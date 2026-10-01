@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Cockpit: neuer Skin Trafag CI, 2026-10-01 (nicht deployed)
+## Cockpit: neuer Skin Trafag CI, 2026-10-01, produktiv 14:14
 
 - `7d1e5b5`: orange Kopfleiste, Logo im hellblauen Kasten mit „Cockpit“ daneben; das bisherige Rot ist ueber den
   Paletten-Knopf weiter waehlbar. `docs/rag/ARCHITECTURE.md`.

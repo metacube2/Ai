@@ -44,6 +44,9 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-01 14:14, Skin Trafag CI mit Umschalter (`7d1e5b5`).** Stand `73577b1`, gleicher Worktree, ohne Finance_All. `801/801`. `BiDashboard.dll`
+  `01.10.2026 14:14:13`, `6475776` Bytes, SHA256 `8AD664AF24FD7BB8673980791002218CB3ABD4851ED843A1E89FE1C202298D94`, bitgleich. `/` und `/einkauf` 200, `app.css` mit `ci-brand` ausgeliefert.
+  Sicherung `trafag_exporter.db.before-skin-trafag-ci-20261001-141308.bak`. Alarm „2 verschwunden“, diesmal im ungefilterten Protokoll belegt: `trafag_exporter.db-wal` und `-shm`; beide um 14:14:20 neu angelegt.
 - **Deploy 2026-10-01 11:21, Einkauf: alter Stand waehrend der Neuberechnung (`4e2b55a`) und Texte D1/D5 (`3407868`).** Gleicher Worktree, ohne Finance_All. `801/801`.
   `BiDashboard.dll` `01.10.2026 11:21:49`, `6'471'680` Bytes, SHA256 `8E824F234C444B3D8BC8546A312133F989BBF79A94216524F0738CFC163AA135`, gegen den Release-Build nachgemessen bitgleich;
   `app_offline.htm.disabled`, `/einkauf` 200. **FALLE, selbst passiert:** im selben Befehl stand versehentlich ein zweiter `dotnet run ... DeployHeadless --no-build | head -0`. Er ist nach Lage

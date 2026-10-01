@@ -18,6 +18,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 | 2026-08-10 | Admin-Schalter in `appsettings.json` war nach dem Deploy weg | Laufzeit-Einstellungen gehoeren in die DB, nicht in `appsettings.json` | `rag/DEPLOYMENT.md` |
 | 2026-08-24 | Schreiben von aussen in die produktive SQLite war fuer die App unsichtbar (WAL) | Nie von aussen in die Produktiv-DB schreiben; Pruefkopie immer `.db` + `-wal` + `-shm` | `rag/DEPLOYMENT.md` |
 | 2026-10-01 | Im selben Befehl stand ein zweiter `dotnet run ... DeployHeadless --no-build \| head -0`; das Protokoll des ersten Laufs ging durch einen `grep` verloren | Deploy-Befehl allein ausfuehren, nie mit `head`, `grep` oder einem zweiten Aufruf koppeln; Protokoll ungefiltert behalten | `rag/DEPLOYMENT.md` Kurzstand 11:21 |
+| 2026-10-01 | Deploy-Runner endet mit Exit 1 und „2 verschwunden“ | Das sind `trafag_exporter.db-wal`/`-shm`, die SQLite beim Neustart neu anlegt (am 01.10. 14:14 im ungefilterten Protokoll belegt); pruefen, dass beide wieder da sind, dann ist es kein Fehler | `rag/DEPLOYMENT.md` Kurzstand 14:14 |
 | 2026-10-01 | Ein Neustart (Deploy) startet die Hintergrunddienste neu, z. B. den SAP-HR-Abruf nach 2 Minuten | Nach einem Deploy mit neuem Abruf das Ereignisprotokoll (`AppEventLogs`) pruefen; ein Neustart ist auch ein Weg, einen Tagesabruf vorzuziehen | `HR_KPI.md` 8.6/8.7 |
 | 2026-10-01 | Der Absenzen-Abruf hing am Zeitstempel einer anderen Datei und waere erst am naechsten Morgen gelaufen | Jeder Tagesabruf bekommt seinen eigenen Faelligkeitsstempel | `c12b34a` |
 
