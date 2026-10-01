@@ -21,6 +21,12 @@ Erzeugte Blaetter:
 - `Vorlage Projektauftrag` und `Vorlage Abnahmeprotokoll`: je eine Seite zum Ausfuellen.
 
 Alle uebrigen Blaetter bleiben unveraendert.
+
+Zusaetzlich, seit 2026-10-01, eine EIGENE Datei `Status_kurz.xlsx` fuer den Chef (Wunsch Ingo:
+separates Excel, schoen dargestellt). Quelle ist `Status_kurz.tsv`, wenige Zeilen je Bereich mit
+Bereit / Laeuft / Wartet / Offen; die Zahlen oben werden aus `Wochen_Todo.tsv` gerechnet, damit
+die vielen kleinen und fremdabhaengigen Punkte nicht wie 50 Baustellen aussehen. Die Datei wird
+bei jedem Lauf neu geschrieben.
 """
 
 from __future__ import annotations
@@ -30,7 +36,7 @@ import math
 from datetime import date
 from pathlib import Path
 
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.chart import BarChart, PieChart, Reference
 from openpyxl.chart.label import DataLabelList
 from openpyxl.chart.series import DataPoint
@@ -41,6 +47,8 @@ from openpyxl.utils import get_column_letter
 ORDNER = Path(__file__).resolve().parent
 TSV = ORDNER / "Wochen_Todo.tsv"
 VORHABEN_TSV = ORDNER / "Vorhaben_HERMES.tsv"
+KURZ_TSV = ORDNER / "Status_kurz.tsv"
+KURZ_XLSX = ORDNER / "Status_kurz.xlsx"
 XLSX = ORDNER / "Wochen_Todo.xlsx"
 
 BLATT_TODO = "Wochen-Todo"
@@ -59,6 +67,11 @@ FARBEN = {
     "Läuft": "FFE699",
     "Offen": "F8CBAD",
 }
+
+# Status kurz: Hintergrund je Stand
+KURZ_FARBEN = {"Bereit": "C6E0B4", "Läuft": "FFE699", "Wartet": "DDEBF7", "Offen": "F8CBAD"}
+KURZ_REIHE = ("Bereit", "Läuft", "Wartet", "Offen")
+KURZ_TEXT = {"Bereit": "bereit", "Läuft": "läuft", "Wartet": "wartet auf andere", "Offen": "offen"}
 
 STUFE_FARBEN = {"Kleinauftrag": "E2EFDA", "Vorhaben": "DDEBF7", "Projekt": "E4DFEC"}
 
@@ -137,6 +150,127 @@ def schreibe_todo(mappe, zeilen: list[list[str]]) -> None:
 
     blatt.freeze_panes = "A2"
     blatt.auto_filter.ref = blatt.dimensions
+
+
+def lies_datum(wert: str) -> date | None:
+    """Erledigt am / Seit kommen als JJJJ-MM-TT (mit oder ohne Uhrzeit) oder TT.MM.JJJJ."""
+    wert = (wert or "").strip()
+    try:
+        if len(wert) >= 10 and wert[4] == "-":
+            return date.fromisoformat(wert[:10])
+        if len(wert) >= 10 and wert[2] == ".":
+            return date(int(wert[6:10]), int(wert[3:5]), int(wert[0:2]))
+    except ValueError:
+        return None
+    return None
+
+
+def schreibe_status_kurz(punkte: list[dict[str, str]], aufgaben: list[dict[str, str]]) -> None:
+    """Eigene Datei fuer den Chef: je Bereich wenige Zeilen, Details stehen in Wochen_Todo.xlsx."""
+    mappe = Workbook()
+    blatt = mappe.active
+    blatt.title = "Status"
+    heute = date.today()
+    for spalte, breite in zip("ABCDE", (2, 58, 13, 34, 12)):
+        blatt.column_dimensions[spalte].width = breite
+
+    # Kopfband
+    for spalte in range(1, 6):
+        for zeile in (1, 2):
+            blatt.cell(row=zeile, column=spalte).fill = PatternFill("solid", fgColor=DUNKEL)
+    zelle(blatt, "B1", "Informatik / Analytics  ·  Status kurz",
+          font=Font(name=SCHRIFT, size=18, bold=True, color="FFFFFF"),
+          alignment=Alignment(vertical="center"))
+    zelle(blatt, "B2", f"Stand {heute:%d.%m.%Y}  ·  Ingo Kohler",
+          font=Font(name=SCHRIFT, size=10, color="D9E1F2"), alignment=Alignment(vertical="top"))
+    blatt.row_dimensions[1].height = 34
+    blatt.row_dimensions[2].height = 20
+
+    # Kacheln: Zahl gross, Text klein
+    zeile = 4
+    for i, stand in enumerate(KURZ_REIHE):
+        anzahl = sum(1 for p in punkte if p.get("Stand") == stand)
+        spalte = (2, 3, 4, 5)[i]
+        oben = blatt.cell(row=zeile, column=spalte, value=anzahl)
+        oben.font = Font(name=SCHRIFT, size=20, bold=True, color=DUNKEL)
+        oben.alignment = Alignment(horizontal="center", vertical="center")
+        unten = blatt.cell(row=zeile + 1, column=spalte, value=KURZ_TEXT[stand])
+        unten.font = Font(name=SCHRIFT, size=9, color=DUNKEL)
+        unten.alignment = Alignment(horizontal="center")
+        for z in (oben, unten):
+            z.fill = PatternFill("solid", fgColor=KURZ_FARBEN[stand])
+    blatt.row_dimensions[zeile].height = 32
+
+    offen = [a for a in aufgaben if a.get("Status", "").strip() != "Erledigt"]
+    wartet = [a for a in offen
+              if a.get("Status", "").startswith("Wartet") or "Ingo" not in a.get("Wer", "")]
+    klein = [a for a in offen if a.get("Dringlichkeit", "") == "Nur terminieren"]
+    erledigt = [a for a in aufgaben if a.get("Status", "").strip() == "Erledigt"
+                and (d := lies_datum(a.get("Erledigt am", ""))) and (heute - d).days <= 14]
+    zelle(blatt, "B7",
+          f"Hinter dieser Seite stehen {len(offen)} offene Detailpunkte (Wochen_Todo.xlsx). "
+          f"Davon warten {len(wartet)} auf andere, {len(klein)} sind Kleinigkeiten zum Terminieren. "
+          f"In den letzten 14 Tagen erledigt: {len(erledigt)}.",
+          font=Font(name=SCHRIFT, size=10, italic=True, color=GRAU),
+          alignment=Alignment(wrap_text=True, vertical="top"))
+    blatt.merge_cells("B7:E7")
+    blatt.row_dimensions[7].height = 30
+
+    zeile = 9
+    for spalte, name in zip(range(2, 6), ("Punkt", "Stand", "Wartet auf", "Seit")):
+        z = blatt.cell(row=zeile, column=spalte, value=name)
+        z.font = Font(name=SCHRIFT, bold=True, color="FFFFFF")
+        z.fill = PatternFill("solid", fgColor=DUNKEL)
+        z.alignment = Alignment(vertical="center")
+    blatt.row_dimensions[zeile].height = 20
+    zeile += 1
+
+    bereiche: list[str] = []
+    for p in punkte:
+        if p.get("Bereich") not in bereiche:
+            bereiche.append(p.get("Bereich", ""))
+    linie = Border(bottom=Side(style="thin", color="D9D9D9"))
+    for bereich in bereiche:
+        z = blatt.cell(row=zeile, column=2, value=bereich)
+        z.font = Font(name=SCHRIFT, size=12, bold=True, color=DUNKEL)
+        for spalte in range(2, 6):
+            blatt.cell(row=zeile, column=spalte).fill = PatternFill("solid", fgColor=HELL)
+        blatt.row_dimensions[zeile].height = 22
+        zeile += 1
+        for p in (p for p in punkte if p.get("Bereich") == bereich):
+            seit = lies_datum(p.get("Seit", ""))
+            werte = (p.get("Punkt", ""), p.get("Stand", ""), p.get("Wartet auf", ""),
+                     seit.strftime("%d.%m.%Y") if seit else p.get("Seit", ""))
+            for spalte, wert in zip(range(2, 6), werte):
+                z = blatt.cell(row=zeile, column=spalte, value=wert)
+                z.font = Font(name=SCHRIFT, size=10, color="404040" if spalte != 3 else DUNKEL,
+                              bold=spalte == 3)
+                z.alignment = Alignment(vertical="center", wrap_text=True,
+                                        horizontal="center" if spalte in (3, 5) else "left")
+                z.border = linie
+            farbe = KURZ_FARBEN.get(p.get("Stand", ""))
+            if farbe:
+                blatt.cell(row=zeile, column=3).fill = PatternFill("solid", fgColor=farbe)
+            blatt.row_dimensions[zeile].height = 20
+            zeile += 1
+        zeile += 1
+
+    zelle(blatt, f"B{zeile}",
+          "Bereit = erledigt und in Betrieb · Läuft = in Arbeit · Wartet = braucht eine andere Person · "
+          "Offen = noch nicht begonnen oder Entscheid von Ingo. Details und Nachweise: Wochen_Todo.xlsx.",
+          font=Font(name=SCHRIFT, size=9, italic=True, color=GRAU),
+          alignment=Alignment(wrap_text=True, vertical="top"))
+    blatt.merge_cells(f"B{zeile}:E{zeile}")
+    blatt.row_dimensions[zeile].height = 26
+
+    blatt.sheet_view.showGridLines = False
+    blatt.freeze_panes = "A10"
+    blatt.page_setup.orientation = "portrait"
+    blatt.page_setup.fitToWidth = 1
+    blatt.page_setup.fitToHeight = 0
+    blatt.sheet_properties.pageSetUpPr.fitToPage = True
+    blatt.print_title_rows = "9:9"
+    mappe.save(KURZ_XLSX)
 
 
 def meilenstein(wert: str) -> tuple[str, str]:
@@ -521,8 +655,15 @@ def main() -> int:
             blatt.sheet_view.tabSelected = blatt.title == BLATT_HERMES
         print(f"{len(vorhaben)} Vorhaben in Blatt '{BLATT_HERMES}' geschrieben, Vorlagen erneuert.")
 
+
+
     mappe.save(XLSX)
     print(f"{len(zeilen) - 1} Zeilen in Blatt '{BLATT_TODO}' geschrieben.")
+
+    if KURZ_TSV.exists():
+        punkte = als_dicts(lies_tsv(KURZ_TSV))
+        schreibe_status_kurz(punkte, als_dicts(zeilen))
+        print(f"{len(punkte)} Punkte in {KURZ_XLSX.name} geschrieben.")
     if andere:
         print("Unveraendert erhalten: " + ", ".join(andere))
     return 0
