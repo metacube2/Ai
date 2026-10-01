@@ -4,7 +4,8 @@ Stand: 2026-09-11
 
 ## Ladereihenfolge fuer eine neue Sitzung
 
-1. `router.md` (Repo-Wurzel) — Themenaeste und Vorrangregeln, immer zuerst
+1. `router.md` (Repo-Wurzel) — Themenaeste und Vorrangregeln, immer zuerst, und gleich danach
+   **`docs/rag/LEARNINGS.md`** — die gemachten Fehler mit der Regel daraus (seit 2026-10-01)
 2. Der passende Unterrouter unter `docs/router/`, von dort die Detaildatei oder die
    RAG-Kurzdatei aus `docs/rag/` (etwa `FINANCE.md`, `PURCHASING.md`, `PROJECT.md`,
    `MANUAL_IMPORT.md`, `DEPLOYMENT.md`). Das ist derselbe Ladeweg wie in `router.md`

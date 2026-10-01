@@ -1,9 +1,12 @@
 # Router — globaler Einstieg
 
-Stand: 2026-09-29
+Stand: 2026-10-01
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
+
+**Zuerst `docs/rag/LEARNINGS.md` lesen**: alle bisher gemachten Fehler mit der Regel daraus, an
+einer Stelle statt verstreut (Wunsch Ingo, 2026-10-01). Neue Fehler dort eintragen, siehe Regel 9.
 
 **Ladeweg fuer eine Aufgabe: `router.md` -> ein Unterrouter -> eine Detaildatei.**
 Mehr soll nicht noetig sein. Wer den ganzen Bestand sucht, nimmt `baum.md` — das ist ein
@@ -56,6 +59,11 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
    abweichende lokale `trafag_exporter.db` oder ein lokal gestarteter Dev-Server sind kein
    Beleg fuer den produktiven Zustand. Bei UI-/Datenfragen den produktiven Stand pruefen
    (Browser, Admin-Logs, `docs/rag/DEPLOYMENT.md`), nicht die lokale Kopie im Repo.
+9. **Fehler werden in `docs/rag/LEARNINGS.md` protokolliert, nicht nur verstreut.** Vor jeder
+   Aenderung, jedem SAP-Schritt und jedem Deploy die Datei lesen. Wer einen Fehler macht oder
+   wiederholt, traegt ihn im selben Commit wie die Korrektur dort ein: eine Zeile mit Datum,
+   was passiert ist, Regel daraus und Verweis auf die Fachdatei. Die Einzelheiten bleiben in der
+   Fachdatei (etwa `rag/DEPLOYMENT.md`, SAP-Arbeitsweise), die Gesamtsicht steht nur dort.
 
 ## Themenaeste
 

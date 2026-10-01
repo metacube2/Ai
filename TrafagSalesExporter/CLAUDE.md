@@ -60,6 +60,8 @@ Zum Abschluss gehoeren:
    Sitzung falsch startet.
 5. **`docs/AGENT_COORDINATION.md` abschliessen** mit Ergebnis, geaenderten Dateien, Tests
    und Deploystatus, und die Reservierung freigeben.
+6. **Fehler in `docs/rag/LEARNINGS.md` eintragen.** Ist bei der Aufgabe ein Fehler passiert oder
+   ein alter wiederholt worden, gehoert eine Zeile dorthin, im selben Commit wie die Korrektur.
 
 Beispiele, warum diese Regel existiert: UK galt in drei Dateien als „strukturell ohne
 Lieferantenfelder", obwohl die Spalten immer gefuellt und nur nie gemappt waren. Das

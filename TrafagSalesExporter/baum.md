@@ -94,6 +94,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | Datei | Rolle |
 | --- | --- |
 | `docs/rag/PURCHASING.md` | Kurzstand |
+| `docs/rag/LEARNINGS.md` | **Gemachte Fehler mit Regel, eine Zeile je Fehler. Pflichtlektuere, verlinkt aus `router.md` (Einstieg und Regel 9) und `CLAUDE.md` 3** |
 | `docs/PURCHASING_DASHBOARD_2026-06-05.md` | Hauptdoku, Formeln, Cache |
 | `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` | **zusammengefuehrt**: umgesetzt, offen, zurueckgestellt |
 | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` | welche Indikatoren echt rechnen |
