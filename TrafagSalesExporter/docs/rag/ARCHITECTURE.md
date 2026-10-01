@@ -125,6 +125,7 @@ vorher in `docs/AGENT_COORDINATION.md` abstimmen.
   nimmt im Dunkelmodus das helle Schaltflaechen-Rot `#EF5350`; die Kopfleiste hat deshalb kein
   `Color` und nutzt `AppbarBackground` (`a397440`). Bewusst hell bleiben die 3D-Flaechen (im Dunkelmodus abgedunkelt) und der
   weisse Grund hinter den Schulungsbildern.
+- SKIN seit 2026-10-01 (`7d1e5b5`, noch nicht deployed): **Trafag CI** ist Standard, Leiste Trafag-Orange `#C8501E` (dunkel `#B5481B`, Schaltflaechen dunkel `#F08A4B`), links ein hellblauer Kasten mit dem schwarzen Logo `trafag.jpg` und „Cockpit“ gleich hoch (`.ci-brand` in `app.css`, `mix-blend-mode: multiply` gegen den weissen JPG-Grund). Das bisherige Rot heisst „klassisch“ und ist ueber den Paletten-Knopf in der Kopfleiste waehlbar; Wahl je Browser in `localStorage` (`trafag-skin`), `data-skin` am `<html>` schon im `<head>` gesetzt. Optik vor dem Commit als HTML-Nachbau mit Edge headless gegengeprueft, nicht in der laufenden App.
 
 ## Rohquellen Nur Bei Bedarf
 

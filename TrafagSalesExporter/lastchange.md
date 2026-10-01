@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Cockpit: neuer Skin Trafag CI, 2026-10-01 (nicht deployed)
+
+- `7d1e5b5`: orange Kopfleiste, Logo im hellblauen Kasten mit „Cockpit“ daneben; das bisherige Rot ist ueber den
+  Paletten-Knopf weiter waehlbar. `docs/rag/ARCHITECTURE.md`.
+
 ## Einkauf: alter Stand waehrend der Neuberechnung, Texte D1/D5, 2026-10-01, produktiv 11:21
 
 - `4e2b55a`: Nach „Delta aktualisieren“ kommt die Seite sofort mit dem Stand vor dem Lauf und einem Hinweis und
