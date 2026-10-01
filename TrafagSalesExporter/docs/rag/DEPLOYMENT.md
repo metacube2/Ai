@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-09-30
+Stand: 2026-10-01
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,6 +44,12 @@ Stand: 2026-09-30
 
 ## Kurzstand
 
+- **Deploy 2026-10-01 09:12, HR-Cockpit: SAP-Abruf `HrKpiSet` (`4051506`), Absenz-Ampel ab 5 % (`81140fa`), Kader 8,1 h (`c51445c`).** Stand `ba9cf5c`,
+  Worktree `C:TMPTrafagSalesExporter_release_eafd1c5`, ohne Finance_All. `785/785`. `BiDashboard.dll` `01.10.2026 09:12:34`, `6'444'544` Bytes,
+  SHA256 `5E25C0E5A432AE981328B8B4693F509C060CBB0ED77956E0E1633CF5454F480B`, bitgleich. Fuenf Routen `200`, Produktiv-DB unveraendert,
+  Sicherung `trafag_exporter.db.before-hr-sap-kader-ampel-20261001-091049.bak`. Ein Alarm, harmlos: das erwartete Literal `h je Tag), sonst aus dem Arbeitszeitmodell.`
+  fehlt, weil `c51445c` diesen Hinweis selbst um „Kader 8,1h“ erweitert hat. **Der Tagesabruf laeuft produktiv, findet aber bis zum
+  Transport `T76K912530` kein `HrKpiSet` in P76** und laesst die Handdatei stehen (Fehler im AppEventLog, Kategorie HR).
 - **Deploy 2026-09-30 09:36, HR-Cockpit: Arbeitstag 8,0 h statt 8,4 h (`e3545c4`).** Stand `2047add`,
   gleicher Worktree `C:\TMP\TrafagSalesExporter_release_eafd1c5`, ohne Finance_All. `773/773`. `BiDashboard.dll`
   `30.09.2026 09:34:14`, `6'425'600` Bytes, SHA256 `6DDE3BB4F7D4FC2CBD9AEF6793FB9545FED39A318DB1BD6E84975231F763B369`, bitgleich.

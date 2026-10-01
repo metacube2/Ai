@@ -16,7 +16,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
 ## Fallen in diesem Ast
 
-- **Seit 2026-09-30 kommt die SAP-Datei automatisch** ueber `HrKpiSet` (T76 aktiv, P76 und Deploy offen,
+- **Seit 2026-09-30 kommt die SAP-Datei automatisch** ueber `HrKpiSet` (T76 aktiv, Cockpit produktiv seit 01.10. 09:12, P76-Transport offen,
   `docs/HR_KPI.md` 8.6). HR-Sitzung vom 30.09. (Kader 8,1 h, Absenzen je Fall, Ampel): 8.5.
 
 - **Arbeitstage sind nicht Montag bis Freitag.** `ZurichWorkdayCalendar` zieht die neun
@@ -32,6 +32,6 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
   Reminderprofile ohne FTE und Sollzeit ausgeschlossen, Restferien-Ampel nach Quartal,
   zusaetzlich gleitende Prognose und Vorjahr. `docs/HR_KPI.md` Abschnitt 8.
 - **Seit 2026-09-30: ein Arbeitstag hat 8,0 h** (`HoursPerWorkday`), die frueheren 8,4 h sind ueberholt.
-  Kader (Rexx `Leitung j/n` = ja) 8,1 h ab `c51445c` (01.10., noch nicht deployed).
+  Kader (Rexx `Leitung j/n` = ja) 8,1 h ab `c51445c` (produktiv seit 01.10. 09:12).
 - *Ueberholt am 2026-09-28, die 8,4 h am 2026-09-30:* Mehrere Werte sind Annahmen ohne fachliche Bestaetigung (`8.4h = 1 Krankheitstag`,
   FTE-Fallback `0.5`, Ampelgrenzen). Siehe `docs/HR_KPI.md` Abschnitt 7.

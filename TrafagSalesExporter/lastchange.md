@@ -2,18 +2,18 @@
 
 Stand: 2026-10-01
 
-## HR-Cockpit: Kader mit 8,1 h je Arbeitstag, 2026-10-01 (nicht deployed)
+## HR-Cockpit: Kader mit 8,1 h je Arbeitstag, 2026-10-01, produktiv 09:12
 
 - `c51445c`: Kader ist, wer in Rexx `Leitung j/n` = ja hat (Ingo, Wochen_Todo 66). Fuer sie gelten 8,1 h
   statt 8,0 h bei Krankheitstagen, Langzeitgrenze und FTE aus der Sollzeit. 800/800. `docs/HR_KPI.md` 8.5.
 
-## HR-Cockpit: SAP-Datei automatisch ueber OData, 2026-09-30 (nicht deployed, nicht in P76)
+## HR-Cockpit: SAP-Datei automatisch ueber OData, 2026-09-30 (Cockpit produktiv seit 01.10. 09:12, `HrKpiSet` noch nicht in P76)
 
 - `4051506`: EntitySet `HrKpiSet` (T76, Transport `T76K912530` mit dem Journal) und Tagesabruf im
   Cockpit, der `hrdata/HR_KPI_Export.xlsx` schreibt. Ersetzt den Handstart von `Z_HR_KPI_CONS`.
   Nur Cockpit-Felder, keine Namen, kein Lohn. Bis zum Transport bleibt die Handdatei stehen.
 
-## HR-Cockpit: Absenz-Ampel der Uebersicht ab 5 % rot, 2026-09-30 (noch nicht deployed)
+## HR-Cockpit: Absenz-Ampel der Uebersicht ab 5 % rot, 2026-09-30, produktiv 01.10. 09:12
 
 - `81140fa`: HR bestaetigt „bis 4,99 % gelb, ab 5 % rot“. Die Uebersichtskachel „Krankheitstage“ warnte
   erst ueber fest verdrahteten 5 %, jetzt ab der konfigurierten Rot-Grenze wie die Krankenquote.
