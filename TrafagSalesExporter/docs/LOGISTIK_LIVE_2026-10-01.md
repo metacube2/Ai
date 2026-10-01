@@ -64,12 +64,18 @@ sind nicht zeilenweise geprüft (Rumpf im Gateway Client nicht lesbar).
   Vorab-Rendern keinen Abruf auslöst.
 - Tests `LogisticsLiveTests`, 825/825. Texte in sechs Sprachen und Berndeutsch.
 
+## Produktiv seit 2026-10-01 15:01
+
+*Erledigt 2026-10-01 15:01:* Ingo hat `T76K912650` nach P76 importiert. **Gateway Client P76** (heute, 14:59):
+`$metadata` 354'793 (gleich T76, Cache aktuell); `LogTaSet` ganzer Tag 1,3 s / 402 KB, letzte 10 Min. 0,8 s / 11 KB;
+`LogLiefSet` 0,8 s / 24 KB; `LogRueckSet` ganzer Tag zwei Seiten 2,0 s + 1,2 s / 1,6 MB, letzte 10 Min. 0,9 s / 17 KB;
+ohne Datum 0,7 s leer; Gegenproben `HrKpiSet`, `FinanzJournalSet` 200. Deploy `6b4bf21` (810/810, DLL bitgleich,
+SHA256 `226536E1...82C3`, fuenf Routen und `/logistik/live` 200, Alarm nur WAL/SHM), Menuepunkt `logistics-live` angelegt.
+
 ## Offen
 
-1. **Transport `T76K912650` nach P76** (Ingo). Bis dahin meldet die Seite „Set vermutlich noch nicht
-   transportiert“ und pausiert 5 Minuten.
-2. Nach dem Import: `$metadata` in P76 muss wachsen; `LogTaSet`/`LogRueckSet` mit heutigem Datum im
-   Gateway Client P76 messen (Dauer), dann Deploy und Sichtprüfung.
+1. Sichtpruefung der Seite durch Ingo (Chrome-Erweiterung war nicht verbunden); danach im AppEventLog Kategorie Logistik nachsehen.
+2. *Erledigt (siehe oben).*
 3. Werte gegen SAP prüfen (ein TA, eine Lieferung, eine Rückmeldung per Screenshot).
 4. Ideen für später: Lagerplatz-Heatmap, Auftragsfortschritt je Arbeitsplatz über den Tag, Warnung
    bei Arbeitsplätzen ohne Rückmeldung während der Schicht.

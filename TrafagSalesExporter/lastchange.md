@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Logistik live, 2026-10-01 (T76 fertig, Transport und Deploy offen)
+## Logistik live, 2026-10-01, produktiv 15:01
 
 - `2be8623`: Seite `/logistik/live` mit Kommissionierung und Produktion aus SAP, Abruf alle 30 s nur bei offener
   Seite, ohne Personendaten. SAP-Sets in `T76K912650`. `docs/LOGISTIK_LIVE_2026-10-01.md`.

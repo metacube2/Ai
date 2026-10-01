@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-01 15:01, Logistik live (`2be8623`).** Stand `6b4bf21`, `810/810`, `BiDashboard.dll` `15:01:10`, `6'695'424` Bytes, SHA256 `226536E119D548B7EF04E9E4BF97586EA058BE64FC3FDA61F5FB1B68B00D82C3`, bitgleich, fuenf Routen und `/logistik/live` 200. Alarm nur `-wal`/`-shm` (um 15:01:14 neu angelegt). Vorher `T76K912650` in P76 (Ingo).
 - **Deploy 2026-10-01 14:26: Logo direkt auf Orange mit „Dashboard“ (`92e012e`), Berndeutsch, Hintergrund-Dimmer, zwei abwechselnd blinkende Statuslampen (`102c20c`).** `803/803`, `BiDashboard.dll` `14:26:37`, `6'617'088` Bytes, SHA256 `F0A8C1E8C73AD42A481A48FF536DD5A07D6BE8B5A5F7ED718128E06B6B0FF069`, bitgleich, fuenf Routen 200, ohne Alarm.
 - **Deploy 2026-10-01 14:14, Skin Trafag CI mit Umschalter (`7d1e5b5`).** Stand `73577b1`, gleicher Worktree, ohne Finance_All. `801/801`. `BiDashboard.dll`
   `01.10.2026 14:14:13`, `6475776` Bytes, SHA256 `8AD664AF24FD7BB8673980791002218CB3ABD4851ED843A1E89FE1C202298D94`, bitgleich. `/` und `/einkauf` 200, `app.css` mit `ci-brand` ausgeliefert.
