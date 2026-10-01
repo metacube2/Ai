@@ -36,6 +36,8 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 | 2026-10-01 | `SapProbe.exe` direkt aufgerufen fand kein Passwort (`SAP_PASSWORD` gesetzt) | Variable heisst `SAP_NCO_PASSWORD`; `RunSapProbe.ps1` zeigt Fehler nur als leere `NativeCommandError` | SAP-Arbeitsweise Transport |
 | 2026-10-01 | `Remove-Item Env:...` in einem `finally` blockierte das Werkzeug | Umgebungsvariable mit `$env:X = $null` leeren | diese Datei |
 | 2026-10-01 | Ungefiltertes `FinanzJournalSet` lief 154 s in einen 500er | OData-Gegenproben immer mit Filter; ein 500 ohne Filter ist kein Transportfehler | `HR_KPI.md` 8.6 |
+| 2026-10-01 | Git Bash machte aus dem Methodennamen `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET` einen Pfad `C:/PROGRAM FILES/GIT/IWBEP/...` | SAP-Skripte mit Argumenten, die mit `/` beginnen, ueber PowerShell aufrufen, nie ueber Bash | SAP-Arbeitsweise „Bash verstuemmelt“ |
+| 2026-10-01 | Ein neuer Datumsschutz (hoechstens 7 Tage zurueck) machte die Sets in T76 untestbar, weil die Testkopie im Maerz endet | Schutzgrenzen so waehlen, dass T76 testbar bleibt; die eigentliche Last-Grenze ist "genau ein Tag", nicht das Alter | `LOGISTIK_LIVE_2026-10-01.md` |
 | 2026-10-01 | Falsche Annahme, dass F6 in SE24 nach dem Auftrag fragt; die Abfrage kam erst beim Sichern | Nach jedem Sichern auf `wnd[1]` pruefen und den Auftrag dort setzen | SAP-Arbeitsweise Skripttabelle |
 
 ## Code, Tests, Werkzeuge
@@ -43,7 +45,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
 | 2026-09-30 | ClosedXML verweigerte eine temporaere Datei mit Endung `.tmp` | Temporaere Excel-Dateien `<name>.tmp.xlsx` nennen | `SapGatewayHrKpiReader.WriteWorkbook` |
-| 2026-09-30 | `node -e` mit Backslashes oder einfachen Anfuehrungszeichen brach im Bash-Quoting | Groessere Ersetzungen als Skriptdatei im Scratchpad schreiben und mit `node <datei>` ausfuehren | diese Datei |
+| 2026-09-30 | `node -e` mit Backslashes oder einfachen Anfuehrungszeichen brach im Bash-Quoting | Groessere Ersetzungen als Skriptdatei im Scratchpad schreiben und mit `node <datei>` ausfuehren. **Am 2026-10-01 dreimal wiederholt** (Apostroph in `1'796`, Regex mit Backslash): auch kleine `node -e` mit Anfuehrungszeichen, Apostroph oder Backslash gehoeren in eine Datei | diese Datei |
 | 2026-10-01 | Testerwartung im Kopf gerechnet: der 02.01. ist in Zuerich kein Feiertag, 12,8 statt 16 h | Erwartungswerte mit Datumslogik aus dem Kalender ableiten, nicht schaetzen | `HrKpiServiceTests` |
 | 2026-10-01 | Neuer Anzeigetext liess den Uebersetzungstest scheitern | Jeder neue `T(de, en)`-Text braucht Eintraege in allen Sprachbloecken von `UiTextGeneratedTranslations.cs` **und** in `UiTextBerneseTranslations.cs` (seit 14:26) | `UiTextServiceTests` |
 | 2026-10-01 | Eine neue Datenquelle aenderte die Zahl der `FileStatuses`, ein Konsistenztest schlug an | Bei neuer Quelldatei die Konsistenztests mitpflegen und den Grund im Test kommentieren | `HrKpiServiceTests` |

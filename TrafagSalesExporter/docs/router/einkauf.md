@@ -23,6 +23,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 | Produktgruppen, ZC23/Disponent, Mehrfachverwendung, ABC/XYZ-Nutzen | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` |
 | Produktgruppen direkt aus SAP OData, ZDISPO | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` |
 | Supply Chain: Fehlteile, Deckung, Materialabhaengigkeit, Dispositionspruefung, Lieferperformance | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` |
+| **Logistik live**: Kommissionierung und Produktion aus SAP, Abruf nur bei offener Seite, Schutz fuer P76, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | Logistik-Stuecklisten-Dashboard, Top-Down und Bottom-Up | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` |
 | Oberflaechensprachen und Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 

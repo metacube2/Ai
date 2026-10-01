@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Logistik live, 2026-10-01 (T76 fertig, Transport und Deploy offen)
+
+- `2be8623`: Seite `/logistik/live` mit Kommissionierung und Produktion aus SAP, Abruf alle 30 s nur bei offener
+  Seite, ohne Personendaten. SAP-Sets in `T76K912650`. `docs/LOGISTIK_LIVE_2026-10-01.md`.
+
 ## Cockpit: Berndeutsch, Dimmer, Doppel-LED, Logo auf Orange, 2026-10-01, produktiv 14:26
 
 - `92e012e`, `102c20c`. `docs/rag/ARCHITECTURE.md`.
