@@ -341,7 +341,9 @@ Felder, die das Cockpit liest; keine Namen, kein Geburtsdatum, kein Lohn. Das Co
 
 **Gemessen im Gateway Client T76, 2026-09-30** (Antwortrumpf nicht lesbar, nur Status und Laenge): `$metadata` 200 (342'123 Zeichen statt 341'032); `HrKpiSet` `$top=5` 200 in 0,7 s; Filter 2026/09 Seite 1 200 (560'915), Seite 2 mit `$skip=1000` 200 (84'670), Monat 13 200 mit leerer Liste; Gegenproben `MAKTSet` und `FinanzJournalSet` 200. **Die Werte selbst sind noch nicht zeilenweise gegen den Report gegengelesen.**
 
-**Offen bis produktiv:** (1) Stichprobe der Werte gegen `Z_HR_KPI_CONS` fuer 09/2026 (Screenshot oder Browser mit Sitzung); (2) Transport `T76K912530` nach P76, zusammen mit dem Journal, Freigabe Ingo. *Erledigt am 2026-10-01 09:12:* (3) Deploy des Cockpits. Bis zum Transport meldet der Abruf taeglich einen Fehler und laesst die Handdatei stehen.
+**Offen bis produktiv:** (1) Stichprobe der Werte gegen `Z_HR_KPI_CONS` fuer 09/2026 (Screenshot oder Browser mit Sitzung); *Erledigt am 2026-10-01:* (2) Transport `T76K912530` von Ingo nach P76 importiert; (3) Deploy des Cockpits um 09:12.
+
+**Gemessen im Gateway Client P76, 2026-10-01** (nach dem Import): `$metadata` 200 (343'930); `HrKpiSet` 2026/09 Seite 1 200 in 1,6 s (560'979), Seite 2 200 (93'147), 2026/10 200 (560'979); `MAKTSet` 200; `FinanzJournalSet` mit `Bukrs eq '1200' and Gjahr eq '2026'` 200 in 0,9 s (ohne Filter 500 nach 154 s, das ist der bekannte Vollscan, kein Transportfehler). Der Abruf des Cockpits um 09:14 lief vor dem Import auf 404 (AppEventLog 15372) und versucht es erst am 02.10. ab 05:00 wieder (einmal pro Tag), ausser die App startet neu. **Offen:** Werte gegen `Z_HR_KPI_CONS` vergleichen; Rumpf nur per Screenshot lesbar. Fachlich zu klaeren: der Abruf holt den **laufenden Monat** (am 01.10. also Oktober mit fast keinen Absenztagen), die Handdatei war ein abgeschlossener Monat.
 
 Rexx-Berichtsnummern aus denselben Notizen, fuer die Anfrage bei Upgreat: Abwesenheit in Stunden
 `#744`, Export KOMMEN/GEHEN `#732`, Personal ausgeschieden `#381`, Abwesenheiten Uebersicht `#742`,
