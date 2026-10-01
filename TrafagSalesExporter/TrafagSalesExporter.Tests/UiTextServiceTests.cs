@@ -114,6 +114,39 @@ public class UiTextServiceTests
     }
 
     [Fact]
+    public void Bernese_Covers_Every_Catalogue_Key_And_Keeps_Placeholders()
+    {
+        // Berndeutsch (gsw, 2026-10-01) hat einen eigenen Katalog ueber alle vier Kataloge.
+        var keys = UiTextGeneratedTranslations.All["es"].Keys
+            .Concat(PurchasingUiTextGeneratedTranslations.All["es"].Keys)
+            .Concat(LogisticsUiTextGeneratedTranslations.All["es"].Keys)
+            .Concat(SupplyChainUiTextGeneratedTranslations.All["es"].Keys)
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var missing = keys.Where(key => !UiTextBerneseTranslations.All.ContainsKey(key)).ToArray();
+        Assert.True(missing.Length == 0, $"gsw is missing: {string.Join(" | ", missing.Take(20))}");
+        foreach (var key in keys)
+        {
+            var bernese = UiTextBerneseTranslations.All[key];
+            Assert.False(string.IsNullOrWhiteSpace(bernese), $"gsw/{key} is empty");
+            Assert.Equal(Placeholders(key), Placeholders(bernese));
+        }
+    }
+
+    [Fact]
+    public void Bernese_Falls_Back_To_German_Not_English()
+    {
+        var service = new UiTextService();
+        service.SetLanguage("bärndütsch");
+
+        Assert.Equal("gsw", service.CurrentLanguage);
+        Assert.Equal("Gibt es nicht im Katalog", service.Text("Gibt es nicht im Katalog", "Not in catalogue"));
+        Assert.Equal(UiTextBerneseTranslations.All["Anleitung"], service.Text("Anleitung", "Guide"));
+    }
+
+    [Fact]
     public void Logistics_Translations_Cover_Every_Dashboard_Key_In_Every_Language()
     {
         Assert.Equal(

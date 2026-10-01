@@ -20,7 +20,9 @@ public sealed class UiTextService : IUiTextService
         "hi",
         "sq",
         "tr",
-        "tlh"
+        "tlh",
+        // Berndeutsch (Wunsch Ingo 2026-10-01), ISO 639 gsw; Katalog UiTextBerneseTranslations.
+        "gsw"
     };
 
     private static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Translations =
@@ -1133,6 +1135,10 @@ public sealed class UiTextService : IUiTextService
             return german;
         if (string.Equals(_currentLanguage, "en", StringComparison.OrdinalIgnoreCase))
             return english;
+        // Berndeutsch hat einen eigenen, vollstaendigen Katalog. Fehlt ein Text, ist Deutsch
+        // naeher als Englisch.
+        if (_currentLanguage is "gsw")
+            return UiTextBerneseTranslations.All.TryGetValue(german, out var bernese) ? bernese : german;
 
         // New languages use the complete generated catalogue first. The older
         // languages retain their manually reviewed wording and only fill gaps
@@ -1188,6 +1194,8 @@ public sealed class UiTextService : IUiTextService
             normalized = "tr";
         if (normalized is "klingon" or "tlhingan" or "tlhingan hol")
             normalized = "tlh";
+        if (normalized is "be" or "bern" or "berndeutsch" or "bärndütsch" or "baerndeutsch")
+            normalized = "gsw";
         return SupportedLanguages.Contains(normalized) ? normalized : "de";
     }
 }

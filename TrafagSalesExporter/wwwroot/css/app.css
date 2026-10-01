@@ -33,6 +33,22 @@ html[data-theme="dark"] body {
     letter-spacing: 0.02em;
 }
 
+.bg-dimmer {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+    width: 120px;
+}
+
+.bg-dimmer-slider {
+    min-width: 0;
+}
+
+/* Regler weiss auf der farbigen Leiste, damit er auf Orange und Rot sichtbar ist. */
+.bg-dimmer .mud-slider-input {
+    color: #fff;
+}
+
 .app-logo {
     height: 34px;
     width: auto;
@@ -219,14 +235,15 @@ html[data-theme="dark"] .finance-3d-surface {
 .status-light {
     align-items: center;
     background: rgba(255, 255, 255, 0.92);
-    border-radius: 50%;
+    border-radius: 13px;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
     cursor: pointer;
     display: inline-flex;
+    gap: 5px;
     height: 26px;
     justify-content: center;
     transition: background 120ms ease;
-    width: 26px;
+    width: 44px;
 }
 
 .status-light:hover {
@@ -256,17 +273,22 @@ html[data-theme="dark"] .finance-3d-surface {
     box-shadow: 0 0 6px rgba(198, 40, 40, 0.85);
 }
 
-/* Rot zusaetzlich pulsieren lassen. Ein Fehler soll auch am Rand des
-   Blickfelds auffallen, nicht nur wenn man hinsieht. */
-@media (prefers-reduced-motion: no-preference) {
-    .status-light-red .status-light-lamp {
-        animation: status-light-pulse 1.6s ease-in-out infinite;
-    }
+/* Zwei Lampen blinken abwechselnd links, rechts, links ... je 800 ms, mit hartem Wechsel
+   wie eine Abfahrtstafel (Wunsch Ingo 2026-10-01). Gilt fuer jede Farbe; das fruehere
+   Pulsieren nur bei Rot entfaellt damit. Bewusst nicht an prefers-reduced-motion gebunden,
+   sonst blinkt auf Rechnern mit abgeschalteten Windows-Animationen nichts. */
+.status-light-lamp {
+    animation: status-light-alternate 1.6s step-end infinite;
 }
 
-@keyframes status-light-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.45; }
+.status-light-lamp-b {
+    animation-delay: -0.8s;
+}
+
+@keyframes status-light-alternate {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.15; }
+    100% { opacity: 1; }
 }
 
 .status-light-list {

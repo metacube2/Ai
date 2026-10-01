@@ -32,7 +32,10 @@
                   Bordered="true">
             <MudTooltip Text="@TooltipText">
                 <span class="status-light @LampClass" aria-label="@TooltipText">
+                    @* Zwei Lampen, die abwechselnd blinken (Wunsch Ingo 2026-10-01, wie eine
+                       Abfahrtstafel am Flughafen); Takt in app.css. *@
                     <span class="status-light-lamp"></span>
+                    <span class="status-light-lamp status-light-lamp-b"></span>
                 </span>
             </MudTooltip>
         </MudBadge>

@@ -32,6 +32,15 @@
         @* Statusampel: haelt die Meldungen fest, die sonst mit der Snackbar verschwinden.
            Bewusst hier oben und nicht auf einer Seite, damit der Zustand ueberall sichtbar
            ist. Siehe Components/AppStatusLight.razor. *@
+        @* Dimmer (Wunsch Ingo 2026-10-01): Hintergrund von Seite und Menue heller oder dunkler,
+           je Browser gemerkt; Umsetzung in js/theme.js (applyDim). *@
+        <MudTooltip Text="@T("Hintergrund heller oder dunkler", "Background lighter or darker")">
+            <div class="bg-dimmer mr-3">
+                <MudIcon Icon="@Icons.Material.Filled.Brightness6" Size="Size.Small" />
+                <MudSlider T="int" Value="_dim" ValueChanged="SetDimAsync" Min="0" Max="100" Step="5"
+                           Size="Size.Small" Color="Color.Default" Class="bg-dimmer-slider" />
+            </div>
+        </MudTooltip>
         <AppStatusLight />
         <MudTooltip Text="@T("Design umschalten: Trafag CI oder klassisch", "Switch design: Trafag CI or classic")">
             <MudIconButton Icon="@Icons.Material.Filled.Palette" Color="Color.Inherit" OnClick="ToggleSkinAsync" />
@@ -62,6 +71,7 @@
                 <MudMenuItem OnClick="@(() => ChangeLanguage("hi"))">हिन्दी</MudMenuItem>
                 <MudMenuItem OnClick="@(() => ChangeLanguage("sq"))">Shqip</MudMenuItem>
                 <MudMenuItem OnClick="@(() => ChangeLanguage("tr"))">Türkçe</MudMenuItem>
+                <MudMenuItem OnClick="@(() => ChangeLanguage("gsw"))">Bärndütsch</MudMenuItem>
                 <MudMenuItem OnClick="@(() => ChangeLanguage("tlh"))">tlhIngan Hol</MudMenuItem>
             </ChildContent>
         </MudMenu>
@@ -95,6 +105,8 @@
     private bool _isDarkMode = true;
     // Skin Trafag CI ist Standard (Wunsch Ingo 2026-10-01); das bisherige Rot bleibt waehlbar.
     private bool _ciSkin = true;
+    // Dimmer 0..100, 50 = bisheriger Hintergrund.
+    private int _dim = 50;
 
     // Trafag-Orange aus dem Intranet (Kachel "Stellenantrag"). Dunkel: gleiche Leiste,
     // helleres Orange fuer Schaltflaechen und Links, damit sie auf dunklem Grund lesbar bleiben.
@@ -152,8 +164,11 @@
         // Gemerkte Wahl je Browser; ohne Wahl bleibt es dunkel.
         var dark = await JS.InvokeAsync<string?>("trafagTheme.get") != "light";
         var ci = await JS.InvokeAsync<string?>("trafagTheme.getSkin") != "classic";
+        _dim = await JS.InvokeAsync<int>("trafagTheme.getDim");
+        if (_dim != 50)
+            await JS.InvokeVoidAsync("trafagTheme.applyDim", _dim);
 
-        if (dark != _isDarkMode || ci != _ciSkin)
+        if (dark != _isDarkMode || ci != _ciSkin || _dim != 50)
         {
             _isDarkMode = dark;
             _ciSkin = ci;
@@ -171,6 +186,14 @@
     {
         _isDarkMode = !_isDarkMode;
         await JS.InvokeVoidAsync("trafagTheme.set", _isDarkMode ? "dark" : "light");
+        // Der Dimmer rechnet je Modus mit anderen Helligkeiten.
+        await JS.InvokeVoidAsync("trafagTheme.applyDim", _dim);
+    }
+
+    private async Task SetDimAsync(int value)
+    {
+        _dim = value;
+        await JS.InvokeVoidAsync("trafagTheme.setDim", value);
     }
 
     protected override void OnInitialized()
@@ -190,7 +213,8 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private string LanguageLabel => UiText.CurrentLanguage.ToUpperInvariant();
+    // Berndeutsch heisst intern gsw, angezeigt wird BE.
+    private string LanguageLabel => UiText.CurrentLanguage == "gsw" ? "BE" : UiText.CurrentLanguage.ToUpperInvariant();
 
     private string T(string german, string english) => UiText.Text(german, english);
 
