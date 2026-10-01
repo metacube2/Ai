@@ -374,3 +374,46 @@ html[data-theme="dark"] .app-loading-text {
 body:has(.mud-layout) #app-loading {
     display: none;
 }
+
+/* -------------------------------------------------------------------------
+   Logistik live (2026-10-01): Kommissionierung und Produktion, Components/Pages/LogisticsLive.razor.
+   Flaechen ueber MudBlazor-Variablen, damit Hell/Dunkel und Dimmer greifen. Das Laufband
+   ist bewusst immer dunkel wie eine Abfahrtstafel.
+   ------------------------------------------------------------------------- */
+.ll-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.ll-muted { color: var(--mud-palette-text-secondary); }
+.ll-live { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px;
+    background: rgba(46, 125, 50, 0.15); color: #2E7D32; font-weight: 700; font-size: 13px; text-transform: uppercase; }
+.ll-live .ll-dot { width: 10px; height: 10px; border-radius: 50%; background: #2E7D32;
+    animation: status-light-alternate 1.6s step-end infinite; }
+.ll-live.ll-paused { background: rgba(249, 168, 37, 0.18); color: #B26A00; }
+.ll-live.ll-paused .ll-dot { background: #F9A825; animation: none; }
+.ll-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.ll-kpi { background: var(--mud-palette-surface); border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; padding: 10px 14px; }
+.ll-kpi-value { font-size: 26px; font-weight: 800; color: var(--mud-palette-primary); line-height: 1.1; }
+.ll-kpi-label { font-size: 12px; color: var(--mud-palette-text-secondary); }
+.ll-panel { height: 100%; }
+.ll-bars { display: flex; align-items: flex-end; gap: 4px; height: 120px; padding: 4px 0 18px; position: relative; }
+.ll-bar-col { flex: 1; display: flex; align-items: flex-end; gap: 1px; height: 100%; position: relative; }
+.ll-bar { flex: 1; min-height: 1px; border-radius: 2px 2px 0 0; transition: height 400ms ease; }
+.ll-bar-a { background: var(--mud-palette-primary); opacity: 0.45; }
+.ll-bar-b { background: var(--mud-palette-primary); }
+.ll-bar-label { position: absolute; bottom: -16px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--mud-palette-text-secondary); }
+.ll-legend { display: flex; gap: 14px; font-size: 12px; color: var(--mud-palette-text-secondary); }
+.ll-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.ll-list { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
+.ll-row { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 3px 0; border-bottom: 1px solid var(--mud-palette-lines-default); }
+.ll-grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ll-mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; }
+.ll-progress { width: 110px; height: 8px; border-radius: 4px; background: var(--mud-palette-lines-default); overflow: hidden; flex-shrink: 0; }
+.ll-progress > span { display: block; height: 100%; background: var(--mud-palette-success); transition: width 400ms ease; }
+.ll-board { background: #111318; border-radius: 6px; padding: 6px 10px; font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 13px; color: #F5A623; min-height: 60px; }
+.ll-board-row { display: flex; gap: 12px; padding: 2px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); white-space: nowrap; }
+.ll-board-row:first-child { color: #FFD27A; }
+.ll-board-row > span:first-child { color: #9AA0A6; }
+.ll-centers { display: flex; flex-wrap: wrap; gap: 4px; }
+.ll-center { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; padding: 3px 6px; border-radius: 4px; cursor: default; }
+.ll-aktiv { background: #2E7D32; color: #fff; }
+.ll-eben { background: #F9A825; color: #111; }
+.ll-ruhig { background: var(--mud-palette-lines-default); color: var(--mud-palette-text-secondary); }

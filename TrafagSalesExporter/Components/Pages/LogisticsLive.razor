@@ -1,0 +1,236 @@
+@page "/logistik/live"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@implements IDisposable
+@inject LogisticsLiveService Live
+@inject IUiTextService UiText
+
+@* Logistik live (Wunsch Ingo 2026-10-01): Kommissionierung und Produktion so zeitnah wie moeglich.
+   SAP wird nur abgefragt, solange diese Seite offen ist, gemeinsam fuer alle Betrachter
+   (LogisticsLiveService). Keine Personendaten. Doku: docs/LOGISTIK_LIVE_2026-10-01.md *@
+
+<PageTitle>@T("Logistik live", "Logistics live")</PageTitle>
+
+<div class="ll-head">
+    <MudText Typo="Typo.h4">@T("Logistik live", "Logistics live")</MudText>
+    <span class="ll-live @(S.Paused ? "ll-paused" : string.Empty)">
+        <span class="ll-dot"></span>@(S.Paused ? T("pausiert", "paused") : T("live", "live"))
+    </span>
+    <MudText Typo="Typo.caption" Class="ll-muted">
+        @T("Stand", "As of") @(S.UpdatedAt?.ToString("HH:mm:ss") ?? "–") ·
+        @T("Abruf alle 30 Sekunden, nur solange diese Seite offen ist", "Refreshed every 30 seconds, only while this page is open")
+    </MudText>
+</div>
+
+@if (S.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">@S.Error</MudAlert>
+}
+@if (S.UpdatedAt is null && S.Error is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    <MudText Typo="Typo.body2" Class="mb-3">@T("Erster Abruf des Tages läuft …", "First load of the day is running …")</MudText>
+}
+
+<div class="ll-kpis">
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@S.TransferItemsConfirmed / @S.Transfers.Count</div>
+        <div class="ll-kpi-label">@T("Lagerpositionen quittiert", "Warehouse items confirmed")</div>
+    </div>
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@S.TransferItemsOpen</div>
+        <div class="ll-kpi-label">@T("Lagerpositionen offen", "Warehouse items open")</div>
+    </div>
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@S.DeliveriesPicked / @S.DeliveriesWithPicking</div>
+        <div class="ll-kpi-label">@T("Lieferungen fertig kommissioniert", "Deliveries fully picked")</div>
+    </div>
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@S.ValidConfirmations.Count()</div>
+        <div class="ll-kpi-label">@T("Rückmeldungen heute", "Confirmations today")</div>
+    </div>
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@ActiveWorkCenters / @_workCenters.Count</div>
+        <div class="ll-kpi-label">@T("Arbeitsplätze aktiv (15 Min.)", "Work centres active (15 min)")</div>
+    </div>
+</div>
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="6">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">@T("Kommissionierung", "Picking")</MudText>
+
+            <MudText Typo="Typo.subtitle2">@T("Lagerpositionen je Stunde", "Warehouse items per hour")</MudText>
+            <div class="ll-bars">
+                @foreach (var hour in _transferHours)
+                {
+                    <div class="ll-bar-col" title="@($"{hour.Hour:00}:00 · {hour.Created} / {hour.Confirmed}")">
+                        <div class="ll-bar ll-bar-a" style="height:@Height(hour.Created, _transferMax)"></div>
+                        <div class="ll-bar ll-bar-b" style="height:@Height(hour.Confirmed, _transferMax)"></div>
+                        <div class="ll-bar-label">@hour.Hour</div>
+                    </div>
+                }
+            </div>
+            <div class="ll-legend">
+                <span><i class="ll-swatch ll-bar-a"></i>@T("angelegt", "created")</span>
+                <span><i class="ll-swatch ll-bar-b"></i>@T("quittiert", "confirmed")</span>
+            </div>
+
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Lieferungen mit Warenausgang heute", "Deliveries with goods issue today")</MudText>
+            @if (S.Deliveries.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Lieferungen für heute.", "No deliveries for today.")</MudText>
+            }
+            else
+            {
+                <div class="ll-list">
+                    @foreach (var d in S.Deliveries.OrderBy(x => x.PositionsPicked == x.Positions).ThenBy(x => x.Delivery).Take(25))
+                    {
+                        <div class="ll-row">
+                            <span class="ll-mono">@d.Delivery</span>
+                            <span class="ll-grow">@(string.IsNullOrWhiteSpace(d.CustomerName) ? d.Customer : d.CustomerName)</span>
+                            <span class="ll-progress" title="@($"{d.PositionsPicked} / {d.Positions}")">
+                                <span style="width:@Percent(d.PositionsPicked, d.Positions)"></span>
+                            </span>
+                            <span class="ll-mono">@d.PositionsPicked/@d.Positions</span>
+                            @if (d.GoodsIssueStatus == "C")
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Size="Size.Small" Color="Color.Success" Title="@T("Warenausgang gebucht", "Goods issue posted")" />
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Zuletzt quittiert", "Recently confirmed")</MudText>
+            <div class="ll-board">
+                @foreach (var t in S.Transfers.Where(x => x.Confirmed && x.ConfirmedAt.HasValue).OrderByDescending(x => x.ConfirmedAt).Take(12))
+                {
+                    <div class="ll-board-row">
+                        <span>@t.ConfirmedAt!.Value.ToString("HH:mm")</span>
+                        <span>@t.Tanum.TrimStart('0')</span>
+                        <span class="ll-grow">@t.Material</span>
+                        <span>@t.FromType → @t.ToType</span>
+                        <span>@(string.IsNullOrWhiteSpace(t.Delivery) ? "" : t.Delivery.TrimStart('0'))</span>
+                    </div>
+                }
+            </div>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" lg="6">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">@T("Produktion", "Production")</MudText>
+
+            <MudText Typo="Typo.subtitle2">@T("Arbeitsplätze nach letzter Rückmeldung", "Work centres by last confirmation")</MudText>
+            <div class="ll-legend mb-1">
+                <span><i class="ll-swatch ll-aktiv"></i>@T("bis 15 Min.", "up to 15 min")</span>
+                <span><i class="ll-swatch ll-eben"></i>@T("bis 60 Min.", "up to 60 min")</span>
+                <span><i class="ll-swatch ll-ruhig"></i>@T("ruhig", "quiet")</span>
+            </div>
+            <div class="ll-centers">
+                @foreach (var w in _workCenters)
+                {
+                    <span class="ll-center ll-@LogisticsLiveService.ActivityClass(w.LastAt, _now)"
+                          title="@($"{w.WorkCenter} ({w.Plant}) · {w.LastAt:HH:mm} · {w.ConfirmationsToday}")">
+                        @w.WorkCenter
+                    </span>
+                }
+            </div>
+
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Aufträge, zuletzt zurückgemeldet", "Orders, most recently confirmed")</MudText>
+            <div class="ll-list">
+                @foreach (var o in _orders)
+                {
+                    <div class="ll-row">
+                        <span class="ll-mono">@o.Order</span>
+                        <span class="ll-grow">@o.Material</span>
+                        <span class="ll-progress" title="@($"{o.Confirmed:N0} / {o.Target:N0}")">
+                            <span style="width:@Percent(o.Confirmed, o.Target)"></span>
+                        </span>
+                        <span class="ll-mono">@o.Confirmed.ToString("N0")/@o.Target.ToString("N0")</span>
+                        <span class="ll-mono ll-muted">@o.LastAt.ToString("HH:mm")</span>
+                    </div>
+                }
+            </div>
+
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Letzte Rückmeldungen", "Latest confirmations")</MudText>
+            <div class="ll-board">
+                @foreach (var c in S.ValidConfirmations.Where(x => x.At.HasValue).OrderByDescending(x => x.At).Take(12))
+                {
+                    <div class="ll-board-row">
+                        <span>@c.At!.Value.ToString("HH:mm")</span>
+                        <span>@c.WorkCenter</span>
+                        <span class="ll-grow">@c.Order / @c.Operation</span>
+                        <span>+@c.Yield.ToString("0.##") @c.Unit</span>
+                        <span>@(c.Scrap > 0 ? $"−{c.Scrap:0.##}" : "")</span>
+                    </div>
+                }
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudText Typo="Typo.caption" Class="ll-muted mt-3 d-block">
+    @T("Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU).",
+       "No personal data: SAP returns neither personnel number nor user. Source P76, warehouse management (LTAK/LTAP), deliveries (LIKP/LIPS), confirmations (AFRU).")
+</MudText>
+
+@code {
+    private LogisticsLiveSnapshot S => Live.Snapshot;
+    private bool _subscribed;
+    private DateTime _now = DateTime.Now;
+    private IReadOnlyList<(int Hour, int Created, int Confirmed)> _transferHours = [];
+    private int _transferMax = 1;
+    private IReadOnlyList<LiveWorkCenter> _workCenters = [];
+    private IReadOnlyList<LiveOrderProgress> _orders = [];
+
+    private int ActiveWorkCenters => _workCenters.Count(x => LogisticsLiveService.ActivityClass(x.LastAt, _now) == "aktiv");
+
+    protected override void OnInitialized() => Recalculate();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Erst im interaktiven Durchgang abonnieren: das Vorab-Rendern auf dem Server soll keinen
+        // SAP-Abruf ausloesen.
+        if (!firstRender || _subscribed)
+            return;
+        _subscribed = true;
+        Live.Changed += HandleChanged;
+        Live.Subscribe();
+    }
+
+    private void HandleChanged() => InvokeAsync(() =>
+    {
+        Recalculate();
+        StateHasChanged();
+    });
+
+    private void Recalculate()
+    {
+        _now = DateTime.Now;
+        var hours = LogisticsLiveService.TransferThroughputByHour(S);
+        var used = hours.Where(x => x.Created > 0 || x.Confirmed > 0).Select(x => x.Hour).ToList();
+        var from = used.Count == 0 ? 6 : Math.Min(used.Min(), 6);
+        var to = used.Count == 0 ? 18 : Math.Max(used.Max(), Math.Min(_now.Hour, 23));
+        _transferHours = hours.Where(x => x.Hour >= from && x.Hour <= to).ToList();
+        _transferMax = Math.Max(1, _transferHours.Count == 0 ? 1 : _transferHours.Max(x => Math.Max(x.Created, x.Confirmed)));
+        _workCenters = LogisticsLiveService.WorkCenters(S);
+        _orders = LogisticsLiveService.Orders(S);
+    }
+
+    private static string Height(int value, int max) => $"{Math.Round(100.0 * value / Math.Max(1, max))}%";
+
+    private static string Percent(decimal value, decimal total)
+        => total <= 0 ? "0%" : $"{Math.Min(100m, Math.Round(100m * value / total)).ToString(System.Globalization.CultureInfo.InvariantCulture)}%";
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    public void Dispose()
+    {
+        if (!_subscribed)
+            return;
+        Live.Changed -= HandleChanged;
+        Live.Unsubscribe();
+    }
+}

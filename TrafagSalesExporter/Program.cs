@@ -47,6 +47,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
 builder.Services.Configure<HrKpiDataSourceOptions>(builder.Configuration.GetSection(HrKpiDataSourceOptions.SectionName));
+// Logistik live: Notschalter LogisticsLive:Enabled, docs/LOGISTIK_LIVE_2026-10-01.md.
+builder.Services.Configure<LogisticsLiveOptions>(builder.Configuration.GetSection(LogisticsLiveOptions.SectionName));
 builder.Services.Configure<HrKpiAccessOptions>(builder.Configuration.GetSection(HrKpiAccessOptions.SectionName));
 builder.Services.Configure<FinanceCockpitAccessOptions>(builder.Configuration.GetSection(FinanceCockpitAccessOptions.SectionName));
 builder.Services.Configure<AdminAccessOptions>(builder.Configuration.GetSection(AdminAccessOptions.SectionName));
@@ -142,6 +144,8 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<PurchasingRefreshR
 // Die Einkaufsauswertung fuehrt rund 30-40 Vollcache-Aggregationen aus. Identische Filter
 // werden deshalb fuer alle Circuits geteilt; erfolgreiche Full-/Delta-Laeufe invalidieren.
 builder.Services.AddSingleton<PurchasingDashboardSnapshotCache>();
+// Ein gemeinsamer SAP-Abruf fuer alle Betrachter der Seite Logistik live, nur solange sie offen ist.
+builder.Services.AddSingleton<LogisticsLiveService>();
 
 // UI-/Page-Services: Scoped = pro Blazor-Circuit.
 builder.Services.AddScoped<ISettingsPageService, SettingsPageService>();

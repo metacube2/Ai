@@ -15,6 +15,7 @@ public static class NavigationIconResolver
         "CompareArrows" => Icons.Material.Filled.CompareArrows,
         "Dashboard" => Icons.Material.Filled.Dashboard,
         "FactCheck" => Icons.Material.Filled.FactCheck,
+        "Sensors" => Icons.Material.Filled.Sensors,
         "Groups" => Icons.Material.Filled.Groups,
         "Hub" => Icons.Material.Filled.Hub,
         "InsertChart" => Icons.Material.Filled.InsertChart,

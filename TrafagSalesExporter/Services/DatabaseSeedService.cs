@@ -338,6 +338,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Group("logistics", null, "Logistik", "Logistics", "LocalShipping", 35),
         Link("logistics-bom-analysis", "logistics", "Stuecklistenanalyse", "BOM analysis", "AccountTree", "logistik/stuecklistenanalyse", 10, "All"),
         Link("logistics-material-disposition", "logistics", "Materialdisposition & Fehlteile", "Material planning & shortages", "Inventory", "logistik/materialdisposition", 20, "All"),
+        // Logistik live 2026-10-01: Kommissionierung und Produktion aus SAP, Abruf nur bei offener Seite.
+        Link("logistics-live", "logistics", "Logistik live", "Logistics live", "Sensors", "logistik/live", 5, "All"),
         Link("logistics-planning-audit", "logistics", "Dispositionspruefung", "Planning parameter audit", "FactCheck", "logistik/dispositionspruefung", 30, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
