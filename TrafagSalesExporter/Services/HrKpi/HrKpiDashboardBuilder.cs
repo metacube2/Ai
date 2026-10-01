@@ -65,6 +65,16 @@ internal sealed class HrKpiDashboardBuilder
         if (reminderProfiles > 0)
             result.Notices.Add($"{reminderProfiles:N0} aktive Zeilen ohne SAP-Beschaeftigungsgrad und ohne Rexx-Sollzeit wurden als Reminderprofil ausgeschlossen (laut HR keine echten Mitarbeitenden).");
 
+        // Krankheit je Fall aus SAP PA2001, sobald die Datei da ist (docs/HR_KPI.md 8.7). Die
+        // Rexx-Summen bleiben nur Ersatz, weil sie sich auf keinen Zeitraum zuschneiden lassen.
+        var sapAbsenceCases = LoadSapAbsenceCases(context);
+        var sicknessFromSap = sapAbsenceCases.Count > 0;
+        if (sicknessFromSap)
+        {
+            absences = BuildSapSicknessRows(sapAbsenceCases, employees);
+            result.Notices.Add($"Krankheit aus SAP PA2001: {absences.Count:N0} Faelle der Arten {string.Join(", ", SickAbsenceTypes)}, je Fall auf den Zeitraum zugeschnitten. Die Rexx-Absenzdatei wird dafuer nicht verwendet.");
+        }
+
         result.OrganisationOptions = employees
             .Select(x => x.Organisationseinheit)
             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -102,7 +112,11 @@ internal sealed class HrKpiDashboardBuilder
         // Vorjahresvergleich braucht Austritte ALLER Jahre (nur Struktur-, kein Datumsfilter),
         // sonst ist das Vorjahr per Definition leer und das Delta damit falsch.
         var comparisonLeavers = ApplyComparisonLeaverFilters(leavers, normalizedOptions).ToList();
-        var analysisPeriod = ResolveAnalysisPeriod(normalizedOptions, absences);
+        var analysisPeriod = sicknessFromSap
+            ? ResolveSapAnalysisPeriod(normalizedOptions)
+            : ResolveAnalysisPeriod(normalizedOptions, absences);
+        if (sicknessFromSap)
+            absences = ClipSapAbsencesToPeriod(absences, analysisPeriod);
         var filteredEmployees = ApplyEmployeeFilters(employees, normalizedOptions).ToList();
         var filteredEmployeeNumbers = filteredEmployees
             .Where(x => x.Personalnummer.HasValue)
@@ -136,6 +150,8 @@ internal sealed class HrKpiDashboardBuilder
         // ausschliessen konnte). Deshalb Periodenwert klar als nicht verlaesslich kennzeichnen.
         result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences, analysisPeriod, periodScopingUnreliable);
         result.TimeVacationMetrics = BuildTimeVacationMetrics(employees);
+        if (sicknessFromSap)
+            result.TimeVacationMetrics.AddRange(BuildSapOtherAbsenceMetrics(sapAbsenceCases, filteredEmployeeNumbers, analysisPeriod));
         result.PeriodComparisonMetrics = BuildPeriodComparisonMetrics(turnoverEmployees, comparisonLeavers, turnoverPeriod);
         result.TrafficLights = BuildTrafficLights(result.Metrics, result.TurnoverMetrics, result.AbsenceMetrics, result.TimeVacationMetrics, context);
         result.DataQualityIssues = BuildDataQualityIssues(employees, absences, leavers, sapRows, duplicateSapNumbers, nameJoinMisses, context);
@@ -366,6 +382,164 @@ internal sealed class HrKpiDashboardBuilder
         })
         .Where(x => string.Equals(x.Status, "Aktiv", StringComparison.OrdinalIgnoreCase))
         .ToList();
+    }
+
+    /// <summary>Krankheitsarten in PA2001 (T554T, Mitarbeiterkreis 02). 0210 Arzt und Therapie zaehlt nicht; HR bestaetigen lassen.</summary>
+    internal static readonly string[] SickAbsenceTypes = ["0220", "0230", "0240", "0260", "0270"];
+    internal const string VacationAbsenceType = "0100";
+    internal const string CompensationAbsenceType = "0400";
+    internal const string MilitaryAbsenceType = "0600";
+
+    private List<HrAbsenceSapCase> LoadSapAbsenceCases(ImportContext context)
+        => context.ReadRows(_dataSources.SapAbsenceFile, "SAP PA2001 Absenzen je Fall", (row, headers) =>
+            {
+                var von = ReadDate(row, headers, "Von");
+                var bis = ReadDate(row, headers, "Bis");
+                return new HrAbsenceSapCase(
+                    ReadString(row, headers, "Personalnummer"),
+                    ReadString(row, headers, "Abwesenheitsart"),
+                    von ?? DateTime.MinValue,
+                    bis ?? von ?? DateTime.MinValue,
+                    ReadString(row, headers, "Folgenummer"),
+                    ReadDecimal(row, headers, "Abwesenheitstage"),
+                    ReadDecimal(row, headers, "Stunden"),
+                    ReadDecimal(row, headers, "Kalendertage"));
+            })
+            .Where(x => x.Von != DateTime.MinValue && !string.IsNullOrWhiteSpace(x.Personalnummer))
+            .ToList();
+
+    /// <summary>
+    /// Eine Zeile je Krankheitsfall mit vollem Von/Bis. Nur Personen, die als aktiv geladen sind;
+    /// Name und Organisation kommen aus Rexx, weil die SAP-Datei bewusst keine Namen hat.
+    /// </summary>
+    internal static List<HrAbsenceRow> BuildSapSicknessRows(
+        IEnumerable<HrAbsenceSapCase> cases, IReadOnlyCollection<HrKpiEmployeeRow> employees)
+    {
+        var byNumber = employees
+            .Where(x => x.Personalnummer.HasValue)
+            .GroupBy(x => x.Personalnummer!.Value)
+            .ToDictionary(g => g.Key, g => g.First());
+        var rows = new List<HrAbsenceRow>();
+        foreach (var sapCase in cases.Where(x => SickAbsenceTypes.Contains(x.Abwesenheitsart)))
+        {
+            if (!int.TryParse(sapCase.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) ||
+                !byNumber.TryGetValue(pernr, out var employee))
+                continue;
+            var stundenProTag = HoursPerWorkdayFor(employee.Leitung);
+            var stunden = sapCase.Stunden > 0 ? sapCase.Stunden : sapCase.Abwesenheitstage * stundenProTag;
+            rows.Add(new HrAbsenceRow
+            {
+                Personalnummer = pernr,
+                Name = employee.NameVoll,
+                Organisationseinheit = employee.Organisationseinheit,
+                Stelle = employee.Stelle,
+                Status = "Aktiv",
+                VonDatum = sapCase.Von,
+                BisDatum = sapCase.Bis,
+                KrankheitKurzStd = stunden,
+                KrankheitGesamtStd = stunden,
+                StundenProArbeitstag = stundenProTag
+            });
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// Schneidet jeden Fall auf den Zeitraum zu. Die Stunden werden nach Arbeitstagen anteilig
+    /// genommen: ein Fall vom 28.09. bis 03.10. zaehlt im September nur mit seinen Septembertagen.
+    /// Ein offenes Ende (z. B. 31.12.9999) hat keine sinnvolle Gesamtdauer; dann zaehlt jeder
+    /// Arbeitstag im Zeitraum mit den Stunden eines Arbeitstags.
+    /// </summary>
+    internal static List<HrAbsenceRow> ClipSapAbsencesToPeriod(IEnumerable<HrAbsenceRow> rows, DateTime? periodStart, DateTime? periodEnd)
+    {
+        var clipped = new List<HrAbsenceRow>();
+        foreach (var row in rows)
+        {
+            var von = row.VonDatum!.Value.Date;
+            var bis = (row.BisDatum ?? row.VonDatum)!.Value.Date;
+            var start = periodStart.HasValue && periodStart.Value > von ? periodStart.Value.Date : von;
+            var end = periodEnd.HasValue && periodEnd.Value < bis ? periodEnd.Value.Date : bis;
+            if (end < start)
+                continue;
+
+            var stunden = ProrateHours(row.KrankheitGesamtStd, row.StundenProArbeitstag, von, bis, start, end);
+            if (stunden <= 0)
+                continue;
+            row.VonDatum = start;
+            row.BisDatum = end;
+            row.KrankheitKurzStd = stunden;
+            row.KrankheitLangStd = 0;
+            row.KrankheitGesamtStd = stunden;
+            clipped.Add(row);
+        }
+
+        return clipped;
+    }
+
+    private static List<HrAbsenceRow> ClipSapAbsencesToPeriod(IEnumerable<HrAbsenceRow> rows, AnalysisPeriod period)
+        => ClipSapAbsencesToPeriod(rows, period.Start, period.End);
+
+    internal static decimal ProrateHours(decimal totalHours, decimal hoursPerWorkday, DateTime von, DateTime bis, DateTime start, DateTime end)
+    {
+        var overlapWorkdays = ZurichWorkdayCalendar.CountWorkdays(start, end);
+        if (bis.Year >= 9000)
+            return overlapWorkdays * hoursPerWorkday;
+        if (start == von && end == bis)
+            return totalHours;
+        var caseWorkdays = ZurichWorkdayCalendar.CountWorkdays(von, bis);
+        if (caseWorkdays > 0)
+            return Math.Round(totalHours * overlapWorkdays / caseWorkdays, 2);
+        // Fall nur an Wochenenden oder Feiertagen: nach Kalendertagen teilen.
+        var caseDays = (bis - von).Days + 1;
+        return Math.Round(totalHours * ((end - start).Days + 1) / caseDays, 2);
+    }
+
+    /// <summary>
+    /// Wie <see cref="ResolveAnalysisPeriod"/>, aber ohne Zeitraumfilter das laufende Jahr bis
+    /// heute statt der Spanne aller Fall-Daten: die SAP-Datei reicht ins Vorjahr zurueck.
+    /// </summary>
+    private static AnalysisPeriod ResolveSapAnalysisPeriod(HrKpiOptions options)
+    {
+        var period = ResolveEmploymentPeriod(options);
+        var start = period?.Start ?? new DateTime(DateTime.Today.Year, 1, 1);
+        var end = period?.End ?? DateTime.Today;
+        if (end > DateTime.Today)
+            end = DateTime.Today;
+        if (end < start)
+            end = start;
+        var workdays = ZurichWorkdayCalendar.CountWorkdays(start, end);
+        var label = $"{start:dd.MM.yyyy} - {end:dd.MM.yyyy}" + (period.HasValue ? string.Empty : " (laufendes Jahr, SAP)");
+        return new AnalysisPeriod(start, end, Math.Max(1, workdays), label, true);
+    }
+
+    /// <summary>Ferien, Kompensation und Militaer im Zeitraum, in Tagen, nur fuer die gefilterten Personen.</summary>
+    private static List<HrKpiMetric> BuildSapOtherAbsenceMetrics(
+        IReadOnlyCollection<HrAbsenceSapCase> cases, IReadOnlySet<int> employeeNumbers, AnalysisPeriod period)
+    {
+        decimal Days(string awart) => cases
+            .Where(x => x.Abwesenheitsart == awart &&
+                        int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) &&
+                        employeeNumbers.Contains(pernr))
+            .Sum(x => ProratedDays(x, period.Start, period.End));
+
+        var detail = $"SAP PA2001, {period.Label}";
+        return
+        [
+            new() { Label = "Ferien bezogen im Zeitraum", Value = Days(VacationAbsenceType).ToString("N1"), Detail = $"Tage, {detail}", Severity = "Normal" },
+            new() { Label = "Kompensation im Zeitraum", Value = Days(CompensationAbsenceType).ToString("N1"), Detail = $"Tage, {detail}", Severity = "Normal" },
+            new() { Label = "Militaer/Zivilschutz im Zeitraum", Value = Days(MilitaryAbsenceType).ToString("N1"), Detail = $"Tage, {detail}", Severity = "Normal" }
+        ];
+    }
+
+    internal static decimal ProratedDays(HrAbsenceSapCase sapCase, DateTime? periodStart, DateTime? periodEnd)
+    {
+        var start = periodStart.HasValue && periodStart.Value > sapCase.Von ? periodStart.Value.Date : sapCase.Von;
+        var end = periodEnd.HasValue && periodEnd.Value < sapCase.Bis ? periodEnd.Value.Date : sapCase.Bis;
+        if (end < start)
+            return 0;
+        // Tage ueber die Stundenlogik anteilig rechnen, mit 1 "Stunde" je Abwesenheitstag.
+        return ProrateHours(sapCase.Abwesenheitstage, 1m, sapCase.Von, sapCase.Bis, start, end);
     }
 
     private List<HrLeaverRow> LoadLeavers(ImportContext context)

@@ -589,6 +589,53 @@ public sealed class HrKpiServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildAsync_Nimmt_Krankheit_Und_Ferien_Je_Fall_Aus_SAP()
+    {
+        // Rexx-Absenzen wuerden 1001 mit 61 Tagen langzeitkrank machen; mit SAP-Datei zaehlen nur die Faelle.
+        WriteWorkbook(Path.Combine(_folder, "Abwesenheitinstunden.xlsx"),
+            [
+                "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation", "Stelle", "Personal Status",
+                "Krankheit angetreten (Stunden Ind.)", "Krank nicht buchbar angetreten (Stunden Ind.)"
+            ],
+            [[1001, "Alpha, Anna", "Org A", "Engineer", "Aktiv", 488.0, 0]]);
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [
+                // Mo 03.03. bis Fr 07.03.2025: 5 Tage, 40 h.
+                new("00001001", "0260", new(2025, 3, 3), new(2025, 3, 7), "000", 5m, 40m, 5m),
+                // Ueber den Jahreswechsel: 5 Arbeitstage (02.01. ist in Zuerich kein Feiertag), 2 davon 2025, also 12,8 von 32 h.
+                new("00001001", "0230", new(2025, 12, 30), new(2026, 1, 6), "000", 4m, 32m, 8m),
+                // 2024 und Arzt (0210) zaehlen nicht, unbekannte Person auch nicht.
+                new("00001001", "0260", new(2024, 5, 6), new(2024, 5, 7), "000", 2m, 16m, 2m),
+                new("00001001", "0210", new(2025, 4, 1), new(2025, 4, 1), "000", 0.5m, 4m, 1m),
+                new("00009999", "0260", new(2025, 3, 3), new(2025, 3, 3), "000", 1m, 8m, 1m),
+                new("00001002", "0100", new(2025, 7, 7), new(2025, 7, 11), "000", 5m, 40m, 5m),
+                new("00001002", "0400", new(2025, 8, 1), new(2025, 8, 1), "000", 1m, 8m, 1m)
+            ],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+
+        var alpha = Assert.Single(result.Absences, row => row.Personalnummer == 1001);
+        Assert.Equal(52.8m, alpha.KrankheitGesamtStd);
+        Assert.Equal(6.6m, alpha.KrankheitstageGesamt);
+        Assert.False(alpha.IstLangzeitkrank);
+        Assert.DoesNotContain(result.Absences, row => row.Personalnummer == 9999);
+        Assert.True(result.AbsenceRatesReliable);
+        Assert.Equal("5.0", Assert.Single(result.TimeVacationMetrics, m => m.Label == "Ferien bezogen im Zeitraum").Value);
+        Assert.Equal("1.0", Assert.Single(result.TimeVacationMetrics, m => m.Label == "Kompensation im Zeitraum").Value);
+        Assert.Contains(result.Notices, n => n.StartsWith("Krankheit aus SAP PA2001"));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Ohne_SAP_Absenzdatei_Rechnet_Wie_Bisher_Aus_Rexx()
+    {
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        Assert.DoesNotContain(result.Notices, n => n.StartsWith("Krankheit aus SAP PA2001"));
+        Assert.DoesNotContain(result.TimeVacationMetrics, m => m.Label == "Ferien bezogen im Zeitraum");
+    }
+
+    [Fact]
     public async Task BuildAsync_Beschriftet_Unfalltage_Als_Laufenden_Monat()
     {
         // HrKpiSet liefert BU/NBU nur fuer den laufenden Monat (Entscheid 2026-10-01).
@@ -724,7 +771,8 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Equal(8, result.TimeVacationMetrics.Count);
         Assert.Equal(4, result.PeriodComparisonMetrics.Count);
         Assert.Equal(5, result.TrafficLights.Count);
-        Assert.Equal(5, result.FileStatuses.Count);
+        // Fuenf Rexx-/SAP-Dateien plus die SAP-Absenzen je Fall (HR_KPI.md 8.7), auch wenn sie fehlt.
+        Assert.Equal(6, result.FileStatuses.Count);
 
         Assert.Equal(employeeNumbers.Count, result.HeadcountByOrganisation.Sum(row => row.Count));
         Assert.All(result.CriticalTimeBalances, row => Assert.Contains(row.NameVoll, employeeNames));

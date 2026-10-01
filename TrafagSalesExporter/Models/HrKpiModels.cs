@@ -26,6 +26,8 @@ public sealed class HrKpiDataSourceOptions
     public string MainFile { get; set; } = "Saldiperstichdatum.xlsx";
     public string TimeFile { get; set; } = "Exportkommengehen.xlsx";
     public string SapFile { get; set; } = "HR_KPI_Export.xlsx";
+    // Abwesenheiten je Fall aus SAP PA2001 (HrAbsenzSet), docs/HR_KPI.md 8.7.
+    public string SapAbsenceFile { get; set; } = "HR_Absenzen_SAP.xlsx";
     public string AbsenceFile { get; set; } = "Abwesenheitinstunden.xlsx";
     public string LeaverFile { get; set; } = "Personalausgeschieden.xlsx";
     public decimal AbsenceYellowThresholdPercent { get; set; } = 3m;
@@ -42,6 +44,7 @@ public sealed class HrKpiDataSourceOptions
             MainFile = NormalizeText(MainFile, "Saldiperstichdatum.xlsx"),
             TimeFile = NormalizeText(TimeFile, "Exportkommengehen.xlsx"),
             SapFile = NormalizeText(SapFile, "HR_KPI_Export.xlsx"),
+            SapAbsenceFile = NormalizeText(SapAbsenceFile, "HR_Absenzen_SAP.xlsx"),
             AbsenceFile = NormalizeText(AbsenceFile, "Abwesenheitinstunden.xlsx"),
             LeaverFile = NormalizeText(LeaverFile, "Personalausgeschieden.xlsx"),
             AbsenceYellowThresholdPercent = yellow,

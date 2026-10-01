@@ -176,7 +176,7 @@ public class SapGatewayHrKpiReader
     private static decimal Number(JsonElement item, string name)
         => decimal.TryParse(Text(item, name), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0m;
 
-    private static HttpClient CreateClient(string username, string password)
+    internal static HttpClient CreateClient(string username, string password)
     {
         var client = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
@@ -187,7 +187,9 @@ public class SapGatewayHrKpiReader
 }
 
 /// <summary>
-/// Holt die SAP-HR-Felder einmal am Tag ab 05:00 und schreibt <c>hrdata/HR_KPI_Export.xlsx</c>.
+/// Holt die SAP-HR-Felder einmal am Tag ab 05:00 und schreibt <c>hrdata/HR_KPI_Export.xlsx</c>,
+/// danach die Abwesenheiten je Fall des laufenden und des Vorjahres nach <c>hrdata/HR_Absenzen_SAP.xlsx</c>
+/// (<see cref="SapGatewayHrAbsenceReader"/>). Beide Abrufe scheitern unabhaengig voneinander.
 /// Nur in Produktion, wie das Vorwaermen des Einkaufs.
 ///
 /// WIRFT NIE: Solange das EntitySet in P76 nicht transportiert ist, antwortet SAP mit 404. Dann
@@ -207,6 +209,7 @@ public sealed class HrKpiSapRefreshService : BackgroundService
     private readonly IHostEnvironment _environment;
     private readonly HrKpiDataSourceOptions _options;
     private readonly SapGatewayHrKpiReader _reader = new();
+    private readonly SapGatewayHrAbsenceReader _absenceReader = new();
     private DateOnly _lastAttempt;
 
     public HrKpiSapRefreshService(
@@ -235,6 +238,8 @@ public sealed class HrKpiSapRefreshService : BackgroundService
             {
                 _lastAttempt = DateOnly.FromDateTime(now);
                 await RefreshSafeAsync(path, now, stoppingToken);
+                await RefreshAbsencesSafeAsync(
+                    Path.Combine(_environment.ContentRootPath, "hrdata", _options.SapAbsenceFile), now, stoppingToken);
             }
 
             await Task.Delay(CheckInterval, stoppingToken);
@@ -280,6 +285,40 @@ public sealed class HrKpiSapRefreshService : BackgroundService
         catch (Exception ex)
         {
             await _log.WriteAsync("HR", "SAP-HR-Abruf fehlgeschlagen", "Warning",
+                details: $"Die bisherige Datei bleibt stehen. {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Vorjahr und laufendes Jahr, damit Jahresvergleich und ein Zeitraum ueber den Jahreswechsel
+    /// rechnen. Faellt das Set aus (vor dem Transport 404), bleibt die letzte Datei stehen; fehlt
+    /// sie ganz, rechnet das Cockpit die Krankheit wie bisher aus Rexx.
+    /// </summary>
+    private async Task RefreshAbsencesSafeAsync(string path, DateTime now, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var (url, user, password) = await ResolveConnectionAsync(cancellationToken);
+            var cases = await _absenceReader.ReadAsync(url, user, password, [now.Year - 1, now.Year], cancellationToken);
+            if (cases.Count == 0)
+            {
+                await _log.WriteAsync("HR", "SAP-Absenzen ohne Zeilen", "Warning",
+                    details: $"{SapGatewayHrAbsenceReader.EntitySet} {now.Year - 1}/{now.Year} lieferte keinen Fall; Datei bleibt unveraendert.");
+                return;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            SapGatewayHrAbsenceReader.WriteWorkbook(cases, path);
+            await _log.WriteAsync("HR", "SAP-Absenzen aus OData geschrieben",
+                details: $"{cases.Count} Faelle {now.Year - 1}/{now.Year}, Datei {path}");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await _log.WriteAsync("HR", "SAP-Absenzen-Abruf fehlgeschlagen", "Warning",
                 details: $"Die bisherige Datei bleibt stehen. {ex.Message}");
         }
     }
