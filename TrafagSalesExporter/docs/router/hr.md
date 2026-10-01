@@ -17,7 +17,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 ## Fallen in diesem Ast
 
 - **Seit 2026-09-30 kommt die SAP-Datei automatisch** ueber `HrKpiSet` (seit 01.10. in P76 und produktiv, erster Abruf 02.10. 05:00,
-  `docs/HR_KPI.md` 8.6). HR-Sitzung vom 30.09. (Kader 8,1 h, Absenzen je Fall, Ampel): 8.5. Absenzen je Fall aus SAP `PA2001` (`HrAbsenzSet`, ersetzt Rexx fuer Krankheit und Ferien, sobald die Datei da ist): 8.7.
+  `docs/HR_KPI.md` 8.6). HR-Sitzung vom 30.09. (Kader 8,1 h, Absenzen je Fall, Ampel): 8.5. Absenzen je Fall aus SAP `PA2001` (`HrAbsenzSet`, produktiv seit 01.10. 10:50, ersetzt Rexx fuer Krankheit und Ferien): 8.7.
 
 - **Arbeitstage sind nicht Montag bis Freitag.** `ZurichWorkdayCalendar` zieht die neun
   gesetzlichen Feiertage des Kantons Zuerich ab.

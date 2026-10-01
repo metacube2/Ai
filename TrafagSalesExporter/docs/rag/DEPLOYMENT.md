@@ -44,6 +44,10 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-01 10:50, HR-Cockpit: Krankheit und Ferien je Fall aus SAP `HrAbsenzSet` (`c749d32`, `c12b34a`).** Stand `b54a503`, gleicher Worktree, ohne Finance_All. `795/795`.
+  `BiDashboard.dll` `01.10.2026 10:50:33`, `6'465'024` Bytes, SHA256 `DC76FE33FD67D8264BD1FB9E61A7BFBBFDF8C261D3B29C8A607FF2C34A04ADD6`, bitgleich. Fuenf Routen `200`,
+  Produktiv-DB unveraendert, Sicherung `trafag_exporter.db.before-hr-sap-absenzen-20261001-104907.bak`. Ein Alarm „2 verschwunden“: nach Lage die bekannten `trafag_exporter.db-wal`/`-shm`,
+  beide danach wieder vorhanden, `hrdata` vollstaendig. Erster Absenzen-Abruf 10:52 (4'948 Faelle).
 - **Deploy 2026-10-01 09:44, HR-Cockpit: Unfalltage als laufender Monat beschriftet (`931f151`).** Gleicher Worktree, ohne Finance_All. `786/786`. `BiDashboard.dll` `01.10.2026 09:44:38`, `6'445'568` Bytes,
   SHA256 `605EC034C401AC3435CDAAC44F7345C09CBC452191C18CFE74685A879FA6719D`, bitgleich. Fuenf Routen `200`, Produktiv-DB unveraendert, ohne Alarm.
   Nebenwirkung des Neustarts: erster erfolgreicher `HrKpiSet`-Abruf um 09:46 (1'168 Personen).

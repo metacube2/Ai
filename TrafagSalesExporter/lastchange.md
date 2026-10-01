@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## HR-Cockpit: Krankheit und Ferien je Fall aus SAP, 2026-10-01 (nicht deployed, Transport offen)
+## HR-Cockpit: Krankheit und Ferien je Fall aus SAP, 2026-10-01, produktiv 10:50
 
 - `c749d32`: neues EntitySet `HrAbsenzSet` (T76, Transport `T76K912644`) liefert jede Abwesenheit aus
   `PA2001` mit Von/Bis. Das Cockpit schneidet Krankheitsfaelle auf den Zeitraum zu und zeigt Ferien,
