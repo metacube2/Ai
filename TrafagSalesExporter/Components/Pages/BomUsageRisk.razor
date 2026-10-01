@@ -1,0 +1,189 @@
+@page "/logistik/verwendung-risiko"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@inject BomInheritanceService Bom
+@inject IUiTextService UiText
+
+@* Verwendung und Risiko ueber mehrere Stufen (Wunsch Ingo 2026-10-01). Nur LZ-Code-Komponenten,
+   weil MaterialParentCache nur diese enthaelt; deshalb kein Umsatz, keine Gleichteile.
+   Doku: docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md *@
+
+<PageTitle>@T("Verwendung & Risiko", "Usage & risk")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">@T("Verwendung & Risiko", "Usage & risk")</MudText>
+<MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+    @T("Nur Komponenten mit LZ-Code: Die Verwendungsdaten stammen aus dem LZ-Code-Report, nicht aus der vollständigen Stückliste. Teile ohne LZ-Code fehlen, deshalb hier kein Umsatz und keine Gleichteil-Auswertung.",
+       "LZ-coded components only: the usage data comes from the LZ code report, not from the complete bill of materials. Parts without an LZ code are missing, so there is no revenue or common-part analysis here.")
+</MudAlert>
+
+@if (_result is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
+        @T("Stand der Verwendungsdaten", "Usage data as of") @(_result.LoadedAtUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "–") ·
+        @T("Lieferanten der letzten 24 Monate, überfällig = Liefertermin vorbei und noch nicht voll geliefert", "Suppliers of the last 24 months, overdue = delivery date passed and not fully delivered")
+    </MudText>
+
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@_result.Components.ToString("N0")</div><div class="ll-kpi-label">@T("Komponenten", "Components")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_result.TopProducts.ToString("N0")</div><div class="ll-kpi-label">@T("Endprodukte (oberste Stufe)", "End products (top level)")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_result.Intermediates.ToString("N0")</div><div class="ll-kpi-label">@T("Baugruppen dazwischen", "Assemblies in between")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_result.MaxDepth</div><div class="ll-kpi-label">@T("Grösste Tiefe (Stufen)", "Greatest depth (levels)")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_singleSource.ToString("N0")</div><div class="ll-kpi-label">@T("Komponenten mit nur einem Lieferanten", "Components with a single supplier")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_overdue.ToString("N0")</div><div class="ll-kpi-label">@T("Komponenten mit überfälliger Bestellung", "Components with an overdue order")</div></div>
+    </div>
+
+    <MudTextField T="string" @bind-Value="_search" @bind-Value:after="ApplySearch" Immediate="true" DebounceInterval="300"
+                  Label="@T("Material oder Text suchen", "Search material or text")" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" Style="max-width:420px" />
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Komponenten mit der grössten Wirkung", "Components with the widest impact")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
+                    @T("Wie viele Endprodukte über alle Stufen betroffen wären, wenn die Komponente fehlt. Zeile anklicken für den Verwendungsbaum.", "How many end products across all levels would be affected if the component were missing. Click a row for the usage tree.")
+                </MudText>
+                <div class="ll-list" style="max-height:520px">
+                    <div class="ll-row bom-head">
+                        <span class="bom-mat">@T("Material", "Material")</span>
+                        <span class="ll-grow">@T("Text", "Text")</span>
+                        <span class="bom-num">@T("direkt", "direct")</span>
+                        <span class="bom-num">@T("Endprod.", "End prod.")</span>
+                        <span class="bom-num">@T("Tiefe", "Depth")</span>
+                        <span class="bom-sup">@T("Lieferanten", "Suppliers")</span>
+                    </div>
+                    @foreach (var c in _components)
+                    {
+                        <div class="ll-row bom-click @(c.Material == _selected ? "bom-selected" : string.Empty)" @onclick="() => Select(c.Material)">
+                            <span class="bom-mat ll-mono">@c.Material</span>
+                            <span class="ll-grow">@c.Text</span>
+                            <span class="bom-num">@c.DirectParents</span>
+                            <span class="bom-num"><b>@c.TopProducts</b></span>
+                            <span class="bom-num">@c.Depth</span>
+                            <span class="bom-sup">
+                                @if (c.NotPurchased)
+                                {
+                                    <span class="ll-muted">@T("kein Einkauf", "not purchased")</span>
+                                }
+                                else
+                                {
+                                    <span title="@c.SupplierNames">@c.Suppliers</span>
+                                }
+                                @if (c.SingleSource)
+                                {
+                                    <span class="bom-tag bom-tag-warn">@T("eine Quelle", "single source")</span>
+                                }
+                                @if (c.OverdueItems > 0)
+                                {
+                                    <span class="bom-tag bom-tag-bad">@T("überfällig", "overdue") @c.OverdueItems</span>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Verwendungsbaum nach oben", "Usage tree upwards")</MudText>
+                @if (_selected is null)
+                {
+                    <MudText Typo="Typo.body2" Class="ll-muted">@T("Links eine Komponente anklicken.", "Click a component on the left.")</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Höchstens 4 Stufen und 25 Einträge je Stufe.", "At most 4 levels and 25 entries per level.")</MudText>
+                    <div class="bom-tree">@Tree(_selected, 0, new HashSet<string>())</div>
+                }
+            </MudPaper>
+
+            <MudPaper Class="pa-3 mt-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Endprodukte mit vererbtem Risiko", "End products with inherited risk")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
+                    @T("Komponenten darunter, die nur einen Lieferanten haben oder überfällig sind.", "Components below that have a single supplier or are overdue.")
+                </MudText>
+                <div class="ll-list" style="max-height:360px">
+                    @foreach (var p in _products)
+                    {
+                        <div class="ll-row">
+                            <span class="bom-mat ll-mono">@p.Material</span>
+                            <span class="ll-grow">@p.Text</span>
+                            <span class="bom-num" title="@T("Komponenten darunter", "Components below")">@p.ComponentsBelow</span>
+                            <span class="bom-tag bom-tag-warn">@p.SingleSourceComponents</span>
+                            <span class="bom-tag bom-tag-bad">@p.OverdueComponents</span>
+                        </div>
+                    }
+                </div>
+                <div class="ll-legend mt-1">
+                    <span><i class="ll-swatch bom-tag-warn"></i>@T("eine Quelle", "single source")</span>
+                    <span><i class="ll-swatch bom-tag-bad"></i>@T("überfällig", "overdue")</span>
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    // Als Konstanten, damit der Uebersetzungstest Attributpaare nicht fuer Anzeigetexte haelt.
+    private const string ClassAttribute = "class";
+    private const string NodeCss = "bom-node";
+    private const string NodeMutedCss = "bom-node ll-muted";
+    private BomInheritanceResult? _result;
+    private string? _search;
+    private string? _selected;
+    private int _singleSource;
+    private int _overdue;
+    private IReadOnlyList<BomComponentImpact> _components = [];
+    private IReadOnlyList<BomProductRisk> _products = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _result = await Bom.GetAsync();
+        _singleSource = _result.ComponentImpacts.Count(x => x.SingleSource);
+        _overdue = _result.ComponentImpacts.Count(x => x.OverdueItems > 0);
+        ApplySearch();
+    }
+
+    private void ApplySearch()
+    {
+        if (_result is null)
+            return;
+        var s = _search?.Trim();
+        bool Match(string material, string text) => string.IsNullOrEmpty(s) ||
+            material.Contains(s, StringComparison.OrdinalIgnoreCase) || text.Contains(s, StringComparison.OrdinalIgnoreCase);
+        _components = _result.ComponentImpacts.Where(x => Match(x.Material, x.Text)).Take(100).ToList();
+        _products = _result.ProductRisks.Where(x => x.RiskComponents > 0 && Match(x.Material, x.Text)).Take(60).ToList();
+    }
+
+    private void Select(string material) => _selected = material;
+
+    private RenderFragment Tree(string material, int level, HashSet<string> path) => builder =>
+    {
+        var seq = 0;
+        var text = _result!.Texts.TryGetValue(material, out var t) ? t : string.Empty;
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, ClassAttribute, NodeCss);
+        builder.AddAttribute(seq++, "style", $"padding-left:{level * 18}px");
+        builder.AddContent(seq++, (level == 0 ? "● " : "↑ ") + material + (text.Length > 0 ? "  " + text : string.Empty));
+        builder.CloseElement();
+        if (level >= 4 || !path.Add(material) || !_result.ParentsOf.TryGetValue(material, out var parents))
+            return;
+        foreach (var parent in parents.Take(25))
+            builder.AddContent(seq++, Tree(parent, level + 1, new HashSet<string>(path)));
+        if (parents.Count > 25)
+        {
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, ClassAttribute, NodeMutedCss);
+            builder.AddAttribute(seq++, "style", $"padding-left:{(level + 1) * 18}px");
+            builder.AddContent(seq++, $"… +{parents.Count - 25}");
+            builder.CloseElement();
+        }
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

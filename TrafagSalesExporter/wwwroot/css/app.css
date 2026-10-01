@@ -417,3 +417,17 @@ body:has(.mud-layout) #app-loading {
 .ll-aktiv { background: #2E7D32; color: #fff; }
 .ll-eben { background: #F9A825; color: #111; }
 .ll-ruhig { background: var(--mud-palette-lines-default); color: var(--mud-palette-text-secondary); }
+
+/* Verwendung & Risiko (2026-10-01), Components/Pages/BomUsageRisk.razor; nutzt die ll-* Bausteine. */
+.bom-head { font-weight: 700; color: var(--mud-palette-text-secondary); font-size: 12px; position: sticky; top: 0; background: var(--mud-palette-surface); z-index: 1; }
+.bom-mat { width: 120px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bom-num { width: 56px; flex-shrink: 0; text-align: right; }
+.bom-sup { width: 190px; flex-shrink: 0; display: flex; gap: 4px; align-items: center; justify-content: flex-end; }
+.bom-click { cursor: pointer; }
+.bom-click:hover { background: rgba(127, 127, 127, 0.08); }
+.bom-selected { background: rgba(200, 80, 30, 0.14); }
+.bom-tag { font-size: 11px; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
+.bom-tag-warn { background: #F9A825; color: #111; }
+.bom-tag-bad { background: #C62828; color: #fff; }
+.bom-tree { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; max-height: 360px; overflow: auto; }
+.bom-node { white-space: nowrap; padding-top: 1px; padding-bottom: 1px; }

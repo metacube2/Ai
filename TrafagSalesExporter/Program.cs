@@ -146,6 +146,8 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<PurchasingRefreshR
 builder.Services.AddSingleton<PurchasingDashboardSnapshotCache>();
 // Ein gemeinsamer SAP-Abruf fuer alle Betrachter der Seite Logistik live, nur solange sie offen ist.
 builder.Services.AddSingleton<LogisticsLiveService>();
+// Verwendung & Risiko: rechnet aus MaterialParentCache und Einkaufscache, gemerkt bis neue Daten kommen.
+builder.Services.AddSingleton<BomInheritanceService>();
 
 // UI-/Page-Services: Scoped = pro Blazor-Circuit.
 builder.Services.AddScoped<ISettingsPageService, SettingsPageService>();

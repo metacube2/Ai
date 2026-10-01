@@ -340,6 +340,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("logistics-material-disposition", "logistics", "Materialdisposition & Fehlteile", "Material planning & shortages", "Inventory", "logistik/materialdisposition", 20, "All"),
         // Logistik live 2026-10-01: Kommissionierung und Produktion aus SAP, Abruf nur bei offener Seite.
         Link("logistics-live", "logistics", "Logistik live", "Logistics live", "Sensors", "logistik/live", 5, "All"),
+        // Verwendung & Risiko 2026-10-01: mehrstufige Verwendung der LZ-Code-Komponenten mit Lieferantenrisiko.
+        Link("logistics-usage-risk", "logistics", "Verwendung & Risiko", "Usage & risk", "AccountTree", "logistik/verwendung-risiko", 15, "All"),
         Link("logistics-planning-audit", "logistics", "Dispositionspruefung", "Planning parameter audit", "FactCheck", "logistik/dispositionspruefung", 30, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
