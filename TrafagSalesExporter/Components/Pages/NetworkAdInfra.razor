@@ -132,7 +132,7 @@ else
                                 <g>
                                     <path d="@path" class="dir-sitelink" />
                                     <circle r="3.5" class="dir-packet"><animateMotion dur="@(F(2.5 + l.Cost / 100.0))s" repeatCount="indefinite" path="@path" /></circle>
-                                    <circle r="3.5" class="dir-packet"><animateMotion dur="@(F(2.5 + l.Cost / 100.0))s" begin="1.2s" repeatCount="indefinite" path="@path" keyPoints="1;0" keyTimes="0;1" calcMode="linear" /></circle>
+                                    <circle r="3.5" class="dir-packet"><animateMotion dur="@(F(2.5 + l.Cost / 100.0))s" begin="-1.2s" repeatCount="indefinite" path="@path" keyPoints="1;0" keyTimes="0;1" calcMode="linear" /></circle>
                                     <text x="@F((a.X + b.X) / 2)" y="@F((a.Y + b.Y) / 2 - 6)" text-anchor="middle" class="dir-node-sub">@l.Cost</text>
                                 </g>
                             }

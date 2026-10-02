@@ -54,7 +54,7 @@ else
             {
                 var w = _waves[i];
                 var index = i;
-                var y = 50 + (i % Math.Max(1, _lanes)) * 46;
+                var y = 50 + _lane[i] * 46;
                 var r = 6 + 20 * Math.Sqrt(w.Devices.Count / (double)_maxDevices);
                 var cls = w.Expired ? "aus" : w.DaysLeft <= 180 ? "bald" : "ok";
                 <g class="dir-mig-wave dir-mig-@cls @(_selected == index ? "dir-mig-sel" : string.Empty)" style="animation-delay:@(F(i * 0.05))s" @onclick="() => _selected = index">
@@ -157,6 +157,7 @@ else
     private DateTime _now;
     private DateOnly _today;
     private int _lanes = 1;
+    private int[] _lane = [];
     private int _maxDevices = 1;
     private int? _selected;
     private List<DateOnly> _days = [];
@@ -171,8 +172,21 @@ else
         if (!_ad.Enabled || _ad.Error is not null)
             return;
         _waves = AdInfraAnalysis.MigrationWaves(_ad.Computers, _today);
-        _lanes = Math.Clamp(_waves.Count, 1, 8);
         _maxDevices = Math.Max(1, _waves.Select(w => w.Devices.Count).DefaultIfEmpty(1).Max());
+        // Zeilen so vergeben, dass sich Blase und Beschriftung nicht mit der vorherigen in derselben Zeile ueberlappen.
+        var lastEnd = new List<double>();
+        _lane = new int[_waves.Count];
+        for (var i = 0; i < _waves.Count; i++)
+        {
+            var w = _waves[i];
+            var r = 6 + 20 * Math.Sqrt(w.Devices.Count / (double)_maxDevices);
+            var start = X(w.End) - r;
+            var end = X(w.End) + r + 8 + 6.2 * ShortProduct(w.Product).Length;
+            var lane = lastEnd.FindIndex(e => e < start);
+            if (lane < 0) { lane = lastEnd.Count; lastEnd.Add(end); } else lastEnd[lane] = end;
+            _lane[i] = lane;
+        }
+        _lanes = Math.Max(1, lastEnd.Count);
         var points = (await Store.LoadAdMetricsAsync(400, CancellationToken.None)).Where(p => p.Metric.StartsWith("os:", StringComparison.Ordinal)).ToList();
         _days = points.Select(p => p.Day).Distinct().OrderBy(d => d).ToList();
         _values = points.ToDictionary(p => (p.Day, p.Metric), p => (double?)p.Value);
