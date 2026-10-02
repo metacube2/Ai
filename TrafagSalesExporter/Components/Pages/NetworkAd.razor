@@ -37,14 +37,14 @@ else
         <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_delegation.Count</div><div class="ll-kpi-label">@T("riskante Delegation", "risky delegation")</div></div>
     </div>
 
-    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-3" Class="ad-tabs">
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-3" Class="dir-tabs">
         <MudTabPanel Text="@T("3D-Übersicht", "3D overview")" Icon="@Icons.Material.Filled.ViewInAr">
             <MudGrid Spacing="3">
                 <MudItem xs="12" lg="8">
-                    <div class="ad3d-scene" style="--w:@(Px(_worldSize));--k:@F(_scale)">
-                        <div class="ad3d-world">
-                            <div class="ad3d-floor"></div>
-                            <div class="ad3d-scan"></div>
+                    <div class="dir3d-scene" style="--w:@(Px(_worldSize));--k:@F(_scale)">
+                        <div class="dir3d-world">
+                            <div class="dir3d-floor"></div>
+                            <div class="dir3d-scan"></div>
                             @for (var i = 0; i < _towers.Count; i++)
                             {
                                 var t = _towers[i];
@@ -54,27 +54,27 @@ else
                                 var x = col * Cell - _worldSize / 2 + (Cell - Base) / 2.0;
                                 var y = row * Cell - _worldSize / 2 + (Cell - Base) / 2.0;
                                 var z = 0.0;
-                                <div class="ad3d-tower @(_selected == index ? "ad3d-selected" : string.Empty)" style="--x:@Px(x);--y:@Px(y);--d:@(F(i * 0.06))s;--s:@Px(Base)"
+                                <div class="dir3d-tower @(_selected == index ? "dir3d-selected" : string.Empty)" style="--x:@Px(x);--y:@Px(y);--d:@(F(i * 0.06))s;--s:@Px(Base)"
                                      title="@(i + 1). @t.Label · @t.Total" @onclick="() => Select(index)">
                                     @foreach (var seg in Segments(t))
                                     {
                                         var h = Math.Max(2, seg.Count * _heightPerComputer);
-                                        <div class="ad3d-cube ad3d-@seg.Css" style="--z:@Px(z);--h:@Px(h)">
-                                            <i class="ad3d-n"></i><i class="ad3d-s"></i><i class="ad3d-w"></i><i class="ad3d-e"></i><i class="ad3d-top"></i>
+                                        <div class="dir3d-cube dir3d-@seg.Css" style="--z:@Px(z);--h:@Px(h)">
+                                            <i class="dir3d-n"></i><i class="dir3d-s"></i><i class="dir3d-w"></i><i class="dir3d-e"></i><i class="dir3d-top"></i>
                                         </div>
                                         z += h;
                                     }
-                                    <div class="ad3d-label" style="--z:@Px(z + 1)"><b>@(i + 1)</b></div>
+                                    <div class="dir3d-label" style="--z:@Px(z + 1)"><b>@(i + 1)</b></div>
                                 </div>
                             }
                         </div>
-                        <div class="ad3d-hint">@T("Jeder Turm ist eine OU, die Höhe die Zahl der Computer. Maus darüber hält die Drehung an, Klick zeigt die Geräte.", "Each tower is an OU, its height the number of computers. Hover pauses the rotation, click shows the devices.")</div>
+                        <div class="dir3d-hint">@T("Jeder Turm ist eine OU, die Höhe die Zahl der Computer. Maus darüber hält die Drehung an, Klick zeigt die Geräte.", "Each tower is an OU, its height the number of computers. Hover pauses the rotation, click shows the devices.")</div>
                     </div>
                     <div class="ll-legend mt-2">
-                        <span><i class="ll-swatch ad-c-ok"></i>@T("in Ordnung", "fine")</span>
-                        <span><i class="ll-swatch ad-c-inactive"></i>@T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days")</span>
-                        <span><i class="ll-swatch ad-c-disabled"></i>@T("deaktiviert", "disabled")</span>
-                        <span><i class="ll-swatch ad-c-unsupported"></i>@T("ohne Herstellersupport", "without vendor support")</span>
+                        <span><i class="ll-swatch dir-c-ok"></i>@T("in Ordnung", "fine")</span>
+                        <span><i class="ll-swatch dir-c-inactive"></i>@T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days")</span>
+                        <span><i class="ll-swatch dir-c-disabled"></i>@T("deaktiviert", "disabled")</span>
+                        <span><i class="ll-swatch dir-c-unsupported"></i>@T("ohne Herstellersupport", "without vendor support")</span>
                     </div>
                 </MudItem>
                 <MudItem xs="12" lg="4">
@@ -85,11 +85,11 @@ else
                             {
                                 var t = _towers[i];
                                 var index = i;
-                                <div class="ll-row ad-ou-row @(_selected == index ? "ad-ou-active" : string.Empty)" @onclick="() => Select(index)">
+                                <div class="ll-row dir-ou-row @(_selected == index ? "dir-ou-active" : string.Empty)" @onclick="() => Select(index)">
                                     <span class="ll-mono" style="width:26px">@(i + 1)</span>
                                     <span class="ll-grow">@t.Label @if (t.IsDefaultContainer) {<MudChip T="string" Size="Size.Small" Color="Color.Warning">@T("Standardcontainer", "default container")</MudChip>} else if (!t.HasGpoLink) {<MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@T("keine eigene GPO", "no own GPO")</MudChip>}</span>
-                                    <span class="ad-mini">
-                                        <i class="ad-c-ok" style="flex:@t.Ok"></i><i class="ad-c-inactive" style="flex:@t.Inactive"></i><i class="ad-c-disabled" style="flex:@t.Disabled"></i><i class="ad-c-unsupported" style="flex:@t.Unsupported"></i>
+                                    <span class="dir-mini">
+                                        <i class="dir-c-ok" style="flex:@t.Ok"></i><i class="dir-c-inactive" style="flex:@t.Inactive"></i><i class="dir-c-disabled" style="flex:@t.Disabled"></i><i class="dir-c-unsupported" style="flex:@t.Unsupported"></i>
                                     </span>
                                     <span class="ll-mono" style="width:40px;text-align:right">@t.Total</span>
                                 </div>
@@ -117,28 +117,28 @@ else
                 <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Nur aktivierte Konten. Supportende nach Microsoft Lifecycle, Stand Oktober 2026. Rot: abgelaufen, gelb: endet in 180 Tagen.", "Enabled accounts only. End of support per Microsoft Lifecycle, as of October 2026. Red: expired, yellow: ends within 180 days.")</MudText>
                 @foreach (var p in _products)
                 {
-                    <div class="ad-life">
-                        <div class="ad-life-head">
-                            <span class="nw-dot ad-life-@p.Class"></span>
+                    <div class="dir-life">
+                        <div class="dir-life-head">
+                            <span class="nw-dot dir-life-@p.Class"></span>
                             <b>@p.Product</b>
                             <span class="ll-grow"></span>
                             <span class="ll-mono ll-muted">@(p.End?.ToString("dd.MM.yyyy") ?? T("unbekannt", "unknown"))</span>
                             <span class="ll-mono" style="width:56px;text-align:right">@p.Count</span>
                         </div>
-                        <div class="ad-life-track"><span class="ad-life-fill ad-life-@p.Class" style="width:@Pct(p.Count, _maxProduct);animation-delay:@(F(_products.IndexOf(p) * 0.05))s"></span></div>
+                        <div class="dir-life-track"><span class="dir-life-fill dir-life-@p.Class" style="width:@Pct(p.Count, _maxProduct);animation-delay:@(F(_products.IndexOf(p) * 0.05))s"></span></div>
                     </div>
                 }
             </MudPaper>
             <MudPaper Class="pa-3" Outlined="true">
                 <MudText Typo="Typo.h6">@T("Neu angelegte Computerkonten je Monat", "New computer accounts per month")</MudText>
-                <svg viewBox="0 0 1000 180" class="ad-growth">
+                <svg viewBox="0 0 1000 180" class="dir-growth">
                     @for (var i = 0; i < _created.Count; i++)
                     {
                         var (month, count) = _created[i];
                         var bw = 1000.0 / _created.Count;
                         var bh = count * 140.0 / Math.Max(1, _maxCreated);
                         <g>
-                            <rect x="@F(i * bw + 4)" y="@F(150 - bh)" width="@F(bw - 8)" height="@F(bh)" class="ad-growth-bar" style="animation-delay:@(F(i * 0.04))s"><title>@month.ToString("MM.yyyy") · @count</title></rect>
+                            <rect x="@F(i * bw + 4)" y="@F(150 - bh)" width="@F(bw - 8)" height="@F(bh)" class="dir-growth-bar" style="animation-delay:@(F(i * 0.04))s"><title>@month.ToString("MM.yyyy") · @count</title></rect>
                             <text x="@F(i * bw + bw / 2)" y="170" class="nw-axis" text-anchor="middle">@month.ToString("MM.yy")</text>
                             @if (count > 0)
                             {
@@ -184,7 +184,7 @@ else
         <MudTabPanel Text="@T("Sicherheit", "Security")" Icon="@Icons.Material.Filled.Shield">
             <MudGrid Spacing="3">
                 <MudItem xs="12" md="4">
-                    <MudPaper Class="pa-3 ll-panel ad-gauge-box" Outlined="true">
+                    <MudPaper Class="pa-3 ll-panel dir-gauge-box" Outlined="true">
                         <MudText Typo="Typo.h6">LAPS</MudText>
                         @Gauge(_lapsBase == 0 ? 0 : (_lapsBase - _lapsMissing.Count) / (double)_lapsBase, T("mit verwaltetem Admin-Passwort", "with managed admin password"))
                         <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Gelesen wird nur das Ablaufdatum, nie das Passwort. Ist bei keinem Gerät ein Datum sichtbar, fehlen eher Leserechte als LAPS.", "Only the expiry date is read, never the password. If no device shows a date, read permission is more likely missing than LAPS.")</MudText>
@@ -195,16 +195,16 @@ else
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudPaper Class="pa-3 ll-panel ad-gauge-box" Outlined="true">
+                    <MudPaper Class="pa-3 ll-panel dir-gauge-box" Outlined="true">
                         <MudText Typo="Typo.h6">BitLocker</MudText>
                         @Gauge(_lapsBase == 0 ? 0 : _ad.Computers.Count(c => c.Enabled && c.BitLockerKeys > 0) / (double)_lapsBase, T("mit Wiederherstellungsschlüssel im AD", "with recovery key in AD"))
                         <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Gezählt werden nur die Objekte, nie der Schlüssel. Ohne Leserechte erscheinen 0 %.", "Only the objects are counted, never the key. Without read permission 0 % is shown.")</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudPaper Class="pa-3 ll-panel ad-gauge-box" Outlined="true">
+                    <MudPaper Class="pa-3 ll-panel dir-gauge-box" Outlined="true">
                         <MudText Typo="Typo.h6">@T("Delegation", "Delegation")</MudText>
-                        <div class="ad-big @(_delegation.Count > 0 ? "nw-text-net" : string.Empty)">@_delegation.Count</div>
+                        <div class="dir-big @(_delegation.Count > 0 ? "nw-text-net" : string.Empty)">@_delegation.Count</div>
                         <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Computer ausser Domänencontrollern mit uneingeschränkter Delegation oder Protokollübergang. Wer so ein Gerät übernimmt, kann sich als beliebiger Benutzer ausgeben.", "Computers other than domain controllers with unconstrained delegation or protocol transition. Whoever takes over such a device can impersonate any user.")</MudText>
                         <MudText Typo="Typo.caption" Class="d-block mt-1">@T("Eingeschränkte Delegation", "Constrained delegation"): @_ad.Computers.Count(c => c.ConstrainedTargets > 0)</MudText>
                     </MudPaper>
@@ -228,8 +228,8 @@ else
             <MudPaper Class="pa-3" Outlined="true">
                 <MudText Typo="Typo.h6">@T("Dienste je Server", "Services per server")</MudText>
                 <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Aus den Dienstnamen (servicePrincipalName) der aktivierten Konten. Zeigt, wo SQL, Web, Remotedesktop und Ähnliches registriert sind; ob der Dienst läuft, sagt das nicht.", "From the service names (servicePrincipalName) of enabled accounts. Shows where SQL, web, remote desktop and similar are registered; it does not say whether the service runs.")</MudText>
-                <div class="ad-matrix-wrap">
-                    <table class="ad-matrix">
+                <div class="dir-matrix-wrap">
+                    <table class="dir-matrix">
                         <thead><tr><th></th>@foreach (var s in _serviceColumns) {<th><span>@s</span></th>}</tr></thead>
                         <tbody>
                             @foreach (var row in _serviceRows)
@@ -238,7 +238,7 @@ else
                                     <td class="ll-mono" title="@row.Computer.OperatingSystem">@row.Computer.Name</td>
                                     @foreach (var s in _serviceColumns)
                                     {
-                                        <td>@if (row.Groups.Contains(s)) {<i class="ad-cell"></i>}</td>
+                                        <td>@if (row.Groups.Contains(s)) {<i class="dir-cell"></i>}</td>
                                     }
                                 </tr>
                             }
@@ -327,12 +327,12 @@ else
                         @foreach (var dc in _ad.Computers.Where(c => c.IsDomainController).OrderBy(c => c.Name))
                         {
                             var life = AdAnalysis.Lifecycle(dc.OperatingSystem, dc.OsVersion);
-                            <div class="ad-dc">
-                                <div class="ad-dc-head"><MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" /> <b>@dc.Name</b> <span class="ll-muted">@dc.OperatingSystem</span><span class="ll-grow"></span><span class="nw-dot ad-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, _today)" title="@life.EndOfSupport"></span></div>
-                                <div class="ad-dc-probes">
+                            <div class="dir-dc">
+                                <div class="dir-dc-head"><MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" /> <b>@dc.Name</b> <span class="ll-muted">@dc.OperatingSystem</span><span class="ll-grow"></span><span class="nw-dot dir-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, _today)" title="@life.EndOfSupport"></span></div>
+                                <div class="dir-dc-probes">
                                     @foreach (var s in _dcStatus.Where(s => s.Target.Host.Equals(dc.DnsHostName, StringComparison.OrdinalIgnoreCase)))
                                     {
-                                        <span class="ad-probe @(s.Last is null ? "ad-probe-none" : s.Last.Ok ? "ad-probe-ok" : "ad-probe-bad")">
+                                        <span class="dir-probe @(s.Last is null ? "dir-probe-none" : s.Last.Ok ? "dir-probe-ok" : "dir-probe-bad")">
                                             @s.Target.Port · @(s.Last?.LatencyMs is { } ms ? F(ms) + " ms" : "–") · @(s.Availability24h is { } a ? F(a * 100) + " %" : "–")
                                         </span>
                                     }
@@ -498,11 +498,11 @@ else
     {
         var pct = Math.Clamp(share, 0, 1);
         var len = 2 * Math.PI * 52;
-        <svg viewBox="0 0 140 140" class="ad-gauge">
-            <circle cx="70" cy="70" r="52" class="ad-gauge-bg" />
-            <circle cx="70" cy="70" r="52" class="ad-gauge-fg @(pct < 0.5 ? "ad-gauge-bad" : pct < 0.9 ? "ad-gauge-warn" : "ad-gauge-ok")"
-                    style="stroke-dasharray:@F(len);--ad-off:@F(len * (1 - pct));--ad-len:@F(len)" />
-            <text x="70" y="76" class="ad-gauge-num">@F(pct * 100)%</text>
+        <svg viewBox="0 0 140 140" class="dir-gauge">
+            <circle cx="70" cy="70" r="52" class="dir-gauge-bg" />
+            <circle cx="70" cy="70" r="52" class="dir-gauge-fg @(pct < 0.5 ? "dir-gauge-bad" : pct < 0.9 ? "dir-gauge-warn" : "dir-gauge-ok")"
+                    style="stroke-dasharray:@F(len);--dir-off:@F(len * (1 - pct));--dir-len:@F(len)" />
+            <text x="70" y="76" class="dir-gauge-num">@F(pct * 100)%</text>
         </svg>
         <MudText Typo="Typo.body2" Align="Align.Center">@caption</MudText>
     };

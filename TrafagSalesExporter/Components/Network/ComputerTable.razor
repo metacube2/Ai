@@ -9,7 +9,7 @@
 else
 {
     <div class="ll-list" style="max-height:@(MaxHeight)px">
-        <div class="ll-row ad-table-head">
+        <div class="ll-row dir-table-head">
             <span style="width:150px">@T("Name", "Name")</span>
             <span class="ll-grow">@T("Betriebssystem", "Operating system")</span>
             <span style="width:96px">@T("Anmeldung", "Logon")</span>
@@ -23,7 +23,7 @@ else
             var life = AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion);
             <div class="ll-row @(c.Enabled ? string.Empty : "ll-muted")">
                 <span class="ll-mono" style="width:150px" title="@c.DnsHostName">@c.Name</span>
-                <span class="ll-grow"><span class="nw-dot ad-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, DateOnly.FromDateTime(Now))"></span> @life.Product</span>
+                <span class="ll-grow"><span class="nw-dot dir-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, DateOnly.FromDateTime(Now))"></span> @life.Product</span>
                 <span class="ll-mono ll-muted" style="width:96px">@(c.LastLogonUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? T("nie", "never"))</span>
                 @if (ShowPassword)
                 {
