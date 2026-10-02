@@ -54,8 +54,7 @@
             "finance-rules" or
             "settings" or
             "logs" or
-            "source-viewer" ||
-            // Reiter Verkauf (2026-10-02): Kundenumsaetze, gleich geschuetzt wie das Management-Cockpit.
-            path == "verkauf" || path.StartsWith("verkauf/", StringComparison.Ordinal);
+            "source-viewer";
+        // Reiter Verkauf bewusst ohne Freischaltung (Entscheid Ingo 2026-10-02, docs/VERKAUF_2026-10-02.md).
     }
 }
