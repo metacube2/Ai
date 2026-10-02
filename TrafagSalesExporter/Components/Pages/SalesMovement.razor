@@ -1,0 +1,110 @@
+@page "/verkauf/kundenbewegung"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Reiter Verkauf, neue und verlorene Kunden je Quartal (2026-10-02). Doku docs/VERKAUF_2026-10-02.md *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Neue und verlorene Kunden", "New and lost customers")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-3 mb-3" Outlined="true">
+        <div class="d-flex align-center" style="gap:12px">
+            <MudText Typo="Typo.h6" Class="ll-grow">@T("Kunden gewonnen und verloren je Quartal", "Customers won and lost per quarter")</MudText>
+            <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined">
+                <MudButton Color="@(_byRevenue ? Color.Default : Color.Primary)" OnClick="() => _byRevenue = false">@T("Anzahl", "Count")</MudButton>
+                <MudButton Color="@(_byRevenue ? Color.Primary : Color.Default)" OnClick="() => _byRevenue = true">@T("Umsatz CHF", "Sales CHF")</MudButton>
+            </MudButtonGroup>
+            <ExcelButton FileLabel="Verkauf_Kundenbewegung" Sheets="ExcelSheets" />
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen.", "Green upwards: first purchase in the quarter, as sales the first 12 months. Red downwards: last purchase in the quarter and nothing since, as sales the 12 months before. Hatched: less than 12 months ago, the customer may still return.")</MudText>
+        @{
+            var max = Math.Max(1.0, _moves.Select(m => Math.Max(Value(m, true), Value(m, false))).DefaultIfEmpty(1).Max());
+            var w = 960.0 / Math.Max(1, _moves.Count);
+        }
+        <svg viewBox="0 0 1000 340" class="sal-diverge">
+            <defs>
+                <pattern id="sal-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" fill="#C62828" fill-opacity="0.55" /></pattern>
+            </defs>
+            <line x1="30" y1="170" x2="1000" y2="170" class="nw-grid" />
+            @for (var i = 0; i < _moves.Count; i++)
+            {
+                var m = _moves[i];
+                var up = 150 * Value(m, true) / max;
+                var down = 150 * Value(m, false) / max;
+                var x = 34 + i * w;
+                <g class="sal-q" style="animation-delay:@(F(i * 0.05))s">
+                    <rect x="@F(x + 4)" y="@F(170 - up)" width="@F(w - 8)" height="@F(up)" rx="3" class="sal-new"><title>@m.Quarter · @m.NewCustomers @T("neu", "new") · CHF @Chf(m.NewRevenue12)</title></rect>
+                    <rect x="@F(x + 4)" y="170" width="@F(w - 8)" height="@F(down)" rx="3" class="@(m.LostFinal ? "sal-lost" : "sal-lost-open")"><title>@m.Quarter · @m.LostCustomers @T("verloren", "lost") · CHF @Chf(m.LostRevenue12)</title></rect>
+                    <text x="@F(x + w / 2)" y="@F(164 - up)" text-anchor="middle" class="sal-q-val">@(_byRevenue ? Short(m.NewRevenue12) : m.NewCustomers.ToString())</text>
+                    <text x="@F(x + w / 2)" y="@F(184 + down)" text-anchor="middle" class="sal-q-val">@(_byRevenue ? Short(m.LostRevenue12) : m.LostCustomers.ToString())</text>
+                    <text x="@F(x + w / 2)" y="336" text-anchor="middle" class="nw-axis">@m.Quarter</text>
+                </g>
+            }
+        </svg>
+    </MudPaper>
+    <MudGrid Spacing="3">
+        @foreach (var m in _moves.AsEnumerable().Reverse().Take(4))
+        {
+            <MudItem xs="12" md="6" lg="3">
+                <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                    <MudText Typo="Typo.subtitle1"><b>@m.Quarter</b></MudText>
+                    <MudText Typo="Typo.caption" Class="sal-up d-block">@m.NewCustomers @T("neu", "new") · CHF @Short(m.NewRevenue12)</MudText>
+                    @foreach (var n in m.NewNames)
+                    {
+                        <div class="sal-small">+ @n</div>
+                    }
+                    <MudText Typo="Typo.caption" Class="sal-down d-block mt-2">@m.LostCustomers @T("verloren", "lost") · CHF @Short(m.LostRevenue12)</MudText>
+                    @foreach (var n in m.LostNames)
+                    {
+                        <div class="sal-small">− @n</div>
+                    }
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    private SalesDataset? _data;
+    private IReadOnlyList<SalesQuarterMovement> _moves = [];
+    private bool _byRevenue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is null)
+            _moves = SalesAnalytics.Movements(_data.Facts, _data.ReferenceEnd);
+    }
+
+    private double Value(SalesQuarterMovement m, bool isNew)
+        => _byRevenue ? (double)(isNew ? m.NewRevenue12 : m.LostRevenue12) : isNew ? m.NewCustomers : m.LostCustomers;
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Quartale", Rows(_moves, m => new Dictionary<string, object?>
+        {
+            ["Quartal"] = m.Quarter, ["Neue Kunden"] = m.NewCustomers, ["Umsatz neue 12 M CHF"] = m.NewRevenue12,
+            ["Verlorene Kunden"] = m.LostCustomers, ["Umsatz verlorene 12 M CHF"] = m.LostRevenue12, ["Verlust endgueltig"] = m.LostFinal ? "ja" : "nein",
+            ["Neue (Top)"] = Csv(m.NewNames), ["Verlorene (Top)"] = Csv(m.LostNames)
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

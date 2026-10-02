@@ -1,0 +1,119 @@
+@page "/verkauf/preise"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Reiter Verkauf, Preisstreuung je Artikel (2026-10-02). Doku docs/VERKAUF_2026-10-02.md *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Preisstreuung", "Price spread")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <div class="d-flex align-center" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Artikel mit grosser Preisstreuung", "Articles with wide price spread")</MudText>
+                    <ExcelButton FileLabel="Verkauf_Preise" Sheets="ExcelSheets" />
+                </div>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate, ab 4 Kunden. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil.", "Average unit price in CHF per customer, 12 months, at least 4 customers. Factor = 90 % value divided by 10 % value, so single outliers do not count. Different quantities, countries and companies explain part of it.")</MudText>
+                <div class="ll-list" style="max-height:620px">
+                    <div class="ll-row sal-head"><span class="ll-grow">@T("Artikel", "Article")</span><span style="width:50px;text-align:right">@T("Kunden", "Customers")</span><span style="width:72px;text-align:right">@T("Umsatz", "Sales")</span><span style="width:56px;text-align:right">@T("Faktor", "Factor")</span></div>
+                    @foreach (var s in _spreads.Take(200))
+                    {
+                        var current = s;
+                        <div class="ll-row sal-row @(_selected == s ? "sal-row-sel" : string.Empty)" @onclick="() => _selected = current" style="font-size:13px">
+                            <span class="ll-grow sal-name" title="@s.Material">@s.Article <span class="ll-muted ll-mono">@s.Material</span></span>
+                            <span class="ll-mono" style="width:50px;text-align:right">@s.Customers</span>
+                            <span class="ll-mono" style="width:72px;text-align:right">@Short(s.Revenue)</span>
+                            <span class="ll-mono @(s.Ratio >= 3 ? "sal-down" : string.Empty)" style="width:56px;text-align:right">@s.Ratio.ToString("0.0")×</span>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                @if (_selected is null)
+                {
+                    <MudText Typo="Typo.body2" Class="ll-muted">@T("Artikel links wählen.", "Select an article on the left.")</MudText>
+                }
+                else
+                {
+                    var s = _selected;
+                    var lo = Math.Log10((double)Math.Max(0.01m, s.Min));
+                    var hi = Math.Log10((double)Math.Max(s.Min * 1.01m, s.Max));
+                    double Px(decimal v) => 30 + 640 * (Math.Log10((double)Math.Max(0.01m, v)) - lo) / Math.Max(0.0001, hi - lo);
+                    var maxQty = (double)Math.Max(1, s.Points.Max(p => p.Quantity));
+                    <MudText Typo="Typo.h6">@s.Article</MudText>
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@s.Material · @s.Customers @T("Kunden", "customers") · @T("Median", "median") CHF @s.Median.ToString("N2") · P10 @s.P10.ToString("N2") · P90 @s.P90.ToString("N2")</MudText>
+                    <svg viewBox="0 0 700 220" class="sal-strip">
+                        <rect x="@F(Px(s.P10))" y="40" width="@F(Math.Max(2, Px(s.P90) - Px(s.P10)))" height="120" rx="6" class="sal-band" />
+                        <line x1="@F(Px(s.Median))" y1="30" x2="@F(Px(s.Median))" y2="170" class="sal-median" />
+                        @for (var i = 0; i < s.Points.Count; i++)
+                        {
+                            var p = s.Points[i];
+                            var r = 4 + 10 * Math.Sqrt((double)p.Quantity / maxQty);
+                            var y = 100 + ((i * 37) % 90) - 45;
+                            <circle cx="@F(Px(p.UnitPriceChf))" cy="@F(y)" r="@F(r)" class="sal-dot" style="animation-delay:@(F(i * 0.02))s"><title>@p.CustomerName (@p.Country, @p.Tsc) · @p.Quantity.ToString("N0") @T("Stück", "pcs") · CHF @p.UnitPriceChf.ToString("N2")</title></circle>
+                        }
+                        <g><text x="30" y="200" class="nw-axis">CHF @s.Min.ToString("N2")</text><text x="670" y="200" text-anchor="end" class="nw-axis">CHF @s.Max.ToString("N2")</text></g>
+                    </svg>
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Jeder Punkt ist ein Kunde, die Grösse die Menge. Achse logarithmisch, das Band zeigt 10 % bis 90 %, die Linie den Median.", "Each dot is a customer, its size the quantity. Logarithmic axis, the band shows 10 % to 90 %, the line the median.")</MudText>
+                    <div class="ll-list mt-2" style="max-height:260px">
+                        @foreach (var p in s.Points.OrderBy(p => p.UnitPriceChf))
+                        {
+                            <div class="ll-row" style="font-size:13px"><span class="ll-grow">@p.CustomerName</span><span style="width:40px">@p.Country</span><span style="width:50px" class="ll-muted">@p.Tsc</span><span class="ll-mono" style="width:70px;text-align:right">@p.Quantity.ToString("N0")</span><span class="ll-mono" style="width:80px;text-align:right">@p.UnitPriceChf.ToString("N2")</span></div>
+                        }
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    private SalesDataset? _data;
+    private IReadOnlyList<SalesPriceSpread> _spreads = [];
+    private SalesPriceSpread? _selected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is not null)
+            return;
+        _spreads = SalesAnalytics.PriceSpreads(_data.Facts, _data.ReferenceEnd);
+        _selected = _spreads.FirstOrDefault();
+    }
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Artikel", Rows(_spreads, s => new Dictionary<string, object?>
+        {
+            ["Material"] = s.Material, ["Artikel"] = s.Article, ["Kunden"] = s.Customers, ["Menge"] = s.Quantity, ["Umsatz CHF"] = s.Revenue,
+            ["P10 CHF"] = s.P10, ["Median CHF"] = s.Median, ["P90 CHF"] = s.P90, ["Faktor"] = Math.Round(s.Ratio, 2)
+        })),
+        new("Preise je Kunde", Rows(_spreads.SelectMany(s => s.Points.Select(p => (s, p))), x => new Dictionary<string, object?>
+        {
+            ["Material"] = x.s.Material, ["Kunde"] = x.p.CustomerName, ["Land"] = x.p.Country, ["Gesellschaft"] = x.p.Tsc,
+            ["Menge"] = x.p.Quantity, ["Stueckpreis CHF"] = Math.Round(x.p.UnitPriceChf, 4)
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

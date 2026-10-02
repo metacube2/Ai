@@ -1,0 +1,178 @@
+using TrafagSalesExporter.Services;
+
+namespace TrafagSalesExporter.Tests;
+
+public sealed class SalesAnalyticsTests
+{
+    private static readonly DateOnly RefEnd = new(2026, 10, 1);
+
+    private static SalesFact Fact(string customer, DateOnly date, decimal chf, string division = "Transmitters", string country = "DE",
+        string tsc = "TRCH", string material = "M1", decimal qty = 1)
+        => new(date, tsc, tsc == "TRCH" ? "CH" : "IT", customer, customer, country, material, "Artikel " + material, division, chf, qty, "R-" + date.DayNumber);
+
+    [Theory]
+    [InlineData("Siemens AG", "SIEMENS")]
+    [InlineData("Siemens Schweiz AG", "SIEMENS SCHWEIZ")]
+    [InlineData("ABB S.p.A.", "ABB")]
+    [InlineData("Müller & Co. GmbH", "MULLER AND")]
+    public void Kundenschluessel_Ohne_Rechtsform_Und_Akzente(string name, string expected)
+        => Assert.Equal(expected, SalesAnalytics.CustomerKey(name, "TRCH", "1"));
+
+    [Fact]
+    public void Kundenschluessel_Ohne_Name_Aus_Gesellschaft_Und_Nummer()
+        => Assert.Equal("TRIT#4711", SalesAnalytics.CustomerKey("", "trit", "4711"));
+
+    [Fact]
+    public void Referenz_Ist_Ende_Des_Letzten_Vollstaendigen_Monats()
+    {
+        Assert.Equal(new DateOnly(2026, 9, 1), SalesAnalytics.ReferenceEnd([Fact("A", new DateOnly(2026, 9, 17), 1)], new DateOnly(2026, 10, 2)));
+        Assert.Equal(new DateOnly(2026, 10, 1), SalesAnalytics.ReferenceEnd([Fact("A", new DateOnly(2026, 9, 30), 1)], new DateOnly(2026, 10, 2)));
+    }
+
+    [Fact]
+    public void Kunden_Zwoelf_Monate_Und_Vorjahr()
+    {
+        var facts = new[]
+        {
+            Fact("A", new DateOnly(2026, 3, 1), 100, tsc: "TRCH"),
+            Fact("A", new DateOnly(2025, 3, 1), 300, tsc: "TRIT"),
+            Fact("A", new DateOnly(2026, 10, 5), 999),
+            Fact("B", new DateOnly(2026, 9, 1), 50)
+        };
+        var a = SalesAnalytics.Customers(facts, RefEnd).Single(c => c.Key == "A");
+
+        Assert.Equal(100, a.Last12);
+        Assert.Equal(300, a.Previous12);
+        Assert.Equal(["TRCH", "TRIT"], a.Companies);
+        Assert.Equal(-66.667m, Math.Round(a.ChangePercent!.Value, 3));
+    }
+
+    [Fact]
+    public void Rueckgang_Und_Eingeschlafen()
+    {
+        var facts = new[]
+        {
+            Fact("Fall", new DateOnly(2025, 5, 1), 20000), Fact("Fall", new DateOnly(2026, 8, 1), 10000),
+            Fact("Schlaf", new DateOnly(2025, 5, 1), 20000), Fact("Schlaf", new DateOnly(2025, 12, 1), 3000),
+            Fact("Gut", new DateOnly(2025, 5, 1), 20000), Fact("Gut", new DateOnly(2026, 8, 1), 19000),
+            Fact("Klein", new DateOnly(2025, 5, 1), 500)
+        };
+        var d = SalesAnalytics.Declines(SalesAnalytics.Customers(facts, RefEnd));
+
+        Assert.Equal(2, d.Count);
+        Assert.Equal("Schlaf", d[0].Customer.Key);
+        Assert.Equal("eingeschlafen", d[0].Kind);
+        Assert.Equal(17000, d[0].LostChf);
+        Assert.Equal("rueckgang", d[1].Kind);
+    }
+
+    [Fact]
+    public void Neue_Und_Verlorene_Kunden_Je_Quartal()
+    {
+        var facts = new[]
+        {
+            Fact("Alt", new DateOnly(2023, 1, 10), 10), Fact("Alt", new DateOnly(2024, 2, 1), 40),
+            Fact("Neu", new DateOnly(2025, 4, 5), 70), Fact("Neu", new DateOnly(2026, 9, 1), 10)
+        };
+        var moves = SalesAnalytics.Movements(facts, RefEnd);
+
+        var q1 = moves.Single(m => m.Quarter == "2024 Q1");
+        Assert.Equal(1, q1.LostCustomers);
+        Assert.True(q1.LostFinal);
+        Assert.Equal(40, q1.LostRevenue12);
+        var q2 = moves.Single(m => m.Quarter == "2025 Q2");
+        Assert.Equal(1, q2.NewCustomers);
+        Assert.Equal(70, q2.NewRevenue12);
+        Assert.DoesNotContain(moves, m => m.Quarter == "2026 Q4");
+    }
+
+    [Fact]
+    public void Konzentration_Top_Anteile_Und_80_Prozent()
+    {
+        var facts = new[] { Fact("A", new DateOnly(2026, 5, 1), 700), Fact("B", new DateOnly(2026, 5, 1), 200), Fact("C", new DateOnly(2026, 5, 1), 100) };
+        var c = SalesAnalytics.Concentration(facts, RefEnd);
+
+        Assert.Equal(0.7, c.Top1, 3);
+        Assert.Equal(2, c.CustomersFor80);
+        Assert.Equal(49 * 100 + 4 * 100 + 1 * 100, c.Hhi, 0);
+        Assert.Equal(3, c.Customers);
+    }
+
+    [Fact]
+    public void Cross_Selling_Regel_Und_Ansatz()
+    {
+        var facts = new List<SalesFact>();
+        for (var i = 0; i < 6; i++)
+        {
+            facts.Add(Fact("K" + i, new DateOnly(2026, 2, 1), 100, "Transmitters"));
+            facts.Add(Fact("K" + i, new DateOnly(2026, 2, 1), 50, "Pressure Switches"));
+        }
+        // Kunden nur mit Thermostaten senken die Grundrate von Pressure Switches, damit der Lift ueber 1 liegt.
+        for (var i = 0; i < 3; i++)
+            facts.Add(Fact("T" + i, new DateOnly(2026, 2, 1), 80, "Thermostats"));
+        facts.Add(Fact("Ziel", new DateOnly(2026, 2, 1), 5000, "Transmitters"));
+        facts.Add(Fact("Ziel", new DateOnly(2026, 2, 1), 10, "Others"));
+
+        var rule = SalesAnalytics.CrossSellRules(facts, RefEnd).Single(r => r.From == "Transmitters" && r.To == "Pressure Switches");
+        Assert.Equal(6, rule.Both);
+        Assert.Equal(6.0 / 7, rule.Confidence, 3);
+        var opp = Assert.Single(SalesAnalytics.CrossSellOpportunities(facts, RefEnd));
+        Assert.Equal("Ziel", opp.CustomerKey);
+        Assert.Equal("Pressure Switches", opp.Division);
+        Assert.Equal(50, opp.TypicalRevenue);
+    }
+
+    [Fact]
+    public void Preisstreuung_Je_Artikel_Mit_Perzentilen()
+    {
+        var facts = new[]
+        {
+            Fact("A", new DateOnly(2026, 5, 1), 100, qty: 10), Fact("B", new DateOnly(2026, 5, 1), 200, qty: 10),
+            Fact("C", new DateOnly(2026, 5, 1), 300, qty: 10), Fact("D", new DateOnly(2026, 5, 1), 400, qty: 10),
+            Fact("E", new DateOnly(2026, 5, 1), -50, qty: 1)
+        };
+        var s = Assert.Single(SalesAnalytics.PriceSpreads(facts, RefEnd));
+
+        Assert.Equal(4, s.Customers);
+        Assert.Equal(10, s.Min);
+        Assert.Equal(40, s.Max);
+        Assert.Equal(25, s.Median);
+        Assert.Equal(13m, s.P10);
+    }
+
+    [Fact]
+    public void Prognose_Mit_Saison_Und_Wachstum()
+    {
+        var facts = new List<SalesFact>();
+        foreach (var year in new[] { 2023, 2024, 2025 })
+        for (var m = 1; m <= 12; m++)
+        {
+            var date = new DateOnly(year, m, 1).AddMonths(9);
+            var factor = year == 2025 ? 1.1m : year == 2024 ? 1.0m : 1.0m;
+            facts.Add(Fact("A", date, (m == 3 ? 200 : 100) * factor));
+        }
+        var f = SalesAnalytics.Forecast("*", facts, RefEnd);
+
+        Assert.Equal(36, f.History.Count);
+        Assert.Equal(12, f.Forecast.Count);
+        Assert.Equal(new DateOnly(2026, 10, 1), f.Forecast[0].Month);
+        Assert.True(f.SeasonIndex.Max() > 1.5);
+        Assert.Equal(f.History[24].Value * 1.1m, f.Forecast[0].Value, 2);
+    }
+
+    [Fact]
+    public void Laender_Und_Warenfluss()
+    {
+        var facts = new[]
+        {
+            Fact("A", new DateOnly(2026, 5, 1), 100, country: "DE", tsc: "TRCH"),
+            Fact("B", new DateOnly(2026, 5, 1), 50, country: "CH", tsc: "TRCH"),
+            Fact("C", new DateOnly(2026, 5, 1), 30, country: "", tsc: "TRCH")
+        };
+        var countries = SalesAnalytics.Countries(facts, RefEnd);
+        Assert.Equal(["DE", "CH"], countries.Select(c => c.Country));
+        Assert.Equal(24, countries[0].Monthly.Count);
+        var flow = Assert.Single(SalesAnalytics.Flows(facts, RefEnd));
+        Assert.Equal(("CH", "DE", 100m), (flow.FromCountry, flow.ToCountry, flow.Last12));
+    }
+}

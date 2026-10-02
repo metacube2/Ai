@@ -1,0 +1,182 @@
+@page "/verkauf"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Reiter Verkauf, Kunden-Cockpit (Wunsch Ingo 2026-10-02): ein Bild je Kunde ueber alle Gesellschaften.
+   Doku docs/VERKAUF_2026-10-02.md *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Kunden", "Customers")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.caption" Class="ll-muted">@T("Verkaufsdaten werden geladen, beim ersten Aufruf bis zu einer Minute …", "Loading sales data, up to a minute on first call …")</MudText>
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_l12)</div><div class="ll-kpi-label">@T("Umsatz CHF, 12 Monate", "Sales CHF, 12 months")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_p12)</div><div class="ll-kpi-label">@T("12 Monate davor", "12 months before")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_l12 >= _p12 ? "sal-up" : "sal-down")">@Percent(_p12 == 0 ? null : (_l12 - _p12) / _p12 * 100)</div><div class="ll-kpi-label">@T("Veränderung", "Change")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_customers.Count(c => c.Last12 > 0)</div><div class="ll-kpi-label">@T("Kunden mit Umsatz, 12 Monate", "customers with sales, 12 months")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_customers.Count(c => c.Companies.Count > 1 && c.Last12 > 0)</div><div class="ll-kpi-label">@T("kaufen bei mehreren Gesellschaften", "buy from several companies")</div></div>
+    </div>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="6">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <div class="d-flex align-center flex-wrap" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Kunden", "Customers")</MudText>
+                    <MudTextField T="string" @bind-Value="_search" Immediate="true" DebounceInterval="250" Placeholder="@T("Kunde suchen", "Search customer")" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Dense="true" Variant="Variant.Outlined" Style="max-width:260px" />
+                    <ExcelButton FileLabel="Verkauf_Kunden" Sheets="ExcelSheets" />
+                </div>
+                <div class="ll-list mt-2" style="max-height:640px">
+                    <div class="ll-row sal-head"><span style="width:28px"></span><span class="ll-grow">@T("Kunde", "Customer")</span><span style="width:80px">@T("Gesellschaften", "Companies")</span><span style="width:84px;text-align:right">12 M</span><span style="width:64px;text-align:right">Δ</span><span style="width:90px"></span></div>
+                    @foreach (var (c, i) in Filtered.Select((c, i) => (c, i)))
+                    {
+                        <div class="ll-row sal-row @(_selected?.Key == c.Key ? "sal-row-sel" : string.Empty)" @onclick="() => Select(c)">
+                            <span class="ll-mono ll-muted" style="width:28px">@(i + 1)</span>
+                            <span class="ll-grow sal-name" title="@c.Name">@c.Name <span class="ll-muted">@c.MainCountry</span></span>
+                            <span style="width:80px" class="ll-muted">@Csv(c.Companies)</span>
+                            <span class="ll-mono" style="width:84px;text-align:right">@Short(c.Last12)</span>
+                            <span class="ll-mono @(c.ChangePercent >= 0 ? "sal-up" : "sal-down")" style="width:64px;text-align:right">@Percent(c.ChangePercent)</span>
+                            <svg viewBox="0 0 90 22" class="sal-spark"><polyline points="@Spark(_sparks.GetValueOrDefault(c.Key) ?? [], 90, 22)" /></svg>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="6">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                @if (_selected is null)
+                {
+                    <MudText Typo="Typo.h6">@T("Top 10 Kunden", "Top 10 customers")</MudText>
+                    <svg viewBox="0 0 520 330" class="sal-top">
+                        @for (var i = 0; i < Math.Min(10, _customers.Count); i++)
+                        {
+                            var c = _customers[i];
+                            var w = 330.0 * (double)(c.Last12 / Math.Max(1, _customers[0].Last12));
+                            <g class="sal-bar-g" style="animation-delay:@(F(i * 0.06))s" @onclick="() => Select(c)">
+                                <text x="0" y="@F(22 + i * 31)" class="sal-bar-label">@Truncate(c.Name, 24)</text>
+                                <rect x="170" y="@F(10 + i * 31)" width="@F(Math.Max(2, w))" height="18" rx="4" class="sal-bar" />
+                                <text x="@F(176 + w)" y="@F(24 + i * 31)" class="sal-bar-value">@Short(c.Last12)</text>
+                            </g>
+                        }
+                    </svg>
+                    <MudText Typo="Typo.caption" Class="ll-muted">@T("Klick auf einen Kunden zeigt Verlauf, Sparten und Artikel.", "Click a customer to see history, divisions and articles.")</MudText>
+                }
+                else
+                {
+                    var c = _selected;
+                    <div class="d-flex align-center"><MudText Typo="Typo.h6" Class="ll-grow">@c.Name</MudText><MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => _selected = null" /></div>
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@WorldGeo.Name(c.MainCountry) · @Csv(c.Companies) · @T("Kunde seit", "customer since") @c.FirstDate.ToString("MM.yyyy") · @T("letzte Rechnung", "last invoice") @c.LastDate.ToString("dd.MM.yyyy") · @c.Invoices @T("Rechnungen", "invoices")</MudText>
+                    <div class="ll-kpis">
+                        <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Last12)</div><div class="ll-kpi-label">@T("12 Monate", "12 months")</div></div>
+                        <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Previous12)</div><div class="ll-kpi-label">@T("12 Monate davor", "12 months before")</div></div>
+                        <div class="ll-kpi"><div class="ll-kpi-value @(c.ChangePercent >= 0 ? "sal-up" : "sal-down")">@Percent(c.ChangePercent)</div><div class="ll-kpi-label">@T("Veränderung", "Change")</div></div>
+                    </div>
+                    <MudText Typo="Typo.subtitle2">@T("Umsatz je Monat, 36 Monate", "Sales per month, 36 months")</MudText>
+                    <svg viewBox="0 0 720 170" class="sal-months">
+                        @for (var i = 0; i < _detailMonths.Count; i++)
+                        {
+                            var m = _detailMonths[i];
+                            var h = 140.0 * (double)(Math.Max(0, m.Value) / _detailMax);
+                            <g><rect x="@F(i * 20 + 2)" y="@F(150 - h)" width="16" height="@F(h)" rx="2" class="sal-month @(m.Month.Year == _data.ReferenceEnd.AddDays(-1).Year ? "sal-month-cur" : string.Empty)" style="animation-delay:@(F(i * 0.02))s"><title>@m.Month.ToString("MM.yyyy") · @Chf(m.Value)</title></rect></g>
+                            @if (m.Month.Month == 1)
+                            {
+                                <g><text x="@F(i * 20 + 2)" y="166" class="nw-axis">@m.Month.Year</text></g>
+                            }
+                        }
+                    </svg>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2">@T("Sparten, 24 Monate", "Divisions, 24 months")</MudText>
+                            @foreach (var (d, v) in c.Divisions.Take(8))
+                            {
+                                <div class="dir-ou-bar"><span class="ll-grow">@d</span><span class="dir-ou-track"><span style="width:@(F(100.0 * (double)(v / Math.Max(1, c.Divisions[0].Value))))%"></span></span><span class="ll-mono" style="width:64px;text-align:right">@Short(v)</span></div>
+                            }
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2">@T("Top-Artikel, 12 Monate", "Top articles, 12 months")</MudText>
+                            @foreach (var a in _detailArticles)
+                            {
+                                <div class="ll-row" style="font-size:13px"><span class="ll-grow" title="@a.Material">@Truncate(a.Article, 34)</span><span class="ll-mono ll-muted">@a.Quantity.ToString("N0")</span><span class="ll-mono" style="width:64px;text-align:right">@Short(a.Value)</span></div>
+                            }
+                        </MudItem>
+                    </MudGrid>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    private sealed record ArticleRow(string Material, string Article, decimal Quantity, decimal Value);
+
+    private SalesDataset? _data;
+    private IReadOnlyList<SalesCustomerSummary> _customers = [];
+    private Dictionary<string, IReadOnlyList<decimal>> _sparks = [];
+    private decimal _l12;
+    private decimal _p12;
+    private string _search = string.Empty;
+    private SalesCustomerSummary? _selected;
+    private IReadOnlyList<SalesMonthValue> _detailMonths = [];
+    private decimal _detailMax = 1;
+    private IReadOnlyList<ArticleRow> _detailArticles = [];
+
+    private IEnumerable<SalesCustomerSummary> Filtered => (_search.Length == 0
+        ? _customers.Where(c => c.Last12 > 0 || c.Previous12 > 0)
+        : _customers.Where(c => c.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))).Take(200);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is not null)
+            return;
+        var refEnd = _data.ReferenceEnd;
+        _customers = SalesAnalytics.Customers(_data.Facts, refEnd);
+        _l12 = _customers.Sum(c => c.Last12);
+        _p12 = _customers.Sum(c => c.Previous12);
+        var top = _customers.Take(200).Select(c => c.Key).ToHashSet();
+        _sparks = _data.Facts.Where(f => top.Contains(f.CustomerKey)).GroupBy(f => f.CustomerKey)
+            .ToDictionary(g => g.Key, g => MonthlyValues(g, refEnd, 24));
+    }
+
+    private void Select(SalesCustomerSummary c)
+    {
+        _selected = c;
+        var facts = _data!.Facts.Where(f => f.CustomerKey == c.Key).ToList();
+        _detailMonths = SalesAnalytics.Monthly(facts, _data.ReferenceEnd.AddMonths(-36), _data.ReferenceEnd);
+        _detailMax = Math.Max(1, _detailMonths.Select(m => m.Value).DefaultIfEmpty(1).Max());
+        _detailArticles = facts.Where(f => f.Date >= _data.ReferenceEnd.AddMonths(-12) && f.Date < _data.ReferenceEnd)
+            .GroupBy(f => f.Material)
+            .Select(g => new ArticleRow(g.Key, g.First().Article.Length > 0 ? g.First().Article : g.Key, g.Sum(f => f.Quantity), g.Sum(f => f.ValueChf)))
+            .OrderByDescending(a => a.Value).Take(10).ToList();
+    }
+
+    private static string Truncate(string text, int max) => text.Length <= max ? text : text[..(max - 1)] + "…";
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Kunden", Rows(_customers, c => new Dictionary<string, object?>
+        {
+            ["Kunde"] = c.Name, ["Land"] = c.MainCountry, ["Gesellschaften"] = Csv(c.Companies), ["Umsatz 12 M CHF"] = c.Last12,
+            ["Umsatz Vorjahr CHF"] = c.Previous12, ["Veraenderung %"] = c.ChangePercent, ["Erste Rechnung"] = c.FirstDate.ToDateTime(TimeOnly.MinValue),
+            ["Letzte Rechnung"] = c.LastDate.ToDateTime(TimeOnly.MinValue), ["Rechnungen"] = c.Invoices
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

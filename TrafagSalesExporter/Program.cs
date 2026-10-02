@@ -160,6 +160,8 @@ builder.Services.AddSingleton<AdInfrastructureService>();
 builder.Services.AddSingleton<AdGpoService>();
 builder.Services.AddSingleton<AdDnsZoneService>();
 builder.Services.AddSingleton<AdSnapshotService>();
+// Reiter Verkauf (2026-10-02): Verkaufszeilen nach Finance-Regeln, in CHF, gemerkt bis neuer Quellstand.
+builder.Services.AddSingleton<SalesDataService>();
 builder.Services.AddHostedService<NetworkProbeService>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, ClientConnectionTracker>();
 

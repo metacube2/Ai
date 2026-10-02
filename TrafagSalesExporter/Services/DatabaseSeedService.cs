@@ -335,6 +335,16 @@ public class DatabaseSeedService : IDatabaseSeedService
         // Logistik 2026-07-21 (Wunsch Ingo): eigener Root-Reiter; die Stuecklistendaten (ZLO03/
         // ZAT_VC via MaterialUsageDataRefreshService) koennen spaeter auch im Einkauf verwendet
         // werden, starten aber bewusst als eigenes Thema.
+        // Verkauf 2026-10-02 (Wunsch Ingo): Kundenanalysen nach Finance-Regeln, hinter der Finance-Freischaltung. Doku docs/VERKAUF_2026-10-02.md.
+        Group("sales", null, "Verkauf", "Sales", "Storefront", 33),
+        Link("sales-customers", "sales", "Kunden", "Customers", "Storefront", "verkauf", 10, "All"),
+        Link("sales-decline", "sales", "Rueckgang", "Decline", "TrendingDown", "verkauf/rueckgang", 20, "All"),
+        Link("sales-movement", "sales", "Neue und verlorene Kunden", "New and lost customers", "SwapVert", "verkauf/kundenbewegung", 30, "All"),
+        Link("sales-concentration", "sales", "Konzentration", "Concentration", "PieChart", "verkauf/konzentration", 40, "All"),
+        Link("sales-crosssell", "sales", "Cross-Selling", "Cross-selling", "JoinInner", "verkauf/cross-selling", 50, "All"),
+        Link("sales-prices", "sales", "Preisstreuung", "Price spread", "PriceChange", "verkauf/preise", 60, "All"),
+        Link("sales-forecast", "sales", "Saison und Prognose", "Season and forecast", "QueryStats", "verkauf/prognose", 70, "All"),
+        Link("sales-worldmap", "sales", "Weltkarte", "World map", "Public", "verkauf/weltkarte", 80, "All"),
         Group("logistics", null, "Logistik", "Logistics", "LocalShipping", 35),
         Link("logistics-bom-analysis", "logistics", "Stuecklistenanalyse", "BOM analysis", "AccountTree", "logistik/stuecklistenanalyse", 10, "All"),
         Link("logistics-material-disposition", "logistics", "Materialdisposition & Fehlteile", "Material planning & shortages", "Inventory", "logistik/materialdisposition", 20, "All"),

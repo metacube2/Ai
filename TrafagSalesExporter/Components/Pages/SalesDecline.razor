@@ -1,0 +1,95 @@
+@page "/verkauf/rueckgang"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Reiter Verkauf, Kunden mit Umsatzrueckgang (2026-10-02). Doku docs/VERKAUF_2026-10-02.md *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Rückgang", "Decline")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    var list = Declines;
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value sal-down">@list.Count</div><div class="ll-kpi-label">@T("Kunden mit Rückgang", "customers in decline")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value sal-down">@list.Count(d => d.Kind == "eingeschlafen")</div><div class="ll-kpi-label">@T("davon seit 6 Monaten ohne Umsatz", "of which no sales for 6 months")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value sal-down">@Short(list.Sum(d => d.LostChf))</div><div class="ll-kpi-label">@T("fehlender Umsatz CHF gegenüber Vorjahr", "missing sales CHF against previous year")</div></div>
+    </div>
+    <MudPaper Class="pa-3" Outlined="true">
+        <div class="d-flex align-center flex-wrap" style="gap:16px">
+            <MudText Typo="Typo.h6" Class="ll-grow">@T("Kunden mit Umsatzrückgang", "Customers with declining sales")</MudText>
+            <span class="ll-muted" style="font-size:13px">@T("Vorjahr mindestens CHF", "previous year at least CHF")</span>
+            <MudSelect T="decimal" @bind-Value="_minPrevious" Dense="true" Variant="Variant.Outlined" Style="max-width:130px">
+                @foreach (var v in Thresholds)
+                {
+                    <MudSelectItem T="decimal" Value="@v">@Chf(v)</MudSelectItem>
+                }
+            </MudSelect>
+            <ExcelButton FileLabel="Verkauf_Rueckgang" Sheets="ExcelSheets" />
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Rückgang ab 30 % in den letzten 12 Monaten gegenüber den 12 davor, oder seit 6 Monaten keine Rechnung mehr. Sortiert nach fehlendem Umsatz.", "Decline of 30 % or more in the last 12 months against the 12 before, or no invoice for 6 months. Sorted by missing sales.")</MudText>
+        <div class="ll-list" style="max-height:640px">
+            @{ var maxLost = Math.Max(1, list.Select(d => d.LostChf).DefaultIfEmpty(1).Max()); }
+            @foreach (var (d, i) in list.Take(150).Select((d, i) => (d, i)))
+            {
+                <div class="sal-decline" style="animation-delay:@(F(Math.Min(i, 30) * 0.03))s">
+                    <span class="sal-decline-name" title="@d.Customer.Name">
+                        @d.Customer.Name <span class="ll-muted">@d.Customer.MainCountry · @Csv(d.Customer.Companies)</span>
+                        @if (d.Kind == "eingeschlafen")
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error">@T("eingeschlafen", "dormant")</MudChip>
+                        }
+                    </span>
+                    <span class="ll-mono" style="width:150px;text-align:right">@Short(d.Customer.Previous12) → @Short(d.Customer.Last12)</span>
+                    <span class="ll-mono sal-down" style="width:60px;text-align:right">@Percent(d.Customer.ChangePercent)</span>
+                    <span class="sal-lost-track"><span class="sal-lost-bar" style="width:@(F(100.0 * (double)(d.LostChf / maxLost)))%"></span></span>
+                    <span class="ll-mono" style="width:72px;text-align:right">−@Short(d.LostChf)</span>
+                    <span class="ll-mono ll-muted" style="width:86px;text-align:right">@d.Customer.LastDate.ToString("dd.MM.yy")</span>
+                </div>
+            }
+        </div>
+    </MudPaper>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    private static readonly decimal[] Thresholds = [1000m, 5000m, 10000m, 25000m, 50000m, 100000m];
+    private SalesDataset? _data;
+    private IReadOnlyList<SalesCustomerSummary> _customers = [];
+    private decimal _minPrevious = 10000m;
+
+    private IReadOnlyList<SalesDeclineItem> Declines => SalesAnalytics.Declines(_customers, _minPrevious);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is null)
+            _customers = SalesAnalytics.Customers(_data.Facts, _data.ReferenceEnd);
+    }
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Rueckgang", Rows(Declines, d => new Dictionary<string, object?>
+        {
+            ["Kunde"] = d.Customer.Name, ["Land"] = d.Customer.MainCountry, ["Gesellschaften"] = Csv(d.Customer.Companies),
+            ["Art"] = d.Kind, ["Vorjahr CHF"] = d.Customer.Previous12, ["12 M CHF"] = d.Customer.Last12, ["Veraenderung %"] = d.Customer.ChangePercent,
+            ["Fehlender Umsatz CHF"] = d.LostChf, ["Letzte Rechnung"] = d.Customer.LastDate.ToDateTime(TimeOnly.MinValue)
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

@@ -1,0 +1,127 @@
+@page "/verkauf/cross-selling"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Reiter Verkauf, Cross-Selling ueber Sparten (2026-10-02). Doku docs/VERKAUF_2026-10-02.md *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Cross-Selling", "Cross-selling")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="6">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Wer A kauft, kauft auch B", "Who buys A also buys B")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Zeile A, Spalte B: Anteil der Kunden mit Sparte A, die auch B kaufen (24 Monate, ab 5 gemeinsamen Kunden). Sparten ohne Zuordnung, „Others“ und Nummern bleiben weg.", "Row A, column B: share of customers with division A who also buy B (24 months, at least 5 shared customers). Unassigned divisions, \"Others\" and numbers are left out.")</MudText>
+                @if (_divisions.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Einträge.", "No entries.")</MudText>
+                }
+                else
+                {
+                    var cell = Math.Min(54.0, 420.0 / _divisions.Count);
+                    <svg viewBox="0 0 @F(160 + cell * _divisions.Count) @F(130 + cell * _divisions.Count)" class="sal-heat">
+                        @for (var j = 0; j < _divisions.Count; j++)
+                        {
+                            <g><text transform="translate(@F(160 + j * cell + cell / 2),124) rotate(-50)" class="nw-axis">@_divisions[j]</text></g>
+                        }
+                        @for (var i = 0; i < _divisions.Count; i++)
+                        {
+                            var a = _divisions[i];
+                            <g>
+                                <text x="154" y="@F(130 + i * cell + cell / 2 + 4)" text-anchor="end" class="nw-axis">@a</text>
+                                @for (var j = 0; j < _divisions.Count; j++)
+                                {
+                                    var b = _divisions[j];
+                                    var rule = _rules.FirstOrDefault(r => r.From == a && r.To == b);
+                                    var conf = rule?.Confidence ?? 0;
+                                    <rect x="@F(160 + j * cell + 1)" y="@F(130 + i * cell + 1)" width="@F(cell - 2)" height="@F(cell - 2)" rx="3"
+                                          class="sal-heat-cell @(i == j ? "sal-heat-diag" : string.Empty)" style="fill-opacity:@(F(i == j ? 0.15 : 0.08 + conf * 0.92));animation-delay:@(F((i + j) * 0.03))s">
+                                        <title>@a → @b: @Percent(conf) (@(rule?.Both ?? 0) @T("Kunden", "customers"))</title>
+                                    </rect>
+                                    @if (i != j && conf >= 0.3)
+                                    {
+                                        <g><text x="@F(160 + j * cell + cell / 2)" y="@F(130 + i * cell + cell / 2 + 4)" text-anchor="middle" class="sal-heat-val">@((conf * 100).ToString("0"))</text></g>
+                                    }
+                                }
+                            </g>
+                        }
+                    </svg>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="6">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <div class="d-flex align-center" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Ansätze je Kunde", "Opportunities per customer")</MudText>
+                    <ExcelButton FileLabel="Verkauf_CrossSelling" Sheets="ExcelSheets" />
+                </div>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Sparten, die ein Kunde nicht kauft, obwohl mindestens 40 % der Kunden mit seiner Sparte sie kaufen. Sortiert nach Kundenumsatz mal Wahrscheinlichkeit; „typisch“ ist der mittlere Umsatz der Käufer dieser Sparte.", "Divisions a customer does not buy although at least 40 % of customers with his division do. Sorted by customer sales times probability; \"typical\" is the median sales of buyers of that division.")</MudText>
+                <div class="ll-list" style="max-height:600px">
+                    <div class="ll-row sal-head"><span class="ll-grow">@T("Kunde", "Customer")</span><span style="width:150px">@T("fehlt", "missing")</span><span style="width:140px">@T("weil er kauft", "because buys")</span><span style="width:50px;text-align:right">%</span><span style="width:70px;text-align:right">@T("typisch", "typical")</span></div>
+                    @foreach (var o in _opps.Take(150))
+                    {
+                        <div class="ll-row" style="font-size:13px">
+                            <span class="ll-grow sal-name" title="@o.CustomerName">@o.CustomerName <span class="ll-muted">@Short(o.CustomerRevenue)</span></span>
+                            <span style="width:150px"><b>@o.Division</b></span>
+                            <span style="width:140px" class="ll-muted">@o.BecauseOf</span>
+                            <span class="ll-mono" style="width:50px;text-align:right">@((o.Confidence * 100).ToString("0"))</span>
+                            <span class="ll-mono" style="width:70px;text-align:right">@Short(o.TypicalRevenue)</span>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    private SalesDataset? _data;
+    private IReadOnlyList<SalesCrossSellRule> _rules = [];
+    private IReadOnlyList<SalesCrossSellOpportunity> _opps = [];
+    private List<string> _divisions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is not null)
+            return;
+        _rules = SalesAnalytics.CrossSellRules(_data.Facts, _data.ReferenceEnd);
+        _opps = SalesAnalytics.CrossSellOpportunities(_data.Facts, _data.ReferenceEnd);
+        _divisions = _rules.SelectMany(r => new[] { r.From, r.To }).GroupBy(d => d)
+            .OrderByDescending(g => _rules.Where(r => r.From == g.Key).Select(r => r.FromCustomers).DefaultIfEmpty(0).Max())
+            .Select(g => g.Key).Take(12).ToList();
+    }
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Ansaetze", Rows(_opps, o => new Dictionary<string, object?>
+        {
+            ["Kunde"] = o.CustomerName, ["Umsatz 24 M CHF"] = o.CustomerRevenue, ["Fehlende Sparte"] = o.Division,
+            ["Weil er kauft"] = o.BecauseOf, ["Wahrscheinlichkeit"] = Math.Round(o.Confidence, 3), ["Typischer Umsatz CHF"] = o.TypicalRevenue
+        })),
+        new("Regeln", Rows(_rules, r => new Dictionary<string, object?>
+        {
+            ["Von"] = r.From, ["Zu"] = r.To, ["Gemeinsame Kunden"] = r.Both, ["Kunden Von"] = r.FromCustomers,
+            ["Konfidenz"] = Math.Round(r.Confidence, 3), ["Lift"] = Math.Round(r.Lift, 2)
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

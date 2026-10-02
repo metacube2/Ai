@@ -1,0 +1,176 @@
+@page "/verkauf/weltkarte"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@implements IDisposable
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Reiter Verkauf, Weltkarte Umsatz nach Kundenland mit Warenfluss und Monatsanimation (2026-10-02).
+   Stilisierte Karte aus WorldGeo, keine externe Bibliothek. Doku docs/VERKAUF_2026-10-02.md *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Weltkarte", "World map")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="9">
+            <MudPaper Class="pa-3" Outlined="true">
+                <div class="d-flex align-center flex-wrap" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatz nach Kundenland", "Sales by customer country")</MudText>
+                    <MudIconButton Icon="@(_playing ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="TogglePlay" />
+                    <span class="ll-mono" style="min-width:150px">@(_month is null ? T("12 Monate", "12 months") : _months[_month.Value].ToString("MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("de-CH")))</span>
+                    <MudSlider T="int" Min="-1" Max="@(_months.Count - 1)" Value="@(_month ?? -1)" ValueChanged="SetMonth" Style="max-width:260px" />
+                    <MudSwitch T="bool" @bind-Value="_showFlows" Color="Color.Primary" Label="@T("Warenfluss", "Flows")" />
+                </div>
+                <svg viewBox="0 0 1000 500" class="sal-world">
+                    <defs>
+                        <pattern id="sal-dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.4" class="sal-land-dot" /></pattern>
+                        <radialGradient id="sal-glow"><stop offset="0%" stop-color="#FFB74D" stop-opacity="0.95" /><stop offset="70%" stop-color="#F08A4B" stop-opacity="0.55" /><stop offset="100%" stop-color="#C8501E" stop-opacity="0.1" /></radialGradient>
+                    </defs>
+                    @foreach (var p in WorldGeo.ContinentPaths())
+                    {
+                        <path d="@p" class="sal-land" />
+                    }
+                    @if (_showFlows)
+                    {
+                        foreach (var f in _flows.Take(25))
+                        {
+                            if (!WorldGeo.Countries.TryGetValue(f.FromCountry, out var a) || !WorldGeo.Countries.TryGetValue(f.ToCountry, out var b)) continue;
+                            var (x1, y1) = WorldGeo.Project(a.Lat, a.Lon);
+                            var (x2, y2) = WorldGeo.Project(b.Lat, b.Lon);
+                            var mx = (x1 + x2) / 2;
+                            var my = (y1 + y2) / 2 - Math.Min(140, Math.Abs(x2 - x1) * 0.35 + 20);
+                            var width = 0.8 + 5 * Math.Sqrt((double)(f.Last12 / _maxFlow));
+                            <path d="M@(F(x1)),@(F(y1)) Q@(F(mx)),@(F(my)) @(F(x2)),@(F(y2))" class="sal-flow" style="stroke-width:@F(width)"><title>@WorldGeo.Name(f.FromCountry) → @WorldGeo.Name(f.ToCountry): CHF @Chf(f.Last12)</title></path>
+                        }
+                    }
+                    @foreach (var c in _countries)
+                    {
+                        if (!WorldGeo.Countries.TryGetValue(c.Country, out var geo)) continue;
+                        var (x, y) = WorldGeo.Project(geo.Lat, geo.Lon);
+                        var value = _month is { } m ? c.Monthly[m] : c.Last12;
+                        var max = _month is null ? _maxL12 : _maxMonth;
+                        var r = value <= 0 ? 0 : 3 + 34 * Math.Sqrt((double)(value / max));
+                        <g class="sal-bubble-g">
+                            <circle cx="@F(x)" cy="@F(y)" r="@F(r)" class="sal-bubble" fill="url(#sal-glow)"><title>@WorldGeo.Name(c.Country): CHF @Chf(value) · @c.Customers @T("Kunden", "customers")</title></circle>
+                            @if (r > 13)
+                            {
+                                <g><text x="@F(x)" y="@F(y + 4)" text-anchor="middle" class="sal-bubble-label">@c.Country</text></g>
+                            }
+                        </g>
+                    }
+                </svg>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Stilisierte Karte, Grenzen nur angedeutet. Blasenfläche nach Umsatz; Bögen vom Land der verkaufenden Gesellschaft zum Kundenland (Top 25, 12 Monate). Mit ▶ laufen die letzten 24 Monate ab.", "Stylised map, borders only hinted. Bubble area by sales; arcs from the selling company's country to the customer country (top 25, 12 months). ▶ plays the last 24 months.")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="3">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <div class="d-flex align-center" style="gap:8px"><MudText Typo="Typo.h6" Class="ll-grow">@T("Länder", "Countries")</MudText><ExcelButton FileLabel="Verkauf_Laender" Sheets="ExcelSheets" /></div>
+                <div class="ll-list" style="max-height:520px">
+                    @foreach (var c in _countries.Take(40))
+                    {
+                        <div class="dir-ou-bar"><span style="width:110px" title="@c.Country">@WorldGeo.Name(c.Country)</span><span class="dir-ou-track ll-grow" style="width:auto"><span style="width:@(F(100.0 * (double)(c.Last12 / _maxL12)))%"></span></span><span class="ll-mono" style="width:60px;text-align:right">@Short(c.Last12)</span></div>
+                    }
+                </div>
+                @if (_withoutCountry > 0)
+                {
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Ohne Kundenland, 12 Monate", "Without customer country, 12 months"): CHF @Short(_withoutCountry)</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    private SalesDataset? _data;
+    private IReadOnlyList<SalesCountryValue> _countries = [];
+    private IReadOnlyList<SalesFlow> _flows = [];
+    private List<DateOnly> _months = [];
+    private int? _month;
+    private bool _playing;
+    private bool _showFlows = true;
+    private decimal _maxL12 = 1;
+    private decimal _maxMonth = 1;
+    private decimal _maxFlow = 1;
+    private decimal _withoutCountry;
+    private CancellationTokenSource? _play;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is not null)
+            return;
+        var refEnd = _data.ReferenceEnd;
+        _countries = SalesAnalytics.Countries(_data.Facts, refEnd);
+        _flows = SalesAnalytics.Flows(_data.Facts, refEnd);
+        _months = Enumerable.Range(0, 24).Select(i => refEnd.AddMonths(-24 + i)).ToList();
+        _maxL12 = Math.Max(1, _countries.Select(c => c.Last12).DefaultIfEmpty(1).Max());
+        _maxMonth = Math.Max(1, _countries.SelectMany(c => c.Monthly).DefaultIfEmpty(1).Max());
+        _maxFlow = Math.Max(1, _flows.Select(f => f.Last12).DefaultIfEmpty(1).Max());
+        _withoutCountry = _data.Facts.Where(f => f.Date >= refEnd.AddMonths(-12) && f.Date < refEnd && f.CustomerCountry.Length == 0).Sum(f => f.ValueChf);
+    }
+
+    private void SetMonth(int value) => _month = value < 0 ? null : value;
+
+    private void TogglePlay()
+    {
+        if (_playing)
+        {
+            _play?.Cancel();
+            _playing = false;
+            return;
+        }
+        _playing = true;
+        _play = new CancellationTokenSource();
+        var token = _play.Token;
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(700));
+            var i = _month ?? -1;
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+            {
+                i++;
+                if (i >= _months.Count)
+                {
+                    _month = null;
+                    _playing = false;
+                    await InvokeAsync(StateHasChanged);
+                    return;
+                }
+                _month = i;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, token).ContinueWith(_ => { }, TaskScheduler.Default);
+    }
+
+    public void Dispose()
+    {
+        _play?.Cancel();
+        _play?.Dispose();
+    }
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Laender", Rows(_countries, c => new Dictionary<string, object?>
+        {
+            ["Land"] = c.Country, ["Name"] = WorldGeo.Name(c.Country), ["Umsatz 12 M CHF"] = c.Last12, ["Kunden"] = c.Customers
+        })),
+        new("Warenfluss", Rows(_flows, f => new Dictionary<string, object?> { ["Von"] = f.FromCountry, ["Nach"] = f.ToCountry, ["Umsatz 12 M CHF"] = f.Last12 }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

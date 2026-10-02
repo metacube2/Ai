@@ -54,6 +54,8 @@
             "finance-rules" or
             "settings" or
             "logs" or
-            "source-viewer";
+            "source-viewer" ||
+            // Reiter Verkauf (2026-10-02): Kundenumsaetze, gleich geschuetzt wie das Management-Cockpit.
+            path == "verkauf" || path.StartsWith("verkauf/", StringComparison.Ordinal);
     }
 }

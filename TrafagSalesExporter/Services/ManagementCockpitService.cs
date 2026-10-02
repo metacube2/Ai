@@ -2238,7 +2238,7 @@ public class ManagementCockpitService : IManagementCockpitService
         return string.Join(", ", reasons.Distinct(StringComparer.OrdinalIgnoreCase));
     }
 
-    private static bool IsIntercompanyCustomer(SalesRecord record, IReadOnlyList<FinanceIntercompanyRule> rules)
+    internal static bool IsIntercompanyCustomer(SalesRecord record, IReadOnlyList<FinanceIntercompanyRule> rules)
     {
         var customerNumber = record.CustomerNumber?.Trim() ?? string.Empty;
         var customerName = record.CustomerName?.Trim() ?? string.Empty;
@@ -2333,7 +2333,7 @@ public class ManagementCockpitService : IManagementCockpitService
         };
     }
 
-    private static string ResolveFinanceCurrency(SalesRecord record)
+    internal static string ResolveFinanceCurrency(SalesRecord record)
         => ResolveFinanceCountryKey(record.Land, record.Tsc) switch
         {
             "CH" => "CHF",
@@ -2348,7 +2348,7 @@ public class ManagementCockpitService : IManagementCockpitService
             _ => string.IsNullOrWhiteSpace(record.CompanyCurrency) ? record.SalesCurrency : record.CompanyCurrency
         };
 
-    private static string ResolveFinanceCountryKey(string land, string tsc)
+    internal static string ResolveFinanceCountryKey(string land, string tsc)
     {
         var normalizedLand = (land ?? string.Empty).Trim().ToUpperInvariant();
         var normalizedTsc = (tsc ?? string.Empty).Trim().ToUpperInvariant();
