@@ -1,0 +1,517 @@
+@page "/netzwerk/ad"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@inject NetworkAnalysisService Network
+@inject AdComputerService Ad
+@inject IUiTextService UiText
+
+@* Unterreiter Active Directory (Wunsch Ingo 2026-10-02, fuer die Netzwerktechniker). Nur Computerkonten,
+   nur lesend; Passwoerter und BitLocker-Schluessel werden nie gelesen. Doku docs/NETZWERK_2026-10-02.md *@
+<PageTitle>@T("Netzwerk", "Network") · Active Directory</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_ad is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!_ad.Enabled)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@T("Die AD-Auswertung ist ausgeschaltet (NetworkProbe:AdEnabled).", "The AD analysis is switched off (NetworkProbe:AdEnabled).")</MudAlert>
+}
+else if (_ad.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_ad.Error</MudAlert>
+}
+else
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@_ad.Computers.Count</div><div class="ll-kpi-label">@T("Computerkonten", "Computer accounts")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_ad.Computers.Count(c => AdAnalysis.IsActiveRecently(c, _now))</div><div class="ll-kpi-label">@T("aktiv in 30 Tagen", "active in 30 days")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_unsupported.Count(c => c.Enabled)</div><div class="ll-kpi-label">@T("aktiv ohne Herstellersupport", "enabled without vendor support")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-data">@_inactive.Count</div><div class="ll-kpi-label">@T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_lapsMissing.Count</div><div class="ll-kpi-label">@T("ohne LAPS", "without LAPS")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_delegation.Count</div><div class="ll-kpi-label">@T("riskante Delegation", "risky delegation")</div></div>
+    </div>
+
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-3" Class="ad-tabs">
+        <MudTabPanel Text="@T("3D-Übersicht", "3D overview")" Icon="@Icons.Material.Filled.ViewInAr">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="8">
+                    <div class="ad3d-scene" style="--w:@(Px(_worldSize));--k:@F(_scale)">
+                        <div class="ad3d-world">
+                            <div class="ad3d-floor"></div>
+                            <div class="ad3d-scan"></div>
+                            @for (var i = 0; i < _towers.Count; i++)
+                            {
+                                var t = _towers[i];
+                                var index = i;
+                                var col = i % _cols;
+                                var row = i / _cols;
+                                var x = col * Cell - _worldSize / 2 + (Cell - Base) / 2.0;
+                                var y = row * Cell - _worldSize / 2 + (Cell - Base) / 2.0;
+                                var z = 0.0;
+                                <div class="ad3d-tower @(_selected == index ? "ad3d-selected" : string.Empty)" style="--x:@Px(x);--y:@Px(y);--d:@(F(i * 0.06))s;--s:@Px(Base)"
+                                     title="@(i + 1). @t.Label · @t.Total" @onclick="() => Select(index)">
+                                    @foreach (var seg in Segments(t))
+                                    {
+                                        var h = Math.Max(2, seg.Count * _heightPerComputer);
+                                        <div class="ad3d-cube ad3d-@seg.Css" style="--z:@Px(z);--h:@Px(h)">
+                                            <i class="ad3d-n"></i><i class="ad3d-s"></i><i class="ad3d-w"></i><i class="ad3d-e"></i><i class="ad3d-top"></i>
+                                        </div>
+                                        z += h;
+                                    }
+                                    <div class="ad3d-label" style="--z:@Px(z + 1)"><b>@(i + 1)</b></div>
+                                </div>
+                            }
+                        </div>
+                        <div class="ad3d-hint">@T("Jeder Turm ist eine OU, die Höhe die Zahl der Computer. Maus darüber hält die Drehung an, Klick zeigt die Geräte.", "Each tower is an OU, its height the number of computers. Hover pauses the rotation, click shows the devices.")</div>
+                    </div>
+                    <div class="ll-legend mt-2">
+                        <span><i class="ll-swatch ad-c-ok"></i>@T("in Ordnung", "fine")</span>
+                        <span><i class="ll-swatch ad-c-inactive"></i>@T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days")</span>
+                        <span><i class="ll-swatch ad-c-disabled"></i>@T("deaktiviert", "disabled")</span>
+                        <span><i class="ll-swatch ad-c-unsupported"></i>@T("ohne Herstellersupport", "without vendor support")</span>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" lg="4">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("OUs", "OUs")</MudText>
+                        <div class="ll-list" style="max-height:470px">
+                            @for (var i = 0; i < _towers.Count; i++)
+                            {
+                                var t = _towers[i];
+                                var index = i;
+                                <div class="ll-row ad-ou-row @(_selected == index ? "ad-ou-active" : string.Empty)" @onclick="() => Select(index)">
+                                    <span class="ll-mono" style="width:26px">@(i + 1)</span>
+                                    <span class="ll-grow">@t.Label @if (t.IsDefaultContainer) {<MudChip T="string" Size="Size.Small" Color="Color.Warning">@T("Standardcontainer", "default container")</MudChip>} else if (!t.HasGpoLink) {<MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@T("keine eigene GPO", "no own GPO")</MudChip>}</span>
+                                    <span class="ad-mini">
+                                        <i class="ad-c-ok" style="flex:@t.Ok"></i><i class="ad-c-inactive" style="flex:@t.Inactive"></i><i class="ad-c-disabled" style="flex:@t.Disabled"></i><i class="ad-c-unsupported" style="flex:@t.Unsupported"></i>
+                                    </span>
+                                    <span class="ll-mono" style="width:40px;text-align:right">@t.Total</span>
+                                </div>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                @if (_selected is { } sel && sel < _towers.Count)
+                {
+                    var tower = _towers[sel];
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudText Typo="Typo.h6">@(sel + 1). @tower.Label</MudText>
+                            <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@tower.Container</MudText>
+                            <ComputerTable Rows="@_ad.Computers.Where(c => string.Equals(c.Container, tower.Container, StringComparison.OrdinalIgnoreCase)).ToList()" Now="@_now" />
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Lebenszyklus", "Lifecycle")" Icon="@Icons.Material.Filled.HourglassBottom">
+            <MudPaper Class="pa-3 mb-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Betriebssysteme und Supportende", "Operating systems and end of support")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Nur aktivierte Konten. Supportende nach Microsoft Lifecycle, Stand Oktober 2026. Rot: abgelaufen, gelb: endet in 180 Tagen.", "Enabled accounts only. End of support per Microsoft Lifecycle, as of October 2026. Red: expired, yellow: ends within 180 days.")</MudText>
+                @foreach (var p in _products)
+                {
+                    <div class="ad-life">
+                        <div class="ad-life-head">
+                            <span class="nw-dot ad-life-@p.Class"></span>
+                            <b>@p.Product</b>
+                            <span class="ll-grow"></span>
+                            <span class="ll-mono ll-muted">@(p.End?.ToString("dd.MM.yyyy") ?? T("unbekannt", "unknown"))</span>
+                            <span class="ll-mono" style="width:56px;text-align:right">@p.Count</span>
+                        </div>
+                        <div class="ad-life-track"><span class="ad-life-fill ad-life-@p.Class" style="width:@Pct(p.Count, _maxProduct);animation-delay:@(F(_products.IndexOf(p) * 0.05))s"></span></div>
+                    </div>
+                }
+            </MudPaper>
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Neu angelegte Computerkonten je Monat", "New computer accounts per month")</MudText>
+                <svg viewBox="0 0 1000 180" class="ad-growth">
+                    @for (var i = 0; i < _created.Count; i++)
+                    {
+                        var (month, count) = _created[i];
+                        var bw = 1000.0 / _created.Count;
+                        var bh = count * 140.0 / Math.Max(1, _maxCreated);
+                        <g>
+                            <rect x="@F(i * bw + 4)" y="@F(150 - bh)" width="@F(bw - 8)" height="@F(bh)" class="ad-growth-bar" style="animation-delay:@(F(i * 0.04))s"><title>@month.ToString("MM.yyyy") · @count</title></rect>
+                            <text x="@F(i * bw + bw / 2)" y="170" class="nw-axis" text-anchor="middle">@month.ToString("MM.yy")</text>
+                            @if (count > 0)
+                            {
+                                <g><text x="@F(i * bw + bw / 2)" y="@F(145 - bh)" class="nw-axis" text-anchor="middle">@count</text></g>
+                            }
+                        </g>
+                    }
+                </svg>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Aufräumen", "Clean-up")" Icon="@Icons.Material.Filled.CleaningServices">
+            <div class="ll-kpis">
+                <div class="ll-kpi"><div class="ll-kpi-value">@_inactive.Count</div><div class="ll-kpi-label">@T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days")</div></div>
+                <div class="ll-kpi"><div class="ll-kpi-value">@_ad.Computers.Count(c => AdAnalysis.IsInactive(c, _now, 180))</div><div class="ll-kpi-label">@T("davon über 180 Tage", "of which over 180 days")</div></div>
+                <div class="ll-kpi"><div class="ll-kpi-value">@_neverUsed.Count</div><div class="ll-kpi-label">@T("nie angemeldet (älter als 30 Tage)", "never logged on (older than 30 days)")</div></div>
+                <div class="ll-kpi"><div class="ll-kpi-value">@_longDisabled.Count</div><div class="ll-kpi-label">@T("seit über einem Jahr deaktiviert", "disabled for over a year")</div></div>
+                <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_pwdStale.Count</div><div class="ll-kpi-label">@T("aktiv, Computerpasswort über 60 Tage alt", "active, computer password over 60 days old")</div></div>
+            </div>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Aktiv, aber ohne Anmeldung", "Enabled but without logon")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Kandidaten zum Deaktivieren. Die letzte Anmeldung im AD ist bis zu 14 Tage ungenau.", "Candidates for disabling. The last logon in AD can be up to 14 days off.")</MudText>
+                        <ComputerTable Rows="@_inactive.Concat(_neverUsed).Distinct().OrderBy(c => c.LastLogonUtc ?? DateTime.MinValue).ToList()" Now="@_now" />
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel mb-3" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Computerpasswort nicht erneuert", "Computer password not renewed")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Gerät meldet sich an, erneuert aber sein Kontopasswort nicht. Häufige Ursache für „Vertrauensstellung verloren“.", "Device logs on but does not renew its account password. Common cause of a lost trust relationship.")</MudText>
+                        <ComputerTable Rows="@_pwdStale" Now="@_now" ShowPassword="true" />
+                    </MudPaper>
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Seit über einem Jahr deaktiviert", "Disabled for over a year")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Letzte Änderung des Kontos als Näherung für das Deaktivierungsdatum. Kandidaten zum Löschen.", "Last change of the account as an approximation of the disable date. Candidates for deletion.")</MudText>
+                        <ComputerTable Rows="@_longDisabled" Now="@_now" />
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Sicherheit", "Security")" Icon="@Icons.Material.Filled.Shield">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-3 ll-panel ad-gauge-box" Outlined="true">
+                        <MudText Typo="Typo.h6">LAPS</MudText>
+                        @Gauge(_lapsBase == 0 ? 0 : (_lapsBase - _lapsMissing.Count) / (double)_lapsBase, T("mit verwaltetem Admin-Passwort", "with managed admin password"))
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Gelesen wird nur das Ablaufdatum, nie das Passwort. Ist bei keinem Gerät ein Datum sichtbar, fehlen eher Leserechte als LAPS.", "Only the expiry date is read, never the password. If no device shows a date, read permission is more likely missing than LAPS.")</MudText>
+                        @if (_lapsOverdue.Count > 0)
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">@_lapsOverdue.Count @T("aktive Geräte mit abgelaufenem LAPS-Passwort", "active devices with expired LAPS password")</MudAlert>
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-3 ll-panel ad-gauge-box" Outlined="true">
+                        <MudText Typo="Typo.h6">BitLocker</MudText>
+                        @Gauge(_lapsBase == 0 ? 0 : _ad.Computers.Count(c => c.Enabled && c.BitLockerKeys > 0) / (double)_lapsBase, T("mit Wiederherstellungsschlüssel im AD", "with recovery key in AD"))
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Gezählt werden nur die Objekte, nie der Schlüssel. Ohne Leserechte erscheinen 0 %.", "Only the objects are counted, never the key. Without read permission 0 % is shown.")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-3 ll-panel ad-gauge-box" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Delegation", "Delegation")</MudText>
+                        <div class="ad-big @(_delegation.Count > 0 ? "nw-text-net" : string.Empty)">@_delegation.Count</div>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Computer ausser Domänencontrollern mit uneingeschränkter Delegation oder Protokollübergang. Wer so ein Gerät übernimmt, kann sich als beliebiger Benutzer ausgeben.", "Computers other than domain controllers with unconstrained delegation or protocol transition. Whoever takes over such a device can impersonate any user.")</MudText>
+                        <MudText Typo="Typo.caption" Class="d-block mt-1">@T("Eingeschränkte Delegation", "Constrained delegation"): @_ad.Computers.Count(c => c.ConstrainedTargets > 0)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Riskante Delegation", "Risky delegation")</MudText>
+                        <ComputerTable Rows="@_delegation" Now="@_now" />
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Aktive Geräte ohne LAPS", "Active devices without LAPS")</MudText>
+                        <ComputerTable Rows="@_lapsMissing.Where(c => AdAnalysis.IsActiveRecently(c, _now)).ToList()" Now="@_now" />
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Dienste", "Services")" Icon="@Icons.Material.Filled.Dns">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Dienste je Server", "Services per server")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Aus den Dienstnamen (servicePrincipalName) der aktivierten Konten. Zeigt, wo SQL, Web, Remotedesktop und Ähnliches registriert sind; ob der Dienst läuft, sagt das nicht.", "From the service names (servicePrincipalName) of enabled accounts. Shows where SQL, web, remote desktop and similar are registered; it does not say whether the service runs.")</MudText>
+                <div class="ad-matrix-wrap">
+                    <table class="ad-matrix">
+                        <thead><tr><th></th>@foreach (var s in _serviceColumns) {<th><span>@s</span></th>}</tr></thead>
+                        <tbody>
+                            @foreach (var row in _serviceRows)
+                            {
+                                <tr>
+                                    <td class="ll-mono" title="@row.Computer.OperatingSystem">@row.Computer.Name</td>
+                                    @foreach (var s in _serviceColumns)
+                                    {
+                                        <td>@if (row.Groups.Contains(s)) {<i class="ad-cell"></i>}</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Struktur und Subnetze", "Structure and subnets")" Icon="@Icons.Material.Filled.AccountTree">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Netzbereiche ohne AD-Standort", "Network ranges without AD site")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("/24-Bereiche, in denen Computer (laut DNS) oder Browser des Cockpits gesehen werden, die in keinem AD-Subnetz liegen. Geräte dort melden sich an einem beliebigen Domänencontroller an, auch über langsame Leitungen.", "/24 ranges where computers (per DNS) or cockpit browsers are seen that are in no AD subnet. Devices there log on to any domain controller, even over slow links.")</MudText>
+                        @if (_dns is null)
+                        {
+                            <MudProgressLinear Indeterminate="true" /><MudText Typo="Typo.caption">@T("DNS wird abgefragt …", "Querying DNS …")</MudText>
+                        }
+                        else if (_ad.Subnets.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine AD-Subnetze lesbar.", "No AD subnets readable.")</MudText>
+                        }
+                        else if (_uncovered.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Success" Dense="true">@T("Alle gesehenen Bereiche liegen in einem AD-Subnetz.", "All seen ranges are inside an AD subnet.")</MudAlert>
+                        }
+                        else
+                        {
+                            <div class="ll-list" style="max-height:340px">
+                                @foreach (var u in _uncovered)
+                                {
+                                    <div class="ll-row">
+                                        <span class="ll-mono" style="width:130px">@u.Range</span>
+                                        <span style="width:110px">@u.Computers @T("Computer", "computers")</span>
+                                        <span style="width:110px">@u.ClientSessions @T("Sitzungen", "sessions")</span>
+                                        <span class="ll-grow ll-muted">@string.Join(" · ", u.Examples)</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("AD-Subnetze und Standorte", "AD subnets and sites")</MudText>
+                        <div class="ll-list" style="max-height:340px">
+                            @foreach (var g in _ad.Subnets.GroupBy(s => s.Site).OrderBy(g => g.Key))
+                            {
+                                <div class="ll-row" style="align-items:flex-start">
+                                    <span style="width:160px"><b>@(g.Key.Length > 0 ? g.Key : "–")</b></span>
+                                    <span class="ll-grow ll-mono">@string.Join(" · ", g.Select(s => s.Cidr))</span>
+                                </div>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("OUs mit Computern ohne eigene Gruppenrichtlinie", "OUs with computers but no own group policy")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Es wirken nur geerbte Richtlinien. Im Standardcontainer „Computers“ greifen gar keine OU-Richtlinien.", "Only inherited policies apply. In the default container \"Computers\" no OU policies apply at all.")</MudText>
+                        <div class="ll-list" style="max-height:300px">
+                            @foreach (var t in _towers.Where(t => t.IsDefaultContainer || !t.HasGpoLink))
+                            {
+                                <div class="ll-row">
+                                    <span class="ll-grow">@t.Label</span>
+                                    @if (t.IsDefaultContainer)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">@T("Standardcontainer", "default container")</MudChip>
+                                    }
+                                    <span class="ll-mono" style="width:50px;text-align:right">@t.Total</span>
+                                </div>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("DNS und DCs", "DNS and DCs")" Icon="@Icons.Material.Filled.Router">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="5">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Domänencontroller", "Domain controllers")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("LDAP (389) und Kerberos (88) laufen in der 5-Minuten-Prüfung mit, nur als Verbindungsaufbau.", "LDAP (389) and Kerberos (88) are part of the 5-minute check, as connection setup only.")</MudText>
+                        @foreach (var dc in _ad.Computers.Where(c => c.IsDomainController).OrderBy(c => c.Name))
+                        {
+                            var life = AdAnalysis.Lifecycle(dc.OperatingSystem, dc.OsVersion);
+                            <div class="ad-dc">
+                                <div class="ad-dc-head"><MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" /> <b>@dc.Name</b> <span class="ll-muted">@dc.OperatingSystem</span><span class="ll-grow"></span><span class="nw-dot ad-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, _today)" title="@life.EndOfSupport"></span></div>
+                                <div class="ad-dc-probes">
+                                    @foreach (var s in _dcStatus.Where(s => s.Target.Host.Equals(dc.DnsHostName, StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        <span class="ad-probe @(s.Last is null ? "ad-probe-none" : s.Last.Ok ? "ad-probe-ok" : "ad-probe-bad")">
+                                            @s.Target.Port · @(s.Last?.LatencyMs is { } ms ? F(ms) + " ms" : "–") · @(s.Availability24h is { } a ? F(a * 100) + " %" : "–")
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="7">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("DNS der aktiven Computer", "DNS of active computers")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Aktive Computer der letzten 30 Tage, nur Anfrage an den DNS-Server. Doppelte IPs deuten auf veraltete DNS-Einträge oder Adresskonflikte.", "Active computers of the last 30 days, query to the DNS server only. Duplicate IPs point to stale DNS records or address conflicts.")</MudText>
+                        @if (_dns is null)
+                        {
+                            <MudProgressLinear Indeterminate="true" />
+                        }
+                        else
+                        {
+                            var failed = _dns.Entries.Where(e => e.Failed || e.Ips.Count == 0).OrderBy(e => e.Name).ToList();
+                            <div class="ll-kpis">
+                                <div class="ll-kpi"><div class="ll-kpi-value">@_dns.Entries.Count</div><div class="ll-kpi-label">@T("abgefragt", "queried")</div></div>
+                                <div class="ll-kpi"><div class="ll-kpi-value nw-text-data">@failed.Count</div><div class="ll-kpi-label">@T("nicht auflösbar", "not resolvable")</div></div>
+                                <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_duplicates.Count</div><div class="ll-kpi-label">@T("doppelte IPs", "duplicate IPs")</div></div>
+                            </div>
+                            <MudText Typo="Typo.subtitle2">@T("Doppelte IPs", "Duplicate IPs")</MudText>
+                            <div class="ll-list mb-2" style="max-height:200px">
+                                @foreach (var d in _duplicates)
+                                {
+                                    <div class="ll-row"><span class="ll-mono" style="width:130px">@d.Ip</span><span class="ll-grow">@string.Join(" · ", d.Names)</span></div>
+                                }
+                            </div>
+                            <MudText Typo="Typo.subtitle2">@T("Nicht auflösbar", "Not resolvable")</MudText>
+                            <div class="ll-list" style="max-height:200px">
+                                @foreach (var e in failed)
+                                {
+                                    <div class="ll-row"><span class="ll-mono" style="width:160px">@e.Name</span><span class="ll-grow ll-muted">@e.DnsHostName</span></div>
+                                }
+                            </div>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+    </MudTabs>
+
+    @if (_ad.Notes.Count > 0)
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Dense="true" Class="mt-3">@T("Nicht lesbar", "Not readable"): @string.Join(" · ", _ad.Notes)</MudAlert>
+    }
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Stand AD", "AD as of") @_ad.ReadAt?.ToString("dd.MM.yyyy HH:mm") · @T("eine Stunde gemerkt", "kept for one hour")</MudText>
+}
+
+@code {
+    private const double Cell = 70;
+    private const double Base = 40;
+    private const double MaxTower = 190;
+    private const int MaxTowers = 36;
+
+    private sealed record Segment(string Css, int Count);
+    private sealed record ProductRow(string Product, DateOnly? End, string Class, int Count);
+    private sealed record ServiceRow(AdComputer Computer, HashSet<string> Groups);
+
+    private AdComputerResult? _ad;
+    private AdDnsResult? _dns;
+    private DateTime _now;
+    private DateOnly _today;
+    private IReadOnlyList<AdOuTower> _towers = [];
+    private int _cols = 1;
+    private double _worldSize = Cell;
+    private double _scale = 1;
+    private double _heightPerComputer = 1;
+    private int? _selected;
+    private List<AdComputer> _unsupported = [];
+    private List<AdComputer> _inactive = [];
+    private List<AdComputer> _neverUsed = [];
+    private List<AdComputer> _longDisabled = [];
+    private List<AdComputer> _pwdStale = [];
+    private List<AdComputer> _lapsMissing = [];
+    private List<AdComputer> _lapsOverdue = [];
+    private List<AdComputer> _delegation = [];
+    private int _lapsBase;
+    private List<ProductRow> _products = [];
+    private int _maxProduct = 1;
+    private IReadOnlyList<(DateOnly Month, int Created)> _created = [];
+    private int _maxCreated = 1;
+    private List<string> _serviceColumns = [];
+    private List<ServiceRow> _serviceRows = [];
+    private IReadOnlyList<NetworkTargetStatus> _dcStatus = [];
+    private IReadOnlyList<AdUncoveredRange> _uncovered = [];
+    private IReadOnlyList<AdDuplicateIp> _duplicates = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _now = DateTime.UtcNow;
+        _today = DateOnly.FromDateTime(DateTime.Today);
+        _ad = await Ad.GetAsync();
+        if (!_ad.Enabled || _ad.Error is not null)
+            return;
+
+        var all = _ad.Computers;
+        _towers = AdAnalysis.Towers(all, _ad.Ous, _now).Take(MaxTowers).ToList();
+        _cols = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(_towers.Count)));
+        _worldSize = _cols * Cell;
+        _scale = Math.Min(1.3, 470 / Math.Max(1, _worldSize));
+        _heightPerComputer = MaxTower / Math.Max(1, _towers.Select(t => t.Total).DefaultIfEmpty(1).Max());
+
+        _unsupported = all.Where(c => AdAnalysis.Health(c, _now) == AdHealth.Unsupported).ToList();
+        _inactive = all.Where(c => AdAnalysis.IsInactive(c, _now) && c.LastLogonUtc is not null).ToList();
+        _neverUsed = all.Where(c => c.Enabled && c.LastLogonUtc is null && c.CreatedUtc < _now.AddDays(-30)).ToList();
+        _longDisabled = all.Where(c => !c.Enabled && c.ChangedUtc < _now.AddDays(-365)).OrderBy(c => c.ChangedUtc).ToList();
+        _pwdStale = all.Where(c => AdAnalysis.PasswordStale(c, _now)).OrderBy(c => c.PwdLastSetUtc).ToList();
+        _lapsMissing = all.Where(AdAnalysis.LapsMissing).OrderBy(c => c.Name).ToList();
+        _lapsOverdue = all.Where(c => AdAnalysis.LapsOverdue(c, _now)).ToList();
+        _delegation = all.Where(AdAnalysis.RiskyDelegation).ToList();
+        _lapsBase = all.Count(c => c.Enabled && !c.IsDomainController && c.OperatingSystem.Contains("Windows", StringComparison.OrdinalIgnoreCase));
+
+        _products = all.Where(c => c.Enabled)
+            .Select(c => AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion))
+            .GroupBy(l => (l.Product, l.EndOfSupport))
+            .Select(g => new ProductRow(g.Key.Product, g.Key.EndOfSupport, AdAnalysis.LifecycleClass(g.Key.EndOfSupport, _today), g.Count()))
+            .OrderBy(p => p.End ?? DateOnly.MaxValue).ThenByDescending(p => p.Count)
+            .ToList();
+        _maxProduct = Math.Max(1, _products.Select(p => p.Count).DefaultIfEmpty(1).Max());
+        _created = AdAnalysis.CreatedPerMonth(all, _now, 24);
+        _maxCreated = Math.Max(1, _created.Select(x => x.Created).DefaultIfEmpty(1).Max());
+
+        _serviceRows = all.Where(c => c.Enabled)
+            .Select(c => new ServiceRow(c, c.Services.Select(AdAnalysis.ServiceGroup).Where(s => s.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase)))
+            .Where(r => r.Groups.Count > 0)
+            .OrderByDescending(r => r.Groups.Count).ThenBy(r => r.Computer.Name)
+            .ToList();
+        _serviceColumns = _serviceRows.SelectMany(r => r.Groups).GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(g => g.Count()).Select(g => g.Key).Take(14).ToList();
+
+        var targets = await Network.TargetsAsync();
+        var results = await Network.ResultsAsync(2);
+        _dcStatus = NetworkAnalysisService.Status(targets.Where(t => t.Group == "Active Directory").ToList(), results, _now);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _ad is not { Enabled: true, Error: null })
+            return;
+        var dns = await Ad.ResolveDnsAsync();
+        var (subnets, _, _) = await Network.ClientStatsAsync(30);
+        _uncovered = AdAnalysis.UncoveredRanges(dns.Entries, subnets, _ad.Subnets);
+        _duplicates = AdAnalysis.DuplicateIps(dns.Entries);
+        _dns = dns;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void Select(int index) => _selected = _selected == index ? null : index;
+
+    private static IEnumerable<Segment> Segments(AdOuTower t)
+    {
+        if (t.Ok > 0) yield return new Segment("ok", t.Ok);
+        if (t.Inactive > 0) yield return new Segment("inactive", t.Inactive);
+        if (t.Disabled > 0) yield return new Segment("disabled", t.Disabled);
+        if (t.Unsupported > 0) yield return new Segment("unsupported", t.Unsupported);
+    }
+
+    private RenderFragment Gauge(double share, string caption) => __builder =>
+    {
+        var pct = Math.Clamp(share, 0, 1);
+        var len = 2 * Math.PI * 52;
+        <svg viewBox="0 0 140 140" class="ad-gauge">
+            <circle cx="70" cy="70" r="52" class="ad-gauge-bg" />
+            <circle cx="70" cy="70" r="52" class="ad-gauge-fg @(pct < 0.5 ? "ad-gauge-bad" : pct < 0.9 ? "ad-gauge-warn" : "ad-gauge-ok")"
+                    style="stroke-dasharray:@F(len);--ad-off:@F(len * (1 - pct));--ad-len:@F(len)" />
+            <text x="70" y="76" class="ad-gauge-num">@F(pct * 100)%</text>
+        </svg>
+        <MudText Typo="Typo.body2" Align="Align.Center">@caption</MudText>
+    };
+
+    private static string Pct(int value, int max) => $"{Math.Round(100.0 * value / Math.Max(1, max)).ToString(CultureInfo.InvariantCulture)}%";
+
+    private static string Px(double value) => value.ToString("0.#", CultureInfo.InvariantCulture) + "px";
+
+    private static string F(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

@@ -20,6 +20,7 @@ public static class NavigationIconResolver
         "Timeline" => Icons.Material.Filled.Timeline,
         "Security" => Icons.Material.Filled.Security,
         "Wifi" => Icons.Material.Filled.Wifi,
+        "Domain" => Icons.Material.Filled.Domain,
         "Groups" => Icons.Material.Filled.Groups,
         "Hub" => Icons.Material.Filled.Hub,
         "InsertChart" => Icons.Material.Filled.InsertChart,

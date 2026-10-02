@@ -1,0 +1,49 @@
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+
+@* Liste von AD-Computerkonten im Unterreiter Active Directory (2026-10-02). Nur Computer, keine Personen. *@
+@if (Rows.Count == 0)
+{
+    <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Einträge.", "No entries.")</MudText>
+}
+else
+{
+    <div class="ll-list" style="max-height:@(MaxHeight)px">
+        <div class="ll-row ad-table-head">
+            <span style="width:150px">@T("Name", "Name")</span>
+            <span class="ll-grow">@T("Betriebssystem", "Operating system")</span>
+            <span style="width:96px">@T("Anmeldung", "Logon")</span>
+            @if (ShowPassword)
+            {
+                <span style="width:96px">@T("Passwort", "Password")</span>
+            }
+        </div>
+        @foreach (var c in Rows.Take(Limit))
+        {
+            var life = AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion);
+            <div class="ll-row @(c.Enabled ? string.Empty : "ll-muted")">
+                <span class="ll-mono" style="width:150px" title="@c.DnsHostName">@c.Name</span>
+                <span class="ll-grow"><span class="nw-dot ad-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, DateOnly.FromDateTime(Now))"></span> @life.Product</span>
+                <span class="ll-mono ll-muted" style="width:96px">@(c.LastLogonUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? T("nie", "never"))</span>
+                @if (ShowPassword)
+                {
+                    <span class="ll-mono ll-muted" style="width:96px">@(c.PwdLastSetUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? "–")</span>
+                }
+            </div>
+        }
+        @if (Rows.Count > Limit)
+        {
+            <MudText Typo="Typo.caption" Class="ll-muted">@T("Weitere Einträge", "More entries"): @(Rows.Count - Limit)</MudText>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<AdComputer> Rows { get; set; } = [];
+    [Parameter] public DateTime Now { get; set; } = DateTime.UtcNow;
+    [Parameter] public bool ShowPassword { get; set; }
+    [Parameter] public int Limit { get; set; } = 300;
+    [Parameter] public int MaxHeight { get; set; } = 360;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

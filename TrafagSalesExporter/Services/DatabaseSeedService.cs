@@ -349,6 +349,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("network-availability", "network", "Verfuegbarkeit", "Availability", "Timeline", "netzwerk/verfuegbarkeit", 20, "All"),
         Link("network-exports", "network", "Netz oder Daten", "Network or data", "CompareArrows", "netzwerk/netz-oder-daten", 30, "All"),
         Link("network-security", "network", "Sicherheit", "Security", "Security", "netzwerk/sicherheit", 40, "All"),
+        Link("network-ad", "network", "Active Directory", "Active Directory", "Domain", "netzwerk/ad", 45, "All"),
         Link("network-workplaces", "network", "Arbeitsplaetze", "Workplaces", "Wifi", "netzwerk/arbeitsplaetze", 50, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),

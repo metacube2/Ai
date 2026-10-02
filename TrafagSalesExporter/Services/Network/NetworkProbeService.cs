@@ -14,10 +14,12 @@ namespace TrafagSalesExporter.Services;
 public sealed class NetworkTargetCatalog
 {
     private readonly NetworkStore _store;
+    private readonly AdComputerService _ad;
 
-    public NetworkTargetCatalog(NetworkStore store)
+    public NetworkTargetCatalog(NetworkStore store, AdComputerService ad)
     {
         _store = store;
+        _ad = ad;
     }
 
     public async Task<IReadOnlyList<NetworkTarget>> LoadAsync(CancellationToken ct)
@@ -55,6 +57,17 @@ WHERE COALESCE(h.Host,'') <> '' GROUP BY h.Host, h.Port", null, ct);
         targets.Add(new NetworkTarget("tls:graph.microsoft.com", "Microsoft Graph", "Microsoft 365", "graph.microsoft.com", 443, NetworkProbeKind.Tls));
         targets.Add(new NetworkTarget("tls:login.microsoftonline.com", "Microsoft Login", "Microsoft 365", "login.microsoftonline.com", 443, NetworkProbeKind.Tls));
         targets.Add(new NetworkTarget("tls:www.ecb.europa.eu", "EZB Kurse", "Extern", "www.ecb.europa.eu", 443, NetworkProbeKind.Tls));
+
+        // Domaenencontroller aus dem AD (nur wenn NetworkProbe:AdEnabled): nur TCP-Aufbau auf LDAP und Kerberos.
+        if (_ad.IsEnabled)
+        {
+            var ad = await _ad.GetAsync();
+            foreach (var dc in ad.Computers.Where(c => c.IsDomainController && c.Enabled && c.DnsHostName.Length > 0).OrderBy(c => c.Name))
+            {
+                targets.Add(new NetworkTarget($"dc-ldap:{dc.DnsHostName}", $"DC {dc.Name} LDAP", "Active Directory", dc.DnsHostName, 389, NetworkProbeKind.Tcp));
+                targets.Add(new NetworkTarget($"dc-krb:{dc.DnsHostName}", $"DC {dc.Name} Kerberos", "Active Directory", dc.DnsHostName, 88, NetworkProbeKind.Tcp));
+            }
+        }
 
         foreach (var w in (await _store.LoadWatchTargetsAsync(ct)).Where(x => x.IsActive && x.Host.Length > 0))
             targets.Add(new NetworkTarget($"custom:{w.Id}", w.Label.Length > 0 ? w.Label : w.Host, "Eigene Ziele", w.Host, w.Port,
