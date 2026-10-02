@@ -46,8 +46,8 @@ else if (_f is not null)
                 @{
                     var all = _f.History.Concat(_f.Forecast).ToList();
                     var max = (double)Math.Max(1, all.Max(v => v.Value)) * (1 + (_f.BacktestMape ?? 0)) * 1.05;
-                    var w = 940.0 / all.Count;
-                    double Xm(int i) => 40 + i * w + w / 2;
+                    var w = 900.0 / all.Count;
+                    double Xm(int i) => 80 + i * w + w / 2;
                     double Yv(double v) => 250 - 230 * v / max;
                     var band = _f.BacktestMape ?? 0;
                     var fStart = _f.History.Count;
@@ -55,12 +55,12 @@ else if (_f is not null)
                 <svg viewBox="0 0 1000 280" class="sal-fc">
                     @for (var g = 0; g <= 4; g++)
                     {
-                        <g><line x1="40" y1="@F(20 + g * 57.5)" x2="990" y2="@F(20 + g * 57.5)" class="nw-grid" /><text x="36" y="@F(24 + g * 57.5)" class="nw-axis" style="text-anchor:end">@Short((decimal)(max * (4 - g) / 4))</text></g>
+                        <g><line x1="80" y1="@F(20 + g * 57.5)" x2="990" y2="@F(20 + g * 57.5)" class="nw-grid" /><text x="74" y="@F(24 + g * 57.5)" class="nw-axis" style="text-anchor:end">@Short((decimal)(max * (4 - g) / 4))</text></g>
                     }
                     @for (var i = 0; i < _f.History.Count; i++)
                     {
                         var v = (double)_f.History[i].Value;
-                        <g><rect x="@F(40 + i * w + 2)" y="@F(Yv(Math.Max(0, v)))" width="@F(w - 4)" height="@F(250 - Yv(Math.Max(0, v)))" rx="2" class="sal-month" style="animation-delay:@(F(i * 0.015))s"><title>@_f.History[i].Month.ToString("MM.yyyy") · @Chf(_f.History[i].Value)</title></rect></g>
+                        <g><rect x="@F(80 + i * w + 2)" y="@F(Yv(Math.Max(0, v)))" width="@F(w - 4)" height="@F(250 - Yv(Math.Max(0, v)))" rx="2" class="sal-month" style="animation-delay:@(F(i * 0.015))s"><title>@_f.History[i].Month.ToString("MM.yyyy") · @Chf(_f.History[i].Value)</title></rect></g>
                     }
                     <polygon class="sal-fc-band" points="@string.Join(" ", _f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value * (1 + band)))}").Concat(_f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value * (1 - band)))}").Reverse()))" />
                     <polyline class="sal-fc-line" pathLength="1" points="@string.Join(" ", _f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value))}"))" />
@@ -68,11 +68,11 @@ else if (_f is not null)
                     {
                         <circle cx="@F(Xm(fStart + i))" cy="@F(Yv((double)_f.Forecast[i].Value))" r="4" class="sal-fc-dot"><title>@T("Prognose", "Forecast") @_f.Forecast[i].Month.ToString("MM.yyyy") · @Chf(_f.Forecast[i].Value)</title></circle>
                     }
-                    <line x1="@F(40 + fStart * w)" y1="16" x2="@F(40 + fStart * w)" y2="254" class="dir-mig-today" />
+                    <line x1="@F(80 + fStart * w)" y1="16" x2="@F(80 + fStart * w)" y2="254" class="dir-mig-today" />
                     @for (var i = 0; i < all.Count; i++)
                     {
                         if (all[i].Month.Month != 1) continue;
-                        <g><text x="@F(40 + i * w)" y="272" class="nw-axis">@all[i].Month.Year</text></g>
+                        <g><text x="@F(80 + i * w)" y="272" class="nw-axis">@all[i].Month.Year</text></g>
                     }
                 </svg>
             </MudPaper>
