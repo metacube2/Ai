@@ -21,7 +21,7 @@ Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
 | Diagramme und technische Einordnung | `docs/PROGRAMM_DIAGRAMME.md` |
 | Projektstand, Kurzstand | `docs/rag/PROJECT.md` |
 | Pausenspiel (Nebenfeature, Reiter ausgeblendet) | `docs/PAUSENSPIEL.md` |
-| **Reiter Netzwerk**: Netzkarte, Verfuegbarkeit, Netz oder Daten, Sicherheit, Arbeitsplaetze; Schutzregeln fuer Pruefungen | `docs/NETZWERK_2026-10-02.md` |
+| **Reiter Netzwerk**: Netzkarte, Verfuegbarkeit, Netz oder Daten, Sicherheit, Active Directory, AD-Infrastruktur, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht, Arbeitsplaetze; Schutzregeln fuer Pruefungen und AD | `docs/NETZWERK_2026-10-02.md` |
 | ccusage installieren und nutzen | `docs/CCUSAGE_INSTALL_ANLEITUNG.md` |
 
 ## Live-Werkzeuge

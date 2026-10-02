@@ -125,6 +125,7 @@ vorher in `docs/AGENT_COORDINATION.md` abstimmen.
   nimmt im Dunkelmodus das helle Schaltflaechen-Rot `#EF5350`; die Kopfleiste hat deshalb kein
   `Color` und nutzt `AppbarBackground` (`a397440`). Bewusst hell bleiben die 3D-Flaechen (im Dunkelmodus abgedunkelt) und der
   weisse Grund hinter den Schulungsbildern.
+- NETZWERK MIGRATION/BERICHT (`7d31df5`, produktiv 2026-10-02 12:00): Seiten `NetworkMigration.razor`, `NetworkReport.razor` (PDF nur ueber Browser-Druck, kein Versand), Geraetelandkarte und Altlasten-Score; Logik `AdInfraAnalysis.MigrationWaves`, `LegacyScores`, `DevicesPerSite`.
 - NETZWERK AD-INFRASTRUKTUR (`50b6c4a`): `AdInfrastructureService`, `AdGpoService`, `AdDnsZoneService` (je gemerkt), reine Logik `AdInfraAnalysis`; `AdSnapshotService` taeglich aus `NetworkProbeService`, Tabellen `NetworkAdMetrics`, `NetworkAdChanges`, `NetworkAdComputers`. CSS-Praefix `dir-`, nie `ad-`.
 - NETZWERK AD (`b57d20f`, produktiv 2026-10-02 08:07): `AdComputerService` liest Computer, OUs, AD-Subnetze, LAPS-Ablaufdatum und BitLocker-Anzahl, nie Geheimnisse; reine Logik in `AdAnalysis`; DCs als Pruefziele im `NetworkTargetCatalog`.
 - NETZWERK seit 2026-10-02 (`1635b46`): Hintergrunddienst `NetworkProbeService` (nur Produktion, alle 5 Min., Schalter `NetworkProbe:Enabled`), `CircuitHandler` `ClientConnectionTracker` (nur /24), Tabellen `NetworkProbeResults`, `NetworkWatchTargets`, `NetworkClientEvents`. **Regel:** nie mit Anmeldedaten pruefen, nur feste Zielliste, keine Scans (`docs/NETZWERK_2026-10-02.md`).
