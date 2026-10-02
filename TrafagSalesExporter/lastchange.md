@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Netzwerk: Migration, Bericht, Geraetelandkarte, Altlasten-Score, 2026-10-02, produktiv 12:00
+
+- `c6b2d29`, `7d31df5`: Unterreiter Migration (Wellen, Zeitachse, Fortschritt) und Bericht (PDF ueber Browser-Druck),
+  Geraetelandkarte in AD-Infrastruktur/Standorte, Altlasten-Score in Active Directory.
+
 ## Netzwerk: AD-Infrastruktur, Gruppenrichtlinien, DNS, Verlauf, 2026-10-02, produktiv 10:14
 
 - `50b6c4a`: vier neue Unterreiter (Replikationsnetz, Sonnenstrahl der OUs, DNS-Alterung, Countdown und Verlauf),
