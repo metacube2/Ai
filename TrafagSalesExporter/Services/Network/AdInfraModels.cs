@@ -135,3 +135,18 @@ public sealed record AdComputerState(string Name, string Container, bool Enabled
 
 /// <summary>Countdown bis zum Supportende eines Produkts.</summary>
 public sealed record AdCountdown(string Product, DateOnly End, int DaysLeft, int ActiveDevices);
+
+/// <summary>Altlasten-Score einer OU: Summe der Punkte ihrer Computer, aufgeteilt nach Grund.</summary>
+public sealed record AdOuScore(string Container, string Label, int Computers, int Score, IReadOnlyDictionary<string, int> Parts)
+{
+    public double PerDevice => Computers == 0 ? 0 : (double)Score / Computers;
+}
+
+/// <summary>Migrationswelle: aktive Geraete eines Produkts mit gemeinsamem Supportende.</summary>
+public sealed record AdMigrationWave(string Product, DateOnly End, int DaysLeft, IReadOnlyList<AdComputer> Devices)
+{
+    public bool Expired => DaysLeft < 0;
+}
+
+/// <summary>Geraete je AD-Standort, abgeleitet aus DNS-IP und AD-Subnetz.</summary>
+public sealed record AdSiteDevices(string Site, int Devices, IReadOnlyList<string> Examples);

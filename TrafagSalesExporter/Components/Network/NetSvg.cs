@@ -9,6 +9,9 @@ public static class NetSvg
     /// <summary>Kommaliste; in Razor statt string.Join, weil der Uebersetzungstest benachbarte Zeichenketten als Textpaar liest.</summary>
     public static string Csv(IEnumerable<string> items) => string.Join(", ", items);
 
+    /// <summary>Kurzform eines Produktnamens fuer Beschriftungen in Grafiken.</summary>
+    public static string ShortProduct(string product) => product.Replace("Windows ", "Win ").Replace("Enterprise", "Ent.").Replace("Professional", "Pro").Replace("Datacenter", "DC");
+
     public static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>Ringsegment von Anteil <paramref name="from"/> bis <paramref name="to"/> (0..1, im Uhrzeigersinn ab 12 Uhr).</summary>

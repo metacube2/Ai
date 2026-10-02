@@ -1,0 +1,210 @@
+@page "/netzwerk/migration"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Network.NetSvg
+@inject AdComputerService Ad
+@inject NetworkStore Store
+@inject IUiTextService UiText
+
+@* Unterreiter Migration (Wunsch Ingo 2026-10-02): Migrationsplaner fuer Geraete mit abgelaufenem oder bald endendem
+   Herstellersupport, Fortschritt aus den Tagesschnappschuessen (Kennzahlen "os:<Produkt>"). Doku docs/NETZWERK_2026-10-02.md *@
+<PageTitle>@T("Netzwerk", "Network") · @T("Migration", "Migration")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_ad is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!_ad.Enabled)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@T("Die AD-Auswertung ist ausgeschaltet (NetworkProbe:AdEnabled).", "The AD analysis is switched off (NetworkProbe:AdEnabled).")</MudAlert>
+}
+else if (_ad.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_ad.Error</MudAlert>
+}
+else
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@_waves.Sum(w => w.Devices.Count)</div><div class="ll-kpi-label">@T("Geräte zu migrieren (2 Jahre)", "devices to migrate (2 years)")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_waves.Where(w => w.Expired).Sum(w => w.Devices.Count)</div><div class="ll-kpi-label">@T("Support schon abgelaufen", "support already expired")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_waves.Where(w => !w.Expired && w.DaysLeft <= 30).Sum(w => w.Devices.Count)</div><div class="ll-kpi-label">@T("endet in 30 Tagen", "ends within 30 days")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-data">@_waves.Where(w => !w.Expired && w.DaysLeft <= 180).Sum(w => w.Devices.Count)</div><div class="ll-kpi-label">@T("endet in 180 Tagen", "ends within 180 days")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_waves.Count</div><div class="ll-kpi-label">@T("Wellen", "waves")</div></div>
+    </div>
+
+    <MudPaper Class="pa-3 mb-3" Outlined="true">
+        <div class="d-flex align-center" style="gap:12px">
+            <MudText Typo="Typo.h6" Class="ll-grow">@T("Zeitachse der Supportenden", "Timeline of end of support")</MudText>
+            <ExcelButton FileLabel="Migration" Sheets="ExcelSheets" />
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Jede Blase ist eine Welle: Produkt und Supportende. Die Grösse zeigt die Zahl aktiver Geräte, links der heutigen Linie ist der Support schon vorbei. Klick zeigt die Geräte.", "Each bubble is a wave: product and end of support. Size shows the number of active devices; left of today's line support has already ended. Click shows the devices.")</MudText>
+        <svg viewBox="0 0 1000 @F(70 + _lanes * 46)" class="dir-mig">
+            @for (var m = -12; m <= 24; m += 3)
+            {
+                var md = _today.AddMonths(m);
+                <g><line x1="@F(X(md))" y1="24" x2="@F(X(md))" y2="@F(50 + _lanes * 46)" class="nw-grid" /><text x="@F(X(md))" y="16" text-anchor="middle" class="nw-axis">@md.ToString("MM.yy")</text></g>
+            }
+            <line x1="@F(X(_today))" y1="20" x2="@F(X(_today))" y2="@F(54 + _lanes * 46)" class="dir-mig-today" />
+            <g><text x="@F(X(_today) + 6)" y="@F(50 + _lanes * 46)" class="dir-mig-today-label">@T("heute", "today")</text></g>
+            @for (var i = 0; i < _waves.Count; i++)
+            {
+                var w = _waves[i];
+                var index = i;
+                var y = 50 + (i % Math.Max(1, _lanes)) * 46;
+                var r = 6 + 20 * Math.Sqrt(w.Devices.Count / (double)_maxDevices);
+                var cls = w.Expired ? "aus" : w.DaysLeft <= 180 ? "bald" : "ok";
+                <g class="dir-mig-wave dir-mig-@cls @(_selected == index ? "dir-mig-sel" : string.Empty)" style="animation-delay:@(F(i * 0.05))s" @onclick="() => _selected = index">
+                    <circle cx="@F(X(w.End))" cy="@F(y)" r="@F(r)" class="dir-mig-bubble"><title>@w.Product · @w.End.ToString("dd.MM.yyyy") · @w.Devices.Count</title></circle>
+                    <text x="@F(X(w.End))" y="@F(y + 4)" text-anchor="middle" class="dir-mig-count">@w.Devices.Count</text>
+                    <text x="@F(X(w.End) + r + 4)" y="@F(y + 4)" class="dir-mig-name">@ShortProduct(w.Product)</text>
+                </g>
+            }
+        </svg>
+    </MudPaper>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Wellen und Fortschritt", "Waves and progress")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Fortschritt gegenüber dem ersten Tagesschnappschuss: so viele Geräte sind seither aus der Welle verschwunden (migriert, ersetzt oder deaktiviert).", "Progress against the first daily snapshot: this many devices have left the wave since then (migrated, replaced or disabled).")</MudText>
+                <div class="ll-list" style="max-height:520px">
+                    @for (var i = 0; i < _waves.Count; i++)
+                    {
+                        var w = _waves[i];
+                        var index = i;
+                        var first = FirstCount(w.Product);
+                        var done = first is { } f && f > 0 ? Math.Clamp((f - w.Devices.Count) / f, 0, 1) : 0;
+                        <div class="dir-wave @(_selected == index ? "dir-wave-sel" : string.Empty)" @onclick="() => _selected = index">
+                            <div class="dir-wave-head">
+                                <span class="nw-dot dir-life-@(w.Expired ? "aus" : w.DaysLeft <= 180 ? "bald" : "ok")"></span>
+                                <b class="ll-grow">@w.Product</b>
+                                <span class="ll-mono">@w.Devices.Count</span>
+                            </div>
+                            <div class="dir-wave-meta ll-muted">
+                                @w.End.ToString("dd.MM.yyyy") · @(w.Expired ? T("seit", "for") + $" {-w.DaysLeft} " + T("Tagen abgelaufen", "days expired") : T("noch", "still") + $" {w.DaysLeft} " + T("Tage", "days"))
+                                @if (first is not null)
+                                {
+                                    <span> · @T("erledigt", "done") @F(done * 100) %</span>
+                                }
+                            </div>
+                            <div class="dir-life-track"><span class="dir-life-fill dir-life-ok" style="width:@(F(Math.Max(2, done * 100)))%"></span></div>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                @if (_selected is { } sel && sel < _waves.Count)
+                {
+                    var wave = _waves[sel];
+                    <MudText Typo="Typo.h6">@wave.Product</MudText>
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Supportende", "End of support") @wave.End.ToString("dd.MM.yyyy") · @wave.Devices.Count @T("aktive Geräte", "active devices")</MudText>
+                    <MudText Typo="Typo.subtitle2">@T("Je OU", "Per OU")</MudText>
+                    @foreach (var g in wave.Devices.GroupBy(d => AdAnalysis.ContainerLabel(d.Container)).OrderByDescending(g => g.Count()).Take(8))
+                    {
+                        <div class="dir-ou-bar">
+                            <span class="ll-grow" title="@g.Key">@g.Key</span>
+                            <span class="dir-ou-track"><span style="width:@(F(100.0 * g.Count() / wave.Devices.Count))%"></span></span>
+                            <span class="ll-mono" style="width:36px;text-align:right">@g.Count()</span>
+                        </div>
+                    }
+                    <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Geräte", "Devices")</MudText>
+                    <ComputerTable Rows="@wave.Devices" Now="@_now" MaxHeight="300" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h6">@T("Wochenfortschritt", "Weekly progress")</MudText>
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Aktive Geräte je Welle über die Tage. Kurven erscheinen ab dem zweiten Tagesschnappschuss.", "Active devices per wave over the days. Curves appear from the second daily snapshot.")</MudText>
+                    @if (_days.Count < 2)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">@T("Der Verlauf beginnt mit dem ersten Tagesschnappschuss. Kurven erscheinen ab dem zweiten Tag.", "The history starts with the first daily snapshot. Curves appear from the second day on.")</MudAlert>
+                    }
+                    <svg viewBox="0 0 700 260" class="dir-trend">
+                        @for (var w = 0; w < Math.Min(_waves.Count, 9); w++)
+                        {
+                            var key = "os:" + _waves[w].Product;
+                            var pts = _days.Select((d, i) => (i, v: _values.GetValueOrDefault((d, key)))).Where(x => x.v is not null).ToList();
+                            if (pts.Count == 0) continue;
+                            <g>
+                                <polyline points="@string.Join(" ", pts.Select(p => $"{F(Xd(p.i))},{F(Yd(p.v!.Value))}"))" class="dir-line dir-line-@(w % 9)" pathLength="1" />
+                                @foreach (var p in pts)
+                                {
+                                    <circle cx="@F(Xd(p.i))" cy="@F(Yd(p.v!.Value))" r="3" class="dir-dot dir-line-@(w % 9)"><title>@_waves[w].Product · @_days[p.i].ToString("dd.MM.") · @F(p.v!.Value)</title></circle>
+                                }
+                            </g>
+                        }
+                    </svg>
+                    <div class="ll-legend" style="flex-wrap:wrap">
+                        @for (var w = 0; w < Math.Min(_waves.Count, 9); w++)
+                        {
+                            <span><i class="ll-swatch dir-line-bg-@(w % 9)"></i>@ShortProduct(_waves[w].Product)</span>
+                        }
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private AdComputerResult? _ad;
+    private IReadOnlyList<AdMigrationWave> _waves = [];
+    private DateTime _now;
+    private DateOnly _today;
+    private int _lanes = 1;
+    private int _maxDevices = 1;
+    private int? _selected;
+    private List<DateOnly> _days = [];
+    private Dictionary<(DateOnly, string), double?> _values = [];
+    private double _maxValue = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _now = DateTime.UtcNow;
+        _today = DateOnly.FromDateTime(DateTime.Today);
+        _ad = await Ad.GetAsync();
+        if (!_ad.Enabled || _ad.Error is not null)
+            return;
+        _waves = AdInfraAnalysis.MigrationWaves(_ad.Computers, _today);
+        _lanes = Math.Clamp(_waves.Count, 1, 8);
+        _maxDevices = Math.Max(1, _waves.Select(w => w.Devices.Count).DefaultIfEmpty(1).Max());
+        var points = (await Store.LoadAdMetricsAsync(400, CancellationToken.None)).Where(p => p.Metric.StartsWith("os:", StringComparison.Ordinal)).ToList();
+        _days = points.Select(p => p.Day).Distinct().OrderBy(d => d).ToList();
+        _values = points.ToDictionary(p => (p.Day, p.Metric), p => (double?)p.Value);
+        _maxValue = Math.Max(1, points.Select(p => p.Value).DefaultIfEmpty(1).Max() * 1.1);
+    }
+
+    private double? FirstCount(string product)
+        => _days.Select(d => _values.GetValueOrDefault((d, "os:" + product))).FirstOrDefault(v => v is not null);
+
+    private double X(DateOnly d)
+    {
+        var from = _today.AddMonths(-12).DayNumber;
+        var to = _today.AddMonths(24).DayNumber;
+        return 30 + 940.0 * Math.Clamp((d.DayNumber - from) / (double)(to - from), 0, 1);
+    }
+
+    private double Xd(int i) => _days.Count <= 1 ? 350 : 30 + 640.0 * i / (_days.Count - 1);
+
+    private double Yd(double v) => 240 - 220 * v / _maxValue;
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Wellen", Rows(_waves, w => new Dictionary<string, object?>
+        {
+            ["Produkt"] = w.Product, ["Supportende"] = w.End.ToDateTime(TimeOnly.MinValue), ["Tage"] = w.DaysLeft, ["Aktive Geraete"] = w.Devices.Count
+        })),
+        new("Geraete", Rows(_waves.SelectMany(w => w.Devices.Select(d => (w, d))), x => new Dictionary<string, object?>
+        {
+            ["Welle"] = x.w.Product, ["Supportende"] = x.w.End.ToDateTime(TimeOnly.MinValue), ["Name"] = x.d.Name, ["DNS"] = x.d.DnsHostName,
+            ["OU"] = AdAnalysis.ContainerLabel(x.d.Container), ["Letzte Anmeldung"] = x.d.LastLogonUtc?.ToLocalTime()
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

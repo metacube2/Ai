@@ -1,0 +1,213 @@
+@page "/netzwerk/bericht"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Network.NetSvg
+@inject AdComputerService Ad
+@inject AdInfrastructureService Infra
+@inject AdGpoService Gpo
+@inject AdDnsZoneService Dns
+@inject NetworkAnalysisService Network
+@inject NetworkStore Store
+@inject IJSRuntime JsRuntime
+@inject IUiTextService UiText
+
+@* Unterreiter Bericht (Wunsch Ingo 2026-10-02): Wochenbericht Netzwerk und AD auf Management-Flughoehe, als PDF ueber
+   den Browser-Druck (trafagDownload.printElement). Wird nicht versendet. Doku docs/NETZWERK_2026-10-02.md *@
+<PageTitle>@T("Netzwerk", "Network") · @T("Bericht", "Report")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_ad is null || _infra is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.caption" Class="ll-muted">@T("Domänencontroller werden abgefragt, das dauert bis zu 15 Sekunden …", "Querying domain controllers, this takes up to 15 seconds …")</MudText>
+}
+else if (!_ad.Enabled || _ad.Error is not null)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@(_ad.Error ?? T("Die AD-Auswertung ist ausgeschaltet (NetworkProbe:AdEnabled).", "The AD analysis is switched off (NetworkProbe:AdEnabled)."))</MudAlert>
+}
+else
+{
+    <div class="d-flex align-center mb-2" style="gap:12px">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="PrintAsync">@T("Als PDF drucken", "Print as PDF")</MudButton>
+        <MudText Typo="Typo.caption" Class="ll-muted">@T("Öffnet den Druckdialog; dort „Als PDF speichern“ wählen. Der Bericht wird nicht verschickt.", "Opens the print dialog; choose \"Save as PDF\" there. The report is not sent.")</MudText>
+    </div>
+
+    <div id="net-report" class="dir-report">
+        <div class="hr-print-header dir-report-head">
+            <h1>@T("Netzwerkbericht", "Network report") @T("KW", "CW") @ISOWeek.GetWeekOfYear(DateTime.Today)</h1>
+            <span>@DateTime.Now.ToString("dd.MM.yyyy HH:mm") · Trafag · @T("nur lesend erhoben, keine Personendaten", "collected read-only, no personal data")</span>
+        </div>
+
+        <h2>@T("Kennzahlen und Veränderung zur Vorwoche", "Metrics and change against last week")</h2>
+        <table class="dir-report-table">
+            <thead><tr><th>@T("Kennzahl", "Metric")</th><th>@T("heute", "today")</th><th>@T("vor 7 Tagen", "7 days ago")</th><th>@T("Veränderung", "Change")</th></tr></thead>
+            <tbody>
+                @foreach (var (key, label) in MetricLabels)
+                {
+                    if (!_current.TryGetValue(key, out var now)) continue;
+                    var before = _weekAgo.TryGetValue(key, out var b) ? b : (double?)null;
+                    var delta = before is null ? (double?)null : now - before.Value;
+                    <tr>
+                        <td>@label</td>
+                        <td class="ll-mono">@F(now)</td>
+                        <td class="ll-mono">@(before is null ? "–" : F(before.Value))</td>
+                        <td class="ll-mono @(delta > 0 ? "dir-up" : delta < 0 ? "dir-down" : string.Empty)">@(delta is null ? T("noch kein Vergleich", "no comparison yet") : (delta > 0 ? "▲ +" : delta < 0 ? "▼ " : "= ") + F(delta.Value))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="dir-report-grid">
+            <section>
+                <h2>@T("Supportende in 90 Tagen", "End of support within 90 days")</h2>
+                @if (_countdowns.Count == 0)
+                {
+                    <p>@T("Keine Einträge.", "No entries.")</p>
+                }
+                <ul>
+                    @foreach (var c in _countdowns)
+                    {
+                        <li><b>@c.Product</b>: @c.ActiveDevices @T("aktive Geräte", "active devices"), @c.End.ToString("dd.MM.yyyy") (@c.DaysLeft @T("Tage", "days"))</li>
+                    }
+                </ul>
+                <p>@T("Ohne Herstellersupport aktiv", "Active without vendor support"): <b>@_current.GetValueOrDefault("ohneSupport")</b></p>
+            </section>
+            <section>
+                <h2>@T("Active Directory", "Active Directory")</h2>
+                <ul>
+                    <li>@T("Domänencontroller", "Domain controllers"): @_infra.Replication.Count, @T("nicht abfragbar", "not queryable"): @_infra.Replication.Count(r => r.Error is not null), @T("Replikationen mit Fehler", "replications with errors"): @_infra.Replication.SelectMany(r => r.Links).Count(l => AdInfraAnalysis.ReplicationState(l, _nowUtc) == "fehler")</li>
+                    <li>@T("Tage seit krbtgt-Passwort", "days since krbtgt password"): @(_infra.Domain.Krbtgt.FirstOrDefault(k => k.Name == "krbtgt")?.PwdLastSetUtc is { } p ? ((int)(_nowUtc - p).TotalDays).ToString() : "?")</li>
+                    <li>@T("Computer, die jeder Benutzer anlegen darf", "Computers any user may join"): @(_infra.Domain.MachineAccountQuota?.ToString() ?? "?")</li>
+                    <li>@T("doppelte SPNs", "duplicate SPNs"): @_infra.SpnDuplicates.Count</li>
+                    @if (_gpo is { Error: null })
+                    {
+                        <li>@T("Gruppenrichtlinien", "Group policies"): @_gpo.Gpos.Count, @T("nicht verknüpft", "not linked"): @_gpo.Gpos.Count(g => AdInfraAnalysis.GpoState(g) == "unverknuepft"), @T("Version AD ≠ SYSVOL", "version AD ≠ SYSVOL"): @_gpo.Gpos.Count(g => AdInfraAnalysis.GpoState(g) == "version")</li>
+                    }
+                    @if (_dns is { Error: null })
+                    {
+                        <li>DNS: @_dns.Zones.Count @T("Zonen im AD", "Zones in AD"), @_dns.Zones.Sum(z => z.Stale) @T("veraltet", "stale"), @_dns.DuplicateA.Count @T("IPs mit mehreren Namen", "IPs with several names")</li>
+                    }
+                </ul>
+            </section>
+            <section>
+                <h2>@T("Wo Aufräumen am meisten bringt", "Where clean-up pays off most")</h2>
+                <ol>
+                    @foreach (var s in _scores.Take(5))
+                    {
+                        <li>@s.Label: <b>@s.Score</b> @T("Punkte", "points") (@s.Computers @T("Computer", "computers"))</li>
+                    }
+                </ol>
+            </section>
+            <section>
+                <h2>@T("Änderungen an Computerkonten", "Changes to computer accounts") (7 @T("Tage", "days"))</h2>
+                @if (_changes.Count == 0)
+                {
+                    <p>@T("Noch keine Änderungen erfasst.", "No changes recorded yet.")</p>
+                }
+                <ul>
+                    @foreach (var g in _changes.GroupBy(c => c.Change).OrderByDescending(g => g.Count()))
+                    {
+                        <li>@ChangeLabel(g.Key): <b>@g.Count()</b></li>
+                    }
+                </ul>
+            </section>
+            <section>
+                <h2>@T("Erreichbarkeit der Ziele, 24 Stunden", "Target availability, 24 hours")</h2>
+                <ul>
+                    @foreach (var s in _status.OrderBy(s => s.Availability24h ?? 2).Take(12))
+                    {
+                        <li>@s.Target.Label: @(s.Availability24h is { } a ? F(a * 100) + " %" : "–")</li>
+                    }
+                </ul>
+            </section>
+            <section>
+                <h2>@T("Zertifikate unter 90 Tagen", "Certificates below 90 days")</h2>
+                @if (_certs.Count == 0)
+                {
+                    <p>@T("Keine Einträge.", "No entries.")</p>
+                }
+                <ul>
+                    @foreach (var c in _certs)
+                    {
+                        <li>@c.Name: @c.NotAfter.ToString("dd.MM.yyyy") (@c.Days @T("Tage", "days"))</li>
+                    }
+                </ul>
+            </section>
+        </div>
+    </div>
+}
+
+@code {
+    private AdComputerResult? _ad;
+    private AdInfraResult? _infra;
+    private AdGpoResult? _gpo;
+    private AdDnsZoneResult? _dns;
+    private DateTime _nowUtc;
+    private Dictionary<string, double> _current = [];
+    private Dictionary<string, double> _weekAgo = [];
+    private IReadOnlyList<AdCountdown> _countdowns = [];
+    private IReadOnlyList<AdOuScore> _scores = [];
+    private List<AdComputerChange> _changes = [];
+    private IReadOnlyList<NetworkTargetStatus> _status = [];
+    private List<(string Name, DateTime NotAfter, int Days)> _certs = [];
+
+    private IReadOnlyList<(string Key, string Label)> MetricLabels =>
+    [
+        ("computer", T("Computerkonten", "Computer accounts")),
+        ("aktiv30", T("aktiv in 30 Tagen", "active in 30 days")),
+        ("ohneSupport", T("ohne Herstellersupport", "without vendor support")),
+        ("inaktiv90", T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days")),
+        ("passwortAlt", T("Computerpasswort nicht erneuert", "Computer password not renewed")),
+        ("delegation", T("riskante Delegation", "risky delegation")),
+        ("standardcontainer", T("Standardcontainer", "default container")),
+        ("altlasten", T("Altlasten-Score", "Legacy score"))
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _nowUtc = DateTime.UtcNow;
+        _ad = await Ad.GetAsync();
+        if (!_ad.Enabled || _ad.Error is not null)
+        {
+            _infra = new AdInfraResult();
+            return;
+        }
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        _current = AdInfraAnalysis.Metrics(_ad, _nowUtc).ToDictionary(kv => kv.Key, kv => kv.Value);
+        var history = await Store.LoadAdMetricsAsync(14, CancellationToken.None);
+        var reference = history.Select(p => p.Day).Where(d => d <= today.AddDays(-7)).DefaultIfEmpty().Max();
+        _weekAgo = reference == default ? [] : history.Where(p => p.Day == reference).ToDictionary(p => p.Metric, p => p.Value);
+        _countdowns = AdInfraAnalysis.Countdowns(_ad.Computers, today, 90);
+        _scores = AdInfraAnalysis.LegacyScores(_ad.Computers, _nowUtc, _ad.LapsReadable);
+        _changes = await Store.LoadAdChangesAsync(7, CancellationToken.None);
+        var targets = await Network.TargetsAsync();
+        _status = NetworkAnalysisService.Status(targets, await Network.ResultsAsync(2), _nowUtc);
+        _gpo = await Gpo.GetAsync();
+        _dns = await Dns.GetAsync();
+        _infra = await Infra.GetAsync();
+        _certs = NetworkAnalysisService.Certificates(_status, _nowUtc).Select(c => (c.Subject, c.NotAfter, c.DaysLeft))
+            .Concat(_infra.CertificateAuthorities.Where(c => c.NotAfterUtc is not null).Select(c => (c.Name, c.NotAfterUtc!.Value, (int)(c.NotAfterUtc.Value - _nowUtc).TotalDays)))
+            .Concat(_infra.WebCertificates.Where(c => c.NotAfterUtc is not null).Select(c => (c.Host, c.NotAfterUtc!.Value, (int)(c.NotAfterUtc.Value - _nowUtc).TotalDays)))
+            .Where(c => c.Item3 < 90).OrderBy(c => c.Item3).ToList();
+    }
+
+    private const string ReportElementId = "net-report";
+
+    private async Task PrintAsync() => await JsRuntime.InvokeVoidAsync("trafagDownload.printElement", ReportElementId);
+
+    private string ChangeLabel(string change) => change switch
+    {
+        "neu" => T("neu", "new"),
+        "entfernt" => T("entfernt", "removed"),
+        "verschoben" => T("verschoben", "moved"),
+        "deaktiviert" => T("deaktiviert", "disabled"),
+        "aktiviert" => T("aktiviert", "enabled"),
+        _ => T("Betriebssystem", "Operating system")
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

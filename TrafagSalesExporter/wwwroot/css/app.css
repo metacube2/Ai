@@ -664,3 +664,54 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .dir-printer-kpis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .dir-printer-server { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 14px; background: rgba(200, 80, 30, 0.12); font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .dir-orbit, .dir-edge-ok, .dir-edge-alt, .dir-edge-fehler, .dir-node-halo, .dir-sun-spin, .dir-sun-seg, .dir-zone-bar > span, .dir-cd, .dir-cd-ring, polyline.dir-line, .dir-site, .dir-fact { animation: none; } polyline.dir-line { stroke-dashoffset: 0; } }
+
+/* Netzwerk: Migration, Bericht, Geraetelandkarte, Altlasten-Score (2026-10-02). Praefix "dir-". */
+.dir-mig { width: 100%; height: auto; }
+.dir-mig-today { stroke: #C8501E; stroke-width: 2; stroke-dasharray: 5 4; animation: dir-flow 1.5s linear infinite; }
+.dir-mig-today-label { font: 700 11px system-ui, sans-serif; fill: #C8501E; }
+.dir-mig-wave { cursor: pointer; transform-box: fill-box; transform-origin: center; animation: dir-pop 0.7s ease-out both; }
+.dir-mig-bubble { stroke: var(--mud-palette-surface); stroke-width: 2; opacity: 0.9; transition: opacity 0.2s; }
+.dir-mig-wave:hover .dir-mig-bubble, .dir-mig-sel .dir-mig-bubble { opacity: 1; stroke: #FFD180; stroke-width: 3; }
+.dir-mig-aus .dir-mig-bubble { fill: #C62828; animation: dir-cd-pulse-svg 1.8s ease-in-out infinite; }
+.dir-mig-bald .dir-mig-bubble { fill: #F9A825; } .dir-mig-ok .dir-mig-bubble { fill: #1E88E5; }
+@keyframes dir-cd-pulse-svg { 50% { opacity: 0.6; } }
+.dir-mig-count { font: 700 11px system-ui, sans-serif; fill: #fff; pointer-events: none; }
+.dir-mig-name { font: 11px system-ui, sans-serif; fill: var(--mud-palette-text-secondary); pointer-events: none; }
+.dir-wave { padding: 6px 8px; border-radius: 6px; cursor: pointer; border-bottom: 1px solid rgba(127, 127, 127, 0.15); }
+.dir-wave:hover, .dir-wave-sel { background: rgba(240, 138, 75, 0.14); }
+.dir-wave-head { display: flex; align-items: center; gap: 8px; }
+.dir-wave-meta { font-size: 12px; margin: 2px 0 4px; }
+.dir-ou-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 3px 0; }
+.dir-ou-bar > .ll-grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dir-ou-track { width: 45%; height: 10px; border-radius: 5px; background: rgba(127, 127, 127, 0.15); overflow: hidden; }
+.dir-ou-track > span { display: block; height: 100%; background: #C8501E; transform-origin: left; animation: dir-life-in 1s ease-out both; }
+.dir-line-bg-0 { background: #90A4AE; } .dir-line-bg-1 { background: #42A5F5; } .dir-line-bg-2 { background: #EF5350; } .dir-line-bg-3 { background: #F08A4B; }
+.dir-line-bg-4 { background: #78909C; } .dir-line-bg-5 { background: #AB47BC; } .dir-line-bg-6 { background: #C62828; } .dir-line-bg-7 { background: #F9A825; } .dir-line-bg-8 { background: #26A69A; }
+.dir-score { display: flex; align-items: center; gap: 10px; margin: 4px 0; font-size: 13px; }
+.dir-score-rank { width: 22px; text-align: right; font-weight: 700; opacity: 0.7; }
+.dir-score-label { width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dir-score-track { flex: 1; height: 14px; border-radius: 7px; background: rgba(127, 127, 127, 0.12); overflow: hidden; }
+.dir-score-bar { display: flex; height: 100%; border-radius: 7px; overflow: hidden; transform-origin: left; animation: dir-life-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.dir-score-bar > i { display: block; min-width: 0; }
+.dir-score-value { width: 48px; text-align: right; }
+.dir-reason-delegation { background: #C62828; } .dir-reason-ohneSupport { background: #EF5350; } .dir-reason-supportBald { background: #F9A825; }
+.dir-reason-inaktiv { background: #F08A4B; } .dir-reason-passwortAlt { background: #AB47BC; } .dir-reason-nieAngemeldet { background: #90A4AE; }
+.dir-reason-langeDeaktiviert { background: #546E7A; } .dir-reason-ohneLaps { background: #26A69A; }
+.dir-sitelink { stroke: rgba(240, 138, 75, 0.55); stroke-width: 2.5; fill: none; }
+.dir-packet { fill: #FFD180; filter: drop-shadow(0 0 4px rgba(255, 209, 128, 0.9)); }
+.dir-sitenode-bubble { fill: #1E88E5; fill-opacity: 0.85; stroke: #90CAF9; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: dir-pop 0.8s ease-out both, dir-breathe 4s ease-in-out 0.8s infinite; }
+.dir-sitenode-nodc .dir-sitenode-bubble { fill: #F9A825; stroke: #FFE082; }
+.dir-sitenode-none .dir-sitenode-bubble { fill: #78909C; stroke: #B0BEC5; }
+@keyframes dir-breathe { 50% { transform: scale(1.05); } }
+.dir-sitenode-count { font: 800 14px system-ui, sans-serif; fill: #fff; pointer-events: none; }
+.dir-report { background: var(--mud-palette-surface); border: 1px solid var(--mud-palette-lines-default); border-radius: 8px; padding: 18px 22px; }
+.dir-report h1 { font-size: 22px; margin: 0; }
+.dir-report h2 { font-size: 15px; margin: 16px 0 6px; color: #C8501E; }
+.dir-report-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; border-bottom: 3px solid #C8501E; padding-bottom: 6px; }
+.dir-report-head > span { font-size: 12px; opacity: 0.75; }
+.dir-report-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.dir-report-table th, .dir-report-table td { border-bottom: 1px solid rgba(127, 127, 127, 0.25); padding: 4px 8px; text-align: left; }
+.dir-report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 4px 24px; font-size: 13px; }
+.dir-report-grid ul, .dir-report-grid ol { margin: 0; padding-left: 18px; }
+.dir-up { color: #C62828; } .dir-down { color: #2E7D32; }
+@media (prefers-reduced-motion: reduce) { .dir-mig-today, .dir-mig-wave, .dir-mig-aus .dir-mig-bubble, .dir-ou-track > span, .dir-score-bar, .dir-sitenode-bubble { animation: none; } }

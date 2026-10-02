@@ -25,14 +25,18 @@ public sealed class AdSnapshotService
         var today = DateOnly.FromDateTime(DateTime.Today);
         if (!_ad.IsEnabled || _done == today || DateTime.Now.Hour < 6)
             return;
-        if (await _store.HasAdMetricsAsync(today, ct))
-        {
-            _done = today;
-            return;
-        }
         var ad = await _ad.GetAsync();
         if (ad.Error is not null || ad.Computers.Count == 0)
             return;
+        if (await _store.HasAdMetricsAsync(today, ct))
+        {
+            // Schnappschuss des Tages besteht schon; spaeter hinzugekommene Kennzahlen (Migration, Altlasten) nachtragen.
+            if (!await _store.HasAdMetricAsync(today, "altlasten", ct))
+                // Gespeicherten Stand unveraendert zurueckschreiben, damit der Vergleich morgen nichts verliert.
+                await _store.SaveAdSnapshotAsync(today, AdInfraAnalysis.Metrics(ad, DateTime.UtcNow), [], await _store.LoadAdComputerStatesAsync(ct), ct);
+            _done = today;
+            return;
+        }
 
         var now = DateTime.UtcNow;
         var states = ad.Computers

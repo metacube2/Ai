@@ -211,6 +211,10 @@ CREATE TABLE IF NOT EXISTS NetworkAdComputers (
             }
         }, ct);
 
+    public async Task<bool> HasAdMetricAsync(DateOnly day, string metric, CancellationToken ct)
+        => (await QueryAsync("SELECT COUNT(*) FROM NetworkAdMetrics WHERE Day = $d AND Metric = $m", new Dictionary<string, object> { ["$d"] = day.ToString("yyyy-MM-dd"), ["$m"] = metric }, ct))
+            .Select(r => Convert.ToInt64(r[0])).FirstOrDefault() > 0;
+
     public async Task<bool> HasAdMetricsAsync(DateOnly day, CancellationToken ct)
         => (await QueryAsync("SELECT COUNT(*) FROM NetworkAdMetrics WHERE Day = $d", new Dictionary<string, object> { ["$d"] = day.ToString("yyyy-MM-dd") }, ct))
             .Select(r => Convert.ToInt64(r[0])).FirstOrDefault() > 0;

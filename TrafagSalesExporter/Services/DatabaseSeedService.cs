@@ -354,6 +354,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("network-gpo", "network", "Gruppenrichtlinien", "Group policies", "Policy", "netzwerk/gruppenrichtlinien", 47, "All"),
         Link("network-dns", "network", "DNS", "DNS", "Dns", "netzwerk/dns", 48, "All"),
         Link("network-history", "network", "Verlauf", "History", "History", "netzwerk/verlauf", 49, "All"),
+        Link("network-migration", "network", "Migration", "Migration", "MoveUp", "netzwerk/migration", 52, "All"),
+        Link("network-report", "network", "Bericht", "Report", "Summarize", "netzwerk/bericht", 53, "All"),
         Link("network-workplaces", "network", "Arbeitsplaetze", "Workplaces", "Wifi", "netzwerk/arbeitsplaetze", 50, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),

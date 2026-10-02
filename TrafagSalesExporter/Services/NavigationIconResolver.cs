@@ -25,6 +25,8 @@ public static class NavigationIconResolver
         "Policy" => Icons.Material.Filled.Policy,
         "Dns" => Icons.Material.Filled.Dns,
         "History" => Icons.Material.Filled.History,
+        "MoveUp" => Icons.Material.Filled.MoveUp,
+        "Summarize" => Icons.Material.Filled.Summarize,
         "Groups" => Icons.Material.Filled.Groups,
         "Hub" => Icons.Material.Filled.Hub,
         "InsertChart" => Icons.Material.Filled.InsertChart,

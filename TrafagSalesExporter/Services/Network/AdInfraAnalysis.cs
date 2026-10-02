@@ -176,6 +176,10 @@ public static class AdInfraAnalysis
             ["standardcontainer"] = all.Count(c => AdAnalysis.IsDefaultComputersContainer(c.Container))
         };
         if (ad.LapsReadable) m["ohneLaps"] = all.Count(AdAnalysis.LapsMissing);
+        // Fuer den Migrationsplaner: aktive Geraete je Produkt mit Supportende bis in zwei Jahren.
+        foreach (var w in MigrationWaves(all, DateOnly.FromDateTime(nowUtc)))
+            m["os:" + w.Product] = m.GetValueOrDefault("os:" + w.Product) + w.Devices.Count;
+        m["altlasten"] = LegacyScores(all, nowUtc, ad.LapsReadable).Sum(s => s.Score);
         return m;
     }
 
@@ -205,5 +209,77 @@ public static class AdInfraAnalysis
         {
             return null;
         }
+    }
+
+    /// <summary>Punkte je Grund fuer den Altlasten-Score (Netzwerk, Active Directory, 2026-10-02).</summary>
+    public static readonly IReadOnlyDictionary<string, int> ScoreWeights = new Dictionary<string, int>
+    {
+        ["delegation"] = 5,
+        ["ohneSupport"] = 3,
+        ["supportBald"] = 2,
+        ["inaktiv"] = 2,
+        ["passwortAlt"] = 2,
+        ["nieAngemeldet"] = 1,
+        ["langeDeaktiviert"] = 1,
+        ["ohneLaps"] = 1
+    };
+
+    /// <summary>Gruende eines Computers fuer den Altlasten-Score.</summary>
+    public static IEnumerable<string> ScoreReasons(AdComputer c, DateTime nowUtc, bool lapsReadable)
+    {
+        var today = DateOnly.FromDateTime(nowUtc);
+        if (AdAnalysis.RiskyDelegation(c)) yield return "delegation";
+        if (c.Enabled)
+        {
+            var cls = AdAnalysis.LifecycleClass(AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion).EndOfSupport, today);
+            if (cls == "aus") yield return "ohneSupport";
+            else if (cls == "bald") yield return "supportBald";
+        }
+        if (AdAnalysis.IsInactive(c, nowUtc) && c.LastLogonUtc is not null) yield return "inaktiv";
+        if (c.Enabled && c.LastLogonUtc is null && c.CreatedUtc < nowUtc.AddDays(-30)) yield return "nieAngemeldet";
+        if (AdAnalysis.PasswordStale(c, nowUtc)) yield return "passwortAlt";
+        if (!c.Enabled && c.ChangedUtc < nowUtc.AddDays(-365)) yield return "langeDeaktiviert";
+        if (lapsReadable && AdAnalysis.LapsMissing(c)) yield return "ohneLaps";
+    }
+
+    public static IReadOnlyList<AdOuScore> LegacyScores(IReadOnlyList<AdComputer> computers, DateTime nowUtc, bool lapsReadable)
+        => computers.GroupBy(c => c.Container, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var parts = g.SelectMany(c => ScoreReasons(c, nowUtc, lapsReadable))
+                    .GroupBy(r => r).ToDictionary(r => r.Key, r => r.Count() * ScoreWeights[r.Key]);
+                return new AdOuScore(g.Key, AdAnalysis.ContainerLabel(g.Key), g.Count(), parts.Values.Sum(), parts);
+            })
+            .Where(s => s.Score > 0)
+            .OrderByDescending(s => s.Score).ThenBy(s => s.Label)
+            .ToList();
+
+    /// <summary>Aktive Geraete, deren Support abgelaufen ist oder in <paramref name="days"/> Tagen endet, je Produkt und Datum.</summary>
+    public static IReadOnlyList<AdMigrationWave> MigrationWaves(IReadOnlyList<AdComputer> computers, DateOnly today, int days = 730)
+        => computers.Where(c => c.Enabled)
+            .Select(c => (c, l: AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion)))
+            .Where(x => x.l.EndOfSupport is { } e && e <= today.AddDays(days))
+            .GroupBy(x => (x.l.Product, End: x.l.EndOfSupport!.Value))
+            .Select(g => new AdMigrationWave(g.Key.Product, g.Key.End, g.Key.End.DayNumber - today.DayNumber, g.Select(x => x.c).OrderBy(c => c.Name).ToList()))
+            .OrderBy(w => w.End).ThenByDescending(w => w.Devices.Count)
+            .ToList();
+
+    /// <summary>Ordnet die DNS-IPs aktiver Computer den AD-Subnetzen und damit Standorten zu; "" = kein Standort.</summary>
+    public static IReadOnlyList<AdSiteDevices> DevicesPerSite(IReadOnlyList<AdDnsEntry> dns, IReadOnlyList<AdSubnet> subnets)
+    {
+        var bySite = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var e in dns)
+        {
+            var ip = e.Ips.Select(i => System.Net.IPAddress.TryParse(i, out var a) ? a : null).FirstOrDefault(a => a is not null);
+            if (ip is null) continue;
+            // Laengstes passendes Subnetz gewinnt.
+            var site = subnets.Where(s => AdAnalysis.InCidr(ip, s.Cidr))
+                .OrderByDescending(s => int.TryParse(s.Cidr.Split('/').Last(), out var b) ? b : 0)
+                .Select(s => s.Site).FirstOrDefault() ?? "";
+            if (!bySite.TryGetValue(site, out var list)) bySite[site] = list = [];
+            list.Add(e.Name);
+        }
+        return bySite.Select(kv => new AdSiteDevices(kv.Key, kv.Value.Count, kv.Value.OrderBy(n => n).Take(5).ToList()))
+            .OrderByDescending(s => s.Devices).ToList();
     }
 }

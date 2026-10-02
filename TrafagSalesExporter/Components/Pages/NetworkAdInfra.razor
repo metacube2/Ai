@@ -4,6 +4,7 @@
 @using TrafagSalesExporter.Components.Network
 @using static TrafagSalesExporter.Components.Network.NetSvg
 @inject AdInfrastructureService Infra
+@inject AdComputerService Ad
 @inject IUiTextService UiText
 
 @* Unterreiter AD-Infrastruktur (Wunsch Ingo 2026-10-02): Replikation, Standorte, Domaene, Zertifikate, Dienstkonten.
@@ -112,6 +113,49 @@ else
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Standorte", "Sites")" Icon="@Icons.Material.Filled.Place">
+            <MudPaper Class="pa-3 mb-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Gerätelandkarte", "Device map")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Jede Blase ist ein AD-Standort, die Grösse die Zahl der in 30 Tagen aktiven Computer dort (IP aus dem DNS, zugeordnet über die AD-Subnetze). Linien sind Standortverknüpfungen mit Kosten, die Punkte darauf zeigen den Replikationsweg. Grau: Geräte ohne passendes Subnetz.", "Each bubble is an AD site, its size the number of computers active in 30 days there (IP from DNS, mapped via the AD subnets). Lines are site links with cost, the dots on them show the replication path. Grey: devices without a matching subnet.")</MudText>
+                @if (_siteDevices is null)
+                {
+                    <MudProgressLinear Indeterminate="true" /><MudText Typo="Typo.caption">@T("DNS wird abgefragt …", "Querying DNS …")</MudText>
+                }
+                else
+                {
+                    <svg viewBox="0 0 640 430" class="dir-graph">
+                        @foreach (var l in _r.SiteLinks)
+                        {
+                            for (var k = 0; k + 1 < l.Sites.Count; k++)
+                            {
+                                if (!_sitePos.TryGetValue(l.Sites[k], out var a) || !_sitePos.TryGetValue(l.Sites[k + 1], out var b)) continue;
+                                var path = $"M{F(a.X)},{F(a.Y)} L{F(b.X)},{F(b.Y)}";
+                                <g>
+                                    <path d="@path" class="dir-sitelink" />
+                                    <circle r="3.5" class="dir-packet"><animateMotion dur="@(F(2.5 + l.Cost / 100.0))s" repeatCount="indefinite" path="@path" /></circle>
+                                    <circle r="3.5" class="dir-packet"><animateMotion dur="@(F(2.5 + l.Cost / 100.0))s" begin="1.2s" repeatCount="indefinite" path="@path" keyPoints="1;0" keyTimes="0;1" calcMode="linear" /></circle>
+                                    <text x="@F((a.X + b.X) / 2)" y="@F((a.Y + b.Y) / 2 - 6)" text-anchor="middle" class="dir-node-sub">@l.Cost</text>
+                                </g>
+                            }
+                        }
+                        @foreach (var (site, p) in _sitePos)
+                        {
+                            var n = _siteDevices.FirstOrDefault(s => s.Site.Equals(site, StringComparison.OrdinalIgnoreCase))?.Devices ?? 0;
+                            var info = _r.Sites.FirstOrDefault(s => s.Name.Equals(site, StringComparison.OrdinalIgnoreCase));
+                            var radius = 14 + 34 * Math.Sqrt(n / (double)_maxSiteDevices);
+                            var none = site.Length == 0;
+                            <g class="dir-sitenode @(none ? "dir-sitenode-none" : info?.Dcs.Count == 0 ? "dir-sitenode-nodc" : string.Empty)">
+                                <circle cx="@F(p.X)" cy="@F(p.Y)" r="@F(radius)" class="dir-sitenode-bubble"><title>@(none ? T("ohne Standort", "without site") : site) · @n</title></circle>
+                                <text x="@F(p.X)" y="@F(p.Y + 5)" text-anchor="middle" class="dir-sitenode-count">@n</text>
+                                <text x="@F(p.X)" y="@F(p.Y + radius + 14)" text-anchor="middle" class="dir-node-label">@(none ? T("ohne Standort", "without site") : site)</text>
+                                @if (info is { Dcs.Count: > 0 })
+                                {
+                                    <g><text x="@F(p.X)" y="@F(p.Y + radius + 26)" text-anchor="middle" class="dir-node-sub">@info.Dcs.Count DC</text></g>
+                                }
+                            </g>
+                        }
+                    </svg>
+                }
+            </MudPaper>
             <MudGrid Spacing="3">
                 <MudItem xs="12" lg="7">
                     <MudPaper Class="pa-3 ll-panel" Outlined="true">
@@ -330,6 +374,32 @@ else
             })
             .Where(e => _pos.ContainsKey(e.Source) && _pos.ContainsKey(e.Target))
             .ToList();
+    }
+
+    private IReadOnlyList<AdSiteDevices>? _siteDevices;
+    private Dictionary<string, (double X, double Y)> _sitePos = new(StringComparer.OrdinalIgnoreCase);
+    private int _maxSiteDevices = 1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // DNS-Abfrage der aktiven Computer dauert einige Sekunden; deshalb nach dem ersten Aufbau.
+        if (!firstRender || _r is not { Enabled: true, Error: null })
+            return;
+        var dns = await Ad.ResolveDnsAsync();
+        var computers = await Ad.GetAsync();
+        var devices = AdInfraAnalysis.DevicesPerSite(dns.Entries, computers.Subnets);
+        var names = _r.Sites.Select(s => s.Name).Concat(devices.Where(d => d.Site.Length > 0).Select(d => d.Site))
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToList();
+        if (devices.Any(d => d.Site.Length == 0))
+            names.Add("");
+        for (var i = 0; i < names.Count; i++)
+        {
+            var angle = 2 * Math.PI * i / Math.Max(1, names.Count) - Math.PI / 2;
+            _sitePos[names[i]] = (320 + 200 * Math.Cos(angle), 205 + 150 * Math.Sin(angle));
+        }
+        _maxSiteDevices = Math.Max(1, devices.Select(d => d.Devices).DefaultIfEmpty(1).Max());
+        _siteDevices = devices;
+        await InvokeAsync(StateHasChanged);
     }
 
     private string KrbtgtClass => _krbtgtDays > 365 ? "nw-text-net" : _krbtgtDays > 180 ? "nw-text-data" : string.Empty;

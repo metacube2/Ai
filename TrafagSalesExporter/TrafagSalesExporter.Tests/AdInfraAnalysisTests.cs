@@ -169,4 +169,51 @@ public sealed class AdInfraAnalysisTests
     [InlineData(10, "Windows Server 2025")]
     [InlineData(null, "?")]
     public void Funktionsebene_Lesbar(int? level, string expected) => Assert.Equal(expected, AdInfraAnalysis.LevelName(level));
+
+    [Fact]
+    public void Altlasten_Score_Je_Ou_Mit_Gewichten()
+    {
+        var clients = "OU=Clients,DC=x";
+        var computers = new[]
+        {
+            new AdComputer("A", "Windows 7 Professional", Now.AddDays(-200), Now.AddYears(-5), true) { OsVersion = "6.1 (7601)", Container = clients },
+            new AdComputer("B", "Windows 11 Enterprise", Now, Now.AddYears(-1), true) { OsVersion = "10.0 (26100)", Container = clients, UnconstrainedDelegation = true },
+            new AdComputer("C", "Windows 11 Enterprise", Now, Now.AddYears(-1), true) { OsVersion = "10.0 (26100)", Container = "OU=Gut,DC=x" }
+        };
+        var s = Assert.Single(AdInfraAnalysis.LegacyScores(computers, Now, lapsReadable: false));
+
+        Assert.Equal("Clients", s.Label);
+        Assert.Equal(3 + 2 + 5, s.Score);
+        Assert.Equal(5, s.Parts["delegation"]);
+        Assert.Equal(5.0, s.PerDevice);
+    }
+
+    [Fact]
+    public void Migrationswellen_Nach_Produkt_Und_Datum()
+    {
+        var computers = new[]
+        {
+            new AdComputer("A", "Windows 10 Enterprise 2016 LTSB", Now, Now, true) { OsVersion = "10.0 (14393)" },
+            new AdComputer("B", "Windows 7 Professional", Now, Now, true) { OsVersion = "6.1 (7601)" },
+            new AdComputer("C", "Windows 7 Professional", Now, Now, false) { OsVersion = "6.1 (7601)" },
+            new AdComputer("D", "Windows Server 2025 Standard", Now, Now, true) { OsVersion = "10.0 (26100)" }
+        };
+        var waves = AdInfraAnalysis.MigrationWaves(computers, DateOnly.FromDateTime(Now));
+
+        Assert.Equal(2, waves.Count);
+        Assert.True(waves[0].Expired);
+        Assert.Single(waves[0].Devices);
+        Assert.Equal(11, waves[1].DaysLeft);
+    }
+
+    [Fact]
+    public void Geraete_Je_Standort_Laengstes_Subnetz_Gewinnt()
+    {
+        var dns = new[] { new AdDnsEntry("A", "a", ["10.120.16.5"], false), new AdDnsEntry("B", "b", ["192.168.1.2"], false), new AdDnsEntry("C", "c", [], true) };
+        var sites = AdInfraAnalysis.DevicesPerSite(dns, [new AdSubnet("10.120.0.0/16", "Datacenter"), new AdSubnet("10.120.16.0/24", "CH-Bubikon")]);
+
+        Assert.Contains(sites, s => s.Site == "CH-Bubikon" && s.Devices == 1);
+        Assert.Contains(sites, s => s.Site == "" && s.Devices == 1);
+        Assert.DoesNotContain(sites, s => s.Site == "Datacenter");
+    }
 }
