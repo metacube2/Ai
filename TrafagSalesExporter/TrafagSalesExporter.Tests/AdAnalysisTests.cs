@@ -117,4 +117,16 @@ public sealed class AdAnalysisTests
         Assert.Equal(3, list.Count);
         Assert.Equal((new DateOnly(2026, 9, 1), 2), list[1]);
     }
+
+    [Fact]
+    public void Laps_Und_BitLocker_Ohne_Jedes_Datum_Gelten_Als_Nicht_Lesbar()
+    {
+        var none = new AdComputerResult { Enabled = true, Computers = [Pc("A"), Pc("B")] };
+        var some = new AdComputerResult { Enabled = true, Computers = [Pc("A") with { LapsExpiryUtc = Now, BitLockerKeys = 1 }, Pc("B")] };
+
+        Assert.False(none.LapsReadable);
+        Assert.False(none.BitLockerReadable);
+        Assert.True(some.LapsReadable);
+        Assert.True(some.BitLockerReadable);
+    }
 }

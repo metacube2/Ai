@@ -8,6 +8,9 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["LAPS nicht lesbar"] = "LAPS no legible",
+                ["Jeder Turm ist eine OU, die Höhe wächst mit der Zahl der Computer (Wurzel, damit kleine OUs sichtbar bleiben). Maus darüber hält die Drehung an, Klick zeigt die Geräte."] = "Cada torre es una OU, su altura crece con el número de equipos (raíz cuadrada, para que las OU pequeñas sigan visibles). Pasar el ratón detiene la rotación, un clic muestra los equipos.",
+                ["Bei keinem Computer lesbar. Entweder nicht im Einsatz, oder das Konto des Servers darf das Attribut nicht lesen. Das kann nur die IT klären."] = "No legible en ningún equipo. O no está en uso, o la cuenta del servidor no puede leer el atributo. Solo TI puede aclararlo.",
                 ["Active Directory"] = "Active Directory",
                 ["Keine Einträge."] = "Sin entradas.",
                 ["Betriebssystem"] = "Sistema operativo",
@@ -1761,6 +1764,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["LAPS nicht lesbar"] = "LAPS non leggibile",
+                ["Jeder Turm ist eine OU, die Höhe wächst mit der Zahl der Computer (Wurzel, damit kleine OUs sichtbar bleiben). Maus darüber hält die Drehung an, Klick zeigt die Geräte."] = "Ogni torre è una OU, l'altezza cresce con il numero di computer (radice quadrata, così le OU piccole restano visibili). Il passaggio del mouse ferma la rotazione, un clic mostra i dispositivi.",
+                ["Bei keinem Computer lesbar. Entweder nicht im Einsatz, oder das Konto des Servers darf das Attribut nicht lesen. Das kann nur die IT klären."] = "Non leggibile su nessun computer. O non è in uso, o l'account del server non può leggere l'attributo. Solo l'IT può chiarirlo.",
                 ["Active Directory"] = "Active Directory",
                 ["Keine Einträge."] = "Nessuna voce.",
                 ["Betriebssystem"] = "Sistema operativo",
@@ -3514,6 +3520,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["LAPS nicht lesbar"] = "LAPS पढ़ने योग्य नहीं",
+                ["Jeder Turm ist eine OU, die Höhe wächst mit der Zahl der Computer (Wurzel, damit kleine OUs sichtbar bleiben). Maus darüber hält die Drehung an, Klick zeigt die Geräte."] = "हर टावर एक OU है, ऊँचाई कंप्यूटरों की संख्या के साथ बढ़ती है (वर्गमूल, ताकि छोटे OU दिखते रहें)। माउस रखने पर घूमना रुकता है, क्लिक से डिवाइस दिखते हैं।",
+                ["Bei keinem Computer lesbar. Entweder nicht im Einsatz, oder das Konto des Servers darf das Attribut nicht lesen. Das kann nur die IT klären."] = "किसी भी कंप्यूटर पर पढ़ने योग्य नहीं। या तो उपयोग में नहीं है, या सर्वर खाता यह विशेषता नहीं पढ़ सकता। यह केवल IT स्पष्ट कर सकता है।",
                 ["Active Directory"] = "एक्टिव डायरेक्टरी",
                 ["Keine Einträge."] = "कोई प्रविष्टि नहीं।",
                 ["Betriebssystem"] = "ऑपरेटिंग सिस्टम",
@@ -5267,6 +5276,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["LAPS nicht lesbar"] = "LAPS i palexueshëm",
+                ["Jeder Turm ist eine OU, die Höhe wächst mit der Zahl der Computer (Wurzel, damit kleine OUs sichtbar bleiben). Maus darüber hält die Drehung an, Klick zeigt die Geräte."] = "Çdo kullë është një OU, lartësia rritet me numrin e kompjuterëve (rrënja katrore, që OU-të e vogla të mbeten të dukshme). Miu sipër ndalon rrotullimin, klikimi tregon pajisjet.",
+                ["Bei keinem Computer lesbar. Entweder nicht im Einsatz, oder das Konto des Servers darf das Attribut nicht lesen. Das kann nur die IT klären."] = "I palexueshëm në asnjë kompjuter. Ose nuk përdoret, ose llogaria e serverit nuk mund ta lexojë atributin. Këtë mund ta sqarojë vetëm IT.",
                 ["Active Directory"] = "Active Directory",
                 ["Keine Einträge."] = "Asnjë hyrje.",
                 ["Betriebssystem"] = "Sistemi operativ",
@@ -7020,6 +7032,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["LAPS nicht lesbar"] = "LAPS okunamıyor",
+                ["Jeder Turm ist eine OU, die Höhe wächst mit der Zahl der Computer (Wurzel, damit kleine OUs sichtbar bleiben). Maus darüber hält die Drehung an, Klick zeigt die Geräte."] = "Her kule bir OU, yüksekliği bilgisayar sayısıyla artar (karekök, küçük OU'lar görünür kalsın diye). Fareyle üzerine gelmek dönüşü durdurur, tıklama cihazları gösterir.",
+                ["Bei keinem Computer lesbar. Entweder nicht im Einsatz, oder das Konto des Servers darf das Attribut nicht lesen. Das kann nur die IT klären."] = "Hiçbir bilgisayarda okunamıyor. Ya kullanılmıyor ya da sunucu hesabı bu özniteliği okuyamıyor. Bunu yalnızca BT netleştirebilir.",
                 ["Active Directory"] = "Active Directory",
                 ["Keine Einträge."] = "Kayıt yok.",
                 ["Betriebssystem"] = "İşletim sistemi",
@@ -8773,6 +8788,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["LAPS nicht lesbar"] = "LAPS laDlaHbe'",
+                ["Jeder Turm ist eine OU, die Höhe wächst mit der Zahl der Computer (Wurzel, damit kleine OUs sichtbar bleiben). Maus darüber hält die Drehung an, Klick zeigt die Geräte."] = "Hoch qach OU. 'aDmey mI' tIn. ghItlh tI'.",
+                ["Bei keinem Computer lesbar. Entweder nicht im Einsatz, oder das Konto des Servers darf das Attribut nicht lesen. Das kann nur die IT klären."] = "De'wI' Hoch laDlaHbe'. IT neH Sov.",
                 ["Active Directory"] = "Active Directory",
                 ["Keine Einträge."] = "ghItlh pagh.",
                 ["Betriebssystem"] = "QIn pat",

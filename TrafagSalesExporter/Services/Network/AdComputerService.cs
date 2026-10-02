@@ -48,6 +48,10 @@ public sealed class AdComputerResult
     public IReadOnlyList<AdOu> Ous { get; init; } = [];
     /// <summary>Hinweise, welche Teilabfrage nicht lesbar war (z. B. BitLocker ohne Rechte).</summary>
     public IReadOnlyList<string> Notes { get; init; } = [];
+    /// <summary>Bei mindestens einem Computer ist ein LAPS-Ablaufdatum lesbar; sonst fehlt das Leserecht oder LAPS.</summary>
+    public bool LapsReadable => Computers.Any(c => c.LapsExpiryUtc is not null);
+    /// <summary>Mindestens ein BitLocker-Objekt sichtbar; sonst fehlt das Leserecht oder es liegen keine Schluessel im AD.</summary>
+    public bool BitLockerReadable => Computers.Any(c => c.BitLockerKeys > 0);
     public IEnumerable<AdComputer> Stale(int days) => Computers.Where(c => c.Enabled && (c.LastLogonUtc is null || c.LastLogonUtc < DateTime.UtcNow.AddDays(-days)));
 }
 
@@ -193,7 +197,8 @@ public sealed class AdComputerService
                         PwdLastSetUtc = FileTime("pwdLastSet"),
                         Container = AdAnalysis.ParentDn(dn),
                         Services = services,
-                        IsDomainController = (uac & 0x2000) != 0,
+                        // 0x2000 SERVER_TRUST_ACCOUNT (DC), 0x4000000 PARTIAL_SECRETS_ACCOUNT (RODC, z. B. AzureADKerberos).
+                        IsDomainController = (uac & 0x2000) != 0 || (uac & 0x4000000) != 0,
                         UnconstrainedDelegation = (uac & 0x80000) != 0,
                         ProtocolTransition = (uac & 0x1000000) != 0,
                         ConstrainedTargets = r.Properties["msDS-AllowedToDelegateTo"].Count,

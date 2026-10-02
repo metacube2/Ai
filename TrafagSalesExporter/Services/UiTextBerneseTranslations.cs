@@ -10,6 +10,9 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["LAPS nicht lesbar"] = "LAPS nid läsbar",
+            ["Jeder Turm ist eine OU, die Höhe wächst mit der Zahl der Computer (Wurzel, damit kleine OUs sichtbar bleiben). Maus darüber hält die Drehung an, Klick zeigt die Geräte."] = "Jede Turm isch e OU, d Höchi wachst mit dr Aazau Computer (Wurzle, dass chlini OUs sichtbar blibe). Mit dr Muus drüber haut d Drejig aa, e Klick zeigt d Grät.",
+            ["Bei keinem Computer lesbar. Entweder nicht im Einsatz, oder das Konto des Servers darf das Attribut nicht lesen. Das kann nur die IT klären."] = "Bi keim Computer läsbar. Entweder nid im Iisatz, oder ds Konto vom Server darf das Attribut nid läse. Das cha nume d IT kläre.",
             ["Active Directory"] = "Active Directory",
             ["Keine Einträge."] = "Kei Iiträg.",
             ["Betriebssystem"] = "Betriebssyschtem",
