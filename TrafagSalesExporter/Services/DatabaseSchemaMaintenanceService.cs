@@ -60,6 +60,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureProjectItemsTable(db);
         EnsurePurchasingCacheTables(db);
         EnsureMaterialUsageCacheTables(db);
+        EnsureNetworkTables(db);
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
@@ -441,6 +442,20 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         var addedKtmng = AddColumnIfMissing(db, "PurchasingEkpoCache", "Ktmng", "TEXT NOT NULL DEFAULT '0'");
         if (addedElikz || addedKtmng)
             BackfillEkpoItemFieldsFromRawJson(conn, addedElikz, addedKtmng);
+    }
+
+    /// <summary>Reiter Netzwerk (2026-10-02): Pruefergebnisse, eigene Ziele, Verbindungsereignisse.</summary>
+    private static void EnsureNetworkTables(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+        foreach (var sql in new[] { NetworkStore.ProbeTableSql, NetworkStore.WatchTableSql, NetworkStore.ClientTableSql }.Concat(NetworkStore.IndexSql))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.ExecuteNonQuery();
+        }
     }
 
     private static void EnsureMaterialUsageCacheTables(AppDbContext db)

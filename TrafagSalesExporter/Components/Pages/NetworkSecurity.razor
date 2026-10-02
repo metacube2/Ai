@@ -1,0 +1,178 @@
+@page "/netzwerk/sicherheit"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@inject NetworkAnalysisService Network
+@inject AdComputerService Ad
+@inject IUiTextService UiText
+
+<PageTitle>@T("Netzwerk", "Network") · @T("Sicherheit", "Security")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_status is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Zertifikate: Restlaufzeit", "Certificates: time left")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Aus dem TLS-Handshake der letzten Prüfung. Rot unter 30 Tagen, gelb unter 90.", "From the TLS handshake of the last check. Red below 30 days, yellow below 90.")</MudText>
+                @if (_certs.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="ll-muted">@T("Noch keine Prüfung mit Zertifikat gespeichert.", "No check with a certificate stored yet.")</MudText>
+                }
+                @foreach (var c in _certs)
+                {
+                    var label = _status.FirstOrDefault(s => s.Target.Key == c.TargetKey)?.Target.Label ?? c.TargetKey;
+                    <div class="nw-cert">
+                        <div class="nw-cert-head"><b>@label</b> <span class="ll-muted">@c.Subject · @c.Issuer</span><span class="ll-grow"></span><span class="ll-mono">@c.NotAfter.ToString("dd.MM.yyyy")</span></div>
+                        <div class="nw-cert-track"><span class="nw-cert-fill @CertClass(c.DaysLeft)" style="width:@F(Math.Clamp(c.DaysLeft / 400.0 * 100, 2, 100))%"></span><em>@c.DaysLeft @T("Tage", "days")</em></div>
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("DNS und Verschlüsselung", "DNS and encryption")</MudText>
+                <div class="ll-list" style="max-height:360px">
+                    @foreach (var s in _status)
+                    {
+                        <div class="ll-row">
+                            <MudIcon Icon="@(s.Encrypted ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)" Size="Size.Small" Color="@(s.Encrypted ? Color.Success : Color.Warning)" />
+                            <span class="ll-grow">@s.Target.Label <span class="ll-muted">@s.Target.Host:@s.Target.Port</span></span>
+                            <span class="ll-mono ll-muted">@(s.Ips.Length > 0 ? s.Ips : "–")</span>
+                        </div>
+                    }
+                </div>
+                @if (_status.Any(s => !s.Encrypted && s.Target.Kind == NetworkProbeKind.Http))
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                        @T("Das SAP-Gateway wird über HTTP ohne Verschlüsselung angesprochen (Port 8000). Benutzer und Passwort der OData-Abrufe gehen damit unverschlüsselt durchs interne Netz.", "The SAP gateway is addressed via HTTP without encryption (port 8000). User and password of the OData calls therefore cross the internal network unencrypted.")
+                    </MudAlert>
+                }
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("HANA und eigene Ziele werden nur per Port geprüft; ob dort verschlüsselt wird, sieht diese Prüfung nicht.", "HANA and own targets are only port-checked; this check cannot see whether they encrypt.")</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("AD-Computerkonten", "AD computer accounts")</MudText>
+                @if (_ad is null)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (!_ad.Enabled)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        @T("Abgeschaltet, bis die IT zustimmt. Einschalten mit NetworkProbe:AdEnabled = true in appsettings.json. Gelesen werden nur Computerkonten, keine Personen.", "Switched off until IT agrees. Enable with NetworkProbe:AdEnabled = true in appsettings.json. Only computer accounts are read, no persons.")
+                    </MudAlert>
+                }
+                else if (_ad.Error is not null)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true">@_ad.Error</MudAlert>
+                }
+                else
+                {
+                    var stale = _ad.Stale(90).OrderBy(c => c.LastLogonUtc ?? DateTime.MinValue).ToList();
+                    <div class="ll-kpis">
+                        <div class="ll-kpi"><div class="ll-kpi-value">@_ad.Computers.Count</div><div class="ll-kpi-label">@T("Computerkonten", "Computer accounts")</div></div>
+                        <div class="ll-kpi"><div class="ll-kpi-value">@_ad.Computers.Count(c => !c.Enabled)</div><div class="ll-kpi-label">@T("deaktiviert", "disabled")</div></div>
+                        <div class="ll-kpi"><div class="ll-kpi-value">@stale.Count</div><div class="ll-kpi-label">@T("aktiv, aber 90 Tage ohne Anmeldung", "enabled but no logon for 90 days")</div></div>
+                    </div>
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="5">
+                            <svg viewBox="0 0 220 220" class="nw-donut">
+                                @{
+                                    var groups = _ad.Computers.GroupBy(c => OsGroup(c.OperatingSystem)).OrderByDescending(g => g.Count()).ToList();
+                                    var total = Math.Max(1, _ad.Computers.Count);
+                                    var start = 0.0;
+                                }
+                                @for (var i = 0; i < groups.Count; i++)
+                                {
+                                    var share = groups[i].Count() / (double)total;
+                                    <path d="@Arc(start, start + share)" class="nw-arc nw-arc-@(i % 6)"><title>@groups[i].Key · @groups[i].Count()</title></path>
+                                    start += share;
+                                }
+                                <text x="110" y="106" class="nw-donut-num">@_ad.Computers.Count</text>
+                                <text x="110" y="124" class="nw-donut-sub">@T("Computer", "Computers")</text>
+                            </svg>
+                            <div class="ll-legend" style="flex-wrap:wrap">
+                                @for (var i = 0; i < groups.Count; i++)
+                                {
+                                    <span><i class="ll-swatch nw-arc-@(i % 6)"></i>@groups[i].Key (@groups[i].Count())</span>
+                                }
+                            </div>
+                        </MudItem>
+                        <MudItem xs="12" md="7">
+                            <MudText Typo="Typo.subtitle2">@T("Aktive Konten ohne Anmeldung seit 90 Tagen", "Enabled accounts without logon for 90 days")</MudText>
+                            <div class="ll-list" style="max-height:300px">
+                                @foreach (var c in stale.Take(150))
+                                {
+                                    <div class="ll-row">
+                                        <span class="ll-mono" style="width:150px">@c.Name</span>
+                                        <span class="ll-grow">@c.OperatingSystem</span>
+                                        <span class="ll-mono ll-muted">@(c.LastLogonUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? T("nie", "never"))</span>
+                                    </div>
+                                }
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Dense="true">
+                @T("Noch nicht möglich, braucht eine Freigabe von IT und Datenschutz: wer mit wem spricht (Firewall-Logs), DHCP-Geräte ohne AD-Konto und Konten von Ausgetretenen.", "Not possible yet, needs approval from IT and data protection: who talks to whom (firewall logs), DHCP devices without an AD account and accounts of leavers.")
+            </MudAlert>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private IReadOnlyList<NetworkTargetStatus>? _status;
+    private IReadOnlyList<NetworkCertificateInfo> _certs = [];
+    private AdComputerResult? _ad;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var targets = await Network.TargetsAsync();
+        var results = await Network.ResultsAsync(2);
+        _status = NetworkAnalysisService.Status(targets, results, DateTime.UtcNow);
+        _certs = NetworkAnalysisService.Certificates(_status, DateTime.UtcNow);
+        _ad = await Ad.GetAsync();
+    }
+
+    private static string CertClass(int days) => days < 30 ? "nw-cert-bad" : days < 90 ? "nw-cert-warn" : "nw-cert-ok";
+
+    private static string OsGroup(string os)
+    {
+        if (string.IsNullOrWhiteSpace(os))
+            return "?";
+        var parts = os.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(' ', parts.Take(Math.Min(parts.Length, os.Contains("Server", StringComparison.OrdinalIgnoreCase) ? 4 : 2)));
+    }
+
+    private static string Arc(double from, double to)
+    {
+        if (to - from >= 0.9999)
+            to = from + 0.9999;
+        static (double, double) P(double f, double r) => (110 + r * Math.Sin(2 * Math.PI * f), 110 - r * Math.Cos(2 * Math.PI * f));
+        var (x1, y1) = P(from, 95);
+        var (x2, y2) = P(to, 95);
+        var (x3, y3) = P(to, 60);
+        var (x4, y4) = P(from, 60);
+        var large = to - from > 0.5 ? 1 : 0;
+        return $"M{F(x1)},{F(y1)} A95,95 0 {large} 1 {F(x2)},{F(y2)} L{F(x3)},{F(y3)} A60,60 0 {large} 0 {F(x4)},{F(y4)} Z";
+    }
+
+    private static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

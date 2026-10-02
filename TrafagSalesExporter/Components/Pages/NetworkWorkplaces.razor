@@ -1,0 +1,158 @@
+@page "/netzwerk/arbeitsplaetze"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@inject NetworkAnalysisService Network
+@inject NetworkStore Store
+@inject LogisticsLiveService Live
+@inject IUiTextService UiText
+
+<PageTitle>@T("Netzwerk", "Network") · @T("Arbeitsplätze", "Workplaces")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="7">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <MudText Typo="Typo.h6">@T("Verbindungsabbrüche je Netzbereich, letzte 7 Tage", "Connection drops per network range, last 7 days")</MudText>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
+                @T("Gezählt wird, wie oft die Browser-Verbindung zum Cockpit abreisst. Viele Abbrüche je Sitzung in einem Bereich deuten auf schwaches WLAN. Gespeichert wird nur der Bereich (/24), keine Person und keine volle Adresse.", "Counts how often the browser connection to the cockpit drops. Many drops per session in one range point to weak Wi-Fi. Only the range (/24) is stored, no person and no full address.")
+            </MudText>
+            @if (_subnets is null)
+            {
+                <MudProgressLinear Indeterminate="true" />
+            }
+            else if (_subnets.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="ll-muted">@T("Noch keine Verbindungen erfasst. Die Zählung beginnt mit dem Deploy.", "No connections recorded yet. Counting starts with the deploy.")</MudText>
+            }
+            else
+            {
+                @foreach (var s in _subnets.Take(15))
+                {
+                    <div class="nw-subnet">
+                        <span class="ll-mono nw-subnet-name">@s.Subnet</span>
+                        <div class="nw-subnet-bars">
+                            <span class="nw-subnet-circ" style="width:@Pct(s.Circuits, _maxCircuits)" title="@T("Sitzungen", "Sessions") @s.Circuits"></span>
+                            <span class="nw-subnet-drop" style="width:@Pct(s.Drops, _maxCircuits)" title="@T("Abbrüche", "Drops") @s.Drops"></span>
+                        </div>
+                        <span class="ll-mono nw-subnet-ratio @(s.DropsPerCircuit >= 1 ? "nw-text-net" : string.Empty)">@s.DropsPerCircuit.ToString("N2")</span>
+                    </div>
+                }
+                <div class="ll-legend mt-1">
+                    <span><i class="ll-swatch nw-subnet-circ"></i>@T("Sitzungen", "Sessions")</span>
+                    <span><i class="ll-swatch nw-subnet-drop"></i>@T("Abbrüche", "Drops")</span>
+                    <span class="ll-muted">@T("Zahl rechts: Abbrüche je Sitzung", "Figure on the right: drops per session")</span>
+                </div>
+                <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Abbrüche nach Tageszeit", "Drops by time of day")</MudText>
+                <div class="ll-bars" style="height:90px">
+                    @foreach (var h in _byHour)
+                    {
+                        <div class="ll-bar-col" title="@($"{h.Hour:00}:00 · {h.Drops}")">
+                            <div class="ll-bar ll-bar-b" style="height:@Pct(h.Drops, _maxHour)"></div>
+                            <div class="ll-bar-label">@h.Hour</div>
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" lg="5">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <MudText Typo="Typo.h6">@T("Eigene Prüfziele", "Own check targets")</MudText>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
+                @T("Zum Beispiel Rückmeldeterminals. Geprüft wird nur der Port, alle 5 Minuten. Mit Arbeitsplatz zeigt die Seite neben dem Netz die letzte Rückmeldung aus Logistik live: Terminal erreichbar und keine Rückmeldung heisst eher Stillstand, Terminal nicht erreichbar eher Netz.", "For example confirmation terminals. Only the port is checked, every 5 minutes. With a work centre the page shows the last confirmation from Logistics live next to the network: terminal reachable but no confirmation rather means standstill, terminal unreachable rather network.")
+            </MudText>
+            <div class="nw-form">
+                <MudTextField @bind-Value="_edit.Label" Label="@T("Bezeichnung", "Label")" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_edit.Host" Label="@T("Rechnername oder IP", "Host name or IP")" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudNumericField @bind-Value="_edit.Port" Label="Port" Min="1" Max="65535" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_edit.WorkCenter" Label="@T("Arbeitsplatz (optional)", "Work centre (optional)")" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="SaveAsync" Disabled="@(string.IsNullOrWhiteSpace(_edit.Host))">
+                    @(_edit.Id == 0 ? T("Hinzufügen", "Add") : T("Speichern", "Save"))
+                </MudButton>
+            </div>
+            <div class="ll-list mt-2" style="max-height:340px">
+                @if (_targets.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="ll-muted">@T("Noch keine eigenen Ziele. Eine Liste Terminal und Arbeitsplatz kommt von der IT.", "No own targets yet. A list of terminal and work centre comes from IT.")</MudText>
+                }
+                @foreach (var t in _targets)
+                {
+                    var st = _status.FirstOrDefault(s => s.Target.Key == $"custom:{t.Id}");
+                    var center = t.WorkCenter.Length == 0 ? null : _centers.FirstOrDefault(c => string.Equals(c.WorkCenter, t.WorkCenter, StringComparison.OrdinalIgnoreCase));
+                    <div class="ll-row">
+                        <span class="nw-dot nw-dot-@(st?.Last is null ? "unknown" : st.Last.Ok ? "ok" : "down")"></span>
+                        <span class="ll-grow">@t.Label <span class="ll-muted ll-mono">@t.Host:@t.Port</span></span>
+                        @if (t.WorkCenter.Length > 0)
+                        {
+                            <span class="bom-tag @(center is null ? "ll-ruhig" : "ll-" + LogisticsLiveService.ActivityClass(center.LastAt, DateTime.Now))" title="@T("Letzte Rückmeldung", "Last confirmation")">
+                                @t.WorkCenter @(center is null ? "–" : center.LastAt.ToString("HH:mm"))
+                            </span>
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => Edit(t)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => DeleteAsync(t)" />
+                    </div>
+                }
+            </div>
+            @if (_targets.Any(t => t.WorkCenter.Length > 0) && Live.Snapshot.UpdatedAt is null)
+            {
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Rückmeldungen erscheinen, solange Logistik live irgendwo offen ist.", "Confirmations appear while Logistics live is open somewhere.")</MudText>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private IReadOnlyList<NetworkSubnetStat>? _subnets;
+    private IReadOnlyList<(int Hour, int Drops)> _byHour = [];
+    private int _maxCircuits = 1;
+    private int _maxHour = 1;
+    private List<NetworkWatchTarget> _targets = [];
+    private IReadOnlyList<NetworkTargetStatus> _status = [];
+    private IReadOnlyList<LiveWorkCenter> _centers = [];
+    private NetworkWatchTarget _edit = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var (subnets, byHour, _) = await Network.ClientStatsAsync(7);
+        _subnets = subnets;
+        _byHour = byHour;
+        _maxCircuits = Math.Max(1, subnets.Select(s => Math.Max(s.Circuits, s.Drops)).DefaultIfEmpty(1).Max());
+        _maxHour = Math.Max(1, byHour.Select(h => h.Drops).DefaultIfEmpty(1).Max());
+        await LoadTargetsAsync();
+    }
+
+    private async Task LoadTargetsAsync()
+    {
+        _targets = await Store.LoadWatchTargetsAsync(CancellationToken.None);
+        var targets = await Network.TargetsAsync();
+        _status = NetworkAnalysisService.Status(targets, await Network.ResultsAsync(1), DateTime.UtcNow);
+        _centers = LogisticsLiveService.WorkCenters(Live.Snapshot);
+    }
+
+    private void Edit(NetworkWatchTarget t) => _edit = new NetworkWatchTarget { Id = t.Id, Label = t.Label, Host = t.Host, Port = t.Port, WorkCenter = t.WorkCenter, IsActive = t.IsActive };
+
+    private async Task SaveAsync()
+    {
+        // Nur einzelne, bekannte Ziele: ein Bereich oder eine Liste waere ein Scan.
+        if (_edit.Host.Contains('/') || _edit.Host.Contains(',') || _edit.Host.Contains(' '))
+            return;
+        await Store.SaveWatchTargetAsync(_edit, CancellationToken.None);
+        _edit = new NetworkWatchTarget();
+        await LoadTargetsAsync();
+    }
+
+    private async Task DeleteAsync(NetworkWatchTarget t)
+    {
+        await Store.DeleteWatchTargetAsync(t.Id, CancellationToken.None);
+        await LoadTargetsAsync();
+    }
+
+    private static string Pct(int value, int max) => $"{Math.Round(100.0 * value / Math.Max(1, max)).ToString(CultureInfo.InvariantCulture)}%";
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

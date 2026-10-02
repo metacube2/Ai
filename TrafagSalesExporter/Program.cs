@@ -148,6 +148,15 @@ builder.Services.AddSingleton<PurchasingDashboardSnapshotCache>();
 builder.Services.AddSingleton<LogisticsLiveService>();
 // Verwendung & Risiko: rechnet aus MaterialParentCache und Einkaufscache, gemerkt bis neue Daten kommen.
 builder.Services.AddSingleton<BomInheritanceService>();
+// Reiter Netzwerk (2026-10-02): feste Zielliste, Pruefung alle 5 Min. nur in Produktion,
+// Notschalter NetworkProbe:Enabled, AD-Auswertung nur mit NetworkProbe:AdEnabled.
+builder.Services.Configure<NetworkProbeOptions>(builder.Configuration.GetSection(NetworkProbeOptions.SectionName));
+builder.Services.AddSingleton<NetworkStore>();
+builder.Services.AddSingleton<NetworkTargetCatalog>();
+builder.Services.AddSingleton<NetworkAnalysisService>();
+builder.Services.AddSingleton<AdComputerService>();
+builder.Services.AddHostedService<NetworkProbeService>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, ClientConnectionTracker>();
 
 // UI-/Page-Services: Scoped = pro Blazor-Circuit.
 builder.Services.AddScoped<ISettingsPageService, SettingsPageService>();

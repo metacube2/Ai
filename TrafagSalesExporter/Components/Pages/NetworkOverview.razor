@@ -1,0 +1,164 @@
+@page "/netzwerk"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@implements IDisposable
+@inject NetworkAnalysisService Network
+@inject IUiTextService UiText
+
+<PageTitle>@T("Netzwerk", "Network")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_status is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@_status.Count(x => x.Last?.Ok == true) / @_status.Count</div><div class="ll-kpi-label">@T("Ziele erreichbar", "Targets reachable")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@(AvgLatency?.ToString("N0") ?? "–") ms</div><div class="ll-kpi-label">@T("Mittlere Antwortzeit (24 h)", "Average response time (24 h)")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@(_lastProbe?.ToLocalTime().ToString("HH:mm") ?? "–")</div><div class="ll-kpi-label">@T("Letzte Prüfung", "Last check")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@(_since?.ToLocalTime().ToString("dd.MM.") ?? "–")</div><div class="ll-kpi-label">@T("Verlauf seit", "History since")</div></div>
+    </div>
+
+    @if (_since is null)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+            @T("Noch keine Prüfung gespeichert. Der Server prüft alle 5 Minuten, die erste Prüfung kommt eine Minute nach dem Start.", "No check stored yet. The server checks every 5 minutes; the first check runs one minute after start.")
+        </MudAlert>
+    }
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel nw-map-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Netzkarte", "Network map")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-1">@T("Linien zeigen den Weg vom Cockpit-Server zu jedem Ziel; Punkte laufen, solange das Ziel antwortet.", "Lines show the path from the cockpit server to each target; dots move while the target answers.")</MudText>
+                <svg viewBox="0 0 800 560" class="nw-map" role="img">
+                    <defs>
+                        <radialGradient id="nwCore" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="var(--mud-palette-primary)" stop-opacity="0.9" />
+                            <stop offset="100%" stop-color="var(--mud-palette-primary)" stop-opacity="0.15" />
+                        </radialGradient>
+                    </defs>
+                    <circle cx="400" cy="280" r="215" class="nw-orbit" />
+                    <circle cx="400" cy="280" r="130" class="nw-orbit" />
+                    @for (var i = 0; i < _status.Count; i++)
+                    {
+                        var s = _status[i];
+                        var (x, y) = Position(i, _status.Count);
+                        var state = State(s);
+                        var path = $"M400,280 L{F(x)},{F(y)}";
+                        <path d="@path" class="nw-link nw-link-@state" />
+                        @if (state == "ok")
+                        {
+                            <circle r="4" class="nw-packet">
+                                <animateMotion dur="@F(1.2 + (s.AvgLatency24h ?? 50) / 120)s" repeatCount="indefinite" path="@path" />
+                            </circle>
+                        }
+                        <g class="nw-node nw-node-@state">
+                            <circle cx="@F(x)" cy="@F(y)" r="26" />
+                            <text x="@F(x)" y="@F(y + 4)" class="nw-node-icon">@Glyph(s.Target)</text>
+                            <text x="@F(x)" y="@F(y + 44)" class="nw-node-label">@s.Target.Label</text>
+                            <text x="@F(x)" y="@F(y + 58)" class="nw-node-sub">@(s.Last?.LatencyMs is { } ms && s.Last.Ok ? $"{ms:N0} ms" : s.Last is null ? T("noch nicht geprüft", "not checked yet") : T("nicht erreichbar", "unreachable"))</text>
+                        </g>
+                    }
+                    <circle cx="400" cy="280" r="54" fill="url(#nwCore)" class="nw-core-pulse" />
+                    <circle cx="400" cy="280" r="40" class="nw-core" />
+                    <text x="400" y="276" class="nw-core-text">Cockpit</text>
+                    <text x="400" y="292" class="nw-core-sub">tragvapp401</text>
+                </svg>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Ziele", "Targets")</MudText>
+                <div class="ll-list" style="max-height:520px">
+                    @foreach (var s in _status)
+                    {
+                        <div class="ll-row">
+                            <span class="nw-dot nw-dot-@State(s)"></span>
+                            <span class="ll-grow" title="@s.Target.Host">@s.Target.Label <span class="ll-muted">· @s.Target.Group</span></span>
+                            <svg class="nw-spark" viewBox="0 0 96 24" preserveAspectRatio="none"><polyline points="@Spark(s.Latency24h)" /></svg>
+                            <span class="ll-mono" style="width:64px;text-align:right">@(s.Availability24h is { } a ? (a * 100).ToString("N1") + " %" : "–")</span>
+                        </div>
+                    }
+                </div>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">
+                    @T("Linie: Antwortzeit der letzten 24 Stunden. Zahl: Anteil erfolgreicher Prüfungen in 24 Stunden. SAP nur über den öffentlichen Ping ohne Anmeldung, HANA nur Port-Test.", "Line: response time of the last 24 hours. Figure: share of successful checks in 24 hours. SAP only via the public ping without login, HANA only port test.")
+                </MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private IReadOnlyList<NetworkTargetStatus>? _status;
+    private DateTime? _lastProbe;
+    private DateTime? _since;
+    private System.Threading.Timer? _timer;
+
+    private double? AvgLatency => _status is { } st && st.Any(x => x.AvgLatency24h.HasValue)
+        ? st.Where(x => x.AvgLatency24h.HasValue).Average(x => x.AvgLatency24h!.Value)
+        : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        // Die Pruefung laeuft alle 5 Minuten; die Seite liest einmal pro Minute nach.
+        _timer = new System.Threading.Timer(_ => InvokeAsync(async () => { await LoadAsync(); StateHasChanged(); }), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+    }
+
+    private async Task LoadAsync()
+    {
+        var targets = await Network.TargetsAsync();
+        var results = await Network.ResultsAsync(1);
+        _status = NetworkAnalysisService.Status(targets, results, DateTime.UtcNow);
+        _lastProbe = results.Count == 0 ? null : results.Max(r => r.TimestampUtc);
+        var all = await Network.ResultsAsync(30);
+        _since = all.Count == 0 ? null : all.Min(r => r.TimestampUtc);
+    }
+
+    private static (double X, double Y) Position(int index, int count)
+    {
+        var angle = -Math.PI / 2 + 2 * Math.PI * index / Math.Max(1, count);
+        var radius = index % 2 == 0 ? 215 : 175;
+        return (400 + radius * Math.Cos(angle), 280 + radius * Math.Sin(angle) * 0.92);
+    }
+
+    private static string State(NetworkTargetStatus s) => s.Last is null ? "unknown" : s.Last.Ok ? (s.Last.LatencyMs > 500 ? "slow" : "ok") : "down";
+
+    // Kurzzeichen im Knoten. Einzeln als Konstanten, damit der Uebersetzungstest benachbarte
+    // Zeichenketten nicht fuer Anzeigetexte haelt (LEARNINGS 2026-10-01).
+    private const string GlyphSap = "SAP";
+    private const string GlyphDb = "DB";
+    private const string GlyphCloud = "M365";
+    private const string GlyphWeb = "WWW";
+    private const string GlyphOther = "⌁";
+
+    private static string Glyph(NetworkTarget t)
+    {
+        if (t.Kind == NetworkProbeKind.Http)
+            return GlyphSap;
+        if (t.Group.StartsWith("HANA", StringComparison.Ordinal))
+            return GlyphDb;
+        if (t.Group.StartsWith("Microsoft", StringComparison.Ordinal))
+            return GlyphCloud;
+        return t.Kind == NetworkProbeKind.Tls ? GlyphWeb : GlyphOther;
+    }
+
+    private static string Spark(IReadOnlyList<double?> values)
+    {
+        var max = Math.Max(1, values.Where(v => v.HasValue).Select(v => v!.Value).DefaultIfEmpty(1).Max());
+        return string.Join(" ", values.Select((v, i) => v is null ? null : $"{F(i * 96.0 / Math.Max(1, values.Count - 1))},{F(22 - v.Value / max * 20)}").Where(p => p is not null));
+    }
+
+    private static string F(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    public void Dispose() => _timer?.Dispose();
+}

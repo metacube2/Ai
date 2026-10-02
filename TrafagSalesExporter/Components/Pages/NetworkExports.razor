@@ -1,0 +1,140 @@
+@page "/netzwerk/netz-oder-daten"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@inject NetworkAnalysisService Network
+@inject IUiTextService UiText
+
+<PageTitle>@T("Netzwerk", "Network") · @T("Netz oder Daten", "Network or data")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_runs is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@_runs.Count</div><div class="ll-kpi-label">@T("Exportläufe seit Juni", "Export runs since June")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_runs.Count(x => x.Cause != "ok")</div><div class="ll-kpi-label">@T("davon fehlgeschlagen", "of which failed")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_runs.Count(x => x.Cause == "netz")</div><div class="ll-kpi-label">@T("Ursache Netz", "Cause network")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-data">@_runs.Count(x => x.Cause == "daten")</div><div class="ll-kpi-label">@T("Ursache Daten oder Quelle", "Cause data or source")</div></div>
+    </div>
+
+    <MudPaper Class="pa-3 mb-3" Outlined="true">
+        <MudText Typo="Typo.h6">@T("Exportläufe je Standort", "Export runs per site")</MudText>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
+            @T("Jeder Punkt ist ein Lauf. „Netz“ heisst: die Fehlermeldung deutet auf eine Verbindung, oder das Ziel war zur selben Zeit nicht erreichbar (Prüfungen erst seit dem Start der Netzwerkprüfung).", "Each dot is one run. \"Network\" means the error points to a connection, or the target was unreachable at the same time (checks only since the network monitoring started).")
+        </MudText>
+        <svg viewBox="0 0 1000 @F(30 + _sites.Count * 34)" class="nw-timeline">
+            @for (var m = 0; m <= _months; m++)
+            {
+                var monthDate = _from.AddMonths(m);
+                var mx = X(monthDate);
+                <g>
+                    <line x1="@F(mx)" y1="18" x2="@F(mx)" y2="@F(24 + _sites.Count * 34)" class="nw-grid" />
+                    <text x="@F(mx + 4)" y="12" class="nw-axis">@monthDate.ToString("MMM yy", Culture)</text>
+                </g>
+            }
+            @for (var i = 0; i < _sites.Count; i++)
+            {
+                var site = _sites[i];
+                var y = 40 + i * 34;
+                <g>
+                    <text x="0" y="@F(y + 4)" class="nw-site">@site</text>
+                    <line x1="90" y1="@y" x2="1000" y2="@y" class="nw-lane" />
+                    @foreach (var r in _runs.Where(x => x.Tsc == site))
+                    {
+                        <circle cx="@F(X(r.Timestamp))" cy="@y" r="@(r.Cause == "ok" ? 3 : 6)" class="nw-run nw-run-@r.Cause">
+                            <title>@r.Timestamp.ToString("dd.MM.yyyy HH:mm") · @r.Status @(r.Error.Length > 0 ? "· " + r.Error[..Math.Min(140, r.Error.Length)] : "")</title>
+                        </circle>
+                    }
+                </g>
+            }
+        </svg>
+        <div class="ll-legend">
+            <span><i class="ll-swatch nw-run-ok"></i>@T("erfolgreich", "successful")</span>
+            <span><i class="ll-swatch nw-run-netz"></i>@T("Netz", "Network")</span>
+            <span><i class="ll-swatch nw-run-daten"></i>@T("Daten oder Quelle", "Data or source")</span>
+        </div>
+    </MudPaper>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Standorte nach Kritikalität", "Sites by criticality")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Umsatz 2025 in CHF (Kurs 31.12.2025), Abhängigkeit, Exportfehler und Verfügbarkeit des Ziels in 24 Stunden. Oben steht, wo ein Ausfall am meisten kostet.", "Revenue 2025 in CHF (rate 31.12.2025), dependency, export failures and availability of the target in 24 hours. At the top is where an outage costs most.")</MudText>
+                @foreach (var c in _criticality)
+                {
+                    <div class="nw-crit">
+                        <div class="nw-crit-head">
+                            <b>@c.Tsc</b> <span class="ll-muted">@c.Land · @c.Dependency</span>
+                            <span class="ll-grow"></span>
+                            <span class="ll-mono">CHF @c.RevenueChf2025.ToString("N0", Culture)</span>
+                        </div>
+                        <div class="nw-crit-bar"><span style="width:@Pct(c.RevenueChf2025, _maxRevenue)"></span></div>
+                        <div class="nw-crit-meta">
+                            <span>@T("Läufe", "Runs") @c.Runs</span>
+                            <span class="nw-text-data">@T("Fehler", "Errors") @c.Failures</span>
+                            <span class="nw-text-net">@T("davon Netz", "of which network") @c.NetworkFailures</span>
+                            <span>@T("Ziel 24 h", "Target 24 h") @(c.Availability24h is { } a ? (a * 100).ToString("N1") + " %" : "–")</span>
+                        </div>
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Letzte Fehler", "Latest errors")</MudText>
+                <div class="ll-list" style="max-height:520px">
+                    @foreach (var r in _runs.Where(x => x.Cause != "ok").OrderByDescending(x => x.Timestamp).Take(40))
+                    {
+                        <div class="ll-row" style="align-items:flex-start">
+                            <span class="nw-dot nw-run-@r.Cause" style="margin-top:4px"></span>
+                            <span class="ll-mono" style="width:92px">@r.Timestamp.ToString("dd.MM. HH:mm")</span>
+                            <span style="width:76px"><b>@r.Tsc</b></span>
+                            <span class="ll-grow" style="white-space:normal">@r.Error[..Math.Min(160, r.Error.Length)]</span>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("de-CH");
+    private IReadOnlyList<NetworkExportRun>? _runs;
+    private IReadOnlyList<string> _sites = [];
+    private IReadOnlyList<NetworkSiteCriticality> _criticality = [];
+    private decimal _maxRevenue = 1;
+    private DateTime _from;
+    private DateTime _to;
+    private int _months;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var targets = await Network.TargetsAsync();
+        var results = await Network.ResultsAsync(30);
+        var status = NetworkAnalysisService.Status(targets, results, DateTime.UtcNow);
+        _runs = await Network.ExportRunsAsync(targets, results);
+        _sites = _runs.Select(x => x.Tsc).Where(x => x.Length > 0).Distinct().OrderBy(x => x).ToList();
+        var first = _runs.Count == 0 ? DateTime.Today.AddMonths(-3) : _runs.Min(x => x.Timestamp);
+        _from = new DateTime(first.Year, first.Month, 1);
+        _to = DateTime.Today.AddDays(1);
+        _months = (_to.Year - _from.Year) * 12 + _to.Month - _from.Month;
+        _criticality = await Network.CriticalityAsync(targets, status, _runs);
+        _maxRevenue = Math.Max(1, _criticality.Select(x => x.RevenueChf2025).DefaultIfEmpty(1).Max());
+    }
+
+    private double X(DateTime t) => 90 + 905 * Math.Clamp((t - _from).TotalDays / Math.Max(1, (_to - _from).TotalDays), 0, 1);
+
+    private static string Pct(decimal value, decimal max) => $"{Math.Round(100m * value / max).ToString(CultureInfo.InvariantCulture)}%";
+
+    private static string F(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

@@ -343,6 +343,13 @@ public class DatabaseSeedService : IDatabaseSeedService
         // Verwendung & Risiko 2026-10-01: mehrstufige Verwendung der LZ-Code-Komponenten mit Lieferantenrisiko.
         Link("logistics-usage-risk", "logistics", "Verwendung & Risiko", "Usage & risk", "AccountTree", "logistik/verwendung-risiko", 15, "All"),
         Link("logistics-planning-audit", "logistics", "Dispositionspruefung", "Planning parameter audit", "FactCheck", "logistik/dispositionspruefung", 30, "All"),
+        // Netzwerk 2026-10-02 (Wunsch Ingo): nur lesend, feste Zielliste, Doku docs/NETZWERK_2026-10-02.md.
+        Group("network", null, "Netzwerk", "Network", "Lan", 37),
+        Link("network-overview", "network", "Uebersicht", "Overview", "Hub", "netzwerk", 10, "All"),
+        Link("network-availability", "network", "Verfuegbarkeit", "Availability", "Timeline", "netzwerk/verfuegbarkeit", 20, "All"),
+        Link("network-exports", "network", "Netz oder Daten", "Network or data", "CompareArrows", "netzwerk/netz-oder-daten", 30, "All"),
+        Link("network-security", "network", "Sicherheit", "Security", "Security", "netzwerk/sicherheit", 40, "All"),
+        Link("network-workplaces", "network", "Arbeitsplaetze", "Workplaces", "Wifi", "netzwerk/arbeitsplaetze", 50, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
     ];

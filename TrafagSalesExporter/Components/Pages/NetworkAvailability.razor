@@ -1,0 +1,115 @@
+@page "/netzwerk/verfuegbarkeit"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@inject NetworkAnalysisService Network
+@inject IUiTextService UiText
+
+<PageTitle>@T("Netzwerk", "Network") · @T("Verfügbarkeit", "Availability")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_status is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Verfügbarkeit je Stunde, letzte 7 Tage", "Availability per hour, last 7 days")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Jedes Feld ist eine Stunde. Grün: alle Prüfungen erfolgreich, rot: keine, grau: noch nicht geprüft.", "Each cell is one hour. Green: all checks succeeded, red: none, grey: not checked yet.")</MudText>
+                @foreach (var s in _status)
+                {
+                    var cells = NetworkAnalysisService.Heatmap(s.Target.Key, _results!, _now, 7);
+                    <div class="nw-heat-row">
+                        <span class="nw-heat-label" title="@s.Target.Host">@s.Target.Label</span>
+                        <div class="nw-heat">
+                            @foreach (var c in cells)
+                            {
+                                <span class="nw-cell @CellClass(c.Availability) @(c.HourUtc.ToLocalTime().Hour == 0 ? "nw-cell-day" : string.Empty)"
+                                      title="@($"{c.HourUtc.ToLocalTime():dd.MM. HH}:00 · {(c.Availability is { } v ? (v * 100).ToString("N0") + " %" : "–")}")"></span>
+                            }
+                        </div>
+                        <span class="ll-mono nw-heat-pct">@(s.Availability24h is { } a ? (a * 100).ToString("N1") + " %" : "–")</span>
+                    </div>
+                }
+                <div class="ll-legend mt-2">
+                    <span><i class="ll-swatch nw-cell-ok"></i>100 %</span>
+                    <span><i class="ll-swatch nw-cell-part"></i>@T("teilweise", "partly")</span>
+                    <span><i class="ll-swatch nw-cell-down"></i>0 %</span>
+                    <span><i class="ll-swatch nw-cell-none"></i>@T("keine Prüfung", "no check")</span>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("SAP-Frühwarnung, letzte 30 Tage", "SAP early warning, last 30 days")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
+                    @T("Linie: Antwortzeit des SAP-Pings je Tag. Balken: Warnungen und Fehler der SAP-Abrufe des Cockpits (Einkauf, HR, Logistik, Journal). Steigen beide, wird SAP langsam, bevor es steht.", "Line: response time of the SAP ping per day. Bars: warnings and errors of the cockpit's SAP calls (purchasing, HR, logistics, journal). If both rise, SAP is slowing down before it stops.")
+                </MudText>
+                <svg viewBox="0 0 900 220" class="nw-trend" preserveAspectRatio="none">
+                    @{
+                        var maxProblems = Math.Max(1, _trend.Max(x => x.Problems));
+                        var maxLatency = Math.Max(1, _trend.Where(x => x.AvgLatencyMs.HasValue).Select(x => x.AvgLatencyMs!.Value).DefaultIfEmpty(1).Max());
+                        var step = 900.0 / Math.Max(1, _trend.Count);
+                    }
+                    @for (var i = 0; i < _trend.Count; i++)
+                    {
+                        var d = _trend[i];
+                        var h = 160.0 * d.Problems / maxProblems;
+                        <g>
+                            <rect x="@F(i * step + 3)" y="@F(190 - h)" width="@F(step - 6)" height="@F(h)" class="nw-bar"><title>@d.Day.ToString("dd.MM.") · @d.Problems</title></rect>
+                            <text x="@F(i * step + step / 2)" y="208" class="nw-axis">@(i % 3 == 0 ? d.Day.ToString("dd.MM.") : "")</text>
+                        </g>
+                    }
+                    <polyline class="nw-trend-line" points="@string.Join(" ", _trend.Select((d, i) => d.AvgLatencyMs is { } v ? $"{F(i * step + step / 2)},{F(190 - 160 * v / maxLatency)}" : null).Where(p => p is not null))" />
+                    @for (var i = 0; i < _trend.Count; i++)
+                    {
+                        if (_trend[i].AvgLatencyMs is { } v)
+                        {
+                            <circle cx="@F(i * step + step / 2)" cy="@F(190 - 160 * v / maxLatency)" r="3.5" class="nw-trend-dot"><title>@_trend[i].Day.ToString("dd.MM.") · @v.ToString("N0") ms</title></circle>
+                        }
+                    }
+                </svg>
+                <div class="ll-legend">
+                    <span><i class="ll-swatch nw-bar"></i>@T("Warnungen/Fehler", "Warnings/errors")</span>
+                    <span><i class="ll-swatch nw-trend-dot"></i>@T("SAP-Antwortzeit (ms)", "SAP response time (ms)")</span>
+                    <span class="ll-muted">@T("Höchstwert", "Maximum"): @(_trend.Where(x => x.AvgLatencyMs.HasValue).Select(x => x.AvgLatencyMs!.Value).DefaultIfEmpty().Max().ToString("N0")) ms</span>
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private IReadOnlyList<NetworkTargetStatus>? _status;
+    private List<NetworkProbeResult>? _results;
+    private IReadOnlyList<NetworkDayValue> _trend = [];
+    private DateTime _now = DateTime.UtcNow;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _now = DateTime.UtcNow;
+        var targets = await Network.TargetsAsync();
+        _results = await Network.ResultsAsync(30);
+        _status = NetworkAnalysisService.Status(targets, _results, _now);
+        _trend = await Network.SapTrendAsync(_results, 30);
+    }
+
+    private static string CellClass(double? value) => value switch
+    {
+        null => "nw-cell-none",
+        >= 0.999 => "nw-cell-ok",
+        <= 0.001 => "nw-cell-down",
+        _ => "nw-cell-part"
+    };
+
+    private static string F(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
