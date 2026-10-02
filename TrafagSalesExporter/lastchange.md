@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Reiter Netzwerk, 2026-10-02, produktiv 07:20
+
+- `1635b46`: Netzkarte, Verfuegbarkeit mit SAP-Fruehwarnung, Netz oder Daten, Sicherheit, Arbeitsplaetze. Pruefung alle
+  5 Minuten, nur feste Ziele, SAP nur ueber den oeffentlichen Ping. AD-Auswertung ausgeschaltet. `docs/NETZWERK_2026-10-02.md`.
+
 ## Logistik: Verwendung & Risiko, 2026-10-01, produktiv 16:05
 
 - `1a754e0`: Seite `/logistik/verwendung-risiko`, mehrstufige Verwendung und vererbtes Lieferantenrisiko fuer die

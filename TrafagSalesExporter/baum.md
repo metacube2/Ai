@@ -174,6 +174,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` | HR- und Einkaufscockpit Konsistenzreview vom 29.09. (Codex) mit lokalem Reparaturstand |
 | `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
+| `docs/NETZWERK_2026-10-02.md` | Reiter Netzwerk: Entscheide, Schutzregeln, Unterreiter, Messungen |
 | `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` | Verwendung & Risiko: Messung der Datenlage, Regeln, Ausbau mit voller Stueckliste |
 | `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, offene Schritte |
 | `docs/UI_BERNDEUTSCH_GLOSSAR.md` | Stil und Glossar fuer den Berndeutsch-Katalog |
