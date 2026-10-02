@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Netzwerk AD: Korrekturen, 2026-10-02, produktiv 08:29 und 08:43
+
+- `ce9e06a`: Klassen `dir-` statt `ad-` (Edge-Werbefilter blendete die inneren Reiter aus). `3e21220`: LAPS/BitLocker
+  „nicht lesbar“ statt 0 %, RODC als DC, Turmhoehe nach Wurzel. `65e3a88` (Veeam gruppiert): Deploy offen, VPN weg.
+
 ## Netzwerk: Unterreiter Active Directory, 2026-10-02, produktiv 08:07
 
 - `b57d20f`: 3D-OU-Stadt, Lebenszyklus, Aufraeumen, Sicherheit (LAPS, BitLocker, Delegation), Dienste je Server,
