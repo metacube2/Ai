@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Netzwerk AD: Deploy `65e3a88` (Veeam gruppiert) | Release-Worktree auf `65e3a88`, Runner vorbereitet | **Deploy offen** (2026-10-02 08:53: VPN weg). Dateien frei. |
+| – | derzeit keine laufende Arbeit | – | – |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -39,6 +39,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Netzwerk: AD-Infrastruktur, Gruppenrichtlinien, DNS, Verlauf | 2026-10-02 10:17 | **Abgeschlossen und produktiv um 10:14, Reservierung frei.** `50b6c4a` (enthaelt `65e3a88`): Dienste `AdInfrastructureService`, `AdGpoService`, `AdDnsZoneService`, `AdSnapshotService`, Logik `AdInfraAnalysis`, vier Seiten, Drucker in Arbeitsplaetze, Excel-Export, Countdown, drei Tabellen; `Program.cs` nur eigene Zeilen per Index. Tests 881/881 (866 Release), DLL bitgleich, ohne Alarm, Seiten per Edge headless angesehen. Doku `NETZWERK_2026-10-02.md`, `lastchange.md`, `rag/DEPLOYMENT.md`, `rag/ARCHITECTURE.md`, LEARNINGS, Wochen_Todo 73. |
 | Claude | Netzwerk AD: Korrekturen nach Sichtpruefung | 2026-10-02 08:53 | **Abgeschlossen, Reservierung frei; nur Deploy `65e3a88` offen.** `ce9e06a` 08:29 Klassen `dir-` (Edge-Werbefilter blendete `ad-tabs` aus), `3e21220` 08:43 LAPS/BitLocker „nicht lesbar“, RODC als DC, Wurzelhoehe; `65e3a88` Veeam gruppiert. Tests 868/868 (853 Release). Produktiv per Edge headless (DevTools) alle Reiter angesehen. Eintrag nachtraeglich (LEARNINGS). Doku `NETZWERK_2026-10-02.md`, `lastchange.md`, `rag/DEPLOYMENT.md`, LEARNINGS, Wochen_Todo 73. |
 | Claude | Netzwerk: Unterreiter Active Directory | 2026-10-02 08:15 | **Abgeschlossen und produktiv um 08:07, Reservierung frei.** `b57d20f`: `AdAnalysis` (neu), `AdComputerService` (OUs, Subnetze, LAPS-Datum, BitLocker-Anzahl, DNS), DCs als Pruefziele, Seite `NetworkAd.razor` mit 3D-OU-Stadt und sieben inneren Reitern, `ComputerTable.razor`, Menue, CSS, 68 Texte in sieben Sprachen, 25 Tests; 864/864 (849 Release), DLL bitgleich, ohne Alarm. Sichtpruefung im Browser offen (Erweiterung nicht verbunden), 3D vorab mit Edge headless am Muster geprueft. Doku `NETZWERK_2026-10-02.md`, `lastchange.md`, `rag/DEPLOYMENT.md`, `rag/ARCHITECTURE.md`, LEARNINGS (3 Zeilen), Wochen_Todo 73. |
 | Claude | Netzwerk: AD-Computer einschalten | 2026-10-02 07:36 | **Abgeschlossen und produktiv um 07:34, Reservierung frei.** Erlaubnis der IT laut Ingo. `48121df`: nur `appsettings.json` (`NetworkProbe:AdEnabled = true`), 824/824, DLL bitgleich, Server-appsettings geprueft. Gleiche AD-Abfrage vom Arbeitsplatz: 784 Computer, 50 aktive ohne Anmeldung seit 90 Tagen. Sichtpruefung im Browser nicht moeglich (Erweiterung nicht verbunden), Lesezugriff des App-Pools also unbelegt. Doku `NETZWERK_2026-10-02.md`, `lastchange.md`, `rag/DEPLOYMENT.md`, Wochen_Todo 73, Status kurz. |
