@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## Reiter Verkauf: ohne Passwort, Vergleich gleicher Zeitraeume, Korrekturen, 2026-10-02, produktiv 14:05 bis 14:46
+
+- `84fd1fd` ohne Finance-Passwort (Ingo), `fa83ad1` Vergleich 01–09.2026 gegen 01–09.2025 statt 12 gegen 12 Monate (Daten ab 01.2025),
+  `a2bd605` Veraenderung je Gesellschaft, Verluste erst nach 6 Monaten, Preisstreuung ohne Platzhalter/Leistungen,
+  alter Stand waehrend Neuladen, Achsanker; `81a4132` Prognoseachse.
+
 ## Reiter Verkauf, 2026-10-02, produktiv 13:24
 
 - `e2fb8ce`: acht Unterreiter (Kunden, Rueckgang, neue und verlorene Kunden, Konzentration, Cross-Selling, Preisstreuung,
