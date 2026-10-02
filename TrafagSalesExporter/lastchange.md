@@ -2,10 +2,10 @@
 
 Stand: 2026-10-01
 
-## Netzwerk: Unterreiter Active Directory, 2026-10-02, Deploy offen
+## Netzwerk: Unterreiter Active Directory, 2026-10-02, produktiv 08:07
 
 - `b57d20f`: 3D-OU-Stadt, Lebenszyklus, Aufraeumen, Sicherheit (LAPS, BitLocker, Delegation), Dienste je Server,
-  Subnetze ohne AD-Standort, DNS und DCs; DCs als Pruefziele. Deploy scheiterte 08:05, Laptop nicht im Firmennetz.
+  Subnetze ohne AD-Standort, DNS und DCs; DCs als Pruefziele. Erster Deploy-Versuch scheiterte, Laptop nicht im Firmennetz; mit VPN um 08:07 deployed.
 
 ## Netzwerk: AD-Computer eingeschaltet, 2026-10-02, produktiv 07:34
 
