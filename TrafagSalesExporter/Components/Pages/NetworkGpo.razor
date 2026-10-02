@@ -1,0 +1,234 @@
+@page "/netzwerk/gruppenrichtlinien"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Network.NetSvg
+@inject AdGpoService Gpo
+@inject IUiTextService UiText
+
+@* Unterreiter Gruppenrichtlinien (Wunsch Ingo 2026-10-02). Nur lesend. Doku docs/NETZWERK_2026-10-02.md *@
+<PageTitle>@T("Netzwerk", "Network") · @T("Gruppenrichtlinien", "Group policies")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_r is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!_r.Enabled)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@T("Die AD-Auswertung ist ausgeschaltet (NetworkProbe:AdEnabled).", "The AD analysis is switched off (NetworkProbe:AdEnabled).")</MudAlert>
+}
+else if (_r.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_r.Error</MudAlert>
+}
+else
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@_r.Gpos.Count</div><div class="ll-kpi-label">@T("Gruppenrichtlinien", "Group policies")</div></div>
+        @foreach (var s in States)
+        {
+            <div class="ll-kpi"><div class="ll-kpi-value dir-gpo-text-@s.Key">@_r.Gpos.Count(g => AdInfraAnalysis.GpoState(g) == s.Key)</div><div class="ll-kpi-label">@s.Label</div></div>
+        }
+        <div class="ll-kpi"><div class="ll-kpi-value">@_r.Ous.Count(o => o.BlocksInheritance)</div><div class="ll-kpi-label">@T("OUs mit Vererbungssperre", "OUs blocking inheritance")</div></div>
+    </div>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("OU-Struktur und Richtlinien", "OU structure and policies")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Innen die Domäne, nach aussen die OU-Ebenen. Die Breite eines Segments ist die Zahl der Computer darunter, die Farbe die Zahl eigener Richtlinien. Rot umrandet: Vererbung blockiert. Klick wählt die OU.", "The domain in the centre, OU levels outwards. Segment width is the number of computers below, colour the number of own policies. Red outline: inheritance blocked. Click selects the OU.")</MudText>
+                <svg viewBox="0 0 520 520" class="dir-sun">
+                    <g class="dir-sun-spin">
+                        @foreach (var seg in _segments)
+                        {
+                            var dn = seg.Node.Dn;
+                            <path d="@Ring(260, 260, 46 + (seg.Depth - 1) * 46, 44 + seg.Depth * 46, seg.From, seg.To)"
+                                  class="dir-sun-seg dir-sun-g@(Math.Min(seg.Node.OwnGpos, 4)) @(seg.Node.BlocksInheritance ? "dir-sun-block" : string.Empty) @(_selected == dn ? "dir-sun-sel" : string.Empty)"
+                                  style="animation-delay:@(F(seg.Depth * 0.15 + seg.From * 0.4))s" @onclick="() => _selected = dn">
+                                <title>@seg.Node.Label · @seg.Total @T("Computer", "computers") · @seg.Node.OwnGpos GPO</title>
+                            </path>
+                        }
+                    </g>
+                    <circle cx="260" cy="260" r="42" class="dir-sun-core" @onclick="() => _selected = null" />
+                    <text x="260" y="256" text-anchor="middle" class="dir-sun-num">@_r.Gpos.Count</text>
+                    <text x="260" y="274" text-anchor="middle" class="dir-sun-sub">GPO</text>
+                </svg>
+                <div class="ll-legend">
+                    @for (var i = 0; i <= 4; i++)
+                    {
+                        <span><i class="ll-swatch dir-sun-g@(i)"></i>@(i == 4 ? "4+" : i.ToString()) GPO</span>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                @if (_selected is null)
+                {
+                    <MudText Typo="Typo.h6">@T("Auffällige Richtlinien", "Notable policies")</MudText>
+                    @if (!_r.SysvolReadable)
+                    {
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("SYSVOL war nicht lesbar; Versionskonflikte zwischen AD und SYSVOL können deshalb nicht geprüft werden.", "SYSVOL was not readable; version conflicts between AD and SYSVOL can therefore not be checked.")</MudText>
+                    }
+                    <div class="ll-list" style="max-height:470px">
+                        @foreach (var g in _r.Gpos.Where(g => AdInfraAnalysis.GpoState(g) != "ok").OrderBy(g => AdInfraAnalysis.GpoState(g)).ThenBy(g => g.Name))
+                        {
+                            var state = AdInfraAnalysis.GpoState(g);
+                            <div class="ll-row">
+                                <span class="nw-dot dir-gpo-@state"></span>
+                                <span class="ll-grow">@g.Name</span>
+                                <span class="ll-muted" style="width:150px">@StateLabel(state)</span>
+                                <span class="ll-mono ll-muted">@g.ChangedUtc?.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    var node = _r.Ous.FirstOrDefault(o => o.Dn == _selected);
+                    <div class="d-flex align-center"><MudText Typo="Typo.h6" Class="ll-grow">@node?.Label</MudText><MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => _selected = null" /></div>
+                    @if (node?.BlocksInheritance == true)
+                    {
+                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2">@T("Vererbung blockiert: Richtlinien höherer Ebenen wirken hier nur, wenn sie erzwungen sind.", "Inheritance blocked: policies from higher levels only apply here if enforced.")</MudAlert>
+                    }
+                    <MudText Typo="Typo.subtitle2">@T("Wirkende Richtlinien, von oben nach unten", "Effective policies, top down")</MudText>
+                    <div class="ll-list" style="max-height:420px">
+                        @foreach (var (g, link, inherited) in Effective(_selected))
+                        {
+                            <div class="ll-row">
+                                <span class="nw-dot dir-gpo-@AdInfraAnalysis.GpoState(g)"></span>
+                                <span class="ll-grow">@g.Name</span>
+                                @if (link.Enforced)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">@T("erzwungen", "enforced")</MudChip>
+                                }
+                                <span class="ll-muted" style="width:160px">@(inherited ? link.TargetLabel : T("direkt", "direct"))</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudPaper Class="pa-3" Outlined="true">
+                <div class="d-flex align-center mb-2" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Alle Gruppenrichtlinien", "All group policies")</MudText>
+                    <ExcelButton FileLabel="Gruppenrichtlinien" Sheets="ExcelSheets" />
+                </div>
+                <div class="ll-list" style="max-height:520px">
+                    <div class="ll-row dir-table-head"><span class="ll-grow">@T("Name", "Name")</span><span style="width:150px">@T("Zustand", "State")</span><span style="width:90px">AD / SYSVOL</span><span style="width:60px">@T("Links", "Links")</span><span style="width:96px">@T("Geändert", "Changed")</span></div>
+                    @foreach (var g in _r.Gpos)
+                    {
+                        var state = AdInfraAnalysis.GpoState(g);
+                        <div class="ll-row">
+                            <span class="ll-grow"><span class="nw-dot dir-gpo-@state"></span> @g.Name</span>
+                            <span style="width:150px" class="ll-muted">@StateLabel(state)</span>
+                            <span style="width:90px" class="ll-mono">@g.AdVersion@(g.SysvolVersion is { } s ? $" / {s}" : string.Empty)</span>
+                            <span style="width:60px" class="ll-mono">@g.Links.Count(l => l.Enabled)</span>
+                            <span style="width:96px" class="ll-mono ll-muted">@g.ChangedUtc?.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Stand AD", "AD as of") @_r.ReadAt?.ToString("dd.MM.yyyy HH:mm") · @T("30 Minuten gemerkt", "kept for 30 minutes")</MudText>
+    @if (_r.Notes.Count > 0)
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Dense="true" Class="mt-2">@T("Nicht lesbar", "Not readable"): @string.Join(" · ", _r.Notes)</MudAlert>
+    }
+}
+
+@code {
+    private sealed record StateInfo(string Key, string Label);
+    private sealed record Segment(AdOuNode Node, int Depth, double From, double To, int Total);
+
+    private AdGpoResult? _r;
+    private List<Segment> _segments = [];
+    private string? _selected;
+
+    private IReadOnlyList<StateInfo> States =>
+    [
+        new("unverknuepft", T("nicht verknüpft", "not linked")),
+        new("leer", T("ohne Einstellungen", "without settings")),
+        new("aus", T("ganz deaktiviert", "fully disabled")),
+        new("verknuepfung-aus", T("nur deaktivierte Links", "only disabled links")),
+        new("version", T("Version AD ≠ SYSVOL", "version AD ≠ SYSVOL"))
+    ];
+
+    private string StateLabel(string state) => States.FirstOrDefault(s => s.Key == state)?.Label ?? T("in Ordnung", "fine");
+
+    protected override async Task OnInitializedAsync()
+    {
+        _r = await Gpo.GetAsync();
+        if (!_r.Enabled || _r.Error is not null)
+            return;
+
+        // Baum aus den DNs; Breite nach Computern im ganzen Teilbaum, leere Teilbaeume entfallen.
+        var nodes = _r.Ous.ToDictionary(o => o.Dn, StringComparer.OrdinalIgnoreCase);
+        var root = _r.Ous.FirstOrDefault(o => o.Depth == 0);
+        var children = new Dictionary<string, List<AdOuNode>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var o in _r.Ous.Where(o => o != root))
+        {
+            var parent = AdAnalysis.ParentDn(o.Dn);
+            var key = nodes.ContainsKey(parent) ? parent : root?.Dn ?? "";
+            if (!children.TryGetValue(key, out var list)) children[key] = list = [];
+            list.Add(o);
+        }
+        var totals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        int Total(AdOuNode n) => totals.TryGetValue(n.Dn, out var t) ? t : totals[n.Dn] = n.Computers + (children.GetValueOrDefault(n.Dn) ?? []).Sum(Total);
+        void Place(string parentDn, int depth, double from, double to)
+        {
+            if (depth > 4) return;
+            var kids = (children.GetValueOrDefault(parentDn) ?? []).Where(k => Total(k) > 0).OrderByDescending(Total).ToList();
+            var sum = kids.Sum(Total);
+            var at = from;
+            foreach (var k in kids)
+            {
+                var share = (to - from) * Total(k) / Math.Max(1, sum);
+                _segments.Add(new Segment(k, depth, at, at + share, Total(k)));
+                Place(k.Dn, depth + 1, at, at + share);
+                at += share;
+            }
+        }
+        if (root is not null)
+            Place(root.Dn, 1, 0, 1);
+    }
+
+    /// <summary>Richtlinien, die auf eine OU wirken: Domaene, Elternebenen (ausser bei Sperre, dann nur erzwungene) und die OU selbst.</summary>
+    private IEnumerable<(AdGpo Gpo, AdGpoLink Link, bool Inherited)> Effective(string dn)
+    {
+        var chain = new List<string>();
+        for (var d = dn; d.Length > 0 && !d.StartsWith("DC=", StringComparison.OrdinalIgnoreCase); d = AdAnalysis.ParentDn(d))
+            chain.Add(d);
+        var root = _r!.Ous.FirstOrDefault(o => o.Depth == 0)?.Dn;
+        if (root is not null) chain.Add(root);
+        chain.Reverse();
+        var blocked = _r.Ous.FirstOrDefault(o => o.Dn == dn)?.BlocksInheritance == true;
+        foreach (var level in chain)
+            foreach (var g in _r.Gpos)
+                foreach (var l in g.Links.Where(l => l.Enabled && l.TargetDn.Equals(level, StringComparison.OrdinalIgnoreCase)))
+                    if (level.Equals(dn, StringComparison.OrdinalIgnoreCase) || !blocked || l.Enforced)
+                        yield return (g, l, !level.Equals(dn, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Gruppenrichtlinien", Rows(_r!.Gpos, g => new Dictionary<string, object?>
+        {
+            ["Name"] = g.Name, ["GUID"] = g.Guid, ["Zustand"] = StateLabel(AdInfraAnalysis.GpoState(g)),
+            ["Version AD"] = g.AdVersion, ["Version SYSVOL"] = g.SysvolVersion, ["Computerteil"] = g.HasComputerSettings ? "ja" : "",
+            ["Benutzerteil"] = g.HasUserSettings ? "ja" : "", ["Verknuepft an"] = string.Join("; ", g.Links.Select(l => l.TargetLabel + (l.Enabled ? string.Empty : " (aus)") + (l.Enforced ? " (erzwungen)" : string.Empty))),
+            ["Angelegt"] = g.CreatedUtc?.ToLocalTime(), ["Geaendert"] = g.ChangedUtc?.ToLocalTime()
+        })),
+        new("OUs", Rows(_r.Ous, o => new Dictionary<string, object?>
+        {
+            ["OU"] = o.Label, ["Computer"] = o.Computers, ["Eigene GPOs"] = o.OwnGpos, ["Vererbung blockiert"] = o.BlocksInheritance ? "ja" : ""
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

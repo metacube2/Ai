@@ -1,0 +1,366 @@
+@page "/netzwerk/ad-infrastruktur"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Network.NetSvg
+@inject AdInfrastructureService Infra
+@inject IUiTextService UiText
+
+@* Unterreiter AD-Infrastruktur (Wunsch Ingo 2026-10-02): Replikation, Standorte, Domaene, Zertifikate, Dienstkonten.
+   Nur lesend, keine Personen, keine Geheimnisse. Doku docs/NETZWERK_2026-10-02.md *@
+<PageTitle>@T("Netzwerk", "Network") · @T("AD-Infrastruktur", "AD infrastructure")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_r is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.caption" Class="ll-muted">@T("Domänencontroller werden abgefragt, das dauert bis zu 15 Sekunden …", "Querying domain controllers, this takes up to 15 seconds …")</MudText>
+}
+else if (!_r.Enabled)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@T("Die AD-Auswertung ist ausgeschaltet (NetworkProbe:AdEnabled).", "The AD analysis is switched off (NetworkProbe:AdEnabled).")</MudAlert>
+}
+else if (_r.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_r.Error</MudAlert>
+}
+else
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@_r.Replication.Count</div><div class="ll-kpi-label">@T("Domänencontroller", "Domain controllers")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_unreachable > 0 ? "nw-text-net" : string.Empty)">@_unreachable</div><div class="ll-kpi-label">@T("nicht abfragbar", "not queryable")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_failing > 0 ? "nw-text-net" : string.Empty)">@_failing</div><div class="ll-kpi-label">@T("Replikationen mit Fehler", "replications with errors")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@_r.Sites.Count</div><div class="ll-kpi-label">@T("Standorte", "Sites")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(KrbtgtClass)">@(_krbtgtDays?.ToString() ?? "?")</div><div class="ll-kpi-label">@T("Tage seit krbtgt-Passwort", "days since krbtgt password")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_r.SpnDuplicates.Count > 0 ? "nw-text-data" : string.Empty)">@_r.SpnDuplicates.Count</div><div class="ll-kpi-label">@T("doppelte SPNs", "duplicate SPNs")</div></div>
+    </div>
+
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-3">
+        <MudTabPanel Text="@T("Replikation", "Replication")" Icon="@Icons.Material.Filled.SyncAlt">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="7">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Replikationsnetz", "Replication network")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Jeder Pfeil ist eine eingehende Replikation (vom Partner zum DC). Grün fliesst, gelb: letzte erfolgreiche älter als 24 Stunden, rot: Fehler. Ein roter, blinkender DC war vom Webserver aus nicht abfragbar.", "Each arrow is an inbound replication (from partner to DC). Green flows, yellow: last success older than 24 hours, red: error. A red blinking DC could not be queried from the web server.")</MudText>
+                        <svg viewBox="0 0 640 440" class="dir-graph">
+                            <defs>
+                                <marker id="dir-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dir-arrow" /></marker>
+                            </defs>
+                            <circle cx="320" cy="220" r="185" class="dir-orbit" />
+                            @foreach (var e in _edges)
+                            {
+                                var (x1, y1) = _pos[e.Source];
+                                var (x2, y2) = _pos[e.Target];
+                                var dx = x2 - x1;
+                                var dy = y2 - y1;
+                                var len = Math.Max(1, Math.Sqrt(dx * dx + dy * dy));
+                                var ox = -dy / len * 5;
+                                var oy = dx / len * 5;
+                                <g>
+                                    <line x1="@F(x1 + ox + dx / len * 24)" y1="@F(y1 + oy + dy / len * 24)" x2="@F(x2 + ox - dx / len * 26)" y2="@F(y2 + oy - dy / len * 26)"
+                                          class="dir-edge dir-edge-@e.State" marker-end="url(#dir-arrow)"><title>@e.Source → @e.Target · @e.Tooltip</title></line>
+                                </g>
+                            }
+                            @foreach (var (name, (x, y)) in _pos)
+                            {
+                                var rep = _r.Replication.FirstOrDefault(r => r.Dc.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                var cls = rep is null ? "dir-node-ext" : rep.Error is not null ? "dir-node-bad" : rep.Links.Any(l => AdInfraAnalysis.ReplicationState(l, _now) == "fehler") ? "dir-node-warn" : "dir-node-ok";
+                                <g class="dir-node @cls">
+                                    <circle cx="@F(x)" cy="@F(y)" r="22" class="dir-node-halo" />
+                                    <circle cx="@F(x)" cy="@F(y)" r="17" class="dir-node-core"><title>@name @(rep?.Error ?? string.Empty)</title></circle>
+                                    <text x="@F(x)" y="@F(y + 36)" text-anchor="middle" class="dir-node-label">@name</text>
+                                    <text x="@F(x)" y="@F(y + 48)" text-anchor="middle" class="dir-node-sub">@(rep?.Site ?? string.Empty)</text>
+                                </g>
+                            }
+                        </svg>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="5">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Je Domänencontroller", "Per domain controller")</MudText>
+                        <div class="ll-list" style="max-height:480px">
+                            @foreach (var dc in _r.Replication)
+                            {
+                                <div class="dir-dc">
+                                    <div class="dir-dc-head"><b>@dc.Dc</b> <span class="ll-muted">@dc.Site</span></div>
+                                    @if (dc.Error is not null)
+                                    {
+                                        <div class="nw-text-net" style="font-size:13px">@dc.Error</div>
+                                    }
+                                    @foreach (var l in dc.Links.OrderBy(l => l.Partition).ThenBy(l => l.Source))
+                                    {
+                                        var state = AdInfraAnalysis.ReplicationState(l, _now);
+                                        <div class="ll-row" style="font-size:13px">
+                                            <span class="nw-dot dir-rep-@state"></span>
+                                            <span style="width:120px">@l.Source</span>
+                                            <span style="width:110px" class="ll-muted">@l.Partition</span>
+                                            <span class="ll-grow ll-mono">@(l.LastSuccessUtc?.ToLocalTime().ToString("dd.MM. HH:mm") ?? "–")</span>
+                                            @if (l.Failures > 0)
+                                            {
+                                                <span class="nw-text-net ll-mono">@l.Failures× · @l.LastResult</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Standorte", "Sites")" Icon="@Icons.Material.Filled.Place">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="7">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("AD-Standorte", "AD sites")</MudText>
+                        <div class="dir-sites">
+                            @foreach (var s in _r.Sites)
+                            {
+                                <div class="dir-site @(s.Dcs.Count == 0 ? "dir-site-nodc" : string.Empty)">
+                                    <div class="dir-site-name">@s.Name</div>
+                                    <div class="dir-site-meta"><MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" /> @(s.Dcs.Count > 0 ? string.Join(" · ", s.Dcs) : T("kein DC", "no DC"))</div>
+                                    <div class="dir-site-meta ll-mono">@s.Subnets.Count @T("Subnetze", "subnets")</div>
+                                </div>
+                            }
+                        </div>
+                        @if (_r.Sites.Any(s => s.Dcs.Count == 0))
+                        {
+                            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Standorte ohne eigenen DC melden sich über eine Standortverknüpfung an einem anderen Standort an.", "Sites without their own DC log on to another site through a site link.")</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="5">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Standortverknüpfungen", "Site links")</MudText>
+                        <div class="ll-list" style="max-height:420px">
+                            @foreach (var l in _r.SiteLinks)
+                            {
+                                <div class="ll-row" style="align-items:flex-start">
+                                    <span style="width:150px"><b>@l.Name</b></span>
+                                    <span class="ll-grow">@string.Join(" ↔ ", l.Sites)</span>
+                                    <span class="ll-mono ll-muted" style="width:120px;text-align:right">@T("Kosten", "cost") @l.Cost · @l.IntervalMinutes min</span>
+                                </div>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Domäne", "Domain")" Icon="@Icons.Material.Filled.Domain">
+            <div class="dir-facts">
+                <div class="dir-fact"><span>@T("Domäne", "Domain")</span><b>@_r.Domain.DomainName</b></div>
+                <div class="dir-fact"><span>@T("Funktionsebene Domäne", "Domain functional level")</span><b>@AdInfraAnalysis.LevelName(_r.Domain.DomainLevel)</b></div>
+                <div class="dir-fact"><span>@T("Funktionsebene Gesamtstruktur", "Forest functional level")</span><b>@AdInfraAnalysis.LevelName(_r.Domain.ForestLevel)</b></div>
+                <div class="dir-fact"><span>@T("Schemaversion", "Schema version")</span><b>@(_r.Domain.SchemaVersion?.ToString() ?? "?")</b></div>
+                <div class="dir-fact @(_r.Domain.RecycleBin == false ? "dir-fact-warn" : string.Empty)"><span>@T("AD-Papierkorb", "AD recycle bin")</span><b>@(_r.Domain.RecycleBin switch { true => T("aktiv", "on"), false => T("aus", "off"), _ => "?" })</b></div>
+                <div class="dir-fact"><span>@T("Aufbewahrung gelöschter Objekte", "Tombstone lifetime")</span><b>@(_r.Domain.TombstoneDays is { } d ? $"{d} " + T("Tage", "days") : T("Standard", "default"))</b></div>
+                <div class="dir-fact @(_r.Domain.MachineAccountQuota > 0 ? "dir-fact-warn" : string.Empty)"><span>@T("Computer, die jeder Benutzer anlegen darf", "Computers any user may join")</span><b>@(_r.Domain.MachineAccountQuota?.ToString() ?? "?")</b></div>
+            </div>
+            @if (_r.Domain.MachineAccountQuota > 0)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">@T("ms-DS-MachineAccountQuota ist grösser als 0: Jeder angemeldete Benutzer darf Computer in die Domäne aufnehmen. Empfehlung von Microsoft und gängigen Härtungsleitfäden: 0.", "ms-DS-MachineAccountQuota is greater than 0: every signed-in user may join computers to the domain. Microsoft and common hardening guides recommend 0.")</MudAlert>
+            }
+            <MudGrid Spacing="3" Class="mt-1">
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-3 ll-panel dir-gauge-box" Outlined="true">
+                        <MudText Typo="Typo.h6">krbtgt</MudText>
+                        @foreach (var k in _r.Domain.Krbtgt)
+                        {
+                            var days = k.PwdLastSetUtc is { } p ? (int)(_now - p).TotalDays : (int?)null;
+                            <div class="dir-krb">
+                                <span class="ll-mono">@k.Name</span>
+                                <span class="ll-grow"></span>
+                                <b class="@(days > 365 ? "nw-text-net" : days > 180 ? "nw-text-data" : string.Empty)">@(days?.ToString() ?? "?") @T("Tage", "days")</b>
+                            </div>
+                            <div class="dir-life-track"><span class="dir-life-fill @(days > 365 ? "dir-life-aus" : days > 180 ? "dir-life-bald" : "dir-life-ok")" style="width:@(Math.Clamp((days ?? 0) / 7.3, 2, 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
+                        }
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Systemkonto für Kerberos-Tickets, keine Person. Übliche Empfehlung: Passwort mindestens jährlich zweimal hintereinander wechseln.", "System account for Kerberos tickets, not a person. Common advice: change the password twice in a row at least once a year.")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="8">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Passwortrichtlinien", "Password policies")</MudText>
+                        <div class="ll-list">
+                            <div class="ll-row dir-table-head"><span class="ll-grow">@T("Richtlinie", "Policy")</span><span style="width:70px">@T("Länge", "Length")</span><span style="width:80px">@T("Historie", "History")</span><span style="width:90px">@T("Max. Alter", "Max. age")</span><span style="width:80px">@T("Sperre", "Lockout")</span><span style="width:80px">@T("Komplex", "Complex")</span></div>
+                            @foreach (var p in _r.Domain.PasswordPolicies)
+                            {
+                                <div class="ll-row">
+                                    <span class="ll-grow">@p.Name @(p.AppliesToCount > 0 ? $"({p.AppliesToCount})" : string.Empty)</span>
+                                    <span style="width:70px" class="@(p.MinLength < 12 ? "nw-text-data" : string.Empty)">@p.MinLength</span>
+                                    <span style="width:80px">@p.HistoryLength</span>
+                                    <span style="width:90px">@(p.MaxAgeDays is { } a ? F(a) : "–")</span>
+                                    <span style="width:80px">@(p.LockoutThreshold == 0 ? "–" : p.LockoutThreshold.ToString())</span>
+                                    <span style="width:80px">@(p.Complexity ? "✓" : "–")</span>
+                                </div>
+                            }
+                        </div>
+                        <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Vertrauensstellungen", "Trusts")</MudText>
+                        @if (_r.Domain.Trusts.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Einträge.", "No entries.")</MudText>
+                        }
+                        @foreach (var t in _r.Domain.Trusts)
+                        {
+                            <div class="ll-row"><span class="ll-grow"><b>@t.Name</b></span><span style="width:110px">@t.Direction</span><span style="width:150px" class="ll-muted">@t.Type</span></div>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Zertifikate", "Certificates")" Icon="@Icons.Material.Filled.VerifiedUser">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Zertifizierungsstellen", "Certificate authorities")</MudText>
+                        @if (_r.CertificateAuthorities.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Einträge.", "No entries.")</MudText>
+                        }
+                        @foreach (var c in _r.CertificateAuthorities)
+                        {
+                            @CertBar(c.Name, $"{c.Kind}{(c.Templates > 0 ? $" · {c.Templates} " + T("Vorlagen", "templates") : string.Empty)} · {c.Host}", c.NotAfterUtc, null)
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Zertifikate der Webserver", "Web server certificates")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Server mit HTTP-Dienstnamen und Anmeldung in 30 Tagen, TLS-Handshake auf Port 443. Das Zertifikat wird nur gelesen.", "Servers with an HTTP service name and logon in 30 days, TLS handshake on port 443. The certificate is only read.")</MudText>
+                        @foreach (var c in _r.WebCertificates)
+                        {
+                            @CertBar(c.Host, c.Error ?? $"{c.Subject} · {c.Issuer}", c.NotAfterUtc, c.Error)
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Dienstkonten", "Service accounts")" Icon="@Icons.Material.Filled.ManageAccounts">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Verwaltete Dienstkonten (gMSA/sMSA)", "Managed service accounts (gMSA/sMSA)")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Konten, deren Passwort Windows selbst wechselt. Gelesen werden nur Name, Intervall und Datum des letzten Wechsels.", "Accounts whose password Windows rotates itself. Only name, interval and date of the last change are read.")</MudText>
+                        @if (_r.ServiceAccounts.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Einträge.", "No entries.")</MudText>
+                        }
+                        @foreach (var a in _r.ServiceAccounts)
+                        {
+                            var overdue = a.PwdLastSetUtc is { } p && a.IntervalDays is { } i && p < _now.AddDays(-2 * i);
+                            <div class="ll-row">
+                                <span class="ll-mono" style="width:200px">@a.Name</span>
+                                <span style="width:60px">@a.Kind</span>
+                                <span class="ll-grow ll-muted">@a.SpnCount SPN</span>
+                                <span class="ll-mono @(overdue ? "nw-text-net" : "ll-muted")">@(a.PwdLastSetUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? "–")</span>
+                            </div>
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                        <MudText Typo="Typo.h6">@T("Doppelte Dienstnamen (SPN)", "Duplicate service names (SPN)")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Derselbe SPN an zwei Konten bricht die Kerberos-Anmeldung an diesem Dienst. Geprüft sind Computer und Dienstkonten, keine Benutzerkonten.", "The same SPN on two accounts breaks Kerberos logon to that service. Computers and service accounts are checked, not user accounts.")</MudText>
+                        @if (_r.SpnDuplicates.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Success" Dense="true">@T("Keine doppelten SPNs.", "No duplicate SPNs.")</MudAlert>
+                        }
+                        @foreach (var d in _r.SpnDuplicates)
+                        {
+                            <div class="ll-row"><span class="ll-mono ll-grow">@d.Spn</span><span>@string.Join(" · ", d.Owners)</span></div>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+    </MudTabs>
+
+    <div class="d-flex align-center mt-3" style="gap:12px">
+        <ExcelButton FileLabel="AD_Infrastruktur" Sheets="ExcelSheets" />
+        <MudText Typo="Typo.caption" Class="ll-muted">@T("Stand AD", "AD as of") @_r.ReadAt?.ToString("dd.MM.yyyy HH:mm") · @T("30 Minuten gemerkt", "kept for 30 minutes")</MudText>
+    </div>
+    @if (_r.Notes.Count > 0)
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Dense="true" Class="mt-2">@T("Nicht lesbar", "Not readable"): @string.Join(" · ", _r.Notes)</MudAlert>
+    }
+}
+
+@code {
+    private sealed record Edge(string Source, string Target, string State, string Tooltip);
+
+    private AdInfraResult? _r;
+    private DateTime _now;
+    private int _unreachable;
+    private int _failing;
+    private int? _krbtgtDays;
+    private List<Edge> _edges = [];
+    private Dictionary<string, (double X, double Y)> _pos = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _now = DateTime.UtcNow;
+        _r = await Infra.GetAsync();
+        if (!_r.Enabled || _r.Error is not null)
+            return;
+        _unreachable = _r.Replication.Count(r => r.Error is not null);
+        _failing = _r.Replication.SelectMany(r => r.Links).Count(l => AdInfraAnalysis.ReplicationState(l, _now) == "fehler");
+        _krbtgtDays = _r.Domain.Krbtgt.FirstOrDefault(k => k.Name.Equals("krbtgt", StringComparison.OrdinalIgnoreCase))?.PwdLastSetUtc is { } p ? (int)(_now - p).TotalDays : null;
+
+        var names = _r.Replication.Select(r => r.Dc)
+            .Concat(_r.Replication.SelectMany(r => r.Links).Select(l => l.Source))
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToList();
+        for (var i = 0; i < names.Count; i++)
+        {
+            var a = 2 * Math.PI * i / Math.Max(1, names.Count) - Math.PI / 2;
+            _pos[names[i]] = (320 + 185 * Math.Cos(a), 220 + 185 * Math.Sin(a));
+        }
+        _edges = _r.Replication.SelectMany(r => r.Links)
+            .GroupBy(l => (l.Source, l.Dc))
+            .Select(g =>
+            {
+                var states = g.Select(l => AdInfraAnalysis.ReplicationState(l, _now)).ToList();
+                var state = states.Contains("fehler") ? "fehler" : states.Contains("alt") ? "alt" : "ok";
+                var last = g.Max(l => l.LastSuccessUtc);
+                return new Edge(g.Key.Source, g.Key.Dc, state, $"{Csv(g.Select(l => l.Partition))} · {last?.ToLocalTime():dd.MM. HH:mm}");
+            })
+            .Where(e => _pos.ContainsKey(e.Source) && _pos.ContainsKey(e.Target))
+            .ToList();
+    }
+
+    private string KrbtgtClass => _krbtgtDays > 365 ? "nw-text-net" : _krbtgtDays > 180 ? "nw-text-data" : string.Empty;
+
+    private RenderFragment CertBar(string title, string sub, DateTime? notAfter, string? error) => __builder =>
+    {
+        var days = notAfter is { } n ? (int)(n - _now).TotalDays : (int?)null;
+        var cls = days is null ? "nw-cert-warn" : days < 30 ? "nw-cert-bad" : days < 90 ? "nw-cert-warn" : "nw-cert-ok";
+        <div class="nw-cert">
+            <div class="nw-cert-head"><b>@title</b> <span class="ll-muted">@sub</span><span class="ll-grow"></span><span class="ll-mono">@(notAfter?.ToLocalTime().ToString("dd.MM.yyyy") ?? "–")</span></div>
+            <div class="nw-cert-track"><span class="nw-cert-fill @cls" style="width:@(F(Math.Clamp((days ?? 0) / 400.0 * 100, 2, 100)))%"></span><em>@(days is { } d ? $"{d} " + T("Tage", "days") : error ?? "–")</em></div>
+        </div>
+    };
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Replikation", Rows(_r!.Replication.SelectMany(r => r.Links.Select(l => (r, l))), x => new Dictionary<string, object?>
+        {
+            ["DC"] = x.r.Dc, ["Standort"] = x.r.Site, ["Partner"] = x.l.Source, ["Partition"] = x.l.Partition,
+            ["Letzte Replikation"] = x.l.LastSuccessUtc?.ToLocalTime(), ["Letzter Versuch"] = x.l.LastAttemptUtc?.ToLocalTime(),
+            ["Fehler in Folge"] = x.l.Failures, ["Letztes Ergebnis"] = x.l.LastResult
+        })),
+        new("DC nicht abfragbar", Rows(_r.Replication.Where(r => r.Error is not null), r => new Dictionary<string, object?> { ["DC"] = r.Dc, ["Standort"] = r.Site, ["Fehler"] = r.Error })),
+        new("Standorte", Rows(_r.Sites, s => new Dictionary<string, object?> { ["Standort"] = s.Name, ["DCs"] = Csv(s.Dcs), ["Subnetze"] = Csv(s.Subnets) })),
+        new("Zertifikate", Rows(_r.CertificateAuthorities.Select(c => (c.Name, Art: c.Kind, c.Subject, c.NotAfterUtc))
+            .Concat(_r.WebCertificates.Select(c => (Name: c.Host, Art: "Webserver", c.Subject, c.NotAfterUtc))), c => new Dictionary<string, object?>
+        {
+            ["Name"] = c.Name, ["Art"] = c.Art, ["Subject"] = c.Subject, ["Gueltig bis"] = c.NotAfterUtc?.ToLocalTime()
+        })),
+        new("Doppelte SPN", Rows(_r.SpnDuplicates, d => new Dictionary<string, object?> { ["SPN"] = d.Spn, ["Konten"] = Csv(d.Owners) }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

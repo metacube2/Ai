@@ -90,12 +90,14 @@ public sealed class NetworkProbeService : BackgroundService
     private readonly IOptionsMonitor<NetworkProbeOptions> _options;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<NetworkProbeService> _logger;
+    private readonly AdSnapshotService _snapshots;
     private readonly HashSet<string> _halted = new();
     private DateOnly _lastCleanup;
 
     public NetworkProbeService(NetworkTargetCatalog catalog, NetworkStore store, IOptionsMonitor<NetworkProbeOptions> options,
-        IHostEnvironment environment, ILogger<NetworkProbeService> logger)
+        IHostEnvironment environment, ILogger<NetworkProbeService> logger, AdSnapshotService snapshots)
     {
+        _snapshots = snapshots;
         _catalog = catalog;
         _store = store;
         _options = options;
@@ -125,6 +127,8 @@ public sealed class NetworkProbeService : BackgroundService
                         _lastCleanup = DateOnly.FromDateTime(DateTime.Today);
                         await _store.CleanupAsync(options.RetentionDays, stoppingToken);
                     }
+                    // Verlauf AD: einmal je Tag ab 06:00, nur mit NetworkProbe:AdEnabled.
+                    await _snapshots.TakeIfDueAsync(stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {

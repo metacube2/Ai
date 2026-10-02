@@ -1,0 +1,201 @@
+@page "/netzwerk/verlauf"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Network.NetSvg
+@inject AdComputerService Ad
+@inject NetworkStore Store
+@inject IUiTextService UiText
+
+@* Unterreiter Verlauf (Wunsch Ingo 2026-10-02): Countdown bis Supportende, Tageskennzahlen, Aenderungen an
+   Computerkonten. Schnappschuss einmal je Tag ab 06:00 (AdSnapshotService). Doku docs/NETZWERK_2026-10-02.md *@
+<PageTitle>@T("Netzwerk", "Network") · @T("Verlauf", "History")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_ad is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!_ad.Enabled)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@T("Die AD-Auswertung ist ausgeschaltet (NetworkProbe:AdEnabled).", "The AD analysis is switched off (NetworkProbe:AdEnabled).")</MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h6">@T("Countdown Supportende", "End of support countdown")</MudText>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Produkte, deren Herstellersupport in den nächsten 12 Monaten endet, mit der Zahl aktiver Geräte. Der Ring zeigt die verbleibende Zeit eines Jahres.", "Products whose vendor support ends in the next 12 months, with the number of active devices. The ring shows the remaining time of one year.")</MudText>
+    <div class="dir-countdowns mb-3">
+        @if (_countdowns.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Einträge.", "No entries.")</MudText>
+        }
+        @foreach (var c in _countdowns)
+        {
+            var share = Math.Clamp(c.DaysLeft / 365.0, 0.005, 1);
+            var len = 2 * Math.PI * 46;
+            var cls = c.DaysLeft <= 30 ? "dir-cd-bad" : c.DaysLeft <= 120 ? "dir-cd-warn" : "dir-cd-ok";
+            <div class="dir-cd @cls">
+                <svg viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="46" class="dir-gauge-bg" />
+                    <circle cx="60" cy="60" r="46" class="dir-cd-ring" style="stroke-dasharray:@F(len);--dir-off:@F(len * (1 - share));--dir-len:@F(len)" />
+                    <text x="60" y="62" text-anchor="middle" class="dir-cd-days">@c.DaysLeft</text>
+                    <text x="60" y="80" text-anchor="middle" class="dir-cd-unit">@T("Tage", "days")</text>
+                </svg>
+                <div class="dir-cd-product">@c.Product</div>
+                <div class="dir-cd-meta"><b>@c.ActiveDevices</b> @T("aktive Geräte", "active devices") · @c.End.ToString("dd.MM.yyyy")</div>
+            </div>
+        }
+    </div>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Kennzahlen je Tag", "Metrics per day")</MudText>
+                <div class="d-flex flex-wrap mb-2" style="gap:6px">
+                    @foreach (var m in Metrics)
+                    {
+                        var key = m.Key;
+                        <MudChip T="string" Size="Size.Small" Variant="@(_shown.Contains(key) ? Variant.Filled : Variant.Outlined)" Class="@($"dir-chip-{m.Color}")" OnClick="() => Toggle(key)">@m.Label</MudChip>
+                    }
+                </div>
+                @if (_days.Count < 2)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">@T("Der Verlauf beginnt mit dem ersten Tagesschnappschuss. Kurven erscheinen ab dem zweiten Tag.", "The history starts with the first daily snapshot. Curves appear from the second day on.") @(_days.Count == 1 ? T("Erster Schnappschuss", "First snapshot") + ": " + _days[0].ToString("dd.MM.yyyy") : string.Empty)</MudAlert>
+                }
+                <svg viewBox="0 0 1000 300" class="dir-trend">
+                    @for (var g = 0; g <= 4; g++)
+                    {
+                        <g><line x1="50" y1="@F(20 + g * 60)" x2="990" y2="@F(20 + g * 60)" class="nw-grid" /><text x="44" y="@F(24 + g * 60)" text-anchor="end" class="nw-axis">@F(_max * (4 - g) / 4)</text></g>
+                    }
+                    @foreach (var m in Metrics.Where(m => _shown.Contains(m.Key)))
+                    {
+                        var points = _days.Select((d, i) => (i, v: _values.GetValueOrDefault((d, m.Key)))).Where(x => x.v is not null).ToList();
+                        if (points.Count == 0) continue;
+                        var path = string.Join(" ", points.Select(p => $"{F(X(p.i))},{F(Y(p.v!.Value))}"));
+                        <g>
+                            <polyline points="@path" class="dir-line dir-line-@m.Color" pathLength="1" />
+                            @foreach (var p in points)
+                            {
+                                <circle cx="@F(X(p.i))" cy="@F(Y(p.v!.Value))" r="3.5" class="dir-dot dir-line-@m.Color"><title>@_days[p.i].ToString("dd.MM.yyyy") · @m.Label: @F(p.v!.Value)</title></circle>
+                            }
+                        </g>
+                    }
+                    @for (var i = 0; i < _days.Count; i += Math.Max(1, _days.Count / 10))
+                    {
+                        <g><text x="@F(X(i))" y="292" text-anchor="middle" class="nw-axis">@_days[i].ToString("dd.MM.")</text></g>
+                    }
+                </svg>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="4">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <div class="d-flex align-center" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Änderungen an Computerkonten", "Changes to computer accounts")</MudText>
+                    <ExcelButton FileLabel="AD_Aenderungen" Sheets="ExcelSheets" />
+                </div>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Vergleich der Tagesschnappschüsse, 90 Tage.", "Comparison of daily snapshots, 90 days.")</MudText>
+                @if (_changes.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="ll-muted">@T("Noch keine Änderungen erfasst.", "No changes recorded yet.")</MudText>
+                }
+                <div class="ll-list" style="max-height:440px">
+                    @foreach (var day in _changes.GroupBy(c => c.Day))
+                    {
+                        <div class="dir-day">@day.Key.ToString("dddd, dd.MM.yyyy")</div>
+                        @foreach (var c in day)
+                        {
+                            <div class="ll-row">
+                                <MudIcon Icon="@ChangeIcon(c.Change)" Size="Size.Small" Class="@($"dir-change-{c.Change}")" />
+                                <span class="ll-mono" style="width:130px">@c.Name</span>
+                                <span class="ll-grow ll-muted">@ChangeLabel(c.Change) @c.Detail</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private sealed record MetricInfo(string Key, string Label, string Color);
+
+    private AdComputerResult? _ad;
+    private IReadOnlyList<AdCountdown> _countdowns = [];
+    private List<DateOnly> _days = [];
+    private Dictionary<(DateOnly, string), double?> _values = [];
+    private List<AdComputerChange> _changes = [];
+    // Als ein Text, weil der Uebersetzungstest zwei benachbarte Zeichenketten fuer ein Textpaar haelt.
+    private HashSet<string> _shown = "ohneSupport inaktiv90 passwortAlt delegation".Split(' ').ToHashSet();
+    private double _max = 1;
+
+    private IReadOnlyList<MetricInfo> Metrics =>
+    [
+        new("computer", T("Computerkonten", "Computer accounts"), "0"),
+        new("aktiv30", T("aktiv in 30 Tagen", "active in 30 days"), "1"),
+        new("ohneSupport", T("ohne Herstellersupport", "without vendor support"), "2"),
+        new("inaktiv90", T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days"), "3"),
+        new("deaktiviert", T("deaktiviert", "disabled"), "4"),
+        new("passwortAlt", T("Computerpasswort nicht erneuert", "Computer password not renewed"), "5"),
+        new("delegation", T("riskante Delegation", "risky delegation"), "6"),
+        new("standardcontainer", T("Standardcontainer", "default container"), "7"),
+        new("ohneLaps", T("ohne LAPS", "without LAPS"), "8")
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ad = await Ad.GetAsync();
+        if (!_ad.Enabled || _ad.Error is not null)
+            return;
+        _countdowns = AdInfraAnalysis.Countdowns(_ad.Computers, DateOnly.FromDateTime(DateTime.Today));
+        var points = await Store.LoadAdMetricsAsync(400, CancellationToken.None);
+        _days = points.Select(p => p.Day).Distinct().OrderBy(d => d).ToList();
+        _values = points.ToDictionary(p => (p.Day, p.Metric), p => (double?)p.Value);
+        _changes = await Store.LoadAdChangesAsync(90, CancellationToken.None);
+        Rescale();
+    }
+
+    private void Toggle(string key)
+    {
+        if (!_shown.Remove(key)) _shown.Add(key);
+        Rescale();
+    }
+
+    private void Rescale()
+        => _max = Math.Max(1, _values.Where(v => _shown.Contains(v.Key.Item2) && v.Value is not null).Select(v => v.Value!.Value).DefaultIfEmpty(1).Max() * 1.1);
+
+    private double X(int i) => _days.Count <= 1 ? 520 : 60 + 920.0 * i / (_days.Count - 1);
+
+    private double Y(double v) => 260 - 240 * v / _max;
+
+    private static string ChangeIcon(string change) => change switch
+    {
+        "neu" => Icons.Material.Filled.AddCircle,
+        "entfernt" => Icons.Material.Filled.RemoveCircle,
+        "verschoben" => Icons.Material.Filled.DriveFileMove,
+        "deaktiviert" => Icons.Material.Filled.Block,
+        "aktiviert" => Icons.Material.Filled.CheckCircle,
+        _ => Icons.Material.Filled.Update
+    };
+
+    private string ChangeLabel(string change) => change switch
+    {
+        "neu" => T("neu in", "new in"),
+        "entfernt" => T("entfernt aus", "removed from"),
+        "verschoben" => T("verschoben", "moved"),
+        "deaktiviert" => T("deaktiviert", "disabled"),
+        "aktiviert" => T("aktiviert", "enabled"),
+        _ => T("Betriebssystem", "Operating system")
+    };
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Aenderungen", Rows(_changes, c => new Dictionary<string, object?> { ["Tag"] = c.Day.ToDateTime(TimeOnly.MinValue), ["Name"] = c.Name, ["Aenderung"] = c.Change, ["Detail"] = c.Detail })),
+        new("Kennzahlen", Rows(_days, d => (IReadOnlyDictionary<string, object?>)Metrics.ToDictionary(m => m.Key, m => (object?)_values.GetValueOrDefault((d, m.Key))).Prepend(new KeyValuePair<string, object?>("Tag", d.ToDateTime(TimeOnly.MinValue))).ToDictionary(kv => kv.Key, kv => kv.Value))),
+        new("Countdown", Rows(_countdowns, c => new Dictionary<string, object?> { ["Produkt"] = c.Product, ["Supportende"] = c.End.ToDateTime(TimeOnly.MinValue), ["Tage"] = c.DaysLeft, ["Aktive Geraete"] = c.ActiveDevices }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

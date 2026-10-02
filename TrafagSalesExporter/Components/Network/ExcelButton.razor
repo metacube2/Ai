@@ -1,0 +1,36 @@
+@using TrafagSalesExporter.Services
+@inject IExcelExportService ExcelExport
+@inject IJSRuntime JsRuntime
+@inject IUiTextService UiText
+
+@* Excel-Export einer oder mehrerer Listen der Netzwerk-Reiter (2026-10-02), im Browser erzeugt und heruntergeladen. *@
+<MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="DownloadAsync" Disabled="_busy">
+    @T("Excel", "Excel")
+</MudButton>
+
+@code {
+    [Parameter, EditorRequired] public Func<IReadOnlyList<ExcelSheetData>> Sheets { get; set; } = () => [];
+    [Parameter, EditorRequired] public string FileLabel { get; set; } = "Netzwerk";
+
+    private bool _busy;
+
+    private async Task DownloadAsync()
+    {
+        _busy = true;
+        try
+        {
+            var sheets = Sheets().Where(s => s.Rows.Count > 0).ToList();
+            if (sheets.Count == 0)
+                sheets = [new ExcelSheetData("Leer", [new Dictionary<string, object?> { ["Hinweis"] = T("Keine Einträge.", "No entries.") }])];
+            var bytes = ExcelExport.CreateWorkbookBytes(sheets);
+            await JsRuntime.InvokeVoidAsync("trafagDownload.saveBytes", $"{FileLabel}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx", Convert.ToBase64String(bytes),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

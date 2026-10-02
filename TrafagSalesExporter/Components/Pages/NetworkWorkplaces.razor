@@ -6,6 +6,7 @@
 @inject NetworkAnalysisService Network
 @inject NetworkStore Store
 @inject LogisticsLiveService Live
+@inject AdInfrastructureService Infra
 @inject IUiTextService UiText
 
 <PageTitle>@T("Netzwerk", "Network") · @T("Arbeitsplätze", "Workplaces")</PageTitle>
@@ -104,9 +105,72 @@
             }
         </MudPaper>
     </MudItem>
+    <MudItem xs="12">
+        <MudPaper Class="pa-3" Outlined="true">
+            <div class="d-flex align-center" style="gap:12px">
+                <MudText Typo="Typo.h6" Class="ll-grow">@T("Drucker im AD", "Printers in AD")</MudText>
+                @if (_printers is { Count: > 0 })
+                {
+                    <ExcelButton FileLabel="Drucker" Sheets="PrinterSheets" />
+                }
+            </div>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Im AD veröffentlichte Druckerwarteschlangen mit Server, Standorttext und Treiber. Nur gelesen, kein Zugriff auf die Drucker.", "Print queues published in AD with server, location text and driver. Read only, no access to the printers.")</MudText>
+            @if (_printers is null)
+            {
+                <MudProgressLinear Indeterminate="true" />
+            }
+            else if (_printers.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="ll-muted">@T("Keine Einträge.", "No entries.")</MudText>
+            }
+            else
+            {
+                <div class="dir-printer-kpis">
+                    @foreach (var g in _printers.GroupBy(p => p.Server).OrderByDescending(g => g.Count()))
+                    {
+                        <div class="dir-printer-server"><MudIcon Icon="@Icons.Material.Filled.Print" Size="Size.Small" /> <b>@g.Key</b> <span class="ll-muted">@g.Count()</span></div>
+                    }
+                </div>
+                <div class="ll-list" style="max-height:360px">
+                    <div class="ll-row dir-table-head"><span style="width:220px">@T("Drucker", "Printer")</span><span style="width:160px">Server</span><span class="ll-grow">@T("Standort", "Location")</span><span style="width:260px">@T("Treiber", "Driver")</span><span style="width:80px">@T("Farbe", "Colour")</span></div>
+                    @foreach (var p in _printers)
+                    {
+                        <div class="ll-row">
+                            <span style="width:220px">@p.Name</span>
+                            <span style="width:160px" class="ll-mono ll-muted">@p.Server.Split('.')[0]</span>
+                            <span class="ll-grow">@p.Location</span>
+                            <span style="width:260px" class="ll-muted">@p.Driver</span>
+                            <span style="width:80px">@(p.Color ? "✓" : "–")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
 </MudGrid>
 
 @code {
+    private IReadOnlyList<AdPrinter>? _printers;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Die AD-Infrastruktur fragt auch die DCs ab und dauert bis zu 15 s; deshalb erst nach dem ersten Aufbau.
+        if (!firstRender)
+            return;
+        var infra = await Infra.GetAsync();
+        _printers = infra.Enabled && infra.Error is null ? infra.Printers : [];
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private IReadOnlyList<ExcelSheetData> PrinterSheets() =>
+    [
+        new("Drucker", NetSvg.Rows(_printers ?? [], p => new Dictionary<string, object?>
+        {
+            ["Drucker"] = p.Name, ["Server"] = p.Server, ["Standort"] = p.Location, ["Treiber"] = p.Driver,
+            ["Farbe"] = p.Color ? "ja" : "", ["Duplex"] = p.Duplex ? "ja" : "", ["Geaendert"] = p.ChangedUtc?.ToLocalTime()
+        }))
+    ];
+
     private IReadOnlyList<NetworkSubnetStat>? _subnets;
     private IReadOnlyList<(int Hour, int Drops)> _byHour = [];
     private int _maxCircuits = 1;

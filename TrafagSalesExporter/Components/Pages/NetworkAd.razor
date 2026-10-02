@@ -120,6 +120,12 @@ else
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Lebenszyklus", "Lifecycle")" Icon="@Icons.Material.Filled.HourglassBottom">
+            @foreach (var c in AdInfraAnalysis.Countdowns(_ad.Computers, _today, 90))
+            {
+                <MudAlert Severity="@(c.DaysLeft <= 30 ? Severity.Error : Severity.Warning)" Dense="true" Class="mb-2">
+                    <b>@c.Product</b>: @c.ActiveDevices @T("aktive Geräte", "active devices"), @T("Support endet in", "support ends in") <b>@c.DaysLeft @T("Tagen", "days")</b> (@c.End.ToString("dd.MM.yyyy")).
+                </MudAlert>
+            }
             <MudPaper Class="pa-3 mb-3" Outlined="true">
                 <MudText Typo="Typo.h6">@T("Betriebssysteme und Supportende", "Operating systems and end of support")</MudText>
                 <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Nur aktivierte Konten. Supportende nach Microsoft Lifecycle, Stand Oktober 2026. Rot: abgelaufen, gelb: endet in 180 Tagen.", "Enabled accounts only. End of support per Microsoft Lifecycle, as of October 2026. Red: expired, yellow: ends within 180 days.")</MudText>
@@ -404,7 +410,10 @@ else
     {
         <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Dense="true" Class="mt-3">@T("Nicht lesbar", "Not readable"): @string.Join(" · ", _ad.Notes)</MudAlert>
     }
-    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Stand AD", "AD as of") @_ad.ReadAt?.ToString("dd.MM.yyyy HH:mm") · @T("eine Stunde gemerkt", "kept for one hour")</MudText>
+    <div class="d-flex align-center mt-2" style="gap:12px">
+        <ExcelButton FileLabel="Active_Directory" Sheets="ExcelSheets" />
+        <MudText Typo="Typo.caption" Class="ll-muted">@T("Stand AD", "AD as of") @_ad.ReadAt?.ToString("dd.MM.yyyy HH:mm") · @T("eine Stunde gemerkt", "kept for one hour")</MudText>
+    </div>
 }
 
 @code {
@@ -507,6 +516,19 @@ else
     }
 
     private void Select(int index) => _selected = _selected == index ? null : index;
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Alle Computer", NetSvg.ComputerRows(_ad!.Computers)),
+        new("Ohne Support", NetSvg.ComputerRows(_unsupported)),
+        new("Ohne Anmeldung", NetSvg.ComputerRows(_inactive.Concat(_neverUsed).Distinct())),
+        new("Passwort alt", NetSvg.ComputerRows(_pwdStale)),
+        new("Deaktiviert 1 Jahr", NetSvg.ComputerRows(_longDisabled)),
+        new("Delegation", NetSvg.ComputerRows(_delegation)),
+        new("DNS doppelt", NetSvg.Rows(_duplicates, d => new Dictionary<string, object?> { ["IP"] = d.Ip, ["Namen"] = NetSvg.Csv(d.Names) })),
+        new("DNS nicht aufloesbar", NetSvg.Rows((_dns?.Entries ?? []).Where(e => e.Failed || e.Ips.Count == 0), e => new Dictionary<string, object?> { ["Name"] = e.Name, ["DNS"] = e.DnsHostName })),
+        new("Ohne AD-Subnetz", NetSvg.Rows(_uncovered, u => new Dictionary<string, object?> { ["Bereich"] = u.Range, ["Computer"] = u.Computers, ["Sitzungen"] = u.ClientSessions, ["Beispiele"] = NetSvg.Csv(u.Examples) }))
+    ];
 
     private static IEnumerable<Segment> Segments(AdOuTower t)
     {

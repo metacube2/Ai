@@ -50,11 +50,40 @@ CREATE TABLE IF NOT EXISTS NetworkClientEvents (
     EventType TEXT NOT NULL DEFAULT ''
 );";
 
+    /// <summary>Verlauf AD (2026-10-02): eine Zeile je Tag und Kennzahl.</summary>
+    internal const string AdMetricTableSql = @"
+CREATE TABLE IF NOT EXISTS NetworkAdMetrics (
+    Day TEXT NOT NULL,
+    Metric TEXT NOT NULL,
+    Value REAL NOT NULL,
+    PRIMARY KEY (Day, Metric)
+);";
+
+    /// <summary>Aenderungen an Computerkonten zwischen zwei Tagesschnappschuessen.</summary>
+    internal const string AdChangeTableSql = @"
+CREATE TABLE IF NOT EXISTS NetworkAdChanges (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Day TEXT NOT NULL,
+    Name TEXT NOT NULL DEFAULT '',
+    Change TEXT NOT NULL DEFAULT '',
+    Detail TEXT NOT NULL DEFAULT ''
+);";
+
+    /// <summary>Letzter Schnappschuss der Computerkonten (nur der juengste, fuer den Vergleich).</summary>
+    internal const string AdComputerTableSql = @"
+CREATE TABLE IF NOT EXISTS NetworkAdComputers (
+    Name TEXT NOT NULL PRIMARY KEY,
+    Container TEXT NOT NULL DEFAULT '',
+    Enabled INTEGER NOT NULL DEFAULT 1,
+    Product TEXT NOT NULL DEFAULT ''
+);";
+
     internal static readonly string[] IndexSql =
     [
         "CREATE INDEX IF NOT EXISTS IX_NetworkProbeResults_Time ON NetworkProbeResults (TimestampUtc);",
         "CREATE INDEX IF NOT EXISTS IX_NetworkProbeResults_Target ON NetworkProbeResults (TargetKey, TimestampUtc);",
-        "CREATE INDEX IF NOT EXISTS IX_NetworkClientEvents_Time ON NetworkClientEvents (TimestampUtc);"
+        "CREATE INDEX IF NOT EXISTS IX_NetworkClientEvents_Time ON NetworkClientEvents (TimestampUtc);",
+        "CREATE INDEX IF NOT EXISTS IX_NetworkAdChanges_Day ON NetworkAdChanges (Day);"
     ];
 
     public async Task SaveProbeResultsAsync(IEnumerable<NetworkProbeResult> results, CancellationToken ct)
@@ -172,7 +201,84 @@ CREATE TABLE IF NOT EXISTS NetworkClientEvents (
                 cmd.Parameters.AddWithValue("$b", before);
                 await cmd.ExecuteNonQueryAsync(ct);
             }
+            // AD-Verlauf: Kennzahlen 400 Tage, Aenderungen 90 Tage.
+            foreach (var (table, keep) in new[] { ("NetworkAdMetrics", 400), ("NetworkAdChanges", 90) })
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = $"DELETE FROM {table} WHERE Day < $d";
+                cmd.Parameters.AddWithValue("$d", DateTime.Today.AddDays(-keep).ToString("yyyy-MM-dd"));
+                await cmd.ExecuteNonQueryAsync(ct);
+            }
         }, ct);
+
+    public async Task<bool> HasAdMetricsAsync(DateOnly day, CancellationToken ct)
+        => (await QueryAsync("SELECT COUNT(*) FROM NetworkAdMetrics WHERE Day = $d", new Dictionary<string, object> { ["$d"] = day.ToString("yyyy-MM-dd") }, ct))
+            .Select(r => Convert.ToInt64(r[0])).FirstOrDefault() > 0;
+
+    /// <summary>Schreibt Kennzahlen, Aenderungen und den neuen Stand der Computer in einer Transaktion.</summary>
+    public async Task SaveAdSnapshotAsync(DateOnly day, IReadOnlyDictionary<string, double> metrics, IReadOnlyList<AdComputerChange> changes,
+        IReadOnlyList<AdComputerState> states, CancellationToken ct)
+        => await WithConnectionAsync(async conn =>
+        {
+            await using var tx = (SqliteTransaction)await conn.BeginTransactionAsync(ct);
+            var d = day.ToString("yyyy-MM-dd");
+            foreach (var (k, v) in metrics)
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.Transaction = tx;
+                cmd.CommandText = "INSERT OR REPLACE INTO NetworkAdMetrics (Day, Metric, Value) VALUES ($d, $m, $v)";
+                cmd.Parameters.AddWithValue("$d", d);
+                cmd.Parameters.AddWithValue("$m", k);
+                cmd.Parameters.AddWithValue("$v", v);
+                await cmd.ExecuteNonQueryAsync(ct);
+            }
+            foreach (var c in changes)
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.Transaction = tx;
+                cmd.CommandText = "INSERT INTO NetworkAdChanges (Day, Name, Change, Detail) VALUES ($d, $n, $c, $x)";
+                cmd.Parameters.AddWithValue("$d", d);
+                cmd.Parameters.AddWithValue("$n", c.Name);
+                cmd.Parameters.AddWithValue("$c", c.Change);
+                cmd.Parameters.AddWithValue("$x", c.Detail);
+                await cmd.ExecuteNonQueryAsync(ct);
+            }
+            await using (var del = conn.CreateCommand())
+            {
+                del.Transaction = tx;
+                del.CommandText = "DELETE FROM NetworkAdComputers";
+                await del.ExecuteNonQueryAsync(ct);
+            }
+            foreach (var s in states)
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.Transaction = tx;
+                cmd.CommandText = "INSERT OR REPLACE INTO NetworkAdComputers (Name, Container, Enabled, Product) VALUES ($n, $c, $e, $p)";
+                cmd.Parameters.AddWithValue("$n", s.Name);
+                cmd.Parameters.AddWithValue("$c", s.Container);
+                cmd.Parameters.AddWithValue("$e", s.Enabled ? 1 : 0);
+                cmd.Parameters.AddWithValue("$p", s.Product);
+                await cmd.ExecuteNonQueryAsync(ct);
+            }
+            await tx.CommitAsync(ct);
+        }, ct);
+
+    public async Task<List<AdComputerState>> LoadAdComputerStatesAsync(CancellationToken ct)
+        => (await QueryAsync("SELECT Name, Container, Enabled, Product FROM NetworkAdComputers", null, ct))
+            .Select(r => new AdComputerState(Convert.ToString(r[0]) ?? "", Convert.ToString(r[1]) ?? "", Convert.ToInt64(r[2]) != 0, Convert.ToString(r[3]) ?? ""))
+            .ToList();
+
+    public async Task<List<AdMetricPoint>> LoadAdMetricsAsync(int days, CancellationToken ct)
+        => (await QueryAsync("SELECT Day, Metric, Value FROM NetworkAdMetrics WHERE Day >= $d ORDER BY Day",
+                new Dictionary<string, object> { ["$d"] = DateTime.Today.AddDays(-days).ToString("yyyy-MM-dd") }, ct))
+            .Select(r => new AdMetricPoint(DateOnly.ParseExact(Convert.ToString(r[0])!, "yyyy-MM-dd", CultureInfo.InvariantCulture), Convert.ToString(r[1]) ?? "", Convert.ToDouble(r[2])))
+            .ToList();
+
+    public async Task<List<AdComputerChange>> LoadAdChangesAsync(int days, CancellationToken ct)
+        => (await QueryAsync("SELECT Day, Name, Change, Detail FROM NetworkAdChanges WHERE Day >= $d ORDER BY Day DESC, Change, Name",
+                new Dictionary<string, object> { ["$d"] = DateTime.Today.AddDays(-days).ToString("yyyy-MM-dd") }, ct))
+            .Select(r => new AdComputerChange(DateOnly.ParseExact(Convert.ToString(r[0])!, "yyyy-MM-dd", CultureInfo.InvariantCulture), Convert.ToString(r[1]) ?? "", Convert.ToString(r[2]) ?? "", Convert.ToString(r[3]) ?? ""))
+            .ToList();
 
     /// <summary>Einfache Lesehilfe fuer andere Tabellen der App (ExportLogs, Sites ...), nur SELECT.</summary>
     public async Task<List<object?[]>> QueryAsync(string selectSql, IReadOnlyDictionary<string, object>? parameters, CancellationToken ct)

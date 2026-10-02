@@ -450,7 +450,7 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         var conn = db.Database.GetDbConnection();
         if (conn.State != System.Data.ConnectionState.Open)
             conn.Open();
-        foreach (var sql in new[] { NetworkStore.ProbeTableSql, NetworkStore.WatchTableSql, NetworkStore.ClientTableSql }.Concat(NetworkStore.IndexSql))
+        foreach (var sql in new[] { NetworkStore.ProbeTableSql, NetworkStore.WatchTableSql, NetworkStore.ClientTableSql, NetworkStore.AdMetricTableSql, NetworkStore.AdChangeTableSql, NetworkStore.AdComputerTableSql }.Concat(NetworkStore.IndexSql))
         {
             using var cmd = conn.CreateCommand();
             cmd.CommandText = sql;

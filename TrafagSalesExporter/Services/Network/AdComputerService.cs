@@ -16,6 +16,8 @@ public sealed record AdComputer(string Name, string OperatingSystem, DateTime? L
     public string Container { get; init; } = string.Empty;
     /// <summary>Dienstklassen aus servicePrincipalName (MSSQLSvc, HTTP, TERMSRV ...), ohne HOST.</summary>
     public IReadOnlyList<string> Services { get; init; } = [];
+    /// <summary>Vollstaendige servicePrincipalName-Eintraege (fuer doppelte SPNs).</summary>
+    public IReadOnlyList<string> Spns { get; init; } = [];
     public bool IsDomainController { get; init; }
     /// <summary>userAccountControl TRUSTED_FOR_DELEGATION (0x80000).</summary>
     public bool UnconstrainedDelegation { get; init; }
@@ -184,8 +186,9 @@ public sealed class AdComputerService
                     DateTime? Date(string p) => r.Properties[p].Count > 0 && r.Properties[p][0] is DateTime d ? d.ToUniversalTime() : null;
                     var uac = r.Properties["userAccountControl"].Count > 0 ? Convert.ToInt32(r.Properties["userAccountControl"][0]) : 0;
                     var dn = Text("distinguishedName");
-                    var services = r.Properties["servicePrincipalName"].Cast<object>()
-                        .Select(x => (Convert.ToString(x) ?? "").Split('/')[0])
+                    var spns = r.Properties["servicePrincipalName"].Cast<object>().Select(x => Convert.ToString(x) ?? "").Where(x => x.Length > 0).ToList();
+                    var services = spns
+                        .Select(x => x.Split('/')[0])
                         .Where(x => x.Length > 0 && !x.Equals("HOST", StringComparison.OrdinalIgnoreCase) && !x.Equals("RestrictedKrbHost", StringComparison.OrdinalIgnoreCase))
                         .Distinct(StringComparer.OrdinalIgnoreCase)
                         .ToList();
@@ -197,6 +200,7 @@ public sealed class AdComputerService
                         PwdLastSetUtc = FileTime("pwdLastSet"),
                         Container = AdAnalysis.ParentDn(dn),
                         Services = services,
+                        Spns = spns,
                         // 0x2000 SERVER_TRUST_ACCOUNT (DC), 0x4000000 PARTIAL_SECRETS_ACCOUNT (RODC, z. B. AzureADKerberos).
                         IsDomainController = (uac & 0x2000) != 0 || (uac & 0x4000000) != 0,
                         UnconstrainedDelegation = (uac & 0x80000) != 0,

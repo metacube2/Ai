@@ -1,0 +1,135 @@
+@page "/netzwerk/dns"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Network.NetSvg
+@inject AdDnsZoneService Dns
+@inject IUiTextService UiText
+
+@* Unterreiter DNS (Wunsch Ingo 2026-10-02): AD-integrierte Zonen, Alterung, Scavenging, doppelte A-Eintraege.
+   Nur lesend aus dem AD, keine Anfragen an Geraete. Doku docs/NETZWERK_2026-10-02.md *@
+<PageTitle>@T("Netzwerk", "Network") · DNS</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Netzwerk", "Network")</MudText>
+<NetworkTabs />
+
+@if (_r is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!_r.Enabled)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@T("Die AD-Auswertung ist ausgeschaltet (NetworkProbe:AdEnabled).", "The AD analysis is switched off (NetworkProbe:AdEnabled).")</MudAlert>
+}
+else if (_r.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_r.Error</MudAlert>
+}
+else
+{
+    var zones = _r.Zones;
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value">@zones.Count</div><div class="ll-kpi-label">@T("Zonen im AD", "Zones in AD")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@zones.Sum(z => z.Static + z.Dynamic)</div><div class="ll-kpi-label">@T("Einträge", "Records")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@zones.Sum(z => z.Static)</div><div class="ll-kpi-label">@T("statisch", "static")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-data">@zones.Sum(z => z.Stale)</div><div class="ll-kpi-label">@T("veraltet (Scavenging-Kandidaten)", "stale (scavenging candidates)")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(zones.Any(z => z.Aging != true && z.Dynamic > 0) ? "nw-text-net" : string.Empty)">@zones.Count(z => z.Aging != true && z.Dynamic > 0)</div><div class="ll-kpi-label">@T("Zonen mit dynamischen Einträgen ohne Alterung", "zones with dynamic records but no aging")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_r.DuplicateA.Count</div><div class="ll-kpi-label">@T("IPs mit mehreren Namen", "IPs with several names")</div></div>
+    </div>
+
+    <MudPaper Class="pa-3 mb-3" Outlined="true">
+        <div class="d-flex align-center mb-1" style="gap:12px">
+            <MudText Typo="Typo.h6" Class="ll-grow">@T("Zonen und Alter der dynamischen Einträge", "Zones and age of dynamic records")</MudText>
+            <ExcelButton FileLabel="DNS" Sheets="ExcelSheets" />
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Dynamische Einträge erneuern ihren Zeitstempel, solange das Gerät lebt. Ohne Alterung (Scavenging) bleiben Einträge alter Geräte stehen; daraus entstehen doppelte IPs und falsche Namensauflösung.", "Dynamic records renew their timestamp while the device lives. Without aging (scavenging) records of old devices remain; this causes duplicate IPs and wrong name resolution.")</MudText>
+        @foreach (var z in zones.Where(z => z.Static + z.Dynamic > 0))
+        {
+            var total = Math.Max(1, z.Dynamic);
+            <div class="dir-zone">
+                <div class="dir-zone-head">
+                    <b>@z.Name</b>
+                    <span class="ll-muted">@z.Partition</span>
+                    @if (z.Aging == true)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">@T("Alterung an", "aging on") @(z.NoRefreshHours is { } a && z.RefreshHours is { } b ? $"{a / 24}+{b / 24} d" : string.Empty)</MudChip>
+                    }
+                    else if (z.Dynamic > 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error">@T("Alterung aus", "aging off")</MudChip>
+                    }
+                    <span class="ll-grow"></span>
+                    <span class="ll-mono ll-muted">@z.Dynamic @T("dynamisch", "dynamic") · @z.Static @T("statisch", "static") · @z.Stale @T("veraltet", "stale")</span>
+                </div>
+                <div class="dir-zone-bar">
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        <span class="dir-age-@i" style="flex:@z.AgeBuckets[i];animation-delay:@(F(i * 0.12))s" title="@AgeLabels[i]: @z.AgeBuckets[i]"></span>
+                    }
+                </div>
+            </div>
+        }
+        <div class="ll-legend mt-2">
+            @for (var i = 0; i < 5; i++)
+            {
+                <span><i class="ll-swatch dir-age-@i"></i>@AgeLabels[i]</span>
+            }
+        </div>
+    </MudPaper>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="6">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("IPs mit mehreren Namen", "IPs with several names")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("A-Einträge aller Zonen, ohne Zonenstamm und Diensteinträge. Bei Notebooks meist alte Einträge nach DHCP-Wechsel.", "A records of all zones, without zone apex and service records. For notebooks mostly old records after a DHCP change.")</MudText>
+                <div class="ll-list" style="max-height:420px">
+                    @foreach (var d in _r.DuplicateA.Take(300))
+                    {
+                        <div class="ll-row" style="align-items:flex-start"><span class="ll-mono" style="width:130px">@d.Ip</span><span class="ll-grow">@string.Join(" · ", d.Names)</span></div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="6">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Älteste dynamische Einträge", "Oldest dynamic records")</MudText>
+                <div class="ll-list" style="max-height:420px">
+                    @foreach (var o in _r.OldestDynamic.Take(150))
+                    {
+                        <div class="ll-row"><span class="ll-grow ll-mono">@o.Name</span><span class="ll-mono ll-muted">@o.StampUtc.ToLocalTime().ToString("dd.MM.yyyy")</span></div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Stand AD", "AD as of") @_r.ReadAt?.ToString("dd.MM.yyyy HH:mm") · @T("eine Stunde gemerkt", "kept for one hour")</MudText>
+    @if (_r.Notes.Count > 0)
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Dense="true" Class="mt-2">@T("Nicht lesbar", "Not readable"): @string.Join(" · ", _r.Notes)</MudAlert>
+    }
+}
+
+@code {
+    private AdDnsZoneResult? _r;
+
+    private IReadOnlyList<string> AgeLabels =>
+    [
+        T("bis 7 Tage", "up to 7 days"), T("bis 30 Tage", "up to 30 days"), T("bis 90 Tage", "up to 90 days"), T("bis 1 Jahr", "up to 1 year"), T("älter", "older")
+    ];
+
+    protected override async Task OnInitializedAsync() => _r = await Dns.GetAsync();
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Zonen", Rows(_r!.Zones, z => new Dictionary<string, object?>
+        {
+            ["Zone"] = z.Name, ["Partition"] = z.Partition, ["Alterung"] = z.Aging switch { true => "an", false => "aus", _ => "?" },
+            ["NoRefresh h"] = z.NoRefreshHours, ["Refresh h"] = z.RefreshHours, ["Statisch"] = z.Static, ["Dynamisch"] = z.Dynamic,
+            ["Veraltet"] = z.Stale, ["Tombstoned"] = z.Tombstoned
+        })),
+        new("Doppelte IPs", Rows(_r.DuplicateA, d => new Dictionary<string, object?> { ["IP"] = d.Ip, ["Namen"] = Csv(d.Names) })),
+        new("Veraltete Eintraege", Rows(_r.OldestDynamic, o => new Dictionary<string, object?> { ["Name"] = o.Name, ["Zone"] = o.Zone, ["Zeitstempel"] = o.StampUtc.ToLocalTime() }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

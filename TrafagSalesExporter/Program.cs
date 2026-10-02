@@ -155,6 +155,11 @@ builder.Services.AddSingleton<NetworkStore>();
 builder.Services.AddSingleton<NetworkTargetCatalog>();
 builder.Services.AddSingleton<NetworkAnalysisService>();
 builder.Services.AddSingleton<AdComputerService>();
+// AD-Infrastruktur, Gruppenrichtlinien, DNS-Zonen und Tagesschnappschuss (2026-10-02), nur mit AdEnabled.
+builder.Services.AddSingleton<AdInfrastructureService>();
+builder.Services.AddSingleton<AdGpoService>();
+builder.Services.AddSingleton<AdDnsZoneService>();
+builder.Services.AddSingleton<AdSnapshotService>();
 builder.Services.AddHostedService<NetworkProbeService>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, ClientConnectionTracker>();
 
