@@ -30,19 +30,40 @@ public sealed class SalesDataService
 
     public async Task<SalesDataset> GetAsync()
     {
-        await _gate.WaitAsync();
+        var stamp = await _provider.GetSourceStampAsync();
+        var current = _cache;
+        if (current is { Error: null } && stamp is not null && stamp == _stamp && current.LoadedAt > DateTime.Now.AddHours(-2))
+            return current;
+        // Neuer Quellstand: bisherigen Stand sofort zeigen, neu im Hintergrund rechnen (wie Einkauf, PM-04).
+        if (current is { Error: null })
+        {
+            _ = RefreshAsync(stamp);
+            return current;
+        }
+        return await RefreshAsync(stamp);
+    }
+
+    private async Task<SalesDataset> RefreshAsync(string? stamp)
+    {
+        if (!await _gate.WaitAsync(0))
+        {
+            // Ein Ladevorgang laeuft schon; auf ihn warten und dessen Ergebnis nehmen.
+            await _gate.WaitAsync();
+            _gate.Release();
+            return _cache ?? new SalesDataset { LoadedAt = DateTime.Now, Error = "Laden fehlgeschlagen." };
+        }
         try
         {
-            var stamp = await _provider.GetSourceStampAsync();
-            if (_cache is { Error: null } c && stamp is not null && stamp == _stamp && c.LoadedAt > DateTime.Now.AddHours(-2))
+            if (_cache is { Error: null } c && stamp is not null && stamp == _stamp)
                 return c;
-            _cache = await LoadAsync();
+            var loaded = await Task.Run(LoadAsync);
+            _cache = loaded;
             _stamp = stamp;
-            return _cache;
+            return loaded;
         }
         catch (Exception ex)
         {
-            return new SalesDataset { LoadedAt = DateTime.Now, Error = ex.Message };
+            return _cache ?? new SalesDataset { LoadedAt = DateTime.Now, Error = ex.Message };
         }
         finally
         {

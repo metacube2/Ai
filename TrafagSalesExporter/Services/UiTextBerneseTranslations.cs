@@ -10,6 +10,11 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen. Verluste erscheinen erst 6 Monate nach Quartalsende."] = "Grüen ufe: erschte Chouf im Quartal, aus Umsatz di erschte 12 Mönet. Rot abe: letschte Chouf im Quartal und sither nüt, aus Umsatz di letschte 12 Mönet dervor. Schraffiert: no kei 12 Mönet verbi, dr Kund cha no zrüggcho. Grau: im erschte Datejahr isch „nöi“ nid belastbar, wöu d Date ersch denn aafö. Verluscht chöme ersch 6 Mönet nach Quartalsänd.",
+            ["noch offen"] = "no offe",
+            ["Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil."] = "Durchschnittleche Stückpriis i CHF pro Kund, 12 Mönet. Faktor = 90-%-Wärt teilt dür 10-%-Wärt, dass einzelni Usreisser nid zelle. Ab 5 Kunde, ohni Platzhalter-Nummere und Leischtige wie Zertifikat oder Bearbeitig. Verschideni Mängene, Länder und Gsellschafte erkläre e Teil.",
+            ["Veränderung je Gesellschaft"] = "Veränderig pro Gsellschaft",
+            ["Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance)."] = "En extreme Wärt bi ere Gsellschaft dütet eher uf ne Datefähler aus uf echts Wachstum (zum Bischpiu UK 2025, Stückpriis statt Ziilewärt, lueg Finance).",
             ["Daten ab"] = "Date ab",
             ["Vorjahresvergleich"] = "Vorjahresvergliich",
             ["gleicher Zeitraum Vorjahr"] = "glichi Periode Vorjahr",

@@ -30,7 +30,7 @@ else
                     <MudText Typo="Typo.h6" Class="ll-grow">@T("Artikel mit grosser Preisstreuung", "Articles with wide price spread")</MudText>
                     <ExcelButton FileLabel="Verkauf_Preise" Sheets="ExcelSheets" />
                 </div>
-                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate, ab 4 Kunden. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil.", "Average unit price in CHF per customer, 12 months, at least 4 customers. Factor = 90 % value divided by 10 % value, so single outliers do not count. Different quantities, countries and companies explain part of it.")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil.", "Average unit price in CHF per customer, 12 months. Factor = 90 % value divided by 10 % value, so single outliers do not count. From 5 customers, without placeholder numbers and services such as certificates or machining. Different quantities, countries and companies explain part of it.")</MudText>
                 <div class="ll-list" style="max-height:620px">
                     <div class="ll-row sal-head"><span class="ll-grow">@T("Artikel", "Article")</span><span style="width:50px;text-align:right">@T("Kunden", "Customers")</span><span style="width:72px;text-align:right">@T("Umsatz", "Sales")</span><span style="width:56px;text-align:right">@T("Faktor", "Factor")</span></div>
                     @foreach (var s in _spreads.Take(200))
@@ -71,7 +71,7 @@ else
                             var y = 100 + ((i * 37) % 90) - 45;
                             <circle cx="@F(Px(p.UnitPriceChf))" cy="@F(y)" r="@F(r)" class="sal-dot" style="animation-delay:@(F(i * 0.02))s"><title>@p.CustomerName (@p.Country, @p.Tsc) · @p.Quantity.ToString("N0") @T("Stück", "pcs") · CHF @p.UnitPriceChf.ToString("N2")</title></circle>
                         }
-                        <g><text x="30" y="200" class="nw-axis">CHF @s.Min.ToString("N2")</text><text x="670" y="200" text-anchor="end" class="nw-axis">CHF @s.Max.ToString("N2")</text></g>
+                        <g><text x="30" y="200" class="nw-axis" style="text-anchor:start">CHF @s.Min.ToString("N2")</text><text x="670" y="200" class="nw-axis" style="text-anchor:end">CHF @s.Max.ToString("N2")</text></g>
                     </svg>
                     <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Jeder Punkt ist ein Kunde, die Grösse die Menge. Achse logarithmisch, das Band zeigt 10 % bis 90 %, die Linie den Median.", "Each dot is a customer, its size the quantity. Logarithmic axis, the band shows 10 % to 90 %, the line the median.")</MudText>
                     <div class="ll-list mt-2" style="max-height:260px">

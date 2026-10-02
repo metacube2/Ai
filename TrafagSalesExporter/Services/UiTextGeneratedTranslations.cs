@@ -8,6 +8,11 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen. Verluste erscheinen erst 6 Monate nach Quartalsende."] = "Verde hacia arriba: primera compra en el trimestre, como ventas los primeros 12 meses. Rojo hacia abajo: última compra en el trimestre y nada desde entonces, como ventas los 12 meses anteriores. Rayado: aún no han pasado 12 meses, el cliente puede volver. Gris: en el primer año de datos \"nuevo\" no es fiable porque los datos empiezan entonces. Las pérdidas aparecen solo 6 meses después del fin del trimestre.",
+                ["noch offen"] = "aún abierto",
+                ["Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil."] = "Precio unitario medio en CHF por cliente, 12 meses. Factor = valor del 90 % dividido por valor del 10 %, para que los valores atípicos no cuenten. Desde 5 clientes, sin números comodín ni servicios como certificados o mecanizado. Diferentes cantidades, países y sociedades explican una parte.",
+                ["Veränderung je Gesellschaft"] = "Cambio por sociedad",
+                ["Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance)."] = "Un valor extremo en una sociedad indica más bien un error de datos que un crecimiento real (por ejemplo UK 2025, precio unitario en lugar de valor de línea, ver Finance).",
                 ["Daten ab"] = "datos desde",
                 ["Vorjahresvergleich"] = "comparación interanual",
                 ["gleicher Zeitraum Vorjahr"] = "mismo periodo año anterior",
@@ -2006,6 +2011,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen. Verluste erscheinen erst 6 Monate nach Quartalsende."] = "Verde in alto: primo acquisto nel trimestre, come fatturato i primi 12 mesi. Rosso in basso: ultimo acquisto nel trimestre e nulla da allora, come fatturato i 12 mesi precedenti. Tratteggiato: non sono ancora passati 12 mesi, il cliente può tornare. Grigio: nel primo anno di dati \"nuovo\" non è affidabile perché i dati iniziano solo allora. Le perdite appaiono solo 6 mesi dopo la fine del trimestre.",
+                ["noch offen"] = "ancora aperto",
+                ["Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil."] = "Prezzo unitario medio in CHF per cliente, 12 mesi. Fattore = valore al 90 % diviso valore al 10 %, così i singoli valori anomali non contano. Da 5 clienti, senza numeri segnaposto e prestazioni come certificati o lavorazioni. Quantità, paesi e società diverse ne spiegano una parte.",
+                ["Veränderung je Gesellschaft"] = "Variazione per società",
+                ["Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance)."] = "Un valore estremo in una società indica piuttosto un errore nei dati che una crescita reale (ad esempio UK 2025, prezzo unitario invece del valore di riga, vedi Finance).",
                 ["Daten ab"] = "dati dal",
                 ["Vorjahresvergleich"] = "confronto anno su anno",
                 ["gleicher Zeitraum Vorjahr"] = "stesso periodo anno precedente",
@@ -4004,6 +4014,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen. Verluste erscheinen erst 6 Monate nach Quartalsende."] = "हरा ऊपर: तिमाही में पहली खरीद, बिक्री के रूप में पहले 12 महीने। लाल नीचे: तिमाही में अंतिम खरीद और तब से कुछ नहीं, बिक्री के रूप में पहले के 12 महीने। धारीदार: अभी 12 महीने नहीं हुए, ग्राहक लौट सकता है। धूसर: डेटा के पहले वर्ष में \"नया\" विश्वसनीय नहीं। नुकसान तिमाही समाप्ति के 6 महीने बाद ही दिखते हैं।",
+                ["noch offen"] = "अभी खुला",
+                ["Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil."] = "प्रति ग्राहक CHF में औसत इकाई मूल्य, 12 महीने। गुणक = 90 % मान भाग 10 % मान, ताकि अकेले अपवाद न गिने जाएँ। कम से कम 5 ग्राहक, प्लेसहोल्डर नंबर और प्रमाणपत्र या मशीनिंग जैसी सेवाओं के बिना। अलग मात्राएँ, देश और कंपनियाँ इसका कुछ हिस्सा समझाती हैं।",
+                ["Veränderung je Gesellschaft"] = "प्रति कंपनी बदलाव",
+                ["Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance)."] = "किसी कंपनी में अत्यधिक मान वास्तविक वृद्धि की बजाय डेटा त्रुटि की ओर इशारा करता है (उदाहरण UK 2025, पंक्ति मान की जगह इकाई मूल्य, Finance देखें)।",
                 ["Daten ab"] = "डेटा से",
                 ["Vorjahresvergleich"] = "वर्ष-दर-वर्ष तुलना",
                 ["gleicher Zeitraum Vorjahr"] = "पिछले वर्ष की समान अवधि",
@@ -6002,6 +6017,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen. Verluste erscheinen erst 6 Monate nach Quartalsende."] = "E gjelbër lart: blerja e parë në tremujor, si shitje 12 muajt e parë. E kuqe poshtë: blerja e fundit në tremujor dhe asgjë që atëherë, si shitje 12 muajt para. E vijëzuar: ende nuk kanë kaluar 12 muaj, klienti mund të kthehet. Gri: në vitin e parë të të dhënave \"i ri\" nuk është i besueshëm. Humbjet shfaqen vetëm 6 muaj pas fundit të tremujorit.",
+                ["noch offen"] = "ende e hapur",
+                ["Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil."] = "Çmimi mesatar për njësi në CHF për klient, 12 muaj. Faktori = vlera 90 % pjesëtuar me vlerën 10 %, që vlerat e veçanta të mos llogariten. Nga 5 klientë, pa numra zëvendësues dhe shërbime si certifikata ose përpunim. Sasi, vende dhe shoqëri të ndryshme shpjegojnë një pjesë.",
+                ["Veränderung je Gesellschaft"] = "Ndryshimi për shoqëri",
+                ["Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance)."] = "Një vlerë ekstreme te një shoqëri tregon më shumë një gabim të dhënash sesa rritje të vërtetë (p.sh. UK 2025, çmimi për njësi në vend të vlerës së rreshtit, shih Finance).",
                 ["Daten ab"] = "të dhëna nga",
                 ["Vorjahresvergleich"] = "krahasim vjetor",
                 ["gleicher Zeitraum Vorjahr"] = "e njëjta periudhë vitin e kaluar",
@@ -8000,6 +8020,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen. Verluste erscheinen erst 6 Monate nach Quartalsende."] = "Yeşil yukarı: çeyrekteki ilk alım, satış olarak ilk 12 ay. Kırmızı aşağı: çeyrekteki son alım ve sonrasında hiçbir şey, satış olarak önceki 12 ay. Taralı: henüz 12 ay geçmedi, müşteri geri dönebilir. Gri: verinin ilk yılında \"yeni\" güvenilir değil. Kayıplar ancak çeyrek sonundan 6 ay sonra görünür.",
+                ["noch offen"] = "henüz açık",
+                ["Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil."] = "Müşteri başına CHF cinsinden ortalama birim fiyat, 12 ay. Faktör = %90 değeri bölü %10 değeri, tek tük aykırı değerler sayılmasın diye. En az 5 müşteri, yer tutucu numaralar ve sertifika veya işleme gibi hizmetler hariç. Farklı miktarlar, ülkeler ve şirketler bir kısmını açıklar.",
+                ["Veränderung je Gesellschaft"] = "Şirket başına değişim",
+                ["Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance)."] = "Bir şirketteki aşırı değer, gerçek büyümeden çok bir veri hatasına işaret eder (örneğin UK 2025, satır değeri yerine birim fiyat, bkz. Finance).",
                 ["Daten ab"] = "veri başlangıcı",
                 ["Vorjahresvergleich"] = "yıllık karşılaştırma",
                 ["gleicher Zeitraum Vorjahr"] = "önceki yıl aynı dönem",
@@ -9998,6 +10023,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen. Verluste erscheinen erst 6 Monate nach Quartalsende."] = "SuDqu' Dung, Doq bIng, qIj: wa'DIch DIS. jar 6 ret chIllu'.",
+                ["noch offen"] = "poSmoH",
+                ["Durchschnittlicher Stückpreis in CHF je Kunde, 12 Monate. Faktor = 90-%-Wert geteilt durch 10-%-Wert, damit einzelne Ausreisser nicht zählen. Ab 5 Kunden, ohne Platzhalter-Nummern und Leistungen wie Zertifikate oder Bearbeitung. Verschiedene Mengen, Länder und Gesellschaften erklären einen Teil."] = "Hoch ngevwI' 'ay'. 90 % / 10 %. vagh ngevwI'.",
+                ["Veränderung je Gesellschaft"] = "Hoch kampa'nI' choH",
+                ["Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance)."] = "Qagh De' net Sov.",
                 ["Daten ab"] = "De' tagh",
                 ["Vorjahresvergleich"] = "DIS juv",
                 ["gleicher Zeitraum Vorjahr"] = "DIS ret rap poH",

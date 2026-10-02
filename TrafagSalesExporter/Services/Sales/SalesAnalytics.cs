@@ -32,6 +32,9 @@ public static class SalesAnalytics
         return cleaned.Length == 0 ? text.ToUpperInvariant() : cleaned;
     }
 
+    /// <summary>Anzeigename; Kunden ohne Namen in der Quelle erscheinen mit ihrem Schluessel (Gesellschaft#Nummer).</summary>
+    public static string DisplayName(string name, string key) => string.IsNullOrWhiteSpace(name) ? key : name;
+
     public static DateOnly ReferenceEnd(IEnumerable<SalesFact> facts, DateOnly today)
     {
         var max = facts.Select(f => f.Date).Where(d => d <= today).DefaultIfEmpty(today).Max();
@@ -70,7 +73,7 @@ public static class SalesAnalytics
             .GroupBy(f => f.CustomerKey)
             .Select(g =>
             {
-                var name = g.GroupBy(f => f.CustomerName).OrderByDescending(n => n.Sum(f => f.ValueChf)).First().Key;
+                var name = DisplayName(g.GroupBy(f => f.CustomerName).OrderByDescending(n => n.Sum(f => f.ValueChf)).First().Key, g.Key);
                 var country = g.Where(f => f.CustomerCountry.Length > 0).GroupBy(f => f.CustomerCountry)
                     .OrderByDescending(c => c.Sum(f => f.ValueChf)).Select(c => c.Key).FirstOrDefault() ?? "";
                 return new SalesCustomerSummary(g.Key, name, country,
@@ -84,6 +87,12 @@ public static class SalesAnalytics
             .OrderByDescending(c => c.Last12)
             .ToList();
     }
+
+    public static IReadOnlyList<SalesCompanyChange> CompanyChanges(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int compareMonths)
+        => facts.GroupBy(f => f.Tsc)
+            .Select(g => new SalesCompanyChange(g.Key, Sum(g, refEnd.AddMonths(-compareMonths), refEnd), Sum(g, refEnd.AddMonths(-12 - compareMonths), refEnd.AddMonths(-12))))
+            .OrderByDescending(c => c.Current)
+            .ToList();
 
     /// <summary>Kunden mit Rueckgang im Vergleichszeitraum: Vorjahr mindestens <paramref name="minPrevious"/> CHF und Rueckgang ab 30 %, oder seit 6 Monaten kein Umsatz.</summary>
     public static IReadOnlyList<SalesDeclineItem> Declines(IReadOnlyList<SalesCustomerSummary> customers, decimal minPrevious = 10000m, decimal dropPercent = 30m)
@@ -108,7 +117,7 @@ public static class SalesAnalytics
         // Ende des letzten vollstaendigen Quartals (exklusiv).
         var lastQuarterEnd = QuarterStart(refEnd);
         var byCustomer = facts.Where(f => f.Date < refEnd).GroupBy(f => f.CustomerKey)
-            .Select(g => (Key: g.Key, Name: g.First().CustomerName, First: g.Min(f => f.Date), Last: g.Max(f => f.Date), Facts: g.ToList()))
+            .Select(g => (Key: g.Key, Name: DisplayName(g.First().CustomerName, g.Key), First: g.Min(f => f.Date), Last: g.Max(f => f.Date), Facts: g.ToList()))
             .ToList();
         var firstDate = facts.Select(f => f.Date).DefaultIfEmpty(refEnd).Min();
         // "Neu" ist erst belastbar, wenn davor mindestens 12 Monate Daten liegen; sonst ist jeder Kunde scheinbar neu.
@@ -119,11 +128,13 @@ public static class SalesAnalytics
             var end = q.AddMonths(3);
             if (q < QuarterStart(firstDate)) continue;
             var news = byCustomer.Where(c => c.First >= q && c.First < end).ToList();
-            var lost = byCustomer.Where(c => c.Last >= q && c.Last < end).ToList();
+            // Verloren erst ab 6 Monaten nach Quartalsende zeigen; vorher hat fast jeder Kunde einfach noch nicht wieder bestellt.
+            var lostKnown = end.AddMonths(6) <= refEnd;
+            var lost = lostKnown ? byCustomer.Where(c => c.Last >= q && c.Last < end).ToList() : [];
             result.Add(new SalesQuarterMovement(QuarterLabel(q),
                 news.Count, news.Sum(c => c.Facts.Where(f => f.Date < c.First.AddMonths(12)).Sum(f => f.ValueChf)),
                 lost.Count, lost.Sum(c => c.Facts.Where(f => f.Date >= c.Last.AddMonths(-12)).Sum(f => f.ValueChf)),
-                end.AddMonths(12) <= refEnd, q >= reliableFrom,
+                end.AddMonths(12) <= refEnd, q >= reliableFrom, lostKnown,
                 news.OrderByDescending(c => c.Facts.Sum(f => f.ValueChf)).Take(8).Select(c => c.Name).ToList(),
                 lost.OrderByDescending(c => c.Facts.Sum(f => f.ValueChf)).Take(8).Select(c => c.Name).ToList()));
         }
@@ -161,7 +172,8 @@ public static class SalesAnalytics
         return new SalesConcentrationResult(curve, Share(1), Share(5), Share(10), Share(20), for80, hhi, total, values.Count, perCompany);
     }
 
-    private static bool UsableDivision(string d) => d.Length > 0 && !d.Equals("Others", StringComparison.OrdinalIgnoreCase)
+    private static bool UsableDivision(string d) => d.Length > 0 && !d.Equals("Nicht zugeordnet", StringComparison.OrdinalIgnoreCase)
+        && !d.Equals("Others", StringComparison.OrdinalIgnoreCase)
         && !d.Equals("Other", StringComparison.OrdinalIgnoreCase) && !d.Equals("Übrige", StringComparison.OrdinalIgnoreCase)
         && !d.All(char.IsDigit);
 
@@ -203,7 +215,7 @@ public static class SalesAnalytics
             var best = rules.Where(r => divisions.Contains(r.From) && !divisions.Contains(r.To))
                 .GroupBy(r => r.To).Select(g => g.OrderByDescending(r => r.Confidence).First());
             foreach (var r in best)
-                result.Add(new SalesCrossSellOpportunity(customer, revenue[customer].Name, r.To, r.From, r.Confidence, revenue[customer].Value, typical.GetValueOrDefault(r.To)));
+                result.Add(new SalesCrossSellOpportunity(customer, DisplayName(revenue[customer].Name, customer), r.To, r.From, r.Confidence, revenue[customer].Value, typical.GetValueOrDefault(r.To)));
         }
         return result.OrderByDescending(o => (double)o.CustomerRevenue * o.Confidence).ToList();
     }
@@ -225,13 +237,22 @@ public static class SalesAnalytics
     }
 
     /// <summary>Stueckpreis in CHF je Artikel und Kunde (12 Monate, nur positive Menge und Wert), ab <paramref name="minCustomers"/> Kunden.</summary>
-    public static IReadOnlyList<SalesPriceSpread> PriceSpreads(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int minCustomers = 4)
-        => facts.Where(f => f.Date >= refEnd.AddMonths(-12) && f.Date < refEnd && f.Quantity > 0 && f.ValueChf > 0 && f.Material.Length > 0)
+    private static readonly Regex PlaceholderMaterial = new(@"9{4,}", RegexOptions.Compiled);
+    private static readonly Regex ServiceArticle = new(@"CERTIF|ZERTIFIKAT|LAVORAZION|MANUFACTURING|INSPECTION|PRUEF|PRÜF|FREIGHT|FRACHT|TRANSPORT|VERPACKUNG|PACKING|SERVICE|DIENSTLEIST|SPESE|SURCHARGE|ZUSCHLAG",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    /// <summary>Platzhalter-Materialnummern (viele Neunen) und Leistungen (Zertifikate, Bearbeitung, Fracht ...) haben keinen vergleichbaren Stueckpreis.</summary>
+    public static bool IsComparableArticle(string material, string article)
+        => !PlaceholderMaterial.IsMatch(material) && !ServiceArticle.IsMatch(article);
+
+    public static IReadOnlyList<SalesPriceSpread> PriceSpreads(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int minCustomers = 5)
+        => facts.Where(f => f.Date >= refEnd.AddMonths(-12) && f.Date < refEnd && f.Quantity > 0 && f.ValueChf > 0 && f.Material.Length > 0
+                            && IsComparableArticle(f.Material, f.Article))
             .GroupBy(f => MaterialKeyNormalizer.Normalize(f.Material))
             .Select(g =>
             {
                 var points = g.GroupBy(f => f.CustomerKey)
-                    .Select(c => new SalesPricePoint(c.First().CustomerName, c.First().CustomerCountry, c.First().Tsc, c.Sum(f => f.Quantity), c.Sum(f => f.ValueChf) / c.Sum(f => f.Quantity)))
+                    .Select(c => new SalesPricePoint(DisplayName(c.First().CustomerName, c.Key), c.First().CustomerCountry, c.First().Tsc, c.Sum(f => f.Quantity), c.Sum(f => f.ValueChf) / c.Sum(f => f.Quantity)))
                     .OrderBy(p => p.UnitPriceChf).ToList();
                 var prices = points.Select(p => p.UnitPriceChf).ToList();
                 return new SalesPriceSpread(g.First().Material, g.GroupBy(f => f.Article).OrderByDescending(a => a.Count()).First().Key,

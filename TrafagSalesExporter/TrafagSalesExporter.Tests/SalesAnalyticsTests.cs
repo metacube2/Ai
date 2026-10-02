@@ -132,7 +132,7 @@ public sealed class SalesAnalyticsTests
             Fact("C", new DateOnly(2026, 5, 1), 300, qty: 10), Fact("D", new DateOnly(2026, 5, 1), 400, qty: 10),
             Fact("E", new DateOnly(2026, 5, 1), -50, qty: 1)
         };
-        var s = Assert.Single(SalesAnalytics.PriceSpreads(facts, RefEnd));
+        var s = Assert.Single(SalesAnalytics.PriceSpreads(facts, RefEnd, minCustomers: 4));
 
         Assert.Equal(4, s.Customers);
         Assert.Equal(10, s.Min);
@@ -215,5 +215,24 @@ public sealed class SalesAnalyticsTests
 
         Assert.False(moves.Single(m => m.Quarter == "2025 Q1").NewReliable);
         Assert.True(moves.Single(m => m.Quarter == "2026 Q1").NewReliable);
+    }
+
+    [Theory]
+    [InlineData("E99999", "Special device", false)]
+    [InlineData("M_IT01_002303", "CERTIFICATI", false)]
+    [InlineData("45226", "NAT4.0 PRESSURE TRANSMITTER", true)]
+    public void Vergleichbare_Artikel_Ohne_Platzhalter_Und_Leistungen(string material, string article, bool expected)
+        => Assert.Equal(expected, SalesAnalytics.IsComparableArticle(material, article));
+
+    [Fact]
+    public void Verluste_Erst_Sechs_Monate_Nach_Quartalsende()
+    {
+        var facts = new[] { Fact("A", new DateOnly(2025, 1, 5), 10), Fact("B", new DateOnly(2026, 8, 1), 10), Fact("C", new DateOnly(2026, 2, 1), 10) };
+        var moves = SalesAnalytics.Movements(facts, RefEnd);
+
+        Assert.False(moves.Single(m => m.Quarter == "2026 Q3").LostKnown);
+        Assert.Equal(0, moves.Single(m => m.Quarter == "2026 Q3").LostCustomers);
+        Assert.True(moves.Single(m => m.Quarter == "2026 Q1").LostKnown);
+        Assert.Equal(1, moves.Single(m => m.Quarter == "2026 Q1").LostCustomers);
     }
 }

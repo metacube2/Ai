@@ -67,7 +67,7 @@ else
                 <svg viewBox="0 0 1000 300" class="dir-trend">
                     @for (var g = 0; g <= 4; g++)
                     {
-                        <g><line x1="50" y1="@F(20 + g * 60)" x2="990" y2="@F(20 + g * 60)" class="nw-grid" /><text x="44" y="@F(24 + g * 60)" text-anchor="end" class="nw-axis">@F(_max * (4 - g) / 4)</text></g>
+                        <g><line x1="50" y1="@F(20 + g * 60)" x2="990" y2="@F(20 + g * 60)" class="nw-grid" /><text x="44" y="@F(24 + g * 60)" class="nw-axis" style="text-anchor:end">@F(_max * (4 - g) / 4)</text></g>
                     }
                     @foreach (var m in Metrics.Where(m => _shown.Contains(m.Key)))
                     {

@@ -32,9 +32,15 @@ public sealed record SalesCustomerSummary(
     public decimal? ChangePercent => Previous == 0 ? null : (Current - Previous) / Previous * 100m;
 }
 
+/// <summary>Vergleichszeitraum je Gesellschaft, um Datenfehler einzelner Standorte zu erkennen.</summary>
+public sealed record SalesCompanyChange(string Tsc, decimal Current, decimal Previous)
+{
+    public decimal? ChangePercent => Previous == 0 ? null : (Current - Previous) / Previous * 100m;
+}
+
 public sealed record SalesDeclineItem(SalesCustomerSummary Customer, string Kind, decimal LostChf);
 
-public sealed record SalesQuarterMovement(string Quarter, int NewCustomers, decimal NewRevenue12, int LostCustomers, decimal LostRevenue12, bool LostFinal, bool NewReliable,
+public sealed record SalesQuarterMovement(string Quarter, int NewCustomers, decimal NewRevenue12, int LostCustomers, decimal LostRevenue12, bool LostFinal, bool NewReliable, bool LostKnown,
     IReadOnlyList<string> NewNames, IReadOnlyList<string> LostNames);
 
 public sealed record SalesConcentrationResult(IReadOnlyList<(int Rank, double CumulativeShare)> Curve, double Top1, double Top5, double Top10, double Top20,

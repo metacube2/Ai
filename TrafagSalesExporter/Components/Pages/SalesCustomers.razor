@@ -34,6 +34,22 @@ else
         <div class="ll-kpi"><div class="ll-kpi-value">@_customers.Count(c => c.Companies.Count > 1 && c.Last12 > 0)</div><div class="ll-kpi-label">@T("kaufen bei mehreren Gesellschaften", "buy from several companies")</div></div>
     </div>
 
+    <MudPaper Class="pa-3 mb-3" Outlined="true">
+        <MudText Typo="Typo.subtitle1"><b>@T("Veränderung je Gesellschaft", "Change per company")</b> <span class="ll-muted">@CurrentPeriod(_data) / @PreviousPeriod(_data)</span></MudText>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-1">@T("Ein extremer Wert bei einer Gesellschaft deutet eher auf einen Datenfehler als auf echtes Wachstum (zum Beispiel UK 2025, Stückpreis statt Zeilenwert, siehe Finance).", "An extreme value at one company points to a data error rather than real growth (for example UK 2025, unit price instead of line value, see Finance).")</MudText>
+        <div class="sal-companies">
+            @foreach (var c in _companies)
+            {
+                var pct = c.ChangePercent;
+                <div class="sal-company @(pct is > 100 or < -60 ? "sal-company-warn" : string.Empty)">
+                    <b>@c.Tsc</b>
+                    <span class="ll-mono">@Short(c.Previous) → @Short(c.Current)</span>
+                    <span class="ll-mono @(pct >= 0 ? "sal-up" : "sal-down")">@Percent(pct)</span>
+                </div>
+            }
+        </div>
+    </MudPaper>
+
     <MudGrid Spacing="3">
         <MudItem xs="12" lg="6">
             <MudPaper Class="pa-3 ll-panel" Outlined="true">
@@ -131,6 +147,7 @@ else
     private IReadOnlyList<SalesCustomerSummary> _customers = [];
     private Dictionary<string, IReadOnlyList<decimal>> _sparks = [];
     private decimal _l12;
+    private IReadOnlyList<SalesCompanyChange> _companies = [];
     private decimal _cur;
     private decimal _prev;
     private string _search = string.Empty;
@@ -152,6 +169,7 @@ else
         _customers = SalesAnalytics.Customers(_data.Facts, refEnd, _data.CompareMonths);
         _l12 = _customers.Sum(c => c.Last12);
         _cur = _customers.Sum(c => c.Current);
+        _companies = SalesAnalytics.CompanyChanges(_data.Facts, refEnd, _data.CompareMonths);
         _prev = _customers.Sum(c => c.Previous);
         var top = _customers.Take(200).Select(c => c.Key).ToHashSet();
         _sparks = _data.Facts.Where(f => top.Contains(f.CustomerKey)).GroupBy(f => f.CustomerKey)
@@ -174,6 +192,10 @@ else
 
     private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
     [
+        new("Gesellschaften", Rows(_companies, c => new Dictionary<string, object?>
+        {
+            ["Gesellschaft"] = c.Tsc, ["Vergleichszeitraum CHF"] = c.Current, ["Vorjahreszeitraum CHF"] = c.Previous, ["Veraenderung %"] = c.ChangePercent
+        })),
         new("Kunden", Rows(_customers, c => new Dictionary<string, object?>
         {
             ["Kunde"] = c.Name, ["Land"] = c.MainCountry, ["Gesellschaften"] = Csv(c.Companies), ["Umsatz 12 M CHF"] = c.Last12,

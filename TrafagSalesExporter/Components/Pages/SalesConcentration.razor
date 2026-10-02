@@ -38,7 +38,7 @@ else if (_c is not null)
                 <svg viewBox="0 0 640 340" class="sal-pareto">
                     @for (var g = 0; g <= 4; g++)
                     {
-                        <g><line x1="50" y1="@F(20 + g * 75)" x2="630" y2="@F(20 + g * 75)" class="nw-grid" /><text x="44" y="@F(24 + g * 75)" text-anchor="end" class="nw-axis">@((100 - g * 25))%</text></g>
+                        <g><line x1="50" y1="@F(20 + g * 75)" x2="630" y2="@F(20 + g * 75)" class="nw-grid" /><text x="44" y="@F(24 + g * 75)" class="nw-axis" style="text-anchor:end">@((100 - g * 25))%</text></g>
                     }
                     <polygon points="50,320 @string.Join(" ", _c.Curve.Select(p => $"{F(X(p.Rank))},{F(Y(p.CumulativeShare))}")) 630,320" class="sal-pareto-area" />
                     <polyline points="@string.Join(" ", _c.Curve.Select(p => $"{F(X(p.Rank))},{F(Y(p.CumulativeShare))}"))" class="sal-pareto-line" pathLength="1" />
@@ -46,7 +46,7 @@ else if (_c is not null)
                     <line x1="@F(X(_c.CustomersFor80))" y1="@F(Y(0.8))" x2="@F(X(_c.CustomersFor80))" y2="320" class="sal-pareto-mark" />
                     <circle cx="@F(X(_c.CustomersFor80))" cy="@F(Y(0.8))" r="6" class="sal-pareto-dot" />
                     <text x="@F(X(_c.CustomersFor80) + 10)" y="@F(Y(0.8) + 18)" class="sal-bar-value">@_c.CustomersFor80 @T("von", "of") @_c.Customers @T("Kunden = 80 %", "customers = 80 %")</text>
-                    <text x="630" y="336" text-anchor="end" class="nw-axis">@_c.Customers @T("Kunden", "customers")</text>
+                    <text x="630" y="336" class="nw-axis" style="text-anchor:end">@_c.Customers @T("Kunden", "customers")</text>
                 </svg>
             </MudPaper>
         </MudItem>
