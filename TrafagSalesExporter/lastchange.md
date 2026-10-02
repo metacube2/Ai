@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Netzwerk: Unterreiter Active Directory, 2026-10-02, Deploy offen
+
+- `b57d20f`: 3D-OU-Stadt, Lebenszyklus, Aufraeumen, Sicherheit (LAPS, BitLocker, Delegation), Dienste je Server,
+  Subnetze ohne AD-Standort, DNS und DCs; DCs als Pruefziele. Deploy scheiterte 08:05, Laptop nicht im Firmennetz.
+
 ## Netzwerk: AD-Computer eingeschaltet, 2026-10-02, produktiv 07:34
 
 - `48121df`: `NetworkProbe:AdEnabled = true` nach Erlaubnis der IT (laut Ingo). Nur Computerkonten, keine Personen.
