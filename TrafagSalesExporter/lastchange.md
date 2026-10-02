@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## Reiter Verkauf, 2026-10-02, produktiv 13:24
+
+- `e2fb8ce`: acht Unterreiter (Kunden, Rueckgang, neue und verlorene Kunden, Konzentration, Cross-Selling, Preisstreuung,
+  Saison und Prognose, Weltkarte) auf den Finance-Daten, ohne Konzernkunden, CHF zum Belegdatum, hinter der
+  Finance-Freischaltung. `docs/VERKAUF_2026-10-02.md`.
+
 ## Netzwerk: Migration, Bericht, Geraetelandkarte, Altlasten-Score, 2026-10-02, produktiv 12:00
 
 - `c6b2d29`, `7d31df5`: Unterreiter Migration (Wellen, Zeitachse, Fortschritt) und Bericht (PDF ueber Browser-Druck),
