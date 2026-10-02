@@ -2,6 +2,10 @@
 
 Stand: 2026-10-01
 
+## Netzwerk: AD-Computer eingeschaltet, 2026-10-02, produktiv 07:34
+
+- `48121df`: `NetworkProbe:AdEnabled = true` nach Erlaubnis der IT (laut Ingo). Nur Computerkonten, keine Personen.
+
 ## Reiter Netzwerk, 2026-10-02, produktiv 07:20
 
 - `1635b46`: Netzkarte, Verfuegbarkeit mit SAP-Fruehwarnung, Netz oder Daten, Sicherheit, Arbeitsplaetze. Pruefung alle

@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-02 07:34, Netzwerk: AD-Computer eingeschaltet (`48121df`).** Nur `appsettings.json` geaendert (`NetworkProbe:AdEnabled = true`), `824/824`, `BiDashboard.dll` `07:34:12`, SHA256 `45CE08E916005F5339E22113FBD5171B4770A7A6B753EB3BE39B2DCD385F12BE`, bitgleich, fuenf Routen 200, Alarm nur `-wal`/`-shm`. Damit ist „`AdEnabled` aus“ im Eintrag darunter ueberholt.
 - **Deploy 2026-10-02 07:20, Reiter Netzwerk (`1635b46`).** `824/824`, `BiDashboard.dll` `07:20:16`, `6'993'408` Bytes, SHA256 `D73F77B5B044F6DC3522349E6E1D4D1D8EF11335410EEFC8E19C44348DCB5A68`, bitgleich, fuenf Routen und fuenf Netzwerk-Seiten 200. Alarm nur `-wal`/`-shm`. Neuer Hintergrunddienst `NetworkProbeService` (alle 5 Min., erste Runde 07:21 alle 7 Ziele ok); `NetworkProbe:AdEnabled` aus.
 - **Deploy 2026-10-01 16:05, Verwendung & Risiko (`1a754e0`).** `814/814`, `BiDashboard.dll` `16:05:31`, `6'754'816` Bytes, SHA256 `E24A59A5F954338F8022D61A64C2231F91C25FCBC360D793570892DB38CD37DA`, bitgleich, fuenf Routen und `/logistik/verwendung-risiko` 200. Alarm nur `-wal`/`-shm` (16:05:38 neu).
 - **Deploy 2026-10-01 15:01, Logistik live (`2be8623`).** Stand `6b4bf21`, `810/810`, `BiDashboard.dll` `15:01:10`, `6'695'424` Bytes, SHA256 `226536E119D548B7EF04E9E4BF97586EA058BE64FC3FDA61F5FB1B68B00D82C3`, bitgleich, fuenf Routen und `/logistik/live` 200. Alarm nur `-wal`/`-shm` (um 15:01:14 neu angelegt). Vorher `T76K912650` in P76 (Ingo).
