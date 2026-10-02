@@ -129,4 +129,11 @@ public sealed class AdAnalysisTests
         Assert.True(some.LapsReadable);
         Assert.True(some.BitLockerReadable);
     }
+
+    [Theory]
+    [InlineData("VeeamGuestHelperSvc", "Backup (Veeam)")]
+    [InlineData("MSSQLSvc", "SQL Server")]
+    [InlineData("HOST", "HOST")]
+    public void Dienstklassen_Werden_Gruppiert(string spn, string expected)
+        => Assert.Equal(expected, AdAnalysis.ServiceGroup(spn));
 }

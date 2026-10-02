@@ -190,6 +190,7 @@ public static class AdAnalysis
     /// <summary>Bekannte Dienstklassen aus servicePrincipalName lesbar zusammengefasst.</summary>
     public static string ServiceGroup(string spnClass) => spnClass.ToUpperInvariant() switch
     {
+        var v when v.StartsWith("VEEAM") => "Backup (Veeam)",
         "MSSQLSVC" => "SQL Server",
         "HTTP" => "Web (HTTP)",
         "TERMSRV" => "Remotedesktop",
