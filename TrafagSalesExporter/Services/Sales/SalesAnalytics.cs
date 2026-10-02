@@ -43,11 +43,29 @@ public static class SalesAnalytics
     private static decimal Sum(IEnumerable<SalesFact> facts, DateOnly from, DateOnly to)
         => facts.Where(f => f.Date >= from && f.Date < to).Sum(f => f.ValueChf);
 
-    public static IReadOnlyList<SalesCustomerSummary> Customers(IReadOnlyList<SalesFact> facts, DateOnly refEnd)
+    /// <summary>Spaetester Datenbeginn (Monatsanfang) aller Gesellschaften; davor fehlen Daten mindestens einer Gesellschaft.</summary>
+    public static DateOnly DataStart(IEnumerable<SalesFact> facts)
+    {
+        var starts = facts.GroupBy(f => f.Tsc).Select(g => g.Min(f => f.Date)).ToList();
+        var latest = starts.Count == 0 ? DateOnly.MinValue : starts.Max();
+        return new DateOnly(latest.Year, latest.Month, 1);
+    }
+
+    /// <summary>Monate fuer den Vorjahresvergleich: hoechstens 12, und der Vorjahreszeitraum muss ganz in den Daten liegen.</summary>
+    public static int CompareMonths(DateOnly dataStart, DateOnly refEnd)
+    {
+        var available = (refEnd.Year - dataStart.Year) * 12 + refEnd.Month - dataStart.Month;
+        return Math.Clamp(available - 12, 1, 12);
+    }
+
+    public static IReadOnlyList<SalesCustomerSummary> Customers(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int compareMonths = 12)
     {
         var l12 = refEnd.AddMonths(-12);
-        var p12 = refEnd.AddMonths(-24);
+        var cur = refEnd.AddMonths(-compareMonths);
+        var prevEnd = refEnd.AddMonths(-12);
+        var prevStart = prevEnd.AddMonths(-compareMonths);
         var l6 = refEnd.AddMonths(-6);
+        var p24 = refEnd.AddMonths(-24);
         return facts.Where(f => f.Date < refEnd)
             .GroupBy(f => f.CustomerKey)
             .Select(g =>
@@ -57,21 +75,21 @@ public static class SalesAnalytics
                     .OrderByDescending(c => c.Sum(f => f.ValueChf)).Select(c => c.Key).FirstOrDefault() ?? "";
                 return new SalesCustomerSummary(g.Key, name, country,
                     g.Select(f => f.Tsc).Distinct().OrderBy(t => t).ToList(),
-                    Sum(g, l12, refEnd), Sum(g, p12, l12), Sum(g, l6, refEnd),
+                    Sum(g, l12, refEnd), Sum(g, cur, refEnd), Sum(g, prevStart, prevEnd), Sum(g, l6, refEnd),
                     g.Min(f => f.Date), g.Max(f => f.Date),
                     g.Select(f => f.Tsc + "|" + f.InvoiceNumber).Distinct().Count(),
-                    g.Where(f => f.Date >= p12).GroupBy(f => f.Division).Select(d => (d.Key, d.Sum(f => f.ValueChf)))
+                    g.Where(f => f.Date >= p24).GroupBy(f => f.Division).Select(d => (d.Key, d.Sum(f => f.ValueChf)))
                         .Where(d => d.Item2 > 0).OrderByDescending(d => d.Item2).ToList());
             })
             .OrderByDescending(c => c.Last12)
             .ToList();
     }
 
-    /// <summary>Kunden mit Rueckgang: Vorjahr mindestens <paramref name="minPrevious"/> CHF und Rueckgang ab 30 %, oder seit 6 Monaten kein Umsatz.</summary>
+    /// <summary>Kunden mit Rueckgang im Vergleichszeitraum: Vorjahr mindestens <paramref name="minPrevious"/> CHF und Rueckgang ab 30 %, oder seit 6 Monaten kein Umsatz.</summary>
     public static IReadOnlyList<SalesDeclineItem> Declines(IReadOnlyList<SalesCustomerSummary> customers, decimal minPrevious = 10000m, decimal dropPercent = 30m)
-        => customers.Where(c => c.Previous12 >= minPrevious)
-            .Select(c => c.Last6 <= 0 && c.Last12 < c.Previous12 ? new SalesDeclineItem(c, "eingeschlafen", c.Previous12 - Math.Max(0, c.Last12))
-                : c.ChangePercent <= -dropPercent ? new SalesDeclineItem(c, "rueckgang", c.Previous12 - c.Last12) : null)
+        => customers.Where(c => c.Previous >= minPrevious)
+            .Select(c => c.Last6 <= 0 && c.Current < c.Previous ? new SalesDeclineItem(c, "eingeschlafen", c.Previous - Math.Max(0, c.Current))
+                : c.ChangePercent <= -dropPercent ? new SalesDeclineItem(c, "rueckgang", c.Previous - c.Current) : null)
             .Where(d => d is not null)
             .Select(d => d!)
             .OrderByDescending(d => d.LostChf)
@@ -85,25 +103,27 @@ public static class SalesAnalytics
     /// Neue und verlorene Kunden je Quartal (die letzten <paramref name="quarters"/> vollstaendigen Quartale). Verloren heisst:
     /// letzter Kauf im Quartal und seither nichts mehr; endgueltig erst, wenn danach mindestens 12 Monate vergangen sind.
     /// </summary>
-    public static IReadOnlyList<SalesQuarterMovement> Movements(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int quarters = 12)
+    public static IReadOnlyList<SalesQuarterMovement> Movements(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int quarters = 12, DateOnly? dataStart = null)
     {
         // Ende des letzten vollstaendigen Quartals (exklusiv).
         var lastQuarterEnd = QuarterStart(refEnd);
         var byCustomer = facts.Where(f => f.Date < refEnd).GroupBy(f => f.CustomerKey)
             .Select(g => (Key: g.Key, Name: g.First().CustomerName, First: g.Min(f => f.Date), Last: g.Max(f => f.Date), Facts: g.ToList()))
             .ToList();
-        var dataStart = facts.Select(f => f.Date).DefaultIfEmpty(refEnd).Min();
+        var firstDate = facts.Select(f => f.Date).DefaultIfEmpty(refEnd).Min();
+        // "Neu" ist erst belastbar, wenn davor mindestens 12 Monate Daten liegen; sonst ist jeder Kunde scheinbar neu.
+        var reliableFrom = (dataStart ?? new DateOnly(firstDate.Year, firstDate.Month, 1)).AddMonths(12);
         var result = new List<SalesQuarterMovement>();
         for (var q = lastQuarterEnd.AddMonths(-3 * quarters); q < lastQuarterEnd; q = q.AddMonths(3))
         {
             var end = q.AddMonths(3);
-            if (q < QuarterStart(dataStart).AddMonths(3)) continue; // erstes Datenquartal: alle waeren "neu"
+            if (q < QuarterStart(firstDate)) continue;
             var news = byCustomer.Where(c => c.First >= q && c.First < end).ToList();
             var lost = byCustomer.Where(c => c.Last >= q && c.Last < end).ToList();
             result.Add(new SalesQuarterMovement(QuarterLabel(q),
                 news.Count, news.Sum(c => c.Facts.Where(f => f.Date < c.First.AddMonths(12)).Sum(f => f.ValueChf)),
                 lost.Count, lost.Sum(c => c.Facts.Where(f => f.Date >= c.Last.AddMonths(-12)).Sum(f => f.ValueChf)),
-                end.AddMonths(12) <= refEnd,
+                end.AddMonths(12) <= refEnd, q >= reliableFrom,
                 news.OrderByDescending(c => c.Facts.Sum(f => f.ValueChf)).Take(8).Select(c => c.Name).ToList(),
                 lost.OrderByDescending(c => c.Facts.Sum(f => f.ValueChf)).Take(8).Select(c => c.Name).ToList()));
         }
@@ -238,11 +258,17 @@ public static class SalesAnalytics
     /// gleicher Monat im Vorjahr mal Wachstum (letzte 12 Monate zu den 12 davor). Rueckrechnung des Verfahrens auf das
     /// letzte Jahr ergibt die mittlere Abweichung (MAPE) als Guete.
     /// </summary>
-    public static SalesForecast Forecast(string dimension, IReadOnlyList<SalesFact> facts, DateOnly refEnd)
+    public static SalesForecast Forecast(string dimension, IReadOnlyList<SalesFact> facts, DateOnly refEnd, DateOnly? dataStart = null, int compareMonths = 12)
     {
         var history = Monthly(facts, refEnd.AddMonths(-36), refEnd);
+        if (dataStart is { } ds && ds > refEnd.AddMonths(-36))
+        {
+            // Monate vor dem Datenbeginn sind keine Nullumsaetze, sondern fehlende Daten: nicht anzeigen, nicht verwenden.
+            history = history.Where(v => v.Month >= ds).ToList();
+        }
         var index = new double[12];
-        var years = Enumerable.Range(0, 3).Select(y => history.Skip(y * 12).Take(12).ToList()).Where(y => y.Count == 12 && y.Sum(v => v.Value) > 0).ToList();
+        var years = Enumerable.Range(0, 3).Select(y => history.SkipLast(y * 12).TakeLast(12).ToList()).Where(y => y.Count == 12 && y.Sum(v => v.Value) > 0)
+            .GroupBy(y => y[0].Month).Select(g => g.First()).ToList();
         for (var m = 0; m < 12; m++)
         {
             var ratios = years.Select(y =>
@@ -253,26 +279,30 @@ public static class SalesAnalytics
             }).ToList();
             index[m] = ratios.Count == 0 ? 1 : ratios.Average();
         }
-        var last12 = history.Skip(24).Sum(v => v.Value);
-        var prev12 = history.Skip(12).Take(12).Sum(v => v.Value);
-        var prev2 = history.Take(12).Sum(v => v.Value);
-        var growth = prev12 > 0 ? last12 / prev12 : 1m;
+        decimal Window(int monthsBackEnd, int length) => history.Where(v => v.Month >= refEnd.AddMonths(-monthsBackEnd - length) && v.Month < refEnd.AddMonths(-monthsBackEnd)).Sum(v => v.Value);
+        var last12 = Window(0, 12);
+        var current = Window(0, compareMonths);
+        var previous = Window(12, compareMonths);
+        var growth = previous > 0 ? current / previous : 1m;
         growth = Math.Clamp(growth, 0.5m, 2m);
-        var forecast = history.Skip(24).Select(v => new SalesMonthValue(v.Month.AddMonths(12), Math.Max(0, v.Value * growth))).ToList();
+        var lastYear = history.Where(v => v.Month >= refEnd.AddMonths(-12)).ToList();
+        var forecast = lastYear.Select(v => new SalesMonthValue(v.Month.AddMonths(12), Math.Max(0, v.Value * growth))).ToList();
         double? mape = null;
-        if (prev2 > 0 && prev12 > 0)
+        // Rueckrechnung braucht drei volle Jahre: Wachstum aus Jahr 1 zu 2 auf Jahr 2 angewendet, mit Jahr 3 verglichen.
+        if (history.Count >= 36 && Window(24, 12) > 0 && Window(12, 12) > 0)
         {
-            var g = Math.Clamp(prev12 / prev2, 0.5m, 2m);
-            var errors = history.Skip(24).Select((v, i) => (actual: v.Value, predicted: history[12 + i].Value * g))
+            var g = Math.Clamp(Window(12, 12) / Window(24, 12), 0.5m, 2m);
+            var errors = lastYear.Select(v => (actual: v.Value, predicted: (history.FirstOrDefault(h => h.Month == v.Month.AddMonths(-12))?.Value ?? 0) * g))
                 .Where(x => x.actual > 0).Select(x => Math.Abs((double)((x.actual - x.predicted) / x.actual))).ToList();
             mape = errors.Count == 0 ? null : errors.Average();
         }
-        return new SalesForecast(dimension, history, forecast, index, mape, last12, prev12);
+        return new SalesForecast(dimension, history, forecast, index, mape, current, previous);
     }
 
-    public static IReadOnlyList<SalesCountryValue> Countries(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int months = 24)
+    public static IReadOnlyList<SalesCountryValue> Countries(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int months = 24, DateOnly? dataStart = null)
     {
         var from = refEnd.AddMonths(-months);
+        if (dataStart is { } ds && ds > from) from = ds;
         var l12 = refEnd.AddMonths(-12);
         return facts.Where(f => f.Date >= from && f.Date < refEnd && f.CustomerCountry.Length == 2)
             .GroupBy(f => f.CustomerCountry)

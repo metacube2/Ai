@@ -32,7 +32,7 @@ else
             </MudButtonGroup>
             <ExcelButton FileLabel="Verkauf_Kundenbewegung" Sheets="ExcelSheets" />
         </div>
-        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen.", "Green upwards: first purchase in the quarter, as sales the first 12 months. Red downwards: last purchase in the quarter and nothing since, as sales the 12 months before. Hatched: less than 12 months ago, the customer may still return.")</MudText>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen.", "Green upwards: first purchase in the quarter, as sales the first 12 months. Red downwards: last purchase in the quarter and nothing since, as sales the 12 months before. Hatched: less than 12 months ago, the customer may still return. Grey: in the first data year \"new\" is not reliable because the data only starts then.")</MudText>
         @{
             var max = Math.Max(1.0, _moves.Select(m => Math.Max(Value(m, true), Value(m, false))).DefaultIfEmpty(1).Max());
             var w = 960.0 / Math.Max(1, _moves.Count);
@@ -49,7 +49,7 @@ else
                 var down = 150 * Value(m, false) / max;
                 var x = 34 + i * w;
                 <g class="sal-q" style="animation-delay:@(F(i * 0.05))s">
-                    <rect x="@F(x + 4)" y="@F(170 - up)" width="@F(w - 8)" height="@F(up)" rx="3" class="sal-new"><title>@m.Quarter · @m.NewCustomers @T("neu", "new") · CHF @Chf(m.NewRevenue12)</title></rect>
+                    <rect x="@F(x + 4)" y="@F(170 - up)" width="@F(w - 8)" height="@F(up)" rx="3" class="@(m.NewReliable ? "sal-new" : "sal-new-open")"><title>@m.Quarter · @m.NewCustomers @T("neu", "new") · CHF @Chf(m.NewRevenue12)</title></rect>
                     <rect x="@F(x + 4)" y="170" width="@F(w - 8)" height="@F(down)" rx="3" class="@(m.LostFinal ? "sal-lost" : "sal-lost-open")"><title>@m.Quarter · @m.LostCustomers @T("verloren", "lost") · CHF @Chf(m.LostRevenue12)</title></rect>
                     <text x="@F(x + w / 2)" y="@F(164 - up)" text-anchor="middle" class="sal-q-val">@(_byRevenue ? Short(m.NewRevenue12) : m.NewCustomers.ToString())</text>
                     <text x="@F(x + w / 2)" y="@F(184 + down)" text-anchor="middle" class="sal-q-val">@(_byRevenue ? Short(m.LostRevenue12) : m.LostCustomers.ToString())</text>
@@ -90,7 +90,7 @@ else
     {
         _data = await Sales.GetAsync();
         if (_data.Error is null)
-            _moves = SalesAnalytics.Movements(_data.Facts, _data.ReferenceEnd);
+            _moves = SalesAnalytics.Movements(_data.Facts, _data.ReferenceEnd, dataStart: _data.DataStart);
     }
 
     private double Value(SalesQuarterMovement m, bool isNew)
@@ -101,7 +101,7 @@ else
         new("Quartale", Rows(_moves, m => new Dictionary<string, object?>
         {
             ["Quartal"] = m.Quarter, ["Neue Kunden"] = m.NewCustomers, ["Umsatz neue 12 M CHF"] = m.NewRevenue12,
-            ["Verlorene Kunden"] = m.LostCustomers, ["Umsatz verlorene 12 M CHF"] = m.LostRevenue12, ["Verlust endgueltig"] = m.LostFinal ? "ja" : "nein",
+            ["Neu belastbar"] = m.NewReliable ? "ja" : "nein (erstes Datenjahr)", ["Verlorene Kunden"] = m.LostCustomers, ["Umsatz verlorene 12 M CHF"] = m.LostRevenue12, ["Verlust endgueltig"] = m.LostFinal ? "ja" : "nein",
             ["Neue (Top)"] = Csv(m.NewNames), ["Verlorene (Top)"] = Csv(m.LostNames)
         }))
     ];

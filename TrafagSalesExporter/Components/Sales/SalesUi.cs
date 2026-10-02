@@ -42,4 +42,10 @@ public static class SalesUi
         => items.Select(map).ToList();
 
     public static string Csv(IEnumerable<string> items) => string.Join(", ", items);
+
+    /// <summary>Vergleichszeitraum, z. B. "01.2026–09.2026".</summary>
+    public static string CurrentPeriod(SalesDataset d) => $"{d.ReferenceEnd.AddMonths(-d.CompareMonths):MM.yyyy}–{d.ReferenceEnd.AddDays(-1):MM.yyyy}";
+
+    /// <summary>Derselbe Zeitraum ein Jahr frueher.</summary>
+    public static string PreviousPeriod(SalesDataset d) => $"{d.ReferenceEnd.AddMonths(-12 - d.CompareMonths):MM.yyyy}–{d.ReferenceEnd.AddMonths(-12).AddDays(-1):MM.yyyy}";
 }

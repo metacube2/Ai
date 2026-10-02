@@ -98,11 +98,15 @@ public sealed class SalesDataService
                 Math.Round(value * rate.Value, 2), r.Quantity, r.InvoiceNumber ?? ""));
         }
 
+        var referenceEnd = SalesAnalytics.ReferenceEnd(facts, DateOnly.FromDateTime(DateTime.Today));
+        var dataStart = SalesAnalytics.DataStart(facts);
         return new SalesDataset
         {
             LoadedAt = DateTime.Now,
             Facts = facts,
-            ReferenceEnd = SalesAnalytics.ReferenceEnd(facts, DateOnly.FromDateTime(DateTime.Today)),
+            ReferenceEnd = referenceEnd,
+            DataStart = dataStart,
+            CompareMonths = SalesAnalytics.CompareMonths(dataStart, referenceEnd),
             MissingRateRows = missingRate,
             IntercompanyRowsExcluded = intercompanyRows
         };

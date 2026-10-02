@@ -42,7 +42,8 @@ public sealed class SalesAnalyticsTests
         var a = SalesAnalytics.Customers(facts, RefEnd).Single(c => c.Key == "A");
 
         Assert.Equal(100, a.Last12);
-        Assert.Equal(300, a.Previous12);
+        Assert.Equal(300, a.Previous);
+        Assert.Equal(100, a.Current);
         Assert.Equal(["TRCH", "TRIT"], a.Companies);
         Assert.Equal(-66.667m, Math.Round(a.ChangePercent!.Value, 3));
     }
@@ -174,5 +175,45 @@ public sealed class SalesAnalyticsTests
         Assert.Equal(24, countries[0].Monthly.Count);
         var flow = Assert.Single(SalesAnalytics.Flows(facts, RefEnd));
         Assert.Equal(("CH", "DE", 100m), (flow.FromCountry, flow.ToCountry, flow.Last12));
+    }
+
+    [Fact]
+    public void Datenbeginn_Und_Vergleich_Gleicher_Zeitraeume()
+    {
+        var facts = new[] { Fact("A", new DateOnly(2025, 1, 6), 10, tsc: "TRCH"), Fact("B", new DateOnly(2025, 1, 20), 10, tsc: "TRIT"), Fact("C", new DateOnly(2026, 9, 3), 10) };
+        var start = SalesAnalytics.DataStart(facts);
+        Assert.Equal(new DateOnly(2025, 1, 1), start);
+        // Jan 2025 bis Sep 2026 = 21 Monate, davon 9 vergleichbar: Jan-Sep 2026 gegen Jan-Sep 2025.
+        Assert.Equal(9, SalesAnalytics.CompareMonths(start, RefEnd));
+        Assert.Equal(12, SalesAnalytics.CompareMonths(new DateOnly(2023, 1, 1), RefEnd));
+
+        var c = SalesAnalytics.Customers([Fact("X", new DateOnly(2025, 2, 1), 100), Fact("X", new DateOnly(2025, 11, 1), 999), Fact("X", new DateOnly(2026, 2, 1), 150)], RefEnd, 9).Single();
+        Assert.Equal(150, c.Current);
+        Assert.Equal(100, c.Previous);
+        Assert.Equal(50m, c.ChangePercent);
+    }
+
+    [Fact]
+    public void Prognose_Ohne_Monate_Vor_Datenbeginn_Und_Ohne_Rueckrechnung()
+    {
+        var facts = new List<SalesFact>();
+        for (var m = new DateOnly(2025, 1, 1); m < RefEnd; m = m.AddMonths(1))
+            facts.Add(Fact("A", m, m.Year == 2026 ? 120 : 100));
+        var f = SalesAnalytics.Forecast("*", facts, RefEnd, new DateOnly(2025, 1, 1), 9);
+
+        Assert.Equal(new DateOnly(2025, 1, 1), f.History[0].Month);
+        Assert.Equal(21, f.History.Count);
+        Assert.Null(f.BacktestMape);
+        Assert.Equal(1.2m * 100, f.Forecast[0].Value);
+    }
+
+    [Fact]
+    public void Neu_Im_Ersten_Datenjahr_Nicht_Belastbar()
+    {
+        var facts = new[] { Fact("A", new DateOnly(2025, 2, 1), 10), Fact("B", new DateOnly(2026, 2, 1), 10) };
+        var moves = SalesAnalytics.Movements(facts, RefEnd, dataStart: new DateOnly(2025, 1, 1));
+
+        Assert.False(moves.Single(m => m.Quarter == "2025 Q1").NewReliable);
+        Assert.True(moves.Single(m => m.Quarter == "2026 Q1").NewReliable);
     }
 }

@@ -7,6 +7,8 @@
     <MudText Typo="Typo.caption" Class="ll-muted d-block mt-3">
         @T("Quelle wie Finance: Nettoumsatz nach Finance-Regeln, ohne Konzernkunden, in CHF zum Kurs des Belegdatums. Zeitfenster enden mit dem letzten vollständigen Monat", "Source as Finance: net sales by Finance rules, without group customers, in CHF at the rate of the document date. Time windows end with the last complete month")
         @Data.ReferenceEnd.AddDays(-1).ToString("MM.yyyy") ·
+        @T("Daten ab", "data from") @Data.DataStart.ToString("MM.yyyy") ·
+        @T("Vorjahresvergleich", "year-on-year") @SalesUi.CurrentPeriod(Data) / @SalesUi.PreviousPeriod(Data) ·
         @Data.Facts.Count.ToString("N0") @T("Positionen", "line items") ·
         @T("ohne Kurs weggelassen", "dropped without rate"): @Data.MissingRateRows ·
         @T("Konzernkunden ausgeschlossen", "group customers excluded"): @Data.IntercompanyRowsExcluded ·

@@ -27,8 +27,9 @@ else
 {
     <div class="ll-kpis">
         <div class="ll-kpi"><div class="ll-kpi-value">@Short(_l12)</div><div class="ll-kpi-label">@T("Umsatz CHF, 12 Monate", "Sales CHF, 12 months")</div></div>
-        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_p12)</div><div class="ll-kpi-label">@T("12 Monate davor", "12 months before")</div></div>
-        <div class="ll-kpi"><div class="ll-kpi-value @(_l12 >= _p12 ? "sal-up" : "sal-down")">@Percent(_p12 == 0 ? null : (_l12 - _p12) / _p12 * 100)</div><div class="ll-kpi-label">@T("Veränderung", "Change")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_cur)</div><div class="ll-kpi-label">@T("Umsatz CHF", "Sales CHF") @CurrentPeriod(_data)</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_prev)</div><div class="ll-kpi-label">@T("gleicher Zeitraum Vorjahr", "same period previous year") @PreviousPeriod(_data)</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_cur >= _prev ? "sal-up" : "sal-down")">@Percent(_prev == 0 ? null : (_cur - _prev) / _prev * 100)</div><div class="ll-kpi-label">@T("Veränderung", "Change")</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value">@_customers.Count(c => c.Last12 > 0)</div><div class="ll-kpi-label">@T("Kunden mit Umsatz, 12 Monate", "customers with sales, 12 months")</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value">@_customers.Count(c => c.Companies.Count > 1 && c.Last12 > 0)</div><div class="ll-kpi-label">@T("kaufen bei mehreren Gesellschaften", "buy from several companies")</div></div>
     </div>
@@ -42,7 +43,7 @@ else
                     <ExcelButton FileLabel="Verkauf_Kunden" Sheets="ExcelSheets" />
                 </div>
                 <div class="ll-list mt-2" style="max-height:640px">
-                    <div class="ll-row sal-head"><span style="width:28px"></span><span class="ll-grow">@T("Kunde", "Customer")</span><span style="width:80px">@T("Gesellschaften", "Companies")</span><span style="width:84px;text-align:right">12 M</span><span style="width:64px;text-align:right">Δ</span><span style="width:90px"></span></div>
+                    <div class="ll-row sal-head"><span style="width:28px"></span><span class="ll-grow">@T("Kunde", "Customer")</span><span style="width:80px">@T("Gesellschaften", "Companies")</span><span style="width:84px;text-align:right">12 M</span><span style="width:64px;text-align:right" title="@CurrentPeriod(_data) / @PreviousPeriod(_data)">Δ</span><span style="width:90px"></span></div>
                     @foreach (var (c, i) in Filtered.Select((c, i) => (c, i)))
                     {
                         <div class="ll-row sal-row @(_selected?.Key == c.Key ? "sal-row-sel" : string.Empty)" @onclick="() => Select(c)">
@@ -80,10 +81,11 @@ else
                 {
                     var c = _selected;
                     <div class="d-flex align-center"><MudText Typo="Typo.h6" Class="ll-grow">@c.Name</MudText><MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => _selected = null" /></div>
-                    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@WorldGeo.Name(c.MainCountry) · @Csv(c.Companies) · @T("Kunde seit", "customer since") @c.FirstDate.ToString("MM.yyyy") · @T("letzte Rechnung", "last invoice") @c.LastDate.ToString("dd.MM.yyyy") · @c.Invoices @T("Rechnungen", "invoices")</MudText>
+                    <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@WorldGeo.Name(c.MainCountry) · @Csv(c.Companies) · @T("erste Rechnung im Datenbestand", "first invoice in the data") @c.FirstDate.ToString("MM.yyyy") · @T("letzte Rechnung", "last invoice") @c.LastDate.ToString("dd.MM.yyyy") · @c.Invoices @T("Rechnungen", "invoices")</MudText>
                     <div class="ll-kpis">
                         <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Last12)</div><div class="ll-kpi-label">@T("12 Monate", "12 months")</div></div>
-                        <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Previous12)</div><div class="ll-kpi-label">@T("12 Monate davor", "12 months before")</div></div>
+                        <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Current)</div><div class="ll-kpi-label">@CurrentPeriod(_data)</div></div>
+                        <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Previous)</div><div class="ll-kpi-label">@PreviousPeriod(_data)</div></div>
                         <div class="ll-kpi"><div class="ll-kpi-value @(c.ChangePercent >= 0 ? "sal-up" : "sal-down")">@Percent(c.ChangePercent)</div><div class="ll-kpi-label">@T("Veränderung", "Change")</div></div>
                     </div>
                     <MudText Typo="Typo.subtitle2">@T("Umsatz je Monat, 36 Monate", "Sales per month, 36 months")</MudText>
@@ -129,7 +131,8 @@ else
     private IReadOnlyList<SalesCustomerSummary> _customers = [];
     private Dictionary<string, IReadOnlyList<decimal>> _sparks = [];
     private decimal _l12;
-    private decimal _p12;
+    private decimal _cur;
+    private decimal _prev;
     private string _search = string.Empty;
     private SalesCustomerSummary? _selected;
     private IReadOnlyList<SalesMonthValue> _detailMonths = [];
@@ -137,7 +140,7 @@ else
     private IReadOnlyList<ArticleRow> _detailArticles = [];
 
     private IEnumerable<SalesCustomerSummary> Filtered => (_search.Length == 0
-        ? _customers.Where(c => c.Last12 > 0 || c.Previous12 > 0)
+        ? _customers.Where(c => c.Last12 > 0 || c.Previous > 0)
         : _customers.Where(c => c.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))).Take(200);
 
     protected override async Task OnInitializedAsync()
@@ -146,9 +149,10 @@ else
         if (_data.Error is not null)
             return;
         var refEnd = _data.ReferenceEnd;
-        _customers = SalesAnalytics.Customers(_data.Facts, refEnd);
+        _customers = SalesAnalytics.Customers(_data.Facts, refEnd, _data.CompareMonths);
         _l12 = _customers.Sum(c => c.Last12);
-        _p12 = _customers.Sum(c => c.Previous12);
+        _cur = _customers.Sum(c => c.Current);
+        _prev = _customers.Sum(c => c.Previous);
         var top = _customers.Take(200).Select(c => c.Key).ToHashSet();
         _sparks = _data.Facts.Where(f => top.Contains(f.CustomerKey)).GroupBy(f => f.CustomerKey)
             .ToDictionary(g => g.Key, g => MonthlyValues(g, refEnd, 24));
@@ -173,7 +177,7 @@ else
         new("Kunden", Rows(_customers, c => new Dictionary<string, object?>
         {
             ["Kunde"] = c.Name, ["Land"] = c.MainCountry, ["Gesellschaften"] = Csv(c.Companies), ["Umsatz 12 M CHF"] = c.Last12,
-            ["Umsatz Vorjahr CHF"] = c.Previous12, ["Veraenderung %"] = c.ChangePercent, ["Erste Rechnung"] = c.FirstDate.ToDateTime(TimeOnly.MinValue),
+            ["Vergleichszeitraum CHF"] = c.Current, ["Vorjahreszeitraum CHF"] = c.Previous, ["Veraenderung %"] = c.ChangePercent, ["Erste Rechnung"] = c.FirstDate.ToDateTime(TimeOnly.MinValue),
             ["Letzte Rechnung"] = c.LastDate.ToDateTime(TimeOnly.MinValue), ["Rechnungen"] = c.Invoices
         }))
     ];

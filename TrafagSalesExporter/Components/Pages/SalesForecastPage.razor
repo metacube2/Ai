@@ -33,16 +33,16 @@ else if (_f is not null)
         <ExcelButton FileLabel="Verkauf_Prognose" Sheets="ExcelSheets" />
     </div>
     <div class="ll-kpis">
-        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_f.Last12)</div><div class="ll-kpi-label">@T("Umsatz CHF, 12 Monate", "Sales CHF, 12 months")</div></div>
-        <div class="ll-kpi"><div class="ll-kpi-value @(_f.Last12 >= _f.Previous12 ? "sal-up" : "sal-down")">@Percent(_f.Previous12 == 0 ? null : (_f.Last12 - _f.Previous12) / _f.Previous12 * 100)</div><div class="ll-kpi-label">@T("Wachstum zum Vorjahr", "growth to previous year")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_f.Last12)</div><div class="ll-kpi-label">@T("Umsatz CHF", "Sales CHF") @CurrentPeriod(_data)</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_f.Last12 >= _f.Previous12 ? "sal-up" : "sal-down")">@Percent(_f.Previous12 == 0 ? null : (_f.Last12 - _f.Previous12) / _f.Previous12 * 100)</div><div class="ll-kpi-label">@T("Wachstum zum Vorjahr", "growth to previous year") (@PreviousPeriod(_data))</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value">@Short(_f.Forecast.Sum(v => v.Value))</div><div class="ll-kpi-label">@T("Prognose nächste 12 Monate", "forecast next 12 months")</div></div>
-        <div class="ll-kpi"><div class="ll-kpi-value">@(_f.BacktestMape is { } m ? "± " + (m * 100).ToString("0") + " %" : "–")</div><div class="ll-kpi-label">@T("typische Abweichung je Monat (Rückrechnung)", "typical deviation per month (backtest)")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@(_f.BacktestMape is { } m ? "± " + (m * 100).ToString("0") + " %" : "–")</div><div class="ll-kpi-label">@(_f.BacktestMape is null ? T("Rückrechnung erst ab drei Jahren Daten", "backtest only from three years of data") : T("typische Abweichung je Monat (Rückrechnung)", "typical deviation per month (backtest)"))</div></div>
     </div>
     <MudGrid Spacing="3">
         <MudItem xs="12" lg="8">
             <MudPaper Class="pa-3 ll-panel" Outlined="true">
                 <MudText Typo="Typo.h6">@T("Verlauf und Prognose", "History and forecast")</MudText>
-                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("36 Monate Ist, danach 12 Monate Prognose: gleicher Monat im Vorjahr mal Wachstum der letzten 12 Monate. Das Band zeigt die typische Abweichung aus der Rückrechnung auf das letzte Jahr. Eine einfache, nachvollziehbare Methode, keine Planung.", "36 months actual, then 12 months forecast: same month last year times growth of the last 12 months. The band shows the typical deviation from the backtest on the last year. A simple, traceable method, not a plan.")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Ist ab Datenbeginn, danach 12 Monate Prognose: gleicher Monat im Vorjahr mal Wachstum im Vorjahresvergleich. Das Band zeigt die typische Abweichung aus der Rückrechnung auf das letzte Jahr. Eine einfache, nachvollziehbare Methode, keine Planung.", "Actuals from the start of the data, then 12 months forecast: same month last year times year-on-year growth. The band shows the typical deviation from the backtest on the last year. A simple, traceable method, not a plan.")</MudText>
                 @{
                     var all = _f.History.Concat(_f.Forecast).ToList();
                     var max = (double)Math.Max(1, all.Max(v => v.Value)) * (1 + (_f.BacktestMape ?? 0)) * 1.05;
@@ -80,7 +80,7 @@ else if (_f is not null)
         <MudItem xs="12" lg="4">
             <MudPaper Class="pa-3 ll-panel" Outlined="true">
                 <MudText Typo="Typo.h6">@T("Saisonmuster", "Seasonal pattern")</MudText>
-                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Anteil jedes Monats am Monatsmittel, aus bis zu drei vollen Jahren. Über dem Kreis: stärker als der Durchschnitt.", "Share of each month in the monthly average, from up to three full years. Outside the circle: stronger than average.")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Anteil jedes Monats am Monatsmittel, aus bis zu drei vollen Jahren (mit weniger als drei Jahren noch unsicher). Über dem Kreis: stärker als der Durchschnitt.", "Share of each month in the monthly average, from up to three full years (still uncertain with fewer than three years). Outside the circle: stronger than average.")</MudText>
                 <svg viewBox="0 0 300 300" class="sal-radial">
                     <circle cx="150" cy="150" r="70" class="sal-radial-ref" />
                     @for (var m = 0; m < 12; m++)
@@ -124,7 +124,7 @@ else if (_f is not null)
         IEnumerable<SalesFact> facts = _data!.Facts;
         if (dimension.StartsWith("S:", StringComparison.Ordinal)) facts = facts.Where(f => f.Division == dimension[2..]);
         else if (dimension.StartsWith("G:", StringComparison.Ordinal)) facts = facts.Where(f => f.Tsc == dimension[2..]);
-        _f = SalesAnalytics.Forecast(dimension, facts.ToList(), _data.ReferenceEnd);
+        _f = SalesAnalytics.Forecast(dimension, facts.ToList(), _data.ReferenceEnd, _data.DataStart, _data.CompareMonths);
     }
 
     private string Label(string d) => d == Total ? T("Gesamt", "Total")

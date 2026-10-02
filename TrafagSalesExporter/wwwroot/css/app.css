@@ -774,3 +774,4 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .sal-bubble-g:hover .sal-bubble { stroke: #fff; stroke-width: 2; }
 .sal-bubble-label { font: 700 10px system-ui, sans-serif; fill: #1b1b1b; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .sal-bar, .sal-bar-g, .sal-month, .sal-decline, .sal-lost-bar, .sal-q, .sal-new, .sal-lost, .sal-lost-open, .sal-pareto-line, .sal-pareto-dot, .sal-heat-cell, .sal-dot, .sal-fc-line, .sal-radial-seg, .sal-flow, .sal-bubble { animation: none; } .sal-pareto-line, .sal-fc-line { stroke-dashoffset: 0; } }
+.sal-new-open { fill: #90A4AE; fill-opacity: 0.55; stroke: #90A4AE; stroke-dasharray: 3 3; transform-box: fill-box; transform-origin: bottom; animation: dir-grow-y 0.9s ease-out both; }

@@ -10,6 +10,17 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Daten ab"] = "Date ab",
+            ["Vorjahresvergleich"] = "Vorjahresvergliich",
+            ["gleicher Zeitraum Vorjahr"] = "glichi Periode Vorjahr",
+            ["erste Rechnung im Datenbestand"] = "erschti Rächnig im Datebestand",
+            ["Vorjahreszeitraum mindestens CHF"] = "Vorjahresperiode mindeschtens CHF",
+            ["Rückgang ab 30 % im Vergleichszeitraum gegenüber demselben Zeitraum ein Jahr früher, oder seit 6 Monaten keine Rechnung mehr. Sortiert nach fehlendem Umsatz."] = "Rückgang ab 30 % i dr Vergliichsperiode gägenüber dr gliche Periode es Jahr früecher, oder sit 6 Mönet kei Rächnig meh. Sortiert nach fäuendem Umsatz.",
+            ["Grün nach oben: erster Kauf im Quartal, als Umsatz die ersten 12 Monate. Rot nach unten: letzter Kauf im Quartal und seither nichts, als Umsatz die letzten 12 Monate davor. Schraffiert: noch keine 12 Monate vergangen, der Kunde kann noch zurückkommen. Grau: im ersten Datenjahr ist „neu“ nicht belastbar, weil die Daten erst dann beginnen."] = "Grüen ufe: erschte Chouf im Quartal, aus Umsatz di erschte 12 Mönet. Rot abe: letschte Chouf im Quartal und sither nüt, aus Umsatz di letschte 12 Mönet dervor. Schraffiert: no kei 12 Mönet verbi, dr Kund cha no zrüggcho. Grau: im erschte Datejahr isch „nöi“ nid belastbar, wöu d Date ersch denn aafö.",
+            ["Rückrechnung erst ab drei Jahren Daten"] = "Rückrächnig ersch ab drü Jahr Date",
+            ["Ist ab Datenbeginn, danach 12 Monate Prognose: gleicher Monat im Vorjahr mal Wachstum im Vorjahresvergleich. Das Band zeigt die typische Abweichung aus der Rückrechnung auf das letzte Jahr. Eine einfache, nachvollziehbare Methode, keine Planung."] = "Ist ab Datebeginn, drnah 12 Mönet Prognose: gliiche Monet im Vorjahr mau Wachstum im Vorjahresvergliich. Ds Band zeigt di typischi Abwichig us dr Rückrächnig ufs letschte Jahr. E eifachi, nachvouziehbari Methode, kei Planig.",
+            ["Anteil jedes Monats am Monatsmittel, aus bis zu drei vollen Jahren (mit weniger als drei Jahren noch unsicher). Über dem Kreis: stärker als der Durchschnitt."] = "Aateil vo jedem Monet am Monetsmittu, us bis zu drü voue Jahr (mit weniger aus drü Jahr no unsicher). Usserhaub vom Kreis: stercher aus dr Durchschnitt.",
+            ["Stilisierte Karte, Grenzen nur angedeutet. Blasenfläche nach Umsatz; Bögen vom Land der verkaufenden Gesellschaft zum Kundenland (Top 25, 12 Monate). Mit ▶ laufen die Monate ab Datenbeginn ab, höchstens 24."] = "Stilisierti Charte, Gränze nume aadütet. Blasefläche nach Umsatz; Böge vom Land vo dr verchoufende Gsellschaft zum Kundeland (Top 25, 12 Mönet). Mit ▶ loufe d Mönet ab Datebeginn ab, höchschtens 24.",
             ["Rückgang"] = "Rückgang",
             ["Neue und verlorene Kunden"] = "Nöii und verloreni Kunde",
             ["Konzentration"] = "Konzentration",

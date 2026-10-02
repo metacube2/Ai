@@ -73,7 +73,7 @@ else
                         </g>
                     }
                 </svg>
-                <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Stilisierte Karte, Grenzen nur angedeutet. Blasenfläche nach Umsatz; Bögen vom Land der verkaufenden Gesellschaft zum Kundenland (Top 25, 12 Monate). Mit ▶ laufen die letzten 24 Monate ab.", "Stylised map, borders only hinted. Bubble area by sales; arcs from the selling company's country to the customer country (top 25, 12 months). ▶ plays the last 24 months.")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Stilisierte Karte, Grenzen nur angedeutet. Blasenfläche nach Umsatz; Bögen vom Land der verkaufenden Gesellschaft zum Kundenland (Top 25, 12 Monate). Mit ▶ laufen die Monate ab Datenbeginn ab, höchstens 24.", "Stylised map, borders only hinted. Bubble area by sales; arcs from the selling company's country to the customer country (top 25, 12 months). ▶ plays the months since the start of the data, at most 24.")</MudText>
             </MudPaper>
         </MudItem>
         <MudItem xs="12" lg="3">
@@ -115,9 +115,11 @@ else
         if (_data.Error is not null)
             return;
         var refEnd = _data.ReferenceEnd;
-        _countries = SalesAnalytics.Countries(_data.Facts, refEnd);
+        var from = refEnd.AddMonths(-24) > _data.DataStart ? refEnd.AddMonths(-24) : _data.DataStart;
+        var monthCount = (refEnd.Year - from.Year) * 12 + refEnd.Month - from.Month;
+        _countries = SalesAnalytics.Countries(_data.Facts, refEnd, monthCount, _data.DataStart);
         _flows = SalesAnalytics.Flows(_data.Facts, refEnd);
-        _months = Enumerable.Range(0, 24).Select(i => refEnd.AddMonths(-24 + i)).ToList();
+        _months = Enumerable.Range(0, monthCount).Select(i => from.AddMonths(i)).ToList();
         _maxL12 = Math.Max(1, _countries.Select(c => c.Last12).DefaultIfEmpty(1).Max());
         _maxMonth = Math.Max(1, _countries.SelectMany(c => c.Monthly).DefaultIfEmpty(1).Max());
         _maxFlow = Math.Max(1, _flows.Select(f => f.Last12).DefaultIfEmpty(1).Max());

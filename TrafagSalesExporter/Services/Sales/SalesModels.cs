@@ -14,6 +14,10 @@ public sealed class SalesDataset
     public IReadOnlyList<SalesFact> Facts { get; init; } = [];
     /// <summary>Erster Tag nach dem letzten vollstaendigen Monat; alle Zeitfenster enden hier.</summary>
     public DateOnly ReferenceEnd { get; init; }
+    /// <summary>Erster Monat, ab dem alle Gesellschaften Daten haben (spaetester Datenbeginn der Gesellschaften).</summary>
+    public DateOnly DataStart { get; init; }
+    /// <summary>Laenge des Vorjahresvergleichs in Monaten: hoechstens 12, so dass auch der Vorjahreszeitraum ganz in den Daten liegt.</summary>
+    public int CompareMonths { get; init; } = 12;
     public int MissingRateRows { get; init; }
     public int IntercompanyRowsExcluded { get; init; }
     public string? Error { get; init; }
@@ -21,15 +25,16 @@ public sealed class SalesDataset
 
 public sealed record SalesCustomerSummary(
     string Key, string Name, string MainCountry, IReadOnlyList<string> Companies,
-    decimal Last12, decimal Previous12, decimal Last6, DateOnly FirstDate, DateOnly LastDate, int Invoices,
+    decimal Last12, decimal Current, decimal Previous, decimal Last6, DateOnly FirstDate, DateOnly LastDate, int Invoices,
     IReadOnlyList<(string Division, decimal Value)> Divisions)
 {
-    public decimal? ChangePercent => Previous12 == 0 ? null : (Last12 - Previous12) / Previous12 * 100m;
+    /// <summary>Veraenderung des Vergleichszeitraums (Current) gegen denselben Zeitraum ein Jahr frueher (Previous).</summary>
+    public decimal? ChangePercent => Previous == 0 ? null : (Current - Previous) / Previous * 100m;
 }
 
 public sealed record SalesDeclineItem(SalesCustomerSummary Customer, string Kind, decimal LostChf);
 
-public sealed record SalesQuarterMovement(string Quarter, int NewCustomers, decimal NewRevenue12, int LostCustomers, decimal LostRevenue12, bool LostFinal,
+public sealed record SalesQuarterMovement(string Quarter, int NewCustomers, decimal NewRevenue12, int LostCustomers, decimal LostRevenue12, bool LostFinal, bool NewReliable,
     IReadOnlyList<string> NewNames, IReadOnlyList<string> LostNames);
 
 public sealed record SalesConcentrationResult(IReadOnlyList<(int Rank, double CumulativeShare)> Curve, double Top1, double Top5, double Top10, double Top20,
