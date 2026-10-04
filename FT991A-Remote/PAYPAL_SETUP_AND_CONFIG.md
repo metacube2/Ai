@@ -2,7 +2,11 @@
 
 ## Aktueller Verkaufsfluss
 
-Die öffentliche Seite liegt unter `https://www.aiscom.ch/macyaesu/`. Der
+Die öffentliche Seite liegt unter `https://www.aiscom.ch/macyaesu/`. Seit
+2026-10-04 zeigt `https://www.aiscom.ch/` wieder die AISCOM-Firmenseite; MacYaesu
+ist dort unter „Projekte im Verkauf“ verlinkt (Details: `../aiscom-site/README.md`).
+Die Dateien `marketing-site/root-*` und `aiscom-index.html` sind damit überholt.
+Der
 Kaufbutton öffnet einen vorkonfigurierten PayPal-Checkout für:
 
 - Produkt: `MacYaesu Vollversion`

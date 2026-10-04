@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "title": "AISCOM - IT Services & 3D Printing",
+    "description": "Professional IT services, 3D printing, C# & SAP ABAP development in Zurich"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "upload": "3D Upload",
+    "contact": "Contact",
+    "products": "Products"
+  },
+  "hero": {
+    "title": "IT Solutions & 3D Printing",
+    "subtitle": "from Zurich",
+    "description": "Professional software development, SAP ABAP, and high-quality 3D printing - all from one source.",
+    "cta": "Get in touch",
+    "secondary": "Learn more"
+  },
+  "services": {
+    "title": "Services",
+    "subtitle": "What I can do for you",
+    "3dprint": {
+      "title": "3D Printing",
+      "description": "High-quality 3D prints with Bambu Lab X1C. PLA and ABS materials for prototypes, spare parts, and creative projects.",
+      "price": "CHF 45.-/hour + materials"
+    },
+    "csharp": {
+      "title": "C# Development",
+      "description": "Desktop applications, web APIs, and backend services with .NET and C#. Clean, maintainable, efficient.",
+      "price": "CHF 120.-/hour"
+    },
+    "abap": {
+      "title": "SAP ABAP",
+      "description": "SAP development and customization. Reports, forms, interfaces, and enhancements.",
+      "price": "CHF 150.-/hour"
+    },
+    "web": {
+      "title": "Web Development",
+      "description": "Modern websites and web applications. Responsive design, SEO-optimized, user-friendly.",
+      "price": "CHF 100.-/hour"
+    }
+  },
+  "about": {
+    "title": "About Me",
+    "subtitle": "Ingo Kohler",
+    "intro": "With over 20 years of experience in software development, I offer professional IT services and 3D printing.",
+    "experience": "20+ years experience",
+    "location": "Zurich, Switzerland",
+    "skills": {
+      "title": "Expertise",
+      "list": [
+        "C# / .NET",
+        "SAP ABAP",
+        "Web Development",
+        "3D Printing"
+      ]
+    },
+    "text": "As an experienced developer, I combine technical know-how with practical problem-solving. Whether complex SAP customizations, modern C# applications, or innovative 3D printing projects - I find the right solution for every challenge."
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "subtitle": "Selected Projects",
+    "empty": "No projects available yet.",
+    "categories": {
+      "all": "All",
+      "3dprint": "3D Printing",
+      "software": "Software",
+      "web": "Web"
+    }
+  },
+  "upload": {
+    "title": "Upload 3D File",
+    "subtitle": "Send me your 3D models",
+    "description": "Upload your STL or OBJ files. I'll get back to you with a quote.",
+    "dropzone": "Drop file here or click",
+    "formats": "Supported formats: STL, OBJ (max. 50 MB)",
+    "fields": {
+      "file": "3D File",
+      "description": "Description / Requirements",
+      "email": "Your email address"
+    },
+    "submit": "Upload",
+    "success": "File uploaded successfully! I'll get back to you.",
+    "error": "Upload failed. Please try again."
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Let's talk",
+    "description": "Have a project or question? Write to me!",
+    "fields": {
+      "name": "Your name",
+      "email": "Your email address",
+      "message": "Your message"
+    },
+    "submit": "Send message",
+    "success": "Message sent successfully! I'll get back to you.",
+    "error": "Failed to send. Please try again.",
+    "direct": "Or email directly:"
+  },
+  "legal": {
+    "imprint": {
+      "title": "Imprint",
+      "owner": "Owner",
+      "address": "Address",
+      "contact": "Contact"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "Protecting your personal data is important to me.",
+      "sections": {
+        "responsible": {
+          "title": "Responsible Party",
+          "text": "Responsible for data processing on this website is:"
+        },
+        "collection": {
+          "title": "Data Collection and Processing",
+          "text": "When visiting this website, general information is automatically collected (server log files). This includes browser type, operating system, referrer URL, and similar information."
+        },
+        "contact_form": {
+          "title": "Contact Form",
+          "text": "When you send me a message via the contact form, your information (name, email, message) is stored to process your inquiry."
+        },
+        "upload": {
+          "title": "3D File Upload",
+          "text": "Uploaded 3D files are used for quote preparation and deleted after project completion unless otherwise agreed."
+        },
+        "rights": {
+          "title": "Your Rights",
+          "text": "You have the right to information, correction, deletion, and restriction of processing of your data. Contact me via email for this."
+        }
+      }
+    }
+  },
+  "footer": {
+    "tagline": "IT Services & 3D Printing from Zurich",
+    "links": "Links",
+    "legal": "Legal",
+    "imprint": "Imprint",
+    "privacy": "Privacy",
+    "copyright": "© {year} AISCOM. All rights reserved."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "required": "Required field"
+  },
+  "products": {
+    "title": "Products for sale",
+    "subtitle": "Own software – available now or launching soon.",
+    "items": [
+      {
+        "name": "MacYaesu",
+        "badge": "Available",
+        "description": "macOS remote control for the Yaesu FT-991A: CAT control, logbook and audio routing. Free demo, full version with licence.",
+        "href": "/macyaesu/",
+        "cta": "Product page"
+      },
+      {
+        "name": "Kamera-Uploader",
+        "badge": "Coming soon",
+        "description": "New project. Description, price and download will follow shortly.",
+        "href": "/kamera-uploader/",
+        "cta": "Learn more"
+      }
+    ]
+  }
+}

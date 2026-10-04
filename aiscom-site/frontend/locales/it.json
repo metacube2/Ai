@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "title": "AISCOM - Servizi IT e Stampa 3D",
+    "description": "Servizi IT professionali, stampa 3D, sviluppo C# e SAP ABAP a Zurigo"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "Chi sono",
+    "services": "Servizi",
+    "portfolio": "Portfolio",
+    "upload": "Upload 3D",
+    "contact": "Contatto",
+    "products": "Prodotti"
+  },
+  "hero": {
+    "title": "Soluzioni IT e Stampa 3D",
+    "subtitle": "da Zurigo",
+    "description": "Sviluppo software professionale, SAP ABAP e stampa 3D di alta qualità - tutto da un'unica fonte.",
+    "cta": "Contattami",
+    "secondary": "Scopri di più"
+  },
+  "services": {
+    "title": "Servizi",
+    "subtitle": "Cosa posso fare per te",
+    "3dprint": {
+      "title": "Stampa 3D",
+      "description": "Stampe 3D di alta qualità con Bambu Lab X1C. Materiali PLA e ABS per prototipi, pezzi di ricambio e progetti creativi.",
+      "price": "CHF 45.-/ora + materiale"
+    },
+    "csharp": {
+      "title": "Sviluppo C#",
+      "description": "Applicazioni desktop, API web e servizi backend con .NET e C#. Pulito, manutenibile, efficiente.",
+      "price": "CHF 120.-/ora"
+    },
+    "abap": {
+      "title": "SAP ABAP",
+      "description": "Sviluppo e personalizzazione SAP. Report, moduli, interfacce e miglioramenti.",
+      "price": "CHF 150.-/ora"
+    },
+    "web": {
+      "title": "Sviluppo Web",
+      "description": "Siti web moderni e applicazioni web. Design responsive, ottimizzato SEO, user-friendly.",
+      "price": "CHF 100.-/ora"
+    }
+  },
+  "about": {
+    "title": "Chi sono",
+    "subtitle": "Ingo Kohler",
+    "intro": "Con oltre 20 anni di esperienza nello sviluppo software, offro servizi IT professionali e stampa 3D.",
+    "experience": "20+ anni di esperienza",
+    "location": "Zurigo, Svizzera",
+    "skills": {
+      "title": "Competenze",
+      "list": [
+        "C# / .NET",
+        "SAP ABAP",
+        "Sviluppo Web",
+        "Stampa 3D"
+      ]
+    },
+    "text": "Come sviluppatore esperto, combino know-how tecnico con problem-solving pratico. Che si tratti di personalizzazioni SAP complesse, moderne applicazioni C# o progetti innovativi di stampa 3D - trovo la soluzione giusta per ogni sfida."
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "subtitle": "Progetti selezionati",
+    "empty": "Nessun progetto disponibile ancora.",
+    "categories": {
+      "all": "Tutti",
+      "3dprint": "Stampa 3D",
+      "software": "Software",
+      "web": "Web"
+    }
+  },
+  "upload": {
+    "title": "Carica file 3D",
+    "subtitle": "Inviami i tuoi modelli 3D",
+    "description": "Carica i tuoi file STL o OBJ. Ti risponderò con un preventivo.",
+    "dropzone": "Trascina il file qui o clicca",
+    "formats": "Formati supportati: STL, OBJ (max. 50 MB)",
+    "fields": {
+      "file": "File 3D",
+      "description": "Descrizione / Requisiti",
+      "email": "Il tuo indirizzo email"
+    },
+    "submit": "Carica",
+    "success": "File caricato con successo! Ti contatterò.",
+    "error": "Caricamento fallito. Riprova."
+  },
+  "contact": {
+    "title": "Contatto",
+    "subtitle": "Parliamone",
+    "description": "Hai un progetto o una domanda? Scrivimi!",
+    "fields": {
+      "name": "Il tuo nome",
+      "email": "Il tuo indirizzo email",
+      "message": "Il tuo messaggio"
+    },
+    "submit": "Invia messaggio",
+    "success": "Messaggio inviato con successo! Ti contatterò.",
+    "error": "Invio fallito. Riprova.",
+    "direct": "O scrivi direttamente a:"
+  },
+  "legal": {
+    "imprint": {
+      "title": "Impressum",
+      "owner": "Titolare",
+      "address": "Indirizzo",
+      "contact": "Contatto"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "La protezione dei tuoi dati personali è importante per me.",
+      "sections": {
+        "responsible": {
+          "title": "Responsabile",
+          "text": "Responsabile del trattamento dei dati su questo sito è:"
+        },
+        "collection": {
+          "title": "Raccolta e trattamento dei dati",
+          "text": "Visitando questo sito, vengono raccolte automaticamente informazioni generali (file di log del server). Questi includono tipo di browser, sistema operativo, URL di riferimento e informazioni simili."
+        },
+        "contact_form": {
+          "title": "Modulo di contatto",
+          "text": "Quando mi invii un messaggio tramite il modulo di contatto, le tue informazioni (nome, email, messaggio) vengono memorizzate per elaborare la tua richiesta."
+        },
+        "upload": {
+          "title": "Upload file 3D",
+          "text": "I file 3D caricati vengono utilizzati per la preparazione del preventivo e cancellati dopo il completamento del progetto, salvo diverso accordo."
+        },
+        "rights": {
+          "title": "I tuoi diritti",
+          "text": "Hai il diritto di informazione, correzione, cancellazione e limitazione del trattamento dei tuoi dati. Contattami via email per questo."
+        }
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Servizi IT e Stampa 3D da Zurigo",
+    "links": "Link",
+    "legal": "Legale",
+    "imprint": "Impressum",
+    "privacy": "Privacy",
+    "copyright": "© {year} AISCOM. Tutti i diritti riservati."
+  },
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Si è verificato un errore",
+    "required": "Campo obbligatorio"
+  },
+  "products": {
+    "title": "Prodotti in vendita",
+    "subtitle": "Software proprio – disponibile o in arrivo.",
+    "items": [
+      {
+        "name": "MacYaesu",
+        "badge": "Disponibile",
+        "description": "Controllo remoto macOS per lo Yaesu FT-991A: controllo CAT, logbook e routing audio. Demo gratuita, versione completa con licenza.",
+        "href": "/macyaesu/",
+        "cta": "Pagina prodotto"
+      },
+      {
+        "name": "Kamera-Uploader",
+        "badge": "In arrivo",
+        "description": "Nuovo progetto. Descrizione, prezzo e download seguiranno a breve.",
+        "href": "/kamera-uploader/",
+        "cta": "Scopri di più"
+      }
+    ]
+  }
+}

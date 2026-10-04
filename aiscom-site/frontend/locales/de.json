@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "title": "AISCOM - IT-Dienstleistungen & 3D-Druck",
+    "description": "Professionelle IT-Dienstleistungen, 3D-Druck, C# & SAP ABAP Entwicklung in Zürich"
+  },
+  "nav": {
+    "home": "Startseite",
+    "about": "Über mich",
+    "services": "Dienstleistungen",
+    "portfolio": "Portfolio",
+    "upload": "3D-Upload",
+    "contact": "Kontakt",
+    "products": "Produkte"
+  },
+  "hero": {
+    "title": "IT-Lösungen & 3D-Druck",
+    "subtitle": "aus Zürich",
+    "description": "Professionelle Softwareentwicklung, SAP ABAP, und hochwertiger 3D-Druck - alles aus einer Hand.",
+    "cta": "Jetzt anfragen",
+    "secondary": "Mehr erfahren"
+  },
+  "services": {
+    "title": "Dienstleistungen",
+    "subtitle": "Was ich für Sie tun kann",
+    "3dprint": {
+      "title": "3D-Druck",
+      "description": "Hochwertige 3D-Drucke mit Bambu Lab X1C. PLA und ABS Materialien für Prototypen, Ersatzteile und kreative Projekte.",
+      "price": "CHF 45.-/Stunde + Material"
+    },
+    "csharp": {
+      "title": "C# Entwicklung",
+      "description": "Desktop-Anwendungen, Web-APIs und Backend-Services mit .NET und C#. Sauber, wartbar, effizient.",
+      "price": "CHF 120.-/Stunde"
+    },
+    "abap": {
+      "title": "SAP ABAP",
+      "description": "SAP-Entwicklung und Anpassungen. Reports, Formulare, Schnittstellen und Erweiterungen.",
+      "price": "CHF 150.-/Stunde"
+    },
+    "web": {
+      "title": "Webentwicklung",
+      "description": "Moderne Webseiten und Web-Applikationen. Responsive Design, SEO-optimiert, benutzerfreundlich.",
+      "price": "CHF 100.-/Stunde"
+    }
+  },
+  "about": {
+    "title": "Über mich",
+    "subtitle": "Ingo Kohler",
+    "intro": "Mit über 20 Jahren Erfahrung in der Softwareentwicklung biete ich Ihnen professionelle IT-Dienstleistungen und 3D-Druck.",
+    "experience": "20+ Jahre Erfahrung",
+    "location": "Zürich, Schweiz",
+    "skills": {
+      "title": "Fachgebiete",
+      "list": [
+        "C# / .NET",
+        "SAP ABAP",
+        "Webentwicklung",
+        "3D-Druck"
+      ]
+    },
+    "text": "Als erfahrener Entwickler verbinde ich technisches Know-how mit praktischer Problemlösung. Ob komplexe SAP-Anpassungen, moderne C#-Applikationen oder innovative 3D-Druck-Projekte - ich finde für jede Herausforderung die passende Lösung."
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "subtitle": "Ausgewählte Projekte",
+    "empty": "Noch keine Projekte vorhanden.",
+    "categories": {
+      "all": "Alle",
+      "3dprint": "3D-Druck",
+      "software": "Software",
+      "web": "Web"
+    }
+  },
+  "upload": {
+    "title": "3D-Datei hochladen",
+    "subtitle": "Senden Sie mir Ihre 3D-Modelle",
+    "description": "Laden Sie Ihre STL- oder OBJ-Dateien hoch. Ich melde mich mit einem Angebot bei Ihnen.",
+    "dropzone": "Datei hier ablegen oder klicken",
+    "formats": "Unterstützte Formate: STL, OBJ (max. 50 MB)",
+    "fields": {
+      "file": "3D-Datei",
+      "description": "Beschreibung / Anforderungen",
+      "email": "Ihre E-Mail-Adresse"
+    },
+    "submit": "Hochladen",
+    "success": "Datei erfolgreich hochgeladen! Ich melde mich bei Ihnen.",
+    "error": "Fehler beim Hochladen. Bitte versuchen Sie es erneut."
+  },
+  "contact": {
+    "title": "Kontakt",
+    "subtitle": "Lassen Sie uns sprechen",
+    "description": "Haben Sie ein Projekt oder eine Frage? Schreiben Sie mir!",
+    "fields": {
+      "name": "Ihr Name",
+      "email": "Ihre E-Mail-Adresse",
+      "message": "Ihre Nachricht"
+    },
+    "submit": "Nachricht senden",
+    "success": "Nachricht erfolgreich gesendet! Ich melde mich bei Ihnen.",
+    "error": "Fehler beim Senden. Bitte versuchen Sie es erneut.",
+    "direct": "Oder direkt per E-Mail:"
+  },
+  "legal": {
+    "imprint": {
+      "title": "Impressum",
+      "owner": "Inhaber",
+      "address": "Adresse",
+      "contact": "Kontakt"
+    },
+    "privacy": {
+      "title": "Datenschutzerklärung",
+      "intro": "Der Schutz Ihrer persönlichen Daten ist mir wichtig.",
+      "sections": {
+        "responsible": {
+          "title": "Verantwortliche Stelle",
+          "text": "Verantwortlich für die Datenverarbeitung auf dieser Website ist:"
+        },
+        "collection": {
+          "title": "Erhebung und Verarbeitung von Daten",
+          "text": "Beim Besuch dieser Website werden automatisch Informationen allgemeiner Natur erfasst (Server-Logfiles). Diese beinhalten Art des Webbrowsers, verwendetes Betriebssystem, Referrer URL und ähnliche Informationen."
+        },
+        "contact_form": {
+          "title": "Kontaktformular",
+          "text": "Wenn Sie mir über das Kontaktformular eine Nachricht senden, werden Ihre Angaben (Name, E-Mail, Nachricht) zur Bearbeitung Ihrer Anfrage gespeichert."
+        },
+        "upload": {
+          "title": "3D-Datei Upload",
+          "text": "Hochgeladene 3D-Dateien werden zur Angebotserstellung verwendet und nach Abschluss des Projekts gelöscht, sofern nicht anders vereinbart."
+        },
+        "rights": {
+          "title": "Ihre Rechte",
+          "text": "Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten. Kontaktieren Sie mich hierfür per E-Mail."
+        }
+      }
+    }
+  },
+  "footer": {
+    "tagline": "IT-Dienstleistungen & 3D-Druck aus Zürich",
+    "links": "Links",
+    "legal": "Rechtliches",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz",
+    "copyright": "© {year} AISCOM. Alle Rechte vorbehalten."
+  },
+  "common": {
+    "loading": "Lädt...",
+    "error": "Ein Fehler ist aufgetreten",
+    "required": "Pflichtfeld"
+  },
+  "products": {
+    "title": "Projekte im Verkauf",
+    "subtitle": "Eigene Software – erhältlich oder kurz vor dem Start.",
+    "items": [
+      {
+        "name": "MacYaesu",
+        "badge": "Erhältlich",
+        "description": "macOS-Fernsteuerung für den Yaesu FT-991A: CAT-Steuerung, Logbuch und Audio-Routing. Demo zum Testen, Vollversion mit Lizenz.",
+        "href": "/macyaesu/",
+        "cta": "Zur Produktseite"
+      },
+      {
+        "name": "Kamera-Uploader",
+        "badge": "Bald verfügbar",
+        "description": "Neues Projekt. Beschreibung, Preis und Download folgen in Kürze.",
+        "href": "/kamera-uploader/",
+        "cta": "Mehr erfahren"
+      }
+    ]
+  }
+}
