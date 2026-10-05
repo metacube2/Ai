@@ -129,7 +129,19 @@ Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, Gateway Client T76. Inhalt: `LogTaSe
 `QNAME` (quittiert von); `LogLiefSet` + `WADAT`, `WADAT_IST` und Uhrzeit der Warenbewegung aus `VBFA-ERZET`; Datum für
 `LogLiefSet` bis heute + 14 Tage (weiterhin ein Tag je Abfrage). Felder in T76 per RFC belegt (2026-10-05).
 
-**Teil C, SAP-Transport 2 (Entwurf `docs/abap/ZLOG_KAP_ADD.abap`, in T76 nicht angelegt):** Quellen in T76 per RFC belegt: Bedarf
+**Teil C, Stand 2026-10-05 12:35:** Testreport `Z_LOG_KAP_TEST` (`$TMP`, nur lesend, Quelle `docs/abap/Z_LOG_KAP_TEST.abap`) in T76
+ausgeführt: `CR_CAPACITY_AVAILABLE_PERIODS` liefert ohne vorbereiteten Puffer **0 Perioden**; MLE01 und MLE02 teilen sich die
+Personalkapazität `10000262` „LAG00“ (Art 002, 8–17 Uhr, 1 h Pause, 100 %, 1 Kapazität = 8 h/Tag), daneben je eine eigene
+Maschinenkapazität; `KAPA` (Intervalle) leer, also gilt das Standardangebot aus `KAKO`; `KBED` in Stunden, in T76 Reste 0 (erledigt),
+Soll vorhanden; `KBED` hat den Sekundärindex 3 auf `KAPID`. **Neu entworfen: Set je Kapazität und Tag** (`docs/abap/ZLOG_KAP_ADD.abap`,
+zweite Fassung): Bedarf `KBEAREST`+`KRUEREST` über den Index `KAPID`, Angebot `(ENDZT−BEGZT−PAUSE) × NGRAD % × AZNOR` an
+Arbeitstagen des Fabrikkalenders (`KAKO-KALID`, sonst `T001W-FABKL`); Kapazitäten mit Intervallen bekommen kein Angebot
+(`KeinStandard = X`) statt eines falschen. In T76 angelegt: Struktur **`ZSTR_LOG_KAP`** aktiv im neuen Transport **`T76K912660`**
+(Paket ZPP, 12 Felder per DD03L geprüft). **Klassen noch nicht geändert:** `DPC_EXT`/`MPC_EXT` sind im nicht freigegebenen
+`T76K912658` gesperrt; jede weitere Änderung liefe still in diesen Auftrag (beim Versuch gemessen, Sichern ohne Auftragsabfrage).
+Der Versuch wurde zurückgenommen: `DEFINE` mit dem Teil-B-Stand neu gesichert und aktiviert, `$metadata` wieder 355'759.
+**Nächster Schritt:** Ingo gibt `T76K912658` frei (Teil B) und importiert; danach Klassenänderung für Teil C in `T76K912660`.
+Ursprünglicher Entwurf: Quellen in T76 per RFC belegt: Bedarf
 `KBED-KBEAREST` + `KRUEREST` (Einheit `KEINH`, Datum `FSTAD`, Arbeitsplatz `ARBID` → `CRHD`), Angebot über den Standardbaustein
 `CR_CAPACITY_AVAILABLE_PERIODS` (Tabelle `RC65K`: `KAPID`, `DATUV`/`DATUB`, `ANGEB`, `EINZT`, `KEINH`). Drei Punkte vor dem Anlegen in
 SE37 prüfen (stehen am Ende des Entwurfs). Ursprünglicher Plan: neues Set für Kapazität je Arbeitsplatz und Tag (Bedarf aus `KBED`, Angebot über den
