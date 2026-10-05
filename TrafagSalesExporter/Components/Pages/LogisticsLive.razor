@@ -44,7 +44,7 @@
 
 <div class="ll-kpis">
     <div class="ll-kpi">
-        <div class="ll-kpi-value">@S.TransferItemsConfirmed / @S.Transfers.Count</div>
+        <div class="ll-kpi-value">@S.TransferItemsConfirmed / @S.TransferItemsTotal</div>
         <div class="ll-kpi-label">@T("Lagerpositionen quittiert", "Warehouse items confirmed")</div>
     </div>
     <div class="ll-kpi">
@@ -71,12 +71,12 @@
 }
 else if (_view == ViewProductivity)
 {
-    <ProductivityPanel Transfers="ViewTransfers" Deliveries="S.Deliveries" Now="_now" />
-    <PeoplePanel Transfers="ViewTransfers" AccessChanged="AccessChangedAsync" />
+    <ProductivityPanel Transfers="ViewTransfers" Deliveries="S.Deliveries" Now="_now" Day="S.Day" />
+    <PeoplePanel Transfers="ViewTransfers" Day="S.Day" AccessChanged="AccessChangedAsync" />
 }
 else if (_view == ViewCapacity)
 {
-    <CapacityPanel Transfers="ViewTransfers" />
+    <CapacityPanel Transfers="ViewTransfers" Day="S.Day" />
 }
 else
 {
@@ -203,7 +203,26 @@ else
 </MudText>
 
 @code {
-    private LogisticsLiveSnapshot S => Live.Snapshot;
+    // Nach Mitternacht kann der Dienst noch den Stand von gestern halten (Pause, Fehler, Seite blieb offen): dann
+    // gilt wie beim ersten Abruf des Tages ein leerer Stand, nicht die Zahlen von gestern unter "heute".
+    private LogisticsLiveSnapshot S
+    {
+        get
+        {
+            var snapshot = Live.Snapshot;
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            if (snapshot.UpdatedAt is null || snapshot.Day == today)
+                return snapshot;
+            if (_emptyDay != today)
+            {
+                _emptyDay = today;
+                _empty = new LogisticsLiveSnapshot { Day = today, Error = snapshot.Error, Paused = snapshot.Paused };
+            }
+            return _empty;
+        }
+    }
+    private DateOnly _emptyDay;
+    private LogisticsLiveSnapshot _empty = new();
     private IReadOnlyList<LiveTransferItem>? _anonymous;
     private IReadOnlyList<LiveTransferItem>? _anonymousSource;
 

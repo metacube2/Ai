@@ -23,7 +23,7 @@ else
             var life = AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion);
             <div class="ll-row @(c.Enabled ? string.Empty : "ll-muted")">
                 <span class="ll-mono" style="width:150px" title="@c.DnsHostName">@c.Name</span>
-                <span class="ll-grow"><span class="nw-dot dir-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, DateOnly.FromDateTime(Now))"></span> @life.Product</span>
+                <span class="ll-grow"><span class="nw-dot dir-life-@AdAnalysis.LifecycleClass(life.EndOfSupport, DateOnly.FromDateTime(Now))"></span> @life.Product@if (AdAnalysis.IsEsuOnly(life, DateOnly.FromDateTime(Now))) {<MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-1">@T("nur ESU", "ESU only")</MudChip>}</span>
                 <span class="ll-mono ll-muted" style="width:96px">@(c.LastLogonUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? T("nie", "never"))</span>
                 @if (ShowPassword)
                 {

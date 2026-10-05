@@ -115,7 +115,7 @@ else
         <MudTabPanel Text="@T("Standorte", "Sites")" Icon="@Icons.Material.Filled.Place">
             <MudPaper Class="pa-3 mb-3" Outlined="true">
                 <MudText Typo="Typo.h6">@T("Gerätelandkarte", "Device map")</MudText>
-                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Jede Blase ist ein AD-Standort, die Grösse die Zahl der in 30 Tagen aktiven Computer dort (IP aus dem DNS, zugeordnet über die AD-Subnetze). Linien sind Standortverknüpfungen mit Kosten, die Punkte darauf zeigen den Replikationsweg. Grau: Geräte ohne passendes Subnetz.", "Each bubble is an AD site, its size the number of computers active in 30 days there (IP from DNS, mapped via the AD subnets). Lines are site links with cost, the dots on them show the replication path. Grey: devices without a matching subnet.")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Jede Blase ist ein AD-Standort, die Grösse die Zahl der in 44 Tagen aktiven Computer dort (IP aus dem DNS, zugeordnet über die AD-Subnetze). Linien sind Standortverknüpfungen mit Kosten, die Punkte darauf zeigen den Replikationsweg. Grau: Geräte ohne passendes Subnetz.", "Each bubble is an AD site, its size the number of computers active in 44 days there (IP from DNS, mapped via the AD subnets). Lines are site links with cost, the dots on them show the replication path. Grey: devices without a matching subnet.")</MudText>
                 @if (_siteDevices is null)
                 {
                     <MudProgressLinear Indeterminate="true" /><MudText Typo="Typo.caption">@T("DNS wird abgefragt …", "Querying DNS …")</MudText>
@@ -125,9 +125,11 @@ else
                     <svg viewBox="0 0 640 430" class="dir-graph">
                         @foreach (var l in _r.SiteLinks)
                         {
-                            for (var k = 0; k + 1 < l.Sites.Count; k++)
+                            // Eine Verknuepfung mit drei oder mehr Standorten verbindet alle untereinander, nicht nur der Reihe nach.
+                            for (var k = 0; k < l.Sites.Count; k++)
+                            for (var m = k + 1; m < l.Sites.Count; m++)
                             {
-                                if (!_sitePos.TryGetValue(l.Sites[k], out var a) || !_sitePos.TryGetValue(l.Sites[k + 1], out var b)) continue;
+                                if (!_sitePos.TryGetValue(l.Sites[k], out var a) || !_sitePos.TryGetValue(l.Sites[m], out var b)) continue;
                                 var path = $"M{F(a.X)},{F(a.Y)} L{F(b.X)},{F(b.Y)}";
                                 <g>
                                     <path d="@path" class="dir-sitelink" />
@@ -274,7 +276,7 @@ else
                 <MudItem xs="12" lg="6">
                     <MudPaper Class="pa-3 ll-panel" Outlined="true">
                         <MudText Typo="Typo.h6">@T("Zertifikate der Webserver", "Web server certificates")</MudText>
-                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Server mit HTTP-Dienstnamen und Anmeldung in 30 Tagen, TLS-Handshake auf Port 443. Das Zertifikat wird nur gelesen.", "Servers with an HTTP service name and logon in 30 days, TLS handshake on port 443. The certificate is only read.")</MudText>
+                        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Server mit HTTP-Dienstnamen und Anmeldung in 44 Tagen, TLS-Handshake auf Port 443. Das Zertifikat wird nur gelesen.", "Servers with an HTTP service name and logon in 44 days, TLS handshake on port 443. The certificate is only read.")</MudText>
                         @foreach (var c in _r.WebCertificates)
                         {
                             @CertBar(c.Host, c.Error ?? $"{c.Subject} · {c.Issuer}", c.NotAfterUtc, c.Error)
@@ -406,7 +408,7 @@ else
 
     private RenderFragment CertBar(string title, string sub, DateTime? notAfter, string? error) => __builder =>
     {
-        var days = notAfter is { } n ? (int)(n - _now).TotalDays : (int?)null;
+        var days = notAfter is { } n ? (int)Math.Floor((n - _now).TotalDays) : (int?)null;
         var cls = days is null ? "nw-cert-warn" : days < 30 ? "nw-cert-bad" : days < 90 ? "nw-cert-warn" : "nw-cert-ok";
         <div class="nw-cert">
             <div class="nw-cert-head"><b>@title</b> <span class="ll-muted">@sub</span><span class="ll-grow"></span><span class="ll-mono">@(notAfter?.ToLocalTime().ToString("dd.MM.yyyy") ?? "–")</span></div>

@@ -42,14 +42,16 @@
             {
                 var sel = _selected == p.Key;
                 var dim = _selected is not null && !sel;
-                <circle class="six-bubble @(sel ? "six-sel" : "") @(dim ? "six-dim" : "")"
-                        style="cx:@F(X(p.Revenue))px;cy:@F(Y(p.Growth))px;r:@F(R(p.Invoices))px;fill:@CountryColor(p.Country)"
+                var gv = p.Growth.GetValueOrDefault();
+                var growthText = p.Growth.HasValue ? gv.ToString("+0;-0", CultureInfo.InvariantCulture) + " %" : "–";
+                <circle @key="p.Key" class="six-bubble @(sel ? "six-sel" : "") @(dim ? "six-dim" : "") @(p.Growth.HasValue ? "" : "six-nogrowth")"
+                        style="cx:@F(X(p.Revenue))px;cy:@F(Y(gv))px;r:@F(R(p.Invoices))px;fill:@CountryColor(p.Country)"
                         @onclick="@(() => _selected = sel ? null : p.Key)">
-                    <title>@p.Name (@p.Country): CHF @Chf(p.Revenue), @(p.Growth.ToString("+0;-0", CultureInfo.InvariantCulture)) %, @p.Invoices @P(T("Rechnungen", "invoices"), T("Bestellungen", "orders"))</title>
+                    <title>@p.Name (@p.Country): CHF @Chf(p.Revenue), @growthText, @p.Invoices @P(T("Rechnungen", "invoices"), T("Bestellungen", "orders"))</title>
                 </circle>
                 @if (sel || _labelled.Contains(p.Key))
                 {
-                    <g><text x="@F(X(p.Revenue))" y="@F(Y(p.Growth) - R(p.Invoices) - 4)" class="six-label">@Cut(p.Name)</text></g>
+                    <g><text x="@F(X(p.Revenue))" y="@F(Y(gv) - R(p.Invoices) - 4)" class="six-label">@Cut(p.Name)</text></g>
                 }
             }
         </svg>
@@ -83,10 +85,12 @@
         var sorted = values.Order().ToList();
         _logMin = Math.Log10(Math.Max(100, sorted.Count == 0 ? 1000 : sorted[(int)(sorted.Count * 0.1)]));
         _logMax = Math.Log10(Math.Max(1000, values.DefaultIfEmpty(1000000).Max()));
-        _frame = Math.Max(0, _frames.Count - 1);
+        // Start im letzten vollstaendigen Quartal; das angebrochene hat kein vergleichbares Wachstum.
+        _frame = Math.Max(0, _frames.Count(f => !f.Partial) - 1);
+        if (_frames.Count > 0 && _frames[0].Partial) _frame = 0;
     }
 
-    private string QuarterLabel => _frames.Count == 0 ? "" : $"Q{(_frames[_frame].Quarter.Month - 1) / 3 + 1} {_frames[_frame].Quarter.Year}";
+    private string QuarterLabel => _frames.Count == 0 ? "" : $"Q{(_frames[_frame].Quarter.Month - 1) / 3 + 1} {_frames[_frame].Quarter.Year}" + (_frames[_frame].Partial ? " · " + T("Quartal unvollständig", "Quarter incomplete") : "");
 
     private double X(decimal revenue) => revenue <= 0 ? 60 : 60 + 920 * Math.Clamp((Math.Log10((double)revenue) - _logMin) / Math.Max(0.1, _logMax - _logMin), 0, 1);
     private static double Y(double growth) => 510 - (Math.Clamp(growth, -100, 300) + 100) / 400 * 490;
@@ -102,7 +106,7 @@
 
     private string Trail(string key)
         => string.Join(" ", _frames.Take(_frame + 1).Select(f => f.Points.FirstOrDefault(p => p.Key == key)).OfType<GalaxyPoint>()
-            .Select(p => $"{F(X(p.Revenue))},{F(Y(p.Growth))}"));
+            .Select(p => $"{F(X(p.Revenue))},{F(Y(p.Growth.GetValueOrDefault()))}"));
 
     private void SetFrame(int v) => _frame = v;
 

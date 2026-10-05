@@ -61,12 +61,47 @@ public static class AdInfraAnalysis
             })
             .ToList();
 
-    public static (int User, int Computer) SplitGpoVersion(int version) => ((version >> 16) & 0xFFFF, version & 0xFFFF);
+    public static (int User, int Computer) SplitGpoVersion(long version) => ((int)((version >> 16) & 0xFFFF), (int)(version & 0xFFFF));
 
-    public static int? GptIniVersion(string? text)
+    /// <summary>Die Version ist eine vorzeichenlose 32-Bit-Zahl (obere 16 Bit Benutzer), deshalb long.</summary>
+    public static long? GptIniVersion(string? text)
     {
         var m = Regex.Match(text ?? "", @"^\s*Version\s*=\s*(\d+)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        return m.Success && int.TryParse(m.Groups[1].Value, out var v) ? v : null;
+        return m.Success && uint.TryParse(m.Groups[1].Value, out var v) ? v : null;
+    }
+
+    /// <summary>Hat die Verknuepfung (Attribut gPLink) mindestens eine aktive Gruppenrichtlinie? Deaktivierte Links zaehlen nicht.</summary>
+    public static bool HasActiveGpoLink(string? gpLink) => ParseGpLink(gpLink).Any(l => l.Enabled);
+
+    /// <summary>
+    /// Richtlinien, die auf eine OU wirken, von oben nach unten. Die Kette wird von der OU zur Domaene durchlaufen:
+    /// Hat ein Knoten die Vererbung blockiert, entfallen alle nicht erzwungenen Links der Ebenen darueber.
+    /// Innerhalb einer Ebene gilt die Reihenfolge des gPLink (der spaetere Eintrag setzt sich durch). Nicht bewertet
+    /// werden WMI-Filter, Sicherheitsfilterung und Standort-Links.
+    /// </summary>
+    public static IReadOnlyList<(AdGpo Gpo, AdGpoLink Link, bool Inherited)> EffectiveGpos(IReadOnlyList<AdGpo> gpos, IReadOnlyList<AdOuNode> ous, string dn)
+    {
+        var chain = new List<string>();
+        for (var d = dn; d.Length > 0 && !d.StartsWith("DC=", StringComparison.OrdinalIgnoreCase); d = AdAnalysis.ParentDn(d))
+            chain.Add(d);
+        var root = ous.FirstOrDefault(o => o.Depth == 0)?.Dn;
+        if (root is not null && !chain.Contains(root, StringComparer.OrdinalIgnoreCase))
+            chain.Add(root);
+
+        var found = new List<(int Level, AdGpo Gpo, AdGpoLink Link)>();
+        var blockedAbove = false;
+        for (var i = 0; i < chain.Count; i++)
+        {
+            var level = chain[i];
+            foreach (var g in gpos)
+                foreach (var l in g.Links.Where(l => l.Enabled && l.TargetDn.Equals(level, StringComparison.OrdinalIgnoreCase)))
+                    if (i == 0 || !blockedAbove || l.Enforced)
+                        found.Add((i, g, l));
+            if (ous.FirstOrDefault(o => o.Dn.Equals(level, StringComparison.OrdinalIgnoreCase))?.BlocksInheritance == true)
+                blockedAbove = true;
+        }
+        return found.OrderByDescending(x => x.Level).ThenBy(x => x.Link.Order).ThenBy(x => x.Gpo.Name)
+            .Select(x => (x.Gpo, x.Link, x.Level > 0)).ToList();
     }
 
     /// <summary>Hat die GPO Einstellungen? Erweiterungsliste "[{...}{...}]" mit mindestens einer GUID.</summary>
@@ -78,7 +113,7 @@ public static class AdInfraAnalysis
         if (g.Links.Count == 0) return "unverknuepft";
         if (g.Links.All(l => !l.Enabled)) return "verknuepfung-aus";
         if (!g.HasComputerSettings && !g.HasUserSettings) return "leer";
-        if (g.SysvolVersion is { } s && s != g.AdVersion) return "version";
+        if (g.SysvolMissing || (g.SysvolVersion is { } s && s != g.AdVersion)) return "version";
         return "ok";
     }
 
@@ -150,9 +185,13 @@ public static class AdInfraAnalysis
         return changes.OrderBy(c => c.Change).ThenBy(c => c.Name).ToList();
     }
 
+    /// <summary>Aktiviert und nicht seit ueber 90 Tagen ohne Anmeldung (sonst ist es kein aktives Geraet).</summary>
+    private static bool IsInUse(AdComputer c, DateOnly today)
+        => c.Enabled && !AdAnalysis.IsInactive(c, today.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+
     /// <summary>Produkte mit aktiven Geraeten, deren Support in den naechsten <paramref name="days"/> Tagen endet.</summary>
     public static IReadOnlyList<AdCountdown> Countdowns(IReadOnlyList<AdComputer> computers, DateOnly today, int days = 365)
-        => computers.Where(c => c.Enabled)
+        => computers.Where(c => IsInUse(c, today))
             .Select(c => AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion))
             .Where(l => l.EndOfSupport is { } e && e >= today && e <= today.AddDays(days))
             .GroupBy(l => (l.Product, End: l.EndOfSupport!.Value))
@@ -169,7 +208,7 @@ public static class AdInfraAnalysis
             ["computer"] = all.Count,
             ["aktiv30"] = all.Count(c => AdAnalysis.IsActiveRecently(c, nowUtc)),
             ["ohneSupport"] = all.Count(c => AdAnalysis.Health(c, nowUtc) == AdHealth.Unsupported),
-            ["inaktiv90"] = all.Count(c => AdAnalysis.IsInactive(c, nowUtc) && c.LastLogonUtc is not null),
+            ["inaktiv90"] = all.Count(c => AdAnalysis.IsInactive(c, nowUtc)),
             ["deaktiviert"] = all.Count(c => !c.Enabled),
             ["passwortAlt"] = all.Count(c => AdAnalysis.PasswordStale(c, nowUtc)),
             ["delegation"] = all.Count(AdAnalysis.RiskyDelegation),
@@ -235,8 +274,8 @@ public static class AdInfraAnalysis
             if (cls == "aus") yield return "ohneSupport";
             else if (cls == "bald") yield return "supportBald";
         }
-        if (AdAnalysis.IsInactive(c, nowUtc) && c.LastLogonUtc is not null) yield return "inaktiv";
-        if (c.Enabled && c.LastLogonUtc is null && c.CreatedUtc < nowUtc.AddDays(-30)) yield return "nieAngemeldet";
+        if (AdAnalysis.IsInactive(c, nowUtc)) yield return "inaktiv";
+        if (AdAnalysis.IsNeverUsed(c, nowUtc)) yield return "nieAngemeldet";
         if (AdAnalysis.PasswordStale(c, nowUtc)) yield return "passwortAlt";
         if (!c.Enabled && c.ChangedUtc < nowUtc.AddDays(-365)) yield return "langeDeaktiviert";
         if (lapsReadable && AdAnalysis.LapsMissing(c)) yield return "ohneLaps";
@@ -256,7 +295,7 @@ public static class AdInfraAnalysis
 
     /// <summary>Aktive Geraete, deren Support abgelaufen ist oder in <paramref name="days"/> Tagen endet, je Produkt und Datum.</summary>
     public static IReadOnlyList<AdMigrationWave> MigrationWaves(IReadOnlyList<AdComputer> computers, DateOnly today, int days = 730)
-        => computers.Where(c => c.Enabled)
+        => computers.Where(c => IsInUse(c, today))
             .Select(c => (c, l: AdAnalysis.Lifecycle(c.OperatingSystem, c.OsVersion)))
             .Where(x => x.l.EndOfSupport is { } e && e <= today.AddDays(days))
             .GroupBy(x => (x.l.Product, End: x.l.EndOfSupport!.Value))

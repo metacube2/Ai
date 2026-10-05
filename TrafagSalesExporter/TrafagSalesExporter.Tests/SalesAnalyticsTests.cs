@@ -19,6 +19,68 @@ public sealed class SalesAnalyticsTests
         => Assert.Equal(expected, SalesAnalytics.CustomerKey(name, "TRCH", "1"));
 
     [Fact]
+    public void Kundenschluessel_Ohne_Name_Und_Nummer_Hat_Erkennbaren_Sammelschluessel_Je_Gesellschaft()
+    {
+        var a = SalesAnalytics.CustomerKey("", "TRIT", "");
+        var b = SalesAnalytics.CustomerKey(null, "TRCH", null);
+
+        Assert.Equal("TRIT#(ohne Nummer)", a);
+        Assert.NotEqual(a, b);
+        Assert.NotEqual("TRIT#", a);
+    }
+
+    [Fact]
+    public void Datenbeginn_Angebrochener_Monat_Zaehlt_Nicht()
+    {
+        var facts = new[] { Fact("A", new DateOnly(2025, 1, 6), 10, tsc: "TRCH"), Fact("B", new DateOnly(2025, 1, 20), 10, tsc: "TRIT") };
+
+        Assert.Equal(new DateOnly(2025, 2, 1), SalesAnalytics.DataStart(facts));
+    }
+
+    [Theory]
+    [InlineData("UK", "GB")]
+    [InlineData("el", "GR")]
+    [InlineData(" de ", "DE")]
+    [InlineData(null, "")]
+    public void Kundenland_Wird_Vereinheitlicht(string? raw, string expected)
+        => Assert.Equal(expected, SalesAnalytics.NormalizeCountry(raw));
+
+    [Fact]
+    public void Referenz_Monat_Mit_Wochenende_Am_Ende_Ist_Vollstaendig_Am_Letzten_Werktag()
+    {
+        // 31.5.2026 ist ein Sonntag, letzter Werktag Freitag 29.5.
+        Assert.Equal(new DateOnly(2026, 5, 29), SalesAnalytics.LastBusinessDayOfMonth(new DateOnly(2026, 5, 10)));
+        Assert.Equal(new DateOnly(2026, 6, 1), SalesAnalytics.ReferenceEnd([Fact("A", new DateOnly(2026, 5, 29), 1)], new DateOnly(2026, 6, 2)));
+        Assert.Equal(new DateOnly(2026, 5, 1), SalesAnalytics.ReferenceEnd([Fact("A", new DateOnly(2026, 5, 28), 1)], new DateOnly(2026, 6, 2)));
+    }
+
+    [Fact]
+    public void Erster_Und_Letzter_Kauf_Ohne_Gutschriften()
+    {
+        var facts = new[]
+        {
+            Fact("A", new DateOnly(2025, 1, 5), -20), Fact("A", new DateOnly(2025, 3, 5), 100),
+            Fact("A", new DateOnly(2026, 2, 5), 50), Fact("A", new DateOnly(2026, 8, 5), -10)
+        };
+
+        var a = SalesAnalytics.Customers(facts, RefEnd).Single();
+
+        Assert.Equal(new DateOnly(2025, 3, 5), a.FirstDate);
+        Assert.Equal(new DateOnly(2026, 2, 5), a.LastDate);
+    }
+
+    [Fact]
+    public void Konzentration_Ohne_Umsatz_Ist_Leer_Und_Ohne_Unendlich()
+    {
+        var c = SalesAnalytics.Concentration([Fact("A", new DateOnly(2026, 5, 1), -5)], RefEnd);
+
+        Assert.Equal(0, c.Customers);
+        Assert.Equal(0, c.CustomersFor80);
+        Assert.Equal(0, c.Top1);
+        Assert.Equal(0, c.Hhi);
+    }
+
+    [Fact]
     public void Kundenschluessel_Ohne_Name_Aus_Gesellschaft_Und_Nummer()
         => Assert.Equal("TRIT#4711", SalesAnalytics.CustomerKey("", "trit", "4711"));
 
@@ -180,9 +242,10 @@ public sealed class SalesAnalyticsTests
     [Fact]
     public void Datenbeginn_Und_Vergleich_Gleicher_Zeitraeume()
     {
-        var facts = new[] { Fact("A", new DateOnly(2025, 1, 6), 10, tsc: "TRCH"), Fact("B", new DateOnly(2025, 1, 20), 10, tsc: "TRIT"), Fact("C", new DateOnly(2026, 9, 3), 10) };
+        var facts = new[] { Fact("A", new DateOnly(2025, 1, 6), 10, tsc: "TRCH"), Fact("B", new DateOnly(2025, 1, 5), 10, tsc: "TRIT"), Fact("C", new DateOnly(2026, 9, 3), 10) };
         var start = SalesAnalytics.DataStart(facts);
         Assert.Equal(new DateOnly(2025, 1, 1), start);
+        // Jan 2025 bis Sep 2026 = 21 Monate, davon 9 vergleichbar: Jan-Sep 2026 gegen Jan-Sep 2025.
         // Jan 2025 bis Sep 2026 = 21 Monate, davon 9 vergleichbar: Jan-Sep 2026 gegen Jan-Sep 2025.
         Assert.Equal(9, SalesAnalytics.CompareMonths(start, RefEnd));
         Assert.Equal(12, SalesAnalytics.CompareMonths(new DateOnly(2023, 1, 1), RefEnd));

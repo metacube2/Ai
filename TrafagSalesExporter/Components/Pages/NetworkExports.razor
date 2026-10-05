@@ -73,7 +73,7 @@ else
                         <div class="nw-crit-head">
                             <b>@c.Tsc</b> <span class="ll-muted">@c.Land · @c.Dependency</span>
                             <span class="ll-grow"></span>
-                            <span class="ll-mono">CHF @c.RevenueChf2025.ToString("N0", Culture)</span>
+                            <span class="ll-mono" title="@(c.RevenueIncomplete ? T("Umsatz unvollständig: Zeilen ohne Währung oder Kurs fehlen.", "Revenue incomplete: rows without currency or rate are missing.") : string.Empty)">CHF @c.RevenueChf2025.ToString("N0", Culture)@(c.RevenueIncomplete ? " *" : string.Empty)</span>
                         </div>
                         <div class="nw-crit-bar"><span style="width:@Pct(c.RevenueChf2025, _maxRevenue)"></span></div>
                         <div class="nw-crit-meta">

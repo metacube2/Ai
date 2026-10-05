@@ -44,7 +44,7 @@ else
                 <div class="sal-company @(pct is > 100 or < -60 ? "sal-company-warn" : string.Empty)">
                     <b>@c.Tsc</b>
                     <span class="ll-mono">@Short(c.Previous) → @Short(c.Current)</span>
-                    <span class="ll-mono @(pct >= 0 ? "sal-up" : "sal-down")">@Percent(pct)</span>
+                    <span class="ll-mono @(pct is null ? "ll-muted" : pct >= 0 ? "sal-up" : "sal-down")">@Percent(pct)</span>
                 </div>
             }
         </div>
@@ -67,7 +67,7 @@ else
                             <span class="ll-grow sal-name" title="@c.Name">@c.Name <span class="ll-muted">@c.MainCountry</span></span>
                             <span style="width:80px" class="ll-muted">@Csv(c.Companies)</span>
                             <span class="ll-mono" style="width:84px;text-align:right">@Short(c.Last12)</span>
-                            <span class="ll-mono @(c.ChangePercent >= 0 ? "sal-up" : "sal-down")" style="width:64px;text-align:right">@Percent(c.ChangePercent)</span>
+                            <span class="ll-mono @(c.ChangePercent is null ? "ll-muted" : c.ChangePercent >= 0 ? "sal-up" : "sal-down")" style="width:64px;text-align:right">@Percent(c.ChangePercent)</span>
                             <svg viewBox="0 0 90 22" class="sal-spark"><polyline points="@Spark(_sparks.GetValueOrDefault(c.Key) ?? [], 90, 22)" /></svg>
                         </div>
                     }
@@ -102,7 +102,7 @@ else
                         <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Last12)</div><div class="ll-kpi-label">@T("12 Monate", "12 months")</div></div>
                         <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Current)</div><div class="ll-kpi-label">@CurrentPeriod(_data)</div></div>
                         <div class="ll-kpi"><div class="ll-kpi-value">@Short(c.Previous)</div><div class="ll-kpi-label">@PreviousPeriod(_data)</div></div>
-                        <div class="ll-kpi"><div class="ll-kpi-value @(c.ChangePercent >= 0 ? "sal-up" : "sal-down")">@Percent(c.ChangePercent)</div><div class="ll-kpi-label">@T("Veränderung", "Change")</div></div>
+                        <div class="ll-kpi"><div class="ll-kpi-value @(c.ChangePercent is null ? "ll-muted" : c.ChangePercent >= 0 ? "sal-up" : "sal-down")">@Percent(c.ChangePercent)</div><div class="ll-kpi-label">@T("Veränderung", "Change")</div></div>
                     </div>
                     <MudText Typo="Typo.subtitle2">@T("Umsatz je Monat, 36 Monate", "Sales per month, 36 months")</MudText>
                     <svg viewBox="0 0 720 170" class="sal-months">

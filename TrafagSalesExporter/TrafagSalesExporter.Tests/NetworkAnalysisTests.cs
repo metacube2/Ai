@@ -56,6 +56,33 @@ public sealed class NetworkAnalysisTests
         Assert.Equal("ok", NetworkAnalysisService.Classify("Success", "", "TRIT", at, [Hana], []));
     }
 
+    [Theory]
+    [InlineData("HTTP 503 Service Unavailable", "netz")]
+    [InlineData("The operation timed out", "netz")]
+    [InlineData("Connection refused", "netz")]
+    [InlineData("Zeitueberschreitung beim Abruf", "netz")]
+    [InlineData("Spalte 15034 fehlt", "daten")]
+    [InlineData("Unbekannter Host-Parameter in Abfrage", "daten")]
+    [InlineData("Passwort reset erforderlich fuer Benutzer", "daten")]
+    [InlineData("Verbindungsname ungueltig im Mapping", "daten")]
+    [InlineData("Header dnsmasq fehlt", "daten")]
+    public void Fehlertext_Wird_Nur_Bei_Echten_Netzmeldungen_Netz(string error, string expected)
+        => Assert.Equal(expected, NetworkAnalysisService.Classify("Error", error, "TRXX", Now, [], []));
+
+    [Fact]
+    public void Umsatz_Ohne_Waehrung_Oder_Kurs_Wird_Ausgelassen_Und_Als_Unvollstaendig_Gemeldet()
+    {
+        var rows = new[] { ("TRCH", "CHF", 100m), ("TRDE", "EUR", 200m), ("TRDE", "", 50m), ("TRUK", "GBP", 70m) };
+        var (chf, incomplete) = NetworkAnalysisService.RevenueInChf(rows, c => c == "EUR" ? 0.9m : null);
+
+        Assert.Equal(100m, chf["TRCH"]);
+        Assert.Equal(180m, chf["TRDE"]);
+        Assert.False(chf.ContainsKey("TRUK"));
+        Assert.Contains("TRDE", incomplete);
+        Assert.Contains("TRUK", incomplete);
+        Assert.DoesNotContain("TRCH", incomplete);
+    }
+
     [Fact]
     public void Zertifikate_Werden_Aus_Der_Pruefung_Gelesen()
     {

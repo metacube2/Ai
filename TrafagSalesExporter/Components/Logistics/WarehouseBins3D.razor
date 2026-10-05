@@ -31,7 +31,7 @@
                             var rackH = aisle.Levels * H + 6;
                                 @Cube(x0 - 4, y0, 0, 4, D, rackH, "wh3d-post")
                                 @Cube(x0 + aisle.Columns * W, y0, 0, 4, D, rackH, "wh3d-post")
-                                <div class="wh3d-tag" style="transform:translate3d(@Px(x0 - 70),@Px(y0 + D / 2 - 8),1px)">@aisle.Type · @AisleName(aisle.Aisle)</div>
+                                <div class="wh3d-tag" style="transform:translate3d(@Px(x0 - 70),@Px(y0 + D / 2 - 8),1px)">@(_severalWarehouses ? aisle.Lgnum + " · " : "")@aisle.Type · @AisleName(aisle.Aisle)</div>
                                 @for (var lv = 1; lv <= aisle.Levels; lv++)
                                 {
                                     @Cube(x0, y0, (lv - 1) * H, aisle.Columns * W, D, 2, "wh3d-shelf")
@@ -41,7 +41,7 @@
                                     var x = x0 + (b.Column - 1) * W + 3;
                                     var z = (b.Level - 1) * H + 2;
                                     var boxH = 5 + 12 * Math.Min(1.0, Math.Sqrt(b.Moves.Count / (double)_maxMoves));
-                                    var sel = _selected is { } s && s.Bin == b.Bin && s.Type == b.Type;
+                                    var sel = _selected is { } s && s.Bin == b.Bin && s.Type == b.Type && s.Lgnum == b.Lgnum;
                                     <div class="wh3d-bin @(sel ? "wh3d-sel" : "")" @onclick="@(() => _selected = b)" title="@($"{b.Type} / {b.Bin} · {b.Moves.Count}")">
                                         @Cube(x, y0 + 3, z, W - 6, D - 6, 4, "wh3d-pallet")
                                         @Cube(x + 2, y0 + 5, z + 4, W - 10, D - 10, boxH, b.HasOpen ? "wh3d-box wh3d-open" : "wh3d-box wh3d-done")
@@ -51,6 +51,10 @@
                     </div>
                     <div class="dir3d-hint">@T("Jede Zeile ist ein Regalgang, jedes Feld ein Platz, an dem seit Tagesbeginn etwas bewegt wurde. Kiste orange = offene Position, grün = quittiert; Höhe nach Anzahl Bewegungen. Klick auf eine Palette zeigt den Platz.", "Each row is a rack aisle, each slot a bin with movement since start of day. Box orange = open item, green = confirmed; height by number of movements. Click a pallet to see the bin.")</div>
                 </div>
+            }
+            @if (_omittedAisles > 0)
+            {
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">+@_omittedAisles @T("weitere Gänge nicht dargestellt (nur die aktivsten werden gezeigt)", "more aisles not shown (only the most active are displayed)")</MudText>
             }
             @if (_zones.Count > 0)
             {
@@ -137,6 +141,8 @@
     private IReadOnlyList<LiveAisle> _aisles = [];
     private IReadOnlyList<(string Type, int Bins, int Moves, int Open)> _zones = [];
     private LiveBin? _selected;
+    private int _omittedAisles;
+    private bool _severalWarehouses;
     private bool _spin;
     private int _angle = -30;
     private const double TagWidth = 80;
@@ -154,7 +160,8 @@
             return;
         _lastTransfers = Transfers;
         _bins = LogisticsBinLayout.Bins(Transfers);
-        _aisles = LogisticsBinLayout.Aisles(_bins);
+        (_aisles, _omittedAisles) = LogisticsBinLayout.AislesLimited(_bins);
+        _severalWarehouses = _aisles.Select(a => a.Lgnum).Distinct().Count() > 1;
         _zones = LogisticsBinLayout.Zones(_bins);
         _maxMoves = Math.Max(1, _aisles.SelectMany(a => a.Bins).Select(b => b.Moves.Count).DefaultIfEmpty(1).Max());
         // Gaenge in Spalten nebeneinander, damit die Halle eher quadratisch wird statt eines langen Streifens.
@@ -166,7 +173,7 @@
         _scale = Math.Min(1.6, 620 / Math.Max(_width, _depth));
         // Ausgewaehlten Platz mit neuen Daten nachziehen.
         if (_selected is { } s)
-            _selected = _bins.FirstOrDefault(b => b.Type == s.Type && b.Bin == s.Bin);
+            _selected = _bins.FirstOrDefault(b => b.Lgnum == s.Lgnum && b.Type == s.Type && b.Bin == s.Bin);
     }
 
     private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);

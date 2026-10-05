@@ -62,7 +62,7 @@ else if (_f is not null)
                         var v = (double)_f.History[i].Value;
                         <g><rect x="@F(80 + i * w + 2)" y="@F(Yv(Math.Max(0, v)))" width="@F(w - 4)" height="@F(250 - Yv(Math.Max(0, v)))" rx="2" class="sal-month" style="animation-delay:@(F(i * 0.015))s"><title>@_f.History[i].Month.ToString("MM.yyyy") · @Chf(_f.History[i].Value)</title></rect></g>
                     }
-                    <polygon class="sal-fc-band" points="@string.Join(" ", _f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value * (1 + band)))}").Concat(_f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value * (1 - band)))}").Reverse()))" />
+                    <polygon class="sal-fc-band" points="@string.Join(" ", _f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value * (1 + band)))}").Concat(_f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value * Math.Max(0, 1 - band)))}").Reverse()))" />
                     <polyline class="sal-fc-line" pathLength="1" points="@string.Join(" ", _f.Forecast.Select((v, i) => $"{F(Xm(fStart + i))},{F(Yv((double)v.Value))}"))" />
                     @for (var i = 0; i < _f.Forecast.Count; i++)
                     {

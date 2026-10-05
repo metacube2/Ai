@@ -38,7 +38,14 @@ public sealed record AdSubnet(string Cidr, string Site);
 public sealed record AdOu(string DistinguishedName, bool HasGpoLink);
 
 /// <summary>DNS-Aufloesung eines aktiven Computers.</summary>
-public sealed record AdDnsEntry(string Name, string DnsHostName, IReadOnlyList<string> Ips, bool Failed);
+public sealed record AdDnsEntry(string Name, string DnsHostName, IReadOnlyList<string> Ips, bool Failed)
+{
+    /// <summary>IPv6-Adressen; ein Host nur mit IPv6 ist aufloesbar, hat aber keine IPv4 in <see cref="Ips"/>.</summary>
+    public IReadOnlyList<string> Ipv6 { get; init; } = [];
+
+    /// <summary>Weder IPv4 noch IPv6 aufloesbar (oder Abfrage fehlgeschlagen).</summary>
+    public bool Unresolvable => Failed || (Ips.Count == 0 && Ipv6.Count == 0);
+}
 
 public sealed class AdComputerResult
 {
@@ -54,7 +61,8 @@ public sealed class AdComputerResult
     public bool LapsReadable => Computers.Any(c => c.LapsExpiryUtc is not null);
     /// <summary>Mindestens ein BitLocker-Objekt sichtbar; sonst fehlt das Leserecht oder es liegen keine Schluessel im AD.</summary>
     public bool BitLockerReadable => Computers.Any(c => c.BitLockerKeys > 0);
-    public IEnumerable<AdComputer> Stale(int days) => Computers.Where(c => c.Enabled && (c.LastLogonUtc is null || c.LastLogonUtc < DateTime.UtcNow.AddDays(-days)));
+    /// <summary>Aktiviert, letzte Anmeldung bekannt und aelter als <paramref name="days"/> Tage (gleiche Definition wie <see cref="AdAnalysis.IsInactive"/>).</summary>
+    public IEnumerable<AdComputer> Stale(int days) => Computers.Where(c => AdAnalysis.IsInactive(c, DateTime.UtcNow, days));
 }
 
 public sealed class AdDnsResult
@@ -101,7 +109,8 @@ public sealed class AdComputerService
         await _gate.WaitAsync();
         try
         {
-            if (_cache is { ReadAt: { } at } && at > DateTime.Now.AddHours(-1))
+            // Fehler hoechstens eine Minute merken, damit ein kurzer Ausfall nicht eine Stunde lang angezeigt wird.
+            if (_cache is { ReadAt: { } at } && at > DateTime.Now - AdInfrastructureService.CacheWindow(_cache.Error, TimeSpan.FromHours(1)))
                 return _cache;
             _cache = await Task.Run(Read);
             return _cache;
@@ -128,7 +137,7 @@ public sealed class AdComputerService
             if (_dnsCache is { ReadAt: { } at } && at > DateTime.Now.AddHours(-1))
                 return _dnsCache;
             var active = ad.Computers
-                .Where(c => c.Enabled && c.DnsHostName.Length > 0 && c.LastLogonUtc > DateTime.UtcNow.AddDays(-30))
+                .Where(c => c.DnsHostName.Length > 0 && AdAnalysis.IsActiveRecently(c, DateTime.UtcNow))
                 .ToList();
             using var limit = new SemaphoreSlim(16);
             var tasks = active.Select(async c =>
@@ -138,7 +147,10 @@ public sealed class AdComputerService
                 {
                     var ips = await Dns.GetHostAddressesAsync(c.DnsHostName).WaitAsync(TimeSpan.FromSeconds(3));
                     return new AdDnsEntry(c.Name, c.DnsHostName,
-                        ips.Where(i => i.AddressFamily == AddressFamily.InterNetwork).Select(i => i.ToString()).Distinct().ToList(), false);
+                        ips.Where(i => i.AddressFamily == AddressFamily.InterNetwork).Select(i => i.ToString()).Distinct().ToList(), false)
+                    {
+                        Ipv6 = ips.Where(i => i.AddressFamily == AddressFamily.InterNetworkV6).Select(i => i.ToString()).Distinct().ToList()
+                    };
                 }
                 catch
                 {
@@ -183,7 +195,7 @@ public sealed class AdComputerService
                     string Text(string p) => r.Properties[p].Count > 0 ? Convert.ToString(r.Properties[p][0]) ?? "" : "";
                     DateTime? FileTime(string p) => r.Properties[p].Count > 0 && r.Properties[p][0] is long ft && ft > 0 && ft < DateTime.MaxValue.ToFileTimeUtc()
                         ? DateTime.FromFileTimeUtc(ft) : null;
-                    DateTime? Date(string p) => r.Properties[p].Count > 0 && r.Properties[p][0] is DateTime d ? d.ToUniversalTime() : null;
+                    DateTime? Date(string p) => r.Properties[p].Count > 0 && r.Properties[p][0] is DateTime d ? AdInfrastructureService.ToUtc(d) : null;
                     var uac = r.Properties["userAccountControl"].Count > 0 ? Convert.ToInt32(r.Properties["userAccountControl"][0]) : 0;
                     var dn = Text("distinguishedName");
                     var spns = r.Properties["servicePrincipalName"].Cast<object>().Select(x => Convert.ToString(x) ?? "").Where(x => x.Length > 0).ToList();
@@ -262,7 +274,7 @@ public sealed class AdComputerService
             return results.Cast<SearchResult>()
                 .Select(r => new AdOu(
                     r.Properties["distinguishedName"].Count > 0 ? Convert.ToString(r.Properties["distinguishedName"][0]) ?? "" : "",
-                    r.Properties["gPLink"].Count > 0 && (Convert.ToString(r.Properties["gPLink"][0]) ?? "").Contains("LDAP://", StringComparison.OrdinalIgnoreCase)))
+                    AdInfraAnalysis.HasActiveGpoLink(r.Properties["gPLink"].Count > 0 ? Convert.ToString(r.Properties["gPLink"][0]) : null)))
                 .ToList();
         }
         catch (Exception ex)

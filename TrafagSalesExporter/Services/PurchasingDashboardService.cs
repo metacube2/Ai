@@ -300,9 +300,10 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         // (Marco-Review 2026-07-10): weder Von- noch Bis-Filter schneiden offene Einteilungen ab.
         // Keine Untergrenze, sonst verschwinden alte ueberfaellige Rueckstaende; keine Obergrenze,
         // sonst faellt der zukuenftige Zulauf heraus (K3).
-        // Endgelieferte Positionen (EKPO.Elikz='X') zaehlen nicht als offen (M7); da alle
-        // Offen-Queries EKPO als p joinen, ist der Ausschluss hier zentral eingehaengt.
-        var endDelivered = filter.ExcludeEndDelivered ? " AND COALESCE(p.Elikz, '') <> 'X'" : string.Empty;
+        // Endgelieferte Positionen (EKPO.Elikz) zaehlen nicht als offen (M7). Der OData-Cache speichert
+        // das Kennzeichen als 'True'/'False', nicht als 'X' (Befund 2026-10-05: der Ausschluss griff nie);
+        // da alle Offen-Queries EKPO als p joinen, ist der Ausschluss hier zentral eingehaengt.
+        var endDelivered = filter.ExcludeEndDelivered ? " AND COALESCE(p.Elikz, '') NOT IN ('X', 'True', '1')" : string.Empty;
         var eketOpenPeriod = $"1 = 1{endDelivered}";
         // Ueberfaellig: offene Einteilung, deren Liefertermin bereits in der Vergangenheit liegt.
         var eketOverduePeriod = $"{eketOpenPeriod} AND date(e.Eindt) < date('now', 'localtime')";

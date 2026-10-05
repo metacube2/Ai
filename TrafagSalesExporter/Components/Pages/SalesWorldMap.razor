@@ -63,7 +63,8 @@ else
                         var (x, y) = WorldGeo.Project(geo.Lat, geo.Lon);
                         var value = _month is { } m ? c.Monthly[m] : c.Last12;
                         var max = _month is null ? _maxL12 : _maxMonth;
-                        var r = value <= 0 ? 0 : 3 + 34 * Math.Sqrt((double)(value / max));
+                        // Fläche proportional zum Umsatz (Radius = Wurzel), ohne festen Aufschlag; nur eine kleine Mindestgrösse für Sichtbarkeit.
+                        var r = value <= 0 ? 0 : Math.Max(2, 37 * Math.Sqrt((double)(value / max)));
                         <g class="sal-bubble-g">
                             <circle cx="@F(x)" cy="@F(y)" r="@F(r)" class="sal-bubble" fill="url(#sal-glow)"><title>@WorldGeo.Name(c.Country): CHF @Chf(value) · @c.Customers @T("Kunden", "customers")</title></circle>
                             @if (r > 13)

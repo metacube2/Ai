@@ -896,6 +896,7 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .six-stage { animation: six-in 0.45s ease-out both; }
 @keyframes six-in { from { opacity: 0; transform: translateY(8px); } }
 .six-dim { opacity: 0.15; }
+.six-nogrowth { opacity: 0.55; }
 .six-grid { stroke: var(--mud-palette-lines-default); stroke-width: 1; }
 .six-zero { stroke: var(--mud-palette-text-secondary); stroke-dasharray: 4 4; }
 .six-watermark { font: 700 64px system-ui, sans-serif; fill: var(--mud-palette-text-secondary); opacity: 0.15; }

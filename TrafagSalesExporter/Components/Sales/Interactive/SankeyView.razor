@@ -16,7 +16,7 @@
     <svg viewBox="0 0 1000 @F(Height)" class="six-sankey">
         @foreach (var l in _layout.Links)
         {
-            var on = _focus is null || l.Link.From == _focus || l.Link.To == _focus || Through(l.Link);
+            var on = _focus is null || l.Link.From == _focus || l.Link.To == _focus;
             <path d="@l.Path" class="six-flow @(on ? "" : "six-dim")" style="stroke:@ColumnColor(l.FromColumn);stroke-width:@F(Math.Max(1, l.Width))px">
                 <title>@Label(l.Link.From) → @Label(l.Link.To): CHF @Chf(l.Link.Value)</title>
             </path>
@@ -92,10 +92,9 @@
         _layout = (placed, placedLinks);
     }
 
-    private bool Connected(string id) => _focus is not null && _links.Any(l => (l.From == _focus && l.To == id) || (l.To == _focus && l.From == id)
-        || (_links.Any(x => x.From == _focus && x.To == l.From) && l.To == id) || (_links.Any(x => x.To == _focus && x.From == l.To) && l.From == id));
-
-    private bool Through(SankeyLink l) => _focus is not null && (_links.Any(x => x.From == _focus && x.To == l.From) || _links.Any(x => x.To == _focus && x.From == l.To));
+    // Hervorhebung nur auf einen Schritt: der Knoten, seine unmittelbaren Ströme und deren Nachbarn. Die Ströme sind je Paar
+    // zusammengefasst; ein zweiter Schritt würde Anteile anderer Gesellschaften oder Sparten mitzeigen, die nicht zum Knoten gehören.
+    private bool Connected(string id) => _focus is not null && _links.Any(l => (l.From == _focus && l.To == id) || (l.To == _focus && l.From == id));
 
     private static string Label(string id) => id.Length > 2 ? id[2..] switch { var c when id.StartsWith("c:") && c.Length == 2 => WorldGeo.Name(c), var other => other } : id;
 

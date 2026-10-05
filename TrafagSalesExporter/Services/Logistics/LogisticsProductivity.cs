@@ -10,6 +10,9 @@ public sealed record LivePickingRun(
     public double Minutes(DateTime now) => ((Done ? LastConfirmed!.Value : now) - FirstCreated).TotalMinutes;
 }
 
+/// <summary>Minuten bis Warenausgang plus Zahl der Lieferungen, die nicht eingehen konnten.</summary>
+public sealed record GoodsIssueStats(IReadOnlyList<double> Minutes, int WithoutTime, int Inconsistent);
+
 /// <summary>Leistung je Lagernummer und Stunde (quittierte Positionen), anonym.</summary>
 public sealed record LiveHourlyOutput(string Lgnum, int Hour, int Confirmed);
 
@@ -32,9 +35,9 @@ public static class LogisticsProductivity
             .ToList();
 
     /// <summary>Quittierte Positionen je Lagernummer und Stunde.</summary>
-    public static IReadOnlyList<LiveHourlyOutput> HourlyOutput(IEnumerable<LiveTransferItem> transfers)
+    public static IReadOnlyList<LiveHourlyOutput> HourlyOutput(IEnumerable<LiveTransferItem> transfers, DateOnly? day = null)
         => transfers
-            .Where(t => t.Confirmed && t.ConfirmedAt.HasValue)
+            .Where(t => t.Confirmed && t.ConfirmedAt.HasValue && (day is null || DateOnly.FromDateTime(t.ConfirmedAt.Value) == day))
             .GroupBy(t => (t.Lgnum, t.ConfirmedAt!.Value.Hour))
             .Select(g => new LiveHourlyOutput(g.Key.Lgnum, g.Key.Hour, g.Count()))
             .OrderBy(o => o.Lgnum).ThenBy(o => o.Hour)
@@ -42,13 +45,37 @@ public static class LogisticsProductivity
 
     /// <summary>Minuten vom ersten angelegten TA bis zur Warenausgangsbuchung, je Lieferung mit gebuchtem Warenausgang.</summary>
     public static IReadOnlyList<double> UntilGoodsIssue(IEnumerable<LivePickingRun> runs, IEnumerable<LiveDelivery> deliveries)
+        => GoodsIssueDurations(runs, deliveries).Minutes;
+
+    /// <summary>
+    /// Wie <see cref="UntilGoodsIssue"/>, nennt aber auch, was nicht in den Minuten steht: Lieferungen mit gebuchtem
+    /// Warenausgang ohne Uhrzeit (Datum da, Zeit leer oder 00:00; P76 liefert die Zeit aus VBFA/MKPF erst nach dem
+    /// naechsten Transport) und solche mit Warenausgang vor dem ersten TA (widerspruechlich, z. B. TA nach der Buchung).
+    /// Beides still zu verwerfen hiess: Kachel dauerhaft "-" ohne Grund.
+    /// </summary>
+    public static GoodsIssueStats GoodsIssueDurations(IEnumerable<LivePickingRun> runs, IEnumerable<LiveDelivery> deliveries)
     {
-        var gi = deliveries.Where(d => d.GoodsIssueAt.HasValue && d.GoodsIssueAt.Value.TimeOfDay > TimeSpan.Zero)
-            .GroupBy(d => d.Delivery.TrimStart('0')).ToDictionary(g => g.Key, g => g.First().GoodsIssueAt!.Value);
-        return runs.Where(r => gi.ContainsKey(r.Delivery))
-            .Select(r => (gi[r.Delivery] - r.FirstCreated).TotalMinutes)
-            .Where(m => m >= 0)
-            .ToList();
+        var gi = deliveries.Where(d => d.GoodsIssueAt.HasValue)
+            .GroupBy(d => d.Delivery.TrimStart('0'))
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(d => d.GoodsIssueTimeKnown).First());
+        var minutes = new List<double>();
+        int withoutTime = 0, inconsistent = 0;
+        foreach (var run in runs)
+        {
+            if (!gi.TryGetValue(run.Delivery, out var delivery))
+                continue;
+            if (!delivery.GoodsIssueTimeKnown)
+            {
+                withoutTime++;
+                continue;
+            }
+            var m = (delivery.GoodsIssueAt!.Value - run.FirstCreated).TotalMinutes;
+            if (m < 0)
+                inconsistent++;
+            else
+                minutes.Add(m);
+        }
+        return new GoodsIssueStats(minutes, withoutTime, inconsistent);
     }
 
     /// <summary>Wert am Anteil p (0..1) einer Liste, linear zwischen den Nachbarn; null bei leerer Liste.</summary>

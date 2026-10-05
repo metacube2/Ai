@@ -15,7 +15,7 @@ public sealed record NetworkExportRun(DateTime Timestamp, string Tsc, string Sta
 
 public sealed record NetworkSiteCriticality(
     string Tsc, string Land, string SourceSystem, string Dependency, decimal RevenueChf2025,
-    int Runs, int Failures, int NetworkFailures, double? Availability24h);
+    int Runs, int Failures, int NetworkFailures, double? Availability24h, bool RevenueIncomplete = false);
 
 public sealed record NetworkSubnetStat(string Subnet, int Circuits, int Drops, int Reconnects)
 {
@@ -29,7 +29,7 @@ public sealed record NetworkSubnetStat(string Subnet, int Circuits, int Drops, i
 public sealed class NetworkAnalysisService
 {
     private static readonly Regex NetworkError = new(
-        @"timeout|timed out|zeitueberschreitung|zeitüberschreitung|unreachable|nicht erreichbar|connection|verbindung|socket|host|network|netzwerk|dns|refused|reset|ssl|tls|503|502|504",
+        @"timeout|timed out|zeitueberschreitung|zeitüberschreitung|unreachable|nicht erreichbar|refused|abgelehnt|connection attempt failed|forcibly closed|no such host|name resolution|socket|network|netzwerk|\b(?:dns|ssl|tls)\b|\b50[234]\b",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private readonly NetworkStore _store;
@@ -163,17 +163,9 @@ GROUP BY substr(Timestamp, 1, 10)", new Dictionary<string, object> { ["$from"] =
 SELECT Tsc, COALESCE(NULLIF(SalesCurrency,''), CompanyCurrency, ''), SUM(CAST(SalesPriceValue AS REAL))
 FROM CentralSalesRecords WHERE InvoiceDate >= '2025' AND InvoiceDate < '2026'
 GROUP BY Tsc, COALESCE(NULLIF(SalesCurrency,''), CompanyCurrency, '')", null, ct);
-        var chf = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        foreach (var r in revenue)
-        {
-            var tsc = Convert.ToString(r[0]) ?? "";
-            var currency = _fx.NormalizeCurrencyCode(Convert.ToString(r[1]));
-            var value = Convert.ToDecimal(r[2] ?? 0m, CultureInfo.InvariantCulture);
-            var rate = currency is "CHF" or "" ? 1m : _fx.ResolveRate(currency, "CHF", new DateTime(2025, 12, 31));
-            if (rate is null)
-                continue; // ohne Kurs lieber weglassen als falsch umrechnen
-            chf[tsc] = chf.GetValueOrDefault(tsc) + value * rate.Value;
-        }
+        var (chf, incomplete) = RevenueInChf(
+            revenue.Select(r => (Convert.ToString(r[0]) ?? "", _fx.NormalizeCurrencyCode(Convert.ToString(r[1])), Convert.ToDecimal(r[2] ?? 0m, CultureInfo.InvariantCulture))),
+            currency => _fx.ResolveRate(currency, "CHF", new DateTime(2025, 12, 31)));
 
         return sites.Select(r =>
         {
@@ -185,18 +177,40 @@ GROUP BY Tsc, COALESCE(NULLIF(SalesCurrency,''), CompanyCurrency, '')", null, ct
             var rev = chf.GetValueOrDefault(revenueKey) + (tsc == "ZSCHWEIZ" ? chf.GetValueOrDefault("TRAT") : 0m);
             return new NetworkSiteCriticality(tsc, Convert.ToString(r[1]) ?? "", Convert.ToString(r[2]) ?? "",
                 dep?.Label ?? "–", Math.Round(rev, 0), own.Count, own.Count(x => x.Cause != "ok"), own.Count(x => x.Cause == "netz"),
-                depStatus?.Availability24h);
+                depStatus?.Availability24h, incomplete.Contains(revenueKey) || (tsc == "ZSCHWEIZ" && incomplete.Contains("TRAT")));
         }).OrderByDescending(x => x.RevenueChf2025).ToList();
     }
 
-    /// <summary>Verbindungen und Abbrueche je /24-Netzbereich.</summary>
+    /// <summary>
+    /// Umsatz je Gesellschaft in CHF. Zeilen ohne Waehrung oder ohne Kurs werden nicht mitgerechnet (eine leere Waehrung
+    /// ist nicht CHF) und die Gesellschaft als unvollstaendig gemeldet.
+    /// </summary>
+    internal static (Dictionary<string, decimal> Chf, HashSet<string> Incomplete) RevenueInChf(
+        IEnumerable<(string Tsc, string Currency, decimal Value)> rows, Func<string, decimal?> rateToChf)
+    {
+        var chf = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+        var incomplete = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (tsc, currency, value) in rows)
+        {
+            var rate = string.IsNullOrWhiteSpace(currency) ? null : currency == "CHF" ? 1m : rateToChf(currency);
+            if (rate is null)
+            {
+                incomplete.Add(tsc);
+                continue;
+            }
+            chf[tsc] = chf.GetValueOrDefault(tsc) + value * rate.Value;
+        }
+        return (chf, incomplete);
+    }
+
+    /// <summary>Verbindungen und Abbrueche je /24-Netzbereich. Ein Abbruch ist eine Trennung mit Wiederverbindung (Ereignis "drop"), kein geschlossener Tab.</summary>
     public async Task<(IReadOnlyList<NetworkSubnetStat> Subnets, IReadOnlyList<(int Hour, int Drops)> ByHour, DateTime? Since)> ClientStatsAsync(int days, CancellationToken ct = default)
     {
         var events = await _store.LoadClientEventsAsync(DateTime.UtcNow.AddDays(-days), ct);
         var subnets = events.GroupBy(e => e.Subnet)
-            .Select(g => new NetworkSubnetStat(g.Key, g.Count(e => e.EventType == "open"), g.Count(e => e.EventType == "down"), g.Count(e => e.EventType == "up")))
+            .Select(g => new NetworkSubnetStat(g.Key, g.Count(e => e.EventType == "open"), g.Count(e => e.EventType == "drop"), g.Count(e => e.EventType == "up")))
             .OrderByDescending(s => s.Drops).ThenByDescending(s => s.Circuits).ToList();
-        var byHour = Enumerable.Range(0, 24).Select(h => (h, events.Count(e => e.EventType == "down" && e.TimestampUtc.ToLocalTime().Hour == h))).ToList();
+        var byHour = Enumerable.Range(0, 24).Select(h => (h, events.Count(e => e.EventType == "drop" && e.TimestampUtc.ToLocalTime().Hour == h))).ToList();
         return (subnets, byHour, events.Count == 0 ? null : events.Min(e => e.TimestampUtc));
     }
 

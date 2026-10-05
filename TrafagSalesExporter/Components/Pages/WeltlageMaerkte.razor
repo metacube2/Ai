@@ -29,14 +29,15 @@ else
         {
             var change = s.ChangePercent(90);
             var stress = s.Key == "STLFSI4";
-            var good = stress ? -(s.Last ?? 0) : -(change ?? 0) / 10;
+            // Dieselbe Signalskala wie in der Radar-Rechnung (WorldImpactAnalytics), damit gleiche Werte gleich gefaerbt sind.
+            var good = stress ? WorldImpactAnalytics.StressSignal(s.Last ?? 0) : WorldImpactAnalytics.CostSignal(s) ?? 0;
             <MudPaper Class="pa-3 wl-card" Outlined="true">
                 <div class="d-flex align-center" style="gap:6px">
                     <b class="ll-grow">@s.Name</b>
                     <span class="ll-mono" style="color:@Tone(good)">@(stress ? (s.Last ?? 0).ToString("0.00") : change is { } c ? c.ToString("+0.0;-0.0") + " %" : "–")</span>
                 </div>
                 <div class="ll-muted" style="font-size:12px">@(s.Last?.ToString("N1")) @s.Unit · @(s.Points.Count > 0 ? s.Points[^1].Date.ToString("dd.MM.yyyy") : "")</div>
-                <svg viewBox="0 0 220 60" class="wl-spark"><polyline points="@Spark(s.Points.TakeLast(stress ? 104 : 36).ToList(), 220, 60)" style="stroke:@Tone(good)" /></svg>
+                <svg viewBox="0 0 220 60" class="wl-spark"><polyline points="@Spark(LastDays(s.Points, stress ? 728 : 1095), 220, 60)" style="stroke:@Tone(good)" /></svg>
                 <div class="ll-muted" style="font-size:12px">@Usage(s.Key)</div>
             </MudPaper>
         }
@@ -52,12 +53,12 @@ else
                         @foreach (var (cur, net) in _exposure!.NetByCurrency.OrderByDescending(n => Math.Abs(n.Value)))
                         {
                             var change = _exposure.CurrencyChange90.TryGetValue(cur, out var ch) ? ch : (double?)null;
-                            var effect = change is { } c ? c * Math.Sign(net) : 0;
+                            var effect = change is { } c ? WorldImpactAnalytics.CurrencySignal(c, net) : 0;
                             <tr>
                                 <td class="ll-mono">@cur</td>
                                 <td class="ll-mono" style="text-align:right">@net.ToString("N0")</td>
                                 <td class="ll-mono" style="text-align:right">@(change?.ToString("+0.0;-0.0") ?? "–") %</td>
-                                <td><span class="wl-src-dot" style="background:@Tone(effect / 3)"></span> @(effect < -0.5 ? T("Gegenwind", "Headwind") : effect > 0.5 ? T("Rückenwind", "Tailwind") : T("ruhig", "calm"))</td>
+                                <td><span class="wl-src-dot" style="background:@Tone(effect)"></span> @(effect <= -Threshold ? T("Gegenwind", "Headwind") : effect >= Threshold ? T("Rückenwind", "Tailwind") : T("ruhig", "calm"))</td>
                             </tr>
                         }
                     </tbody>

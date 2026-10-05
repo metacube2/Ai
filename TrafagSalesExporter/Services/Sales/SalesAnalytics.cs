@@ -19,7 +19,12 @@ public static class SalesAnalytics
     {
         var text = (name ?? "").Trim();
         if (text.Length == 0)
-            return $"{(tsc ?? "").Trim().ToUpperInvariant()}#{(number ?? "").Trim()}";
+        {
+            // Ohne Name und ohne Nummer wuerde "TSC#" fuer alle diese Zeilen einen leer wirkenden Schluessel ergeben:
+            // erkennbarer Sammelschluessel je Gesellschaft.
+            var num = (number ?? "").Trim();
+            return $"{(tsc ?? "").Trim().ToUpperInvariant()}#{(num.Length == 0 ? "(ohne Nummer)" : num)}";
+        }
         var formD = text.ToUpperInvariant().Replace("&", " AND ").Normalize(NormalizationForm.FormD);
         var sb = new StringBuilder();
         foreach (var ch in formD)
@@ -35,12 +40,29 @@ public static class SalesAnalytics
     /// <summary>Anzeigename; Kunden ohne Namen in der Quelle erscheinen mit ihrem Schluessel (Gesellschaft#Nummer).</summary>
     public static string DisplayName(string name, string key) => string.IsNullOrWhiteSpace(name) ? key : name;
 
+    /// <summary>Letzter Werktag (Mo-Fr) des Monats, in dem <paramref name="day"/> liegt.</summary>
+    public static DateOnly LastBusinessDayOfMonth(DateOnly day)
+    {
+        var last = new DateOnly(day.Year, day.Month, 1).AddMonths(1).AddDays(-1);
+        while (last.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            last = last.AddDays(-1);
+        return last;
+    }
+
     public static DateOnly ReferenceEnd(IEnumerable<SalesFact> facts, DateOnly today)
     {
         var max = facts.Select(f => f.Date).Where(d => d <= today).DefaultIfEmpty(today).Max();
         var firstOfMonth = new DateOnly(max.Year, max.Month, 1);
-        // Liegt der juengste Beleg am Monatsende, ist der Monat vollstaendig.
-        return max == firstOfMonth.AddMonths(1).AddDays(-1) ? firstOfMonth.AddMonths(1) : firstOfMonth;
+        // Vollstaendig, wenn der juengste Beleg den letzten Werktag des Monats erreicht (das Monatsende kann ein Wochenende sein).
+        // Spaetere Monate gibt es nicht, denn max ist das juengste Datum.
+        return max >= LastBusinessDayOfMonth(max) ? firstOfMonth.AddMonths(1) : firstOfMonth;
+    }
+
+    /// <summary>Kundenland als ISO-2 in der Schreibweise der Weltkarte: UK wird GB, EL wird GR.</summary>
+    public static string NormalizeCountry(string? country)
+    {
+        var c = (country ?? "").Trim().ToUpperInvariant();
+        return c switch { "UK" => "GB", "EL" => "GR", _ => c };
     }
 
     private static decimal Sum(IEnumerable<SalesFact> facts, DateOnly from, DateOnly to)
@@ -51,7 +73,9 @@ public static class SalesAnalytics
     {
         var starts = facts.GroupBy(f => f.Tsc).Select(g => g.Min(f => f.Date)).ToList();
         var latest = starts.Count == 0 ? DateOnly.MinValue : starts.Max();
-        return new DateOnly(latest.Year, latest.Month, 1);
+        // Beginnt die juengste Gesellschaft erst nach dem 7. des Monats, ist dieser Monat angebrochen: erster voller Monat danach.
+        var first = new DateOnly(latest.Year, latest.Month, 1);
+        return latest.Day > 7 ? first.AddMonths(1) : first;
     }
 
     /// <summary>Monate fuer den Vorjahresvergleich: hoechstens 12, und der Vorjahreszeitraum muss ganz in den Daten liegen.</summary>
@@ -79,13 +103,22 @@ public static class SalesAnalytics
                 return new SalesCustomerSummary(g.Key, name, country,
                     g.Select(f => f.Tsc).Distinct().OrderBy(t => t).ToList(),
                     Sum(g, l12, refEnd), Sum(g, cur, refEnd), Sum(g, prevStart, prevEnd), Sum(g, l6, refEnd),
-                    g.Min(f => f.Date), g.Max(f => f.Date),
+                    PurchaseDates(g).Min, PurchaseDates(g).Max,
                     g.Select(f => f.Tsc + "|" + f.InvoiceNumber).Distinct().Count(),
                     g.Where(f => f.Date >= p24).GroupBy(f => f.Division).Select(d => (d.Key, d.Sum(f => f.ValueChf)))
                         .Where(d => d.Item2 > 0).OrderByDescending(d => d.Item2).ToList());
             })
             .OrderByDescending(c => c.Last12)
             .ToList();
+    }
+
+    /// <summary>Erster und letzter Kauf nur aus Zeilen mit positivem Umsatz; Gutschriften sind kein Kauf. Nur Gutschriften: alle Zeilen.</summary>
+    private static (DateOnly Min, DateOnly Max) PurchaseDates(IEnumerable<SalesFact> rows)
+    {
+        var list = rows.ToList();
+        var pos = list.Where(f => f.ValueChf > 0).Select(f => f.Date).ToList();
+        var dates = pos.Count > 0 ? pos : list.Select(f => f.Date).ToList();
+        return (dates.Min(), dates.Max());
     }
 
     public static IReadOnlyList<SalesCompanyChange> CompanyChanges(IReadOnlyList<SalesFact> facts, DateOnly refEnd, int compareMonths)
@@ -117,7 +150,8 @@ public static class SalesAnalytics
         // Ende des letzten vollstaendigen Quartals (exklusiv).
         var lastQuarterEnd = QuarterStart(refEnd);
         var byCustomer = facts.Where(f => f.Date < refEnd).GroupBy(f => f.CustomerKey)
-            .Select(g => (Key: g.Key, Name: DisplayName(g.First().CustomerName, g.Key), First: g.Min(f => f.Date), Last: g.Max(f => f.Date), Facts: g.ToList()))
+            .Where(g => g.Any(f => f.ValueChf > 0))
+            .Select(g => (Key: g.Key, Name: DisplayName(g.First().CustomerName, g.Key), First: PurchaseDates(g).Min, Last: PurchaseDates(g).Max, Facts: g.ToList()))
             .ToList();
         var firstDate = facts.Select(f => f.Date).DefaultIfEmpty(refEnd).Min();
         // "Neu" ist erst belastbar, wenn davor mindestens 12 Monate Daten liegen; sonst ist jeder Kunde scheinbar neu.
@@ -136,7 +170,9 @@ public static class SalesAnalytics
                 lost.Count, lost.Sum(c => c.Facts.Where(f => f.Date >= c.Last.AddMonths(-12)).Sum(f => f.ValueChf)),
                 end.AddMonths(12) <= refEnd, q >= reliableFrom, lostKnown,
                 news.OrderByDescending(c => c.Facts.Sum(f => f.ValueChf)).Take(8).Select(c => c.Name).ToList(),
-                lost.OrderByDescending(c => c.Facts.Sum(f => f.ValueChf)).Take(8).Select(c => c.Name).ToList()));
+                lost.OrderByDescending(c => c.Facts.Sum(f => f.ValueChf)).Take(8).Select(c => c.Name).ToList(),
+                // Umsatz der ersten 12 Monate ist nur vollstaendig, wenn auch der letzte Neukunde des Quartals 12 Monate im Datenbestand hat.
+                end.AddMonths(12) <= refEnd));
         }
         return result;
     }
@@ -147,19 +183,20 @@ public static class SalesAnalytics
         var window = facts.Where(f => f.Date >= from && f.Date < refEnd).ToList();
         var values = window.GroupBy(f => f.CustomerKey).Select(g => g.Sum(f => f.ValueChf)).Where(v => v > 0).OrderByDescending(v => v).ToList();
         var total = values.Sum();
-        double Share(int n) => total == 0 ? 0 : (double)(values.Take(n).Sum() / total);
+        double Share(int n) => total <= 0 ? 0 : (double)(values.Take(n).Sum() / total);
         var curve = new List<(int, double)>();
         decimal running = 0;
         var for80 = 0;
         for (var i = 0; i < values.Count; i++)
         {
             running += values[i];
-            var s = total == 0 ? 0 : (double)(running / total);
+            var s = total <= 0 ? 0 : (double)(running / total);
             if (for80 == 0 && s >= 0.8) for80 = i + 1;
             if (i < 200 || i % Math.Max(1, values.Count / 200) == 0 || i == values.Count - 1)
                 curve.Add((i + 1, s));
         }
-        var hhi = total == 0 ? 0 : values.Sum(v => Math.Pow((double)(v / total) * 100, 2));
+        // Ohne positiven Umsatz (total = 0) gibt es keine Kunden in der Kurve: CustomersFor80 bleibt 0, alle Anteile 0.
+        var hhi = total <= 0 ? 0 : values.Sum(v => Math.Pow((double)(v / total) * 100, 2));
         var perCompany = window.GroupBy(f => f.Tsc)
             .Select(g =>
             {
@@ -279,6 +316,8 @@ public static class SalesAnalytics
     /// gleicher Monat im Vorjahr mal Wachstum (letzte 12 Monate zu den 12 davor). Rueckrechnung des Verfahrens auf das
     /// letzte Jahr ergibt die mittlere Abweichung (MAPE) als Guete.
     /// </summary>
+    /// <remarks>Das Wachstum ist auf 0.5 bis 2 begrenzt, und zwar je Aufruf: die Summe der Prognosen je Gesellschaft oder Sparte
+    /// ist deshalb nicht gleich der Prognose des Gesamts.</remarks>
     public static SalesForecast Forecast(string dimension, IReadOnlyList<SalesFact> facts, DateOnly refEnd, DateOnly? dataStart = null, int compareMonths = 12)
     {
         var history = Monthly(facts, refEnd.AddMonths(-36), refEnd);

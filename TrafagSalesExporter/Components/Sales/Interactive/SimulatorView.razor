@@ -40,8 +40,8 @@
                 var delta = r.SimYear - r.BaseYear;
                 <div class="ll-kpis mt-2">
                     <div class="ll-kpi"><div class="ll-kpi-value">@Short(r.BaseYear)</div><div class="ll-kpi-label">@T("ohne Hebel", "without levers")</div></div>
-                    <div class="ll-kpi"><div class="ll-kpi-value six-anim" style="color:@(delta >= 0 ? "#66BB6A" : "#EF5350")">@Short(r.SimYear)</div><div class="ll-kpi-label">@T("mit Hebeln", "with levers")</div></div>
-                    <div class="ll-kpi"><div class="ll-kpi-value" style="color:@(delta >= 0 ? "#66BB6A" : "#EF5350")">@(delta >= 0 ? "+" : "")@Short(delta)</div><div class="ll-kpi-label">@T("Unterschied", "Difference")</div></div>
+                    <div class="ll-kpi"><div class="ll-kpi-value six-anim" style="color:@(Good(delta) ? "#66BB6A" : "#EF5350")">@Short(r.SimYear)</div><div class="ll-kpi-label">@T("mit Hebeln", "with levers")</div></div>
+                    <div class="ll-kpi"><div class="ll-kpi-value" style="color:@(Good(delta) ? "#66BB6A" : "#EF5350")">@(delta >= 0 ? "+" : "")@Short(delta)</div><div class="ll-kpi-label">@T("Unterschied", "Difference")</div></div>
                     @if (b.PreviousYear is { } py && py != 0)
                     {
                         <div class="ll-kpi"><div class="ll-kpi-value">@Percent((r.SimYear - py) / py * 100m)</div><div class="ll-kpi-label">@T("gegen Vorjahr", "vs previous year")</div></div>
@@ -61,7 +61,7 @@
                     <tbody>
                         @foreach (var (div, br, sr) in r.Divisions.Take(10))
                         {
-                            <tr><td>@div</td><td class="ll-mono" style="text-align:right">@Short(br)</td><td class="ll-mono" style="text-align:right">@Short(sr)</td><td class="ll-mono" style="text-align:right;color:@(sr - br >= 0 ? "#66BB6A" : "#EF5350")">@Short(sr - br)</td></tr>
+                            <tr><td>@div</td><td class="ll-mono" style="text-align:right">@Short(br)</td><td class="ll-mono" style="text-align:right">@Short(sr)</td><td class="ll-mono" style="text-align:right;color:@(Good(sr - br) ? "#66BB6A" : "#EF5350")">@Short(sr - br)</td></tr>
                         }
                         <tr><td>@T("Währungseffekt", "Currency effect")</td><td></td><td></td><td class="ll-mono" style="text-align:right">@Short(r.FxEffect)</td></tr>
                     </tbody>
@@ -78,6 +78,9 @@
     [Parameter] public bool Purchasing { get; set; }
 
     private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
+
+    /// <summary>Im Verkauf ist mehr gut (gruen), im Einkauf ist mehr Einkaufsvolumen kein Gewinn: dort gilt weniger als gruen.</summary>
+    private bool Good(decimal delta) => Purchasing ? delta <= 0 : delta >= 0;
 
     private sealed class DivisionLever
     {

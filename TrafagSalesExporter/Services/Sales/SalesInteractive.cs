@@ -4,8 +4,10 @@ namespace TrafagSalesExporter.Services;
 // wie die übrigen Unterreiter (Finance-Regeln, ohne Konzernkunden, CHF). Nur Rechnung, keine Darstellung.
 // Doku docs/VERKAUF_2026-10-02.md, Abschnitt „Interaktiv“.
 
-public sealed record GalaxyPoint(string Key, string Name, string Country, decimal Revenue, double Growth, int Invoices);
-public sealed record GalaxyFrame(DateOnly Quarter, IReadOnlyList<GalaxyPoint> Points);
+/// <summary>Growth ist null ohne belastbares Vorquartal (erstes Quartal, Vorquartal ohne Umsatz oder angebrochen) und im angebrochenen Quartal.</summary>
+public sealed record GalaxyPoint(string Key, string Name, string Country, decimal Revenue, double? Growth, int Invoices);
+/// <summary>Partial: Quartal ist noch nicht vollstaendig (Referenzende liegt mitten darin); Umsatz und Wachstum sind dann nur vorlaeufig.</summary>
+public sealed record GalaxyFrame(DateOnly Quarter, IReadOnlyList<GalaxyPoint> Points, bool Partial = false);
 
 public sealed record RaceBar(string Key, string Name, decimal Value);
 public sealed record RaceFrame(DateOnly Month, IReadOnlyList<RaceBar> Bars);
@@ -45,8 +47,8 @@ public static class SalesInteractive
     private static DateOnly MonthStart(DateOnly d) => new(d.Year, d.Month, 1);
 
     /// <summary>
-    /// Kunden-Galaxie: je Quartal ab Datenbeginn Umsatz, Veränderung zum Vorquartal in Prozent (begrenzt auf −100..300)
-    /// und Rechnungen; nur die <paramref name="top"/> Kunden der letzten 12 Monate, damit die Animation lesbar bleibt.
+    /// Kunden-Galaxie: je Quartal ab Datenbeginn Umsatz, Veränderung zum Vorquartal in Prozent (begrenzt auf −100..300,
+    /// null ohne vollstaendiges Vorquartal mit Umsatz und im angebrochenen Quartal) und Rechnungen; nur die <paramref name="top"/> Kunden der letzten 12 Monate, damit die Animation lesbar bleibt.
     /// </summary>
     public static IReadOnlyList<GalaxyFrame> Galaxy(IReadOnlyList<SalesFact> facts, DateOnly refEnd, DateOnly dataStart, int top = 60)
     {
@@ -59,14 +61,19 @@ public static class SalesInteractive
         var frames = new List<GalaxyFrame>();
         for (var q = QuarterStart(dataStart); q < refEnd; q = q.AddMonths(3))
         {
+            // Angebrochenes Quartal (Referenzende mitten darin) und Vorquartal vor dem Datenbeginn sind nicht vergleichbar.
+            var partial = q.AddMonths(3) > refEnd;
+            var prevComplete = q.AddMonths(-3) >= dataStart;
             var points = keys.Select(k =>
             {
                 var cur = byQuarter.GetValueOrDefault((q, k.Key));
                 var prev = byQuarter.GetValueOrDefault((q.AddMonths(-3), k.Key));
-                var growth = prev.Value > 0 ? (double)((cur.Value - prev.Value) / prev.Value * 100) : cur.Value > 0 ? 100 : 0;
-                return new GalaxyPoint(k.Key, k.Value.Name, k.Value.Country, cur.Value, Math.Clamp(growth, -100, 300), cur.Invoices);
+                double? growth = !partial && prevComplete && prev.Value > 0
+                    ? Math.Clamp((double)((cur.Value - prev.Value) / prev.Value * 100), -100, 300)
+                    : null;
+                return new GalaxyPoint(k.Key, k.Value.Name, k.Value.Country, cur.Value, growth, cur.Invoices);
             }).ToList();
-            frames.Add(new GalaxyFrame(q, points));
+            frames.Add(new GalaxyFrame(q, points, partial));
         }
         return frames;
     }
@@ -165,8 +172,11 @@ public static class SalesInteractive
             baseSum += d.Remaining;
             foreign += s * d.ForeignShare;
         }
+        // Rest, den die Summe der Sparten nicht abdeckt (je Sicht begrenztes Wachstum): wirkt wie die Hebel "Alle" mit.
         var diff = b.TotalRest - baseSum;
-        return new SimulatorResult(b.Ytd, b.TotalRest, sim + diff, foreign * (decimal)(fxPercent / 100), rows);
+        var all = levers.FirstOrDefault(l => l.Division == "*");
+        var diffFactor = all is null ? 1m : (decimal)((1 + all.PricePercent / 100) * (1 + all.VolumePercent / 100));
+        return new SimulatorResult(b.Ytd, b.TotalRest, sim + diff * diffFactor, foreign * (decimal)(fxPercent / 100), rows);
     }
 
     /// <summary>
@@ -182,13 +192,14 @@ public static class SalesInteractive
             if (days.Count < minOrders) return null;
             var gaps = days.Zip(days.Skip(1), (a, b) => (double)(b.DayNumber - a.DayNumber)).Order().ToList();
             var median = gaps.Count % 2 == 1 ? gaps[gaps.Count / 2] : (gaps[gaps.Count / 2 - 1] + gaps[gaps.Count / 2]) / 2;
-            if (median < 1) median = 1;
-            var expected = days[^1].AddDays((int)Math.Round(median));
+            // Ganze Tage, kaufmaennisch gerundet: erwartetes Datum, Anzeige und Verhaeltnis rechnen mit demselben Wert.
+            median = Math.Max(1, Math.Round(median, MidpointRounding.AwayFromZero));
+            var expected = days[^1].AddDays((int)median);
             var last12 = g.Where(f => f.Date >= refEnd.AddMonths(-12) && f.Date < refEnd).Sum(f => f.ValueChf);
             return new RhythmCustomer(g.Key, SalesAnalytics.DisplayName(g.First().CustomerName, g.Key),
                 g.GroupBy(f => f.CustomerCountry).OrderByDescending(x => x.Count()).First().Key,
                 days, median, days[^1], expected, day.DayNumber - expected.DayNumber, last12);
-        }).OfType<RhythmCustomer>().OrderByDescending(c => c.OverdueRatio * (double)c.Last12).ToList();
+        }).OfType<RhythmCustomer>().OrderByDescending(c => c.OverdueRatio * (double)c.Last12).ThenByDescending(c => c.OverdueRatio).ThenByDescending(c => c.Last12).ThenBy(c => c.Key, StringComparer.Ordinal).ToList();
     }
 
     /// <summary>Umsatz und Rechnungen je Tag eines Jahres (für die Kalender-Heatmap).</summary>
@@ -274,6 +285,19 @@ public static class SalesInteractive
         var nodes = arts.Select((a, i) => new NetworkNode(a.Id, a.Id, a.Customers.Count, a.Revenue, x[i], y[i], group[i])).ToList();
         return (nodes, edges);
     }
+
+    /// <summary>Alle Monate von Datenbeginn bis Referenzende, auch solche ohne Umsatz (sonst springt die Zeitachse der Landschaft).</summary>
+    public static IReadOnlyList<DateOnly> Months(DateOnly dataStart, DateOnly refEnd)
+    {
+        var list = new List<DateOnly>();
+        for (var m = MonthStart(dataStart); m < refEnd; m = m.AddMonths(1))
+            list.Add(m);
+        return list;
+    }
+
+    /// <summary>Saeulenhoehe der Landschaft in Pixel: Wurzel des Anteils am Maximum; negative Werte (Gutschriften) und Null ergeben die Mindesthoehe statt NaN.</summary>
+    public static double LandscapeHeight(decimal value, decimal max)
+        => value <= 0 || max <= 0 ? 1 : Math.Max(1, 180 * Math.Sqrt((double)(value / max)));
 
     /// <summary>3D-Landschaft: Umsatz je Monat und Sparte ab Datenbeginn.</summary>
     public static IReadOnlyList<LandscapeCell> Landscape(IReadOnlyList<SalesFact> facts, DateOnly refEnd, DateOnly dataStart)

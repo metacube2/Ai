@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace TrafagSalesExporter.Services;
 
 /// <summary>Supportende eines Betriebssystems. <see cref="Product"/> ist die lesbare Bezeichnung mit Version.</summary>
-public sealed record AdLifecycle(string Product, DateOnly? EndOfSupport);
+public sealed record AdLifecycle(string Product, DateOnly? EndOfSupport, DateOnly? EsuEnd = null);
 
 /// <summary>Zustand eines Computers fuer die 3D-Ansicht und die Zaehler; jeder Computer genau einmal.</summary>
 public enum AdHealth { Ok, Inactive, Disabled, Unsupported }
@@ -16,7 +16,7 @@ public sealed record AdOuTower(string Container, string Label, int Ok, int Inact
 }
 
 /// <summary>Ein /24-Netzbereich, der in keinem AD-Subnetz liegt.</summary>
-public sealed record AdUncoveredRange(string Range, int Computers, int ClientSessions, IReadOnlyList<string> Examples);
+public sealed record AdUncoveredRange(string Range, int Computers, int ClientSessions, IReadOnlyList<string> Examples, bool Partial = false);
 
 /// <summary>Mehrere Computer mit derselben IP im DNS.</summary>
 public sealed record AdDuplicateIp(string Ip, IReadOnlyList<string> Names);
@@ -29,6 +29,10 @@ public static class AdAnalysis
 {
     public const int InactiveDays = 90;
     public const int PasswordDays = 60;
+    /// <summary>lastLogonTimestamp wird nur alle 9 bis 14 Tage aktualisiert: 30 Tage Aktivitaet plus 14 Tage Replikationsverzoegerung.</summary>
+    public const int ActiveDays = 44;
+    /// <summary>Konten juenger als 30 Tage gelten nicht als "nie angemeldet".</summary>
+    public const int NeverUsedMinAgeDays = 30;
 
     private static readonly Regex BuildPattern = new(@"\((\d+)\)", RegexOptions.Compiled);
 
@@ -37,6 +41,24 @@ public static class AdAnalysis
         var m = BuildPattern.Match(osVersion ?? "");
         return m.Success && int.TryParse(m.Groups[1].Value, out var b) ? b : null;
     }
+
+    /// <summary>
+    /// Windows 10 oder 11 nach der Build-Nummer aus operatingSystemVersion ("10.0 (22631)"); das Feld operatingSystem nennt
+    /// auf Windows-11-Geraeten oft noch "Windows 10". Ohne Build entscheidet der Text. 0 = kein Windows 10/11.
+    /// </summary>
+    private static int ClientFamily(string os, string osVersion, int? build)
+    {
+        if (build is { } b && (osVersion ?? "").TrimStart().StartsWith("10.0", StringComparison.Ordinal))
+        {
+            if (b >= 22000) return 11;
+            if (b >= 10240) return 10;
+        }
+        if (os.Contains("Windows 11", StringComparison.OrdinalIgnoreCase)) return 11;
+        if (os.Contains("Windows 10", StringComparison.OrdinalIgnoreCase)) return 10;
+        return 0;
+    }
+
+    private static string WithYear(string name, int year) => name.Contains(year.ToString(), StringComparison.Ordinal) ? name : $"{name} {year}";
 
     public static AdLifecycle Lifecycle(string os, string osVersion)
     {
@@ -49,56 +71,67 @@ public static class AdAnalysis
         {
             if (Has("2003")) return new(os, D(2015, 7, 14));
             if (Has("2008")) return new(os, D(2020, 1, 14));
-            if (Has("2012")) return new(os, D(2023, 10, 10));
+            // Server 2012 (R2): erweiterte Updates (ESU) noch bis 13.10.2026.
+            if (Has("2012")) return new(os, D(2023, 10, 10), D(2026, 10, 13));
             if (Has("2016")) return new(os, D(2027, 1, 12));
             if (Has("2019")) return new(os, D(2029, 1, 9));
             if (Has("2022")) return new(os, D(2031, 10, 14));
             if (Has("2025")) return new(os, D(2034, 10, 10));
             return new(os, null);
         }
-        if (Has("XP")) return new(os, D(2014, 4, 8));
-        if (Has("Vista")) return new(os, D(2017, 4, 11));
-        if (Has("Windows 7")) return new(os, D(2020, 1, 14));
-        if (Has("Windows 8.1")) return new(os, D(2023, 1, 10));
-        if (Has("Windows 8")) return new(os, D(2016, 1, 12));
+        var family = ClientFamily(os, osVersion, build);
+        if (family == 0)
+        {
+            if (Has("XP")) return new(os, D(2014, 4, 8));
+            if (Has("Vista")) return new(os, D(2017, 4, 11));
+            if (Has("Windows 7")) return new(os, D(2020, 1, 14));
+            if (Has("Windows 8.1")) return new(os, D(2023, 1, 10));
+            if (Has("Windows 8")) return new(os, D(2016, 1, 12));
+            return new(os.Length > 0 ? os : "?", null);
+        }
 
+        // Das Feld operatingSystem nennt auf Windows 11 teils "Windows 10": Name nach dem Build richtigstellen.
+        var name = family == 11 ? Regex.Replace(os, "Windows 10", "Windows 11", RegexOptions.IgnoreCase) : os;
         var enterprise = Has("Enterprise") || Has("Education");
         var ltsc = Has("LTSC") || Has("LTSB");
         var iot = Has("IoT");
-        if (Has("Windows 10"))
+        if (family == 10)
         {
             if (ltsc)
                 return build switch
                 {
-                    10240 => new($"{os} 2015", D(2025, 10, 14)),
-                    14393 => new($"{os} 2016", D(2026, 10, 13)),
-                    17763 => new($"{os} 2019", D(2029, 1, 9)),
-                    19044 => new($"{os} 2021", iot ? D(2032, 1, 13) : D(2027, 1, 12)),
-                    _ => new(os, null)
+                    10240 => new(WithYear(name, 2015), D(2025, 10, 14)),
+                    14393 => new(WithYear(name, 2016), D(2026, 10, 13)),
+                    17763 => new(WithYear(name, 2019), D(2029, 1, 9)),
+                    19044 => new(WithYear(name, 2021), iot ? D(2032, 1, 13) : D(2027, 1, 12)),
+                    _ => new(name, null)
                 };
-            return new($"{os} {Win10Release(build)}".TrimEnd(), D(2025, 10, 14));
+            // Windows 10 22H2: Standardsupport Oktober 2025 vorbei, Sicherheitsupdates nur noch ueber ESU bis 13.10.2026.
+            return new($"{name} {Win10Release(build)}".TrimEnd(), D(2025, 10, 14), build == 19045 ? D(2026, 10, 13) : null);
         }
-        if (Has("Windows 11"))
+        if (ltsc && build == 26100)
+            return new(WithYear(name, 2024), iot ? D(2034, 10, 10) : D(2029, 10, 9));
+        var label = $"{name} {Win11Release(build)}".TrimEnd();
+        return build switch
         {
-            if (ltsc && build == 26100)
-                return new($"{os} 2024", iot ? D(2034, 10, 10) : D(2029, 10, 9));
-            var name = $"{os} {Win11Release(build)}".TrimEnd();
-            return build switch
-            {
-                22000 => new(name, enterprise ? D(2024, 10, 8) : D(2023, 10, 10)),
-                22621 => new(name, enterprise ? D(2025, 10, 14) : D(2024, 10, 8)),
-                22631 => new(name, enterprise ? D(2026, 11, 10) : D(2025, 11, 11)),
-                26100 => new(name, enterprise ? D(2027, 10, 12) : D(2026, 10, 13)),
-                26200 => new(name, enterprise ? D(2028, 10, 10) : D(2027, 10, 12)),
-                _ => new(name, null)
-            };
-        }
-        return new(os.Length > 0 ? os : "?", null);
+            22000 => new(label, enterprise ? D(2024, 10, 8) : D(2023, 10, 10)),
+            22621 => new(label, enterprise ? D(2025, 10, 14) : D(2024, 10, 8)),
+            22631 => new(label, enterprise ? D(2026, 11, 10) : D(2025, 11, 11)),
+            26100 => new(label, enterprise ? D(2027, 10, 12) : D(2026, 10, 13)),
+            26200 => new(label, enterprise ? D(2028, 10, 10) : D(2027, 10, 12)),
+            _ => new(label, null)
+        };
     }
+
+    /// <summary>Standardsupport vorbei, aber erweiterte Sicherheitsupdates (ESU) laufen noch: "nur ESU".</summary>
+    public static bool IsEsuOnly(AdLifecycle l, DateOnly today)
+        => l.EndOfSupport is { } e && e < today && l.EsuEnd is { } esu && esu >= today;
 
     private static string Win10Release(int? build) => build switch
     {
-        19041 => "2004", 19042 => "20H2", 19043 => "21H1", 19044 => "21H2", 19045 => "22H2", null => "", _ => $"Build {build}"
+        10240 => "1507", 10586 => "1511", 14393 => "1607", 15063 => "1703", 16299 => "1709", 17134 => "1803", 17763 => "1809",
+        18362 => "1903", 18363 => "1909", 19041 => "2004", 19042 => "20H2", 19043 => "21H1", 19044 => "21H2", 19045 => "22H2",
+        null => "", _ => $"Build {build}"
     };
 
     private static string Win11Release(int? build) => build switch
@@ -110,10 +143,19 @@ public static class AdAnalysis
     public static string LifecycleClass(DateOnly? end, DateOnly today)
         => end is null ? "unbekannt" : end < today ? "aus" : end <= today.AddDays(180) ? "bald" : "ok";
 
+    /// <summary>
+    /// Die eine Definition von "inaktiv": aktiviertes Konto mit bekannter letzter Anmeldung, die laenger als
+    /// <paramref name="days"/> Tage zurueckliegt. Nie angemeldete Konten siehe <see cref="IsNeverUsed"/>.
+    /// </summary>
     public static bool IsInactive(AdComputer c, DateTime nowUtc, int days = InactiveDays)
-        => c.Enabled && (c.LastLogonUtc is null || c.LastLogonUtc < nowUtc.AddDays(-days));
+        => c.Enabled && c.LastLogonUtc is { } l && l < nowUtc.AddDays(-days);
 
-    public static bool IsActiveRecently(AdComputer c, DateTime nowUtc) => c.Enabled && c.LastLogonUtc > nowUtc.AddDays(-30);
+    /// <summary>Aktiviertes Konto ohne jede Anmeldung, das schon aelter als 30 Tage ist.</summary>
+    public static bool IsNeverUsed(AdComputer c, DateTime nowUtc)
+        => c.Enabled && c.LastLogonUtc is null && c.CreatedUtc is { } created && created < nowUtc.AddDays(-NeverUsedMinAgeDays);
+
+    /// <summary>Angemeldet in den letzten <see cref="ActiveDays"/> Tagen (30 plus 14 Tage Ungenauigkeit von lastLogonTimestamp).</summary>
+    public static bool IsActiveRecently(AdComputer c, DateTime nowUtc) => c.Enabled && c.LastLogonUtc > nowUtc.AddDays(-ActiveDays);
 
     public static AdHealth Health(AdComputer c, DateTime nowUtc)
     {
@@ -223,9 +265,25 @@ public static class AdAnalysis
         return true;
     }
 
+    /// <summary>Wie viele der 256 Adressen eines /24-Bereichs ("a.b.c.0/24") liegen in AD-Subnetzen.</summary>
+    public static int CoveredAddresses24(string range24, IReadOnlyList<AdSubnet> subnets)
+    {
+        var slash = range24.IndexOf('/');
+        if (slash < 0 || !IPAddress.TryParse(range24[..slash], out var net) || net.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) return 0;
+        var b = net.GetAddressBytes();
+        var count = 0;
+        for (var i = 0; i < 256; i++)
+        {
+            var ip = new IPAddress([b[0], b[1], b[2], (byte)i]);
+            if (subnets.Any(s => InCidr(ip, s.Cidr))) count++;
+        }
+        return count;
+    }
+
     /// <summary>
-    /// Netzbereiche (/24), in denen Computer (laut DNS) oder Browser-Sitzungen gesehen werden, die in keinem
-    /// AD-Subnetz liegen. Solche Geraete melden sich an einem beliebigen Domaenencontroller an.
+    /// Netzbereiche (/24), in denen Computer (laut DNS) oder Browser-Sitzungen gesehen werden, die nicht vollstaendig in
+    /// AD-Subnetzen liegen. Deckt ein AD-Subnetz einen /24 nur teilweise ab, ist der Bereich als
+    /// <see cref="AdUncoveredRange.Partial"/> markiert. Solche Geraete melden sich an einem beliebigen Domaenencontroller an.
     /// </summary>
     public static IReadOnlyList<AdUncoveredRange> UncoveredRanges(
         IReadOnlyList<AdDnsEntry> dns, IReadOnlyList<NetworkSubnetStat> clientSubnets, IReadOnlyList<AdSubnet> subnets)
@@ -236,7 +294,7 @@ public static class AdAnalysis
         foreach (var e in dns)
         foreach (var ip in e.Ips)
         {
-            if (!IPAddress.TryParse(ip, out var a) || Covered(a)) continue;
+            if (!IPAddress.TryParse(ip, out var a) || a.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || Covered(a)) continue;
             var key = Range24(a);
             if (!ranges.TryGetValue(key, out var v)) ranges[key] = v = (new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0);
             v.Names.Add(e.Name);
@@ -244,13 +302,15 @@ public static class AdAnalysis
         foreach (var s in clientSubnets)
         {
             var slash = s.Subnet.IndexOf('/');
-            if (slash < 0 || !IPAddress.TryParse(s.Subnet[..slash], out var a) || Covered(a)) continue;
+            if (slash < 0 || !IPAddress.TryParse(s.Subnet[..slash], out var a) || a.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) continue;
             var key = Range24(a);
             var v = ranges.TryGetValue(key, out var x) ? x : (new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0);
             ranges[key] = (v.Item1, v.Item2 + s.Circuits);
         }
         return ranges
-            .Select(r => new AdUncoveredRange(r.Key, r.Value.Names.Count, r.Value.Sessions, r.Value.Names.OrderBy(n => n).Take(5).ToList()))
+            .Select(r => (r, covered: CoveredAddresses24(r.Key, subnets)))
+            .Where(x => x.covered < 256)
+            .Select(x => new AdUncoveredRange(x.r.Key, x.r.Value.Names.Count, x.r.Value.Sessions, x.r.Value.Names.OrderBy(n => n).Take(5).ToList(), x.covered > 0))
             .OrderByDescending(r => r.Computers + r.ClientSessions)
             .ToList();
     }

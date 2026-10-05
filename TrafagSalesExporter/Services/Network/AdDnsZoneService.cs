@@ -30,7 +30,7 @@ public sealed class AdDnsZoneService
         await _gate.WaitAsync();
         try
         {
-            if (_cache is { ReadAt: { } at } && at > DateTime.Now.AddHours(-1))
+            if (_cache is { ReadAt: { } at } && at > DateTime.Now - AdInfrastructureService.CacheWindow(_cache.Error, TimeSpan.FromHours(1)))
                 return _cache;
             _cache = await Task.Run(Read);
             return _cache;
@@ -109,7 +109,8 @@ public sealed class AdDnsZoneService
                                 var stamp = rec.StampUtc!.Value;
                                 var age = (now - stamp).TotalDays;
                                 buckets[age <= 7 ? 0 : age <= 30 ? 1 : age <= 90 ? 2 : age <= 365 ? 3 : 4]++;
-                                if (stamp < staleBefore)
+                                // Nur in Zonen mit eingeschalteter Alterung raeumt Scavenging auf; sonst sind alte Zeitstempel keine Kandidaten.
+                                if (aging == true && stamp < staleBefore)
                                 {
                                     stale++;
                                     oldest.Add(($"{host}.{name}", name, stamp));

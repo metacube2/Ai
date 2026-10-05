@@ -2,6 +2,21 @@
 
 Stand: 2026-10-01
 
+## Pruefbefund-Fixes, 2026-10-05 (noch nicht deployed)
+
+- **Endlieferkennzeichen:** EKPO.Elikz steht im Cache als `True`/`False`, nicht als `X`. Der Ausschluss endgelieferter
+  Positionen (M7) im Einkaufsdashboard und in der Supply Chain griff deshalb nie, und die Weltlage zaehlte nichts als offen
+  (Logistik 0.0). Auf der Deploy-Sicherung sinkt der offene Bestellwert von 28.7 auf 12.8 Mio CHF (10'757 auf 1'548 Einteilungen).
+- **Nur Bestellungen** jetzt auch in Einkauf Interaktiv und Weltlage; Weltlage offen nach offener Menge, ohne Konzernlieferanten,
+  gleiches 12-Monats-Fenster fuer Verkauf und Einkauf.
+- **Logistik live:** Timeout als Meldung statt Absturz, Fehler nur 1 Minute gemerkt, nur heute quittierte Positionen zaehlen,
+  Ausblick mit heute und ueberfaellig, Lgnum 110, Ausbringung je letztem Vorgang. ABAP-Teil (Warenausgangszeit, offene TAs,
+  STZHL, Kapazitaet verteilt und nach KEINH) liegt in `docs/abap/`, wirkt erst nach neuem T76-Transport.
+- **Netzwerk/AD:** Windows 11 nach Build, Abbruch nur bei Wiederverbindung, eine Inaktiv-Definition, GPO-Vererbung, BitLocker,
+  /24-Abdeckung, DNS-Alterung und weitere Einzelpunkte.
+- **Verkauf/Controlling/Interaktiv/Weltlage:** Referenzmonat nach letztem Werktag, Galaxie ohne +100 % im ersten Quartal,
+  Landschaft ohne NaN, Bruecke rundungsgenau, Prognoseband ab 0, UK/EL normiert, Ereignisse dedupliziert, Eurostat-Arrayform.
+
 ## Einkauf: Interaktiv, 2026-10-05, produktiv 15:11
 
 - Menü Einkauf → Interaktiv mit denselben neun Ansichten auf den Bestellungen; Korrekturen Verkauf Interaktiv (Galaxie-Achse,

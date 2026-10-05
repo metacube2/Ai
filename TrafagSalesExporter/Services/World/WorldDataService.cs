@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS WorldSourceCache (
             {
                 // Stark beachtete Konflikte und negative Ereignisse der letzten 24 h; nur Link, kein Artikeltext.
                 var since = latest.AddHours(-24);
-                _topEvents = _topEvents.Concat(fresh).Where(e => e.TimeUtc >= since || e.TimeUtc == DateTime.MinValue)
+                _topEvents = WorldParsers.DedupeEvents(_topEvents.Concat(fresh).Where(e => e.TimeUtc >= since || e.TimeUtc == DateTime.MinValue))
                     .OrderByDescending(e => e.Mentions).Take(400).ToList();
             }
             var msg = $"{files} neue Dateien" + (failed > 0 ? $", {failed} nicht lesbar" : "");
@@ -285,10 +285,14 @@ CREATE TABLE IF NOT EXISTS WorldSourceCache (
         var data = await _sales.GetAsync();
         var fromSales = data.Facts.Where(f => f.CustomerCountry.Length == 2 && f.Date >= data.ReferenceEnd.AddMonths(-12))
             .GroupBy(f => f.CustomerCountry).OrderByDescending(g => g.Sum(f => f.ValueChf)).Take(20).Select(g => g.Key);
-        var fromPurchasing = (await QueryAsync("SELECT SupplierCountry FROM PurchasingEkkoCache WHERE COALESCE(SupplierCountry,'') <> '' GROUP BY SupplierCountry ORDER BY COUNT(*) DESC LIMIT 15", ct))
+        // Lieferlaender nach Bestellwert der letzten 12 Monate (nicht nach Anzahl Belegen), Schreibweise UK/EL wie im Verkauf vereinheitlicht.
+        var fromPurchasing = (await QueryAsync($@"SELECT COALESCE(k.SupplierCountry, ''), SUM({WorldImpactService.ChfValue})
+FROM PurchasingEkpoCache p JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE COALESCE(k.SupplierCountry, '') <> '' AND k.Bedat >= $s AND COALESCE(p.Loekz, '') = ''
+GROUP BY 1 ORDER BY 2 DESC LIMIT 15", ct, ("$s", DateTime.Today.AddMonths(-12).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))))
             .Select(r => Convert.ToString(r[0]) ?? "");
         return fromSales.Concat(fromPurchasing).Concat(BaseCountries)
-            .Where(c => c.Length == 2).Select(c => c.ToUpperInvariant()).Distinct().ToList();
+            .Select(WorldImpactService.Iso).Where(c => c.Length == 2).Distinct().ToList();
     }
 
     public sealed record PointDto(DateOnly Date, double Value);

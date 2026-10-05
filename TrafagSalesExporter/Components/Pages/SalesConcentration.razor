@@ -74,7 +74,8 @@ else if (_c is not null)
         _c = _data.Error is null ? SalesAnalytics.Concentration(_data.Facts, _data.ReferenceEnd) : null;
     }
 
-    private double X(int rank) => 50 + 580.0 * Math.Log(rank) / Math.Log(Math.Max(2, _c!.Customers));
+    // Rang 0 (kein Kunde mit Umsatz, Gesamt 0) wuerde Math.Log(0) = -unendlich ergeben: auf den Achsenanfang setzen.
+    private double X(int rank) => rank <= 1 ? 50 : 50 + 580.0 * Math.Log(rank) / Math.Log(Math.Max(2, _c!.Customers));
 
     private static double Y(double share) => 320 - 300 * share;
 

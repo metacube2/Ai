@@ -102,7 +102,13 @@
 
     private string CellColor(decimal value)
     {
-        if (value <= 0) return "var(--mud-palette-lines-default)";
+        if (value == 0) return "var(--mud-palette-lines-default)";
+        // Tage mit negativem Saldo (Gutschriften) in Blau, nach Betrag abgestuft.
+        if (value < 0)
+        {
+            var tn = Math.Min(1.0, (double)(-value / _max));
+            return $"hsl(205, 70%, {(80 - 40 * tn).ToString("0", CultureInfo.InvariantCulture)}%)";
+        }
         var t = Math.Min(1.0, (double)(value / _max));
         var light = 85 - 50 * t;
         return $"hsl(24, 85%, {light.ToString("0", CultureInfo.InvariantCulture)}%)";

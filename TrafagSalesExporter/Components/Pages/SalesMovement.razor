@@ -49,7 +49,7 @@ else
                 var down = 150 * Value(m, false) / max;
                 var x = 34 + i * w;
                 <g class="sal-q" style="animation-delay:@(F(i * 0.05))s">
-                    <rect x="@F(x + 4)" y="@F(170 - up)" width="@F(w - 8)" height="@F(up)" rx="3" class="@(m.NewReliable ? "sal-new" : "sal-new-open")"><title>@m.Quarter · @m.NewCustomers @T("neu", "new") · CHF @Chf(m.NewRevenue12)</title></rect>
+                    <rect x="@F(x + 4)" y="@F(170 - up)" width="@F(w - 8)" height="@F(up)" rx="3" class="@(m.NewReliable && (!_byRevenue || m.NewRevenueComplete) ? "sal-new" : "sal-new-open")"><title>@m.Quarter · @m.NewCustomers @T("neu", "new") · CHF @Chf(m.NewRevenue12)</title></rect>
                     <rect x="@F(x + 4)" y="170" width="@F(w - 8)" height="@F(down)" rx="3" class="@(m.LostFinal ? "sal-lost" : "sal-lost-open")" visibility="@(m.LostKnown ? "visible" : "hidden")"><title>@m.Quarter · @m.LostCustomers @T("verloren", "lost") · CHF @Chf(m.LostRevenue12)</title></rect>
                     <text x="@F(x + w / 2)" y="@F(164 - up)" text-anchor="middle" class="sal-q-val">@(_byRevenue ? Short(m.NewRevenue12) : m.NewCustomers.ToString())</text>
                     <text x="@F(x + w / 2)" y="@F(184 + down)" text-anchor="middle" class="sal-q-val">@(m.LostKnown ? (_byRevenue ? Short(m.LostRevenue12) : m.LostCustomers.ToString()) : T("noch offen", "still open"))</text>

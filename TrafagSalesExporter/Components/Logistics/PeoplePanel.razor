@@ -61,6 +61,7 @@
 @code {
     [Parameter] public IReadOnlyList<LiveTransferItem> Transfers { get; set; } = [];
     [Parameter] public EventCallback AccessChanged { get; set; }
+    [Parameter] public DateOnly Day { get; set; }
 
     private IReadOnlyList<LivePersonOutput> _people = [];
     private string _user = "";
@@ -68,7 +69,7 @@
     private bool _failed;
 
     protected override void OnParametersSet()
-        => _people = Access.IsUnlocked ? LogisticsPeople.Outputs(Transfers) : [];
+        => _people = Access.IsUnlocked ? LogisticsPeople.Outputs(Transfers, Day == default ? null : Day) : [];
 
     private async Task UnlockAsync()
     {

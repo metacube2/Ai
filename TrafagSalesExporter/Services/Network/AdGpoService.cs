@@ -29,7 +29,7 @@ public sealed class AdGpoService
         await _gate.WaitAsync();
         try
         {
-            if (_cache is { ReadAt: { } at } && at > DateTime.Now.AddMinutes(-30))
+            if (_cache is { ReadAt: { } at } && at > DateTime.Now - AdInfrastructureService.CacheWindow(_cache.Error, TimeSpan.FromMinutes(30)))
                 return _cache;
             var computers = await _ad.GetAsync();
             _cache = await Task.Run(() => Read(computers));
@@ -69,7 +69,7 @@ public sealed class AdGpoService
             }
 
             var links = targets
-                .SelectMany(t => AdInfraAnalysis.ParseGpLink(t.GpLink).Select(l => (l.Guid, Link: new AdGpoLink(t.Dn, t.Label, t.Kind, l.Enabled, l.Enforced))))
+                .SelectMany(t => AdInfraAnalysis.ParseGpLink(t.GpLink).Select((l, order) => (l.Guid, Link: new AdGpoLink(t.Dn, t.Label, t.Kind, l.Enabled, l.Enforced, order))))
                 .GroupBy(x => x.Guid, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.Select(x => x.Link).ToList(), StringComparer.OrdinalIgnoreCase);
 
@@ -80,7 +80,8 @@ public sealed class AdGpoService
                          ["name", "displayName", "versionNumber", "flags", "gPCFileSysPath", "gPCMachineExtensionNames", "gPCUserExtensionNames", "whenCreated", "whenChanged"]))
             {
                 var guid = AdInfrastructureService.Text(r, "name").ToUpperInvariant();
-                int? sysvol = null;
+                long? sysvol = null;
+                var sysvolMissing = false;
                 var path = AdInfrastructureService.Text(r, "gPCFileSysPath");
                 if (path.Length > 0 && sysvolFailures < 3)
                 {
@@ -97,6 +98,11 @@ public sealed class AdGpoService
                             sysvolFailures++;
                         }
                     }
+                    catch (Exception ex) when (ex.GetBaseException() is FileNotFoundException or DirectoryNotFoundException)
+                    {
+                        // GPT.INI fehlt: die GPO ist im AD, aber ihre Dateien im SYSVOL nicht (kaputte GPO), kein Zugriffsproblem.
+                        sysvolMissing = true;
+                    }
                     catch (Exception ex)
                     {
                         if (++sysvolFailures == 3)
@@ -109,8 +115,9 @@ public sealed class AdGpoService
                     Name = AdInfrastructureService.Text(r, "displayName") is { Length: > 0 } n ? n : guid,
                     CreatedUtc = AdInfrastructureService.Date(r, "whenCreated"),
                     ChangedUtc = AdInfrastructureService.Date(r, "whenChanged"),
-                    AdVersion = AdInfrastructureService.Int(r, "versionNumber") ?? 0,
+                    AdVersion = AdInfrastructureService.Version(r, "versionNumber") ?? 0,
                     SysvolVersion = sysvol,
+                    SysvolMissing = sysvolMissing,
                     Flags = AdInfrastructureService.Int(r, "flags") ?? 0,
                     HasComputerSettings = AdInfraAnalysis.HasExtensions(AdInfrastructureService.Text(r, "gPCMachineExtensionNames")),
                     HasUserSettings = AdInfraAnalysis.HasExtensions(AdInfrastructureService.Text(r, "gPCUserExtensionNames")),

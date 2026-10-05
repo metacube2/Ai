@@ -12,8 +12,19 @@
 *&   KAKO: (ENDZT - BEGZT - PAUSE) x NGRAD % x AZNOR an Arbeitstagen des Fabrikkalenders
 *&   (KAKO-KALID, sonst T001W-FABKL). Kapazitaeten MIT Intervallen werden NICHT gerechnet
 *&   (ANGEBOT_H leer, KEIN_STANDARD = 'X'), statt ein falsches Angebot zu zeigen.
-*& - KBED: Einheit H; Bedarf = KBEAREST + KRUEREST (Rest Bearbeiten + Ruesten). In T76 sind die
-*&   Reste der vergangenen Tage 0 (erledigt), Soll vorhanden.
+*& - KBED: Bedarf = KBEAREST + KRUEREST (Rest Bearbeiten + Ruesten) in der Einheit KEINH (H, MIN oder S,
+*&   wird in Stunden umgerechnet). In T76 sind die Reste der vergangenen Tage 0 (erledigt), Soll vorhanden.
+*&
+*& Dritte Fassung 2026-10-05 (Review, Befund DWM00 1323 %):
+*& - KBED legt den GANZEN Restbedarf eines Vorgangs auf FSTAD (Starttermin). Ein Vorgang, der ueber mehrere
+*&   Tage laeuft, erschien deshalb an einem Tag mit seinem gesamten Bedarf. Jetzt wird der Bedarf gleichmaessig
+*&   auf die Arbeitstage von FSTAD bis FENDD (Fabrikkalender der Kapazitaet) verteilt; im Fenster zaehlt nur der
+*&   Anteil der Tage im Fenster. Hat der Vorgang kein Ende (FENDD leer), liegt alles auf FSTAD wie bisher.
+*&   Rueckstand, dessen Zeitraum VOR dem Fenster endet, erscheint NICHT mehr auf dem ersten Tag.
+*&   Genauer waere die tatsaechliche Verteilung je Tag aus KBEZ; die Feldnamen dort sind nicht geprueft.
+*& - VORGAENGE zaehlt verschiedene Vorgaenge (KBEDID) je Kapazitaet und Tag, nicht KBED-Zeilen.
+*& - VOR DEM EINFUEGEN IN SE11 PRUEFEN (KBED): FENDD (Ende), KEINH, KBEDID; sonst die Namen anpassen.
+*& - is_paging (skip/top) wird angewendet wie bei den anderen Sets; Obergrenzen melden eine Warnung.
 *&
 *& DDIC-Struktur ZSTR_LOG_KAP (SE11, Paket ZPP):
 *&   WERKS WERKS_D, DATUM CHAR8, TAGE CHAR2, KAPID KAPID, KAPNAME KAPNAME, KAPAR KAPART,
@@ -159,10 +170,29 @@
            END OF ty_kp_kako,
            BEGIN OF ty_kp_bed,
              kapid    TYPE kapid,
-             fstad    TYPE fstad,
+             kbedid   TYPE kbed-kbedid,
+             fstad    TYPE kbed-fstad,
+             fendd    TYPE kbed-fendd,
+             keinh    TYPE kbed-keinh,
              kbearest TYPE cy_kbeares,
              kruerest TYPE cy_krueres,
            END OF ty_kp_bed,
+           BEGIN OF ty_kp_wd,
+             kal    TYPE cr_wfcid,
+             datum  TYPE datum,
+             arbeit TYPE c LENGTH 1,
+           END OF ty_kp_wd,
+           BEGIN OF ty_kp_agg,
+             kapid TYPE kapid,
+             tag   TYPE datum,
+             h     TYPE f,
+             ops   TYPE i,
+           END OF ty_kp_agg,
+           BEGIN OF ty_kp_opk,
+             kapid  TYPE kapid,
+             tag    TYPE datum,
+             kbedid TYPE kbed-kbedid,
+           END OF ty_kp_opk,
            BEGIN OF ty_kp_ca,
              objid TYPE cr_objid,
              kapid TYPE kapid,
@@ -188,6 +218,23 @@
           ls_kp_kako  TYPE ty_kp_kako,
           lt_kp_bed   TYPE STANDARD TABLE OF ty_kp_bed,
           ls_kp_bed   TYPE ty_kp_bed,
+          lt_kp_wd    TYPE HASHED TABLE OF ty_kp_wd WITH UNIQUE KEY kal datum,
+          ls_kp_wd    TYPE ty_kp_wd,
+          lt_kp_agg   TYPE SORTED TABLE OF ty_kp_agg WITH UNIQUE KEY kapid tag,
+          ls_kp_agg   TYPE ty_kp_agg,
+          lt_kp_opk   TYPE HASHED TABLE OF ty_kp_opk WITH UNIQUE KEY kapid tag kbedid,
+          ls_kp_opk   TYPE ty_kp_opk,
+          lt_kp_days  TYPE STANDARD TABLE OF datum,
+          lv_kp_s     TYPE datum,
+          lv_kp_e     TYPE datum,
+          lv_kp_d     TYPE datum,
+          lv_kp_n     TYPE i,
+          lv_kp_h     TYPE f,
+          lv_kp_fak   TYPE f,
+          lv_kp_zeile TYPE i,
+          lv_kp_skip  TYPE i,
+          lv_kp_max   TYPE i,
+          lv_kp_grenze TYPE i,
           lt_kp_ca    TYPE STANDARD TABLE OF ty_kp_ca,
           ls_kp_ca    TYPE ty_kp_ca,
           lt_kp_ap    TYPE SORTED TABLE OF ty_kp_ap WITH UNIQUE KEY objid,
@@ -236,12 +283,99 @@
       FOR ALL ENTRIES IN lt_kp_kako
       WHERE kapid = lt_kp_kako-kapid.
 
-*   Bedarf ueber den Index KAPID, Rest Bearbeiten + Ruesten im Fenster.
-    SELECT kapid fstad kbearest kruerest FROM kbed
-      INTO CORRESPONDING FIELDS OF TABLE lt_kp_bed UP TO 20000 ROWS
+*   Bedarf ueber den Index KAPID: Vorgaenge, deren Zeitraum FSTAD..FENDD das Fenster beruehrt (FENDD leer =
+*   nur FSTAD). Eine Zeile mehr als erlaubt, damit Abschneiden erkennbar ist.
+    SELECT kapid kbedid fstad fendd keinh kbearest kruerest FROM kbed
+      INTO CORRESPONDING FIELDS OF TABLE lt_kp_bed UP TO 20001 ROWS
       FOR ALL ENTRIES IN lt_kp_kako
       WHERE kapid = lt_kp_kako-kapid
-        AND fstad BETWEEN lv_kp_von AND lv_kp_bis.
+        AND fstad <= lv_kp_bis
+        AND ( fendd >= lv_kp_von OR ( fendd = '00000000' AND fstad >= lv_kp_von ) ).
+    DESCRIBE TABLE lt_kp_bed LINES lv_kp_zeile.
+    IF lv_kp_zeile > 20000.
+      lv_kp_grenze = 20001.
+      DELETE lt_kp_bed FROM lv_kp_grenze.
+      mo_context->get_message_container( )->add_message_text_only(
+        iv_msg_type = 'W'
+        iv_msg_text = 'LogKapSet: Obergrenze 20000 Bedarfssaetze erreicht, Antwort unvollstaendig'
+        iv_add_to_response_header = abap_true ).
+    ENDIF.
+
+*   Bedarf je Vorgang auf die Arbeitstage seines Zeitraums verteilen, nur Tage im Fenster zaehlen.
+    LOOP AT lt_kp_bed INTO ls_kp_bed.
+      CASE ls_kp_bed-keinh.
+        WHEN 'MIN'.
+          lv_kp_fak = '0.0166666667'.
+        WHEN 'S'.
+          lv_kp_fak = '0.000277777778'.
+        WHEN OTHERS.   " H (und unbekannt)
+          lv_kp_fak = 1.
+      ENDCASE.
+      lv_kp_h = ( ls_kp_bed-kbearest + ls_kp_bed-kruerest ) * lv_kp_fak.
+      lv_kp_s = ls_kp_bed-fstad.
+      lv_kp_e = ls_kp_bed-fendd.
+      IF lv_kp_e < lv_kp_s.
+        lv_kp_e = lv_kp_s.
+      ENDIF.
+      IF lv_kp_e - lv_kp_s > 400.
+        lv_kp_e = lv_kp_s + 400.
+      ENDIF.
+      READ TABLE lt_kp_kako INTO ls_kp_kako WITH KEY kapid = ls_kp_bed-kapid.
+      lv_kp_kal = ls_kp_kako-kalid.
+      IF lv_kp_kal IS INITIAL.
+        lv_kp_kal = lv_kp_fabkl.
+      ENDIF.
+      CLEAR lt_kp_days.
+      lv_kp_d = lv_kp_s.
+      WHILE lv_kp_d <= lv_kp_e.
+        READ TABLE lt_kp_wd INTO ls_kp_wd WITH TABLE KEY kal = lv_kp_kal datum = lv_kp_d.
+        IF sy-subrc <> 0.
+          ls_kp_wd-kal = lv_kp_kal.
+          ls_kp_wd-datum = lv_kp_d.
+          ls_kp_wd-arbeit = 'X'.   " ohne Kalender oder bei Fehler: Arbeitstag
+          IF lv_kp_kal IS NOT INITIAL.
+            CLEAR lv_kp_ind.
+            CALL FUNCTION 'DATE_CONVERT_TO_FACTORYDATE'
+              EXPORTING
+                date                 = lv_kp_d
+                factory_calendar_id  = lv_kp_kal
+                correct_option       = '+'
+              IMPORTING
+                workingday_indicator = lv_kp_ind
+              EXCEPTIONS
+                OTHERS               = 1.
+            IF sy-subrc = 0 AND lv_kp_ind IS NOT INITIAL.
+              CLEAR ls_kp_wd-arbeit.
+            ENDIF.
+          ENDIF.
+          INSERT ls_kp_wd INTO TABLE lt_kp_wd.
+        ENDIF.
+        IF ls_kp_wd-arbeit = 'X'.
+          APPEND lv_kp_d TO lt_kp_days.
+        ENDIF.
+        lv_kp_d = lv_kp_d + 1.
+      ENDWHILE.
+      IF lt_kp_days IS INITIAL.   " Zeitraum nur an freien Tagen: alles auf den Start
+        APPEND lv_kp_s TO lt_kp_days.
+      ENDIF.
+      DESCRIBE TABLE lt_kp_days LINES lv_kp_n.
+      lv_kp_h = lv_kp_h / lv_kp_n.
+      LOOP AT lt_kp_days INTO lv_kp_d.
+        CHECK lv_kp_d >= lv_kp_von AND lv_kp_d <= lv_kp_bis.
+        CLEAR ls_kp_agg.
+        ls_kp_agg-kapid = ls_kp_bed-kapid.
+        ls_kp_agg-tag   = lv_kp_d.
+        ls_kp_agg-h     = lv_kp_h.
+        ls_kp_opk-kapid  = ls_kp_bed-kapid.
+        ls_kp_opk-tag    = lv_kp_d.
+        ls_kp_opk-kbedid = ls_kp_bed-kbedid.
+        INSERT ls_kp_opk INTO TABLE lt_kp_opk.
+        IF sy-subrc = 0.
+          ls_kp_agg-ops = 1.   " verschiedener Vorgang an diesem Tag
+        ENDIF.
+        COLLECT ls_kp_agg INTO lt_kp_agg.
+      ENDLOOP.
+    ENDLOOP.
 
 *   Arbeitsplaetze je Kapazitaet (Text).
     SELECT objid kapid FROM crca INTO CORRESPONDING FIELDS OF TABLE lt_kp_ca
@@ -255,7 +389,7 @@
 
 *   Nur Kapazitaeten mit Bedarf im Fenster ausgeben.
     LOOP AT lt_kp_kako INTO ls_kp_kako.
-      READ TABLE lt_kp_bed TRANSPORTING NO FIELDS WITH KEY kapid = ls_kp_kako-kapid.
+      READ TABLE lt_kp_agg TRANSPORTING NO FIELDS WITH KEY kapid = ls_kp_kako-kapid.
       CHECK sy-subrc = 0.
       lv_kp_kal = ls_kp_kako-kalid.
       IF lv_kp_kal IS INITIAL.
@@ -284,10 +418,11 @@
         lv_kp_tag = lv_kp_von + lv_kp_i.
         ls_kp_out-tag = lv_kp_tag.
         CLEAR: ls_kp_out-bedarf_h, ls_kp_out-angebot_h, ls_kp_out-vorgaenge.
-        LOOP AT lt_kp_bed INTO ls_kp_bed WHERE kapid = ls_kp_kako-kapid AND fstad = lv_kp_tag.
-          ls_kp_out-bedarf_h  = ls_kp_out-bedarf_h + ls_kp_bed-kbearest + ls_kp_bed-kruerest.
-          ls_kp_out-vorgaenge = ls_kp_out-vorgaenge + 1.
-        ENDLOOP.
+        READ TABLE lt_kp_agg INTO ls_kp_agg WITH TABLE KEY kapid = ls_kp_kako-kapid tag = lv_kp_tag.
+        IF sy-subrc = 0.
+          ls_kp_out-bedarf_h  = ls_kp_agg-h.
+          ls_kp_out-vorgaenge = ls_kp_agg-ops.
+        ENDIF.
         IF ls_kp_out-kein_standard IS INITIAL AND lv_kp_kal IS NOT INITIAL.
           CLEAR lv_kp_ind.
           CALL FUNCTION 'DATE_CONVERT_TO_FACTORYDATE'
@@ -309,6 +444,20 @@
     ENDLOOP.
 
     SORT lt_kp_out BY kapid tag.
+
+*   Paging wie bei den anderen Sets (skip/top); der Client holt Seiten zu 2000 Zeilen.
+    IF is_paging-skip > 0.
+      lv_kp_skip = is_paging-skip.
+      DELETE lt_kp_out TO lv_kp_skip.
+    ENDIF.
+    IF is_paging-top > 0.
+      lv_kp_max = is_paging-top.
+      DESCRIBE TABLE lt_kp_out LINES lv_kp_zeile.
+      IF lv_kp_zeile > lv_kp_max.
+        lv_kp_max = lv_kp_max + 1.
+        DELETE lt_kp_out FROM lv_kp_max.
+      ENDIF.
+    ENDIF.
     copy_data_to_ref( EXPORTING is_data = lt_kp_out CHANGING cr_data = er_entityset ).
     RETURN.
   ENDIF.

@@ -68,24 +68,58 @@ public static class WorldParsers
             .Select(p => (DateOnly.Parse(p[0], CultureInfo.InvariantCulture), double.Parse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture)))
             .ToList();
 
-    /// <summary>Eurostat JSON-stat 2.0 mit einer Zeitdimension (Monate "2026-07") fuer ein Land.</summary>
+    /// <summary>
+    /// Eurostat JSON-stat 2.0 mit einer Zeitdimension (Monate "2026-07") fuer ein Land. JSON-stat kennt beide Formen:
+    /// <c>value</c> als Objekt (Position als Schluessel, nur vorhandene Werte) oder als Array (Position = Index, null = fehlt);
+    /// <c>index</c> der Zeit als Objekt (Name zu Position) oder als Array der Namen (Position = Index).
+    /// </summary>
     public static IReadOnlyList<(DateOnly, double)> ParseEurostat(string json)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
         if (!root.TryGetProperty("value", out var values) || !root.TryGetProperty("dimension", out var dims)) return [];
         var index = dims.GetProperty("time").GetProperty("category").GetProperty("index");
-        var result = new List<(DateOnly, double)>();
-        foreach (var t in index.EnumerateObject())
+
+        JsonElement? ValueAt(int pos)
         {
-            var pos = t.Value.GetInt32().ToString(CultureInfo.InvariantCulture);
-            if (!values.TryGetProperty(pos, out var v) || v.ValueKind != JsonValueKind.Number) continue;
-            var parts = t.Name.Split('-', 'M');
+            if (values.ValueKind == JsonValueKind.Object)
+                return values.TryGetProperty(pos.ToString(CultureInfo.InvariantCulture), out var o) ? o : null;
+            if (values.ValueKind == JsonValueKind.Array && pos >= 0 && pos < values.GetArrayLength())
+                return values[pos];
+            return null;
+        }
+
+        IEnumerable<(string Name, int Pos)> Periods()
+        {
+            if (index.ValueKind == JsonValueKind.Object)
+                foreach (var t in index.EnumerateObject())
+                    yield return (t.Name, t.Value.GetInt32());
+            else if (index.ValueKind == JsonValueKind.Array)
+            {
+                var i = 0;
+                foreach (var t in index.EnumerateArray())
+                    yield return (t.GetString() ?? "", i++);
+            }
+        }
+
+        var result = new List<(DateOnly, double)>();
+        foreach (var (name, pos) in Periods())
+        {
+            if (ValueAt(pos) is not { ValueKind: JsonValueKind.Number } v) continue;
+            var parts = name.Split('-', 'M');
             if (parts.Length < 2 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[^1], out var mo)) continue;
             result.Add((new DateOnly(y, mo, 1), v.GetDouble()));
         }
         return result.OrderBy(r => r.Item1).ToList();
     }
+
+    /// <summary>Doppelte Meldungen (dieselbe Quelle erscheint in mehreren 15-Minuten-Dateien oder fuer mehrere Orte) auf eine je Adresse und Land und Tag reduzieren; die meistbeachtete bleibt.</summary>
+    public static IReadOnlyList<WorldEvent> DedupeEvents(IEnumerable<WorldEvent> events)
+        => events.GroupBy(e => e.Url.Length > 0
+                ? e.Url.Trim().ToLowerInvariant() + "|" + e.Country
+                : $"{e.Country}|{e.Place}|{e.RootCode}|{DateOnly.FromDateTime(e.TimeUtc):yyyy-MM-dd}")
+            .Select(g => g.OrderByDescending(e => e.Mentions).First())
+            .ToList();
 
     /// <summary>IMF DataMapper NGDP_RPCH: Wachstum je ISO-3-Land fuer zwei Jahre.</summary>
     public static IReadOnlyList<WorldGrowth> ParseImf(string json, IEnumerable<string> iso2, int firstYear)

@@ -12,6 +12,21 @@ public sealed class ControllingAnalyticsTests
         => new(date, tsc, "CH", "K", "Kunde", "CH", material, material, "Transmitters", local * rate, qty, "R", local, currency);
 
     [Fact]
+    public void Bruecke_Schritte_Summieren_Trotz_Rundung_Genau_Auf_Aktuell()
+    {
+        var facts = new[]
+        {
+            Line(Prev, "A", 3, 100.4m), Line(Prev, "B", 7, 333.3m), Line(Prev, "D", 2, 41.7m),
+            Line(Cur, "A", 4, 150.6m), Line(Cur, "B", 6, 280.2m), Line(Cur, "C", 2, 77.7m)
+        };
+
+        var b = ControllingAnalytics.Bridge("*", facts, RefEnd, 9);
+
+        Assert.Equal(b.Current, b.Previous + b.Volume + b.Mix + b.Price + b.NewItems + b.LostItems + b.Currency + b.Other);
+        Assert.Equal(b.Change, b.Volume + b.Mix + b.Price + b.NewItems + b.LostItems + b.Currency + b.Other);
+    }
+
+    [Fact]
     public void Ein_Artikel_Menge_Und_Preis()
     {
         var b = ControllingAnalytics.Bridge("*", [Line(Prev, "A", 10, 100), Line(Cur, "A", 12, 132)], RefEnd, 9);

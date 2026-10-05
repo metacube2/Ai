@@ -100,8 +100,12 @@ public static class ControllingAnalytics
         }
         var previousTotal = prev.Sum(f => f.ValueChf);
         var currentTotal = cur.Sum(f => f.ValueChf);
-        var other = currentTotal - previousTotal - (volume + mix + price + newItems + lost + currency);
-        return new ControllingBridge(scope, Round(previousTotal), Round(volume), Round(mix), Round(price), Round(newItems), Round(lost), Round(currency), Round(other), Round(currentTotal));
+        // Gerundet wird jeder Schritt; "Uebrige" nimmt die Rundungsreste auf, damit die Schritte genau auf Aktuell - Vorjahr summieren.
+        var rPrev = Round(previousTotal);
+        var rCur = Round(currentTotal);
+        decimal rVol = Round(volume), rMix = Round(mix), rPrice = Round(price), rNew = Round(newItems), rLost = Round(lost), rCurrency = Round(currency);
+        var rOther = rCur - rPrev - (rVol + rMix + rPrice + rNew + rLost + rCurrency);
+        return new ControllingBridge(scope, rPrev, rVol, rMix, rPrice, rNew, rLost, rCurrency, rOther, rCur);
     }
 
     private static decimal Round(decimal v) => Math.Round(v, 0);
@@ -109,7 +113,8 @@ public static class ControllingAnalytics
     /// <summary>
     /// Hochrechnung des Kalenderjahrs von <paramref name="refEnd"/>: Ist bis zum letzten vollstaendigen Monat plus die Restmonate
     /// aus dem gleichen Monat im Vorjahr mal Wachstum (Ist seit Jahresbeginn gegen denselben Zeitraum im Vorjahr, 0.5 bis 2).
-    /// Das volle Vorjahr nur, wenn die Daten es ganz enthalten.
+    /// Das volle Vorjahr nur, wenn die Daten es ganz enthalten. Das Wachstum ist je Sicht begrenzt (0.5 bis 2) und deshalb nicht
+    /// additiv: die Summe der Hochrechnungen je Gesellschaft oder Sparte muss nicht die Hochrechnung des Gesamts ergeben.
     /// </summary>
     public static ControllingProjection Projection(string scope, IReadOnlyList<SalesFact> facts, DateOnly refEnd, DateOnly dataStart)
     {

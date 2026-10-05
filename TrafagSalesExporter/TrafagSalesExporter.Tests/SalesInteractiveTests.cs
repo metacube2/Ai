@@ -21,8 +21,50 @@ public sealed class SalesInteractiveTests
         Assert.Equal(2, frames.Count);
         var q3 = frames[1].Points.Single();
         Assert.Equal(150, q3.Revenue);
-        Assert.Equal(50, q3.Growth, 6);
+        Assert.Equal(50, q3.Growth!.Value, 6);
         Assert.Equal(1, q3.Invoices);
+    }
+
+    [Fact]
+    public void Galaxie_Erstes_Quartal_Ohne_Wachstum_Und_Angebrochenes_Quartal_Markiert()
+    {
+        var facts = new[] { F(new(2026, 1, 10), "K1", 100), F(new(2026, 4, 10), "K1", 150, invoice: "R2"), F(new(2026, 7, 10), "K1", 90, invoice: "R3") };
+
+        // Referenzende 1.9.: Q3 enthaelt erst Juli und August.
+        var frames = SalesInteractive.Galaxy(facts, new DateOnly(2026, 9, 1), new DateOnly(2026, 1, 1));
+
+        Assert.Equal(3, frames.Count);
+        Assert.Null(frames[0].Points.Single().Growth);
+        Assert.False(frames[0].Partial);
+        Assert.Equal(50, frames[1].Points.Single().Growth!.Value, 6);
+        Assert.True(frames[2].Partial);
+        Assert.Null(frames[2].Points.Single().Growth);
+    }
+
+    [Fact]
+    public void Landschaft_Negative_Werte_Ergeben_Keine_NaN_Und_Alle_Monate()
+    {
+        Assert.Equal(1, SalesInteractive.LandscapeHeight(-50, 100));
+        Assert.Equal(1, SalesInteractive.LandscapeHeight(0, 100));
+        Assert.Equal(180, SalesInteractive.LandscapeHeight(100, 100), 6);
+        Assert.False(double.IsNaN(SalesInteractive.LandscapeHeight(-1, 0)));
+
+        var months = SalesInteractive.Months(new DateOnly(2026, 1, 1), new DateOnly(2026, 5, 1));
+        Assert.Equal(4, months.Count);
+        Assert.Equal(new DateOnly(2026, 4, 1), months[^1]);
+    }
+
+    [Fact]
+    public void Rhythmus_Reihenfolge_Ist_Stabil_Bei_Gleichstand()
+    {
+        var facts = new List<SalesFact>();
+        foreach (var k in new[] { "B", "A" })
+            foreach (var d in new[] { 1, 31, 61, 91 })
+                facts.Add(F(new DateOnly(2026, 1, 1).AddDays(d), k, 100));
+
+        var r = SalesInteractive.Rhythm(facts, RefEnd);
+
+        Assert.Equal(["A", "B"], r.Select(c => c.Key));
     }
 
     [Fact]

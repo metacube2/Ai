@@ -12,7 +12,7 @@ public sealed record LiveBin(
 }
 
 /// <summary>Ein Gang (Regalzeile) eines Lagertyps.</summary>
-public sealed record LiveAisle(string Type, string Aisle, int Columns, int Levels, IReadOnlyList<LiveBin> Bins);
+public sealed record LiveAisle(string Type, string Aisle, int Columns, int Levels, IReadOnlyList<LiveBin> Bins, string Lgnum = "");
 
 /// <summary>
 /// Logistik live, 3D-Lagerplatzansicht (Wunsch Ingo 2026-10-05): aus den heutigen Transportauftragspositionen die
@@ -95,30 +95,54 @@ public static class LogisticsBinLayout
 
     /// <summary>Regalgaenge der physischen Lagertypen; nicht zerlegbare Plaetze je Lagertyp der Reihe nach, 10 Felder je Ebene.</summary>
     public static IReadOnlyList<LiveAisle> Aisles(IEnumerable<LiveBin> bins, int maxAisles = 24)
+        => AislesLimited(bins, maxAisles).Shown;
+
+    /// <summary>Wie <see cref="Aisles"/>, meldet aber zusaetzlich, wie viele Gaenge wegen der Obergrenze fehlen.</summary>
+    public static (IReadOnlyList<LiveAisle> Shown, int Omitted) AislesLimited(IEnumerable<LiveBin> bins, int maxAisles = 24)
     {
         var physical = bins.Where(b => !IsInterim(b.Type)).ToList();
         var aisles = new List<LiveAisle>();
-        foreach (var g in physical.Where(b => b.Aisle.Length > 0).GroupBy(b => (b.Type, b.Aisle)))
+        // Lagernummer gehoert zum Gang: Gang "01" in Lager 110 und in Lager 120 sind zwei Regale.
+        foreach (var g in physical.Where(b => b.Aisle.Length > 0).GroupBy(b => (b.Lgnum, b.Type, b.Aisle)))
         {
             // Felder und Ebenen verdichten: nur belegte Nummern, in ihrer Reihenfolge.
             var cols = g.Select(b => b.Column).Distinct().Order().Select((c, i) => (c, i)).ToDictionary(x => x.c, x => x.i + 1);
             var levels = g.Select(b => b.Level).Distinct().Order().Select((l, i) => (l, i)).ToDictionary(x => x.l, x => x.i + 1);
-            var placed = g.Select(b => b with { Column = cols[b.Column], Level = levels[b.Level] }).ToList();
-            aisles.Add(new LiveAisle(g.Key.Type, g.Key.Aisle, cols.Count, levels.Count, placed));
+            var placed = MergeSameCell(g.Select(b => b with { Column = cols[b.Column], Level = levels[b.Level] }));
+            aisles.Add(new LiveAisle(g.Key.Type, g.Key.Aisle, cols.Count, levels.Count, placed, g.Key.Lgnum));
         }
-        foreach (var g in physical.Where(b => b.Aisle.Length == 0).GroupBy(b => b.Type))
+        foreach (var g in physical.Where(b => b.Aisle.Length == 0).GroupBy(b => (b.Lgnum, b.Type)))
         {
             var ordered = g.OrderBy(b => b.Bin, StringComparer.OrdinalIgnoreCase).ToList();
             for (var chunk = 0; chunk * 40 < ordered.Count; chunk++)
             {
                 var part = ordered.Skip(chunk * 40).Take(40).Select((b, i) => b with { Aisle = "~" + (chunk + 1), Column = i % 10 + 1, Level = i / 10 + 1 }).ToList();
-                aisles.Add(new LiveAisle(g.Key, "~" + (chunk + 1), Math.Min(10, part.Count), (part.Count + 9) / 10, part));
+                aisles.Add(new LiveAisle(g.Key.Type, "~" + (chunk + 1), Math.Min(10, part.Count), (part.Count + 9) / 10, part, g.Key.Lgnum));
             }
         }
-        return aisles.OrderBy(a => a.Type, StringComparer.Ordinal).ThenBy(a => a.Aisle, StringComparer.OrdinalIgnoreCase)
+        var shown = aisles.OrderBy(a => a.Lgnum, StringComparer.Ordinal).ThenBy(a => a.Type, StringComparer.Ordinal).ThenBy(a => a.Aisle, StringComparer.OrdinalIgnoreCase)
             .OrderByDescending(a => a.Bins.Sum(b => b.Moves.Count)).Take(maxAisles)
-            .OrderBy(a => a.Type, StringComparer.Ordinal).ThenBy(a => a.Aisle, StringComparer.OrdinalIgnoreCase).ToList();
+            .OrderBy(a => a.Lgnum, StringComparer.Ordinal).ThenBy(a => a.Type, StringComparer.Ordinal).ThenBy(a => a.Aisle, StringComparer.OrdinalIgnoreCase).ToList();
+        return (shown, aisles.Count - shown.Count);
     }
+
+    /// <summary>
+    /// Zwei Plaetze, die auf dasselbe Feld und dieselbe Ebene zerlegt werden (z. B. "A-01-1" und "A-1-1"), wuerden im 3D-Bild
+    /// uebereinander liegen und einer waere nicht anklickbar. Sie werden zu einer Zelle zusammengefasst (Name des aktiveren Platzes).
+    /// </summary>
+    private static List<LiveBin> MergeSameCell(IEnumerable<LiveBin> placed)
+        => placed.GroupBy(b => (b.Column, b.Level)).Select(c =>
+        {
+            var main = c.OrderByDescending(b => b.Moves.Count).ThenBy(b => b.Bin, StringComparer.Ordinal).First();
+            if (c.Count() == 1) return main;
+            var moves = c.SelectMany(b => b.Moves).Distinct().OrderByDescending(x => x.ConfirmedAt ?? x.CreatedAt).ToList();
+            return main with
+            {
+                Picks = c.Sum(b => b.Picks), PicksOpen = c.Sum(b => b.PicksOpen),
+                Puts = c.Sum(b => b.Puts), PutsOpen = c.Sum(b => b.PutsOpen),
+                Quantity = c.Sum(b => b.Quantity), LastAt = c.Max(b => b.LastAt), Moves = moves
+            };
+        }).ToList();
 
     /// <summary>Schnittstellen und Zonen (9xx) je Lagertyp: Anzahl Plaetze, Bewegungen, offen.</summary>
     public static IReadOnlyList<(string Type, int Bins, int Moves, int Open)> Zones(IEnumerable<LiveBin> bins)

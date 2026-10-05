@@ -17,6 +17,12 @@ namespace TrafagSalesExporter.Services;
 public sealed class AdInfrastructureService
 {
     private static readonly TimeSpan CacheTime = TimeSpan.FromMinutes(30);
+
+    /// <summary>Fehlerergebnisse hoechstens eine Minute merken, erfolgreiche so lange wie <paramref name="normal"/>.</summary>
+    internal static TimeSpan CacheWindow(string? error, TimeSpan normal) => error is null ? normal : TimeSpan.FromMinutes(1);
+
+    /// <summary>System.DirectoryServices liefert Datumswerte als UTC mit Kind Unspecified; ToUniversalTime wuerde sie als Ortszeit lesen.</summary>
+    internal static DateTime ToUtc(DateTime d) => d.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(d, DateTimeKind.Utc) : d.ToUniversalTime();
     private readonly AdComputerService _ad;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private AdInfraResult? _cache;
@@ -36,7 +42,7 @@ public sealed class AdInfrastructureService
         await _gate.WaitAsync();
         try
         {
-            if (_cache is { ReadAt: { } at } && at > DateTime.Now - CacheTime)
+            if (_cache is { ReadAt: { } at } && at > DateTime.Now - CacheWindow(_cache.Error, CacheTime))
                 return _cache;
             var computers = await _ad.GetAsync();
             _cache = await ReadAsync(computers);
@@ -56,14 +62,14 @@ public sealed class AdInfrastructureService
             var notes = new List<string>();
             var (defaultNc, configNc, schemaNc) = await Task.Run(NamingContexts);
             var domain = await Task.Run(() => ReadDomain(defaultNc, configNc, schemaNc, notes));
-            var (sites, links) = await Task.Run(() => ReadSites(configNc, notes));
             var dcs = computers.Computers.Where(c => c.IsDomainController && c.Enabled && c.DnsHostName.Length > 0).ToList();
+            var (sites, links) = await Task.Run(() => ReadSites(configNc, notes, dcs));
             var dcSite = sites.SelectMany(s => s.Dcs.Select(d => (Dc: d, Site: s.Name))).GroupBy(x => x.Dc, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First().Site, StringComparer.OrdinalIgnoreCase);
             var replication = await Task.WhenAll(dcs.Select(dc => ReadReplicationAsync(dc, dcSite.GetValueOrDefault(dc.Name) ?? "", [defaultNc, configNc, schemaNc])));
             var cas = await Task.Run(() => ReadCas(configNc, notes));
             var webHosts = computers.Computers
-                .Where(c => c.Enabled && c.DnsHostName.Length > 0 && c.LastLogonUtc > DateTime.UtcNow.AddDays(-30)
+                .Where(c => c.DnsHostName.Length > 0 && AdAnalysis.IsActiveRecently(c, DateTime.UtcNow)
                             && c.Spns.Any(s => s.StartsWith("HTTP/", StringComparison.OrdinalIgnoreCase)))
                 .Select(c => c.DnsHostName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(h => h).Take(40).ToList();
             var webCerts = await ReadWebCertsAsync(webHosts);
@@ -122,7 +128,11 @@ public sealed class AdInfrastructureService
     internal static DateTime? FileTime(SearchResult r, string p)
         => Long(r, p) is { } ft && ft > 0 && ft < DateTime.MaxValue.ToFileTimeUtc() ? DateTime.FromFileTimeUtc(ft) : null;
 
-    internal static DateTime? Date(SearchResult r, string p) => r.Properties[p].Count > 0 && r.Properties[p][0] is DateTime d ? d.ToUniversalTime() : null;
+    internal static DateTime? Date(SearchResult r, string p) => r.Properties[p].Count > 0 && r.Properties[p][0] is DateTime d ? ToUtc(d) : null;
+
+    /// <summary>GPO-Version (versionNumber): vorzeichenlose 32 Bit, AD liefert sie als int und damit ab 32768 Benutzerversionen negativ.</summary>
+    internal static long? Version(SearchResult r, string p)
+        => r.Properties[p].Count == 0 ? null : r.Properties[p][0] switch { int i => (long)unchecked((uint)i), long l => l, var o => long.TryParse(Convert.ToString(o), out var v) ? v : null };
 
     [SupportedOSPlatform("windows")]
     private static AdDomainInfo ReadDomain(string defaultNc, string configNc, string schemaNc, List<string> notes)
@@ -192,12 +202,16 @@ public sealed class AdInfrastructureService
     }
 
     [SupportedOSPlatform("windows")]
-    private static (IReadOnlyList<AdSiteInfo>, IReadOnlyList<AdSiteLinkInfo>) ReadSites(string configNc, List<string> notes)
+    private static (IReadOnlyList<AdSiteInfo>, IReadOnlyList<AdSiteLinkInfo>) ReadSites(string configNc, List<string> notes, IReadOnlyList<AdComputer> dcs)
     {
         try
         {
             var sitesPath = $"LDAP://CN=Sites,{configNc}";
-            var servers = Search(sitesPath, "(objectClass=server)", ["name", "distinguishedName"])
+            // Nur Serverobjekte, die auf ein vorhandenes, aktiviertes DC-Computerkonto verweisen (serverReference);
+            // verwaiste Serverobjekte alter DCs zaehlen sonst als DC des Standorts.
+            var dcDns = dcs.Select(d => $"CN={d.Name},{d.Container}").ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var servers = Search(sitesPath, "(objectClass=server)", ["name", "distinguishedName", "serverReference"])
+                .Where(r => dcDns.Count == 0 || dcDns.Contains(Text(r, "serverReference")))
                 .Select(r => (Name: Text(r, "name"), Site: AdAnalysis.FirstRdnValue(AdAnalysis.ParentDn(AdAnalysis.ParentDn(Text(r, "distinguishedName"))))))
                 .ToList();
             var subnets = Search($"LDAP://CN=Subnets,CN=Sites,{configNc}", "(objectClass=subnet)", ["name", "siteObject"])

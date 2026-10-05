@@ -42,7 +42,7 @@ public sealed record SalesCompanyChange(string Tsc, decimal Current, decimal Pre
 public sealed record SalesDeclineItem(SalesCustomerSummary Customer, string Kind, decimal LostChf);
 
 public sealed record SalesQuarterMovement(string Quarter, int NewCustomers, decimal NewRevenue12, int LostCustomers, decimal LostRevenue12, bool LostFinal, bool NewReliable, bool LostKnown,
-    IReadOnlyList<string> NewNames, IReadOnlyList<string> LostNames);
+    IReadOnlyList<string> NewNames, IReadOnlyList<string> LostNames, bool NewRevenueComplete = true);
 
 public sealed record SalesConcentrationResult(IReadOnlyList<(int Rank, double CumulativeShare)> Curve, double Top1, double Top5, double Top10, double Top20,
     int CustomersFor80, double Hhi, decimal Total, int Customers, IReadOnlyList<(string Tsc, double Top10Share, int Customers)> PerCompany);

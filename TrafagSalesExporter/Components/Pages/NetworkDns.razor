@@ -33,7 +33,7 @@ else
         <div class="ll-kpi"><div class="ll-kpi-value">@zones.Sum(z => z.Static + z.Dynamic)</div><div class="ll-kpi-label">@T("Einträge", "Records")</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value">@zones.Sum(z => z.Static)</div><div class="ll-kpi-label">@T("statisch", "static")</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value nw-text-data">@zones.Sum(z => z.Stale)</div><div class="ll-kpi-label">@T("veraltet (Scavenging-Kandidaten)", "stale (scavenging candidates)")</div></div>
-        <div class="ll-kpi"><div class="ll-kpi-value @(zones.Any(z => z.Aging != true && z.Dynamic > 0) ? "nw-text-net" : string.Empty)">@zones.Count(z => z.Aging != true && z.Dynamic > 0)</div><div class="ll-kpi-label">@T("Zonen mit dynamischen Einträgen ohne Alterung", "zones with dynamic records but no aging")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(zones.Any(z => z.Aging != true && z.Static + z.Dynamic > 0) ? "nw-text-net" : string.Empty)">@zones.Count(z => z.Aging != true && z.Static + z.Dynamic > 0)</div><div class="ll-kpi-label">@T("Zonen mit Einträgen ohne Alterung", "zones with records but no aging")</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value nw-text-net">@_r.DuplicateA.Count</div><div class="ll-kpi-label">@T("IPs mit mehreren Namen", "IPs with several names")</div></div>
     </div>
 
@@ -54,12 +54,16 @@ else
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Success">@T("Alterung an", "aging on") @(z.NoRefreshHours is { } a && z.RefreshHours is { } b ? $"{a / 24}+{b / 24} d" : string.Empty)</MudChip>
                     }
-                    else if (z.Dynamic > 0)
+                    else if (z.Aging == false)
                     {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Error">@T("Alterung aus", "aging off")</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="@(z.Static + z.Dynamic > 0 ? Color.Warning : Color.Default)">@T("Alterung aus", "aging off")</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@T("Alterung unbekannt", "aging unknown")</MudChip>
                     }
                     <span class="ll-grow"></span>
-                    <span class="ll-mono ll-muted">@z.Dynamic @T("dynamisch", "dynamic") · @z.Static @T("statisch", "static") · @z.Stale @T("veraltet", "stale")</span>
+                    <span class="ll-mono ll-muted">@z.Dynamic @T("dynamisch", "dynamic") · @z.Static @(z.Aging == true ? T("statisch", "static") : T("Zeitstempel 0 (statisch oder ungealtert)", "timestamp 0 (static or not aged)")) · @z.Stale @T("veraltet", "stale")</span>
                 </div>
                 <div class="dir-zone-bar">
                     @for (var i = 0; i < 5; i++)

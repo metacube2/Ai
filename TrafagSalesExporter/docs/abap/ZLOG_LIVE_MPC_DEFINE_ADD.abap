@@ -427,6 +427,17 @@
   lo_property->set_nullable( abap_false ).
   lo_property->set_filterable( abap_false ).
 
+* Nachtrag 2026-10-05: Filter "ueberfaellig" (ZSTR_LOG_LIEF-UEBERF, CHAR1); nur als Filter 'X' benutzt.
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'Ueberf'
+                  iv_abap_fieldname = 'UEBERF' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 1 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_true ).
+
   lo_entity_type->bind_structure( iv_structure_name   = 'ZSTR_LOG_LIEF'
                                   iv_bind_conversions = 'X' ).
 
@@ -596,6 +607,17 @@
                   iv_abap_fieldname = 'STOKZ' ).
   lo_property->set_type_edm_string( ).
   lo_property->set_maxlength( iv_max_length = 1 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
+* Nachtrag 2026-10-05: Stornozaehler (ZSTR_LOG_RUECK-STZHL, NUMC 8); das Cockpit liest ihn optional.
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'Stzhl'
+                  iv_abap_fieldname = 'STZHL' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 8 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_nullable( abap_false ).

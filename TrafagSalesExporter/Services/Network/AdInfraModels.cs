@@ -63,7 +63,7 @@ public sealed class AdInfraResult
 }
 
 /// <summary>Verknuepfung einer GPO mit Domaene, OU oder Standort.</summary>
-public sealed record AdGpoLink(string TargetDn, string TargetLabel, string Kind, bool Enabled, bool Enforced);
+public sealed record AdGpoLink(string TargetDn, string TargetLabel, string Kind, bool Enabled, bool Enforced, int Order = 0);
 
 public sealed class AdGpo
 {
@@ -71,8 +71,10 @@ public sealed class AdGpo
     public string Name { get; init; } = "";
     public DateTime? CreatedUtc { get; init; }
     public DateTime? ChangedUtc { get; init; }
-    public int AdVersion { get; init; }
-    public int? SysvolVersion { get; init; }
+    public long AdVersion { get; init; }
+    public long? SysvolVersion { get; init; }
+    /// <summary>GPT.INI im SYSVOL nicht gefunden: die GPO ist im AD, ihre Dateien fehlen.</summary>
+    public bool SysvolMissing { get; init; }
     /// <summary>flags: 1 Benutzerteil aus, 2 Computerteil aus, 3 ganz aus.</summary>
     public int Flags { get; init; }
     public bool HasComputerSettings { get; init; }

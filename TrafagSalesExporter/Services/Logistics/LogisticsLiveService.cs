@@ -27,7 +27,9 @@ public sealed class LogisticsLiveSnapshot
 
     public int TransferOrdersCreated => Transfers.Select(x => (x.Lgnum, x.Tanum)).Distinct().Count();
     public int TransferItemsOpen => Transfers.Count(x => !x.Confirmed);
-    public int TransferItemsConfirmed => Transfers.Count(x => x.Confirmed);
+    /// <summary>Am Tag selbst quittiert; frueher quittierte Positionen (offene TA von Vortagen) zaehlen nicht als heutige Leistung.</summary>
+    public int TransferItemsConfirmed => Transfers.Count(x => x.Confirmed && (Day == default || !x.ConfirmedAt.HasValue || DateOnly.FromDateTime(x.ConfirmedAt.Value) == Day));
+    public int TransferItemsTotal => TransferItemsOpen + TransferItemsConfirmed;
     public int DeliveriesPicked => Deliveries.Count(x => x.Positions > 0 && x.PositionsPicked == x.Positions);
     public int DeliveriesWithPicking => Deliveries.Count(x => x.Positions > 0);
     public IEnumerable<LiveConfirmation> ValidConfirmations => Confirmations.Where(x => !x.Cancelled);
@@ -97,7 +99,7 @@ public sealed class LogisticsLiveService : IDisposable
         await _capacityGate.WaitAsync(ct);
         try
         {
-            if (_capacity is { } c && DateTime.Now - c.At < TimeSpan.FromMinutes(15))
+            if (_capacity is { } c && DateTime.Now - c.At < CacheTtl(c.Error))
                 return (c.Days, c.Error, c.At);
             IReadOnlyList<LiveCapacityDay> days = [];
             string? error = null;
@@ -107,7 +109,14 @@ public sealed class LogisticsLiveService : IDisposable
             {
                 var (baseUrl, user, password) = await ResolveConnectionAsync(ct);
                 using var client = CreateClient(user, password);
-                days = await _reader.ReadCapacityAsync(client, baseUrl, CapacityPlant, DateOnly.FromDateTime(DateTime.Today), 14, ct);
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeout.CancelAfter(TimeSpan.FromSeconds(30));
+                days = await _reader.ReadCapacityAsync(client, baseUrl, CapacityPlant, DateOnly.FromDateTime(DateTime.Today), 14, timeout.Token);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                // HttpClient-Timeout oder eigene Frist: kein Abbruch durch den Betrachter, sondern ein Fehler.
+                error = TimeoutText;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -122,6 +131,15 @@ public sealed class LogisticsLiveService : IDisposable
         }
     }
 
+    /// <summary>Lagernummer der Kommissionierung fuer die Vorschau (LIKP-LGNUM), sonst kaeme jedes Lager.</summary>
+    public const string OutlookWarehouse = "110";
+
+    internal const string TimeoutText = "SAP hat nicht rechtzeitig geantwortet (Timeout).";
+    private bool _overdueUnsupported;
+
+    /// <summary>Erfolg 15 Minuten merken, einen Fehler nur 1 Minute: sonst zeigt die Seite nach einem Import noch lange "fehlt".</summary>
+    internal static TimeSpan CacheTtl(string? error) => error is null ? TimeSpan.FromMinutes(15) : TimeSpan.FromMinutes(1);
+
     private readonly SemaphoreSlim _outlookGate = new(1, 1);
     private (DateTime At, IReadOnlyList<LiveDelivery> Deliveries, string? Error)? _outlook;
 
@@ -135,7 +153,7 @@ public sealed class LogisticsLiveService : IDisposable
         await _outlookGate.WaitAsync(ct);
         try
         {
-            if (_outlook is { } c && DateTime.Now - c.At < TimeSpan.FromMinutes(15))
+            if (_outlook is { } c && DateTime.Now - c.At < CacheTtl(c.Error))
                 return (c.Deliveries, c.Error, c.At);
             var list = new List<LiveDelivery>();
             string? error = null;
@@ -145,10 +163,39 @@ public sealed class LogisticsLiveService : IDisposable
             {
                 var (baseUrl, user, password) = await ResolveConnectionAsync(ct);
                 using var client = CreateClient(user, password);
+                // 15 Abfragen nacheinander: eine gemeinsame Frist, damit ein haengendes SAP nicht 15 x 20 s blockiert.
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeout.CancelAfter(TimeSpan.FromSeconds(60));
                 var today = DateOnly.FromDateTime(DateTime.Today);
-                for (var i = 1; i <= 14; i++)
-                    list.AddRange((await _reader.ReadDeliveriesAsync(client, baseUrl, today.AddDays(i), ct))
+                // Heute (i = 0) und die naechsten 14 Tage; nur Lagernummer 110 (Kommissionierung), sonst kommen alle Lager.
+                for (var i = 0; i <= 14; i++)
+                    list.AddRange((await _reader.ReadDeliveriesAsync(client, baseUrl, today.AddDays(i), timeout.Token, OutlookWarehouse))
                         .Select(d => d with { PlannedGoodsIssue = d.PlannedGoodsIssue ?? today.AddDays(i).ToDateTime(TimeOnly.MinValue) }));
+                // Eine Lieferung kann an zwei Tagen vorkommen (WADAT und WADAT_IST): je Lieferung nur die erste behalten.
+                var unique = list.GroupBy(d => d.Delivery).Select(g => g.First()).ToList();
+                list.Clear();
+                list.AddRange(unique);
+                // Ueberfaellige (Termin vor heute, Warenausgang nicht gebucht): braucht das neue Feld Ueberf in P76.
+                // Kennt P76 es noch nicht (HTTP 400), bleibt der Eimer leer und wir fragen bis zum Neustart nicht mehr.
+                if (!_overdueUnsupported)
+                {
+                    try
+                    {
+                        var overdue = await _reader.ReadDeliveriesAsync(client, baseUrl, today, timeout.Token, OutlookWarehouse, overdue: true);
+                        var known = list.Select(d => d.Delivery).ToHashSet();
+                        list.AddRange(overdue.Where(d => d.PlannedGoodsIssue.HasValue && d.PlannedGoodsIssue.Value.Date < today.ToDateTime(TimeOnly.MinValue)
+                                                          && d.GoodsIssueStatus != "C" && known.Add(d.Delivery)));
+                    }
+                    catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                    {
+                        _overdueUnsupported = true;
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                error = TimeoutText;
+                await _log.WriteAsync("Logistik", "Logistik live: Vorschau Warenausgang fehlgeschlagen", "Warning", details: error);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -242,7 +289,7 @@ public sealed class LogisticsLiveService : IDisposable
             var deliveries = await _reader.ReadDeliveriesAsync(client, baseUrl, day, timeout.Token);
 
             Merge(_transfers, transfers, x => (x.Lgnum, x.Tanum, x.Tapos));
-            Merge(_confirmations, confirmations, x => (x.Rueck, x.Rmzhl));
+            MergeConfirmations(_confirmations, confirmations);
             _deliveries = deliveries;
             _lastPollStart = started;
 
@@ -285,6 +332,25 @@ public sealed class LogisticsLiveService : IDisposable
             target[key(item)] = item;
     }
 
+    /// <summary>
+    /// Fuehrt Rueckmeldungen zusammen und macht Stornos wirksam: Der Stornosatz traegt den Zaehler des Originals (STZHL).
+    /// Das Original selbst ist beim inkrementellen Abruf nicht mehr dabei (sein Zeitstempel ist alt), bliebe also als
+    /// gueltig stehen. Deshalb wird es ueber den Schluessel (Rueck, Rmzhl) als storniert markiert.
+    /// </summary>
+    internal static void MergeConfirmations(Dictionary<(string, string), LiveConfirmation> target, IEnumerable<LiveConfirmation> items)
+    {
+        foreach (var item in items)
+        {
+            target[(item.Rueck, item.Rmzhl)] = item;
+            if (!item.HasStornoCounter)
+                continue;
+            var stzhl = item.Stzhl.Trim().TrimStart('0');
+            var original = target.Keys.FirstOrDefault(k => k.Item1 == item.Rueck && k.Item2.TrimStart('0') == stzhl && k.Item2 != item.Rmzhl);
+            if (original != default && !target[original].Cancelled)
+                target[original] = target[original] with { Cancelled = true };
+        }
+    }
+
     private void Publish(string? error, bool paused)
     {
         Snapshot = new LogisticsLiveSnapshot
@@ -318,7 +384,9 @@ public sealed class LogisticsLiveService : IDisposable
         => snapshot.ValidConfirmations
             .Where(x => x.At.HasValue && x.WorkCenter.Length > 0)
             .GroupBy(x => (x.WorkCenter, x.Plant))
-            .Select(g => new LiveWorkCenter(g.Key.WorkCenter, g.Key.Plant, g.Max(x => x.At!.Value), g.Count(), g.Sum(x => x.Yield)))
+            // Gutmenge nur in der haeufigsten Einheit des Arbeitsplatzes summieren (Stueck und Stunden nicht mischen).
+            .Select(g => new LiveWorkCenter(g.Key.WorkCenter, g.Key.Plant, g.Max(x => x.At!.Value), g.Count(),
+                g.GroupBy(x => x.Unit).OrderByDescending(u => u.Count()).First().Sum(x => x.Yield)))
             .OrderBy(x => x.Plant).ThenBy(x => x.WorkCenter)
             .ToList();
 
@@ -329,8 +397,11 @@ public sealed class LogisticsLiveService : IDisposable
             .Select(g =>
             {
                 var latest = g.MaxBy(x => x.At)!;
+                // Gutmenge je Auftrag = Menge des zuletzt zurueckgemeldeten Vorgangs (Teilrueckmeldungen dieses Vorgangs
+                // und dieser Einheit summiert); Vorgaenge nacheinander zu addieren zaehlte jedes Stueck mehrfach.
+                var lastOperation = g.Where(x => x.Operation == latest.Operation && x.Unit == latest.Unit).Sum(x => x.Yield);
                 return new LiveOrderProgress(g.Key, latest.Material, latest.OrderTarget, latest.OrderConfirmed,
-                    g.Sum(x => x.Yield), latest.At!.Value);
+                    lastOperation, latest.At!.Value);
             })
             .OrderByDescending(x => x.LastAt)
             .Take(top)

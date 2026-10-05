@@ -82,7 +82,9 @@ else
     private List<Trend> _trend = [];
     private bool _ourOnly = true;
 
-    private IEnumerable<WorldEvent> Events => _snap!.TopEvents.Where(e => !_ourOnly || _ours.Contains(e.Country));
+    private List<WorldEvent> _events = [];
+
+    private IEnumerable<WorldEvent> Events => _events.Where(e => !_ourOnly || _ours.Contains(e.Country));
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,8 +92,10 @@ else
         _snap = snap;
         _exposure = exposure;
         _ours = exposure.SalesByCountry.Keys.Concat(exposure.PurchaseByCountry.Keys).ToHashSet();
+        _events = WorldParsers.DedupeEvents(snap.TopEvents).OrderByDescending(e => e.Mentions).ToList();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var days = Enumerable.Range(0, 14).Select(i => today.AddDays(i - 13)).ToList();
+        // Der heutige Tag ist erst teilweise gezählt (UTC): die 14 letzten vollständigen Tage bis gestern.
+        var days = Enumerable.Range(0, 14).Select(i => today.AddDays(i - 14)).ToList();
         var weight = exposure.SalesByCountry.Concat(exposure.PurchaseByCountry).GroupBy(e => e.Key).ToDictionary(g => g.Key, g => g.Sum(e => e.Value));
         _trend = snap.EventDays.Where(d => _ours.Contains(d.Country)).GroupBy(d => d.Country)
             .Select(g => new Trend(g.Key, days.Select(day => g.FirstOrDefault(x => x.Day == day)?.ConflictShare ?? 0).ToList()))

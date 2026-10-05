@@ -158,7 +158,7 @@ else
     private IReadOnlyList<(string Key, string Label)> MetricLabels =>
     [
         ("computer", T("Computerkonten", "Computer accounts")),
-        ("aktiv30", T("aktiv in 30 Tagen", "active in 30 days")),
+        ("aktiv30", T("aktiv in 44 Tagen", "active in 44 days")),
         ("ohneSupport", T("ohne Herstellersupport", "without vendor support")),
         ("inaktiv90", T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days")),
         ("passwortAlt", T("Computerpasswort nicht erneuert", "Computer password not renewed")),
@@ -190,8 +190,9 @@ else
         _dns = await Dns.GetAsync();
         _infra = await Infra.GetAsync();
         _certs = NetworkAnalysisService.Certificates(_status, _nowUtc).Select(c => (c.Subject, c.NotAfter, c.DaysLeft))
-            .Concat(_infra.CertificateAuthorities.Where(c => c.NotAfterUtc is not null).Select(c => (c.Name, c.NotAfterUtc!.Value, (int)(c.NotAfterUtc.Value - _nowUtc).TotalDays)))
-            .Concat(_infra.WebCertificates.Where(c => c.NotAfterUtc is not null).Select(c => (c.Host, c.NotAfterUtc!.Value, (int)(c.NotAfterUtc.Value - _nowUtc).TotalDays)))
+            // Abgelaufene Stamm-CAs aus dem Container "Certification Authorities" sind meist alte Reste und gehoeren nicht in die Warnliste.
+            .Concat(_infra.CertificateAuthorities.Where(c => c.NotAfterUtc is not null && (c.Kind != "Stamm-CA" || c.NotAfterUtc.Value > _nowUtc.AddDays(-30))).Select(c => (c.Name, c.NotAfterUtc!.Value, (int)Math.Floor((c.NotAfterUtc.Value - _nowUtc).TotalDays))))
+            .Concat(_infra.WebCertificates.Where(c => c.NotAfterUtc is not null).Select(c => (c.Host, c.NotAfterUtc!.Value, (int)Math.Floor((c.NotAfterUtc.Value - _nowUtc).TotalDays))))
             .Where(c => c.Item3 < 90).OrderBy(c => c.Item3).ToList();
     }
 

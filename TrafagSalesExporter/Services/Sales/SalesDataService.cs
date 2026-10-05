@@ -32,7 +32,8 @@ public sealed class SalesDataService
     {
         var stamp = await _provider.GetSourceStampAsync();
         var current = _cache;
-        if (current is { Error: null } && stamp is not null && stamp == _stamp && current.LoadedAt > DateTime.Now.AddHours(-2))
+        // Ohne Quellstempel (null) gilt allein die Frist von 2 Stunden; mit Stempel zusaetzlich: Stempel unveraendert.
+        if (current is { Error: null } && IsFresh(current) && (stamp is null || stamp == _stamp))
             return current;
         // Neuer Quellstand: bisherigen Stand sofort zeigen, neu im Hintergrund rechnen (wie Einkauf, PM-04).
         if (current is { Error: null })
@@ -43,6 +44,8 @@ public sealed class SalesDataService
         return await RefreshAsync(stamp);
     }
 
+    private static bool IsFresh(SalesDataset d) => d.LoadedAt > DateTime.Now.AddHours(-2);
+
     private async Task<SalesDataset> RefreshAsync(string? stamp)
     {
         if (!await _gate.WaitAsync(0))
@@ -50,11 +53,12 @@ public sealed class SalesDataService
             // Ein Ladevorgang laeuft schon; auf ihn warten und dessen Ergebnis nehmen.
             await _gate.WaitAsync();
             _gate.Release();
+            // Fehlerergebnisse werden nie gemerkt (_cache wird nur bei Erfolg gesetzt): der naechste Aufruf versucht es neu.
             return _cache ?? new SalesDataset { LoadedAt = DateTime.Now, Error = "Laden fehlgeschlagen." };
         }
         try
         {
-            if (_cache is { Error: null } c && stamp is not null && stamp == _stamp)
+            if (_cache is { Error: null } c && IsFresh(c) && (stamp is null || stamp == _stamp))
                 return c;
             var loaded = await Task.Run(LoadAsync);
             _cache = loaded;
@@ -111,7 +115,7 @@ public sealed class SalesDataService
             var division = r.ProductDivisionText?.Trim() ?? "";
             if (division.Length == 0 && !string.IsNullOrWhiteSpace(r.Material))
                 division = divisionByMaterial.GetValueOrDefault(MaterialKeyNormalizer.Normalize(r.Material)) ?? "";
-            var country = (r.CustomerCountry ?? "").Trim().ToUpperInvariant();
+            var country = SalesAnalytics.NormalizeCountry(r.CustomerCountry);
             facts.Add(new SalesFact(DateOnly.FromDateTime(date), r.Tsc.Trim().ToUpperInvariant(), countryKey,
                 SalesAnalytics.CustomerKey(r.CustomerName, r.Tsc, r.CustomerNumber), (r.CustomerName ?? "").Trim(),
                 country.Length == 2 && country.All(char.IsLetter) ? country : "",

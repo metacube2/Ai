@@ -9,7 +9,10 @@ public static class WeltlageUi
     public static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>Farbe nach Signal: rot Gegenwind, gruen Rueckenwind, grau neutral.</summary>
-    public static string Tone(double signal) => signal <= -0.15 ? "#EF5350" : signal >= 0.15 ? "#66BB6A" : "#B0BEC5";
+    /// <summary>Schwelle, ab der ein Signal als Gegen- oder Rueckenwind gilt; gilt fuer Farben, Pulsieren und Beschriftungen gleichermassen.</summary>
+    public const double Threshold = 0.15;
+
+    public static string Tone(double signal) => signal <= -Threshold ? "#EF5350" : signal >= Threshold ? "#66BB6A" : "#B0BEC5";
 
     public static string Points(double score) => (score > 0 ? "+" : string.Empty) + score.ToString("0.0", CultureInfo.GetCultureInfo("de-CH"));
 
@@ -28,15 +31,21 @@ public static class WeltlageUi
         return (cx + r * Math.Cos(rad), cy + r * Math.Sin(rad));
     }
 
-    /// <summary>Linienpunkte einer Reihe in einem Rechteck w x h.</summary>
+    /// <summary>Linienpunkte einer Reihe in einem Rechteck w x h; waagrecht nach Datum, nicht nach Anzahl der Punkte (Wochen- und Monatsreihen vergleichbar).</summary>
     public static string Spark(IReadOnlyList<(DateOnly Date, double Value)> points, double w, double h)
     {
         if (points.Count < 2) return string.Empty;
         var min = points.Min(p => p.Value);
         var max = points.Max(p => p.Value);
         var span = max - min == 0 ? 1 : max - min;
-        return string.Join(" ", points.Select((p, i) => $"{F(w * i / (points.Count - 1))},{F(h - 2 - (h - 4) * (p.Value - min) / span)}"));
+        var first = points[0].Date.DayNumber;
+        var days = Math.Max(1, points[^1].Date.DayNumber - first);
+        return string.Join(" ", points.Select(p => $"{F(w * (p.Date.DayNumber - first) / days)},{F(h - 2 - (h - 4) * (p.Value - min) / span)}"));
     }
+
+    /// <summary>Die Punkte der letzten <paramref name="days"/> Tage bis zum letzten Datum der Reihe.</summary>
+    public static IReadOnlyList<(DateOnly Date, double Value)> LastDays(IReadOnlyList<(DateOnly Date, double Value)> points, int days)
+        => points.Count == 0 ? points : points.Where(p => p.Date >= points[^1].Date.AddDays(-days)).ToList();
 
     /// <summary>Anzeigename: Laender mit Namen statt ISO-Code.</summary>
     public static string Title(WorldImpact i) => i.Subject.Length == 2 ? TrafagSalesExporter.Components.Sales.WorldGeo.Name(i.Subject) : i.Title;

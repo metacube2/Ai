@@ -27,10 +27,10 @@ else if (_data.Error is not null)
 else if (_bridge is not null && _total is not null)
 {
     <div class="ll-kpis">
-        <div class="ll-kpi"><div class="ll-kpi-value @(_bridge.Change >= 0 ? "sal-up" : "sal-down")">@(_bridge.Change >= 0 ? "+" : string.Empty)@Short(_bridge.Change)</div><div class="ll-kpi-label">@T("Veränderung CHF", "Change CHF") @CurrentPeriod(_data) / @PreviousPeriod(_data)</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_totalBridge!.Change >= 0 ? "sal-up" : "sal-down")">@(_totalBridge.Change >= 0 ? "+" : string.Empty)@Short(_totalBridge.Change)</div><div class="ll-kpi-label">@T("Veränderung CHF", "Change CHF") @CurrentPeriod(_data) / @PreviousPeriod(_data)</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value">@Short(_total.Projected)</div><div class="ll-kpi-label">@T("Hochrechnung", "Projection") @_total.Year</div></div>
         <div class="ll-kpi"><div class="ll-kpi-value">@(_total.PreviousYear is { } py ? Short(py) : "–")</div><div class="ll-kpi-label">@T("Ist", "Actual") @(_total.Year - 1)</div></div>
-        <div class="ll-kpi"><div class="ll-kpi-value @(_total.ChangePercent >= 0 ? "sal-up" : "sal-down")">@Percent(_total.ChangePercent)</div><div class="ll-kpi-label">@T("Hochrechnung gegen Vorjahr", "Projection against previous year")</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_total.ChangePercent is null ? "ll-muted" : _total.ChangePercent >= 0 ? "sal-up" : "sal-down")">@Percent(_total.ChangePercent)</div><div class="ll-kpi-label">@T("Hochrechnung gegen Vorjahr", "Projection against previous year")</div></div>
     </div>
 
     <MudPaper Class="pa-3 mb-3" Outlined="true">
@@ -117,7 +117,7 @@ else if (_bridge is not null && _total is not null)
                             {
                                 <line x1="@F(60 + 480 * (double)prevYear / pmax)" y1="@F(y - 4)" x2="@F(60 + 480 * (double)prevYear / pmax)" y2="@F(y + 24)" class="ctl-prev-mark"><title>@(p.Year - 1): CHF @Chf(prevYear)</title></line>
                             }
-                            <text x="@F(66 + wYtd + wRest)" y="@F(y + 15)" class="ctl-val-left">@Short(p.Projected) <tspan class="@(p.ChangePercent >= 0 ? "ctl-up" : "ctl-down")">@Percent(p.ChangePercent)</tspan></text>
+                            <text x="@F(66 + wYtd + wRest)" y="@F(y + 15)" class="ctl-val-left">@Short(p.Projected) <tspan class="@(p.ChangePercent is null ? "ll-muted" : p.ChangePercent >= 0 ? "ctl-up" : "ctl-down")">@Percent(p.ChangePercent)</tspan></text>
                         </g>
                     }
                 </svg>
@@ -167,6 +167,8 @@ else if (_bridge is not null && _total is not null)
 
     private SalesDataset? _data;
     private ControllingBridge? _bridge;
+    // Die Kennzahl oben gilt immer für das Gesamt, unabhängig von der gewählten Sicht der Brücke (wie die übrigen Kennzahlen).
+    private ControllingBridge? _totalBridge;
     private ControllingProjection? _total;
     private IReadOnlyList<ControllingBridge> _companyBridges = [];
     private IReadOnlyList<ControllingProjection> _companyProjections = [];
@@ -200,6 +202,7 @@ else if (_bridge is not null && _total is not null)
             .Select(g => ControllingAnalytics.Projection(g.Key, g.ToList(), refEnd, _data.DataStart))
             .OrderByDescending(p => p.Projected).ToList();
         _total = ControllingAnalytics.Projection(All, facts, refEnd, _data.DataStart);
+        _totalBridge = ControllingAnalytics.Bridge(All, facts, refEnd, _data.CompareMonths);
         Choose(All);
     }
 

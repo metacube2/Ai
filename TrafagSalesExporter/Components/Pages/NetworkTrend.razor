@@ -134,7 +134,7 @@ else
     private IReadOnlyList<MetricInfo> Metrics =>
     [
         new("computer", T("Computerkonten", "Computer accounts"), "0"),
-        new("aktiv30", T("aktiv in 30 Tagen", "active in 30 days"), "1"),
+        new("aktiv30", T("aktiv in 44 Tagen", "active in 44 days"), "1"),
         new("ohneSupport", T("ohne Herstellersupport", "without vendor support"), "2"),
         new("inaktiv90", T("aktiv, 90 Tage ohne Anmeldung", "enabled, no logon for 90 days"), "3"),
         new("deaktiviert", T("deaktiviert", "disabled"), "4"),
@@ -166,7 +166,8 @@ else
     private void Rescale()
         => _max = Math.Max(1, _values.Where(v => _shown.Contains(v.Key.Item2) && v.Value is not null).Select(v => v.Value!.Value).DefaultIfEmpty(1).Max() * 1.1);
 
-    private double X(int i) => _days.Count <= 1 ? 520 : 60 + 920.0 * i / (_days.Count - 1);
+    // X nach dem Datum, nicht nach der Nummer: fehlende Tage sollen als Luecke erscheinen.
+    private double X(int i) => _days.Count <= 1 ? 520 : 60 + 920.0 * (_days[i].DayNumber - _days[0].DayNumber) / Math.Max(1, _days[^1].DayNumber - _days[0].DayNumber);
 
     private double Y(double v) => 260 - 240 * v / _max;
 

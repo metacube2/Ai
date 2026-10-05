@@ -31,12 +31,14 @@ public static class LogisticsPeople
         => transfers.Any(t => t.ConfirmedBy.Length > 0 || t.CreatedBy.Length > 0 || t.PickedBy.Length > 0);
 
     /// <summary>Je Person: quittierte Positionen (Quittierer, sonst Entnahme), angelegte TA, geschätzte Stunden.</summary>
-    public static IReadOnlyList<LivePersonOutput> Outputs(IEnumerable<LiveTransferItem> transfers)
+    public static IReadOnlyList<LivePersonOutput> Outputs(IEnumerable<LiveTransferItem> transfers, DateOnly? day = null)
     {
+        // Mit Tag: nur, was an diesem Tag angelegt bzw. quittiert wurde (offene TA von frueheren Tagen zaehlen nicht mit).
         var list = transfers.ToList();
-        var created = list.Where(t => t.CreatedBy.Length > 0).GroupBy(t => t.CreatedBy).ToDictionary(g => g.Key, g => g.Select(t => t.Tanum).Distinct().Count());
+        var created = list.Where(t => t.CreatedBy.Length > 0 && (day is null || (t.CreatedAt.HasValue && DateOnly.FromDateTime(t.CreatedAt.Value) == day)))
+            .GroupBy(t => t.CreatedBy).ToDictionary(g => g.Key, g => g.Select(t => t.Tanum).Distinct().Count());
         return list
-            .Where(t => t.Confirmed && t.ConfirmedAt.HasValue)
+            .Where(t => t.Confirmed && t.ConfirmedAt.HasValue && (day is null || DateOnly.FromDateTime(t.ConfirmedAt.Value) == day))
             .Select(t => (User: t.ConfirmedBy.Length > 0 ? t.ConfirmedBy : t.PickedBy, At: t.ConfirmedAt!.Value))
             .Where(x => x.User.Length > 0)
             .GroupBy(x => x.User)

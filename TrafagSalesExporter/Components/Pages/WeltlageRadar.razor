@@ -46,7 +46,7 @@ else
                         <g class="wl-sector-g" @onclick="@(() => SelectDepartment(dep))">
                             <path d="@Sector(Cx, Cx, R, a1, a1 + 72)" class="wl-sector @(active ? "" : "wl-dim")" />
                             <text x="@F(lx)" y="@F(ly)" class="wl-dep" text-anchor="middle">@DepartmentLabel(dep)</text>
-                            <text x="@F(lx)" y="@F(ly + 15)" class="wl-dep-score" text-anchor="middle" style="fill:@Tone(score / 20)">@Points(score)</text>
+                            <text x="@F(lx)" y="@F(ly + 15)" class="wl-dep-score" text-anchor="middle" style="fill:@Tone(score / 100)">@Points(score)</text>
                         </g>
                     }
                     @foreach (var f in new[] { 0.25, 0.5, 0.75 })

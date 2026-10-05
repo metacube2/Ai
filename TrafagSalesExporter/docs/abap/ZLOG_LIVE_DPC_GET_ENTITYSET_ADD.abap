@@ -17,6 +17,18 @@
 *& - Personenfelder: seit 2026-10-05 nur die TA-Benutzer BNAME, ENAME, QNAME (HR-Freigabe
 *&   laut Ingo 2026-10-05); das Cockpit zeigt sie nur nach Anmeldung. Kein PERNR.
 *& - LogLiefSet ab 2026-10-05 bis heute + 14 Tage (Warenausgang nach Termin), weiterhin ein Tag.
+*&
+*& Nachtrag 2026-10-05 (Review, naechster Transport nach T76K912662):
+*& - DDIC ZSTR_LOG_RUECK + Feld STZHL (AFRU-STZHL, NUMC 8), ZSTR_LOG_LIEF + Feld UEBERF (CHAR1);
+*&   MPC: Property Stzhl (LogRueck) und Ueberf (LogLief, filterable) siehe ZLOG_LIVE_MPC_DEFINE_ADD.abap.
+*&   Das Cockpit bleibt gegen den alten Stand lauffaehig (fehlt Stzhl, gilt nur STOKZ; Ueberf wird erst gefragt,
+*&   nachdem P76 es kennt, ein HTTP 400 schaltet die Abfrage bis zum Neustart ab).
+*& - LogLiefSet: Auswahl WADAT = Tag ODER WADAT_IST = Tag; Uhrzeit des Warenausgangs aus der VBFA-Zeile (Typ R)
+*&   mit ERDAT = WADAT_IST, sonst CPUTM aus MKPF; ohne gebuchten Warenausgang keine Uhrzeit.
+*& - LogLiefSet mit Ueberf = X: Termin in den 30 Tagen vor dem Datum, WBSTK <> C.
+*& - LogTaSet: beim ersten Abruf des laufenden Tages auch offene Positionen (PQUIT leer) der letzten 14 Tage.
+*& - Obergrenzen: jede Auswahl holt eine Zeile mehr; ueberschritten wird abgeschnitten und eine Warnung
+*&   (sap-message Antwortkopf) gesetzt, statt still zu kuerzen. Signatur von ADD_MESSAGE_TEXT_ONLY in SE24 pruefen.
 *&---------------------------------------------------------------------*
 
 * Logistik live, docs/abap/ZLOG_LIVE_DPC_GET_ENTITYSET_ADD.abap
@@ -76,9 +88,17 @@
            END OF ty_lg_lf_pos,
            BEGIN OF ty_lg_vbfa,
              vbelv TYPE vbeln_von,
+             vbeln TYPE vbeln_nach,
+             mjahr TYPE mjahr,
              erdat TYPE erdat,
              erzet TYPE erzet,
            END OF ty_lg_vbfa,
+           BEGIN OF ty_lg_mkpf,
+             mblnr TYPE mblnr,
+             mjahr TYPE mjahr,
+             cpudt TYPE cpudt,
+             cputm TYPE cputm,
+           END OF ty_lg_mkpf,
            BEGIN OF ty_lg_kunde,
              kunnr TYPE kunnr,
              name1 TYPE name1_gp,
@@ -97,6 +117,7 @@
              meinh TYPE ru_vorme,
              aueru TYPE aueru_vs,
              stokz TYPE co_stokz,
+             stzhl TYPE afru-stzhl,
            END OF ty_lg_ru,
            BEGIN OF ty_lg_ap,
              objid TYPE cr_objid,
@@ -128,6 +149,15 @@
           lv_lg_spaet   TYPE datum,
           lt_lg_vbfa    TYPE STANDARD TABLE OF ty_lg_vbfa,
           ls_lg_vbfa    TYPE ty_lg_vbfa,
+          ls_lg_vbfa_gi TYPE ty_lg_vbfa,
+          lt_lg_mkpf    TYPE SORTED TABLE OF ty_lg_mkpf WITH UNIQUE KEY mblnr mjahr,
+          ls_lg_mkpf    TYPE ty_lg_mkpf,
+          lv_lg_ueberf  TYPE c LENGTH 1,
+          lv_lg_von     TYPE datum,
+          lv_lg_vortag  TYPE datum,
+          lv_lg_grenze  TYPE i,
+          lv_lg_wazeit  TYPE uzeit,
+          lt_lg_ta_alt  TYPE STANDARD TABLE OF ty_lg_ta_key,
           lv_lg_skip    TYPE i,
           lv_lg_max     TYPE i,
           lv_lg_zeile   TYPE i,
@@ -173,6 +203,8 @@
           WHEN 'LGNUM'.
             ls_lg_lgnum-sign = 'I'. ls_lg_lgnum-option = 'EQ'. ls_lg_lgnum-low = <ls_lg_option>-low.
             APPEND ls_lg_lgnum TO lr_lg_lgnum.
+          WHEN 'UEBERF'.   " nur LogLiefSet: ueberfaellige, noch nicht ausgelieferte Lieferungen
+            lv_lg_ueberf = <ls_lg_option>-low.
           WHEN 'WERKS'.
             ls_lg_werks-sign = 'I'. ls_lg_werks-option = 'EQ'. ls_lg_werks-low = <ls_lg_option>-low.
             APPEND ls_lg_werks TO lr_lg_werks.
@@ -204,16 +236,40 @@
 
       WHEN 'LogTaSet'.
 *       Transportauftraege, die ab AbZeit angelegt ODER quittiert wurden.
-        SELECT lgnum tanum FROM ltak INTO TABLE lt_lg_ta_keys UP TO 5000 ROWS
+*       Jede Auswahl holt eine Zeile mehr als erlaubt (5001): so ist Abschneiden erkennbar statt still.
+        SELECT lgnum tanum FROM ltak INTO TABLE lt_lg_ta_keys UP TO 5001 ROWS
           WHERE lgnum IN lr_lg_lgnum
             AND bdatu = lv_lg_datum
             AND bzeit >= lv_lg_abzeit.
-        SELECT lgnum tanum FROM ltap APPENDING TABLE lt_lg_ta_keys UP TO 5000 ROWS
+        SELECT lgnum tanum FROM ltap APPENDING TABLE lt_lg_ta_keys UP TO 5001 ROWS
           WHERE lgnum IN lr_lg_lgnum
             AND qdatu = lv_lg_datum
             AND qzeit >= lv_lg_abzeit.
+*       Offene Positionen von frueheren Tagen (hoechstens 14 Tage zurueck): nur beim ersten Abruf des Tages
+*       (AbZeit 000000) und nur fuer den laufenden Tag. Spaeter bleiben sie im Cockpit gemerkt; wird eine davon
+*       quittiert, kommt sie ueber die Auswahl nach QDATU oben.
+        IF lv_lg_abzeit = '000000' AND lv_lg_datum = sy-datum.
+          lv_lg_von = lv_lg_datum - 14.
+          lv_lg_vortag = lv_lg_datum - 1.
+          SELECT DISTINCT ltak~lgnum ltak~tanum FROM ltak
+            INNER JOIN ltap ON ltap~lgnum = ltak~lgnum AND ltap~tanum = ltak~tanum
+            APPENDING CORRESPONDING FIELDS OF TABLE lt_lg_ta_alt UP TO 5001 ROWS
+            WHERE ltak~lgnum IN lr_lg_lgnum
+              AND ltak~bdatu BETWEEN lv_lg_von AND lv_lg_vortag
+              AND ltap~pquit = space.
+          APPEND LINES OF lt_lg_ta_alt TO lt_lg_ta_keys.
+        ENDIF.
         SORT lt_lg_ta_keys BY lgnum tanum.
         DELETE ADJACENT DUPLICATES FROM lt_lg_ta_keys COMPARING lgnum tanum.
+        DESCRIBE TABLE lt_lg_ta_keys LINES lv_lg_zeile.
+        IF lv_lg_zeile > 5000.
+          lv_lg_grenze = 5001.
+          DELETE lt_lg_ta_keys FROM lv_lg_grenze.
+          mo_context->get_message_container( )->add_message_text_only(
+            iv_msg_type = 'W'
+            iv_msg_text = 'LogTaSet: Obergrenze 5000 Transportauftraege erreicht, Antwort unvollstaendig'
+            iv_add_to_response_header = abap_true ).
+        ENDIF.
 
         IF lt_lg_ta_keys IS NOT INITIAL.
           SELECT lgnum tanum bwlvs bdatu bzeit vbeln bname FROM ltak
@@ -281,10 +337,41 @@
 
       WHEN 'LogLiefSet'.
 *       Lieferungen mit geplantem Warenausgang am Datum, Kommissionierstand je Position.
-        SELECT vbeln lfart vstel lgnum kunnr kostk wbstk erzet wadat wadat_ist FROM likp
-          INTO CORRESPONDING FIELDS OF TABLE lt_lg_lf_kopf UP TO 2000 ROWS
-          WHERE wadat = lv_lg_datum
-            AND lgnum IN lr_lg_lgnum.
+        IF lv_lg_ueberf = 'X'.
+*         Ueberfaellig: geplanter Warenausgang in den letzten 30 Tagen vor dem Datum, Warenausgang nicht gebucht.
+          lv_lg_von = lv_lg_datum - 30.
+          lv_lg_vortag = lv_lg_datum - 1.
+          SELECT vbeln lfart vstel lgnum kunnr kostk wbstk erzet wadat wadat_ist FROM likp
+            INTO CORRESPONDING FIELDS OF TABLE lt_lg_lf_kopf UP TO 2001 ROWS
+            WHERE wadat BETWEEN lv_lg_von AND lv_lg_vortag
+              AND wbstk <> 'C'
+              AND lgnum IN lr_lg_lgnum.
+        ELSE.
+*         Geplanter Warenausgang am Datum ODER tatsaechlich gebucht am Datum (WADAT_IST): eine Lieferung, die
+*         an einem anderen Tag geplant war, erscheint sonst am Tag ihrer Buchung nicht. Zwei Auswahlen statt OR,
+*         damit jede ihren Index nutzt.
+          SELECT vbeln lfart vstel lgnum kunnr kostk wbstk erzet wadat wadat_ist FROM likp
+            INTO CORRESPONDING FIELDS OF TABLE lt_lg_lf_kopf UP TO 2001 ROWS
+            WHERE wadat = lv_lg_datum
+              AND lgnum IN lr_lg_lgnum.
+          IF lv_lg_datum <= sy-datum.
+            SELECT vbeln lfart vstel lgnum kunnr kostk wbstk erzet wadat wadat_ist FROM likp
+              APPENDING CORRESPONDING FIELDS OF TABLE lt_lg_lf_kopf UP TO 2001 ROWS
+              WHERE wadat_ist = lv_lg_datum
+                AND lgnum IN lr_lg_lgnum.
+          ENDIF.
+          SORT lt_lg_lf_kopf BY vbeln.
+          DELETE ADJACENT DUPLICATES FROM lt_lg_lf_kopf COMPARING vbeln.
+        ENDIF.
+        DESCRIBE TABLE lt_lg_lf_kopf LINES lv_lg_zeile.
+        IF lv_lg_zeile > 2000.
+          lv_lg_grenze = 2001.
+          DELETE lt_lg_lf_kopf FROM lv_lg_grenze.
+          mo_context->get_message_container( )->add_message_text_only(
+            iv_msg_type = 'W'
+            iv_msg_text = 'LogLiefSet: Obergrenze 2000 Lieferungen erreicht, Antwort unvollstaendig'
+            iv_add_to_response_header = abap_true ).
+        ENDIF.
 
         IF lt_lg_lf_kopf IS NOT INITIAL.
           SELECT vbeln posnr kosta FROM lips
@@ -295,13 +382,22 @@
             INTO CORRESPONDING FIELDS OF TABLE lt_lg_kunde
             FOR ALL ENTRIES IN lt_lg_lf_kopf
             WHERE kunnr = lt_lg_lf_kopf-kunnr.
-*         Uhrzeit der Warenbewegung (Folgebeleg Typ R), juengste zuerst.
-          SELECT vbelv erdat erzet FROM vbfa
+*         Uhrzeit der Warenbewegung (Folgebeleg Typ R = Materialbeleg), juengste zuerst. Gewaehlt wird weiter unten
+*         die Zeile, deren ERDAT dem tatsaechlichen Warenausgangsdatum (WADAT_IST) entspricht; Teilbuchungen oder
+*         Stornos an anderen Tagen liefern sonst die falsche Uhrzeit. Fehlt ERZET dort, kommt CPUTM aus MKPF.
+          SELECT vbelv vbeln mjahr erdat erzet FROM vbfa
             INTO CORRESPONDING FIELDS OF TABLE lt_lg_vbfa
             FOR ALL ENTRIES IN lt_lg_lf_kopf
             WHERE vbelv = lt_lg_lf_kopf-vbeln
               AND vbtyp_n = 'R'.
           SORT lt_lg_vbfa BY vbelv ASCENDING erdat DESCENDING erzet DESCENDING.
+          IF lt_lg_vbfa IS NOT INITIAL.
+            SELECT mblnr mjahr cpudt cputm FROM mkpf
+              INTO CORRESPONDING FIELDS OF TABLE lt_lg_mkpf
+              FOR ALL ENTRIES IN lt_lg_vbfa
+              WHERE mblnr = lt_lg_vbfa-vbeln
+                AND mjahr = lt_lg_vbfa-mjahr.
+          ENDIF.
         ENDIF.
 
         LOOP AT lt_lg_lf_kopf INTO ls_lg_lf_kopf.
@@ -317,10 +413,27 @@
           ls_lg_lf_out-erzet = ls_lg_lf_kopf-erzet.
           ls_lg_lf_out-wadat = ls_lg_lf_kopf-wadat.
           ls_lg_lf_out-wadat_ist = ls_lg_lf_kopf-wadat_ist.
-          READ TABLE lt_lg_vbfa INTO ls_lg_vbfa WITH KEY vbelv = ls_lg_lf_kopf-vbeln BINARY SEARCH.
-          IF sy-subrc = 0.
-            ls_lg_lf_out-wa_zeit = ls_lg_vbfa-erzet.
+          ls_lg_lf_out-ueberf = lv_lg_ueberf.
+*         Nur wenn der Warenausgang gebucht ist: Zeile mit ERDAT = WADAT_IST, sonst keine Uhrzeit.
+          CLEAR: ls_lg_vbfa_gi, lv_lg_wazeit.
+          IF ls_lg_lf_kopf-wadat_ist IS NOT INITIAL.
+            LOOP AT lt_lg_vbfa INTO ls_lg_vbfa
+                 WHERE vbelv = ls_lg_lf_kopf-vbeln AND erdat = ls_lg_lf_kopf-wadat_ist.
+              ls_lg_vbfa_gi = ls_lg_vbfa.   " juengste zuerst: die erste Zeile genuegt
+              EXIT.
+            ENDLOOP.
+            IF ls_lg_vbfa_gi-vbelv IS NOT INITIAL.
+              lv_lg_wazeit = ls_lg_vbfa_gi-erzet.
+              IF lv_lg_wazeit IS INITIAL.
+                READ TABLE lt_lg_mkpf INTO ls_lg_mkpf
+                     WITH TABLE KEY mblnr = ls_lg_vbfa_gi-vbeln mjahr = ls_lg_vbfa_gi-mjahr.
+                IF sy-subrc = 0 AND ls_lg_mkpf-cpudt = ls_lg_lf_kopf-wadat_ist.
+                  lv_lg_wazeit = ls_lg_mkpf-cputm.
+                ENDIF.
+              ENDIF.
+            ENDIF.
           ENDIF.
+          ls_lg_lf_out-wa_zeit = lv_lg_wazeit.
           READ TABLE lt_lg_kunde INTO ls_lg_kunde WITH TABLE KEY kunnr = ls_lg_lf_kopf-kunnr.
           IF sy-subrc = 0.
             ls_lg_lf_out-name1 = ls_lg_kunde-name1.
@@ -359,11 +472,22 @@
 
       WHEN OTHERS.  " LogRueckSet
 *       Rueckmeldungen ab AbZeit, ohne Personalnummer.
-        SELECT rueck rmzhl aufnr vornr arbid werks ersda erzet lmnga xmnga meinh aueru stokz
-          FROM afru INTO CORRESPONDING FIELDS OF TABLE lt_lg_ru UP TO 10000 ROWS
+*       STZHL: Stornozaehler; ungleich 0 heisst storniert bzw. Stornosatz (zeigt auf das Original, dessen
+*       Zeitstempel alt ist und das ein inkrementeller Abruf deshalb nicht mehr liefert).
+        SELECT rueck rmzhl aufnr vornr arbid werks ersda erzet lmnga xmnga meinh aueru stokz stzhl
+          FROM afru INTO CORRESPONDING FIELDS OF TABLE lt_lg_ru UP TO 10001 ROWS
           WHERE ersda = lv_lg_datum
             AND erzet >= lv_lg_abzeit
             AND werks IN lr_lg_werks.
+        DESCRIBE TABLE lt_lg_ru LINES lv_lg_zeile.
+        IF lv_lg_zeile > 10000.
+          lv_lg_grenze = 10001.
+          DELETE lt_lg_ru FROM lv_lg_grenze.
+          mo_context->get_message_container( )->add_message_text_only(
+            iv_msg_type = 'W'
+            iv_msg_text = 'LogRueckSet: Obergrenze 10000 Rueckmeldungen erreicht, Antwort unvollstaendig'
+            iv_add_to_response_header = abap_true ).
+        ENDIF.
 
         IF lt_lg_ru IS NOT INITIAL.
           LOOP AT lt_lg_ru INTO ls_lg_ru.
@@ -404,6 +528,7 @@
           ls_lg_ru_out-meinh  = ls_lg_ru-meinh.
           ls_lg_ru_out-aueru  = ls_lg_ru-aueru.
           ls_lg_ru_out-stokz  = ls_lg_ru-stokz.
+          ls_lg_ru_out-stzhl  = ls_lg_ru-stzhl.
           READ TABLE lt_lg_ap INTO ls_lg_ap WITH TABLE KEY objid = ls_lg_ru-arbid.
           IF sy-subrc = 0.
             ls_lg_ru_out-arbpl = ls_lg_ap-arbpl.

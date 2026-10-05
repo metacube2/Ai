@@ -89,14 +89,16 @@ else
                         <MudItem xs="12" md="5">
                             <svg viewBox="0 0 220 220" class="nw-donut">
                                 @{
-                                    var groups = _ad.Computers.GroupBy(c => OsGroup(c.OperatingSystem)).OrderByDescending(g => g.Count()).ToList();
+                                    var raw = _ad.Computers.GroupBy(c => OsGroup(c.OperatingSystem)).Select(g => (Key: g.Key, Count: g.Count())).OrderByDescending(g => g.Count).ToList();
+                                    // Mehr als 6 Gruppen: der Rest wird zu "Andere", damit Farben und Legende lesbar bleiben.
+                                    var groups = raw.Count > 6 ? raw.Take(5).Append((Key: T("Andere", "Other"), Count: raw.Skip(5).Sum(g => g.Count))).ToList() : raw;
                                     var total = Math.Max(1, _ad.Computers.Count);
                                     var start = 0.0;
                                 }
                                 @for (var i = 0; i < groups.Count; i++)
                                 {
-                                    var share = groups[i].Count() / (double)total;
-                                    <path d="@Arc(start, start + share)" class="nw-arc nw-arc-@(i % 6)"><title>@groups[i].Key · @groups[i].Count()</title></path>
+                                    var share = groups[i].Count / (double)total;
+                                    <path d="@Arc(start, start + share)" class="nw-arc nw-arc-@(i % 6)"><title>@groups[i].Key · @groups[i].Count</title></path>
                                     start += share;
                                 }
                                 <text x="110" y="106" class="nw-donut-num">@_ad.Computers.Count</text>
@@ -105,7 +107,7 @@ else
                             <div class="ll-legend" style="flex-wrap:wrap">
                                 @for (var i = 0; i < groups.Count; i++)
                                 {
-                                    <span><i class="ll-swatch nw-arc-@(i % 6)"></i>@groups[i].Key (@groups[i].Count())</span>
+                                    <span><i class="ll-swatch nw-arc-@(i % 6)"></i>@groups[i].Key (@groups[i].Count)</span>
                                 }
                             </div>
                         </MudItem>

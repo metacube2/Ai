@@ -77,6 +77,8 @@
     {
         _arcs = [];
         var radii = new[] { 80.0, 150.0, 215.0, 290.0 };
+        // Farbe je Gesellschaft aus der Wurzel, nicht aus der Position im gezoomten Ring: gleiche Farbe bei jeder Zoomstufe.
+        var companyColors = _root.Children.Select((c, idx) => (c.Id, Color: Palette[idx % Palette.Length])).ToDictionary(x => x.Id, x => x.Color);
         void Walk(SunburstNode node, int depth, double a1, double a2, string color)
         {
             if (depth >= 3 || node.Value <= 0) return;
@@ -85,9 +87,11 @@
             foreach (var c in node.Children.Where(c => c.Value > 0))
             {
                 var span = (a2 - a1) * (double)(c.Value / node.Value);
-                var col = depth == 0 ? Palette[i % Palette.Length] : color;
+                var col = companyColors.GetValueOrDefault(c.Id.Split('|')[0], color);
+                // Absolute Ebene aus der Id (Gesellschaft 0, Sparte 1, Kunde 2); Geschwister wechseln die Helligkeit.
+                var level = c.Id.Count(ch => ch == '|');
                 if (span > 0.004)
-                    _arcs.Add(new Arc(c, depth + 1, ArcPath(radii[depth], radii[depth + 1] - 3, angle, angle + span), Shade(col, depth), depth * 0.15 + angle / 20));
+                    _arcs.Add(new Arc(c, depth + 1, ArcPath(radii[depth], radii[depth + 1] - 3, angle, angle + span), Shade(col, level, i % 2 == 1), depth * 0.15 + angle / 20));
                 Walk(c, depth + 1, angle, angle + span, col);
                 angle += span;
                 i++;
@@ -97,7 +101,12 @@
         _zoomKey++;
     }
 
-    private static string Shade(string hex, int depth) => depth switch { 0 => hex, 1 => hex + "CC", _ => hex + "88" };
+    private static string Shade(string hex, int level, bool odd) => (level, odd) switch
+    {
+        (0, false) => hex, (0, true) => hex + "E0",
+        (1, false) => hex + "CC", (1, true) => hex + "A8",
+        (_, false) => hex + "88", (_, true) => hex + "66"
+    };
 
     private static string ArcPath(double r1, double r2, double a1, double a2)
     {

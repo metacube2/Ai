@@ -12,6 +12,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-05 | EKPO.Elikz im OData-Cache ist `True`/`False`; Filter auf `<> 'X'` (Dashboard M7, Supply Chain) und auf leer (Weltlage) griffen nie, unbemerkt seit Einfuehrung | Kennzeichenwerte vor dem Filtern im Cache messen (`group by`), nie die SAP-Darstellung annehmen; Filter `NOT IN ('X','True','1')` | Pruefbefund-Fixes |
 | 2026-10-05 | Deploys brachen dreimal in der DB-Sicherung mit SQLite `disk I/O error` ab; Ursache Always On VPN (SSTP, RAS-Code 829), Heimnetz stabil | Deploy erst starten, wenn die Freigabe 2 Minuten am Stueck erreichbar ist (Warteschleife im Hintergrund); leere `.bak` in Temp danach loeschen | `docs/rag/DEPLOYMENT.md` |
 | 2026-10-05 | Ein fertiger Deploy-Lauf (Protokoll geschrieben) beendete sich nicht und sperrte `DeployConsole.dll`; Folgedeploys scheiterten beim Bauen | Nach Abbruch „konnte nicht kopiert werden“ zuerst `Get-Process DeployHeadless` pruefen; Ingo musste den Prozess beenden | `docs/rag/DEPLOYMENT.md` |
 | 2026-08-07 | `dotnet publish` aus Git Bash auf den UNC-Pfad legte alles lokal unter `C:\trch-webapp...` ab, der Server stand mit `app_offline` still | Deploy nur als Bash `dotnet run --project .tmp_tools/DeployHeadless -c Release`; nie selbst publishen | `rag/DEPLOYMENT.md` oben |

@@ -24,13 +24,17 @@
         <div class="ll-bars" style="height:110px">
             @foreach (var d in _outlookDays)
             {
-                <div class="ll-bar-col" title="@($"{d.Day:dd.MM.} · {d.Deliveries} / {d.Positions}")">
+                <div class="ll-bar-col" title="@($"{(d.Overdue ? OverdueLabel() : d.Day.ToString("dd.MM."))} · {d.Deliveries} / {d.Positions}")">
                     <div class="ll-bar ll-bar-a" style="height:@Pct(d.Positions, _outlookMax)"></div>
-                    <div class="ll-bar-label">@d.Day.ToString("dd.MM")</div>
+                    <div class="ll-bar-label">@(d.Overdue ? "!" : d.Day.ToString("dd.MM"))</div>
                 </div>
             }
         </div>
-        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Balken = offene kommissionierrelevante Positionen je geplantem Warenausgangstag; Lieferungen im Tooltip. Grundlage für den Bedarf beim Rüsten.", "Bars = open picking-relevant items per planned goods issue day; deliveries in the tooltip. Basis for the picking demand.")</MudText>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Balken = offene kommissionierrelevante Positionen je geplantem Warenausgangstag, der erste Balken ist der laufende Tag; Lieferungen im Tooltip. Das Ausrufezeichen steht für überfällige Lieferungen (Termin vorbei, Warenausgang nicht gebucht). Grundlage für den Bedarf beim Rüsten.", "Bars = open picking-relevant items per planned goods issue day, the first bar is the current day; deliveries in the tooltip. The exclamation mark stands for overdue deliveries (date passed, goods issue not posted). Basis for the picking demand.")</MudText>
+        @if (_outlookDays.Sum(d => d.WithoutPositions) > 0)
+        {
+            <MudText Typo="Typo.caption" Class="ll-muted d-block">@_outlookDays.Sum(d => d.WithoutPositions) @T("Lieferungen ohne Kommissionierpositionen (in den Balken nicht gezählt)", "deliveries without picking items (not counted in the bars)")</MudText>
+        }
     }
 </MudPaper>
 
@@ -161,6 +165,10 @@
                                 <span class="cap-bar"><span style="width:@(Math.Min(100, load).ToString("0", CultureInfo.InvariantCulture))%;background:@LoadColor(load)"></span></span>
                                 <span class="ll-mono" style="color:@LoadColor(load)">@load.ToString("0", CultureInfo.InvariantCulture) %</span>
                             }
+                            else if (e.NoCapacityRecorded)
+                            {
+                                <span class="ll-mono" style="color:#EF5350">∞ · @T("keine Kapazität erfasst", "no capacity recorded")</span>
+                            }
                             else
                             {
                                 <span class="ll-muted">–</span>
@@ -177,6 +185,7 @@
 
 @code {
     [Parameter] public IReadOnlyList<LiveTransferItem> Transfers { get; set; } = [];
+    [Parameter] public DateOnly Day { get; set; }
 
     private sealed class Row
     {
@@ -200,8 +209,7 @@
     private DateTime? _savedAt;
 
     private bool IsToday => _day == DateOnly.FromDateTime(DateTime.Today);
-    private sealed record OutlookDay(DateOnly Day, int Deliveries, int Positions);
-    private List<OutlookDay> _outlookDays = [];
+    private List<LiveOutlookBucket> _outlookDays = [];
     private int _outlookMax = 1;
     private string? _outlookError;
     private sealed record CapRow(string Id, string Name, string WorkCenters, Dictionary<DateOnly, LiveCapacityDay> Days);
@@ -214,20 +222,35 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
-        var (deliveries, error, at) = await Live.GetOutlookAsync();
-        _outlookError = error;
-        _outlookAt = at;
         var today = DateOnly.FromDateTime(DateTime.Today);
-        _outlookDays = Enumerable.Range(1, 14).Select(i => today.AddDays(i)).Select(day =>
+        IReadOnlyList<LiveDelivery> deliveries = [];
+        try
         {
-            var list = deliveries.Where(d => d.PlannedGoodsIssue.HasValue && DateOnly.FromDateTime(d.PlannedGoodsIssue.Value) == day).ToList();
-            return new OutlookDay(day, list.Count, list.Sum(d => Math.Max(0, d.Positions - d.PositionsPicked)));
-        }).ToList();
+            var (list, error, at) = await Live.GetOutlookAsync();
+            deliveries = list;
+            _outlookError = error;
+            _outlookAt = at;
+        }
+        catch (Exception ex)
+        {
+            // Der Dienst faengt SAP-Fehler selbst; hier nur, was sonst den ganzen Schaltkreis abbraeche (z. B. Abbruch).
+            _outlookError = ex.GetBaseException().Message;
+        }
+        _outlookDays = LogisticsOutlook.Build(deliveries, today).ToList();
         _outlookMax = Math.Max(1, _outlookDays.Select(d => d.Positions).DefaultIfEmpty(1).Max());
 
-        var (cap, capError, capAt) = await Live.GetCapacityAsync();
-        _capError = capError;
-        _capAt = capAt;
+        IReadOnlyList<LiveCapacityDay> cap = [];
+        try
+        {
+            var (days, capError, capAt) = await Live.GetCapacityAsync();
+            cap = days;
+            _capError = capError;
+            _capAt = capAt;
+        }
+        catch (Exception ex)
+        {
+            _capError = ex.GetBaseException().Message;
+        }
         _capDays = Enumerable.Range(0, 14).Select(i => today.AddDays(i)).ToList();
         _capRows = cap.GroupBy(c => c.CapacityId)
             .Select(g => new CapRow(g.Key, g.First().Name, g.First().WorkCenters, g.GroupBy(x => x.Day).ToDictionary(x => x.Key, x => x.First())))
@@ -236,11 +259,13 @@
             .ToList();
     }
 
+    private string OverdueLabel() => T("überfällig", "overdue");
+
     private static string Pct(double v, double max) => (100.0 * Math.Min(1, v / Math.Max(1, max))).ToString("0.#", CultureInfo.InvariantCulture) + "%";
 
     protected override void OnParametersSet()
     {
-        _livePicking = LogisticsCapacityStore.PickingFromLive(Transfers);
+        _livePicking = LogisticsCapacityStore.PickingFromLive(Transfers, Day == default ? null : Day);
         foreach (var r in _rows)
             r.Live = r.Area == LogisticsCapacityAreas.Picking && IsToday ? _livePicking : null;
     }

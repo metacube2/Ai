@@ -13,6 +13,11 @@ public sealed class WorldExposure
     public IReadOnlyDictionary<string, double> CurrencyChange90 { get; init; } = new Dictionary<string, double>();
     /// <summary>Standortlaender mit Umsatzanteil der Gesellschaft als Groessenmass (keine Personendaten).</summary>
     public IReadOnlyDictionary<string, decimal> SiteByCountry { get; init; } = new Dictionary<string, decimal>();
+    /// <summary>
+    /// True: <see cref="OpenOrdersByCountry"/> ist der offene Restwert (offene Menge aus den Einteilungen mal Stueckpreis);
+    /// False: Bestellwert ganzer offener Positionen (Rueckfall, wenn keine Einteilungen im Cache sind).
+    /// </summary>
+    public bool OpenOrdersByQuantity { get; init; }
     public string? SalesError { get; init; }
     public string? PurchasingError { get; init; }
 }
@@ -88,6 +93,12 @@ public static class WorldImpactAnalytics
         return parts.Count == 0 ? null : (parts.Average(), yoy, growth);
     }
 
+    /// <summary>Finanzstress-Index (0 = normal, ueber 1 = angespannt) als Signal -1..+1; dieselbe Skala wie alle anderen Signale.</summary>
+    public static double StressSignal(double index) => Clamp(-index / 2);
+
+    /// <summary>Kursveraenderung in Prozent gegen CHF als Signal; Einnahmen (Nettoposition positiv) leiden unter schwacher Fremdwaehrung, Ausgaben profitieren.</summary>
+    public static double CurrencySignal(double changePercent, decimal net) => Clamp(changePercent / 8 * Math.Sign(net));
+
     /// <summary>Preisveraenderung 90 Tage; steigende Preise sind fuer den Einkauf schlecht.</summary>
     public static double? CostSignal(WorldSeries? s) => s?.ChangePercent(90) is { } c ? Clamp(-c / 20) : null;
 
@@ -134,7 +145,8 @@ public static class WorldImpactAnalytics
 
         ByCountry(Sales, exp.SalesByCountry, "Absatzmarkt", 15);
         ByCountry(Purchasing, exp.PurchaseByCountry, "Lieferland", 10);
-        ByCountry(Logistics, exp.OpenOrdersByCountry, "Lieferweg", 10);
+        // Ohne Einteilungen im Cache nur der Bestellwert ganzer offener Positionen: so benennen, nicht als offenen Restwert ausgeben.
+        ByCountry(Logistics, exp.OpenOrdersByCountry, exp.OpenOrdersByQuantity ? "Lieferweg" : "Lieferweg (Bestellwert offener Positionen)", 10);
         ByCountry(Hr, exp.SiteByCountry, "Standort", 10);
 
         // Einkauf: Rohstoffe ueber Stichworte in Warengruppen- und Positionstexten.
@@ -158,17 +170,28 @@ public static class WorldImpactAnalytics
         foreach (var (cur, net) in exp.NetByCurrency.Where(n => n.Value != 0).OrderByDescending(n => Math.Abs(n.Value)).Take(8))
         {
             if (!exp.CurrencyChange90.TryGetValue(cur, out var change) || netTotal == 0) continue;
-            var sig = Clamp(change / 8 * Math.Sign(net));
+            var sig = CurrencySignal(change, net);
             result.Add(new WorldImpact(Finance, "Währung", cur, cur, $"{cur} {change:+0.0;-0.0} % gegen CHF in 90 Tagen, Netto {(net >= 0 ? "Einnahmen" : "Ausgaben")} {Math.Abs(net):N0} CHF", Math.Abs(net), (double)(Math.Abs(net) / netTotal), sig, "EZB"));
         }
         var stress = snap.Series.FirstOrDefault(x => x.Key == "STLFSI4");
         if (stress?.Last is { } st)
-            result.Add(new WorldImpact(Finance, "Finanzmarkt", "STLFSI4", stress.Name, $"Index {st:0.00} (0 = normal, über 1 = angespannt)", 0, 0.5, Clamp(-st / 2), "FRED"));
+            result.Add(new WorldImpact(Finance, "Finanzmarkt", "STLFSI4", stress.Name, $"Index {st:0.00} (0 = normal, über 1 = angespannt)", 0, 0.5, StressSignal(st), "FRED"));
 
         return result.Where(r => !double.IsNaN(r.Signal)).ToList();
     }
 
-    /// <summary>Kennzahl je Abteilung: Summe der Wirkungen (Punkte), negativ = Gegenwind.</summary>
+    /// <summary>
+    /// Kennzahl je Abteilung in Punkten (-100..+100), negativ = Gegenwind. Die Anteile gelten je Thema (Land, Rohstoff, Waehrung)
+    /// und ueberlappen sich zwischen Themen; deshalb wird je Thema summiert (Anteile eines Themas ergeben hoechstens 1) und
+    /// ueber die Themen der Abteilung gemittelt, statt alle Punkte zu addieren.
+    /// </summary>
     public static IReadOnlyDictionary<string, double> DepartmentScores(IEnumerable<WorldImpact> impacts)
-        => Departments.ToDictionary(d => d, d => Math.Round(impacts.Where(i => i.Department == d).Sum(i => i.Score), 1));
+    {
+        var list = impacts.ToList();
+        return Departments.ToDictionary(d => d, d =>
+        {
+            var perTopic = list.Where(i => i.Department == d).GroupBy(i => i.Topic).Select(g => g.Sum(i => i.Score)).ToList();
+            return perTopic.Count == 0 ? 0 : Math.Round(perTopic.Average(), 1);
+        });
+    }
 }

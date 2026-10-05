@@ -62,7 +62,7 @@ public sealed class AdInfraAnalysisTests
     public void Gpo_Version_Und_Gpt_Ini()
     {
         Assert.Equal((3, 17), AdInfraAnalysis.SplitGpoVersion((3 << 16) | 17));
-        Assert.Equal(196625, AdInfraAnalysis.GptIniVersion("[General]\r\nVersion=196625\r\ndisplayName=Neue GPO"));
+        Assert.Equal(196625L, AdInfraAnalysis.GptIniVersion("[General]\r\nVersion=196625\r\ndisplayName=Neue GPO"));
         Assert.Null(AdInfraAnalysis.GptIniVersion("[General]"));
     }
 

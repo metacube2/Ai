@@ -156,10 +156,10 @@ als einziger der vier Aufträge **keine grüne Nummer (359) und ein oranges Drei
 sind grün mit Häkchen. Das Cockpit zeigte um 13:40 noch „Set fehlt“ (gemerkter Abruf von 13:35, 15 Minuten). *Erledigt 13:53:* trotz der Warnung ist `LogKapSet` in P76 da. Cockpit 13:53: rund 30 Kapazitäten mit Belastung je Tag,
 z. B. LAG00 (u. a. MLE01, MLE02, MLE04) 05.10. 222 %, 06.10. 63 %, 07.10. 40 %; DSQ00 an allen Werktagen über 100 % (158 bis 275 %);
 Wochenenden ohne Angebot (0.0 h). **Auffällig (offen, nicht geprüft):** Der laufende Tag ist bei vielen Kapazitäten sehr hoch
-(DWM00 1323 %), vermutlich Rückstand, der auf heute terminiert ist. Mit der Logistik oder AV gegenprüfen. Das Warnprotokoll von
+(DWM00 1323 %), ~~vermutlich Rückstand, der auf heute terminiert ist~~ **(überholt 2026-10-05, Review: Rückstand rollt nicht auf heute. Ursache ist, dass `KBED` den ganzen Restbedarf eines Vorgangs auf `FSTAD`, den Starttermin, legt; ein mehrtägiger Vorgang landet so an einem Tag. `ZLOG_KAP_ADD.abap` verteilt den Bedarf jetzt gleichmässig auf die Arbeitstage `FSTAD` bis `FENDD`, rechnet `KEINH` (H, MIN, S) in Stunden um und zählt verschiedene Vorgänge. Rückstand, dessen Zeitraum vor dem Fenster endet, steht nicht mehr auf dem ersten Tag. Wirkt erst nach dem nächsten Transport; Feldnamen `FENDD`/`KBEDID` vorher in SE11 prüfen.)**. Mit der Logistik oder AV gegenprüfen. Das Warnprotokoll von
 `T76K912662` hat Ingo nicht geschickt; ohne Wirkung auf die Funktion.
 
-**Schwäche im Cockpit (offen):** Ein Fehler beim Abruf von Kapazität oder Vorschau wird wie ein Erfolg 15 Minuten gemerkt. Nach
+**Schwäche im Cockpit (erledigt im Code 2026-10-05, Review; noch nicht deployed): Fehler werden nur 1 Minute gemerkt, ein HTTP-Timeout wird als Fehler gezeigt statt den Schaltkreis zu stören. Ursprünglich offen:** Ein Fehler beim Abruf von Kapazität oder Vorschau wird wie ein Erfolg 15 Minuten gemerkt. Nach
 einem Import zeigt die Seite deshalb bis zu 15 Minuten weiter „fehlt“. Besser: Fehler nur 1 Minute merken.
 
 **MES (Frage Ingo 2026-10-05):** Antwort Ingo: **Eigenentwicklung**, der Entwickler hat wenig Zeit; Ingo klärt das später. Grundsatz: Daten des MES sieht das Cockpit nur, wenn das MES sie nach SAP zurückmeldet
@@ -224,3 +224,5 @@ sein. T76 belegt Felder und Schutz, nicht den Inhalt.
 3. Werte gegen SAP prüfen (ein TA, eine Lieferung, eine Rückmeldung per Screenshot).
 4. Ideen für später: *Lagerplatzansicht 2026-10-05 als 3D umgesetzt.* Auftragsfortschritt je Arbeitsplatz über den Tag, Warnung
    bei Arbeitsplätzen ohne Rückmeldung während der Schicht.
+
+**Nachtrag Review 2026-10-05 (Code, noch nicht deployed, ABAP im naechsten Transport):** Timeout als Fehler, Fehler 1 Minute gemerkt; Vorschau Warenausgang mit Lgnum 110, laufendem Tag und Eimer ueberfaellig (Filter `Ueberf`, nur wenn P76 ihn kennt); Kommissionierung zaehlt nur Lieferungen mit Positionen; Bis-Warenausgang nennt Lieferungen ohne Uhrzeit und widerspruechliche; Leistung nur vom Tag selbst; Storno ueber `Stzhl` (Original wird ueber Rueck/Rmzhl entwertet); Gaenge nach Lagernummer getrennt, doppelte Felder zusammengefasst, "+N weitere Gaenge"; Gutmenge je Auftrag aus dem letzten Vorgang; Stand von gestern gilt nach Mitternacht als erster Abruf; Last ohne verfuegbare Stunden als unendlich. ABAP: Warenausgangszeit aus VBFA (ERDAT = WADAT_IST) oder MKPF, Auswahl nach WADAT oder WADAT_IST, offene TA der letzten 14 Tage, Obergrenzen mit Warnung, Kapazitaet verteilt und mit Paging.

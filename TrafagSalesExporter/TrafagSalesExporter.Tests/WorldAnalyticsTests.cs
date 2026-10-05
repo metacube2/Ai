@@ -84,6 +84,48 @@ public sealed class WorldAnalyticsTests
     }
 
     [Fact]
+    public void Eurostat_Json_Stat_Arrayform()
+    {
+        // JSON-stat kennt value und index auch als Arrays (null = fehlender Wert).
+        const string json = """{"value":[101.5,null,99.0],"dimension":{"time":{"category":{"index":["2026-05","2026-06","2026-07"]}}}}""";
+
+        var points = WorldParsers.ParseEurostat(json);
+
+        Assert.Equal(2, points.Count);
+        Assert.Equal(new DateOnly(2026, 5, 1), points[0].Item1);
+        Assert.Equal(new DateOnly(2026, 7, 1), points[1].Item1);
+        Assert.Equal(99.0, points[1].Item2);
+    }
+
+    [Fact]
+    public void Ereignisse_Doppelte_Adressen_Werden_Zusammengefasst()
+    {
+        var t = new DateTime(2026, 10, 5, 6, 0, 0, DateTimeKind.Utc);
+        var events = new[]
+        {
+            new WorldEvent(t, "DE", "A", 4, "19", -10, -5, 10, "https://example.org/a"),
+            new WorldEvent(t.AddMinutes(15), "DE", "B", 4, "19", -10, -5, 30, "https://example.org/A"),
+            new WorldEvent(t, "FR", "C", 4, "19", -10, -5, 5, "https://example.org/a")
+        };
+
+        var result = WorldParsers.DedupeEvents(events);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(30, result.Single(e => e.Country == "DE").Mentions);
+    }
+
+    [Fact]
+    public void Abteilungskennzahl_Mittelt_Themen_Statt_Zu_Addieren()
+    {
+        WorldImpact I(string topic, double share, double signal) => new(WorldImpactAnalytics.Purchasing, topic, "x", "x", "", 1, share, signal, "t");
+        var impacts = new[] { I("Lieferland", 1, -0.5), I("Rohstoff", 1, -0.5) };
+
+        var score = WorldImpactAnalytics.DepartmentScores(impacts)[WorldImpactAnalytics.Purchasing];
+
+        Assert.Equal(-50, score, 1);
+    }
+
+    [Fact]
     public void Imf_Wachstum_Je_Land()
     {
         const string json = """{"values":{"NGDP_RPCH":{"DEU":{"2026":0.9,"2027":1.4},"CHE":{"2026":1.3}}}}""";

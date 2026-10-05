@@ -18,7 +18,11 @@ public sealed record LiveTransferItem(
 public sealed record LiveDelivery(
     string Delivery, string DeliveryType, string ShippingPoint, string Lgnum, string Customer, string CustomerName,
     string PickingStatus, string GoodsIssueStatus, int Positions, int PositionsPicked, int PositionsPartial,
-    DateTime? PlannedGoodsIssue = null, DateTime? GoodsIssueAt = null);
+    DateTime? PlannedGoodsIssue = null, DateTime? GoodsIssueAt = null)
+{
+    /// <summary>Warenausgang hat Datum und eine Uhrzeit ungleich 00:00; sonst laesst sich die Dauer nicht rechnen.</summary>
+    public bool GoodsIssueTimeKnown => GoodsIssueAt.HasValue && GoodsIssueAt.Value.TimeOfDay > TimeSpan.Zero;
+}
 
 /// <summary>Kapazitaet je Tag (LogKapSet, Teil C 2026-10-05): Bedarf aus KBED, Angebot aus dem Kapazitaetskopf.</summary>
 public sealed record LiveCapacityDay(
@@ -32,7 +36,11 @@ public sealed record LiveCapacityDay(
 public sealed record LiveConfirmation(
     string Rueck, string Rmzhl, string Order, string Operation, string WorkCenter, string Plant,
     DateTime? At, decimal Yield, decimal Scrap, string Unit, bool Final, bool Cancelled,
-    string Material, decimal OrderTarget, decimal OrderConfirmed);
+    string Material, decimal OrderTarget, decimal OrderConfirmed, string Stzhl = "")
+{
+    /// <summary>Stornozaehler gesetzt (AFRU-STZHL ungleich 0): Stornosatz, der auf seine Original-Rueckmeldung zeigt.</summary>
+    public bool HasStornoCounter => Stzhl.Trim().TrimStart('0').Length > 0;
+}
 
 /// <summary>
 /// Liest die drei Logistik-Live-Sets aus ZPOWERBI_EINKAUF_SRV (docs/LOGISTIK_LIVE_2026-10-01.md).
@@ -67,9 +75,19 @@ public class SapGatewayLogisticsLiveReader
         HttpClient client, string baseUrl, DateOnly day, TimeOnly fromTime, CancellationToken ct)
         => ParseTransfers(await ReadAllAsync(client, baseUrl, TransferSet, BuildFilter(day, fromTime), ct));
 
+    /// <summary>
+    /// Lieferungen eines Tages. <paramref name="lgnum"/> (z. B. 110) engt auf eine Lagernummer ein (die ABAP-Seite kennt
+    /// den Filter seit T76K912658); <paramref name="overdue"/> verlangt zusaetzlich die ueberfaelligen, noch nicht
+    /// ausgelieferten Lieferungen (neues Feld Ueberf, erst nach dem naechsten Transport; sonst antwortet P76 mit 400).
+    /// </summary>
     public async Task<IReadOnlyList<LiveDelivery>> ReadDeliveriesAsync(
-        HttpClient client, string baseUrl, DateOnly day, CancellationToken ct)
-        => ParseDeliveries(await ReadAllAsync(client, baseUrl, DeliverySet, BuildFilter(day, null), ct));
+        HttpClient client, string baseUrl, DateOnly day, CancellationToken ct, string? lgnum = null, bool overdue = false)
+        => ParseDeliveries(await ReadAllAsync(client, baseUrl, DeliverySet, BuildDeliveryFilter(day, lgnum, overdue), ct));
+
+    internal static string BuildDeliveryFilter(DateOnly day, string? lgnum, bool overdue)
+        => BuildFilter(day, null)
+           + (string.IsNullOrWhiteSpace(lgnum) ? "" : $" and Lgnum eq '{lgnum.Trim()}'")
+           + (overdue ? " and Ueberf eq 'X'" : "");
 
     public async Task<IReadOnlyList<LiveConfirmation>> ReadConfirmationsAsync(
         HttpClient client, string baseUrl, DateOnly day, TimeOnly fromTime, CancellationToken ct)
@@ -138,7 +156,8 @@ public class SapGatewayLogisticsLiveReader
                 Text(x, "Rueck"), Text(x, "Rmzhl"), Text(x, "Aufnr").TrimStart('0'), Text(x, "Vornr"),
                 Text(x, "Arbpl"), Text(x, "Werks"), DateTimeOf(Text(x, "Ersda"), Text(x, "Erzet")),
                 Number(x, "Lmnga"), Number(x, "Xmnga"), Text(x, "Meinh"), Text(x, "Aueru") == "X",
-                Text(x, "Stokz") == "X", Text(x, "Matnr").TrimStart('0'), Number(x, "Gamng"), Number(x, "Igmng")))
+                Text(x, "Stokz") == "X" || Text(x, "Stzhl").TrimStart('0').Length > 0,
+                Text(x, "Matnr").TrimStart('0'), Number(x, "Gamng"), Number(x, "Igmng"), Text(x, "Stzhl")))
             .Where(x => x.Rueck.Length > 0)
             .ToList();
 

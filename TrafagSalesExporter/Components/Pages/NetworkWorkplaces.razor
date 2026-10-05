@@ -19,7 +19,7 @@
         <MudPaper Class="pa-3 ll-panel" Outlined="true">
             <MudText Typo="Typo.h6">@T("Verbindungsabbrüche je Netzbereich, letzte 7 Tage", "Connection drops per network range, last 7 days")</MudText>
             <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">
-                @T("Gezählt wird, wie oft die Browser-Verbindung zum Cockpit abreisst. Viele Abbrüche je Sitzung in einem Bereich deuten auf schwaches WLAN. Gespeichert wird nur der Bereich (/24), keine Person und keine volle Adresse.", "Counts how often the browser connection to the cockpit drops. Many drops per session in one range point to weak Wi-Fi. Only the range (/24) is stored, no person and no full address.")
+                @T("Gezählt wird, wie oft die Browser-Verbindung zum Cockpit abreisst und sich innerhalb von 5 Minuten wieder aufbaut. Ein geschlossener Tab ist kein Abbruch; Zählungen aus der Zeit davor enthielten ihn und werden nicht mehr verwendet. Viele Abbrüche je Sitzung in einem Bereich deuten auf schwaches WLAN. Gespeichert wird nur der Bereich (/24), keine Person und keine volle Adresse.", "Counts how often the browser connection to the cockpit drops and is re-established within 5 minutes. A closed tab is not a drop; earlier counts included it and are no longer used. Many drops per session in one range point to weak Wi-Fi. Only the range (/24) is stored, no person and no full address.")
             </MudText>
             @if (_subnets is null)
             {
@@ -39,7 +39,7 @@
                             <span class="nw-subnet-circ" style="width:@Pct(s.Circuits, _maxCircuits)" title="@T("Sitzungen", "Sessions") @s.Circuits"></span>
                             <span class="nw-subnet-drop" style="width:@Pct(s.Drops, _maxCircuits)" title="@T("Abbrüche", "Drops") @s.Drops"></span>
                         </div>
-                        <span class="ll-mono nw-subnet-ratio @(s.DropsPerCircuit >= 1 ? "nw-text-net" : string.Empty)">@s.DropsPerCircuit.ToString("N2")</span>
+                        <span class="ll-mono nw-subnet-ratio @(s.DropsPerCircuit >= 0.25 ? "nw-text-net" : string.Empty)">@s.DropsPerCircuit.ToString("N2")</span>
                     </div>
                 }
                 <div class="ll-legend mt-1">

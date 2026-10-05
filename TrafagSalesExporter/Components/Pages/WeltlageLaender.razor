@@ -43,10 +43,11 @@ else
                         var value = Value(c);
                         if (value <= 0 || !WorldGeo.Countries.TryGetValue(c.Country, out var geo)) continue;
                         var (x, y) = WorldGeo.Project(geo.Lat, geo.Lon);
-                        var r = 4 + 30 * Math.Sqrt((double)(value / _max));
+                        // Fläche proportional zum Wert, in allen drei Ansichten derselben Skala (_max = grösster Wert aus Verkauf plus Einkauf).
+                        var r = Math.Max(3, 34 * Math.Sqrt((double)(value / _max)));
                         <g class="wl-country-g" @onclick="@(() => _selected = c)">
                             <circle cx="@F(x)" cy="@F(y)" r="@F(r)" class="wl-country" style="fill:@(c.Signal is { } s ? Tone(s) : "#78909C")"><title>@WorldGeo.Name(c.Country): @(c.Signal?.ToString("+0.00;-0.00") ?? "–")</title></circle>
-                            @if (c.Signal is <= -0.3)
+                            @if (c.Signal is { } sg && sg <= -Threshold)
                             {
                                 <circle cx="@F(x)" cy="@F(y)" r="@F(r)" class="wl-pulse" />
                             }

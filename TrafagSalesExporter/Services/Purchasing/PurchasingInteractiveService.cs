@@ -33,7 +33,8 @@ public sealed class PurchasingInteractiveService
         await _gate.WaitAsync();
         try
         {
-            if (_cache is { } c && DateTime.Now - c.LoadedAt < TimeSpan.FromMinutes(30))
+            // Fehlerergebnisse nur 1 Minute merken, damit ein voruebergehend nicht lesbarer Cache nicht eine halbe Stunde haengt.
+            if (_cache is { } c && DateTime.Now - c.LoadedAt < (c.Error is null ? TimeSpan.FromMinutes(30) : TimeSpan.FromMinutes(1)))
                 return c;
             _cache = await LoadAsync();
             return _cache;
@@ -68,8 +69,9 @@ SELECT k.Bedat, COALESCE(k.Bukrs, ''), COALESCE(k.Lifnr, ''), COALESCE(k.Supplie
        COALESCE(p.Matnr, ''), COALESCE(NULLIF(p.MaraMatkl, ''), p.Matkl, ''), CAST(p.Menge AS REAL), k.Ebeln, CAST(p.Netwr AS REAL),
        COALESCE(k.Waers, ''), {ChfValue}
 FROM PurchasingEkpoCache p JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE k.Bedat >= $from AND COALESCE(p.Loekz, '') = ''";
-            cmd.Parameters.AddWithValue("$from", DateTime.Today.AddMonths(-30).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+WHERE k.Bedat >= $from AND COALESCE(p.Loekz, '') = ''
+  AND (COALESCE(k.Bstyp, '') = '' OR (k.Bstyp = 'F' AND COALESCE(k.Bsart, '') <> 'UB'))";
+            cmd.Parameters.AddWithValue("$from", new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-30).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
             await using var r = await cmd.ExecuteReaderAsync();
             var groupText = new Dictionary<string, (string Main, string Group)>(StringComparer.OrdinalIgnoreCase);
             while (await r.ReadAsync())
@@ -83,7 +85,7 @@ WHERE k.Bedat >= $from AND COALESCE(p.Loekz, '') = ''";
                     groupText[matkl] = g = (MainGroup(matkl), matkl.Length == 0 ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(matkl));
                 var lifnr = r.GetString(2).TrimStart('0');
                 facts.Add(new SalesFact(date, r.GetString(1), r.GetString(1), lifnr.Length == 0 ? "ohne Lieferant" : lifnr, r.GetString(3),
-                    r.GetString(4).Trim().ToUpperInvariant(), r.GetString(5).TrimStart('0'), g.Group, g.Main, chf,
+                    SalesAnalytics.NormalizeCountry(r.GetString(4)), r.GetString(5).TrimStart('0'), g.Group, g.Main, chf,
                     r.IsDBNull(7) ? 0 : Convert.ToDecimal(r.GetDouble(7)), r.GetString(8),
                     r.IsDBNull(9) ? 0 : Convert.ToDecimal(r.GetDouble(9)), r.GetString(10).Trim().ToUpperInvariant()));
             }

@@ -35,7 +35,7 @@ public static class NetSvg
             {
                 ["Name"] = c.Name,
                 ["DNS"] = c.DnsHostName,
-                ["Betriebssystem"] = life.Product,
+                ["Betriebssystem"] = life.Product + (AdAnalysis.IsEsuOnly(life, DateOnly.FromDateTime(DateTime.Today)) ? " (nur ESU)" : string.Empty),
                 ["Supportende"] = life.EndOfSupport?.ToDateTime(TimeOnly.MinValue),
                 ["Aktiv"] = c.Enabled ? "ja" : "nein",
                 ["Letzte Anmeldung"] = c.LastLogonUtc?.ToLocalTime(),
