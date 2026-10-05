@@ -11,11 +11,11 @@
     </div>
     <div class="ll-kpi">
         <div class="ll-kpi-value">@Min(_median)</div>
-        <div class="ll-kpi-label">@T("Rüstzeit je Lieferung, Median", "Staging time per delivery, median")</div>
+        <div class="ll-kpi-label">@T("Durchlaufzeit je Lieferung, Median", "Lead time per delivery, median")</div>
     </div>
     <div class="ll-kpi">
         <div class="ll-kpi-value">@Min(_p80)</div>
-        <div class="ll-kpi-label">@T("Rüstzeit, 8 von 10 Lieferungen darunter", "Staging time, 8 of 10 deliveries below")</div>
+        <div class="ll-kpi-label">@T("Durchlaufzeit, 8 von 10 Lieferungen darunter", "Lead time, 8 of 10 deliveries below")</div>
     </div>
     <div class="ll-kpi">
         <div class="ll-kpi-value">@_perHour.ToString("0.#", CultureInfo.InvariantCulture)</div>
@@ -75,7 +75,7 @@
                     <MudText Class="ll-muted">@T("Alle Lieferungen mit Transportauftrag sind gerüstet.", "All deliveries with a transfer order are staged.")</MudText>
                 }
             </div>
-            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Rot = schon länger offen als 80 % der fertigen Rüstvorgänge. Rüstzeit = erster Transportauftrag angelegt bis letzte Position quittiert. Warenausgangszeit und Namen folgen mit der SAP-Erweiterung; die Namen nur nach Anmeldung.", "Red = open longer than 80 % of the finished runs. Staging time = first transfer order created until last item confirmed. Goods issue time and names follow with the SAP extension; names only after login.")</MudText>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Rot = schon länger offen als 80 % der fertigen Rüstvorgänge. Durchlaufzeit = erster Transportauftrag angelegt bis letzte Position quittiert. Das ist keine Arbeitszeit: Wartezeiten zählen mit, und mehrere Personen an einer Lieferung sind nicht berücksichtigt. Echte Personenzeit braucht Zeiterfassung (WM, Fiori-App oder MES).", "Red = open longer than 80 % of the finished runs. Lead time = first transfer order created until last item confirmed. This is not working time: waiting time is included and several people on one delivery are not taken into account. Real person time needs time recording (WM, Fiori app or MES).")</MudText>
         </MudPaper>
     </MudItem>
 </MudGrid>

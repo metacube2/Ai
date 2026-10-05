@@ -1,0 +1,193 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@inject LogisticsCapacityStore Store
+@inject IUiTextService UiText
+
+@* Logistik live, Kapazität (Wunsch Neva 2026-10-05): tägliche Erfassung je Bereich (verfügbare und eingesetzte
+   Personenstunden, Planzeit je Einheit, offene und erledigte Menge) als Übergang, bis Zeiten aus SAP, Fiori-App oder
+   MES kommen. Rüsten am laufenden Tag zählt das Cockpit selbst. Keine Personen. Doku docs/LOGISTIK_LIVE_2026-10-01.md *@
+<MudPaper Class="pa-3 mb-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Kapazität je Bereich", "Capacity per area")</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small" OnClick="@(() => ChangeDay(-1))" />
+        <span class="ll-mono">@_day.ToString("ddd dd.MM.yyyy", CultureInfo.GetCultureInfo("de-CH"))</span>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" OnClick="@(() => ChangeDay(1))" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="_saving">@T("Speichern", "Save")</MudButton>
+        @if (_savedAt is { } at)
+        {
+            <span class="ll-muted" style="font-size:12px">@T("gespeichert", "saved") @at.ToString("HH:mm:ss")</span>
+        }
+    </div>
+    <div style="overflow-x:auto">
+        <table class="cap-table">
+            <thead>
+                <tr>
+                    <th>@T("Bereich", "Area")</th>
+                    <th>@T("Einheit", "Unit")</th>
+                    <th>@T("Verfügbare Std.", "Available h")</th>
+                    <th>@T("Eingesetzte Std.", "Used h")</th>
+                    <th>@T("Erledigt", "Done")</th>
+                    <th>@T("Offen", "Open")</th>
+                    <th>@T("Planzeit min/Einheit", "Plan min/unit")</th>
+                    <th>@T("Produktivität je Std.", "Productivity per h")</th>
+                    <th>@T("Gemessen min/Einheit", "Measured min/unit")</th>
+                    <th>@T("Bedarf Std.", "Required h")</th>
+                    <th>@T("Belastung", "Load")</th>
+                    <th>@T("Lücke Std.", "Gap h")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _rows)
+                {
+                    var e = r.ToEntry(_day);
+                    var auto = r.Area == LogisticsCapacityAreas.Picking && IsToday;
+                    <tr>
+                        <td><b>@AreaLabel(r.Area)</b></td>
+                        <td class="ll-muted">@UnitLabel(r.Unit)</td>
+                        <td><input type="number" min="0" step="0.25" class="cap-in" @bind="r.AvailableHours" /></td>
+                        <td><input type="number" min="0" step="0.25" class="cap-in" @bind="r.UsedHours" /></td>
+                        <td>
+                            @if (auto)
+                            {
+                                <span class="ll-mono" title="@T("aus dem Live-Abruf", "from the live feed")">@_livePicking.Done ⟳</span>
+                            }
+                            else
+                            {
+                                <input type="number" min="0" step="1" class="cap-in" @bind="r.DoneUnits" />
+                            }
+                        </td>
+                        <td>
+                            @if (auto)
+                            {
+                                <span class="ll-mono" title="@T("aus dem Live-Abruf", "from the live feed")">@_livePicking.Open ⟳</span>
+                            }
+                            else
+                            {
+                                <input type="number" min="0" step="1" class="cap-in" @bind="r.OpenUnits" />
+                            }
+                        </td>
+                        <td><input type="number" min="0" step="0.5" class="cap-in" @bind="r.PlanMinutesPerUnit" /></td>
+                        <td class="ll-mono">@Num(e.Productivity, "0.0")</td>
+                        <td class="ll-mono">@Num(e.MinutesPerUnit, "0.0")</td>
+                        <td class="ll-mono">@Num(e.RequiredHours, "0.0")</td>
+                        <td>
+                            @if (e.LoadPercent is { } load)
+                            {
+                                <span class="cap-bar"><span style="width:@(Math.Min(100, load).ToString("0", CultureInfo.InvariantCulture))%;background:@LoadColor(load)"></span></span>
+                                <span class="ll-mono" style="color:@LoadColor(load)">@load.ToString("0", CultureInfo.InvariantCulture) %</span>
+                            }
+                            else
+                            {
+                                <span class="ll-muted">–</span>
+                            }
+                        </td>
+                        <td class="ll-mono" style="color:@(e.Gap > 0 ? "#EF5350" : "inherit")">@(e.AvailableHours > 0 || e.RequiredHours > 0 ? e.Gap.ToString("+0.0;-0.0", CultureInfo.InvariantCulture) : "–")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Übergangslösung nach den Logistik-Kennzahlen: Produktivität = erledigt ÷ eingesetzte Personenstunden; gemessene Zeit je Einheit = eingesetzte Minuten ÷ erledigt; Bedarf = offen × Planzeit; Belastung = Bedarf ÷ verfügbare Stunden; Lücke = Bedarf minus verfügbar. Zwei Personen, die 30 Minuten gemeinsam arbeiten, sind eine Personenstunde. Beim Rüsten zählt das Cockpit am laufenden Tag die offenen und quittierten TA-Positionen selbst (⟳). Planzeiten aus überprüften Messungen ableiten; die gemessene Spalte hilft dabei.", "Interim solution following the logistics key figures: productivity = done ÷ person hours used; measured time per unit = minutes used ÷ done; required = open × plan time; load = required ÷ available hours; gap = required minus available. Two people working 30 minutes together are one person hour. For picking the cockpit counts open and confirmed TO items of the current day itself (⟳). Derive plan times from verified measurements; the measured column helps.")</MudText>
+</MudPaper>
+
+@code {
+    [Parameter] public IReadOnlyList<LiveTransferItem> Transfers { get; set; } = [];
+
+    private sealed class Row
+    {
+        public string Area { get; init; } = "";
+        public string Unit { get; init; } = "";
+        public double AvailableHours { get; set; }
+        public double UsedHours { get; set; }
+        public double PlanMinutesPerUnit { get; set; }
+        public double OpenUnits { get; set; }
+        public double DoneUnits { get; set; }
+        public (int Open, int Done)? Live { get; set; }
+
+        public LogisticsCapacityEntry ToEntry(DateOnly day)
+            => new(day, Area, AvailableHours, UsedHours, PlanMinutesPerUnit, Live?.Open ?? OpenUnits, Live?.Done ?? DoneUnits);
+    }
+
+    private DateOnly _day = DateOnly.FromDateTime(DateTime.Today);
+    private List<Row> _rows = [];
+    private (int Open, int Done) _livePicking;
+    private bool _saving;
+    private DateTime? _savedAt;
+
+    private bool IsToday => _day == DateOnly.FromDateTime(DateTime.Today);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    protected override void OnParametersSet()
+    {
+        _livePicking = LogisticsCapacityStore.PickingFromLive(Transfers);
+        foreach (var r in _rows)
+            r.Live = r.Area == LogisticsCapacityAreas.Picking && IsToday ? _livePicking : null;
+    }
+
+    private async Task LoadAsync()
+    {
+        var saved = await Store.LoadAsync(_day, _day);
+        // Planzeiten vom letzten erfassten Tag übernehmen, wenn für den Tag noch keine stehen.
+        var recent = await Store.LoadAsync(_day.AddDays(-60), _day.AddDays(-1));
+        _rows = LogisticsCapacityAreas.All.Select(a =>
+        {
+            var s = saved.FirstOrDefault(x => x.Area == a.Area);
+            var plan = s?.PlanMinutesPerUnit ?? recent.Where(x => x.Area == a.Area && x.PlanMinutesPerUnit > 0).OrderByDescending(x => x.Day).Select(x => x.PlanMinutesPerUnit).FirstOrDefault();
+            return new Row
+            {
+                Area = a.Area, Unit = a.Unit,
+                AvailableHours = s?.AvailableHours ?? 0, UsedHours = s?.UsedHours ?? 0, PlanMinutesPerUnit = plan,
+                OpenUnits = s?.OpenUnits ?? 0, DoneUnits = s?.DoneUnits ?? 0,
+                Live = a.Area == LogisticsCapacityAreas.Picking && IsToday ? _livePicking : null
+            };
+        }).ToList();
+        _savedAt = null;
+    }
+
+    private async Task ChangeDay(int delta)
+    {
+        _day = _day.AddDays(delta);
+        await LoadAsync();
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            await Store.SaveAsync(_rows.Select(r => r.ToEntry(_day)));
+            _savedAt = DateTime.Now;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string Num(double? v, string format) => v is null || double.IsNaN(v.Value) ? "–" : v.Value.ToString(format, CultureInfo.InvariantCulture);
+
+    private static string LoadColor(double load) => load > 100 ? "#EF5350" : load > 85 ? "#FFA726" : "#66BB6A";
+
+    private string AreaLabel(string area) => area switch
+    {
+        "Wareneingang" => T("Wareneingang", "Goods receipt"),
+        "Versorgung Abteilungen" => T("Versorgung Abteilungen", "Supply of departments"),
+        "Vorverpackung" => T("Vorverpackung", "Pre-packing"),
+        LogisticsCapacityAreas.Picking => T("Rüsten Kundenaufträge", "Picking customer orders"),
+        "Sammellisten" => T("Sammellisten", "Collective lists"),
+        _ => area
+    };
+
+    private string UnitLabel(string unit) => unit switch
+    {
+        "Positionen" => T("Positionen", "Items"),
+        "TA-Positionen" => T("TA-Positionen", "TO items"),
+        "Aufträge" => T("Aufträge", "Orders"),
+        "Gutmenge" => T("Gutmenge", "Yield"),
+        "Lieferungen" => T("Lieferungen", "Deliveries"),
+        _ => unit
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

@@ -27,6 +27,7 @@
         <MudButton StartIcon="@Icons.Material.Filled.Dashboard" Variant="@ViewVariant(ViewOriginal)" OnClick="@(() => _view = ViewOriginal)">@T("Original", "Original")</MudButton>
         <MudButton StartIcon="@Icons.Material.Filled.ViewInAr" Variant="@ViewVariant(View3d)" OnClick="@(() => _view = View3d)">@T("3D-Lager", "3D warehouse")</MudButton>
         <MudButton StartIcon="@Icons.Material.Filled.Speed" Variant="@ViewVariant(ViewProductivity)" OnClick="@(() => _view = ViewProductivity)">@T("Produktivität", "Productivity")</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Groups" Variant="@ViewVariant(ViewCapacity)" OnClick="@(() => _view = ViewCapacity)">@T("Kapazität", "Capacity")</MudButton>
     </MudButtonGroup>
 </div>
 
@@ -70,6 +71,10 @@
 else if (_view == ViewProductivity)
 {
     <ProductivityPanel Transfers="S.Transfers" Now="_now" />
+}
+else if (_view == ViewCapacity)
+{
+    <CapacityPanel Transfers="S.Transfers" />
 }
 else
 {
@@ -201,6 +206,7 @@ else
     private const string ViewOriginal = "original";
     private const string View3d = "3d";
     private const string ViewProductivity = "productivity";
+    private const string ViewCapacity = "capacity";
     private string _view = ViewOriginal;
 
     private Variant ViewVariant(string view) => _view == view ? Variant.Filled : Variant.Outlined;

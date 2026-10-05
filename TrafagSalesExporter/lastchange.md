@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## Logistik live: Produktivität und Kapazität, 2026-10-05, DEPLOYSTAND
+
+- Umschalter Produktivität (Durchlaufzeit je Lieferung, Leistung je Stunde, anonym, produktiv 10:31) und Kapazität (tägliche
+  Erfassung je Bereich nach Nevas Kennzahlen: Produktivität, Bedarf, Belastung, Lücke). SAP-Teil für Namen und Warenausgang in T76
+  (`T76K912658`), Aktivierung offen. `docs/LOGISTIK_LIVE_2026-10-01.md`.
+
 ## Logistik live: 3D-Lagerplatzansicht, 2026-10-05, produktiv 09:21
 
 - Umschalter Original | 3D-Lager: heute bewegte Plätze als Regale mit Paletten, Klick zeigt einen Platz mit seinen

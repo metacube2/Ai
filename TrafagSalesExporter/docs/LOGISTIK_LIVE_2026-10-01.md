@@ -128,6 +128,30 @@ Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, Gateway Client T76. Inhalt: `LogTaSe
 **Teil C, SAP-Transport 2 (geplant):** neues Set für Kapazität je Arbeitsplatz und Tag (Bedarf aus `KBED`, Angebot über den
 SAP-Standardbaustein für verfügbare Kapazität statt selbst aus `KAPA` gerechnet), Pflichtfilter Werk, höchstens 14 Tage.
 
+**Umbenennung 2026-10-05:** „Rüstzeit“ heisst jetzt **„Durchlaufzeit“**. Nevas Unterlage „Logistikkennzahlen bei Trafag“
+(über Ingo, 2026-10-05) hält fest: „Auftragserstellung bis Quittierung ist nicht automatisch Arbeitszeit.“ Die Seite sagt das jetzt.
+
+**Teil D, Kapazität je Bereich (Übergangslösung aus Nevas Unterlage):** Umschalter **Kapazität**. Je Tag und Bereich
+(Wareneingang, Versorgung Abteilungen, Vorverpackung, MLE01, MLE02, MLE04, Rüsten Kundenaufträge, Sammellisten): verfügbare
+und eingesetzte Personenstunden, erledigt, offen, Planzeit je Einheit; daraus Produktivität, gemessene Zeit je Einheit,
+Bedarf, Belastung (grün bis 85 %, orange bis 100 %, rot darüber) und Lücke, wie in Nevas Kennzahlentabelle. Beim Rüsten am
+laufenden Tag zählt das Cockpit offene und quittierte TA-Positionen mit Lieferung selbst. Planzeiten werden vom letzten
+erfassten Tag übernommen. Tabelle `LogisticsCapacityDay` (Summen je Bereich, keine Personen), Code `LogisticsCapacity.cs`,
+`CapacityPanel.razor`, Tests `LogisticsCapacityTests`. **Erfassen darf jeder, der die Seite öffnet** (wie die übrige
+Seite ohne Anmeldung); bei Bedarf hinter den geplanten Logistik-Login legen.
+
+**SAP-Befund zu Nevas Fragen (T76, nur lesend, 2026-10-05):**
+
+| Feld | Befund |
+| --- | --- |
+| `LTAK-STDAT/STUZT/ENDAT/ENUZT`, `ISTWM`, `SOLWM` (Start, Ende, Ist- und Sollzeit je TA) | vorhanden, 2026 **nie gefüllt**: WM-Zeiterfassung ist aus (Nevas „Zeitfelder vorhanden, aber nicht aktiv“). Einschalten ist Customizing mit der SAP-Beratung |
+| `LTAK-REFNR` (WM-Gruppe) | nie gefüllt: Sammellisten laufen nicht über WM-Gruppen; wo sie entstehen, ist offen |
+| `LTAK-PERNR` | leer; Namen kommen über `BNAME`/`QNAME` (Teil B) |
+| `AFRU` Start/Ende | Start = Ende, keine echte Dauer |
+| `AFRU-ISM01` | teilweise gefüllt (z. B. 12 h, 10 min): rückgemeldete Leistung als Personenzeit für MLE und Produktion nutzbar (Teil C) |
+
+T76-Daten enden im März; P76 vor dem Bau von Teil C gegenprüfen.
+
 **Grenze T76:** Daten in T76 enden im März; Abfragen in die Zukunft und Kapazitätsbedarf werden dort voraussichtlich leer
 sein. T76 belegt Felder und Schutz, nicht den Inhalt.
 

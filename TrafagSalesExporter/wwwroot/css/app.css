@@ -878,3 +878,11 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .pr-stack { flex: 1; display: flex; flex-direction: column-reverse; min-height: 1px; border-radius: 2px 2px 0 0; overflow: hidden; transition: height 400ms ease; }
 .pr-stack > div { width: 100%; }
 .pr-late { color: #EF5350; font-weight: 600; }
+
+/* Logistik live, Kapazitaet je Bereich (2026-10-05). */
+.cap-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.cap-table th { text-align: left; font-weight: 600; color: var(--mud-palette-text-secondary); padding: 4px 6px; border-bottom: 1px solid var(--mud-palette-lines-default); white-space: nowrap; }
+.cap-table td { padding: 3px 6px; border-bottom: 1px solid var(--mud-palette-lines-default); white-space: nowrap; }
+.cap-in { width: 74px; padding: 3px 5px; border: 1px solid var(--mud-palette-lines-inputs); border-radius: 4px; background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); font: inherit; }
+.cap-bar { display: inline-block; width: 70px; height: 8px; border-radius: 4px; background: var(--mud-palette-lines-default); vertical-align: middle; overflow: hidden; margin-right: 6px; }
+.cap-bar > span { display: block; height: 100%; }

@@ -62,6 +62,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureMaterialUsageCacheTables(db);
         EnsureNetworkTables(db);
         EnsureWorldTables(db);
+        EnsureLogisticsCapacityTable(db);
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
@@ -471,6 +472,17 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             cmd.CommandText = sql;
             cmd.ExecuteNonQuery();
         }
+    }
+
+    /// <summary>Logistik live, Kapazität je Bereich und Tag (2026-10-05).</summary>
+    private static void EnsureLogisticsCapacityTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = LogisticsCapacityStore.TableSql;
+        cmd.ExecuteNonQuery();
     }
 
     private static void EnsureMaterialUsageCacheTables(AppDbContext db)
