@@ -1,0 +1,88 @@
+@page "/einkauf/interaktiv"
+@page "/einkauf/interaktiv/{View}"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Sales.Interactive
+@inject PurchasingInteractiveService Purchases
+@inject IUiTextService UiText
+
+@* Einkauf Interaktiv (Wunsch Ingo 2026-10-05, analog Verkauf Interaktiv): dieselben neun Ansichten auf den Bestellungen
+   aus dem Einkaufscache (PurchasingInteractiveService). Doku docs/VERKAUF_2026-10-02.md, Abschnitt „Interaktiv“. *@
+<PageTitle>@T("Einkauf", "Purchasing") · @T("Interaktiv", "Interactive")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Einkauf", "Purchasing") · @T("Interaktiv", "Interactive")</MudText>
+
+<div class="six-tabs">
+    @foreach (var v in Views)
+    {
+        <a href="@($"einkauf/interaktiv/{v.Key}")" class="six-tab @(Current == v.Key ? "six-tab-active" : "")">
+            <MudIcon Icon="@v.Icon" Size="Size.Small" /><span>@v.Label</span>
+        </a>
+    }
+</div>
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.caption" Class="ll-muted">@T("Einkaufsdaten werden geladen …", "Loading purchasing data …")</MudText>
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    <div class="six-stage" @key="Current">
+        @switch (Current)
+        {
+            case ViewRace: <RaceView Data="_data" Purchasing="true" /> break;
+            case ViewSankey: <SankeyView Data="_data" Purchasing="true" /> break;
+            case ViewSunburst: <SunburstView Data="_data" Purchasing="true" /> break;
+            case ViewSimulator: <SimulatorView Data="_data" Purchasing="true" /> break;
+            case ViewRhythm: <RhythmView Data="_data" Purchasing="true" /> break;
+            case ViewCalendar: <CalendarView Data="_data" Purchasing="true" /> break;
+            case ViewNetwork: <NetworkView Data="_data" Purchasing="true" /> break;
+            case ViewLandscape: <LandscapeView Data="_data" Purchasing="true" /> break;
+            default: <GalaxyView Data="_data" Purchasing="true" /> break;
+        }
+    </div>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-3">@T("Quelle Einkaufscache: Bestellpositionen ohne Löschkennzeichen, Netto-Bestellwert in CHF wie im Einkaufsdashboard, Bestelldatum. Lieferant statt Kunde, Lieferland statt Kundenland, Hauptwarengruppe statt Sparte, Buchungskreis statt Gesellschaft.", "Source purchasing cache: order items without deletion flag, net order value in CHF as in the purchasing dashboard, order date. Supplier instead of customer, supplier country instead of customer country, main material group instead of division, company code instead of company.") @_data.Facts.Count.ToString("N0") @T("Positionen", "items") · @T("geladen", "loaded") @_data.LoadedAt.ToString("dd.MM.yyyy HH:mm")</MudText>
+}
+
+@code {
+    [Parameter] public string? View { get; set; }
+
+    private const string ViewGalaxy = "galaxie";
+    private const string ViewRace = "rennen";
+    private const string ViewSankey = "fluss";
+    private const string ViewSunburst = "sonnenstrahl";
+    private const string ViewSimulator = "simulator";
+    private const string ViewRhythm = "rhythmus";
+    private const string ViewCalendar = "kalender";
+    private const string ViewNetwork = "netzwerk";
+    private const string ViewLandscape = "landschaft";
+
+    private SalesDataset? _data;
+
+    private string Current => (View ?? ViewGalaxy).ToLowerInvariant();
+
+    private sealed record ViewTab(string Key, string Icon, string Label);
+
+    private IReadOnlyList<ViewTab> Views =>
+    [
+        new(ViewGalaxy, Icons.Material.Filled.BubbleChart, T("Lieferanten-Galaxie", "Supplier galaxy")),
+        new(ViewRace, Icons.Material.Filled.Leaderboard, T("Rennen", "Race")),
+        new(ViewSankey, Icons.Material.Filled.AltRoute, T("Einkaufsfluss", "Purchasing flow")),
+        new(ViewSunburst, Icons.Material.Filled.DonutLarge, T("Sonnenstrahl", "Sunburst")),
+        new(ViewSimulator, Icons.Material.Filled.Tune, T("Was wäre wenn", "What if")),
+        new(ViewRhythm, Icons.Material.Filled.EventRepeat, T("Bestellrhythmus", "Order rhythm")),
+        new(ViewCalendar, Icons.Material.Filled.CalendarMonth, T("Kalender", "Calendar")),
+        new(ViewNetwork, Icons.Material.Filled.Hub, T("Warengruppen-Netzwerk", "Material group network")),
+        new(ViewLandscape, Icons.Material.Filled.Landscape, T("3D-Landschaft", "3D landscape"))
+    ];
+
+    protected override async Task OnInitializedAsync() => _data = await Purchases.GetAsync();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

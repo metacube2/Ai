@@ -10,10 +10,10 @@
     <MudItem xs="12" lg="5">
         <MudPaper Class="pa-3 ll-panel" Outlined="true">
             <div class="d-flex align-center flex-wrap" style="gap:8px">
-                <MudText Typo="Typo.h6" Class="ll-grow">@T("Sollte eigentlich bestellt haben", "Should have ordered by now")</MudText>
+                <MudText Typo="Typo.h6" Class="ll-grow">@P(T("Sollte eigentlich bestellt haben", "Should have ordered by now"), T("Wiederbestellung überfällig", "Re-order overdue"))</MudText>
                 <MudSwitch T="bool" @bind-Value="_onlyOverdue" Color="Color.Primary" Label="@T("nur überfällige", "overdue only")" />
             </div>
-            <MudTextField T="string" @bind-Value="_search" Placeholder="@T("Kunde suchen", "Search customer")" Dense="true" Variant="Variant.Outlined" Immediate="true" Class="mb-2" />
+            <MudTextField T="string" @bind-Value="_search" Placeholder="@P(T("Kunde suchen", "Search customer"), T("Lieferant suchen", "Search supplier"))" Dense="true" Variant="Variant.Outlined" Immediate="true" Class="mb-2" />
             <div class="ll-list" style="max-height:560px">
                 @foreach (var c in Visible.Take(60))
                 {
@@ -26,7 +26,7 @@
                     </div>
                 }
             </div>
-            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Sortiert nach überfälligen Takten mal Umsatz der letzten 12 Monate. Rot = mehr als ein üblicher Abstand überfällig, orange = leicht überfällig. Nur Kunden mit mindestens vier Bestelltagen.", "Sorted by overdue cycles times revenue of the last 12 months. Red = more than one usual interval overdue, orange = slightly overdue. Only customers with at least four order days.")</MudText>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@P(T("Sortiert nach überfälligen Takten mal Umsatz der letzten 12 Monate. Rot = mehr als ein üblicher Abstand überfällig, orange = leicht überfällig. Nur Kunden mit mindestens vier Bestelltagen.", "Sorted by overdue cycles times revenue of the last 12 months. Red = more than one usual interval overdue, orange = slightly overdue. Only customers with at least four order days."), T("Sortiert nach überfälligen Takten mal Einkaufsvolumen der letzten 12 Monate. Rot = mehr als ein üblicher Abstand ohne neue Bestellung, orange = leicht darüber. Nur Lieferanten mit mindestens vier Bestelltagen. Hinweis auf auslaufende Beziehungen oder fällige Nachbestellungen.", "Sorted by overdue cycles times purchasing volume of the last 12 months. Red = more than one usual interval without a new order, orange = slightly above. Only suppliers with at least four order days. Points to fading relationships or due re-orders."))</MudText>
         </MudPaper>
     </MudItem>
     <MudItem xs="12" lg="7">
@@ -62,15 +62,19 @@
             }
             else
             {
-                <MudText Class="ll-muted">@T("Kunde links wählen.", "Choose a customer on the left.")</MudText>
+                <MudText Class="ll-muted">@P(T("Kunde links wählen.", "Choose a customer on the left."), T("Lieferant links wählen.", "Choose a supplier on the left."))</MudText>
             }
-            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Jeder Punkt ist ein Tag mit Rechnung. Der Balken zeigt den üblichen Abstand ab der letzten Bestellung, die Linie das erwartete Datum. Stichtag ist der jüngste Tag in den Verkaufsdaten.", "Each dot is a day with an invoice. The bar shows the usual interval from the last order, the line the expected date. Reference day is the latest day in the sales data.")</MudText>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@P(T("Jeder Punkt ist ein Tag mit Rechnung. Der Balken zeigt den üblichen Abstand ab der letzten Bestellung, die Linie das erwartete Datum. Stichtag ist der jüngste Tag in den Verkaufsdaten.", "Each dot is a day with an invoice. The bar shows the usual interval from the last order, the line the expected date. Reference day is the latest day in the sales data."), T("Jeder Punkt ist ein Tag mit Bestellung. Der Balken zeigt den üblichen Abstand ab der letzten Bestellung, die Linie das erwartete Datum. Stichtag ist der jüngste Bestelltag im Einkaufscache.", "Each dot is a day with an order. The bar shows the usual interval from the last order, the line the expected date. Reference day is the latest order day in the purchasing cache."))</MudText>
         </MudPaper>
     </MudItem>
 </MudGrid>
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private IReadOnlyList<RhythmCustomer> _all = [];
     private RhythmCustomer? _selected;

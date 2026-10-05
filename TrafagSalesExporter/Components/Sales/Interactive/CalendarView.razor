@@ -6,7 +6,7 @@
 @* Verkauf Interaktiv: Kalender-Heatmap Umsatz je Tag (2026-10-05). Klick auf einen Tag listet seine Rechnungen. *@
 <MudPaper Class="pa-3" Outlined="true">
     <div class="d-flex align-center flex-wrap" style="gap:12px">
-        <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatzkalender", "Revenue calendar")</MudText>
+        <MudText Typo="Typo.h6" Class="ll-grow">@P(T("Umsatzkalender", "Revenue calendar"), T("Einkaufskalender", "Purchasing calendar"))</MudText>
         @foreach (var y in _years)
         {
             <MudButton Size="Size.Small" Variant="@(y == _year ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" OnClick="@(() => SetYear(y))">@y</MudButton>
@@ -31,7 +31,7 @@
                   class="six-cal-cell @(_selected == day ? "six-cal-sel" : "")"
                   style="fill:@CellColor(v?.Value ?? 0);animation-delay:@F(Week(day) * 0.012)s"
                   @onclick="@(() => _selected = day)">
-                <title>@day.ToString("ddd dd.MM.yyyy", CultureInfo.GetCultureInfo("de-CH")): CHF @Chf(v?.Value ?? 0) · @(v?.Invoices ?? 0) @T("Rechnungen", "invoices")</title>
+                <title>@day.ToString("ddd dd.MM.yyyy", CultureInfo.GetCultureInfo("de-CH")): CHF @Chf(v?.Value ?? 0) · @(v?.Invoices ?? 0) @P(T("Rechnungen", "invoices"), T("Bestellungen", "orders"))</title>
             </rect>
         }
     </svg>
@@ -58,11 +58,15 @@
             }
         </div>
     }
-    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Ein Kästchen je Tag, Farbe nach Umsatz (Finance-Regeln, CHF). Hover zeigt Umsatz und Anzahl Rechnungen, Klick listet die Rechnungen des Tages.", "One square per day, colour by revenue (Finance rules, CHF). Hover shows revenue and number of invoices, click lists the invoices of the day.")</MudText>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@P(T("Ein Kästchen je Tag, Farbe nach Umsatz (Finance-Regeln, CHF). Hover zeigt Umsatz und Anzahl Rechnungen, Klick listet die Rechnungen des Tages.", "One square per day, colour by revenue (Finance rules, CHF). Hover shows revenue and number of invoices, click lists the invoices of the day."), T("Ein Kästchen je Bestelltag, Farbe nach Bestellwert (CHF wie im Einkaufsdashboard). Hover zeigt Wert und Anzahl Bestellungen, Klick listet die Bestellungen des Tages.", "One square per order day, colour by order value (CHF as in the purchasing dashboard). Hover shows value and number of orders, click lists the orders of the day."))</MudText>
 </MudPaper>
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private List<int> _years = [];
     private int _year;

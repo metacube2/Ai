@@ -172,6 +172,8 @@ builder.Services.AddSingleton<LogisticsCapacityStore>();
 // Logistik live, Namen nur nach Anmeldung (HR-Freigabe laut Ingo 2026-10-05), Passwort-Hash in LogisticsPeopleAccess.
 builder.Services.Configure<LogisticsPeopleAccessOptions>(builder.Configuration.GetSection(LogisticsPeopleAccessOptions.SectionName));
 builder.Services.AddScoped<LogisticsPeopleAccessService>();
+// Einkauf Interaktiv (2026-10-05): Bestellungen in Verkaufszeilen-Form fuer die neun Ansichten, 30 Minuten gemerkt.
+builder.Services.AddSingleton<PurchasingInteractiveService>();
 builder.Services.AddHostedService<NetworkProbeService>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, ClientConnectionTracker>();
 

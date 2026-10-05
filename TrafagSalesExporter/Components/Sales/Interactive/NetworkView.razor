@@ -8,8 +8,8 @@
     <MudItem xs="12" lg="9">
         <MudPaper Class="pa-3" Outlined="true">
             <div class="d-flex align-center flex-wrap" style="gap:12px">
-                <MudText Typo="Typo.h6" Class="ll-grow">@T("Artikel, die zusammen gekauft werden", "Articles bought together")</MudText>
-                <span class="ll-muted" style="font-size:12px">@T("mind. gemeinsame Kunden", "min. shared customers")</span>
+                <MudText Typo="Typo.h6" Class="ll-grow">@P(T("Artikel, die zusammen gekauft werden", "Articles bought together"), T("Warengruppen mit gemeinsamen Lieferanten", "Material groups with shared suppliers"))</MudText>
+                <span class="ll-muted" style="font-size:12px">@P(T("mind. gemeinsame Kunden", "min. shared customers"), T("mind. gemeinsame Lieferanten", "min. shared suppliers"))</span>
                 <MudSlider T="int" Min="2" Max="15" Value="_minBoth" ValueChanged="SetMin" Style="max-width:180px" />
                 <span class="ll-mono">@_minBoth</span>
             </div>
@@ -33,7 +33,7 @@
                     </g>
                 }
             </svg>
-            <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Die 40 Artikel mit den meisten Kunden der letzten 12 Monate (ohne Leistungen und Platzhalter). Linie = von mindestens so vielen Kunden gemeinsam gekauft wie eingestellt, dicker = enger verbunden. Farbe = zusammenhängende Gruppe. Maus darüber hebt die Nachbarn hervor, Klick hält die Auswahl.", "The 40 articles with the most customers in the last 12 months (without services and placeholders). Line = bought together by at least as many customers as set, thicker = more closely linked. Colour = connected group. Hover highlights the neighbours, click keeps the selection.")</MudText>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block">@P(T("Die 40 Artikel mit den meisten Kunden der letzten 12 Monate (ohne Leistungen und Platzhalter). Linie = von mindestens so vielen Kunden gemeinsam gekauft wie eingestellt, dicker = enger verbunden. Farbe = zusammenhängende Gruppe. Maus darüber hebt die Nachbarn hervor, Klick hält die Auswahl.", "The 40 articles with the most customers in the last 12 months (without services and placeholders). Line = bought together by at least as many customers as set, thicker = more closely linked. Colour = connected group. Hover highlights the neighbours, click keeps the selection."), T("Die 40 Warengruppen mit den meisten Lieferanten der letzten 12 Monate. Linie = mindestens so viele Lieferanten wie eingestellt liefern beide Warengruppen, dicker = enger verbunden. Farbe = zusammenhängende Gruppe. Zeigt, wo Lieferanten breit aufgestellt sind (Bündelung möglich). Maus darüber hebt die Nachbarn hervor, Klick hält die Auswahl.", "The 40 material groups with the most suppliers in the last 12 months. Line = at least as many suppliers as set deliver both groups, thicker = more closely linked. Colour = connected group. Shows where suppliers are broadly positioned (bundling possible). Hover highlights the neighbours, click keeps the selection."))</MudText>
         </MudPaper>
     </MudItem>
     <MudItem xs="12" lg="3">
@@ -54,7 +54,7 @@
             }
             else
             {
-                <MudText Class="ll-muted">@T("Artikel anklicken.", "Click an article.")</MudText>
+                <MudText Class="ll-muted">@P(T("Artikel anklicken.", "Click an article."), T("Warengruppe anklicken.", "Click a material group."))</MudText>
             }
         </MudPaper>
     </MudItem>
@@ -62,6 +62,10 @@
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private IReadOnlyList<NetworkNode> _nodes = [];
     private IReadOnlyList<NetworkEdge> _edges = [];

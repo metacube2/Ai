@@ -46,11 +46,15 @@
             </div>
         </div>
     </div>
-    <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Innen die Gesellschaften, dann die Sparten, aussen die Kunden (je Sparte die acht grössten, Rest Übrige). Klick auf ein Stück zoomt hinein, Klick in die Mitte zurück.", "Inside the companies, then the divisions, outside the customers (eight largest per division, rest others). Click a segment to zoom in, click the centre to go back.")</MudText>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block">@P(T("Innen die Gesellschaften, dann die Sparten, aussen die Kunden (je Sparte die acht grössten, Rest Übrige). Klick auf ein Stück zoomt hinein, Klick in die Mitte zurück.", "Inside the companies, then the divisions, outside the customers (eight largest per division, rest others). Click a segment to zoom in, click the centre to go back."), T("Innen die Buchungskreise, dann die Hauptwarengruppen, aussen die Lieferanten (je Warengruppe die acht grössten, Rest Übrige). Klick auf ein Stück zoomt hinein, Klick in die Mitte zurück.", "Inside the company codes, then the main material groups, outside the suppliers (eight largest per group, rest others). Click a segment to zoom in, click the centre to go back."))</MudText>
 </MudPaper>
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private sealed record Arc(SunburstNode Node, int Depth, string Path, string Color, double Delay);
     private SunburstNode _root = new("", "Total", 0, []);

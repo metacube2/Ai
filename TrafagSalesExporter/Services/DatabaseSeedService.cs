@@ -333,6 +333,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("purchasing-kpi-catalog", "purchasing", "Kennzahlen-Katalog", "KPI catalogue", "Checklist", "einkauf/kennzahlen", 70, "All"),
         Link("purchasing-pbix", "purchasing", "PBIX Vorlage", "PBIX template", "InsertChart", "einkauf/pbix", 80, "All"),
         Link("purchasing-3d", "purchasing", "3D Simulation", "3D simulation", "ViewInAr", "einkauf/3d", 90, "All"),
+        // Einkauf Interaktiv 2026-10-05: neun animierte Ansichten wie im Verkauf, auf den Bestellungen.
+        Link("purchasing-interactive", "purchasing", "Interaktiv", "Interactive", "AutoAwesome", "einkauf/interaktiv", 95, "All"),
         Link("purchasing-data-sources", "purchasing", "Datenquellen", "Data sources", "Hub", "einkauf/verbindungen", 100, "All"),
         // Logistik 2026-07-21 (Wunsch Ingo): eigener Root-Reiter; die Stuecklistendaten (ZLO03/
         // ZAT_VC via MaterialUsageDataRefreshService) koennen spaeter auch im Einkauf verwendet

@@ -12,14 +12,14 @@
                 <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="Reset">@T("Zurücksetzen", "Reset")</MudButton>
             </div>
             <div class="six-lever">
-                <div class="d-flex"><b class="ll-grow">@T("Alle Sparten: Preis", "All divisions: price")</b><span class="ll-mono">@Pct(_allPrice)</span></div>
+                <div class="d-flex"><b class="ll-grow">@P(T("Alle Sparten: Preis", "All divisions: price"), T("Alle Warengruppen: Preis", "All material groups: price"))</b><span class="ll-mono">@Pct(_allPrice)</span></div>
                 <MudSlider T="double" Min="-20" Max="20" Step="0.5" Value="_allPrice" ValueChanged="@(v => { _allPrice = v; Recalc(); })" />
-                <div class="d-flex"><b class="ll-grow">@T("Alle Sparten: Menge", "All divisions: volume")</b><span class="ll-mono">@Pct(_allVolume)</span></div>
+                <div class="d-flex"><b class="ll-grow">@P(T("Alle Sparten: Menge", "All divisions: volume"), T("Alle Warengruppen: Menge", "All material groups: volume"))</b><span class="ll-mono">@Pct(_allVolume)</span></div>
                 <MudSlider T="double" Min="-30" Max="30" Step="1" Value="_allVolume" ValueChanged="@(v => { _allVolume = v; Recalc(); })" />
                 <div class="d-flex"><b class="ll-grow">@T("Fremdwährungen gegen CHF", "Foreign currencies vs CHF")</b><span class="ll-mono">@Pct(_fx)</span></div>
                 <MudSlider T="double" Min="-15" Max="15" Step="0.5" Value="_fx" ValueChanged="@(v => { _fx = v; Recalc(); })" />
             </div>
-            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Je Sparte (überschreibt „Alle Sparten“)", "Per division (overrides „all divisions“)")</MudText>
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@P(T("Je Sparte (überschreibt „Alle Sparten“)", "Per division (overrides „all divisions“)"), T("Je Hauptwarengruppe (überschreibt „Alle Warengruppen“)", "Per main material group (overrides „all material groups“)"))</MudText>
             @foreach (var d in _divisions)
             {
                 <div class="six-lever">
@@ -57,7 +57,7 @@
                     <text x="4" y="74" class="nw-axis" style="text-anchor:start">@T("mit Hebeln", "with levers")</text>
                 </svg>
                 <MudSimpleTable Dense="true" Class="mt-2">
-                    <thead><tr><th>@T("Sparte", "Division")</th><th style="text-align:right">@T("Rest ohne Hebel", "Rest without levers")</th><th style="text-align:right">@T("Rest mit Hebeln", "Rest with levers")</th><th style="text-align:right">Δ</th></tr></thead>
+                    <thead><tr><th>@P(T("Sparte", "Division"), T("Warengruppe", "Material group"))</th><th style="text-align:right">@T("Rest ohne Hebel", "Rest without levers")</th><th style="text-align:right">@T("Rest mit Hebeln", "Rest with levers")</th><th style="text-align:right">Δ</th></tr></thead>
                     <tbody>
                         @foreach (var (div, br, sr) in r.Divisions.Take(10))
                         {
@@ -67,13 +67,17 @@
                     </tbody>
                 </MudSimpleTable>
             }
-            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Grundlage ist die Hochrechnung aus dem Controlling: Ist bis zum letzten vollständigen Monat plus Restmonate aus dem Vorjahresmonat mal Wachstum seit Jahresbeginn. Preis und Menge wirken multiplikativ auf die Restmonate der Sparte, der Währungshebel auf deren Fremdwährungsanteil. Spielwiese, keine Planung.", "Basis is the projection from controlling: actuals up to the last complete month plus remaining months from the previous-year month times growth since the start of the year. Price and volume act multiplicatively on the remaining months of the division, the currency lever on their foreign-currency share. A playground, not a plan.")</MudText>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@P(T("Grundlage ist die Hochrechnung aus dem Controlling: Ist bis zum letzten vollständigen Monat plus Restmonate aus dem Vorjahresmonat mal Wachstum seit Jahresbeginn. Preis und Menge wirken multiplikativ auf die Restmonate der Sparte, der Währungshebel auf deren Fremdwährungsanteil. Spielwiese, keine Planung.", "Basis is the projection from controlling: actuals up to the last complete month plus remaining months from the previous-year month times growth since the start of the year. Price and volume act multiplicatively on the remaining months of the division, the currency lever on their foreign-currency share. A playground, not a plan."), T("Grundlage ist eine Hochrechnung des Einkaufsvolumens wie im Controlling: bestellt bis zum letzten vollständigen Monat plus Restmonate aus dem Vorjahresmonat mal Veränderung seit Jahresbeginn. Preis und Menge wirken auf die Restmonate der Warengruppe, der Währungshebel auf deren Fremdwährungsanteil (steigt eine Fremdwährung, wird der Einkauf teurer). Spielwiese, keine Planung.", "Basis is a projection of the purchasing volume as in controlling: ordered up to the last complete month plus remaining months from the previous-year month times change since the start of the year. Price and volume act on the remaining months of the material group, the currency lever on its foreign-currency share (if a foreign currency rises, purchasing gets more expensive). A playground, not a plan."))</MudText>
         </MudPaper>
     </MudItem>
 </MudGrid>
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private sealed class DivisionLever
     {

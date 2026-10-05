@@ -122,4 +122,20 @@ public sealed class SalesInteractiveTests
         var cells = SalesInteractive.Landscape(facts, RefEnd, Start);
         Assert.Equal(15, cells.Single(c => c.Month == new DateOnly(2026, 3, 1)).Value);
     }
+
+    [Fact]
+    public void Einkauf_Hauptwarengruppe_Aus_Warengruppe()
+    {
+        Assert.StartsWith("10.00.00", PurchasingInteractiveService.MainGroup("10.04.00"));
+        Assert.Contains("Elektronik", PurchasingInteractiveService.MainGroup("10.04.00"));
+        Assert.Equal("ohne Warengruppe", PurchasingInteractiveService.MainGroup(""));
+        Assert.Equal("ABC", PurchasingInteractiveService.MainGroup("ABC"));
+    }
+
+    [Fact]
+    public void Versandpauschale_Ist_Kein_Artikel()
+    {
+        Assert.False(SalesAnalytics.IsComparableArticle("123456", "Versand bis 2,9 kg, EP/DHL"));
+        Assert.True(SalesAnalytics.IsComparableArticle("123456", "Drucktransmitter NAH 8254"));
+    }
 }

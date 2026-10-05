@@ -2,7 +2,12 @@
 
 Stand: 2026-10-01
 
-## Verkauf: Unterreiter Interaktiv, 2026-10-05, DEPLOYSTAND
+## Einkauf: Interaktiv, 2026-10-05, DEPLOYSTAND
+
+- Menü Einkauf → Interaktiv mit denselben neun Ansichten auf den Bestellungen; Korrekturen Verkauf Interaktiv (Galaxie-Achse,
+  Versandpauschalen).
+
+## Verkauf: Unterreiter Interaktiv, 2026-10-05, produktiv 14:25
 
 - Neun animierte Ansichten (Kunden-Galaxie, Rennen, Umsatzfluss, Sonnenstrahl, Was wäre wenn, Bestellrhythmus, Kalender,
   Artikel-Netzwerk, 3D-Landschaft) unter `/verkauf/interaktiv`, bestehende Unterreiter unverändert.

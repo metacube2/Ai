@@ -238,7 +238,7 @@ public static class SalesAnalytics
 
     /// <summary>Stueckpreis in CHF je Artikel und Kunde (12 Monate, nur positive Menge und Wert), ab <paramref name="minCustomers"/> Kunden.</summary>
     private static readonly Regex PlaceholderMaterial = new(@"9{4,}", RegexOptions.Compiled);
-    private static readonly Regex ServiceArticle = new(@"CERTIF|ZERTIFIKAT|LAVORAZION|MANUFACTURING|INSPECTION|PRUEF|PRÜF|FREIGHT|FRACHT|TRANSPORT|VERPACKUNG|PACKING|SERVICE|DIENSTLEIST|SPESE|SURCHARGE|ZUSCHLAG",
+    private static readonly Regex ServiceArticle = new(@"CERTIF|ZERTIFIKAT|LAVORAZION|MANUFACTURING|INSPECTION|PRUEF|PRÜF|FREIGHT|FRACHT|VERSAND|PORTO|SHIPPING|POSTAGE|TRANSPORT|VERPACKUNG|PACKING|SERVICE|DIENSTLEIST|SPESE|SURCHARGE|ZUSCHLAG",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>Platzhalter-Materialnummern (viele Neunen) und Leistungen (Zertifikate, Bearbeitung, Fracht ...) haben keinen vergleichbaren Stueckpreis.</summary>

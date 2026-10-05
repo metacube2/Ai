@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-05 14:25, Verkauf Interaktiv (`25da8a1`).** `944/944`, `BiDashboard.dll` `14:12:48`, `8'553'472` Bytes, SHA256 `465E5CF5...110668`, bitgleich, Alarm nur WAL; DB-Sicherung 552 s. Neun Ansichten per Edge headless geoeffnet.
 - **Deploy 2026-10-05 13:34, Logistik Kapazitaet SAP (`dd4c627`).** `936/936`, `BiDashboard.dll` `13:30:18`, SHA256 `8A596F53...59D833`, bitgleich, ohne Alarm. Umschalter Kapazitaet zeigt Vorschau Warenausgang mit P76-Zukunftsdaten (Teil B importiert) und den Hinweis, dass `LogKapSet` in P76 fehlt (`T76K912662` nicht importiert).
 - **Deploys 2026-10-05 Logistik live:** 10:31 Produktivitaet (`9fdae38`, `926/926`); 11:20 Kapazitaet je Bereich und Durchlaufzeit (`b776115`, `930/930`, SHA256 `9C0914E9...0C11BE`, ohne Alarm); 12:40 Namen nach Anmeldung, Vorschau Warenausgang, bis Warenausgang (`f9dc3eb`, `935/935`, SHA256 `4EA66149...2E35B2`, Alarm nur WAL). 12:47 Fusszeile ohne „Ohne Personendaten“ (`1c7e4ee`, `935/935`, SHA256 `CA537E5C...552342`, Alarm nur WAL, DB-Dateien vollstaendig). Alle bitgleich, per Edge headless angesehen.
 - **Deploy 2026-10-05 10:23, Logistik 3D Platznamen (`71981b6`).** `923/923`, `BiDashboard.dll` `09:55:41`, `8198144` Bytes, SHA256 `96DDD2EA4D8C62E94A994A4BC09627ADF9326402D8F260BFDD1A7D7A1B074729`, bitgleich; Alarm nur WAL. Zwei Laeufe davor (09:56, 10:04) brachen in der DB-Sicherung mit `disk I/O error` ab: Always On VPN trennt mehrmals taeglich mit RAS-Code 829, Heimnetz stabil.

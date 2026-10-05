@@ -23,6 +23,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 | Produktgruppen, ZC23/Disponent, Mehrfachverwendung, ABC/XYZ-Nutzen | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` |
 | Produktgruppen direkt aus SAP OData, ZDISPO | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` |
 | Supply Chain: Fehlteile, Deckung, Materialabhaengigkeit, Dispositionspruefung, Lieferperformance | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` |
+| **Einkauf Interaktiv**: neun animierte Ansichten auf den Bestellungen (Lieferanten-Galaxie, Rennen, Einkaufsfluss, Sonnenstrahl, Simulator, Wiederbestell-Rhythmus, Kalender, Warengruppen-Netzwerk, 3D), gleiche Bausteine wie Verkauf Interaktiv | `docs/VERKAUF_2026-10-02.md` Abschnitt „Interaktiv“ |
 | **Logistik live**: Kommissionierung und Produktion aus SAP, Umschalter 3D-Lagerplatzansicht, Abruf nur bei offener Seite, Schutz fuer P76, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | **Verwendung & Risiko**: mehrstufige Verwendung der LZ-Code-Komponenten, vererbtes Lieferantenrisiko; warum kein Umsatz je Komponente | `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` |
 | Logistik-Stuecklisten-Dashboard, Top-Down und Bottom-Up | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` |

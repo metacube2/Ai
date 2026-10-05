@@ -7,7 +7,7 @@
 @* Verkauf Interaktiv: Kunden-Galaxie im Gapminder-Stil (2026-10-05). Blasen gleiten über CSS-Übergänge von Quartal zu Quartal. *@
 <MudPaper Class="pa-3" Outlined="true">
     <div class="d-flex align-center flex-wrap" style="gap:12px">
-        <MudText Typo="Typo.h6" Class="ll-grow">@T("Kunden-Galaxie", "Customer galaxy")</MudText>
+        <MudText Typo="Typo.h6" Class="ll-grow">@P(T("Kunden-Galaxie", "Customer galaxy"), T("Lieferanten-Galaxie", "Supplier galaxy"))</MudText>
         <MudIconButton Icon="@(_playing ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="TogglePlay" />
         <span class="ll-mono" style="min-width:90px">@QuarterLabel</span>
         <MudSlider T="int" Min="0" Max="@(Math.Max(0, _frames.Count - 1))" Value="_frame" ValueChanged="SetFrame" Style="max-width:260px" />
@@ -20,6 +20,7 @@
     else
     {
         var f = _frames[_frame];
+        _labelled = f.Points.OrderByDescending(p => p.Revenue).Take(8).Select(p => p.Key).ToHashSet();
         <svg viewBox="0 0 1000 560" class="six-galaxy">
             @foreach (var gx in new[] { 0.0, 0.25, 0.5, 0.75, 1.0 })
             {
@@ -30,7 +31,7 @@
                 <line x1="60" y1="@F(Y(g))" x2="980" y2="@F(Y(g))" class="six-grid @(g == 0 ? "six-zero" : "")" />
                 <g><text x="52" y="@F(Y(g) + 4)" class="nw-axis" style="text-anchor:end">@(g > 0 ? "+" : "")@g %</text></g>
             }
-            <text x="520" y="545" class="nw-axis">@T("Umsatz im Quartal (logarithmisch)", "Revenue in quarter (logarithmic)")</text>
+            <text x="520" y="545" class="nw-axis">@P(T("Umsatz im Quartal (logarithmisch)", "Revenue in quarter (logarithmic)"), T("Einkaufsvolumen im Quartal (logarithmisch)", "Purchasing volume in quarter (logarithmic)"))</text>
             <text x="14" y="270" class="nw-axis" transform="rotate(-90 14 270)">@T("Veränderung zum Vorquartal", "Change vs previous quarter")</text>
             <text x="980" y="500" class="six-watermark" style="text-anchor:end">@QuarterLabel</text>
             @if (_trails && _selected is not null)
@@ -44,26 +45,31 @@
                 <circle class="six-bubble @(sel ? "six-sel" : "") @(dim ? "six-dim" : "")"
                         style="cx:@F(X(p.Revenue))px;cy:@F(Y(p.Growth))px;r:@F(R(p.Invoices))px;fill:@CountryColor(p.Country)"
                         @onclick="@(() => _selected = sel ? null : p.Key)">
-                    <title>@p.Name (@p.Country): CHF @Chf(p.Revenue), @(p.Growth.ToString("+0;-0", CultureInfo.InvariantCulture)) %, @p.Invoices @T("Rechnungen", "invoices")</title>
+                    <title>@p.Name (@p.Country): CHF @Chf(p.Revenue), @(p.Growth.ToString("+0;-0", CultureInfo.InvariantCulture)) %, @p.Invoices @P(T("Rechnungen", "invoices"), T("Bestellungen", "orders"))</title>
                 </circle>
-                @if (sel || R(p.Invoices) > 16)
+                @if (sel || _labelled.Contains(p.Key))
                 {
                     <g><text x="@F(X(p.Revenue))" y="@F(Y(p.Growth) - R(p.Invoices) - 4)" class="six-label">@Cut(p.Name)</text></g>
                 }
             }
         </svg>
-        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Jede Blase ist einer der 60 grössten Kunden der letzten 12 Monate. Rechts = mehr Umsatz im Quartal, oben = Wachstum gegen das Vorquartal, Grösse = Rechnungen, Farbe = Land. ▶ spielt die Quartale ab; Klick auf eine Blase hebt den Kunden hervor, mit Spuren sieht man seinen Weg.", "Each bubble is one of the 60 largest customers of the last 12 months. Right = more revenue in the quarter, up = growth vs previous quarter, size = invoices, colour = country. ▶ plays the quarters; click a bubble to highlight the customer, with trails you see its path.")</MudText>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@P(T("Jede Blase ist einer der 60 grössten Kunden der letzten 12 Monate. Rechts = mehr Umsatz im Quartal, oben = Wachstum gegen das Vorquartal, Grösse = Rechnungen, Farbe = Land. ▶ spielt die Quartale ab; Klick auf eine Blase hebt den Kunden hervor, mit Spuren sieht man seinen Weg.", "Each bubble is one of the 60 largest customers of the last 12 months. Right = more revenue in the quarter, up = growth vs previous quarter, size = invoices, colour = country. ▶ plays the quarters; click a bubble to highlight the customer, with trails you see its path."), T("Jede Blase ist einer der 60 grössten Lieferanten der letzten 12 Monate. Rechts = mehr Einkaufsvolumen im Quartal, oben = Veränderung gegen das Vorquartal, Grösse = Bestellungen, Farbe = Lieferland. ▶ spielt die Quartale ab; Klick auf eine Blase hebt den Lieferanten hervor, mit Spuren sieht man seinen Weg.", "Each bubble is one of the 60 largest suppliers of the last 12 months. Right = more purchasing volume in the quarter, up = change vs previous quarter, size = orders, colour = supplier country. ▶ plays the quarters; click a bubble to highlight the supplier, with trails you see its path."))</MudText>
     }
 </MudPaper>
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private IReadOnlyList<GalaxyFrame> _frames = [];
     private int _frame;
     private bool _playing;
     private bool _trails = true;
     private string? _selected;
+    private HashSet<string> _labelled = [];
     private double _logMin, _logMax;
     private CancellationTokenSource? _play;
     private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #E57373 #4DB6AC #9575CD #AED581 #FF8A65 #90A4AE #F06292".Split(' ');
@@ -73,7 +79,9 @@
     {
         _frames = SalesInteractive.Galaxy(Data.Facts, Data.ReferenceEnd, Data.DataStart);
         var values = _frames.SelectMany(f => f.Points).Select(p => (double)p.Revenue).Where(v => v > 0).ToList();
-        _logMin = Math.Log10(Math.Max(100, values.DefaultIfEmpty(1000).Min()));
+        // Untere Grenze beim 10-%-Wert, sonst drängen wenige Kleinstwerte alle Blasen nach rechts.
+        var sorted = values.Order().ToList();
+        _logMin = Math.Log10(Math.Max(100, sorted.Count == 0 ? 1000 : sorted[(int)(sorted.Count * 0.1)]));
         _logMax = Math.Log10(Math.Max(1000, values.DefaultIfEmpty(1000000).Max()));
         _frame = Math.Max(0, _frames.Count - 1);
     }

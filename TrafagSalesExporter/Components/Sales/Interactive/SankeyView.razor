@@ -7,7 +7,7 @@
 @* Verkauf Interaktiv: Umsatzfluss Gesellschaft → Sparte → Kundenland (2026-10-05). Klick auf einen Knoten filtert. *@
 <MudPaper Class="pa-3" Outlined="true">
     <div class="d-flex align-center flex-wrap" style="gap:12px">
-        <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatzfluss, 12 Monate", "Revenue flow, 12 months")</MudText>
+        <MudText Typo="Typo.h6" Class="ll-grow">@P(T("Umsatzfluss, 12 Monate", "Revenue flow, 12 months"), T("Einkaufsfluss, 12 Monate", "Purchasing flow, 12 months"))</MudText>
         @if (_focus is not null)
         {
             <MudChip T="string" Color="Color.Primary" OnClose="@(_ => _focus = null)">@Label(_focus)</MudChip>
@@ -33,11 +33,15 @@
             </g>
         }
     </svg>
-    <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Breite der Ströme = Umsatz der letzten 12 Monate. Links Gesellschaften, Mitte Sparten, rechts Kundenländer (Top 12, Rest Übrige). Klick auf einen Knoten zeigt nur seine Ströme; die Bewegung in den Strömen zeigt die Richtung.", "Width of the flows = revenue of the last 12 months. Left companies, middle divisions, right customer countries (top 12, rest others). Click a node to show only its flows; the movement in the flows shows the direction.")</MudText>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block">@P(T("Breite der Ströme = Umsatz der letzten 12 Monate. Links Gesellschaften, Mitte Sparten, rechts Kundenländer (Top 12, Rest Übrige). Klick auf einen Knoten zeigt nur seine Ströme; die Bewegung in den Strömen zeigt die Richtung.", "Width of the flows = revenue of the last 12 months. Left companies, middle divisions, right customer countries (top 12, rest others). Click a node to show only its flows; the movement in the flows shows the direction."), T("Breite der Ströme = Einkaufsvolumen der letzten 12 Monate. Links Buchungskreise, Mitte Hauptwarengruppen, rechts Lieferländer (Top 12, Rest Übrige). Klick auf einen Knoten zeigt nur seine Ströme; die Bewegung in den Strömen zeigt die Richtung.", "Width of the flows = purchasing volume of the last 12 months. Left company codes, middle main material groups, right supplier countries (top 12, rest others). Click a node to show only its flows; the movement in the flows shows the direction."))</MudText>
 </MudPaper>
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private sealed record PlacedNode(SankeyNode Node, double X, double Y, double H);
     private sealed record PlacedLink(SankeyLink Link, string Path, double Width, int FromColumn);

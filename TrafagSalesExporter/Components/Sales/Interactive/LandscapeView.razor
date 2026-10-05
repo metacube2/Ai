@@ -8,7 +8,7 @@
     <MudItem xs="12" lg="9">
         <MudPaper Class="pa-3" Outlined="true">
             <div class="d-flex align-center flex-wrap" style="gap:12px">
-                <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatzlandschaft", "Revenue landscape")</MudText>
+                <MudText Typo="Typo.h6" Class="ll-grow">@P(T("Umsatzlandschaft", "Revenue landscape"), T("Einkaufslandschaft", "Purchasing landscape"))</MudText>
                 <MudSwitch T="bool" @bind-Value="_spin" Color="Color.Primary" Label="@T("Drehen", "Rotate")" />
                 <MudSlider T="int" Min="-180" Max="180" @bind-Value="_angle" Style="max-width:180px" Disabled="_spin" />
                 <MudSlider T="int" Min="35" Max="75" @bind-Value="_tilt" Style="max-width:120px" />
@@ -34,7 +34,7 @@
                         }
                     }
                 </div>
-                <div class="dir3d-hint">@T("Jede Säule ist ein Monat einer Sparte, Höhe nach Umsatz (Wurzel, damit kleine Werte sichtbar bleiben). Regler: Blickwinkel und Neigung. Klick auf eine Säule zeigt den Wert.", "Each column is one month of a division, height by revenue (square root so small values stay visible). Sliders: view angle and tilt. Click a column to see the value.")</div>
+                <div class="dir3d-hint">@P(T("Jede Säule ist ein Monat einer Sparte, Höhe nach Umsatz (Wurzel, damit kleine Werte sichtbar bleiben). Regler: Blickwinkel und Neigung. Klick auf eine Säule zeigt den Wert.", "Each column is one month of a division, height by revenue (square root so small values stay visible). Sliders: view angle and tilt. Click a column to see the value."), T("Jede Säule ist ein Monat einer Hauptwarengruppe, Höhe nach Einkaufsvolumen (Wurzel, damit kleine Werte sichtbar bleiben). Regler: Blickwinkel und Neigung. Klick auf eine Säule zeigt den Wert.", "Each column is one month of a main material group, height by purchasing volume (square root so small values stay visible). Sliders: view angle and tilt. Click a column to see the value."))</div>
             </div>
         </MudPaper>
     </MudItem>
@@ -56,7 +56,7 @@
             {
                 <MudText Class="ll-muted">@T("Säule anklicken.", "Click a column.")</MudText>
             }
-            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Sparten", "Divisions")</MudText>
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@P(T("Sparten", "Divisions"), T("Hauptwarengruppen", "Main material groups"))</MudText>
             @for (var di = 0; di < _divisions.Count; di++)
             {
                 <div class="d-flex align-center" style="gap:6px;font-size:12px"><span class="ll-swatch" style="background:@Palette[di % Palette.Length]"></span>@_divisions[di]</div>
@@ -67,6 +67,10 @@
 
 @code {
     [Parameter] public SalesDataset Data { get; set; } = default!;
+    /// <summary>Einkauf Interaktiv: gleiche Rechnung auf Bestellungen, Beschriftung Einkauf.</summary>
+    [Parameter] public bool Purchasing { get; set; }
+
+    private string P(string sales, string purchasing) => Purchasing ? purchasing : sales;
 
     private const double Cell = 34;
     private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #E57373 #4DB6AC #9575CD".Split(' ');
