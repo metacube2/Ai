@@ -4,16 +4,21 @@ using System.Text.Json;
 
 namespace TrafagSalesExporter.Services;
 
-/// <summary>Eine Transportauftragsposition (LTAK/LTAP), ohne Benutzer.</summary>
+/// <summary>
+/// Eine Transportauftragsposition (LTAK/LTAP). Seit 2026-10-05 mit den TA-Benutzern (BNAME angelegt, ENAME Entnahme,
+/// QNAME quittiert; HR-Freigabe laut Ingo); leer, solange P76 die Felder nicht liefert. Angezeigt nur nach Anmeldung.
+/// </summary>
 public sealed record LiveTransferItem(
     string Lgnum, string Tanum, string Tapos, string Bwlvs, string Delivery, string Material, string Plant,
     string FromType, string FromBin, string ToType, string ToBin, decimal Quantity, string Unit,
-    DateTime? CreatedAt, bool Confirmed, DateTime? ConfirmedAt);
+    DateTime? CreatedAt, bool Confirmed, DateTime? ConfirmedAt,
+    string CreatedBy = "", string PickedBy = "", string ConfirmedBy = "");
 
 /// <summary>Eine Lieferung mit Kommissionierstand (LIKP/LIPS).</summary>
 public sealed record LiveDelivery(
     string Delivery, string DeliveryType, string ShippingPoint, string Lgnum, string Customer, string CustomerName,
-    string PickingStatus, string GoodsIssueStatus, int Positions, int PositionsPicked, int PositionsPartial);
+    string PickingStatus, string GoodsIssueStatus, int Positions, int PositionsPicked, int PositionsPartial,
+    DateTime? PlannedGoodsIssue = null, DateTime? GoodsIssueAt = null);
 
 /// <summary>Eine Produktionsrueckmeldung (AFRU), ohne Personalnummer.</summary>
 public sealed record LiveConfirmation(
@@ -90,7 +95,8 @@ public class SapGatewayLogisticsLiveReader
                 Text(x, "Matnr").TrimStart('0'), Text(x, "Werks"), Text(x, "Vltyp"), Text(x, "Vlpla"),
                 Text(x, "Nltyp"), Text(x, "Nlpla"), Number(x, "Menge"), Text(x, "Meins"),
                 DateTimeOf(Text(x, "Bdatu"), Text(x, "Bzeit")),
-                Text(x, "Pquit") == "X", DateTimeOf(Text(x, "Qdatu"), Text(x, "Qzeit"))))
+                Text(x, "Pquit") == "X", DateTimeOf(Text(x, "Qdatu"), Text(x, "Qzeit")),
+                Text(x, "Bname"), Text(x, "Ename"), Text(x, "Qname")))
             .Where(x => x.Tanum.Length > 0)
             .ToList();
 
@@ -98,7 +104,8 @@ public class SapGatewayLogisticsLiveReader
         => rows.Select(x => new LiveDelivery(
                 Text(x, "Vbeln"), Text(x, "Lfart"), Text(x, "Vstel"), Text(x, "Lgnum"), Text(x, "Kunnr").TrimStart('0'),
                 Text(x, "Name1"), Text(x, "Kostk"), Text(x, "Wbstk"),
-                (int)Number(x, "PosGes"), (int)Number(x, "PosKomm"), (int)Number(x, "PosTeil")))
+                (int)Number(x, "PosGes"), (int)Number(x, "PosKomm"), (int)Number(x, "PosTeil"),
+                DateTimeOf(Text(x, "Wadat"), ""), DateTimeOf(Text(x, "WadatIst"), Text(x, "WaZeit"))))
             .Where(x => x.Delivery.Length > 0)
             .ToList();
 

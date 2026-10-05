@@ -1,0 +1,88 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@inject LogisticsPeopleAccessService Access
+@inject IUiTextService UiText
+
+@* Logistik live, Personen (HR-Freigabe laut Ingo 2026-10-05): Namen nur nach Anmeldung, nur im Speicher, kein Export.
+   Personenstunden geschätzt aus den Quittierzeiten. Doku docs/LOGISTIK_LIVE_2026-10-01.md *@
+<MudPaper Class="pa-3 mt-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:8px">
+        <MudIcon Icon="@Icons.Material.Filled.Badge" />
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Leistung je Person", "Output per person")</MudText>
+        @if (Access.IsUnlocked)
+        {
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Lock" OnClick="LockAsync">@T("Namen ausblenden", "Hide names")</MudButton>
+        }
+    </div>
+    @if (!Access.IsConfigured)
+    {
+        <MudText Class="ll-muted">@T("Die Anmeldung für Namen ist noch nicht eingerichtet (Passwort fehlt in der Konfiguration). Ohne Anmeldung bleibt alles anonym.", "The login for names is not set up yet (password missing in the configuration). Without login everything stays anonymous.")</MudText>
+    }
+    else if (!Access.IsUnlocked)
+    {
+        <div class="d-flex align-center flex-wrap mt-1" style="gap:8px">
+            <MudTextField T="string" @bind-Value="_user" Label="@T("Benutzer", "User")" Dense="true" Variant="Variant.Outlined" Style="max-width:160px" />
+            <MudTextField T="string" @bind-Value="_password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Dense="true" Variant="Variant.Outlined" Style="max-width:200px" OnKeyUp="@(e => e.Key == "Enter" ? UnlockAsync() : Task.CompletedTask)" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="UnlockAsync">@T("Namen anzeigen", "Show names")</MudButton>
+            @if (_failed)
+            {
+                <MudText Color="Color.Error" Typo="Typo.caption">@T("Anmeldung fehlgeschlagen.", "Login failed.")</MudText>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Ohne Anmeldung zeigt die Seite keine Personen.", "Without login the page shows no persons.")</MudText>
+    }
+    else if (_people.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("SAP liefert noch keine Benutzer zu den Transportaufträgen. Das kommt mit dem Transport T76K912658 in P76.", "SAP does not deliver users for the transfer orders yet. This comes with transport T76K912658 in P76.")</MudText>
+    }
+    else
+    {
+        <MudSimpleTable Dense="true" Hover="true" Class="mt-1">
+            <thead><tr><th>@T("Benutzer", "User")</th><th style="text-align:right">@T("Quittiert", "Confirmed")</th><th style="text-align:right">@T("TA angelegt", "TOs created")</th><th>@T("Erste", "First")</th><th>@T("Letzte", "Last")</th><th style="text-align:right">@T("Geschätzte Std.", "Estimated h")</th><th style="text-align:right">@T("Positionen je Std.", "Items per h")</th></tr></thead>
+            <tbody>
+                @foreach (var p in _people)
+                {
+                    <tr>
+                        <td class="ll-mono">@p.User</td>
+                        <td class="ll-mono" style="text-align:right">@p.Confirmed</td>
+                        <td class="ll-mono" style="text-align:right">@p.Created</td>
+                        <td class="ll-mono">@p.First.ToString("HH:mm")</td>
+                        <td class="ll-mono">@p.Last.ToString("HH:mm")</td>
+                        <td class="ll-mono" style="text-align:right">@p.EstimatedHours.ToString("0.0", CultureInfo.InvariantCulture)</td>
+                        <td class="ll-mono" style="text-align:right">@(p.PerHour?.ToString("0", CultureInfo.InvariantCulture) ?? "–")</td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Geschätzte Stunden: aufeinanderfolgende Quittierungen mit höchstens 15 Minuten Abstand gelten als ein Arbeitsabschnitt. Das ist keine Zeiterfassung. Nur im Speicher für den laufenden Tag, kein Export.", "Estimated hours: consecutive confirmations at most 15 minutes apart count as one work stretch. This is not time recording. Kept in memory for the current day only, no export.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public IReadOnlyList<LiveTransferItem> Transfers { get; set; } = [];
+    [Parameter] public EventCallback AccessChanged { get; set; }
+
+    private IReadOnlyList<LivePersonOutput> _people = [];
+    private string _user = "";
+    private string _password = "";
+    private bool _failed;
+
+    protected override void OnParametersSet()
+        => _people = Access.IsUnlocked ? LogisticsPeople.Outputs(Transfers) : [];
+
+    private async Task UnlockAsync()
+    {
+        _failed = !Access.TryUnlock(_user, _password);
+        _password = "";
+        await AccessChanged.InvokeAsync();
+    }
+
+    private async Task LockAsync()
+    {
+        Access.Lock();
+        _people = [];
+        await AccessChanged.InvokeAsync();
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

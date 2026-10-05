@@ -82,6 +82,48 @@ public sealed class LogisticsLiveService : IDisposable
 
     public event Action? Changed;
 
+    private readonly SemaphoreSlim _outlookGate = new(1, 1);
+    private (DateTime At, IReadOnlyList<LiveDelivery> Deliveries, string? Error)? _outlook;
+
+    /// <summary>
+    /// Warenausgang nach Termin (2026-10-05): Lieferungen der naechsten 14 Tage, ein Tag je Abfrage, eigener Takt
+    /// (hoechstens alle 15 Minuten, gemeinsam fuer alle Betrachter), nicht im 30-Sekunden-Abruf. Liefert P76 die Zukunft
+    /// noch nicht (Transport T76K912658 fehlt), bleibt die Liste leer statt eines Fehlers.
+    /// </summary>
+    public async Task<(IReadOnlyList<LiveDelivery> Deliveries, string? Error, DateTime? At)> GetOutlookAsync(CancellationToken ct = default)
+    {
+        await _outlookGate.WaitAsync(ct);
+        try
+        {
+            if (_outlook is { } c && DateTime.Now - c.At < TimeSpan.FromMinutes(15))
+                return (c.Deliveries, c.Error, c.At);
+            var list = new List<LiveDelivery>();
+            string? error = null;
+            if (!_options.CurrentValue.Enabled)
+                return (list, null, null);
+            try
+            {
+                var (baseUrl, user, password) = await ResolveConnectionAsync(ct);
+                using var client = CreateClient(user, password);
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                for (var i = 1; i <= 14; i++)
+                    list.AddRange((await _reader.ReadDeliveriesAsync(client, baseUrl, today.AddDays(i), ct))
+                        .Select(d => d with { PlannedGoodsIssue = d.PlannedGoodsIssue ?? today.AddDays(i).ToDateTime(TimeOnly.MinValue) }));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                error = ex.GetBaseException().Message;
+                await _log.WriteAsync("Logistik", "Logistik live: Vorschau Warenausgang fehlgeschlagen", "Warning", details: error);
+            }
+            _outlook = (DateTime.Now, list, error);
+            return (list, error, DateTime.Now);
+        }
+        finally
+        {
+            _outlookGate.Release();
+        }
+    }
+
     /// <summary>Seite geoeffnet: startet den Abruf, falls er nicht schon laeuft.</summary>
     public void Subscribe()
     {

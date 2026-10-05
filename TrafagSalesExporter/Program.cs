@@ -169,6 +169,9 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<WorldDataService>(
 builder.Services.AddSingleton<WorldImpactService>();
 // Logistik live, Kapazitaet je Bereich und Tag (2026-10-05), docs/LOGISTIK_LIVE_2026-10-01.md.
 builder.Services.AddSingleton<LogisticsCapacityStore>();
+// Logistik live, Namen nur nach Anmeldung (HR-Freigabe laut Ingo 2026-10-05), Passwort-Hash in LogisticsPeopleAccess.
+builder.Services.Configure<LogisticsPeopleAccessOptions>(builder.Configuration.GetSection(LogisticsPeopleAccessOptions.SectionName));
+builder.Services.AddScoped<LogisticsPeopleAccessService>();
 builder.Services.AddHostedService<NetworkProbeService>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, ClientConnectionTracker>();
 

@@ -40,6 +40,17 @@ public static class LogisticsProductivity
             .OrderBy(o => o.Lgnum).ThenBy(o => o.Hour)
             .ToList();
 
+    /// <summary>Minuten vom ersten angelegten TA bis zur Warenausgangsbuchung, je Lieferung mit gebuchtem Warenausgang.</summary>
+    public static IReadOnlyList<double> UntilGoodsIssue(IEnumerable<LivePickingRun> runs, IEnumerable<LiveDelivery> deliveries)
+    {
+        var gi = deliveries.Where(d => d.GoodsIssueAt.HasValue && d.GoodsIssueAt.Value.TimeOfDay > TimeSpan.Zero)
+            .GroupBy(d => d.Delivery.TrimStart('0')).ToDictionary(g => g.Key, g => g.First().GoodsIssueAt!.Value);
+        return runs.Where(r => gi.ContainsKey(r.Delivery))
+            .Select(r => (gi[r.Delivery] - r.FirstCreated).TotalMinutes)
+            .Where(m => m >= 0)
+            .ToList();
+    }
+
     /// <summary>Wert am Anteil p (0..1) einer Liste, linear zwischen den Nachbarn; null bei leerer Liste.</summary>
     public static double? Quantile(IEnumerable<double> values, double p)
     {

@@ -119,7 +119,11 @@ Stunde. Rechnet nur aus dem gemeinsamen Abruf, kein zusätzlicher SAP-Zugriff. C
 **Teil B, SAP-Transport 1 (in Arbeit, Stand 2026-10-05 11:00):** Transport **`T76K912658`** „Logistik live: TA-Benutzer und
 Warenausgang“, Paket `ZPP`. In T76 erledigt: `ZSTR_LOG_TA` + `BNAME`/`ENAME`/`QNAME` aktiv (DD03L geprüft),
 `ZSTR_LOG_LIEF` + `WADAT`/`WADAT_IST`/`WA_ZEIT` (CHAR8/CHAR8/CHAR6) aktiv; `GET_ENTITYSET` (DPC_EXT, Include `CM01W`) und
-`DEFINE` (MPC_EXT, `CM001`) neu geschrieben und **gesichert, noch nicht aktiviert**. Grundlage war der per `abap-read` gelesene
+`DEFINE` (MPC_EXT, `CM001`) neu geschrieben, *überholt 11:40:* mit Ingos Freigabe („option b, du darfst“) per GUI-Scripting **aktiviert**
+(MPC_EXT, dann DPC_EXT), aktiver Quelltext per RFC gegengelesen, Cache `/IWFND/CACHE_CLEANUP` für `ZPOWERBI_EINKAUF_MDL`.
+**Gateway Client T76:** `$metadata` 200, 355'759 (vorher 354'793); `LogTaSet` 26.03. 200, 1,6 s, 1,38 MB; `LogLiefSet` 26.03. 200,
+1,1 s, 61 KB; `LogLiefSet` 08.10. (Zukunft) 200 leer (T76 ohne Zukunftsdaten), 30.10. (über 14 Tage) 200 leer; Gegenproben
+`LogRueckSet`, `HrKpiSet` 200. Grundlage war der per `abap-read` gelesene
 Live-Quelltext, nicht die Repo-Schnipsel; dieselben Ersetzungen stehen in `docs/abap/ZLOG_LIVE_*_ADD.abap`. Offen: beide
 Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, Gateway Client T76. Inhalt: `LogTaSet` + `BNAME` (TA angelegt von), `ENAME` (Entnahme quittiert von),
 `QNAME` (quittiert von); `LogLiefSet` + `WADAT`, `WADAT_IST` und Uhrzeit der Warenbewegung aus `VBFA-ERZET`; Datum für
@@ -154,6 +158,25 @@ Seite ohne Anmeldung); bei Bedarf hinter den geplanten Logistik-Login legen.
 | `AFRU-ISM01` | teilweise gefüllt (z. B. 12 h, 10 min): rückgemeldete Leistung als Personenzeit für MLE und Produktion nutzbar (Teil C) |
 
 T76-Daten enden im März; P76 vor dem Bau von Teil C gegenprüfen.
+
+**Cockpit zu Teil B (2026-10-05):** liest `Bname`, `Ename`, `Qname`, `Wadat`, `WadatIst`, `WaZeit`; fehlen sie (P76 vor dem Import),
+bleiben sie leer, nichts bricht (Test). **Namen:** ohne Anmeldung bekommt jede Darstellung (Original, 3D, Produktivität, Kapazität)
+die anonymisierte Liste (`LogisticsPeople.Anonymize`, Test). Nach Anmeldung (Abschnitt „Leistung je Person“ unter Produktivität)
+je Benutzer: quittierte Positionen, angelegte TA, erste/letzte Quittierung, geschätzte Stunden (Abschnitte mit Lücken bis 15 Minuten,
+einzelne Quittierung 2 Minuten), Positionen je Stunde. Nur im Speicher, kein Export. **Warenausgang nach Termin:** eigene Abfrage
+der nächsten 14 Tage (je Tag ein Aufruf), höchstens alle 15 Minuten, gemeinsam für alle, nur wenn der Umschalter Kapazität offen ist.
+**Bis Warenausgang:** Median erster TA angelegt bis Warenbewegung, sobald `WadatIst`/`WaZeit` kommen.
+
+**Passwort für die Namen setzen (Ingo):** In PowerShell den Hash erzeugen und ihn (nicht das Passwort) in
+`appsettings.json` unter `LogisticsPeopleAccess:PasswordHash` eintragen lassen; Benutzer ist `logistik`:
+```powershell
+$p = Read-Host "Passwort" -AsSecureString; $t = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($p)); [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($t)))
+```
+Ohne Hash zeigt die Seite „noch nicht eingerichtet“ und bleibt anonym.
+
+**Prüfliste P76 nach Ingos Import von `T76K912658`:** `$metadata` muss auf rund 355'759 wachsen, sonst `/IWFND/CACHE_CLEANUP` für
+`ZPOWERBI_EINKAUF_MDL` in P76; dann `LogTaSet` heute 200 mit Benutzern, `LogLiefSet` heute und morgen 200, Gegenproben `HrKpiSet`,
+`FinanzJournalSet` gefiltert. Danach im Cockpit: Kapazität zeigt die Vorschau, Produktivität nach Anmeldung die Personen.
 
 **Grenze T76:** Daten in T76 enden im März; Abfragen in die Zukunft und Kapazitätsbedarf werden dort voraussichtlich leer
 sein. T76 belegt Felder und Schutz, nicht den Inhalt.

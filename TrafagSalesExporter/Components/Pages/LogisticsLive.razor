@@ -4,6 +4,7 @@
 @using TrafagSalesExporter.Components.Logistics
 @implements IDisposable
 @inject LogisticsLiveService Live
+@inject LogisticsPeopleAccessService PeopleAccess
 @inject IUiTextService UiText
 
 @* Logistik live (Wunsch Ingo 2026-10-01): Kommissionierung und Produktion so zeitnah wie moeglich.
@@ -66,15 +67,16 @@
 
 @if (_view == View3d)
 {
-    <WarehouseBins3D Transfers="S.Transfers" />
+    <WarehouseBins3D Transfers="ViewTransfers" />
 }
 else if (_view == ViewProductivity)
 {
-    <ProductivityPanel Transfers="S.Transfers" Now="_now" />
+    <ProductivityPanel Transfers="ViewTransfers" Deliveries="S.Deliveries" Now="_now" />
+    <PeoplePanel Transfers="ViewTransfers" AccessChanged="AccessChangedAsync" />
 }
 else if (_view == ViewCapacity)
 {
-    <CapacityPanel Transfers="S.Transfers" />
+    <CapacityPanel Transfers="ViewTransfers" />
 }
 else
 {
@@ -202,6 +204,29 @@ else
 
 @code {
     private LogisticsLiveSnapshot S => Live.Snapshot;
+    private IReadOnlyList<LiveTransferItem>? _anonymous;
+    private IReadOnlyList<LiveTransferItem>? _anonymousSource;
+
+    // Namen nur nach Anmeldung: ohne Freischaltung bekommt jede Darstellung die anonymisierte Liste (2026-10-05).
+    private IReadOnlyList<LiveTransferItem> ViewTransfers
+    {
+        get
+        {
+            if (PeopleAccess.IsUnlocked) return S.Transfers;
+            if (!ReferenceEquals(_anonymousSource, S.Transfers))
+            {
+                _anonymousSource = S.Transfers;
+                _anonymous = LogisticsPeople.Anonymize(S.Transfers);
+            }
+            return _anonymous!;
+        }
+    }
+
+    private Task AccessChangedAsync()
+    {
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
     private bool _subscribed;
     private const string ViewOriginal = "original";
     private const string View3d = "3d";

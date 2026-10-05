@@ -18,6 +18,10 @@
         <div class="ll-kpi-label">@T("Durchlaufzeit, 8 von 10 Lieferungen darunter", "Lead time, 8 of 10 deliveries below")</div>
     </div>
     <div class="ll-kpi">
+        <div class="ll-kpi-value">@Min(_giMedian)</div>
+        <div class="ll-kpi-label">@T("Bis Warenausgang je Lieferung, Median", "Until goods issue per delivery, median")</div>
+    </div>
+    <div class="ll-kpi">
         <div class="ll-kpi-value">@_perHour.ToString("0.#", CultureInfo.InvariantCulture)</div>
         <div class="ll-kpi-label">@T("Positionen je aktive Stunde", "Items per active hour")</div>
     </div>
@@ -83,6 +87,8 @@
 @code {
     [Parameter] public IReadOnlyList<LiveTransferItem> Transfers { get; set; } = [];
     [Parameter] public DateTime Now { get; set; }
+    [Parameter] public IReadOnlyList<LiveDelivery> Deliveries { get; set; } = [];
+    private double? _giMedian;
 
     private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #90A4AE".Split(' ');
     private IReadOnlyList<LivePickingRun> _runs = [];
@@ -104,6 +110,7 @@
         _median = LogisticsProductivity.Quantile(_done.Select(r => r.Minutes(_now)), 0.5);
         _p80 = LogisticsProductivity.Quantile(_done.Select(r => r.Minutes(_now)), 0.8);
         _output = LogisticsProductivity.HourlyOutput(Transfers);
+        _giMedian = LogisticsProductivity.Quantile(LogisticsProductivity.UntilGoodsIssue(_runs, Deliveries), 0.5);
         _lgnums = _output.Select(o => o.Lgnum).Distinct().Order().ToList();
         _hours = _output.Select(o => o.Hour).Distinct().Order().ToList();
         _maxHour = Math.Max(1, _hours.Select(h => _output.Where(o => o.Hour == h).Sum(o => o.Confirmed)).DefaultIfEmpty(1).Max());
