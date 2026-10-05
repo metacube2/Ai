@@ -151,7 +151,16 @@ Klassenänderung für Teil C liegt deshalb im neuen Auftrag **`T76K912662`** „
 und Tag die Belastung in Prozent (Ampel), Tooltip Bedarf/Angebot/Vorgänge; ohne Angebot nur die Stunden; fehlt das Set in P76,
 steht der Hinweis auf `T76K912662`. Ein Aufruf, höchstens alle 15 Minuten, Werk 1100.
 
-**MES (Frage Ingo 2026-10-05):** Daten eines externen MES-Systems sieht das Cockpit nur, wenn das MES sie nach SAP zurückmeldet
+**Stand P76 Teil C (2026-10-05 13:45):** Ingo meldet `T76K912662` importiert; in der Importqueue (Screenshot Ingo) hat er aber
+als einziger der vier Aufträge **keine grüne Nummer (359) und ein oranges Dreieck** (Warnung), `T76K912658` und `T76K912660`
+sind grün mit Häkchen. Das Cockpit zeigte um 13:40 noch „Set fehlt“ (gemerkter Abruf von 13:35, 15 Minuten). **Offen:**
+Importprotokoll von `T76K912662` (Rückgabecode, Schritt Aktivierung) und danach `/IWFND/CACHE_CLEANUP` in P76; dann
+Kapazitätstabelle im Cockpit prüfen.
+
+**Schwäche im Cockpit (offen):** Ein Fehler beim Abruf von Kapazität oder Vorschau wird wie ein Erfolg 15 Minuten gemerkt. Nach
+einem Import zeigt die Seite deshalb bis zu 15 Minuten weiter „fehlt“. Besser: Fehler nur 1 Minute merken.
+
+**MES (Frage Ingo 2026-10-05):** Antwort Ingo: **Eigenentwicklung**, der Entwickler hat wenig Zeit; Ingo klärt das später. Grundsatz: Daten des MES sieht das Cockpit nur, wenn das MES sie nach SAP zurückmeldet
 (dann stehen sie in `AFRU` und kommen über `LogRueckSet` und die Kapazität schon an). Hat das MES eine eigene Datenbank oder
 Schnittstelle, braucht es Name, Hersteller, Zugang und eine Firewall-Freigabe; ungeprüft.
 Ursprünglicher Entwurf: Quellen in T76 per RFC belegt: Bedarf

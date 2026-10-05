@@ -10,8 +10,11 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 ## Deploy und Server
 
+
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-05 | Deploys brachen dreimal in der DB-Sicherung mit SQLite `disk I/O error` ab; Ursache Always On VPN (SSTP, RAS-Code 829), Heimnetz stabil | Deploy erst starten, wenn die Freigabe 2 Minuten am Stueck erreichbar ist (Warteschleife im Hintergrund); leere `.bak` in Temp danach loeschen | `docs/rag/DEPLOYMENT.md` |
+| 2026-10-05 | Ein fertiger Deploy-Lauf (Protokoll geschrieben) beendete sich nicht und sperrte `DeployConsole.dll`; Folgedeploys scheiterten beim Bauen | Nach Abbruch „konnte nicht kopiert werden“ zuerst `Get-Process DeployHeadless` pruefen; Ingo musste den Prozess beenden | `docs/rag/DEPLOYMENT.md` |
 | 2026-08-07 | `dotnet publish` aus Git Bash auf den UNC-Pfad legte alles lokal unter `C:\trch-webapp...` ab, der Server stand mit `app_offline` still | Deploy nur als Bash `dotnet run --project .tmp_tools/DeployHeadless -c Release`; nie selbst publishen | `rag/DEPLOYMENT.md` oben |
 | 2026-08-07 | Publish meldete Erfolg, uebersprang aber die neuere `BiDashboard.dll` im Ziel | Nach jedem Deploy SHA256 Server gegen Release-Build vergleichen (macht der Runner) | `rag/DEPLOYMENT.md` |
 | 2026-09-01 | Produktiver Stand ohne Commit, kein Rollback-Punkt | Erst committen, dann aus dem sauberen Release-Worktree am Commit deployen, nie aus dem Arbeitsbaum | `CLAUDE.md` 3 |
@@ -79,6 +82,12 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 | 2026-09-30 | 8,4 h je Arbeitstag stand ungeprueft im Code | Fachkonstanten nur mit Quelle (Person, Datum) | `HR_KPI.md` 8.4 |
 | 2026-10-01 | Erst nur „Felder in HrKpiSet“ als Option angeboten, obwohl ein Set je Fall besser passte | Vor einer Entscheidungsfrage alle sinnvollen Varianten durchdenken, nicht nur die naheliegende | `HR_KPI.md` 8.7 |
 | 2026-10-05 | Weltlage: Kursveraenderung 90 Tage aus der Kurstabelle gerechnet, die nur bei Bedarf importiert wird; alle Waehrungen 0.0 | Vor einer Zeitreihen-Rechnung pruefen, ob die Quelle ueberhaupt Verlauf hat (Fuellstand, Import-Takt), nicht nur, ob sie Werte liefert | `WELTLAGE_2026-10-05.md` Produktiver Stand |
+| 2026-10-05 | Logistik: „Rüstzeit“ als Zeit vom TA bis zur Quittierung angezeigt; Neva: das ist keine Arbeitszeit | Kennzahlen nach dem benennen, was sie messen (Durchlaufzeit), und die Grenze auf der Seite sagen | `LOGISTIK_LIVE_2026-10-01.md` |
+| 2026-10-05 | Cockpit merkt einen Fehlabruf (Set fehlt) 15 Minuten wie einen Erfolg; nach dem P76-Import zeigte die Seite weiter „fehlt“ | Fehler kurz merken (1 Minute), Erfolge lang | `LOGISTIK_LIVE_2026-10-01.md` (offen) |
+| 2026-10-05 | Fusszeile „Ohne Personendaten“ blieb stehen, nachdem Namen mit Login eingebaut waren | Bei jeder Erweiterung feste Texte der Seite auf neue Unwahrheiten durchsuchen | `LogisticsLive.razor` |
 | 2026-10-05 | Logistik 3D: Platzschema geraten statt gemessen; echte Namen (`1-008-B`, `BP-MLE04-2`, `DL20004`) fielen durch | Bei Darstellungen aus Schluesseln zuerst echte Werte ansehen (Seite produktiv oeffnen), dann Regeln schreiben | `LOGISTIK_LIVE_2026-10-01.md` 3D |
 | 2026-10-05 | SAP: Teil C sollte in eigenen Transport, die Klassen waren aber noch im nicht freigegebenen `T76K912658` gesperrt; Sichern fragte nicht nach dem Auftrag und haette Teil C still in Teil B gelegt | Vor jeder weiteren Aenderung an einem Objekt pruefen, ob es in einem offenen Auftrag gesperrt ist (SE03/E071); getrennte Transporte erst nach Freigabe des ersten | `LOGISTIK_LIVE_2026-10-01.md` Teil C |
+| 2026-10-05 | SAP: Ingo gab `T76K912660` zusammen mit `T76K912658` frei, obwohl er erst die Struktur enthielt; das Sichern der Klassen meldete dann „Auftrag bereits freigegeben“ | Vor dem Sichern pruefen, ob der Zielauftrag noch offen ist; beim Melden eines Auftrags an Ingo dazusagen, ob er schon freigabereif ist oder noch Objekte bekommt | `LOGISTIK_LIVE_2026-10-01.md` Teil C |
+| 2026-10-05 | Dialoge in GUI-Skripten ohne Auslesen weggeklickt: eine „Information“ nach dem Auftragsdialog blieb ungelesen, das Sichern war nicht erfolgt | Jedes unerwartete Fenster erst auslesen (`txtMESSTXT1/2`), dann entscheiden; `SapGuiAuftragNeuImDialog.vbs` liest und meldet es | `.tmp_sap_probe/` |
+| 2026-10-05 | Datumsschutz `LogKapSet` (heute − 30 Tage) machte den ersten T76-Test mit Maerzdaten leer; erst ein Test im erlaubten Fenster zeigte, dass T76 offene Auftraege fuer Sept/Okt hat | Vor dem Test pruefen, wo im Testsystem im erlaubten Fenster Daten liegen (RFC `table-read` mit Datumsfilter) | `LOGISTIK_LIVE_2026-10-01.md` Teil C |
 | 2026-10-01 | Ohne Datei wuerde ein Zeitraum vor den SAP-Daten eine leere, „verlaessliche“ 0-%-Quote zeigen | Bei jeder neuen Quelle pruefen, was ausserhalb ihrer Abdeckung angezeigt wird | `c12b34a` |
