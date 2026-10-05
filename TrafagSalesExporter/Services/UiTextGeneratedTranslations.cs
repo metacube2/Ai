@@ -8,6 +8,7 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Personas solo tras iniciar sesión (rendimiento por persona en productividad), si no anónimo; sin números de personal. Fuente P76, gestión de almacenes (LTAK/LTAP), entregas (LIKP/LIPS), notificaciones (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Salida de mercancías por fecha, próximos 14 días",
                 ["höchstens alle 15 Minuten"] = "como máximo cada 15 minutos",
                 ["Keine Lieferungen mit geplantem Warenausgang in den nächsten 14 Tagen gemeldet. Solange der Transport T76K912658 nicht in P76 ist, liefert SAP keine Zukunft."] = "No se han comunicado entregas con salida de mercancías prevista en los próximos 14 días. Mientras el transporte T76K912658 no esté en P76, SAP no devuelve fechas futuras.",
@@ -604,7 +605,6 @@ internal static class UiTextGeneratedTranslations
                 ["ruhig"] = "inactivo",
                 ["Aufträge, zuletzt zurückgemeldet"] = "Órdenes notificadas recientemente",
                 ["Letzte Rückmeldungen"] = "Últimas notificaciones",
-                ["Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Sin datos personales: SAP no entrega ni número de personal ni usuario. Fuente P76, gestión de almacenes (LTAK/LTAP), entregas (LIKP/LIPS), notificaciones (AFRU).",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Se muestran {0:N0} de {1:N0} filas de detalle. El limite se aplica antes de los filtros de columna y la exportacion a Excel contiene las mismas filas. Solo el libro de comprobacion esta completo.",
                 ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Esta exportacion esta limitada: libro de control {0:N0} de {1:N0}, margen de grupo {2:N0} de {3:N0} filas de detalle. Solo el libro de comprobacion esta completo.",
                 ["Zeitraum nicht bestimmbar"] = "Periodo no determinable",
@@ -2168,6 +2168,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Persone solo dopo l'accesso (rendimento per persona in produttività), altrimenti anonimo; nessun numero di personale. Fonte P76, gestione magazzino (LTAK/LTAP), consegne (LIKP/LIPS), conferme (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Uscita merci per data, prossimi 14 giorni",
                 ["höchstens alle 15 Minuten"] = "al massimo ogni 15 minuti",
                 ["Keine Lieferungen mit geplantem Warenausgang in den nächsten 14 Tagen gemeldet. Solange der Transport T76K912658 nicht in P76 ist, liefert SAP keine Zukunft."] = "Nessuna consegna con uscita merci prevista nei prossimi 14 giorni. Finché il trasporto T76K912658 non è in P76, SAP non restituisce date future.",
@@ -2764,7 +2765,6 @@ internal static class UiTextGeneratedTranslations
                 ["ruhig"] = "inattivo",
                 ["Aufträge, zuletzt zurückgemeldet"] = "Ordini confermati di recente",
                 ["Letzte Rückmeldungen"] = "Ultime conferme",
-                ["Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Nessun dato personale: SAP non fornisce né numero di matricola né utente. Fonte P76, gestione magazzino (LTAK/LTAP), consegne (LIKP/LIPS), conferme (AFRU).",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Vengono mostrate {0:N0} di {1:N0} righe di dettaglio. Il limite si applica prima dei filtri di colonna e l'esportazione Excel contiene le stesse righe. Solo la cartella di verifica e completa.",
                 ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Questa esportazione e limitata: registro di controllo {0:N0} di {1:N0}, margine di gruppo {2:N0} di {3:N0} righe di dettaglio. Solo la cartella di verifica e completa.",
                 ["Zeitraum nicht bestimmbar"] = "Periodo non determinabile",
@@ -4328,6 +4328,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "व्यक्ति केवल लॉगिन के बाद (उत्पादकता में प्रति व्यक्ति आउटपुट), अन्यथा गुमनाम; कोई कार्मिक संख्या नहीं। स्रोत P76, गोदाम प्रबंधन (LTAK/LTAP), डिलीवरी (LIKP/LIPS), पुष्टियाँ (AFRU)।",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "तिथि अनुसार माल निकासी, अगले 14 दिन",
                 ["höchstens alle 15 Minuten"] = "अधिकतम हर 15 मिनट",
                 ["Keine Lieferungen mit geplantem Warenausgang in den nächsten 14 Tagen gemeldet. Solange der Transport T76K912658 nicht in P76 ist, liefert SAP keine Zukunft."] = "अगले 14 दिनों में नियोजित माल निकासी वाली कोई डिलीवरी नहीं। जब तक ट्रांसपोर्ट T76K912658 P76 में नहीं है, SAP भविष्य की तिथियाँ नहीं देता।",
@@ -4924,7 +4925,6 @@ internal static class UiTextGeneratedTranslations
                 ["ruhig"] = "शांत",
                 ["Aufträge, zuletzt zurückgemeldet"] = "हाल ही में पुष्टि किए गए ऑर्डर",
                 ["Letzte Rückmeldungen"] = "नवीनतम पुष्टियाँ",
-                ["Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "कोई व्यक्तिगत डेटा नहीं: SAP न कर्मचारी संख्या देता है न उपयोगकर्ता। स्रोत P76, गोदाम प्रबंधन (LTAK/LTAP), डिलीवरी (LIKP/LIPS), पुष्टियाँ (AFRU)।",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
                 ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
@@ -6488,6 +6488,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Personat vetëm pas hyrjes (rendimenti për person te produktiviteti), përndryshe anonim; pa numra personeli. Burimi P76, menaxhimi i magazinës (LTAK/LTAP), dërgesat (LIKP/LIPS), konfirmimet (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Dalja e mallrave sipas datës, 14 ditët e ardhshme",
                 ["höchstens alle 15 Minuten"] = "më së shumti çdo 15 minuta",
                 ["Keine Lieferungen mit geplantem Warenausgang in den nächsten 14 Tagen gemeldet. Solange der Transport T76K912658 nicht in P76 ist, liefert SAP keine Zukunft."] = "Asnjë dërgesë me dalje të planifikuar mallrash në 14 ditët e ardhshme. Derisa transporti T76K912658 të jetë në P76, SAP nuk kthen data të ardhshme.",
@@ -7084,7 +7085,6 @@ internal static class UiTextGeneratedTranslations
                 ["ruhig"] = "i qetë",
                 ["Aufträge, zuletzt zurückgemeldet"] = "Urdhrat e konfirmuar së fundmi",
                 ["Letzte Rückmeldungen"] = "Konfirmimet e fundit",
-                ["Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Pa të dhëna personale: SAP nuk jep as numër personeli as përdorues. Burimi P76, menaxhimi i magazinës (LTAK/LTAP), dërgesat (LIKP/LIPS), konfirmimet (AFRU).",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
                 ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
@@ -8648,6 +8648,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Kişiler yalnızca girişten sonra (verimlilik altında kişi başına çıktı), aksi halde anonim; personel numarası yok. Kaynak P76, depo yönetimi (LTAK/LTAP), teslimatlar (LIKP/LIPS), onaylar (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Tarihe göre mal çıkışı, sonraki 14 gün",
                 ["höchstens alle 15 Minuten"] = "en fazla 15 dakikada bir",
                 ["Keine Lieferungen mit geplantem Warenausgang in den nächsten 14 Tagen gemeldet. Solange der Transport T76K912658 nicht in P76 ist, liefert SAP keine Zukunft."] = "Sonraki 14 günde planlanmış mal çıkışı olan teslimat bildirilmedi. T76K912658 transportu P76'da olmadığı sürece SAP gelecek tarih döndürmez.",
@@ -9244,7 +9245,6 @@ internal static class UiTextGeneratedTranslations
                 ["ruhig"] = "sakin",
                 ["Aufträge, zuletzt zurückgemeldet"] = "En son teyit edilen siparişler",
                 ["Letzte Rückmeldungen"] = "Son teyitler",
-                ["Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Kişisel veri yok: SAP ne personel numarası ne de kullanıcı verir. Kaynak P76, depo yönetimi (LTAK/LTAP), teslimatlar (LIKP/LIPS), teyitler (AFRU).",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
                 ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
@@ -10808,6 +10808,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "ghot 'el pagh cha'be'; ghot mI' tu'be'. Hal P76, Daq (LTAK/LTAP), ngev (LIKP/LIPS), rIn (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Hap mej jaj, wa'maH loS jaj",
                 ["höchstens alle 15 Minuten"] = "wa'maH vagh tup Hoch",
                 ["Keine Lieferungen mit geplantem Warenausgang in den nächsten 14 Tagen gemeldet. Solange der Transport T76K912658 nicht in P76 ist, liefert SAP keine Zukunft."] = "wa'maH loS jaj ngev tu'be'. T76K912658 P76 Daq tu'be'chugh, SAP ghIq De' nobbe'.",
@@ -11404,7 +11405,6 @@ internal static class UiTextGeneratedTranslations
                 ["ruhig"] = "tam",
                 ["Aufträge, zuletzt zurückgemeldet"] = "ra'meH Qav ja'",
                 ["Letzte Rückmeldungen"] = "ja'meH Qav",
-                ["Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "ghot De' pagh: SAP ghot mI' ghap lo'wI' nob be'. Hal P76, polmeH (LTAK/LTAP), Doch ghoS (LIKP/LIPS), ja'meH (AFRU).",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
                 ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",

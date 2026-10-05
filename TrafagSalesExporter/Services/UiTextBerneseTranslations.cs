@@ -10,6 +10,7 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Persone nume nach dr Aamäldig (Leischtig pro Person under Produktivität), süsch anonym; keni Personalnummere. Quälle P76, Lagerverwautig (LTAK/LTAP), Liferige (LIKP/LIPS), Rückmäldige (AFRU).",
             ["Warenausgang nach Termin, nächste 14 Tage"] = "Wareusgang nach Termin, nächschti 14 Täg",
             ["höchstens alle 15 Minuten"] = "höchschtens aui 15 Minute",
             ["Keine Lieferungen mit geplantem Warenausgang in den nächsten 14 Tagen gemeldet. Solange der Transport T76K912658 nicht in P76 ist, liefert SAP keine Zukunft."] = "Keni Liferige mit planetem Wareusgang i de nächschte 14 Täg gmäldet. Solang dr Transport T76K912658 nid i P76 isch, liferet SAP ke Zuekunft.",
@@ -602,7 +603,6 @@ internal static class UiTextBerneseTranslations
             ["ruhig"] = "ruhig",
             ["Aufträge, zuletzt zurückgemeldet"] = "Ufträg, zletscht zrüggmäudet",
             ["Letzte Rückmeldungen"] = "Letschti Rückmäudige",
-            ["Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Ohni Persone-Date: SAP liferet weder Personalnummere no Benutzer. Quelle P76, Lagerverwautig (LTAK/LTAP), Lieferige (LIKP/LIPS), Rückmäudige (AFRU).",
             ["\r\n"] = "\r\n",
             [" + string.Join("] = " + string.Join(",
             ["#00838f"] = "#00838f",

@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Logistik live: Produktivität und Kapazität, 2026-10-05, DEPLOYSTAND
+## Logistik live: Produktivität, Kapazität, Namen nach Anmeldung, 2026-10-05, produktiv 10:31 bis 12:40
 
 - Umschalter Produktivität (Durchlaufzeit je Lieferung, Leistung je Stunde, anonym, produktiv 10:31) und Kapazität (tägliche
   Erfassung je Bereich nach Nevas Kennzahlen: Produktivität, Bedarf, Belastung, Lücke). SAP-Teil für Namen und Warenausgang in T76
