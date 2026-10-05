@@ -28,6 +28,7 @@ public static class NavigationIconResolver
         "MoveUp" => Icons.Material.Filled.MoveUp,
         "Summarize" => Icons.Material.Filled.Summarize,
         "Storefront" => Icons.Material.Filled.Storefront,
+        "Insights" => Icons.Material.Filled.Insights,
         "TrendingDown" => Icons.Material.Filled.TrendingDown,
         "SwapVert" => Icons.Material.Filled.SwapVert,
         "JoinInner" => Icons.Material.Filled.JoinInner,

@@ -778,3 +778,29 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .sal-companies { display: flex; flex-wrap: wrap; gap: 8px; }
 .sal-company { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; min-width: 120px; font-size: 13px; animation: dir-pop 0.5s ease-out both; }
 .sal-company-warn { border-color: #F9A825; box-shadow: 0 0 0 1px #F9A825 inset; }
+
+/* Finance Cockpit, Unterreiter Controlling (2026-10-05). Praefix "ctl-". */
+.ctl-bridge, .ctl-proj, .ctl-months { width: 100%; height: auto; }
+.ctl-step { animation: dir-pop 0.6s ease-out both; }
+.ctl-total { fill: #1E88E5; } .ctl-pos { fill: #43A047; } .ctl-neg { fill: #E53935; }
+.ctl-total, .ctl-pos, .ctl-neg { transform-box: fill-box; transform-origin: bottom; animation: dir-grow-y 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.ctl-connector { stroke: rgba(127, 127, 127, 0.7); stroke-dasharray: 3 3; }
+.ctl-val { font: 700 12px system-ui, sans-serif; fill: var(--mud-palette-text-primary); text-anchor: middle; }
+.ctl-label { font: 12px system-ui, sans-serif; fill: var(--mud-palette-text-secondary); text-anchor: middle; }
+.ctl-name { font: 700 12px system-ui, sans-serif; fill: var(--mud-palette-text-primary); }
+.ctl-val-left { font: 600 12px system-ui, sans-serif; fill: var(--mud-palette-text-primary); text-anchor: start; }
+.ctl-up { fill: #43A047; } .ctl-down { fill: #E53935; }
+.ctl-ytd { fill: #C8501E; transform-box: fill-box; transform-origin: left; animation: dir-life-in 1s ease-out both; }
+.ctl-rest { stroke: #C8501E; stroke-width: 1; stroke-dasharray: 3 2; }
+.ctl-prev-mark { stroke: #B0BEC5; stroke-width: 3; }
+.ctl-table-wrap { overflow-x: auto; }
+.ctl-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.ctl-table th, .ctl-table td { padding: 4px 8px; border-bottom: 1px solid rgba(127, 127, 127, 0.2); text-align: right; white-space: nowrap; }
+.ctl-table th:first-child, .ctl-table td:first-child { text-align: left; }
+.ctl-line-prev { fill: none; stroke: #90A4AE; stroke-width: 2; stroke-dasharray: 4 4; }
+.ctl-line-cur { fill: none; stroke: #C8501E; stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; animation: dir-draw 1.6s ease-out forwards; }
+.ctl-line-fc { fill: none; stroke: #F08A4B; stroke-width: 3; stroke-dasharray: 6 5; }
+.ctl-sw-prev { background: #90A4AE; } .ctl-sw-cur { background: #C8501E; } .ctl-sw-fc { background: #F08A4B; }
+.ctl-open { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.ctl-open-item { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; border: 1px dashed var(--mud-palette-lines-default); border-radius: 6px; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .ctl-step, .ctl-total, .ctl-pos, .ctl-neg, .ctl-ytd, .ctl-line-cur { animation: none; } .ctl-line-cur { stroke-dashoffset: 0; } }

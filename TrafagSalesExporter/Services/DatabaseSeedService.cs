@@ -285,6 +285,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("raw-diagnostics", "experts", "Rohdaten Diagnose", "Raw-data diagnostics", "QueryStats", "management-cockpit?section=raw", 130, "All"),
         Link("finance-heartbeat", "experts", "Daten-Heartbeat", "Data heartbeat", "MonitorHeart", "management-cockpit?section=heartbeat", 140, "All"),
         Link("finance-comparison", "finance", "Soll/Ist Vergleich", "Actual/reference comparison", "CompareArrows", "finance-cockpit/vergleich", 30),
+        // Controlling 2026-10-05 (Eigeninitiative, ohne Passwort wie Verkauf). Doku docs/CONTROLLING_2026-10-05.md.
+        Link("finance-controlling", "finance", "Controlling", "Controlling", "Insights", "finance-cockpit/controlling", 35),
         Link("finance-training", "finance", "Finance Schulung", "Finance training", "School", "finance-cockpit/schulung", 40),
         Link("manual-imports", "finance", "Manuelle Importe", "Manual imports", "UploadFile", "manual-imports", 50),
         Link("finance-journal-import", "finance", "Journal Import", "Journal import", "AccountBalance", "finance-journal-import", 55),

@@ -116,7 +116,8 @@ public sealed class SalesDataService
                 SalesAnalytics.CustomerKey(r.CustomerName, r.Tsc, r.CustomerNumber), (r.CustomerName ?? "").Trim(),
                 country.Length == 2 && country.All(char.IsLetter) ? country : "",
                 (r.Material ?? "").Trim(), (r.Name ?? "").Trim(), division.Length == 0 ? "Nicht zugeordnet" : division,
-                Math.Round(value * rate.Value, 2), r.Quantity, r.InvoiceNumber ?? ""));
+                Math.Round(value * rate.Value, 2), r.Quantity, r.InvoiceNumber ?? "",
+                value, ManagementCockpitService.ResolveFinanceCurrency(r)));
         }
 
         var referenceEnd = SalesAnalytics.ReferenceEnd(facts, DateOnly.FromDateTime(DateTime.Today));

@@ -1,0 +1,251 @@
+@page "/finance-cockpit/controlling"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Network
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Unterreiter Controlling im Finance Cockpit (Eigeninitiative 2026-10-05, kein Auftraggeber): Umsatzbruecke gegen
+   Vorjahr (Menge, Mix, Preis, neue/weggefallene Artikel, Waehrung) und Hochrechnung des laufenden Jahres. Offene Fragen
+   separat unten. Gleiche Datenbasis wie der Reiter Verkauf. Doku docs/CONTROLLING_2026-10-05.md *@
+<PageTitle>Finance Cockpit · Controlling</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">Controlling</MudText>
+<MudText Typo="Typo.body2" Class="ll-muted mb-3">@T("Woher kommt die Umsatzveränderung, und wo landen wir dieses Jahr? Aus eigener Initiative gebaut, Grundlage sind die Verkaufsdaten nach Finance-Regeln.", "Where does the sales change come from, and where will we end up this year? Built on own initiative, based on sales data by Finance rules.")</MudText>
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.caption" Class="ll-muted">@T("Verkaufsdaten werden geladen, beim ersten Aufruf bis zu einer Minute …", "Loading sales data, up to a minute on first call …")</MudText>
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else if (_bridge is not null && _total is not null)
+{
+    <div class="ll-kpis">
+        <div class="ll-kpi"><div class="ll-kpi-value @(_bridge.Change >= 0 ? "sal-up" : "sal-down")">@(_bridge.Change >= 0 ? "+" : string.Empty)@Short(_bridge.Change)</div><div class="ll-kpi-label">@T("Veränderung CHF", "Change CHF") @CurrentPeriod(_data) / @PreviousPeriod(_data)</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@Short(_total.Projected)</div><div class="ll-kpi-label">@T("Hochrechnung", "Projection") @_total.Year</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value">@(_total.PreviousYear is { } py ? Short(py) : "–")</div><div class="ll-kpi-label">@T("Ist", "Actual") @(_total.Year - 1)</div></div>
+        <div class="ll-kpi"><div class="ll-kpi-value @(_total.ChangePercent >= 0 ? "sal-up" : "sal-down")">@Percent(_total.ChangePercent)</div><div class="ll-kpi-label">@T("Hochrechnung gegen Vorjahr", "Projection against previous year")</div></div>
+    </div>
+
+    <MudPaper Class="pa-3 mb-3" Outlined="true">
+        <div class="d-flex align-center flex-wrap" style="gap:12px">
+            <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatzbrücke gegen Vorjahr", "Sales bridge against previous year")</MudText>
+            <MudSelect T="string" Value="_scope" ValueChanged="Choose" Label="@T("Sicht", "View")" Dense="true" Variant="Variant.Outlined" Style="max-width:300px">
+                @foreach (var s in _scopes)
+                {
+                    <MudSelectItem T="string" Value="@s">@ScopeLabel(s)</MudSelectItem>
+                }
+            </MudSelect>
+            <ExcelButton FileLabel="Controlling" Sheets="ExcelSheets" />
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Von links nach rechts: Umsatz im Vorjahreszeitraum, dann was ihn verändert hat, am Ende der aktuelle Umsatz. Grün erhöht, rot senkt. Menge: mehr oder weniger Stück. Mix: andere Artikel verkauft (teurere oder günstigere). Preis: gleiche Artikel zu anderem Preis. Neue und weggefallene Artikel: im einen Zeitraum gar nicht verkauft. Währung: andere Wechselkurse. Übrige: ohne Stückzahl, zum Beispiel Leistungen.", "From left to right: sales in the previous-year period, then what changed it, finally the current sales. Green increases, red decreases. Volume: more or fewer pieces. Mix: other articles sold (more or less expensive). Price: same articles at another price. New and dropped articles: not sold at all in one period. Currency: other exchange rates. Other: without quantity, for example services.")</MudText>
+        @{
+            var steps = Steps(_bridge);
+            var max = (double)Math.Max(1, steps.Max(s => Math.Max(s.From, s.To)));
+            var w = 900.0 / steps.Count;
+        }
+        <svg viewBox="0 0 1000 330" class="ctl-bridge">
+            @for (var i = 0; i < steps.Count; i++)
+            {
+                var s = steps[i];
+                var top = Math.Max(s.From, s.To);
+                var bottom = Math.Min(s.From, s.To);
+                var y1 = 270 - 240 * (double)top / max;
+                var y2 = 270 - 240 * (double)bottom / max;
+                var x = 70 + i * w;
+                var cls = s.Total ? "ctl-total" : s.To >= s.From ? "ctl-pos" : "ctl-neg";
+                <g class="ctl-step" style="animation-delay:@(F(i * 0.12))s">
+                    <rect x="@F(x + 8)" y="@F(y1)" width="@F(w - 16)" height="@F(Math.Max(2, y2 - y1))" rx="3" class="@cls"><title>@s.Label: @Chf(s.To - (s.Total ? 0 : s.From))</title></rect>
+                    @if (i + 1 < steps.Count)
+                    {
+                        <line x1="@F(x + w - 8)" y1="@F(270 - 240 * (double)s.To / max)" x2="@F(x + w + 8)" y2="@F(270 - 240 * (double)s.To / max)" class="ctl-connector" />
+                    }
+                    <text x="@F(x + w / 2)" y="@F(y1 - 6)" class="ctl-val">@(s.Total ? Short(s.To) : (s.To >= s.From ? "+" : string.Empty) + Short(s.To - s.From))</text>
+                    <text x="@F(x + w / 2)" y="292" class="ctl-label">@s.Label</text>
+                </g>
+            }
+        </svg>
+        <MudText Typo="Typo.subtitle2" Class="mt-2">@T("Je Gesellschaft", "Per company")</MudText>
+        <div class="ctl-table-wrap">
+            <table class="ctl-table">
+                <thead><tr><th>@T("Gesellschaft", "Company")</th><th>@T("Vorjahr", "Previous year")</th><th>@T("Menge", "Volume")</th><th>Mix</th><th>@T("Preis", "Price")</th><th>@T("Neue Artikel", "New articles")</th><th>@T("Weggefallen", "Dropped")</th><th>@T("Währung", "Currency")</th><th>@T("Übrige", "Other")</th><th>@T("Aktuell", "Current")</th></tr></thead>
+                <tbody>
+                    @foreach (var b in _companyBridges)
+                    {
+                        <tr>
+                            <td><b>@b.Scope</b></td>
+                            <td>@Short(b.Previous)</td>
+                            @foreach (var v in new[] { b.Volume, b.Mix, b.Price, b.NewItems, b.LostItems, b.Currency, b.Other })
+                            {
+                                <td class="@(v > 0 ? "sal-up" : v < 0 ? "sal-down" : "ll-muted")">@(v > 0 ? "+" : string.Empty)@Short(v)</td>
+                            }
+                            <td><b>@Short(b.Current)</b></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </MudPaper>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Hochrechnung", "Projection") @_total.Year @T("je Gesellschaft", "per company")</MudText>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Voller Balken: Ist bis Ende des letzten vollständigen Monats. Schraffiert: Restmonate, gerechnet aus dem gleichen Monat im Vorjahr mal Wachstum seit Jahresbeginn. Grauer Strich: Ist im Vorjahr. Eine Rechnung, kein Budget.", "Solid bar: actual up to the end of the last complete month. Hatched: remaining months, from the same month last year times growth since the start of the year. Grey line: actual previous year. A calculation, not a budget.")</MudText>
+                @{
+                    var pmax = (double)Math.Max(1, _companyProjections.Select(p => Math.Max(p.Projected, p.PreviousYear ?? 0)).DefaultIfEmpty(1).Max());
+                }
+                <svg viewBox="0 0 700 @F(30 + _companyProjections.Count * 34)" class="ctl-proj">
+                    <defs><pattern id="ctl-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" fill="#C8501E" fill-opacity="0.6" /></pattern></defs>
+                    @for (var i = 0; i < _companyProjections.Count; i++)
+                    {
+                        var p = _companyProjections[i];
+                        var y = 14 + i * 34;
+                        var wYtd = 480 * (double)p.Ytd / pmax;
+                        var wRest = 480 * (double)p.Rest / pmax;
+                        <g class="ctl-step" style="animation-delay:@(F(i * 0.07))s">
+                            <text x="0" y="@F(y + 15)" class="ctl-name">@p.Scope</text>
+                            <rect x="60" y="@F(y)" width="@F(Math.Max(1, wYtd))" height="20" rx="3" class="ctl-ytd"><title>@T("Ist", "Actual") CHF @Chf(p.Ytd)</title></rect>
+                            <rect x="@F(60 + wYtd)" y="@F(y)" width="@F(Math.Max(0, wRest))" height="20" rx="3" fill="url(#ctl-hatch)" class="ctl-rest"><title>@T("Rest", "Rest") CHF @Chf(p.Rest)</title></rect>
+                            @if (p.PreviousYear is { } prevYear)
+                            {
+                                <line x1="@F(60 + 480 * (double)prevYear / pmax)" y1="@F(y - 4)" x2="@F(60 + 480 * (double)prevYear / pmax)" y2="@F(y + 24)" class="ctl-prev-mark"><title>@(p.Year - 1): CHF @Chf(prevYear)</title></line>
+                            }
+                            <text x="@F(66 + wYtd + wRest)" y="@F(y + 15)" class="ctl-val-left">@Short(p.Projected) <tspan class="@(p.ChangePercent >= 0 ? "ctl-up" : "ctl-down")">@Percent(p.ChangePercent)</tspan></text>
+                        </g>
+                    }
+                </svg>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Monate", "Months") @_total.Year @T("gegen", "against") @(_total.Year - 1)</MudText>
+                @{
+                    var mmax = (double)Math.Max(1, _total.Actual.Concat(_total.Forecast).Concat(_total.PreviousMonths).Max());
+                    string Pts(IReadOnlyList<decimal> vals, bool skipZero) => string.Join(" ", vals.Select((v, i) => (v, i)).Where(x => !skipZero || x.v > 0).Select(x => $"{F(40 + x.i * 32)},{F(220 - 200 * (double)x.v / mmax)}"));
+                }
+                <svg viewBox="0 0 420 250" class="ctl-months">
+                    @for (var g = 0; g <= 4; g++)
+                    {
+                        <g><line x1="40" y1="@F(20 + g * 50)" x2="410" y2="@F(20 + g * 50)" class="nw-grid" /><text x="36" y="@F(24 + g * 50)" class="nw-axis" style="text-anchor:end">@Short((decimal)(mmax * (4 - g) / 4))</text></g>
+                    }
+                    <polyline points="@Pts(_total.PreviousMonths, false)" class="ctl-line-prev" />
+                    <polyline points="@Pts(_total.Actual, true)" class="ctl-line-cur" pathLength="1" />
+                    <polyline points="@Pts(_total.Forecast, true)" class="ctl-line-fc" />
+                    @for (var m = 0; m < 12; m++)
+                    {
+                        <g><text x="@F(40 + m * 32)" y="240" class="nw-axis">@(m + 1)</text></g>
+                    }
+                </svg>
+                <div class="ll-legend"><span><i class="ll-swatch ctl-sw-prev"></i>@(_total.Year - 1)</span><span><i class="ll-swatch ctl-sw-cur"></i>@T("Ist", "Actual") @_total.Year</span><span><i class="ll-swatch ctl-sw-fc"></i>@T("Hochrechnung", "Projection")</span></div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-3 mt-3" Outlined="true">
+        <MudText Typo="Typo.h6">@T("Offene Fragen (Eigeninitiative, kein Auftraggeber)", "Open questions (own initiative, no requester)")</MudText>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mb-2">@T("Weitere Controlling-Teile, die mit den heutigen Daten nur mit Antworten möglich wären. Bewusst nicht gebaut und keiner Person als Aufgabe zugeteilt.", "Further controlling parts that would only be possible with answers given today's data. Deliberately not built and not assigned to anyone as a task.")</MudText>
+        <div class="ctl-open">
+            @foreach (var (title, question) in OpenQuestions)
+            {
+                <div class="ctl-open-item"><b>@title</b><span>@question</span></div>
+            }
+        </div>
+    </MudPaper>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    private const string All = "*";
+    private sealed record Step(string Label, decimal From, decimal To, bool Total);
+
+    private SalesDataset? _data;
+    private ControllingBridge? _bridge;
+    private ControllingProjection? _total;
+    private IReadOnlyList<ControllingBridge> _companyBridges = [];
+    private IReadOnlyList<ControllingProjection> _companyProjections = [];
+    private List<string> _scopes = [];
+    private string _scope = All;
+
+    private IReadOnlyList<(string, string)> OpenQuestions =>
+    [
+        (T("Debitoren und Überfälligkeit", "Receivables and overdue items"), T("Im Journal stehen Fälligkeit und Ausgleich nur für FR, IT, US und IN, ohne Kundenfeld. Welche Konten je Land Debitoren sind, ist nicht festgelegt.", "The journal holds due and clearing dates only for FR, IT, US and IN, without a customer field. Which accounts are receivables per country is not defined.")),
+        (T("Vorräte und Lagerumschlag", "Inventory and turnover"), T("Lagerwert nur für CH und nur für Einkaufsteile; passt nicht sauber zu den Warenkosten aus dem Verkauf.", "Stock value only for CH and only for purchased parts; does not match the cost of goods from sales cleanly.")),
+        (T("Margenentwicklung", "Margin development"), T("Mit der Gruppenmarge rechenbar, aber CHF-Kurs (ISS-018.1) und Kostenbasis sind nicht überall geklärt.", "Computable with the group margin, but CHF rate (ISS-018.1) and cost basis are not settled everywhere.")),
+        (T("Erfolgsrechnung je Gesellschaft", "Income statement per company"), T("Zuordnung lokaler Konten zu Konzernkonten fehlt; DE, UK und ES ohne Buchhaltungsdaten; Journal CH/AT erst nach einem Ladelauf vorhanden.", "Mapping of local accounts to group accounts is missing; DE, UK and ES without accounting data; journal CH/AT only available after a load run.")),
+        (T("Kostenstellen und Budget", "Cost centres and budget"), T("Kostenstelle in allen Quellen leer; ein Budget gibt es nicht, nur Umsatz-Sollwerte für 2025.", "Cost centre empty in all sources; there is no budget, only sales targets for 2025."))
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is not null)
+            return;
+        var facts = _data.Facts;
+        var refEnd = _data.ReferenceEnd;
+        var recent = facts.Where(f => f.Date >= refEnd.AddMonths(-12) && f.Date < refEnd).ToList();
+        _scopes = [All];
+        _scopes.AddRange(recent.GroupBy(f => f.Tsc).OrderByDescending(g => g.Sum(f => f.ValueChf)).Select(g => "G:" + g.Key));
+        _scopes.AddRange(recent.GroupBy(f => f.Division).OrderByDescending(g => g.Sum(f => f.ValueChf)).Take(10).Select(g => "S:" + g.Key));
+        _companyBridges = facts.GroupBy(f => f.Tsc)
+            .Select(g => ControllingAnalytics.Bridge(g.Key, g.ToList(), refEnd, _data.CompareMonths))
+            .OrderByDescending(b => b.Current).ToList();
+        _companyProjections = facts.GroupBy(f => f.Tsc)
+            .Select(g => ControllingAnalytics.Projection(g.Key, g.ToList(), refEnd, _data.DataStart))
+            .OrderByDescending(p => p.Projected).ToList();
+        _total = ControllingAnalytics.Projection(All, facts, refEnd, _data.DataStart);
+        Choose(All);
+    }
+
+    private void Choose(string scope)
+    {
+        _scope = scope;
+        IEnumerable<SalesFact> facts = _data!.Facts;
+        if (scope.StartsWith("G:", StringComparison.Ordinal)) facts = facts.Where(f => f.Tsc == scope[2..]);
+        else if (scope.StartsWith("S:", StringComparison.Ordinal)) facts = facts.Where(f => f.Division == scope[2..]);
+        _bridge = ControllingAnalytics.Bridge(scope, facts.ToList(), _data.ReferenceEnd, _data.CompareMonths);
+    }
+
+    private string ScopeLabel(string s) => s == All ? T("Gesamt", "Total")
+        : s.StartsWith("G:", StringComparison.Ordinal) ? T("Gesellschaft", "Company") + ": " + s[2..]
+        : T("Sparte", "Division") + ": " + s[2..];
+
+    private List<Step> Steps(ControllingBridge b)
+    {
+        var list = new List<Step> { new(T("Vorjahr", "Previous year"), 0, b.Previous, true) };
+        var level = b.Previous;
+        foreach (var (label, value) in new[]
+        {
+            (T("Menge", "Volume"), b.Volume), ("Mix", b.Mix), (T("Preis", "Price"), b.Price), (T("Neue Artikel", "New articles"), b.NewItems),
+            (T("Weggefallen", "Dropped"), b.LostItems), (T("Währung", "Currency"), b.Currency), (T("Übrige", "Other"), b.Other)
+        })
+        {
+            list.Add(new Step(label, level, level + value, false));
+            level += value;
+        }
+        list.Add(new Step(T("Aktuell", "Current"), 0, b.Current, true));
+        return list;
+    }
+
+    private IReadOnlyList<ExcelSheetData> ExcelSheets() =>
+    [
+        new("Bruecke je Gesellschaft", Rows(_companyBridges.Prepend(_bridge!), b => new Dictionary<string, object?>
+        {
+            ["Sicht"] = b.Scope == All ? "Gesamt" : b.Scope, ["Vorjahreszeitraum CHF"] = b.Previous, ["Menge"] = b.Volume, ["Mix"] = b.Mix, ["Preis"] = b.Price,
+            ["Neue Artikel"] = b.NewItems, ["Weggefallen"] = b.LostItems, ["Waehrung"] = b.Currency, ["Uebrige"] = b.Other, ["Vergleichszeitraum CHF"] = b.Current
+        })),
+        new("Hochrechnung", Rows(_companyProjections.Prepend(_total!), p => new Dictionary<string, object?>
+        {
+            ["Sicht"] = p.Scope == All ? "Gesamt" : p.Scope, ["Jahr"] = p.Year, ["Ist bis heute CHF"] = p.Ytd, ["Vorjahr gleicher Zeitraum CHF"] = p.PreviousYtd,
+            ["Wachstum"] = Math.Round(p.Growth, 3), ["Rest hochgerechnet CHF"] = p.Rest, ["Hochrechnung CHF"] = p.Projected, ["Vorjahr CHF"] = p.PreviousYear
+        }))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

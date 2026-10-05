@@ -6,7 +6,8 @@ namespace TrafagSalesExporter.Services;
 
 public sealed record SalesFact(
     DateOnly Date, string Tsc, string CountryKey, string CustomerKey, string CustomerName, string CustomerCountry,
-    string Material, string Article, string Division, decimal ValueChf, decimal Quantity, string InvoiceNumber);
+    string Material, string Article, string Division, decimal ValueChf, decimal Quantity, string InvoiceNumber,
+    decimal ValueLocal = 0m, string Currency = "");
 
 public sealed class SalesDataset
 {
