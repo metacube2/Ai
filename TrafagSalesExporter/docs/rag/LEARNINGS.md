@@ -10,7 +10,6 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 ## Deploy und Server
 
-
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
 | 2026-10-05 | Deploys brachen dreimal in der DB-Sicherung mit SQLite `disk I/O error` ab; Ursache Always On VPN (SSTP, RAS-Code 829), Heimnetz stabil | Deploy erst starten, wenn die Freigabe 2 Minuten am Stueck erreichbar ist (Warteschleife im Hintergrund); leere `.bak` in Temp danach loeschen | `docs/rag/DEPLOYMENT.md` |
