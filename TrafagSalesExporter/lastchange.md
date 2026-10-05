@@ -2,12 +2,12 @@
 
 Stand: 2026-10-01
 
-## Logistik live: 3D-Lagerplatzansicht, 2026-10-05, DEPLOYSTAND
+## Logistik live: 3D-Lagerplatzansicht, 2026-10-05, produktiv 09:21
 
 - Umschalter Original | 3D-Lager: heute bewegte Plätze als Regale mit Paletten, Klick zeigt einen Platz mit seinen
   Bewegungen. `docs/LOGISTIK_LIVE_2026-10-01.md`.
 
-## Reiter Weltlage, 2026-10-05, DEPLOYSTAND
+## Reiter Weltlage, 2026-10-05, produktiv 09:21 (Währungskorrektur danach)
 
 - Neuer Reiter (Radar je Abteilung mit drehendem Strahl, Länder, Rohstoffe und Währungen, Ereignisse) aus frei
   abrufbaren Quellen, verknüpft mit Verkauf, Einkauf und Kursen; Firewall-Zustand je Quelle. `docs/WELTLAGE_2026-10-05.md`.

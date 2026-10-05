@@ -164,4 +164,18 @@ public sealed class WorldAnalyticsTests
         Assert.True(impacts.Single(i => i.Subject == "EUR").Signal < 0);
         Assert.True(impacts.Single(i => i.Subject == "USD").Signal > 0);
     }
+
+    [Fact]
+    public void Ezb_Kreuzkurs_Gegen_Chf()
+    {
+        const string xml = """<gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01" xmlns="http://www.ecb.int/vocabulary/2002-08-01/eurofxref"><Cube><Cube time="2026-10-02"><Cube currency="USD" rate="1.2"/><Cube currency="CHF" rate="0.9"/></Cube><Cube time="2026-07-06"><Cube currency="USD" rate="1.0"/><Cube currency="CHF" rate="0.9"/></Cube></Cube></gesmes:Envelope>""";
+
+        var perEur = WorldParsers.ParseEcbHistory(xml);
+
+        Assert.Equal(2, perEur["EUR"].Count);
+        Assert.Equal(new DateOnly(2026, 7, 6), perEur["USD"][0].Item1);
+        Assert.Equal(0, WorldParsers.ChangeAgainstChf(perEur, "EUR")!.Value, 6);
+        Assert.Equal(-16.6667, WorldParsers.ChangeAgainstChf(perEur, "USD")!.Value, 3);
+        Assert.Null(WorldParsers.ChangeAgainstChf(perEur, "INR"));
+    }
 }

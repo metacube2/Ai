@@ -103,6 +103,31 @@ public static class WorldParsers
         return result;
     }
 
+    /// <summary>EZB-Referenzkurse (eurofxref-hist-90d.xml): je Waehrung Kurs pro EUR und Tag, dazu EUR = 1.</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyList<(DateOnly, double)>> ParseEcbHistory(string xml)
+    {
+        var doc = System.Xml.Linq.XDocument.Parse(xml);
+        var result = new Dictionary<string, List<(DateOnly, double)>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var day in doc.Descendants().Where(e => e.Name.LocalName == "Cube" && e.Attribute("time") is not null))
+        {
+            if (!DateOnly.TryParseExact(day.Attribute("time")!.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)) continue;
+            (result.TryGetValue("EUR", out var eur) ? eur : result["EUR"] = []).Add((date, 1));
+            foreach (var c in day.Elements().Where(e => e.Attribute("currency") is not null))
+                if (double.TryParse(c.Attribute("rate")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var rate) && rate > 0)
+                    (result.TryGetValue(c.Attribute("currency")!.Value, out var l) ? l : result[c.Attribute("currency")!.Value] = []).Add((date, rate));
+        }
+        return result.ToDictionary(r => r.Key, r => (IReadOnlyList<(DateOnly, double)>)r.Value.OrderBy(p => p.Item1).ToList(), StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Kursveraenderung einer Waehrung gegen CHF in Prozent vom ersten bis zum letzten gemeinsamen Tag.</summary>
+    public static double? ChangeAgainstChf(IReadOnlyDictionary<string, IReadOnlyList<(DateOnly, double)>> perEur, string currency)
+    {
+        if (!perEur.TryGetValue("CHF", out var chf) || !perEur.TryGetValue(currency, out var cur)) return null;
+        var common = cur.Join(chf, a => a.Item1, b => b.Item1, (a, b) => (a.Item1, Value: b.Item2 / a.Item2)).OrderBy(x => x.Item1).ToList();
+        if (common.Count < 2 || common[0].Value == 0) return null;
+        return (common[^1].Value - common[0].Value) / common[0].Value * 100;
+    }
+
     public static string? Iso3(string iso2)
     {
         try { return new RegionInfo(iso2).ThreeLetterISORegionName; }

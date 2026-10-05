@@ -11,7 +11,7 @@
             <div class="ll-grow">
                 <div><b>@s.Name</b> <span class="ll-muted ll-mono">@s.Host</span></div>
                 <div class="ll-muted" style="font-size:12px">
-                    @StateText(s.State)@(string.IsNullOrEmpty(s.Message) ? "" : " · " + s.Message)
+                    @StateText(s.State)@(string.IsNullOrEmpty(s.Message) || s.State == WorldSourceState.Pending ? "" : " · " + s.Message)
                     @if (s.FetchedAtUtc is { } at)
                     {
                         <span> · @at.ToLocalTime().ToString("dd.MM. HH:mm")</span>

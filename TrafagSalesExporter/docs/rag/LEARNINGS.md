@@ -78,4 +78,5 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 | laufend | Zu viele Annahmen bei unklarem Auftrag kosteten Mehraufwand | Bei fachlich offenen Punkten kurz fragen, mit Empfehlung | `persona.md` |
 | 2026-09-30 | 8,4 h je Arbeitstag stand ungeprueft im Code | Fachkonstanten nur mit Quelle (Person, Datum) | `HR_KPI.md` 8.4 |
 | 2026-10-01 | Erst nur „Felder in HrKpiSet“ als Option angeboten, obwohl ein Set je Fall besser passte | Vor einer Entscheidungsfrage alle sinnvollen Varianten durchdenken, nicht nur die naheliegende | `HR_KPI.md` 8.7 |
+| 2026-10-05 | Weltlage: Kursveraenderung 90 Tage aus der Kurstabelle gerechnet, die nur bei Bedarf importiert wird; alle Waehrungen 0.0 | Vor einer Zeitreihen-Rechnung pruefen, ob die Quelle ueberhaupt Verlauf hat (Fuellstand, Import-Takt), nicht nur, ob sie Werte liefert | `WELTLAGE_2026-10-05.md` Produktiver Stand |
 | 2026-10-01 | Ohne Datei wuerde ein Zeitraum vor den SAP-Daten eine leere, „verlaessliche“ 0-%-Quote zeigen | Bei jeder neuen Quelle pruefen, was ausserhalb ihrer Abdeckung angezeigt wird | `c12b34a` |

@@ -36,7 +36,7 @@ public sealed class WorldImpactService
     public async Task<(WorldSnapshot Snapshot, WorldExposure Exposure, IReadOnlyList<WorldImpact> Impacts)> GetAsync(CancellationToken ct = default)
     {
         var snap = await _world.GetAsync(ct);
-        var exposure = await ExposureAsync(ct);
+        var exposure = WithEcbChanges(await ExposureAsync(ct), snap);
         return (snap, exposure, WorldImpactAnalytics.Compute(snap, exposure, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
 
@@ -132,6 +132,23 @@ GROUP BY 1, 2, 3, 4, 5", ct, ("$s", since));
             CurrencyChange90 = change,
             SalesError = salesError,
             PurchasingError = purchasingError
+        };
+    }
+
+    /// <summary>Kursveraenderung aus der EZB-90-Tage-Reihe; die Kurstabelle des Cockpits nur, wenn die Reihe fehlt.</summary>
+    internal static WorldExposure WithEcbChanges(WorldExposure e, WorldSnapshot snap)
+    {
+        if (snap.Currencies.Count == 0) return e;
+        var perEur = snap.Currencies.ToDictionary(s => s.Key, s => (IReadOnlyList<(DateOnly, double)>)s.Points.Select(p => (p.Date, p.Value)).ToList(), StringComparer.OrdinalIgnoreCase);
+        var change = new Dictionary<string, double>(e.CurrencyChange90);
+        foreach (var cur in e.NetByCurrency.Keys)
+            if (WorldParsers.ChangeAgainstChf(perEur, cur) is { } c)
+                change[cur] = c;
+        return new WorldExposure
+        {
+            SalesByCountry = e.SalesByCountry, SiteByCountry = e.SiteByCountry, PurchaseByCountry = e.PurchaseByCountry,
+            OpenOrdersByCountry = e.OpenOrdersByCountry, PurchaseByCommodity = e.PurchaseByCommodity, NetByCurrency = e.NetByCurrency,
+            CurrencyChange90 = change, SalesError = e.SalesError, PurchasingError = e.PurchasingError
         };
     }
 

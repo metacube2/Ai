@@ -45,6 +45,8 @@ public sealed class WorldSnapshot
     public IReadOnlyList<WorldEvent> TopEvents { get; init; } = [];
     public IReadOnlyList<WorldSeries> Series { get; init; } = [];
     public IReadOnlyList<WorldSeries> Industry { get; init; } = [];
+    /// <summary>EZB-Referenzkurse je Waehrung pro EUR (90 Tage).</summary>
+    public IReadOnlyList<WorldSeries> Currencies { get; init; } = [];
     public IReadOnlyList<WorldGrowth> Growth { get; init; } = [];
 }
 

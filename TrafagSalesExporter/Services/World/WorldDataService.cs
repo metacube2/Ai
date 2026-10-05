@@ -197,6 +197,21 @@ CREATE TABLE IF NOT EXISTS WorldSourceCache (
             await SaveCacheAsync("fred", state, message, null, ct);
         }
 
+        // EZB: 90-Tage-Referenzkurse (gleicher Host wie der bestehende Kursimport).
+        try
+        {
+            var xml = await client.GetStringAsync("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml", ct);
+            var perEur = WorldParsers.ParseEcbHistory(xml);
+            if (perEur.Count < 2) throw new InvalidDataException("keine Kurse in der Antwort");
+            await SaveCacheAsync("ecb", WorldSourceState.Ok, $"{perEur.Count - 1} Waehrungen, {perEur["EUR"].Count} Tage",
+                JsonSerializer.Serialize(perEur.Select(s => new SeriesDto(s.Key, s.Key, "pro EUR", s.Value.Select(p => new PointDto(p.Item1, p.Item2)).ToList()))), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            var (state, message) = Classify(ex);
+            await SaveCacheAsync("ecb", state, message, null, ct);
+        }
+
         // Laender, die fuer uns zaehlen: Kunden- und Lieferlaender mit Umsatz bzw. Einkauf.
         List<string> countries;
         try
@@ -307,13 +322,14 @@ CREATE TABLE IF NOT EXISTS WorldSourceCache (
                 Status("fred", "FRED Rohstoffe und Finanzstress", "fred.stlouisfed.org"),
                 Status("eurostat", "Eurostat Industrieproduktion", "ec.europa.eu"),
                 Status("imf", "IMF Wirtschaftswachstum", "www.imf.org"),
-                new WorldSourceStatus("ecb", "EZB Wechselkurse", "www.ecb.europa.eu", WorldSourceState.Ok, "aus der Kurstabelle des Cockpits", null),
+                Status("ecb", "EZB Wechselkurse 90 Tage", "www.ecb.europa.eu"),
                 new WorldSourceStatus("boerse", "Börsenindizes (SMI, DAX)", "–", WorldSourceState.Error, "keine freie Quelle ohne Anmeldung; Ersatz: Finanzstress-Index", null)
             ],
             EventDays = days,
             TopEvents = top,
             Series = Series("fred"),
             Industry = Series("eurostat"),
+            Currencies = Series("ecb"),
             Growth = cache.TryGetValue("imf", out var imf) && imf.Payload.Length > 2 ? JsonSerializer.Deserialize<List<WorldGrowth>>(imf.Payload) ?? [] : []
         };
     }

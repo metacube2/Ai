@@ -8,6 +8,8 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Primer borrador: reglas sencillas y documentadas abiertamente, sin previsión. Eventos de noticias de todo el mundo (GDELT), coyuntura de Eurostat y FMI, materias primas y estrés financiero de FRED, tipos de referencia del BCE de los últimos 90 días. Nuestro lado: ventas según reglas de Finance, compras de la caché de compras, 12 meses cada una.",
+                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "Neto = ventas en esta divisa menos compras en esta divisa, en CHF. Positivo significa que ingresamos más en esta divisa; entonces un tipo más débil perjudica. Tipos de referencia del BCE de los últimos 90 días.",
                 ["Lagerplätze seit Tagesbeginn"] = "Ubicaciones desde el inicio del día",
                 ["Drehen"] = "Girar",
                 ["Blickwinkel"] = "Ángulo de vista",
@@ -35,7 +37,6 @@ internal static class UiTextGeneratedTranslations
                 ["unser Anteil"] = "nuestra cuota",
                 ["Stärkste Wirkungen"] = "Impactos más fuertes",
                 ["Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start)."] = "Sin señales. O las fuentes externas están bloqueadas o los datos se están cargando (primera consulta unos dos minutos después del inicio).",
-                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Primer borrador: reglas sencillas y documentadas abiertamente, sin previsión. Eventos de noticias de todo el mundo (GDELT), coyuntura de Eurostat y FMI, materias primas y estrés financiero de FRED, tipos de la tabla BCE del cockpit. Nuestro lado: ventas según reglas de Finance, compras de la caché de compras, 12 meses cada una.",
                 ["Logistik"] = "Logística",
                 ["HR"] = "RR. HH.",
                 ["Finance"] = "Finanzas",
@@ -52,7 +53,6 @@ internal static class UiTextGeneratedTranslations
                 ["Wirkung"] = "Impacto",
                 ["Gegenwind"] = "Viento en contra",
                 ["Rückenwind"] = "Viento a favor",
-                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits."] = "Neto = ventas en esta divisa menos compras en esta divisa, en CHF. Positivo significa que ingresamos más en esta divisa; entonces un tipo más débil perjudica. Tipos de la tabla BCE del cockpit.",
                 ["Einkauf nach Rohstoff (Stichwort)"] = "Compras por materia prima (palabra clave)",
                 ["Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste."] = "Asignación mediante palabras clave en el grupo de materiales y el texto de la posición (p. ej. acero inoxidable → níquel, latón → cobre, plástico → petróleo). Suposición, no lista de materiales.",
                 ["Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)"] = "Sustituto de índices bursátiles: 0 = normal, más de 1 = mercados financieros tensos (semanal)",
@@ -2113,6 +2113,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Prima bozza: regole semplici e documentate apertamente, nessuna previsione. Eventi dalle notizie mondiali (GDELT), congiuntura da Eurostat e FMI, materie prime e stress finanziario da FRED, cambi di riferimento BCE degli ultimi 90 giorni. Il nostro lato: vendite secondo le regole Finance, acquisti dalla cache acquisti, 12 mesi ciascuno.",
+                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "Netto = vendite in questa valuta meno acquisti in questa valuta, in CHF. Positivo significa che incassiamo di più in questa valuta; allora un cambio più debole danneggia. Cambi di riferimento BCE degli ultimi 90 giorni.",
                 ["Lagerplätze seit Tagesbeginn"] = "Ubicazioni dall'inizio della giornata",
                 ["Drehen"] = "Ruotare",
                 ["Blickwinkel"] = "Angolo di vista",
@@ -2140,7 +2142,6 @@ internal static class UiTextGeneratedTranslations
                 ["unser Anteil"] = "nostra quota",
                 ["Stärkste Wirkungen"] = "Impatti più forti",
                 ["Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start)."] = "Nessun segnale. Le fonti esterne sono bloccate oppure i dati sono in caricamento (prima interrogazione circa due minuti dopo l'avvio).",
-                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Prima bozza: regole semplici e documentate apertamente, nessuna previsione. Eventi dalle notizie mondiali (GDELT), congiuntura da Eurostat e FMI, materie prime e stress finanziario da FRED, cambi dalla tabella BCE del cockpit. Il nostro lato: vendite secondo le regole Finance, acquisti dalla cache acquisti, 12 mesi ciascuno.",
                 ["Logistik"] = "Logistica",
                 ["HR"] = "Risorse umane",
                 ["Finance"] = "Finanza",
@@ -2157,7 +2158,6 @@ internal static class UiTextGeneratedTranslations
                 ["Wirkung"] = "Impatto",
                 ["Gegenwind"] = "Vento contrario",
                 ["Rückenwind"] = "Vento favorevole",
-                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits."] = "Netto = vendite in questa valuta meno acquisti in questa valuta, in CHF. Positivo significa che incassiamo di più in questa valuta; allora un cambio più debole danneggia. Cambi dalla tabella BCE del cockpit.",
                 ["Einkauf nach Rohstoff (Stichwort)"] = "Acquisti per materia prima (parola chiave)",
                 ["Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste."] = "Assegnazione tramite parole chiave nel gruppo merci e nel testo della posizione (es. acciaio inox → nichel, ottone → rame, plastica → petrolio). Ipotesi, non distinta base.",
                 ["Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)"] = "Sostituto degli indici di borsa: 0 = normale, oltre 1 = mercati finanziari tesi (settimanale)",
@@ -4218,6 +4218,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "पहला मसौदा: सरल, खुले तौर पर प्रलेखित नियम, कोई पूर्वानुमान नहीं। विश्वभर की खबरों से घटनाएँ (GDELT), Eurostat और IMF से अर्थव्यवस्था, FRED से कच्चा माल और वित्तीय तनाव, पिछले 90 दिनों की ECB संदर्भ दरें। हमारी ओर: Finance नियमों के अनुसार बिक्री, खरीद कैश से खरीद, प्रत्येक 12 महीने।",
+                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "शुद्ध = इस मुद्रा में बिक्री घटा इस मुद्रा में खरीद, CHF में। सकारात्मक का अर्थ है कि हम इस मुद्रा में अधिक कमाते हैं; तब कमजोर दर नुकसान करती है। पिछले 90 दिनों की ECB संदर्भ दरें।",
                 ["Lagerplätze seit Tagesbeginn"] = "दिन की शुरुआत से भंडारण स्थान",
                 ["Drehen"] = "घुमाएँ",
                 ["Blickwinkel"] = "दृश्य कोण",
@@ -4245,7 +4247,6 @@ internal static class UiTextGeneratedTranslations
                 ["unser Anteil"] = "हमारा हिस्सा",
                 ["Stärkste Wirkungen"] = "सबसे मजबूत प्रभाव",
                 ["Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start)."] = "कोई संकेत नहीं। या तो बाहरी स्रोत अवरुद्ध हैं या डेटा लोड हो रहा है (शुरू होने के लगभग दो मिनट बाद पहली पूछताछ)।",
-                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "पहला मसौदा: सरल, खुले तौर पर प्रलेखित नियम, कोई पूर्वानुमान नहीं। विश्वभर की खबरों से घटनाएँ (GDELT), Eurostat और IMF से अर्थव्यवस्था, FRED से कच्चा माल और वित्तीय तनाव, कॉकपिट की ECB तालिका से दरें। हमारी ओर: Finance नियमों के अनुसार बिक्री, खरीद कैश से खरीद, प्रत्येक 12 महीने।",
                 ["Logistik"] = "लॉजिस्टिक्स",
                 ["HR"] = "मानव संसाधन",
                 ["Finance"] = "वित्त",
@@ -4262,7 +4263,6 @@ internal static class UiTextGeneratedTranslations
                 ["Wirkung"] = "प्रभाव",
                 ["Gegenwind"] = "प्रतिकूल",
                 ["Rückenwind"] = "अनुकूल",
-                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits."] = "शुद्ध = इस मुद्रा में बिक्री घटा इस मुद्रा में खरीद, CHF में। सकारात्मक का अर्थ है कि हम इस मुद्रा में अधिक कमाते हैं; तब कमजोर दर नुकसान करती है। कॉकपिट की ECB तालिका से दरें।",
                 ["Einkauf nach Rohstoff (Stichwort)"] = "कच्चे माल के अनुसार खरीद (कीवर्ड)",
                 ["Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste."] = "सामग्री समूह और पोजीशन टेक्स्ट में कीवर्ड के माध्यम से असाइनमेंट (जैसे स्टेनलेस स्टील → निकल, पीतल → तांबा, प्लास्टिक → तेल)। अनुमान, सामग्री सूची नहीं।",
                 ["Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)"] = "शेयर सूचकांकों का विकल्प: 0 = सामान्य, 1 से ऊपर = तनावपूर्ण वित्तीय बाजार (साप्ताहिक)",
@@ -6323,6 +6323,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Draft i parë: rregulla të thjeshta, të dokumentuara hapur, pa parashikim. Ngjarje nga lajmet botërore (GDELT), ekonomia nga Eurostat dhe FMN, lëndët e para dhe stresi financiar nga FRED, kurset referuese të BQE-së të 90 ditëve të fundit. Ana jonë: shitjet sipas rregullave të Finance, blerjet nga cache e blerjeve, nga 12 muaj.",
+                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "Neto = shitjet në këtë valutë minus blerjet në këtë valutë, në CHF. Pozitiv do të thotë se fitojmë më shumë në këtë valutë; atëherë një kurs më i dobët dëmton. Kurset referuese të BQE-së të 90 ditëve të fundit.",
                 ["Lagerplätze seit Tagesbeginn"] = "Vendet e magazinës nga fillimi i ditës",
                 ["Drehen"] = "Rrotullo",
                 ["Blickwinkel"] = "Këndi i shikimit",
@@ -6350,7 +6352,6 @@ internal static class UiTextGeneratedTranslations
                 ["unser Anteil"] = "pjesa jonë",
                 ["Stärkste Wirkungen"] = "Ndikimet më të forta",
                 ["Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start)."] = "Asnjë sinjal. Ose burimet e jashtme janë të bllokuara ose të dhënat po ngarkohen (marrja e parë rreth dy minuta pas nisjes).",
-                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Draft i parë: rregulla të thjeshta, të dokumentuara hapur, pa parashikim. Ngjarje nga lajmet botërore (GDELT), ekonomia nga Eurostat dhe FMN, lëndët e para dhe stresi financiar nga FRED, kurset nga tabela e BQE-së në cockpit. Ana jonë: shitjet sipas rregullave të Finance, blerjet nga cache e blerjeve, nga 12 muaj.",
                 ["Logistik"] = "Logjistika",
                 ["HR"] = "Burime njerëzore",
                 ["Finance"] = "Financa",
@@ -6367,7 +6368,6 @@ internal static class UiTextGeneratedTranslations
                 ["Wirkung"] = "Ndikimi",
                 ["Gegenwind"] = "Erë kundër",
                 ["Rückenwind"] = "Erë në favor",
-                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits."] = "Neto = shitjet në këtë valutë minus blerjet në këtë valutë, në CHF. Pozitiv do të thotë se fitojmë më shumë në këtë valutë; atëherë një kurs më i dobët dëmton. Kurset nga tabela e BQE-së në cockpit.",
                 ["Einkauf nach Rohstoff (Stichwort)"] = "Blerjet sipas lëndës së parë (fjalë kyçe)",
                 ["Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste."] = "Caktim përmes fjalëve kyçe në grupin e materialeve dhe tekstin e pozicionit (p.sh. çelik inoks → nikel, tunxh → bakër, plastikë → naftë). Supozim, jo listë materialesh.",
                 ["Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)"] = "Zëvendësues i indekseve të bursës: 0 = normale, mbi 1 = tregje financiare të tensionuara (javore)",
@@ -8428,6 +8428,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "İlk taslak: basit, açıkça belgelenmiş kurallar, tahmin yok. Dünya haberlerinden olaylar (GDELT), Eurostat ve IMF'den ekonomi, FRED'den emtia ve finansal stres, son 90 günün ECB referans kurları. Bizim tarafımız: Finance kurallarına göre satış, satın alma önbelleğinden satın alma, her biri 12 ay.",
+                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "Net = bu dövizdeki satışlar eksi bu dövizdeki satın almalar, CHF olarak. Pozitif, bu dövizde daha fazla kazandığımız anlamına gelir; o zaman daha zayıf bir kur zarar verir. Kurlar son 90 günün ECB referans kurlarından.",
                 ["Lagerplätze seit Tagesbeginn"] = "Gün başından beri depo gözleri",
                 ["Drehen"] = "Döndür",
                 ["Blickwinkel"] = "Bakış açısı",
@@ -8455,7 +8457,6 @@ internal static class UiTextGeneratedTranslations
                 ["unser Anteil"] = "payımız",
                 ["Stärkste Wirkungen"] = "En güçlü etkiler",
                 ["Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start)."] = "Sinyal yok. Ya dış kaynaklar engellenmiş ya da veriler yükleniyor (ilk sorgu başlangıçtan yaklaşık iki dakika sonra).",
-                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "İlk taslak: basit, açıkça belgelenmiş kurallar, tahmin yok. Dünya haberlerinden olaylar (GDELT), Eurostat ve IMF'den ekonomi, FRED'den emtia ve finansal stres, kokpitin ECB tablosundan kurlar. Bizim tarafımız: Finance kurallarına göre satış, satın alma önbelleğinden satın alma, her biri 12 ay.",
                 ["Logistik"] = "Lojistik",
                 ["HR"] = "İK",
                 ["Finance"] = "Finans",
@@ -8472,7 +8473,6 @@ internal static class UiTextGeneratedTranslations
                 ["Wirkung"] = "Etki",
                 ["Gegenwind"] = "Karşı rüzgar",
                 ["Rückenwind"] = "Arka rüzgar",
-                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits."] = "Net = bu dövizdeki satışlar eksi bu dövizdeki satın almalar, CHF olarak. Pozitif, bu dövizde daha fazla kazandığımız anlamına gelir; o zaman daha zayıf bir kur zarar verir. Kurlar kokpitin ECB tablosundan.",
                 ["Einkauf nach Rohstoff (Stichwort)"] = "Emtiaya göre satın alma (anahtar kelime)",
                 ["Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste."] = "Malzeme grubu ve kalem metnindeki anahtar kelimelerle atama (ör. paslanmaz çelik → nikel, pirinç → bakır, plastik → petrol). Varsayım, malzeme listesi değil.",
                 ["Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)"] = "Borsa endeksleri yerine: 0 = normal, 1'in üzeri = gergin finans piyasaları (haftalık)",
@@ -10533,6 +10533,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "wa'DIch nab: chut ngeD, poQbe' ghIq. qo' De' (GDELT), Hup De' (Eurostat, IMF), Hap 'ej Huch (FRED), ECB mI' (HutmaH jaj). maH De': Finance chut, je'meH De', wa'maH cha' jar.",
+                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "naQ = Huch Segh ngev, je' boqHa', CHF. Hutlh: law' maH Suq; mI' puj Qaw'. ECB mI' (HutmaH jaj).",
                 ["Lagerplätze seit Tagesbeginn"] = "jaj tagh pa' Dop",
                 ["Drehen"] = "yIjIr",
                 ["Blickwinkel"] = "legh Dop",
@@ -10560,7 +10562,6 @@ internal static class UiTextGeneratedTranslations
                 ["unser Anteil"] = "maH 'ay'",
                 ["Stärkste Wirkungen"] = "Dub HoSqu'",
                 ["Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start)."] = "QIn tu'be'. Hur Hal Sev ghap De' lI' (cha' tup tagh ret wa'DIch tlhob).",
-                ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "wa'DIch nab: chut ngeD, poQbe' ghIq. qo' De' (GDELT), Hup De' (Eurostat, IMF), Hap 'ej Huch (FRED), ECB mI'. maH De': Finance chut, je'meH De', wa'maH cha' jar.",
                 ["Logistik"] = "lup",
                 ["HR"] = "ghot yaH",
                 ["Finance"] = "Huch",
@@ -10577,7 +10578,6 @@ internal static class UiTextGeneratedTranslations
                 ["Wirkung"] = "Dub",
                 ["Gegenwind"] = "SuS Daq",
                 ["Rückenwind"] = "SuS QaH",
-                ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits."] = "naQ = Huch Segh ngev, je' boqHa', CHF. Hutlh: law' maH Suq; mI' puj Qaw'. ECB mI'.",
                 ["Einkauf nach Rohstoff (Stichwort)"] = "Hap je' (mu' ngaQ)",
                 ["Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste."] = "mu' ngaQ lo' (baS → nickel, Sorpuq → copper, plastik → Hergh). Qub, Hap tetlh ghobe'.",
                 ["Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)"] = "Huch mI' tam: 0 = motlh, wa' Dung = Huch Hal ral (Hogh)",

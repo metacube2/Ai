@@ -10,6 +10,8 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Erschte Wurf: eifachi, offe dokumentierti Regle, ke Prognose. Ereignis us Nachrichte wäutwit (GDELT), Konjunktur vo Eurostat und IMF, Rohstoff und Finanzstress vo FRED, Kürs us de EZB-Referenzkürs vo de letschte 90 Täg. Üsi Site: Verchouf nach Finance-Regle, Iichouf us em Iichoufscache, je 12 Monet.",
+            ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "Netto = Verchouf i dere Währig minus Iichouf i dere Währig, i CHF. Positiv heisst: mir nä i dere Währig meh ii; de schadet e schwächere Kurs. Kürs us de EZB-Referenzkürs vo de letschte 90 Täg.",
             ["Lagerplätze seit Tagesbeginn"] = "Lagerplätz sit Tagesbeginn",
             ["Drehen"] = "Dräie",
             ["Blickwinkel"] = "Blickwinkel",
@@ -37,7 +39,6 @@ internal static class UiTextBerneseTranslations
             ["unser Anteil"] = "üse Aateil",
             ["Stärkste Wirkungen"] = "Stärchsti Würkige",
             ["Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start)."] = "Keni Signal. Entweder si di externe Quälle blockiert oder d Date wärde grad glade (erschti Abfrag öppe zwo Minute nach em Start).",
-            ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Erschte Wurf: eifachi, offe dokumentierti Regle, ke Prognose. Ereignis us Nachrichte wäutwit (GDELT), Konjunktur vo Eurostat und IMF, Rohstoff und Finanzstress vo FRED, Kürs us dr EZB-Kurstabälle vom Cockpit. Üsi Site: Verchouf nach Finance-Regle, Iichouf us em Iichoufscache, je 12 Monet.",
             ["HR"] = "HR",
             ["Finance"] = "Finance",
             ["Lage in den Ländern, in denen wir Geschäft haben"] = "Lag i de Länder, wo mir Gschäft hei",
@@ -52,7 +53,6 @@ internal static class UiTextBerneseTranslations
             ["Kurs gegen CHF, 90 Tage"] = "Kurs gäge CHF, 90 Täg",
             ["Gegenwind"] = "Gägewind",
             ["Rückenwind"] = "Rückewind",
-            ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits."] = "Netto = Verchouf i dere Währig minus Iichouf i dere Währig, i CHF. Positiv heisst: mir nä i dere Währig meh ii; de schadet e schwächere Kurs. Kürs us dr EZB-Kurstabälle vom Cockpit.",
             ["Einkauf nach Rohstoff (Stichwort)"] = "Iichouf nach Rohstoff (Stichwort)",
             ["Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste."] = "Zuordnig über Stichwort i dr Warengruppe und im Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahm, ke Stückliste.",
             ["Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)"] = "Ersatz für Börseindizes: 0 = normal, über 1 = aagspannti Finanzmärt (wöchentlech)",
