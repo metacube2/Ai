@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Einkauf: Interaktiv, 2026-10-05, DEPLOYSTAND
+## Einkauf: Interaktiv, 2026-10-05, produktiv 15:11
 
 - Menü Einkauf → Interaktiv mit denselben neun Ansichten auf den Bestellungen; Korrekturen Verkauf Interaktiv (Galaxie-Achse,
   Versandpauschalen).

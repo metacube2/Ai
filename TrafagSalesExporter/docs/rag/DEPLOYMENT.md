@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-05 15:11, Einkauf Interaktiv (`ba13744`).** `946/946`, `BiDashboard.dll` `14:58:22`, `8'623'616` Bytes, SHA256 `4C03171C...DF24E4`, bitgleich, Alarm nur WAL. Neun Einkaufsansichten per Edge headless geoeffnet.
 - **Deploy 2026-10-05 14:25, Verkauf Interaktiv (`25da8a1`).** `944/944`, `BiDashboard.dll` `14:12:48`, `8'553'472` Bytes, SHA256 `465E5CF5...110668`, bitgleich, Alarm nur WAL; DB-Sicherung 552 s. Neun Ansichten per Edge headless geoeffnet.
 - **Deploy 2026-10-05 13:34, Logistik Kapazitaet SAP (`dd4c627`).** `936/936`, `BiDashboard.dll` `13:30:18`, SHA256 `8A596F53...59D833`, bitgleich, ohne Alarm. Umschalter Kapazitaet zeigt Vorschau Warenausgang mit P76-Zukunftsdaten (Teil B importiert) und den Hinweis, dass `LogKapSet` in P76 fehlt (`T76K912662` nicht importiert).
 - **Deploys 2026-10-05 Logistik live:** 10:31 Produktivitaet (`9fdae38`, `926/926`); 11:20 Kapazitaet je Bereich und Durchlaufzeit (`b776115`, `930/930`, SHA256 `9C0914E9...0C11BE`, ohne Alarm); 12:40 Namen nach Anmeldung, Vorschau Warenausgang, bis Warenausgang (`f9dc3eb`, `935/935`, SHA256 `4EA66149...2E35B2`, Alarm nur WAL). 12:47 Fusszeile ohne „Ohne Personendaten“ (`1c7e4ee`, `935/935`, SHA256 `CA537E5C...552342`, Alarm nur WAL, DB-Dateien vollstaendig). Alle bitgleich, per Edge headless angesehen.

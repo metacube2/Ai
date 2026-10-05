@@ -19,13 +19,13 @@
                     var a = _pos[e.A];
                     var b = _pos[e.B];
                     var on = Focus is null || e.A == Focus || e.B == Focus;
-                    <line x1="@F(a.X)" y1="@F(a.Y)" x2="@F(b.X)" y2="@F(b.Y)" class="six-edge @(on ? (Focus is null ? "" : "six-edge-on") : "six-dim")" style="stroke-width:@F(0.6 + 3 * e.Weight)px"><title>@e.A + @e.B: @e.Both @T("Kunden", "customers")</title></line>
+                    <line x1="@F(a.X)" y1="@F(a.Y)" x2="@F(b.X)" y2="@F(b.Y)" class="six-edge @(on ? (Focus is null ? "" : "six-edge-on") : "six-dim")" style="stroke-width:@F(0.6 + 3 * e.Weight)px"><title>@e.A + @e.B: @e.Both @P(T("Kunden", "customers"), T("Lieferanten", "suppliers"))</title></line>
                 }
                 @foreach (var n in _nodes)
                 {
                     var on = Focus is null || n.Id == Focus || Neighbours(Focus).Contains(n.Id);
                     <g class="six-net-node @(on ? "" : "six-dim")" @onmouseover="@(() => _hover = n.Id)" @onmouseout="@(() => _hover = null)" @onclick="@(() => _focus = _focus == n.Id ? null : n.Id)">
-                        <circle cx="@F(n.X)" cy="@F(n.Y)" r="@F(5 + 2.2 * Math.Sqrt(n.Customers))" style="fill:@GroupColor(n.Group)" class="six-net-dot"><title>@n.Label: @n.Customers @T("Kunden", "customers"), CHF @Chf(n.Revenue)</title></circle>
+                        <circle cx="@F(n.X)" cy="@F(n.Y)" r="@F(5 + 2.2 * Math.Sqrt(n.Customers))" style="fill:@GroupColor(n.Group)" class="six-net-dot"><title>@n.Label: @n.Customers @P(T("Kunden", "customers"), T("Lieferanten", "suppliers")), CHF @Chf(n.Revenue)</title></circle>
                         @if (on && (Focus is not null || n.Customers >= _labelMin))
                         {
                             <g><text x="@F(n.X)" y="@F(n.Y - 9 - 2.2 * Math.Sqrt(n.Customers))" class="six-label">@Cut(n.Label)</text></g>
@@ -42,7 +42,7 @@
             {
                 var node = _nodes.First(n => n.Id == f);
                 <MudText Typo="Typo.h6">@node.Label</MudText>
-                <div class="ll-muted">@node.Customers @T("Kunden", "customers") · CHF @Chf(node.Revenue)</div>
+                <div class="ll-muted">@node.Customers @P(T("Kunden", "customers"), T("Lieferanten", "suppliers")) · CHF @Chf(node.Revenue)</div>
                 <MudText Typo="Typo.subtitle2" Class="mt-2">@T("Oft zusammen mit", "Often together with")</MudText>
                 <div class="ll-list">
                     @foreach (var e in _edges.Where(e => e.A == f || e.B == f).OrderByDescending(e => e.Both))
