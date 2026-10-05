@@ -113,7 +113,15 @@ zuerst (rot, wenn länger offen als 80 % der fertigen), quittierte Positionen je
 Stunde. Rechnet nur aus dem gemeinsamen Abruf, kein zusätzlicher SAP-Zugriff. Code `LogisticsProductivity` (Tests
 `LogisticsProductivityTests`), `Components/Logistics/ProductivityPanel.razor`. Deploystand siehe `docs/rag/DEPLOYMENT.md`.
 
-**Teil B, SAP-Transport 1 (in Arbeit):** `LogTaSet` + `BNAME` (TA angelegt von), `ENAME` (Entnahme quittiert von),
+**Teil A produktiv 2026-10-05 10:31 (`9fdae38`)**, angesehen: 50 von 53 Lieferungen gerüstet, Median 4 min, 8 von 10 unter
+8 min, 64 Positionen je aktive Stunde (nur Lager 110 quittiert).
+
+**Teil B, SAP-Transport 1 (in Arbeit, Stand 2026-10-05 11:00):** Transport **`T76K912658`** „Logistik live: TA-Benutzer und
+Warenausgang“, Paket `ZPP`. In T76 erledigt: `ZSTR_LOG_TA` + `BNAME`/`ENAME`/`QNAME` aktiv (DD03L geprüft),
+`ZSTR_LOG_LIEF` + `WADAT`/`WADAT_IST`/`WA_ZEIT` (CHAR8/CHAR8/CHAR6) aktiv; `GET_ENTITYSET` (DPC_EXT, Include `CM01W`) und
+`DEFINE` (MPC_EXT, `CM001`) neu geschrieben und **gesichert, noch nicht aktiviert**. Grundlage war der per `abap-read` gelesene
+Live-Quelltext, nicht die Repo-Schnipsel; dieselben Ersetzungen stehen in `docs/abap/ZLOG_LIVE_*_ADD.abap`. Offen: beide
+Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, Gateway Client T76. Inhalt: `LogTaSet` + `BNAME` (TA angelegt von), `ENAME` (Entnahme quittiert von),
 `QNAME` (quittiert von); `LogLiefSet` + `WADAT`, `WADAT_IST` und Uhrzeit der Warenbewegung aus `VBFA-ERZET`; Datum für
 `LogLiefSet` bis heute + 14 Tage (weiterhin ein Tag je Abfrage). Felder in T76 per RFC belegt (2026-10-05).
 

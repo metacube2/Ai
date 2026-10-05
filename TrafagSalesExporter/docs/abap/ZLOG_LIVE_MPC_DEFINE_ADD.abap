@@ -2,7 +2,8 @@
 *& MPC_EXT: Logistik live (Kommissionierung, Lieferungen, Rueckmeldungen)
 *& Klasse : ZCL_ZPOWERBI_EINKAUF_MPC_EXT, Methode DEFINE (redefiniert)
 *& Stand  : 2026-10-01. EINFUEGEN nach dem HrAbsenz-Teil, VOR ENDMETHOD.
-*& Entscheid Ingo 2026-10-01: keine Personenfelder (kein PERNR, kein Benutzer).
+*& Entscheid Ingo 2026-10-01: keine Personenfelder. *Ueberholt 2026-10-05:* TA-Benutzer Bname, Ename,
+*& Qname mit HR-Freigabe laut Ingo; Anzeige nur nach Anmeldung. Kein PERNR.
 *&---------------------------------------------------------------------*
 
 * ---------------------------------------------------------------------
@@ -216,6 +217,37 @@
   lo_property->set_nullable( abap_false ).
   lo_property->set_filterable( abap_false ).
 
+* 2026-10-05: TA-Benutzer (HR-Freigabe laut Ingo), Anzeige im Cockpit nur nach Anmeldung.
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'Bname'
+                  iv_abap_fieldname = 'BNAME' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 12 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'Ename'
+                  iv_abap_fieldname = 'ENAME' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 12 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'Qname'
+                  iv_abap_fieldname = 'QNAME' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 12 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
   lo_entity_type->bind_structure( iv_structure_name   = 'ZSTR_LOG_TA'
                                   iv_bind_conversions = 'X' ).
 
@@ -359,6 +391,37 @@
                   iv_property_name  = 'PosTeil'
                   iv_abap_fieldname = 'POS_TEIL' ).
   lo_property->set_type_edm_int32( ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
+* 2026-10-05: Warenausgang geplant und ist, Uhrzeit der Warenbewegung.
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'Wadat'
+                  iv_abap_fieldname = 'WADAT' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'WadatIst'
+                  iv_abap_fieldname = 'WADAT_IST' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'WaZeit'
+                  iv_abap_fieldname = 'WA_ZEIT' ).
+  lo_property->set_type_edm_string( ).
+  lo_property->set_maxlength( iv_max_length = 6 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_nullable( abap_false ).

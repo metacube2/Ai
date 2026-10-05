@@ -14,7 +14,9 @@
 *& - optional AbZeit (HHMMSS): nur was ab dieser Uhrzeit neu ist; das Cockpit
 *&   fragt damit nach dem ersten Abruf nur noch die letzten Minuten ab;
 *& - feste Obergrenzen (UP TO n ROWS);
-*& - keine Personenfelder (kein PERNR, kein Benutzer; Entscheid Ingo).
+*& - Personenfelder: seit 2026-10-05 nur die TA-Benutzer BNAME, ENAME, QNAME (HR-Freigabe
+*&   laut Ingo 2026-10-05); das Cockpit zeigt sie nur nach Anmeldung. Kein PERNR.
+*& - LogLiefSet ab 2026-10-05 bis heute + 14 Tage (Warenausgang nach Termin), weiterhin ein Tag.
 *&---------------------------------------------------------------------*
 
 * Logistik live, docs/abap/ZLOG_LIVE_DPC_GET_ENTITYSET_ADD.abap
@@ -34,6 +36,7 @@
              bdatu TYPE ltak_bdatu,
              bzeit TYPE ltak_bzeit,
              vbeln TYPE vbeln,
+             bname TYPE lvs_bname,
            END OF ty_lg_ta_kopf,
            BEGIN OF ty_lg_ta_pos,
              lgnum TYPE lgnum,
@@ -51,6 +54,8 @@
              qdatu TYPE ltap_qdatu,
              qzeit TYPE ltap_qzeit,
              vbeln TYPE vbeln_vl,
+             ename TYPE ltap_ename,
+             qname TYPE ltap_qname,
            END OF ty_lg_ta_pos,
            BEGIN OF ty_lg_lf_kopf,
              vbeln TYPE vbeln_vl,
@@ -61,12 +66,19 @@
              kostk TYPE kostk,
              wbstk TYPE wbstk,
              erzet TYPE erzet,
+             wadat TYPE wadak,
+             wadat_ist TYPE wadat_ist,
            END OF ty_lg_lf_kopf,
            BEGIN OF ty_lg_lf_pos,
              vbeln TYPE vbeln_vl,
              posnr TYPE posnr_vl,
              kosta TYPE kosta,
            END OF ty_lg_lf_pos,
+           BEGIN OF ty_lg_vbfa,
+             vbelv TYPE vbeln_von,
+             erdat TYPE erdat,
+             erzet TYPE erzet,
+           END OF ty_lg_vbfa,
            BEGIN OF ty_lg_kunde,
              kunnr TYPE kunnr,
              name1 TYPE name1_gp,
@@ -113,6 +125,9 @@
           lr_lg_werks   TYPE RANGE OF werks_d,
           ls_lg_werks   LIKE LINE OF lr_lg_werks,
           lv_lg_frueh   TYPE datum,
+          lv_lg_spaet   TYPE datum,
+          lt_lg_vbfa    TYPE STANDARD TABLE OF ty_lg_vbfa,
+          ls_lg_vbfa    TYPE ty_lg_vbfa,
           lv_lg_skip    TYPE i,
           lv_lg_max     TYPE i,
           lv_lg_zeile   TYPE i,
@@ -168,7 +183,12 @@
 
 *   Ohne gueltiges Datum kein einziger Datenbankzugriff (Schutz fuer P76).
     lv_lg_frueh = sy-datum - 400.
-    IF lv_lg_datum IS INITIAL OR lv_lg_datum > sy-datum OR lv_lg_datum < lv_lg_frueh.
+*   LogLiefSet darf bis 14 Tage voraus (Warenausgang nach Termin), weiterhin genau ein Tag.
+    lv_lg_spaet = sy-datum.
+    IF iv_entity_set_name = 'LogLiefSet'.
+      lv_lg_spaet = sy-datum + 14.
+    ENDIF.
+    IF lv_lg_datum IS INITIAL OR lv_lg_datum > lv_lg_spaet OR lv_lg_datum < lv_lg_frueh.
       CASE iv_entity_set_name.
         WHEN 'LogTaSet'.
           copy_data_to_ref( EXPORTING is_data = lt_lg_ta_out CHANGING cr_data = er_entityset ).
@@ -196,13 +216,13 @@
         DELETE ADJACENT DUPLICATES FROM lt_lg_ta_keys COMPARING lgnum tanum.
 
         IF lt_lg_ta_keys IS NOT INITIAL.
-          SELECT lgnum tanum bwlvs bdatu bzeit vbeln FROM ltak
+          SELECT lgnum tanum bwlvs bdatu bzeit vbeln bname FROM ltak
             INTO CORRESPONDING FIELDS OF TABLE lt_lg_ta_kopf
             FOR ALL ENTRIES IN lt_lg_ta_keys
             WHERE lgnum = lt_lg_ta_keys-lgnum
               AND tanum = lt_lg_ta_keys-tanum.
           SELECT lgnum tanum tapos matnr werks vltyp vlpla nltyp nlpla nsolm meins
-                 pquit qdatu qzeit vbeln FROM ltap
+                 pquit qdatu qzeit vbeln ename qname FROM ltap
             INTO CORRESPONDING FIELDS OF TABLE lt_lg_ta_pos
             FOR ALL ENTRIES IN lt_lg_ta_keys
             WHERE lgnum = lt_lg_ta_keys-lgnum
@@ -228,12 +248,15 @@
           ls_lg_ta_out-qdatu  = ls_lg_ta_pos-qdatu.
           ls_lg_ta_out-qzeit  = ls_lg_ta_pos-qzeit.
           ls_lg_ta_out-vbeln  = ls_lg_ta_pos-vbeln.
+          ls_lg_ta_out-ename  = ls_lg_ta_pos-ename.
+          ls_lg_ta_out-qname  = ls_lg_ta_pos-qname.
           READ TABLE lt_lg_ta_kopf INTO ls_lg_ta_kopf
                WITH TABLE KEY lgnum = ls_lg_ta_pos-lgnum tanum = ls_lg_ta_pos-tanum.
           IF sy-subrc = 0.
             ls_lg_ta_out-bwlvs = ls_lg_ta_kopf-bwlvs.
             ls_lg_ta_out-bdatu = ls_lg_ta_kopf-bdatu.
             ls_lg_ta_out-bzeit = ls_lg_ta_kopf-bzeit.
+            ls_lg_ta_out-bname = ls_lg_ta_kopf-bname.
             IF ls_lg_ta_out-vbeln IS INITIAL.
               ls_lg_ta_out-vbeln = ls_lg_ta_kopf-vbeln.
             ENDIF.
@@ -258,7 +281,7 @@
 
       WHEN 'LogLiefSet'.
 *       Lieferungen mit geplantem Warenausgang am Datum, Kommissionierstand je Position.
-        SELECT vbeln lfart vstel lgnum kunnr kostk wbstk erzet FROM likp
+        SELECT vbeln lfart vstel lgnum kunnr kostk wbstk erzet wadat wadat_ist FROM likp
           INTO CORRESPONDING FIELDS OF TABLE lt_lg_lf_kopf UP TO 2000 ROWS
           WHERE wadat = lv_lg_datum
             AND lgnum IN lr_lg_lgnum.
@@ -272,6 +295,13 @@
             INTO CORRESPONDING FIELDS OF TABLE lt_lg_kunde
             FOR ALL ENTRIES IN lt_lg_lf_kopf
             WHERE kunnr = lt_lg_lf_kopf-kunnr.
+*         Uhrzeit der Warenbewegung (Folgebeleg Typ R), juengste zuerst.
+          SELECT vbelv erdat erzet FROM vbfa
+            INTO CORRESPONDING FIELDS OF TABLE lt_lg_vbfa
+            FOR ALL ENTRIES IN lt_lg_lf_kopf
+            WHERE vbelv = lt_lg_lf_kopf-vbeln
+              AND vbtyp_n = 'R'.
+          SORT lt_lg_vbfa BY vbelv ASCENDING erdat DESCENDING erzet DESCENDING.
         ENDIF.
 
         LOOP AT lt_lg_lf_kopf INTO ls_lg_lf_kopf.
@@ -285,6 +315,12 @@
           ls_lg_lf_out-kostk = ls_lg_lf_kopf-kostk.
           ls_lg_lf_out-wbstk = ls_lg_lf_kopf-wbstk.
           ls_lg_lf_out-erzet = ls_lg_lf_kopf-erzet.
+          ls_lg_lf_out-wadat = ls_lg_lf_kopf-wadat.
+          ls_lg_lf_out-wadat_ist = ls_lg_lf_kopf-wadat_ist.
+          READ TABLE lt_lg_vbfa INTO ls_lg_vbfa WITH KEY vbelv = ls_lg_lf_kopf-vbeln BINARY SEARCH.
+          IF sy-subrc = 0.
+            ls_lg_lf_out-wa_zeit = ls_lg_vbfa-erzet.
+          ENDIF.
           READ TABLE lt_lg_kunde INTO ls_lg_kunde WITH TABLE KEY kunnr = ls_lg_lf_kopf-kunnr.
           IF sy-subrc = 0.
             ls_lg_lf_out-name1 = ls_lg_kunde-name1.
