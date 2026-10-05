@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Finance Cockpit: Unterreiter Controlling, 2026-10-05, produktiv 08:18
+
+- `cb08f18`: Umsatzbruecke gegen Vorjahr (Menge, Mix, Preis, neue/weggefallene Artikel, Waehrung, Uebrige) und
+  Hochrechnung des laufenden Jahres; offene Fragen separat (Eigeninitiative, kein Auftraggeber).
+
 ## Reiter Verkauf: ohne Passwort, Vergleich gleicher Zeitraeume, Korrekturen, 2026-10-02, produktiv 14:05 bis 14:46
 
 - `84fd1fd` ohne Finance-Passwort (Ingo), `fa83ad1` Vergleich 01–09.2026 gegen 01–09.2025 statt 12 gegen 12 Monate (Daten ab 01.2025),

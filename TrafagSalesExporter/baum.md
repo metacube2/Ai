@@ -62,6 +62,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` | UK 2025, Stueckpreis statt Zeilenwert |
 | `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` | Begruendung und Fallen zum Issue-Log |
 | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` | Marktsegmente und Marktumfrage |
+| `docs/CONTROLLING_2026-10-05.md` | Unterreiter Controlling: Herkunft (Eigeninitiative), Rechnung Brücke und Hochrechnung, offene Fragen |
 | `docs/VERKAUF_2026-10-02.md` | Reiter Verkauf: Entscheide (Quelle, Regeln, Kundenschlüssel), acht Unterreiter, Grenzen, Abgleich |
 | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` | Fragebogen zum Railway-Export |
 | `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` | Konzept Railway-Export per Mausklick |

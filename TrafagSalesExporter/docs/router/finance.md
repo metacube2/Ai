@@ -39,6 +39,7 @@ Marktsegmente.
 | Schulung fuer Anwender, Keyuser und Revision | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` |
 | Budget-CHF-Fragen an den Finanzchef | `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` |
 | **Marktsegmente, Railway, Marktumfrage** | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` |
+| **Unterreiter Controlling** (Eigeninitiative): Umsatzbrücke Vorjahr (Menge, Mix, Preis, Währung), Hochrechnung laufendes Jahr, offene Fragen separat | `docs/CONTROLLING_2026-10-05.md` |
 | **Reiter Verkauf**: Kunden, Rückgang, neue und verlorene Kunden, Konzentration, Cross-Selling, Preisstreuung, Prognose, Weltkarte; gleiche Quelle und Regeln wie Finance, ohne Konzernkunden, CHF zum Belegdatum | `docs/VERKAUF_2026-10-02.md` |
 | Railway-Excel-Export per Mausklick: Konzept, Blaetter, Defaultwerte | `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` |
 | Railway-Export: Fragebogen zur Abstimmung mit Patrik | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` |
