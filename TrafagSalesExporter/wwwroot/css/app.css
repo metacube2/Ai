@@ -839,3 +839,37 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .wl-spark { width: 100%; height: 60px; }
 .wl-spark polyline { fill: none; stroke-width: 2; }
 @media (prefers-reduced-motion: reduce) { .wl-sweep, .wl-blip, .wl-pulse, .wl-country { animation: none; } }
+
+/* Logistik live, 3D-Lagerplatzansicht (2026-10-05): Regale, Paletten, Kisten aus CSS-Quadern. */
+.wh3d-scene { position: relative; height: 540px; perspective: 1600px; overflow: hidden; border-radius: 10px; background: radial-gradient(ellipse at 50% 35%, #2b3440 0%, #11161c 80%); }
+.wh3d-world { position: absolute; left: 50%; top: 52%; width: 0; height: 0; transform-style: preserve-3d; transform: scale3d(var(--k), var(--k), var(--k)) rotateX(58deg) rotateZ(var(--rz)); transition: transform 0.4s ease; }
+.wh3d-spin { animation: wh3d-spin 40s linear infinite; }
+.wh3d-scene:hover .wh3d-spin { animation-play-state: paused; }
+@keyframes wh3d-spin { from { transform: scale3d(var(--k), var(--k), var(--k)) rotateX(58deg) rotateZ(0deg); } to { transform: scale3d(var(--k), var(--k), var(--k)) rotateX(58deg) rotateZ(360deg); } }
+.wh3d-floor { position: absolute; left: 0; top: 0; width: var(--fw); height: var(--fd); transform: translate3d(var(--fx), var(--fy), -1px); border-radius: 6px;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 34px), repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 34px), #2f3a45; border: 1px solid rgba(255, 213, 79, 0.35); }
+.wh3d-bin { position: absolute; left: 0; top: 0; transform-style: preserve-3d; cursor: pointer; }
+.wh3d-cube { position: absolute; left: 0; top: 0; transform-style: preserve-3d; transform: translate3d(var(--x), var(--y), var(--z)); }
+.wh3d-cube > i { position: absolute; left: 0; top: 0; display: block; transform-origin: 0 0 0; background: var(--c); border: 1px solid rgba(255, 255, 255, 0.16); box-sizing: border-box; }
+.wh3d-cube > .wh3d-n { width: var(--w); height: var(--h); transform: rotateX(90deg); filter: brightness(0.75); }
+.wh3d-cube > .wh3d-s { width: var(--w); height: var(--h); transform: translateY(var(--d)) rotateX(90deg); filter: brightness(0.95); }
+.wh3d-cube > .wh3d-w { width: var(--d); height: var(--h); transform: rotateZ(90deg) rotateX(90deg); filter: brightness(0.65); }
+.wh3d-cube > .wh3d-e { width: var(--d); height: var(--h); transform: translateX(var(--w)) rotateZ(90deg) rotateX(90deg); filter: brightness(0.85); }
+.wh3d-cube > .wh3d-top { width: var(--w); height: var(--d); transform: translateZ(var(--h)); filter: brightness(1.15); }
+.wh3d-post { --c: #1565C0; }
+.wh3d-shelf { --c: rgba(144, 164, 174, 0.55); }
+.wh3d-pallet { --c: #A1887F; }
+.wh3d-pallet > .wh3d-top { background: repeating-linear-gradient(90deg, #BCAAA4 0 22%, #6D4C41 22% 26%); }
+.wh3d-box { --c: #C8A165; }
+.wh3d-done { --c: #43A047; }
+.wh3d-open { --c: #FB8C00; }
+.wh3d-open > .wh3d-top { animation: wh3d-blink 1.6s ease-in-out infinite; }
+@keyframes wh3d-blink { 50% { background: #FFD180; box-shadow: 0 0 14px 4px rgba(255, 171, 64, 0.8); } }
+.wh3d-bin:hover .wh3d-box > i, .wh3d-sel .wh3d-box > i { border-color: #fff; filter: brightness(1.4); }
+.wh3d-sel .wh3d-pallet > i { border-color: #FFD54F; }
+.wh3d-tag { position: absolute; left: 0; top: 0; font: 600 11px system-ui, sans-serif; color: #FFE082; white-space: nowrap; pointer-events: none; }
+.wh3d-zone { font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px dashed var(--mud-palette-lines-default); }
+.wh3d-dot { width: 9px; height: 9px; border-radius: 50%; background: #FB8C00; display: inline-block; }
+.wh3d-detail { position: relative; height: 230px; perspective: 900px; margin: 8px 0; border-radius: 8px; background: radial-gradient(ellipse at 50% 40%, #2b3440 0%, #11161c 85%); overflow: hidden; }
+.wh3d-detail-world { top: 62%; --k: 0.95; animation: wh3d-spin 24s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .wh3d-spin, .wh3d-detail-world, .wh3d-open > .wh3d-top { animation: none; } }

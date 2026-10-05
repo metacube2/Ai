@@ -1,0 +1,178 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+
+@* Logistik live, 3D-Lagerplatzansicht (Wunsch Ingo 2026-10-05): heute beruehrte Plaetze als Regale mit Paletten.
+   Kiste auf der Palette: orange = offene Position, gruen = quittiert; Hoehe nach Anzahl Bewegungen.
+   Klick auf einen Platz zeigt ihn gross mit seinen Bewegungen. Doku docs/LOGISTIK_LIVE_2026-10-01.md *@
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="8">
+        <MudPaper Class="pa-3" Outlined="true">
+            <div class="d-flex align-center flex-wrap" style="gap:12px">
+                <MudText Typo="Typo.h6" Class="ll-grow">@T("Lagerplätze seit Tagesbeginn", "Storage bins since start of day")</MudText>
+                <MudSwitch T="bool" @bind-Value="_spin" Color="Color.Primary" Label="@T("Drehen", "Rotate")" />
+                <span class="ll-muted" style="font-size:12px">@T("Blickwinkel", "View angle")</span>
+                <MudSlider T="int" Min="-180" Max="180" @bind-Value="_angle" Style="max-width:180px" Disabled="_spin" />
+            </div>
+            @if (_aisles.Count == 0)
+            {
+                <MudText Class="ll-muted my-6">@T("Keine Lagerbewegung auf einem Regalplatz seit Tagesbeginn.", "No movement on a rack bin since start of day.")</MudText>
+            }
+            else
+            {
+                <div class="wh3d-scene">
+                    <div class="wh3d-world @(_spin ? "wh3d-spin" : "")" style="--k:@F(_scale);--rz:@(_angle)deg">
+                        <div class="wh3d-floor" style="--fw:@Px(_width + 60);--fd:@Px(_depth + 60);--fx:@Px(-_width / 2 - 30);--fy:@Px(-_depth / 2 - 30)"></div>
+                        @for (var a = 0; a < _aisles.Count; a++)
+                        {
+                            var aisle = _aisles[a];
+                            var y0 = a * (D + AisleGap) - _depth / 2;
+                            var x0 = -_width / 2;
+                            var rackH = aisle.Levels * H + 6;
+                                @Cube(x0 - 4, y0, 0, 4, D, rackH, "wh3d-post")
+                                @Cube(x0 + aisle.Columns * W, y0, 0, 4, D, rackH, "wh3d-post")
+                                <div class="wh3d-tag" style="transform:translate3d(@Px(x0 - 70),@Px(y0 + D / 2 - 8),1px)">@aisle.Type · @AisleName(aisle.Aisle)</div>
+                                @for (var lv = 1; lv <= aisle.Levels; lv++)
+                                {
+                                    @Cube(x0, y0, (lv - 1) * H, aisle.Columns * W, D, 2, "wh3d-shelf")
+                                }
+                                @foreach (var b in aisle.Bins)
+                                {
+                                    var x = x0 + (b.Column - 1) * W + 3;
+                                    var z = (b.Level - 1) * H + 2;
+                                    var boxH = 5 + 12 * Math.Min(1.0, Math.Sqrt(b.Moves.Count / (double)_maxMoves));
+                                    var sel = _selected is { } s && s.Bin == b.Bin && s.Type == b.Type;
+                                    <div class="wh3d-bin @(sel ? "wh3d-sel" : "")" @onclick="@(() => _selected = b)" title="@($"{b.Type} / {b.Bin} · {b.Moves.Count}")">
+                                        @Cube(x, y0 + 3, z, W - 6, D - 6, 4, "wh3d-pallet")
+                                        @Cube(x + 2, y0 + 5, z + 4, W - 10, D - 10, boxH, b.HasOpen ? "wh3d-box wh3d-open" : "wh3d-box wh3d-done")
+                                    </div>
+                                }
+                        }
+                    </div>
+                    <div class="dir3d-hint">@T("Jede Zeile ist ein Regalgang, jedes Feld ein Platz, an dem seit Tagesbeginn etwas bewegt wurde. Kiste orange = offene Position, grün = quittiert; Höhe nach Anzahl Bewegungen. Klick auf eine Palette zeigt den Platz.", "Each row is a rack aisle, each slot a bin with movement since start of day. Box orange = open item, green = confirmed; height by number of movements. Click a pallet to see the bin.")</div>
+                </div>
+            }
+            @if (_zones.Count > 0)
+            {
+                <div class="d-flex flex-wrap mt-2" style="gap:8px">
+                    @foreach (var z in _zones)
+                    {
+                        <span class="wh3d-zone">@T("Zone", "Zone") @z.Type: @z.Bins @T("Plätze", "bins") · @z.Moves @T("Bewegungen", "movements")@(z.Open > 0 ? $" · {z.Open} " + T("offen", "open") : "")</span>
+                    }
+                </div>
+            }
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Lage aus dem Platznamen (Gang-Feld-Ebene); Plätze ohne erkennbares Muster stehen der Reihe nach im Gang ~. Lagertypen 9xx (Versand, Wareneingang, Schnittstellen) sind keine Regale und stehen als Zonen darunter.", "Position from the bin name (aisle-slot-level); bins without a recognisable pattern are placed in order in aisle ~. Storage types 9xx (shipping, goods receipt, interfaces) are not racks and are listed as zones below.")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" lg="4">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            @if (_selected is { } b)
+            {
+                <MudText Typo="Typo.h6">@T("Platz", "Bin") @b.Bin</MudText>
+                <div class="ll-muted">@T("Lagertyp", "Storage type") @b.Type · @T("Lagernummer", "Warehouse") @b.Lgnum</div>
+                <div class="wh3d-detail">
+                    <div class="wh3d-world wh3d-detail-world" style="--rz:-30deg">
+                        @Cube(-70, -40, 0, 8, 80, 150, "wh3d-post")
+                        @Cube(62, -40, 0, 8, 80, 150, "wh3d-post")
+                        @Cube(-70, -40, 0, 140, 80, 4, "wh3d-shelf")
+                        @Cube(-70, -40, 140, 140, 80, 4, "wh3d-shelf")
+                        @Cube(-55, -32, 4, 110, 64, 12, "wh3d-pallet")
+                        @for (var i = 0; i < Math.Min(9, b.Moves.Count); i++)
+                        {
+                            var open = !b.Moves[i].Confirmed;
+                            var col = i % 3;
+                            var layer = i / 3;
+                            @Cube(-52 + col * 36, -28, 16 + layer * 34, 32, 56, 32, open ? "wh3d-box wh3d-open" : "wh3d-box wh3d-done")
+                        }
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap" style="gap:12px;font-size:13px">
+                    <span>@T("Entnahmen", "Picks") <b>@b.Picks</b>@(b.PicksOpen > 0 ? $" ({b.PicksOpen} " + T("offen", "open") + ")" : "")</span>
+                    <span>@T("Einlagerungen", "Put-aways") <b>@b.Puts</b>@(b.PutsOpen > 0 ? $" ({b.PutsOpen} " + T("offen", "open") + ")" : "")</span>
+                </div>
+                <div class="ll-board mt-2">
+                    @foreach (var t in b.Moves.Take(15))
+                    {
+                        <div class="ll-board-row">
+                            <span>@((t.ConfirmedAt ?? t.CreatedAt)?.ToString("HH:mm") ?? "–")</span>
+                            <span class="ll-grow">@t.Material</span>
+                            <span>@t.Quantity.ToString("0.##") @t.Unit</span>
+                            <span>@(t.FromBin.Trim() == b.Bin ? "→ " + t.ToType : "← " + t.FromType)</span>
+                            <span>@(t.Confirmed ? "✓" : "…")</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <MudText Typo="Typo.h6">@T("Aktivste Plätze", "Most active bins")</MudText>
+                <div class="ll-list">
+                    @foreach (var top in _bins.Where(x => !LogisticsBinLayout.IsInterim(x.Type)).OrderByDescending(x => x.Moves.Count).Take(15))
+                    {
+                        <div class="ll-row" style="cursor:pointer" @onclick="@(() => _selected = top)">
+                            <span class="ll-mono">@top.Type</span>
+                            <span class="ll-grow ll-mono">@top.Bin</span>
+                            <span class="ll-mono">@top.Moves.Count</span>
+                            @if (top.HasOpen)
+                            {
+                                <span class="wh3d-dot"></span>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private const double W = 30;
+    private const double D = 28;
+    private const double H = 26;
+    private const double AisleGap = 40;
+
+    [Parameter] public IReadOnlyList<LiveTransferItem> Transfers { get; set; } = [];
+
+    private IReadOnlyList<LiveBin> _bins = [];
+    private IReadOnlyList<LiveAisle> _aisles = [];
+    private IReadOnlyList<(string Type, int Bins, int Moves, int Open)> _zones = [];
+    private LiveBin? _selected;
+    private bool _spin;
+    private int _angle = -30;
+    private double _width;
+    private double _depth;
+    private double _scale = 1;
+    private int _maxMoves = 1;
+    private IReadOnlyList<LiveTransferItem>? _lastTransfers;
+
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(_lastTransfers, Transfers))
+            return;
+        _lastTransfers = Transfers;
+        _bins = LogisticsBinLayout.Bins(Transfers);
+        _aisles = LogisticsBinLayout.Aisles(_bins);
+        _zones = LogisticsBinLayout.Zones(_bins);
+        _maxMoves = Math.Max(1, _aisles.SelectMany(a => a.Bins).Select(b => b.Moves.Count).DefaultIfEmpty(1).Max());
+        _width = Math.Max(W, _aisles.Select(a => a.Columns * W).DefaultIfEmpty(W).Max());
+        _depth = Math.Max(D, _aisles.Count * (D + AisleGap) - AisleGap);
+        _scale = Math.Min(1.6, 620 / Math.Max(_width, _depth));
+        // Ausgewaehlten Platz mit neuen Daten nachziehen.
+        if (_selected is { } s)
+            _selected = _bins.FirstOrDefault(b => b.Type == s.Type && b.Bin == s.Bin);
+    }
+
+    private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+    private static string Px(double v) => F(v) + "px";
+
+    private static string AisleName(string aisle) => aisle.StartsWith('~') ? "~" : aisle;
+
+    private static RenderFragment Cube(double x, double y, double z, double w, double d, double h, string css) => __builder =>
+    {
+        <div class="wh3d-cube @css" style="--x:@Px(x);--y:@Px(y);--z:@Px(z);--w:@Px(w);--d:@Px(d);--h:@Px(h)">
+            <i class="wh3d-n"></i><i class="wh3d-s"></i><i class="wh3d-w"></i><i class="wh3d-e"></i><i class="wh3d-top"></i>
+        </div>
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

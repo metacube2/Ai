@@ -179,7 +179,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/WELTLAGE_2026-10-05.md` | Reiter Weltlage: Auftrag, Quellen und Firewall, Verknüpfung je Abteilung, Rechenregeln, Seiten, Grenzen |
 | `docs/NETZWERK_2026-10-02.md` | Reiter Netzwerk mit zwoelf Unterreitern (inkl. AD, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht): Entscheide, Schutzregeln, Messungen, Befunde |
 | `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` | Verwendung & Risiko: Messung der Datenlage, Regeln, Ausbau mit voller Stueckliste |
-| `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, offene Schritte |
+| `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, 3D-Lagerplatzansicht, offene Schritte |
 | `docs/UI_BERNDEUTSCH_GLOSSAR.md` | Stil und Glossar fuer den Berndeutsch-Katalog |
 | `projektmanagement/Status_kurz.tsv`, `projektmanagement/Status_kurz.xlsx` | Status kurz fuer den Chef (Quelle und erzeugte A4-Seite), seit 2026-10-01 |
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |

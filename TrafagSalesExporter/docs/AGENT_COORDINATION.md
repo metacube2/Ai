@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Logistik live: Umschalter 3D-Lagerplatzansicht (Paletten je Platz), zurueck zur Originalsicht | `Components/Pages/LogisticsLive.razor`, `Components/Logistics/*` (neu), `Services/Logistics/LogisticsBinLayout.cs` (neu), `app.css`, Uebersetzungen, Tests, Doku `docs/LOGISTIK_LIVE_2026-10-01.md` | in Arbeit 2026-10-05 |
 | Claude | Neuer Reiter Weltlage (externe Daten EZB/GDELT/FRED/Eurostat/IMF, Impact je Abteilung, Radar; Firewall-Status je Quelle) | `Services/World/*` (neu), `Components/Pages/Weltlage*.razor` (neu), `Components/World/*` (neu), Menue, `app.css`, Uebersetzungen, Tests, `Program.cs` (nur eigene Zeilen), Doku | in Arbeit 2026-10-05 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.

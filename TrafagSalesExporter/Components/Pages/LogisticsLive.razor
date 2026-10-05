@@ -1,6 +1,7 @@
 @page "/logistik/live"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Logistics
 @implements IDisposable
 @inject LogisticsLiveService Live
 @inject IUiTextService UiText
@@ -20,6 +21,12 @@
         @T("Stand", "As of") @(S.UpdatedAt?.ToString("HH:mm:ss") ?? "–") ·
         @T("Abruf alle 30 Sekunden, nur solange diese Seite offen ist", "Refreshed every 30 seconds, only while this page is open")
     </MudText>
+    <span class="ll-grow"></span>
+    @* Umschalter 3D-Lagerplatzansicht (2026-10-05), zurueck zur Originalsicht jederzeit. *@
+    <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+        <MudButton StartIcon="@Icons.Material.Filled.Dashboard" Variant="@(_view3d ? Variant.Outlined : Variant.Filled)" OnClick="@(() => _view3d = false)">@T("Original", "Original")</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.ViewInAr" Variant="@(_view3d ? Variant.Filled : Variant.Outlined)" OnClick="@(() => _view3d = true)">@T("3D-Lager", "3D warehouse")</MudButton>
+    </MudButtonGroup>
 </div>
 
 @if (S.Error is not null)
@@ -55,6 +62,12 @@
     </div>
 </div>
 
+@if (_view3d)
+{
+    <WarehouseBins3D Transfers="S.Transfers" />
+}
+else
+{
 <MudGrid Spacing="3">
     <MudItem xs="12" lg="6">
         <MudPaper Class="pa-3 ll-panel" Outlined="true">
@@ -170,6 +183,7 @@
         </MudPaper>
     </MudItem>
 </MudGrid>
+}
 
 <MudText Typo="Typo.caption" Class="ll-muted mt-3 d-block">
     @T("Ohne Personendaten: SAP liefert weder Personalnummer noch Benutzer. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU).",
@@ -179,6 +193,7 @@
 @code {
     private LogisticsLiveSnapshot S => Live.Snapshot;
     private bool _subscribed;
+    private bool _view3d;
     private DateTime _now = DateTime.Now;
     private IReadOnlyList<(int Hour, int Created, int Confirmed)> _transferHours = [];
     private int _transferMax = 1;

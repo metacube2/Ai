@@ -1,6 +1,6 @@
 # Logistik live: Kommissionierung und Produktion aus SAP
 
-Stand: 2026-10-01. Auftrag Ingo: „bei Logistik wäre es mega cool, wenn man realtime sieht, wie die
+Stand: 2026-10-01, ergänzt 2026-10-05 um die 3D-Lagerplatzansicht (Abschnitt unten). Auftrag Ingo: „bei Logistik wäre es mega cool, wenn man realtime sieht, wie die
 Kommissionierung oder die Produktion läuft … grafisch dargestellt, nutze auch das SAP-Tool“.
 Seite `/logistik/live` (Menü Logistik > Logistik live).
 
@@ -72,10 +72,26 @@ sind nicht zeilenweise geprüft (Rumpf im Gateway Client nicht lesbar).
 ohne Datum 0,7 s leer; Gegenproben `HrKpiSet`, `FinanzJournalSet` 200. Deploy `6b4bf21` (810/810, DLL bitgleich,
 SHA256 `226536E1...82C3`, fuenf Routen und `/logistik/live` 200, Alarm nur WAL/SHM), Menuepunkt `logistics-live` angelegt.
 
+## 3D-Lagerplatzansicht (2026-10-05)
+
+Wunsch Ingo: „die Lagerplätze mit Umschalter als 3D, sicher die Paletten-Anzeige oder wie ein Platz aussieht,
+Zurückschaltung auf Originalsicht möglich“. Umschalter oben rechts **Original | 3D-Lager**; Original ist unverändert.
+
+| Teil | Umsetzung |
+| --- | --- |
+| Datenbasis | dieselben TA-Positionen wie die Seite (kein zusätzlicher SAP-Abruf): je Position Von-Platz (Entnahme) und Nach-Platz (Einlagerung), offen oder quittiert |
+| Lage im Regal | aus dem Platznamen: `01-02-03`, `A-01-2`, `A-07`, `A0102`, `010203` → Gang, Feld, Ebene; belegte Felder und Ebenen werden verdichtet. Plätze ohne Muster liegen der Reihe nach im Gang `~` (10 Felder je Ebene). Höchstens 24 Gänge (die aktivsten) |
+| Schnittstellen | Lagertypen `9xx` (z. B. 916 Versandzone, Platz = Lieferung) sind keine Regale und stehen als Zonen unter der Grafik |
+| Darstellung | Regale mit Pfosten und Fachböden, je Platz eine Palette mit Kiste: orange blinkend = offene Position, grün = quittiert, Höhe nach Anzahl Bewegungen; Blickwinkel per Regler oder Drehen |
+| Ein Platz | Klick auf eine Palette: Platz gross (Regalfach, Palette, je Bewegung eine Kiste, höchstens 9), Entnahmen und Einlagerungen, letzte 15 Bewegungen mit Material, Menge, Richtung, Status |
+
+Code `LogisticsBinLayout` (reine Logik, Tests `LogisticsBinLayoutTests`), `Components/Logistics/WarehouseBins3D.razor`, CSS `wh3d-`.
+**Annahme:** Das tatsächliche Platzschema in P76 ist hier nicht geprüft; passt die Zerlegung nicht, landen die Plätze im Gang `~` und die Ansicht bleibt brauchbar. Nach dem ersten produktiven Blick nachschärfen.
+
 ## Offen
 
 1. *Erledigt 2026-10-01 15:13:* Sichtpruefung durch Ingo („logistik live sieht super aus“). Werte gegen SAP (ein TA, eine Lieferung, eine Rueckmeldung) noch nicht einzeln abgeglichen.
 2. *Erledigt (siehe oben).*
 3. Werte gegen SAP prüfen (ein TA, eine Lieferung, eine Rückmeldung per Screenshot).
-4. Ideen für später: Lagerplatz-Heatmap, Auftragsfortschritt je Arbeitsplatz über den Tag, Warnung
+4. Ideen für später: *Lagerplatzansicht 2026-10-05 als 3D umgesetzt.* Auftragsfortschritt je Arbeitsplatz über den Tag, Warnung
    bei Arbeitsplätzen ohne Rückmeldung während der Schicht.
