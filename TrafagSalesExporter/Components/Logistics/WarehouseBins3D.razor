@@ -26,8 +26,8 @@
                         @for (var a = 0; a < _aisles.Count; a++)
                         {
                             var aisle = _aisles[a];
-                            var y0 = a * (D + AisleGap) - _depth / 2;
-                            var x0 = -_width / 2;
+                            var y0 = (a % _perColumn) * (D + AisleGap) - _depth / 2;
+                            var x0 = (a / _perColumn) * _columnWidth + TagWidth - _width / 2;
                             var rackH = aisle.Levels * H + 6;
                                 @Cube(x0 - 4, y0, 0, 4, D, rackH, "wh3d-post")
                                 @Cube(x0 + aisle.Columns * W, y0, 0, 4, D, rackH, "wh3d-post")
@@ -139,6 +139,9 @@
     private LiveBin? _selected;
     private bool _spin;
     private int _angle = -30;
+    private const double TagWidth = 80;
+    private int _perColumn = 1;
+    private double _columnWidth;
     private double _width;
     private double _depth;
     private double _scale = 1;
@@ -154,8 +157,12 @@
         _aisles = LogisticsBinLayout.Aisles(_bins);
         _zones = LogisticsBinLayout.Zones(_bins);
         _maxMoves = Math.Max(1, _aisles.SelectMany(a => a.Bins).Select(b => b.Moves.Count).DefaultIfEmpty(1).Max());
-        _width = Math.Max(W, _aisles.Select(a => a.Columns * W).DefaultIfEmpty(W).Max());
-        _depth = Math.Max(D, _aisles.Count * (D + AisleGap) - AisleGap);
+        // Gaenge in Spalten nebeneinander, damit die Halle eher quadratisch wird statt eines langen Streifens.
+        _columnWidth = TagWidth + Math.Max(W, _aisles.Select(a => a.Columns * W).DefaultIfEmpty(W).Max()) + 30;
+        var columns = Math.Clamp((int)Math.Round(Math.Sqrt(_aisles.Count * (D + AisleGap) / _columnWidth)), 1, 4);
+        _perColumn = Math.Max(1, (int)Math.Ceiling(_aisles.Count / (double)columns));
+        _width = Math.Ceiling(_aisles.Count / (double)_perColumn) * _columnWidth;
+        _depth = Math.Max(D, _perColumn * (D + AisleGap) - AisleGap);
         _scale = Math.Min(1.6, 620 / Math.Max(_width, _depth));
         // Ausgewaehlten Platz mit neuen Daten nachziehen.
         if (_selected is { } s)

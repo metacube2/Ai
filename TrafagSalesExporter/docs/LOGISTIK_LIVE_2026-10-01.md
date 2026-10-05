@@ -86,7 +86,13 @@ Zurückschaltung auf Originalsicht möglich“. Umschalter oben rechts **Origina
 | Ein Platz | Klick auf eine Palette: Platz gross (Regalfach, Palette, je Bewegung eine Kiste, höchstens 9), Entnahmen und Einlagerungen, letzte 15 Bewegungen mit Material, Menge, Richtung, Status |
 
 Code `LogisticsBinLayout` (reine Logik, Tests `LogisticsBinLayoutTests`), `Components/Logistics/WarehouseBins3D.razor`, CSS `wh3d-`.
-**Annahme:** Das tatsächliche Platzschema in P76 ist hier nicht geprüft; passt die Zerlegung nicht, landen die Plätze im Gang `~` und die Ansicht bleibt brauchbar. Nach dem ersten produktiven Blick nachschärfen.
+*Überholt 09:55:* Die Annahme „Platzschema ungeprüft“ ist erledigt. **Produktiv 09:21 (`98146c6`), um 09:52 mit echten Daten angesehen:** 318 TA-Positionen,
+Lagertypen 100, 1BP, 1G1, 1P1, 2BP, 2G1, ML4, QM2, UGK, ABT, CZ; Zonen 901, 902, 911, 916, 922, 999. Echte Platznamen wie
+`EL100`, `DL20004`, `EDB0102`, `1-008-B`, `3-162-B`, `BP-MLE04-2`, `TR5_KERAM`, `SPEDITION`. Befund: Die ersten Regeln
+erkannten `1-008-B`, `BP-MLE04-2` und `DL20004` nicht (alles im Gang `~`), und 24 Gänge in einer Reihe machten die Halle
+winzig. **Nachgeschärft:** Ebene auch als Buchstabe (B = 2), Feld mit Buchstaben vor der Nummer (`MLE04` → 4), Buchstaben +
+beliebig viele Ziffern (letzte zwei = Ebene, bei drei Ziffern die letzte); Gänge in bis zu vier Spalten nebeneinander.
+Deploystand siehe `docs/rag/DEPLOYMENT.md`.
 
 ## Offen
 

@@ -15,6 +15,10 @@ public sealed class LogisticsBinLayoutTests
     [InlineData("A0102", "A", 1, 2)]
     [InlineData("b05", "B", 5, 1)]
     [InlineData("010203", "01", 2, 3)]
+    [InlineData("1-008-B", "1", 8, 2)]
+    [InlineData("BP-MLE04-2", "BP", 4, 2)]
+    [InlineData("DL20004", "DL", 200, 4)]
+    [InlineData("EDB0102", "EDB", 1, 2)]
     public void Platzname_Wird_Zerlegt(string bin, string aisle, int column, int level)
     {
         var p = LogisticsBinLayout.Parse(bin);

@@ -22,7 +22,8 @@ public sealed record LiveAisle(string Type, string Aisle, int Columns, int Level
 /// </summary>
 public static class LogisticsBinLayout
 {
-    private static readonly Regex Letters = new(@"^([A-Za-z]+)(\d{2})(\d{1,2})?$", RegexOptions.Compiled);
+    private static readonly Regex Letters = new(@"^([A-Za-z]+)(\d+)$", RegexOptions.Compiled);
+    private static readonly Regex TrailingDigits = new(@"(\d+)$", RegexOptions.Compiled);
     private static readonly Regex Digits = new(@"^(\d{2})(\d{2})(\d{2})$", RegexOptions.Compiled);
 
     public static bool IsInterim(string type) => type.StartsWith('9');
@@ -33,18 +34,41 @@ public static class LogisticsBinLayout
         var b = (bin ?? "").Trim();
         if (b.Length == 0) return null;
         var parts = b.Split(['-', '/', '.', ' ', '_'], StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 3 && int.TryParse(parts[1], out var c3) && int.TryParse(parts[2], out var l3))
-            return (parts[0], c3, l3);
-        if (parts.Length == 2 && int.TryParse(parts[1], out var c2))
-            return (parts[0], c2, 1);
+        // Gang-Feld-Ebene; Feld darf Buchstaben vor der Nummer haben (MLE04), Ebene als Zahl oder Buchstabe (B = 2).
+        if (parts.Length >= 3 && Number(parts[1]) is { } c3 && Level(parts[2]) is { } l3)
+            return (parts[0].ToUpperInvariant(), c3, l3);
+        if (parts.Length == 2 && Number(parts[1]) is { } c2)
+            return (parts[0].ToUpperInvariant(), c2, 1);
         var m = Letters.Match(b);
         if (m.Success)
-            return (m.Groups[1].Value.ToUpperInvariant(), int.Parse(m.Groups[2].Value), m.Groups[3].Success ? int.Parse(m.Groups[3].Value) : 1);
+        {
+            // Buchstaben + Ziffern: die letzten zwei (bei drei Ziffern die letzte) sind die Ebene.
+            var d = m.Groups[2].Value;
+            var aisle = m.Groups[1].Value.ToUpperInvariant();
+            return d.Length switch
+            {
+                <= 2 => (aisle, int.Parse(d), 1),
+                3 => (aisle, int.Parse(d[..2]), int.Parse(d[2..])),
+                <= 8 => (aisle, int.Parse(d[..^2]), int.Parse(d[^2..])),
+                _ => null
+            };
+        }
         m = Digits.Match(b);
         if (m.Success)
             return (m.Groups[1].Value, int.Parse(m.Groups[2].Value), int.Parse(m.Groups[3].Value));
         return null;
     }
+
+    private static int? Number(string part)
+    {
+        var m = TrailingDigits.Match(part);
+        return m.Success && m.Value.Length <= 6 ? int.Parse(m.Value) : null;
+    }
+
+    private static int? Level(string part)
+        => int.TryParse(part, out var n) ? n
+            : part.Length == 1 && char.IsLetter(part[0]) ? char.ToUpperInvariant(part[0]) - 'A' + 1
+            : null;
 
     /// <summary>Alle heute beruehrten Plaetze: Entnahme (von) und Einlagerung (nach), offen oder quittiert.</summary>
     public static IReadOnlyList<LiveBin> Bins(IEnumerable<LiveTransferItem> transfers)
