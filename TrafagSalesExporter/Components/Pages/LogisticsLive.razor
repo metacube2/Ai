@@ -24,8 +24,9 @@
     <span class="ll-grow"></span>
     @* Umschalter 3D-Lagerplatzansicht (2026-10-05), zurueck zur Originalsicht jederzeit. *@
     <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
-        <MudButton StartIcon="@Icons.Material.Filled.Dashboard" Variant="@(_view3d ? Variant.Outlined : Variant.Filled)" OnClick="@(() => _view3d = false)">@T("Original", "Original")</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.ViewInAr" Variant="@(_view3d ? Variant.Filled : Variant.Outlined)" OnClick="@(() => _view3d = true)">@T("3D-Lager", "3D warehouse")</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Dashboard" Variant="@ViewVariant(ViewOriginal)" OnClick="@(() => _view = ViewOriginal)">@T("Original", "Original")</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.ViewInAr" Variant="@ViewVariant(View3d)" OnClick="@(() => _view = View3d)">@T("3D-Lager", "3D warehouse")</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Speed" Variant="@ViewVariant(ViewProductivity)" OnClick="@(() => _view = ViewProductivity)">@T("Produktivität", "Productivity")</MudButton>
     </MudButtonGroup>
 </div>
 
@@ -62,9 +63,13 @@
     </div>
 </div>
 
-@if (_view3d)
+@if (_view == View3d)
 {
     <WarehouseBins3D Transfers="S.Transfers" />
+}
+else if (_view == ViewProductivity)
+{
+    <ProductivityPanel Transfers="S.Transfers" Now="_now" />
 }
 else
 {
@@ -193,7 +198,12 @@ else
 @code {
     private LogisticsLiveSnapshot S => Live.Snapshot;
     private bool _subscribed;
-    private bool _view3d;
+    private const string ViewOriginal = "original";
+    private const string View3d = "3d";
+    private const string ViewProductivity = "productivity";
+    private string _view = ViewOriginal;
+
+    private Variant ViewVariant(string view) => _view == view ? Variant.Filled : Variant.Outlined;
     private DateTime _now = DateTime.Now;
     private IReadOnlyList<(int Hour, int Created, int Confirmed)> _transferHours = [];
     private int _transferMax = 1;

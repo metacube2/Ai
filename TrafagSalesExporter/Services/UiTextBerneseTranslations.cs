@@ -10,6 +10,17 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Lieferungen fertig gerüstet"] = "Liferige fertig grüschtet",
+            ["Rüstzeit je Lieferung, Median"] = "Rüschtzyt pro Liferig, Median",
+            ["Rüstzeit, 8 von 10 Lieferungen darunter"] = "Rüschtzyt, 8 vo 10 Liferige drunger",
+            ["Positionen je aktive Stunde"] = "Positione pro aktivi Stund",
+            ["Quittierte Positionen je Stunde und Lagernummer"] = "Quittierti Positione pro Stund und Lagernummere",
+            ["Keine quittierten Positionen seit Tagesbeginn."] = "Keni quittierte Positione sit Tagesbeginn.",
+            ["Lager"] = "Lager",
+            ["Offene Rüstvorgänge, älteste zuerst"] = "Offnigi Rüschtvorgäng, eltischti zersch",
+            ["Alle Lieferungen mit Transportauftrag sind gerüstet."] = "Alli Liferige mit Transportuftrag si grüschtet.",
+            ["Rot = schon länger offen als 80 % der fertigen Rüstvorgänge. Rüstzeit = erster Transportauftrag angelegt bis letzte Position quittiert. Warenausgangszeit und Namen folgen mit der SAP-Erweiterung; die Namen nur nach Anmeldung."] = "Rot = scho länger offe als 80 % vo de fertige Rüschtvorgäng. Rüschtzyt = erschte Transportuftrag aagleit bis letschti Position quittiert. Wareusgangszyt und Näme chöme mit dr SAP-Erwiterig; d Näme nume nach dr Aamäldig.",
+            ["Produktivität"] = "Produktivität",
             ["Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus den EZB-Referenzkursen der letzten 90 Tage. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate."] = "Erschte Wurf: eifachi, offe dokumentierti Regle, ke Prognose. Ereignis us Nachrichte wäutwit (GDELT), Konjunktur vo Eurostat und IMF, Rohstoff und Finanzstress vo FRED, Kürs us de EZB-Referenzkürs vo de letschte 90 Täg. Üsi Site: Verchouf nach Finance-Regle, Iichouf us em Iichoufscache, je 12 Monet.",
             ["Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus den EZB-Referenzkursen der letzten 90 Tage."] = "Netto = Verchouf i dere Währig minus Iichouf i dere Währig, i CHF. Positiv heisst: mir nä i dere Währig meh ii; de schadet e schwächere Kurs. Kürs us de EZB-Referenzkürs vo de letschte 90 Täg.",
             ["Lagerplätze seit Tagesbeginn"] = "Lagerplätz sit Tagesbeginn",

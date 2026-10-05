@@ -1,0 +1,122 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+
+@* Logistik live, Produktivität (Wunsch Logistik 2026-10-05): Rüsten je Lieferung, Leistung je Stunde und Lagernummer,
+   anonym. Warenausgangszeit und Namen kommen, sobald die SAP-Erweiterung in P76 ist. Doku docs/LOGISTIK_LIVE_2026-10-01.md *@
+<div class="ll-kpis">
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@_done.Count / @_runs.Count</div>
+        <div class="ll-kpi-label">@T("Lieferungen fertig gerüstet", "Deliveries fully staged")</div>
+    </div>
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@Min(_median)</div>
+        <div class="ll-kpi-label">@T("Rüstzeit je Lieferung, Median", "Staging time per delivery, median")</div>
+    </div>
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@Min(_p80)</div>
+        <div class="ll-kpi-label">@T("Rüstzeit, 8 von 10 Lieferungen darunter", "Staging time, 8 of 10 deliveries below")</div>
+    </div>
+    <div class="ll-kpi">
+        <div class="ll-kpi-value">@_perHour.ToString("0.#", CultureInfo.InvariantCulture)</div>
+        <div class="ll-kpi-label">@T("Positionen je aktive Stunde", "Items per active hour")</div>
+    </div>
+</div>
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="7">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">@T("Quittierte Positionen je Stunde und Lagernummer", "Confirmed items per hour and warehouse")</MudText>
+            @if (_hours.Count == 0)
+            {
+                <MudText Class="ll-muted">@T("Keine quittierten Positionen seit Tagesbeginn.", "No confirmed items since start of day.")</MudText>
+            }
+            else
+            {
+                <div class="ll-bars">
+                    @foreach (var h in _hours)
+                    {
+                        var total = _output.Where(o => o.Hour == h).Sum(o => o.Confirmed);
+                        <div class="ll-bar-col" title="@($"{h:00}:00 · {total}")">
+                            <div class="pr-stack" style="height:@Pct(total, _maxHour)">
+                                @foreach (var o in _output.Where(o => o.Hour == h))
+                                {
+                                    <div style="height:@Pct(o.Confirmed, total);background:@Color(o.Lgnum)" title="@($"{o.Lgnum} · {o.Confirmed}")"></div>
+                                }
+                            </div>
+                            <div class="ll-bar-label">@h</div>
+                        </div>
+                    }
+                </div>
+                <div class="ll-legend">
+                    @foreach (var l in _lgnums)
+                    {
+                        <span><i class="ll-swatch" style="background:@Color(l)"></i>@T("Lager", "Warehouse") @l</span>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" lg="5">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-1">@T("Offene Rüstvorgänge, älteste zuerst", "Open staging runs, oldest first")</MudText>
+            <div class="ll-list">
+                @foreach (var r in _runs.Where(r => !r.Done).OrderBy(r => r.FirstCreated).Take(15))
+                {
+                    <div class="ll-row">
+                        <span class="ll-mono">@r.Delivery</span>
+                        <span class="ll-progress ll-grow" title="@($"{r.ItemsConfirmed} / {r.Items}")"><span style="width:@Pct(r.ItemsConfirmed, r.Items)"></span></span>
+                        <span class="ll-mono">@r.ItemsConfirmed/@r.Items</span>
+                        <span class="ll-mono @(r.Minutes(_now) > (_p80 ?? double.MaxValue) ? "pr-late" : "ll-muted")" style="width:60px;text-align:right">@Min(r.Minutes(_now))</span>
+                    </div>
+                }
+                @if (!_runs.Any(r => !r.Done))
+                {
+                    <MudText Class="ll-muted">@T("Alle Lieferungen mit Transportauftrag sind gerüstet.", "All deliveries with a transfer order are staged.")</MudText>
+                }
+            </div>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Rot = schon länger offen als 80 % der fertigen Rüstvorgänge. Rüstzeit = erster Transportauftrag angelegt bis letzte Position quittiert. Warenausgangszeit und Namen folgen mit der SAP-Erweiterung; die Namen nur nach Anmeldung.", "Red = open longer than 80 % of the finished runs. Staging time = first transfer order created until last item confirmed. Goods issue time and names follow with the SAP extension; names only after login.")</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public IReadOnlyList<LiveTransferItem> Transfers { get; set; } = [];
+    [Parameter] public DateTime Now { get; set; }
+
+    private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #90A4AE".Split(' ');
+    private IReadOnlyList<LivePickingRun> _runs = [];
+    private List<LivePickingRun> _done = [];
+    private IReadOnlyList<LiveHourlyOutput> _output = [];
+    private List<int> _hours = [];
+    private List<string> _lgnums = [];
+    private int _maxHour = 1;
+    private double? _median;
+    private double? _p80;
+    private double _perHour;
+    private DateTime _now;
+
+    protected override void OnParametersSet()
+    {
+        _now = Now == default ? DateTime.Now : Now;
+        _runs = LogisticsProductivity.PickingRuns(Transfers);
+        _done = _runs.Where(r => r.Done).ToList();
+        _median = LogisticsProductivity.Quantile(_done.Select(r => r.Minutes(_now)), 0.5);
+        _p80 = LogisticsProductivity.Quantile(_done.Select(r => r.Minutes(_now)), 0.8);
+        _output = LogisticsProductivity.HourlyOutput(Transfers);
+        _lgnums = _output.Select(o => o.Lgnum).Distinct().Order().ToList();
+        _hours = _output.Select(o => o.Hour).Distinct().Order().ToList();
+        _maxHour = Math.Max(1, _hours.Select(h => _output.Where(o => o.Hour == h).Sum(o => o.Confirmed)).DefaultIfEmpty(1).Max());
+        _perHour = _hours.Count == 0 ? 0 : _output.Sum(o => o.Confirmed) / (double)_hours.Count;
+    }
+
+    private string Color(string lgnum) => Palette[Math.Max(0, _lgnums.IndexOf(lgnum)) % Palette.Length];
+
+    private static string Pct(double value, double total) => total <= 0 ? "0%" : (100.0 * Math.Min(1, value / total)).ToString("0.#", CultureInfo.InvariantCulture) + "%";
+
+    private static string Min(double? minutes) => minutes is null ? "–"
+        : minutes.Value >= 120 ? (minutes.Value / 60).ToString("0.0", CultureInfo.InvariantCulture) + " h"
+        : Math.Round(minutes.Value).ToString(CultureInfo.InvariantCulture) + " min";
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

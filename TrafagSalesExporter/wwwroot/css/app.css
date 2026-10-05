@@ -873,3 +873,8 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .wh3d-detail { position: relative; height: 230px; perspective: 900px; margin: 8px 0; border-radius: 8px; background: radial-gradient(ellipse at 50% 40%, #2b3440 0%, #11161c 85%); overflow: hidden; }
 .wh3d-detail-world { top: 62%; --k: 0.95; animation: wh3d-spin 24s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .wh3d-spin, .wh3d-detail-world, .wh3d-open > .wh3d-top { animation: none; } }
+
+/* Logistik live, Produktivitaet (2026-10-05): gestapelte Stundenbalken je Lagernummer. */
+.pr-stack { flex: 1; display: flex; flex-direction: column-reverse; min-height: 1px; border-radius: 2px 2px 0 0; overflow: hidden; transition: height 400ms ease; }
+.pr-stack > div { width: 100%; }
+.pr-late { color: #EF5350; font-weight: 600; }

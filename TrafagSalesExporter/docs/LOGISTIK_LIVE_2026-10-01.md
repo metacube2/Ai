@@ -10,7 +10,7 @@ Seite `/logistik/live` (Menü Logistik > Logistik live).
 | --- | --- |
 | Echtzeit-Technik | **Kein OData-Push.** Das Gateway kann nicht von sich aus senden; echtes Push ginge auf S/4HANA 2023 (`S4CORE 108`, `SAP_BASIS 758`) nur über ABAP Push Channel mit Code in den produktiven Buchungen. Stattdessen ein gemeinsamer Abruf alle 30 s, Blazor schickt die Änderung über die bestehende Verbindung an jeden Browser |
 | Wann wird abgefragt | **Nur solange jemand die Seite offen hat** (Ingo). Erster Betrachter startet, letzter stoppt; ein Abruf für alle |
-| Personen | **Keine** (Ingo, Empfehlung wegen ArGV 3 Art. 26): weder `AFRU-PERNR` noch Benutzer aus `LTAK/LTAP` werden gelesen |
+| Personen | *Überholt 2026-10-05:* zuerst **keine** (Ingo, Empfehlung wegen ArGV 3 Art. 26). Seit 2026-10-05 **Namen der TA-Benutzer nur nach Anmeldung** (Passwort wie HR KPI), HR-Freigabe laut Ingo 2026-10-05; ohne Anmeldung anonym wie bisher. Siehe Abschnitt „Produktivität und Kapazität“ |
 | Umfang | Kommissionierung und Produktion auf einer Seite (Ingo) |
 | Schutz P76 („wenn SAP steht, steht die Produktion“) | Siehe unten |
 
@@ -94,6 +94,34 @@ winzig. **Nachgeschärft:** Ebene auch als Buchstabe (B = 2), Feld mit Buchstabe
 beliebig viele Ziffern (letzte zwei = Ebene, bei drei Ziffern die letzte); Gänge in bis zu vier Spalten nebeneinander.
 **Produktiv 10:23 (`71981b6`)**, 10:24 angesehen: 24 Gänge, davon 2G1 in acht Gängen mit Ebenen, 1G1 in vier, im Gang `~`
 nur noch wenige Plätze (100, 1BP, ABT, QM2); Zonen 901 bis 999 darunter.
+
+## Produktivität und Kapazität (2026-10-05)
+
+Wunsch der Logistik nach der Vorstellung am 2026-10-05 (über Ingo): Kapazitätsplanung, Produktivität vom Rüsten bis zum
+Warenausgang, Namen der Leute nur mit Login, sonst anonym. Entscheide Ingo am selben Tag:
+
+| Frage | Entscheid |
+| --- | --- |
+| Kapazitätsplanung | alle drei: Arbeitsvorrat Kommissionierung, Arbeitsplätze Produktion, Warenausgang nach Termin |
+| Produktivität | beides: Durchlaufzeit je Lieferung und Leistung je Stunde |
+| Namen | **HR-Freigabe liegt vor (laut Ingo, 2026-10-05)**; Anzeige nur nach Anmeldung mit eigenem Passwort wie HR KPI, das Ingo setzt; nur im Speicher für den laufenden Tag, keine Speicherung, kein Export |
+| SAP | zuerst T76, P76 erst nach Ingos Import; neue Transportaufträge beim ersten Speichern |
+
+**Teil A, Cockpit, anonym (ohne SAP-Änderung):** Umschalter **Produktivität** neben Original und 3D-Lager. Rüstzeit je
+Lieferung = erster TA angelegt bis letzte Position quittiert (Median, 8 von 10 darunter), offene Rüstvorgänge älteste
+zuerst (rot, wenn länger offen als 80 % der fertigen), quittierte Positionen je Stunde und Lagernummer, Positionen je aktive
+Stunde. Rechnet nur aus dem gemeinsamen Abruf, kein zusätzlicher SAP-Zugriff. Code `LogisticsProductivity` (Tests
+`LogisticsProductivityTests`), `Components/Logistics/ProductivityPanel.razor`. Deploystand siehe `docs/rag/DEPLOYMENT.md`.
+
+**Teil B, SAP-Transport 1 (in Arbeit):** `LogTaSet` + `BNAME` (TA angelegt von), `ENAME` (Entnahme quittiert von),
+`QNAME` (quittiert von); `LogLiefSet` + `WADAT`, `WADAT_IST` und Uhrzeit der Warenbewegung aus `VBFA-ERZET`; Datum für
+`LogLiefSet` bis heute + 14 Tage (weiterhin ein Tag je Abfrage). Felder in T76 per RFC belegt (2026-10-05).
+
+**Teil C, SAP-Transport 2 (geplant):** neues Set für Kapazität je Arbeitsplatz und Tag (Bedarf aus `KBED`, Angebot über den
+SAP-Standardbaustein für verfügbare Kapazität statt selbst aus `KAPA` gerechnet), Pflichtfilter Werk, höchstens 14 Tage.
+
+**Grenze T76:** Daten in T76 enden im März; Abfragen in die Zukunft und Kapazitätsbedarf werden dort voraussichtlich leer
+sein. T76 belegt Felder und Schutz, nicht den Inhalt.
 
 ## Offen
 
