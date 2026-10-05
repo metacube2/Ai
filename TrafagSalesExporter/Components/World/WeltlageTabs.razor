@@ -1,0 +1,34 @@
+@using TrafagSalesExporter.Services
+@inject NavigationManager Nav
+@inject IUiTextService UiText
+
+@* Unterreiter des Reiters Weltlage (2026-10-05). Doku: docs/WELTLAGE_2026-10-05.md *@
+<div class="nw-tabs">
+    @foreach (var tab in Tabs)
+    {
+        <a href="@tab.Href" class="nw-tab @(IsActive(tab.Href) ? "nw-tab-active" : string.Empty)">
+            <MudIcon Icon="@tab.Icon" Size="Size.Small" />
+            <span>@tab.Label</span>
+        </a>
+    }
+</div>
+
+@code {
+    private sealed record Tab(string Href, string Icon, string Label);
+
+    private IReadOnlyList<Tab> Tabs =>
+    [
+        new("weltlage", Icons.Material.Filled.Radar, T("Radar", "Radar")),
+        new("weltlage/laender", Icons.Material.Filled.Public, T("Länder", "Countries")),
+        new("weltlage/maerkte", Icons.Material.Filled.ShowChart, T("Rohstoffe und Währungen", "Commodities and currencies")),
+        new("weltlage/ereignisse", Icons.Material.Filled.Feed, T("Ereignisse", "Events"))
+    ];
+
+    private bool IsActive(string href)
+    {
+        var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].TrimEnd('/');
+        return string.Equals(path, href, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

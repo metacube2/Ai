@@ -61,6 +61,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsurePurchasingCacheTables(db);
         EnsureMaterialUsageCacheTables(db);
         EnsureNetworkTables(db);
+        EnsureWorldTables(db);
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
@@ -451,6 +452,20 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         if (conn.State != System.Data.ConnectionState.Open)
             conn.Open();
         foreach (var sql in new[] { NetworkStore.ProbeTableSql, NetworkStore.WatchTableSql, NetworkStore.ClientTableSql, NetworkStore.AdMetricTableSql, NetworkStore.AdChangeTableSql, NetworkStore.AdComputerTableSql }.Concat(NetworkStore.IndexSql))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    /// <summary>Reiter Weltlage (2026-10-05): Ereignistage, verarbeitete GDELT-Dateien, Quellenstand.</summary>
+    private static void EnsureWorldTables(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+        foreach (var sql in new[] { WorldDataService.EventTableSql, WorldDataService.FileTableSql, WorldDataService.CacheTableSql })
         {
             using var cmd = conn.CreateCommand();
             cmd.CommandText = sql;

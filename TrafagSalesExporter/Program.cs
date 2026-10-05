@@ -162,6 +162,11 @@ builder.Services.AddSingleton<AdDnsZoneService>();
 builder.Services.AddSingleton<AdSnapshotService>();
 // Reiter Verkauf (2026-10-02): Verkaufszeilen nach Finance-Regeln, in CHF, gemerkt bis neuer Quellstand.
 builder.Services.AddSingleton<SalesDataService>();
+// Reiter Weltlage (2026-10-05): externe Quellen ohne Anmeldung, nur in Produktion, docs/WELTLAGE_2026-10-05.md.
+builder.Services.AddHttpClient("Weltlage");
+builder.Services.AddSingleton<WorldDataService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<WorldDataService>());
+builder.Services.AddSingleton<WorldImpactService>();
 builder.Services.AddHostedService<NetworkProbeService>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, ClientConnectionTracker>();
 

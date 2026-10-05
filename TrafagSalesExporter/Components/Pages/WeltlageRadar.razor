@@ -1,0 +1,182 @@
+@page "/weltlage"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.World
+@using static TrafagSalesExporter.Components.World.WeltlageUi
+@inject WorldImpactService World
+@inject IUiTextService UiText
+
+@* Reiter Weltlage, Radar (2026-10-05, erster Wurf): je Abteilung ein Sektor, jeder Punkt ein Weltthema, das uns betrifft.
+   Je naeher an der Mitte, desto staerker die Wirkung; rot Gegenwind, gruen Rueckenwind; Groesse = unser Anteil.
+   Offen fuer alle. Doku docs/WELTLAGE_2026-10-05.md *@
+<PageTitle>@T("Weltlage", "World situation") · @T("Radar", "Radar")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Weltlage", "World situation")</MudText>
+<WeltlageTabs />
+
+@if (_impacts is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3" Outlined="true">
+                <div class="d-flex align-center flex-wrap" style="gap:8px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Wirkung auf unsere Abteilungen", "Impact on our departments")</MudText>
+                    @if (_department is not null)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => { _department = null; _selected = null; })">@T("Alle Abteilungen", "All departments")</MudButton>
+                    }
+                </div>
+                <svg viewBox="0 0 640 640" class="wl-radar">
+                    <defs>
+                        <radialGradient id="wl-bg"><stop offset="0%" stop-color="#0f2a1c" /><stop offset="100%" stop-color="#050d08" /></radialGradient>
+                        <linearGradient id="wl-sweep-grad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#69F0AE" stop-opacity="0" /><stop offset="100%" stop-color="#69F0AE" stop-opacity="0.45" /></linearGradient>
+                    </defs>
+                    <circle cx="@Cx" cy="@Cx" r="@R" fill="url(#wl-bg)" stroke="#69F0AE" stroke-opacity="0.5" />
+                    @for (var d = 0; d < Departments.Length; d++)
+                    {
+                        var dep = Departments[d];
+                        var a1 = d * 72.0;
+                        var active = _department is null || _department == dep;
+                        var score = _scores.GetValueOrDefault(dep);
+                        var (lx, ly) = Polar(Cx, Cx, R + 22, a1 + 36);
+                        <g class="wl-sector-g" @onclick="@(() => SelectDepartment(dep))">
+                            <path d="@Sector(Cx, Cx, R, a1, a1 + 72)" class="wl-sector @(active ? "" : "wl-dim")" />
+                            <text x="@F(lx)" y="@F(ly)" class="wl-dep" text-anchor="middle">@DepartmentLabel(dep)</text>
+                            <text x="@F(lx)" y="@F(ly + 15)" class="wl-dep-score" text-anchor="middle" style="fill:@Tone(score / 20)">@Points(score)</text>
+                        </g>
+                    }
+                    @foreach (var f in new[] { 0.25, 0.5, 0.75 })
+                    {
+                        <circle cx="@Cx" cy="@Cx" r="@F(R * f)" class="wl-ring" />
+                    }
+                    @for (var d = 0; d < 5; d++)
+                    {
+                        var (ex, ey) = Polar(Cx, Cx, R, d * 72.0);
+                        <line x1="@Cx" y1="@Cx" x2="@F(ex)" y2="@F(ey)" class="wl-ring" />
+                    }
+                    <g class="wl-sweep" style="transform-origin:@(Cx)px @(Cx)px">
+                        <path d="@Sector(Cx, Cx, R, -40, 0)" fill="url(#wl-sweep-grad)" style="opacity:0.9" />
+                        <line x1="@Cx" y1="@Cx" x2="@Cx" y2="@(Cx - R)" class="wl-sweep-line" />
+                    </g>
+                    @foreach (var b in _blips)
+                    {
+                        var dim = _department is not null && _department != b.Impact.Department;
+                        <g class="wl-blip-g @(dim ? "wl-dim" : "") @(ReferenceEquals(_selected, b.Impact) ? "wl-blip-sel" : "")" @onclick="@(() => _selected = b.Impact)">
+                            <circle cx="@F(b.X)" cy="@F(b.Y)" r="@F(b.Size)" class="wl-blip" style="fill:@Tone(b.Impact.Signal);animation-delay:@F(b.Angle / 360 * SweepSeconds)s"><title>@DepartmentLabel(b.Impact.Department) · @Title(b.Impact): @Points(b.Impact.Score)</title></circle>
+                            @if (b.Size >= 7)
+                            {
+                                <g><text x="@F(b.X)" y="@F(b.Y - b.Size - 3)" text-anchor="middle" class="wl-blip-label">@Title(b.Impact)</text></g>
+                            }
+                        </g>
+                    }
+                    <circle cx="@Cx" cy="@Cx" r="3" fill="#69F0AE" />
+                </svg>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Summe der Punkte. Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung.", "The closer to the centre, the stronger the impact. Red = headwind, green = tailwind, grey = calm. Dot size = our share (sales, purchasing, open orders, currency position). Number per department = sum of points. Click a sector to filter, a dot to see the reasoning.")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            @if (_selected is { } s)
+            {
+                <MudPaper Class="pa-3 mb-3 wl-detail" Outlined="true">
+                    <div class="d-flex align-center" style="gap:8px">
+                        <span class="wl-src-dot" style="background:@Tone(s.Signal)"></span>
+                        <MudText Typo="Typo.h6" Class="ll-grow">@Title(s)</MudText>
+                        <span class="ll-mono" style="font-size:20px;color:@Tone(s.Signal)">@Points(s.Score)</span>
+                    </div>
+                    <div class="ll-muted">@DepartmentLabel(s.Department) · @s.Topic · @T("Quelle", "Source") @s.Source</div>
+                    <div class="mt-2">@s.Detail</div>
+                    <div class="mt-1 ll-muted" style="font-size:12px">
+                        @T("Signal", "Signal") @s.Signal.ToString("+0.00;-0.00") · @T("unser Anteil", "our share") @s.ExposureShare.ToString("P1")
+                        @if (s.ExposureChf > 0)
+                        {
+                            <span> · CHF @s.ExposureChf.ToString("N0")</span>
+                        }
+                    </div>
+                </MudPaper>
+            }
+            <MudPaper Class="pa-3 mb-3" Outlined="true">
+                <MudText Typo="Typo.h6" Class="mb-1">@(_department is null ? T("Stärkste Wirkungen", "Strongest impacts") : DepartmentLabel(_department))</MudText>
+                <div class="ll-list" style="max-height:330px">
+                    @foreach (var i in Visible.OrderByDescending(i => Math.Abs(i.Score)).Take(25))
+                    {
+                        <div class="wl-row @(ReferenceEquals(_selected, i) ? "wl-row-sel" : "")" @onclick="@(() => _selected = i)">
+                            <span class="wl-src-dot" style="background:@Tone(i.Signal)"></span>
+                            <span style="width:70px" class="ll-muted">@DepartmentLabel(i.Department)</span>
+                            <span class="ll-grow">@Title(i) <span class="ll-muted">· @i.Topic</span></span>
+                            <span class="ll-mono" style="width:52px;text-align:right">@Points(i.Score)</span>
+                        </div>
+                    }
+                    @if (_impacts.Count == 0)
+                    {
+                        <MudText Class="ll-muted">@T("Keine Signale. Entweder sind die externen Quellen blockiert oder die Daten werden gerade geladen (erster Abruf etwa zwei Minuten nach dem Start).", "No signals. Either the external sources are blocked or data is being loaded (first fetch about two minutes after start).")</MudText>
+                    }
+                </div>
+            </MudPaper>
+            <WeltlageSources Sources="_snapshot!.Sources" Exposure="_exposure" />
+        </MudItem>
+    </MudGrid>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-3">@T("Erster Wurf: einfache, offen dokumentierte Regeln, keine Prognose. Ereignisse aus Nachrichten weltweit (GDELT), Konjunktur aus Eurostat und IMF, Rohstoffe und Finanzstress aus FRED, Kurse aus der EZB-Kurstabelle des Cockpits. Unsere Seite: Verkauf nach Finance-Regeln, Einkauf aus dem Einkaufscache, je 12 Monate.", "First draft: simple, openly documented rules, no forecast. Events from news worldwide (GDELT), economy from Eurostat and IMF, commodities and financial stress from FRED, rates from the cockpit's ECB table. Our side: sales by Finance rules, purchasing from the purchasing cache, 12 months each.")</MudText>
+}
+
+@code {
+    private const double Cx = 320;
+    private const double R = 260;
+    private const double SweepSeconds = 6;
+    private static readonly string[] Departments = WorldImpactAnalytics.Departments;
+
+    private sealed record Blip(WorldImpact Impact, double X, double Y, double Size, double Angle);
+
+    private WorldSnapshot? _snapshot;
+    private WorldExposure? _exposure;
+    private IReadOnlyList<WorldImpact>? _impacts;
+    private IReadOnlyDictionary<string, double> _scores = new Dictionary<string, double>();
+    private List<Blip> _blips = [];
+    private string? _department;
+    private WorldImpact? _selected;
+
+    private IEnumerable<WorldImpact> Visible => _department is null ? _impacts! : _impacts!.Where(i => i.Department == _department);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var (snap, exposure, impacts) = await World.GetAsync();
+        _snapshot = snap;
+        _exposure = exposure;
+        _impacts = impacts;
+        _scores = WorldImpactAnalytics.DepartmentScores(impacts);
+        var maxAbs = Math.Max(1, impacts.Select(i => Math.Abs(i.Score)).DefaultIfEmpty(1).Max());
+        _blips = [];
+        for (var d = 0; d < Departments.Length; d++)
+        {
+            var items = impacts.Where(i => i.Department == Departments[d]).OrderBy(i => i.Topic).ThenBy(i => i.Subject).ToList();
+            for (var k = 0; k < items.Count; k++)
+            {
+                var angle = d * 72.0 + 6 + 60.0 * (k + 0.5) / items.Count;
+                var strength = Math.Min(1, Math.Abs(items[k].Score) / maxAbs);
+                var radius = R * (0.92 - 0.75 * Math.Sqrt(strength));
+                var (x, y) = Polar(Cx, Cx, radius, angle);
+                _blips.Add(new Blip(items[k], x, y, 3.5 + 10 * Math.Sqrt(Math.Min(1, items[k].ExposureShare)), angle));
+            }
+        }
+    }
+
+    private void SelectDepartment(string dep)
+    {
+        _department = _department == dep ? null : dep;
+        _selected = null;
+    }
+
+    private string DepartmentLabel(string dep) => dep switch
+    {
+        WorldImpactAnalytics.Sales => T("Verkauf", "Sales"),
+        WorldImpactAnalytics.Purchasing => T("Einkauf", "Purchasing"),
+        WorldImpactAnalytics.Logistics => T("Logistik", "Logistics"),
+        WorldImpactAnalytics.Hr => T("HR", "HR"),
+        _ => T("Finance", "Finance")
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

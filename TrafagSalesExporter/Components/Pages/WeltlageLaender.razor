@@ -1,0 +1,115 @@
+@page "/weltlage/laender"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.World
+@using TrafagSalesExporter.Components.Sales
+@using static TrafagSalesExporter.Components.World.WeltlageUi
+@inject WorldImpactService World
+@inject IUiTextService UiText
+
+@* Reiter Weltlage, Laender (2026-10-05): Lage je Land (Farbe) gegen unser Geschaeft dort (Groesse). Doku docs/WELTLAGE_2026-10-05.md *@
+<PageTitle>@T("Weltlage", "World situation") · @T("Länder", "Countries")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Weltlage", "World situation")</MudText>
+<WeltlageTabs />
+
+@if (_rows is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-3" Outlined="true">
+                <div class="d-flex align-center flex-wrap" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Lage in den Ländern, in denen wir Geschäft haben", "Situation in the countries where we do business")</MudText>
+                    <MudSelect T="string" @bind-Value="_view" Dense="true" Variant="Variant.Outlined" Style="max-width:220px">
+                        <MudSelectItem Value="@ViewAll">@T("Verkauf und Einkauf", "Sales and purchasing")</MudSelectItem>
+                        <MudSelectItem Value="@ViewSales">@T("Verkauf", "Sales")</MudSelectItem>
+                        <MudSelectItem Value="@ViewPurchasing">@T("Einkauf", "Purchasing")</MudSelectItem>
+                    </MudSelect>
+                </div>
+                <svg viewBox="0 0 1000 500" class="sal-world">
+                    <defs>
+                        <pattern id="sal-dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.4" class="sal-land-dot" /></pattern>
+                    </defs>
+                    @foreach (var p in WorldGeo.ContinentPaths())
+                    {
+                        <path d="@p" class="sal-land" />
+                    }
+                    @foreach (var c in _rows)
+                    {
+                        var value = Value(c);
+                        if (value <= 0 || !WorldGeo.Countries.TryGetValue(c.Country, out var geo)) continue;
+                        var (x, y) = WorldGeo.Project(geo.Lat, geo.Lon);
+                        var r = 4 + 30 * Math.Sqrt((double)(value / _max));
+                        <g class="wl-country-g" @onclick="@(() => _selected = c)">
+                            <circle cx="@F(x)" cy="@F(y)" r="@F(r)" class="wl-country" style="fill:@(c.Signal is { } s ? Tone(s) : "#78909C")"><title>@WorldGeo.Name(c.Country): @(c.Signal?.ToString("+0.00;-0.00") ?? "–")</title></circle>
+                            @if (c.Signal is <= -0.3)
+                            {
+                                <circle cx="@F(x)" cy="@F(y)" r="@F(r)" class="wl-pulse" />
+                            }
+                        </g>
+                    }
+                </svg>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Kreisgrösse = unser Umsatz bzw. Einkauf dort (12 Monate), Farbe = Lage des Landes (Ereignisse der letzten drei Tage gegen die vier Wochen davor, Industrieproduktion, Wachstumsprognose). Pulsierend = deutlicher Gegenwind. Grau = keine Daten.", "Circle size = our sales or purchasing there (12 months), colour = country situation (events of the last three days against the four weeks before, industrial production, growth forecast). Pulsing = clear headwind. Grey = no data.")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="4">
+            @if (_selected is { } sel)
+            {
+                <MudPaper Class="pa-3 mb-3 wl-detail" Outlined="true">
+                    <MudText Typo="Typo.h6">@WorldGeo.Name(sel.Country)</MudText>
+                    <div class="ll-muted">@T("Verkauf", "Sales") CHF @sel.Sales.ToString("N0") · @T("Einkauf", "Purchasing") CHF @sel.Purchasing.ToString("N0")</div>
+                    <div class="mt-2">@(sel.Detail ?? T("Keine Daten der externen Quellen.", "No data from the external sources."))</div>
+                </MudPaper>
+            }
+            <MudPaper Class="pa-3 ll-panel" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Länder", "Countries")</MudText>
+                <div class="ll-list" style="max-height:520px">
+                    @foreach (var c in _rows.Where(c => Value(c) > 0).OrderByDescending(Value).Take(40))
+                    {
+                        <div class="wl-row @(ReferenceEquals(_selected, c) ? "wl-row-sel" : "")" @onclick="@(() => _selected = c)">
+                            <span class="wl-src-dot" style="background:@(c.Signal is { } s ? Tone(s) : "#78909C")"></span>
+                            <span class="ll-grow">@WorldGeo.Name(c.Country)</span>
+                            <span class="ll-mono" style="width:60px;text-align:right">@SalesUi.Short(Value(c))</span>
+                            <span class="ll-mono" style="width:52px;text-align:right">@(c.Signal?.ToString("+0.00;-0.00") ?? "–")</span>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private const string ViewAll = "all";
+    private const string ViewSales = "sales";
+    private const string ViewPurchasing = "purchasing";
+
+    private sealed record CountryRow(string Country, decimal Sales, decimal Purchasing, double? Signal, string? Detail);
+
+    private List<CountryRow>? _rows;
+    private CountryRow? _selected;
+    private string _view = ViewAll;
+    private decimal _max = 1;
+
+    private decimal Value(CountryRow c) => _view switch { ViewSales => c.Sales, ViewPurchasing => c.Purchasing, _ => c.Sales + c.Purchasing };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var (snap, exposure, _) = await World.GetAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        _rows = exposure.SalesByCountry.Keys.Union(exposure.PurchaseByCountry.Keys)
+            .Select(c =>
+            {
+                var s = WorldImpactAnalytics.CountrySignal(snap, c, today);
+                return new CountryRow(c, exposure.SalesByCountry.GetValueOrDefault(c), exposure.PurchaseByCountry.GetValueOrDefault(c), s?.Signal, s?.Detail);
+            })
+            .ToList();
+        _max = Math.Max(1, _rows.Select(r => r.Sales + r.Purchasing).DefaultIfEmpty(1).Max());
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

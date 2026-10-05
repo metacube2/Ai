@@ -369,6 +369,12 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("network-migration", "network", "Migration", "Migration", "MoveUp", "netzwerk/migration", 52, "All"),
         Link("network-report", "network", "Bericht", "Report", "Summarize", "netzwerk/bericht", 53, "All"),
         Link("network-workplaces", "network", "Arbeitsplaetze", "Workplaces", "Wifi", "netzwerk/arbeitsplaetze", 50, "All"),
+        // Weltlage 2026-10-05 (Wunsch Ingo, erster Wurf): externe Quellen gegen unser Geschaeft, offen fuer alle, Doku docs/WELTLAGE_2026-10-05.md.
+        Group("world", null, "Weltlage", "World situation", "TravelExplore", 38),
+        Link("world-radar", "world", "Radar", "Radar", "Radar", "weltlage", 10, "All"),
+        Link("world-countries", "world", "Laender", "Countries", "Public", "weltlage/laender", 20, "All"),
+        Link("world-markets", "world", "Rohstoffe und Waehrungen", "Commodities and currencies", "ShowChart", "weltlage/maerkte", 30, "All"),
+        Link("world-events", "world", "Ereignisse", "Events", "Feed", "weltlage/ereignisse", 40, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
     ];

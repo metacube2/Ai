@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Reiter Weltlage, 2026-10-05, DEPLOYSTAND
+
+- Neuer Reiter (Radar je Abteilung mit drehendem Strahl, Länder, Rohstoffe und Währungen, Ereignisse) aus frei
+  abrufbaren Quellen, verknüpft mit Verkauf, Einkauf und Kursen; Firewall-Zustand je Quelle. `docs/WELTLAGE_2026-10-05.md`.
+
 ## Finance Cockpit: Unterreiter Controlling, 2026-10-05, produktiv 08:18
 
 - `cb08f18`: Umsatzbruecke gegen Vorjahr (Menge, Mix, Preis, neue/weggefallene Artikel, Waehrung, Uebrige) und

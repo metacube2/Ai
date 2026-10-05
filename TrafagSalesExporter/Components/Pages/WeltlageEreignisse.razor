@@ -1,0 +1,121 @@
+@page "/weltlage/ereignisse"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.World
+@using TrafagSalesExporter.Components.Sales
+@using static TrafagSalesExporter.Components.World.WeltlageUi
+@inject WorldImpactService World
+@inject IUiTextService UiText
+
+@* Reiter Weltlage, Ereignisse (2026-10-05): meistbeachtete Konflikt- und Negativmeldungen der letzten 24 h, nur Link
+   zur Quelle, kein Artikeltext. Doku docs/WELTLAGE_2026-10-05.md *@
+<PageTitle>@T("Weltlage", "World situation") · @T("Ereignisse", "Events")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Weltlage", "World situation")</MudText>
+<WeltlageTabs />
+
+@if (_snap is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-3" Outlined="true">
+                <div class="d-flex align-center flex-wrap" style="gap:12px">
+                    <MudText Typo="Typo.h6" Class="ll-grow">@T("Meistbeachtete Ereignisse, 24 Stunden", "Most covered events, 24 hours")</MudText>
+                    <MudSwitch T="bool" @bind-Value="_ourOnly" Color="Color.Primary" Label="@T("Nur Länder mit unserem Geschäft", "Only countries with our business")" />
+                </div>
+                <div class="ll-list" style="max-height:640px">
+                    @foreach (var e in Events.Take(150))
+                    {
+                        <div class="wl-row">
+                            <span class="wl-src-dot" style="background:@Tone(e.Goldstein / 6)"></span>
+                            <span style="width:120px">@WorldGeo.Name(e.Country)</span>
+                            <span style="width:150px" class="ll-muted">@Kind(e.RootCode)</span>
+                            <span class="ll-grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="@e.Place">@e.Place</span>
+                            <span class="ll-mono ll-muted" style="width:46px;text-align:right" title="@T("Erwähnungen", "Mentions")">@e.Mentions</span>
+                            @if (e.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <a href="@e.Url" target="_blank" rel="noopener noreferrer" class="ll-mono" style="width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@Host(e.Url)</a>
+                            }
+                        </div>
+                    }
+                    @if (!Events.Any())
+                    {
+                        <MudText Class="ll-muted">@T("Keine Ereignisse im Speicher. Nach einem Neustart füllt der Dienst die letzten 24 Stunden nach, sofern GDELT erreichbar ist.", "No events in memory. After a restart the service refills the last 24 hours, if GDELT is reachable.")</MudText>
+                    }
+                </div>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Quelle GDELT: automatisch aus Nachrichten weltweit erkannte Ereignisse, mit Fehlern. Gezeigt werden Konflikte und stark negative Ereignisse, sortiert nach Erwähnungen. Farbe = Goldstein-Skala (rot = destabilisierend). Nur Link, kein Artikeltext.", "Source GDELT: events detected automatically from news worldwide, with errors. Shown are conflicts and strongly negative events, sorted by mentions. Colour = Goldstein scale (red = destabilising). Link only, no article text.")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="4">
+            <MudPaper Class="pa-3 mb-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Konfliktanteil je Land, 14 Tage", "Conflict share per country, 14 days")</MudText>
+                @foreach (var c in _trend.Take(15))
+                {
+                    <div class="dir-ou-bar">
+                        <span style="width:110px">@WorldGeo.Name(c.Country)</span>
+                        <svg viewBox="0 0 140 24" class="ll-grow" style="height:24px">
+                            @for (var i = 0; i < c.Shares.Count; i++)
+                            {
+                                var h = 22 * c.Shares[i];
+                                <rect x="@F(i * 10)" y="@F(23 - h)" width="8" height="@F(h)" rx="1" style="fill:@Tone(-c.Shares[i] * 3 + 0.6)" />
+                            }
+                        </svg>
+                        <span class="ll-mono" style="width:44px;text-align:right">@((c.Shares.LastOrDefault()).ToString("P0"))</span>
+                    </div>
+                }
+            </MudPaper>
+            <WeltlageSources Sources="_snap.Sources" Exposure="_exposure" />
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private sealed record Trend(string Country, List<double> Shares);
+
+    private WorldSnapshot? _snap;
+    private WorldExposure? _exposure;
+    private HashSet<string> _ours = [];
+    private List<Trend> _trend = [];
+    private bool _ourOnly = true;
+
+    private IEnumerable<WorldEvent> Events => _snap!.TopEvents.Where(e => !_ourOnly || _ours.Contains(e.Country));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var (snap, exposure, _) = await World.GetAsync();
+        _snap = snap;
+        _exposure = exposure;
+        _ours = exposure.SalesByCountry.Keys.Concat(exposure.PurchaseByCountry.Keys).ToHashSet();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var days = Enumerable.Range(0, 14).Select(i => today.AddDays(i - 13)).ToList();
+        var weight = exposure.SalesByCountry.Concat(exposure.PurchaseByCountry).GroupBy(e => e.Key).ToDictionary(g => g.Key, g => g.Sum(e => e.Value));
+        _trend = snap.EventDays.Where(d => _ours.Contains(d.Country)).GroupBy(d => d.Country)
+            .Select(g => new Trend(g.Key, days.Select(day => g.FirstOrDefault(x => x.Day == day)?.ConflictShare ?? 0).ToList()))
+            .OrderByDescending(t => weight.GetValueOrDefault(t.Country))
+            .ToList();
+    }
+
+    private static string Host(string url) => Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host : url;
+
+    private string Kind(string root) => root switch
+    {
+        "10" => T("Forderung", "Demand"),
+        "11" => T("Missbilligung", "Disapproval"),
+        "12" => T("Ablehnung", "Rejection"),
+        "13" => T("Drohung", "Threat"),
+        "14" => T("Protest", "Protest"),
+        "15" => T("Machtdemonstration", "Show of force"),
+        "16" => T("Abbruch von Beziehungen", "Reduced relations"),
+        "17" => T("Zwang", "Coercion"),
+        "18" => T("Angriff", "Assault"),
+        "19" => T("Kampfhandlung", "Fighting"),
+        "20" => T("Massengewalt", "Mass violence"),
+        _ => T("Sonstiges", "Other")
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

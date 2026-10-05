@@ -65,6 +65,10 @@ public static class NavigationIconResolver
         "EventAvailable" => Icons.Material.Filled.EventAvailable,
         "ViewInAr" => Icons.Material.Filled.ViewInAr,
         "WarningAmber" => Icons.Material.Filled.WarningAmber,
+        "TravelExplore" => Icons.Material.Filled.TravelExplore,
+        "Radar" => Icons.Material.Filled.Radar,
+        "ShowChart" => Icons.Material.Filled.ShowChart,
+        "Feed" => Icons.Material.Filled.Feed,
         _ => Icons.Material.Filled.Circle
     };
 }

@@ -1,0 +1,104 @@
+@page "/weltlage/maerkte"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.World
+@using TrafagSalesExporter.Components.Sales
+@using static TrafagSalesExporter.Components.World.WeltlageUi
+@inject WorldImpactService World
+@inject IUiTextService UiText
+
+@* Reiter Weltlage, Rohstoffe und Waehrungen (2026-10-05). Doku docs/WELTLAGE_2026-10-05.md *@
+<PageTitle>@T("Weltlage", "World situation") · @T("Rohstoffe und Währungen", "Commodities and currencies")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Weltlage", "World situation")</MudText>
+<WeltlageTabs />
+
+@if (_snap is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudText Typo="Typo.h6" Class="mb-2">@T("Rohstoffe, Energie und Finanzstress", "Commodities, energy and financial stress")</MudText>
+    @if (_snap.Series.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">@T("Keine Reihen vorhanden, Zustand der Quelle FRED siehe unten.", "No series available, see the state of the FRED source below.")</MudAlert>
+    }
+    <div class="wl-cards">
+        @foreach (var s in _snap.Series)
+        {
+            var change = s.ChangePercent(90);
+            var stress = s.Key == "STLFSI4";
+            var good = stress ? -(s.Last ?? 0) : -(change ?? 0) / 10;
+            <MudPaper Class="pa-3 wl-card" Outlined="true">
+                <div class="d-flex align-center" style="gap:6px">
+                    <b class="ll-grow">@s.Name</b>
+                    <span class="ll-mono" style="color:@Tone(good)">@(stress ? (s.Last ?? 0).ToString("0.00") : change is { } c ? c.ToString("+0.0;-0.0") + " %" : "–")</span>
+                </div>
+                <div class="ll-muted" style="font-size:12px">@(s.Last?.ToString("N1")) @s.Unit · @(s.Points.Count > 0 ? s.Points[^1].Date.ToString("dd.MM.yyyy") : "")</div>
+                <svg viewBox="0 0 220 60" class="wl-spark"><polyline points="@Spark(s.Points.TakeLast(stress ? 104 : 36).ToList(), 220, 60)" style="stroke:@Tone(good)" /></svg>
+                <div class="ll-muted" style="font-size:12px">@Usage(s.Key)</div>
+            </MudPaper>
+        }
+    </div>
+
+    <MudGrid Spacing="3" Class="mt-1">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Währungen: unsere Position und Kursbewegung", "Currencies: our position and rate movement")</MudText>
+                <MudSimpleTable Dense="true" Hover="true">
+                    <thead><tr><th>@T("Währung", "Currency")</th><th style="text-align:right">@T("Netto CHF, 12 Monate", "Net CHF, 12 months")</th><th style="text-align:right">@T("Kurs gegen CHF, 90 Tage", "Rate vs CHF, 90 days")</th><th>@T("Wirkung", "Impact")</th></tr></thead>
+                    <tbody>
+                        @foreach (var (cur, net) in _exposure!.NetByCurrency.OrderByDescending(n => Math.Abs(n.Value)))
+                        {
+                            var change = _exposure.CurrencyChange90.TryGetValue(cur, out var ch) ? ch : (double?)null;
+                            var effect = change is { } c ? c * Math.Sign(net) : 0;
+                            <tr>
+                                <td class="ll-mono">@cur</td>
+                                <td class="ll-mono" style="text-align:right">@net.ToString("N0")</td>
+                                <td class="ll-mono" style="text-align:right">@(change?.ToString("+0.0;-0.0") ?? "–") %</td>
+                                <td><span class="wl-src-dot" style="background:@Tone(effect / 3)"></span> @(effect < -0.5 ? T("Gegenwind", "Headwind") : effect > 0.5 ? T("Rückenwind", "Tailwind") : T("ruhig", "calm"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Netto = Verkauf in dieser Währung minus Einkauf in dieser Währung, in CHF. Positiv heisst: wir nehmen in dieser Währung mehr ein; dann schadet ein schwächerer Kurs. Kurse aus der EZB-Kurstabelle des Cockpits.", "Net = sales in this currency minus purchasing in this currency, in CHF. Positive means we earn more in this currency; then a weaker rate hurts. Rates from the cockpit's ECB table.")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 mb-3" Outlined="true">
+                <MudText Typo="Typo.h6">@T("Einkauf nach Rohstoff (Stichwort)", "Purchasing by commodity (keyword)")</MudText>
+                @foreach (var (key, value) in _exposure!.PurchaseByCommodity.OrderByDescending(v => v.Value))
+                {
+                    <div class="dir-ou-bar"><span style="width:110px">@(_snap.Series.FirstOrDefault(s => s.Key == key)?.Name ?? key)</span><span class="dir-ou-track ll-grow" style="width:auto"><span style="width:@(F(100.0 * (double)(value / _maxCommodity)))%"></span></span><span class="ll-mono" style="width:60px;text-align:right">@SalesUi.Short(value)</span></div>
+                }
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Zuordnung über Stichworte in Warengruppe und Positionstext (z. B. Edelstahl → Nickel, Messing → Kupfer, Kunststoff → Erdöl). Annahme, keine Stückliste.", "Assignment by keywords in material group and item text (e.g. stainless steel → nickel, brass → copper, plastic → oil). Assumption, not a bill of materials.")</MudText>
+            </MudPaper>
+            <WeltlageSources Sources="_snap.Sources" Exposure="_exposure" />
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private WorldSnapshot? _snap;
+    private WorldExposure? _exposure;
+    private decimal _maxCommodity = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var (snap, exposure, _) = await World.GetAsync();
+        _snap = snap;
+        _exposure = exposure;
+        _maxCommodity = Math.Max(1, exposure.PurchaseByCommodity.Values.DefaultIfEmpty(1).Max());
+    }
+
+    private string Usage(string key) => key switch
+    {
+        "STLFSI4" => T("Ersatz für Börsenindizes: 0 = normal, über 1 = angespannte Finanzmärkte (wöchentlich)", "Substitute for stock indices: 0 = normal, above 1 = tense financial markets (weekly)"),
+        "DCOILBRENTEU" => T("Fracht und Kunststoffe; Wirkung auf Logistik und Einkauf", "Freight and plastics; affects logistics and purchasing"),
+        "PNGASEUUSDM" => T("Energiekosten in Europa", "Energy costs in Europe"),
+        _ => T("Wirkung auf den Einkauf über die Stichwortzuordnung", "Affects purchasing via keyword assignment")
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
