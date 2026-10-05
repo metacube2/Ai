@@ -82,6 +82,46 @@ public sealed class LogisticsLiveService : IDisposable
 
     public event Action? Changed;
 
+    private readonly SemaphoreSlim _capacityGate = new(1, 1);
+    private (DateTime At, IReadOnlyList<LiveCapacityDay> Days, string? Error)? _capacity;
+
+    /// <summary>Werk der Produktionskapazitaet (Teil C), wie die Rueckmeldungen.</summary>
+    public const string CapacityPlant = "1100";
+
+    /// <summary>
+    /// Kapazitaet je Kapazitaet und Tag, naechste 14 Tage (LogKapSet, Teil C 2026-10-05). Ein Aufruf, hoechstens alle
+    /// 15 Minuten, gemeinsam fuer alle. Fehlt das Set in P76 noch, kommt der Fehlertext statt einer Ausnahme.
+    /// </summary>
+    public async Task<(IReadOnlyList<LiveCapacityDay> Days, string? Error, DateTime? At)> GetCapacityAsync(CancellationToken ct = default)
+    {
+        await _capacityGate.WaitAsync(ct);
+        try
+        {
+            if (_capacity is { } c && DateTime.Now - c.At < TimeSpan.FromMinutes(15))
+                return (c.Days, c.Error, c.At);
+            IReadOnlyList<LiveCapacityDay> days = [];
+            string? error = null;
+            if (!_options.CurrentValue.Enabled)
+                return (days, null, null);
+            try
+            {
+                var (baseUrl, user, password) = await ResolveConnectionAsync(ct);
+                using var client = CreateClient(user, password);
+                days = await _reader.ReadCapacityAsync(client, baseUrl, CapacityPlant, DateOnly.FromDateTime(DateTime.Today), 14, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                error = ex.GetBaseException().Message;
+            }
+            _capacity = (DateTime.Now, days, error);
+            return (days, error, DateTime.Now);
+        }
+        finally
+        {
+            _capacityGate.Release();
+        }
+    }
+
     private readonly SemaphoreSlim _outlookGate = new(1, 1);
     private (DateTime At, IReadOnlyList<LiveDelivery> Deliveries, string? Error)? _outlook;
 

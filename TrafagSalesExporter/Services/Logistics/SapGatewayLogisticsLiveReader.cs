@@ -20,6 +20,14 @@ public sealed record LiveDelivery(
     string PickingStatus, string GoodsIssueStatus, int Positions, int PositionsPicked, int PositionsPartial,
     DateTime? PlannedGoodsIssue = null, DateTime? GoodsIssueAt = null);
 
+/// <summary>Kapazitaet je Tag (LogKapSet, Teil C 2026-10-05): Bedarf aus KBED, Angebot aus dem Kapazitaetskopf.</summary>
+public sealed record LiveCapacityDay(
+    string CapacityId, string Name, string Category, string WorkCenters, DateOnly Day,
+    double DemandHours, double SupplyHours, int Operations, bool NoStandard)
+{
+    public double? LoadPercent => SupplyHours > 0 ? DemandHours / SupplyHours * 100 : null;
+}
+
 /// <summary>Eine Produktionsrueckmeldung (AFRU), ohne Personalnummer.</summary>
 public sealed record LiveConfirmation(
     string Rueck, string Rmzhl, string Order, string Operation, string WorkCenter, string Plant,
@@ -36,6 +44,22 @@ public class SapGatewayLogisticsLiveReader
     public const string TransferSet = "LogTaSet";
     public const string DeliverySet = "LogLiefSet";
     public const string ConfirmationSet = "LogRueckSet";
+    public const string CapacitySet = "LogKapSet";
+
+    /// <summary>Kapazitaet je Kapazitaet und Tag fuer ein Werk, hoechstens 14 Tage ab <paramref name="from"/>.</summary>
+    public async Task<IReadOnlyList<LiveCapacityDay>> ReadCapacityAsync(
+        HttpClient client, string baseUrl, string plant, DateOnly from, int days, CancellationToken ct)
+        => ParseCapacity(await ReadAllAsync(client, baseUrl, CapacitySet,
+            $"Werks eq '{plant}' and Datum eq '{from:yyyyMMdd}' and Tage eq '{Math.Clamp(days, 1, 14)}'", ct));
+
+    internal static List<LiveCapacityDay> ParseCapacity(IEnumerable<JsonElement> rows)
+        => rows.Select(x => (Row: x, Day: DateTimeOf(Text(x, "Tag"), "")))
+            .Where(x => x.Day.HasValue && Text(x.Row, "Kapid").Length > 0)
+            .Select(x => new LiveCapacityDay(
+                Text(x.Row, "Kapid").TrimStart('0'), Text(x.Row, "Kapname"), Text(x.Row, "Kapar"), Text(x.Row, "Arbpl"),
+                DateOnly.FromDateTime(x.Day!.Value), (double)Number(x.Row, "BedarfH"), (double)Number(x.Row, "AngebotH"),
+                (int)Number(x.Row, "Vorgaenge"), Text(x.Row, "KeinStandard") == "X"))
+            .ToList();
     internal const int PageSize = 2000;
     internal const int MaxPages = 15;
 

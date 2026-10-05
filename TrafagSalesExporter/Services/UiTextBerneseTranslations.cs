@@ -10,6 +10,10 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Kapazität Produktion aus SAP, nächste 14 Tage"] = "Kapazität Produktion us SAP, nächschti 14 Täg",
+            ["Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662)."] = "S Kapazitäts-Set isch no nid i P76 (Transport T76K912662).",
+            ["Keine Kapazitätsbelastung im Zeitraum."] = "Ke Kapazitätsbelaschtig im Zytruum.",
+            ["Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge."] = "Belaschtig = Reschtbedarf us de Fertigungsufträg (Bearbeite und Rüschte) ÷ Standardaagebot vo dr Kapazität a Arbeitstäg. Ohni Prozänt: kes Aagebot (Wuchenänd, Fyrtig oder Kapazität mit Schichtintervall). MLE01 und MLE02 teile sich d Personalkapazität LAG00. Tooltip: Bedarf / Aagebot i Stunde, Vorgäng.",
             ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Persone nume nach dr Aamäldig (Leischtig pro Person under Produktivität), süsch anonym; keni Personalnummere. Quälle P76, Lagerverwautig (LTAK/LTAP), Liferige (LIKP/LIPS), Rückmäldige (AFRU).",
             ["Warenausgang nach Termin, nächste 14 Tage"] = "Wareusgang nach Termin, nächschti 14 Täg",
             ["höchstens alle 15 Minuten"] = "höchschtens aui 15 Minute",

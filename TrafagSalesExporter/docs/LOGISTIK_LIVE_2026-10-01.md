@@ -140,7 +140,20 @@ Arbeitstagen des Fabrikkalenders (`KAKO-KALID`, sonst `T001W-FABKL`); Kapazität
 (Paket ZPP, 12 Felder per DD03L geprüft). **Klassen noch nicht geändert:** `DPC_EXT`/`MPC_EXT` sind im nicht freigegebenen
 `T76K912658` gesperrt; jede weitere Änderung liefe still in diesen Auftrag (beim Versuch gemessen, Sichern ohne Auftragsabfrage).
 Der Versuch wurde zurückgenommen: `DEFINE` mit dem Teil-B-Stand neu gesichert und aktiviert, `$metadata` wieder 355'759.
-**Nächster Schritt:** Ingo gibt `T76K912658` frei (Teil B) und importiert; danach Klassenänderung für Teil C in `T76K912660`.
+*Erledigt 2026-10-05:* Ingo hat `T76K912658` freigegeben und nach P76 importiert (Cockpit 12:50: Vorschau Warenausgang
+liefert P76-Zukunft, z. B. 07.10. 140 Lieferungen). **`T76K912660` war dabei mitfreigegeben** (nur die Struktur); die
+Klassenänderung für Teil C liegt deshalb im neuen Auftrag **`T76K912662`** „Logistik live: LogKapSet Klassen“ (DPC_EXT
+`GET_ENTITYSET` 1'214 Zeilen, MPC_EXT `DEFINE` 1'396 Zeilen, aktiv, per RFC gegengelesen; Cache geleert).
+**Gateway Client T76:** `$metadata` 200, 357'957; `LogKapSet` Werk 1100 ab 05.10., 14 Tage: 200, 1,1 s, 30'688 Bytes; ab 10.09.:
+200, 0,9 s, 73'581 Bytes; ab 02.03. (älter als 30 Tage) und ohne Filter: 200 leer (Schutz); Gegenproben `LogTaSet`, `LogLiefSet`,
+`HrKpiSet` 200. **Import P76:** `T76K912660` (Struktur) muss vor oder mit `T76K912662` drin sein, danach `/IWFND/CACHE_CLEANUP`.
+**Cockpit:** Umschalter Kapazität zeigt oben „Kapazität Produktion aus SAP, nächste 14 Tage“: je Kapazität (Name, Arbeitsplätze)
+und Tag die Belastung in Prozent (Ampel), Tooltip Bedarf/Angebot/Vorgänge; ohne Angebot nur die Stunden; fehlt das Set in P76,
+steht der Hinweis auf `T76K912662`. Ein Aufruf, höchstens alle 15 Minuten, Werk 1100.
+
+**MES (Frage Ingo 2026-10-05):** Daten eines externen MES-Systems sieht das Cockpit nur, wenn das MES sie nach SAP zurückmeldet
+(dann stehen sie in `AFRU` und kommen über `LogRueckSet` und die Kapazität schon an). Hat das MES eine eigene Datenbank oder
+Schnittstelle, braucht es Name, Hersteller, Zugang und eine Firewall-Freigabe; ungeprüft.
 Ursprünglicher Entwurf: Quellen in T76 per RFC belegt: Bedarf
 `KBED-KBEAREST` + `KRUEREST` (Einheit `KEINH`, Datum `FSTAD`, Arbeitsplatz `ARBID` → `CRHD`), Angebot über den Standardbaustein
 `CR_CAPACITY_AVAILABLE_PERIODS` (Tabelle `RC65K`: `KAPID`, `DATUV`/`DATUB`, `ANGEB`, `EINZT`, `KEINH`). Drei Punkte vor dem Anlegen in

@@ -36,6 +36,63 @@
 
 <MudPaper Class="pa-3 mb-3" Outlined="true">
     <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Kapazität Produktion aus SAP, nächste 14 Tage", "Production capacity from SAP, next 14 days")</MudText>
+        @if (_capAt is { } ca)
+        {
+            <span class="ll-muted" style="font-size:12px">@T("Stand", "As of") @ca.ToString("HH:mm") · @T("höchstens alle 15 Minuten", "at most every 15 minutes")</span>
+        }
+    </div>
+    @if (_capRows.Count == 0)
+    {
+        <MudText Class="ll-muted">@(_capError is { } ce && ce.Contains("404") ? T("Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662).", "The capacity set is not in P76 yet (transport T76K912662).") : _capError ?? T("Keine Kapazitätsbelastung im Zeitraum.", "No capacity load in the period."))</MudText>
+    }
+    else
+    {
+        <div style="overflow-x:auto">
+            <table class="cap-table">
+                <thead>
+                    <tr>
+                        <th>@T("Kapazität", "Capacity")</th>
+                        <th>@T("Arbeitsplätze", "Work centres")</th>
+                        @foreach (var d in _capDays)
+                        {
+                            <th style="text-align:center">@d.ToString("dd.MM")</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _capRows)
+                    {
+                        <tr>
+                            <td><b>@row.Name</b> <span class="ll-muted ll-mono">@row.Id</span></td>
+                            <td class="ll-muted" style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="@row.WorkCenters">@row.WorkCenters</td>
+                            @foreach (var d in _capDays)
+                            {
+                                var cell = row.Days.GetValueOrDefault(d);
+                                if (cell is null)
+                                {
+                                    <td></td>
+                                }
+                                else if (cell.LoadPercent is { } lp)
+                                {
+                                    <td class="cap-cell" style="background:@LoadColor(lp)33;color:@LoadColor(lp)" title="@($"{cell.DemandHours:0.0} h / {cell.SupplyHours:0.0} h · {cell.Operations}")">@lp.ToString("0", CultureInfo.InvariantCulture)%</td>
+                                }
+                                else
+                                {
+                                    <td class="cap-cell ll-muted" title="@($"{cell.DemandHours:0.0} h · {cell.Operations}")">@cell.DemandHours.ToString("0.0", CultureInfo.InvariantCulture) h</td>
+                                }
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block mt-1">@T("Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge.", "Load = remaining demand from production orders (processing and setup) ÷ standard supply of the capacity on working days. Without percentage: no supply (weekend, holiday or capacity with shift intervals). MLE01 and MLE02 share the personnel capacity LAG00. Tooltip: demand / supply in hours, operations.")</MudText>
+    }
+</MudPaper>
+
+<MudPaper Class="pa-3 mb-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
         <MudText Typo="Typo.h6" Class="ll-grow">@T("Kapazität je Bereich", "Capacity per area")</MudText>
         <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small" OnClick="@(() => ChangeDay(-1))" />
         <span class="ll-mono">@_day.ToString("ddd dd.MM.yyyy", CultureInfo.GetCultureInfo("de-CH"))</span>
@@ -147,6 +204,11 @@
     private List<OutlookDay> _outlookDays = [];
     private int _outlookMax = 1;
     private string? _outlookError;
+    private sealed record CapRow(string Id, string Name, string WorkCenters, Dictionary<DateOnly, LiveCapacityDay> Days);
+    private List<CapRow> _capRows = [];
+    private List<DateOnly> _capDays = [];
+    private string? _capError;
+    private DateTime? _capAt;
     private DateTime? _outlookAt;
 
     protected override async Task OnInitializedAsync()
@@ -162,6 +224,16 @@
             return new OutlookDay(day, list.Count, list.Sum(d => Math.Max(0, d.Positions - d.PositionsPicked)));
         }).ToList();
         _outlookMax = Math.Max(1, _outlookDays.Select(d => d.Positions).DefaultIfEmpty(1).Max());
+
+        var (cap, capError, capAt) = await Live.GetCapacityAsync();
+        _capError = capError;
+        _capAt = capAt;
+        _capDays = Enumerable.Range(0, 14).Select(i => today.AddDays(i)).ToList();
+        _capRows = cap.GroupBy(c => c.CapacityId)
+            .Select(g => new CapRow(g.Key, g.First().Name, g.First().WorkCenters, g.GroupBy(x => x.Day).ToDictionary(x => x.Key, x => x.First())))
+            .OrderByDescending(r => r.Days.Values.Sum(d => d.DemandHours))
+            .Take(30)
+            .ToList();
     }
 
     private static string Pct(double v, double max) => (100.0 * Math.Min(1, v / Math.Max(1, max))).ToString("0.#", CultureInfo.InvariantCulture) + "%";

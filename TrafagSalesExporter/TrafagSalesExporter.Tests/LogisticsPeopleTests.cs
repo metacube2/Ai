@@ -74,6 +74,20 @@ public sealed class LogisticsPeopleTests
         Assert.False(new LogisticsPeopleAccessService(new StaticMonitor(new LogisticsPeopleAccessOptions())).TryUnlock("logistik", ""));
     }
 
+    [Fact]
+    public void Kapazitaet_Je_Tag_Lesen()
+    {
+        using var doc = JsonDocument.Parse("""{"Kapid":"10000262","Kapname":"LAG00","Kapar":"002","Arbpl":"MLE01 MLE02","Tag":"20261006","BedarfH":"6.5","AngebotH":"8","Vorgaenge":12,"KeinStandard":""}""");
+
+        var day = SapGatewayLogisticsLiveReader.ParseCapacity([doc.RootElement]).Single();
+
+        Assert.Equal("10000262", day.CapacityId);
+        Assert.Equal(new DateOnly(2026, 10, 6), day.Day);
+        Assert.Equal(81.25, day.LoadPercent!.Value, 6);
+        Assert.False(day.NoStandard);
+        Assert.Null((day with { SupplyHours = 0 }).LoadPercent);
+    }
+
     private sealed class StaticMonitor(LogisticsPeopleAccessOptions value) : IOptionsMonitor<LogisticsPeopleAccessOptions>
     {
         public LogisticsPeopleAccessOptions CurrentValue => value;

@@ -8,6 +8,10 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Kapazität Produktion aus SAP, nächste 14 Tage"] = "Capacidad de producción desde SAP, próximos 14 días",
+                ["Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662)."] = "El conjunto de capacidad aún no está en P76 (transporte T76K912662).",
+                ["Keine Kapazitätsbelastung im Zeitraum."] = "Sin carga de capacidad en el periodo.",
+                ["Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge."] = "Carga = necesidad restante de las órdenes de fabricación (procesamiento y preparación) ÷ oferta estándar de la capacidad en días laborables. Sin porcentaje: sin oferta (fin de semana, festivo o capacidad con intervalos de turno). MLE01 y MLE02 comparten la capacidad de personal LAG00. Información emergente: necesidad / oferta en horas, operaciones.",
                 ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Personas solo tras iniciar sesión (rendimiento por persona en productividad), si no anónimo; sin números de personal. Fuente P76, gestión de almacenes (LTAK/LTAP), entregas (LIKP/LIPS), notificaciones (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Salida de mercancías por fecha, próximos 14 días",
                 ["höchstens alle 15 Minuten"] = "como máximo cada 15 minutos",
@@ -2168,6 +2172,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Kapazität Produktion aus SAP, nächste 14 Tage"] = "Capacità di produzione da SAP, prossimi 14 giorni",
+                ["Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662)."] = "Il set di capacità non è ancora in P76 (trasporto T76K912662).",
+                ["Keine Kapazitätsbelastung im Zeitraum."] = "Nessun carico di capacità nel periodo.",
+                ["Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge."] = "Carico = fabbisogno residuo degli ordini di produzione (lavorazione e attrezzaggio) ÷ offerta standard della capacità nei giorni lavorativi. Senza percentuale: nessuna offerta (fine settimana, festivo o capacità con intervalli di turno). MLE01 e MLE02 condividono la capacità di personale LAG00. Tooltip: fabbisogno / offerta in ore, operazioni.",
                 ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Persone solo dopo l'accesso (rendimento per persona in produttività), altrimenti anonimo; nessun numero di personale. Fonte P76, gestione magazzino (LTAK/LTAP), consegne (LIKP/LIPS), conferme (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Uscita merci per data, prossimi 14 giorni",
                 ["höchstens alle 15 Minuten"] = "al massimo ogni 15 minuti",
@@ -4328,6 +4336,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Kapazität Produktion aus SAP, nächste 14 Tage"] = "SAP से उत्पादन क्षमता, अगले 14 दिन",
+                ["Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662)."] = "क्षमता सेट अभी P76 में नहीं है (ट्रांसपोर्ट T76K912662)।",
+                ["Keine Kapazitätsbelastung im Zeitraum."] = "अवधि में कोई क्षमता भार नहीं।",
+                ["Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge."] = "भार = उत्पादन ऑर्डर की शेष आवश्यकता (प्रसंस्करण और सेटअप) ÷ कार्य दिवसों पर क्षमता की मानक आपूर्ति। प्रतिशत के बिना: कोई आपूर्ति नहीं (सप्ताहांत, छुट्टी या शिफ्ट अंतराल वाली क्षमता)। MLE01 और MLE02 कार्मिक क्षमता LAG00 साझा करते हैं। टूलटिप: घंटों में आवश्यकता / आपूर्ति, संचालन।",
                 ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "व्यक्ति केवल लॉगिन के बाद (उत्पादकता में प्रति व्यक्ति आउटपुट), अन्यथा गुमनाम; कोई कार्मिक संख्या नहीं। स्रोत P76, गोदाम प्रबंधन (LTAK/LTAP), डिलीवरी (LIKP/LIPS), पुष्टियाँ (AFRU)।",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "तिथि अनुसार माल निकासी, अगले 14 दिन",
                 ["höchstens alle 15 Minuten"] = "अधिकतम हर 15 मिनट",
@@ -6488,6 +6500,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Kapazität Produktion aus SAP, nächste 14 Tage"] = "Kapaciteti i prodhimit nga SAP, 14 ditët e ardhshme",
+                ["Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662)."] = "Grupi i kapacitetit ende nuk është në P76 (transporti T76K912662).",
+                ["Keine Kapazitätsbelastung im Zeitraum."] = "Asnjë ngarkesë kapaciteti në periudhë.",
+                ["Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge."] = "Ngarkesa = nevoja e mbetur nga urdhrat e prodhimit (përpunim dhe përgatitje) ÷ oferta standarde e kapacitetit në ditë pune. Pa përqindje: pa ofertë (fundjavë, festë ose kapacitet me intervale turni). MLE01 dhe MLE02 ndajnë kapacitetin e personelit LAG00. Tooltip: nevoja / oferta në orë, operacione.",
                 ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Personat vetëm pas hyrjes (rendimenti për person te produktiviteti), përndryshe anonim; pa numra personeli. Burimi P76, menaxhimi i magazinës (LTAK/LTAP), dërgesat (LIKP/LIPS), konfirmimet (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Dalja e mallrave sipas datës, 14 ditët e ardhshme",
                 ["höchstens alle 15 Minuten"] = "më së shumti çdo 15 minuta",
@@ -8648,6 +8664,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Kapazität Produktion aus SAP, nächste 14 Tage"] = "SAP'den üretim kapasitesi, sonraki 14 gün",
+                ["Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662)."] = "Kapasite seti henüz P76'da değil (transport T76K912662).",
+                ["Keine Kapazitätsbelastung im Zeitraum."] = "Dönemde kapasite yükü yok.",
+                ["Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge."] = "Yük = üretim siparişlerinden kalan ihtiyaç (işleme ve hazırlık) ÷ iş günlerinde kapasitenin standart arzı. Yüzde yoksa: arz yok (hafta sonu, tatil veya vardiya aralıklı kapasite). MLE01 ve MLE02 personel kapasitesi LAG00'ı paylaşır. Araç ipucu: saat olarak ihtiyaç / arz, operasyonlar.",
                 ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "Kişiler yalnızca girişten sonra (verimlilik altında kişi başına çıktı), aksi halde anonim; personel numarası yok. Kaynak P76, depo yönetimi (LTAK/LTAP), teslimatlar (LIKP/LIPS), onaylar (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Tarihe göre mal çıkışı, sonraki 14 gün",
                 ["höchstens alle 15 Minuten"] = "en fazla 15 dakikada bir",
@@ -10808,6 +10828,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Kapazität Produktion aus SAP, nächste 14 Tage"] = "SAP vo' chenmoH laH, wa'maH loS jaj",
+                ["Das Kapazitäts-Set ist in P76 noch nicht da (Transport T76K912662)."] = "laH boq P76 Daq tu'be' (T76K912662).",
+                ["Keine Kapazitätsbelastung im Zeitraum."] = "poH Daq laH ngI' tu'be'.",
+                ["Belastung = Restbedarf aus den Fertigungsaufträgen (Bearbeiten und Rüsten) ÷ Standardangebot der Kapazität an Arbeitstagen. Ohne Prozent: kein Angebot (Wochenende, Feiertag oder Kapazität mit Schichtintervallen). MLE01 und MLE02 teilen sich die Personalkapazität LAG00. Tooltip: Bedarf / Angebot in Stunden, Vorgänge."] = "ngI' = chenmoH ra'wI' poQ ÷ laH motlh Qu' jaj. vatlh tu'be': nob tu'be'. MLE01 'ej MLE02 LAG00 lo'. tooltip: poQ / nob rep.",
                 ["Personen nur nach Anmeldung (Leistung je Person unter Produktivität), sonst anonym; keine Personalnummern. Quelle P76, Lagerverwaltung (LTAK/LTAP), Lieferungen (LIKP/LIPS), Rückmeldungen (AFRU)."] = "ghot 'el pagh cha'be'; ghot mI' tu'be'. Hal P76, Daq (LTAK/LTAP), ngev (LIKP/LIPS), rIn (AFRU).",
                 ["Warenausgang nach Termin, nächste 14 Tage"] = "Hap mej jaj, wa'maH loS jaj",
                 ["höchstens alle 15 Minuten"] = "wa'maH vagh tup Hoch",
