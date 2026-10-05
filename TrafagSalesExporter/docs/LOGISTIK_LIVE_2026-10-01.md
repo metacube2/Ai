@@ -125,7 +125,10 @@ Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, Gateway Client T76. Inhalt: `LogTaSe
 `QNAME` (quittiert von); `LogLiefSet` + `WADAT`, `WADAT_IST` und Uhrzeit der Warenbewegung aus `VBFA-ERZET`; Datum für
 `LogLiefSet` bis heute + 14 Tage (weiterhin ein Tag je Abfrage). Felder in T76 per RFC belegt (2026-10-05).
 
-**Teil C, SAP-Transport 2 (geplant):** neues Set für Kapazität je Arbeitsplatz und Tag (Bedarf aus `KBED`, Angebot über den
+**Teil C, SAP-Transport 2 (Entwurf `docs/abap/ZLOG_KAP_ADD.abap`, in T76 nicht angelegt):** Quellen in T76 per RFC belegt: Bedarf
+`KBED-KBEAREST` + `KRUEREST` (Einheit `KEINH`, Datum `FSTAD`, Arbeitsplatz `ARBID` → `CRHD`), Angebot über den Standardbaustein
+`CR_CAPACITY_AVAILABLE_PERIODS` (Tabelle `RC65K`: `KAPID`, `DATUV`/`DATUB`, `ANGEB`, `EINZT`, `KEINH`). Drei Punkte vor dem Anlegen in
+SE37 prüfen (stehen am Ende des Entwurfs). Ursprünglicher Plan: neues Set für Kapazität je Arbeitsplatz und Tag (Bedarf aus `KBED`, Angebot über den
 SAP-Standardbaustein für verfügbare Kapazität statt selbst aus `KAPA` gerechnet), Pflichtfilter Werk, höchstens 14 Tage.
 
 **Umbenennung 2026-10-05:** „Rüstzeit“ heisst jetzt **„Durchlaufzeit“**. Nevas Unterlage „Logistikkennzahlen bei Trafag“
