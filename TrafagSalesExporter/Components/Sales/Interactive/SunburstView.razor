@@ -1,0 +1,146 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: Zoom-Sonnenstrahl Gesellschaft → Sparte → Kunde (2026-10-05). Klick zoomt hinein, Mitte zoomt heraus. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:8px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Sonnenstrahl, 12 Monate", "Sunburst, 12 months")</MudText>
+        @foreach (var (n, i) in _path.Select((n, i) => (n, i)))
+        {
+            <MudChip T="string" Size="Size.Small" OnClick="@(() => ZoomTo(i))">@(i == 0 ? T("Total", "Total") : n.Label)</MudChip>
+        }
+    </div>
+    <div class="d-flex flex-wrap" style="gap:16px;align-items:center">
+        <svg viewBox="-300 -300 600 600" class="six-sun" @key="_zoomKey">
+            @foreach (var a in _arcs)
+            {
+                <path d="@a.Path" class="six-arc" style="fill:@a.Color;animation-delay:@F(a.Delay)s" @onclick="@(() => Click(a.Node, a.Depth))" @onmouseover="@(() => _hover = a.Node)">
+                    <title>@a.Node.Label: CHF @Chf(a.Node.Value) (@Share(a.Node))</title>
+                </path>
+            }
+            <circle r="78" class="six-sun-center" @onclick="ZoomOut" />
+            <text y="-6" class="six-sun-title">@Cut(Current.Label == "Total" ? T("Total", "Total") : Current.Label, 18)</text>
+            <text y="16" class="six-sun-value">@Short(Current.Value)</text>
+            @if (_path.Count > 1)
+            {
+                <g><text y="36" class="six-sun-back">↩ @T("zurück", "back")</text></g>
+            }
+        </svg>
+        <div style="min-width:260px;flex:1">
+            @if (_hover is { } h)
+            {
+                <MudText Typo="Typo.subtitle1"><b>@h.Label</b></MudText>
+                <div class="ll-mono">CHF @Chf(h.Value) · @Share(h)</div>
+            }
+            <div class="ll-list mt-2" style="max-height:420px">
+                @foreach (var c in Current.Children)
+                {
+                    <div class="dir-ou-bar" style="cursor:pointer" @onclick="@(() => Click(c, 1))">
+                        <span style="width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="@c.Label">@c.Label</span>
+                        <span class="dir-ou-track ll-grow" style="width:auto"><span style="width:@F(100.0 * (double)(c.Value / Math.Max(1, Current.Value)))%"></span></span>
+                        <span class="ll-mono" style="width:60px;text-align:right">@Short(c.Value)</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Innen die Gesellschaften, dann die Sparten, aussen die Kunden (je Sparte die acht grössten, Rest Übrige). Klick auf ein Stück zoomt hinein, Klick in die Mitte zurück.", "Inside the companies, then the divisions, outside the customers (eight largest per division, rest others). Click a segment to zoom in, click the centre to go back.")</MudText>
+</MudPaper>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private sealed record Arc(SunburstNode Node, int Depth, string Path, string Color, double Delay);
+    private SunburstNode _root = new("", "Total", 0, []);
+    private List<SunburstNode> _path = [];
+    private List<Arc> _arcs = [];
+    private SunburstNode? _hover;
+    private int _zoomKey;
+    private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #E57373 #4DB6AC #9575CD #AED581 #FF8A65".Split(' ');
+
+    private SunburstNode Current => _path[^1];
+
+    protected override void OnParametersSet()
+    {
+        _root = SalesInteractive.Sunburst(Data.Facts, Data.ReferenceEnd);
+        _path = [_root];
+        Build();
+    }
+
+    private void Build()
+    {
+        _arcs = [];
+        var radii = new[] { 80.0, 150.0, 215.0, 290.0 };
+        void Walk(SunburstNode node, int depth, double a1, double a2, string color)
+        {
+            if (depth >= 3 || node.Value <= 0) return;
+            var angle = a1;
+            var i = 0;
+            foreach (var c in node.Children.Where(c => c.Value > 0))
+            {
+                var span = (a2 - a1) * (double)(c.Value / node.Value);
+                var col = depth == 0 ? Palette[i % Palette.Length] : color;
+                if (span > 0.004)
+                    _arcs.Add(new Arc(c, depth + 1, ArcPath(radii[depth], radii[depth + 1] - 3, angle, angle + span), Shade(col, depth), depth * 0.15 + angle / 20));
+                Walk(c, depth + 1, angle, angle + span, col);
+                angle += span;
+                i++;
+            }
+        }
+        Walk(Current, 0, 0, 2 * Math.PI, Palette[0]);
+        _zoomKey++;
+    }
+
+    private static string Shade(string hex, int depth) => depth switch { 0 => hex, 1 => hex + "CC", _ => hex + "88" };
+
+    private static string ArcPath(double r1, double r2, double a1, double a2)
+    {
+        if (a2 - a1 >= 2 * Math.PI - 1e-6) a2 = a1 + 2 * Math.PI - 1e-4;
+        var large = a2 - a1 > Math.PI ? 1 : 0;
+        (double, double) P(double r, double a) => (r * Math.Sin(a), -r * Math.Cos(a));
+        var (x1, y1) = P(r2, a1); var (x2, y2) = P(r2, a2); var (x3, y3) = P(r1, a2); var (x4, y4) = P(r1, a1);
+        return $"M{F(x1)},{F(y1)} A{F(r2)},{F(r2)} 0 {large} 1 {F(x2)},{F(y2)} L{F(x3)},{F(y3)} A{F(r1)},{F(r1)} 0 {large} 0 {F(x4)},{F(y4)} Z";
+    }
+
+    private void Click(SunburstNode node, int depth)
+    {
+        if (node.Children.Count == 0) { _hover = node; return; }
+        // Pfad bis zum Knoten nachziehen (Klick auf Ring 2 springt zwei Ebenen).
+        var trail = FindPath(Current, node);
+        if (trail is null) return;
+        _path.AddRange(trail);
+        Build();
+    }
+
+    private static List<SunburstNode>? FindPath(SunburstNode from, SunburstNode target)
+    {
+        foreach (var c in from.Children)
+        {
+            if (ReferenceEquals(c, target)) return [c];
+            var sub = FindPath(c, target);
+            if (sub is not null) { sub.Insert(0, c); return sub; }
+        }
+        return null;
+    }
+
+    private void ZoomOut()
+    {
+        if (_path.Count <= 1) return;
+        _path.RemoveAt(_path.Count - 1);
+        Build();
+    }
+
+    private void ZoomTo(int index)
+    {
+        _path = _path.Take(index + 1).ToList();
+        Build();
+    }
+
+    private string Share(SunburstNode n) => (100.0 * (double)(n.Value / Math.Max(1, _root.Value))).ToString("0.0", CultureInfo.InvariantCulture) + " % " + T("vom Total", "of total");
+
+    private static string Cut(string s, int n) => s.Length > n ? s[..(n - 1)] + "…" : s;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

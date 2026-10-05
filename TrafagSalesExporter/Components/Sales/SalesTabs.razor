@@ -25,13 +25,16 @@
         new("verkauf/cross-selling", Icons.Material.Filled.JoinInner, T("Cross-Selling", "Cross-selling")),
         new("verkauf/preise", Icons.Material.Filled.PriceChange, T("Preisstreuung", "Price spread")),
         new("verkauf/prognose", Icons.Material.Filled.QueryStats, T("Saison und Prognose", "Season and forecast")),
-        new("verkauf/weltkarte", Icons.Material.Filled.Public, T("Weltkarte", "World map"))
+        new("verkauf/weltkarte", Icons.Material.Filled.Public, T("Weltkarte", "World map")),
+        new("verkauf/interaktiv", Icons.Material.Filled.AutoAwesome, T("Interaktiv", "Interactive"))
     ];
 
     private bool IsActive(string href)
     {
         var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].TrimEnd('/');
-        return string.Equals(path, href, StringComparison.OrdinalIgnoreCase);
+        // Interaktiv hat eigene Unterseiten (verkauf/interaktiv/...), der Reiter bleibt dort aktiv.
+        return string.Equals(path, href, StringComparison.OrdinalIgnoreCase)
+            || (href.EndsWith("/interaktiv", StringComparison.Ordinal) && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase));
     }
 
     private string T(string german, string english) => UiText.Text(german, english);

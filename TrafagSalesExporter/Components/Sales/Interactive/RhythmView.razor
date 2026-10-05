@@ -1,0 +1,99 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: Bestellrhythmus je Kunde (2026-10-05). Üblicher Abstand = Median der Bestellabstände; überfällig, wenn
+   seit dem erwarteten Datum mehr Zeit vergangen ist. *@
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="5">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <div class="d-flex align-center flex-wrap" style="gap:8px">
+                <MudText Typo="Typo.h6" Class="ll-grow">@T("Sollte eigentlich bestellt haben", "Should have ordered by now")</MudText>
+                <MudSwitch T="bool" @bind-Value="_onlyOverdue" Color="Color.Primary" Label="@T("nur überfällige", "overdue only")" />
+            </div>
+            <MudTextField T="string" @bind-Value="_search" Placeholder="@T("Kunde suchen", "Search customer")" Dense="true" Variant="Variant.Outlined" Immediate="true" Class="mb-2" />
+            <div class="ll-list" style="max-height:560px">
+                @foreach (var c in Visible.Take(60))
+                {
+                    var sel = _selected?.Key == c.Key;
+                    <div class="six-rhythm-row @(sel ? "six-rhythm-sel" : "")" @onclick="@(() => _selected = c)">
+                        <span class="six-dot-status @(c.OverdueRatio >= 1 ? "six-late" : c.OverdueDays > 0 ? "six-warn" : "six-ok")"></span>
+                        <span class="ll-grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="@c.Name">@c.Name</span>
+                        <span class="ll-mono ll-muted" style="width:70px;text-align:right">@Short(c.Last12)</span>
+                        <span class="ll-mono" style="width:90px;text-align:right">@(c.OverdueDays > 0 ? "+" + c.OverdueDays + " " + T("Tage", "days") : T("im Takt", "on time"))</span>
+                    </div>
+                }
+            </div>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Sortiert nach überfälligen Takten mal Umsatz der letzten 12 Monate. Rot = mehr als ein üblicher Abstand überfällig, orange = leicht überfällig. Nur Kunden mit mindestens vier Bestelltagen.", "Sorted by overdue cycles times revenue of the last 12 months. Red = more than one usual interval overdue, orange = slightly overdue. Only customers with at least four order days.")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" lg="7">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            @if (_selected is { } s)
+            {
+                <MudText Typo="Typo.h6">@s.Name</MudText>
+                <div class="ll-muted">@WorldGeo.Name(s.Country) · @T("üblicher Abstand", "usual interval") @s.MedianDays.ToString("0", CultureInfo.InvariantCulture) @T("Tage", "days") · @T("letzte Bestellung", "last order") @s.Last.ToString("dd.MM.yyyy") · @T("erwartet", "expected") @s.Expected.ToString("dd.MM.yyyy")</div>
+                <svg viewBox="0 0 900 190" class="six-life" @key="s.Key">
+                    <line x1="20" y1="100" x2="880" y2="100" class="six-life-axis" />
+                    @foreach (var m in Months)
+                    {
+                        <line x1="@F(Xd(m))" y1="94" x2="@F(Xd(m))" y2="106" class="six-life-axis" />
+                        if (m.Month == 1 || m == Months[0])
+                        {
+                            <g><text x="@F(Xd(m))" y="124" class="nw-axis">@m.ToString("MM.yy")</text></g>
+                        }
+                    }
+                    @foreach (var (d, i) in s.Days.Where(d => d >= _from).Select((d, i) => (d, i)))
+                    {
+                        <circle cx="@F(Xd(d))" cy="100" r="6" class="six-life-dot" style="animation-delay:@F(i * 0.05)s"><title>@d.ToString("dd.MM.yyyy")</title></circle>
+                    }
+                    <rect x="@F(Xd(s.Last))" y="70" height="10" rx="3" width="@F(Math.Max(2, Xd(s.Expected) - Xd(s.Last)))" class="six-life-gap"><title>@T("üblicher Abstand", "usual interval")</title></rect>
+                    <line x1="@F(Xd(s.Expected))" y1="60" x2="@F(Xd(s.Expected))" y2="140" class="six-life-expected @(s.OverdueDays > 0 ? "six-life-late" : "")" />
+                    <g><text x="@F(Xd(s.Expected))" y="54" class="nw-axis">@T("erwartet", "expected")</text></g>
+                    <line x1="@F(Xd(_today))" y1="60" x2="@F(Xd(_today))" y2="140" class="six-life-today" />
+                    <g><text x="@F(Xd(_today))" y="156" class="nw-axis">@T("Datenstand", "data as of")</text></g>
+                </svg>
+                @if (s.OverdueDays > 0)
+                {
+                    <MudAlert Severity="@(s.OverdueRatio >= 1 ? Severity.Error : Severity.Warning)" Dense="true">@T("Überfällig seit", "Overdue for") @s.OverdueDays @T("Tagen", "days") (@s.OverdueRatio.ToString("0.0", CultureInfo.InvariantCulture) × @T("üblicher Abstand", "usual interval")).</MudAlert>
+                }
+            }
+            else
+            {
+                <MudText Class="ll-muted">@T("Kunde links wählen.", "Choose a customer on the left.")</MudText>
+            }
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Jeder Punkt ist ein Tag mit Rechnung. Der Balken zeigt den üblichen Abstand ab der letzten Bestellung, die Linie das erwartete Datum. Stichtag ist der jüngste Tag in den Verkaufsdaten.", "Each dot is a day with an invoice. The bar shows the usual interval from the last order, the line the expected date. Reference day is the latest day in the sales data.")</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private IReadOnlyList<RhythmCustomer> _all = [];
+    private RhythmCustomer? _selected;
+    private bool _onlyOverdue = true;
+    private string _search = "";
+    private DateOnly _from, _to, _today;
+    private List<DateOnly> Months = [];
+
+    private IEnumerable<RhythmCustomer> Visible => _all
+        .Where(c => !_onlyOverdue || c.OverdueDays > 0)
+        .Where(c => _search.Length == 0 || c.Name.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnParametersSet()
+    {
+        _all = SalesInteractive.Rhythm(Data.Facts, Data.ReferenceEnd);
+        _today = Data.Facts.Count == 0 ? Data.ReferenceEnd : Data.Facts.Max(f => f.Date);
+        _from = new DateOnly(_today.Year, _today.Month, 1).AddMonths(-20);
+        _to = _today.AddMonths(3);
+        Months = Enumerable.Range(0, 24).Select(i => _from.AddMonths(i)).Where(m => m <= _to).ToList();
+        _selected = _all.FirstOrDefault(c => c.OverdueDays > 0) ?? _all.FirstOrDefault();
+    }
+
+    private double Xd(DateOnly d) => 20 + 860 * Math.Clamp((d.DayNumber - _from.DayNumber) / (double)Math.Max(1, _to.DayNumber - _from.DayNumber), 0, 1);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

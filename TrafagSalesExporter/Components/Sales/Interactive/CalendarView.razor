@@ -1,0 +1,108 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: Kalender-Heatmap Umsatz je Tag (2026-10-05). Klick auf einen Tag listet seine Rechnungen. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatzkalender", "Revenue calendar")</MudText>
+        @foreach (var y in _years)
+        {
+            <MudButton Size="Size.Small" Variant="@(y == _year ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" OnClick="@(() => SetYear(y))">@y</MudButton>
+        }
+    </div>
+    <svg viewBox="0 0 1000 170" class="six-cal" @key="_year">
+        @foreach (var (m, i) in Enumerable.Range(1, 12).Select((m, i) => (m, i)))
+        {
+            var first = new DateOnly(_year, m, 1);
+            <g><text x="@F(40 + Week(first) * 17.5)" y="12" class="nw-axis" style="text-anchor:start">@first.ToString("MMM", CultureInfo.GetCultureInfo("de-CH"))</text></g>
+        }
+        @foreach (var (label, row) in new[] { (T("Mo", "Mon"), 0), (T("Mi", "Wed"), 2), (T("Fr", "Fri"), 4) })
+        {
+            <g><text x="34" y="@F(30 + row * 17.5)" class="nw-axis" style="text-anchor:end">@label</text></g>
+        }
+        @for (var d = new DateOnly(_year, 1, 1); d.Year == _year; d = d.AddDays(1))
+        {
+            var day = d;
+            var v = _days.GetValueOrDefault(day);
+            var row = ((int)day.DayOfWeek + 6) % 7;
+            <rect x="@F(40 + Week(day) * 17.5)" y="@F(18 + row * 17.5)" width="15" height="15" rx="3"
+                  class="six-cal-cell @(_selected == day ? "six-cal-sel" : "")"
+                  style="fill:@CellColor(v?.Value ?? 0);animation-delay:@F(Week(day) * 0.012)s"
+                  @onclick="@(() => _selected = day)">
+                <title>@day.ToString("ddd dd.MM.yyyy", CultureInfo.GetCultureInfo("de-CH")): CHF @Chf(v?.Value ?? 0) · @(v?.Invoices ?? 0) @T("Rechnungen", "invoices")</title>
+            </rect>
+        }
+    </svg>
+    <div class="d-flex align-center" style="gap:6px;font-size:12px">
+        <span class="ll-muted">@T("wenig", "low")</span>
+        @foreach (var q in new[] { 0.0, 0.25, 0.5, 0.75, 1.0 })
+        {
+            <span class="six-cal-key" style="background:@CellColor((decimal)q * _max)"></span>
+        }
+        <span class="ll-muted">@T("viel", "high")</span>
+        <span class="ll-grow"></span>
+        <span class="ll-muted">@T("Bester Tag", "Best day") @(_best is null ? "–" : $"{_best.Day:dd.MM.} · {Short(_best.Value)}")</span>
+    </div>
+    @if (_selected is { } sel)
+    {
+        var lines = Data.Facts.Where(f => f.Date == sel).GroupBy(f => (f.InvoiceNumber, f.CustomerKey))
+            .Select(g => (Invoice: g.Key.InvoiceNumber, Customer: SalesAnalytics.DisplayName(g.First().CustomerName, g.Key.CustomerKey), Tsc: g.First().Tsc, Value: g.Sum(f => f.ValueChf)))
+            .OrderByDescending(x => x.Value).Take(40).ToList();
+        <MudText Typo="Typo.subtitle1" Class="mt-3"><b>@sel.ToString("dddd, dd.MM.yyyy", CultureInfo.GetCultureInfo("de-CH"))</b> · CHF @Chf(lines.Sum(l => l.Value))</MudText>
+        <div class="ll-list" style="max-height:300px">
+            @foreach (var l in lines)
+            {
+                <div class="ll-row"><span class="ll-mono" style="width:60px">@l.Tsc</span><span class="ll-mono" style="width:110px">@l.Invoice</span><span class="ll-grow">@l.Customer</span><span class="ll-mono">@Chf(l.Value)</span></div>
+            }
+        </div>
+    }
+    <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Ein Kästchen je Tag, Farbe nach Umsatz (Finance-Regeln, CHF). Hover zeigt Umsatz und Anzahl Rechnungen, Klick listet die Rechnungen des Tages.", "One square per day, colour by revenue (Finance rules, CHF). Hover shows revenue and number of invoices, click lists the invoices of the day.")</MudText>
+</MudPaper>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private List<int> _years = [];
+    private int _year;
+    private Dictionary<DateOnly, CalendarDay> _days = [];
+    private decimal _max = 1;
+    private CalendarDay? _best;
+    private DateOnly? _selected;
+
+    protected override void OnParametersSet()
+    {
+        _years = Data.Facts.Select(f => f.Date.Year).Distinct().Order().ToList();
+        SetYear(_years.Count == 0 ? DateTime.Today.Year : _years[^1]);
+    }
+
+    private void SetYear(int year)
+    {
+        _year = year;
+        var days = SalesInteractive.Calendar(Data.Facts, year);
+        _days = days.ToDictionary(d => d.Day);
+        // Obergrenze beim 95%-Wert, damit einzelne Rekordtage die Farben nicht flach machen.
+        var sorted = days.Select(d => d.Value).Where(v => v > 0).Order().ToList();
+        _max = sorted.Count == 0 ? 1 : Math.Max(1, sorted[(int)Math.Floor((sorted.Count - 1) * 0.95)]);
+        _best = days.OrderByDescending(d => d.Value).FirstOrDefault();
+        _selected = null;
+    }
+
+    private int Week(DateOnly d)
+    {
+        var jan1 = new DateOnly(d.Year, 1, 1);
+        var offset = ((int)jan1.DayOfWeek + 6) % 7;
+        return (d.DayOfYear - 1 + offset) / 7;
+    }
+
+    private string CellColor(decimal value)
+    {
+        if (value <= 0) return "var(--mud-palette-lines-default)";
+        var t = Math.Min(1.0, (double)(value / _max));
+        var light = 85 - 50 * t;
+        return $"hsl(24, 85%, {light.ToString("0", CultureInfo.InvariantCulture)}%)";
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

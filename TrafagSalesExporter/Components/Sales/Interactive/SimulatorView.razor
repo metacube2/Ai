@@ -1,0 +1,116 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: Was-wäre-wenn-Simulator (2026-10-05). Hebel auf die Restmonate der Hochrechnung aus dem Controlling. *@
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="5">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <div class="d-flex align-center" style="gap:8px">
+                <MudText Typo="Typo.h6" Class="ll-grow">@T("Hebel", "Levers")</MudText>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="Reset">@T("Zurücksetzen", "Reset")</MudButton>
+            </div>
+            <div class="six-lever">
+                <div class="d-flex"><b class="ll-grow">@T("Alle Sparten: Preis", "All divisions: price")</b><span class="ll-mono">@Pct(_allPrice)</span></div>
+                <MudSlider T="double" Min="-20" Max="20" Step="0.5" Value="_allPrice" ValueChanged="@(v => { _allPrice = v; Recalc(); })" />
+                <div class="d-flex"><b class="ll-grow">@T("Alle Sparten: Menge", "All divisions: volume")</b><span class="ll-mono">@Pct(_allVolume)</span></div>
+                <MudSlider T="double" Min="-30" Max="30" Step="1" Value="_allVolume" ValueChanged="@(v => { _allVolume = v; Recalc(); })" />
+                <div class="d-flex"><b class="ll-grow">@T("Fremdwährungen gegen CHF", "Foreign currencies vs CHF")</b><span class="ll-mono">@Pct(_fx)</span></div>
+                <MudSlider T="double" Min="-15" Max="15" Step="0.5" Value="_fx" ValueChanged="@(v => { _fx = v; Recalc(); })" />
+            </div>
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Je Sparte (überschreibt „Alle Sparten“)", "Per division (overrides „all divisions“)")</MudText>
+            @foreach (var d in _divisions)
+            {
+                <div class="six-lever">
+                    <div class="d-flex"><span class="ll-grow" title="@d.Name">@d.Name</span><span class="ll-mono ll-muted">@T("Preis", "Price") @Pct(d.Price) · @T("Menge", "Volume") @Pct(d.Volume)</span></div>
+                    <div class="d-flex" style="gap:12px">
+                        <MudSlider T="double" Min="-20" Max="20" Step="0.5" Value="d.Price" ValueChanged="@(v => { d.Price = v; d.Own = true; Recalc(); })" />
+                        <MudSlider T="double" Min="-30" Max="30" Step="1" Value="d.Volume" ValueChanged="@(v => { d.Volume = v; d.Own = true; Recalc(); })" />
+                    </div>
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" lg="7">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            <MudText Typo="Typo.h6">@T("Hochrechnung", "Projection") @_base?.Year</MudText>
+            @if (_result is { } r && _base is { } b)
+            {
+                var delta = r.SimYear - r.BaseYear;
+                <div class="ll-kpis mt-2">
+                    <div class="ll-kpi"><div class="ll-kpi-value">@Short(r.BaseYear)</div><div class="ll-kpi-label">@T("ohne Hebel", "without levers")</div></div>
+                    <div class="ll-kpi"><div class="ll-kpi-value six-anim" style="color:@(delta >= 0 ? "#66BB6A" : "#EF5350")">@Short(r.SimYear)</div><div class="ll-kpi-label">@T("mit Hebeln", "with levers")</div></div>
+                    <div class="ll-kpi"><div class="ll-kpi-value" style="color:@(delta >= 0 ? "#66BB6A" : "#EF5350")">@(delta >= 0 ? "+" : "")@Short(delta)</div><div class="ll-kpi-label">@T("Unterschied", "Difference")</div></div>
+                    @if (b.PreviousYear is { } py && py != 0)
+                    {
+                        <div class="ll-kpi"><div class="ll-kpi-value">@Percent((r.SimYear - py) / py * 100m)</div><div class="ll-kpi-label">@T("gegen Vorjahr", "vs previous year")</div></div>
+                    }
+                </div>
+                var max = Math.Max(1m, Math.Max(r.BaseYear, r.SimYear));
+                <svg viewBox="0 0 700 150" class="six-sim">
+                    <rect x="0" y="20" height="40" rx="4" width="@F(680.0 * (double)(r.Ytd / max))" class="six-sim-ytd"><title>@T("Ist seit Jahresbeginn", "Actual year to date") CHF @Chf(r.Ytd)</title></rect>
+                    <rect x="@F(680.0 * (double)(r.Ytd / max))" y="20" height="40" width="@F(680.0 * (double)(r.BaseRest / max))" class="six-sim-base"><title>@T("Rest ohne Hebel", "Rest without levers") CHF @Chf(r.BaseRest)</title></rect>
+                    <rect x="0" y="80" height="40" rx="4" width="@F(680.0 * (double)(r.Ytd / max))" class="six-sim-ytd" />
+                    <rect x="@F(680.0 * (double)(r.Ytd / max))" y="80" height="40" style="width:@F(Math.Max(0, 680.0 * (double)((r.SimRest + r.FxEffect) / max)))px" class="six-sim-new"><title>@T("Rest mit Hebeln", "Rest with levers") CHF @Chf(r.SimRest + r.FxEffect)</title></rect>
+                    <text x="4" y="14" class="nw-axis" style="text-anchor:start">@T("ohne Hebel", "without levers")</text>
+                    <text x="4" y="74" class="nw-axis" style="text-anchor:start">@T("mit Hebeln", "with levers")</text>
+                </svg>
+                <MudSimpleTable Dense="true" Class="mt-2">
+                    <thead><tr><th>@T("Sparte", "Division")</th><th style="text-align:right">@T("Rest ohne Hebel", "Rest without levers")</th><th style="text-align:right">@T("Rest mit Hebeln", "Rest with levers")</th><th style="text-align:right">Δ</th></tr></thead>
+                    <tbody>
+                        @foreach (var (div, br, sr) in r.Divisions.Take(10))
+                        {
+                            <tr><td>@div</td><td class="ll-mono" style="text-align:right">@Short(br)</td><td class="ll-mono" style="text-align:right">@Short(sr)</td><td class="ll-mono" style="text-align:right;color:@(sr - br >= 0 ? "#66BB6A" : "#EF5350")">@Short(sr - br)</td></tr>
+                        }
+                        <tr><td>@T("Währungseffekt", "Currency effect")</td><td></td><td></td><td class="ll-mono" style="text-align:right">@Short(r.FxEffect)</td></tr>
+                    </tbody>
+                </MudSimpleTable>
+            }
+            <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">@T("Grundlage ist die Hochrechnung aus dem Controlling: Ist bis zum letzten vollständigen Monat plus Restmonate aus dem Vorjahresmonat mal Wachstum seit Jahresbeginn. Preis und Menge wirken multiplikativ auf die Restmonate der Sparte, der Währungshebel auf deren Fremdwährungsanteil. Spielwiese, keine Planung.", "Basis is the projection from controlling: actuals up to the last complete month plus remaining months from the previous-year month times growth since the start of the year. Price and volume act multiplicatively on the remaining months of the division, the currency lever on their foreign-currency share. A playground, not a plan.")</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private sealed class DivisionLever
+    {
+        public string Name { get; init; } = "";
+        public double Price { get; set; }
+        public double Volume { get; set; }
+        public bool Own { get; set; }
+    }
+
+    private SimulatorBase? _base;
+    private SimulatorResult? _result;
+    private List<DivisionLever> _divisions = [];
+    private double _allPrice, _allVolume, _fx;
+
+    protected override void OnParametersSet()
+    {
+        _base = SalesInteractive.SimulatorBaseOf(Data.Facts, Data.ReferenceEnd, Data.DataStart);
+        _divisions = _base.Divisions.Take(8).Select(d => new DivisionLever { Name = d.Division }).ToList();
+        Recalc();
+    }
+
+    private void Recalc()
+    {
+        if (_base is null) return;
+        var levers = _divisions.Where(d => d.Own).Select(d => new SimulatorLever(d.Name, d.Price, d.Volume)).ToList();
+        levers.Add(new SimulatorLever("*", _allPrice, _allVolume));
+        _result = SalesInteractive.Simulate(_base, levers, _fx);
+    }
+
+    private void Reset()
+    {
+        _allPrice = _allVolume = _fx = 0;
+        foreach (var d in _divisions) { d.Price = 0; d.Volume = 0; d.Own = false; }
+        Recalc();
+    }
+
+    private static string Pct(double v) => (v > 0 ? "+" : "") + v.ToString("0.#", CultureInfo.InvariantCulture) + " %";
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

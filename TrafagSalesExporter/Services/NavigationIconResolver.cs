@@ -66,6 +66,7 @@ public static class NavigationIconResolver
         "ViewInAr" => Icons.Material.Filled.ViewInAr,
         "WarningAmber" => Icons.Material.Filled.WarningAmber,
         "TravelExplore" => Icons.Material.Filled.TravelExplore,
+        "AutoAwesome" => Icons.Material.Filled.AutoAwesome,
         "Radar" => Icons.Material.Filled.Radar,
         "ShowChart" => Icons.Material.Filled.ShowChart,
         "Feed" => Icons.Material.Filled.Feed,

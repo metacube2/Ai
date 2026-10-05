@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Verkauf: Unterreiter Interaktiv, 2026-10-05, DEPLOYSTAND
+
+- Neun animierte Ansichten (Kunden-Galaxie, Rennen, Umsatzfluss, Sonnenstrahl, Was wäre wenn, Bestellrhythmus, Kalender,
+  Artikel-Netzwerk, 3D-Landschaft) unter `/verkauf/interaktiv`, bestehende Unterreiter unverändert.
+
 ## Logistik live: Produktivität, Kapazität, Namen nach Anmeldung, 2026-10-05, produktiv 10:31 bis 12:40
 
 - Umschalter Produktivität (Durchlaufzeit je Lieferung, Leistung je Stunde, anonym, produktiv 10:31) und Kapazität (tägliche

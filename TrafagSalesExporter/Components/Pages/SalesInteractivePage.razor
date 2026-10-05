@@ -1,0 +1,89 @@
+@page "/verkauf/interaktiv"
+@page "/verkauf/interaktiv/{View}"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using TrafagSalesExporter.Components.Sales.Interactive
+@inject SalesDataService Sales
+@inject IUiTextService UiText
+
+@* Reiter Verkauf, Unterreiter Interaktiv (Wunsch Ingo 2026-10-05): neun animierte Ansichten mit eigener Reiterleiste,
+   die übrigen Unterreiter bleiben unverändert. Doku docs/VERKAUF_2026-10-02.md, Abschnitt „Interaktiv“. *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Interaktiv", "Interactive")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+<div class="six-tabs">
+    @foreach (var v in Views)
+    {
+        <a href="@($"verkauf/interaktiv/{v.Key}")" class="six-tab @(Current == v.Key ? "six-tab-active" : "")">
+            <MudIcon Icon="@v.Icon" Size="Size.Small" /><span>@v.Label</span>
+        </a>
+    }
+</div>
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.caption" Class="ll-muted">@T("Verkaufsdaten werden geladen, beim ersten Aufruf bis zu einer Minute …", "Loading sales data, up to a minute on first call …")</MudText>
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else
+{
+    <div class="six-stage" @key="Current">
+        @switch (Current)
+        {
+            case ViewRace: <RaceView Data="_data" /> break;
+            case ViewSankey: <SankeyView Data="_data" /> break;
+            case ViewSunburst: <SunburstView Data="_data" /> break;
+            case ViewSimulator: <SimulatorView Data="_data" /> break;
+            case ViewRhythm: <RhythmView Data="_data" /> break;
+            case ViewCalendar: <CalendarView Data="_data" /> break;
+            case ViewNetwork: <NetworkView Data="_data" /> break;
+            case ViewLandscape: <LandscapeView Data="_data" /> break;
+            default: <GalaxyView Data="_data" /> break;
+        }
+    </div>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    [Parameter] public string? View { get; set; }
+
+    private const string ViewGalaxy = "galaxie";
+    private const string ViewRace = "rennen";
+    private const string ViewSankey = "fluss";
+    private const string ViewSunburst = "sonnenstrahl";
+    private const string ViewSimulator = "simulator";
+    private const string ViewRhythm = "rhythmus";
+    private const string ViewCalendar = "kalender";
+    private const string ViewNetwork = "netzwerk";
+    private const string ViewLandscape = "landschaft";
+
+    private SalesDataset? _data;
+
+    private string Current => (View ?? ViewGalaxy).ToLowerInvariant();
+
+    private sealed record ViewTab(string Key, string Icon, string Label);
+
+    private IReadOnlyList<ViewTab> Views =>
+    [
+        new(ViewGalaxy, Icons.Material.Filled.BubbleChart, T("Kunden-Galaxie", "Customer galaxy")),
+        new(ViewRace, Icons.Material.Filled.Leaderboard, T("Rennen", "Race")),
+        new(ViewSankey, Icons.Material.Filled.AltRoute, T("Umsatzfluss", "Revenue flow")),
+        new(ViewSunburst, Icons.Material.Filled.DonutLarge, T("Sonnenstrahl", "Sunburst")),
+        new(ViewSimulator, Icons.Material.Filled.Tune, T("Was wäre wenn", "What if")),
+        new(ViewRhythm, Icons.Material.Filled.EventRepeat, T("Bestellrhythmus", "Order rhythm")),
+        new(ViewCalendar, Icons.Material.Filled.CalendarMonth, T("Kalender", "Calendar")),
+        new(ViewNetwork, Icons.Material.Filled.Hub, T("Artikel-Netzwerk", "Article network")),
+        new(ViewLandscape, Icons.Material.Filled.Landscape, T("3D-Landschaft", "3D landscape"))
+    ];
+
+    protected override async Task OnInitializedAsync() => _data = await Sales.GetAsync();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

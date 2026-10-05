@@ -1,0 +1,100 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: Artikel-Netzwerk (2026-10-05). Kante = von mehreren Kunden gemeinsam gekauft; Lage aus einem Kräfteverfahren. *@
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="9">
+        <MudPaper Class="pa-3" Outlined="true">
+            <div class="d-flex align-center flex-wrap" style="gap:12px">
+                <MudText Typo="Typo.h6" Class="ll-grow">@T("Artikel, die zusammen gekauft werden", "Articles bought together")</MudText>
+                <span class="ll-muted" style="font-size:12px">@T("mind. gemeinsame Kunden", "min. shared customers")</span>
+                <MudSlider T="int" Min="2" Max="15" Value="_minBoth" ValueChanged="SetMin" Style="max-width:180px" />
+                <span class="ll-mono">@_minBoth</span>
+            </div>
+            <svg viewBox="0 0 1000 600" class="six-net" @key="_minBoth">
+                @foreach (var e in _edges)
+                {
+                    var a = _pos[e.A];
+                    var b = _pos[e.B];
+                    var on = Focus is null || e.A == Focus || e.B == Focus;
+                    <line x1="@F(a.X)" y1="@F(a.Y)" x2="@F(b.X)" y2="@F(b.Y)" class="six-edge @(on ? (Focus is null ? "" : "six-edge-on") : "six-dim")" style="stroke-width:@F(0.6 + 3 * e.Weight)px"><title>@e.A + @e.B: @e.Both @T("Kunden", "customers")</title></line>
+                }
+                @foreach (var n in _nodes)
+                {
+                    var on = Focus is null || n.Id == Focus || Neighbours(Focus).Contains(n.Id);
+                    <g class="six-net-node @(on ? "" : "six-dim")" @onmouseover="@(() => _hover = n.Id)" @onmouseout="@(() => _hover = null)" @onclick="@(() => _focus = _focus == n.Id ? null : n.Id)">
+                        <circle cx="@F(n.X)" cy="@F(n.Y)" r="@F(5 + 2.2 * Math.Sqrt(n.Customers))" style="fill:@GroupColor(n.Group)" class="six-net-dot"><title>@n.Label: @n.Customers @T("Kunden", "customers"), CHF @Chf(n.Revenue)</title></circle>
+                        @if (on && (Focus is not null || n.Customers >= _labelMin))
+                        {
+                            <g><text x="@F(n.X)" y="@F(n.Y - 9 - 2.2 * Math.Sqrt(n.Customers))" class="six-label">@Cut(n.Label)</text></g>
+                        }
+                    </g>
+                }
+            </svg>
+            <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Die 40 Artikel mit den meisten Kunden der letzten 12 Monate (ohne Leistungen und Platzhalter). Linie = von mindestens so vielen Kunden gemeinsam gekauft wie eingestellt, dicker = enger verbunden. Farbe = zusammenhängende Gruppe. Maus darüber hebt die Nachbarn hervor, Klick hält die Auswahl.", "The 40 articles with the most customers in the last 12 months (without services and placeholders). Line = bought together by at least as many customers as set, thicker = more closely linked. Colour = connected group. Hover highlights the neighbours, click keeps the selection.")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" lg="3">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            @if (Focus is { } f)
+            {
+                var node = _nodes.First(n => n.Id == f);
+                <MudText Typo="Typo.h6">@node.Label</MudText>
+                <div class="ll-muted">@node.Customers @T("Kunden", "customers") · CHF @Chf(node.Revenue)</div>
+                <MudText Typo="Typo.subtitle2" Class="mt-2">@T("Oft zusammen mit", "Often together with")</MudText>
+                <div class="ll-list">
+                    @foreach (var e in _edges.Where(e => e.A == f || e.B == f).OrderByDescending(e => e.Both))
+                    {
+                        var other = e.A == f ? e.B : e.A;
+                        <div class="ll-row" style="cursor:pointer" @onclick="@(() => _focus = other)"><span class="ll-grow ll-mono">@other</span><span class="ll-mono">@e.Both</span></div>
+                    }
+                </div>
+            }
+            else
+            {
+                <MudText Class="ll-muted">@T("Artikel anklicken.", "Click an article.")</MudText>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private IReadOnlyList<NetworkNode> _nodes = [];
+    private IReadOnlyList<NetworkEdge> _edges = [];
+    private Dictionary<string, NetworkNode> _pos = [];
+    private int _minBoth = 4;
+    private int _labelMin = 1;
+    private string? _hover;
+    private string? _focus;
+    private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #E57373 #4DB6AC #9575CD #AED581 #FF8A65 #90A4AE #F06292".Split(' ');
+
+    private string? Focus => _hover ?? _focus;
+
+    protected override void OnParametersSet() => Load();
+
+    private void SetMin(int v)
+    {
+        _minBoth = v;
+        Load();
+    }
+
+    private void Load()
+    {
+        (_nodes, _edges) = SalesInteractive.ArticleNetwork(Data.Facts, Data.ReferenceEnd, 40, _minBoth);
+        _pos = _nodes.ToDictionary(n => n.Id);
+        _labelMin = _nodes.Select(n => n.Customers).OrderByDescending(c => c).Skip(12).FirstOrDefault();
+        if (_focus is not null && !_pos.ContainsKey(_focus)) _focus = null;
+    }
+
+    private HashSet<string> Neighbours(string id) => _edges.Where(e => e.A == id || e.B == id).Select(e => e.A == id ? e.B : e.A).ToHashSet();
+
+    private static string GroupColor(int g) => Palette[g % Palette.Length];
+
+    private static string Cut(string s) => s.Length > 18 ? s[..17] + "…" : s;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

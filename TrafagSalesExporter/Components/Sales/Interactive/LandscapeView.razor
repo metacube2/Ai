@@ -1,0 +1,100 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: 3D-Umsatzlandschaft Monate × Sparten (2026-10-05), CSS-3D wie das 3D-Lager in Logistik live. *@
+<MudGrid Spacing="3">
+    <MudItem xs="12" lg="9">
+        <MudPaper Class="pa-3" Outlined="true">
+            <div class="d-flex align-center flex-wrap" style="gap:12px">
+                <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatzlandschaft", "Revenue landscape")</MudText>
+                <MudSwitch T="bool" @bind-Value="_spin" Color="Color.Primary" Label="@T("Drehen", "Rotate")" />
+                <MudSlider T="int" Min="-180" Max="180" @bind-Value="_angle" Style="max-width:180px" Disabled="_spin" />
+                <MudSlider T="int" Min="35" Max="75" @bind-Value="_tilt" Style="max-width:120px" />
+            </div>
+            <div class="wh3d-scene six-land-scene">
+                <div class="wh3d-world @(_spin ? "six-land-spin" : "")" style="--k:@F(_scale);--rz:@(_angle)deg;--rx:@(_tilt)deg">
+                    <div class="wh3d-floor" style="--fw:@F(_w + 40)px;--fd:@F(_d + 40)px;--fx:@F(-_w / 2 - 20)px;--fy:@F(-_d / 2 - 20)px"></div>
+                    @for (var di = 0; di < _divisions.Count; di++)
+                    {
+                        var div = _divisions[di];
+                        <div class="wh3d-tag" style="transform:translate3d(@F(-_w / 2 - 130)px,@F(di * Cell - _d / 2 + 4)px,1px)">@Cut(div)</div>
+                        @for (var mi = 0; mi < _months.Count; mi++)
+                        {
+                            var v = _cells.GetValueOrDefault((_months[mi], div));
+                            var h = Math.Max(1, 180 * Math.Sqrt((double)(v / _max)));
+                            var key = (_months[mi], div);
+                            var sel = _selected == key;
+                            <div class="six-col @(sel ? "six-col-sel" : "")" @onclick="@(() => _selected = key)" title="@($"{div} · {_months[mi]:MM.yyyy}: CHF {Chf(v)}")">
+                                <div class="wh3d-cube" style="--x:@F(mi * Cell - _w / 2)px;--y:@F(di * Cell - _d / 2)px;--z:0px;--w:@F(Cell - 6)px;--d:@F(Cell - 6)px;--h:@F(h)px;--c:@ColColor(di, v)">
+                                    <i class="wh3d-n"></i><i class="wh3d-s"></i><i class="wh3d-w"></i><i class="wh3d-e"></i><i class="wh3d-top"></i>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="dir3d-hint">@T("Jede Säule ist ein Monat einer Sparte, Höhe nach Umsatz (Wurzel, damit kleine Werte sichtbar bleiben). Regler: Blickwinkel und Neigung. Klick auf eine Säule zeigt den Wert.", "Each column is one month of a division, height by revenue (square root so small values stay visible). Sliders: view angle and tilt. Click a column to see the value.")</div>
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" lg="3">
+        <MudPaper Class="pa-3 ll-panel" Outlined="true">
+            @if (_selected is { } s)
+            {
+                var v = _cells.GetValueOrDefault(s);
+                var prev = _cells.GetValueOrDefault((s.Item1.AddYears(-1), s.Item2));
+                <MudText Typo="Typo.h6">@s.Item2</MudText>
+                <div class="ll-muted">@s.Item1.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("de-CH"))</div>
+                <div class="ll-mono mt-2" style="font-size:22px">CHF @Chf(v)</div>
+                @if (prev > 0)
+                {
+                    <div class="ll-mono" style="color:@(v >= prev ? "#66BB6A" : "#EF5350")">@Percent((v - prev) / prev * 100m) @T("gegen Vorjahresmonat", "vs same month last year")</div>
+                }
+            }
+            else
+            {
+                <MudText Class="ll-muted">@T("Säule anklicken.", "Click a column.")</MudText>
+            }
+            <MudText Typo="Typo.subtitle2" Class="mt-3">@T("Sparten", "Divisions")</MudText>
+            @for (var di = 0; di < _divisions.Count; di++)
+            {
+                <div class="d-flex align-center" style="gap:6px;font-size:12px"><span class="ll-swatch" style="background:@Palette[di % Palette.Length]"></span>@_divisions[di]</div>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private const double Cell = 34;
+    private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #E57373 #4DB6AC #9575CD".Split(' ');
+    private Dictionary<(DateOnly, string), decimal> _cells = [];
+    private List<DateOnly> _months = [];
+    private List<string> _divisions = [];
+    private decimal _max = 1;
+    private double _w, _d, _scale = 1;
+    private bool _spin = true;
+    private int _angle = -35;
+    private int _tilt = 58;
+    private (DateOnly, string)? _selected;
+
+    protected override void OnParametersSet()
+    {
+        var cells = SalesInteractive.Landscape(Data.Facts, Data.ReferenceEnd, Data.DataStart);
+        _divisions = cells.GroupBy(c => c.Division).OrderByDescending(g => g.Sum(c => c.Value)).Take(8).Select(g => g.Key).ToList();
+        _months = cells.Select(c => c.Month).Distinct().Order().ToList();
+        _cells = cells.Where(c => _divisions.Contains(c.Division)).ToDictionary(c => (c.Month, c.Division), c => c.Value);
+        _max = Math.Max(1, _cells.Values.DefaultIfEmpty(1).Max());
+        _w = _months.Count * Cell;
+        _d = _divisions.Count * Cell;
+        _scale = Math.Min(1.4, 640 / Math.Max(1, Math.Max(_w, _d)));
+    }
+
+    private string ColColor(int division, decimal value) => value <= 0 ? "#37474F" : Palette[division % Palette.Length];
+
+    private static string Cut(string s) => s.Length > 18 ? s[..17] + "…" : s;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

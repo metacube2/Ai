@@ -1,0 +1,101 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: Umsatzfluss Gesellschaft → Sparte → Kundenland (2026-10-05). Klick auf einen Knoten filtert. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Umsatzfluss, 12 Monate", "Revenue flow, 12 months")</MudText>
+        @if (_focus is not null)
+        {
+            <MudChip T="string" Color="Color.Primary" OnClose="@(_ => _focus = null)">@Label(_focus)</MudChip>
+        }
+    </div>
+    <svg viewBox="0 0 1000 @F(Height)" class="six-sankey">
+        @foreach (var l in _layout.Links)
+        {
+            var on = _focus is null || l.Link.From == _focus || l.Link.To == _focus || Through(l.Link);
+            <path d="@l.Path" class="six-flow @(on ? "" : "six-dim")" style="stroke:@ColumnColor(l.FromColumn);stroke-width:@F(Math.Max(1, l.Width))px">
+                <title>@Label(l.Link.From) → @Label(l.Link.To): CHF @Chf(l.Link.Value)</title>
+            </path>
+        }
+        @foreach (var n in _layout.Nodes)
+        {
+            var on = _focus is null || n.Node.Id == _focus || Connected(n.Node.Id);
+            <g class="six-node-g @(on ? "" : "six-dim")" @onclick="@(() => _focus = _focus == n.Node.Id ? null : n.Node.Id)">
+                <rect x="@F(n.X)" y="@F(n.Y)" width="14" height="@F(Math.Max(2, n.H))" rx="3" class="six-node" style="fill:@ColumnColor(n.Node.Column)"><title>@Label(n.Node.Id): CHF @Chf(n.Node.Value)</title></rect>
+                @if (n.H >= 9)
+                {
+                    <g><text x="@F(n.Node.Column == 2 ? n.X - 6 : n.X + 20)" y="@F(n.Y + n.H / 2 + 4)" class="six-node-label" style="text-anchor:@(n.Node.Column == 2 ? "end" : "start")">@Label(n.Node.Id) · @Short(n.Node.Value)</text></g>
+                }
+            </g>
+        }
+    </svg>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Breite der Ströme = Umsatz der letzten 12 Monate. Links Gesellschaften, Mitte Sparten, rechts Kundenländer (Top 12, Rest Übrige). Klick auf einen Knoten zeigt nur seine Ströme; die Bewegung in den Strömen zeigt die Richtung.", "Width of the flows = revenue of the last 12 months. Left companies, middle divisions, right customer countries (top 12, rest others). Click a node to show only its flows; the movement in the flows shows the direction.")</MudText>
+</MudPaper>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private sealed record PlacedNode(SankeyNode Node, double X, double Y, double H);
+    private sealed record PlacedLink(SankeyLink Link, string Path, double Width, int FromColumn);
+    private (List<PlacedNode> Nodes, List<PlacedLink> Links) _layout = ([], []);
+    private IReadOnlyList<SankeyLink> _links = [];
+    private string? _focus;
+    private double Height = 560;
+
+    protected override void OnParametersSet()
+    {
+        var (nodes, links) = SalesInteractive.Sankey(Data.Facts, Data.ReferenceEnd);
+        _links = links;
+        var total = Math.Max(1m, nodes.Where(n => n.Column == 0).Sum(n => n.Value));
+        var gap = 8.0;
+        var maxCount = Enumerable.Range(0, 3).Max(c => nodes.Count(n => n.Column == c));
+        var usable = 520 - gap * Math.Max(0, maxCount - 1);
+        var scale = usable / (double)total;
+        var placed = new List<PlacedNode>();
+        foreach (var col in Enumerable.Range(0, 3))
+        {
+            var y = 20.0;
+            foreach (var n in nodes.Where(n => n.Column == col))
+            {
+                var h = (double)n.Value * scale;
+                placed.Add(new PlacedNode(n, col switch { 0 => 120, 1 => 493, _ => 866 }, y, h));
+                y += h + gap;
+            }
+            Height = Math.Max(Height, y + 20);
+        }
+        var byId = placed.ToDictionary(p => p.Node.Id);
+        var outOffset = placed.ToDictionary(p => p.Node.Id, p => p.Y);
+        var inOffset = placed.ToDictionary(p => p.Node.Id, p => p.Y);
+        var placedLinks = new List<PlacedLink>();
+        foreach (var l in links.OrderBy(l => byId[l.From].Y).ThenBy(l => byId[l.To].Y))
+        {
+            var a = byId[l.From];
+            var b = byId[l.To];
+            var w = (double)l.Value * scale;
+            var y1 = outOffset[l.From] + w / 2;
+            var y2 = inOffset[l.To] + w / 2;
+            outOffset[l.From] += w;
+            inOffset[l.To] += w;
+            var x1 = a.X + 14;
+            var x2 = b.X;
+            var mx = (x1 + x2) / 2;
+            placedLinks.Add(new PlacedLink(l, $"M{F(x1)},{F(y1)} C{F(mx)},{F(y1)} {F(mx)},{F(y2)} {F(x2)},{F(y2)}", w, a.Node.Column));
+        }
+        _layout = (placed, placedLinks);
+    }
+
+    private bool Connected(string id) => _focus is not null && _links.Any(l => (l.From == _focus && l.To == id) || (l.To == _focus && l.From == id)
+        || (_links.Any(x => x.From == _focus && x.To == l.From) && l.To == id) || (_links.Any(x => x.To == _focus && x.From == l.To) && l.From == id));
+
+    private bool Through(SankeyLink l) => _focus is not null && (_links.Any(x => x.From == _focus && x.To == l.From) || _links.Any(x => x.To == _focus && x.From == l.To));
+
+    private static string Label(string id) => id.Length > 2 ? id[2..] switch { var c when id.StartsWith("c:") && c.Length == 2 => WorldGeo.Name(c), var other => other } : id;
+
+    private static string ColumnColor(int column) => column switch { 0 => "#F08A4B", 1 => "#4FC3F7", _ => "#81C784" };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

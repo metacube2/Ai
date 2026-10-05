@@ -1,0 +1,103 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@implements IDisposable
+@inject IUiTextService UiText
+
+@* Verkauf Interaktiv: Bar Chart Race (2026-10-05). Balken gleiten über transform auf ihren neuen Rang. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Rennen der Grössten", "Race of the largest")</MudText>
+        <MudSelect T="string" Value="_dimension" ValueChanged="SetDimension" Dense="true" Variant="Variant.Outlined" Style="max-width:170px">
+            <MudSelectItem Value="@DimCustomer">@T("Kunden", "Customers")</MudSelectItem>
+            <MudSelectItem Value="@DimArticle">@T("Artikel", "Articles")</MudSelectItem>
+            <MudSelectItem Value="@DimCountry">@T("Länder", "Countries")</MudSelectItem>
+        </MudSelect>
+        <MudIconButton Icon="@(_playing ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="TogglePlay" />
+        <span class="ll-mono" style="min-width:90px">@(_frames.Count == 0 ? "" : _frames[_frame].Month.ToString("MM.yyyy"))</span>
+        <MudSlider T="int" Min="0" Max="@(Math.Max(0, _frames.Count - 1))" Value="_frame" ValueChanged="@((int v) => _frame = v)" Style="max-width:260px" />
+    </div>
+    @if (_frames.Count > 0)
+    {
+        var bars = _frames[_frame].Bars;
+        var max = Math.Max(1m, bars.Select(b => b.Value).DefaultIfEmpty(1).Max());
+        <div class="six-race" style="height:@(Top * RowHeight + 10)px">
+            @foreach (var key in _allKeys)
+            {
+                var rank = bars.Select((b, i) => (b, i)).FirstOrDefault(x => x.b.Key == key);
+                var visible = rank.b is not null;
+                var value = visible ? rank.b!.Value : 0m;
+                <div class="six-race-row @(visible ? "" : "six-race-out")" style="transform:translateY(@((visible ? rank.i : Top) * RowHeight)px)">
+                    <span class="six-race-name" title="@Name(key)">@Name(key)</span>
+                    <span class="six-race-track">
+                        <span class="six-race-bar" style="width:@((100.0 * (double)(value / max)).ToString("0.#", CultureInfo.InvariantCulture))%;background:@BarColor(key)"></span>
+                    </span>
+                    <span class="six-race-value ll-mono">@Short(value)</span>
+                </div>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Top 15 nach Umsatz der jeweils letzten drei Monate (gleitend). ▶ spielt die Monate ab Datenbeginn ab; die Balken überholen sich.", "Top 15 by revenue of the respective last three months (rolling). ▶ plays the months since the start of the data; the bars overtake each other.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public SalesDataset Data { get; set; } = default!;
+
+    private const string DimCustomer = "customer";
+    private const string DimArticle = "article";
+    private const string DimCountry = "country";
+    private const int Top = 15;
+    private const int RowHeight = 30;
+    private string _dimension = DimCustomer;
+    private IReadOnlyList<RaceFrame> _frames = [];
+    private List<string> _allKeys = [];
+    private Dictionary<string, string> _names = [];
+    private int _frame;
+    private bool _playing;
+    private CancellationTokenSource? _play;
+    private static readonly string[] Palette = "#F08A4B #4FC3F7 #81C784 #BA68C8 #FFD54F #E57373 #4DB6AC #9575CD #AED581 #FF8A65 #90A4AE #F06292".Split(' ');
+
+    protected override void OnParametersSet() => Load();
+
+    private void Load()
+    {
+        _frames = SalesInteractive.Race(Data.Facts, _dimension, Data.ReferenceEnd, Data.DataStart, Top);
+        _allKeys = _frames.SelectMany(f => f.Bars).Select(b => b.Key).Distinct().ToList();
+        _names = _frames.SelectMany(f => f.Bars).GroupBy(b => b.Key).ToDictionary(g => g.Key, g => g.First().Name);
+        _frame = Math.Max(0, _frames.Count - 1);
+    }
+
+    private void SetDimension(string d)
+    {
+        _play?.Cancel();
+        _playing = false;
+        _dimension = d;
+        Load();
+    }
+
+    private string Name(string key) => _names.GetValueOrDefault(key, key);
+    private string BarColor(string key) => Palette[(int)((uint)key.GetHashCode() % (uint)Palette.Length)];
+
+    private void TogglePlay()
+    {
+        if (_playing) { _play?.Cancel(); _playing = false; return; }
+        _playing = true;
+        if (_frame >= _frames.Count - 1) _frame = 0;
+        _play = new CancellationTokenSource();
+        var token = _play.Token;
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(900));
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+            {
+                if (_frame >= _frames.Count - 1) { _playing = false; await InvokeAsync(StateHasChanged); return; }
+                _frame++;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, token).ContinueWith(_ => { }, TaskScheduler.Default);
+    }
+
+    public void Dispose() { _play?.Cancel(); _play?.Dispose(); }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

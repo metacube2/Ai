@@ -347,6 +347,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("sales-prices", "sales", "Preisstreuung", "Price spread", "PriceChange", "verkauf/preise", 60, "All"),
         Link("sales-forecast", "sales", "Saison und Prognose", "Season and forecast", "QueryStats", "verkauf/prognose", 70, "All"),
         Link("sales-worldmap", "sales", "Weltkarte", "World map", "Public", "verkauf/weltkarte", 80, "All"),
+        // Verkauf Interaktiv 2026-10-05: neun animierte Ansichten mit eigener Reiterleiste.
+        Link("sales-interactive", "sales", "Interaktiv", "Interactive", "AutoAwesome", "verkauf/interaktiv", 90, "All"),
         Group("logistics", null, "Logistik", "Logistics", "LocalShipping", 35),
         Link("logistics-bom-analysis", "logistics", "Stuecklistenanalyse", "BOM analysis", "AccountTree", "logistik/stuecklistenanalyse", 10, "All"),
         Link("logistics-material-disposition", "logistics", "Materialdisposition & Fehlteile", "Material planning & shortages", "Inventory", "logistik/materialdisposition", 20, "All"),
