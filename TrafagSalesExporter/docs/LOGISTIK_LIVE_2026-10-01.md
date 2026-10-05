@@ -92,7 +92,8 @@ Lagertypen 100, 1BP, 1G1, 1P1, 2BP, 2G1, ML4, QM2, UGK, ABT, CZ; Zonen 901, 902,
 erkannten `1-008-B`, `BP-MLE04-2` und `DL20004` nicht (alles im Gang `~`), und 24 Gänge in einer Reihe machten die Halle
 winzig. **Nachgeschärft:** Ebene auch als Buchstabe (B = 2), Feld mit Buchstaben vor der Nummer (`MLE04` → 4), Buchstaben +
 beliebig viele Ziffern (letzte zwei = Ebene, bei drei Ziffern die letzte); Gänge in bis zu vier Spalten nebeneinander.
-Deploystand siehe `docs/rag/DEPLOYMENT.md`.
+**Produktiv 10:23 (`71981b6`)**, 10:24 angesehen: 24 Gänge, davon 2G1 in acht Gängen mit Ebenen, 1G1 in vier, im Gang `~`
+nur noch wenige Plätze (100, 1BP, ABT, QM2); Zonen 901 bis 999 darunter.
 
 ## Offen
 
