@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Weltlage unter Finance Cockpit, 2026-10-06
+## Weltlage unter Finance Cockpit, 2026-10-06, produktiv 14:36
 
 - Weltlage ist keine Hauptgruppe mehr, sondern liegt unter Finance Cockpit und verlangt das Finance-Passwort.
   Auftraggeber ist Ingo, Rückfragen landeten bisher bei Andreas.
