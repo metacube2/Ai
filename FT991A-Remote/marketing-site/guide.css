@@ -1,0 +1,141 @@
+:root {
+  --bg: #f7f5f1;
+  --surface: #ffffff;
+  --line: rgba(27, 23, 18, 0.12);
+  --text: #171411;
+  --muted: #676056;
+  --accent: #ff5257;
+  --code-bg: #ece7e0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Suisse Intl", "Avenir Next", "Helvetica Neue", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+}
+
+.guide-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  font-size: 0.9rem;
+}
+
+.guide-nav a {
+  color: inherit;
+}
+
+.guide-brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main.guide {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 8px 16px 48px;
+}
+
+.guide .kicker {
+  color: var(--accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.guide h1 {
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  line-height: 1.15;
+  margin: 8px 0 16px;
+}
+
+.guide h2 {
+  font-size: 1.35rem;
+  margin: 36px 0 8px;
+}
+
+.guide .lead {
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.guide code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.guide table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.95rem;
+}
+
+.guide th,
+.guide td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.guide .table-wrap {
+  overflow-x: auto;
+}
+
+.guide .note {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 20px 0;
+}
+
+.guide .cta {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 40px;
+}
+
+.guide .cta a.button {
+  display: inline-block;
+  background: var(--text);
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  margin: 8px 8px 0 0;
+}
+
+.guide-footer {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  gap: 16px;
+}
+
+.guide-footer a {
+  color: inherit;
+}
+
+.guide code,
+.guide td {
+  overflow-wrap: anywhere;
+}

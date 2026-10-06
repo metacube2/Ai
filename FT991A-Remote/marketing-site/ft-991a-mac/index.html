@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yaesu FT-991A on a Mac: CAT control without Wine or a VM | MacYaesu</title>
+  <meta name="description" content="How to control a Yaesu FT-991A from macOS: USB connection, the right CP2105 port, CAT menu settings and a native Mac app. No Windows, Wine or virtual machine needed.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/macyaesu/ft-991a-mac/">
+  <link rel="alternate" hreflang="en" href="https://www.aiscom.ch/macyaesu/ft-991a-mac/">
+  <link rel="alternate" hreflang="de" href="https://www.aiscom.ch/macyaesu/de/ft-991a-mac/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Yaesu FT-991A on a Mac: CAT control without Wine or a VM">
+  <meta property="og:description" content="USB connection, the right CP2105 port and CAT settings for the FT-991A on macOS.">
+  <meta property="og:url" content="https://www.aiscom.ch/macyaesu/ft-991a-mac/">
+  <meta property="og:image" content="https://www.aiscom.ch/macyaesu/main.png">
+  <link rel="stylesheet" href="../guide.css?v=20261006">
+</head>
+<body>
+  <nav class="guide-nav">
+    <a class="guide-brand" href="https://www.aiscom.ch/macyaesu/">MacYaesu</a>
+    <a href="https://www.aiscom.ch/macyaesu/de/ft-991a-mac/" hreflang="de">Deutsch</a>
+  </nav>
+
+  <main class="guide">
+    <p class="kicker">Guide</p>
+    <h1>Yaesu FT-991A on a Mac: CAT control without Wine or a VM</h1>
+    <p class="lead">The FT-991A has a built-in USB port, and macOS can talk to it directly. You don't need Windows, Wine or a virtual machine. You only need the right serial port and matching CAT settings on the radio.</p>
+
+    <h2>1. Connect the radio</h2>
+    <p>Use a plain USB A-to-B cable from the rear USB socket of the FT-991A to the Mac. The radio contains a Silicon Labs CP2105 chip. macOS sees it as a <em>CP2105 Dual USB to UART Bridge Controller</em> and creates two serial ports, plus a USB audio device for digital modes.</p>
+    <p>Check that the ports exist in Terminal:</p>
+    <p><code>ls /dev/cu.usbserial-*</code></p>
+    <p>You should see two entries that differ only in the last digit, for example <code>…AF10</code> and <code>…AF11</code>. If nothing shows up, try another cable or USB port first. On older macOS versions you may need the Silicon Labs VCP driver.</p>
+
+    <h2>2. Pick the right one of the two ports</h2>
+    <p>This is where most Mac setups fail. The CP2105 provides an <strong>Enhanced</strong> and a <strong>Standard</strong> COM port:</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Port</th><th>Use</th></tr>
+        <tr><td>Enhanced COM Port</td><td>CAT commands (frequency, mode, levels)</td></tr>
+        <tr><td>Standard COM Port</td><td>TX control (PTT/keying via RTS/DTR)</td></tr>
+      </table>
+    </div>
+    <p>On our test radio, CAT only answered on the Enhanced port, the one ending in <code>0</code>. On the other port there was no response at all. Many programs simply pick the first port they find and then report "no connection".</p>
+
+    <h2>3. Match the CAT settings</h2>
+    <p>The radio's menu and the software must use the same values:</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Menu</th><th>Setting</th><th>Note</th></tr>
+        <tr><td>031 CAT RATE</td><td>e.g. 38400 bps</td><td>Must match the software exactly. The factory setting is lower.</td></tr>
+        <tr><td>033 CAT RTS</td><td>ENABLE</td><td>Then the software must set RTS on.</td></tr>
+      </table>
+    </div>
+    <p>In our tests the combination <em>Enhanced port + 38400 bps + RTS on</em> was the key. With RTS off, the correct port stayed silent.</p>
+
+    <h2>4. Test the connection</h2>
+    <p>A real CAT connection answers. The command <code>ID;</code> must return <code>ID0670;</code> (the FT-991A's ID), and <code>FA;</code> returns the VFO-A frequency. If you only get your own command back (an echo), the wrong port or wrong settings are in use.</p>
+
+    <h2>5. Software on the Mac</h2>
+    <p>Digital-mode programs such as WSJT-X and fldigi run natively on macOS and can control the FT-991A through Hamlib. What is missing on the Mac is a full control surface for the radio itself: VFO, levels, meters, memories and repeater setup in one window.</p>
+    <p>That is why <a href="https://www.aiscom.ch/macyaesu/">MacYaesu</a> exists. It is a native macOS app for the FT-991A. It recognizes the Enhanced port and offers it first, only reports "connected" after a real CAT handshake, and remembers the working port. A CAT trace helps when something doesn't work.</p>
+
+    <div class="note">
+      <strong>Requirements:</strong> macOS 15 (Sequoia) or newer, FT-991A with USB cable.
+    </div>
+
+    <div class="cta">
+      <strong>Try it with your own radio first.</strong>
+      <p>The demo runs for 15 minutes with no registration. The full version costs 49 CHF one-time.</p>
+      <a class="button" href="https://www.aiscom.ch/macyaesu/MacYaesu.dmg">Download demo</a>
+      <a href="https://www.aiscom.ch/macyaesu/">More about MacYaesu</a>
+    </div>
+  </main>
+
+  <footer class="guide-footer">
+    <a href="https://www.aiscom.ch/macyaesu/ft-991a-cp2105-macos/">FT-991A CP2105 ports on macOS</a>
+    <a href="https://www.aiscom.ch/en/legal/imprint">Imprint</a>
+    <a href="https://www.aiscom.ch/en/legal/privacy">Privacy</a>
+  </footer>
+</body>
+</html>

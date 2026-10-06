@@ -22,7 +22,7 @@
   <meta name="twitter:title" content="MacYaesu | FT-991A Remote für macOS">
   <meta name="twitter:description" content="FT-991A am Mac ohne VM oder Wine: CAT-Steuerung, Logging, Speicher und Digimode-Vorbereitung.">
   <meta name="twitter:image" content="https://www.aiscom.ch/macyaesu/main.png">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles.css?v=20261006b">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -354,6 +354,10 @@
             <h3 data-i18n="faq_3_title">Läuft die App über den Mac App Store?</h3>
             <p data-i18n="faq_3_text">Nein. Der empfohlene Weg ist der Direktvertrieb als signiertes DMG, damit CAT- und Audio-Funktionen nicht durch Sandbox-Regeln beschnitten werden.</p>
           </article>
+          <article class="faq-card">
+            <h3 data-i18n="faq_4_title">Wie öffne ich die App beim ersten Start?</h3>
+            <p data-i18n="faq_4_text">MacYaesu ist noch nicht von Apple notarisiert. macOS blockiert deshalb den ersten Start. DMG öffnen, App in „Programme“ ziehen, einmal starten, dann unter Systemeinstellungen → Datenschutz &amp; Sicherheit auf „Trotzdem öffnen“ klicken.</p>
+          </article>
         </div>
       </section>
     </main>
@@ -369,9 +373,15 @@
         <a href="mailto:metacube@gmail.com?subject=MacYaesu%20Pricing" class="secondary-button" data-i18n="footer_cta_2" data-config-link="pricing_mail">Lizenz anfragen</a>
       </div>
     </footer>
+    <nav class="legal-links" aria-label="Rechtliches">
+      <a href="https://www.aiscom.ch/de/legal/imprint" data-href-de="https://www.aiscom.ch/de/legal/imprint" data-href-en="https://www.aiscom.ch/en/legal/imprint" data-i18n="legal_imprint">Impressum</a>
+      <a href="https://www.aiscom.ch/de/legal/privacy" data-href-de="https://www.aiscom.ch/de/legal/privacy" data-href-en="https://www.aiscom.ch/en/legal/privacy" data-i18n="legal_privacy">Datenschutz</a>
+      <a href="https://www.aiscom.ch/macyaesu/de/ft-991a-mac/" data-href-de="https://www.aiscom.ch/macyaesu/de/ft-991a-mac/" data-href-en="https://www.aiscom.ch/macyaesu/ft-991a-mac/" data-i18n="guide_setup">Anleitung: FT-991A am Mac</a>
+      <a href="https://www.aiscom.ch/macyaesu/ft-991a-cp2105-macos/" data-i18n="guide_cp2105">CAT-Fehlersuche (Englisch)</a>
+    </nav>
   </div>
 
-  <script src="./config.js"></script>
-  <script src="./app.js"></script>
+  <script src="./config.js?v=20261006b"></script>
+  <script src="./app.js?v=20261006b"></script>
 </body>
 </html>

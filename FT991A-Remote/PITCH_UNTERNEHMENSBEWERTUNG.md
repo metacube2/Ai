@@ -71,6 +71,10 @@ Empfohlene Positionierung:
 
 ## Geschaeftsmodell
 
+> Umgesetzt ist seit 2026-10 ein Einheitspreis von 49 CHF (Vollversion,
+> Updates der Hauptversion inklusive). Die Staffel unten ist eine spaetere
+> Option, kein aktueller Stand.
+
 | Angebot | Inhalt | Preisidee |
 |---|---|---:|
 | Connection Doctor | Porterkennung, CAT-Test und Diagnose | kostenlos |

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yaesu FT-991A am Mac: CAT-Steuerung ohne Wine oder VM | MacYaesu</title>
+  <meta name="description" content="So steuert man einen Yaesu FT-991A unter macOS: USB-Verbindung, der richtige CP2105-Port, CAT-Menüeinstellungen und eine native Mac-App. Ohne Windows, Wine oder virtuelle Maschine.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/macyaesu/de/ft-991a-mac/">
+  <link rel="alternate" hreflang="de" href="https://www.aiscom.ch/macyaesu/de/ft-991a-mac/">
+  <link rel="alternate" hreflang="en" href="https://www.aiscom.ch/macyaesu/ft-991a-mac/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Yaesu FT-991A am Mac: CAT-Steuerung ohne Wine oder VM">
+  <meta property="og:description" content="USB-Verbindung, der richtige CP2105-Port und CAT-Einstellungen für den FT-991A unter macOS.">
+  <meta property="og:url" content="https://www.aiscom.ch/macyaesu/de/ft-991a-mac/">
+  <meta property="og:image" content="https://www.aiscom.ch/macyaesu/main.png">
+  <link rel="stylesheet" href="../../guide.css?v=20261006">
+</head>
+<body>
+  <nav class="guide-nav">
+    <a class="guide-brand" href="https://www.aiscom.ch/macyaesu/">MacYaesu</a>
+    <a href="https://www.aiscom.ch/macyaesu/ft-991a-mac/" hreflang="en">English</a>
+  </nav>
+
+  <main class="guide">
+    <p class="kicker">Anleitung</p>
+    <h1>Yaesu FT-991A am Mac: CAT-Steuerung ohne Wine oder VM</h1>
+    <p class="lead">Der FT-991A hat einen eingebauten USB-Anschluss, und macOS kann direkt mit ihm sprechen. Windows, Wine oder eine virtuelle Maschine braucht es nicht. Nötig sind nur der richtige serielle Port und passende CAT-Einstellungen am Gerät.</p>
+
+    <h2>1. Gerät anschliessen</h2>
+    <p>Ein normales USB-A-auf-B-Kabel von der USB-Buchse hinten am FT-991A zum Mac genügt. Im Gerät steckt ein Silicon-Labs-Chip CP2105. macOS erkennt ihn als <em>CP2105 Dual USB to UART Bridge Controller</em> und legt zwei serielle Ports an, dazu ein USB-Audiogerät für digitale Betriebsarten.</p>
+    <p>Im Terminal prüfen, ob die Ports da sind:</p>
+    <p><code>ls /dev/cu.usbserial-*</code></p>
+    <p>Es sollten zwei Einträge erscheinen, die sich nur in der letzten Ziffer unterscheiden, zum Beispiel <code>…AF10</code> und <code>…AF11</code>. Erscheint nichts, zuerst ein anderes Kabel oder einen anderen USB-Anschluss versuchen. Auf älteren macOS-Versionen kann der VCP-Treiber von Silicon Labs nötig sein.</p>
+
+    <h2>2. Den richtigen der beiden Ports wählen</h2>
+    <p>Hier scheitern die meisten Mac-Einrichtungen. Der CP2105 stellt einen <strong>Enhanced</strong>- und einen <strong>Standard</strong>-Port bereit:</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Port</th><th>Zweck</th></tr>
+        <tr><td>Enhanced COM Port</td><td>CAT-Befehle (Frequenz, Betriebsart, Pegel)</td></tr>
+        <tr><td>Standard COM Port</td><td>Sendesteuerung (PTT/Tastung über RTS/DTR)</td></tr>
+      </table>
+    </div>
+    <p>An unserem Testgerät antwortete CAT nur auf dem Enhanced-Port, also dem mit der Endung <code>0</code>. Auf dem anderen Port kam gar nichts zurück. Viele Programme nehmen einfach den ersten gefundenen Port und melden dann „keine Verbindung“.</p>
+
+    <h2>3. CAT-Einstellungen abgleichen</h2>
+    <p>Menü am Gerät und Software müssen dieselben Werte verwenden:</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Menü</th><th>Einstellung</th><th>Hinweis</th></tr>
+        <tr><td>031 CAT RATE</td><td>z. B. 38400 bps</td><td>Muss exakt zur Software passen. Ab Werk ist ein niedrigerer Wert eingestellt.</td></tr>
+        <tr><td>033 CAT RTS</td><td>ENABLE</td><td>Dann muss die Software RTS einschalten.</td></tr>
+      </table>
+    </div>
+    <p>In unseren Tests war die Kombination <em>Enhanced-Port + 38400 bps + RTS an</em> der Schlüssel. Mit RTS aus blieb auch der richtige Port stumm.</p>
+
+    <h2>4. Verbindung testen</h2>
+    <p>Eine echte CAT-Verbindung antwortet. Auf den Befehl <code>ID;</code> muss <code>ID0670;</code> zurückkommen (die Kennung des FT-991A), auf <code>FA;</code> die Frequenz von VFO A. Kommt nur der eigene Befehl zurück (ein Echo), sind Port oder Einstellungen falsch.</p>
+
+    <h2>5. Software am Mac</h2>
+    <p>Programme für digitale Betriebsarten wie WSJT-X und fldigi laufen nativ unter macOS und können den FT-991A über Hamlib steuern. Was am Mac fehlt, ist eine vollständige Bedienoberfläche für das Gerät selbst: VFO, Pegel, Anzeigen, Speicher und Relais-Einstellungen in einem Fenster.</p>
+    <p>Dafür gibt es <a href="https://www.aiscom.ch/macyaesu/">MacYaesu</a>, eine native macOS-App für den FT-991A. Sie erkennt den Enhanced-Port und bietet ihn zuerst an, meldet „verbunden“ erst nach einem echten CAT-Handshake und merkt sich den funktionierenden Port. Ein CAT-Trace hilft, wenn etwas nicht klappt.</p>
+
+    <div class="note">
+      <strong>Voraussetzungen:</strong> macOS 15 (Sequoia) oder neuer, FT-991A mit USB-Kabel.
+    </div>
+
+    <div class="cta">
+      <strong>Zuerst mit dem eigenen Gerät testen.</strong>
+      <p>Die Demo läuft 15 Minuten ohne Anmeldung. Die Vollversion kostet einmalig 49 CHF.</p>
+      <a class="button" href="https://www.aiscom.ch/macyaesu/MacYaesu.dmg">Demo herunterladen</a>
+      <a href="https://www.aiscom.ch/macyaesu/">Mehr über MacYaesu</a>
+    </div>
+  </main>
+
+  <footer class="guide-footer">
+    <a href="https://www.aiscom.ch/de/legal/imprint">Impressum</a>
+    <a href="https://www.aiscom.ch/de/legal/privacy">Datenschutz</a>
+  </footer>
+</body>
+</html>

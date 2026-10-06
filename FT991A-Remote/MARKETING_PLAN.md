@@ -12,12 +12,37 @@ MacYaesu soll in der Amateurfunk- und Mac-Nische sichtbar werden, zuerst ueber t
 4. Reviews und Rueckmeldungen einsammeln
 5. Inhalte nachschieben statt nur einmal zu posten
 
+## Stand 2026-10-06
+
+- Release 1.1 (Build 2) und PayPal-Checkout 49 CHF sind live; vorher lief
+  online noch 1.0 ohne echten Checkout.
+- FAQ mit Anleitung zum ersten Start (App nicht notarisiert), Links zu
+  Impressum und Datenschutz.
+- Entwürfe: `EULA_ENTWURF.md` (vor Veröffentlichung prüfen lassen),
+  `FORUM_POSTS.md` (Posten macht der Entwickler selbst).
+- Offen beim Entwickler: Apple Developer Program (Signatur und Notarisierung),
+  Wahl zwischen Merchant of Record und eigener EU-MWST über OSS, echter
+  Testkauf, Search Console, Demo-Video, Forenposts.
+- Automatischer Lizenzversand und Update-Prüfung (Sparkle) erst nach der
+  Entscheidung zum Zahlungsanbieter.
+- Anleitungsseiten live: `/macyaesu/ft-991a-mac/` (EN),
+  `/macyaesu/de/ft-991a-mac/` (DE), `/macyaesu/ft-991a-cp2105-macos/` (EN),
+  in der Root-Sitemap und von der Hauptseite verlinkt.
+- Google Search Console eingerichtet (Property `https://www.aiscom.ch/`),
+  Sitemap eingereicht, Indexierung für alle vier Seiten beantragt. Grund für
+  die bisher fehlende Indexierung: Canonical zeigte bis zum Deploy auf eine
+  interne IP.
+- Besucherzählung: Das Access-Log enthält ab 2026-10-06 die echten
+  Client-Adressen; Auswertung frühestens nach ein bis zwei Wochen.
+- Forenposts: Regeln, Moderator-Vorlage und Angebot „10 Gratis-Lizenzen für
+  Tester“ in `FORUM_POSTS.md`.
+
 ## Was bereits erledigt ist
 
 - Landingpage live unter `/macyaesu/`
 - DMG Download funktioniert
 - `robots.txt` live
-- `sitemap.xml` live
+- `sitemap.xml` liegt im Root (`https://www.aiscom.ch/sitemap.xml`) und enthält `/macyaesu/`
 - Open Graph / Twitter Meta live
 - strukturierte Daten fuer `SoftwareApplication` live
 
@@ -29,7 +54,7 @@ MacYaesu soll in der Amateurfunk- und Mac-Nische sichtbar werden, zuerst ueber t
 - Sitemap einreichen:
 
 ```text
-https://www.aiscom.ch/macyaesu/sitemap.xml
+https://www.aiscom.ch/sitemap.xml
 ```
 
 - Hauptseite zur Indexierung anfordern:

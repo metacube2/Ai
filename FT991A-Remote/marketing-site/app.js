@@ -106,7 +106,13 @@ const translations = {
     faq_2_title: "Wie lange kann ich die Demo testen?",
     faq_2_text: "Die Demo läuft 15 Minuten ohne Aktivierung. Danach kann sie mit einem Lizenzschlüssel freigeschaltet werden.",
     faq_3_title: "Läuft die App über den Mac App Store?",
-    faq_3_text: "Nein. Der empfohlene Weg ist der Direktvertrieb als signiertes DMG, damit CAT- und Audio-Funktionen nicht durch Sandbox-Regeln beschnitten werden."
+    faq_3_text: "Nein. MacYaesu wird direkt als DMG vertrieben, damit CAT- und Audio-Funktionen nicht durch Sandbox-Regeln beschnitten werden.",
+    faq_4_title: "Wie öffne ich die App beim ersten Start?",
+    faq_4_text: "MacYaesu ist noch nicht von Apple notarisiert. macOS blockiert deshalb den ersten Start. DMG öffnen, App in „Programme“ ziehen, einmal starten, dann unter Systemeinstellungen → Datenschutz & Sicherheit auf „Trotzdem öffnen“ klicken.",
+    legal_imprint: "Impressum",
+    legal_privacy: "Datenschutz",
+    guide_setup: "Anleitung: FT-991A am Mac",
+    guide_cp2105: "CAT-Fehlersuche (Englisch)"
   },
   en: {
     nav_preview: "Preview",
@@ -215,7 +221,13 @@ const translations = {
     faq_2_title: "How long can I test the demo?",
     faq_2_text: "The demo runs for 15 minutes without activation. After that it can be unlocked with a license key.",
     faq_3_title: "Is the app distributed through the Mac App Store?",
-    faq_3_text: "No. The recommended path is direct distribution as a signed DMG so CAT and audio workflows are not constrained by sandbox rules."
+    faq_3_text: "No. MacYaesu is distributed directly as a DMG so CAT and audio workflows are not constrained by sandbox rules.",
+    faq_4_title: "How do I open the app the first time?",
+    faq_4_text: "MacYaesu is not yet notarized by Apple, so macOS blocks the first launch. Open the DMG, drag the app to Applications, launch it once, then click “Open Anyway” in System Settings → Privacy & Security.",
+    legal_imprint: "Imprint",
+    legal_privacy: "Privacy",
+    guide_setup: "Guide: FT-991A on a Mac",
+    guide_cp2105: "CAT troubleshooting"
   }
 };
 
@@ -279,6 +291,10 @@ function applyLanguage(language) {
     if (value) {
       node.textContent = value;
     }
+  });
+
+  document.querySelectorAll("[data-href-de]").forEach((link) => {
+    link.href = activeLanguage === "de" ? link.dataset.hrefDe : link.dataset.hrefEn;
   });
 
   elements.images.forEach((image) => {
