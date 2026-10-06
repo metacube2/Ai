@@ -8,6 +8,13 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Avg. unit price by year (quantity-weighted)"] = "Precio unitario medio por año (ponderado por cantidad)",
+                ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Lista Min(Netwr CHF/unidad) por artículo/año, evolución como media ponderada por cantidad, filtro de proveedor.",
+                ["Min per article, avg per year"] = "Mín. por artículo, media por año",
+                ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "Precio unitario medio por año (ponderado por cantidad)",
+                ["Hotlist Min(Netwr CHF/Stk) je Artikel/Jahr, Verlauf mengengewichteter Durchschnitt, Lieferantenslicer."] = "Lista Min(Netwr CHF/unidad) por artículo/año, evolución como media ponderada por cantidad, filtro de proveedor.",
+                ["Min je Artikel, Ø je Jahr"] = "Mín. por artículo, media por año",
+                ["Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Mittel über ihre Themen (Punkte je Thema summiert). Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung."] = "Cuanto más cerca del centro, mayor el impacto. Rojo = viento en contra, verde = viento a favor, gris = tranquilo. Tamaño del punto = nuestra cuota (ventas, compras, pedidos abiertos, posición de divisas). Cifra por departamento = media de sus temas (puntos sumados por tema). Clic en un sector filtra, clic en un punto muestra el motivo.",
                 ["Benutzerhandbuch"] = "Manual de usuario",
                 ["Im Handbuch suchen"] = "Buscar en el manual",
                 ["Word-Datei herunterladen"] = "Descargar archivo Word",
@@ -2296,6 +2303,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Avg. unit price by year (quantity-weighted)"] = "Prezzo unitario medio per anno (ponderato per quantità)",
+                ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Hotlist Min(Netwr CHF/unità) per articolo/anno, andamento come media ponderata per quantità, filtro fornitore.",
+                ["Min per article, avg per year"] = "Min per articolo, media per anno",
+                ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "Prezzo unitario medio per anno (ponderato per quantità)",
+                ["Hotlist Min(Netwr CHF/Stk) je Artikel/Jahr, Verlauf mengengewichteter Durchschnitt, Lieferantenslicer."] = "Hotlist Min(Netwr CHF/unità) per articolo/anno, andamento come media ponderata per quantità, filtro fornitore.",
+                ["Min je Artikel, Ø je Jahr"] = "Min per articolo, media per anno",
+                ["Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Mittel über ihre Themen (Punkte je Thema summiert). Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung."] = "Più vicino al centro, più forte l'effetto. Rosso = vento contrario, verde = vento a favore, grigio = calmo. Dimensione del punto = nostra quota (vendite, acquisti, ordini aperti, posizione valutaria). Numero per reparto = media sui suoi temi (punti sommati per tema). Clic su un settore filtra, clic su un punto mostra la motivazione.",
                 ["Benutzerhandbuch"] = "Manuale utente",
                 ["Im Handbuch suchen"] = "Cerca nel manuale",
                 ["Word-Datei herunterladen"] = "Scarica file Word",
@@ -4584,6 +4598,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Avg. unit price by year (quantity-weighted)"] = "वर्ष के अनुसार औसत इकाई मूल्य (मात्रा-भारित)",
+                ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "हॉटलिस्ट Min(Netwr CHF/इकाई) प्रति आइटम/वर्ष, रुझान मात्रा-भारित औसत, आपूर्तिकर्ता फ़िल्टर।",
+                ["Min per article, avg per year"] = "प्रति आइटम न्यूनतम, प्रति वर्ष औसत",
+                ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "वर्ष के अनुसार औसत इकाई मूल्य (मात्रा-भारित)",
+                ["Hotlist Min(Netwr CHF/Stk) je Artikel/Jahr, Verlauf mengengewichteter Durchschnitt, Lieferantenslicer."] = "हॉटलिस्ट Min(Netwr CHF/इकाई) प्रति आइटम/वर्ष, रुझान मात्रा-भारित औसत, आपूर्तिकर्ता फ़िल्टर।",
+                ["Min je Artikel, Ø je Jahr"] = "प्रति आइटम न्यूनतम, प्रति वर्ष औसत",
+                ["Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Mittel über ihre Themen (Punkte je Thema summiert). Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung."] = "केंद्र के जितना पास, प्रभाव उतना अधिक। लाल = प्रतिकूल, हरा = अनुकूल, धूसर = शांत। बिंदु का आकार = हमारा हिस्सा (बिक्री, खरीद, खुले ऑर्डर, मुद्रा स्थिति)। विभाग की संख्या = उसके विषयों का औसत (प्रति विषय अंक जोड़े गए)। सेक्टर पर क्लिक फ़िल्टर करता है, बिंदु पर क्लिक कारण दिखाता है।",
                 ["Benutzerhandbuch"] = "उपयोगकर्ता पुस्तिका",
                 ["Im Handbuch suchen"] = "पुस्तिका में खोजें",
                 ["Word-Datei herunterladen"] = "Word फ़ाइल डाउनलोड करें",
@@ -6872,6 +6893,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Avg. unit price by year (quantity-weighted)"] = "Çmimi mesatar për njësi sipas vitit (i ponderuar me sasi)",
+                ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Lista Min(Netwr CHF/njësi) sipas artikullit/vitit, ecuria si mesatare e ponderuar me sasi, filtër furnitori.",
+                ["Min per article, avg per year"] = "Min për artikull, mesatare për vit",
+                ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "Çmimi mesatar për njësi sipas vitit (i ponderuar me sasi)",
+                ["Hotlist Min(Netwr CHF/Stk) je Artikel/Jahr, Verlauf mengengewichteter Durchschnitt, Lieferantenslicer."] = "Lista Min(Netwr CHF/njësi) sipas artikullit/vitit, ecuria si mesatare e ponderuar me sasi, filtër furnitori.",
+                ["Min je Artikel, Ø je Jahr"] = "Min për artikull, mesatare për vit",
+                ["Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Mittel über ihre Themen (Punkte je Thema summiert). Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung."] = "Sa më afër qendrës, aq më i fortë efekti. E kuqe = erë kundër, e gjelbër = erë në favor, gri = qetë. Madhësia e pikës = pjesa jonë (shitje, blerje, porosi të hapura, pozicion valutor). Numri për departament = mesatarja e temave të tij (pikët e mbledhura për temë). Klikimi në sektor filtron, klikimi në pikë tregon arsyen.",
                 ["Benutzerhandbuch"] = "Manuali i përdoruesit",
                 ["Im Handbuch suchen"] = "Kërko në manual",
                 ["Word-Datei herunterladen"] = "Shkarko skedarin Word",
@@ -9160,6 +9188,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Avg. unit price by year (quantity-weighted)"] = "Yıllara göre ortalama birim fiyat (miktar ağırlıklı)",
+                ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Sıcak liste Min(Netwr CHF/birim) ürün/yıl bazında, seyir miktar ağırlıklı ortalama, tedarikçi filtresi.",
+                ["Min per article, avg per year"] = "Ürün başına min, yıl başına ortalama",
+                ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "Yıllara göre ortalama birim fiyat (miktar ağırlıklı)",
+                ["Hotlist Min(Netwr CHF/Stk) je Artikel/Jahr, Verlauf mengengewichteter Durchschnitt, Lieferantenslicer."] = "Sıcak liste Min(Netwr CHF/birim) ürün/yıl bazında, seyir miktar ağırlıklı ortalama, tedarikçi filtresi.",
+                ["Min je Artikel, Ø je Jahr"] = "Ürün başına min, yıl başına ortalama",
+                ["Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Mittel über ihre Themen (Punkte je Thema summiert). Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung."] = "Merkeze ne kadar yakınsa etki o kadar güçlü. Kırmızı = ters rüzgar, yeşil = arka rüzgar, gri = sakin. Nokta boyutu = payımız (satış, satın alma, açık siparişler, döviz pozisyonu). Departman başına sayı = konularının ortalaması (konu başına puanlar toplanır). Sektöre tıklamak filtreler, noktaya tıklamak gerekçeyi gösterir.",
                 ["Benutzerhandbuch"] = "Kullanıcı kılavuzu",
                 ["Im Handbuch suchen"] = "Kılavuzda ara",
                 ["Word-Datei herunterladen"] = "Word dosyasını indir",
@@ -11448,6 +11483,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Avg. unit price by year (quantity-weighted)"] = "DIS Hoch Doch Huch motlh (ghom'a' ngI')",
+                ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Hotlist Min(Netwr CHF/Huch) Doch/DIS, motlh ghom'a' ngI', ngevwI' wIv.",
+                ["Min per article, avg per year"] = "Doch Hoch machqu', DIS Hoch motlh",
+                ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "DIS Hoch Doch Huch motlh (ghom'a' ngI')",
+                ["Hotlist Min(Netwr CHF/Stk) je Artikel/Jahr, Verlauf mengengewichteter Durchschnitt, Lieferantenslicer."] = "Hotlist Min(Netwr CHF/Huch) Doch/DIS, motlh ghom'a' ngI', ngevwI' wIv.",
+                ["Min je Artikel, Ø je Jahr"] = "Doch Hoch machqu', DIS Hoch motlh",
+                ["Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Mittel über ihre Themen (Punkte je Thema summiert). Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung."] = "botlhDaq Sum, HoS law'. Doq = jev, SuD = QaH, qIjbe' = jot. ngoS tIn = maH chunmey (Huch, je', ra'mey, Huch Dop). yaHmey mI' = Dochmey motlh. wIv vay' 'e' yIwIv, meq yIlegh.",
                 ["Benutzerhandbuch"] = "lo'wI' paq",
                 ["Im Handbuch suchen"] = "paq Damej",
                 ["Word-Datei herunterladen"] = "Word De' yIlav",

@@ -29,7 +29,7 @@ Für jedes Thema wird ein Signal zwischen minus 1 (schlecht für uns) und plus 1
 - **Finance:** je Fremdwährung die Nettoposition (Verkauf minus Einkauf in dieser Währung) und die Kursbewegung gegen CHF in 90 Tagen; dazu der Finanzstress-Index mit festem Gewicht.
 - **HR:** Umsatzanteil der Gesellschaft im Standortland als Grössenmass.
 
-Die Zahl je Abteilung fasst die Punkte der Themen der Abteilung zusammen: Je Thema (Land, Rohstoff, Währung) werden die Wirkungen summiert, anschliessend wird über die Themen der Abteilung gemittelt. So entsteht ein Wert zwischen minus 100 und plus 100. Hinweis: Die Beschriftung auf der Seite spricht von „Summe der Punkte“; die Rechnung im Programm mittelt über die Themen. Dieser Widerspruch ist im Handbuch nicht geklärt.
+Die Zahl je Abteilung fasst die Punkte der Themen der Abteilung zusammen: Je Thema (Land, Rohstoff, Währung) werden die Wirkungen summiert, anschliessend wird über die Themen der Abteilung gemittelt. So entsteht ein Wert zwischen minus 100 und plus 100.
 
 ### Einsatz im Arbeitsalltag
 

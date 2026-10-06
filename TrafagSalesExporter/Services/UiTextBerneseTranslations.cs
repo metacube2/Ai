@@ -10,6 +10,13 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Avg. unit price by year (quantity-weighted)"] = "Avg. unit price by year (quantity-weighted)",
+            ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer.",
+            ["Min per article, avg per year"] = "Min per article, avg per year",
+            ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "Ø Stückpriis nach Jahr (mängegwichtet)",
+            ["Hotlist Min(Netwr CHF/Stk) je Artikel/Jahr, Verlauf mengengewichteter Durchschnitt, Lieferantenslicer."] = "Hotlist Min(Netwr CHF/Stk) pro Artikel/Jahr, Verlouf mängegwichtete Durchschnitt, Lieferantefilter.",
+            ["Min je Artikel, Ø je Jahr"] = "Min pro Artikel, Ø pro Jahr",
+            ["Je näher an der Mitte, desto stärker die Wirkung. Rot = Gegenwind, grün = Rückenwind, grau = ruhig. Punktgrösse = unser Anteil (Umsatz, Einkauf, offene Bestellungen, Währungsposition). Zahl je Abteilung = Mittel über ihre Themen (Punkte je Thema summiert). Klick auf einen Sektor filtert, Klick auf einen Punkt zeigt die Begründung."] = "Je nöcher bi dr Mitti, desto stercher d Wirkig. Rot = Gägewind, grüen = Rückewind, grau = ruehig. Punktgrössi = üse Anteil (Umsatz, Ihchouf, offeni Bstelige, Währigsposition). Zahl pro Abteilig = Mittel über iri Theme (Pünkt pro Thema zämezellt). Klick uf e Sektor filteret, Klick uf e Punkt zeigt d Begründig.",
             ["Benutzerhandbuch"] = "Benutzerhandbuech",
             ["Im Handbuch suchen"] = "Im Handbuech sueche",
             ["Word-Datei herunterladen"] = "Word-Datei abelade",

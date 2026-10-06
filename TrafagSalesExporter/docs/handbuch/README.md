@@ -37,15 +37,10 @@ Titelseite und in der Kopfzeile, wie der Cockpit-Skin seit 2026-10-01.
 
 Die Kapitel sind am 2026-10-06 aus Code (Razor-Seiten, Services) und Fachdoku erarbeitet
 worden, Stand Commit `3ad0dae`. Nicht live gepruefte Aussagen sind im Text als solche markiert.
-Bei der Erarbeitung aufgefallen und nicht behoben:
-
-- Einkauf, Preisentwicklung: Titel und Kennzahl sagen „Min. Stueckpreis", gerechnet wird der
-  mengengewichtete Durchschnitt (`PurchasingDashboardService`, um Zeile 650). Im Kapitel als
-  Fallstrick beschrieben.
-- Weltlage Radar: Seitentext sagt „Summe der Punkte", der Code mittelt seit 2026-10-05 ueber
-  die Themen. Im Kapitel nach Code beschrieben.
-- Netzwerk: einige Beschriftungen sagen noch 30 Tage aktiv, der Code rechnet seit 2026-10-05
-  mit 44 Tagen.
+Bei der Erarbeitung aufgefallen und am 2026-10-06 behoben (*Erledigt 2026-10-06*): Einkauf Preisentwicklung
+heisst jetzt „Ø Stueckpreis nach Jahr (mengengewichtet)", die Hotlist bleibt das Minimum je Artikel und Jahr;
+Weltlage-Radar sagt jetzt „Mittel ueber ihre Themen"; die 30-Tage-Angabe fuer aktive Computer ist in Code-Kommentar
+und `NETZWERK_2026-10-02.md` als ueberholt (44 Tage) markiert, die Oberflaeche sagte schon 44.
 
 Bei neuen Seiten oder geaenderten Rechnungen das betroffene Kapitel nachfuehren und die
 Word-Datei neu erzeugen.

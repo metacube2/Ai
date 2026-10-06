@@ -379,7 +379,7 @@ Der Stückpreis ist der mengengewichtete Durchschnitt in CHF je Jahr: Summe der 
 
 ### Grenzen und Fallstricke
 
-- Das Diagramm ist mit «Min. Stückpreis nach Jahr» beschriftet, gerechnet wird aber der mengengewichtete Durchschnitt. Der Titel stammt aus der Anfangsfassung, die nach Power BI das Minimum zeigte, und ist überholt. Auch Hinweise wie «Min(Netwr CHF/Stk)» in den Kennzahlen meinen heute den Durchschnitt.
+- Das Diagramm zeigt den **mengengewichteten Durchschnitt** je Jahr («Ø Stückpreis nach Jahr»), die Hotlist dagegen das **Minimum** je Artikel und Jahr wie in Power BI. Beide Zahlen sind also nicht direkt vergleichbar. Ein steigender Durchschnitt kann auch daher kommen, dass mehr teure Artikel bestellt wurden (Mix), nicht nur von Preiserhöhungen.
 - Ein Durchschnitt über alle Artikel mischt sehr unterschiedliche Teile. Die Aussage liegt in der Veränderung, nicht im Niveau.
 
 ## Ideen: Spend-Konzentration

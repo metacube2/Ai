@@ -122,7 +122,7 @@ public sealed class AdComputerService
     }
 
     /// <summary>
-    /// Loest die DNS-Namen der aktiven Computer (Anmeldung in den letzten 30 Tagen) auf. Nur Anfragen
+    /// Loest die DNS-Namen der aktiven Computer (Anmeldung in den letzten 44 Tagen, 30 plus Replikationsverzoegerung) auf. Nur Anfragen
     /// an den DNS-Server, kein Zugriff auf die Geraete. Hoechstens 16 gleichzeitig, je 3 s.
     /// </summary>
     public async Task<AdDnsResult> ResolveDnsAsync()

@@ -78,7 +78,7 @@ internal static class PurchasingKlingonOverrides
             ["Pflichtfelder und Nullwerte im Einkauf-Cache werden als Qualitaetsampel gezaehlt."] = "je'meH De' polDaq yotlhmey poQlu'bogh pagh Huchmey je toblu'; De' QaQghach 'anglu'.",
             ["Echte Analyse aus dem Einkauf-Cache."] = "je'meH De' polDaqvo' poj teH.",
             ["Offener Wert nach Faelligkeit"] = "rInmeH poH Hoch Huch rInbe'",
-            ["Min. Stueckpreis nach Jahr"] = "DIS Hoch Doch Huch machqu'",
+            ["Ø Stueckpreis nach Jahr (mengengewichtet)"] = "DIS Hoch Doch Huch motlh (ghom'a' ngI')",
             ["Top Lieferanten Spend"] = "ngevwI' Huch lo' law' law'",
             ["Datenqualitaetsfehler"] = "De' QaQghach Qaghmey",
             ["Beschaffungsregion"] = "je'meH mIch",

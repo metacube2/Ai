@@ -141,7 +141,7 @@ internal static class PurchasingUiTextCatalog
         ("Pflichtfelder und Nullwerte im Einkauf-Cache werden als Qualitaetsampel gezaehlt.", "Required fields and zero values in the purchasing cache are counted as quality indicators."),
         ("Echte Analyse aus dem Einkauf-Cache.", "Real analysis from the purchasing cache."),
         ("Offener Wert nach Faelligkeit", "Open value by due date"),
-        ("Min. Stueckpreis nach Jahr", "Min. unit price by year"),
+        ("Ø Stueckpreis nach Jahr (mengengewichtet)", "Avg. unit price by year (quantity-weighted)"),
         ("Top Lieferanten Spend", "Top supplier spend"),
         ("Datenqualitaetsfehler", "Data quality issues"),
         ("Beschaffungsregion", "Procurement region"),
