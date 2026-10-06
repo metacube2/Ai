@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Weltlage unter Finance Cockpit, 2026-10-06
+
+- Weltlage ist keine Hauptgruppe mehr, sondern liegt unter Finance Cockpit und verlangt das Finance-Passwort.
+  Auftraggeber ist Ingo, Rückfragen landeten bisher bei Andreas.
+
 ## Benutzerhandbuch, 2026-10-06, produktiv 10:16
 
 - Neuer Reiter **Benutzerhandbuch** auf oberster Ebene (`/handbuch`, nach Home): alle Module aus betriebswirtschaftlicher

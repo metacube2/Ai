@@ -54,7 +54,9 @@
             "finance-rules" or
             "settings" or
             "logs" or
-            "source-viewer";
+            "source-viewer"
+            // Weltlage seit 2026-10-06 unter Finance Cockpit und hinter dem Finance-Passwort.
+            || path == "weltlage" || path.StartsWith("weltlage/");
         // Reiter Verkauf bewusst ohne Freischaltung (Entscheid Ingo 2026-10-02, docs/VERKAUF_2026-10-02.md).
     }
 }

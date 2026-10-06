@@ -8,6 +8,30 @@ namespace TrafagSalesExporter.Tests;
 
 public class NavigationMenuSeedTests
 {
+    // 2026-10-06: Weltlage liegt unter Finance Cockpit; alte Installationen mit Weltlage auf oberster Ebene werden verschoben.
+    [Fact]
+    public void SeedDefaults_Verschiebt_Weltlage_Unter_Finance()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using var db = new AppDbContext(options);
+        db.Database.EnsureCreated();
+        db.NavigationMenuItems.Add(new NavigationMenuItem
+        {
+            Key = "world", ParentKey = null, TitleDe = "Weltlage", TitleEn = "World situation", Icon = "TravelExplore",
+            ItemType = NavigationMenuItemTypes.Group, SortOrder = 38
+        });
+        db.SaveChanges();
+
+        new DatabaseSeedService().SeedDefaults(db);
+
+        var world = db.NavigationMenuItems.Single(x => x.Key == "world");
+        Assert.Equal("finance", world.ParentKey);
+        Assert.Equal(60, world.SortOrder);
+        Assert.Equal("world", db.NavigationMenuItems.Single(x => x.Key == "world-radar").ParentKey);
+    }
+
     // 2026-10-06: Benutzerhandbuch, Journal Import, Marktsegmente und Projekte zeigten einen grauen Kreis,
     // weil ihr Seed-Icon im Resolver fehlte.
     [Fact]

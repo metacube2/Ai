@@ -257,6 +257,16 @@ public class DatabaseSeedService : IDatabaseSeedService
             changed = true;
         }
 
+        // Weltlage 2026-10-06: bestehende Installationen von der obersten Ebene unter Finance Cockpit
+        // verschieben, aber nur solange die alte Standardlage (ohne Eltern) noch vorliegt.
+        var world = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "world");
+        if (world is not null && string.IsNullOrWhiteSpace(world.ParentKey))
+        {
+            world.ParentKey = "finance";
+            world.SortOrder = 60;
+            changed = true;
+        }
+
         if (changed)
             db.SaveChanges();
     }
@@ -376,7 +386,9 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("network-report", "network", "Bericht", "Report", "Summarize", "netzwerk/bericht", 53, "All"),
         Link("network-workplaces", "network", "Arbeitsplaetze", "Workplaces", "Wifi", "netzwerk/arbeitsplaetze", 50, "All"),
         // Weltlage 2026-10-05 (Wunsch Ingo, erster Wurf): externe Quellen gegen unser Geschaeft, offen fuer alle, Doku docs/WELTLAGE_2026-10-05.md.
-        Group("world", null, "Weltlage", "World situation", "TravelExplore", 38),
+        // Weltlage seit 2026-10-06 unter Finance Cockpit und hinter dem Finance-Passwort (Wunsch Ingo:
+        // Rueckfragen landeten bei Andreas, der nicht Auftraggeber war).
+        Group("world", "finance", "Weltlage", "World situation", "TravelExplore", 60),
         Link("world-radar", "world", "Radar", "Radar", "Radar", "weltlage", 10, "All"),
         Link("world-countries", "world", "Laender", "Countries", "Public", "weltlage/laender", 20, "All"),
         Link("world-markets", "world", "Rohstoffe und Waehrungen", "Commodities and currencies", "ShowChart", "weltlage/maerkte", 30, "All"),
