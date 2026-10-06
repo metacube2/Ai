@@ -117,7 +117,7 @@
         },
         "collection": {
           "title": "Erhebung und Verarbeitung von Daten",
-          "text": "Beim Besuch dieser Website werden automatisch Informationen allgemeiner Natur erfasst (Server-Logfiles). Diese beinhalten Art des Webbrowsers, verwendetes Betriebssystem, Referrer URL und ähnliche Informationen."
+          "text": "Beim Besuch dieser Website speichert der Server automatisch Protokolldaten: IP-Adresse, Zeitpunkt, aufgerufene Seite, Referrer-URL, Browser und Betriebssystem. Sie dienen dem sicheren Betrieb und einer einfachen Besucherstatistik ohne Tracking-Dienste und werden nach 14 Tagen gelöscht."
         },
         "contact_form": {
           "title": "Kontaktformular",
@@ -126,6 +126,10 @@
         "upload": {
           "title": "3D-Datei Upload",
           "text": "Hochgeladene 3D-Dateien werden zur Angebotserstellung verwendet und nach Abschluss des Projekts gelöscht, sofern nicht anders vereinbart."
+        },
+        "software": {
+          "title": "Softwarekauf und Lizenz",
+          "text": "Beim Kauf von Software (MacYaesu, Kamera-Import) wird die Zahlung über PayPal (Europe) S.à r.l. et Cie, S.C.A., Luxemburg, abgewickelt; dabei gilt zusätzlich die Datenschutzerklärung von PayPal. Ich erhalte von PayPal Name, E-Mail-Adresse, Betrag und Zahlungsstatus sowie die von Ihnen angegebene Lizenz-E-Mail. Diese Angaben verwende ich, um den Lizenzschlüssel zu erzeugen und zuzustellen und für Support. Sie werden aufbewahrt, solange es die gesetzlichen Aufbewahrungspflichten für Geschäftsunterlagen verlangen. Die Apps selbst übertragen keine Nutzungsdaten; die Lizenz wird offline auf Ihrem Mac geprüft."
         },
         "rights": {
           "title": "Ihre Rechte",

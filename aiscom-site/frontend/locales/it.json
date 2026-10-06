@@ -117,7 +117,7 @@
         },
         "collection": {
           "title": "Raccolta e trattamento dei dati",
-          "text": "Visitando questo sito, vengono raccolte automaticamente informazioni generali (file di log del server). Questi includono tipo di browser, sistema operativo, URL di riferimento e informazioni simili."
+          "text": "Quando visita questo sito, il server memorizza automaticamente dati di log: indirizzo IP, ora, pagina richiesta, URL di provenienza, browser e sistema operativo. Servono al funzionamento sicuro e a una semplice statistica delle visite senza servizi di tracciamento e vengono cancellati dopo 14 giorni."
         },
         "contact_form": {
           "title": "Modulo di contatto",
@@ -126,6 +126,10 @@
         "upload": {
           "title": "Upload file 3D",
           "text": "I file 3D caricati vengono utilizzati per la preparazione del preventivo e cancellati dopo il completamento del progetto, salvo diverso accordo."
+        },
+        "software": {
+          "title": "Acquisto di software e licenza",
+          "text": "Per l'acquisto di software (MacYaesu, Kamera-Import) il pagamento è gestito da PayPal (Europe) S.à r.l. et Cie, S.C.A., Lussemburgo; si applica anche l'informativa sulla privacy di PayPal. Da PayPal ricevo nome, indirizzo e-mail, importo e stato del pagamento, oltre all'e-mail di licenza indicata. Uso questi dati per generare e inviare la chiave di licenza e per l'assistenza. Sono conservati per il tempo richiesto dagli obblighi legali di conservazione dei documenti commerciali. Le app non trasmettono dati di utilizzo; la licenza viene verificata offline sul Mac."
         },
         "rights": {
           "title": "I tuoi diritti",

@@ -60,6 +60,14 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
               <p className="text-gray-400">{dictionary.legal.privacy.sections.upload.text}</p>
             </section>
 
+            {/* Software purchase */}
+            <section>
+              <h2 className="text-xl font-semibold text-white mb-4">
+                {dictionary.legal.privacy.sections.software.title}
+              </h2>
+              <p className="text-gray-400">{dictionary.legal.privacy.sections.software.text}</p>
+            </section>
+
             {/* Your Rights */}
             <section>
               <h2 className="text-xl font-semibold text-white mb-4">

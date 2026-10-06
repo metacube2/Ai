@@ -117,7 +117,7 @@
         },
         "collection": {
           "title": "Data Collection and Processing",
-          "text": "When visiting this website, general information is automatically collected (server log files). This includes browser type, operating system, referrer URL, and similar information."
+          "text": "When you visit this website, the server automatically stores log data: IP address, time, page requested, referrer URL, browser and operating system. It is used for secure operation and simple visitor statistics without tracking services and is deleted after 14 days."
         },
         "contact_form": {
           "title": "Contact Form",
@@ -126,6 +126,10 @@
         "upload": {
           "title": "3D File Upload",
           "text": "Uploaded 3D files are used for quote preparation and deleted after project completion unless otherwise agreed."
+        },
+        "software": {
+          "title": "Software purchase and licence",
+          "text": "When you buy software (MacYaesu, Kamera-Import), payment is processed by PayPal (Europe) S.à r.l. et Cie, S.C.A., Luxembourg; PayPal's privacy policy also applies. PayPal provides me with your name, email address, amount and payment status, plus the licence email you entered. I use this data to generate and deliver the licence key and for support. It is kept as long as statutory retention rules for business records require. The apps themselves transmit no usage data; the licence is checked offline on your Mac."
         },
         "rights": {
           "title": "Your Rights",
