@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Finance Details mit Standardkosten in CHF, 2026-10-06
+
+- Sales_All, Blatt Finance Details: Standardkosten je Stück in CHF, Kostenbasis und Marge in CHF aus der Gruppenmarge,
+  Kostenquelle, Status und Kostenstand (historisch/aktuell). Wunsch Andreas aus dem Gespräch vom 06.10.
+
 ## Weltlage unter Finance Cockpit, 2026-10-06, produktiv 14:36
 
 - Weltlage ist keine Hauptgruppe mehr, sondern liegt unter Finance Cockpit und verlangt das Finance-Passwort.

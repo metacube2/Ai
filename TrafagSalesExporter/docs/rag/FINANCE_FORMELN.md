@@ -241,3 +241,20 @@ Fachgrundlage Kunden-Marker: `docs/FINANCE_ENTSCHEIDE.md` Abschnitt „Intercomp
 - `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` — Formeln je Land im Detail
 - `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` — Gesamt-Datenfluss im Detail
 - `docs/FINANCE_IT_VORGEHEN_2026-05-18.md` / `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md` — Land-Sonderfaelle
+
+## Standardkosten in CHF im Blatt Finance Details (Sales_All), 2026-10-06
+
+Wunsch Andreas im Gespraech 2026-10-06: Umsatz, Standardkosten und Marge je Artikel in einer Waehrung vergleichen. Finance Details (Sales_All) hat dafuer neue Spalten AH bis AP:
+
+| Spalte | Inhalt |
+|---|---|
+| Standard Cost, Standard Cost Currency | Stueckkosten der Zeile wie importiert |
+| Standard Cost CHF Rate, Standard Cost CHF (per unit) | Jahreskurs der Kostenwaehrung, gleiche Kursquelle wie `Net Sales CHF` |
+| Cost Basis CHF, Margin CHF | Kostenbasis aus der Gruppenmarge (Kaskade, eine Stufe), mit dem Kurs der Verkaufswaehrung; leer, wenn die Kostenbasis nicht bekannt ist |
+| Cost Source, Margin Status | welche Stufe gegriffen hat (TR AG / TR IT / TR IN / Beleg / lokal) und Status wie in Gruppenmarge Details |
+| Cost Timing | historisch oder aktuell, siehe unten |
+
+**Historisch oder aktuell (Frage Andreas):** Kosten aus der Verkaufszeile und lokale Standardkosten sind der Wert im Beleg (historisch); CH/AT nehmen WAVWR zum Warenausgang (historisch), bei rund 12 % ohne Lieferbezug STPRS (aktuell), je Zeile nicht unterscheidbar. **Konzernkosten** (TR AG MBEW-STPRS, TR IT / TR IN juengster StockPrice) sind der Stand beim letzten Abgleich und werden **nicht taeglich historisiert**; eine Abweichung je Artikel bei Konzernkosten kann also aus einer seither geaenderten Kostenbasis stammen.
+
+**Eine Stufe:** Die Kaskade bricht nach der liefernden Gesellschaft ab (Schnitt 2026-09-09). Ein Thermostat Indien -> Italien -> Deutschland bekommt in DE die Kosten von TR IT (Italiens Einstandspreis, Verrechnungspreis), nicht Indiens Herstellkosten. Genau diesen Fall will Andreas mit Beispielen pruefen.
+

@@ -463,7 +463,8 @@ public class ExcelExportService : IExcelExportService
                     contribution.ContributionMargin,
                     contribution.ContributionMarginPercent,
                     row.Record.SalesType ?? string.Empty,
-                    row.Record.GroupMaterialNumber ?? string.Empty);
+                    row.Record.GroupMaterialNumber ?? string.Empty,
+                    row.Record);
             })
             .OrderBy(row => GroupMarginStatuses.Sort(row.Status))
             .ThenBy(row => row.Year)
@@ -1065,9 +1066,11 @@ public class ExcelExportService : IExcelExportService
         // Klassifikation, standen bisher aber in keinem Blatt. Ohne sie ist die indische
         // Zeile im Nachweis nicht nachvollziehbar.
         string SalesType,
-        string GroupMaterialNumber);
+        string GroupMaterialNumber,
+        // Ursprungszeile, damit Finance Details (Sales_All) die Kostenbasis je Zeile zuordnen kann (2026-10-06).
+        SalesRecord? Source = null);
 
-    private static void WriteWorkbook(
+    internal static void WriteWorkbook(
         string fullPath,
         List<SalesRecord> records,
         bool includeFinanceHelpSheet,
@@ -1245,9 +1248,9 @@ public class ExcelExportService : IExcelExportService
         if (includeFinanceHelpSheet)
         {
             AddFinanceSummarySheet(workbook, records, financeRules);
-            AddFinanceDetailsSheet(workbook, records, financeRules, referenceByMaterial, resolveChfRate);
             // Gruppenmarge auch im zentralen Sales_All (nicht nur im Nachweis), damit Andreas
-            // Umsatz, Kostenbasis und Marge in derselben Datei gegenpruefen kann.
+            // Umsatz, Kostenbasis und Marge in derselben Datei gegenpruefen kann. Seit 2026-10-06
+            // vor Finance Details gerechnet, weil dort die Kosten in CHF je Zeile stehen.
             var groupMarginRows = BuildGroupMarginProofRows(
                 BuildFinanceProofRows(records, financeRules),
                 groupMarginCostCurrencyMode,
@@ -1258,12 +1261,39 @@ public class ExcelExportService : IExcelExportService
                 internalSupplierCostSourceMode,
                 foreignProcurementMaterialKeys,
                 marcForeignProcurementMode);
+            var marginBySource = new Dictionary<SalesRecord, GroupMarginProofRow>(ReferenceEqualityComparer.Instance);
+            foreach (var marginRow in groupMarginRows)
+                if (marginRow.Source is not null)
+                    marginBySource.TryAdd(marginRow.Source, marginRow);
+            AddFinanceDetailsSheet(workbook, records, financeRules, referenceByMaterial, resolveChfRate, marginBySource);
             AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
             AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
             AddFinanceHelpSheet(workbook);
         }
 
         workbook.SaveAs(fullPath);
+    }
+
+    /// <summary>
+    /// Ob die Kosten einer Zeile historisch (zum Beleg eingefroren) oder ein aktueller Stammdatenstand sind
+    /// (Frage Andreas 2026-10-06: Abweichung aus Fehler oder aus Historie?). Konzernkosten (TR AG STPRS,
+    /// TR IT / TR IN juengster StockPrice) sind der aktuelle Stand beim letzten Abgleich und werden nicht je
+    /// Tag historisiert; Kosten aus der Verkaufszeile sind der Wert des Belegs. CH/AT: WAVWR zum
+    /// Warenausgang (historisch), bei rund 12 % ohne Lieferbezug STPRS (aktuell), je Zeile nicht unterscheidbar.
+    /// </summary>
+    internal static string CostTiming(string costSource, string countryKey)
+    {
+        if (costSource == GroupMarginStatuses.GroupCostMissingSource)
+            return string.Empty;
+        if (costSource.StartsWith("Konzernkosten", StringComparison.OrdinalIgnoreCase))
+            return "aktuell (Stammdatenstand beim letzten Abgleich)";
+        if (costSource == "Kosten aus Verkaufszeile")
+            return "historisch (Wert im Beleg)";
+        if (costSource is "Standardkosten der lokalen Gesellschaft" or "Interner Standardpreis")
+            return countryKey.Trim().ToUpperInvariant() is "CH" or "AT"
+                ? "historisch (Warenausgang), ohne Lieferbezug aktuell (STPRS)"
+                : "historisch (Wert im Beleg)";
+        return string.Empty;
     }
 
     private static void AddFinanceSummarySheet(XLWorkbook workbook, List<SalesRecord> records, IReadOnlyList<FinanceRule> financeRules)
@@ -1347,7 +1377,8 @@ public class ExcelExportService : IExcelExportService
         List<SalesRecord> records,
         IReadOnlyList<FinanceRule> financeRules,
         IReadOnlyDictionary<string, SalesRecord> referenceByMaterial,
-        Func<string, int, decimal?>? resolveChfRate)
+        Func<string, int, decimal?>? resolveChfRate,
+        IReadOnlyDictionary<SalesRecord, GroupMarginProofRow>? marginBySource = null)
     {
         var ws = workbook.Worksheets.Add("Finance Details");
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
@@ -1394,7 +1425,18 @@ public class ExcelExportService : IExcelExportService
             "Product Division Code",
             "Product Division Text",
             "CHF Rate",
-            "Net Sales CHF"
+            "Net Sales CHF",
+            // Standardkosten in CHF (Wunsch Andreas 2026-10-06): gleicher Jahreskurs wie Net Sales CHF,
+            // damit Umsatz, Kosten und Marge je Artikel in einer Waehrung vergleichbar sind.
+            "Standard Cost",
+            "Standard Cost Currency",
+            "Standard Cost CHF Rate",
+            "Standard Cost CHF (per unit)",
+            "Cost Basis CHF",
+            "Margin CHF",
+            "Cost Source",
+            "Margin Status",
+            "Cost Timing"
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1463,6 +1505,35 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(rowIndex, 33).Value = netSalesActual * chfRate.Value;
             }
 
+            ws.Cell(rowIndex, 34).Value = record.StandardCost;
+            ws.Cell(rowIndex, 35).Value = record.StandardCostCurrency;
+            var costCurrency = string.IsNullOrWhiteSpace(record.StandardCostCurrency) ? financeCurrency : record.StandardCostCurrency.Trim().ToUpperInvariant();
+            var costRateKey = (costCurrency, financeDate.Year);
+            if (!chfRateCache.TryGetValue(costRateKey, out var costChfRate))
+            {
+                costChfRate = resolveChfRate?.Invoke(costCurrency, financeDate.Year);
+                chfRateCache[costRateKey] = costChfRate;
+            }
+            if (costChfRate.HasValue && record.StandardCost != 0m)
+            {
+                ws.Cell(rowIndex, 36).Value = costChfRate.Value;
+                ws.Cell(rowIndex, 37).Value = record.StandardCost * costChfRate.Value;
+            }
+
+            // Kostenbasis aus der Gruppenmarge (Kaskade TR AG / TR IT / TR IN / lokal), bereits in die
+            // Verkaufswaehrung umgerechnet; mit dem Kurs der Verkaufswaehrung in CHF.
+            if (marginBySource is not null && marginBySource.TryGetValue(record, out var margin))
+            {
+                if (chfRate.HasValue && GroupMarginStatuses.IsCostBasisKnown(margin.Status))
+                {
+                    ws.Cell(rowIndex, 38).Value = margin.CostBasisValue * chfRate.Value;
+                    ws.Cell(rowIndex, 39).Value = (netSalesActual - margin.CostBasisValue) * chfRate.Value;
+                }
+                ws.Cell(rowIndex, 40).Value = margin.CostSource;
+                ws.Cell(rowIndex, 41).Value = margin.Status;
+                ws.Cell(rowIndex, 42).Value = CostTiming(margin.CostSource, countryKey);
+            }
+
             rowIndex++;
         }
 
@@ -1472,6 +1543,9 @@ public class ExcelExportService : IExcelExportService
         ws.Column(28).Style.NumberFormat.Format = "#,##0.00";
         ws.Column(32).Style.NumberFormat.Format = "#,##0.0000";
         ws.Column(33).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(34).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(36).Style.NumberFormat.Format = "#,##0.0000";
+        ws.Columns(37, 39).Style.NumberFormat.Format = "#,##0.00";
         ws.Columns().AdjustToContents();
     }
 
@@ -1548,7 +1622,7 @@ public class ExcelExportService : IExcelExportService
         var whereRows = new (string Sheet, string Where, string Meaning)[]
         {
             ("Sales", "Spalte X 'Standard cost' / Y 'Standard Cost Currency'", "Rohwert je Zeile, so wie er aus der Quelle importiert wurde (Stueckpreis). Reine Anzeige, keine Berechnung."),
-            ("Finance Details", "-", "Enthaelt KEINE Standardkosten-Spalte, nur den Finance-Nettowert bis 'Net Sales CHF'. Fuer den Soll/Ist-Abgleich irrelevant."),
+            ("Finance Details", "Spalten AH-AP (seit 2026-10-06)", "Standard Cost und Waehrung je Stueck, umgerechnet mit dem Jahreskurs wie Net Sales CHF ('Standard Cost CHF (per unit)'); 'Cost Basis CHF' und 'Margin CHF' aus der Gruppenmarge (Kaskade, eine Stufe: Kosten der liefernden Gesellschaft); 'Cost Source' zeigt die Stufe, 'Cost Timing' ob historisch (Beleg/Warenausgang) oder aktueller Stammdatenstand (Konzernkosten)."),
             ("Gruppenmarge Details", "Spalte P 'Unit Cost' bis T 'Margin %', neu W-Z fuer den Deckungsbeitrag", "Hier steht die eigentliche Rechnung: Stueckpreis, daraus abgeleitete Kostenbasis (Menge x Preis, vorzeichenbewusst), Marge/% und der vorbereitete Deckungsbeitrag."),
             ("Gruppenmarge Summary", "Spalte E 'Known Cost Basis' ff.", "Aggregiert die Kostenbasis/Marge aus Gruppenmarge Details je Jahr/Land/TSC/Waehrung."),
             ("Finance Filter Hilfe", "dieses Blatt", "Erklaert Bedeutung und Berechnung jeder Spalte in Textform (Abschnitte unten).")

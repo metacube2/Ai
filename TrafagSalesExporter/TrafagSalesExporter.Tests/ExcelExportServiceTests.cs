@@ -432,6 +432,59 @@ public class ExcelExportServiceTests
         }
     }
 
+    // Wunsch Andreas 2026-10-06: Standardkosten, Kostenbasis und Marge in CHF direkt in Finance Details.
+    [Fact]
+    public void CreateConsolidatedExcelFile_FinanceDetails_Zeigt_Kosten_In_Chf()
+    {
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-export-{Guid.NewGuid():N}");
+        var service = new ExcelExportService();
+        var records = new List<SalesRecord>
+        {
+            new()
+            {
+                ExtractionDate = new DateTime(2026, 6, 17), PostingDate = new DateTime(2025, 12, 31), InvoiceDate = new DateTime(2025, 12, 31),
+                Tsc = "TRCH", Land = "CH", InvoiceNumber = "INV-1", PositionOnInvoice = 1, Material = "000000000000000123",
+                Name = "Pressure transmitter", Quantity = 2m, SupplierName = "External Supplier", SupplierCountry = "DE",
+                CustomerName = "Customer AG", CustomerCountry = "CH", SalesPriceValue = 100m, SalesCurrency = "CHF",
+                CompanyCurrency = "CHF", StandardCost = 10m, StandardCostCurrency = "CHF"
+            }
+        };
+
+        try
+        {
+            Directory.CreateDirectory(outputDirectory);
+            var path = Path.Combine(outputDirectory, "Sales_All_test.xlsx");
+            ExcelExportService.WriteWorkbook(path, records, includeFinanceHelpSheet: true, FinanceRuleEngine.CreateDefaultRules(),
+                (currency, _) => currency == "CHF" ? 1m : null);
+
+            using var workbook = new XLWorkbook(path);
+            var details = workbook.Worksheet("Finance Details");
+            Assert.Equal("Standard Cost CHF (per unit)", details.Cell(4, 37).GetString());
+            Assert.Equal("Cost Timing", details.Cell(4, 42).GetString());
+            Assert.Equal(100m, details.Cell(5, 33).GetValue<decimal>());
+            Assert.Equal(10m, details.Cell(5, 37).GetValue<decimal>());
+            Assert.Equal(20m, details.Cell(5, 38).GetValue<decimal>());
+            Assert.Equal(80m, details.Cell(5, 39).GetValue<decimal>());
+            Assert.Equal("Interner Standardpreis", details.Cell(5, 40).GetString());
+            Assert.Equal("historisch (Warenausgang), ohne Lieferbezug aktuell (STPRS)", details.Cell(5, 42).GetString());
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("Konzernkosten TR AG (MBEW-STPRS)", "CH", "aktuell (Stammdatenstand beim letzten Abgleich)")]
+    [InlineData("Konzernkosten TR IT (B1 StockPrice)", "DE", "aktuell (Stammdatenstand beim letzten Abgleich)")]
+    [InlineData("Standardkosten der lokalen Gesellschaft", "AT", "historisch (Warenausgang), ohne Lieferbezug aktuell (STPRS)")]
+    [InlineData("Kosten aus Verkaufszeile", "IT", "historisch (Wert im Beleg)")]
+    [InlineData("Interner Standardpreis", "FR", "historisch (Wert im Beleg)")]
+    [InlineData("Konzernkosten fehlen (lokaler Wert ist IC-Preis)", "DE", "")]
+    public void Kostenstand_Je_Kostenquelle(string source, string country, string expected)
+        => Assert.Equal(expected, ExcelExportService.CostTiming(source, country));
+
     private static SalesRecord CreateGermanyRecord(string customerName, string customerCountry, string invoiceNumber, decimal value)
         => new()
         {
