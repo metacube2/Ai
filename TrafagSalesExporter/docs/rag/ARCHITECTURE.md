@@ -1,6 +1,6 @@
 # RAG Architecture
 
-Stand: 2026-09-29 (Hell/Dunkel im Kurzstand ergaenzt; Abschnitt „Code-Architektur" vom
+Stand: 2026-10-06 (Benutzerhandbuch, Icon-Pruefung, Pruefbefund-Fixes ergaenzt; Abschnitt „Code-Architektur" vom
 2026-09-28; der Kurzstand darunter stammt sonst vom 2026-05-27 und ist fachlich weiter gueltig,
 beschreibt aber nicht die seither dazugekommenen Bereiche Einkauf, Journal, Marktsegmente,
 Serveranalyse und HR)
@@ -127,6 +127,9 @@ vorher in `docs/AGENT_COORDINATION.md` abstimmen.
   weisse Grund hinter den Schulungsbildern.
 - WELTLAGE (2026-10-05): `WorldDataService` (Singleton und Hintergrunddienst, nur Produktion, HttpClient "Weltlage") holt GDELT, FRED, Eurostat, IMF in eigene Tabellen `World*`; `WorldImpactService` verknuepft mit `SalesDataService`, Einkaufscache und Kurstabelle; reine Rechnung `WorldImpactAnalytics`; Seiten `/weltlage*` offen fuer alle; nicht erreichbare Quelle = "Firewall blockiert" (`docs/WELTLAGE_2026-10-05.md`).
 - CONTROLLING (`cb08f18`): `ControllingAnalytics` (Umsatzbruecke, Hochrechnung) auf den Verkaufszeilen von `SalesDataService` (jetzt mit Lokalwert und Waehrung); Seite `/finance-cockpit/controlling` ohne Passwort; offene Fragen nur in `docs/CONTROLLING_2026-10-05.md` und auf der Seite, nicht im Issue-Log (Eigeninitiative).
+- BENUTZERHANDBUCH (2026-10-06, `fbe30b9`, produktiv 10:16): Reiter `/handbuch` auf oberster Ebene (`user-manual`, Sortierung 5), Seite `UserManual.razor`, Parser `UserManualContent` liest `wwwroot/handbuch/kapitel/*.md`; dieselben Dateien baut `Tools/HandbuchDocx` zur Word-Datei (Trafag-CI). Doku `docs/handbuch/README.md`.
+- MENUE-ICONS (2026-10-06, `d7270a5`): jedes Seed-Icon muss in `NavigationIconResolver` stehen, sonst grauer Kreis; Test `SeedDefaults_JedesMenueIcon_Ist_Aufgeloest`.
+- PRUEFBEFUND-FIXES (2026-10-05, `3ad0dae`, produktiv 2026-10-06 10:16): Elikz-Filter an allen Stellen, OrdersOnly auch in Einkauf Interaktiv und Weltlage, Fehlerergebnisse nur 1 Minute gemerkt (Logistik, AD, Einkauf Interaktiv), Referenzmonat nach letztem Werktag.
 - EINKAUF INTERAKTIV (2026-10-05): `PurchasingInteractiveService` bildet Bestellpositionen als `SalesFact` ab, Seite `PurchasingInteractivePage` (`/einkauf/interaktiv/{View}`) nutzt die Verkauf-Ansichten mit `Purchasing=true`.
 - VERKAUF INTERAKTIV (2026-10-05): `SalesInteractive` (reine Rechnung), `Components/Sales/Interactive/*View.razor`, Seite `SalesInteractivePage` (`/verkauf/interaktiv/{View}`), Animation ueber CSS-Uebergaenge und PeriodicTimer.
 - VERKAUF (`e2fb8ce`): `SalesDataService` (Singleton, gemerkt je Quellstand) baut aus `ICentralSalesDataProvider` mit `FinanceRuleEngine` und Intercompany-Regeln Verkaufszeilen in CHF; reine Logik `SalesAnalytics`; Seiten `/verkauf*` hinter der Finance-Freischaltung (`Routes.razor`). Keine Marge, keine Verkäuferauswertung (`docs/VERKAUF_2026-10-02.md`).

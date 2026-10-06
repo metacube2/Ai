@@ -112,7 +112,7 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 - Spend-Regeln: nur echte Bestellungen (`Bstyp F`, `Bsart <> UB`), stornierte
   Positionen (`Loekz`) aus historischem Spend ausgeschlossen; offene Werte
   sind Stand-heute, zeitraumunabhaengig und schliessen MSTAE 98/99 sowie
-  `Elikz='X'` aus; CHF-Bewertung ueber `Waers`/`Wkurs`.
+  endgelieferte Positionen aus (`Elikz` steht im Cache als `True`/`False`, Filter seit 2026-10-05 `NOT IN ('X','True','1')`, vorher griff `='X'` nie; offener Bestellwert produktiv ab 2026-10-06 10:16 rund 12.8 statt 28.7 Mio CHF); CHF-Bewertung ueber `Waers`/`Wkurs`.
 - Arbeitsweise aus dem Marco-Review: jeweils einen Reiter vollstaendig
   abnehmen, bevor der naechste erweitert wird.
 

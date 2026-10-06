@@ -1,6 +1,6 @@
 # Unterreiter Controlling im Finance Cockpit
 
-Stand: 2026-10-05, Code `cb08f18`, **produktiv 08:18**, von mir per Edge headless angesehen. Route `/finance-cockpit/controlling`,
+Stand: 2026-10-05, nachgefuehrt 2026-10-06 (Pruefbefund-Korrekturen produktiv 10:16, Abschnitt am Ende bzw. Nachtrag Review), Code `cb08f18`, **produktiv 08:18**, von mir per Edge headless angesehen. Route `/finance-cockpit/controlling`,
 Menü Finance Cockpit > Controlling.
 
 ## Herkunft
@@ -55,3 +55,12 @@ Excel-Export mit Brücke je Gesellschaft und Hochrechnung. Tests `ControllingAna
   wie üblich bei Stückmischungen).
 - Ein Artikel, der im Vorjahr nur mit Gutschrift oder ohne Menge vorkam, landet in „Übrige“.
 - Hochrechnung ist eine Rechnung, keine Planung; Wachstum gilt für alle Restmonate gleich.
+
+## Pruefbefund und Korrekturen 2026-10-05, produktiv 2026-10-06 10:16
+
+*Erledigt 2026-10-06 10:16:*
+
+- Erste Kennzahl nutzte den gewaehlten Brueckenbereich, die anderen das Total; jetzt eigene Gesamtbruecke.
+- Bruecke rundungsgenau: „Uebrige" nimmt die Rundung auf, die Stufen summieren exakt aufs Total (vorher bis ±4 CHF).
+- Wachstumsbegrenzung 0.5 bis 2 gilt je Bereich; die Summe der Bereiche kann darum vom Total abweichen (in `Projection`/`Forecast` dokumentiert, nicht geaendert).
+- Referenzmonat nach letztem Werktag wie im Verkauf.
