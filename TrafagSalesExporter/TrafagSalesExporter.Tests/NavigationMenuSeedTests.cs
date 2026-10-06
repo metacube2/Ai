@@ -8,6 +8,26 @@ namespace TrafagSalesExporter.Tests;
 
 public class NavigationMenuSeedTests
 {
+    // 2026-10-06: Benutzerhandbuch, Journal Import, Marktsegmente und Projekte zeigten einen grauen Kreis,
+    // weil ihr Seed-Icon im Resolver fehlte.
+    [Fact]
+    public void SeedDefaults_JedesMenueIcon_Ist_Aufgeloest()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using var db = new AppDbContext(options);
+        db.Database.EnsureCreated();
+        new DatabaseSeedService().SeedDefaults(db);
+
+        var missing = db.NavigationMenuItems.AsEnumerable()
+            .Where(x => !string.IsNullOrEmpty(x.Icon) && NavigationIconResolver.Resolve(x.Icon) == MudBlazor.Icons.Material.Filled.Circle)
+            .Select(x => x.Key + ":" + x.Icon)
+            .ToList();
+        Assert.Empty(missing);
+        Assert.Contains(db.NavigationMenuItems, x => x.Key == "user-manual" && x.ParentKey == null && x.Href == "handbuch");
+    }
+
     private static readonly string[] AdminChildKeys =
     [
         "admin-sessions",

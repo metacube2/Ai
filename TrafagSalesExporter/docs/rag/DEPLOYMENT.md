@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-06 10:16, Pruefbefund-Fixes, Benutzerhandbuch, Beschriftungen (`f582814`).** `1015/1015`, `BiDashboard.dll` `10:03:47`, `8'728'576` Bytes, SHA256 `B6E20898...FD808C`, bitgleich, Alarm nur WAL. Enthaelt `3ad0dae` (Elikz True/False, OrdersOnly, Logistik/Netzwerk/Verkauf/Weltlage-Fixes), `98fb2cd` und den neuen Reiter Benutzerhandbuch; `/handbuch` produktiv angesehen (9 Kapitel, Download, kein Fehlerbalken). ABAP-Teil Logistik noch nicht transportiert.
 - **Deploy 2026-10-05 15:11, Einkauf Interaktiv (`ba13744`).** `946/946`, `BiDashboard.dll` `14:58:22`, `8'623'616` Bytes, SHA256 `4C03171C...DF24E4`, bitgleich, Alarm nur WAL. Neun Einkaufsansichten per Edge headless geoeffnet.
 - **Deploy 2026-10-05 14:25, Verkauf Interaktiv (`25da8a1`).** `944/944`, `BiDashboard.dll` `14:12:48`, `8'553'472` Bytes, SHA256 `465E5CF5...110668`, bitgleich, Alarm nur WAL; DB-Sicherung 552 s. Neun Ansichten per Edge headless geoeffnet.
 - **Deploy 2026-10-05 13:34, Logistik Kapazitaet SAP (`dd4c627`).** `936/936`, `BiDashboard.dll` `13:30:18`, SHA256 `8A596F53...59D833`, bitgleich, ohne Alarm. Umschalter Kapazitaet zeigt Vorschau Warenausgang mit P76-Zukunftsdaten (Teil B importiert) und den Hinweis, dass `LogKapSet` in P76 fehlt (`T76K912662` nicht importiert).

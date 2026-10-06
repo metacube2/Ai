@@ -976,7 +976,9 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .um-body h2 { font-size: 21px; margin: 28px 0 8px; scroll-margin-top: 80px; }
 .um-body h3 { color: var(--mud-palette-primary); font-size: 15px; margin: 16px 0 4px; }
 .um-body p { margin: 0 0 10px; }
-.um-body ul { margin: 0 0 10px 20px; }
+.um-body ul { margin: 0 0 10px 22px; padding-left: 0; list-style: disc; }
+.um-body li { display: list-item; margin-bottom: 3px; }
+.um-body li::marker { color: var(--mud-palette-primary); }
 .um-table { overflow-x: auto; margin: 8px 0 14px; }
 .um-table table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .um-table th, .um-table td { border: 1px solid var(--mud-palette-lines-default); padding: 4px 8px; text-align: left; vertical-align: top; }
