@@ -159,11 +159,11 @@
         "cta": "Zur Produktseite"
       },
       {
-        "name": "Kamera-Uploader",
-        "badge": "Bald verfügbar",
-        "description": "Neues Projekt. Beschreibung, Preis und Download folgen in Kürze.",
+        "name": "Kamera-Import",
+        "badge": "Erhältlich",
+        "description": "macOS-App, die von der Kamera nur die fehlenden Fotos und Videos lädt, auf den Mac oder per SFTP auf einen anderen Rechner. Demo zum Testen, Vollversion mit Lizenz.",
         "href": "/kamera-uploader/",
-        "cta": "Mehr erfahren"
+        "cta": "Zur Produktseite"
       }
     ]
   }

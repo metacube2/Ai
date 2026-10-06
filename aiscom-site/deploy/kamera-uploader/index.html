@@ -3,9 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kamera-Uploader | AISCOM</title>
-  <meta name="description" content="Kamera-Uploader von AISCOM. Beschreibung, Preis und Download folgen in Kürze.">
+  <title>Kamera-Import für macOS | AISCOM</title>
+  <meta name="description" content="Kamera-Import lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen. Auch auf einen anderen Rechner per SFTP. Für macOS, Demo kostenlos.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/kamera-uploader/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Kamera-Import für macOS">
+  <meta property="og:description" content="Nur die fehlenden Fotos und Videos von der Kamera laden, auf den Mac oder per SFTP auf einen anderen Rechner.">
+  <meta property="og:url" content="https://www.aiscom.ch/kamera-uploader/">
   <link rel="icon" href="/favicon.ico">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Kamera-Import",
+      "operatingSystem": "macOS 14 oder neuer",
+      "applicationCategory": "MultimediaApplication",
+      "url": "https://www.aiscom.ch/kamera-uploader/",
+      "downloadUrl": "https://www.aiscom.ch/kamera-uploader/KameraImport.dmg",
+      "offers": { "@type": "Offer", "price": "19.00", "priceCurrency": "CHF" }
+    }
+  </script>
   <style>
     :root {
       --bg: #0a1628;
@@ -15,6 +33,7 @@
       --muted: #a8b3c7;
       --accent: #87ceeb;
       --line: rgba(135, 206, 235, 0.18);
+      --ok: #7ad3a1;
     }
 
     * { box-sizing: border-box; }
@@ -23,6 +42,7 @@
       min-height: 100vh;
       font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
       color: var(--text);
+      line-height: 1.6;
       background:
         radial-gradient(circle at top right, rgba(135, 206, 235, 0.1), transparent 30%),
         linear-gradient(180deg, #091120, var(--bg));
@@ -32,32 +52,19 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
       max-width: 1120px;
       margin: 0 auto;
       padding: 18px 16px;
     }
-
-    header a {
-      color: var(--text);
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 1.2rem;
-    }
-
-    header nav a {
-      margin-left: 18px;
-      color: var(--muted);
-      font-weight: 500;
-      font-size: 0.95rem;
-    }
-
+    header > a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    header nav a { margin-left: 18px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
+    header nav a:first-child { margin-left: 0; }
     header nav a:hover { color: var(--accent); }
 
-    main {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 56px 16px 84px;
-    }
+    main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+    section { margin-top: 56px; }
 
     .eyebrow {
       margin: 0 0 10px;
@@ -67,40 +74,68 @@
       font-size: 0.76rem;
       font-weight: 700;
     }
+    h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    p { color: var(--muted); }
 
-    h1 {
-      margin: 0 0 18px;
-      font-size: clamp(2.4rem, 6vw, 4.2rem);
-      line-height: 1;
-      letter-spacing: -0.04em;
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--accent);
+      color: #08121f;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
     }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
 
-    .lead {
-      margin: 0 0 32px;
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 1.08rem;
-    }
-
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
     .card {
-      padding: 24px;
+      padding: 20px;
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 18px;
       background: linear-gradient(180deg, var(--surface), var(--surface-2));
     }
-
-    .card p { margin: 0 0 12px; line-height: 1.6; color: var(--muted); }
-    .card p:last-child { margin-bottom: 0; }
+    .card p { margin: 0; }
     .card a { color: var(--accent); }
 
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--text); }
+    td { color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+
+    form { display: grid; gap: 10px; max-width: 420px; }
+    label { font-size: 0.9rem; color: var(--text); }
+    input[type=email] {
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0d1a30;
+      color: var(--text);
+      font: inherit;
+    }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .status.ok { color: var(--ok); }
+
+    details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+    summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details p { margin: 8px 0 0; }
+
     footer {
-      max-width: 820px;
+      max-width: 880px;
       margin: 0 auto;
       padding: 0 16px 40px;
       color: var(--muted);
       font-size: 0.85rem;
     }
-
     footer a { color: var(--muted); }
   </style>
 </head>
@@ -115,18 +150,111 @@
   </header>
 
   <main>
-    <p class="eyebrow">Bald verfügbar</p>
-    <h1>Kamera-Uploader</h1>
-    <p class="lead">Ein neues Software-Projekt von AISCOM. Beschreibung, Preis und Download folgen in Kürze auf dieser Seite.</p>
-
-    <div class="card">
-      <p>Sie möchten informiert werden, sobald der Kamera-Uploader erhältlich ist?</p>
-      <p>Schreiben Sie an <a href="mailto:ingo.kohler.zh@gmail.com?subject=Kamera-Uploader">ingo.kohler.zh@gmail.com</a>.</p>
+    <p class="eyebrow">macOS-App · Fotos und Videos von der Kamera</p>
+    <h1>Kamera-Import</h1>
+    <p class="lead">Kamera per USB anstecken, und die App lädt nur die Fotos und Videos, die im Zielordner noch fehlen. Kein Durchsuchen der Karte, keine Doppelten, nichts wird überschrieben. Auf Wunsch direkt auf einen anderen Rechner per SFTP.</p>
+    <div class="actions">
+      <a class="button" href="./KameraImport.dmg" download>Demo herunterladen</a>
+      <a class="button secondary" href="#kaufen">Vollversion 19 CHF</a>
     </div>
+    <p class="meta">macOS 14 oder neuer · Demo lädt 50 Dateien · getestet mit Canon EOS R5</p>
+
+    <section>
+      <h2>Was die App macht</h2>
+      <div class="grid">
+        <div class="card"><h3>Nur was fehlt</h3><p>Name und Grösse jeder Datei werden mit dem Zielordner abgeglichen. Schon kopierte Aufnahmen werden übersprungen, auch in Unterordnern.</p></div>
+        <div class="card"><h3>Ohne Finder-Laufwerk</h3><p>Die Kamera muss nicht als Laufwerk erscheinen. Die App nutzt dasselbe Apple-Framework wie „Digitale Bilder“.</p></div>
+        <div class="card"><h3>Automatisch nachziehen</h3><p>Für eine freigegebene Kamera startet der Import beim Verbinden von selbst, ab dem ersten fehlenden Aufnahmetag.</p></div>
+        <div class="card"><h3>Auf einen anderen Rechner</h3><p>Ziel kann ein Ordner per SFTP sein, etwa ein Mac mini oder ein NAS. Es liegt immer nur eine Datei zwischendurch auf der eigenen Platte.</p></div>
+        <div class="card"><h3>Übersteht Wackler</h3><p>Trennt sich die Kamera mitten im Import, macht die App nach dem Wiederverbinden mit dem Rest weiter. Der Mac bleibt während des Imports wach.</p></div>
+        <div class="card"><h3>Sicher abgelegt</h3><p>Jede Datei wird erst vollständig geladen und in der Grösse geprüft, dann abgelegt. Gleiche Namen mit anderem Inhalt bekommen eine Nummer statt eines Überschreibens.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Ablage im Zielordner</h2>
+      <p>Wahlweise nach Dateityp getrennt (CR3, JPG, MP4 …) und nach Aufnahmetag sortiert. Ein Zeitraum-Filter lädt nur Aufnahmen ab einem bestimmten Tag. Eine Anzeige zeigt die Übertragungsgeschwindigkeit, so sieht man auch, ob die Kamera nur mit USB-2-Tempo verbunden ist.</p>
+    </section>
+
+    <section>
+      <h2>Welche Kameras?</h2>
+      <p>Getestet mit der <strong>Canon EOS R5</strong>. Andere Kameras, die unter macOS in „Digitale Bilder“ erscheinen, sollten ebenfalls funktionieren, das ist aber nicht geprüft. Darum zuerst die Demo mit der eigenen Kamera ausprobieren.</p>
+    </section>
+
+    <section id="kaufen">
+      <h2>Vollversion kaufen</h2>
+      <p>Einmalig 19 CHF. Die Zahlung läuft über PayPal. Nach bestätigtem Zahlungseingang kommt der Lizenzschlüssel an die hier angegebene E-Mail-Adresse. Updates der Version 1 sind inklusive.</p>
+      <form id="buy" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+        <label for="license-email">E-Mail für den Lizenzschlüssel</label>
+        <input id="license-email" name="os0" type="email" autocomplete="email" required placeholder="name@example.com">
+        <input type="hidden" name="cmd" value="_xclick">
+        <input type="hidden" name="business" value="metacube@gmail.com">
+        <input type="hidden" name="item_name" value="Kamera-Import Vollversion">
+        <input type="hidden" name="item_number" value="KAMERAIMPORT-1.0">
+        <input type="hidden" name="amount" value="19.00">
+        <input type="hidden" name="currency_code" value="CHF">
+        <input type="hidden" name="no_shipping" value="1">
+        <input type="hidden" name="on0" value="Lizenz-E-Mail">
+        <input type="hidden" name="return" value="https://www.aiscom.ch/kamera-uploader/?payment=success#kaufen">
+        <input type="hidden" name="cancel_return" value="https://www.aiscom.ch/kamera-uploader/?payment=cancelled#kaufen">
+        <input type="hidden" name="rm" value="2">
+        <input type="hidden" name="charset" value="utf-8">
+        <button class="button" type="submit">Mit PayPal kaufen</button>
+      </form>
+      <p id="payment-status" class="status" hidden></p>
+      <p class="meta">Fragen zur Lizenz: <a href="mailto:metacube@gmail.com?subject=Kamera-Import" style="color: var(--accent)">metacube@gmail.com</a></p>
+    </section>
+
+    <section id="download">
+      <h2>Download</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Version</th><td>1.0</td></tr>
+          <tr><th>System</th><td>macOS 14 (Sonoma) oder neuer</td></tr>
+          <tr><th>Demo</th><td>voller Funktionsumfang, insgesamt 50 Dateien</td></tr>
+          <tr><th>Datei</th><td><a href="./KameraImport.dmg" download style="color: var(--accent)">KameraImport.dmg</a> (1,2 MB)</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Häufige Fragen</h2>
+      <details>
+        <summary>Wie öffne ich die App beim ersten Start?</summary>
+        <p>Die App ist noch nicht von Apple notarisiert, darum blockiert macOS den ersten Start. DMG öffnen, App in „Programme“ ziehen, einmal starten, dann unter Systemeinstellungen → Datenschutz &amp; Sicherheit auf „Trotzdem öffnen“ klicken.</p>
+      </details>
+      <details>
+        <summary>Was kann die Demo?</summary>
+        <p>Alles, auch SFTP und automatischen Import, aber insgesamt nur 50 Dateien. Danach braucht es den Lizenzschlüssel, der unter „Lizenz“ in der App eingetragen wird.</p>
+      </details>
+      <details>
+        <summary>Wie richte ich ein SFTP-Ziel ein?</summary>
+        <p>Benutzer, Rechner und Ordner eintragen, bei einem anderen Port als 22 als <code>rechner:port</code>. Angemeldet wird nur mit ssh-Schlüssel, einmalig einzurichten mit <code>ssh-copy-id benutzer@rechner</code> im Terminal. Passwörter speichert die App nicht.</p>
+      </details>
+      <details>
+        <summary>Die Kamera wird nicht gefunden.</summary>
+        <p>Kamera einschalten, ein datenfähiges USB-Kabel ohne Hub verwenden, WLAN und Bluetooth an der Kamera ausschalten. Programme wie EOS Utility oder „Fotos“ können die Kamera blockieren, dann diese beenden.</p>
+      </details>
+    </section>
   </main>
 
   <footer>
     &copy; AISCOM &middot; <a href="/de/legal/imprint">Impressum</a> &middot; <a href="/de/legal/privacy">Datenschutz</a>
   </footer>
+
+  <script>
+    (function () {
+      var state = new URLSearchParams(window.location.search).get("payment");
+      var box = document.getElementById("payment-status");
+      if (state === "success") {
+        box.textContent = "Danke für den Kauf. Der Lizenzschlüssel kommt nach Prüfung der Zahlung per E-Mail.";
+        box.className = "status ok";
+        box.hidden = false;
+      } else if (state === "cancelled") {
+        box.textContent = "Die Zahlung wurde abgebrochen. Es wurde nichts belastet.";
+        box.hidden = false;
+      }
+    })();
+  </script>
 </body>
 </html>

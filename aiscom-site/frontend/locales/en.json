@@ -159,11 +159,11 @@
         "cta": "Product page"
       },
       {
-        "name": "Kamera-Uploader",
-        "badge": "Coming soon",
-        "description": "New project. Description, price and download will follow shortly.",
+        "name": "Kamera-Import",
+        "badge": "Available",
+        "description": "macOS app that loads only the photos and videos still missing from the camera, to the Mac or via SFTP to another computer. Demo to try, full version with licence.",
         "href": "/kamera-uploader/",
-        "cta": "Learn more"
+        "cta": "Product page"
       }
     ]
   }

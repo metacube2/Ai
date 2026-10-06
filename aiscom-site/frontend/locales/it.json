@@ -159,11 +159,11 @@
         "cta": "Pagina prodotto"
       },
       {
-        "name": "Kamera-Uploader",
-        "badge": "In arrivo",
-        "description": "Nuovo progetto. Descrizione, prezzo e download seguiranno a breve.",
+        "name": "Kamera-Import",
+        "badge": "Disponibile",
+        "description": "App macOS che scarica dalla fotocamera solo le foto e i video mancanti, sul Mac o via SFTP su un altro computer. Demo da provare, versione completa con licenza.",
         "href": "/kamera-uploader/",
-        "cta": "Scopri di più"
+        "cta": "Pagina del prodotto"
       }
     ]
   }
