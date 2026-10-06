@@ -10,6 +10,11 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Benutzerhandbuch"] = "Benutzerhandbuech",
+            ["Im Handbuch suchen"] = "Im Handbuech sueche",
+            ["Word-Datei herunterladen"] = "Word-Datei abelade",
+            ["Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch."] = "Was jedi Syte und Grafik zeigt, warum s se git, wie grächnet wird und wo me se als Controller, Ihchöifer, Verchöifer, Logistiker oder Gschäftsleitig bruucht. Dr Inhalt isch uf Dütsch.",
+            ["Das Handbuch ist auf diesem Server nicht vorhanden."] = "S Handbuech isch uf däm Server nid vorhande.",
             ["Quartal unvollständig"] = "Quartal nid vollständig",
             ["nur ESU"] = "nume ESU",
             ["aktiv in 44 Tagen"] = "aktiv i 44 Tag",

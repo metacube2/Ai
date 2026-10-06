@@ -264,6 +264,8 @@ public class DatabaseSeedService : IDatabaseSeedService
     private static List<NavigationMenuItem> BuildDefaultNavigationMenuItems() =>
     [
         Link("management-home", null, "Home", "Home", "Home", string.Empty, 0, "All"),
+        // Benutzerhandbuch 2026-10-06: betriebswirtschaftliches Handbuch aller Module, oberste Ebene, Word-Download.
+        Link("user-manual", null, "Benutzerhandbuch", "User manual", "MenuBook", "handbuch", 5, "All"),
         Group("finance", null, "Finance Cockpit", "Finance Cockpit", "Analytics", 10, expanded: true),
         Link("export-dashboard", "finance", "Export Dashboard", "Export dashboard", "Dashboard", "export-dashboard", 10),
         Group("management-analysis", "finance", "Management Analyse", "Management analysis", "QueryStats", 20),

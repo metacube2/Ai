@@ -1,0 +1,110 @@
+@page "/handbuch"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@inject IWebHostEnvironment Environment
+@inject IUiTextService UiText
+
+@* Reiter Benutzerhandbuch (2026-10-06): betriebswirtschaftliches Anwenderhandbuch aller Module.
+   Quelle sind die Kapitel-Markdowns in wwwroot/handbuch/kapitel, dieselben, aus denen
+   Tools/HandbuchDocx die Word-Datei baut. Inhalt nur Deutsch. Doku docs/handbuch/README.md *@
+<PageTitle>@T("Benutzerhandbuch", "User manual")</PageTitle>
+
+<div class="d-flex align-center flex-wrap mb-2" style="gap:12px">
+    <MudText Typo="Typo.h4" Class="ll-grow">@T("Benutzerhandbuch", "User manual")</MudText>
+    <MudTextField T="string" @bind-Value="_search" Immediate="true" DebounceInterval="250" Placeholder="@T("Im Handbuch suchen", "Search the manual")"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:320px" />
+    <MudButton Href="@UserManualContent.DocxPath" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download">
+        @T("Word-Datei herunterladen", "Download Word file")
+    </MudButton>
+</div>
+<MudText Class="ll-muted mb-3">@T("Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch.", "What every page and chart shows, why it exists, how it is calculated and where controllers, buyers, sales, logistics or management use it. The content is in German.")</MudText>
+
+@if (_chapters.Count == 0)
+{
+    <MudAlert Severity="Severity.Warning">@T("Das Handbuch ist auf diesem Server nicht vorhanden.", "The manual is not available on this server.")</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="3">
+            <MudPaper Class="pa-2 um-nav" Outlined="true">
+                @foreach (var c in _chapters)
+                {
+                    var chapter = c;
+                    var hits = Hits(chapter).Count;
+                    <div class="um-chapter @(chapter == _current ? "um-active" : "")" @onclick="@(() => Select(chapter))">
+                        <span class="ll-grow">@chapter.Title</span>
+                        @if (!string.IsNullOrWhiteSpace(_search))
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="@(hits > 0 ? Color.Primary : Color.Default)">@hits</MudChip>
+                        }
+                    </div>
+                    @if (chapter == _current)
+                    {
+                        @foreach (var s in Hits(chapter).Where(s => s.Title.Length > 0))
+                        {
+                            <a class="um-section" href="@(UserManualContent.AnchorHref(s))">@s.Title</a>
+                        }
+                    }
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="9">
+            <MudPaper Class="pa-4 um-body" Outlined="true">
+                @if (_current is { } cur)
+                {
+                    <h1>@cur.Title</h1>
+                    @foreach (var s in Hits(cur))
+                    {
+                        @if (s.Title.Length > 0)
+                        {
+                            <h2 id="@s.Anchor">@s.Title</h2>
+                        }
+                        @foreach (var b in s.Blocks)
+                        {
+                            @switch (b.Kind)
+                            {
+                                case 'h':
+                                    <h3>@b.Text</h3>
+                                    break;
+                                case 'l':
+                                    <ul>@foreach (var item in b.Items) { <li>@Inline(item)</li> }</ul>
+                                    break;
+                                case 't':
+                                    <div class="um-table"><table>
+                                        <thead><tr>@foreach (var cell in b.Rows[0]) { <th>@Inline(cell)</th> }</tr></thead>
+                                        <tbody>@foreach (var row in b.Rows.Skip(1)) { <tr>@foreach (var cell in row) { <td>@Inline(cell)</td> }</tr> }</tbody>
+                                    </table></div>
+                                    break;
+                                default:
+                                    <p>@Inline(b.Text)</p>
+                                    break;
+                            }
+                        }
+                    }
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private List<UserManualContent.Chapter> _chapters = [];
+    private UserManualContent.Chapter? _current;
+    private string _search = "";
+
+    protected override void OnInitialized()
+    {
+        _chapters = UserManualContent.Load(Environment.WebRootPath);
+        _current = _chapters.FirstOrDefault();
+    }
+
+    private void Select(UserManualContent.Chapter c) => _current = c;
+
+    private List<UserManualContent.Section> Hits(UserManualContent.Chapter c)
+        => string.IsNullOrWhiteSpace(_search) ? c.Sections : c.Sections.Where(s => UserManualContent.Matches(s, _search)).ToList();
+
+    private static MarkupString Inline(string text) => UserManualContent.Inline(text);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

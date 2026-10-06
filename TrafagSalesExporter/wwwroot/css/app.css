@@ -963,3 +963,21 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 @keyframes six-grow { from { opacity: 0; } }
 .six-col:hover .wh3d-cube > i, .six-col-sel .wh3d-cube > i { filter: brightness(1.45); border-color: #fff; }
 @media (prefers-reduced-motion: reduce) { .six-stage, .six-flow, .six-arc, .six-late, .six-life-dot, .six-cal-cell, .six-net-dot, .six-land-spin, .six-col .wh3d-cube { animation: none; } }
+
+/* Benutzerhandbuch (2026-10-06): Kapitelnavigation und Lesetext. */
+.um-nav { position: sticky; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto; }
+.um-chapter { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.um-chapter:hover { background: rgba(200, 80, 30, 0.08); }
+.um-chapter.um-active { background: rgba(200, 80, 30, 0.14); color: var(--mud-palette-primary); }
+.um-section { display: block; padding: 2px 10px 2px 22px; font-size: 13px; color: inherit; text-decoration: none; opacity: 0.85; }
+.um-section:hover { color: var(--mud-palette-primary); opacity: 1; }
+.um-body { max-width: 980px; line-height: 1.6; }
+.um-body h1 { color: var(--mud-palette-primary); font-size: 28px; border-bottom: 2px solid var(--mud-palette-primary); padding-bottom: 6px; margin: 0 0 16px; }
+.um-body h2 { font-size: 21px; margin: 28px 0 8px; scroll-margin-top: 80px; }
+.um-body h3 { color: var(--mud-palette-primary); font-size: 15px; margin: 16px 0 4px; }
+.um-body p { margin: 0 0 10px; }
+.um-body ul { margin: 0 0 10px 20px; }
+.um-table { overflow-x: auto; margin: 8px 0 14px; }
+.um-table table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.um-table th, .um-table td { border: 1px solid var(--mud-palette-lines-default); padding: 4px 8px; text-align: left; vertical-align: top; }
+.um-table th { background: rgba(200, 80, 30, 0.12); }

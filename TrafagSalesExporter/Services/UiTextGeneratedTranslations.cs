@@ -8,6 +8,11 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Benutzerhandbuch"] = "Manual de usuario",
+                ["Im Handbuch suchen"] = "Buscar en el manual",
+                ["Word-Datei herunterladen"] = "Descargar archivo Word",
+                ["Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch."] = "Qué muestra cada página y gráfico, por qué existe, cómo se calcula y dónde lo usan controlling, compras, ventas, logística o dirección. El contenido está en alemán.",
+                ["Das Handbuch ist auf diesem Server nicht vorhanden."] = "El manual no está disponible en este servidor.",
                 ["Quartal unvollständig"] = "Trimestre incompleto",
                 ["nur ESU"] = "solo ESU",
                 ["aktiv in 44 Tagen"] = "activo en 44 días",
@@ -2291,6 +2296,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Benutzerhandbuch"] = "Manuale utente",
+                ["Im Handbuch suchen"] = "Cerca nel manuale",
+                ["Word-Datei herunterladen"] = "Scarica file Word",
+                ["Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch."] = "Cosa mostra ogni pagina e grafico, perché esiste, come viene calcolato e dove lo usano controller, acquisti, vendite, logistica o direzione. Il contenuto è in tedesco.",
+                ["Das Handbuch ist auf diesem Server nicht vorhanden."] = "Il manuale non è disponibile su questo server.",
                 ["Quartal unvollständig"] = "Trimestre incompleto",
                 ["nur ESU"] = "solo ESU",
                 ["aktiv in 44 Tagen"] = "attivo in 44 giorni",
@@ -4574,6 +4584,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Benutzerhandbuch"] = "उपयोगकर्ता पुस्तिका",
+                ["Im Handbuch suchen"] = "पुस्तिका में खोजें",
+                ["Word-Datei herunterladen"] = "Word फ़ाइल डाउनलोड करें",
+                ["Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch."] = "हर पेज और ग्राफ़ क्या दिखाता है, क्यों है, कैसे गणना होती है और कंट्रोलर, खरीद, बिक्री, लॉजिस्टिक्स या प्रबंधन इसे कहाँ उपयोग करते हैं। सामग्री जर्मन में है।",
+                ["Das Handbuch ist auf diesem Server nicht vorhanden."] = "इस सर्वर पर पुस्तिका उपलब्ध नहीं है।",
                 ["Quartal unvollständig"] = "तिमाही अधूरी",
                 ["nur ESU"] = "केवल ESU",
                 ["aktiv in 44 Tagen"] = "44 दिनों में सक्रिय",
@@ -6857,6 +6872,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Benutzerhandbuch"] = "Manuali i përdoruesit",
+                ["Im Handbuch suchen"] = "Kërko në manual",
+                ["Word-Datei herunterladen"] = "Shkarko skedarin Word",
+                ["Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch."] = "Çfarë tregon çdo faqe dhe grafik, pse ekziston, si llogaritet dhe ku e përdorin kontrolli, blerjet, shitjet, logjistika ose drejtimi. Përmbajtja është në gjermanisht.",
+                ["Das Handbuch ist auf diesem Server nicht vorhanden."] = "Manuali nuk është i disponueshëm në këtë server.",
                 ["Quartal unvollständig"] = "Tremujori i paplotë",
                 ["nur ESU"] = "vetëm ESU",
                 ["aktiv in 44 Tagen"] = "aktiv në 44 ditë",
@@ -9140,6 +9160,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Benutzerhandbuch"] = "Kullanıcı kılavuzu",
+                ["Im Handbuch suchen"] = "Kılavuzda ara",
+                ["Word-Datei herunterladen"] = "Word dosyasını indir",
+                ["Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch."] = "Her sayfa ve grafiğin ne gösterdiği, neden var olduğu, nasıl hesaplandığı ve kontrol, satın alma, satış, lojistik veya yönetimin onu nerede kullandığı. İçerik Almancadır.",
+                ["Das Handbuch ist auf diesem Server nicht vorhanden."] = "Kılavuz bu sunucuda mevcut değil.",
                 ["Quartal unvollständig"] = "Çeyrek tamamlanmadı",
                 ["nur ESU"] = "yalnızca ESU",
                 ["aktiv in 44 Tagen"] = "44 günde etkin",
@@ -11423,6 +11448,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Benutzerhandbuch"] = "lo'wI' paq",
+                ["Im Handbuch suchen"] = "paq Damej",
+                ["Word-Datei herunterladen"] = "Word De' yIlav",
+                ["Was jede Seite und Grafik zeigt, warum es sie gibt, wie gerechnet wird und wo man sie als Controller, Einkäufer, Verkäufer, Logistiker oder Geschäftsleitung einsetzt. Der Inhalt ist auf Deutsch."] = "Hoch nav 'ej mIllogh cha'lu'bogh, qatlh tu'lu', chay' toglu', 'ej nuqDaq lo'lu'. Doych Hol neH.",
+                ["Das Handbuch ist auf diesem Server nicht vorhanden."] = "jabwI'vam Daq paq tu'lu'be'.",
                 ["Quartal unvollständig"] = "jar cha' rIn pagh",
                 ["nur ESU"] = "ESU neH",
                 ["aktiv in 44 Tagen"] = "44 jaj la' chu'",

@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## Benutzerhandbuch, 2026-10-06 (noch nicht deployed)
+
+- Neuer Reiter **Benutzerhandbuch** auf oberster Ebene (`/handbuch`, nach Home): alle Module aus betriebswirtschaftlicher
+  Sicht, je Seite Wozu, Lesart, Rechnung, Einsatz je Rolle und Fallstricke, Kapitelnavigation und Suche.
+- Word-Datei im Trafag-CI (105 Seiten) zum Herunterladen; Quelle und Neuerzeugung in `docs/handbuch/README.md`.
+
 ## Pruefbefund-Fixes, 2026-10-05 (noch nicht deployed)
 
 - **Endlieferkennzeichen:** EKPO.Elikz steht im Cache als `True`/`False`, nicht als `X`. Der Ausschluss endgelieferter
