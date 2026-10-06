@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-06 10:46, Menue-Icons und Handbuch-Aufzaehlungen (`d7270a5`).** `1016/1016`, `BiDashboard.dll` `10:42:32`, `8'733'184` Bytes, SHA256 `81E43064...48B20E`, bitgleich, ohne Alarm. `/handbuch` produktiv angesehen: Icons Home, Benutzerhandbuch, Journal Import, Marktsegmente, Projekte sichtbar, Aufzaehlungspunkte orange.
 - **Deploy 2026-10-06 10:16, Pruefbefund-Fixes, Benutzerhandbuch, Beschriftungen (`f582814`).** `1015/1015`, `BiDashboard.dll` `10:03:47`, `8'728'576` Bytes, SHA256 `B6E20898...FD808C`, bitgleich, Alarm nur WAL. Enthaelt `3ad0dae` (Elikz True/False, OrdersOnly, Logistik/Netzwerk/Verkauf/Weltlage-Fixes), `98fb2cd` und den neuen Reiter Benutzerhandbuch; `/handbuch` produktiv angesehen (9 Kapitel, Download, kein Fehlerbalken). ABAP-Teil Logistik noch nicht transportiert.
 - **Deploy 2026-10-05 15:11, Einkauf Interaktiv (`ba13744`).** `946/946`, `BiDashboard.dll` `14:58:22`, `8'623'616` Bytes, SHA256 `4C03171C...DF24E4`, bitgleich, Alarm nur WAL. Neun Einkaufsansichten per Edge headless geoeffnet.
 - **Deploy 2026-10-05 14:25, Verkauf Interaktiv (`25da8a1`).** `944/944`, `BiDashboard.dll` `14:12:48`, `8'553'472` Bytes, SHA256 `465E5CF5...110668`, bitgleich, Alarm nur WAL; DB-Sicherung 552 s. Neun Ansichten per Edge headless geoeffnet.
