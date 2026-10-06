@@ -390,6 +390,17 @@ html, body {
 }
 
 /* Weniger Bewegung, wenn im System so eingestellt */
+/* Polarlicht in der cAurora-Produktkarte */
+.aurora-wave {
+  animation: aurora-sway 6s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes aurora-sway {
+  from { transform: translateX(-4%) scaleY(0.9); opacity: 0.7; }
+  to { transform: translateX(4%) scaleY(1.1); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

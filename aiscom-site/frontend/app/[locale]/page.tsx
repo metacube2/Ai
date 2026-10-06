@@ -7,7 +7,7 @@ import CodeWindow from '@/components/visual/CodeWindow';
 import Marquee from '@/components/visual/Marquee';
 import Reveal from '@/components/visual/Reveal';
 import Wave from '@/components/visual/Wave';
-import { RadioVisual, CameraVisual } from '@/components/visual/ProductVisuals';
+import { RadioVisual, CameraVisual, AuroraVisual } from '@/components/visual/ProductVisuals';
 import Button from '@/components/ui/Button';
 
 // Service icons as SVG components
@@ -76,6 +76,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const productVisuals: Record<string, JSX.Element> = {
     '/macyaesu/': <RadioVisual />,
     '/kamera-uploader/': <CameraVisual />,
+    'https://www.aurora-weather-livecam.com/app/': <AuroraVisual />,
   };
 
   return (
@@ -183,10 +184,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <p className="section-subtitle">{dictionary.products.subtitle}</p>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {dictionary.products.items.map((product, index) => (
               <Reveal key={product.href} delay={index * 150} className="h-full">
-                <a href={product.href} className="glass glow-border group block h-full rounded-3xl p-6 transition-transform duration-300 hover:-translate-y-2">
+                <a href={product.href} {...(product.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="glass glow-border group block h-full rounded-3xl p-6 transition-transform duration-300 hover:-translate-y-2">
                   {productVisuals[product.href]}
                   <div className="mt-6 flex items-center justify-between gap-4">
                     <h3 className="text-2xl font-semibold text-white">{product.name}</h3>

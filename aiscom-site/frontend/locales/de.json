@@ -168,6 +168,13 @@
         "description": "macOS-App, die von der Kamera nur die fehlenden Fotos und Videos lädt, auf den Mac oder per SFTP auf einen anderen Rechner. Demo zum Testen, Vollversion mit Lizenz.",
         "href": "/kamera-uploader/",
         "cta": "Zur Produktseite"
+      },
+      {
+        "name": "cAurora",
+        "badge": "Beta · Android",
+        "description": "Android-App zur Aurora-Livecam in Dürnten: Livebild, Zeitraffer, AI-Ereignisse und Wetter. Tagsüber hell, nachts im Polarlicht-Design. Kostenlos.",
+        "href": "https://www.aurora-weather-livecam.com/app/",
+        "cta": "Zur Beta"
       }
     ]
   }
