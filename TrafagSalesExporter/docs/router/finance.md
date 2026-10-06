@@ -19,7 +19,7 @@ Marktsegmente.
 | Thema | Datei |
 | --- | --- |
 | Fachentscheide fuer Net Sales Actuals | `docs/FINANCE_ENTSCHEIDE.md` |
-| Zeilenmechanik, Umrechnung, Marge, Filter | `docs/rag/FINANCE_FORMELN.md` |
+| Zeilenmechanik, Umrechnung, Marge, Filter; seit 2026-10-06 Standardkosten, Kostenbasis und Marge in CHF in Finance Details (Abschnitt am Ende) | `docs/rag/FINANCE_FORMELN.md` |
 | Detailregeln je Land | `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` |
 | Prozessablauf, Audit-CSV, Sales_All, Pruefbuch | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |
 | Technischer Datenfluss end to end | `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |

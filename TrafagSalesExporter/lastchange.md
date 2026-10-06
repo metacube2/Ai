@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Finance Details mit Standardkosten in CHF, 2026-10-06
+## Finance Details mit Standardkosten in CHF, 2026-10-06, produktiv 15:45
 
 - Sales_All, Blatt Finance Details: Standardkosten je Stück in CHF, Kostenbasis und Marge in CHF aus der Gruppenmarge,
   Kostenquelle, Status und Kostenstand (historisch/aktuell). Wunsch Andreas aus dem Gespräch vom 06.10.
