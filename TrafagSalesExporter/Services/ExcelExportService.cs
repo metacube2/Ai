@@ -1426,7 +1426,7 @@ public class ExcelExportService : IExcelExportService
             "Product Division Text",
             "CHF Rate",
             "Net Sales CHF",
-            // Standardkosten in CHF (Wunsch Andreas 2026-10-06): gleicher Jahreskurs wie Net Sales CHF,
+            // Standardkosten in CHF (Wunsch Andreas 2026-10-06): gleiches Kursprofil wie Net Sales CHF,
             // damit Umsatz, Kosten und Marge je Artikel in einer Waehrung vergleichbar sind.
             "Standard Cost",
             "Standard Cost Currency",
@@ -1622,7 +1622,7 @@ public class ExcelExportService : IExcelExportService
         var whereRows = new (string Sheet, string Where, string Meaning)[]
         {
             ("Sales", "Spalte X 'Standard cost' / Y 'Standard Cost Currency'", "Rohwert je Zeile, so wie er aus der Quelle importiert wurde (Stueckpreis). Reine Anzeige, keine Berechnung."),
-            ("Finance Details", "Spalten AH-AP (seit 2026-10-06)", "Standard Cost und Waehrung je Stueck, umgerechnet mit dem Jahreskurs wie Net Sales CHF ('Standard Cost CHF (per unit)'); 'Cost Basis CHF' und 'Margin CHF' aus der Gruppenmarge (Kaskade, eine Stufe: Kosten der liefernden Gesellschaft); 'Cost Source' zeigt die Stufe, 'Cost Timing' ob historisch (Beleg/Warenausgang) oder aktueller Stammdatenstand (Konzernkosten)."),
+            ("Finance Details", "Spalten AH-AP (seit 2026-10-06)", "Standard Cost und Waehrung je Stueck, umgerechnet mit demselben Kurs wie Net Sales CHF (Kursprofil in den Settings) ('Standard Cost CHF (per unit)'); 'Cost Basis CHF' und 'Margin CHF' aus der Gruppenmarge (Kaskade, eine Stufe: Kosten der liefernden Gesellschaft); 'Cost Source' zeigt die Stufe, 'Cost Timing' ob historisch (Beleg/Warenausgang) oder aktueller Stammdatenstand (Konzernkosten)."),
             ("Gruppenmarge Details", "Spalte P 'Unit Cost' bis T 'Margin %', neu W-Z fuer den Deckungsbeitrag", "Hier steht die eigentliche Rechnung: Stueckpreis, daraus abgeleitete Kostenbasis (Menge x Preis, vorzeichenbewusst), Marge/% und der vorbereitete Deckungsbeitrag."),
             ("Gruppenmarge Summary", "Spalte E 'Known Cost Basis' ff.", "Aggregiert die Kostenbasis/Marge aus Gruppenmarge Details je Jahr/Land/TSC/Waehrung."),
             ("Finance Filter Hilfe", "dieses Blatt", "Erklaert Bedeutung und Berechnung jeder Spalte in Textform (Abschnitte unten).")

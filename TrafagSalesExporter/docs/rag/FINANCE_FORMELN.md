@@ -249,10 +249,12 @@ Wunsch Andreas im Gespraech 2026-10-06: Umsatz, Standardkosten und Marge je Arti
 | Spalte | Inhalt |
 |---|---|
 | Standard Cost, Standard Cost Currency | Stueckkosten der Zeile wie importiert |
-| Standard Cost CHF Rate, Standard Cost CHF (per unit) | Jahreskurs der Kostenwaehrung, gleiche Kursquelle wie `Net Sales CHF` |
+| Standard Cost CHF Rate, Standard Cost CHF (per unit) | Kurs der Kostenwaehrung nach demselben Kursprofil wie `Net Sales CHF` (Abschnitt 3, produktiv `CurrentDailyRate`: heute gueltiger Kurs, fuer alle Jahre gleich) |
 | Cost Basis CHF, Margin CHF | Kostenbasis aus der Gruppenmarge (Kaskade, eine Stufe), mit dem Kurs der Verkaufswaehrung; leer, wenn die Kostenbasis nicht bekannt ist |
 | Cost Source, Margin Status | welche Stufe gegriffen hat (TR AG / TR IT / TR IN / Beleg / lokal) und Status wie in Gruppenmarge Details |
 | Cost Timing | historisch oder aktuell, siehe unten |
+
+**Welcher Kurs, gemessen 2026-10-07 in `Sales_All_2026-10-07.xlsx` und der Deploy-Sicherung vom 06.10.:** Profil `CurrentDailyRate`, also der heute gueltige Kurs fuer **alle Jahre**, auch 2025. Heute gueltig ist bei EUR der Eintrag `ECB daily reference rate` 0.923 vom **16.04.2026** (offen, seither nicht nachgefuehrt), bei USD 0.80, GBP 1.09, INR 1/110 der `Budget 2026`-Kurs (EUR-Budget 2026 waere 0.94). Die Umrechnung mischt damit einen veralteten EZB-Kurs mit Budgetkursen. Das ist kein neuer Fehler der CHF-Spalten, sondern gilt fuer `Net Sales CHF` seit jeher; offen fuer Andreas, ob Budget- oder Jahreskurs je Finance-Jahr gelten soll (Profil `FinanceYearEndRate` gibt je Jahr den 31.12.-Kurs, also das Budget des Jahres).
 
 **Historisch oder aktuell (Frage Andreas):** Kosten aus der Verkaufszeile und lokale Standardkosten sind der Wert im Beleg (historisch); CH/AT nehmen WAVWR zum Warenausgang (historisch), bei rund 12 % ohne Lieferbezug STPRS (aktuell), je Zeile nicht unterscheidbar. **Konzernkosten** (TR AG MBEW-STPRS, TR IT / TR IN juengster StockPrice) sind der Stand beim letzten Abgleich und werden **nicht taeglich historisiert**; eine Abweichung je Artikel bei Konzernkosten kann also aus einer seither geaenderten Kostenbasis stammen.
 
