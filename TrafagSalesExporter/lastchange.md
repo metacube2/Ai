@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Budgetkurse und farbige Standardkosten-Spalten, 2026-10-07
+## Budgetkurse und farbige Standardkosten-Spalten, 2026-10-07, produktiv 10:06
 
 - Entscheid Ingo: Finance rechnet immer mit Budgetkursen. CHF in Cockpit, Pruefbuch, Nachweis und Sales_All jetzt mit dem
   Budgetkurs des Finance-Jahres (2025 = Budget 2025, EUR 2026 = 0.94 statt EZB 0.923); der CHF-Schalter folgt demselben Profil.
