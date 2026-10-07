@@ -262,3 +262,26 @@ Wunsch Andreas im Gespraech 2026-10-06: Umsatz, Standardkosten und Marge je Arti
 
 **Eine Stufe:** Die Kaskade bricht nach der liefernden Gesellschaft ab (Schnitt 2026-09-09). Ein Thermostat Indien -> Italien -> Deutschland bekommt in DE die Kosten von TR IT (Italiens Einstandspreis, Verrechnungspreis), nicht Indiens Herstellkosten. Genau diesen Fall will Andreas mit Beispielen pruefen.
 
+## Eine Stufe: Lieferantenerkennung und gemessene Luecken, 2026-10-07
+
+Entscheid Andreas 2026-09-09 (`ISS-007.3`): extern = Standardkosten der verkaufenden Gesellschaft; intern = Kosten der **ersten liefernden** Konzerngesellschaft, dann Schnitt. Umsetzung `GroupMarginSupplierClassifier` + `GroupMarginCalculator`, gemeinsam fuer Cockpit und Excel.
+
+**Vorrang (vor den Lieferantenfeldern):** 1. Verkauf durch TRCH/TRAT -> immer TR AG. 2. Sales Type (heute nur TRIN): LRD -> TR AG, FFM/CM -> eigene Fertigung. 3. Lieferantenfelder vorhanden -> Schritte unten. 4. Lieferant leer -> CH-Werkstamm MARC 1100 kennt den Artikel -> TR AG, sonst lokal.
+
+**Schritt 1, intern oder extern:** Regex mit Wortgrenzen auf Lieferant-Nr, -Name und -Land: `TRAFAG`, `TR AG`, `TR-AG`, `TRCH`, `TRIT`, `TR IT`, `TRIN`, `TR IN`, `GFS`, `GESELLSCHAFT FUER SENSORIK` (Wortgrenze, damit „Triton"/„Trinity" extern bleiben).
+
+**Schritt 2, welche Gesellschaft (nur Lieferantenname):** `TRAFAG AG`/`TR AG` -> TR AG (MBEW-STPRS, CHF); `TRAFAG ITALIA|ITALY`/`TR IT` -> TR IT (B1 StockPrice, EUR); `TRAFAG (CONTROLS) INDIA`/`TR IN` -> TR IN (B1 StockPrice, INR). Intern ohne Treffer (z. B. Trafag GmbH, GFS) -> keine Konzernkosten, „Interner Standardpreis" (lokaler Wert). „TRAFAG" allein entscheidet also nur intern/extern, nicht die Kostentabelle.
+
+**Artikelsuche in der Kostentabelle:** ueber die Trafag-Sachnummer der Zeile (`GroupMaterialNumber`, heute nur Indien via `U_TASC_OMN`), sonst ueber die Artikelnummer. Kein Treffer -> „Interner Standardpreis" = Einkaufspreis der verkaufenden Gesellschaft; bei Indien mit Sales Type LRD bleibt die Zeile offen.
+
+**Gemessen in `Sales_All_2026-10-07 (1).xlsx`, Thermostat-Weg Indien -> Italien -> Deutschland:**
+
+| Verkauf | Lieferant laut Regel | Soll (1 Stufe) | Ist |
+|---|---|---|---|
+| TR IT, Lieferant „Trafag AG" (8'820 Zeilen) | TR AG | Konzernkosten TR AG | ok |
+| TR IT, Lieferant „Trafag Controls India" (420) | TR IN | Konzernkosten TR IN | nur 5; 414 „Interner Standardpreis" (Italiens Einkaufspreis inkl. Indien-Marge). Ursache: Sachnummer in 0 von 420 Zeilen, Artikelnummern italienisch (`ITS000681`, `I37749` ...) -> `ISS-007.4` |
+| TR IT, Lieferant „Trafag Italia" (429) | TR IT | Konzernkosten TR IT | 275 ok, 154 Standardpreis fehlt |
+| TR DE (7'346) | TR IT | Konzernkosten TR IT | Lieferantenfeld leer in 7'346 von 7'346 (`ISS-003.3`) -> 7'212 lokale Standardkosten (DE-Einkaufspreis) |
+
+Die von Andreas akzeptierte Ungenauigkeit (`ISS-007.3`, Margen von Indien und Italien bleiben beim Weiterverkauf an die Toechter drin, 200-300k Gruppenumsatz) setzt voraus, dass die erste Stufe greift. Heute greift sie fuer TR IT mit Ware aus Indien und fuer TR DE nicht; Andreas' Thermostat-Test zeigt deshalb Einkaufspreise der Gesellschaften, nicht die Regel.
+

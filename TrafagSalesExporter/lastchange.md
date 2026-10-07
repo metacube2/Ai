@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Doku: eine Stufe und Lieferantenerkennung, 2026-10-07
+
+- `FINANCE_FORMELN.md`: Vorrang, Regex intern/extern, Zuordnung TR AG/IT/IN, gemessene Lücken (TR IT mit Indien-Ware, TR DE ohne Lieferant).
+- Neu `ISS-007.4`, drei Todos (Brücke Sachnummer Italien, Andreas informieren, Kostenwährung Budget oder Tageskurs).
+
 ## Budgetkurse und farbige Standardkosten-Spalten, 2026-10-07, produktiv 10:06
 
 - Entscheid Ingo: Finance rechnet immer mit Budgetkursen. CHF in Cockpit, Pruefbuch, Nachweis und Sales_All jetzt mit dem
