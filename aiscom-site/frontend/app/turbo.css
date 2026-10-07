@@ -1,0 +1,210 @@
+/*
+ * Turbo-Vision-Design (2026-10-07). Gilt nur mit <body data-design="turbo">,
+ * das klassische Design bleibt unberuehrt. Schalter: /admin/design.
+ * Nur die 16 CGA-Farben, Monospace, Doppelrahmen, harte Schatten.
+ */
+body[data-design="turbo"] {
+  --tv-schwarz: #000000; --tv-blau: #0000aa; --tv-gruen: #00aa00; --tv-cyan: #00aaaa;
+  --tv-rot: #aa0000; --tv-hellgrau: #aaaaaa; --tv-dunkelgrau: #555555;
+  --tv-hellblau: #5555ff; --tv-hellgruen: #55ff55; --tv-hellcyan: #55ffff;
+  --tv-hellrot: #ff5555; --tv-gelb: #ffff55; --tv-weiss: #ffffff;
+  --tv-font: "Px437 IBM VGA 8x16", "Perfect DOS VGA 437", "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+  --tv-zeile: 1.35em;
+  margin: 0;
+  font: 16px/1.35 var(--tv-font);
+  color: var(--tv-hellgrau);
+  background-color: var(--tv-blau);
+  /* Desktop-Raster wie das ░ der TP7-IDE */
+  background-image:
+    linear-gradient(45deg, rgba(170,170,170,.22) 25%, transparent 25%, transparent 75%, rgba(170,170,170,.22) 75%),
+    linear-gradient(45deg, rgba(170,170,170,.22) 25%, transparent 25%, transparent 75%, rgba(170,170,170,.22) 75%);
+  background-size: 4px 4px;
+  background-position: 0 0, 2px 2px;
+  -webkit-font-smoothing: none;
+}
+body[data-design="turbo"]::before { display: none; }
+body[data-design="turbo"] *,
+body[data-design="turbo"] *::before,
+body[data-design="turbo"] *::after {
+  font-family: var(--tv-font) !important;
+  border-radius: 0 !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+}
+body[data-design="turbo"] ::selection { background: var(--tv-cyan); color: var(--tv-schwarz); }
+body[data-design="turbo"] a { color: inherit; }
+.tv-k { color: var(--tv-rot); }
+
+/* ---------- Menueleiste ---------- */
+.tv-menu {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: stretch; flex-wrap: nowrap;
+  background: var(--tv-hellgrau); color: var(--tv-schwarz);
+  white-space: nowrap; line-height: var(--tv-zeile);
+}
+.tv-menu-item { padding: 0 1ch; color: var(--tv-schwarz); background: none; border: 0; font: inherit; cursor: pointer; text-decoration: none; }
+.tv-menu-item:hover, .tv-menu-item:focus-visible, .tv-menu-item.tv-aktiv { background: var(--tv-gruen); outline: none; }
+.tv-system { font-weight: bold; }
+.tv-menu-nav { display: flex; }
+.tv-menu-rechts { margin-left: auto; display: flex; }
+.tv-uhr { padding: 0 1ch; }
+.tv-burger { display: none; }
+
+/* ---------- Statuszeile ---------- */
+.tv-status {
+  position: sticky; bottom: 0; z-index: 50;
+  display: flex; flex-wrap: nowrap; overflow: hidden; white-space: nowrap;
+  background: var(--tv-hellgrau); color: var(--tv-schwarz); line-height: var(--tv-zeile);
+}
+.tv-status a { padding: 0 1ch; text-decoration: none; color: var(--tv-schwarz); }
+.tv-status a:hover { background: var(--tv-gruen); }
+.tv-status-rechts { margin-left: auto; padding: 0 1ch; overflow: hidden; text-overflow: ellipsis; }
+
+.tv-main { min-height: calc(100vh - 2 * var(--tv-zeile)); padding: 1.6em 3ch 2.4em 2ch; }
+
+/* ---------- Fenster ---------- */
+.tv-desktop { max-width: 1180px; margin: 0 auto; display: grid; gap: 2.2em; }
+.tv-fenster {
+  position: relative; background: var(--tv-blau); color: var(--tv-hellgrau);
+  border: 4px double var(--tv-weiss); box-shadow: 2ch 1em 0 rgba(0,0,0,.6);
+  padding: 1.1em 2.5ch 1.3em; margin: .7em 2ch 0 0; min-width: 0;
+}
+.tv-fenster .tv-titel { position: absolute; top: -.8em; left: 0; right: 0; margin: 0; text-align: center; font-size: 1em; font-weight: normal; pointer-events: none; }
+.tv-fenster .tv-titel span { background: var(--tv-blau); color: var(--tv-weiss); padding: 0 1ch; }
+.tv-schliessen { position: absolute; top: -.8em; left: 1.5ch; background: var(--tv-blau); color: var(--tv-weiss); padding: 0 .5ch; }
+.tv-schliessen b { color: var(--tv-hellgruen); font-weight: normal; }
+.tv-nummer { position: absolute; top: -.8em; right: 1.5ch; background: var(--tv-blau); color: var(--tv-weiss); padding: 0 .5ch; }
+.tv-inhalt p { margin: 0 0 var(--tv-zeile); }
+.tv-dialog { background: var(--tv-hellgrau); color: var(--tv-schwarz); }
+.tv-dialog .tv-titel span, .tv-dialog .tv-schliessen { background: var(--tv-hellgrau); color: var(--tv-weiss); }
+.tv-raster-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2.2em 2ch; }
+.tv-gelb { color: var(--tv-gelb); }
+.tv-hell { color: var(--tv-hellcyan); }
+.tv-zeile { margin: 0 0 .6em; }
+
+/* Startfenster */
+.tv-logo { margin: .2em 0 1em; color: var(--tv-hellcyan); font-size: clamp(7px, 1.55vw, 16px); line-height: 1.05; overflow: hidden; white-space: pre; }
+.tv-h1 { margin: 0 0 .6em; font-size: 1.35em; font-weight: normal; color: var(--tv-weiss); }
+.tv-prompt { color: var(--tv-weiss); }
+.tv-cursor { animation: tv-blinken 1.06s steps(1) infinite; color: var(--tv-weiss); }
+@keyframes tv-blinken { 50% { visibility: hidden; } }
+
+/* Knoepfe */
+.tv-knoepfe { display: flex; flex-wrap: wrap; gap: 1.2em 3ch; margin-top: 1em; }
+.tv-knopf, body[data-design="turbo"] button:not(.tv-menu-item):not(.tv-burger),
+body[data-design="turbo"] input[type="submit"] {
+  display: inline-block; background: var(--tv-gruen) !important; color: var(--tv-schwarz) !important;
+  border: 0 !important; padding: 0 2ch !important; line-height: var(--tv-zeile); font-size: 1em !important; font-weight: normal !important;
+  box-shadow: 1ch .5em 0 var(--tv-schwarz) !important; text-decoration: none; cursor: pointer; white-space: pre;
+}
+.tv-knopf.tv-standard { color: var(--tv-weiss) !important; }
+.tv-knopf:hover, body[data-design="turbo"] button:not(.tv-menu-item):not(.tv-burger):hover { color: var(--tv-weiss) !important; filter: none; }
+.tv-knopf:active, body[data-design="turbo"] button:not(.tv-menu-item):not(.tv-burger):active { transform: translate(1ch, .5em); box-shadow: none !important; }
+.tv-knopf.tv-klein { margin-top: .8em; align-self: flex-start; }
+
+/* Liste, Haken, Tabelle */
+.tv-liste { list-style: none; margin: 0; padding: 0; }
+.tv-liste li { margin: 0 0 .8em; }
+.tv-liste a { display: flex; gap: 1ch; text-decoration: none; color: var(--tv-weiss); }
+.tv-liste a:hover { background: var(--tv-cyan); color: var(--tv-schwarz); }
+.tv-liste p { margin: 0 0 0 5ch; color: var(--tv-hellgrau); }
+.tv-kuerzel { color: var(--tv-gelb); width: 4ch; flex: none; }
+.tv-liste-titel { flex: 1; }
+.tv-preis { color: var(--tv-hellcyan); }
+.tv-checks { list-style: none; padding: 0; margin: 0 0 1em; columns: 2; }
+.tv-checks b { color: var(--tv-hellgruen); font-weight: normal; }
+.tv-tabelle { border-collapse: collapse; margin-bottom: .4em; }
+.tv-tabelle td { padding: 0 2ch 0 0; }
+
+/* Produkte */
+.tv-produkte { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.6em 3ch; }
+.tv-produkt { display: flex; flex-direction: column; text-decoration: none; background: var(--tv-cyan); color: var(--tv-schwarz); padding: .8em 2ch 1.2em; box-shadow: 1ch .5em 0 var(--tv-schwarz); }
+.tv-produkt:hover { background: var(--tv-hellcyan); }
+.tv-produkt .tv-gelb { color: var(--tv-weiss); background: var(--tv-blau); padding: 0 1ch; }
+.tv-produkt-kopf { display: flex; justify-content: space-between; gap: 1ch; margin-bottom: .6em; }
+.tv-badge { background: var(--tv-rot); color: var(--tv-weiss); padding: 0 1ch; }
+.tv-produkt-text { flex: 1; }
+
+.tv-cta { max-width: 640px; justify-self: center; text-align: center; }
+.tv-cta .tv-knoepfe { justify-content: center; }
+
+/* ---------- Unterseiten: vorhandene Bausteine umfaerben ---------- */
+body[data-design="turbo"] .aurora,
+body[data-design="turbo"] .stars,
+body[data-design="turbo"] .blueprint-floor { display: none !important; }
+body[data-design="turbo"] .reveal { opacity: 1 !important; transform: none !important; }
+body[data-design="turbo"] .gradient-text { background: none !important; color: var(--tv-gelb) !important; animation: none !important; -webkit-text-fill-color: currentColor; }
+
+/* Seitenkopf: wie eine Titelzeile, ohne Hero-Hintergrund */
+body[data-design="turbo"] .tv-main h1 { font-size: 1.6em !important; font-weight: normal !important; line-height: 1.3 !important; }
+body[data-design="turbo"] .tv-main > div > div > div:first-child:has(> div > h1),
+body[data-design="turbo"] .tv-main div:has(> div > h1 > .gradient-text) {
+  margin: 0 0 2em !important; padding: .4em 0 0 !important; width: auto !important; left: auto !important; transform: none !important;
+}
+body[data-design="turbo"] .tv-main p { line-height: 1.45 !important; }
+body[data-design="turbo"] .tv-main h2 { font-weight: normal !important; color: var(--tv-weiss) !important; line-height: 1.35 !important; }
+body[data-design="turbo"] .tv-main h3 { font-weight: normal !important; color: var(--tv-gelb) !important; }
+body[data-design="turbo"] .tv-main [class*="bg-gradient-to-r"][class*="via-accent"] { display: none; }
+
+/* Karten -> Fenster */
+body[data-design="turbo"] .glass {
+  background: var(--tv-blau) !important; border: 4px double var(--tv-weiss) !important;
+  box-shadow: 2ch 1em 0 rgba(0,0,0,.6) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  transform: none !important; color: var(--tv-hellgrau);
+}
+body[data-design="turbo"] .glow-border::before { display: none !important; }
+body[data-design="turbo"] .glass .bg-primary,
+body[data-design="turbo"] .glass [class*="bg-primary"] { background: var(--tv-cyan) !important; color: var(--tv-schwarz) !important; }
+body[data-design="turbo"] .glass .bg-primary *,
+body[data-design="turbo"] .glass [class*="bg-primary"] * { color: var(--tv-schwarz) !important; }
+body[data-design="turbo"] .icon-badge { background: none !important; border: 0 !important; box-shadow: none !important; }
+
+/* Textfarben der Tailwind-Klassen auf die Palette abbilden */
+body[data-design="turbo"] .text-white { color: var(--tv-weiss) !important; }
+body[data-design="turbo"] [class*="text-gray-"] { color: var(--tv-hellgrau) !important; }
+body[data-design="turbo"] .text-accent, body[data-design="turbo"] [class*="text-accent"] { color: var(--tv-hellcyan) !important; }
+body[data-design="turbo"] [class*="text-red"] { color: var(--tv-hellrot) !important; }
+body[data-design="turbo"] [class*="text-green"] { color: var(--tv-hellgruen) !important; }
+body[data-design="turbo"] .bg-primary, body[data-design="turbo"] .bg-primary-dark,
+body[data-design="turbo"] [class*="from-primary"] { background: transparent !important; }
+body[data-design="turbo"] [class*="bg-accent/"] { background: transparent !important; }
+
+/* Formulare wie TV-Eingabezeilen */
+body[data-design="turbo"] input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body[data-design="turbo"] textarea,
+body[data-design="turbo"] select {
+  background: var(--tv-cyan) !important; color: var(--tv-schwarz) !important; border: 0 !important;
+  box-shadow: none !important; padding: .15em 1ch !important; font-size: 1em !important;
+}
+body[data-design="turbo"] input:focus, body[data-design="turbo"] textarea:focus, body[data-design="turbo"] select:focus {
+  outline: 0 !important; background: var(--tv-hellcyan) !important;
+}
+body[data-design="turbo"] input::placeholder, body[data-design="turbo"] textarea::placeholder { color: var(--tv-dunkelgrau) !important; }
+body[data-design="turbo"] label { color: var(--tv-weiss) !important; }
+body[data-design="turbo"] [class*="border-dashed"] { border: 2px dashed var(--tv-hellcyan) !important; background: transparent !important; }
+
+/* Bilder bleiben, aber ohne Rundungen und mit Rahmen */
+body[data-design="turbo"] .tv-main img { border: 2px solid var(--tv-weiss); }
+
+/* ---------- Handy ---------- */
+@media (max-width: 760px) {
+  body[data-design="turbo"] { font-size: 15px; }
+  .tv-burger { display: block; }
+  .tv-menu { flex-wrap: wrap; }
+  .tv-menu-nav { display: none; order: 9; width: 100%; flex-direction: column; background: var(--tv-hellgrau); border-top: 1px solid var(--tv-schwarz); }
+  .tv-menu-nav.tv-offen { display: flex; }
+  .tv-menu-nav .tv-menu-item { padding: .2em 2ch; }
+  .tv-uhr { display: none; }
+  .tv-nur-breit { display: none; }
+  .tv-status-rechts { display: none; }
+  .tv-main { padding: 1.2em 1.5ch 2em 1ch; }
+  .tv-fenster { margin-right: 1.5ch; padding: 1em 1.5ch 1.2em; box-shadow: 1ch .6em 0 rgba(0,0,0,.6); }
+  .tv-raster-2 { grid-template-columns: 1fr; }
+  .tv-checks { columns: 1; }
+  .tv-liste p { margin-left: 0; }
+  .tv-liste a { flex-wrap: wrap; }
+  .tv-preis { flex-basis: 100%; padding-left: 5ch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-cursor { animation: none; }
+}

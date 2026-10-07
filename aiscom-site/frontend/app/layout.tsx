@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './turbo.css';
 
 export const metadata: Metadata = {
   title: 'AISCOM - IT-Dienstleistungen & 3D-Druck',

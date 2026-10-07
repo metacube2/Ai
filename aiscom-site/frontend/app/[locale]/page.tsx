@@ -9,6 +9,10 @@ import Reveal from '@/components/visual/Reveal';
 import Wave from '@/components/visual/Wave';
 import { RadioVisual, CameraVisual, AuroraVisual } from '@/components/visual/ProductVisuals';
 import Button from '@/components/ui/Button';
+import TurboHome from '@/components/turbo/TurboHome';
+import { aktuellesDesign } from '@/lib/design';
+
+export const dynamic = 'force-dynamic';
 
 // Service icons as SVG components
 const PrinterIcon = () => (
@@ -38,6 +42,10 @@ const GlobeIcon = () => (
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const dictionary = getDictionary(locale as Locale);
+
+  if (aktuellesDesign() === 'turbo') {
+    return <TurboHome locale={locale as Locale} dictionary={dictionary} />;
+  }
 
   const services = [
     {
