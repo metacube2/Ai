@@ -1605,3 +1605,5 @@ Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.
 * Lokale Objekte (`$TMP`) aktiviert `SapGuiInaktiveLokalAktivieren.vbs`, nicht `SapGuiInaktiveMarkieren.vbs` (der sucht auf dem Reiter „Transportierbare Objekte").
 * Selektionstexte: SE38, Radio `RS38M-FUNC_TEXT`, F6, Reiter `tabpSSSS`, Tabelle `tblSAPLSETXPSELPAR`, Spalten `RS38M-STEXTI[0,r]` (Name) und `RS38M-STEXTT[1,r]` (Text); sichern fragt nach dem Auftrag, danach aktivieren.
 * `RunSapProbe.ps1` aus Bash: `powershell -NoProfile -ExecutionPolicy Bypass -File ...`, sonst blockt die Ausfuehrungsrichtlinie; aus dem PowerShell-Werkzeug bricht `table-read` mit NativeCommandError ab.
+* **OData-Modell erweitert, Set liefert 404:** nach `/IWFND/CACHE_CLEANUP` (Modell `ZPOWERBI_EINKAUF_MDL`) zusaetzlich `/IWBEP/CACHE_CLEANUP` ausfuehren; der Bildschirm hat nur die Option „Cache f. alle Modelle" (`chkALLMODEL`, F8). Gemessen 2026-10-07 bei ShopZd05Set/ShopAufSet.
+* **Aus Bash immer `export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'`**, sonst wird `/nSE24` zu einem Pfad.

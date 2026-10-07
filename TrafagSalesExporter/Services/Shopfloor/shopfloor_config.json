@@ -1,0 +1,4975 @@
+{
+ "modules": [
+  {
+   "key": "highlights",
+   "kind": "list",
+   "sheet": "Highlights",
+   "header_row": 2,
+   "title": "Highlights",
+   "short": "Highlights",
+   "id_format": "SFH-{yy}-{n:03}",
+   "date_field": "datum",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum",
+     "type": "date",
+     "col": "B",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "C",
+     "default": "user",
+     "list": true
+    },
+    {
+     "key": "abteilung",
+     "label": "Abteilung / Bereich",
+     "type": "select",
+     "col": "D",
+     "opts": "abteilung",
+     "free": true,
+     "list": true
+    },
+    {
+     "key": "titel",
+     "label": "Titel",
+     "type": "text",
+     "col": "E",
+     "list": true,
+     "required": true
+    },
+    {
+     "key": "beschreibung",
+     "label": "Beschreibung",
+     "type": "long",
+     "col": "F",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "G"
+    }
+   ]
+  },
+  {
+   "key": "zust",
+   "kind": "daily",
+   "sheet": "Zuständigkeiten",
+   "header_row": 5,
+   "date_col": "C",
+   "title": "Zuständigkeiten / Schichtleitung",
+   "short": "Zuständigkeiten",
+   "copy_prev": true,
+   "fields": [
+    {
+     "key": "seh_tl",
+     "label": "SEH · TL Goran (343)",
+     "type": "select",
+     "col": "D",
+     "opts": "tl",
+     "group": "SEH"
+    },
+    {
+     "key": "seh_s1",
+     "label": "SEH · Schicht 1 Früh",
+     "type": "select",
+     "col": "E",
+     "opts": "z_seh",
+     "free": true,
+     "group": "SEH"
+    },
+    {
+     "key": "seh_s2",
+     "label": "SEH · Schicht 2 Spät",
+     "type": "select",
+     "col": "F",
+     "opts": "z_seh",
+     "free": true,
+     "group": "SEH"
+    },
+    {
+     "key": "tr5_tl",
+     "label": "TR5 · TL Goran (343)",
+     "type": "select",
+     "col": "G",
+     "opts": "tl",
+     "group": "TR5"
+    },
+    {
+     "key": "tr5_s1",
+     "label": "TR5 · Schicht 1 Früh",
+     "type": "select",
+     "col": "H",
+     "opts": "z_tr5",
+     "free": true,
+     "group": "TR5"
+    },
+    {
+     "key": "tr5_s2",
+     "label": "TR5 · Schicht 2 Spät",
+     "type": "select",
+     "col": "I",
+     "opts": "z_tr5",
+     "free": true,
+     "group": "TR5"
+    },
+    {
+     "key": "tx_tl",
+     "label": "TX · TL Michael (208)",
+     "type": "select",
+     "col": "J",
+     "opts": "tl",
+     "group": "TX"
+    },
+    {
+     "key": "tx_s1",
+     "label": "TX · Schicht 1 Früh",
+     "type": "select",
+     "col": "K",
+     "opts": "z_tx",
+     "free": true,
+     "group": "TX"
+    },
+    {
+     "key": "tx_s2",
+     "label": "TX · Schicht 2 Spät",
+     "type": "select",
+     "col": "L",
+     "opts": "z_tx",
+     "free": true,
+     "group": "TX"
+    },
+    {
+     "key": "dw_tl",
+     "label": "DW · TL Sanel (226)",
+     "type": "select",
+     "col": "M",
+     "opts": "tl",
+     "group": "DW"
+    },
+    {
+     "key": "dw_s1",
+     "label": "DW · Schicht 1 Früh",
+     "type": "select",
+     "col": "N",
+     "opts": "z_dw",
+     "free": true,
+     "group": "DW"
+    },
+    {
+     "key": "dw_s2",
+     "label": "DW · Schicht 2 Spät",
+     "type": "select",
+     "col": "O",
+     "opts": "z_dw",
+     "free": true,
+     "group": "DW"
+    },
+    {
+     "key": "dw_s3",
+     "label": "DW · Schicht 3 Nacht",
+     "type": "select",
+     "col": "P",
+     "opts": "z_dw",
+     "free": true,
+     "group": "DW"
+    },
+    {
+     "key": "mtf_tl",
+     "label": "MTF · TL Vesna (248)",
+     "type": "select",
+     "col": "Q",
+     "opts": "tl",
+     "group": "MTF"
+    },
+    {
+     "key": "mtf_s1",
+     "label": "MTF · Schicht 1 Früh",
+     "type": "select",
+     "col": "R",
+     "opts": "z_mtf",
+     "free": true,
+     "group": "MTF"
+    },
+    {
+     "key": "mtf_s2",
+     "label": "MTF · Schicht 2 Spät",
+     "type": "select",
+     "col": "S",
+     "opts": "z_mtf",
+     "free": true,
+     "group": "MTF"
+    },
+    {
+     "key": "uh_tl",
+     "label": "Unterhalt · TL Vesna (248)",
+     "type": "select",
+     "col": "T",
+     "opts": "tl",
+     "group": "Unterhalt"
+    },
+    {
+     "key": "uh_s1",
+     "label": "Unterhalt · Schicht 1 Früh",
+     "type": "select",
+     "col": "U",
+     "opts": "z_uh",
+     "free": true,
+     "group": "Unterhalt"
+    },
+    {
+     "key": "uh_s2",
+     "label": "Unterhalt · Schicht 2 Spät",
+     "type": "select",
+     "col": "V",
+     "opts": "z_uh",
+     "free": true,
+     "group": "Unterhalt"
+    },
+    {
+     "key": "log_tl",
+     "label": "Logistik · TL Sacha (319)",
+     "type": "select",
+     "col": "W",
+     "opts": "tl",
+     "group": "Logistik"
+    },
+    {
+     "key": "log_s1_we",
+     "label": "Logistik · Tag Wareneingang",
+     "type": "select",
+     "col": "X",
+     "opts": "z_log",
+     "free": true,
+     "group": "Logistik"
+    },
+    {
+     "key": "log_s1_rr",
+     "label": "Logistik · Tag Reinraum",
+     "type": "select",
+     "col": "Y",
+     "opts": "z_log",
+     "free": true,
+     "group": "Logistik"
+    },
+    {
+     "key": "log_s1_dw",
+     "label": "Logistik · Tag Dichtewächter",
+     "type": "select",
+     "col": "Z",
+     "opts": "z_log",
+     "free": true,
+     "group": "Logistik"
+    },
+    {
+     "key": "log_s2_we",
+     "label": "Logistik · Abend Wareneingang",
+     "type": "select",
+     "col": "AA",
+     "opts": "z_log",
+     "free": true,
+     "group": "Logistik"
+    },
+    {
+     "key": "log_s2_rr",
+     "label": "Logistik · Abend Reinraum",
+     "type": "select",
+     "col": "AB",
+     "opts": "z_log",
+     "free": true,
+     "group": "Logistik"
+    },
+    {
+     "key": "log_s2_dw",
+     "label": "Logistik · Abend Dichtewächter",
+     "type": "select",
+     "col": "AC",
+     "opts": "z_log",
+     "free": true,
+     "group": "Logistik"
+    }
+   ]
+  },
+  {
+   "key": "pendenzen",
+   "kind": "list",
+   "sheet": "1. Pendenzen",
+   "header_row": 2,
+   "title": "Pendenzen",
+   "short": "Pendenzen",
+   "id_format": "SFP-{yy}-{n:03}",
+   "due_field": "zieltermin",
+   "status_field": "status",
+   "date_field": "datum",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum",
+     "type": "date",
+     "col": "B",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "C",
+     "default": "user"
+    },
+    {
+     "key": "abteilung",
+     "label": "Betroffene Abteilung",
+     "type": "select",
+     "col": "D",
+     "opts": "abteilung",
+     "free": true,
+     "list": true
+    },
+    {
+     "key": "produkt",
+     "label": "Betroffenes Produkt",
+     "type": "text",
+     "col": "E"
+    },
+    {
+     "key": "material",
+     "label": "Betroffenes Material",
+     "type": "text",
+     "col": "F"
+    },
+    {
+     "key": "beschreibung",
+     "label": "Beschreibung",
+     "type": "long",
+     "col": "G",
+     "list": true,
+     "required": true
+    },
+    {
+     "key": "ticket",
+     "label": "Ticketnummer",
+     "type": "text",
+     "col": "H"
+    },
+    {
+     "key": "massnahme",
+     "label": "Massnahme",
+     "type": "long",
+     "col": "I",
+     "list": true
+    },
+    {
+     "key": "verantwortlich",
+     "label": "Verantwortlicher",
+     "type": "text",
+     "col": "J",
+     "list": true
+    },
+    {
+     "key": "zustaendig",
+     "label": "Zuständiger MA / Bereich",
+     "type": "text",
+     "col": "K"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "L"
+    },
+    {
+     "key": "zieltermin",
+     "label": "Zieltermin",
+     "type": "date",
+     "col": "M",
+     "list": true
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "col": "N",
+     "opts": "status",
+     "free": true,
+     "list": true,
+     "default": "offen"
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "O"
+    }
+   ]
+  },
+  {
+   "key": "ea",
+   "kind": "list",
+   "sheet": "2. Entw.Aufträge",
+   "header_row": 3,
+   "title": "Entwicklungsaufträge",
+   "short": "Entw.-Aufträge",
+   "id_format": "SFEA-{yy}-{n:03}",
+   "due_field": "zieltermin",
+   "status_field": "status",
+   "date_field": "datum",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Eingabe durch Entwicklung",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "C",
+     "group": "Eingabe durch Entwicklung",
+     "default": "user",
+     "list": true
+    },
+    {
+     "key": "wunschdatum",
+     "label": "Wunschlieferdatum",
+     "type": "date",
+     "col": "D",
+     "group": "Eingabe durch Entwicklung",
+     "list": true
+    },
+    {
+     "key": "prio",
+     "label": "Prio",
+     "type": "select",
+     "col": "E",
+     "opts": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "free": true,
+     "group": "Eingabe durch Entwicklung",
+     "list": true
+    },
+    {
+     "key": "vknr",
+     "label": "VkNr / Baugruppe",
+     "type": "text",
+     "col": "F",
+     "group": "Eingabe durch Entwicklung",
+     "list": true
+    },
+    {
+     "key": "menge",
+     "label": "Menge",
+     "type": "num",
+     "col": "G",
+     "group": "Eingabe durch Entwicklung",
+     "unit": "Stk."
+    },
+    {
+     "key": "auftrag",
+     "label": "Kundenauftrag / Fertigungsauftrag",
+     "type": "text",
+     "col": "H",
+     "group": "Eingabe durch Entwicklung"
+    },
+    {
+     "key": "pos",
+     "label": "Kundenposition",
+     "type": "text",
+     "col": "I",
+     "group": "Eingabe durch Entwicklung"
+    },
+    {
+     "key": "beschreibung",
+     "label": "Beschreibung (spezieller Aufbau / Material)",
+     "type": "long",
+     "col": "J",
+     "group": "Eingabe durch Entwicklung",
+     "list": true
+    },
+    {
+     "key": "grund",
+     "label": "Grund der Dringlichkeit",
+     "type": "long",
+     "col": "K",
+     "group": "Eingabe durch Entwicklung"
+    },
+    {
+     "key": "ansprechpartner",
+     "label": "Ansprechpartner während Aufbau",
+     "type": "text",
+     "col": "L",
+     "group": "Eingabe durch Entwicklung"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Sonstige Bemerkungen",
+     "type": "long",
+     "col": "M",
+     "group": "Eingabe durch Entwicklung"
+    },
+    {
+     "key": "zieltermin",
+     "label": "Zieltermin",
+     "type": "date",
+     "col": "N",
+     "group": "Eingabe durch Dispo",
+     "list": true
+    },
+    {
+     "key": "abteilung",
+     "label": "Abteilung",
+     "type": "text",
+     "col": "O",
+     "group": "Eingabe durch Dispo",
+     "list": true
+    },
+    {
+     "key": "bemerkungen_dispo",
+     "label": "Bemerkungen Dispo",
+     "type": "long",
+     "col": "P",
+     "group": "Eingabe durch Dispo"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "col": "Q",
+     "opts": "status",
+     "free": true,
+     "group": "Eingabe durch Dispo",
+     "list": true,
+     "default": "offen"
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "R",
+     "group": "Eingabe durch Dispo"
+    }
+   ]
+  },
+  {
+   "key": "seh",
+   "kind": "daily",
+   "sheet": "3. SEH",
+   "header_row": 6,
+   "date_col": "C",
+   "title": "Abteilung SEH",
+   "short": "SEH",
+   "dept": "SEH",
+   "chart": {
+    "bar": "prod",
+    "line": "ziel",
+    "label": "Produziert vs. Tagesziel"
+   },
+   "fields": [
+    {
+     "key": "vorrat_total",
+     "label": "Auftragsvorrat total",
+     "type": "num",
+     "col": "D",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_3m",
+     "label": "Auftragsvorrat 3 Mte",
+     "type": "num",
+     "col": "E",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_2m",
+     "label": "Auftragsvorrat 2 Mte",
+     "type": "num",
+     "col": "F",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_1m",
+     "label": "Auftragsvorrat 1 Mte",
+     "type": "num",
+     "col": "G",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "geraete_tag_1m",
+     "label": "Ø Geräte pro Tag 1. Mte",
+     "type": "calc",
+     "calc": "v.vorrat_1m / 20",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk.",
+     "digits": 0
+    },
+    {
+     "key": "offen_kw",
+     "label": "Offene Menge aktuelle KW",
+     "type": "num",
+     "col": "K",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "ziel",
+     "label": "Offene Tagesmenge / Tagesziel",
+     "type": "num",
+     "col": "L",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "prod",
+     "label": "Produzierte Tagesmenge",
+     "type": "num",
+     "col": "M",
+     "src": "mes",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "abw",
+     "label": "Abweichung",
+     "type": "calc",
+     "calc": "v.prod - v.ziel",
+     "group": "Tagesleistung",
+     "unit": "Stk.",
+     "signed": true,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "leistung",
+     "label": "Erreichte Tagesleistung",
+     "type": "calc",
+     "calc": "v.ziel ? v.prod / v.ziel * 100 : null",
+     "group": "Tagesleistung",
+     "unit": "%",
+     "digits": 0,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "verzug",
+     "label": "Menge in Verzug (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','verzug_seh')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv",
+     "label": "Terminverschiebungen (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','tv_seh')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "ma1",
+     "label": "MA Schicht 1 Früh",
+     "type": "num",
+     "col": "R",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA Schicht 2 Spät",
+     "type": "num",
+     "col": "S",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA frei / Ferien",
+     "type": "num",
+     "col": "T",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA krank",
+     "type": "num",
+     "col": "U",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "lz_tr5",
+     "label": "Lieferzeit BG TR5",
+     "type": "num",
+     "col": "V",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_tx",
+     "label": "Lieferzeit BG TX",
+     "type": "num",
+     "col": "W",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "fpy",
+     "label": "FPY",
+     "type": "num",
+     "col": "Y",
+     "src": "mes",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "%"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "AN",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "rs_seh",
+   "kind": "list",
+   "sheet": "3.1 RS",
+   "header_row": 4,
+   "title": "Rückstandsliste SEH",
+   "short": "RS SEH",
+   "id_format": "RS-SEH-{yy}-{n:03}",
+   "due_field": "tv1",
+   "status_field": "status",
+   "date_field": "datum",
+   "dept": "SEH",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Eingabe durch Dispo",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "E",
+     "group": "Eingabe durch Dispo",
+     "default": "user"
+    },
+    {
+     "key": "disponent",
+     "label": "Disponent",
+     "type": "text",
+     "col": "F",
+     "group": "Eingabe durch Dispo",
+     "list": true
+    },
+    {
+     "key": "vknr",
+     "label": "VkNr",
+     "type": "text",
+     "col": "G",
+     "group": "Auftrag",
+     "list": true,
+     "src": "sap"
+    },
+    {
+     "key": "typencode",
+     "label": "Typencode",
+     "type": "text",
+     "col": "H",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "eckendtermin",
+     "label": "Eckendtermin",
+     "type": "date",
+     "col": "I",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "wunschtermin",
+     "label": "Wunschtermin",
+     "type": "date",
+     "col": "J",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "tv1",
+     "label": "Neuer Liefertermin 1. TV",
+     "type": "date",
+     "col": "K",
+     "group": "Termine",
+     "list": true
+    },
+    {
+     "key": "tv2",
+     "label": "Neuer Liefertermin 2. TV",
+     "type": "date",
+     "col": "L",
+     "group": "Termine"
+    },
+    {
+     "key": "tv3",
+     "label": "Neuer Liefertermin 3. TV",
+     "type": "date",
+     "col": "M",
+     "group": "Termine"
+    },
+    {
+     "key": "ka_nr",
+     "label": "Kundenauftrag",
+     "type": "text",
+     "col": "N",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "ka_pos",
+     "label": "Position",
+     "type": "text",
+     "col": "O",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "kunde",
+     "label": "Kundenname",
+     "type": "text",
+     "col": "P",
+     "group": "Auftrag",
+     "src": "sap",
+     "list": true
+    },
+    {
+     "key": "bestellmenge",
+     "label": "Kundenbestellmenge",
+     "type": "num",
+     "col": "Q",
+     "group": "Auftrag",
+     "src": "sap",
+     "unit": "Stk."
+    },
+    {
+     "key": "pl_auf",
+     "label": "Pl-Auf",
+     "type": "text",
+     "col": "R",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "fa",
+     "label": "Fertigungsauftrag",
+     "type": "text",
+     "col": "S",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "menge_rs",
+     "label": "Menge im Rückstand",
+     "type": "num",
+     "col": "T",
+     "group": "Auftrag",
+     "unit": "Stk.",
+     "list": true
+    },
+    {
+     "key": "verursacher",
+     "label": "Verursacher / beteiligt",
+     "type": "flags",
+     "opts": "verursacher",
+     "cols": {
+      "Einkauf": "U",
+      "GFS DE": "V",
+      "Trafag CZ": "W",
+      "Logistik": "X",
+      "Verkauf": "Y",
+      "Dispo": "Z",
+      "AVOR": "AA",
+      "Qualität": "AB",
+      "Entwicklung": "AC",
+      "Ausschuss": "AD",
+      "MA-Kapazität": "AE",
+      "Produktion": "AF",
+      "Betriebsmittel": "AG",
+      "Prozess-Problem": "AH",
+      "Nachmessungen": "AI"
+     },
+     "group": "Ursache"
+    },
+    {
+     "key": "ursache",
+     "label": "Ursache",
+     "type": "select",
+     "col": "AK",
+     "opts": "ursache",
+     "free": true,
+     "group": "Ursache",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "AJ",
+     "group": "Ursache"
+    },
+    {
+     "key": "ticket",
+     "label": "Ticketnummer",
+     "type": "text",
+     "col": "AL",
+     "group": "Ursache"
+    },
+    {
+     "key": "fehlmat",
+     "label": "FehlMat",
+     "type": "text",
+     "col": "AM",
+     "group": "Fehlmaterial",
+     "list": true
+    },
+    {
+     "key": "komponenten",
+     "label": "Betroffene Komponente",
+     "type": "flags",
+     "opts": [
+      "Print",
+      "Anschluss",
+      "Membrane",
+      "Keramikzelle",
+      "Sonstiges"
+     ],
+     "cols": {
+      "Print": "AN",
+      "Anschluss": "AO",
+      "Membrane": "AP",
+      "Keramikzelle": "AQ",
+      "Sonstiges": "AR"
+     },
+     "group": "Fehlmaterial"
+    },
+    {
+     "key": "we_geplant",
+     "label": "Datum WE geplant",
+     "type": "date",
+     "col": "AS",
+     "group": "Fehlmaterial",
+     "src": "sap"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "col": "AT",
+     "opts": "status",
+     "free": true,
+     "group": "Abschluss (Dispo / TL)",
+     "list": true
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "AU",
+     "group": "Abschluss (Dispo / TL)"
+    },
+    {
+     "key": "abschluss_durch",
+     "label": "Abschluss durch",
+     "type": "text",
+     "col": "AV",
+     "group": "Abschluss (Dispo / TL)"
+    }
+   ]
+  },
+  {
+   "key": "tr5",
+   "kind": "daily",
+   "sheet": "4. TR5",
+   "header_row": 6,
+   "date_col": "C",
+   "title": "Abteilung TR5",
+   "short": "TR5",
+   "dept": "TR5",
+   "chart": {
+    "bar": "prod",
+    "line": "ziel",
+    "label": "Produziert vs. Tagesziel"
+   },
+   "fields": [
+    {
+     "key": "vorrat_total",
+     "label": "Auftragsvorrat total",
+     "type": "num",
+     "col": "D",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_3m",
+     "label": "Auftragsvorrat 3 Mte",
+     "type": "num",
+     "col": "E",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_2m",
+     "label": "Auftragsvorrat 2 Mte",
+     "type": "num",
+     "col": "F",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_1m",
+     "label": "Auftragsvorrat 1 Mte",
+     "type": "num",
+     "col": "G",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "geraete_tag_1m",
+     "label": "Ø Geräte pro Tag 1. Mte",
+     "type": "calc",
+     "calc": "v.vorrat_1m / 20",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk.",
+     "digits": 0
+    },
+    {
+     "key": "offen_kw",
+     "label": "Offene Menge aktuelle KW",
+     "type": "num",
+     "col": "K",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "ziel",
+     "label": "Tagesziel",
+     "type": "num",
+     "col": "L",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "prod",
+     "label": "Produzierte Tagesmenge",
+     "type": "num",
+     "col": "M",
+     "src": "mes",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "abw",
+     "label": "Abweichung",
+     "type": "calc",
+     "calc": "v.prod - v.ziel",
+     "group": "Tagesleistung",
+     "unit": "Stk.",
+     "signed": true,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "leistung",
+     "label": "Erreichte Tagesleistung",
+     "type": "calc",
+     "calc": "v.ziel ? v.prod / v.ziel * 100 : null",
+     "group": "Tagesleistung",
+     "unit": "%",
+     "digits": 0,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "verzug",
+     "label": "Menge in Verzug (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','verzug_tr5')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv",
+     "label": "Terminverschiebungen (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','tv_tr5')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "ma1",
+     "label": "MA Schicht 1 Früh",
+     "type": "num",
+     "col": "R",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA Schicht 2 Spät",
+     "type": "num",
+     "col": "S",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA frei / Ferien",
+     "type": "num",
+     "col": "T",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA krank",
+     "type": "num",
+     "col": "U",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "lz_cold",
+     "label": "Lieferzeit Cold",
+     "type": "num",
+     "col": "V",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_hot",
+     "label": "Lieferzeit Hot (TK)",
+     "type": "num",
+     "col": "W",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_8292",
+     "label": "Lieferzeit 8292 (EXNT)",
+     "type": "num",
+     "col": "X",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "fpy",
+     "label": "FPY",
+     "type": "num",
+     "col": "Y",
+     "src": "mes",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "%"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "AN",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "rs_tr5",
+   "kind": "list",
+   "sheet": "4.1 RS",
+   "header_row": 4,
+   "title": "Rückstandsliste TR5",
+   "short": "RS TR5",
+   "id_format": "RS-TR5-{yy}-{n:03}",
+   "due_field": "tv1",
+   "status_field": "status",
+   "date_field": "datum",
+   "dept": "TR5",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Eingabe durch Dispo",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "E",
+     "group": "Eingabe durch Dispo",
+     "default": "user"
+    },
+    {
+     "key": "disponent",
+     "label": "Disponent",
+     "type": "text",
+     "col": "F",
+     "group": "Eingabe durch Dispo",
+     "list": true
+    },
+    {
+     "key": "vknr",
+     "label": "VkNr",
+     "type": "text",
+     "col": "G",
+     "group": "Auftrag",
+     "list": true,
+     "src": "sap"
+    },
+    {
+     "key": "typencode",
+     "label": "Typencode",
+     "type": "text",
+     "col": "H",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "eckendtermin",
+     "label": "Eckendtermin",
+     "type": "date",
+     "col": "I",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "wunschtermin",
+     "label": "Wunschtermin",
+     "type": "date",
+     "col": "J",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "tv1",
+     "label": "Neuer Liefertermin 1. TV",
+     "type": "date",
+     "col": "K",
+     "group": "Termine",
+     "list": true
+    },
+    {
+     "key": "tv2",
+     "label": "Neuer Liefertermin 2. TV",
+     "type": "date",
+     "col": "L",
+     "group": "Termine"
+    },
+    {
+     "key": "tv3",
+     "label": "Neuer Liefertermin 3. TV",
+     "type": "date",
+     "col": "M",
+     "group": "Termine"
+    },
+    {
+     "key": "ka_nr",
+     "label": "Kundenauftrag",
+     "type": "text",
+     "col": "N",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "ka_pos",
+     "label": "Position",
+     "type": "text",
+     "col": "O",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "kunde",
+     "label": "Kundenname",
+     "type": "text",
+     "col": "P",
+     "group": "Auftrag",
+     "src": "sap",
+     "list": true
+    },
+    {
+     "key": "bestellmenge",
+     "label": "Kundenbestellmenge",
+     "type": "num",
+     "col": "Q",
+     "group": "Auftrag",
+     "src": "sap",
+     "unit": "Stk."
+    },
+    {
+     "key": "pl_auf",
+     "label": "Pl-Auf",
+     "type": "text",
+     "col": "R",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "fa",
+     "label": "Fertigungsauftrag",
+     "type": "text",
+     "col": "S",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "menge_rs",
+     "label": "Menge im Rückstand",
+     "type": "num",
+     "col": "T",
+     "group": "Auftrag",
+     "unit": "Stk.",
+     "list": true
+    },
+    {
+     "key": "verursacher",
+     "label": "Verursacher / beteiligt",
+     "type": "flags",
+     "opts": "verursacher",
+     "cols": {
+      "Einkauf": "U",
+      "GFS DE": "V",
+      "Trafag CZ": "W",
+      "Logistik": "X",
+      "Verkauf": "Y",
+      "Dispo": "Z",
+      "AVOR": "AA",
+      "Qualität": "AB",
+      "Entwicklung": "AC",
+      "Ausschuss": "AD",
+      "MA-Kapazität": "AE",
+      "Produktion": "AF",
+      "Betriebsmittel": "AG",
+      "Prozess-Problem": "AH",
+      "Nachmessungen": "AI"
+     },
+     "group": "Ursache"
+    },
+    {
+     "key": "ursache",
+     "label": "Ursache",
+     "type": "select",
+     "col": "AK",
+     "opts": "ursache",
+     "free": true,
+     "group": "Ursache",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "AJ",
+     "group": "Ursache"
+    },
+    {
+     "key": "ticket",
+     "label": "Ticketnummer",
+     "type": "text",
+     "col": "AL",
+     "group": "Ursache"
+    },
+    {
+     "key": "fehlmat",
+     "label": "FehlMat",
+     "type": "text",
+     "col": "AM",
+     "group": "Fehlmaterial",
+     "list": true
+    },
+    {
+     "key": "komponenten",
+     "label": "Betroffene Komponente",
+     "type": "flags",
+     "opts": [
+      "Print",
+      "Anschluss",
+      "Sensor-BG",
+      "Kabel-BG",
+      "Sonstiges"
+     ],
+     "cols": {
+      "Print": "AN",
+      "Anschluss": "AO",
+      "Sensor-BG": "AP",
+      "Kabel-BG": "AQ",
+      "Sonstiges": "AR"
+     },
+     "group": "Fehlmaterial"
+    },
+    {
+     "key": "we_geplant",
+     "label": "Datum WE geplant",
+     "type": "date",
+     "col": "AS",
+     "group": "Fehlmaterial",
+     "src": "sap"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "col": "AT",
+     "opts": "status",
+     "free": true,
+     "group": "Abschluss (Dispo / TL)",
+     "list": true
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "AU",
+     "group": "Abschluss (Dispo / TL)"
+    },
+    {
+     "key": "abschluss_durch",
+     "label": "Abschluss durch",
+     "type": "text",
+     "col": "AV",
+     "group": "Abschluss (Dispo / TL)"
+    }
+   ]
+  },
+  {
+   "key": "tx",
+   "kind": "daily",
+   "sheet": "5. TX",
+   "header_row": 6,
+   "date_col": "C",
+   "title": "Abteilung TX",
+   "short": "TX",
+   "dept": "TX",
+   "chart": {
+    "bar": "prod",
+    "line": "ziel",
+    "label": "Produziert vs. Tagesziel"
+   },
+   "fields": [
+    {
+     "key": "vorrat_total",
+     "label": "Auftragsvorrat total",
+     "type": "num",
+     "col": "D",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_3m",
+     "label": "Auftragsvorrat 3 Mte",
+     "type": "num",
+     "col": "E",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_2m",
+     "label": "Auftragsvorrat 2 Mte",
+     "type": "num",
+     "col": "F",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_1m",
+     "label": "Auftragsvorrat 1 Mte",
+     "type": "num",
+     "col": "G",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "geraete_tag_1m",
+     "label": "Ø Geräte pro Tag 1. Mte",
+     "type": "calc",
+     "calc": "v.vorrat_1m / 20",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk.",
+     "digits": 0
+    },
+    {
+     "key": "offen_kw",
+     "label": "Offene Menge aktuelle KW",
+     "type": "num",
+     "col": "K",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "plan5",
+     "label": "Planmenge nächste 5 AT",
+     "type": "num",
+     "col": "L",
+     "src": "sap",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "ziel",
+     "label": "Tagesziel",
+     "type": "num",
+     "col": "M",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "prod",
+     "label": "Produzierte Tagesmenge",
+     "type": "num",
+     "col": "N",
+     "src": "mes",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "abw",
+     "label": "Abweichung",
+     "type": "calc",
+     "calc": "v.prod - v.ziel",
+     "group": "Tagesleistung",
+     "unit": "Stk.",
+     "signed": true,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "leistung",
+     "label": "Erreichte Tagesleistung",
+     "type": "calc",
+     "calc": "v.ziel ? v.prod / v.ziel * 100 : null",
+     "group": "Tagesleistung",
+     "unit": "%",
+     "digits": 0,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "verzug",
+     "label": "Menge in Verzug (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','verzug_tx')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv",
+     "label": "Terminverschiebungen (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','tv_tx')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "ziel_s1",
+     "label": "Ziel Schicht 1",
+     "type": "num",
+     "col": "S",
+     "group": "Schichten",
+     "unit": "Stk."
+    },
+    {
+     "key": "prod_s1",
+     "label": "Produziert Schicht 1",
+     "type": "num",
+     "col": "T",
+     "src": "mes",
+     "group": "Schichten",
+     "unit": "Stk."
+    },
+    {
+     "key": "ziel_s2",
+     "label": "Ziel Schicht 2",
+     "type": "num",
+     "col": "U",
+     "group": "Schichten",
+     "unit": "Stk."
+    },
+    {
+     "key": "prod_s2",
+     "label": "Produziert Schicht 2",
+     "type": "num",
+     "col": "V",
+     "src": "mes",
+     "group": "Schichten",
+     "unit": "Stk."
+    },
+    {
+     "key": "abgleich_s1",
+     "label": "Abgleich Modus Schicht 1",
+     "type": "select",
+     "col": "W",
+     "opts": "abgleich",
+     "free": true,
+     "group": "Schichten"
+    },
+    {
+     "key": "abgleich_s2",
+     "label": "Abgleich Modus Schicht 2",
+     "type": "select",
+     "col": "X",
+     "opts": "abgleich",
+     "free": true,
+     "group": "Schichten"
+    },
+    {
+     "key": "ma1",
+     "label": "MA Schicht 1 Früh",
+     "type": "num",
+     "col": "Y",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA Schicht 2 Spät",
+     "type": "num",
+     "col": "Z",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma3",
+     "label": "MA Schicht 3 Nacht",
+     "type": "num",
+     "col": "AA",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA frei / Ferien",
+     "type": "num",
+     "col": "AB",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA krank",
+     "type": "num",
+     "col": "AC",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "lz_cold",
+     "label": "Lieferzeit COLD",
+     "type": "num",
+     "col": "AD",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_hot",
+     "label": "Lieferzeit HOT",
+     "type": "num",
+     "col": "AE",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_838x",
+     "label": "Lieferzeit 838x (DPx)",
+     "type": "num",
+     "col": "AF",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "hot_anteil",
+     "label": "Hot-Anteil",
+     "type": "num",
+     "col": "AG",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "%"
+    },
+    {
+     "key": "fpy",
+     "label": "FPY",
+     "type": "num",
+     "col": "AH",
+     "src": "mes",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "%"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "AY",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "rs_tx",
+   "kind": "list",
+   "sheet": "5.1 RS",
+   "header_row": 4,
+   "title": "Rückstandsliste TX",
+   "short": "RS TX",
+   "id_format": "RS-TX-{yy}-{n:03}",
+   "due_field": "tv1",
+   "status_field": "status",
+   "date_field": "datum",
+   "dept": "TX",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Eingabe durch Dispo",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "E",
+     "group": "Eingabe durch Dispo",
+     "default": "user"
+    },
+    {
+     "key": "disponent",
+     "label": "Disponent",
+     "type": "text",
+     "col": "F",
+     "group": "Eingabe durch Dispo",
+     "list": true
+    },
+    {
+     "key": "vknr",
+     "label": "VkNr",
+     "type": "text",
+     "col": "G",
+     "group": "Auftrag",
+     "list": true,
+     "src": "sap"
+    },
+    {
+     "key": "typencode",
+     "label": "Typencode",
+     "type": "text",
+     "col": "H",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "eckendtermin",
+     "label": "Eckendtermin",
+     "type": "date",
+     "col": "I",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "wunschtermin",
+     "label": "Wunschtermin",
+     "type": "date",
+     "col": "J",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "tv1",
+     "label": "Neuer Liefertermin 1. TV",
+     "type": "date",
+     "col": "K",
+     "group": "Termine",
+     "list": true
+    },
+    {
+     "key": "tv2",
+     "label": "Neuer Liefertermin 2. TV",
+     "type": "date",
+     "col": "L",
+     "group": "Termine"
+    },
+    {
+     "key": "tv3",
+     "label": "Neuer Liefertermin 3. TV",
+     "type": "date",
+     "col": "M",
+     "group": "Termine"
+    },
+    {
+     "key": "ka_nr",
+     "label": "Kundenauftrag",
+     "type": "text",
+     "col": "N",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "ka_pos",
+     "label": "Position",
+     "type": "text",
+     "col": "O",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "kunde",
+     "label": "Kundenname",
+     "type": "text",
+     "col": "P",
+     "group": "Auftrag",
+     "src": "sap",
+     "list": true
+    },
+    {
+     "key": "bestellmenge",
+     "label": "Kundenbestellmenge",
+     "type": "num",
+     "col": "Q",
+     "group": "Auftrag",
+     "src": "sap",
+     "unit": "Stk."
+    },
+    {
+     "key": "pl_auf",
+     "label": "Pl-Auf",
+     "type": "text",
+     "col": "R",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "fa",
+     "label": "Fertigungsauftrag",
+     "type": "text",
+     "col": "S",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "menge_rs",
+     "label": "Menge im Rückstand",
+     "type": "num",
+     "col": "T",
+     "group": "Auftrag",
+     "unit": "Stk.",
+     "list": true
+    },
+    {
+     "key": "verursacher",
+     "label": "Verursacher / beteiligt",
+     "type": "flags",
+     "opts": "verursacher",
+     "cols": {
+      "Einkauf": "U",
+      "GFS DE": "V",
+      "Trafag CZ": "W",
+      "Logistik": "X",
+      "Verkauf": "Y",
+      "Dispo": "Z",
+      "AVOR": "AA",
+      "Qualität": "AB",
+      "Entwicklung": "AC",
+      "Ausschuss": "AD",
+      "MA-Kapazität": "AE",
+      "Produktion": "AF",
+      "Betriebsmittel": "AG",
+      "Prozess-Problem": "AH",
+      "Nachmessungen": "AI"
+     },
+     "group": "Ursache"
+    },
+    {
+     "key": "ursache",
+     "label": "Ursache",
+     "type": "select",
+     "col": "AK",
+     "opts": "ursache",
+     "free": true,
+     "group": "Ursache",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "AJ",
+     "group": "Ursache"
+    },
+    {
+     "key": "ticket",
+     "label": "Ticketnummer",
+     "type": "text",
+     "col": "AL",
+     "group": "Ursache"
+    },
+    {
+     "key": "fehlmat",
+     "label": "FehlMat",
+     "type": "text",
+     "col": "AM",
+     "group": "Fehlmaterial",
+     "list": true
+    },
+    {
+     "key": "komponenten",
+     "label": "Betroffene Komponente",
+     "type": "flags",
+     "opts": [
+      "Print",
+      "Anschluss",
+      "Sensor-BG",
+      "Display",
+      "Sonstiges"
+     ],
+     "cols": {
+      "Print": "AN",
+      "Anschluss": "AO",
+      "Sensor-BG": "AP",
+      "Display": "AQ",
+      "Sonstiges": "AR"
+     },
+     "group": "Fehlmaterial"
+    },
+    {
+     "key": "we_geplant",
+     "label": "Datum WE geplant",
+     "type": "date",
+     "col": "AS",
+     "group": "Fehlmaterial",
+     "src": "sap"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "col": "AT",
+     "opts": "status",
+     "free": true,
+     "group": "Abschluss (Dispo / TL)",
+     "list": true
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "AU",
+     "group": "Abschluss (Dispo / TL)"
+    },
+    {
+     "key": "abschluss_durch",
+     "label": "Abschluss durch",
+     "type": "text",
+     "col": "AV",
+     "group": "Abschluss (Dispo / TL)"
+    }
+   ]
+  },
+  {
+   "key": "dw",
+   "kind": "daily",
+   "sheet": "6. DW",
+   "header_row": 6,
+   "date_col": "C",
+   "title": "Abteilung DW",
+   "short": "DW",
+   "dept": "DW",
+   "chart": {
+    "bar": "prod",
+    "line": "ziel",
+    "label": "Produziert vs. Tagesziel"
+   },
+   "fields": [
+    {
+     "key": "vorrat_total",
+     "label": "Auftragsvorrat total",
+     "type": "num",
+     "col": "D",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_3m",
+     "label": "Auftragsvorrat 3 Mte",
+     "type": "num",
+     "col": "E",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_2m",
+     "label": "Auftragsvorrat 2 Mte",
+     "type": "num",
+     "col": "F",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_1m",
+     "label": "Auftragsvorrat 1 Mte",
+     "type": "num",
+     "col": "G",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "geraete_tag_1m",
+     "label": "Ø Geräte pro Tag 1. Mte",
+     "type": "calc",
+     "calc": "v.vorrat_1m / 20",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk.",
+     "digits": 0
+    },
+    {
+     "key": "offen_kw",
+     "label": "Offene Menge aktuelle KW",
+     "type": "num",
+     "col": "K",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "ziel",
+     "label": "Tagesziel",
+     "type": "num",
+     "col": "L",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "prod",
+     "label": "Produzierte Tagesmenge DL790",
+     "type": "num",
+     "col": "M",
+     "src": "mes",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "lieferbereit",
+     "label": "Lieferbereite Tagesmenge DLQ72",
+     "type": "num",
+     "col": "N",
+     "src": "sap",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "abw",
+     "label": "Abweichung",
+     "type": "calc",
+     "calc": "v.prod - v.ziel",
+     "group": "Tagesleistung",
+     "unit": "Stk.",
+     "signed": true,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "leistung",
+     "label": "Erreichte Tagesleistung",
+     "type": "calc",
+     "calc": "v.ziel ? v.prod / v.ziel * 100 : null",
+     "group": "Tagesleistung",
+     "unit": "%",
+     "digits": 0,
+     "need": [
+      "prod"
+     ]
+    },
+    {
+     "key": "verzug",
+     "label": "Menge in Verzug (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','verzug_dw')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv",
+     "label": "Terminverschiebungen (aus PPD)",
+     "type": "calc",
+     "calc": "ref('ppd','tv_dw')",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "ma1",
+     "label": "MA DW Schicht 1",
+     "type": "num",
+     "col": "S",
+     "group": "Personal DW",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA DW Schicht 2",
+     "type": "num",
+     "col": "T",
+     "group": "Personal DW",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma3",
+     "label": "MA DW Schicht 3",
+     "type": "num",
+     "col": "U",
+     "group": "Personal DW",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA DW frei / Ferien",
+     "type": "num",
+     "col": "V",
+     "group": "Personal DW",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA DW krank",
+     "type": "num",
+     "col": "W",
+     "group": "Personal DW",
+     "unit": "Anz."
+    },
+    {
+     "key": "ds_ma1",
+     "label": "MA DS/DSM Schicht 1",
+     "type": "num",
+     "col": "X",
+     "group": "Personal DS/DSM",
+     "unit": "FTE"
+    },
+    {
+     "key": "ds_ma2",
+     "label": "MA DS/DSM Schicht 2",
+     "type": "num",
+     "col": "Y",
+     "group": "Personal DS/DSM",
+     "unit": "FTE"
+    },
+    {
+     "key": "ds_frei",
+     "label": "MA DS/DSM frei / Ferien",
+     "type": "num",
+     "col": "Z",
+     "group": "Personal DS/DSM",
+     "unit": "Anz."
+    },
+    {
+     "key": "ds_krank",
+     "label": "MA DS/DSM krank",
+     "type": "num",
+     "col": "AA",
+     "group": "Personal DS/DSM",
+     "unit": "Anz."
+    },
+    {
+     "key": "lz_std",
+     "label": "Lieferzeit Standard",
+     "type": "num",
+     "col": "AB",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_hybrid",
+     "label": "Lieferzeit Hybrid",
+     "type": "num",
+     "col": "AC",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_nd",
+     "label": "Lieferzeit ND",
+     "type": "num",
+     "col": "AD",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_87x9",
+     "label": "Lieferzeit 87x9",
+     "type": "num",
+     "col": "AE",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "lz_877x",
+     "label": "Lieferzeit 8773/8774/8775",
+     "type": "num",
+     "col": "AF",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "Wo"
+    },
+    {
+     "key": "fpy",
+     "label": "FPY",
+     "type": "num",
+     "col": "AG",
+     "src": "mes",
+     "group": "Lieferzeiten & Qualität",
+     "unit": "%"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "AW",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "rs_dw",
+   "kind": "list",
+   "sheet": "6.1 RS",
+   "header_row": 4,
+   "title": "Rückstandsliste DW",
+   "short": "RS DW",
+   "id_format": "RS-DW-{yy}-{n:03}",
+   "due_field": "tv1",
+   "status_field": "status",
+   "date_field": "datum",
+   "dept": "DW",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Eingabe durch Dispo",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "E",
+     "group": "Eingabe durch Dispo",
+     "default": "user"
+    },
+    {
+     "key": "disponent",
+     "label": "Disponent",
+     "type": "text",
+     "col": "F",
+     "group": "Eingabe durch Dispo",
+     "list": true
+    },
+    {
+     "key": "vknr",
+     "label": "VkNr",
+     "type": "text",
+     "col": "G",
+     "group": "Auftrag",
+     "list": true,
+     "src": "sap"
+    },
+    {
+     "key": "typencode",
+     "label": "Typencode",
+     "type": "text",
+     "col": "H",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "eckendtermin",
+     "label": "Eckendtermin",
+     "type": "date",
+     "col": "I",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "wunschtermin",
+     "label": "Wunschtermin",
+     "type": "date",
+     "col": "J",
+     "group": "Termine",
+     "src": "sap"
+    },
+    {
+     "key": "tv1",
+     "label": "Neuer Liefertermin 1. TV",
+     "type": "date",
+     "col": "K",
+     "group": "Termine",
+     "list": true
+    },
+    {
+     "key": "tv2",
+     "label": "Neuer Liefertermin 2. TV",
+     "type": "date",
+     "col": "L",
+     "group": "Termine"
+    },
+    {
+     "key": "tv3",
+     "label": "Neuer Liefertermin 3. TV",
+     "type": "date",
+     "col": "M",
+     "group": "Termine"
+    },
+    {
+     "key": "ka_nr",
+     "label": "Kundenauftrag",
+     "type": "text",
+     "col": "N",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "ka_pos",
+     "label": "Position",
+     "type": "text",
+     "col": "O",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "kunde",
+     "label": "Kundenname",
+     "type": "text",
+     "col": "P",
+     "group": "Auftrag",
+     "src": "sap",
+     "list": true
+    },
+    {
+     "key": "bestellmenge",
+     "label": "Kundenbestellmenge",
+     "type": "num",
+     "col": "Q",
+     "group": "Auftrag",
+     "src": "sap",
+     "unit": "Stk."
+    },
+    {
+     "key": "pl_auf",
+     "label": "Pl-Auf",
+     "type": "text",
+     "col": "R",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "fa",
+     "label": "Fertigungsauftrag",
+     "type": "text",
+     "col": "S",
+     "group": "Auftrag",
+     "src": "sap"
+    },
+    {
+     "key": "menge_rs",
+     "label": "Menge im Rückstand",
+     "type": "num",
+     "col": "T",
+     "group": "Auftrag",
+     "unit": "Stk.",
+     "list": true
+    },
+    {
+     "key": "verursacher",
+     "label": "Verursacher / beteiligt",
+     "type": "flags",
+     "opts": "verursacher",
+     "cols": {
+      "Einkauf": "U",
+      "GFS DE": "V",
+      "Trafag CZ": "W",
+      "Logistik": "X",
+      "Verkauf": "Y",
+      "Dispo": "Z",
+      "AVOR": "AA",
+      "Qualität": "AB",
+      "Entwicklung": "AC",
+      "Ausschuss": "AD",
+      "MA-Kapazität": "AE",
+      "Produktion": "AF",
+      "Betriebsmittel": "AG",
+      "Prozess-Problem": "AH",
+      "Nachmessungen": "AI"
+     },
+     "group": "Ursache"
+    },
+    {
+     "key": "ursache",
+     "label": "Ursache",
+     "type": "select",
+     "col": "AK",
+     "opts": "ursache",
+     "free": true,
+     "group": "Ursache",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "AJ",
+     "group": "Ursache"
+    },
+    {
+     "key": "ticket",
+     "label": "Ticketnummer",
+     "type": "text",
+     "col": "AL",
+     "group": "Ursache"
+    },
+    {
+     "key": "fehlmat",
+     "label": "FehlMat",
+     "type": "text",
+     "col": "AM",
+     "group": "Fehlmaterial",
+     "list": true
+    },
+    {
+     "key": "komponenten",
+     "label": "Betroffene Komponente",
+     "type": "flags",
+     "opts": [
+      "Balg-BG",
+      "Print / Print-BG",
+      "Deckel-BG",
+      "Hybrid-BG",
+      "Sonstiges"
+     ],
+     "cols": {
+      "Balg-BG": "AN",
+      "Print / Print-BG": "AO",
+      "Deckel-BG": "AP",
+      "Hybrid-BG": "AQ",
+      "Sonstiges": "AR"
+     },
+     "group": "Fehlmaterial"
+    },
+    {
+     "key": "we_geplant",
+     "label": "Datum WE geplant",
+     "type": "date",
+     "col": "AS",
+     "group": "Fehlmaterial",
+     "src": "sap"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "col": "AT",
+     "opts": "status",
+     "free": true,
+     "group": "Abschluss (Dispo / TL)",
+     "list": true
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "AU",
+     "group": "Abschluss (Dispo / TL)"
+    },
+    {
+     "key": "abschluss_durch",
+     "label": "Abschluss durch",
+     "type": "text",
+     "col": "AV",
+     "group": "Abschluss (Dispo / TL)"
+    }
+   ]
+  },
+  {
+   "key": "ppd",
+   "kind": "daily",
+   "sheet": "7. PPD",
+   "header_row": 5,
+   "date_col": "C",
+   "title": "PPD – Produktionsplanung / Dispo",
+   "short": "PPD",
+   "chart": {
+    "bar": "verzug_total",
+    "label": "Total in Verzug"
+   },
+   "fields": [
+    {
+     "key": "verzug_seh",
+     "label": "Verzug SEH",
+     "type": "num",
+     "col": "D",
+     "group": "Mengen in Verzug",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "verzug_mts",
+     "label": "Verzug MTS",
+     "type": "num",
+     "col": "E",
+     "group": "Mengen in Verzug",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "verzug_tr5",
+     "label": "Verzug TR5",
+     "type": "num",
+     "col": "F",
+     "group": "Mengen in Verzug",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "verzug_tx",
+     "label": "Verzug TX",
+     "type": "num",
+     "col": "G",
+     "group": "Mengen in Verzug",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "verzug_dw",
+     "label": "Verzug DW",
+     "type": "num",
+     "col": "H",
+     "group": "Mengen in Verzug",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "verzug_total",
+     "label": "Total in Verzug",
+     "type": "calc",
+     "calc": "v.verzug_seh + v.verzug_mts + v.verzug_tr5 + v.verzug_tx + v.verzug_dw",
+     "group": "Mengen in Verzug",
+     "unit": "Stk."
+    },
+    {
+     "key": "verzug_bem",
+     "label": "Bemerkungen Verzug",
+     "type": "long",
+     "col": "J",
+     "group": "Mengen in Verzug"
+    },
+    {
+     "key": "tv_seh",
+     "label": "TV SEH",
+     "type": "num",
+     "col": "L",
+     "group": "Terminverschiebungen",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv_mts",
+     "label": "TV MTS",
+     "type": "num",
+     "col": "M",
+     "group": "Terminverschiebungen",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv_tr5",
+     "label": "TV TR5",
+     "type": "num",
+     "col": "N",
+     "group": "Terminverschiebungen",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv_tx",
+     "label": "TV TX",
+     "type": "num",
+     "col": "O",
+     "group": "Terminverschiebungen",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv_dw",
+     "label": "TV DW",
+     "type": "num",
+     "col": "P",
+     "group": "Terminverschiebungen",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv_total",
+     "label": "Total Terminverschiebungen",
+     "type": "calc",
+     "calc": "v.tv_seh + v.tv_mts + v.tv_tr5 + v.tv_tx + v.tv_dw",
+     "group": "Terminverschiebungen",
+     "unit": "Stk."
+    },
+    {
+     "key": "tv_bem",
+     "label": "Bemerkungen Terminverschiebung",
+     "type": "long",
+     "col": "R",
+     "group": "Terminverschiebungen"
+    },
+    {
+     "key": "we_dringend",
+     "label": "Anstehende WE mit sehr hoher Dringlichkeit (Prio-Liste FehlMat)",
+     "type": "long",
+     "col": "T",
+     "group": "Prio-Liste FehlMat"
+    },
+    {
+     "key": "z_gino",
+     "label": "Gino (275)",
+     "type": "select",
+     "col": "V",
+     "opts": "ppd_zust",
+     "free": true,
+     "group": "Zuständigkeiten PPD"
+    },
+    {
+     "key": "z_anhnhi",
+     "label": "Anh-Nhi (339)",
+     "type": "select",
+     "col": "W",
+     "opts": "ppd_zust",
+     "free": true,
+     "group": "Zuständigkeiten PPD"
+    },
+    {
+     "key": "z_sergio",
+     "label": "Sergio",
+     "type": "select",
+     "col": "X",
+     "opts": "ppd_zust",
+     "free": true,
+     "group": "Zuständigkeiten PPD"
+    },
+    {
+     "key": "z_dani",
+     "label": "Dani (374)",
+     "type": "select",
+     "col": "Y",
+     "opts": "ppd_zust",
+     "free": true,
+     "group": "Zuständigkeiten PPD"
+    }
+   ]
+  },
+  {
+   "key": "grafik",
+   "kind": "page",
+   "title": "PPA-Grafik / Auslastung",
+   "short": "PPA-Grafik"
+  },
+  {
+   "key": "forecast",
+   "kind": "page",
+   "title": "Forecast nächste Woche",
+   "short": "Forecast"
+  },
+  {
+   "key": "tvav",
+   "kind": "list",
+   "sheet": "7.2 TVAV",
+   "header_row": 3,
+   "title": "Terminverbesserungsanfragen Verkauf (TVAV)",
+   "short": "TVAV",
+   "id_format": "TVAV-{yy}-{n:03}",
+   "due_field": "best_termin",
+   "closed": [
+    "erledigt",
+    "eingeplant"
+   ],
+   "status_field": "status",
+   "date_field": "datum",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Eingabe durch Verkauf",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "C",
+     "group": "Eingabe durch Verkauf",
+     "default": "user",
+     "list": true
+    },
+    {
+     "key": "vknr",
+     "label": "VkNr",
+     "type": "text",
+     "col": "D",
+     "group": "Eingabe durch Verkauf",
+     "list": true,
+     "src": "sap"
+    },
+    {
+     "key": "typencode",
+     "label": "Typencode",
+     "type": "text",
+     "col": "E",
+     "group": "Eingabe durch Verkauf",
+     "src": "sap"
+    },
+    {
+     "key": "ka_nr",
+     "label": "Kundenauftrag",
+     "type": "text",
+     "col": "F",
+     "group": "Eingabe durch Verkauf",
+     "list": true,
+     "src": "sap"
+    },
+    {
+     "key": "ka_pos",
+     "label": "Position",
+     "type": "text",
+     "col": "G",
+     "group": "Eingabe durch Verkauf",
+     "src": "sap"
+    },
+    {
+     "key": "menge",
+     "label": "Auftragsmenge",
+     "type": "num",
+     "col": "H",
+     "group": "Eingabe durch Verkauf",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "fa",
+     "label": "Fertigungsauftrag",
+     "type": "text",
+     "col": "I",
+     "group": "Eingabe durch Verkauf",
+     "src": "sap"
+    },
+    {
+     "key": "termin_sap",
+     "label": "Bestätigter Termin (SAP)",
+     "type": "date",
+     "col": "J",
+     "group": "Eingabe durch Verkauf",
+     "src": "sap"
+    },
+    {
+     "key": "wunschdatum",
+     "label": "Neues Wunschlieferdatum (VF)",
+     "type": "date",
+     "col": "K",
+     "group": "Eingabe durch Verkauf",
+     "list": true
+    },
+    {
+     "key": "wunschmenge",
+     "label": "Wunschmenge",
+     "type": "num",
+     "col": "L",
+     "group": "Eingabe durch Verkauf",
+     "unit": "Stk."
+    },
+    {
+     "key": "prio",
+     "label": "Priorität / Dringlichkeit",
+     "type": "select",
+     "col": "M",
+     "opts": "prio",
+     "free": true,
+     "group": "Eingabe durch Verkauf",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen Verkauf",
+     "type": "long",
+     "col": "N",
+     "group": "Eingabe durch Verkauf"
+    },
+    {
+     "key": "vorzug",
+     "label": "Vorzug möglich",
+     "type": "select",
+     "col": "O",
+     "opts": "vorzug",
+     "free": true,
+     "group": "Eingabe durch PPD",
+     "list": true
+    },
+    {
+     "key": "letzte_aenderung",
+     "label": "Datum letzte Änderung",
+     "type": "date",
+     "col": "P",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "col": "Q",
+     "opts": "status",
+     "free": true,
+     "group": "Eingabe durch PPD",
+     "list": true,
+     "default": "offen"
+    },
+    {
+     "key": "fehlmat",
+     "label": "FehlMat (Artikel)",
+     "type": "text",
+     "col": "R",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "best_termin",
+     "label": "Bestmöglicher Termin (VF)",
+     "type": "date",
+     "col": "S",
+     "group": "Eingabe durch PPD",
+     "list": true
+    },
+    {
+     "key": "best_menge",
+     "label": "Bestätigte Menge",
+     "type": "num",
+     "col": "T",
+     "group": "Eingabe durch PPD",
+     "unit": "Stk."
+    },
+    {
+     "key": "disponent",
+     "label": "Disponent",
+     "type": "text",
+     "col": "U",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "produkt",
+     "label": "Produkt",
+     "type": "text",
+     "col": "V",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "bemerkungen_ppd",
+     "label": "Bemerkungen PPD",
+     "type": "long",
+     "col": "W",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "bearbeitet",
+     "label": "Bearbeitet durch",
+     "type": "text",
+     "col": "X",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "Y",
+     "group": "Eingabe durch PPD"
+    }
+   ]
+  },
+  {
+   "key": "angebote",
+   "kind": "list",
+   "sheet": "7.3 Angebote",
+   "header_row": 3,
+   "title": "PPA-Angebote Verkauf (PPA-AV)",
+   "short": "Angebote",
+   "id_format": "PPA-AV-{yy}{n:04}",
+   "due_field": "gueltig_bis",
+   "status_field": "status",
+   "date_field": "datum",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "C",
+     "group": "Anfrage (Verkauf)",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "D",
+     "group": "Anfrage (Verkauf)",
+     "default": "user",
+     "list": true
+    },
+    {
+     "key": "vknr",
+     "label": "VkNr",
+     "type": "text",
+     "col": "E",
+     "group": "Anfrage (Verkauf)",
+     "list": true
+    },
+    {
+     "key": "typencode",
+     "label": "Typencode oder Disponent",
+     "type": "text",
+     "col": "F",
+     "group": "Anfrage (Verkauf)"
+    },
+    {
+     "key": "menge",
+     "label": "Menge",
+     "type": "num",
+     "col": "G",
+     "group": "Anfrage (Verkauf)",
+     "unit": "Stk.",
+     "list": true
+    },
+    {
+     "key": "wunschdatum",
+     "label": "Wunschlieferdatum",
+     "type": "date",
+     "col": "H",
+     "group": "Anfrage (Verkauf)",
+     "list": true
+    },
+    {
+     "key": "prio",
+     "label": "Priorität / Dringlichkeit",
+     "type": "select",
+     "col": "I",
+     "opts": "prio",
+     "free": true,
+     "group": "Anfrage (Verkauf)",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "J",
+     "group": "Anfrage (Verkauf)"
+    },
+    {
+     "key": "datum_kauf",
+     "label": "Datum Erfassung K-Auf",
+     "type": "date",
+     "col": "K",
+     "group": "Bestellung (Verkauf)"
+    },
+    {
+     "key": "ka_nr",
+     "label": "Kundenauftrag",
+     "type": "text",
+     "col": "L",
+     "group": "Bestellung (Verkauf)",
+     "src": "sap"
+    },
+    {
+     "key": "ka_pos",
+     "label": "Position",
+     "type": "text",
+     "col": "M",
+     "group": "Bestellung (Verkauf)",
+     "src": "sap"
+    },
+    {
+     "key": "best_menge_vk",
+     "label": "Menge",
+     "type": "num",
+     "col": "N",
+     "group": "Bestellung (Verkauf)",
+     "unit": "Stk."
+    },
+    {
+     "key": "eintrag_best",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "O",
+     "group": "Bestellung (Verkauf)"
+    },
+    {
+     "key": "bemerkungen_best",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "P",
+     "group": "Bestellung (Verkauf)"
+    },
+    {
+     "key": "best_termin",
+     "label": "Bestmöglicher Termin (VF)",
+     "type": "date",
+     "col": "Q",
+     "group": "Eingabe durch PPD",
+     "list": true
+    },
+    {
+     "key": "lieferzeit_kw",
+     "label": "Lieferzeit ab Bestellungseingang",
+     "type": "num",
+     "col": "R",
+     "group": "Eingabe durch PPD",
+     "unit": "KW"
+    },
+    {
+     "key": "best_menge",
+     "label": "Bestätigte Menge / Teilmengen",
+     "type": "num",
+     "col": "S",
+     "group": "Eingabe durch PPD",
+     "unit": "Stk."
+    },
+    {
+     "key": "letzte_aenderung",
+     "label": "Datum letzte Änderung",
+     "type": "date",
+     "col": "T",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "gueltig_bis",
+     "label": "Angebot gültig bis",
+     "type": "calc",
+     "calc": "addDays(v.letzte_aenderung, 7)",
+     "group": "Eingabe durch PPD",
+     "fmt": "date",
+     "list": true
+    },
+    {
+     "key": "status",
+     "label": "Status der Anfrage",
+     "type": "select",
+     "col": "U",
+     "opts": "status_angebot",
+     "free": true,
+     "group": "Eingabe durch PPD",
+     "list": true
+    },
+    {
+     "key": "fehlmat",
+     "label": "FehlMat (Artikel)",
+     "type": "text",
+     "col": "V",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "disponent",
+     "label": "Disponent",
+     "type": "text",
+     "col": "W",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "produkt",
+     "label": "Produkt",
+     "type": "text",
+     "col": "X",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "bemerkungen_ppd",
+     "label": "Bemerkungen PPD",
+     "type": "long",
+     "col": "Y",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "planauftrag",
+     "label": "Planauftrag Fast Manufacturing angelegt",
+     "type": "text",
+     "col": "Z",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "bearbeitet",
+     "label": "Bearbeitet durch",
+     "type": "text",
+     "col": "AA",
+     "group": "Eingabe durch PPD"
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "AB",
+     "group": "Eingabe durch PPD"
+    }
+   ]
+  },
+  {
+   "key": "czch",
+   "kind": "list",
+   "sheet": "7.4 CZ-CH",
+   "header_row": 3,
+   "title": "Kommunikationstool CZ ↔ CH (PPA-KT)",
+   "short": "CZ ↔ CH",
+   "id_format": "PPA-KT-{n:04}",
+   "due_field": "best_termin",
+   "status_field": "status",
+   "date_field": "datum",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Besteller / Auftragsersteller",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "C",
+     "group": "Besteller / Auftragsersteller",
+     "default": "user",
+     "list": true
+    },
+    {
+     "key": "von",
+     "label": "Anfrage von",
+     "type": "select",
+     "col": "D",
+     "opts": "bereich_kt",
+     "free": true,
+     "group": "Besteller / Auftragsersteller",
+     "list": true
+    },
+    {
+     "key": "an",
+     "label": "Anfrage an",
+     "type": "select",
+     "col": "E",
+     "opts": "bereich_kt",
+     "free": true,
+     "group": "Besteller / Auftragsersteller",
+     "list": true
+    },
+    {
+     "key": "material",
+     "label": "Material",
+     "type": "text",
+     "col": "F",
+     "group": "Besteller / Auftragsersteller",
+     "list": true
+    },
+    {
+     "key": "menge",
+     "label": "Menge",
+     "type": "num",
+     "col": "G",
+     "group": "Besteller / Auftragsersteller",
+     "unit": "Stk.",
+     "list": true
+    },
+    {
+     "key": "wunschdatum",
+     "label": "Wunschlieferdatum",
+     "type": "date",
+     "col": "H",
+     "group": "Besteller / Auftragsersteller",
+     "list": true
+    },
+    {
+     "key": "prio",
+     "label": "Priorität / Anfragemodus",
+     "type": "select",
+     "col": "I",
+     "opts": "prio_kt",
+     "free": true,
+     "group": "Besteller / Auftragsersteller",
+     "list": true
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "J",
+     "group": "Besteller / Auftragsersteller"
+    },
+    {
+     "key": "best_termin",
+     "label": "Bestmöglicher Termin",
+     "type": "date",
+     "col": "K",
+     "group": "Ausführender Bereich",
+     "list": true
+    },
+    {
+     "key": "best_menge",
+     "label": "Menge",
+     "type": "num",
+     "col": "L",
+     "group": "Ausführender Bereich",
+     "unit": "Stk."
+    },
+    {
+     "key": "bemerkungen_ausf",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "M",
+     "group": "Ausführender Bereich"
+    },
+    {
+     "key": "bearbeitet",
+     "label": "Bearbeitet durch",
+     "type": "text",
+     "col": "N",
+     "group": "Ausführender Bereich"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "opts": "status",
+     "free": true,
+     "group": "Ausführender Bereich",
+     "list": true,
+     "default": "offen"
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "O",
+     "group": "Ausführender Bereich"
+    }
+   ]
+  },
+  {
+   "key": "logistik",
+   "kind": "daily",
+   "sheet": "8. Logistik",
+   "header_row": 4,
+   "date_col": "C",
+   "title": "Logistik",
+   "short": "Logistik",
+   "chart": {
+    "bar": "total_ist",
+    "line": "total_soll",
+    "label": "Verpacken IST vs. SOLL"
+   },
+   "fields": [
+    {
+     "key": "tr5_mle01",
+     "label": "TR5 Menge MLE01",
+     "type": "num",
+     "col": "D",
+     "group": "TR5",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "tr5_mle02",
+     "label": "TR5 Menge MLE02",
+     "type": "num",
+     "col": "E",
+     "group": "TR5",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "tr5_ist",
+     "label": "TR5 IST total",
+     "type": "calc",
+     "calc": "v.tr5_mle01 + v.tr5_mle02",
+     "group": "TR5",
+     "unit": "Stk."
+    },
+    {
+     "key": "tr5_soll",
+     "label": "TR5 Prod.menge SOLL (aus TR5)",
+     "type": "calc",
+     "calc": "ref('tr5','prod')",
+     "group": "TR5",
+     "unit": "Stk."
+    },
+    {
+     "key": "tr5_abw",
+     "label": "TR5 Abw. IST–SOLL",
+     "type": "calc",
+     "calc": "v.tr5_ist - v.tr5_soll",
+     "group": "TR5",
+     "unit": "Stk.",
+     "signed": true
+    },
+    {
+     "key": "dw_mle04",
+     "label": "DW Menge MLE04",
+     "type": "num",
+     "col": "I",
+     "group": "DW",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "dw_soll",
+     "label": "DW Prod.menge SOLL (aus DW)",
+     "type": "calc",
+     "calc": "ref('dw','prod')",
+     "group": "DW",
+     "unit": "Stk."
+    },
+    {
+     "key": "dw_abw",
+     "label": "DW Abw. IST–SOLL",
+     "type": "calc",
+     "calc": "v.dw_mle04 - v.dw_soll",
+     "group": "DW",
+     "unit": "Stk.",
+     "signed": true
+    },
+    {
+     "key": "tx_mle08",
+     "label": "TX Menge MLE08 / MLE09",
+     "type": "num",
+     "col": "L",
+     "group": "TX",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "tx_mlm01",
+     "label": "TX Menge MLM01",
+     "type": "num",
+     "col": "M",
+     "group": "TX",
+     "unit": "Stk.",
+     "src": "sap"
+    },
+    {
+     "key": "tx_ist",
+     "label": "TX IST total",
+     "type": "calc",
+     "calc": "v.tx_mle08 + v.tx_mlm01",
+     "group": "TX",
+     "unit": "Stk."
+    },
+    {
+     "key": "tx_soll",
+     "label": "TX Prod.menge SOLL (aus TX)",
+     "type": "calc",
+     "calc": "ref('tx','prod')",
+     "group": "TX",
+     "unit": "Stk."
+    },
+    {
+     "key": "tx_abw",
+     "label": "TX Abw. IST–SOLL",
+     "type": "calc",
+     "calc": "v.tx_ist - v.tx_soll",
+     "group": "TX",
+     "unit": "Stk.",
+     "signed": true
+    },
+    {
+     "key": "total_ist",
+     "label": "Total IST Verpacken",
+     "type": "calc",
+     "calc": "v.tr5_ist + v.dw_mle04 + v.tx_ist",
+     "group": "Total",
+     "unit": "Stk."
+    },
+    {
+     "key": "total_soll",
+     "label": "Total SOLL Verpacken",
+     "type": "calc",
+     "calc": "v.tr5_soll + v.dw_soll + v.tx_soll",
+     "group": "Total",
+     "unit": "Stk."
+    },
+    {
+     "key": "total_abw",
+     "label": "Total Abw. IST–SOLL",
+     "type": "calc",
+     "calc": "v.total_ist - v.total_soll",
+     "group": "Total",
+     "unit": "Stk.",
+     "signed": true
+    },
+    {
+     "key": "offene_kauf",
+     "label": "Offene K-Auf",
+     "type": "num",
+     "col": "T",
+     "group": "Total",
+     "src": "sap"
+    },
+    {
+     "key": "ma1",
+     "label": "MA Schicht 1 Früh",
+     "type": "num",
+     "col": "U",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA Schicht 2 Spät",
+     "type": "num",
+     "col": "V",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA frei / Ferien",
+     "type": "num",
+     "col": "W",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA krank",
+     "type": "num",
+     "col": "X",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "Z",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "unterhalt",
+   "kind": "daily",
+   "sheet": "9. Unterhalt",
+   "header_row": 4,
+   "date_col": "C",
+   "title": "Unterhalt",
+   "short": "Unterhalt",
+   "chart": {
+    "bar": "stoer_dauer",
+    "label": "Störungsdauer [h]"
+   },
+   "fields": [
+    {
+     "key": "stoerungen",
+     "label": "Anzahl Störungen / Einsätze",
+     "type": "num",
+     "col": "D",
+     "group": "Störungen & Instandhaltung"
+    },
+    {
+     "key": "stoer_dauer",
+     "label": "Störungsdauer",
+     "type": "num",
+     "col": "E",
+     "group": "Störungen & Instandhaltung",
+     "unit": "h"
+    },
+    {
+     "key": "vih_anz",
+     "label": "Anzahl vorbeugende Instandhaltungen",
+     "type": "num",
+     "col": "F",
+     "group": "Störungen & Instandhaltung"
+    },
+    {
+     "key": "vih_h",
+     "label": "Aufwand vorbeugende Instandhaltungen",
+     "type": "num",
+     "col": "G",
+     "group": "Störungen & Instandhaltung",
+     "unit": "h"
+    },
+    {
+     "key": "ih_offen",
+     "label": "Anzahl offene Instandhaltungen",
+     "type": "num",
+     "col": "H",
+     "group": "Störungen & Instandhaltung"
+    },
+    {
+     "key": "ma1",
+     "label": "MA Schicht 1 Früh",
+     "type": "num",
+     "col": "I",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA Schicht 2 Spät",
+     "type": "num",
+     "col": "J",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA frei / Ferien",
+     "type": "num",
+     "col": "K",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA krank",
+     "type": "num",
+     "col": "L",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "ma_total",
+     "label": "MA Schicht 1 + 2",
+     "type": "calc",
+     "calc": "v.ma1 + v.ma2",
+     "group": "Personal"
+    },
+    {
+     "key": "anteil_stoer",
+     "label": "Anteil Störungsdauer zu Anwesenheit",
+     "type": "calc",
+     "calc": "v.ma_total ? v.stoer_dauer / (v.ma_total * 8) * 100 : null",
+     "group": "Auswertung",
+     "unit": "%",
+     "digits": 0
+    },
+    {
+     "key": "anteil_vih",
+     "label": "Anteil vorb. Instandhaltung zu Anwesenheit",
+     "type": "calc",
+     "calc": "v.ma_total ? v.vih_h / (v.ma_total * 8) * 100 : null",
+     "group": "Auswertung",
+     "unit": "%",
+     "digits": 0
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "P",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "einkauf",
+   "kind": "list",
+   "sheet": "10. Einkauf",
+   "header_row": 3,
+   "title": "Kommunikationstool Einkauf ↔ Produktion / PPD",
+   "short": "Kommunikation",
+   "id_format": "PPA-KEP-{n:04}",
+   "due_field": "best_termin",
+   "status_field": "status",
+   "date_field": "datum",
+   "fields": [
+    {
+     "key": "datum",
+     "label": "Datum Eintrag",
+     "type": "date",
+     "col": "B",
+     "group": "Eingaben durch PPD / Produktion",
+     "list": true,
+     "default": "today"
+    },
+    {
+     "key": "eintrag",
+     "label": "Eintrag durch",
+     "type": "text",
+     "col": "C",
+     "group": "Eingaben durch PPD / Produktion",
+     "default": "user",
+     "list": true
+    },
+    {
+     "key": "von",
+     "label": "Anfrage von",
+     "type": "select",
+     "col": "D",
+     "opts": "bereich_kt",
+     "free": true,
+     "group": "Eingaben durch PPD / Produktion",
+     "list": true
+    },
+    {
+     "key": "an",
+     "label": "Anfrage an",
+     "type": "select",
+     "col": "E",
+     "opts": "bereich_kt",
+     "free": true,
+     "group": "Eingaben durch PPD / Produktion"
+    },
+    {
+     "key": "material",
+     "label": "Material",
+     "type": "text",
+     "col": "F",
+     "group": "Eingaben durch PPD / Produktion",
+     "list": true
+    },
+    {
+     "key": "menge",
+     "label": "Menge",
+     "type": "num",
+     "col": "G",
+     "group": "Eingaben durch PPD / Produktion",
+     "unit": "Stk.",
+     "list": true
+    },
+    {
+     "key": "we_sap",
+     "label": "WE aktuell gem. SAP",
+     "type": "date",
+     "col": "H",
+     "group": "Eingaben durch PPD / Produktion",
+     "src": "sap",
+     "list": true
+    },
+    {
+     "key": "wunschdatum",
+     "label": "Wunschlieferdatum",
+     "type": "date",
+     "col": "I",
+     "group": "Eingaben durch PPD / Produktion",
+     "list": true
+    },
+    {
+     "key": "prio",
+     "label": "Priorität / Anfragemodus",
+     "type": "select",
+     "col": "J",
+     "opts": "prio_kt",
+     "free": true,
+     "group": "Eingaben durch PPD / Produktion",
+     "list": true
+    },
+    {
+     "key": "bestellnr",
+     "label": "Bestellnummer",
+     "type": "text",
+     "col": "K",
+     "group": "Eingaben durch PPD / Produktion",
+     "src": "sap"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "L",
+     "group": "Eingaben durch PPD / Produktion"
+    },
+    {
+     "key": "best_termin",
+     "label": "Bestmöglicher Termin",
+     "type": "date",
+     "col": "M",
+     "group": "Auszufüllen durch Einkauf",
+     "list": true
+    },
+    {
+     "key": "best_menge",
+     "label": "Menge",
+     "type": "num",
+     "col": "N",
+     "group": "Auszufüllen durch Einkauf",
+     "unit": "Stk."
+    },
+    {
+     "key": "bemerkungen_ek",
+     "label": "Bemerkungen Einkauf",
+     "type": "long",
+     "col": "O",
+     "group": "Auszufüllen durch Einkauf"
+    },
+    {
+     "key": "bearbeitet",
+     "label": "Bearbeitet durch",
+     "type": "text",
+     "col": "P",
+     "group": "Auszufüllen durch Einkauf"
+    },
+    {
+     "key": "status",
+     "label": "Status",
+     "type": "select",
+     "opts": "status",
+     "free": true,
+     "group": "Auszufüllen durch Einkauf",
+     "list": true,
+     "default": "offen"
+    },
+    {
+     "key": "abschluss",
+     "label": "Datum Abschluss",
+     "type": "date",
+     "col": "Q",
+     "group": "Auszufüllen durch Einkauf"
+    }
+   ]
+  },
+  {
+   "key": "zd05",
+   "kind": "page",
+   "title": "Einkauf – Fehlteile (ZD05)",
+   "short": "Einkauf"
+  },
+  {
+   "key": "verkauf",
+   "kind": "daily",
+   "sheet": "11. Verkauf",
+   "header_row": 4,
+   "date_col": "C",
+   "title": "Verkauf",
+   "short": "Verkauf",
+   "chart": {
+    "bar": "umsatz_ist",
+    "line": "umsatz_plan",
+    "label": "Umsatz IST vs. geplant (Monat)"
+   },
+   "fields": [
+    {
+     "key": "ae_aktuell",
+     "label": "AE aktuell",
+     "type": "num",
+     "col": "D",
+     "group": "Auftragseingang & Umsatz",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "umsatz_ist",
+     "label": "Umsatz IST",
+     "type": "num",
+     "col": "E",
+     "group": "Auftragseingang & Umsatz",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "tagesumsatz",
+     "label": "Tagesumsatz",
+     "type": "calc",
+     "calc": "v.umsatz_ist - prev('umsatz_ist')",
+     "group": "Auftragseingang & Umsatz",
+     "unit": "CHF"
+    },
+    {
+     "key": "umsatz_plan",
+     "label": "Geplanter Umsatz Monat (zc23)",
+     "type": "num",
+     "col": "H",
+     "group": "Auftragseingang & Umsatz",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "book_to_bill",
+     "label": "Book to Bill",
+     "type": "calc",
+     "calc": "v.umsatz_ist ? v.ae_aktuell / v.umsatz_ist : null",
+     "group": "Auftragseingang & Umsatz",
+     "digits": 2
+    },
+    {
+     "key": "goforit",
+     "label": "Go-for-it Ziel",
+     "type": "num",
+     "col": "J",
+     "group": "Auftragseingang & Umsatz",
+     "unit": "CHF"
+    },
+    {
+     "key": "abw_plan",
+     "label": "Abweichung IST zu geplant",
+     "type": "calc",
+     "calc": "v.umsatz_ist - v.umsatz_plan",
+     "group": "Auftragseingang & Umsatz",
+     "unit": "CHF",
+     "signed": true
+    },
+    {
+     "key": "erf_plan",
+     "label": "Umsatz IST zu zc23",
+     "type": "calc",
+     "calc": "v.umsatz_plan ? v.umsatz_ist / v.umsatz_plan * 100 : null",
+     "group": "Auftragseingang & Umsatz",
+     "unit": "%",
+     "digits": 1
+    },
+    {
+     "key": "ae_tr5",
+     "label": "AE Abteilung TR5",
+     "type": "num",
+     "col": "M",
+     "group": "AE pro Bereich",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "ae_tx",
+     "label": "AE Transmitter TX + TR5",
+     "type": "num",
+     "col": "N",
+     "group": "AE pro Bereich",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "ae_dw",
+     "label": "AE Abteilung DW",
+     "type": "num",
+     "col": "O",
+     "group": "AE pro Bereich",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "ae_rest",
+     "label": "AE restliche Bereiche",
+     "type": "calc",
+     "calc": "v.ae_aktuell - v.ae_tr5 - v.ae_tx - v.ae_dw",
+     "group": "AE pro Bereich",
+     "unit": "CHF"
+    },
+    {
+     "key": "u_tr5",
+     "label": "Umsatz Abteilung TR5",
+     "type": "num",
+     "col": "Q",
+     "group": "Umsatz pro Bereich",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "u_tx",
+     "label": "Umsatz Transmitter TX + TR5",
+     "type": "num",
+     "col": "R",
+     "group": "Umsatz pro Bereich",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "u_dw",
+     "label": "Umsatz Abteilung DW",
+     "type": "num",
+     "col": "S",
+     "group": "Umsatz pro Bereich",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "u_rest",
+     "label": "Umsatz restliche Bereiche",
+     "type": "calc",
+     "calc": "v.umsatz_ist - v.u_tr5 - v.u_tx - v.u_dw",
+     "group": "Umsatz pro Bereich",
+     "unit": "CHF"
+    },
+    {
+     "key": "gutschriften",
+     "label": "Gutschriften",
+     "type": "num",
+     "col": "U",
+     "group": "Umsatz pro Bereich",
+     "unit": "CHF",
+     "src": "sap"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "V",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "cz",
+   "kind": "daily",
+   "sheet": "F1. CZ",
+   "header_row": 6,
+   "date_col": "C",
+   "friday": true,
+   "title": "CZ",
+   "short": "CZ",
+   "dept": "CZ",
+   "chart": {
+    "bar": "prod",
+    "line": "ziel",
+    "label": "Produziert vs. Tagesziel"
+   },
+   "fields": [
+    {
+     "key": "vorrat_total",
+     "label": "Auftragsvorrat total",
+     "type": "num",
+     "col": "D",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_3m",
+     "label": "Auftragsvorrat 3 Mte",
+     "type": "num",
+     "col": "E",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_2m",
+     "label": "Auftragsvorrat 2 Mte",
+     "type": "num",
+     "col": "F",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "vorrat_1m",
+     "label": "Auftragsvorrat 1 Mte",
+     "type": "num",
+     "col": "G",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "geraete_tag_1m",
+     "label": "Ø Geräte pro Tag 1. Mte",
+     "type": "calc",
+     "calc": "v.vorrat_1m / 20",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk.",
+     "digits": 0
+    },
+    {
+     "key": "offen_kw",
+     "label": "Offene Menge aktuelle KW",
+     "type": "num",
+     "col": "K",
+     "src": "sap",
+     "group": "Auftragsvorrat (SAP)",
+     "unit": "Stk."
+    },
+    {
+     "key": "ziel",
+     "label": "Tagesziel",
+     "type": "num",
+     "col": "L",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "prod",
+     "label": "Produzierte Menge total",
+     "type": "calc",
+     "calc": "v.p_ds900 + v.p_ds987 + v.p_pico + v.p_pico9r + v.p_frost + v.p_mini + v.p_navi + v.p_picotherm + v.p_dtp + v.p_bg_stecker + v.p_bg_kabel + v.p_bg_print + v.p_bg_mech + v.p_bg_sf6 + v.p_membranen + v.p_reserve",
+     "group": "Tagesleistung",
+     "unit": "Stk."
+    },
+    {
+     "key": "p_ds900",
+     "label": "Druckschalter 900-986",
+     "type": "num",
+     "col": "N",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_ds987",
+     "label": "Druckschalter 987/988",
+     "type": "num",
+     "col": "P",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_pico",
+     "label": "Picostaten 9B0-9K4",
+     "type": "num",
+     "col": "R",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_pico9r",
+     "label": "Picostaten 9Rx",
+     "type": "num",
+     "col": "T",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_frost",
+     "label": "Frostschutzstaten",
+     "type": "num",
+     "col": "V",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_mini",
+     "label": "Ministaten, Ambistaten",
+     "type": "num",
+     "col": "X",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_navi",
+     "label": "Navistaten, Industaten",
+     "type": "num",
+     "col": "Z",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_picotherm",
+     "label": "Picotherm",
+     "type": "num",
+     "col": "AB",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_dtp",
+     "label": "DTP 8180",
+     "type": "num",
+     "col": "AD",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_bg_stecker",
+     "label": "BG Elektronik Stecker",
+     "type": "num",
+     "col": "AF",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_bg_kabel",
+     "label": "BG Elektronik Kabel",
+     "type": "num",
+     "col": "AH",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_bg_print",
+     "label": "BG Elektronik Print SF6",
+     "type": "num",
+     "col": "AJ",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_bg_mech",
+     "label": "BG Mechanik",
+     "type": "num",
+     "col": "AL",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_bg_sf6",
+     "label": "BG für SF6 Geräte",
+     "type": "num",
+     "col": "AN",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_membranen",
+     "label": "Membranen",
+     "type": "num",
+     "col": "AP",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "p_reserve",
+     "label": "Reserve",
+     "type": "num",
+     "col": "AR",
+     "group": "Produzierte Menge pro Gruppe",
+     "unit": "Stk."
+    },
+    {
+     "key": "ma1",
+     "label": "MA Schicht 1 Früh",
+     "type": "num",
+     "col": "AU",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA Schicht 2 Spät",
+     "type": "num",
+     "col": "AV",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma3",
+     "label": "MA Schicht 3 Nacht",
+     "type": "num",
+     "col": "AW",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA frei / Ferien",
+     "type": "num",
+     "col": "AX",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA krank",
+     "type": "num",
+     "col": "AY",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "fpy",
+     "label": "FPY",
+     "type": "num",
+     "col": "AZ",
+     "group": "Qualität",
+     "unit": "%",
+     "src": "mes"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "BL",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "mtf",
+   "kind": "daily",
+   "sheet": "F2. MTF",
+   "header_row": 5,
+   "date_col": "C",
+   "friday": true,
+   "title": "Abteilung MTF",
+   "short": "MTF",
+   "dept": "MTF",
+   "chart": {
+    "bar": "auftragsbestand",
+    "label": "Auftragsbestand [Anzahl]"
+   },
+   "fields": [
+    {
+     "key": "auftragsbestand",
+     "label": "Auftragsbestand",
+     "type": "num",
+     "col": "D",
+     "group": "Aufträge",
+     "unit": "Anz."
+    },
+    {
+     "key": "rueckstaende",
+     "label": "Rückstände",
+     "type": "num",
+     "col": "E",
+     "group": "Aufträge",
+     "unit": "Anz."
+    },
+    {
+     "key": "qfall",
+     "label": "Q-Fall / Störungen",
+     "type": "num",
+     "col": "F",
+     "group": "Aufträge",
+     "unit": "Anz."
+    },
+    {
+     "key": "top5",
+     "label": "Top 5 Projekte",
+     "type": "num",
+     "col": "G",
+     "group": "Aufträge",
+     "unit": "Anz."
+    },
+    {
+     "key": "kvp",
+     "label": "KVP-Projekte",
+     "type": "num",
+     "col": "H",
+     "group": "Aufträge",
+     "unit": "Anz."
+    },
+    {
+     "key": "kundenbest",
+     "label": "Kundenbestellungen",
+     "type": "num",
+     "col": "I",
+     "group": "Aufträge",
+     "unit": "Anz."
+    },
+    {
+     "key": "auslastung",
+     "label": "Auslastung",
+     "type": "num",
+     "col": "J",
+     "group": "Kennzahlen",
+     "unit": "%"
+    },
+    {
+     "key": "verfuegbarkeit",
+     "label": "Anlagenverfügbarkeit",
+     "type": "num",
+     "col": "K",
+     "group": "Kennzahlen",
+     "unit": "%",
+     "src": "mes"
+    },
+    {
+     "key": "ma1",
+     "label": "MA Schicht 1 Früh",
+     "type": "num",
+     "col": "L",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "ma2",
+     "label": "MA Schicht 2 Spät",
+     "type": "num",
+     "col": "M",
+     "group": "Personal",
+     "unit": "FTE"
+    },
+    {
+     "key": "frei",
+     "label": "MA frei / Ferien",
+     "type": "num",
+     "col": "N",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "krank",
+     "label": "MA krank",
+     "type": "num",
+     "col": "O",
+     "group": "Personal",
+     "unit": "Anz."
+    },
+    {
+     "key": "ma_total",
+     "label": "MA Schicht 1 + 2",
+     "type": "calc",
+     "calc": "v.ma1 + v.ma2",
+     "group": "Personal"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen / Info",
+     "type": "long",
+     "col": "Q",
+     "group": "Bemerkungen"
+    }
+   ]
+  },
+  {
+   "key": "sensoren",
+   "kind": "daily",
+   "sheet": "IN1.1 Daten SB",
+   "header_row": 24,
+   "date_col": "A",
+   "title": "Sensorbestände SEH (SB)",
+   "short": "Sensorbestände",
+   "chart": {
+    "bar": "total",
+    "line": "grenze_total",
+    "label": "Total Sensorbestand vs. Grenzwert"
+   },
+   "fields": [
+    {
+     "key": "zeit",
+     "label": "Zeit",
+     "type": "time",
+     "col": "B",
+     "group": "Erfassung"
+    },
+    {
+     "key": "bemerkungen",
+     "label": "Bemerkungen",
+     "type": "long",
+     "col": "C",
+     "group": "Erfassung"
+    },
+    {
+     "key": "se12",
+     "label": "SE1+SE2 Stahlzellen (TR5)",
+     "type": "num",
+     "col": "D",
+     "group": "Bestände",
+     "unit": "Stk.",
+     "src": "mes",
+     "limit": 3000
+    },
+    {
+     "key": "sl124",
+     "label": "SL1, SL2, SL4 Stahlzellen (TX)",
+     "type": "num",
+     "col": "G",
+     "group": "Bestände",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "slx_bat",
+     "label": "davon SLx Batterie",
+     "type": "num",
+     "col": "J",
+     "group": "Bestände",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "slx_ohne",
+     "label": "SLx ohne BAT",
+     "type": "calc",
+     "calc": "v.sl124 - v.slx_bat",
+     "group": "Bestände",
+     "unit": "Stk.",
+     "limit": 2600
+    },
+    {
+     "key": "sl3",
+     "label": "SL3 Keramik-Anschlüsse",
+     "type": "num",
+     "col": "P",
+     "group": "Bestände",
+     "unit": "Stk.",
+     "src": "mes"
+    },
+    {
+     "key": "slx_total",
+     "label": "Total SLx (TX)",
+     "type": "calc",
+     "calc": "v.sl124 + v.sl3",
+     "group": "Bestände",
+     "unit": "Stk.",
+     "limit": 4000
+    },
+    {
+     "key": "total",
+     "label": "Total TR5 + TX",
+     "type": "calc",
+     "calc": "v.se12 + v.sl124 + v.sl3",
+     "group": "Bestände",
+     "unit": "Stk.",
+     "limit": 7000
+    },
+    {
+     "key": "grenze_total",
+     "label": "Grenzwert total",
+     "type": "calc",
+     "calc": "7000",
+     "group": "Bestände",
+     "unit": "Stk."
+    }
+   ]
+  }
+ ],
+ "lists": {
+  "tl": [
+   "anwesend",
+   "abwesend"
+  ],
+  "status": [
+   "offen",
+   "in Arbeit",
+   "in Abklärung",
+   "eingeplant",
+   "FehlMat",
+   "Kapazität",
+   "Q-Problem",
+   "Q-Problem mit Ticket",
+   "Auftrag angelegt",
+   "Engpass TK-Anlagen",
+   "Auftrag hängt",
+   "Warten auf Kundenfreigabe",
+   "Kundenbestellung fehlt",
+   "gesperrt",
+   "erledigt"
+  ],
+  "status_angebot": [
+   "Bestellung offen",
+   "Angebot max. 48h gültig",
+   "FehlMat",
+   "Kapazität",
+   "gesperrt",
+   "Bestellt",
+   "verfallen",
+   "erledigt"
+  ],
+  "prio": [
+   "Produktionsstillstand, Prio 1",
+   "Q-Fall-Ersatzgeräte, Prio 2",
+   "Spezialprojekt",
+   "Neukundengewinnung",
+   "Bemusterung",
+   "Dringender Bedarf",
+   "Kundenanfrage",
+   "Fast Manufacturing"
+  ],
+  "prio_kt": [
+   "Prio 1 / Produktionsstillstand",
+   "Prio 2 / Dringender Bedarf",
+   "Prio 3 / Normaler Bedarf",
+   "Terminanfrage (ohne Bestellung)",
+   "Materialbestellung",
+   "Terminvorzugsanfrage durch Kunde"
+  ],
+  "bereich_kt": [
+   "PPD (CH)",
+   "Einkauf (CH)",
+   "Logistik (CH)",
+   "CZ",
+   "TX (CH)",
+   "TR5 (CH)",
+   "SEH (CH)"
+  ],
+  "vorzug": [
+   "Ja",
+   "Ja, wäre möglich",
+   "Ja, aber nur Teilmenge",
+   "nur mit Abtausch möglich",
+   "Leider nicht"
+  ],
+  "abteilung": [
+   "SEH",
+   "TR5",
+   "TX",
+   "DW",
+   "MTF",
+   "MTS",
+   "CZ",
+   "PPD",
+   "Logistik",
+   "Unterhalt",
+   "Einkauf",
+   "Verkauf",
+   "Q / MQS",
+   "Entwicklung",
+   "IT",
+   "Diverse"
+  ],
+  "abgleich": [
+   "Cold",
+   "Mix 1",
+   "Mix 2",
+   "Mix 3",
+   "x"
+  ],
+  "ppd_zust": [
+   "TX - EL*",
+   "TR5 - EK*",
+   "i2s - SK3",
+   "DW - D*",
+   "TX / TR5 / SEH",
+   "TX / DW",
+   "TR5 / DW",
+   "Diverses",
+   "TX / Projekt GIB",
+   "Projekt GIB",
+   "TX / Projekt ATP",
+   "Projekt ATP",
+   "Schulung VC",
+   "VC-Support / 1st/2nd-Level",
+   "Alleine",
+   "Abwesend"
+  ],
+  "ursache": [
+   "Fehlmaterial / Verzug Lieferant",
+   "GFS",
+   "Probeam verspätet oder Qualität",
+   "CPT Falschlieferung",
+   "Inventurdifferenz / Fehlbestand",
+   "Falschlieferung Nachproduktion",
+   "Ausschuss",
+   "Handlingfehler / falsch produziert",
+   "Produktion liegengeblieben",
+   "Prozess Erfassung / Material / Planung",
+   "Erstfertigung",
+   "Wechsel Komponente in BOM",
+   "PCBA Hybrid",
+   "Bonden",
+   "Rofin Laser",
+   "Personalausfall",
+   "Engpass Ofenauslastung / TK Anlage",
+   "Engpass Abteilung Sensoren SEH",
+   "Schweissanlage",
+   "Lagerdifferenz",
+   "Auftrag liegen geblieben",
+   "Priorisierung",
+   "Planungsfehler",
+   "Q-Freigabe",
+   "Unspezifisch"
+  ],
+  "verursacher": [
+   "Einkauf",
+   "GFS DE",
+   "Trafag CZ",
+   "Logistik",
+   "Verkauf",
+   "Dispo",
+   "AVOR",
+   "Qualität",
+   "Entwicklung",
+   "Ausschuss",
+   "MA-Kapazität",
+   "Produktion",
+   "Betriebsmittel",
+   "Prozess-Problem",
+   "Nachmessungen"
+  ],
+  "z_seh": [
+   "Theresa - 314",
+   "Goran - 343",
+   "Guido - 263",
+   "nur bis 17:00",
+   "nur bis 18:00",
+   "nur bis 19:00",
+   "ohne Leitung",
+   "keine Schicht"
+  ],
+  "z_tr5": [
+   "Theresa - 314",
+   "Goran - 343",
+   "Germelina - 349",
+   "nur bis 17:00",
+   "nur bis 18:00",
+   "nur bis 19:00",
+   "ohne Leitung",
+   "keine Schicht"
+  ],
+  "z_tx": [
+   "Melanie - 377",
+   "Michi - 208",
+   "Paulo - 292",
+   "Juha - 215",
+   "Sofia - 220",
+   "EAP bis 17:00",
+   "EAP bis 18:00",
+   "EAP bis 19:00",
+   "ohne Leitung",
+   "keine Schicht"
+  ],
+  "z_dw": [
+   "René - 230",
+   "Dario - 295",
+   "Sami - 295",
+   "Ganimete - 295",
+   "Ganimete - 295 bis 12:30",
+   "nur bis 17:00",
+   "nur bis 18:00",
+   "nur bis 19:00",
+   "ohne Leitung",
+   "keine Schicht"
+  ],
+  "z_mtf": [
+   "Vesna - 248",
+   "Ismet - 261",
+   "nur bis 17:00",
+   "nur bis 18:00",
+   "nur bis 19:00",
+   "ohne Leitung",
+   "keine Schicht"
+  ],
+  "z_uh": [
+   "Vesna - 248",
+   "Kujtim - 378",
+   "Samuel - 329",
+   "Driton - 377",
+   "Ismet - 261",
+   "bis 17:00 abgedeckt",
+   "bis 18:00 abgedeckt",
+   "bis 19:00 abgedeckt",
+   "ohne Leitung",
+   "keine Schicht"
+  ],
+  "z_log": [
+   "Sacha - 319",
+   "Diego - 209",
+   "Anina - 389",
+   "Erika",
+   "Dita - nur Teams",
+   "Maggie - nur Teams",
+   "nur bis 17:00",
+   "nur bis 18:00",
+   "nur bis 19:00",
+   "ohne Leitung",
+   "keine Schicht"
+  ]
+ },
+ "agenda": [
+  {
+   "label": "Highlights",
+   "module": "highlights",
+   "must": false
+  },
+  {
+   "label": "Zuständigkeiten",
+   "module": "zust",
+   "must": false
+  },
+  {
+   "label": "1. Pendenzen",
+   "module": "pendenzen",
+   "must": true
+  },
+  {
+   "label": "2. Entwicklungsaufträge EA",
+   "module": "ea",
+   "must": false
+  },
+  {
+   "label": "3. Abteilung SEH",
+   "module": "seh",
+   "must": true
+  },
+  {
+   "label": "3.1 Rückstandsliste SEH",
+   "module": "rs_seh",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "4. Abteilung TR5",
+   "module": "tr5",
+   "must": true
+  },
+  {
+   "label": "4.1 Rückstandsliste TR5",
+   "module": "rs_tr5",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "5. Abteilung TX",
+   "module": "tx",
+   "must": true
+  },
+  {
+   "label": "5.1 Rückstandsliste TX",
+   "module": "rs_tx",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "6. Abteilung DW",
+   "module": "dw",
+   "must": true
+  },
+  {
+   "label": "6.1 Rückstandsliste DW",
+   "module": "rs_dw",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "7. PPD – Produktionsplanung / Dispo",
+   "module": "ppd",
+   "must": true
+  },
+  {
+   "label": "7.1 PPA-Grafik / Auslastung",
+   "module": "grafik",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "7.2 Terminverbesserungsanfragen (TVAV)",
+   "module": "tvav",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "7.3 PPA-Angebote Verkauf (PPA-AV)",
+   "module": "angebote",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "7.4 CZ ↔ CH Anfragen / Materialbestellungen",
+   "module": "czch",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "7.5 Forecast nächste Woche",
+   "module": "forecast",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "8. Logistik",
+   "module": "logistik",
+   "must": true
+  },
+  {
+   "label": "9. Unterhalt",
+   "module": "unterhalt",
+   "must": false
+  },
+  {
+   "label": "10. Einkauf – Fehlteile ZD05",
+   "module": "zd05",
+   "must": true
+  },
+  {
+   "label": "10.1 Kommunikation Einkauf ↔ Produktion",
+   "module": "einkauf",
+   "must": false,
+   "sub": true
+  },
+  {
+   "label": "11. Verkauf",
+   "module": "verkauf",
+   "must": true
+  },
+  {
+   "label": "F1. CZ",
+   "module": "cz",
+   "must": true,
+   "friday": true
+  },
+  {
+   "label": "F2. Abteilung MTF",
+   "module": "mtf",
+   "must": true,
+   "friday": true
+  },
+  {
+   "label": "IN1. Sensorbestände (SB)",
+   "module": "sensoren",
+   "must": false
+  }
+ ],
+ "participants": {
+  "standard": "Produktion (SEH, TR5, TX, DW) / Planung / Unterhalt / Logistik / Einkauf / Verkauf",
+  "friday": "GFS / CZ / Masterdata / Q-Abteilung / Teilefertigung / Gebäudeunterhalt / Prozesstechnik / IT / Produktion (SEH, TR5, TX, DW) / Planung / Unterhalt / Logistik / Einkauf / Verkauf"
+ },
+ "closed_status": [
+  "erledigt",
+  "verfallen",
+  "bestellt"
+ ],
+ "forecast_prefix": {
+  "TX": [
+   "EL",
+   "TX"
+  ],
+  "TR5": [
+   "EK",
+   "TR5"
+  ],
+  "DW": [
+   "D",
+   "DS",
+   "DEF",
+   "DW"
+  ],
+  "SEH": [
+   "012",
+   "SK",
+   "SEH"
+  ],
+  "CZ": [
+   "CZ"
+  ]
+ },
+ "notify_rules": {
+  "pendenzen": {
+   "notify": [
+    "verantwortlich",
+    "zustaendig"
+   ],
+   "notify_done": [
+    "eintrag"
+   ],
+   "title": "beschreibung"
+  },
+  "ea": {
+   "notify": [
+    "abteilung"
+   ],
+   "notify_done": [
+    "eintrag",
+    "ansprechpartner"
+   ],
+   "title": "beschreibung"
+  },
+  "tvav": {
+   "notify": [],
+   "notify_done": [
+    "eintrag"
+   ],
+   "title": "vknr"
+  },
+  "angebote": {
+   "notify": [],
+   "notify_done": [
+    "eintrag"
+   ],
+   "title": "vknr"
+  },
+  "czch": {
+   "notify": [
+    "an"
+   ],
+   "notify_done": [
+    "eintrag"
+   ],
+   "title": "material"
+  },
+  "einkauf": {
+   "notify": [
+    "an"
+   ],
+   "notify_done": [
+    "eintrag"
+   ],
+   "title": "material"
+  },
+  "rs_seh": {
+   "notify": [
+    "disponent"
+   ],
+   "notify_done": [],
+   "title": "kunde"
+  },
+  "rs_tr5": {
+   "notify": [
+    "disponent"
+   ],
+   "notify_done": [],
+   "title": "kunde"
+  },
+  "rs_tx": {
+   "notify": [
+    "disponent"
+   ],
+   "notify_done": [],
+   "title": "kunde"
+  },
+  "rs_dw": {
+   "notify": [
+    "disponent"
+   ],
+   "notify_done": [],
+   "title": "kunde"
+  }
+ }
+}

@@ -372,6 +372,9 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("logistics-usage-risk", "logistics", "Verwendung & Risiko", "Usage & risk", "AccountTree", "logistik/verwendung-risiko", 15, "All"),
         Link("logistics-planning-audit", "logistics", "Dispositionspruefung", "Planning parameter audit", "FactCheck", "logistik/dispositionspruefung", 30, "All"),
         // Netzwerk 2026-10-02 (Wunsch Ingo): nur lesend, feste Zielliste, Doku docs/NETZWERK_2026-10-02.md.
+        // Operations (Shopfloor) 2026-10-07: PPA-Shopfloor im Cockpit, oberste Ebene; Zugriff nur fuer freigegebene Windows-Konten
+        // (Shopfloor:AllowedUsers / Shopfloor:OpenForAll), Doku docs/SHOPFLOOR_2026-10-07.md.
+        Link("operations", null, "Operations (Shopfloor)", "Operations (Shopfloor)", "Factory", "operations", 36, "All"),
         Group("network", null, "Netzwerk", "Network", "Lan", 37),
         Link("network-overview", "network", "Uebersicht", "Overview", "Hub", "netzwerk", 10, "All"),
         Link("network-availability", "network", "Verfuegbarkeit", "Availability", "Timeline", "netzwerk/verfuegbarkeit", 20, "All"),

@@ -9,6 +9,7 @@ using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Security;
 using TrafagSalesExporter.Services;
 using TrafagSalesExporter.Services.DataSources;
+using TrafagSalesExporter.Services.Shopfloor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,9 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = SecurityPolicyFactory.BuildAccessPolicy(securitySettings, useDevelopmentAuthentication);
     options.AddPolicy(SecurityPolicies.AdminOnly, SecurityPolicyFactory.BuildAdminPolicy(securitySettings, useDevelopmentAuthentication));
 });
+
+// Operations (Shopfloor) 2026-10-07: PPA-Shopfloor im Cockpit, Zugriff ueber Shopfloor:AllowedUsers, docs/SHOPFLOOR_2026-10-07.md.
+builder.Services.AddShopfloor(builder.Configuration);
 
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
@@ -221,6 +225,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseShopfloorAccess();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -277,6 +282,8 @@ app.MapPost("/access/hr", async (HttpContext httpContext, IOptions<HrKpiAccessOp
 
     return Results.Redirect(ResolveReturnUrl(httpContext, form["returnUrl"].ToString()));
 }).DisableAntiforgery();
+
+app.MapShopfloor();
 
 app.MapRazorComponents<TrafagSalesExporter.Components.App>()
     .AddInteractiveServerRenderMode();

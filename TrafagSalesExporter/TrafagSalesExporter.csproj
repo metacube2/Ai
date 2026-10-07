@@ -52,6 +52,11 @@
     <Content Include="trafag_exporter.db" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
     <Content Include="trafag_exporter.db-wal" Condition="Exists('trafag_exporter.db-wal')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
     <Content Include="trafag_exporter.db-shm" Condition="Exists('trafag_exporter.db-shm')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <!-- Operations (Shopfloor) 2026-10-07: Konfiguration und Startstand der Datenbank. Die Startdatenbank wird nur
+         kopiert, wenn die Betriebsdatenbank (Shopfloor:DatabasePath) fehlt, und ueberschreibt nie vorhandene Daten.
+         Doku docs/SHOPFLOOR_2026-10-07.md. -->
+    <Content Update="Services\Shopfloor\shopfloor_config.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Services\Shopfloor\seed\shopfloor.seed.db" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="check.xlsx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="DE_Beispiel_Export_Daten.xlsx" Condition="Exists('DE_Beispiel_Export_Daten.xlsx')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="formeln.docx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />

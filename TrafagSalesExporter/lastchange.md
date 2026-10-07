@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## Operations (Shopfloor), 2026-10-07 (committet, nicht deployed)
+
+- Neuer Reiter `/operations`: PPA-Shopfloor im Cockpit (Oberfläche übernommen, Python-Backend in C#), Daten aus dem Excel-Stand.
+- Zugriff vorerst nur Ingo, bis die Leitung Produktion/Operations freigibt.
+- SAP: ShopZd05Set (ZD05) und ShopAufSet (Forecast) in T76 fertig (T76K912718); Abgleich im Cockpit gebaut, ausgeschaltet bis P76.
+
 ## SAP: ZM_OFFENE_FAUF mit Bedarfsverursacher, 2026-10-07 (T76)
 
 - Neun einblendbare Felder (Dispoelement, Nummer, Position, Einteilung, Daten zum Dispoelement, Dispobereich, Termin,

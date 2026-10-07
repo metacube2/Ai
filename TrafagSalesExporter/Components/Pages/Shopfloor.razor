@@ -1,0 +1,43 @@
+@page "/operations"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Services.Shopfloor
+@inject AuthenticationStateProvider AuthProvider
+@inject IShopfloorAccess Access
+@inject IUiTextService UiText
+
+@* Reiter Operations (Shopfloor), 2026-10-07: das PPA-Shopfloor laeuft als eigene Oberflaeche unter
+   wwwroot/shopfloor und wird hier im Vollbild eingebettet. Zugriff nur fuer freigegebene Windows-Konten
+   (Shopfloor:AllowedUsers / Shopfloor:OpenForAll). Die Sperre gilt zusaetzlich fuer Dateien und API,
+   nicht nur fuer diese Seite. Doku docs/SHOPFLOOR_2026-10-07.md. Pfade stehen in ShopfloorEndpoints,
+   damit der Lokalisierungsscanner keine Kunstpaare bildet. *@
+<PageTitle>@T("Operations (Shopfloor)", "Operations (Shopfloor)")</PageTitle>
+
+@if (!_loaded)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (!_allowed)
+{
+    <MudAlert Severity="Severity.Warning">@T("Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus.", "No access: approval by the head of production/operations is still pending.")</MudAlert>
+    <MudText Class="mt-3">@T("Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen.", "New tabs only become available after approval by the head of production/operations. Please request approval there.")</MudText>
+}
+else
+{
+    <iframe src="@ShopfloorEndpoints.IndexPath" title="@T("Operations (Shopfloor)", "Operations (Shopfloor)")"
+            style="width:100%;height:calc(100vh - 150px);min-height:480px;border:0;border-radius:8px;background:#fff"></iframe>
+}
+
+@code {
+    private bool _loaded;
+    private bool _allowed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        _allowed = Access.IsAllowed(state.User);
+        _loaded = true;
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

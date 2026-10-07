@@ -8,6 +8,11 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations (Shopfloor)"] = "Operaciones (Shopfloor)",
+                ["Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus."] = "Sin acceso: la aprobación de la dirección de producción/operaciones aún está pendiente.",
+                ["No access: approval by the head of production/operations is still pending."] = "Sin acceso: la aprobación de la dirección de producción/operaciones aún está pendiente.",
+                ["Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen."] = "Las pestañas nuevas solo se muestran tras la aprobación de la dirección de producción/operaciones. Por favor, solicite allí la aprobación.",
+                ["New tabs only become available after approval by the head of production/operations. Please request approval there."] = "Las pestañas nuevas solo se muestran tras la aprobación de la dirección de producción/operaciones. Por favor, solicite allí la aprobación.",
                 ["Budgetkurs je Finance-Jahr (Standard)"] = "Tipo presupuestario por año financiero (estándar)",
                 ["Budget rate per finance year (default)"] = "Tipo presupuestario por año financiero (estándar)",
                 ["Aktueller Tageskurs"] = "Tipo de cambio diario actual",
@@ -2307,6 +2312,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations (Shopfloor)"] = "Operazioni (Shopfloor)",
+                ["Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus."] = "Nessun accesso: l'approvazione della direzione produzione/operations è ancora in sospeso.",
+                ["No access: approval by the head of production/operations is still pending."] = "Nessun accesso: l'approvazione della direzione produzione/operations è ancora in sospeso.",
+                ["Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen."] = "Le nuove schede diventano visibili solo dopo l'approvazione della direzione produzione/operations. Richiedere lì l'approvazione.",
+                ["New tabs only become available after approval by the head of production/operations. Please request approval there."] = "Le nuove schede diventano visibili solo dopo l'approvazione della direzione produzione/operations. Richiedere lì l'approvazione.",
                 ["Budgetkurs je Finance-Jahr (Standard)"] = "Cambio di budget per anno finanziario (standard)",
                 ["Budget rate per finance year (default)"] = "Cambio di budget per anno finanziario (standard)",
                 ["Aktueller Tageskurs"] = "Cambio giornaliero attuale",
@@ -4606,6 +4616,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations (Shopfloor)"] = "ऑपरेशन्स (शॉपफ्लोर)",
+                ["Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus."] = "पहुँच नहीं: उत्पादन/ऑपरेशन्स प्रमुख की मंज़ूरी अभी बाकी है।",
+                ["No access: approval by the head of production/operations is still pending."] = "पहुँच नहीं: उत्पादन/ऑपरेशन्स प्रमुख की मंज़ूरी अभी बाकी है।",
+                ["Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen."] = "नए टैब उत्पादन/ऑपरेशन्स प्रमुख की मंज़ूरी के बाद ही दिखाई देते हैं। कृपया वहाँ मंज़ूरी का अनुरोध करें।",
+                ["New tabs only become available after approval by the head of production/operations. Please request approval there."] = "नए टैब उत्पादन/ऑपरेशन्स प्रमुख की मंज़ूरी के बाद ही दिखाई देते हैं। कृपया वहाँ मंज़ूरी का अनुरोध करें।",
                 ["Budgetkurs je Finance-Jahr (Standard)"] = "प्रति वित्त वर्ष बजट दर (मानक)",
                 ["Budget rate per finance year (default)"] = "प्रति वित्त वर्ष बजट दर (मानक)",
                 ["Aktueller Tageskurs"] = "वर्तमान दैनिक दर",
@@ -6905,6 +6920,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations (Shopfloor)"] = "Operacionet (Shopfloor)",
+                ["Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus."] = "Nuk ka qasje: miratimi nga drejtuesi i prodhimit/operacioneve është ende në pritje.",
+                ["No access: approval by the head of production/operations is still pending."] = "Nuk ka qasje: miratimi nga drejtuesi i prodhimit/operacioneve është ende në pritje.",
+                ["Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen."] = "Skedat e reja bëhen të dukshme vetëm pas miratimit nga drejtuesi i prodhimit/operacioneve. Ju lutemi kërkoni miratimin atje.",
+                ["New tabs only become available after approval by the head of production/operations. Please request approval there."] = "Skedat e reja bëhen të dukshme vetëm pas miratimit nga drejtuesi i prodhimit/operacioneve. Ju lutemi kërkoni miratimin atje.",
                 ["Budgetkurs je Finance-Jahr (Standard)"] = "Kursi i buxhetit për vit financiar (standard)",
                 ["Budget rate per finance year (default)"] = "Kursi i buxhetit për vit financiar (standard)",
                 ["Aktueller Tageskurs"] = "Kursi aktual ditor",
@@ -9204,6 +9224,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations (Shopfloor)"] = "Operasyonlar (Shopfloor)",
+                ["Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus."] = "Erişim yok: Üretim/Operasyon yönetiminin onayı henüz bekleniyor.",
+                ["No access: approval by the head of production/operations is still pending."] = "Erişim yok: Üretim/Operasyon yönetiminin onayı henüz bekleniyor.",
+                ["Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen."] = "Yeni sekmeler yalnızca Üretim/Operasyon yönetiminin onayından sonra görünür. Lütfen onayı oradan isteyin.",
+                ["New tabs only become available after approval by the head of production/operations. Please request approval there."] = "Yeni sekmeler yalnızca Üretim/Operasyon yönetiminin onayından sonra görünür. Lütfen onayı oradan isteyin.",
                 ["Budgetkurs je Finance-Jahr (Standard)"] = "Finans yılı başına bütçe kuru (standart)",
                 ["Budget rate per finance year (default)"] = "Finans yılı başına bütçe kuru (standart)",
                 ["Aktueller Tageskurs"] = "Güncel günlük kur",
@@ -11503,6 +11528,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations (Shopfloor)"] = "mIwmey (Shopfloor)",
+                ["Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus."] = "Hotlh pagh: Qutlh/mIwmey wo' ghItlh Dochlaw'.",
+                ["No access: approval by the head of production/operations is still pending."] = "Hotlh pagh: Qutlh/mIwmey wo' ghItlh Dochlaw'.",
+                ["Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen."] = "tab chu' Qutlh/mIwmey wo' ghItlh qaStaHvIS neH legh. pa' ghItlh yIchIch.",
+                ["New tabs only become available after approval by the head of production/operations. Please request approval there."] = "tab chu' Qutlh/mIwmey wo' ghItlh qaStaHvIS neH legh. pa' ghItlh yIchIch.",
                 ["Budgetkurs je Finance-Jahr (Standard)"] = "DIS Huch nab mI' (motlh)",
                 ["Budget rate per finance year (default)"] = "DIS Huch nab mI' (motlh)",
                 ["Aktueller Tageskurs"] = "DaHjaj jaj mI'",

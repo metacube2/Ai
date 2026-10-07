@@ -45,6 +45,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **HR-EntitySet `HrAbsenzSet` (Abwesenheiten je Fall, Transport `T76K912644`)** | `docs/HR_KPI.md` Abschnitt 8.7 |
 | **Logistik-Live-Sets `LogTaSet`, `LogLiefSet`, `LogRueckSet` (Transport `T76K912650`)** | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) als einblendbare Felder, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
+| **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |

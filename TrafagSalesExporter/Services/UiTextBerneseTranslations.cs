@@ -10,6 +10,11 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Operations (Shopfloor)"] = "Operations (Shopfloor)",
+            ["Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus."] = "Kei Zuegang: D Freigab dür d Leitig Produktion/Operations steit no us.",
+            ["No access: approval by the head of production/operations is still pending."] = "Kei Zuegang: D Freigab dür d Leitig Produktion/Operations steit no us.",
+            ["Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen."] = "Nöii Reiter wärde erst nach de Freigab dür d Leitig Produktion/Operations sichtbar. Bitte dert d Freigab beantrage.",
+            ["New tabs only become available after approval by the head of production/operations. Please request approval there."] = "Nöii Reiter wärde erst nach de Freigab dür d Leitig Produktion/Operations sichtbar. Bitte dert d Freigab beantrage.",
             ["Budgetkurs je Finance-Jahr (Standard)"] = "Budgetkurs pro Finance-Jahr (Standard)",
             ["Budget rate per finance year (default)"] = "Budget rate per finance year (default)",
             ["Aktueller Tageskurs"] = "Aktuelle Tageskurs",
