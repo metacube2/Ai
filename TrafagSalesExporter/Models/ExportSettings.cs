@@ -49,7 +49,7 @@ public class ExportSettings
     /// Kursprofil fuer alle CHF-Finance-Umrechnungen: Gruppenmarge im Cockpit,
     /// Finance-Pruefbuch sowie Nachweis- und Sales_All-Excel.
     /// </summary>
-    public string GroupMarginChfRateMode { get; set; } = GroupMarginChfRateModes.CurrentDailyRate;
+    public string GroupMarginChfRateMode { get; set; } = GroupMarginChfRateModes.BudgetRate;
 
     /// <summary>
     /// ISS-003.4: Verhalten der CH/AT-Herstellerregel (jede TRCH/TRAT-Verkaufszeile ist per
@@ -127,16 +127,25 @@ public static class GroupMarginChfRateModes
 {
     public const string CurrentDailyRate = nameof(CurrentDailyRate);
     public const string FinanceYearEndRate = nameof(FinanceYearEndRate);
+    /// <summary>Budgetkurs je Finance-Jahr (Notiz „Budget &lt;Jahr&gt;"), Standard seit 2026-10-07.</summary>
+    public const string BudgetRate = nameof(BudgetRate);
 
     public static string Normalize(string? mode)
-        => string.Equals(mode?.Trim(), FinanceYearEndRate, StringComparison.OrdinalIgnoreCase)
-            ? FinanceYearEndRate
-            : CurrentDailyRate;
+    {
+        var value = mode?.Trim();
+        if (string.Equals(value, FinanceYearEndRate, StringComparison.OrdinalIgnoreCase))
+            return FinanceYearEndRate;
+        if (string.Equals(value, CurrentDailyRate, StringComparison.OrdinalIgnoreCase))
+            return CurrentDailyRate;
+        // Entscheid Ingo 2026-10-07: Trafag arbeitet immer mit Budgetkursen; leer oder unbekannt = Budget.
+        return BudgetRate;
+    }
 
+    /// <summary>Stichtag fuer Anzeige und Cache; Budget- und Jahresendkurs gelten zum 31.12. des Finance-Jahres.</summary>
     public static DateTime ResolveRateDate(string? mode, int financeYear, DateTime? today = null)
-        => Normalize(mode) == FinanceYearEndRate
-            ? new DateTime(financeYear, 12, 31)
-            : (today ?? DateTime.Today).Date;
+        => Normalize(mode) == CurrentDailyRate
+            ? (today ?? DateTime.Today).Date
+            : new DateTime(financeYear, 12, 31);
 }
 
 public static class MarcForeignProcurementModes

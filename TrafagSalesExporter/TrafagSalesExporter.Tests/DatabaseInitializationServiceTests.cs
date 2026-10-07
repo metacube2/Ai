@@ -74,7 +74,7 @@ public class DatabaseInitializationServiceTests : IDisposable
         Assert.Equal(SupplierFallbackModes.ChPlantMaster, settings.SupplierFallbackMode);
         Assert.Equal(InternalSupplierCostSourceModes.DeliveringEntityCosts, settings.InternalSupplierCostSourceMode);
         Assert.Equal(B1GroupStandardCostModes.LatestPositive, settings.B1GroupStandardCostMode);
-        Assert.Equal(GroupMarginChfRateModes.CurrentDailyRate, settings.GroupMarginChfRateMode);
+        Assert.Equal(GroupMarginChfRateModes.BudgetRate, settings.GroupMarginChfRateMode);
 
         await using var tableCommand = _connection.CreateCommand();
         tableCommand.CommandText = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='GroupMaterialMasters';";

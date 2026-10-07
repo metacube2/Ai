@@ -33,6 +33,25 @@ public class CurrencyExchangeRateServiceTests : IDisposable
         _connection.Dispose();
     }
 
+    // Entscheid Ingo 2026-10-07: Finance rechnet mit dem Budgetkurs des Jahres. Produktiv ueberlagerte
+    // ein offener EZB-Kurs vom 16.04.2026 (0.923) das EUR-Budget 2026 (0.94).
+    [Fact]
+    public async Task ResolveBudgetRate_Ignoriert_Juengeren_Tageskurs()
+    {
+        await SeedRatesAsync(
+            new CurrencyExchangeRate { FromCurrency = "EUR", ToCurrency = "CHF", Rate = 0.95m, ValidFrom = new DateTime(2025, 1, 1), ValidTo = new DateTime(2025, 12, 31), Notes = "Budget 2025", IsActive = true },
+            new CurrencyExchangeRate { FromCurrency = "EUR", ToCurrency = "CHF", Rate = 0.94m, ValidFrom = new DateTime(2026, 1, 1), ValidTo = new DateTime(2026, 12, 31), Notes = "Budget 2026", IsActive = true },
+            new CurrencyExchangeRate { FromCurrency = "EUR", ToCurrency = "CHF", Rate = 0.923m, ValidFrom = new DateTime(2026, 4, 16), ValidTo = null, Notes = "ECB daily reference rate", IsActive = true },
+            new CurrencyExchangeRate { FromCurrency = "USD", ToCurrency = "CHF", Rate = 0.80m, ValidFrom = new DateTime(2026, 1, 1), ValidTo = new DateTime(2026, 12, 31), Notes = "Budget 2026", IsActive = true });
+
+        Assert.Equal(0.95m, _service.ResolveBudgetRate("EUR", "CHF", 2025));
+        Assert.Equal(0.94m, _service.ResolveBudgetRate("EUR", "CHF", 2026));
+        Assert.Equal(0.923m, _service.ResolveRate("EUR", "CHF", new DateTime(2026, 12, 31)));
+        Assert.Equal(0.80m / 0.94m, _service.ResolveBudgetRate("USD", "EUR", 2026));
+        Assert.Null(_service.ResolveBudgetRate("USD", "CHF", 2025));
+        Assert.Equal(0.94m, ((ICurrencyExchangeRateService)_service).ResolveFinanceRate("EUR", "CHF", 2026, GroupMarginChfRateModes.BudgetRate));
+    }
+
     [Fact]
     public async Task ResolveRate_Returns_Direct_Rate_For_Valid_Date()
     {

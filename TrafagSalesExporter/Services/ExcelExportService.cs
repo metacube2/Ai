@@ -31,8 +31,7 @@ public class ExcelExportService : IExcelExportService
     /// einzelnen Ausgabe still vorgegeben.
     /// </summary>
     private decimal? ResolveChfRate(string currency, int year, string? groupMarginChfRateMode)
-        => _exchangeRateService?.ResolveRate(currency, "CHF",
-            GroupMarginChfRateModes.ResolveRateDate(groupMarginChfRateMode, year));
+        => _exchangeRateService?.ResolveFinanceRate(currency, "CHF", year, groupMarginChfRateMode);
 
     /// <summary>Jahreskurs zwischen zwei Waehrungen (Kostenbasis -> Verkaufswaehrung), wie im Dashboard.</summary>
     private decimal? ResolveCrossRate(string fromCurrency, string toCurrency, DateTime rateDate)
@@ -1271,7 +1270,46 @@ public class ExcelExportService : IExcelExportService
             AddFinanceHelpSheet(workbook);
         }
 
+        MarkStandardCostColumns(workbook);
         workbook.SaveAs(fullPath);
+    }
+
+    /// <summary>Spalten mit Standardkosten-Bezug in Sales_All (Wunsch Ingo 2026-10-07).</summary>
+    internal static readonly IReadOnlySet<string> StandardCostHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Standard cost", "Standard Cost Currency", "Standard Cost CHF Rate", "Standard Cost CHF (per unit)",
+        "Cost Basis CHF", "Margin CHF", "Cost Source", "Margin Status", "Cost Timing",
+        "Unit Cost", "Known Cost Basis", "Margin Value", "Margin %",
+        "Variable Unit Cost", "Variable Cost Basis", "Deckungsbeitrag (DB)", "DB %"
+    };
+
+    /// <summary>
+    /// Faerbt in jedem Blatt die Kopfzelle (kraeftig) und die Spalte (hell) jeder Standardkosten-Spalte,
+    /// damit Andreas sie zwischen Umsatz- und Stammdatenfeldern sofort findet. Kopfzeile = erste der
+    /// Zeilen 1 bis 5, die eine solche Ueberschrift enthaelt.
+    /// </summary>
+    internal static void MarkStandardCostColumns(XLWorkbook workbook)
+    {
+        var header = XLColor.FromHtml("#F4B183");
+        var body = XLColor.FromHtml("#FCE4D6");
+        foreach (var ws in workbook.Worksheets)
+        {
+            for (var row = 1; row <= 5; row++)
+            {
+                var cells = ws.Row(row).CellsUsed()
+                    .Where(c => StandardCostHeaders.Contains(c.GetString().Trim()))
+                    .ToList();
+                if (cells.Count == 0)
+                    continue;
+                foreach (var cell in cells)
+                {
+                    ws.Column(cell.Address.ColumnNumber).Style.Fill.BackgroundColor = body;
+                    cell.Style.Fill.BackgroundColor = header;
+                    cell.Style.Font.Bold = true;
+                }
+                break;
+            }
+        }
     }
 
     /// <summary>

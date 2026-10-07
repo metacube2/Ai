@@ -8,6 +8,10 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Budgetkurs je Finance-Jahr (Standard)"] = "Tipo presupuestario por año financiero (estándar)",
+                ["Budget rate per finance year (default)"] = "Tipo presupuestario por año financiero (estándar)",
+                ["Aktueller Tageskurs"] = "Tipo de cambio diario actual",
+                ["Current daily rate"] = "Tipo de cambio diario actual",
                 ["Avg. unit price by year (quantity-weighted)"] = "Precio unitario medio por año (ponderado por cantidad)",
                 ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Lista Min(Netwr CHF/unidad) por artículo/año, evolución como media ponderada por cantidad, filtro de proveedor.",
                 ["Min per article, avg per year"] = "Mín. por artículo, media por año",
@@ -2303,6 +2307,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Budgetkurs je Finance-Jahr (Standard)"] = "Cambio di budget per anno finanziario (standard)",
+                ["Budget rate per finance year (default)"] = "Cambio di budget per anno finanziario (standard)",
+                ["Aktueller Tageskurs"] = "Cambio giornaliero attuale",
+                ["Current daily rate"] = "Cambio giornaliero attuale",
                 ["Avg. unit price by year (quantity-weighted)"] = "Prezzo unitario medio per anno (ponderato per quantità)",
                 ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Hotlist Min(Netwr CHF/unità) per articolo/anno, andamento come media ponderata per quantità, filtro fornitore.",
                 ["Min per article, avg per year"] = "Min per articolo, media per anno",
@@ -4598,6 +4606,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Budgetkurs je Finance-Jahr (Standard)"] = "प्रति वित्त वर्ष बजट दर (मानक)",
+                ["Budget rate per finance year (default)"] = "प्रति वित्त वर्ष बजट दर (मानक)",
+                ["Aktueller Tageskurs"] = "वर्तमान दैनिक दर",
+                ["Current daily rate"] = "वर्तमान दैनिक दर",
                 ["Avg. unit price by year (quantity-weighted)"] = "वर्ष के अनुसार औसत इकाई मूल्य (मात्रा-भारित)",
                 ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "हॉटलिस्ट Min(Netwr CHF/इकाई) प्रति आइटम/वर्ष, रुझान मात्रा-भारित औसत, आपूर्तिकर्ता फ़िल्टर।",
                 ["Min per article, avg per year"] = "प्रति आइटम न्यूनतम, प्रति वर्ष औसत",
@@ -6893,6 +6905,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Budgetkurs je Finance-Jahr (Standard)"] = "Kursi i buxhetit për vit financiar (standard)",
+                ["Budget rate per finance year (default)"] = "Kursi i buxhetit për vit financiar (standard)",
+                ["Aktueller Tageskurs"] = "Kursi aktual ditor",
+                ["Current daily rate"] = "Kursi aktual ditor",
                 ["Avg. unit price by year (quantity-weighted)"] = "Çmimi mesatar për njësi sipas vitit (i ponderuar me sasi)",
                 ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Lista Min(Netwr CHF/njësi) sipas artikullit/vitit, ecuria si mesatare e ponderuar me sasi, filtër furnitori.",
                 ["Min per article, avg per year"] = "Min për artikull, mesatare për vit",
@@ -9188,6 +9204,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Budgetkurs je Finance-Jahr (Standard)"] = "Finans yılı başına bütçe kuru (standart)",
+                ["Budget rate per finance year (default)"] = "Finans yılı başına bütçe kuru (standart)",
+                ["Aktueller Tageskurs"] = "Güncel günlük kur",
+                ["Current daily rate"] = "Güncel günlük kur",
                 ["Avg. unit price by year (quantity-weighted)"] = "Yıllara göre ortalama birim fiyat (miktar ağırlıklı)",
                 ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Sıcak liste Min(Netwr CHF/birim) ürün/yıl bazında, seyir miktar ağırlıklı ortalama, tedarikçi filtresi.",
                 ["Min per article, avg per year"] = "Ürün başına min, yıl başına ortalama",
@@ -11483,6 +11503,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Budgetkurs je Finance-Jahr (Standard)"] = "DIS Huch nab mI' (motlh)",
+                ["Budget rate per finance year (default)"] = "DIS Huch nab mI' (motlh)",
+                ["Aktueller Tageskurs"] = "DaHjaj jaj mI'",
+                ["Current daily rate"] = "DaHjaj jaj mI'",
                 ["Avg. unit price by year (quantity-weighted)"] = "DIS Hoch Doch Huch motlh (ghom'a' ngI')",
                 ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Hotlist Min(Netwr CHF/Huch) Doch/DIS, motlh ghom'a' ngI', ngevwI' wIv.",
                 ["Min per article, avg per year"] = "Doch Hoch machqu', DIS Hoch motlh",

@@ -35,6 +35,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "ExportSettings", "ExchangeRateDateField", "TEXT NOT NULL DEFAULT 'PostingDate'");
         AddColumnIfMissing(db, "ExportSettings", "GroupMarginCostCurrencyMode", "TEXT NOT NULL DEFAULT 'Convert'");
         ApplyGroupMarginCostCurrencyDecisionOnce(db);
+        ApplyBudgetRateDecisionOnce(db);
         AddColumnIfMissing(db, "ExportSettings", "SupplierFallbackMode", "TEXT NOT NULL DEFAULT 'ChPlantMaster'");
         AddColumnIfMissing(db, "ExportSettings", "InternalSupplierCostSourceMode", "TEXT NOT NULL DEFAULT 'DeliveringEntityCosts'");
         AddColumnIfMissing(db, "ExportSettings", "B1GroupStandardCostMode", "TEXT NOT NULL DEFAULT 'LatestPositive'");
@@ -282,6 +283,30 @@ FROM Sites_old;";
             + "GroupMarginCostCurrencyDecision20260827Applied = 1;";
         cmd.ExecuteNonQuery();
     }
+    /// <summary>
+    /// Einmaliger Nachzug des Entscheids von Ingo vom 2026-10-07: Trafag arbeitet immer mit
+    /// Budgetkursen. Bestehende Datenbanken tragen den nie bewusst gewaehlten Wert 'CurrentDailyRate'
+    /// (Spalten-Default); er wird genau einmal auf 'BudgetRate' gestellt. Wer danach bewusst einen
+    /// anderen Kurs waehlt, behaelt ihn.
+    /// </summary>
+    private static void ApplyBudgetRateDecisionOnce(AppDbContext db)
+    {
+        var markerWasMissing = AddColumnIfMissing(
+            db, "ExportSettings", "BudgetRateDecision20261007Applied", "INTEGER NOT NULL DEFAULT 0");
+        if (!markerWasMissing)
+            return;
+
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "UPDATE ExportSettings SET GroupMarginChfRateMode = 'BudgetRate', "
+            + "BudgetRateDecision20261007Applied = 1;";
+        cmd.ExecuteNonQuery();
+    }
+
     private static bool AddColumnIfMissing(AppDbContext db, string table, string column, string type)
     {
         var conn = db.Database.GetDbConnection();

@@ -83,11 +83,13 @@ IT-Sonderfall: `docs/FINANCE_IT_VORGEHEN_2026-05-18.md`, UK-Korrektur:
 **b) Group-Currency/CHF (Anzeige, Management Cockpit)**
 
 **Geltende Kursregeln, Stand 2026-09-29 (aus dem Code ermittelt).** Es gibt drei getrennte Regeln:
-1. Das **Kursprofil** (`GroupMarginChfRateMode`, Standard und produktiv `CurrentDailyRate`, also
+*Stand 2026-10-07, Entscheid Ingo „wir arbeiten immer mit Budgetkursen": Standard ist jetzt `BudgetRate`, der Kurs mit Notiz `Budget <Finance-Jahr>`, auch wenn ein juengerer Tageskurs existiert; die Datenbank wird einmal umgestellt (Marker `BudgetRateDecision20261007Applied`). Fehlt einer Waehrung das Budget, bleibt CHF leer; nur ein Jahr ganz ohne Budgetkurse faellt auf den 31.12.-Kurs zurueck. Der CHF-Schalter im Cockpit folgt seither ebenfalls dem Profil, Regel 2 und `ISS-018.1` sind damit erledigt. Die Aufzaehlung unten ist der Stand vom 2026-09-29.*
+
+1. Das **Kursprofil** (`GroupMarginChfRateMode`, ~~Standard und produktiv `CurrentDailyRate`~~ bis 2026-10-07, also
    der juengste heute gueltige Kurs; Alternative `FinanceYearEndRate` = 31.12. des Finance-Jahres)
    bestimmt die CHF-Werte in Pruefbuch, Nachweis-Excel und `Sales_All` sowie in Gruppenmarge und
    Finance-Pivot, **solange der Schalter „Group-Waehrung (CHF)" aus ist**.
-2. Ist der **Schalter an**, rechnet das Cockpit Net Sales, Gruppenmarge und Pivot unabhaengig vom
+2. *(Ueberholt 2026-10-07: der Schalter folgt jetzt dem Profil.)* Ist der **Schalter an**, rechnet das Cockpit Net Sales, Gruppenmarge und Pivot unabhaengig vom
    Profil fix zum 31.12. des Zeilenjahres um. Das Pruefbuch rechnet weiter nach Profil, deshalb
    koennen die CHF-Margen abweichen (`ISS-018.1`, offen). Ohne Schalter rechnet das Cockpit nicht
    um; bei mehreren Waehrungen im Filter steht „Mixed".
@@ -249,12 +251,12 @@ Wunsch Andreas im Gespraech 2026-10-06: Umsatz, Standardkosten und Marge je Arti
 | Spalte | Inhalt |
 |---|---|
 | Standard Cost, Standard Cost Currency | Stueckkosten der Zeile wie importiert |
-| Standard Cost CHF Rate, Standard Cost CHF (per unit) | Kurs der Kostenwaehrung nach demselben Kursprofil wie `Net Sales CHF` (Abschnitt 3, produktiv `CurrentDailyRate`: heute gueltiger Kurs, fuer alle Jahre gleich) |
+| Standard Cost CHF Rate, Standard Cost CHF (per unit) | Kurs der Kostenwaehrung nach demselben Kursprofil wie `Net Sales CHF` (Abschnitt 3, seit 2026-10-07 `BudgetRate`: Budgetkurs des Finance-Jahres) |
 | Cost Basis CHF, Margin CHF | Kostenbasis aus der Gruppenmarge (Kaskade, eine Stufe), mit dem Kurs der Verkaufswaehrung; leer, wenn die Kostenbasis nicht bekannt ist |
 | Cost Source, Margin Status | welche Stufe gegriffen hat (TR AG / TR IT / TR IN / Beleg / lokal) und Status wie in Gruppenmarge Details |
 | Cost Timing | historisch oder aktuell, siehe unten |
 
-**Welcher Kurs, gemessen 2026-10-07 in `Sales_All_2026-10-07.xlsx` und der Deploy-Sicherung vom 06.10.:** Profil `CurrentDailyRate`, also der heute gueltige Kurs fuer **alle Jahre**, auch 2025. Heute gueltig ist bei EUR der Eintrag `ECB daily reference rate` 0.923 vom **16.04.2026** (offen, seither nicht nachgefuehrt), bei USD 0.80, GBP 1.09, INR 1/110 der `Budget 2026`-Kurs (EUR-Budget 2026 waere 0.94). Die Umrechnung mischt damit einen veralteten EZB-Kurs mit Budgetkursen. Das ist kein neuer Fehler der CHF-Spalten, sondern gilt fuer `Net Sales CHF` seit jeher; offen fuer Andreas, ob Budget- oder Jahreskurs je Finance-Jahr gelten soll (Profil `FinanceYearEndRate` gibt je Jahr den 31.12.-Kurs, also das Budget des Jahres).
+*Ueberholt am selben Tag durch den Budgetkurs-Entscheid (oben, Abschnitt 3); Messung als Historie:* **Welcher Kurs, gemessen 2026-10-07 in `Sales_All_2026-10-07.xlsx` und der Deploy-Sicherung vom 06.10.:** Profil `CurrentDailyRate`, also der heute gueltige Kurs fuer **alle Jahre**, auch 2025. Heute gueltig ist bei EUR der Eintrag `ECB daily reference rate` 0.923 vom **16.04.2026** (offen, seither nicht nachgefuehrt), bei USD 0.80, GBP 1.09, INR 1/110 der `Budget 2026`-Kurs (EUR-Budget 2026 waere 0.94). Die Umrechnung mischt damit einen veralteten EZB-Kurs mit Budgetkursen. Das ist kein neuer Fehler der CHF-Spalten, sondern gilt fuer `Net Sales CHF` seit jeher; offen fuer Andreas, ob Budget- oder Jahreskurs je Finance-Jahr gelten soll (Profil `FinanceYearEndRate` gibt je Jahr den 31.12.-Kurs, also das Budget des Jahres).
 
 **Historisch oder aktuell (Frage Andreas):** Kosten aus der Verkaufszeile und lokale Standardkosten sind der Wert im Beleg (historisch); CH/AT nehmen WAVWR zum Warenausgang (historisch), bei rund 12 % ohne Lieferbezug STPRS (aktuell), je Zeile nicht unterscheidbar. **Konzernkosten** (TR AG MBEW-STPRS, TR IT / TR IN juengster StockPrice) sind der Stand beim letzten Abgleich und werden **nicht taeglich historisiert**; eine Abweichung je Artikel bei Konzernkosten kann also aus einer seither geaenderten Kostenbasis stammen.
 

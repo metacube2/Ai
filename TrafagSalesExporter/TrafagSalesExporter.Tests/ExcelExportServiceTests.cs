@@ -461,6 +461,12 @@ public class ExcelExportServiceTests
             var details = workbook.Worksheet("Finance Details");
             Assert.Equal("Standard Cost CHF (per unit)", details.Cell(4, 37).GetString());
             Assert.Equal("Cost Timing", details.Cell(4, 42).GetString());
+            Assert.Equal(XLColor.FromHtml("#F4B183"), details.Cell(4, 37).Style.Fill.BackgroundColor);
+            Assert.Equal(XLColor.FromHtml("#FCE4D6"), details.Cell(5, 38).Style.Fill.BackgroundColor);
+            Assert.NotEqual(XLColor.FromHtml("#F4B183"), details.Cell(4, 33).Style.Fill.BackgroundColor);
+            var sales = workbook.Worksheet("Sales");
+            var stdCol = sales.Row(1).CellsUsed().Single(c => c.GetString() == "Standard cost");
+            Assert.Equal(XLColor.FromHtml("#F4B183"), stdCol.Style.Fill.BackgroundColor);
             Assert.Equal(100m, details.Cell(5, 33).GetValue<decimal>());
             Assert.Equal(10m, details.Cell(5, 37).GetValue<decimal>());
             Assert.Equal(20m, details.Cell(5, 38).GetValue<decimal>());

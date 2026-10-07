@@ -480,7 +480,9 @@ public class ManagementCockpitService : IManagementCockpitService
                 var cacheKey = string.Concat(code, "|", rateDate.Year.ToString(CultureInfo.InvariantCulture));
                 if (!rateCache.TryGetValue(cacheKey, out var rate))
                 {
-                    rate = _exchangeRateService.ResolveRate(code, groupCurrency, rateDate);
+                    // Seit 2026-10-07 nach Kursprofil (Standard Budgetkurs) statt fix 31.12.: so rechnet der
+                    // Schalter „Group-Waehrung (CHF)" gleich wie Pruefbuch, Nachweis und Sales_All (ISS-018.1).
+                    rate = _exchangeRateService.ResolveFinanceRate(code, groupCurrency, rateDate.Year, settings.GroupMarginChfRateMode);
                     rateCache[cacheKey] = rate;
                 }
                 return rate;
@@ -636,9 +638,12 @@ public class ManagementCockpitService : IManagementCockpitService
         notices.Add(groupMarginCostCurrencyMode == GroupMarginCostCurrencyModes.Convert
             ? "Abweichende Kostenwaehrung: Kostenbasis wird mit dem TAGESKURS in die Verkaufswaehrung umgerechnet (Beschluss Andreas vom 27.08.2026: kein Rueckrechnen auf historische Kurse). Ohne verfuegbaren Kurs bleibt die Zeile offen."
             : "Abweichende Kostenwaehrung: Marge/% bleiben offen ('-'). Das ist seit dem Beschluss vom 27.08.2026 die bewusst gewaehlte Ausnahme, nicht mehr der Normalfall (Schalter in den Export-Einstellungen).");
-        notices.Add(groupMarginChfRateMode == GroupMarginChfRateModes.FinanceYearEndRate
-            ? "CHF-Umrechnung: Kurs zum 31.12. des jeweiligen Finance-Jahres (Cockpit, Pruefbuch, Nachweis und Sales_All reproduzierbar)."
-            : "CHF-Umrechnung: aktueller Tageskurs (bisheriger Standard; Cockpit, Pruefbuch, Nachweis und Sales_All koennen sich mit dem Kurs aendern).");
+        notices.Add(groupMarginChfRateMode switch
+        {
+            GroupMarginChfRateModes.BudgetRate => "CHF-Umrechnung: Budgetkurs des jeweiligen Finance-Jahres (Standard seit 07.10.2026; Cockpit, Pruefbuch, Nachweis und Sales_All gleich). Fehlt das Budget einer Waehrung, bleibt der CHF-Wert leer.",
+            GroupMarginChfRateModes.FinanceYearEndRate => "CHF-Umrechnung: Kurs zum 31.12. des jeweiligen Finance-Jahres (Cockpit, Pruefbuch, Nachweis und Sales_All reproduzierbar).",
+            _ => "CHF-Umrechnung: aktueller Tageskurs (Cockpit, Pruefbuch, Nachweis und Sales_All koennen sich mit dem Kurs aendern)."
+        });
         notices.Add(supplierFallbackMode switch
         {
             SupplierFallbackModes.ChPlantMaster => $"Supplier-Fallback: CH-Werkstamm MARC 1100 (neu, {chPlantMaterialKeys.Count:N0} Materialien). Ist der Cache leer, greift automatisch die bisherige MBEW-Regel.",
@@ -1514,7 +1519,7 @@ public class ManagementCockpitService : IManagementCockpitService
             var cacheKey = (key, rateDate);
             if (!chfRates.TryGetValue(cacheKey, out var cached))
             {
-                cached = ResolveCrossRate(key, "CHF", rateDate);
+                cached = _exchangeRateService.ResolveFinanceRate(key, "CHF", financeYear, groupMarginChfRateMode);
                 chfRates[cacheKey] = cached;
             }
 
@@ -1779,7 +1784,7 @@ public class ManagementCockpitService : IManagementCockpitService
             {
                 var rateDate = GroupMarginChfRateModes.ResolveRateDate(groupMarginChfRateMode, row.Year);
                 var originalCurrency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
-                var chfRate = _exchangeRateService.ResolveRate(originalCurrency, "CHF", rateDate);
+                var chfRate = _exchangeRateService.ResolveFinanceRate(originalCurrency, "CHF", row.Year, groupMarginChfRateMode);
                 // Gleiche Rechnung wie Gruppenmarge und Excel-Nachweis; zusaetzlich schlaegt hier
                 // ein fehlender CHF-Kurs auf den Status durch.
                 var basis = GroupMarginCalculator.Evaluate(
@@ -1845,9 +1850,12 @@ public class ManagementCockpitService : IManagementCockpitService
                     ChfRate = chfRate,
                     ChfAmount = chfRate.HasValue ? row.Value * chfRate.Value : null,
                     RateSource = chfRate.HasValue
-                        ? groupMarginChfRateMode == GroupMarginChfRateModes.FinanceYearEndRate
-                            ? "CurrencyExchangeRates / Jahresendkurs"
-                            : "CurrencyExchangeRates / Tageskurs"
+                        ? groupMarginChfRateMode switch
+                        {
+                            GroupMarginChfRateModes.BudgetRate => $"CurrencyExchangeRates / Budget {row.Year}",
+                            GroupMarginChfRateModes.FinanceYearEndRate => "CurrencyExchangeRates / Jahresendkurs",
+                            _ => "CurrencyExchangeRates / Tageskurs"
+                        }
                         : "Kurs fehlt",
                     RateYear = row.Year,
                     RateDate = rateDate,
@@ -1895,8 +1903,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     ? row.InvoiceDate ?? row.PostingDate ?? row.ExtractionDate
                     : row.FinanceDate;
                 var currency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
-                var rate = _exchangeRateService.ResolveRate(currency, "CHF",
-                    GroupMarginChfRateModes.ResolveRateDate(groupMarginChfRateMode, row.Year));
+                var rate = _exchangeRateService.ResolveFinanceRate(currency, "CHF", row.Year, groupMarginChfRateMode);
                 return new FinancePivotValue(
                     row.Tsc,
                     financeDate.Year,

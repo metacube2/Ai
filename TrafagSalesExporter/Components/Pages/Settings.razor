@@ -328,7 +328,8 @@
             <MudSelect T="string" @bind-Value="_exportSettings.GroupMarginChfRateMode"
                        Label="@T("CHF-Finance-Umrechnung: Kursprofil", "CHF finance conversion: rate profile")"
                        HelperText="@T("Wirkt einheitlich auf alle CHF-Finance-Werte in Cockpit, Finance-Pivot, Pruefbuch, Nachweis-Excel und Sales_All. Der Tageskurs kann diese Werte bei jeder Neuberechnung aendern, der Jahresendkurs macht die Jahressicht reproduzierbar. Kursquelle und verbindlicher Stichtag der offiziellen Reportingumrechnung sind fachlich noch offen (ISS-008).", "Applies uniformly to all CHF finance values in cockpit, finance pivot, audit ledger, proof Excel and Sales_All. The daily rate can change these values on every recalculation, the year-end rate makes the yearly view reproducible. Rate source and binding cut-off date of the official reporting conversion are still open (ISS-008).")">
-                <MudSelectItem Value="@GroupMarginChfRateModes.CurrentDailyRate">@T("Aktueller Tageskurs (bisheriger Standard)", "Current daily rate (existing default)")</MudSelectItem>
+                <MudSelectItem Value="@GroupMarginChfRateModes.BudgetRate">@T("Budgetkurs je Finance-Jahr (Standard)", "Budget rate per finance year (default)")</MudSelectItem>
+                <MudSelectItem Value="@GroupMarginChfRateModes.CurrentDailyRate">@T("Aktueller Tageskurs", "Current daily rate")</MudSelectItem>
                 <MudSelectItem Value="@GroupMarginChfRateModes.FinanceYearEndRate">@T("Jahresendkurs je Finance-Jahr (reproduzierbar)", "Year-end rate per finance year (reproducible)")</MudSelectItem>
             </MudSelect>
         </MudItem>

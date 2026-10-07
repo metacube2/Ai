@@ -21,8 +21,11 @@ public class GroupMarginChfRateModesTests
     }
 
     [Fact]
-    public void Normalize_UsesExistingDailyDefaultForUnknownValue()
+    // Entscheid Ingo 2026-10-07: immer Budgetkurse, leer oder unbekannt = Budget.
+    public void Normalize_UsesBudgetDefaultForUnknownValue()
     {
-        Assert.Equal(GroupMarginChfRateModes.CurrentDailyRate, GroupMarginChfRateModes.Normalize("anything"));
+        Assert.Equal(GroupMarginChfRateModes.BudgetRate, GroupMarginChfRateModes.Normalize("anything"));
+        Assert.Equal(GroupMarginChfRateModes.CurrentDailyRate, GroupMarginChfRateModes.Normalize("CurrentDailyRate"));
+        Assert.Equal(new DateTime(2025, 12, 31), GroupMarginChfRateModes.ResolveRateDate(GroupMarginChfRateModes.BudgetRate, 2025));
     }
 }

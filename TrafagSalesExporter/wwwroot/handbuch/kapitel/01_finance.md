@@ -244,7 +244,7 @@ Filter für Jahr, MTD-Monat und TSC. Vier Kacheln: Jahresumsatz des gewählten J
 
 ### Wie gerechnet wird
 
-Alle Beträge sind in CHF. Das Kursprofil in den Settings bestimmt, ob zum aktuellen Tageskurs oder zum Jahresendkurs des Finance-Jahres umgerechnet wird. „Jahresumsatz" summiert alle Monate des Jahres, bei einem abgeschlossenen Jahr ist das der Jahreswert.
+Alle Beträge sind in CHF. Umgerechnet wird mit dem Budgetkurs des Finance-Jahres (Standard seit 7. Oktober 2026, Kursprofil in den Settings); 2025 also mit Budget 2025, 2026 mit Budget 2026. „Jahresumsatz" summiert alle Monate des Jahres, bei einem abgeschlossenen Jahr ist das der Jahreswert.
 
 ### Einsatz im Arbeitsalltag
 

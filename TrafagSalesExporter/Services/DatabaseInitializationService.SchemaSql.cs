@@ -117,7 +117,7 @@ CREATE TABLE ExportSettings (
     SupplierFallbackMode TEXT NOT NULL DEFAULT 'ChPlantMaster',
     InternalSupplierCostSourceMode TEXT NOT NULL DEFAULT 'DeliveringEntityCosts',
     B1GroupStandardCostMode TEXT NOT NULL DEFAULT 'LatestPositive',
-    GroupMarginChfRateMode TEXT NOT NULL DEFAULT 'CurrentDailyRate',
+    GroupMarginChfRateMode TEXT NOT NULL DEFAULT 'BudgetRate',
     MarcForeignProcurementMode TEXT NOT NULL DEFAULT 'Ignore',
     LastTimerRunUtc TEXT NULL
 );";

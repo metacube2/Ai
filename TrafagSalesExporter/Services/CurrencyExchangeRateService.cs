@@ -77,6 +77,50 @@ public class CurrencyExchangeRateService : ICurrencyExchangeRateService
             key => ResolveFromSnapshot(snapshot, key.From, key.To, key.Date));
     }
 
+    /// <summary>
+    /// Budgetkurs des Jahres: nur Kurse mit Notiz „Budget &lt;Jahr&gt;", direkt, umgekehrt oder ueber
+    /// CHF. Ein juengerer Tageskurs (etwa der EZB-Kurs vom 2026-04-16) ueberlagert ihn nicht; fehlt
+    /// das Budget einer Waehrung, bleibt der Wert leer statt still auf einen Tageskurs auszuweichen;
+    /// nur ein Jahr ganz ohne Budgetkurse faellt auf den Kurs zum 31.12. zurueck.
+    /// </summary>
+    public decimal? ResolveBudgetRate(string fromCurrency, string toCurrency, int year)
+    {
+        var from = NormalizeCurrencyCode(fromCurrency);
+        var to = NormalizeCurrencyCode(toCurrency);
+        if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to))
+            return null;
+        if (string.Equals(from, to, StringComparison.OrdinalIgnoreCase))
+            return 1m;
+
+        var snapshot = GetSnapshot();
+        return snapshot.Budget.GetOrAdd((from, to, year), key =>
+        {
+            var notes = $"Budget {key.Year}";
+            decimal? Direct(string a, string b)
+            {
+                if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase))
+                    return 1m;
+                if (snapshot.Rates.TryGetValue((a, b), out var direct) && direct.FirstOrDefault(r => r.Notes == notes) is { } d)
+                    return d.Rate;
+                if (snapshot.Rates.TryGetValue((b, a), out var inverse) && inverse.FirstOrDefault(r => r.Notes == notes) is { Rate: not 0m } i)
+                    return 1m / i.Rate;
+                return null;
+            }
+
+            var rate = Direct(key.From, key.To);
+            if (rate.HasValue)
+                return rate;
+            var fromChf = Direct(key.From, "CHF");
+            var toChf = Direct(key.To, "CHF");
+            if (fromChf.HasValue && toChf is { } t && t != 0m)
+                return fromChf.Value / t;
+            // Rueckfall nur, wenn es fuer dieses Jahr gar keinen Budgetkurs gibt: Kurs zum 31.12.
+            // Gibt es Budgetkurse, fehlt aber diese Waehrung, bleibt der Wert leer (sichtbar).
+            var anyBudget = snapshot.Rates.Values.Any(list => list.Any(r => r.Notes == notes));
+            return anyBudget ? null : ResolveFromSnapshot(snapshot, key.From, key.To, new DateTime(key.Year, 12, 31));
+        });
+    }
+
     public string NormalizeCurrencyCode(string? currencyCode)
     {
         var normalized = currencyCode?.Trim() ?? string.Empty;
@@ -178,6 +222,7 @@ public class CurrencyExchangeRateService : ICurrencyExchangeRateService
     {
         public DateTime LoadedAtUtc { get; } = loadedAtUtc;
         public long Version { get; } = version;
+        public ConcurrentDictionary<(string From, string To, int Year), decimal?> Budget { get; } = new();
         public Dictionary<(string From, string To), CurrencyExchangeRate[]> Rates { get; } = rates;
         public ConcurrentDictionary<(string From, string To, DateTime Date), decimal?> Resolved { get; } = new();
     }

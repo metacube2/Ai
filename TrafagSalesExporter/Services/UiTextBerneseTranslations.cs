@@ -10,6 +10,10 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Budgetkurs je Finance-Jahr (Standard)"] = "Budgetkurs pro Finance-Jahr (Standard)",
+            ["Budget rate per finance year (default)"] = "Budget rate per finance year (default)",
+            ["Aktueller Tageskurs"] = "Aktuelle Tageskurs",
+            ["Current daily rate"] = "Current daily rate",
             ["Avg. unit price by year (quantity-weighted)"] = "Avg. unit price by year (quantity-weighted)",
             ["Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer."] = "Hotlist Min(Netwr CHF/unit) by article/year, trend quantity-weighted average, supplier slicer.",
             ["Min per article, avg per year"] = "Min per article, avg per year",
