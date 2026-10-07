@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## SAP: ZM_OFFENE_FAUF mit Bedarfsverursacher, 2026-10-07 (T76)
+
+- Neun einblendbare Felder (Dispoelement, Nummer, Position, Einteilung, Daten zum Dispoelement, Dispobereich, Termin,
+  Menge, Anzahl) über MD_PEGGING_NODIALOG; Transport T76K912714, in T76 getestet, P76 offen.
+
 ## Doku: eine Stufe und Lieferantenerkennung, 2026-10-07
 
 - `FINANCE_FORMELN.md`: Vorrang, Regex intern/extern, Zuordnung TR AG/IT/IN, gemessene Lücken (TR IT mit Indien-Ware, TR DE ohne Lieferant).

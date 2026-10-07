@@ -961,6 +961,7 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiActivateBadi.vbs <Impl>` | Gegenstueck dazu, Implementierung aktivieren. Nimmt den Namen als Argument. Das aeltere `SapGuiActivateBadiImpl.vbs` hat den Namen `Z_ZZPRDAT_AT_RELEASE` fest eingebaut und steigt bei jedem anderen **still mit Code 5** aus |
 | `SapGuiWorklistWaehlen.vbs <TX> <LOCAL\|TRANSPORT> [Namen...]` | Dialog „Inaktive Objekte", Reiter waehlen, genau die genannten Objekte markieren und alles andere demarkieren. Ohne Namen wird nur aufgelistet. Ersetzt `SapGuiWorklistSelect.vbs` und `SapGuiWorklistTransport.vbs`, deren Namensfilter fest verdrahtet sind |
 | `SapGuiBadiMethodeHier.vbs <Methode> <Datei>` | wie oben, aber **ohne Navigation** auf dem gerade offenen SE19-Bild. Noetig, solange die Implementierung noch nicht gesichert ist |
+| `SapGuiSetReportSourceAuftrag.vbs <Sitzung> <Prog> <Datei> <Auftrag>` | wie oben, beantwortet aber die Transportabfrage (beim Aendern und beim Sichern) mit dem genannten Auftrag; danach steht der Dialog „Inaktive Objekte" offen -> `SapGuiInaktiveMarkieren.vbs`. Seit 2026-10-07 (ZM_OFFENE_FAUF) |
 | `SapGuiSetReportSource.vbs <Prog> <Datei>` | Quelltext eines **bestehenden** Reports ersetzen, sichern und aktivieren. Legt keinen Report an |
 | `SapGuiPaketZuordnen.vbs <TX> <Paket> [Fenster]` | Dialog „Objektkatalogeintrag anlegen" beantworten. Die anschliessende Auftragsfrage bleibt bewusst offen |
 | `SapGuiWorklistSelect.vbs <TX> waehle\|liste` | Dialog „Inaktive Objekte", Reiter **Lokale Objekte** ($TMP) |
@@ -1596,3 +1597,11 @@ erweitert.
 
 Kosten: Der Zugriff ist nicht typgeprueft. Deshalb sollten die Werte sofort in getypte
 Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.
+
+### Nachtrag 2026-10-07 (ZM_OFFENE_FAUF)
+
+* `SapGuiStrukturFelder.vbs` schreibt ab Zeile 0 und **ueberschreibt** bestehende Felder. Fuer Erweiterungen das neue dritte Argument `ErsteZeile` setzen (Anzahl vorhandener Felder, vorher per `DD03L` zaehlen und die Zeile am Bildschirm pruefen).
+* Nach `SapGuiReportAnlegenLokal.vbs` steht der Dialog „Objektkatalogeintrag anlegen" offen; **sofort** `SapGuiLokalesObjekt.vbs` aufrufen. Ein dazwischen gesendetes `/nSE38` bricht die Anlage ab.
+* Lokale Objekte (`$TMP`) aktiviert `SapGuiInaktiveLokalAktivieren.vbs`, nicht `SapGuiInaktiveMarkieren.vbs` (der sucht auf dem Reiter „Transportierbare Objekte").
+* Selektionstexte: SE38, Radio `RS38M-FUNC_TEXT`, F6, Reiter `tabpSSSS`, Tabelle `tblSAPLSETXPSELPAR`, Spalten `RS38M-STEXTI[0,r]` (Name) und `RS38M-STEXTT[1,r]` (Text); sichern fragt nach dem Auftrag, danach aktivieren.
+* `RunSapProbe.ps1` aus Bash: `powershell -NoProfile -ExecutionPolicy Bypass -File ...`, sonst blockt die Ausfuehrungsrichtlinie; aus dem PowerShell-Werkzeug bricht `table-read` mit NativeCommandError ab.

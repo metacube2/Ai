@@ -177,6 +177,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
 | `docs/WELTLAGE_2026-10-05.md` | Reiter Weltlage: Auftrag, Quellen und Firewall, Verknüpfung je Abteilung, Rechenregeln, Seiten, Grenzen |
+| `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` | Report ZM_OFFENE_FAUF: Bedarfsverursacher-Felder, Transport T76K912714, Test, Offenes |
+| `docs/abap/ZM_OFFENE_FAUF.abap`, `docs/abap/ZM_OFFENE_FAUF_vorher_2026-10-07.abap` | Quelltext neu und vorher (Rueckbau) |
 | `docs/handbuch/README.md` | Benutzerhandbuch: Ablage, Word-Generator, Neuerzeugung, bei der Erarbeitung aufgefallene Widersprueche |
 | `docs/handbuch/VORGABE.md` | Schreibvorgabe fuer Handbuchkapitel (Aufbau je Seite, Format fuer den Word-Generator) |
 | `docs/NETZWERK_2026-10-02.md` | Reiter Netzwerk mit zwoelf Unterreitern (inkl. AD, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht): Entscheide, Schutzregeln, Messungen, Befunde |

@@ -3,7 +3,7 @@ Option Explicit
 ' Die Tabelle zeigt nur wenige Zeilen; deshalb wird nach jedem Block
 ' gescrollt statt blind auf Zeilenindizes zu setzen.
 '
-' Aufruf: SapGuiStrukturFelder.vbs <SitzungsIndex> <Datei>
+' Aufruf: SapGuiStrukturFelder.vbs <SitzungsIndex> <Datei> [ErsteZeile]
 ' Datei: je Zeile "FELDNAME;KOMPONENTENTYP"
 
 Dim a, app, c, s, sesIdx, fso, datei, txt, zeilen, i, r
@@ -35,6 +35,8 @@ geschrieben = 0
 r = 0
 Dim zielZeile
 zielZeile = CLng(0)
+' Optionales drittes Argument: erste Zielzeile (Felder ANHAENGEN statt ab Zeile 0 ueberschreiben, 2026-10-07).
+If WScript.Arguments.Count > 2 Then zielZeile = CLng(WScript.Arguments(2))
 For i = 0 To UBound(zeilen)
   If Trim(zeilen(i)) <> "" And Left(Trim(zeilen(i)), 1) <> "#" Then
     paar = Split(Trim(zeilen(i)), ";")
