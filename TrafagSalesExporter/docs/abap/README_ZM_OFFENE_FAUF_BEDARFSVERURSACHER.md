@@ -6,6 +6,11 @@ Nummer, Daten zum Dispoelement) als zusaetzliche Felder im Report `ZM_OFFENE_FAU
 seit 2026-10-08 auf Wunsch Ingo standardmaessig eingeblendet und ueber das Layout ausblendbar
 (`NO_OUT` entfernt, gleicher Auftrag `T76K912714`, in T76 aktiv). Ein gespeichertes Standardlayout
 des Benutzers geht weiterhin vor.
+**Befund 2026-10-08 (T76, LTDXD):** Fuer den Report ist das globale Layout `/ P00 TX` als Standard hinterlegt
+(Ersteller TDA), daneben rund 40 weitere globale Layouts (`/ P00 …`, `/ D00 …`). Ein gespeichertes Layout legt
+die Spalten fest, neue Felder erscheinen darin nicht automatisch. In ZC22 sieht man die Bedarfsverursacher
+deshalb erst, wenn man sie im Layout einblendet (Spaltentexte „Dispositionselement“, „Nummer Dispoelement“ …)
+und das Layout sichert. Globale Layouts nur mit Absprache der Produktion aendern.
 
 ## Stand
 
