@@ -2,6 +2,13 @@
 
 Stand: 2026-10-01
 
+## Einkauf: offener Mengenkontraktwert und LZ-/Sortiments-Code, 2026-10-08 (noch nicht deployed)
+
+- Gespräch Armin: offener Kontraktwert wie ME3L (Zielmenge minus EKAB-Abrufe × Nettopreis, inkl. abgelaufen) auf Kontrakte-Seite und
+  Dashboard-Kachel; bisherige 5.2 Mio heissen jetzt „Abrufbestellungen zu Kontrakten“.
+- Spend-Aufriss: Ebenen Lebenszyklus-Code und Sortiments-Code (bis Material) mit Grafik.
+- SAP T76: EinkKontraktSet, EinkMatLzSet (Strukturen T76K912724, Klassen T76K912718). Bis zum P76-Import zeigt das Cockpit „noch nicht verfügbar“.
+
 ## Operations (Shopfloor): Cockpit-Design, Grafiken und Login, 2026-10-08, produktiv 09:23
 
 - Reiter für alle sichtbar, Zugang mit eigenem Login (Benutzer `operations`, analog Finance/HR); Ingo ohne Login.

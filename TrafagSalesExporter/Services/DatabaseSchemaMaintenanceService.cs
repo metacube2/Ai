@@ -393,6 +393,8 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             DatabaseSchemaSql.GetPurchasingEkkoCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingEkpoCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingEketCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingContractCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingMaterialLzCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingSyncStateCreateSql(),
             DatabaseSchemaSql.GetPurchasingStockValueCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingStockValueHistoryCreateSql()
@@ -409,6 +411,7 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             "CREATE INDEX IF NOT EXISTS IX_PurchasingEkkoCache_Lifnr ON PurchasingEkkoCache (Lifnr);",
             "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Ebeln ON PurchasingEkpoCache (Ebeln);",
             "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Matkl ON PurchasingEkpoCache (Matkl);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingContractCache_Lifnr ON PurchasingContractCache (Lifnr);",
             "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_Eindt ON PurchasingEketCache (Eindt);",
             "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_EbelnEbelp ON PurchasingEketCache (Ebeln, Ebelp);"
         })

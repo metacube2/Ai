@@ -1,5 +1,67 @@
 # Einkaufsdashboard 2026-06-05
 
+## Nachtrag 2026-10-08: Offener Mengenkontraktwert (wie ME3L) und LZ-/Sortiments-Dimensionen, lokal — nicht deployed
+
+Anlass: Besprechung mit Armin (Einkaufsleitung) am 2026-10-08. Die Kachel „Offener Wert der
+Kontraktabrufe“ (rund 5,2 Mio CHF) ist der offene Wert von **Bestellungen, die auf einen
+Kontrakt verweisen** (`EKKO.KONNR`), nicht der offene Wert der **Kontrakte selbst**. Armin will
+die Sicht von SAP ME3L (offene Mengenkontrakte, erwartete Groessenordnung 16 bis 17 Mio CHF).
+
+**Zwei verschiedene Kennzahlen, bewusst getrennt benannt:**
+
+| Kennzahl | Bedeutung | Quelle |
+| --- | --- | --- |
+| **Offener Mengenkontraktwert (wie ME3L)**, Kachel „Offener Kontraktwert“ | je Kontraktposition `max(EKPO.KTMNG - Summe EKAB.MENGE, 0) x EKPO.NETPR / EKPO.PEINH` (Peinh 0 oder leer = 1), in CHF; **abgelaufene Kontrakte (`EKKO.KDATE` vor heute) zaehlen mit** und werden getrennt ausgewiesen; nur Belegart `MK`, Buchungskreis `1100`, ohne Loeschkennzeichen; Stand heute, unabhaengig vom Zeitraumfilter | SAP-Set `EinkKontraktSet` -> Cache `PurchasingContractCache` |
+| **Abrufbestellungen zu Kontrakten** (frueher „Offener Wert der Kontraktabrufe“) | offener Bestellwert (EKET-Offenmenge x Stueckwert) nur fuer Bestellungen mit gesetztem `EKKO.KONNR` | EKKO/EKPO/EKET-Cache wie bisher |
+
+- **Umrechnung nach CHF** wie im uebrigen Einkaufsdashboard (`ChfValueSql`): CHF oder leere
+  Waehrung unveraendert, positiver `WKURS` multipliziert, negativer teilt durch den Absolutwert,
+  Kurs 0 bei Fremdwaehrung bleibt 1:1 und wird als „nicht belastbar“ gezaehlt. Rechenregel als
+  reine Funktion in `Services/PurchasingContractCalculator.cs`. Es wird **kein Budgetkursprofil**
+  verwendet: das Einkaufsdashboard rechnet durchgaengig mit `EKKO.WKURS`, ein Budgetkurs-Zugriff
+  waere ein Bruch dieser Regel. Der Kurs steht in der Hauswaehrung des Buchungskreises; deshalb
+  zaehlt die Kennzahl nur Buchungskreis `1100`, andere werden gezaehlt und ausgewiesen.
+- **Wo sie erscheint:** Kachel „Offener Kontraktwert“ (Untertitel „Mengenkontrakte, inkl.
+  abgelaufen“) auf `/einkauf` direkt nach dem offenen Bestellwert; auf `/einkauf/kontrakte` der
+  neue Block „Offener Mengenkontraktwert (wie ME3L)“ mit Kacheln (Gesamt, davon abgelaufen mit
+  Anteil, Kontrakte/Positionen, abgelaufene Kontrakte), Balken je Lieferant und Tabelle der
+  groessten 25 offenen Positionen. Der bisherige Abschnitt heisst jetzt „Abrufbestellungen zu
+  Kontrakten“.
+- **Ladeverhalten und 404-Verhalten:** Full Load und Delta lesen `EinkKontraktSet` und
+  `EinkMatLzSet` vollstaendig neu (`PurchasingContractLoader`, `RefreshContractsAndLzSafeAsync`),
+  nach dem Commit der Belegdaten, in je eigener Transaktion, mit Zeitgrenze 10 Minuten. Beide Sets
+  liegen bis zum Transport in SAP T76; in P76 antworten sie mit 404. Das wirft **nicht**: Warnung im
+  Ereignislog, der bisherige Cache bleibt unveraendert, der Einkauf-Lauf wird normal abgeschlossen
+  (Lehre aus dem 404 auf `MARA001Set` am 2026-07-02). Ein Cache wird nur nach erfolgreichem Lesen
+  mit mindestens einer Zeile ersetzt. Solange `PurchasingContractCache` leer ist, zeigt die Kachel
+  „–“ mit Hinweis und der Block „Kontraktdaten noch nicht verfuegbar“, nie eine 0.
+- **Tabellen:** `PurchasingContractCache` (Ebeln+Ebelp, alle Zahlen als TEXT, Datum ISO, plus
+  `SupplierName` aus LFA1 zum Ladezeitpunkt) und `PurchasingMaterialLzCache` (Matnr normalisiert,
+  Lzcode, Lzsort). Anlage fuer bestehende Datenbanken in `EnsurePurchasingCacheTables`.
+- **SAP-Zahlenformat:** negative Werte kommen teils mit nachgestelltem Minus („1.075-“); SQLite
+  wuerde das beim `CAST` als positiv lesen. Deshalb wird beim Laden auf fuehrendes Minus
+  normalisiert. Datum `00000000` und leer bedeuten „kein Laufzeitende“ und gelten nie als abgelaufen.
+
+**Spend-Aufriss `/einkauf/aufriss`:** zwei neue Einstiege „Lebenszyklus-Code“ (`MARA-ZZLZCOD`) und
+„Sortiments-Code“ (`MARA-ZZLZCODSORT`), je Code > Lieferant > Material. Quelle ist ausschliesslich
+`EinkMatLzSet` (nur Materialien mit mindestens einem Code); Materialien ohne Code und Positionen
+ohne Materialnummer stehen unter „ohne Code“. Der Join ist 1:1 ueber die normalisierte
+Materialnummer, die Gesamtsumme bleibt je Einstieg gleich. Dazu zwei kleine Balkendiagramme
+(Volumen nach Lebenszyklus-/Sortiments-Code) unter dem Aufriss. Ohne LZ-Cache bleibt die Abfrage
+lauffaehig und zeigt nur „ohne Code“; die Diagramme sagen, dass der Cache noch leer ist.
+
+**Offen:** SAP-Transport nach P76 (`EinkKontraktSet`, `EinkMatLzSet`), danach ein Einkauf-Lauf und
+Abgleich gegen ME3L (erwartet rund 15,5 Mio EUR + 2,7 Mio andere Waehrung). Ob nur `MK` oder auch
+eigene Kontraktarten zaehlen sollen, ist mit Armin zu bestaetigen; ausgeschlossene Positionen
+werden unter dem Block gezaehlt. Spaltenbezeichnungen der Sets sind aus der Beschreibung
+uebernommen und beim ersten Lauf gegen `$metadata` zu pruefen. Abnahme im Browser und Deploy stehen aus.
+
+**Ueberholt durch diesen Nachtrag:** die Aussage weiter unten, echte Mengenkontrakte brauchten
+noch Kontraktbelege aus SAP und `Kdate` fehle im Modell (Stand Phase 1.5 / Mapping-Review), sowie
+die Bezeichnung „Offener Wert der Kontraktabrufe“ (jetzt „Abrufbestellungen zu Kontrakten“); die
+Tabellenzeile „Kontrakt-Restwert“ im Formelabschnitt meint die Abrufbestellungen, nicht den
+Mengenkontraktwert.
+
 ## Nachtrag 2026-09-29: Konsistenzreparaturen, lokal — nicht deployed
 
 - Jahres-Spend-Detailkennzahl aggregiert alle Lieferanten statt nur die Top-10-Grafik.

@@ -121,7 +121,9 @@ nicht reichen („Navitrack ist ein uraltes Produkt").
 - **Sortiments- und Lebenszyklusgueter** — in Arbeit ueber ZLO03, keine neue Anforderung.
   Haengt an der abgeschlossenen Plausibilisierung.
 - **Lieferanten-Factsheet und -Vergleich** („wie Galaxus") — aufgenommen, nicht terminiert.
-- **Echte Mengenkontrakte** im Register Kontrakte — aufgenommen, nicht terminiert.
+- **Echte Mengenkontrakte** im Register Kontrakte — **seit 2026-10-08 lokal umgesetzt, nicht deployed**
+  (Wunsch Armin, „wie ME3L“, inkl. abgelaufener Kontrakte; wartet auf den SAP-Transport von
+  `EinkKontraktSet`/`EinkMatLzSet`). Siehe `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-10-08.
 - **Termintreue-Kachel** — Prioritaet durch Marco bestaetigt, Umsetzung offen.
 
 ## 6. Argumentarium

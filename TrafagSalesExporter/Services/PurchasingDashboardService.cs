@@ -266,6 +266,8 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         // am Cache-Zustand der Belegdaten. Stuende er weiter unten, waere er im
         // Cache-Pfad (der frueh zurueckkehrt) immer leer.
         await ApplyStockValueAsync(state, cancellationToken);
+        // Ebenfalls unabhaengig von Zeitfilter und EKKO/EKPO/EKET-Zustand, siehe Methode.
+        await ApplyQuantityContractsAsync(state, cancellationToken);
 
         try
         {
@@ -283,6 +285,94 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         }
 
         return state;
+    }
+
+    /// <summary>Anzahl Zeilen der Kontrakt-Rangliste (Positionen mit dem hoechsten offenen CHF-Wert).</summary>
+    private const int ContractTopRowCount = 25;
+    private const int ContractSupplierRowCount = 8;
+
+    /// <summary>
+    /// Offener Mengenkontraktwert (wie ME3L) aus dem Cache <c>PurchasingContractCache</c>.
+    ///
+    /// Eigene Abfrage mit eigenem try/catch, unabhaengig vom Zeitfilter und vom Zustand der
+    /// EKKO/EKPO/EKET-Caches. Fehlt die Tabelle (aeltere Datenbank) oder ist sie leer (das SAP-Set
+    /// <c>EinkKontraktSet</c> ist noch nicht in P76), bleibt <c>ContractDataAvailable</c> false;
+    /// die Oberflaeche zeigt dann "Kontraktdaten noch nicht verfuegbar" statt einer falschen 0.
+    /// Die Rechenregel steht in <see cref="PurchasingContractCalculator"/>.
+    /// </summary>
+    private async Task ApplyQuantityContractsAsync(PurchasingDashboardLiveState state, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var conn = (SqliteConnection)db.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open)
+                await conn.OpenAsync(cancellationToken);
+            if (!await TableExistsAsync(conn, "PurchasingContractCache", cancellationToken))
+                return;
+
+            var items = new List<PurchasingContractItem>();
+            DateTime? loadedAt = null;
+            await using (var command = conn.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT Ebeln, Ebelp, Bukrs, Bsart, Lifnr, SupplierName, Matnr, Txz01, Meins, Waers, Wkurs, Kdate, Loekz, Ktmng, Netpr, Peinh, Abmng, LastLoadedAtUtc
+FROM PurchasingContractCache;";
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    string Text(int index) => reader.IsDBNull(index) ? string.Empty : Convert.ToString(reader.GetValue(index), CultureInfo.InvariantCulture) ?? string.Empty;
+                    items.Add(new PurchasingContractItem(
+                        Text(0), Text(1), Text(2), Text(3), Text(4), Text(5), Text(6), Text(7), Text(8), Text(9),
+                        PurchasingContractCalculator.ParseSapDecimal(Text(10)),
+                        PurchasingContractCalculator.ParseSapDate(Text(11)),
+                        Text(12),
+                        PurchasingContractCalculator.ParseSapDecimal(Text(13)),
+                        PurchasingContractCalculator.ParseSapDecimal(Text(14)),
+                        PurchasingContractCalculator.ParseSapDecimal(Text(15)),
+                        PurchasingContractCalculator.ParseSapDecimal(Text(16))));
+                    if (DateTime.TryParse(Text(17), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var stamp) &&
+                        (loadedAt is null || stamp > loadedAt))
+                        loadedAt = stamp;
+                }
+            }
+
+            if (items.Count == 0)
+                return;
+
+            var evaluation = PurchasingContractCalculator.Evaluate(items, DateTime.Today);
+            var openRows = evaluation.Rows.Where(row => row.OpenValueChf > 0m).ToList();
+            state.ContractDataAvailable = true;
+            state.ContractDataLoadedAtUtc = loadedAt;
+            state.QuantityContractOpenValueChf = evaluation.Summary.TotalChf;
+            state.QuantityContractExpiredValueChf = evaluation.Summary.ExpiredChf;
+            state.QuantityContractCount = evaluation.Summary.ContractCount;
+            state.QuantityContractExpiredCount = evaluation.Summary.ExpiredContractCount;
+            state.QuantityContractItemCount = evaluation.Summary.ItemCount;
+            state.QuantityContractMissingRateItemCount = evaluation.Summary.MissingRateItemCount;
+            state.QuantityContractOtherDocTypeItemCount = evaluation.OtherDocTypeItemCount;
+            state.QuantityContractOtherCompanyItemCount = evaluation.OtherCompanyItemCount;
+            state.QuantityContractTopRows = openRows
+                .OrderByDescending(row => row.OpenValueChf)
+                .Take(ContractTopRowCount)
+                .ToList();
+            state.QuantityContractSupplierRows = openRows
+                .GroupBy(row => row.Supplier, StringComparer.OrdinalIgnoreCase)
+                .Select(group => new PurchasingLiveChartPoint(group.Key, group.Sum(row => row.OpenValueChf)))
+                .OrderByDescending(point => point.Value)
+                .Take(ContractSupplierRowCount)
+                .ToList();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            // Ein Fehler bei den Kontraktdaten darf das Dashboard nicht blank machen; die Kennzahl
+            // bleibt dann "nicht verfuegbar".
+            state.ContractDataAvailable = false;
+        }
     }
 
     private static async Task<bool> TryLoadCacheStateAsync(AppDbContext db, PurchasingDashboardLiveState state, PurchasingDashboardFilter filter, CancellationToken cancellationToken)
@@ -517,6 +607,27 @@ WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 12;", cancellationToken);
+        // Volumen je Lebenszyklus-Code und Sortiments-Code (MARA-ZZLZCOD / ZZLZCODSORT). Ohne
+        // LZ-Cache (aeltere Datenbank) bleibt es bei einer einzigen Zeile "ohne Code".
+        var lzCacheAvailable = await TableExistsAsync(conn, "PurchasingMaterialLzCache", cancellationToken);
+        foreach (var sortiment in new[] { false, true })
+        {
+            var dimension = BuildLzDimension(sortiment, lzCacheAvailable);
+            var rows = await ExecuteChartRowsAsync(conn, @"
+SELECT " + dimension.Sql + @" AS Label, SUM(" + ChfNetValue + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+" + dimension.JoinSql + @"
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
+ORDER BY Value DESC
+LIMIT 12;", cancellationToken);
+            if (sortiment)
+                state.LzSortSpendRows = rows;
+            else
+                state.LzCodeSpendRows = rows;
+        }
+
         state.AbcXyzActionRows = await ExecuteAbcXyzActionRowsAsync(
             conn,
             joinedEkkoPeriod,
@@ -1237,7 +1348,10 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         string LabelDe,
         string LabelEn,
         string Sql,
-        bool ResolveMaterialGroupText = false);
+        bool ResolveMaterialGroupText = false,
+        // Zusaetzlicher JOIN, den der Ausdruck braucht (z.B. LZ-Code-Cache als Alias lz). Wird je
+        // Query nur einmal eingesetzt, auch wenn mehrere Ebenen ihn verlangen.
+        string JoinSql = "");
 
     /// <summary>
     /// Eine Perspektive = Einstiegsdimension plus die Reihenfolge, in der weiter aufgerissen wird.
@@ -1301,6 +1415,42 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
             [NoCap, NoCap, NoCap, NoCap])
     ];
 
+    internal const string NoLzCodeLabel = "ohne Code";
+
+    /// <summary>
+    /// Aufriss-Dimension "Lebenszyklus-Code" (MARA-ZZLZCOD) bzw. "Sortiments-Code" (MARA-ZZLZCODSORT).
+    /// Der Code kommt aus <c>PurchasingMaterialLzCache</c> (SAP-Set EinkMatLzSet); der Cache enthaelt
+    /// nur Materialien mit gesetztem Code, alle anderen (und Positionen ohne Materialnummer) landen in
+    /// "ohne Code". Der Join laeuft ueber die normalisierte Materialnummer und ist 1:1 (PK Matnr), kann
+    /// die Spend-Summe also nicht vervielfachen. Fehlt die Tabelle (aeltere Datenbank), bleibt nur
+    /// "ohne Code" uebrig, statt dass die Abfrage scheitert.
+    /// </summary>
+    private static SpendDimension BuildLzDimension(bool sortiment, bool tableAvailable)
+    {
+        var column = sortiment ? "Lzsort" : "Lzcode";
+        return new SpendDimension(
+            sortiment ? "lzsort" : "lzcode",
+            sortiment ? "Sortiments-Code" : "Lebenszyklus-Code",
+            sortiment ? "Assortment code" : "Lifecycle code",
+            tableAvailable ? $"COALESCE(NULLIF(trim(lz.{column}), ''), '{NoLzCodeLabel}')" : $"'{NoLzCodeLabel}'",
+            JoinSql: tableAvailable ? $"LEFT JOIN PurchasingMaterialLzCache lz ON lz.Matnr = {NormalizeMaterialKeySql("p.Matnr")}" : string.Empty);
+    }
+
+    private static IReadOnlyList<SpendPerspective> BuildLzPerspectives(bool tableAvailable)
+    {
+        var lzCode = BuildLzDimension(false, tableAvailable);
+        var lzSort = BuildLzDimension(true, tableAvailable);
+        return
+        [
+            new(lzCode.Key, lzCode.LabelDe, lzCode.LabelEn,
+                [lzCode, SupplierDimension, ArticleDimension],
+                [NoCap, NoCap, NoCap]),
+            new(lzSort.Key, lzSort.LabelDe, lzSort.LabelEn,
+                [lzSort, SupplierDimension, ArticleDimension],
+                [NoCap, NoCap, NoCap])
+        ];
+    }
+
     /// <summary>
     /// Eine Zeile des Aufriss-Groupings. <see cref="Keys"/> traegt die Labels der Ebenen in der
     /// Reihenfolge der gewaehlten Perspektive - dadurch ist der Baumaufbau von der konkreten
@@ -1320,7 +1470,8 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         CancellationToken cancellationToken)
     {
         var results = new List<PurchasingSpendPerspectiveResult>();
-        foreach (var perspective in SpendPerspectives)
+        var lzAvailable = await TableExistsAsync(conn, "PurchasingMaterialLzCache", cancellationToken);
+        foreach (var perspective in SpendPerspectives.Concat(BuildLzPerspectives(lzAvailable)))
         {
             var rows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, perspective, cancellationToken);
             results.Add(new PurchasingSpendPerspectiveResult(
@@ -1733,6 +1884,7 @@ SELECT " + selectList + @",
        SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+" + string.Join("\n", perspective.Levels.Select(level => level.JoinSql).Where(join => join.Length > 0).Distinct()) + @"
 WHERE " + spendItemFilter + @"
   AND k.Bedat >= '" + from + @"'
   AND k.Bedat <= '" + to + @"'

@@ -184,6 +184,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/NETZWERK_2026-10-02.md` | Reiter Netzwerk mit zwoelf Unterreitern (inkl. AD, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht): Entscheide, Schutzregeln, Messungen, Befunde |
 | `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` | Verwendung & Risiko: Messung der Datenlage, Regeln, Ausbau mit voller Stueckliste |
 | `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, 3D-Lagerplatzansicht, offene Schritte |
+| `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
 | `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
 | `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, offene Schritte |
 | `docs/UI_BERNDEUTSCH_GLOSSAR.md` | Stil und Glossar fuer den Berndeutsch-Katalog |

@@ -51,6 +51,30 @@ public sealed class PurchasingDashboardLiveState
     public decimal OpenQuantitySample { get; set; }
     public decimal OpenValueSample { get; set; }
     public decimal ContractValueSample { get; set; }
+    // Offener Mengenkontraktwert (wie SAP ME3L): je Kontraktposition (EKKO.BSTYP K, Belegart MK)
+    // Zielmenge minus abgerufene Menge mal Preis, CHF-bewertet, INKLUSIVE abgelaufener Kontrakte
+    // (getrennt ausgewiesen). Nicht zu verwechseln mit ContractValueSample (offener Wert von
+    // ABRUFBESTELLUNGEN zu Kontrakten, EKKO.Konnr). Quelle ist der Cache PurchasingContractCache aus
+    // dem SAP-Set EinkKontraktSet; solange der leer ist (Transport noch nicht in P76),
+    // bleibt ContractDataAvailable false und die Oberflaeche sagt das offen statt 0 zu zeigen.
+    public bool ContractDataAvailable { get; set; }
+    public DateTime? ContractDataLoadedAtUtc { get; set; }
+    public decimal QuantityContractOpenValueChf { get; set; }
+    public decimal QuantityContractExpiredValueChf { get; set; }
+    public int QuantityContractCount { get; set; }
+    public int QuantityContractExpiredCount { get; set; }
+    public int QuantityContractItemCount { get; set; }
+    // Positionen in Fremdwaehrung ohne Kurs (EKKO.WKURS = 0): CHF-Wert dort nur 1:1, nicht belastbar.
+    public int QuantityContractMissingRateItemCount { get; set; }
+    // Nicht eingerechnete Kontraktpositionen (andere Belegart als MK bzw. anderer Buchungskreis als 1100).
+    public int QuantityContractOtherDocTypeItemCount { get; set; }
+    public int QuantityContractOtherCompanyItemCount { get; set; }
+    public List<PurchasingContractRow> QuantityContractTopRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> QuantityContractSupplierRows { get; set; } = [];
+    // Volumen (CHF) je Lebenszyklus-Code (MARA-ZZLZCOD) und Sortiments-Code (MARA-ZZLZCODSORT),
+    // Materialien ohne Code als "ohne Code". Quelle EinkMatLzSet -> PurchasingMaterialLzCache.
+    public List<PurchasingLiveChartPoint> LzCodeSpendRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> LzSortSpendRows { get; set; } = [];
     // Ueberfaellige offene Positionen (EKET.Eindt < heute, offene Menge > 0). Eigene KPI fuer die
     // Offene-Bestellungen-Sicht, damit Rueckstand getrennt vom disponierten Zulauf sichtbar ist.
     public decimal OverdueValueSample { get; set; }

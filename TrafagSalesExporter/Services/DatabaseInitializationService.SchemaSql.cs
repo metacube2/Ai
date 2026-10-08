@@ -385,6 +385,53 @@ CREATE TABLE PurchasingEkpoCache (
     PRIMARY KEY (Ebeln, Ebelp)
 );";
 
+    /// <summary>
+    /// Mengenkontrakt-Positionen (EKKO.BSTYP = K) aus <c>EinkKontraktSet</c>. Eine Zeile je
+    /// Ebeln + Ebelp. Alle Zahlen als TEXT wie in den uebrigen Einkaufs-Caches; Datumsfelder
+    /// sind ISO (yyyy-MM-dd) oder leer. Wird bei jedem Lauf vollstaendig ersetzt, nicht
+    /// fortgeschrieben. Grundlage der Kennzahl "Offener Mengenkontraktwert (wie ME3L)".
+    /// </summary>
+    internal static string GetPurchasingContractCacheCreateSql() => @"
+CREATE TABLE PurchasingContractCache (
+    Ebeln TEXT NOT NULL,
+    Ebelp TEXT NOT NULL,
+    Bukrs TEXT NOT NULL DEFAULT '',
+    Bsart TEXT NOT NULL DEFAULT '',
+    Lifnr TEXT NOT NULL DEFAULT '',
+    SupplierName TEXT NOT NULL DEFAULT '',
+    Matnr TEXT NOT NULL DEFAULT '',
+    Txz01 TEXT NOT NULL DEFAULT '',
+    Matkl TEXT NOT NULL DEFAULT '',
+    Waers TEXT NOT NULL DEFAULT '',
+    Wkurs TEXT NOT NULL DEFAULT '0',
+    Kdatb TEXT NULL,
+    Kdate TEXT NULL,
+    Loekz TEXT NOT NULL DEFAULT '',
+    Meins TEXT NOT NULL DEFAULT '',
+    Ktmng TEXT NOT NULL DEFAULT '0',
+    Netpr TEXT NOT NULL DEFAULT '0',
+    Peinh TEXT NOT NULL DEFAULT '1',
+    Zwert TEXT NOT NULL DEFAULT '0',
+    Abmng TEXT NOT NULL DEFAULT '0',
+    Abwrt TEXT NOT NULL DEFAULT '0',
+    LastLoadedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (Ebeln, Ebelp)
+);";
+
+    /// <summary>
+    /// Lebenszyklus-Code (MARA-ZZLZCOD) und Sortiments-Code (MARA-ZZLZCODSORT) je Material aus
+    /// <c>EinkMatLzSet</c>. Nur Materialien mit mindestens einem gesetzten Code. <c>Matnr</c> ist
+    /// NORMALISIERT (Grossbuchstaben, ohne fuehrende Nullen), damit der Join auf EKPO.MATNR
+    /// unabhaengig von der Schreibweise greift. Wird bei jedem Lauf vollstaendig ersetzt.
+    /// </summary>
+    internal static string GetPurchasingMaterialLzCacheCreateSql() => @"
+CREATE TABLE PurchasingMaterialLzCache (
+    Matnr TEXT NOT NULL PRIMARY KEY,
+    Lzcode TEXT NOT NULL DEFAULT '',
+    Lzsort TEXT NOT NULL DEFAULT '',
+    LastLoadedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetPurchasingEketCacheCreateSql() => @"
 CREATE TABLE PurchasingEketCache (
     Ebeln TEXT NOT NULL,

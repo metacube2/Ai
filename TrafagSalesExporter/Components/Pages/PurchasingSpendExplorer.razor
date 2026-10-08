@@ -42,6 +42,16 @@
         </MudText>
     }
 
+    @if (ActivePerspectiveKey == "lzcode" || ActivePerspectiveKey == "lzsort")
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+            <strong>@T("Lebenszyklus-Code", "Lifecycle code")</strong> (MARA-ZZLZCOD) /
+            <strong>@T("Sortiments-Code", "Assortment code")</strong> (MARA-ZZLZCODSORT):
+            @T("Der Code wird je Material aus dem Materialstamm gelesen (SAP-Set EinkMatLzSet). Materialien ohne Code und Positionen ohne Materialnummer stehen unter ohne Code. Die Gesamtsumme bleibt gleich wie bei den anderen Einstiegen.",
+               "The code is read per material from the material master (SAP set EinkMatLzSet). Materials without a code and items without a material number appear under ohne Code. The total stays the same as for the other entry points.")
+        </MudAlert>
+    }
+
     @if (ActivePerspectiveKey == "productgroup")
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
@@ -249,6 +259,77 @@
     </MudItem>
 </MudGrid>
 
+<MudGrid Spacing="2" Class="mt-1">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
+            <div class="purchasing-section-panel-head">
+                <MudText Typo="Typo.subtitle1">@T("Volumen nach Lebenszyklus-Code", "Volume by lifecycle code")</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
+            </div>
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
+                @T("Lebenszyklus-Code aus dem Materialstamm (MARA-ZZLZCOD). Materialien ohne Code stehen unter ohne Code.",
+                   "Lifecycle code from the material master (MARA-ZZLZCOD). Materials without a code appear under ohne Code.")
+            </MudText>
+            @if (BarsEmptyOrUnknown(LzCodeRows, "ohne Code"))
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    @T("LZ-Codes im Cache noch leer. Sie fuellen sich mit dem naechsten Einkauf-Lauf, sobald das SAP-Set EinkMatLzSet verfuegbar ist.",
+                       "LZ codes still empty in the cache. They fill with the next purchasing run as soon as the SAP set EinkMatLzSet is available.")
+                </MudAlert>
+            }
+            else
+            {
+                <div class="purchasing-explorer-bars">
+                    @foreach (var bar in BuildBars(LzCodeRows))
+                    {
+                        <div class="purchasing-bar-row">
+                            <div class="purchasing-bar-label">@bar.Label</div>
+                            <div class="purchasing-bar-track">
+                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
+                            </div>
+                            <div class="purchasing-bar-value">@bar.ValueText</div>
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
+            <div class="purchasing-section-panel-head">
+                <MudText Typo="Typo.subtitle1">@T("Volumen nach Sortiments-Code", "Volume by assortment code")</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
+            </div>
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
+                @T("Sortiments-Code aus dem Materialstamm (MARA-ZZLZCODSORT). Materialien ohne Code stehen unter ohne Code.",
+                   "Assortment code from the material master (MARA-ZZLZCODSORT). Materials without a code appear under ohne Code.")
+            </MudText>
+            @if (BarsEmptyOrUnknown(LzSortRows, "ohne Code"))
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    @T("LZ-Codes im Cache noch leer. Sie fuellen sich mit dem naechsten Einkauf-Lauf, sobald das SAP-Set EinkMatLzSet verfuegbar ist.",
+                       "LZ codes still empty in the cache. They fill with the next purchasing run as soon as the SAP set EinkMatLzSet is available.")
+                </MudAlert>
+            }
+            else
+            {
+                <div class="purchasing-explorer-bars">
+                    @foreach (var bar in BuildBars(LzSortRows))
+                    {
+                        <div class="purchasing-bar-row">
+                            <div class="purchasing-bar-label">@bar.Label</div>
+                            <div class="purchasing-bar-track">
+                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
+                            </div>
+                            <div class="purchasing-bar-value">@bar.ValueText</div>
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
 <MudPaper Class="pa-3 purchasing-section-shell mt-3" Outlined="true">
     <div class="purchasing-section-head">
         <div>
@@ -311,6 +392,8 @@
     [Parameter] public IReadOnlyList<PurchasingRegionPieGroup> RegionGroups { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> AbcRows { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> XyzRows { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> LzCodeRows { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> LzSortRows { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];
 
     private static readonly string[] Palette = ["#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a", "#00838f", "#ad1457", "#5d4037", "#455a64", "#9e9d24"];

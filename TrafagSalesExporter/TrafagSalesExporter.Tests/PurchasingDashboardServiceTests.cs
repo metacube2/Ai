@@ -650,7 +650,7 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.Equal(
-            ["supplier", "region", "materialgroup", "productgroup", "currency"],
+            ["supplier", "region", "materialgroup", "productgroup", "currency", "lzcode", "lzsort"],
             state.SpendPerspectiveRows.Select(perspective => perspective.Key));
 
         // Region-Perspektive steigt beim Lieferantenland ein und geht vier Ebenen tief.
@@ -872,6 +872,123 @@ CREATE TABLE PurchasingSpendDisponentRule (
     UpdatedAtUtc TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (DisponentPattern, ProductGroup)
 );");
+    }
+
+    private static readonly PurchasingDashboardFilter Year2025 = new(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+    private Task InsertContractAsync(
+        string ebeln, string bsart = "MK", string bukrs = "1100", string waers = "CHF", string wkurs = "1",
+        string? kdate = null, string loekz = "", string ktmng = "0", string abmng = "0", string netpr = "0", string peinh = "1",
+        string lifnr = "L1", string supplierName = "Lieferant 1")
+        => ExecuteAsync(
+            "INSERT INTO PurchasingContractCache (Ebeln, Ebelp, Bukrs, Bsart, Lifnr, SupplierName, Matnr, Txz01, Waers, Wkurs, Kdate, Loekz, Meins, Ktmng, Netpr, Peinh, Abmng, LastLoadedAtUtc) " +
+            $"VALUES ('{ebeln}', '10', '{bukrs}', '{bsart}', '{lifnr}', '{supplierName}', 'M-{ebeln}', 'Text {ebeln}', '{waers}', '{wkurs}', {(kdate is null ? "NULL" : $"'{kdate}'")}, '{loekz}', 'ST', '{ktmng}', '{netpr}', '{peinh}', '{abmng}', '2026-10-08T06:00:00.0000000Z');");
+
+    [Fact]
+    public async Task QuantityContract_OpenValue_Includes_Expired_Contracts_And_Reports_Them_Separately()
+    {
+        // Wunsch Armin 2026-10-08 (wie ME3L): Zielmenge minus Abruf, mal Preis/Preiseinheit, in CHF,
+        // abgelaufene Kontrakte zaehlen mit. EKKO/EKPO/EKET-Caches sind hier bewusst leer: die
+        // Kontraktkennzahl haengt nicht an ihnen.
+        ExecuteSync(DatabaseSchemaSql.GetPurchasingContractCacheCreateSql());
+        // EUR mit Kurs 0.9: (1000 - 400) * 10 = 6000 EUR = 5400 CHF, laeuft noch.
+        await InsertContractAsync("K1", waers: "EUR", wkurs: "0.9", kdate: "2099-12-31", ktmng: "1000", abmng: "400", netpr: "10");
+        // Ueberabgerufen: offene Menge nie negativ.
+        await InsertContractAsync("K2", ktmng: "100", abmng: "150", netpr: "10");
+        // Preis je 100 Stueck, abgelaufen: 200 * (500 / 100) = 1000 CHF.
+        await InsertContractAsync("K3", kdate: "2020-01-31", ktmng: "200", netpr: "500", peinh: "100", lifnr: "L2", supplierName: "Lieferant 2");
+        // Nicht eingerechnet: Wertkontrakt, geloescht, anderer Buchungskreis.
+        await InsertContractAsync("K4", bsart: "WK", ktmng: "10", netpr: "10");
+        await InsertContractAsync("K5", loekz: "L", ktmng: "10", netpr: "10");
+        await InsertContractAsync("K6", bukrs: "1200", ktmng: "10", netpr: "10");
+
+        var state = await _service.LoadAsync(Year2025);
+
+        Assert.True(state.ContractDataAvailable);
+        Assert.Equal(6400m, state.QuantityContractOpenValueChf);
+        Assert.Equal(1000m, state.QuantityContractExpiredValueChf);
+        Assert.Equal(2, state.QuantityContractCount);
+        Assert.Equal(2, state.QuantityContractItemCount);
+        Assert.Equal(1, state.QuantityContractExpiredCount);
+        Assert.Equal(1, state.QuantityContractOtherDocTypeItemCount);
+        Assert.Equal(1, state.QuantityContractOtherCompanyItemCount);
+        Assert.Equal(["K1", "K3"], state.QuantityContractTopRows.Select(row => row.Ebeln));
+        Assert.True(state.QuantityContractTopRows[1].IsExpired);
+        Assert.Equal("Lieferant 1", state.QuantityContractSupplierRows[0].Label);
+        Assert.Equal(5400m, state.QuantityContractSupplierRows[0].Value);
+        // Die Abrufbestellungs-Kennzahl bleibt davon unberuehrt.
+        Assert.Equal(0m, state.ContractValueSample);
+    }
+
+    [Fact]
+    public async Task QuantityContract_Is_Reported_As_Unavailable_Not_As_Zero_Without_Data()
+    {
+        // Tabelle fehlt (aeltere Datenbank): kein Fehler, nur "nicht verfuegbar".
+        var withoutTable = await _service.LoadAsync(Year2025);
+        Assert.False(withoutTable.ContractDataAvailable);
+
+        // Tabelle da, aber leer (EinkKontraktSet noch nicht in P76): ebenfalls nicht verfuegbar, keine 0.
+        ExecuteSync(DatabaseSchemaSql.GetPurchasingContractCacheCreateSql());
+        var empty = await _service.LoadAsync(Year2025);
+        Assert.False(empty.ContractDataAvailable);
+        Assert.Equal(0m, empty.QuantityContractOpenValueChf);
+    }
+
+    private async Task SeedLzSpendAsync()
+    {
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, Waers, Wkurs, LastLoadedAtUtc) VALUES ('Z1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', 'CHF', '1', '2026-01-01');");
+        // M1 hat fuehrende Nullen im Beleg, der LZ-Cache fuehrt die normalisierte Nummer.
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('Z1', '10', '000000000000000M1', 'WG1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('Z1', '20', 'M2', 'WG1', '1', '200', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('Z1', '30', 'M3', 'WG2', '1', '300', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('Z1', '40', '', 'WG2', '1', '400', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('Z1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+    }
+
+    [Fact]
+    public async Task LzPerspectives_Group_By_Code_With_Ohne_Code_And_Keep_The_Total()
+    {
+        ExecuteSync(DatabaseSchemaSql.GetPurchasingMaterialLzCacheCreateSql());
+        await SeedLzSpendAsync();
+        await ExecuteAsync("INSERT INTO PurchasingMaterialLzCache (Matnr, Lzcode, Lzsort, LastLoadedAtUtc) VALUES ('M1', 'A1', 'S1', '2026-10-08');");
+        await ExecuteAsync("INSERT INTO PurchasingMaterialLzCache (Matnr, Lzcode, Lzsort, LastLoadedAtUtc) VALUES ('M2', 'A1', '', '2026-10-08');");
+
+        var state = await _service.LoadAsync(Year2025);
+
+        var supplierTotal = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "supplier").Rows.Sum(row => row.Total);
+        Assert.Equal(1000m, supplierTotal);
+
+        var lz = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "lzcode");
+        Assert.Equal(["Lebenszyklus-Code", "Lieferant", "Material"], lz.LevelLabelsDe);
+        Assert.Equal(supplierTotal, lz.Rows.Sum(row => row.Total));
+        Assert.Equal(["ohne Code", "A1"], lz.Rows.Select(row => row.Label));
+        Assert.Equal(700m, lz.Rows[0].Total);
+        Assert.Equal(300m, lz.Rows[1].Total);
+        // Drill-down bis zum Material.
+        Assert.Contains(lz.Rows[1].Children.Single().Children, child => child.Label.Contains("M1"));
+
+        var sort = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "lzsort");
+        Assert.Equal(supplierTotal, sort.Rows.Sum(row => row.Total));
+        Assert.Equal(["ohne Code", "S1"], sort.Rows.Select(row => row.Label));
+        Assert.Equal(100m, sort.Rows[1].Total);
+
+        Assert.Equal(["ohne Code", "A1"], state.LzCodeSpendRows.Select(row => row.Label));
+        Assert.Equal(supplierTotal, state.LzCodeSpendRows.Sum(row => row.Value));
+        Assert.Equal(supplierTotal, state.LzSortSpendRows.Sum(row => row.Value));
+    }
+
+    [Fact]
+    public async Task LzPerspectives_Fall_Back_To_Ohne_Code_When_The_Cache_Table_Is_Missing()
+    {
+        await SeedLzSpendAsync();
+
+        var state = await _service.LoadAsync(Year2025);
+
+        var lz = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "lzcode");
+        var node = Assert.Single(lz.Rows);
+        Assert.Equal("ohne Code", node.Label);
+        Assert.Equal(1000m, node.Total);
+        Assert.Equal("ohne Code", Assert.Single(state.LzCodeSpendRows).Label);
     }
 
     private void ExecuteSync(string sql)

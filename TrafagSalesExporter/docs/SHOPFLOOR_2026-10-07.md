@@ -206,6 +206,7 @@ Endpunkte: `GET sap/status`, `POST sap/sync` (Abgleich sofort). Schalter `Shopfl
 ohne ALV, Pflichtfilter Werks und Dispo; `ShopAufSet` = offene Planauftraege (BESKZ <> F, Eckend PEDTR) und Fertigungsauftraege (offene Menge, GLTRP),
 Pflichtfilter Werks und Datum, 60 Tage. Gemessen T76: ShopAufSet 200, 300 KB, 3 s; ShopZd05Set Dispo 003 18 s, 001 14 s. Nach dem Import in P76:
 `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` UND `/IWBEP/CACHE_CLEANUP` (sonst 404, siehe LEARNINGS 2026-10-07).
+*Nachtrag 2026-10-08:* T76K912718 enthaelt jetzt auch den Code der Einkauf-Sets EinkKontraktSet/EinkMatLzSet; deren Strukturen liegen in T76K912724. **Import: zuerst T76K912724, dann T76K912718.**
 
 *Vorbereitung (Stand vor dem Umsetzen):*
 

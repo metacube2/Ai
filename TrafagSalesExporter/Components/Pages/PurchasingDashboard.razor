@@ -169,7 +169,8 @@
                 <tr><td>@T("Bestellungen / Lieferanten", "Orders / suppliers")</td><td>@T("Unterschiedliche EKKO.EBELN (Bestellnummern) mit passenden Positionen; Lieferanten als unterschiedliche EKKO.LIFNR mit EKPO.NETWR ungleich 0 im Zeitraum. Keine Lieferantenbewertung.", "Distinct EKKO.EBELN (order numbers) with matching items; suppliers are distinct EKKO.LIFNR with non-zero EKPO.NETWR in the period. Not a supplier rating.")</td></tr>
                 <tr><td>@T("Offene Menge / offener Bestellwert", "Open quantity / order value")</td><td>@T("Je Einteilung: MAX(EKET.MENGE - EKET.WEMNG, 0), also eingeplante Menge minus erfasste Wareneingangsmenge. Wert = offene Menge × (EKPO.NETWR in CHF / EKPO.MENGE). Bei Bestellmenge 0 ist der Stueckwert 0. Alle Jahre inklusive alter Rueckstaende.", "Per schedule line: MAX(EKET.MENGE - EKET.WEMNG, 0), scheduled quantity minus recorded received quantity. Value = open quantity × (EKPO.NETWR in CHF / EKPO.MENGE). A zero order quantity gives a zero unit value. All years, including old backlogs.")</td></tr>
                 <tr><td>@T("Ueberfaelliger Wert / Positionen", "Overdue value / items")</td><td>@T("Offener Bestellwert mit EKET.EINDT (geplanter Liefertermin) vor heute. Positionszahl zaehlt unterschiedliche EBELN/EBELP mit offener ueberfaelliger Einteilung. EKET.EINDT ist kein tatsaechliches Wareneingangsdatum; daraus wird keine Liefertreue berechnet.", "Open order value with EKET.EINDT (planned delivery date) before today. Item count uses distinct EBELN/EBELP with an overdue open schedule line. EKET.EINDT is not an actual receipt date; it does not measure delivery reliability.")</td></tr>
-                <tr><td>@T("Offener Wert der Kontraktabrufe", "Open contract call-off value")</td><td>@T("Gleiche Offenwert-Formel, eingeschraenkt auf Bestellungen mit gefuelltem EKKO.KONNR (Kontraktbezug). Naeherung fuer offene Abrufe, kein noch verfuegbarer Vertragsrahmen. Ohne KONNR-Zuordnung ergibt sich 0.", "Same open-value formula, restricted to orders with EKKO.KONNR (contract reference). An approximation of open call-offs, not unused contract capacity. No KONNR assignments results in 0.")</td></tr>
+                <tr><td>@T("Abrufbestellungen zu Kontrakten", "Call-off orders against contracts")</td><td>@T("Gleiche Offenwert-Formel, eingeschraenkt auf Bestellungen mit gefuelltem EKKO.KONNR (Kontraktbezug). Naeherung fuer offene Abrufe, kein noch verfuegbarer Vertragsrahmen. Ohne KONNR-Zuordnung ergibt sich 0.", "Same open-value formula, restricted to orders with EKKO.KONNR (contract reference). An approximation of open call-offs, not unused contract capacity. No KONNR assignments results in 0.")</td></tr>
+                <tr><td>@T("Offener Mengenkontraktwert (wie ME3L)", "Open quantity contract value (like ME3L)")</td><td>@T("Je Kontraktposition (EKKO.BSTYP = K, Belegart MK, Buchungskreis 1100): offene Menge = EKPO.KTMNG (Zielmenge) minus Summe EKAB.MENGE (Abrufe), nie negativ; Wert = offene Menge × EKPO.NETPR / EKPO.PEINH, mit EKKO.WAERS/WKURS in CHF umgerechnet. Abgelaufene Kontrakte (EKKO.KDATE vor heute) zaehlen mit und werden getrennt ausgewiesen. Stand heute, unabhaengig vom Zeitraum. Das ist nicht der offene Wert der Abrufbestellungen.", "Per contract item (EKKO.BSTYP = K, document type MK, company code 1100): open quantity = EKPO.KTMNG (target quantity) minus the sum of EKAB.MENGE (call-offs), never negative; value = open quantity × EKPO.NETPR / EKPO.PEINH, converted to CHF with EKKO.WAERS/WKURS. Expired contracts (EKKO.KDATE before today) are included and shown separately. As of today, independent of the period. This is not the open value of call-off orders.")</td></tr>
                 <tr><td>@T("Waehrung / CHF-Umrechnung", "Currency / CHF conversion")</td><td>@T("EKKO.WAERS ist die Belegwaehrung; EKKO.WKURS der Kurs des Bestellbelegs. Positiver Kurs: multiplizieren; negativer Kurs: durch den Absolutwert teilen. CHF bleibt unveraendert. Bei fehlender Waehrung oder Kurs 0 bleibt der Betrag derzeit ebenfalls unveraendert. Der Waehrungsaufriss gruppiert nach Belegwaehrung und zeigt CHF-Werte.", "EKKO.WAERS is the document currency; EKKO.WKURS the order document exchange rate. Positive rate: multiply; negative rate: divide by its absolute value. CHF is unchanged. Missing currency or a zero rate currently also leaves the amount unchanged. The currency breakdown groups by document currency and shows CHF values.")</td></tr>
                 <tr><td>@T("Lieferant / Material / Warengruppe", "Supplier / material / material group")</td><td>@T("Lieferant: EKKO.LIFNR → LFA1.NAME1; Land: LFA1.LAND1. Material: EKPO.MATNR mit MAKT.MAKTX im Drilldown. Ohne Stammtext bleibt die Nummer; ohne Materialnummer wird EKPO.TXZ01 angezeigt. Warengruppe: MARA.MATKL, ersatzweise EKPO.MATKL; Texte aus dem lokalen T023T-Katalog.", "Supplier: EKKO.LIFNR → LFA1.NAME1; country: LFA1.LAND1. Material: EKPO.MATNR with MAKT.MAKTX in the drilldown. Missing master text leaves the number; without a material number, EKPO.TXZ01 is shown. Material group: MARA.MATKL, falling back to EKPO.MATKL; descriptions from the local T023T catalogue.")</td></tr>
                 <tr><td>@T("Lagerwert Einkaufsteile", "Purchased parts stock value")</td><td>@T("Summe MBEW.SALK3 (bewerteter Gesamtbestand), Bewertungskreis MBEW.BWKEY = 1100; Zuordnung ueber Materialnummer zu MARC.DISPO, Disponenten 001–005. Eigener gespeicherter Abrufzeitpunkt an der Kachel; unabhaengig vom Bestellzeitraum.", "Sum of MBEW.SALK3 (valued total stock), valuation area MBEW.BWKEY = 1100; material number maps to MARC.DISPO, planners 001–005. Its own stored retrieval timestamp is shown on the card; independent of the order period.")</td></tr>
@@ -193,7 +194,7 @@
                         @* Waehrend des ersten Ladens neutral: "wartet auf EKPO" oder "Noch nicht
                            geladen" saehe sonst nach fehlenden Daten aus (seit 2026-09-28 sichtbar,
                            weil die Seite ohne Vorrendern sofort erscheint). *@
-                        <MudText Typo="Typo.h6">@(_liveLoading ? "…" : card.Value)</MudText>
+                        <MudText Typo="Typo.h6" title="@card.ValueTitle">@(_liveLoading ? "…" : card.Value)</MudText>
                         <MudText Typo="Typo.caption">@(_liveLoading ? T("wird geladen", "loading") : T(card.DetailDe, card.DetailEn))</MudText>
                         @* Zweite, ausfuehrliche Zeile: WAS genau gezaehlt wird und was NICHT.
                            Wunsch Ingo/Marco 2026-08-27 - die Kurzzeile darueber nennt nur die
@@ -240,10 +241,132 @@
                            DetailRows="@OpenOrderDetailRows" />
         break;
     case "kontrakte":
-        <PurchasingSection TitleDe="Offene Kontraktabrufe"
-                           TitleEn="Open contract call-offs"
-                           DescriptionDe="Naeherung: Restwert nur fuer Abrufe zu Rahmenkontrakten (EKKO.Konnr gesetzt), aus EKET-Offenmenge und EKPO-Stueckwert. Echte Mengenkontrakte mit Ablaufdatum brauchen noch Kontraktbelege aus SAP; bis dahin ist dieser Wert eine Annaeherung und 0, wenn keine Konnr-Daten vorliegen."
-                           DescriptionEn="Approximation: remaining value only for call-offs against outline agreements (EKKO.Konnr set), from EKET open quantity and EKPO unit value. True quantity contracts with expiry dates still need contract documents from SAP; until then this value is an approximation and 0 when no Konnr data is present."
+        @* Zwei verschiedene Zahlen, bewusst getrennt (Armin 2026-10-08): oben der offene Wert der
+           KONTRAKTE selbst (wie ME3L), darunter der offene Wert der ABRUFBESTELLUNGEN zu Kontrakten. *@
+        <MudPaper Class="pa-3 mb-3 purchasing-section-shell" Outlined="true">
+            <MudText Typo="Typo.h6">@T("Offener Mengenkontraktwert (wie ME3L)", "Open quantity contract value (like ME3L)")</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-muted mb-3">
+                @T("Je Kontraktposition: Zielmenge minus abgerufene Menge, mal Nettopreis je Preiseinheit, in CHF umgerechnet. Abgelaufene Kontrakte zaehlen mit und werden getrennt ausgewiesen. Nur Mengenkontrakte (Belegart MK) im Buchungskreis 1100. Stand heute, unabhaengig vom Zeitraumfilter.",
+                   "Per contract item: target quantity minus called-off quantity, times net price per price unit, converted to CHF. Expired contracts are included and shown separately. Quantity contracts (document type MK) in company code 1100 only. As of today, independent of the period filter.")
+            </MudText>
+            @if (_liveLoading)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (!_liveState.ContractDataAvailable)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    <strong>@T("Kontraktdaten noch nicht verfuegbar", "Contract data not available yet")</strong>
+                    @T("Die SAP-Kontraktdaten (EinkKontraktSet) sind noch nicht geladen. Sobald der Einkauf-Lauf sie liest, erscheinen die Zahlen hier.", "The SAP contract data (EinkKontraktSet) is not loaded yet. As soon as the purchasing run reads it, the figures appear here.")
+                </MudAlert>
+            }
+            else
+            {
+                <MudGrid Spacing="2" Class="mb-2">
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                            <MudText Typo="Typo.caption" Class="purchasing-section-muted">@T("Offener Kontraktwert", "Open contract value")</MudText>
+                            <MudText Typo="Typo.h6">@FormatChf(_liveState.QuantityContractOpenValueChf)</MudText>
+                            <MudText Typo="Typo.caption">@T("Mengenkontrakte, inkl. abgelaufen", "Quantity contracts, incl. expired")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                            <MudText Typo="Typo.caption" Class="purchasing-section-muted">@T("davon abgelaufen", "of which expired")</MudText>
+                            <MudText Typo="Typo.h6">@FormatChf(_liveState.QuantityContractExpiredValueChf)</MudText>
+                            <MudText Typo="Typo.caption">@ContractExpiredShareText</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                            <MudText Typo="Typo.caption" Class="purchasing-section-muted">@T("Kontrakte / Positionen", "Contracts / items")</MudText>
+                            <MudText Typo="Typo.h6">@_liveState.QuantityContractCount.ToString("N0") / @_liveState.QuantityContractItemCount.ToString("N0")</MudText>
+                            <MudText Typo="Typo.caption">@T("mit offener Menge", "with open quantity")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                            <MudText Typo="Typo.caption" Class="purchasing-section-muted">@T("Abgelaufene Kontrakte", "Expired contracts")</MudText>
+                            <MudText Typo="Typo.h6">@_liveState.QuantityContractExpiredCount.ToString("N0")</MudText>
+                            <MudText Typo="Typo.caption">@T("Laufzeitende vor heute, noch offene Menge", "validity end before today, quantity still open")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+                <MudText Typo="Typo.caption" Class="purchasing-muted d-block mb-2">
+                    @T("Stand der Kontraktdaten:", "Contract data as of:")
+                    @(_liveState.ContractDataLoadedAtUtc is { } contractStamp ? FormatRefreshDate(contractStamp) : "–")
+                </MudText>
+                @if (_liveState.QuantityContractMissingRateItemCount > 0)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2">
+                        @_liveState.QuantityContractMissingRateItemCount.ToString("N0")
+                        @T("Positionen in Fremdwaehrung haben keinen Kurs; ihr CHF-Wert ist nur 1:1 gerechnet und nicht belastbar.", "items in a foreign currency have no exchange rate; their CHF value is only converted 1:1 and is not reliable.")
+                    </MudAlert>
+                }
+                @if (_liveState.QuantityContractOtherDocTypeItemCount > 0 || _liveState.QuantityContractOtherCompanyItemCount > 0)
+                {
+                    <MudText Typo="Typo.caption" Class="purchasing-muted d-block mb-2">
+                        @T("Nicht eingerechnet:", "Not included:")
+                        @_liveState.QuantityContractOtherDocTypeItemCount.ToString("N0")
+                        @T("Positionen anderer Kontraktarten (z.B. Wertkontrakt WK),", "items of other contract types (e.g. value contract WK),")
+                        @_liveState.QuantityContractOtherCompanyItemCount.ToString("N0")
+                        @T("Positionen anderer Buchungskreise.", "items of other company codes.")
+                    </MudText>
+                }
+                @if (_liveState.QuantityContractSupplierRows.Count > 0)
+                {
+                    <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">@T("Offener Kontraktwert nach Lieferant", "Open contract value by supplier")</MudText>
+                    <div class="purchasing-bars mb-3">
+                        @foreach (var supplierRow in BuildContractSupplierBars())
+                        {
+                            <div class="purchasing-bar-row">
+                                <div class="purchasing-bar-label">@supplierRow.Label</div>
+                                <div class="purchasing-bar-track">
+                                    <div class="purchasing-bar-fill" style="@($"width:{supplierRow.Width}%; background:#1565c0")"></div>
+                                </div>
+                                <div class="purchasing-bar-value">@supplierRow.Value</div>
+                            </div>
+                        }
+                    </div>
+                }
+                @if (_liveState.QuantityContractTopRows.Count > 0)
+                {
+                    <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">@T("Groesste offene Kontraktpositionen", "Largest open contract items")</MudText>
+                    <MudTable Items="@_liveState.QuantityContractTopRows" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>@T("Kontrakt", "Contract")</MudTh>
+                            <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                            <MudTh>@T("Material / Text", "Material / text")</MudTh>
+                            <MudTh Style="text-align:right">@T("Zielmenge", "Target quantity")</MudTh>
+                            <MudTh Style="text-align:right">@T("Abgerufen", "Called off")</MudTh>
+                            <MudTh Style="text-align:right">@T("Offen", "Open")</MudTh>
+                            <MudTh Style="text-align:right">@T("Offener Wert CHF", "Open value CHF")</MudTh>
+                            <MudTh>@T("Laufzeit bis", "Valid until")</MudTh>
+                            <MudTh>@T("Abgelaufen", "Expired")</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Ebeln / @context.Ebelp</MudTd>
+                            <MudTd>@context.Supplier</MudTd>
+                            <MudTd>@ContractMaterialText(context)</MudTd>
+                            <MudTd Style="text-align:right">@context.TargetQuantity.ToString("N0") @context.Unit</MudTd>
+                            <MudTd Style="text-align:right">@context.CalledQuantity.ToString("N0")</MudTd>
+                            <MudTd Style="text-align:right">@context.OpenQuantity.ToString("N0")</MudTd>
+                            <MudTd Style="text-align:right"><strong>@FormatChf(context.OpenValueChf)</strong></MudTd>
+                            <MudTd>@(context.ValidTo?.ToString("dd.MM.yyyy") ?? "–")</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(context.IsExpired ? Color.Warning : Color.Success)">
+                                    @(context.IsExpired ? T("Ja", "Yes") : T("Nein", "No"))
+                                </MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            }
+        </MudPaper>
+        <PurchasingSection TitleDe="Abrufbestellungen zu Kontrakten"
+                           TitleEn="Call-off orders against contracts"
+                           DescriptionDe="Offener Wert der Bestellungen, die sich auf einen Kontrakt beziehen (EKKO.Konnr gesetzt), aus EKET-Offenmenge und EKPO-Stueckwert. Das ist NICHT der offene Wert der Kontrakte selbst; der steht im Block darueber."
+                           DescriptionEn="Open value of purchase orders that reference a contract (EKKO.Konnr set), from EKET open quantity and EKPO unit value. This is NOT the open value of the contracts themselves; that is shown in the block above."
                            ChartTitleDe="Top Verpflichtungen nach Lieferant und Artikel"
                            ChartTitleEn="Top commitments by supplier and article"
                            Kpis="@ContractKpis"
@@ -271,6 +394,8 @@
                                  RegionGroups="@_liveState.RegionByMaterialGroupRows"
                                  AbcRows="@_liveState.AbcSpendRows"
                                  XyzRows="@_liveState.XyzSpendRows"
+                                 LzCodeRows="@_liveState.LzCodeSpendRows"
+                                 LzSortRows="@_liveState.LzSortSpendRows"
                                  AbcXyzActionRows="@_liveState.AbcXyzActionRows" />
         break;
     case "ideen":
@@ -897,6 +1022,16 @@
         new("Offener Bestellwert inkl. Rueckstaende", "Open order value incl. backlog", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "Offene SAP-Einteilungen, unabhaengig vom Zeitraum" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "Open SAP schedule lines, independent of period" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info,
             "SAP: EKET.MENGE/WEMNG, EKPO.NETWR/MENGE, EKKO.WAERS/WKURS. Bestellt und noch nicht eingetroffen: offene Menge mal Stueckwert, laut geladenem SAP-Stand ueber alle Jahre. Enthaelt auch alte, nie geschlossene Einteilungen; nur Bestellungen, keine Mengenkontrakte.",
             "SAP: EKET.MENGE/WEMNG, EKPO.NETWR/MENGE, EKKO.WAERS/WKURS. Ordered and not yet arrived: open quantity times unit value, across all years in the loaded SAP data. Includes old schedule lines never closed; purchase orders only, no quantity contracts."),
+        // Offener Mengenkontraktwert (wie ME3L), Wunsch Armin 2026-10-08: neben dem offenen
+        // Bestellwert, damit offene Bestellungen + offene Kontrakte gegen das Einkaufsvolumen
+        // sichtbar sind. Ohne Kontraktdaten steht "–" mit Hinweis statt einer 0.
+        new("Offener Kontraktwert", "Open contract value",
+            _liveState.ContractDataAvailable ? FormatChf(_liveState.QuantityContractOpenValueChf) : "–",
+            ContractKpiDetail, ContractKpiDetail,
+            Icons.Material.Filled.Description, Color.Tertiary,
+            "SAP: Mengenkontrakte (EKKO.BSTYP = K, Belegart MK), je Position EKPO.KTMNG (Zielmenge) minus EKAB.MENGE (Abrufe), mal EKPO.NETPR / PEINH, mit EKKO.WAERS/WKURS in CHF umgerechnet. Enthaelt auch abgelaufene Kontrakte. Nicht der offene Wert der Abrufbestellungen.",
+            "SAP: quantity contracts (EKKO.BSTYP = K, document type MK), per item EKPO.KTMNG (target quantity) minus EKAB.MENGE (call-offs), times EKPO.NETPR / PEINH, converted to CHF with EKKO.WAERS/WKURS. Includes expired contracts. Not the open value of call-off orders.",
+            _liveState.ContractDataAvailable ? string.Empty : T("Die SAP-Kontraktdaten (EinkKontraktSet) sind noch nicht geladen. Sobald der Einkauf-Lauf sie liest, erscheinen die Zahlen hier.", "The SAP contract data (EinkKontraktSet) is not loaded yet. As soon as the purchasing run reads it, the figures appear here.")),
         new("Aktive Lieferanten im Zeitraum", "Active suppliers in period", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success,
             "SAP: EKKO.LIFNR, EKPO.NETWR, EKKO.BEDAT; Name aus LFA1.NAME1. Anzahl Lieferanten mit mindestens einer Bestellposition ungleich null im Zeitraum. Sagt nichts ueber Liefertreue oder Qualitaet aus.",
             "SAP: EKKO.LIFNR, EKPO.NETWR, EKKO.BEDAT; name from LFA1.NAME1. Number of suppliers with at least one non-zero order item in the period. Says nothing about delivery reliability or quality."),
@@ -911,6 +1046,40 @@
             "SAP: MBEW.SALK3 (Bestandswert), MBEW.BWKEY (Bewertungskreis), MARC.DISPO (Disponent). Bewerteter Lagerbestand zum letzten erfolgreichen Lagerwert-Abruf, eine Stichtagsbetrachtung. Ein frei waehlbarer Stichtag ist nicht moeglich, die Quelle fuehrt nur den Jetzt-Wert.",
             "SAP: MBEW.SALK3 (stock value), MBEW.BWKEY (valuation area), MARC.DISPO (planner). Valued stock at the last successful stock value load, a snapshot. A freely chosen key date is not possible, the source only carries the current value.")
     ];
+
+    private string ContractKpiDetail => _liveState.ContractDataAvailable
+        ? T("Mengenkontrakte, inkl. abgelaufen", "Quantity contracts, incl. expired")
+        : T("Kontraktdaten noch nicht verfuegbar", "Contract data not available yet");
+
+    private string ContractExpiredShareText
+    {
+        get
+        {
+            var total = _liveState.QuantityContractOpenValueChf;
+            var share = total > 0m ? _liveState.QuantityContractExpiredValueChf / total * 100m : 0m;
+            return $"{share.ToString("0.#", System.Globalization.CultureInfo.CurrentCulture)} % {T("des offenen Kontraktwerts", "of the open contract value")}";
+        }
+    }
+
+    private sealed record ContractSupplierBar(string Label, string Value, string Width);
+
+    private IReadOnlyList<ContractSupplierBar> BuildContractSupplierBars()
+    {
+        var rows = _liveState.QuantityContractSupplierRows;
+        var max = rows.Count > 0 ? rows.Max(row => row.Value) : 0m;
+        return rows
+            .Select(row => new ContractSupplierBar(
+                row.Label,
+                FormatChf(row.Value),
+                (max > 0m ? Math.Clamp((double)(row.Value / max) * 100d, 3d, 100d) : 3d)
+                    .ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)))
+            .ToList();
+    }
+
+    private static string ContractMaterialText(PurchasingContractRow row)
+        => string.IsNullOrWhiteSpace(row.Matnr)
+            ? row.Text
+            : string.IsNullOrWhiteSpace(row.Text) ? row.Matnr : $"{row.Matnr} - {row.Text}";
 
     // Detailzeile der Lagerwert-Kachel. Nennt Materialzahl und Lesezeitpunkt, damit der Wert
     // einordenbar ist: er stammt aus dem letzten Einkauf-Lauf, nicht aus diesem Seitenaufruf.
@@ -1119,7 +1288,7 @@
 
     private IReadOnlyList<PurchasingSectionKpi> ContractKpis =>
     [
-        new("Offener Wert der Kontraktabrufe", "Open contract call-off value", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), _liveState.EketLoaded ? "aus SAP Einteilungen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers"),
+        new("Abrufbestellungen zu Kontrakten", "Call-off orders against contracts", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), _liveState.EketLoaded ? "aus SAP Einteilungen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers"),
         new("Einteilungen im Zeitraum (alle Belege)", "Schedule lines in period (all documents)", _liveState.EketLoaded ? _liveState.ScheduleSampleCount.ToString("N0") : "-", "EKET.EINDT; nicht auf Kontraktabrufe begrenzt", "EKET.EINDT; not restricted to contract call-offs"),
         new("Top Verpflichtung", "Top commitment", TopCommitmentLabel, "Lieferant / Artikel / Monat", "supplier / article / month"),
         // Bewusst "Letztes Bestelldatum": der Wert ist MAX(EKKO.Bedat), also das juengste
@@ -1552,7 +1721,7 @@
         new("spend", "Spend CHF", "Spend CHF", "CHF"),
         new("openValue", "Offener Bestellwert", "Open order value", "CHF"),
         new("openQuantity", "Offene Menge", "Open quantity", "Qty"),
-        new("contractValue", "Offener Wert der Kontraktabrufe", "Open contract call-off value", "CHF"),
+        new("contractValue", "Abrufbestellungen zu Kontrakten", "Call-off orders against contracts", "CHF"),
         new("deliveryRisk", "Liefertermin-Risiko", "Delivery due-date risk", "CHF"),
         new("priceVariance", "Preisentwicklung CHF", "Price trend CHF", "CHF"),
         new("spendConcentration", "Spend-Konzentration", "Spend concentration", "CHF"),
@@ -1851,7 +2020,7 @@
     [
         BuildStatus("Bestellpositionen mit Kontraktbezug", "Order items with contract reference", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? DataSourceLabel : "wartet auf EKPO"),
         BuildStatus("Einteilungen im Zeitraum (alle Belege)", "Schedule lines in period (all documents)", _liveState.EketLoaded, _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0"),
-        BuildStatus("Offener Wert der Kontraktabrufe", "Open contract call-off value", _liveState.EkpoLoaded && _liveState.EketLoaded, _liveState.EkpoLoaded && _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : "Simulation")
+        BuildStatus("Abrufbestellungen zu Kontrakten", "Call-off orders against contracts", _liveState.EkpoLoaded && _liveState.EketLoaded, _liveState.EkpoLoaded && _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : "Simulation")
     ];
 
     private IReadOnlyList<PurchasingSectionStatusRow> SupplierStatusRows =>
@@ -1887,7 +2056,7 @@
 
     private IReadOnlyList<PurchasingSectionDetailRow> ContractDetailRows =>
     [
-        new("Offener Wert der Kontraktabrufe", "Open contract call-off value", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "nur Abrufe mit EKKO.Konnr", _liveState.EketLoaded ? DataSourceLabel : "Simulation"),
+        new("Abrufbestellungen zu Kontrakten", "Call-off orders against contracts", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "nur Abrufe mit EKKO.Konnr", _liveState.EketLoaded ? DataSourceLabel : "Simulation"),
         new("Groesste Verpflichtung", "Largest commitment", TopCommitmentLabel, "Lieferant / Artikel / Faelligkeit", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP"),
         new("Faelligkeit", "Due date", _liveState.OpenValueChartRows.Count > 0 ? "als Detail verfuegbar" : "-", "eketSet.Eindt", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP"),
         new("Namensmapping", "Name mapping", _liveState.EketLoaded ? "SupplierName wenn geliefert" : "wartet", "SupplierName / Lifnr", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP")
@@ -2465,7 +2634,7 @@
         return $"{delta:N0} {Purchasing3dIndicators.First(x => x.Key == _purchasing3dIndicator).Unit}";
     }
 
-    private sealed record PurchasingKpiCard(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, Color Color, string ExplainDe = "", string ExplainEn = "");
+    private sealed record PurchasingKpiCard(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, Color Color, string ExplainDe = "", string ExplainEn = "", string ValueTitle = "");
     private sealed record PurchasingAxis(string LabelDe, string LabelEn, string Field, string UsageDe, string UsageEn);
     private sealed record PurchasingSource(string Name, string Description);
     private sealed record PurchasingPipelineStep(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, bool IsReady, Color Color);

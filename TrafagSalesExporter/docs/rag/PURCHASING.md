@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-10-01 (**neu Verwendung & Risiko** `/logistik/verwendung-risiko`, nur LZ-Code-Komponenten, `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md`; **neu Logistik live** `/logistik/live`: Kommissionierung und Produktion aus SAP alle 30 s, nur bei offener Seite, ohne Personendaten, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` in P76, `docs/LOGISTIK_LIVE_2026-10-01.md`; nach dem Auffrischen sofort alter Stand mit Hinweis `4e2b55a`; Texte D1/D5 `3407868`; vorher 2026-09-30: Rueckmeldung Armin zum Tempo, `PLATTFORM_TEMPO_2026-09-28.md` 10: viel schneller, beim Auffrischen noch langsam, Vorschlag offen; ZRL2-Konditionsart AT in P76, `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md`; Codex-Reparaturen E1/E2/C1/C2 produktiv seit 10:07; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
+Stand: 2026-10-08 (**neu Offener Mengenkontraktwert wie ME3L und LZ-/Sortiments-Einstiege im Spend-Aufriss, lokal, nicht deployed**, Abschnitt „Kontrakte und LZ-Dimensionen 2026-10-08“; 2026-10-01: **neu Verwendung & Risiko** `/logistik/verwendung-risiko`, nur LZ-Code-Komponenten, `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md`; **neu Logistik live** `/logistik/live`: Kommissionierung und Produktion aus SAP alle 30 s, nur bei offener Seite, ohne Personendaten, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` in P76, `docs/LOGISTIK_LIVE_2026-10-01.md`; nach dem Auffrischen sofort alter Stand mit Hinweis `4e2b55a`; Texte D1/D5 `3407868`; vorher 2026-09-30: Rueckmeldung Armin zum Tempo, `PLATTFORM_TEMPO_2026-09-28.md` 10: viel schneller, beim Auffrischen noch langsam, Vorschlag offen; ZRL2-Konditionsart AT in P76, `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md`; Codex-Reparaturen E1/E2/C1/C2 produktiv seit 10:07; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
 
 Live-Abgleich vom Juli fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -11,6 +11,29 @@ nachgewiesen (`docs/PLATTFORM_TEMPO_2026-09-28.md`, `ISS-017`).
 
 Kurzdatei fuer Spend, offene Bestellungen, Kontrakte und Lieferanten. Historie
 und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
+
+## Kontrakte und LZ-Dimensionen 2026-10-08 (lokal, nicht deployed)
+
+Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-10-08.
+
+- **Zwei Kontrakt-Kennzahlen, nicht verwechseln:**
+  - **Offener Mengenkontraktwert (wie ME3L)** = Kachel „Offener Kontraktwert“ auf `/einkauf` und Block auf
+    `/einkauf/kontrakte`. Je Kontraktposition `max(KTMNG - Summe EKAB.MENGE, 0) x NETPR / PEINH`
+    (PEINH 0/leer = 1), in CHF mit `EKKO.WAERS/WKURS` wie das uebrige Dashboard, **inklusive
+    abgelaufener Kontrakte** (`KDATE` vor heute), die getrennt ausgewiesen werden. Nur Belegart `MK`,
+    Buchungskreis `1100`, ohne Loeschkennzeichen. Stand heute, ohne Zeitraumfilter. Erwartet rund 16 bis
+    17 Mio CHF (15,5 Mio EUR + 2,7 Mio andere Waehrung), Abgleich gegen ME3L nach dem ersten Lauf offen.
+  - **Abrufbestellungen zu Kontrakten** (frueher „Offener Wert der Kontraktabrufe“, rund 5,2 Mio CHF) =
+    offener Bestellwert nur fuer Bestellungen mit `EKKO.KONNR`. Das ist **nicht** der Kontraktwert.
+- **Quelle:** SAP-Sets `EinkKontraktSet` und `EinkMatLzSet` (Service `ZPOWERBI_EINKAUF_SRV`, T76, bis zum
+  Transport 404 in P76). Caches `PurchasingContractCache`, `PurchasingMaterialLzCache`; Full Load und Delta
+  lesen beide vollstaendig neu. **Ein 404 bricht den Lauf nicht ab:** Warnung im Log, alter Cache bleibt,
+  Seite zeigt „Kontraktdaten noch nicht verfuegbar“ bzw. „–“ statt 0.
+- **Spend-Aufriss:** neue Einstiege „Lebenszyklus-Code“ (`MARA-ZZLZCOD`) und „Sortiments-Code“
+  (`MARA-ZZLZCODSORT`), je Code > Lieferant > Material, Materialien ohne Code unter „ohne Code“, plus zwei
+  Balkendiagramme. Quelle fuer beide Codes ist `EinkMatLzSet` (nicht `MARA001Set`).
+- Fallstrick: SAP-Zahlen mit nachgestelltem Minus („1.075-“) werden beim Laden normalisiert; Datum
+  `00000000` heisst „kein Laufzeitende“ und ist nie abgelaufen.
 
 ## Kurzstand
 

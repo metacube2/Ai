@@ -106,6 +106,88 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
         }
     }
 
+    private static readonly TimeSpan ContractLzReadTimeout = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Laedt Mengenkontrakte (<c>EinkKontraktSet</c>) und LZ-/Sortiments-Codes (<c>EinkMatLzSet</c>)
+    /// in ihre Caches. Beide werden bei jedem Lauf (Full und Delta) vollstaendig neu gelesen und
+    /// ersetzt: Kontrakte sind wenige, die LZ-Codes einige zehntausend Zeilen.
+    ///
+    /// WIRFT BEWUSST NICHT, ausser der Lauf selbst wird abgebrochen. Beide Sets liegen bis zum
+    /// Transport in SAP T76; in P76 antworten sie mit 404. Das darf den Einkauf-Lauf nicht kosten
+    /// (Vorfall 2026-07-02, 404 auf MARA001Set). Bei Fehler oder leerer Antwort bleibt der
+    /// bisherige Cache stehen, die Seite zeigt "Kontraktdaten noch nicht verfuegbar", solange er leer ist.
+    /// Eigene Transaktion je Cache, nach dem Commit der Belegdaten.
+    /// </summary>
+    internal async Task<string> RefreshContractsAndLzSafeAsync(
+        HttpClient client,
+        string baseUrl,
+        IReadOnlyDictionary<string, SupplierInfo> supplierNameMap,
+        CancellationToken cancellationToken)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ContractLzReadTimeout);
+
+        try
+        {
+            SapEntitySetReader reader = (entitySet, select, filter, orderBy, token)
+                => ReadAllRowsAsync(client, baseUrl, entitySet, select, filter, orderBy, token);
+            var contracts = await PurchasingContractLoader.TryReadAsync(
+                reader, PurchasingContractLoader.ContractSet, PurchasingContractLoader.ContractSelect, "Ebeln,Ebelp", timeout.Token);
+            var lzCodes = await PurchasingContractLoader.TryReadAsync(
+                reader, PurchasingContractLoader.LzSet, PurchasingContractLoader.LzSelect, "Matnr", timeout.Token);
+
+            await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var conn = (SqliteConnection)db.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await conn.OpenAsync(cancellationToken);
+
+            var nowText = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
+            var parts = new List<string>();
+            var warnings = new List<string>();
+
+            if (contracts.Available)
+            {
+                var written = await PurchasingContractLoader.ReplaceContractsAsync(
+                    conn, contracts.Rows, lifnr => ResolveSupplierName(supplierNameMap, lifnr, string.Empty), nowText, timeout.Token);
+                parts.Add($"Kontraktpositionen={written:N0}");
+            }
+            else
+            {
+                warnings.Add(contracts.Warning);
+                parts.Add("Kontrakte=nicht verfuegbar (Cache unveraendert)");
+            }
+
+            if (lzCodes.Available)
+            {
+                var written = await PurchasingContractLoader.ReplaceMaterialLzAsync(conn, lzCodes.Rows, nowText, timeout.Token);
+                parts.Add($"LZ-Codes={written:N0}");
+            }
+            else
+            {
+                warnings.Add(lzCodes.Warning);
+                parts.Add("LZ-Codes=nicht verfuegbar (Cache unveraendert)");
+            }
+
+            if (warnings.Count > 0)
+                await _logService.WriteAsync("Purchasing", "Kontrakt-/LZ-Daten nicht aktualisiert", "Warning",
+                    details: string.Join(" | ", warnings) + " Der Einkauf-Lauf laeuft normal weiter.");
+
+            return string.Join(", ", parts) + ".";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await _logService.WriteAsync("Purchasing", "Kontrakt-/LZ-Daten konnten nicht gelesen werden", "Warning",
+                details: $"{ex.GetType().Name}: {ex.Message} — Der Einkauf-Lauf laeuft trotzdem weiter, " +
+                         "die bisherigen Kontrakt- und LZ-Daten bleiben stehen.");
+            return "Kontrakte/LZ-Codes=Fehler beim Lesen (Cache unveraendert).";
+        }
+    }
+
     public async Task<PurchasingDataRefreshStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
@@ -160,11 +242,12 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
 
             // Nach dem Commit, damit ein Fehler hier die bereits geschriebenen Belegdaten
             // nicht mehr gefaehrden kann.
+            var contractLzMessage = await RefreshContractsAndLzSafeAsync(client, connection.BaseUrl, supplierNameMap, cancellationToken);
             await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;
             var materialTextCount = materialStatusMap.Values.Count(info => info.Maktx.Length > 0);
-            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, MAKT-Texte={materialTextCount:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
+            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, MAKT-Texte={materialTextCount:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}). {contractLzMessage}";
             await WriteStatusAsync("Full", "Success", started, completed, fromDate, null, completed, ekkoRows.Count, ekpoRows.Count, eketRows.Count, message, cancellationToken);
             _dashboardSnapshotCache?.Clear();
             await _logService.WriteAsync("Purchasing", "Einkauf Full Load erfolgreich", details: message);
@@ -241,11 +324,12 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
 
             // Nach dem Commit, damit ein Fehler hier die bereits geschriebenen Belegdaten
             // nicht mehr gefaehrden kann.
+            var contractLzMessage = await RefreshContractsAndLzSafeAsync(client, connection.BaseUrl, supplierNameMap, cancellationToken);
             await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;
             var status = await GetStatusAsync(cancellationToken);
-            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
+            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}). {contractLzMessage}";
             await WriteStatusAsync("Delta", "Success", started, completed, deltaFrom, null, completed, status.EkkoRows, status.EkpoRows, status.EketRows, message, cancellationToken);
             _dashboardSnapshotCache?.Clear();
             await _logService.WriteAsync("Purchasing", "Einkauf Delta erfolgreich", details: message);
