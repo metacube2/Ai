@@ -162,6 +162,14 @@ public static class ShopfloorEndpoints
 
             if (ctx.Request.Path.Equals(Root, StringComparison.OrdinalIgnoreCase) || ctx.Request.Path.Equals(Root + "/", StringComparison.OrdinalIgnoreCase))
                 ctx.Request.Path = Root + "/index.html";
+            // 2026-10-08: nach dem Design-Deploy zeigte Ingos Browser noch die alte style.css aus dem Cache. no-cache heisst
+            // "vor Gebrauch beim Server nachfragen" (ETag, 304 wenn unveraendert), nicht "nie zwischenspeichern".
+            if (!ctx.Request.Path.StartsWithSegments(ApiRoot, StringComparison.OrdinalIgnoreCase))
+                ctx.Response.OnStarting(() =>
+                {
+                    ctx.Response.Headers.CacheControl = "no-cache";
+                    return Task.CompletedTask;
+                });
             await next().ConfigureAwait(false);
         });
     }

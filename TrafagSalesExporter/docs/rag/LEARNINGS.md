@@ -12,6 +12,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-08 | Nach dem Design-Deploy sah Ingo im Shopfloor weiter den alten weissen Stil: statische Dateien ohne Versionsangabe kamen aus dem Browser-Cache | Eigene statische Oberflaechen mit `Cache-Control: no-cache` (oder Versions-Query) ausliefern; nach Deploys mit frischem Browser UND beim Nutzer pruefen | `Services/Shopfloor/ShopfloorEndpoints.cs` |
 | 2026-10-08 | CSS: die Zeichenfolge `text-*/` in einem Blockkommentar beendete den Kommentar vorzeitig und schaltete die ersten Regeln still ab | In CSS-Kommentaren kein `*/` innerhalb von Mustern schreiben (z. B. `text-*` umschreiben) | `wwwroot/shopfloor/style.css` |
 | 2026-10-08 | Vorschau-Server eines Hilfsagenten band an alle Netzwerkschnittstellen (`listen(8765)` ohne Adresse); Windows fragte Ingo nach Adminrechten fuer die Firewall | Lokale Vorschau nur als `file://` oder `listen(port, '127.0.0.1')`; Hilfsagenten das ausdruecklich vorgeben | `docs/SHOPFLOOR_2026-10-07.md` |
 | 2026-10-07 | Minimal-API: `MapPost` mit `async (HttpContext c) => ...` hinter einem Endpunktfilter gab ein leeres 200 | Lambdas als `async Task<IResult> (HttpContext c) => ...` schreiben | `Services/Shopfloor/ShopfloorEndpoints.cs` |

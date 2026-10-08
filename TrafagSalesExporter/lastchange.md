@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Operations (Shopfloor): Cockpit-Design, Grafiken und Login, 2026-10-08 (noch nicht deployed)
+## Operations (Shopfloor): Cockpit-Design, Grafiken und Login, 2026-10-08, produktiv 09:23
 
 - Reiter für alle sichtbar, Zugang mit eigenem Login (Benutzer `operations`, analog Finance/HR); Ingo ohne Login.
 
