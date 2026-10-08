@@ -25,6 +25,15 @@ public sealed class ShopfloorOptions
     /// <summary>Windows-Konten mit Zugriff (mit oder ohne Domaene, ohne Gross-/Kleinschreibung). Leer = niemand.</summary>
     public List<string> AllowedUsers { get; set; } = [];
 
+    /// <summary>Login fuer alle anderen (2026-10-08, analog Finance/HR): Benutzername.</summary>
+    public string LoginUsername { get; set; } = "operations";
+
+    /// <summary>SHA-256-Hash des Passworts (Hex, wie HR KPI). Leer = Login ausgeschaltet, nur AllowedUsers.</summary>
+    public string LoginPasswordHash { get; set; } = string.Empty;
+
+    /// <summary>Gueltigkeit der Anmeldung in Stunden.</summary>
+    public int LoginHours { get; set; } = 12;
+
     /// <summary>true = alle angemeldeten Benutzer. Erst nach Freigabe durch die Leitung Produktion setzen.</summary>
     public bool OpenForAll { get; set; }
 

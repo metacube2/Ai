@@ -37,6 +37,14 @@ Fehler kommen wie im Original als `{"error": "..."}` mit 400 (fachlich), 401 (To
 
 ## 3. Zugriffsregel (Freigabe durch die Leitung Produktion)
 
+*Geaendert 2026-10-08 (Entscheid Ingo): Der Reiter ist fuer alle sichtbar, der Zugang laeuft ueber ein eigenes Login analog Finance/HR.*
+Benutzer `Shopfloor:LoginUsername` (`operations`), Passwort nur als SHA-256-Hash in `Shopfloor:LoginPasswordHash` (wie HR KPI, Passwort kennt Ingo).
+Nach der Anmeldung (`wwwroot/shopfloor/login.html`, `POST /shopfloor/api/login`) setzt der Server ein HttpOnly-Cookie `TrafagShopfloor`
+(Data Protection, SameSite Strict, Pfad `/BiDashboard/shopfloor`, `LoginHours` 12 h). Ohne Zugriff leiten Seiten auf `login.html` um, die API
+antwortet 403. Windows-Konten in `AllowedUsers` (`koi`) brauchen kein Login. Abmelden: `POST api/logout`. Code `Services/Shopfloor/ShopfloorLogin.cs`.
+Die Regel unten (Freigabe Leitung Produktion vor Sichtbarkeit) ist damit fuer diesen Reiter durch Ingo entschieden; die Daten bleiben hinter dem Login.
+
+
 Regel: Neue Reiter sind erst nach Freigabe durch die Leitung Produktion/Operations sichtbar. Deshalb ist der Standard
 **gesperrt fuer alle**.
 

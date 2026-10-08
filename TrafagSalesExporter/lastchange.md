@@ -2,7 +2,9 @@
 
 Stand: 2026-10-01
 
-## Operations (Shopfloor): Cockpit-Design und Grafiken, 2026-10-08 (noch nicht deployed)
+## Operations (Shopfloor): Cockpit-Design, Grafiken und Login, 2026-10-08 (noch nicht deployed)
+
+- Reiter für alle sichtbar, Zugang mit eigenem Login (Benutzer `operations`, analog Finance/HR); Ingo ohne Login.
 
 - Shopfloor sieht aus wie das Cockpit (CI-Orange, Open Sans, Karten, Kacheln) und folgt Hell/Dunkel und Dimmer des Cockpits.
 - Grafiken: Fortschrittsring Pflichtpunkte, Rückstände je Abteilung, ZD05-Kennzahl gegen Ziel 1.20, Trendkacheln je Abteilung,

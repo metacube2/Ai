@@ -87,7 +87,15 @@ public static class ShopfloorEndpoints
     public const string Root = "/shopfloor";
     public const string ApiRoot = "/shopfloor/api";
     public const string IndexPath = "shopfloor/index.html";
-    private const string NoAccessText = "Kein Zugriff. Die Freigabe durch die Leitung Produktion/Operations steht noch aus.";
+    private const string NoAccessText = "Kein Zugriff. Bitte im Reiter Operations anmelden.";
+    public const string LoginPage = "/shopfloor/login.html";
+    public const string LoginApi = "/shopfloor/api/login";
+
+    /// <summary>Zugriff: freigegebenes Windows-Konto ODER gueltige Shopfloor-Anmeldung (Cookie, seit 2026-10-08).</summary>
+    public static bool HasAccess(HttpContext ctx, System.Security.Claims.ClaimsPrincipal? user)
+        => ctx.RequestServices.GetRequiredService<IShopfloorAccess>().IsAllowed(user)
+           || ShopfloorLogin.IsValidCookie(ctx.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(),
+                  ctx.Request.Cookies[ShopfloorLogin.CookieName], DateTimeOffset.UtcNow);
 
     public static IServiceCollection AddShopfloor(this IServiceCollection services, IConfiguration configuration)
     {
@@ -117,9 +125,12 @@ public static class ShopfloorEndpoints
             // Die Schnittstelle prueft ihr Bearer-Token selbst und braucht keinen freigegebenen Windows-Benutzer.
             var isPush = ctx.Request.Path.Equals(ApiRoot + "/integration/push", StringComparison.OrdinalIgnoreCase)
                          && ctx.Request.Headers.Authorization.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase);
-            if (!isPush)
+            // Anmeldeseite und Anmelde-Endpunkt sind ohne Freigabe erreichbar (Login 2026-10-08).
+            var isLogin = ctx.Request.Path.Equals(LoginPage, StringComparison.OrdinalIgnoreCase)
+                          || ctx.Request.Path.Equals(LoginApi, StringComparison.OrdinalIgnoreCase)
+                          || ctx.Request.Path.Equals(Root + "/logo.png", StringComparison.OrdinalIgnoreCase);
+            if (!isPush && !isLogin)
             {
-                var access = ctx.RequestServices.GetRequiredService<IShopfloorAccess>();
                 System.Security.Claims.ClaimsPrincipal? user = ctx.User;
                 if (user?.Identity?.IsAuthenticated != true)
                 {
@@ -132,8 +143,16 @@ public static class ShopfloorEndpoints
                         // kein Standard-Schema konfiguriert: gilt als nicht angemeldet
                     }
                 }
-                if (!access.IsAllowed(user))
+                if (!HasAccess(ctx, user))
                 {
+                    // Seiten fuehren zur Anmeldung, API-Aufrufe bekommen 403.
+                    var path = ctx.Request.Path.Value ?? string.Empty;
+                    if (!path.StartsWith(ApiRoot, StringComparison.OrdinalIgnoreCase) &&
+                        (path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || path.Equals(Root, StringComparison.OrdinalIgnoreCase) || path.Equals(Root + "/", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        ctx.Response.Redirect(ctx.Request.PathBase + LoginPage);
+                        return;
+                    }
                     ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
                     ctx.Response.ContentType = "text/plain; charset=utf-8";
                     await ctx.Response.WriteAsync(NoAccessText).ConfigureAwait(false);
@@ -199,8 +218,7 @@ public static class ShopfloorEndpoints
 
             if (!isPush)
             {
-                var access = ctx.RequestServices.GetRequiredService<IShopfloorAccess>();
-                if (!access.IsAllowed(ctx.User))
+                if (!HasAccess(ctx, ctx.User))
                     return Results.Text(NoAccessText, "text/plain; charset=utf-8", Encoding.UTF8, StatusCodes.Status403Forbidden);
             }
             return await next(c).ConfigureAwait(false);
@@ -219,6 +237,32 @@ public static class ShopfloorEndpoints
     /// <summary>Alle Endpunkte von server.py unter /shopfloor/api, mit denselben JSON-Formen.</summary>
     public static WebApplication MapShopfloor(this WebApplication app)
     {
+        // Anmeldung (2026-10-08): ausserhalb der Gruppe, weil der Guard sonst schon den Zugriff verlangt.
+        app.MapPost(LoginApi, async Task<IResult> (HttpContext c) =>
+        {
+            var options = c.RequestServices.GetRequiredService<IOptionsMonitor<ShopfloorOptions>>().CurrentValue;
+            var body = await JsonNode.ParseAsync(c.Request.Body) as JsonObject;
+            var user = body?["user"]?.GetValue<string>();
+            var password = body?["password"]?.GetValue<string>();
+            if (!ShopfloorLogin.Verify(options, user, password))
+            {
+                await Task.Delay(800);   // bremst Durchprobieren
+                return J(c, new JsonObject { ["ok"] = false, ["error"] = "Benutzer oder Passwort falsch" }, StatusCodes.Status401Unauthorized);
+            }
+            var expires = DateTimeOffset.UtcNow.AddHours(Math.Clamp(options.LoginHours, 1, 24 * 14));
+            c.Response.Cookies.Append(ShopfloorLogin.CookieName,
+                ShopfloorLogin.CreateCookieValue(c.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(), expires),
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = c.Request.IsHttps,
+                    SameSite = SameSiteMode.Strict,
+                    Path = (c.Request.PathBase.HasValue ? c.Request.PathBase.Value : string.Empty) + Root,
+                    Expires = expires
+                });
+            return J(c, new JsonObject { ["ok"] = true });
+        }).DisableAntiforgery();
+
         var g = app.MapGroup(ApiRoot).DisableAntiforgery();
         g.AddEndpointFilter(Guard);
 
@@ -229,6 +273,11 @@ public static class ShopfloorEndpoints
             return Results.Text(Store(c).Config.RawJson, "application/json; charset=utf-8", Encoding.UTF8);
         });
         g.MapGet("/whoami", (HttpContext c) => J(c, new JsonObject { ["user"] = Editor(c), ["name"] = c.User.Identity?.Name }));
+        g.MapPost("/logout", (HttpContext c) =>
+        {
+            c.Response.Cookies.Delete(ShopfloorLogin.CookieName, new CookieOptions { Path = (c.Request.PathBase.HasValue ? c.Request.PathBase.Value : string.Empty) + Root });
+            return J(c, new JsonObject { ["ok"] = true });
+        });
         // SAP-Abgleich (ShopZd05Set, ShopAufSet), 2026-10-07: Status und Abgleich auf Knopfdruck.
         g.MapGet("/sap/status", (HttpContext c) => J(c, c.RequestServices.GetRequiredService<ShopfloorSapSync>().LastResult.DeepClone()));
         g.MapPost("/sap/sync", async Task<IResult> (HttpContext c) =>

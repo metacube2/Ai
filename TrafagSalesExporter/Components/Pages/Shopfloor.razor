@@ -2,8 +2,6 @@
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using TrafagSalesExporter.Services
 @using TrafagSalesExporter.Services.Shopfloor
-@inject AuthenticationStateProvider AuthProvider
-@inject IShopfloorAccess Access
 @inject IUiTextService UiText
 
 @* Reiter Operations (Shopfloor), 2026-10-07: das PPA-Shopfloor laeuft als eigene Oberflaeche unter
@@ -16,31 +14,11 @@
    laesst den Cockpit-Hintergrund durchscheinen. Farben und Hell/Dunkel uebernimmt wwwroot/shopfloor/app.js (themeSync). *@
 <PageTitle>@T("Operations (Shopfloor)", "Operations (Shopfloor)")</PageTitle>
 
-@if (!_loaded)
-{
-    <MudProgressLinear Indeterminate="true" />
-}
-else if (!_allowed)
-{
-    <MudAlert Severity="Severity.Warning">@T("Kein Zugriff: Die Freigabe durch die Leitung Produktion/Operations steht noch aus.", "No access: approval by the head of production/operations is still pending.")</MudAlert>
-    <MudText Class="mt-3">@T("Neue Reiter werden erst nach der Freigabe durch die Leitung Produktion/Operations sichtbar. Bitte dort die Freigabe beantragen.", "New tabs only become available after approval by the head of production/operations. Please request approval there.")</MudText>
-}
-else
-{
-    <iframe src="@ShopfloorEndpoints.IndexPath" title="@T("Operations (Shopfloor)", "Operations (Shopfloor)")"
-            style="display:block;width:100%;height:calc(100vh - 80px);min-height:480px;border:0;background:transparent"></iframe>
-}
+@* Seit 2026-10-08 fuer alle sichtbar; der Zugang wird im Rahmen geprueft (Login analog Finance/HR, sonst
+   freigegebenes Windows-Konto). Ohne Anmeldung leitet /shopfloor/index.html auf login.html um. *@
+<iframe src="@ShopfloorEndpoints.IndexPath" title="@T("Operations (Shopfloor)", "Operations (Shopfloor)")"
+        style="display:block;width:100%;height:calc(100vh - 80px);min-height:480px;border:0;background:transparent"></iframe>
 
 @code {
-    private bool _loaded;
-    private bool _allowed;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var state = await AuthProvider.GetAuthenticationStateAsync();
-        _allowed = Access.IsAllowed(state.User);
-        _loaded = true;
-    }
-
     private string T(string german, string english) => UiText.Text(german, english);
 }

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-skin="ci">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operations – Anmeldung</title>
+<!-- Anmeldung fuer den Reiter Operations (Shopfloor), 2026-10-08. Gleiche Farben wie style.css, Hell/Dunkel vom Cockpit. -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body{display:flex;align-items:flex-start;justify-content:center;min-height:100vh;margin:0;padding-top:12vh;background:var(--paper);color:var(--ink);font-family:var(--font)}
+  .login{width:min(380px,92vw);background:var(--card);border:1px solid var(--rule);border-radius:var(--r-l,8px);padding:28px 28px 22px}
+  .login h1{font-size:20px;margin:0 0 4px}
+  .login p{margin:0 0 18px;color:color-mix(in srgb,var(--ink) 65%,transparent)}
+  .login label{display:block;font-size:12px;color:color-mix(in srgb,var(--ink) 65%,transparent);margin:12px 0 4px}
+  .login input{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--field-line);border-radius:var(--r-s,4px);background:transparent;color:inherit;font:inherit}
+  .login input:focus{outline:none;border-color:var(--brand)}
+  .login button{margin-top:18px;width:100%;padding:10px;border:0;border-radius:4px;background:var(--brand);color:var(--on-brand,#fff);font:inherit;font-weight:600;cursor:pointer}
+  .login .err{color:var(--alarm);min-height:18px;margin-top:10px;font-size:13px}
+</style>
+<script>
+  // Hell/Dunkel und Skin wie im Cockpit (gleiche Herkunft, also direkter Zugriff auf das Elternfenster).
+  (function () {
+    var src = null;
+    try { src = window.parent !== window ? window.parent.document.documentElement : null; } catch (e) { }
+    var theme = src ? src.getAttribute("data-theme") : null, skin = src ? src.getAttribute("data-skin") : null;
+    try { theme = theme || localStorage.getItem("trafag-theme"); skin = skin || localStorage.getItem("trafag-skin"); } catch (e) { }
+    document.documentElement.setAttribute("data-theme", theme === "light" ? "light" : "dark");
+    document.documentElement.setAttribute("data-skin", skin === "classic" ? "classic" : "ci");
+  })();
+</script>
+</head>
+<body>
+  <form class="login" id="f" autocomplete="on">
+    <h1>Operations (Shopfloor)</h1>
+    <p>Bitte anmelden.</p>
+    <label for="u">Benutzer</label>
+    <input id="u" name="username" autocomplete="username" required>
+    <label for="p">Passwort</label>
+    <input id="p" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Anmelden</button>
+    <div class="err" id="e"></div>
+  </form>
+<script>
+  document.getElementById("f").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    var e = document.getElementById("e");
+    e.textContent = "";
+    try {
+      var r = await fetch("api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: document.getElementById("u").value, password: document.getElementById("p").value })
+      });
+      if (r.ok) { location.href = "index.html"; return; }
+      var j = {}; try { j = await r.json(); } catch (x) { }
+      e.textContent = j.error || "Anmeldung fehlgeschlagen";
+    } catch (x) {
+      e.textContent = "Server nicht erreichbar";
+    }
+  });
+</script>
+</body>
+</html>

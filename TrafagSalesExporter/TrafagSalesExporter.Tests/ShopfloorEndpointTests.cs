@@ -50,7 +50,9 @@ public sealed class ShopfloorEndpointTests : IAsyncLifetime
         {
             ["Shopfloor:DatabasePath"] = Path.Combine(_dir, "shopfloor.db"),
             ["Shopfloor:AllowedUsers:0"] = "tester",
-            ["Shopfloor:ApiToken"] = "geheim"
+            ["Shopfloor:ApiToken"] = "geheim",
+            ["Shopfloor:LoginUsername"] = "operations",
+            ["Shopfloor:LoginPasswordHash"] = TrafagSalesExporter.Services.AccessPasswordSettingsWriter.HashPassword("testpasswort")
         });
         // Wie Program.cs: Anmeldung (hier Testschema statt Windows) und FallbackPolicy "angemeldet", sonst wuerde
         // der Test die Ablehnung durch UseAuthorization nie sehen.
@@ -63,7 +65,8 @@ public sealed class ShopfloorEndpointTests : IAsyncLifetime
         _app.UseAuthorization();
         _app.MapShopfloor();
         await _app.StartAsync();
-        _http = new HttpClient { BaseAddress = new Uri(_app.Urls.First()) };
+        // Ohne automatische Umleitung und ohne Cookie-Speicher, damit die Tests Location und Set-Cookie sehen.
+        _http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false }) { BaseAddress = new Uri(_app.Urls.First()) };
     }
 
     public async Task DisposeAsync()
@@ -90,7 +93,33 @@ public sealed class ShopfloorEndpointTests : IAsyncLifetime
     {
         Assert.Equal(HttpStatusCode.Forbidden, (await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/api/config", user: null))).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/api/config", user: "TRAFAG\\fremder"))).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/index.html", user: "TRAFAG\\fremder"))).StatusCode);
+        // Seit 2026-10-08 fuehren Seiten ohne Zugriff zur Anmeldung (Login analog Finance/HR).
+        var page = await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/index.html", user: "TRAFAG\\fremder"));
+        Assert.Equal(HttpStatusCode.Redirect, page.StatusCode);
+        Assert.EndsWith("/shopfloor/login.html", page.Headers.Location!.ToString());
+    }
+
+    [Fact]
+    public async Task Login_Mit_Benutzer_Und_Passwort_Oeffnet_Den_Zugriff_Per_Cookie()
+    {
+        var falsch = await _http.SendAsync(Req(HttpMethod.Post, "/shopfloor/api/login", user: "TRAFAG\\fremder",
+            body: """{"user":"operations","password":"falsch"}"""));
+        Assert.Equal(HttpStatusCode.Unauthorized, falsch.StatusCode);
+        Assert.False(falsch.Headers.Contains("Set-Cookie"));
+
+        var ok = await _http.SendAsync(Req(HttpMethod.Post, "/shopfloor/api/login", user: "TRAFAG\\fremder",
+            body: """{"user":"Operations","password":"testpasswort"}"""));
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var cookie = ok.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
+        Assert.StartsWith(ShopfloorLogin.CookieName + "=", cookie);
+
+        var mitCookie = Req(HttpMethod.Get, "/shopfloor/api/config", user: "TRAFAG\\fremder");
+        mitCookie.Headers.Add("Cookie", cookie);
+        Assert.Equal(HttpStatusCode.OK, (await _http.SendAsync(mitCookie)).StatusCode);
+
+        var gefaelscht = Req(HttpMethod.Get, "/shopfloor/api/config", user: "TRAFAG\\fremder");
+        gefaelscht.Headers.Add("Cookie", ShopfloorLogin.CookieName + "=abc");
+        Assert.Equal(HttpStatusCode.Forbidden, (await _http.SendAsync(gefaelscht)).StatusCode);
     }
 
     [Fact]
