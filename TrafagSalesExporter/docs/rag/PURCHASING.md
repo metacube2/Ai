@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-10-08 (**neu Offener Mengenkontraktwert wie ME3L und LZ-/Sortiments-Einstiege im Spend-Aufriss, lokal, nicht deployed**, Abschnitt „Kontrakte und LZ-Dimensionen 2026-10-08“; 2026-10-01: **neu Verwendung & Risiko** `/logistik/verwendung-risiko`, nur LZ-Code-Komponenten, `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md`; **neu Logistik live** `/logistik/live`: Kommissionierung und Produktion aus SAP alle 30 s, nur bei offener Seite, ohne Personendaten, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` in P76, `docs/LOGISTIK_LIVE_2026-10-01.md`; nach dem Auffrischen sofort alter Stand mit Hinweis `4e2b55a`; Texte D1/D5 `3407868`; vorher 2026-09-30: Rueckmeldung Armin zum Tempo, `PLATTFORM_TEMPO_2026-09-28.md` 10: viel schneller, beim Auffrischen noch langsam, Vorschlag offen; ZRL2-Konditionsart AT in P76, `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md`; Codex-Reparaturen E1/E2/C1/C2 produktiv seit 10:07; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
+Stand: 2026-10-08 (**neu Produktgruppe im Spend-Aufriss ueber ZLO03 je Komponente aus dem Einkauf-Lauf, lokal, nicht deployed**, Abschnitt „Produktgruppe 2026-10-08“; **neu Offener Mengenkontraktwert wie ME3L und LZ-/Sortiments-Einstiege im Spend-Aufriss, lokal, nicht deployed**, Abschnitt „Kontrakte und LZ-Dimensionen 2026-10-08“; 2026-10-01: **neu Verwendung & Risiko** `/logistik/verwendung-risiko`, nur LZ-Code-Komponenten, `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md`; **neu Logistik live** `/logistik/live`: Kommissionierung und Produktion aus SAP alle 30 s, nur bei offener Seite, ohne Personendaten, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` in P76, `docs/LOGISTIK_LIVE_2026-10-01.md`; nach dem Auffrischen sofort alter Stand mit Hinweis `4e2b55a`; Texte D1/D5 `3407868`; vorher 2026-09-30: Rueckmeldung Armin zum Tempo, `PLATTFORM_TEMPO_2026-09-28.md` 10: viel schneller, beim Auffrischen noch langsam, Vorschlag offen; ZRL2-Konditionsart AT in P76, `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md`; Codex-Reparaturen E1/E2/C1/C2 produktiv seit 10:07; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
 
 Live-Abgleich vom Juli fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -11,6 +11,17 @@ nachgewiesen (`docs/PLATTFORM_TEMPO_2026-09-28.md`, `ISS-017`).
 
 Kurzdatei fuer Spend, offene Bestellungen, Kontrakte und Lieferanten. Historie
 und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
+
+## Produktgruppe 2026-10-08 (lokal, nicht deployed)
+
+Punkt 4 Gespraech Armin. Details: `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`, Nachtrag 2026-10-08.
+
+- Bis hierhin las die Produktgruppe nur den Cache der Stuecklistenanalyse (86 Zeilen) und fast alles stand unter
+  „ohne Produktgruppe“.
+- Neu fragt der Einkauf-Lauf je bestellter Komponente `ZSTR_LZCODE_USAGESet` Bottom-Up ab (verkuerzte Nummer und
+  deren Disponent), 8 Minuten je Lauf, jede Komponente hoechstens woechentlich; Cache `PurchasingComponentDispoCache`.
+  Keine SAP-Aenderung. Erwartet rund 72 bis 77 % des Spends, der Rest hat in ZLO03 keine verkuerzte Nummer.
+- Offen: Umlaut-Ersatzzeichen in den ZDISPO_SPART-Texten aus P76, doppelte Regeln DS1/DS2/016 (50/50).
 
 ## Kontrakte und LZ-Dimensionen 2026-10-08 (lokal, nicht deployed)
 

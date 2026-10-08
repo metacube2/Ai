@@ -2,6 +2,14 @@
 
 Stand: 2026-10-01
 
+## Einkauf: Produktgruppe im Spend-Aufriss über ZLO03, 2026-10-08 (noch nicht deployed)
+
+- Gespräch Armin Punkt 4: Fast der ganze Einkauf stand unter „ohne Produktgruppe“, weil die Zuordnung nur den Cache der
+  Stücklistenanalyse las (86 Zeilen, nur von Hand eingegebene Nummern).
+- Neu fragt der Einkauf-Lauf je bestellter Komponente ZLO03 Bottom-Up ab (verkürzte Nummer und deren Disponent), höchstens
+  8 Minuten je Lauf, jede Komponente höchstens einmal pro Woche. Keine SAP-Änderung.
+- Erwartete Abdeckung nach dem Aufbau rund drei Viertel des Spends; der Rest hat in ZLO03 keine verkürzte Nummer.
+
 ## Einkauf: offener Mengenkontraktwert und LZ-/Sortiments-Code, 2026-10-08 (noch nicht deployed)
 
 - Gespräch Armin: offener Kontraktwert wie ME3L (Zielmenge minus EKAB-Abrufe × Nettopreis, inkl. abgelaufen) auf Kontrakte-Seite und

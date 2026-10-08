@@ -1,6 +1,45 @@
 # Einkaufs-Produktgruppen direkt aus SAP
 
-Stand: 2026-08-11
+Stand: 2026-10-08 (Abschnitt „Nachtrag 2026-10-08“: Verwendung je Komponente aus dem Einkauf-Lauf; die
+Abschnitte darunter sind der Stand vom 2026-08-11/12, die Zuordnungsregeln gelten unveraendert)
+
+## Nachtrag 2026-10-08: Produktgruppe kam fast nie an (Gespraech Armin, Punkt 4)
+
+**Befund (Produktiv-DB-Sicherung 2026-10-08 09:13, nur gelesen):**
+
+- Die Kette unten war richtig, aber der Schritt `ZLO03/VknrDispo` las nur `MaterialUsageCache`. Den fuellt die
+  Seite Stuecklistenanalyse, und nur fuer dort eingegebene Nummern: **86 Zeilen** (85 Bottom-Up fuer 4 Komponenten,
+  1 Top-Down). Der „Full Load“ ohne Nummer liefert wegen des SAP-Pflichtfilters 1 Zeile; Lauf 65 vom 15.09. steht
+  seither auf `Running`. Damit lag praktisch der ganze Einkauf unter „ohne Produktgruppe“.
+- **Obergrenze:** Bestellmaterialien, die in `ZPOWERBI_VC_TXT` als Komponente einer verkuerzten Nummer vorkommen,
+  decken 2025 **24,3 von 34,0 Mio** (72 %) und 2026 **23,1 von 30,2 Mio** (77 %) ab; Positionen ohne Material
+  3,3 bzw. 1,9 Mio. Mehr kann keine ZLO03-Loesung erreichen, der Rest fehlt in der ZLO03-Selektion.
+- `MaterialParentCache` (25'279 Paare) taugt nicht als Abkuerzung: `ElternMatnr` ist mehrstufig (1'941 Eltern sind
+  selbst Komponenten), also nicht zwingend die verkuerzte Nummer.
+
+**Loesung (ohne SAP-Aenderung, `PurchasingComponentDispoLoader`):** Der Einkauf-Lauf (Full und Delta) fragt nach den
+Kontrakten je bestelltem Material `ZSTR_LZCODE_USAGESet` mit `Richtung eq 'BOTTOMUPD'` (inklusive
+loeschvorgemerkter Koepfe) und `Kompnr eq '<18-stellig>'` ab, eine Anfrage je Komponente, drei parallel, hoechstens
+8 Minuten je Lauf. Ergebnis `(Kompnr, Vknr, VknrDispo)` in `PurchasingComponentDispoCache`, Abfragezeitpunkt in
+`PurchasingComponentDispoState` (auch bei 0 Treffern); eine Komponente wird erst nach 7 Tagen erneut gefragt. Der
+erste Aufbau (rund 7'350 Materialien, gemessen 0,25 s je Anfrage) verteilt sich auf mehrere Laeufe. Fehler oder 404
+lassen den alten Stand stehen und brechen den Lauf nicht ab. Die Perspektive liest beide Quellen
+(Stuecklistenanalyse und neuer Cache), doppelte Paare zaehlen einmal; Regeln, 1/n-Verteilung und Beschriftung
+bleiben wie unten.
+
+**Weitere Befunde fuer Armin/Ingo (nicht geaendert):**
+
+1. **Umlaute:** Im Cache stehen `HW_ZUBEH�R`, `BG_DICHTEW�CH`, `FP_DICHTEW�CH` mit Ersatzzeichen.
+   In T76 ist `ZDISPO_SPART` korrekt („HW_ZUBEHÖR“), andere Gateway-Texte (Lieferanten, Materialtexte) kommen ohne
+   Ersatzzeichen an. Vermutlich ist der Text in P76 so gespeichert; in SM30 auf P76 pruefen.
+2. **Doppelte Regeln:** `DS1` und `DS2` zeigen auf D5 und DS, `016` auf H und H2. Das sind echte Doppelnennungen
+   in `ZDISPO_GRP`; der Spend wird dort 50/50 verteilt. Ob das so gewollt ist, mit Armin klaeren.
+3. Materialien, die selbst verkauft werden (Handelsware ohne Stuecklistenverwendung), bekommen weiterhin keine
+   Gruppe. Eine Zuordnung ueber den eigenen Disponenten waere eine neue Regel und nur nach Freigabe einzubauen.
+
+**Pruefen nach dem Deploy:** Meldung im Einkauf-Lauf („Produktgruppen-Verwendung: … gefragt, … offen“), nach dem
+Aufbau Anteil „Zugeordnet“ im Spend-Aufriss gegen die Obergrenze oben.
+
 
 ## Produktiver Abschluss 2026-08-12
 
@@ -37,6 +76,9 @@ Zwei SAP-Nacharbeiten blockieren den Betrieb nicht:
 Die Anwendung ist auf eine ausschliessliche SAP-Datenstrecke umgestellt:
 
 `EKPO -> ZLO03/VknrDispo -> SAP ZDISPO_GRP -> SAP ZDISPO_SPART -> lokaler Cache -> Dashboard`
+
+*Ueberholt am 2026-10-08:* „ZLO03/VknrDispo“ kam bis dahin nur aus der Stuecklistenanalyse (86 Zeilen); seither
+liefert der Einkauf-Lauf die Verwendung je Komponente, siehe Nachtrag oben.
 
 Die bisherigen Excel-Dateien sind keine Laufzeitquelle mehr:
 

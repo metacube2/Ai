@@ -22,7 +22,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 | Materialtext im Spend-Drilldown, MAKT/MAKTX, Sprachfilter | `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-08-18 |
 | Welche Indikatoren echt rechnen, welche leer sind | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` |
 | Produktgruppen, ZC23/Disponent, Mehrfachverwendung, ABC/XYZ-Nutzen | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` |
-| Produktgruppen direkt aus SAP OData, ZDISPO | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` |
+| Produktgruppen direkt aus SAP OData, ZDISPO; Verwendung je Komponente (ZLO03) seit 2026-10-08 | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` |
 | Supply Chain: Fehlteile, Deckung, Materialabhaengigkeit, Dispositionspruefung, Lieferperformance | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` |
 | **Einkauf Interaktiv**: neun animierte Ansichten auf den Bestellungen (Lieferanten-Galaxie, Rennen, Einkaufsfluss, Sonnenstrahl, Simulator, Wiederbestell-Rhythmus, Kalender, Warengruppen-Netzwerk, 3D), gleiche Bausteine wie Verkauf Interaktiv | `docs/VERKAUF_2026-10-02.md` Abschnitt „Interaktiv“ |
 | **Logistik live**: Kommissionierung und Produktion aus SAP, Umschalter 3D-Lagerplatzansicht, Abruf nur bei offener Seite, Schutz fuer P76, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` | `docs/LOGISTIK_LIVE_2026-10-01.md` |

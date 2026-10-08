@@ -1534,11 +1534,26 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
                 new PurchasingProductGroupAllocationSummary(0m, fallbackUnassignedSpend, 0m, 0, fallbackUnassignedMaterials, 0, 0, 0));
         }
 
+        // Zwei Quellen fuer (Komponente, Disponent der verkuerzten Nummer): die Stuecklistenanalyse (nur von Hand
+        // eingegebene Nummern) und seit 2026-10-08 der Einkauf-Lauf je bestellter Komponente
+        // (PurchasingComponentDispoLoader). Doppelte Paare fallen in UsageGroups per DISTINCT weg.
+        var hasComponentDispo = await TableExistsAsync(conn, "PurchasingComponentDispoCache", cancellationToken);
+        var usageSourceCte = hasComponentDispo
+            ? @"UsageSource AS (
+    SELECT Kompnr, VknrDispo FROM MaterialUsageCache
+    UNION ALL
+    SELECT Kompnr, VknrDispo FROM PurchasingComponentDispoCache
+),
+"
+            : @"UsageSource AS (
+    SELECT Kompnr, VknrDispo FROM MaterialUsageCache
+),
+";
         var hasSapProductGroupRules = await TableExistsAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
         var sapProductGroupCtes = hasSapProductGroupRules
             ? @"SapProductGroupDispatchers AS (
     SELECT DISTINCT trim(VknrDispo) AS Disponent
-    FROM MaterialUsageCache
+    FROM UsageSource
     WHERE COALESCE(trim(VknrDispo), '') <> ''
 ),
 SapProductGroupCandidates AS (
@@ -1583,10 +1598,10 @@ SapProductGroupResolved AS (
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
         var usageGroupsCte = $@"
-{sapProductGroupCtes}UsageGroups AS (
+{usageSourceCte}{sapProductGroupCtes}UsageGroups AS (
     SELECT DISTINCT {usageMaterialKey} AS MaterialKey,
            {productGroupLabel} AS ProductGroup
-    FROM MaterialUsageCache u
+    FROM UsageSource u
     {mapJoin}
     WHERE COALESCE(trim(u.Kompnr), '') <> ''
       AND COALESCE(trim(u.VknrDispo), '') <> ''
@@ -1675,10 +1690,10 @@ FROM PositionFacts;";
         {
             mappingCommand.CommandText = hasSapProductGroupRules
                 ? $@"
-WITH {sapProductGroupCtes}MappedDispatchers AS (
+WITH {usageSourceCte}{sapProductGroupCtes}MappedDispatchers AS (
     SELECT trim(u.VknrDispo) AS Disponent,
            {mappedCode} AS ProductGroup
-    FROM MaterialUsageCache u
+    FROM UsageSource u
     {mapJoin}
     WHERE COALESCE(trim(u.VknrDispo), '') <> ''
 )
@@ -1686,9 +1701,10 @@ SELECT
     COUNT(DISTINCT CASE WHEN ProductGroup <> '' THEN Disponent END),
     COUNT(DISTINCT CASE WHEN ProductGroup = '' THEN Disponent END)
 FROM MappedDispatchers;"
-                : @"
+                : $@"
+WITH {usageSourceCte.TrimEnd().TrimEnd(',')}
 SELECT 0, COUNT(DISTINCT trim(VknrDispo))
-FROM MaterialUsageCache
+FROM UsageSource
 WHERE COALESCE(trim(VknrDispo), '') <> '';";
             await using var reader = await mappingCommand.ExecuteReaderAsync(cancellationToken);
             await reader.ReadAsync(cancellationToken);

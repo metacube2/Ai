@@ -778,6 +778,38 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal(0, state.ProductGroupAllocation.UnmappedDispatcherCount);
     }
 
+    [Fact]
+    public async Task LoadAsync_ProductGroupPerspective_Uses_Component_Dispo_Cache_From_Purchasing_Run()
+    {
+        // Punkt 4 Gespraech Armin 2026-10-08: Die Verwendung kommt jetzt auch aus dem Einkauf-Lauf
+        // (PurchasingComponentDispoCache, Schluessel normalisiert). Dasselbe Paar in beiden Quellen zaehlt einmal.
+        ExecuteSync(DatabaseSchemaSql.GetPurchasingComponentDispoCacheCreateSql());
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('PG2', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG2', '10', '000000000000004711', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG2', '20', 'M2', '1', '80', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG2', '30', 'M9', '1', '30', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('PG2', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V3', '001', 'M2', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('M2', 'V3', '001', '2026-10-08');");
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('4711', 'V5', '002', '2026-10-08');");
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('4711', 'V6', '001', '2026-10-08');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('002', 'PG-B', 'Zubehoer', 'SAP OData', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
+        var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
+        Assert.Equal(210m, perspective.Rows.Sum(row => row.Total));
+        Assert.Equal(130m, Assert.Single(perspective.Rows, row => row.Label == "PG-A - Sensorik").Total);   // 80 + 100/2
+        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "PG-B - Zubehoer").Total);
+        Assert.Equal(30m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
+        Assert.Equal(180m, state.ProductGroupAllocation.AssignedSpendChf);
+        Assert.Equal(100m, state.ProductGroupAllocation.MultiGroupSpendChf);
+        Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);
+    }
+
     private void CreatePurchasingCacheTables()
     {
         ExecuteSync(@"

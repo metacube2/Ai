@@ -395,6 +395,8 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             DatabaseSchemaSql.GetPurchasingEketCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingContractCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingMaterialLzCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingComponentDispoCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingComponentDispoStateCreateSql(),
             DatabaseSchemaSql.GetPurchasingSyncStateCreateSql(),
             DatabaseSchemaSql.GetPurchasingStockValueCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingStockValueHistoryCreateSql()

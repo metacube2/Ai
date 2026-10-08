@@ -188,6 +188,45 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
         }
     }
 
+    /// <summary>Zeitbudget je Lauf fuer die Verwendungsabfrage (P76 schonen; der erste Aufbau verteilt sich auf mehrere Laeufe).</summary>
+    private static readonly TimeSpan ComponentDispoBudget = TimeSpan.FromMinutes(8);
+    private const int ComponentDispoParallelism = 3;
+
+    /// <summary>
+    /// Fragt je bestellter Komponente die verkuerzten Nummern und deren Disponenten ab (Produktgruppe im Spend-Aufriss,
+    /// Punkt 4 Gespraech Armin 2026-10-08, siehe <see cref="PurchasingComponentDispoLoader"/>). WIRFT NICHT, ausser der
+    /// Lauf selbst wird abgebrochen: ein Fehler laesst den bisherigen Stand stehen.
+    /// </summary>
+    internal async Task<string> RefreshComponentDispoSafeAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var conn = (SqliteConnection)db.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await conn.OpenAsync(cancellationToken);
+
+            SapEntitySetReader reader = (entitySet, select, filter, orderBy, token)
+                => ReadAllRowsAsync(client, baseUrl, entitySet, select, filter, orderBy, token);
+            var result = await PurchasingComponentDispoLoader.RunAsync(
+                conn, reader, ComponentDispoBudget, ComponentDispoParallelism, () => DateTime.UtcNow, cancellationToken);
+            if (result.Failed > 0)
+                await _logService.WriteAsync("Purchasing", "Produktgruppen-Verwendung teilweise nicht gelesen", "Warning",
+                    details: $"{result.Failed:N0} Komponenten ohne Antwort, erster Fehler: {result.Warning} Der bisherige Stand bleibt stehen.");
+            return $"Produktgruppen-Verwendung: {result.Checked:N0} Komponenten gefragt, {result.WithUsage:N0} mit verkuerzter Nummer, {result.Remaining:N0} offen fuer naechste Laeufe.";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await _logService.WriteAsync("Purchasing", "Produktgruppen-Verwendung konnte nicht gelesen werden", "Warning",
+                details: $"{ex.GetType().Name}: {ex.Message} — Der Einkauf-Lauf laeuft trotzdem weiter.");
+            return "Produktgruppen-Verwendung=Fehler beim Lesen (Stand unveraendert).";
+        }
+    }
+
     public async Task<PurchasingDataRefreshStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
@@ -243,6 +282,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             // Nach dem Commit, damit ein Fehler hier die bereits geschriebenen Belegdaten
             // nicht mehr gefaehrden kann.
             var contractLzMessage = await RefreshContractsAndLzSafeAsync(client, connection.BaseUrl, supplierNameMap, cancellationToken);
+            contractLzMessage += " " + await RefreshComponentDispoSafeAsync(client, connection.BaseUrl, cancellationToken);
             await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;
@@ -325,6 +365,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             // Nach dem Commit, damit ein Fehler hier die bereits geschriebenen Belegdaten
             // nicht mehr gefaehrden kann.
             var contractLzMessage = await RefreshContractsAndLzSafeAsync(client, connection.BaseUrl, supplierNameMap, cancellationToken);
+            contractLzMessage += " " + await RefreshComponentDispoSafeAsync(client, connection.BaseUrl, cancellationToken);
             await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;

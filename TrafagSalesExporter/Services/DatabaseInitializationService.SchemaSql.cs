@@ -432,6 +432,28 @@ CREATE TABLE PurchasingMaterialLzCache (
     LastLoadedAtUtc TEXT NOT NULL
 );";
 
+    /// <summary>
+    /// Verwendung einer Einkaufskomponente in verkuerzten Nummern (VKNR) mit deren Disponent, aus
+    /// <c>ZSTR_LZCODE_USAGESet</c> Bottom-Up (<see cref="PurchasingComponentDispoLoader"/>). Grundlage der
+    /// Produktgruppe im Spend-Aufriss. Schluessel normalisiert wie <c>PurchasingMaterialLzCache</c>.
+    /// </summary>
+    internal static string GetPurchasingComponentDispoCacheCreateSql() => @"
+CREATE TABLE PurchasingComponentDispoCache (
+    Kompnr TEXT NOT NULL,
+    Vknr TEXT NOT NULL,
+    VknrDispo TEXT NOT NULL DEFAULT '',
+    LastLoadedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (Kompnr, Vknr)
+);";
+
+    /// <summary>Wann eine Komponente zuletzt gefragt wurde und mit wie vielen Verwendungen, auch bei 0 Treffern.</summary>
+    internal static string GetPurchasingComponentDispoStateCreateSql() => @"
+CREATE TABLE PurchasingComponentDispoState (
+    Kompnr TEXT NOT NULL PRIMARY KEY,
+    CheckedAtUtc TEXT NOT NULL,
+    UsageCount INTEGER NOT NULL DEFAULT 0
+);";
+
     internal static string GetPurchasingEketCacheCreateSql() => @"
 CREATE TABLE PurchasingEketCache (
     Ebeln TEXT NOT NULL,
