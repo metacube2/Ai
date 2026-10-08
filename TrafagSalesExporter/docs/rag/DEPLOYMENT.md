@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-08 15:03, Einkauf Kontrakte/LZ-Code (`4ba0c07`), Produktgruppe ueber ZLO03 (`f9bf598`), Shopfloor no-cache (`a50dc3b`).** `1120/1120` (Release-Worktree), DLL SHA256 `1C0A52E4...7F64`, fuenf Routen 200, ohne Alarm. Sicherung `trafag_exporter.db.before-einkauf-kontrakte-produktgruppe-20261008-150419.bak` (seitenweise, weil `-wal` offen war). Kontrakt-/LZ-Sets bleiben bis zum Import T76K912724+T76K912718 in P76 „nicht verfuegbar“; Produktgruppen-Verwendung baut sich ueber die naechsten Einkauf-Laeufe auf.
 - **Deploy 2026-10-08 09:23, Operations Design, Grafiken und Login (`cbf168c`).** `1072/1072`, bitgleich, Alarm nur WAL (`shopfloor.db-wal`). Mit frischem Browser angesehen: dunkles Cockpit-Design, Kacheln und Grafiken. Ingos Browser zeigte noch die alte `style.css` aus dem Cache (Strg+F5 hilft); Folgefix: `Cache-Control: no-cache` fuer `/shopfloor`.
 - **Deploy 2026-10-08 06:39, Operations (Shopfloor) (`59d0531`).** `1071/1071`, bitgleich, ohne Alarm. `/operations` produktiv angesehen: Shopfloor-Oberflaeche laedt mit den Excel-Daten, Benutzer `koi`. SAP-Abgleich aus (`Shopfloor:SapSyncEnabled=false`) bis T76K912718 in P76.
 - **Deploy 2026-10-07 10:06, Budgetkurse und farbige Standardkosten-Spalten (`cbc528b`).** `1025/1025`, bitgleich, ohne Alarm. Beim ersten Start stellt der Marker `BudgetRateDecision20261007Applied` das Kursprofil einmal auf `BudgetRate`. Sales_All muss danach neu erzeugt werden (Export Dashboard, Finance-Login).
