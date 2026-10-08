@@ -17,6 +17,11 @@ Gegenprobe Material 63500: Planauftrag 2359802 -> `VC 410313`, `410313/000010/00
 Spaltenvorrat ganz unten (Zeilen 37 bis 45 von 45), deshalb uebersieht man sie leicht. **In P76 nach dem Import von
 `T76K912714` dasselbe noch einmal** (Layouts sind Mandantendaten und kommen nicht mit dem Transport).
 
+**Nachtrag 2026-10-08 nachmittags:** Feld `ZZPEG_WERKS` (Position 59) in `ZMM_UEB_FAUF` und im Report ergaenzt,
+ebenfalls im Auftrag `T76K912714`, in T76 aktiv. Im Layout `/ P00 TX` als Spalte „Werk“ eingeblendet und gesichert
+(Rueckfrage „wird vollstaendig ueberschrieben“ bestaetigt). Gegenprobe Material 63500: Werk 1100. In P76 nach dem
+Import ebenfalls ins Layout aufnehmen.
+
 ## Stand
 
 | | |
@@ -42,6 +47,7 @@ Spaltenvorrat ganz unten (Zeilen 37 bis 45 von 45), deshalb uebersieht man sie l
 | `ZZPEG_DAT00` | `DAT00` | Zugangs-/Bedarfstermin | `01.07.2026` |
 | `ZZPEG_MNG01` | `MENGEP` | Menge (DEC, bewusst kein QUAN, sonst Referenzfeld noetig) | `80` |
 | `ZZPEG_ANZ` | `INT4` | Anzahl Bedarfsverursacher | `1` |
+| `ZZPEG_WERKS` | `WERKS_D` | Werk des Bedarfsverursachers (`MDRQ-WERKS`), neu 2026-10-08 auf Wunsch Fabio, z. B. 1200 bei einer BANF im Werk 1200 | `1100` |
 
    Praefix `ZZPEG_`, damit die vielen `MOVE-CORRESPONDING` im Report die Felder nicht
    versehentlich aus MARA/AFKO/AUFK fuellen.

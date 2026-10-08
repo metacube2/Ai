@@ -921,7 +921,7 @@ form e01_fieldcat_init using e01_lt_fieldcat type slis_t_fieldcat_alv.
   append 'ZZPEG_DELPS' to lt_peg. append 'ZZPEG_DELET' to lt_peg.
   append 'ZZPEG_EXTRA' to lt_peg. append 'ZZPEG_BERID' to lt_peg.
   append 'ZZPEG_DAT00' to lt_peg. append 'ZZPEG_MNG01' to lt_peg.
-  append 'ZZPEG_ANZ'   to lt_peg.
+  append 'ZZPEG_ANZ'   to lt_peg. append 'ZZPEG_WERKS' to lt_peg.
   loop at lt_peg into l_peg.
     clear ls_fieldcat.
     ls_fieldcat-fieldname = l_peg.
@@ -983,4 +983,6 @@ form bedarfsverursacher.
   gt_uebauf-zzpeg_berid = ls_mdrq-berid.
   gt_uebauf-zzpeg_dat00 = ls_mdrq-dat00.
   gt_uebauf-zzpeg_mng01 = ls_mdrq-mng01.
+* 2026-10-08 (Wunsch Fabio): Werk des Bedarfsverursachers, z.B. 1200 bei BANF im Werk 1200
+  gt_uebauf-zzpeg_werks = ls_mdrq-werks.
 endform.                    " BEDARFSVERURSACHER
