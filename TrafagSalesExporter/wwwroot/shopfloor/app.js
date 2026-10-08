@@ -6,6 +6,58 @@
 /* PPA Shop-Floor – Oberfläche (ohne externe Bibliotheken) */
 "use strict";
 
+/* ---------------------------------------------------------------- Cockpit-Design (2026-10-08)
+   themeSync: uebernimmt Hell/Dunkel, Skin (ci/classic) und die echten MudBlazor-Farben des Cockpits.
+   Die Seite laeuft im iframe derselben Herkunft, daher ist window.parent.document lesbar.
+   - data-theme / data-skin am <html> des Cockpits (Quelle: App.razor / theme.js), sonst localStorage
+     "trafag-theme" / "trafag-skin", sonst dunkel + ci.
+   - Die berechneten --mud-palette-* Werte des Cockpits (inkl. Dimmer) werden auf <html> dieser Seite kopiert;
+     fehlen sie (Direktaufruf), gelten die Rueckfallwerte in style.css.
+   - Reaktion auf Aenderungen: MutationObserver auf <html> und <head> des Cockpits (MudBlazor schreibt sein
+     Theme in ein <style>), dazu ein Poll alle 1,5 s als Absicherung.
+   - Eingebettet (window.parent !== window) bekommt <html> die Klasse "embedded": der eigene Logo-Block
+     entfaellt, das Cockpit zeigt das Logo schon in der Kopfleiste. */
+(function themeSync() {
+  const root = document.documentElement;
+  const VARS = ["background", "surface", "text-primary", "text-secondary", "lines-default", "primary"].map(n => "--mud-palette-" + n);
+  let last = "";
+  let embedded = false;
+  try { embedded = window.parent !== window; } catch (e) { embedded = true; }
+  root.classList.toggle("embedded", embedded);
+  function readParent() {
+    try { return embedded ? window.parent.document.documentElement : null; } catch (e) { return null; }
+  }
+  function apply() {
+    const par = readParent();
+    let theme = null, skin = null;
+    if (par) { theme = par.getAttribute("data-theme"); skin = par.getAttribute("data-skin"); }
+    if (!theme) { try { theme = localStorage.getItem("trafag-theme"); } catch (e) { } }
+    if (!skin) { try { skin = localStorage.getItem("trafag-skin"); } catch (e) { } }
+    theme = theme === "light" ? "light" : "dark"; skin = skin === "classic" ? "classic" : "ci";
+    const vals = {};
+    if (par) {
+      const cs = par.ownerDocument.defaultView.getComputedStyle(par);
+      VARS.forEach(v => { const x = cs.getPropertyValue(v).trim(); if (x) vals[v] = x; });
+    }
+    const sig = theme + "|" + skin + "|" + VARS.map(v => vals[v] || "").join("|");
+    if (sig === last) return;
+    last = sig;
+    root.setAttribute("data-theme", theme); root.setAttribute("data-skin", skin);
+    VARS.forEach(v => { if (vals[v]) root.style.setProperty(v, vals[v]); else root.style.removeProperty(v); });
+  }
+  apply();
+  try {
+    const par = readParent();
+    if (par) {
+      const mo = new MutationObserver(apply);
+      mo.observe(par, { attributes: true, attributeFilter: ["data-theme", "data-skin", "style", "class"] });
+      mo.observe(par.ownerDocument.head, { childList: true, subtree: true, characterData: true });
+    }
+  } catch (e) { }
+  setInterval(apply, 1500);
+  window.addEventListener("storage", apply);
+})();
+
 const S = {
   cfg: null, mods: {}, user: "", route: null,
   cache: {},                 // module -> records
@@ -239,6 +291,46 @@ async function poll() {
   } catch (e) { setSync("⚠ keine Verbindung zum Server"); }
 }
 
+/* ---------------------------------------------------------------- Grafik-Bausteine (2026-10-08)
+   Reines Inline-SVG / CSS, keine Bibliothek, laeuft offline. Farben kommen aus style.css (Klassen .ring,
+   .mb, .stack, .spark ...) und folgen damit Hell/Dunkel des Cockpits. */
+/* Fortschrittsring; pct 0..100, text = Beschriftung in der Mitte, cls "ok" | "bad" */
+function gxRing(pct, text, cls, size = 62) {
+  const r = 26, c = 2 * Math.PI * r, d = c * Math.max(0, Math.min(100, pct)) / 100;
+  return `<svg class="ring ${cls || ""}" width="${size}" height="${size}" viewBox="0 0 64 64" role="img" aria-label="${esc(text)}">
+    <circle class="rt" cx="32" cy="32" r="${r}"/><circle class="ra" cx="32" cy="32" r="${r}" stroke-dasharray="${d.toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 32 32)"/>
+    <text x="32" y="37" text-anchor="middle">${esc(text)}</text></svg>`;
+}
+/* Sparkline ueber vals (Zahl oder null); o.ref = Referenzlinie (z. B. Ziel), o.cls = "ok" | "bad" */
+function gxSpark(vals, o = {}) {
+  const W = o.w || 180, H = o.h || 44, p = 4;
+  const pts = vals.map((v, i) => ({ v, i })).filter(q => q.v != null && isFinite(q.v));
+  if (pts.length < 2) return `<div class="muted" style="font-size:11.5px;line-height:${H}px">zu wenige Werte für einen Verlauf</div>`;
+  let mn = Math.min(...pts.map(q => q.v)), mx = Math.max(...pts.map(q => q.v));
+  if (o.ref != null) { mn = Math.min(mn, o.ref); mx = Math.max(mx, o.ref); }
+  if (mx === mn) { mx += 1; mn -= 1; }
+  const x = i => p + (W - 2 * p) * i / Math.max(1, vals.length - 1), y = v => p + (H - 2 * p) * (1 - (v - mn) / (mx - mn));
+  const line = pts.map(q => `${x(q.i).toFixed(1)},${y(q.v).toFixed(1)}`).join(" ");
+  const a = pts[0], z = pts[pts.length - 1];
+  return `<svg class="spark ${o.cls || ""}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label || "Verlauf")}">
+    ${o.ref != null ? `<line class="sp-ref" x1="${p}" x2="${W - p}" y1="${y(o.ref).toFixed(1)}" y2="${y(o.ref).toFixed(1)}"/>` : ""}
+    <polygon class="sp-area" points="${x(a.i).toFixed(1)},${H - p} ${line} ${x(z.i).toFixed(1)},${H - p}"/>
+    <polyline class="sp-line" points="${line}"/><circle class="sp-dot" cx="${x(z.i).toFixed(1)}" cy="${y(z.v).toFixed(1)}" r="3"/></svg>`;
+}
+/* Mini-Balken: items [{lab, val, od, title}], od = davon ueberfaellig (rot) */
+function gxMiniBars(items) {
+  const max = Math.max(1, ...items.map(i => i.val));
+  return `<div class="mbars">${items.map(i => `<div class="mb" title="${esc(i.title || "")}"><span>${esc(i.lab)}</span>
+    <span class="t"><i style="width:${((i.val - (i.od || 0)) / max * 100).toFixed(1)}%"></i><i class="od" style="width:${((i.od || 0) / max * 100).toFixed(1)}%"></i></span><b>${i.val}</b></div>`).join("")}</div>`;
+}
+/* Statusband: parts [{cls: s-open|s-od|s-done|s-new, n, lab}] mit Legende */
+function gxStack(parts, legend = true) {
+  const sum = parts.reduce((t, q) => t + q.n, 0);
+  if (!sum) return `<div class="stack"></div>`;
+  return `<div class="stack" role="img" aria-label="${esc(parts.map(q => q.n + " " + q.lab).join(", "))}">${parts.filter(q => q.n).map(q => `<i class="${q.cls}" style="flex:${q.n}" title="${q.n} ${esc(q.lab)}"></i>`).join("")}</div>` +
+    (legend ? `<div class="stack-leg">${parts.map(q => `<span><i class="${q.cls}"></i><b>${q.n}</b> ${esc(q.lab)}</span>`).join("")}</div>` : "");
+}
+
 /* ---------------------------------------------------------------- Startseite */
 function homeDay() { return S.homeDay || todayIso(); }
 async function viewHome(silent) {
@@ -246,14 +338,15 @@ async function viewHome(silent) {
   const isFri = d.getDay() === 5;
   const st = await api("GET", "api/agenda?day=" + day);
   S.agendaStatus = st;
+  let zh = null; try { zh = await api("GET", "api/zd05/history"); } catch (e) { }   // nur fuer die Kennzahl-Sparkline, optional
   const items = S.cfg.agenda;
-  let must = 0, mustDone = 0;
+  let must = 0, mustDone = 0; const mustDots = [];   // mustDots: je Pflichtpunkt erledigt ja/nein (Chips unter dem Ring)
   const rows = items.map((it, i) => {
     const m = S.mods[it.module]; const s = st[it.module] || {};
     const skip = it.friday && !isFri;
     let stat = "";
     if (m.kind === "daily") {
-      if (it.must && !skip) { must++; if (s.filled) mustDone++; }
+      if (it.must && !skip) { must++; if (s.filled) mustDone++; mustDots.push({ lab: m.short, done: !!s.filled }); }
       stat = s.filled
         ? `<span class="pill ok">erfasst</span><span class="who">${esc(s.by || "")} ${s.at ? s.at.slice(11, 16) : ""}</span>`
         : (skip ? `<span class="muted">nur am Freitag</span>` : `<span class="pill ${it.must ? "bad" : ""}">noch nicht erfasst</span>`);
@@ -269,8 +362,8 @@ async function viewHome(silent) {
       if (z.imported) {
         const k = z.kpi || {}; const bad = k.kennzahl != null && k.kennzahl > 1.2;
         stat = `<span class="pill ${bad ? "bad" : "ok"}">Kennzahl ${f2(k.kennzahl)}</span>${k.code2 ? `<span class="pill warn">${k.code2} × Code 2</span>` : ""}<span class="who">${esc(z.by || "")} ${z.at ? z.at.slice(11, 16) : ""}</span>`;
-      } else { if (it.must) must++; stat = `<span class="pill ${it.must ? "bad" : ""}">ZD05 noch nicht importiert</span>`; }
-      if (z.imported && it.must) { must++; mustDone++; }
+      } else { if (it.must) { must++; mustDots.push({ lab: m.short, done: false }); } stat = `<span class="pill ${it.must ? "bad" : ""}">ZD05 noch nicht importiert</span>`; }
+      if (z.imported && it.must) { must++; mustDone++; mustDots.push({ lab: m.short, done: true }); }
     } else stat = `<span class="muted">Übersicht</span>`;
     const cur = S.meeting && S.meeting.idx === i ? " current" : "";
     return `<li class="${it.must ? "must" : ""} ${it.sub ? "sub" : ""} ${skip ? "skip" : ""}${cur}">
@@ -280,6 +373,13 @@ async function viewHome(silent) {
   const rsOpen = ["rs_seh", "rs_tr5", "rs_tx", "rs_dw"].reduce((t, k) => t + ((st[k] || {}).open || 0), 0);
   const overdue = Object.values(st).reduce((t, x) => t + (x.overdue || 0), 0);
   const pend = st.pendenzen || {};
+  // Grafiken der Kacheln (2026-10-08): Ring, Statusband, Mini-Balken je Abteilung, Verteilung der Ueberfaelligen
+  const rsDepts = [["rs_seh", "SEH"], ["rs_tr5", "TR5"], ["rs_tx", "TX"], ["rs_dw", "DW"]].map(([k, l]) => ({ lab: l, val: (st[k] || {}).open || 0, od: (st[k] || {}).overdue || 0, title: `${l}: ${(st[k] || {}).open || 0} offen, ${(st[k] || {}).overdue || 0} überfällig` }));
+  const odList = Object.entries(st).filter(([k, x]) => x && x.overdue && S.mods[k]).sort((a, b) => b[1].overdue - a[1].overdue).slice(0, 4)
+    .map(([k, x]) => ({ lab: S.mods[k].short, val: x.overdue, od: x.overdue, title: `${S.mods[k].title}: ${x.overdue} überfällig` }));
+  const zk = zh ? (zh.days || []).filter(x => x.kpi && x.kpi.kennzahl != null).slice(-30) : [];
+  const zTarget = (zh && zh.target) || 1.2;
+  const zLast = zk.length ? zk[zk.length - 1].kpi.kennzahl : null;
   const html = `
   <div class="hero">
     <div class="dayline"><span class="kw">KW ${isoWeek(d)} · ${d.getFullYear()}</span><h1>${WD_LONG[d.getDay()]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}</h1></div>
@@ -291,10 +391,14 @@ async function viewHome(silent) {
     </div>
   </div>
   <div class="kpis">
-    <div class="kpi"><div class="v">${mustDone}<span class="muted" style="font-size:20px"> / ${must}</span></div><div class="l">Pflichtpunkte erfasst</div><div class="bar"><i style="width:${pct}%"></i></div></div>
-    <a class="kpi" href="#/m/pendenzen"><div class="v">${pend.open || 0}</div><div class="l">offene Pendenzen${pend.new_today ? ` · ${pend.new_today} neu` : ""}</div></a>
-    <a class="kpi" href="#/m/rs_tx"><div class="v">${rsOpen}</div><div class="l">offene Rückstände (SEH, TR5, TX, DW)</div></a>
-    <div class="kpi ${overdue ? "alarm" : ""}"><div class="v">${overdue}</div><div class="l">überfällige Punkte total</div></div>
+    <div class="kpi"><div class="kpi-top"><div><div class="v">${mustDone}<span class="muted" style="font-size:18px"> / ${must}</span></div><div class="l">Pflichtpunkte erfasst</div></div>
+      ${gxRing(pct, pct + " %", pct >= 100 ? "ok" : "")}</div>
+      <div class="dots">${mustDots.map(d => `<span class="dt ${d.done ? "ok" : ""}" title="${esc(d.lab)}: ${d.done ? "erfasst" : "noch nicht erfasst"}">${esc(d.lab)}</span>`).join("")}</div></div>
+    <a class="kpi" href="#/m/pendenzen"><div><div class="v">${pend.open || 0}</div><div class="l">offene Pendenzen${pend.new_today ? ` · ${pend.new_today} neu` : ""}</div></div>
+      ${gxStack([{ cls: "s-open", n: Math.max(0, (pend.open || 0) - (pend.overdue || 0)), lab: "im Termin" }, { cls: "s-od", n: pend.overdue || 0, lab: "überfällig" }])}</a>
+    <a class="kpi" href="#/m/rs_tx"><div><div class="v">${rsOpen}</div><div class="l">offene Rückstände (SEH, TR5, TX, DW)</div></div>${gxMiniBars(rsDepts)}</a>
+    <div class="kpi ${overdue ? "alarm" : ""}"><div><div class="v">${overdue}</div><div class="l">überfällige Punkte total</div></div>
+      ${overdue ? gxMiniBars(odList) : '<span class="pill ok" style="align-self:flex-start">alles im Termin</span>'}</div>
   </div>
   <div class="home">
     <section class="panel-card">
@@ -309,6 +413,10 @@ async function viewHome(silent) {
         ${S.meeting ? '<button class="btn big-start" id="stopMeeting">Shop-Floor beenden</button>'
                     : '<button class="btn signal big-start" id="startMeeting">Shop-Floor starten</button>'}
       </div>
+      ${zk.length > 1 ? `<a class="side-card" href="#/m/zd05" style="display:block;text-decoration:none;color:inherit">
+        <h3>Einkauf ZD05: Bewertungskennzahl</h3>
+        <div class="zdspark"><div class="tl"><span>letzte ${zk.length} Importtage</span><span>aktuell <b>${f2(zLast)}</b> · Ziel ≤ ${f2(zTarget)}</span></div>
+        ${gxSpark(zk.map(x => x.kpi.kennzahl), { ref: zTarget, cls: zLast > zTarget ? "bad" : "ok", h: 54, label: "Verlauf Bewertungskennzahl" })}</div></a>` : ""}
       <div class="side-card">
         <h3>Teilnehmerkreis ${isFri ? "· erweitert (Freitag)" : "· Standard (Mo–Do)"}</h3>
         <p>${esc(isFri ? S.cfg.participants.friday : S.cfg.participants.standard)}</p>
@@ -401,6 +509,7 @@ async function viewList(m, openNr) {
     <div class="head"><div class="grow"><h1>${esc(m.title)}</h1><p class="lede" id="listCount"></p></div>
       <button class="btn" data-export="${m.key}">Export (CSV)</button>
       <button class="btn primary" id="newBtn">+ Neuer Eintrag</button></div>
+    <div class="listbar" id="listBar" hidden></div>
     <div class="toolbar">
       <input class="field-in search" id="q" type="search" placeholder="Suchen (Nr., Material, Kunde, Text …)" value="${esc(ls.q)}">
       ${m.status_field ? `<div class="seg" role="group" aria-label="Status">
@@ -441,6 +550,13 @@ function renderListBody(m) {
   const openCount = sf ? rows.filter(r => !isClosed(r.data[sf], m)).length : null;
   const odCount = m.due_field ? rows.filter(r => isOverdue(m, r, today)).length : 0;
   const oc = $("#odCnt"); if (oc) oc.textContent = odCount ? `(${odCount})` : "";
+  // Statusband ueber alle Eintraege des Moduls (2026-10-08): im Termin offen / ueberfaellig / erledigt
+  const lbar = $("#listBar");
+  if (lbar) {
+    const done = sf ? total - openCount : 0;
+    lbar.hidden = !sf || !total;
+    if (sf && total) lbar.innerHTML = gxStack([{ cls: "s-open", n: openCount - odCount, lab: m.due_field ? "offen im Termin" : "offen" }, ...(m.due_field ? [{ cls: "s-od", n: odCount, lab: "überfällig" }] : []), { cls: "s-done", n: done, lab: "erledigt" }]);
+  }
   if (sf && ls.status === "open") rows = rows.filter(r => !isClosed(r.data[sf], m));
   if (sf && ls.status === "closed") rows = rows.filter(r => isClosed(r.data[sf], m));
   if (ls.status === "overdue") rows = rows.filter(r => isOverdue(m, r, today));
@@ -670,6 +786,7 @@ async function viewDaily(m) {
     <div class="head"><div class="grow"><h1>${esc(m.title)}</h1>
       <p class="lede">Werte direkt in die Tabelle eintragen – gespeichert wird beim Verlassen des Feldes. Enter springt zum nächsten Feld.</p></div>
       <button class="btn" data-export="${m.key}">Export (CSV)</button></div>
+    <div id="trendBox"></div>
     <div id="chartBox"></div>
     <div class="toolbar">
       <div class="weeknav"><button class="btn small" data-w="-7" aria-label="Vorwoche">‹</button>
@@ -692,7 +809,40 @@ async function viewDaily(m) {
   });
   const cp = $("#copyPrev"); if (cp) cp.onclick = () => copyPrev(m);
   renderDailyGrid(m);
+  renderDailyTrend(m);
   renderDailyChart(m);
+}
+/* Verlaufs-Kacheln (2026-10-08): bis zu 4 Hauptkennzahlen der Abteilung als Sparkline ueber die letzten ~20
+   Erfassungen. Auswahl: zuerst das Balkenfeld des bestehenden Diagramms, dann die uebrigen Zahlen- und
+   Rechenfelder in Reihenfolge der Konfiguration, ohne Personalfelder. Eigene Abfrage api/daily (letzte 45 Tage). */
+async function renderDailyTrend(m) {
+  const box = $("#trendBox"); if (!box) return;
+  try {
+    const to = todayIso(), from = iso(addDaysD(new Date(), -45));
+    const r = await loadRange(refModules(m), from, to);
+    const own = r[m.key] || {};
+    const days = Object.keys(own).sort().filter(d => Object.values(own[d].data || {}).some(v => typeof v === "number")).slice(-20);
+    if (days.length < 3) { box.innerHTML = ""; return; }
+    const save = S.daily; S.daily = Object.assign({}, S.daily, r);
+    const rows = days.map(d => computeRecord(m, own[d].data || {}, { module: m.key, day: d }));
+    S.daily = save;
+    const cand = m.fields.filter(f => (f.type === "num" || f.type === "calc") && !/personal/i.test(f.group || "") && f.key !== "frei" && f.key !== "krank");
+    if (m.chart && m.chart.bar) cand.sort((a, b) => (b.key === m.chart.bar) - (a.key === m.chart.bar));
+    const tiles = [];
+    for (const f of cand) {
+      const vals = rows.map(v => num(v[f.key]));
+      if (vals.filter(x => x != null).length < 5) continue;
+      const last = vals.filter(x => x != null).slice(-2);
+      const cur = last[last.length - 1], prev = last.length > 1 ? last[0] : null;
+      const dlt = prev != null ? cur - prev : null;
+      tiles.push(`<div class="tt"><div class="tl" title="${esc(f.label)}">${esc(f.label)}</div>
+        <div class="tv"><b>${fmtNum(cur, f.digits)}</b><small class="${dlt > 0 ? "up" : dlt < 0 ? "dn" : ""}">${f.unit ? esc(f.unit) : ""}${dlt != null && dlt !== 0 ? ` ${dlt > 0 ? "▲" : "▼"} ${fmtNum(Math.abs(dlt), f.digits)}` : ""}</small></div>
+        ${gxSpark(vals, { h: 38, label: f.label })}
+        <div class="tf"><span>${fmtDate(days[0]).slice(0, 6)}</span><span>letzte ${days.length} Erfassungen</span><span>${fmtDate(days[days.length - 1]).slice(0, 6)}</span></div></div>`);
+      if (tiles.length >= 4) break;
+    }
+    box.innerHTML = tiles.length ? `<div class="trend">${tiles.join("")}</div>` : "";
+  } catch (e) { box.innerHTML = ""; }
 }
 async function copyPrev(m) {
   const day = S.activeDay || todayIso();
@@ -827,14 +977,14 @@ function barLineSvg(pts, h = 170) {
   const y = v => pt + (H - pt - pb) * (1 - (v - min) / (max - min));
   const bw = (W - pl) / pts.length;
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Diagramm">`;
-  for (let i = 0; i <= 4; i++) { const v = min + (max - min) * i / 4; s += `<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#EEF0F2"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#7D868F">${fmtNum(Math.round(v))}</text>`; }
+  for (let i = 0; i <= 4; i++) { const v = min + (max - min) * i / 4; s += `<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="gx-grid"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" class="gx-ax">${fmtNum(Math.round(v))}</text>`; }
   pts.forEach((p, i) => {
     const x = pl + i * bw;
-    if (p.bar != null) s += `<rect x="${x + bw * .15}" y="${Math.min(y(p.bar), y(0))}" width="${bw * .7}" height="${Math.abs(y(0) - y(p.bar))}" fill="#E8531A" rx="2"><title>${fmtDate(p.day)}: ${fmtNum(p.bar)}</title></rect>`;
-    if (parseIso(p.day).getDay() === 1) s += `<text x="${x + 2}" y="${H - 6}" font-size="11" fill="#7D868F">KW${isoWeek(parseIso(p.day))}</text>`;
+    if (p.bar != null) s += `<rect x="${x + bw * .15}" y="${Math.min(y(p.bar), y(0))}" width="${bw * .7}" height="${Math.abs(y(0) - y(p.bar))}" class="gx-bar" rx="2"><title>${fmtDate(p.day)}: ${fmtNum(p.bar)}</title></rect>`;
+    if (parseIso(p.day).getDay() === 1) s += `<text x="${x + 2}" y="${H - 6}" font-size="11" class="gx-ax">KW${isoWeek(parseIso(p.day))}</text>`;
   });
   const lp = pts.map((p, i) => p.line != null ? `${pl + i * bw + bw / 2},${y(p.line)}` : null).filter(Boolean);
-  if (lp.length) s += `<polyline points="${lp.join(" ")}" fill="none" stroke="#22262A" stroke-width="2.5" stroke-dasharray="0" stroke-linejoin="round"/>`;
+  if (lp.length) s += `<polyline points="${lp.join(" ")}" class="gx-ln"/>`;
   return s + "</svg>";
 }
 function multiLineSvg(series, days, h = 220, W = 1000) {
@@ -845,18 +995,18 @@ function multiLineSvg(series, days, h = 220, W = 1000) {
   const y = v => pt + (H - pt - pb) * (1 - (v - min) / (max - min || 1));
   const x = i => pl + (W - pl - 10) * i / Math.max(1, days.length - 1);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
-  for (let i = 0; i <= 4; i++) { const v = min + (max - min) * i / 4; s += `<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#EEF0F2"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#7D868F">${fmtNum(Math.round(v))}</text>`; }
-  days.forEach((d, i) => { if (i % 4 === 0) s += `<text x="${x(i)}" y="${H - 6}" font-size="11" fill="#7D868F" text-anchor="middle">${esc(d)}</text>`; });
+  for (let i = 0; i <= 4; i++) { const v = min + (max - min) * i / 4; s += `<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="gx-grid"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" class="gx-ax">${fmtNum(Math.round(v))}</text>`; }
+  days.forEach((d, i) => { if (i % 4 === 0) s += `<text x="${x(i)}" y="${H - 6}" font-size="11" class="gx-ax" text-anchor="middle">${esc(d)}</text>`; });
   series.forEach(se => {
     const p = se.values.map((v, i) => v != null ? `${x(i)},${y(v)}` : null).filter(Boolean);
-    s += `<polyline points="${p.join(" ")}" fill="none" stroke="${se.color}" stroke-width="2.5" stroke-linejoin="round"><title>${esc(se.name)}</title></polyline>`;
+    s += `<polyline points="${p.join(" ")}" class="gx-ln" style="stroke:${se.color}"><title>${esc(se.name)}</title></polyline>`;
   });
   return s + "</svg>";
 }
 
 /* ---------------------------------------------------------------- 7.1 PPA-Grafik */
 async function viewGrafik() {
-  const depts = [["seh", "SEH", "#E8531A"], ["tr5", "TR5", "#22262A"], ["tx", "TX", "#2D5F93"], ["dw", "DW", "#1F8A5B"], ["cz", "CZ", "#B83F12"]];
+  const depts = [["seh", "SEH", "var(--c1)"], ["tr5", "TR5", "var(--c2)"], ["tx", "TX", "var(--c3)"], ["dw", "DW", "var(--c4)"], ["cz", "CZ", "var(--c5)"]];
   const from = iso(addDaysD(new Date(), -7 * 26)), to = todayIso();
   const r = await loadRange(depts.map(d => d[0]), from, to);
   // Wochenwerte: letzter erfasster Auftragsvorrat und Summe produziert
@@ -874,6 +1024,9 @@ async function viewGrafik() {
   const legend = list => `<div class="legend">${list.map(s => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join("")}</div>`;
   $("#view").innerHTML = `<div class="head"><div class="grow"><h1>PPA-Grafik / Übersicht der Auslastung</h1>
     <p class="lede">Wird automatisch aus den Tageswerten der Abteilungen berechnet – letzte 26 Wochen.</p></div></div>
+    <div class="trend">${vor.map(s => { const vv = s.values.filter(x => x != null); const cur = vv.length ? vv[vv.length - 1] : null; const pv = vv.length > 1 ? vv[vv.length - 2] : null;
+      return `<div class="tt"><div class="tl">Auftragsvorrat ${s.name}</div><div class="tv"><b style="color:${s.color}">${cur != null ? fmtNum(Math.round(cur)) : "–"}</b><small>${cur != null && pv != null && cur !== pv ? (cur > pv ? "▲ " : "▼ ") + fmtNum(Math.abs(Math.round(cur - pv))) : ""}</small></div>
+      <div style="--brand:${s.color};--brand-soft:color-mix(in srgb,${s.color} 14%,transparent)">${gxSpark(s.values, { h: 36, label: "Auftragsvorrat " + s.name })}</div><div class="tf"><span>${lbl[0]}</span><span>Stand Ende Woche</span><span>${lbl[lbl.length - 1]}</span></div></div>`; }).join("")}</div>
     <div class="chart"><h3>Auftragsvorrat total pro Abteilung (Stand Ende Woche)</h3>${legend(vor.filter(s => s.name !== "CZ"))}${multiLineSvg(vor.filter(s => s.name !== "CZ"), lbl)}</div>
     <div class="charts2">
       <div class="chart"><h3>Produzierte Wochenmenge (abgeschlossene Wochen)</h3>${legend(prod)}${multiLineSvg(prod.map(s => ({ ...s, values: s.values.slice(0, -1) })), lbl.slice(0, -1), 300, 560)}</div>
@@ -947,14 +1100,19 @@ function renderZd05() {
   </div>
   <div class="kpis">
     <div class="kpi ${bad ? "alarm" : ""}"><div class="v">${f2(k.kennzahl)}</div><div class="l">Bewertungskennzahl · Ziel ≤ ${f2(target)}${d.kpi_fixed ? " · Wert aus Excel" : ""}</div>
-      <div class="bar"><i style="width:${Math.min(100, (k.kennzahl || 0) / 2 * 100)}%;background:${bad ? "var(--alarm)" : "var(--ok)"}"></i></div></div>
-    <div class="kpi"><div class="v">${k.anzahl ?? "–"}</div><div class="l">Positionen bewertet${k.horizon ? ` (Unterdeckung bis ${fmtDate(k.horizon)})` : ""} · Summe ${k.summe ?? "–"} Pt.</div></div>
-    <div class="kpi ${k.code2 ? "alarm" : ""}"><div class="v">${k.code2 ?? 0}</div><div class="l">Fehlmaterial Kundenauftrag (Code 2)${k.c2_A != null ? ` · A ${k.c2_A} / B ${k.c2_B} / C ${k.c2_C}` : ""}</div></div>
-    <div class="kpi"><div class="v">${d.rows.filter(r => r.neu).length}<span class="muted" style="font-size:18px"> neu · ${d.resolved.length} erledigt</span></div><div class="l">gegenüber ${d.prev_day ? fmtDate(d.prev_day) : "Vortag"}${(d.kpi_live || {}).ohne_code ? ` · <b style="color:var(--alarm)">${d.kpi_live.ohne_code} ohne Code</b>` : ""}</div></div>
+      <div class="bar"><i style="width:${Math.min(100, (k.kennzahl || 0) / 2 * 100)}%;background:${bad ? "var(--alarm)" : "var(--ok)"}"></i></div>
+      ${gxSpark((ZD.hist.days || []).filter(x => x.kpi && x.kpi.kennzahl != null).slice(-20).map(x => x.kpi.kennzahl), { ref: target, cls: bad ? "bad" : "ok", h: 34, label: "Verlauf Kennzahl" })}</div>
+    <div class="kpi"><div class="kpi-top"><div><div class="v">${k.anzahl ?? "–"}</div><div class="l">Positionen bewertet${k.horizon ? ` (Unterdeckung bis ${fmtDate(k.horizon)})` : ""} · Summe ${k.summe ?? "–"} Pt.</div></div>
+      ${k.anzahl != null && d.rows.length ? gxRing(k.anzahl / d.rows.length * 100, Math.round(k.anzahl / d.rows.length * 100) + " %") : ""}</div>
+      ${k.anzahl != null && d.rows.length ? `<div class="muted" style="font-size:11.5px">${k.anzahl} von ${d.rows.length} Positionen im Horizont</div>` : ""}</div>
+    <div class="kpi ${k.code2 ? "alarm" : ""}"><div><div class="v">${k.code2 ?? 0}</div><div class="l">Fehlmaterial Kundenauftrag (Code 2)${k.c2_A != null ? ` · A ${k.c2_A} / B ${k.c2_B} / C ${k.c2_C}` : ""}</div></div>
+      ${k.c2_A != null ? gxMiniBars([{ lab: "A", val: k.c2_A || 0, od: k.c2_A || 0 }, { lab: "B", val: k.c2_B || 0, od: k.c2_B || 0 }, { lab: "C", val: k.c2_C || 0, od: k.c2_C || 0 }]) : ""}</div>
+    <div class="kpi"><div><div class="v">${d.rows.filter(r => r.neu).length}<span class="muted" style="font-size:18px"> neu · ${d.resolved.length} erledigt</span></div><div class="l">gegenüber ${d.prev_day ? fmtDate(d.prev_day) : "Vortag"}${(d.kpi_live || {}).ohne_code ? ` · <b style="color:var(--alarm)">${d.kpi_live.ohne_code} ohne Code</b>` : ""}</div></div>
+      ${gxStack([{ cls: "s-new", n: d.rows.filter(r => r.neu).length, lab: "neu" }, { cls: "s-open", n: d.rows.filter(r => !r.neu).length, lab: "unverändert" }, { cls: "s-done", n: d.resolved.length, lab: "erledigt" }])}</div>
   </div>
   <div class="charts2">
     <div class="chart"><h3>Bewertungskennzahl pro Tag</h3><div class="legend"><span><i style="background:var(--brand)"></i>Kennzahl</span><span><i style="background:var(--alarm)"></i>Ziel ${f2(target)}</span></div>${zdTrendSvg()}</div>
-    <div class="chart"><h3>Pro KW: Materialverfügbarkeit und offene Bestellungen</h3><div class="legend">${(ZD.hist.weeks || []).some(w => w.mat_verf != null) ? '<span><i style="background:var(--ok)"></i>Materialverfügbarkeit %</span>' : ""}<span><i style="background:#22262A;opacity:.3"></i>offene Bestellungen</span></div>${zdWeekSvg()}</div>
+    <div class="chart"><h3>Pro KW: Materialverfügbarkeit und offene Bestellungen</h3><div class="legend">${(ZD.hist.weeks || []).some(w => w.mat_verf != null) ? '<span><i style="background:var(--ok)"></i>Materialverfügbarkeit %</span>' : ""}<span><i style="background:var(--ink);opacity:.25"></i>offene Bestellungen</span></div>${zdWeekSvg()}</div>
   </div>
   <div class="toolbar">
     <input class="field-in search" id="zdQ" type="search" placeholder="Material, Text, Bemerkung …" value="${esc(ZD.filter.q)}">
@@ -1067,11 +1225,11 @@ function zdTrendSvg() {
   const vals = days.map(x => x.kpi.kennzahl); const max = Math.max(1.6, ...vals) * 1.05, min = Math.min(0.6, ...vals) * 0.95;
   const y = v => pt + (H - pt - pb) * (1 - (v - min) / (max - min)); const x = i => pl + (W - pl - 8) * i / Math.max(1, days.length - 1);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf Bewertungskennzahl">`;
-  [min, (min + max) / 2, max].forEach(v => s += `<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#EEF0F2"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#7D868F">${fmtNum(v, 1)}</text>`);
-  s += `<line x1="${pl}" x2="${W}" y1="${y(tg)}" y2="${y(tg)}" stroke="#C63B2F" stroke-dasharray="5 4" stroke-width="1.5"/>`;
-  days.forEach((dd, i) => { if (parseIso(dd.day).getDay() === 1 && i % 2 === 0) s += `<text x="${x(i)}" y="${H - 6}" font-size="11" fill="#7D868F" text-anchor="middle">KW${isoWeek(parseIso(dd.day))}</text>`; });
-  s += `<polyline points="${days.map((dd, i) => `${x(i)},${y(dd.kpi.kennzahl)}`).join(" ")}" fill="none" stroke="#E8531A" stroke-width="2.5" stroke-linejoin="round"/>`;
-  days.forEach((dd, i) => { if (dd.kpi.kennzahl > tg) s += `<circle cx="${x(i)}" cy="${y(dd.kpi.kennzahl)}" r="2.6" fill="#C63B2F"><title>${fmtDate(dd.day)}: ${fmtNum(dd.kpi.kennzahl, 2)}</title></circle>`; });
+  [min, (min + max) / 2, max].forEach(v => s += `<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="gx-grid"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" class="gx-ax">${fmtNum(v, 1)}</text>`);
+  s += `<line x1="${pl}" x2="${W}" y1="${y(tg)}" y2="${y(tg)}" class="gx-target"/><text x="${W - 4}" y="${y(tg) - 5}" text-anchor="end" font-size="11" class="gx-ax" style="fill:var(--alarm)">Ziel ${fmtNum(tg, 2)}</text>`;
+  days.forEach((dd, i) => { if (parseIso(dd.day).getDay() === 1 && i % 2 === 0) s += `<text x="${x(i)}" y="${H - 6}" font-size="11" class="gx-ax" text-anchor="middle">KW${isoWeek(parseIso(dd.day))}</text>`; });
+  s += `<polyline points="${days.map((dd, i) => `${x(i)},${y(dd.kpi.kennzahl)}`).join(" ")}" class="gx-ln brand"/>`;
+  days.forEach((dd, i) => { if (dd.kpi.kennzahl > tg) s += `<circle cx="${x(i)}" cy="${y(dd.kpi.kennzahl)}" r="2.6" class="gx-dot-bad"><title>${fmtDate(dd.day)}: ${fmtNum(dd.kpi.kennzahl, 2)}</title></circle>`; });
   return s + "</svg>";
 }
 function zdWeekSvg() {
@@ -1083,11 +1241,11 @@ function zdWeekSvg() {
   const x = i => pl + (W - pl - pr) * i / Math.max(1, w.length - 1);
   const y1 = v => pt + (H - pt - pb) * (1 - (v - m1) / (M1 - m1)); const y2 = v => pt + (H - pt - pb) * (1 - v / M2);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
-  [m1, (m1 + M1) / 2, M1].forEach(v => s += `<line x1="${pl}" x2="${W - pr}" y1="${y1(v)}" y2="${y1(v)}" stroke="#EEF0F2"/>${mv.length ? `<text x="${pl - 6}" y="${y1(v) + 4}" text-anchor="end" font-size="11" fill="#1F8A5B">${fmtNum(v, 1)}</text>` : ""}`);
-  [0, M2 / 2, M2].forEach(v => s += `<text x="${W - pr + 6}" y="${y2(v) + 4}" font-size="11" fill="#22262A">${fmtNum(Math.round(v))}</text>`);
-  w.forEach((ww, i) => { const bw = (W - pl - pr) / w.length * 0.6; if (ww.off_best != null) s += `<rect x="${x(i) - bw / 2}" y="${y2(ww.off_best)}" width="${bw}" height="${y2(0) - y2(ww.off_best)}" fill="#22262A" opacity=".18" rx="2"><title>${ww.kw}: ${ww.off_best} offene Bestellungen</title></rect>`;
-    if (i % 4 === 0) s += `<text x="${x(i)}" y="${H - 6}" font-size="11" fill="#7D868F" text-anchor="middle">${ww.kw.slice(5)}</text>`; });
-  s += `<polyline points="${w.map((ww, i) => ww.mat_verf != null ? `${x(i)},${y1(ww.mat_verf)}` : null).filter(Boolean).join(" ")}" fill="none" stroke="#1F8A5B" stroke-width="2.5"/>`;
+  [m1, (m1 + M1) / 2, M1].forEach(v => s += `<line x1="${pl}" x2="${W - pr}" y1="${y1(v)}" y2="${y1(v)}" class="gx-grid"/>${mv.length ? `<text x="${pl - 6}" y="${y1(v) + 4}" text-anchor="end" font-size="11" class="gx-ok-t">${fmtNum(v, 1)}</text>` : ""}`);
+  [0, M2 / 2, M2].forEach(v => s += `<text x="${W - pr + 6}" y="${y2(v) + 4}" font-size="11" class="gx-in-t">${fmtNum(Math.round(v))}</text>`);
+  w.forEach((ww, i) => { const bw = (W - pl - pr) / w.length * 0.6; if (ww.off_best != null) s += `<rect x="${x(i) - bw / 2}" y="${y2(ww.off_best)}" width="${bw}" height="${y2(0) - y2(ww.off_best)}" class="gx-bar mute" rx="2"><title>${ww.kw}: ${ww.off_best} offene Bestellungen</title></rect>`;
+    if (i % 4 === 0) s += `<text x="${x(i)}" y="${H - 6}" font-size="11" class="gx-ax" text-anchor="middle">${ww.kw.slice(5)}</text>`; });
+  s += `<polyline points="${w.map((ww, i) => ww.mat_verf != null ? `${x(i)},${y1(ww.mat_verf)}` : null).filter(Boolean).join(" ")}" class="gx-ln ok"/>`;
   return s + "</svg>";
 }
 function zdWeekRows() {
@@ -1391,6 +1549,11 @@ function renderForecast() {
     <td class="heat ${auslCls(c.tot.ausl)}"><b>${c.tot.ausl != null ? fmtNum(Math.round(c.tot.ausl * 100)) + " %" : "–"}</b><div class="sub">${c.leistung ? `${fmtNum(Math.round(c.tot.menge))} / ${fmtNum(Math.round(c.tot.kap))}` : "keine Daten"}</div></td></tr>`).join("")}
   </tbody></table></div>
   <p class="muted" style="font-size:12.5px;margin:6px 2px 0">Auslastung = geplante Menge ÷ Kapazität (geplante FTE × Leistung). <span class="heat-key ok">85–105 %</span> <span class="heat-key bad">über 105 %</span> <span class="heat-key res">unter 85 % = Reserve</span></p>
+  <div class="chart" style="margin-top:14px"><h3>Auslastung der Woche pro Abteilung: Bedarf (Menge) gegen Kapazität</h3>
+    <div class="legend"><span><i style="background:var(--ok)"></i>85–105 %</span><span><i style="background:var(--alarm)"></i>über 105 %</span><span><i style="background:var(--info)"></i>unter 85 % (Reserve)</span><span>Strich = 100 % Kapazität</span></div>
+    <div class="fcbars">${all.map(c => { const a = c.tot.ausl; const w = a == null ? 0 : Math.min(150, isFinite(a) ? a * 100 : 150) / 150 * 100;
+      return `<div class="fb" data-fd="${c.def.dept}" style="cursor:pointer"><span class="nm">${c.def.dept}</span><div class="tr"><i class="${auslCls(a)}" style="width:${w.toFixed(1)}%"></i><u style="left:${(100 / 150 * 100).toFixed(2)}%"></u></div>
+      <span class="vv">${a != null ? fmtNum(Math.round(a * 100)) + " %" : "–"}${c.leistung ? ` · ${fmtNum(Math.round(c.tot.menge))} / ${fmtNum(Math.round(c.tot.kap))}` : ""}</span></div>`; }).join("")}</div></div>
   ${tips.length ? `<div class="side-card tips"><h3>Hinweise für die Planung</h3><ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul></div>` : `<div class="side-card tips"><h3>Hinweise für die Planung</h3><p>Alle Abteilungen sind ausgeglichen geplant.</p></div>`}
   <div class="tabs">${all.map(c => `<button data-ft="${c.def.dept}" aria-pressed="${c.def.dept === sel.def.dept}">${c.def.dept}</button>`).join("")}</div>
   <div id="fcDetail"></div>

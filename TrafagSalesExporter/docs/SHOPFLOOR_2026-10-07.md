@@ -118,6 +118,47 @@ Minimal und im Kopf von `app.js` dokumentiert:
 3. `X-User` wird immer gesendet (`-` wenn leer), weil der Server ihn als Pflichtheader prueft.
 4. Der Link in der "In Outlook oeffnen"-Mail zeigt auf diese Seite (`origin + pathname`), nicht auf die Wurzel des Servers.
 
+### 5.1 Cockpit-Design und Grafiken (Stand 2026-10-08, ersetzt das Trafag-Eigendesign aus dem Originalpaket)
+
+Nur Frontend, keine Aenderung an C# oder an den JSON-Formen der API.
+
+**Design.** `style.css` ist neu geschrieben: Schrift Open Sans (wie `App.razor`), Karten wie `MudPaper Outlined` (Linie, 4 bzw.
+6 px Radius, kein Schatten), KPI-Kacheln wie `ll-kpi`, dichte Tabellen, Schaltflaechen und Felder mit Linie, Primaerfarbe aus
+dem Cockpit. Alle Farben sind CSS-Variablen auf `:root`; Statusfarben und Hover werden per `color-mix` daraus abgeleitet.
+Die festen Farbwerte in den SVG-Diagrammen von `app.js` wurden durch Klassen (`gx-*`) und Variablen ersetzt.
+
+**Theme-Sync (`themeSync` am Anfang von `app.js`).** Die Seite laeuft im iframe derselben Herkunft und liest
+`window.parent.document.documentElement`: `data-theme` (hell/dunkel) und `data-skin` (ci/classic), ersatzweise
+`localStorage` `trafag-theme` / `trafag-skin`, Standard dunkel + ci. Zusaetzlich werden die echten, berechneten
+`--mud-palette-*` Werte des Cockpits (background, surface, text-primary, text-secondary, lines-default, primary; damit auch der
+Dimmer-Stand) auf `<html>` der Shopfloor-Seite kopiert. Aenderungen erkennt ein `MutationObserver` auf `<html>` und `<head>`
+des Cockpits (MudBlazor schreibt sein Theme in ein `<style>`), dazu ein Poll alle 1,5 s. Ohne Cockpit (Direktaufruf) gelten die
+Rueckfallwerte in `style.css` nach `data-theme`.
+
+**Eingebettet.** `<html>` bekommt die Klasse `embedded`, wenn `window.parent !== window`. Dann entfaellt der Trafag-Logoblock
+(das Cockpit zeigt das Logo in der Kopfleiste), die Modulnavigation bleibt. `Shopfloor.razor`: iframe `display:block`,
+`height:calc(100vh - 80px)` (Kopfleiste 64 px + unteres Padding 16 px), transparenter Grund, kein Rand: keine doppelten Scrollbalken,
+keine dunkle Luecke am unteren Rand.
+
+**Grafiken** (Inline-SVG/CSS, offline, folgen dem Theme; Bausteine `gxRing`, `gxSpark`, `gxMiniBars`, `gxStack` in `app.js`):
+
+| Ansicht | Grafik |
+| --- | --- |
+| Startseite, Kachel Pflichtpunkte | Fortschrittsring und je Pflichtpunkt ein Chip erfasst/offen |
+| Startseite, Kachel Pendenzen | Statusband im Termin / ueberfaellig |
+| Startseite, Kachel Rueckstaende | Mini-Balken SEH, TR5, TX, DW (rot = ueberfaellig Anteil) |
+| Startseite, Kachel ueberfaellig | Mini-Balken der vier Module mit den meisten Ueberfaelligen |
+| Startseite, Seitenleiste | Sparkline Bewertungskennzahl ZD05 (30 Importtage, Ziel gestrichelt), eigener Abruf `api/zd05/history`, optional |
+| Tageswerte-Seiten (kind daily) | bis zu vier Verlaufs-Kacheln (Sparkline ueber die letzten 20 Erfassungen, Delta zum Vorwert), eigener Abruf `api/daily` der letzten 45 Tage |
+| Listen mit Status | Statusband offen im Termin / ueberfaellig / erledigt ueber alle Eintraege des Moduls |
+| ZD05 Einkauf | Sparkline in der Kennzahl-Kachel, Ring Positionen im Horizont, Mini-Balken Code 2 nach A/B/C, Statusband neu/unveraendert/erledigt; Verlaufsdiagramm mit beschrifteter Ziellinie 1.20 |
+| Forecast | Balken Auslastung der Woche je Abteilung mit 100-%-Marke (zusaetzlich zur bestehenden Heatmap und zum Menge-gegen-Kapazitaet-Diagramm je Abteilung) |
+| PPA-Grafik | Kacheln mit aktuellem Auftragsvorrat und Sparkline je Abteilung; Diagramme auf die gemeinsame Farbpalette (`--c1` ... `--c5`) umgestellt |
+
+Nicht umgesetzt: ein Verlauf der Ueberfaelligen (die API liefert keine Historie dazu; Ersatz ist die ZD05-Kennzahl-Sparkline).
+Geprueft wurde mit dem Demo-Backend des Originalpakets in Edge (hell und dunkel, alle 26 Routen ohne JS-Fehler); die echte Cockpit-Einbettung
+(Aufruf `/operations`) ist noch nicht im laufenden System gesehen worden.
+
 ## 6. Konfiguration (Module, Felder, Listen) und Neuerzeugung
 
 `Services/Shopfloor/shopfloor_config.json` wurde einmal aus `modules_config.py` erzeugt und enthaelt genau das, was

@@ -11,6 +11,9 @@
    (Shopfloor:AllowedUsers / Shopfloor:OpenForAll). Die Sperre gilt zusaetzlich fuer Dateien und API,
    nicht nur fuer diese Seite. Doku docs/SHOPFLOOR_2026-10-07.md. Pfade stehen in ShopfloorEndpoints,
    damit der Lokalisierungsscanner keine Kunstpaare bildet. *@
+@* Hoehe 2026-10-08: 100vh minus Kopfleiste (64 px) minus unteres Padding von MudMainContent (pb-4 = 16 px).
+   display:block entfernt die Zeilenluecke unter dem iframe (sonst zweiter Scrollbalken), der transparente Grund
+   laesst den Cockpit-Hintergrund durchscheinen. Farben und Hell/Dunkel uebernimmt wwwroot/shopfloor/app.js (themeSync). *@
 <PageTitle>@T("Operations (Shopfloor)", "Operations (Shopfloor)")</PageTitle>
 
 @if (!_loaded)
@@ -25,7 +28,7 @@ else if (!_allowed)
 else
 {
     <iframe src="@ShopfloorEndpoints.IndexPath" title="@T("Operations (Shopfloor)", "Operations (Shopfloor)")"
-            style="width:100%;height:calc(100vh - 150px);min-height:480px;border:0;border-radius:8px;background:#fff"></iframe>
+            style="display:block;width:100%;height:calc(100vh - 80px);min-height:480px;border:0;background:transparent"></iframe>
 }
 
 @code {

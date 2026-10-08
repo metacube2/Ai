@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## Operations (Shopfloor): Cockpit-Design und Grafiken, 2026-10-08 (noch nicht deployed)
+
+- Shopfloor sieht aus wie das Cockpit (CI-Orange, Open Sans, Karten, Kacheln) und folgt Hell/Dunkel und Dimmer des Cockpits.
+- Grafiken: Fortschrittsring Pflichtpunkte, Rückstände je Abteilung, ZD05-Kennzahl gegen Ziel 1.20, Trendkacheln je Abteilung,
+  Statusbalken in Listen, Auslastung je Abteilung im Forecast, Abteilungskacheln in der PPA-Grafik.
+
 ## Operations (Shopfloor), 2026-10-07, produktiv 2026-10-08 06:39
 
 - Neuer Reiter `/operations`: PPA-Shopfloor im Cockpit (Oberfläche übernommen, Python-Backend in C#), Daten aus dem Excel-Stand.

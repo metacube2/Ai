@@ -12,6 +12,8 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-08 | CSS: die Zeichenfolge `text-*/` in einem Blockkommentar beendete den Kommentar vorzeitig und schaltete die ersten Regeln still ab | In CSS-Kommentaren kein `*/` innerhalb von Mustern schreiben (z. B. `text-*` umschreiben) | `wwwroot/shopfloor/style.css` |
+| 2026-10-08 | Vorschau-Server eines Hilfsagenten band an alle Netzwerkschnittstellen (`listen(8765)` ohne Adresse); Windows fragte Ingo nach Adminrechten fuer die Firewall | Lokale Vorschau nur als `file://` oder `listen(port, '127.0.0.1')`; Hilfsagenten das ausdruecklich vorgeben | `docs/SHOPFLOOR_2026-10-07.md` |
 | 2026-10-07 | Minimal-API: `MapPost` mit `async (HttpContext c) => ...` hinter einem Endpunktfilter gab ein leeres 200 | Lambdas als `async Task<IResult> (HttpContext c) => ...` schreiben | `Services/Shopfloor/ShopfloorEndpoints.cs` |
 | 2026-10-07 | Gateway-Filter in DPC mit `'Werks'` verglichen; das Gateway liefert die Property gross (`WERKS`) — die Abfrage waere immer leer gewesen | Wie LogKap: `CASE to_upper( property ). WHEN 'WERKS'.` | `docs/abap/ZSHOP_ADD.abap` |
 | 2026-10-07 | SAP-GUI-Skripte aus Bash: `/nSE24` als Argument wurde von MSYS zu einem Windows-Pfad umgeschrieben, SAP meldete „Bitte zulaessigen Befehl eingeben" | Vor jedem `cscript ... '/n...'` `MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'` setzen | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` |
