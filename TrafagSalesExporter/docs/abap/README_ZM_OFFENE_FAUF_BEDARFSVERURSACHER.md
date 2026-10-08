@@ -1,9 +1,11 @@
 # ZM_OFFENE_FAUF: Bedarfsverursacher als einblendbare Felder
 
-Stand: 2026-10-07. Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
+Stand: 2026-10-08 (seit dem 08.10. standardmaessig eingeblendet, siehe unten). Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
 Nummer, Daten zum Dispoelement) als zusaetzliche Felder im Report `ZM_OFFENE_FAUF`
-(„Uebersicht offene Fertigungsauftraege"), standardmaessig ausgeblendet, ueber das Layout
-einblendbar.
+(„Uebersicht offene Fertigungsauftraege"). *Ueberholt:* am 2026-10-07 standardmaessig ausgeblendet;
+seit 2026-10-08 auf Wunsch Ingo standardmaessig eingeblendet und ueber das Layout ausblendbar
+(`NO_OUT` entfernt, gleicher Auftrag `T76K912714`, in T76 aktiv). Ein gespeichertes Standardlayout
+des Benutzers geht weiterhin vor.
 
 ## Stand
 
@@ -41,8 +43,8 @@ einblendbar.
      mit `EDELKZ = 'PA'` (Planauftrag, Dispobereich aus `PLAF-BERID`) bzw. `'FE'`
      (Fertigungsauftrag), schreibt den **ersten** Verursacher in die Zeile und die Anzahl in
      `ZZPEG_ANZ`;
-   * Feldkatalog: die neun Felder mit `NO_OUT = 'X'`, also ausgeblendet und ueber
-     „Layout aendern" einblendbar.
+   * Feldkatalog: die neun Felder ohne `NO_OUT` (bis 2026-10-07 mit `NO_OUT = 'X'`), also
+     sichtbar und ueber „Layout aendern" ausblendbar.
 
 ## Test in T76 (2026-10-07)
 

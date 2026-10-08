@@ -913,7 +913,8 @@ form e01_fieldcat_init using e01_lt_fieldcat type slis_t_fieldcat_alv.
   ls_fieldcat-no_zero  = 'X'.
   append ls_fieldcat to e01_lt_fieldcat.
 
-* 2026-10-07: Bedarfsverursacher standardmaessig ausgeblendet, ueber Layout einblendbar
+* 2026-10-07: Bedarfsverursacher-Spalten; seit 2026-10-08 standardmaessig eingeblendet
+* (Wunsch Ingo), ueber Layout ausblendbar
   data: lt_peg type standard table of slis_fieldname,
         l_peg  type slis_fieldname.
   append 'ZZPEG_DELKZ' to lt_peg. append 'ZZPEG_DELNR' to lt_peg.
@@ -924,7 +925,6 @@ form e01_fieldcat_init using e01_lt_fieldcat type slis_t_fieldcat_alv.
   loop at lt_peg into l_peg.
     clear ls_fieldcat.
     ls_fieldcat-fieldname = l_peg.
-    ls_fieldcat-no_out    = 'X'.
     ls_fieldcat-no_zero   = 'X'.
     append ls_fieldcat to e01_lt_fieldcat.
   endloop.
@@ -936,7 +936,7 @@ endform.                    " E01_FIELDCAT_INIT
 * 2026-10-07 (Ingo Kohler): erster Bedarfsverursacher wie MD04 >
 * Bedarfsverursacher (Dispoelement, Nummer, Position, Einteilung,
 * Daten zum Dispoelement, Dispobereich, Termin, Menge) plus Anzahl.
-* Felder ZZPEG_* in ZMM_UEB_FAUF, im Layout standardmaessig ausgeblendet.
+* Felder ZZPEG_* in ZMM_UEB_FAUF, im Layout standardmaessig eingeblendet (seit 2026-10-08).
 form bedarfsverursacher.
   data: lt_mdrq  type standard table of mdrq,
         ls_mdrq  type mdrq,
