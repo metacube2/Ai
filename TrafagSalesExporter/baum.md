@@ -165,6 +165,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md` | ZLO03-Systemabgleich |
 | `zlo03/ZM_LZCODE20_OPT_fixes.md` | ZLO03-Codefixes |
 | `zlo03/CLAUDE.md` | bereichsspezifische Arbeitsregeln ZLO03 |
+| `zlo03/EXKLUSIV_LOGIK_2026-10-08.md` | ZLO03: Bedeutung von „Exklusiv“, Fall B63491 |
 
 ## Projekt und Koordination
 

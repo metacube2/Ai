@@ -44,7 +44,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **HR-EntitySet `HrKpiSet`: Bauplan, Stand T76, offene Schritte** | `docs/HR_KPI.md` Abschnitt 8.6 |
 | **HR-EntitySet `HrAbsenzSet` (Abwesenheiten je Fall, Transport `T76K912644`)** | `docs/HR_KPI.md` Abschnitt 8.7 |
 | **Logistik-Live-Sets `LogTaSet`, `LogLiefSet`, `LogRueckSet` (Transport `T76K912650`)** | `docs/LOGISTIK_LIVE_2026-10-01.md` |
-| **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) als einblendbare Felder, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
+| **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) standardmaessig sichtbar, mit Werk (`ZZPEG_WERKS`), Layout `/ P00 TX`, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
 | **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
 | **Einkauf: `EinkKontraktSet` (Mengenkontrakte wie ME3L, EKAB) und `EinkMatLzSet` (LZ-/Sortiments-Code), Strukturen in `T76K912724`, Klassen in `T76K912718`** | `docs/abap/ZEINK_KONTRAKT_ADD.abap`, `docs/rag/PURCHASING.md` |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
@@ -58,6 +58,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **ZZPRDAT: Loesungsdokument fuer den Fachbereich**, seit 2026-09-07 mit Kapitel „So testen Sie es selbst" (drei Testfaelle, Fehlerbilder) | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
 | ZZPRDAT: Anschreiben zur Abnahme (Vorlage fuer den Outlook-Entwurf) | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` |
 | ZZPRDAT-Arbeitsstand und vollstaendiger Analyseverlauf | `saptasks/zzprdat-kontext.md` |
+| ZLO03: Bedeutung „Exklusiv“ (Top-Down relativ zur Selektion), TSTC ZLO03 -> `Z_ZLO03_TURBO2` | `zlo03/EXKLUSIV_LOGIK_2026-10-08.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |
 
 ## Systeme

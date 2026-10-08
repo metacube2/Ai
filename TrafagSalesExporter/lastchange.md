@@ -31,6 +31,16 @@ Stand: 2026-10-01
 - Zugriff vorerst nur Ingo, bis die Leitung Produktion/Operations freigibt.
 - SAP: ShopZd05Set (ZD05) und ShopAufSet (Forecast) in T76 fertig (T76K912718); Abgleich im Cockpit gebaut, ausgeschaltet bis P76.
 
+## SAP: ZM_OFFENE_FAUF Bedarfsverursacher sichtbar und mit Werk, 2026-10-08 (T76)
+
+- Wunsch Ingo/Fabio: Die Spalten sind jetzt standardmässig eingeblendet; neues Feld „Werk“ (Werk des Bedarfsverursachers, z. B. 1200 bei einer BANF in 1200).
+- Das globale Standardlayout `/ P00 TX` versteckte neue Spalten; in T76 um DE, NR-Disp, Daten zum Dispoelement und Werk ergänzt.
+- Alles im selben Auftrag T76K912714. In P76 nach dem Import das Layout noch einmal anpassen (Layouts reisen nicht mit).
+
+## ZLO03: Bedeutung von „Exklusiv“ geklärt, 2026-10-08
+
+- Frage Ann-Katrin (B63491): „Exklusiv“ gilt relativ zur Selektion, ohne Status 99 und Nicht-FERT; Bottom-Up zählt alles. Notiz `zlo03/EXKLUSIV_LOGIK_2026-10-08.md`, Antwort als .eml.
+
 ## SAP: ZM_OFFENE_FAUF mit Bedarfsverursacher, 2026-10-07 (T76)
 
 - Neun einblendbare Felder (Dispoelement, Nummer, Position, Einteilung, Daten zum Dispoelement, Dispobereich, Termin,
