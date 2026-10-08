@@ -10,7 +10,12 @@ des Benutzers geht weiterhin vor.
 (Ersteller TDA), daneben rund 40 weitere globale Layouts (`/ P00 …`, `/ D00 …`). Ein gespeichertes Layout legt
 die Spalten fest, neue Felder erscheinen darin nicht automatisch. In ZC22 sieht man die Bedarfsverursacher
 deshalb erst, wenn man sie im Layout einblendet (Spaltentexte „Dispositionselement“, „Nummer Dispoelement“ …)
-und das Layout sichert. Globale Layouts nur mit Absprache der Produktion aendern.
+und das Layout sichert. Globale Layouts nur mit Absprache der Produktion aendern. **Erledigt in T76 am 2026-10-08 (Auftrag Ingo):** ALV-Puffer
+mit `BALVBUFDEL` geleert, im Standardlayout `/ P00 TX` („Tisk trafag cz“) die Spalten Dispositionselement, Nummer
+Dispositionselement und Daten zum Dispoelement ans Ende gestellt und gesichert (Filter/Sortierung unveraendert).
+Gegenprobe Material 63500: Planauftrag 2359802 -> `VC 410313`, `410313/000010/0001`. Die Felder stehen im
+Spaltenvorrat ganz unten (Zeilen 37 bis 45 von 45), deshalb uebersieht man sie leicht. **In P76 nach dem Import von
+`T76K912714` dasselbe noch einmal** (Layouts sind Mandantendaten und kommen nicht mit dem Transport).
 
 ## Stand
 
