@@ -34,8 +34,8 @@ Top-Down übrig lässt, ist deshalb kein Widerspruch.
 
 Wenn nur 44902 und 43457 selektiert waren, müssen die übrigen rund 248 VKNR Status 99 haben oder keine FERT sein.
 Bei einem alten Print ist das plausibel. Prüfen lässt sich das nur in P76, weil `ZPOWERBI_VC_TXT` in T76 leer ist.
-Ann-Katrin wurde gebeten, in der Bottom-Up-Liste auf Status ungleich 99 zu filtern. Die Antwortmail liegt als
-`.eml` in Ingos Downloads, weil Outlook-Entwürfe weiterhin gesperrt sind.
+Ann-Katrin wurde gebeten, in der Bottom-Up-Liste auf Status ungleich 99 zu filtern. Die Antwort hat Ingo am
+08.10.2026 verschickt (vorbereitet als `.eml`, weil Outlook-Entwürfe gesperrt sind).
 
 ## Offen
 
