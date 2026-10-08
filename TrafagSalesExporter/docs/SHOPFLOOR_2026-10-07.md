@@ -4,7 +4,7 @@ Das PPA-Shopfloor (Ersatz fuer das Excel "PPA-Shop-Floor-File-2026") laeuft jetz
 "Operations (Shopfloor)" (Route `/operations`). Das Python-Backend wurde in C# nachgebaut, die Oberflaeche
 (HTML/JS/CSS) ist unveraendert uebernommen. Auf dem Server wird kein Python benoetigt.
 
-Stand 2026-10-07 abends: committet, **nicht deployed**. Zugriff nur fuer `koi` (Ingo), bis die Leitung Produktion/Operations
+Stand 2026-10-08: **produktiv seit 06:39** (`59d0531`), angesehen. Zugriff nur fuer `koi` (Ingo), bis die Leitung Produktion/Operations
 freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transport `T76K912718` in P76 ist (Abschnitt 8).
 *Ueberholt:* „nicht committet, Zugriff fuer niemanden" war der Stand des Worktrees.
 

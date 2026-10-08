@@ -44,6 +44,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-08 06:39, Operations (Shopfloor) (`59d0531`).** `1071/1071`, bitgleich, ohne Alarm. `/operations` produktiv angesehen: Shopfloor-Oberflaeche laedt mit den Excel-Daten, Benutzer `koi`. SAP-Abgleich aus (`Shopfloor:SapSyncEnabled=false`) bis T76K912718 in P76.
 - **Deploy 2026-10-07 10:06, Budgetkurse und farbige Standardkosten-Spalten (`cbc528b`).** `1025/1025`, bitgleich, ohne Alarm. Beim ersten Start stellt der Marker `BudgetRateDecision20261007Applied` das Kursprofil einmal auf `BudgetRate`. Sales_All muss danach neu erzeugt werden (Export Dashboard, Finance-Login).
 - **Deploy 2026-10-06 15:45, Finance Details mit Standardkosten in CHF (`3c0db1b`).** `1024/1024`, `BiDashboard.dll` `15:33:25`, `8'735'744` Bytes, SHA256 `70E08B38...28CE77`, bitgleich, ohne Alarm. Wirkt ab dem naechsten erzeugten Sales_All (Spalten AH-AP in Finance Details).
 - **Deploy 2026-10-06 14:36, Weltlage unter Finance mit Passwort (`eb47027`).** `1017/1017`, `BiDashboard.dll` `14:23:21`, `8'733'184` Bytes, SHA256 `0CC885F1...DC9B6B1`, bitgleich, ohne Alarm. Produktiv angesehen: Weltlage als Gruppe unter Finance Cockpit, `/weltlage` zeigt das Finance-Passwortfeld.

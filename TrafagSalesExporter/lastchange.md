@@ -2,7 +2,7 @@
 
 Stand: 2026-10-01
 
-## Operations (Shopfloor), 2026-10-07 (committet, nicht deployed)
+## Operations (Shopfloor), 2026-10-07, produktiv 2026-10-08 06:39
 
 - Neuer Reiter `/operations`: PPA-Shopfloor im Cockpit (Oberfläche übernommen, Python-Backend in C#), Daten aus dem Excel-Stand.
 - Zugriff vorerst nur Ingo, bis die Leitung Produktion/Operations freigibt.
