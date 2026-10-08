@@ -22,7 +22,7 @@
   <meta name="twitter:title" content="MacYaesu | FT-991A Remote für macOS">
   <meta name="twitter:description" content="FT-991A am Mac ohne VM oder Wine: CAT-Steuerung, Logging, Speicher und Digimode-Vorbereitung.">
   <meta name="twitter:image" content="https://www.aiscom.ch/macyaesu/main.png">
-  <link rel="stylesheet" href="./styles.css?v=20261006b">
+  <link rel="stylesheet" href="./styles.css?v=20261008">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -54,7 +54,7 @@
       <nav class="topbar">
         <div class="utility-nav">
           <a href="#demo" data-i18n="nav_preview">Vorschau</a>
-          <a href="#vertrieb" data-i18n="nav_sales">Vertrieb</a>
+          <a href="#kaufen" data-i18n="nav_sales">Kaufen</a>
           <a href="#kontakt" data-i18n="nav_contact">Kontakt</a>
         </div>
 
@@ -66,7 +66,6 @@
         <div class="utility-nav utility-nav-right">
           <button class="lang-toggle" data-lang="de" aria-pressed="true">DE</button>
           <button class="lang-toggle" data-lang="en" aria-pressed="false">EN</button>
-          <a href="#appstore" data-i18n="nav_appstore">App Store</a>
           <a href="#download" class="utility-pill" data-i18n="nav_demo">Download</a>
         </div>
       </nav>
@@ -74,7 +73,7 @@
       <div class="main-nav">
         <a href="#betrieb" data-i18n="mainnav_operations">Betrieb</a>
         <a href="#workflow" data-i18n="mainnav_workflow">Ablauf</a>
-        <a href="#vertrieb" data-i18n="mainnav_sales">Vertrieb</a>
+        <a href="#kaufen" data-i18n="mainnav_sales">Kaufen</a>
         <a href="#kontakt" data-i18n="mainnav_contact">Kontakt</a>
       </div>
 
@@ -236,37 +235,6 @@
         </div>
       </section>
 
-      <section class="sales-section" id="vertrieb">
-        <div class="section-heading">
-          <p class="section-kicker" data-i18n="sales_kicker">Vertrieb</p>
-          <h2 data-i18n="sales_title">Für diese App ist Direktvertrieb realistischer als der Mac App Store.</h2>
-        </div>
-
-        <div class="sales-grid" id="appstore">
-          <article class="sales-card sales-card-emphasis">
-            <p class="panel-label" data-i18n="sales_1_label">Empfohlener Weg</p>
-            <h3 data-i18n="sales_1_title">Developer ID + signiertes DMG</h3>
-            <ul class="sales-list">
-              <li data-i18n="sales_1_point_1">Direkter Zugriff auf serielle Ports und USB-CAT bleibt erhalten</li>
-              <li data-i18n="sales_1_point_2">Keine App-Sandbox, die `/dev/cu.*` blockiert</li>
-              <li data-i18n="sales_1_point_3">Volle Kontrolle über Preis, Updates und Support für die Nische</li>
-              <li data-i18n="sales_1_point_4">Vertrieb über eigene Website, QRZ.com, eHam und Mailinglisten</li>
-            </ul>
-          </article>
-
-          <article class="sales-card">
-            <p class="panel-label" data-i18n="sales_2_label">Technisch möglich, aber heikel</p>
-            <h3 data-i18n="sales_2_title">Mac App Store</h3>
-            <ul class="sales-list">
-              <li data-i18n="sales_2_point_1">App Sandbox kollidiert mit direktem IOKit-/Serial-Port-Zugriff</li>
-              <li data-i18n="sales_2_point_2">Öffentliche Entitlements für serielle Ports gibt es praktisch nicht</li>
-              <li data-i18n="sales_2_point_3">BlackHole-/treibernahe Audio-Workflows sind für Store-Review unhandlich</li>
-              <li data-i18n="sales_2_point_4">Eher sinnvoll nur für eine Companion-App ohne Hardware-Steuerung</li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
       <section class="purchase-section" id="kaufen">
         <div class="section-heading">
           <p class="section-kicker" data-i18n="purchase_kicker">Kaufen</p>
@@ -324,7 +292,7 @@
           </div>
           <div class="download-actions">
             <a href="./MacYaesu.dmg" class="primary-button" download data-i18n="download_cta_primary" data-config-link="download">Demo herunterladen</a>
-            <a href="#vertrieb" class="secondary-button" data-i18n="download_cta_secondary">Lizenzmodell ansehen</a>
+            <a href="#kaufen" class="secondary-button" data-i18n="download_cta_secondary">Lizenzmodell ansehen</a>
           </div>
           <div class="download-release">
             <span><strong data-i18n="download_release_version_label">Version</strong> <span data-release="version">1.1</span></span>
@@ -381,7 +349,7 @@
     </nav>
   </div>
 
-  <script src="./config.js?v=20261006b"></script>
-  <script src="./app.js?v=20261006b"></script>
+  <script src="./config.js?v=20261008"></script>
+  <script src="./app.js?v=20261008"></script>
 </body>
 </html>
