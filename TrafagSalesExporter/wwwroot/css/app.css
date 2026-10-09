@@ -1204,7 +1204,10 @@ html[data-theme="dark"] .pm-page { --pm-open: #B98322; --pm-progress: #3D8FE0; -
 .pm-input:disabled { opacity: .7; }
 .pm-narrow { width: 80px; }
 .pm-narrow2 { width: 140px; }
-.pm-label { display: block; margin: 10px 0 4px; font-size: .78rem; font-weight: 700; color: var(--mud-palette-text-secondary); }
+.pm-flabel { display: block; margin: 10px 0 4px; font-size: .78rem; font-weight: 700; color: var(--mud-palette-text-secondary); }
+/* Eingabefelder in Zeilen teilen sich den Platz mit Knoepfen und Avataren, statt umzubrechen. */
+.pm-row > .pm-input { flex: 1 1 160px; width: auto; min-width: 0; }
+.pm-fields .pm-row { flex-wrap: nowrap; }
 .pm-chip { padding: 4px 10px; border: 1px solid var(--pm-line); border-radius: 14px; background: transparent; color: var(--mud-palette-text-primary); font-size: .8rem; font-weight: 600; cursor: pointer; }
 .pm-chip.pm-on { border-color: var(--pm-accent); background: rgba(200, 80, 30, .12); color: var(--pm-accent); }
 .pm-icon-btn { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: var(--mud-palette-text-secondary); cursor: pointer; }

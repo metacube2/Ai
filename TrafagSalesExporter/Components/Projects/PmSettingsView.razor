@@ -67,7 +67,7 @@
         }
         @if (Board.CanManage)
         {
-            <label class="pm-label pm-mt">@T("Person hinzufügen", "Add a person")</label>
+            <label class="pm-flabel pm-mt">@T("Person hinzufügen", "Add a person")</label>
             <input class="pm-input" placeholder="@T("Name oder Kürzel eingeben …", "Type a name or login …")" value="@_search" @oninput="Search" />
             @foreach (var hit in _hits)
             {

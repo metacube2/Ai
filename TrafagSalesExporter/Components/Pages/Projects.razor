@@ -64,19 +64,19 @@
             </div>
             <div class="pm-create-grid">
                 <div>
-                    <label class="pm-label">@T("Name", "Name")</label>
+                    <label class="pm-flabel">@T("Name", "Name")</label>
                     <input class="pm-input" maxlength="80" value="@_new.Name" placeholder="@T("z. B. Logistik Umbau Halle 3", "e.g. Logistics hall 3 rebuild")" @oninput="NameInput" />
                 </div>
                 <div>
-                    <label class="pm-label">@T("Schlüssel", "Key")</label>
+                    <label class="pm-flabel">@T("Schlüssel", "Key")</label>
                     <input class="pm-input pm-key-input" maxlength="6" value="@_new.Key" @oninput="e => { _new.Key = (e.Value?.ToString() ?? string.Empty).ToUpperInvariant(); _keyTouched = true; }" />
                 </div>
                 <div class="pm-create-wide">
-                    <label class="pm-label">@T("Beschreibung", "Description")</label>
+                    <label class="pm-flabel">@T("Beschreibung", "Description")</label>
                     <input class="pm-input" value="@_new.Description" placeholder="@T("Ziel und Umfang in einem Satz", "Goal and scope in one sentence")" @oninput="e => _new.Description = e.Value?.ToString() ?? string.Empty" />
                 </div>
                 <div>
-                    <label class="pm-label">@T("Farbe", "Colour")</label>
+                    <label class="pm-flabel">@T("Farbe", "Colour")</label>
                     <div class="pm-swatches">
                         @foreach (var color in PmStyle.Colors)
                         {
@@ -86,7 +86,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="pm-label">@T("Symbol", "Icon")</label>
+                    <label class="pm-flabel">@T("Symbol", "Icon")</label>
                     <div class="pm-swatches">
                         @foreach (var icon in PmStyle.Icons)
                         {
