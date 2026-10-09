@@ -19,10 +19,21 @@
     [Parameter] public bool Horizontal { get; set; }
     [Parameter] public EventCallback<int> OnVote { get; set; }
 
+    private bool _pending;
+
     private async Task Click(int value)
     {
-        if (!Disabled)
+        if (Disabled || _pending)
+            return;
+        _pending = true;
+        try
+        {
             await OnVote.InvokeAsync(value);
+        }
+        finally
+        {
+            _pending = false;
+        }
     }
 
     private string Hint(int value) => Disabled && DisabledReason.Length > 0

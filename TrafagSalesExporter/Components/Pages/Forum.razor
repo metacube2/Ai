@@ -564,13 +564,25 @@
         await LoadSideAsync();
         if (PostId is { } id)
         {
-            await LoadDetailAsync(id, countView: true);
+            await LoadDetailAsync(id, countView: false);
         }
         else
         {
             _detail = null;
             _profile = UserLogin is null ? null : await Board.GetContributorAsync(UserLogin) ?? new ForumContributor(UserLogin, UserLogin, 0, 0, 0, 0, ForumLevel.Newcomer);
             await LoadFeedAsync();
+        }
+    }
+
+    // Aufruf erst in der interaktiven Sitzung zaehlen; das Vorab-Rendern laeuft auch durch OnParametersSet.
+    private int? _viewCountedFor;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (PostId is { } id && _detail is not null && _viewCountedFor != id)
+        {
+            _viewCountedFor = id;
+            await Board.CountViewAsync(id);
         }
     }
 
@@ -808,8 +820,9 @@
 
     private async Task VoteDetail(int value)
     {
-        if (_detail is null)
+        if (_detail is null || _busy)
             return;
+        _busy = true;
         try
         {
             MarkOwn();
@@ -818,6 +831,10 @@
         catch (ForumException ex)
         {
             _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

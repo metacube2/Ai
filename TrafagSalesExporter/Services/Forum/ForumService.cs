@@ -15,6 +15,7 @@ public interface IForumService
     Task<IReadOnlyList<ForumPostSummary>> GetFeedAsync(ForumFeedQuery query, ForumUser user);
     Task<ForumPostDetail?> GetPostAsync(int id, ForumUser user, bool countView = true);
     Task<ForumPostInput?> GetPostInputAsync(int id);
+    Task CountViewAsync(int id);
     Task<int> CreatePostAsync(ForumUser user, ForumPostInput input);
     Task UpdatePostAsync(ForumUser user, int id, ForumPostInput input);
     Task DeletePostAsync(ForumUser user, int id);
@@ -45,6 +46,10 @@ public sealed partial class ForumService : IForumService
     public const int BodyMax = 20000;
     public const int CommentMax = 10000;
     public const int MaxTags = 5;
+
+    // Stimmen und Lesezeichen nacheinander schreiben: zwei schnelle Klicks fanden sonst beide "keine Stimme"
+    // und der zweite Insert scheiterte am Unique-Index. SQLite schreibt ohnehin nur einzeln.
+    private static readonly SemaphoreSlim ToggleGate = new(1, 1);
 
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ForumNotifier _notifier;
@@ -103,11 +108,11 @@ public sealed partial class ForumService : IForumService
     }
 
     private const string WelcomeText = """
-        Hier ist Platz für alles, was in SharePoint keinen Ort findet: Fragen, Ideen, Tipps, Fundstuecke und den Marktplatz.
+        Hier ist Platz für alles, was in SharePoint keinen Ort findet: Fragen, Ideen, Tipps, Fundstücke und den Marktplatz.
 
         ### So funktioniert es
         - **Abstimmen:** Pfeil hoch, wenn ein Beitrag hilft oder gefällt, Pfeil runter, wenn er nicht weiterbringt. Die besten Beiträge steigen nach oben.
-        - **Fragen:** Wähle beim Erstellen „Frage". Wer fragt, kann die beste Antwort mit dem Haken akzeptieren; sie steht dann zuoberst und gruen.
+        - **Fragen:** Wähle beim Erstellen „Frage“. Wer fragt, kann die beste Antwort mit dem Haken akzeptieren; sie steht dann zuoberst und grün.
         - **Communities:** Jedes Thema hat seine eigene Ecke. Fehlt eine, kann jeder eine neue anlegen.
         - **Reputation:** Jede Stimme für deinen Beitrag gibt 10 Punkte, eine akzeptierte Antwort 15. Gegenstimmen kosten 2.
         - **Formatierung:** `**fett**`, `*kursiv*`, `- Liste`, `> Zitat`, `[Text](https://...)` und Code in Backticks.
@@ -282,6 +287,13 @@ public sealed partial class ForumService : IForumService
         return new ForumPostDetail(summary, post.Body, Build(null, true));
     }
 
+    public async Task CountViewAsync(int id)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.ForumPosts.Where(p => p.Id == id && !p.IsDeleted)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.ViewCount, p => p.ViewCount + 1));
+    }
+
     public async Task<ForumPostInput?> GetPostInputAsync(int id)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -429,6 +441,19 @@ public sealed partial class ForumService : IForumService
     public async Task<(int Score, int MyVote)> VoteAsync(ForumUser user, string targetKind, int targetId, int value)
     {
         RequireUser(user);
+        await ToggleGate.WaitAsync();
+        try
+        {
+            return await VoteCoreAsync(user, targetKind, targetId, value);
+        }
+        finally
+        {
+            ToggleGate.Release();
+        }
+    }
+
+    private async Task<(int Score, int MyVote)> VoteCoreAsync(ForumUser user, string targetKind, int targetId, int value)
+    {
         value = Math.Sign(value);
         await using var db = await _dbFactory.CreateDbContextAsync();
 
@@ -516,6 +541,19 @@ public sealed partial class ForumService : IForumService
     public async Task<bool> ToggleBookmarkAsync(ForumUser user, int postId)
     {
         RequireUser(user);
+        await ToggleGate.WaitAsync();
+        try
+        {
+            return await ToggleBookmarkCoreAsync(user, postId);
+        }
+        finally
+        {
+            ToggleGate.Release();
+        }
+    }
+
+    private async Task<bool> ToggleBookmarkCoreAsync(ForumUser user, int postId)
+    {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var existing = await db.ForumBookmarks.FirstOrDefaultAsync(b => b.PostId == postId && b.UserLogin == user.Login);
         if (existing is not null)

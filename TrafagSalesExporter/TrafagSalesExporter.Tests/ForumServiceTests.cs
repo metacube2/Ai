@@ -113,7 +113,10 @@ public sealed class ForumServiceTests : IDisposable
 
         await Assert.ThrowsAsync<ForumException>(() => _service.UpdatePostAsync(Ben, id, input));
         await _service.UpdatePostAsync(Anna, id, input);
-        Assert.Equal("Velo zu verschenken, abgeholt", (await _service.GetPostAsync(id, Ben))!.Summary.Title);
+        await _service.CountViewAsync(id);
+        var edited = (await _service.GetPostAsync(id, Ben, countView: false))!.Summary;
+        Assert.Equal("Velo zu verschenken, abgeholt", edited.Title);
+        Assert.Equal(1, edited.ViewCount);
 
         await Assert.ThrowsAsync<ForumException>(() => _service.DeletePostAsync(Ben, id));
         await _service.DeletePostAsync(Admin, id);
