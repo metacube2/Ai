@@ -35,6 +35,10 @@
         }
 
         <div class="pm-panel-body">
+            @if (_error is { } err)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+            }
             @if (Detail.CanEdit)
             {
                 <input class="pm-title-input" value="@_edit.Title" maxlength="@PmService.TitleMax" @onchange="e => SetAndSave(() => _edit.Title = e.Value?.ToString() ?? string.Empty)" />
@@ -269,6 +273,7 @@
     private string _comment = string.Empty;
     private string _tab = "comments";
     private bool _copied;
+    private (string German, string English)? _error;
 
     protected override void OnParametersSet()
     {
@@ -277,6 +282,7 @@
         var c = Detail.Card;
         if (_loadedFor != c.Id)
         {
+            _error = null;
             _editingDescription = false;
             _comment = string.Empty;
             _copied = false;
@@ -373,11 +379,15 @@
         try
         {
             await action();
+            _error = null;
             await OnChanged.InvokeAsync();
         }
         catch (PmException ex)
         {
-            await OnError.InvokeAsync((ex.German, ex.English));
+            // Fehler im Panel zeigen (die Seitenmeldung liegt unter dem Panel) und Felder auf den gespeicherten Stand zuruecksetzen.
+            _error = (ex.German, ex.English);
+            _loadedStamp = default;
+            await OnChanged.InvokeAsync();
         }
     }
 

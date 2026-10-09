@@ -172,6 +172,31 @@ public sealed class PmServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Done_Task_In_Closed_Sprint_And_Task_Of_Removed_Member_Stay_Editable()
+    {
+        var id = await _service.CreateProjectAsync(Lead, new PmProjectInput { Name = "Nachlauf", Key = "NL", Template = PmTemplates.Scrum });
+        await _service.AddMemberAsync(Lead, id, "ben", "Ben Beispiel");
+        var board = (await _service.GetBoardAsync(id, Lead))!;
+        var sprint = board.Sprints[0].Id;
+        var done = await _service.CreateTaskAsync(Lead, id, new PmTaskInput { Title = "Fertig", SprintId = sprint });
+        var bens = await _service.CreateTaskAsync(Lead, id, new PmTaskInput { Title = "Bens Aufgabe", AssigneeLogin = "ben" });
+        await _service.StartSprintAsync(Lead, sprint, DateTime.Today, DateTime.Today.AddDays(13), "");
+        await _service.MoveTaskAsync(Lead, done, board.Columns[^1].Id, null);
+        await _service.CompleteSprintAsync(Lead, sprint, null);
+        await _service.RemoveMemberAsync(Lead, id, "ben");
+
+        var doneInput = new PmTaskInput { Title = "Fertig, nachgetragen", SprintId = sprint, ColumnId = board.Columns[^1].Id };
+        await _service.UpdateTaskAsync(Lead, done, doneInput);
+        var bensInput = new PmTaskInput { Title = "Bens Aufgabe", AssigneeLogin = "ben", DueDate = DateTime.Today.AddDays(3) };
+        await _service.UpdateTaskAsync(Lead, bens, bensInput);
+
+        Assert.Equal("Fertig, nachgetragen", (await _service.GetTaskAsync(done, Lead))!.Card.Title);
+        Assert.Equal("ben", (await _service.GetTaskAsync(bens, Lead))!.Card.AssigneeLogin);
+        // Neu zuweisen an ein Nicht-Mitglied bleibt verboten.
+        await Assert.ThrowsAsync<PmException>(() => _service.UpdateTaskAsync(Lead, done, new PmTaskInput { Title = "x", SprintId = sprint, AssigneeLogin = "ben" }));
+    }
+
+    [Fact]
     public void Burndown_Uses_Points_And_Stops_Today()
     {
         var today = new DateTime(2026, 10, 9);

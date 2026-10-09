@@ -353,12 +353,19 @@ public sealed partial class PmService : IPmService
         var epic = task.Type == PmTaskTypes.Epic ? null : await ValidRelationAsync(db, task.ProjectId, input.EpicId, true);
         if (epic == task.Id) epic = null;
         if (epic != task.EpicId) { changes.Add("Epic"); task.EpicId = epic; }
-        var sprint = await ValidSprintAsync(db, task.ProjectId, input.SprintId);
-        if (sprint != task.SprintId) { changes.Add(sprint is null ? "in den Backlog" : "Sprint"); task.SprintId = sprint; }
-        var before = task.AssigneeLogin;
-        await ApplyAssigneeAsync(db, task, input.AssigneeLogin);
-        if (!Same(before, task.AssigneeLogin))
+        // Unveraenderte Verweise nicht neu pruefen: erledigte Aufgaben behalten ihren abgeschlossenen Sprint,
+        // und Aufgaben ausgetretener Mitglieder muessen sich trotzdem bearbeiten lassen.
+        if (input.SprintId != task.SprintId)
+        {
+            var sprint = await ValidSprintAsync(db, task.ProjectId, input.SprintId);
+            changes.Add(sprint is null ? "in den Backlog" : "Sprint");
+            task.SprintId = sprint;
+        }
+        if (!Same(NormalizeLogin(input.AssigneeLogin), task.AssigneeLogin))
+        {
+            await ApplyAssigneeAsync(db, task, input.AssigneeLogin);
             changes.Add(task.AssigneeLogin.Length == 0 ? "Zuweisung entfernt" : $"zugewiesen an {task.AssigneeName}");
+        }
         if (input.ColumnId is { } columnId && columnId != task.ColumnId)
         {
             var column = await db.PmColumns.FirstOrDefaultAsync(c => c.Id == columnId && c.ProjectId == task.ProjectId) ?? throw NotFound();
