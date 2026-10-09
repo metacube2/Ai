@@ -1,0 +1,50 @@
+@* Avatar mit Initialen (Farbe je Login), Name, Stufe und Reputation wie StackOverflow. *@
+@inject IUiTextService UiText
+
+<a class="frm-author @(Compact ? "frm-author-compact" : "")" href="@($"forum/u/{Uri.EscapeDataString(Login)}")" @onclick:stopPropagation="true">
+    <span class="frm-avatar" style="background:@Color(Login)">@Initials(Name)</span>
+    <span class="frm-author-name">@Name</span>
+    @if (Login != "system" && Login.Length > 0)
+    {
+        <span class="frm-level frm-level-@((int)ForumRanking.Level(Reputation))" title="@T("Reputation", "Reputation")">@LevelName(ForumRanking.Level(Reputation)) · @Reputation</span>
+    }
+    @if (IsOp)
+    {
+        <span class="frm-op">OP</span>
+    }
+</a>
+
+@code {
+    [Parameter] public string Login { get; set; } = string.Empty;
+    [Parameter] public string Name { get; set; } = string.Empty;
+    [Parameter] public int Reputation { get; set; }
+    [Parameter] public bool IsOp { get; set; }
+    [Parameter] public bool Compact { get; set; }
+
+    private string LevelName(ForumLevel level) => level switch
+    {
+        ForumLevel.Legend => T("Legende", "Legend"),
+        ForumLevel.Expert => T("Experte", "Expert"),
+        ForumLevel.Connoisseur => T("Kenner", "Connoisseur"),
+        ForumLevel.Member => T("Mitglied", "Member"),
+        _ => T("Neuling", "Newcomer")
+    };
+
+    internal static string Initials(string name)
+    {
+        var parts = (name ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
+        return string.Concat(char.ToUpperInvariant(parts[0][0]), char.ToUpperInvariant(parts[^1][0]));
+    }
+
+    internal static string Color(string login)
+    {
+        if (login == "system") return "#C8501E";
+        var hash = 17;
+        foreach (var ch in login ?? string.Empty) hash = unchecked(hash * 31 + ch);
+        return $"hsl({Math.Abs(hash % 360)} 55% 45%)";
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

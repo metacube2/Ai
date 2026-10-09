@@ -33,4 +33,9 @@ public class AppDbContext : DbContext
     public DbSet<MarketSurveyEntry> MarketSurveyEntries => Set<MarketSurveyEntry>();
     public DbSet<NavigationMenuItem> NavigationMenuItems => Set<NavigationMenuItem>();
     public DbSet<ProjectItem> ProjectItems => Set<ProjectItem>();
+    public DbSet<ForumCommunity> ForumCommunities => Set<ForumCommunity>();
+    public DbSet<ForumPost> ForumPosts => Set<ForumPost>();
+    public DbSet<ForumComment> ForumComments => Set<ForumComment>();
+    public DbSet<ForumVote> ForumVotes => Set<ForumVote>();
+    public DbSet<ForumBookmark> ForumBookmarks => Set<ForumBookmark>();
 }

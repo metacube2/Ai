@@ -1,0 +1,23 @@
+@* Relative Zeitangabe ("vor 5 Min."), genauer Zeitpunkt im Tooltip. *@
+@inject IUiTextService UiText
+
+<span class="frm-ago" title="@Utc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")">@Text</span>
+
+@code {
+    [Parameter] public DateTime Utc { get; set; }
+
+    private string Text
+    {
+        get
+        {
+            var span = DateTime.UtcNow - DateTime.SpecifyKind(Utc, DateTimeKind.Utc);
+            if (span.TotalMinutes < 1) return T("gerade eben", "just now");
+            if (span.TotalHours < 1) return string.Format(T("vor {0} Min.", "{0} min ago"), (int)span.TotalMinutes);
+            if (span.TotalDays < 1) return string.Format(T("vor {0} Std.", "{0} h ago"), (int)span.TotalHours);
+            if (span.TotalDays < 30) return string.Format(T("vor {0} Tg.", "{0} d ago"), (int)span.TotalDays);
+            return Utc.ToLocalTime().ToString("dd.MM.yyyy");
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

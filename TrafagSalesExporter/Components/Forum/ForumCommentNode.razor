@@ -1,0 +1,171 @@
+@* Ein Kommentar mit Antworten, rekursiv. Faden-Linie zum Einklappen wie bei Reddit; bei Fragen kann
+   der Fragesteller eine direkte Antwort akzeptieren wie bei StackOverflow. *@
+@inject IUiTextService UiText
+@inject IForumService Forum
+
+<div class="frm-comment @(Comment.IsAccepted ? "frm-accepted" : "") @(Depth == 0 ? "frm-comment-top" : "")" id="@($"c{Comment.Id}")">
+    <div class="frm-comment-head">
+        <button type="button" class="frm-collapse" title="@(_collapsed ? T("Aufklappen", "Expand") : T("Einklappen", "Collapse"))" @onclick="() => _collapsed = !_collapsed">
+            @(_collapsed ? "+" : "−")
+        </button>
+        @if (Comment.IsDeleted)
+        {
+            <span class="ll-muted">@T("[gelöscht]", "[deleted]")</span>
+        }
+        else
+        {
+            <ForumAuthor Login="@Comment.AuthorLogin" Name="@Comment.AuthorName" Reputation="Comment.AuthorReputation" IsOp="Comment.IsByPostAuthor" Compact="true" />
+        }
+        <ForumAgo Utc="Comment.CreatedAtUtc" />
+        @if (Comment.EditedAtUtc is not null)
+        {
+            <span class="ll-muted frm-edited">(@T("bearbeitet", "edited"))</span>
+        }
+        @if (Comment.IsAccepted)
+        {
+            <span class="frm-accepted-badge"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" /> @T("Akzeptierte Antwort", "Accepted answer")</span>
+        }
+        @if (_collapsed)
+        {
+            <span class="ll-muted">· @Count(Comment) @T("Kommentare", "Comments")</span>
+        }
+    </div>
+
+    @if (!_collapsed)
+    {
+        <div class="frm-comment-body">
+            <div class="frm-thread-line" @onclick="() => _collapsed = true" title="@T("Einklappen", "Collapse")"></div>
+            <div class="frm-comment-content">
+                @if (_editing)
+                {
+                    <ForumEditor @bind-Value="_editText" Rows="4" MaxLength="ForumService.CommentMax" />
+                    <div class="frm-actions">
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveEdit">@T("Speichern", "Save")</MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _editing = false">@T("Abbrechen", "Cancel")</MudButton>
+                    </div>
+                }
+                else if (!Comment.IsDeleted)
+                {
+                    <div class="frm-md">@ForumMarkdown.Render(Comment.Body)</div>
+                }
+
+                @if (!Comment.IsDeleted && !_editing)
+                {
+                    <div class="frm-actions">
+                        <ForumVote Horizontal="true" Score="_score" MyVote="_myVote" Disabled="@(!CanVote)" OnVote="Vote" />
+                        @if (User.IsKnown && Depth < MaxDepth)
+                        {
+                            <button type="button" class="frm-action" @onclick="() => _replying = !_replying">
+                                <MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" Size="Size.Small" /> @T("Antwort schreiben", "Reply")
+                            </button>
+                        }
+                        @if (CanAccept)
+                        {
+                            <button type="button" class="frm-action frm-accept @(Comment.IsAccepted ? "frm-on" : "")" @onclick="Accept"
+                                    title="@T("Als beste Antwort markieren", "Mark as best answer")">
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                                @(Comment.IsAccepted ? T("Akzeptiert", "Accepted") : T("Akzeptieren", "Accept"))
+                            </button>
+                        }
+                        @if (IsMine || User.IsAdmin)
+                        {
+                            <button type="button" class="frm-action" @onclick="StartEdit"><MudIcon Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" /> @T("Bearbeiten", "Edit")</button>
+                            <button type="button" class="frm-action frm-danger" @onclick="Delete"><MudIcon Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" /> @T("Löschen", "Delete")</button>
+                        }
+                    </div>
+                }
+
+                @if (_replying)
+                {
+                    <div class="frm-reply">
+                        <ForumEditor @bind-Value="_replyText" Rows="3" MaxLength="ForumService.CommentMax" Placeholder="@T("Deine Antwort …", "Your reply …")" />
+                        <div class="frm-actions">
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@string.IsNullOrWhiteSpace(_replyText)" OnClick="SendReply">@T("Antwort schreiben", "Reply")</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _replying = false">@T("Abbrechen", "Cancel")</MudButton>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var reply in Comment.Replies)
+                {
+                    <ForumCommentNode @key="reply.Id" Comment="reply" Post="Post" User="User" Depth="Depth + 1"
+                                      OnChanged="OnChanged" OnError="OnError" OnOwnChange="OnOwnChange" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private const int MaxDepth = 8;
+
+    [Parameter, EditorRequired] public ForumCommentView Comment { get; set; } = default!;
+    [Parameter, EditorRequired] public ForumPostSummary Post { get; set; } = default!;
+    [Parameter, EditorRequired] public ForumUser User { get; set; } = ForumUser.Anonymous;
+    [Parameter] public int Depth { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+    [Parameter] public EventCallback OnOwnChange { get; set; }
+
+    private bool _collapsed;
+    private bool _replying;
+    private bool _editing;
+    private string _replyText = string.Empty;
+    private string _editText = string.Empty;
+    private int _score;
+    private int _myVote;
+
+    protected override void OnParametersSet()
+    {
+        _score = Comment.Score;
+        _myVote = Comment.MyVote;
+    }
+
+    private bool IsMine => User.IsKnown && string.Equals(User.Login, Comment.AuthorLogin, StringComparison.OrdinalIgnoreCase);
+    private bool CanVote => User.IsKnown && !IsMine;
+    private bool CanAccept => Depth == 0 && Post.Kind == ForumPostKinds.Question && User.IsKnown
+                              && string.Equals(User.Login, Post.AuthorLogin, StringComparison.OrdinalIgnoreCase);
+
+    private static int Count(ForumCommentView c) => 1 + c.Replies.Sum(Count);
+
+    private async Task Run(Func<Task> action, bool reload = true)
+    {
+        try
+        {
+            await OnOwnChange.InvokeAsync();
+            await action();
+            if (reload)
+                await OnChanged.InvokeAsync();
+        }
+        catch (ForumException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+    }
+
+    private Task Vote(int value) => Run(async () => (_score, _myVote) = await Forum.VoteAsync(User, ForumTargetKinds.Comment, Comment.Id, value), reload: false);
+
+    private Task SendReply() => Run(async () =>
+    {
+        await Forum.AddCommentAsync(User, Post.Id, Comment.Id, _replyText);
+        _replyText = string.Empty;
+        _replying = false;
+    });
+
+    private void StartEdit()
+    {
+        _editText = Comment.Body;
+        _editing = true;
+    }
+
+    private Task SaveEdit() => Run(async () =>
+    {
+        await Forum.UpdateCommentAsync(User, Comment.Id, _editText);
+        _editing = false;
+    });
+
+    private Task Delete() => Run(() => Forum.DeleteCommentAsync(User, Comment.Id));
+    private Task Accept() => Run(() => Forum.AcceptAnswerAsync(User, Post.Id, Comment.Id));
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

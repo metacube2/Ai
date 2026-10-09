@@ -1,0 +1,31 @@
+@inject IUiTextService UiText
+
+<span class="frm-kind frm-kind-@Kind.ToLowerInvariant() @(IsAnswered ? "frm-kind-solved" : "")">
+    <MudIcon Icon="@Icon" Size="Size.Small" />
+    @Label
+</span>
+
+@code {
+    [Parameter] public string Kind { get; set; } = ForumPostKinds.Discussion;
+    [Parameter] public bool IsAnswered { get; set; }
+
+    private string Icon => Kind switch
+    {
+        ForumPostKinds.Question when IsAnswered => Icons.Material.Filled.CheckCircle,
+        ForumPostKinds.Question => Icons.Material.Filled.HelpOutline,
+        ForumPostKinds.Link => Icons.Material.Filled.Link,
+        ForumPostKinds.Idea => Icons.Material.Filled.Lightbulb,
+        _ => Icons.Material.Filled.Forum
+    };
+
+    private string Label => Kind switch
+    {
+        ForumPostKinds.Question when IsAnswered => T("Gelöst", "Solved"),
+        ForumPostKinds.Question => T("Frage", "Question"),
+        ForumPostKinds.Link => T("Link", "Link"),
+        ForumPostKinds.Idea => T("Idee", "Idea"),
+        _ => T("Diskussion", "Discussion")
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

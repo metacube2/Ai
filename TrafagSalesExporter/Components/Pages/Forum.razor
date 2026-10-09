@@ -1,0 +1,929 @@
+@page "/forum"
+@page "/forum/r/{Slug}"
+@page "/forum/p/{PostId:int}"
+@page "/forum/p/{PostId:int}/bearbeiten"
+@page "/forum/u/{UserLogin}"
+@page "/forum/gespeichert"
+@page "/forum/neu"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@implements IDisposable
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Services.Forum
+@using TrafagSalesExporter.Components.Forum
+@inject IForumService Board
+@inject ForumNotifier Notifier
+@inject ForumUserDirectory Directory
+@inject IAdminAccessService AdminAccess
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+@inject IUiTextService UiText
+@inject IJSRuntime JS
+
+@* Trafag Reddit (2026-10-09, Wunsch Ingo): Forum fuer alles, was in SharePoint keinen Platz findet.
+   Reddit: Communities, Hot/Neu/Top/Kontrovers, verschachtelte Kommentare, Karma, Speichern.
+   StackOverflow: Fragen mit akzeptierter Antwort, offene Fragen, Tags, Reputation und Stufen, aehnliche Fragen beim Tippen.
+   Sofort fuer alle sichtbar (Entscheid Ingo), Autor = Windows-Login mit AD-Anzeigename. Doku docs/TRAFAG_REDDIT_2026-10-09.md *@
+<PageTitle>Trafag Reddit</PageTitle>
+
+<div class="frm-page">
+    <header class="frm-hero">
+        <div class="frm-hero-glow"></div>
+        <a class="frm-logo" href="forum">
+            <span class="frm-logo-bubble"><MudIcon Icon="@Icons.Material.Filled.Forum" /></span>
+            <span>
+                <span class="frm-logo-title">Trafag Reddit</span>
+                <span class="frm-logo-sub">@T("Fragen, Ideen, Tipps und Fundstücke: alles, was in SharePoint keinen Platz hat.", "Questions, ideas, tips and finds: everything that has no place in SharePoint.")</span>
+            </span>
+        </a>
+        <div class="frm-hero-search">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+            <input type="search" placeholder="@T("Trafag Reddit durchsuchen", "Search Trafag Reddit")" value="@_search"
+                   @oninput="OnSearchInput" @onkeydown="OnSearchKey" />
+        </div>
+        <button type="button" class="frm-create" disabled="@(!_user.IsKnown)" @onclick="StartCompose">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" /> @T("Beitrag erstellen", "Create post")
+        </button>
+        @if (_stats is { } s)
+        {
+            <div class="frm-hero-stats">
+                <span><b>@s.Posts</b> @T("Beiträge", "Posts")</span>
+                <span><b>@s.Comments</b> @T("Kommentare", "Comments")</span>
+                <span><b>@s.Votes</b> @T("Stimmen", "Votes")</span>
+                <span><b>@s.Contributors</b> @T("Mitwirkende", "Contributors")</span>
+                <span><b>@s.OpenQuestions</b> @T("offene Fragen", "open questions")</span>
+            </div>
+        }
+    </header>
+
+    @if (_error is { } err)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+    }
+    @if (!_user.IsKnown && _loaded)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-3">@T("Ohne Windows-Anmeldung kann man nur lesen.", "Without a Windows sign-in you can only read.")</MudAlert>
+    }
+
+    <div class="frm-layout">
+        <main class="frm-main">
+            @if (_composing)
+            {
+                <section class="frm-panel frm-compose">
+                    <h2>@(_editId is null ? T("Beitrag erstellen", "Create post") : T("Beitrag bearbeiten", "Edit post"))</h2>
+                    <div class="frm-kinds">
+                        @foreach (var kind in ForumPostKinds.All)
+                        {
+                            var k = kind;
+                            <button type="button" class="frm-kind-choice @(_input.Kind == k ? "frm-on" : "")" @onclick="() => _input.Kind = k">
+                                <ForumKindBadge Kind="@k" />
+                                <span class="frm-kind-help">@KindHelp(k)</span>
+                            </button>
+                        }
+                    </div>
+                    <label class="frm-label">@T("Community", "Community")</label>
+                    <select class="frm-select" value="@_input.CommunityId" @onchange="e => _input.CommunityId = int.TryParse(e.Value?.ToString(), out var id) ? id : 0">
+                        <option value="0">@T("Community wählen …", "Choose a community …")</option>
+                        @foreach (var c in _communities)
+                        {
+                            <option value="@c.Id">r/@c.Slug · @c.Name</option>
+                        }
+                    </select>
+                    <label class="frm-label">@T("Titel", "Title")</label>
+                    <input class="frm-input" maxlength="@ForumService.TitleMax" value="@_input.Title" @oninput="OnTitleInput"
+                           placeholder="@(_input.Kind == ForumPostKinds.Question ? T("Was möchtest du wissen? Möglichst genau fragen.", "What do you want to know? Be specific.") : T("Worum geht es?", "What is it about?"))" />
+                    @if (_similar.Count > 0)
+                    {
+                        <div class="frm-similar">
+                            <div class="frm-similar-head"><MudIcon Icon="@Icons.Material.Filled.TipsAndUpdates" Size="Size.Small" /> @T("Gibt es das schon? Ähnliche Beiträge:", "Already asked? Similar posts:")</div>
+                            @foreach (var sim in _similar)
+                            {
+                                <a href="@($"forum/p/{sim.Id}")" target="_blank" class="frm-similar-item">
+                                    <span class="frm-similar-score">@sim.Score</span>
+                                    <span class="frm-grow">@sim.Title</span>
+                                    @if (sim.IsAnswered)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
+                                    }
+                                    <span class="ll-muted">@sim.CommentCount <MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" Size="Size.Small" /></span>
+                                </a>
+                            }
+                        </div>
+                    }
+                    @if (_input.Kind == ForumPostKinds.Link || _input.Url.Length > 0)
+                    {
+                        <label class="frm-label">Link</label>
+                        <input class="frm-input" type="url" placeholder="https://" value="@_input.Url" @oninput="e => _input.Url = e.Value?.ToString() ?? string.Empty" />
+                    }
+                    <label class="frm-label">@T("Text", "Text")</label>
+                    <ForumEditor @bind-Value="_input.Body" Rows="8" Placeholder="@T("Details, Hintergrund, was du schon versucht hast …", "Details, background, what you already tried …")" />
+                    <label class="frm-label">@T("Tags (höchstens 5, mit Komma getrennt)", "Tags (at most 5, comma separated)")</label>
+                    <input class="frm-input" value="@_input.Tags" placeholder="excel, sap, me21n" @oninput="e => _input.Tags = e.Value?.ToString() ?? string.Empty" />
+                    @if (ForumService.NormalizeTags(_input.Tags) is { Count: > 0 } preview)
+                    {
+                        <div class="frm-tags">@foreach (var t in preview) { <span class="frm-tag">#@t</span> }</div>
+                    }
+                    <div class="frm-actions frm-compose-actions">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SavePost" Disabled="_busy">
+                            @(_editId is null ? T("Veröffentlichen", "Publish") : T("Speichern", "Save"))
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="CancelCompose">@T("Abbrechen", "Cancel")</MudButton>
+                    </div>
+                </section>
+            }
+            else if (PostId is not null)
+            {
+                @if (_detail is null)
+                {
+                    @if (_loaded)
+                    {
+                        <section class="frm-panel"><p>@T("Der Beitrag ist nicht mehr vorhanden.", "The post no longer exists.")</p><a href="forum">← Trafag Reddit</a></section>
+                    }
+                }
+                else
+                {
+                    var p = _detail.Summary;
+                    <a class="frm-back" href="@($"forum/r/{p.CommunitySlug}")">← r/@p.CommunitySlug</a>
+                    <article class="frm-panel frm-detail">
+                        <div class="frm-detail-grid">
+                            <ForumVote Score="_detailScore" MyVote="_detailVote" Disabled="@(!CanVoteOn(p.AuthorLogin))" OnVote="VoteDetail" />
+                            <div class="frm-card-main">
+                                <div class="frm-card-meta">
+                                    <a class="frm-community-pill" style="--frm-c:@p.CommunityColor" href="@($"forum/r/{p.CommunitySlug}")">
+                                        <MudIcon Icon="@ForumIcons.Resolve(p.CommunityIcon)" Size="Size.Small" /> r/@p.CommunitySlug
+                                    </a>
+                                    <ForumKindBadge Kind="@p.Kind" IsAnswered="p.IsAnswered" />
+                                    @if (p.IsPinned)
+                                    {
+                                        <span class="frm-pin"><MudIcon Icon="@Icons.Material.Filled.PushPin" Size="Size.Small" /></span>
+                                    }
+                                    <span class="frm-grow"></span>
+                                    <ForumAgo Utc="p.CreatedAtUtc" />
+                                    @if (p.EditedAtUtc is not null)
+                                    {
+                                        <span class="ll-muted frm-edited">(@T("bearbeitet", "edited"))</span>
+                                    }
+                                </div>
+                                <h1 class="frm-detail-title">@p.Title</h1>
+                                <ForumAuthor Login="@p.AuthorLogin" Name="@p.AuthorName" Reputation="p.AuthorReputation" />
+                                @if (p.Url.Length > 0)
+                                {
+                                    <a class="frm-link-card" href="@p.Url" target="_blank" rel="noopener noreferrer">
+                                        <MudIcon Icon="@Icons.Material.Filled.Language" />
+                                        <span class="frm-grow"><b>@ForumPostCard.Domain(p.Url)</b><br /><span class="ll-muted">@p.Url</span></span>
+                                        <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" />
+                                    </a>
+                                }
+                                <div class="frm-md frm-detail-body">@ForumMarkdown.Render(_detail.Body)</div>
+                                @if (p.Tags.Count > 0)
+                                {
+                                    <div class="frm-tags">@foreach (var tag in p.Tags) { <a class="frm-tag" href="@($"forum?tag={Uri.EscapeDataString(tag)}")">#@tag</a> }</div>
+                                }
+                                <div class="frm-actions">
+                                    <span class="frm-stat"><MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" Size="Size.Small" /> @p.CommentCount @T("Kommentare", "Comments")</span>
+                                    <span class="frm-stat"><MudIcon Icon="@Icons.Material.Outlined.Visibility" Size="Size.Small" /> @p.ViewCount</span>
+                                    <button type="button" class="frm-action @(_detailSaved ? "frm-on" : "")" disabled="@(!_user.IsKnown)" @onclick="ToggleSaveDetail">
+                                        <MudIcon Icon="@(_detailSaved ? Icons.Material.Filled.Bookmark : Icons.Material.Outlined.BookmarkBorder)" Size="Size.Small" />
+                                        @(_detailSaved ? T("Gespeichert", "Saved") : T("Speichern", "Save"))
+                                    </button>
+                                    <button type="button" class="frm-action" @onclick="CopyLink"><MudIcon Icon="@Icons.Material.Outlined.Share" Size="Size.Small" /> @(_copied ? T("Link kopiert", "Link copied") : T("Teilen", "Share"))</button>
+                                    @if (IsMine(p.AuthorLogin) || _user.IsAdmin)
+                                    {
+                                        <button type="button" class="frm-action" @onclick="() => StartEdit(p.Id)"><MudIcon Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" /> @T("Bearbeiten", "Edit")</button>
+                                        <button type="button" class="frm-action frm-danger" @onclick="() => DeletePost(p.Id)"><MudIcon Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" /> @T("Löschen", "Delete")</button>
+                                    }
+                                    @if (_user.IsAdmin)
+                                    {
+                                        <button type="button" class="frm-action" @onclick="() => TogglePin(p.Id)"><MudIcon Icon="@Icons.Material.Outlined.PushPin" Size="Size.Small" /> @(p.IsPinned ? T("Lösen", "Unpin") : T("Anheften", "Pin"))</button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <section class="frm-panel frm-answers">
+                        @if (_user.IsKnown)
+                        {
+                            <ForumEditor @bind-Value="_commentText" Rows="4" MaxLength="ForumService.CommentMax"
+                                         Placeholder="@(p.Kind == ForumPostKinds.Question ? T("Deine Antwort …", "Your reply …") : T("Was meinst du dazu?", "What do you think?"))" />
+                            <div class="frm-actions">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(string.IsNullOrWhiteSpace(_commentText) || _busy)" OnClick="SendComment">
+                                    @(p.Kind == ForumPostKinds.Question ? T("Antwort senden", "Post answer") : T("Kommentieren", "Comment"))
+                                </MudButton>
+                            </div>
+                        }
+                        <div class="frm-answers-head">
+                            <h3>@(p.Kind == ForumPostKinds.Question ? T("Antworten", "Answers") : T("Kommentare", "Comments")) (@p.CommentCount)</h3>
+                            @if (p.Kind == ForumPostKinds.Question && !p.IsAnswered && IsMine(p.AuthorLogin) && _detail.Comments.Count > 0)
+                            {
+                                <span class="frm-hint"><MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" /> @T("Hat dir eine Antwort geholfen? Akzeptiere sie mit dem Haken.", "Did an answer help? Accept it with the check mark.")</span>
+                            }
+                        </div>
+                        @if (_detail.Comments.Count == 0)
+                        {
+                            <div class="frm-empty frm-empty-small">
+                                <MudIcon Icon="@Icons.Material.Outlined.Forum" />
+                                <span>@T("Noch keine Kommentare. Sei die erste Person, die antwortet.", "No comments yet. Be the first to answer.")</span>
+                            </div>
+                        }
+                        @foreach (var c in _detail.Comments)
+                        {
+                            <ForumCommentNode @key="c.Id" Comment="c" Post="p" User="_user" Depth="0"
+                                              OnChanged="ReloadDetail" OnError="ShowError" OnOwnChange="MarkOwn" />
+                        }
+                    </section>
+                }
+            }
+            else
+            {
+                @if (_profile is { } prof)
+                {
+                    <section class="frm-panel frm-profile">
+                        <span class="frm-avatar frm-avatar-big" style="background:@ForumAuthor.Color(prof.Login)">@ForumAuthor.Initials(prof.Name)</span>
+                        <div class="frm-grow">
+                            <h2>@prof.Name</h2>
+                            <div class="frm-profile-stats">
+                                <span><b>@prof.Reputation</b> @T("Reputation", "Reputation")</span>
+                                <span><b>@prof.Posts</b> @T("Beiträge", "Posts")</span>
+                                <span><b>@prof.Comments</b> @T("Kommentare", "Comments")</span>
+                                <span><b>@prof.Accepted</b> @T("akzeptierte Antworten", "accepted answers")</span>
+                            </div>
+                        </div>
+                    </section>
+                }
+                else if (CurrentCommunity is { } cc)
+                {
+                    <section class="frm-community-banner" style="--frm-c:@cc.Color">
+                        <span class="frm-community-icon"><MudIcon Icon="@ForumIcons.Resolve(cc.Icon)" /></span>
+                        <div class="frm-grow">
+                            <h2>@cc.Name</h2>
+                            <span class="frm-community-slug">r/@cc.Slug · @cc.PostCount @T("Beiträge", "Posts") · @cc.MemberCount @T("Mitwirkende", "Contributors")</span>
+                            <p>@cc.Description</p>
+                        </div>
+                    </section>
+                }
+
+                <div class="frm-sortbar">
+                    @foreach (var sort in Sorts)
+                    {
+                        var key = sort.Key;
+                        <button type="button" class="frm-sort @(_sort == key ? "frm-on" : "")" @onclick="() => SetSort(key)">
+                            <MudIcon Icon="@sort.Icon" Size="Size.Small" /> @SortLabel(key)
+                        </button>
+                    }
+                    @if (_sort is ForumSorts.Top or ForumSorts.Controversial)
+                    {
+                        <select class="frm-select frm-period" value="@_period" @onchange="e => SetPeriod(e.Value?.ToString())">
+                            <option value="@ForumPeriods.Day">@T("Heute", "Today")</option>
+                            <option value="@ForumPeriods.Week">@T("Diese Woche", "This week")</option>
+                            <option value="@ForumPeriods.Month">@T("Diesen Monat", "This month")</option>
+                            <option value="@ForumPeriods.Year">@T("Dieses Jahr", "This year")</option>
+                            <option value="@ForumPeriods.All">@T("Seit Beginn", "All time")</option>
+                        </select>
+                    }
+                </div>
+
+                @if (HasFilter)
+                {
+                    <div class="frm-filters">
+                        @if (!string.IsNullOrWhiteSpace(Tag))
+                        {
+                            <span class="frm-filter">#@Tag <a href="forum">✕</a></span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_appliedSearch))
+                        {
+                            <span class="frm-filter">„@_appliedSearch“ <button type="button" @onclick="ClearSearch">✕</button></span>
+                        }
+                        @if (IsSavedView)
+                        {
+                            <span class="frm-filter"><MudIcon Icon="@Icons.Material.Filled.Bookmark" Size="Size.Small" /> @T("Gespeichert", "Saved") <a href="forum">✕</a></span>
+                        }
+                    </div>
+                }
+
+                @if (_hasNews)
+                {
+                    <button type="button" class="frm-news" @onclick="ReloadFeed">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" /> @T("Neues im Forum, jetzt anzeigen", "New activity, show now")
+                    </button>
+                }
+
+                @if (!_loaded)
+                {
+                    @for (var i = 0; i < 4; i++)
+                    {
+                        <div class="frm-card frm-skeleton"><div></div><div></div></div>
+                    }
+                }
+                else if (_feed.Count == 0)
+                {
+                    <div class="frm-empty">
+                        <MudIcon Icon="@Icons.Material.Outlined.Forum" Style="font-size:56px" />
+                        <h3>@T("Hier ist es noch still.", "It is quiet here.")</h3>
+                        <p>@T("Stell die erste Frage, teile eine Idee oder einen Fund.", "Ask the first question, share an idea or a find.")</p>
+                        @if (_user.IsKnown)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="StartCompose">@T("Beitrag erstellen", "Create post")</MudButton>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @foreach (var post in _feed)
+                    {
+                        <ForumPostCard @key="post.Id" Post="post" User="_user" OnError="ShowError" OnOwnChange="MarkOwn" />
+                    }
+                }
+            }
+        </main>
+
+        <aside class="frm-side">
+            @if (_user.IsKnown)
+            {
+                <section class="frm-panel frm-me">
+                    <div class="frm-me-head">
+                        <span class="frm-avatar" style="background:@ForumAuthor.Color(_user.Login)">@ForumAuthor.Initials(_user.DisplayName)</span>
+                        <div class="frm-grow">
+                            <b>@_user.DisplayName</b>
+                            <div class="ll-muted">@(_me?.Reputation ?? 0) @T("Reputation", "Reputation") · @LevelName(ForumRanking.Level(_me?.Reputation ?? 0))</div>
+                        </div>
+                    </div>
+                    @if (ForumRanking.NextLevelAt(_me?.Reputation ?? 0) is > 0 and var next)
+                    {
+                        <div class="frm-progress"><div style="width:@(Math.Clamp((_me?.Reputation ?? 0) * 100 / next, 2, 100))%"></div></div>
+                        <div class="ll-muted frm-small">@string.Format(T("Noch {0} Punkte bis zur nächsten Stufe", "{0} points to the next level"), next - (_me?.Reputation ?? 0))</div>
+                    }
+                    <div class="frm-me-links">
+                        <a href="@($"forum/u/{Uri.EscapeDataString(_user.Login)}")"><MudIcon Icon="@Icons.Material.Outlined.Person" Size="Size.Small" /> @T("Meine Beiträge", "My posts")</a>
+                        <a href="forum/gespeichert"><MudIcon Icon="@Icons.Material.Outlined.BookmarkBorder" Size="Size.Small" /> @T("Gespeichert", "Saved")</a>
+                    </div>
+                </section>
+            }
+
+            <section class="frm-panel">
+                <div class="frm-side-head">
+                    <h3>@T("Communities", "Communities")</h3>
+                    @if (_user.IsKnown)
+                    {
+                        <button type="button" class="frm-mini" title="@T("Neue Community", "New community")" @onclick="() => _newCommunity = !_newCommunity">＋</button>
+                    }
+                </div>
+                @if (_newCommunity)
+                {
+                    <div class="frm-new-community">
+                        <input class="frm-input" maxlength="40" placeholder="@T("Name, z. B. Lean & 5S", "Name, e.g. Lean & 5S")" value="@_ncName" @oninput="e => _ncName = e.Value?.ToString() ?? string.Empty" />
+                        <input class="frm-input" maxlength="300" placeholder="@T("Worum geht es?", "What is it about?")" value="@_ncDescription" @oninput="e => _ncDescription = e.Value?.ToString() ?? string.Empty" />
+                        <div class="frm-icon-pick">
+                            @foreach (var icon in ForumIcons.Choices)
+                            {
+                                var ic = icon;
+                                <button type="button" class="@(_ncIcon == ic ? "frm-on" : "")" @onclick="() => _ncIcon = ic"><MudIcon Icon="@ForumIcons.Resolve(ic)" Size="Size.Small" /></button>
+                            }
+                        </div>
+                        <div class="frm-color-pick">
+                            @foreach (var color in ForumIcons.Colors)
+                            {
+                                var co = color;
+                                <button type="button" class="@(_ncColor == co ? "frm-on" : "")" style="background:@co" @onclick="() => _ncColor = co"></button>
+                            }
+                        </div>
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateCommunity">@T("Anlegen", "Create")</MudButton>
+                    </div>
+                }
+                <a class="frm-community-row @(Slug is null && PostId is null && UserLogin is null && !IsSavedView ? "frm-on" : "")" href="forum">
+                    <span class="frm-community-dot" style="--frm-c:#C8501E"><MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" /></span>
+                    <span class="frm-grow">@T("Alle Beiträge", "All posts")</span>
+                </a>
+                @foreach (var c in _communities)
+                {
+                    <a class="frm-community-row @(Slug == c.Slug ? "frm-on" : "")" href="@($"forum/r/{c.Slug}")" title="@c.Description">
+                        <span class="frm-community-dot" style="--frm-c:@c.Color"><MudIcon Icon="@ForumIcons.Resolve(c.Icon)" Size="Size.Small" /></span>
+                        <span class="frm-grow">r/@c.Slug</span>
+                        <span class="frm-count">@c.PostCount</span>
+                    </a>
+                }
+            </section>
+
+            @if (_contributors.Count > 0)
+            {
+                <section class="frm-panel">
+                    <h3>@T("Ruhmeshalle", "Hall of fame")</h3>
+                    @{ var rank = 0; }
+                    @foreach (var person in _contributors)
+                    {
+                        rank++;
+                        <a class="frm-leader" href="@($"forum/u/{Uri.EscapeDataString(person.Login)}")">
+                            <span class="frm-rank frm-rank-@rank">@rank</span>
+                            <span class="frm-avatar" style="background:@ForumAuthor.Color(person.Login)">@ForumAuthor.Initials(person.Name)</span>
+                            <span class="frm-grow">@person.Name<br /><span class="ll-muted frm-small">@LevelName(person.Level)</span></span>
+                            <b>@person.Reputation</b>
+                        </a>
+                    }
+                </section>
+            }
+
+            @if (_tags.Count > 0)
+            {
+                <section class="frm-panel">
+                    <h3>@T("Beliebte Tags", "Popular tags")</h3>
+                    <div class="frm-tags">
+                        @foreach (var (tag, count) in _tags)
+                        {
+                            <a class="frm-tag @(Tag == tag ? "frm-on" : "")" href="@($"forum?tag={Uri.EscapeDataString(tag)}")">#@tag <span class="ll-muted">@count</span></a>
+                        }
+                    </div>
+                </section>
+            }
+
+            <section class="frm-panel frm-rules">
+                <h3>@T("Spielregeln", "House rules")</h3>
+                <ol>
+                    <li>@T("Freundlich bleiben, du schreibst mit deinem Namen.", "Be kind, you write under your own name.")</li>
+                    <li>@T("Keine vertraulichen Kunden-, Personal- oder Finanzdaten.", "No confidential customer, HR or financial data.")</li>
+                    <li>@T("Erst suchen, dann fragen.", "Search first, then ask.")</li>
+                    <li>@T("Abstimmen für Hilfreiches, nicht für Personen.", "Vote for helpful content, not for people.")</li>
+                </ol>
+                <div class="ll-muted frm-small">@T("Stimme für deinen Beitrag +10, akzeptierte Antwort +15, Gegenstimme −2.", "Upvote on your post +10, accepted answer +15, downvote −2.")</div>
+            </section>
+        </aside>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Slug { get; set; }
+    [Parameter] public int? PostId { get; set; }
+    [Parameter] public string? UserLogin { get; set; }
+    [SupplyParameterFromQuery(Name = "tag")] public string? Tag { get; set; }
+    [SupplyParameterFromQuery(Name = "q")] public string? Query { get; set; }
+
+    private sealed record SortOption(string Key, string Icon);
+
+    private static readonly SortOption[] Sorts =
+    [
+        new(ForumSorts.Hot, Icons.Material.Filled.LocalFireDepartment),
+        new(ForumSorts.New, Icons.Material.Filled.NewReleases),
+        new(ForumSorts.Top, Icons.Material.Filled.EmojiEvents),
+        new(ForumSorts.Active, Icons.Material.Filled.Bolt),
+        new(ForumSorts.Unanswered, Icons.Material.Filled.HelpOutline),
+        new(ForumSorts.Controversial, Icons.Material.Filled.Whatshot),
+    ];
+
+    private ForumUser _user = ForumUser.Anonymous;
+    private ForumContributor? _me;
+    private IReadOnlyList<ForumCommunityInfo> _communities = [];
+    private IReadOnlyList<ForumPostSummary> _feed = [];
+    private IReadOnlyList<ForumContributor> _contributors = [];
+    private IReadOnlyList<(string Tag, int Count)> _tags = [];
+    private ForumStats? _stats;
+    private ForumContributor? _profile;
+    private ForumPostDetail? _detail;
+    private int _detailScore;
+    private int _detailVote;
+    private bool _detailSaved;
+    private string _commentText = string.Empty;
+    private bool _copied;
+
+    private string _sort = ForumSorts.Hot;
+    private string _period = ForumPeriods.Week;
+    private string _search = string.Empty;
+    private string _appliedSearch = string.Empty;
+    private CancellationTokenSource? _searchDelay;
+    private (string German, string English)? _error;
+    private bool _loaded;
+    private bool _busy;
+    private bool _hasNews;
+    private DateTime _ownUntil;
+    private string _lastRoute = string.Empty;
+
+    private bool _composing;
+    private int? _editId;
+    private ForumPostInput _input = new();
+    private IReadOnlyList<ForumPostSummary> _similar = [];
+    private CancellationTokenSource? _similarDelay;
+
+    private bool _newCommunity;
+    private string _ncName = string.Empty;
+    private string _ncDescription = string.Empty;
+    private string _ncIcon = "Forum";
+    private string _ncColor = ForumIcons.Colors[0];
+
+    private bool IsSavedView => Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].EndsWith("forum/gespeichert", StringComparison.OrdinalIgnoreCase);
+    private bool IsComposeRoute => Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].EndsWith("forum/neu", StringComparison.OrdinalIgnoreCase);
+    private bool IsEditRoute => Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].EndsWith("/bearbeiten", StringComparison.OrdinalIgnoreCase);
+    private ForumCommunityInfo? CurrentCommunity => Slug is null ? null : _communities.FirstOrDefault(c => c.Slug == Slug);
+    private bool HasFilter => !string.IsNullOrWhiteSpace(Tag) || !string.IsNullOrWhiteSpace(_appliedSearch) || IsSavedView;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UiText.Changed += OnLanguageChanged;
+        Notifier.Changed += OnForumChanged;
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var login = ForumUserDirectory.ShortName(state.User.Identity?.Name);
+        if (login.Length > 0)
+            _user = new ForumUser(login, await Directory.DisplayNameAsync(login), AdminAccess.IsUnlocked);
+
+        await Board.EnsureDefaultsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var route = Nav.Uri;
+        if (route == _lastRoute)
+            return;
+        _lastRoute = route;
+        _search = _appliedSearch = Query ?? string.Empty;
+        _composing = false;
+        _editId = null;
+        _commentText = string.Empty;
+        _copied = false;
+        _hasNews = false;
+
+        if (IsComposeRoute)
+        {
+            await LoadSideAsync();
+            BeginCompose(new ForumPostInput { CommunityId = CurrentCommunity?.Id ?? 0 });
+        }
+        else if (IsEditRoute && PostId is { } editId)
+        {
+            await LoadSideAsync();
+            if (await Board.GetPostInputAsync(editId) is { } existing)
+            {
+                BeginCompose(existing);
+                _editId = editId;
+            }
+        }
+        else
+        {
+            await LoadAllAsync();
+        }
+        _loaded = true;
+    }
+
+    private async Task LoadAllAsync()
+    {
+        await LoadSideAsync();
+        if (PostId is { } id)
+        {
+            await LoadDetailAsync(id, countView: true);
+        }
+        else
+        {
+            _detail = null;
+            _profile = UserLogin is null ? null : await Board.GetContributorAsync(UserLogin) ?? new ForumContributor(UserLogin, UserLogin, 0, 0, 0, 0, ForumLevel.Newcomer);
+            await LoadFeedAsync();
+        }
+    }
+
+    private async Task LoadSideAsync()
+    {
+        _communities = await Board.GetCommunitiesAsync();
+        _contributors = await Board.GetContributorsAsync(8);
+        _tags = await Board.GetPopularTagsAsync(18);
+        _stats = await Board.GetStatsAsync();
+        _me = _user.IsKnown ? await Board.GetContributorAsync(_user.Login) : null;
+    }
+
+    private async Task LoadFeedAsync()
+    {
+        _feed = await Board.GetFeedAsync(new ForumFeedQuery
+        {
+            CommunitySlug = Slug,
+            Sort = _sort,
+            Period = _period,
+            Search = _appliedSearch,
+            Tag = Tag,
+            AuthorLogin = UserLogin,
+            SavedOnly = IsSavedView,
+            Take = 100
+        }, _user);
+        _hasNews = false;
+    }
+
+    private async Task LoadDetailAsync(int id, bool countView)
+    {
+        _detail = await Board.GetPostAsync(id, _user, countView);
+        if (_detail is not null)
+        {
+            _detailScore = _detail.Summary.Score;
+            _detailVote = _detail.Summary.MyVote;
+            _detailSaved = _detail.Summary.IsSaved;
+        }
+    }
+
+    private async Task ReloadDetail()
+    {
+        if (PostId is { } id)
+            await LoadDetailAsync(id, countView: false);
+        _stats = await Board.GetStatsAsync();
+        _me = _user.IsKnown ? await Board.GetContributorAsync(_user.Login) : null;
+    }
+
+    private async Task ReloadFeed()
+    {
+        await LoadSideAsync();
+        await LoadFeedAsync();
+    }
+
+    // Live: Aenderungen anderer Personen. In der Beitragsansicht sofort nachladen, im Feed nur einen Hinweis zeigen,
+    // damit die Liste nicht unter der Maus umsortiert wird.
+    private void OnForumChanged(int? postId)
+    {
+        if (DateTime.UtcNow < _ownUntil)
+            return;
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                if (_composing)
+                    return;
+                if (PostId is { } id)
+                {
+                    if (postId is null || postId == id)
+                    {
+                        await LoadDetailAsync(id, countView: false);
+                        StateHasChanged();
+                    }
+                    return;
+                }
+                _hasNews = true;
+                StateHasChanged();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        });
+    }
+
+    private void MarkOwn() => _ownUntil = DateTime.UtcNow.AddSeconds(2);
+
+    private void ShowError((string German, string English) error) => _error = error;
+
+    private async Task SetSort(string sort)
+    {
+        _sort = sort;
+        if (sort is ForumSorts.Top or ForumSorts.Controversial && _period == ForumPeriods.All)
+            _period = ForumPeriods.Week;
+        await LoadFeedAsync();
+    }
+
+    private async Task SetPeriod(string? period)
+    {
+        _period = period ?? ForumPeriods.All;
+        await LoadFeedAsync();
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? string.Empty;
+        _searchDelay?.Cancel();
+        _searchDelay = new CancellationTokenSource();
+        var token = _searchDelay.Token;
+        try
+        {
+            await Task.Delay(350, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+        await ApplySearch();
+    }
+
+    private async Task OnSearchKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await ApplySearch();
+    }
+
+    private async Task ApplySearch()
+    {
+        _appliedSearch = _search.Trim();
+        if (PostId is not null || _composing)
+        {
+            Nav.NavigateTo(_appliedSearch.Length == 0 ? "forum" : $"forum?q={Uri.EscapeDataString(_appliedSearch)}");
+            return;
+        }
+        await LoadFeedAsync();
+    }
+
+    private async Task ClearSearch()
+    {
+        _search = _appliedSearch = string.Empty;
+        await LoadFeedAsync();
+    }
+
+    private void StartCompose() => Nav.NavigateTo(Slug is null ? "forum/neu" : $"forum/neu?r={Uri.EscapeDataString(Slug)}");
+
+    private void BeginCompose(ForumPostInput input)
+    {
+        if (input.CommunityId == 0 && new Uri(Nav.Uri).Query is { Length: > 0 } query)
+        {
+            var slug = System.Web.HttpUtility.ParseQueryString(query)["r"];
+            input.CommunityId = _communities.FirstOrDefault(c => c.Slug == slug)?.Id ?? 0;
+        }
+        _input = input;
+        _similar = [];
+        _composing = true;
+    }
+
+    private void CancelCompose() => Nav.NavigateTo(_editId is { } id ? $"forum/p/{id}" : "forum");
+
+    private async Task OnTitleInput(ChangeEventArgs e)
+    {
+        _input.Title = e.Value?.ToString() ?? string.Empty;
+        _similarDelay?.Cancel();
+        _similarDelay = new CancellationTokenSource();
+        var token = _similarDelay.Token;
+        try
+        {
+            await Task.Delay(400, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+        _similar = _input.Title.Trim().Length < 4 ? [] : await Board.FindSimilarAsync(_input.Title, _user, _editId);
+    }
+
+    private async Task SavePost()
+    {
+        if (_busy)
+            return;
+        _busy = true;
+        try
+        {
+            MarkOwn();
+            int id;
+            if (_editId is { } editId)
+            {
+                await Board.UpdatePostAsync(_user, editId, _input);
+                id = editId;
+            }
+            else
+            {
+                id = await Board.CreatePostAsync(_user, _input);
+            }
+            _error = null;
+            Nav.NavigateTo($"forum/p/{id}");
+        }
+        catch (ForumException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void StartEdit(int id) => Nav.NavigateTo($"forum/p/{id}/bearbeiten");
+
+    private async Task DeletePost(int id)
+    {
+        try
+        {
+            MarkOwn();
+            await Board.DeletePostAsync(_user, id);
+            Nav.NavigateTo(_detail is { } d ? $"forum/r/{d.Summary.CommunitySlug}" : "forum");
+        }
+        catch (ForumException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+    }
+
+    private async Task TogglePin(int id)
+    {
+        try
+        {
+            MarkOwn();
+            await Board.TogglePinAsync(_user, id);
+            await ReloadDetail();
+        }
+        catch (ForumException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+    }
+
+    private async Task VoteDetail(int value)
+    {
+        if (_detail is null)
+            return;
+        try
+        {
+            MarkOwn();
+            (_detailScore, _detailVote) = await Board.VoteAsync(_user, ForumTargetKinds.Post, _detail.Summary.Id, value);
+        }
+        catch (ForumException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+    }
+
+    private async Task ToggleSaveDetail()
+    {
+        if (_detail is null)
+            return;
+        try
+        {
+            _detailSaved = await Board.ToggleBookmarkAsync(_user, _detail.Summary.Id);
+        }
+        catch (ForumException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+    }
+
+    private async Task SendComment()
+    {
+        if (_detail is null || _busy)
+            return;
+        _busy = true;
+        try
+        {
+            MarkOwn();
+            await Board.AddCommentAsync(_user, _detail.Summary.Id, null, _commentText);
+            _commentText = string.Empty;
+            await ReloadDetail();
+        }
+        catch (ForumException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CopyLink()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", Nav.Uri);
+            _copied = true;
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task CreateCommunity()
+    {
+        try
+        {
+            MarkOwn();
+            var created = await Board.CreateCommunityAsync(_user, _ncName, _ncDescription, _ncIcon, _ncColor);
+            _newCommunity = false;
+            _ncName = _ncDescription = string.Empty;
+            Nav.NavigateTo($"forum/r/{created.Slug}");
+        }
+        catch (ForumException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+    }
+
+    private bool IsMine(string login) => _user.IsKnown && string.Equals(_user.Login, login, StringComparison.OrdinalIgnoreCase);
+    private bool CanVoteOn(string login) => _user.IsKnown && !IsMine(login);
+
+    private string SortLabel(string key) => key switch
+    {
+        ForumSorts.New => T("Neu", "New"),
+        ForumSorts.Top => T("Top", "Top"),
+        ForumSorts.Active => T("Aktiv", "Active"),
+        ForumSorts.Unanswered => T("Offene Fragen", "Open questions"),
+        ForumSorts.Controversial => T("Kontrovers", "Controversial"),
+        _ => T("Angesagt", "Hot")
+    };
+
+    private string KindHelp(string kind) => kind switch
+    {
+        ForumPostKinds.Question => T("Antwort gesucht, beste wird akzeptiert", "Looking for an answer, best one gets accepted"),
+        ForumPostKinds.Link => T("Etwas Lesenswertes teilen", "Share something worth reading"),
+        ForumPostKinds.Idea => T("Vorschlag zum Abstimmen", "Proposal to vote on"),
+        _ => T("Meinungen und Austausch", "Opinions and exchange")
+    };
+
+    private string LevelName(ForumLevel level) => level switch
+    {
+        ForumLevel.Legend => T("Legende", "Legend"),
+        ForumLevel.Expert => T("Experte", "Expert"),
+        ForumLevel.Connoisseur => T("Kenner", "Connoisseur"),
+        ForumLevel.Member => T("Mitglied", "Member"),
+        _ => T("Neuling", "Newcomer")
+    };
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    public void Dispose()
+    {
+        UiText.Changed -= OnLanguageChanged;
+        Notifier.Changed -= OnForumChanged;
+        _searchDelay?.Cancel();
+        _similarDelay?.Cancel();
+    }
+}

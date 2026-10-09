@@ -59,6 +59,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureCentralSalesRecordTable(db);
         EnsureNavigationMenuItemTable(db);
         EnsureProjectItemsTable(db);
+        EnsureForumTables(db);
         EnsurePurchasingCacheTables(db);
         EnsureMaterialUsageCacheTables(db);
         EnsureNetworkTables(db);
@@ -380,6 +381,20 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         using var cmd = conn.CreateCommand();
         cmd.CommandText = DatabaseSchemaSql.GetProjectItemsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
         cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureForumTables(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        foreach (var sql in DatabaseSchemaSql.GetForumCreateSql().Concat(DatabaseSchemaSql.ForumIndexSql))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql.Replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ");
+            cmd.ExecuteNonQuery();
+        }
     }
 
     private static void EnsurePurchasingCacheTables(AppDbContext db)

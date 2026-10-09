@@ -1,0 +1,66 @@
+@* Textfeld mit Formatierungsleiste und Vorschau (Markdown-Teil aus ForumMarkdown). *@
+@inject IUiTextService UiText
+
+<div class="frm-editor">
+    <div class="frm-editor-bar">
+        <button type="button" class="@(_preview ? "" : "frm-on")" @onclick="() => _preview = false">@T("Schreiben", "Write")</button>
+        <button type="button" class="@(_preview ? "frm-on" : "")" @onclick="() => _preview = true">@T("Vorschau", "Preview")</button>
+        <span class="frm-grow"></span>
+        @if (!_preview)
+        {
+            <button type="button" title="@T("Fett", "Bold")" @onclick="@(() => Wrap("**"))"><b>B</b></button>
+            <button type="button" title="@T("Kursiv", "Italic")" @onclick="@(() => Wrap("*"))"><i>I</i></button>
+            <button type="button" title="Code" @onclick="@(() => Wrap("`"))"><code>&lt;/&gt;</code></button>
+            <button type="button" title="@T("Liste", "List")" @onclick="@(() => Line("- "))">•</button>
+            <button type="button" title="@T("Zitat", "Quote")" @onclick="@(() => Line("> "))">❝</button>
+            <button type="button" title="Link" @onclick="@(() => Append("[Text](https://)"))">🔗</button>
+        }
+    </div>
+    @if (_preview)
+    {
+        <div class="frm-md frm-preview">
+            @if (string.IsNullOrWhiteSpace(Value))
+            {
+                <span class="ll-muted">@T("Noch nichts zu sehen.", "Nothing to preview yet.")</span>
+            }
+            else
+            {
+                @ForumMarkdown.Render(Value)
+            }
+        </div>
+    }
+    else
+    {
+        <textarea class="frm-textarea" rows="@Rows" maxlength="@MaxLength" placeholder="@Placeholder"
+                  value="@Value" @oninput="OnInput"></textarea>
+    }
+    <div class="frm-editor-foot">
+        <span>@T("**fett**, *kursiv*, `Code`, - Liste, > Zitat, [Text](Link)", "**bold**, *italic*, `code`, - list, > quote, [text](link)")</span>
+        <span>@((Value ?? string.Empty).Length) / @MaxLength</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = string.Empty;
+    [Parameter] public int Rows { get; set; } = 6;
+    [Parameter] public int MaxLength { get; set; } = ForumService.BodyMax;
+
+    private bool _preview;
+
+    private Task OnInput(ChangeEventArgs e) => Set(e.Value?.ToString() ?? string.Empty);
+
+    private Task Set(string value)
+    {
+        Value = value;
+        return ValueChanged.InvokeAsync(value);
+    }
+
+    // Ohne Cursorposition (kein JS): Muster ans Ende setzen, das ist für kurze Beiträge genug.
+    private Task Wrap(string mark) => Append(mark + T("Text", "text") + mark);
+    private Task Line(string prefix) => Set((Value ?? string.Empty).TrimEnd() + (string.IsNullOrEmpty(Value) ? "" : "\n") + prefix);
+    private Task Append(string text) => Set((Value ?? string.Empty) + (string.IsNullOrEmpty(Value) || Value.EndsWith(' ') || Value.EndsWith('\n') ? "" : " ") + text);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

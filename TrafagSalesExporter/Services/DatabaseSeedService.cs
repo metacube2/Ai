@@ -376,6 +376,9 @@ public class DatabaseSeedService : IDatabaseSeedService
         // (Shopfloor:AllowedUsers / Shopfloor:OpenForAll), Doku docs/SHOPFLOOR_2026-10-07.md.
         Link("operations", null, "Operations (Shopfloor)", "Operations (Shopfloor)", "Factory", "operations", 36, "All"),
         Group("network", null, "Netzwerk", "Network", "Lan", 37),
+        // Trafag Reddit 2026-10-09 (Wunsch Ingo): Forum mit Abstimmung fuer alles, was in SharePoint keinen Platz findet,
+        // sofort fuer alle sichtbar (Entscheid Ingo), Doku docs/TRAFAG_REDDIT_2026-10-09.md.
+        Link("trafag-reddit", null, "Trafag Reddit", "Trafag Reddit", "Forum", "forum", 38, "Prefix"),
         Link("network-overview", "network", "Uebersicht", "Overview", "Hub", "netzwerk", 10, "All"),
         Link("network-availability", "network", "Verfuegbarkeit", "Availability", "Timeline", "netzwerk/verfuegbarkeit", 20, "All"),
         Link("network-exports", "network", "Netz oder Daten", "Network or data", "CompareArrows", "netzwerk/netz-oder-daten", 30, "All"),

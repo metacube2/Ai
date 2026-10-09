@@ -347,6 +347,86 @@ CREATE TABLE ProjectItems (
     UpdatedAtUtc TEXT NOT NULL
 );";
 
+    // Trafag Reddit (2026-10-09): Forum, Doku docs/TRAFAG_REDDIT_2026-10-09.md.
+    internal static IEnumerable<string> GetForumCreateSql()
+    {
+        yield return @"
+CREATE TABLE ForumCommunities (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Slug TEXT NOT NULL DEFAULT '',
+    Name TEXT NOT NULL DEFAULT '',
+    Description TEXT NOT NULL DEFAULT '',
+    Icon TEXT NOT NULL DEFAULT 'Forum',
+    Color TEXT NOT NULL DEFAULT '#C8501E',
+    CreatedByLogin TEXT NOT NULL DEFAULT '',
+    CreatedByName TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    IsArchived INTEGER NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE ForumPosts (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    CommunityId INTEGER NOT NULL,
+    Kind TEXT NOT NULL DEFAULT 'Discussion',
+    Title TEXT NOT NULL DEFAULT '',
+    Body TEXT NOT NULL DEFAULT '',
+    Url TEXT NOT NULL DEFAULT '',
+    Tags TEXT NOT NULL DEFAULT '',
+    AuthorLogin TEXT NOT NULL DEFAULT '',
+    AuthorName TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL,
+    EditedAtUtc TEXT NULL,
+    LastActivityUtc TEXT NOT NULL,
+    UpVotes INTEGER NOT NULL DEFAULT 0,
+    DownVotes INTEGER NOT NULL DEFAULT 0,
+    CommentCount INTEGER NOT NULL DEFAULT 0,
+    ViewCount INTEGER NOT NULL DEFAULT 0,
+    AcceptedCommentId INTEGER NULL,
+    IsPinned INTEGER NOT NULL DEFAULT 0,
+    IsDeleted INTEGER NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE ForumComments (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    PostId INTEGER NOT NULL,
+    ParentId INTEGER NULL,
+    Body TEXT NOT NULL DEFAULT '',
+    AuthorLogin TEXT NOT NULL DEFAULT '',
+    AuthorName TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL,
+    EditedAtUtc TEXT NULL,
+    UpVotes INTEGER NOT NULL DEFAULT 0,
+    DownVotes INTEGER NOT NULL DEFAULT 0,
+    IsDeleted INTEGER NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE ForumVotes (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    TargetKind TEXT NOT NULL DEFAULT 'P',
+    TargetId INTEGER NOT NULL,
+    VoterLogin TEXT NOT NULL DEFAULT '',
+    Value INTEGER NOT NULL DEFAULT 0,
+    CreatedAtUtc TEXT NOT NULL
+);";
+        yield return @"
+CREATE TABLE ForumBookmarks (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    PostId INTEGER NOT NULL,
+    UserLogin TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL
+);";
+    }
+
+    internal static readonly string[] ForumIndexSql =
+    [
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_ForumCommunities_Slug ON ForumCommunities (Slug)",
+        "CREATE INDEX IF NOT EXISTS IX_ForumPosts_Community ON ForumPosts (CommunityId, IsDeleted)",
+        "CREATE INDEX IF NOT EXISTS IX_ForumComments_Post ON ForumComments (PostId)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_ForumVotes_Target_Voter ON ForumVotes (TargetKind, TargetId, VoterLogin)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_ForumBookmarks_Post_User ON ForumBookmarks (PostId, UserLogin)"
+    ];
+
     internal static string GetPurchasingEkkoCacheCreateSql() => @"
 CREATE TABLE PurchasingEkkoCache (
     Ebeln TEXT NOT NULL PRIMARY KEY,

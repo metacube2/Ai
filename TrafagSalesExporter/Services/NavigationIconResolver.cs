@@ -69,6 +69,7 @@ public static class NavigationIconResolver
         "AutoAwesome" => Icons.Material.Filled.AutoAwesome,
         "MenuBook" => Icons.Material.Filled.MenuBook,
         "Factory" => Icons.Material.Filled.Factory,
+        "Forum" => Icons.Material.Filled.Forum,
         // Bis 2026-10-06 fehlten diese Seed-Icons und fielen auf den grauen Kreis zurueck.
         "AccountBalance" => Icons.Material.Filled.AccountBalance,
         "Category" => Icons.Material.Filled.Category,

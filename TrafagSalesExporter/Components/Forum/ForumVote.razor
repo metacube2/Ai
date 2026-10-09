@@ -1,0 +1,37 @@
+@* Trafag Reddit: Pfeil hoch, Punktzahl, Pfeil runter. Zweiter Klick nimmt die Stimme zurueck. *@
+@inject IUiTextService UiText
+
+<div class="frm-vote @(Horizontal ? "frm-vote-h" : "") @(MyVote > 0 ? "frm-up" : MyVote < 0 ? "frm-down" : "")">
+    <button type="button" class="frm-arrow frm-arrow-up" disabled="@Disabled" title="@Hint(1)" @onclick="() => Click(1)" @onclick:stopPropagation="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 14h6v6h6v-6h6z" /></svg>
+    </button>
+    <span class="frm-score">@Compact(Score)</span>
+    <button type="button" class="frm-arrow frm-arrow-down" disabled="@Disabled" title="@Hint(-1)" @onclick="() => Click(-1)" @onclick:stopPropagation="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20 3 10h6V4h6v6h6z" /></svg>
+    </button>
+</div>
+
+@code {
+    [Parameter] public int Score { get; set; }
+    [Parameter] public int MyVote { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string DisabledReason { get; set; } = string.Empty;
+    [Parameter] public bool Horizontal { get; set; }
+    [Parameter] public EventCallback<int> OnVote { get; set; }
+
+    private async Task Click(int value)
+    {
+        if (!Disabled)
+            await OnVote.InvokeAsync(value);
+    }
+
+    private string Hint(int value) => Disabled && DisabledReason.Length > 0
+        ? DisabledReason
+        : value > 0 ? T("Hilfreich, nach oben", "Helpful, move up") : T("Nicht hilfreich, nach unten", "Not helpful, move down");
+
+    internal static string Compact(int score) => Math.Abs(score) >= 10000
+        ? (score / 1000d).ToString("0.#k", System.Globalization.CultureInfo.InvariantCulture)
+        : score.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

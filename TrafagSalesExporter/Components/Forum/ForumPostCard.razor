@@ -1,0 +1,108 @@
+@* Ein Beitrag im Feed: Stimmen links, Community, Art, Titel, Vorschau, Tags, Autor, Antworten. *@
+@inject IUiTextService UiText
+@inject IForumService Forum
+@inject NavigationManager Nav
+
+<article class="frm-card @(Post.IsPinned ? "frm-pinned" : "")" @onclick="Open">
+    <ForumVote Score="_score" MyVote="_myVote" Disabled="@(!CanVote)" DisabledReason="@VoteHint" OnVote="Vote" />
+    <div class="frm-card-main">
+        <div class="frm-card-meta">
+            <a class="frm-community-pill" style="--frm-c:@Post.CommunityColor" href="@($"forum/r/{Post.CommunitySlug}")" @onclick:stopPropagation="true">
+                <MudIcon Icon="@ForumIcons.Resolve(Post.CommunityIcon)" Size="Size.Small" />
+                r/@Post.CommunitySlug
+            </a>
+            <ForumKindBadge Kind="@Post.Kind" IsAnswered="Post.IsAnswered" />
+            @if (Post.IsPinned)
+            {
+                <span class="frm-pin" title="@T("Angeheftet", "Pinned")"><MudIcon Icon="@Icons.Material.Filled.PushPin" Size="Size.Small" /></span>
+            }
+            <span class="frm-grow"></span>
+            <ForumAgo Utc="Post.CreatedAtUtc" />
+        </div>
+        <h3 class="frm-card-title">@Post.Title</h3>
+        @if (Post.Url.Length > 0)
+        {
+            <a class="frm-link-chip" href="@Post.Url" target="_blank" rel="noopener noreferrer" @onclick:stopPropagation="true">
+                <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" /> @Domain(Post.Url)
+            </a>
+        }
+        @if (Post.Snippet.Length > 0)
+        {
+            <p class="frm-snippet">@Post.Snippet</p>
+        }
+        @if (Post.Tags.Count > 0)
+        {
+            <div class="frm-tags">
+                @foreach (var tag in Post.Tags)
+                {
+                    <a class="frm-tag" href="@($"forum?tag={Uri.EscapeDataString(tag)}")" @onclick:stopPropagation="true">#@tag</a>
+                }
+            </div>
+        }
+        <div class="frm-card-foot">
+            <ForumAuthor Login="@Post.AuthorLogin" Name="@Post.AuthorName" Reputation="Post.AuthorReputation" Compact="true" />
+            <span class="frm-grow"></span>
+            <span class="frm-stat @(Post.Kind == ForumPostKinds.Question ? (Post.IsAnswered ? "frm-answered" : Post.CommentCount > 0 ? "frm-has-answers" : "") : "")"
+                  title="@T("Kommentare", "Comments")">
+                <MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" Size="Size.Small" /> @Post.CommentCount
+            </span>
+            <span class="frm-stat" title="@T("Aufrufe", "Views")"><MudIcon Icon="@Icons.Material.Outlined.Visibility" Size="Size.Small" /> @Post.ViewCount</span>
+            <button type="button" class="frm-stat frm-save @(_saved ? "frm-on" : "")" disabled="@(!User.IsKnown)" title="@T("Speichern", "Save")"
+                    @onclick="ToggleSave" @onclick:stopPropagation="true">
+                <MudIcon Icon="@(_saved ? Icons.Material.Filled.Bookmark : Icons.Material.Outlined.BookmarkBorder)" Size="Size.Small" />
+            </button>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public ForumPostSummary Post { get; set; } = default!;
+    [Parameter, EditorRequired] public ForumUser User { get; set; } = ForumUser.Anonymous;
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+    [Parameter] public EventCallback OnOwnChange { get; set; }
+
+    private int _score;
+    private int _myVote;
+    private bool _saved;
+
+    protected override void OnParametersSet()
+    {
+        _score = Post.Score;
+        _myVote = Post.MyVote;
+        _saved = Post.IsSaved;
+    }
+
+    private bool CanVote => User.IsKnown && !string.Equals(User.Login, Post.AuthorLogin, StringComparison.OrdinalIgnoreCase);
+    private string VoteHint => User.IsKnown ? T("Eigene Beiträge kann man nicht bewerten.", "You cannot vote on your own posts.") : T("Ohne Windows-Anmeldung nur lesen.", "Read only without a Windows sign-in.");
+
+    private async Task Vote(int value)
+    {
+        try
+        {
+            await OnOwnChange.InvokeAsync();
+            (_score, _myVote) = await Forum.VoteAsync(User, ForumTargetKinds.Post, Post.Id, value);
+        }
+        catch (ForumException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+    }
+
+    private async Task ToggleSave()
+    {
+        try
+        {
+            _saved = await Forum.ToggleBookmarkAsync(User, Post.Id);
+        }
+        catch (ForumException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+    }
+
+    private void Open() => Nav.NavigateTo($"forum/p/{Post.Id}");
+
+    internal static string Domain(string url) => Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host.Replace("www.", string.Empty) : url;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
