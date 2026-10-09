@@ -65,11 +65,23 @@ behalten ihren abgeschlossenen Sprint (Fix `9d819ae`).
 
 ## Stand
 
-- 2026-10-09: gebaut (`df4fa60`, Fix `9d819ae`). Deploystatus siehe Abschnitt „Deploy“.
+- 2026-10-09: gebaut (`df4fa60`, Fix `9d819ae`), **produktiv seit 10:18** (Stand `e879bab`).
+- CSS-Korrektur (Formularbeschriftung, umbrechende Zeilen) committet, **noch nicht deployed**.
 
 ## Deploy
 
-(wird nach dem Deploy nachgetragen)
+- 2026-10-09 10:18 aus dem sauberen Worktree (ohne Finance_All), Release-Tests 1150/1150, DLL bitgleich,
+  `/projekte` 200. Protokoll in `docs/rag/DEPLOYMENT.md`. Der Deploy-Runner blieb danach haengen
+  (Prozess 18396) und blockiert den naechsten Deploy, bis er beendet ist.
+- Sichtpruefung produktiv per Edge headless mit Windows-Anmeldung und dem Testprojekt „ZZ Test Trafag
+  Projekte“ (ZTTP, Scrum): Projekt angelegt, sechs Aufgaben, vier per Ziehen in den Sprint, Sprint mit Ziel
+  gestartet, Aufgabe im Panel zugewiesen, Prioritaet, Faelligkeit, Punkte, Checkliste und Unteraufgabe gesetzt,
+  Karte auf dem Board in „In Arbeit“ gezogen; Board, Backlog, Liste, Zeitachse, Kalender, Diagramme
+  (Burndown, Durchsatz), Aktivitaet, Einstellungen, Uebersicht und Meine Aufgaben angesehen. Danach
+  archiviert; die Uebersicht zeigt wieder 0 Projekte (sichtbar mit „Archivierte zeigen“).
+- Gefunden und behoben (noch nicht deployed): die Klasse `pm-label` war fuer Formularbeschriftung und
+  Trello-Label doppelt vergeben (Beschriftung „Person hinzufuegen“ abgeschnitten); Eingabefelder in Zeilen
+  brachen um (Zuweisen im Panel, neue Spalte).
 
 ## Offen
 

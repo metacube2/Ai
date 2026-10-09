@@ -2,7 +2,7 @@
 
 Stand: 2026-10-09
 
-## Trafag Projekte ersetzt die Poor Man's Project Management Suite, 2026-10-09
+## Trafag Projekte ersetzt die Poor Man's Project Management Suite, 2026-10-09 (produktiv 10:18)
 
 - Projektmanagement wie Jira, Trello und Planner: Board mit Ziehen und Swimlanes, Backlog und Sprints mit Burndown,
   Liste mit CSV, Zeitachse nach Epic, Kalender, Diagramme, „Meine Aufgaben“ über alle Projekte, Aufgabenpanel mit
