@@ -32,5 +32,5 @@ Logistik	ABAP-Transport Prüfbefund Logistik live (Warenausgangszeit, Kapazität
 Einkauf	Einkauf über offenen Bestellwert nach Elikz-Fix informieren	Wartet	Ingo	2026-10-06
 Finance	TR IT verkauft Indien-Ware ohne Konzernkosten TR IN (Sachnummer fehlt, ISS-007.4)	Wartet	Prüfung B1-Artikelstamm TR IT	2026-10-07
 Finance	Kostenwährung zum Budget- oder Tageskurs	Wartet	Andreas	2026-10-07
-Logistik	ZM_OFFENE_FAUF mit Bedarfsverursacher (T76 fertig, Transport T76K912714)	Wartet	Ingo: Sichtung T76, Freigabe, Import P76	2026-10-07
+Logistik	ZM_OFFENE_FAUF mit Bedarfsverursacher (T76K912714 am 09.10. in P76)	Läuft	Fabio: Layout in P76 prüfen, Fall BANF Werk 1200	2026-10-09
 Plattform	Operations (Shopfloor): Freigabe Leitung Produktion, P76-Import T76K912718	Wartet	Ingo / Leitung Produktion	2026-10-07

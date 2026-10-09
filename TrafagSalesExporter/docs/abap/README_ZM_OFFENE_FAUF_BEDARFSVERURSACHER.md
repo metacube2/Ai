@@ -1,6 +1,6 @@
 # ZM_OFFENE_FAUF: Bedarfsverursacher als einblendbare Felder
 
-Stand: 2026-10-08 (seit dem 08.10. standardmaessig eingeblendet, siehe unten). Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
+Stand: 2026-10-09 (seit dem 08.10. standardmaessig eingeblendet, am 09.10. nach P76 transportiert). Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
 Nummer, Daten zum Dispoelement) als zusaetzliche Felder im Report `ZM_OFFENE_FAUF`
 („Uebersicht offene Fertigungsauftraege"). *Ueberholt:* am 2026-10-07 standardmaessig ausgeblendet;
 seit 2026-10-08 auf Wunsch Ingo standardmaessig eingeblendet und ueber das Layout ausblendbar
@@ -27,7 +27,7 @@ Import ebenfalls ins Layout aufnehmen.
 | | |
 |---|---|
 | System | **T76**, umgesetzt und getestet 2026-10-07 |
-| Transport | **`T76K912714`** (Aufgabe `T76K912715`), offen; enthaelt Struktur `ZMM_UEB_FAUF`, Report `ZM_OFFENE_FAUF` (Quelltext und Textpool) |
+| Transport | **`T76K912714`** (Aufgabe `T76K912715`), am 2026-10-09 von Ingo nach P76 transportiert; enthaelt Struktur `ZMM_UEB_FAUF`, Report `ZM_OFFENE_FAUF` (Quelltext und Textpool) |
 | Paket | `ZLO1` |
 | P76 | noch nicht; Freigabe und Import durch Ingo |
 | Quelltext | `docs/abap/ZM_OFFENE_FAUF.abap` (neu), `docs/abap/ZM_OFFENE_FAUF_vorher_2026-10-07.abap` (Stand vorher, fuer Rueckbau) |
