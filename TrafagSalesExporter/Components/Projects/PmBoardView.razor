@@ -49,7 +49,7 @@
                         @if (_addColumn == col.Id)
                         {
                             <div class="pm-quick">
-                                <input class="pm-input" placeholder="@T("Titel eingeben, Enter speichert", "Enter a title, Enter saves")" value="@_quickTitle"
+                                <input class="pm-input" placeholder="@T("Titel eingeben, mit Enter speichern", "Enter a title, Enter saves")" value="@_quickTitle"
                                        @oninput="e => _quickTitle = e.Value?.ToString() ?? string.Empty" @onkeydown="e => QuickKey(e, col.Id)" />
                                 <div class="pm-row">
                                     <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => QuickAdd(col.Id)">@T("Karte anlegen", "Add card")</MudButton>

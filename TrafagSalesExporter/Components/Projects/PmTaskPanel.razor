@@ -189,7 +189,7 @@
             }
             @if (Detail.CanEdit)
             {
-                <input class="pm-input pm-mt" placeholder="@T("Punkt hinzufügen, Enter speichert", "Add an item, Enter saves")" value="@_newCheck"
+                <input class="pm-input pm-mt" placeholder="@T("Punkt hinzufügen, mit Enter speichern", "Add an item, Enter saves")" value="@_newCheck"
                        @oninput="e => _newCheck = e.Value?.ToString() ?? string.Empty" @onkeydown="AddCheckKey" />
             }
 
@@ -209,7 +209,7 @@
                 }
                 @if (Detail.CanEdit)
                 {
-                    <input class="pm-input pm-mt" placeholder="@T("Unteraufgabe anlegen, Enter speichert", "Create a subtask, Enter saves")" value="@_newSubtask"
+                    <input class="pm-input pm-mt" placeholder="@T("Unteraufgabe anlegen, mit Enter speichern", "Create a subtask, Enter saves")" value="@_newSubtask"
                            @oninput="e => _newSubtask = e.Value?.ToString() ?? string.Empty" @onkeydown="AddSubtaskKey" />
                 }
             }

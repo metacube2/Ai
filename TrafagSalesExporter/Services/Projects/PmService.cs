@@ -339,9 +339,9 @@ public sealed partial class PmService : IPmService
         if (description != task.Description) { changes.Add("Beschreibung"); task.Description = description; }
         var type = PmTaskTypes.All.Contains(input.Type) ? input.Type : task.Type;
         if (task.ParentId is null && type == PmTaskTypes.Subtask) type = PmTaskTypes.Task;
-        if (type != task.Type) { changes.Add($"Typ {type}"); task.Type = type; }
+        if (type != task.Type) { changes.Add($"Typ {TypeDe(type)}"); task.Type = type; }
         var priority = PmPriorities.All.Contains(input.Priority) ? input.Priority : task.Priority;
-        if (priority != task.Priority) { changes.Add($"Priorität {priority}"); task.Priority = priority; }
+        if (priority != task.Priority) { changes.Add($"Priorität {PriorityDe(priority)}"); task.Priority = priority; }
         var labels = string.Join(",", NormalizeLabels(input.Labels));
         if (labels != task.Labels) { changes.Add("Labels"); task.Labels = labels; }
         if (input.StartDate?.Date != task.StartDate) { changes.Add("Start"); task.StartDate = input.StartDate?.Date; }
@@ -358,7 +358,7 @@ public sealed partial class PmService : IPmService
         if (input.SprintId != task.SprintId)
         {
             var sprint = await ValidSprintAsync(db, task.ProjectId, input.SprintId);
-            changes.Add(sprint is null ? "in den Backlog" : "Sprint");
+            changes.Add(sprint is null ? "zurück in den Backlog" : "Sprint");
             task.SprintId = sprint;
         }
         if (!Same(NormalizeLogin(input.AssigneeLogin), task.AssigneeLogin))
@@ -426,8 +426,10 @@ public sealed partial class PmService : IPmService
             if (task.SprintId != sprint)
             {
                 var key = await db.PmProjects.Where(p => p.Id == task.ProjectId).Select(p => p.Key).FirstAsync();
-                var sprintName = sprint is null ? "den Backlog" : await db.PmSprints.Where(s => s.Id == sprint).Select(s => s.Name).FirstAsync();
-                Log(db, task.ProjectId, task.Id, user, $"hat {key}-{task.Number} in {sprintName} eingeplant");
+                var text = sprint is null
+                    ? $"hat {key}-{task.Number} zurück in den Backlog gelegt"
+                    : $"hat {key}-{task.Number} in {await db.PmSprints.Where(s => s.Id == sprint).Select(s => s.Name).FirstAsync()} eingeplant";
+                Log(db, task.ProjectId, task.Id, user, text);
             }
             task.SprintId = sprint;
             task.UpdatedAtUtc = DateTime.UtcNow;
@@ -568,7 +570,7 @@ public sealed partial class PmService : IPmService
         var project = await db.PmProjects.FirstOrDefaultAsync(p => p.Id == projectId) ?? throw NotFound();
         await RequireManageAsync(db, user, project);
         if (Same(project.LeadLogin, login))
-            throw new PmException("Die Projektleitung bleibt im Team.", "The project lead stays in the team.");
+            throw new PmException("Die Projektleitung kann nicht aus dem Team entfernt werden.", "The project lead stays in the team.");
         var member = await db.PmMembers.FirstOrDefaultAsync(m => m.ProjectId == projectId && m.Login == login);
         if (member is null)
             return;
@@ -655,7 +657,7 @@ public sealed partial class PmService : IPmService
         foreach (var task in await db.PmTasks.Where(t => t.ColumnId == columnId).ToListAsync())
             SetColumn(task, target);
         db.PmColumns.Remove(column);
-        Log(db, project.Id, null, user, $"hat die Spalte „{column.Name}“ gelöscht, Karten nach „{target.Name}“");
+        Log(db, project.Id, null, user, $"hat die Spalte „{column.Name}“ gelöscht und die Karten nach „{target.Name}“ verschoben");
         await db.SaveChangesAsync();
         _notifier.Publish(project.Id);
     }
@@ -685,7 +687,7 @@ public sealed partial class PmService : IPmService
         if (sprint.State != PmSprintStates.Planned)
             throw new PmException("Nur geplante Sprints lassen sich starten.", "Only planned sprints can be started.");
         if (await db.PmSprints.AnyAsync(s => s.ProjectId == sprint.ProjectId && s.State == PmSprintStates.Active))
-            throw new PmException("Es läuft schon ein Sprint. Erst abschliessen.", "A sprint is already running. Complete it first.");
+            throw new PmException("Es läuft bereits ein Sprint. Schliesse ihn zuerst ab.", "A sprint is already running. Complete it first.");
         if (end.Date < start.Date)
             throw new PmException("Das Ende liegt vor dem Start.", "The end is before the start.");
         sprint.State = PmSprintStates.Active;
@@ -713,7 +715,7 @@ public sealed partial class PmService : IPmService
             task.SprintId = target;
         sprint.State = PmSprintStates.Closed;
         sprint.CompletedAtUtc = DateTime.UtcNow;
-        Log(db, sprint.ProjectId, null, user, $"hat {sprint.Name} abgeschlossen, {open.Count} offene Aufgaben verschoben");
+        Log(db, sprint.ProjectId, null, user, $"hat {sprint.Name} abgeschlossen und {open.Count} offene Aufgaben verschoben");
         await db.SaveChangesAsync();
         _notifier.Publish(sprint.ProjectId);
         return open.Count;
@@ -856,7 +858,7 @@ public sealed partial class PmService : IPmService
             return;
         }
         var member = await db.PmMembers.FirstOrDefaultAsync(m => m.ProjectId == task.ProjectId && m.Login == login)
-            ?? throw new PmException("Zuweisen kann man nur an Mitglieder des Projekts.", "Tasks can only be assigned to project members.");
+            ?? throw new PmException("Aufgaben lassen sich nur Mitgliedern des Projekts zuweisen.", "Tasks can only be assigned to project members.");
         task.AssigneeLogin = member.Login;
         task.AssigneeName = member.Name;
     }
@@ -866,11 +868,11 @@ public sealed partial class PmService : IPmService
         if (id is not { } value)
             return null;
         var target = await db.PmTasks.FirstOrDefaultAsync(t => t.Id == value && t.ProjectId == projectId && !t.IsArchived)
-            ?? throw new PmException("Die verknüpfte Aufgabe gibt es nicht.", "The linked task does not exist.");
+            ?? throw new PmException("Die verknüpfte Aufgabe existiert nicht mehr.", "The linked task does not exist.");
         if (mustBeEpic && target.Type != PmTaskTypes.Epic)
             throw new PmException("Bitte ein Epic wählen.", "Please choose an epic.");
         if (!mustBeEpic && target.Type is PmTaskTypes.Epic or PmTaskTypes.Subtask)
-            throw new PmException("Unteraufgaben hängen an einer Aufgabe, Story oder einem Bug.", "Subtasks belong to a task, story or bug.");
+            throw new PmException("Eine Unteraufgabe gehört zu einer Aufgabe, einer Story oder einem Fehler.", "Subtasks belong to a task, story or bug.");
         return value;
     }
 
@@ -881,6 +883,25 @@ public sealed partial class PmService : IPmService
         var ok = await db.PmSprints.AnyAsync(s => s.Id == id && s.ProjectId == projectId && s.State != PmSprintStates.Closed);
         return ok ? id : throw new PmException("Der Sprint ist abgeschlossen oder gehört zu einem anderen Projekt.", "The sprint is closed or belongs to another project.");
     }
+
+    // Der Verlauf wird deutsch gespeichert; interne Werte wie "High" oder "Bug" darin auf Deutsch.
+    private static string TypeDe(string type) => type switch
+    {
+        PmTaskTypes.Story => "Story",
+        PmTaskTypes.Bug => "Fehler",
+        PmTaskTypes.Epic => "Epic",
+        PmTaskTypes.Subtask => "Unteraufgabe",
+        _ => "Aufgabe"
+    };
+
+    private static string PriorityDe(string priority) => priority switch
+    {
+        PmPriorities.Highest => "sehr hoch",
+        PmPriorities.High => "hoch",
+        PmPriorities.Low => "niedrig",
+        PmPriorities.Lowest => "sehr niedrig",
+        _ => "mittel"
+    };
 
     private static void Log(AppDbContext db, int projectId, int? taskId, PmUser user, string text) =>
         db.PmActivities.Add(new PmActivity { ProjectId = projectId, TaskId = taskId, Login = user.Login, Name = user.DisplayName, Text = text, AtUtc = DateTime.UtcNow });
@@ -909,7 +930,7 @@ public sealed partial class PmService : IPmService
             throw new PmException("Ohne Windows-Anmeldung kann man nur lesen.", "Without a Windows sign-in you can only read.");
     }
 
-    private static PmException NotFound() => new("Das gibt es nicht mehr.", "This no longer exists.");
+    private static PmException NotFound() => new("Dieser Eintrag existiert nicht mehr.", "This no longer exists.");
 
     [GeneratedRegex("^[A-Z][A-Z0-9]{1,5}$")] private static partial Regex KeyRegex();
     [GeneratedRegex("[A-Z0-9]+")] private static partial Regex WordRegex();

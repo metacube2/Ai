@@ -57,7 +57,7 @@
             {
                 var open = items.Count(i => i.Category != "Done");
                 <div class="pm-inline-form">
-                    <div>@string.Format(T("{0} erledigt, {1} offen. Wohin mit den offenen Aufgaben?", "{0} done, {1} open. Where should the open issues go?"), items.Count - open, open)</div>
+                    <div>@string.Format(T("{0} erledigt, {1} offen. Wohin sollen die offenen Aufgaben?", "{0} done, {1} open. Where should the open issues go?"), items.Count - open, open)</div>
                     <select class="pm-input" value="@(_moveTo?.ToString() ?? "")" @onchange="e => _moveTo = int.TryParse(e.Value?.ToString(), out var x) ? x : null">
                         <option value="">Backlog</option>
                         @foreach (var next in Board.Sprints.Where(x => x.State == "Planned"))
@@ -104,7 +104,7 @@
         </div>
         @if (CanEdit)
         {
-            <input class="pm-input pm-mt" placeholder="@T("Neue Aufgabe im Backlog, Enter speichert", "New backlog issue, Enter saves")" value="@_newTitle"
+            <input class="pm-input pm-mt" placeholder="@T("Neue Aufgabe im Backlog, mit Enter speichern", "New backlog issue, Enter saves")" value="@_newTitle"
                    @oninput="e => _newTitle = e.Value?.ToString() ?? string.Empty" @onkeydown="NewKey" />
         }
     </section>

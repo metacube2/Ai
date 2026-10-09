@@ -64,7 +64,7 @@
         }
         @if (!_board.CanEdit && _user.IsKnown)
         {
-            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">@string.Format(T("Du siehst dieses Projekt. Ändern dürfen Mitglieder; aufnehmen kann dich {0}.", "You can view this project. Members can make changes; {0} can add you."), PmText.PersonName(p.LeadName))</MudAlert>
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">@string.Format(T("Du kannst dieses Projekt ansehen. Ändern dürfen nur Mitglieder; ins Team aufnehmen kann dich {0}.", "You can view this project. Members can make changes; {0} can add you."), PmText.PersonName(p.LeadName))</MudAlert>
         }
 
         @if (_view is not "settings" and not "activity")
@@ -152,7 +152,7 @@
                             <option value="@t">@PmLabels.Type(UiText, t)</option>
                         }
                     </select>
-                    <input class="pm-input" placeholder="@T("Was ist zu tun? Enter legt an", "What needs to be done? Enter creates")" value="@_newTitle"
+                    <input class="pm-input" placeholder="@T("Was ist zu tun? Mit Enter anlegen", "What needs to be done? Enter creates")" value="@_newTitle"
                            @oninput="e => _newTitle = e.Value?.ToString() ?? string.Empty" @onkeydown="QuickCreateKey" />
                     <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@string.IsNullOrWhiteSpace(_newTitle)" OnClick="QuickCreate">@T("Anlegen", "Create")</MudButton>
                 </div>

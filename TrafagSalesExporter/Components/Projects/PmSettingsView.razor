@@ -11,7 +11,7 @@
             <label>@T("Name", "Name")</label>
             <input class="pm-input" disabled="@(!Board.CanManage)" value="@_input.Name" @oninput="e => _input.Name = e.Value?.ToString() ?? string.Empty" />
             <label>@T("Schlüssel", "Key")</label>
-            <span><b>@Board.Project.Key</b> <span class="pm-muted pm-small">@T("fest, damit Verweise wie LOG-12 gültig bleiben", "fixed so that references like LOG-12 stay valid")</span></span>
+            <span><b>@Board.Project.Key</b> <span class="pm-muted pm-small">@T("lässt sich nicht ändern, damit Verweise wie LOG-12 gültig bleiben", "fixed so that references like LOG-12 stay valid")</span></span>
             <label>@T("Beschreibung", "Description")</label>
             <textarea class="pm-input" rows="3" disabled="@(!Board.CanManage)" @oninput="e => _input.Description = e.Value?.ToString() ?? string.Empty">@_input.Description</textarea>
             <label>@T("Start", "Start")</label>
@@ -103,7 +103,7 @@
                 {
                     <button type="button" class="pm-icon-btn" @onclick="() => Run(() => Pm.MoveColumnAsync(User, col.Id, -1))"><MudIcon Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" /></button>
                     <button type="button" class="pm-icon-btn" @onclick="() => Run(() => Pm.MoveColumnAsync(User, col.Id, 1))"><MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" /></button>
-                    <button type="button" class="pm-icon-btn" title="@T("Spalte löschen, Karten wandern in die erste Spalte derselben Art", "Delete column, cards move to the first column of the same kind")"
+                    <button type="button" class="pm-icon-btn" title="@T("Spalte löschen; die Karten kommen in die erste Spalte derselben Art", "Delete column, cards move to the first column of the same kind")"
                             @onclick="() => Run(() => Pm.DeleteColumnAsync(User, col.Id))"><MudIcon Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" /></button>
                 }
             </div>

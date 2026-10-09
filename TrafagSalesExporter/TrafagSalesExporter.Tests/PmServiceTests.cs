@@ -114,7 +114,7 @@ public sealed class PmServiceTests : IDisposable
         Assert.True(detail.Card.IsOverdue);
         Assert.Equal(["finance", "quartal"], detail.Card.Labels);
         Assert.Equal("Muster, Anna", detail.Card.AssigneeName);
-        Assert.Contains(detail.Activity, a => a.Text.Contains("Priorität High") && a.Text.Contains("Titel"));
+        Assert.Contains(detail.Activity, a => a.Text.Contains("Priorität hoch") && a.Text.Contains("Titel"));
 
         var mine = Assert.Single(await _service.GetMyTasksAsync(Lead));
         Assert.Equal(task, mine.Card.Id);

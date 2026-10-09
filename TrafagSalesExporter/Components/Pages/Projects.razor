@@ -99,7 +99,7 @@
             <div class="pm-row pm-mt">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="Create">@T("Projekt anlegen", "Create project")</MudButton>
                 <MudButton Variant="Variant.Text" OnClick="() => _creating = false">@T("Abbrechen", "Cancel")</MudButton>
-                <span class="pm-muted pm-small">@T("Du wirst Projektleitung und kannst danach das Team zusammenstellen.", "You become the project lead and can then build the team.")</span>
+                <span class="pm-muted pm-small">@T("Du übernimmst die Projektleitung und kannst danach das Team zusammenstellen.", "You become the project lead and can then build the team.")</span>
             </div>
         </section>
     }
@@ -126,7 +126,7 @@
             <div class="pm-empty">
                 <MudIcon Icon="@Icons.Material.Outlined.ViewKanban" Style="font-size:56px" />
                 <h3>@T("Noch keine Projekte.", "No projects yet.")</h3>
-                <p>@T("Leg das erste an: Vorlage wählen, Namen geben, Team einladen.", "Create the first one: choose a template, name it, invite the team.")</p>
+                <p>@T("Lege das erste an: Vorlage wählen, Namen vergeben, Team einladen.", "Create the first one: choose a template, name it, invite the team.")</p>
             </div>
         }
         <div class="pm-grid">
@@ -194,7 +194,7 @@
         {
             <div class="pm-empty">
                 <MudIcon Icon="@Icons.Material.Outlined.TaskAlt" Style="font-size:56px" />
-                <h3>@T("Nichts offen für dich.", "Nothing open for you.")</h3>
+                <h3>@T("Für dich ist nichts offen.", "Nothing open for you.")</h3>
             </div>
         }
         @foreach (var group in MineGroups)
