@@ -25,6 +25,8 @@ Punkt 4 Gespraech Armin. Details: `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026
 
 ## Kontrakte und LZ-Dimensionen 2026-10-08 (Cockpit produktiv 15:03, SAP-Sets nach P76-Import)
 
+*Stand 2026-10-09:* T76K912724 und T76K912718 in P76, Caches geleert, Delta 12:27 erfolgreich: 1'262 Kontraktpositionen, 35'042 LZ-Codes, offener Kontraktwert **CHF 18'670'239** inkl. abgelaufener Kontrakte. Armins ME3L-Erwartung war 16–17 Mio.; Abweichung mit Armin klaeren (abgelaufene Kontrakte, nur Belegart MK?). Produktgruppen-Verwendung im selben Lauf: 4'469 von 6'075 Komponenten mit verkuerzter Nummer, 1'280 folgen.
+
 Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-10-08.
 
 - **Zwei Kontrakt-Kennzahlen, nicht verwechseln:**

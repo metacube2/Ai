@@ -208,6 +208,8 @@ Pflichtfilter Werks und Datum, 60 Tage. Gemessen T76: ShopAufSet 200, 300 KB, 3 
 `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` UND `/IWBEP/CACHE_CLEANUP` (sonst 404, siehe LEARNINGS 2026-10-07).
 *Nachtrag 2026-10-08:* T76K912718 enthaelt jetzt auch den Code der Einkauf-Sets EinkKontraktSet/EinkMatLzSet; deren Strukturen liegen in T76K912724. **Import: zuerst T76K912724, dann T76K912718.**
 
+*Nachtrag 2026-10-09:* Beide Auftraege von Ingo nach P76 importiert, Caches geleert. `Shopfloor:SapSyncEnabled` steht seit dem Deploy 11:32 (`2aea0ba`) auf **true**. Nach jedem App-Neustart holt der Dienst den juengsten faelligen Termin des Tages nach. Erster Lauf 11:33: `ShopZd05Set` 58 Positionen (29 fuer den Tag uebernommen), `ShopAufSet` 6'449 Auftraege, davon 3'858 im Forecast-Fenster 09.10. bis 06.11.; je Abteilung TX 539, DW 875, TR5 492, SEH 40, **ohne Abteilung („?“) 1'912**. Die Disponenten dieser Auftraege kommen in der Zuordnung `ShopfloorForecast.DefaultPrefix` nicht vor; haeufigste in der Woche ab 12.10.: 025 (91), SE1 (74), 024 (67), PKA (43), SL1 (42), SE2 (38), 019, 022, 018, SL3. Welche davon zu welcher Abteilung gehoeren, muss die Produktion festlegen (nicht geraten).
+
 *Vorbereitung (Stand vor dem Umsetzen):*
 
 Die automatische Befuellung aus SAP kommt ueber neue OData-Sets `ShopZd05Set` (Report ZD05, Fehlteile) und `ShopAufSet`

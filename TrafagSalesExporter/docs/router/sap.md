@@ -45,8 +45,8 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **HR-EntitySet `HrAbsenzSet` (Abwesenheiten je Fall, Transport `T76K912644`)** | `docs/HR_KPI.md` Abschnitt 8.7 |
 | **Logistik-Live-Sets `LogTaSet`, `LogLiefSet`, `LogRueckSet` (Transport `T76K912650`)** | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) standardmaessig sichtbar, mit Werk (`ZZPEG_WERKS`), Layout `/ P00 TX`, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
-| **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
-| **Einkauf: `EinkKontraktSet` (Mengenkontrakte wie ME3L, EKAB) und `EinkMatLzSet` (LZ-/Sortiments-Code), Strukturen in `T76K912724`, Klassen in `T76K912718`** | `docs/abap/ZEINK_KONTRAKT_ADD.abap`, `docs/rag/PURCHASING.md` |
+| **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`, seit 2026-10-09 in P76** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
+| **Einkauf: `EinkKontraktSet` (Mengenkontrakte wie ME3L, EKAB) und `EinkMatLzSet` (LZ-/Sortiments-Code), Strukturen in `T76K912724`, Klassen in `T76K912718`, beide seit 2026-10-09 in P76** | `docs/abap/ZEINK_KONTRAKT_ADD.abap`, `docs/rag/PURCHASING.md` |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |
