@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Neuer Reiter Trafag Reddit: Forum mit Communities, Fragen/Antworten, Abstimmung, Karma (Reddit + StackOverflow), sofort fuer alle, Autor mit Windows-Namen, Deploy freigegeben (Wunsch Ingo 2026-10-09) | `Components/Pages/Forum*.razor`, `Components/Forum/*`, `Services/Forum/*`, `Models/Forum*.cs`, `Data/AppDbContext.cs`, Schema-SQL/-Wartung, Menue-Seed, `NavigationIconResolver.cs`, Uebersetzungen, `app.css` (Praefix `frm-`), `Program.cs` (eine Zeile), Tests, Doku | in Arbeit seit 2026-10-09 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Neuer Reiter Trafag Reddit (Forum mit Abstimmung, Reddit + StackOverflow) | 2026-10-09 09:20 | **Abgeschlossen, produktiv 09:20 (`33bd2b5`), Reservierung frei.** Code `4d4693d` + `9efa491`: `Components/Pages/Forum.razor`, `Components/Forum/*`, `Services/Forum/*`, `Models/ForumModels.cs`, Tabellen `Forum*` (Schema-SQL), Menue `trafag-reddit`, 101 Texte in allen Sprachen, `frm-`-CSS, 15 Tests; Release 1135/1135, DLL bitgleich, ohne Alarm; produktiv per Edge headless angesehen. Program.cs nur mit den drei Forum-Zeilen committet, Finance_All weiter unkommittiert. Vorher Koordination aufgeraeumt (`f5b50cf`). Doku `docs/TRAFAG_REDDIT_2026-10-09.md`, Handbuch Kapitel 9. |
 | Claude | Neuer Reiter Operations (Shopfloor): PPA-Shopfloor-App ins Cockpit (JS-Oberflaeche uebernommen, Backend in C#), Etappe 1 Geruest + ZD05 + Forecast aus SAP; sichtbar erst nach Freigabe Leiter Produktion/Operations (2026-10-07) | 2026-10-08 | abgeschlossen, deployed 2026-10-08 06:39 (`59d0531`); SAP T76K912718 offen, Reservierung frei |
 | Claude | Operations (Shopfloor): Design wie Cockpit (CI, Hell/Dunkel), Grafiken ergaenzen (Wunsch Ingo 2026-10-08) | 2026-10-08 | abgeschlossen, deployed 2026-10-08 09:23 (`cbf168c`); Cache-Fix committet, Reservierung frei |
 | Claude | Einkauf (Gespraech Armin 2026-10-08): offener Mengenkontraktwert (neues Set EinkKontraktSet, T76) auf Kontrakte und Dashboard; Lebenszyklus- und Sortiments-Code im Spend-Aufriss | 2026-10-08 | deployed 2026-10-08 15:03 (`f9bf598`); SAP T76K912724+T76K912718 offen, Reservierung frei |

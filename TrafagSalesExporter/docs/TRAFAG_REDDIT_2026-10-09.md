@@ -54,15 +54,23 @@ Rechenregeln (Hot, Wilson, Reputation, Stufen) stehen im Handbuchkapitel
 
 ## Stand
 
-- 2026-10-09: gebaut, Commits `4d4693d` und `9efa491`, Release-Tests 1135/1135 im sauberen Worktree.
-  Deploystatus siehe Abschnitt „Deploy“.
+- 2026-10-09: gebaut (`4d4693d`, `9efa491`, Doku `33bd2b5`), **produktiv seit 09:20**.
 
 ## Deploy
 
-(wird nach dem Deploy nachgetragen)
+- 2026-10-09 09:20 aus dem sauberen Worktree am Commit `33bd2b5` (ohne Finance_All), Release-Tests
+  1135/1135, DLL bitgleich, `/forum` 200, ohne Alarm. Protokoll in `docs/rag/DEPLOYMENT.md`.
+- Sichtpruefung produktiv per Edge headless mit Windows-Anmeldung: Feed, Beitragsseite, Formular
+  „Beitrag erstellen“, hell und dunkel, Handybreite. Beim ersten Aufruf sind die acht Communities und der
+  angeheftete Willkommensbeitrag entstanden. Der AD-Anzeigename kommt im Format „Nachname, Vorname“
+  („Kohler, Ingo“). Ein Aufruf zaehlt einmal.
+- **Nicht produktiv geprueft:** Schreiben, Abstimmen, Antworten und Akzeptieren. Jeder Testbeitrag waere
+  sofort fuer alle sichtbar; die Abläufe sind durch 15 Service- und Markdown-Tests abgedeckt.
 
 ## Offen
 
+- Kosmetik: AD-Name „Nachname, Vorname“ eventuell als „Vorname Nachname“ zeigen; Zaehler „1 Beiträge“
+  ohne Einzahl.
 - Ankündigung im Intranet/Teams: nur auf Ingos Entscheid.
 - Moderation über die Oberfläche (Communities umbenennen/archivieren) fehlt; bei Bedarf als Admin-Funktion.
 - Keine Mail-Benachrichtigung bei Antworten.

@@ -2,7 +2,7 @@
 
 Stand: 2026-10-09
 
-## Neuer Reiter Trafag Reddit, 2026-10-09
+## Neuer Reiter Trafag Reddit, 2026-10-09 (produktiv 09:20)
 
 - Internes Forum für alles, was in SharePoint keinen Platz hat: Communities, Abstimmen hoch/runter, Sortierung Angesagt/Neu/Top/Aktiv/
   Offene Fragen/Kontrovers, verschachtelte Kommentare, Fragen mit akzeptierter Antwort, Tags, Reputation mit Stufen, ähnliche Beiträge
