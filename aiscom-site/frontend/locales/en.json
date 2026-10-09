@@ -177,5 +177,10 @@
         "cta": "Join the beta"
       }
     ]
+  },
+  "badges": {
+    "swiss": "From Switzerland",
+    "swissmade": "Swiss made",
+    "solar": "CO₂-neutral · solar powered"
   }
 }

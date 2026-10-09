@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Locale } from '@/lib/i18n';
+import TrustBadges from './TrustBadges';
 
 interface FooterProps {
   locale: Locale;
@@ -20,6 +21,7 @@ interface FooterProps {
       privacy: string;
       copyright: string;
     };
+    badges: { swiss: string; swissmade: string; solar: string };
   };
 }
 
@@ -100,6 +102,8 @@ export default function Footer({ locale, dictionary }: FooterProps) {
             </ul>
           </div>
         </div>
+
+        <TrustBadges labels={dictionary.badges} className="mt-8" />
 
         {/* Copyright */}
         <div className="mt-8 pt-8 border-t border-primary-light/30 text-center text-gray-500">

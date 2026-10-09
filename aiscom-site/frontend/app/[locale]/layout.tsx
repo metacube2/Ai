@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { Locale, locales, getDictionary } from '@/lib/i18n';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import TrustBadges from '@/components/layout/TrustBadges';
 import TurboMenu from '@/components/turbo/TurboMenu';
 import TurboStatus from '@/components/turbo/TurboStatus';
 import { aktuellesDesign } from '@/lib/design';
@@ -43,6 +44,7 @@ export default async function LocaleLayout({
         <body data-design="turbo">
           <TurboMenu locale={locale as Locale} nav={dictionary.nav} />
           <main className="tv-main">{children}</main>
+          <TrustBadges labels={dictionary.badges} className="tv-badges py-3" />
           <TurboStatus
             locale={locale as Locale}
             labels={{
