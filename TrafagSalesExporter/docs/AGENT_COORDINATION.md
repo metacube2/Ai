@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Trafag Projekte: Poor Man's Project Management ersetzen durch Projektmanagement mit Board (Trello/Jira), Backlog und Sprints, Liste, Zeitachse, Kalender, Diagramme, Meine Aufgaben (Planner); alle sehen, Mitglieder bearbeiten; alte Eintraege nie genutzt, werden nicht uebernommen; Deploy freigegeben (Wunsch Ingo 2026-10-09) | Components/Pages/Projects*.razor, Components/Projects/*, Services/Projects/*, Models/Pm*.cs, alte ProjectItem/ProjectManagementService-Dateien, Data/AppDbContext.cs, Schema-SQL/-Wartung, Menue-Seed, NavigationIconResolver.cs, Uebersetzungen, app.css (Praefix pm-), Program.cs (Registrierung), Tests, Handbuch Kapitel 8, Doku | in Arbeit seit 2026-10-09 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

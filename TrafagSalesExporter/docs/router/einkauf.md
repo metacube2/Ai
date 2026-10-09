@@ -28,7 +28,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 | **Logistik live**: Kommissionierung und Produktion aus SAP, Umschalter 3D-Lagerplatzansicht, Abruf nur bei offener Seite, Schutz fuer P76, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | **Verwendung & Risiko**: mehrstufige Verwendung der LZ-Code-Komponenten, vererbtes Lieferantenrisiko; warum kein Umsatz je Komponente | `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` |
 | Logistik-Stuecklisten-Dashboard, Top-Down und Bottom-Up | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` |
-| Oberflaechensprachen und Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
+| Oberflaechensprachen und Projektsuite (Projektsuite ueberholt, siehe `docs/TRAFAG_PROJEKTE_2026-10-09.md`) | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 
 ## Fallen in diesem Ast
 

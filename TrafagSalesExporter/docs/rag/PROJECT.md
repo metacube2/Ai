@@ -57,7 +57,9 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
-- Die einfache Projektverwaltung ist als unterster Hauptnavigationseintrag
+- *Ueberholt seit 2026-10-09:* die einfache Projektverwaltung ist durch **Trafag Projekte** ersetzt
+  (Board, Backlog/Sprints, Liste, Zeitachse, Kalender, Diagramme; Doku `docs/TRAFAG_PROJEKTE_2026-10-09.md`).
+  Frueherer Stand: Die einfache Projektverwaltung ist als unterster Hauptnavigationseintrag
   `Projekte` unter `/projekte` eingebaut. Sie verwaltet Status, Prioritaet,
   Verantwortung, Termine, Fortschritt, Notizen und Archivierung in SQLite.
   Aktueller Funktions- und Lokalisierungsstand:

@@ -105,7 +105,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` | Produktgruppen aus SAP OData |
 | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` | Supply-Chain-Reiter |
 | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` | Stuecklisten-Dashboard |
-| `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` | Sprachen, Projektsuite |
+| `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` | Sprachen, Projektsuite (Projektsuite seit 2026-10-09 ueberholt) |
 
 ## HR
 
@@ -188,6 +188,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
 | `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
 | `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, offene Schritte |
+| `docs/TRAFAG_PROJEKTE_2026-10-09.md` | Reiter Trafag Projekte: Projektmanagement wie Jira/Trello/Planner, Rechte, Technik, Tabellen, Statusfarben, Deploy, offene Punkte |
 | `docs/TRAFAG_REDDIT_2026-10-09.md` | Reiter Trafag Reddit: Forum mit Abstimmung (Reddit + StackOverflow), Funktionen, Technik, Tabellen, Identitaet, Deploy, offene Punkte |
 | `docs/UI_BERNDEUTSCH_GLOSSAR.md` | Stil und Glossar fuer den Berndeutsch-Katalog |
 | `projektmanagement/Status_kurz.tsv`, `projektmanagement/Status_kurz.xlsx` | Status kurz fuer den Chef (Quelle und erzeugte A4-Seite), seit 2026-10-01 |

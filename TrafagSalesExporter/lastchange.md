@@ -2,6 +2,13 @@
 
 Stand: 2026-10-09
 
+## Trafag Projekte ersetzt die Poor Man's Project Management Suite, 2026-10-09
+
+- Projektmanagement wie Jira, Trello und Planner: Board mit Ziehen und Swimlanes, Backlog und Sprints mit Burndown,
+  Liste mit CSV, Zeitachse nach Epic, Kalender, Diagramme, „Meine Aufgaben“ über alle Projekte, Aufgabenpanel mit
+  Checkliste, Unteraufgaben, Kommentaren und Verlauf. Alle sehen, Mitglieder bearbeiten, Leitung verwaltet.
+  Die alte Suite (nie genutzt) ist entfernt. Doku `docs/TRAFAG_PROJEKTE_2026-10-09.md`, Handbuch Kapitel 8 neu.
+
 ## Neuer Reiter Trafag Reddit, 2026-10-09 (produktiv 09:20)
 
 - Internes Forum für alles, was in SharePoint keinen Platz hat: Communities, Abstimmen hoch/runter, Sortierung Angesagt/Neu/Top/Aktiv/

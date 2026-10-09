@@ -12,6 +12,10 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-09 | Wiederholt: Bash-Heredoc ass Backslashes, die LDAP-Maskierung `\5c` im AD-Suchfilter landete als `c` im C#-Code (vor dem Build gefunden) | Code mit Backslashes nur mit dem Write- oder Edit-Werkzeug schreiben, nie per Bash-Heredoc oder python -c | `Services/Forum/ForumUserDirectory.cs` |
+| 2026-10-09 | SVG-`<text>` direkt in einer Razor-`@foreach`-Schleife: Build-Fehler RZ1023, Razor hielt es fuer sein eigenes `<text>`-Tag | SVG-Elemente in Schleifen in ein `<g>` packen | `Components/Projects/PmChartsView.razor` |
+| 2026-10-09 | Der Uebersetzungstest wertet jedes Paar `"a", "b"` in .razor-Dateien als Text, auch in Kommentaren und bei `new("epic", "Epic")` oder `Replace("\"", "\"\"")` | In .razor keine zwei Zeichenketten mit Komma nebeneinander, die keine Texte sind; Konstanten oder `T(...)` verwenden | `TrafagSalesExporter.Tests/UiTextServiceTests.cs` |
+| 2026-10-09 | Neue Projektverwaltung gebaut, obwohl eine Memory-Notiz vor dem Ausbau den Abgleich mit Philip Steiger (Project Power Pack) verlangte; erst der Review fand sie | Vor neuen Reitern und Ausbauten die Memory-Liste nach dem Bereich durchsuchen und Ingo vor dem Bau fragen (hier: Ingo hat danach „trotzdem deployen“ entschieden) | Memory `project_projekte_seite_power_pack` |
 | 2026-10-09 | Razor-Seite `Forum.razor` mit `@inject IForumService Forum`: Build-Fehler CS0542, weil die Eigenschaft wie die eigene Seitenklasse hiess | Injizierte Dienste nie wie die Seite benennen (hier `Board`) | `Components/Pages/Forum.razor` |
 | 2026-10-09 | Bash-Heredocs mit Backslashes, Apostrophen oder typografischen Anfuehrungszeichen brachen mehrmals ab („unexpected EOF“, Regex ohne Backslash) | Skripte und Dateien mit solchem Inhalt mit dem Write-Werkzeug anlegen, dann ausfuehren | diese Sitzung |
 | 2026-10-09 | Python schrieb Umlaute/Minuszeichen auf die Konsole und brach mit cp1252 ab; `PYTHONIOENCODING` wirkt mit `-I` nicht | Python mit `-X utf8` starten | `reference_python_ohne_installation` |

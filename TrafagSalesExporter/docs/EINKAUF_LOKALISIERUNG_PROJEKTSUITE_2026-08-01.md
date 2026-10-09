@@ -67,6 +67,10 @@ Der Release-Test umfasst 351 Tests. Die Lokalisierungstests pruefen insbesondere
 
 ## Poor Man's Project Management Suite
 
+*Ueberholt seit 2026-10-09:* ersetzt durch Trafag Projekte (`docs/TRAFAG_PROJEKTE_2026-10-09.md`);
+Seite, Service, Modell und Tests der Suite sind entfernt, die Tabelle `ProjectItems` bleibt ungenutzt
+liegen. Der folgende Abschnitt beschreibt den frueheren Stand.
+
 Die Suite ist als unterster Hauptnavigationseintrag `Projekte` eingebunden und
 unter `/projekte` erreichbar. Sie ist bewusst einfach gehalten und speichert in
 der bestehenden SQLite-Datenbank.
