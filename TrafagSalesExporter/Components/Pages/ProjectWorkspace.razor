@@ -1,0 +1,556 @@
+@page "/projekte/{ProjectKey}"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@implements IDisposable
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Services.Projects
+@using TrafagSalesExporter.Components.Projects
+@inject IPmService Pm
+@inject PmNotifier Notifier
+@inject TrafagSalesExporter.Services.Forum.ForumUserDirectory Directory
+@inject IAdminAccessService AdminAccess
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+@inject IUiTextService UiText
+
+@* Trafag Projekte: ein Projekt mit allen Ansichten. Filter (Suche, Personen, Typ, Prioritaet, Label, Epic)
+   gelten fuer Board, Backlog, Liste, Zeitachse, Kalender und Diagramme gleich. Aenderungen anderer
+   erscheinen live. Doku docs/TRAFAG_PROJEKTE_2026-10-09.md *@
+<PageTitle>@(_board?.Project.Name ?? T("Trafag Projekte", "Trafag Projects"))</PageTitle>
+
+<div class="pm-page">
+    @if (_board is null)
+    {
+        @if (_loaded)
+        {
+            <div class="pm-empty"><h3>@T("Projekt nicht gefunden.", "Project not found.")</h3><a href="projekte">← @T("Alle Projekte", "All projects")</a></div>
+        }
+        else
+        {
+            <div class="pm-project pm-skeleton" style="height:120px"></div>
+        }
+    }
+    else
+    {
+        var p = _board.Project;
+        <header class="pm-ws-head" style="--pm-c:@p.Color">
+            <a class="pm-back" href="projekte">← @T("Alle Projekte", "All projects")</a>
+            <div class="pm-ws-title">
+                <span class="pm-project-icon"><MudIcon Icon="@PmStyle.ResolveIcon(p.Icon)" /></span>
+                <span class="pm-grow">
+                    <h1>@p.Name @if (p.IsArchived) { <span class="pm-status-chip pm-cat-todo">@T("Archiviert", "Archived")</span> }</h1>
+                    <span class="pm-muted pm-small">@p.Key · @PmLabels.Template(UiText, p.Template) · @T("Leitung", "Lead") @PmText.PersonName(p.LeadName)
+                        @if (p.DueDate is { } due) { <span> · @T("Ende", "End") @due.ToString("dd.MM.yyyy")</span> }
+                    </span>
+                </span>
+                <div class="pm-ws-progress" title="@($"{p.ProgressPercent} %")">
+                    <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" class="pm-ring-track" /><circle cx="18" cy="18" r="15.5" class="pm-ring" pathLength="100" stroke-dasharray="@p.ProgressPercent 100" /></svg>
+                    <b>@p.ProgressPercent %</b>
+                </div>
+            </div>
+            <nav class="pm-views">
+                @foreach (var v in Views)
+                {
+                    var view = v;
+                    <button type="button" class="@(_view == view.Key ? "pm-on" : "")" @onclick="() => SetView(view.Key)">
+                        <MudIcon Icon="@view.Icon" Size="Size.Small" /> @view.Label
+                    </button>
+                }
+            </nav>
+        </header>
+
+        @if (_error is { } err)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-2" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+        }
+        @if (!_board.CanEdit && _user.IsKnown)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">@string.Format(T("Du siehst dieses Projekt. Ändern dürfen Mitglieder; aufnehmen kann dich {0}.", "You can view this project. Members can make changes; {0} can add you."), PmText.PersonName(p.LeadName))</MudAlert>
+        }
+
+        @if (_view is not "settings" and not "activity")
+        {
+            <div class="pm-filters">
+                <div class="pm-filter-search">
+                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+                    <input type="search" placeholder="@T("Aufgaben filtern", "Filter issues")" value="@_text" @oninput="e => _text = e.Value?.ToString() ?? string.Empty" />
+                </div>
+                <span class="pm-avatars pm-avatar-filter">
+                    @foreach (var m in p.Members)
+                    {
+                        var member = m;
+                        <button type="button" class="@(_people.Contains(member.Login) ? "pm-on" : "")" title="@PmText.PersonName(member.Name)" @onclick="() => TogglePerson(member.Login)">
+                            <PmAvatar Login="@member.Login" Name="@member.Name" Small="true" />
+                        </button>
+                    }
+                </span>
+                @if (_user.IsKnown)
+                {
+                    <button type="button" class="pm-chip @(_onlyMine ? "pm-on" : "")" @onclick="() => _onlyMine = !_onlyMine">@T("Nur meine", "Only mine")</button>
+                }
+                <button type="button" class="pm-chip @(_onlyOverdue ? "pm-on" : "")" @onclick="() => _onlyOverdue = !_onlyOverdue">@T("Überfällig", "Overdue")</button>
+                <select class="pm-input pm-filter-select" value="@_type" @onchange="e => _type = e.Value?.ToString() ?? string.Empty">
+                    <option value="">@T("Alle Typen", "All types")</option>
+                    @foreach (var t in TrafagSalesExporter.Models.PmTaskTypes.All.Where(x => x != "Epic"))
+                    {
+                        <option value="@t">@PmLabels.Type(UiText, t)</option>
+                    }
+                </select>
+                <select class="pm-input pm-filter-select" value="@_priority" @onchange="e => _priority = e.Value?.ToString() ?? string.Empty">
+                    <option value="">@T("Alle Prioritäten", "All priorities")</option>
+                    @foreach (var pr in TrafagSalesExporter.Models.PmPriorities.All)
+                    {
+                        <option value="@pr">@PmLabels.Priority(UiText, pr)</option>
+                    }
+                </select>
+                @if (_board.Labels.Count > 0)
+                {
+                    <select class="pm-input pm-filter-select" value="@_label" @onchange="e => _label = e.Value?.ToString() ?? string.Empty">
+                        <option value="">@T("Alle Labels", "All labels")</option>
+                        @foreach (var l in _board.Labels)
+                        {
+                            <option value="@l">@l</option>
+                        }
+                    </select>
+                }
+                @if (_board.Epics.Count > 0)
+                {
+                    <select class="pm-input pm-filter-select" value="@(_epic?.ToString() ?? "")" @onchange="e => _epic = int.TryParse(e.Value?.ToString(), out var x) ? x : null">
+                        <option value="">@T("Alle Epics", "All epics")</option>
+                        @foreach (var ep in _board.Epics)
+                        {
+                            <option value="@ep.Id">@ep.Title</option>
+                        }
+                    </select>
+                }
+                @if (_view == "board")
+                {
+                    <select class="pm-input pm-filter-select" value="@_swimlanes" @onchange="e => _swimlanes = e.Value?.ToString() ?? string.Empty">
+                        <option value="none">@T("Ohne Swimlanes", "No swimlanes")</option>
+                        <option value="assignee">@T("Swimlanes: Person", "Swimlanes: person")</option>
+                        <option value="epic">@T("Swimlanes: Epic", "Swimlanes: epic")</option>
+                        <option value="priority">@T("Swimlanes: Priorität", "Swimlanes: priority")</option>
+                    </select>
+                    <label class="pm-small pm-row"><input type="checkbox" checked="@_hideOldDone" @onchange="e => _hideOldDone = e.Value is true" /> @T("Erledigte älter als 14 Tage ausblenden", "Hide done older than 14 days")</label>
+                }
+                @if (HasFilter)
+                {
+                    <button type="button" class="pm-link pm-small" @onclick="ClearFilters">@T("Filter zurücksetzen", "Clear filters")</button>
+                }
+                <span class="pm-grow"></span>
+                @if (_board.CanEdit)
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _quickCreate = !_quickCreate">@T("Aufgabe", "Issue")</MudButton>
+                }
+            </div>
+
+            @if (_quickCreate)
+            {
+                <div class="pm-quick-create">
+                    <select class="pm-input pm-filter-select" value="@_newType" @onchange="e => _newType = e.Value?.ToString() ?? string.Empty">
+                        @foreach (var t in TrafagSalesExporter.Models.PmTaskTypes.All.Where(x => x != "Subtask"))
+                        {
+                            <option value="@t">@PmLabels.Type(UiText, t)</option>
+                        }
+                    </select>
+                    <input class="pm-input" placeholder="@T("Was ist zu tun? Enter legt an", "What needs to be done? Enter creates")" value="@_newTitle"
+                           @oninput="e => _newTitle = e.Value?.ToString() ?? string.Empty" @onkeydown="QuickCreateKey" />
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@string.IsNullOrWhiteSpace(_newTitle)" OnClick="QuickCreate">@T("Anlegen", "Create")</MudButton>
+                </div>
+            }
+        }
+
+        <div class="pm-view">
+            @switch (_view)
+            {
+                case "backlog":
+                    <PmBacklogView Board="_board" Cards="Filtered" User="_user" CanEdit="_board.CanEdit" OnOpen="OpenTask" OnChanged="Reload" OnError="ShowError" />
+                    break;
+                case "list":
+                    <PmListView Cards="Filtered" Columns="_board.Columns" CanEdit="_board.CanEdit" ProjectKey="@p.Key" OnOpen="OpenTask" OnStatus="ChangeStatus" />
+                    break;
+                case "timeline":
+                    <PmTimelineView Cards="Filtered" Epics="_board.Epics" OnOpen="OpenTask" />
+                    break;
+                case "calendar":
+                    <PmCalendarView Cards="Filtered" CanEdit="_board.CanEdit" OnOpen="OpenTask" OnReschedule="Reschedule" />
+                    break;
+                case "charts":
+                    <PmChartsView Cards="Filtered" ActiveSprint="ActiveSprint" SprintCards="@(ActiveSprint is { } s ? _board.Tasks.Where(t => t.SprintId == s.Id && t.Type != "Subtask").ToList() : [])" />
+                    break;
+                case "activity":
+                    <div class="pm-chart-card pm-activity-feed">
+                        @foreach (var a in _activity)
+                        {
+                            <div class="pm-activity">
+                                <PmAvatar Login="@a.Login" Name="@a.Name" Small="true" />
+                                <span class="pm-grow"><b>@PmText.PersonName(a.Name)</b> @a.Text
+                                    @if (a.TaskId is { } tid && a.TaskKey.Length > 0) { <button type="button" class="pm-link" @onclick="() => OpenTask(tid)">@a.TaskKey</button> }
+                                </span>
+                                <TrafagSalesExporter.Components.Forum.ForumAgo Utc="a.AtUtc" />
+                            </div>
+                        }
+                        @if (_activity.Count == 0)
+                        {
+                            <span class="pm-muted">@T("Noch keine Aktivität.", "No activity yet.")</span>
+                        }
+                    </div>
+                    break;
+                case "settings":
+                    <PmSettingsView Board="_board" User="_user" OnChanged="Reload" OnError="ShowError" />
+                    break;
+                default:
+                    @if (p.Template == "Scrum" && ActiveSprint is null)
+                    {
+                        <div class="pm-empty">
+                            <MudIcon Icon="@Icons.Material.Outlined.DirectionsRun" Style="font-size:48px" />
+                            <h3>@T("Kein Sprint aktiv.", "No active sprint.")</h3>
+                            <p>@T("Plane im Backlog Aufgaben in einen Sprint ein und starte ihn; das Board zeigt dann den laufenden Sprint.", "Plan issues into a sprint in the backlog and start it; the board then shows the running sprint.")</p>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => SetView("backlog"))">@T("Zum Backlog", "Go to backlog")</MudButton>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (ActiveSprint is { } sp)
+                        {
+                            <div class="pm-sprint-banner">
+                                <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Size="Size.Small" /><b>@sp.Name</b>
+                                @if (sp.EndDate is { } end) { <span class="pm-muted">@string.Format(T("noch {0} Tage", "{0} days left"), Math.Max(0, (end - DateTime.Today).Days))</span> }
+                                @if (sp.Goal.Length > 0) { <span class="pm-muted">· @sp.Goal</span> }
+                            </div>
+                        }
+                        <PmBoardView Columns="_board.Columns" Cards="BoardCards" AllCards="BoardCards" Epics="_board.Epics" SwimlaneBy="@_swimlanes" CanEdit="_board.CanEdit"
+                                     OnOpen="OpenTask" OnMove="Move" OnQuickAdd="QuickAddCard" OnDragging="d => _dragging = d" />
+                    }
+                    break;
+            }
+        </div>
+
+        @if (_openTaskId is not null)
+        {
+            <PmTaskPanel Detail="_detail" Board="_board" User="_user" OnClose="CloseTask" OnChanged="Reload" OnOpenTask="OpenTask" OnError="ShowError" />
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string ProjectKey { get; set; } = string.Empty;
+    [SupplyParameterFromQuery(Name = "task")] public string? TaskKey { get; set; }
+    [SupplyParameterFromQuery(Name = "view")] public string? ViewParam { get; set; }
+
+    private sealed record ViewTab(string Key, string Icon, string Label);
+
+    private PmUser _user = PmUser.Anonymous;
+    private PmBoard? _board;
+    private int? _projectId;
+    private bool _loaded;
+    private string _view = "board";
+    private (string German, string English)? _error;
+    private IReadOnlyList<PmActivityView> _activity = [];
+
+    private int? _openTaskId;
+    private PmTaskDetail? _detail;
+    private bool _dragging;
+    private string _lastRoute = string.Empty;
+
+    private string _text = string.Empty;
+    private readonly HashSet<string> _people = new(StringComparer.OrdinalIgnoreCase);
+    private bool _onlyMine;
+    private bool _onlyOverdue;
+    private string _type = string.Empty;
+    private string _priority = string.Empty;
+    private string _label = string.Empty;
+    private int? _epic;
+    private string _swimlanes = "none";
+    private bool _hideOldDone = true;
+
+    private bool _quickCreate;
+    private string _newTitle = string.Empty;
+    private string _newType = "Task";
+
+    private IReadOnlyList<ViewTab> Views =>
+    [
+        new("board", Icons.Material.Outlined.ViewKanban, "Board"),
+        new("backlog", Icons.Material.Outlined.FormatListBulleted, "Backlog"),
+        new("list", Icons.Material.Outlined.TableRows, T("Liste", "List")),
+        new("timeline", Icons.Material.Outlined.ViewTimeline, T("Zeitachse", "Timeline")),
+        new("calendar", Icons.Material.Outlined.CalendarMonth, T("Kalender", "Calendar")),
+        new("charts", Icons.Material.Outlined.DonutLarge, T("Diagramme", "Charts")),
+        new("activity", Icons.Material.Outlined.History, T("Aktivität", "Activity")),
+        new("settings", Icons.Material.Outlined.Settings, T("Einstellungen", "Settings")),
+    ];
+
+    private PmSprintView? ActiveSprint => _board?.Sprints.FirstOrDefault(s => s.State == "Active");
+
+    private bool HasFilter => _text.Length > 0 || _people.Count > 0 || _onlyMine || _onlyOverdue || _type.Length > 0 || _priority.Length > 0 || _label.Length > 0 || _epic is not null;
+
+    private List<PmCard> Filtered
+    {
+        get
+        {
+            if (_board is null)
+                return [];
+            IEnumerable<PmCard> cards = _board.Tasks;
+            if (_text.Length > 0)
+                cards = cards.Where(c => c.Title.Contains(_text, StringComparison.CurrentCultureIgnoreCase) || c.Key.Contains(_text, StringComparison.OrdinalIgnoreCase)
+                                         || c.Labels.Any(l => l.Contains(_text, StringComparison.CurrentCultureIgnoreCase)));
+            if (_people.Count > 0)
+                cards = cards.Where(c => _people.Contains(c.AssigneeLogin));
+            if (_onlyMine)
+                cards = cards.Where(c => string.Equals(c.AssigneeLogin, _user.Login, StringComparison.OrdinalIgnoreCase));
+            if (_onlyOverdue)
+                cards = cards.Where(c => c.IsOverdue);
+            if (_type.Length > 0)
+                cards = cards.Where(c => c.Type == _type);
+            if (_priority.Length > 0)
+                cards = cards.Where(c => c.Priority == _priority);
+            if (_label.Length > 0)
+                cards = cards.Where(c => c.Labels.Contains(_label, StringComparer.OrdinalIgnoreCase));
+            if (_epic is { } e)
+                cards = cards.Where(c => c.EpicId == e);
+            return cards.ToList();
+        }
+    }
+
+    private List<PmCard> BoardCards
+    {
+        get
+        {
+            IEnumerable<PmCard> cards = Filtered;
+            if (_board?.Project.Template == "Scrum" && ActiveSprint is { } sprint)
+                cards = cards.Where(c => c.SprintId == sprint.Id);
+            if (_hideOldDone)
+                cards = cards.Where(c => c.Category != "Done" || c.CompletedAtUtc is not { } done || done > DateTime.UtcNow.AddDays(-14));
+            return cards.ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UiText.Changed += OnLanguageChanged;
+        Notifier.Changed += OnPmChanged;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var login = TrafagSalesExporter.Services.Forum.ForumUserDirectory.ShortName(state.User.Identity?.Name);
+        if (login.Length > 0)
+            _user = new PmUser(login, await Directory.DisplayNameAsync(login), AdminAccess.IsUnlocked);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Nav.Uri == _lastRoute)
+            return;
+        var keyChanged = _board is null || !string.Equals(_board.Project.Key, ProjectKey, StringComparison.OrdinalIgnoreCase);
+        _lastRoute = Nav.Uri;
+        if (keyChanged)
+        {
+            _projectId = await Pm.FindProjectIdAsync(ProjectKey);
+            await LoadBoardAsync();
+        }
+        if (!string.IsNullOrWhiteSpace(ViewParam) && Views.Any(v => v.Key == ViewParam))
+            _view = ViewParam;
+        if (_view == "activity")
+            await LoadActivityAsync();
+        if (!string.IsNullOrWhiteSpace(TaskKey) && _board is not null)
+        {
+            var card = _board.Tasks.Concat(_board.Epics).FirstOrDefault(c => string.Equals(c.Key, TaskKey, StringComparison.OrdinalIgnoreCase));
+            if (card is not null && _openTaskId != card.Id)
+            {
+                _openTaskId = card.Id;
+                _detail = await Pm.GetTaskAsync(card.Id, _user);
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(TaskKey))
+        {
+            _openTaskId = null;
+            _detail = null;
+        }
+        _loaded = true;
+    }
+
+    private async Task LoadBoardAsync()
+    {
+        _board = _projectId is { } id ? await Pm.GetBoardAsync(id, _user) : null;
+        if (_board is not null && _board.Project.Template == "Scrum" && _view == "board" && ActiveSprint is null && string.IsNullOrWhiteSpace(ViewParam))
+            _view = "backlog";
+    }
+
+    private async Task LoadActivityAsync()
+    {
+        if (_projectId is { } id)
+            _activity = await Pm.GetActivityAsync(id, 80);
+    }
+
+    private async Task Reload()
+    {
+        await LoadBoardAsync();
+        if (_openTaskId is { } taskId)
+            _detail = await Pm.GetTaskAsync(taskId, _user);
+        if (_view == "activity")
+            await LoadActivityAsync();
+    }
+
+    private void OnPmChanged(int projectId)
+    {
+        if (projectId != _projectId)
+            return;
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                if (_dragging)
+                    return;
+                await Reload();
+                StateHasChanged();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        });
+    }
+
+    private async Task SetView(string view)
+    {
+        _view = view;
+        if (view == "activity")
+            await LoadActivityAsync();
+        Nav.NavigateTo(Url(view, _detail?.Card.Key), replace: true);
+    }
+
+    private string Url(string view, string? taskKey)
+    {
+        var query = new List<string>();
+        if (view != "board")
+            query.Add($"view={view}");
+        if (!string.IsNullOrWhiteSpace(taskKey))
+            query.Add($"task={taskKey}");
+        return $"projekte/{_board?.Project.Key ?? ProjectKey}" + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
+    }
+
+    private async Task OpenTask(int id)
+    {
+        _openTaskId = id;
+        _detail = null;
+        _detail = await Pm.GetTaskAsync(id, _user);
+        if (_detail is not null)
+        {
+            _lastRoute = Nav.ToAbsoluteUri(Url(_view, _detail.Card.Key)).ToString();
+            Nav.NavigateTo(Url(_view, _detail.Card.Key), replace: false);
+        }
+    }
+
+    private void CloseTask()
+    {
+        _openTaskId = null;
+        _detail = null;
+        _lastRoute = Nav.ToAbsoluteUri(Url(_view, null)).ToString();
+        Nav.NavigateTo(Url(_view, null));
+    }
+
+    private void TogglePerson(string login)
+    {
+        if (!_people.Remove(login))
+            _people.Add(login);
+    }
+
+    private void ClearFilters()
+    {
+        _text = string.Empty;
+        _people.Clear();
+        _onlyMine = _onlyOverdue = false;
+        _type = _priority = _label = string.Empty;
+        _epic = null;
+    }
+
+    private async Task Move((int TaskId, int ColumnId, int? BeforeId, string LaneKey) move)
+    {
+        await Run(async () =>
+        {
+            await Pm.MoveTaskAsync(_user, move.TaskId, move.ColumnId, move.BeforeId);
+            // Zwischen Swimlanes ziehen aendert auch Person, Epic oder Prioritaet (wie Jira).
+            var card = _board!.Tasks.First(t => t.Id == move.TaskId);
+            var input = await InputFor(move.TaskId);
+            if (input is null)
+                return;
+            var changed = false;
+            if (_swimlanes == "assignee" && !string.Equals(card.AssigneeLogin, move.LaneKey, StringComparison.OrdinalIgnoreCase)) { input.AssigneeLogin = move.LaneKey; changed = true; }
+            if (_swimlanes == "epic" && (card.EpicId ?? 0).ToString() != move.LaneKey) { input.EpicId = move.LaneKey == "0" ? null : int.Parse(move.LaneKey); changed = true; }
+            if (_swimlanes == "priority" && card.Priority != move.LaneKey) { input.Priority = move.LaneKey; changed = true; }
+            if (changed)
+                await Pm.UpdateTaskAsync(_user, move.TaskId, input);
+        });
+    }
+
+    private async Task<PmTaskInput?> InputFor(int taskId)
+    {
+        var detail = await Pm.GetTaskAsync(taskId, _user);
+        if (detail is null)
+            return null;
+        var c = detail.Card;
+        return new PmTaskInput
+        {
+            Title = c.Title, Type = c.Type, Description = detail.Description, ColumnId = c.ColumnId, Priority = c.Priority, AssigneeLogin = c.AssigneeLogin,
+            Labels = string.Join(",", c.Labels), StartDate = c.StartDate, DueDate = c.DueDate, StoryPoints = c.StoryPoints, ParentId = c.ParentId,
+            EpicId = c.EpicId, SprintId = c.SprintId, Cover = c.Cover
+        };
+    }
+
+    private Task ChangeStatus((int TaskId, int ColumnId) change) => Run(() => Pm.MoveTaskAsync(_user, change.TaskId, change.ColumnId, null));
+
+    private Task Reschedule((int TaskId, DateTime Due) change) => Run(async () =>
+    {
+        var input = await InputFor(change.TaskId);
+        if (input is null)
+            return;
+        input.DueDate = change.Due;
+        await Pm.UpdateTaskAsync(_user, change.TaskId, input);
+    });
+
+    private Task QuickAddCard((int ColumnId, string Title) add) => Run(() => Pm.CreateTaskAsync(_user, _board!.Project.Id, new PmTaskInput
+    {
+        Title = add.Title,
+        ColumnId = add.ColumnId,
+        SprintId = _board.Project.Template == "Scrum" ? ActiveSprint?.Id : null,
+        AssigneeLogin = _onlyMine ? _user.Login : string.Empty
+    }));
+
+    private async Task QuickCreateKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await QuickCreate();
+    }
+
+    private async Task QuickCreate()
+    {
+        if (string.IsNullOrWhiteSpace(_newTitle) || _board is null)
+            return;
+        var title = _newTitle;
+        _newTitle = string.Empty;
+        var sprint = _view == "board" && _board.Project.Template == "Scrum" ? ActiveSprint?.Id : null;
+        await Run(() => Pm.CreateTaskAsync(_user, _board.Project.Id, new PmTaskInput { Title = title, Type = _newType, SprintId = sprint }));
+    }
+
+    private async Task Run(Func<Task> action)
+    {
+        try
+        {
+            await action();
+            await Reload();
+        }
+        catch (PmException ex)
+        {
+            _error = (ex.German, ex.English);
+            await Reload();
+        }
+    }
+
+    private void ShowError((string German, string English) error) => _error = error;
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    public void Dispose()
+    {
+        UiText.Changed -= OnLanguageChanged;
+        Notifier.Changed -= OnPmChanged;
+    }
+}

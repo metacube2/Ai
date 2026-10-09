@@ -32,7 +32,14 @@ public class AppDbContext : DbContext
     public DbSet<SegmentNamePattern> SegmentNamePatterns => Set<SegmentNamePattern>();
     public DbSet<MarketSurveyEntry> MarketSurveyEntries => Set<MarketSurveyEntry>();
     public DbSet<NavigationMenuItem> NavigationMenuItems => Set<NavigationMenuItem>();
-    public DbSet<ProjectItem> ProjectItems => Set<ProjectItem>();
+    public DbSet<PmProject> PmProjects => Set<PmProject>();
+    public DbSet<PmMember> PmMembers => Set<PmMember>();
+    public DbSet<PmColumn> PmColumns => Set<PmColumn>();
+    public DbSet<PmSprint> PmSprints => Set<PmSprint>();
+    public DbSet<PmTask> PmTasks => Set<PmTask>();
+    public DbSet<PmChecklistItem> PmChecklistItems => Set<PmChecklistItem>();
+    public DbSet<PmComment> PmComments => Set<PmComment>();
+    public DbSet<PmActivity> PmActivities => Set<PmActivity>();
     public DbSet<ForumCommunity> ForumCommunities => Set<ForumCommunity>();
     public DbSet<ForumPost> ForumPosts => Set<ForumPost>();
     public DbSet<ForumComment> ForumComments => Set<ForumComment>();

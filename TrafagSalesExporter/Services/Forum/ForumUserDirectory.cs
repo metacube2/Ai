@@ -56,6 +56,50 @@ public sealed class ForumUserDirectory
         return name;
     }
 
+    /// <summary>Personensuche fuer Trafag Projekte: AD-Namensaufloesung (anr) ueber Name, Kuerzel oder Mail, hoechstens 10 aktive Konten.</summary>
+    public async Task<IReadOnlyList<(string Login, string Name)>> SearchAsync(string? term)
+    {
+        term = (term ?? string.Empty).Trim();
+        if (term.Length < 2 || !OperatingSystem.IsWindows())
+            return [];
+        try
+        {
+            var found = await Task.Run(() => OperatingSystem.IsWindows() ? Search(term) : []).WaitAsync(TimeSpan.FromSeconds(6));
+            foreach (var (login, name) in found)
+                _cache[login] = (name, DateTime.UtcNow);
+            return found;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInformation("Personensuche im AD fehlgeschlagen: {Message}", ex.Message);
+            return [];
+        }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private static List<(string Login, string Name)> Search(string term)
+    {
+        using var root = new DirectoryEntry();
+        var escaped = term.Replace("\\", "\\5c").Replace("*", "\\2a").Replace("(", "\\28").Replace(")", "\\29");
+        // aktive Personenkonten (Bit 2 von userAccountControl = deaktiviert)
+        var filter = $"(&(objectCategory=person)(objectClass=user)(anr={escaped})(!(userAccountControl:1.2.840.113556.1.4.803:=2)))";
+        using var searcher = new DirectorySearcher(root, filter, ["sAMAccountName", "displayName"])
+        {
+            SizeLimit = 10,
+            ClientTimeout = TimeSpan.FromSeconds(5)
+        };
+        var list = new List<(string, string)>();
+        using var results = searcher.FindAll();
+        foreach (SearchResult r in results)
+        {
+            var login = r.Properties["sAMAccountName"].Count > 0 ? Convert.ToString(r.Properties["sAMAccountName"][0]) ?? "" : "";
+            var name = r.Properties["displayName"].Count > 0 ? Convert.ToString(r.Properties["displayName"][0]) ?? login : login;
+            if (login.Length > 0)
+                list.Add((login.ToLowerInvariant(), name));
+        }
+        return list;
+    }
+
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private static string? Lookup(string shortName)
     {

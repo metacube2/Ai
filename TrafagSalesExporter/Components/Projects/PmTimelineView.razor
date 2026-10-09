@@ -1,0 +1,127 @@
+@* Zeitachse wie Jira-Roadmap: Balken von Start bis Faelligkeit, nach Epic gruppiert, Heute-Linie.
+   Ohne Start gilt das Erstelldatum; ohne Faelligkeit erscheint die Aufgabe als Punkt am Start. *@
+@inject IUiTextService UiText
+
+@if (Rows.Count == 0)
+{
+    <div class="pm-empty">@T("Für die Zeitachse brauchen Aufgaben ein Fälligkeitsdatum.", "Issues need a due date to appear on the timeline.")</div>
+}
+else
+{
+    <div class="pm-timeline">
+        <div class="pm-tl-grid" style="--pm-days:@_days">
+            <div class="pm-tl-label pm-tl-corner"></div>
+            <div class="pm-tl-scale">
+                @foreach (var month in Months)
+                {
+                    <div class="pm-tl-month" style="left:@Pct(month.Start)%;width:@Pct(month.Days)%">@month.Label</div>
+                }
+                <div class="pm-tl-today" style="left:@Pct((DateTime.Today - _from).Days + 0.5)%" title="@T("Heute", "Today")"></div>
+            </div>
+            @foreach (var row in Rows)
+            {
+                var r = row;
+                <div class="pm-tl-label @(r.IsGroup ? "pm-tl-group" : "")" @onclick="() => Open(r)">
+                    @if (r.Card is { } c)
+                    {
+                        <span class="pm-type pm-type-@c.Type.ToLowerInvariant()"><MudIcon Icon="@PmStyle.TypeIcon(c.Type)" Size="Size.Small" /></span>
+                        <span class="pm-key">@c.Key</span>
+                    }
+                    <span class="pm-tl-title">@r.Title</span>
+                </div>
+                <div class="pm-tl-lane">
+                    @foreach (var m in Months)
+                    {
+                        <div class="pm-tl-gridline" style="left:@Pct(m.Start)%"></div>
+                    }
+                    <div class="pm-tl-today" style="left:@Pct((DateTime.Today - _from).Days + 0.5)%"></div>
+                    @if (r.Start is { } s)
+                    {
+                        var startDay = Math.Max(0, (s - _from).Days);
+                        var length = r.End is { } e ? Math.Max(1, (e - s).Days + 1) : 0;
+                        if (length > 0)
+                        {
+                            <div class="pm-tl-bar pm-cat-@r.Category.ToLowerInvariant() @(r.IsGroup ? "pm-tl-bar-group" : "") @(r.Overdue ? "pm-tl-overdue" : "")"
+                                 style="left:@Pct(startDay)%;width:@Pct(length)%"
+                                 title="@($"{r.Title}: {s:dd.MM.yyyy} – {r.End:dd.MM.yyyy}")" @onclick="() => Open(r)">
+                                @if (r.Progress is { } p)
+                                {
+                                    <div class="pm-tl-progress" style="width:@p%"></div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="pm-tl-dot" style="left:@Pct(startDay)%" title="@r.Title" @onclick="() => Open(r)"></div>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+    <div class="pm-legend">
+        <span><i class="pm-sw pm-cat-todo"></i>@PmLabels.Category(UiText, "Todo")</span>
+        <span><i class="pm-sw pm-cat-inprogress"></i>@PmLabels.Category(UiText, "InProgress")</span>
+        <span><i class="pm-sw pm-cat-done"></i>@PmLabels.Category(UiText, "Done")</span>
+        <span><i class="pm-sw pm-tl-overdue-sw"></i>@T("überfällig", "overdue")</span>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PmCard> Cards { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PmCard> Epics { get; set; } = [];
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+
+    private sealed record Row(string Title, PmCard? Card, DateTime? Start, DateTime? End, string Category, bool IsGroup, int? Progress, bool Overdue);
+    private sealed record Month(int Start, int Days, string Label);
+
+    private DateTime _from;
+    private int _days = 1;
+    private List<Row> Rows { get; set; } = [];
+    private List<Month> Months { get; set; } = [];
+
+    protected override void OnParametersSet()
+    {
+        var dated = Cards.Where(c => c.DueDate is not null || c.StartDate is not null).ToList();
+        var rows = new List<Row>();
+        Row ToRow(PmCard c) => new(c.Title, c, (c.StartDate ?? c.CreatedAtUtc.ToLocalTime()).Date, c.DueDate?.Date, c.Category, false, null, c.IsOverdue);
+
+        foreach (var epic in Epics)
+        {
+            var children = dated.Where(c => c.EpicId == epic.Id).OrderBy(c => c.StartDate ?? c.DueDate).ToList();
+            if (children.Count == 0 && epic.DueDate is null)
+                continue;
+            var all = Cards.Where(c => c.EpicId == epic.Id).ToList();
+            var starts = children.Select(c => (c.StartDate ?? c.CreatedAtUtc.ToLocalTime()).Date).Append((epic.StartDate ?? epic.CreatedAtUtc.ToLocalTime()).Date);
+            var ends = children.Where(c => c.DueDate is not null).Select(c => c.DueDate!.Value.Date).Concat(epic.DueDate is { } d ? [d.Date] : []).ToList();
+            var progress = all.Count == 0 ? 0 : all.Count(c => c.Category == "Done") * 100 / all.Count;
+            rows.Add(new Row(epic.Title, epic, starts.Min(), ends.Count == 0 ? null : ends.Max(), epic.Category, true, progress, epic.IsOverdue));
+            rows.AddRange(children.Select(ToRow));
+        }
+        var loose = dated.Where(c => c.EpicId is null || !Epics.Any(e => e.Id == c.EpicId)).OrderBy(c => c.StartDate ?? c.DueDate).ToList();
+        if (loose.Count > 0 && rows.Count > 0)
+            rows.Add(new Row(T("Ohne Epic", "No epic"), null, null, null, "Todo", true, null, false));
+        rows.AddRange(loose.Select(ToRow));
+        Rows = rows;
+
+        var dates = rows.SelectMany(r => new[] { r.Start, r.End }).Where(d => d is not null).Select(d => d!.Value).Append(DateTime.Today).ToList();
+        _from = new DateTime(dates.Min().Year, dates.Min().Month, 1);
+        var to = dates.Max().AddDays(14);
+        if ((to - _from).Days < 90)
+            to = _from.AddDays(90);
+        _days = (to - _from).Days + 1;
+        Months = [];
+        for (var m = _from; m <= to; m = m.AddMonths(1))
+        {
+            var start = (m - _from).Days;
+            var length = Math.Min(DateTime.DaysInMonth(m.Year, m.Month), _days - start);
+            Months.Add(new Month(start, length, m.ToString("MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("de-CH"))));
+        }
+    }
+
+    private string Pct(double days) => (days * 100d / _days).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
+    private Task Open(Row row) => row.Card is { } c ? OnOpen.InvokeAsync(c.Id) : Task.CompletedTask;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

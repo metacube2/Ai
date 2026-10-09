@@ -330,22 +330,127 @@ CREATE TABLE NavigationMenuItems (
     SortOrder INTEGER NOT NULL DEFAULT 0
 );";
 
-    internal static string GetProjectItemsCreateSql() => @"
-CREATE TABLE ProjectItems (
+    // Trafag Projekte (2026-10-09) ersetzt die Poor Man's Project Management Suite (Tabelle ProjectItems, nie genutzt,
+    // bleibt in bestehenden Datenbanken liegen). Doku docs/TRAFAG_PROJEKTE_2026-10-09.md.
+    internal static IEnumerable<string> GetPmCreateSql()
+    {
+        yield return @"
+CREATE TABLE PmProjects (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    Title TEXT NOT NULL DEFAULT '',
+    Key TEXT NOT NULL DEFAULT '',
+    Name TEXT NOT NULL DEFAULT '',
     Description TEXT NOT NULL DEFAULT '',
-    Status TEXT NOT NULL DEFAULT 'Idea',
-    Priority TEXT NOT NULL DEFAULT 'Normal',
-    Owner TEXT NOT NULL DEFAULT '',
+    Color TEXT NOT NULL DEFAULT '#C8501E',
+    Icon TEXT NOT NULL DEFAULT 'ViewKanban',
+    Template TEXT NOT NULL DEFAULT 'Kanban',
+    LeadLogin TEXT NOT NULL DEFAULT '',
+    LeadName TEXT NOT NULL DEFAULT '',
     StartDate TEXT NULL,
     DueDate TEXT NULL,
-    ProgressPercent INTEGER NOT NULL DEFAULT 0,
-    Notes TEXT NOT NULL DEFAULT '',
+    NextNumber INTEGER NOT NULL DEFAULT 1,
     IsArchived INTEGER NOT NULL DEFAULT 0,
     CreatedAtUtc TEXT NOT NULL,
     UpdatedAtUtc TEXT NOT NULL
 );";
+        yield return @"
+CREATE TABLE PmMembers (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Login TEXT NOT NULL DEFAULT '',
+    Name TEXT NOT NULL DEFAULT '',
+    Role TEXT NOT NULL DEFAULT 'Member',
+    AddedAtUtc TEXT NOT NULL
+);";
+        yield return @"
+CREATE TABLE PmColumns (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Name TEXT NOT NULL DEFAULT '',
+    Category TEXT NOT NULL DEFAULT 'Todo',
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    WipLimit INTEGER NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE PmSprints (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Name TEXT NOT NULL DEFAULT '',
+    Goal TEXT NOT NULL DEFAULT '',
+    StartDate TEXT NULL,
+    EndDate TEXT NULL,
+    State TEXT NOT NULL DEFAULT 'Planned',
+    CompletedAtUtc TEXT NULL
+);";
+        yield return @"
+CREATE TABLE PmTasks (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Number INTEGER NOT NULL DEFAULT 0,
+    Type TEXT NOT NULL DEFAULT 'Task',
+    Title TEXT NOT NULL DEFAULT '',
+    Description TEXT NOT NULL DEFAULT '',
+    ColumnId INTEGER NOT NULL DEFAULT 0,
+    Priority TEXT NOT NULL DEFAULT 'Medium',
+    AssigneeLogin TEXT NOT NULL DEFAULT '',
+    AssigneeName TEXT NOT NULL DEFAULT '',
+    ReporterLogin TEXT NOT NULL DEFAULT '',
+    ReporterName TEXT NOT NULL DEFAULT '',
+    Labels TEXT NOT NULL DEFAULT '',
+    StartDate TEXT NULL,
+    DueDate TEXT NULL,
+    StoryPoints INTEGER NOT NULL DEFAULT 0,
+    ParentId INTEGER NULL,
+    EpicId INTEGER NULL,
+    SprintId INTEGER NULL,
+    Rank REAL NOT NULL DEFAULT 0,
+    Cover TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL,
+    CompletedAtUtc TEXT NULL,
+    IsArchived INTEGER NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE PmChecklistItems (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    TaskId INTEGER NOT NULL,
+    Text TEXT NOT NULL DEFAULT '',
+    IsDone INTEGER NOT NULL DEFAULT 0,
+    SortOrder INTEGER NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE PmComments (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    TaskId INTEGER NOT NULL,
+    Body TEXT NOT NULL DEFAULT '',
+    AuthorLogin TEXT NOT NULL DEFAULT '',
+    AuthorName TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL
+);";
+        yield return @"
+CREATE TABLE PmActivities (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    TaskId INTEGER NULL,
+    Login TEXT NOT NULL DEFAULT '',
+    Name TEXT NOT NULL DEFAULT '',
+    Text TEXT NOT NULL DEFAULT '',
+    AtUtc TEXT NOT NULL
+);";
+    }
+
+    internal static readonly string[] PmIndexSql =
+    [
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmProjects_Key ON PmProjects (Key)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmMembers_Project_Login ON PmMembers (ProjectId, Login)",
+        "CREATE INDEX IF NOT EXISTS IX_PmColumns_Project ON PmColumns (ProjectId)",
+        "CREATE INDEX IF NOT EXISTS IX_PmSprints_Project ON PmSprints (ProjectId)",
+        "CREATE INDEX IF NOT EXISTS IX_PmTasks_Project ON PmTasks (ProjectId, IsArchived)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmTasks_Project_Number ON PmTasks (ProjectId, Number)",
+        "CREATE INDEX IF NOT EXISTS IX_PmTasks_Assignee ON PmTasks (AssigneeLogin)",
+        "CREATE INDEX IF NOT EXISTS IX_PmChecklistItems_Task ON PmChecklistItems (TaskId)",
+        "CREATE INDEX IF NOT EXISTS IX_PmComments_Task ON PmComments (TaskId)",
+        "CREATE INDEX IF NOT EXISTS IX_PmActivities_Project ON PmActivities (ProjectId, AtUtc)"
+    ];
 
     // Trafag Reddit (2026-10-09): Forum, Doku docs/TRAFAG_REDDIT_2026-10-09.md.
     internal static IEnumerable<string> GetForumCreateSql()

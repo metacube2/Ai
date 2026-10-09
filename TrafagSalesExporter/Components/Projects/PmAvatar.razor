@@ -1,0 +1,15 @@
+@* Rundes Kuerzel mit fester Farbe je Login, Name im Tooltip. *@
+<span class="pm-avatar @(Small ? "pm-avatar-sm" : "") @(Empty ? "pm-avatar-empty" : "")" style="@(Empty ? "" : $"background:{ForumAuthor.Color(Login)}")" title="@Name">
+    @(Empty ? "?" : ForumAuthor.Initials(DisplayName))
+</span>
+
+@code {
+    [Parameter] public string Login { get; set; } = string.Empty;
+    [Parameter] public string Name { get; set; } = string.Empty;
+    [Parameter] public bool Small { get; set; }
+
+    private bool Empty => string.IsNullOrWhiteSpace(Login);
+
+    // AD liefert "Nachname, Vorname"; fuer Kuerzel und Anzeige "Vorname Nachname".
+    private string DisplayName => PmText.PersonName(Name);
+}

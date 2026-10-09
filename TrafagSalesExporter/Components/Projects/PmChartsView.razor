@@ -1,0 +1,193 @@
+@* Diagramme wie Planner (Status, Personen, Prioritaet) und Jira (Burndown des laufenden Sprints,
+   Durchsatz je Woche). Statusfarben aus der geprueften Palette (pm-cat-*), Werte immer als Zahl dabei. *@
+@inject IUiTextService UiText
+
+<div class="pm-charts">
+    <section class="pm-chart-card">
+        <h4>@T("Status", "Status")</h4>
+        @{ var total = Math.Max(1, Cards.Count); var offset = 0d; }
+        <div class="pm-donut-wrap">
+            <svg viewBox="0 0 120 120" class="pm-donut" role="img" aria-label="@T("Aufgaben nach Status", "Issues by status")">
+                <circle cx="60" cy="60" r="46" class="pm-donut-track" />
+                @foreach (var s in Status)
+                {
+                    var share = s.Count * 100d / total;
+                    if (s.Count > 0)
+                    {
+                        <circle cx="60" cy="60" r="46" pathLength="100" class="pm-donut-seg pm-stroke-@s.Key"
+                                stroke-dasharray="@Inv(Math.Max(0, share - 0.8)) @Inv(100 - Math.Max(0, share - 0.8))" stroke-dashoffset="@Inv(-offset)">
+                            <title>@s.Label: @s.Count</title>
+                        </circle>
+                    }
+                    offset += share;
+                }
+                <text x="60" y="58" class="pm-donut-num">@Cards.Count</text>
+                <text x="60" y="74" class="pm-donut-sub">@T("Aufgaben", "issues")</text>
+            </svg>
+            <div class="pm-legend pm-legend-col">
+                @foreach (var s in Status)
+                {
+                    <span><i class="pm-sw pm-cat-@s.Key"></i>@s.Label <b>@s.Count</b> <span class="pm-muted">@(Cards.Count == 0 ? 0 : s.Count * 100 / Cards.Count) %</span></span>
+                }
+                <span><MudIcon Icon="@Icons.Material.Filled.WarningAmber" Size="Size.Small" Class="pm-overdue-text" />@T("überfällig", "overdue") <b>@Cards.Count(c => c.IsOverdue)</b></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="pm-chart-card">
+        <h4>@T("Nach Person", "By person")</h4>
+        @{ var maxPerson = Math.Max(1, People.Select(p => p.Total).DefaultIfEmpty(1).Max()); }
+        @foreach (var p in People)
+        {
+            <div class="pm-hbar-row" title="@($"{p.Name}: {p.Todo} / {p.Progress} / {p.Done}")">
+                <span class="pm-hbar-label">
+                    @if (p.Login.Length > 0)
+                    {
+                        <PmAvatar Login="@p.Login" Name="@p.Name" Small="true" />
+                    }
+                    <span>@p.Name</span>
+                </span>
+                <span class="pm-hbar" style="width:@(p.Total * 100 / maxPerson)%">
+                    @if (p.Todo > 0) { <i class="pm-cat-todo" style="flex:@p.Todo"></i> }
+                    @if (p.Progress > 0) { <i class="pm-cat-inprogress" style="flex:@p.Progress"></i> }
+                    @if (p.Done > 0) { <i class="pm-cat-done" style="flex:@p.Done"></i> }
+                </span>
+                <b class="pm-hbar-val">@p.Total</b>
+            </div>
+        }
+        <div class="pm-legend">
+            <span><i class="pm-sw pm-cat-todo"></i>@PmLabels.Category(UiText, "Todo")</span>
+            <span><i class="pm-sw pm-cat-inprogress"></i>@PmLabels.Category(UiText, "InProgress")</span>
+            <span><i class="pm-sw pm-cat-done"></i>@PmLabels.Category(UiText, "Done")</span>
+        </div>
+    </section>
+
+    <section class="pm-chart-card">
+        <h4>@T("Offene Aufgaben nach Priorität", "Open issues by priority")</h4>
+        @{ var open = Cards.Where(c => c.Category != "Done").ToList(); var maxPrio = Math.Max(1, TrafagSalesExporter.Models.PmPriorities.All.Select(p => open.Count(c => c.Priority == p)).Max()); }
+        @foreach (var prio in TrafagSalesExporter.Models.PmPriorities.All)
+        {
+            var count = open.Count(c => c.Priority == prio);
+            <div class="pm-hbar-row" title="@($"{PmLabels.Priority(UiText, prio)}: {count}")">
+                <span class="pm-hbar-label"><span class="pm-prio pm-prio-@prio.ToLowerInvariant()"><MudIcon Icon="@PmStyle.PriorityIcon(prio)" Size="Size.Small" /></span>@PmLabels.Priority(UiText, prio)</span>
+                <span class="pm-hbar"><i class="pm-bar-neutral" style="flex:0 0 @(count * 100 / maxPrio)%"></i></span>
+                <b class="pm-hbar-val">@count</b>
+            </div>
+        }
+    </section>
+
+    <section class="pm-chart-card pm-chart-wide">
+        <h4>@T("Burndown", "Burndown") @if (ActiveSprint is { } sp) { <span class="pm-muted pm-small">@sp.Name</span> }</h4>
+        @if (Burn.Count == 0)
+        {
+            <div class="pm-muted">@T("Erscheint, sobald ein Sprint läuft.", "Appears once a sprint is running.")</div>
+        }
+        else
+        {
+            var maxY = Math.Max(1, Burn.Max(p => Math.Max(p.Ideal, p.Remaining ?? 0)));
+            const double W = 600, H = 200, L = 34, B = 24, Tp = 10;
+            double X(int i) => L + (W - L - 10) * (Burn.Count == 1 ? 0 : i / (double)(Burn.Count - 1));
+            double Y(double v) => Tp + (H - Tp - B) * (1 - v / maxY);
+            var ideal = string.Join(" ", Burn.Select((p, i) => $"{Inv(X(i))},{Inv(Y(p.Ideal))}"));
+            var actual = string.Join(" ", Burn.Select((p, i) => (p, i)).Where(x => x.p.Remaining is not null).Select(x => $"{Inv(X(x.i))},{Inv(Y(x.p.Remaining!.Value))}"));
+            <svg viewBox="0 0 @Inv(W) @Inv(H)" class="pm-line-chart" role="img" aria-label="Burndown">
+                @foreach (var tick in new[] { 0d, maxY / 2, maxY })
+                {
+                    <g>
+                        <line x1="@Inv(L)" x2="@Inv(W - 10)" y1="@Inv(Y(tick))" y2="@Inv(Y(tick))" class="pm-grid" />
+                        <text x="@Inv(L - 6)" y="@Inv(Y(tick) + 4)" class="pm-axis" text-anchor="end">@Math.Round(tick)</text>
+                    </g>
+                }
+                <text x="@Inv(L)" y="@Inv(H - 6)" class="pm-axis">@Burn[0].Day.ToString("dd.MM.")</text>
+                <text x="@Inv(W - 10)" y="@Inv(H - 6)" class="pm-axis" text-anchor="end">@Burn[^1].Day.ToString("dd.MM.")</text>
+                <polyline points="@ideal" class="pm-line-ideal" />
+                <polyline points="@actual" class="pm-line-actual" />
+                @for (var i = 0; i < Burn.Count; i++)
+                {
+                    var p = Burn[i];
+                    if (p.Remaining is { } rem)
+                    {
+                        <circle cx="@Inv(X(i))" cy="@Inv(Y(rem))" r="4" class="pm-line-dot"><title>@p.Day.ToString("dd.MM."): @rem (@T("Ideal", "Ideal") @p.Ideal)</title></circle>
+                    }
+                }
+            </svg>
+            <div class="pm-legend">
+                <span><i class="pm-sw pm-sw-line"></i>@T("Verbleibend", "Remaining") (@(UsesPoints ? T("Punkte", "points") : T("Aufgaben", "issues")))</span>
+                <span><i class="pm-sw pm-sw-dash"></i>@T("Ideal", "Ideal")</span>
+            </div>
+        }
+    </section>
+
+    <section class="pm-chart-card pm-chart-wide">
+        <h4>@T("Durchsatz: angelegt und erledigt je Woche", "Throughput: created and done per week")</h4>
+        @{ var weeks = Weeks; var maxW = Math.Max(1, weeks.Max(w => Math.Max(w.Created, w.Done))); }
+        <div class="pm-weeks">
+            @foreach (var w in weeks)
+            {
+                <div class="pm-week" title="@($"KW {w.Week}: +{w.Created} / ✓{w.Done}")">
+                    <div class="pm-week-bars">
+                        <i class="pm-bar-created" style="height:@(w.Created * 100 / maxW)%"></i>
+                        <i class="pm-cat-done" style="height:@(w.Done * 100 / maxW)%"></i>
+                    </div>
+                    <span class="pm-axis-label">KW @w.Week</span>
+                    <span class="pm-small"><b>@w.Created</b> / <b>@w.Done</b></span>
+                </div>
+            }
+        </div>
+        <div class="pm-legend">
+            <span><i class="pm-sw pm-bar-created"></i>@T("angelegt", "created")</span>
+            <span><i class="pm-sw pm-cat-done"></i>@T("erledigt", "done")</span>
+        </div>
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PmCard> Cards { get; set; } = [];
+    [Parameter] public PmSprintView? ActiveSprint { get; set; }
+    [Parameter] public IReadOnlyList<PmCard> SprintCards { get; set; } = [];
+
+    private sealed record StatusSlice(string Key, string Label, int Count);
+    private sealed record Person(string Login, string Name, int Todo, int Progress, int Done)
+    {
+        public int Total => Todo + Progress + Done;
+    }
+    private sealed record WeekBucket(int Week, int Created, int Done);
+
+    private IReadOnlyList<StatusSlice> Status =>
+    [
+        new("todo", PmLabels.Category(UiText, "Todo"), Cards.Count(c => c.Category == "Todo")),
+        new("inprogress", PmLabels.Category(UiText, "InProgress"), Cards.Count(c => c.Category == "InProgress")),
+        new("done", PmLabels.Category(UiText, "Done"), Cards.Count(c => c.Category == "Done")),
+    ];
+
+    private IReadOnlyList<Person> People => Cards
+        .GroupBy(c => c.AssigneeLogin)
+        .Select(g => new Person(g.Key, g.Key.Length == 0 ? T("Nicht zugewiesen", "Unassigned") : PmText.PersonName(g.First().AssigneeName),
+            g.Count(c => c.Category == "Todo"), g.Count(c => c.Category == "InProgress"), g.Count(c => c.Category == "Done")))
+        .OrderByDescending(p => p.Total)
+        .Take(10)
+        .ToList();
+
+    private bool UsesPoints => SprintCards.Sum(c => c.StoryPoints) > 0;
+
+    private IReadOnlyList<PmBurndownPoint> Burn => ActiveSprint is { } sprint ? PmService.Burndown(sprint, SprintCards, DateTime.Today) : [];
+
+    private IReadOnlyList<WeekBucket> Weeks
+    {
+        get
+        {
+            var monday = DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7));
+            return Enumerable.Range(0, 8).Select(i =>
+            {
+                var start = monday.AddDays(-7 * (7 - i));
+                var end = start.AddDays(7);
+                bool In(DateTime? utc) => utc is { } u && u.ToLocalTime() >= start && u.ToLocalTime() < end;
+                return new WeekBucket(System.Globalization.ISOWeek.GetWeekOfYear(start), Cards.Count(c => In(c.CreatedAtUtc)), Cards.Count(c => In(c.CompletedAtUtc)));
+            }).ToList();
+        }
+    }
+
+    private static string Inv(double v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

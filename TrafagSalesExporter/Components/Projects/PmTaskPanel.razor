@@ -1,0 +1,387 @@
+@* Aufgabe im Seitenpanel: alle Felder direkt aenderbar (speichert sofort wie Planner), Beschreibung,
+   Checkliste, Unteraufgaben, Kommentare und Verlauf (Jira). *@
+@inject IUiTextService UiText
+@inject IPmService Pm
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="pm-panel-backdrop" @onclick="Close"></div>
+<aside class="pm-panel">
+    @if (Detail is null)
+    {
+        <div class="pm-panel-loading"><MudProgressCircular Indeterminate="true" Size="Size.Small" /></div>
+    }
+    else
+    {
+        var c = Detail.Card;
+        <header class="pm-panel-head">
+            <span class="pm-type pm-type-@c.Type.ToLowerInvariant()"><MudIcon Icon="@PmStyle.TypeIcon(c.Type)" Size="Size.Small" /></span>
+            @if (c.ParentKey.Length > 0)
+            {
+                <button type="button" class="pm-link" @onclick="() => OnOpenTask.InvokeAsync(c.ParentId!.Value)">@c.ParentKey</button><span class="pm-muted">/</span>
+            }
+            <b class="pm-key">@c.Key</b>
+            <span class="pm-grow"></span>
+            <button type="button" class="pm-icon-btn" title="@T("Link kopieren", "Copy link")" @onclick="CopyLink"><MudIcon Icon="@(_copied ? Icons.Material.Filled.Check : Icons.Material.Outlined.Link)" Size="Size.Small" /></button>
+            @if (Detail.CanEdit)
+            {
+                <button type="button" class="pm-icon-btn" title="@T("Archivieren", "Archive")" @onclick="Archive"><MudIcon Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" /></button>
+            }
+            <button type="button" class="pm-icon-btn" title="@T("Schliessen", "Close")" @onclick="Close"><MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" /></button>
+        </header>
+        @if (_cover.Length > 0)
+        {
+            <div class="pm-panel-cover" style="background:@_cover"></div>
+        }
+
+        <div class="pm-panel-body">
+            @if (Detail.CanEdit)
+            {
+                <input class="pm-title-input" value="@_edit.Title" maxlength="@PmService.TitleMax" @onchange="e => SetAndSave(() => _edit.Title = e.Value?.ToString() ?? string.Empty)" />
+            }
+            else
+            {
+                <h2 class="pm-title-input">@c.Title</h2>
+            }
+
+            <div class="pm-fields">
+                <label>@T("Status", "Status")</label>
+                <select class="pm-input pm-status pm-cat-@c.Category.ToLowerInvariant()" disabled="@(!Detail.CanEdit)" value="@c.ColumnId" @onchange="e => SetAndSave(() => _edit.ColumnId = int.Parse(e.Value!.ToString()!))">
+                    @foreach (var col in Board.Columns)
+                    {
+                        <option value="@col.Id">@col.Name</option>
+                    }
+                </select>
+
+                <label>@T("Zugewiesen", "Assignee")</label>
+                <div class="pm-row">
+                    <PmAvatar Login="@_edit.AssigneeLogin" Name="@c.AssigneeName" Small="true" />
+                    <select class="pm-input" disabled="@(!Detail.CanEdit)" value="@_edit.AssigneeLogin" @onchange="e => SetAndSave(() => _edit.AssigneeLogin = e.Value?.ToString() ?? string.Empty)">
+                        <option value="">@T("Nicht zugewiesen", "Unassigned")</option>
+                        @foreach (var m in Board.Project.Members)
+                        {
+                            <option value="@m.Login">@PmText.PersonName(m.Name)</option>
+                        }
+                    </select>
+                    @if (Detail.CanEdit && !string.Equals(_edit.AssigneeLogin, User.Login, StringComparison.OrdinalIgnoreCase) && Board.Project.Members.Any(m => string.Equals(m.Login, User.Login, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        <button type="button" class="pm-link pm-small" @onclick="() => SetAndSave(() => _edit.AssigneeLogin = User.Login)">@T("Mir zuweisen", "Assign to me")</button>
+                    }
+                </div>
+
+                <label>@T("Typ", "Type")</label>
+                <select class="pm-input" disabled="@(!Detail.CanEdit || c.Type == "Subtask")" value="@_edit.Type" @onchange="e => SetAndSave(() => _edit.Type = e.Value?.ToString() ?? string.Empty)">
+                    @foreach (var type in TrafagSalesExporter.Models.PmTaskTypes.All.Where(x => x != "Subtask" || c.Type == "Subtask"))
+                    {
+                        <option value="@type">@PmLabels.Type(UiText, type)</option>
+                    }
+                </select>
+
+                <label>@T("Priorität", "Priority")</label>
+                <select class="pm-input" disabled="@(!Detail.CanEdit)" value="@_edit.Priority" @onchange="e => SetAndSave(() => _edit.Priority = e.Value?.ToString() ?? string.Empty)">
+                    @foreach (var prio in TrafagSalesExporter.Models.PmPriorities.All)
+                    {
+                        <option value="@prio">@PmLabels.Priority(UiText, prio)</option>
+                    }
+                </select>
+
+                <label>@T("Start", "Start")</label>
+                <input type="date" class="pm-input" disabled="@(!Detail.CanEdit)" value="@_edit.StartDate?.ToString("yyyy-MM-dd")" @onchange="e => SetAndSave(() => _edit.StartDate = ParseDate(e))" />
+
+                <label>@T("Fällig", "Due")</label>
+                <div class="pm-row">
+                    <input type="date" class="pm-input" disabled="@(!Detail.CanEdit)" value="@_edit.DueDate?.ToString("yyyy-MM-dd")" @onchange="e => SetAndSave(() => _edit.DueDate = ParseDate(e))" />
+                    @if (c.DueDate is { } due && c.Category != "Done")
+                    {
+                        <span class="pm-small @(c.IsOverdue ? "pm-overdue-text" : "pm-muted")">@PmLabels.Due(UiText, due)</span>
+                    }
+                </div>
+
+                <label>Story Points</label>
+                <input type="number" min="0" max="100" class="pm-input pm-narrow" disabled="@(!Detail.CanEdit)" value="@_edit.StoryPoints" @onchange="e => SetAndSave(() => _edit.StoryPoints = int.TryParse(e.Value?.ToString(), out var p) ? p : 0)" />
+
+                @if (c.Type != "Epic" && Board.Epics.Count > 0)
+                {
+                    <label>Epic</label>
+                    <select class="pm-input" disabled="@(!Detail.CanEdit)" value="@(_edit.EpicId?.ToString() ?? "")" @onchange="e => SetAndSave(() => _edit.EpicId = int.TryParse(e.Value?.ToString(), out var x) ? x : null)">
+                        <option value="">@T("Kein Epic", "No epic")</option>
+                        @foreach (var epic in Board.Epics)
+                        {
+                            <option value="@epic.Id">@epic.Key · @epic.Title</option>
+                        }
+                    </select>
+                }
+
+                @if (Board.Sprints.Any(s => s.State != "Closed"))
+                {
+                    <label>Sprint</label>
+                    <select class="pm-input" disabled="@(!Detail.CanEdit)" value="@(_edit.SprintId?.ToString() ?? "")" @onchange="e => SetAndSave(() => _edit.SprintId = int.TryParse(e.Value?.ToString(), out var x) ? x : null)">
+                        <option value="">Backlog</option>
+                        @foreach (var sprint in Board.Sprints.Where(s => s.State != "Closed"))
+                        {
+                            <option value="@sprint.Id">@sprint.Name (@PmLabels.SprintState(UiText, sprint.State))</option>
+                        }
+                    </select>
+                }
+
+                <label>Labels</label>
+                <input class="pm-input" disabled="@(!Detail.CanEdit)" value="@_edit.Labels" placeholder="@T("mit Komma getrennt", "comma separated")" list="pm-label-list"
+                       @onchange="e => SetAndSave(() => _edit.Labels = e.Value?.ToString() ?? string.Empty)" />
+                <datalist id="pm-label-list">@foreach (var l in Board.Labels) { <option value="@l"></option> }</datalist>
+
+                <label>@T("Farbe", "Colour")</label>
+                <div class="pm-swatches">
+                    @foreach (var color in PmStyle.Covers)
+                    {
+                        var col = color;
+                        <button type="button" disabled="@(!Detail.CanEdit)" class="pm-swatch @(col.Length == 0 ? "pm-swatch-none" : "") @(_edit.Cover == col ? "pm-on" : "")" style="@(col.Length > 0 ? $"background:{col}" : "")"
+                                @onclick="() => SetAndSave(() => _edit.Cover = col)"></button>
+                    }
+                </div>
+
+                <label>@T("Erstellt", "Created")</label>
+                <span class="pm-small pm-muted">@PmText.PersonName(Detail.ReporterName) · <ForumAgo Utc="c.CreatedAtUtc" /></span>
+            </div>
+
+            <h4>@T("Beschreibung", "Description")</h4>
+            @if (_editingDescription)
+            {
+                <ForumEditor @bind-Value="_description" Rows="8" MaxLength="PmService.DescriptionMax" />
+                <div class="pm-row pm-mt">
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDescription">@T("Speichern", "Save")</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _editingDescription = false">@T("Abbrechen", "Cancel")</MudButton>
+                </div>
+            }
+            else
+            {
+                <div class="pm-description frm-md @(Detail.CanEdit ? "pm-editable" : "")" @onclick="StartDescription">
+                    @if (string.IsNullOrWhiteSpace(Detail.Description))
+                    {
+                        <span class="pm-muted">@(Detail.CanEdit ? T("Beschreibung hinzufügen …", "Add a description …") : T("Keine Beschreibung.", "No description."))</span>
+                    }
+                    else
+                    {
+                        @TrafagSalesExporter.Services.Forum.ForumMarkdown.Render(Detail.Description)
+                    }
+                </div>
+            }
+
+            <h4>@T("Checkliste", "Checklist") @if (Detail.Checklist.Count > 0) { <span class="pm-muted">@Detail.Checklist.Count(x => x.IsDone)/@Detail.Checklist.Count</span> }</h4>
+            @if (Detail.Checklist.Count > 0)
+            {
+                <div class="pm-progress"><div style="width:@(Detail.Checklist.Count(x => x.IsDone) * 100 / Detail.Checklist.Count)%"></div></div>
+            }
+            @foreach (var item in Detail.Checklist)
+            {
+                var it = item;
+                <div class="pm-check @(it.IsDone ? "pm-check-done" : "")">
+                    <input type="checkbox" checked="@it.IsDone" disabled="@(!Detail.CanEdit)" @onchange="() => Run(() => Pm.ToggleChecklistItemAsync(User, it.Id))" />
+                    <span class="pm-grow">@it.Text</span>
+                    @if (Detail.CanEdit)
+                    {
+                        <button type="button" class="pm-icon-btn pm-hover-show" @onclick="() => Run(() => Pm.DeleteChecklistItemAsync(User, it.Id))"><MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" /></button>
+                    }
+                </div>
+            }
+            @if (Detail.CanEdit)
+            {
+                <input class="pm-input pm-mt" placeholder="@T("Punkt hinzufügen, Enter speichert", "Add an item, Enter saves")" value="@_newCheck"
+                       @oninput="e => _newCheck = e.Value?.ToString() ?? string.Empty" @onkeydown="AddCheckKey" />
+            }
+
+            @if (c.Type is not "Subtask" and not "Epic")
+            {
+                <h4>@T("Unteraufgaben", "Subtasks") @if (Detail.Subtasks.Count > 0) { <span class="pm-muted">@Detail.Subtasks.Count(s => s.Category == "Done")/@Detail.Subtasks.Count</span> }</h4>
+                @foreach (var sub in Detail.Subtasks)
+                {
+                    var s = sub;
+                    <div class="pm-subtask" @onclick="() => OnOpenTask.InvokeAsync(s.Id)">
+                        <span class="pm-type pm-type-subtask"><MudIcon Icon="@PmStyle.TypeIcon(s.Type)" Size="Size.Small" /></span>
+                        <span class="pm-key">@s.Key</span>
+                        <span class="pm-grow @(s.Category == "Done" ? "pm-strike" : "")">@s.Title</span>
+                        <span class="pm-status-chip pm-cat-@s.Category.ToLowerInvariant()">@s.ColumnName</span>
+                        <PmAvatar Login="@s.AssigneeLogin" Name="@s.AssigneeName" Small="true" />
+                    </div>
+                }
+                @if (Detail.CanEdit)
+                {
+                    <input class="pm-input pm-mt" placeholder="@T("Unteraufgabe anlegen, Enter speichert", "Create a subtask, Enter saves")" value="@_newSubtask"
+                           @oninput="e => _newSubtask = e.Value?.ToString() ?? string.Empty" @onkeydown="AddSubtaskKey" />
+                }
+            }
+
+            <div class="pm-tabs pm-mt">
+                <button type="button" class="@(_tab == "comments" ? "pm-on" : "")" @onclick="@(() => _tab = "comments")">@T("Kommentare", "Comments") (@Detail.Comments.Count)</button>
+                <button type="button" class="@(_tab == "history" ? "pm-on" : "")" @onclick="@(() => _tab = "history")">@T("Verlauf", "History")</button>
+            </div>
+            @if (_tab == "comments")
+            {
+                @if (User.IsKnown)
+                {
+                    <ForumEditor @bind-Value="_comment" Rows="3" MaxLength="PmService.CommentMax" Placeholder="@T("Kommentar schreiben …", "Write a comment …")" />
+                    <div class="pm-row pm-mt">
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@string.IsNullOrWhiteSpace(_comment)" OnClick="SendComment">@T("Kommentieren", "Comment")</MudButton>
+                    </div>
+                }
+                @foreach (var comment in Detail.Comments.Reverse())
+                {
+                    <div class="pm-comment">
+                        <PmAvatar Login="@comment.AuthorLogin" Name="@comment.AuthorName" />
+                        <div class="pm-grow">
+                            <div><b>@PmText.PersonName(comment.AuthorName)</b> <ForumAgo Utc="comment.CreatedAtUtc" /></div>
+                            <div class="frm-md">@TrafagSalesExporter.Services.Forum.ForumMarkdown.Render(comment.Body)</div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                @foreach (var a in Detail.Activity)
+                {
+                    <div class="pm-activity">
+                        <PmAvatar Login="@a.Login" Name="@a.Name" Small="true" />
+                        <span class="pm-grow"><b>@PmText.PersonName(a.Name)</b> @a.Text</span>
+                        <ForumAgo Utc="a.AtUtc" />
+                    </div>
+                }
+            }
+        </div>
+    }
+</aside>
+
+@code {
+    [Parameter, EditorRequired] public PmTaskDetail? Detail { get; set; }
+    [Parameter, EditorRequired] public PmBoard Board { get; set; } = default!;
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback<int> OnOpenTask { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+
+    private PmTaskInput _edit = new();
+    private string _cover = string.Empty;
+    private int _loadedFor;
+    private DateTime _loadedStamp;
+    private bool _editingDescription;
+    private string _description = string.Empty;
+    private string _newCheck = string.Empty;
+    private string _newSubtask = string.Empty;
+    private string _comment = string.Empty;
+    private string _tab = "comments";
+    private bool _copied;
+
+    protected override void OnParametersSet()
+    {
+        if (Detail is null)
+            return;
+        var c = Detail.Card;
+        if (_loadedFor != c.Id)
+        {
+            _editingDescription = false;
+            _comment = string.Empty;
+            _copied = false;
+        }
+        if (_loadedFor == c.Id && _loadedStamp == c.UpdatedAtUtc)
+            return;
+        _loadedFor = c.Id;
+        _loadedStamp = c.UpdatedAtUtc;
+        _edit = new PmTaskInput
+        {
+            Title = c.Title, Type = c.Type, Description = Detail.Description, ColumnId = c.ColumnId, Priority = c.Priority,
+            AssigneeLogin = c.AssigneeLogin, Labels = string.Join(", ", c.Labels), StartDate = c.StartDate, DueDate = c.DueDate,
+            StoryPoints = c.StoryPoints, ParentId = c.ParentId, EpicId = c.EpicId, SprintId = c.SprintId, Cover = c.Cover
+        };
+        _cover = c.Cover;
+    }
+
+    private static DateTime? ParseDate(ChangeEventArgs e) => DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null;
+
+    private async Task SetAndSave(Action change)
+    {
+        if (Detail is null || !Detail.CanEdit)
+            return;
+        change();
+        _cover = _edit.Cover;
+        await Run(() => Pm.UpdateTaskAsync(User, Detail.Card.Id, _edit));
+    }
+
+    private void StartDescription()
+    {
+        if (Detail is null || !Detail.CanEdit)
+            return;
+        _description = Detail.Description;
+        _editingDescription = true;
+    }
+
+    private async Task SaveDescription()
+    {
+        _edit.Description = _description;
+        _editingDescription = false;
+        await Run(() => Pm.UpdateTaskAsync(User, Detail!.Card.Id, _edit));
+    }
+
+    private async Task AddCheckKey(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter" || string.IsNullOrWhiteSpace(_newCheck) || Detail is null)
+            return;
+        var text = _newCheck;
+        _newCheck = string.Empty;
+        await Run(() => Pm.AddChecklistItemAsync(User, Detail.Card.Id, text));
+    }
+
+    private async Task AddSubtaskKey(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter" || string.IsNullOrWhiteSpace(_newSubtask) || Detail is null)
+            return;
+        var title = _newSubtask;
+        _newSubtask = string.Empty;
+        var c = Detail.Card;
+        await Run(() => Pm.CreateTaskAsync(User, c.ProjectId, new PmTaskInput { Title = title, ParentId = c.Id, SprintId = c.SprintId, EpicId = c.EpicId, Type = "Subtask" }));
+    }
+
+    private async Task SendComment()
+    {
+        if (Detail is null)
+            return;
+        var body = _comment;
+        _comment = string.Empty;
+        await Run(() => Pm.AddCommentAsync(User, Detail.Card.Id, body));
+    }
+
+    private async Task Archive()
+    {
+        if (Detail is null)
+            return;
+        await Run(() => Pm.SetTaskArchivedAsync(User, Detail.Card.Id, true));
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task CopyLink()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", Nav.Uri);
+            _copied = true;
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task Run(Func<Task> action)
+    {
+        try
+        {
+            await action();
+            await OnChanged.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+    }
+
+    private Task Close() => OnClose.InvokeAsync();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

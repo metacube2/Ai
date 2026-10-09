@@ -1,0 +1,159 @@
+@* Board: Spalten mit Karten, ziehen und ablegen (Trello), WIP-Grenzen (Jira Kanban), Schnellerfassung
+   am Spaltenende und Swimlanes nach Person, Epic oder Prioritaet. *@
+@inject IUiTextService UiText
+
+<div class="pm-board-wrap">
+    @foreach (var lane in Lanes)
+    {
+        @if (Lanes.Count > 1)
+        {
+            <div class="pm-lane-head">
+                @if (SwimlaneBy == "assignee")
+                {
+                    <PmAvatar Login="@lane.Key" Name="@lane.Title" Small="true" />
+                }
+                <b>@lane.Title</b><span class="pm-muted">@lane.Cards.Count</span>
+            </div>
+        }
+        <div class="pm-board">
+            @foreach (var column in Columns)
+            {
+                var col = column;
+                var cards = lane.Cards.Where(c => c.ColumnId == col.Id).OrderBy(c => c.Rank).ToList();
+                var total = AllCards.Count(c => c.ColumnId == col.Id);
+                var overWip = col.WipLimit > 0 && total > col.WipLimit;
+                <section class="pm-column pm-cat-@col.Category.ToLowerInvariant() @(overWip ? "pm-wip-over" : "") @(_dropColumn == col.Id && _dropLane == lane.Key ? "pm-drop" : "")"
+                         @ondragover:preventDefault="true"
+                         @ondragenter="() => Enter(col.Id, lane.Key)"
+                         @ondrop="() => Drop(col.Id, null, lane.Key)">
+                    <header class="pm-column-head">
+                        <span class="pm-column-dot"></span>
+                        <span class="pm-grow pm-column-name">@col.Name</span>
+                        <span class="pm-count @(overWip ? "pm-count-over" : "")" title="@(col.WipLimit > 0 ? T("WIP-Grenze", "WIP limit") : "")">
+                            @total@(col.WipLimit > 0 ? $"/{col.WipLimit}" : "")
+                        </span>
+                    </header>
+                    <div class="pm-column-body">
+                        @foreach (var card in cards)
+                        {
+                            <PmCardView @key="card.Id" Card="card" CanDrag="CanEdit" Dragging="_dragId == card.Id"
+                                        OnOpen="OnOpen" OnDragStart="Start" OnDragEnd="End" OnDropBefore="id => Drop(col.Id, id, lane.Key)" />
+                        }
+                        @if (cards.Count == 0)
+                        {
+                            <div class="pm-empty-col">@T("Karte hierher ziehen", "Drop a card here")</div>
+                        }
+                    </div>
+                    @if (CanEdit && Lanes.Count == 1)
+                    {
+                        @if (_addColumn == col.Id)
+                        {
+                            <div class="pm-quick">
+                                <input class="pm-input" placeholder="@T("Titel eingeben, Enter speichert", "Enter a title, Enter saves")" value="@_quickTitle"
+                                       @oninput="e => _quickTitle = e.Value?.ToString() ?? string.Empty" @onkeydown="e => QuickKey(e, col.Id)" />
+                                <div class="pm-row">
+                                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => QuickAdd(col.Id)">@T("Karte anlegen", "Add card")</MudButton>
+                                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Close" OnClick="() => _addColumn = null" />
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <button type="button" class="pm-add-card" @onclick="() => { _addColumn = col.Id; _quickTitle = string.Empty; }">
+                                <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" /> @T("Karte hinzufügen", "Add a card")
+                            </button>
+                        }
+                    }
+                </section>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PmColumnView> Columns { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PmCard> Cards { get; set; } = [];
+    [Parameter] public IReadOnlyList<PmCard> AllCards { get; set; } = [];
+    [Parameter] public IReadOnlyList<PmCard> Epics { get; set; } = [];
+    [Parameter] public string SwimlaneBy { get; set; } = "none";
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<(int TaskId, int ColumnId, int? BeforeId, string LaneKey)> OnMove { get; set; }
+    [Parameter] public EventCallback<(int ColumnId, string Title)> OnQuickAdd { get; set; }
+    [Parameter] public EventCallback<bool> OnDragging { get; set; }
+
+    private sealed record Lane(string Key, string Title, List<PmCard> Cards);
+
+    private int? _dragId;
+    private int? _dropColumn;
+    private string? _dropLane;
+    private int? _addColumn;
+    private string _quickTitle = string.Empty;
+
+    private List<Lane> Lanes => SwimlaneBy switch
+    {
+        "assignee" => Cards.GroupBy(c => c.AssigneeLogin)
+            .OrderBy(g => g.Key.Length == 0).ThenBy(g => g.First().AssigneeName)
+            .Select(g => new Lane(g.Key, g.Key.Length == 0 ? T("Nicht zugewiesen", "Unassigned") : PmText.PersonName(g.First().AssigneeName), g.ToList())).ToList(),
+        "epic" => Cards.GroupBy(c => c.EpicId ?? 0)
+            .OrderBy(g => g.Key == 0).ThenBy(g => g.First().EpicTitle)
+            .Select(g => new Lane(g.Key.ToString(), g.Key == 0 ? T("Ohne Epic", "No epic") : g.First().EpicTitle, g.ToList())).ToList(),
+        "priority" => Cards.GroupBy(c => c.Priority)
+            .OrderByDescending(g => TrafagSalesExporter.Models.PmPriorities.Weight(g.Key))
+            .Select(g => new Lane(g.Key, PmLabels.Priority(UiText, g.Key), g.ToList())).ToList(),
+        _ => [new Lane(string.Empty, string.Empty, Cards.ToList())]
+    };
+
+    private async Task Start(int id)
+    {
+        _dragId = id;
+        await OnDragging.InvokeAsync(true);
+    }
+
+    private async Task End()
+    {
+        _dragId = null;
+        _dropColumn = null;
+        await OnDragging.InvokeAsync(false);
+    }
+
+    private void Enter(int columnId, string laneKey)
+    {
+        _dropColumn = columnId;
+        _dropLane = laneKey;
+    }
+
+    private async Task Drop(int columnId, int? beforeId, string laneKey)
+    {
+        if (_dragId is not { } id)
+            return;
+        _dragId = null;
+        _dropColumn = null;
+        if (beforeId == id)
+        {
+            await OnDragging.InvokeAsync(false);
+            return;
+        }
+        await OnMove.InvokeAsync((id, columnId, beforeId, laneKey));
+        await OnDragging.InvokeAsync(false);
+    }
+
+    private async Task QuickKey(KeyboardEventArgs e, int columnId)
+    {
+        if (e.Key == "Enter")
+            await QuickAdd(columnId);
+        else if (e.Key == "Escape")
+            _addColumn = null;
+    }
+
+    private async Task QuickAdd(int columnId)
+    {
+        var title = _quickTitle.Trim();
+        if (title.Length == 0)
+            return;
+        _quickTitle = string.Empty;
+        await OnQuickAdd.InvokeAsync((columnId, title));
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

@@ -1,0 +1,206 @@
+@* Projekteinstellungen: Stammdaten, Team (Suche im AD) und Spalten mit Art und WIP-Grenze.
+   Aendern darf die Projektleitung oder ein Admin; alle anderen sehen die Einstellungen nur. *@
+@inject IUiTextService UiText
+@inject IPmService Pm
+@inject TrafagSalesExporter.Services.Forum.ForumUserDirectory Directory
+
+<div class="pm-settings">
+    <section class="pm-chart-card">
+        <h4>@T("Projekt", "Project")</h4>
+        <div class="pm-fields">
+            <label>@T("Name", "Name")</label>
+            <input class="pm-input" disabled="@(!Board.CanManage)" value="@_input.Name" @oninput="e => _input.Name = e.Value?.ToString() ?? string.Empty" />
+            <label>@T("Schlüssel", "Key")</label>
+            <span><b>@Board.Project.Key</b> <span class="pm-muted pm-small">@T("fest, damit Verweise wie LOG-12 gültig bleiben", "fixed so that references like LOG-12 stay valid")</span></span>
+            <label>@T("Beschreibung", "Description")</label>
+            <textarea class="pm-input" rows="3" disabled="@(!Board.CanManage)" @oninput="e => _input.Description = e.Value?.ToString() ?? string.Empty">@_input.Description</textarea>
+            <label>@T("Start", "Start")</label>
+            <input type="date" class="pm-input" disabled="@(!Board.CanManage)" value="@_input.StartDate?.ToString("yyyy-MM-dd")" @onchange="e => _input.StartDate = DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null" />
+            <label>@T("Ende", "End")</label>
+            <input type="date" class="pm-input" disabled="@(!Board.CanManage)" value="@_input.DueDate?.ToString("yyyy-MM-dd")" @onchange="e => _input.DueDate = DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null" />
+            <label>@T("Farbe", "Colour")</label>
+            <div class="pm-swatches">
+                @foreach (var color in PmStyle.Colors)
+                {
+                    var c = color;
+                    <button type="button" class="pm-swatch @(_input.Color == c ? "pm-on" : "")" style="background:@c" disabled="@(!Board.CanManage)" @onclick="() => _input.Color = c"></button>
+                }
+            </div>
+            <label>@T("Symbol", "Icon")</label>
+            <div class="pm-swatches">
+                @foreach (var icon in PmStyle.Icons)
+                {
+                    var i = icon;
+                    <button type="button" class="pm-icon-pick @(_input.Icon == i ? "pm-on" : "")" disabled="@(!Board.CanManage)" @onclick="() => _input.Icon = i"><MudIcon Icon="@PmStyle.ResolveIcon(i)" Size="Size.Small" /></button>
+                }
+            </div>
+        </div>
+        @if (Board.CanManage)
+        {
+            <div class="pm-row pm-mt">
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveProject">@T("Speichern", "Save")</MudButton>
+                <span class="pm-grow"></span>
+                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Archive" OnClick="ToggleArchive">
+                    @(Board.Project.IsArchived ? T("Wiederherstellen", "Restore") : T("Projekt archivieren", "Archive project"))
+                </MudButton>
+            </div>
+        }
+    </section>
+
+    <section class="pm-chart-card">
+        <h4>@T("Team", "Team") <span class="pm-muted">@Board.Project.Members.Count</span></h4>
+        @foreach (var member in Board.Project.Members)
+        {
+            var m = member;
+            <div class="pm-member">
+                <PmAvatar Login="@m.Login" Name="@m.Name" />
+                <span class="pm-grow">@PmText.PersonName(m.Name) <span class="pm-muted pm-small">@m.Login</span></span>
+                @if (string.Equals(m.Login, Board.Project.LeadLogin, StringComparison.OrdinalIgnoreCase))
+                {
+                    <span class="pm-status-chip pm-cat-inprogress">@T("Projektleitung", "Project lead")</span>
+                }
+                else if (Board.CanManage)
+                {
+                    <button type="button" class="pm-icon-btn" title="@T("Aus dem Team nehmen", "Remove from team")" @onclick="() => Run(() => Pm.RemoveMemberAsync(User, Board.Project.Id, m.Login))"><MudIcon Icon="@Icons.Material.Filled.PersonRemove" Size="Size.Small" /></button>
+                }
+            </div>
+        }
+        @if (Board.CanManage)
+        {
+            <label class="pm-label pm-mt">@T("Person hinzufügen", "Add a person")</label>
+            <input class="pm-input" placeholder="@T("Name oder Kürzel eingeben …", "Type a name or login …")" value="@_search" @oninput="Search" />
+            @foreach (var hit in _hits)
+            {
+                var h = hit;
+                <button type="button" class="pm-person-hit" @onclick="() => Add(h)">
+                    <PmAvatar Login="@h.Login" Name="@h.Name" Small="true" />
+                    <span class="pm-grow">@PmText.PersonName(h.Name)</span><span class="pm-muted pm-small">@h.Login</span>
+                    <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Small" />
+                </button>
+            }
+        }
+    </section>
+
+    <section class="pm-chart-card pm-chart-wide">
+        <h4>@T("Spalten", "Columns")</h4>
+        <div class="pm-muted pm-small">@T("Die Art bestimmt, was als offen, in Arbeit oder erledigt zählt. Die WIP-Grenze färbt die Spalte rot, wenn mehr Karten darin liegen (0 = keine Grenze).", "The kind decides what counts as to do, in progress or done. The WIP limit turns the column red when it holds more cards (0 = no limit).")</div>
+        @foreach (var column in Board.Columns)
+        {
+            var col = column;
+            var state = _columns.TryGetValue(col.Id, out var pending) ? pending : (Name: col.Name, Category: col.Category, Wip: col.WipLimit);
+            <div class="pm-column-edit">
+                <span class="pm-column-dot pm-cat-@state.Category.ToLowerInvariant()"></span>
+                <input class="pm-input" disabled="@(!Board.CanManage)" value="@state.Name" @onchange="e => SaveColumn(col, e.Value?.ToString() ?? string.Empty, state.Category, state.Wip)" />
+                <select class="pm-input pm-narrow2" disabled="@(!Board.CanManage)" value="@state.Category" @onchange="e => SaveColumn(col, state.Name, e.Value?.ToString() ?? state.Category, state.Wip)">
+                    @foreach (var cat in TrafagSalesExporter.Models.PmCategories.All)
+                    {
+                        <option value="@cat">@PmLabels.Category(UiText, cat)</option>
+                    }
+                </select>
+                <input type="number" min="0" max="99" class="pm-input pm-narrow" title="@T("WIP-Grenze", "WIP limit")" disabled="@(!Board.CanManage)" value="@state.Wip"
+                       @onchange="e => SaveColumn(col, state.Name, state.Category, int.TryParse(e.Value?.ToString(), out var w) ? w : 0)" />
+                @if (Board.CanManage)
+                {
+                    <button type="button" class="pm-icon-btn" @onclick="() => Run(() => Pm.MoveColumnAsync(User, col.Id, -1))"><MudIcon Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" /></button>
+                    <button type="button" class="pm-icon-btn" @onclick="() => Run(() => Pm.MoveColumnAsync(User, col.Id, 1))"><MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" /></button>
+                    <button type="button" class="pm-icon-btn" title="@T("Spalte löschen, Karten wandern in die erste Spalte derselben Art", "Delete column, cards move to the first column of the same kind")"
+                            @onclick="() => Run(() => Pm.DeleteColumnAsync(User, col.Id))"><MudIcon Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" /></button>
+                }
+            </div>
+        }
+        @if (Board.CanManage)
+        {
+            <div class="pm-row pm-mt">
+                <input class="pm-input" placeholder="@T("Neue Spalte, z. B. Freigabe", "New column, e.g. Approval")" value="@_newColumn" @oninput="e => _newColumn = e.Value?.ToString() ?? string.Empty" />
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Disabled="@string.IsNullOrWhiteSpace(_newColumn)" OnClick="AddColumn">@T("Hinzufügen", "Add")</MudButton>
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PmBoard Board { get; set; } = default!;
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+
+    private PmProjectInput _input = new();
+    private int _loadedFor;
+    private string _search = string.Empty;
+    private IReadOnlyList<PmPerson> _hits = [];
+    private IReadOnlyList<PmPerson>? _known;
+    private CancellationTokenSource? _searchDelay;
+    private string _newColumn = string.Empty;
+    private readonly Dictionary<int, (string Name, string Category, int Wip)> _columns = [];
+
+    protected override void OnParametersSet()
+    {
+        _columns.Clear();
+        if (_loadedFor == Board.Project.Id)
+            return;
+        _loadedFor = Board.Project.Id;
+        var p = Board.Project;
+        _input = new PmProjectInput { Name = p.Name, Description = p.Description, Color = p.Color, Icon = p.Icon, StartDate = p.StartDate, DueDate = p.DueDate, Template = p.Template, Key = p.Key };
+    }
+
+    private async Task Search(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? string.Empty;
+        _searchDelay?.Cancel();
+        _searchDelay = new CancellationTokenSource();
+        try { await Task.Delay(300, _searchDelay.Token); } catch (TaskCanceledException) { return; }
+        var term = _search.Trim();
+        if (term.Length < 2)
+        {
+            _hits = [];
+            return;
+        }
+        _known ??= await Pm.GetKnownPeopleAsync();
+        var members = Board.Project.Members.Select(m => m.Login).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var ad = (await Directory.SearchAsync(term)).Select(x => new PmPerson(x.Login, x.Name));
+        var local = _known.Where(p => p.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) || p.Login.Contains(term, StringComparison.OrdinalIgnoreCase));
+        _hits = ad.Concat(local)
+            .Where(p => !members.Contains(p.Login))
+            .GroupBy(p => p.Login, StringComparer.OrdinalIgnoreCase).Select(g => g.First())
+            .Take(8).ToList();
+    }
+
+    private async Task Add(PmPerson person)
+    {
+        _hits = [];
+        _search = string.Empty;
+        await Run(() => Pm.AddMemberAsync(User, Board.Project.Id, person.Login, person.Name));
+    }
+
+    private Task SaveProject() => Run(() => Pm.UpdateProjectAsync(User, Board.Project.Id, _input));
+
+    private Task ToggleArchive() => Run(() => Pm.SetProjectArchivedAsync(User, Board.Project.Id, !Board.Project.IsArchived));
+
+    private async Task SaveColumn(PmColumnView column, string name, string category, int wip)
+    {
+        _columns[column.Id] = (name, category, wip);
+        await Run(() => Pm.UpdateColumnAsync(User, column.Id, name, category, wip));
+    }
+
+    private async Task AddColumn()
+    {
+        var name = _newColumn;
+        _newColumn = string.Empty;
+        await Run(() => Pm.AddColumnAsync(User, Board.Project.Id, name, "InProgress"));
+    }
+
+    private async Task Run(Func<Task> action)
+    {
+        try
+        {
+            await action();
+            await OnChanged.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

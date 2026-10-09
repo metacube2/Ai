@@ -1,179 +1,338 @@
 @page "/projekte"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
-@using TrafagSalesExporter.Models
+@implements IDisposable
 @using TrafagSalesExporter.Services
-@inject IProjectManagementService ProjectManagement
+@using TrafagSalesExporter.Services.Projects
+@using TrafagSalesExporter.Components.Projects
+@using TrafagSalesExporter.Components.Forum
+@inject IPmService Pm
+@inject PmNotifier Notifier
+@inject TrafagSalesExporter.Services.Forum.ForumUserDirectory Directory
+@inject IAdminAccessService AdminAccess
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
 @inject IUiTextService UiText
-@inject ISnackbar Snackbar
 
-<PageTitle>@T("Poor Man's Project Management Suite", "Poor Man's Project Management Suite")</PageTitle>
+@* Trafag Projekte (2026-10-09, Wunsch Ingo): ersetzt die Poor Man's Project Management Suite.
+   Uebersicht aller Projekte, Meine Aufgaben ueber alle Projekte (Planner), neues Projekt mit Vorlage.
+   Doku docs/TRAFAG_PROJEKTE_2026-10-09.md *@
+<PageTitle>@T("Trafag Projekte", "Trafag Projects")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-1">@T("Poor Man's Project Management Suite", "Poor Man's Project Management Suite")</MudText>
-<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-    @T("Einfache Projektverwaltung fuer Status, Verantwortung, Termine und Fortschritt.", "Simple project management for status, ownership, dates and progress.")
-</MudText>
+<div class="pm-page">
+    <header class="pm-hero">
+        <div class="pm-hero-text">
+            <span class="pm-hero-icon"><MudIcon Icon="@Icons.Material.Filled.ViewKanban" /></span>
+            <span>
+                <span class="pm-hero-title">@T("Trafag Projekte", "Trafag Projects")</span>
+                <span class="pm-hero-sub">@T("Boards wie Trello, Backlog und Sprints wie Jira, Checklisten und Diagramme wie Planner.", "Boards like Trello, backlog and sprints like Jira, checklists and charts like Planner.")</span>
+            </span>
+        </div>
+        <div class="pm-hero-search">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+            <input type="search" placeholder="@T("Projekte suchen", "Search projects")" value="@_search" @oninput="e => _search = e.Value?.ToString() ?? string.Empty" />
+        </div>
+        <button type="button" class="pm-hero-btn" disabled="@(!_user.IsKnown)" @onclick="() => { _creating = !_creating; _new = new PmProjectInput(); _keyTouched = false; }">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" /> @T("Neues Projekt", "New project")
+        </button>
+        <div class="pm-hero-stats">
+            <span><b>@_projects.Count(p => !p.IsArchived)</b> @T("Projekte", "Projects")</span>
+            <span><b>@_projects.Sum(p => p.Open + p.InProgress)</b> @T("offene Aufgaben", "open issues")</span>
+            <span><b>@_projects.Sum(p => p.Overdue)</b> @T("überfällig", "overdue")</span>
+            <span><b>@_mine.Count</b> @T("für mich", "for me")</span>
+        </div>
+    </header>
 
-<MudGrid Class="mb-4">
-    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("Aktive Projekte", "Active projects")</MudText><MudText Typo="Typo.h5">@ActiveCount</MudText></MudPaper></MudItem>
-    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("In Arbeit", "In progress")</MudText><MudText Typo="Typo.h5">@Count(ProjectStatuses.InProgress)</MudText></MudPaper></MudItem>
-    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("Blockiert", "Blocked")</MudText><MudText Typo="Typo.h5" Color="Color.Error">@Count(ProjectStatuses.Blocked)</MudText></MudPaper></MudItem>
-    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("Abgeschlossen", "Completed")</MudText><MudText Typo="Typo.h5" Color="Color.Success">@Count(ProjectStatuses.Completed)</MudText></MudPaper></MudItem>
-</MudGrid>
+    @if (_error is { } err)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+    }
 
-<MudPaper Class="pa-4 mb-4" Elevation="1">
-    <MudText Typo="Typo.h6" Class="mb-3">@(_editing.Id == 0 ? T("Neues Projekt", "New project") : T("Projekt bearbeiten", "Edit project"))</MudText>
-    <MudGrid>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="_editing.Title" Label="@T("Projekttitel", "Project title")" Required /></MudItem>
-        <MudItem xs="12" md="3"><MudTextField @bind-Value="_editing.Owner" Label="@T("Verantwortlich", "Owner")" /></MudItem>
-        <MudItem xs="12" md="3">
-            <MudSelect T="string" @bind-Value="_editing.Status" Label="@T("Status", "Status")">
-                @foreach (var status in ProjectStatuses.All)
+    @if (_creating)
+    {
+        <section class="pm-chart-card pm-create">
+            <h3>@T("Neues Projekt", "New project")</h3>
+            <div class="pm-templates">
+                @foreach (var template in TrafagSalesExporter.Models.PmTemplates.All)
                 {
-                    <MudSelectItem Value="@status">@StatusLabel(status)</MudSelectItem>
+                    var t = template;
+                    <button type="button" class="pm-template @(_new.Template == t ? "pm-on" : "")" @onclick="() => _new.Template = t">
+                        <span class="pm-template-art pm-template-@t.ToLowerInvariant()"><i></i><i></i><i></i></span>
+                        <b>@PmLabels.Template(UiText, t)</b>
+                        <span class="pm-small pm-muted">@PmLabels.TemplateHelp(UiText, t)</span>
+                    </button>
                 }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudSelect T="string" @bind-Value="_editing.Priority" Label="@T("Prioritaet", "Priority")">
-                @foreach (var priority in ProjectPriorities.All)
-                {
-                    <MudSelectItem Value="@priority">@PriorityLabel(priority)</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="3"><MudDatePicker @bind-Date="_editing.StartDate" Label="@T("Startdatum", "Start date")" Clearable /></MudItem>
-        <MudItem xs="12" md="3"><MudDatePicker @bind-Date="_editing.DueDate" Label="@T("Faellig am", "Due date")" Clearable /></MudItem>
-        <MudItem xs="12" md="3"><MudNumericField T="int" @bind-Value="_editing.ProgressPercent" Label="@T("Fortschritt in Prozent", "Progress in percent")" Min="0" Max="100" /></MudItem>
-        <MudItem xs="12"><MudTextField @bind-Value="_editing.Description" Label="@T("Beschreibung", "Description")" Lines="2" /></MudItem>
-        <MudItem xs="12"><MudTextField @bind-Value="_editing.Notes" Label="@T("Notizen", "Notes")" Lines="2" /></MudItem>
-    </MudGrid>
-    <MudStack Row Spacing="2" Class="mt-3">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="@_saving">@T("Projekt speichern", "Save project")</MudButton>
-        <MudButton Variant="Variant.Text" OnClick="ResetEditor">@T("Abbrechen", "Cancel")</MudButton>
-    </MudStack>
-</MudPaper>
+            </div>
+            <div class="pm-create-grid">
+                <div>
+                    <label class="pm-label">@T("Name", "Name")</label>
+                    <input class="pm-input" maxlength="80" value="@_new.Name" placeholder="@T("z. B. Logistik Umbau Halle 3", "e.g. Logistics hall 3 rebuild")" @oninput="NameInput" />
+                </div>
+                <div>
+                    <label class="pm-label">@T("Schlüssel", "Key")</label>
+                    <input class="pm-input pm-key-input" maxlength="6" value="@_new.Key" @oninput="e => { _new.Key = (e.Value?.ToString() ?? string.Empty).ToUpperInvariant(); _keyTouched = true; }" />
+                </div>
+                <div class="pm-create-wide">
+                    <label class="pm-label">@T("Beschreibung", "Description")</label>
+                    <input class="pm-input" value="@_new.Description" placeholder="@T("Ziel und Umfang in einem Satz", "Goal and scope in one sentence")" @oninput="e => _new.Description = e.Value?.ToString() ?? string.Empty" />
+                </div>
+                <div>
+                    <label class="pm-label">@T("Farbe", "Colour")</label>
+                    <div class="pm-swatches">
+                        @foreach (var color in PmStyle.Colors)
+                        {
+                            var c = color;
+                            <button type="button" class="pm-swatch @(_new.Color == c ? "pm-on" : "")" style="background:@c" @onclick="() => _new.Color = c"></button>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <label class="pm-label">@T("Symbol", "Icon")</label>
+                    <div class="pm-swatches">
+                        @foreach (var icon in PmStyle.Icons)
+                        {
+                            var i = icon;
+                            <button type="button" class="pm-icon-pick @(_new.Icon == i ? "pm-on" : "")" @onclick="() => _new.Icon = i"><MudIcon Icon="@PmStyle.ResolveIcon(i)" Size="Size.Small" /></button>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="pm-row pm-mt">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="Create">@T("Projekt anlegen", "Create project")</MudButton>
+                <MudButton Variant="Variant.Text" OnClick="() => _creating = false">@T("Abbrechen", "Cancel")</MudButton>
+                <span class="pm-muted pm-small">@T("Du wirst Projektleitung und kannst danach das Team zusammenstellen.", "You become the project lead and can then build the team.")</span>
+            </div>
+        </section>
+    }
 
-<MudPaper Class="pa-4" Elevation="1">
-    <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
-        <MudText Typo="Typo.h6">@T("Projektuebersicht", "Project overview")</MudText>
-        <MudSpacer />
-        <MudCheckBox T="bool" Value="_showArchived" ValueChanged="ShowArchivedChangedAsync" Label="@T("Archivierte anzeigen", "Show archived")" />
-    </MudStack>
+    <div class="pm-tabs pm-tabs-big">
+        <button type="button" class="@(_tab == "projects" ? "pm-on" : "")" @onclick="@(() => _tab = "projects")"><MudIcon Icon="@Icons.Material.Outlined.Dashboard" Size="Size.Small" /> @T("Projekte", "Projects")</button>
+        <button type="button" class="@(_tab == "mine" ? "pm-on" : "")" @onclick="@(() => _tab = "mine")"><MudIcon Icon="@Icons.Material.Outlined.AssignmentInd" Size="Size.Small" /> @T("Meine Aufgaben", "My tasks") <span class="pm-count">@_mine.Count</span></button>
+        <span class="pm-grow"></span>
+        @if (_tab == "projects")
+        {
+            <label class="pm-small pm-row"><input type="checkbox" checked="@_showArchived" @onchange="ToggleArchived" /> @T("Archivierte zeigen", "Show archived")</label>
+        }
+    </div>
 
-    <MudTable Items="_items" Dense Hover Striped Loading="_loading" Breakpoint="Breakpoint.Md">
-        <HeaderContent>
-            <MudTh>@T("Projekt", "Project")</MudTh>
-            <MudTh>@T("Status", "Status")</MudTh>
-            <MudTh>@T("Prioritaet", "Priority")</MudTh>
-            <MudTh>@T("Verantwortlich", "Owner")</MudTh>
-            <MudTh>@T("Faellig am", "Due date")</MudTh>
-            <MudTh>@T("Fortschritt", "Progress")</MudTh>
-            <MudTh>@T("Aktionen", "Actions")</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="@T("Projekt", "Project")"><strong>@context.Title</strong><br /><small>@context.Description</small></MudTd>
-            <MudTd DataLabel="@T("Status", "Status")"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@StatusLabel(context.Status)</MudChip></MudTd>
-            <MudTd DataLabel="@T("Prioritaet", "Priority")">@PriorityLabel(context.Priority)</MudTd>
-            <MudTd DataLabel="@T("Verantwortlich", "Owner")">@(string.IsNullOrWhiteSpace(context.Owner) ? "-" : context.Owner)</MudTd>
-            <MudTd DataLabel="@T("Faellig am", "Due date")">@(context.DueDate?.ToString("dd.MM.yyyy") ?? "-")</MudTd>
-            <MudTd DataLabel="@T("Fortschritt", "Progress")" Style="min-width:130px"><MudProgressLinear Value="@context.ProgressPercent" Color="Color.Primary" /><small>@context.ProgressPercent%</small></MudTd>
-            <MudTd DataLabel="@T("Aktionen", "Actions")">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => Edit(context))" />
-                @if (!context.IsArchived)
-                {
-                    <MudIconButton Icon="@Icons.Material.Filled.Archive" Color="Color.Warning" Size="Size.Small" OnClick="@(() => ArchiveAsync(context))" />
-                }
-            </MudTd>
-        </RowTemplate>
-        <NoRecordsContent><MudText Typo="Typo.body2">@T("Noch keine Projekte vorhanden.", "No projects yet.")</MudText></NoRecordsContent>
-    </MudTable>
-</MudPaper>
+    @if (!_loaded)
+    {
+        <div class="pm-grid">@for (var i = 0; i < 3; i++) { <div class="pm-project pm-skeleton"></div> }</div>
+    }
+    else if (_tab == "projects")
+    {
+        var list = Filtered;
+        @if (list.Count == 0)
+        {
+            <div class="pm-empty">
+                <MudIcon Icon="@Icons.Material.Outlined.ViewKanban" Style="font-size:56px" />
+                <h3>@T("Noch keine Projekte.", "No projects yet.")</h3>
+                <p>@T("Leg das erste an: Vorlage wählen, Namen geben, Team einladen.", "Create the first one: choose a template, name it, invite the team.")</p>
+            </div>
+        }
+        <div class="pm-grid">
+            @foreach (var p in list)
+            {
+                var project = p;
+                <a class="pm-project @(project.IsArchived ? "pm-archived" : "")" href="@($"projekte/{project.Key}")" style="--pm-c:@project.Color">
+                    <div class="pm-project-band"></div>
+                    <div class="pm-project-head">
+                        <span class="pm-project-icon"><MudIcon Icon="@PmStyle.ResolveIcon(project.Icon)" /></span>
+                        <span class="pm-grow">
+                            <b class="pm-project-name">@project.Name</b>
+                            <span class="pm-muted pm-small">@project.Key · @PmLabels.Template(UiText, project.Template)</span>
+                        </span>
+                        @if (project.IsMember)
+                        {
+                            <span class="pm-status-chip pm-cat-inprogress">@T("Mitglied", "Member")</span>
+                        }
+                    </div>
+                    @if (project.Description.Length > 0)
+                    {
+                        <p class="pm-project-desc">@project.Description</p>
+                    }
+                    <div class="pm-stack" title="@($"{project.Open} / {project.InProgress} / {project.Done}")">
+                        @if (project.Total == 0)
+                        {
+                            <i class="pm-stack-empty"></i>
+                        }
+                        else
+                        {
+                            @if (project.Open > 0) { <i class="pm-cat-todo" style="flex:@project.Open"></i> }
+                            @if (project.InProgress > 0) { <i class="pm-cat-inprogress" style="flex:@project.InProgress"></i> }
+                            @if (project.Done > 0) { <i class="pm-cat-done" style="flex:@project.Done"></i> }
+                        }
+                    </div>
+                    <div class="pm-project-nums">
+                        <span><b>@project.ProgressPercent %</b> @T("erledigt", "done")</span>
+                        <span>@project.Open @T("offen", "to do") · @project.InProgress @T("in Arbeit", "in progress") · @project.Done @T("erledigt", "done")</span>
+                    </div>
+                    <div class="pm-project-foot">
+                        <span class="pm-avatars">
+                            @foreach (var m in project.Members.Take(6))
+                            {
+                                <PmAvatar Login="@m.Login" Name="@m.Name" Small="true" />
+                            }
+                            @if (project.Members.Count > 6) { <span class="pm-avatar pm-avatar-sm pm-avatar-more">+@(project.Members.Count - 6)</span> }
+                        </span>
+                        <span class="pm-grow"></span>
+                        @if (project.Overdue > 0)
+                        {
+                            <span class="pm-badge pm-overdue"><MudIcon Icon="@Icons.Material.Filled.WarningAmber" Size="Size.Small" />@project.Overdue</span>
+                        }
+                        @if (project.DueDate is { } due)
+                        {
+                            <span class="pm-badge"><MudIcon Icon="@Icons.Material.Outlined.Flag" Size="Size.Small" />@due.ToString("dd.MM.yyyy")</span>
+                        }
+                    </div>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        @if (_mine.Count == 0)
+        {
+            <div class="pm-empty">
+                <MudIcon Icon="@Icons.Material.Outlined.TaskAlt" Style="font-size:56px" />
+                <h3>@T("Nichts offen für dich.", "Nothing open for you.")</h3>
+            </div>
+        }
+        @foreach (var group in MineGroups)
+        {
+            <h4 class="pm-mine-group">@group.Title <span class="pm-muted">@group.Items.Count</span></h4>
+            @foreach (var task in group.Items)
+            {
+                var t = task;
+                <a class="pm-mine" href="@($"projekte/{t.Card.Key.Split('-')[0]}?task={t.Card.Key}")" style="--pm-c:@t.ProjectColor">
+                    <span class="pm-mine-band"></span>
+                    <span class="pm-type pm-type-@t.Card.Type.ToLowerInvariant()"><MudIcon Icon="@PmStyle.TypeIcon(t.Card.Type)" Size="Size.Small" /></span>
+                    <span class="pm-key">@t.Card.Key</span>
+                    <span class="pm-grow">@t.Card.Title <span class="pm-muted pm-small">· @t.ProjectName</span></span>
+                    <span class="pm-status-chip pm-cat-@t.Card.Category.ToLowerInvariant()">@t.Card.ColumnName</span>
+                    <span class="pm-prio pm-prio-@t.Card.Priority.ToLowerInvariant()"><MudIcon Icon="@PmStyle.PriorityIcon(t.Card.Priority)" Size="Size.Small" /></span>
+                    @if (t.Card.DueDate is { } d)
+                    {
+                        <span class="pm-due @(t.Card.IsOverdue ? "pm-overdue" : "")">@PmLabels.Due(UiText, d)</span>
+                    }
+                </a>
+            }
+        }
+    }
+</div>
 
 @code {
-    private List<ProjectItem> _items = [];
-    private ProjectItem _editing = NewProject();
-    private bool _loading = true;
-    private bool _saving;
+    private PmUser _user = PmUser.Anonymous;
+    private IReadOnlyList<PmProjectSummary> _projects = [];
+    private IReadOnlyList<PmMyTask> _mine = [];
+    private string _tab = "projects";
+    private string _search = string.Empty;
     private bool _showArchived;
+    private bool _loaded;
+    private bool _creating;
+    private bool _busy;
+    private bool _keyTouched;
+    private PmProjectInput _new = new();
+    private (string German, string English)? _error;
 
-    private int ActiveCount => _items.Count(x => !x.IsArchived && x.Status != ProjectStatuses.Completed);
-    private int Count(string status) => _items.Count(x => !x.IsArchived && x.Status == status);
+    private sealed record MineGroup(string Title, List<PmMyTask> Items);
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private List<PmProjectSummary> Filtered => _projects
+        .Where(p => string.IsNullOrWhiteSpace(_search)
+                    || p.Name.Contains(_search, StringComparison.CurrentCultureIgnoreCase)
+                    || p.Key.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                    || p.Description.Contains(_search, StringComparison.CurrentCultureIgnoreCase))
+        .ToList();
+
+    // Planner-Gruppen: ueberfaellig, heute, diese Woche, spaeter, ohne Datum.
+    private List<MineGroup> MineGroups
+    {
+        get
+        {
+            var today = DateTime.Today;
+            var weekEnd = today.AddDays(7 - (((int)today.DayOfWeek + 6) % 7));
+            var groups = new List<MineGroup>
+            {
+                new(T("Überfällig", "Overdue"), _mine.Where(t => t.Card.DueDate is { } d && d.Date < today).ToList()),
+                new(T("Heute", "Today"), _mine.Where(t => t.Card.DueDate?.Date == today).ToList()),
+                new(T("Diese Woche", "This week"), _mine.Where(t => t.Card.DueDate is { } d && d.Date > today && d.Date < weekEnd).ToList()),
+                new(T("Später", "Later"), _mine.Where(t => t.Card.DueDate is { } d && d.Date >= weekEnd).ToList()),
+                new(T("Ohne Datum", "No date"), _mine.Where(t => t.Card.DueDate is null).ToList()),
+            };
+            return groups.Where(g => g.Items.Count > 0).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UiText.Changed += OnLanguageChanged;
+        Notifier.Changed += OnPmChanged;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var login = TrafagSalesExporter.Services.Forum.ForumUserDirectory.ShortName(state.User.Identity?.Name);
+        if (login.Length > 0)
+            _user = new PmUser(login, await Directory.DisplayNameAsync(login), AdminAccess.IsUnlocked);
+        await LoadAsync();
+        _loaded = true;
+    }
 
     private async Task LoadAsync()
     {
-        _loading = true;
-        _items = await ProjectManagement.GetProjectsAsync(_showArchived);
-        _loading = false;
+        _projects = await Pm.GetProjectsAsync(_user, _showArchived);
+        _mine = await Pm.GetMyTasksAsync(_user);
     }
 
-    private async Task SaveAsync()
+    private async Task ToggleArchived(ChangeEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(_editing.Title))
-        {
-            Snackbar.Add(T("Bitte einen Projekttitel eingeben.", "Please enter a project title."), Severity.Warning);
-            return;
-        }
+        _showArchived = e.Value is true;
+        await LoadAsync();
+    }
 
-        _saving = true;
+    private void NameInput(ChangeEventArgs e)
+    {
+        _new.Name = e.Value?.ToString() ?? string.Empty;
+        if (!_keyTouched)
+            _new.Key = PmService.SuggestKey(_new.Name);
+    }
+
+    private async Task Create()
+    {
+        if (_busy)
+            return;
+        _busy = true;
         try
         {
-            await ProjectManagement.SaveAsync(_editing);
-            Snackbar.Add(T("Projekt gespeichert.", "Project saved."), Severity.Success);
-            ResetEditor();
-            await LoadAsync();
+            var id = await Pm.CreateProjectAsync(_user, _new);
+            var key = (await Pm.GetProjectsAsync(_user)).First(x => x.Id == id).Key;
+            Nav.NavigateTo($"projekte/{key}?view=settings");
+        }
+        catch (PmException ex)
+        {
+            _error = (ex.German, ex.English);
         }
         finally
         {
-            _saving = false;
+            _busy = false;
         }
     }
 
-    private void Edit(ProjectItem project)
+    private void OnPmChanged(int projectId) => _ = InvokeAsync(async () =>
     {
-        _editing = new ProjectItem
+        try
         {
-            Id = project.Id, Title = project.Title, Description = project.Description, Status = project.Status,
-            Priority = project.Priority, Owner = project.Owner, StartDate = project.StartDate, DueDate = project.DueDate,
-            ProgressPercent = project.ProgressPercent, Notes = project.Notes, IsArchived = project.IsArchived,
-            CreatedAtUtc = project.CreatedAtUtc, UpdatedAtUtc = project.UpdatedAtUtc
-        };
-    }
+            await LoadAsync();
+            StateHasChanged();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    });
 
-    private async Task ArchiveAsync(ProjectItem project)
-    {
-        await ProjectManagement.ArchiveAsync(project.Id);
-        Snackbar.Add(T("Projekt archiviert.", "Project archived."), Severity.Info);
-        await LoadAsync();
-    }
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
-    private void ResetEditor() => _editing = NewProject();
-    private async Task ShowArchivedChangedAsync(bool value)
-    {
-        _showArchived = value;
-        await LoadAsync();
-    }
-
-    private static ProjectItem NewProject() => new() { Status = ProjectStatuses.Idea, Priority = ProjectPriorities.Normal };
     private string T(string german, string english) => UiText.Text(german, english);
 
-    private string StatusLabel(string status) => status switch
+    public void Dispose()
     {
-        ProjectStatuses.Idea => T("Idee", "Idea"), ProjectStatuses.Planned => T("Geplant", "Planned"),
-        ProjectStatuses.InProgress => T("In Arbeit", "In progress"), ProjectStatuses.Blocked => T("Blockiert", "Blocked"),
-        ProjectStatuses.Completed => T("Abgeschlossen", "Completed"), _ => status
-    };
-
-    private string PriorityLabel(string priority) => priority switch
-    {
-        ProjectPriorities.Low => T("Niedrig", "Low"), ProjectPriorities.Normal => T("Normal", "Normal"),
-        ProjectPriorities.High => T("Hoch", "High"), ProjectPriorities.Critical => T("Kritisch", "Critical"), _ => priority
-    };
-
-    private static Color StatusColor(string status) => status switch
-    {
-        ProjectStatuses.InProgress => Color.Info, ProjectStatuses.Blocked => Color.Error,
-        ProjectStatuses.Completed => Color.Success, ProjectStatuses.Planned => Color.Primary, _ => Color.Default
-    };
+        UiText.Changed -= OnLanguageChanged;
+        Notifier.Changed -= OnPmChanged;
+    }
 }

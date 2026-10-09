@@ -205,7 +205,8 @@ builder.Services.AddScoped<ISupplyChainAnalysisService, SupplyChainAnalysisServi
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
 builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
 builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();
-builder.Services.AddScoped<IProjectManagementService, ProjectManagementService>();
+builder.Services.AddSingleton<TrafagSalesExporter.Services.Projects.PmNotifier>();
+builder.Services.AddScoped<TrafagSalesExporter.Services.Projects.IPmService, TrafagSalesExporter.Services.Projects.PmService>();
 builder.Services.AddSingleton<TrafagSalesExporter.Services.Forum.ForumNotifier>();
 builder.Services.AddSingleton<TrafagSalesExporter.Services.Forum.ForumUserDirectory>();
 builder.Services.AddScoped<TrafagSalesExporter.Services.Forum.IForumService, TrafagSalesExporter.Services.Forum.ForumService>();

@@ -1,0 +1,142 @@
+@* Liste wie die Jira-Vorgangssuche: sortierbare Spalten, Status direkt aenderbar, Export als CSV. *@
+@inject IUiTextService UiText
+@inject IJSRuntime JS
+
+<div class="pm-table-wrap">
+    <div class="pm-row pm-table-tools">
+        <span class="pm-muted pm-small">@Cards.Count @T("Aufgaben", "issues")</span>
+        <span class="pm-grow"></span>
+        <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.FileDownload" OnClick="ExportCsv">CSV</MudButton>
+    </div>
+    <table class="pm-table">
+        <thead>
+            <tr>
+                @foreach (var col in Headers)
+                {
+                    var key = col.Key;
+                    <th class="@(key == _sort ? "pm-sorted" : "")" @onclick="() => Sort(key)">
+                        @col.Label @(key == _sort ? (_desc ? "▼" : "▲") : "")
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Sorted)
+            {
+                var card = c;
+                <tr @onclick="() => OnOpen.InvokeAsync(card.Id)">
+                    <td><span class="pm-type pm-type-@card.Type.ToLowerInvariant()"><MudIcon Icon="@PmStyle.TypeIcon(card.Type)" Size="Size.Small" /></span> <span class="pm-key">@card.Key</span></td>
+                    <td class="pm-td-title @(card.Category == "Done" ? "pm-strike" : "")">@card.Title</td>
+                    <td @onclick:stopPropagation="true">
+                        @if (CanEdit)
+                        {
+                            <select class="pm-input pm-status pm-cat-@card.Category.ToLowerInvariant()" value="@card.ColumnId" @onchange="e => OnStatus.InvokeAsync((card.Id, int.Parse(e.Value!.ToString()!)))">
+                                @foreach (var col in Columns)
+                                {
+                                    <option value="@col.Id">@col.Name</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <span class="pm-status-chip pm-cat-@card.Category.ToLowerInvariant()">@card.ColumnName</span>
+                        }
+                    </td>
+                    <td><span class="pm-prio pm-prio-@card.Priority.ToLowerInvariant()"><MudIcon Icon="@PmStyle.PriorityIcon(card.Priority)" Size="Size.Small" /></span> @PmLabels.Priority(UiText, card.Priority)</td>
+                    <td>
+                        @if (card.AssigneeLogin.Length > 0)
+                        {
+                            <span class="pm-row"><PmAvatar Login="@card.AssigneeLogin" Name="@card.AssigneeName" Small="true" />@PmText.PersonName(card.AssigneeName)</span>
+                        }
+                    </td>
+                    <td class="@(card.IsOverdue ? "pm-overdue-text" : "")">@card.DueDate?.ToString("dd.MM.yyyy")</td>
+                    <td>@(card.StoryPoints == 0 ? "" : card.StoryPoints.ToString())</td>
+                    <td>@card.EpicTitle</td>
+                    <td>@string.Join(", ", card.Labels)</td>
+                    <td><ForumAgo Utc="card.UpdatedAtUtc" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PmCard> Cards { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PmColumnView> Columns { get; set; } = [];
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public string ProjectKey { get; set; } = string.Empty;
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<(int TaskId, int ColumnId)> OnStatus { get; set; }
+
+    private sealed record Header(string Key, string Label);
+
+    private const string DoubleQuote = "\"\"";
+    private const string CsvType = "text/csv;charset=utf-8";
+    private string _sort = "key";
+    private bool _desc = true;
+
+    private IReadOnlyList<Header> Headers =>
+    [
+        new("key", T("Schlüssel", "Key")),
+        new("title", T("Titel", "Title")),
+        new("status", T("Status", "Status")),
+        new("priority", T("Priorität", "Priority")),
+        new("assignee", T("Zugewiesen", "Assignee")),
+        new("due", T("Fällig", "Due")),
+        new("points", T("Punkte", "Points")),
+        new("epic", T("Epic", "Epic")),
+        new("labels", T("Labels", "Labels")),
+        new("updated", T("Geändert", "Updated")),
+    ];
+
+    private void Sort(string key)
+    {
+        if (_sort == key)
+            _desc = !_desc;
+        else
+        {
+            _sort = key;
+            _desc = key is "priority" or "points" or "updated";
+        }
+    }
+
+    private IEnumerable<PmCard> Sorted
+    {
+        get
+        {
+            var columnOrder = Columns.Select((c, i) => (c.Id, i)).ToDictionary(x => x.Id, x => x.i);
+            Func<PmCard, IComparable> selector = _sort switch
+            {
+                "title" => c => c.Title,
+                "status" => c => columnOrder.GetValueOrDefault(c.ColumnId),
+                "priority" => c => TrafagSalesExporter.Models.PmPriorities.Weight(c.Priority),
+                "assignee" => c => c.AssigneeName,
+                "due" => c => c.DueDate ?? DateTime.MaxValue,
+                "points" => c => c.StoryPoints,
+                "epic" => c => c.EpicTitle,
+                "labels" => c => string.Join(",", c.Labels),
+                "updated" => c => c.UpdatedAtUtc,
+                _ => c => c.Number
+            };
+            return _desc ? Cards.OrderByDescending(selector) : Cards.OrderBy(selector);
+        }
+    }
+
+    private async Task ExportCsv()
+    {
+        static string Q(string? s) => '"' + (s ?? string.Empty).Replace("\"", DoubleQuote) + '"';
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine(string.Join(";", Headers.Select(h => Q(h.Label))));
+        foreach (var c in Sorted)
+            sb.AppendLine(string.Join(";", new[]
+            {
+                Q(c.Key), Q(c.Title), Q(c.ColumnName), Q(PmLabels.Priority(UiText, c.Priority)), Q(PmText.PersonName(c.AssigneeName)),
+                Q(c.DueDate?.ToString("dd.MM.yyyy")), Q(c.StoryPoints.ToString()), Q(c.EpicTitle), Q(string.Join(", ", c.Labels)),
+                Q(c.UpdatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
+            }));
+        var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+        await JS.InvokeVoidAsync("trafagDownload.saveBytes", $"{ProjectKey}_Aufgaben_{DateTime.Today:yyyy-MM-dd}.csv", Convert.ToBase64String(bytes), CsvType);
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

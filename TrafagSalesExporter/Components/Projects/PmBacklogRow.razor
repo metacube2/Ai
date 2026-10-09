@@ -1,0 +1,36 @@
+@* Eine Zeile im Backlog oder in der Liste: Typ, Schluessel, Titel, Epic, Status, Prioritaet, Punkte, Person. *@
+@inject IUiTextService UiText
+
+<div class="pm-brow" draggable="@(CanDrag ? "true" : "false")"
+     @ondragstart="() => OnDragStart.InvokeAsync(Card.Id)"
+     @ondragover:preventDefault="true"
+     @ondrop="() => OnDropBefore.InvokeAsync(Card.Id)" @ondrop:stopPropagation="true"
+     @onclick="() => OnOpen.InvokeAsync(Card.Id)">
+    @if (CanDrag)
+    {
+        <span class="pm-grip">⋮⋮</span>
+    }
+    <span class="pm-type pm-type-@Card.Type.ToLowerInvariant()" title="@PmLabels.Type(UiText, Card.Type)"><MudIcon Icon="@PmStyle.TypeIcon(Card.Type)" Size="Size.Small" /></span>
+    <span class="pm-key">@Card.Key</span>
+    <span class="pm-grow pm-brow-title @(Card.Category == "Done" ? "pm-strike" : "")">@Card.Title</span>
+    @if (Card.EpicTitle.Length > 0)
+    {
+        <span class="pm-epic-chip">@Card.EpicTitle</span>
+    }
+    @foreach (var label in Card.Labels.Take(2))
+    {
+        <span class="pm-label" style="background:@PmStyle.LabelColor(label)">@label</span>
+    }
+    <span class="pm-status-chip pm-cat-@Card.Category.ToLowerInvariant()">@Card.ColumnName</span>
+    <span class="pm-prio pm-prio-@Card.Priority.ToLowerInvariant()" title="@PmLabels.Priority(UiText, Card.Priority)"><MudIcon Icon="@PmStyle.PriorityIcon(Card.Priority)" Size="Size.Small" /></span>
+    <span class="pm-points @(Card.StoryPoints == 0 ? "pm-points-empty" : "")">@(Card.StoryPoints == 0 ? "-" : Card.StoryPoints.ToString())</span>
+    <PmAvatar Login="@Card.AssigneeLogin" Name="@Card.AssigneeName" Small="true" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PmCard Card { get; set; } = default!;
+    [Parameter] public bool CanDrag { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<int> OnDragStart { get; set; }
+    [Parameter] public EventCallback<int> OnDropBefore { get; set; }
+}

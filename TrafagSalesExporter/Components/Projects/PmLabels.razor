@@ -1,0 +1,63 @@
+@* Uebersetzte Namen fuer Typen, Prioritaeten, Spaltenarten, Vorlagen und Sprintstatus (nur statische Hilfen).
+   Als .razor-Datei, damit der Uebersetzungstest die Textpaare findet. *@
+@code {
+    public static string Type(IUiTextService ui, string type) => type switch
+    {
+        "Story" => ui.Text("Story", "Story"),
+        "Bug" => ui.Text("Fehler", "Bug"),
+        "Epic" => ui.Text("Epic", "Epic"),
+        "Subtask" => ui.Text("Unteraufgabe", "Subtask"),
+        _ => ui.Text("Aufgabe", "Task")
+    };
+
+    public static string Priority(IUiTextService ui, string priority) => priority switch
+    {
+        "Highest" => ui.Text("Sehr hoch", "Highest"),
+        "High" => ui.Text("Hoch", "High"),
+        "Low" => ui.Text("Niedrig", "Low"),
+        "Lowest" => ui.Text("Sehr niedrig", "Lowest"),
+        _ => ui.Text("Mittel", "Medium")
+    };
+
+    public static string Category(IUiTextService ui, string category) => category switch
+    {
+        "InProgress" => ui.Text("In Arbeit", "In progress"),
+        "Done" => ui.Text("Erledigt", "Done"),
+        _ => ui.Text("Offen", "To do")
+    };
+
+    public static string Template(IUiTextService ui, string template) => template switch
+    {
+        "Scrum" => ui.Text("Scrum mit Sprints", "Scrum with sprints"),
+        "Planner" => ui.Text("Planner mit Buckets", "Planner with buckets"),
+        _ => ui.Text("Kanban-Board", "Kanban board")
+    };
+
+    public static string TemplateHelp(IUiTextService ui, string template) => template switch
+    {
+        "Scrum" => ui.Text("Wie Jira: Backlog, Sprints mit Ziel, Story Points und Burndown.", "Like Jira: backlog, sprints with a goal, story points and burndown."),
+        "Planner" => ui.Text("Wie Microsoft Planner: Buckets, Checklisten, Diagramme, Fortschritt.", "Like Microsoft Planner: buckets, checklists, charts, progress."),
+        _ => ui.Text("Wie Trello: Listen, Karten ziehen, Farben und Labels.", "Like Trello: lists, drag cards, colours and labels.")
+    };
+
+    public static string SprintState(IUiTextService ui, string state) => state switch
+    {
+        "Active" => ui.Text("Läuft", "Active"),
+        "Closed" => ui.Text("Abgeschlossen", "Closed"),
+        _ => ui.Text("Geplant", "Planned")
+    };
+
+    /// <summary>Relative Faelligkeit: heute, morgen, in drei Tagen oder seit zwei Tagen ueberfaellig.</summary>
+    public static string Due(IUiTextService ui, DateTime due)
+    {
+        var days = (due.Date - DateTime.Today).Days;
+        return days switch
+        {
+            0 => ui.Text("heute", "today"),
+            1 => ui.Text("morgen", "tomorrow"),
+            > 1 => string.Format(ui.Text("in {0} Tagen", "in {0} days"), days),
+            -1 => ui.Text("seit gestern überfällig", "overdue since yesterday"),
+            _ => string.Format(ui.Text("seit {0} Tagen überfällig", "overdue for {0} days"), -days)
+        };
+    }
+}

@@ -1,0 +1,76 @@
+@* Karte auf dem Board: Farbband (Trello), Labels, Titel, Schluessel und Typ (Jira), Faelligkeit,
+   Checkliste und Kommentare (Planner), Punkte und zugewiesene Person. *@
+@inject IUiTextService UiText
+
+<div class="pm-card @(Card.Category == "Done" ? "pm-card-done" : "") @(Dragging ? "pm-card-dragging" : "")"
+     draggable="@(CanDrag ? "true" : "false")"
+     @ondragstart="() => OnDragStart.InvokeAsync(Card.Id)"
+     @ondragend="() => OnDragEnd.InvokeAsync()"
+     @ondragover:preventDefault="true"
+     @ondrop="() => OnDropBefore.InvokeAsync(Card.Id)" @ondrop:stopPropagation="true"
+     @onclick="() => OnOpen.InvokeAsync(Card.Id)">
+    @if (Card.Cover.Length > 0)
+    {
+        <div class="pm-cover" style="background:@Card.Cover"></div>
+    }
+    @if (Card.Labels.Count > 0)
+    {
+        <div class="pm-labels">
+            @foreach (var label in Card.Labels)
+            {
+                <span class="pm-label" style="background:@PmStyle.LabelColor(label)" title="@label">@label</span>
+            }
+        </div>
+    }
+    @if (Card.EpicTitle.Length > 0)
+    {
+        <div class="pm-epic-chip"><MudIcon Icon="@Icons.Material.Filled.Bolt" Size="Size.Small" />@Card.EpicTitle</div>
+    }
+    <div class="pm-card-title">@Card.Title</div>
+    @if (Card.ParentKey.Length > 0)
+    {
+        <div class="pm-card-parent">↳ @Card.ParentKey</div>
+    }
+    <div class="pm-card-meta">
+        <span class="pm-type pm-type-@Card.Type.ToLowerInvariant()" title="@TypeName(Card.Type)"><MudIcon Icon="@PmStyle.TypeIcon(Card.Type)" Size="Size.Small" /></span>
+        <span class="pm-key">@Card.Key</span>
+        <span class="pm-prio pm-prio-@Card.Priority.ToLowerInvariant()" title="@PriorityName(Card.Priority)"><MudIcon Icon="@PmStyle.PriorityIcon(Card.Priority)" Size="Size.Small" /></span>
+        @if (Card.DueDate is { } due)
+        {
+            <span class="pm-due @(Card.IsOverdue ? "pm-overdue" : due.Date <= DateTime.Today.AddDays(2) && Card.Category != "Done" ? "pm-soon" : "") @(Card.Category == "Done" ? "pm-due-done" : "")">
+                <MudIcon Icon="@Icons.Material.Outlined.Schedule" Size="Size.Small" />@due.ToString("dd.MM.")
+            </span>
+        }
+        @if (Card.ChecklistTotal > 0)
+        {
+            <span class="pm-badge @(Card.ChecklistDone == Card.ChecklistTotal ? "pm-badge-ok" : "")"><MudIcon Icon="@Icons.Material.Outlined.Checklist" Size="Size.Small" />@Card.ChecklistDone/@Card.ChecklistTotal</span>
+        }
+        @if (Card.SubtasksTotal > 0)
+        {
+            <span class="pm-badge @(Card.SubtasksDone == Card.SubtasksTotal ? "pm-badge-ok" : "")"><MudIcon Icon="@Icons.Material.Outlined.AccountTree" Size="Size.Small" />@Card.SubtasksDone/@Card.SubtasksTotal</span>
+        }
+        @if (Card.CommentCount > 0)
+        {
+            <span class="pm-badge"><MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" Size="Size.Small" />@Card.CommentCount</span>
+        }
+        <span class="pm-grow"></span>
+        @if (Card.StoryPoints > 0)
+        {
+            <span class="pm-points" title="Story Points">@Card.StoryPoints</span>
+        }
+        <PmAvatar Login="@Card.AssigneeLogin" Name="@Card.AssigneeName" Small="true" />
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PmCard Card { get; set; } = default!;
+    [Parameter] public bool CanDrag { get; set; }
+    [Parameter] public bool Dragging { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<int> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+    [Parameter] public EventCallback<int> OnDropBefore { get; set; }
+
+    private string TypeName(string type) => PmLabels.Type(UiText, type);
+    private string PriorityName(string priority) => PmLabels.Priority(UiText, priority);
+}

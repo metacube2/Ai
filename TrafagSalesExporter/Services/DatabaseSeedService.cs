@@ -267,6 +267,25 @@ public class DatabaseSeedService : IDatabaseSeedService
             changed = true;
         }
 
+        // Trafag Projekte 2026-10-09: der Link "projects" kommt aus der Gruppe "Poor Man's Project Management Suite"
+        // auf die oberste Ebene, die leere Gruppe faellt weg. Nur solange die alte Standardlage vorliegt.
+        var projects = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "projects");
+        if (projects is not null && string.Equals(projects.ParentKey, "poor-mans-project-management", StringComparison.OrdinalIgnoreCase))
+        {
+            projects.ParentKey = null;
+            projects.TitleDe = "Trafag Projekte";
+            projects.TitleEn = "Trafag Projects";
+            projects.SortOrder = 40;
+            projects.Match = "Prefix";
+            db.SaveChanges();
+        }
+        var oldProjectGroup = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "poor-mans-project-management");
+        if (oldProjectGroup is not null && !db.NavigationMenuItems.Any(x => x.ParentKey == "poor-mans-project-management"))
+        {
+            db.NavigationMenuItems.Remove(oldProjectGroup);
+            changed = true;
+        }
+
         if (changed)
             db.SaveChanges();
     }
@@ -399,8 +418,9 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("world-countries", "world", "Laender", "Countries", "Public", "weltlage/laender", 20, "All"),
         Link("world-markets", "world", "Rohstoffe und Waehrungen", "Commodities and currencies", "ShowChart", "weltlage/maerkte", 30, "All"),
         Link("world-events", "world", "Ereignisse", "Events", "Feed", "weltlage/ereignisse", 40, "All"),
-        Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
-        Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
+        // Trafag Projekte 2026-10-09 (Wunsch Ingo) ersetzt die Gruppe "Poor Man's Project Management Suite";
+        // Board, Backlog, Liste, Zeitachse, Kalender, Diagramme. Doku docs/TRAFAG_PROJEKTE_2026-10-09.md.
+        Link("projects", null, "Trafag Projekte", "Trafag Projects", "ViewKanban", "projekte", 40, "Prefix"),
     ];
 
     private static NavigationMenuItem Group(string key, string? parentKey, string titleDe, string titleEn, string icon, int sortOrder, bool expanded = false)

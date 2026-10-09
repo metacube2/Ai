@@ -1,0 +1,199 @@
+@* Backlog wie Jira: laufender Sprint, geplante Sprints und Backlog untereinander; Aufgaben per Ziehen
+   einplanen und sortieren, Sprint anlegen, starten (Ziel, Dauer) und abschliessen. *@
+@inject IUiTextService UiText
+@inject IPmService Pm
+
+<div class="pm-backlog">
+    @foreach (var sprint in Board.Sprints.Where(s => s.State != "Closed").OrderByDescending(s => s.State == "Active").ThenBy(s => s.Id))
+    {
+        var sp = sprint;
+        var items = Items(sp.Id);
+        var points = items.Sum(i => i.StoryPoints);
+        <section class="pm-sprint @(sp.State == "Active" ? "pm-sprint-active" : "") @(_dropTarget == sp.Id ? "pm-drop" : "")"
+                 @ondragover:preventDefault="true" @ondragenter="() => _dropTarget = sp.Id" @ondrop="() => Drop(sp.Id, null)">
+            <header class="pm-sprint-head">
+                <MudIcon Icon="@(sp.State == "Active" ? Icons.Material.Filled.PlayCircle : Icons.Material.Outlined.Event)" Size="Size.Small" />
+                <b>@sp.Name</b>
+                <span class="pm-status-chip @(sp.State == "Active" ? "pm-cat-inprogress" : "pm-cat-todo")">@PmLabels.SprintState(UiText, sp.State)</span>
+                @if (sp.StartDate is { } s && sp.EndDate is { } e)
+                {
+                    <span class="pm-muted pm-small">@s.ToString("dd.MM.") – @e.ToString("dd.MM.yyyy")</span>
+                }
+                <span class="pm-grow"></span>
+                <span class="pm-muted pm-small">@items.Count @T("Aufgaben", "issues") · @points @T("Punkte", "points")</span>
+                @if (CanEdit && sp.State == "Planned" && !Board.Sprints.Any(x => x.State == "Active"))
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(items.Count == 0)" OnClick="() => BeginStart(sp)">@T("Sprint starten", "Start sprint")</MudButton>
+                }
+                @if (CanEdit && sp.State == "Active")
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => BeginComplete(sp)">@T("Sprint abschliessen", "Complete sprint")</MudButton>
+                }
+            </header>
+            @if (sp.Goal.Length > 0)
+            {
+                <div class="pm-sprint-goal"><MudIcon Icon="@Icons.Material.Outlined.Flag" Size="Size.Small" /> @sp.Goal</div>
+            }
+            @if (_starting?.Id == sp.Id)
+            {
+                <div class="pm-inline-form">
+                    <label>@T("Sprintziel", "Sprint goal")</label>
+                    <input class="pm-input" value="@_goal" @oninput="e => _goal = e.Value?.ToString() ?? string.Empty" placeholder="@T("Was soll am Ende erreicht sein?", "What should be achieved at the end?")" />
+                    <label>@T("Dauer", "Duration")</label>
+                    <div class="pm-row">
+                        @foreach (var weeks in new[] { 1, 2, 3, 4 })
+                        {
+                            var w = weeks;
+                            <button type="button" class="pm-chip @(_weeks == w ? "pm-on" : "")" @onclick="() => _weeks = w">@w @T("Wochen", "weeks")</button>
+                        }
+                    </div>
+                    <div class="pm-row pm-mt">
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmStart">@T("Starten", "Start")</MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _starting = null">@T("Abbrechen", "Cancel")</MudButton>
+                    </div>
+                </div>
+            }
+            @if (_completing?.Id == sp.Id)
+            {
+                var open = items.Count(i => i.Category != "Done");
+                <div class="pm-inline-form">
+                    <div>@string.Format(T("{0} erledigt, {1} offen. Wohin mit den offenen Aufgaben?", "{0} done, {1} open. Where should the open issues go?"), items.Count - open, open)</div>
+                    <select class="pm-input" value="@(_moveTo?.ToString() ?? "")" @onchange="e => _moveTo = int.TryParse(e.Value?.ToString(), out var x) ? x : null">
+                        <option value="">Backlog</option>
+                        @foreach (var next in Board.Sprints.Where(x => x.State == "Planned"))
+                        {
+                            <option value="@next.Id">@next.Name</option>
+                        }
+                    </select>
+                    <div class="pm-row pm-mt">
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmComplete">@T("Abschliessen", "Complete")</MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _completing = null">@T("Abbrechen", "Cancel")</MudButton>
+                    </div>
+                </div>
+            }
+            <div class="pm-backlog-list">
+                @foreach (var item in items)
+                {
+                    <PmBacklogRow @key="item.Id" Card="item" CanDrag="CanEdit" OnOpen="OnOpen" OnDragStart="id => _dragId = id" OnDropBefore="id => Drop(sp.Id, id)" />
+                }
+                @if (items.Count == 0)
+                {
+                    <div class="pm-empty-col">@T("Aufgaben aus dem Backlog hierher ziehen", "Drag issues from the backlog here")</div>
+                }
+            </div>
+        </section>
+    }
+
+    @{ var backlog = Items(null); }
+    <section class="pm-sprint @(_dropTarget == 0 ? "pm-drop" : "")" @ondragover:preventDefault="true" @ondragenter="() => _dropTarget = 0" @ondrop="() => Drop(null, null)">
+        <header class="pm-sprint-head">
+            <MudIcon Icon="@Icons.Material.Outlined.Inventory2" Size="Size.Small" />
+            <b>Backlog</b>
+            <span class="pm-grow"></span>
+            <span class="pm-muted pm-small">@backlog.Count @T("Aufgaben", "issues") · @backlog.Sum(i => i.StoryPoints) @T("Punkte", "points")</span>
+            @if (CanEdit)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="CreateSprint">@T("Sprint anlegen", "Create sprint")</MudButton>
+            }
+        </header>
+        <div class="pm-backlog-list">
+            @foreach (var item in backlog)
+            {
+                <PmBacklogRow @key="item.Id" Card="item" CanDrag="CanEdit" OnOpen="OnOpen" OnDragStart="id => _dragId = id" OnDropBefore="id => Drop(null, id)" />
+            }
+        </div>
+        @if (CanEdit)
+        {
+            <input class="pm-input pm-mt" placeholder="@T("Neue Aufgabe im Backlog, Enter speichert", "New backlog issue, Enter saves")" value="@_newTitle"
+                   @oninput="e => _newTitle = e.Value?.ToString() ?? string.Empty" @onkeydown="NewKey" />
+        }
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PmBoard Board { get; set; } = default!;
+    [Parameter, EditorRequired] public IReadOnlyList<PmCard> Cards { get; set; } = [];
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+
+    private int? _dragId;
+    private int? _dropTarget;
+    private PmSprintView? _starting;
+    private PmSprintView? _completing;
+    private string _goal = string.Empty;
+    private int _weeks = 2;
+    private int? _moveTo;
+    private string _newTitle = string.Empty;
+
+    // Unteraufgaben folgen ihrer Aufgabe und stehen nicht einzeln im Backlog (wie Jira).
+    private List<PmCard> Items(int? sprintId) => Cards.Where(c => c.SprintId == sprintId && c.Type != "Subtask").OrderBy(c => c.Rank).ToList();
+
+    private async Task Drop(int? sprintId, int? beforeId)
+    {
+        _dropTarget = null;
+        if (_dragId is not { } id || beforeId == id)
+            return;
+        _dragId = null;
+        await Run(() => Pm.PlanTaskAsync(User, id, sprintId, beforeId));
+    }
+
+    private void BeginStart(PmSprintView sprint)
+    {
+        _starting = sprint;
+        _goal = sprint.Goal;
+        _weeks = 2;
+    }
+
+    private async Task ConfirmStart()
+    {
+        if (_starting is null)
+            return;
+        var sprint = _starting;
+        _starting = null;
+        await Run(() => Pm.StartSprintAsync(User, sprint.Id, DateTime.Today, DateTime.Today.AddDays(_weeks * 7 - 1), _goal));
+    }
+
+    private void BeginComplete(PmSprintView sprint)
+    {
+        _completing = sprint;
+        _moveTo = Board.Sprints.FirstOrDefault(s => s.State == "Planned")?.Id;
+    }
+
+    private async Task ConfirmComplete()
+    {
+        if (_completing is null)
+            return;
+        var sprint = _completing;
+        _completing = null;
+        await Run(() => Pm.CompleteSprintAsync(User, sprint.Id, _moveTo));
+    }
+
+    private Task CreateSprint() => Run(() => Pm.CreateSprintAsync(User, Board.Project.Id, string.Empty, string.Empty, null, null));
+
+    private async Task NewKey(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter" || string.IsNullOrWhiteSpace(_newTitle))
+            return;
+        var title = _newTitle;
+        _newTitle = string.Empty;
+        await Run(() => Pm.CreateTaskAsync(User, Board.Project.Id, new PmTaskInput { Title = title }));
+    }
+
+    private async Task Run(Func<Task> action)
+    {
+        try
+        {
+            await action();
+            await OnChanged.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

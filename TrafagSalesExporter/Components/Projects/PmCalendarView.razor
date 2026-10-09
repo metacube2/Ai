@@ -1,0 +1,73 @@
+@* Kalender wie Planner-Zeitplan: Monatsraster mit Aufgaben am Faelligkeitstag; Karten auf einen Tag
+   ziehen setzt die Faelligkeit neu. *@
+@inject IUiTextService UiText
+
+<div class="pm-cal-head">
+    <button type="button" class="pm-icon-btn" @onclick="() => _month = _month.AddMonths(-1)"><MudIcon Icon="@Icons.Material.Filled.ChevronLeft" /></button>
+    <b class="pm-cal-title">@_month.ToString("MMMM yyyy", Culture)</b>
+    <button type="button" class="pm-icon-btn" @onclick="() => _month = _month.AddMonths(1)"><MudIcon Icon="@Icons.Material.Filled.ChevronRight" /></button>
+    <button type="button" class="pm-chip" @onclick="() => _month = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)">@T("Heute", "Today")</button>
+    <span class="pm-grow"></span>
+    <span class="pm-muted pm-small">@Cards.Count(c => c.DueDate is null) @T("ohne Fälligkeit", "without due date")</span>
+</div>
+<div class="pm-cal">
+    @foreach (var name in WeekDays)
+    {
+        <div class="pm-cal-dow">@name</div>
+    }
+    @foreach (var day in Days)
+    {
+        var d = day;
+        var items = Cards.Where(c => c.DueDate?.Date == d).OrderBy(c => c.Category == "Done").ThenByDescending(c => TrafagSalesExporter.Models.PmPriorities.Weight(c.Priority)).ToList();
+        <div class="pm-cal-day @(d.Month != _month.Month ? "pm-cal-out" : "") @(d == DateTime.Today ? "pm-cal-today" : "") @(d.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "pm-cal-weekend" : "")"
+             @ondragover:preventDefault="true" @ondrop="() => Drop(d)">
+            <span class="pm-cal-num">@d.Day</span>
+            @foreach (var item in items.Take(4))
+            {
+                var c = item;
+                <div class="pm-cal-item pm-cat-@c.Category.ToLowerInvariant() @(c.IsOverdue ? "pm-overdue" : "")" draggable="@(CanEdit ? "true" : "false")"
+                     @ondragstart="() => _drag = c.Id" @onclick="() => OnOpen.InvokeAsync(c.Id)" title="@($"{c.Key} {c.Title}")">
+                    <span class="pm-key">@c.Key</span> @c.Title
+                </div>
+            }
+            @if (items.Count > 4)
+            {
+                <div class="pm-muted pm-small">+@(items.Count - 4)</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PmCard> Cards { get; set; } = [];
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<(int TaskId, DateTime Due)> OnReschedule { get; set; }
+
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("de-CH");
+    private DateTime _month = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private int? _drag;
+
+    private IEnumerable<string> WeekDays => Enumerable.Range(1, 7).Select(i => Culture.DateTimeFormat.GetAbbreviatedDayName((DayOfWeek)(i % 7)));
+
+    private IEnumerable<DateTime> Days
+    {
+        get
+        {
+            var offset = ((int)_month.DayOfWeek + 6) % 7;
+            var start = _month.AddDays(-offset);
+            var weeks = (int)Math.Ceiling((offset + DateTime.DaysInMonth(_month.Year, _month.Month)) / 7d);
+            return Enumerable.Range(0, weeks * 7).Select(i => start.AddDays(i));
+        }
+    }
+
+    private async Task Drop(DateTime day)
+    {
+        if (_drag is not { } id || !CanEdit)
+            return;
+        _drag = null;
+        await OnReschedule.InvokeAsync((id, day));
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
