@@ -212,6 +212,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </Reveal>
             ))}
           </div>
+          {dictionary.products.items.filter((p) => p.live).map((p) => (
+            <p key={p.live} className="mt-10 text-center">
+              <a href={p.live} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#FF0000] px-6 py-3 font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5">
+                ▶ {dictionary.products.live_text}
+              </a>
+            </p>
+          ))}
         </div>
       </section>
 

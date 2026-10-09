@@ -160,23 +160,27 @@
         "badge": "Erhältlich",
         "description": "macOS-Fernsteuerung für den Yaesu FT-991A: CAT-Steuerung, Logbuch und Audio-Routing. Demo zum Testen, Vollversion mit Lizenz.",
         "href": "/macyaesu/",
-        "cta": "Zur Produktseite"
+        "cta": "Zur Produktseite",
+        "live": ""
       },
       {
         "name": "Kamera-Import",
         "badge": "Erhältlich",
         "description": "macOS-App, die von der Kamera nur die fehlenden Fotos und Videos lädt, auf den Mac oder per SFTP auf einen anderen Rechner. Demo zum Testen, Vollversion mit Lizenz.",
         "href": "/kamera-uploader/",
-        "cta": "Zur Produktseite"
+        "cta": "Zur Produktseite",
+        "live": ""
       },
       {
         "name": "cAurora",
         "badge": "Beta · Android",
         "description": "Android-App zur Aurora-Livecam in Dürnten: Livebild, Zeitraffer, AI-Ereignisse und Wetter. Tagsüber hell, nachts im Polarlicht-Design. Kostenlos.",
         "href": "https://www.aurora-weather-livecam.com/app/",
-        "cta": "Zur Beta"
+        "cta": "Zur Beta",
+        "live": "https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA/live"
       }
-    ]
+    ],
+    "live_text": "Aurora Livecam rund um die Uhr live auf YouTube"
   },
   "badges": {
     "swiss": "Aus der Schweiz",

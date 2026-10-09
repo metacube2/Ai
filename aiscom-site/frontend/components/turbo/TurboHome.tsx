@@ -139,6 +139,13 @@ export default function TurboHome({ locale, dictionary }: { locale: Locale; dict
             </a>
           ))}
         </div>
+        {dictionary.products.items.filter((p) => p.live).map((p) => (
+          <p key={p.live} className="tv-hell">
+            <a href={p.live} target="_blank" rel="noopener noreferrer" className="tv-knopf tv-klein">
+              ▶ {dictionary.products.live_text}
+            </a>
+          </p>
+        ))}
       </TvFenster>
 
       {/* Abschluss als Dialog */}

@@ -160,23 +160,27 @@
         "badge": "Disponibile",
         "description": "Controllo remoto macOS per lo Yaesu FT-991A: controllo CAT, logbook e routing audio. Demo gratuita, versione completa con licenza.",
         "href": "/macyaesu/",
-        "cta": "Pagina prodotto"
+        "cta": "Pagina prodotto",
+        "live": ""
       },
       {
         "name": "Kamera-Import",
         "badge": "Disponibile",
         "description": "App macOS che scarica dalla fotocamera solo le foto e i video mancanti, sul Mac o via SFTP su un altro computer. Demo da provare, versione completa con licenza.",
         "href": "/kamera-uploader/",
-        "cta": "Pagina del prodotto"
+        "cta": "Pagina del prodotto",
+        "live": ""
       },
       {
         "name": "cAurora",
         "badge": "Beta · Android",
         "description": "App Android per la webcam Aurora a Dürnten: immagine live, timelapse, eventi AI e meteo. Chiara di giorno, design aurora di notte. Gratuita.",
         "href": "https://www.aurora-weather-livecam.com/app/",
-        "cta": "Alla beta"
+        "cta": "Alla beta",
+        "live": "https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA/live"
       }
-    ]
+    ],
+    "live_text": "Aurora Livecam in diretta su YouTube, 24/7"
   },
   "badges": {
     "swiss": "Dalla Svizzera",
