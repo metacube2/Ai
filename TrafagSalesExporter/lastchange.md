@@ -1,6 +1,13 @@
 # Last Change
 
-Stand: 2026-10-01
+Stand: 2026-10-09
+
+## Neuer Reiter Trafag Reddit, 2026-10-09
+
+- Internes Forum für alles, was in SharePoint keinen Platz hat: Communities, Abstimmen hoch/runter, Sortierung Angesagt/Neu/Top/Aktiv/
+  Offene Fragen/Kontrovers, verschachtelte Kommentare, Fragen mit akzeptierter Antwort, Tags, Reputation mit Stufen, ähnliche Beiträge
+  beim Tippen, Speichern. Autor ist der Windows-Name, für alle sichtbar (Entscheid Ingo). Doku `docs/TRAFAG_REDDIT_2026-10-09.md`,
+  Handbuchkapitel 9.
 
 ## Einkauf: Produktgruppe im Spend-Aufriss über ZLO03, 2026-10-08 (produktiv 15:03)
 

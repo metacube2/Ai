@@ -1,6 +1,6 @@
 # Benutzerhandbuch (betriebswirtschaftlich)
 
-Stand: 2026-10-06
+Stand: 2026-10-09
 
 Anwenderhandbuch aller Cockpit-Module aus betriebswirtschaftlicher Sicht: je Seite „Wozu",
 „Was man sieht", „Wie gerechnet wird", „Einsatz im Arbeitsalltag" (nach Rolle) und
@@ -11,7 +11,7 @@ im Trafag-CI, als Word-Datei und als eigener Reiter auf oberster Menueebene.
 
 | Was | Ort |
 |---|---|
-| Quelle (eine Datei je Kapitel, `00_` bis `08_`) | `wwwroot/handbuch/kapitel/*.md` |
+| Quelle (eine Datei je Kapitel, `00_` bis `09_`; `09_trafag_reddit.md` seit 2026-10-09) | `wwwroot/handbuch/kapitel/*.md` |
 | Word-Datei (Download im Reiter) | `wwwroot/handbuch/Trafag_Cockpit_Handbuch.docx` |
 | Schreibvorgabe fuer Kapitel (Format, Aufbau, Ton) | `docs/handbuch/VORGABE.md` |
 | Generator Markdown nach Word | `Tools/HandbuchDocx` |

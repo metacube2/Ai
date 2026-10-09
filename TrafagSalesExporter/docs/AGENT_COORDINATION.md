@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Neuer Reiter Trafag Reddit: Forum mit Communities, Fragen/Antworten, Abstimmung, Karma (Reddit + StackOverflow), sofort fuer alle, Autor mit Windows-Namen, Deploy freigegeben (Wunsch Ingo 2026-10-09) | `Components/Pages/Forum*.razor`, `Components/Forum/*`, `Services/Forum/*`, `Models/Forum*.cs`, `Data/AppDbContext.cs`, Schema-SQL/-Wartung, Menue-Seed, `NavigationIconResolver.cs`, Uebersetzungen, `app.css` (Praefix `frm-`), `Program.cs` (eine Zeile), Tests, Doku | in Arbeit seit 2026-10-09 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
