@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nextvision creation – Zeitreise 2002–2005</title>
+<meta name="description" content="Rekonstruktion der alten Homepage Nextvision (nextvision.ch.vu) von Ingo Kohler, 2002–2005, aus dem Internet Archive.">
+<link rel="icon" href="2004/nextvision-logo.jpg">
+<script>
+/* Nachbauten im oberen Rahmen markieren, wenn der Schalter unten an ist */
+var NACHBAU = ["BILDER/HAND.gif", "BILDER/HANDR.gif", "BILDER/white.jpg", "BILDER/next.jpg", "BILDER/dechvu.gif",
+               "BILDER/mice.jpg", "BILDER/notcpa.gif", "auge.gif"];
+function markieren() {
+  try {
+    var an = frames.leiste.document.getElementById("zeigen").checked;
+    var d = frames.haupt.document, st = d.getElementById("nv-nachbau");
+    if (!st) { st = d.createElement("style"); st.id = "nv-nachbau"; (d.head || d.documentElement).appendChild(st); }
+    st.textContent = an ? NACHBAU.map(function (n) { return 'img[src$="' + n + '"]'; }).join(",") +
+      "{outline:2px dashed #ff00cc;outline-offset:-2px}" : "";
+    var imgs = d.getElementsByTagName("img");
+    for (var i = 0; i < imgs.length; i++) {
+      var s = imgs[i].getAttribute("src") || "";
+      if (NACHBAU.some(function (n) { return s.slice(-n.length) === n; })) imgs[i].title = an ? "Nachbau 2026 – Original verloren" : "";
+    }
+    frames.leiste.aktiv(frames.haupt.location.pathname);
+  } catch (e) {}
+}
+</script>
+</head>
+<frameset rows="*,62" border="0" frameborder="0">
+  <frame name="haupt" src="2002/index.html" scrolling="auto" onload="markieren()">
+  <frame name="leiste" src="zeitleiste.html" scrolling="no" noresize>
+  <noframes><body><a href="2002/index.html">nextvision creation</a></body></noframes>
+</frameset>
+</html>

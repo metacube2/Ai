@@ -182,6 +182,12 @@
     ],
     "live_text": "Aurora Livecam rund um die Uhr live auf YouTube"
   },
+  "retro": {
+    "title": "Zeitreise",
+    "text": "Wo alles anfing: meine erste Homepage „Nextvision“ von 2002 – mit Flash-Intro, Gästebuch und Psy-Room Technologie, rekonstruiert aus dem Internet Archive.",
+    "cta": "Zur Zeitreise ins Jahr 2002",
+    "href": "/nextvision/"
+  },
   "badges": {
     "swiss": "Aus der Schweiz",
     "swissmade": "Swiss made",

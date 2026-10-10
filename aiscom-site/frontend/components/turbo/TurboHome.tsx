@@ -148,6 +148,14 @@ export default function TurboHome({ locale, dictionary }: { locale: Locale; dict
         ))}
       </TvFenster>
 
+      {/* Zeitreise zur ersten Homepage (statisch unter /nextvision/) */}
+      <TvFenster titel={dictionary.retro.title} nummer={5} id="zeitreise">
+        <p>{dictionary.retro.text}</p>
+        <div className="tv-knoepfe">
+          <a href={dictionary.retro.href} className="tv-knopf">{dictionary.retro.cta} ►</a>
+        </div>
+      </TvFenster>
+
       {/* Abschluss als Dialog */}
       <TvFenster titel={t('Projekt starten?', 'Start a project?', 'Iniziare un progetto?')} grau className="tv-cta">
         <p>

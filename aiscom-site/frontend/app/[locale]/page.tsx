@@ -219,6 +219,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </a>
             </p>
           ))}
+          <Reveal>
+            <a href={dictionary.retro.href} className="group mt-12 mx-auto block max-w-2xl glass rounded-2xl p-6 text-center transition-transform hover:-translate-y-1">
+              <p className="text-sm uppercase tracking-widest text-accent">⏳ {dictionary.retro.title}</p>
+              <p className="mt-2 text-gray-300">{dictionary.retro.text}</p>
+              <p className="mt-4 inline-flex items-center gap-2 font-semibold text-accent">
+                {dictionary.retro.cta}
+                <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+              </p>
+            </a>
+          </Reveal>
         </div>
       </section>
 

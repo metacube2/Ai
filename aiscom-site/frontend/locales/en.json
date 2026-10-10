@@ -182,6 +182,12 @@
     ],
     "live_text": "Aurora Livecam live on YouTube, 24/7"
   },
+  "retro": {
+    "title": "Time travel",
+    "text": "Where it all started: my first homepage “Nextvision” from 2002 – with Flash intro, guestbook and Psy-Room technology, rebuilt from the Internet Archive.",
+    "cta": "Travel back to 2002",
+    "href": "/nextvision/"
+  },
   "badges": {
     "swiss": "From Switzerland",
     "swissmade": "Swiss made",
