@@ -14,8 +14,11 @@ Demo-Daten, nie in Betrieb).
 - Daten: `/opt/stacks/bildervon/data/` (`bildervon.db` SQLite, `secret.key`
   fuer Sitzungen, beim Erststart `admin-passwort.txt`, root 600). Die Datei
   verschwindet, sobald der Admin sein Passwort in der Oberflaeche aendert.
-- Oeffentlich: `https://bildervon.ingok.ch` ueber NPM (cNginx) mit
-  Let's-Encrypt; intern Unbound-Override `bildervon.ingok.ch → 192.168.178.111`.
+- Oeffentlich: `https://bildervon.ingok.ch` ueber NPM Proxy Host 41 (cNginx),
+  Let's-Encrypt-Zertifikat 87 (`npm-87`, bis 2027-01-09, NPM erneuert);
+  intern Unbound-Override `bildervon.ingok.ch → 192.168.178.111`.
+  Wie der Host ohne NPM-Login entstand: `instructions/homelab/reverse-proxy-dns.md`
+  und `npm_host_41.sh` (einmalig, nicht erneut ausfuehren).
 - Aktualisieren: Dateien nach `/opt/stacks/bildervon` kopieren (ohne `data/`),
   `docker compose up -d --build`.
 
