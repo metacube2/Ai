@@ -1,0 +1,5 @@
+<div class="zeile linkzeile">
+  <label class="schmal">Dienst <select name="dienst">{% for k, v in DIENSTE.items() %}<option value="{{ k }}" {{ 'selected' if k == d }}>{{ v }}</option>{% endfor %}</select></label>
+  <label>Link <input name="url" type="url" value="{{ u }}" placeholder="https://…"></label>
+  <label>Bezeichnung <input name="bezeichnung" value="{{ b }}" placeholder="z.B. Fotos Bescherung"></label>
+</div>

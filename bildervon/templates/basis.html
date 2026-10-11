@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block titel %}Bilder von uns{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
+<link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
+</head>
+<body>
+<header class="kopf">
+  <a class="marke" href="{{ url_for('start') }}"><span class="punkt"></span>Bilder von uns</a>
+  {% if g.konto %}
+  <nav>
+    {% if g.konto.admin %}<a href="{{ url_for('admin') }}">Verwalten</a>{% endif %}
+    <span class="wer">{{ g.konto.name }}</span>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="leise">Abmelden</button></form>
+  </nav>
+  {% endif %}
+</header>
+<main>
+  {% with meldungen = get_flashed_messages() %}{% for m in meldungen %}<p class="meldung">{{ m }}</p>{% endfor %}{% endwith %}
+  {% block inhalt %}{% endblock %}
+</main>
+</body>
+</html>

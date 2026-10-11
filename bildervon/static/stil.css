@@ -1,0 +1,69 @@
+:root {
+  --grund: #f7f3ee; --karte: #ffffff; --text: #2b2622; --leise: #7a7068; --linie: #e7dfd6;
+  --akzent: #c0663b; --akzent-text: #ffffff;
+  --nextcloud: #0082c9; --immich: #4250af; --photoprism: #7a3fb8; --andere: #5b6b5d;
+  --schatten: 0 1px 2px rgba(60,40,20,.06), 0 4px 16px rgba(60,40,20,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --grund: #1b1917; --karte: #26231f; --text: #efe9e2; --leise: #a59c92; --linie: #3a3530;
+          --akzent: #e08a5c; --schatten: none; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--grund); color: var(--text);
+       font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--akzent); }
+main { max-width: 960px; margin: 0 auto; padding: 0 16px 48px; }
+.kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+        max-width: 960px; margin: 0 auto; padding: 16px; }
+.marke { font-weight: 700; font-size: 1.15rem; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+.punkt { width: 14px; height: 14px; border-radius: 50%; background: var(--akzent); display: inline-block; }
+.kopf nav { display: flex; align-items: center; gap: 14px; }
+.kopf nav form { margin: 0; }
+.wer { color: var(--leise); }
+h1 { font-size: 1.5rem; margin: 28px 0 12px; }
+h2 { font-size: 1.1rem; margin: 18px 0 8px; }
+.karte { background: var(--karte); border: 1px solid var(--linie); border-radius: 14px; padding: 18px; box-shadow: var(--schatten); }
+.login { max-width: 380px; margin: 48px auto; }
+.leer { margin-top: 32px; text-align: center; }
+.hinweis, small, .datum, .admininfo { color: var(--leise); }
+.meldung { background: var(--karte); border-left: 4px solid var(--akzent); padding: 10px 14px; border-radius: 8px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; color: var(--leise); flex: 1; min-width: 0; }
+input, select, textarea { font: inherit; color: var(--text); background: var(--grund); border: 1px solid var(--linie);
+                          border-radius: 8px; padding: 9px 11px; width: 100%; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--akzent); outline-offset: 1px; }
+button, .knopf { font: inherit; cursor: pointer; border: 0; border-radius: 10px; padding: 10px 16px;
+                 background: var(--akzent); color: var(--akzent-text); text-decoration: none; display: inline-block; }
+button.leise { background: none; color: var(--leise); padding: 6px 8px; }
+button.gefahr { color: #b3372f; }
+.login form { display: flex; flex-direction: column; gap: 14px; }
+.jahre { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: thin; }
+.jahre a { flex: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--linie); background: var(--karte);
+           color: var(--text); text-decoration: none; font-weight: 600; }
+.jahre a.aktiv { background: var(--akzent); color: var(--akzent-text); border-color: var(--akzent); }
+.jahrtitel { font-size: 2.2rem; margin: 12px 0 16px; }
+.raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.anlass h2 { margin: 0 0 2px; font-size: 1.2rem; }
+.anlass .datum { margin: 0 0 8px; }
+.links { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.links .knopf { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 600; }
+.knopf .dienst { font-size: .75rem; font-weight: 500; opacity: .85; }
+.knopf.nextcloud { background: var(--nextcloud); } .knopf.immich { background: var(--immich); }
+.knopf.photoprism { background: var(--photoprism); } .knopf.andere { background: var(--andere); }
+.admininfo { font-size: .85rem; margin: 12px 0 0; }
+.kopfzeile { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; }
+.kopfzeile h1 { margin: 28px 0 12px; }
+.liste { width: 100%; border-collapse: collapse; }
+.liste td { padding: 10px 6px; border-bottom: 1px solid var(--linie); vertical-align: top; }
+.liste tr:last-child td { border-bottom: 0; }
+.liste .jahr { font-weight: 700; width: 4.5em; }
+.liste .aktion { text-align: right; width: 1%; white-space: nowrap; }
+.zeile { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin: 10px 0; }
+.zeile .schmal { flex: 0 1 140px; }
+.formular > label { margin: 10px 0; }
+.familien { display: flex; gap: 10px; flex-wrap: wrap; }
+.haken { flex-direction: row; align-items: center; gap: 8px; flex: none; padding: 8px 12px; border: 1px solid var(--linie);
+         border-radius: 10px; color: var(--text); }
+.haken input { width: auto; }
+details summary { cursor: pointer; padding: 4px 0; }
+form.loeschen { margin: 0; }
+@media (max-width: 560px) { .zeile { flex-direction: column; align-items: stretch; } .zeile .schmal { flex: 1; } }

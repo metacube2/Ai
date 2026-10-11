@@ -1,0 +1,26 @@
+{% extends "basis.html" %}
+{% block inhalt %}
+{% if not jahre %}
+<section class="karte leer"><h1>Noch nichts da</h1><p class="hinweis">Für euch ist noch kein Anlass freigegeben.</p></section>
+{% else %}
+<nav class="jahre" aria-label="Jahr wählen">
+  {% for j in jahre %}<a href="?jahr={{ j }}" class="{{ 'aktiv' if j == jahr }}">{{ j }}</a>{% endfor %}
+</nav>
+<h1 class="jahrtitel">{{ jahr }}</h1>
+<div class="raster">
+  {% for a in anlaesse %}
+  <article class="karte anlass">
+    <h2>{{ a.titel }}</h2>
+    {% if a.datum %}<p class="datum">{{ a.datum }}</p>{% endif %}
+    {% if a.beschreibung %}<p>{{ a.beschreibung }}</p>{% endif %}
+    <div class="links">
+      {% for l in a.links %}
+      <a class="knopf {{ l.dienst }}" href="{{ l.url }}" target="_blank" rel="noopener noreferrer">{{ l.bezeichnung or DIENSTE[l.dienst] }}<span class="dienst">{{ DIENSTE[l.dienst] }}</span></a>
+      {% else %}<p class="hinweis">Noch keine Bilder verlinkt.</p>{% endfor %}
+    </div>
+    {% if g.konto.admin %}<p class="admininfo">Sichtbar für: {{ a.familien|join(', ') or 'niemand' }} · <a href="{{ url_for('anlass_bearbeiten', anlass_id=a.id) }}">bearbeiten</a></p>{% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
