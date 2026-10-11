@@ -63,6 +63,48 @@ export PAPERLESS_TOKEN="your_api_token"
 
 ## Verwendung
 
+## Docker Dashboard
+
+Das Projekt kann als eigene Web-App neben Paperless laufen.
+
+```bash
+docker compose up -d --build
+```
+
+Standard-Port:
+
+```text
+http://<docker-host>:8088
+```
+
+Benötigte Umgebungsvariablen:
+
+```text
+PAPERLESS_URL=http://paperlessngx-webserver-1:8000
+PAPERLESS_HOST_HEADER=paperless.aiscom.ch
+PAPERLESS_TOKEN=<paperless-api-token>
+FINANCE_ADMIN_USER=metacube
+FINANCE_ADMIN_PASSWORD=<initial-password>
+FINANCE_SECRET_KEY=<random-secret>
+```
+
+Login:
+
+- `/login` schützt Dashboard und Sync-Funktion.
+- `/password` erlaubt das Ändern des Passworts nach dem ersten Login.
+- Das geänderte Passwort wird als Hash in `output/auth.json` gespeichert.
+
+Funktionen im Dashboard:
+
+- Summen nach Tag, Korrespondent, Kategorie und Monat.
+- Vorschläge für Rechnungsbeträge aus OCR-Text.
+- Sicherer Sync zurück nach Paperless in das Custom Field `betrag`.
+- Automatische Betragsübernahme ist konservativ und ignoriert Werte über `20000.00`.
+
+Paperless-Voraussetzung:
+
+- Das Custom Field `betrag` wird bei Bedarf als Typ `monetary` angelegt.
+
 ### Verbindung testen
 
 ```bash

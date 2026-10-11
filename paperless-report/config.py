@@ -130,6 +130,10 @@ class Config:
 
     def _validate_config(self) -> None:
         """Validiert die Konfiguration."""
+        env_url = os.environ.get('PAPERLESS_URL')
+        if env_url:
+            self._config['paperless']['url'] = env_url
+
         # Paperless URL prüfen
         url = self.get('paperless.url', '')
         if not url:

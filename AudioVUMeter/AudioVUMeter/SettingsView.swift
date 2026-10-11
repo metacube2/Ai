@@ -138,8 +138,10 @@ struct SettingsView: View {
     }
 }
 
-#Preview {
-    SettingsView()
-        .environmentObject(AudioEngine())
-        .environmentObject(SerialManager())
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView()
+            .environmentObject(AudioEngine())
+            .environmentObject(SerialManager())
+    }
 }

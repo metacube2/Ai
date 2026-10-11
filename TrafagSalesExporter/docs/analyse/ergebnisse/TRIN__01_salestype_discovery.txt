@@ -1,0 +1,278 @@
+﻿Server-Analyse (nur lesend)
+Datei    : TRIN__01_salestype_discovery.sql
+Standort : TRIN (Indien)
+Quelle   : SAGE
+Host     : 20.197.20.60:30015
+Schema   : TRAFAG_LIVE
+Zeitpunkt: 2026-08-05 11:13:17
+Statements: 7
+
+=== Runde 1: Wo steckt das Feld "Sales Type" im indischen SAP B1? ===
+TABLE_NAME | RECORD_COUNT
+CUFD | 3904
+OITB | 14
+OITG | 64
+OITL | 1201868
+OITM | 5949
+OITR | 27180
+OITT | 2056
+OITW | 136804
+OUDG | 1
+UFD1 | 1800
+-- 10 Zeile(n), 1634 ms
+
+=== 2 UDF-Woerterbuch: alle benutzerdefinierten Felder des Artikelstamms mit Beschriftung ===
+TableID | FieldID | AliasID | Descr | TypeID | EditType | SizeID | EditSize | Dflt | NotNull | IndexID | RTable | RField | Action | Sys | DfltDate | RelUDO | ValidRule | RelSO | RThrdPTab | RThrdPFld
+OITM | 0 | TASC_CN | Customer Name | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 13 | Tasc_RI | Remove Item Image | A |  | 10 | 10 | N | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 2 | TASC_OC | Ordering Code | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 3 | Tasc_IND | Index | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 4 | Tasc_CPN | Customer Part No. | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 5 | Tasc_DN | Drawing No | A |  | 15 | 15 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 6 | Tasc_QC | QC Applicable | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 7 | QCApr | QC Approval | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 8 | SPGrp | Spec Group | A |  | 30 | 30 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 1 | TASC_OMN | Material No | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 10 | Tasc_II | Item Image | A | I | 200 | 200 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OITM | 11 | Tasc_CUN | Conversion UOM Name | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OITM | 12 | Tasc_CUQ | Conversion UOM QTY | B | Q | 16 | 16 | 1.000000 | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OITM | 9 | TASC_TR | Tax Rate | A |  | 10 | 10 | 18% | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 14 | Tasc_ST | Sales Type | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OITM | 15 | AFTQCAPPWHS | After QC Approved Warehouse | A |  | 8 | 8 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | 64 | NULL | NULL
+-- 16 Zeile(n), 263 ms
+
+=== 3 UDF-Woerterbuch der Belegtabellen (falls das Feld an der Zeile statt am Artikel haengt) ===
+TableID | FieldID | AliasID | Descr | TypeID | EditType | SizeID | EditSize | Dflt | NotNull | IndexID | RTable | RField | Action | Sys | DfltDate | RelUDO | ValidRule | RelSO | RThrdPTab | RThrdPFld
+ORIN | 0 | Tasc_ORN | Format No. & Date | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 0 | Tasc_ORN | Format No. & Date | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 1 | Tasc_ST | Shipment Term | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 1 | Tasc_ST | Shipment Term | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 2 | Tasc_BOND | Buyers Order No & Date | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 2 | Tasc_BOND | Buyers Order No & Date | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 3 | Tasc_PO | PO No. | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 3 | Tasc_PO | PO No. | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 4 | Tasc_PCB | Pre-Carriage by | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 4 | Tasc_PCB | Pre-Carriage by | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 53 | Tasc_CFN | Check Format No. | A |  | 10 | 10 | NOT OK | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 53 | Tasc_CFN | Check Format No. | A |  | 10 | 10 | NOT OK | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 6 | Tasc_POD | Port of Destination | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 6 | Tasc_POD | Port of Destination | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 7 | Tasc_POL | Port of Loading | A |  | 30 | 30 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 7 | Tasc_POL | Port of Loading | A |  | 30 | 30 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 8 | Tasc_PORPC | Place of receipt by pre-carrier | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 8 | Tasc_PORPC | Place of receipt by pre-carrier | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 9 | Tasc_COFD | Country of Final Destination | A |  | 30 | 30 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 9 | Tasc_COFD | Country of Final Destination | A |  | 30 | 30 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 10 | Tasc_CD | Certification | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 10 | Tasc_CD | Certification | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 11 | Tasc_IT | Issue Type | A |  | 30 | 30 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 11 | Tasc_IT | Issue Type | A |  | 30 | 30 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 12 | Tasc_PF | Packing and Forwarding | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 12 | Tasc_PF | Packing and Forwarding | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 13 | Tasc_FN | Freight Narration | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 13 | Tasc_FN | Freight Narration | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 14 | Tasc_VQ | Validity of Quotation | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 14 | Tasc_VQ | Validity of Quotation | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 15 | Tasc_DP | Delivery Period | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 15 | Tasc_DP | Delivery Period | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 16 | U_Tasc_AprovalReq | Approval Required | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 16 | U_Tasc_AprovalReq | Approval Required | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 17 | Business_Unit | Business_Unit | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 17 | Business_Unit | Business_Unit | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 18 | QCDocC | QC Document Created | A |  | 20 | 20 | N | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 18 | QCDocC | QC Document Created | A |  | 20 | 20 | N | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 19 | Cancel | Cancel ITR | A |  | 20 | 20 | N | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 19 | Cancel | Cancel ITR | A |  | 20 | 20 | N | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 20 | UID | Unique Id | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 20 | UID | Unique Id | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 21 | DocType | DocType | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 21 | DocType | DocType | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 22 | BseEntry | BaseEntry | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 22 | BseEntry | BaseEntry | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 23 | BseNum | BaseNum | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 23 | BseNum | BaseNum | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 24 | Tasc_TotalQty | Total Quantity | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 24 | Tasc_TotalQty | Total Quantity | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 25 | Tasc_PriceQty | Total Price | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 25 | Tasc_PriceQty | Total Price | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 0 | Tasc_RR | Rejection Reason | A |  | 200 | 200 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 0 | Tasc_RR | Rejection Reason | A |  | 200 | 200 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 1 | QCDocNo | QC DocNum | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 1 | QCDocNo | QC DocNum | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 2 | QCStatus | QC Status | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 2 | QCStatus | QC Status | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 3 | QCCheck | QC Check | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 3 | QCCheck | QC Check | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 4 | Machine | Machine | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 4 | Machine | Machine | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 5 | Tool | Tool | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 5 | Tool | Tool | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 6 | Strok | Strokes | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 6 | Strok | Strokes | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 7 | Tasc_VN | Vendor Name | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 7 | Tasc_VN | Vendor Name | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 26 | Tasc_WF | Warranty Format No. | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 26 | Tasc_WF | Warranty Format No. | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 27 | Tasc_PLF | Packing List Format No. | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 27 | Tasc_PLF | Packing List Format No. | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 28 | U_Tasc_DCN | Docket/LR Number | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 28 | U_Tasc_DCN | Docket/LR Number | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 29 | Tasc_DD | Docket/LR Date | D |  | 8 | 8 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 29 | Tasc_DD | Docket/LR Date | D |  | 8 | 8 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 30 | Tasc_TN | Transporter Name | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 30 | Tasc_TN | Transporter Name | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 31 | Tasc_TF | Transit From | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 31 | Tasc_TF | Transit From | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 32 | Tasc_TT | Transit To | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 32 | Tasc_TT | Transit To | A |  | 25 | 25 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 33 | Tasc_DDate | Delivery Date | D |  | 8 | 8 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 33 | Tasc_DDate | Delivery Date | D |  | 8 | 8 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 34 | Tasc_DS | Delivery Status | A |  | 25 | 25 | On The Way | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 34 | Tasc_DS | Delivery Status | A |  | 25 | 25 | On The Way | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 8 | Tasc_CUN | Conversion UOM Name | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+RIN1 | 8 | Tasc_CUN | Conversion UOM Name | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+INV1 | 11 | Tasc_CUP | Conversion Unit Price | B | P | 16 | 16 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 11 | Tasc_CUP | Conversion Unit Price | B | P | 16 | 16 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 10 | Tasc_PS | Party State | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 10 | Tasc_PS | Party State | A |  | 10 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 9 | Tasc_CUQ | Conversion UOM QTY | B | Q | 16 | 16 | 1.000000 | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+RIN1 | 9 | Tasc_CUQ | Conversion UOM QTY | B | Q | 16 | 16 | 1.000000 | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 35 | EwaySta | EWay Bill Status | A |  | 10 | 10 | P | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 35 | EwaySta | EWay Bill Status | A |  | 10 | 10 | P | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 36 | IRN | IRN No | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 36 | IRN | IRN No | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 37 | AckNo | Ack No | A |  | 50 | 50 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 37 | AckNo | Ack No | A |  | 50 | 50 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 38 | AckDt | Ack date | D |  | 8 | 8 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 38 | AckDt | Ack date | D |  | 8 | 8 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 39 | ResQR | Res QR | M |  | 8 | NULL | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 39 | ResQR | Res QR | M |  | 8 | NULL | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 40 | ResMsg | Res Msg | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 40 | ResMsg | Res Msg | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 41 | JSON | JSON | M |  | 8 | NULL | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 41 | JSON | JSON | M |  | 8 | NULL | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 42 | DutSt | Duty Status | A |  | 1 | 1 | N | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 42 | DutSt | Duty Status | A |  | 1 | 1 | N | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 43 | EinvSta | EWay Bill Status | A |  | 10 | 10 | P | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 43 | EinvSta | EWay Bill Status | A |  | 10 | 10 | P | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 44 | InvPri | InvPrint | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 44 | InvPri | InvPrint | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 45 | EwSum | Print Summary | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 45 | EwSum | Print Summary | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 46 | EwDtl | Print Detail | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 46 | EwDtl | Print Detail | A |  | 254 | 254 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 47 | ConsEBill | Consolidated E-Way Bill | A |  | 50 | 50 | N | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 47 | ConsEBill | Consolidated E-Way Bill | A |  | 50 | 50 | N | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 48 | ConsEBillNo | Consolidated E-WayBill No | A |  | 200 | 200 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 48 | ConsEBillNo | Consolidated E-WayBill No | A |  | 200 | 200 | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 49 | WepRem | Wep Remark | M |  | 8 | NULL | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 49 | WepRem | Wep Remark | M |  | 8 | NULL | NULL | N | N |  | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+ORIN | 50 | Tasc_PN | Party Name | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 50 | Tasc_PN | Party Name | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 51 | Tasc_PA | Party Address | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 51 | Tasc_PA | Party Address | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 12 | Tasc_DCR | Delivery Challan Remarks | M |  | 8 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 12 | Tasc_DCR | Delivery Challan Remarks | M |  | 8 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 52 | Tasc_ND | Notification Details | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 52 | Tasc_ND | Notification Details | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 13 | Tasc_IPC | Information For Production | M |  | 8 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 13 | Tasc_IPC | Information For Production | M |  | 8 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+INV1 | 14 | Tasc_TR | Tax Code | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+RIN1 | 14 | Tasc_TR | Tax Code | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 5 | Tasc_VFN | Vessel/Flight No | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 5 | Tasc_VFN | Vessel/Flight No | A |  | 100 | 100 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 54 | Tasc_LUT | LUT No. | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 54 | Tasc_LUT | LUT No. | A |  | 50 | 50 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 55 | Tasc_LUTDT | LUT Date | D |  | 8 | 8 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+OINV | 55 | Tasc_LUTDT | LUT Date | D |  | 8 | 8 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL |  | NULL | NULL | NULL
+ORIN | 56 | Division | Division | A |  | 10 | 10 |  | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+OINV | 56 | Division | Division | A |  | 10 | 10 |  | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+INV1 | 15 | Qty | Rejected Qty | B | Q | 16 | 16 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+RIN1 | 15 | Qty | Rejected Qty | B | Q | 16 | 16 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+INV1 | 16 | QCEnable | QC Enable | A |  | 3 | 3 | N | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+RIN1 | 16 | QCEnable | QC Enable | A |  | 3 | 3 | N | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+INV1 | 17 | BaseType | QC BaseType | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+RIN1 | 17 | BaseType | QC BaseType | A |  | 20 | 20 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+INV1 | 18 | BaseEntry | QC BaseEntry | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+RIN1 | 18 | BaseEntry | QC BaseEntry | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+INV1 | 19 | BaseLine | QC BaseLine | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+RIN1 | 19 | BaseLine | QC BaseLine | N |  | 11 | 10 | NULL | N | N | NULL | NULL | NULL | N | NULL | NULL | NULL | NULL | NULL | NULL
+-- 154 Zeile(n), 392 ms
+
+=== 4 Gueltige Werte der Artikelstamm-UDFs (hier muessen LRD und die Fertigungsvariante stehen) ===
+TableID | FieldID | IndexID | FldValue | Descr | FldDate
+OITM | 6 | 0 | Yes | Yes | NULL
+OITM | 6 | 1 | No | No | NULL
+OITM | 7 | 0 | Y | YES | NULL
+OITM | 7 | 1 | N | NO | NULL
+OITM | 9 | 0 | 0% | 0% | NULL
+OITM | 9 | 1 | 5% | 5% | NULL
+OITM | 9 | 2 | 12% | 12% | NULL
+OITM | 9 | 3 | 18% | 18% | NULL
+OITM | 9 | 4 | 28% | 28% | NULL
+OITM | 13 | 0 | N | N | NULL
+OITM | 13 | 1 | Y | Y | NULL
+OITM | 14 | 0 | FFM | Full Fledged Manufacturing | NULL
+OITM | 14 | 1 | LRD | Limited Risk Distributor | NULL
+OITM | 14 | 2 | CM | Contract Manufacturing | NULL
+OITM | 14 | 3 | -- | -- | NULL
+-- 15 Zeile(n), 262 ms
+
+=== 5 OITM-Spalten mit Namensbezug zu Sales Type, Herkunft oder Fertigung ===
+COLUMN_NAME | DATA_TYPE_NAME | LENGTH | POSITION
+TrackSales | NVARCHAR | 1 | 34
+NumInSale | DECIMAL | 21 | 36
+TreeType | NVARCHAR | 1 | 52
+ObjType | NVARCHAR | 20 | 199
+ShipType | SMALLINT | 5 | 205
+TaxType | NVARCHAR | 1 | 210
+ItemType | NVARCHAR | 1 | 213
+MatType | NVARCHAR | 3 | 238
+SpProdType | NVARCHAR | 2 | 294
+ProdctType | NVARCHAR | 1 | 338
+ProdTypeEx | NVARCHAR | 10 | 339
+U_TASC_CN | NVARCHAR | 100 | 347
+U_TASC_OMN | NVARCHAR | 50 | 348
+U_TASC_OC | NVARCHAR | 100 | 349
+U_Tasc_IND | NVARCHAR | 10 | 350
+U_Tasc_CPN | NVARCHAR | 100 | 351
+U_Tasc_DN | NVARCHAR | 15 | 352
+U_Tasc_QC | NVARCHAR | 10 | 353
+U_QCApr | NVARCHAR | 50 | 354
+U_SPGrp | NVARCHAR | 30 | 355
+U_TASC_TR | NVARCHAR | 10 | 356
+U_Tasc_II | NVARCHAR | 200 | 357
+U_Tasc_CUN | NVARCHAR | 10 | 358
+U_Tasc_CUQ | DECIMAL | 21 | 359
+U_Tasc_RI | NVARCHAR | 10 | 360
+U_Tasc_ST | NVARCHAR | 25 | 361
+U_AFTQCAPPWHS | NVARCHAR | 8 | 362
+-- 27 Zeile(n), 379 ms
+
+=== 6 Fertige Wertabfragen fuer Runde 2 (Ausgabe ist SQL-Text zum Kopieren, keine Auswertung) ===
+SQL_FUER_RUNDE_2
+SELECT "U_TASC_CN" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_TASC_CN" ORDER BY 2 DESC
+SELECT "U_TASC_OMN" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_TASC_OMN" ORDER BY 2 DESC
+SELECT "U_TASC_OC" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_TASC_OC" ORDER BY 2 DESC
+SELECT "U_Tasc_IND" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_IND" ORDER BY 2 DESC
+SELECT "U_Tasc_CPN" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_CPN" ORDER BY 2 DESC
+SELECT "U_Tasc_DN" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_DN" ORDER BY 2 DESC
+SELECT "U_Tasc_QC" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_QC" ORDER BY 2 DESC
+SELECT "U_QCApr" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_QCApr" ORDER BY 2 DESC
+SELECT "U_SPGrp" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_SPGrp" ORDER BY 2 DESC
+SELECT "U_TASC_TR" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_TASC_TR" ORDER BY 2 DESC
+SELECT "U_Tasc_II" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_II" ORDER BY 2 DESC
+SELECT "U_Tasc_CUN" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_CUN" ORDER BY 2 DESC
+SELECT "U_Tasc_CUQ" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_CUQ" ORDER BY 2 DESC
+SELECT "U_Tasc_RI" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_RI" ORDER BY 2 DESC
+SELECT "U_Tasc_ST" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_Tasc_ST" ORDER BY 2 DESC
+SELECT "U_AFTQCAPPWHS" AS WERT, COUNT(*) AS ARTIKEL FROM TRAFAG_LIVE."OITM" WHERE "InvntItem" = 'Y' AND "validFor" = 'Y' GROUP BY "U_AFTQCAPPWHS" ORDER BY 2 DESC
+-- 16 Zeile(n), 377 ms
+
+=== 7 Pruefanker: zwei Artikel, deren Einordnung aus dem Call bzw. den Produktivdaten bekannt ist ===
+ItemCode | ItemName | FrgnName | ItmsGrpCod | CstGrpCode | VatGourpSa | CodeBars | VATLiable | PrchseItem | SellItem | InvntItem | OnHand | IsCommited | OnOrder | IncomeAcct | ExmptIncom | MaxLevel | DfltWH | CardCode | SuppCatNum | BuyUnitMsr | NumInBuy | ReorderQty | MinLevel | LstEvlPric | LstEvlDate | CustomPer | Canceled | MnufctTime | WholSlsTax | RetilrTax | SpcialDisc | DscountCod | TrackSales | SalUnitMsr | NumInSale | Consig | QueryGroup | Counted | OpenBlnc | EvalSystem | UserSign | FREE | PicturName | Transfered | BlncTrnsfr | UserText | SerialNum | CommisPcnt | CommisSum | CommisGrp | TreeType | TreeQty | LastPurPrc | LastPurCur | LastPurDat | ExitCur | ExitPrice | ExitWH | AssetItem | WasCounted | ManSerNum | SHeight1 | SHght1Unit | SHeight2 | SHght2Unit | SWidth1 | SWdth1Unit | SWidth2 | SWdth2Unit | SLength1 | SLen1Unit | Slength2 | SLen2Unit | SVolume | SVolUnit | SWeight1 | SWght1Unit | SWeight2 | SWght2Unit | BHeight1 | BHght1Unit | BHeight2 | BHght2Unit | BWidth1 | BWdth1Unit | BWidth2 | BWdth2Unit | BLength1 | BLen1Unit | Blength2 | BLen2Unit | BVolume | BVolUnit | BWeight1 | BWght1Unit | BWeight2 | BWght2Unit | FixCurrCms | FirmCode | LstSalDate | QryGroup1 | QryGroup2 | QryGroup3 | QryGroup4 | QryGroup5 | QryGroup6 | QryGroup7 | QryGroup8 | QryGroup9 | QryGroup10 | QryGroup11 | QryGroup12 | QryGroup13 | QryGroup14 | QryGroup15 | QryGroup16 | QryGroup17 | QryGroup18 | QryGroup19 | QryGroup20 | QryGroup21 | QryGroup22 | QryGroup23 | QryGroup24 | QryGroup25 | QryGroup26 | QryGroup27 | QryGroup28 | QryGroup29 | QryGroup30 | QryGroup31 | QryGroup32 | QryGroup33 | QryGroup34 | QryGroup35 | QryGroup36 | QryGroup37 | QryGroup38 | QryGroup39 | QryGroup40 | QryGroup41 | QryGroup42 | QryGroup43 | QryGroup44 | QryGroup45 | QryGroup46 | QryGroup47 | QryGroup48 | QryGroup49 | QryGroup50 | QryGroup51 | QryGroup52 | QryGroup53 | QryGroup54 | QryGroup55 | QryGroup56 | QryGroup57 | QryGroup58 | QryGroup59 | QryGroup60 | QryGroup61 | QryGroup62 | QryGroup63 | QryGroup64 | CreateDate | UpdateDate | ExportCode | SalFactor1 | SalFactor2 | SalFactor3 | SalFactor4 | PurFactor1 | PurFactor2 | PurFactor3 | PurFactor4 | SalFormula | PurFormula | VatGroupPu | AvgPrice | PurPackMsr | PurPackUn | SalPackMsr | SalPackUn | SCNCounter | ManBtchNum | ManOutOnly | DataSource | validFor | validFrom | validTo | frozenFor | frozenFrom | frozenTo | BlockOut | ValidComm | FrozenComm | LogInstanc | ObjType | SWW | Deleted | DocEntry | ExpensAcct | FrgnInAcct | ShipType | GLMethod | ECInAcct | FrgnExpAcc | ECExpAcc | TaxType | ByWh | WTLiable | ItemType | WarrntTmpl | BaseUnit | CountryOrg | StockValue | Phantom | IssueMthd | FREE1 | PricingPrc | MngMethod | ReorderPnt | InvntryUom | PlaningSys | PrcrmntMtd | OrdrIntrvl | OrdrMulti | MinOrdrQty | LeadTime | IndirctTax | TaxCodeAR | TaxCodeAP | OSvcCode | ISvcCode | ServiceGrp | NCMCode | MatType | MatGrp | ProductSrc | ServiceCtg | ItemClass | Excisable | ChapterID | NotifyASN | ProAssNum | AssblValue | DNFEntry | UserSign2 | Spec | TaxCtg | Series | Number | FuelCode | BeverTblC | BeverGrpC | BeverTM | Attachment | AtcEntry | ToleranDay | UgpEntry | PUoMEntry | SUoMEntry | IUoMEntry | IssuePriBy | AssetClass | AssetGroup | InventryNo | Technician | Employee | Location | StatAsset | Cession | DeacAftUL | AsstStatus | CapDate | AcqDate | RetDate | GLPickMeth | NoDiscount | MgrByQty | AssetRmk1 | AssetRmk2 | AssetAmnt1 | AssetAmnt2 | DeprGroup | AssetSerNo | CntUnitMsr | NumInCnt | INUoMEntry | OneBOneRec | RuleCode | ScsCode | SpProdType | IWeight1 | IWght1Unit | IWeight2 | IWght2Unit | CompoWH | CreateTS | UpdateTS | VirtAstItm | SouVirAsst | InCostRoll | PrdStdCst | EnAstSeri | LinkRsc | OnHldPert | onHldLimt | PriceUnit | GSTRelevnt | SACEntry | GstTaxCtg | AssVal4WTR | ExcImpQUoM | ExcFixAmnt | ExcRate | SOIExc | TNVED | Imported | AutoBatch | CstmActing | StdItemId | CommClass | TaxCatCode | DataVers | NVECode | CESTCode | CtrSealQty | LegalText | QRCodeSrc | Traceable | IfrsPsRev | PlPaTaxCat | PlPaWght | PPTExReSa | PPTExRePr | ProdctType | ProdTypeEx | SalUomNum | SalUomDen | BuyUomNum | BuyUomDen | IncUomNum | IncUomDen | NoApDisc | U_TASC_CN | U_TASC_OMN | U_TASC_OC | U_Tasc_IND | U_Tasc_CPN | U_Tasc_DN | U_Tasc_QC | U_QCApr | U_SPGrp | U_TASC_TR | U_Tasc_II | U_Tasc_CUN | U_Tasc_CUQ | U_Tasc_RI | U_Tasc_ST | U_AFTQCAPPWHS
+DM000083 | GDMINSULATIONASSY (Hyosung Part no-DYB0407018H0001) | Hyosung Part no-DYB0407018H0001 Density monitor insulation assy. | 101 | -1 | NULL | NULL | Y | Y | Y | Y | 0.000000 | 136.000000 | 288.000000 | NULL | NULL | 0.000000 | FG03 | NULL | NULL | PCS | 1.000000 | 0.000000 | 0.000000 | 613.143000 | 2026-08-04 00:00:00 | 0.000000 | N | NULL | NULL | NULL | 0.000000 | NULL | N | PCS | 1.000000 | 0.000000 | 0 | 0.000000 | 0.000000 | F | 28 | N | NULL | N | N | NULL | Y | 0.000000 | 0.000000 | 0 | P | 1.000000 | 613.143000 | INR | 2026-07-29 00:00:00 | NULL | 0.000000 | NULL | N | N | N | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | NULL | -1 | NULL | N | N | N | Y | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | Y | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | 2024-04-29 00:00:00 | 2026-07-27 00:00:00 | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | NULL | NULL | NULL | 0.000000 | PCS | 1.000000 | NULL | 1.000000 | NULL | Y | Y | I | Y | NULL | NULL | N | NULL | NULL | Y | 445 | NULL | 0 | 4 | NULL | N | 5708 | NULL | NULL | 1 | C | NULL | NULL | NULL | Y | Y | N | I | NULL | NULL | IN | 0.000000 | N | M | NULL | 0.000000 | A | 0.000000 | PCS | M | M | NULL | 0.000000 | 0.000000 | NULL | N | NULL | NULL | -1 | -1 | -1 | -1 | 3 | -1 | 0 | -1 | 2 | N | 75 | NULL | NULL | 0.000000 | -1 | 28 | NULL | NULL | 89 | 83 | -1 | NULL | NULL | -1 | NULL | NULL | NULL | -1 | NULL | NULL | -1 | 0 |  |  |  | NULL | NULL | NULL | N | N | N | N | NULL | NULL | NULL | A | N | N | NULL | NULL | 0.000000 | 0.000000 | NULL |  | NULL | 1.000000 | NULL | N | NULL | NULL | NULL | 0.000000 | NULL | 0.000000 | NULL | B | 165954 | 170039 | N | NULL | Y | 0.000000 | N | NULL | NULL | NULL | -1 | Y | -1 | R | 0.000000 | NULL | 0.000000 | 0.000000 | 4 | NULL | N | N | N | NULL | NULL | NULL | 23 | NULL | -1 | 0.000000 | NULL | NULL | N | N | NULL | NULL | NULL | NULL | NULL | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | N | Hyosung T&D India Pvt. Ltd. | -- | Code 46 + code 06 | NULL | DYB0407018H0001 | NULL | Yes | Y | NULL | 18% |  | NULL | 1.000000 | N | LRD | NULL
+PT000010 | NAH10.0V(54859)Wabtec (FT0054009-100) | FT Part No. FT0054009-100 | 101 | -1 | NULL | NULL | Y | Y | Y | Y | 531.000000 | 1446.000000 | 915.000000 | NULL | NULL | 0.000000 | FG04 | V0078 | NULL | PCS | 1.000000 | 0.000000 | 0.000000 | 4068.247686 | 2026-08-04 00:00:00 | 0.000000 | N | NULL | NULL | NULL | 0.000000 | NULL | N | PCS | 1.000000 | 0.000000 | 0 | 0.000000 | 0.000000 | F | 11 | N | NULL | N | N | NULL | Y | 0.000000 | 0.000000 | 0 | N | 1.000000 | 4044.463000 | INR | 2026-07-21 00:00:00 | NULL | 0.000000 | NULL | N | N | Y | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | NULL | -1 | NULL | N | Y | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | 2024-03-02 00:00:00 | 2024-07-25 00:00:00 | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | NULL | NULL | NULL | 0.000000 | PCS | 1.000000 | NULL | 1.000000 | NULL | N | Y | I | Y | NULL | NULL | N | NULL | NULL | Y | 9 | NULL | 0 | 4 | 12504 | N | 4455 | NULL | NULL | 1 | C | NULL | NULL | NULL | Y | Y | N | I | NULL | NULL | CH | 0.000000 | N | M | NULL | 0.000000 | A | 0.000000 | PCS | M | B | NULL | 0.000000 | 0.000000 | NULL | N | NULL | NULL | -1 | -1 | -1 | -1 | 3 | -1 | 0 | -1 | 2 | N | 56 | NULL | NULL | 0.000000 | -1 | 29 | NULL | NULL | 87 | 10 | -1 | NULL | NULL | -1 | NULL | NULL | NULL | -1 | NULL | NULL | -1 | 0 |  |  |  | NULL | NULL | NULL | N | N | N | N | NULL | NULL | NULL | A | N | N | NULL | NULL | 0.000000 | 0.000000 | NULL |  | NULL | 1.000000 | NULL | N | NULL | NULL | NULL | 0.000000 | NULL | 0.000000 | NULL | B | 150146 | 101829 | N | NULL | Y | 0.000000 | N | NULL | NULL | NULL | -1 | Y | -1 | R | 0.000000 | NULL | 0.000000 | 0.000000 | 4 | NULL | N | N | N | NULL | NULL | NULL | 23 | NULL | -1 | 0.000000 | NULL | NULL | N | N | NULL | NULL | NULL | NULL | NULL | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | N | Wabtec India | 54859 | 8254.78.2315.32.0000.0000.23.61 | NULL | FT0054009-100 | NULL | No | N | NULL | 18% |  | NULL | 1.000000 | N | LRD | NULL
+DM000001 | DENSITYMONITOR_59831, Customer Part No. - DYD0100168H0040 | 3 Stage Density Monitor, Customer Part No. - DYD0100168H0040 | 101 | -1 | NULL | NULL | Y | Y | Y | Y | 121.000000 | 820.000000 | 884.000000 | NULL | NULL | 0.000000 | FG03 | NULL | NULL | PCS | 1.000000 | 0.000000 | 0.000000 | 5496.029000 | 2026-08-04 00:00:00 | 0.000000 | N | NULL | NULL | NULL | 0.000000 | NULL | N | PCS | 1.000000 | 0.000000 | 0 | 0.000000 | 0.000000 | F | 10 | N | NULL | N | N | 8736 - Gas density monitor with three microswitch 20 - Standard Microswitch															 1030 - Radial Process Connection With G1/2" thread & Long Tube															 Y1 - Setting Specifications															 11 - EMC-cable gland M25x1.5, brass nickel-plated, for cable-ø 8 ... 16 [mm]															 60 - Basic density monitor dial with two colour sectors without markings															 61 - Density monitor dial with scale according to customer specification															 66 - Low pressure indicator															 01 - Dial Red-Yellow-Green with scale        0.45...0.46...0.47...0.51 MPa Rel. @ 20 °C														 01 - Customer PART NO. - DYD0100168-H0040														 01 - SP1 = 0.47 MPa Rel., SP2 = 0.46 MPa Rel., SP3 = 0.45 MPa Rel.    Refer Drawing No. 7100015 for Laser marking of labels   Refer Drawing No. 7100016 for Primary Packaging label. | Y | 0.000000 | 0.000000 | 0 | P | 1.000000 | 5611.345000 | INR | 2026-07-29 00:00:00 | NULL | 0.000000 | NULL | N | N | Y | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | NULL | -1 | NULL | N | N | N | Y | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | 2023-11-27 00:00:00 | 2026-07-01 00:00:00 | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | NULL | NULL | NULL | 0.000000 | PCS | 1.000000 | NULL | 1.000000 | NULL | N | Y | O | Y | NULL | NULL | N | NULL | NULL | Y | 444 | NULL | 0 | 4 | 12433 | N | 3360 | NULL | NULL | 1 | C | NULL | NULL | NULL | Y | Y | N | I | NULL | NULL | IN | 0.000000 | N | M | NULL | 0.000000 | A | 0.000000 | PCS | M | M | NULL | 0.000000 | 0.000000 | NULL | N | NULL | NULL | -1 | -1 | -1 | -1 | 3 | -1 | 0 | -1 | 2 | N | 26 | NULL | NULL | 0.000000 | -1 | 29 | NULL | NULL | 89 | 1 | -1 | NULL | NULL | -1 | NULL | NULL | NULL | -1 | NULL | NULL | -1 | 0 |  |  |  | NULL | NULL | NULL | N | N | N | N | NULL | NULL | NULL | A | N | N | NULL | NULL | 0.000000 | 0.000000 | NULL |  | NULL | 1.000000 | NULL | N | NULL | NULL | NULL | 0.000000 | NULL | 0.000000 | NULL | B | 220650 | 105255 | N | NULL | Y | 0.000000 | N | NULL | NULL | NULL | -1 | Y | -1 | R | 0.000000 | NULL | 0.000000 | 0.000000 | 4 | NULL | N | N | N | NULL | NULL | NULL | 43 | NULL | -1 | 0.000000 | NULL | NULL | N | N | NULL | NULL | NULL | NULL | NULL | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | N | Hyosung T&D India Pvt. Ltd. | 59831 | 8736.20.1030.Y1.0000.0000.11.60.61.66.01.01.01 | NULL | DYD0100168H0040 | NULL | Yes | Y | NULL | 18% | 598314.png | NULL | 1.000000 | N | FFM | NULL
+PT000003 | EPR10.0A(57291)-8283 | Railway Pressure Transmitter | 101 | -1 | NULL | NULL | Y | Y | Y | Y | 0.000000 | 3078.000000 | 451.000000 | NULL | NULL | 0.000000 | FG04 | V0078 | NULL | PCS | 1.000000 | 0.000000 | 0.000000 | 5482.274000 | 2026-08-04 00:00:00 | 0.000000 | N | NULL | NULL | NULL | 0.000000 | NULL | N | PCS | 1.000000 | 0.000000 | 0 | 0.000000 | 0.000000 | F | 10 | N | NULL | N | N | NULL | Y | 0.000000 | 0.000000 | 0 | N | 1.000000 | 5482.274000 | INR | 2026-06-26 00:00:00 | NULL | 0.000000 | NULL | N | N | Y | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | NULL | 0.000000 | 4 | 0.000000 | NULL | 0.000000 | NULL | NULL | -1 | NULL | N | Y | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | N | 2023-11-27 00:00:00 | 2024-12-17 00:00:00 | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | NULL | NULL | NULL | 0.000000 | PCS | 1.000000 | NULL | 1.000000 | NULL | N | Y | O | Y | NULL | NULL | N | NULL | NULL | Y | 7 | NULL | 0 | 4 | 11927 | N | 3559 | NULL | NULL | 1 | C | NULL | NULL | NULL | Y | Y | N | I | NULL | NULL | CH | 0.000000 | N | M | NULL | 0.000000 | A | 0.000000 | PCS | M | B | NULL | 0.000000 | 0.000000 | NULL | N | NULL | NULL | -1 | -1 | -1 | -1 | 3 | -1 | 0 | -1 | 2 | N | 56 | NULL | NULL | 0.000000 | -1 | 28 | NULL | NULL | 87 | 3 | -1 | NULL | NULL | -1 | NULL | NULL | NULL | -1 | NULL | NULL | -1 | 0 |  |  |  | NULL | NULL | NULL | N | N | N | N | NULL | NULL | NULL | A | N | N | NULL | NULL | 0.000000 | 0.000000 | NULL |  | NULL | 1.000000 | NULL | N | NULL | NULL | NULL | 0.000000 | NULL | 0.000000 | NULL | B | 220706 | 133810 | N | NULL | Y | 0.000000 | N | NULL | NULL | NULL | -1 | Y | -1 | R | 0.000000 | NULL | 0.000000 | 0.000000 | 4 | NULL | N | N | N | NULL | NULL | NULL | 24 | NULL | -1 | 0.000000 | NULL | NULL | N | N | NULL | NULL | NULL | NULL | NULL | NULL | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 1.000000 | N | Medha | 57291 | 8283.78.2511.05.0000.0000.19.58 | NULL | Medha Part No. - 30600703263 Siemens Part No. - 115032744 | NULL | Yes | Y | NULL | 18% |  | NULL | 1.000000 | N | LRD | NULL
+-- 4 Zeile(n), 276 ms

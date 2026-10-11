@@ -1,0 +1,188 @@
+@page "/hr-kpi/schulung"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+<PageTitle>@T("HR KPI Schulung", "HR KPI training")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">@T("HR KPI Schulung", "HR KPI training")</MudText>
+<MudText Typo="Typo.body1" Class="mb-4 training-lead">
+    Ausführliche Anwenderunterlage für HR-Keyuser, HR-Leitung und Stellvertretungen. Die Seite erklärt nicht nur die Bedienung,
+    sondern auch die Reihenfolge, die Prüfpflichten und die fachliche Interpretation der wichtigsten Kennzahlen.
+</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="7">
+            <img class="training-hero-image" src="training/hr_kpi_cockpit_preview.png" alt="HR KPI Cockpit Vorschau" />
+        </MudItem>
+        <MudItem xs="12" md="5">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3">
+                Diese Schulung ist als Arbeitsanleitung gedacht: erst Datenstatus prüfen, dann filtern, danach Kennzahlen interpretieren.
+            </MudAlert>
+            <MudSimpleTable Dense Hover>
+                <thead>
+                    <tr><th>Rolle</th><th>Schwerpunkt</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>HR Keyuser</td><td>Daten bereitstellen, Plausibilität prüfen, Monatsauswertung erstellen</td></tr>
+                    <tr><td>HR Leitung</td><td>Kennzahlen bewerten, Managementsicht freigeben, Massnahmen ableiten</td></tr>
+                    <tr><td>IT/Admin</td><td>Zugriff, Pfad, Konfiguration und technische Fehler klären</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTabs Rounded Border>
+    <MudTabPanel Text="Überblick">
+        <TrainingSection Title="1. Zweck und Grundprinzip">
+            <p>Das HR KPI Cockpit bündelt operative HR-Auswertungen in einer geschützten Oberfläche. Es ersetzt keine fachliche Freigabe,
+                sondern liefert eine nachvollziehbare Sicht auf Headcount, Fluktuation, Absenzen, GLZ, Restferien und Datenqualität.</p>
+            <p>Die wichtigste Regel lautet: Eine Kennzahl ist nur so belastbar wie die Quelldateien, Filter und fachlichen Ausschlüsse,
+                die zu ihrer Berechnung verwendet wurden. Deshalb beginnt jede Auswertung mit dem Datenstatus.</p>
+            <ul>
+                <li>Vor jeder Weitergabe den Reiter <strong>Datenstatus</strong> öffnen.</li>
+                <li>Rote Datenqualitätsmeldungen zuerst klären.</li>
+                <li>Filter und Zeitraum in Bericht oder E-Mail nennen.</li>
+                <li>Für Managementberichte personenbezogene Detailtabellen vermeiden.</li>
+            </ul>
+        </TrainingSection>
+
+        <TrainingSection Title="2. Bedienreihenfolge">
+            <div class="training-flow">
+                <div><span>1</span><strong>Dateien exportieren</strong><small>Rexx/SAP-Quellen aktualisieren</small></div>
+                <div><span>2</span><strong>Datenordner prüfen</strong><small>Pfad und Dateistand kontrollieren</small></div>
+                <div><span>3</span><strong>Laden</strong><small>Cockpit neu aufbauen</small></div>
+                <div><span>4</span><strong>Datenqualität</strong><small>Warnungen und Fehler lesen</small></div>
+                <div><span>5</span><strong>KPI freigeben</strong><small>Interpretieren und dokumentieren</small></div>
+            </div>
+            <p>Diese Reihenfolge verhindert, dass alte Dateien, leere Filter oder unvollständige Exporte als Managementzahlen verwendet werden.</p>
+        </TrainingSection>
+
+        <TrainingSection Title="3. Datenquellen und Dateistatus">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Datei</th><th>Inhalt</th><th>Prüfung</th></tr></thead>
+                <tbody>
+                    <tr><td>Saldiperstichdatum.xlsx</td><td>Aktive Mitarbeitende, Saldi, Ferien, Organisation, Kostenstelle</td><td>Zeilenanzahl, Alter, Organisationsabdeckung</td></tr>
+                    <tr><td>Exportkommengehen.xlsx</td><td>Arbeitszeitmodell, Sollzeit, Geburtsdatum</td><td>FTE-/Sollzeit-Fallback prüfen</td></tr>
+                    <tr><td>HR_KPI_Export.xlsx</td><td>SAP-HR-Felder, Beschäftigungsgrad, Geschlecht, BU/NBU, Planstelle</td><td>Join auf Personalnummer plausibilisieren</td></tr>
+                    <tr><td>Abwesenheitinstunden.xlsx</td><td>Krankheit kurz/lang, Unfall, Stundenwerte</td><td>Stunden-zu-Tage-Logik und Zeitraum prüfen</td></tr>
+                    <tr><td>Personalausgeschieden.xlsx</td><td>Austritte, Austrittsart, Austrittsdatum</td><td>Austrittsarten und Ausschlüsse kontrollieren</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3">
+                PDF-Dateien sind für diese Auswertung ungeeignet. Die Dateien müssen als strukturierte Excel-Dateien vorliegen.
+            </MudAlert>
+        </TrainingSection>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Auswertung">
+        <TrainingSection Title="4. Filter richtig verwenden">
+            <p>Filter sind fachliche Eingriffe in die Sicht. Deshalb muss bei jeder Auswertung klar sein, ob ein Filter nur aktive Mitarbeitende,
+                Austritte oder beide Datenbereiche betrifft.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Filter</th><th>Wirkung</th><th>Hinweis</th></tr></thead>
+                <tbody>
+                    <tr><td>Austrittsjahr</td><td>grenzt Austritte nach Jahr ein</td><td>Leer bedeutet alle verfügbaren Jahre</td></tr>
+                    <tr><td>Von/Bis Austritt</td><td>hat Vorrang vor Austrittsjahr</td><td>Für Quartals- und Sonderauswertungen verwenden</td></tr>
+                    <tr><td>Organisation</td><td>wirkt auf aktive Mitarbeitende und passende Austrittsdaten</td><td>Leere Organisationen sind Datenqualitätsthema</td></tr>
+                    <tr><td>Kostenstelle</td><td>wirkt stabil auf aktive Mitarbeitende</td><td>Nicht jede Austrittsquelle enthält Kostenstellen sauber</td></tr>
+                    <tr><td>GLZ/Restferien Ampel</td><td>fokussiert operative Prüffälle</td><td>Nicht als Fluktuationsfilter interpretieren</td></tr>
+                    <tr><td>Managementsicht</td><td>reduziert personenbezogene Details</td><td>Für Weitergabe und Ausdruck bevorzugen</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="5. Headcount und Mitarbeitende">
+            <p>Headcount ist die Basis fast aller HR-Kennzahlen. Sprünge gegenüber Vormonat oder Vorjahr müssen erklärbar sein,
+                zum Beispiel durch Eintritte, Austritte, Organisationswechsel oder geänderte Quelldateien.</p>
+            <ul>
+                <li>Headcount nach Organisation zählt eindeutige Personalnummern.</li>
+                <li>Leere Personalnummern werden nicht als verlässlicher Distinct-Headcount verwendet.</li>
+                <li>FTE kann aus SAP-Beschäftigungsgrad oder aus Arbeitszeitmodell/Sollzeit abgeleitet werden.</li>
+                <li>Bei unerwarteten Sprüngen zuerst Datenstatus und Join-Hinweise prüfen.</li>
+            </ul>
+        </TrainingSection>
+
+        <TrainingSection Title="6. Fluktuation fachlich lesen">
+            <p>Die Fluktuation wird aus ausgeschiedenen Personen berechnet. Relevant sind vor allem Arbeitnehmerkündigungen.
+                Praktikanten, befristete Verträge, Pensionierungen und Arbeitgeberkündigungen werden für die relevante Fluktuation ausgeschlossen.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Kennzahl</th><th>Berechnung</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>Monatsfluktuation</td><td>relevante Austritte im Monat / Headcount des Monats</td><td>Operativer Frühindikator</td></tr>
+                    <tr><td>Quartalsfluktuation</td><td>relevante Austritte im Quartal / durchschnittlicher Quartals-Headcount</td><td>Stabiler als Monatswert</td></tr>
+                    <tr><td>Jahresfluktuation</td><td>relevante Austritte im Jahr / durchschnittlicher Jahres-Headcount</td><td>Management-KPI</td></tr>
+                    <tr><td>Hochrechnung</td><td>aktuelle Quartalsfluktuation x 4</td><td>Nur als Prognose lesen</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="7. Absenzen, GLZ und Restferien">
+            <p>Absenzen werden nach Stunden/Tagen und Organisation ausgewertet. Die Krankenquote nutzt Krankheitstage im Verhältnis
+                zu FTE und Arbeitstagen. Unfalltage können je nach Quelle anders abgegrenzt sein und müssen daher vorsichtig interpretiert werden.</p>
+            <ul>
+                <li>Top-Absenzen dienen der operativen Prüfung, nicht der direkten Weitergabe.</li>
+                <li>Kritische Restferien zeigen Planungsbedarf oder Datenfehler.</li>
+                <li>Kritische GLZ-Saldi sollten mit Linienverantwortlichen geprüft werden.</li>
+                <li>Gelbe Ampeln sind Beobachtungspunkte, rote Ampeln brauchen aktive Klärung.</li>
+            </ul>
+        </TrainingSection>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Qualität & Freigabe">
+        <TrainingSection Title="8. Datenqualität systematisch prüfen">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Fehlerbild</th><th>Mögliche Ursache</th><th>Massnahme</th></tr></thead>
+                <tbody>
+                    <tr><td>Keine Daten</td><td>Datei fehlt, falscher Ordner, falscher Dateiname</td><td>Pfad korrigieren und neu laden</td></tr>
+                    <tr><td>Alter Dateistand</td><td>Export wurde nicht erneuert</td><td>Quelle neu exportieren</td></tr>
+                    <tr><td>Leere Organisation</td><td>Join oder Stammdatenfeld fehlt</td><td>Quelldaten und Personalnummer prüfen</td></tr>
+                    <tr><td>Sprung im Headcount</td><td>neuer Export, Filter, Stichtagswechsel</td><td>Vorperiode und Dateistatus vergleichen</td></tr>
+                    <tr><td>Ungewöhnliche Absenzen</td><td>Stundenlogik, Zeitraum, Doppelerfassung</td><td>Einzelzeilen und Quelle prüfen</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="9. Managementsicht und Datenschutz">
+            <p>HR-Daten enthalten personenbezogene Informationen. Für Berichte an Management oder Dritte ist die Managementsicht zu bevorzugen.
+                Detailtabellen mit Namen, Personalnummern oder Einzelfällen dürfen nur an berechtigte Personen gehen.</p>
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+                Keine HR-Dateien per E-Mail weiterleiten und keine Kopien in ungeschützten Ordnern liegen lassen.
+            </MudAlert>
+        </TrainingSection>
+
+        <TrainingSection Title="10. Monatsabschluss-Checkliste">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Nr.</th><th>Prüfpunkt</th><th>Erledigt</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Alle HR-Quelldateien neu exportiert und im richtigen Ordner abgelegt</td><td></td></tr>
+                    <tr><td>2</td><td>Cockpit neu geladen, keine roten Dateistatusmeldungen</td><td></td></tr>
+                    <tr><td>3</td><td>Headcount gegen Vorperiode plausibilisiert</td><td></td></tr>
+                    <tr><td>4</td><td>Fluktuationsausschlüsse fachlich geprüft</td><td></td></tr>
+                    <tr><td>5</td><td>Absenzen, GLZ und Restferien auf Ausreisser geprüft</td><td></td></tr>
+                    <tr><td>6</td><td>Filter, Zeitraum und Datenstand im Bericht dokumentiert</td><td></td></tr>
+                    <tr><td>7</td><td>Managementsicht für Weitergabe verwendet</td><td></td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+    </MudTabPanel>
+</MudTabs>
+
+<style>
+    .training-lead { max-width: 980px; color: var(--mud-palette-text-secondary); }
+    .training-hero-image { width: 100%; border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; }
+    .training-section { margin: 18px 0 28px; max-width: 1180px; }
+    .training-section p { margin-bottom: 12px; line-height: 1.55; }
+    .training-section ul { margin-top: 8px; }
+    .training-flow { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 10px; margin: 12px 0 18px; }
+    .training-flow div { border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; padding: 12px; background: var(--mud-palette-surface); }
+    .training-flow span { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); font-weight: 700; margin-bottom: 8px; }
+    .training-flow strong, .training-flow small { display: block; }
+    .training-flow small { color: var(--mud-palette-text-secondary); margin-top: 4px; }
+    @@media (max-width: 900px) { .training-flow { grid-template-columns: 1fr; } }
+</style>
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
+}
