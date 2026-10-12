@@ -1,0 +1,82 @@
+Vergleich ZM_OFFENE_KDAUF 12.10.2026 08:39:03 System T76      Mandant 100
+Variante:                 A = ZM_OFFENE_KDAUF_REF                       B = ZM_OFFENE_KDAUF_REF
+Selektion, mit der beide Programme gestartet werden:
+   S_MBDAT  S I BT 20260301                       20260315
+   P_WERK   P      1100
+   P_UPDBI  P
+   P_VGL    P      X
+Laufzeiten in Sekunden                           A                       B
+Programm                         ZM_OFFENE_KDAUF_REF     ZM_OFFENE_KDAUF_REF
+Ergebnis abgelegt                                X                       X
+Wanduhr ganzer SUBMIT                         49.426                  51.478
+Programm gesamt                               49.417                  51.470
+FILL_IVBEP                                     0.964                   1.021
+FILL_UEBAUF                                   48.453                  50.448
+  davon Vorablesen                             0.000                   0.000
+  davon Z_BASISPREISLISTE                      8.087                   8.960
+  davon FILL_FKDAT (Belegfluss)               22.245                  21.477
+  davon ERSTER_BEZUG (AUFM)                    0.936                   1.068
+  davon Dispo-Gruppen-Select                   1.176                   1.219
+  davon Waehrungsumrechnung                    0.004                   0.040
+Einteilungen nach FILL_IVBEP                   1,150                   1,150
+MBEW mehrfach je Material                          0                       0
+Summen                                           A                         B
+Zeilen                                           1,108                   1,108
+BMENG                                      615,687.558             615,687.558
+NETWR1                                    4,527,383.56            4,527,383.56
+NETWR2                                            0.00                    0.00
+NETWR3N                                           0.00                    0.00
+STANDARDWERT                              7,515,294.50            7,515,294.50
+Zeilen nur in A                                           0
+Zeilen nur in B                                           0
+Zeilen in beiden                                      1,108
+  davon mit mindestens einer Feldabweichung               6
+Doppelte Schluessel VBELN/POSNR/ETENR in A                0
+Doppelte Schluessel VBELN/POSNR/ETENR in B                0
+Reihenfolge der Liste gleich
+Abweichungen je Feld (Anzahl Zeilen):
+   ERNAM                         4
+       406218     000020 0003 A= TAN                                      B= TDA
+       406218     000020 0004 A= TDA                                      B= TAN
+       407878     000010 0006 A= TDA                                      B= TAN
+       407878     000010 0008 A= TAN                                      B= TDA
+   ERDAT                         4
+       406218     000020 0003 A= 20260210                                 B= 20260220
+       406218     000020 0004 A= 20260220                                 B= 20260210
+       407878     000010 0006 A= 20260220                                 B= 20260223
+       407878     000010 0008 A= 20260223                                 B= 20260220
+   AUFNR                         6
+       406218     000020 0003 A= 000001230348                             B= 000001232431
+       406218     000020 0004 A= 000001232431                             B= 000001230348
+       407878     000010 0002 A= 000001231448                             B= 000001231449
+       407878     000010 0003 A= 000001231449                             B= 000001231448
+       407878     000010 0006 A= 000001232510                             B= 000001232809
+   PSMNG                         2
+       406218     000020 0003 A= 30.000                                   B= 20.000
+       406218     000020 0004 A= 20.000                                   B= 30.000
+   GLTRI                         2
+       406218     000020 0003 A= 20260218                                 B= 20260309
+       406218     000020 0004 A= 20260309                                 B= 20260218
+   GLTRP                         6
+       406218     000020 0003 A= 20260218                                 B= 20260306
+       406218     000020 0004 A= 20260306                                 B= 20260218
+       407878     000010 0002 A= 20260223                                 B= 20260225
+       407878     000010 0003 A= 20260225                                 B= 20260223
+       407878     000010 0006 A= 20260227                                 B= 20260303
+   KWOCHE2                       4
+       406218     000020 0003 A= 08/26                                    B= 10/26
+       406218     000020 0004 A= 10/26                                    B= 08/26
+       407878     000010 0006 A= 09/26                                    B= 10/26
+       407878     000010 0008 A= 10/26                                    B= 09/26
+   FTRMI                         6
+       406218     000020 0003 A= 20260212                                 B= 20260304
+       406218     000020 0004 A= 20260304                                 B= 20260212
+       407878     000010 0002 A= 20260218                                 B= 20260219
+       407878     000010 0003 A= 20260219                                 B= 20260218
+       407878     000010 0006 A= 20260224                                 B= 20260226
+   ZZMBDAT                       4
+       406218     000020 0003 A= 20260213                                 B= 20260304
+       406218     000020 0004 A= 20260304                                 B= 20260213
+       407878     000010 0006 A= 20260226                                 B= 20260228
+       407878     000010 0008 A= 20260228                                 B= 20260226
+ERGEBNIS: ABWEICHUNGEN

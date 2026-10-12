@@ -31,7 +31,7 @@ For r = 0 To tbl.VisibleRowCount - 1
     End If
   Next
 Next
-If treffer <> WScript.Arguments.Count - 1 Then
+If treffer < WScript.Arguments.Count - 1 Then
   WScript.Echo "ABBRUCH: nicht alle Namen gefunden (" & treffer & ")"
   WScript.Quit 3
 End If

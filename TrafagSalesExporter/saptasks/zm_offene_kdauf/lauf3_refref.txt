@@ -1,0 +1,40 @@
+Vergleich ZM_OFFENE_KDAUF 12.10.2026 08:44:02 System T76      Mandant 100
+Variante:                 A = ZM_OFFENE_KDAUF_REF                       B = ZM_OFFENE_KDAUF_REF
+Selektion, mit der beide Programme gestartet werden:
+   S_MBDAT  S I BT 20260301                       20260315
+   P_WERK   P      1100
+   P_UPDBI  P
+   P_VGL    P      X
+Laufzeiten in Sekunden                           A                       B
+Programm                         ZM_OFFENE_KDAUF_REF     ZM_OFFENE_KDAUF_REF
+Ergebnis abgelegt                                X                       X
+Wanduhr ganzer SUBMIT                         48.484                  52.085
+Programm gesamt                               48.464                  52.079
+FILL_IVBEP                                     1.093                   1.069
+FILL_UEBAUF                                   47.371                  51.010
+  davon Vorablesen                             0.000                   0.000
+  davon Z_BASISPREISLISTE                      8.139                   9.415
+  davon FILL_FKDAT (Belegfluss)               21.456                  21.386
+  davon ERSTER_BEZUG (AUFM)                    0.976                   1.059
+  davon Dispo-Gruppen-Select                   1.170                   1.207
+  davon Waehrungsumrechnung                    0.001                   0.002
+Einteilungen nach FILL_IVBEP                   1,150                   1,150
+MBEW mehrfach je Material                          0                       0
+Belegfluss-Aufrufe                                 0                       0
+Belegfluss gespart (kein VBFA)                     0                       0
+Summen                                           A                         B
+Zeilen                                           1,108                   1,108
+BMENG                                      615,687.558             615,687.558
+NETWR1                                    4,527,383.56            4,527,383.56
+NETWR2                                            0.00                    0.00
+NETWR3N                                           0.00                    0.00
+STANDARDWERT                              7,515,294.50            7,515,294.50
+Zeilen nur in A                                           0
+Zeilen nur in B                                           0
+Zeilen in beiden                                      1,108
+  davon mit mindestens einer Feldabweichung               0
+Doppelte Schluessel VBELN/POSNR/ETENR in A                0
+Doppelte Schluessel VBELN/POSNR/ETENR in B                0
+Reihenfolge der Liste gleich                     X
+Abweichungen je Feld (Anzahl Zeilen):
+ERGEBNIS: IDENTISCH      1,108  Zeilen, alle Felder gleich
