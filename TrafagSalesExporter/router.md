@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-10-01
+Stand: 2026-10-12
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
@@ -74,14 +74,14 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 
 | Ast | Wofuer | Unterrouter |
 | --- | --- | --- |
-| **Finance** | Finance Cockpit, Soll/Ist, Formeln, Marge, Standardkosten, Supplier, Journal, Marktsegmente | `docs/router/finance.md` |
+| **Finance** | Finance Cockpit, Soll/Ist, Formeln, Marge, Standardkosten, Supplier, Journal, Marktsegmente, Controlling, Reiter Verkauf | `docs/router/finance.md` |
 | **Standortdaten** | Exporte und Importe je Land (ES, DE, UK, IT, IN, CH/AT), Feldluecken, Ansprechpartner | `docs/router/standortdaten.md` |
-| **Einkauf** | Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ | `docs/router/einkauf.md` |
+| **Einkauf** | Spend, Bestellungen, Kontrakte, Supply Chain, Einkauf Interaktiv, Logistik und Logistik live, Produktgruppen, ABC/XYZ | `docs/router/einkauf.md` |
 | **HR** | HR-KPI-Cockpit, Fluktuation, Absenzen | `docs/router/hr.md` |
-| **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen, Arbeitsplatzleistung und WLAN, Tempo der Webapp, Benutzerhandbuch, Operations (Shopfloor) | `docs/router/plattform.md` |
+| **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen, Arbeitsplatzleistung und WLAN, Tempo der Webapp, Benutzerhandbuch, Reiter Netzwerk, Weltlage, Operations (Shopfloor), Trafag Projekte, Trafag Reddit | `docs/router/plattform.md` |
 | **SAP** | **SAP selbst bedienen (Werkzeuge, Grenzen, Fallen)**, ABAP, OData/Gateway, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation | `docs/router/sap.md` |
 | **Projekt** | Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand | `docs/router/projekt.md` |
-| **Wo stehen wir gerade?** Uebergabestand mit offenen Punkten und Reihenfolge | `docs/UEBERGABE_2026-09-08.md` |
+| **Wo stehen wir gerade?** | Gesamtstand je Bereich, offene Punkte, Arbeitspakete | Ast Projekt: `projektmanagement/Status_kurz.tsv`, `projektmanagement/PROJEKTSTATUS.md`, fuer Finance-Punkte das Issue-Log. `docs/UEBERGABE_2026-09-08.md` ist der Stand vom 2026-09-09 (Finance-Ladelauf) und nicht mehr der aktuelle Einstieg |
 
 ## Wenn der Ast nicht klar ist
 
@@ -93,6 +93,9 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | „Wie bringe ich das auf den Server?" | Plattform |
 | „Warum ist mein Arbeitsplatz oder die Anzeige zaeh?" | Plattform |
 | „Warum ist die Webapp langsam oder zeigt lange nichts?" | Plattform, `docs/PLATTFORM_TEMPO_2026-09-28.md` |
+| „Wie laufen Kunden und Umsaetze im Reiter Verkauf?" | Finance |
+| „Was macht Lager oder Kommissionierung gerade?" | Einkauf (Logistik live) |
+| „Was zeigt Netzwerk, Operations, Trafag Projekte oder Trafag Reddit?" | Plattform |
 | „Was liefert SAP und wie?" | SAP, bei Verkaufszahlen Standortdaten |
 | „Kann ich in SAP selbst etwas anlegen, aendern oder messen?" | **Ja.** `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`, ohne Umweg ueber einen Unterrouter |
 

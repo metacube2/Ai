@@ -75,6 +75,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-12 | Ein Bash-Befehl begann mit einem uebrig gebliebenen `cat > datei` ohne Heredoc; er wartete auf Eingabe und lief 2 Minuten in den Timeout | Jedes `cat >` braucht ein Heredoc oder eine Quelle; Befehle vor dem Absenden auf solche Reste pruefen | diese Zeile |
 | 2026-09-30 | ClosedXML verweigerte eine temporaere Datei mit Endung `.tmp` | Temporaere Excel-Dateien `<name>.tmp.xlsx` nennen | `SapGatewayHrKpiReader.WriteWorkbook` |
 | 2026-09-30 | `node -e` mit Backslashes oder einfachen Anfuehrungszeichen brach im Bash-Quoting | Groessere Ersetzungen als Skriptdatei im Scratchpad schreiben und mit `node <datei>` ausfuehren. **Am 2026-10-01 dreimal wiederholt** (Apostroph in `1'796`, Regex mit Backslash): auch kleine `node -e` mit Anfuehrungszeichen, Apostroph oder Backslash gehoeren in eine Datei | diese Datei |
 | 2026-10-01 | Testerwartung im Kopf gerechnet: der 02.01. ist in Zuerich kein Feiertag, 12,8 statt 16 h | Erwartungswerte mit Datumslogik aus dem Kalender ableiten, nicht schaetzen | `HrKpiServiceTests` |
