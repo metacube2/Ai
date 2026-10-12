@@ -71,7 +71,8 @@ SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME.
   PARAMETERS: p_prga  TYPE progname DEFAULT 'ZM_OFFENE_KDAUF_OPT',
               p_prgb  TYPE progname DEFAULT 'ZM_OFFENE_KDAUF_REF',
               p_beisp TYPE i DEFAULT 5,
-              p_ptask TYPE i DEFAULT 6.
+              p_ptask TYPE i DEFAULT 6,
+              p_korr  TYPE c LENGTH 1 DEFAULT 'A'. " OPT-Korrekturen: A alt, V korrigiert, B nur Absagegrund
 SELECTION-SCREEN END OF BLOCK b2.
 * Grosse Varianten laufen im Dialog in den TIME_OUT (600 s je Dialogschritt). P_BG plant
 * denselben Vergleich als Hintergrundjob ein; der Job legt seine Liste in INDX(ZK) ab, und
@@ -171,6 +172,13 @@ FORM selektion_bauen.
   ls_par-low     = p_ptask.
   CONDENSE ls_par-low.
   APPEND ls_par TO gt_par.
+
+  " Korrekturmodus fuer OPT (Radiobuttons; REF kennt sie nicht und ignoriert sie)
+  DELETE gt_par WHERE selname = 'P_KVOLL' OR selname = 'P_KABGR' OR selname = 'P_KALT'.
+  CLEAR ls_par. ls_par-kind = 'P'.
+  ls_par-selname = 'P_KVOLL'. ls_par-low = boolc( p_korr = 'V' ). APPEND ls_par TO gt_par.
+  ls_par-selname = 'P_KABGR'. ls_par-low = boolc( p_korr = 'B' ). APPEND ls_par TO gt_par.
+  ls_par-selname = 'P_KALT'.  ls_par-low = boolc( p_korr <> 'V' AND p_korr <> 'B' ). APPEND ls_par TO gt_par.
 
   " nie in ZPOWERBI_KDAUF schreiben, immer Vergleichslauf
   DELETE gt_par WHERE selname = 'P_UPDBI' OR selname = 'P_VGL'.

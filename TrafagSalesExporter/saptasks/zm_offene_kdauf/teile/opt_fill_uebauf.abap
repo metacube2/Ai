@@ -67,7 +67,10 @@ FORM fill_uebauf.
     gt_uebauf-kunnr = vbak-kunnr.
     gt_uebauf-ernam = vbak-ernam.
     gt_uebauf-erdat = vbap-erdat.
-    gt_uebauf-erdat = vbap-abgru.
+    " Korrektur (Schalter): das Original ueberschreibt ERDAT mit dem Absagegrund
+    IF p_kalt = abap_true.
+      gt_uebauf-erdat = vbap-abgru.
+    ENDIF.
 
 
     IF ivbep-wmeng = ivbep-bmeng.
@@ -192,6 +195,12 @@ FORM fill_uebauf.
         MOVE-CORRESPONDING aufk TO gt_uebauf.
         MOVE-CORRESPONDING afko TO gt_uebauf.
         MOVE-CORRESPONDING afpo TO gt_uebauf.
+        " Korrektur (Schalter "korrigiert"): AUFK hat eben Erfasser und Erstelldatum des
+        " Fertigungsauftrags eingetragen; Erfasser und Datum des Kundenauftrags wiederherstellen
+        IF p_kvoll = abap_true.
+          gt_uebauf-ernam = vbak-ernam.
+          gt_uebauf-erdat = vbap-erdat.
+        ENDIF.
         gt_uebauf-gltri = afpo-ltrmi.
         GET RUN TIME FIELD gv_rt0.
         PERFORM erster_bezug.
@@ -287,9 +296,9 @@ FORM fill_uebauf.
 
   "AND abgru IN p_abgru "KOI
   LOOP AT gt_uebauf INTO wa_uebauf2  WHERE abgru NOT   IN p_abgru.
-    IF wa_uebauf2-abgru NE p_werk.
-      DELETE gt_uebauf.
-    ENDIF.
+    " Korrektur: hier stand IF abgru NE p_werk (Absagegrund gegen Werk, immer wahr);
+    " das Ergebnis ist unveraendert: jede Zeile mit Absagegrund ausserhalb P_ABGRU faellt weg
+    DELETE gt_uebauf.
   ENDLOOP.
 
 

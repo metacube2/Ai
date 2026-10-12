@@ -66,6 +66,22 @@ SELECTION-SCREEN BEGIN OF BLOCK b4 WITH FRAME TITLE TEXT-T04. " TEXT-T04: 'Daten
   PARAMETERS: p_updbi AS CHECKBOX. " Text über Selektionstexte: 'PowerBI Tabelle aktualisieren'
 SELECTION-SCREEN END OF BLOCK b4.
 PARAMETERS p_vgl NO-DISPLAY. " Vergleichslauf aus ZM_OFFENE_KDAUF_CMP: Ergebnis ins Memory statt ALV
+* Korrekturen 2026-10-12 (Entscheid Ingo): Vorgabe "korrigiert". "Alte Logik" rechnet wie
+* das Programm bis Oktober 2026, Fehler eingeschlossen, etwa fuer einen Vergleich.
+SELECTION-SCREEN BEGIN OF BLOCK b5 WITH FRAME TITLE tit_korr.
+  SELECTION-SCREEN BEGIN OF LINE.
+    PARAMETERS p_kvoll RADIOBUTTON GROUP korr DEFAULT 'X'.
+    SELECTION-SCREEN COMMENT 4(75) txt_kvol FOR FIELD p_kvoll.
+  SELECTION-SCREEN END OF LINE.
+  SELECTION-SCREEN BEGIN OF LINE.
+    PARAMETERS p_kabgr RADIOBUTTON GROUP korr.
+    SELECTION-SCREEN COMMENT 4(75) txt_kabg FOR FIELD p_kabgr.
+  SELECTION-SCREEN END OF LINE.
+  SELECTION-SCREEN BEGIN OF LINE.
+    PARAMETERS p_kalt RADIOBUTTON GROUP korr.
+    SELECTION-SCREEN COMMENT 4(75) txt_kalt FOR FIELD p_kalt.
+  SELECTION-SCREEN END OF LINE.
+SELECTION-SCREEN END OF BLOCK b5.
 
 " NEU: Globale Variable, um den Button-Klick zu signalisieren
 DATA: gv_update_powerbi_table TYPE abap_bool VALUE abap_false.
@@ -266,6 +282,12 @@ INITIALIZATION.
 
 * 24.03.2011, ERP_EDI, end of insert
 
+* Texte fuer den Block Korrekturen (ohne Textelemente, damit sie beim Zurueckkopieren mitgehen)
+  tit_korr = 'Korrekturen (Stand Oktober 2026)'.
+  txt_kvol = 'Korrigiert: Erfasser und Erstelldatum immer aus dem Kundenauftrag'.
+  txt_kabg = 'Nur Fehler behoben: Absagegrund im Erstelldatum'.
+  txt_kalt = 'Alte Logik wie bis Oktober 2026 (mit den Fehlern)'.
+
 *at selection-screen output.
 *  if s_mbdat[] is initial.
 *    w_datum = sy-datum.
@@ -462,6 +484,11 @@ FORM fill_ivbep.
                                                 AND   auart IN s_auart.
                         IF sy-subrc NE 0.
                           DELETE ivbep.
+                          " Korrektur: die Zeile ist geloescht; ohne CONTINUE liefe fuer sie
+                          " gleich noch ein zweites DELETE (Ergebnis dann undefiniert)
+                          IF p_kalt = abap_false.
+                            CONTINUE.
+                          ENDIF.
                         ENDIF.
                         SELECT COUNT(*) FROM afko WHERE aufnr = afpo-aufnr "#EC CI_ALL_FIELDS_NEEDED
                                                   AND   fevor IN s_fevor.
@@ -562,7 +589,10 @@ FORM fill_uebauf.
     gt_uebauf-kunnr = vbak-kunnr.
     gt_uebauf-ernam = vbak-ernam.
     gt_uebauf-erdat = vbap-erdat.
-    gt_uebauf-erdat = vbap-abgru.
+    " Korrektur (Schalter): das Original ueberschreibt ERDAT mit dem Absagegrund
+    IF p_kalt = abap_true.
+      gt_uebauf-erdat = vbap-abgru.
+    ENDIF.
 
 
     IF ivbep-wmeng = ivbep-bmeng.
@@ -687,6 +717,12 @@ FORM fill_uebauf.
         MOVE-CORRESPONDING aufk TO gt_uebauf.
         MOVE-CORRESPONDING afko TO gt_uebauf.
         MOVE-CORRESPONDING afpo TO gt_uebauf.
+        " Korrektur (Schalter "korrigiert"): AUFK hat eben Erfasser und Erstelldatum des
+        " Fertigungsauftrags eingetragen; Erfasser und Datum des Kundenauftrags wiederherstellen
+        IF p_kvoll = abap_true.
+          gt_uebauf-ernam = vbak-ernam.
+          gt_uebauf-erdat = vbap-erdat.
+        ENDIF.
         gt_uebauf-gltri = afpo-ltrmi.
         GET RUN TIME FIELD gv_rt0.
         PERFORM erster_bezug.
@@ -782,9 +818,9 @@ FORM fill_uebauf.
 
   "AND abgru IN p_abgru "KOI
   LOOP AT gt_uebauf INTO wa_uebauf2  WHERE abgru NOT   IN p_abgru.
-    IF wa_uebauf2-abgru NE p_werk.
-      DELETE gt_uebauf.
-    ENDIF.
+    " Korrektur: hier stand IF abgru NE p_werk (Absagegrund gegen Werk, immer wahr);
+    " das Ergebnis ist unveraendert: jede Zeile mit Absagegrund ausserhalb P_ABGRU faellt weg
+    DELETE gt_uebauf.
   ENDLOOP.
 
 
