@@ -69,6 +69,7 @@ const exportForm = [
   '         n_par_pak  = gv_n_par_pakete',
   '         n_par_fehl = gv_n_par_fehler',
   '         n_par_tref = gv_n_par_treffer',
+  '         n_bp_diff  = gv_n_bp_diff',
   "    TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.",
   '  LEAVE PROGRAM.',
   'ENDFORM.                    "vergleich_export',

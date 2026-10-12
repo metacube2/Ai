@@ -76,4 +76,6 @@ DATA: gt_o_vbak    TYPE HASHED TABLE OF vbak WITH UNIQUE KEY vbeln,
 
 * Parallelrechnung: Anzahl gleichzeitiger Aufgaben (0 = aus) und Paketgroesse
 PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
-            p_ppak  TYPE i DEFAULT 50 NO-DISPLAY.
+            p_ppak  TYPE i DEFAULT 50 NO-DISPLAY,
+* Basispreisliste im Parallelbaustein: K Kurzfassung, P Pruefen gegen das Original, O Original
+            p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY.

@@ -111,7 +111,8 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_t_par           TYPE p LENGTH 16 DECIMALS 3,
       gv_n_par_pakete    TYPE i,
       gv_n_par_fehler    TYPE i,
-      gv_n_par_treffer   TYPE i.
+      gv_n_par_treffer   TYPE i,
+      gv_n_bp_diff       TYPE i.
 
 * OPT 2026-10-12: Puffer fuer FILL_UEBAUF, gefuellt in PREFETCH_OPT.
 TYPES: BEGIN OF ty_o_vbkd,
@@ -190,7 +191,9 @@ DATA: gt_o_vbak    TYPE HASHED TABLE OF vbak WITH UNIQUE KEY vbeln,
 
 * Parallelrechnung: Anzahl gleichzeitiger Aufgaben (0 = aus) und Paketgroesse
 PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
-            p_ppak  TYPE i DEFAULT 50 NO-DISPLAY.
+            p_ppak  TYPE i DEFAULT 50 NO-DISPLAY,
+* Basispreisliste im Parallelbaustein: K Kurzfassung, P Pruefen gegen das Original, O Original
+            p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY.
 
 
 
@@ -1689,7 +1692,7 @@ FORM parallel_rechnen.
     lv_i = lv_i + p_ppak.
 
     CLEAR lv_in.
-    EXPORT pos = lt_pak_pos matnr = lt_pak_mat TO DATA BUFFER lv_in.
+    EXPORT pos = lt_pak_pos matnr = lt_pak_mat bpmod = p_bpmod TO DATA BUFFER lv_in.
     gv_n_par_pakete = gv_n_par_pakete + 1.
     lv_task = |ZKDAUF{ gv_n_par_pakete }|.
 
@@ -1732,7 +1735,8 @@ ENDFORM.                    " parallel_rechnen
 FORM par_ende USING p_task TYPE clike.
   DATA: lv_out   TYPE xstring,
         lt_fluss TYPE STANDARD TABLE OF ty_o_par_fluss,
-        lt_bp    TYPE STANDARD TABLE OF ty_o_par_bp.
+        lt_bp    TYPE STANDARD TABLE OF ty_o_par_bp,
+        lv_diff  TYPE i.
 
   RECEIVE RESULTS FROM FUNCTION 'Z_KDAUF_PAR_RECHNEN'
     IMPORTING
@@ -1746,7 +1750,8 @@ FORM par_ende USING p_task TYPE clike.
     gv_n_par_fehler = gv_n_par_fehler + 1.
     RETURN.
   ENDIF.
-  IMPORT fluss = lt_fluss bp = lt_bp FROM DATA BUFFER lv_out.
+  IMPORT fluss = lt_fluss bp = lt_bp bp_diff = lv_diff FROM DATA BUFFER lv_out.
+  gv_n_bp_diff = gv_n_bp_diff + lv_diff.
   INSERT LINES OF lt_fluss INTO TABLE gt_o_par_fluss.
   INSERT LINES OF lt_bp INTO TABLE gt_o_par_bp.
 ENDFORM.                    " par_ende
@@ -1780,6 +1785,7 @@ FORM vergleich_export.
          n_par_pak  = gv_n_par_pakete
          n_par_fehl = gv_n_par_fehler
          n_par_tref = gv_n_par_treffer
+         n_bp_diff  = gv_n_bp_diff
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export

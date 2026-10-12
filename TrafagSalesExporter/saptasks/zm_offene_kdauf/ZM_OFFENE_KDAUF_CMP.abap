@@ -40,6 +40,7 @@ TYPES: ty_tab TYPE STANDARD TABLE OF zmm_ueb_kdauf WITH DEFAULT KEY,
          n_par_pak  TYPE i,
          n_par_fehl TYPE i,
          n_par_tref TYPE i,
+         n_bp_diff  TYPE i,
        END OF ty_info,
        BEGIN OF ty_feld,
          name TYPE abap_compname,
@@ -72,6 +73,7 @@ SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME.
               p_prgb  TYPE progname DEFAULT 'ZM_OFFENE_KDAUF_REF',
               p_beisp TYPE i DEFAULT 5,
               p_ptask TYPE i DEFAULT 6,
+              p_bpmod TYPE c LENGTH 1 DEFAULT 'K',  " OPT-Basispreisliste: K kurz, P pruefen, O original
               p_korr  TYPE c LENGTH 1 DEFAULT 'A'. " OPT-Korrekturen: A alt, V korrigiert, B nur Absagegrund
 SELECTION-SCREEN END OF BLOCK b2.
 * Grosse Varianten laufen im Dialog in den TIME_OUT (600 s je Dialogschritt). P_BG plant
@@ -180,6 +182,9 @@ FORM selektion_bauen.
   ls_par-selname = 'P_KABGR'. ls_par-low = boolc( p_korr = 'B' ). APPEND ls_par TO gt_par.
   ls_par-selname = 'P_KALT'.  ls_par-low = boolc( p_korr <> 'V' AND p_korr <> 'B' ). APPEND ls_par TO gt_par.
 
+  DELETE gt_par WHERE selname = 'P_BPMOD'.
+  CLEAR ls_par. ls_par-kind = 'P'. ls_par-selname = 'P_BPMOD'. ls_par-low = p_bpmod. APPEND ls_par TO gt_par.
+
   " nie in ZPOWERBI_KDAUF schreiben, immer Vergleichslauf
   DELETE gt_par WHERE selname = 'P_UPDBI' OR selname = 'P_VGL'.
   CLEAR ls_par.
@@ -247,6 +252,7 @@ FORM lauf USING iv_prog TYPE progname
          n_par_pak  = cs_info-n_par_pak
          n_par_fehl = cs_info-n_par_fehl
          n_par_tref = cs_info-n_par_tref
+         n_bp_diff  = cs_info-n_bp_diff
     FROM MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   IF sy-subrc = 0.
     cs_info-ok = abap_true.
@@ -277,6 +283,7 @@ FORM laufzeiten_zeigen.
   WRITE: / 'Parallel: Pakete', AT 34(20) gs_ia-n_par_pak, AT 58(20) gs_ib-n_par_pak.
   WRITE: / 'Parallel: Fehler/ohne Prozess', AT 34(20) gs_ia-n_par_fehl, AT 58(20) gs_ib-n_par_fehl.
   WRITE: / 'Parallel: genutzte Belegflusse', AT 34(20) gs_ia-n_par_tref, AT 58(20) gs_ib-n_par_tref.
+  WRITE: / 'Basispreisliste kurz <> Original', AT 34(20) gs_ia-n_bp_diff, AT 58(20) gs_ib-n_bp_diff.
   WRITE: / 'Belegfluss ohne Fakturazeile', AT 34(20) gs_ia-n_flow_leer, AT 58(20) gs_ib-n_flow_leer.
   ULINE.
 ENDFORM.

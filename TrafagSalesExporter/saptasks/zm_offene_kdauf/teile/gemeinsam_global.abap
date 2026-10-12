@@ -24,4 +24,5 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_t_par           TYPE p LENGTH 16 DECIMALS 3,
       gv_n_par_pakete    TYPE i,
       gv_n_par_fehler    TYPE i,
-      gv_n_par_treffer   TYPE i.
+      gv_n_par_treffer   TYPE i,
+      gv_n_bp_diff       TYPE i.
