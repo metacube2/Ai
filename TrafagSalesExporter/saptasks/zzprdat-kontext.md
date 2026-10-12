@@ -1,6 +1,10 @@
 # Kontext: Produktionsdatum ZZPRDAT (PP / Fertigungsauftrag)
 
-Arbeitsstand für die Fortsetzung im CLI. Stand: 07.09.2026.
+Arbeitsstand für die Fortsetzung im CLI. Stand: 12.10.2026 (Technik unverändert seit 07.09.2026).
+
+## Nachtrag 12.10.2026: Abnahmetest verschoben
+
+Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2. Vorbereitung für den neuen Termin: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` und `docs/ZZPRDAT_Loesung_2026-09-03.docx` Kapitel „So testen Sie es selbst“.
 
 ## Aktueller Kurzstand 07.09.2026
 

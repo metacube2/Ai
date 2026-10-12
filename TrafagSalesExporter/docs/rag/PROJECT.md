@@ -47,7 +47,8 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Trefferlimit, kein unbeschraenkter Lauf mit `p_max <= 0`. Offen bleiben das Absenden
   des Anschreibens und die fachliche Abnahme inklusive des realen Druckablaufs gegenueber
   V2. Befund und Messungen: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a. Einstieg bleibt
-  dieselbe Datei.
+  dieselbe Datei. **Stand 2026-10-12:** Der Abnahmetest (geplant 12.10. 16:00) ist um zwei
+  Wochen verschoben, voraussichtlich Woche ab 26.10.2026; Technik in T76 unverändert.
 
 - LIVE-PRUEFUNG 2026-07-31: UK-2025 ist produktiv vorhanden (1'867 Zeilen);
   `GroupStandardCosts` ist mit 63'506 TR-AG-Werten gefuellt; Supplier bleibt bei

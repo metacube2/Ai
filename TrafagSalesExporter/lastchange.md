@@ -2,6 +2,12 @@
 
 Stand: 2026-10-12
 
+## SAP ZZPRDAT: Abnahmetest verschoben, 2026-10-12
+
+- Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
+- Nachgeführt: `saptasks/ZZPRDAT_TRANSPORTPLAN.md`, `saptasks/zzprdat-kontext.md`, `docs/rag/PROJECT.md`,
+  `docs/router/sap.md`, `projektmanagement/Wochen_Todo.tsv` Zeile 56 (fällig 2026-10-26).
+
 ## SAP T76: ZM_OFFENE_KDAUF (offene Kundenaufträge) schnell und geprüft, 2026-10-12 (in T76 eingesetzt, Transport T76K912728 bereit)
 
 - Schnelle Kopie `ZM_OFFENE_KDAUF_OPT` liefert dieselbe Liste wie das Original, Feld für Feld gegen eine Referenzkopie

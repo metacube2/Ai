@@ -43,7 +43,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **Journal-EntitySet CH/AT: Messung, Fuellgrade und Bauplan** (seit 30.09. teilt es den Transport `T76K912530` mit `HrKpiSet`) | `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` |
 | **HR-EntitySet `HrKpiSet`: Bauplan, Stand T76, offene Schritte** | `docs/HR_KPI.md` Abschnitt 8.6 |
 | **HR-EntitySet `HrAbsenzSet` (Abwesenheiten je Fall, Transport `T76K912644`)** | `docs/HR_KPI.md` Abschnitt 8.7 |
-| **Logistik-Live-Sets `LogTaSet`, `LogLiefSet`, `LogRueckSet` (Transport `T76K912650`)** | `docs/LOGISTIK_LIVE_2026-10-01.md` |
+| **Logistik-Live-Sets `LogTaSet`, `LogLiefSet`, `LogRueckSet` (Transport `T76K912650`); offen: Einwand Serverlast durch Polling (Marco, 12.10.)** | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | **`ZM_OFFENE_KDAUF` beschleunigen: `_OPT` (etwa 1/35 bis 1/50 der Laufzeit, identisch), Parallelbaustein `Z_KDAUF_PAR_RECHNEN`, Korrekturschalter, Vergleich `_CMP`, in T76 eingesetzt, Transport `T76K912728` bereit, Import P76 offen** | `saptasks/zm_offene_kdauf/NOTES.md` |
 | **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) standardmaessig sichtbar, mit Werk (`ZZPEG_WERKS`), Layout `/ P00 TX`, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
 | **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`, seit 2026-10-09 in P76** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
@@ -55,7 +55,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **PPWR und Stoffcompliance, aktueller Stand und Mandant 100** | `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` |
 | PPWR, fachlicher Katalog und Anlageprotokoll (Erfolgsmeldung strittig, siehe Zeile darueber) | `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` |
 | Wie SAP Ruestzeit von Bearbeitungszeit unterscheidet | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` |
-| **ZZPRDAT: Transportauftrag `T76K912490`, Objektliste, Nachtest und was vor der Freigabe offen ist** | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` |
+| **ZZPRDAT: Transportauftrag `T76K912490`, Objektliste, Nachtest und was vor der Freigabe offen ist; Abnahmetest vom 12.10. um zwei Wochen verschoben** | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` |
 | **ZZPRDAT: Loesungsdokument fuer den Fachbereich**, seit 2026-09-07 mit Kapitel „So testen Sie es selbst" (drei Testfaelle, Fehlerbilder) | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
 | ZZPRDAT: Anschreiben zur Abnahme (Vorlage fuer den Outlook-Entwurf) | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` |
 | ZZPRDAT-Arbeitsstand und vollstaendiger Analyseverlauf | `saptasks/zzprdat-kontext.md` |

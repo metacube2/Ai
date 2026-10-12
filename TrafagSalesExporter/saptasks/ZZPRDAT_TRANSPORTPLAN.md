@@ -1,6 +1,8 @@
 # ZZPRDAT: Weg vom Testaufbau zum Transport
 
-Stand: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
+Stand: 2026-10-12 (Technik unverändert seit 2026-09-07). **Abnahmetest verschoben:** Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
+
+Stand der Technik: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
 gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
 geschieht erst nach der fachlichen Abnahme.
 
