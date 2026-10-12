@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-09-03
+Stand: 2026-09-03, Nachträge bis 2026-10-12 am Ende
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**
@@ -1607,3 +1607,14 @@ Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.
 * `RunSapProbe.ps1` aus Bash: `powershell -NoProfile -ExecutionPolicy Bypass -File ...`, sonst blockt die Ausfuehrungsrichtlinie; aus dem PowerShell-Werkzeug bricht `table-read` mit NativeCommandError ab.
 * **OData-Modell erweitert, Set liefert 404:** nach `/IWFND/CACHE_CLEANUP` (Modell `ZPOWERBI_EINKAUF_MDL`) zusaetzlich `/IWBEP/CACHE_CLEANUP` ausfuehren; der Bildschirm hat nur die Option „Cache f. alle Modelle" (`chkALLMODEL`, F8). Gemessen 2026-10-07 bei ShopZd05Set/ShopAufSet.
 * **Aus Bash immer `export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'`**, sonst wird `/nSE24` zu einem Pfad.
+
+### Nachtrag 2026-10-12 (ZM_OFFENE_KDAUF)
+
+* **Report kopieren** (mit Textelementen, Oberflaeche, Dynpros): `SapGuiReportKopieren.vbs <Sitzung> start <Quelle> <Ziel>`, dann `... bestaetigen los`, dann sofort `SapGuiLokalesObjekt.vbs`. Das Zielfeld im Kopierdialog heisst `txtPROGRAM_GLOBAL`.
+* **Funktionsgruppe und -baustein anlegen**: `SapGuiFbAnlegen.vbs <Sitzung> gruppe|baustein ...`, danach `SapGuiLokalesObjekt.vbs`; Parameter mit `SapGuiFbParameter.vbs <Sitzung> import|export <Name> <Typ>` (Wertuebergabe wird gesetzt), RFC-faehig mit `SapGuiFbRemote.vbs` (fest Sitzung 1).
+* **Aktivieren** mit Liste der inaktiven Objekte: `SapGuiAktivierenListe.vbs <Sitzung>`, dann `SapGuiInaktiveLokalAktivieren.vbs <Sitzung> <Name...>`; ein Name darf mehrere Zeilen haben (REPS, CUA, Texte), das Skript verlangt seit 2026-10-12 nur noch mindestens eine.
+* **Vor `SapGuiSetFunctionSourceFromFile.vbs` Sitzung 1 mit `/nSE37` vorbereiten**, sonst oeffnet das Skript eine zweite Sitzung, und der Baustein bleibt dort gesperrt.
+* **Ganze Liste lesen**: `SapGuiListeAlleSeiten.vbs <Sitzung> [MaxSeiten]` blaettert mit Bild ab; `Get-SapList.ps1` sieht nur den sichtbaren Ausschnitt.
+* **Dialoggrenze 600 s** (`rdisp/scheduler/prio_high/max_runtime`): grosse Laeufe als Job. Jobstatus per `TBTCO` immer mit JOBNAME, JOBCOUNT und STRTDATE abfragen.
+* **Kurzdumps lesen**: `/nST22`, `wnd[0]/usr/btnTODAY` druecken (`SapGuiDruecken.vbs`), Liste mit `SapGuiGridLesen.vbs ST22 <GridId>`, Zeile oeffnen mit `SapGuiGridZeileOeffnen.vbs`, Langtext mit `SapGuiListeAlleSeiten.vbs`.
+* `BP_JOBLOG_READ` und `RSPO_RETURN_ABAP_SPOOLJOB` sind nicht RFC-faehig; Joblisten deshalb vom Job selbst ablegen lassen (Beispiel: CMP schreibt nach `INDX(ZK)`).

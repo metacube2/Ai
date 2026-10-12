@@ -138,6 +138,8 @@ pruefe(910, '*&-----');
 pruefe(913, 'FORM erster_bezug');
 pruefe(924, 'ENDFORM.');
 pruefe(1058, 'FORM get_standard_price');
+pruefe(1056, 'ENDFORM.');
+pruefe(1053, "ls_fieldcat-fieldname = 'PSMNG'.");
 const opt = anwenden([
   { von: 68, bis: 67, neu: [...pVgl, ...teil('opt_korr_screen')] },
   { von: 71, bis: 70, neu: [...teil('gemeinsam_global'), ...teil('opt_global')] },
@@ -146,6 +148,7 @@ const opt = anwenden([
   { von: 274, bis: 291, neu: teil('opt_ivbep_vbak') },
   { von: 322, bis: 321, neu: teil('opt_korr_delete') },
   { von: 673, bis: 715, neu: teil('opt_schreiben') },
+  { von: 1056, bis: 1055, neu: teil('opt_fieldcat') },
   { von: 353, bis: 637, neu: teil('opt_fill_uebauf') },
   { von: 870, bis: 908, neu: teil('opt_bereich') },
   { von: 910, bis: 924, neu: teil('opt_erster_bezug') },

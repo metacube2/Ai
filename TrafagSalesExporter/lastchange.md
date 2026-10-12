@@ -1,6 +1,18 @@
 # Last Change
 
-Stand: 2026-10-09
+Stand: 2026-10-12
+
+## SAP T76: ZM_OFFENE_KDAUF (offene Kundenaufträge) schnell und geprüft, 2026-10-12 (nur T76, Transport offen)
+
+- Schnelle Kopie `ZM_OFFENE_KDAUF_OPT` liefert dieselbe Liste wie das Original, Feld für Feld gegen eine Referenzkopie
+  verglichen: April bis Juni 2026 5 s statt 187 s, Variante `BI UPDATE` 24 s statt rund 20 Minuten.
+- Wege: gesammeltes Vorablesen statt rund 20 Einzelzugriffen je Zeile, Parallelrechnung über den neuen RFC-Baustein
+  `Z_KDAUF_PAR_RECHNEN` (Funktionsgruppe `ZKDAUF_PAR`), Kurzfassung der Basispreisliste, eigene Belegfluss-Lesung mit
+  Rückfall auf den SAP-Baustein bei gleich datierten Rechnungen, IDs für `ZPOWERBI_KDAUF` in einem Sammelaufruf.
+- Befunde: Das Original vergibt Fertigungsaufträge bei gleichem Lieferdatum zufällig (jetzt ETENR-Sortierung) und
+  bricht als Hintergrundjob in der ALV-Liste ab (Feldkatalog mit nicht vorhandenem Feld `NETWR`). Korrekturschalter
+  im Selektionsbild (Vorgabe „korrigiert“, „alte Logik“ für Vergleiche). Alles `$TMP`, Original unverändert.
+  Doku `saptasks/zm_offene_kdauf/NOTES.md`.
 
 ## Trafag Projekte ersetzt die Poor Man's Project Management Suite, 2026-10-09 (produktiv 10:18)
 

@@ -199,9 +199,9 @@ PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
             p_ppak  TYPE i DEFAULT 50 NO-DISPLAY,
 * Basispreisliste im Parallelbaustein: K Kurzfassung, P Pruefen gegen das Original, O Original
             p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY,
-* Belegfluss im Parallelbaustein: O Original (Vorgabe), P Pruefen, K eigene Lesung,
-* H eigene Lesung ausser bei gleichem Rechnungsdatum
-            p_flmod TYPE c LENGTH 1 DEFAULT 'O' NO-DISPLAY.
+* Belegfluss im Parallelbaustein: O Original, P Pruefen, K eigene Lesung,
+* H eigene Lesung ausser bei gleichem Rechnungsdatum (Vorgabe, geprueft 2026-10-12)
+            p_flmod TYPE c LENGTH 1 DEFAULT 'H' NO-DISPLAY.
 
 
 
@@ -1551,6 +1551,12 @@ FORM e01_fieldcat_init USING e01_lt_fieldcat TYPE slis_t_fieldcat_alv.
   ls_fieldcat-fieldname = 'PSMNG'.
   ls_fieldcat-no_zero  = 'X'.
   APPEND ls_fieldcat TO e01_lt_fieldcat.
+  " Korrektur 2026-10-12: NETWR gibt es in ZMM_UEB_KDAUF nicht. Im Hintergrund bricht die
+  " ALV-Liste daran mit GETWA_NOT_ASSIGNED (SAPLKKBL, GEN_FIELD_OUT2) ab, noch bevor
+  " ZPOWERBI_KDAUF fortgeschrieben wird.
+  IF p_kalt = abap_false.
+    DELETE e01_lt_fieldcat WHERE fieldname = 'NETWR'.
+  ENDIF.
 ENDFORM.
 " E01_FIELDCAT_INIT
 FORM get_standard_price USING    p_matnr TYPE matnr

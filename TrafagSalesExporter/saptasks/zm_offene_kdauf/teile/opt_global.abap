@@ -80,6 +80,6 @@ PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
             p_ppak  TYPE i DEFAULT 50 NO-DISPLAY,
 * Basispreisliste im Parallelbaustein: K Kurzfassung, P Pruefen gegen das Original, O Original
             p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY,
-* Belegfluss im Parallelbaustein: O Original (Vorgabe), P Pruefen, K eigene Lesung,
-* H eigene Lesung ausser bei gleichem Rechnungsdatum
-            p_flmod TYPE c LENGTH 1 DEFAULT 'O' NO-DISPLAY.
+* Belegfluss im Parallelbaustein: O Original, P Pruefen, K eigene Lesung,
+* H eigene Lesung ausser bei gleichem Rechnungsdatum (Vorgabe, geprueft 2026-10-12)
+            p_flmod TYPE c LENGTH 1 DEFAULT 'H' NO-DISPLAY.
