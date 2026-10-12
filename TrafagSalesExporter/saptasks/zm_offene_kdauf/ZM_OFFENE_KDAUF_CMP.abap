@@ -41,6 +41,9 @@ TYPES: ty_tab TYPE STANDARD TABLE OF zmm_ueb_kdauf WITH DEFAULT KEY,
          n_par_fehl TYPE i,
          n_par_tref TYPE i,
          n_bp_diff  TYPE i,
+         n_fl_menge TYPE i,
+         n_fl_folge TYPE i,
+         n_fl_fm    TYPE i,
        END OF ty_info,
        BEGIN OF ty_feld,
          name TYPE abap_compname,
@@ -74,6 +77,7 @@ SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME.
               p_beisp TYPE i DEFAULT 5,
               p_ptask TYPE i DEFAULT 6,
               p_bpmod TYPE c LENGTH 1 DEFAULT 'K',  " OPT-Basispreisliste: K kurz, P pruefen, O original
+              p_flmod TYPE c LENGTH 1 DEFAULT 'O',  " OPT-Belegfluss: O original, P pruefen, K eigene Lesung
               p_korr  TYPE c LENGTH 1 DEFAULT 'A'. " OPT-Korrekturen: A alt, V korrigiert, B nur Absagegrund
 SELECTION-SCREEN END OF BLOCK b2.
 * Grosse Varianten laufen im Dialog in den TIME_OUT (600 s je Dialogschritt). P_BG plant
@@ -81,7 +85,8 @@ SELECTION-SCREEN END OF BLOCK b2.
 * P_ZEIG zeigt die zuletzt abgelegte Liste im Dialog.
 SELECTION-SCREEN BEGIN OF BLOCK b3 WITH FRAME.
   PARAMETERS: p_bg   AS CHECKBOX,
-              p_zeig AS CHECKBOX.
+              p_zeig AS CHECKBOX,
+              p_upd  AS CHECKBOX. " Programm A als Job MIT Fortschreibung ZPOWERBI_KDAUF (nur T76-Test)
 SELECTION-SCREEN END OF BLOCK b3.
 PARAMETERS: p_job NO-DISPLAY.
 
@@ -91,11 +96,16 @@ DATA: gt_par TYPE STANDARD TABLE OF rsparams,
       gt_a   TYPE ty_tab,
       gt_b   TYPE ty_tab,
       gs_ia  TYPE ty_info,
-      gs_ib  TYPE ty_info.
+      gs_ib  TYPE ty_info,
+      gt_fl_beisp TYPE string_table.
 
 START-OF-SELECTION.
   IF p_zeig = abap_true.
     PERFORM ergebnis_zeigen.
+    RETURN.
+  ENDIF.
+  IF p_upd = abap_true.
+    PERFORM update_job.
     RETURN.
   ENDIF.
   IF p_bg = abap_true.
@@ -111,6 +121,14 @@ START-OF-SELECTION.
   PERFORM lauf USING p_prga CHANGING gt_a gs_ia.
   PERFORM lauf USING p_prgb CHANGING gt_b gs_ib.
   PERFORM laufzeiten_zeigen.
+  IF gt_fl_beisp IS NOT INITIAL.
+    DATA lv_bz TYPE c LENGTH 250.
+    WRITE: / 'Beispiele abweichender Belegfluesse (Pruefmodus):'.
+    LOOP AT gt_fl_beisp INTO lv_bz.
+      WRITE: / lv_bz(200).
+    ENDLOOP.
+    ULINE.
+  ENDIF.
   IF gs_ia-ok = abap_true AND gs_ib-ok = abap_true.
     PERFORM vergleichen.
   ELSE.
@@ -182,6 +200,8 @@ FORM selektion_bauen.
   ls_par-selname = 'P_KABGR'. ls_par-low = boolc( p_korr = 'B' ). APPEND ls_par TO gt_par.
   ls_par-selname = 'P_KALT'.  ls_par-low = boolc( p_korr <> 'V' AND p_korr <> 'B' ). APPEND ls_par TO gt_par.
 
+  DELETE gt_par WHERE selname = 'P_FLMOD'.
+  CLEAR ls_par. ls_par-kind = 'P'. ls_par-selname = 'P_FLMOD'. ls_par-low = p_flmod. APPEND ls_par TO gt_par.
   DELETE gt_par WHERE selname = 'P_BPMOD'.
   CLEAR ls_par. ls_par-kind = 'P'. ls_par-selname = 'P_BPMOD'. ls_par-low = p_bpmod. APPEND ls_par TO gt_par.
 
@@ -224,7 +244,8 @@ FORM lauf USING iv_prog TYPE progname
           CHANGING ct_tab TYPE ty_tab
                    cs_info TYPE ty_info.
   DATA: lv_t0 TYPE timestampl,
-        lv_t1 TYPE timestampl.
+        lv_t1 TYPE timestampl,
+        lt_fb TYPE string_table.
 
   CLEAR: ct_tab, cs_info.
   cs_info-prog = iv_prog.
@@ -253,10 +274,15 @@ FORM lauf USING iv_prog TYPE progname
          n_par_fehl = cs_info-n_par_fehl
          n_par_tref = cs_info-n_par_tref
          n_bp_diff  = cs_info-n_bp_diff
+         n_fl_menge = cs_info-n_fl_menge
+         n_fl_folge = cs_info-n_fl_folge
+         n_fl_fm    = cs_info-n_fl_fm
+         fl_beisp   = lt_fb
     FROM MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   IF sy-subrc = 0.
     cs_info-ok = abap_true.
   ENDIF.
+  APPEND LINES OF lt_fb TO gt_fl_beisp.
   FREE MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
 ENDFORM.
 
@@ -284,6 +310,9 @@ FORM laufzeiten_zeigen.
   WRITE: / 'Parallel: Fehler/ohne Prozess', AT 34(20) gs_ia-n_par_fehl, AT 58(20) gs_ib-n_par_fehl.
   WRITE: / 'Parallel: genutzte Belegflusse', AT 34(20) gs_ia-n_par_tref, AT 58(20) gs_ib-n_par_tref.
   WRITE: / 'Basispreisliste kurz <> Original', AT 34(20) gs_ia-n_bp_diff, AT 58(20) gs_ib-n_bp_diff.
+  WRITE: / 'Fluss kurz: andere Fakturazeilen', AT 34(20) gs_ia-n_fl_menge, AT 58(20) gs_ib-n_fl_menge.
+  WRITE: / 'Fluss kurz: andere Reihenfolge', AT 34(20) gs_ia-n_fl_folge, AT 58(20) gs_ib-n_fl_folge.
+  WRITE: / 'Fluss H: Rueckfall Original', AT 34(20) gs_ia-n_fl_fm, AT 58(20) gs_ib-n_fl_fm.
   WRITE: / 'Belegfluss ohne Fakturazeile', AT 34(20) gs_ia-n_flow_leer, AT 58(20) gs_ib-n_flow_leer.
   ULINE.
 ENDFORM.
@@ -569,4 +598,46 @@ FORM ergebnis_zeigen.
   LOOP AT lt_txt INTO lv_txt.
     WRITE: / lv_txt.
   ENDLOOP.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+* Test der Fortschreibung: Programm A mit derselben Selektion als Job,
+* diesmal mit P_UPDBI = X und ohne P_VGL. Schreibt ZPOWERBI_KDAUF neu.
+FORM update_job.
+  DATA: lv_name TYPE btcjob VALUE 'ZM_OFFENE_KDAUF_UPD',
+        lv_nr   TYPE btcjobcnt,
+        ls_par  TYPE rsparams.
+
+  IF sy-sysid <> 'T76'.
+    WRITE: / 'ABBRUCH: Fortschreibungstest nur in T76'.
+    RETURN.
+  ENDIF.
+  PERFORM selektion_bauen.
+  DELETE gt_par WHERE selname = 'P_UPDBI' OR selname = 'P_VGL'.
+  CLEAR ls_par.
+  ls_par-selname = 'P_UPDBI'.
+  ls_par-kind    = 'P'.
+  ls_par-low     = 'X'.
+  APPEND ls_par TO gt_par.
+
+  CALL FUNCTION 'JOB_OPEN'
+    EXPORTING
+      jobname  = lv_name
+    IMPORTING
+      jobcount = lv_nr
+    EXCEPTIONS
+      OTHERS   = 1.
+  IF sy-subrc <> 0.
+    WRITE: / 'JOB_OPEN fehlgeschlagen', sy-subrc.
+    RETURN.
+  ENDIF.
+  SUBMIT (p_prga) WITH SELECTION-TABLE gt_par VIA JOB lv_name NUMBER lv_nr AND RETURN.
+  CALL FUNCTION 'JOB_CLOSE'
+    EXPORTING
+      jobcount  = lv_nr
+      jobname   = lv_name
+      strtimmed = 'X'
+    EXCEPTIONS
+      OTHERS    = 1.
+  WRITE: / 'UPDATE-JOB EINGEPLANT', lv_name, lv_nr, p_prga, 'sy-subrc', sy-subrc.
 ENDFORM.

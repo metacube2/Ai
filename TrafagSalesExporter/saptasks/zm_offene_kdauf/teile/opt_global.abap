@@ -72,10 +72,14 @@ DATA: gt_o_vbak    TYPE HASHED TABLE OF vbak WITH UNIQUE KEY vbeln,
       gt_o_flow_beleg TYPE HASHED TABLE OF vbeln WITH UNIQUE KEY table_line,
       gt_o_par_fluss  TYPE HASHED TABLE OF ty_o_par_fluss WITH UNIQUE KEY vbeln posnr,
       gt_o_par_bp     TYPE HASHED TABLE OF ty_o_par_bp WITH UNIQUE KEY matnr,
-      gv_par_offen    TYPE i.
+      gv_par_offen    TYPE i,
+      gt_o_fl_beisp   TYPE string_table.
 
 * Parallelrechnung: Anzahl gleichzeitiger Aufgaben (0 = aus) und Paketgroesse
 PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
             p_ppak  TYPE i DEFAULT 50 NO-DISPLAY,
 * Basispreisliste im Parallelbaustein: K Kurzfassung, P Pruefen gegen das Original, O Original
-            p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY.
+            p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY,
+* Belegfluss im Parallelbaustein: O Original (Vorgabe), P Pruefen, K eigene Lesung,
+* H eigene Lesung ausser bei gleichem Rechnungsdatum
+            p_flmod TYPE c LENGTH 1 DEFAULT 'O' NO-DISPLAY.

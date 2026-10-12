@@ -70,6 +70,10 @@ const exportForm = [
   '         n_par_fehl = gv_n_par_fehler',
   '         n_par_tref = gv_n_par_treffer',
   '         n_bp_diff  = gv_n_bp_diff',
+  '         n_fl_menge = gv_n_fl_menge',
+  '         n_fl_folge = gv_n_fl_folge',
+  '         n_fl_fm    = gv_n_fl_fm',
+  '         fl_beisp   = gt_fl_beisp_exp',
   "    TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.",
   '  LEAVE PROGRAM.',
   'ENDFORM.                    "vergleich_export',
@@ -120,6 +124,8 @@ const ref = anwenden([
 pruefe(160, '* 24.03.2011, ERP_EDI, end of insert');
 pruefe(321, 'DELETE ivbep.');
 pruefe(322, 'ENDIF.');
+pruefe(673, '" 2. Daten aus gt_uebauf');
+pruefe(715, 'ENDLOOP.');
 pruefe(274, 'LOOP AT ivbep.');
 pruefe(275, 'SELECT SINGLE * FROM vbak');
 pruefe(291, 'ENDLOOP.');
@@ -139,6 +145,7 @@ const opt = anwenden([
   { von: 190, bis: 196, neu: start },
   { von: 274, bis: 291, neu: teil('opt_ivbep_vbak') },
   { von: 322, bis: 321, neu: teil('opt_korr_delete') },
+  { von: 673, bis: 715, neu: teil('opt_schreiben') },
   { von: 353, bis: 637, neu: teil('opt_fill_uebauf') },
   { von: 870, bis: 908, neu: teil('opt_bereich') },
   { von: 910, bis: 924, neu: teil('opt_erster_bezug') },

@@ -17,6 +17,15 @@ FUNCTION z_kdauf_par_rechnen.
 *   P = Pruefen: beide Fassungen, Rueckgabe des Originals, BP_DIFF zaehlt die
 *       Materialien, deren erste drei Zeilen (Code, Text) abweichen.
 *   sonst Original Z_BASISPREISLISTE.
+* FLMOD (Belegfluss):
+*   K = eigene Lesung FLUSS_KURZ statt RV_ORDER_FLOW_INFORMATION
+*   P = Pruefen: beide, Rueckgabe des Originals; FL_MENGE und FL_FOLGE zaehlen
+*       Positionen mit anderen Fakturazeilen bzw. anderer Reihenfolge
+*   H = Mischform: eigene Lesung; haben zwei Fakturazeilen dasselbe ERDAT,
+*       fuer diese Position doch RV_ORDER_FLOW_INFORMATION (die Reihenfolge
+*       gleich datierter Zeilen haengt am ganzen Baum des Originals).
+*       FL_FM zaehlt diese Rueckfaelle.
+*   sonst Original RV_ORDER_FLOW_INFORMATION.
 * Ein- und Ausgabe als Datencluster in XSTRING, damit die Schnittstelle
 * RFC-faehig bleibt und keine eigenen DDIC-Typen braucht.
   TYPES: BEGIN OF lty_pos,
@@ -51,22 +60,53 @@ FUNCTION z_kdauf_par_rechnen.
         lt_bptab   TYPE STANDARD TABLE OF zzbptab,
         lt_kurz    TYPE STANDARD TABLE OF zzbptab,
         lv_bp_diff TYPE i,
+        lv_flmod   TYPE c LENGTH 1,
+        lt_fl_kurz TYPE TABLE OF vbfa,
+        lv_fl_menge TYPE i,
+        lv_fl_folge TYPE i,
+        lv_fl_vor   TYPE i,
+        lv_fl_fm    TYPE i,
+        lv_gleich   TYPE abap_bool,
+        lt_beisp    TYPE string_table,
+        lv_beisp_n  TYPE i,
         ls_vbco6   TYPE vbco6.
 
-  IMPORT pos = lt_pos matnr = lt_matnr bpmod = lv_bpmod FROM DATA BUFFER iv_in.
+  IMPORT pos = lt_pos matnr = lt_matnr bpmod = lv_bpmod flmod = lv_flmod FROM DATA BUFFER iv_in.
 
   LOOP AT lt_pos INTO DATA(ls_pos).
-    CLEAR lt_vbfa.
-    ls_vbco6 = VALUE vbco6( vbeln = ls_pos-vbeln  posnr = ls_pos-posnr ).
-    CALL FUNCTION 'RV_ORDER_FLOW_INFORMATION'        "#EC CI_USAGE_OK[2198647]
-      EXPORTING
-        comwa         = ls_vbco6
-      TABLES
-        vbfa_tab      = lt_vbfa
-      EXCEPTIONS
-        no_vbfa       = 1
-        no_vbuk_found = 2
-        OTHERS        = 3.
+    CLEAR: lt_vbfa, lt_fl_kurz.
+    IF lv_flmod = 'K' OR lv_flmod = 'P' OR lv_flmod = 'H'.
+      PERFORM fluss_kurz USING ls_pos-vbeln ls_pos-posnr CHANGING lt_fl_kurz.
+    ENDIF.
+    lv_gleich = abap_false.
+    IF lv_flmod = 'H'.
+      PERFORM fluss_gleiches_datum USING lt_fl_kurz CHANGING lv_gleich.
+      IF lv_gleich = abap_true.
+        lv_fl_fm = lv_fl_fm + 1.
+      ENDIF.
+    ENDIF.
+    IF ( lv_flmod <> 'K' AND lv_flmod <> 'H' ) OR lv_gleich = abap_true.
+      ls_vbco6 = VALUE vbco6( vbeln = ls_pos-vbeln  posnr = ls_pos-posnr ).
+      CALL FUNCTION 'RV_ORDER_FLOW_INFORMATION'        "#EC CI_USAGE_OK[2198647]
+        EXPORTING
+          comwa         = ls_vbco6
+        TABLES
+          vbfa_tab      = lt_vbfa
+        EXCEPTIONS
+          no_vbfa       = 1
+          no_vbuk_found = 2
+          OTHERS        = 3.
+    ELSE.
+      lt_vbfa = lt_fl_kurz.
+    ENDIF.
+    IF lv_flmod = 'P'.
+      lv_fl_vor = lv_fl_menge + lv_fl_folge.
+      PERFORM fluss_vergleich USING lt_vbfa lt_fl_kurz CHANGING lv_fl_menge lv_fl_folge.
+      IF lv_fl_menge + lv_fl_folge > lv_fl_vor AND lv_beisp_n < 3.
+        lv_beisp_n = lv_beisp_n + 1.
+        PERFORM fluss_beispiel USING ls_pos-vbeln ls_pos-posnr lt_vbfa lt_fl_kurz CHANGING lt_beisp.
+      ENDIF.
+    ENDIF.
     ls_fluss-vbeln = ls_pos-vbeln.
     ls_fluss-posnr = ls_pos-posnr.
     ls_fluss-vbfa  = lt_vbfa.
@@ -100,5 +140,6 @@ FUNCTION z_kdauf_par_rechnen.
     APPEND ls_bp TO lt_bp.
   ENDLOOP.
 
-  EXPORT fluss = lt_fluss bp = lt_bp bp_diff = lv_bp_diff TO DATA BUFFER ev_out.
+  EXPORT fluss = lt_fluss bp = lt_bp bp_diff = lv_bp_diff
+         fl_menge = lv_fl_menge fl_folge = lv_fl_folge fl_beisp = lt_beisp fl_fm = lv_fl_fm TO DATA BUFFER ev_out.
 ENDFUNCTION.

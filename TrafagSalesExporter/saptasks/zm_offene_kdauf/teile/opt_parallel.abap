@@ -67,7 +67,7 @@ FORM parallel_rechnen.
     lv_i = lv_i + p_ppak.
 
     CLEAR lv_in.
-    EXPORT pos = lt_pak_pos matnr = lt_pak_mat bpmod = p_bpmod TO DATA BUFFER lv_in.
+    EXPORT pos = lt_pak_pos matnr = lt_pak_mat bpmod = p_bpmod flmod = p_flmod TO DATA BUFFER lv_in.
     gv_n_par_pakete = gv_n_par_pakete + 1.
     lv_task = |ZKDAUF{ gv_n_par_pakete }|.
 
@@ -102,6 +102,7 @@ FORM parallel_rechnen.
     WAIT UNTIL gv_par_offen < p_ptask.
   ENDWHILE.
   WAIT UNTIL gv_par_offen = 0.
+  gt_fl_beisp_exp = gt_o_fl_beisp.
 
   GET TIME STAMP FIELD lv_ts1.
   gv_t_par = cl_abap_tstmp=>subtract( tstmp1 = lv_ts1 tstmp2 = lv_ts0 ).
@@ -111,7 +112,11 @@ FORM par_ende USING p_task TYPE clike.
   DATA: lv_out   TYPE xstring,
         lt_fluss TYPE STANDARD TABLE OF ty_o_par_fluss,
         lt_bp    TYPE STANDARD TABLE OF ty_o_par_bp,
-        lv_diff  TYPE i.
+        lv_diff  TYPE i,
+        lv_flm   TYPE i,
+        lv_flf   TYPE i,
+        lv_flfm  TYPE i,
+        lt_beisp TYPE string_table.
 
   RECEIVE RESULTS FROM FUNCTION 'Z_KDAUF_PAR_RECHNEN'
     IMPORTING
@@ -125,8 +130,14 @@ FORM par_ende USING p_task TYPE clike.
     gv_n_par_fehler = gv_n_par_fehler + 1.
     RETURN.
   ENDIF.
-  IMPORT fluss = lt_fluss bp = lt_bp bp_diff = lv_diff FROM DATA BUFFER lv_out.
+  IMPORT fluss = lt_fluss bp = lt_bp bp_diff = lv_diff fl_menge = lv_flm fl_folge = lv_flf fl_beisp = lt_beisp fl_fm = lv_flfm FROM DATA BUFFER lv_out.
+  gv_n_fl_fm = gv_n_fl_fm + lv_flfm.
+  IF lines( gt_o_fl_beisp ) < 200.
+    APPEND LINES OF lt_beisp TO gt_o_fl_beisp.
+  ENDIF.
   gv_n_bp_diff = gv_n_bp_diff + lv_diff.
+  gv_n_fl_menge = gv_n_fl_menge + lv_flm.
+  gv_n_fl_folge = gv_n_fl_folge + lv_flf.
   INSERT LINES OF lt_fluss INTO TABLE gt_o_par_fluss.
   INSERT LINES OF lt_bp INTO TABLE gt_o_par_bp.
 ENDFORM.                    " par_ende

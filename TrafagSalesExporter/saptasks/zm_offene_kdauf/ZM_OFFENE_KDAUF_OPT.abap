@@ -112,7 +112,11 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_n_par_pakete    TYPE i,
       gv_n_par_fehler    TYPE i,
       gv_n_par_treffer   TYPE i,
-      gv_n_bp_diff       TYPE i.
+      gv_n_bp_diff       TYPE i,
+      gv_n_fl_menge      TYPE i,
+      gv_n_fl_folge      TYPE i,
+      gv_n_fl_fm         TYPE i,
+      gt_fl_beisp_exp    TYPE string_table.
 
 * OPT 2026-10-12: Puffer fuer FILL_UEBAUF, gefuellt in PREFETCH_OPT.
 TYPES: BEGIN OF ty_o_vbkd,
@@ -187,13 +191,17 @@ DATA: gt_o_vbak    TYPE HASHED TABLE OF vbak WITH UNIQUE KEY vbeln,
       gt_o_flow_beleg TYPE HASHED TABLE OF vbeln WITH UNIQUE KEY table_line,
       gt_o_par_fluss  TYPE HASHED TABLE OF ty_o_par_fluss WITH UNIQUE KEY vbeln posnr,
       gt_o_par_bp     TYPE HASHED TABLE OF ty_o_par_bp WITH UNIQUE KEY matnr,
-      gv_par_offen    TYPE i.
+      gv_par_offen    TYPE i,
+      gt_o_fl_beisp   TYPE string_table.
 
 * Parallelrechnung: Anzahl gleichzeitiger Aufgaben (0 = aus) und Paketgroesse
 PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
             p_ppak  TYPE i DEFAULT 50 NO-DISPLAY,
 * Basispreisliste im Parallelbaustein: K Kurzfassung, P Pruefen gegen das Original, O Original
-            p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY.
+            p_bpmod TYPE c LENGTH 1 DEFAULT 'K' NO-DISPLAY,
+* Belegfluss im Parallelbaustein: O Original (Vorgabe), P Pruefen, K eigene Lesung,
+* H eigene Lesung ausser bei gleichem Rechnungsdatum
+            p_flmod TYPE c LENGTH 1 DEFAULT 'O' NO-DISPLAY.
 
 
 
@@ -1108,16 +1116,30 @@ FORM write_to_zpowerbi_kdauf.
   ENDIF.
 
   " 2. Daten aus gt_uebauf in die neue Struktur mappen und ID generieren
-  LOOP AT gt_uebauf INTO DATA(ls_uebauf).
-    CLEAR: ls_zpowerbi_kdauf, lv_next_id.
+  " OPT 2026-10-12 (Entscheid Ingo): alle IDs mit einem Sammelaufruf statt je Zeile.
+  " NUMBER_GET_NEXT liefert bei QUANTITY > 1 die LETZTE Nummer des Blocks (in T76
+  " gemessen: 25 angefordert -> 98241..98265). Liefert er weniger als angefordert,
+  " wird der Rest nachgefordert. Die Nummern im Hauptspeicherpuffer werden dabei
+  " uebersprungen; Luecken im Nummernkreis sind zulaessig.
+  DATA: lt_o_ids    TYPE STANDARD TABLE OF zpowerbi_kdauf-id,
+        lv_o_anz    TYPE inri-quantity,
+        lv_o_letzte TYPE n LENGTH 10,
+        lv_o_nr10   TYPE n LENGTH 10,
+        lv_o_wert   TYPE p LENGTH 12,
+        lv_o_soll   TYPE i,
+        lv_o_id     TYPE zpowerbi_kdauf-id.
 
-    " Nächste ID aus Nummernkreis holen
+  lv_o_soll = lines( gt_uebauf ).
+  WHILE lines( lt_o_ids ) < lv_o_soll.
+    lv_o_anz = lv_o_soll - lines( lt_o_ids ).
     CALL FUNCTION 'NUMBER_GET_NEXT'
       EXPORTING
         nr_range_nr = gc_nr_range_kdaufid
         object      = gc_nr_object_kdaufid
+        quantity    = lv_o_anz
       IMPORTING
-        number      = lv_next_id
+        number      = lv_o_letzte
+        quantity    = lv_o_anz
       EXCEPTIONS
         interval_not_found        = 1
         number_range_not_intern   = 2
@@ -1128,13 +1150,24 @@ FORM write_to_zpowerbi_kdauf.
         buffer_overflow           = 7
         OTHERS                    = 8.
 
-    IF sy-subrc <> 0.
+    IF sy-subrc <> 0 OR lv_o_anz <= 0.
       MESSAGE |Fehler beim Abrufen der nächsten ID für ZPOWERBI_KDAUF (Obj: { gc_nr_object_kdaufid } Int: { gc_nr_range_kdaufid }). SY-SUBRC: { sy-subrc }| TYPE 'E'.
-      " Hier entscheiden, ob abgebrochen oder mit Fehler fortgefahren werden soll.
-      " Fürs Erste brechen wir den Loop ab, um nicht unvollständige Daten zu schreiben.
-      ROLLBACK WORK. " Wichtig, um ggf. schon gezogene Nummern zurückzugeben (wenn Pufferung aktiv)
+      ROLLBACK WORK.
       RETURN.
     ENDIF.
+    " Block erste .. letzte; Umweg ueber NUMC 10 wie bisher (NUMBER -> ID)
+    lv_o_wert = lv_o_letzte - lv_o_anz + 1.
+    DO lv_o_anz TIMES.
+      lv_o_nr10 = lv_o_wert.
+      lv_o_id   = lv_o_nr10.
+      APPEND lv_o_id TO lt_o_ids.
+      lv_o_wert = lv_o_wert + 1.
+    ENDDO.
+  ENDWHILE.
+
+  LOOP AT gt_uebauf INTO DATA(ls_uebauf).
+    CLEAR: ls_zpowerbi_kdauf, lv_next_id.
+    READ TABLE lt_o_ids INTO lv_next_id INDEX sy-tabix.
 
     ls_zpowerbi_kdauf-id     = lv_next_id. " NEU: Generierte ID
     ls_zpowerbi_kdauf-ketdat = ls_uebauf-ketdat.
@@ -1692,7 +1725,7 @@ FORM parallel_rechnen.
     lv_i = lv_i + p_ppak.
 
     CLEAR lv_in.
-    EXPORT pos = lt_pak_pos matnr = lt_pak_mat bpmod = p_bpmod TO DATA BUFFER lv_in.
+    EXPORT pos = lt_pak_pos matnr = lt_pak_mat bpmod = p_bpmod flmod = p_flmod TO DATA BUFFER lv_in.
     gv_n_par_pakete = gv_n_par_pakete + 1.
     lv_task = |ZKDAUF{ gv_n_par_pakete }|.
 
@@ -1727,6 +1760,7 @@ FORM parallel_rechnen.
     WAIT UNTIL gv_par_offen < p_ptask.
   ENDWHILE.
   WAIT UNTIL gv_par_offen = 0.
+  gt_fl_beisp_exp = gt_o_fl_beisp.
 
   GET TIME STAMP FIELD lv_ts1.
   gv_t_par = cl_abap_tstmp=>subtract( tstmp1 = lv_ts1 tstmp2 = lv_ts0 ).
@@ -1736,7 +1770,11 @@ FORM par_ende USING p_task TYPE clike.
   DATA: lv_out   TYPE xstring,
         lt_fluss TYPE STANDARD TABLE OF ty_o_par_fluss,
         lt_bp    TYPE STANDARD TABLE OF ty_o_par_bp,
-        lv_diff  TYPE i.
+        lv_diff  TYPE i,
+        lv_flm   TYPE i,
+        lv_flf   TYPE i,
+        lv_flfm  TYPE i,
+        lt_beisp TYPE string_table.
 
   RECEIVE RESULTS FROM FUNCTION 'Z_KDAUF_PAR_RECHNEN'
     IMPORTING
@@ -1750,8 +1788,14 @@ FORM par_ende USING p_task TYPE clike.
     gv_n_par_fehler = gv_n_par_fehler + 1.
     RETURN.
   ENDIF.
-  IMPORT fluss = lt_fluss bp = lt_bp bp_diff = lv_diff FROM DATA BUFFER lv_out.
+  IMPORT fluss = lt_fluss bp = lt_bp bp_diff = lv_diff fl_menge = lv_flm fl_folge = lv_flf fl_beisp = lt_beisp fl_fm = lv_flfm FROM DATA BUFFER lv_out.
+  gv_n_fl_fm = gv_n_fl_fm + lv_flfm.
+  IF lines( gt_o_fl_beisp ) < 200.
+    APPEND LINES OF lt_beisp TO gt_o_fl_beisp.
+  ENDIF.
   gv_n_bp_diff = gv_n_bp_diff + lv_diff.
+  gv_n_fl_menge = gv_n_fl_menge + lv_flm.
+  gv_n_fl_folge = gv_n_fl_folge + lv_flf.
   INSERT LINES OF lt_fluss INTO TABLE gt_o_par_fluss.
   INSERT LINES OF lt_bp INTO TABLE gt_o_par_bp.
 ENDFORM.                    " par_ende
@@ -1786,6 +1830,10 @@ FORM vergleich_export.
          n_par_fehl = gv_n_par_fehler
          n_par_tref = gv_n_par_treffer
          n_bp_diff  = gv_n_bp_diff
+         n_fl_menge = gv_n_fl_menge
+         n_fl_folge = gv_n_fl_folge
+         n_fl_fm    = gv_n_fl_fm
+         fl_beisp   = gt_fl_beisp_exp
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export

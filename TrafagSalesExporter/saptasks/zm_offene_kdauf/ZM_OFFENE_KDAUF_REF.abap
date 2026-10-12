@@ -96,7 +96,11 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_n_par_pakete    TYPE i,
       gv_n_par_fehler    TYPE i,
       gv_n_par_treffer   TYPE i,
-      gv_n_bp_diff       TYPE i.
+      gv_n_bp_diff       TYPE i,
+      gv_n_fl_menge      TYPE i,
+      gv_n_fl_folge      TYPE i,
+      gv_n_fl_fm         TYPE i,
+      gt_fl_beisp_exp    TYPE string_table.
 
 
 
@@ -1215,6 +1219,10 @@ FORM vergleich_export.
          n_par_fehl = gv_n_par_fehler
          n_par_tref = gv_n_par_treffer
          n_bp_diff  = gv_n_bp_diff
+         n_fl_menge = gv_n_fl_menge
+         n_fl_folge = gv_n_fl_folge
+         n_fl_fm    = gv_n_fl_fm
+         fl_beisp   = gt_fl_beisp_exp
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export

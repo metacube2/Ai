@@ -25,4 +25,8 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_n_par_pakete    TYPE i,
       gv_n_par_fehler    TYPE i,
       gv_n_par_treffer   TYPE i,
-      gv_n_bp_diff       TYPE i.
+      gv_n_bp_diff       TYPE i,
+      gv_n_fl_menge      TYPE i,
+      gv_n_fl_folge      TYPE i,
+      gv_n_fl_fm         TYPE i,
+      gt_fl_beisp_exp    TYPE string_table.
