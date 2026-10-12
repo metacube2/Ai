@@ -91,7 +91,11 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_n_mbew_mehrfach TYPE i,
       gv_n_flow_fm       TYPE i,
       gv_n_flow_ohne     TYPE i,
-      gv_n_flow_leer     TYPE i.
+      gv_n_flow_leer     TYPE i,
+      gv_t_par           TYPE p LENGTH 16 DECIMALS 3,
+      gv_n_par_pakete    TYPE i,
+      gv_n_par_fehler    TYPE i,
+      gv_n_par_treffer   TYPE i.
 
 
 
@@ -1205,6 +1209,10 @@ FORM vergleich_export.
          n_flow_fm  = gv_n_flow_fm
          n_flow_ohne = gv_n_flow_ohne
          n_flow_leer = gv_n_flow_leer
+         t_par      = gv_t_par
+         n_par_pak  = gv_n_par_pakete
+         n_par_fehl = gv_n_par_fehler
+         n_par_tref = gv_n_par_treffer
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export

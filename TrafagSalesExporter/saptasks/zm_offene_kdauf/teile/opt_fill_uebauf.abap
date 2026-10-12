@@ -12,6 +12,7 @@ FORM fill_uebauf.
   " Die Schleife selbst ist Anweisung fuer Anweisung die alte; jeder ersetzte Zugriff steht
   " unten als Kommentar "war: ..." daneben.
   PERFORM prefetch_opt.
+  PERFORM parallel_rechnen.
 
   LOOP AT ivbep. "Für jede Position in VBAP kann es mehrere Einteilungsdaten in VBEP geben.
     IF ivbep-edatu LT dat_lo OR

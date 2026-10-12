@@ -31,6 +31,18 @@ TYPES: BEGIN OF ty_o_vbkd,
          gesetzt TYPE abap_bool,
          wert    TYPE zmm_ueb_kdauf-range,
        END OF ty_o_bereich,
+       ty_o_vbfa_tab  TYPE STANDARD TABLE OF vbfa WITH DEFAULT KEY,
+       ty_o_bptab_tab TYPE STANDARD TABLE OF zzbptab WITH DEFAULT KEY,
+       " gleiche Struktur wie in Z_KDAUF_PAR_RECHNEN (IMPORT FROM DATA BUFFER)
+       BEGIN OF ty_o_par_fluss,
+         vbeln TYPE vbeln,
+         posnr TYPE posnr,
+         vbfa  TYPE ty_o_vbfa_tab,
+       END OF ty_o_par_fluss,
+       BEGIN OF ty_o_par_bp,
+         matnr TYPE matnr,
+         bptab TYPE ty_o_bptab_tab,
+       END OF ty_o_par_bp,
        BEGIN OF ty_o_vbak_ok,
          vbeln TYPE vbak-vbeln,
          kunnr TYPE vbak-kunnr,
@@ -57,4 +69,11 @@ DATA: gt_o_vbak    TYPE HASHED TABLE OF vbak WITH UNIQUE KEY vbeln,
       gv_o_flow_vbeln TYPE vbeln,
       gv_o_flow_posnr TYPE posnr,
       gv_o_flow_da    TYPE abap_bool,
-      gt_o_flow_beleg TYPE HASHED TABLE OF vbeln WITH UNIQUE KEY table_line.
+      gt_o_flow_beleg TYPE HASHED TABLE OF vbeln WITH UNIQUE KEY table_line,
+      gt_o_par_fluss  TYPE HASHED TABLE OF ty_o_par_fluss WITH UNIQUE KEY vbeln posnr,
+      gt_o_par_bp     TYPE HASHED TABLE OF ty_o_par_bp WITH UNIQUE KEY matnr,
+      gv_par_offen    TYPE i.
+
+* Parallelrechnung: Anzahl gleichzeitiger Aufgaben (0 = aus) und Paketgroesse
+PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
+            p_ppak  TYPE i DEFAULT 50 NO-DISPLAY.

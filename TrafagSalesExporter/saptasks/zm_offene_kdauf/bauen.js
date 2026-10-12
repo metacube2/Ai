@@ -65,6 +65,10 @@ const exportForm = [
   '         n_flow_fm  = gv_n_flow_fm',
   '         n_flow_ohne = gv_n_flow_ohne',
   '         n_flow_leer = gv_n_flow_leer',
+  '         t_par      = gv_t_par',
+  '         n_par_pak  = gv_n_par_pakete',
+  '         n_par_fehl = gv_n_par_fehler',
+  '         n_par_tref = gv_n_par_treffer',
   "    TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.",
   '  LEAVE PROGRAM.',
   'ENDFORM.                    "vergleich_export',
@@ -132,7 +136,7 @@ const opt = anwenden([
   { von: 353, bis: 637, neu: teil('opt_fill_uebauf') },
   { von: 870, bis: 908, neu: teil('opt_bereich') },
   { von: 910, bis: 924, neu: teil('opt_erster_bezug') },
-  { von: 1058, bis: 1133, neu: [...teil('opt_preis_fkdat'), ...exportForm] },
+  { von: 1058, bis: 1133, neu: [...teil('opt_preis_fkdat'), ...teil('opt_parallel'), ...exportForm] },
 ]);
 
 fs.writeFileSync('ZM_OFFENE_KDAUF_REF.abap', ref);

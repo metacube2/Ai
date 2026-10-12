@@ -22,6 +22,17 @@ ENDFORM.                    "bereich
 * Bisheriger Inhalt von BEREICH, unveraendert bis auf das Ziel der Zuweisung.
 FORM bereich_rechnen CHANGING cs_bereich TYPE ty_o_bereich.
   REFRESH bptab.
+  " Typ 87: das Original ruft Z_BASISPREISLISTE und verwirft das Ergebnis gleich danach
+  " ("kein Range"). Der Baustein setzt alle seine Werte bei jedem Aufruf neu (geprueft in
+  " LZZLO1F01), der Aufruf kann also entfallen.
+  IF mara-zztyp(2) = '87'.
+    EXIT.
+  ENDIF.
+  " parallel vorab gerechnet (PARALLEL_RECHNEN), sonst wie bisher selbst aufrufen
+  READ TABLE gt_o_par_bp INTO DATA(ls_o_par_bp) WITH TABLE KEY matnr = vbap-matnr.
+  IF sy-subrc = 0.
+    bptab[] = ls_o_par_bp-bptab.
+  ELSE.
   CALL FUNCTION 'Z_BASISPREISLISTE'
     EXPORTING
       i_matnr   = vbap-matnr
@@ -32,6 +43,7 @@ FORM bereich_rechnen CHANGING cs_bereich TYPE ty_o_bereich.
       no_object = 1
       no_typcd  = 2
       OTHERS    = 3.
+  ENDIF.
 
   IF mara-zztyp(2) = '87'.             "kein Range !!!
     EXIT.

@@ -20,4 +20,8 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_n_mbew_mehrfach TYPE i,
       gv_n_flow_fm       TYPE i,
       gv_n_flow_ohne     TYPE i,
-      gv_n_flow_leer     TYPE i.
+      gv_n_flow_leer     TYPE i,
+      gv_t_par           TYPE p LENGTH 16 DECIMALS 3,
+      gv_n_par_pakete    TYPE i,
+      gv_n_par_fehler    TYPE i,
+      gv_n_par_treffer   TYPE i.

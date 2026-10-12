@@ -91,7 +91,11 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_n_mbew_mehrfach TYPE i,
       gv_n_flow_fm       TYPE i,
       gv_n_flow_ohne     TYPE i,
-      gv_n_flow_leer     TYPE i.
+      gv_n_flow_leer     TYPE i,
+      gv_t_par           TYPE p LENGTH 16 DECIMALS 3,
+      gv_n_par_pakete    TYPE i,
+      gv_n_par_fehler    TYPE i,
+      gv_n_par_treffer   TYPE i.
 
 * OPT 2026-10-12: Puffer fuer FILL_UEBAUF, gefuellt in PREFETCH_OPT.
 TYPES: BEGIN OF ty_o_vbkd,
@@ -125,6 +129,18 @@ TYPES: BEGIN OF ty_o_vbkd,
          gesetzt TYPE abap_bool,
          wert    TYPE zmm_ueb_kdauf-range,
        END OF ty_o_bereich,
+       ty_o_vbfa_tab  TYPE STANDARD TABLE OF vbfa WITH DEFAULT KEY,
+       ty_o_bptab_tab TYPE STANDARD TABLE OF zzbptab WITH DEFAULT KEY,
+       " gleiche Struktur wie in Z_KDAUF_PAR_RECHNEN (IMPORT FROM DATA BUFFER)
+       BEGIN OF ty_o_par_fluss,
+         vbeln TYPE vbeln,
+         posnr TYPE posnr,
+         vbfa  TYPE ty_o_vbfa_tab,
+       END OF ty_o_par_fluss,
+       BEGIN OF ty_o_par_bp,
+         matnr TYPE matnr,
+         bptab TYPE ty_o_bptab_tab,
+       END OF ty_o_par_bp,
        BEGIN OF ty_o_vbak_ok,
          vbeln TYPE vbak-vbeln,
          kunnr TYPE vbak-kunnr,
@@ -151,7 +167,14 @@ DATA: gt_o_vbak    TYPE HASHED TABLE OF vbak WITH UNIQUE KEY vbeln,
       gv_o_flow_vbeln TYPE vbeln,
       gv_o_flow_posnr TYPE posnr,
       gv_o_flow_da    TYPE abap_bool,
-      gt_o_flow_beleg TYPE HASHED TABLE OF vbeln WITH UNIQUE KEY table_line.
+      gt_o_flow_beleg TYPE HASHED TABLE OF vbeln WITH UNIQUE KEY table_line,
+      gt_o_par_fluss  TYPE HASHED TABLE OF ty_o_par_fluss WITH UNIQUE KEY vbeln posnr,
+      gt_o_par_bp     TYPE HASHED TABLE OF ty_o_par_bp WITH UNIQUE KEY matnr,
+      gv_par_offen    TYPE i.
+
+* Parallelrechnung: Anzahl gleichzeitiger Aufgaben (0 = aus) und Paketgroesse
+PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
+            p_ppak  TYPE i DEFAULT 50 NO-DISPLAY.
 
 
 
@@ -484,6 +507,7 @@ FORM fill_uebauf.
   " Die Schleife selbst ist Anweisung fuer Anweisung die alte; jeder ersetzte Zugriff steht
   " unten als Kommentar "war: ..." daneben.
   PERFORM prefetch_opt.
+  PERFORM parallel_rechnen.
 
   LOOP AT ivbep. "Für jede Position in VBAP kann es mehrere Einteilungsdaten in VBEP geben.
     IF ivbep-edatu LT dat_lo OR
@@ -1265,6 +1289,17 @@ ENDFORM.                    "bereich
 * Bisheriger Inhalt von BEREICH, unveraendert bis auf das Ziel der Zuweisung.
 FORM bereich_rechnen CHANGING cs_bereich TYPE ty_o_bereich.
   REFRESH bptab.
+  " Typ 87: das Original ruft Z_BASISPREISLISTE und verwirft das Ergebnis gleich danach
+  " ("kein Range"). Der Baustein setzt alle seine Werte bei jedem Aufruf neu (geprueft in
+  " LZZLO1F01), der Aufruf kann also entfallen.
+  IF mara-zztyp(2) = '87'.
+    EXIT.
+  ENDIF.
+  " parallel vorab gerechnet (PARALLEL_RECHNEN), sonst wie bisher selbst aufrufen
+  READ TABLE gt_o_par_bp INTO DATA(ls_o_par_bp) WITH TABLE KEY matnr = vbap-matnr.
+  IF sy-subrc = 0.
+    bptab[] = ls_o_par_bp-bptab.
+  ELSE.
   CALL FUNCTION 'Z_BASISPREISLISTE'
     EXPORTING
       i_matnr   = vbap-matnr
@@ -1275,6 +1310,7 @@ FORM bereich_rechnen CHANGING cs_bereich TYPE ty_o_bereich.
       no_object = 1
       no_typcd  = 2
       OTHERS    = 3.
+  ENDIF.
 
   IF mara-zztyp(2) = '87'.             "kein Range !!!
     EXIT.
@@ -1495,6 +1531,10 @@ FORM fill_fkdat USING p_vbeln TYPE vbeln
   IF sy-subrc <> 0.
     CLEAR lt_vbfa.
     gv_n_flow_ohne = gv_n_flow_ohne + 1.
+  ELSEIF line_exists( gt_o_par_fluss[ vbeln = p_vbeln posnr = p_posnr ] ).
+    " parallel vorab gerechnet (PARALLEL_RECHNEN), unveraenderte Rueckgabe des Bausteins
+    lt_vbfa = gt_o_par_fluss[ vbeln = p_vbeln posnr = p_posnr ]-vbfa.
+    gv_n_par_treffer = gv_n_par_treffer + 1.
   ELSEIF gv_o_flow_da = abap_true AND gv_o_flow_vbeln = p_vbeln AND gv_o_flow_posnr = p_posnr.
     lt_vbfa = gt_o_flow_vbfa.
   ELSE.
@@ -1546,6 +1586,136 @@ FORM fill_fkdat USING p_vbeln TYPE vbeln
 ENDFORM.
 
 *&---------------------------------------------------------------------*
+*&      Form  PARALLEL_RECHNEN
+*&---------------------------------------------------------------------*
+* OPT 2026-10-12: RV_ORDER_FLOW_INFORMATION (je Position mit Belegfluss)
+* und Z_BASISPREISLISTE (je Material) laufen paketweise parallel ueber
+* Z_KDAUF_PAR_RECHNEN (STARTING NEW TASK, Gruppe DEFAULT). Die Ergebnisse
+* sind die unveraenderten Rueckgaben der Bausteine; FILL_FKDAT und BEREICH
+* verwenden sie statt eines eigenen Aufrufs. Fehlt ein Ergebnis (kein
+* Prozess frei, Abbruch), rufen sie den Baustein wie bisher selbst auf.
+*----------------------------------------------------------------------*
+FORM parallel_rechnen.
+  TYPES: BEGIN OF lty_pos,
+           vbeln TYPE vbeln,
+           posnr TYPE posnr,
+         END OF lty_pos.
+  DATA: lt_pos     TYPE STANDARD TABLE OF lty_pos,
+        lt_matnr   TYPE STANDARD TABLE OF matnr,
+        lt_pak_pos TYPE STANDARD TABLE OF lty_pos,
+        lt_pak_mat TYPE STANDARD TABLE OF matnr,
+        lv_in      TYPE xstring,
+        lv_task    TYPE c LENGTH 32,
+        lv_i       TYPE i,
+        lv_pos_n   TYPE i,
+        lv_mat_n   TYPE i,
+        lv_versuch TYPE i,
+        lv_ts0     TYPE timestampl,
+        lv_ts1     TYPE timestampl.
+
+  CLEAR: gt_o_par_fluss, gt_o_par_bp, gv_par_offen, gv_n_par_pakete, gv_n_par_fehler.
+  CHECK p_ptask > 0 AND p_ppak > 0.
+  GET TIME STAMP FIELD lv_ts0.
+
+  " Positionen genau so, wie FILL_FKDAT sie braucht: jede Position aus IVBEP,
+  " deren Beleg ueberhaupt einen Belegfluss hat
+  LOOP AT ivbep[] INTO DATA(ls_ep).
+    READ TABLE gt_o_flow_beleg WITH TABLE KEY table_line = ls_ep-vbeln TRANSPORTING NO FIELDS.
+    IF sy-subrc = 0.
+      APPEND VALUE #( vbeln = ls_ep-vbeln posnr = ls_ep-posnr ) TO lt_pos.
+    ENDIF.
+  ENDLOOP.
+  SORT lt_pos BY vbeln posnr.
+  DELETE ADJACENT DUPLICATES FROM lt_pos COMPARING vbeln posnr.
+
+  " Materialien genau so, wie BEREICH sie braucht: VBAP-MATNR der gepufferten Positionen
+  LOOP AT gt_o_vbap INTO DATA(ls_vbap) WHERE matnr IS NOT INITIAL.
+    READ TABLE gt_o_mara INTO DATA(ls_mara) WITH TABLE KEY matnr = ls_vbap-matnr.
+    IF sy-subrc = 0 AND ls_mara-zztyp(2) = '87'.
+      CONTINUE.            " BEREICH braucht fuer Typ 87 kein Ergebnis
+    ENDIF.
+    APPEND ls_vbap-matnr TO lt_matnr.
+  ENDLOOP.
+  SORT lt_matnr.
+  DELETE ADJACENT DUPLICATES FROM lt_matnr.
+
+  lv_pos_n = lines( lt_pos ).
+  lv_mat_n = lines( lt_matnr ).
+  lv_i = 0.
+  WHILE lv_i < lv_pos_n OR lv_i < lv_mat_n.
+    CLEAR: lt_pak_pos, lt_pak_mat.
+    IF lv_i < lv_pos_n.
+      APPEND LINES OF lt_pos FROM lv_i + 1 TO lv_i + p_ppak TO lt_pak_pos.
+    ENDIF.
+    IF lv_i < lv_mat_n.
+      APPEND LINES OF lt_matnr FROM lv_i + 1 TO lv_i + p_ppak TO lt_pak_mat.
+    ENDIF.
+    lv_i = lv_i + p_ppak.
+
+    CLEAR lv_in.
+    EXPORT pos = lt_pak_pos matnr = lt_pak_mat TO DATA BUFFER lv_in.
+    gv_n_par_pakete = gv_n_par_pakete + 1.
+    lv_task = |ZKDAUF{ gv_n_par_pakete }|.
+
+    " Kein freier Prozess: kurz warten, bis eine laufende Aufgabe fertig ist, und erneut
+    " versuchen. Klappt es gar nicht, bleibt das Paket ohne Ergebnis und wird spaeter in
+    " der Schleife wie bisher einzeln gerechnet.
+    lv_versuch = 0.
+    DO.
+      CALL FUNCTION 'Z_KDAUF_PAR_RECHNEN'
+        STARTING NEW TASK lv_task
+        DESTINATION IN GROUP DEFAULT
+        PERFORMING par_ende ON END OF TASK
+        EXPORTING
+          iv_in                 = lv_in
+        EXCEPTIONS
+          resource_failure      = 1
+          communication_failure = 2
+          system_failure        = 3
+          OTHERS                = 4.
+      IF sy-subrc = 0.
+        gv_par_offen = gv_par_offen + 1.
+        EXIT.
+      ENDIF.
+      lv_versuch = lv_versuch + 1.
+      IF sy-subrc <> 1 OR lv_versuch > 30.
+        gv_n_par_fehler = gv_n_par_fehler + 1.
+        EXIT.
+      ENDIF.
+      WAIT UNTIL gv_par_offen = 0 UP TO 1 SECONDS.
+    ENDDO.
+
+    WAIT UNTIL gv_par_offen < p_ptask.
+  ENDWHILE.
+  WAIT UNTIL gv_par_offen = 0.
+
+  GET TIME STAMP FIELD lv_ts1.
+  gv_t_par = cl_abap_tstmp=>subtract( tstmp1 = lv_ts1 tstmp2 = lv_ts0 ).
+ENDFORM.                    " parallel_rechnen
+
+FORM par_ende USING p_task TYPE clike.
+  DATA: lv_out   TYPE xstring,
+        lt_fluss TYPE STANDARD TABLE OF ty_o_par_fluss,
+        lt_bp    TYPE STANDARD TABLE OF ty_o_par_bp.
+
+  RECEIVE RESULTS FROM FUNCTION 'Z_KDAUF_PAR_RECHNEN'
+    IMPORTING
+      ev_out                = lv_out
+    EXCEPTIONS
+      communication_failure = 1
+      system_failure        = 2
+      OTHERS                = 3.
+  gv_par_offen = gv_par_offen - 1.
+  IF sy-subrc <> 0 OR lv_out IS INITIAL.
+    gv_n_par_fehler = gv_n_par_fehler + 1.
+    RETURN.
+  ENDIF.
+  IMPORT fluss = lt_fluss bp = lt_bp FROM DATA BUFFER lv_out.
+  INSERT LINES OF lt_fluss INTO TABLE gt_o_par_fluss.
+  INSERT LINES OF lt_bp INTO TABLE gt_o_par_bp.
+ENDFORM.                    " par_ende
+
+*&---------------------------------------------------------------------*
 *&      Form  VERGLEICH_EXPORT
 *&---------------------------------------------------------------------*
 * Nur im Vergleichslauf (P_VGL): Ergebnis und Laufzeiten ins ABAP-Memory,
@@ -1570,6 +1740,10 @@ FORM vergleich_export.
          n_flow_fm  = gv_n_flow_fm
          n_flow_ohne = gv_n_flow_ohne
          n_flow_leer = gv_n_flow_leer
+         t_par      = gv_t_par
+         n_par_pak  = gv_n_par_pakete
+         n_par_fehl = gv_n_par_fehler
+         n_par_tref = gv_n_par_treffer
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export

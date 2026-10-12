@@ -48,6 +48,10 @@ FORM fill_fkdat USING p_vbeln TYPE vbeln
   IF sy-subrc <> 0.
     CLEAR lt_vbfa.
     gv_n_flow_ohne = gv_n_flow_ohne + 1.
+  ELSEIF line_exists( gt_o_par_fluss[ vbeln = p_vbeln posnr = p_posnr ] ).
+    " parallel vorab gerechnet (PARALLEL_RECHNEN), unveraenderte Rueckgabe des Bausteins
+    lt_vbfa = gt_o_par_fluss[ vbeln = p_vbeln posnr = p_posnr ]-vbfa.
+    gv_n_par_treffer = gv_n_par_treffer + 1.
   ELSEIF gv_o_flow_da = abap_true AND gv_o_flow_vbeln = p_vbeln AND gv_o_flow_posnr = p_posnr.
     lt_vbfa = gt_o_flow_vbfa.
   ELSE.

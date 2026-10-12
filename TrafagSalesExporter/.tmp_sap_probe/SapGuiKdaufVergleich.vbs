@@ -3,7 +3,7 @@ Option Explicit
 ' Angelegt 2026-10-12. Ergebnis danach mit Get-SapList.ps1 -Transaktion SE38 lesen.
 ' "-" laesst ein Feld leer. Datum als TT.MM.JJJJ.
 '
-' Aufruf: SapGuiKdaufVergleich.vbs <SitzungsIndex> <Variante|-> <Werk|-> <DatumVon|-> <DatumBis|-> [ProgA|-] [ProgB|-] [bg|zeig]
+' Aufruf: SapGuiKdaufVergleich.vbs <SitzungsIndex> <Variante|-> <Werk|-> <DatumVon|-> <DatumBis|-> [ProgA|-] [ProgB|-] [bg|zeig|-] [Parallel]
 
 Dim a, app, s, arg
 Set a = GetObject("SAPGUI")
@@ -41,6 +41,7 @@ If WScript.Arguments.Count > 7 Then
   If WScript.Arguments(7) = "bg" Then s.FindById("wnd[0]/usr/chkP_BG").Selected = True
   If WScript.Arguments(7) = "zeig" Then s.FindById("wnd[0]/usr/chkP_ZEIG").Selected = True
 End If
+If WScript.Arguments.Count > 8 Then Setze "P_PTASK", WScript.Arguments(8)
 WScript.Echo "START=" & Now
 ' F8 kehrt erst zurueck, wenn der Server die Liste geliefert hat
 s.FindById("wnd[0]").SendVKey 8
