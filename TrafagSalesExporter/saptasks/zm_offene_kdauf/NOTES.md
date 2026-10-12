@@ -28,6 +28,10 @@ TRDIR, vermutlich ein Rest eines früheren Versuchs. Nicht angefasst.
 | 01.04.–30.06.2026, Werk 1100, OPT gegen REF | 4'392 | **identisch** | 59 s | 158 s |
 | Variante `KDAUF_INGO` (fest 29.–31.12.2017) | 4 | identisch | 1 s | 0.3 s |
 | Variante `BI UPDATE` im Dialog | | TIME_OUT nach 600 s im Belegfluss-Baustein; seither als Hintergrundjob | | |
+| Variante `BI UPDATE` (fest 01.01.–31.07.2025), Job, OPT ohne Parallelrechnung | 15'820 | **identisch** | 711 s | 1'277 s |
+| Variante `BI UPDATE`, Job, OPT **parallel, 10 Aufgaben** (319 Pakete, 0 Ausfälle) | 15'820 | **identisch** | **51 s** | 1'129 s |
+| 01.04.–30.06.2026, OPT **parallel, 6 Aufgaben**, gegen REF | 4'392 | **identisch** | 13 s | 189 s |
+| dieselbe Selektion, OPT **parallel, 10 Aufgaben**, Typ 87 ohne Basispreisliste | 4'392 | **identisch** | 7.9 s | 191 s |
 
 Wo die Zeit im Original liegt (Q2 2026, 158 s): Belegfluss `RV_ORDER_FLOW_INFORMATION` je
 Einteilung 51 s, `Z_BASISPREISLISTE` je Einteilung 36 s, übrige Einzelzugriffe rund 70 s.
@@ -40,13 +44,43 @@ unveränderten Originals können sich Positionen mit mehreren Fertigungsaufträg
 Lieferdatum in der Zuordnung der Aufträge unterscheiden, weil das Original sie zufällig
 vergibt.
 
+## Parallelrechnung (seit 2026-10-12)
+
+Neue Funktionsgruppe `ZKDAUF_PAR` mit dem RFC-fähigen Baustein `Z_KDAUF_PAR_RECHNEN`
+(`$TMP`, Quelltext `Z_KDAUF_PAR_RECHNEN.abap`). Er bekommt ein Paket aus Positionen und
+Materialien als Datencluster (XSTRING), ruft für jede Position `RV_ORDER_FLOW_INFORMATION` und
+für jedes Material `Z_BASISPREISLISTE` unverändert auf und gibt die Ergebnisse unverändert
+zurück. OPT (`PARALLEL_RECHNEN`) verteilt Pakete zu 50 mit `STARTING NEW TASK ... DESTINATION
+IN GROUP DEFAULT` auf höchstens `P_PTASK` Aufgaben (NO-DISPLAY, Vorgabe 6). `FILL_FKDAT` und
+`BEREICH` nehmen das vorab gerechnete Ergebnis; fehlt eines (kein Prozess frei, Abbruch),
+rufen sie den Baustein wie bisher selbst auf.
+
+Warum das exakt bleibt: Beide Bausteine liefern je Eingabe dasselbe, unabhängig davon, was
+vorher in derselben Sitzung lief. Für `Z_BASISPREISLISTE` ist das im Quelltext geprüft
+(`LZZLO1F01`: `KEY`, `ZTYP_KOPF`, `ZWBPTAB`, Längen und `MARA` werden bei jedem Aufruf neu
+gesetzt); für beide belegt es der Vergleich.
+
+Für Material mit Typcode `87` entfällt `Z_BASISPREISLISTE` ganz: Das Original verwirft das
+Ergebnis dort sofort („kein Range“).
+
+Nicht gemacht, weil der Gewinn klein und das Risiko groß ist: eine schärfere Sperre für den
+Belegfluss über das ganze VBFA-Netz. Von 4'593 Ergebnissen haben 3'131 keine Fakturazeile,
+davon 2'148 schon durch die bestehende Sperre (Beleg ganz ohne VBFA) gespart.
+
+**P76:** Die Parallelrechnung belegt Dialogprozesse von P76. T76 hat rund 20; vor dem
+Zurückkopieren in P76 die Zahl der Dialogprozesse prüfen und `P_PTASK` passend setzen
+(Vorgabe 6, gemessen auch 10).
+
 ## Entscheide für Ingo
 
 1. **ETENR als letztes Sortierfeld übernehmen** (empfohlen). Macht das Ergebnis
    reproduzierbar; ändert nur die bisher zufällige Zuordnung bei gleichem Lieferdatum.
 2. Eigenheiten des Originals beheben oder lassen (siehe unten Punkt 7), jeweils einzeln.
-3. Nächster Tempo-Schritt nur mit neuem Objekt: Belegfluss parallel über einen
-   RFC-fähigen Wrapper-Baustein. Das bleibt exakt, braucht aber einen Transport.
+3. Transport: Für P76 braucht es die Funktionsgruppe `ZKDAUF_PAR` mit `Z_KDAUF_PAR_RECHNEN` in
+   einem Paket und Transportauftrag (heute `$TMP`), dazu `ZM_OFFENE_KDAUF` mit dem OPT-Quelltext.
+   Mit `P_PTASK = 0` rechnet OPT ohne den Baustein wie vor der Parallelisierung (etwa 1/3 der
+   Laufzeit). Wie OPT reagiert, wenn der Baustein im System fehlt, ist nicht getestet; deshalb
+   beides zusammen transportieren.
 4. `P_UPDBI` (Fortschreibung `ZPOWERBI_KDAUF`) ist nicht gemessen: `NUMBER_GET_NEXT` je
    Zeile. Ein Aufruf mit `QUANTITY` wäre schneller, ändert aber die ID-Werte.
 5. Zurückkopieren: OPT enthält den Vergleichsschalter `P_VGL` (NO-DISPLAY) und Zeitmessung.

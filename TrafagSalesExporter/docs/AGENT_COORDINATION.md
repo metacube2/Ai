@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | SAP T76: Report `ZM_OFFENE_KDAUF` beschleunigen, als Kopie in neuem `$TMP`-Report, Ergebnisvergleich alt gegen neu; Original bleibt unveraendert (Auftrag Ingo 2026-10-12) | SAP T76: `ZM_OFFENE_KDAUF` (nur lesen), neue Kopie; Repo: `saptasks/zm_offene_kdauf/` | in Arbeit 2026-10-12; REF/OPT/CMP in T76 aktiv ($TMP), OPT gegen REF identisch (Maerz, Q2 2026), Variante BI UPDATE laeuft als Hintergrundjob |
+| Claude | SAP T76: Report `ZM_OFFENE_KDAUF` beschleunigen, als Kopie in neuem `$TMP`-Report, Ergebnisvergleich alt gegen neu; Original bleibt unveraendert (Auftrag Ingo 2026-10-12) | SAP T76: `ZM_OFFENE_KDAUF` (nur lesen), neue Kopie; Repo: `saptasks/zm_offene_kdauf/` | in Arbeit 2026-10-12; REF/OPT/CMP in T76 aktiv ($TMP), OPT gegen REF identisch (Maerz, Q2 2026, BI UPDATE 15820 Zeilen); OPT parallel ueber neuen RFC-Baustein Z_KDAUF_PAR_RECHNEN (FG ZKDAUF_PAR, $TMP): BI UPDATE 51 s statt 1129 s. Wartet auf Entscheide Ingo (ETENR, Transport, Zurueckkopieren) |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
