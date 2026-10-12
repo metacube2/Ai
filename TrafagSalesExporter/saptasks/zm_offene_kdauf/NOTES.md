@@ -1,6 +1,6 @@
 # ZM_OFFENE_KDAUF beschleunigen
 
-Stand: 2026-10-12 11:40, in T76 fertig und verglichen; Transport nach P76 und Zurückkopieren offen
+Stand: 2026-10-12 11:55, in T76 eingesetzt: `ZM_OFFENE_KDAUF` (ZC23) hat den neuen Quelltext, Transport `T76K912728` bereit; Freigabe und Import nach P76 offen (Ingo)
 
 Auftrag Ingo 2026-10-12: Der Report liefert richtige Zahlen, ist aber sehr langsam. Frühere
 schnelle Fassungen (verschiedene Claude-Versionen) hatten am Ende falsche Zahlen. Gearbeitet
@@ -92,12 +92,33 @@ ETENR als letztes Sortierfeld (Entscheid Ingo: ja): `SORT ivbep BY vbeln posnr e
 Das Original ordnet Einteilungen mit gleichem Lieferdatum zufällig und vergibt dabei die
 Fertigungsaufträge zufällig; REF gegen REF zeigte das (6 Zeilen).
 
+## Transport nach P76 (vorbereitet 2026-10-12 11:50)
+
+Auftrag **`T76K912728`** „ZM_OFFENE_KDAUF schnell (ZC23, ZKDAUF_PAR)“, Aufgabe `T76K912729`, beide offen:
+
+| Objekt | Inhalt |
+| --- | --- |
+| `R3TR FUGR ZKDAUF_PAR` | Funktionsgruppe mit `Z_KDAUF_PAR_RECHNEN` (RFC), Paket von `$TMP` nach `ZPP1` umgehängt (RSWBO052) |
+| `LIMU REPS ZM_OFFENE_KDAUF` | Quelltext aus `ZM_OFFENE_KDAUF_OPT.abap`, in T76 aktiv |
+| `LIMU ADIR ... SUSH Z_KDAUF_PAR_RECHNEN` | von SAP angelegte Berechtigungsvorschlagswerte des RFC-Bausteins |
+
+Gegenprobe nach dem Einsetzen: `ZM_OFFENE_KDAUF` gegen REF, 01.04.–30.06.2026, „alte Logik“: identisch,
+4.5 s statt 173 s. Rücksicherung: `ZM_OFFENE_KDAUF_original.abap` im Repo, P76-Stand von Ingo auf GitHub,
+`ZM_OFFENE_KDAUF_REF` in T76. `ZC23` ruft weiter `ZM_OFFENE_KDAUF` (TSTC), Varianten, Layouts und Jobs
+bleiben am Programmnamen.
+
+Für P76 zu beachten:
+
+* **Berechtigung `S_RFC`** für Funktionsgruppe `ZKDAUF_PAR` in den Rollen der ZC23-Benutzer. Fehlt sie,
+  rechnet das Programm richtig, aber ohne Parallelrechnung (Rückfall auf Einzelaufrufe, etwa 1/3 statt
+  1/35 der alten Laufzeit).
+* **Andere Werte für Erfasser und Erstelldatum** (Vorgabe „korrigiert“); `ZPOWERBI_KDAUF` enthält sie nicht.
+* **Job `BI UPDATE`** in P76 in SM37 ansehen: Mit dem alten Programm bricht er im Hintergrund in der
+  ALV-Liste ab (in T76 belegt).
+
 ## Offen für P76
 
-1. **Transport**: Funktionsgruppe `ZKDAUF_PAR` (mit `Z_KDAUF_PAR_RECHNEN` und
-   `LZKDAUF_PARTOP`) in ein Paket und einen Transportauftrag, dazu `ZM_OFFENE_KDAUF` mit dem
-   Quelltext aus `ZM_OFFENE_KDAUF_OPT.abap`. Beides zusammen transportieren; ohne Baustein
-   ist das Verhalten nicht getestet (mit `P_PTASK = 0` rechnet OPT ohne ihn).
+1. **Transport `T76K912728` freigeben und nach P76 importieren** (Ingo). *Erledigt in T76 2026-10-12 11:50:* Paket und Auftrag vorbereitet, Quelltext eingesetzt.
 2. **Dialogprozesse in P76** prüfen und `P_PTASK` danach setzen (T76 hat rund 20, Vorgabe 6).
 3. **Textelemente**: Der Korrekturblock braucht keine (Texte im Code). `P_VGL`, `P_PTASK`,
    `P_PPAK`, `P_BPMOD`, `P_FLMOD` sind NO-DISPLAY.

@@ -1617,4 +1617,6 @@ Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.
 * **Ganze Liste lesen**: `SapGuiListeAlleSeiten.vbs <Sitzung> [MaxSeiten]` blaettert mit Bild ab; `Get-SapList.ps1` sieht nur den sichtbaren Ausschnitt.
 * **Dialoggrenze 600 s** (`rdisp/scheduler/prio_high/max_runtime`): grosse Laeufe als Job. Jobstatus per `TBTCO` immer mit JOBNAME, JOBCOUNT und STRTDATE abfragen.
 * **Kurzdumps lesen**: `/nST22`, `wnd[0]/usr/btnTODAY` druecken (`SapGuiDruecken.vbs`), Liste mit `SapGuiGridLesen.vbs ST22 <GridId>`, Zeile oeffnen mit `SapGuiGridZeileOeffnen.vbs`, Langtext mit `SapGuiListeAlleSeiten.vbs`.
+* **Paket eines `$TMP`-Objekts aendern**: SE38 `RSWBO052` (`SapGuiReportSelektion.vbs`), Objekt ankreuzen und ausfuehren (`SapGuiTadirFugr.vbs` fuer Funktionsgruppen), Cursor auf die Zeile und "Objektkatalog aendern" (`SapGuiListeCursorTaste.vbs ... tbar[1]/btn[19]`), Paket setzen (`SapGuiPaketAendern.vbs`), neuen Auftrag anlegen (`SapGuiAuftragNeu.vbs`).
+* `SapGuiSetReportSourceAuftrag.vbs` liest die Quelldatei seit 2026-10-12 als UTF-8 (vorher ANSI: Umlaute aus UTF-8-Dateien waeren verstuemmelt worden).
 * `BP_JOBLOG_READ` und `RSPO_RETURN_ABAP_SPOOLJOB` sind nicht RFC-faehig; Joblisten deshalb vom Job selbst ablegen lassen (Beispiel: CMP schreibt nach `INDX(ZK)`).

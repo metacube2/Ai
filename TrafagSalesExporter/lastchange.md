@@ -2,7 +2,7 @@
 
 Stand: 2026-10-12
 
-## SAP T76: ZM_OFFENE_KDAUF (offene Kundenaufträge) schnell und geprüft, 2026-10-12 (nur T76, Transport offen)
+## SAP T76: ZM_OFFENE_KDAUF (offene Kundenaufträge) schnell und geprüft, 2026-10-12 (in T76 eingesetzt, Transport T76K912728 bereit)
 
 - Schnelle Kopie `ZM_OFFENE_KDAUF_OPT` liefert dieselbe Liste wie das Original, Feld für Feld gegen eine Referenzkopie
   verglichen: April bis Juni 2026 5 s statt 187 s, Variante `BI UPDATE` 24 s statt rund 20 Minuten.

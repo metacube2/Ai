@@ -19,7 +19,16 @@ If s.Info.SystemName <> "T76" Then
 End If
 
 Set fso = CreateObject("Scripting.FileSystemObject")
-quelle = fso.OpenTextFile(datei, 1).ReadAll
+' UTF-8 lesen (seit 2026-10-12): ANSI wuerde Umlaute aus UTF-8-Dateien verstuemmeln
+Dim strom
+Set strom = CreateObject("ADODB.Stream")
+strom.Type = 2
+strom.Charset = "utf-8"
+strom.Open
+strom.LoadFromFile datei
+quelle = strom.ReadText
+strom.Close
+WScript.Echo "QUELLE_ZEICHEN=" & Len(quelle)
 
 Sub Auftragsabfrage()
   Dim w
