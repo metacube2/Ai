@@ -1,0 +1,129 @@
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+ Kurztext
+     Zeitlimit Åberschritten
+ Was ist passiert?
+     Das Programm "SAPLV05C" hat die maximal zulÑssige Laufzeit ohne
+     Unterbrechung Åberschritten und wurde deshalb abgebrochen.
+ Fehleranalyse
+     Nach Ablauf der maximalen Laufzeit wird das Programm abgebrochen.
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+     Damit soll verhindert werden, dass ein Workprozess z.B. durch
+     - Endlosschleifen (DO, WHILE, ...),
+     - lang dauernde Datenbankzugriffe
+     unnîtig lange blockiert wird.
+     Die maximale Laufzeit eines Programms wird vom Profilparameter
+     "rdisp/scheduler/prio_high/max_runtime" begrenzt.
+     Die aktuelle Einstellung ist 600 Sekunden.
+     Falls die aktuelle Einstellung vom Wert des genannten Parameter
+     abweicht, hat die Anwendung die maximale Laufzeit selbst gesetzt.
+     Nach öberschreiten der maximalen Laufzeit wird das laufende Programm
+     abgebrochen.
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+ Auslîsestelle des Laufzeitfehlers
+     (Programm)                              SAPLV05C
+     (Include)                               LV05CF01
+     (Zeile)                                 2,319
+     (Modultyp)                              (FORM)
+     (Modulname)                             TRANSPORTFLUSS_EINFUEGEN
+ Ausschnitt Quelltext
+ Zeile Quelltext
+  2289     select * from vtfa appending table xvtfa
+  2290                          where tknum = transportbeleg
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+  2291        %_hints oracle 'RULE'
+  2292                db2 'USE VALUES FOR OPTIMIZATION'            "n564019
+  2293                db2 '&SUBSTITUTE VALUES&'                    "n564019
+  2294 * Inserted line of Note 938279
+  2295                db6  '<IXSCAN TABLE=''VTFA'' SAP_INDEX=''0''/>'.
+  2296     sort xvtfa by mandt tknum vbelv posnv vbtyp_v vbeln posnn vbtyp_n.
+  2297   endif.
+  2298
+  2299 endform.                               " TRANSPORTFLUSS_lesen
+  2300
+  2301 *&---------------------------------------------------------------------*
+  2302 *&      Form  TRANSPORTFLUSS_LESEN
+  2303 *&---------------------------------------------------------------------*
+  2304 *       text                                                           *
+  2305 *----------------------------------------------------------------------*
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+  2306 *  -->  p1        text
+  2307 *  <--  p2        text
+  2308 *----------------------------------------------------------------------*
+  2309 form transportfluss_einfuegen.
+  2310 * v_n_673782
+  2311   data:
+  2312     l_erdat_t   like vbfa-erdat,
+  2313     l_erzet_t   like vbfa-erzet,
+  2314     l_lfpos     like vtfa-posnv,   "number of delivery item
+  2315     l_tabix_pre like sy-tabix,
+  2316     l_vbfa_pre  like vbfa.         "predecessor in document flow
+  2317 * ^_n_673782
+  2318
+ >>>>>   describe table xvtfa lines sy-tfill.
+  2320   check sy-tfill > 0.
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+  2321
+  2322
+  2323   loop at vbfa_tab where vbtyp_n = if_sd_doc_category=>shipment.
+  2324     vbfa_insert = sy-tabix.
+  2325     vbfa = vbfa_tab.
+  2326     add 1 to vbfa_tab-stufe.
+  2327     l_erdat_t = vbfa_tab-erdat.
+  2328     l_erzet_t = vbfa_tab-erzet.
+  2329
+  2330     if vbco6-vbeln = vbfa-vbeln and
+  2331        belegtyp    = vbfa-vbtyp_n.
+  2332       clear vbfa_tab-matnr.            "kein Vorgaenger
+  2333       subtract 1 from vbfa_tab-stufe.
+  2334     endif.
+  2335
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+  2336 * only in case entrance document is not transport document
+  2337     if vbco6-vbeln <> vbfa-vbeln.
+  2338 * v_n_673782
+ Aktive Aufrufe/Ereignisse
+ Nr.   Art          Programm                            Include                             Zeile
+       Name
+     5 FORM         SAPLV05C                            LV05CF01                             2319
+       TRANSPORTFLUSS_EINFUEGEN
+     4 FUNCTION     SAPLV05C                            LV05CU01                              332
+       RV_ORDER_FLOW_INFORMATION
+Kategorie              ABAP Programmierfehler
+Laufzeitfehler         TIME_OUT
+ABAP: Programm         SAPLV05C
+Anwendungskomponente   SD-SLS-GF
+Datum und Zeit         12.10.2026 09:07:51 (CET)
+     3 FORM         ZM_OFFENE_KDAUF_OPT                 ZM_OFFENE_KDAUF_OPT                  1503
+       FILL_FKDAT
+     2 FORM         ZM_OFFENE_KDAUF_OPT                 ZM_OFFENE_KDAUF_OPT                   692
+       FILL_UEBAUF
+     1 EVENT        ZM_OFFENE_KDAUF_OPT                 ZM_OFFENE_KDAUF_OPT                   285
+       START-OF-SELECTION

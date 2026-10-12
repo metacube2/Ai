@@ -64,6 +64,7 @@ const exportForm = [
   '         n_mbew     = gv_n_mbew_mehrfach',
   '         n_flow_fm  = gv_n_flow_fm',
   '         n_flow_ohne = gv_n_flow_ohne',
+  '         n_flow_leer = gv_n_flow_leer',
   "    TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.",
   '  LEAVE PROGRAM.',
   'ENDFORM.                    "vergleich_export',

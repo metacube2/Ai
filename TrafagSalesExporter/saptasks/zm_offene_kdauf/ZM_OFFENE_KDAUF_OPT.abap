@@ -90,7 +90,8 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_t_conv     TYPE p LENGTH 16 DECIMALS 3,
       gv_n_mbew_mehrfach TYPE i,
       gv_n_flow_fm       TYPE i,
-      gv_n_flow_ohne     TYPE i.
+      gv_n_flow_ohne     TYPE i,
+      gv_n_flow_leer     TYPE i.
 
 * OPT 2026-10-12: Puffer fuer FILL_UEBAUF, gefuellt in PREFETCH_OPT.
 TYPES: BEGIN OF ty_o_vbkd,
@@ -1519,6 +1520,9 @@ FORM fill_fkdat USING p_vbeln TYPE vbeln
   SORT lt_vbfa BY erdat ASCENDING.
   " Vorfiltern der Tabelle lt_vbfa für Einträge mit vbtyp_n = 'M'
   DELETE lt_vbfa WHERE vbtyp_n <> 'M'.
+  IF lt_vbfa IS INITIAL.
+    gv_n_flow_leer = gv_n_flow_leer + 1.
+  ENDIF.
   " Wenn nur eine Auslieferung stattgefunden hat kann diese Rechnung das erste mal die volle Menge enthalten.
   LOOP AT lt_vbfa INTO DATA(ls_vbkr_ext).
     CLEAR lv_cum_qty.
@@ -1565,6 +1569,7 @@ FORM vergleich_export.
          n_mbew     = gv_n_mbew_mehrfach
          n_flow_fm  = gv_n_flow_fm
          n_flow_ohne = gv_n_flow_ohne
+         n_flow_leer = gv_n_flow_leer
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export

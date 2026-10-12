@@ -57,6 +57,10 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-12 | ZM_OFFENE_KDAUF: Das Original lieferte gegen sich selbst unterschiedliche Ergebnisse (REF gegen REF: 6 Zeilen mit vertauschten Fertigungsauftraegen), weil `SORT ivbep BY vbeln posnr edatu` Einteilungen mit gleichem Datum zufaellig ordnet. Fruehere schnelle Fassungen wurden vermutlich an diesem Rauschen als „falsch“ gemessen | Vor jedem Vergleich alt gegen neu zuerst alt gegen alt laufen lassen; erst wenn das identisch ist, beweist ein Unterschied etwas | `saptasks/zm_offene_kdauf/NOTES.md` |
+| 2026-10-12 | Wiederholt: Nach `SapGuiReportAnlegenLokal.vbs` lief gleich `SapGuiSetReportSource.vbs`, dessen `/nSE38` brach die Anlage von ZM_OFFENE_KDAUF_CMP ab (Fall Z_PEG_TEST vom 2026-10-07) | Direkt nach der Anlage `SapGuiLokalesObjekt.vbs`, erst dann den Quelltext setzen | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` Nachtrag 2026-10-07 |
+| 2026-10-12 | `RS_VARIANT_CONTENTS` ohne `MOVE_OR_WRITE = 'M'` gab Datumswerte im Anzeigeformat zurueck; der per `SUBMIT ... WITH SELECTION-TABLE` gestartete Report blieb mit „Geben Sie das Datum ... ein“ auf seinem Selektionsbild stehen | Varianteninhalt fuer SUBMIT immer mit `move_or_write = 'M'` lesen | `saptasks/zm_offene_kdauf/ZM_OFFENE_KDAUF_CMP.abap` |
+| 2026-10-12 | Ein Vergleich mit der Variante `BI UPDATE` brach im Dialog nach genau 600 s mit TIME_OUT ab (`rdisp/scheduler/prio_high/max_runtime`) | Grosse Laeufe als Hintergrundjob starten; CMP hat dafuer `P_BG`, das Ergebnis zeigt `P_ZEIG` | `saptasks/zm_offene_kdauf/NOTES.md` |
 | 2026-09-10 | `Sessions=0` kostete zwei Stunden, Ursache lag am Server | Erst Server und Scripting-Engine pruefen, nicht den Arbeitsplatz | `saptasks/SAP_ARBEITSWEISE...` 0 |
 | 2026-09-10 | Der vorgeschlagene Transportauftrag war der eines anderen, abzunehmenden Vorhabens | `KO008-TRKORR` nie blind uebernehmen; eigenen Auftrag anlegen (`btn[8]`) oder ausdruecklich setzen | SAP-Arbeitsweise, Abschnitt Transport |
 | 2026-09-10 | Im Dialog „Inaktive Objekte“ standen fremde, unfertige Objekte | Nur ueber Namensabgleich markieren, nie ueber Zeilennummern | SAP-Arbeitsweise 3 |
@@ -75,6 +79,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-12 | ABAP: `WRITE ls-wert(40)` auf einen String, der kuerzer als 40 Zeichen war, brach mit STRING_LENGTH_TOO_LARGE ab | Teilzugriffe `(n)` nur auf Felder fester Laenge; fuer Ausgaben `TYPE c LENGTH n` statt `string` | `saptasks/zm_offene_kdauf/ZM_OFFENE_KDAUF_CMP.abap` |
 | 2026-10-12 | Ein Bash-Befehl begann mit einem uebrig gebliebenen `cat > datei` ohne Heredoc; er wartete auf Eingabe und lief 2 Minuten in den Timeout | Jedes `cat >` braucht ein Heredoc oder eine Quelle; Befehle vor dem Absenden auf solche Reste pruefen | diese Zeile |
 | 2026-09-30 | ClosedXML verweigerte eine temporaere Datei mit Endung `.tmp` | Temporaere Excel-Dateien `<name>.tmp.xlsx` nennen | `SapGatewayHrKpiReader.WriteWorkbook` |
 | 2026-09-30 | `node -e` mit Backslashes oder einfachen Anfuehrungszeichen brach im Bash-Quoting | Groessere Ersetzungen als Skriptdatei im Scratchpad schreiben und mit `node <datei>` ausfuehren. **Am 2026-10-01 dreimal wiederholt** (Apostroph in `1'796`, Regex mit Backslash): auch kleine `node -e` mit Anfuehrungszeichen, Apostroph oder Backslash gehoeren in eine Datei | diese Datei |

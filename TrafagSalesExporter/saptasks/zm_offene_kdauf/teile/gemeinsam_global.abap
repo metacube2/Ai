@@ -19,4 +19,5 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_t_conv     TYPE p LENGTH 16 DECIMALS 3,
       gv_n_mbew_mehrfach TYPE i,
       gv_n_flow_fm       TYPE i,
-      gv_n_flow_ohne     TYPE i.
+      gv_n_flow_ohne     TYPE i,
+      gv_n_flow_leer     TYPE i.

@@ -90,7 +90,8 @@ DATA: gv_ts_start  TYPE timestampl,
       gv_t_conv     TYPE p LENGTH 16 DECIMALS 3,
       gv_n_mbew_mehrfach TYPE i,
       gv_n_flow_fm       TYPE i,
-      gv_n_flow_ohne     TYPE i.
+      gv_n_flow_ohne     TYPE i,
+      gv_n_flow_leer     TYPE i.
 
 
 
@@ -1203,6 +1204,7 @@ FORM vergleich_export.
          n_mbew     = gv_n_mbew_mehrfach
          n_flow_fm  = gv_n_flow_fm
          n_flow_ohne = gv_n_flow_ohne
+         n_flow_leer = gv_n_flow_leer
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export

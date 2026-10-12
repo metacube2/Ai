@@ -17,6 +17,7 @@ REPORT zm_offene_kdauf_cmp LINE-SIZE 255 NO STANDARD PAGE HEADING.
 *----------------------------------------------------------------------*
 
 TYPES: ty_tab TYPE STANDARD TABLE OF zmm_ueb_kdauf WITH DEFAULT KEY,
+       ty_par_tab TYPE STANDARD TABLE OF rsparams WITH DEFAULT KEY,
        BEGIN OF ty_info,
          prog       TYPE progname,
          ok         TYPE abap_bool,
@@ -34,6 +35,7 @@ TYPES: ty_tab TYPE STANDARD TABLE OF zmm_ueb_kdauf WITH DEFAULT KEY,
          n_mbew     TYPE i,
          n_flow_fm  TYPE i,
          n_flow_ohne TYPE i,
+         n_flow_leer TYPE i,
        END OF ty_info,
        BEGIN OF ty_feld,
          name TYPE abap_compname,
@@ -66,6 +68,16 @@ SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME.
               p_prgb  TYPE progname DEFAULT 'ZM_OFFENE_KDAUF_REF',
               p_beisp TYPE i DEFAULT 5.
 SELECTION-SCREEN END OF BLOCK b2.
+* Grosse Varianten laufen im Dialog in den TIME_OUT (600 s je Dialogschritt). P_BG plant
+* denselben Vergleich als Hintergrundjob ein; der Job legt seine Liste in INDX(ZK) ab, und
+* P_ZEIG zeigt die zuletzt abgelegte Liste im Dialog.
+SELECTION-SCREEN BEGIN OF BLOCK b3 WITH FRAME.
+  PARAMETERS: p_bg   AS CHECKBOX,
+              p_zeig AS CHECKBOX.
+SELECTION-SCREEN END OF BLOCK b3.
+PARAMETERS: p_job NO-DISPLAY.
+
+TABLES: indx.
 
 DATA: gt_par TYPE STANDARD TABLE OF rsparams,
       gt_a   TYPE ty_tab,
@@ -74,6 +86,18 @@ DATA: gt_par TYPE STANDARD TABLE OF rsparams,
       gs_ib  TYPE ty_info.
 
 START-OF-SELECTION.
+  IF p_zeig = abap_true.
+    PERFORM ergebnis_zeigen.
+    RETURN.
+  ENDIF.
+  IF p_bg = abap_true.
+    PERFORM job_einplanen.
+    RETURN.
+  ENDIF.
+  IF p_job = abap_true.
+    PERFORM job_lauf.
+    RETURN.
+  ENDIF.
   PERFORM selektion_bauen.
   PERFORM selektion_zeigen.
   PERFORM lauf USING p_prga CHANGING gt_a gs_ia.
@@ -96,6 +120,7 @@ FORM selektion_bauen.
       EXPORTING
         report               = 'ZM_OFFENE_KDAUF'
         variant              = p_var
+        move_or_write        = 'M'
       TABLES
         valutab              = gt_par
       EXCEPTIONS
@@ -195,6 +220,7 @@ FORM lauf USING iv_prog TYPE progname
          n_mbew     = cs_info-n_mbew
          n_flow_fm  = cs_info-n_flow_fm
          n_flow_ohne = cs_info-n_flow_ohne
+         n_flow_leer = cs_info-n_flow_leer
     FROM MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   IF sy-subrc = 0.
     cs_info-ok = abap_true.
@@ -221,6 +247,7 @@ FORM laufzeiten_zeigen.
   WRITE: / 'MBEW mehrfach je Material', AT 34(20) gs_ia-n_mbew, AT 58(20) gs_ib-n_mbew.
   WRITE: / 'Belegfluss-Aufrufe', AT 34(20) gs_ia-n_flow_fm, AT 58(20) gs_ib-n_flow_fm.
   WRITE: / 'Belegfluss gespart (kein VBFA)', AT 34(20) gs_ia-n_flow_ohne, AT 58(20) gs_ib-n_flow_ohne.
+  WRITE: / 'Belegfluss ohne Fakturazeile', AT 34(20) gs_ia-n_flow_leer, AT 58(20) gs_ib-n_flow_leer.
   ULINE.
 ENDFORM.
 
@@ -407,5 +434,102 @@ FORM doppelte USING it_tab TYPE ty_tab CHANGING cv_anz TYPE i.
     ENDIF.
     ls_vor = <z>.
     lv_erst = abap_false.
+  ENDLOOP.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+* Hintergrund: eigene Selektion ohne P_BG/P_ZEIG, mit P_JOB = X
+FORM eigene_selektion CHANGING ct_self TYPE ty_par_tab.
+  CALL FUNCTION 'RS_REFRESH_FROM_SELECTOPTIONS'
+    EXPORTING
+      curr_report     = sy-repid
+    TABLES
+      selection_table = ct_self
+    EXCEPTIONS
+      OTHERS          = 1.
+  DELETE ct_self WHERE selname = 'P_BG' OR selname = 'P_ZEIG' OR selname = 'P_JOB'.
+ENDFORM.
+
+FORM job_einplanen.
+  DATA: lt_self  TYPE ty_par_tab,
+        ls_par   TYPE rsparams,
+        lv_name  TYPE btcjob VALUE 'ZM_OFFENE_KDAUF_CMP',
+        lv_nr    TYPE btcjobcnt.
+
+  PERFORM eigene_selektion CHANGING lt_self.
+  ls_par-selname = 'P_JOB'.
+  ls_par-kind    = 'P'.
+  ls_par-low     = 'X'.
+  APPEND ls_par TO lt_self.
+
+  CALL FUNCTION 'JOB_OPEN'
+    EXPORTING
+      jobname  = lv_name
+    IMPORTING
+      jobcount = lv_nr
+    EXCEPTIONS
+      OTHERS   = 1.
+  IF sy-subrc <> 0.
+    WRITE: / 'JOB_OPEN fehlgeschlagen', sy-subrc.
+    RETURN.
+  ENDIF.
+  SUBMIT zm_offene_kdauf_cmp WITH SELECTION-TABLE lt_self
+         VIA JOB lv_name NUMBER lv_nr AND RETURN.
+  CALL FUNCTION 'JOB_CLOSE'
+    EXPORTING
+      jobcount  = lv_nr
+      jobname   = lv_name
+      strtimmed = 'X'
+    EXCEPTIONS
+      OTHERS    = 1.
+  WRITE: / 'JOB EINGEPLANT', lv_name, lv_nr, 'sy-subrc', sy-subrc.
+ENDFORM.
+
+FORM job_lauf.
+  DATA: lt_self  TYPE ty_par_tab,
+        lt_liste TYPE STANDARD TABLE OF abaplist,
+        lt_txt   TYPE STANDARD TABLE OF char255,
+        lv_txt   TYPE char255,
+        lv_stand TYPE timestamp.
+
+  PERFORM eigene_selektion CHANGING lt_self.
+  SUBMIT zm_offene_kdauf_cmp WITH SELECTION-TABLE lt_self
+         EXPORTING LIST TO MEMORY AND RETURN.
+  CALL FUNCTION 'LIST_FROM_MEMORY'
+    TABLES
+      listobject = lt_liste
+    EXCEPTIONS
+      OTHERS     = 1.
+  IF sy-subrc = 0.
+    CALL FUNCTION 'LIST_TO_ASCI'
+      TABLES
+        listasci   = lt_txt
+        listobject = lt_liste
+      EXCEPTIONS
+        OTHERS     = 1.
+  ENDIF.
+  IF lt_txt IS INITIAL.
+    APPEND 'KEINE LISTE vom Vergleichslauf erhalten' TO lt_txt.
+  ENDIF.
+  GET TIME STAMP FIELD lv_stand.
+  EXPORT liste = lt_txt stand = lv_stand TO DATABASE indx(zk) ID 'ZM_OFFENE_KDAUF_CMP'.
+  COMMIT WORK.
+  LOOP AT lt_txt INTO lv_txt.
+    WRITE: / lv_txt.
+  ENDLOOP.
+ENDFORM.
+
+FORM ergebnis_zeigen.
+  DATA: lt_txt   TYPE STANDARD TABLE OF char255,
+        lv_txt   TYPE char255,
+        lv_stand TYPE timestamp.
+  IMPORT liste = lt_txt stand = lv_stand FROM DATABASE indx(zk) ID 'ZM_OFFENE_KDAUF_CMP'.
+  IF sy-subrc <> 0.
+    WRITE: / 'KEIN ABGELEGTES ERGEBNIS'.
+    RETURN.
+  ENDIF.
+  WRITE: / 'ABGELEGT', lv_stand TIME ZONE sy-zonlo.
+  LOOP AT lt_txt INTO lv_txt.
+    WRITE: / lv_txt.
   ENDLOOP.
 ENDFORM.

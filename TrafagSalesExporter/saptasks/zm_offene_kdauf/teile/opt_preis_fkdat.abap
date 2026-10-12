@@ -73,6 +73,9 @@ FORM fill_fkdat USING p_vbeln TYPE vbeln
   SORT lt_vbfa BY erdat ASCENDING.
   " Vorfiltern der Tabelle lt_vbfa für Einträge mit vbtyp_n = 'M'
   DELETE lt_vbfa WHERE vbtyp_n <> 'M'.
+  IF lt_vbfa IS INITIAL.
+    gv_n_flow_leer = gv_n_flow_leer + 1.
+  ENDIF.
   " Wenn nur eine Auslieferung stattgefunden hat kann diese Rechnung das erste mal die volle Menge enthalten.
   LOOP AT lt_vbfa INTO DATA(ls_vbkr_ext).
     CLEAR lv_cum_qty.
