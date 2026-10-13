@@ -12,7 +12,7 @@
         var state = index < Current ? "pm-hp-done" : index == Current ? "pm-hp-now" : "pm-hp-next";
         <button type="button" class="pm-hp-phase @state" title="@PmLabels.PhaseHelp(UiText, phase)" @onclick="() => OnSelect.InvokeAsync(phase)">
             <span class="pm-hp-bar"></span>
-            @if (!Compact || index == Current)
+            @if (!Compact)
             {
                 <span class="pm-hp-label">@PmLabels.Phase(UiText, phase)</span>
             }
