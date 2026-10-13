@@ -207,8 +207,12 @@ public sealed class PurchasingDashboardSnapshotCacheTests
     {
         var filter = PurchasingDashboardFilter.Default(new DateTime(2026, 9, 28, 15, 30, 0));
 
-        Assert.Equal(new DateTime(2020, 1, 1), filter.FromDate);
+        Assert.Equal(new DateTime(2026, 1, 1), filter.FromDate);
         Assert.Equal(new DateTime(2026, 9, 28), filter.ToDate);
+
+        var nextYear = PurchasingDashboardFilter.Default(new DateTime(2027, 2, 3));
+        Assert.Equal(new DateTime(2027, 1, 1), nextYear.FromDate);
+        Assert.Equal(new DateTime(2027, 2, 3), nextYear.ToDate);
         Assert.True(filter.ExcludeDeletedItems);
         Assert.True(filter.OrdersOnly);
         Assert.True(filter.ExcludeEndDelivered);

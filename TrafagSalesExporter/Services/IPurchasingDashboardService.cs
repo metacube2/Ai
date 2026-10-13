@@ -23,12 +23,13 @@ public sealed record PurchasingDashboardFilter(
     public string Label => $"{FromDate:yyyy-MM-dd} bis {ToDate:yyyy-MM-dd}";
 
     /// <summary>
-    /// Die Ansicht, mit der `/einkauf` ohne Filteraenderung oeffnet: 01.01.2020 bis heute, alle
+    /// Die Ansicht, mit der `/einkauf` ohne Filteraenderung oeffnet: 01.01. des laufenden Jahres
+    /// bis heute (bis 2026-10-13: 01.01.2020 bis heute), alle
     /// Schalter auf Standard. Muss genau dem entsprechen, was die Seite beim ersten Aufruf baut
     /// (`BuildDefaultFromMonth`/`BuildDefaultToMonth` in PurchasingDashboard.razor), sonst waermt
     /// der Hintergrund einen Schluessel vor, den niemand abfragt.
     /// </summary>
-    public static PurchasingDashboardFilter Default(DateTime today) => new(new DateTime(2020, 1, 1), today.Date);
+    public static PurchasingDashboardFilter Default(DateTime today) => new(new DateTime(today.Year, 1, 1), today.Date);
 }
 
 public sealed class PurchasingDashboardLiveState

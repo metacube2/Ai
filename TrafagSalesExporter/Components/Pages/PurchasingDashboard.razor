@@ -2128,17 +2128,16 @@
     private static string FormatChf(decimal value) => $"CHF {value:N0}";
     // Standardansicht. Muss zu PurchasingDashboardFilter.Default passen: genau diesen Filter
     // waermt TimerBackgroundService vor, damit der erste Aufruf nicht rechnen muss.
+    // Wunsch Ingo 2026-10-13: immer Januar des laufenden Kalenderjahres bis heute (vorher 2020-01).
     private static string BuildDefaultFromMonth()
-    {
-        return "2020-01";
-    }
+        => PurchasingDashboardFilter.Default(DateTime.Today).FromDate.ToString("yyyy-MM", CultureInfo.InvariantCulture);
 
     private static string BuildDefaultToMonth()
         => DateTime.Today.ToString("yyyy-MM", CultureInfo.InvariantCulture);
 
     private PurchasingDashboardFilter BuildCurrentFilter()
     {
-        var from = ParseMonth(_filterFromMonth, new DateTime(DateTime.Today.Year - 2, 1, 1));
+        var from = ParseMonth(_filterFromMonth, new DateTime(DateTime.Today.Year, 1, 1));
         var toMonth = ParseMonth(_filterToMonth, DateTime.Today);
         var to = new DateTime(toMonth.Year, toMonth.Month, DateTime.DaysInMonth(toMonth.Year, toMonth.Month));
         var minFrom = new DateTime(2020, 1, 1);
@@ -2150,9 +2149,6 @@
 
         if (to > DateTime.Today)
             to = DateTime.Today;
-
-        if (to.Year > 2026)
-            to = new DateTime(2026, 12, 31);
 
         return new PurchasingDashboardFilter(from, to, _excludeDeletedItems);
     }
@@ -2190,8 +2186,6 @@
             parsed = new DateTime(2020, 1, 1);
         if (parsed > DateTime.Today)
             parsed = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        if (parsed.Year > 2026)
-            parsed = new DateTime(2026, 12, 1);
         return parsed.ToString("yyyy-MM", CultureInfo.InvariantCulture);
     }
 
@@ -2208,7 +2202,8 @@
 
     private async Task SetPurchasingRangeAsync()
     {
-        _filterFromMonth = BuildDefaultFromMonth();
+        // Knopf "2020 bis heute": seit 2026-10-13 nicht mehr der Standard, sondern die Mehrjahressicht.
+        _filterFromMonth = "2020-01";
         _filterToMonth = BuildDefaultToMonth();
         await ApplyPurchasingFilterAsync();
     }
