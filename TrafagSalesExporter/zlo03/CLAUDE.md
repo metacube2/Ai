@@ -184,6 +184,12 @@ Nicht vergleichbar aufgebaut:
 Stücklistenverwendung, ein- oder mehrstufig. Ohne die vier Werte wird gegen
 eine geratene Einstellung verglichen. Muss erfragt werden.
 
+### F) Ergebnisse haengen von der Tageszeit ab (seit 2026-10-13 erfasst)
+
+Ann-Katrin meldet seit Maerz 2026 unterschiedlich grosse Ergebnisse zu verschiedenen Uhrzeiten
+am Nachmittag. Die Batch-Jobs enden laut SM37 um etwa 06:32 und erklaeren das nicht. Ungeloest,
+Kandidaten und naechste Schritte in `TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md`.
+
 ---
 
 ## Verifikationsplan

@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-09-29
+Stand: 2026-10-13
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
 Aufgabe gilt `router.md` -> Unterrouter -> Detaildatei. Hier steht jede Markdown-Datei des
@@ -167,6 +167,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `zlo03/ZM_LZCODE20_OPT_fixes.md` | ZLO03-Codefixes |
 | `zlo03/CLAUDE.md` | bereichsspezifische Arbeitsregeln ZLO03 |
 | `zlo03/EXKLUSIV_LOGIK_2026-10-08.md` | ZLO03: Bedeutung von „Exklusiv“, Fall B63491 |
+| `zlo03/TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md` | ZLO03: Ergebnisse je nach Tageszeit, Jobliste, Kandidaten |
 
 ## Projekt und Koordination
 

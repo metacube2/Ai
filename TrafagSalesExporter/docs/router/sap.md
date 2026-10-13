@@ -60,6 +60,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | ZZPRDAT: Anschreiben zur Abnahme (Vorlage fuer den Outlook-Entwurf) | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` |
 | ZZPRDAT-Arbeitsstand und vollstaendiger Analyseverlauf | `saptasks/zzprdat-kontext.md` |
 | ZLO03: Bedeutung „Exklusiv“ (Top-Down relativ zur Selektion), TSTC ZLO03 -> `Z_ZLO03_TURBO2` | `zlo03/EXKLUSIV_LOGIK_2026-10-08.md` |
+| ZLO03: Ergebnisse je nach Tageszeit verschieden (Meldung Ann-Katrin, ungeloest) | `zlo03/TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |
 
 ## Systeme
