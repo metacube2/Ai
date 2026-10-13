@@ -2,7 +2,7 @@
 
 Stand: 2026-10-13
 
-## Trafag Projekte: HERMES-Angaben, Portfolio und Demoprojekt, 2026-10-13 (`7e20f93`)
+## Trafag Projekte: HERMES-Angaben, Portfolio und Demoprojekt, 2026-10-13 (`7e20f93`, produktiv 09:34; Fix `47990ad` produktiv 09:47)
 
 - Je Projekt ein HERMES-Block in den Einstellungen: Aufwand mit Skala und Stufenvorschlag (unter 5 / 5 bis 40 /
   über 40 Personentage), Stufe, Ampel, Auftraggeber, Anwendervertreter, Stand in einem Satz, nächster Entscheid,

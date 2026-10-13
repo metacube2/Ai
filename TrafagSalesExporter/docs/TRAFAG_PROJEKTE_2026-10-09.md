@@ -95,6 +95,7 @@ deren Quelle), dazu ein Demoprojekt zum Anschauen.
 
 - 2026-10-09: gebaut (`df4fa60`, Fix `9d819ae`), **produktiv seit 10:18** (Stand `e879bab`).
 - CSS-Korrektur (Formularbeschriftung, umbrechende Zeilen) **produktiv seit 11:07** (`41f2423`).
+- 2026-10-13: HERMES-Angaben, Portfolio und Demoprojekt HDEMO **produktiv seit 09:34** (`7e20f93`), Darstellungsfix Phasenpfad **produktiv seit 09:47** (`47990ad`). Release-Tests 1158/1158; Sichtpruefung per Edge headless (alle Ansichten am Demoprojekt ohne Fehler, Bedienen wie Ziehen oder Speichern nicht angeklickt, durch Tests abgedeckt).
 
 ## Deploy
 
