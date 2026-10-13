@@ -1,6 +1,6 @@
 # Trafag Projekte (Projektmanagement wie Jira, Trello und Planner)
 
-Stand: 2026-10-09
+Stand: 2026-10-13 (HERMES-Angaben, Portfolio und Demoprojekt ergänzt)
 
 Auftrag Ingo 2026-10-09: die „Poor Man's Project Management Suite“ durch eine richtige Lösung ersetzen,
 „ein Jira-Trello-Projektmanagementsystem, Funktionen von Jira, Ansicht Trello möglich und das Beste von
@@ -62,6 +62,34 @@ behalten ihren abgeschlossenen Sprint (Fix `9d819ae`).
 - **Alte Projektsuite:** Seite, Service, Modell und Tests entfernt; Tabelle `ProjectItems` bleibt in
   bestehenden Datenbanken ungenutzt liegen. Die Menügruppe „Poor Man's Project Management Suite“ wird beim
   Start entfernt, der Link `projects` wandert auf die oberste Ebene.
+
+## HERMES (2026-10-13)
+
+Wunsch Ingo am 2026-10-13: die HERMES-Elemente, die in `projektmanagement/Wochen_Todo.xlsx` und
+`Vorhaben_HERMES.tsv` schon gepflegt werden, auch in Trafag Projekte, grafisch und interaktiv. Entscheide Ingo:
+Felder je Projekt plus Portfolio-Reiter, **keine** Übernahme der Vorhaben PM-01 bis PM-12 (die Wochen-Todo bleibt
+deren Quelle), dazu ein Demoprojekt zum Anschauen.
+
+- **Felder je Projekt** (Einstellungen, Block „HERMES“, pflegen darf die Projektleitung oder ein Admin):
+  Aufwand in Personentagen mit Skala und Stufenvorschlag (unter 5 Kleinauftrag, 5 bis 40 Vorhaben, darüber
+  Projekt, wie im Blatt „HERMES Übersicht“), Stufe, Ampel, Auftraggeber, Anwendervertreter, Stand in einem Satz,
+  nächster Entscheid, „Erledigt, wenn“ (Abnahmekriterien) und die Entscheidungspunkte ① Freigabe, ② Abnahme,
+  ③ Abschluss mit Datum. Beim Kleinauftrag sind Rollen und Entscheidungspunkte ausgeblendet.
+- **Regeln:** keine Abnahme ohne Freigabe, kein Abschluss ohne Abnahme, Daten in dieser Reihenfolge. Die Phase
+  folgt aus den Punkten: Initialisierung, nach ① Umsetzung, nach ② Einführung, nach ③ abgeschlossen.
+- **Grafik:** HERMES-Pfad (vier Phasen, Rauten ①②③, aktuelle Phase läuft animiert, Hinweise beim Darüberfahren);
+  auf jeder Projektkarte Ampel, Stufe, Phase und die drei Rauten.
+- **Reiter „Portfolio (HERMES)“** in der Projektübersicht: Ampelring und Stufenbalken filtern per Klick,
+  Phasenlandkarte mit jedem Projekt als Kachel in seiner Phase (Rand in Ampelfarbe, Fortschritt, nächster
+  Entscheid), Tabelle „Übersicht für die Geschäftsleitung“ (rote zuerst) mit kleinem Pfad je Zeile; Klick auf
+  eine Phase filtert. Projekte ohne Angaben werden mit Schlüssel gelistet.
+- **Demoprojekt `HDEMO`** „HERMES-Demo: Beispielvorhaben“: wird beim App-Start einmalig angelegt (Leitung
+  koi), mit erfundenen Werten, fünf Aufgaben entlang der Entscheidungspunkte und Freigabe am Anlagetag.
+  Archivieren blendet es aus; es kommt nicht wieder, solange der Schlüssel existiert.
+- **Technik:** eigene Tabelle `PmHermes` (eine Zeile je Projekt, Index `UX_PmHermes_Project`), damit
+  `PmProjects` unverändert bleibt; `PmService.Hermes.cs` (`SaveHermesAsync`, `ValidateHermes`,
+  `SeedHermesDemoAsync`), Komponenten `PmHermesPath`, `PmHermesEffort`, `PmHermesPortfolio`, CSS-Präfixe
+  `pm-hp-`, `pm-he-`, `pm-pf-`, `pm-light`, Texte in allen Sprachen, Tests in `PmServiceTests`.
 
 ## Stand
 

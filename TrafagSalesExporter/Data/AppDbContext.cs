@@ -40,6 +40,7 @@ public class AppDbContext : DbContext
     public DbSet<PmChecklistItem> PmChecklistItems => Set<PmChecklistItem>();
     public DbSet<PmComment> PmComments => Set<PmComment>();
     public DbSet<PmActivity> PmActivities => Set<PmActivity>();
+    public DbSet<PmHermes> PmHermes => Set<PmHermes>();
     public DbSet<ForumCommunity> ForumCommunities => Set<ForumCommunity>();
     public DbSet<ForumPost> ForumPosts => Set<ForumPost>();
     public DbSet<ForumComment> ForumComments => Set<ForumComment>();

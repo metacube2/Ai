@@ -115,6 +115,66 @@ public sealed class PmActivity
     public DateTime AtUtc { get; set; }
 }
 
+// HERMES zugeschnitten (2026-10-13, Wunsch Ingo): eine Zeile je Projekt mit denselben Angaben wie
+// projektmanagement/Vorhaben_HERMES.tsv. Eigene Tabelle, damit PmProjects unveraendert bleibt.
+public sealed class PmHermes
+{
+    public int Id { get; set; }
+    public int ProjectId { get; set; }
+    public string Stage { get; set; } = string.Empty;
+    public string Sponsor { get; set; } = string.Empty;
+    public string UserRepresentative { get; set; } = string.Empty;
+    public int EffortDays { get; set; }
+    public string Traffic { get; set; } = string.Empty;
+    public string StatusLine { get; set; } = string.Empty;
+    public string NextDecision { get; set; } = string.Empty;
+    public string DoneWhen { get; set; } = string.Empty;
+    public DateTime? ReleasedOn { get; set; }
+    public DateTime? AcceptedOn { get; set; }
+    public DateTime? ClosedOn { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+}
+
+// Einstufung wie im Blatt "HERMES Übersicht": Kleinauftrag unter ca. 5 PT, Vorhaben 5 bis 40 PT, Projekt darueber.
+public static class PmHermesStages
+{
+    public const string SmallOrder = "SmallOrder";
+    public const string Undertaking = "Undertaking";
+    public const string Project = "Project";
+
+    public static readonly string[] All = [SmallOrder, Undertaking, Project];
+
+    public static string Suggest(int effortDays) => effortDays switch
+    {
+        <= 0 => string.Empty,
+        < 5 => SmallOrder,
+        <= 40 => Undertaking,
+        _ => Project
+    };
+}
+
+public static class PmTraffic
+{
+    public const string Green = "Green";
+    public const string Yellow = "Yellow";
+    public const string Red = "Red";
+
+    public static readonly string[] All = [Green, Yellow, Red];
+}
+
+// Phase aus den drei Entscheidungspunkten: vor (1) Freigabe Initialisierung, danach Umsetzung,
+// nach (2) Abnahme Einfuehrung, nach (3) Abschluss abgeschlossen.
+public static class PmHermesPhases
+{
+    public const string Initiation = "Initiation";
+    public const string Execution = "Execution";
+    public const string Introduction = "Introduction";
+    public const string Closed = "Closed";
+
+    public static string Of(DateTime? releasedOn, DateTime? acceptedOn, DateTime? closedOn) =>
+        closedOn.HasValue ? Closed : acceptedOn.HasValue ? Introduction : releasedOn.HasValue ? Execution : Initiation;
+}
+
 public static class PmTemplates
 {
     public const string Kanban = "Kanban";

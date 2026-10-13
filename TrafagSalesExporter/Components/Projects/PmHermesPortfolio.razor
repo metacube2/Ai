@@ -1,0 +1,212 @@
+@* Portfolio nach HERMES (2026-10-13, Wunsch Ingo): dieselbe Sicht wie das Blatt "HERMES Übersicht" in
+   projektmanagement/Wochen_Todo.xlsx, aber interaktiv. Ampelring und Stufen filtern per Klick, die
+   Phasenlandkarte zeigt jedes Projekt in seiner Phase zwischen den Entscheidungspunkten, die Tabelle
+   ist die Statuszeile fuer die Geschaeftsleitung. Nur nicht archivierte Projekte. *@
+@using TrafagSalesExporter.Models
+@inject IUiTextService UiText
+
+<div class="pm-portfolio">
+    <div class="pm-pf-top">
+        <section class="pm-chart-card pm-pf-ring-card">
+            <h4>@T("Ampel", "Status light")</h4>
+            <div class="pm-pf-ring-wrap">
+                <button type="button" class="pm-pf-ring" style="background:@RingGradient" title="@T("Filter zurücksetzen", "Reset filter")" @onclick="Reset">
+                    <span><b>@Classified.Count</b><small>@T("eingestuft", "classified")</small></span>
+                </button>
+                <div class="pm-pf-legend">
+                    @foreach (var light in Lights)
+                    {
+                        var l = light;
+                        var count = Classified.Count(p => p.Hermes!.Traffic == l);
+                        <button type="button" class="pm-pf-leg @(IsTrafficOn(l) ? "pm-on" : "")" @onclick="() => ToggleTraffic(l)">
+                            <i class="pm-light pm-light-@(l.Length == 0 ? "none" : l.ToLowerInvariant())"></i>
+                            <span class="pm-grow">@PmLabels.Traffic(UiText, l)</span><b>@count</b>
+                        </button>
+                    }
+                </div>
+            </div>
+        </section>
+        <section class="pm-chart-card pm-pf-stage-card">
+            <h4>@T("Einstufung", "Classification")</h4>
+            @foreach (var stage in PmHermesStages.All)
+            {
+                var s = stage;
+                var count = Classified.Count(p => p.Hermes!.Stage == s);
+                <button type="button" class="pm-pf-stage pm-st-@s.ToLowerInvariant() @(_stage == s ? "pm-on" : "")" title="@PmLabels.StageHelp(UiText, s)" @onclick="() => _stage = _stage == s ? string.Empty : s">
+                    <span class="pm-pf-stage-name">@PmLabels.Stage(UiText, s)</span>
+                    <span class="pm-pf-stage-bar"><i style="width:@Share(count)%"></i></span>
+                    <b>@count</b>
+                    <span class="pm-pf-stage-help">@PmLabels.StageHelp(UiText, s)</span>
+                </button>
+            }
+            @if (Unclassified.Count > 0)
+            {
+                <div class="pm-muted pm-small pm-mt">@Unclassified.Count @T("Projekte ohne HERMES-Angaben:", "projects without HERMES details:")
+                    @foreach (var p in Unclassified.Take(8))
+                    {
+                        <a class="pm-pf-key" href="@SettingsLink(p)">@p.Key</a>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    <section class="pm-chart-card">
+        <h4>@T("Phasenlandkarte", "Phase map")
+            <span class="pm-muted pm-small">@T("Jedes Projekt steht in seiner Phase. Ein Klick auf eine Phase filtert, ein Klick auf ein Projekt öffnet seine HERMES-Angaben.", "Each project sits in its phase. Click a phase to filter, click a project to open its HERMES details.")</span>
+            @if (HasFilter)
+            {
+                <button type="button" class="pm-link pm-small" @onclick="Reset">@T("Filter zurücksetzen", "Reset filter")</button>
+            }
+        </h4>
+        <div class="pm-pf-map">
+            @for (var i = 0; i < Phases.Length; i++)
+            {
+                var phase = Phases[i];
+                var inPhase = Visible.Where(p => p.Hermes!.Phase == phase).ToList();
+                <div class="pm-pf-lane @(_phase == phase ? "pm-on" : "") @(_phase.Length > 0 && _phase != phase ? "pm-dim" : "")">
+                    <button type="button" class="pm-pf-lane-head" title="@PmLabels.PhaseHelp(UiText, phase)" @onclick="() => SelectPhase(phase)">
+                        @PmLabels.Phase(UiText, phase) <span class="pm-count">@inPhase.Count</span>
+                    </button>
+                    @foreach (var project in inPhase)
+                    {
+                        var h = project.Hermes!;
+                        <a class="pm-pf-tile pm-tr-@(h.Traffic.Length == 0 ? "none" : h.Traffic.ToLowerInvariant())" href="@SettingsLink(project)" style="--pm-c:@project.Color"
+                           title="@(h.StatusLine.Length > 0 ? h.StatusLine : PmLabels.Traffic(UiText, h.Traffic))">
+                            <span class="pm-pf-tile-head"><b>@project.Key</b><span class="pm-status-chip pm-st-@h.Stage.ToLowerInvariant()">@PmLabels.Stage(UiText, h.Stage)</span></span>
+                            <span class="pm-pf-tile-name">@project.Name</span>
+                            @if (h.NextDecision.Length > 0)
+                            {
+                                <span class="pm-pf-tile-next"><MudIcon Icon="@Icons.Material.Outlined.Gavel" Size="Size.Small" /> @h.NextDecision</span>
+                            }
+                            <span class="pm-pf-tile-progress"><i style="width:@project.ProgressPercent%"></i></span>
+                        </a>
+                    }
+                </div>
+                @if (i < 3)
+                {
+                    var number = i + 1;
+                    <div class="pm-pf-gate" title="@PmLabels.MilestoneHelp(UiText, number)"><span class="pm-hp-diamond">@number</span><small>@PmLabels.Milestone(UiText, number)</small></div>
+                }
+            }
+        </div>
+    </section>
+
+    <section class="pm-chart-card">
+        <h4>@T("Übersicht für die Geschäftsleitung", "Overview for management") <span class="pm-muted pm-small">@Visible.Count @T("Projekte", "Projects")</span></h4>
+        <div class="pm-pf-table-wrap">
+            <table class="pm-pf-table">
+                <thead>
+                    <tr>
+                        <th>@T("Projekt", "Project")</th>
+                        <th>@T("Stufe", "Level")</th>
+                        <th>@T("Ampel", "Status light")</th>
+                        <th>@T("Phase und Entscheidungspunkte", "Phase and decision points")</th>
+                        <th>@T("Auftraggeber", "Sponsor")</th>
+                        <th>@T("Anwendervertreter", "User representative")</th>
+                        <th>@T("Stand in einem Satz", "Status in one sentence")</th>
+                        <th>@T("Nächster Entscheid", "Next decision")</th>
+                        <th>@T("Erledigt, wenn", "Done when")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var project in Visible.OrderBy(p => TrafficOrder(p.Hermes!.Traffic)).ThenBy(p => p.Key))
+                    {
+                        var h = project.Hermes!;
+                        <tr>
+                            <td><a href="@SettingsLink(project)"><b>@project.Key</b></a><div class="pm-small">@project.Name</div></td>
+                            <td><span class="pm-status-chip pm-st-@h.Stage.ToLowerInvariant()" title="@PmLabels.StageHelp(UiText, h.Stage)">@PmLabels.Stage(UiText, h.Stage)</span>
+                                @if (h.EffortDays > 0) { <div class="pm-muted pm-small">@h.EffortDays PT</div> }</td>
+                            <td><i class="pm-light pm-light-@(h.Traffic.Length == 0 ? "none" : h.Traffic.ToLowerInvariant()) pm-on" title="@PmLabels.Traffic(UiText, h.Traffic)"></i></td>
+                            <td class="pm-pf-path-cell">@if (h.IsSmallOrder) { <span class="pm-muted pm-small">@T("Kleinauftrag, ohne Entscheidungspunkte", "Small order, no decision points")</span> } else { <PmHermesPath Hermes="@h" Compact="true" OnSelect="SelectPhase" /> }</td>
+                            <td>@h.Sponsor</td>
+                            <td>@h.UserRepresentative</td>
+                            <td>@h.StatusLine</td>
+                            <td>@h.NextDecision</td>
+                            <td class="pm-small">@h.DoneWhen</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PmProjectSummary> Projects { get; set; } = [];
+
+    private static readonly string[] Phases = [PmHermesPhases.Initiation, PmHermesPhases.Execution, PmHermesPhases.Introduction, PmHermesPhases.Closed];
+    private static readonly string[] Lights = [PmTraffic.Red, PmTraffic.Yellow, PmTraffic.Green, string.Empty];
+
+    private string _traffic = string.Empty;
+    private string _stage = string.Empty;
+    private string _phase = string.Empty;
+    private bool _noTrafficFilter;
+
+    private List<PmProjectSummary> Active => Projects.Where(p => !p.IsArchived).ToList();
+
+    private List<PmProjectSummary> Classified => Active.Where(p => p.Hermes is { Stage.Length: > 0 }).ToList();
+
+    private List<PmProjectSummary> Unclassified => Active.Where(p => p.Hermes is not { Stage.Length: > 0 }).ToList();
+
+    private bool HasFilter => _traffic.Length > 0 || _stage.Length > 0 || _phase.Length > 0 || _noTrafficFilter;
+
+    private List<PmProjectSummary> Visible => Classified
+        .Where(p => _stage.Length == 0 || p.Hermes!.Stage == _stage)
+        .Where(p => _noTrafficFilter ? p.Hermes!.Traffic.Length == 0 : _traffic.Length == 0 || p.Hermes!.Traffic == _traffic)
+        .Where(p => _phase.Length == 0 || p.Hermes!.Phase == _phase)
+        .ToList();
+
+    // Ampelring als conic-gradient: Rot, Gelb, Gruen, ohne Ampel grau.
+    private string RingGradient
+    {
+        get
+        {
+            var total = Classified.Count;
+            if (total == 0)
+                return "conic-gradient(var(--pm-line) 0 100%)";
+            var parts = new List<string>();
+            double start = 0;
+            foreach (var light in Lights)
+            {
+                var share = Classified.Count(p => p.Hermes!.Traffic == light) * 100d / total;
+                if (share <= 0)
+                    continue;
+                var color = light switch { PmTraffic.Red => "var(--pm-danger)", PmTraffic.Yellow => "var(--pm-open)", PmTraffic.Green => "var(--pm-done)", _ => "var(--pm-line)" };
+                parts.Add(FormattableString.Invariant($"{color} {start:0.##}% {start + share:0.##}%"));
+                start += share;
+            }
+            return $"conic-gradient({string.Join(',', parts)})";
+        }
+    }
+
+    private int Share(int count) => Classified.Count == 0 ? 0 : (int)Math.Round(count * 100d / Classified.Count);
+
+    private static int TrafficOrder(string traffic) => traffic switch { PmTraffic.Red => 0, PmTraffic.Yellow => 1, PmTraffic.Green => 2, _ => 3 };
+
+    private static string SettingsLink(PmProjectSummary project) => $"projekte/{project.Key}?view=settings";
+
+    private bool IsTrafficOn(string light) => light.Length == 0 ? _noTrafficFilter : _traffic == light;
+
+    private void ToggleTraffic(string light)
+    {
+        if (light.Length == 0)
+        {
+            _noTrafficFilter = !_noTrafficFilter;
+            _traffic = string.Empty;
+            return;
+        }
+        _noTrafficFilter = false;
+        _traffic = _traffic == light ? string.Empty : light;
+    }
+
+    private void SelectPhase(string phase) => _phase = _phase == phase ? string.Empty : phase;
+
+    private void Reset()
+    {
+        _traffic = _stage = _phase = string.Empty;
+        _noTrafficFilter = false;
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

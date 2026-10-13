@@ -107,6 +107,7 @@
     <div class="pm-tabs pm-tabs-big">
         <button type="button" class="@(_tab == "projects" ? "pm-on" : "")" @onclick="@(() => _tab = "projects")"><MudIcon Icon="@Icons.Material.Outlined.Dashboard" Size="Size.Small" /> @T("Projekte", "Projects")</button>
         <button type="button" class="@(_tab == "mine" ? "pm-on" : "")" @onclick="@(() => _tab = "mine")"><MudIcon Icon="@Icons.Material.Outlined.AssignmentInd" Size="Size.Small" /> @T("Meine Aufgaben", "My tasks") <span class="pm-count">@_mine.Count</span></button>
+        <button type="button" class="@(_tab == "portfolio" ? "pm-on" : "")" @onclick="@(() => _tab = "portfolio")"><MudIcon Icon="@Icons.Material.Outlined.AccountTree" Size="Size.Small" /> @T("Portfolio (HERMES)", "Portfolio (HERMES)")</button>
         <span class="pm-grow"></span>
         @if (_tab == "projects")
         {
@@ -117,6 +118,10 @@
     @if (!_loaded)
     {
         <div class="pm-grid">@for (var i = 0; i < 3; i++) { <div class="pm-project pm-skeleton"></div> }</div>
+    }
+    else if (_tab == "portfolio")
+    {
+        <PmHermesPortfolio Projects="@_projects" />
     }
     else if (_tab == "projects")
     {
@@ -149,6 +154,21 @@
                     @if (project.Description.Length > 0)
                     {
                         <p class="pm-project-desc">@project.Description</p>
+                    }
+                    @if (project.Hermes is { Stage.Length: > 0 } hermes)
+                    {
+                        <div class="pm-project-hermes" title="@(hermes.StatusLine.Length > 0 ? hermes.StatusLine : PmLabels.PhaseHelp(UiText, hermes.Phase))">
+                            <i class="pm-light pm-on pm-light-@(hermes.Traffic.Length == 0 ? "none" : hermes.Traffic.ToLowerInvariant())"></i>
+                            <span class="pm-status-chip pm-st-@hermes.Stage.ToLowerInvariant()">@PmLabels.Stage(UiText, hermes.Stage)</span>
+                            @if (!hermes.IsSmallOrder)
+                            {
+                                <span class="pm-small">@PmLabels.Phase(UiText, hermes.Phase)</span>
+                                <span class="pm-grow"></span>
+                                <span class="pm-hgates">
+                                    <i class="@(hermes.ReleasedOn.HasValue ? "pm-on" : "")">1</i><i class="@(hermes.AcceptedOn.HasValue ? "pm-on" : "")">2</i><i class="@(hermes.ClosedOn.HasValue ? "pm-on" : "")">3</i>
+                                </span>
+                            }
+                        </div>
                     }
                     <div class="pm-stack" title="@($"{project.Open} / {project.InProgress} / {project.Done}")">
                         @if (project.Total == 0)

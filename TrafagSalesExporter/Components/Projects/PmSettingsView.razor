@@ -1,5 +1,6 @@
 @* Projekteinstellungen: Stammdaten, Team (Suche im AD) und Spalten mit Art und WIP-Grenze.
    Aendern darf die Projektleitung oder ein Admin; alle anderen sehen die Einstellungen nur. *@
+@using TrafagSalesExporter.Models
 @inject IUiTextService UiText
 @inject IPmService Pm
 @inject TrafagSalesExporter.Services.Forum.ForumUserDirectory Directory
@@ -43,6 +44,76 @@
                 <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Archive" OnClick="ToggleArchive">
                     @(Board.Project.IsArchived ? T("Wiederherstellen", "Restore") : T("Projekt archivieren", "Archive project"))
                 </MudButton>
+            </div>
+        }
+    </section>
+
+    <section class="pm-chart-card pm-chart-wide pm-hermes-card">
+        <h4>@T("HERMES", "HERMES") <span class="pm-muted pm-small">@T("Einstufung, Rollen, Ampel und Entscheidungspunkte wie in der Wochen-Todo", "Classification, roles, status light and decision points as in the weekly to-do")</span></h4>
+        <PmHermesPath Hermes="@Preview" />
+        <div class="pm-hermes-grid">
+            <div class="pm-fields">
+                <label>@T("Aufwand", "Effort")</label>
+                <div class="pm-row">
+                    <input type="number" min="0" max="999" class="pm-input pm-narrow" disabled="@(!Board.CanManage)" value="@_hermes.EffortDays"
+                           @onchange="e => _hermes.EffortDays = int.TryParse(e.Value?.ToString(), out var d) ? d : 0" />
+                    <span class="pm-muted pm-small">@T("Personentage, geschätzt", "person-days, estimated")</span>
+                </div>
+                <label></label>
+                <PmHermesEffort Days="@_hermes.EffortDays" />
+                <label>@T("Stufe", "Level")</label>
+                <div class="pm-row pm-wrap">
+                    @foreach (var stage in PmHermesStages.All)
+                    {
+                        var s = stage;
+                        <button type="button" class="pm-chip @(_hermes.Stage == s ? "pm-on" : "")" disabled="@(!Board.CanManage)" title="@PmLabels.StageHelp(UiText, s)" @onclick="() => _hermes.Stage = s">@PmLabels.Stage(UiText, s)</button>
+                    }
+                    @if (Board.CanManage && PmHermesStages.Suggest(_hermes.EffortDays) is { Length: > 0 } suggested && suggested != _hermes.Stage)
+                    {
+                        <button type="button" class="pm-link pm-small" @onclick="() => _hermes.Stage = suggested">@T("Vorschlag nach Aufwand:", "Suggested by effort:") @PmLabels.Stage(UiText, suggested)</button>
+                    }
+                </div>
+                <label>@T("Ampel", "Status light")</label>
+                <div class="pm-row">
+                    @foreach (var light in PmTraffic.All)
+                    {
+                        var l = light;
+                        <button type="button" class="pm-light pm-light-@l.ToLowerInvariant() @(_hermes.Traffic == l ? "pm-on" : "")" disabled="@(!Board.CanManage)" title="@PmLabels.Traffic(UiText, l)" @onclick="() => _hermes.Traffic = l"></button>
+                    }
+                    <span class="pm-small">@PmLabels.Traffic(UiText, _hermes.Traffic)</span>
+                </div>
+                @if (_hermes.Stage != PmHermesStages.SmallOrder)
+                {
+                    <label>@T("Auftraggeber", "Sponsor")</label>
+                    <input class="pm-input" disabled="@(!Board.CanManage)" placeholder="@T("entscheidet und priorisiert", "decides and prioritises")" value="@_hermes.Sponsor" @oninput="e => _hermes.Sponsor = e.Value?.ToString() ?? string.Empty" />
+                    <label>@T("Anwendervertreter", "User representative")</label>
+                    <input class="pm-input" disabled="@(!Board.CanManage)" placeholder="@T("definiert fachlich und nimmt ab", "defines the requirements and accepts")" value="@_hermes.UserRepresentative" @oninput="e => _hermes.UserRepresentative = e.Value?.ToString() ?? string.Empty" />
+                }
+            </div>
+            <div class="pm-fields">
+                <label>@T("Stand in einem Satz", "Status in one sentence")</label>
+                <input class="pm-input" disabled="@(!Board.CanManage)" value="@_hermes.StatusLine" @oninput="e => _hermes.StatusLine = e.Value?.ToString() ?? string.Empty" />
+                <label>@T("Nächster Entscheid", "Next decision")</label>
+                <input class="pm-input" disabled="@(!Board.CanManage)" value="@_hermes.NextDecision" @oninput="e => _hermes.NextDecision = e.Value?.ToString() ?? string.Empty" />
+                <label>@T("Erledigt, wenn", "Done when")</label>
+                <textarea class="pm-input" rows="3" disabled="@(!Board.CanManage)" placeholder="@T("Abnahmekriterien: Das Vorhaben ist fertig, wenn …", "Acceptance criteria: the undertaking is finished when …")" @oninput="e => _hermes.DoneWhen = e.Value?.ToString() ?? string.Empty">@_hermes.DoneWhen</textarea>
+                @if (_hermes.Stage != PmHermesStages.SmallOrder)
+                {
+                    @for (var n = 1; n <= 3; n++)
+                    {
+                        var number = n;
+                        <label title="@PmLabels.MilestoneHelp(UiText, number)"><span class="pm-hp-diamond pm-hp-inline">@number</span> @PmLabels.Milestone(UiText, number)</label>
+                        <input type="date" class="pm-input pm-narrow2" disabled="@(!Board.CanManage)" value="@MilestoneDate(number)?.ToString("yyyy-MM-dd")"
+                               @onchange="e => SetMilestone(number, DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null)" />
+                    }
+                }
+            </div>
+        </div>
+        @if (Board.CanManage)
+        {
+            <div class="pm-row pm-mt">
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveHermes">@T("HERMES-Angaben speichern", "Save HERMES details")</MudButton>
+                <span class="pm-muted pm-small">@T("Erscheint danach im Reiter Portfolio der Projektübersicht.", "Then appears in the Portfolio tab of the project overview.")</span>
             </div>
         }
     </section>
@@ -125,6 +196,7 @@
     [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
 
     private PmProjectInput _input = new();
+    private PmHermesInput _hermes = new();
     private int _loadedFor;
     private string _search = string.Empty;
     private IReadOnlyList<PmPerson> _hits = [];
@@ -140,6 +212,7 @@
             return;
         _loadedFor = Board.Project.Id;
         var p = Board.Project;
+        _hermes = PmHermesInput.From(p.Hermes);
         _input = new PmProjectInput { Name = p.Name, Description = p.Description, Color = p.Color, Icon = p.Icon, StartDate = p.StartDate, DueDate = p.DueDate, Template = p.Template, Key = p.Key };
     }
 
@@ -173,6 +246,21 @@
     }
 
     private Task SaveProject() => Run(() => Pm.UpdateProjectAsync(User, Board.Project.Id, _input));
+
+    // Vorschau des Pfads aus den noch ungespeicherten Eingaben.
+    private PmHermesView Preview => new(_hermes.Stage, _hermes.Sponsor, _hermes.UserRepresentative, _hermes.EffortDays, _hermes.Traffic,
+        _hermes.StatusLine, _hermes.NextDecision, _hermes.DoneWhen, _hermes.ReleasedOn, _hermes.AcceptedOn, _hermes.ClosedOn, DateTime.UtcNow);
+
+    private DateTime? MilestoneDate(int number) => number switch { 1 => _hermes.ReleasedOn, 2 => _hermes.AcceptedOn, _ => _hermes.ClosedOn };
+
+    private void SetMilestone(int number, DateTime? date)
+    {
+        if (number == 1) _hermes.ReleasedOn = date;
+        else if (number == 2) _hermes.AcceptedOn = date;
+        else _hermes.ClosedOn = date;
+    }
+
+    private Task SaveHermes() => Run(() => Pm.SaveHermesAsync(User, Board.Project.Id, _hermes));
 
     private Task ToggleArchive() => Run(() => Pm.SetProjectArchivedAsync(User, Board.Project.Id, !Board.Project.IsArchived));
 

@@ -35,6 +35,7 @@ public interface IPmService
     Task<IReadOnlyList<PmMyTask>> GetMyTasksAsync(PmUser user);
     Task<IReadOnlyList<PmActivityView>> GetActivityAsync(int projectId, int take = 40);
     Task<IReadOnlyList<PmPerson>> GetKnownPeopleAsync();
+    Task SaveHermesAsync(PmUser user, int projectId, PmHermesInput input);
 }
 
 /// <summary>
@@ -72,6 +73,7 @@ public sealed partial class PmService : IPmService
         var columns = await db.PmColumns.AsNoTracking().ToDictionaryAsync(c => c.Id, c => c.Category);
         var tasks = await db.PmTasks.AsNoTracking().Where(t => !t.IsArchived && t.Type != PmTaskTypes.Epic)
             .Select(t => new { t.ProjectId, t.ColumnId, t.DueDate }).ToListAsync();
+        var hermes = await db.PmHermes.AsNoTracking().ToDictionaryAsync(h => h.ProjectId);
         var today = DateTime.Today;
 
         return projects
@@ -87,7 +89,7 @@ public sealed partial class PmService : IPmService
                 return new PmProjectSummary(p.Id, p.Key, p.Name, p.Description, p.Color, p.Icon, p.Template, p.LeadLogin, p.LeadName,
                     people, p.StartDate, p.DueDate, p.IsArchived, own.Count, own.Count - done - progress, progress, done, overdue,
                     own.Count == 0 ? 0 : (int)Math.Round(done * 100d / own.Count), p.UpdatedAtUtc,
-                    people.Any(m => Same(m.Login, user.Login)));
+                    people.Any(m => Same(m.Login, user.Login)), ToHermesView(hermes.GetValueOrDefault(p.Id)));
             })
             .OrderByDescending(p => p.IsMember)
             .ThenByDescending(p => p.UpdatedAtUtc)

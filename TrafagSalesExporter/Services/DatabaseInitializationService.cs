@@ -32,6 +32,9 @@ public partial class DatabaseInitializationService : IDatabaseInitializationServ
         // idempotent: steht der gleiche Bestand schon in der Datenbank, wird nicht geschrieben.
         await SupplierMaterialOverrideStore.SeedAsync(
             db, SupplierMaterialOverrideStore.LoadEmbedded(DateTime.UtcNow));
+
+        // Trafag Projekte: einmaliges Demoprojekt fuer die HERMES-Angaben (Wunsch Ingo 2026-10-13).
+        await TrafagSalesExporter.Services.Projects.PmService.SeedHermesDemoAsync(db, "koi", "Kohler, Ingo");
     }
 
     private static void ConfigureSqlite(AppDbContext db)

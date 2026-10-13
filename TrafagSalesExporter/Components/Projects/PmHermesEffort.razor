@@ -1,0 +1,33 @@
+@* Aufwandsskala (2026-10-13): drei Zonen Kleinauftrag / Vorhaben / Projekt mit den Grenzen 5 und 40
+   Personentage, Marke beim geschaetzten Aufwand. Skala bis 60 PT, darueber steht die Marke am Rand. *@
+@using TrafagSalesExporter.Models
+@inject IUiTextService UiText
+
+<div class="pm-heffort" title="@Title">
+    <div class="pm-he-track">
+        <span class="pm-he-zone pm-he-small @(Zone == PmHermesStages.SmallOrder ? "pm-on" : "")" style="width:@Pct(5)%">@PmLabels.Stage(UiText, PmHermesStages.SmallOrder)</span>
+        <span class="pm-he-zone pm-he-mid @(Zone == PmHermesStages.Undertaking ? "pm-on" : "")" style="width:@Pct(35)%">@PmLabels.Stage(UiText, PmHermesStages.Undertaking)</span>
+        <span class="pm-he-zone pm-he-big @(Zone == PmHermesStages.Project ? "pm-on" : "")" style="width:@Pct(20)%">@PmLabels.Stage(UiText, PmHermesStages.Project)</span>
+        @if (Days > 0)
+        {
+            <span class="pm-he-mark" style="left:@Pct(Math.Min(Days, Scale))%"><b>@Days</b></span>
+        }
+    </div>
+    <div class="pm-he-scale"><span>0</span><span style="left:@Pct(5)%">5</span><span style="left:@Pct(40)%">40</span><span class="pm-he-end">@T("Personentage", "person-days")</span></div>
+</div>
+
+@code {
+    [Parameter] public int Days { get; set; }
+
+    private const double Scale = 60;
+
+    private string Zone => PmHermesStages.Suggest(Days);
+
+    private static string Pct(double days) => (days * 100 / Scale).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string Title => Days > 0
+        ? $"{Days} {T("Personentage", "person-days")}: {PmLabels.StageHelp(UiText, Zone)}"
+        : PmLabels.StageHelp(UiText, string.Empty);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

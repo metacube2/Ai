@@ -15,7 +15,40 @@ public sealed record PmProjectSummary(
     string LeadLogin, string LeadName, IReadOnlyList<PmPerson> Members,
     DateTime? StartDate, DateTime? DueDate, bool IsArchived,
     int Total, int Open, int InProgress, int Done, int Overdue, int ProgressPercent,
-    DateTime UpdatedAtUtc, bool IsMember);
+    DateTime UpdatedAtUtc, bool IsMember, PmHermesView? Hermes = null);
+
+// HERMES-Angaben eines Projekts (2026-10-13); Phase wird aus den Entscheidungspunkten abgeleitet.
+public sealed record PmHermesView(
+    string Stage, string Sponsor, string UserRepresentative, int EffortDays, string Traffic,
+    string StatusLine, string NextDecision, string DoneWhen,
+    DateTime? ReleasedOn, DateTime? AcceptedOn, DateTime? ClosedOn, DateTime UpdatedAtUtc)
+{
+    public string Phase => PmHermesPhases.Of(ReleasedOn, AcceptedOn, ClosedOn);
+    public bool IsSmallOrder => Stage == PmHermesStages.SmallOrder;
+}
+
+public sealed class PmHermesInput
+{
+    public string Stage { get; set; } = string.Empty;
+    public string Sponsor { get; set; } = string.Empty;
+    public string UserRepresentative { get; set; } = string.Empty;
+    public int EffortDays { get; set; }
+    public string Traffic { get; set; } = string.Empty;
+    public string StatusLine { get; set; } = string.Empty;
+    public string NextDecision { get; set; } = string.Empty;
+    public string DoneWhen { get; set; } = string.Empty;
+    public DateTime? ReleasedOn { get; set; }
+    public DateTime? AcceptedOn { get; set; }
+    public DateTime? ClosedOn { get; set; }
+
+    public static PmHermesInput From(PmHermesView? view) => view is null ? new() : new()
+    {
+        Stage = view.Stage, Sponsor = view.Sponsor, UserRepresentative = view.UserRepresentative,
+        EffortDays = view.EffortDays, Traffic = view.Traffic, StatusLine = view.StatusLine,
+        NextDecision = view.NextDecision, DoneWhen = view.DoneWhen,
+        ReleasedOn = view.ReleasedOn, AcceptedOn = view.AcceptedOn, ClosedOn = view.ClosedOn
+    };
+}
 
 public sealed record PmColumnView(int Id, string Name, string Category, int SortOrder, int WipLimit);
 

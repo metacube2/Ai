@@ -1,0 +1,50 @@
+@* HERMES-Pfad (2026-10-13): vier Phasen mit den Entscheidungspunkten (1) Freigabe, (2) Abnahme,
+   (3) Abschluss dazwischen. Erledigtes ist gefuellt, die aktuelle Phase pulsiert, Hinweise beim Darueberfahren.
+   Klick auf eine Phase oder einen Punkt meldet ihn ueber OnSelect (Portfolio filtert damit). *@
+@using TrafagSalesExporter.Models
+@inject IUiTextService UiText
+
+<div class="pm-hpath @(Compact ? "pm-hpath-sm" : "")">
+    @for (var i = 0; i < Phases.Length; i++)
+    {
+        var index = i;
+        var phase = Phases[index];
+        var state = index < Current ? "pm-hp-done" : index == Current ? "pm-hp-now" : "pm-hp-next";
+        <button type="button" class="pm-hp-phase @state" title="@PmLabels.PhaseHelp(UiText, phase)" @onclick="() => OnSelect.InvokeAsync(phase)">
+            <span class="pm-hp-bar"></span>
+            @if (!Compact || index == Current)
+            {
+                <span class="pm-hp-label">@PmLabels.Phase(UiText, phase)</span>
+            }
+        </button>
+        @if (index < 3)
+        {
+            var number = index + 1;
+            var date = Dates[index];
+            <span class="pm-hp-gate @(date.HasValue ? "pm-hp-reached" : "")" title="@GateTitle(number, date)">
+                <span class="pm-hp-diamond">@number</span>
+                @if (!Compact)
+                {
+                    <span class="pm-hp-gate-label">@PmLabels.Milestone(UiText, number)</span>
+                    <span class="pm-hp-date">@(date?.ToString("dd.MM.yy") ?? "–")</span>
+                }
+            </span>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public PmHermesView? Hermes { get; set; }
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+
+    private static readonly string[] Phases = [PmHermesPhases.Initiation, PmHermesPhases.Execution, PmHermesPhases.Introduction, PmHermesPhases.Closed];
+
+    private int Current => Array.IndexOf(Phases, Hermes?.Phase ?? PmHermesPhases.Initiation);
+
+    private DateTime?[] Dates => [Hermes?.ReleasedOn, Hermes?.AcceptedOn, Hermes?.ClosedOn];
+
+    private string GateTitle(int number, DateTime? date) =>
+        $"{number} {PmLabels.Milestone(UiText, number)}: {PmLabels.MilestoneHelp(UiText, number)}"
+        + (date is { } d ? $" ({d:dd.MM.yyyy})" : string.Empty);
+}

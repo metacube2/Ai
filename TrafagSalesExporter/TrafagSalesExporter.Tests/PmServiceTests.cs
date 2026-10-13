@@ -26,7 +26,7 @@ public sealed class PmServiceTests : IDisposable
         using var db = new AppDbContext(_options);
         db.Database.EnsureCreated();
         // Die Schema-SQL muss die Tabellen auch ohne EF anlegen (bestehende Produktiv-DB).
-        foreach (var table in new[] { "PmProjects", "PmMembers", "PmColumns", "PmSprints", "PmTasks", "PmChecklistItems", "PmComments", "PmActivities" })
+        foreach (var table in new[] { "PmProjects", "PmMembers", "PmColumns", "PmSprints", "PmTasks", "PmChecklistItems", "PmComments", "PmActivities", "PmHermes" })
             db.Database.ExecuteSqlRaw($"DROP TABLE {table}");
         new DatabaseSchemaMaintenanceService().EnsureSchema(db);
         _service = new PmService(new TestDbContextFactory(_options), new PmNotifier());
@@ -268,6 +268,82 @@ public sealed class PmServiceTests : IDisposable
         var projects = db.NavigationMenuItems.Single(x => x.Key == "projects");
         Assert.Null(projects.ParentKey);
         Assert.Equal("Trafag Projekte", projects.TitleDe);
+    }
+
+    [Fact]
+    public async Task Hermes_Details_Are_Saved_By_Lead_And_Shown_In_Summary()
+    {
+        var id = await _service.CreateProjectAsync(Lead, new PmProjectInput { Name = "Auswertung Phase-Out", Key = "PHO" });
+        Assert.Null((await _service.GetProjectsAsync(Lead)).Single(p => p.Id == id).Hermes);
+
+        var input = new PmHermesInput
+        {
+            Stage = PmHermesStages.Undertaking, Traffic = PmTraffic.Yellow, EffortDays = 12,
+            Sponsor = "  Leitung Logistik ", UserRepresentative = "Disponent", StatusLine = "Umsetzung läuft",
+            NextDecision = "Abnahmetermin", DoneWhen = "Stichprobe stimmt", ReleasedOn = new DateTime(2026, 10, 13, 15, 0, 0)
+        };
+        await Assert.ThrowsAsync<PmException>(() => _service.SaveHermesAsync(Ben, id, input));
+        await _service.SaveHermesAsync(Lead, id, input);
+
+        var hermes = (await _service.GetProjectsAsync(Guest)).Single(p => p.Id == id).Hermes!;
+        Assert.Equal(PmHermesStages.Undertaking, hermes.Stage);
+        Assert.Equal("Leitung Logistik", hermes.Sponsor);
+        Assert.Equal(new DateTime(2026, 10, 13), hermes.ReleasedOn);
+        Assert.Equal(PmHermesPhases.Execution, hermes.Phase);
+
+        // Zweites Speichern aktualisiert dieselbe Zeile statt eine neue anzulegen.
+        input.AcceptedOn = new DateTime(2026, 11, 2);
+        await _service.SaveHermesAsync(Admin, id, input);
+        using var db = new AppDbContext(_options);
+        Assert.Equal(1, db.PmHermes.Count(h => h.ProjectId == id));
+        Assert.Equal(PmHermesPhases.Introduction, (await _service.GetProjectsAsync(Lead)).Single(p => p.Id == id).Hermes!.Phase);
+    }
+
+    [Fact]
+    public void Hermes_Decision_Points_Must_Follow_Each_Other()
+    {
+        Assert.Throws<PmException>(() => PmService.ValidateHermes(new PmHermesInput { AcceptedOn = new DateTime(2026, 10, 1) }));
+        Assert.Throws<PmException>(() => PmService.ValidateHermes(new PmHermesInput { ReleasedOn = new DateTime(2026, 10, 1), ClosedOn = new DateTime(2026, 10, 2) }));
+        Assert.Throws<PmException>(() => PmService.ValidateHermes(new PmHermesInput { ReleasedOn = new DateTime(2026, 10, 5), AcceptedOn = new DateTime(2026, 10, 1) }));
+        Assert.Throws<PmException>(() => PmService.ValidateHermes(new PmHermesInput { DoneWhen = new string('x', PmService.HermesTextMax + 1) }));
+
+        var clean = PmService.ValidateHermes(new PmHermesInput { Stage = "Gross", Traffic = "Blau", EffortDays = -3 });
+        Assert.Equal(string.Empty, clean.Stage);
+        Assert.Equal(string.Empty, clean.Traffic);
+        Assert.Equal(0, clean.EffortDays);
+    }
+
+    [Theory]
+    [InlineData(0, "")]
+    [InlineData(4, PmHermesStages.SmallOrder)]
+    [InlineData(5, PmHermesStages.Undertaking)]
+    [InlineData(40, PmHermesStages.Undertaking)]
+    [InlineData(41, PmHermesStages.Project)]
+    public void Hermes_Stage_Is_Suggested_From_Effort(int days, string expected) =>
+        Assert.Equal(expected, PmHermesStages.Suggest(days));
+
+    [Fact]
+    public async Task Hermes_Demo_Is_Seeded_Once_And_Stays_Away_When_Archived()
+    {
+        using (var db = new AppDbContext(_options))
+        {
+            await PmService.SeedHermesDemoAsync(db, "koi", "Kohler, Ingo");
+            await PmService.SeedHermesDemoAsync(db, "koi", "Kohler, Ingo");
+        }
+
+        var koi = new PmUser("koi", "Kohler, Ingo", false);
+        var demo = Assert.Single(await _service.GetProjectsAsync(koi), p => p.Key == PmService.DemoKey);
+        Assert.Equal(PmHermesStages.Undertaking, demo.Hermes!.Stage);
+        Assert.Equal(PmHermesPhases.Execution, demo.Hermes.Phase);
+        Assert.Equal(5, demo.Total);
+        Assert.True(demo.IsMember);
+        var board = (await _service.GetBoardAsync(demo.Id, koi))!;
+        Assert.True(board.CanManage);
+
+        await _service.SetProjectArchivedAsync(koi, demo.Id, true);
+        using (var db = new AppDbContext(_options))
+            await PmService.SeedHermesDemoAsync(db, "koi", "Kohler, Ingo");
+        Assert.Single(await _service.GetProjectsAsync(koi, includeArchived: true), p => p.Key == PmService.DemoKey);
     }
 
     public void Dispose() => _connection.Dispose();

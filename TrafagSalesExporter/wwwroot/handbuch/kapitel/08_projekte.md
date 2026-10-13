@@ -194,6 +194,37 @@ Die Aktivität zeigt alles, was im Projekt passiert ist. Die Einstellungen verwa
 
 Die Projektleitung bleibt immer im Team und kann nicht entfernt werden. Der Schlüssel lässt sich nicht ändern.
 
+## Portfolio nach HERMES
+
+### Wozu
+
+Der Reiter **Portfolio (HERMES)** zeigt alle Projekte so, wie die Geschäftsleitung sie nach HERMES sehen will:
+Stufe, Ampel, Phase und der nächste Entscheid auf einen Blick.
+
+### Was man sieht
+
+Oben ein Ampelring und die Verteilung auf Kleinauftrag, Vorhaben und Projekt; ein Klick darauf filtert. Darunter
+die Phasenlandkarte mit den Phasen Initialisierung, Umsetzung, Einführung und abgeschlossen, getrennt durch die
+Entscheidungspunkte ① Freigabe, ② Abnahme und ③ Abschluss. Jedes Projekt ist eine Kachel in seiner Phase, der
+Rand hat die Farbe seiner Ampel. Ganz unten die Tabelle für die Geschäftsleitung, rote Projekte zuerst.
+
+### Wie gerechnet wird
+
+Die Phase ergibt sich aus den eingetragenen Entscheidungspunkten. Die Stufe schlägt die App nach dem geschätzten
+Aufwand vor: unter 5 Personentagen Kleinauftrag, bis 40 Vorhaben, darüber Projekt. Gepflegt werden die Angaben in
+den Einstellungen des Projekts im Block „HERMES“.
+
+### Einsatz im Arbeitsalltag
+
+Vor der Freigabe Auftraggeber, Anwendervertreter und „Erledigt, wenn“ eintragen; das Datum der Freigabe setzen,
+sobald der Projektauftrag unterschrieben ist. Ampel und Stand in einem Satz bei jeder Statusrunde nachführen.
+Das Demoprojekt HDEMO zeigt ein ausgefülltes Beispiel.
+
+### Grenzen und Fallstricke
+
+Projekte ohne HERMES-Angaben erscheinen nicht auf der Landkarte, nur als Liste darüber. Abnahme und Abschluss
+lassen sich erst nach der Freigabe eintragen. Die Vorhaben aus der Wochen-Todo werden nicht automatisch übernommen.
+
 ## Kennzahlen-Glossar
 
 | Kennzahl | Bedeutung | Berechnung in Worten |

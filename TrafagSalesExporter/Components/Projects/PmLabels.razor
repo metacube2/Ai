@@ -26,6 +26,61 @@
         _ => ui.Text("Offen", "To do")
     };
 
+    // HERMES (2026-10-13): Stufe, Ampel, Phase und Entscheidungspunkte.
+    public static string Stage(IUiTextService ui, string stage) => stage switch
+    {
+        "SmallOrder" => ui.Text("Kleinauftrag", "Small order"),
+        "Undertaking" => ui.Text("Vorhaben", "Undertaking"),
+        "Project" => ui.Text("Projekt", "Project"),
+        _ => ui.Text("Nicht eingestuft", "Not classified")
+    };
+
+    public static string StageHelp(IUiTextService ui, string stage) => stage switch
+    {
+        "SmallOrder" => ui.Text("Unter etwa 5 Personentagen. Ein Ticket genügt, es braucht keine HERMES-Dokumente.", "Under about 5 person-days. A ticket is enough, no HERMES documents are needed."),
+        "Undertaking" => ui.Text("Etwa 5 bis 40 Personentage. Es braucht einen Projektauftrag, eine Abnahme und eine Statuszeile.", "About 5 to 40 person-days. It needs a project order, an acceptance and a status line."),
+        "Project" => ui.Text("Über etwa 40 Personentage. HERMES zugeschnitten mit Risikoliste, eventuell mit Ausschuss.", "Over about 40 person-days. Tailored HERMES with a risk list, possibly a steering board."),
+        _ => ui.Text("Die Stufe richtet sich nach dem geschätzten Aufwand.", "The level follows the estimated effort.")
+    };
+
+    public static string Traffic(IUiTextService ui, string traffic) => traffic switch
+    {
+        "Green" => ui.Text("Grün: läuft nach Plan", "Green: on track"),
+        "Yellow" => ui.Text("Gelb: Verzug oder offene Frage", "Yellow: delay or open question"),
+        "Red" => ui.Text("Rot: braucht einen Entscheid", "Red: needs a decision"),
+        _ => ui.Text("Keine Ampel gesetzt", "No status set")
+    };
+
+    public static string Phase(IUiTextService ui, string phase) => phase switch
+    {
+        "Execution" => ui.Text("Umsetzung", "Execution"),
+        "Introduction" => ui.Text("Einführung", "Introduction"),
+        "Closed" => ui.Text("Abgeschlossen", "Closed"),
+        _ => ui.Text("Initialisierung", "Initiation")
+    };
+
+    public static string PhaseHelp(IUiTextService ui, string phase) => phase switch
+    {
+        "Execution" => ui.Text("Nach der Freigabe: Die Arbeit läuft, Ampel und Statuszeile halten die Geschäftsleitung auf dem Laufenden.", "After the release: the work is under way, status light and status line keep management informed."),
+        "Introduction" => ui.Text("Nach der Abnahme: Übergabe in den Betrieb mit Dokumentation und Zuständigkeit.", "After acceptance: handover to operations with documentation and ownership."),
+        "Closed" => ui.Text("Nach dem Abschluss: Das Vorhaben ist fertig und im Betrieb.", "After closure: the undertaking is finished and in operation."),
+        _ => ui.Text("Vor der Freigabe: Projektauftrag schreiben, Rollen und Abnahmekriterien festlegen.", "Before the release: write the project order, define roles and acceptance criteria.")
+    };
+
+    public static string Milestone(IUiTextService ui, int number) => number switch
+    {
+        1 => ui.Text("Freigabe", "Release"),
+        2 => ui.Text("Abnahme", "Acceptance"),
+        _ => ui.Text("Abschluss", "Closure")
+    };
+
+    public static string MilestoneHelp(IUiTextService ui, int number) => number switch
+    {
+        1 => ui.Text("Der Auftraggeber unterschreibt den Projektauftrag.", "The sponsor signs the project order."),
+        2 => ui.Text("Der Anwendervertreter unterschreibt das Abnahmeprotokoll.", "The user representative signs the acceptance record."),
+        _ => ui.Text("Die Übergabe in den Betrieb ist erledigt.", "The handover to operations is done.")
+    };
+
     public static string Template(IUiTextService ui, string template) => template switch
     {
         "Scrum" => ui.Text("Scrum mit Sprints", "Scrum with sprints"),

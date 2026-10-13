@@ -436,10 +436,29 @@ CREATE TABLE PmActivities (
     Text TEXT NOT NULL DEFAULT '',
     AtUtc TEXT NOT NULL
 );";
+        // HERMES-Angaben je Projekt (2026-10-13).
+        yield return @"
+CREATE TABLE PmHermes (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Stage TEXT NOT NULL DEFAULT '',
+    Sponsor TEXT NOT NULL DEFAULT '',
+    UserRepresentative TEXT NOT NULL DEFAULT '',
+    EffortDays INTEGER NOT NULL DEFAULT 0,
+    Traffic TEXT NOT NULL DEFAULT '',
+    StatusLine TEXT NOT NULL DEFAULT '',
+    NextDecision TEXT NOT NULL DEFAULT '',
+    DoneWhen TEXT NOT NULL DEFAULT '',
+    ReleasedOn TEXT NULL,
+    AcceptedOn TEXT NULL,
+    ClosedOn TEXT NULL,
+    UpdatedAtUtc TEXT NOT NULL
+);";
     }
 
     internal static readonly string[] PmIndexSql =
     [
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmHermes_Project ON PmHermes (ProjectId)",
         "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmProjects_Key ON PmProjects (Key)",
         "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmMembers_Project_Login ON PmMembers (ProjectId, Login)",
         "CREATE INDEX IF NOT EXISTS IX_PmColumns_Project ON PmColumns (ProjectId)",
