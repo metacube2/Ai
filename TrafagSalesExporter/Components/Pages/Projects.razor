@@ -95,6 +95,17 @@
                         }
                     </div>
                 </div>
+                <div class="pm-create-wide">
+                    <label class="pm-flabel">@T("Wer sieht es", "Who can see it")</label>
+                    <div class="pm-row pm-wrap">
+                        <button type="button" class="pm-chip @(_new.Visibility == TrafagSalesExporter.Models.PmVisibility.Public ? "pm-on" : "")" @onclick="() => _new.Visibility = TrafagSalesExporter.Models.PmVisibility.Public">
+                            <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" /> @T("Alle", "Everyone")
+                        </button>
+                        <button type="button" class="pm-chip @(_new.Visibility == TrafagSalesExporter.Models.PmVisibility.Private ? "pm-on" : "")" @onclick="() => _new.Visibility = TrafagSalesExporter.Models.PmVisibility.Private">
+                            <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" /> @T("Privat, nur ich und wen ich eintrage", "Private, only me and whom I add")
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="pm-row pm-mt">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="Create">@T("Projekt anlegen", "Create project")</MudButton>
@@ -146,6 +157,10 @@
                             <b class="pm-project-name">@project.Name</b>
                             <span class="pm-muted pm-small">@project.Key · @PmLabels.Template(UiText, project.Template)</span>
                         </span>
+                        @if (project.IsPrivate)
+                        {
+                            <span class="pm-status-chip" title="@T("Privat: nur das Team sieht dieses Projekt", "Private: only the team sees this project")"><MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" /> @T("Privat", "Private")</span>
+                        }
                         @if (project.IsMember)
                         {
                             <span class="pm-status-chip pm-cat-inprogress">@T("Mitglied", "Member")</span>

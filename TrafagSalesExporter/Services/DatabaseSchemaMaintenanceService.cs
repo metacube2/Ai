@@ -384,6 +384,10 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             cmd.CommandText = sql.Replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ");
             cmd.ExecuteNonQuery();
         }
+
+        // 2026-10-13: Sichtbarkeit je Projekt und Herkunft importierter Aufgaben (Wochen_Todo).
+        AddColumnIfMissing(db, "PmProjects", "Visibility", "TEXT NOT NULL DEFAULT 'Public'");
+        AddColumnIfMissing(db, "PmTasks", "ExternalRef", "TEXT NOT NULL DEFAULT ''");
     }
 
     private static void EnsureForumTables(AppDbContext db)

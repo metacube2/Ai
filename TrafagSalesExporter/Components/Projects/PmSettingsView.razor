@@ -1,5 +1,6 @@
-@* Projekteinstellungen: Stammdaten, Team (Suche im AD) und Spalten mit Art und WIP-Grenze.
-   Aendern darf die Projektleitung oder ein Admin; alle anderen sehen die Einstellungen nur. *@
+@* Projekteinstellungen: Stammdaten, Sichtbarkeit (alle oder privat), Team mit Rolle Mitglied/Leser (Suche im AD),
+   Abgleich der Wochen_Todo und Spalten mit Art und WIP-Grenze. Aendern darf die Projektleitung, bei oeffentlichen
+   Projekten auch ein Admin; alle anderen sehen die Einstellungen nur. *@
 @using TrafagSalesExporter.Models
 @inject IUiTextService UiText
 @inject IPmService Pm
@@ -34,6 +35,20 @@
                     var i = icon;
                     <button type="button" class="pm-icon-pick @(_input.Icon == i ? "pm-on" : "")" disabled="@(!Board.CanManage)" @onclick="() => _input.Icon = i"><MudIcon Icon="@PmStyle.ResolveIcon(i)" Size="Size.Small" /></button>
                 }
+            </div>
+            <label>@T("Wer sieht es", "Who can see it")</label>
+            <div>
+                <div class="pm-row pm-wrap">
+                    <button type="button" class="pm-chip @(_input.Visibility == PmVisibility.Public ? "pm-on" : "")" disabled="@(!Board.CanManage)" @onclick="() => _input.Visibility = PmVisibility.Public">
+                        <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" /> @T("Alle", "Everyone")
+                    </button>
+                    <button type="button" class="pm-chip @(_input.Visibility == PmVisibility.Private ? "pm-on" : "")" disabled="@(!Board.CanManage)" @onclick="() => _input.Visibility = PmVisibility.Private">
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" /> @T("Privat, nur das Team", "Private, team only")
+                    </button>
+                </div>
+                <span class="pm-muted pm-small">@(_input.Visibility == PmVisibility.Private
+                    ? T("Nur die Personen unter Team sehen das Projekt, auch Admins nicht. Leser sehen alles, ändern aber nichts.", "Only the people listed under Team see the project, admins included. Readers see everything but change nothing.")
+                    : T("Alle Angemeldeten sehen das Projekt; ändern dürfen nur Teammitglieder.", "Everyone signed in sees the project; only team members can change it."))</span>
             </div>
         </div>
         @if (Board.CanManage)
@@ -132,13 +147,26 @@
                 }
                 else if (Board.CanManage)
                 {
+                    <select class="pm-input pm-narrow2" value="@m.Role" title="@T("Mitglied darf ändern, Leser sieht nur", "Member can change, reader only views")"
+                            @onchange="e => Run(() => Pm.SetMemberRoleAsync(User, Board.Project.Id, m.Login, e.Value?.ToString() ?? PmRoles.Member))">
+                        <option value="@PmRoles.Member">@T("Mitglied", "Member")</option>
+                        <option value="@PmRoles.Viewer">@T("Leser", "Reader")</option>
+                    </select>
                     <button type="button" class="pm-icon-btn" title="@T("Aus dem Team nehmen", "Remove from team")" @onclick="() => Run(() => Pm.RemoveMemberAsync(User, Board.Project.Id, m.Login))"><MudIcon Icon="@Icons.Material.Filled.PersonRemove" Size="Size.Small" /></button>
+                }
+                else if (m.Role == PmRoles.Viewer)
+                {
+                    <span class="pm-status-chip">@T("Leser", "Reader")</span>
                 }
             </div>
         }
         @if (Board.CanManage)
         {
-            <label class="pm-flabel pm-mt">@T("Person hinzufügen", "Add a person")</label>
+            <label class="pm-flabel pm-mt">@T("Person hinzufügen als", "Add a person as")</label>
+            <div class="pm-row">
+                <button type="button" class="pm-chip @(_addRole == PmRoles.Member ? "pm-on" : "")" @onclick="() => _addRole = PmRoles.Member">@T("Mitglied (darf ändern)", "Member (can change)")</button>
+                <button type="button" class="pm-chip @(_addRole == PmRoles.Viewer ? "pm-on" : "")" @onclick="() => _addRole = PmRoles.Viewer">@T("Leser (sieht nur)", "Reader (view only)")</button>
+            </div>
             <input class="pm-input" placeholder="@T("Name oder Kürzel eingeben …", "Type a name or login …")" value="@_search" @oninput="Search" />
             @foreach (var hit in _hits)
             {
@@ -151,6 +179,26 @@
             }
         }
     </section>
+
+    @if (Board.CanManage)
+    {
+        <section class="pm-chart-card">
+            <h4>@T("Wochen_Todo abgleichen", "Sync weekly to-do")</h4>
+            <div class="pm-muted pm-small">@T("Datei projektmanagement/Wochen_Todo.tsv wählen. Jede Zeile wird über ihre Nr. zu einer Aufgabe (Verweis WT-Nr). Ein erneuter Abgleich legt neue Zeilen an und übernimmt geänderten Titel, Schritt, Priorität, Termin und Status aus der Datei; die Datei bleibt führend.",
+                "Choose projektmanagement/Wochen_Todo.tsv. Each row becomes one task via its number (reference WT-no). Syncing again adds new rows and takes over changed title, step, priority, due date and status; the file stays authoritative.")</div>
+            <div class="pm-row pm-mt">
+                <InputFile OnChange="SyncWochenTodo" accept=".tsv,.txt,text/tab-separated-values" disabled="@_syncing" />
+            </div>
+            @if (_syncing)
+            {
+                <div class="pm-small pm-mt">@T("Gleiche ab …", "Syncing …")</div>
+            }
+            else if (_syncResult is { } r)
+            {
+                <div class="pm-small pm-mt">@T($"Fertig: {r.Created} neu, {r.Updated} geändert, {r.Unchanged} unverändert, {r.Skipped} übersprungen.", $"Done: {r.Created} new, {r.Updated} changed, {r.Unchanged} unchanged, {r.Skipped} skipped.")</div>
+            }
+        </section>
+    }
 
     <section class="pm-chart-card pm-chart-wide">
         <h4>@T("Spalten", "Columns")</h4>
@@ -213,7 +261,36 @@
         _loadedFor = Board.Project.Id;
         var p = Board.Project;
         _hermes = PmHermesInput.From(p.Hermes);
-        _input = new PmProjectInput { Name = p.Name, Description = p.Description, Color = p.Color, Icon = p.Icon, StartDate = p.StartDate, DueDate = p.DueDate, Template = p.Template, Key = p.Key };
+        _input = new PmProjectInput { Name = p.Name, Description = p.Description, Color = p.Color, Icon = p.Icon, StartDate = p.StartDate, DueDate = p.DueDate, Template = p.Template, Key = p.Key, Visibility = p.Visibility };
+    }
+
+    private string _addRole = PmRoles.Member;
+    private bool _syncing;
+    private PmImportResult? _syncResult;
+
+    private async Task SyncWochenTodo(InputFileChangeEventArgs e)
+    {
+        _syncing = true;
+        _syncResult = null;
+        try
+        {
+            using var reader = new StreamReader(e.File.OpenReadStream(5 * 1024 * 1024), System.Text.Encoding.UTF8);
+            var text = await reader.ReadToEndAsync();
+            _syncResult = await Pm.SyncWochenTodoAsync(User, Board.Project.Id, text);
+            await OnChanged.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+        catch (IOException)
+        {
+            await OnError.InvokeAsync(("Die Datei liess sich nicht lesen (höchstens 5 MB).", "The file could not be read (5 MB at most)."));
+        }
+        finally
+        {
+            _syncing = false;
+        }
     }
 
     private async Task Search(ChangeEventArgs e)
@@ -242,7 +319,7 @@
     {
         _hits = [];
         _search = string.Empty;
-        await Run(() => Pm.AddMemberAsync(User, Board.Project.Id, person.Login, person.Name));
+        await Run(() => Pm.AddMemberAsync(User, Board.Project.Id, person.Login, person.Name, _addRole));
     }
 
     private Task SaveProject() => Run(() => Pm.UpdateProjectAsync(User, Board.Project.Id, _input));

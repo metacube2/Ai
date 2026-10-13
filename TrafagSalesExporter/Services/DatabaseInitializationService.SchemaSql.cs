@@ -349,6 +349,7 @@ CREATE TABLE PmProjects (
     DueDate TEXT NULL,
     NextNumber INTEGER NOT NULL DEFAULT 1,
     IsArchived INTEGER NOT NULL DEFAULT 0,
+    Visibility TEXT NOT NULL DEFAULT 'Public',
     CreatedAtUtc TEXT NOT NULL,
     UpdatedAtUtc TEXT NOT NULL
 );";
@@ -407,7 +408,8 @@ CREATE TABLE PmTasks (
     CreatedAtUtc TEXT NOT NULL,
     UpdatedAtUtc TEXT NOT NULL,
     CompletedAtUtc TEXT NULL,
-    IsArchived INTEGER NOT NULL DEFAULT 0
+    IsArchived INTEGER NOT NULL DEFAULT 0,
+    ExternalRef TEXT NOT NULL DEFAULT ''
 );";
         yield return @"
 CREATE TABLE PmChecklistItems (

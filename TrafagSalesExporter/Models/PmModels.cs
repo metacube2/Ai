@@ -20,6 +20,8 @@ public sealed class PmProject
     public DateTime? DueDate { get; set; }
     public int NextNumber { get; set; } = 1;
     public bool IsArchived { get; set; }
+    // Seit 2026-10-13 (Wunsch Ingo): Public sehen alle, Private nur das Team (auch Admins nicht).
+    public string Visibility { get; set; } = PmVisibility.Public;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
 }
@@ -83,6 +85,8 @@ public sealed class PmTask
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public bool IsArchived { get; set; }
+    // Herkunft einer importierten Aufgabe, z. B. "WT-95" fuer Zeile 95 der Wochen_Todo (2026-10-13).
+    public string ExternalRef { get; set; } = string.Empty;
 }
 
 public sealed class PmChecklistItem
@@ -188,6 +192,16 @@ public static class PmRoles
 {
     public const string Lead = "Lead";
     public const string Member = "Member";
+    // Leser (2026-10-13): sieht ein privates Projekt, aendert aber nichts.
+    public const string Viewer = "Viewer";
+}
+
+public static class PmVisibility
+{
+    public const string Public = "Public";
+    public const string Private = "Private";
+
+    public static readonly string[] All = [Public, Private];
 }
 
 public static class PmCategories

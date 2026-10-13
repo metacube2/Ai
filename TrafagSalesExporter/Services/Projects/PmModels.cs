@@ -8,14 +8,17 @@ public sealed record PmUser(string Login, string DisplayName, bool IsAdmin)
     public bool IsKnown => Login.Length > 0;
 }
 
-public sealed record PmPerson(string Login, string Name);
+public sealed record PmPerson(string Login, string Name, string Role = PmRoles.Member);
 
 public sealed record PmProjectSummary(
     int Id, string Key, string Name, string Description, string Color, string Icon, string Template,
     string LeadLogin, string LeadName, IReadOnlyList<PmPerson> Members,
     DateTime? StartDate, DateTime? DueDate, bool IsArchived,
     int Total, int Open, int InProgress, int Done, int Overdue, int ProgressPercent,
-    DateTime UpdatedAtUtc, bool IsMember, PmHermesView? Hermes = null);
+    DateTime UpdatedAtUtc, bool IsMember, PmHermesView? Hermes = null, string Visibility = PmVisibility.Public)
+{
+    public bool IsPrivate => Visibility == PmVisibility.Private;
+}
 
 // HERMES-Angaben eines Projekts (2026-10-13); Phase wird aus den Entscheidungspunkten abgeleitet.
 public sealed record PmHermesView(
@@ -94,7 +97,11 @@ public sealed class PmProjectInput
     public string Template { get; set; } = PmTemplates.Kanban;
     public DateTime? StartDate { get; set; }
     public DateTime? DueDate { get; set; }
+    public string Visibility { get; set; } = PmVisibility.Public;
 }
+
+// Ergebnis des Wochen_Todo-Abgleichs (2026-10-13).
+public sealed record PmImportResult(int Created, int Updated, int Unchanged, int Skipped);
 
 public sealed class PmTaskInput
 {

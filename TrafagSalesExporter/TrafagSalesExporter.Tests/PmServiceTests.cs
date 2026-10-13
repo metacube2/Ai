@@ -346,6 +346,94 @@ public sealed class PmServiceTests : IDisposable
         Assert.Single(await _service.GetProjectsAsync(koi, includeArchived: true), p => p.Key == PmService.DemoKey);
     }
 
+    [Fact]
+    public async Task Private_Project_Is_Invisible_To_Others_And_Admins_Readers_See_But_Cannot_Edit()
+    {
+        var id = await _service.CreateProjectAsync(Lead, new PmProjectInput { Name = "Meine Wochen-Todo", Key = "WTODO", Visibility = PmVisibility.Private });
+        var taskId = await _service.CreateTaskAsync(Lead, id, new PmTaskInput { Title = "Geheim" });
+
+        Assert.Single(await _service.GetProjectsAsync(Lead), p => p.Id == id && p.IsPrivate);
+        Assert.DoesNotContain(await _service.GetProjectsAsync(Ben), p => p.Id == id);
+        Assert.DoesNotContain(await _service.GetProjectsAsync(Admin), p => p.Id == id);
+        Assert.Null(await _service.GetBoardAsync(id, Ben));
+        Assert.Null(await _service.GetBoardAsync(id, Admin));
+        Assert.Null(await _service.GetTaskAsync(taskId, Admin));
+        await Assert.ThrowsAsync<PmException>(() => _service.CreateTaskAsync(Admin, id, new PmTaskInput { Title = "Admin darf nicht" }));
+        await Assert.ThrowsAsync<PmException>(() => _service.UpdateProjectAsync(Admin, id, new PmProjectInput { Name = "Umbenannt", Visibility = PmVisibility.Public }));
+
+        await _service.AddMemberAsync(Lead, id, "ben", "Ben Beispiel", PmRoles.Viewer);
+        var benBoard = (await _service.GetBoardAsync(id, Ben))!;
+        Assert.False(benBoard.CanEdit);
+        Assert.False(benBoard.CanManage);
+        Assert.Equal(PmRoles.Viewer, benBoard.Project.Members.Single(m => m.Login == "ben").Role);
+        Assert.NotNull(await _service.GetTaskAsync(taskId, Ben));
+        await Assert.ThrowsAsync<PmException>(() => _service.CreateTaskAsync(Ben, id, new PmTaskInput { Title = "Leser darf nicht" }));
+
+        await _service.SetMemberRoleAsync(Lead, id, "ben", PmRoles.Member);
+        Assert.True((await _service.GetBoardAsync(id, Ben))!.CanEdit);
+        await _service.CreateTaskAsync(Ben, id, new PmTaskInput { Title = "Jetzt schon" });
+
+        await _service.UpdateProjectAsync(Lead, id, new PmProjectInput { Name = "Meine Wochen-Todo", Visibility = PmVisibility.Public });
+        Assert.Contains(await _service.GetProjectsAsync(Guest), p => p.Id == id && !p.IsPrivate);
+        Assert.True((await _service.GetBoardAsync(id, Admin))!.CanEdit);
+    }
+
+    [Fact]
+    public async Task Sync_WochenTodo_Creates_Then_Updates_By_Number()
+    {
+        var id = await _service.CreateProjectAsync(Lead, new PmProjectInput { Name = "Wochen Todo", Key = "WT", Visibility = PmVisibility.Private });
+        const string header = "Nr\tDringlichkeit\tBereich\tID\tThema\tWer\tPrio\tStatus\tFällig\tNächster Schritt\tErledigt am\tVorhaben\tHERMES-Stufe";
+        var first = string.Join("\n",
+            header,
+            "1\tErledigt\tFinance ES\tISS-004.2\tSpanien Buchungsdatum\tIngo\tMittel\tErledigt\t\tEntscheid 02.09.\t02.09.2026\tPM-05\tProjekt",
+            "94\tHeute\tSAP ZLO03\tPM-01\tZLO03 Tageszeit\tIngo\tHoch\tOffen\t2026-10-19\tNur lesend prüfen\t\t\t",
+            "95\tDiese Woche\tSAP Berechtigung\t\tWolfurt Rahmenvertrag\tIngo\tHoch\tIn P76, Ladelauf offen\t\tSU53 holen\t\t\t",
+            "x\tkaputt");
+
+        var result = await _service.SyncWochenTodoAsync(Lead, id, "﻿" + first);
+        Assert.Equal(new PmImportResult(3, 0, 0, 0), result);
+        var board = (await _service.GetBoardAsync(id, Lead))!;
+        var done = board.Tasks.Single(t => t.Title == "Spanien Buchungsdatum");
+        Assert.Equal(PmCategories.Done, done.Category);
+        var today = board.Tasks.Single(t => t.Title == "ZLO03 Tageszeit");
+        Assert.Equal(PmPriorities.Highest, today.Priority);
+        Assert.Equal(new DateTime(2026, 10, 19), today.DueDate);
+        Assert.Equal("anna", today.AssigneeLogin);
+        Assert.Contains("SAP ZLO03", today.Labels);
+        Assert.Equal(PmCategories.InProgress, board.Tasks.Single(t => t.Title == "Wolfurt Rahmenvertrag").Category);
+
+        var second = first.Replace("94\tHeute\tSAP ZLO03\tPM-01\tZLO03 Tageszeit\tIngo\tHoch\tOffen", "94\tHeute\tSAP ZLO03\tPM-01\tZLO03 Tageszeit\tIngo\tHoch\tErledigt")
+            + "\n96\tNächste Woche\tPlattform\t\tNeue Zeile\tIngo\tNiedrig\tOffen\t\t\t\t\t";
+        result = await _service.SyncWochenTodoAsync(Lead, id, second);
+        Assert.Equal(new PmImportResult(1, 1, 2, 0), result);
+        board = (await _service.GetBoardAsync(id, Lead))!;
+        Assert.Equal(4, board.Tasks.Count);
+        Assert.Equal(PmCategories.Done, board.Tasks.Single(t => t.Title == "ZLO03 Tageszeit").Category);
+        Assert.Equal(PmPriorities.Low, board.Tasks.Single(t => t.Title == "Neue Zeile").Priority);
+
+        await Assert.ThrowsAsync<PmException>(() => _service.SyncWochenTodoAsync(Ben, id, second));
+        await Assert.ThrowsAsync<PmException>(() => _service.SyncWochenTodoAsync(Lead, id, "irgendwas\nohne Kopf"));
+    }
+
+    [Fact]
+    public async Task Schema_Adds_Visibility_And_ExternalRef_To_Existing_Tables()
+    {
+        using (var db = new AppDbContext(_options))
+        {
+            // Stand vor 2026-10-13: Tabellen ohne die neuen Spalten.
+            db.Database.ExecuteSqlRaw("DROP TABLE PmProjects");
+            db.Database.ExecuteSqlRaw("DROP TABLE PmTasks");
+            foreach (var sql in DatabaseSchemaSql.GetPmCreateSql().Where(s => s.Contains("CREATE TABLE PmProjects") || s.Contains("CREATE TABLE PmTasks")))
+                db.Database.ExecuteSqlRaw(sql.Replace("    Visibility TEXT NOT NULL DEFAULT 'Public',\n", "").Replace("    Visibility TEXT NOT NULL DEFAULT 'Public',\r\n", "")
+                    .Replace(",\n    ExternalRef TEXT NOT NULL DEFAULT ''", "").Replace(",\r\n    ExternalRef TEXT NOT NULL DEFAULT ''", ""));
+            Assert.Throws<SqliteException>(() => db.Database.ExecuteSqlRaw("SELECT Visibility FROM PmProjects"));
+            new DatabaseSchemaMaintenanceService().EnsureSchema(db);
+        }
+
+        var id = await _service.CreateProjectAsync(Lead, new PmProjectInput { Name = "Nach dem Update", Key = "NDU", Visibility = PmVisibility.Private });
+        Assert.True((await _service.GetProjectsAsync(Lead)).Single(p => p.Id == id).IsPrivate);
+    }
+
     public void Dispose() => _connection.Dispose();
 
     private sealed class TestDbContextFactory(DbContextOptions<AppDbContext> options) : IDbContextFactory<AppDbContext>

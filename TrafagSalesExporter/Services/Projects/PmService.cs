@@ -23,7 +23,9 @@ public interface IPmService
     Task ToggleChecklistItemAsync(PmUser user, int itemId);
     Task DeleteChecklistItemAsync(PmUser user, int itemId);
     Task<int> AddCommentAsync(PmUser user, int taskId, string body);
-    Task AddMemberAsync(PmUser user, int projectId, string login, string name);
+    Task AddMemberAsync(PmUser user, int projectId, string login, string name, string role = PmRoles.Member);
+    Task SetMemberRoleAsync(PmUser user, int projectId, string login, string role);
+    Task<PmImportResult> SyncWochenTodoAsync(PmUser user, int projectId, string tsv);
     Task RemoveMemberAsync(PmUser user, int projectId, string login);
     Task<int> AddColumnAsync(PmUser user, int projectId, string name, string category);
     Task UpdateColumnAsync(PmUser user, int columnId, string name, string category, int wipLimit);
@@ -40,8 +42,9 @@ public interface IPmService
 
 /// <summary>
 /// Trafag Projekte: Projekte, Spalten (Trello-Listen / Jira-Status / Planner-Buckets), Aufgaben mit Rang,
-/// Sprints, Checklisten, Kommentare und Verlauf. Rechte: alle sehen alles; Aufgaben aendern duerfen
-/// Mitglieder und Admins; Projekt, Mitglieder und Spalten verwaltet die Projektleitung oder ein Admin.
+/// Sprints, Checklisten, Kommentare und Verlauf. Rechte: oeffentliche Projekte sehen alle, private nur ihr Team
+/// (seit 2026-10-13, auch keine Admins); Aufgaben aendern duerfen Mitglieder (Leser nicht) und in oeffentlichen
+/// Projekten Admins; Projekt, Mitglieder und Spalten verwaltet die Projektleitung, bei oeffentlichen auch ein Admin.
 /// Rang ist eine Kommazahl: Einfuegen zwischen zwei Karten nimmt die Mitte, ans Ende +1000.
 /// </summary>
 public sealed partial class PmService : IPmService
@@ -68,8 +71,9 @@ public sealed partial class PmService : IPmService
     public async Task<IReadOnlyList<PmProjectSummary>> GetProjectsAsync(PmUser user, bool includeArchived = false)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var projects = await db.PmProjects.AsNoTracking().Where(p => includeArchived || !p.IsArchived).ToListAsync();
         var members = await db.PmMembers.AsNoTracking().ToListAsync();
+        var projects = (await db.PmProjects.AsNoTracking().Where(p => includeArchived || !p.IsArchived).ToListAsync())
+            .Where(p => CanSee(p, members, user)).ToList();
         var columns = await db.PmColumns.AsNoTracking().ToDictionaryAsync(c => c.Id, c => c.Category);
         var tasks = await db.PmTasks.AsNoTracking().Where(t => !t.IsArchived && t.Type != PmTaskTypes.Epic)
             .Select(t => new { t.ProjectId, t.ColumnId, t.DueDate }).ToListAsync();
@@ -85,11 +89,11 @@ public sealed partial class PmService : IPmService
                 var overdue = own.Count(t => t.DueDate is { } d && d.Date < today && columns.GetValueOrDefault(t.ColumnId) != PmCategories.Done);
                 var people = members.Where(m => m.ProjectId == p.Id)
                     .OrderByDescending(m => m.Role == PmRoles.Lead).ThenBy(m => m.Name)
-                    .Select(m => new PmPerson(m.Login, m.Name)).ToList();
+                    .Select(m => new PmPerson(m.Login, m.Name, m.Role)).ToList();
                 return new PmProjectSummary(p.Id, p.Key, p.Name, p.Description, p.Color, p.Icon, p.Template, p.LeadLogin, p.LeadName,
                     people, p.StartDate, p.DueDate, p.IsArchived, own.Count, own.Count - done - progress, progress, done, overdue,
                     own.Count == 0 ? 0 : (int)Math.Round(done * 100d / own.Count), p.UpdatedAtUtc,
-                    people.Any(m => Same(m.Login, user.Login)), ToHermesView(hermes.GetValueOrDefault(p.Id)));
+                    people.Any(m => Same(m.Login, user.Login)), ToHermesView(hermes.GetValueOrDefault(p.Id)), p.Visibility);
             })
             .OrderByDescending(p => p.IsMember)
             .ThenByDescending(p => p.UpdatedAtUtc)
@@ -114,6 +118,7 @@ public sealed partial class PmService : IPmService
                 Color = PmStyle.Colors.Contains(input.Color) ? input.Color : PmStyle.Colors[0],
                 Icon = PmStyle.Icons.Contains(input.Icon) ? input.Icon : PmStyle.Icons[0],
                 Template = template, LeadLogin = user.Login, LeadName = user.DisplayName,
+                Visibility = PmVisibility.All.Contains(input.Visibility) ? input.Visibility : PmVisibility.Public,
                 StartDate = input.StartDate?.Date, DueDate = input.DueDate?.Date, CreatedAtUtc = now, UpdatedAtUtc = now
             };
             db.PmProjects.Add(project);
@@ -160,6 +165,13 @@ public sealed partial class PmService : IPmService
         project.Icon = PmStyle.Icons.Contains(input.Icon) ? input.Icon : project.Icon;
         project.StartDate = input.StartDate?.Date;
         project.DueDate = input.DueDate?.Date;
+        if (PmVisibility.All.Contains(input.Visibility) && input.Visibility != project.Visibility)
+        {
+            project.Visibility = input.Visibility;
+            Log(db, project.Id, null, user, input.Visibility == PmVisibility.Private
+                ? "hat das Projekt auf privat gestellt (nur das Team sieht es)"
+                : "hat das Projekt für alle sichtbar gemacht");
+        }
         project.UpdatedAtUtc = DateTime.UtcNow;
         Log(db, project.Id, null, user, "hat die Projekteinstellungen geändert");
         await db.SaveChangesAsync();
@@ -194,21 +206,24 @@ public sealed partial class PmService : IPmService
         var project = await db.PmProjects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == projectId);
         if (project is null)
             return null;
-        var summary = (await GetProjectsAsync(user, includeArchived: true)).First(p => p.Id == projectId);
+        // Ein privates Projekt sieht nur das Team; fuer alle anderen gibt es es nicht.
+        var summary = (await GetProjectsAsync(user, includeArchived: true)).FirstOrDefault(p => p.Id == projectId);
+        if (summary is null)
+            return null;
         var columns = await db.PmColumns.AsNoTracking().Where(c => c.ProjectId == projectId).OrderBy(c => c.SortOrder).ToListAsync();
         var sprints = await db.PmSprints.AsNoTracking().Where(s => s.ProjectId == projectId).OrderBy(s => s.Id).ToListAsync();
         var tasks = await db.PmTasks.AsNoTracking().Where(t => t.ProjectId == projectId && !t.IsArchived).ToListAsync();
         var cards = await CardsAsync(db, project, columns, tasks);
         var labels = cards.SelectMany(c => c.Labels).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(l => l).ToList();
-        var isMember = summary.IsMember;
+        var canEdit = await CanEditAsync(db, user, projectId);
         return new PmBoard(summary,
             columns.Select(c => new PmColumnView(c.Id, c.Name, c.Category, c.SortOrder, c.WipLimit)).ToList(),
             sprints.Select(ToView).ToList(),
             cards.Where(c => c.Type != PmTaskTypes.Epic).OrderBy(c => c.Rank).ToList(),
             cards.Where(c => c.Type == PmTaskTypes.Epic).OrderBy(c => c.Rank).ToList(),
             labels,
-            user.IsKnown && (isMember || user.IsAdmin),
-            user.IsKnown && (Same(project.LeadLogin, user.Login) || user.IsAdmin));
+            canEdit,
+            CanManage(project, user));
     }
 
     private static PmSprintView ToView(PmSprint s) => new(s.Id, s.Name, s.Goal, s.StartDate, s.EndDate, s.State, s.CompletedAtUtc);
@@ -250,6 +265,8 @@ public sealed partial class PmService : IPmService
         if (task is null)
             return null;
         var project = await db.PmProjects.AsNoTracking().FirstAsync(p => p.Id == task.ProjectId);
+        if (!CanSee(project, await db.PmMembers.AsNoTracking().Where(m => m.ProjectId == project.Id).ToListAsync(), user))
+            return null;
         var columns = await db.PmColumns.AsNoTracking().Where(c => c.ProjectId == project.Id).ToListAsync();
         var all = await db.PmTasks.AsNoTracking().Where(t => t.ProjectId == project.Id).ToListAsync();
         var cards = await CardsAsync(db, project, columns, all.Where(t => t.Id == taskId || t.ParentId == taskId).ToList());
@@ -549,7 +566,7 @@ public sealed partial class PmService : IPmService
 
     // ---------- Mitglieder ----------
 
-    public async Task AddMemberAsync(PmUser user, int projectId, string login, string name)
+    public async Task AddMemberAsync(PmUser user, int projectId, string login, string name, string role = PmRoles.Member)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var project = await db.PmProjects.FirstOrDefaultAsync(p => p.Id == projectId) ?? throw NotFound();
@@ -560,8 +577,28 @@ public sealed partial class PmService : IPmService
         if (await db.PmMembers.AnyAsync(m => m.ProjectId == projectId && m.Login == login))
             return;
         name = string.IsNullOrWhiteSpace(name) ? login : name.Trim();
-        db.PmMembers.Add(new PmMember { ProjectId = projectId, Login = login, Name = name, Role = PmRoles.Member, AddedAtUtc = DateTime.UtcNow });
-        Log(db, projectId, null, user, $"hat {name} ins Team aufgenommen");
+        role = role == PmRoles.Viewer ? PmRoles.Viewer : PmRoles.Member;
+        db.PmMembers.Add(new PmMember { ProjectId = projectId, Login = login, Name = name, Role = role, AddedAtUtc = DateTime.UtcNow });
+        Log(db, projectId, null, user, role == PmRoles.Viewer ? $"hat {name} als Leser aufgenommen" : $"hat {name} ins Team aufgenommen");
+        await db.SaveChangesAsync();
+        _notifier.Publish(projectId);
+    }
+
+    // Mitglied (darf aendern) oder Leser (sieht nur); die Projektleitung bleibt Projektleitung.
+    public async Task SetMemberRoleAsync(PmUser user, int projectId, string login, string role)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var project = await db.PmProjects.FirstOrDefaultAsync(p => p.Id == projectId) ?? throw NotFound();
+        await RequireManageAsync(db, user, project);
+        if (Same(project.LeadLogin, login))
+            throw new PmException("Die Rolle der Projektleitung lässt sich nicht ändern.", "The project lead's role cannot be changed.");
+        if (role is not (PmRoles.Member or PmRoles.Viewer))
+            throw new PmException("Unbekannte Rolle.", "Unknown role.");
+        var member = await db.PmMembers.FirstOrDefaultAsync(m => m.ProjectId == projectId && m.Login == login) ?? throw NotFound();
+        if (member.Role == role)
+            return;
+        member.Role = role;
+        Log(db, projectId, null, user, role == PmRoles.Viewer ? $"hat {member.Name} zum Leser gemacht" : $"hat {member.Name} das Ändern erlaubt");
         await db.SaveChangesAsync();
         _notifier.Publish(projectId);
     }
@@ -757,7 +794,9 @@ public sealed partial class PmService : IPmService
         await using var db = await _dbFactory.CreateDbContextAsync();
         var mine = await db.PmTasks.AsNoTracking().Where(t => t.AssigneeLogin == user.Login && !t.IsArchived).ToListAsync();
         var projectIds = mine.Select(t => t.ProjectId).Distinct().ToList();
-        var projects = await db.PmProjects.AsNoTracking().Where(p => projectIds.Contains(p.Id) && !p.IsArchived).ToListAsync();
+        var memberships = await db.PmMembers.AsNoTracking().Where(m => projectIds.Contains(m.ProjectId)).ToListAsync();
+        var projects = (await db.PmProjects.AsNoTracking().Where(p => projectIds.Contains(p.Id) && !p.IsArchived).ToListAsync())
+            .Where(p => CanSee(p, memberships, user)).ToList();
         var result = new List<PmMyTask>();
         foreach (var project in projects)
         {
@@ -908,20 +947,41 @@ public sealed partial class PmService : IPmService
     private static void Log(AppDbContext db, int projectId, int? taskId, PmUser user, string text) =>
         db.PmActivities.Add(new PmActivity { ProjectId = projectId, TaskId = taskId, Login = user.Login, Name = user.DisplayName, Text = text, AtUtc = DateTime.UtcNow });
 
-    private static async Task<bool> CanEditAsync(AppDbContext db, PmUser user, int projectId) =>
-        user.IsKnown && (user.IsAdmin || await db.PmMembers.AnyAsync(m => m.ProjectId == projectId && m.Login == user.Login));
+    // Rechte seit 2026-10-13: Ein oeffentliches Projekt sehen alle, ein privates nur sein Team (Leitung, Mitglieder,
+    // Leser), ausdruecklich auch keine Admins. Aendern duerfen Leitung und Mitglieder, Leser nicht; Admins nur in
+    // oeffentlichen Projekten. Verwalten darf die Leitung, ein Admin nur in oeffentlichen Projekten.
+    internal static bool CanSee(PmProject project, IEnumerable<PmMember> members, PmUser user) =>
+        project.Visibility != PmVisibility.Private
+        || (user.IsKnown && members.Any(m => m.ProjectId == project.Id && Same(m.Login, user.Login)));
+
+    private static bool CanManage(PmProject project, PmUser user) =>
+        user.IsKnown && (Same(project.LeadLogin, user.Login) || (user.IsAdmin && project.Visibility != PmVisibility.Private));
+
+    private static async Task<bool> CanEditAsync(AppDbContext db, PmUser user, int projectId)
+    {
+        if (!user.IsKnown)
+            return false;
+        var project = await db.PmProjects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == projectId);
+        if (project is null)
+            return false;
+        var role = await db.PmMembers.AsNoTracking().Where(m => m.ProjectId == projectId && m.Login == user.Login)
+            .Select(m => m.Role).FirstOrDefaultAsync();
+        if (role is not null)
+            return role != PmRoles.Viewer;
+        return user.IsAdmin && project.Visibility != PmVisibility.Private;
+    }
 
     private static async Task RequireEditAsync(AppDbContext db, PmUser user, int projectId)
     {
         RequireUser(user);
         if (!await CanEditAsync(db, user, projectId))
-            throw new PmException("Ändern dürfen nur Mitglieder des Projekts. Die Projektleitung kann dich aufnehmen.", "Only project members can make changes. The project lead can add you.");
+            throw new PmException("Ändern dürfen nur Mitglieder des Projekts, Leser nicht. Die Projektleitung kann dich aufnehmen.", "Only project members can make changes, readers cannot. The project lead can add you.");
     }
 
     private static Task RequireManageAsync(AppDbContext db, PmUser user, PmProject project)
     {
         RequireUser(user);
-        if (!user.IsAdmin && !Same(project.LeadLogin, user.Login))
+        if (!CanManage(project, user))
             throw new PmException("Das darf nur die Projektleitung.", "Only the project lead can do this.");
         return Task.CompletedTask;
     }
