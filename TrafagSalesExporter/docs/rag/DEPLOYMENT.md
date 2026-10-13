@@ -4,9 +4,11 @@ Stand: 2026-10-13
 
 ## Deploy-Ablauf seit 2026-10-13 (Entscheid Ingo)
 
-- **Keine DB-Sicherung mehr bei jedem Deploy.** Sie kostete bis 13 Minuten (seitenweise Kopie bei offenem `-wal`).
-  `DeployHeadless` sichert nur noch mit Argument `--backup`; Claude schlaegt das vor, wenn ein Deploy das Schema
-  aendert oder Daten umschreibt, sonst nur auf Ingos Wunsch.
+- **DB-Sicherung einmal pro Woche** (Entscheid Ingo 2026-10-13 nachmittags, nachdem eine Sicherung zu lange
+  dauerte und abgebrochen wurde). `DeployHeadless` sichert von selbst, wenn die neueste `trafag_exporter.db.before-*.bak`
+  auf dem Share aelter als sieben Tage ist (Etikett `wochensicherung`); `--backup` erzwingt eine Sicherung,
+  `--no-backup` unterdrueckt auch die Wochensicherung. Eine Sicherung kostet bis 13 Minuten (seitenweise Kopie bei
+  offenem `-wal`). *Ueberholt:* vormittags am 2026-10-13 galt „nur auf Ansage mit `--backup`“, davor „bei jedem Deploy“.
 - **Bestand am 2026-10-13 aufgeraeumt:** 96 alte Sicherungen (rund 36,8 GB) auf Ingos Entscheid geloescht. Behalten:
   `trafag_exporter.db.before-menue-hervorhebung-20261013-101656.bak` (neueste) und
   `trafag_exporter.db.before-verkauf-korrekturen-20261002-142056.bak` (rund zehn Tage alt). Nicht angefasst:
