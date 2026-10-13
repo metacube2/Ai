@@ -82,6 +82,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-13 | Wiederholt: `node -e` mit maskierten Backslashes, um ein Hilfsskript im Scratchpad zu aendern; die Ersetzung griff nur halb (CRLF-Anpassung fuer die Berndeutsch-Datei), vor dem Lauf bemerkt | Auch Aenderungen an Hilfsskripten mit dem Edit-Werkzeug machen, nie per `node -e` | Zeile 2026-09-30 unten |
 | 2026-10-13 | `Reindex-Docs.ps1` im PowerShell-Werkzeug mit `*>&1` aufgerufen: die harmlose fastembed-Warnung (mean pooling) auf stderr wurde in PS 5.1 zur `NativeCommandError`, der Lauf brach mit Exit 1 ab | Reindex ohne Umleitung starten, z. B. aus Bash `powershell.exe -NoProfile -ExecutionPolicy Bypass -File Tools/Qdrant/Reindex-Docs.ps1 > log 2>&1`; Fortschritt steht im Log („n/3837 Abschnitte“) | `Tools/Qdrant/Reindex-Docs.ps1` |
 | 2026-10-12 | Wiederholt: Bash-Heredoc mit `'...'` und `"`-Zeichen in node-Skripten brach ab (unexpected EOF, falsche Escapes) | Aenderungsskripte immer mit dem Write-Werkzeug als Datei anlegen und mit `node datei` ausfuehren | `saptasks/zm_offene_kdauf/teile/aendern_*.js` |
 | 2026-10-12 | ABAP: `WRITE ls-wert(40)` auf einen String, der kuerzer als 40 Zeichen war, brach mit STRING_LENGTH_TOO_LARGE ab | Teilzugriffe `(n)` nur auf Felder fester Laenge; fuer Ausgaben `TYPE c LENGTH n` statt `string` | `saptasks/zm_offene_kdauf/ZM_OFFENE_KDAUF_CMP.abap` |

@@ -1,6 +1,17 @@
 # Last Change
 
-Stand: 2026-10-12
+Stand: 2026-10-13
+
+## Trafag Projekte: HERMES-Angaben, Portfolio und Demoprojekt, 2026-10-13 (`7e20f93`)
+
+- Je Projekt ein HERMES-Block in den Einstellungen: Aufwand mit Skala und Stufenvorschlag (unter 5 / 5 bis 40 /
+  über 40 Personentage), Stufe, Ampel, Auftraggeber, Anwendervertreter, Stand in einem Satz, nächster Entscheid,
+  „Erledigt, wenn“ und die Entscheidungspunkte ① Freigabe, ② Abnahme, ③ Abschluss; die Phase folgt daraus.
+- Grafik: HERMES-Pfad mit animierter aktueller Phase, Projektkarten mit Ampel, Stufe, Phase und Rauten,
+  neuer Reiter „Portfolio (HERMES)“ mit Ampelring, Stufenbalken, Phasenlandkarte und Tabelle für die
+  Geschäftsleitung, alles per Klick filterbar.
+- Demoprojekt `HDEMO` wird beim Start einmalig angelegt. Neue Tabelle `PmHermes`, 49 Texte in allen Sprachen,
+  8 neue Tests (1173/1173). Doku `docs/TRAFAG_PROJEKTE_2026-10-09.md`, Handbuch Kapitel 8.
 
 ## SAP ZZPRDAT: Abnahmetest verschoben, 2026-10-12
 
