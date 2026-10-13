@@ -186,7 +186,7 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
 - Die Seite ist als Cockpit-Struktur umgesetzt und ueber den vorhandenen UI-Sprachservice mehrsprachig vorbereitet.
 - EKKO, EKPO und EKET werden per SAP/OData in lokale Cache-Tabellen geladen.
 - Das Cockpit liest zuerst den Cache und nutzt nur noch als Fallback eine begrenzte Live-Probe, falls noch kein Cache vorhanden ist.
-- Seit 2026-06-18 ist der Zeitraumfilter standardmaessig auf 2020 bis aktuelles Jahr ausgerichtet.
+- Seit 2026-06-18 ist der Zeitraumfilter standardmaessig auf 2020 bis aktuelles Jahr ausgerichtet. **Ueberholt seit 2026-10-13 (`4b9ebb1`): Standard ist jetzt Januar des laufenden Jahres bis heute; der Knopf „2020 bis heute“ zeigt die Mehrjahressicht.**
 - Seit 2026-06-18 gibt es eine Excel-aehnliche Kaskadierungstabelle Lieferant x Jahr mit Jahresspalten, Gesamtsumme und Top-down-Sortierung.
 - Spend im aktuellen Jahr wird pro Lieferant separat analysiert.
 - Bereits beschafft/gebucht und offene Bestellungen/Zulauf werden getrennt visualisiert.
@@ -312,7 +312,7 @@ Die Seite `/einkauf` zeigt nun echte Werte aus dem SAP-Cache:
 - Offene Verpflichtungen werden nicht mehr primaer als reine Vergangenheits-Zeitreihe interpretiert; fuer Einkauf ist die Zukunfts-/Faelligkeitssicht nach Lieferant und Artikel fachlich aussagekraeftiger.
 - Spend-, Offenwert- und Kontrakt-Diagramme verwenden Cache-Gruppierungen, sofern der Cache gefuellt ist.
 - Ist der Cache leer oder nicht erreichbar, faellt das Dashboard auf eine begrenzte SAP-Live-Probe zurueck.
-- Der Standardzeitraum ist seit 2026-06-18 auf 2020 bis heute ausgerichtet. Die Datumsabgrenzung erfolgt im Dashboard ueber `Von Monat` und `Bis Monat`.
+- Der Standardzeitraum ist seit 2026-06-18 auf 2020 bis heute ausgerichtet. Die Datumsabgrenzung erfolgt im Dashboard ueber `Von Monat` und `Bis Monat`. **Ueberholt seit 2026-10-13 (`4b9ebb1`): Standard ist jetzt Januar des laufenden Jahres bis heute; der Knopf „2020 bis heute“ zeigt die Mehrjahressicht.**
 
 ## PowerBI-Abgleich
 
@@ -344,7 +344,7 @@ Noch nicht final 1:1 ist die Namensauflösung:
 Umgesetzt:
 
 - Neue Matrix `Kaskadierung Lieferant / Jahr` in der Einkaufssicht.
-- Jahresachse aus den tatsaechlichen Spend-Jahren, im Standard 2020 bis aktuelles Jahr.
+- Jahresachse aus den tatsaechlichen Spend-Jahren, im Standard 2020 bis aktuelles Jahr. **Ueberholt seit 2026-10-13 (`4b9ebb1`): Standard ist jetzt Januar des laufenden Jahres bis heute; der Knopf „2020 bis heute“ zeigt die Mehrjahressicht.**
 - Lieferanten werden Top-down nach Gesamt-Spend sortiert.
 - Aktuelles Jahr: Spend pro Lieferant als separate Analyse.
 - Gebuchter/beschaffter Wert und offener Zulauf werden in der Uebersicht getrennt dargestellt.
@@ -1288,3 +1288,7 @@ der 120-Sekunden-Grenze. Danach lieferten alle 14 weiteren Einkaufsrouten HTTPS 
 
 Nachweis: Commits `756e931` und `2444731`, vier gezielte Cachetests, **674/674** Release-
 Tests, NuGet-Audit ohne bekannte Schwachstelle sowie produktiver Deploy am 2026-09-03.
+
+## Nachtrag 2026-10-13: Standardzeitraum laufendes Jahr
+
+Wunsch Ingo: `/einkauf` oeffnet immer mit Januar des laufenden Kalenderjahres bis zum aktuellen Monat (heute 01.2026 bis 10.2026), ab 01.01.2027 automatisch 01.2027. `PurchasingDashboardFilter.Default(today)` liefert den 01.01. des Jahres; die Seite leitet `BuildDefaultFromMonth` daraus ab, damit die Vorwaermung im Hintergrund denselben Schluessel trifft. Der feste Jahresdeckel 2026 in `BuildCurrentFilter`/`ClampMonth` ist entfernt, er haette ab 2027 nur noch bis Dezember 2026 gerechnet. Der Knopf „2020 bis heute“ setzt jetzt ausdruecklich 2020-01 bis heute (vorher Ruecksprung auf den Standard). Folge: Mehrjahresansichten wie „Bestellwert nach Lieferant und Jahr“ zeigen standardmaessig nur das laufende Jahr. Commit `4b9ebb1`, produktiv 2026-10-13, geprueft: Seite zeigt 01.2026 bis 10.2026, 6'101 Bestellungen.
