@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-09-03, Nachträge bis 2026-10-12 am Ende
+Stand: 2026-09-03, Nachträge bis 2026-10-13 am Ende
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**
@@ -1620,3 +1620,9 @@ Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.
 * **Paket eines `$TMP`-Objekts aendern**: SE38 `RSWBO052` (`SapGuiReportSelektion.vbs`), Objekt ankreuzen und ausfuehren (`SapGuiTadirFugr.vbs` fuer Funktionsgruppen), Cursor auf die Zeile und "Objektkatalog aendern" (`SapGuiListeCursorTaste.vbs ... tbar[1]/btn[19]`), Paket setzen (`SapGuiPaketAendern.vbs`), neuen Auftrag anlegen (`SapGuiAuftragNeu.vbs`).
 * `SapGuiSetReportSourceAuftrag.vbs` liest die Quelldatei seit 2026-10-12 als UTF-8 (vorher ANSI: Umlaute aus UTF-8-Dateien waeren verstuemmelt worden).
 * `BP_JOBLOG_READ` und `RSPO_RETURN_ABAP_SPOOLJOB` sind nicht RFC-faehig; Joblisten deshalb vom Job selbst ablegen lassen (Beispiel: CMP schreibt nach `INDX(ZK)`).
+
+### Nachtrag 2026-10-13 (lesend in P76, Berechtigungsfall)
+
+* **Lesen in P76 ueber Ingos angemeldete GUI**: `P76Lesen.vbs` (neue Sitzung nur mit Anzeige-TX, Ingos Sitzungen bleiben unberuehrt), `P76SitzungSchliessen.vbs`, Listen auswerten mit `SapListeZeilen.py`. Die uebrigen Skripte sperren P76 absichtlich. Anleitung, Feld-Ids fuer `AGR_TCODES`/`AGR_1251`/`AGR_1252`/`EKKO` und Fallen: `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` Abschnitt 5.
+* **Berechtigungsfaelle**: Vorgehen in sieben Schritten (Beleg klaeren, Betroffene klaeren, SU53, AGR_TCODES, AGR_1251/AGR_1252, Kandidaten suchen, nur Rollen zuordnen) in `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` Abschnitt 4.
+* P76 ist Produktion: auch lesend nur nach Ingos ausdruecklichem Auftrag; der Auto-Modus lehnt solche Zugriffe sonst ab.

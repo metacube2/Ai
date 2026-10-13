@@ -36,6 +36,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | Thema | Datei |
 | --- | --- |
 | **Wie man SAP ueberhaupt bedient: Zugangswege, Grenzen, Aktivierungsfallen, Gateway/OData, Skriptbestand** | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` |
+| **Berechtigungsfall untersuchen (Rollen, SU53, AGR_TCODES/AGR_1251/AGR_1252), lesend in P76 per GUI; Fall Rahmenvertrag 46010612 Wolfurt: `M_RAHM_EKO` fehlt EKORG 1200** | `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` |
 | **ZLO03 / Stuecklistenanalyse-Webservice** (`ZM_LZCODE20_OPT`) | `docs/abap/README_LZCODE_WEBSERVICE.md` |
 | Produktsparten-Provider | `docs/abap/README_PRODSPARTE.md` |
 | Produktgruppen als SAP OData (SEGW-Anleitung, Methodenruempfe) | `docs/abap/README_PRODUCT_GROUP_SAP_ODATA.md` |

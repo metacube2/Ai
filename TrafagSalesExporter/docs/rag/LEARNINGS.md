@@ -77,6 +77,9 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 | 2026-10-01 | Git Bash machte aus dem Methodennamen `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET` einen Pfad `C:/PROGRAM FILES/GIT/IWBEP/...` | SAP-Skripte mit Argumenten, die mit `/` beginnen, ueber PowerShell aufrufen, nie ueber Bash | SAP-Arbeitsweise „Bash verstuemmelt“ |
 | 2026-10-01 | Ein neuer Datumsschutz (hoechstens 7 Tage zurueck) machte die Sets in T76 untestbar, weil die Testkopie im Maerz endet | Schutzgrenzen so waehlen, dass T76 testbar bleibt; die eigentliche Last-Grenze ist "genau ein Tag", nicht das Alter | `LOGISTIK_LIVE_2026-10-01.md` |
 | 2026-10-01 | Falsche Annahme, dass F6 in SE24 nach dem Auftrag fragt; die Abfrage kam erst beim Sichern | Nach jedem Sichern auf `wnd[1]` pruefen und den Auftrag dort setzen | SAP-Arbeitsweise Skripttabelle |
+| 2026-10-13 | Fabios Kuerzel BLS/GAL fuer funktionierende Vorlagen gehalten; es waren die Betroffenen selbst (Blematl Sarah). Rollenvergleich darauf aufgebaut und eine falsche Empfehlung gegeben | Bei Berechtigungsfaellen zuerst fragen, wer betroffen ist und wer funktioniert; Kuerzel nicht deuten | `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` Abschnitt 4 |
+| 2026-10-13 | „Hainzl 64776 lt. Rahmenvertrag 46010612“ als Kunde und SD-Kontrakt gedeutet und die CH-Verkaufsrolle empfohlen; es war Material 64776 in einem Einkaufs-Mengenkontrakt (EKORG 1200) | Erst den Beleg lesen (EKKO/VBAK, ME33K/VA43), dann Rollen vergleichen | `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` Abschnitt 2 |
+| 2026-10-13 | SE16 `AGR_1252` mit falscher Feld-Id gefiltert (`txtI4` statt `ctxtI3`): SE16 blieb auf dem Selektionsbild, sah aus wie „nichts gefunden“ | Feld-Ids zuerst per `dump` ablesen; Titel muss „n Treffer“ zeigen | `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` Abschnitt 5 |
 
 ## Code, Tests, Werkzeuge
 
