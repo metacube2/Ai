@@ -1,7 +1,7 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-10-01. Angelegt auf Wunsch von Ingo: Fehler an einer Stelle festhalten statt verstreut,
-damit sie nicht wieder passieren.
+Stand: 2026-10-13 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
 neuen Fehler macht oder einen alten wiederholt, traegt ihn hier ein, im selben Commit wie die
@@ -114,6 +114,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-13 | Wiederholt (Fall 2026-09-02): Kopfzeile „Stand“ blieb beim Nachtragen stehen; `LEARNINGS.md` sagte 2026-10-01 bei Eintraegen bis 2026-10-12, `rag/init.md` sagte 2026-09-11, verwies aber schon auf die erst am 2026-10-01 angelegte `LEARNINGS.md` | Wer eine Datei inhaltlich aendert, zieht die Zeile „Stand“ im selben Commit mit, auch bei einer einzelnen angehaengten Zeile | `CLAUDE.md` 3 Punkt 2 |
 | 2026-09-02 | UK galt als „ohne Lieferantenfelder“, Spanien-Datum war laengst entschieden, Doku sagte anderes | Doku vollstaendig nachfuehren, ueberholte Aussagen markieren | `CLAUDE.md` 3 |
 | laufend | Lokale DB oder Dev-Server als Beleg genommen | Ingo testet nur produktiv; Belege nur aus Produktion | `router.md` 8 |
 | laufend | Zu viele Annahmen bei unklarem Auftrag kosteten Mehraufwand | Bei fachlich offenen Punkten kurz fragen, mit Empfehlung | `persona.md` |

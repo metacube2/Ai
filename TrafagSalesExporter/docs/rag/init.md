@@ -1,6 +1,6 @@
 # RAG-Einstieg: Ladereihenfolge und Abschlussregel
 
-Stand: 2026-09-11
+Stand: 2026-10-01 (Verweis auf `LEARNINGS.md` ergaenzt; Kopfzeile am 2026-10-13 nachgefuehrt)
 
 ## Ladereihenfolge fuer eine neue Sitzung
 
