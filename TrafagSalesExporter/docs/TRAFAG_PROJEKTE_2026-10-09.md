@@ -1,6 +1,6 @@
 # Trafag Projekte (Projektmanagement wie Jira, Trello und Planner)
 
-Stand: 2026-10-13 (HERMES-Angaben, Portfolio und Demoprojekt ergänzt)
+Stand: 2026-10-13 (HERMES-Angaben, Portfolio und Demoprojekt ergänzt; nachmittags private Projekte, Rolle Leser und Abgleich der Wochen_Todo, Abschnitt „Sichtbarkeit und Wochen_Todo“)
 
 Auftrag Ingo 2026-10-09: die „Poor Man's Project Management Suite“ durch eine richtige Lösung ersetzen,
 „ein Jira-Trello-Projektmanagementsystem, Funktionen von Jira, Ansicht Trello möglich und das Beste von
@@ -8,6 +8,7 @@ Microsoft Planner“. Entscheide Ingo am selben Tag:
 
 - Name **Trafag Projekte**, oberste Menüebene.
 - **Alle sehen, Mitglieder bearbeiten**; jeder Angemeldete darf ein Projekt anlegen und wird dessen Leitung.
+  *Ergänzt am 2026-10-13:* Ein Projekt kann privat sein; dann sieht es nur sein Team.
 - Die alten Einträge waren nie genutzt (produktiv 0 Projekte, geprüft an der Sicherung vom 09.10.) und
   werden **nicht übernommen**.
 - **Deploy für alle**, auch nach dem Hinweis auf Philip Steigers Project-Power-Pack-Test (Memory vom
@@ -29,6 +30,8 @@ Rechenregeln (Fortschritt, Überfällig, Burndown, Durchsatz) stehen im Handbuch
 (`wwwroot/handbuch/kapitel/08_projekte.md`) und im Code `Services/Projects/PmService.cs`.
 
 ## Rechte
+
+*Stand bis 2026-10-13 vormittags; für private Projekte gilt seither der Abschnitt „Sichtbarkeit und Wochen_Todo“.*
 
 | Wer | Darf |
 |---|---|
@@ -96,6 +99,7 @@ deren Quelle), dazu ein Demoprojekt zum Anschauen.
 - 2026-10-09: gebaut (`df4fa60`, Fix `9d819ae`), **produktiv seit 10:18** (Stand `e879bab`).
 - CSS-Korrektur (Formularbeschriftung, umbrechende Zeilen) **produktiv seit 11:07** (`41f2423`).
 - 2026-10-13: HERMES-Angaben, Portfolio und Demoprojekt HDEMO **produktiv seit 09:34** (`7e20f93`), Darstellungsfix Phasenpfad **produktiv seit 09:47** (`47990ad`). Release-Tests 1158/1158; Sichtpruefung per Edge headless (alle Ansichten am Demoprojekt ohne Fehler, Bedienen wie Ziehen oder Speichern nicht angeklickt, durch Tests abgedeckt).
+- 2026-10-13: private Projekte, Rolle Leser und Abgleich der Wochen_Todo **produktiv seit 14:43** (`6cc0035`), Release-Tests 1161/1161, ohne DB-Sicherung (abgebrochen, siehe `docs/rag/DEPLOYMENT.md`). Produktiv geprueft per Edge headless: Formular „Neues Projekt“ zeigt „Wer sieht es“, Einstellungen von HDEMO zeigen Sichtbarkeit, „Person hinzufügen als“ und „Wochen_Todo abgleichen“. Den ersten Abgleich macht Ingo selbst (privates Projekt anlegen, TSV hochladen).
 
 ## Deploy
 
@@ -112,6 +116,23 @@ deren Quelle), dazu ein Demoprojekt zum Anschauen.
 - Gefunden und behoben (seit 11:07 produktiv): die Klasse `pm-label` war fuer Formularbeschriftung und
   Trello-Label doppelt vergeben (Beschriftung „Person hinzufuegen“ abgeschnitten); Eingabefelder in Zeilen
   brachen um (Zuweisen im Panel, neue Spalte).
+
+## Sichtbarkeit und Wochen_Todo (2026-10-13)
+
+Auftrag Ingo: „bring meine Wochen_Todo in die Trafag Projekte, stell auf privat, dass nur ich meine Projekte sehen kann; man soll als Owner sagen können, wer Projekte sieht“. Entscheide Ingo: Abgleich **wiederholbar** (TSV bleibt führend), **alle Zeilen** (erledigte in die Spalte Erledigt), privat heisst **auch keine Admins**.
+
+| Wer | Öffentliches Projekt | Privates Projekt |
+|---|---|---|
+| alle Angemeldeten | sehen, anlegen, kommentieren | sehen es nicht (Übersicht, Portfolio, Link, Meine Aufgaben) |
+| Leser (neue Rolle) | sehen | sehen alles, ändern nichts |
+| Mitglieder | Aufgaben und Sprints ändern | Aufgaben und Sprints ändern |
+| Projektleitung (Besitzer) | verwalten, Sichtbarkeit, Team mit Rolle | verwalten, Sichtbarkeit, Team mit Rolle |
+| Admin | wie Projektleitung | **nichts**, ausser er ist im Team |
+
+- Sichtbarkeit wählt man beim Anlegen („Wer sieht es“) oder in den Einstellungen; Wechsel steht im Verlauf. Bestehende Projekte bleiben öffentlich.
+- Team: „Person hinzufügen als“ Mitglied oder Leser; die Rolle lässt sich je Person umstellen (`SetMemberRoleAsync`).
+- **Abgleich Wochen_Todo** (Einstellungen, nur Projektleitung): `projektmanagement/Wochen_Todo.tsv` hochladen. Jede Zeile wird über ihre Nr. zu genau einer Aufgabe (`PmTasks.ExternalRef` = `WT-<Nr>`). Ein erneuter Abgleich legt neue Zeilen an und überschreibt Titel, Beschreibung (Nächster Schritt, Bereich, ID, Wer, Vorhaben, HERMES), Priorität, Termin und Labels (Bereich, Status, Dringlichkeit). Die Spalte wechselt nur bei anderer Art; Status „Erledigt…“ = erledigt, „Läuft/Umgesetzt…/In …/Teilweise…“ = in Arbeit, sonst offen. Prio Hoch/Mittel/Niedrig, Dringlichkeit „Heute“ = sehr hoch. „Wer“ mit Ingo wird dem Hochladenden zugewiesen. Aus der TSV verschwundene Zeilen bleiben stehen.
+- Technik: `PmProjects.Visibility` (Public/Private) und `PmTasks.ExternalRef`, beim Start per `AddColumnIfMissing` nachgerüstet; Rechte zentral in `PmService.CanSee/CanManage/CanEditAsync`; Abgleich in `PmService.WochenTodo.cs`; Tests in `PmServiceTests` (privat/Leser, Abgleich, Schema-Nachrüstung). Commit `6cc0035`.
 
 ## Offen
 
