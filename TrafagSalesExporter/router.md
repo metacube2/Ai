@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-10-12
+Stand: 2026-10-13
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
@@ -69,6 +69,10 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
    „Erledigt am“ in `Wochen_Todo.tsv` als `JJJJ-MM-TT HH:MM`, „Letztes Update“ im Issue-Log, in der
    Fachdatei ein Vermerk `*Erledigt JJJJ-MM-TT HH:MM:*` am betroffenen Absatz, Deploys mit Uhrzeit
    in `rag/DEPLOYMENT.md`. Keine Zeitstempel an unveraenderten Absaetzen, alte Eintraege nicht nachruesten.
+11. **Deploy (Stand 2026-10-13, Entscheid Ingo):** ohne DB-Sicherung, ausser Ingo verlangt sie oder Claude schlaegt
+   sie vor (etwa bei Schemaaenderungen), dann mit `--backup`. Zu jedem Deploy das **Monitor-Fenster** oeffnen:
+   `.tmp_tools/DeployMonitor/` (Start ueber `explorer.exe ...\ZeigeLetztenDeploy.cmd`, sonst unsichtbar) zeigt
+   Schritt, Fortschrittsbalken und die letzten Zeilen. Befehle und Fallen in `docs/rag/DEPLOYMENT.md` oben („Deploy-Ablauf seit 2026-10-13“).
 
 ## Themenaeste
 

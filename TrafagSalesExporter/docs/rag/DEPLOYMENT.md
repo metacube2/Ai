@@ -1,6 +1,26 @@
 # RAG Deployment
 
-Stand: 2026-10-01
+Stand: 2026-10-13
+
+## Deploy-Ablauf seit 2026-10-13 (Entscheid Ingo)
+
+- **Keine DB-Sicherung mehr bei jedem Deploy.** Sie kostete bis 13 Minuten (seitenweise Kopie bei offenem `-wal`).
+  `DeployHeadless` sichert nur noch mit Argument `--backup`; Claude schlaegt das vor, wenn ein Deploy das Schema
+  aendert oder Daten umschreibt, sonst nur auf Ingos Wunsch.
+- **Bestand am 2026-10-13 aufgeraeumt:** 96 alte Sicherungen (rund 36,8 GB) auf Ingos Entscheid geloescht. Behalten:
+  `trafag_exporter.db.before-menue-hervorhebung-20261013-101656.bak` (neueste) und
+  `trafag_exporter.db.before-verkauf-korrekturen-20261002-142056.bak` (rund zehn Tage alt). Nicht angefasst:
+  Ordner `deploy_backups\` und zwei `.bak` unter `output\`.
+- **Monitor-Fenster** (Wunsch Ingo): vor dem Deploy oeffnen, es liest das Protokoll nur mit:
+  Protokollpfad in `.tmp_tools/DeployMonitor/DeployMonitor.logpath.txt` schreiben, dann
+  `explorer.exe "<Repo>\.tmp_tools\DeployMonitor\ZeigeLetztenDeploy.cmd"`; nur ueber `explorer.exe` erscheint das
+  Fenster auf Ingos Desktop (ein direktes `Start-Process` aus Claudes Shell blieb am 2026-10-13 unsichtbar).
+  Danach der Runner mit Ausgabe in genau diese Datei. Das Fenster zeigt Schritt, Fortschrittsbalken, Laufzeit
+  und die letzten Zeilen; der Kopf wird gruen (ohne Alarm), gelb (Alarm, Claude prueft) oder rot (abgebrochen),
+  danach schliesst es sich nach 5 Sekunden selbst (Wunsch Ingo).
+- **Runner beendet sich jetzt hart** (`Environment.Exit` am Ende). Vorher blieb er nach „Fertig“ haengen und
+  sperrte `DeployConsole.dll` (2026-10-05 und zweimal am 2026-10-13). Haengt trotzdem einer, den naechsten Lauf
+  mit eigenem Ausgabeordner bauen: `dotnet run --project .tmp_tools/DeployHeadless -c Release -p:BaseOutputPath=binmon/`.
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,6 +64,7 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploys 2026-10-13 10:30 bis 11:00, Menue-Hervorhebung (Wunsch Ingo).** `fffe31b` 10:30 (mit Sicherung `...before-menue-hervorhebung-20261013-101656.bak`, 783 s; Selektor griff nicht, weil `MudNavLink` die Klasse auf das umschliessende `div.mud-nav-item` setzt), `bedc57e` 10:37 (Selektor korrigiert, erster Deploy ohne Sicherung), `1265ff9` 10:44 (Netzwerk mit Kabel, Trafag Reddit orange, Benutzerhandbuch hellgrau; Kabel unsichtbar, weil MudBlazors Ripple `::after` belegt, Netzwerk-Balken lief ueber den Rand), `50eef03` (Kabel auf `::before`, groesser, Breite begrenzt; vorher an einem lokalen Muster geprueft), `c8b91a7` (ohne `overflow: visible`, sonst ragte der Ripple heraus und das Menue bekam eine waagrechte Scrollleiste). Alle bitgleich, acht Routen 200. Alarme jeweils nur SQLite-Begleitdateien (`-wal`/`-shm` verschwunden, Hauptdatei beim Herunterfahren per Checkpoint geschrieben). Runner ab `bedc57e` mit `-p:BaseOutputPath=binmon/` gebaut (alter Runner hing) und beendet sich jetzt selbst.
 - **Deploy 2026-10-13 09:47, HERMES-Darstellungsfix (`47990ad`, Phasenbalken volle Breite, kleiner Pfad ohne Ueberlappung).** Gestartet mit `--no-build`, weil der haengende Runner von 09:21 `DeployConsole.dll` sperrte und Ingo ihn ohne Adminrechte nicht beenden konnte; der Runner baut die App trotzdem frisch aus dem Release-Worktree (`Commit 47990ad` im Protokoll). Titel und Testzahl im Runner-Protokoll sind deshalb die alten; gueltig: Release-Tests `1158/1158`. DLL `09:47:20`, SHA256 `25553C00...99A7` bitgleich, acht Routen 200. Sicherung wiederverwendet (`...before-projekte-hermes-20261013-092117.bak`, Hauptdatei seit 09:18 unveraendert). „1 Alarm“ = nur `trafag_exporter.db-shm` veraendert (Neustart, bekannt). Sichtpruefung per Edge headless: Pfad in Tabelle und Einstellungen korrekt.
 - **Deploy 2026-10-13 09:34, Trafag Projekte HERMES (`7e20f93`): HERMES-Angaben je Projekt, Reiter Portfolio (HERMES), Demoprojekt HDEMO.** Release-Worktree ohne Finance_All, Tests dort `1158/1158` (nach dem Deploy im Worktree nachgemessen; im Runner-Protokoll stand noch fest eingetragen `1150/1150` und der Titel des Vor-Deploys). DLL `09:35:01`, `9'916'416` Bytes, SHA256 `C07E6318...A81C` bitgleich, acht Routen 200 inkl. `/projekte`, „Fertig, ohne Alarm“. Sicherung `trafag_exporter.db.before-projekte-hermes-20261013-092117.bak` (seitenweise, `-wal` offen, 761 s). Sichtpruefung per Edge headless (CDP): HDEMO angelegt, Portfolio, Karte, Einstellungen und alle acht Ansichten ohne Fehler. Gefunden: Phasenbalken im HERMES-Pfad nur als Striche, kleiner Pfad in der Tabelle ueberlappt; Fix `47990ad`. *Danach:* Der Runner beendete sich nicht und sperrte `DeployConsole.dll` (Fall 2026-10-05); der Fix-Deploy brach deshalb beim Bauen ab, ohne den Server zu beruehren.
 
