@@ -11,6 +11,16 @@ body,
     font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
 }
 
+/* Hervorgehobene Menueeintraege Trafag Projekte und Operations (NavMenuNode.razor, 2026-10-13) */
+.mud-nav-link.nav-hl { margin: 3px 8px; border-radius: 10px; background: linear-gradient(110deg, #B0101F 0%, #E03131 35%, #FF5A4E 50%, #E03131 65%, #B0101F 100%); background-size: 250% 100%; color: #fff !important; font-weight: 800; box-shadow: 0 2px 10px rgba(200, 16, 46, .45); animation: nav-hl-flow 3.2s linear infinite, nav-hl-glow 2.4s ease-in-out infinite; }
+.mud-nav-link.nav-hl .mud-nav-link-text { color: #fff !important; font-weight: 800 !important; letter-spacing: .01em; }
+.mud-nav-link.nav-hl .mud-nav-link-icon { color: #fff !important; animation: nav-hl-bounce 2.4s ease-in-out infinite; }
+.mud-nav-link.nav-hl:hover, .mud-nav-link.nav-hl.active { filter: brightness(1.12); background-color: transparent; }
+@keyframes nav-hl-flow { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+@keyframes nav-hl-glow { 0%, 100% { box-shadow: 0 2px 8px rgba(200, 16, 46, .35); } 50% { box-shadow: 0 2px 16px rgba(255, 70, 70, .75); } }
+@keyframes nav-hl-bounce { 0%, 70%, 100% { transform: none; } 78% { transform: translateY(-3px) rotate(-8deg); } 86% { transform: translateY(0) rotate(6deg); } }
+@media (prefers-reduced-motion: reduce) { .mud-nav-link.nav-hl, .mud-nav-link.nav-hl .mud-nav-link-icon { animation: none; } }
+
 /* -------------------------------------------------------------------------
    Hell/Dunkel (MainLayout.razor, js/theme.js, 2026-09-29)
 

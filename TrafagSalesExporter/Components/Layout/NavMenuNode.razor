@@ -23,7 +23,7 @@ else if (Item.ItemType == NavigationMenuItemTypes.Action)
 }
 else
 {
-    <MudNavLink Href="@Item.Href" Match="@Match" Icon="@Icon">
+    <MudNavLink Href="@Item.Href" Match="@Match" Icon="@Icon" Class="@LinkClass">
         @Title
     </MudNavLink>
 }
@@ -39,6 +39,10 @@ else
     private NavLinkMatch Match => string.Equals(Item.Match, "All", StringComparison.OrdinalIgnoreCase)
         ? NavLinkMatch.All
         : NavLinkMatch.Prefix;
+
+    // Hervorgehobene Eintraege (Wunsch Ingo 2026-10-13): rot, weisse fette Schrift, animiert. CSS .nav-hl in app.css.
+    private static readonly HashSet<string> Highlighted = new("projects operations".Split(' '), StringComparer.OrdinalIgnoreCase);
+    private string? LinkClass => Highlighted.Contains(Item.Key) ? "nav-hl" : null;
 
     [Inject] private IUiTextService UiText { get; set; } = default!;
 
