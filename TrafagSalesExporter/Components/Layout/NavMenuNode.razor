@@ -4,7 +4,7 @@
 
 @if (Item.ItemType == NavigationMenuItemTypes.Group)
 {
-    <MudNavGroup Title="@Title" Icon="@Icon" Expanded="@Item.IsExpanded">
+    <MudNavGroup Title="@Title" Icon="@Icon" Expanded="@Item.IsExpanded" Class="@LinkClass">
         @foreach (var child in Children)
         {
             <NavMenuNode Item="child"
@@ -41,8 +41,8 @@ else
         : NavLinkMatch.Prefix;
 
     // Hervorgehobene Eintraege (Wunsch Ingo 2026-10-13): rot, weisse fette Schrift, animiert. CSS .nav-hl in app.css.
-    private static readonly HashSet<string> Highlighted = new("projects operations".Split(' '), StringComparer.OrdinalIgnoreCase);
-    private string? LinkClass => Highlighted.Contains(Item.Key) ? "nav-hl" : null;
+    private static readonly Dictionary<string, string> Highlighted = "projects=nav-hl;operations=nav-hl;network=nav-hl nav-hl-net;trafag-reddit=nav-hl nav-hl-orange;user-manual=nav-hl-grey".Split(';').Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1], StringComparer.OrdinalIgnoreCase);
+    private string? LinkClass => Highlighted.GetValueOrDefault(Item.Key);
 
     [Inject] private IUiTextService UiText { get; set; } = default!;
 
