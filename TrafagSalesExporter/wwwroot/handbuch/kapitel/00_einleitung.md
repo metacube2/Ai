@@ -1,8 +1,8 @@
 # Einleitung und Wegweiser
 
-Das Trafag Cockpit führt Daten aus SAP, den Exporten der Standorte, den HR-Dateien, dem Netzwerk und öffentlichen Quellen an einer Stelle zusammen. Dieses Handbuch erklärt jede Seite aus betriebswirtschaftlicher Sicht: wozu sie da ist, was die Grafik zeigt, wie die Zahl entsteht und in welcher Arbeitssituation man sie einsetzt. Technische Einzelheiten stehen in der Entwicklerdokumentation, nicht hier.
+Das Trafag Cockpit führt Daten aus SAP, den Exporten der Standorte, den HR-Dateien, dem Shop-Floor-Meeting, dem Netzwerk und öffentlichen Quellen an einer Stelle zusammen. Dieses Handbuch erklärt jede Seite aus betriebswirtschaftlicher Sicht: wozu sie da ist, was die Grafik zeigt, wie die Zahl entsteht und in welcher Arbeitssituation man sie einsetzt. Technische Einzelheiten stehen in der Entwicklerdokumentation, nicht hier.
 
-Das Handbuch beschreibt den Stand der Software vom 5. Oktober 2026. Es ist im Cockpit unter dem Reiter **Benutzerhandbuch** lesbar und als Word-Datei herunterladbar.
+Das Handbuch beschreibt den Stand der Software vom 14. Oktober 2026; die Grundfassung entstand am 5. Oktober, die Kapitel Trafag Projekte, Trafag Reddit und Operations kamen danach dazu. Es ist im Cockpit unter dem Reiter **Benutzerhandbuch** lesbar und als Word-Datei herunterladbar.
 
 ## So ist jede Seite beschrieben
 
@@ -28,6 +28,11 @@ Am Ende jedes Kapitels steht ein Kennzahlen-Glossar.
 | **Logistik** | Logistik live (Übersicht, 3D-Lager, Produktivität, Kapazität), Stücklistenanalyse | Tagessteuerung, Schichtplanung, Kapazitätsabgleich mit der Produktion |
 | **HR** | HR Dashboard und HR KPI Schulung | Fluktuations- und Absenzenbericht, Quartalsauswertung |
 | **IT und Geschäftsleitung** | Netzwerk Übersicht, Verfügbarkeit, Migration, Bericht | Budget für Geräteersatz, Support-Ende, Störungen einordnen |
+| **Produktion, PPD und Leitung Operations** | Operations KPI (OTD, OTIF, OTP), Shopfloor mit Pendenzen, Abteilungswerten, Rückständen, Fehlteilen ZD05, Forecast und PPA-Grafik | Tägliches Shop-Floor-Meeting, Wochenplanung, Monatsbericht Liefertreue |
+
+## Die Kopfleiste
+
+Oben rechts stehen für alle Seiten dieselben Bedienelemente. Ganz links zeigt eine kleine Leuchtanzeige im Stil eines Kassettendecks die **CPU-Last**: der obere Balken **S** die Last des ganzen Servers, der untere Balken **C** den Anteil des Cockpits selbst, je von 0 bis 100 %; ein schwach leuchtendes Segment hält kurz die letzte Spitze fest. Sie hilft einzuordnen, ob eine langsame Seite am Server oder an der eigenen Verbindung liegt. Daneben folgen der Dimmer für die Helligkeit, die Statusampel mit den letzten Meldungen, die Umschaltung des Designs, Hell/Dunkel und die Sprache.
 
 ## Allgemeine Regeln für alle Zahlen
 
