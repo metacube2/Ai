@@ -3,9 +3,9 @@
 Auftrag: Mail Fabio Palma vom 2026-10-14 mit Spezifikation und Referenzpaket (`docs/operations_kpi/`). Menue nach Wunsch Ingo:
 **Operations** mit den Unterreitern **KPI** (darunter **OTD / OTIF / OTP**) und **Shopfloor** (der bisherige Reiter).
 
-Stand 2026-10-14 10:30: **produktiv** (Deploy 10:04 `f51bdeb`, Korrektur 10:11 `982e193`, gepusht im manuellen Modus nach
-Freigabe Ingo). Seiten und Excel-Export laufen, zeigen aber noch den **Referenzabzug** von Fabio (so angeschrieben).
-**Live-Abruf scheitert an der Berechtigung** des technischen Cockpit-Benutzers, siehe Abschnitt 3a.
+Stand 2026-10-14 10:35: **produktiv und live aus SAP, Abnahme bestanden (3b)** (Deploy 10:04 `f51bdeb`, Korrektur 10:11 `982e193`, gepusht im manuellen Modus nach
+Freigabe Ingo). Seiten und Excel-Export zeigen seit 10:33 den SAP-Abzug. *Ueberholt (10:30):* „zeigen noch den Referenzabzug,
+Live-Abruf scheitert an der Berechtigung“ (Abschnitt 3a).
 *Ueberholt:* „nicht deployed und nicht gepusht“ (Stand vormittags; der Auto-Modus hatte Push und Deploy-Pruefung abgelehnt,
 weil das Referenzpaket Kundennamen und Betraege enthaelt).
 
@@ -77,14 +77,33 @@ fuer `202609` zeigt, ob die Portierung auf Rohdaten dieselben Werte liefert (Tol
   Die Rolle ist breit (279 Aktivitaetswerte, auch 01/02/06) und fuer einen technischen Benutzer nur befristet sinnvoll;
   dauerhaft eine schmale Rolle (nur `S_RS_COMP`/`S_RS_COMP1` mit 16 fuer die zwei Queries) beim Hauptadmin bestellen.
 - 10:25: Ingo hat `ZF_BR_SALES_MANAGER` dem Benutzer `KOI` zugeordnet. `AGR_USERS` zeigt: **KOI hatte die Rolle schon seit
-  19.10.2023**. Das Cockpit meldet sich mit dem OData-Benutzer **`ZPOWERBI`** an (Angabe Ingo 2026-10-14; Site Einkauf bzw.
-  zentraler SAP-Benutzer, gilt fuer alle Gateway-Abrufe des Cockpits). `ZPOWERBI` braucht die Rolle; die doppelte Zeile bei KOI kann weg.
+  19.10.2023**. Das Cockpit meldet sich mit dem OData-Benutzer **`POWERBI`** an (Angabe Ingo 2026-10-14, in P76 geprueft: Rollen `Z_POWERBI_SERVICES`, `Z_FLP_USER`; Site Einkauf bzw.
+  zentraler SAP-Benutzer, gilt fuer alle Gateway-Abrufe des Cockpits). `POWERBI` braucht die Rolle; die doppelte Zeile bei KOI kann weg.
 - Die Query hinter `C_DELIVITMPERFANLYTSQRY` ist noch unbekannt (unter „DELIV“, „DLV“, „PERF“ keine Rolle in `AGR_1251`);
   der naechste Abruf nennt sie, falls auch dort eine Berechtigung fehlt.
 
+## 3b. Live-Abruf und Abnahme (*Erledigt 2026-10-14 10:33*)
+
+Ingo hat `ZF_BR_SALES_MANAGER` dem Benutzer **`POWERBI`** zugeordnet (gueltig bis 31.10.2026). Abruf `202609` danach ok:
+22'175 Auftragspositionen, 30'358 Lieferpositionen, 155 s. Die Liefer-Abfrage brauchte keine weitere Berechtigung.
+
+| Kennzahl | Abnahme (Fabio, 13.10.) | Live SAP (14.10. 10:33) |
+| --- | --- | --- |
+| OTD mit / ohne Toleranz | 90.6 % / 80.7 %, 16'134 Pos. | 90.6 % / 80.7 %, 16'132 Pos. |
+| OTIF mit / ohne Toleranz | 89.9 % / 78.4 %, 9'047 Auftraege | 89.9 % / 78.4 %, 9'045 Auftraege |
+| OTP mit / ohne Toleranz | 73.0 % / 57.8 %, 15'975 Pos. | 73.0 % / 57.8 %, 15'974 Pos. |
+| Zu frueh >= 5 AT | 2'236 | 2'236 |
+
+Abnahme bestanden (Toleranz 1 Prozentpunkt; die zwei bis drei Positionen Unterschied sind Nachbuchungen seit dem 13.10.).
+Uebersicht und Report zeigen jetzt „Quelle: SAP 14.10.2026 10:33“. **Offen:** `ZF_BR_SALES_MANAGER` laeuft am 31.10. aus;
+bis dahin eine schmale Rolle (nur `S_RS_COMP`/`S_RS_COMP1`, ACTVT 16, Query `2CCSDSLSORDDLVPRFQ`, InfoProvider
+`2CISDSLSORDDLVPRFC`) beim Hauptadmin bestellen und `POWERBI` zuordnen, sonst scheitert der Monatsabruf am 02.11.
+
 ## 4. Offene Punkte
 
-- Rolle `ZF_BR_SALES_MANAGER` fuer `ZPOWERBI` (befristet), danach Abruf `202609` und Vergleich mit der Abnahme.
+- **Schmale Rolle fuer `POWERBI` vor dem 31.10.** (siehe 3b), sonst scheitert der Abruf vom 02.11.
+
+- *Erledigt 10:33:* Rolle fuer `POWERBI`, Abruf `202609`, Abnahme (3b).
 - Feiertage ja oder nein (Fabio).
 - Inhalt der KPI-Uebersicht (Fabio, separat).
 - Transitzeit bei Export-Positionen (Fabio, aus der Spezifikation).

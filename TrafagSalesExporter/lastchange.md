@@ -2,7 +2,7 @@
 
 Stand: 2026-10-14
 
-## Operations: KPI Liefertreue OTD / OTIF / OTP und neues Menü, 2026-10-14 (`89e9c7c`, produktiv 10:04, Live-Abruf wartet auf SAP-Rolle)
+## Operations: KPI Liefertreue OTD / OTIF / OTP und neues Menü, 2026-10-14 (`89e9c7c`, produktiv 10:04, live aus SAP seit 10:33, Abnahme bestanden)
 
 - Menü Operations mit den Unterreitern KPI (Übersicht, OTD / OTIF / OTP) und Shopfloor.
 - Liefertreue der Trafag AG nach Fabios Spezifikation: Kennzahlen, Diagramm, Monatstabelle, Machbarkeit des Wunschtermins,

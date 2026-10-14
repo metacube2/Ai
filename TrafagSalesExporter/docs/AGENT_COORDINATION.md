@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-10-09
+Stand: 2026-10-14
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -25,8 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Operations (Shopfloor): Stand aus `Shopfloor_SAP_Feldmapping.xlsx` (2026-10-14) uebernehmen: Disponenten-Zuordnung (SEH S*, TR5 EK*, TX EL*, DW D*, CZ 017-028), Quelle SAP statt MES ausser FPY, Feld-Mapping auf der Seite Schnittstelle | `Services/Shopfloor/*`, `wwwroot/shopfloor/app.js`, `TrafagSalesExporter.Tests/Shopfloor*`, `docs/SHOPFLOOR_2026-10-07.md` | Code und Doku committet (`b613f7c`), Tests 1193/1193; **Deploy wartet auf Ingos Freigabe** (Einkauf-Delta konnte ohne Browser nicht geprueft werden); wird mit dem KPI-Deploy ausgeliefert |
-| Claude | Operations: Menue Operations > KPI > OTD/OTIF/OTP und Operations > Shopfloor; Liefertreue (Spezifikation Fabio 2026-10-14) aus den CDS-Services C_SLSORDDELIVPERFANLYTSQRY/C_DELIVITMPERFANLYTSQRY, Monatsabruf, Ausschlusstabelle | `Services/Shopfloor/*` (neu `Kpi*`), `wwwroot/shopfloor/kpi/*`, `Components/Pages/Operations*.razor`, `Components/Pages/Shopfloor.razor`, Menue-Seed/Migration, `TrafagSalesExporter.Tests/Kpi*`, `docs/OPERATIONS_KPI_*` | Produktiv 10:04 (`f51bdeb`) und 10:11 (`982e193`), gepusht. Seiten laufen mit Referenzabzug; **Live-Abruf wartet auf Rolle `ZF_BR_SALES_MANAGER` fuer `ZPOWERBI`** (Ingo, SU01), danach Abruf 202609 gegen Abnahme pruefen. Shopfloor-Feldmapping damit ebenfalls produktiv (294 statt 1'912 ohne Abteilung) |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -38,6 +36,8 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Operations: Menue Operations > KPI > OTD/OTIF/OTP und Shopfloor; Liefertreue nach Spezifikation Fabio (Port der Referenzlogik), Monatsabruf aus den CDS-Services, Ausschlusstabelle | 2026-10-14 10:35 | **Abgeschlossen, produktiv 10:04 (`f51bdeb`) und 10:11 (`982e193`), live aus SAP seit 10:33, Abnahme bestanden (OTD 90.6/80.7, OTIF 89.9/78.4, OTP 73.0/57.8), Reservierung frei.** Rolle `ZF_BR_SALES_MANAGER` fuer `POWERBI` von Ingo bis 31.10. zugeordnet; schmale Rolle offen. Neu `KpiLiefertreue*.cs`, `wwwroot/shopfloor/kpi/*`, `OperationsKpi*.razor`, Menue-Migration, Tests; Release 1197/1197. Doku `OPERATIONS_KPI_2026-10-14.md`, Router Plattform, LEARNINGS (6), `rag/DEPLOYMENT.md`, Wochen_Todo 96 |
+| Claude | Operations (Shopfloor): Feldmapping-Excel 2026-10-14 uebernommen (Disponenten je Abteilung, SAP statt MES ausser FPY, Mapping auf der Seite Schnittstelle) | 2026-10-14 10:05 | **Abgeschlossen, produktiv 10:04 (`b613f7c`), Reservierung frei.** Abgleich 10:05: 294 statt 1'912 Auftraege ohne Abteilung. Doku `SHOPFLOOR_2026-10-07.md` Abschnitt 12, Wochen_Todo 87 |
 | Claude | Trafag Projekte: private Projekte (nur Team, auch keine Admins), Rolle Leser, Abgleich Wochen_Todo per TSV-Upload | 2026-10-13 14:45 | **Abgeschlossen, produktiv 14:43 (`6cc0035`), Reservierung frei.** Schema `PmProjects.Visibility`, `PmTasks.ExternalRef`; `PmService` (Rechte, `SetMemberRoleAsync`), `PmService.WochenTodo.cs`, `PmSettingsView.razor`, `Projects.razor`, Uebersetzungen (6 Sprachen + Berndeutsch), 3 Tests; Release-Tests 1161/1161; Sicherung abgebrochen (Wunsch Ingo); produktiv geprueft (Formular und Einstellungen). Doku: `TRAFAG_PROJEKTE_2026-10-09.md`, Router Plattform, RAG DEPLOYMENT, Wochen_Todo 92 |
 | Claude | SAP Berechtigung Wolfurt (Rahmenvertrag 46010612): Ursache lesend in P76, Strategie fuer Berechtigungsfaelle, Lesewerkzeug P76 | 2026-10-13 | **Abgeschlossen, nur Doku und Werkzeug, keine SAP-Aenderung, kein Deploy, Reservierung frei.** `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md`, `.tmp_sap_probe/P76Lesen.vbs`, `P76SitzungSchliessen.vbs`, `SapListeZeilen.py`, Nachtrag SAP-Arbeitsweise, Router SAP, LEARNINGS (3), Wochen_Todo Zeile 95 |
 | Claude | Einkauf: Standardzeitraum Januar des laufenden Jahres bis heute (statt 2020), Jahresdeckel 2026 entfernt, Knopf „2020 bis heute“ fuer Mehrjahressicht | 2026-10-13 | **Abgeschlossen, produktiv (`4b9ebb1`, Deploy ohne Alarm, ohne DB-Sicherung), Reservierung frei.** `PurchasingDashboard.razor`, `IPurchasingDashboardService.cs` (`Default`), Test; Tests 1173/1173 lokal; produktiv geprueft 01.2026-10.2026. Doku: `PURCHASING_DASHBOARD_2026-06-05.md`, RAG PURCHASING |
