@@ -25,9 +25,10 @@ public class KpiLiefertreueTests
     [Fact]
     public void Seite_Entspricht_Der_Beispielseite_Der_Referenz()
     {
-        var template = File.ReadAllText(Path.Combine(RefDir, "board_template.html"));
+        // Git checkt die Referenz je nach Einstellung mit CRLF aus (Release-Worktree des Deploys); verglichen wird mit LF.
+        var template = File.ReadAllText(Path.Combine(RefDir, "board_template.html")).Replace("\r\n", "\n");
         // Die Beispielseite ist zusaetzlich in doctype/head eingepackt (Artifact-Huelle), die Vorlage nicht.
-        var expected = File.ReadAllText(Path.Combine(RefDir, "board_beispiel_2026-09.html"));
+        var expected = File.ReadAllText(Path.Combine(RefDir, "board_beispiel_2026-09.html")).Replace("\r\n", "\n");
         expected = expected[expected.IndexOf("<title>", StringComparison.Ordinal)..expected.LastIndexOf("\n</html>", StringComparison.Ordinal)];
         var actual = KpiLiefertreue.BuildBoard(Abnahme(), template);
 
