@@ -67,6 +67,5 @@ vom letzten Mal, und das Cockpit füllt das zuletzt benutzte Gewicht vor. Unter
 - Getestet ist alles nur im Chrome mit Handygrösse, nicht auf einem echten
   iPhone oder Android. Offen sind dort Ton, Bildschirmsperre und die
   Installation auf dem Homebildschirm.
-- Hairpinning über die WAN-IP geht nicht (siehe
-  `instructions/homelab/reverse-proxy-dns.md`). Im Heimnetz läuft der Zugriff
-  über Split-DNS.
+- Im Heimnetz läuft der Zugriff über Split-DNS. Seit 2026-10-14 geht auch der
+  Weg über die WAN-IP (Hairpinning, siehe `instructions/homelab/reverse-proxy-dns.md`).
