@@ -66,6 +66,11 @@ Stand: 2026-10-14
 
 ## Kurzstand
 
+- **Sicherung 2026-10-14 11:36 ohne Deploy (Auftrag Ingo).** Neuer Schalter `--only-backup` im Runner
+  (`.tmp_tools/DeployHeadless`): sichert und beendet sich, kein Publish, kein Neustart. Aufruf einzeln:
+  `dotnet run --project .tmp_tools/DeployHeadless -c Release -- --only-backup`. Ergebnis
+  `trafag_exporter.db.before-sicherung-20261014-113629.bak` (`614'862'848` Bytes), seitenweise (`-wal` offen) 727 s plus 60 s
+  Uebertragung. Lokale Zwischenkopie in Temp danach geloescht. Die naechste Wochensicherung ist damit erst nach dem 21.10. faellig.
 - **Deploy 2026-10-14 11:13, Benutzerhandbuch Kapitel Operations und Kopfleiste, Word neu (`f38020f`).** Release-Worktree,
   `1205/1205`, DLL bitgleich, zehn Routen `200`, Alarm nur `-wal`/`-shm`.
 - **Deploy 2026-10-14 11:04, Startseite neuer Untertitel (`d911cb1`).** Release-Worktree, `1205/1205`, DLL bitgleich, zehn
