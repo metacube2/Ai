@@ -1,12 +1,24 @@
 # Router — globaler Einstieg
 
-Stand: 2026-10-13
+Stand: 2026-10-14
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
 
 **Zuerst `docs/rag/LEARNINGS.md` lesen**: alle bisher gemachten Fehler mit der Regel daraus, an
 einer Stelle statt verstreut (Wunsch Ingo, 2026-10-01). Neue Fehler dort eintragen, siehe Regel 9.
+
+## Auto-Modus: so bleibt er an (Wunsch Ingo 2026-10-14, nicht vergessen)
+
+Erlaubnisregeln: `.claude/settings.local.json` (u. a. `git *`, `git push *`, `dotnet run *`, `dotnet test *`),
+Umgebungsbeschreibung: `~/.claude/settings.json` (`autoMode.environment`). Sie greifen nur, wenn der Befehl genau passt:
+
+1. Heikle Befehle einzeln absetzen: kein `;`, `&&`, `|`, kein vorangestelltes `cd`/`Set-Location`. `> datei 2>&1` geht.
+2. Push nur als `git push origin <branch>` allein (2026-10-14 abgelehnt, weil mit `| tail`, PowerShell und `ls` gekoppelt).
+3. Deploy nur als `dotnet run --project .tmp_tools/DeployHeadless -c Release` (Bash, Projektordner, Umleitung ins Protokoll).
+4. Geschaeftsdaten von aussen (Dateien von Kollegen) vor dem Commit Ingo nennen, sonst gilt der Push als Datenweitergabe.
+5. Produktiv-DB, P76-Geschaeftsdaten, AD-Personendaten nur auf ausdruecklichen Auftrag lesen.
+6. Nach einer Ablehnung nicht mit Varianten weiterprobieren; anhalten und Ingo den Befehl nennen (`! <befehl>`).
 
 **Ladeweg fuer eine Aufgabe: `router.md` -> ein Unterrouter -> eine Detaildatei.**
 Mehr soll nicht noetig sein. Wer den ganzen Bestand sucht, nimmt `baum.md` — das ist ein
