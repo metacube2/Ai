@@ -8,6 +8,7 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Trafag Global BI Dashboard"] = "Trafag Global BI Dashboard",
                 ["Manometer anzeigen"] = "Mostrar manómetro",
                 ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Última actualización",
@@ -2649,6 +2650,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Trafag Global BI Dashboard"] = "Trafag Global BI Dashboard",
                 ["Manometer anzeigen"] = "Mostra manometro",
                 ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Ultimo aggiornamento",
@@ -5290,6 +5292,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Trafag Global BI Dashboard"] = "Trafag Global BI Dashboard",
                 ["Manometer anzeigen"] = "मैनोमीटर दिखाएँ",
                 ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "अंतिम अपडेट",
@@ -7931,6 +7934,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Trafag Global BI Dashboard"] = "Trafag Global BI Dashboard",
                 ["Manometer anzeigen"] = "Shfaq manometrin",
                 ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Rifreskimi i fundit",
@@ -10572,6 +10576,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Trafag Global BI Dashboard"] = "Trafag Global BI Dashboard",
                 ["Manometer anzeigen"] = "Manometreyi göster",
                 ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Son güncelleme",
@@ -13213,6 +13218,7 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Trafag Global BI Dashboard"] = "Trafag Global BI Dashboard",
                 ["Manometer anzeigen"] = "manometer yIcha'",
                 ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "chu'moH Qav",
