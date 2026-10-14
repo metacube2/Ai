@@ -5,18 +5,50 @@ namespace TrafagSalesExporter.Tests;
 
 public class ShopfloorForecastTests
 {
+    // Stand Shopfloor_SAP_Feldmapping.xlsx vom 2026-10-14, Blatt Disponenten (Werk 1100)
     [Theory]
     [InlineData("EL3", "TX")]
+    [InlineData("EL8", "TX")]
     [InlineData("EK1", "TR5")]
+    [InlineData("EKB", "TR5")]
     [InlineData("DS2", "DW")]
-    [InlineData("D1", "DW")]
-    [InlineData("012", "SEH")]
-    [InlineData("CZ7", "CZ")]
+    [InlineData("DSN", "DW")]
+    [InlineData("DL6", "DW")]
+    [InlineData("D10", "DW")]
+    [InlineData("SB1", "SEH")]
+    [InlineData("SE1", "SEH")]
+    [InlineData("SL3", "SEH")]
+    [InlineData("SPB", "SEH")]
+    [InlineData("017", "CZ")]
+    [InlineData("025", "CZ")]
+    [InlineData("028", "CZ")]
+    [InlineData("010", "?")]
+    [InlineData("012", "?")]
+    [InlineData("013", "?")]
+    [InlineData("016", "?")]
+    [InlineData("030", "?")]
+    [InlineData("PKA", "?")]
+    [InlineData("TL1", "?")]
     [InlineData("XY", "?")]
     public void Disponent_Wird_Der_Abteilung_Zugeordnet(string disponent, string erwartet)
     {
         var order = new JsonObject { ["disponent"] = disponent };
         Assert.Equal(erwartet, ShopfloorForecast.AssignDept(order));
+        var config = ShopfloorConfig.Load(Path.Combine(ShopfloorTestEnv.ShopfloorDir, "shopfloor_config.json"));
+        var prefixes = config.ForecastPrefix.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
+        Assert.Equal(erwartet, ShopfloorForecast.AssignDept(order, prefixes));
+    }
+
+    [Fact]
+    public void Konfiguration_Liefert_Nur_FPY_Aus_Dem_MES_Und_Alles_Andere_Aus_SAP()
+    {
+        var config = ShopfloorConfig.Load(Path.Combine(ShopfloorTestEnv.ShopfloorDir, "shopfloor_config.json"));
+        var auto = config.ModuleList.SelectMany(m => m.Fields.Select(f => (m, f))).Where(x => x.f.Src != "manuell").ToList();
+        Assert.Equal(129, auto.Count(x => x.f.Src == "sap"));
+        var mes = auto.Where(x => x.f.Src == "mes").ToList();
+        Assert.Equal(5, mes.Count);
+        Assert.All(mes, x => Assert.Equal("fpy", x.f.Key));
+        Assert.All(auto, x => Assert.NotNull(x.f.Sap));
     }
 
     [Fact]

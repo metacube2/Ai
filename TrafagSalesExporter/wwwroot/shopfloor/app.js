@@ -1038,10 +1038,18 @@ async function viewGrafik() {
 async function viewSchema() {
   const sc = await api("GET", "api/integration/schema");
   const rows = sc.flatMap(m => m.fields.filter(f => f.planned_source !== "manuell").map(f => ({ m, f })));
+  const nSap = rows.filter(r => r.f.planned_source === "sap").length, nMes = rows.length - nSap;
+  const nDef = rows.filter(r => /definiert/i.test((r.f.sap || {}).status || "")).length;
+  const prefix = Object.entries(S.cfg.forecast_prefix || {}).map(([k, v]) => `${esc(k)} = ${esc(v.filter(p => p !== k).join(", "))}`).join(" · ");
+  // Spalte SAP: Ingos Angabe (Feldmapping-Excel J/K), sonst der ungepruefte Vorschlag (G/H) kursiv
+  const sapCell = s => s.tabelle || s.feld
+    ? `${esc(s.tabelle || "")}${s.feld ? " · " + esc(s.feld) : ""}`
+    : (s.vorschlag_tabelle || s.vorschlag_feld ? `<i class="muted" title="Vorschlag, nicht geprüft">${esc(s.vorschlag_tabelle || "")}${s.vorschlag_feld ? " · " + esc(s.vorschlag_feld) : ""}</i>` : "");
   $("#view").innerHTML = `<div class="head"><div class="grow"><h1>Schnittstelle SAP / MES</h1>
-    <p class="lede">Diese ${rows.length} Felder sind für die automatische Befüllung vorgesehen. Bis die Anbindung steht, werden sie von Hand erfasst. Geliefert wird über <code>POST /api/integration/push</code> (Details in <code>connectors/README.md</code>).</p></div></div>
-    <div class="tbl-wrap"><table class="schema"><thead><tr><th>Quelle</th><th>Modul</th><th>Feld</th><th>Technischer Name</th><th>Einheit</th></tr></thead>
-    <tbody>${rows.map(({ m, f }) => `<tr><td><span class="src ${f.planned_source}">${f.planned_source.toUpperCase()}</span></td><td>${esc(m.title)}</td><td>${esc(f.label)}</td><td><code>${esc(m.module)}.${esc(f.key)}</code></td><td>${esc(f.unit || "")}</td></tr>`).join("")}</tbody></table></div>`;
+    <p class="lede">Diese ${rows.length} Felder sind für die automatische Befüllung vorgesehen: ${nSap} aus SAP und ${nMes} aus dem MES (nur die FPY-Werte). Bis die Anbindung steht, werden sie von Hand erfasst. Geliefert wird über <code>POST api/integration/push</code>, die Übergabe aus SAP ist täglich um 04:00 Uhr vorgesehen. Festgelegt sind ${nDef} von ${rows.length} Feldern.</p>
+    <p class="muted" style="font-size:13px">Abteilungen werden über den Disponenten im Werk 1100 abgegrenzt: ${prefix}. Kursiv steht ein Vorschlag nach SAP-Standard, der noch nicht geprüft ist. Stand: Feldmapping vom 14.10.2026.</p></div></div>
+    <div class="tbl-wrap"><table class="schema"><thead><tr><th>Quelle</th><th>Modul</th><th>Feld</th><th>Technischer Name</th><th>Einheit</th><th>SAP-Tabelle · Feld</th><th>Selektion</th><th>Status</th><th>Bemerkung</th></tr></thead>
+    <tbody>${rows.map(({ m, f }) => { const s = f.sap || {}; return `<tr><td><span class="src ${f.planned_source}">${f.planned_source.toUpperCase()}</span></td><td>${esc(m.title)}</td><td>${esc(f.label)}</td><td><code>${esc(m.module)}.${esc(f.key)}</code></td><td>${esc(f.unit || "")}</td><td>${sapCell(s)}</td><td>${esc(s.selektion || "")}</td><td>${esc(s.status || "")}</td><td>${esc(s.bemerkung || "")}</td></tr>`; }).join("")}</tbody></table></div>`;
 }
 
 document.addEventListener("click", e => {
@@ -1557,7 +1565,7 @@ function renderForecast() {
   ${tips.length ? `<div class="side-card tips"><h3>Hinweise für die Planung</h3><ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul></div>` : `<div class="side-card tips"><h3>Hinweise für die Planung</h3><p>Alle Abteilungen sind ausgeglichen geplant.</p></div>`}
   <div class="tabs">${all.map(c => `<button data-ft="${c.def.dept}" aria-pressed="${c.def.dept === sel.def.dept}">${c.def.dept}</button>`).join("")}</div>
   <div id="fcDetail"></div>
-  ${unassigned.length ? `<h2>Nicht zugeordnete Aufträge (${unassigned.length})</h2><p class="muted" style="font-size:13px">Zuordnung über den Disponenten: ${Object.entries(d.prefix || S.cfg.forecast_prefix || {}).map(([k, v]) => `${k} = ${v.join(", ")}…`).join(" · ")}. Anpassbar in <code>forecast.py</code>.</p>${fcOrderTable(unassigned)}` : ""}`;
+  ${unassigned.length ? `<h2>Nicht zugeordnete Aufträge (${unassigned.length})</h2><p class="muted" style="font-size:13px">Zuordnung über den Disponenten: ${Object.entries(d.prefix || S.cfg.forecast_prefix || {}).map(([k, v]) => `${k} = ${v.join(", ")}…`).join(" · ")}. Anpassbar in <code>shopfloor_config.json</code> (<code>forecast_prefix</code>).</p>${fcOrderTable(unassigned)}` : ""}`;
   document.querySelectorAll("[data-fw]").forEach(b => b.onclick = () => { const n = Number(b.dataset.fw); const m = n === 0 ? iso(addDaysD(monday(new Date()), 7)) : iso(addDaysD(parseIso(FC.monday), n)); history.replaceState(null, "", "#/m/forecast?monday=" + m); viewForecast(); });
   document.querySelectorAll("[data-ft],[data-fd]").forEach(b => b.onclick = () => { FC.sel = b.dataset.ft || b.dataset.fd; renderForecast(); });
   $("#fcFile").onchange = e => e.target.files[0] && fcImportFile(e.target.files[0]);

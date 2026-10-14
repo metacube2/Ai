@@ -588,7 +588,14 @@
      "col": "D",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_3m",
@@ -597,7 +604,14 @@
      "col": "E",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_2m",
@@ -606,7 +620,14 @@
      "col": "F",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_1m",
@@ -615,7 +636,14 @@
      "col": "G",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "geraete_tag_1m",
@@ -633,7 +661,14 @@
      "col": "K",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ziel",
@@ -648,9 +683,17 @@
      "label": "Produzierte Tagesmenge",
      "type": "num",
      "col": "M",
-     "src": "mes",
+     "src": "sap",
      "group": "Tagesleistung",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponenten SEH",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "abw",
@@ -747,7 +790,12 @@
      "col": "Y",
      "src": "mes",
      "group": "Lieferzeiten & Qualität",
-     "unit": "%"
+     "unit": "%",
+     "sap": {
+      "vorschlag_tabelle": "– (MES-Datenbank)",
+      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
+      "status": "offen"
+     }
     },
     {
      "key": "bemerkungen",
@@ -803,7 +851,14 @@
      "col": "G",
      "group": "Auftrag",
      "list": true,
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "? (Trafag-spezifisch)",
+      "vorschlag_feld": "zu klären – Verkaufsnummer?",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "typencode",
@@ -811,7 +866,14 @@
      "type": "text",
      "col": "H",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARA / Klassifizierung",
+      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "eckendtermin",
@@ -819,7 +881,14 @@
      "type": "date",
      "col": "I",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO",
+      "vorschlag_feld": "GLTRP",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "wunschtermin",
@@ -827,7 +896,14 @@
      "type": "date",
      "col": "J",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBEP / VBAK",
+      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "tv1",
@@ -857,7 +933,14 @@
      "type": "text",
      "col": "N",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "VBELN",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ka_pos",
@@ -865,7 +948,14 @@
      "type": "text",
      "col": "O",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "POSNR",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "kunde",
@@ -874,7 +964,14 @@
      "col": "P",
      "group": "Auftrag",
      "src": "sap",
-     "list": true
+     "list": true,
+     "sap": {
+      "vorschlag_tabelle": "VBAK → KNA1",
+      "vorschlag_feld": "KUNNR → NAME1",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "bestellmenge",
@@ -883,7 +980,14 @@
      "col": "Q",
      "group": "Auftrag",
      "src": "sap",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "KWMENG",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "pl_auf",
@@ -891,7 +995,14 @@
      "type": "text",
      "col": "R",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "PLAF",
+      "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "fa",
@@ -899,7 +1010,14 @@
      "type": "text",
      "col": "S",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFPO",
+      "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "menge_rs",
@@ -992,7 +1110,14 @@
      "type": "date",
      "col": "AS",
      "group": "Fehlmaterial",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / PLAF",
+      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "status",
@@ -1042,7 +1167,14 @@
      "col": "D",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_3m",
@@ -1051,7 +1183,14 @@
      "col": "E",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_2m",
@@ -1060,7 +1199,14 @@
      "col": "F",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_1m",
@@ -1069,7 +1215,14 @@
      "col": "G",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "geraete_tag_1m",
@@ -1087,7 +1240,14 @@
      "col": "K",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ziel",
@@ -1102,9 +1262,17 @@
      "label": "Produzierte Tagesmenge",
      "type": "num",
      "col": "M",
-     "src": "mes",
+     "src": "sap",
      "group": "Tagesleistung",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponenten TR5",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "abw",
@@ -1209,7 +1377,12 @@
      "col": "Y",
      "src": "mes",
      "group": "Lieferzeiten & Qualität",
-     "unit": "%"
+     "unit": "%",
+     "sap": {
+      "vorschlag_tabelle": "– (MES-Datenbank)",
+      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
+      "status": "offen"
+     }
     },
     {
      "key": "bemerkungen",
@@ -1265,7 +1438,14 @@
      "col": "G",
      "group": "Auftrag",
      "list": true,
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "? (Trafag-spezifisch)",
+      "vorschlag_feld": "zu klären – Verkaufsnummer?",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "typencode",
@@ -1273,7 +1453,14 @@
      "type": "text",
      "col": "H",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARA / Klassifizierung",
+      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "eckendtermin",
@@ -1281,7 +1468,14 @@
      "type": "date",
      "col": "I",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO",
+      "vorschlag_feld": "GLTRP",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "wunschtermin",
@@ -1289,7 +1483,14 @@
      "type": "date",
      "col": "J",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBEP / VBAK",
+      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "tv1",
@@ -1319,7 +1520,14 @@
      "type": "text",
      "col": "N",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "VBELN",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ka_pos",
@@ -1327,7 +1535,14 @@
      "type": "text",
      "col": "O",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "POSNR",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "kunde",
@@ -1336,7 +1551,14 @@
      "col": "P",
      "group": "Auftrag",
      "src": "sap",
-     "list": true
+     "list": true,
+     "sap": {
+      "vorschlag_tabelle": "VBAK → KNA1",
+      "vorschlag_feld": "KUNNR → NAME1",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "bestellmenge",
@@ -1345,7 +1567,14 @@
      "col": "Q",
      "group": "Auftrag",
      "src": "sap",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "KWMENG",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "pl_auf",
@@ -1353,7 +1582,14 @@
      "type": "text",
      "col": "R",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "PLAF",
+      "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "fa",
@@ -1361,7 +1597,14 @@
      "type": "text",
      "col": "S",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFPO",
+      "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "menge_rs",
@@ -1454,7 +1697,14 @@
      "type": "date",
      "col": "AS",
      "group": "Fehlmaterial",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / PLAF",
+      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "status",
@@ -1504,7 +1754,14 @@
      "col": "D",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_3m",
@@ -1513,7 +1770,14 @@
      "col": "E",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_2m",
@@ -1522,7 +1786,14 @@
      "col": "F",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_1m",
@@ -1531,7 +1802,14 @@
      "col": "G",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "geraete_tag_1m",
@@ -1549,7 +1827,14 @@
      "col": "K",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "plan5",
@@ -1558,7 +1843,14 @@
      "col": "L",
      "src": "sap",
      "group": "Tagesleistung",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "PLAF / AFKO",
+      "vorschlag_feld": "PLAF-GSMNG, PLAF-PEDTR bzw. AFKO-GAMNG, AFKO-GLTRP",
+      "vorschlag_odata": "API_PLANNED_ORDERS / API_PRODUCTION_ORDER_2_SRV",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ziel",
@@ -1573,9 +1865,17 @@
      "label": "Produzierte Tagesmenge",
      "type": "num",
      "col": "N",
-     "src": "mes",
+     "src": "sap",
      "group": "Tagesleistung",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponenten TX",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "abw",
@@ -1630,9 +1930,17 @@
      "label": "Produziert Schicht 1",
      "type": "num",
      "col": "T",
-     "src": "mes",
+     "src": "sap",
      "group": "Schichten",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponenten TX + Schicht 1 über Rückmeldezeit (AFRU-ISDZ/IEDZ)",
+      "status": "offen",
+      "bemerkung": "Schichtzuordnung über Uhrzeit – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "ziel_s2",
@@ -1647,9 +1955,17 @@
      "label": "Produziert Schicht 2",
      "type": "num",
      "col": "V",
-     "src": "mes",
+     "src": "sap",
      "group": "Schichten",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponenten TX + Schicht 2 über Rückmeldezeit (AFRU-ISDZ/IEDZ)",
+      "status": "offen",
+      "bemerkung": "Schichtzuordnung über Uhrzeit – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "abgleich_s1",
@@ -1748,7 +2064,12 @@
      "col": "AH",
      "src": "mes",
      "group": "Lieferzeiten & Qualität",
-     "unit": "%"
+     "unit": "%",
+     "sap": {
+      "vorschlag_tabelle": "– (MES-Datenbank)",
+      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
+      "status": "offen"
+     }
     },
     {
      "key": "bemerkungen",
@@ -1804,7 +2125,14 @@
      "col": "G",
      "group": "Auftrag",
      "list": true,
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "? (Trafag-spezifisch)",
+      "vorschlag_feld": "zu klären – Verkaufsnummer?",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "typencode",
@@ -1812,7 +2140,14 @@
      "type": "text",
      "col": "H",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARA / Klassifizierung",
+      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "eckendtermin",
@@ -1820,7 +2155,14 @@
      "type": "date",
      "col": "I",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO",
+      "vorschlag_feld": "GLTRP",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "wunschtermin",
@@ -1828,7 +2170,14 @@
      "type": "date",
      "col": "J",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBEP / VBAK",
+      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "tv1",
@@ -1858,7 +2207,14 @@
      "type": "text",
      "col": "N",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "VBELN",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ka_pos",
@@ -1866,7 +2222,14 @@
      "type": "text",
      "col": "O",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "POSNR",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "kunde",
@@ -1875,7 +2238,14 @@
      "col": "P",
      "group": "Auftrag",
      "src": "sap",
-     "list": true
+     "list": true,
+     "sap": {
+      "vorschlag_tabelle": "VBAK → KNA1",
+      "vorschlag_feld": "KUNNR → NAME1",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "bestellmenge",
@@ -1884,7 +2254,14 @@
      "col": "Q",
      "group": "Auftrag",
      "src": "sap",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "KWMENG",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "pl_auf",
@@ -1892,7 +2269,14 @@
      "type": "text",
      "col": "R",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "PLAF",
+      "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "fa",
@@ -1900,7 +2284,14 @@
      "type": "text",
      "col": "S",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFPO",
+      "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "menge_rs",
@@ -1993,7 +2384,14 @@
      "type": "date",
      "col": "AS",
      "group": "Fehlmaterial",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / PLAF",
+      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "status",
@@ -2043,7 +2441,14 @@
      "col": "D",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_3m",
@@ -2052,7 +2457,14 @@
      "col": "E",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_2m",
@@ -2061,7 +2473,14 @@
      "col": "F",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_1m",
@@ -2070,7 +2489,14 @@
      "col": "G",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "geraete_tag_1m",
@@ -2088,7 +2514,14 @@
      "col": "K",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ziel",
@@ -2103,9 +2536,17 @@
      "label": "Produzierte Tagesmenge DL790",
      "type": "num",
      "col": "M",
-     "src": "mes",
+     "src": "sap",
      "group": "Tagesleistung",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Arbeitsplatz DL790 (AFRU-ARBID → CRHD-ARBPL)",
+      "status": "offen",
+      "bemerkung": "DL790 vermutlich Arbeitsplatz – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "lieferbereit",
@@ -2114,7 +2555,14 @@
      "col": "N",
      "src": "sap",
      "group": "Tagesleistung",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "MARD / LIPS",
+      "vorschlag_feld": "Bestand Lagerort DLQ72 (MARD-LABST) – zu klären",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "abw",
@@ -2275,7 +2723,12 @@
      "col": "AG",
      "src": "mes",
      "group": "Lieferzeiten & Qualität",
-     "unit": "%"
+     "unit": "%",
+     "sap": {
+      "vorschlag_tabelle": "– (MES-Datenbank)",
+      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
+      "status": "offen"
+     }
     },
     {
      "key": "bemerkungen",
@@ -2331,7 +2784,14 @@
      "col": "G",
      "group": "Auftrag",
      "list": true,
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "? (Trafag-spezifisch)",
+      "vorschlag_feld": "zu klären – Verkaufsnummer?",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "typencode",
@@ -2339,7 +2799,14 @@
      "type": "text",
      "col": "H",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARA / Klassifizierung",
+      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "eckendtermin",
@@ -2347,7 +2814,14 @@
      "type": "date",
      "col": "I",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO",
+      "vorschlag_feld": "GLTRP",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "wunschtermin",
@@ -2355,7 +2829,14 @@
      "type": "date",
      "col": "J",
      "group": "Termine",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBEP / VBAK",
+      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "tv1",
@@ -2385,7 +2866,14 @@
      "type": "text",
      "col": "N",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "VBELN",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ka_pos",
@@ -2393,7 +2881,14 @@
      "type": "text",
      "col": "O",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "POSNR",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "kunde",
@@ -2402,7 +2897,14 @@
      "col": "P",
      "group": "Auftrag",
      "src": "sap",
-     "list": true
+     "list": true,
+     "sap": {
+      "vorschlag_tabelle": "VBAK → KNA1",
+      "vorschlag_feld": "KUNNR → NAME1",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "bestellmenge",
@@ -2411,7 +2913,14 @@
      "col": "Q",
      "group": "Auftrag",
      "src": "sap",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "KWMENG",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "pl_auf",
@@ -2419,7 +2928,14 @@
      "type": "text",
      "col": "R",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "PLAF",
+      "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "fa",
@@ -2427,7 +2943,14 @@
      "type": "text",
      "col": "S",
      "group": "Auftrag",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFPO",
+      "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "menge_rs",
@@ -2520,7 +3043,14 @@
      "type": "date",
      "col": "AS",
      "group": "Fehlmaterial",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / PLAF",
+      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "status",
@@ -2568,7 +3098,14 @@
      "col": "D",
      "group": "Mengen in Verzug",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / AFPO",
+      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
+      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "verzug_mts",
@@ -2577,7 +3114,14 @@
      "col": "E",
      "group": "Mengen in Verzug",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / AFPO",
+      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
+      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
+      "selektion": "leer – kein MTS-Disponent",
+      "status": "offen"
+     }
     },
     {
      "key": "verzug_tr5",
@@ -2586,7 +3130,14 @@
      "col": "F",
      "group": "Mengen in Verzug",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / AFPO",
+      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
+      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "verzug_tx",
@@ -2595,7 +3146,14 @@
      "col": "G",
      "group": "Mengen in Verzug",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / AFPO",
+      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
+      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "verzug_dw",
@@ -2604,7 +3162,14 @@
      "col": "H",
      "group": "Mengen in Verzug",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFKO / AFPO",
+      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
+      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "verzug_total",
@@ -2774,7 +3339,13 @@
      "col": "D",
      "group": "Eingabe durch Verkauf",
      "list": true,
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "? (Trafag-spezifisch)",
+      "vorschlag_feld": "zu klären – Verkaufsnummer?",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "typencode",
@@ -2782,7 +3353,13 @@
      "type": "text",
      "col": "E",
      "group": "Eingabe durch Verkauf",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARA / Klassifizierung",
+      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "ka_nr",
@@ -2791,7 +3368,13 @@
      "col": "F",
      "group": "Eingabe durch Verkauf",
      "list": true,
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "VBELN",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "ka_pos",
@@ -2799,7 +3382,13 @@
      "type": "text",
      "col": "G",
      "group": "Eingabe durch Verkauf",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "POSNR",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "menge",
@@ -2808,7 +3397,13 @@
      "col": "H",
      "group": "Eingabe durch Verkauf",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "KWMENG",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "fa",
@@ -2816,7 +3411,13 @@
      "type": "text",
      "col": "I",
      "group": "Eingabe durch Verkauf",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFPO",
+      "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "termin_sap",
@@ -2824,7 +3425,13 @@
      "type": "date",
      "col": "J",
      "group": "Eingabe durch Verkauf",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBEP",
+      "vorschlag_feld": "EDATU mit BMENG > 0",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "wunschdatum",
@@ -3039,7 +3646,13 @@
      "type": "text",
      "col": "L",
      "group": "Bestellung (Verkauf)",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "VBELN",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "ka_pos",
@@ -3047,7 +3660,13 @@
      "type": "text",
      "col": "M",
      "group": "Bestellung (Verkauf)",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAP",
+      "vorschlag_feld": "POSNR",
+      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
+      "status": "offen"
+     }
     },
     {
      "key": "best_menge_vk",
@@ -3334,7 +3953,13 @@
      "col": "D",
      "group": "TR5",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD",
+      "vorschlag_feld": "LABST für Lagerort MLE01",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "tr5_mle02",
@@ -3343,7 +3968,13 @@
      "col": "E",
      "group": "TR5",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD",
+      "vorschlag_feld": "LABST für Lagerort MLE02",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "tr5_ist",
@@ -3377,7 +4008,13 @@
      "col": "I",
      "group": "DW",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD",
+      "vorschlag_feld": "LABST für Lagerort MLE04",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "dw_soll",
@@ -3403,7 +4040,13 @@
      "col": "L",
      "group": "TX",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD",
+      "vorschlag_feld": "LABST für Lagerort MLE08 / MLE09",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "tx_mlm01",
@@ -3412,7 +4055,13 @@
      "col": "M",
      "group": "TX",
      "unit": "Stk.",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD",
+      "vorschlag_feld": "LABST für Lagerort MLM01",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "tx_ist",
@@ -3470,7 +4119,13 @@
      "type": "num",
      "col": "T",
      "group": "Total",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAK / VBUK",
+      "vorschlag_feld": "offene Kundenaufträge (Anzahl) – zu klären",
+      "vorschlag_odata": "API_SALES_ORDER_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "ma1",
@@ -3702,7 +4357,13 @@
      "col": "H",
      "group": "Eingaben durch PPD / Produktion",
      "src": "sap",
-     "list": true
+     "list": true,
+     "sap": {
+      "vorschlag_tabelle": "EKET",
+      "vorschlag_feld": "EINDT",
+      "vorschlag_odata": "API_PURCHASEORDER_PROCESS_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "wunschdatum",
@@ -3728,7 +4389,13 @@
      "type": "text",
      "col": "K",
      "group": "Eingaben durch PPD / Produktion",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "EKKO",
+      "vorschlag_feld": "EBELN",
+      "vorschlag_odata": "API_PURCHASEORDER_PROCESS_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "bemerkungen",
@@ -3813,7 +4480,13 @@
      "col": "D",
      "group": "Auftragseingang & Umsatz",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
+      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
+      "vorschlag_odata": "API_SALES_ORDER_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "umsatz_ist",
@@ -3822,7 +4495,13 @@
      "col": "E",
      "group": "Auftragseingang & Umsatz",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBRK / VBRP",
+      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
+      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "tagesumsatz",
@@ -3839,7 +4518,13 @@
      "col": "H",
      "group": "Auftragseingang & Umsatz",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "Z-Tabelle hinter ZC23",
+      "vorschlag_feld": "zu klären (kundeneigene Transaktion)",
+      "vorschlag_odata": "eigener OData-Service / CDS-View nötig",
+      "status": "offen"
+     }
     },
     {
      "key": "book_to_bill",
@@ -3882,7 +4567,14 @@
      "col": "M",
      "group": "AE pro Bereich",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
+      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
+      "vorschlag_odata": "API_SALES_ORDER_SRV",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ae_tx",
@@ -3891,7 +4583,14 @@
      "col": "N",
      "group": "AE pro Bereich",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
+      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
+      "vorschlag_odata": "API_SALES_ORDER_SRV",
+      "selektion": "Disponent(en) TX + TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ae_dw",
@@ -3900,7 +4599,14 @@
      "col": "O",
      "group": "AE pro Bereich",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
+      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
+      "vorschlag_odata": "API_SALES_ORDER_SRV",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ae_rest",
@@ -3917,7 +4623,14 @@
      "col": "Q",
      "group": "Umsatz pro Bereich",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBRK / VBRP",
+      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
+      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "u_tx",
@@ -3926,7 +4639,14 @@
      "col": "R",
      "group": "Umsatz pro Bereich",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBRK / VBRP",
+      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
+      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
+      "selektion": "Disponent(en) TX + TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "u_dw",
@@ -3935,7 +4655,14 @@
      "col": "S",
      "group": "Umsatz pro Bereich",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBRK / VBRP",
+      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
+      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "u_rest",
@@ -3952,7 +4679,13 @@
      "col": "U",
      "group": "Umsatz pro Bereich",
      "unit": "CHF",
-     "src": "sap"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "VBRK / VBRP",
+      "vorschlag_feld": "NETWR Fakturaart Gutschrift (z. B. G2)",
+      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
+      "status": "offen"
+     }
     },
     {
      "key": "bemerkungen",
@@ -3986,7 +4719,14 @@
      "col": "D",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) CZ – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_3m",
@@ -3995,7 +4735,14 @@
      "col": "E",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) CZ – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_2m",
@@ -4004,7 +4751,14 @@
      "col": "F",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) CZ – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "vorrat_1m",
@@ -4013,7 +4767,14 @@
      "col": "G",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) CZ – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "geraete_tag_1m",
@@ -4031,7 +4792,14 @@
      "col": "K",
      "src": "sap",
      "group": "Auftragsvorrat (SAP)",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "sap": {
+      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
+      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
+      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
+      "selektion": "Disponent(en) CZ – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
+      "status": "offen"
+     }
     },
     {
      "key": "ziel",
@@ -4056,7 +4824,15 @@
      "col": "N",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 019",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_ds987",
@@ -4065,7 +4841,15 @@
      "col": "P",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 020",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_pico",
@@ -4074,7 +4858,15 @@
      "col": "R",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponenten 022, 027",
+      "status": "offen",
+      "bemerkung": "9B0-9K4 ↔ 9X4/9X0 – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_pico9r",
@@ -4083,7 +4875,15 @@
      "col": "T",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 021",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_frost",
@@ -4092,7 +4892,15 @@
      "col": "V",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 028",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_mini",
@@ -4101,7 +4909,15 @@
      "col": "X",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "?",
+      "status": "offen",
+      "bemerkung": "kein eigener Disponent – über Material/Typ abgrenzen?; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_navi",
@@ -4110,7 +4926,15 @@
      "col": "Z",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "?",
+      "status": "offen",
+      "bemerkung": "kein eigener Disponent – über Material/Typ abgrenzen?; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_picotherm",
@@ -4119,7 +4943,15 @@
      "col": "AB",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 023",
+      "status": "offen",
+      "bemerkung": "prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_dtp",
@@ -4128,7 +4960,15 @@
      "col": "AD",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "?",
+      "status": "offen",
+      "bemerkung": "kein eigener Disponent – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_bg_stecker",
@@ -4137,7 +4977,15 @@
      "col": "AF",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 024 (+ Material/Typ)",
+      "status": "offen",
+      "bemerkung": "024 enthält Stecker, Kabel, Print – Aufteilung prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_bg_kabel",
@@ -4146,7 +4994,15 @@
      "col": "AH",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 024 (+ Material/Typ)",
+      "status": "offen",
+      "bemerkung": "024 enthält Stecker, Kabel, Print – Aufteilung prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_bg_print",
@@ -4155,7 +5011,15 @@
      "col": "AJ",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 024 (+ Material/Typ)",
+      "status": "offen",
+      "bemerkung": "024 enthält Stecker, Kabel, Print – Aufteilung prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_bg_mech",
@@ -4164,7 +5028,15 @@
      "col": "AL",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 026",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_bg_sf6",
@@ -4173,7 +5045,15 @@
      "col": "AN",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 025",
+      "status": "offen",
+      "bemerkung": "DW-BG Montage = BG für SF6? – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_membranen",
@@ -4182,7 +5062,15 @@
      "col": "AP",
      "group": "Produzierte Menge pro Gruppe",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
+      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
+      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
+      "selektion": "Disponent 018",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "p_reserve",
@@ -4239,7 +5127,12 @@
      "col": "AZ",
      "group": "Qualität",
      "unit": "%",
-     "src": "mes"
+     "src": "mes",
+     "sap": {
+      "vorschlag_tabelle": "– (MES-Datenbank)",
+      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
+      "status": "offen"
+     }
     },
     {
      "key": "bemerkungen",
@@ -4328,7 +5221,14 @@
      "col": "K",
      "group": "Kennzahlen",
      "unit": "%",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "QMEL / AFRU (PM)",
+      "vorschlag_feld": "Ausfallzeiten aus Störmeldungen – prüfen, ob in SAP vorhanden",
+      "vorschlag_odata": "API_MAINTNOTIFICATION",
+      "status": "offen",
+      "bemerkung": "Falls nicht in SAP: manuell erfassen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "ma1",
@@ -4413,8 +5313,16 @@
      "col": "D",
      "group": "Bestände",
      "unit": "Stk.",
-     "src": "mes",
-     "limit": 3000
+     "src": "sap",
+     "limit": 3000,
+     "sap": {
+      "vorschlag_tabelle": "MARD + MARC",
+      "vorschlag_feld": "Bestand MARD-LABST für Materialien mit MARC-DISPO",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "selektion": "Disponenten SE1, SE2",
+      "status": "offen",
+      "bemerkung": "prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "sl124",
@@ -4423,7 +5331,15 @@
      "col": "G",
      "group": "Bestände",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD + MARC",
+      "vorschlag_feld": "Bestand MARD-LABST für Materialien mit MARC-DISPO",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "selektion": "Disponenten SL1, SL2, SL4",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "slx_bat",
@@ -4432,7 +5348,15 @@
      "col": "J",
      "group": "Bestände",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD + MARC",
+      "vorschlag_feld": "Bestand MARD-LABST für Materialien mit MARC-DISPO",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "selektion": "Disponenten SL2, SL5 (BAT)",
+      "status": "offen",
+      "bemerkung": "prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "slx_ohne",
@@ -4450,7 +5374,15 @@
      "col": "P",
      "group": "Bestände",
      "unit": "Stk.",
-     "src": "mes"
+     "src": "sap",
+     "sap": {
+      "vorschlag_tabelle": "MARD + MARC",
+      "vorschlag_feld": "Bestand MARD-LABST für Materialien mit MARC-DISPO",
+      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
+      "selektion": "Disponent SL3",
+      "status": "offen",
+      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+     }
     },
     {
      "key": "slx_total",
@@ -4867,26 +5799,35 @@
   "bestellt"
  ],
  "forecast_prefix": {
-  "TX": [
-   "EL",
-   "TX"
+  "SEH": [
+   "S",
+   "SEH"
   ],
   "TR5": [
    "EK",
    "TR5"
   ],
+  "TX": [
+   "EL",
+   "TX"
+  ],
   "DW": [
    "D",
-   "DS",
-   "DEF",
    "DW"
   ],
-  "SEH": [
-   "012",
-   "SK",
-   "SEH"
-  ],
   "CZ": [
+   "017",
+   "018",
+   "019",
+   "020",
+   "021",
+   "022",
+   "023",
+   "024",
+   "025",
+   "026",
+   "027",
+   "028",
    "CZ"
   ]
  },

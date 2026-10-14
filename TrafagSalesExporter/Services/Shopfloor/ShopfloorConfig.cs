@@ -181,7 +181,8 @@ public static class SfJson
     }
 }
 
-public sealed record ShopfloorFieldDef(string Key, string Label, string Type, string Src, string? Unit);
+/// <param name="Sap">Feld-Mapping aus Shopfloor_SAP_Feldmapping.xlsx (Vorschlag, Ingos Angaben, Selektion, Status), sonst null.</param>
+public sealed record ShopfloorFieldDef(string Key, string Label, string Type, string Src, string? Unit, JsonObject? Sap = null);
 
 public sealed class ShopfloorModuleDef
 {
@@ -243,7 +244,8 @@ public sealed class ShopfloorConfig
                     SfJson.GetString(f, "label") ?? string.Empty,
                     SfJson.GetString(f, "type") ?? string.Empty,
                     SfJson.GetString(f, "src") ?? "manuell",
-                    SfJson.GetString(f, "unit"))).ToList()
+                    SfJson.GetString(f, "unit"),
+                    f["sap"] as JsonObject)).ToList()
             };
             ModuleList.Add(def);
             Modules[def.Key] = def;

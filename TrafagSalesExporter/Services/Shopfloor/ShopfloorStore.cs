@@ -369,7 +369,11 @@ public sealed class ShopfloorStore
         {
             var fields = new JsonArray();
             foreach (var f in m.Fields.Where(f => f.Type != "calc"))
-                fields.Add(new JsonObject { ["key"] = f.Key, ["label"] = f.Label, ["type"] = f.Type, ["planned_source"] = f.Src, ["unit"] = f.Unit });
+                fields.Add(new JsonObject
+                {
+                    ["key"] = f.Key, ["label"] = f.Label, ["type"] = f.Type, ["planned_source"] = f.Src, ["unit"] = f.Unit,
+                    ["sap"] = f.Sap?.DeepClone()
+                });
             arr.Add(new JsonObject { ["module"] = m.Key, ["title"] = m.Title, ["kind"] = m.Kind, ["fields"] = fields });
         }
         return arr;
