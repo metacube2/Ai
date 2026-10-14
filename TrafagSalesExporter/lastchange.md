@@ -2,6 +2,12 @@
 
 Stand: 2026-10-14
 
+## Startseite: Manometer abschaltbar, Titel „Trafag Dashboard“, 2026-10-14 (`cc9c6ab`, produktiv)
+
+- Manometer auf der Startseite standardmässig aus; Schalter „Manometer anzeigen“ unter Admin Bereich > Aktive Logins,
+  in der Datenbank gespeichert (übersteht Deploys).
+- Kopfleiste „Trafag Dashboard“ statt „Trafag Cockpit“, Mitte der Standortgrafik „BI Dashboard“.
+
 ## Startseite: animierte Standortgrafik, 2026-10-14 (`ce5d27d`, produktiv)
 
 - Schwarze, animierte Grafik statt des festen Bildes: neun Länder mit Flagge rund um „Trafag Global BI Cockpit“, Ring in der

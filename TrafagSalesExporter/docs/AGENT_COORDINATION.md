@@ -36,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Startseite: Manometer per Admin-Schalter (Standard aus, DB), Titel Trafag Dashboard, Animation BI Dashboard | 2026-10-14 13:50 | **Abgeschlossen, produktiv (`cc9c6ab`), Reservierung frei.** `ExportSettings.ShowLandingManometer`, `LandingPageSettingsService`, `AdminSessions.razor`, `Dashboard.razor`, `MainLayout.razor`, Uebersetzungen, Test. Doku `lastchange.md`, `rag/DEPLOYMENT.md` |
 | Claude | Operations KPI Monatsabruf abgesichert (Fabio): Versuche in DB, Warnbanner, Admin-Log, Wiederholung alle 2 h | 2026-10-14 13:40 | **Abgeschlossen, produktiv (`55b42d9`), Reservierung frei.** `KpiLiefertreueSync.cs` (IsDue, kpi_run), `ShopfloorDb.cs`, `ShopfloorEndpoints.cs`, `kpi/index.html`, Tests; Release 1217/1217. Doku `OPERATIONS_KPI_2026-10-14.md` 3c, Handbuch Kapitel 10, `rag/DEPLOYMENT.md` |
 | Claude | Startseite: animierte Standortgrafik mit Live-Zustand je Land | 2026-10-14 13:30 | **Abgeschlossen, produktiv (`ce5d27d`), Reservierung frei.** `Components/Home/SiteNetwork*.{cs,razor}`, `Dashboard.razor`, CSS `sng-`, Texte in allen Sprachen, Tests. Deploy ohne Delta-Pruefung, WAL 241 MB (LEARNINGS). Doku `lastchange.md`, `rag/DEPLOYMENT.md` |
 | Claude | Kopfleiste nach Designpruefung: Dimmer-Schiene sichtbar, CPU-Anzeige flacher, Logo-Abstand | 2026-10-14 | **Abgeschlossen, produktiv (`5b51011`, ohne Alarm), Reservierung frei.** Nur `wwwroot/css/app.css`. Doku `rag/DEPLOYMENT.md`, `lastchange.md` |
