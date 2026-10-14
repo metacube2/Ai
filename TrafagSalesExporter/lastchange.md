@@ -2,6 +2,11 @@
 
 Stand: 2026-10-14
 
+## Anonyme Nutzungsmessung, 2026-10-14 (`4615268`, produktiv)
+
+- Admin Bereich > Nutzung: Aufrufe und Nutzertage je Seite, Personen pro Tag, ohne Namen; Ingos eigene Aufrufe zählen nicht.
+  Befund und Massnahmen in `docs/NUTZUNG_2026-10-14.md`.
+
 ## Startseite: Manometer abschaltbar, Titel „Trafag Dashboard“, 2026-10-14 (`cc9c6ab`, produktiv)
 
 - Manometer auf der Startseite standardmässig aus; Schalter „Manometer anzeigen“ unter Admin Bereich > Aktive Logins,

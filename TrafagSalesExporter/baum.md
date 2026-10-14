@@ -190,6 +190,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
 | `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
 | `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, Feld-Mapping (Abschnitt 12), offene Schritte |
+| `docs/NUTZUNG_2026-10-14.md` | Geringe Nutzung des Dashboards: Befund, Ursachen, Massnahmen, anonyme Nutzungsmessung und naechste Schritte |
 | `docs/OPERATIONS_KPI_2026-10-14.md` | Operations > KPI: Liefertreue OTD / OTIF / OTP (Spezifikation Fabio), Port der Referenzlogik, Abruf aus den CDS-Services, Abnahme, offene Punkte |
 | `docs/operations_kpi/` | Fabios Paket vom 2026-10-14: Spezifikation (docx), Referenz (JS-Abzug, Python-Aufbau, Vorlage, Beispielseite, Abnahmedaten mit Kundendaten), PDF- und Excel-Beispiel |
 | `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |
