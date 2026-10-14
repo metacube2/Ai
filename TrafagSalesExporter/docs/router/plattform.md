@@ -1,6 +1,6 @@
 # Unterrouter Plattform
 
-Zurueck: `router.md`. Stand: 2026-09-28.
+Zurueck: `router.md`. Stand: 2026-10-14.
 
 Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen,
 Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
@@ -24,7 +24,8 @@ Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
 | **Weltlage** (seit 2026-10-06 unter Finance Cockpit, hinter Finance-Passwort): Radar je Abteilung, Länder, Rohstoffe und Währungen, Ereignisse; externe Quellen ohne Anmeldung (GDELT, FRED, Eurostat, IMF, EZB), Firewall-Zustand je Quelle, Rechenregeln | `docs/WELTLAGE_2026-10-05.md` |
 | **Reiter Benutzerhandbuch**: betriebswirtschaftliches Handbuch aller Module (Wozu, Lesart, Rechnung, Einsatz je Rolle), Word im Trafag-CI, Quelle `wwwroot/handbuch/kapitel`, Generator, Neuerzeugung | `docs/handbuch/README.md` |
 | **Reiter Netzwerk**: Netzkarte, Verfuegbarkeit, Netz oder Daten, Sicherheit, Active Directory, AD-Infrastruktur, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht, Arbeitsplaetze; Schutzregeln fuer Pruefungen und AD | `docs/NETZWERK_2026-10-02.md` |
-| **Reiter Operations (Shopfloor)**: PPA-Shopfloor im Cockpit (Route `/operations`), C#-Port des Python-Backends, Zugriff nur fuer freigegebene Windows-Konten (`Shopfloor:AllowedUsers`/`OpenForAll`), Datenbank `shopfloor\shopfloor.db`, Push-Schnittstelle mit Token | `docs/SHOPFLOOR_2026-10-07.md` |
+| **Reiter Operations (Shopfloor)**: PPA-Shopfloor im Cockpit (Route `/operations`, seit 2026-10-14 Unterreiter Operations > Shopfloor), C#-Port des Python-Backends, Zugriff nur fuer freigegebene Windows-Konten (`Shopfloor:AllowedUsers`/`OpenForAll`), Datenbank `shopfloor\shopfloor.db`, Push-Schnittstelle mit Token, Feld-Mapping SAP/MES | `docs/SHOPFLOOR_2026-10-07.md` |
+| **Operations > KPI**: Liefertreue OTD / OTIF / OTP der Trafag AG (Spezifikation Fabio 2026-10-14), Abruf aus den CDS-Services, Ausschlusstabelle, Abnahmewerte | `docs/OPERATIONS_KPI_2026-10-14.md` |
 | **Reiter Trafag Projekte**: Projektmanagement wie Jira/Trello/Planner (Route `/projekte`), ersetzt seit 2026-10-09 die Poor Man's Project Management Suite; seit 2026-10-13 private Projekte (nur Team, auch keine Admins), Rolle Leser und Abgleich der Wochen_Todo per TSV-Upload; Board, Backlog und Sprints, Liste, Zeitachse, Kalender, Diagramme, Meine Aufgaben; alle sehen, Mitglieder bearbeiten | `docs/TRAFAG_PROJEKTE_2026-10-09.md` |
 | **Reiter Trafag Reddit**: internes Forum (Route `/forum`) fuer alles ohne Platz in SharePoint, Communities, Abstimmen, Fragen mit akzeptierter Antwort, Tags, Reputation, Windows-Name als Autor, fuer alle sichtbar | `docs/TRAFAG_REDDIT_2026-10-09.md` |
 | ccusage installieren und nutzen | `docs/CCUSAGE_INSTALL_ANLEITUNG.md` |

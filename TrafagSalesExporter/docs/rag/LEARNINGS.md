@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-10-13 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-10-14 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -85,6 +85,9 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-14 | Wiederholt (Fall 2026-10-09): `sed` mit `\\r\\n` in einer C#-Zeichenkette; Bash machte echte Zeilenumbrueche daraus und zerbrach den Test, vor dem Build gesehen und per `git checkout` zurueckgesetzt | Code mit Backslashes nur mit dem Edit-Werkzeug aendern, auch bei einer einzelnen Zeile | `TrafagSalesExporter.Tests/KpiLiefertreueTests.cs` |
+| 2026-10-14 | Testvergleich gegen eine Referenzdatei suchte `";\n"`; im Release-Worktree checkt Git dieselbe Datei mit CRLF aus, der Test waere dort gescheitert (vor dem Deploy bemerkt) | Referenzdateien im Test vor dem Vergleich auf LF normalisieren und einmal mit CRLF-Fassung pruefen | `docs/OPERATIONS_KPI_2026-10-14.md` |
+| 2026-10-14 | Kundendaten (Fabios Abnahmedaten mit Kundennamen und Betraegen) committet; der Auto-Modus lehnte danach den Push nach GitHub als Datenweitergabe ab | Vor dem Commit von Fremddaten pruefen, ob Geschaeftsdaten darin stehen, und Ingo vor dem Push fragen | `docs/OPERATIONS_KPI_2026-10-14.md` Kopf |
 | 2026-10-13 | Menue-Hervorhebung zweimal ohne Wirkung deployt: `MudNavLink`/`MudNavGroup` setzen `Class` auf den Wrapper (`div.mud-nav-item`, `nav.mud-nav-group`), nicht auf den Link; und `::after` am Link gehoert MudBlazors Ripple | Bei MudBlazor-Bausteinen vor dem CSS die echte DOM-Struktur produktiv per CDP auslesen; Pseudo-Elemente nur `::before` oder an Kindelementen; neue Optik zuerst an einem lokalen HTML-Muster mit derselben CSS ansehen | `wwwroot/css/app.css` `nav-hl` |
 | 2026-10-13 | Monitor-Fenster per `Start-Process` aus Claudes Shell gestartet: lief, war fuer Ingo aber unsichtbar | GUI fuer Ingo immer ueber `explorer.exe <datei.cmd>` starten | `.tmp_tools/DeployMonitor/` |
 | 2026-10-13 | Wiederholt (Fall 2026-10-05): Der Runner von 09:21 meldete „Fertig, ohne Alarm“, beendete sich aber nicht und sperrte `DeployConsole.dll`; der naechste Deploy brach beim Bauen ab. Beenden war fuer mich gesperrt und fuer Ingo nur mit Adminrechten moeglich | Nach jedem Deploy `Get-Process DeployHeadless` pruefen; haengt er, den naechsten Lauf mit `--no-build` starten (baut die App trotzdem frisch aus dem Worktree), Titel/Testzahl im Protokoll dann selbst richtigstellen | `docs/rag/DEPLOYMENT.md` 2026-10-13 09:47 |
