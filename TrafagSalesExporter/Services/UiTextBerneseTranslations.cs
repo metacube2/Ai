@@ -10,6 +10,16 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Nutzung"] = "Nutzig",
+            ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "Anonymi Mässig: Pro Tag u Site wird nume e Tagesschlüssu ohni Name gspicheret. Nutzertäg si di verschidene Lüt pro Tag, zämezellt. Eigeti Ufrüef vom Betreuer zelle nid.",
+            ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "No kener Date. D Mässig zellt ab em erschte Ufruef nach em Deploy.",
+            ["Personen pro Tag"] = "Lüt pro Tag",
+            ["Seite"] = "Site",
+            ["Aufrufe 7 Tage"] = "Ufrüef 7 Täg",
+            ["Nutzertage 7 Tage"] = "Nutzertäg 7 Täg",
+            ["Aufrufe 30 Tage"] = "Ufrüef 30 Täg",
+            ["Nutzertage 30 Tage"] = "Nutzertäg 30 Täg",
+            ["Zuletzt"] = "Zletscht",
             ["Trafag Global BI Dashboard"] = "Trafag Global BI Dashboard",
             ["Manometer anzeigen"] = "Manometer azeige",
             ["Trafag Dashboard"] = "Trafag Dashboard",

@@ -2044,3 +2044,10 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
     .sng-packet { display: none; }
     .sng-line, .sng-hub-ring, .sng-bars rect, .sng-node-ring { animation: none !important; }
 }
+
+/* Admin > Nutzung (2026-10-14): Personen pro Tag als schmale Saeulen, Seitenpfad grau hinter dem Titel */
+.use-days { align-items: flex-end; display: flex; gap: 4px; height: 120px; }
+.use-day { align-items: center; display: flex; flex: 1; flex-direction: column; height: 100%; justify-content: flex-end; min-width: 0; }
+.use-bar { background: var(--mud-palette-primary); border-radius: 2px 2px 0 0; width: 100%; }
+.use-day span { color: var(--mud-palette-text-secondary); font-size: 10px; margin-top: 2px; }
+.use-route { color: var(--mud-palette-text-secondary); font-size: 11px; margin-left: 6px; }

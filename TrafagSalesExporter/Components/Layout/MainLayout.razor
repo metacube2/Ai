@@ -3,6 +3,10 @@
 @using System.Security.Claims
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthState
+@inject Microsoft.EntityFrameworkCore.IDbContextFactory<TrafagSalesExporter.Data.AppDbContext> DbFactory
+@using TrafagSalesExporter.Services
 
 <MudThemeProvider Theme="@(_ciSkin ? _ciTheme : _theme)" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -198,10 +202,26 @@
         await JS.InvokeVoidAsync("trafagTheme.setDim", value);
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         UiText.Changed += HandleLanguageChanged;
+        // Anonyme Nutzungsmessung (2026-10-14): erster Aufruf und jeder Seitenwechsel, ohne Namen gespeichert (PageUsageTracker)
+        try
+        {
+            _usageUser = (await AuthState.GetAuthenticationStateAsync()).User.Identity?.Name;
+        }
+        catch (InvalidOperationException)
+        {
+            _usageUser = null;
+        }
+        Nav.LocationChanged += HandleLocationChanged;
+        PageUsageTracker.Record(_usageUser, Nav.ToBaseRelativePath(Nav.Uri), DbFactory);
     }
+
+    private string? _usageUser;
+
+    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+        => PageUsageTracker.Record(_usageUser, Nav.ToBaseRelativePath(e.Location), DbFactory);
 
     private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
 
@@ -230,5 +250,6 @@
     public void Dispose()
     {
         UiText.Changed -= HandleLanguageChanged;
+        Nav.LocationChanged -= HandleLocationChanged;
     }
 }

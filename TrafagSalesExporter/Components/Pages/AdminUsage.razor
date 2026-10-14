@@ -1,0 +1,95 @@
+@page "/admin/nutzung"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@attribute [Authorize(Policy = TrafagSalesExporter.Security.SecurityPolicies.AdminOnly)]
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IUiTextService UiText
+
+@* Anonyme Nutzungsmessung (Wunsch Ingo 2026-10-14): welche Seiten wie oft und von wie vielen Personen genutzt werden.
+   Keine Namen gespeichert, nur ein Tages-Hash (PageUsageTracker). Nutzertage = Summe der verschiedenen Personen je Tag. *@
+<PageTitle>@T("Nutzung", "Usage")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">@T("Nutzung", "Usage")</MudText>
+<MudText Typo="Typo.body2" Class="mb-4" Style="max-width:900px">
+    @T("Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht.", "Anonymous measurement: per day and page only a daily key without names is stored. User days are the distinct people per day, added up. The maintainer's own visits are not counted.")
+</MudText>
+
+@if (_rows is null)
+{
+    <MudProgressLinear Indeterminate Color="Color.Primary" />
+}
+else if (_rows.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">@T("Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy.", "No data yet. Counting starts with the first visit after the deploy.")</MudAlert>
+}
+else
+{
+    <MudPaper Outlined Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Personen pro Tag", "People per day")</MudText>
+        <div class="use-days">
+            @foreach (var d in _days!)
+            {
+                <div class="use-day" title="@DayTitle(d)">
+                    <div class="use-bar" style="@BarStyle(d.Users)"></div>
+                    <span>@d.Day[8..]</span>
+                </div>
+            }
+        </div>
+    </MudPaper>
+
+    <MudPaper Outlined Class="pa-0">
+        <MudSimpleTable Dense Hover Striped>
+            <thead>
+                <tr>
+                    <th>@T("Seite", "Page")</th>
+                    <th style="text-align:right">@T("Aufrufe 7 Tage", "Views 7 days")</th>
+                    <th style="text-align:right">@T("Nutzertage 7 Tage", "User days 7 days")</th>
+                    <th style="text-align:right">@T("Aufrufe 30 Tage", "Views 30 days")</th>
+                    <th style="text-align:right">@T("Nutzertage 30 Tage", "User days 30 days")</th>
+                    <th>@T("Zuletzt", "Last")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _rows.Where(r => r.Route != PageUsageTracker.AllRoutes))
+                {
+                    <tr>
+                        <td>@r.Title <span class="use-route">@r.Route</span></td>
+                        <td style="text-align:right">@r.Views7</td>
+                        <td style="text-align:right">@r.UserDays7</td>
+                        <td style="text-align:right">@r.Views30</td>
+                        <td style="text-align:right"><b>@r.UserDays30</b></td>
+                        <td>@r.LastDay</td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+}
+
+@code {
+    private List<PageUsageRow>? _rows;
+    private List<PageUsageDay>? _days;
+    private int _maxUsers = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        // Menuetitel je Seite, damit die Tabelle Namen statt Pfade zeigt
+        var titles = new Dictionary<string, string>(StringComparer.Ordinal) { ["/"] = "Home" };
+        foreach (var item in await db.NavigationMenuItems.AsNoTracking().Where(i => i.Href != null && i.Href != string.Empty).ToListAsync())
+            titles.TryAdd(PageUsageTracker.NormalizeRoute(item.Href!), item.TitleDe);
+        PageUsageTracker.Flush(DbFactory);   // eigene, noch gepufferte Aufrufe anderer Benutzer zuerst schreiben
+        var (rows, days) = PageUsageReport.Load(db, DateOnly.FromDateTime(DateTime.Today), titles);
+        _rows = rows;
+        _days = days;
+        _maxUsers = Math.Max(1, days.Max(d => d.Users));
+    }
+
+    private string BarStyle(int users) => FormattableString.Invariant($"height:{Math.Max(2, 100.0 * users / _maxUsers):0}%");
+
+    private string DayTitle(PageUsageDay d) => $"{d.Day}: {d.Users} · {d.Views}";
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
