@@ -2,14 +2,14 @@
 
 Stand: 2026-10-14
 
-## Operations: KPI Liefertreue OTD / OTIF / OTP und neues Menü, 2026-10-14 (`89e9c7c`, Deploy offen)
+## Operations: KPI Liefertreue OTD / OTIF / OTP und neues Menü, 2026-10-14 (`89e9c7c`, produktiv 10:04, Live-Abruf wartet auf SAP-Rolle)
 
 - Menü Operations mit den Unterreitern KPI (Übersicht, OTD / OTIF / OTP) und Shopfloor.
 - Liefertreue der Trafag AG nach Fabios Spezifikation: Kennzahlen, Diagramm, Monatstabelle, Machbarkeit des Wunschtermins,
   Abweichungsliste mit Excel-Export. Abnahmewerte Jan–Sep 2026 werden genau getroffen.
 - Monatlicher Abruf aus SAP am 2. Kalendertag, Abruf auf Knopfdruck, Ausschlusstabelle auf der KPI-Seite pflegbar.
 
-## Operations (Shopfloor): Feld-Mapping aus dem Excel, 2026-10-14 (`b613f7c`, Deploy offen)
+## Operations (Shopfloor): Feld-Mapping aus dem Excel, 2026-10-14 (`b613f7c`, produktiv 10:04)
 
 - Abteilungen über den Disponenten: SEH = S*, TR5 = EK*, TX = EL*, DW = D*, CZ = 017 bis 028; 012 nicht mehr SEH.
 - Aus dem MES kommen nur noch die FPY-Werte, die übrigen 129 Felder aus SAP.

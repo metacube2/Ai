@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-13
+Stand: 2026-10-14
 
 ## Deploy-Ablauf seit 2026-10-13 (Entscheid Ingo)
 
@@ -66,6 +66,17 @@ Stand: 2026-10-13
 
 ## Kurzstand
 
+- **Deploy 2026-10-14 10:11, Operations KPI Fehlertext/Kodierung (`982e193`).** Release-Worktree, `1197/1197`, DLL bitgleich,
+  zehn Routen `200`. Alarm nur `-wal`/`-shm` von `trafag_exporter.db` und `shopfloor\shopfloor.db` (Neustart). Keine Sicherung
+  (Wochenregel, neueste vom 13.10.).
+- **Deploy 2026-10-14 10:04, Operations: Menue Operations > KPI > OTD/OTIF/OTP und Shopfloor, Liefertreue (`89e9c7c`, `f51bdeb`),
+  Shopfloor-Feldmapping (`b613f7c`).** Release-Worktree ohne Finance_All, `1196/1196`, DLL SHA256 `659F0D45...15AA` bitgleich,
+  zehn Routen `200` inkl. `/operations/kpi` und `/operations/kpi/liefertreue`, Alarm nur `-wal`/`-shm`. Gleich danach war das VPN
+  rund eine Minute weg (Freigabe und Server nicht erreichbar), ab 10:06 wieder da. Produktiv geprueft: KPI-API mit Startstand
+  (OTD 90.6 %), Seite und Excel `200`, Schnittstelle 129 SAP / 5 MES, Shopfloor-Abgleich 10:05 nur noch **294** Auftraege ohne
+  Abteilung (vorher 1'912). Liefertreue-Live-Abruf: HTTP 400 „No authority for query 2CCSDSLSORDDLVPRFQ“
+  (`docs/OPERATIONS_KPI_2026-10-14.md` 3a). **Befehlsform:** Push und Deploy nur einzeln; am Vormittag lehnte der Auto-Modus einen
+  mit Pipe und PowerShell gekoppelten `git push` ab (LEARNINGS).
 - **Deploy 2026-10-13 14:43, Trafag Projekte privat, Leser, Wochen_Todo-Abgleich (`6cc0035`).** Release-Worktree, `1161/1161`, DLL bitgleich, acht Routen `200`, Alarm nur `-wal`/`-shm` (Checkpoint). Schema beim Start ergaenzt: `PmProjects.Visibility`, `PmTasks.ExternalRef`. **Sicherung mit `--backup` auf Wunsch Ingo abgebrochen** („dauert ewig“): Blockkopie wegen 144 KB ungeschriebener WAL-Seiten unbrauchbar, der seitenweise Weg ueber das Netz ist sehr langsam; keine halbe Datei auf dem Share; Rueckweg waere `before-menue-hervorhebung-20261013-101656.bak`. Ingo dazu: „Sicherung auf diesem PC würde reichen, der wird ja auch in Microsoft gesynct“; noch nicht umgesetzt (Kopie der Produktiv-DB auf den Laptop lehnte der Auto-Modus bisher ab; 614 MB Geschaeftsdaten im OneDrive sind eine Datenschutzfrage).
 - **Deploys 2026-10-13 10:30 bis 11:00, Menue-Hervorhebung (Wunsch Ingo).** `fffe31b` 10:30 (mit Sicherung `...before-menue-hervorhebung-20261013-101656.bak`, 783 s; Selektor griff nicht, weil `MudNavLink` die Klasse auf das umschliessende `div.mud-nav-item` setzt), `bedc57e` 10:37 (Selektor korrigiert, erster Deploy ohne Sicherung), `1265ff9` 10:44 (Netzwerk mit Kabel, Trafag Reddit orange, Benutzerhandbuch hellgrau; Kabel unsichtbar, weil MudBlazors Ripple `::after` belegt, Netzwerk-Balken lief ueber den Rand), `50eef03` (Kabel auf `::before`, groesser, Breite begrenzt; vorher an einem lokalen Muster geprueft), `c8b91a7` (ohne `overflow: visible`, sonst ragte der Ripple heraus und das Menue bekam eine waagrechte Scrollleiste). Alle bitgleich, acht Routen 200. Alarme jeweils nur SQLite-Begleitdateien (`-wal`/`-shm` verschwunden, Hauptdatei beim Herunterfahren per Checkpoint geschrieben). Runner ab `bedc57e` mit `-p:BaseOutputPath=binmon/` gebaut (alter Runner hing) und beendet sich jetzt selbst.
 - **Deploy 2026-10-13 09:47, HERMES-Darstellungsfix (`47990ad`, Phasenbalken volle Breite, kleiner Pfad ohne Ueberlappung).** Gestartet mit `--no-build`, weil der haengende Runner von 09:21 `DeployConsole.dll` sperrte und Ingo ihn ohne Adminrechte nicht beenden konnte; der Runner baut die App trotzdem frisch aus dem Release-Worktree (`Commit 47990ad` im Protokoll). Titel und Testzahl im Runner-Protokoll sind deshalb die alten; gueltig: Release-Tests `1158/1158`. DLL `09:47:20`, SHA256 `25553C00...99A7` bitgleich, acht Routen 200. Sicherung wiederverwendet (`...before-projekte-hermes-20261013-092117.bak`, Hauptdatei seit 09:18 unveraendert). „1 Alarm“ = nur `trafag_exporter.db-shm` veraendert (Neustart, bekannt). Sichtpruefung per Edge headless: Pfad in Tabelle und Einstellungen korrekt.

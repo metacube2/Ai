@@ -3,9 +3,11 @@
 Auftrag: Mail Fabio Palma vom 2026-10-14 mit Spezifikation und Referenzpaket (`docs/operations_kpi/`). Menue nach Wunsch Ingo:
 **Operations** mit den Unterreitern **KPI** (darunter **OTD / OTIF / OTP**) und **Shopfloor** (der bisherige Reiter).
 
-Stand: Code committet (`89e9c7c`, Testkorrektur `f51bdeb`), **nicht deployed und nicht gepusht**. Der Auto-Modus hat am
-2026-10-14 den Push nach GitHub und danach auch die Pruefung des Deploy-Ziels als moegliche Datenweitergabe abgelehnt (das
-Referenzpaket enthaelt Kundennamen und Betraege). Entscheid Ingo offen.
+Stand 2026-10-14 10:30: **produktiv** (Deploy 10:04 `f51bdeb`, Korrektur 10:11 `982e193`, gepusht im manuellen Modus nach
+Freigabe Ingo). Seiten und Excel-Export laufen, zeigen aber noch den **Referenzabzug** von Fabio (so angeschrieben).
+**Live-Abruf scheitert an der Berechtigung** des technischen Cockpit-Benutzers, siehe Abschnitt 3a.
+*Ueberholt:* „nicht deployed und nicht gepusht“ (Stand vormittags; der Auto-Modus hatte Push und Deploy-Pruefung abgelehnt,
+weil das Referenzpaket Kundennamen und Betraege enthaelt).
 
 ## 1. Was gebaut ist
 
@@ -64,9 +66,25 @@ fuer `202609` zeigt, ob die Portierung auf Rohdaten dieselben Werte liefert (Tol
   sofort der Abruf fuer `202609`, der Abnahmemonat.
 - Tabellenfelder der Spezifikation (`VBAP-CMTD_DELIV_DATE` usw.) werden fuer diesen Weg nicht gebraucht und sind **nicht geprueft**.
 
+## 3a. Erster Live-Abruf: Berechtigung (2026-10-14)
+
+- 10:07 und 10:14: `C_SLSORDDELIVPERFANLYTSQRY` antwortet **HTTP 400**, SAP-Text (seit `982e193` im Status sichtbar):
+  **„No authority for query 2CCSDSLSORDDLVPRFQ“**. Gateway-Service und Value-Helps gehen durch (kein 403), es fehlt die
+  Analyse-Berechtigung fuer die Query.
+- P76 lesend (SE16 `AGR_1251`, Freigabe Ingo): die Query steht nur in Rolle **`ZF_BR_SALES_MANAGER`**, Objekte
+  `S_RS_COMP` (ACTVT 16, RSZCOMPID `2CCSDSLSORDDLVPRFQ`, InfoProvider `2CISDSLSORDDLVPRFC`) und `S_RS_COMP1`
+  (RSZCOMPTP REP, RSZOWNER *). `ZF_BR_INTERNAL_SALES_REP` deckt andere Verkaufs-Queries ab, nicht diese.
+  Die Rolle ist breit (279 Aktivitaetswerte, auch 01/02/06) und fuer einen technischen Benutzer nur befristet sinnvoll;
+  dauerhaft eine schmale Rolle (nur `S_RS_COMP`/`S_RS_COMP1` mit 16 fuer die zwei Queries) beim Hauptadmin bestellen.
+- 10:25: Ingo hat `ZF_BR_SALES_MANAGER` dem Benutzer `KOI` zugeordnet. `AGR_USERS` zeigt: **KOI hatte die Rolle schon seit
+  19.10.2023**. Das Cockpit meldet sich mit dem OData-Benutzer **`ZPOWERBI`** an (Angabe Ingo 2026-10-14; Site Einkauf bzw.
+  zentraler SAP-Benutzer, gilt fuer alle Gateway-Abrufe des Cockpits). `ZPOWERBI` braucht die Rolle; die doppelte Zeile bei KOI kann weg.
+- Die Query hinter `C_DELIVITMPERFANLYTSQRY` ist noch unbekannt (unter „DELIV“, „DLV“, „PERF“ keine Rolle in `AGR_1251`);
+  der naechste Abruf nennt sie, falls auch dort eine Berechtigung fehlt.
+
 ## 4. Offene Punkte
 
-- Push und Deploy: Entscheid Ingo (siehe Kopf).
+- Rolle `ZF_BR_SALES_MANAGER` fuer `ZPOWERBI` (befristet), danach Abruf `202609` und Vergleich mit der Abnahme.
 - Feiertage ja oder nein (Fabio).
 - Inhalt der KPI-Uebersicht (Fabio, separat).
 - Transitzeit bei Export-Positionen (Fabio, aus der Spezifikation).

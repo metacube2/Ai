@@ -10,6 +10,9 @@ freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transpor
 
 Stand 2026-10-14: Feld-Mapping aus `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` uebernommen (`b613f7c`): Abteilungen ueber den
 Disponenten, Quelle SAP statt MES ausser FPY, Mapping je Feld auf der Seite „Schnittstelle SAP / MES“. Einzelheiten Abschnitt 12.
+*Erledigt 2026-10-14 10:04:* produktiv. Abgleich 10:05: 3'926 Auftraege im Forecast, **294 ohne Abteilung** (vorher 1'912), CZ 1'045,
+SEH 656, DW 888, TX 542, TR5 501. Seit 2026-10-14 heisst der Reiter Operations > Shopfloor (Gruppe Operations mit KPI,
+`docs/OPERATIONS_KPI_2026-10-14.md`).
 
 ## 1. Was uebernommen wurde
 
