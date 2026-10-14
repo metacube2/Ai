@@ -192,6 +192,8 @@ public sealed class ShopfloorEndpointTests : IAsyncLifetime
         Assert.Equal(90.6, (double)status["stand"]!["otd"]![0]!);
         Assert.Equal(8, status["ausschluesse"]!.AsArray().Count);
         Assert.Contains("Referenzabzug", (string)status["stand"]!["quelle"]!);
+        // Ohne gespeicherten Versuch neutral (ok = null), nicht als Fehler
+        Assert.Null(status["letzter_abruf"]!["ok"]);
 
         var page = await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/kpi/liefertreue.html"));
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);

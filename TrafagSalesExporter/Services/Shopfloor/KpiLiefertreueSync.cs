@@ -43,7 +43,7 @@ public sealed class KpiLiefertreueSync : BackgroundService
     private readonly IHostEnvironment _env;
     private readonly ILogger<KpiLiefertreueSync> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private DateOnly _lastAttempt;
+    private JsonObject? _last;
     private int _seeded;
 
     public KpiLiefertreueSync(IServiceProvider services, ShopfloorStoreProvider stores, IOptionsMonitor<ShopfloorOptions> options,
@@ -58,7 +58,15 @@ public sealed class KpiLiefertreueSync : BackgroundService
 
     public bool Running { get; private set; }
 
-    public JsonObject LastResult { get; private set; } = new() { ["ok"] = false, ["meldung"] = "seit dem Start noch kein Abruf" };
+    /// <summary>
+    /// Letzter Abruf: laufend oder aus diesem Prozess, sonst der juengste gespeicherte Versuch (uebersteht einen Neustart).
+    /// Ohne Versuch neutral mit ok = null, damit die Seite keinen Fehler vortaeuscht.
+    /// </summary>
+    public JsonObject LastResult
+    {
+        get => _last ?? LastAttempt() ?? new JsonObject { ["ok"] = null, ["meldung"] = "Noch kein Abruf gespeichert" };
+        private set => _last = value;
+    }
 
     private ShopfloorDb Db => _stores.Store.Db;
 
@@ -144,6 +152,52 @@ public sealed class KpiLiefertreueSync : BackgroundService
         return ShopfloorDb.QueryOne(con, "SELECT COUNT(*) AS n FROM kpi_snapshot WHERE kind=? AND cut=? AND source LIKE 'SAP%'", Kind, cut)!.Long("n") > 0;
     }
 
+    // ------------------------------------------------------------------ Abrufprotokoll (seit 2026-10-14, Wunsch Fabio)
+
+    /// <summary>Abstand zwischen zwei automatischen Versuchen, solange der Vormonat fehlt.</summary>
+    public static readonly TimeSpan RetryInterval = TimeSpan.FromHours(2);
+
+    /// <summary>Juengster gespeicherter Abrufversuch (uebersteht einen Neustart), sonst null.</summary>
+    public JsonObject? LastAttempt()
+    {
+        EnsureSeed();
+        using var con = Db.Open();
+        var row = ShopfloorDb.QueryOne(con, "SELECT data FROM kpi_run WHERE kind=? ORDER BY id DESC LIMIT 1", Kind);
+        return row is null ? null : JsonNode.Parse(row.Str("data") ?? "{}") as JsonObject;
+    }
+
+    private DateTime? LastAttemptAt(string cut)
+    {
+        using var con = Db.Open();
+        var row = ShopfloorDb.QueryOne(con, "SELECT started_at FROM kpi_run WHERE kind=? AND cut=? ORDER BY id DESC LIMIT 1", Kind, cut);
+        return DateTime.TryParse(row?.Str("started_at"), CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d : null;
+    }
+
+    private void SaveAttempt(string cut, DateTime started, bool ok, JsonObject result, string user)
+        => Db.Write(con => ShopfloorDb.Exec(con,
+            "INSERT INTO kpi_run (kind, cut, started_at, finished_at, ok, data, user) VALUES (?,?,?,?,?,?,?)",
+            Kind, cut, started.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture), ShopfloorDb.Now(), ok ? 1 : 0, result.ToJsonString(), user));
+
+    /// <summary>
+    /// Automatischer Abruf faellig: ab dem Stichtag, solange fuer den Vormonat kein SAP-Stand vorliegt und der letzte
+    /// Versuch fuer diesen Monat mindestens <see cref="RetryInterval"/> zurueckliegt.
+    /// </summary>
+    internal static bool IsDue(DateTime now, int syncDay, bool hasSapSnapshot, DateTime? lastAttempt)
+        => now.Day >= Math.Clamp(syncDay, 1, 28) && !hasSapSnapshot && (lastAttempt is null || now - lastAttempt.Value >= RetryInterval);
+
+    /// <summary>Warnhinweis, wenn ab dem Tag nach dem Stichtag fuer den Vormonat noch kein SAP-Stand vorliegt; sonst null.</summary>
+    public string? MissingWarning(DateTime now)
+    {
+        var o = _options.CurrentValue;
+        var cut = PreviousMonth(DateOnly.FromDateTime(now));
+        if (!o.KpiSyncEnabled || now.Day <= Math.Clamp(o.KpiSyncDay, 1, 28) || HasSapSnapshot(cut)) return null;
+        var month = KpiLiefertreue.MonthLong[int.Parse(cut[4..], CultureInfo.InvariantCulture) - 1] + " " + cut[..4];
+        var last = LastAttempt();
+        var detail = last is null ? "Es wurde noch kein Abruf versucht."
+            : $"Letzter Versuch {last["start"]?.GetValue<string>()}: {last["meldung"]?.GetValue<string>()}";
+        return $"Für {month} liegt noch kein Stand aus SAP vor. Die Zahlen zeigen den letzten gültigen Monat. {detail}";
+    }
+
     // ------------------------------------------------------------------ Zeitplan
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -155,13 +209,10 @@ public sealed class KpiLiefertreueSync : BackgroundService
             try
             {
                 var o = _options.CurrentValue;
-                var today = DateOnly.FromDateTime(DateTime.Today);
-                var cut = PreviousMonth(today);
-                if (o.KpiSyncEnabled && today.Day >= Math.Clamp(o.KpiSyncDay, 1, 28) && _lastAttempt != today && !HasSapSnapshot(cut))
-                {
-                    _lastAttempt = today;
+                var now = DateTime.Now;
+                var cut = PreviousMonth(DateOnly.FromDateTime(now));
+                if (o.KpiSyncEnabled && IsDue(now, o.KpiSyncDay, HasSapSnapshot(cut), LastAttemptAt(cut)))
                     await RunAsync(cut, "Monatsabruf", stoppingToken);
-                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -253,6 +304,8 @@ public sealed class KpiLiefertreueSync : BackgroundService
                 ["meldung"] = $"Abruf ok: {q1.Count} Auftragspositionen, {q2.Count} Lieferpositionen"
             };
             _logger.LogInformation("Operations KPI: Liefertreue {Cut} aus SAP, {Q1} Auftragspositionen, {Q2} Lieferpositionen, OTD {Otd}", cut, q1.Count, q2.Count, s.OtdTol);
+            SaveAttempt(cut, started, true, LastResult, user);
+            await EventLogAsync("Info", $"Liefertreue {cut} aus SAP geholt", LastResult["meldung"]!.GetValue<string>());
             return LastResult;
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -262,6 +315,17 @@ public sealed class KpiLiefertreueSync : BackgroundService
                 ["ok"] = false, ["cut"] = cut, ["start"] = started.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
                 ["meldung"] = ex.GetBaseException().Message
             };
+            // Gespeichert und in den Admin-Logs, damit ein Fehler einen Neustart uebersteht und auffindbar ist (Wunsch Fabio 2026-10-14)
+            try
+            {
+                SaveAttempt(cut, started, false, LastResult, user);
+                await EventLogAsync("Warning", $"Liefertreue-Abruf {cut} fehlgeschlagen",
+                    $"{ex.GetBaseException().Message} Naechster automatischer Versuch in {RetryInterval.TotalHours:0} Stunden.");
+            }
+            catch (Exception logEx)
+            {
+                _logger.LogWarning(logEx, "Operations KPI: Abrufversuch konnte nicht protokolliert werden");
+            }
             throw;
         }
         finally
@@ -269,6 +333,13 @@ public sealed class KpiLiefertreueSync : BackgroundService
             Running = false;
             _gate.Release();
         }
+    }
+
+    private async Task EventLogAsync(string level, string message, string details)
+    {
+        // Erst hier aufgeloest: Hosts ohne Cockpit-Datenbank (Tests) haben keinen Eventlog-Dienst.
+        if (_services.GetService<TrafagSalesExporter.Services.IAppEventLogService>() is { } log)
+            await log.WriteAsync("Operations KPI", message, level, details: details);
     }
 
     /// <summary>Gateway-Wurzel: Einstellung oder alles vor /sap/opu/odata/ der Einkauf-Verbindung.</summary>

@@ -184,6 +184,7 @@ public static class ShopfloorEndpoints
         {
             ["laeuft"] = sync.Running,
             ["letzter_abruf"] = sync.LastResult.DeepClone(),
+            ["warnung"] = sync.MissingWarning(DateTime.Now),
             ["staende"] = sync.SnapshotList(),
             ["ausschluesse"] = new JsonArray(sync.Exclusions().Select(e => (JsonNode?)new JsonObject
             {
@@ -405,6 +406,10 @@ public static class ShopfloorEndpoints
                 ["__SOURCE__"] = System.Net.WebUtility.HtmlEncode(snap.Value.Source),
                 ["__EXPORT__"] = "../api/kpi/liefertreue/export.xlsx?cut=" + cut
             });
+            // Warnhinweis, wenn der Vormonat nach dem Stichtag noch fehlt (Wunsch Fabio 2026-10-14)
+            if (string.IsNullOrEmpty(c.Request.Query["cut"]) && sync.MissingWarning(DateTime.Now) is { } warn)
+                html = html.Replace("<div class=\"wrap\">", "<div class=\"wrap\"><div style=\"background:var(--bad);color:#fff;border-radius:6px;padding:10px 14px;font-weight:600\">"
+                    + System.Net.WebUtility.HtmlEncode(warn) + "</div>", StringComparison.Ordinal);
             c.Response.Headers.CacheControl = "no-store";
             return Results.Text(html, "text/html; charset=utf-8", Encoding.UTF8);
         });

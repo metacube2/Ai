@@ -90,6 +90,20 @@ public class KpiLiefertreueTests
         Assert.Equal("substringof('EN%2010204'%2CProductText)", KpiLiefertreueSync.JsEncode("substringof('EN 10204',ProductText)"));
     }
 
+    // Monatsabruf (Wunsch Fabio 2026-10-14): ab Stichtag, solange der Vormonat fehlt, hoechstens alle zwei Stunden
+    [Theory]
+    [InlineData("2026-11-01 08:00", false, null, false)]                  // vor dem Stichtag
+    [InlineData("2026-11-02 08:00", false, null, true)]                   // Stichtag, noch nie versucht
+    [InlineData("2026-11-02 08:00", true, null, false)]                   // Stand schon da
+    [InlineData("2026-11-02 08:00", false, "2026-11-02 07:00", false)]    // vor einer Stunde gescheitert
+    [InlineData("2026-11-02 09:30", false, "2026-11-02 07:00", true)]     // zwei Stunden spaeter erneut
+    [InlineData("2026-11-05 06:00", false, "2026-11-02 23:00", true)]     // App lag tagelang still: sofort nachholen
+    public void Abruf_Faellig(string now, bool hasSnapshot, string? last, bool expected)
+    {
+        var lastAt = last is null ? (DateTime?)null : DateTime.Parse(last, System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal(expected, KpiLiefertreueSync.IsDue(DateTime.Parse(now, System.Globalization.CultureInfo.InvariantCulture), 2, hasSnapshot, lastAt));
+    }
+
     [Fact]
     public void JsRound_Rundet_Halbe_Nach_Oben()
     {

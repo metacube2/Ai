@@ -37,6 +37,7 @@ th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)}
 th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
 .ok{color:var(--ok)} .err{color:var(--bad)}
 .go{color:var(--otd);font-weight:600;text-decoration:none}
+.warn{background:var(--bad);color:#fff;border-radius:6px;padding:12px 16px;font-weight:600}
 </style>
 <script>
 /* Hell/Dunkel und Grundfarben wie im Cockpit (Prinzip wie themeSync in ../app.js). */
@@ -66,6 +67,8 @@ th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mu
     <h1>Operations KPI</h1>
     <p class="lede">Übersicht der Operations-Kennzahlen. Als Erstes steht die Liefertreue der Trafag AG (Verkaufsorganisation 1100) bereit. Weitere Kennzahlen folgen.</p>
   </div>
+
+  <div id="warn" class="warn" hidden></div>
 
   <section>
     <h2>Liefertreue <span class="muted" id="period"></span></h2>
@@ -122,8 +125,11 @@ async function load(){
     $('kpis').innerHTML=tile('OTD · On Time Delivery','--otd',s.otd,'Positionen')+tile('OTIF · On Time In Full','--otif',s.otif,'Aufträge')+tile('OTP · On Time Performance','--otp',s.otp,'Positionen');
     $('source').textContent=`Quelle: ${s.quelle}. Stand ${s.stand}. Berichtsmonat ${s.monat}: OTD ${f1(s.otd_monat)} %, OTIF ${f1(s.otif_monat)} %, OTP ${f1(s.otp_monat)} %. Toleranz 0 bis 4 Arbeitstage.`;
   } else $('kpis').innerHTML='<div class="card muted">Noch kein Stand vorhanden.</div>';
+  // Warnhinweis, wenn der Vormonat nach dem Stichtag fehlt; letzter Versuch aus der Datenbank, ohne Versuch neutral (2026-10-14)
+  $('warn').hidden=!d.warnung; $('warn').textContent=d.warnung||'';
   const l=d.letzter_abruf||{};
-  $('last').innerHTML=d.laeuft?'<b>Abruf läuft …</b>':`Letzter Abruf seit dem Start der App: <span class="${l.ok?'ok':'err'}">${esc(l.meldung||'')}</span>${l.start?' ('+esc(l.start)+(l.cut?', Monat '+esc(l.cut):'')+')':''}`;
+  const cls=l.ok===true?'ok':l.ok===false?'err':'muted';
+  $('last').innerHTML=d.laeuft?'<b>Abruf läuft …</b>':`Letzter Abruf: <span class="${cls}">${esc(l.meldung||'')}</span>${l.start?' ('+esc(l.start)+(l.cut?', Monat '+esc(l.cut):'')+')':''}. Fehlt der Vormonat, versucht die App es ab dem 2. alle zwei Stunden erneut; Fehler stehen zusätzlich in den Admin-Logs.`;
   $('run').disabled=!!d.laeuft;
   $('snaps').innerHTML=(d.staende||[]).length?`<table><thead><tr><th>Berichtsmonat</th><th>Quelle</th><th>Gespeichert</th></tr></thead><tbody>${d.staende.map(x=>`<tr><td>${esc(x.cut)}</td><td>${esc(x.source)}</td><td>${esc(x.created_at)}</td></tr>`).join('')}</tbody></table>`:'';
   $('ex').innerHTML=(d.ausschluesse||[]).map(e=>`<tr><td>${esc(e.typ)}</td><td>${esc(e.schluessel)}</td><td>${esc(e.bezeichnung)}</td><td>${esc(e.grund)}</td><td><button data-del="${e.id}" title="Entfernen">Entfernen</button></td></tr>`).join('');

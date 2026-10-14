@@ -74,6 +74,8 @@ public sealed class ShopfloorDb
             rcpt TEXT, subject TEXT, html TEXT, text TEXT, status TEXT, error TEXT, tries INTEGER DEFAULT 0, sent_at TEXT, reason TEXT);
         CREATE TABLE IF NOT EXISTS mail_state (k TEXT PRIMARY KEY, v TEXT);
         CREATE TABLE IF NOT EXISTS kpi_snapshot (kind TEXT, cut TEXT, data TEXT, source TEXT, created_at TEXT, created_by TEXT, PRIMARY KEY(kind, cut));
+        CREATE TABLE IF NOT EXISTS kpi_run (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, cut TEXT, started_at TEXT, finished_at TEXT,
+            ok INTEGER, data TEXT, user TEXT);
         CREATE TABLE IF NOT EXISTS kpi_exclusion (id INTEGER PRIMARY KEY AUTOINCREMENT, typ TEXT, schluessel TEXT, bezeichnung TEXT, grund TEXT,
             updated_at TEXT, updated_by TEXT);
         """;
