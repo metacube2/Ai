@@ -1656,3 +1656,134 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .pm-light-red.pm-on, .pm-hp-now .pm-hp-bar, .pm-pf-ring, .pm-pf-stage-bar i, .pm-pf-tile { animation: none; } }
 @media (max-width: 900px) { .pm-hero { grid-template-columns: 1fr; padding: 16px; } .pm-hero-title { font-size: 1.4rem; } .pm-create-grid { grid-template-columns: 1fr; } .pm-fields { grid-template-columns: 1fr; } .pm-column { width: 260px; } .pm-charts, .pm-settings { grid-template-columns: 1fr; } .pm-hbar-row { grid-template-columns: 110px 1fr 30px; } }
 @media (prefers-reduced-motion: reduce) { .pm-project, .pm-card, .pm-skeleton, .pm-panel, .pm-panel-backdrop { animation: none; } }
+
+/* -------------------------------------------------------------------------
+   CPU-Pegelanzeige in der Kopfleiste (Components/ServerLoadMeter.razor), Wunsch Ingo 2026-10-14:
+   Fluoreszenzanzeige (VFD) wie das VU-Meter eines Kassettendecks. Tuerkis glimmende Segmente mit
+   Leuchthof, unbeleuchtete Segmente schwach sichtbar (Phosphor unter Glas), Kaestchen ab 80 %.
+   Masse fest in px, weil ServerLoadMeter.MarkStyle die Skala daraus rechnet: Strich 3 + 2, Kaestchen 6 + 2.
+   Bewusst unabhaengig von Hell/Dunkel: eine VFD ist immer ein dunkles Fenster.
+   ------------------------------------------------------------------------- */
+.vfd {
+    align-items: center;
+    background: linear-gradient(180deg, #0b0f0e 0%, #030505 55%, #070a09 100%);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 0 rgba(255, 255, 255, 0.12);
+    display: inline-flex;
+    gap: 4px;
+    margin-right: 16px;
+    padding: 5px 7px 5px 6px;
+    position: relative;
+    user-select: none;
+    --vfd-on: #8ef9e6;
+    --vfd-glow: rgba(64, 232, 205, 0.75);
+    --vfd-ghost: rgba(120, 205, 190, 0.10);
+    --vfd-text: #6fe3cf;
+}
+
+/* Spiegelung auf dem Glas */
+.vfd::after {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 35%, transparent 55%);
+    border-radius: 4px;
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+.vfd-glass {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vfd-row {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+}
+
+.vfd-ch,
+.vfd-unit {
+    color: var(--vfd-text);
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 0 3px var(--vfd-glow);
+    width: 7px;
+}
+
+.vfd-unit {
+    align-self: center;
+    margin-left: 9px;
+    width: auto;
+}
+
+.vfd-bar {
+    display: flex;
+    gap: 2px;
+}
+
+.vfd-seg {
+    background: var(--vfd-ghost);
+    border-radius: 0.5px;
+    display: block;
+    height: 9px;
+    transition: background 90ms linear, box-shadow 90ms linear;
+    width: 3px;
+}
+
+.vfd-seg.vfd-box {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--vfd-ghost);
+    width: 6px;
+}
+
+.vfd-seg.vfd-on {
+    background: var(--vfd-on);
+    box-shadow: 0 0 2px var(--vfd-glow), 0 0 6px rgba(64, 232, 205, 0.45);
+}
+
+.vfd-seg.vfd-box.vfd-on {
+    background: var(--vfd-on);
+    box-shadow: 0 0 3px var(--vfd-glow), 0 0 8px rgba(64, 232, 205, 0.5);
+}
+
+.vfd-seg.vfd-peak {
+    background: rgba(142, 249, 230, 0.55);
+    box-shadow: 0 0 3px rgba(64, 232, 205, 0.5);
+}
+
+.vfd-seg.vfd-box.vfd-peak {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px rgba(142, 249, 230, 0.7), 0 0 4px rgba(64, 232, 205, 0.45);
+}
+
+.vfd-scale {
+    height: 9px;
+    margin-left: 11px;
+    position: relative;
+    width: 138px;
+}
+
+.vfd-scale .vfd-ch {
+    display: none;
+}
+
+.vfd-mark {
+    color: var(--vfd-text);
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: 8px;
+    line-height: 9px;
+    opacity: 0.9;
+    position: absolute;
+    text-shadow: 0 0 3px var(--vfd-glow);
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .vfd { display: none; }
+}

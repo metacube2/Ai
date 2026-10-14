@@ -1,0 +1,93 @@
+@* CPU-Last als Fluoreszenz-Pegelanzeige (VFD, wie das VU-Meter eines Kassettendecks), Wunsch Ingo 2026-10-14.
+   Oberer Balken S = Server gesamt, unterer Balken C = Cockpit-Prozess, je 25 Segmente zu 4 %, ab 80 % als Kaestchen
+   wie der Uebersteuerungsbereich im Vorbild. Unbeleuchtete Segmente bleiben schwach sichtbar, die Spitze haelt kurz.
+   Messung in Services/ServerLoadSampler.cs (ein Takt fuer alle Besucher), Aussehen in app.css unter vfd-. *@
+@implements IDisposable
+@using TrafagSalesExporter.Services
+
+<div class="vfd" title="@TitleText" aria-label="@TitleText">
+    <div class="vfd-glass">
+        <div class="vfd-row">
+            <span class="vfd-ch">S</span>
+            <div class="vfd-bar">
+                @for (var i = 0; i < Segments; i++)
+                {
+                    <i class="@SegClass(i, _litMachine, _peakMachine)"></i>
+                }
+            </div>
+        </div>
+        <div class="vfd-scale">
+            <span class="vfd-ch"></span>
+            @foreach (var mark in Marks)
+            {
+                <span class="vfd-mark" style="@MarkStyle(mark)">@mark</span>
+            }
+        </div>
+        <div class="vfd-row">
+            <span class="vfd-ch">C</span>
+            <div class="vfd-bar">
+                @for (var i = 0; i < Segments; i++)
+                {
+                    <i class="@SegClass(i, _litApp, _peakApp)"></i>
+                }
+            </div>
+        </div>
+    </div>
+    <span class="vfd-unit">%</span>
+</div>
+
+@code {
+    private const int Segments = 25;
+    private const int BoxFrom = 20;          // ab 80 %: Kaestchen wie der Bereich 0 bis 8+ dB im Vorbild
+    private const string SegBase = "vfd-seg";
+    private static readonly int[] Marks = [0, 20, 40, 60, 80, 100];
+    private static readonly TimeSpan PeakHold = TimeSpan.FromSeconds(2);
+
+    private Timer? _timer;
+    private double _machine, _app;
+    private int _litMachine, _litApp, _peakMachine, _peakApp;
+    private DateTime _peakMachineAt, _peakAppAt;
+    private bool _hasMachine = true;
+
+    private string TitleText => _hasMachine
+        ? $"CPU Server {_machine:0} % · Cockpit {_app:0} %"
+        : $"CPU Cockpit {_app:0} %";
+
+    protected override void OnInitialized()
+    {
+        Update();
+        _timer = new Timer(_ => InvokeAsync(() => { Update(); StateHasChanged(); }), null, ServerLoadSampler.Interval, ServerLoadSampler.Interval);
+    }
+
+    private void Update()
+    {
+        var (machine, app) = ServerLoadSampler.Current;
+        _hasMachine = machine is not null;
+        // Traegheit wie bei einem Zeigerinstrument: halb neuer Wert, halb alter
+        _machine = 0.5 * _machine + 0.5 * (machine ?? 0);
+        _app = 0.5 * _app + 0.5 * app;
+        _litMachine = ServerLoadSampler.LitSegments(_machine, Segments);
+        _litApp = ServerLoadSampler.LitSegments(_app, Segments);
+        var now = DateTime.UtcNow;
+        if (_litMachine >= _peakMachine || now - _peakMachineAt > PeakHold) { _peakMachine = _litMachine; _peakMachineAt = now; }
+        if (_litApp >= _peakApp || now - _peakAppAt > PeakHold) { _peakApp = _litApp; _peakAppAt = now; }
+    }
+
+    private static string SegClass(int i, int lit, int peak)
+    {
+        var c = i >= BoxFrom ? SegBase + " vfd-box" : SegBase;
+        if (i < lit) return c + " vfd-on";
+        if (peak > 0 && i == peak - 1) return c + " vfd-peak";
+        return c;
+    }
+
+    // Striche 3 px + 2 px Abstand, Kaestchen 6 px + 2 px (app.css): Skalenstrich genau an der Segmentgrenze
+    private static string MarkStyle(int mark)
+    {
+        var k = mark * Segments / 100;
+        var x = k <= BoxFrom ? k * 5 : BoxFrom * 5 + (k - BoxFrom) * 8;
+        return FormattableString.Invariant($"left:{x}px");
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}
