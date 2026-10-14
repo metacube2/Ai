@@ -8,6 +8,9 @@ Stand 2026-10-08: **produktiv seit 06:39** (`59d0531`), angesehen. Zugriff nur f
 freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transport `T76K912718` in P76 ist (Abschnitt 8).
 *Ueberholt:* „nicht committet, Zugriff fuer niemanden" war der Stand des Worktrees.
 
+Stand 2026-10-14: Feld-Mapping aus `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` uebernommen (`b613f7c`): Abteilungen ueber den
+Disponenten, Quelle SAP statt MES ausser FPY, Mapping je Feld auf der Seite „Schnittstelle SAP / MES“. Einzelheiten Abschnitt 12.
+
 ## 1. Was uebernommen wurde
 
 | Original (PPA-Shopfloor vom 2026-10-05) | Jetzt im Cockpit |
@@ -209,6 +212,7 @@ Pflichtfilter Werks und Datum, 60 Tage. Gemessen T76: ShopAufSet 200, 300 KB, 3 
 *Nachtrag 2026-10-08:* T76K912718 enthaelt jetzt auch den Code der Einkauf-Sets EinkKontraktSet/EinkMatLzSet; deren Strukturen liegen in T76K912724. **Import: zuerst T76K912724, dann T76K912718.**
 
 *Nachtrag 2026-10-09:* Beide Auftraege von Ingo nach P76 importiert, Caches geleert. `Shopfloor:SapSyncEnabled` steht seit dem Deploy 11:32 (`2aea0ba`) auf **true**. Nach jedem App-Neustart holt der Dienst den juengsten faelligen Termin des Tages nach. Erster Lauf 11:33: `ShopZd05Set` 58 Positionen (29 fuer den Tag uebernommen), `ShopAufSet` 6'449 Auftraege, davon 3'858 im Forecast-Fenster 09.10. bis 06.11.; je Abteilung TX 539, DW 875, TR5 492, SEH 40, **ohne Abteilung („?“) 1'912**. Die Disponenten dieser Auftraege kommen in der Zuordnung `ShopfloorForecast.DefaultPrefix` nicht vor; haeufigste in der Woche ab 12.10.: 025 (91), SE1 (74), 024 (67), PKA (43), SL1 (42), SE2 (38), 019, 022, 018, SL3. Welche davon zu welcher Abteilung gehoeren, muss die Produktion festlegen (nicht geraten).
+*Ueberholt 2026-10-14:* Die Zuordnung ist mit dem Feldmapping-Excel festgelegt (Disponentenliste von Fabio, 13.10.), siehe Abschnitt 12.
 
 *Vorbereitung (Stand vor dem Umsetzen):*
 
@@ -254,3 +258,34 @@ builder.Services.AddShopfloor(builder.Configuration);              // nach AddAu
 app.UseShopfloorAccess();                                          // direkt VOR app.UseStaticFiles();
 app.MapShopfloor();                                                // vor app.MapRazorComponents<...>()
 ```
+
+## 12. Feld-Mapping SAP/MES (Stand Excel 2026-10-14, `b613f7c`)
+
+Quelle: `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` (Kopie aus Ingos Downloads vom 2026-10-14 07:16). Blatt „Feld-Mapping“
+mit 134 Schnittstellenfeldern, Blatt „Disponenten“ mit der SAP-Liste „Disponent fuer Auftrag“ (Screenshots Fabio, 13.10.).
+
+**Festgelegt im Excel und uebernommen:**
+
+1. **Abteilung ueber den Disponenten (Werk 1100):** SEH = S* (SB1-5, SE1-4, SK1-3, SL1-5, SPB), TR5 = EK*, TX = EL*, DW = D*,
+   CZ = 017 bis 028 (exakte Codes, damit 010, 012, 013, 015, 016 nicht mitlaufen), MTS ohne Disponent. Steht in
+   `forecast_prefix` von `shopfloor_config.json` (massgebend, `ShopfloorStore` liest es) und gleich in `ShopfloorForecast.DefaultPrefix`.
+   *Geaendert:* 012 (PPD / Sensoren OEM) zaehlte bisher zu SEH (aus `forecast.py`), im Excel steht es auf „pruefen (SEH?)“ und ist jetzt
+   ohne Abteilung. Ohne Abteilung bleiben ausserdem 001-005, 010, 012, 013, 015, 016, 030, 031, 099, A99, N15, PKA, TL1, TPT.
+   Die gespeicherten Forecast-Auftraege bekommen die neue Abteilung erst beim naechsten SAP-Abgleich (05:45, 12:45 oder `POST sap/sync`).
+2. **Quelle:** aus dem MES kommen nur die fuenf FPY-Werte (`seh/tr5/tx/dw/cz.fpy`), alle anderen 129 Felder aus SAP. 26 Felder
+   (Produzierte Mengen, CZ-Mengen, MTF-Verfuegbarkeit, Sensorbestaende) standen vorher auf `mes`.
+3. **Mapping je Feld:** jedes Feld in `shopfloor_config.json` hat ein Objekt `sap` mit `vorschlag_tabelle`, `vorschlag_feld`,
+   `vorschlag_odata` (Spalten G-I, Vorschlag nach SAP-Standard, **nicht geprueft**), `tabelle`, `feld` (Spalten J/K, Ingo), `selektion`,
+   `status`, `bemerkung`. `GET integration/schema` liefert es mit, die Seite „Schnittstelle SAP / MES“ zeigt es (Vorschlaege kursiv).
+   Uebernahme per Skript aus dem Excel (Zeilen ab 4, Schluessel Spalte D `modul.feld`, leere Werte weggelassen). Wenn Ingo die gelben
+   Spalten J-N fuellt, das Excel neu ablegen und dieselbe Uebernahme wiederholen; die Konfiguration nicht von Hand auseinanderlaufen lassen.
+
+**Offen (aus dem Excel):**
+
+- Uebergabe taeglich 04:00 an `integration/push`: im Excel festgelegt, gebaut ist der Abruf durch die App (`ShopfloorSapSync`
+  05:45 und 12:45 ueber OData). Ein echter Push aus SAP braucht Token und eine IIS-Ausnahme (Abschnitt 3). Entscheid Ingo offen:
+  Abruf um 04:00 oder Push aus SAP.
+- Alle 134 Felder haben Status „offen“, die Spalten J-N sind leer. Fachlich ungeklaert: VkNr, Typencode, Z-Tabelle hinter ZC23,
+  Aufteilung Disponent 024 (Stecker/Kabel/Print), CZ-Mengen ohne eigenen Disponenten (Ministaten, Navistaten, DTP 8180), DL790/DLQ72,
+  Schichtzuordnung TX ueber die Rueckmeldezeit, Anlagenverfuegbarkeit MTF.
+- Disponenten auf „pruefen“: EL1, EL4, EL5, EL6, EL8 (TX), DL6, DS1, DS2, DSN, DW1 (DW), SPB (SEH), sowie 010, 012, 013, PKA, TL1, TPT.

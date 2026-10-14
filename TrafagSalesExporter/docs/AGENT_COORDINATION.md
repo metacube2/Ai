@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Operations (Shopfloor): Stand aus `Shopfloor_SAP_Feldmapping.xlsx` (2026-10-14) uebernehmen: Disponenten-Zuordnung (SEH S*, TR5 EK*, TX EL*, DW D*, CZ 017-028), Quelle SAP statt MES ausser FPY, Feld-Mapping auf der Seite Schnittstelle | `Services/Shopfloor/*`, `wwwroot/shopfloor/app.js`, `TrafagSalesExporter.Tests/Shopfloor*`, `docs/SHOPFLOOR_2026-10-07.md` | Code und Doku committet (`b613f7c`), Tests 1193/1193; **Deploy wartet auf Ingos Freigabe** (Einkauf-Delta konnte ohne Browser nicht geprueft werden) |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

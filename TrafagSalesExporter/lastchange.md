@@ -1,6 +1,12 @@
 # Last Change
 
-Stand: 2026-10-13
+Stand: 2026-10-14
+
+## Operations (Shopfloor): Feld-Mapping aus dem Excel, 2026-10-14 (`b613f7c`, Deploy offen)
+
+- Abteilungen über den Disponenten: SEH = S*, TR5 = EK*, TX = EL*, DW = D*, CZ = 017 bis 028; 012 nicht mehr SEH.
+- Aus dem MES kommen nur noch die FPY-Werte, die übrigen 129 Felder aus SAP.
+- Seite „Schnittstelle SAP / MES“ zeigt je Feld SAP-Tabelle und -Feld (Vorschlag kursiv), Selektion, Status und Bemerkung.
 
 ## Menü-Hervorhebung, Deploy ohne Sicherung, Deploy-Monitor, 2026-10-13
 
