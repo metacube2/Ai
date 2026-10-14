@@ -10,6 +10,8 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Manometer anzeigen"] = "Manometer azeige",
+            ["Trafag Dashboard"] = "Trafag Dashboard",
             ["Letzter Abruf"] = "Letschte Abruef",
             ["Klick öffnet den Datenstatus"] = "E Klick macht dr Datestatus uf",
             ["Standorte aktuell"] = "Standort aktuell",

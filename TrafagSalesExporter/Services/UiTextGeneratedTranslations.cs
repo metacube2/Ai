@@ -8,6 +8,8 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Manometer anzeigen"] = "Mostrar manómetro",
+                ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Última actualización",
                 ["Klick öffnet den Datenstatus"] = "Al hacer clic se abre el estado de los datos",
                 ["Standorte aktuell"] = "Sedes actualizadas",
@@ -2647,6 +2649,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Manometer anzeigen"] = "Mostra manometro",
+                ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Ultimo aggiornamento",
                 ["Klick öffnet den Datenstatus"] = "Un clic apre lo stato dei dati",
                 ["Standorte aktuell"] = "Sedi aggiornate",
@@ -5286,6 +5290,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Manometer anzeigen"] = "मैनोमीटर दिखाएँ",
+                ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "अंतिम अपडेट",
                 ["Klick öffnet den Datenstatus"] = "क्लिक करने पर डेटा स्थिति खुलती है",
                 ["Standorte aktuell"] = "अद्यतन स्थान",
@@ -7925,6 +7931,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Manometer anzeigen"] = "Shfaq manometrin",
+                ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Rifreskimi i fundit",
                 ["Klick öffnet den Datenstatus"] = "Klikimi hap gjendjen e të dhënave",
                 ["Standorte aktuell"] = "Vendndodhjet të përditësuara",
@@ -10564,6 +10572,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Manometer anzeigen"] = "Manometreyi göster",
+                ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "Son güncelleme",
                 ["Klick öffnet den Datenstatus"] = "Tıklamak veri durumunu açar",
                 ["Standorte aktuell"] = "Güncel lokasyonlar",
@@ -13203,6 +13213,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Manometer anzeigen"] = "manometer yIcha'",
+                ["Trafag Dashboard"] = "Trafag Dashboard",
                 ["Letzter Abruf"] = "chu'moH Qav",
                 ["Klick öffnet den Datenstatus"] = "De' Dotlh poSmoH 'uy'",
                 ["Standorte aktuell"] = "Daqmey chu'",

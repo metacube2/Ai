@@ -29,6 +29,10 @@ else
             <MudSwitch T="bool" Value="LandingSettings.ShowWalkingLabFigure" ValueChanged="SetWalkingFigure"
                        Color="Color.Primary"
                        Label="@T("Strichmännchen anzeigen", "Show stick figure")" />
+            @* Manometer oben auf der Startseite, seit 2026-10-14 abschaltbar, Standard aus (in der DB gespeichert) *@
+            <MudSwitch T="bool" Value="LandingSettings.ShowManometer" ValueChanged="SetManometer"
+                       Color="Color.Primary"
+                       Label="@T("Manometer anzeigen", "Show gauge")" />
         </MudStack>
         <MudDivider Class="mb-4" />
         <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
@@ -95,6 +99,11 @@ else
     private void SetWalkingFigure(bool value)
     {
         LandingSettings.SetShowWalkingLabFigure(value);
+    }
+
+    private void SetManometer(bool value)
+    {
+        LandingSettings.SetShowManometer(value);
     }
 
     private static string FormatDate(DateTimeOffset value)

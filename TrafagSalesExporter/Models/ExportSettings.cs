@@ -67,6 +67,12 @@ public class ExportSettings
     /// dass heute noch kein Lauf stattfand, und der Export einmalig nachgeholt.
     /// </summary>
     public DateTime? LastTimerRunUtc { get; set; }
+
+    /// <summary>
+    /// Startseite: Manometer oben anzeigen (Wunsch Ingo 2026-10-14, Standard aus). Bewusst in der DB statt in
+    /// appsettings.json, damit der Schalter einen Deploy uebersteht (LEARNINGS 2026-08-10).
+    /// </summary>
+    public bool ShowLandingManometer { get; set; }
 }
 
 public static class ExchangeRateDateFields

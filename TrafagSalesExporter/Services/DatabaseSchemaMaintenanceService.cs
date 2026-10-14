@@ -41,6 +41,8 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "ExportSettings", "B1GroupStandardCostMode", "TEXT NOT NULL DEFAULT 'LatestPositive'");
         AddColumnIfMissing(db, "ExportSettings", "GroupMarginChfRateMode", "TEXT NOT NULL DEFAULT 'CurrentDailyRate'");
         AddColumnIfMissing(db, "ExportSettings", "MarcForeignProcurementMode", "TEXT NOT NULL DEFAULT 'Ignore'");
+        // Startseite 2026-10-14: Manometer per Admin-Schalter, Standard aus
+        AddColumnIfMissing(db, "ExportSettings", "ShowLandingManometer", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "ExportSettings", "LastTimerRunUtc", "TEXT NULL");
         AddColumnIfMissing(db, "SharePointConfigs", "CentralExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");

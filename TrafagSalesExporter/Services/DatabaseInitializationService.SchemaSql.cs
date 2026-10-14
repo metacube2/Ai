@@ -119,7 +119,8 @@ CREATE TABLE ExportSettings (
     B1GroupStandardCostMode TEXT NOT NULL DEFAULT 'LatestPositive',
     GroupMarginChfRateMode TEXT NOT NULL DEFAULT 'BudgetRate',
     MarcForeignProcurementMode TEXT NOT NULL DEFAULT 'Ignore',
-    LastTimerRunUtc TEXT NULL
+    LastTimerRunUtc TEXT NULL,
+    ShowLandingManometer INTEGER NOT NULL DEFAULT 0
 );";
 
     internal static string GetHanaServersCreateSql() => @"

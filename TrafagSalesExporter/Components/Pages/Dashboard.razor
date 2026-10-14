@@ -17,6 +17,9 @@
 
 <div class="home-shell">
     <div class="home-content">
+        @* Manometer seit 2026-10-14 per Admin-Schalter (Admin Bereich > Aktive Logins > Startseite), Standard aus. *@
+        @if (LandingSettings.ShowManometer)
+        {
         <svg class="home-manometer" viewBox="0 0 600 340" role="img" aria-label="Trafag cockpit manometer">
             <rect x="0" y="0" width="600" height="340" style="fill:var(--mud-palette-background)" />
             <path d="M70 260 A230 230 0 0 1 530 260" class="gauge-outer" />
@@ -40,6 +43,7 @@
             </g>
             <circle cx="300" cy="260" r="28" style="fill:var(--mud-palette-text-primary)" />
         </svg>
+        }
         <div class="home-welcome">@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</div>
         @* Text seit 2026-10-14 (Wunsch Ingo): das Cockpit ist ueber die Laenderabfragen hinausgewachsen. *@
         <div class="home-subtitle">@T("Die Trafag-Gruppe auf einen Blick: alle Standorte, alle Bereiche, täglich aktuell.", "The Trafag Group at a glance: all sites, all areas, updated daily.")</div>
