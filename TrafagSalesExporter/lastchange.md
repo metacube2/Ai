@@ -2,6 +2,12 @@
 
 Stand: 2026-10-14
 
+## Kopfleiste: CPU-Last als Fluoreszenz-Pegelanzeige, 2026-10-14 (`a735b41`, `5235e16`, produktiv 10:51 und 11:00)
+
+- Ganz links in der rechten Kopfleiste, für alle: zwei Balken wie das VU-Meter eines Kassettendecks, S = Server gesamt,
+  C = Cockpit-Prozess, Skala 0 bis 100 %, Beschriftung „CPU LOAD“, Spitze hält 2 Sekunden.
+- Messung im Server alle 1,5 Sekunden (ein Takt für alle Besucher), unter 900 px Breite ausgeblendet.
+
 ## Operations: KPI Liefertreue OTD / OTIF / OTP und neues Menü, 2026-10-14 (`89e9c7c`, produktiv 10:04, live aus SAP seit 10:33, Abnahme bestanden)
 
 - Menü Operations mit den Unterreitern KPI (Übersicht, OTD / OTIF / OTP) und Shopfloor.

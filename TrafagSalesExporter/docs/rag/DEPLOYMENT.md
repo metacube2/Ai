@@ -66,6 +66,10 @@ Stand: 2026-10-14
 
 ## Kurzstand
 
+- **Deploy 2026-10-14 11:00, Pegelanzeige Beschriftung „CPU LOAD“ (`5235e16`)** und **10:51 CPU-Pegelanzeige in der Kopfleiste
+  (`a735b41`).** Release-Worktree, je `1205/1205`, DLL bitgleich, zehn Routen `200`. Alarme nur `-wal`/`-shm` und Checkpoint von
+  `trafag_exporter.db` und `shopfloor.db` beim Neustart. Sichtpruefung: Vorschau mit gleichem Markup per Edge headless; die
+  Produktivseite rendert headless nicht (Blazor-Verbindung), Ingo hat sie live angesehen („sieht gut aus“).
 - **Deploy 2026-10-14 10:11, Operations KPI Fehlertext/Kodierung (`982e193`).** Release-Worktree, `1197/1197`, DLL bitgleich,
   zehn Routen `200`. Alarm nur `-wal`/`-shm` von `trafag_exporter.db` und `shopfloor\shopfloor.db` (Neustart). Keine Sicherung
   (Wochenregel, neueste vom 13.10.).

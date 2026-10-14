@@ -35,7 +35,7 @@ Stand je Berichtsmonat, ein SAP-Abzug ersetzt den Referenzabzug desselben Monats
 Massgebend fuer die Abnahme ist Fabios Referenzlogik, nicht der Spezifikationstext. Unterschiede, die bewusst wie die Referenz gebaut sind:
 
 - **Arbeitstage Mo-Fr ohne Feiertagskalender.** Die Spezifikation sagt „ohne Feiertage“, die Referenz rechnet nur Wochenenden heraus.
-  Rueckfrage an Fabio offen.
+  *Entschieden 2026-10-14 (Mail Fabio):* richtig so, Feiertage werden bewusst nicht abgezogen; Fabio hat die Spezifikation korrigiert.
 - Median = oberes Mittelelement (`s[floor(n/2)]`), kein Mittelwert. Betraege wie `Math.round` (halbe nach oben).
 - Fehlt bei geliefertem Status der Ist-WA, gilt die SAP-Kennzahl `DelivToCmtdDelivDelayInDays <= 0`.
 - Fehlt ein Termin trotz Ist-WA, gilt die Position wie in JavaScript (`null <= 0`) als puenktlich.
@@ -104,7 +104,7 @@ bis dahin eine schmale Rolle (nur `S_RS_COMP`/`S_RS_COMP1`, ACTVT 16, Query `2CC
 - **Schmale Rolle fuer `POWERBI` vor dem 31.10.** (siehe 3b), sonst scheitert der Abruf vom 02.11.
 
 - *Erledigt 10:33:* Rolle fuer `POWERBI`, Abruf `202609`, Abnahme (3b).
-- Feiertage ja oder nein (Fabio).
+- *Erledigt 2026-10-14:* Feiertage nicht abziehen (Fabio, Spezifikation korrigiert).
 - Inhalt der KPI-Uebersicht (Fabio, separat).
 - Transitzeit bei Export-Positionen (Fabio, aus der Spezifikation).
 - Shopfloor-Feldmapping (`b613f7c`) geht mit demselben Deploy hinaus, siehe `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 12.
