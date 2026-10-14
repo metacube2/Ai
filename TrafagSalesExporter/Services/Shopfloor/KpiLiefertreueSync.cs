@@ -219,10 +219,10 @@ public sealed class KpiLiefertreueSync : BackgroundService
 
             const string sel = "SalesOrder,SalesOrderItem,SalesOrderDate,CommittedDeliveryDate,CmtdDelivDateYearMonth,ReqdDelivDateYearMonth," +
                                "EarliestReqdDelivDate,DeliveryStatus,SoldToParty,Product,ProductHierarchyNode,NetAmountInDisplayCurrency,DelivToCmtdDelivDelayInDays";
-            var q1 = await ReadAll(http, So(SoSet + "?$select=" + sel + "&$filter=" + Uri.EscapeDataString($"SalesOrganization eq '1100' and CmtdDelivDateYear eq '{year}'")), "C_SLSORDDELIVPERFANLYTSQRY", ct);
-            q1.AddRange(await ReadAll(http, So(SoSet + "?$select=" + sel + "&$filter=" + Uri.EscapeDataString($"SalesOrganization eq '1100' and ReqdDelivDateYear eq '{year}' and CmtdDelivDateYear ne '{year}'")), "C_SLSORDDELIVPERFANLYTSQRY", ct));
+            var q1 = await ReadAll(http, So(SoSet + "?$select=" + sel + "&$filter=" + JsEncode($"SalesOrganization eq '1100' and CmtdDelivDateYear eq '{year}'")), "C_SLSORDDELIVPERFANLYTSQRY", ct);
+            q1.AddRange(await ReadAll(http, So(SoSet + "?$select=" + sel + "&$filter=" + JsEncode($"SalesOrganization eq '1100' and ReqdDelivDateYear eq '{year}' and CmtdDelivDateYear ne '{year}'")), "C_SLSORDDELIVPERFANLYTSQRY", ct));
             var dlUrl = $"{root}{DlService}{DlSet}?sap-client={client0}&$format=json&$select=OutboundDelivery,OutboundDeliveryItem,ActualGoodsMovementDate,ReferenceSDDocument,ReferenceSDDocumentItem,NumberOfDeliveryItems&$filter="
-                        + Uri.EscapeDataString($"ActualGoodsMovementDate ge '{int.Parse(year, CultureInfo.InvariantCulture) - 1}0901'");
+                        + JsEncode($"ActualGoodsMovementDate ge '{int.Parse(year, CultureInfo.InvariantCulture) - 1}0901'");
             var q2 = await ReadAll(http, dlUrl, "C_DELIVITMPERFANLYTSQRY", ct);
 
             var texts = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -312,6 +312,32 @@ public sealed class KpiLiefertreueSync : BackgroundService
         };
     }
 
+    /// <summary>Fehlertext aus der OData-Antwort (error.message.value), sonst die ersten Zeichen; fuer die Statusanzeige.</summary>
+    internal static string SapMessage(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body)) return string.Empty;
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("error", out var e) && e.TryGetProperty("message", out var m))
+            {
+                var text = m.ValueKind == JsonValueKind.Object && m.TryGetProperty("value", out var v) ? v.GetString() : m.ToString();
+                return string.IsNullOrWhiteSpace(text) ? string.Empty : " SAP: " + text.Trim();
+            }
+        }
+        catch (JsonException)
+        {
+            // XML- oder HTML-Antwort: Tags entfernen
+        }
+        var plain = System.Text.RegularExpressions.Regex.Replace(body, "<[^>]+>", " ");
+        plain = System.Text.RegularExpressions.Regex.Replace(plain, "\\s+", " ").Trim();
+        return plain.Length == 0 ? string.Empty : " SAP: " + (plain.Length > 300 ? plain[..300] : plain);
+    }
+
+    /// <summary>Wie encodeURIComponent der Referenz: ' ( ) * ! bleiben stehen.</summary>
+    internal static string JsEncode(string s)
+        => Uri.EscapeDataString(s).Replace("%27", "'").Replace("%28", "(").Replace("%29", ")").Replace("%2A", "*").Replace("%21", "!");
+
     private static async Task<List<JsonElement>> ReadAll(HttpClient http, string url, string what, CancellationToken ct, bool single = false)
     {
         const int page = 10000;
@@ -327,7 +353,7 @@ public sealed class KpiLiefertreueSync : BackgroundService
                     HttpStatusCode.NotFound => " (Service im Gateway nicht aktiviert).",
                     HttpStatusCode.Unauthorized => " (Anmeldung abgelehnt).",
                     _ => "."
-                });
+                } + SapMessage(await response.Content.ReadAsStringAsync(ct)));
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
             var part = doc.RootElement.TryGetProperty("d", out var d) && d.TryGetProperty("results", out var r) && r.ValueKind == JsonValueKind.Array
                 ? r.EnumerateArray().Select(e => e.Clone()).ToList()
@@ -340,7 +366,7 @@ public sealed class KpiLiefertreueSync : BackgroundService
 
     private static async Task<List<KeyValuePair<string, string>>> ValueHelp(HttpClient http, Func<string, string> so, string set, string key, string txt, string term, CancellationToken ct)
     {
-        var url = so($"{set}?$top=1000&$select={key},{txt}&$filter=" + Uri.EscapeDataString($"substringof('{term}',{txt})"));
+        var url = so($"{set}?$top=1000&$select={key},{txt}&$filter=" + JsEncode($"substringof('{term}',{txt})"));
         return (await ReadAll(http, url, set, ct, single: true)).Select(r => new KeyValuePair<string, string>(Str(r, key), Str(r, txt))).ToList();
     }
 
@@ -352,7 +378,7 @@ public sealed class KpiLiefertreueSync : BackgroundService
             try
             {
                 var filter = string.Join(" or ", chunk.Select(x => $"{key} eq '{x.Replace("'", "''")}'"));
-                foreach (var r in await ReadAll(http, so($"{set}?$select={key},{txt}&$filter=" + Uri.EscapeDataString(filter)), set, ct, single: true))
+                foreach (var r in await ReadAll(http, so($"{set}?$select={key},{txt}&$filter=" + JsEncode(filter)), set, ct, single: true))
                     result[Str(r, key)] = Str(r, txt);
             }
             catch (HttpRequestException)

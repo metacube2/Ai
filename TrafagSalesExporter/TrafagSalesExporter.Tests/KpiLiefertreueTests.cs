@@ -81,6 +81,16 @@ public class KpiLiefertreueTests
     public void Datum_Wird_Normalisiert(string v, string expected) => Assert.Equal(expected, KpiLiefertreue.Norm(v));
 
     [Fact]
+    public void Sap_Fehlertext_Und_Kodierung_Wie_Die_Referenz()
+    {
+        Assert.Equal(" SAP: Property X not found", KpiLiefertreueSync.SapMessage("""{"error":{"code":"x","message":{"lang":"de","value":"Property X not found"}}}"""));
+        Assert.Equal(" SAP: Fehler im Filter", KpiLiefertreueSync.SapMessage("<error><message>Fehler im Filter</message></error>"));
+        Assert.Equal("", KpiLiefertreueSync.SapMessage(""));
+        Assert.Equal("SalesOrganization%20eq%20'1100'", KpiLiefertreueSync.JsEncode("SalesOrganization eq '1100'"));
+        Assert.Equal("substringof('EN%2010204'%2CProductText)", KpiLiefertreueSync.JsEncode("substringof('EN 10204',ProductText)"));
+    }
+
+    [Fact]
     public void JsRound_Rundet_Halbe_Nach_Oben()
     {
         Assert.Equal(3, KpiLiefertreue.JsRound(2.5));
