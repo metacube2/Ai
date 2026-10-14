@@ -1,6 +1,7 @@
 @page "/"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Home
 @inject IUiTextService UiText
 @inject ILandingPageSettingsService LandingSettings
 
@@ -42,9 +43,8 @@
         <div class="home-welcome">@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</div>
         @* Text seit 2026-10-14 (Wunsch Ingo): das Cockpit ist ueber die Laenderabfragen hinausgewachsen. *@
         <div class="home-subtitle">@T("Die Trafag-Gruppe auf einen Blick: alle Standorte, alle Bereiche, täglich aktuell.", "The Trafag Group at a glance: all sites, all areas, updated daily.")</div>
-        <img class="home-connectivity-image"
-             src="mainimage.png"
-             alt="@T("Trafag Cockpit: Daten aller Standorte und Bereiche der Trafag-Gruppe an einem Ort", "Trafag Cockpit: data from all sites and areas of the Trafag Group in one place")" />
+        @* Seit 2026-10-14 (Wunsch Ingo): animierte Standortgrafik mit Live-Zustand statt des festen Bildes mainimage.png. *@
+        <SiteNetworkGraphic />
         @if (LandingSettings.ShowWalkingLabFigure)
         {
             <div class="walking-stage" aria-label="Walking lab figure">

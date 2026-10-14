@@ -10,6 +10,11 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Letzter Abruf"] = "Letschte Abruef",
+            ["Klick öffnet den Datenstatus"] = "E Klick macht dr Datestatus uf",
+            ["Standorte aktuell"] = "Standort aktuell",
+            ["Fehler beim letzten Lauf"] = "Fähler bim letschte Louf",
+            ["noch keine Daten"] = "no kener Date",
             ["Personentage"] = "Persone-Täg",
             ["eingestuft"] = "igstuft",
             ["Einstufung"] = "Igstufig",

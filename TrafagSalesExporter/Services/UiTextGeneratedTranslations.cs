@@ -8,6 +8,11 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Letzter Abruf"] = "Última actualización",
+                ["Klick öffnet den Datenstatus"] = "Al hacer clic se abre el estado de los datos",
+                ["Standorte aktuell"] = "Sedes actualizadas",
+                ["Fehler beim letzten Lauf"] = "Error en la última ejecución",
+                ["noch keine Daten"] = "aún no hay datos",
                 ["Personentage"] = "días-persona",
                 ["eingestuft"] = "clasificado",
                 ["Einstufung"] = "Clasificación",
@@ -2642,6 +2647,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Letzter Abruf"] = "Ultimo aggiornamento",
+                ["Klick öffnet den Datenstatus"] = "Un clic apre lo stato dei dati",
+                ["Standorte aktuell"] = "Sedi aggiornate",
+                ["Fehler beim letzten Lauf"] = "Errore nell'ultima esecuzione",
+                ["noch keine Daten"] = "ancora nessun dato",
                 ["Personentage"] = "giorni-persona",
                 ["eingestuft"] = "classificato",
                 ["Einstufung"] = "Classificazione",
@@ -5276,6 +5286,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Letzter Abruf"] = "अंतिम अपडेट",
+                ["Klick öffnet den Datenstatus"] = "क्लिक करने पर डेटा स्थिति खुलती है",
+                ["Standorte aktuell"] = "अद्यतन स्थान",
+                ["Fehler beim letzten Lauf"] = "पिछले रन में त्रुटि",
+                ["noch keine Daten"] = "अभी कोई डेटा नहीं",
                 ["Personentage"] = "व्यक्ति-दिन",
                 ["eingestuft"] = "वर्गीकृत",
                 ["Einstufung"] = "वर्गीकरण",
@@ -7910,6 +7925,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Letzter Abruf"] = "Rifreskimi i fundit",
+                ["Klick öffnet den Datenstatus"] = "Klikimi hap gjendjen e të dhënave",
+                ["Standorte aktuell"] = "Vendndodhjet të përditësuara",
+                ["Fehler beim letzten Lauf"] = "Gabim në ekzekutimin e fundit",
+                ["noch keine Daten"] = "ende pa të dhëna",
                 ["Personentage"] = "ditë-person",
                 ["eingestuft"] = "i klasifikuar",
                 ["Einstufung"] = "Klasifikimi",
@@ -10544,6 +10564,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Letzter Abruf"] = "Son güncelleme",
+                ["Klick öffnet den Datenstatus"] = "Tıklamak veri durumunu açar",
+                ["Standorte aktuell"] = "Güncel lokasyonlar",
+                ["Fehler beim letzten Lauf"] = "Son çalıştırmada hata",
+                ["noch keine Daten"] = "henüz veri yok",
                 ["Personentage"] = "kişi-gün",
                 ["eingestuft"] = "sınıflandırıldı",
                 ["Einstufung"] = "Sınıflandırma",
@@ -13178,6 +13203,11 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Letzter Abruf"] = "chu'moH Qav",
+                ["Klick öffnet den Datenstatus"] = "De' Dotlh poSmoH 'uy'",
+                ["Standorte aktuell"] = "Daqmey chu'",
+                ["Fehler beim letzten Lauf"] = "Qagh Qav ruch",
+                ["noch keine Daten"] = "De' pagh",
                 ["Personentage"] = "ghot jajmey",
                 ["eingestuft"] = "'ang",
                 ["Einstufung"] = "'angmey",

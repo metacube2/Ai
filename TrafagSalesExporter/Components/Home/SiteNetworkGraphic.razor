@@ -1,0 +1,183 @@
+@* Startseite (Wunsch Ingo 2026-10-14): animierte, interaktive Standortgrafik statt mainimage.png. Schwarzer Grund,
+   in der Mitte das Cockpit, rundherum je Land ein Knoten mit Flagge. Der Ring zeigt den Zustand des letzten Exports
+   (gruen aktuell, gelb veraltet, rot Fehler, grau keine Daten), Datenpakete fliessen zur Mitte. Darueberfahren zeigt
+   Einzelheiten, Klick oeffnet den Datenstatus. Logik in SiteNetwork.cs, Aussehen in app.css unter sng-. *@
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@implements IDisposable
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+@inject IUiTextService UiText
+
+<div class="sng" @onmouseleave="() => _hover = null">
+    <svg viewBox="0 0 1000 560" role="img" aria-label="Trafag Global BI Cockpit">
+        <defs>
+            <radialGradient id="sng-hub-grad" cx="50%" cy="40%" r="65%">
+                <stop offset="0%" stop-color="#262b33" />
+                <stop offset="100%" stop-color="#0d1014" />
+            </radialGradient>
+            <filter id="sng-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <pattern id="sng-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.05)" />
+            </pattern>
+        </defs>
+        <rect width="1000" height="560" fill="url(#sng-dots)" />
+        <ellipse cx="@SiteNetwork.F(SiteNetwork.Cx)" cy="@SiteNetwork.F(SiteNetwork.Cy)" rx="@SiteNetwork.F(SiteNetwork.Rx)" ry="@SiteNetwork.F(SiteNetwork.Ry)" class="sng-orbit" />
+
+        @for (var i = 0; i < _nodes.Count; i++)
+        {
+            var n = _nodes[i];
+            var (x, y) = SiteNetwork.Position(i, _nodes.Count);
+            var pathId = "sng-line-" + n.Code;
+            <g class="@LineClass(n)">
+                <path id="@pathId" d="@SiteNetwork.LinePath(x, y)" class="sng-line" />
+                @if (n.State == SiteNodeState.Ok)
+                {
+                    @foreach (var begin in OkBegins)
+                    {
+                        <circle r="3.4" class="sng-packet" filter="url(#sng-glow)">
+                            <animateMotion dur="2.4s" repeatCount="indefinite" begin="@begin" rotate="auto">
+                                <mpath href="#@pathId" />
+                            </animateMotion>
+                        </circle>
+                    }
+                }
+                else if (n.State == SiteNodeState.Stale)
+                {
+                    <circle r="3" class="sng-packet sng-packet-slow" filter="url(#sng-glow)">
+                        <animateMotion dur="6s" repeatCount="indefinite" begin="0s">
+                            <mpath href="#@pathId" />
+                        </animateMotion>
+                    </circle>
+                }
+            </g>
+        }
+
+        <g class="sng-hub">
+            <circle cx="500" cy="280" r="@SiteNetwork.F(SiteNetwork.HubR)" fill="url(#sng-hub-grad)" class="sng-hub-disc" />
+            <g class="sng-hub-ring"><circle cx="500" cy="280" r="126" class="sng-hub-segments" /></g>
+            <g class="sng-hub-ring sng-hub-ring-rev"><circle cx="500" cy="280" r="134" class="sng-hub-ticks" /></g>
+            <rect x="436" y="196" width="128" height="40" rx="6" fill="#fff" />
+            <image href="trafag.jpg" x="440" y="198" width="120" height="36" preserveAspectRatio="xMidYMid meet" />
+            <g><text x="500" y="270" class="sng-hub-title">Trafag Global</text></g>
+            <g><text x="500" y="298" class="sng-hub-sub">BI Cockpit</text></g>
+            <g class="sng-bars">
+                <rect x="472" y="322" width="8" height="22" />
+                <rect x="484" y="314" width="8" height="30" />
+                <rect x="496" y="326" width="8" height="18" />
+                <rect x="508" y="310" width="8" height="34" />
+                <rect x="520" y="318" width="8" height="26" />
+            </g>
+        </g>
+
+        @for (var i = 0; i < _nodes.Count; i++)
+        {
+            var n = _nodes[i];
+            var (x, y) = SiteNetwork.Position(i, _nodes.Count);
+            var nodeCode = n.Code;
+            <g class="@NodeClass(n)" transform="@Translate(x, y)" role="button" tabindex="0"
+               @onmouseenter="() => _hover = nodeCode" @onfocus="() => _hover = nodeCode" @onclick="OpenStatus">
+                <circle r="@SiteNetwork.F(SiteNetwork.NodeR + 9)" class="sng-node-halo" />
+                <circle r="@SiteNetwork.F(SiteNetwork.NodeR)" class="sng-node-disc" />
+                <circle r="@SiteNetwork.F(SiteNetwork.NodeR + 4)" class="sng-node-ring" />
+                @((MarkupString)SiteNetwork.Flag(nodeCode, -12, -22))
+                <g class="sng-building">
+                    <rect x="-9" y="-2" width="18" height="14" rx="1" />
+                    <rect x="-5" y="1" width="3" height="3" class="sng-win" />
+                    <rect x="2" y="1" width="3" height="3" class="sng-win" />
+                    <rect x="-5" y="6" width="3" height="3" class="sng-win" />
+                    <rect x="2" y="6" width="3" height="3" class="sng-win" />
+                </g>
+                <g><text y="@SiteNetwork.F(SiteNetwork.NodeR + 24)" class="sng-node-code">@nodeCode</text></g>
+            </g>
+        }
+    </svg>
+
+    @if (Hovered is { } h)
+    {
+        var (hx, hy) = SiteNetwork.Position(_nodes.IndexOf(h), _nodes.Count);
+        <div class="sng-tip @(hx < SiteNetwork.Cx ? "sng-tip-right" : "sng-tip-left")" style="@TipStyle(hx, hy)">
+            <div class="sng-tip-head">@h.Name <span>@h.Code</span></div>
+            <div><span class="sng-dot @StateClass(h.State)"></span>@StateText(h.State)</div>
+            <div class="sng-tip-row"><span>@T("Quelle", "Source")</span><b>@h.Source</b></div>
+            <div class="sng-tip-row"><span>@T("Letzter Abruf", "Last refresh")</span><b>@(h.LastAt?.ToString("dd.MM.yyyy HH:mm") ?? "–")</b></div>
+            <div class="sng-tip-row"><span>@T("Zeilen", "Rows")</span><b>@h.Rows.ToString("N0")</b></div>
+            <div class="sng-tip-foot">@T("Klick öffnet den Datenstatus", "Click opens the data status")</div>
+        </div>
+    }
+
+    <div class="sng-status">
+        <span><span class="sng-dot sng-ok"></span>@T("Standorte aktuell", "Sites up to date"): <b>@_nodes.Count(n => n.State == SiteNodeState.Ok)</b> / @_nodes.Count</span>
+        <span>@T("Letzter Abruf", "Last refresh"): <b>@(_nodes.Max(n => n.LastAt)?.ToString("dd.MM.yyyy HH:mm") ?? "–")</b></span>
+    </div>
+</div>
+
+@code {
+    private static readonly string[] OkBegins = SiteNetwork.PacketBegins;
+    private const string StatusRoute = "management-cockpit?section=status";
+    private List<SiteNode> _nodes = [];
+    private string? _hover;
+    private Timer? _timer;
+
+    private SiteNode? Hovered => _hover is null ? null : _nodes.FirstOrDefault(n => n.Code == _hover);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        _timer = new Timer(_ => InvokeAsync(async () => { await LoadAsync(); StateHasChanged(); }), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var sites = await db.Sites.AsNoTracking().ToListAsync();
+            var lastIds = await db.ExportLogs.AsNoTracking().GroupBy(l => l.SiteId).Select(g => g.Max(l => l.Id)).ToListAsync();
+            var logs = await db.ExportLogs.AsNoTracking().Where(l => lastIds.Contains(l.Id)).ToListAsync();
+            _nodes = SiteNetwork.Build(sites, logs.ToDictionary(l => l.SiteId), DateTime.UtcNow);
+        }
+        catch (Exception)
+        {
+            // Startseite darf an einem Datenbankproblem nicht scheitern; dann bleibt der letzte Stand stehen.
+        }
+    }
+
+    private void OpenStatus() => Nav.NavigateTo(StatusRoute);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private string StateText(SiteNodeState s) => s switch
+    {
+        SiteNodeState.Ok => T("aktuell", "up to date"),
+        SiteNodeState.Stale => T("veraltet", "outdated"),
+        SiteNodeState.Error => T("Fehler beim letzten Lauf", "Error in the last run"),
+        _ => T("noch keine Daten", "no data yet")
+    };
+
+    private static string StateClass(SiteNodeState s) => s switch
+    {
+        SiteNodeState.Ok => "sng-ok",
+        SiteNodeState.Stale => "sng-stale",
+        SiteNodeState.Error => "sng-error",
+        _ => "sng-unknown"
+    };
+
+    private string NodeClass(SiteNode n) => "sng-node " + StateClass(n.State) + (_hover == n.Code ? " sng-hot" : string.Empty);
+
+    private string LineClass(SiteNode n) => "sng-link " + StateClass(n.State)
+        + (_hover is null ? string.Empty : _hover == n.Code ? " sng-hot" : " sng-dim");
+
+    private static string Translate(double x, double y) => $"translate({SiteNetwork.F(x)} {SiteNetwork.F(y)})";
+
+    // Infobox neben dem Knoten, in Prozent der Grafik, damit sie mit der Breite mitwaechst
+    private static string TipStyle(double x, double y)
+        => FormattableString.Invariant($"left:{x / 10.0:0.##}%;top:{y / 5.6:0.##}%");
+
+    public void Dispose() => _timer?.Dispose();
+}

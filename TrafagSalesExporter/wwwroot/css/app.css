@@ -1822,3 +1822,225 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
     text-shadow: 0 0 3px var(--vfd-glow);
     width: 138px;
 }
+
+/* -------------------------------------------------------------------------
+   Startseite: animierte Standortgrafik (Components/Home/SiteNetworkGraphic.razor), Wunsch Ingo 2026-10-14.
+   Immer schwarz wie das Vorbild, unabhaengig von Hell/Dunkel. Zustandsfarben: gruen aktuell, gelb veraltet,
+   rot Fehler, grau keine Daten. Bei abgeschalteten Animationen (Windows) steht alles still.
+   ------------------------------------------------------------------------- */
+.sng {
+    --sng-ok: #3fd07a;
+    --sng-stale: #f2b33d;
+    --sng-error: #ef4b4b;
+    --sng-unknown: #6b7280;
+    --sng-packet: #5ef2c4;
+    --sng-red: #d32f2f;
+    background: radial-gradient(ellipse at 50% 45%, #141820 0%, #07090c 70%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+    color: #e8ecef;
+    max-width: 1060px;
+    position: relative;
+    width: min(1060px, 95vw);
+}
+
+.sng svg {
+    display: block;
+    height: auto;
+    width: 100%;
+}
+
+.sng-orbit {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.07);
+    stroke-dasharray: 2 7;
+}
+
+.sng-line {
+    fill: none;
+    stroke: rgba(160, 175, 190, 0.35);
+    stroke-dasharray: 6 6;
+    stroke-width: 2;
+    transition: opacity 200ms ease, stroke 200ms ease;
+}
+
+.sng-link.sng-ok .sng-line { stroke: rgba(63, 208, 122, 0.55); animation: sng-flow 1.2s linear infinite; }
+.sng-link.sng-stale .sng-line { stroke: rgba(242, 179, 61, 0.5); animation: sng-flow 3.5s linear infinite; }
+.sng-link.sng-error .sng-line { stroke: rgba(239, 75, 75, 0.55); stroke-dasharray: 3 9; }
+.sng-link.sng-unknown .sng-line { stroke: rgba(107, 114, 128, 0.4); }
+.sng-link.sng-dim { opacity: 0.15; }
+.sng-link.sng-hot .sng-line { stroke-width: 3; }
+
+@keyframes sng-flow {
+    to { stroke-dashoffset: -24; }
+}
+
+.sng-packet { fill: var(--sng-packet); }
+.sng-packet-slow { fill: var(--sng-stale); }
+
+/* Mitte */
+.sng-hub-disc {
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 1;
+}
+
+.sng-hub-ring {
+    animation: sng-spin 40s linear infinite;
+    transform-box: view-box;
+    transform-origin: 500px 280px;
+}
+
+.sng-hub-ring-rev { animation-direction: reverse; animation-duration: 70s; }
+
+.sng-hub-segments {
+    fill: none;
+    stroke: var(--sng-red);
+    stroke-dasharray: 46 20;
+    stroke-linecap: round;
+    stroke-width: 5;
+    filter: drop-shadow(0 0 4px rgba(211, 47, 47, 0.6));
+}
+
+.sng-hub-ticks {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.18);
+    stroke-dasharray: 1 9;
+    stroke-width: 6;
+}
+
+@keyframes sng-spin {
+    to { transform: rotate(360deg); }
+}
+
+.sng-hub-title,
+.sng-hub-sub {
+    font-family: "Open Sans", Arial, sans-serif;
+    font-weight: 700;
+    text-anchor: middle;
+}
+
+.sng-hub-title { fill: #f3f5f7; font-size: 24px; }
+.sng-hub-sub { fill: #ef5350; font-size: 24px; }
+
+.sng-bars rect {
+    animation: sng-bar 2.6s ease-in-out infinite;
+    fill: #9aa4ae;
+    transform-box: fill-box;
+    transform-origin: bottom;
+}
+
+.sng-bars rect:nth-child(2) { animation-delay: -0.5s; }
+.sng-bars rect:nth-child(3) { animation-delay: -1s; }
+.sng-bars rect:nth-child(4) { animation-delay: -1.5s; fill: #ef5350; }
+.sng-bars rect:nth-child(5) { animation-delay: -2s; }
+
+@keyframes sng-bar {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.55); }
+}
+
+/* Laender */
+.sng-node { cursor: pointer; outline: none; }
+
+.sng-node-halo {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 2;
+}
+
+.sng-node-disc {
+    fill: #11151a;
+    stroke: rgba(255, 255, 255, 0.12);
+    stroke-width: 1;
+}
+
+.sng-node-ring {
+    fill: none;
+    stroke: var(--sng-unknown);
+    stroke-dasharray: 150 90;
+    stroke-linecap: round;
+    stroke-width: 3.5;
+    transition: stroke-width 150ms ease;
+}
+
+.sng-node.sng-ok .sng-node-ring { stroke: var(--sng-ok); filter: drop-shadow(0 0 4px rgba(63, 208, 122, 0.7)); }
+.sng-node.sng-stale .sng-node-ring { stroke: var(--sng-stale); filter: drop-shadow(0 0 4px rgba(242, 179, 61, 0.6)); }
+.sng-node.sng-error .sng-node-ring { stroke: var(--sng-error); animation: sng-pulse 1.4s ease-in-out infinite; }
+
+@keyframes sng-pulse {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(239, 75, 75, 0.5)); }
+    50% { filter: drop-shadow(0 0 9px rgba(239, 75, 75, 0.95)); }
+}
+
+.sng-node.sng-hot .sng-node-ring,
+.sng-node:focus-visible .sng-node-ring { stroke-width: 5.5; }
+
+.sng-node.sng-hot .sng-node-halo { stroke: rgba(255, 255, 255, 0.18); }
+
+.sng-building rect { fill: #8a96a3; }
+.sng-building .sng-win { fill: #11151a; }
+
+.sng-node-code {
+    fill: #e8ecef;
+    font-family: "Open Sans", Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-anchor: middle;
+}
+
+/* Infobox */
+.sng-tip {
+    background: rgba(17, 21, 26, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    font-size: 13px;
+    line-height: 1.5;
+    min-width: 210px;
+    padding: 10px 12px;
+    pointer-events: none;
+    position: absolute;
+    transform: translateY(-50%);
+    z-index: 2;
+}
+
+.sng-tip-right { margin-left: 52px; }
+.sng-tip-left { margin-left: -52px; transform: translate(-100%, -50%); }
+
+.sng-tip-head { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.sng-tip-head span { color: #9aa4ae; font-weight: 400; margin-left: 4px; }
+.sng-tip-row { display: flex; gap: 12px; justify-content: space-between; }
+.sng-tip-row span { color: #9aa4ae; }
+.sng-tip-foot { border-top: 1px solid rgba(255, 255, 255, 0.1); color: #9aa4ae; font-size: 12px; margin-top: 6px; padding-top: 5px; }
+
+.sng-dot {
+    border-radius: 50%;
+    display: inline-block;
+    height: 9px;
+    margin-right: 6px;
+    width: 9px;
+}
+
+.sng-dot.sng-ok { background: var(--sng-ok); box-shadow: 0 0 5px var(--sng-ok); }
+.sng-dot.sng-stale { background: var(--sng-stale); }
+.sng-dot.sng-error { background: var(--sng-error); }
+.sng-dot.sng-unknown { background: var(--sng-unknown); }
+
+.sng-status {
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    color: #b7c0c9;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 13px;
+    gap: 8px 28px;
+    justify-content: center;
+    padding: 10px 16px 12px;
+}
+
+.sng-status b { color: #f3f5f7; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sng-packet { display: none; }
+    .sng-line, .sng-hub-ring, .sng-bars rect, .sng-node-ring { animation: none !important; }
+}
