@@ -32,7 +32,7 @@ public sealed class UiTextService : IUiTextService
             {
                 ["Trafag Cockpit"] = "Trafag Cockpit",
                 ["Trafag Global BI Cockpit"] = "Trafag Cockpit BI global",
-                ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "Consultas de paises conectadas automaticamente con actualizacion diaria",
+                ["Die Trafag-Gruppe auf einen Blick: alle Standorte, alle Bereiche, täglich aktuell."] = "El Grupo Trafag de un vistazo: todas las sedes, todas las áreas, actualizado a diario.",
                 ["Willkommen im Trafag Analyse Dashboard"] = "Bienvenido al panel analítico de Trafag",
                 ["Finance Cockpit"] = "Cockpit financiero",
                 ["Finance Cockpit ist geschuetzt. Bitte separat anmelden."] = "El cockpit financiero está protegido. Inicie sesión por separado.",
@@ -379,7 +379,7 @@ public sealed class UiTextService : IUiTextService
             {
                 ["Trafag Cockpit"] = "Cockpit Trafag",
                 ["Trafag Global BI Cockpit"] = "Cockpit BI globale Trafag",
-                ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "Query Paese collegate automaticamente con refresh giornaliero",
+                ["Die Trafag-Gruppe auf einen Blick: alle Standorte, alle Bereiche, täglich aktuell."] = "Il Gruppo Trafag in sintesi: tutte le sedi, tutte le aree, aggiornato ogni giorno.",
                 ["Willkommen im Trafag Analyse Dashboard"] = "Benvenuto nel dashboard analitico Trafag",
                 ["Finance Cockpit"] = "Cockpit finance",
                 ["Finance Cockpit ist geschuetzt. Bitte separat anmelden."] = "Il cockpit finance è protetto. Effettuare un accesso separato.",
@@ -1050,7 +1050,7 @@ public sealed class UiTextService : IUiTextService
                 ["Einkaufsdatenquellen auf Defaults gesetzt."] = "Purchasing data sources restored to defaults.",
                 ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Country export ke dauran har site ke liye transformed data wali Sales_ProcessedMergeInput_*.csv likhta hai.",
                 ["Trafag Global BI Cockpit"] = "Trafag ग्लोबल BI कॉकपिट",
-                ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "दैनिक रीफ्रेश के साथ स्वचालित रूप से जुड़ी देश क्वेरी",
+                ["Die Trafag-Gruppe auf einen Blick: alle Standorte, alle Bereiche, täglich aktuell."] = "एक नज़र में ट्राफ़ैग समूह: सभी स्थान, सभी क्षेत्र, प्रतिदिन अद्यतन।",
                 ["Schnelluebersicht"] = "त्वरित अवलोकन",
                 ["Experten"] = "विशेषज्ञ",
                 ["Laender Diagnose"] = "देश निदान",
