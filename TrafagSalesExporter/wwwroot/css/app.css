@@ -1715,8 +1715,9 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
 }
 
 .vfd-unit {
-    align-self: center;
+    align-self: flex-start;
     margin-left: 9px;
+    margin-top: 11px;
     width: auto;
 }
 
@@ -1786,4 +1787,19 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
 
 @media (max-width: 900px) {
     .vfd { display: none; }
+}
+
+/* Beschriftung unten in der Anzeige (Wunsch Ingo 2026-10-14), wie der Aufdruck unter einer Deck-Anzeige */
+.vfd-caption {
+    color: var(--vfd-text);
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    line-height: 8px;
+    margin-left: 11px;
+    opacity: 0.85;
+    text-align: center;
+    text-shadow: 0 0 3px var(--vfd-glow);
+    width: 138px;
 }
