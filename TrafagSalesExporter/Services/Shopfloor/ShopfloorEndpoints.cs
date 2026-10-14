@@ -105,6 +105,9 @@ public static class ShopfloorEndpoints
         services.AddHostedService<ShopfloorBackupService>();
         services.AddSingleton<ShopfloorSapSync>();
         services.AddHostedService(sp => sp.GetRequiredService<ShopfloorSapSync>());
+        // Operations KPI Liefertreue (2026-10-14), Doku docs/OPERATIONS_KPI_2026-10-14.md
+        services.AddSingleton<KpiLiefertreueSync>();
+        services.AddHostedService(sp => sp.GetRequiredService<KpiLiefertreueSync>());
         return services;
     }
 
@@ -175,6 +178,32 @@ public static class ShopfloorEndpoints
     }
 
     // ------------------------------------------------------------ Hilfen
+    private static JsonObject KpiStatus(KpiLiefertreueSync sync, string? cut)
+    {
+        var result = new JsonObject
+        {
+            ["laeuft"] = sync.Running,
+            ["letzter_abruf"] = sync.LastResult.DeepClone(),
+            ["staende"] = sync.SnapshotList(),
+            ["ausschluesse"] = new JsonArray(sync.Exclusions().Select(e => (JsonNode?)new JsonObject
+            {
+                ["id"] = e.Id, ["typ"] = e.Typ, ["schluessel"] = e.Schluessel, ["bezeichnung"] = e.Bezeichnung, ["grund"] = e.Grund
+            }).ToArray())
+        };
+        if (sync.Snapshot(cut) is { } snap)
+        {
+            var s = KpiLiefertreue.Summarize(snap.Data);
+            result["stand"] = new JsonObject
+            {
+                ["cut"] = s.Cut, ["zeitraum"] = s.Period, ["stand"] = s.Stand, ["quelle"] = snap.Source, ["erstellt"] = snap.CreatedAt,
+                ["otd"] = new JsonArray(s.OtdTol, s.OtdStrict, s.OtdBase), ["otif"] = new JsonArray(s.OtifTol, s.OtifStrict, s.OtifBase),
+                ["otp"] = new JsonArray(s.OtpTol, s.OtpStrict, s.OtpBase), ["monat"] = s.LastMonth,
+                ["otd_monat"] = s.OtdLast, ["otif_monat"] = s.OtifLast, ["otp_monat"] = s.OtpLast, ["zu_frueh"] = s.Early5, ["zu_spaet"] = s.LateInEval
+            };
+        }
+        return result;
+    }
+
     private static IResult J(HttpContext ctx, JsonNode? node, int status = 200)
     {
         ctx.Response.Headers.CacheControl = "no-store";
@@ -335,6 +364,50 @@ public static class ShopfloorEndpoints
         g.MapPost("/forecast/{action}", async Task<IResult> (HttpContext c, string action) => J(c, Store(c).PostForecast(action, await Body(c), Editor(c))));
         g.MapPost("/people", async Task<IResult> (HttpContext c) => J(c, Store(c).PostMail("people", await Body(c), Editor(c))));
         g.MapPost("/mail/{action}", async Task<IResult> (HttpContext c, string action) => J(c, Store(c).PostMail(action, await Body(c), Editor(c))));
+
+        // --- Operations KPI, Liefertreue OTD/OTIF/OTP (2026-10-14)
+        g.MapGet("/kpi/liefertreue", (HttpContext c) => J(c, KpiStatus(c.RequestServices.GetRequiredService<KpiLiefertreueSync>(), c.Request.Query["cut"])));
+        g.MapGet("/kpi/liefertreue/export.xlsx", (HttpContext c) =>
+        {
+            var snap = c.RequestServices.GetRequiredService<KpiLiefertreueSync>().Snapshot(c.Request.Query["cut"])
+                       ?? throw new ShopfloorException("Kein Stand vorhanden.", 404);
+            var cut = snap.Data["cut"]!.GetValue<string>();
+            return Results.File(KpiLiefertreue.ExportXlsx(snap.Data), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Liefertreue_1100_verspaetet_{cut[..4]}-{cut[4..]}.xlsx");
+        });
+        g.MapPost("/kpi/liefertreue/sync", async Task<IResult> (HttpContext c) =>
+        {
+            var body = await Body(c);
+            var started = c.RequestServices.GetRequiredService<KpiLiefertreueSync>().Start(SfJson.GetString(body, "cut"), Editor(c));
+            return J(c, new JsonObject { ["ok"] = started, ["meldung"] = started ? "Abruf gestartet" : "Abruf laeuft bereits" });
+        });
+        g.MapPost("/kpi/exclusions", async Task<IResult> (HttpContext c) =>
+        {
+            c.RequestServices.GetRequiredService<KpiLiefertreueSync>().SaveExclusion(await Body(c), Editor(c));
+            return J(c, new JsonObject { ["ok"] = true });
+        });
+        g.MapDelete("/kpi/exclusions/{id:long}", (HttpContext c, long id) =>
+        {
+            c.RequestServices.GetRequiredService<KpiLiefertreueSync>().DeleteExclusion(id);
+            return J(c, new JsonObject { ["ok"] = true });
+        });
+        // Seite ausserhalb von /api, damit die Zugriffssperre ohne Anmeldung auf login.html umleitet (wie index.html).
+        app.MapGet(Root + "/kpi/liefertreue.html", (HttpContext c, IHostEnvironment env) =>
+        {
+            var sync = c.RequestServices.GetRequiredService<KpiLiefertreueSync>();
+            var snap = sync.Snapshot(c.Request.Query["cut"]);
+            if (snap is null)
+                return Results.Text("Noch kein Stand vorhanden.", "text/plain; charset=utf-8", Encoding.UTF8, 404);
+            var template = File.ReadAllText(Path.Combine(env.ContentRootPath, "wwwroot", "shopfloor", "kpi", "board_template.html"), Encoding.UTF8);
+            var cut = snap.Value.Data["cut"]!.GetValue<string>();
+            var html = KpiLiefertreue.BuildBoard(snap.Value.Data, template, new Dictionary<string, string>
+            {
+                ["__SOURCE__"] = System.Net.WebUtility.HtmlEncode(snap.Value.Source),
+                ["__EXPORT__"] = "../api/kpi/liefertreue/export.xlsx?cut=" + cut
+            });
+            c.Response.Headers.CacheControl = "no-store";
+            return Results.Text(html, "text/html; charset=utf-8", Encoding.UTF8);
+        });
 
         // --- Schnittstelle fuer SAP / MES / MCP: Bearer-Token statt Benutzerfreigabe
         // AllowAnonymous, weil die FallbackPolicy des Cockpits sonst jeden Aufruf ohne Windows-Login abweisen wuerde,

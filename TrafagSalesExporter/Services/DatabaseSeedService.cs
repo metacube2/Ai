@@ -279,6 +279,20 @@ public class DatabaseSeedService : IDatabaseSeedService
             projects.Match = "Prefix";
             db.SaveChanges();
         }
+        // Operations 2026-10-14: der bisherige Link "operations" (Shopfloor) wird zur Gruppe mit KPI und Shopfloor.
+        // Nur solange die alte Standardlage (Link auf "operations") noch vorliegt.
+        var operations = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "operations");
+        if (operations is not null && operations.ItemType == NavigationMenuItemTypes.Link &&
+            string.Equals(operations.Href, "operations", StringComparison.OrdinalIgnoreCase))
+        {
+            operations.ItemType = NavigationMenuItemTypes.Group;
+            operations.Href = string.Empty;
+            operations.Match = "Prefix";
+            operations.TitleDe = "Operations";
+            operations.TitleEn = "Operations";
+            changed = true;
+        }
+
         var oldProjectGroup = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "poor-mans-project-management");
         if (oldProjectGroup is not null && !db.NavigationMenuItems.Any(x => x.ParentKey == "poor-mans-project-management"))
         {
@@ -393,7 +407,13 @@ public class DatabaseSeedService : IDatabaseSeedService
         // Netzwerk 2026-10-02 (Wunsch Ingo): nur lesend, feste Zielliste, Doku docs/NETZWERK_2026-10-02.md.
         // Operations (Shopfloor) 2026-10-07: PPA-Shopfloor im Cockpit, oberste Ebene; Zugriff nur fuer freigegebene Windows-Konten
         // (Shopfloor:AllowedUsers / Shopfloor:OpenForAll), Doku docs/SHOPFLOOR_2026-10-07.md.
-        Link("operations", null, "Operations (Shopfloor)", "Operations (Shopfloor)", "Factory", "operations", 36, "All"),
+        // Seit 2026-10-14 (Wunsch Ingo, Spezifikation Fabio): Gruppe Operations mit KPI (Uebersicht, OTD / OTIF / OTP) und Shopfloor.
+        // Doku docs/OPERATIONS_KPI_2026-10-14.md.
+        Group("operations", null, "Operations", "Operations", "Factory", 36),
+        Group("operations-kpi", "operations", "KPI", "KPI", "Insights", 10, expanded: true),
+        Link("operations-kpi-overview", "operations-kpi", "Uebersicht", "Overview", "Dashboard", "operations/kpi", 10, "All"),
+        Link("operations-kpi-delivery", "operations-kpi", "OTD / OTIF / OTP", "OTD / OTIF / OTP", "LocalShipping", "operations/kpi/liefertreue", 20, "All"),
+        Link("operations-shopfloor", "operations", "Shopfloor", "Shopfloor", "Factory", "operations", 20, "All"),
         Group("network", null, "Netzwerk", "Network", "Lan", 37),
         // Trafag Reddit 2026-10-09 (Wunsch Ingo): Forum mit Abstimmung fuer alles, was in SharePoint keinen Platz findet,
         // sofort fuer alle sichtbar (Entscheid Ingo), Doku docs/TRAFAG_REDDIT_2026-10-09.md.

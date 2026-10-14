@@ -177,4 +177,39 @@ public sealed class ShopfloorEndpointTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
         Assert.True((bool)JsonNode.Parse(await ok.Content.ReadAsStringAsync())!["results"]![0]!["ok"]!);
     }
+
+    [Fact]
+    public async Task Kpi_Liefertreue_Startstand_Seite_Export_Und_Ausschluesse()
+    {
+        // Ohne Zugriff: Seite fuehrt zur Anmeldung, API 403
+        var gesperrt = await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/kpi/liefertreue.html", user: "TRAFAG\\fremder"));
+        Assert.Equal(HttpStatusCode.Redirect, gesperrt.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/api/kpi/liefertreue", user: "TRAFAG\\fremder"))).StatusCode);
+
+        // Startstand = Referenzabzug Jan-Sep 2026 mit den Abnahmewerten
+        var status = JsonNode.Parse(await (await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/api/kpi/liefertreue"))).Content.ReadAsStringAsync())!;
+        Assert.Equal("202609", (string)status["stand"]!["cut"]!);
+        Assert.Equal(90.6, (double)status["stand"]!["otd"]![0]!);
+        Assert.Equal(8, status["ausschluesse"]!.AsArray().Count);
+        Assert.Contains("Referenzabzug", (string)status["stand"]!["quelle"]!);
+
+        var page = await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/kpi/liefertreue.html"));
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        var html = await page.Content.ReadAsStringAsync();
+        Assert.Contains("Liefertreue Trafag AG (1100)", html);
+        Assert.Contains("const LATE=", html);
+        Assert.DoesNotContain("__", html.Replace("__lt", "").Replace("/*__", "").Replace("__*/", ""));
+
+        var xlsx = await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/api/kpi/liefertreue/export.xlsx?cut=202609"));
+        Assert.Equal(HttpStatusCode.OK, xlsx.StatusCode);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsx.Content.Headers.ContentType!.MediaType);
+
+        var add = await _http.SendAsync(Req(HttpMethod.Post, "/shopfloor/api/kpi/exclusions", body: """{"typ":"Kunde","schluessel":"12345","bezeichnung":"Test AG","grund":"Test"}"""));
+        Assert.Equal(HttpStatusCode.OK, add.StatusCode);
+        var falsch = await _http.SendAsync(Req(HttpMethod.Post, "/shopfloor/api/kpi/exclusions", body: """{"typ":"Lieferant","schluessel":"1"}"""));
+        Assert.Equal(HttpStatusCode.BadRequest, falsch.StatusCode);
+        status = JsonNode.Parse(await (await _http.SendAsync(Req(HttpMethod.Get, "/shopfloor/api/kpi/liefertreue"))).Content.ReadAsStringAsync())!;
+        var neu = status["ausschluesse"]!.AsArray().Single(x => (string)x!["schluessel"]! == "12345")!;
+        Assert.Equal(HttpStatusCode.OK, (await _http.SendAsync(Req(HttpMethod.Delete, "/shopfloor/api/kpi/exclusions/" + (long)neu["id"]!))).StatusCode);
+    }
 }

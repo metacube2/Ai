@@ -32,6 +32,34 @@ public class NavigationMenuSeedTests
         Assert.Equal("world", db.NavigationMenuItems.Single(x => x.Key == "world-radar").ParentKey);
     }
 
+    // 2026-10-14: Operations wird von einem Link (Shopfloor) zur Gruppe mit KPI und Shopfloor.
+    [Fact]
+    public void SeedDefaults_Macht_Operations_Zur_Gruppe_Mit_Kpi_Und_Shopfloor()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using var db = new AppDbContext(options);
+        db.Database.EnsureCreated();
+        db.NavigationMenuItems.Add(new NavigationMenuItem
+        {
+            Key = "operations", ParentKey = null, TitleDe = "Operations (Shopfloor)", TitleEn = "Operations (Shopfloor)", Icon = "Factory",
+            ItemType = NavigationMenuItemTypes.Link, Href = "operations", Match = "All", SortOrder = 36
+        });
+        db.SaveChanges();
+
+        new DatabaseSeedService().SeedDefaults(db);
+
+        var operations = db.NavigationMenuItems.Single(x => x.Key == "operations");
+        Assert.Equal(NavigationMenuItemTypes.Group, operations.ItemType);
+        Assert.Equal("Operations", operations.TitleDe);
+        Assert.True(string.IsNullOrEmpty(operations.Href));
+        Assert.Equal("operations", db.NavigationMenuItems.Single(x => x.Key == "operations-kpi").ParentKey);
+        Assert.Equal("operations-kpi", db.NavigationMenuItems.Single(x => x.Key == "operations-kpi-delivery").ParentKey);
+        var shopfloor = db.NavigationMenuItems.Single(x => x.Key == "operations-shopfloor");
+        Assert.Equal(("operations", "operations", "All"), (shopfloor.ParentKey, shopfloor.Href, shopfloor.Match));
+    }
+
     // 2026-10-06: Benutzerhandbuch, Journal Import, Marktsegmente und Projekte zeigten einen grauen Kreis,
     // weil ihr Seed-Icon im Resolver fehlte.
     [Fact]

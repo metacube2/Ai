@@ -91,7 +91,7 @@ public sealed class ShopfloorSapSync : BackgroundService
         try
         {
             var options = _options.CurrentValue;
-            var (baseUrl, user, password) = await ResolveConnectionAsync(ct);
+            var (baseUrl, user, password) = await ResolveConnectionAsync(_services, ct);
             // ZD05 rechnet je Disponent rund 15 bis 20 s (T76, 2026-10-07); deshalb grosszuegiges Zeitlimit.
             using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
@@ -237,11 +237,11 @@ public sealed class ShopfloorSapSync : BackgroundService
         throw new InvalidOperationException($"{set} lieferte zu viele Seiten; Abbruch.");
     }
 
-    /// <summary>Gleiche Verbindung wie Logistik live und Einkauf (Sets im Service ZPOWERBI_EINKAUF_SRV).</summary>
-    private async Task<(string Url, string User, string Password)> ResolveConnectionAsync(CancellationToken ct)
+    /// <summary>Gleiche Verbindung wie Logistik live und Einkauf (Sets im Service ZPOWERBI_EINKAUF_SRV); auch fuer Operations KPI.</summary>
+    internal static async Task<(string Url, string User, string Password)> ResolveConnectionAsync(IServiceProvider services, CancellationToken ct)
     {
         // Erst hier aufgeloest: Hosts ohne Cockpit-Datenbank (Tests) brauchen den Abgleich nicht.
-        var factory = _services.GetService<IDbContextFactory<AppDbContext>>()
+        var factory = services.GetService<IDbContextFactory<AppDbContext>>()
             ?? throw new InvalidOperationException("Cockpit-Datenbank nicht verfuegbar.");
         await using var db = await factory.CreateDbContextAsync(ct);
         var sap = await db.SourceSystemDefinitions.AsNoTracking().FirstOrDefaultAsync(x => x.Code == "SAP", ct)

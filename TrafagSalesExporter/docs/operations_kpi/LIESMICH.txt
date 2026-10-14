@@ -1,0 +1,17 @@
+Liefertreue OTD / OTIF / OTP, Trafag AG (VKORG 1100): Unterlagen für die BiDashboard-Seite Operations > KPI > OTD/OTIF/OTP
+
+Spezifikation_KPI-Seite_OTD_OTIF_OTP.docx  Spezifikation (Definitionen, Feldmapping SAP, Pseudo-SQL, Ausschlüsse, Seitenaufbau, Abnahme)
+Online-Version:
+https://claude.ai/code/artifact/f3fe48cd-5e0f-4e9c-b8f6-4a4faaaa2c33
+
+Referenz/
+- extract_liefertreue.js    Referenzlogik: Datenabzug und Berechnung (JavaScript, läuft im Fiori Launchpad gegen die zwei CDS-OData-Services)
+- build_liefertreue.py      erzeugt aus den Daten Seite, PDF und Excel
+- board_template.html       Seitenvorlage (Layout, Kacheln, Diagramm, Tabellen, Filter)
+- board_beispiel_2026-09.html  fertige Beispielseite mit Daten Jan–Sep 2026 (im Browser öffnen)
+- abnahme_daten_2026-01_bis_09.json  Rohergebnis Jan–Sep 2026 (Stand 13.10.2026) für den Zahlenabgleich
+
+Liefertreue_Trafag_1100_2026-09.pdf      Monatsreport als PDF (Beispiel)
+Liefertreue_1100_verspaetet_2026-09.xlsx Abweichungsliste (zu spät / zu früh) mit Definitionen
+
+Abnahmewerte Jan–Sep 2026: OTD 90.6 % (ohne Toleranz 80.7 %), OTIF 89.9 % (78.4 %), OTP 73.0 % (57.8 %), Basis 16'134 Positionen / 9'047 Aufträge / 15'975 Positionen.

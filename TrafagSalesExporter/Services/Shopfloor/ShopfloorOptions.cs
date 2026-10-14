@@ -53,6 +53,17 @@ public sealed class ShopfloorOptions
 
     /// <summary>Tage ab heute fuer Plan- und Fertigungsauftraege (Forecast).</summary>
     public int ForecastDays { get; set; } = 28;
+
+    /// <summary>Operations KPI Liefertreue (2026-10-14): monatlicher Abruf aus den CDS-Services, ab diesem Kalendertag fuer den Vormonat.</summary>
+    public bool KpiSyncEnabled { get; set; } = true;
+
+    public int KpiSyncDay { get; set; } = 2;
+
+    /// <summary>SAP-Mandant der CDS-Services (Referenz: sap-client=100).</summary>
+    public string KpiSapClient { get; set; } = "100";
+
+    /// <summary>Gateway-Wurzel, z. B. https://host:port. Leer = aus der Einkauf-Verbindung (alles vor /sap/opu/odata/).</summary>
+    public string KpiGatewayRoot { get; set; } = string.Empty;
 }
 
 public interface IShopfloorAccess

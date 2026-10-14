@@ -1,0 +1,9 @@
+@page "/operations/kpi"
+
+@* Operations > KPI (2026-10-14): Uebersicht der Operations-Kennzahlen, zuerst Liefertreue OTD/OTIF/OTP (Spezifikation Fabio).
+   Laeuft wie der Shopfloor als eigene Seite unter wwwroot/shopfloor/kpi im iframe; dieselbe Zugriffssperre (Login operations
+   oder freigegebenes Windows-Konto). Doku docs/OPERATIONS_KPI_2026-10-14.md. *@
+<PageTitle>Operations KPI</PageTitle>
+
+<iframe src="shopfloor/kpi/index.html" title="Operations KPI"
+        style="display:block;width:100%;height:calc(100vh - 80px);min-height:480px;border:0;background:transparent"></iframe>

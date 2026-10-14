@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Operations > KPI, Uebersicht (2026-10-14). Erste Kennzahlen: Liefertreue OTD / OTIF / OTP (Spezifikation Fabio Palma).
+     Weitere Operations-KPIs definiert Fabio separat. Doku docs/OPERATIONS_KPI_2026-10-14.md. -->
+<title>Operations KPI</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap">
+<style>
+:root{--bg:#f6f7f8;--surface:#fff;--fg:#17202a;--muted:#5b6672;--line:#dde2e7;--soft:#eef1f4;
+  --otd:#1f5f8b;--otif:#d08a1e;--otp:#4f7d5c;--bad:#b4442f;--ok:#4f7d5c}
+:root[data-theme="dark"]{--bg:#12171c;--surface:#1a2128;--fg:#e6eaee;--muted:#9aa5b0;--line:#2c353e;--soft:#222a32;
+  --otd:#5fa3d4;--otif:#e7a84a;--otp:#7fb98e;--bad:#e07a62;--ok:#7fb98e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Open Sans",system-ui,"Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding:24px 20px 48px;display:grid;gap:22px}
+h1{font-size:1.6rem;font-weight:600;margin:0}
+h2{font-size:1.05rem;font-weight:600;margin:0 0 10px}
+.lede{color:var(--muted);margin:4px 0 0}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:0 0 4px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+a.kpi{all:unset;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:6px;padding:16px 18px;display:grid;gap:4px}
+a.kpi:hover,a.kpi:focus-visible{box-shadow:0 0 0 2px var(--c)}
+.kpi .v{font-size:2.4rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .s{font-size:.85rem;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 20px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.muted{color:var(--muted)}
+.note{font-size:.85rem;color:var(--muted)}
+button,input,select{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 10px}
+button{cursor:pointer}
+button.primary{background:var(--otd);border-color:var(--otd);color:#fff}
+button:disabled{opacity:.6;cursor:default}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.ok{color:var(--ok)} .err{color:var(--bad)}
+.go{color:var(--otd);font-weight:600;text-decoration:none}
+</style>
+<script>
+/* Hell/Dunkel und Grundfarben wie im Cockpit (Prinzip wie themeSync in ../app.js). */
+(function(){
+  const root=document.documentElement;let emb=false;try{emb=window.parent!==window;}catch(e){emb=true;}
+  const MAP={'--bg':'--mud-palette-background','--surface':'--mud-palette-surface','--fg':'--mud-palette-text-primary','--muted':'--mud-palette-text-secondary','--line':'--mud-palette-lines-default'};
+  let last='';
+  function apply(){
+    let par=null;try{par=emb?window.parent.document.documentElement:null;}catch(e){}
+    let theme=par?par.getAttribute('data-theme'):null;
+    if(!theme){try{theme=localStorage.getItem('trafag-theme');}catch(e){}}
+    theme=theme==='light'?'light':'dark';
+    const vals={};
+    if(par){const cs=par.ownerDocument.defaultView.getComputedStyle(par);for(const k in MAP){const v=cs.getPropertyValue(MAP[k]).trim();if(v)vals[k]=v;}}
+    const sig=theme+JSON.stringify(vals);if(sig===last)return;last=sig;
+    root.setAttribute('data-theme',theme);
+    for(const k in MAP){if(vals[k])root.style.setProperty(k,vals[k]);else root.style.removeProperty(k);}
+  }
+  apply();setInterval(apply,1500);
+})();
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <p class="eyebrow">Operations · Kennzahlen</p>
+    <h1>Operations KPI</h1>
+    <p class="lede">Übersicht der Operations-Kennzahlen. Als Erstes steht die Liefertreue der Trafag AG (Verkaufsorganisation 1100) bereit. Weitere Kennzahlen folgen.</p>
+  </div>
+
+  <section>
+    <h2>Liefertreue <span class="muted" id="period"></span></h2>
+    <div class="kpis" id="kpis"><div class="card muted">Wird geladen …</div></div>
+    <p class="note" id="source"></p>
+    <p><a class="go" href="../../operations/kpi/liefertreue" target="_top">Zum Report OTD / OTIF / OTP →</a></p>
+  </section>
+
+  <section class="card">
+    <h2>Abruf aus SAP</h2>
+    <p class="note">Die Zahlen werden am 2. Kalendertag jedes Monats für den Zeitraum 1. Januar bis Ende Vormonat aus SAP geholt (CDS-Abfragen C_SLSORDDELIVPERFANLYTSQRY und C_DELIVITMPERFANLYTSQRY, Mandant 100). Ein Abruf dauert einige Minuten.</p>
+    <div class="row">
+      <label>Berichtsmonat <input id="cut" placeholder="JJJJMM" size="8"></label>
+      <button class="primary" id="run">Jetzt aus SAP abrufen</button>
+      <span id="runMsg" class="note"></span>
+    </div>
+    <p class="note" id="last"></p>
+    <div id="snaps"></div>
+  </section>
+
+  <section class="card">
+    <h2>Ausschlüsse</h2>
+    <p class="note">Diese Kunden und Materialien fliessen nicht in die Kennzahlen ein, bleiben aber in der Abweichungsliste sichtbar. Zertifikate (Materialtext mit „EN10204“ oder „EN 10204“) werden beim Abruf automatisch erkannt. Änderungen wirken ab dem nächsten Abruf. Kunden mit „konzern“ im Grund gelten im Filter als Trafag-Gesellschaft.</p>
+    <table><thead><tr><th>Typ</th><th>Nummer</th><th>Bezeichnung</th><th>Grund</th><th></th></tr></thead><tbody id="ex"></tbody></table>
+    <div class="row" style="margin-top:10px">
+      <select id="exTyp"><option>Kunde</option><option>Material</option></select>
+      <input id="exKey" placeholder="Nummer" size="10">
+      <input id="exName" placeholder="Bezeichnung" size="28">
+      <input id="exGrund" placeholder="Grund" size="24">
+      <button id="exAdd">Hinzufügen</button>
+      <span id="exMsg" class="note"></span>
+    </div>
+  </section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f1=v=>Number(v).toLocaleString('de-CH',{minimumFractionDigits:1,maximumFractionDigits:1});
+const f0=v=>Number(v).toLocaleString('de-CH');
+async function api(method,url,body){
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','X-User':'-'},body:body?JSON.stringify(body):undefined});
+  if(r.redirected||r.status===403){location.href='../login.html';throw new Error('Kein Zugriff');}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||j.meldung||('HTTP '+r.status));
+  return j;
+}
+function tile(name,c,v,sub){return `<a class="kpi" style="--c:var(${c})" href="../../operations/kpi/liefertreue" target="_top"><p class="eyebrow">${name}</p><div class="v">${f1(v[0])} %</div><div class="s">ohne Toleranz ${f1(v[1])} % · Basis ${f0(v[2])} ${sub}</div></a>`;}
+let polling=null;
+async function load(){
+  const d=await api('GET','../api/kpi/liefertreue');
+  const s=d.stand;
+  if(s){
+    $('period').textContent=s.zeitraum;
+    $('kpis').innerHTML=tile('OTD · On Time Delivery','--otd',s.otd,'Positionen')+tile('OTIF · On Time In Full','--otif',s.otif,'Aufträge')+tile('OTP · On Time Performance','--otp',s.otp,'Positionen');
+    $('source').textContent=`Quelle: ${s.quelle}. Stand ${s.stand}. Berichtsmonat ${s.monat}: OTD ${f1(s.otd_monat)} %, OTIF ${f1(s.otif_monat)} %, OTP ${f1(s.otp_monat)} %. Toleranz 0 bis 4 Arbeitstage.`;
+  } else $('kpis').innerHTML='<div class="card muted">Noch kein Stand vorhanden.</div>';
+  const l=d.letzter_abruf||{};
+  $('last').innerHTML=d.laeuft?'<b>Abruf läuft …</b>':`Letzter Abruf seit dem Start der App: <span class="${l.ok?'ok':'err'}">${esc(l.meldung||'')}</span>${l.start?' ('+esc(l.start)+(l.cut?', Monat '+esc(l.cut):'')+')':''}`;
+  $('run').disabled=!!d.laeuft;
+  $('snaps').innerHTML=(d.staende||[]).length?`<table><thead><tr><th>Berichtsmonat</th><th>Quelle</th><th>Gespeichert</th></tr></thead><tbody>${d.staende.map(x=>`<tr><td>${esc(x.cut)}</td><td>${esc(x.source)}</td><td>${esc(x.created_at)}</td></tr>`).join('')}</tbody></table>`:'';
+  $('ex').innerHTML=(d.ausschluesse||[]).map(e=>`<tr><td>${esc(e.typ)}</td><td>${esc(e.schluessel)}</td><td>${esc(e.bezeichnung)}</td><td>${esc(e.grund)}</td><td><button data-del="${e.id}" title="Entfernen">Entfernen</button></td></tr>`).join('');
+  if(d.laeuft&&!polling)polling=setInterval(()=>load().catch(()=>{}),10000);
+  if(!d.laeuft&&polling){clearInterval(polling);polling=null;}
+}
+$('run').onclick=async()=>{
+  $('runMsg').textContent='';
+  try{const r=await api('POST','../api/kpi/liefertreue/sync',{cut:$('cut').value.trim()});$('runMsg').textContent=r.meldung;await load();}
+  catch(e){$('runMsg').textContent=e.message;}
+};
+$('exAdd').onclick=async()=>{
+  $('exMsg').textContent='';
+  try{await api('POST','../api/kpi/exclusions',{typ:$('exTyp').value,schluessel:$('exKey').value,bezeichnung:$('exName').value,grund:$('exGrund').value});
+    ['exKey','exName','exGrund'].forEach(id=>$(id).value='');await load();}
+  catch(e){$('exMsg').textContent=e.message;}
+};
+$('ex').onclick=async e=>{
+  const b=e.target.closest('[data-del]');if(!b)return;
+  try{await api('DELETE','../api/kpi/exclusions/'+b.dataset.del);await load();}catch(err){$('exMsg').textContent=err.message;}
+};
+load().catch(e=>{$('kpis').innerHTML=`<div class="card err">${esc(e.message)}</div>`;});
+</script>
+</body>
+</html>
