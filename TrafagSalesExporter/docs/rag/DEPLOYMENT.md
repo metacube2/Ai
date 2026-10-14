@@ -66,6 +66,9 @@ Stand: 2026-10-14
 
 ## Kurzstand
 
+- **Deploy 2026-10-14, Kopfleiste nach Designpruefung (`5b51011`):** Dimmer mit sichtbarer Schiene (MudBlazor zeichnete
+  sie bei Color.Default auf Rot unsichtbar), CPU-Anzeige 5 px flacher und Skala 9 px, Logo 8 px Abstand rechts. Release-Worktree
+  `1205/1205`, DLL bitgleich, zehn Routen `200`, **ohne Alarm**. Vorschau mit MudBlazor- und App-CSS per Edge headless geprueft.
 - **Sicherung 2026-10-14 11:36 ohne Deploy (Auftrag Ingo).** Neuer Schalter `--only-backup` im Runner
   (`.tmp_tools/DeployHeadless`): sichert und beendet sich, kein Publish, kein Neustart. Aufruf einzeln:
   `dotnet run --project .tmp_tools/DeployHeadless -c Release -- --only-backup`. Ergebnis

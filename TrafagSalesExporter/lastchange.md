@@ -2,6 +2,10 @@
 
 Stand: 2026-10-14
 
+## Kopfleiste nach Designprüfung, 2026-10-14 (`5b51011`)
+
+- Dimmer zeigt jetzt eine helle Schiene, CPU-Anzeige flacher mit besser lesbarer Skala, Logo mit Abstand zum rechten Rand.
+
 ## Benutzerhandbuch: Kapitel Operations, 2026-10-14 (`f38020f`, produktiv 11:13)
 
 - Neues Kapitel 10 Operations: KPI Übersicht, OTD / OTIF / OTP, Shopfloor (Ablauf, Listen, Abteilungen, ZD05, Forecast,
