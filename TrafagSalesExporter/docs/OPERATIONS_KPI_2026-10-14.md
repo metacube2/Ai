@@ -99,6 +99,21 @@ Uebersicht und Report zeigen jetzt „Quelle: SAP 14.10.2026 10:33“. **Offen:*
 bis dahin eine schmale Rolle (nur `S_RS_COMP`/`S_RS_COMP1`, ACTVT 16, Query `2CCSDSLSORDDLVPRFQ`, InfoProvider
 `2CISDSLSORDDLVPRFC`) beim Hauptadmin bestellen und `POWERBI` zuordnen, sonst scheitert der Monatsabruf am 02.11.
 
+## 3c. Monatsabruf abgesichert (Fabio 2026-10-14, *Erledigt 2026-10-14, `55b42d9`, produktiv*)
+
+Fabio fragte, ob der Abruf einen Neustart uebersteht und ob jemand bei einem Fehler eine Meldung bekommt. Umgesetzt:
+
+1. Jeder Versuch steht in `shopfloor.db`, Tabelle `kpi_run` (Monat, Start, Ende, ok, Ergebnis, Benutzer). Die Statuszeile liest
+   nach einem Neustart den juengsten Versuch; ohne Versuch steht neutral „Noch kein Abruf gespeichert“.
+   *Ueberholt:* „Letzter Abruf seit dem Start der App: seit dem Start noch kein Abruf“ in Rot nach jedem Neustart.
+2. Ab dem Tag nach dem Stichtag (`KpiSyncDay` + 1, also dem 3.) erscheint auf Uebersicht und Report ein rotes Banner, solange
+   fuer den Vormonat kein SAP-Stand vorliegt, mit dem letzten Versuch und seinem Grund.
+3. Jeder Versuch geht in die Admin-Logs (Kategorie „Operations KPI“): Erfolg als Info, Fehler als Warnung mit SAP-Text.
+4. Faellig ist ein Abruf ab dem Stichtag, solange der Vormonat fehlt und der letzte Versuch fuer diesen Monat mindestens zwei
+   Stunden zurueckliegt (`KpiLiefertreueSync.IsDue`). *Ueberholt:* einmal pro Tag.
+
+Ein Mailversand ist nicht eingerichtet (braucht eine App-Registrierung bei der IT). Der Dauerbetrieb des App-Pools bleibt ISS-017.
+
 ## 4. Offene Punkte
 
 - **Schmale Rolle fuer `POWERBI` vor dem 31.10.** (siehe 3b), sonst scheitert der Abruf vom 02.11.

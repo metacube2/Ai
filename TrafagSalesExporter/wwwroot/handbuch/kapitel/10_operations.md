@@ -17,7 +17,7 @@ Die Übersicht ist der Einstieg in die Operations-Kennzahlen. Sie zeigt die drei
 
 ### Wie gerechnet wird
 
-Die Kacheln zeigen dieselben Zahlen wie der Report (siehe nächster Abschnitt). Der Abruf läuft automatisch am 2. Kalendertag jedes Monats für den Zeitraum 1. Januar bis Ende Vormonat und dauert einige Minuten. Pro Berichtsmonat wird ein Stand gespeichert; ein neuer Abruf ersetzt den Stand desselben Monats.
+Die Kacheln zeigen dieselben Zahlen wie der Report (siehe nächster Abschnitt). Der Abruf läuft automatisch ab dem 2. Kalendertag jedes Monats für den Zeitraum 1. Januar bis Ende Vormonat und dauert einige Minuten. Solange der Vormonat fehlt, versucht die App es alle zwei Stunden erneut, auch nach einem Neustart. Jeder Versuch wird gespeichert und steht in den Admin-Logs unter „Operations KPI“. Fehlt der Vormonat ab dem 3. noch immer, erscheint auf der Übersicht und im Report ein roter Warnhinweis. Pro Berichtsmonat wird ein Stand gespeichert; ein neuer Abruf ersetzt den Stand desselben Monats.
 
 ### Einsatz im Arbeitsalltag
 

@@ -2,6 +2,17 @@
 
 Stand: 2026-10-14
 
+## Startseite: animierte Standortgrafik, 2026-10-14 (`ce5d27d`, produktiv)
+
+- Schwarze, animierte Grafik statt des festen Bildes: neun Länder mit Flagge rund um „Trafag Global BI Cockpit“, Ring in der
+  Farbe des letzten Exports (grün aktuell, gelb veraltet, rot Fehler), Datenpakete zur Mitte, Infobox beim Darüberfahren,
+  Klick öffnet den Datenstatus.
+
+## Operations KPI: Monatsabruf abgesichert, 2026-10-14 (`55b42d9`, produktiv)
+
+- Abrufversuche bleiben über einen Neustart gespeichert, Warnhinweis wenn der Vormonat fehlt, Einträge in den Admin-Logs,
+  neuer Versuch alle zwei Stunden (Wunsch Fabio).
+
 ## Kopfleiste nach Designprüfung, 2026-10-14 (`5b51011`)
 
 - Dimmer zeigt jetzt eine helle Schiene, CPU-Anzeige flacher mit besser lesbarer Skala, Logo mit Abstand zum rechten Rand.

@@ -66,6 +66,11 @@ Stand: 2026-10-14
 
 ## Kurzstand
 
+- **Deploy 2026-10-14 ~13:36, Operations KPI Monatsabruf abgesichert (`55b42d9`).** Release-Worktree `1217/1217`, DLL bitgleich,
+  zehn Routen `200`, Alarm nur WAL/SHM. Produktiv geprueft: `letzter_abruf` neutral (`ok = null`), `warnung` leer (September da).
+- **Deploy 2026-10-14 ~13:30, Startseite animierte Standortgrafik (`ce5d27d`).** Release-Worktree `1211/1211`, DLL bitgleich,
+  zehn Routen `200`. **Vor dem Neustart war `trafag_exporter.db-wal` 241 MB gross:** ein grosser Schreiblauf war aktiv und wurde
+  vermutlich abgebrochen; das Einkauf-Delta war vor dem Deploy nicht geprueft (LEARNINGS). Ingo hat die Grafik live gesehen („super“).
 - **Deploy 2026-10-14, Kopfleiste nach Designpruefung (`5b51011`):** Dimmer mit sichtbarer Schiene (MudBlazor zeichnete
   sie bei Color.Default auf Rot unsichtbar), CPU-Anzeige 5 px flacher und Skala 9 px, Logo 8 px Abstand rechts. Release-Worktree
   `1205/1205`, DLL bitgleich, zehn Routen `200`, **ohne Alarm**. Vorschau mit MudBlazor- und App-CSS per Edge headless geprueft.
