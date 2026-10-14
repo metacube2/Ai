@@ -71,8 +71,27 @@ html[data-theme="dark"] body {
     color: #fff;
 }
 
+/* Designpruefung 2026-10-14: Die Schiene war auf Rot unsichtbar, man sah nur den Knopf und erkannte den Regler
+   nicht. Jetzt eine halbtransparent weisse Schiene; Knopf auf die Schienenmitte gesetzt. */
+.bg-dimmer .mud-slider-input::-webkit-slider-runnable-track {
+    background: rgba(255, 255, 255, 0.45);
+    border-radius: 2px;
+    height: 4px;
+}
+
+.bg-dimmer .mud-slider-input::-moz-range-track {
+    background: rgba(255, 255, 255, 0.45);
+    border-radius: 2px;
+    height: 4px;
+}
+
+.bg-dimmer .mud-slider-input::-webkit-slider-thumb {
+    margin-top: -5px;
+}
+
 .app-logo {
     height: 34px;
+    margin-right: 8px;
     width: auto;
     object-fit: contain;
 }
@@ -1672,7 +1691,7 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
     display: inline-flex;
     gap: 4px;
     margin-right: 16px;
-    padding: 5px 7px 5px 6px;
+    padding: 4px 7px 3px 6px;
     position: relative;
     user-select: none;
     --vfd-on: #8ef9e6;
@@ -1694,7 +1713,7 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
 .vfd-glass {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
 .vfd-row {
@@ -1717,7 +1736,7 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
 .vfd-unit {
     align-self: flex-start;
     margin-left: 9px;
-    margin-top: 11px;
+    margin-top: 10px;
     width: auto;
 }
 
@@ -1762,7 +1781,7 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
 }
 
 .vfd-scale {
-    height: 9px;
+    height: 10px;
     margin-left: 11px;
     position: relative;
     width: 138px;
@@ -1775,9 +1794,9 @@ i.pm-light { width: 14px; height: 14px; cursor: default; }
 .vfd-mark {
     color: var(--vfd-text);
     font-family: "Arial Narrow", Arial, sans-serif;
-    font-size: 8px;
-    line-height: 9px;
-    opacity: 0.9;
+    font-size: 9px;
+    line-height: 10px;
+    opacity: 0.95;
     position: absolute;
     text-shadow: 0 0 3px var(--vfd-glow);
     top: 0;
