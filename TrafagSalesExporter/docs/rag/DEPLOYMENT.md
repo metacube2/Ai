@@ -66,6 +66,8 @@ Stand: 2026-10-14
 
 ## Kurzstand
 
+- **Deploy 2026-10-14 ~13:52, Startseite und Browser-Tab „Trafag Dashboard“ (`b5b4727`).** Release-Worktree `1218/1218`, DLL
+  bitgleich, zehn Routen `200`, Alarm nur WAL/SHM (klein). Einkauf-Delta laut Ingo kurz vorher nicht aktiv.
 - **Deploy 2026-10-14 ~13:46, Startseite Manometer-Schalter, Titel „Trafag Dashboard“ (`cc9c6ab`).** Vorher Ingo gefragt: kein
   Einkauf-Delta aktiv. Release-Worktree `1218/1218`, DLL bitgleich, zehn Routen `200`, Alarm nur WAL/SHM (WAL 0,6 MB). Neue Spalte
   `ExportSettings.ShowLandingManometer` (Standard 0) legt die Schemapflege beim Start an. Handbuch-Nachtrag Kapitel 10 ist damit live.
