@@ -2,6 +2,11 @@
 
 Stand: 2026-10-14
 
+## Startseite: neuer Untertitel, 2026-10-14 (`d911cb1`, produktiv 11:04)
+
+- „Die Trafag-Gruppe auf einen Blick: alle Standorte, alle Bereiche, täglich aktuell.“ statt „Automatisch angebundene
+  Länderabfragen mit täglichem Refresh“; Bildbeschreibung entsprechend. In allen Sprachen inklusive Berndeutsch.
+
 ## Kopfleiste: CPU-Last als Fluoreszenz-Pegelanzeige, 2026-10-14 (`a735b41`, `5235e16`, produktiv 10:51 und 11:00)
 
 - Ganz links in der rechten Kopfleiste, für alle: zwei Balken wie das VU-Meter eines Kassettendecks, S = Server gesamt,
