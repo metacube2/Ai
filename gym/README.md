@@ -49,3 +49,24 @@ Logbuch auf einem anderen Gerät. Neue Profile: höchstens 20 pro IP und Stunde.
 Das Skript sichert einen vorhandenen Stand nach `/root/gym-backup-<zeit>` und
 spielt die Dateien einzeln ein (kein `tar .`). Ändern sich CSS oder JS, in
 `index.html` und `sw.js` die Version `?v=` bzw. `CACHE` hochzählen.
+
+## Speicherung und Auswertung
+
+Jeder Satz, jedes Gerät und jeder Trainingsstart wird sofort gespeichert, erst
+im Browser und eine gute Sekunde später auf dem Server. Der Punkt neben dem
+Namen zeigt den Stand: grün heisst auf dem Server, orange heisst offline, der
+Abgleich folgt dann später. Beim nächsten Training zeigt jedes Gerät die Sätze
+vom letzten Mal, und das Cockpit füllt das zuletzt benutzte Gewicht vor. Unter
+„Verlauf“ stehen alle Tage und pro Gerät eine Kurve des Höchstgewichts.
+
+## Offene Punkte
+
+- Ein vergessenes „Training beenden“ lässt die Gym-Uhr weiterlaufen. Ein
+  automatisches Ende nach einer Pause ohne Satz ist vorgeschlagen, aber noch
+  nicht entschieden.
+- Getestet ist alles nur im Chrome mit Handygrösse, nicht auf einem echten
+  iPhone oder Android. Offen sind dort Ton, Bildschirmsperre und die
+  Installation auf dem Homebildschirm.
+- Hairpinning über die WAN-IP geht nicht (siehe
+  `instructions/homelab/reverse-proxy-dns.md`). Im Heimnetz läuft der Zugriff
+  über Split-DNS.
