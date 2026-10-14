@@ -66,6 +66,8 @@ Stand: 2026-10-14
 
 ## Kurzstand
 
+- **Deploy 2026-10-14 11:13, Benutzerhandbuch Kapitel Operations und Kopfleiste, Word neu (`f38020f`).** Release-Worktree,
+  `1205/1205`, DLL bitgleich, zehn Routen `200`, Alarm nur `-wal`/`-shm`.
 - **Deploy 2026-10-14 11:04, Startseite neuer Untertitel (`d911cb1`).** Release-Worktree, `1205/1205`, DLL bitgleich, zehn
   Routen `200`, Alarm nur WAL/SHM und Checkpoint beim Neustart.
 - **Deploy 2026-10-14 11:00, Pegelanzeige Beschriftung „CPU LOAD“ (`5235e16`)** und **10:51 CPU-Pegelanzeige in der Kopfleiste
