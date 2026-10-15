@@ -566,7 +566,8 @@ public sealed class ShopfloorStore
                     results.Add(new JsonObject { ["ok"] = false, ["error"] = $"Modul {module ?? "None"} unbekannt" });
                     continue;
                 }
-                var ch = CleanChanges(module, SfJson.Get(it, "fields") as JsonObject);
+                // "values" wie in Fabios Paket vom 14.10. gilt als gleichwertig zu "fields" (2026-10-15)
+                var ch = CleanChanges(module, (SfJson.Get(it, "fields") ?? SfJson.Get(it, "values")) as JsonObject);
                 var fieldNames = new JsonArray();
                 foreach (var kv in ch) fieldNames.Add(kv.Key);
                 if (mod.Kind == "daily")

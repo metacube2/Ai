@@ -86,6 +86,9 @@ public static class ShopfloorEndpoints
 {
     public const string Root = "/shopfloor";
     public const string ApiRoot = "/shopfloor/api";
+
+    /// <summary>Zweite Adresse der Schnittstelle (2026-10-15), wie in Fabios Paket vom 14.10. beschrieben.</summary>
+    public const string PushAlias = "/api/integration/push";
     public const string IndexPath = "shopfloor/index.html";
     private const string NoAccessText = "Kein Zugriff. Bitte im Reiter Operations anmelden.";
     public const string LoginPage = "/shopfloor/login.html";
@@ -254,7 +257,8 @@ public static class ShopfloorEndpoints
         {
             // Aenderungen nur mit dem Header, den die Oberflaeche immer mitschickt. Eine fremde Webseite kann ihn
             // ohne Vorabfrage (CORS) nicht setzen, das schliesst Fremdaufrufe mit dem Windows-Login des Benutzers aus.
-            var isPush = ctx.Request.Path.Equals(ApiRoot + "/integration/push", StringComparison.OrdinalIgnoreCase);
+            var isPush = ctx.Request.Path.Equals(ApiRoot + "/integration/push", StringComparison.OrdinalIgnoreCase)
+                         || ctx.Request.Path.Equals(PushAlias, StringComparison.OrdinalIgnoreCase);
             if (!isPush && !HttpMethods.IsGet(ctx.Request.Method) && !ctx.Request.Headers.ContainsKey("X-User"))
                 return J(ctx, new JsonObject { ["error"] = "Ungültige Anfrage" }, StatusCodes.Status403Forbidden);
 
@@ -423,16 +427,34 @@ public static class ShopfloorEndpoints
         // bevor das Token geprueft wird. Die Token-Pruefung im Endpunkt ist die Zugangskontrolle dieses Pfads.
         var push = app.MapGroup(ApiRoot + "/integration").DisableAntiforgery().AllowAnonymous();
         push.AddEndpointFilter(Guard);
-        push.MapPost("/push", async Task<IResult> (HttpContext c, IOptionsMonitor<ShopfloorOptions> options) =>
-        {
-            if (!TokenOk(c, options.CurrentValue.ApiToken))
-                return J(c, new JsonObject { ["error"] = "Token fehlt oder ungültig" }, StatusCodes.Status401Unauthorized);
-            var b = await Body(c);
-            var source = SfJson.Truthy(SfJson.Get(b, "source")) ? SfJson.PyStr(SfJson.Get(b, "source")) : "extern";
-            var items = SfJson.Get(b, "items") as JsonArray ?? [];
-            var results = Store(c).ApplyPush(new ShopfloorPush { Items = items }, source);
-            return J(c, new JsonObject { ["results"] = results });
-        });
+        push.MapPost("/push", PushHandler);
+        var alias = app.MapGroup(string.Empty).DisableAntiforgery().AllowAnonymous();
+        alias.AddEndpointFilter(Guard);
+        alias.MapPost(PushAlias, PushHandler);
         return app;
+    }
+
+    /// <summary>
+    /// Nimmt die Huelle {"source","items":[{"module","day","fields"}]} an und seit 2026-10-15 auch das Format aus Fabios
+    /// Paket vom 14.10.: ein einzelnes Item ohne Huelle ({"module","day","source","values"}), "values" statt "fields".
+    /// </summary>
+    private static async Task<IResult> PushHandler(HttpContext c, IOptionsMonitor<ShopfloorOptions> options)
+    {
+        if (!TokenOk(c, options.CurrentValue.ApiToken))
+            return J(c, new JsonObject { ["error"] = "Token fehlt oder ungültig" }, StatusCodes.Status401Unauthorized);
+        var b = await Body(c);
+        var source = SfJson.Truthy(SfJson.Get(b, "source")) ? SfJson.PyStr(SfJson.Get(b, "source")) : "extern";
+        var items = PushItems(b);
+        var results = Store(c).ApplyPush(new ShopfloorPush { Items = items }, source);
+        return J(c, new JsonObject { ["results"] = results });
+    }
+
+    internal static JsonArray PushItems(JsonObject body)
+    {
+        if (SfJson.Get(body, "items") is JsonArray items)
+            return items;
+        if (SfJson.Get(body, "module") is not null)
+            return [body.DeepClone()];
+        return [];
     }
 }

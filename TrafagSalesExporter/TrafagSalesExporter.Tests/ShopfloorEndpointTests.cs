@@ -179,6 +179,27 @@ public sealed class ShopfloorEndpointTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Push_Im_Format_Aus_Fabios_Paket_Ueber_Beide_Adressen()
+    {
+        // Format aus docs/shopfloor_paket_2026-10-14/1_Schnittstelle/beispiele: ohne items-Huelle, "values" statt "fields"
+        const string body = """{"_hinweis":"Beispiel","module":"logistik","day":"2026-10-14","source":"SAP","values":{"tr5_mle01":673,"tr5_mle02":null}}""";
+
+        foreach (var path in new[] { "/shopfloor/api/integration/push", "/api/integration/push" })
+        {
+            // Ohne Token abgelehnt (unter /shopfloor 403 durch die Zugriffssperre, unter /api 401 durch den Endpunkt)
+            var denied = (await _http.SendAsync(Req(HttpMethod.Post, path, user: null, body: body, xUser: false))).StatusCode;
+            Assert.True(denied is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden, denied.ToString());
+            Assert.Equal(HttpStatusCode.Unauthorized, (await _http.SendAsync(Req(HttpMethod.Post, path, user: null, body: body, xUser: false, bearer: "falsch"))).StatusCode);
+            var res = await _http.SendAsync(Req(HttpMethod.Post, path, user: null, body: body, xUser: false, bearer: "geheim"));
+            Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+            var first = JsonNode.Parse(await res.Content.ReadAsStringAsync())!["results"]![0]!;
+            Assert.True((bool)first["ok"]!);
+            Assert.Equal("2026-10-14", (string)first["day"]!);
+            Assert.Contains("tr5_mle01", first["fields"]!.AsArray().Select(n => (string)n!));
+        }
+    }
+
+    [Fact]
     public async Task Kpi_Liefertreue_Startstand_Seite_Export_Und_Ausschluesse()
     {
         // Ohne Zugriff: Seite fuehrt zur Anmeldung, API 403
