@@ -1,5 +1,7 @@
 <mvc:View controllerName="trafag.erste.controller.Main"
-          xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m">
+          xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" displayBlock="true" height="100%">
+  <!-- App gibt der Seite die volle Hoehe; ohne App war der Inhaltsbereich ausserhalb des Launchpads 0 px hoch -->
+  <App id="app">
   <Page title="Trafag Fiori Test: Produktsparten (ProductDivisionRefSet)">
     <headerContent>
       <Button icon="sap-icon://refresh" tooltip="Neu laden" press=".onLaden"/>
@@ -10,4 +12,5 @@
              noDataText="Keine Daten" class="sapUiSmallMarginBeginEnd"/>
     </content>
   </Page>
+  </App>
 </mvc:View>

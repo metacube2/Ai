@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Erste Fiori-App (nur Lesen, bestehender OData-Dienst) in T76 `$TMP`, oeffnen per URL; Harness/Vorgehen fuer kuenftige Erfassungs-Apps | `saptasks/fiori_erste_app/`, `.tmp_sap_probe/SapGuiUi5*.vbs`, `docs/router/sap.md` | in Arbeit 2026-10-15, nur T76, kein Transport. App in T76 hochgeladen (RFC `/UI5/REPO_LOAD_FROM_ZIP`, SapProbe `@datei:`), ICF aktiv; Browser-Test durch Ingo offen |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Erste Fiori-App `ZFI_ERSTE_APP` (nur Lesen, `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet`), T76 `$TMP`, Harness fuer Erfassungs-Apps | 2026-10-15 | **Abgeschlossen, Reservierung frei.** Upload per RFC `/UI5/REPO_LOAD_FROM_ZIP` (SapProbe `@datei:`), im Browser geprueft (50 Zeilen); kein Transport. `saptasks/fiori_erste_app/NOTES.md` |
 | Claude | ZC23 Formel-Doku als Word (`docs/ZC23_Materialanteil_Formeln_2026-10-15.docx`), Generator `Tools/BuildZc23Formeln` | 2026-10-15 | **Abgeschlossen, nur Doku, Reservierung frei.** Commit `5fef8d6`, Nachtrag Generator und Doku-Verweise; OpenXML geprueft, visuell nicht gesichtet |
 | Claude | ZC23 Spalte „Arbeit CZ“ wie ZM03, Spalten neben Standardwert, Waehrung in der Ueberschrift | 2026-10-15 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912736` (4 Objekte), Werte = ZM03 und Nachrechnung; Freigabe/Import P76 Ingo |
 | Claude | ZC23 Materialanteil gebaut (Kalkulation/Fremdleistung waehlbar, Schalter, schnelle Fassung, Standardwert+Materialanteil in ZPOWERBI_KDAUF und OData) | 2026-10-15 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912736` (Struktur, Tabelle, MPC_EXT DEFINE, ZM_OFFENE_KDAUF), CMP identisch, Werte = ZM03 und Nachrechnung, Q2 13,5 s; Freigabe/Import P76 Ingo. `saptasks/zc23_materialanteil/NOTES.md` |

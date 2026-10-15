@@ -1,6 +1,6 @@
 # Erste Fiori-App (Harness für künftige Erfassungs-Apps)
 
-Stand: 2026-10-15, App in T76 hochgeladen, Browser-Test durch Ingo offen. Auftrag Ingo: „erstelle mal ein kleines Fiori-App, es geht darum, dass wir bereit sind, wenn
+Stand: 2026-10-15, App in T76 hochgeladen und im Browser geprueft: zeigt 50 Zeilen (Schritt 1 erledigt). Auftrag Ingo: „erstelle mal ein kleines Fiori-App, es geht darum, dass wir bereit sind, wenn
 Erfassungsprogramme kommen, und du daraus lernst“. Erster Schritt laut Ingo: nur öffnen können, sehen wo und wie
 Daten gezogen werden. Nur T76, `$TMP`, kein Transport, nur lesen.
 
@@ -74,7 +74,16 @@ delete; `constructor( operation adapter dialog_mode safe_mode )`, `init( reposit
    `apps/trafag.erste/app/sap/zfi_erste_app/` geschrieben. ICF-Knoten `ZFI_ERSTE_APP` aktiv (`ICFSERVLOC`).
    `O2APPL` zeigt den Namen nicht (UI5-Repositorys stehen dort offenbar nicht; kein Fehler).
 8. Vorher öffnete Ingo den Link schon und bekam „ICF Node NOT found“: das heißt nur „noch nicht hochgeladen“.
-9. Browser-Test durch Ingo: offen.
+9. Erster Browser-Test (Ingo, dann ich in Chrome mit seiner Sitzung): nur Kopfzeile, Inhalt leer. Ursachen per
+   JavaScript in der Seite gemessen:
+   - Inhaltsbereich der `sap.m.Page` 0 px hoch: Page ohne `sap.m.App` und ComponentContainer ohne `data-height="100%"`
+     (Container 48 px). Behoben: `<App>` um die Page, `data-height="100%"`, `html, body { height: 100% }`.
+   - `ProductDivisionRefSet` ignoriert `$top`: 48'838 Zeilen statt 50. Die App kuerzt jetzt selbst und zeigt eine Warnung.
+   - SAP liefert UI5-Repository-Dateien mit `Cache-Control: max-age=31536000, public` (ein Jahr). Nach dem neuen Upload
+     holte Chrome trotz Strg+Umschalt+R die alte View aus dem Cache (transferSize 0). Geloest mit
+     `fetch(<datei>, {cache: "reload"})` je Datei und Neuladen.
+10. Ergebnis: Tabelle mit 50 Zeilen (Matnr, Maktx, Paph1, Paph1Text, Wwpfa, WwpfaText, Wwpsp, WwpspText, IsAssigned),
+    gelbe Warnung zu `$top`. Upload zweimal im Deltamodus wiederholt (nur geaenderte Dateien).
 
 Befehl zum erneuten Hochladen (aus PowerShell; ZIP mit Python bauen, siehe oben):
 
@@ -106,5 +115,11 @@ Wo man selbst entwickelt (Übersicht für Ingo, 2026-10-15):
   braucht Eclipse mit ADT. Ob ADT installiert ist und ob Ingo damit arbeiten will, ist offen.
 - Berechtigung: Nutzer brauchen `S_SERVICE` für den Dienst und für die Kachel einen Katalog in einer Rolle.
   Rollen ordne ich nur zu (Memory „SAP Rollen nur zuordnen“).
+- Nach jedem neuen Upload: Browser-Cache leeren (F12 offen, Rechtsklick auf Neuladen, „Cache leeren und vollständig
+  neu laden“), sonst sieht man den alten Stand. Für echte Apps einen Cache-Buster vorsehen (Launchpad macht das über
+  den Anwendungsindex; bei Direktlink z. B. Versionsparameter oder `Component-preload.js` mit Build).
+- Seitenrahmen immer mit `sap.m.App` (oder `Shell`) und Container `data-height="100%"`, sonst ist der Inhalt 0 px hoch.
+- Eigene SEGW-Dienste: `$top/$skip` in `GET_ENTITYSET` selbst umsetzen (`io_tech_request_context->get_top/get_skip`);
+  `ProductDivisionRefSet` tut es nicht.
 - Prüfreihenfolge, wenn eine App nicht startet: Link direkt öffnen → F12-Konsole (404 auf Ressourcen = BSP-Name/Pfad,
   401/403 = Login/Berechtigung) → Dienst-URL `.../$metadata` im selben Browser → `/IWFND/ERROR_LOG`.

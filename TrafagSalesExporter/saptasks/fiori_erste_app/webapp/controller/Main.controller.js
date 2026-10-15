@@ -26,14 +26,20 @@ sap.ui.define([
       oOData.read(SET, {
         urlParameters: { "$top": String(TOP) },
         success: function (oData) {
-          var aZeilen = (oData.results || []).map(function (o) {
+          // ProductDivisionRefSet ignoriert $top (gemessen 2026-10-15: 48'838 Zeilen statt 50); deshalb hier kuerzen
+          var iGeliefert = (oData.results || []).length;
+          var aZeilen = (oData.results || []).slice(0, TOP).map(function (o) {
             var r = {};
             Object.keys(o).forEach(function (k) { if (k !== "__metadata") { r[k] = o[k]; } });
             return r;
           });
           this._spaltenAufbauen(aZeilen);
-          oState.setProperty("/status", aZeilen.length + " Zeilen gelesen aus ZPOWERBI_EINKAUF_SRV" + SET + " (höchstens " + TOP + ").");
-          oState.setProperty("/statusTyp", "Success");
+          var sText = aZeilen.length + " Zeilen angezeigt aus ZPOWERBI_EINKAUF_SRV" + SET + ".";
+          if (iGeliefert > TOP) {
+            sText += " Achtung: Der Dienst ignoriert $top=" + TOP + " und lieferte " + iGeliefert + " Zeilen.";
+          }
+          oState.setProperty("/status", sText);
+          oState.setProperty("/statusTyp", iGeliefert > TOP ? "Warning" : "Success");
         }.bind(this),
         error: function (oErr) {
           // Fehlertext aus der Antwort melden, nicht nur den HTTP-Code (Learning 2026-10-14)
