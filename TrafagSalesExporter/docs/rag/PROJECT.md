@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-09-29 (HERMES-Sicht, PM-10 bis PM-12, Finance-Review; Tempo, Nachtlauf, HR und Lagerwert vom 2026-09-28; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-10-15 (Kurzstand 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -9,6 +9,17 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
+- **2026-10-14/15:** **Operations** ist eine Menuegruppe mit **KPI** (Liefertreue OTD / OTIF / OTP nach Spezifikation Fabio
+  Palma, live aus SAP ueber die CDS-Services, Abnahme Jan-Sep 2026 bestanden, Monatsabruf mit Wiederholung alle 2 h,
+  `docs/OPERATIONS_KPI_2026-10-14.md`) und **Shopfloor** (Feldmapping aus Fabios Excel, Disponenten je Abteilung, Patches
+  ZD05 „Zu besprechen“ und Verkauf Go-for-it, `docs/SHOPFLOOR_2026-10-07.md` 12/13). Der technische SAP-Benutzer des Cockpits
+  heisst **`POWERBI`**; seine Uebergangsrolle `ZF_BR_SALES_MANAGER` laeuft am **31.10.** aus (schmale Rolle beim Hauptadmin).
+  Startseite neu: animierte Standortgrafik mit Live-Zustand je Land, Titel „Trafag Dashboard“, Manometer per Admin-Schalter
+  (Standard aus), CPU-Pegelanzeige in der Kopfleiste, Handbuch Kapitel 10 Operations. **Nutzung:** die Leute schauen hinein,
+  arbeiten aber nicht damit; anonyme Nutzungsmessung seit 14.10. unter Admin > Nutzung, Massnahmen in
+  `docs/NUTZUNG_2026-10-14.md`. **Zusammenarbeit Fabio:** er moechte selbst entwickeln und Ingo nur freigeben; kein Zugriff
+  aufs Haupt-Repository (Passwort-Hashes in `appsettings.json`, HR/Finance-Doku, Deploy), Vorschlag Paket-Ordner, pflegbare
+  Konfiguration, spaeter eigenes Repository (Wochen_Todo 99, 100). Auto-Modus-Regeln oben in `router.md`.
 - **2026-09-29:** Fuer den Interims-Vorgesetzten gibt es eine **Vorhabenuebersicht nach HERMES**,
   zugeschnitten auf ein KMU: Blatt „HERMES Übersicht" in `projektmanagement/Wochen_Todo.xlsx`, Quelle
   `projektmanagement/Vorhaben_HERMES.tsv`, erzeugt mit `projektmanagement/wochen_todo_xlsx.py`. Je
