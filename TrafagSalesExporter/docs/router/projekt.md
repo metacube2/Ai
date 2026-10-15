@@ -1,6 +1,6 @@
 # Unterrouter Projekt
 
-Zurueck: `router.md`. Stand: 2026-09-29.
+Zurueck: `router.md`. Stand: 2026-10-15.
 
 Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand.
 
@@ -27,6 +27,7 @@ nachtragen und die Reservierung freigeben. Eintraege mit `abgeschlossen`, `deplo
 | **Managementbericht fuer den Vorgesetzten: Rolle, Scope-Abgrenzung, Entscheidungsbedarf** | `docs/Uebersicht_Aufgaben_Ingo_2026-09-02.docx`, erzeugt von `.tmp_tools/BuildChefUebersicht0902` |
 | Aktueller Aenderungsstand | `lastchange.md` |
 | Ansprechpartner und Standortempfaenger | `docs/ANSPRECHPARTNER.md` |
+| **Themenlandkarte**: alle Themen auf einer Seite, Datenquellen, Abhaengigkeiten, Ansprechpartner, offene Blocker (SVG, Stand 2026-10-15; neu erzeugen mit `projektmanagement/themenlandkarte.py`) | `docs/THEMENLANDKARTE_2026-10-15.svg` |
 
 **Abgrenzung:** `PROJEKTSTATUS.md` fuehrt Ingos Arbeitspakete. Finance-Detailfragen
 beantwortet es **nicht** — dafuer gilt das Issue-Log.
