@@ -1,0 +1,62 @@
+{
+  "_version": "1.42.0",
+  "sap.app": {
+    "id": "trafag.zc23",
+    "type": "application",
+    "title": "ZC23 Offene Kundenaufträge",
+    "description": "ZC23 (ZM_OFFENE_KDAUF) live mit Selektion, Materialanteil und Arbeit CZ",
+    "applicationVersion": {
+      "version": "1.0.0"
+    },
+    "dataSources": {
+      "einkauf": {
+        "uri": "/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "2.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": false
+    }
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "trafag.zc23.view.Main",
+      "type": "XML",
+      "async": true,
+      "id": "main"
+    },
+    "dependencies": {
+      "minUI5Version": "1.108.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ui.table": {},
+        "sap.ui.layout": {}
+      }
+    },
+    "models": {
+      "": {
+        "dataSource": "einkauf",
+        "settings": {
+          "useBatch": false,
+          "defaultCountMode": "None"
+        }
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/zc23.css"
+        }
+      ]
+    }
+  }
+}

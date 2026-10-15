@@ -141,10 +141,28 @@ pruefe(1058, 'FORM get_standard_price');
 pruefe(1056, 'ENDFORM.');
 pruefe(1053, "ls_fieldcat-fieldname = 'PSMNG'.");
 // OPT mit Materialanteil (2026-10-15): nach VERGLEICH_EXPORT, damit CMP unberuehrt bleibt.
-const startOpt = [...start, '  PERFORM materialanteil_rechnen.'];
+// App-Lauf (2026-10-15): P_APP legt das Ergebnis NACH dem Materialanteil ins Memory (Fiori-App ZC23 ueber OData).
+const startOpt = [...start, '  PERFORM materialanteil_rechnen.', '  PERFORM app_export.'];
+
+const pApp = ['PARAMETERS p_app NO-DISPLAY. " Fiori-App ZC23 (OData Zc23Set): Ergebnis mit Materialanteil ins Memory statt ALV'];
+
+const appForm = [
+  '',
+  '*&---------------------------------------------------------------------*',
+  '*&      Form  APP_EXPORT',
+  '*&---------------------------------------------------------------------*',
+  '* Nur im App-Lauf (P_APP, gesetzt von ZCL_ZPOWERBI_EINKAUF_DPC_EXT fuer Zc23Set):',
+  '* Ergebnis mit Materialanteil und Arbeit CZ ins ABAP-Memory, dann Programmende',
+  '* ohne ALV und ohne Fortschreibung von ZPOWERBI_KDAUF.',
+  'FORM app_export.',
+  "  CHECK p_app = 'X'.",
+  "  EXPORT tab = gt_uebauf[] TO MEMORY ID 'ZM_OFFENE_KDAUF_APP'.",
+  '  LEAVE PROGRAM.',
+  'ENDFORM.                    "app_export',
+];
 
 const opt = anwenden([
-  { von: 68, bis: 67, neu: [...pVgl, ...teil('opt_korr_screen'), ...teil('opt_mata_screen')] },
+  { von: 68, bis: 67, neu: [...pVgl, ...pApp, ...teil('opt_korr_screen'), ...teil('opt_mata_screen')] },
   { von: 71, bis: 70, neu: [...teil('gemeinsam_global'), ...teil('opt_global'), ...teil('opt_mata_global')] },
   { von: 161, bis: 160, neu: [...teil('opt_korr_init'), ...teil('opt_mata_init')] },
   { von: 190, bis: 196, neu: startOpt },
@@ -155,7 +173,7 @@ const opt = anwenden([
   { von: 353, bis: 637, neu: teil('opt_fill_uebauf') },
   { von: 870, bis: 908, neu: teil('opt_bereich') },
   { von: 910, bis: 924, neu: teil('opt_erster_bezug') },
-  { von: 1058, bis: 1133, neu: [...teil('opt_preis_fkdat'), ...teil('opt_parallel'), ...teil('opt_mata_forms'), ...exportForm] },
+  { von: 1058, bis: 1133, neu: [...teil('opt_preis_fkdat'), ...teil('opt_parallel'), ...teil('opt_mata_forms'), ...exportForm, ...appForm] },
 ]);
 
 fs.writeFileSync('ZM_OFFENE_KDAUF_REF.abap', ref);

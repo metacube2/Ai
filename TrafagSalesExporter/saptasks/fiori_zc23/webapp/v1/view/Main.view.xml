@@ -1,0 +1,145 @@
+<mvc:View controllerName="trafag.zc23.controller.Main"
+          xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:t="sap.ui.table" xmlns:l="sap.ui.layout"
+          xmlns:core="sap.ui.core" displayBlock="true" height="100%">
+  <App id="app">
+    <Page showHeader="false" class="zc23Seite" enableScrolling="false">
+      <content>
+        <VBox height="100%" class="zc23Rahmen">
+
+          <!-- Kopf mit Trafag-Logo -->
+          <HBox class="zc23Kopf" alignItems="Center" justifyContent="SpaceBetween">
+            <HBox alignItems="Center">
+              <Image src="{view>/logo}" height="44px" alt="Trafag" class="zc23Logo"/>
+              <VBox class="sapUiMediumMarginBegin">
+                <Title text="ZC23 Offene Kundenaufträge" level="H1" class="zc23Titel"/>
+                <Text text="Live aus SAP (ZM_OFFENE_KDAUF) · Materialanteil und Arbeit CZ" class="zc23Untertitel"/>
+              </VBox>
+            </HBox>
+            <ObjectStatus text="{view>/stand}" state="{view>/standTyp}" icon="sap-icon://history" class="zc23Stand"/>
+          </HBox>
+
+          <!-- Selektion wie im Selektionsbild von ZC23 -->
+          <Panel expandable="true" expanded="{view>/selOffen}" class="zc23Panel">
+            <headerToolbar>
+              <OverflowToolbar style="Clear">
+                <core:Icon src="sap-icon://filter"/>
+                <Title text="Selektion"/>
+                <ToolbarSpacer/>
+                <Text text="{view>/selKurz}" class="zc23SelKurz"/>
+              </OverflowToolbar>
+            </headerToolbar>
+            <l:Grid defaultSpan="XL2 L3 M4 S12" vSpacing="0.5" hSpacing="1">
+              <VBox>
+                <Label text="Werk" required="true" labelFor="werk"/>
+                <Input id="werk" value="{view>/sel/werk}" maxLength="4" width="100%"/>
+              </VBox>
+              <VBox>
+                <Label text="Liefertermin (Einteilung)" required="true" labelFor="zeitraum"/>
+                <DateRangeSelection id="zeitraum" dateValue="{view>/sel/von}" secondDateValue="{view>/sel/bis}"
+                                    displayFormat="dd.MM.yyyy" width="100%"/>
+              </VBox>
+              <VBox>
+                <Label text="Kunde (mehrere mit Komma)" labelFor="kunde"/>
+                <Input id="kunde" value="{view>/sel/kunden}" placeholder="z. B. 7390, 682" width="100%"/>
+              </VBox>
+              <VBox>
+                <Label text="Material (mehrere mit Komma)" labelFor="material"/>
+                <Input id="material" value="{view>/sel/materialien}" width="100%"/>
+              </VBox>
+              <VBox>
+                <Label text="Kundenauftrag (mehrere mit Komma)" labelFor="auftrag"/>
+                <Input id="auftrag" value="{view>/sel/auftraege}" width="100%"/>
+              </VBox>
+              <VBox>
+                <Label text="Korrekturen" labelFor="korr"/>
+                <Select id="korr" selectedKey="{view>/sel/korr}" width="100%">
+                  <core:Item key="V" text="Korrigiert (Vorgabe)"/>
+                  <core:Item key="A" text="Nur Absagegrund"/>
+                  <core:Item key="L" text="Alte Logik"/>
+                </Select>
+              </VBox>
+              <VBox>
+                <Label text="Materialanteil rechnen"/>
+                <Switch state="{view>/sel/mata}" customTextOn="Ja" customTextOff="Nein"/>
+              </VBox>
+              <VBox>
+                <Label text="Kalkulation"/>
+                <SegmentedButton selectedKey="{view>/sel/kalk}" enabled="{view>/sel/mata}">
+                  <items>
+                    <SegmentedButtonItem key="F" text="Freigegeben"/>
+                    <SegmentedButtonItem key="J" text="Jüngste"/>
+                  </items>
+                </SegmentedButton>
+              </VBox>
+              <VBox>
+                <Label text="Fremdleistung"/>
+                <CheckBox text="zum Material zählen" selected="{view>/sel/mfrem}" enabled="{view>/sel/mata}"/>
+              </VBox>
+              <VBox justifyContent="End">
+                <Label text=""/>
+                <Button text="Ausführen" type="Emphasized" icon="sap-icon://media-play" press=".onAusfuehren"
+                        enabled="{= !${view>/laeuft} }" width="100%"/>
+              </VBox>
+            </l:Grid>
+          </Panel>
+
+          <!-- Kennzahlen -->
+          <HBox wrap="Wrap" class="zc23Kacheln" visible="{= ${view>/kpi/positionen} > 0 }">
+            <VBox class="zc23Kachel">
+              <Text text="Positionen" class="zc23KLabel"/>
+              <Text text="{view>/kpi/positionenText}" class="zc23KWert"/>
+              <Text text="{view>/kpi/auftraegeText}" class="zc23KZusatz"/>
+            </VBox>
+            <VBox class="zc23Kachel">
+              <Text text="Offener Wert" class="zc23KLabel"/>
+              <Text text="{view>/kpi/offenText}" class="zc23KWert"/>
+              <Text text="{view>/kpi/waehrung}" class="zc23KZusatz"/>
+            </VBox>
+            <VBox class="zc23Kachel zc23KachelBetont">
+              <Text text="Standardwert" class="zc23KLabel"/>
+              <Text text="{view>/kpi/stdText}" class="zc23KWert"/>
+              <Text text="{view>/kpi/waehrung}" class="zc23KZusatz"/>
+            </VBox>
+            <VBox class="zc23Kachel">
+              <Text text="Materialanteil" class="zc23KLabel"/>
+              <Text text="{view>/kpi/matText}" class="zc23KWert"/>
+              <Text text="{view>/kpi/matQuote}" class="zc23KZusatz"/>
+            </VBox>
+            <VBox class="zc23Kachel">
+              <Text text="Arbeit CZ" class="zc23KLabel"/>
+              <Text text="{view>/kpi/czText}" class="zc23KWert"/>
+              <Text text="{view>/kpi/czQuote}" class="zc23KZusatz"/>
+            </VBox>
+            <VBox class="zc23Kachel">
+              <Text text="Kunden / Material" class="zc23KLabel"/>
+              <Text text="{view>/kpi/kundenText}" class="zc23KWert"/>
+              <Text text="{view>/kpi/materialText}" class="zc23KZusatz"/>
+            </VBox>
+          </HBox>
+
+          <!-- Liste -->
+          <VBox class="zc23Liste" height="100%">
+            <layoutData><FlexItemData growFactor="1" minHeight="0"/></layoutData>
+            <t:Table id="tabelle" rows="{daten>/gefiltert}" selectionMode="None" visibleRowCountMode="Auto"
+                     minAutoRowCount="5" showColumnVisibilityMenu="true" enableColumnReordering="true"
+                     alternateRowColors="true" busy="{view>/laeuft}" busyIndicatorDelay="0"
+                     noData="{view>/leerText}">
+              <t:extension>
+                <OverflowToolbar style="Clear">
+                  <SearchField width="20rem" placeholder="In der Liste suchen (Kunde, Material, Auftrag …)"
+                               liveChange=".onSuchen" value="{view>/suche}"/>
+                  <ToggleButton text="Nur mit Arbeit CZ" pressed="{view>/nurCz}" press=".onFiltern" icon="sap-icon://factory"/>
+                  <ToolbarSpacer/>
+                  <Text text="{view>/anzahlText}"/>
+                  <Button icon="sap-icon://excel-attachment" text="CSV" tooltip="Angezeigte Zeilen als CSV (Excel)" press=".onCsv"
+                          enabled="{= ${view>/kpi/positionen} > 0 }"/>
+                </OverflowToolbar>
+              </t:extension>
+            </t:Table>
+          </VBox>
+
+        </VBox>
+      </content>
+    </Page>
+  </App>
+</mvc:View>

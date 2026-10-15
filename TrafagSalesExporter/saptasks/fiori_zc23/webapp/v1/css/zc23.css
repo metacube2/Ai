@@ -1,0 +1,17 @@
+/* ZC23 Fiori-App: Trafag-Akzent (Orange aus dem Logo), sonst SAP Horizon */
+.zc23Rahmen { background: #f5f6f7; }
+.zc23Kopf { background: #ffffff; padding: 0.75rem 1.5rem; border-bottom: 3px solid #ef7d00; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.zc23Titel { font-size: 1.5rem !important; font-weight: 600; color: #1d2d3e; }
+.zc23Untertitel { color: #556b82; font-size: 0.875rem; }
+.zc23Panel { margin: 0.75rem 1rem 0 1rem; background: #ffffff; border-radius: 0.75rem; }
+.zc23Panel .sapMPanelContent { padding: 0.5rem 1rem 1rem 1rem; }
+.zc23SelKurz { color: #556b82; font-size: 0.8125rem; }
+.zc23Kacheln { margin: 0.75rem 1rem 0 1rem; gap: 0.75rem; }
+.zc23Kachel { background: #ffffff; border-radius: 0.75rem; padding: 0.75rem 1rem; min-width: 11rem; flex: 1 1 11rem;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #0070f2; }
+.zc23KachelBetont { border-left-color: #ef7d00; }
+.zc23KLabel { color: #556b82; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.zc23KWert { font-size: 1.625rem; font-weight: 600; color: #1d2d3e; margin-top: 0.25rem; font-variant-numeric: tabular-nums; }
+.zc23KZusatz { color: #556b82; font-size: 0.8125rem; margin-top: 0.125rem; }
+.zc23Liste { margin: 0.75rem 1rem 1rem 1rem; background: #ffffff; border-radius: 0.75rem; overflow: hidden; }
+.zc23Zahl { font-variant-numeric: tabular-nums; }

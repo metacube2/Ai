@@ -66,6 +66,7 @@ SELECTION-SCREEN BEGIN OF BLOCK b4 WITH FRAME TITLE TEXT-T04. " TEXT-T04: 'Daten
   PARAMETERS: p_updbi AS CHECKBOX. " Text über Selektionstexte: 'PowerBI Tabelle aktualisieren'
 SELECTION-SCREEN END OF BLOCK b4.
 PARAMETERS p_vgl NO-DISPLAY. " Vergleichslauf aus ZM_OFFENE_KDAUF_CMP: Ergebnis ins Memory statt ALV
+PARAMETERS p_app NO-DISPLAY. " Fiori-App ZC23 (OData Zc23Set): Ergebnis mit Materialanteil ins Memory statt ALV
 * Korrekturen 2026-10-12 (Entscheid Ingo): Vorgabe "korrigiert". "Alte Logik" rechnet wie
 * das Programm bis Oktober 2026, Fehler eingeschlossen, etwa fuer einen Vergleich.
 SELECTION-SCREEN BEGIN OF BLOCK b5 WITH FRAME TITLE tit_korr.
@@ -441,6 +442,7 @@ START-OF-SELECTION.
   PERFORM fill_uebauf.
   PERFORM vergleich_export.
   PERFORM materialanteil_rechnen.
+  PERFORM app_export.
 
   WRITE: dat_lo TO sy-tvar0 DD/MM/YYYY.
   WRITE: dat_hi TO sy-tvar1 DD/MM/YYYY.
@@ -2320,3 +2322,15 @@ FORM vergleich_export.
     TO MEMORY ID 'ZM_OFFENE_KDAUF_VGL'.
   LEAVE PROGRAM.
 ENDFORM.                    "vergleich_export
+
+*&---------------------------------------------------------------------*
+*&      Form  APP_EXPORT
+*&---------------------------------------------------------------------*
+* Nur im App-Lauf (P_APP, gesetzt von ZCL_ZPOWERBI_EINKAUF_DPC_EXT fuer Zc23Set):
+* Ergebnis mit Materialanteil und Arbeit CZ ins ABAP-Memory, dann Programmende
+* ohne ALV und ohne Fortschreibung von ZPOWERBI_KDAUF.
+FORM app_export.
+  CHECK p_app = 'X'.
+  EXPORT tab = gt_uebauf[] TO MEMORY ID 'ZM_OFFENE_KDAUF_APP'.
+  LEAVE PROGRAM.
+ENDFORM.                    "app_export
