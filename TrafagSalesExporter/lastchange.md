@@ -2,7 +2,7 @@
 
 Stand: 2026-10-15
 
-## Operations: Login per Admin-Schalter abschaltbar, 2026-10-15 (`8bfe424`, Deploy offen)
+## Operations: Login per Admin-Schalter abschaltbar, 2026-10-15 (`8bfe424`, produktiv 12:15; Freigabe Produktionsleitung laut Ingo erteilt, Schalter legt Ingo um)
 
 - Admin Bereich > Passwörter, Schalter „Operations: Login nötig“ (Wunsch Fabio). Aus: Alle mit Windows-Anmeldung sehen und
   bearbeiten den Shopfloor ohne eigenes Login. Gespeichert in der Datenbank, übersteht Deploys. Standard unverändert: Login nötig.

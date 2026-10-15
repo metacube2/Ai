@@ -26,7 +26,6 @@ in die Historiendatei.
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
 | Claude | ZC23 Materialanteil bauen (Entscheid Ingo 15.10.: Kalkulation und Fremdleistung waehlbar, Standardwert + Materialanteil in ZPOWERBI_KDAUF und OData) | T76: `ZM_OFFENE_KDAUF_OPT` ($TMP), danach `ZM_OFFENE_KDAUF`, Tabelle `ZPOWERBI_KDAUF`, `ZCL_ZPOWERBI_EINKAUF_MPC_EXT`, neuer Transport; Repo `saptasks/zm_offene_kdauf/`, `saptasks/zc23_materialanteil/` | pausiert 2026-10-15: ABAP im Repo fertig, SAP-Einbau wartet auf Freigabe Ingo (Auto-Modus lehnte SE11 ab); in T76 nichts geaendert, SE11 `ZMM_UEB_KDAUF` in eigener Sitzung 2 nur im Aenderungsmodus offen |
-| Claude | Operations: Admin-Schalter „Login noetig“ (aus = alle Windows-Benutzer sehen den Shopfloor) | `Services/Shopfloor/ShopfloorConfig.cs` bzw. Zugriff, `Services/Shopfloor/ShopfloorEndpoints.cs`, `Models/ExportSettings.cs`, Schema-Dateien, `Components/Pages/AdminPasswords.razor`, Uebersetzungen, Tests | laeuft seit 2026-10-15 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -38,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Operations: Admin-Schalter „Login noetig“ (Wunsch Fabio, Freigabe Produktionsleitung) | 2026-10-15 | **Abgeschlossen, deployed 12:15, Reservierung frei.** `8bfe424`, 1234/1234, bitgleich, ohne Alarm. Tabelle `AccessSettings`, PostConfigure ueber `Shopfloor:OpenForAll`; Schalter legt Ingo um |
 | Claude | ZC23 Materialanteil: Analyse ZM03 (`ZLO_CALC_CZ_PREISE`) und CK11N, nur lesend in T76 per SapProbe | 2026-10-15 | **Abgeschlossen, nur Analyse, nichts in SAP geaendert, Reservierung frei.** `saptasks/zc23_materialanteil/NOTES.md`, Quelltext ZM03; ZK11N gibt es nicht (CK11N gemeint); offene Fragen in NOTES und Wochen_Todo 104 |
 | Claude | Zusammenfassung aller Arbeiten 14./15.10. als Markdown | 2026-10-15 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `docs/ARBEITSSTAND_2026-10-14_15.md`, Router Projekt, `baum.md` |
 | Claude | Shopfloor-Schnittstelle nimmt Fabios Push-Format an (ohne items-Huelle, `values`, Adresse `/api/integration/push`) | 2026-10-15 | **Abgeschlossen, deployed 11:06, Reservierung frei.** `f4e3f1b`, 1233/1233, bitgleich, beide Adressen mit falschem Token 401. Geaendert: `ShopfloorEndpoints.cs`, `ShopfloorStore.cs`, `ShopfloorEndpointTests.cs`, Doku SHOPFLOOR Abschnitt 13 |

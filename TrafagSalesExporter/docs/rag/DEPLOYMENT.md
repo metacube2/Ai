@@ -66,6 +66,11 @@ Stand: 2026-10-15
 
 ## Kurzstand
 
+- **Deploy 2026-10-15 12:15, Operations: Admin-Schalter „Login noetig“ (`8bfe424`, Doku `bed8097`).** Auftrag Ingo, Freigabe
+  der Produktionsleitung fuer „offen fuer alle“ laut Ingo erteilt. `1234/1234`, `BiDashboard.dll` `12:15:07`, SHA256
+  `AB65F17888DEED6DE1ED8A3343E42892793538A0E00DD68E026E6B76E707F84B`, bitgleich, zehn Routen 200, ohne Alarm. WAL vorher 14,5 MB
+  (kein Hinweis auf einen grossen Einkauf-Lauf). Nachpruefung `/admin/passwoerter` und `/shopfloor/index.html` 200. Der Schalter
+  steht auf der Vorgabe „Login noetig“, bis Ingo ihn umlegt.
 - **Deploy 2026-10-15 11:06, Shopfloor: Push-Format aus Fabios Paket (`f4e3f1b`).** Auftrag Ingo („pass an und deploye“).
   `1233/1233`, `BiDashboard.dll` `11:05:37`, SHA256 `C14F44E349A462FA56373E3CAD4D62A74C9E3A6B32E113D207A5B73755C3A480`, bitgleich,
   zehn Routen 200, Alarm nur `-wal`/`-shm` (WAL 655 KB, kein grosser Schreiblauf). Nachpruefung: beide Push-Adressen mit falschem
