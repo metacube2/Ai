@@ -26,6 +26,7 @@ nachtragen und die Reservierung freigeben. Eintraege mit `abgeschlossen`, `deplo
 | 180-Tage-Roadmap Analytics, BI, HR, Einkauf | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 | **Managementbericht fuer den Vorgesetzten: Rolle, Scope-Abgrenzung, Entscheidungsbedarf** | `docs/Uebersicht_Aufgaben_Ingo_2026-09-02.docx`, erzeugt von `.tmp_tools/BuildChefUebersicht0902` |
 | Aktueller Aenderungsstand | `lastchange.md` |
+| **Zusammenfassung 14./15.10.2026**: alles Erledigte mit Stand, Fragen an Fabio (Logistik J5, Verkauf J2/J3), offene Punkte Ingo | `docs/ARBEITSSTAND_2026-10-14_15.md` |
 | Ansprechpartner und Standortempfaenger | `docs/ANSPRECHPARTNER.md` |
 | **Themenlandkarte**: alle Themen auf einer Seite, Datenquellen, Abhaengigkeiten, Ansprechpartner, offene Blocker (SVG, Stand 2026-10-15; neu erzeugen mit `projektmanagement/themenlandkarte.py`) | `docs/THEMENLANDKARTE_2026-10-15.svg` |
 

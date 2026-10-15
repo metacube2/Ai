@@ -36,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Zusammenfassung aller Arbeiten 14./15.10. als Markdown | 2026-10-15 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `docs/ARBEITSSTAND_2026-10-14_15.md`, Router Projekt, `baum.md` |
 | Claude | Shopfloor-Schnittstelle nimmt Fabios Push-Format an (ohne items-Huelle, `values`, Adresse `/api/integration/push`) | 2026-10-15 | **Abgeschlossen, deployed 11:06, Reservierung frei.** `f4e3f1b`, 1233/1233, bitgleich, beide Adressen mit falschem Token 401. Geaendert: `ShopfloorEndpoints.cs`, `ShopfloorStore.cs`, `ShopfloorEndpointTests.cs`, Doku SHOPFLOOR Abschnitt 13 |
 | Claude | Passwoerter aller Bereiche im Admin setzbar (Admin, Finance, HR inkl. hradmin, Operations, Logistik), Hashes in der DB | 2026-10-15 | **Abgeschlossen, deployed 2026-10-15 10:56, Reservierung frei.** `e1afd49` + Doku `1519cb3`, 1232/1232, bitgleich, `/admin/passwoerter` 200. Seite `/admin/passwoerter`, Tabelle `AccessPasswords`, PostConfigure ueber appsettings, Operations-Cookie mit Hash-Fingerabdruck. Admin-Passwort setzt Ingo selbst auf der neuen Seite |
 | Claude | Themenlandkarte als SVG (Quellen, Themen, Abhaengigkeiten, Ansprechpartner, Blocker) | 2026-10-15 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `docs/THEMENLANDKARTE_2026-10-15.svg`, Generator `projektmanagement/themenlandkarte.py`, Router Projekt, `baum.md` |
