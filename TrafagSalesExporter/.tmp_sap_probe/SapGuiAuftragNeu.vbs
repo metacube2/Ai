@@ -1,7 +1,16 @@
 ' Im Dialog "Abfrage transportierbarer Workbench-Auftrag": neuen Auftrag anlegen, Text setzen,
 ' sichern, Nummer ausgeben und mit Weiter bestaetigen. Aufruf: <Sitzung> <Kurzbeschreibung>
 Set a = GetObject("SAPGUI")
-Set s = a.GetScriptingEngine.Children(0).Children(CLng(WScript.Arguments(0)))
+' Verbindung T76 suchen statt fest die erste zu nehmen (2026-10-15: P76 war Verbindung 0)
+Set cT76_ = Nothing
+For ci_ = 0 To a.GetScriptingEngine.Children.Count - 1
+  Set c_ = a.GetScriptingEngine.Children(CLng(ci_))
+  If c_.Children.Count > 0 Then
+    If c_.Children(0).Info.SystemName = "T76" Then Set cT76_ = c_
+  End If
+Next
+If cT76_ Is Nothing Then WScript.Quit 2
+Set s = cT76_.Children(CLng(WScript.Arguments(0)))
 If s.Info.SystemName <> "T76" Then WScript.Quit 2
 s.FindById("wnd[1]/tbar[0]/btn[8]").Press
 WScript.Sleep 1500

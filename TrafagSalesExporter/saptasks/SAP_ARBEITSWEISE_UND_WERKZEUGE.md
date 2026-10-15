@@ -48,6 +48,16 @@ Drei Stolpersteine, die sonst Zeit kosten:
   GUI nicht herausgibt, kommt oft auch mit `ASSIGN COMPONENT` zur Laufzeit ans Ziel; siehe
   Abschnitt 13.
 
+### Welche Verbindung, welche Sitzung (seit 2026-10-15)
+
+Sind P76 und T76 zugleich offen, ist die Reihenfolge der Verbindungen zufaellig; am 2026-10-15 war P76 die erste.
+Viele Skripte nahmen fest `app.Children(0)` und brachen nur dank der Pruefung „Sitzung ist nicht T76“ ab. Neun
+Skripte suchen die T76-Verbindung jetzt selbst (`SapGuiSe11Aendern`, `SapGuiStrukturFelder`, `SapGuiWaehrungsref`,
+`SapGuiAktivierenNeuerAuftrag`, `SapGuiInaktiveLokalAktivieren`, `SapGuiKlasseAendernMitAuftrag`, `SapGuiAuftragDialog`,
+`SapGuiAuftragNeu`, `SapGuiSetReportSourceAuftrag`); der Sitzungsindex zaehlt dann innerhalb der T76-Verbindung. Die
+uebrigen Skripte vor Gebrauch genauso umstellen. **Nie in eine Sitzung schreiben, in der Ingo gerade arbeitet**: erst die
+Sitzungen auflisten (Transaktion je Sitzung), dann mit `CreateSession` eine eigene oeffnen.
+
 ### Wenn `Sessions=0` gemeldet wird: erst den Server pruefen, nicht den Arbeitsplatz
 
 **Am 2026-09-10 zwei Stunden gekostet, deshalb hier ganz vorn.** `SapGuiInspect.vbs` meldete

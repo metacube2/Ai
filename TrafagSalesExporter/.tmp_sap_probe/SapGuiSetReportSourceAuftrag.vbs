@@ -8,7 +8,22 @@ Option Explicit
 
 Dim a, app, s, prog, datei, auftrag, fso, quelle, editor
 
-Set s = GetObject("SAPGUI").GetScriptingEngine.Children(0).Children(CLng(WScript.Arguments(0)))
+Dim c
+Set app = GetObject("SAPGUI").GetScriptingEngine
+' Verbindung T76 suchen statt fest die erste zu nehmen (2026-10-15: P76 war Verbindung 0)
+Dim ci_, c_
+Set c = Nothing
+For ci_ = 0 To app.Children.Count - 1
+  Set c_ = app.Children(CLng(ci_))
+  If c_.Children.Count > 0 Then
+    If c_.Children(0).Info.SystemName = "T76" Then Set c = c_
+  End If
+Next
+If c Is Nothing Then
+  WScript.Echo "ABBRUCH: keine T76-Verbindung offen"
+  WScript.Quit 2
+End If
+Set s = c.Children(CLng(WScript.Arguments(0)))
 prog = WScript.Arguments(1)
 datei = WScript.Arguments(2)
 auftrag = WScript.Arguments(3)

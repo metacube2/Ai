@@ -62,6 +62,9 @@
     ls_zpowerbi_kdauf-gltrp  = ls_uebauf-gltrp.
     ls_zpowerbi_kdauf-gltri  = ls_uebauf-gltri.
     ls_zpowerbi_kdauf-edatu  = ls_uebauf-edatu.
+    " Materialanteil 2026-10-15 (Entscheid Ingo): Standardwert und Materialanteil auch fuer Power BI
+    ls_zpowerbi_kdauf-standardwert = ls_uebauf-standardwert.
+    ls_zpowerbi_kdauf-matanteil    = ls_uebauf-matanteil.
     " MANDT wird automatisch gefüllt
 
     APPEND ls_zpowerbi_kdauf TO lt_zpowerbi_kdauf.

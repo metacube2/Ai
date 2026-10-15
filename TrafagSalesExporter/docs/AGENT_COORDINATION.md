@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | ZC23 Materialanteil bauen (Entscheid Ingo 15.10.: Kalkulation und Fremdleistung waehlbar, Standardwert + Materialanteil in ZPOWERBI_KDAUF und OData) | T76: `ZM_OFFENE_KDAUF_OPT` ($TMP), danach `ZM_OFFENE_KDAUF`, Tabelle `ZPOWERBI_KDAUF`, `ZCL_ZPOWERBI_EINKAUF_MPC_EXT`, neuer Transport; Repo `saptasks/zm_offene_kdauf/`, `saptasks/zc23_materialanteil/` | pausiert 2026-10-15: ABAP im Repo fertig, SAP-Einbau wartet auf Freigabe Ingo (Auto-Modus lehnte SE11 ab); in T76 nichts geaendert, SE11 `ZMM_UEB_KDAUF` in eigener Sitzung 2 nur im Aenderungsmodus offen |
 | Claude | Operations: Admin-Schalter „Login noetig“ (aus = alle Windows-Benutzer sehen den Shopfloor) | `Services/Shopfloor/ShopfloorConfig.cs` bzw. Zugriff, `Services/Shopfloor/ShopfloorEndpoints.cs`, `Models/ExportSettings.cs`, Schema-Dateien, `Components/Pages/AdminPasswords.razor`, Uebersetzungen, Tests | laeuft seit 2026-10-15 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
