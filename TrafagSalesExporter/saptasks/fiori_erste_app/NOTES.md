@@ -9,8 +9,11 @@ Daten gezogen werden. Nur T76, `$TMP`, kein Transport, nur lesen.
 - Eine Fiori-App ist eine Webseite (SAPUI5: HTML, XML-Views, JavaScript), die **im Browser** läuft. Die Dateien liegen
   im SAP als BSP-Anwendung im UI5-Repository und werden vom SAP-Webserver (ICM) ausgeliefert.
 - Die Daten holt sie über einen **OData-Dienst** auf demselben Server (SEGW, `/sap/opu/odata/sap/<DIENST>/`). Weil App
-  und Dienst auf demselben Host liegen, gibt es kein CORS-Problem, und der Benutzer meldet sich mit seinem normalen
-  SAP-Login im Browser an. Ein Skript-Login ist nicht nötig (und wegen Sperrgefahr verboten, siehe Memory „SAP Gateway Abfragen“).
+  und Dienst auf demselben Host liegen, gibt es kein CORS-Problem. Ein Skript-Login ist nicht nötig (und wegen
+  Sperrgefahr verboten, siehe Memory „SAP Gateway Abfragen“).
+- **Login (Korrektur Ingo 2026-10-15):** Im Browser meldet man sich mit dem **OData-Login** an, **nicht** mit dem
+  SAP-GUI-Login von T76. Meine frühere Aussage „KOI mit T76-Passwort“ war falsch. Welcher Benutzer genau dahintersteht,
+  ist nicht ausgelesen (`/sap/bc/ui2/start_up` gibt 403).
 - Öffnen ohne Launchpad, direkt per Link:
   `http://travt762.sap.trafag.com:8000/sap/bc/ui5_ui5/sap/zfi_erste_app/index.html?sap-client=100`
 - Später mit Launchpad: Kachel über `/UI2/FLPD_CUST` (Katalog, Target Mapping) und Rolle, Aufruf `/UI2/FLP` bzw.

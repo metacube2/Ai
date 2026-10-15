@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Fiori-App ZC23 (offene Kundenauftraege aus `ZPOWERBI_KDAUF` ueber `ZPOWERBI_EINKAUF_SRV`, Kennzahlen, Filter, Trafag-Logo), nur lesen, T76 `$TMP` | `saptasks/fiori_zc23/` | in Arbeit 2026-10-15, nur T76, kein Transport |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
