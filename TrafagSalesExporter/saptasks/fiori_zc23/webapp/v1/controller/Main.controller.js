@@ -38,7 +38,11 @@ sap.ui.define([
   var MENGE = NumberFormat.getFloatInstance({ maxFractionDigits: 3, groupingEnabled: true, groupingSeparator: "'", decimalSeparator: "." });
 
   function zahl(v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; }
-  function datum(v) { return v && v !== "00000000" && v.length === 8 ? v.substr(6, 2) + "." + v.substr(4, 2) + "." + v.substr(0, 4) : ""; }
+  // Datum kommt als JJJJ-MM-TT (Gateway-Konvertierung) oder JJJJMMTT; Initialdatum leer
+  function datum(v) {
+    var d = String(v || "").replace(/-/g, "");
+    return d.length === 8 && d !== "00000000" ? d.substr(6, 2) + "." + d.substr(4, 2) + "." + d.substr(0, 4) : "";
+  }
   function jjjjmmtt(d) { return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); }
   function liste(s) { return (s || "").split(/[,;\s]+/).map(function (x) { return x.trim(); }).filter(Boolean); }
 

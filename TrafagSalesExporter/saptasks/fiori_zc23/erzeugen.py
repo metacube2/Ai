@@ -41,9 +41,11 @@ def property(name, typ, leng, dec):
         z.append(f"  lo_property->set_precison( iv_precision = {dec} ).")
         z.append(f"  lo_property->set_maxlength( iv_max_length = {leng} ).")
     else:
-        # C, N und D als Zeichenkette (Datum JJJJMMTT wie ZPOWERBI_KDAUF, kein Problem mit Initialdatum)
+        # C, N und D als Zeichenkette. Mit iv_bind_conversions = 'X' schreibt das Gateway ein DATS-Feld als
+        # JJJJ-MM-TT (10 Zeichen); Laenge 8 fuehrte am 2026-10-15 zu HTTP 500 (/IWFND/CM_CONSUMER 122,
+        # "Eigenschaft 'Edatu' hat ungueltigen Wert '2026-04-01'"). Deshalb Datumsfelder mit 10.
         z.append("  lo_property->set_type_edm_string( ).")
-        z.append(f"  lo_property->set_maxlength( iv_max_length = {leng} ).")
+        z.append(f"  lo_property->set_maxlength( iv_max_length = {10 if typ == 'D' else leng} ).")
     z += ["  lo_property->set_creatable( abap_false ).",
           "  lo_property->set_updatable( abap_false ).",
           "  lo_property->set_sortable( abap_false ).",

@@ -66,7 +66,7 @@
                   iv_property_name  = 'Edatu'
                   iv_abap_fieldname = 'EDATU' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -270,7 +270,7 @@
                   iv_property_name  = 'Erdat'
                   iv_abap_fieldname = 'ERDAT' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -281,7 +281,7 @@
                   iv_property_name  = 'Fkdat'
                   iv_abap_fieldname = 'FKDAT' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -359,7 +359,7 @@
                   iv_property_name  = 'Gltri'
                   iv_abap_fieldname = 'GLTRI' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -370,7 +370,7 @@
                   iv_property_name  = 'Gltrp'
                   iv_abap_fieldname = 'GLTRP' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -491,7 +491,7 @@
                   iv_property_name  = 'Bstdk'
                   iv_abap_fieldname = 'BSTDK' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -514,7 +514,7 @@
                   iv_property_name  = 'Ftrmi'
                   iv_abap_fieldname = 'FTRMI' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -525,7 +525,7 @@
                   iv_property_name  = 'Zzmbdat'
                   iv_abap_fieldname = 'ZZMBDAT' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -602,7 +602,7 @@
                   iv_property_name  = 'Budat'
                   iv_abap_fieldname = 'BUDAT' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -719,7 +719,7 @@
                   iv_property_name  = 'Datvon'
                   iv_abap_fieldname = 'DATVON' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
@@ -730,7 +730,7 @@
                   iv_property_name  = 'Datbis'
                   iv_abap_fieldname = 'DATBIS' ).
   lo_property->set_type_edm_string( ).
-  lo_property->set_maxlength( iv_max_length = 8 ).
+  lo_property->set_maxlength( iv_max_length = 10 ).
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_sortable( abap_false ).
