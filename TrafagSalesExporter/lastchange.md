@@ -2,6 +2,12 @@
 
 Stand: 2026-10-15
 
+## Einkauf Spend-Aufriss: Platzhalter „NA - N/A“ nimmt keinen Anteil mehr, 2026-10-15 (Deploy offen)
+
+- Materialien mit einer echten Produktgruppe und dem SAP-Platzhalter `NA` („N/A“) wurden halb/halb verteilt
+  (gemeldet an B53173: T2 und NA). Jetzt zählt `NA` neben einer echten Gruppe nicht mit; gilt für alle Materialien.
+  Nur unter `NA` verwendete Materialien bleiben dort sichtbar. Mehrere echte Gruppen werden weiter 1/n verteilt.
+
 ## Operations: Login per Admin-Schalter abschaltbar, 2026-10-15 (`8bfe424`, produktiv 12:15; Freigabe Produktionsleitung laut Ingo erteilt, Schalter legt Ingo um)
 
 - Admin Bereich > Passwörter, Schalter „Operations: Login nötig“ (Wunsch Fabio). Aus: Alle mit Windows-Anmeldung sehen und

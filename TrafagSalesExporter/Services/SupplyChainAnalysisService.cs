@@ -634,7 +634,14 @@ WHERE upper(trim(Source)) LIKE 'SAP ODATA%';";
                 return rule is null ? $"Disponent {dispatcher}" : rule.Label;
             })
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase);
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        // NA ("N/A") ist in SAP der Platzhalter fuer "keine Produktgruppe" (2026-10-15, wie im Spend-Aufriss):
+        // neben einer echten Gruppe weglassen, allein bleibt er sichtbar.
+        static bool IsPlaceholder(string label) =>
+            label.Equals("NA", StringComparison.OrdinalIgnoreCase) || label.StartsWith("NA - ", StringComparison.OrdinalIgnoreCase);
+        if (groups.Any(label => !IsPlaceholder(label)))
+            groups.RemoveAll(IsPlaceholder);
         return string.Join(", ", groups);
     }
 

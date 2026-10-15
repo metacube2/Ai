@@ -69,7 +69,11 @@ verbindliche Regel ist eine gleichmaessige, summenerhaltende Allokation:
 - mehrere Disponenten derselben Produktgruppe zaehlen nur als eine Gruppe;
 - mehrere ZDISPO-Zeilen fuer dasselbe Muster bleiben als getrennte Gruppen
   erhalten und werden ebenfalls `1/n` verteilt;
-- ohne Zuordnung: 100 Prozent auf `ohne Produktgruppe`.
+- ohne Zuordnung: 100 Prozent auf `ohne Produktgruppe`;
+- *seit 2026-10-15:* die SAP-Gruppe `NA` („N/A“, `ZDISPO_SPART`) ist ein Platzhalter fuer „keine Produktgruppe“
+  und zaehlt neben einer echten Gruppe **nicht** mit (Fall B53173: vorher halb T2, halb NA, jetzt ganz T2).
+  Nur unter `NA` verwendete Materialien bleiben unter `NA - N/A` sichtbar. Gleiche Regel in der Lieferkettenanalyse
+  (Textliste der Gruppen). Test `LoadAsync_ProductGroupPerspective_Placeholder_NA_Takes_No_Share_Next_To_Real_Group`.
 
 Damit gilt immer:
 

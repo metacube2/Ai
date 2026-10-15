@@ -175,6 +175,9 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     // damit die Sicht beim Jahreswechsel nicht still das aktuelle Jahr verliert.
     private const int MinSpendYear = 2020;
 
+    /// <summary>SAP-Gruppe fuer "keine Produktgruppe" in ZDISPO_SPART (DISPO NA, DESCR N/A), 2026-10-15.</summary>
+    private const string ProductGroupPlaceholderCode = "NA";
+
     private static int MaxSpendYear(PurchasingDashboardFilter filter)
         => Math.Max(DateTime.Today.Year, filter.ToDate.Year);
 
@@ -1597,14 +1600,25 @@ SapProductGroupResolved AS (
         var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
+        // Die SAP-Gruppe NA ("N/A", ZDISPO_SPART) ist ein Platzhalter fuer Disponenten ohne Produktgruppe, keine
+        // Produktgruppe. Hat ein Material daneben eine echte Gruppe, nimmt NA bei der 1/n-Verteilung keinen Anteil
+        // (Fall B53173 halb in T2, halb in NA, Ingo 2026-10-15). Nur unter NA verwendete Materialien bleiben dort sichtbar.
+        var placeholderFlag = $"CASE WHEN upper({mappedCode}) = '{ProductGroupPlaceholderCode}' THEN 1 ELSE 0 END";
         var usageGroupsCte = $@"
-{usageSourceCte}{sapProductGroupCtes}UsageGroups AS (
+{usageSourceCte}{sapProductGroupCtes}UsageGroupsAll AS (
     SELECT DISTINCT {usageMaterialKey} AS MaterialKey,
-           {productGroupLabel} AS ProductGroup
+           {productGroupLabel} AS ProductGroup,
+           {placeholderFlag} AS IsPlaceholder
     FROM UsageSource u
     {mapJoin}
     WHERE COALESCE(trim(u.Kompnr), '') <> ''
       AND COALESCE(trim(u.VknrDispo), '') <> ''
+),
+UsageGroups AS (
+    SELECT a.MaterialKey, a.ProductGroup
+    FROM UsageGroupsAll a
+    WHERE a.IsPlaceholder = 0
+       OR NOT EXISTS (SELECT 1 FROM UsageGroupsAll b WHERE b.MaterialKey = a.MaterialKey AND b.IsPlaceholder = 0)
 ),
 GroupCounts AS (
     SELECT MaterialKey, COUNT(*) AS GroupCount

@@ -810,6 +810,39 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);
     }
 
+    [Fact]
+    public async Task LoadAsync_ProductGroupPerspective_Placeholder_NA_Takes_No_Share_Next_To_Real_Group()
+    {
+        // Fall Ingo 2026-10-15: B53173 stand halb in T2 und halb in "NA - N/A". NA ist in SAP (ZDISPO_SPART) der
+        // Platzhalter fuer "keine Produktgruppe" und darf neben einer echten Gruppe keinen Anteil bekommen.
+        ExecuteSync(DatabaseSchemaSql.GetPurchasingComponentDispoCacheCreateSql());
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('NA1', '2025-03-01', 'L1', 'Bepro AG', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('NA1', '10', 'B53173', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('NA1', '20', 'NUR-NA', '1', '40', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('NA1', '30', 'ZWEI-ECHT', '1', '60', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('NA1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('B53173', 'V1', 'T2D', '2026-10-15');");
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('B53173', 'V2', 'XXX', '2026-10-15');");
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('NUR-NA', 'V3', 'XXX', '2026-10-15');");
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('ZWEI-ECHT', 'V4', 'T2D', '2026-10-15');");
+        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('ZWEI-ECHT', 'V5', 'D2D', '2026-10-15');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V0', 'T2D', 'DUMMY', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('T2D', 'T2', 'FP_TRANSM. TX', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('D2D', 'D2', 'FP_DICHTEWAECH', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('XXX', 'NA', 'N/A', 'SAP OData', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
+        var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
+        Assert.Equal(200m, perspective.Rows.Sum(row => row.Total));                                   // nichts geht verloren
+        Assert.Equal(130m, Assert.Single(perspective.Rows, row => row.Label == "T2 - FP_TRANSM. TX").Total);   // 100 + 60/2
+        Assert.Equal(30m, Assert.Single(perspective.Rows, row => row.Label == "D2 - FP_DICHTEWAECH").Total);
+        Assert.Equal(40m, Assert.Single(perspective.Rows, row => row.Label == "NA - N/A").Total);    // nur NA bleibt sichtbar
+        Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);                       // nur ZWEI-ECHT
+    }
+
     private void CreatePurchasingCacheTables()
     {
         ExecuteSync(@"

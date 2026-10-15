@@ -116,7 +116,8 @@ Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nac
   wurde am 2026-08-11 ersetzt; produktiv akzeptiert die Strecke nur noch SAP OData.
   Mehrfach verwendete Komponenten
   werden summenerhaltend gleichmaessig `1/n` auf unterschiedliche
-  Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar.
+  Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar. Die SAP-Platzhaltergruppe `NA` („N/A“)
+  zaehlt seit 2026-10-15 neben einer echten Gruppe nicht mit.
   Details: `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
 - ABC und XYZ werden seit 2026-08-06 zusaetzlich als gemeinsame
   Massnahmenmatrix mit Spend, Material-/Lieferantenzahl und konkretem
