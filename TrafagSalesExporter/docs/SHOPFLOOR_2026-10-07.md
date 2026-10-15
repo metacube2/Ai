@@ -8,6 +8,7 @@ Stand 2026-10-08: **produktiv seit 06:39** (`59d0531`), angesehen. Zugriff nur f
 freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transport `T76K912718` in P76 ist (Abschnitt 8).
 *Ueberholt:* „nicht committet, Zugriff fuer niemanden" war der Stand des Worktrees.
 
+Stand 2026-10-15: Fabios Patches ZD05 „Zu besprechen“ und Verkauf Go-for-it uebernommen, Push-Format der Beispiele weicht ab (Abschnitt 13).
 Stand 2026-10-14: Feld-Mapping aus `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` uebernommen (`b613f7c`): Abteilungen ueber den
 Disponenten, Quelle SAP statt MES ausser FPY, Mapping je Feld auf der Seite „Schnittstelle SAP / MES“. Einzelheiten Abschnitt 12.
 *Erledigt 2026-10-14 10:04:* produktiv. Abgleich 10:05: 3'926 Auftraege im Forecast, **294 ohne Abteilung** (vorher 1'912), CZ 1'045,
@@ -292,3 +293,31 @@ mit 134 Schnittstellenfeldern, Blatt „Disponenten“ mit der SAP-Liste „Disp
   Aufteilung Disponent 024 (Stecker/Kabel/Print), CZ-Mengen ohne eigenen Disponenten (Ministaten, Navistaten, DTP 8180), DL790/DLQ72,
   Schichtzuordnung TX ueber die Rueckmeldezeit, Anlagenverfuegbarkeit MTF.
 - Disponenten auf „pruefen“: EL1, EL4, EL5, EL6, EL8 (TX), DL6, DS1, DS2, DSN, DW1 (DW), SPB (SEH), sowie 010, 012, 013, PKA, TL1, TPT.
+
+## 13. Paket Fabio vom 2026-10-14: Patches und Schnittstelle (Stand 2026-10-15)
+
+Abgelegt unter `docs/shopfloor_paket_2026-10-14/` (Original aus Ingos Downloads, zwei identische ZIP-Kopien).
+
+**Patches (nur Oberflaeche, in `wwwroot/shopfloor/app.js` und `style.css` uebernommen):** angewendet mit Fabios
+`apply_patch.js` gegen die Repo-Fassung (gleich der produktiven), zuerst `--check`, jede Stelle genau einmal gefunden, Syntax ok;
+die `.bak`-Dateien des Skripts wurden nicht ins Repo uebernommen.
+
+1. **ZD05 „Zu besprechen“:** neuer Filter mit Anzahl. Zu besprechen ist eine Position, die neu seit dem letzten Import ist, noch
+   keinen Code hat oder deren Liefertermin ueberschritten ist. Solche Zeilen haben einen orangen Rand und Markierungen
+   („LT ueberfaellig“, „ohne Code“). Im laufenden Shop-Floor ist der Filter automatisch aktiv. Startseite Punkt ZD05 zeigt
+   zusaetzlich „x ohne Code“.
+2. **Verkauf Go-for-it:** Kacheln oben im Verkauf: Go-for-it-Ziel des Monats (einmal pro Monat im Feld „Ziel festlegen“), Umsatz
+   IST in % vom Ziel, fehlender Betrag (mit geplantem Umsatz ZC23), Auftragseingang mit Book to Bill. Konvention: der Eintrag vom
+   Tag D ist der Stand bis D-1, der Monatserste gehoert zum Vormonat; das Ziel steht im bestehenden Tageswert `goforit` (am 2. des
+   Monats bzw. auf dem Tag, der es schon traegt). Kein Backend, keine neue Tabelle.
+
+**Schnittstelle (`1_Schnittstelle`):** `Shopfloor_SAP_Schnittstelle.xlsx` und `feldliste.json` mit allen 134 Feldern, Jobs 04:00,
+Verkauf ueber CO-PA (wie KE30 Z0001-000006, Nettoerloes, Satzart A bzw. F, Buchungskreis 1100; Sparte 0003 = DW, 0005 = Transmitter),
+Logistik aus ZC27 (Vortag, Gutmenge je Arbeitsplatz, MLE08 + MLE09 summiert), MES nur FPY, CZ vorerst zurueckgestellt.
+Noch nicht in `shopfloor_config.json` uebernommen (dort steht das Mapping aus dem Excel vom 2026-10-14, Abschnitt 12).
+
+**Abweichung der Beispiele vom echten Push-Format (wichtig fuer den SAP-Job):** Fabios `beispiele/*.json` haben die Form
+`{"module", "day", "source", "values"}`. Die Schnittstelle des Cockpits (`ShopfloorStore.ApplyPush`) erwartet
+`{"source": "SAP", "items": [{"module": "verkauf", "day": "2026-10-01", "fields": {...}}]}`: Huelle `items`, Schluessel **`fields`**
+statt `values`. Adresse ist `POST /BiDashboard/shopfloor/api/integration/push` mit `Authorization: Bearer <Shopfloor:ApiToken>`,
+nicht `/api/integration/push`. `connectors/README.md` gibt es im C#-Port nicht. Fabio informieren, bevor der Job gebaut wird.

@@ -490,3 +490,12 @@ table th.r{text-align:right}
 .switch input:checked+span::before{transform:translateX(16px)}
 table.ppl td{padding:4px 6px;vertical-align:middle}
 table.ppl .field-in{padding:4px 8px;font-size:13px}
+
+/* ZD05: zu besprechen im Shop-Floor (2026-10-14) */
+table.zd tr.talk td:first-child{box-shadow:inset 4px 0 0 var(--warn)}
+table.zd tr.talk td{background:color-mix(in srgb,var(--warn) 6%,transparent)}
+.seg button b{margin-left:4px}
+
+/* Verkauf: Go-for-it-Kacheln (2026-10-14) */
+.kpis.gfi{margin-bottom:14px}
+.kpis.gfi .gfi-edit{display:flex;gap:6px;align-items:center;margin-top:6px}

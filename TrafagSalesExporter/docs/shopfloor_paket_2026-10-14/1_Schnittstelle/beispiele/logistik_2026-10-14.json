@@ -1,0 +1,13 @@
+{
+  "_hinweis": "Beispielinhalt, Hülle wie beim ZD05-Push. Wert MLE01 = ZC27 Rückmeldedatum 13.10.2026; übrige Arbeitsplätze Platzhalter null.",
+  "module": "logistik",
+  "day": "2026-10-14",
+  "source": "SAP",
+  "values": {
+    "tr5_mle01": 673,
+    "tr5_mle02": null,
+    "dw_mle04": null,
+    "tx_mle08": null,
+    "tx_mlm01": null
+  }
+}

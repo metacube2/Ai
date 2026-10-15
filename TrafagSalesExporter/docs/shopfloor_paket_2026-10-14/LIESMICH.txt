@@ -1,0 +1,19 @@
+Shopfloor / BI-Dashboard: Paket SAP-Schnittstelle und Patches, Stand 14.10.2026 (Fabio Palma)
+
+1_Schnittstelle
+  Shopfloor_SAP_Schnittstelle.xlsx  Alle 134 Felder mit Ziel-Feldname, SAP-Quelle, Selektion, Status
+                                    Blätter: Übersicht, Jobs 04-00, Verkauf CO-PA, Feld-Mapping, Disponenten, ZD05 Anforderung
+  feldliste.json                    Dasselbe maschinenlesbar (Felder + Jobs)
+  beispiele/*.json                  Beispielinhalte für den Push (Verkauf Sep 2026 abgeglichen, Logistik MLE01)
+                                    Hülle/Format wie beim bestehenden ZD05-Push (connectors/README.md im Projekt)
+
+2_Patch
+  apply_patch.js + patches/*.json   Frontend-Änderungen (ZD05 «Zu besprechen», Verkauf Go-for-it), siehe 2_Patch/LIESMICH.txt
+
+Wichtigste Festlegungen
+  - Übergabe täglich 04:00 an POST /api/integration/push
+  - Abteilungen: Disponent (Werk 1100); im Verkauf: CO-PA-Produktsparte 0003 = DW, 0005 = Transmitter
+  - Verkauf AE / Umsatz: CO-PA (wie KE30 Z0001-000006), Nettoerlös, Satzart A bzw. F, Buchungskreis 1100
+  - Logistik: ZC27, Vortag, Gutmenge je Arbeitsplatz (MLE08+MLE09 summiert)
+  - MES liefert nur FPY; CZ vorerst zurückgestellt
+  - Offene Punkte: Blatt «Jobs 04-00», Status «offen»

@@ -361,7 +361,7 @@ async function viewHome(silent) {
       const z = s || {};
       if (z.imported) {
         const k = z.kpi || {}; const bad = k.kennzahl != null && k.kennzahl > 1.2;
-        stat = `<span class="pill ${bad ? "bad" : "ok"}">Kennzahl ${f2(k.kennzahl)}</span>${k.code2 ? `<span class="pill warn">${k.code2} × Code 2</span>` : ""}<span class="who">${esc(z.by || "")} ${z.at ? z.at.slice(11, 16) : ""}</span>`;
+        stat = `<span class="pill ${bad ? "bad" : "ok"}">Kennzahl ${f2(k.kennzahl)}</span>${k.code2 ? `<span class="pill warn">${k.code2} × Code 2</span>` : ""}${k.ohne_code ? `<span class="pill warn">${k.ohne_code} ohne Code</span>` : ""}<span class="who">${esc(z.by || "")} ${z.at ? z.at.slice(11, 16) : ""}</span>`;
       } else { if (it.must) { must++; mustDots.push({ lab: m.short, done: false }); } stat = `<span class="pill ${it.must ? "bad" : ""}">ZD05 noch nicht importiert</span>`; }
       if (z.imported && it.must) { must++; mustDone++; mustDots.push({ lab: m.short, done: true }); }
     } else stat = `<span class="muted">Übersicht</span>`;
@@ -786,6 +786,7 @@ async function viewDaily(m) {
     <div class="head"><div class="grow"><h1>${esc(m.title)}</h1>
       <p class="lede">Werte direkt in die Tabelle eintragen – gespeichert wird beim Verlassen des Feldes. Enter springt zum nächsten Feld.</p></div>
       <button class="btn" data-export="${m.key}">Export (CSV)</button></div>
+    ${m.key === "verkauf" ? '<div id="goalBox"></div>' : ""}
     <div id="trendBox"></div>
     <div id="chartBox"></div>
     <div class="toolbar">
@@ -811,6 +812,42 @@ async function viewDaily(m) {
   renderDailyGrid(m);
   renderDailyTrend(m);
   renderDailyChart(m);
+}
+/* Go-for-it-Ziel Verkauf (2026-10-14): einmal pro Monat erfasst und oben im Bericht angezeigt.
+   Konvention wie im Shopfloor-File: der Eintrag vom Tag D enthält den Stand bis D-1. Darum gehört der
+   Eintrag vom Monatsersten noch zum Vormonat (Berichtsmonat = Monat von D-1). */
+function gfiMonth(d) { return iso(addDaysD(parseIso(d), -1)).slice(0, 7); }
+async function renderGoForIt(m) {
+  const box = $("#goalBox"); if (!box) return;
+  const ref = S.activeDay || todayIso(); const M = gfiMonth(ref);
+  const first = M + "-02"; const nxt = iso(addDaysD(parseIso(M + "-01"), 32)).slice(0, 7) + "-01";
+  let recs = {};
+  try { recs = ((await loadRange([m.key], first, nxt)) || {})[m.key] || {}; } catch (e) { box.innerHTML = ""; return; }
+  const days = Object.keys(recs).sort().filter(d => gfiMonth(d) === M);
+  const withGoal = days.filter(d => num((recs[d].data || {}).goforit) != null);
+  const goalDay = withGoal.length ? withGoal[withGoal.length - 1] : null;
+  const goal = goalDay ? num(recs[goalDay].data.goforit) : null;
+  const upto = days.filter(d => d <= ref);
+  const last = k => { for (let i = upto.length - 1; i >= 0; i--) { const v = num((recs[upto[i]].data || {})[k]); if (v != null) return v; } return null; };
+  const ist = last("umsatz_ist"), ae = last("ae_aktuell"), plan = last("umsatz_plan");
+  const pct = goal && ist != null ? ist / goal * 100 : null;
+  const mName = MONTHS[Number(M.slice(5, 7)) - 1] + " " + M.slice(0, 4);
+  const bar = v => `<div class="bar"><i style="width:${Math.min(100, v || 0)}%;background:${(v || 0) >= 100 ? "var(--ok)" : "var(--brand)"}"></i></div>`;
+  box.innerHTML = `<div class="kpis gfi">
+    <div class="kpi"><div class="v">${goal != null ? fmtNum(goal) : "–"}<span class="muted" style="font-size:16px"> CHF</span></div>
+      <div class="l">Go-for-it-Ziel ${esc(mName)}</div>
+      <label class="gfi-edit muted" style="font-size:12px">Ziel festlegen <input type="number" step="1000" min="0" class="field-in" id="gfiIn" value="${goal != null ? goal : ""}" style="width:130px"></label></div>
+    <div class="kpi"><div class="v">${ist != null ? fmtNum(ist) : "–"}</div><div class="l">Umsatz IST ${esc(mName)}${pct != null ? ` · <b>${fmtNum(pct, 1)} %</b> vom Ziel` : ""}</div>${pct != null ? bar(pct) : ""}</div>
+    <div class="kpi"><div class="v">${goal != null && ist != null ? fmtNum(Math.max(0, goal - ist)) : "–"}</div><div class="l">fehlt bis Go-for-it${plan != null ? ` · geplant (ZC23) ${fmtNum(plan)}` : ""}</div></div>
+    <div class="kpi"><div class="v">${ae != null ? fmtNum(ae) : "–"}</div><div class="l">Auftragseingang ${esc(mName)}${ae != null && ist ? ` · Book to Bill ${fmtNum(ae / ist, 2)}` : ""}</div></div>
+  </div>`;
+  const inp = $("#gfiIn");
+  if (inp) inp.onchange = async () => {
+    const v = inp.value === "" ? null : Number(inp.value);
+    const day = goalDay || first;   // ein Wert pro Monat: bestehenden Eintrag überschreiben, sonst am 2. des Monats ablegen
+    try { await api("POST", "api/daily", { module: m.key, day, changes: { goforit: v } }); toast(`Go-for-it ${mName} gespeichert`); renderGoForIt(m); }
+    catch (e) { toast("Nicht gespeichert: " + e.message, true); }
+  };
 }
 /* Verlaufs-Kacheln (2026-10-08): bis zu 4 Hauptkennzahlen der Abteilung als Sparkline ueber die letzten ~20
    Erfassungen. Auswahl: zuerst das Balkenfeld des bestehenden Diagramms, dann die uebrigen Zahlen- und
@@ -864,6 +901,7 @@ async function viewDailyRefresh(m) {
 }
 
 function renderDailyGrid(m) {
+  if (m.key === "verkauf") renderGoForIt(m);
   const narrow = window.matchMedia("(max-width:760px)").matches;
   const today = todayIso();
   let days = [...Array(7)].map((_, i) => iso(addDaysD(S.week, i)));
@@ -1078,10 +1116,20 @@ function zdLtMatch(r, mode, ref) {
   } return true;
 }
 const ZD_CODE = { 0: "0 Pt. – z. B. Eingabefehler, Lieferantenbeistellmaterial", 1: "1 Pt. – Fehlmaterial für SIBE / Vorproduktion", 2: "2 Pt. – Kundenaufträge sind betroffen" };
+// Zu besprechen im Shop-Floor (2026-10-14): neu seit letztem Import, noch ohne Code (nicht bewertet) oder Liefertermin überschritten.
+// Wie im Excel (#NV bis der Einkauf bewertet): eine neue Position bleibt markiert, bis ein Code gesetzt ist.
+function zdTalk(r, today) {
+  const why = [];
+  if (r.neu) why.push("neu");
+  if (!(r.code === 0 || r.code === 1 || r.code === 2)) why.push("ohne Code");
+  const lt = r.liefertermin; if (/^\d{4}-\d{2}-\d{2}$/.test(lt || "") && lt < (today || todayIso())) why.push("überfällig");
+  return why;
+}
 
 async function viewZd05(day) {
   const q = new URLSearchParams(location.hash.split("?")[1] || "");
   day = day || q.get("day") || "";
+  if (S.meeting && ZD.filter.only === "all") ZD.filter.only = "talk";   // im laufenden Shop-Floor direkt die zu besprechenden Positionen
   const [d, h] = await Promise.all([api("GET", "api/zd05" + (day ? "?day=" + day : "")), api("GET", "api/zd05/history")]);
   ZD.data = d; ZD.hist = h;
   renderZd05();
@@ -1124,7 +1172,7 @@ function renderZd05() {
   </div>
   <div class="toolbar">
     <input class="field-in search" id="zdQ" type="search" placeholder="Material, Text, Bemerkung …" value="${esc(ZD.filter.q)}">
-    <div class="seg" role="group">${[["all", "Alle"], ["h", "Im Horizont"], ["c2", "Code 2"], ["nc", "Ohne Code"], ["neu", "Neu"]].map(([v, l]) => `<button data-zf="${v}" aria-pressed="${ZD.filter.only === v}">${l}</button>`).join("")}</div>
+    <div class="seg" role="group">${[["all", "Alle"], ["talk", "Zu besprechen"], ["h", "Im Horizont"], ["c2", "Code 2"], ["nc", "Ohne Code"], ["neu", "Neu"]].map(([v, l]) => `<button data-zf="${v}" aria-pressed="${ZD.filter.only === v}">${l}${v === "talk" ? ` <b>${d.rows.filter(r => zdTalk(r).length).length}</b>` : ""}</button>`).join("")}</div>
   </div>
   <div class="toolbar ltbar"><span class="ltlab">Liefertermin</span><div id="zdLt" class="ltchips"></div>
     <label class="fsel"><span>am</span><input type="date" class="field-in" id="zdLtDate" value="${esc(ZD.filter.ltDate)}"></label>
@@ -1167,7 +1215,7 @@ function zdRenderBody() {
     if (q && !(r.material + " " + (r.text || "") + " " + (r.bemerkung || "")).toLowerCase().includes(q)) return false;
     const inH = !r.unterdeck || String(r.unterdeck).slice(0, 10) <= hz;
     if (f === "h" && !inH) return false; if (f === "c2" && Number(r.code) !== 2) return false;
-    if (f === "nc" && (r.code === 0 || r.code === 1 || r.code === 2)) return false; if (f === "neu" && !r.neu) return false;
+    if (f === "nc" && (r.code === 0 || r.code === 1 || r.code === 2)) return false; if (f === "neu" && !r.neu) return false; if (f === "talk" && !zdTalk(r).length) return false;
     return true;
   });
   // Liefertermin-Chips (Anzahl bezogen auf die übrigen Filter)
@@ -1191,8 +1239,9 @@ function zdRenderBody() {
     const late = ltIso && r.unterdeck && lt > String(r.unterdeck).slice(0, 10);
     const past = ltIso && lt < today;
     const c = (r.code === 0 || r.code === 1 || r.code === 2) ? r.code : null;
-    return `<tr data-m="${esc(r.material)}" class="${inH ? "inh" : ""}">
-      <td><b class="tab">${esc(r.material)}</b>${r.neu ? ' <span class="pill info">neu</span>' : ""}<div class="sub">${esc(r.text || "")}</div><div class="sub">${[r.dmk, r.lzcode].filter(Boolean).map(esc).join(" · ")}</div></td>
+    const why = zdTalk(r, today);
+    return `<tr data-m="${esc(r.material)}" class="${inH ? "inh" : ""}${why.length ? " talk" : ""}" title="${why.length ? "Zu besprechen: " + esc(why.join(", ")) : ""}">
+      <td><b class="tab">${esc(r.material)}</b>${r.neu ? ' <span class="pill info">neu</span>' : ""}${why.includes("überfällig") ? ' <span class="pill bad">LT überfällig</span>' : ""}${why.includes("ohne Code") && !r.neu ? ' <span class="pill warn">ohne Code</span>' : ""}<div class="sub">${esc(r.text || "")}</div><div class="sub">${[r.dmk, r.lzcode].filter(Boolean).map(esc).join(" · ")}</div></td>
       <td>${r.abc || r.xyz ? `<span class="cls cls-${esc(r.abc || "")}">${esc(r.abc || "–")}${esc(r.xyz || "")}</span>` : '<span class="muted">–</span>'}</td>
       <td class="tab" style="white-space:nowrap">${esc(fmtDate(r.unterdeck))}${inH ? '<div class="sub" style="color:var(--brand-strong)">im Horizont</div>' : ""}</td>
       <td class="n">${fmtNum(r.verbr_wbz)}</td><td class="n">${fmtNum(r.opt_sibe)} <span class="muted">/</span> ${fmtNum(r.akt_sibe)}</td><td class="n">${fmtNum(r.ant_plan)}</td>

@@ -1,0 +1,20 @@
+Shopfloor-Patches vom 14.10.2026 (nur Frontend: app.js und style.css im Ordner /BiDashboard/shopfloor/)
+
+01_zd05_zu_besprechen
+  Einkauf ZD05: neuer Filter «Zu besprechen» mit Anzahl. Zu besprechen = neu seit letztem Import ODER noch ohne Code
+  ODER Liefertermin überschritten. Zeilen mit orangem Rand und Markierung (neu / ohne Code / LT überfällig).
+  Im laufenden Shop-Floor ist der Filter automatisch aktiv. Startseite: Punkt 10 zeigt zusätzlich «x ohne Code».
+
+02_verkauf_go_for_it
+  Verkauf: Kacheln oben im Bericht: Go-for-it-Ziel des Monats (einmal pro Monat erfassen, Feld «Ziel festlegen»),
+  Umsatz IST in % vom Ziel, fehlender Betrag, Auftragseingang mit Book to Bill.
+  Konvention wie bisher: Eintrag vom Tag D = Stand bis D-1, der Monatserste gehört zum Vormonat.
+  Das Ziel wird im bestehenden Feld goforit gespeichert (kein Backend, keine neue Tabelle).
+
+Anwenden
+  1. Prüfen ohne zu schreiben:  node apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check
+  2. Anwenden:                  node apply_patch.js "<Pfad>\BiDashboard\shopfloor"
+  Das Skript legt app.js.bak und style.css.bak an, bricht ohne Änderung ab, wenn eine Stelle nicht exakt passt,
+  und überspringt Patches, die schon drin sind. Rückgängig: .bak-Dateien zurückkopieren.
+
+Getestet am 14.10.2026 gegen die produktive app.js (alle Stellen genau 1x gefunden, Syntax ok, Anzeige mit Echtdaten geprüft).
