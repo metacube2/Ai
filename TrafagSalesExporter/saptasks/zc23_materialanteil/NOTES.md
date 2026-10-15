@@ -178,3 +178,16 @@ und „Materialanteil“, Block „Materialanteil“ im Selektionsbild). Laufzei
   seine eigenen, Layouts werden nicht transportiert. Wer die Spalten sehen will, blendet sie im eigenen Layout einmal ein
   („Layout aendern“, Spaltenvorrat, sichern). Globale Layouts in P76 nur nach Absprache mit deren Nutzern anpassen.
 - In `ZM_OFFENE_KDAUF_OPT` und `ZM_OFFENE_KDAUF` eingespielt und aktiv (Transport `T76K912736`), Q2-Lauf 13,7 s.
+
+## Arbeit CZ (2026-10-15, Wunsch Ingo)
+
+- Neue Spalte **„Arbeit CZ CHF“** (`ARBEIT_CZ`, Summe) hinter dem Materialanteil: Eigenleistung (CKIS Typ E) an
+  Arbeitsplaetzen `CRHD ARBPL LIKE 'CZ%'` (Objekttyp A), ueber alle Stufen der Eigenfertigung, je Einheit × BMENG.
+  Regel wie ZM03 (`w_wert` = CZ-Eigenleistung / Losgroesse; `htab-gk` wird dort nie gefuellt, also keine Zuschlaege).
+  Es gibt kein tschechisches Werk; die CZ-Fertigung laeuft im Werk 1100 ueber die CZ-Arbeitsplaetze.
+- Auch in `ZMM_UEB_KDAUF` (Pos. 63, `NETWR`, Referenz `T001-WAERS`), `ZPOWERBI_KDAUF` (Pos. 13, `RKE_FIELDVALUE`) und
+  OData-Property `ArbeitCz`; alles im Transport `T76K912736`.
+- Pruefung: B87813 Arbeit CZ 1,129 / Material 0,111 je Stueck = ZM03 (1,13 / 0,11); unabhaengige Nachrechnung
+  (`mata_check.py`, jetzt mit CZ) 44640 4,382 je Stueck (×10 = 43,82 wie ZC23), 42211 3,01 wie ZC23. ZM03 gibt fuer
+  44640 keine Zeile aus (Ursache nicht verfolgt). Q2-Lauf mit Fortschreibung 15,9 s. Materialwerte unveraendert.
+- Was weiterhin nicht getrennt wird: Arbeit in der Schweiz und Gemeinkosten stecken in Standardwert − Materialanteil − Arbeit CZ.

@@ -7,7 +7,8 @@ Stand: 2026-10-15
 - ZC23 zeigt neben dem Standardwert den Materialanteil (Zukaufmaterial aus der Standardkalkulation, Regel wie ZM03),
   je Einheit und gesamt; Block „Materialanteil“ im Selektionsbild: ein/aus, freigegebene oder jüngste Kalkulation,
   Fremdleistung zum Material. Standardwert und Materialanteil auch in `ZPOWERBI_KDAUF` und im OData-Dienst (Power BI).
-  Details `saptasks/zc23_materialanteil/NOTES.md`.
+  Dazu Spalte „Arbeit CZ“ (Eigenleistung an CZ-Arbeitsplätzen wie ZM03), Spalten direkt hinter dem Standardwert,
+  Hauswährung des Werks in der Überschrift. Details `saptasks/zc23_materialanteil/NOTES.md`.
 
 ## Einkauf Spend-Aufriss: Platzhalter „NA - N/A“ nimmt keinen Anteil mehr, 2026-10-15 (`7b62544`, produktiv 12:48)
 

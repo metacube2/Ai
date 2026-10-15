@@ -1739,7 +1739,7 @@ METHOD define.
 
 
 *----------------------------------------------------------------------*
-* ZPOWERBI_KDAUF: Standardwert und Materialanteil (2026-10-15, ZC23,
+* ZPOWERBI_KDAUF: Standardwert, Materialanteil, Arbeit CZ (2026-10-15, ZC23,
 * Entscheid Ingo, Transport T76K912736). Die Entity ist in SEGW gepflegt
 * (DEFINE_ZPOWERBI_KDAUF); die zwei neuen Tabellenfelder (RKE_FIELDVALUE,
 * DEC 15,2) kommen hier dazu, danach bind_structure erneut. Der Lesecode
@@ -1763,6 +1763,19 @@ METHOD define.
   lo_property = lo_entity_type->create_property(
                   iv_property_name  = 'Matanteil'
                   iv_abap_fieldname = 'MATANTEIL' ).
+  lo_property->set_type_edm_decimal( ).
+  lo_property->set_precison( iv_precision = 2 ).
+  lo_property->set_maxlength( iv_max_length = 15 ).
+  lo_property->set_creatable( abap_false ).
+  lo_property->set_updatable( abap_false ).
+  lo_property->set_sortable( abap_false ).
+  lo_property->set_nullable( abap_false ).
+  lo_property->set_filterable( abap_false ).
+
+  " Arbeit CZ (Eigenleistung an CZ-Arbeitsplaetzen wie ZM03), 2026-10-15
+  lo_property = lo_entity_type->create_property(
+                  iv_property_name  = 'ArbeitCz'
+                  iv_abap_fieldname = 'ARBEIT_CZ' ).
   lo_property->set_type_edm_decimal( ).
   lo_property->set_precison( iv_precision = 2 ).
   lo_property->set_maxlength( iv_max_length = 15 ).

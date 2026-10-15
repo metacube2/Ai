@@ -36,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | ZC23 Spalte „Arbeit CZ“ wie ZM03, Spalten neben Standardwert, Waehrung in der Ueberschrift | 2026-10-15 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912736` (4 Objekte), Werte = ZM03 und Nachrechnung; Freigabe/Import P76 Ingo |
 | Claude | ZC23 Materialanteil gebaut (Kalkulation/Fremdleistung waehlbar, Schalter, schnelle Fassung, Standardwert+Materialanteil in ZPOWERBI_KDAUF und OData) | 2026-10-15 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912736` (Struktur, Tabelle, MPC_EXT DEFINE, ZM_OFFENE_KDAUF), CMP identisch, Werte = ZM03 und Nachrechnung, Q2 13,5 s; Freigabe/Import P76 Ingo. `saptasks/zc23_materialanteil/NOTES.md` |
 | Claude | Einkauf Spend-Aufriss: Platzhalter NA (N/A) ohne Anteil neben echter Produktgruppe (Fall B53173) | 2026-10-15 | **Abgeschlossen, deployed 12:48, Reservierung frei.** `7b62544`, 1235/1235, bitgleich; auch Lieferkettenanalyse |
 | Claude | Operations: Admin-Schalter „Login noetig“ (Wunsch Fabio, Freigabe Produktionsleitung) | 2026-10-15 | **Abgeschlossen, deployed 12:15, Reservierung frei.** `8bfe424`, 1234/1234, bitgleich, ohne Alarm. Tabelle `AccessSettings`, PostConfigure ueber `Shopfloor:OpenForAll`; Schalter legt Ingo um |

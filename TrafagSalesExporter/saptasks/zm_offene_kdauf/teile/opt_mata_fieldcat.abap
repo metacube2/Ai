@@ -32,6 +32,19 @@
   ls_fieldcat-do_sum    = 'X'.
   APPEND ls_fieldcat TO lt_mata_fc.
 
+  " Arbeit CZ 2026-10-15: Eigenleistung an CZ-Arbeitsplaetzen wie ZM03
+  CLEAR ls_fieldcat.
+  ls_fieldcat-fieldname = 'ARBEIT_CZ'.
+  ls_fieldcat-seltext_l = |Arbeit CZ { lv_mata_waers }|.
+  ls_fieldcat-seltext_m = |Arbeit CZ { lv_mata_waers }|.
+  ls_fieldcat-seltext_s = 'ArbCZ'.
+  ls_fieldcat-reptext_ddic = ls_fieldcat-seltext_l.
+  ls_fieldcat-ddictxt   = 'L'.
+  ls_fieldcat-currency  = lv_mata_waers.
+  ls_fieldcat-no_zero   = 'X'.
+  ls_fieldcat-do_sum    = 'X'.
+  APPEND ls_fieldcat TO lt_mata_fc.
+
   READ TABLE e01_lt_fieldcat TRANSPORTING NO FIELDS WITH KEY fieldname = 'STANDARDWERT'.
   IF sy-subrc = 0.
     lv_mata_idx = sy-tabix + 1.

@@ -251,6 +251,7 @@ TYPES: BEGIN OF ty_mata_key,
          werks     TYPE ckis-werks,
          menge     TYPE ckis-menge,
          wrtfw_kpf TYPE ckis-wrtfw_kpf,
+         arbid     TYPE ckis-arbid,
          ukaln     TYPE ckis-ukaln,
          ukalka    TYPE ckis-ukalka,
          ukadky    TYPE ckis-ukadky,
@@ -269,6 +270,7 @@ TYPES: BEGIN OF ty_mata_key,
          tvers TYPE keko-tvers,
          bwvar TYPE keko-bwvar,
          wert  TYPE p LENGTH 16 DECIMALS 6,
+         cz    TYPE p LENGTH 16 DECIMALS 6,  " Eigenleistung an CZ-Arbeitsplaetzen je Einheit
        END OF ty_mata_kalk,
        BEGIN OF ty_mata_mat,
          matnr TYPE matnr,
@@ -278,12 +280,17 @@ TYPES: BEGIN OF ty_mata_key,
          tvers TYPE keko-tvers,
          bwvar TYPE keko-bwvar,
          wert  TYPE p LENGTH 16 DECIMALS 6,
-       END OF ty_mata_mat.
+         cz    TYPE p LENGTH 16 DECIMALS 6,
+       END OF ty_mata_mat,
+       BEGIN OF ty_mata_czap,
+         objid TYPE crhd-objid,
+       END OF ty_mata_czap.
 DATA: gt_mata_kopf  TYPE HASHED TABLE OF ty_mata_kopf WITH UNIQUE KEY kalnr kalka kadky tvers bwvar,
       gt_mata_pos   TYPE SORTED TABLE OF ty_mata_pos WITH NON-UNIQUE KEY kalnr kalka kadky tvers bwvar,
       gt_mata_beskz TYPE HASHED TABLE OF ty_mata_beskz WITH UNIQUE KEY matnr werks,
       gt_mata_kalk  TYPE HASHED TABLE OF ty_mata_kalk WITH UNIQUE KEY kalnr kalka kadky tvers bwvar,
       gt_mata_mat   TYPE HASHED TABLE OF ty_mata_mat WITH UNIQUE KEY matnr,
+      gt_mata_czap  TYPE HASHED TABLE OF ty_mata_czap WITH UNIQUE KEY objid,  " CZ-Arbeitsplaetze wie ZM03
       gv_mata_tiefe TYPE i,
       gv_n_mata_ohne  TYPE i,  " Materialien ohne passende Kalkulation
       gv_n_mata_gross TYPE i,  " Positionen mit Materialanteil > Standardwert
@@ -1276,6 +1283,7 @@ FORM write_to_zpowerbi_kdauf.
     " Materialanteil 2026-10-15 (Entscheid Ingo): Standardwert und Materialanteil auch fuer Power BI
     ls_zpowerbi_kdauf-standardwert = ls_uebauf-standardwert.
     ls_zpowerbi_kdauf-matanteil    = ls_uebauf-matanteil.
+    ls_zpowerbi_kdauf-arbeit_cz    = ls_uebauf-arbeit_cz.
     " MANDT wird automatisch gefüllt
 
     APPEND ls_zpowerbi_kdauf TO lt_zpowerbi_kdauf.
@@ -1688,6 +1696,19 @@ FORM e01_fieldcat_init USING e01_lt_fieldcat TYPE slis_t_fieldcat_alv.
   ls_fieldcat-do_sum    = 'X'.
   APPEND ls_fieldcat TO lt_mata_fc.
 
+  " Arbeit CZ 2026-10-15: Eigenleistung an CZ-Arbeitsplaetzen wie ZM03
+  CLEAR ls_fieldcat.
+  ls_fieldcat-fieldname = 'ARBEIT_CZ'.
+  ls_fieldcat-seltext_l = |Arbeit CZ { lv_mata_waers }|.
+  ls_fieldcat-seltext_m = |Arbeit CZ { lv_mata_waers }|.
+  ls_fieldcat-seltext_s = 'ArbCZ'.
+  ls_fieldcat-reptext_ddic = ls_fieldcat-seltext_l.
+  ls_fieldcat-ddictxt   = 'L'.
+  ls_fieldcat-currency  = lv_mata_waers.
+  ls_fieldcat-no_zero   = 'X'.
+  ls_fieldcat-do_sum    = 'X'.
+  APPEND ls_fieldcat TO lt_mata_fc.
+
   READ TABLE e01_lt_fieldcat TRANSPORTING NO FIELDS WITH KEY fieldname = 'STANDARDWERT'.
   IF sy-subrc = 0.
     lv_mata_idx = sy-tabix + 1.
@@ -1966,7 +1987,7 @@ FORM materialanteil_rechnen.
 
   LOOP AT gt_mata_mat INTO ls_mat.
     PERFORM mata_wert USING ls_mat-kalnr ls_mat-kalka ls_mat-kadky ls_mat-tvers ls_mat-bwvar
-                      CHANGING ls_mat-wert.
+                      CHANGING ls_mat-wert ls_mat-cz.
     MODIFY TABLE gt_mata_mat FROM ls_mat.
   ENDLOOP.
 
@@ -1976,6 +1997,7 @@ FORM materialanteil_rechnen.
     CHECK sy-subrc = 0.
     <ls_ueb>-matpreis  = ls_mat-wert.
     <ls_ueb>-matanteil = ls_mat-wert * <ls_ueb>-bmeng.
+    <ls_ueb>-arbeit_cz = ls_mat-cz * <ls_ueb>-bmeng.   " Arbeit CZ wie ZM03 (2026-10-15)
     IF <ls_ueb>-standardwert > 0 AND <ls_ueb>-matanteil > <ls_ueb>-standardwert.
       gv_n_mata_gross = gv_n_mata_gross + 1.
     ENDIF.
@@ -2028,6 +2050,9 @@ FORM mata_laden.
         ls_beskz TYPE ty_mata_beskz,
         lv_kenn  TYPE c LENGTH 12.
   FIELD-SYMBOLS <ls_ueb> TYPE zmm_ueb_kdauf.
+
+  " CZ-Arbeitsplaetze einmal laden (ZM03: CRHD ARBPL LIKE 'CZ%', Objekttyp A)
+  SELECT objid FROM crhd INTO TABLE gt_mata_czap WHERE objty = 'A' AND arbpl LIKE 'CZ%'.
 
   " 1. Kopfmaterialien der Liste
   LOOP AT gt_uebauf ASSIGNING <ls_ueb> WHERE matnr IS NOT INITIAL.
@@ -2096,7 +2121,7 @@ FORM mata_laden.
     ENDLOOP.
 
     CLEAR lt_pos.
-    SELECT kalnr kalka kadky tvers bwvar posnr typps matnr werks menge wrtfw_kpf
+    SELECT kalnr kalka kadky tvers bwvar posnr typps matnr werks menge wrtfw_kpf arbid
            ukaln ukalka ukadky utvers ubwvar
       FROM ckis INTO TABLE lt_pos
       FOR ALL ENTRIES IN lt_offen
@@ -2179,25 +2204,29 @@ ENDFORM.                    "mata_ist_material
 *&---------------------------------------------------------------------*
 *&      Form  MATA_WERT
 *&---------------------------------------------------------------------*
-* Material je Basiseinheit einer Kalkulation, nur aus den geladenen Tabellen, je Kalkulation einmal.
+* Material und Arbeit CZ je Basiseinheit einer Kalkulation, nur aus den geladenen Tabellen, je Kalkulation einmal.
 FORM mata_wert USING    iv_kalnr TYPE keko-kalnr
                         iv_kalka TYPE keko-kalka
                         iv_kadky TYPE keko-kadky
                         iv_tvers TYPE keko-tvers
                         iv_bwvar TYPE keko-bwvar
-               CHANGING cv_wert  TYPE p.
+               CHANGING cv_wert  TYPE p
+                        cv_cz    TYPE p.
   DATA: ls_kalk TYPE ty_mata_kalk,
         ls_kopf TYPE ty_mata_kopf,
         ls_pos  TYPE ty_mata_pos,
         lv_kenn TYPE c LENGTH 12,
         lv_sub  TYPE p LENGTH 16 DECIMALS 6,
-        lv_sum  TYPE p LENGTH 16 DECIMALS 6.
+        lv_subcz TYPE p LENGTH 16 DECIMALS 6,
+        lv_sum  TYPE p LENGTH 16 DECIMALS 6,
+        lv_cz   TYPE p LENGTH 16 DECIMALS 6.
 
   READ TABLE gt_mata_kalk INTO ls_kalk WITH TABLE KEY kalnr = iv_kalnr kalka = iv_kalka
                                                      kadky = iv_kadky tvers = iv_tvers
                                                      bwvar = iv_bwvar.
   IF sy-subrc = 0.
     cv_wert = ls_kalk-wert.
+    cv_cz   = ls_kalk-cz.
     RETURN.
   ENDIF.
 
@@ -2226,23 +2255,32 @@ FORM mata_wert USING    iv_kalnr TYPE keko-kalnr
           ELSE.
             PERFORM mata_wert USING ls_pos-ukaln ls_pos-ukalka ls_pos-ukadky
                                     ls_pos-utvers ls_pos-ubwvar
-                              CHANGING lv_sub.
+                              CHANGING lv_sub lv_subcz.
             lv_sum = lv_sum + lv_sub * ls_pos-menge.
+            lv_cz  = lv_cz + lv_subcz * ls_pos-menge.
           ENDIF.
         WHEN 'F'.
           IF p_mfrem = abap_true.
             lv_sum = lv_sum + ls_pos-wrtfw_kpf.
           ENDIF.
+        WHEN 'E'.
+          " Eigenleistung ist kein Material; an CZ-Arbeitsplaetzen zaehlt sie als Arbeit CZ (wie ZM03)
+          READ TABLE gt_mata_czap TRANSPORTING NO FIELDS WITH TABLE KEY objid = ls_pos-arbid.
+          IF sy-subrc = 0.
+            lv_cz = lv_cz + ls_pos-wrtfw_kpf.
+          ENDIF.
         WHEN OTHERS.
-          " Eigenleistung (E), Zuschlaege und uebrige Positionen sind kein Material
+          " Zuschlaege und uebrige Positionen sind kein Material
       ENDCASE.
     ENDLOOP.
     ls_kalk-wert = lv_sum / ls_kopf-losgr.
+    ls_kalk-cz   = lv_cz / ls_kopf-losgr.
   ENDIF.
   gv_mata_tiefe = gv_mata_tiefe - 1.
 
   MODIFY TABLE gt_mata_kalk FROM ls_kalk.
   cv_wert = ls_kalk-wert.
+  cv_cz   = ls_kalk-cz.
 ENDFORM.                    "mata_wert
 
 *&---------------------------------------------------------------------*

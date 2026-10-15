@@ -31,6 +31,7 @@ def num(v):
 
 
 memo = {}
+CZ = {r["OBJID"] for r in read("CRHD", ["OBJID", "ARBPL"], "OBJTY = 'A' AND ARBPL LIKE 'CZ%'", 5000)}
 today = date.today().strftime("%Y%m%d")
 
 
@@ -38,14 +39,15 @@ def kalk(kalnr, kalka, kadky, tvers, bwvar, depth=0):
     key = (kalnr, kalka, kadky, tvers, bwvar)
     if key in memo:
         return memo[key]
-    memo[key] = 0.0
+    memo[key] = (0.0, 0.0)
     k = read("KEKO", ["LOSGR", "WERKS"], f"BZOBJ = '0' AND KALNR = '{kalnr}' AND KALKA = '{kalka}' AND KADKY = '{kadky}' AND TVERS = '{tvers}' AND BWVAR = '{bwvar}'", 2)
     if not k or num(k[0]["LOSGR"]) <= 0 or depth > 30:
-        return 0.0
+        return (0.0, 0.0)
     losgr, werks = num(k[0]["LOSGR"]), k[0]["WERKS"]
-    pos = read("CKIS", ["TYPPS", "MATNR", "WERKS", "MENGE", "WRTFW_KPF", "UKALN", "UKALKA", "UKADKY", "UTVERS", "UBWVAR"],
+    pos = read("CKIS", ["TYPPS", "MATNR", "WERKS", "MENGE", "WRTFW_KPF", "ARBID", "UKALN", "UKALKA", "UKADKY", "UTVERS", "UBWVAR"],
                f"LEDNR = '00' AND BZOBJ = '0' AND KALNR = '{kalnr}' AND KALKA = '{kalka}' AND KADKY = '{kadky}' AND TVERS = '{tvers}' AND BWVAR = '{bwvar}'")
     s = 0.0
+    cz = 0.0
     for p in pos:
         w = num(p["WRTFW_KPF"])
         if w == 0:
@@ -56,8 +58,12 @@ def kalk(kalnr, kalka, kadky, tvers, bwvar, depth=0):
             if p["UKALN"].strip("0") == "" or beskz == "F" or p["WERKS"] != werks:
                 s += w
             else:
-                s += kalk(p["UKALN"], p["UKALKA"], p["UKADKY"], p["UTVERS"], p["UBWVAR"], depth + 1) * num(p["MENGE"])
-    memo[key] = s / losgr
+                sm, sc = kalk(p["UKALN"], p["UKALKA"], p["UKADKY"], p["UTVERS"], p["UBWVAR"], depth + 1)
+                s += sm * num(p["MENGE"])
+                cz += sc * num(p["MENGE"])
+        elif p["TYPPS"] == "E" and p["ARBID"] in CZ:
+            cz += w
+    memo[key] = (s / losgr, cz / losgr)
     return memo[key]
 
 
@@ -70,7 +76,7 @@ for mat in sys.argv[1:]:
         continue
     r = rows[-1]
     mbew = read("MBEW", ["STPRS", "PEINH"], f"MATNR = '{mat}' AND BWKEY = '1100'", 2)
-    v = kalk(r["KALNR"], r["KALKA"], r["KADKY"], r["TVERS"], r["BWVAR"])
+    v, vcz = kalk(r["KALNR"], r["KALKA"], r["KADKY"], r["TVERS"], r["BWVAR"])
     stprs = num(mbew[0]["STPRS"]) if mbew else 0
     peinh = mbew[0]["PEINH"] if mbew else "?"
-    print(f"{mat}: Kalk {r['KADKY']} Material je Einheit {v:.4f}; STPRS {stprs} PEINH {peinh}; Anteil {v / stprs if stprs else 0:.4f}")
+    print(f"{mat}: Kalk {r['KADKY']} Material je Einheit {v:.4f}; Arbeit CZ je Einheit {vcz:.4f}; STPRS {stprs} PEINH {peinh}; Anteil {v / stprs if stprs else 0:.4f}")
