@@ -19,6 +19,7 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
 {
     private readonly FinanceCockpitAccessOptions _options;
     private readonly IHostEnvironment _environment;
+    private readonly IAccessPasswordStore? _passwordStore;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAccessSessionTracker _sessionTracker;
     private readonly ILogger<FinanceCockpitAccessService> _logger;
@@ -29,10 +30,12 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
         IHostEnvironment environment,
         IHttpContextAccessor httpContextAccessor,
         IAccessSessionTracker sessionTracker,
-        ILogger<FinanceCockpitAccessService> logger)
+        ILogger<FinanceCockpitAccessService> logger,
+        IAccessPasswordStore? passwordStore = null)
     {
         _options = options.Value;
         _environment = environment;
+        _passwordStore = passwordStore;
         _httpContextAccessor = httpContextAccessor;
         _sessionTracker = sessionTracker;
         _logger = logger;
@@ -112,7 +115,11 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
         }
 
         var passwordHash = AccessPasswordSettingsWriter.HashPassword(newPassword);
-        AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, FinanceCockpitAccessOptions.SectionName, passwordHash);
+        // Seit 2026-10-15 in der DB (deploy-fest), appsettings nur noch ohne DB (Tests).
+        if (_passwordStore is not null)
+            _passwordStore.Save(AccessPasswordAreas.Finance, passwordHash, username.Trim());
+        else
+            AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, FinanceCockpitAccessOptions.SectionName, passwordHash);
         _options.PasswordHash = passwordHash;
         _options.Password = string.Empty;
         _isUnlocked = true;

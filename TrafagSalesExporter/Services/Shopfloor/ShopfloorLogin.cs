@@ -34,11 +34,15 @@ public static class ShopfloorLogin
         return userOk & hashOk;
     }
 
-    public static string CreateCookieValue(IDataProtectionProvider provider, DateTimeOffset expiresUtc)
+    /// <summary>
+    /// Das Cookie traegt einen Fingerabdruck des Passwort-Hashes (2026-10-15): setzt der Admin ein neues Passwort,
+    /// sind alle bestehenden Anmeldungen ungueltig, wie bei Finance, HR und Admin.
+    /// </summary>
+    public static string CreateCookieValue(IDataProtectionProvider provider, DateTimeOffset expiresUtc, string passwordHash)
         => provider.CreateProtector(Purpose).Protect(
-            Marker + "|" + expiresUtc.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture));
+            Marker + "|" + expiresUtc.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture) + "|" + Fingerprint(passwordHash));
 
-    public static bool IsValidCookie(IDataProtectionProvider provider, string? value, DateTimeOffset nowUtc)
+    public static bool IsValidCookie(IDataProtectionProvider provider, string? value, DateTimeOffset nowUtc, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(value))
             return false;
@@ -46,13 +50,17 @@ public static class ShopfloorLogin
         {
             var plain = provider.CreateProtector(Purpose).Unprotect(value);
             var parts = plain.Split('|');
-            return parts.Length == 2 && parts[0] == Marker &&
+            return parts.Length == 3 && parts[0] == Marker &&
                    long.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var exp) &&
-                   DateTimeOffset.FromUnixTimeSeconds(exp) > nowUtc;
+                   DateTimeOffset.FromUnixTimeSeconds(exp) > nowUtc &&
+                   CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(parts[2]), Encoding.UTF8.GetBytes(Fingerprint(passwordHash)));
         }
         catch (CryptographicException)
         {
             return false;
         }
     }
+
+    private static string Fingerprint(string passwordHash)
+        => AccessPasswordSettingsWriter.HashPassword("shopfloor|" + (passwordHash ?? string.Empty).Trim().ToUpperInvariant())[..16];
 }

@@ -19,6 +19,7 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
 {
     private readonly HrKpiAccessOptions _options;
     private readonly IHostEnvironment _environment;
+    private readonly IAccessPasswordStore? _passwordStore;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAccessSessionTracker _sessionTracker;
     private readonly string _sessionId = Guid.NewGuid().ToString("N");
@@ -27,10 +28,12 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
         IOptions<HrKpiAccessOptions> options,
         IHostEnvironment environment,
         IHttpContextAccessor httpContextAccessor,
-        IAccessSessionTracker sessionTracker)
+        IAccessSessionTracker sessionTracker,
+        IAccessPasswordStore? passwordStore = null)
     {
         _options = options.Value;
         _environment = environment;
+        _passwordStore = passwordStore;
         _httpContextAccessor = httpContextAccessor;
         _sessionTracker = sessionTracker;
     }
@@ -90,7 +93,11 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
         }
 
         var passwordHash = AccessPasswordSettingsWriter.HashPassword(newPassword);
-        AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, HrKpiAccessOptions.SectionName, passwordHash);
+        // Seit 2026-10-15 in der DB (deploy-fest), appsettings nur noch ohne DB (Tests).
+        if (_passwordStore is not null)
+            _passwordStore.Save(AccessPasswordAreas.Hr, passwordHash, username.Trim());
+        else
+            AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, HrKpiAccessOptions.SectionName, passwordHash);
         _options.PasswordHash = passwordHash;
         _options.Password = string.Empty;
         _isUnlocked = true;

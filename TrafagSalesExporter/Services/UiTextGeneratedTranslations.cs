@@ -8,6 +8,14 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Passwörter"] = "Contraseñas",
+                ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Aquí el administrador establece nuevas contraseñas para todas las áreas. No se necesita la contraseña anterior. Solo se guarda un hash en la base de datos; un despliegue no lo sobrescribe. Quien haya iniciado sesión en el área deberá iniciarla de nuevo tras el cambio.",
+                ["Zuletzt geändert"] = "Último cambio",
+                ["gesetzt"] = "establecida",
+                ["aus der Konfiguration"] = "de la configuración",
+                ["Neu setzen"] = "Establecer nueva",
+                ["Passwort konnte nicht geändert werden."] = "No se pudo cambiar la contraseña.",
+                ["Admin-Passwort geändert: beim nächsten Neuladen der Seite bitte neu anmelden."] = "Contraseña de administrador cambiada: inicie sesión de nuevo la próxima vez que recargue la página.",
                 ["Nutzung"] = "Uso",
                 ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "Medición anónima: por día y página solo se guarda una clave diaria sin nombres. Los días de usuario son las personas distintas por día, sumadas. Las visitas del responsable no cuentan.",
                 ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "Aún no hay datos. La medición cuenta desde la primera visita tras el despliegue.",
@@ -2660,6 +2668,14 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Passwörter"] = "Password",
+                ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Qui l'amministratore imposta nuove password per tutte le aree. La vecchia password non serve. Nel database viene salvato solo un hash, un rilascio non lo sovrascrive. Chi ha effettuato l'accesso all'area deve accedere di nuovo dopo la modifica.",
+                ["Zuletzt geändert"] = "Ultima modifica",
+                ["gesetzt"] = "impostata",
+                ["aus der Konfiguration"] = "dalla configurazione",
+                ["Neu setzen"] = "Imposta nuova",
+                ["Passwort konnte nicht geändert werden."] = "Impossibile modificare la password.",
+                ["Admin-Passwort geändert: beim nächsten Neuladen der Seite bitte neu anmelden."] = "Password amministratore modificata: accedi di nuovo al prossimo ricaricamento della pagina.",
                 ["Nutzung"] = "Utilizzo",
                 ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "Misurazione anonima: per giorno e pagina viene salvata solo una chiave giornaliera senza nomi. I giorni utente sono le persone diverse al giorno, sommate. Le visite del responsabile non contano.",
                 ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "Ancora nessun dato. La misurazione conta dalla prima visita dopo il rilascio.",
@@ -5312,6 +5328,14 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Passwörter"] = "पासवर्ड",
+                ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "यहाँ एडमिन सभी क्षेत्रों के नए पासवर्ड सेट करता है। पुराने पासवर्ड की ज़रूरत नहीं है। डेटाबेस में केवल एक हैश सहेजा जाता है, डिप्लॉय उसे नहीं बदलता। क्षेत्र में साइन इन किए लोगों को बदलाव के बाद फिर से साइन इन करना होगा।",
+                ["Zuletzt geändert"] = "अंतिम बदलाव",
+                ["gesetzt"] = "सेट",
+                ["aus der Konfiguration"] = "कॉन्फ़िगरेशन से",
+                ["Neu setzen"] = "नया सेट करें",
+                ["Passwort konnte nicht geändert werden."] = "पासवर्ड नहीं बदला जा सका।",
+                ["Admin-Passwort geändert: beim nächsten Neuladen der Seite bitte neu anmelden."] = "एडमिन पासवर्ड बदल गया: पेज अगली बार रीलोड होने पर कृपया फिर से साइन इन करें।",
                 ["Nutzung"] = "उपयोग",
                 ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "गुमनाम मापन: हर दिन और पेज के लिए बिना नाम के केवल एक दैनिक कुंजी सहेजी जाती है। उपयोगकर्ता-दिन प्रतिदिन अलग-अलग लोगों का जोड़ हैं। संचालक की अपनी विज़िट नहीं गिनी जातीं।",
                 ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "अभी कोई डेटा नहीं। मापन डिप्लॉय के बाद पहली विज़िट से गिनता है।",
@@ -7964,6 +7988,14 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Passwörter"] = "Fjalëkalimet",
+                ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Këtu administratori vendos fjalëkalime të reja për të gjitha zonat. Fjalëkalimi i vjetër nuk nevojitet. Në bazën e të dhënave ruhet vetëm një hash, një publikim nuk e mbishkruan. Kush është i identifikuar në zonë duhet të identifikohet sërish pas ndryshimit.",
+                ["Zuletzt geändert"] = "Ndryshimi i fundit",
+                ["gesetzt"] = "e vendosur",
+                ["aus der Konfiguration"] = "nga konfigurimi",
+                ["Neu setzen"] = "Vendos të re",
+                ["Passwort konnte nicht geändert werden."] = "Fjalëkalimi nuk mund të ndryshohej.",
+                ["Admin-Passwort geändert: beim nächsten Neuladen der Seite bitte neu anmelden."] = "Fjalëkalimi i administratorit u ndryshua: identifikohu sërish kur ta ringarkosh faqen.",
                 ["Nutzung"] = "Përdorimi",
                 ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "Matje anonime: për çdo ditë dhe faqe ruhet vetëm një çelës ditor pa emra. Ditët e përdoruesve janë personat e ndryshëm në ditë, të mbledhur. Vizitat e mirëmbajtësit nuk numërohen.",
                 ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "Ende pa të dhëna. Matja numëron nga vizita e parë pas publikimit.",
@@ -10616,6 +10648,14 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Passwörter"] = "Parolalar",
+                ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Burada yönetici tüm alanlar için yeni parolalar belirler. Eski parola gerekmez. Veritabanında yalnızca bir hash saklanır, yayın bunun üzerine yazmaz. Alanda oturum açmış olanlar değişiklikten sonra yeniden oturum açmalıdır.",
+                ["Zuletzt geändert"] = "Son değişiklik",
+                ["gesetzt"] = "ayarlı",
+                ["aus der Konfiguration"] = "yapılandırmadan",
+                ["Neu setzen"] = "Yeniden belirle",
+                ["Passwort konnte nicht geändert werden."] = "Parola değiştirilemedi.",
+                ["Admin-Passwort geändert: beim nächsten Neuladen der Seite bitte neu anmelden."] = "Yönetici parolası değişti: sayfa bir sonraki yenilendiğinde lütfen yeniden oturum açın.",
                 ["Nutzung"] = "Kullanım",
                 ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "Anonim ölçüm: gün ve sayfa başına yalnızca isimsiz bir günlük anahtar saklanır. Kullanıcı günleri, günlük farklı kişilerin toplamıdır. Bakımcının kendi ziyaretleri sayılmaz.",
                 ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "Henüz veri yok. Ölçüm, yayından sonraki ilk ziyaretten itibaren sayar.",
@@ -13268,6 +13308,14 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Passwörter"] = "mu'meH ngoq",
+                ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "naDev Hoch yoS mu'meH ngoq chu' cher loH. mu'meH ngoq ngo' poQbe'. De' qawHaqDaq hash neH pol. deploy 'oH choHbe'. yoSDaq 'el ghot, choH pIq 'el chu'nIS.",
+                ["Zuletzt geändert"] = "Qav choH",
+                ["gesetzt"] = "cher",
+                ["aus der Konfiguration"] = "SeHlaw vo'",
+                ["Neu setzen"] = "chu' cher",
+                ["Passwort konnte nicht geändert werden."] = "mu'meH ngoq choHlaHbe'.",
+                ["Admin-Passwort geändert: beim nächsten Neuladen der Seite bitte neu anmelden."] = "loH mu'meH ngoq choH: ghItlh chu'qa'DI' 'el chu'.",
                 ["Nutzung"] = "lo'",
                 ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "pong Hutlh juv: jaj 'ej ghItlh Hoch, jaj ngoQ neH pol. ghot jaj chu' boq. QaD ghot lo' 'oHbe'.",
                 ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "De' pagh. deploy pIq wa'DIch lo' mI'.",

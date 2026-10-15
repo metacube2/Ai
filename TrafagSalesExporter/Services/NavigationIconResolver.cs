@@ -49,6 +49,7 @@ public static class NavigationIconResolver
         "PieChart" => Icons.Material.Filled.PieChart,
         "Public" => Icons.Material.Filled.Public,
         "QueryStats" => Icons.Material.Filled.QueryStats,
+        "Password" => Icons.Material.Filled.Password,
         "Rule" => Icons.Material.Filled.Rule,
         "School" => Icons.Material.Filled.School,
         "Settings" => Icons.Material.Filled.Settings,

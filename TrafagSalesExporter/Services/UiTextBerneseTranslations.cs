@@ -10,6 +10,14 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Passwörter"] = "Passwörter",
+            ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Hie setzt dr Admin d Passwörter vo allne Bereiche nöi. Ds alte Passwort bruchts nid. Gspicheret wird nume e Hash i dr Datebank, e Deploy überschribt ne nid. Wär im Bereich aagmäldet isch, muess sech nach dr Änderig nöi aamälde.",
+            ["Zuletzt geändert"] = "Zletscht gänderet",
+            ["gesetzt"] = "gsetzt",
+            ["aus der Konfiguration"] = "us dr Konfiguration",
+            ["Neu setzen"] = "Nöi setze",
+            ["Passwort konnte nicht geändert werden."] = "Ds Passwort het nid chönne gänderet wärde.",
+            ["Admin-Passwort geändert: beim nächsten Neuladen der Seite bitte neu anmelden."] = "Admin-Passwort gänderet: bim nächschte Nöilade vo dr Site bitte nöi aamälde.",
             ["Nutzung"] = "Nutzig",
             ["Anonyme Messung: gespeichert wird je Tag und Seite nur ein Tages-Schlüssel ohne Namen. Nutzertage sind die verschiedenen Personen pro Tag, zusammengezählt. Eigene Aufrufe des Betreuers zählen nicht."] = "Anonymi Mässig: Pro Tag u Site wird nume e Tagesschlüssu ohni Name gspicheret. Nutzertäg si di verschidene Lüt pro Tag, zämezellt. Eigeti Ufrüef vom Betreuer zelle nid.",
             ["Noch keine Daten. Die Messung zählt ab dem ersten Aufruf nach dem Deploy."] = "No kener Date. D Mässig zellt ab em erschte Ufruef nach em Deploy.",

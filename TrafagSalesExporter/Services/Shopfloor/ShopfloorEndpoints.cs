@@ -95,7 +95,8 @@ public static class ShopfloorEndpoints
     public static bool HasAccess(HttpContext ctx, System.Security.Claims.ClaimsPrincipal? user)
         => ctx.RequestServices.GetRequiredService<IShopfloorAccess>().IsAllowed(user)
            || ShopfloorLogin.IsValidCookie(ctx.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(),
-                  ctx.Request.Cookies[ShopfloorLogin.CookieName], DateTimeOffset.UtcNow);
+                  ctx.Request.Cookies[ShopfloorLogin.CookieName], DateTimeOffset.UtcNow,
+                  ctx.RequestServices.GetRequiredService<IOptionsMonitor<ShopfloorOptions>>().CurrentValue.LoginPasswordHash);
 
     public static IServiceCollection AddShopfloor(this IServiceCollection services, IConfiguration configuration)
     {
@@ -108,6 +109,9 @@ public static class ShopfloorEndpoints
         // Operations KPI Liefertreue (2026-10-14), Doku docs/OPERATIONS_KPI_2026-10-14.md
         services.AddSingleton<KpiLiefertreueSync>();
         services.AddHostedService(sp => sp.GetRequiredService<KpiLiefertreueSync>());
+        // Passwoerter aller Bereichs-Logins in der DB (2026-10-15). Gehoert nach Program.cs, sobald die fremden
+        // unkommittierten Aenderungen dort erledigt sind; hier, weil AddShopfloor die einzige freie Registrierstelle ist.
+        AccessPasswordAdministration.Register(services);
         return services;
     }
 
@@ -289,7 +293,7 @@ public static class ShopfloorEndpoints
             }
             var expires = DateTimeOffset.UtcNow.AddHours(Math.Clamp(options.LoginHours, 1, 24 * 14));
             c.Response.Cookies.Append(ShopfloorLogin.CookieName,
-                ShopfloorLogin.CreateCookieValue(c.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(), expires),
+                ShopfloorLogin.CreateCookieValue(c.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(), expires, options.LoginPasswordHash),
                 new CookieOptions
                 {
                     HttpOnly = true,

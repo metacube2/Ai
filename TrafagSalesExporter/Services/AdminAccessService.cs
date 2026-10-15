@@ -19,6 +19,7 @@ public sealed class AdminAccessService : IAdminAccessService
 {
     private readonly AdminAccessOptions _options;
     private readonly IHostEnvironment _environment;
+    private readonly IAccessPasswordStore? _passwordStore;
     private readonly ILogger<AdminAccessService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -26,10 +27,12 @@ public sealed class AdminAccessService : IAdminAccessService
         IOptions<AdminAccessOptions> options,
         IHostEnvironment environment,
         ILogger<AdminAccessService> logger,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        IAccessPasswordStore? passwordStore = null)
     {
         _options = options.Value;
         _environment = environment;
+        _passwordStore = passwordStore;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
     }
@@ -100,7 +103,11 @@ public sealed class AdminAccessService : IAdminAccessService
         }
 
         var passwordHash = AccessPasswordSettingsWriter.HashPassword(newPassword);
-        AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, AdminAccessOptions.SectionName, passwordHash);
+        // Seit 2026-10-15 in der DB (deploy-fest), appsettings nur noch ohne DB (Tests).
+        if (_passwordStore is not null)
+            _passwordStore.Save(AccessPasswordAreas.Admin, passwordHash, username.Trim());
+        else
+            AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, AdminAccessOptions.SectionName, passwordHash);
         _options.PasswordHash = passwordHash;
         _options.Password = string.Empty;
         _isUnlocked = true;

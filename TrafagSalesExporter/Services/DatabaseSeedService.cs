@@ -344,6 +344,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("admin-sessions", "finance-admin", "Aktive Logins", "Active logins", "PeopleAlt", "admin/sessions", 10),
         // Anonyme Nutzungsmessung 2026-10-14 (Wunsch Ingo): welche Seiten genutzt werden, ohne Namen.
         Link("admin-usage", "finance-admin", "Nutzung", "Usage", "QueryStats", "admin/nutzung", 15, requiredPolicy: SecurityPolicies.AdminOnly),
+        // Passwoerter aller Bereichs-Logins an einer Stelle, 2026-10-15 (Wunsch Ingo), gespeichert in der DB.
+        Link("admin-passwords", "finance-admin", "Passwörter", "Passwords", "Password", "admin/passwoerter", 17, requiredPolicy: SecurityPolicies.AdminOnly),
         Link("sites", "finance-admin", "Standorte", "Sites", "LocationOn", "standorte", 20, requiredPolicy: SecurityPolicies.AdminOnly),
         Link("transformations", "finance-admin", "Transformationen", "Transformations", "Transform", "transformations", 30, requiredPolicy: SecurityPolicies.AdminOnly),
         Link("finance-rules", "finance-admin", "Finance Regeln", "Finance rules", "Rule", "finance-rules", 40, requiredPolicy: SecurityPolicies.AdminOnly),
