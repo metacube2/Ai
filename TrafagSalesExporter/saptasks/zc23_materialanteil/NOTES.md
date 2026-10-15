@@ -166,3 +166,15 @@ Transport `T76K912736` / Aufgabe `T76K912737`: `ZMM_UEB_KDAUF`, `ZPOWERBI_KDAUF`
 **Für Ingo:** Transport freigeben und nach P76 importieren; danach in P76 `/IWFND/CACHE_CLEANUP` und `/IWBEP/CACHE_CLEANUP`
 für `ZPOWERBI_EINKAUF_MDL`, dann einmal ZC23 mit einer gewohnten Variante ansehen (neue Spalten „Materialanteil je Einheit“
 und „Materialanteil“, Block „Materialanteil“ im Selektionsbild). Laufzeit `BI UPDATE` als Job danach festhalten.
+
+## Spalten einblenden und Waehrung (2026-10-15, Wunsch Ingo)
+
+- Die zwei Spalten stehen jetzt direkt hinter „Standardwert“ (Einfuegen nach `STANDARDWERT` im Feldkatalog) und tragen
+  die Hauswaehrung des Werks in der Ueberschrift: „Materialanteil je Einheit CHF“ (`MATPREIS`, 4 Nachkommastellen) und
+  „Materialanteil CHF“ (`MATANTEIL`, Summe, mit Waehrungsschluessel formatiert). Waehrung = Bewertungskreis Werk ->
+  `T001K-BUKRS` -> `T001-WAERS`, nicht fest CHF.
+- **Gespeicherte Layouts blenden neue Spalten aus** (SAP-Standard, vom Programm nicht zu uebersteuern). Zu ZC23 gibt es
+  in T76 rund 45 Layouts (global `/TRAFAG`, `/DISPONENT`, `/TRAFAG DW` usw., persoenlich z. B. RP `KE30/ZC23`); P76 hat
+  seine eigenen, Layouts werden nicht transportiert. Wer die Spalten sehen will, blendet sie im eigenen Layout einmal ein
+  („Layout aendern“, Spaltenvorrat, sichern). Globale Layouts in P76 nur nach Absprache mit deren Nutzern anpassen.
+- In `ZM_OFFENE_KDAUF_OPT` und `ZM_OFFENE_KDAUF` eingespielt und aktiv (Transport `T76K912736`), Q2-Lauf 13,7 s.
