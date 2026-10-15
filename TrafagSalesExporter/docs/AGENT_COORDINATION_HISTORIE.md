@@ -492,3 +492,4 @@ Finance-Fragen). Reservierung wieder frei. Kein Anwendungscode, kein Commit, kei
 - Commit `e1afd49`. Deploy offen: Einkauf-Delta-Status nicht pruefbar (Browser-Erweiterung nicht verbunden), Regel LEARNINGS 2026-10-14.
 - Admin-Passwort bewusst nicht von Claude gesetzt (Klartext stand im Chat); Ingo setzt es nach dem Deploy auf der neuen Seite.
 - Folge: alle bestehenden Operations-Anmeldungen werden mit dem Deploy einmal ungueltig (neues Cookie-Format).
+- Nachtrag: Deploy 2026-10-15 10:56 nach Freigabe Ingo, bitgleich, zehn Routen 200, `/admin/passwoerter` 200, Operations-Login mit falschem Passwort 401.

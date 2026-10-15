@@ -66,6 +66,11 @@ Stand: 2026-10-15
 
 ## Kurzstand
 
+- **Deploy 2026-10-15 10:56, Admin: Passwoerter aller Bereiche in der DB (`e1afd49`, Doku `1519cb3`).** Freigabe Ingo im Chat
+  („du kannst deployen“), WAL vorher nur 259 KB, also kein Einkauf-Delta aktiv. `1232/1232`, `BiDashboard.dll` `10:57:21`,
+  SHA256 `A76A1D688853B3A03541385556846BA57BA92EB9608A92DD447EA4A24AE926B6`, bitgleich, zehn Routen 200, Alarm nur `-wal`/`-shm`.
+  Nachpruefung: `/admin/passwoerter` 200, `/shopfloor/api/login` mit falschem Passwort 401 (PostConfigure laeuft ohne Fehler).
+  Die angemeldete Seite hat Claude nicht gesehen (Admin-Passwort nur bei Ingo). Folge: alle Operations-Anmeldungen einmal neu.
 - **Deploy 2026-10-15 ~08:50, Shopfloor-Patches Fabio (`52b3b75`): ZD05 „Zu besprechen“, Verkauf Go-for-it.** Ingo bestaetigt:
   kein Einkauf-Delta aktiv. Release-Worktree `1224/1224`, DLL bitgleich, zehn Routen `200`, Alarm nur WAL/SHM (klein).
   Ausgelieferte `shopfloor/app.js` enthaelt `zdTalk` und `renderGoForIt` (per curl geprueft).

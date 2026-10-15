@@ -2,7 +2,7 @@
 
 Stand: 2026-10-15
 
-## Admin: Passwörter aller Bereiche an einer Stelle, 2026-10-15 (`e1afd49`, Deploy offen)
+## Admin: Passwörter aller Bereiche an einer Stelle, 2026-10-15 (`e1afd49`, produktiv 10:56)
 
 - Neue Seite Admin Bereich > Passwörter (`/admin/passwoerter`): Der entsperrte Admin setzt die Passwörter von Admin, Finance,
   HR KPI (auch `hradmin`), Operations und Logistik (Namen anzeigen) neu, ohne das alte zu kennen.
