@@ -191,3 +191,10 @@ und „Materialanteil“, Block „Materialanteil“ im Selektionsbild). Laufzei
   (`mata_check.py`, jetzt mit CZ) 44640 4,382 je Stueck (×10 = 43,82 wie ZC23), 42211 3,01 wie ZC23. ZM03 gibt fuer
   44640 keine Zeile aus (Ursache nicht verfolgt). Q2-Lauf mit Fortschreibung 15,9 s. Materialwerte unveraendert.
 - Was weiterhin nicht getrennt wird: Arbeit in der Schweiz und Gemeinkosten stecken in Standardwert − Materialanteil − Arbeit CZ.
+
+## Anwenderdoku
+
+Word `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` (Formeln, Beispiel, Bedienung, Grenzen, Pruefung), neu erzeugen mit
+`dotnet run --project .tmp_tools/BuildZc23Formeln -- docs/ZC23_Materialanteil_Formeln_2026-10-15.docx`.
+Die Vorschau ueber Word-COM (PDF-Export) hing am 15.10.; die eigene versteckte Word-Instanz wurde beendet, geprueft ist das
+Dokument ueber OpenXML-Validierung und Pflichttexte.
