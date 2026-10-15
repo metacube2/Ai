@@ -6,6 +6,93 @@ require __DIR__ . '/vendor/autoload.php';
 require_once 'SettingsManager.php';
 require_once 'WeatherManager.php';
 
+$appSecrets = require '/var/www/config.local.php';
+$publicDomain = $appSecrets['site']['public_domain'] ?? 'www.aurora-weather-livecam.com';
+$publicBaseUrl = $appSecrets['site']['public_base_url'] ?? 'https://www.aurora-weather-livecam.com';
+
+// ============================================================
+// REMOTE CACHE SYSTEM - verhindert SMB-Blocking bei Seitenaufruf
+// ============================================================
+class RemoteCache {
+    private static $instance = null;
+    private $cache = null;
+    private $cacheFile;
+    private $lockFile;
+    private $maxAge;
+
+    private function __construct() {
+        $this->cacheFile = __DIR__ . '/remote_cache.json';
+        $this->lockFile  = __DIR__ . '/remote_cache.lock';
+        $this->maxAge    = 300;
+        $this->loadCache();
+    }
+
+    public static function getInstance() {
+        if (self::$instance === null) self::$instance = new self();
+        return self::$instance;
+    }
+
+    private function loadCache() {
+        if (file_exists($this->cacheFile)) {
+            $raw = @file_get_contents($this->cacheFile);
+            $this->cache = $raw ? json_decode($raw, true) : null;
+        }
+        if ($this->cache === null || (time() - ($this->cache['updated_at'] ?? 0)) > $this->maxAge) {
+            $this->triggerBackgroundUpdate();
+        }
+    }
+
+    private function triggerBackgroundUpdate() {
+        if (file_exists($this->lockFile) && (time() - filemtime($this->lockFile)) < 120) return;
+        $script = __DIR__ . '/remote_cache_update.php';
+        if (file_exists($script)) exec('php ' . escapeshellarg($script) . ' > /dev/null 2>&1 &');
+    }
+
+    public function isAvailable() { return ($this->cache !== null && !empty($this->cache['available'])); }
+
+    public function getVideos() {
+        if (!$this->isAvailable()) return [];
+        return $this->cache['videos'] ?? [];
+    }
+
+    public function getImageWebPaths() {
+        if (!$this->isAvailable()) return [];
+        $paths = [];
+        foreach (($this->cache['images'] ?? []) as $img) $paths[] = $img['web_path'];
+        return $paths;
+    }
+
+    public function getVideosForDate($dateStr) {
+        $result = [];
+        foreach ($this->getVideos() as $v) {
+            if (strpos($v['filename'], "daily_video_{$dateStr}_") === 0) $result[] = $v;
+        }
+        return $result;
+    }
+
+    public function hasVideosForDate($dateStr) {
+        foreach ($this->getVideos() as $v) {
+            if (strpos($v['filename'], "daily_video_{$dateStr}_") === 0) return true;
+        }
+        return false;
+    }
+
+    public function getLatestVideo() {
+        $latest = null; $latestTime = 0;
+        foreach ($this->getVideos() as $v) {
+            if (($v['mtime'] ?? 0) > $latestTime) { $latestTime = $v['mtime']; $latest = $v; }
+        }
+        return $latest;
+    }
+
+    public function getCacheAge() {
+        if ($this->cache === null) return PHP_INT_MAX;
+        return time() - ($this->cache['updated_at'] ?? 0);
+    }
+}
+
+$remoteCache = RemoteCache::getInstance();
+
 // Multi-Tenant Bootstrap laden (falls vorhanden)
 if (file_exists(__DIR__ . '/src/bootstrap.php')) {
     require_once __DIR__ . '/src/bootstrap.php';
@@ -22,16 +109,23 @@ $settingsManager->handleAjax();
 $weatherManager->handleAjax();
 
 if (isset($_GET['download_video'])) {
-    $videoDir = './videos/';
     $latestVideo = null;
     $latestTime = 0;
 
-    // Finde das neueste Video
-    foreach (glob($videoDir . '*.mp4') as $video) {
+    // Lokale Videos direkt (schnell)
+    foreach (glob('./videos/*.mp4') as $video) {
         $mtime = filemtime($video);
         if ($mtime > $latestTime) {
             $latestTime = $mtime;
             $latestVideo = $video;
+        }
+    }
+
+    // Remote-Videos aus Cache (kein glob auf SMB!)
+    $remoteLatest = $remoteCache->getLatestVideo();
+    if ($remoteLatest && ($remoteLatest['mtime'] ?? 0) > $latestTime) {
+        if (file_exists($remoteLatest['path'])) {
+            $latestVideo = $remoteLatest['path'];
         }
     }
 
@@ -90,8 +184,8 @@ if (function_exists('getSiteConfig')) {
     $isSeecam = ($tenantConfig['tenant_slug'] === 'seecam');
 
     $siteConfig = [
-        'domain' => $_SERVER['HTTP_HOST'] ?? 'localhost',
-        'domainUrl' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
+        'domain' => $publicDomain,
+        'domainUrl' => $publicBaseUrl,
         'logo' => $tenantConfig['logo_path'] ?? ($isSeecam ? 'seecam.jpg' : 'logo.png'),
         'siteName' => $tenantConfig['site_name'],
         'siteNameFull' => $tenantConfig['site_name_full'],
@@ -141,8 +235,8 @@ if (function_exists('getSiteConfig')) {
         ];
     } else {
         $siteConfig = [
-            'domain' => 'www.aurora-weather-livecam.com',
-            'domainUrl' => 'https://www.aurora-weather-livecam.com',
+            'domain' => $publicDomain,
+            'domainUrl' => $publicBaseUrl,
             'logo' => 'logo.png',
             'siteName' => 'Aurora',
             'siteNameFull' => 'Aurora Wetter Livecam',
@@ -167,12 +261,55 @@ if (function_exists('getSiteConfig')) {
 
 
 
+// Editierbare Textbausteine (Admin-Panel)
+$heroWelcomeText = $settingsManager->get('content.hero_welcome_de');
+if ($heroWelcomeText === null || $heroWelcomeText === '') {
+    $heroWelcomeText = $siteConfig['welcomeDe'];
+}
+
+$heroRegionText = $settingsManager->get('content.hero_region_text_de');
+if ($heroRegionText === null || $heroRegionText === '') {
+    $heroRegionText = 'Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!';
+}
+
+$localFlagAltText = $settingsManager->get('content.local_flag_alt_de');
+if ($localFlagAltText === null || $localFlagAltText === '') {
+    $localFlagAltText = 'Ortsflagge';
+}
+
+$donationCalloutText = $settingsManager->get('content.donation_callout_de');
+if ($donationCalloutText === null || $donationCalloutText === '') {
+    $donationCalloutText = "Gefällt dir die Livecam? Unterstütze das Projekt –\njeder Franken zählt und hilft die Betriebskosten\nzu decken. So kannst du auch weiterhin\nFotos und Videos kostenlos nutzen.";
+}
+
+$twintSupportText = $settingsManager->get('content.twint_support_text_de');
+if ($twintSupportText === null || $twintSupportText === '') {
+    $twintSupportText = 'Unterstütze die Aurora Livecam mit deiner Spende. Du hilfst dabei, Kamera, Server, Internetverbindung und die 100 % autarke Stromversorgung mit Solarenergie und EcoFlow-Speichern zu finanzieren. So bleibt das Projekt nachhaltig, unabhängig und für alle frei zugänglich.';
+}
+$showTwintSupport = $settingsManager->shouldShowTwintSupport();
+// Spendenknoepfe (2026-10-10): PayPal aktiv, Buy Me a Coffee bleibt einstellbar, standardmaessig aus
+$showPaypalDonation = $settingsManager->shouldShowPaypalDonation();
+$paypalDonationUrl = $settingsManager->getSocialLink('paypal', 'https://www.paypal.com/donate/?business=metacube%40gmail.com&currency_code=CHF&item_name=Aurora+Livecam');
+$showBuyMeACoffee = $settingsManager->shouldShowBuyMeACoffee();
+
 session_start();
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0); // Fehler ins Log, nie zu Besuchern (2026-09-27)
+ini_set('log_errors', 1);
 $imageDir = "./image"; // Angepasst an das Ausgabeverzeichnis des Bash-Skripts
-$imageFiles = glob("$imageDir/screenshot_*.jpg");
-rsort($imageFiles); // Sortiert die Dateien in umgekehrter Reihenfolge (neueste zuerst)
+$localImages = glob("$imageDir/screenshot_*.jpg");
+$remoteImagesWeb = $remoteCache->getImageWebPaths(); // Aus Cache statt glob auf SMB
+$imageFiles = array_merge($localImages ?: [], $remoteImagesWeb);
+// Neueste zuerst nach Dateiname (screenshot_JJJJMMTT_HHMMSS), nicht nach Pfad:
+// sonst sortiert "remote-image/" vor "./image/" und die neuesten lokalen
+// Bilder fielen hinter die Obergrenze.
+usort($imageFiles, fn($a, $b) => strcmp(basename($b), basename($a)));
+// Lokale Bilder liegen zusaetzlich als Kopie auf dem Share: je Dateiname nur
+// einmal (lokal zuerst, weil array_merge die lokalen voranstellt).
+$imageFiles = array_values(array_intersect_key($imageFiles, array_unique(array_map('basename', $imageFiles))));
+// Nur die neuesten Bilder in die Seite (~1 Tag bei einem Bild alle 38 s).
+// Die ganze Liste (>140'000) sprengte am 2026-09-27 das Speicherlimit.
+$imageFiles = array_slice($imageFiles, 0, 1500);
 $imageFilesJson = json_encode($imageFiles);
 
 
@@ -271,19 +408,24 @@ class WebcamManager {
         $uploadDir = "uploads/";
         if (!file_exists($uploadDir)) mkdir($uploadDir, 0777, true);
         $uploadFile = $uploadDir . $outputFile;
-        copy($outputFile, $uploadFile);
+        if (!copy($outputFile, $uploadFile)) {
+            unlink($outputFile);
+            return "Fehler";
+        }
 
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . $outputFile . '"');
-        readfile($outputFile);
         unlink($outputFile);
+        header('Location: /?snapshot_saved=' . rawurlencode($outputFile) . '#gallery');
         exit;
     }
 
     public function getImageFiles() {
-        $imageFiles = glob("image/screenshot_*.jpg");
-        if ($imageFiles) rsort($imageFiles); else $imageFiles = [];
-        return json_encode($imageFiles);
+        global $remoteCache;
+        $localFiles = glob("image/screenshot_*.jpg") ?: [];
+        $remoteWeb = $remoteCache->getImageWebPaths(); // Aus Cache statt glob auf SMB
+        $imageFiles = array_merge($localFiles, $remoteWeb);
+        usort($imageFiles, fn($a, $b) => strcmp(basename($b), basename($a))); // neueste zuerst, siehe oben
+        $imageFiles = array_values(array_intersect_key($imageFiles, array_unique(array_map('basename', $imageFiles))));
+        return json_encode(array_slice($imageFiles, 0, 1500)); // siehe Limit oben
     }
 
     public function captureVideoSequence($duration = 10) {
@@ -317,22 +459,104 @@ class WebcamManager {
             var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+            // Ton (2026-10-11): erst mit Ton starten; blockiert der Browser das,
+            // stumm starten und beim ersten Klick/Tippen/Taste einschalten.
+            // Der Knopf haengt am Elternelement, damit er beim Fingerzoom nicht mitskaliert.
+            function auroraTonStart(v) {
+                var knopf = document.getElementById('aurora-ton-knopf');
+                if (!knopf) {
+                    knopf = document.createElement('button');
+                    knopf.type = 'button';
+                    knopf.id = 'aurora-ton-knopf';
+                    var wrap = document.getElementById('live-video-wrapper');
+                    var halter = wrap && wrap.parentElement ? wrap.parentElement : v.parentElement;
+                    if (window.getComputedStyle(halter).position === 'static') halter.style.position = 'relative';
+                    halter.appendChild(knopf);
+                }
+                var ereignisse = ['pointerdown', 'click', 'keydown', 'touchend'];
+                var texte = { de: ['Ton an', 'Ton aus'], en: ['Sound on', 'Sound off'], it: ['Audio on', 'Audio off'],
+                              fr: ['Son activé', 'Son coupé'], es: ['Activar sonido', 'Silenciar'], zh: ['开启声音', '静音'] };
+                function zeigen() {
+                    var t = texte[(document.documentElement.lang || 'de').slice(0, 2)] || texte.de;
+                    knopf.textContent = v.muted ? '🔇 ' + t[0] : '🔊';
+                    knopf.setAttribute('aria-label', v.muted ? t[0] : t[1]);
+                    knopf.title = v.muted ? t[0] : t[1];
+                    knopf.classList.toggle('stumm', v.muted);
+                }
+                function aufraeumen() {
+                    ereignisse.forEach(function (t) { document.removeEventListener(t, freigeben, true); });
+                }
+                function freigeben(e) {
+                    if (e && e.target === knopf) return;
+                    if (v.muted) { v.muted = false; v.play().catch(console.log); }
+                    aufraeumen();
+                    zeigen();
+                }
+                knopf.onclick = function (e) {
+                    e.stopPropagation();
+                    aufraeumen();
+                    v.muted = !v.muted;
+                    if (!v.muted) v.play().catch(console.log);
+                    zeigen();
+                };
+                v.addEventListener('volumechange', zeigen);
+                new MutationObserver(zeigen).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+                v.muted = false;
+                v.play().then(zeigen).catch(function () {
+                    v.muted = true;
+                    v.play().catch(console.log);
+                    zeigen();
+                    ereignisse.forEach(function (t) { document.addEventListener(t, freigeben, true); });
+                });
+                zeigen();
+            }
+
+            // Gleichlauf (2026-10-14): Webseite und App zeigen das Bild gleich weit hinter
+            // der Kamera, gemessen an der Uhrzeit im Segment (EXT-X-PROGRAM-DATE-TIME),
+            // also an derselben Uhr wie die eingeblendete Zeit. Gleicher Wert wie
+            // LIVE_VERZUG_MS in der App (LiveScreen.java).
+            var AURORA_VERZUG_S = 8;
+            function auroraGleichlauf(v, bildzeit) {
+                setInterval(function () {
+                    if (v.paused) return;
+                    var t = bildzeit();
+                    if (!t) return;
+                    var abweichung = (Date.now() - t) / 1000 - AURORA_VERZUG_S;
+                    if (Math.abs(abweichung) > 6 && v.seekable.length) {
+                        var ziel = v.currentTime + abweichung;
+                        var ende = v.seekable.end(v.seekable.length - 1) - 1;
+                        v.currentTime = Math.max(v.seekable.start(0), Math.min(ziel, ende));
+                        v.playbackRate = 1;
+                    } else if (abweichung > 0.5) {
+                        v.playbackRate = 1.05;
+                    } else if (abweichung < -0.5) {
+                        v.playbackRate = 0.95;
+                    } else {
+                        v.playbackRate = 1;
+                    }
+                    v.dataset.verzug = (abweichung + AURORA_VERZUG_S).toFixed(1);
+                }, 1000);
+            }
+
             if(video) {
                 video.controls = false;
                 if (isIOS) {
                     video.src = videoSrc;
                     video.setAttribute('playsinline', '');
                     video.setAttribute('webkit-playsinline', '');
-                    video.muted = true;
                     if(bitrateBadge) bitrateBadge.style.display = 'none';
-                    video.addEventListener('loadedmetadata', function() { video.play().catch(console.log); });
+                    video.addEventListener('loadedmetadata', function() { auroraTonStart(video); });
+                    auroraGleichlauf(video, function () {
+                        var start = video.getStartDate ? video.getStartDate().getTime() : NaN;
+                        return isNaN(start) ? null : start + video.currentTime * 1000;
+                    });
                 } else if (Hls.isSupported()) {
-                    var hls = new Hls({ enableWorker: !isMobile, lowLatencyMode: false });
+                    var hls = new Hls({ enableWorker: !isMobile, lowLatencyMode: false, liveSyncDuration: AURORA_VERZUG_S });
+                    auroraGleichlauf(video, function () { return hls.playingDate ? hls.playingDate.getTime() : null; });
                     hls.loadSource(videoSrc);
                     hls.attachMedia(video);
                     hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                        if (isMobile) video.muted = true;
-                        video.play().catch(console.log);
+                        auroraTonStart(video);
                         if(bitrateBadge) bitrateBadge.style.display = 'inline-flex';
                     });
                     hls.on(Hls.Events.FRAG_LOADED, function(event, data) {
@@ -355,24 +579,25 @@ class WebcamManager {
 
 class VisualCalendarManager {
     private $videoDir;
+    private $videoDirs;
     private $aiDir;
     private $monthNames;
     private $settingsManager;
 
     // AI-Kategorien mit Icons und Farben
     private $aiCategories = [
-        'sunny'   => ['icon' => '☀️', 'name' => 'Sonnig', 'color' => '#FFD700'],
-        'rainy'   => ['icon' => '🌧️', 'name' => 'Regen', 'color' => '#4682B4'],
-        'snowy'   => ['icon' => '❄️', 'name' => 'Schnee', 'color' => '#E0FFFF'],
+        'persons' => ['icon' => '👤', 'name' => 'Personen', 'color' => '#FFB74D'],
+        'cars'    => ['icon' => '🚗', 'name' => 'Autos', 'color' => '#64B5F6'],
+        'buses'   => ['icon' => '🚌', 'name' => 'Busse', 'color' => '#4DB6AC'],
+        'cats'    => ['icon' => '🐱', 'name' => 'Katzen', 'color' => '#BA68C8'],
+        'cows'    => ['icon' => '🐄', 'name' => 'Kühe', 'color' => '#A1887F'],
         'planes'  => ['icon' => '✈️', 'name' => 'Flugzeuge', 'color' => '#87CEEB'],
         'birds'   => ['icon' => '🐦', 'name' => 'Vögel', 'color' => '#98FB98'],
-        'sunset'  => ['icon' => '🌅', 'name' => 'Sonnenuntergang', 'color' => '#FF6347'],
-        'sunrise' => ['icon' => '🌄', 'name' => 'Sonnenaufgang', 'color' => '#FFA07A'],
-        'rainbow' => ['icon' => '🌈', 'name' => 'Regenbogen', 'color' => '#FF69B4'],
     ];
 
     public function __construct($videoDir = './videos/', $aiDir = './ai/', $settingsManager = null) {
-        $this->videoDir = $videoDir;
+        $this->videoDirs = is_array($videoDir) ? $videoDir : [$videoDir];
+        $this->videoDir = $this->videoDirs[0];
         $this->aiDir = $aiDir;
         $this->settingsManager = $settingsManager;
         $this->monthNames = [
@@ -395,6 +620,10 @@ class VisualCalendarManager {
      * Holt AI-Events für ein bestimmtes Datum
      */
     public function getAiEventsForDate($year, $month, $day) {
+        if ($this->settingsManager && !$this->settingsManager->isAIEventsEnabled()) {
+            return [];
+        }
+
         $events = [];
         $dateStr = sprintf('%04d%02d%02d', $year, $month, $day);
 
@@ -436,6 +665,21 @@ class VisualCalendarManager {
     }
 
     /**
+     * Prüft ob AI-Events für einen Monat existieren
+     */
+    public function hasAiEventsForMonth($year, $month) {
+        $monthStr = sprintf('%04d%02d', $year, $month);
+
+        foreach (array_keys($this->aiCategories) as $category) {
+            $pattern = $this->aiDir . $category . "/{$category}_{$monthStr}*.mp4";
+            if (count(glob($pattern)) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Holt kurze Icon-Liste für Kalender-Anzeige
      */
     public function getAiIconsForDate($year, $month, $day) {
@@ -448,12 +692,32 @@ class VisualCalendarManager {
 
         return $icons;
     }
+    
+    /**
+ * Wandelt Dateisystem-Pfad in Web-URL um
+ */
+private function videoPathToUrl($path) {
+    // Remote-Videos: HLS-Stream wenn verfügbar, sonst Fallback auf direkten Pfad
+    if (strpos($path, '/mnt/aurora-remote/videos/') === 0) {
+        $basename = basename($path, '.mp4');
+        $videoId = str_replace('daily_video_', '', $basename);
+        $hlsMaster = '/mnt/aurora-remote/hls/' . $videoId . '/master.m3u8';
+        if (file_exists($hlsMaster)) {
+            return '/remote-hls/' . $videoId . '/master.m3u8';
+        }
+        // Fallback: direkter Apache-Alias
+        return str_replace('/mnt/aurora-remote/videos/', '/remote-videos/', $path);
+    }
+    return $path;
+}
 
     public function getVideosForDate($year, $month, $day) {
+        global $remoteCache;
         $videos = [];
         $dateStr = sprintf('%04d%02d%02d', $year, $month, $day);
 
-        foreach (glob($this->videoDir . "daily_video_{$dateStr}_*.mp4") as $video) {
+        // Lokale Videos direkt (schnell)
+        foreach (glob($this->videoDirs[0] . "daily_video_{$dateStr}_*.mp4") as $video) {
             $videos[] = [
                 'path' => $video,
                 'filename' => basename($video),
@@ -462,19 +726,35 @@ class VisualCalendarManager {
             ];
         }
 
+        // Remote-Videos aus Cache (kein glob auf SMB!)
+        foreach ($remoteCache->getVideosForDate($dateStr) as $rv) {
+            $videos[] = [
+                'path' => $rv['path'],
+                'filename' => $rv['filename'],
+                'filesize' => $rv['filesize'],
+                'time' => date('H:i', $rv['mtime'])
+            ];
+        }
+
         return $videos;
     }
 
     public function hasVideosForDate($year, $month, $day) {
+        global $remoteCache;
         $dateStr = sprintf('%04d%02d%02d', $year, $month, $day);
-        $pattern = $this->videoDir . "daily_video_{$dateStr}_*.mp4";
-        return count(glob($pattern)) > 0;
+        // Lokal prüfen (schnell)
+        if (count(glob($this->videoDirs[0] . "daily_video_{$dateStr}_*.mp4")) > 0) return true;
+        // Remote aus Cache
+        return $remoteCache->hasVideosForDate($dateStr);
     }
 
     public function displayVisualCalendar() {
+        global $adminManager;
+
         $currentYear = isset($_GET['cal_year']) ? intval($_GET['cal_year']) : date('Y');
         $currentMonth = isset($_GET['cal_month']) ? intval($_GET['cal_month']) : date('n');
         $selectedDay = isset($_GET['cal_day']) ? intval($_GET['cal_day']) : null;
+        $isAdmin = isset($adminManager) && $adminManager->isAdmin();
 
         // Settings für Video-Modus holen
         $playInPlayer = $this->settingsManager ? $this->settingsManager->get('video_mode.play_in_player') : true;
@@ -490,7 +770,11 @@ class VisualCalendarManager {
         $output .= '</div>';
 
         // AI-Legende
-        $output .= '<div class="ai-legend">';
+        
+        //$output .= '<div class="ai-legend">';  ai wieder einblende das unten rausnehmendas rein
+        $showAiLegend = (!$this->settingsManager || $this->settingsManager->isAIEventsEnabled()) &&
+            $this->hasAiEventsForMonth($currentYear, $currentMonth);
+        $output .= '<div class="ai-legend" style="display:' . ($showAiLegend ? 'block' : 'none') . ';">'; 
         $output .= '<span class="legend-title">🤖 AI-Erkennung:</span>';
         foreach ($this->aiCategories as $cat => $info) {
             $output .= '<span class="legend-item" title="' . $info['name'] . '">' . $info['icon'] . '</span>';
@@ -519,8 +803,8 @@ class VisualCalendarManager {
         // Tage mit Videos/AI-Events markieren
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $hasVideos = $this->hasVideosForDate($currentYear, $currentMonth, $day);
-            $hasAiEvents = $this->hasAiEventsForDate($currentYear, $currentMonth, $day);
-            $aiIcons = $this->getAiIconsForDate($currentYear, $currentMonth, $day);
+            $hasAiEvents = $showAiLegend ? $this->hasAiEventsForDate($currentYear, $currentMonth, $day) : false;
+            $aiIcons = $showAiLegend ? $this->getAiIconsForDate($currentYear, $currentMonth, $day) : [];
             $isSelected = ($selectedDay == $day);
             $isToday = ($currentYear == date('Y') && $currentMonth == date('n') && $day == date('j'));
 
@@ -559,7 +843,7 @@ class VisualCalendarManager {
         // Video-Liste + AI-Events für ausgewählten Tag
         if ($selectedDay) {
             $videos = $this->getVideosForDate($currentYear, $currentMonth, $selectedDay);
-            $aiEvents = $this->getAiEventsForDate($currentYear, $currentMonth, $selectedDay);
+            $aiEvents = $showAiLegend ? $this->getAiEventsForDate($currentYear, $currentMonth, $selectedDay) : [];
 
             $output .= '<div class="day-details">';
             $output .= '<h4>📅 ' . sprintf('%02d.%02d.%04d', $selectedDay, $currentMonth, $currentYear) . '</h4>';
@@ -574,6 +858,8 @@ class VisualCalendarManager {
                     $sizeInMb = round($video['filesize'] / (1024 * 1024), 2);
                     $token = hash_hmac('sha256', $video['path'], session_id());
                     $videoUrl = '?download_specific_video=' . urlencode($video['path']) . '&token=' . $token;
+                    $videoWebUrl = $this->videoPathToUrl($video['path']);
+                    $deleteToken = hash_hmac('sha256', 'delete_daily_video|' . $video['path'], session_id());
 
                     $output .= '<li>';
                     $output .= '<span class="video-time">🕐 ' . $video['time'] . ' Uhr</span>';
@@ -582,7 +868,8 @@ class VisualCalendarManager {
 
                     // Play Button (wenn aktiviert)
                     if ($playInPlayer) {
-                        $output .= '<a href="#" onclick="DailyVideoPlayer.playVideo(\'' . htmlspecialchars($video['path']) . '\', ' . ($allowDownload ? 'true' : 'false') . '); return false;" class="play-link">';
+                      $output .= '<a href="#" onclick="DailyVideoPlayer.playVideo(\'' . htmlspecialchars($videoWebUrl) . '\', ' . ($allowDownload ? 'true' : 'false') . '); return false;" class="play-link">';
+
                         $output .= '▶️ Abspielen';
                         $output .= '</a>';
                     }
@@ -592,6 +879,18 @@ class VisualCalendarManager {
                         $output .= '<a href="' . $videoUrl . '" class="download-link">';
                         $output .= '⬇️ Download';
                         $output .= '</a>';
+                    }
+
+                    if ($isAdmin) {
+                        $output .= '<form method="post" class="video-delete-form" onsubmit="return confirm(\'Tagesvideo wirklich löschen?\');">';
+                        $output .= '<input type="hidden" name="action" value="delete_daily_video">';
+                        $output .= '<input type="hidden" name="video_path" value="' . htmlspecialchars($video['path'], ENT_QUOTES) . '">';
+                        $output .= '<input type="hidden" name="delete_token" value="' . htmlspecialchars($deleteToken, ENT_QUOTES) . '">';
+                        $output .= '<input type="hidden" name="cal_year" value="' . $currentYear . '">';
+                        $output .= '<input type="hidden" name="cal_month" value="' . $currentMonth . '">';
+                        $output .= '<input type="hidden" name="cal_day" value="' . $selectedDay . '">';
+                        $output .= '<button type="submit" class="video-delete-link">🗑️ Löschen</button>';
+                        $output .= '</form>';
                     }
 
                     $output .= '</div>';
@@ -730,27 +1029,199 @@ class VisualCalendarManager {
 
 
 class GuestbookManager {
+    // Schutz vor Spam (2026-09-27): vom 23. bis 27.09. kamen 32 Casino-/Wett-
+    // Eintraege mit [url=...]-Links, alle von Bots. Mehrere Stufen, die echte
+    // Besucher nicht bemerken: Honigtopf-Feld, signiertes Zeit-Token (min. 4 s,
+    // max. 2 h), keine Links, Spam-Begriffe, Tempolimit je IP, Laengengrenzen.
+    // Ausgabe wird escaped (vorher ungefiltert: gespeichertes XSS moeglich).
+    // Seit 2026-09-27 zusaetzlich Freigabe: neue Eintraege sind erst nach
+    // Freigabe durch einen Admin oeffentlich; der Admin bekommt eine Mail.
+    // Die Datei liegt ausserhalb des Webroots, sonst waeren wartende
+    // Eintraege ueber /guestbook.json lesbar.
     private $entries = [];
-    private $dbFile = 'guestbook.json';
+    private $dbFile = '/var/www/guestbook/guestbook.json';
+    private const KEY_FILE = '/etc/caurora/guestbook.key';
+    private const PROXY_IP = '192.168.178.111';
+    private const MIN_SECONDS = 4;
+    private const MAX_SECONDS = 7200;
+    private const MAX_PER_HOUR = 3;
+    private const MAX_NAME = 40;
+    private const MAX_MESSAGE = 800;
+    private const SPAM_WORDS = [
+        'casino', 'mostbet', 'melbet', '1win', '1вин', 'мостбет', 'pinco', 'aviator', 'olymp',
+        'chicken road', 'chicken-road', 'plinko', 'lucky jet', 'bet365', 'slots', 'freespin',
+        'free spins', 'bonus code', 'crypto', 'bitcoin', 'viagra', 'cialis', 'loan', 'porn',
+        'ставк', 'казино', 'букмекер', 'вывод', 'депозит',
+    ];
 
     public function __construct() {
         if (file_exists($this->dbFile)) {
-            $this->entries = json_decode(file_get_contents($this->dbFile), true);
+            $this->entries = json_decode(file_get_contents($this->dbFile), true) ?: [];
         }
     }
 
     public function handleFormSubmission() {
-        if (isset($_POST['guestbook'], $_POST['guest-name'], $_POST['guest-message'])) {
-            $this->addEntry($_POST['guest-name'], $_POST['guest-message']);
-            $this->saveEntries();
+        if (!isset($_POST['guestbook'], $_POST['guest-name'], $_POST['guest-message'])) {
+            return;
+        }
+        $name = trim((string) $_POST['guest-name']);
+        $message = trim((string) $_POST['guest-message']);
+        $reason = $this->spamReason($name, $message);
+        if ($reason !== null) {
+            $this->logBlocked($reason);
+            // Bots bekommen keine Rueckmeldung. Echte Besucher, die nur einen
+            // Link oder zu viel Text eingetragen haben, sehen einen Hinweis.
+            if (in_array($reason, ['link', 'laenge', 'tempo'], true)) {
+                $_SESSION['guestbook_notice'] = $reason;
+            }
+            return;
+        }
+        $this->addEntry($name, $message);
+        $this->saveEntries();
+        $this->rememberPost();
+        $_SESSION['guestbook_notice'] = 'freigabe';
+        $this->notifyAdmin($name, $message);
+    }
+
+    private function notifyAdmin(string $name, string $message): void {
+        global $appSecrets;
+        $gmail = $appSecrets['gmail'] ?? [];
+        if (empty($gmail['admin_email']) || empty($gmail['user']) || empty($gmail['app_password'])) {
+            return;
+        }
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = $gmail['user'];
+            $mail->Password = $gmail['app_password'];
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+            $mail->Timeout = 10;
+            $mail->CharSet = 'UTF-8';
+            $mail->setFrom($gmail['user'], 'Aurora Livecam');
+            $mail->addAddress($gmail['admin_email']);
+            $mail->Subject = 'Gästebuch: neuer Eintrag wartet auf Freigabe';
+            $mail->Body = "Von: {$name}\n\n{$message}\n\nFreigeben oder löschen: als Admin anmelden, Abschnitt Gästebuch.";
+            $mail->send();
+        } catch (\Throwable $e) {
+            error_log('Gaestebuch-Benachrichtigung fehlgeschlagen: ' . $e->getMessage());
         }
     }
+
+    public function approveEntry($index) {
+        if (isset($this->entries[$index])) {
+            $this->entries[$index]['approved'] = true;
+            $this->saveEntries();
+            return true;
+        }
+        return false;
+    }
+
+    public function pendingCount(): int {
+        return count(array_filter($this->entries, fn($e) => ($e['approved'] ?? true) === false));
+    }
+
+    private function spamReason(string $name, string $message): ?string {
+        if (!empty($_POST['website'])) {
+            return 'honigtopf';
+        }
+        $issued = $this->verifyToken((string) ($_POST['gb_token'] ?? ''));
+        if ($issued === null) {
+            return 'token';
+        }
+        $age = time() - $issued;
+        if ($age < self::MIN_SECONDS || $age > self::MAX_SECONDS) {
+            return 'zeit';
+        }
+        if ($name === '' || $message === '' || mb_strlen($name) > self::MAX_NAME || mb_strlen($message) > self::MAX_MESSAGE) {
+            return 'laenge';
+        }
+        $text = mb_strtolower($name . ' ' . $message);
+        if (preg_match('~\[url|\[link|https?://|www\.|<a\s|\b[a-z0-9-]+\.(com|net|org|ru|kg|shop|xyz|top|site|online|info|biz|io|club|pro|app|link|cc|tk)\b~iu', $text)) {
+            return 'link';
+        }
+        foreach (self::SPAM_WORDS as $word) {
+            if (mb_strpos($text, $word) !== false) {
+                return 'begriff';
+            }
+        }
+        // Namen wie "mostbet_yxpt": Marke + Unterstrich + Zufallskuerzel.
+        if (preg_match('~^[a-z0-9-]+_[A-Za-z]{4}$~', $name)) {
+            return 'name';
+        }
+        if ($this->recentPosts() >= self::MAX_PER_HOUR) {
+            return 'tempo';
+        }
+        return null;
+    }
+
+    // ---------------------------------------------------------------- Token
+
+    private function key(): string {
+        $key = @file_get_contents(self::KEY_FILE);
+        return $key !== false && strlen(trim($key)) >= 32 ? trim($key) : hash('sha256', __FILE__ . php_uname());
+    }
+
+    private function token(): string {
+        $time = (string) time();
+        return $time . '.' . hash_hmac('sha256', $time, $this->key());
+    }
+
+    private function verifyToken(string $token): ?int {
+        if (!preg_match('~^(\d{9,11})\.([a-f0-9]{64})$~', $token, $m)) {
+            return null;
+        }
+        return hash_equals(hash_hmac('sha256', $m[1], $this->key()), $m[2]) ? (int) $m[1] : null;
+    }
+
+    // ---------------------------------------------------------------- Tempo
+
+    private function clientIp(): string {
+        $remote = $_SERVER['REMOTE_ADDR'] ?? '';
+        // Nur dem eigenen Reverse Proxy glauben, sonst waere die IP faelschbar.
+        if ($remote === self::PROXY_IP && !empty($_SERVER['HTTP_X_REAL_IP'])) {
+            return (string) $_SERVER['HTTP_X_REAL_IP'];
+        }
+        return $remote;
+    }
+
+    private function rateFile(): string {
+        return sys_get_temp_dir() . '/caurora_guestbook_rate.json';
+    }
+
+    private function recentPosts(): int {
+        $data = json_decode((string) @file_get_contents($this->rateFile()), true) ?: [];
+        $ip = hash('sha256', $this->clientIp()); // keine Klartext-IPs speichern
+        return count(array_filter($data[$ip] ?? [], fn($t) => $t > time() - 3600));
+    }
+
+    private function rememberPost(): void {
+        $file = $this->rateFile();
+        $data = json_decode((string) @file_get_contents($file), true) ?: [];
+        $ip = hash('sha256', $this->clientIp());
+        $data[$ip][] = time();
+        foreach ($data as $k => $times) {
+            $data[$k] = array_values(array_filter($times, fn($t) => $t > time() - 3600));
+            if (!$data[$k]) unset($data[$k]);
+        }
+        @file_put_contents($file, json_encode($data), LOCK_EX);
+    }
+
+    private function logBlocked(string $reason): void {
+        @file_put_contents(sys_get_temp_dir() . '/caurora_guestbook_blocked.log',
+            date('Y-m-d H:i:s') . ' ' . $reason . "\n", FILE_APPEND | LOCK_EX);
+    }
+
+    // ---------------------------------------------------------------- Daten
 
     private function addEntry($name, $message) {
         $this->entries[] = [
             'name' => $name,
             'message' => $message,
-            'date' => date('Y-m-d H:i:s')
+            'date' => date('Y-m-d H:i:s'),
+            'approved' => false,
         ];
     }
 
@@ -764,40 +1235,56 @@ class GuestbookManager {
         return false;
     }
 
-
-
     private function saveEntries() {
-        file_put_contents($this->dbFile, json_encode($this->entries));
+        file_put_contents($this->dbFile, json_encode($this->entries, JSON_UNESCAPED_UNICODE), LOCK_EX);
     }
 
     public function displayForm() {
-        return '
+        $notice = '';
+        $reason = $_SESSION['guestbook_notice'] ?? null;
+        unset($_SESSION['guestbook_notice']);
+        $texts = [
+            'link' => ['Bitte ohne Links oder Webadressen.', 'Please leave out links and web addresses.'],
+            'laenge' => ['Name bis 40 und Nachricht bis 800 Zeichen.', 'Name up to 40 and message up to 800 characters.'],
+            'tempo' => ['Bitte etwas später erneut versuchen.', 'Please try again a little later.'],
+            'freigabe' => ['Danke! Dein Eintrag erscheint, sobald er freigegeben ist.', 'Thank you! Your entry will appear once it has been approved.'],
+        ];
+        if (isset($texts[$reason])) {
+            $notice = '<p class="guestbook-notice" data-de="' . $texts[$reason][0] . '" data-en="' . $texts[$reason][1] . '">'
+                . $texts[$reason][0] . '</p>';
+        }
+        return $notice . '
         <form method="post">
             <input type="hidden" name="guestbook" value="1">
+            <input type="hidden" name="gb_token" value="' . $this->token() . '">
+            <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                <label for="gb-website">Website</label>
+                <input type="text" id="gb-website" name="website" tabindex="-1" autocomplete="off">
+            </div>
 
           <label for="guest-name"
        data-en="Name:"
        data-de="Name:"
        data-it="Nome:"
-       data-fr="Nom:"
+       data-fr="Nom:" data-es="Nombre:"
        data-zh="姓名：">
     Name:
 </label>
-<input type="text" id="guest-name" name="guest-name" required>
+<input type="text" id="guest-name" name="guest-name" maxlength="' . self::MAX_NAME . '" required>
 <label for="guest-message"
        data-en="Message:"
        data-de="Nachricht:"
        data-it="Messaggio:"
-       data-fr="Message :"
+       data-fr="Message :" data-es="Mensaje:"
        data-zh="留言：">
     Nachricht:
 </label>
-<textarea id="guest-message" name="guest-message" required></textarea>
+<textarea id="guest-message" name="guest-message" maxlength="' . self::MAX_MESSAGE . '" required></textarea>
 <button type="submit"
         data-en="Add Entry"
         data-de="Eintrag hinzufügen"
         data-it="Aggiungi Voce"
-        data-fr="Ajouter une entrée"
+        data-fr="Ajouter une entrée" data-es="Añadir entrada"
         data-zh="添加留言">
     Eintrag hinzufügen
 </button>
@@ -806,12 +1293,32 @@ class GuestbookManager {
     }
 public function displayEntries($isAdmin = false) {
     $output = '<div id="guestbook-entries">';
-    foreach ($this->entries as $index => $entry) {
+    if ($isAdmin && $this->pendingCount() > 0) {
+        $output .= "<p class='guestbook-notice'><strong>" . $this->pendingCount() . " Eintrag/Einträge warten auf Freigabe.</strong></p>";
+    }
+    // Neueste zuerst; der Index bleibt der Speicherindex (fuer Freigabe/Loeschen).
+    foreach (array_reverse($this->entries, true) as $index => $entry) {
+        $approved = ($entry['approved'] ?? true) !== false; // Alt-Eintraege gelten als freigegeben
+        if (!$approved && !$isAdmin) {
+            continue;
+        }
+        $name = htmlspecialchars((string) ($entry['name'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $message = nl2br(htmlspecialchars((string) ($entry['message'] ?? ''), ENT_QUOTES, 'UTF-8'));
+        $date = htmlspecialchars((string) ($entry['date'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $index = (int) $index;
+        $pending = $approved ? '' : " style='border-left:4px solid #e3a32d;opacity:.85'";
         $output .= "
-        <div class='guestbook-entry'>
-            <h4><i class='fas fa-user'></i> {$entry['name']}</h4>
-            <p><i class='fas fa-comment'></i> {$entry['message']}</p>
-            <small><i class='fas fa-clock'></i> {$entry['date']}</small>";
+        <div class='guestbook-entry'{$pending}>" . ($approved ? '' : "<small><strong>Wartet auf Freigabe</strong></small>") . "
+            <h4><i class='fas fa-user'></i> {$name}</h4>
+            <p><i class='fas fa-comment'></i> {$message}</p>
+            <small><i class='fas fa-clock'></i> {$date}</small>";
+            if ($isAdmin && !$approved) {
+                $output .= "<form method='post' style='display:inline;'>
+                    <input type='hidden' name='action' value='approve_guestbook'>
+                    <input type='hidden' name='approve_entry' value='{$index}'>
+                    <button type='submit' class='delete-btn' style='background:#2e7d32'>Freigeben</button>
+                </form> ";
+            }
             if ($isAdmin) {
                 $output .= "<form method='post' style='display:inline;'>
                     <input type='hidden' name='action' value='delete_guestbook'>
@@ -819,7 +1326,7 @@ public function displayEntries($isAdmin = false) {
                     <button type='submit' class='delete-btn'>Löschen</button>
                 </form>";
             }
-
+        $output .= "</div>";
     }
     $output .= '</div>';
     return $output;
@@ -830,10 +1337,18 @@ public function displayEntries($isAdmin = false) {
 
 
 class ContactManager {
-    private $adminEmail = 'metacube@gmail.com';
+    private $adminEmail;
     private $feedbackFile = 'feedbacks.json';
-    private $gmailUser = 'metacube@gmail.com';
-    private $gmailAppPassword = 'qggk hsxz fdkq jgxa';
+    private $gmailUser;
+    private $gmailAppPassword;
+
+    public function __construct() {
+        global $appSecrets;
+        $gmail = $appSecrets['gmail'] ?? [];
+        $this->adminEmail = $gmail['admin_email'] ?? '';
+        $this->gmailUser = $gmail['user'] ?? '';
+        $this->gmailAppPassword = $gmail['app_password'] ?? '';
+    }
 
     public function displayForm() {
         return '
@@ -843,7 +1358,7 @@ class ContactManager {
                    data-en="Name:"
                    data-de="Name:"
                    data-it="Nome:"
-                   data-fr="Nom:"
+                   data-fr="Nom:" data-es="Nombre:"
                    data-zh="姓名：">
                 Name:
             </label>
@@ -853,7 +1368,7 @@ class ContactManager {
                    data-en="E-Mail:"
                    data-de="E-Mail:"
                    data-it="Email:"
-                   data-fr="E-mail:"
+                   data-fr="E-mail:" data-es="Correo electrónico:"
                    data-zh="电子邮件：">
                 E-Mail:
             </label>
@@ -863,7 +1378,7 @@ class ContactManager {
                    data-en="Message:"
                    data-de="Nachricht:"
                    data-it="Messaggio:"
-                   data-fr="Message:"
+                   data-fr="Message:" data-es="Mensaje:"
                    data-zh="消息：">
                 Nachricht:
             </label>
@@ -873,7 +1388,7 @@ class ContactManager {
                     data-en="Send Message"
                     data-de="Nachricht senden"
                     data-it="Invia Messaggio"
-                    data-fr="Envoyer le message"
+                    data-fr="Envoyer le message" data-es="Enviar mensaje"
                     data-zh="发送消息">
                 Nachricht senden
             </button>
@@ -930,7 +1445,7 @@ class ContactManager {
         $mail = new PHPMailer(true);
 
         try {
-            $mail->SMTPDebug = 2;
+            $mail->SMTPDebug = 0; // Stufe 2 schrieb ganze Kontaktanfragen ins error.log
             $mail->Debugoutput = function($str, $level) {
                 error_log("PHPMailer Debug: $str");
             };
@@ -1005,7 +1520,7 @@ class ContactManager {
                 <div class='footer'>
                     <p><strong>📅 Gesendet am:</strong> {$date}</p>
                     <p><strong>🌐 IP-Adresse:</strong> {$ip}</p>
-                    <p style='margin-top: 15px;'>Diese E-Mail wurde automatisch vom Kontaktformular auf<br><a href='https://www.aurora-live-weathercam.com' style='color: #667eea;'>www.aurora-live-weathercam.com</a> generiert.</p>
+                    <p style='margin-top: 15px;'>Diese E-Mail wurde automatisch vom Kontaktformular auf<br><a href='https://www.aurora-weather-livecam.com' style='color: #667eea;'>www.aurora-weather-livecam.com</a> generiert.</p>
                 </div>
             </div>
         </body>
@@ -1015,15 +1530,188 @@ class ContactManager {
 
 
 class AdminManager {
+    private $authFile = '/var/www/admin_auth.json';
+    private $adminEmail;
+    private $gmailUser;
+    private $gmailAppPassword;
+
+    public function __construct() {
+        global $appSecrets;
+        $gmail = $appSecrets['gmail'] ?? [];
+        $this->adminEmail = $gmail['admin_email'] ?? '';
+        $this->gmailUser = $gmail['user'] ?? '';
+        $this->gmailAppPassword = $gmail['app_password'] ?? '';
+    }
+
+    private function loadAuth(): array {
+        if (!file_exists($this->authFile)) {
+            return [
+                'username' => 'admin',
+                'password_hash' => '',
+                'reset_token' => null,
+                'reset_expires' => null,
+            ];
+        }
+        $data = json_decode(file_get_contents($this->authFile), true);
+        return is_array($data) ? $data : [];
+    }
+
+    private function saveAuth(array $auth): bool {
+        $auth['updated_at'] = date('c');
+        return file_put_contents($this->authFile, json_encode($auth, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX) !== false;
+    }
+
+    private function setFlash(string $message, string $type = 'info'): void {
+        $_SESSION['admin_message'] = ['text' => $message, 'type' => $type];
+    }
+
+    private function consumeFlash(): ?array {
+        if (!isset($_SESSION['admin_message'])) {
+            return null;
+        }
+        $message = $_SESSION['admin_message'];
+        unset($_SESSION['admin_message']);
+        return is_array($message) ? $message : null;
+    }
+
+    private function buildResetLink(string $token): string {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        global $publicBaseUrl;
+        $path = $_SERVER['PHP_SELF'] ?? '/index.php';
+        return rtrim($publicBaseUrl, '/') . $path . '?admin_reset=' . urlencode($token) . '#admin';
+    }
+
+    private function sendResetEmail(string $token): bool {
+        if ($this->gmailUser === '' || $this->gmailAppPassword === '' || $this->adminEmail === '') {
+            return false;
+        }
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = $this->gmailUser;
+            $mail->Password = $this->gmailAppPassword;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+            $mail->CharSet = 'UTF-8';
+            $mail->setFrom($this->gmailUser, 'Aurora Admin');
+            $mail->addAddress($this->adminEmail);
+            $mail->isHTML(true);
+            $resetLink = $this->buildResetLink($token);
+            $mail->Subject = 'Aurora Admin Passwort zurücksetzen';
+            $mail->Body = '<p>Es wurde eine Zurücksetzung für den Aurora-Admin angefordert.</p><p><a href="' . htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8') . '">Neues Passwort setzen</a></p><p>Der Link ist 60 Minuten gültig.</p>';
+            $mail->AltBody = "Passwort zurücksetzen: $resetLink\nDer Link ist 60 Minuten gültig.";
+            return $mail->send();
+        } catch (Exception $e) {
+            error_log('Admin reset mail error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function isAdmin() {
         return isset($_SESSION['admin']) && $_SESSION['admin'] === true;
     }
 
+    // Fehlversuche je IP (Hash) drosseln (2026-09-28): 5 in 15 Minuten.
+    private function loginFailFile(): string {
+        return sys_get_temp_dir() . '/caurora_admin_login_fail.json';
+    }
+
+    private function clientKey(): string {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        if ($ip === '192.168.178.111' && !empty($_SERVER['HTTP_X_REAL_IP'])) {
+            $ip = (string) $_SERVER['HTTP_X_REAL_IP']; // nur dem eigenen Proxy glauben
+        }
+        return hash('sha256', $ip);
+    }
+
+    private function recentLoginFailures(): array {
+        $data = json_decode((string) @file_get_contents($this->loginFailFile()), true) ?: [];
+        $cutoff = time() - 900;
+        foreach ($data as $k => $times) {
+            $data[$k] = array_values(array_filter((array) $times, fn($t) => $t > $cutoff));
+            if (!$data[$k]) unset($data[$k]);
+        }
+        return $data;
+    }
+
     public function handleLogin($username, $password) {
-        if ($username === 'admin' && $password === 'sonne4000$$$$Q') {
+        $failures = $this->recentLoginFailures();
+        $key = $this->clientKey();
+        if (count($failures[$key] ?? []) >= 5) {
+            $this->setFlash('Zu viele Fehlversuche. Bitte 15 Minuten warten.', 'error');
+            return false;
+        }
+        $auth = $this->loadAuth();
+        $validUser = hash_equals((string) ($auth['username'] ?? ''), (string) $username);
+        $validPassword = isset($auth['password_hash']) && password_verify((string) $password, (string) $auth['password_hash']);
+        if ($validUser && $validPassword) {
+            session_regenerate_id(true); // Schutz gegen Session Fixation
+            unset($failures[$key]);
+            @file_put_contents($this->loginFailFile(), json_encode($failures), LOCK_EX);
             $_SESSION['admin'] = true;
+            $this->setFlash('Admin-Login erfolgreich.', 'success');
             return true;
         }
+        $failures[$key][] = time();
+        @file_put_contents($this->loginFailFile(), json_encode($failures), LOCK_EX);
+        $this->setFlash('Login fehlgeschlagen.', 'error');
+        return false;
+    }
+
+    public function requestPasswordReset(): bool {
+        $auth = $this->loadAuth();
+        // Hoechstens eine Reset-Mail alle 10 Minuten (sonst Mail-Flut per Knopfdruck).
+        if (!empty($auth['reset_expires']) && ((int) $auth['reset_expires'] - 3600) > time() - 600) {
+            $this->setFlash('Reset-Mail wurde gerade erst angefordert. Bitte Postfach prüfen.', 'error');
+            return false;
+        }
+        $token = bin2hex(random_bytes(32));
+        $auth['reset_token'] = hash('sha256', $token);
+        $auth['reset_expires'] = time() + 3600;
+        if (!$this->saveAuth($auth)) {
+            $this->setFlash('Reset konnte nicht gespeichert werden.', 'error');
+            return false;
+        }
+        if ($this->sendResetEmail($token)) {
+            $this->setFlash('Reset-Link wurde per Mail gesendet.', 'success');
+            return true;
+        }
+        $this->setFlash('Reset-Mail konnte nicht gesendet werden.', 'error');
+        return false;
+    }
+
+    public function isResetTokenValid(?string $token): bool {
+        if (!$token) return false;
+        $auth = $this->loadAuth();
+        if (empty($auth['reset_token']) || empty($auth['reset_expires'])) return false;
+        if ((int) $auth['reset_expires'] < time()) return false;
+        return hash_equals((string) $auth['reset_token'], hash('sha256', $token));
+    }
+
+    public function handlePasswordReset(string $token, string $newPassword, string $confirmPassword): bool {
+        if (!$this->isResetTokenValid($token)) {
+            $this->setFlash('Reset-Link ist ungültig oder abgelaufen.', 'error');
+            return false;
+        }
+        if ($newPassword !== $confirmPassword) {
+            $this->setFlash('Die Passwörter stimmen nicht überein.', 'error');
+            return false;
+        }
+        if (strlen($newPassword) < 12) {
+            $this->setFlash('Das neue Passwort muss mindestens 12 Zeichen haben.', 'error');
+            return false;
+        }
+        $auth = $this->loadAuth();
+        $auth['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
+        $auth['reset_token'] = null;
+        $auth['reset_expires'] = null;
+        if ($this->saveAuth($auth)) {
+            $this->setFlash('Passwort wurde erfolgreich geändert.', 'success');
+            return true;
+        }
+        $this->setFlash('Passwort konnte nicht gespeichert werden.', 'error');
         return false;
     }
 
@@ -1052,12 +1740,39 @@ class AdminManager {
     }
 
     public function displayLoginForm() {
-        return '
+        $flash = $this->consumeFlash();
+        $flashHtml = '';
+        if ($flash) {
+            $bg = ($flash['type'] ?? '') === 'success' ? '#e8f7ee' : '#fdecea';
+            $color = ($flash['type'] ?? '') === 'success' ? '#1f7a3d' : '#a12622';
+            $flashHtml = '<div style="margin-bottom:15px;padding:12px 14px;border-radius:8px;background:' . $bg . ';color:' . $color . ';font-weight:600;">' . htmlspecialchars((string) ($flash['text'] ?? ''), ENT_QUOTES, 'UTF-8') . '</div>';
+        }
+
+        $resetToken = isset($_GET['admin_reset']) ? (string) $_GET['admin_reset'] : '';
+        if ($resetToken !== '') {
+            if ($this->isResetTokenValid($resetToken)) {
+                return $flashHtml . '
+                <form id="admin-reset-form" method="post">
+                    <input type="hidden" name="admin-reset-submit" value="1">
+                    <input type="hidden" name="reset_token" value="' . htmlspecialchars($resetToken, ENT_QUOTES, 'UTF-8') . '">
+                    <label>Neues Passwort:</label><input type="password" name="new_password" minlength="12" required>
+                    <label>Neues Passwort wiederholen:</label><input type="password" name="new_password_confirm" minlength="12" required>
+                    <button type="submit">Passwort setzen</button>
+                </form>';
+            }
+            $flashHtml .= '<div style="margin-bottom:15px;padding:12px 14px;border-radius:8px;background:#fdecea;color:#a12622;font-weight:600;">Reset-Link ist ungültig oder abgelaufen.</div>';
+        }
+
+        return $flashHtml . '
         <form id="login-form" method="post">
             <input type="hidden" name="admin-login" value="1">
             <label>Benutzername:</label><input type="text" name="username" required>
             <label>Passwort:</label><input type="password" name="password" required>
             <button type="submit">Einloggen</button>
+        </form>
+        <form method="post" style="margin-top: 12px;">
+            <input type="hidden" name="admin-reset-request" value="1">
+            <button type="submit" style="background:#f3f4f6;color:#333;">Passwort vergessen</button>
         </form>';
     }
 
@@ -1152,6 +1867,48 @@ class AdminManager {
         $output .= '</div>';
 
         $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Instagram URL</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="url" id="setting-social-instagram" class="text-input" placeholder="https://www.instagram.com/deinprofil" value="' . htmlspecialchars((string) ($settingsManager->get('social_links.instagram') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Facebook URL</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="url" id="setting-social-facebook" class="text-input" placeholder="https://www.facebook.com/deineseite" value="' . htmlspecialchars((string) ($settingsManager->get('social_links.facebook') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">YouTube URL</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="url" id="setting-social-youtube" class="text-input" placeholder="https://www.youtube.com/@deinkanal" value="' . htmlspecialchars((string) ($settingsManager->get('social_links.youtube') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">TikTok URL</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="url" id="setting-social-tiktok" class="text-input" placeholder="https://www.tiktok.com/@deinprofil" value="' . htmlspecialchars((string) ($settingsManager->get('social_links.tiktok') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Buy me a Coffee URL</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="url" id="setting-social-buymeacoffee" class="text-input" placeholder="https://buymeacoffee.com/deinname" value="' . htmlspecialchars((string) ($settingsManager->get('social_links.buymeacoffee') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">PayPal-Spendenlink URL</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="url" id="setting-social-paypal" class="text-input" placeholder="https://www.paypal.com/donate/?business=..." value="' . htmlspecialchars((string) ($settingsManager->get('social_links.paypal') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Patrouille Suisse Section anzeigen</span>';
         $output .= '<div class="setting-input">';
         $output .= '<label class="toggle-switch">';
@@ -1219,7 +1976,17 @@ class AdminManager {
         $output .= '</div>';
 
         $output .= '<div class="setting-row">';
-        $output .= '<span class="setting-label">KI-Events anzeigen</span>';
+        $output .= '<span class="setting-label">KI-Erkennung aktivieren</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-ai-detection-enabled" ' . ($settingsManager->get('content.ai_detection_enabled') !== false ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">KI-Erkannte Bilder anzeigen</span>';
         $output .= '<div class="setting-input">';
         $output .= '<label class="toggle-switch">';
         $output .= '<input type="checkbox" id="setting-ai-events-enabled" ' . ($settingsManager->get('content.ai_events_enabled') ? 'checked' : '') . '>';
@@ -1232,6 +1999,62 @@ class AdminManager {
         $output .= '<span class="setting-label">Max Gästebuch-Einträge</span>';
         $output .= '<div class="setting-input">';
         $output .= '<input type="number" id="setting-max-guestbook" class="number-input" min="10" max="200" step="10" value="' . $settingsManager->get('content.max_guestbook_entries') . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Hero-Titel (DE)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-hero-welcome" class="text-input" placeholder="' . htmlspecialchars($siteConfig['welcomeDe']) . '" value="' . htmlspecialchars((string) ($settingsManager->get('content.hero_welcome_de') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Hero-Untertitel (DE)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<textarea id="setting-hero-region-text" class="textarea-input" rows="2" placeholder="Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!">' . htmlspecialchars((string) ($settingsManager->get('content.hero_region_text_de') ?? '')) . '</textarea>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Ortsflagge ALT-Text (DE)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-local-flag-alt" class="text-input" placeholder="Ortsflagge" value="' . htmlspecialchars((string) ($settingsManager->get('content.local_flag_alt_de') ?? '')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Spenden-Text (DE)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<textarea id="setting-donation-callout" class="textarea-input" rows="4" placeholder="Gefällt dir die Livecam? Unterstütze das Projekt ...">' . htmlspecialchars((string) ($settingsManager->get('content.donation_callout_de') ?? '')) . '</textarea>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">PayPal-Spendenknopf anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="checkbox" id="setting-paypal-enabled" ' . ($settingsManager->shouldShowPaypalDonation() ? 'checked' : '') . '>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Buy-me-a-Coffee-Knopf anzeigen (alt)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="checkbox" id="setting-buymeacoffee-enabled" ' . ($settingsManager->shouldShowBuyMeACoffee() ? 'checked' : '') . '>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">TWINT-Spendenlink anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="checkbox" id="setting-twint-enabled" ' . ($settingsManager->get('content.twint_enabled') ? 'checked' : '') . '>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">TWINT-Infotext (DE)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<textarea id="setting-twint-support-text" class="textarea-input" rows="4" placeholder="Unterstütze die Aurora Livecam mit deiner Spende...">' . htmlspecialchars((string) ($settingsManager->get('content.twint_support_text_de') ?? '')) . '</textarea>';
         $output .= '</div>';
         $output .= '</div>';
         $output .= '</div>'; // settings-group
@@ -1289,21 +2112,21 @@ class AdminManager {
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Custom Title (leer = Standard)</span>';
         $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-custom-title" class="text-input" placeholder="' . $siteConfig['siteTitle'] . '" value="' . htmlspecialchars($settingsManager->get('seo.custom_title')) . '">';
+        $output .= '<input type="text" id="setting-custom-title" class="text-input" placeholder="' . $siteConfig['siteTitle'] . '" value="' . htmlspecialchars((string) ($settingsManager->get('seo.custom_title') ?? '')) . '">';
         $output .= '</div>';
         $output .= '</div>';
 
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Meta Description</span>';
         $output .= '<div class="setting-input">';
-        $output .= '<textarea id="setting-meta-description" class="textarea-input" rows="2" placeholder="SEO Beschreibung für Google...">' . htmlspecialchars($settingsManager->get('seo.meta_description')) . '</textarea>';
+        $output .= '<textarea id="setting-meta-description" class="textarea-input" rows="2" placeholder="SEO Beschreibung für Google...">' . htmlspecialchars((string) ($settingsManager->get('seo.meta_description') ?? '')) . '</textarea>';
         $output .= '</div>';
         $output .= '</div>';
 
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Meta Keywords</span>';
         $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-meta-keywords" class="text-input" placeholder="webcam, zürich, wetter..." value="' . htmlspecialchars($settingsManager->get('seo.meta_keywords')) . '">';
+        $output .= '<input type="text" id="setting-meta-keywords" class="text-input" placeholder="webcam, zürich, wetter..." value="' . htmlspecialchars((string) ($settingsManager->get('seo.meta_keywords') ?? '')) . '">';
         $output .= '</div>';
         $output .= '</div>';
         $output .= '</div>'; // settings-group
@@ -1325,30 +2148,23 @@ class AdminManager {
         // API-KEY FELD KOMPLETT ENTFERNT
 
         $output .= '<div class="setting-row">';
-        $output .= '<span class="setting-label">API Key (OpenWeatherMap, optional)</span>';
-        $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-weather-api-key" class="text-input" placeholder="OWM API Key" value="' . htmlspecialchars($settingsManager->get('weather.api_key')) . '">';
-        $output .= '</div>';
-        $output .= '</div>';
-
-        $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Standort (Anzeigename)</span>';
         $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-weather-location" class="text-input" placeholder="Oberdürnten,CH" value="' . htmlspecialchars($settingsManager->get('weather.location')) . '">';
+        $output .= '<input type="text" id="setting-weather-location" class="text-input" placeholder="Oberdürnten,CH" value="' . htmlspecialchars((string) ($settingsManager->get('weather.location') ?? '')) . '">';
         $output .= '</div>';
         $output .= '</div>';
 
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Latitude (Breitengrad)</span>';
         $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-weather-lat" class="text-input" placeholder="47.2833" value="' . htmlspecialchars($settingsManager->get('weather.lat')) . '">';
+        $output .= '<input type="text" id="setting-weather-lat" class="text-input" placeholder="47.2833" value="' . htmlspecialchars((string) ($settingsManager->get('weather.lat') ?? '')) . '">';
         $output .= '</div>';
         $output .= '</div>';
 
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Longitude (Längengrad)</span>';
         $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-weather-lon" class="text-input" placeholder="8.7167" value="' . htmlspecialchars($settingsManager->get('weather.lon')) . '">';
+        $output .= '<input type="text" id="setting-weather-lon" class="text-input" placeholder="8.7167" value="' . htmlspecialchars((string) ($settingsManager->get('weather.lon') ?? '')) . '">';
         $output .= '</div>';
         $output .= '</div>';
 
@@ -1439,6 +2255,9 @@ class AdminManager {
         $files = glob("uploads/*.{jpg,jpeg,png,gif}", GLOB_BRACE);
 
         if ($files) {
+            usort($files, static function ($a, $b) {
+                return filemtime($b) <=> filemtime($a);
+            });
             foreach($files as $file) {
                 $filename = basename($file);
                 $output .= '<div style="position:relative; display:inline-block;">';
@@ -1472,10 +2291,12 @@ class AdminManager {
 
 class VideoArchiveManager {
     private $videoDir;
+    private $videoDirs;
     private $monthNames;
 
     public function __construct($videoDir = './videos/') {
-        $this->videoDir = $videoDir;
+        $this->videoDirs = is_array($videoDir) ? $videoDir : [$videoDir];
+        $this->videoDir = $this->videoDirs[0];
         $this->monthNames = [
             '01' => 'Januar', '02' => 'Februar', '03' => 'März', '04' => 'April',
             '05' => 'Mai', '06' => 'Juni', '07' => 'Juli', '08' => 'August',
@@ -1484,21 +2305,33 @@ class VideoArchiveManager {
     }
 
     public function getVideosGroupedByDate() {
+        global $remoteCache;
         $videos = [];
 
-        foreach (glob($this->videoDir . 'daily_video_*.mp4') as $video) {
+        // Lokale Videos direkt (schnell)
+        foreach (glob($this->videoDirs[0] . 'daily_video_*.mp4') as $video) {
             if (preg_match('/daily_video_(\d{8})_\d{6}\.mp4/', basename($video), $matches)) {
                 $dateStr = $matches[1];
                 $year = substr($dateStr, 0, 4);
                 $month = substr($dateStr, 4, 2);
                 $day = substr($dateStr, 6, 2);
-
                 $videos[$year][$month][] = [
-                    'path' => $video,
-                    'filename' => basename($video),
-                    'day' => $day,
-                    'filesize' => filesize($video),
-                    'modified' => filemtime($video)
+                    'path' => $video, 'filename' => basename($video),
+                    'day' => $day, 'filesize' => filesize($video), 'modified' => filemtime($video)
+                ];
+            }
+        }
+
+        // Remote-Videos aus Cache (kein glob auf SMB!)
+        foreach ($remoteCache->getVideos() as $rv) {
+            if (preg_match('/daily_video_(\d{8})_\d{6}\.mp4/', $rv['filename'], $matches)) {
+                $dateStr = $matches[1];
+                $year = substr($dateStr, 0, 4);
+                $month = substr($dateStr, 4, 2);
+                $day = substr($dateStr, 6, 2);
+                $videos[$year][$month][] = [
+                    'path' => $rv['path'], 'filename' => $rv['filename'],
+                    'day' => $day, 'filesize' => $rv['filesize'], 'modified' => $rv['mtime']
                 ];
             }
         }
@@ -1514,42 +2347,133 @@ class VideoArchiveManager {
         return $videos;
     }
 
-    public function handleSpecificVideoDownload() {
-        if (isset($_GET['download_specific_video']) && isset($_GET['token'])) {
-            $videoPath = $_GET['download_specific_video'];
-            $token = $_GET['token'];
+  public function handleSpecificVideoDownload() {
+    if (isset($_GET['download_specific_video']) && isset($_GET['token'])) {
+        $videoPath = $_GET['download_specific_video'];
+        $token = $_GET['token'];
 
-            $expectedToken = hash_hmac('sha256', $videoPath, session_id());
-            if (!hash_equals($expectedToken, $token)) {
-                echo "Ungültiger Token. Zugriff verweigert.";
-                exit;
-            }
+        $expectedToken = hash_hmac('sha256', $videoPath, session_id());
+        if (!hash_equals($expectedToken, $token)) {
+            echo "Ungültiger Token. Zugriff verweigert.";
+            exit;
+        }
 
-            $videoDir = realpath($this->videoDir);
+        $validPath = false;
+        foreach ($this->videoDirs as $vDir) {
+            $resolvedDir = realpath($vDir);
             $requestedPath = realpath($videoPath);
-
-            if ($requestedPath && strpos($requestedPath, $videoDir) === 0 && file_exists($requestedPath)) {
-                $extension = pathinfo($requestedPath, PATHINFO_EXTENSION);
-                if (strtolower($extension) !== 'mp4') {
-                    echo "Nur MP4-Dateien können heruntergeladen werden.";
-                    exit;
-                }
-
-                header('Content-Description: File Transfer');
-                header('Content-Type: video/mp4');
-                header('Content-Disposition: attachment; filename="'.basename($requestedPath).'"');
-                header('Expires: 0');
-                header('Cache-Control: must-revalidate');
-                header('Pragma: public');
-                header('Content-Length: ' . filesize($requestedPath));
-                readfile($requestedPath);
-                exit;
-            } else {
-                echo "Datei nicht gefunden oder ungültiger Dateipfad.";
-                exit;
+            if ($requestedPath && $resolvedDir && strpos($requestedPath, $resolvedDir) === 0) {
+                $validPath = true;
+                break;
             }
         }
+        if ($validPath && file_exists($videoPath)) {
+            $extension = pathinfo($videoPath, PATHINFO_EXTENSION);  // ← DAS FEHLT
+            if (strtolower($extension) !== 'mp4') {
+                echo "Nur MP4-Dateien können heruntergeladen werden.";
+                exit;
+            }
+
+            header('Content-Description: File Transfer');
+            header('Content-Type: video/mp4');
+            header('Content-Disposition: attachment; filename="'.basename($requestedPath).'"');
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate');
+            header('Pragma: public');
+            header('Content-Length: ' . filesize($requestedPath));
+            readfile($requestedPath);
+            exit;
+        } else {
+            echo "Datei nicht gefunden oder ungültiger Dateipfad.";
+            exit;
+        }
     }
+}
+
+    private function deleteDirectoryRecursive($dir) {
+        if (!is_dir($dir)) {
+            return true;
+        }
+
+        $items = scandir($dir);
+        if ($items === false) {
+            return false;
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($path)) {
+                if (!$this->deleteDirectoryRecursive($path)) {
+                    return false;
+                }
+            } elseif (!unlink($path)) {
+                return false;
+            }
+        }
+
+        return rmdir($dir);
+    }
+
+    private function deleteHlsForDailyVideo($videoPath) {
+        $basename = basename($videoPath, '.mp4');
+        if (!preg_match('/^daily_video_(\d{8}_\d{6})$/', $basename, $matches)) {
+            return true;
+        }
+
+        $videoId = $matches[1];
+        $videoDir = dirname($videoPath);
+        $parentDir = dirname($videoDir);
+        $hlsDir = $parentDir . '/hls/' . $videoId;
+
+        if (!is_dir($hlsDir)) {
+            return true;
+        }
+
+        $resolvedHlsRoot = realpath($parentDir . '/hls');
+        $resolvedHlsDir = realpath($hlsDir);
+        if (!$resolvedHlsRoot || !$resolvedHlsDir || strpos($resolvedHlsDir, rtrim($resolvedHlsRoot, '/') . '/') !== 0) {
+            return false;
+        }
+
+        return $this->deleteDirectoryRecursive($resolvedHlsDir);
+    }
+
+    public function deleteSpecificVideo($videoPath, $token) {
+        $expectedToken = hash_hmac('sha256', 'delete_daily_video|' . $videoPath, session_id());
+        if (!hash_equals($expectedToken, (string) $token)) {
+            return false;
+        }
+
+        $requestedPath = realpath($videoPath);
+        if (!$requestedPath || !is_file($requestedPath)) {
+            return false;
+        }
+
+        if (strtolower(pathinfo($requestedPath, PATHINFO_EXTENSION)) !== 'mp4') {
+            return false;
+        }
+
+        if (!preg_match('/^daily_video_\d{8}_\d{6}\.mp4$/', basename($requestedPath))) {
+            return false;
+        }
+
+        foreach ($this->videoDirs as $vDir) {
+            $resolvedDir = realpath($vDir);
+            if ($resolvedDir && strpos($requestedPath, rtrim($resolvedDir, '/') . '/') === 0) {
+                if (!unlink($requestedPath)) {
+                    return false;
+                }
+                return $this->deleteHlsForDailyVideo($requestedPath);
+            }
+        }
+
+        return false;
+    }
+
 }
 
 
@@ -1559,7 +2483,7 @@ $guestbookManager = new GuestbookManager();
 $contactManager = new ContactManager();
 $adminManager = new AdminManager();
 
-$videoArchiveManager = new VideoArchiveManager('./videos/');
+$videoArchiveManager = new VideoArchiveManager(['./videos/', '/mnt/aurora-remote/videos/']);
 $videoArchiveManager->handleSpecificVideoDownload();
 
 // AI-Video Download Handler
@@ -1629,13 +2553,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ADMIN LOGIN
     elseif (isset($_POST['admin-login'])) {
-        $adminManager->handleLogin($_POST['username'], $_POST['password']);
+        $adminManager->handleLogin($_POST['username'] ?? '', $_POST['password'] ?? '');
+        header('Location: ' . $_SERVER['PHP_SELF'] . '#admin');
+        exit;
+    }
+
+    elseif (isset($_POST['admin-reset-request'])) {
+        $adminManager->requestPasswordReset();
+        header('Location: ' . $_SERVER['PHP_SELF'] . '#admin');
+        exit;
+    }
+
+    elseif (isset($_POST['admin-reset-submit'])) {
+        $adminManager->handlePasswordReset($_POST['reset_token'] ?? '', $_POST['new_password'] ?? '', $_POST['new_password_confirm'] ?? '');
         header('Location: ' . $_SERVER['PHP_SELF'] . '#admin');
         exit;
     }
 
     // ADMIN AKTIONEN
     elseif ($adminManager->isAdmin()) {
+        if (isset($_POST['action']) && $_POST['action'] === 'approve_guestbook' && isset($_POST['approve_entry'])) {
+            $guestbookManager->approveEntry(intval($_POST['approve_entry']));
+            header("Location: " . $_SERVER['PHP_SELF'] . "#guestbook");
+            exit;
+        }
+
         if (isset($_POST['action']) && $_POST['action'] === 'delete_guestbook' && isset($_POST['delete_entry'])) {
             $guestbookManager->deleteEntry(intval($_POST['delete_entry']));
             header("Location: " . $_SERVER['PHP_SELF'] . "#guestbook");
@@ -1653,6 +2595,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $filepath = "uploads/" . $filename;
             if (file_exists($filepath)) { unlink($filepath); }
             header("Location: " . $_SERVER['PHP_SELF'] . "#admin");
+            exit;
+        }
+
+        if (isset($_POST['action']) && $_POST['action'] === 'delete_daily_video' && isset($_POST['video_path'], $_POST['delete_token'])) {
+            $videoArchiveManager->deleteSpecificVideo($_POST['video_path'], $_POST['delete_token']);
+            $year = isset($_POST['cal_year']) ? intval($_POST['cal_year']) : intval(date('Y'));
+            $month = isset($_POST['cal_month']) ? intval($_POST['cal_month']) : intval(date('n'));
+            $day = isset($_POST['cal_day']) ? intval($_POST['cal_day']) : 1;
+            header("Location: " . $_SERVER['PHP_SELF'] . "?cal_year={$year}&cal_month={$month}&cal_day={$day}#archive");
             exit;
         }
 
@@ -1787,7 +2738,7 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3"></script>
     <link rel="stylesheet" href="css/player-controls.css">
 
 <style>
@@ -1956,6 +2907,18 @@ nav ul li a:hover { color: #4CAF50; }
     height: 100%;
     object-fit: contain;
 }
+
+/* Ton-Knopf im Live-Player (2026-10-11) */
+#aurora-ton-knopf {
+    position: absolute; left: 12px; bottom: 12px; z-index: 35;
+    border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer;
+    font: 600 14px/1 system-ui, -apple-system, sans-serif; color: #fff;
+    background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    transition: background .2s, transform .2s;
+}
+#aurora-ton-knopf:hover { background: rgba(0, 0, 0, .75); transform: scale(1.05); }
+#aurora-ton-knopf.stumm { animation: auroraTonPuls 2s ease-in-out 3; }
+@keyframes auroraTonPuls { 50% { box-shadow: 0 0 0 6px rgba(255, 255, 255, .25); } }
 
 .video-info-bar {
     display: grid;
@@ -2139,7 +3102,7 @@ nav ul li a:hover { color: #4CAF50; }
 
 .video-download-list { list-style: none; padding: 0; }
 .video-download-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 10px; background: white; border-radius: 6px; flex-wrap: wrap; gap: 10px; }
-.video-actions { display: flex; gap: 10px; }
+.video-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
 .play-link {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -2162,6 +3125,26 @@ nav ul li a:hover { color: #4CAF50; }
     transition: all 0.3s;
 }
 .download-link:hover { transform: scale(1.05); }
+
+.video-delete-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    max-width: none;
+}
+.video-delete-link {
+    background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+    color: white;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.video-delete-link:hover { transform: scale(1.05); }
 
 /* Forms */
 form { display: grid; gap: 20px; background-color: rgba(255, 255, 255, 0.7); padding: 25px; border-radius: 8px; max-width: 600px; margin: 0 auto; }
@@ -2598,28 +3581,216 @@ body.theme-neo footer {
 }
 
 
+
+
+
+.starlink-banner-wrapper {
+    text-align: center;
+    margin: 30px 0 20px 0;
+}
+
+.starlink-banner {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.starlink-banner h3 {
+    color: white;
+    margin: 0 0 15px 0;
+}
+
+.starlink-banner p {
+    color: white;
+    margin: 0 0 15px 0;
+    line-height: 1.6;
+}
+
+.starlink-banner a {
+    display: inline-block;
+}
+
+.starlink-banner img {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    background: white;
+    padding: 6px;
+    transition: transform 0.3s;
+}
+
+.starlink-banner img:hover {
+    transform: scale(1.05);
+}
+
+.donation-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.paypal-donation-link {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 220px;
+    padding: 18px 32px;
+    border-radius: 999px;
+    background: #ffc439;
+    color: #111;
+    font: 600 18px/1.2 Arial, Helvetica, sans-serif;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.paypal-donation-link:hover,
+.paypal-donation-link:focus-visible {
+    transform: scale(1.05);
+    background: #f2ba36;
+}
+
+.paypal-logo {
+    font: italic 800 30px/1 Verdana, Arial, sans-serif;
+    letter-spacing: -0.5px;
+}
+
+.paypal-logo b { color: #003087; }
+.paypal-logo i { color: #009cde; }
+
+.twint-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    margin: 30px auto 20px auto;
+    max-width: 760px;
+}
+
+.twint-image {
+    max-width: 320px;
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.green-label-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 7px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 10px rgba(46,125,50,0.25);
+}
+
+.eco-business-box {
+    background: rgba(255,255,255,0.92);
+    border-radius: 14px;
+    padding: 22px 24px;
+    max-width: 700px;
+    width: 100%;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+    border: 1px solid rgba(46,125,50,0.15);
+}
+
+.eco-business-box h3 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    color: #1b5e20;
+    line-height: 1.3;
+}
+
+.eco-subtitle {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.eco-business-box p {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.7;
+    margin-bottom: 18px;
+}
+
+.eco-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.eco-feature-list li {
+    background: #f4faf4;
+    border-left: 4px solid #43a047;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #2d2d2d;
+    text-align: left;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .eco-business-box {
+        padding: 18px 16px;
+    }
+
+    .eco-business-box h3 {
+        font-size: 20px;
+    }
+
+    .eco-subtitle {
+        font-size: 15px;
+    }
+
+    .eco-feature-list li {
+        font-size: 13px;
+    }
+}
+
 </style>
 
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<link rel="stylesheet" href="css/aurora-refresh.css?v=20261007">
 </head>
 <body class="<?php echo $settingsManager->getDefaultTheme(); ?>">
 
 <div class="sun-overlay" aria-hidden="true"></div>
 
 <div id="language-switch">
-    <button id="lang-de" class="lang-button" aria-label="Deutsch">
+    <button id="lang-de" class="lang-button" data-code="DE" aria-label="Deutsch">
         <img src="images/swiss-flag-new.ico" alt="Schweizer Flagge" class="flag-icon">
     </button>
-    <button id="lang-en" class="lang-button" aria-label="English">
+    <button id="lang-en" class="lang-button" data-code="EN" aria-label="English">
         <img src="images/uk-flag.ico" alt="UK Flagge" class="flag-icon">
     </button>
-    <button id="lang-it" class="lang-button" aria-label="Italiano">
+    <button id="lang-it" class="lang-button" data-code="IT" aria-label="Italiano">
         <img src="images/italian-flag.ico" alt="Flagge Italien" class="flag-icon">
     </button>
-    <button id="lang-fr" class="lang-button" aria-label="Français">
+    <button id="lang-fr" class="lang-button" data-code="FR" aria-label="Français">
         <img src="images/french-flag.ico" alt="Flagge Frankreich" class="flag-icon">
     </button>
-    <button id="lang-zh" class="lang-button" aria-label="中文">
+    <button id="lang-es" class="lang-button" aria-label="Español" data-code="ES">
+        <img src="images/spanish-flag.svg" alt="Bandera de España" class="flag-icon">
+    </button>
+    <button id="lang-zh" class="lang-button" data-code="CN" aria-label="中文">
         <img src="images/chinese-flag.ico" alt="中国国旗" class="flag-icon">
     </button>
 </div>
@@ -2634,21 +3805,22 @@ body.theme-neo footer {
         </div>
         <nav>
             <ul>
-                <li><a href="#webcams" data-en="Webcam" data-de="Webcam" data-it="Webcam" data-fr="Webcam" data-zh="摄像头">Webcam</a></li>
-                <li><a href="#guestbook" data-en="Guestbook" data-de="Gästebuch" data-it="Libro degli ospiti" data-fr="Livre d'or" data-zh="留言簿">Gästebuch</a></li>
-                <li><a href="#kontakt" data-en="Contact" data-de="Kontakt" data-it="Contatto" data-fr="Contact" data-zh="联系">Kontakt</a></li>
-                <li><a href="#gallery" data-en="Gallery" data-de="Galerie" data-it="Galleria" data-fr="Galerie" data-zh="图库">Galerie</a></li>
-                <li><a href="#archive" data-en="Video Archive" data-de="Videoarchiv" data-it="Archivio video" data-fr="Archive vidéo" data-zh="视频档案">Videoarchiv</a></li>
+                <li><a href="#webcams" data-en="Webcam" data-de="Webcam" data-it="Webcam" data-fr="Webcam" data-es="Webcam" data-zh="摄像头">Webcam</a></li>
+                <li><a href="#guestbook" data-en="Guestbook" data-de="Gästebuch" data-it="Libro degli ospiti" data-fr="Livre d'or" data-es="Libro de visitas" data-zh="留言簿">Gästebuch</a></li>
+                <li><a href="#kontakt" data-en="Contact" data-de="Kontakt" data-it="Contatto" data-fr="Contact" data-es="Contacto" data-zh="联系">Kontakt</a></li>
+                <li><a href="#gallery" data-en="Gallery" data-de="Galerie" data-it="Galleria" data-fr="Galerie" data-es="Galería" data-zh="图库">Galerie</a></li>
+                <li><a href="#archive" data-en="Video Archive" data-de="Videoarchiv" data-it="Archivio video" data-fr="Archive vidéo" data-es="Archivo de vídeos" data-zh="视频档案">Videoarchiv</a></li>
+                <li><a href="/app/" style="display:inline-flex;align-items:center;gap:6px;"><img src="/app/icon.svg" alt="" width="20" height="20" style="border-radius:5px;"><span data-en="App (Beta)" data-de="App (Beta)" data-it="App (Beta)" data-fr="Appli (bêta)" data-es="App (beta)" data-zh="应用（测试版）">App (Beta)</span></a></li>
                 <?php if ($adminManager->isAdmin()): ?>
-                <li><a href="#admin" data-en="Admin" data-de="Admin" data-it="Admin" data-fr="Admin" data-zh="管理员">Admin</a></li>
+                <li><a href="#admin" data-en="Admin" data-de="Admin" data-it="Admin" data-fr="Admin" data-es="Admin" data-zh="管理员">Admin</a></li>
                 <?php endif; ?>
             </ul>
         </nav>
         <div class="theme-switcher" aria-label="Design wechseln" style="display: <?php echo $settingsManager->shouldShowThemeSwitcher() ? 'flex' : 'none'; ?>;">
-            <span data-en="Design" data-de="Design" data-it="Design" data-fr="Design" data-zh="设计">Design</span>
-            <button class="theme-button active" data-theme="theme-legacy" type="button" data-en="Classic" data-de="Klassisch" data-it="Classico" data-fr="Classique" data-zh="经典">Klassisch</button>
-            <button class="theme-button" data-theme="theme-alpine" type="button" data-en="Alpine" data-de="Alpin" data-it="Alpino" data-fr="Alpin" data-zh="高山">Alpin</button>
-            <button class="theme-button" data-theme="theme-neo" type="button" data-en="Modern" data-de="Modern" data-it="Moderno" data-fr="Moderne" data-zh="现代">Modern</button>
+            <span data-en="Design" data-de="Design" data-it="Design" data-fr="Design" data-es="Diseño" data-zh="设计">Design</span>
+            <button class="theme-button active" data-theme="theme-legacy" type="button" data-en="Classic" data-de="Klassisch" data-it="Classico" data-fr="Classique" data-es="Clásico" data-zh="经典">Klassisch</button>
+            <button class="theme-button" data-theme="theme-alpine" type="button" data-en="Alpine" data-de="Alpin" data-it="Alpino" data-fr="Alpin" data-es="Alpino" data-zh="高山">Alpin</button>
+            <button class="theme-button" data-theme="theme-neo" type="button" data-en="Modern" data-de="Modern" data-it="Moderno" data-fr="Moderne" data-es="Moderno" data-zh="现代">Modern</button>
         </div>
     </div>
 </header>
@@ -2658,18 +3830,28 @@ body.theme-neo footer {
         <div class="container">
             <div class="flag-title-container">
                 <img src="images/swiss.jpg" alt="Schweizer Flagge" class="flag-image">
-                <h1 data-en="<?php echo $siteConfig['welcomeEn']; ?>" data-de="<?php echo $siteConfig['welcomeDe']; ?>" data-it="Benvenuti su <?php echo $siteConfig['siteNameFullEn']; ?>" data-fr="Bienvenue sur <?php echo $siteConfig['siteNameFullEn']; ?>" data-zh="欢迎来到<?php echo $siteConfig['siteNameFullEn']; ?>">
-                    <?php echo $siteConfig['welcomeDe']; ?>
+                <h1 id="hero-welcome-text" data-en="<?php echo $siteConfig['welcomeEn']; ?>" data-de="<?php echo htmlspecialchars($heroWelcomeText); ?>" data-it="Benvenuti su <?php echo $siteConfig['siteNameFullEn']; ?>" data-fr="Bienvenue sur <?php echo $siteConfig['siteNameFullEn']; ?>" data-es="Bienvenido a <?php echo $siteConfig['siteNameFullEn']; ?>" data-zh="欢迎来到<?php echo $siteConfig['siteNameFullEn']; ?>">
+                    <?php echo htmlspecialchars($heroWelcomeText); ?>
                 </h1>
-                <img src="local-flag.jpg" alt="Ortsflagge" class="flag-image">
+                <img src="local-flag.jpg" alt="<?php echo htmlspecialchars($localFlagAltText); ?>" class="flag-image" id="local-flag-image">
             </div>
-            <p data-en="Experience fascinating views of the Zurich region - in real time!"
-               data-de="Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!"
+            <p id="hero-region-text"
+               data-en="Experience fascinating views of the Zurich region - in real time!"
+               data-de="<?php echo htmlspecialchars($heroRegionText); ?>"
                data-it="Vivi affascinanti panorami della regione di Zurigo in tempo reale!"
-               data-fr="Découvrez des panoramas fascinants de la région de Zurich en temps réel !"
+               data-fr="Découvrez des panoramas fascinants de la région de Zurich en temps réel !" data-es="¡Descubra fascinantes vistas de la región de Zúrich en tiempo real!"
                data-zh="实时欣赏苏黎世地区的迷人景色！">
-                Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!
+                <?php echo htmlspecialchars($heroRegionText); ?>
             </p>
+            <!-- Android-App Beta (2026-09-30) -->
+            <a href="/app/" style="text-shadow:none;display:flex;align-items:center;gap:14px;max-width:560px;margin:18px auto 0;padding:12px 16px;border-radius:18px;text-decoration:none;color:#eef4ff;background:linear-gradient(135deg,#050b24,#16325e);box-shadow:0 8px 24px rgba(5,11,36,.35);">
+                <img src="/app/icon.svg" alt="cAurora App" width="52" height="52" style="border-radius:13px;flex:none;">
+                <span style="flex:1;text-align:left;line-height:1.35;">
+                    <strong data-en="cAurora for Android" data-de="cAurora für Android" data-it="cAurora per Android" data-fr="cAurora pour Android" data-es="cAurora para Android" data-zh="cAurora 安卓版">cAurora für Android</strong><br>
+                    <span style="font-size:.9em;opacity:.8;" data-en="Live view, time-lapse and archive in your pocket – test the beta now" data-de="Livebild, Zeitraffer und Archiv in der Hosentasche – jetzt als Beta testen" data-it="Diretta, timelapse e archivio in tasca – prova ora la beta" data-fr="Direct, timelapse et archives dans la poche – testez la bêta" data-es="Imagen en directo, timelapse y archivo en el bolsillo: pruebe ya la beta" data-zh="随身查看直播、延时和档案——立即试用测试版">Livebild, Zeitraffer und Archiv in der Hosentasche – jetzt als Beta testen</span>
+                </span>
+                <span style="flex:none;padding:8px 14px;border-radius:12px;font-weight:700;color:#04130e;background:linear-gradient(90deg,#23f5b1,#1fd3e6);" data-en="Get" data-de="Laden" data-it="Scarica" data-fr="Obtenir" data-es="Descargar" data-zh="下载">Laden</span>
+            </a>
         </div>
     </section>
 
@@ -2678,7 +3860,7 @@ body.theme-neo footer {
             <h2>Unsere Empfehlungen</h2>
             <div class="sponsor-logos">
                 <div class="ad-row">
-                    <div class="ad-item"><a href="https://pizzaforyou.ch/" target="_blank"><img src="pizza.png" alt="Pizza for You"></a></div>
+                    <div class="ad-item"><a href="https://www.radiozuerisee.ch/" target="_blank"><img src="zsee.jpg" alt="Radio Zürichsee"></a></div>
                     <div class="ad-item"><a href="#"><img src="werbung.png" alt="Werbung"></a></div>
                     <div class="ad-item"><a href="#"><img src="werbung.png" alt="Werbung"></a></div>
                     <div class="ad-item"><a href="#"><img src="werbung.png" alt="Werbung"></a></div>
@@ -2705,22 +3887,22 @@ body.theme-neo footer {
             <div class="weather-item weather-temp">
                 <span class="weather-icon">🌡️</span>
                 <span class="weather-value"><?php echo $weather['temp']; ?>°C</span>
-                <span class="weather-label">Temperatur</span>
+                <span class="weather-label" data-de="Temperatur" data-en="Temperature" data-it="Temperatura" data-fr="Température" data-es="Temperatura" data-zh="温度">Temperatur</span>
             </div>
             <div class="weather-item weather-wind">
                 <span class="weather-icon">💨</span>
                 <span class="weather-value"><?php echo $weather['wind_speed']; ?> km/h <?php echo $weather['wind_direction']; ?></span>
-                <span class="weather-label">Wind</span>
+                <span class="weather-label" data-de="Wind" data-en="Wind" data-it="Vento" data-fr="Vent" data-es="Viento" data-zh="风">Wind</span>
             </div>
             <div class="weather-item weather-pressure">
                 <span class="weather-icon">🔽</span>
                 <span class="weather-value"><?php echo $weather['pressure']; ?> hPa</span>
-                <span class="weather-label">Luftdruck</span>
+                <span class="weather-label" data-de="Luftdruck" data-en="Pressure" data-it="Pressione" data-fr="Pression" data-es="Presión" data-zh="气压">Luftdruck</span>
             </div>
             <div class="weather-item weather-humidity">
                 <span class="weather-icon">💧</span>
                 <span class="weather-value"><?php echo $weather['humidity']; ?>%</span>
-                <span class="weather-label">Luftfeuchtigkeit</span>
+                <span class="weather-label" data-de="Luftfeuchtigkeit" data-en="Humidity" data-it="Umidità" data-fr="Humidité" data-es="Humedad" data-zh="湿度">Luftfeuchtigkeit</span>
             </div>
             <div class="weather-item weather-description">
                 <span class="weather-icon"><?php echo $weatherManager->getWeatherEmoji($weather['icon']); ?></span>
@@ -2731,7 +3913,7 @@ body.theme-neo footer {
             <div class="weather-item weather-precipitation">
                 <span class="weather-icon"><?php echo $weather['rain_1h'] > 0 ? '🌧️' : '❄️'; ?></span>
                 <span class="weather-value"><?php echo $weather['rain_1h'] > 0 ? $weather['rain_1h'] : $weather['snow_1h']; ?> mm</span>
-                <span class="weather-label">Niederschlag</span>
+                <span class="weather-label" data-de="Niederschlag" data-en="Precipitation" data-it="Precipitazioni" data-fr="Précipitations" data-es="Precipitación" data-zh="降水">Niederschlag</span>
             </div>
             <?php endif; ?>
         </div>
@@ -2817,7 +3999,7 @@ body.theme-neo footer {
             <div class="info-badge viewer-stat" id="viewer-stat-container">
                 <span class="live-dot"></span>
                 <strong id="viewer-count-display"><?php echo $viewerCount; ?></strong>
-                <span data-en="Watching" data-de="Zuschauer" data-it="Spettatori" data-fr="Spectateurs" data-zh="观看人数">Zuschauer</span>
+                <span data-en="Watching" data-de="Zuschauer" data-it="Spettatori" data-fr="Spectateurs" data-es="Viendo" data-zh="观看人数">Zuschauer</span>
             </div>
             <?php endif; ?>
 
@@ -2826,32 +4008,265 @@ body.theme-neo footer {
 
         <!-- STEUERUNG BUTTONS -->
         <div class="webcam-controls" style="text-align: center;">
-            <a href="?action=snapshot" class="button" data-en="Save Snapshot" data-de="Snapshot speichern" data-it="Salva istantanea" data-fr="Enregistrer l'instantané" data-zh="保存截图">
+            <a href="?action=snapshot" class="button" data-en="Save Snapshot" data-de="Snapshot speichern" data-it="Salva istantanea" data-fr="Enregistrer l'instantané" data-es="Guardar captura" data-zh="保存截图">
                 Snapshot speichern
             </a>
 <?php if ($settingsManager->isWeeklyTimelapseEnabled()): ?>
-          <!--   <a href="#" class="button" id="timelapse-button" data-en="Week Timelapse" data-de="Wochenzeitraffer" data-it="Timelapse settimanale" data-fr="Timelapse hebdomadaire" data-zh="一周延时">
+          <!--   <a href="#" class="button" id="timelapse-button" data-en="Week Timelapse" data-de="Wochenzeitraffer" data-it="Timelapse settimanale" data-fr="Timelapse hebdomadaire" data-es="Timelapse semanal" data-zh="一周延时">
                 Wochenzeitraffer
             </a> -->
             <?php endif; ?>
-            <a href="?action=sequence" class="button" data-en="Save Video Clip" data-de="Videoclip speichern" data-it="Salva clip video" data-fr="Enregistrer le clip vidéo" data-zh="保存视频片段">
+            <a href="?action=sequence" class="button" data-en="Save Video Clip" data-de="Videoclip speichern" data-it="Salva clip video" data-fr="Enregistrer le clip vidéo" data-es="Guardar clip de vídeo" data-zh="保存视频片段">
                 Videoclip speichern
             </a>
-            <a href="?download_video=1" class="button" data-en="Download Latest Video" data-de="Tagesvideo downloaden" data-it="Scarica l'ultimo video" data-fr="Télécharger la dernière vidéo" data-zh="下载最新视频">
+            <a href="?download_video=1" class="button" data-en="Download Latest Video" data-de="Tagesvideo downloaden" data-it="Scarica l'ultimo video" data-fr="Télécharger la dernière vidéo" data-es="Descargar el último vídeo" data-zh="下载最新视频">
                 Tagesvideo downloaden
             </a>
         </div>
     </div>
+
+<!-- YouTube-Livestream (2026-10-09): Link per Kanal-ID, /live zeigt immer die laufende Uebertragung -->
+<div class="yt-live-cta" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:22px auto 6px;">
+  <a href="https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA/live" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;background:#FF0000;color:#fff;font:700 16px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;padding:12px 20px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(255,0,0,.25);">
+    <svg width="22" height="16" viewBox="0 0 24 17" aria-hidden="true"><path fill="#fff" d="M23.5 2.7A3 3 0 0 0 21.4.6C19.5 0 12 0 12 0S4.5 0 2.6.6A3 3 0 0 0 .5 2.7 31 31 0 0 0 0 8.5a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-5.8 31 31 0 0 0-.5-5.8z"/><path fill="#FF0000" d="M9.6 12.1 15.8 8.5 9.6 4.9z"/></svg>
+    <span data-de="Live auf YouTube ansehen" data-en="Watch live on YouTube" data-it="Guarda in diretta su YouTube" data-fr="Regarder en direct sur YouTube" data-es="Ver en directo en YouTube" data-zh="在 YouTube 观看直播">Live auf YouTube ansehen</span>
+  </a>
+  <a href="https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA?sub_confirmation=1" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#222;border:1px solid #ddd;font:700 16px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;padding:12px 20px;border-radius:999px;text-decoration:none;">
+    <span aria-hidden="true">🔔</span>
+    <span data-de="Kanal abonnieren" data-en="Subscribe" data-it="Iscriviti al canale" data-fr="S’abonner à la chaîne" data-es="Suscribirse al canal" data-zh="订阅频道">Kanal abonnieren</span>
+  </a>
+</div>
 </section>
 
+<div style="text-align: center; margin-bottom: 20px;">
+    <div class="donation-buttons">
+<?php if ($showPaypalDonation): ?>
+        <a href="<?php echo htmlspecialchars($paypalDonationUrl); ?>" target="_blank" rel="noopener" class="paypal-donation-link">
+            <span class="paypal-logo" aria-hidden="true"><b>Pay</b><i>Pal</i></span>
+            <span data-de="Jetzt spenden" data-en="Donate now" data-it="Dona ora" data-fr="Faire un don" data-es="Donar ahora" data-zh="立即捐赠">Jetzt spenden</span>
+        </a>
+<?php endif; ?>
+<?php if ($showBuyMeACoffee): ?>
+        <a href="<?php echo htmlspecialchars($settingsManager->getSocialLink('buymeacoffee', 'https://buymeacoffee.com/auroracam')); ?>" target="_blank" rel="noopener" class="donation-link">
+            <img src="buy.png" alt="Buy me a coffee" style="height: 267px; border-radius: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        </a>
+<?php endif; ?>
+    </div>
+    <p class="donation-callout-text" style="font-size: 14px; color: #333; background: rgba(255,255,255,0.85); padding: 8px 16px; border-radius: 8px; margin: 10px auto 0; max-width: 400px; line-height: 1.6;">
+        <?php echo nl2br(htmlspecialchars($donationCalloutText)); ?>
+    </p>
+</div>
+
+
+<div class="twint-box">
+<?php if ($showTwintSupport): ?>
+<div class="twint-payment-content">
+    <img src="twint1.jpg" alt="TWINT" class="twint-image">
+
+
+<p
+   class="twint-support-text"
+   data-de="<?php echo htmlspecialchars($twintSupportText); ?>"
+   data-en="Support the Aurora livecam with your donation. You help fund the camera, server, internet connection, and the 100% off-grid power system based on solar energy and EcoFlow storage. This keeps the project sustainable, independent, and freely accessible to everyone."
+   data-fr="Soutenez la webcam Aurora par votre don. Vous contribuez au financement de la caméra, du serveur, de la connexion Internet et du système d'alimentation 100 % autonome basé sur l'énergie solaire et le stockage EcoFlow. Cela permet au projet de rester durable, indépendant et accessible à tous." data-es="Apoye la webcam Aurora con su donación. Ayuda a financiar la cámara, el servidor, la conexión a internet y el sistema eléctrico 100 % autónomo basado en energía solar y baterías EcoFlow. Así el proyecto sigue siendo sostenible, independiente y de libre acceso para todos."
+   data-it="Sostieni la livecam Aurora con la tua donazione. Aiuti a finanziare la telecamera, il server, la connessione Internet e il sistema di alimentazione 100% autonomo basato su energia solare e accumulo EcoFlow. Così il progetto resta sostenibile, indipendente e accessibile a tutti."
+   data-zh="通过捐助支持 Aurora 实时摄像头。您的支持将帮助承担摄像头、服务器、网络连接，以及基于太阳能和 EcoFlow 储能的 100% 自给供电系统成本，让项目保持可持续、独立并持续免费开放。"
+   style="font-size: 14px; color: #333; background: rgba(255,255,255,0.92); padding: 14px 18px; border-radius: 10px; margin: 12px auto 0; max-width: 640px; line-height: 1.7;">
+    <?php echo htmlspecialchars($twintSupportText); ?>
+</p>
+</div>
+<?php endif; ?>
+
+    <span class="green-label-badge">
+        🌱 724 Green Label
+    </span>
+
+    <div class="eco-business-box">
+        <h3
+            data-de="Live & 100% autark: Unsere Aurora-Webcam"
+            data-en="Live & 100% Off-Grid: Our Aurora Webcam"
+            data-fr="Live & 100% autonome : Notre Webcam Aurora" data-es="En directo y 100 % autónoma: nuestra webcam Aurora"
+            data-it="Live & 100% autonoma: La nostra Webcam Aurora"
+            data-zh="实时在线 & 100% 能源自给：Aurora 实时摄像头">
+            Live & 100% autark: Unsere Aurora-Webcam
+        </h3>
+
+        <p class="eco-subtitle"
+           data-de="Powered by EcoFlow & Swiss Sun"
+           data-en="Powered by EcoFlow & Swiss Sun"
+           data-fr="Propulsée par EcoFlow & le Soleil Suisse" data-es="Impulsada por EcoFlow y el sol suizo"
+           data-it="Alimentata da EcoFlow & Sole Svizzero"
+           data-zh="由 EcoFlow 与瑞士阳光驱动">
+            Powered by EcoFlow & Swiss Sun
+        </p>
+
+        <p
+            data-de="Erleben Sie Dürnten in Echtzeit – angetrieben durch die reine Kraft der Natur. Unsere Infrastruktur wird zu 100 % mit Solarstrom und EcoFlow-Batteriespeichern betrieben."
+            data-en="Experience Dürnten in real-time – powered by the pure force of nature. Our infrastructure runs 100% on solar power and EcoFlow battery storage."
+            data-fr="Découvrez Dürnten en temps réel, propulsé par l'énergie pure de la nature. Notre infrastructure fonctionne à 100 % à l'énergie solaire avec le stockage par batterie EcoFlow." data-es="Viva Dürnten en tiempo real, con la fuerza pura de la naturaleza. Nuestra infraestructura funciona al 100 % con energía solar y baterías EcoFlow."
+            data-it="Scoprite Dürnten in tempo reale, alimentata dalla pura forza della natura. La nostra infrastruttura è gestita al 100 % con energia solare e sistemi di accumulo EcoFlow."
+            data-zh="实时感受迪恩滕（Dürnten）—— 由纯净自然能量驱动。我们的基础设施 100% 采用太阳能和 EcoFlow 电池储能系统。">
+            Erleben Sie Dürnten in Echtzeit – angetrieben durch die reine Kraft der Natur. Unsere Infrastruktur wird zu 100 % mit Solarstrom und EcoFlow-Batteriespeichern betrieben.
+        </p>
+
+        <ul class="eco-feature-list">
+            <li
+                data-de="724 Green Label Swiss: "
+                data-en="724 Green Label Swiss: "
+                data-fr="724 Green Label Swiss: " data-es="724 Green Label Swiss: "
+                data-it="724 Green Label Swiss: "
+                data-zh="724 Green Label Swiss：">
+                724 Green Label Swiss:.
+            </li>
+
+            <li
+                data-de="24/7 Green Power: Dank modernster Speichertechnologie."
+                data-en="24/7 Green Energy: Thanks to state-of-the-art storage technology."
+                data-fr="Énergie Verte 24/7 : Grâce à une technologie de stockage de pointe." data-es="Energía verde 24/7: gracias a la tecnología de almacenamiento más moderna."
+                data-it="Energia Verde 24/7: Grazie a una tecnologia di accumulo all'avanguardia."
+                data-zh="24/7 绿色能源：得益于尖端的储能技术。">
+                24/7 Green Power: Dank modernster Speichertechnologie.
+            </li>
+
+            <li
+                data-de="Emissionsfrei: Innovation direkt aus dem Herzen der Schweiz."
+                data-en="Zero Emissions: Innovation straight from the heart of Switzerland."
+                data-fr="Zéro Émission : L'innovation au cœur de la Suisse." data-es="Cero emisiones: innovación desde el corazón de Suiza."
+                data-it="Zero Emissioni: Innovazione direttamente dal cuore della Svizzera."
+                data-zh="零排放：源自瑞士心脏地带的创新。">
+                Emissionsfrei: Innovation direkt aus dem Herzen der Schweiz.
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Starlink-Banner ausgeblendet (2026-09-30); wieder zeigen: style entfernen -->
+<div class="starlink-banner-wrapper" style="display:none">
+    <div class="starlink-banner">
+        <h3>🛰️ Schnelles Internet für Ihre Livestreams</h3>
+        <p>
+            Für hochwertige Webcam-Übertragungen empfehlen wir Starlink –
+            Highspeed-Internet überall verfügbar, perfekt für abgelegene Standorte!
+        </p>
+        <a href="https://www.starlink.com/" target="_blank" rel="noopener noreferrer">
+            <img src="starlink.png" alt="Starlink - Schnelles Internet überall">
+        </a>
+    </div>
+</div>
  
+
+
 <!-- ARCHIVE SECTION -->
+<!-- ZEITREISE (2026-10-09): gleiches Bild wie jetzt, vor N Tagen. API /api/zeitreise.php -->
+<section id="zeitreise" class="section">
+    <div class="container">
+        <h2 data-de="Zeitreise" data-en="Time travel" data-it="Viaggio nel tempo" data-fr="Voyage dans le temps" data-es="Viaje en el tiempo" data-zh="时光回溯">Zeitreise</h2>
+        <p class="zr-intro" data-de="Derselbe Blick zur gleichen Uhrzeit – wie sah es damals aus? Linie ziehen zum Vergleichen."
+           data-en="The same view at the same time of day – what did it look like back then? Drag the line to compare."
+           data-it="La stessa vista alla stessa ora – com’era allora? Trascina la linea per confrontare."
+           data-fr="La même vue à la même heure – à quoi cela ressemblait-il ? Faites glisser la ligne pour comparer."
+           data-es="La misma vista a la misma hora: ¿cómo era entonces? Arrastra la línea para comparar."
+           data-zh="同一时刻的同一视角——当时是什么样子？拖动分割线进行对比。">Derselbe Blick zur gleichen Uhrzeit – wie sah es damals aus? Linie ziehen zum Vergleichen.</p>
+        <div class="zr-knoepfe" id="zrKnoepfe" role="group" aria-label="Zeitreise"></div>
+        <div class="zr-vergleich" id="zrVergleich" hidden>
+            <img id="zrJetzt" alt="" loading="lazy" decoding="async">
+            <img id="zrDamals" alt="" decoding="async">
+            <div class="zr-linie" id="zrLinie" aria-hidden="true"></div>
+            <span class="zr-marke zr-links" id="zrMarkeDamals"></span>
+            <span class="zr-marke zr-rechts" id="zrMarkeJetzt"></span>
+            <input type="range" id="zrRegler" min="0" max="100" value="50" aria-label="Vergleich">
+        </div>
+        <p class="zr-hinweis" id="zrHinweis"></p>
+    </div>
+    <style>
+        #zeitreise .zr-intro { text-align: center; color: #555; margin: 0 auto 16px; max-width: 640px; }
+        #zeitreise .zr-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
+        #zeitreise .zr-knoepfe button { border: 1px solid #c9b8b5; background: #fff; color: #222; border-radius: 999px; padding: 8px 16px; font: 600 14px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; cursor: pointer; }
+        #zeitreise .zr-knoepfe button[aria-pressed="true"] { background: #b3122e; border-color: #b3122e; color: #fff; }
+        #zeitreise .zr-vergleich { position: relative; max-width: 1100px; margin: 0 auto; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #0b1424; user-select: none; touch-action: pan-y; }
+        #zeitreise .zr-vergleich img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        #zeitreise #zrDamals { clip-path: inset(0 50% 0 0); }
+        #zeitreise .zr-linie { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.5); pointer-events: none; }
+        #zeitreise .zr-linie::after { content: '⟷'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; color: #b3122e; border-radius: 999px; width: 40px; height: 40px; display: grid; place-items: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+        #zeitreise .zr-marke { position: absolute; top: 12px; background: rgba(0,0,0,.6); color: #fff; padding: 4px 10px; border-radius: 999px; font: 600 13px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; pointer-events: none; }
+        #zeitreise .zr-links { left: 12px; } #zeitreise .zr-rechts { right: 12px; }
+        #zeitreise #zrRegler { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+        #zeitreise .zr-hinweis { text-align: center; color: #777; font-size: 13px; margin-top: 10px; min-height: 1em; }
+    </style>
+    <script>
+    (function () {
+        var T = {
+            de: {1: 'Gestern', 7: 'Vor 1 Woche', 30: 'Vor 1 Monat', 91: 'Vor 3 Monaten', 182: 'Vor 6 Monaten', 365: 'Vor 1 Jahr', 730: 'Vor 2 Jahren', jetzt: 'Jetzt', laedt: 'Bild wird geladen …', keins: 'Für diesen Zeitpunkt gibt es noch kein Archivbild.', daneben: 'nächstes Archivbild', loc: 'de-CH'},
+            en: {1: 'Yesterday', 7: '1 week ago', 30: '1 month ago', 91: '3 months ago', 182: '6 months ago', 365: '1 year ago', 730: '2 years ago', jetzt: 'Now', laedt: 'Loading image …', keins: 'No archive image for this moment yet.', daneben: 'nearest archive image', loc: 'en-GB'},
+            it: {1: 'Ieri', 7: '1 settimana fa', 30: '1 mese fa', 91: '3 mesi fa', 182: '6 mesi fa', 365: '1 anno fa', 730: '2 anni fa', jetzt: 'Adesso', laedt: 'Caricamento …', keins: 'Ancora nessuna immagine d’archivio per questo momento.', daneben: 'immagine d’archivio più vicina', loc: 'it-CH'},
+            fr: {1: 'Hier', 7: 'Il y a 1 semaine', 30: 'Il y a 1 mois', 91: 'Il y a 3 mois', 182: 'Il y a 6 mois', 365: 'Il y a 1 an', 730: 'Il y a 2 ans', jetzt: 'Maintenant', laedt: 'Chargement …', keins: 'Pas encore d’image d’archive pour ce moment.', daneben: 'image d’archive la plus proche', loc: 'fr-CH'},
+            es: {1: 'Ayer', 7: 'Hace 1 semana', 30: 'Hace 1 mes', 91: 'Hace 3 meses', 182: 'Hace 6 meses', 365: 'Hace 1 año', 730: 'Hace 2 años', jetzt: 'Ahora', laedt: 'Cargando …', keins: 'Todavía no hay imagen de archivo para este momento.', daneben: 'imagen de archivo más cercana', loc: 'es-ES'},
+            zh: {1: '昨天', 7: '1 周前', 30: '1 个月前', 91: '3 个月前', 182: '6 个月前', 365: '1 年前', 730: '2 年前', jetzt: '现在', laedt: '正在加载 …', keins: '此时刻暂无存档图像。', daneben: '最接近的存档图像', loc: 'zh-CN'}
+        };
+        var angebot = [], gewaehlt = null;
+        var $ = function (id) { return document.getElementById(id); };
+        function sprache() { var l = (document.documentElement.lang || 'de').slice(0, 2); return T[l] ? l : 'de'; }
+        function t(k) { return T[sprache()][k]; }
+        function datum(iso) {
+            try { return new Date(iso).toLocaleString(t('loc'), {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Zurich'}); }
+            catch (e) { return iso; }
+        }
+        function knoepfe() {
+            var box = $('zrKnoepfe'); box.innerHTML = '';
+            angebot.forEach(function (e) {
+                if (!e.ok) return;
+                var b = document.createElement('button'); b.type = 'button';
+                b.textContent = t(e.tage) || (e.tage + ' d');
+                b.setAttribute('aria-pressed', gewaehlt && gewaehlt.tage === e.tage ? 'true' : 'false');
+                b.addEventListener('click', function () { zeigen(e); });
+                box.appendChild(b);
+            });
+        }
+        function marken() {
+            if (!gewaehlt) return;
+            $('zrMarkeDamals').textContent = datum(gewaehlt.zeit);
+            $('zrMarkeJetzt').textContent = t('jetzt');
+            $('zrHinweis').textContent = gewaehlt.tage_daneben ? '(' + t('daneben') + ')' : '';
+        }
+        function zeigen(e) {
+            gewaehlt = e; knoepfe();
+            $('zrVergleich').hidden = false;
+            $('zrHinweis').textContent = t('laedt');
+            $('zrJetzt').src = '/image/current.jpg?t=' + Math.floor(Date.now() / 60000);
+            var img = $('zrDamals');
+            img.onload = marken;
+            img.onerror = function () { $('zrHinweis').textContent = t('keins'); };
+            img.src = e.url;
+        }
+        function regler() {
+            var v = $('zrRegler').value;
+            $('zrDamals').style.clipPath = 'inset(0 ' + (100 - v) + '% 0 0)';
+            $('zrLinie').style.left = v + '%';
+        }
+        $('zrRegler').addEventListener('input', regler);
+        // Sprachwahl der Seite setzt <html lang>; Beschriftungen nachziehen.
+        new MutationObserver(function () { knoepfe(); marken(); }).observe(document.documentElement, {attributes: true, attributeFilter: ['lang']});
+        fetch('/api/zeitreise.php', {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (d) {
+            angebot = (d && d.angebot) || [];
+            var erstes = angebot.filter(function (e) { return e.ok; })[0];
+            if (!erstes) { $('zrHinweis').textContent = t('keins'); return; }
+            knoepfe();
+            // Bild erst laden, wenn der Bereich in Sicht kommt (4K-Archivbilder).
+            var beob = new IntersectionObserver(function (eintr) {
+                if (eintr[0].isIntersecting) { beob.disconnect(); zeigen(angebot.filter(function (e) { return e.ok && e.tage === 7; })[0] || erstes); }
+            }, {rootMargin: '200px'});
+            beob.observe($('zeitreise'));
+        }).catch(function () { $('zeitreise').style.display = 'none'; });
+    })();
+    </script>
+</section>
+
 <section id="archive" class="section">
     <div class="container">
-        <h2 data-en="Video Archive" data-de="Videoarchiv Tagesvideos" data-it="Archivio video giornalieri" data-fr="Archive des vidéos quotidiennes" data-zh="每日视频档案">Videoarchiv Tagesvideos</h2>
+        <h2 data-en="Video Archive" data-de="Videoarchiv Tagesvideos" data-it="Archivio video giornalieri" data-fr="Archive des vidéos quotidiennes" data-es="Archivo de vídeos diarios" data-zh="每日视频档案">Videoarchiv Tagesvideos</h2>
 
         <?php
-        $visualCalendar = new VisualCalendarManager('./videos/', './ai/', $settingsManager);
+        $visualCalendar = new VisualCalendarManager(['./videos/', '/mnt/aurora-remote/videos/'], './ai/', $settingsManager);
         echo $visualCalendar->displayVisualCalendar();
         ?>
     </div>
@@ -2861,7 +4276,7 @@ body.theme-neo footer {
 <!-- STANDORT -->
 <section id="standort" class="section" style="padding: 40px 0;">
     <div class="container" style="text-align: center;">
-        <h2 data-en="Camera Direction" data-de="Kamera-Blickrichtung" data-it="Direzione della camera" data-fr="Direction de la caméra" data-zh="摄像头方向">Kamera-Blickrichtung</h2>
+        <h2 data-en="Camera Direction" data-de="Kamera-Blickrichtung" data-it="Direzione della camera" data-fr="Direction de la caméra" data-es="Orientación de la cámara" data-zh="摄像头方向">Kamera-Blickrichtung</h2>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 30px; margin-top: 30px;">
             <div style="max-width: 350px;">
                 <img src="kompass1.png" alt="Kompass zeigt Blickrichtung der Webcam Richtung Zürichsee und Schweizer Alpen" style="width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
@@ -2880,21 +4295,24 @@ body.theme-neo footer {
 <section id="qr-code" class="section" style="display: <?php echo $settingsManager->shouldShowQRCode() ? 'block' : 'none'; ?>;">
     <div class="container" style="text-align: center;">
         <h1>
-            <p data-en="Follow us and share with friends" data-de="Folge uns und teile mit Freunden" data-it="Seguici e condividi con gli amici" data-fr="Suivez-nous et partagez avec vos amis" data-zh="关注我们并分享给朋友">
+            <p data-en="Follow us and share with friends" data-de="Folge uns und teile mit Freunden" data-it="Seguici e condividi con gli amici" data-fr="Suivez-nous et partagez avec vos amis" data-es="Síganos y compártalo con sus amigos" data-zh="关注我们并分享给朋友">
                 Folge uns und kopiere den Code und sende es deinen Freunden
             </p>
         </h1>
         <div id="qrcode" data-url="<?php echo $siteConfig['domainUrl']; ?>/"></div>
-        <p data-en="Click QR code to copy URL" data-de="Klicke auf den QR-Code um die URL zu kopieren" data-it="Fai clic sul codice QR per copiare l'URL" data-fr="Cliquez sur le code QR pour copier l'URL" data-zh="点击二维码复制网址">
+        <p data-en="Click QR code to copy URL" data-de="Klicke auf den QR-Code um die URL zu kopieren" data-it="Fai clic sul codice QR per copiare l'URL" data-fr="Cliquez sur le code QR pour copier l'URL" data-es="Haga clic en el código QR para copiar la URL" data-zh="点击二维码复制网址">
             Klicke auf den QR-Code, um die URL zu kopieren
         </p>
+
+
+      
     </div>
 </section>
 
 <!-- GUESTBOOK -->
 <section id="guestbook" class="section" style="display: <?php echo $settingsManager->isGuestbookEnabled() ? 'block' : 'none'; ?>;">
     <div class="container">
-        <h2 data-en="Guestbook" data-de="Gästebuch" data-it="Libro degli ospiti" data-fr="Livre d'or" data-zh="留言簿">Gästebuch</h2>
+        <h2 data-en="Guestbook" data-de="Gästebuch" data-it="Libro degli ospiti" data-fr="Livre d'or" data-es="Libro de visitas" data-zh="留言簿">Gästebuch</h2>
         <?php
         echo $guestbookManager->displayForm();
         echo $guestbookManager->displayEntries($adminManager->isAdmin());
@@ -2905,11 +4323,11 @@ body.theme-neo footer {
 <!-- CONTACT -->
 <section id="kontakt" class="section">
     <div class="container">
-        <h2 data-en="Contact" data-de="Kontakt" data-it="Contatto" data-fr="Contact" data-zh="联系">Kontakt</h2>
+        <h2 data-en="Contact" data-de="Kontakt" data-it="Contatto" data-fr="Contact" data-es="Contacto" data-zh="联系">Kontakt</h2>
         <p data-en="Questions or suggestions? We look forward to hearing from you!"
            data-de="Haben Sie Fragen, Anregungen oder möchten uns unterstützen? Wir freuen uns auf Ihre Nachricht!"
            data-it="Domande o suggerimenti? Saremo felici di sentirti!"
-           data-fr="Des questions ou des suggestions ? Nous serions ravis d'avoir de vos nouvelles !"
+           data-fr="Des questions ou des suggestions ? Nous serions ravis d'avoir de vos nouvelles !" data-es="¿Preguntas o sugerencias? ¡Nos encantará saber de usted!"
            data-zh="有问题或建议吗？期待您的来信！">
             Haben Sie Fragen, Anregungen oder möchten uns unterstützen? Wir freuen uns auf Ihre Nachricht!
         </p>
@@ -2920,7 +4338,7 @@ body.theme-neo footer {
 <!-- GALLERY -->
 <section id="gallery" class="section" style="display: <?php echo $settingsManager->isGalleryEnabled() ? 'block' : 'none'; ?>;">
     <div class="container">
-        <h2 data-en="Image Gallery" data-de="Bildergalerie" data-it="Galleria immagini" data-fr="Galerie d'images" data-zh="图片库">Bildergalerie</h2>
+        <h2 data-en="Image Gallery" data-de="Bildergalerie" data-it="Galleria immagini" data-fr="Galerie d'images" data-es="Galería de imágenes" data-zh="图片库">Bildergalerie</h2>
         <div class="gallery-wrapper">
             <button class="gallery-nav-btn left" onclick="scrollGallery('left')"><i class="fas fa-chevron-left"></i></button>
             <?php echo $adminManager->displayGalleryImages(); ?>
@@ -2932,20 +4350,20 @@ body.theme-neo footer {
 <!-- ABOUT -->
 <section id="ueber-uns" class="section">
     <div class="container">
-        <h2 data-en="About Our Project" data-de="Über unser Projekt" data-it="Il nostro progetto" data-fr="À propos de notre projet" data-zh="关于我们的项目">Über unser Projekt</h2>
+        <h2 data-en="About Our Project" data-de="Über unser Projekt" data-it="Il nostro progetto" data-fr="À propos de notre projet" data-es="Sobre nuestro proyecto" data-zh="关于我们的项目">Über unser Projekt</h2>
         <div class="about-grid">
             <div class="about-item">
                 <p data-en="<?php echo $siteConfig['aboutEn']; ?>"
                    data-de="<?php echo $siteConfig['aboutDe']; ?>"
                    data-it="Aurora Weather Livecam è un progetto del cuore di appassionati di meteorologia. Vogliamo avvicinarvi alla bellezza della natura e al fascino del tempo."
-                   data-fr="Aurora Weather Livecam est un projet de passionnés de météo. Nous souhaitons vous faire découvrir la beauté de la nature et la fascination du temps."
+                   data-fr="Aurora Weather Livecam est un projet de passionnés de météo. Nous souhaitons vous faire découvrir la beauté de la nature et la fascination du temps." data-es="Aurora Weather Livecam es un proyecto de apasionados de la meteorología. Queremos acercarle la belleza de la naturaleza y la fascinación del tiempo."
                    data-zh="Aurora Weather Livecam 是天气爱好者的热情项目。我们希望让您更贴近自然之美与天气的魅力。">
                     <?php echo $siteConfig['aboutDe']; ?>
                 </p>
                 <p data-en="We have been operating high-resolution webcams around the clock since 2010. We are particularly proud of unique insights, such as the Patrouille Suisse training flights every Monday morning."
                    data-de="Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen."
                    data-it="Dal 2010 gestiamo webcam ad alta risoluzione 24 ore su 24. Siamo particolarmente orgogliosi di scorci unici, come i voli di addestramento della Patrouille Suisse ogni lunedì mattina."
-                   data-fr="Depuis 2010, nous exploitons des webcams haute résolution 24h/24. Nous sommes particulièrement fiers d'aperçus uniques, comme les vols d'entraînement de la Patrouille Suisse chaque lundi matin."
+                   data-fr="Depuis 2010, nous exploitons des webcams haute résolution 24h/24. Nous sommes particulièrement fiers d'aperçus uniques, comme les vols d'entraînement de la Patrouille Suisse chaque lundi matin." data-es="Desde 2010 operamos webcams de alta resolución las 24 horas. Estamos especialmente orgullosos de vistas únicas, como los vuelos de entrenamiento de la Patrouille Suisse cada lunes por la mañana."
                    data-zh="自2010年以来，我们全天候运行高分辨率摄像头。我们尤其自豪于独特的视角，例如每周一早上的瑞士巡逻兵训练飞行。">
                     Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen.
                 </p>
@@ -2958,14 +4376,14 @@ body.theme-neo footer {
 <?php if ($adminManager->isAdmin()): ?>
 <section id="admin" class="section">
     <div class="container">
-        <h2 data-en="Admin Area" data-de="Admin-Bereich" data-it="Area admin" data-fr="Espace admin" data-zh="管理员区域">Admin-Bereich</h2>
+        <h2 data-en="Admin Area" data-de="Admin-Bereich" data-it="Area admin" data-fr="Espace admin" data-es="Área de administración" data-zh="管理员区域">Admin-Bereich</h2>
         <?php echo $adminManager->displayAdminContent(); ?>
     </div>
 </section>
 <?php else: ?>
 <section id="admin-login" class="section">
     <div class="container">
-        <h2 data-en="Admin Login" data-de="Admin Login" data-it="Accesso admin" data-fr="Connexion admin" data-zh="管理员登录">Admin Login</h2>
+        <h2 data-en="Admin Login" data-de="Admin Login" data-it="Accesso admin" data-fr="Connexion admin" data-es="Acceso de administración" data-zh="管理员登录">Admin Login</h2>
         <?php echo $adminManager->displayLoginForm(); ?>
     </div>
 </section>
@@ -2974,42 +4392,42 @@ body.theme-neo footer {
 <!-- PATROUILLE SUISSE SEKTION -->
 <section id="patrouille-suisse" class="section" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); display: <?php echo $settingsManager->shouldShowPatrouillesuisse() ? 'block' : 'none'; ?>;">
     <div class="container">
-        <h2 style="color: #fff; text-align: center;" data-en="Patrouille Suisse Live - Watch Training Flights" data-de="Patrouille Suisse Live - Trainingsflüge Beobachten" data-it="Patrouille Suisse Live - Guarda i voli di addestramento" data-fr="Patrouille Suisse en direct - Regardez les vols d'entraînement" data-zh="瑞士巡逻兵直播 - 观看训练飞行">Patrouille Suisse Live - Trainingsflüge Beobachten</h2>
+        <h2 style="color: #fff; text-align: center;" data-en="Patrouille Suisse Live - Watch Training Flights" data-de="Patrouille Suisse Live - Trainingsflüge Beobachten" data-it="Patrouille Suisse Live - Guarda i voli di addestramento" data-fr="Patrouille Suisse en direct - Regardez les vols d'entraînement" data-es="Patrouille Suisse en directo: vea los vuelos de entrenamiento" data-zh="瑞士巡逻兵直播 - 观看训练飞行">Patrouille Suisse Live - Trainingsflüge Beobachten</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px;">
             <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
-                <h3 style="color: #ff6b6b; margin-bottom: 15px;" data-en="Every Monday Live!" data-de="Jeden Montag Live!" data-it="Ogni lunedì in diretta!" data-fr="Tous les lundis en direct !" data-zh="每周一直播！">Jeden Montag Live!</h3>
-                <p style="color: #ddd; line-height: 1.8;" data-en="The Patrouille Suisse, the official aerobatic team of the Swiss Air Force, trains every Monday morning in the Zurich Oberland region. Our webcam offers a unique view of the spectacular flight maneuvers of the six F-5E Tiger II jets." data-de="Die Patrouille Suisse, das offizielle Kunstflugteam der Schweizer Luftwaffe, trainiert jeden Montagmorgen in der Region Zürich Oberland. Unsere Webcam bietet einen einzigartigen Blick auf die spektakulären Flugmanöver der sechs F-5E Tiger II Jets." data-it="La Patrouille Suisse, il team acrobatico ufficiale dell'Aeronautica militare svizzera, si addestra ogni lunedì mattina nella regione dell'Oberland di Zurigo. La nostra webcam offre una vista unica delle spettacolari manovre di volo dei sei F-5E Tiger II." data-fr="La Patrouille Suisse, l'équipe officielle de voltige des Forces aériennes suisses, s'entraîne chaque lundi matin dans la région de l'Oberland zurichois. Notre webcam offre une vue unique des spectaculaires manœuvres de vol des six F-5E Tiger II." data-zh="瑞士巡逻兵是瑞士空军的官方特技飞行队，每周一早上在苏黎世高地地区训练。我们的摄像头提供了观赏六架 F-5E Tiger II 喷气机精彩机动的独特视角。">
+                <h3 style="color: #ff6b6b; margin-bottom: 15px;" data-en="Every Monday Live!" data-de="Jeden Montag Live!" data-it="Ogni lunedì in diretta!" data-fr="Tous les lundis en direct !" data-es="¡Cada lunes en directo!" data-zh="每周一直播！">Jeden Montag Live!</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="The Patrouille Suisse, the official aerobatic team of the Swiss Air Force, trains every Monday morning in the Zurich Oberland region. Our webcam offers a unique view of the spectacular flight maneuvers of the six F-5E Tiger II jets." data-de="Die Patrouille Suisse, das offizielle Kunstflugteam der Schweizer Luftwaffe, trainiert jeden Montagmorgen in der Region Zürich Oberland. Unsere Webcam bietet einen einzigartigen Blick auf die spektakulären Flugmanöver der sechs F-5E Tiger II Jets." data-it="La Patrouille Suisse, il team acrobatico ufficiale dell'Aeronautica militare svizzera, si addestra ogni lunedì mattina nella regione dell'Oberland di Zurigo. La nostra webcam offre una vista unica delle spettacolari manovre di volo dei sei F-5E Tiger II." data-fr="La Patrouille Suisse, l'équipe officielle de voltige des Forces aériennes suisses, s'entraîne chaque lundi matin dans la région de l'Oberland zurichois. Notre webcam offre une vue unique des spectaculaires manœuvres de vol des six F-5E Tiger II." data-es="La Patrouille Suisse, el equipo acrobático oficial de las Fuerzas Aéreas suizas, entrena cada lunes por la mañana en la región del Oberland de Zúrich. Nuestra webcam ofrece una vista única de las espectaculares maniobras de los seis aviones F-5E Tiger II." data-zh="瑞士巡逻兵是瑞士空军的官方特技飞行队，每周一早上在苏黎世高地地区训练。我们的摄像头提供了观赏六架 F-5E Tiger II 喷气机精彩机动的独特视角。">
                     Die Patrouille Suisse, das offizielle Kunstflugteam der Schweizer Luftwaffe, trainiert jeden <strong style="color: #fff;">Montagmorgen</strong> in der Region Zürich Oberland. Unsere Webcam bietet einen einzigartigen Blick auf die spektakulären Flugmanöver der sechs F-5E Tiger II Jets.
                 </p>
                 <ul style="color: #ccc; margin-top: 15px; padding-left: 20px;">
-                    <li data-en="Training time: approx. 09:00 - 11:00" data-de="Trainingszeit: ca. 09:00 - 11:00 Uhr" data-it="Orario di addestramento: circa 09:00 - 11:00" data-fr="Heure d'entraînement : env. 09:00 - 11:00" data-zh="训练时间：约 09:00 - 11:00">Trainingszeit: ca. 09:00 - 11:00 Uhr</li>
-                    <li data-en="Visible in good weather" data-de="Bei gutem Wetter sichtbar" data-it="Visibile con bel tempo" data-fr="Visible par beau temps" data-zh="天气良好时可见">Bei gutem Wetter sichtbar</li>
-                    <li data-en="Unique perspective from Zurich Oberland" data-de="Einzigartige Perspektive aus dem Zürcher Oberland" data-it="Prospettiva unica dall'Oberland di Zurigo" data-fr="Perspective unique depuis l'Oberland zurichois" data-zh="来自苏黎世高地的独特视角">Einzigartige Perspektive aus dem Zürcher Oberland</li>
+                    <li data-en="Training time: approx. 09:00 - 11:00" data-de="Trainingszeit: ca. 09:00 - 11:00 Uhr" data-it="Orario di addestramento: circa 09:00 - 11:00" data-fr="Heure d'entraînement : env. 09:00 - 11:00" data-es="Horario de entrenamiento: aprox. 09:00 - 11:00" data-zh="训练时间：约 09:00 - 11:00">Trainingszeit: ca. 09:00 - 11:00 Uhr</li>
+                    <li data-en="Visible in good weather" data-de="Bei gutem Wetter sichtbar" data-it="Visibile con bel tempo" data-fr="Visible par beau temps" data-es="Visible con buen tiempo" data-zh="天气良好时可见">Bei gutem Wetter sichtbar</li>
+                    <li data-en="Unique perspective from Zurich Oberland" data-de="Einzigartige Perspektive aus dem Zürcher Oberland" data-it="Prospettiva unica dall'Oberland di Zurigo" data-fr="Perspective unique depuis l'Oberland zurichois" data-es="Perspectiva única desde el Oberland de Zúrich" data-zh="来自苏黎世高地的独特视角">Einzigartige Perspektive aus dem Zürcher Oberland</li>
                 </ul>
             </div>
             <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
-                <h3 style="color: #4ecdc4; margin-bottom: 15px;" data-en="History of Patrouille Suisse" data-de="Geschichte der Patrouille Suisse" data-it="Storia della Patrouille Suisse" data-fr="Histoire de la Patrouille Suisse" data-zh="瑞士巡逻兵历史">Geschichte der Patrouille Suisse</h3>
-                <p style="color: #ddd; line-height: 1.8;" data-en="Founded in 1964, the Patrouille Suisse is one of Europe's most renowned aerobatic teams. The team has been flying the Northrop F-5E Tiger II since 1995 and delights audiences at shows throughout Switzerland and internationally." data-de="Gegründet 1964, ist die Patrouille Suisse eines der renommiertesten Kunstflugteams Europas. Das Team fliegt seit 1995 die Northrop F-5E Tiger II und begeistert bei Shows in der ganzen Schweiz und international." data-it="Fondata nel 1964, la Patrouille Suisse è uno dei team acrobatici più rinomati d'Europa. Dal 1995 il team vola con i Northrop F-5E Tiger II e entusiasma il pubblico in Svizzera e all'estero." data-fr="Fondée en 1964, la Patrouille Suisse est l'une des équipes de voltige les plus renommées d'Europe. L'équipe vole sur Northrop F-5E Tiger II depuis 1995 et séduit le public en Suisse et à l'international." data-zh="瑞士巡逻兵成立于1964年，是欧洲最著名的特技飞行队之一。该队自1995年以来驾驶 Northrop F-5E Tiger II，在瑞士及国际航展上深受观众喜爱。">
+                <h3 style="color: #4ecdc4; margin-bottom: 15px;" data-en="History of Patrouille Suisse" data-de="Geschichte der Patrouille Suisse" data-it="Storia della Patrouille Suisse" data-fr="Histoire de la Patrouille Suisse" data-es="Historia de la Patrouille Suisse" data-zh="瑞士巡逻兵历史">Geschichte der Patrouille Suisse</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="Founded in 1964, the Patrouille Suisse is one of Europe's most renowned aerobatic teams. The team has been flying the Northrop F-5E Tiger II since 1995 and delights audiences at shows throughout Switzerland and internationally." data-de="Gegründet 1964, ist die Patrouille Suisse eines der renommiertesten Kunstflugteams Europas. Das Team fliegt seit 1995 die Northrop F-5E Tiger II und begeistert bei Shows in der ganzen Schweiz und international." data-it="Fondata nel 1964, la Patrouille Suisse è uno dei team acrobatici più rinomati d'Europa. Dal 1995 il team vola con i Northrop F-5E Tiger II e entusiasma il pubblico in Svizzera e all'estero." data-fr="Fondée en 1964, la Patrouille Suisse est l'une des équipes de voltige les plus renommées d'Europe. L'équipe vole sur Northrop F-5E Tiger II depuis 1995 et séduit le public en Suisse et à l'international." data-es="Fundada en 1964, la Patrouille Suisse es uno de los equipos acrobáticos más prestigiosos de Europa. Desde 1995 vuela con el Northrop F-5E Tiger II y entusiasma al público en exhibiciones en Suiza y en el extranjero." data-zh="瑞士巡逻兵成立于1964年，是欧洲最著名的特技飞行队之一。该队自1995年以来驾驶 Northrop F-5E Tiger II，在瑞士及国际航展上深受观众喜爱。">
                     Gegründet 1964, ist die Patrouille Suisse eines der renommiertesten Kunstflugteams Europas. Das Team fliegt seit 1995 die Northrop F-5E Tiger II und begeistert bei Shows in der ganzen Schweiz und international.
                 </p>
-                <p style="color: #ddd; margin-top: 15px;" data-en="Home base: Payerne (VD) | Aircraft: 6x F-5E Tiger II | Team size: 6 pilots + crew" data-de="Heimatbasis: Payerne (VD) | Flugzeuge: 6x F-5E Tiger II | Teamgrösse: 6 Piloten + Crew" data-it="Base: Payerne (VD) | Aeromobili: 6x F-5E Tiger II | Team: 6 piloti + personale" data-fr="Base : Payerne (VD) | Avions : 6x F-5E Tiger II | Équipe : 6 pilotes + équipe" data-zh="基地：Payerne (VD) | 飞机：6 架 F-5E Tiger II | 团队规模：6 名飞行员 + 机组">
-                    <strong style="color: #fff;" data-en="Home base:" data-de="Heimatbasis:" data-it="Base:" data-fr="Base :" data-zh="基地：">Heimatbasis:</strong> Payerne (VD)<br>
-                    <strong style="color: #fff;" data-en="Aircraft:" data-de="Flugzeuge:" data-it="Aeromobili:" data-fr="Avions :" data-zh="飞机：">Flugzeuge:</strong> 6x F-5E Tiger II<br>
-                    <strong style="color: #fff;" data-en="Team size:" data-de="Teamgrösse:" data-it="Team:" data-fr="Équipe :" data-zh="团队规模：">Teamgrösse:</strong> 6 <span data-en="pilots + crew" data-de="Piloten + Crew" data-it="piloti + personale" data-fr="pilotes + équipe" data-zh="飞行员 + 机组">Piloten + Crew</span>
+                <p style="color: #ddd; margin-top: 15px;" data-en="Home base: Payerne (VD) | Aircraft: 6x F-5E Tiger II | Team size: 6 pilots + crew" data-de="Heimatbasis: Payerne (VD) | Flugzeuge: 6x F-5E Tiger II | Teamgrösse: 6 Piloten + Crew" data-it="Base: Payerne (VD) | Aeromobili: 6x F-5E Tiger II | Team: 6 piloti + personale" data-fr="Base : Payerne (VD) | Avions : 6x F-5E Tiger II | Équipe : 6 pilotes + équipe" data-es="Base: Payerne (VD) | Aviones: 6x F-5E Tiger II | Equipo: 6 pilotos + personal" data-zh="基地：Payerne (VD) | 飞机：6 架 F-5E Tiger II | 团队规模：6 名飞行员 + 机组">
+                    <strong style="color: #fff;" data-en="Home base:" data-de="Heimatbasis:" data-it="Base:" data-fr="Base :" data-es="Base:" data-zh="基地：">Heimatbasis:</strong> Payerne (VD)<br>
+                    <strong style="color: #fff;" data-en="Aircraft:" data-de="Flugzeuge:" data-it="Aeromobili:" data-fr="Avions :" data-es="Aviones:" data-zh="飞机：">Flugzeuge:</strong> 6x F-5E Tiger II<br>
+                    <strong style="color: #fff;" data-en="Team size:" data-de="Teamgrösse:" data-it="Team:" data-fr="Équipe :" data-es="Equipo:" data-zh="团队规模：">Teamgrösse:</strong> 6 <span data-en="pilots + crew" data-de="Piloten + Crew" data-it="piloti + personale" data-fr="pilotes + équipe" data-es="pilotos + personal" data-zh="飞行员 + 机组">Piloten + Crew</span>
                 </p>
             </div>
             <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
-                <h3 style="color: #ffd93d; margin-bottom: 15px;" data-en="Best Viewing Tips" data-de="Beste Beobachtungstipps" data-it="Consigli per la migliore visione" data-fr="Conseils pour une meilleure observation" data-zh="最佳观看提示">Beste Beobachtungstipps</h3>
-                <p style="color: #ddd; line-height: 1.8;" data-en="For the best view of the training flights, we recommend:" data-de="Für die beste Sicht auf die Trainingsflüge empfehlen wir:" data-it="Per la migliore visione dei voli di addestramento, consigliamo:" data-fr="Pour la meilleure vue des vols d'entraînement, nous recommandons :" data-zh="为获得最佳的训练飞行观赏效果，我们建议：">
+                <h3 style="color: #ffd93d; margin-bottom: 15px;" data-en="Best Viewing Tips" data-de="Beste Beobachtungstipps" data-it="Consigli per la migliore visione" data-fr="Conseils pour une meilleure observation" data-es="Consejos para verlo mejor" data-zh="最佳观看提示">Beste Beobachtungstipps</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="For the best view of the training flights, we recommend:" data-de="Für die beste Sicht auf die Trainingsflüge empfehlen wir:" data-it="Per la migliore visione dei voli di addestramento, consigliamo:" data-fr="Pour la meilleure vue des vols d'entraînement, nous recommandons :" data-es="Para ver mejor los vuelos de entrenamiento, recomendamos:" data-zh="为获得最佳的训练飞行观赏效果，我们建议：">
                     Für die beste Sicht auf die Trainingsflüge empfehlen wir:
                 </p>
                 <ul style="color: #ccc; margin-top: 15px; padding-left: 20px;">
-                    <li data-en="Use the zoom function of our webcam" data-de="Nutzen Sie die Zoom-Funktion unserer Webcam" data-it="Usa la funzione zoom della nostra webcam" data-fr="Utilisez la fonction zoom de notre webcam" data-zh="使用我们摄像头的缩放功能">Nutzen Sie die Zoom-Funktion unserer Webcam</li>
-                    <li data-en="Timelapse mode for accelerated view" data-de="Timelapse-Modus für beschleunigte Ansicht" data-it="Modalità timelapse per una vista accelerata" data-fr="Mode timelapse pour une vue accélérée" data-zh="使用延时模式加速观看">Timelapse-Modus für beschleunigte Ansicht</li>
-                    <li data-en="Daily videos to watch later" data-de="Tagesvideos zum Nachschauen" data-it="Video giornalieri da rivedere" data-fr="Vidéos quotidiennes à revoir" data-zh="每日视频可供回看">Tagesvideos zum Nachschauen</li>
-                    <li data-en="AI detection marks aircraft sightings" data-de="AI-Erkennung markiert Flugzeug-Sichtungen" data-it="Il rilevamento AI segnala gli avvistamenti di aerei" data-fr="La détection IA signale les observations d'avions" data-zh="AI 检测会标记飞机出现">AI-Erkennung markiert Flugzeug-Sichtungen</li>
+                    <li data-en="Use the zoom function of our webcam" data-de="Nutzen Sie die Zoom-Funktion unserer Webcam" data-it="Usa la funzione zoom della nostra webcam" data-fr="Utilisez la fonction zoom de notre webcam" data-es="Use la función de zoom de nuestra webcam" data-zh="使用我们摄像头的缩放功能">Nutzen Sie die Zoom-Funktion unserer Webcam</li>
+                    <li data-en="Timelapse mode for accelerated view" data-de="Timelapse-Modus für beschleunigte Ansicht" data-it="Modalità timelapse per una vista accelerata" data-fr="Mode timelapse pour une vue accélérée" data-es="Modo timelapse para una vista acelerada" data-zh="使用延时模式加速观看">Timelapse-Modus für beschleunigte Ansicht</li>
+                    <li data-en="Daily videos to watch later" data-de="Tagesvideos zum Nachschauen" data-it="Video giornalieri da rivedere" data-fr="Vidéos quotidiennes à revoir" data-es="Vídeos diarios para ver más tarde" data-zh="每日视频可供回看">Tagesvideos zum Nachschauen</li>
+                    <li data-en="AI detection marks aircraft sightings" data-de="AI-Erkennung markiert Flugzeug-Sichtungen" data-it="Il rilevamento AI segnala gli avvistamenti di aerei" data-fr="La détection IA signale les observations d'avions" data-es="La detección por IA marca los avistamientos de aviones" data-zh="AI 检测会标记飞机出现">AI-Erkennung markiert Flugzeug-Sichtungen</li>
                 </ul>
-                <p style="color: #aaa; margin-top: 15px; font-size: 14px;" data-en="Note: Trainings may be cancelled in bad weather." data-de="Hinweis: Bei schlechtem Wetter können Trainings abgesagt werden." data-it="Nota: gli addestramenti possono essere annullati in caso di maltempo." data-fr="Remarque : les entraînements peuvent être annulés en cas de mauvais temps." data-zh="注意：恶劣天气时训练可能会取消。">
+                <p style="color: #aaa; margin-top: 15px; font-size: 14px;" data-en="Note: Trainings may be cancelled in bad weather." data-de="Hinweis: Bei schlechtem Wetter können Trainings abgesagt werden." data-it="Nota: gli addestramenti possono essere annullati in caso di maltempo." data-fr="Remarque : les entraînements peuvent être annulés en cas de mauvais temps." data-es="Nota: los entrenamientos pueden cancelarse con mal tiempo." data-zh="注意：恶劣天气时训练可能会取消。">
                     <em>Hinweis: Bei schlechtem Wetter können Trainings abgesagt werden.</em>
                 </p>
             </div>
@@ -3021,7 +4439,7 @@ body.theme-neo footer {
 <section id="blog" class="section" style="background: #f8f9fa;">
     <div class="container">
         <h2 style="text-align: center; margin-bottom: 10px;"><?php echo $siteConfig['blogTitle']; ?></h2>
-        <p style="text-align: center; color: #666; margin-bottom: 40px;" data-en="Latest weather news, webcam updates and nature observations from Zurich Oberland" data-de="Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland" data-it="Ultime notizie meteo, aggiornamenti della webcam e osservazioni naturalistiche dall'Oberland di Zurigo" data-fr="Dernières actualités météo, mises à jour de la webcam et observations de la nature depuis l'Oberland zurichois" data-zh="来自苏黎世高地的最新天气资讯、摄像头更新和自然观察">Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland</p>
+        <p style="text-align: center; color: #666; margin-bottom: 40px;" data-en="Latest weather news, webcam updates and nature observations from Zurich Oberland" data-de="Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland" data-it="Ultime notizie meteo, aggiornamenti della webcam e osservazioni naturalistiche dall'Oberland di Zurigo" data-fr="Dernières actualités météo, mises à jour de la webcam et observations de la nature depuis l'Oberland zurichois" data-es="Noticias del tiempo, novedades de la webcam y observaciones de la naturaleza del Oberland de Zúrich" data-zh="来自苏黎世高地的最新天气资讯、摄像头更新和自然观察">Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland</p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
             <!-- Blog Artikel 1 -->
@@ -3030,12 +4448,12 @@ body.theme-neo footer {
                     <span style="font-size: 60px;">🌅</span>
                 </div>
                 <div style="padding: 25px;">
-                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Sunrises over Lake Zurich" data-de="Sonnenaufgänge über dem Zürichsee" data-it="Albe sul Lago di Zurigo" data-fr="Levers de soleil sur le lac de Zurich" data-zh="苏黎世湖日出">Sonnenaufgänge über dem Zürichsee</h3>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="January 2024" data-de="Januar 2024" data-it="Gennaio 2024" data-fr="Janvier 2024" data-zh="2024年1月">Januar 2024</p>
-                    <p style="color: #555; line-height: 1.7;" data-en="The winter months offer spectacular sunrises over Lake Zurich. Our AI detection automatically identifies the most beautiful moments and saves them in the gallery." data-de="Die Wintermonate bieten spektakuläre Sonnenaufgänge über dem Zürichsee. Unsere AI-Erkennung identifiziert automatisch die schönsten Momente und speichert sie in der Galerie." data-it="I mesi invernali offrono spettacolari albe sul Lago di Zurigo. Il nostro rilevamento AI identifica automaticamente i momenti più belli e li salva nella galleria." data-fr="Les mois d'hiver offrent des levers de soleil spectaculaires sur le lac de Zurich. Notre détection IA identifie automatiquement les plus beaux moments et les enregistre dans la galerie." data-zh="冬季在苏黎世湖上空可见壮观的日出。我们的 AI 检测会自动识别最美瞬间并保存到图库。">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Sunrises over Lake Zurich" data-de="Sonnenaufgänge über dem Zürichsee" data-it="Albe sul Lago di Zurigo" data-fr="Levers de soleil sur le lac de Zurich" data-es="Amaneceres sobre el lago de Zúrich" data-zh="苏黎世湖日出">Sonnenaufgänge über dem Zürichsee</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="January 2024" data-de="Januar 2024" data-it="Gennaio 2024" data-fr="Janvier 2024" data-es="Enero de 2024" data-zh="2024年1月">Januar 2024</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="The winter months offer spectacular sunrises over Lake Zurich. Our AI detection automatically identifies the most beautiful moments and saves them in the gallery." data-de="Die Wintermonate bieten spektakuläre Sonnenaufgänge über dem Zürichsee. Unsere AI-Erkennung identifiziert automatisch die schönsten Momente und speichert sie in der Galerie." data-it="I mesi invernali offrono spettacolari albe sul Lago di Zurigo. Il nostro rilevamento AI identifica automaticamente i momenti più belli e li salva nella galleria." data-fr="Les mois d'hiver offrent des levers de soleil spectaculaires sur le lac de Zurich. Notre détection IA identifie automatiquement les plus beaux moments et les enregistre dans la galerie." data-es="Los meses de invierno ofrecen amaneceres espectaculares sobre el lago de Zúrich. Nuestra detección por IA identifica automáticamente los momentos más bellos y los guarda en la galería." data-zh="冬季在苏黎世湖上空可见壮观的日出。我们的 AI 检测会自动识别最美瞬间并保存到图库。">
                         Die Wintermonate bieten spektakuläre Sonnenaufgänge über dem Zürichsee. Unsere AI-Erkennung identifiziert automatisch die schönsten Momente und speichert sie in der Galerie.
                     </p>
-                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Especially with high fog, impressive lighting moods are created when the sun breaks through the cloud cover." data-de="Besonders bei Hochnebel entstehen eindrucksvolle Lichtstimmungen, wenn die Sonne durch die Wolkendecke bricht." data-it="Soprattutto con la nebbia alta si creano suggestive atmosfere di luce quando il sole rompe la coltre di nubi." data-fr="Surtout en cas de brouillard élevé, des ambiances lumineuses impressionnantes se créent lorsque le soleil perce la couverture nuageuse." data-zh="尤其在高雾天气，当太阳穿透云层时会形成迷人的光影氛围。">
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Especially with high fog, impressive lighting moods are created when the sun breaks through the cloud cover." data-de="Besonders bei Hochnebel entstehen eindrucksvolle Lichtstimmungen, wenn die Sonne durch die Wolkendecke bricht." data-it="Soprattutto con la nebbia alta si creano suggestive atmosfere di luce quando il sole rompe la coltre di nubi." data-fr="Surtout en cas de brouillard élevé, des ambiances lumineuses impressionnantes se créent lorsque le soleil perce la couverture nuageuse." data-es="Sobre todo con niebla alta se crean ambientes de luz impresionantes cuando el sol atraviesa las nubes." data-zh="尤其在高雾天气，当太阳穿透云层时会形成迷人的光影氛围。">
                         Besonders bei Hochnebel entstehen eindrucksvolle Lichtstimmungen, wenn die Sonne durch die Wolkendecke bricht.
                     </p>
                 </div>
@@ -3047,12 +4465,12 @@ body.theme-neo footer {
                     <span style="font-size: 60px;">🏔️</span>
                 </div>
                 <div style="padding: 25px;">
-                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Alpine Panorama in Winter" data-de="Alpenpanorama im Winter" data-it="Panorama alpino in inverno" data-fr="Panorama alpin en hiver" data-zh="冬季阿尔卑斯全景">Alpenpanorama im Winter</h3>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="December 2023" data-de="Dezember 2023" data-it="Dicembre 2023" data-fr="Décembre 2023" data-zh="2023年12月">Dezember 2023</p>
-                    <p style="color: #555; line-height: 1.7;" data-en="On clear winter days, the view from our webcam at 616m altitude extends to the snow-covered peaks of the Glarus Alps. Säntis, Glärnisch and other mountain peaks are visible." data-de="An klaren Wintertagen reicht die Sicht von unserer Webcam auf 616m Höhe bis zu den schneebedeckten Gipfeln der Glarner Alpen. Säntis, Glärnisch und weitere Bergspitzen sind sichtbar." data-it="Nelle limpide giornate invernali, la vista dalla nostra webcam a 616 m di altitudine si estende alle vette innevate delle Alpi di Glarona. Si vedono Säntis, Glärnisch e altre cime." data-fr="Par temps clair en hiver, la vue depuis notre webcam à 616 m d'altitude s'étend jusqu'aux sommets enneigés des Alpes glaronnaises. Le Säntis, le Glärnisch et d'autres sommets sont visibles." data-zh="在晴朗的冬日，从我们海拔616米的摄像头可远眺格拉鲁斯阿尔卑斯的雪峰，可见 Säntis、Glärnisch 等山峰。">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Alpine Panorama in Winter" data-de="Alpenpanorama im Winter" data-it="Panorama alpino in inverno" data-fr="Panorama alpin en hiver" data-es="Panorama alpino en invierno" data-zh="冬季阿尔卑斯全景">Alpenpanorama im Winter</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="December 2023" data-de="Dezember 2023" data-it="Dicembre 2023" data-fr="Décembre 2023" data-es="Diciembre de 2023" data-zh="2023年12月">Dezember 2023</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="On clear winter days, the view from our webcam at 616m altitude extends to the snow-covered peaks of the Glarus Alps. Säntis, Glärnisch and other mountain peaks are visible." data-de="An klaren Wintertagen reicht die Sicht von unserer Webcam auf 616m Höhe bis zu den schneebedeckten Gipfeln der Glarner Alpen. Säntis, Glärnisch und weitere Bergspitzen sind sichtbar." data-it="Nelle limpide giornate invernali, la vista dalla nostra webcam a 616 m di altitudine si estende alle vette innevate delle Alpi di Glarona. Si vedono Säntis, Glärnisch e altre cime." data-fr="Par temps clair en hiver, la vue depuis notre webcam à 616 m d'altitude s'étend jusqu'aux sommets enneigés des Alpes glaronnaises. Le Säntis, le Glärnisch et d'autres sommets sont visibles." data-es="En los días despejados de invierno, la vista desde nuestra webcam a 616 m de altitud llega hasta las cumbres nevadas de los Alpes de Glaris. Se ven el Säntis, el Glärnisch y otras cimas." data-zh="在晴朗的冬日，从我们海拔616米的摄像头可远眺格拉鲁斯阿尔卑斯的雪峰，可见 Säntis、Glärnisch 等山峰。">
                         An klaren Wintertagen reicht die Sicht von unserer Webcam auf 616m Höhe bis zu den schneebedeckten Gipfeln der Glarner Alpen. Säntis, Glärnisch und weitere Bergspitzen sind sichtbar.
                     </p>
-                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Use the zoom function for detailed views of the mountain landscape." data-de="Nutzen Sie die Zoom-Funktion für detaillierte Ansichten der Berglandschaft." data-it="Usa la funzione zoom per viste dettagliate del paesaggio montano." data-fr="Utilisez la fonction zoom pour des vues détaillées du paysage montagneux." data-zh="使用缩放功能可查看更细致的山景。">
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Use the zoom function for detailed views of the mountain landscape." data-de="Nutzen Sie die Zoom-Funktion für detaillierte Ansichten der Berglandschaft." data-it="Usa la funzione zoom per viste dettagliate del paesaggio montano." data-fr="Utilisez la fonction zoom pour des vues détaillées du paysage montagneux." data-es="Use la función de zoom para ver el paisaje montañoso en detalle." data-zh="使用缩放功能可查看更细致的山景。">
                         Nutzen Sie die Zoom-Funktion für detaillierte Ansichten der Berglandschaft.
                     </p>
                 </div>
@@ -3064,12 +4482,12 @@ body.theme-neo footer {
                     <span style="font-size: 60px;">✈️</span>
                 </div>
                 <div style="padding: 25px;">
-                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Patrouille Suisse Season 2024" data-de="Patrouille Suisse Saison 2024" data-it="Stagione 2024 della Patrouille Suisse" data-fr="Saison 2024 de la Patrouille Suisse" data-zh="2024年瑞士巡逻兵季">Patrouille Suisse Saison 2024</h3>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="March 2024" data-de="März 2024" data-it="Marzo 2024" data-fr="Mars 2024" data-zh="2024年3月">März 2024</p>
-                    <p style="color: #555; line-height: 1.7;" data-en="The new flight season of Patrouille Suisse has begun! Every Monday the aerobatic team trains over Zurich Oberland - our webcam captures the flight maneuvers live." data-de="Die neue Flugsaison der Patrouille Suisse hat begonnen! Jeden Montag trainiert das Kunstflugteam über dem Zürcher Oberland - unsere Webcam fängt die Flugmanöver live ein." data-it="È iniziata la nuova stagione di volo della Patrouille Suisse! Ogni lunedì il team acrobatico si addestra sopra l'Oberland di Zurigo: la nostra webcam cattura le manovre in diretta." data-fr="La nouvelle saison de vol de la Patrouille Suisse a commencé ! Chaque lundi, l'équipe de voltige s'entraîne au-dessus de l'Oberland zurichois : notre webcam capture les manœuvres en direct." data-zh="瑞士巡逻兵新一季飞行已开始！每周一特技飞行队在苏黎世高地训练，我们的摄像头会实时捕捉飞行动作。">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Patrouille Suisse Season 2024" data-de="Patrouille Suisse Saison 2024" data-it="Stagione 2024 della Patrouille Suisse" data-fr="Saison 2024 de la Patrouille Suisse" data-es="Temporada 2024 de la Patrouille Suisse" data-zh="2024年瑞士巡逻兵季">Patrouille Suisse Saison 2024</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="March 2024" data-de="März 2024" data-it="Marzo 2024" data-fr="Mars 2024" data-es="Marzo de 2024" data-zh="2024年3月">März 2024</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="The new flight season of Patrouille Suisse has begun! Every Monday the aerobatic team trains over Zurich Oberland - our webcam captures the flight maneuvers live." data-de="Die neue Flugsaison der Patrouille Suisse hat begonnen! Jeden Montag trainiert das Kunstflugteam über dem Zürcher Oberland - unsere Webcam fängt die Flugmanöver live ein." data-it="È iniziata la nuova stagione di volo della Patrouille Suisse! Ogni lunedì il team acrobatico si addestra sopra l'Oberland di Zurigo: la nostra webcam cattura le manovre in diretta." data-fr="La nouvelle saison de vol de la Patrouille Suisse a commencé ! Chaque lundi, l'équipe de voltige s'entraîne au-dessus de l'Oberland zurichois : notre webcam capture les manœuvres en direct." data-es="¡Ha comenzado la nueva temporada de vuelo de la Patrouille Suisse! Cada lunes el equipo acrobático entrena sobre el Oberland de Zúrich y nuestra webcam capta las maniobras en directo." data-zh="瑞士巡逻兵新一季飞行已开始！每周一特技飞行队在苏黎世高地训练，我们的摄像头会实时捕捉飞行动作。">
                         Die neue Flugsaison der Patrouille Suisse hat begonnen! Jeden Montag trainiert das Kunstflugteam über dem Zürcher Oberland - unsere Webcam fängt die Flugmanöver live ein.
                     </p>
-                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="AI detection automatically marks aircraft sightings in our gallery." data-de="Die AI-Erkennung markiert Flugzeug-Sichtungen automatisch in unserer Galerie." data-it="Il rilevamento AI contrassegna automaticamente gli avvistamenti di aerei nella nostra galleria." data-fr="La détection IA marque automatiquement les observations d'avions dans notre galerie." data-zh="AI 检测会在我们的图库中自动标记飞机出现。">
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="AI detection automatically marks aircraft sightings in our gallery." data-de="Die AI-Erkennung markiert Flugzeug-Sichtungen automatisch in unserer Galerie." data-it="Il rilevamento AI contrassegna automaticamente gli avvistamenti di aerei nella nostra galleria." data-fr="La détection IA marque automatiquement les observations d'avions dans notre galerie." data-es="La detección por IA marca automáticamente los avistamientos de aviones en nuestra galería." data-zh="AI 检测会在我们的图库中自动标记飞机出现。">
                         Die AI-Erkennung markiert Flugzeug-Sichtungen automatisch in unserer Galerie.
                     </p>
                 </div>
@@ -3077,7 +4495,7 @@ body.theme-neo footer {
         </div>
 
         <div style="text-align: center; margin-top: 40px;">
-            <p style="color: #888; font-size: 14px;" data-en="More weather updates and observations can be found on our social media channels." data-de="Weitere Wetter-Updates und Beobachtungen finden Sie auf unseren Social Media Kanälen." data-it="Altri aggiornamenti meteo e osservazioni sono disponibili sui nostri canali social." data-fr="D'autres mises à jour météo et observations sont disponibles sur nos réseaux sociaux." data-zh="更多天气更新和观测内容请关注我们的社交媒体渠道。">
+            <p style="color: #888; font-size: 14px;" data-en="More weather updates and observations can be found on our social media channels." data-de="Weitere Wetter-Updates und Beobachtungen finden Sie auf unseren Social Media Kanälen." data-it="Altri aggiornamenti meteo e osservazioni sono disponibili sui nostri canali social." data-fr="D'autres mises à jour météo et observations sont disponibles sur nos réseaux sociaux." data-es="Encontrará más novedades del tiempo y observaciones en nuestras redes sociales." data-zh="更多天气更新和观测内容请关注我们的社交媒体渠道。">
                 Weitere Wetter-Updates und Beobachtungen finden Sie auf unseren Social Media Kanälen.
             </p>
         </div>
@@ -3087,11 +4505,11 @@ body.theme-neo footer {
 <!-- IMPRESSUM -->
 <section id="impressum" class="section">
     <div class="container">
-        <h2 data-en="Imprint" data-de="Impressum" data-it="Note legali" data-fr="Mentions légales" data-zh="法律声明">Impressum</h2>
+        <h2 data-en="Imprint" data-de="Impressum" data-it="Note legali" data-fr="Mentions légales" data-es="Aviso legal" data-zh="法律声明">Impressum</h2>
         <p><?php echo $siteConfig['footerName']; ?></p>
         <p>M. Kessler</p>
         <p>Dürnten, Schweiz</p>
-        <p data-en="Inquiries via contact form" data-de="Anfragen per Kontaktformular" data-it="Richieste tramite modulo di contatto" data-fr="Demandes via le formulaire de contact" data-zh="通过联系表单咨询">Anfragen per Kontaktformular</p>
+        <p data-en="Inquiries via contact form" data-de="Anfragen per Kontaktformular" data-it="Richieste tramite modulo di contatto" data-fr="Demandes via le formulaire de contact" data-es="Consultas a través del formulario de contacto" data-zh="通过联系表单咨询">Anfragen per Kontaktformular</p>
     </div>
 </section>
 
@@ -3101,28 +4519,53 @@ body.theme-neo footer {
     <div class="container">
         <!-- Social Media Icons -->
         <div class="footer-social social-media-container" style="text-align: center; margin-bottom: 20px; display: <?php echo $settingsManager->shouldShowSocialMedia() ? 'block' : 'none'; ?>;">
-            <a href="https://www.instagram.com/auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Folge uns auf Instagram" style="display: inline-block; margin: 0 10px; color: #E1306C; font-size: 24px;">
+            <a href="<?php echo htmlspecialchars($settingsManager->getSocialLink('instagram', 'https://www.instagram.com/auroraweatherlivecam')); ?>" target="_blank" class="social-link social-link-instagram" rel="noopener noreferrer" title="Folge uns auf Instagram" style="display: inline-block; margin: 0 10px; color: #E1306C; font-size: 24px;">
                 <i class="fab fa-instagram" aria-hidden="true"></i>
                 <span class="sr-only">Instagram</span>
             </a>
-            <a href="https://www.facebook.com/auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Folge uns auf Facebook" style="display: inline-block; margin: 0 10px; color: #1877F2; font-size: 24px;">
+            <a href="<?php echo htmlspecialchars($settingsManager->getSocialLink('facebook', 'https://www.facebook.com/auroraweatherlivecam')); ?>" target="_blank" class="social-link social-link-facebook" rel="noopener noreferrer" title="Folge uns auf Facebook" style="display: inline-block; margin: 0 10px; color: #1877F2; font-size: 24px;">
                 <i class="fab fa-facebook" aria-hidden="true"></i>
                 <span class="sr-only">Facebook</span>
             </a>
-            <a href="https://www.youtube.com/@auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Abonniere unseren YouTube Kanal" style="display: inline-block; margin: 0 10px; color: #FF0000; font-size: 24px;">
+            <a href="<?php echo htmlspecialchars($settingsManager->getSocialLink('youtube', 'https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA')); ?>" target="_blank" class="social-link social-link-youtube" rel="noopener noreferrer" title="Abonniere unseren YouTube Kanal" style="display: inline-block; margin: 0 10px; color: #FF0000; font-size: 24px;">
                 <i class="fab fa-youtube" aria-hidden="true"></i>
                 <span class="sr-only">YouTube</span>
             </a>
-            <a href="https://www.tiktok.com/@auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Folge uns auf TikTok" style="display: inline-block; margin: 0 10px; color: #000000; font-size: 24px;">
+            <a href="<?php echo htmlspecialchars($settingsManager->getSocialLink('tiktok', 'https://www.tiktok.com/@auroraweatherlivecam')); ?>" target="_blank" class="social-link social-link-tiktok" rel="noopener noreferrer" title="Folge uns auf TikTok" style="display: inline-block; margin: 0 10px; color: #000000; font-size: 24px;">
                 <i class="fab fa-tiktok" aria-hidden="true"></i>
                 <span class="sr-only">TikTok</span>
             </a>
         </div>
+
+<div style="text-align: center; margin-bottom: 20px;">
+    <div class="donation-buttons">
+<?php if ($showPaypalDonation): ?>
+        <a href="<?php echo htmlspecialchars($paypalDonationUrl); ?>" target="_blank" rel="noopener" class="paypal-donation-link">
+            <span class="paypal-logo" aria-hidden="true"><b>Pay</b><i>Pal</i></span>
+            <span data-de="Jetzt spenden" data-en="Donate now" data-it="Dona ora" data-fr="Faire un don" data-es="Donar ahora" data-zh="立即捐赠">Jetzt spenden</span>
+        </a>
+<?php endif; ?>
+<?php if ($showBuyMeACoffee): ?>
+        <a href="<?php echo htmlspecialchars($settingsManager->getSocialLink('buymeacoffee', 'https://buymeacoffee.com/auroracam')); ?>" target="_blank" rel="noopener" class="donation-link">
+            <img src="buy.png" alt="Buy me a coffee" style="height: 267px; border-radius: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        </a>
+<?php endif; ?>
+    </div>
+    <p class="donation-callout-text" style="font-size: 14px; color: #333; background: rgba(255,255,255,0.85); padding: 8px 16px; border-radius: 8px; margin: 10px auto 0; max-width: 400px; line-height: 1.6;">
+        <?php echo nl2br(htmlspecialchars($donationCalloutText)); ?>
+    </p>
+</div>
+
+
+
+        <!-- Herkunft und Strom (2026-10-09) -->
+        <div class="trust-badges" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px auto;"><span class="trust-badge" style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:999px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;white-space:nowrap;background:#fff;border:1px solid #e3d6d4;color:#222;"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="3" fill="#DA291C"/><path fill="#fff" d="M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7z"/></svg><span class="trust-text" data-de="Aus der Schweiz" data-en="From Switzerland" data-it="Dalla Svizzera" data-fr="De Suisse" data-es="Desde Suiza" data-zh="来自瑞士">Aus der Schweiz</span></span><span class="trust-badge" style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:999px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;white-space:nowrap;background:#fff;border:1px solid #e3d6d4;color:#222;"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="15" fill="#fff" stroke="#DA291C" stroke-width="2"/><circle cx="16" cy="16" r="11" fill="none" stroke="#DA291C" stroke-width="1" stroke-dasharray="2 2"/><path fill="#DA291C" d="M14.2 10h3.6v4.2H22v3.6h-4.2V22h-3.6v-4.2H10v-3.6h4.2z"/></svg>Swiss made</span><span class="trust-badge" style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:999px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;white-space:nowrap;background:#E8F5E9;border:1px solid #A5D6A7;color:#1B5E20;"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="16" fill="#2E7D32"/><circle cx="22" cy="10" r="3.2" fill="#FFD54F"/><g stroke="#FFD54F" stroke-width="1.4" stroke-linecap="round"><path d="M22 4.6v1.6M22 13.8v1.6M16.6 10h1.6M25.8 10h1.6M18.2 6.2l1.1 1.1M24.7 12.7l1.1 1.1M25.8 6.2l-1.1 1.1"/></g><path fill="#fff" d="M8 24c0-7 5-12 13-12-1 8-5 13-12 13l-1-1zm1 0c3-4 6-6 9-7-3 2-6 4-8 8z"/></svg><span class="trust-text" data-de="CO₂-neutral · mit Solarstrom betrieben" data-en="CO₂-neutral · solar powered" data-it="CO₂ neutrale · alimentata a energia solare" data-fr="Neutre en CO₂ · alimentée à l&#x27;énergie solaire" data-es="Neutra en CO₂ · con energía solar" data-zh="碳中和 · 太阳能供电">CO₂-neutral · mit Solarstrom betrieben</span></span></div>
         <div class="footer-links">
             <a href="#webcams">Webcam</a>
             <a href="#guestbook">Gästebuch</a>
             <a href="#kontakt">Kontakt</a>
             <a href="#gallery">Galerie</a>
+            <a href="#zeitreise">Zeitreise</a>
             <a href="#patrouille-suisse">Patrouille Suisse</a>
             <a href="#blog">Blog</a>
             <a href="#impressum">Impressum</a>
@@ -3179,7 +4622,7 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
         defaultZoom: 1
     };
 </script>
-<script src="js/video-zoom.js"></script>
+<script src="js/video-zoom.js?v=20261007"></script>
 
 <!-- TIMELAPSE CONTROLLER -->
 <script>
@@ -3361,6 +4804,7 @@ document.getElementById('timelapse-button')?.addEventListener('click', function(
 <script>
 const DailyVideoPlayer = {
     videoElement: null,
+    hlsInstance: null,
 
     init: function() {
         this.videoElement = document.getElementById('daily-video');
@@ -3377,17 +4821,66 @@ const DailyVideoPlayer = {
         document.getElementById('daily-video-player').style.display = 'block';
         document.getElementById('daily-video-controls').style.display = 'block';
 
-        // Video laden
-        this.videoElement.src = videoPath;
-        this.videoElement.load();
-        this.videoElement.play();
+        // Alte HLS-Instanz aufräumen
+        if (this.hlsInstance) {
+            this.hlsInstance.destroy();
+            this.hlsInstance = null;
+        }
 
-        // Download Button
+        // HLS oder direkte MP4?
+        const isHLS = videoPath.endsWith('.m3u8');
+
+        if (isHLS && Hls.isSupported()) {
+            // HLS-Streaming (adaptiv, wie YouTube)
+            var hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                startLevel: 0,           // Start mit niedrigster Qualität (360p)
+                capLevelToPlayerSize: true // Nicht höher als Player-Grösse
+            });
+            hls.loadSource(videoPath);
+            hls.attachMedia(this.videoElement);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                this.videoElement.play().catch(console.log);
+            });
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.error('HLS Fatal Error:', data.type);
+                    // Fallback: versuche als direkte MP4
+                    hls.destroy();
+                    this.hlsInstance = null;
+                    var mp4Path = videoPath.replace(/\/remote-hls\/(.+)\/master\.m3u8/, '/remote-videos/daily_video_$1.mp4');
+                    this.videoElement.src = mp4Path;
+                    this.videoElement.load();
+                    this.videoElement.play().catch(console.log);
+                }
+            });
+            this.hlsInstance = hls;
+        } else if (isHLS && this.videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari: native HLS
+            this.videoElement.src = videoPath;
+            this.videoElement.load();
+            this.videoElement.play().catch(console.log);
+        } else {
+            // Direkte MP4 (lokale Videos oder Fallback)
+            this.videoElement.src = videoPath;
+            this.videoElement.load();
+            this.videoElement.play().catch(console.log);
+        }
+
+        // Download Button (immer Original-MP4, nicht HLS)
         const downloadBtn = document.getElementById('dvp-download');
         if (allowDownload && downloadBtn) {
             downloadBtn.style.display = 'inline-block';
-            downloadBtn.href = videoPath;
-            downloadBtn.download = videoPath.split('/').pop();
+            if (isHLS) {
+                // Download-Link auf Original-MP4 umleiten
+                var origName = videoPath.match(/\/remote-hls\/(.+)\/master\.m3u8/);
+                downloadBtn.href = origName ? '/remote-videos/daily_video_' + origName[1] + '.mp4' : videoPath;
+                downloadBtn.download = origName ? 'daily_video_' + origName[1] + '.mp4' : '';
+            } else {
+                downloadBtn.href = videoPath;
+                downloadBtn.download = videoPath.split('/').pop();
+            }
         } else if (downloadBtn) {
             downloadBtn.style.display = 'none';
         }
@@ -3397,6 +4890,11 @@ const DailyVideoPlayer = {
     },
 
     backToLive: function() {
+        // HLS aufräumen
+        if (this.hlsInstance) {
+            this.hlsInstance.destroy();
+            this.hlsInstance = null;
+        }
         if (this.videoElement) {
             this.videoElement.pause();
             this.videoElement.src = '';
@@ -3697,6 +5195,18 @@ const AdminSettings = {
                 const socialEls = document.querySelectorAll('.social-link, .social-media-container');
                 socialEls.forEach(el => el.style.display = boolValue ? '' : 'none');
                 break;
+            case 'social_links.instagram':
+            case 'social_links.facebook':
+            case 'social_links.youtube':
+            case 'social_links.tiktok':
+                const socialKey = key.split('.').pop();
+                document.querySelectorAll('.social-link-' + socialKey).forEach(el => el.href = value || '#');
+                this.showNotification('Social-Link gespeichert', 'success');
+                break;
+            case 'social_links.buymeacoffee':
+                document.querySelectorAll('.donation-link').forEach(el => el.href = value || '#');
+                this.showNotification('Spenden-Link gespeichert', 'success');
+                break;
             case 'ui_display.show_patrouille_suisse':
                 const patrouilleSection = document.getElementById('patrouille-suisse');
                 if (patrouilleSection) patrouilleSection.style.display = boolValue ? 'block' : 'none';
@@ -3725,13 +5235,81 @@ const AdminSettings = {
                 const gallerySection = document.getElementById('gallery');
                 if (gallerySection) gallerySection.style.display = boolValue ? 'block' : 'none';
                 break;
+            case 'content.ai_detection_enabled':
+                const aiLegend = document.querySelector('.ai-legend');
+                const aiSectionsByDetection = document.querySelectorAll('.ai-events-section');
+                if (aiLegend) aiLegend.style.display = boolValue ? 'block' : 'none';
+                aiSectionsByDetection.forEach(section => section.style.display = boolValue ? 'block' : 'none');
+                this.showNotification('KI-Erkennung ' + (boolValue ? 'aktiviert' : 'deaktiviert') + ' (Reload empfohlen)', 'success');
+                break;
             case 'content.ai_events_enabled':
                 const aiSections = document.querySelectorAll('.ai-events-section');
                 aiSections.forEach(section => section.style.display = boolValue ? 'block' : 'none');
-                this.showNotification('AI-Events ' + (boolValue ? 'aktiviert' : 'deaktiviert') + ' (Reload empfohlen)', 'success');
+                this.showNotification('KI-Anzeige ' + (boolValue ? 'aktiviert' : 'deaktiviert') + ' (Reload empfohlen)', 'success');
                 break;
             case 'content.max_guestbook_entries':
                 this.showNotification('Max Einträge: ' + value + ' (Reload empfohlen)', 'success');
+                break;
+            case 'content.hero_welcome_de':
+                const heroWelcome = document.getElementById('hero-welcome-text');
+                if (heroWelcome) {
+                    const nextValue = value && String(value).trim() !== '' ? value : '<?php echo addslashes($siteConfig['welcomeDe']); ?>';
+                    heroWelcome.textContent = nextValue;
+                    heroWelcome.setAttribute('data-de', nextValue);
+                }
+                break;
+            case 'content.hero_region_text_de':
+                const heroRegionText = document.getElementById('hero-region-text');
+                if (heroRegionText) {
+                    const fallbackRegion = 'Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!';
+                    const nextValue = value && String(value).trim() !== '' ? value : fallbackRegion;
+                    heroRegionText.textContent = nextValue;
+                    heroRegionText.setAttribute('data-de', nextValue);
+                }
+                break;
+            case 'content.local_flag_alt_de':
+                const localFlagImage = document.getElementById('local-flag-image');
+                if (localFlagImage) {
+                    const nextValue = value && String(value).trim() !== '' ? value : 'Ortsflagge';
+                    localFlagImage.setAttribute('alt', nextValue);
+                }
+                break;
+            case 'content.donation_callout_de':
+                const donationEls = document.querySelectorAll('.donation-callout-text');
+                const donationFallback = 'Gefällt dir die Livecam? Unterstütze das Projekt –\njeder Franken zählt und hilft die Betriebskosten\nzu decken. So kannst du auch weiterhin\nFotos und Videos kostenlos nutzen.';
+                const donationText = value && String(value).trim() !== '' ? value : donationFallback;
+                donationEls.forEach(el => {
+                    el.innerHTML = donationText.replace(/\n/g, '<br>');
+                });
+                break;
+            case 'content.twint_support_text_de':
+                const twintTextEl = document.querySelector('.twint-support-text');
+                if (twintTextEl) {
+                    const fallbackTwint = 'Unterstütze die Aurora Livecam mit deiner Spende. Du hilfst dabei, Kamera, Server, Internetverbindung und die 100 % autarke Stromversorgung mit Solarenergie und EcoFlow-Speichern zu finanzieren. So bleibt das Projekt nachhaltig, unabhängig und für alle frei zugänglich.';
+                    const nextValue = value && String(value).trim() !== '' ? value : fallbackTwint;
+                    twintTextEl.textContent = nextValue;
+                    twintTextEl.setAttribute('data-de', nextValue);
+                }
+                break;
+            case 'social_links.paypal':
+                document.querySelectorAll('.paypal-donation-link').forEach(el => el.href = value || '#');
+                this.showNotification('PayPal-Link gespeichert', 'success');
+                break;
+            case 'content.paypal_enabled':
+            case 'content.buymeacoffee_enabled': {
+                const spendenKlasse = key === 'content.paypal_enabled' ? '.paypal-donation-link' : '.donation-link';
+                const spendenEls = document.querySelectorAll(spendenKlasse);
+                spendenEls.forEach(el => el.style.display = value ? '' : 'none');
+                const spendenName = key === 'content.paypal_enabled' ? 'PayPal-Spendenknopf' : 'Buy-me-a-Coffee-Knopf';
+                this.showNotification(spendenName + (value ? ' aktiviert' : ' deaktiviert') + (value && !spendenEls.length ? ' (Reload nötig)' : ''), 'success');
+                break;
+            }
+            case 'content.twint_enabled':
+                const twintPaymentEl = document.querySelector('.twint-payment-content');
+                if (twintPaymentEl) {
+                    twintPaymentEl.style.display = value ? '' : 'none';
+                }
+                this.showNotification(value ? 'TWINT-Spendenlink aktiviert (Reload empfohlen)' : 'TWINT-Spendenlink deaktiviert', 'success');
                 break;
 
             // Technical (Punkt 6)
@@ -3813,6 +5391,26 @@ const AdminSettings = {
             this.updateSetting('ui_display.show_social_media', e.target.checked);
         });
 
+        document.getElementById('setting-social-instagram')?.addEventListener('change', (e) => {
+            this.updateSetting('social_links.instagram', e.target.value);
+        });
+
+        document.getElementById('setting-social-facebook')?.addEventListener('change', (e) => {
+            this.updateSetting('social_links.facebook', e.target.value);
+        });
+
+        document.getElementById('setting-social-youtube')?.addEventListener('change', (e) => {
+            this.updateSetting('social_links.youtube', e.target.value);
+        });
+
+        document.getElementById('setting-social-tiktok')?.addEventListener('change', (e) => {
+            this.updateSetting('social_links.tiktok', e.target.value);
+        });
+
+        document.getElementById('setting-social-buymeacoffee')?.addEventListener('change', (e) => {
+            this.updateSetting('social_links.buymeacoffee', e.target.value);
+        });
+
         document.getElementById('setting-show-patrouille')?.addEventListener('change', (e) => {
             this.updateSetting('ui_display.show_patrouille_suisse', e.target.checked);
         });
@@ -3839,12 +5437,52 @@ const AdminSettings = {
             this.updateSetting('content.gallery_enabled', e.target.checked);
         });
 
+        document.getElementById('setting-ai-detection-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('content.ai_detection_enabled', e.target.checked);
+        });
+
         document.getElementById('setting-ai-events-enabled')?.addEventListener('change', (e) => {
             this.updateSetting('content.ai_events_enabled', e.target.checked);
         });
 
         document.getElementById('setting-max-guestbook')?.addEventListener('change', (e) => {
             this.updateSetting('content.max_guestbook_entries', parseInt(e.target.value));
+        });
+
+        document.getElementById('setting-hero-welcome')?.addEventListener('change', (e) => {
+            this.updateSetting('content.hero_welcome_de', e.target.value);
+        });
+
+        document.getElementById('setting-hero-region-text')?.addEventListener('change', (e) => {
+            this.updateSetting('content.hero_region_text_de', e.target.value);
+        });
+
+        document.getElementById('setting-local-flag-alt')?.addEventListener('change', (e) => {
+            this.updateSetting('content.local_flag_alt_de', e.target.value);
+        });
+
+        document.getElementById('setting-donation-callout')?.addEventListener('change', (e) => {
+            this.updateSetting('content.donation_callout_de', e.target.value);
+        });
+
+        document.getElementById('setting-social-paypal')?.addEventListener('change', (e) => {
+            this.updateSetting('social_links.paypal', e.target.value);
+        });
+
+        document.getElementById('setting-paypal-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('content.paypal_enabled', e.target.checked);
+        });
+
+        document.getElementById('setting-buymeacoffee-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('content.buymeacoffee_enabled', e.target.checked);
+        });
+
+        document.getElementById('setting-twint-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('content.twint_enabled', e.target.checked);
+        });
+
+        document.getElementById('setting-twint-support-text')?.addEventListener('change', (e) => {
+            this.updateSetting('content.twint_support_text_de', e.target.value);
         });
 
         // Technical Settings (Punkt 6)
@@ -4080,11 +5718,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function setLanguage(lang) {
-    document.querySelectorAll('[data-en], [data-de], [data-it], [data-fr], [data-zh]').forEach(elem => {
+    document.querySelectorAll('[data-en], [data-de], [data-it], [data-fr], [data-es], [data-zh]').forEach(elem => {
         const text = elem.getAttribute(`data-${lang}`);
         if (text) elem.textContent = text;
     });
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+    try { localStorage.setItem('auroraSprache', lang); } catch (e) {}
 }
+// Gewaehlte Sprache beim naechsten Besuch wiederherstellen (2026-10-07).
+document.addEventListener('DOMContentLoaded', function() {
+    let gemerkt = null;
+    try { gemerkt = localStorage.getItem('auroraSprache'); } catch (e) {}
+    const knopf = gemerkt && gemerkt !== 'de' && document.getElementById('lang-' + gemerkt);
+    if (knopf) knopf.click();
+});
 </script>
 
 <!-- CALENDAR NAVIGATION -->
@@ -4177,22 +5824,22 @@ const WeatherUpdater = {
             <div class="weather-item weather-temp">
                 <span class="weather-icon">🌡️</span>
                 <span class="weather-value">${weather.temp}°C</span>
-                <span class="weather-label">Temperatur</span>
+                <span class="weather-label" data-de="Temperatur" data-en="Temperature" data-it="Temperatura" data-fr="Température" data-es="Temperatura" data-zh="温度">Temperatur</span>
             </div>
             <div class="weather-item weather-wind">
                 <span class="weather-icon">💨</span>
                 <span class="weather-value">${weather.wind_speed} km/h ${weather.wind_direction}</span>
-                <span class="weather-label">Wind</span>
+                <span class="weather-label" data-de="Wind" data-en="Wind" data-it="Vento" data-fr="Vent" data-es="Viento" data-zh="风">Wind</span>
             </div>
             <div class="weather-item weather-pressure">
                 <span class="weather-icon">🔽</span>
                 <span class="weather-value">${weather.pressure} hPa</span>
-                <span class="weather-label">Luftdruck</span>
+                <span class="weather-label" data-de="Luftdruck" data-en="Pressure" data-it="Pressione" data-fr="Pression" data-es="Presión" data-zh="气压">Luftdruck</span>
             </div>
             <div class="weather-item weather-humidity">
                 <span class="weather-icon">💧</span>
                 <span class="weather-value">${weather.humidity}%</span>
-                <span class="weather-label">Luftfeuchtigkeit</span>
+                <span class="weather-label" data-de="Luftfeuchtigkeit" data-en="Humidity" data-it="Umidità" data-fr="Humidité" data-es="Humedad" data-zh="湿度">Luftfeuchtigkeit</span>
             </div>
             <div class="weather-item weather-description">
                 <span class="weather-icon">${this.getWeatherEmoji(weather.icon)}</span>
@@ -4203,10 +5850,11 @@ const WeatherUpdater = {
             <div class="weather-item weather-precipitation">
                 <span class="weather-icon">${precipIcon}</span>
                 <span class="weather-value">${precipValue} mm</span>
-                <span class="weather-label">Niederschlag</span>
+                <span class="weather-label" data-de="Niederschlag" data-en="Precipitation" data-it="Precipitazioni" data-fr="Précipitations" data-es="Precipitación" data-zh="降水">Niederschlag</span>
             </div>
             ` : ''}
         `;
+        { const aktiv = document.querySelector('.lang-button.active'); if (aktiv && typeof setLanguage === 'function') setLanguage(aktiv.id.split('-')[1]); }
 
         // Fade-in Animation
         widget.style.animation = 'weatherFadeIn 0.5s ease';
