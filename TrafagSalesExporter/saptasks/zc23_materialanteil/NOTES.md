@@ -1,7 +1,9 @@
 # ZC23: neue Spalte Materialanteil
 
-Stand: 2026-10-15, Nachmittag. Analyse abgeschlossen, Entscheide Ingo da, ABAP im Repository fertig vorbereitet.
-**In SAP noch nichts geändert:** Das Eintragen der Felder in SE11 hat der Auto-Modus abgelehnt (Änderung an einem gemeinsamen System). Ingo muss das freigeben oder die Schritte in Abschnitt „Einbau in T76“ selbst anstossen.
+Stand: 2026-10-15, 13:30. **In T76 eingebaut und geprüft (Freigabe Ingo):** Transport `T76K912736` mit Struktur, Tabelle und
+OData-Modell; `ZM_OFFENE_KDAUF_OPT` ($TMP) mit Materialanteil aktiv, Werte stimmen. **Offen:** Laufzeit (48 s statt 5 s für
+Q2 im Dialog) entscheiden, danach Quelltext in `ZM_OFFENE_KDAUF` übernehmen. Ergebnisse unten in „Einbau in T76: Protokoll“.
+*Überholt:* „In SAP noch nichts geändert“ galt bis zur Freigabe am 15.10. mittags.
 
 ## Wunsch (Gespräch Ingo mit dem Anfragenden, Aufnahme 2026-10-15)
 
@@ -107,3 +109,33 @@ ZM03-Standortvergleich (Schwesterwerk am selben Standort zählt hier als Materia
 - **ZC23 gibt über die DDIC-Struktur `ZMM_UEB_KDAUF` aus**; eine neue Spalte braucht dort ein Feld, nicht nur im Programm.
 - **`ZPOWERBI_KDAUF` ist kein Dashboard-Futter**, sondern Power BI über `ZPOWERBI_EINKAUF`; Frage nach „Dashboard“ vorher präzisieren.
 - **Auto-Modus lehnt SE11-Änderungen ab** („Modify Shared Resources“); vor DDIC-Arbeit Freigabe durch Ingo einholen.
+
+## Einbau in T76: Protokoll (2026-10-15)
+
+| Schritt | Ergebnis |
+| --- | --- |
+| Neuer Transport | `T76K912736` (Aufgabe `T76K912737`), Text „ZC23 Materialanteil (ZMM_UEB_KDAUF, ZPOWERBI_KDAUF, OData)“ |
+| `ZMM_UEB_KDAUF` | `MATPREIS` (Pos. 61, `/PLMB/SPC_QUANT_QUANTITY`), `MATANTEIL` (62, `NETWR`, Referenz `T001-WAERS`), aktiv |
+| `ZPOWERBI_KDAUF` | `STANDARDWERT` (11), `MATANTEIL` (12), beide `RKE_FIELDVALUE`, aktiv, Datenbank angepasst |
+| `ZCL_ZPOWERBI_EINKAUF_MPC_EXT` `DEFINE` | Properties `Standardwert`, `Matanteil` (Decimal 2/15), `bind_structure` erneut; vorher/nachher `MPC_EXT_DEFINE_vorher.abap` / `_neu.abap` |
+| OData T76 (Gateway Client) | `$metadata` 200; `$select=Id,Standardwert,Matanteil` 200, Gegenprobe mit erfundenem Namen 404 |
+| `ZM_OFFENE_KDAUF_OPT` | eingespielt und aktiv (nur dieses Objekt aus der Liste „Inaktive Objekte“ markiert) |
+| Vergleich OPT gegen REF (Q2 2026, Werk 1100) | **identisch**, 4'392 Zeilen, alle Felder (`zm_offene_kdauf/lauf21_mata_cmp.txt`) |
+| ZM03 nur lesend (B80004, B87804) | Material 0,12 bzw. 0,11 je Stück, wie im Gespräch |
+| OPT mit Fortschreibung (Q2) | 4'392 Zeilen in `ZPOWERBI_KDAUF` (T76-Testtabelle überschrieben), Materialanteil meist 50–70 % des Standardwerts |
+| Unabhängige Nachrechnung (`mata_check.py`) | B80004 0,1154, B87804 0,1115 (= ZM03); E11221 27,44 %, 44640 232,52 je Stück, B87813 0,1115 (= ZC23) |
+| **Laufzeit** | Q2 im Dialog **47,7 s** statt 5,1 s; `BI UPDATE` (15'820 Zeilen) noch nicht gemessen |
+
+Prüfskript-Falle: `table-read` mit nur einem Feld gibt keine Spaltentrenner aus; das Skript las `BESKZ` leer und
+rechnete B80004 1'000-fach zu hoch. Immer mindestens zwei Felder lesen.
+
+Bekannte Vereinfachung (wie ZM03): Positionsmenge und Mengeneinheit der Unterkalkulation werden nicht umgerechnet.
+Standardwert nutzt `STPRS` ohne Preiseinheit; bei den geprüften Materialien ist `PEINH` = 1.
+
+### Nächste Schritte
+
+1. Laufzeit: vorschlagen ist Vorablesen von MARC (Beschaffungsart) und CKIS gesammelt statt je Position, oder ein Schalter
+   „Materialanteil rechnen“. Entscheid Ingo.
+2. Danach Quelltext von OPT in `ZM_OFFENE_KDAUF` (`SapGuiSetReportSourceAuftrag.vbs 2 ZM_OFFENE_KDAUF <datei> T76K912736`).
+3. Transport `T76K912736` freigeben, Import P76 (Ingo), danach `/IWFND/CACHE_CLEANUP` und `/IWBEP/CACHE_CLEANUP`.
+4. Variante `BI UPDATE` als Job laufen lassen und Laufzeit gegen 23,6 s festhalten.

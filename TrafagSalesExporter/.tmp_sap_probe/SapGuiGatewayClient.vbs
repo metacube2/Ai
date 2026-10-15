@@ -20,7 +20,20 @@ ziel   = WScript.Arguments(2)
 
 Set a = GetObject("SAPGUI")
 Set app = a.GetScriptingEngine
-Set c = app.Children(0)
+' Verbindung T76 suchen statt fest die erste zu nehmen (2026-10-15: P76 war Verbindung 0)
+Dim ci_, c_, cT76_
+Set cT76_ = Nothing
+For ci_ = 0 To app.Children.Count - 1
+  Set c_ = app.Children(CLng(ci_))
+  If c_.Children.Count > 0 Then
+    If c_.Children(0).Info.SystemName = "T76" Then Set cT76_ = c_
+  End If
+Next
+If cT76_ Is Nothing Then
+  WScript.Echo "ABBRUCH: keine T76-Verbindung offen"
+  WScript.Quit 2
+End If
+Set c = cT76_
 Set s = c.Children(CLng(sesIdx))
 
 If InStr(s.FindById("wnd[0]").Text, "Gateway Client") = 0 Then
