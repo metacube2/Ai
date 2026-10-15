@@ -1,6 +1,11 @@
 # Last Change
 
-Stand: 2026-10-14
+Stand: 2026-10-15
+
+## Shopfloor: Patches von Fabio, 2026-10-15 (`52b3b75`, produktiv 08:50)
+
+- ZD05: Filter „Zu besprechen“ (neu, ohne Code oder Liefertermin überschritten), im Meeting automatisch aktiv.
+- Verkauf: Kacheln mit Go-for-it-Ziel des Monats, Umsatz IST in % vom Ziel, Rest und Book to Bill.
 
 ## Anonyme Nutzungsmessung, 2026-10-14 (`4615268`, produktiv)
 

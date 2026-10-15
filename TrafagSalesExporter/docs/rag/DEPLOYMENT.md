@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-14
+Stand: 2026-10-15
 
 ## Deploy-Ablauf seit 2026-10-13 (Entscheid Ingo)
 
@@ -66,6 +66,9 @@ Stand: 2026-10-14
 
 ## Kurzstand
 
+- **Deploy 2026-10-15 ~08:50, Shopfloor-Patches Fabio (`52b3b75`): ZD05 „Zu besprechen“, Verkauf Go-for-it.** Ingo bestaetigt:
+  kein Einkauf-Delta aktiv. Release-Worktree `1224/1224`, DLL bitgleich, zehn Routen `200`, Alarm nur WAL/SHM (klein).
+  Ausgelieferte `shopfloor/app.js` enthaelt `zdTalk` und `renderGoForIt` (per curl geprueft).
 - **Deploy 2026-10-14 ~14:16, anonyme Nutzungsmessung, Admin > Nutzung (`4615268`).** Release-Worktree `1224/1224`, DLL
   bitgleich, zehn Routen `200`, Alarm nur WAL/SHM (WAL 1,1 MB). Tabellen `UsagePageViews`/`UsagePageUsers` entstehen beim ersten
   Schreiben. Doku `docs/NUTZUNG_2026-10-14.md`.
