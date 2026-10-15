@@ -493,3 +493,9 @@ Finance-Fragen). Reservierung wieder frei. Kein Anwendungscode, kein Commit, kei
 - Admin-Passwort bewusst nicht von Claude gesetzt (Klartext stand im Chat); Ingo setzt es nach dem Deploy auf der neuen Seite.
 - Folge: alle bestehenden Operations-Anmeldungen werden mit dem Deploy einmal ungueltig (neues Cookie-Format).
 - Nachtrag: Deploy 2026-10-15 10:56 nach Freigabe Ingo, bitgleich, zehn Routen 200, `/admin/passwoerter` 200, Operations-Login mit falschem Passwort 401.
+
+## 2026-10-15 Claude: Shopfloor-Push im Format aus Fabios Paket
+
+- Auftrag Ingo: Abweichung der Push-Beispiele ohne Fabio korrigieren und deployen.
+- Ergebnis: `PushItems` nimmt ein einzelnes Item ohne Huelle an, `values` gilt wie `fields`, zweite Adresse `/api/integration/push` (Guard und Token gleich). Feldnamen der Beispiele alle in der Konfiguration bekannt.
+- Test `Push_Im_Format_Aus_Fabios_Paket_Ueber_Beide_Adressen`, gesamt 1233/1233. Commit `f4e3f1b`, Deploy 11:06 bitgleich, beide Adressen mit falschem Token 401.

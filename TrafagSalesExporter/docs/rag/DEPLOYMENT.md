@@ -66,6 +66,10 @@ Stand: 2026-10-15
 
 ## Kurzstand
 
+- **Deploy 2026-10-15 11:06, Shopfloor: Push-Format aus Fabios Paket (`f4e3f1b`).** Auftrag Ingo („pass an und deploye“).
+  `1233/1233`, `BiDashboard.dll` `11:05:37`, SHA256 `C14F44E349A462FA56373E3CAD4D62A74C9E3A6B32E113D207A5B73755C3A480`, bitgleich,
+  zehn Routen 200, Alarm nur `-wal`/`-shm` (WAL 655 KB, kein grosser Schreiblauf). Nachpruefung: beide Push-Adressen mit falschem
+  Token 401, kein Schreibaufruf.
 - **Deploy 2026-10-15 10:56, Admin: Passwoerter aller Bereiche in der DB (`e1afd49`, Doku `1519cb3`).** Freigabe Ingo im Chat
   („du kannst deployen“), WAL vorher nur 259 KB, also kein Einkauf-Delta aktiv. `1232/1232`, `BiDashboard.dll` `10:57:21`,
   SHA256 `A76A1D688853B3A03541385556846BA57BA92EB9608A92DD447EA4A24AE926B6`, bitgleich, zehn Routen 200, Alarm nur `-wal`/`-shm`.

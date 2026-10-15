@@ -2,6 +2,11 @@
 
 Stand: 2026-10-15
 
+## Shopfloor: Schnittstelle nimmt Fabios Push-Format an, 2026-10-15 (`f4e3f1b`, produktiv 11:06)
+
+- Ein einzelnes Item ohne `items`-Hülle und `values` statt `fields` werden angenommen; zusätzliche Adresse
+  `/BiDashboard/api/integration/push`. Fabio muss am Format seines Pakets nichts ändern, er braucht nur Server-Adresse und Token.
+
 ## Admin: Passwörter aller Bereiche an einer Stelle, 2026-10-15 (`e1afd49`, produktiv 10:56)
 
 - Neue Seite Admin Bereich > Passwörter (`/admin/passwoerter`): Der entsperrte Admin setzt die Passwörter von Admin, Finance,

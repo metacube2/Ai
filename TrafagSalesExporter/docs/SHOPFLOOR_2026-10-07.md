@@ -8,7 +8,7 @@ Stand 2026-10-08: **produktiv seit 06:39** (`59d0531`), angesehen. Zugriff nur f
 freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transport `T76K912718` in P76 ist (Abschnitt 8).
 *Ueberholt:* „nicht committet, Zugriff fuer niemanden" war der Stand des Worktrees.
 
-Stand 2026-10-15: Fabios Patches ZD05 „Zu besprechen“ und Verkauf Go-for-it uebernommen, Push-Format der Beispiele weicht ab (Abschnitt 13).
+Stand 2026-10-15: Fabios Patches ZD05 „Zu besprechen“ und Verkauf Go-for-it uebernommen; die Schnittstelle nimmt seit `f4e3f1b` auch das Push-Format seiner Beispiele an (Abschnitt 13).
 Stand 2026-10-14: Feld-Mapping aus `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` uebernommen (`b613f7c`): Abteilungen ueber den
 Disponenten, Quelle SAP statt MES ausser FPY, Mapping je Feld auf der Seite „Schnittstelle SAP / MES“. Einzelheiten Abschnitt 12.
 *Erledigt 2026-10-14 10:04:* produktiv. Abgleich 10:05: 3'926 Auftraege im Forecast, **294 ohne Abteilung** (vorher 1'912), CZ 1'045,
@@ -321,3 +321,8 @@ Noch nicht in `shopfloor_config.json` uebernommen (dort steht das Mapping aus de
 `{"source": "SAP", "items": [{"module": "verkauf", "day": "2026-10-01", "fields": {...}}]}`: Huelle `items`, Schluessel **`fields`**
 statt `values`. Adresse ist `POST /BiDashboard/shopfloor/api/integration/push` mit `Authorization: Bearer <Shopfloor:ApiToken>`,
 nicht `/api/integration/push`. `connectors/README.md` gibt es im C#-Port nicht. Fabio informieren, bevor der Job gebaut wird.
+*Ueberholt 2026-10-15 (`f4e3f1b`, Entscheid Ingo „ohne Fabio korrigieren“):* Die Schnittstelle nimmt Fabios Format jetzt zusaetzlich an:
+ein einzelnes Item ohne `items`-Huelle, `values` gleichwertig zu `fields`, und sie ist auch unter `/BiDashboard/api/integration/push`
+erreichbar. Token-Pruefung auf beiden Adressen unveraendert (`Authorization: Bearer <Shopfloor:ApiToken>`). Fabio braucht nur noch
+Server-Adresse und Token. Alle Feldnamen seiner zwei Beispiele sind in der Konfiguration bekannt (geprueft 2026-10-15). Test
+`Push_Im_Format_Aus_Fabios_Paket_Ueber_Beide_Adressen`.
