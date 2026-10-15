@@ -6,7 +6,7 @@
     "title": "ZC23 Offene Kundenaufträge",
     "description": "ZC23 (ZM_OFFENE_KDAUF) live mit Selektion, Materialanteil und Arbeit CZ",
     "applicationVersion": {
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     "dataSources": {
       "einkauf": {

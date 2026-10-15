@@ -15,3 +15,6 @@
 .zc23KZusatz { color: #556b82; font-size: 0.8125rem; margin-top: 0.125rem; }
 .zc23Liste { margin: 0.75rem 1rem 1rem 1rem; background: #ffffff; border-radius: 0.75rem; overflow: hidden; }
 .zc23Zahl { font-variant-numeric: tabular-nums; }
+/* v2: Breite aus dem Flex-Rahmen statt 100 % plus Rand (sonst waagrechter Rollbalken) */
+.zc23Panel, .zc23Kacheln, .zc23Liste { width: auto !important; }
+.zc23Rahmen { overflow-x: hidden; }

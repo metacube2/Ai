@@ -102,7 +102,7 @@ sap.ui.define([
             delete o.__metadata;
             Object.keys(o).forEach(function (k) { if (/^-?\d+\.\d+$/.test(o[k])) { o[k] = parseFloat(o[k]); } });
             // Rohwerte ohne Gateway-Konvertierung: fuehrende Nullen bei rein numerischen Nummern weg
-            ["Matnr", "Kunnr", "Vbeln", "Aufnr"].forEach(function (k) { if (/^0+\d+$/.test(o[k])) { o[k] = o[k].replace(/^0+/, ""); } });
+            ["Matnr", "Kunnr", "Vbeln", "Aufnr", "Posnr"].forEach(function (k) { if (/^0+\d+$/.test(o[k])) { o[k] = o[k].replace(/^0+/, ""); } });
             return o;
           });
           this.getView().getModel("daten").setProperty("/alle", rows);
