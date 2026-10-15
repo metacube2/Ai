@@ -195,6 +195,7 @@ und „Materialanteil“, Block „Materialanteil“ im Selektionsbild). Laufzei
 ## Anwenderdoku
 
 Word `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` (Formeln, Beispiel, Bedienung, Grenzen, Pruefung), neu erzeugen mit
-`dotnet run --project .tmp_tools/BuildZc23Formeln -- docs/ZC23_Materialanteil_Formeln_2026-10-15.docx`.
+`dotnet run --project Tools/BuildZc23Formeln -- docs/ZC23_Materialanteil_Formeln_2026-10-15.docx`
+(Generator versioniert unter `Tools/BuildZc23Formeln`; bis zum Nachtrag lag er nur im ignorierten `.tmp_tools`).
 Die Vorschau ueber Word-COM (PDF-Export) hing am 15.10.; die eigene versteckte Word-Instanz wurde beendet, geprueft ist das
 Dokument ueber OpenXML-Validierung und Pflichttexte.

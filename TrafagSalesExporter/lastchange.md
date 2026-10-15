@@ -9,6 +9,9 @@ Stand: 2026-10-15
   Fremdleistung zum Material. Standardwert und Materialanteil auch in `ZPOWERBI_KDAUF` und im OData-Dienst (Power BI).
   Dazu Spalte „Arbeit CZ“ (Eigenleistung an CZ-Arbeitsplätzen wie ZM03), Spalten direkt hinter dem Standardwert,
   Hauswährung des Werks in der Überschrift. Details `saptasks/zc23_materialanteil/NOTES.md`.
+- Anwenderdoku als Word: `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` (Felder, Formeln, Beispiel B87813,
+  Bedienung, Grenzen, Prüfung), Generator `Tools/BuildZc23Formeln`. Formal geprüft (OpenXML, 21 Pflichttexte),
+  visuell noch nicht gesichtet.
 
 ## Einkauf Spend-Aufriss: Platzhalter „NA - N/A“ nimmt keinen Anteil mehr, 2026-10-15 (`7b62544`, produktiv 12:48)
 

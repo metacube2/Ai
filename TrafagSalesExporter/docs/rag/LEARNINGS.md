@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-10-14 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-10-15 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -133,6 +133,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-15 | Commit `5fef8d6` nannte „with generator“, der Generator lag aber im gitignorierten `.tmp_tools`; lastchange, Wochen_Todo und Koordination fehlten | Vor dem Commit `git show --stat` gegen die Nachricht pruefen; Werkzeuge, die Repo-Dateien erzeugen, nach `Tools/` (vom Build ausgenommen, versioniert) | `saptasks/zc23_materialanteil/NOTES.md` |
 | 2026-10-13 | Wiederholt (Fall 2026-09-02): Kopfzeile „Stand“ blieb beim Nachtragen stehen; `LEARNINGS.md` sagte 2026-10-01 bei Eintraegen bis 2026-10-12, `rag/init.md` sagte 2026-09-11, verwies aber schon auf die erst am 2026-10-01 angelegte `LEARNINGS.md` | Wer eine Datei inhaltlich aendert, zieht die Zeile „Stand“ im selben Commit mit, auch bei einer einzelnen angehaengten Zeile | `CLAUDE.md` 3 Punkt 2 |
 | 2026-09-02 | UK galt als „ohne Lieferantenfelder“, Spanien-Datum war laengst entschieden, Doku sagte anderes | Doku vollstaendig nachfuehren, ueberholte Aussagen markieren | `CLAUDE.md` 3 |
 | laufend | Lokale DB oder Dev-Server als Beleg genommen | Ingo testet nur produktiv; Belege nur aus Produktion | `router.md` 8 |
