@@ -1,0 +1,28 @@
+{
+  "_version": "1.42.0",
+  "sap.app": {
+    "id": "trafag.erste",
+    "type": "application",
+    "title": "Trafag Fiori Test",
+    "description": "Erste Fiori-App: liest Daten aus einem bestehenden OData-Dienst",
+    "applicationVersion": { "version": "0.1.0" },
+    "dataSources": {
+      "einkauf": {
+        "uri": "/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/",
+        "type": "OData",
+        "settings": { "odataVersion": "2.0" }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": { "desktop": true, "tablet": true, "phone": true }
+  },
+  "sap.ui5": {
+    "rootView": { "viewName": "trafag.erste.view.Main", "type": "XML", "async": true, "id": "main" },
+    "dependencies": { "minUI5Version": "1.108.0", "libs": { "sap.m": {}, "sap.ui.core": {} } },
+    "models": {
+      "": { "dataSource": "einkauf", "settings": { "useBatch": false, "defaultCountMode": "None" } }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+<mvc:View controllerName="trafag.erste.controller.Main"
+          xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m">
+  <Page title="Trafag Fiori Test: Produktsparten (ProductDivisionRefSet)">
+    <headerContent>
+      <Button icon="sap-icon://refresh" tooltip="Neu laden" press=".onLaden"/>
+    </headerContent>
+    <content>
+      <MessageStrip id="status" text="{view>/status}" type="{view>/statusTyp}" showIcon="true" class="sapUiSmallMargin"/>
+      <Table id="tabelle" growing="true" growingThreshold="20"
+             noDataText="Keine Daten" class="sapUiSmallMarginBeginEnd"/>
+    </content>
+  </Page>
+</mvc:View>

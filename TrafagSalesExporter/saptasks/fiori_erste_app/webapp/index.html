@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trafag Fiori Test</title>
+  <!-- UI5 kommt vom SAP-Server selbst (SAP_UI 758), nicht vom CDN -->
+  <script id="sap-ui-bootstrap"
+          src="/sap/public/bc/ui5_ui5/resources/sap-ui-core.js"
+          data-sap-ui-theme="sap_horizon"
+          data-sap-ui-language="de"
+          data-sap-ui-compatVersion="edge"
+          data-sap-ui-async="true"
+          data-sap-ui-resourceroots='{"trafag.erste": "./"}'
+          data-sap-ui-oninit="module:sap/ui/core/ComponentSupport">
+  </script>
+</head>
+<body class="sapUiBody" id="content">
+  <div data-sap-ui-component data-name="trafag.erste" data-id="container" data-settings='{"id": "erste"}' style="height:100%"></div>
+</body>
+</html>

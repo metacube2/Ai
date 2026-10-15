@@ -2,6 +2,13 @@
 
 Stand: 2026-10-15
 
+## SAP Fiori: erste Test-App `ZFI_ERSTE_APP`, 2026-10-15 (gebaut, Upload in T76 offen)
+
+- Kleine SAPUI5-App als Harness für künftige Erfassungs-Apps: liest 50 Zeilen `ProductDivisionRefSet` aus
+  `ZPOWERBI_EINKAUF_SRV`, nur lesen, T76 `$TMP`. Quelle und Vorgehen `saptasks/fiori_erste_app/` (NOTES.md).
+- Läuft im Browser: `http://travt762.sap.trafag.com:8000/sap/bc/ui5_ui5/sap/zfi_erste_app/index.html?sap-client=100`,
+  sobald sie hochgeladen ist (von Hand per `/UI5/UI5_REPOSITORY_LOAD` oder nach Freigabe per RFC `/UI5/REPO_LOAD_FROM_ZIP`).
+
 ## SAP ZC23: neue Spalten Materialanteil, 2026-10-15 (T76 fertig, Transport `T76K912736`, Import P76 offen)
 
 - ZC23 zeigt neben dem Standardwert den Materialanteil (Zukaufmaterial aus der Standardkalkulation, Regel wie ZM03),
