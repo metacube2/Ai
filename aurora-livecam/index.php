@@ -1776,14 +1776,75 @@ class AdminManager {
         </form>';
     }
 
+    // Betrieb & Notfall (2026-10-15): Zustand von Kamera, Webstream und YouTube,
+    // dazu der Notfall-Neustart (caurora-notfall.service ueber aurora-service-control).
+    private function displayBetriebPanel() {
+        if (empty($_SESSION['notfall_token'])) {
+            $_SESSION['notfall_token'] = bin2hex(random_bytes(16));
+        }
+        $h = fn($t) => htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8');
+        $lib = '/var/lib/caurora-youtube/';
+        $playlist = __DIR__ . '/test_video.m3u8';
+        $alter = file_exists($playlist) ? time() - filemtime($playlist) : null;
+        $cfg = @file_get_contents(__DIR__ . '/config.json') ?: '';
+        $kameraIp = preg_match('/@(192\.168\.1\.\d{1,3}):/', $cfg, $m) ? $m[1] : '?';
+        $yt = json_decode(@file_get_contents($lib . 'uebertragung.json') ?: '{}', true) ?: [];
+        $ytId = $yt['id'] ?? '';
+        $ytGesehen = isset($yt['live_gesehen']) ? time() - (int) $yt['live_gesehen'] : null;
+        $notfallLog = @file_get_contents($lib . 'notfall.log') ?: '';
+        $laeuft = trim((string) @shell_exec('systemctl is-active caurora-notfall.service 2>/dev/null')) === 'activating';
+
+        $stream = $alter === null ? ['bad', 'keine Playlist']
+            : ($alter <= 15 ? ['ok', 'läuft (' . $alter . ' s)'] : ($alter <= 120 ? ['warn', 'stockt (' . $alter . ' s)'] : ['bad', 'steht seit ' . round($alter / 60) . ' min']));
+        $youtube = $ytGesehen === null ? ['warn', 'unbekannt']
+            : ($ytGesehen <= 600 ? ['ok', 'live'] : ['bad', 'zuletzt live vor ' . round($ytGesehen / 60) . ' min']);
+
+        $o = '<div class="admin-card admin-betrieb">';
+        $o .= '<div class="admin-card-head"><h3>Betrieb</h3><span class="admin-hint">Automatik: Kamera-Wächter jede Minute, YouTube-Wächter alle 5 min</span></div>';
+        $o .= '<div class="admin-status-grid">';
+        $o .= '<div class="admin-status ' . $stream[0] . '"><span class="admin-status-label">Webstream</span><strong>' . $h($stream[1]) . '</strong></div>';
+        $o .= '<div class="admin-status ' . $youtube[0] . '"><span class="admin-status-label">YouTube</span><strong>' . $h($youtube[1]) . '</strong>'
+            . ($ytId ? '<a href="https://www.youtube.com/watch?v=' . $h($ytId) . '" target="_blank" rel="noopener">' . $h($ytId) . '</a>' : '') . '</div>';
+        $o .= '<div class="admin-status neutral"><span class="admin-status-label">Kamera</span><strong>' . $h($kameraIp) . '</strong><span class="admin-hint">beim Kollegen, über Tailscale</span></div>';
+        $o .= '</div>';
+        $o .= '<div class="admin-notfall">';
+        $o .= '<div><h4>Notfall-Neustart</h4><p>Nur wenn die Automatik versagt: sucht die Kamera, baut Webstream und YouTube neu auf. Dauert etwa 2 Minuten, Webseite und App haben kurz kein Bild.</p></div>';
+        $o .= '<form method="post" onsubmit="return confirm(\'Stream, Recorder und YouTube jetzt neu aufbauen?\');">'
+            . '<input type="hidden" name="action" value="notfall_neustart">'
+            . '<input type="hidden" name="notfall_token" value="' . $h($_SESSION['notfall_token']) . '">'
+            . '<button type="submit" class="admin-btn-danger"' . ($laeuft ? ' disabled' : '') . '>' . ($laeuft ? 'Läuft gerade …' : 'Alles neu starten') . '</button></form>';
+        $o .= '</div>';
+        if ($notfallLog !== '') {
+            $o .= '<details class="admin-log"' . ($laeuft ? ' open' : '') . '><summary>Protokoll des letzten Notfall-Neustarts</summary><pre>' . $h($notfallLog) . '</pre></details>';
+        }
+        $o .= '</div>';
+        return $o;
+    }
+
+    public function notfallNeustart(string $token): void {
+        if (!$this->isAdmin() || empty($_SESSION['notfall_token']) || !hash_equals($_SESSION['notfall_token'], $token)) {
+            $this->setFlash('Notfall-Neustart abgelehnt (Sitzung abgelaufen?).', 'error');
+            return;
+        }
+        exec('sudo /usr/local/sbin/aurora-service-control notfall caurora-notfall.service 2>&1', $out, $rc);
+        $this->setFlash($rc === 0 ? 'Notfall-Neustart läuft. Protokoll unten, Seite in 2 Minuten neu laden.' : 'Notfall-Neustart konnte nicht gestartet werden.', $rc === 0 ? 'success' : 'error');
+    }
+
     public function displayAdminContent() {
         global $settingsManager, $siteConfig;
 
         $feedbacks = json_decode(file_get_contents('feedbacks.json') ?: '[]', true);
 
+        $output = '<div class="admin-board">';
+        $flash = $this->consumeFlash();
+        if ($flash) {
+            $output .= '<div class="admin-flash ' . (($flash['type'] ?? '') === 'success' ? 'ok' : 'bad') . '">' . htmlspecialchars((string) ($flash['text'] ?? ''), ENT_QUOTES, 'UTF-8') . '</div>';
+        }
+        $output .= $this->displayBetriebPanel();
+
         // NEUES SETTINGS PANEL
-        $output = '<div id="admin-settings-panel">';
-        $output .= '<h3>⚙️ Anzeige-Einstellungen</h3>';
+        $output .= '<div class="admin-card-head admin-section-head"><h3>Einstellungen</h3><span class="admin-hint">Änderungen werden direkt gespeichert</span></div>';
+        $output .= '<div id="admin-settings-panel">';
 
         // Zuschauer-Anzeige Settings
         $output .= '<div class="settings-group">';
@@ -2192,17 +2253,19 @@ class AdminManager {
         $output .= '</div>'; // admin-settings-panel
 
         // Bestehender Admin-Content
-        $output .= '<div style="background:white; padding:20px; border-radius:10px; margin-bottom:30px;">';
-        $output .= '<h3 style="border-bottom:2px solid #667eea; padding-bottom:10px;">📩 Posteingang (Kontaktformular)</h3>';
+        $output .= '<div class="admin-card">';
+        $output .= '<div class="admin-card-head"><h3>Posteingang</h3><span class="admin-hint">Kontaktformular</span></div>';
 
         if (empty($feedbacks)) {
             $output .= '<p>Keine Nachrichten vorhanden.</p>';
         } else {
             $output .= '<div id="message-list" style="display:grid; gap:15px; max-height:500px; overflow-y:auto;">';
             foreach ($feedbacks as $index => $feedback) {
+                // Felder stammen aus dem oeffentlichen Kontaktformular: immer escapen.
+                $feedback = array_map(fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'), $feedback);
                 $ip = isset($feedback['ip']) ? $feedback['ip'] : 'Unbekannt';
 
-                $output .= "<div style='background:#f9f9f9; padding:15px; border-left:4px solid #667eea; border-radius:5px;'>";
+                $output .= "<div class='admin-message'>";
                 $output .= "<div style='display:flex; justify-content:space-between; align-items:flex-start;'>";
                 $output .= "<div><strong>{$feedback['name']}</strong> (<a href='mailto:{$feedback['email']}'>{$feedback['email']}</a>)</div>";
 
@@ -2221,31 +2284,32 @@ class AdminManager {
         }
         $output .= '</div>';
 
-        $output .= '<div style="background:white; padding:20px; border-radius:10px; margin-bottom:30px;">';
-        $output .= '<h3 style="border-bottom:2px solid #4CAF50; padding-bottom:10px;">🖼️ Bildergalerie verwalten</h3>';
+        $output .= '<div class="admin-card">';
+        $output .= '<div class="admin-card-head"><h3>Bildergalerie</h3></div>';
 
         $output .= $this->displayGalleryImages(true);
 
-        $output .= '<h4 style="margin-top:20px;">⬆️ Neues Bild hochladen</h4>
-        <form action="" method="post" enctype="multipart/form-data" style="background:#f0f0f0; padding:15px; border-radius:5px;">
+        $output .= '<h4 class="admin-subhead">Neues Bild hochladen</h4>
+        <form action="" method="post" enctype="multipart/form-data" class="admin-upload">
             <input type="file" name="fileToUpload" id="fileToUpload" required>
             <input type="submit" value="Hochladen" name="submit" class="button" style="margin-top:10px;">
         </form>';
         $output .= '</div>';
 
-        $output .= '<div style="background:white; padding:20px; border-radius:10px;">';
-        $output .= '<h3>📲 Social Media Links</h3>
-        <form id="social-media-form" method="post">
+        $output .= '<div class="admin-card">';
+        $output .= '<div class="admin-card-head"><h3>Social-Media-Links</h3></div>
+        <form id="social-media-form" method="post" class="admin-inline-form">
             <input type="hidden" name="update-social-media" value="1">
-            <select name="social-platform" required style="padding:8px; margin-right:10px;">
+            <select name="social-platform" required class="select-input">
                 <option value="facebook">Facebook</option>
                 <option value="instagram">Instagram</option>
                 <option value="tiktok">TikTok</option>
             </select>
-            <input type="url" name="social-url" placeholder="Profil URL" required style="padding:8px; width:200px;">
+            <input type="url" name="social-url" placeholder="Profil-URL" required class="text-input">
             <button type="submit" class="button">Link aktualisieren</button>
         </form>';
         $output .= '</div>';
+        $output .= '</div>'; // admin-board
 
         return $output;
     }
@@ -2572,6 +2636,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ADMIN AKTIONEN
     elseif ($adminManager->isAdmin()) {
+        if (isset($_POST['action']) && $_POST['action'] === 'notfall_neustart') {
+            $adminManager->notfallNeustart((string) ($_POST['notfall_token'] ?? ''));
+            header("Location: " . $_SERVER['PHP_SELF'] . "#admin");
+            exit;
+        }
+
         if (isset($_POST['action']) && $_POST['action'] === 'approve_guestbook' && isset($_POST['approve_entry'])) {
             $guestbookManager->approveEntry(intval($_POST['approve_entry']));
             header("Location: " . $_SERVER['PHP_SELF'] . "#guestbook");
@@ -3374,6 +3444,100 @@ button[type="submit"]:hover { background-color: #45a049; }
 }
 .toggle-switch input:checked + .toggle-slider:before {
     transform: translateX(26px);
+}
+
+/* Admin-Board (2026-10-15): ruhige Karten statt Lila-Verlauf, Betrieb oben */
+.admin-board {
+    --a-bg: #f4f6f9; --a-card: #ffffff; --a-line: #e3e8ef; --a-text: #1c2430;
+    --a-muted: #66717f; --a-accent: #2f6fdb; --a-accent-soft: #e8f0fd;
+    --a-ok: #1f8a4c; --a-ok-soft: #e6f5ec; --a-warn: #b26a00; --a-warn-soft: #fdf3e2;
+    --a-bad: #c0352b; --a-bad-soft: #fcebea;
+    display: grid; gap: 20px; color: var(--a-text); text-align: left;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+.admin-board h3 { margin: 0; font-size: 1.15rem; font-weight: 650; color: var(--a-text); border: 0; padding: 0; }
+.admin-board h4 { margin: 0 0 12px; font-size: 1rem; font-weight: 650; color: var(--a-text); }
+.admin-card {
+    background: var(--a-card); border: 1px solid var(--a-line); border-radius: 14px;
+    padding: 20px 22px; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+.admin-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.admin-section-head { margin: 8px 2px -4px; }
+.admin-hint { color: var(--a-muted); font-size: 0.85rem; }
+.admin-subhead { margin-top: 22px !important; }
+.admin-flash { padding: 12px 16px; border-radius: 10px; font-weight: 600; }
+.admin-flash.ok { background: var(--a-ok-soft); color: var(--a-ok); }
+.admin-flash.bad { background: var(--a-bad-soft); color: var(--a-bad); }
+
+.admin-status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.admin-status {
+    display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 12px;
+    background: var(--a-bg); border-left: 4px solid var(--a-line);
+}
+.admin-status strong { font-size: 1.05rem; }
+.admin-status a { font-size: 0.85rem; color: var(--a-accent); word-break: break-all; }
+.admin-status-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--a-muted); }
+.admin-status.ok { background: var(--a-ok-soft); border-left-color: var(--a-ok); }
+.admin-status.ok strong { color: var(--a-ok); }
+.admin-status.warn { background: var(--a-warn-soft); border-left-color: var(--a-warn); }
+.admin-status.warn strong { color: var(--a-warn); }
+.admin-status.bad { background: var(--a-bad-soft); border-left-color: var(--a-bad); }
+.admin-status.bad strong { color: var(--a-bad); }
+
+.admin-notfall {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    margin-top: 16px; padding: 16px; border: 1px dashed #f0b9b4; border-radius: 12px; background: #fffafa;
+}
+.admin-notfall h4 { margin-bottom: 4px; }
+.admin-notfall p { margin: 0; color: var(--a-muted); font-size: 0.9rem; max-width: 560px; }
+.admin-btn-danger {
+    background: var(--a-bad); color: #fff; border: 0; border-radius: 10px; padding: 12px 20px;
+    font-size: 1rem; font-weight: 650; cursor: pointer; white-space: nowrap; transition: filter 0.2s;
+}
+.admin-btn-danger:hover { filter: brightness(1.08); }
+.admin-btn-danger:disabled { background: #b9bec6; cursor: progress; }
+.admin-log { margin-top: 14px; }
+.admin-log summary { cursor: pointer; color: var(--a-muted); font-size: 0.9rem; }
+.admin-log pre {
+    margin: 10px 0 0; padding: 12px 14px; background: #0f1720; color: #d7e0ea; border-radius: 10px;
+    font-size: 0.8rem; line-height: 1.5; overflow-x: auto; white-space: pre-wrap;
+}
+
+/* Einstellungsgruppen als Kartenraster */
+.admin-board #admin-settings-panel {
+    background: none; box-shadow: none; padding: 0; margin: 0; border-radius: 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start;
+}
+.admin-board .settings-group {
+    background: var(--a-card); border: 1px solid var(--a-line); border-radius: 14px; padding: 18px 20px; margin: 0;
+}
+.admin-board .settings-group h4 { color: var(--a-text); border-bottom: 1px solid var(--a-line); padding-bottom: 10px; font-size: 1rem; }
+.admin-board .setting-row { gap: 14px; padding: 10px 0; border-bottom: 1px solid #f1f3f6; flex-wrap: wrap; }
+.admin-board .setting-label { color: var(--a-text); font-weight: 500; font-size: 0.93rem; min-width: 140px; }
+.admin-board .setting-input { min-width: 0; flex: 1 1 180px; justify-content: flex-end; }
+.admin-board .number-input, .admin-board .text-input, .admin-board .select-input, .admin-board .textarea-input {
+    border: 1px solid #cfd6df; border-radius: 8px; padding: 8px 10px; background: #fff; color: var(--a-text);
+}
+.admin-board .number-input { max-width: 110px; }
+.admin-board .number-input:focus, .admin-board .text-input:focus, .admin-board .select-input:focus, .admin-board .textarea-input:focus {
+    border-color: var(--a-accent); box-shadow: 0 0 0 3px var(--a-accent-soft);
+}
+.admin-board .toggle-switch input:checked + .toggle-slider { background: var(--a-accent); }
+.admin-board .button { border-radius: 8px; }
+
+.admin-message { background: var(--a-bg); padding: 14px 16px; border-radius: 10px; border-left: 4px solid var(--a-accent); }
+.admin-message a { color: var(--a-accent); }
+.admin-upload { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 14px; background: var(--a-bg); border-radius: 10px; }
+.admin-upload .button { margin-top: 0 !important; }
+.admin-inline-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.admin-inline-form .text-input { flex: 1 1 220px; width: auto; }
+.admin-inline-form .select-input { width: auto; }
+
+@media (max-width: 640px) {
+    .admin-card { padding: 16px; }
+    .admin-board #admin-settings-panel { grid-template-columns: 1fr; }
+    .admin-notfall { flex-direction: column; align-items: stretch; }
+    .admin-btn-danger { width: 100%; }
 }
 
 /* Language Switch */
