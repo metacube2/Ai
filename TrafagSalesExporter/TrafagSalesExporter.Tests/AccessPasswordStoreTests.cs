@@ -133,6 +133,35 @@ public sealed class AccessPasswordStoreTests : IDisposable
         Assert.Equal("koi", finance.ChangedBy);
     }
 
+    [Fact]
+    public void Operations_Login_Schalter_Gilt_Sofort_Und_Nach_Neustart()
+    {
+        using (var sp = Build())
+        {
+            var monitor = sp.GetRequiredService<IOptionsMonitor<ShopfloorOptions>>();
+            Assert.False(ShopfloorAccess.IsAllowed(monitor.CurrentValue, "TRAFAG\\fremder"));
+
+            using var scope = sp.CreateScope();
+            var admin = scope.ServiceProvider.GetRequiredService<IAccessPasswordAdministration>();
+            Assert.True(admin.OperationsLoginRequired);
+            Assert.True(admin.TrySetOperationsLoginRequired(false, "koi"));
+            Assert.False(admin.OperationsLoginRequired);
+            Assert.True(ShopfloorAccess.IsAllowed(monitor.CurrentValue, "TRAFAG\\fremder"));
+
+            _adminAccess.Unlocked = false;
+            Assert.False(admin.TrySetOperationsLoginRequired(true, "koi"));
+            _adminAccess.Unlocked = true;
+        }
+
+        using (var restarted = Build())   // wie nach einem Deploy: appsettings sagt wieder OpenForAll = false
+        {
+            Assert.True(restarted.GetRequiredService<IOptionsMonitor<ShopfloorOptions>>().CurrentValue.OpenForAll);
+            using var scope = restarted.CreateScope();
+            Assert.True(scope.ServiceProvider.GetRequiredService<IAccessPasswordAdministration>().TrySetOperationsLoginRequired(true, "koi"));
+            Assert.False(ShopfloorAccess.IsAllowed(restarted.GetRequiredService<IOptionsMonitor<ShopfloorOptions>>().CurrentValue, "TRAFAG\\fremder"));
+        }
+    }
+
     public void Dispose()
     {
         try { File.Delete(_dbPath); } catch (IOException) { }

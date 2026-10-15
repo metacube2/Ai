@@ -8,6 +8,13 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations: Login nötig"] = "Operations: inicio de sesión necesario",
+                ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "Desactivado: todos los que han iniciado sesión en Windows ven y editan el Shopfloor sin inicio de sesión propio. Activado: solo con el inicio de sesión de Operations o una cuenta de Windows autorizada.",
+                ["Login nötig"] = "Inicio de sesión necesario",
+                ["Offen für alle"] = "Abierto para todos",
+                ["Einstellung konnte nicht gespeichert werden."] = "No se pudo guardar la configuración.",
+                ["Operations braucht wieder ein Login."] = "Operations vuelve a requerir inicio de sesión.",
+                ["Operations ist jetzt für alle offen."] = "Operations ahora está abierto para todos.",
                 ["Passwörter"] = "Contraseñas",
                 ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Aquí el administrador establece nuevas contraseñas para todas las áreas. No se necesita la contraseña anterior. Solo se guarda un hash en la base de datos; un despliegue no lo sobrescribe. Quien haya iniciado sesión en el área deberá iniciarla de nuevo tras el cambio.",
                 ["Zuletzt geändert"] = "Último cambio",
@@ -2668,6 +2675,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations: Login nötig"] = "Operations: accesso necessario",
+                ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "Disattivato: tutti gli utenti connessi a Windows vedono e modificano lo Shopfloor senza accesso separato. Attivato: solo con l'accesso Operations o un account Windows autorizzato.",
+                ["Login nötig"] = "Accesso necessario",
+                ["Offen für alle"] = "Aperto a tutti",
+                ["Einstellung konnte nicht gespeichert werden."] = "Impossibile salvare l'impostazione.",
+                ["Operations braucht wieder ein Login."] = "Operations richiede di nuovo l'accesso.",
+                ["Operations ist jetzt für alle offen."] = "Operations è ora aperto a tutti.",
                 ["Passwörter"] = "Password",
                 ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Qui l'amministratore imposta nuove password per tutte le aree. La vecchia password non serve. Nel database viene salvato solo un hash, un rilascio non lo sovrascrive. Chi ha effettuato l'accesso all'area deve accedere di nuovo dopo la modifica.",
                 ["Zuletzt geändert"] = "Ultima modifica",
@@ -5328,6 +5342,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations: Login nötig"] = "ऑपरेशंस: साइन इन आवश्यक",
+                ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "बंद: विंडोज़ में साइन इन सभी लोग अलग साइन इन के बिना शॉपफ़्लोर देखते और संपादित करते हैं। चालू: केवल ऑपरेशंस साइन इन या स्वीकृत विंडोज़ खाते से।",
+                ["Login nötig"] = "साइन इन आवश्यक",
+                ["Offen für alle"] = "सभी के लिए खुला",
+                ["Einstellung konnte nicht gespeichert werden."] = "सेटिंग सहेजी नहीं जा सकी।",
+                ["Operations braucht wieder ein Login."] = "ऑपरेशंस को फिर से साइन इन चाहिए।",
+                ["Operations ist jetzt für alle offen."] = "ऑपरेशंस अब सभी के लिए खुला है।",
                 ["Passwörter"] = "पासवर्ड",
                 ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "यहाँ एडमिन सभी क्षेत्रों के नए पासवर्ड सेट करता है। पुराने पासवर्ड की ज़रूरत नहीं है। डेटाबेस में केवल एक हैश सहेजा जाता है, डिप्लॉय उसे नहीं बदलता। क्षेत्र में साइन इन किए लोगों को बदलाव के बाद फिर से साइन इन करना होगा।",
                 ["Zuletzt geändert"] = "अंतिम बदलाव",
@@ -7988,6 +8009,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations: Login nötig"] = "Operations: identifikimi i nevojshëm",
+                ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "Fikur: të gjithë të identifikuar në Windows e shohin dhe e ndryshojnë Shopfloor pa identifikim të veçantë. Ndezur: vetëm me identifikimin Operations ose një llogari Windows të miratuar.",
+                ["Login nötig"] = "Identifikim i nevojshëm",
+                ["Offen für alle"] = "E hapur për të gjithë",
+                ["Einstellung konnte nicht gespeichert werden."] = "Cilësimi nuk mund të ruhej.",
+                ["Operations braucht wieder ein Login."] = "Operations kërkon sërish identifikim.",
+                ["Operations ist jetzt für alle offen."] = "Operations tani është e hapur për të gjithë.",
                 ["Passwörter"] = "Fjalëkalimet",
                 ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Këtu administratori vendos fjalëkalime të reja për të gjitha zonat. Fjalëkalimi i vjetër nuk nevojitet. Në bazën e të dhënave ruhet vetëm një hash, një publikim nuk e mbishkruan. Kush është i identifikuar në zonë duhet të identifikohet sërish pas ndryshimit.",
                 ["Zuletzt geändert"] = "Ndryshimi i fundit",
@@ -10648,6 +10676,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations: Login nötig"] = "Operations: oturum açma gerekli",
+                ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "Kapalı: Windows'ta oturum açmış herkes Shopfloor'u ayrı oturum açmadan görür ve düzenler. Açık: yalnızca Operations oturumu veya onaylı Windows hesabıyla.",
+                ["Login nötig"] = "Oturum açma gerekli",
+                ["Offen für alle"] = "Herkese açık",
+                ["Einstellung konnte nicht gespeichert werden."] = "Ayar kaydedilemedi.",
+                ["Operations braucht wieder ein Login."] = "Operations yeniden oturum açma gerektiriyor.",
+                ["Operations ist jetzt für alle offen."] = "Operations artık herkese açık.",
                 ["Passwörter"] = "Parolalar",
                 ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Burada yönetici tüm alanlar için yeni parolalar belirler. Eski parola gerekmez. Veritabanında yalnızca bir hash saklanır, yayın bunun üzerine yazmaz. Alanda oturum açmış olanlar değişiklikten sonra yeniden oturum açmalıdır.",
                 ["Zuletzt geändert"] = "Son değişiklik",
@@ -13308,6 +13343,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Operations: Login nötig"] = "Operations: 'el poQ",
+                ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "chu'Ha': Windows 'el Hoch Shopfloor legh choH je, 'el latlh poQbe'. chu': Operations 'el pagh Windows mI' chaw' neH.",
+                ["Login nötig"] = "'el poQ",
+                ["Offen für alle"] = "Hoch poSmoH",
+                ["Einstellung konnte nicht gespeichert werden."] = "SeHlaw pollaHbe'.",
+                ["Operations braucht wieder ein Login."] = "Operations 'el poQqa'.",
+                ["Operations ist jetzt für alle offen."] = "DaH Operations Hoch poSmoH.",
                 ["Passwörter"] = "mu'meH ngoq",
                 ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "naDev Hoch yoS mu'meH ngoq chu' cher loH. mu'meH ngoq ngo' poQbe'. De' qawHaqDaq hash neH pol. deploy 'oH choHbe'. yoSDaq 'el ghot, choH pIq 'el chu'nIS.",
                 ["Zuletzt geändert"] = "Qav choH",

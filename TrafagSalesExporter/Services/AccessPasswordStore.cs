@@ -24,6 +24,9 @@ public static class AccessPasswordAreas
     /// <summary>Zusatzkonten HR KPI (HrKpiAccess:AdminUsers), Schluessel "hr:&lt;benutzer&gt;".</summary>
     public const string HrUserPrefix = "hr:";
 
+    /// <summary>Schalter "Operations: Login noetig" (Wunsch Fabio 2026-10-15). "0" = alle Windows-Benutzer sehen den Shopfloor.</summary>
+    public const string OperationsLoginRequiredKey = "operations.login_required";
+
     public static string HrUser(string username) => HrUserPrefix + username.Trim().ToLowerInvariant();
 }
 
@@ -33,6 +36,10 @@ public interface IAccessPasswordStore
 {
     IReadOnlyDictionary<string, AccessPasswordEntry> ReadAll();
     void Save(string area, string passwordHash, string changedBy);
+
+    /// <summary>Zugangsschalter (2026-10-15), z. B. Operations ohne Login. Null = nicht gesetzt, dann gilt appsettings.</summary>
+    string? ReadSetting(string key);
+    void SaveSetting(string key, string value, string changedBy);
 }
 
 public sealed class AccessPasswordStore : IAccessPasswordStore
@@ -107,6 +114,56 @@ public sealed class AccessPasswordStore : IAccessPasswordStore
         }
     }
 
+    private const string CreateSettingsSql =
+        "CREATE TABLE IF NOT EXISTS AccessSettings (Key TEXT NOT NULL PRIMARY KEY, Value TEXT NOT NULL, ChangedUtc TEXT NOT NULL, ChangedBy TEXT NOT NULL DEFAULT '')";
+
+    public string? ReadSetting(string key)
+    {
+        if (_dbFactory is null)
+            return null;
+        try
+        {
+            lock (Gate)
+            {
+                using var db = _dbFactory.CreateDbContext();
+                var connection = db.Database.GetDbConnection();
+                connection.Open();
+                Execute(connection, CreateSettingsSql);
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT Value FROM AccessSettings WHERE Key = $key";
+                AddParameter(command, "$key", key);
+                return command.ExecuteScalar() as string;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Zugangsschalter {Key} konnte nicht gelesen werden, es gilt appsettings.", key);
+            return null;
+        }
+    }
+
+    public void SaveSetting(string key, string value, string changedBy)
+    {
+        if (_dbFactory is null)
+            throw new InvalidOperationException("Cockpit-Datenbank nicht verfuegbar.");
+        lock (Gate)
+        {
+            using var db = _dbFactory.CreateDbContext();
+            var connection = db.Database.GetDbConnection();
+            connection.Open();
+            Execute(connection, CreateSettingsSql);
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                "INSERT INTO AccessSettings (Key, Value, ChangedUtc, ChangedBy) VALUES ($key, $value, $changed, $by) " +
+                "ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value, ChangedUtc = excluded.ChangedUtc, ChangedBy = excluded.ChangedBy";
+            AddParameter(command, "$key", key);
+            AddParameter(command, "$value", value);
+            AddParameter(command, "$changed", DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+            AddParameter(command, "$by", changedBy ?? string.Empty);
+            command.ExecuteNonQuery();
+        }
+    }
+
     private static void Execute(DbConnection connection, string sql)
     {
         using var command = connection.CreateCommand();
@@ -161,6 +218,12 @@ internal sealed class AccessPasswordPostConfigure :
     public void PostConfigure(string? name, ShopfloorOptions options)
     {
         if (Find(AccessPasswordAreas.Operations) is { } hash) options.LoginPasswordHash = hash;
+        // Admin-Schalter hat Vorrang vor Shopfloor:OpenForAll aus appsettings
+        switch (_store.ReadSetting(AccessPasswordAreas.OperationsLoginRequiredKey))
+        {
+            case "0": options.OpenForAll = true; break;
+            case "1": options.OpenForAll = false; break;
+        }
     }
 
     public void PostConfigure(string? name, LogisticsPeopleAccessOptions options)
@@ -178,6 +241,10 @@ public interface IAccessPasswordAdministration
 {
     IReadOnlyList<AccessPasswordAccount> ListAccounts();
     bool TrySetPassword(string area, string newPassword, string changedBy);
+
+    /// <summary>true = Operations nur mit Login oder freigegebenem Windows-Konto; false = alle Windows-Benutzer.</summary>
+    bool OperationsLoginRequired { get; }
+    bool TrySetOperationsLoginRequired(bool required, string changedBy);
 }
 
 public sealed class AccessPasswordAdministration : IAccessPasswordAdministration
@@ -256,6 +323,17 @@ public sealed class AccessPasswordAdministration : IAccessPasswordAdministration
         var hash = AccessPasswordSettingsWriter.HashPassword(newPassword);
         _store.Save(area, hash, changedBy);
         Apply(area, hash);
+        return true;
+    }
+
+    public bool OperationsLoginRequired => !_shopfloor.CurrentValue.OpenForAll;
+
+    public bool TrySetOperationsLoginRequired(bool required, string changedBy)
+    {
+        if (!_adminAccess.IsUnlocked)
+            return false;
+        _store.SaveSetting(AccessPasswordAreas.OperationsLoginRequiredKey, required ? "1" : "0", changedBy);
+        _shopfloorCache.TryRemove(Options.DefaultName);   // naechster Zugriff baut neu, PostConfigure liest den Schalter
         return true;
     }
 

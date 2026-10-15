@@ -10,6 +10,13 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Operations: Login nötig"] = "Operations: Login nötig",
+            ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "Us: Aui mit Windows-Aamäldig gseh u bearbeite dr Shopfloor ohni eigets Login. I: nume mit Operations-Login oder freigäbnem Windows-Konto.",
+            ["Login nötig"] = "Login nötig",
+            ["Offen für alle"] = "Offe für aui",
+            ["Einstellung konnte nicht gespeichert werden."] = "D Iistellig het nid chönne gspicheret wärde.",
+            ["Operations braucht wieder ein Login."] = "Operations bruucht wider es Login.",
+            ["Operations ist jetzt für alle offen."] = "Operations isch jitz offe für aui.",
             ["Passwörter"] = "Passwörter",
             ["Hier setzt der Admin die Passwörter aller Bereiche neu. Das alte Passwort ist nicht nötig. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich nach der Änderung neu anmelden."] = "Hie setzt dr Admin d Passwörter vo allne Bereiche nöi. Ds alte Passwort bruchts nid. Gspicheret wird nume e Hash i dr Datebank, e Deploy überschribt ne nid. Wär im Bereich aagmäldet isch, muess sech nach dr Änderig nöi aamälde.",
             ["Zuletzt geändert"] = "Zletscht gänderet",
