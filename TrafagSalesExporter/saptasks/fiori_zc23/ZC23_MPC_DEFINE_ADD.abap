@@ -782,7 +782,7 @@
   lo_property->set_filterable( abap_true ).
 
   lo_entity_type->bind_structure( iv_structure_name   = 'ZSTR_ZC23_APP'
-                                  iv_bind_conversions = 'X' ).
+                                  iv_bind_conversions = ' ' ).
 
   lo_entity_set = lo_entity_type->create_entity_set( 'Zc23Set' ).
   lo_entity_set->set_creatable( abap_false ).

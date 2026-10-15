@@ -67,8 +67,11 @@ kopf = [
     "",
 ]
 fuss = [
+    # Ohne Konvertierung (2026-10-15): mit 'X' scheiterte die Ausgabe der DATS-Felder trotz Laenge 10 weiter mit
+    # /IWFND/CM_CONSUMER 122. Roh heisst: Datum JJJJMMTT, MATNR/KUNNR mit fuehrenden Nullen (die App kuerzt),
+    # Filterwerte wandelt der DPC_EXT selbst um (ALPHA, MATN1).
     "  lo_entity_type->bind_structure( iv_structure_name   = 'ZSTR_ZC23_APP'",
-    "                                  iv_bind_conversions = 'X' ).",
+    "                                  iv_bind_conversions = ' ' ).",
     "",
     "  lo_entity_set = lo_entity_type->create_entity_set( 'Zc23Set' ).",
     "  lo_entity_set->set_creatable( abap_false ).",
