@@ -1,6 +1,10 @@
 * Materialanteil 2026-10-15 (Entscheid Ingo): Anteil Zukaufmaterial an den Herstellkosten, wie ZM03
-* (ZLO_CALC_CZ_PREISE). Kalkulation und Fremdleistung waehlbar.
+* (ZLO_CALC_CZ_PREISE). Ein-/ausschaltbar; Kalkulation und Fremdleistung waehlbar.
 SELECTION-SCREEN BEGIN OF BLOCK b6 WITH FRAME TITLE tit_mata.
+  SELECTION-SCREEN BEGIN OF LINE.
+    PARAMETERS p_mata AS CHECKBOX DEFAULT 'X'.
+    SELECTION-SCREEN COMMENT 4(75) txt_mata FOR FIELD p_mata.
+  SELECTION-SCREEN END OF LINE.
   SELECTION-SCREEN BEGIN OF LINE.
     PARAMETERS p_mfrei RADIOBUTTON GROUP mkal DEFAULT 'X'.
     SELECTION-SCREEN COMMENT 4(75) txt_mfre FOR FIELD p_mfrei.

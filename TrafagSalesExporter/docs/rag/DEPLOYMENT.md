@@ -66,6 +66,10 @@ Stand: 2026-10-15
 
 ## Kurzstand
 
+- **Deploy 2026-10-15 12:48, Einkauf: Platzhalter NA ohne Anteil (`7b62544`, Doku `d4e8cdb`).** Auftrag Ingo. `1235/1235`,
+  `BiDashboard.dll` `12:48:13`, SHA256 `018A5D4646E5C377D807C196FE6EEBF4C466F749B90503963FAC684987A02BEA`, bitgleich, zehn
+  Routen 200, Alarm nur `-wal`/`-shm`. **WAL vorher 53,8 MB** (deutlich mehr als 14,5 MB um 12:12): ob ein Einkauf-Lauf
+  abgebrochen wurde, ist nicht geprueft (Datenservice-Seite ohne Browser nicht lesbar); Ingo schaut nach.
 - **Deploy 2026-10-15 12:15, Operations: Admin-Schalter „Login noetig“ (`8bfe424`, Doku `bed8097`).** Auftrag Ingo, Freigabe
   der Produktionsleitung fuer „offen fuer alle“ laut Ingo erteilt. `1234/1234`, `BiDashboard.dll` `12:15:07`, SHA256
   `AB65F17888DEED6DE1ED8A3343E42892793538A0E00DD68E026E6B76E707F84B`, bitgleich, zehn Routen 200, ohne Alarm. WAL vorher 14,5 MB

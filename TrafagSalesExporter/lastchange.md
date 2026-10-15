@@ -2,7 +2,14 @@
 
 Stand: 2026-10-15
 
-## Einkauf Spend-Aufriss: Platzhalter „NA - N/A“ nimmt keinen Anteil mehr, 2026-10-15 (Deploy offen)
+## SAP ZC23: neue Spalten Materialanteil, 2026-10-15 (T76 fertig, Transport `T76K912736`, Import P76 offen)
+
+- ZC23 zeigt neben dem Standardwert den Materialanteil (Zukaufmaterial aus der Standardkalkulation, Regel wie ZM03),
+  je Einheit und gesamt; Block „Materialanteil“ im Selektionsbild: ein/aus, freigegebene oder jüngste Kalkulation,
+  Fremdleistung zum Material. Standardwert und Materialanteil auch in `ZPOWERBI_KDAUF` und im OData-Dienst (Power BI).
+  Details `saptasks/zc23_materialanteil/NOTES.md`.
+
+## Einkauf Spend-Aufriss: Platzhalter „NA - N/A“ nimmt keinen Anteil mehr, 2026-10-15 (`7b62544`, produktiv 12:48)
 
 - Materialien mit einer echten Produktgruppe und dem SAP-Platzhalter `NA` („N/A“) wurden halb/halb verteilt
   (gemeldet an B53173: T2 und NA). Jetzt zählt `NA` neben einer echten Gruppe nicht mit; gilt für alle Materialien.

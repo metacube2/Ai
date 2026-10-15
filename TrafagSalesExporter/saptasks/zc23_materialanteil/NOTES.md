@@ -1,6 +1,8 @@
 # ZC23: neue Spalte Materialanteil
 
-Stand: 2026-10-15, 13:30. **In T76 eingebaut und geprüft (Freigabe Ingo):** Transport `T76K912736` mit Struktur, Tabelle und
+Stand: 2026-10-15, 14:00. **In T76 fertig, Transport `T76K912736` bereit (Freigabe und Import P76: Ingo).** Schnelle Fassung mit Schalter
+(Entscheid Ingo: a + b) in `ZM_OFFENE_KDAUF` aktiv, siehe „Beschleunigung und Schalter“.
+*Überholt:* Stand 13:30: **In T76 eingebaut und geprüft (Freigabe Ingo):** Transport `T76K912736` mit Struktur, Tabelle und
 OData-Modell; `ZM_OFFENE_KDAUF_OPT` ($TMP) mit Materialanteil aktiv, Werte stimmen. **Offen:** Laufzeit (48 s statt 5 s für
 Q2 im Dialog) entscheiden, danach Quelltext in `ZM_OFFENE_KDAUF` übernehmen. Ergebnisse unten in „Einbau in T76: Protokoll“.
 *Überholt:* „In SAP noch nichts geändert“ galt bis zur Freigabe am 15.10. mittags.
@@ -139,3 +141,28 @@ Standardwert nutzt `STPRS` ohne Preiseinheit; bei den geprüften Materialien ist
 2. Danach Quelltext von OPT in `ZM_OFFENE_KDAUF` (`SapGuiSetReportSourceAuftrag.vbs 2 ZM_OFFENE_KDAUF <datei> T76K912736`).
 3. Transport `T76K912736` freigeben, Import P76 (Ingo), danach `/IWFND/CACHE_CLEANUP` und `/IWBEP/CACHE_CLEANUP`.
 4. Variante `BI UPDATE` als Job laufen lassen und Laufzeit gegen 23,6 s festhalten.
+
+## Beschleunigung und Schalter (2026-10-15, Entscheid Ingo: a und b)
+
+- **a, schneller:** `MATA_LADEN` liest stufenweise gesammelt (FOR ALL ENTRIES): Kopfkalkulationen aller Listenmaterialien,
+  dann je Stufe KEKO-Köpfe, CKIS-Positionen und MARC-Beschaffungsart, dann die Unterkalkulationen der Eigenfertigung als
+  nächste Stufe (höchstens 30). Gerechnet wird danach nur im Speicher (`MATA_WERT`, `MATA_IST_MATERIAL`).
+- **b, Schalter:** `P_MATA` „Materialanteil rechnen“, Vorgabe **ein**. Gespeicherte Varianten (z. B. `BI UPDATE`) kennen
+  das Feld nicht und nehmen die Vorgabe, Power BI bekommt den Wert also weiter. Aus: Spalten leer, ZC23 so schnell wie vorher.
+
+| Lauf (T76, Q2 2026, Werk 1100, Dialog) | Dauer |
+| --- | --- |
+| erste Fassung, mit Materialanteil und Fortschreibung | 47,7 s |
+| schnelle Fassung, mit Materialanteil und Fortschreibung | **13,5 s** |
+| schnelle Fassung, Schalter aus, ohne Fortschreibung | 7,5 s |
+
+Werte der schnellen Fassung = erste Fassung (25 Stichproben in `ZPOWERBI_KDAUF` auf den Rappen gleich).
+Übernahme: `ZM_OFFENE_KDAUF_produktiv.abap` (= OPT, nur die Kommentarzeile „Vergleichslauf (-)“ wie im echten Programm)
+mit `SapGuiSetReportSourceAuftrag.vbs` in `ZM_OFFENE_KDAUF`, aktiviert über `SapGuiInaktiveMarkieren.vbs 2 aktivieren
+ZM_OFFENE_KDAUF` (fremdes `Z_REICHW` in der Liste übergangen); aktive Fassung = Datei, 0 Zeilen Unterschied.
+Transport `T76K912736` / Aufgabe `T76K912737`: `ZMM_UEB_KDAUF`, `ZPOWERBI_KDAUF`, `ZCL_ZPOWERBI_EINKAUF_MPC_EXT DEFINE`,
+`ZM_OFFENE_KDAUF`.
+
+**Für Ingo:** Transport freigeben und nach P76 importieren; danach in P76 `/IWFND/CACHE_CLEANUP` und `/IWBEP/CACHE_CLEANUP`
+für `ZPOWERBI_EINKAUF_MDL`, dann einmal ZC23 mit einer gewohnten Variante ansehen (neue Spalten „Materialanteil je Einheit“
+und „Materialanteil“, Block „Materialanteil“ im Selektionsbild). Laufzeit `BI UPDATE` als Job danach festhalten.

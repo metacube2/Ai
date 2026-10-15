@@ -83,8 +83,12 @@ SELECTION-SCREEN BEGIN OF BLOCK b5 WITH FRAME TITLE tit_korr.
   SELECTION-SCREEN END OF LINE.
 SELECTION-SCREEN END OF BLOCK b5.
 * Materialanteil 2026-10-15 (Entscheid Ingo): Anteil Zukaufmaterial an den Herstellkosten, wie ZM03
-* (ZLO_CALC_CZ_PREISE). Kalkulation und Fremdleistung waehlbar.
+* (ZLO_CALC_CZ_PREISE). Ein-/ausschaltbar; Kalkulation und Fremdleistung waehlbar.
 SELECTION-SCREEN BEGIN OF BLOCK b6 WITH FRAME TITLE tit_mata.
+  SELECTION-SCREEN BEGIN OF LINE.
+    PARAMETERS p_mata AS CHECKBOX DEFAULT 'X'.
+    SELECTION-SCREEN COMMENT 4(75) txt_mata FOR FIELD p_mata.
+  SELECTION-SCREEN END OF LINE.
   SELECTION-SCREEN BEGIN OF LINE.
     PARAMETERS p_mfrei RADIOBUTTON GROUP mkal DEFAULT 'X'.
     SELECTION-SCREEN COMMENT 4(75) txt_mfre FOR FIELD p_mfrei.
@@ -218,8 +222,47 @@ PARAMETERS: p_ptask TYPE i DEFAULT 6 NO-DISPLAY,
 * Belegfluss im Parallelbaustein: O Original, P Pruefen, K eigene Lesung,
 * H eigene Lesung ausser bei gleichem Rechnungsdatum (Vorgabe, geprueft 2026-10-12)
             p_flmod TYPE c LENGTH 1 DEFAULT 'H' NO-DISPLAY.
-* Materialanteil 2026-10-15: Material je Basiseinheit, einmal je Kalkulation gerechnet.
-TYPES: BEGIN OF ty_mata_kalk,
+* Materialanteil 2026-10-15: Kalkulationen stufenweise gesammelt gelesen (FOR ALL ENTRIES), gerechnet im Speicher.
+TYPES: BEGIN OF ty_mata_key,
+         kalnr TYPE keko-kalnr,
+         kalka TYPE keko-kalka,
+         kadky TYPE keko-kadky,
+         tvers TYPE keko-tvers,
+         bwvar TYPE keko-bwvar,
+       END OF ty_mata_key,
+       BEGIN OF ty_mata_kopf,
+         kalnr TYPE keko-kalnr,
+         kalka TYPE keko-kalka,
+         kadky TYPE keko-kadky,
+         tvers TYPE keko-tvers,
+         bwvar TYPE keko-bwvar,
+         losgr TYPE keko-losgr,
+         werks TYPE keko-werks,
+       END OF ty_mata_kopf,
+       BEGIN OF ty_mata_pos,
+         kalnr     TYPE ckis-kalnr,
+         kalka     TYPE ckis-kalka,
+         kadky     TYPE ckis-kadky,
+         tvers     TYPE ckis-tvers,
+         bwvar     TYPE ckis-bwvar,
+         posnr     TYPE ckis-posnr,
+         typps     TYPE ckis-typps,
+         matnr     TYPE ckis-matnr,
+         werks     TYPE ckis-werks,
+         menge     TYPE ckis-menge,
+         wrtfw_kpf TYPE ckis-wrtfw_kpf,
+         ukaln     TYPE ckis-ukaln,
+         ukalka    TYPE ckis-ukalka,
+         ukadky    TYPE ckis-ukadky,
+         utvers    TYPE ckis-utvers,
+         ubwvar    TYPE ckis-ubwvar,
+       END OF ty_mata_pos,
+       BEGIN OF ty_mata_beskz,
+         matnr TYPE marc-matnr,
+         werks TYPE marc-werks,
+         beskz TYPE marc-beskz,
+       END OF ty_mata_beskz,
+       BEGIN OF ty_mata_kalk,
          kalnr TYPE keko-kalnr,
          kalka TYPE keko-kalka,
          kadky TYPE keko-kadky,
@@ -229,15 +272,23 @@ TYPES: BEGIN OF ty_mata_kalk,
        END OF ty_mata_kalk,
        BEGIN OF ty_mata_mat,
          matnr TYPE matnr,
-         werks TYPE werks_d,
+         kalnr TYPE keko-kalnr,
+         kalka TYPE keko-kalka,
+         kadky TYPE keko-kadky,
+         tvers TYPE keko-tvers,
+         bwvar TYPE keko-bwvar,
          wert  TYPE p LENGTH 16 DECIMALS 6,
-         ok    TYPE abap_bool,
        END OF ty_mata_mat.
-DATA: gt_mata_kalk  TYPE HASHED TABLE OF ty_mata_kalk WITH UNIQUE KEY kalnr kalka kadky tvers bwvar,
-      gt_mata_mat   TYPE HASHED TABLE OF ty_mata_mat WITH UNIQUE KEY matnr werks,
+DATA: gt_mata_kopf  TYPE HASHED TABLE OF ty_mata_kopf WITH UNIQUE KEY kalnr kalka kadky tvers bwvar,
+      gt_mata_pos   TYPE SORTED TABLE OF ty_mata_pos WITH NON-UNIQUE KEY kalnr kalka kadky tvers bwvar,
+      gt_mata_beskz TYPE HASHED TABLE OF ty_mata_beskz WITH UNIQUE KEY matnr werks,
+      gt_mata_kalk  TYPE HASHED TABLE OF ty_mata_kalk WITH UNIQUE KEY kalnr kalka kadky tvers bwvar,
+      gt_mata_mat   TYPE HASHED TABLE OF ty_mata_mat WITH UNIQUE KEY matnr,
       gv_mata_tiefe TYPE i,
-      gv_n_mata_ohne TYPE i,   " Materialien ohne passende Kalkulation
-      gv_n_mata_gross TYPE i.  " Positionen mit Materialanteil > Standardwert
+      gv_n_mata_ohne  TYPE i,  " Materialien ohne passende Kalkulation
+      gv_n_mata_gross TYPE i,  " Positionen mit Materialanteil > Standardwert
+      gv_n_mata_kalk  TYPE i,  " gelesene Kalkulationen
+      gv_t_mata       TYPE i.  " Laufzeit Materialanteil in Millisekunden
 
 
 
@@ -336,6 +387,7 @@ INITIALIZATION.
   txt_kalt = 'Alte Logik wie bis Oktober 2026 (mit den Fehlern)'.
 * Texte fuer den Block Materialanteil (2026-10-15)
   tit_mata = 'Materialanteil (Zukaufmaterial aus der Standardkalkulation)'.
+  txt_mata = 'Materialanteil rechnen (aus: ZC23 schneller, Spalten leer)'.
   txt_mfre = 'Freigegebene Standardkalkulation (passt zum Standardpreis)'.
   txt_mjun = 'Juengste Standardkalkulation (wie ZM03)'.
   txt_mfrm = 'Fremdleistungen zum Material zaehlen'.
@@ -1877,111 +1929,246 @@ ENDFORM.                    " par_ende
 * aus einem anderen Werk zaehlen als Material; Eigenfertigung wird ueber die Unterkalkulation
 * der CKIS-Position aufgeloest. Eigenleistung (E) nie, Fremdleistung (F) nur mit P_MFREM.
 * Laeuft nach VERGLEICH_EXPORT, damit der Vergleich mit ZM_OFFENE_KDAUF_CMP unberuehrt bleibt.
+* Schnelle Fassung: Kalkulationen stufenweise gesammelt lesen (MATA_LADEN), dann im Speicher rechnen.
 FORM materialanteil_rechnen.
   FIELD-SYMBOLS <ls_ueb> TYPE zmm_ueb_kdauf.
-  DATA lv_wert TYPE p LENGTH 16 DECIMALS 6.
+  DATA: ls_mat     TYPE ty_mata_mat,
+        lv_rt0     TYPE i,
+        lv_rt1     TYPE i.
+
+  CHECK p_mata = abap_true.
+  GET RUN TIME FIELD lv_rt0.
+
+  PERFORM mata_laden.
+
+  LOOP AT gt_mata_mat INTO ls_mat.
+    PERFORM mata_wert USING ls_mat-kalnr ls_mat-kalka ls_mat-kadky ls_mat-tvers ls_mat-bwvar
+                      CHANGING ls_mat-wert.
+    MODIFY TABLE gt_mata_mat FROM ls_mat.
+  ENDLOOP.
 
   LOOP AT gt_uebauf ASSIGNING <ls_ueb>.
     CHECK <ls_ueb>-matnr IS NOT INITIAL.
-    PERFORM mata_material USING <ls_ueb>-matnr p_werk CHANGING lv_wert.
-    <ls_ueb>-matpreis  = lv_wert.
-    <ls_ueb>-matanteil = lv_wert * <ls_ueb>-bmeng.
+    READ TABLE gt_mata_mat INTO ls_mat WITH TABLE KEY matnr = <ls_ueb>-matnr.
+    CHECK sy-subrc = 0.
+    <ls_ueb>-matpreis  = ls_mat-wert.
+    <ls_ueb>-matanteil = ls_mat-wert * <ls_ueb>-bmeng.
     IF <ls_ueb>-standardwert > 0 AND <ls_ueb>-matanteil > <ls_ueb>-standardwert.
       gv_n_mata_gross = gv_n_mata_gross + 1.
     ENDIF.
   ENDLOOP.
+
+  GET RUN TIME FIELD lv_rt1.
+  gv_t_mata = ( lv_rt1 - lv_rt0 ) / 1000.
+  gv_n_mata_kalk = lines( gt_mata_kopf ).
 ENDFORM.                    "materialanteil_rechnen
 
 *&---------------------------------------------------------------------*
-*&      Form  MATA_MATERIAL
+*&      Form  MATA_LADEN
 *&---------------------------------------------------------------------*
-* Material je Basiseinheit fuer ein Material, je Material und Werk einmal gerechnet.
-FORM mata_material USING    iv_matnr TYPE matnr
-                            iv_werks TYPE werks_d
-                   CHANGING cv_wert  TYPE p.
-  DATA: ls_mat  TYPE ty_mata_mat,
-        ls_keko TYPE keko.
+* 1. Je Kopfmaterial die passende Standardkalkulation (freigegeben oder juengste).
+* 2. Stufenweise: Koepfe und Positionen aller offenen Kalkulationen, Beschaffungsart der
+*    Positionsmaterialien, dann die Unterkalkulationen der Eigenfertigung als naechste Stufe.
+FORM mata_laden.
+  TYPES: BEGIN OF lty_matnr,
+           matnr TYPE matnr,
+         END OF lty_matnr,
+         BEGIN OF lty_keko,
+           matnr   TYPE keko-matnr,
+           kalnr   TYPE keko-kalnr,
+           kalka   TYPE keko-kalka,
+           kadky   TYPE keko-kadky,
+           tvers   TYPE keko-tvers,
+           bwvar   TYPE keko-bwvar,
+           kadat   TYPE keko-kadat,
+           freig   TYPE keko-freig,
+           feh_sta TYPE keko-feh_sta,
+         END OF lty_keko,
+         BEGIN OF lty_mw,
+           matnr TYPE marc-matnr,
+           werks TYPE marc-werks,
+         END OF lty_mw.
+  DATA: lt_matnr TYPE SORTED TABLE OF lty_matnr WITH UNIQUE KEY matnr,
+        lt_keko  TYPE STANDARD TABLE OF lty_keko,
+        ls_keko  TYPE lty_keko,
+        ls_mat   TYPE ty_mata_mat,
+        lt_offen TYPE SORTED TABLE OF ty_mata_key WITH UNIQUE KEY kalnr kalka kadky tvers bwvar,
+        lt_neu   TYPE SORTED TABLE OF ty_mata_key WITH UNIQUE KEY kalnr kalka kadky tvers bwvar,
+        ls_key   TYPE ty_mata_key,
+        lt_kopf  TYPE STANDARD TABLE OF ty_mata_kopf,
+        ls_kopf  TYPE ty_mata_kopf,
+        lt_pos   TYPE STANDARD TABLE OF ty_mata_pos,
+        ls_pos   TYPE ty_mata_pos,
+        lt_mw    TYPE SORTED TABLE OF lty_mw WITH UNIQUE KEY matnr werks,
+        ls_mw    TYPE lty_mw,
+        lt_beskz TYPE STANDARD TABLE OF ty_mata_beskz,
+        ls_beskz TYPE ty_mata_beskz,
+        lv_kenn  TYPE c LENGTH 12.
+  FIELD-SYMBOLS <ls_ueb> TYPE zmm_ueb_kdauf.
 
-  READ TABLE gt_mata_mat INTO ls_mat WITH TABLE KEY matnr = iv_matnr werks = iv_werks.
-  IF sy-subrc = 0.
-    cv_wert = ls_mat-wert.
-    RETURN.
-  ENDIF.
+  " 1. Kopfmaterialien der Liste
+  LOOP AT gt_uebauf ASSIGNING <ls_ueb> WHERE matnr IS NOT INITIAL.
+    INSERT VALUE #( matnr = <ls_ueb>-matnr ) INTO TABLE lt_matnr.
+  ENDLOOP.
+  CHECK lt_matnr IS NOT INITIAL.
 
-  CLEAR ls_mat.
-  ls_mat-matnr = iv_matnr.
-  ls_mat-werks = iv_werks.
+  SELECT matnr kalnr kalka kadky tvers bwvar kadat freig feh_sta
+    FROM keko INTO TABLE lt_keko
+    FOR ALL ENTRIES IN lt_matnr
+    WHERE matnr = lt_matnr-matnr
+      AND werks = p_werk
+      AND kalka = '01'
+      AND tvers = '01'
+      AND loekz = space.
 
   IF p_mfrei = abap_true.
-    " Freigegebene Standardkalkulation, die heute gilt (gehoert zum Standardpreis)
-    SELECT * FROM keko INTO ls_keko UP TO 1 ROWS
-      WHERE matnr = iv_matnr
-        AND werks = iv_werks
-        AND kalka = '01'
-        AND tvers = '01'
-        AND freig = 'X'
-        AND loekz = space
-        AND kadat <= sy-datum
-      ORDER BY kadat DESCENDING.
-    ENDSELECT.
+    " freigegebene, die heute gilt: juengstes Gueltig-ab bis heute
+    DELETE lt_keko WHERE freig <> 'X' OR kadat > sy-datum.
+    SORT lt_keko BY matnr ASCENDING kadat DESCENDING kadky DESCENDING.
   ELSE.
-    " Juengste Standardkalkulation wie ZM03
-    SELECT * FROM keko INTO ls_keko UP TO 1 ROWS
-      WHERE matnr = iv_matnr
-        AND werks = iv_werks
-        AND kalka = '01'
-        AND tvers = '01'
-        AND loekz = space
-        AND feh_sta <> 'KF'
-        AND kadky <= sy-datum
-      ORDER BY kadky DESCENDING.
-    ENDSELECT.
+    " juengste wie ZM03
+    DELETE lt_keko WHERE feh_sta = 'KF' OR kadky > sy-datum.
+    SORT lt_keko BY matnr ASCENDING kadky DESCENDING.
   ENDIF.
+  DELETE ADJACENT DUPLICATES FROM lt_keko COMPARING matnr.
 
-  IF sy-subrc = 0.
-    PERFORM mata_kalkulation USING ls_keko-kalnr ls_keko-kalka ls_keko-kadky
-                                   ls_keko-tvers ls_keko-bwvar
-                             CHANGING ls_mat-wert.
-    ls_mat-ok = abap_true.
-  ELSE.
-    gv_n_mata_ohne = gv_n_mata_ohne + 1.
-  ENDIF.
+  LOOP AT lt_keko INTO ls_keko.
+    CLEAR ls_mat.
+    MOVE-CORRESPONDING ls_keko TO ls_mat.
+    INSERT ls_mat INTO TABLE gt_mata_mat.
+    MOVE-CORRESPONDING ls_keko TO ls_key.
+    INSERT ls_key INTO TABLE lt_offen.
+  ENDLOOP.
+  gv_n_mata_ohne = lines( lt_matnr ) - lines( lt_keko ).
 
-  INSERT ls_mat INTO TABLE gt_mata_mat.
-  cv_wert = ls_mat-wert.
-ENDFORM.                    "mata_material
+  " 2. Stufenweise laden, hoechstens 30 Stufen
+  DO 30 TIMES.
+    IF lt_offen IS INITIAL.
+      EXIT.
+    ENDIF.
+
+    CLEAR lt_kopf.
+    SELECT kalnr kalka kadky tvers bwvar losgr werks
+      FROM keko INTO TABLE lt_kopf
+      FOR ALL ENTRIES IN lt_offen
+      WHERE bzobj = '0'
+        AND kalnr = lt_offen-kalnr
+        AND kalka = lt_offen-kalka
+        AND kadky = lt_offen-kadky
+        AND tvers = lt_offen-tvers
+        AND bwvar = lt_offen-bwvar.
+    SORT lt_kopf BY kalnr kalka kadky tvers bwvar.
+    " Jeder offene Schluessel gilt danach als geladen, auch ohne Treffer (Losgroesse 0 = Wert 0)
+    LOOP AT lt_offen INTO ls_key.
+      CLEAR ls_kopf.
+      MOVE-CORRESPONDING ls_key TO ls_kopf.
+      READ TABLE lt_kopf INTO ls_kopf WITH KEY kalnr = ls_key-kalnr kalka = ls_key-kalka
+                                               kadky = ls_key-kadky tvers = ls_key-tvers
+                                               bwvar = ls_key-bwvar BINARY SEARCH.
+      IF sy-subrc <> 0.
+        CLEAR ls_kopf.
+        MOVE-CORRESPONDING ls_key TO ls_kopf.
+      ENDIF.
+      INSERT ls_kopf INTO TABLE gt_mata_kopf.
+    ENDLOOP.
+
+    CLEAR lt_pos.
+    SELECT kalnr kalka kadky tvers bwvar posnr typps matnr werks menge wrtfw_kpf
+           ukaln ukalka ukadky utvers ubwvar
+      FROM ckis INTO TABLE lt_pos
+      FOR ALL ENTRIES IN lt_offen
+      WHERE lednr = '00'
+        AND bzobj = '0'
+        AND kalnr = lt_offen-kalnr
+        AND kalka = lt_offen-kalka
+        AND kadky = lt_offen-kadky
+        AND tvers = lt_offen-tvers
+        AND bwvar = lt_offen-bwvar.
+    DELETE lt_pos WHERE wrtfw_kpf = 0.
+    INSERT LINES OF lt_pos INTO TABLE gt_mata_pos.
+
+    " Beschaffungsart der Positionsmaterialien, die noch nicht bekannt ist
+    CLEAR lt_mw.
+    LOOP AT lt_pos INTO ls_pos WHERE ( typps = 'M' OR typps = 'I' ) AND matnr IS NOT INITIAL.
+      READ TABLE gt_mata_beskz TRANSPORTING NO FIELDS WITH TABLE KEY matnr = ls_pos-matnr werks = ls_pos-werks.
+      IF sy-subrc <> 0.
+        INSERT VALUE #( matnr = ls_pos-matnr werks = ls_pos-werks ) INTO TABLE lt_mw.
+      ENDIF.
+    ENDLOOP.
+    IF lt_mw IS NOT INITIAL.
+      CLEAR lt_beskz.
+      SELECT matnr werks beskz FROM marc INTO TABLE lt_beskz
+        FOR ALL ENTRIES IN lt_mw
+        WHERE matnr = lt_mw-matnr AND werks = lt_mw-werks.
+      SORT lt_beskz BY matnr werks.
+      LOOP AT lt_mw INTO ls_mw.
+        READ TABLE lt_beskz INTO ls_beskz WITH KEY matnr = ls_mw-matnr werks = ls_mw-werks BINARY SEARCH.
+        IF sy-subrc <> 0.
+          CLEAR ls_beskz.
+          ls_beskz-matnr = ls_mw-matnr.
+          ls_beskz-werks = ls_mw-werks.
+        ENDIF.
+        INSERT ls_beskz INTO TABLE gt_mata_beskz.
+      ENDLOOP.
+    ENDIF.
+
+    " Naechste Stufe: Unterkalkulationen der Eigenfertigung, die noch nicht geladen sind
+    CLEAR lt_neu.
+    LOOP AT lt_pos INTO ls_pos WHERE ( typps = 'M' OR typps = 'I' ) AND ukaln IS NOT INITIAL.
+      PERFORM mata_ist_material USING ls_pos CHANGING lv_kenn.
+      CHECK lv_kenn IS INITIAL.   " leer = nicht Material, also aufloesen
+      ls_key-kalnr = ls_pos-ukaln.
+      ls_key-kalka = ls_pos-ukalka.
+      ls_key-kadky = ls_pos-ukadky.
+      ls_key-tvers = ls_pos-utvers.
+      ls_key-bwvar = ls_pos-ubwvar.
+      READ TABLE gt_mata_kopf TRANSPORTING NO FIELDS WITH TABLE KEY kalnr = ls_key-kalnr kalka = ls_key-kalka
+                                                                    kadky = ls_key-kadky tvers = ls_key-tvers
+                                                                    bwvar = ls_key-bwvar.
+      IF sy-subrc <> 0.
+        INSERT ls_key INTO TABLE lt_neu.
+      ENDIF.
+    ENDLOOP.
+    lt_offen = lt_neu.
+  ENDDO.
+ENDFORM.                    "mata_laden
 
 *&---------------------------------------------------------------------*
-*&      Form  MATA_KALKULATION
+*&      Form  MATA_IST_MATERIAL
 *&---------------------------------------------------------------------*
-* Material je Basiseinheit einer Kalkulation (Summe Material / Kalkulationslosgroesse),
-* je Kalkulation einmal gerechnet. Rekursiv ueber die Unterkalkulationen der Positionen.
-FORM mata_kalkulation USING    iv_kalnr TYPE keko-kalnr
-                               iv_kalka TYPE keko-kalka
-                               iv_kadky TYPE keko-kadky
-                               iv_tvers TYPE keko-tvers
-                               iv_bwvar TYPE keko-bwvar
-                      CHANGING cv_wert  TYPE p.
-  TYPES: BEGIN OF lty_pos,
-           typps     TYPE ckis-typps,
-           matnr     TYPE ckis-matnr,
-           werks     TYPE ckis-werks,
-           menge     TYPE ckis-menge,
-           wrtfw_kpf TYPE ckis-wrtfw_kpf,
-           ukaln     TYPE ckis-ukaln,
-           ukalka    TYPE ckis-ukalka,
-           ukadky    TYPE ckis-ukadky,
-           utvers    TYPE ckis-utvers,
-           ubwvar    TYPE ckis-ubwvar,
-         END OF lty_pos.
-  DATA: lt_pos   TYPE STANDARD TABLE OF lty_pos,
-        ls_pos   TYPE lty_pos,
-        ls_kalk  TYPE ty_mata_kalk,
-        lv_losgr TYPE keko-losgr,
-        lv_werks TYPE keko-werks,
-        lv_beskz TYPE marc-beskz,
-        lv_sub   TYPE p LENGTH 16 DECIMALS 6,
-        lv_sum   TYPE p LENGTH 16 DECIMALS 6.
+* Regel wie ZM03 fuer eine Materialposition: Material (Ergebnis 'X'), wenn ohne Unterkalkulation,
+* Zukaufteil (BESKZ F) oder aus einem anderen Werk als die Kalkulation; sonst leer (aufloesen).
+FORM mata_ist_material USING    is_pos   TYPE ty_mata_pos
+                       CHANGING cv_kenn  TYPE clike.
+  DATA: ls_kopf  TYPE ty_mata_kopf,
+        ls_beskz TYPE ty_mata_beskz.
+
+  CLEAR cv_kenn.
+  READ TABLE gt_mata_beskz INTO ls_beskz WITH TABLE KEY matnr = is_pos-matnr werks = is_pos-werks.
+  READ TABLE gt_mata_kopf INTO ls_kopf WITH TABLE KEY kalnr = is_pos-kalnr kalka = is_pos-kalka
+                                                     kadky = is_pos-kadky tvers = is_pos-tvers
+                                                     bwvar = is_pos-bwvar.
+  IF is_pos-ukaln IS INITIAL OR ls_beskz-beskz = 'F' OR is_pos-werks <> ls_kopf-werks.
+    cv_kenn = 'X'.
+  ENDIF.
+ENDFORM.                    "mata_ist_material
+
+*&---------------------------------------------------------------------*
+*&      Form  MATA_WERT
+*&---------------------------------------------------------------------*
+* Material je Basiseinheit einer Kalkulation, nur aus den geladenen Tabellen, je Kalkulation einmal.
+FORM mata_wert USING    iv_kalnr TYPE keko-kalnr
+                        iv_kalka TYPE keko-kalka
+                        iv_kadky TYPE keko-kadky
+                        iv_tvers TYPE keko-tvers
+                        iv_bwvar TYPE keko-bwvar
+               CHANGING cv_wert  TYPE p.
+  DATA: ls_kalk TYPE ty_mata_kalk,
+        ls_kopf TYPE ty_mata_kopf,
+        ls_pos  TYPE ty_mata_pos,
+        lv_kenn TYPE c LENGTH 12,
+        lv_sub  TYPE p LENGTH 16 DECIMALS 6,
+        lv_sum  TYPE p LENGTH 16 DECIMALS 6.
 
   READ TABLE gt_mata_kalk INTO ls_kalk WITH TABLE KEY kalnr = iv_kalnr kalka = iv_kalka
                                                      kadky = iv_kadky tvers = iv_tvers
@@ -2001,55 +2188,39 @@ FORM mata_kalkulation USING    iv_kalnr TYPE keko-kalnr
   INSERT ls_kalk INTO TABLE gt_mata_kalk.
 
   gv_mata_tiefe = gv_mata_tiefe + 1.
-  IF gv_mata_tiefe <= 30.
-    SELECT SINGLE losgr werks FROM keko INTO (lv_losgr, lv_werks)
-      WHERE bzobj = '0'
-        AND kalnr = iv_kalnr
-        AND kalka = iv_kalka
-        AND kadky = iv_kadky
-        AND tvers = iv_tvers
-        AND bwvar = iv_bwvar.
-    IF sy-subrc = 0 AND lv_losgr > 0.
-      SELECT typps matnr werks menge wrtfw_kpf ukaln ukalka ukadky utvers ubwvar
-        FROM ckis INTO TABLE lt_pos
-        WHERE lednr = '00'
-          AND bzobj = '0'
-          AND kalnr = iv_kalnr
-          AND kalka = iv_kalka
-          AND kadky = iv_kadky
-          AND tvers = iv_tvers
-          AND bwvar = iv_bwvar.
-
-      LOOP AT lt_pos INTO ls_pos WHERE wrtfw_kpf <> 0.
-        CASE ls_pos-typps.
-          WHEN 'M' OR 'I'.
-            CLEAR lv_beskz.
-            SELECT SINGLE beskz FROM marc INTO lv_beskz
-              WHERE matnr = ls_pos-matnr AND werks = ls_pos-werks.
-            IF ls_pos-ukaln IS INITIAL OR lv_beskz = 'F' OR ls_pos-werks <> lv_werks.
-              lv_sum = lv_sum + ls_pos-wrtfw_kpf.
-            ELSE.
-              PERFORM mata_kalkulation USING ls_pos-ukaln ls_pos-ukalka ls_pos-ukadky
-                                             ls_pos-utvers ls_pos-ubwvar
-                                       CHANGING lv_sub.
-              lv_sum = lv_sum + lv_sub * ls_pos-menge.
-            ENDIF.
-          WHEN 'F'.
-            IF p_mfrem = abap_true.
-              lv_sum = lv_sum + ls_pos-wrtfw_kpf.
-            ENDIF.
-          WHEN OTHERS.
-            " Eigenleistung (E), Zuschlaege und uebrige Positionen sind kein Material
-        ENDCASE.
-      ENDLOOP.
-      ls_kalk-wert = lv_sum / lv_losgr.
-    ENDIF.
+  READ TABLE gt_mata_kopf INTO ls_kopf WITH TABLE KEY kalnr = iv_kalnr kalka = iv_kalka
+                                                     kadky = iv_kadky tvers = iv_tvers
+                                                     bwvar = iv_bwvar.
+  IF sy-subrc = 0 AND ls_kopf-losgr > 0 AND gv_mata_tiefe <= 30.
+    LOOP AT gt_mata_pos INTO ls_pos WHERE kalnr = iv_kalnr AND kalka = iv_kalka
+                                      AND kadky = iv_kadky AND tvers = iv_tvers
+                                      AND bwvar = iv_bwvar.
+      CASE ls_pos-typps.
+        WHEN 'M' OR 'I'.
+          PERFORM mata_ist_material USING ls_pos CHANGING lv_kenn.
+          IF lv_kenn = 'X'.
+            lv_sum = lv_sum + ls_pos-wrtfw_kpf.
+          ELSE.
+            PERFORM mata_wert USING ls_pos-ukaln ls_pos-ukalka ls_pos-ukadky
+                                    ls_pos-utvers ls_pos-ubwvar
+                              CHANGING lv_sub.
+            lv_sum = lv_sum + lv_sub * ls_pos-menge.
+          ENDIF.
+        WHEN 'F'.
+          IF p_mfrem = abap_true.
+            lv_sum = lv_sum + ls_pos-wrtfw_kpf.
+          ENDIF.
+        WHEN OTHERS.
+          " Eigenleistung (E), Zuschlaege und uebrige Positionen sind kein Material
+      ENDCASE.
+    ENDLOOP.
+    ls_kalk-wert = lv_sum / ls_kopf-losgr.
   ENDIF.
   gv_mata_tiefe = gv_mata_tiefe - 1.
 
   MODIFY TABLE gt_mata_kalk FROM ls_kalk.
   cv_wert = ls_kalk-wert.
-ENDFORM.                    "mata_kalkulation
+ENDFORM.                    "mata_wert
 
 *&---------------------------------------------------------------------*
 *&      Form  VERGLEICH_EXPORT
