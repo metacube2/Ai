@@ -483,3 +483,12 @@ Finance-Fragen). Reservierung wieder frei. Kein Anwendungscode, kein Commit, kei
   gehoert zur Finance-Pruefung. Bitte nicht loeschen oder ueberschreiben. Die Vorgaengerdatei
   `all.xlsx` ist bereits nicht mehr vorhanden, dadurch war ein Vorher-Nachher-Vergleich mit
   demselben Werkzeug nicht moeglich.
+
+## 2026-10-15 Claude: Passwoerter aller Bereiche im Admin
+
+- Auftrag Ingo: Passwort-Aenderung fuer Operations einbauen, im Admin sollen alle Bereichs-Passwoerter aenderbar sein.
+- Ergebnis: `Services/AccessPasswordStore.cs` (Tabelle `AccessPasswords`, nur SHA-256-Hash; PostConfigure fuer Admin-, Finance-, HR-, Shopfloor- und Logistik-Optionen; Verwaltungsdienst mit Pruefung „Admin entsperrt“ auf dem Server), Seite `Components/Pages/AdminPasswords.razor`, Menue `admin-passwords`, Selbstaenderung bei Admin/Finance/HR schreibt in die DB, Shopfloor-Cookie mit Hash-Fingerabdruck. Registrierung ueber `AddShopfloor`, weil `Program.cs` fremde unkommittierte Aenderungen traegt.
+- Tests: `AccessPasswordStoreTests` (8), gesamt 1232/1232 im Release-Worktree.
+- Commit `e1afd49`. Deploy offen: Einkauf-Delta-Status nicht pruefbar (Browser-Erweiterung nicht verbunden), Regel LEARNINGS 2026-10-14.
+- Admin-Passwort bewusst nicht von Claude gesetzt (Klartext stand im Chat); Ingo setzt es nach dem Deploy auf der neuen Seite.
+- Folge: alle bestehenden Operations-Anmeldungen werden mit dem Deploy einmal ungueltig (neues Cookie-Format).

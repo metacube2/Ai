@@ -2,6 +2,16 @@
 
 Stand: 2026-10-15
 
+## Admin: Passwörter aller Bereiche an einer Stelle, 2026-10-15 (`e1afd49`, Deploy offen)
+
+- Neue Seite Admin Bereich > Passwörter (`/admin/passwoerter`): Der entsperrte Admin setzt die Passwörter von Admin, Finance,
+  HR KPI (auch `hradmin`), Operations und Logistik (Namen anzeigen) neu, ohne das alte zu kennen.
+- Gespeichert wird nur der SHA-256-Hash, in der Tabelle `AccessPasswords` der Cockpit-DB. Ein Deploy überschreibt ihn nicht mehr;
+  fehlt ein Eintrag, gilt weiter `appsettings.json`. Die bisherigen Felder „Passwort ändern“ bei Admin, Finance und HR schreiben
+  ebenfalls in die DB.
+- Nach einer Änderung müssen sich alle im Bereich neu anmelden, jetzt auch bei Operations. Einmalig nach dem Deploy gilt das für
+  alle Operations-Anmeldungen, weil das Cookie ein neues Format hat.
+
 ## Shopfloor: Patches von Fabio, 2026-10-15 (`52b3b75`, produktiv 08:50)
 
 - ZD05: Filter „Zu besprechen“ (neu, ohne Code oder Liefertermin überschritten), im Meeting automatisch aktiv.

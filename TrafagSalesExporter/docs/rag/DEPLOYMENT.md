@@ -1118,6 +1118,11 @@ Stand: 2026-10-15
   Einstellung dauerhaft will, muss sie im Repository setzen. Dieselbe Klasse wie die
   XLSX weiter unten. Vor jedem Deploy lohnt ein Vergleich der beiden Dateien; am
   2026-08-10 war der Pausen-Schalter der einzige Unterschied.
+  *Nachtrag 2026-10-15:* Die Passwort-Hashes der Bereichs-Logins (Admin, Finance, HR,
+  Operations, Logistik) waren dieselbe Falle: „Passwort ändern“ schrieb in
+  `appsettings.json`, der naechste Deploy setzte den Repository-Hash zurueck. Seit
+  `e1afd49` liegen sie in der Cockpit-DB (Tabelle `AccessPasswords`, Seite Admin Bereich >
+  Passwoerter) und haben Vorrang; `appsettings.json` ist nur noch Rueckfall.
 
 - Deploy davor: **2026-08-07 17:05, Pausenspiel `/pause`**,
   Funktionscommits `ad0241d` (Spiel) und `b834d61` (Deploy-Konsole und Doku),

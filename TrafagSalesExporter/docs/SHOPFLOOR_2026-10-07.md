@@ -45,7 +45,7 @@ Fehler kommen wie im Original als `{"error": "..."}` mit 400 (fachlich), 401 (To
 ## 3. Zugriffsregel (Freigabe durch die Leitung Produktion)
 
 *Geaendert 2026-10-08 (Entscheid Ingo): Der Reiter ist fuer alle sichtbar, der Zugang laeuft ueber ein eigenes Login analog Finance/HR.*
-Benutzer `Shopfloor:LoginUsername` (`operations`), Passwort nur als SHA-256-Hash in `Shopfloor:LoginPasswordHash` (wie HR KPI, Passwort kennt Ingo).
+Benutzer `Shopfloor:LoginUsername` (`operations`), Passwort nur als SHA-256-Hash in `Shopfloor:LoginPasswordHash` (wie HR KPI, Passwort kennt Ingo). *Ergänzt 2026-10-15:* Das Passwort setzt der Admin unter Admin Bereich > Passwörter; der Hash liegt dann in der Cockpit-DB (Tabelle `AccessPasswords`, Bereich `operations`) und hat Vorrang vor `appsettings.json`. Das Anmelde-Cookie trägt einen Fingerabdruck des Hashes, ein neues Passwort beendet also alle bestehenden Anmeldungen.
 Nach der Anmeldung (`wwwroot/shopfloor/login.html`, `POST /shopfloor/api/login`) setzt der Server ein HttpOnly-Cookie `TrafagShopfloor`
 (Data Protection, SameSite Strict, Pfad `/BiDashboard/shopfloor`, `LoginHours` 12 h). Ohne Zugriff leiten Seiten auf `login.html` um, die API
 antwortet 403. Windows-Konten in `AllowedUsers` (`koi`) brauchen kein Login. Abmelden: `POST api/logout`. Code `Services/Shopfloor/ShopfloorLogin.cs`.

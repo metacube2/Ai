@@ -203,7 +203,7 @@ einzelne Quittierung 2 Minuten), Positionen je Stunde. Nur im Speicher, kein Exp
 der nächsten 14 Tage (je Tag ein Aufruf), höchstens alle 15 Minuten, gemeinsam für alle, nur wenn der Umschalter Kapazität offen ist.
 **Bis Warenausgang:** Median erster TA angelegt bis Warenbewegung, sobald `WadatIst`/`WaZeit` kommen.
 
-**Passwort für die Namen setzen (Ingo):** In PowerShell den Hash erzeugen und ihn (nicht das Passwort) in
+**Passwort für die Namen setzen (Ingo):** *Seit 2026-10-15 einfacher:* Admin Bereich > Passwörter, Zeile Logistik, „Neu setzen“; der Hash liegt dann in der Cockpit-DB und übersteht Deploys. Der folgende Weg über `appsettings.json` gilt nur noch als Rückfall, wenn dort nichts gesetzt ist. Bisher: In PowerShell den Hash erzeugen und ihn (nicht das Passwort) in
 `appsettings.json` unter `LogisticsPeopleAccess:PasswordHash` eintragen lassen; Benutzer ist `logistik`:
 ```powershell
 $p = Read-Host "Passwort" -AsSecureString; $t = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($p)); [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($t)))
