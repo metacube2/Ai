@@ -2,6 +2,14 @@
 
 Stand: 2026-10-15
 
+## SAP Fiori: App ZC23 live mit Selektion, 2026-10-15 (T76 fertig, Transport `T76K912738` offen)
+
+- `http://travt762.sap.trafag.com:8000/sap/bc/ui5_ui5/sap/zfi_zc23/index.html?sap-client=100`: Selektion wie ZC23,
+  Kacheln (Positionen, offener Wert, Standardwert, Materialanteil, Arbeit CZ, Kunden), Liste mit Suche und CSV, Trafag-Logo.
+- Die Logik bleibt in ZC23: neues EntitySet `Zc23Set` in `ZPOWERBI_EINKAUF` startet `ZM_OFFENE_KDAUF` mit `P_APP`
+  (Ergebnis nach dem Materialanteil ins Memory, keine Liste, keine Power-BI-Fortschreibung). Q2-Abgleich gleich
+  `ZPOWERBI_KDAUF` (4'392 Zeilen, alle drei Summen). Details `saptasks/fiori_zc23/NOTES.md`.
+
 ## SAP Fiori: erste Test-App `ZFI_ERSTE_APP`, 2026-10-15 (in T76 hochgeladen, laeuft im Browser)
 
 - Kleine SAPUI5-App als Harness für künftige Erfassungs-Apps: liest 50 Zeilen `ProductDivisionRefSet` aus

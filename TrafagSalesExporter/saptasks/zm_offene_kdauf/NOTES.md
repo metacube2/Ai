@@ -246,3 +246,7 @@ cscript //nologo .tmp_sap_probe/SapGuiListeAlleSeiten.vbs 1 > lauf.txt          
 
 Im Dialog gilt die Grenze von 600 s je Dialogschritt; größere Varianten als Job (`P_BG`).
 REF gegen REF: `... 1 - 1100 <von> <bis> ZM_OFFENE_KDAUF_REF ZM_OFFENE_KDAUF_REF`.
+
+## Nachtrag 2026-10-15: P_APP fuer die Fiori-App
+
+`PARAMETERS p_app NO-DISPLAY` und Form `APP_EXPORT` (nach `materialanteil_rechnen`): Ergebnis ins Memory `ZM_OFFENE_KDAUF_APP`, kein ALV, keine Fortschreibung. Gesetzt vom DPC_EXT fuer `Zc23Set`. REF unveraendert, OPT/produktiv +14 Zeilen aus `bauen.js`. Aktiv in T76, Transport `T76K912738`. Details `saptasks/fiori_zc23/NOTES.md`.

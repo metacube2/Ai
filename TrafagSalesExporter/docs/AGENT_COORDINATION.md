@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Fiori-App ZC23 (offene Kundenauftraege aus `ZPOWERBI_KDAUF` ueber `ZPOWERBI_EINKAUF_SRV`, Kennzahlen, Filter, Trafag-Logo), nur lesen, T76 `$TMP` | `saptasks/fiori_zc23/` | in Arbeit 2026-10-15, nur T76, kein Transport |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Fiori-App ZC23 live mit Selektion (Zc23Set, P_APP, ZSTR_ZC23_APP), Trafag-Logo | 2026-10-15 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912738` offen (Report, Struktur, MPC/DPC), App `ZFI_ZC23` `$TMP`; Q2 gleich `ZPOWERBI_KDAUF`; Freigabe/P76 Ingo. `saptasks/fiori_zc23/NOTES.md` |
 | Claude | Erste Fiori-App `ZFI_ERSTE_APP` (nur Lesen, `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet`), T76 `$TMP`, Harness fuer Erfassungs-Apps | 2026-10-15 | **Abgeschlossen, Reservierung frei.** Upload per RFC `/UI5/REPO_LOAD_FROM_ZIP` (SapProbe `@datei:`), im Browser geprueft (50 Zeilen); kein Transport. `saptasks/fiori_erste_app/NOTES.md` |
 | Claude | ZC23 Formel-Doku als Word (`docs/ZC23_Materialanteil_Formeln_2026-10-15.docx`), Generator `Tools/BuildZc23Formeln` | 2026-10-15 | **Abgeschlossen, nur Doku, Reservierung frei.** Commit `5fef8d6`, Nachtrag Generator und Doku-Verweise; OpenXML geprueft, visuell nicht gesichtet |
 | Claude | ZC23 Spalte „Arbeit CZ“ wie ZM03, Spalten neben Standardwert, Waehrung in der Ueberschrift | 2026-10-15 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912736` (4 Objekte), Werte = ZM03 und Nachrechnung; Freigabe/Import P76 Ingo |

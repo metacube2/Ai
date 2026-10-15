@@ -161,6 +161,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `saptasks/ZZPRDAT_T76_PROTOTYP_2026-09-03.md` | ZZPRDAT-Prototyp in $TMP (ueberholt) |
 | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` | **SAP effizient bedienen: Zugangswege, Skriptbestand, Aktivierungsfallen, Gateway/OData. Pflichtlektuere vor jeder SAP-Aktion, verlinkt aus `router.md` Regel 5 und `docs/rag/init.md`** |
 | `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` | ZC23 Materialanteil und Arbeit CZ: Formeln, Beispiel B87813, Bedienung, Grenzen, Pruefung (Word, Generator `.tmp_tools/BuildZc23Formeln`) |
+| `saptasks/fiori_zc23/` | Fiori-App ZC23: `NOTES.md`, Generator `erzeugen.py`, `methoden_bauen.py`, MPC/DPC vorher/neu, Struktur-Feldliste, App `webapp/` |
 | `saptasks/fiori_erste_app/` | Erste Fiori-App: `NOTES.md` (Harness, Voraussetzungen, Upload-Wege, Link), Quelle `webapp/` |
 | `saptasks/zc23_materialanteil/` | ZC23 Materialanteil: Analyse und Vorschlag `NOTES.md`, Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |
 | `saptasks/zm_offene_kdauf/` | ZM_OFFENE_KDAUF beschleunigen: Original, REF, OPT (zum Zurueckkopieren), CMP, Funktionsgruppe ZKDAUF_PAR (`Z_KDAUF_PAR_RECHNEN.abap`, `LZKDAUF_PARTOP.abap`), Nummerntest `Z_KDAUF_NR_TEST.abap`, Original-Quellen `Z_BASISPREISLISTE.abap`/`LZZLO1*.abap`, Bausteine `teile/`, `bauen.js`, `einspielen.sh`, Laufprotokolle `lauf*.txt`, Tabellenabzug `zpowerbi_opt.csv`; Stand, Ergebnisse und Offenes in `NOTES.md` |

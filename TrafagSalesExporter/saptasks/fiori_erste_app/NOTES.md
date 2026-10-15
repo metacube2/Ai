@@ -12,8 +12,8 @@ Daten gezogen werden. Nur T76, `$TMP`, kein Transport, nur lesen.
   und Dienst auf demselben Host liegen, gibt es kein CORS-Problem. Ein Skript-Login ist nicht nötig (und wegen
   Sperrgefahr verboten, siehe Memory „SAP Gateway Abfragen“).
 - **Login (Korrektur Ingo 2026-10-15):** Im Browser meldet man sich mit dem **OData-Login** an, **nicht** mit dem
-  SAP-GUI-Login von T76. Meine frühere Aussage „KOI mit T76-Passwort“ war falsch. Welcher Benutzer genau dahintersteht,
-  ist nicht ausgelesen (`/sap/bc/ui2/start_up` gibt 403).
+  SAP-GUI-Login von T76. Meine frühere Aussage „KOI mit T76-Passwort“ war falsch. Laut Gateway-Fehlerprotokoll (`/IWFND/SU_ERRLOG`, 2026-10-15) ist das der
+  Benutzer **`POWERBI`** (`/sap/bc/ui2/start_up` gibt fuer ihn 403).
 - Öffnen ohne Launchpad, direkt per Link:
   `http://travt762.sap.trafag.com:8000/sap/bc/ui5_ui5/sap/zfi_erste_app/index.html?sap-client=100`
 - Später mit Launchpad: Kachel über `/UI2/FLPD_CUST` (Katalog, Target Mapping) und Rolle, Aufruf `/UI2/FLP` bzw.

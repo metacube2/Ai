@@ -46,6 +46,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **HR-EntitySet `HrAbsenzSet` (Abwesenheiten je Fall, Transport `T76K912644`)** | `docs/HR_KPI.md` Abschnitt 8.7 |
 | **Logistik-Live-Sets `LogTaSet`, `LogLiefSet`, `LogRueckSet` (Transport `T76K912650`); offen: Einwand Serverlast durch Polling (Marco, 12.10.)** | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | **ZC23 Materialanteil und Arbeit CZ: Formeln fuer Anwender (Word)**, erzeugt mit `.tmp_tools/BuildZc23Formeln` | `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` |
+| **Fiori-App ZC23: offene Kundenauftraege live mit Selektion (Zc23Set, P_APP, ZSTR_ZC23_APP), Trafag-Logo, Kacheln; T76 `T76K912738`** | `saptasks/fiori_zc23/NOTES.md` |
 | **Fiori-App (SAPUI5): erste Test-App `ZFI_ERSTE_APP`, wo und wie sie laeuft, Voraussetzungen T76, drei Upload-Wege, Harness fuer Erfassungs-Apps** | `saptasks/fiori_erste_app/NOTES.md` |
 | **ZC23 Spalten Materialanteil und Arbeit CZ: Analyse ZM03 (`ZLO_CALC_CZ_PREISE`), in T76 gebaut (Transport `T76K912736`, Import P76 offen), Formeln, Pruefung** | `saptasks/zc23_materialanteil/NOTES.md` |
 | **`ZM_OFFENE_KDAUF` beschleunigen: `_OPT` (etwa 1/35 bis 1/50 der Laufzeit, identisch), Parallelbaustein `Z_KDAUF_PAR_RECHNEN`, Korrekturschalter, Vergleich `_CMP`, in T76 eingesetzt, Transport `T76K912728` bereit, Import P76 offen** | `saptasks/zm_offene_kdauf/NOTES.md` |
