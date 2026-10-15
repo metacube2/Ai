@@ -160,6 +160,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` | ZZPRDAT: Transportauftrag T76K912490, Objektliste, Nachtest |
 | `saptasks/ZZPRDAT_T76_PROTOTYP_2026-09-03.md` | ZZPRDAT-Prototyp in $TMP (ueberholt) |
 | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` | **SAP effizient bedienen: Zugangswege, Skriptbestand, Aktivierungsfallen, Gateway/OData. Pflichtlektuere vor jeder SAP-Aktion, verlinkt aus `router.md` Regel 5 und `docs/rag/init.md`** |
+| `saptasks/zc23_materialanteil/` | ZC23 Materialanteil: Analyse und Vorschlag `NOTES.md`, Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |
 | `saptasks/zm_offene_kdauf/` | ZM_OFFENE_KDAUF beschleunigen: Original, REF, OPT (zum Zurueckkopieren), CMP, Funktionsgruppe ZKDAUF_PAR (`Z_KDAUF_PAR_RECHNEN.abap`, `LZKDAUF_PARTOP.abap`), Nummerntest `Z_KDAUF_NR_TEST.abap`, Original-Quellen `Z_BASISPREISLISTE.abap`/`LZZLO1*.abap`, Bausteine `teile/`, `bauen.js`, `einspielen.sh`, Laufprotokolle `lauf*.txt`, Tabellenabzug `zpowerbi_opt.csv`; Stand, Ergebnisse und Offenes in `NOTES.md` |
 | `docs/ZZPRDAT_Loesung_2026-09-03.docx` | ZZPRDAT-Loesungsdokument fuer den Fachbereich |
 | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` | Anschreiben zur Abnahme, Vorlage fuer den Outlook-Entwurf |

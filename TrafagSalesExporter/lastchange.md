@@ -2,6 +2,11 @@
 
 Stand: 2026-10-15
 
+## Operations: Login per Admin-Schalter abschaltbar, 2026-10-15 (`8bfe424`, Deploy offen)
+
+- Admin Bereich > Passwörter, Schalter „Operations: Login nötig“ (Wunsch Fabio). Aus: Alle mit Windows-Anmeldung sehen und
+  bearbeiten den Shopfloor ohne eigenes Login. Gespeichert in der Datenbank, übersteht Deploys. Standard unverändert: Login nötig.
+
 ## Shopfloor: Schnittstelle nimmt Fabios Push-Format an, 2026-10-15 (`f4e3f1b`, produktiv 11:06)
 
 - Ein einzelnes Item ohne `items`-Hülle und `values` statt `fields` werden angenommen; zusätzliche Adresse

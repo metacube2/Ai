@@ -582,7 +582,7 @@ Der Admin-Bereich bündelt die technischen und organisatorischen Grundlagen der 
 
 **Aktive Logins** zeigt die App-internen Entsperrungen von HR und Finance seit dem letzten Start mit Bereich, Name, IP-Adresse, Zeitpunkt der Entsperrung und letztem Zugriff. Wichtig ist der Hinweis, dass HR und Finance gemeinsame Logins verwenden, die Seite also den Login-Namen zeigt und nicht zwingend die Person. Dort lässt sich auch eine Animation auf der Startseite ein- und ausschalten.
 
-**Passwörter** listet alle Bereichs-Logins (Admin, Finance, HR KPI mit Zusatzkonten, Operations, Logistik) mit Benutzer, Status und letzter Änderung. Der angemeldete Admin setzt dort mit „Neu setzen“ ein neues Passwort, ohne das alte zu kennen; es muss mindestens 8 Zeichen lang sein. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich danach neu anmelden.
+**Passwörter** listet alle Bereichs-Logins (Admin, Finance, HR KPI mit Zusatzkonten, Operations, Logistik) mit Benutzer, Status und letzter Änderung. Der angemeldete Admin setzt dort mit „Neu setzen“ ein neues Passwort, ohne das alte zu kennen; es muss mindestens 8 Zeichen lang sein. Gespeichert wird nur ein Hash in der Datenbank, ein Deploy überschreibt ihn nicht. Wer im Bereich angemeldet ist, muss sich danach neu anmelden. Oben auf derselben Seite schaltet „Operations: Login nötig“ das eigene Login für Operations ab: Ist der Schalter aus, sehen und bearbeiten alle mit Windows-Anmeldung den Shopfloor.
 
 **Standorte** pflegt die Gesellschaften: Land, TSC, Schema, Quellsystem, Aktivierung, die Zuordnung der Quellfelder zum zentralen Schema, SAP-Joins, Excel-Spaltenmapping für manuelle Länder und die zentrale HANA-Technik.
 

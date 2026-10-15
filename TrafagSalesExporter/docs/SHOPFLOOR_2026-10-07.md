@@ -58,7 +58,7 @@ Regel: Neue Reiter sind erst nach Freigabe durch die Leitung Produktion/Operatio
 | Schluessel (appsettings, Abschnitt `Shopfloor`) | Standard | Bedeutung |
 | --- | --- | --- |
 | `AllowedUsers` | leer | Windows-Konten mit Zugriff. Eintrag `koi` passt auf jede Domaene, `TRAFAG\koi` nur auf diese. Gross/Klein egal. |
-| `OpenForAll` | `false` | `true` = alle angemeldeten Benutzer. Erst nach der Freigabe setzen. |
+| `OpenForAll` | `false` | `true` = alle angemeldeten Benutzer. Erst nach der Freigabe setzen. *Seit 2026-10-15 (`8bfe424`, Wunsch Fabio):* Admin Bereich > Passwörter, Schalter „Operations: Login nötig“; der Wert liegt in der Cockpit-DB (Tabelle `AccessSettings`, Schlüssel `operations.login_required`) und hat Vorrang vor diesem Eintrag. Aus = alle Windows-Benutzer sehen und bearbeiten den Shopfloor. |
 | `ApiToken` | leer | Bearer-Token fuer `POST integration/push`. Leer = Schnittstelle gesperrt (immer 401). |
 | `DatabasePath` | leer | Leer = `<ContentRoot>\shopfloor\shopfloor.db`. Relative Pfade gelten ab ContentRoot. |
 | `BackupDirectory` | leer | Leer = `backups` neben der Datenbank. |

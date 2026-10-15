@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Operations: Admin-Schalter „Login noetig“ (aus = alle Windows-Benutzer sehen den Shopfloor) | `Services/Shopfloor/ShopfloorConfig.cs` bzw. Zugriff, `Services/Shopfloor/ShopfloorEndpoints.cs`, `Models/ExportSettings.cs`, Schema-Dateien, `Components/Pages/AdminPasswords.razor`, Uebersetzungen, Tests | laeuft seit 2026-10-15 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -36,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | ZC23 Materialanteil: Analyse ZM03 (`ZLO_CALC_CZ_PREISE`) und CK11N, nur lesend in T76 per SapProbe | 2026-10-15 | **Abgeschlossen, nur Analyse, nichts in SAP geaendert, Reservierung frei.** `saptasks/zc23_materialanteil/NOTES.md`, Quelltext ZM03; ZK11N gibt es nicht (CK11N gemeint); offene Fragen in NOTES und Wochen_Todo 104 |
 | Claude | Zusammenfassung aller Arbeiten 14./15.10. als Markdown | 2026-10-15 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `docs/ARBEITSSTAND_2026-10-14_15.md`, Router Projekt, `baum.md` |
 | Claude | Shopfloor-Schnittstelle nimmt Fabios Push-Format an (ohne items-Huelle, `values`, Adresse `/api/integration/push`) | 2026-10-15 | **Abgeschlossen, deployed 11:06, Reservierung frei.** `f4e3f1b`, 1233/1233, bitgleich, beide Adressen mit falschem Token 401. Geaendert: `ShopfloorEndpoints.cs`, `ShopfloorStore.cs`, `ShopfloorEndpointTests.cs`, Doku SHOPFLOOR Abschnitt 13 |
 | Claude | Passwoerter aller Bereiche im Admin setzbar (Admin, Finance, HR inkl. hradmin, Operations, Logistik), Hashes in der DB | 2026-10-15 | **Abgeschlossen, deployed 2026-10-15 10:56, Reservierung frei.** `e1afd49` + Doku `1519cb3`, 1232/1232, bitgleich, `/admin/passwoerter` 200. Seite `/admin/passwoerter`, Tabelle `AccessPasswords`, PostConfigure ueber appsettings, Operations-Cookie mit Hash-Fingerabdruck. Admin-Passwort setzt Ingo selbst auf der neuen Seite |
