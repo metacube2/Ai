@@ -363,7 +363,8 @@ namespace SapProbe
                 throw new ArgumentException("Missing function name. Example: SapProbe.exe rfc-call STFC_CONNECTION --set REQUTEXT=hello");
             }
 
-            var writesTablesOrStructs = options.TableFiles.Count > 0 || options.StructFiles.Count > 0;
+            var writesTablesOrStructs = options.TableFiles.Count > 0 || options.StructFiles.Count > 0
+                || options.SetValues.Values.Any(v => v.StartsWith("@datei:", StringComparison.OrdinalIgnoreCase));
             if (writesTablesOrStructs && !options.DryRun && !options.ConfirmWrite)
             {
                 throw new InvalidOperationException(
@@ -378,6 +379,15 @@ namespace SapProbe
 
             foreach (var pair in options.SetValues)
             {
+                // "@datei:<Pfad>" uebergibt den Dateiinhalt als Binaerwert (XSTRING), z. B. ein ZIP fuer /UI5/REPO_LOAD_FROM_ZIP;
+                // wie --table/--struct nur mit --confirm-write oder --dry-run
+                if (pair.Value.StartsWith("@datei:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var bytes = File.ReadAllBytes(pair.Value.Substring("@datei:".Length));
+                    function.SetValue(pair.Key.ToUpperInvariant(), bytes);
+                    Console.WriteLine("Datei-Param   : " + pair.Key.ToUpperInvariant() + " <- " + bytes.Length + " Byte");
+                    continue;
+                }
                 function.SetValue(pair.Key.ToUpperInvariant(), pair.Value);
             }
 

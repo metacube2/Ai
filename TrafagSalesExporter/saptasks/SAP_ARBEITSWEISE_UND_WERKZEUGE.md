@@ -82,6 +82,8 @@ RFC, ganz ohne GUI:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
   rfc-call TH_GET_PARAMETER --param "PARAMETER_NAME=sapgui/user_scripting" --quiet
+  # Datei als XSTRING (seit 2026-10-15), nur mit --confirm-write oder --dry-run:
+  # rfc-call /UI5/REPO_LOAD_FROM_ZIP --set "IV_ZIP_ARCHIVE=@datei:<zip>" ... (saptasks/fiori_erste_app/NOTES.md)
 ```
 
 **Behebung:** `RZ11`, Parameter `sapgui/user_scripting`, `Wert aendern` auf `TRUE`. Der

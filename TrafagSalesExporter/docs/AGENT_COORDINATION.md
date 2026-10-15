@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Erste Fiori-App (nur Lesen, bestehender OData-Dienst) in T76 `$TMP`, oeffnen per URL; Harness/Vorgehen fuer kuenftige Erfassungs-Apps | `saptasks/fiori_erste_app/`, `.tmp_sap_probe/SapGuiUi5*.vbs`, `docs/router/sap.md` | in Arbeit 2026-10-15, nur T76, kein Transport. App gebaut und committet; Upload in T76 wartet auf Ingo (Weg A von Hand oder Freigabe RFC-Weg B) |
+| Claude | Erste Fiori-App (nur Lesen, bestehender OData-Dienst) in T76 `$TMP`, oeffnen per URL; Harness/Vorgehen fuer kuenftige Erfassungs-Apps | `saptasks/fiori_erste_app/`, `.tmp_sap_probe/SapGuiUi5*.vbs`, `docs/router/sap.md` | in Arbeit 2026-10-15, nur T76, kein Transport. App in T76 hochgeladen (RFC `/UI5/REPO_LOAD_FROM_ZIP`, SapProbe `@datei:`), ICF aktiv; Browser-Test durch Ingo offen |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

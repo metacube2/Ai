@@ -1,6 +1,6 @@
 # Erste Fiori-App (Harness für künftige Erfassungs-Apps)
 
-Stand: 2026-10-15. Auftrag Ingo: „erstelle mal ein kleines Fiori-App, es geht darum, dass wir bereit sind, wenn
+Stand: 2026-10-15, App in T76 hochgeladen, Browser-Test durch Ingo offen. Auftrag Ingo: „erstelle mal ein kleines Fiori-App, es geht darum, dass wir bereit sind, wenn
 Erfassungsprogramme kommen, und du daraus lernst“. Erster Schritt laut Ingo: nur öffnen können, sehen wo und wie
 Daten gezogen werden. Nur T76, `$TMP`, kein Transport, nur lesen.
 
@@ -45,7 +45,7 @@ controller/Main.controller.js).
 | Weg | Wie | Bewertung |
 | --- | --- | --- |
 | A. Standardreport `/UI5/UI5_REPOSITORY_LOAD` | SE38, Name `ZFI_ERSTE_APP`, „Hochladen“, F8, dann Windows-Ordnerdialog: `saptasks\fiori_erste_app\webapp` wählen, Paket `$TMP`, Codepage `UTF-8` | einfach von Hand; Ordnerdialog ist Windows, nicht per SAP-GUI-Scripting bedienbar |
-| B. RFC-Baustein `/UI5/REPO_LOAD_FROM_ZIP` | RFC-fähig, nimmt `IV_ZIP_ARCHIVE` (XSTRING), `IV_REPOSITORY_NAME`, `IV_REPOSITORY_DESCRIPTION`, `IV_PACKAGE`, `IV_TRANSPORT_REQUEST`, `IV_CODE_PAGE`, `IV_TEST_MODE`, `IV_SAFE_MODE`, `IV_DIALOG_MODE`; gibt `ES_OUTCOME`, `ET_LOG`, `ET_LOG_MESSAGES` | skriptbar ohne Dialog und ohne HTTP-Login; braucht in SapProbe eine Übergabe von Dateiinhalt als XSTRING (noch nicht eingebaut) |
+| B. RFC-Baustein `/UI5/REPO_LOAD_FROM_ZIP` (**benutzt, 2026-10-15**) | RFC-fähig, nimmt `IV_ZIP_ARCHIVE` (XSTRING), `IV_REPOSITORY_NAME`, `IV_REPOSITORY_DESCRIPTION`, `IV_PACKAGE`, `IV_TRANSPORT_REQUEST`, `IV_CODE_PAGE`, `IV_TEST_MODE`, `IV_SAFE_MODE`, `IV_DIALOG_MODE`; gibt `ES_OUTCOME`, `ET_LOG`, `ET_LOG_MESSAGES` | skriptbar ohne Dialog und ohne HTTP-Login; SapProbe `rfc-call` übergibt Dateien als XSTRING mit `--set "NAME=@datei:<Pfad>"` (nur mit `--confirm-write` oder `--dry-run`) |
 | C. `/UI5/UI5_REPOSITORY_LOAD_HTTP` | holt ein ZIP von einer URL | braucht einen Webserver, den SAP erreicht; verworfen |
 
 Die ZIP muss Pfade mit `/` enthalten. `[IO.Compression.ZipFile]::CreateFromDirectory` aus Windows PowerShell 5.1
@@ -64,9 +64,41 @@ delete; `constructor( operation adapter dialog_mode safe_mode )`, `init( reposit
 4. ZIP gebaut (3'030 Byte, 5 Dateien).
 5. Weg B angefangen: SapProbe `rfc-call` um Dateiwerte erweitert. Der Auto-Modus hat die zweite Änderung als
    „Remote Shell Writes“ abgelehnt; die erste Änderung wurde zurückgenommen, SapProbe ist unverändert.
-   **Hochladen wartet auf Ingo**: entweder Weg A von Hand oder ausdrückliche Freigabe für Weg B.
+   Ingo gab Weg B frei („mach weg b“). Der Auto-Modus lehnte den echten Upload trotzdem ab („Remote Shell Writes“);
+   Ingo schaltete auf den manuellen Modus, danach lief er.
+6. SapProbe erweitert (`@datei:`) und neu gebaut. Der Build im Ordner `.tmp_sap_probe` scheitert an alten Resten
+   (`obj/Release` und `obj/x86/Release` werden beide mitkompiliert, CS0579 doppelte Attribute); gebaut in einem sauberen
+   Ordner (nur `SapProbe.csproj` und `Program.cs`), Exe ersetzt, alte als `SapProbe.exe.bak_20261015` gesichert.
+7. Upload in drei Stufen: `--dry-run` (nichts an SAP), dann `IV_TEST_MODE=X` (SAP prüft, schreibt nicht, Ergebnis S),
+   dann echt. Ergebnis `S /UI5/UI5_REP_LOAD 001`, 5 Dateien, Repository neu in `$TMP`, Anwendungsindex
+   `apps/trafag.erste/app/sap/zfi_erste_app/` geschrieben. ICF-Knoten `ZFI_ERSTE_APP` aktiv (`ICFSERVLOC`).
+   `O2APPL` zeigt den Namen nicht (UI5-Repositorys stehen dort offenbar nicht; kein Fehler).
+8. Vorher öffnete Ingo den Link schon und bekam „ICF Node NOT found“: das heißt nur „noch nicht hochgeladen“.
+9. Browser-Test durch Ingo: offen.
+
+Befehl zum erneuten Hochladen (aus PowerShell; ZIP mit Python bauen, siehe oben):
+
+```powershell
+& powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 rfc-call /UI5/REPO_LOAD_FROM_ZIP `
+  --set "IV_ZIP_ARCHIVE=@datei:<zip>" --set "IV_REPOSITORY_NAME=ZFI_ERSTE_APP" `
+  --set "IV_REPOSITORY_DESCRIPTION=Trafag Fiori Test" --set "IV_PACKAGE=`$TMP" --set "IV_CODE_PAGE=UTF-8" `
+  --set "IV_TEST_MODE=X" --set "IV_DIALOG_MODE= " --confirm-write --max-table-rows 60 --quiet
+```
+
+Zuerst mit `IV_TEST_MODE=X`, dann mit `IV_TEST_MODE= `. Für einen Transport `IV_PACKAGE` und `IV_TRANSPORT_REQUEST` setzen.
 
 ## 6. Für die Erfassungs-Apps später (Harness)
+
+Wo man selbst entwickelt (Übersicht für Ingo, 2026-10-15):
+
+| Was | Wo |
+| --- | --- |
+| App-Oberfläche | VS Code mit „SAP Fiori tools“ (Generator aus einem OData-Dienst) oder SAP Business Application Studio (BTP) |
+| OData-Dienst klassisch | SEGW; registrieren in `/IWFND/MAINT_SERVICE`; Fehler `/IWFND/ERROR_LOG`; testen `/IWFND/GW_CLIENT` |
+| OData-Dienst modern (RAP) | Eclipse mit ADT: CDS, Behavior Definition, Service Binding |
+| App hochladen | `/UI5/UI5_REPOSITORY_LOAD` (SE38), VS Code „Deploy“ oder RFC `/UI5/REPO_LOAD_FROM_ZIP` |
+| App im SAP ansehen | SE80, BSP-Applikation `ZFI_ERSTE_APP`; Webknoten in SICF unter `/sap/bc/ui5_ui5/sap/` |
+| Launchpad | `/UI2/FLPD_CUST` (Katalog, Kachel, Target Mapping), Rolle PFCG, Start `/UI2/FLP` |
 
 - Schreiben braucht im SEGW-Dienst `CREATE_ENTITY` / `UPDATE_ENTITY` in `DPC_EXT`, im UI5 `oModel.create/update`
   bzw. `submitChanges`; CSRF-Token holt das ODataModel selbst.
