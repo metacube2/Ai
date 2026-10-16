@@ -1,6 +1,12 @@
 # Last Change
 
-Stand: 2026-10-15
+Stand: 2026-10-16
+
+## Operations (Shopfloor): Paket Fabio 2026-10-16, Ampel, Lieferzeiten, Forecast DS (`b2103a4`)
+
+- Fabios Patch 03 (Wuensche D. Tobler) und Config-Patch 04 eingespielt: Verlaufskacheln, Ampel pro Bereich, Menue
+  „Lieferzeiten“ mit Grund, PPD ohne Verzug MTS, Forecast mit eigener Zeile DS. Zwei Korrekturen am Paket (FPY SEH ueber
+  `src`, DW1/DL6 ohne Abteilung). Die SAP-Jobs J2 bis J11 sind nicht gebaut. Details `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 14.
 
 ## SAP Fiori: App ZC23 live mit Selektion, 2026-10-15 (T76 fertig, Transport `T76K912738` offen)
 

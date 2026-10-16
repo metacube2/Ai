@@ -197,6 +197,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
 | `docs/ARBEITSSTAND_2026-10-14_15.md` | Zusammenfassung aller Arbeiten vom 14. und 15.10.2026 mit Stand je Punkt, offenen Fragen an Fabio und offenen Punkten bei Ingo |
 | `docs/shopfloor_paket_2026-10-14/` | Fabios Paket vom 2026-10-14: Schnittstelle Shopfloor-SAP (Excel, Feldliste, Push-Beispiele mit abweichendem Format) und Frontend-Patches mit `apply_patch.js` |
+| `docs/shopfloor_paket_2026-10-16/` | Fabios Deploy-Paket vom 2026-10-16: Schnittstellen-Excel (Jobs J1 bis J11, Deploy-Checkliste), Patch 03 Wuensche D. Tobler, Config-Patch 04 mit `apply_config.js` |
 | `docs/NUTZUNG_2026-10-14.md` | Geringe Nutzung des Dashboards: Befund, Ursachen, Massnahmen, anonyme Nutzungsmessung und naechste Schritte |
 | `docs/OPERATIONS_KPI_2026-10-14.md` | Operations > KPI: Liefertreue OTD / OTIF / OTP (Spezifikation Fabio), Port der Referenzlogik, Abruf aus den CDS-Services, Abnahme, offene Punkte |
 | `docs/operations_kpi/` | Fabios Paket vom 2026-10-14: Spezifikation (docx), Referenz (JS-Abzug, Python-Aufbau, Vorlage, Beispielseite, Abnahmedaten mit Kundendaten), PDF- und Excel-Beispiel |

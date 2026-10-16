@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-10-15
+Stand: 2026-10-16
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Shopfloor-Deploy-Paket Fabio 2026-10-16 (Patch 03 Wuensche Tobler, Config Patch 04) | `wwwroot/shopfloor/app.js`, `style.css`, `Services/Shopfloor/shopfloor_config.json`, `ShopfloorForecast.cs`, Shopfloor-Tests, `docs/shopfloor_paket_2026-10-16/` | **Im Repo fertig (`b2103a4`), Release-Worktree 1240/1240, Deploy wartet auf VPN** (Server nicht erreichbar 2026-10-16). Danach Abschnitt 14 in `SHOPFLOOR_2026-10-07.md` und `rag/DEPLOYMENT.md` nachtragen |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

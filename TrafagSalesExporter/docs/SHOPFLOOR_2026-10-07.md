@@ -315,6 +315,8 @@ die `.bak`-Dateien des Skripts wurden nicht ins Repo uebernommen.
 Verkauf ueber CO-PA (wie KE30 Z0001-000006, Nettoerloes, Satzart A bzw. F, Buchungskreis 1100; Sparte 0003 = DW, 0005 = Transmitter),
 Logistik aus ZC27 (Vortag, Gutmenge je Arbeitsplatz, MLE08 + MLE09 summiert), MES nur FPY, CZ vorerst zurueckgestellt.
 Noch nicht in `shopfloor_config.json` uebernommen (dort steht das Mapping aus dem Excel vom 2026-10-14, Abschnitt 12).
+*Teilweise ueberholt 2026-10-16:* Fabios Config-Patch 04 aus dem Paket vom 2026-10-16 ist uebernommen (Abschnitt 14);
+die Feldliste selbst ist weiter nicht 1:1 eingespielt.
 
 **Abweichung der Beispiele vom echten Push-Format (wichtig fuer den SAP-Job):** Fabios `beispiele/*.json` haben die Form
 `{"module", "day", "source", "values"}`. Die Schnittstelle des Cockpits (`ShopfloorStore.ApplyPush`) erwartet
@@ -326,3 +328,36 @@ ein einzelnes Item ohne `items`-Huelle, `values` gleichwertig zu `fields`, und s
 erreichbar. Token-Pruefung auf beiden Adressen unveraendert (`Authorization: Bearer <Shopfloor:ApiToken>`). Fabio braucht nur noch
 Server-Adresse und Token. Alle Feldnamen seiner zwei Beispiele sind in der Konfiguration bekannt (geprueft 2026-10-15). Test
 `Push_Im_Format_Aus_Fabios_Paket_Ueber_Beide_Adressen`.
+
+## 14. Paket Fabio vom 2026-10-16: Patch 03 und Config-Patch 04 (Stand 2026-10-16)
+
+Abgelegt unter `docs/shopfloor_paket_2026-10-16/` (aus `Shopfloor_Deploy_2026-10-16.zip`). Commit `b2103a4`.
+
+**Eingespielt mit Fabios Skripten, je zuerst `--check`:**
+
+1. `3_Config/apply_config.js` auf `Services/Shopfloor/shopfloor_config.json`: PPD ohne `verzug_mts` (Summe `verzug_total` ohne
+   MTS), Verlaufskacheln (`trend`) fuer SEH/TR5/TX/DW (Produktion, Vorrat 1 Mte, Vorrat total, offen KW, Leistung; SEH auch FPY)
+   und PPD (Verzug und Terminverschiebungen total/SEH/TR5/TX/DW), Liste `ampel` (gruen/orange/rot), Felder `ampel`, `ampel_pct`,
+   `ampel_text` in zehn Bereichen, `lz_grund` in SEH/TR5/TX/DW, Forecast-Praefixe DW und neu DS.
+2. `2_Patch/apply_patch.js` auf `wwwroot/shopfloor`: 01 und 02 uebersprungen (schon drin), 03 „Wuensche D. Tobler“ angewendet
+   (Verlaufskacheln, Ampel pro Bereich auf Abteilungsseite und Startseite, Menuepunkt „Lieferzeiten“, Forecast-Zeile DS).
+   Die `.bak`-Dateien der Skripte sind nicht im Repo.
+
+**Zwei Korrekturen, weil das Paket fuer Fabios Python-Fassung geschrieben ist:**
+
+- Der C#-Port liest die Quelle eines Felds aus `src`, nicht aus `planned_source` (das gibt es nur in der Ausgabe von
+  `/api/integration/schema`). Der Patch setzte bei `seh.fpy` nur `planned_source = sap`; jetzt `src = sap`, SAP-Hinweis auf
+  `C_MFGORDERITEMSCRAPAMTQRY_CDS` (Job J11). Damit 129 Felder SAP und 4 MES (nur noch FPY TR5/TX/DW/CZ).
+- Fabios DW-Liste endet mit dem Praefix `DW`; damit waere DW1 (Ruestpapiere) weiter bei DW gelandet, obwohl er nach dem Deploy
+  pruefen will, dass DW1 nicht mehr zugeordnet ist (seine Checkliste nennt genau diese Abhilfe). `DW` ist aus der Liste entfernt;
+  DW1 und DL6 erscheinen unter „nicht zugeordnet“, DW2 bleibt DW. `ShopfloorForecast.DefaultPrefix` und `Depts` sind
+  nachgezogen (DS als Abteilung).
+
+**Tests:** `ShopfloorForecastTests` (Zuordnung DS1/DS2/DSN = DS, DW1/DL6 = ?, DW2/DB1/D10 = DW; 129 SAP / 4 MES) und neu
+`Ampel_Und_Lieferzeit_Grund_Werden_Gespeichert`. Release-Worktree `1240/1240`.
+
+**Nicht Teil dieses Einspielens (Fabios Schritte 2 bis 8a):** Die Jobs J2 bis J11 (Verkauf CO-PA, Logistik nach ZC27, Tagesmengen,
+Auftragsvorrat, FPY SEH) sind weder im Paket (kein Programm, nur Excel mit Quelle und Selektion) noch im Cockpit gebaut. Deshalb
+ist auch kein Erstlauf moeglich. ZD05 (J1) laeuft im Cockpit selbst (`Shopfloor:SapSyncTimes` 05:45 und 12:45 an Werktagen); die
+Umstellung auf 04:00 ist nicht gemacht (Entscheid Ingo offen). Offen von Fabio: Lieferzeit-Ziele (Daniel Tobler), Kuerzel
+Ergebnisbereich CE1xxxx.
