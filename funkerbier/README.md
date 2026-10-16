@@ -18,6 +18,11 @@ Flipper-Backbox trifft Kurzwellen-Shack. Seit 2026-10-15.
    höchstens alle 10 Minuten. Die Seite zeigt JACKPOT und einen
    Kalender-Knopf.
 
+Die Startseite zeigt im Fenster „LOG · WER IST QRV“ alle laufenden Runden
+(ein Termin heute oder später, höchstens 12) mit Namen, Rufzeichen und Zusagen
+je Termin (API `GET api.php?a=uebersicht`, ohne Mailadressen). Damit ist jede
+laufende Runde für alle sichtbar, nicht nur für Inhaber des Links.
+
 Ein Login gibt es nicht. Eine Runde hat eine öffentliche ID mit 8 Zeichen.
 Der Admin-Link und die Bearbeiten-Links tragen zufällige 128-Bit-Token. Der
 Browser merkt sich die Token in `localStorage`, Mailadressen sieht nur der Admin.

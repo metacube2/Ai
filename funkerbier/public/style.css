@@ -253,6 +253,13 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 120px; display: gri
 .liste a { color: var(--weiss); text-decoration: none; display: flex; gap: 10px; align-items: baseline; }
 .liste a:hover { color: var(--gelb); }
 .liste small { font: 8px var(--pixel); color: var(--gelb); }
+.log-runde + .log-runde { margin-top: 14px; padding-top: 12px; border-top: 2px dashed #5f86c9; }
+.log-titel { font: 12px/1.4 var(--pixel); color: var(--gelb); text-decoration: none; }
+.log-titel:hover { color: var(--weiss); }
+.log-titel small { font: 18px var(--term); color: #cfe1ff; }
+.log-termine li { display: grid; gap: 2px; }
+.log-termine b { font: 20px var(--term); color: var(--weiss); }
+.log-termine .marke-klein { justify-self: start; }
 .schritte { margin: 0; padding-left: 1.4em; }
 .schritte li { margin-bottom: 6px; }
 .punktzahl { font: 10px var(--pixel); color: var(--gelb); }

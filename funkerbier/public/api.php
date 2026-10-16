@@ -541,6 +541,28 @@ function a_link(array $p): never
     antwort(['ok' => true]); // gleiche Antwort ohne Treffer: verraet nicht, wer eingetragen ist
 }
 
+// Oeffentliche Uebersicht fuer die Startseite: laufende Runden (ein Termin heute
+// oder spaeter), nur Namen, Rufzeichen und Stimmen, keine Mailadressen.
+function a_uebersicht(): never
+{
+    $heute = date('Y-m-d');
+    $q = db()->prepare('SELECT r.id, r.titel, r.ort, r.final, MAX(t.beginn) AS letzter
+        FROM runde r JOIN termin t ON t.runde = r.id
+        GROUP BY r.id HAVING letzter >= ? ORDER BY MIN(t.beginn) LIMIT 12');
+    $q->execute([$heute]);
+    $runden = [];
+    foreach ($q->fetchAll() as $r) {
+        $runden[] = [
+            'id' => $r['id'], 'titel' => $r['titel'], 'ort' => $r['ort'],
+            'final' => $r['final'] !== null ? (int) $r['final'] : null,
+            'termine' => array_values(array_filter(termine($r['id']), fn($t) => substr($t['beginn'], 0, 10) >= $heute)),
+            'funker' => array_map(fn($f) => ['name' => $f['name'], 'rufzeichen' => $f['rufzeichen'], 'stimmen' => $f['stimmen']],
+                funker_liste($r['id'])),
+        ];
+    }
+    antwort(['runden' => $runden]);
+}
+
 function a_ics(array $p): never
 {
     $runde = runde_holen((string) ($p['id'] ?? ''));
@@ -577,6 +599,7 @@ try {
     match ($_GET['a'] ?? '') {
         'runde' => a_runde($_GET),
         'ics' => a_ics($_GET),
+        'uebersicht' => a_uebersicht(),
         default => fehler('Unbekannte Aktion.'),
     };
 } catch (PDOException $e) {

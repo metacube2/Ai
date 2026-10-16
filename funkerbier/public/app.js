@@ -255,6 +255,7 @@ function zeigeStart() {
   abschuss, meldung);
 
   const runden = speicher.lesen('runden', []);
+  const uebersicht = h('div', {});
   app.replaceChildren(
     h('div', { class: 'zwei-spalten' },
       fenster('TERMIN ERFASSEN', form),
@@ -268,7 +269,34 @@ function zeigeStart() {
           h('p', { class: 'punktzahl' }, 'SCORE ', h('span', { id: 'punkte' }, String(punkte).padStart(7, '0')))),
         runden.length ? fenster('MEIN LOGBUCH', h('ul', { class: 'liste' }, runden.map((r) =>
           h('li', {}, h('a', { href: r.rolle === 'admin' && speicher.lesen('admin:' + r.id, null) ? `#/r/${r.id}/admin/${speicher.lesen('admin:' + r.id, '')}` : `#/r/${r.id}` },
-            h('span', {}, r.titel || r.id), h('small', {}, r.rolle === 'admin' ? 'ADMIN' : 'QRV')))))) : null)));
+            h('span', {}, r.titel || r.id), h('small', {}, r.rolle === 'admin' ? 'ADMIN' : 'QRV')))))) : null,
+        uebersicht)));
+  uebersichtLaden(uebersicht);
+}
+
+// Oeffentliches Log aller laufenden Runden: wer ist schon drin?
+async function uebersichtLaden(ziel) {
+  let d;
+  try { d = await api({ a: 'uebersicht' }, 'GET'); } catch { ziel.remove(); return; }
+  if (!d.runden.length) { ziel.remove(); return; }
+  const rufname = (f) => f.rufzeichen ? `${f.name} (${f.rufzeichen})` : f.name;
+  ziel.replaceChildren(fenster('LOG · WER IST QRV', ...d.runden.map((r) => {
+    const final = r.termine.find((t) => t.id === r.final);
+    const termine = final ? [final] : r.termine;
+    return h('div', { class: 'log-runde' },
+      h('a', { href: `#/r/${r.id}`, class: 'log-titel' }, r.titel, r.ort ? h('small', {}, ' · ' + r.ort) : null),
+      h('p', { class: 'leise mini' }, `${r.funker.length} OP${r.funker.length === 1 ? '' : 'S'} im Log` + (r.funker.length ? ': ' + r.funker.map(rufname).join(', ') : '')),
+      h('ul', { class: 'liste log-termine' }, termine.map((t) => {
+        const ja = r.funker.filter((f) => f.stimmen[t.id] === 2);
+        const viel = r.funker.filter((f) => f.stimmen[t.id] === 1);
+        return h('li', {},
+          h('b', {}, kurz(t.beginn)), final ? h('span', { class: 'marke-klein jackpot' }, 'FIX') : null,
+          h('div', { class: 'namen' }, `${ja.length}× JA`, ja.length || viel.length ? ' — ' : '',
+            ja.map((f, i) => [i ? ', ' : '', h('span', { class: 'j' }, rufname(f))]),
+            ja.length && viel.length ? ', ' : '',
+            viel.map((f, i) => [i ? ', ' : '', h('span', { class: 'v' }, rufname(f) + '?')])));
+      })));
+  })));
 }
 
 function meldungZeigen(el, text, art = 'gut') {
