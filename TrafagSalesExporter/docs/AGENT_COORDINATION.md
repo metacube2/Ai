@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Operations-Reiter ohne Login (`Shopfloor:OpenForAll = true`, Auftrag Ingo) | `appsettings.json`, Doku SHOPFLOOR | in Arbeit 2026-10-16 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Operations-Reiter ohne Login (`Shopfloor:OpenForAll = true`) | 2026-10-16 | **Abgeschlossen, deployed 07:48 (`70a02b1`, Tests `1c03156`), Reservierung frei.** 1241/1241, bitgleich, ohne Alarm. Endpunkt-Tests setzen `OpenForAll=false` selbst |
 | Claude | Shopfloor: Ampel loeschbar, Config liest `planned_source`, korrigierte Kopie `config_patch.js` | 2026-10-16 | **Abgeschlossen, deployed 07:37 (`e6c007f`), Reservierung frei.** 1241/1241, bitgleich, Alarm nur WAL/SHM, in Chrome geprueft. `SHOPFLOOR_2026-10-07.md` Abschnitt 14 |
 | Claude | Shopfloor ZD05-Abgleich 04:00 und 12:45 (Entscheid Ingo), Speichertest Ampel produktiv | 2026-10-16 | **Abgeschlossen, deployed 07:28 (`a285009`), Reservierung frei.** 1240/1240, bitgleich, Alarm nur WAL/SHM; Testampel gesetzt und wieder entfernt. `SHOPFLOOR_2026-10-07.md` Abschnitt 14 |
 | Claude | Shopfloor-Paket Fabio 2026-10-16 (Patch 03 Tobler, Config-Patch 04, zwei Korrekturen) | 2026-10-16 | **Abgeschlossen, deployed 07:06 (`b2103a4`), Reservierung frei.** 1240/1240, bitgleich, Alarm nur WAL/SHM, im Chrome geprueft. Offen: Jobs J2 bis J11 nicht gebaut, ZD05 04:00 (Entscheid Ingo). `SHOPFLOOR_2026-10-07.md` Abschnitt 14 |

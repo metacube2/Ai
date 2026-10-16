@@ -2,6 +2,11 @@
 
 Stand: 2026-10-16
 
+## Operations ohne Login, 2026-10-16 07:48 (`70a02b1`)
+
+- Auftrag Ingo: `Shopfloor:OpenForAll = true`, alle Windows-Benutzer sehen und bearbeiten den Shopfloor ohne Anmeldung. Der Admin-Schalter
+  bleibt und haette Vorrang, wenn ihn jemand setzt.
+
 ## Operations (Shopfloor): Paket Fabio 2026-10-16, Ampel, Lieferzeiten, Forecast DS (`b2103a4`, produktiv 2026-10-16 07:06)
 
 - Fabios Patch 03 (Wuensche D. Tobler) und Config-Patch 04 eingespielt: Verlaufskacheln, Ampel pro Bereich, Menue

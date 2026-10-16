@@ -67,6 +67,9 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 07:48, Operations ohne Login (`Shopfloor:OpenForAll = true`, `70a02b1`, Tests `1c03156`).** Auftrag Ingo. WAL vorher 136 KB,
+  `1241/1241`, `BiDashboard.dll` `07:48:40`, SHA256 `FAB1D51FFF49F9F2231BFB988A02195BB6D0B12288D77EE5769228C2FEAF366A`, bitgleich, zehn Routen 200,
+  ohne Alarm. Server-`appsettings.json` zeigt `OpenForAll: true`. Wirkung fuer andere Benutzer nicht selbst geprueft (Ingo ist in `AllowedUsers`).
 - **Deploy 2026-10-16 07:37, Shopfloor: Ampel loeschbar, `planned_source` aus Fabios Paketen (`e6c007f`).** WAL vorher 556 KB, `1241/1241`,
   `BiDashboard.dll` `07:37:22`, SHA256 `F6013EE429E8AAE7420D1B6C8073EBAEBAE6FD641F245E4F1BD7AF05EE443944`, bitgleich, zehn Routen 200, Alarm
   nur `-wal`/`-shm`. Monitor-Pfaddatei ohne BOM. In Chrome geprueft: Ampel setzen und per zweitem Klick entfernen.
