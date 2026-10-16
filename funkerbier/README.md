@@ -61,9 +61,8 @@ Schutz gegen Missbrauch als Mailschleuder:
   Rufzeichenprüfung, Datenschutz der Mails, falscher Admin, festlegen,
   Bremse der Rundmail, ICS mit 19:00 MESZ = 17:00Z, Honigtopf) und die
   Oberfläche in Chrome auf Desktop und in Handybreite, mit Ton.
+- Seit 2026-10-16 öffentlich: CNAME bei hosttech, NPM-Host 43, Zertifikat
+  `npm-89` (bis 2027-01-14). Im LAN über den Hairpin, ohne Unbound-Override.
 - **Offen:**
-  - CNAME `bier` → `aiscom.duckdns.org` bei hosttech, macht der Benutzer
-  - danach `deploy/npm_host.sh`
-  - Unbound-Override `bier.ingok.ch → 192.168.178.111` auf der OPNsense, nur mit Freigabe
   - ein echter Mailtest an eine echte Adresse
   - die Mengenbremse ist noch nicht unter Last geprüft
