@@ -16,7 +16,7 @@ function patchConfig(c) {
     const m = mod(k); if (!m) continue;
     if (k === "seh") {   // FPY SEH aus SAP (kein MES): WE-Menge / Gesamtmenge der Aufträge mit Istendtermin in der KW
       const fp = m.fields.find(f => f.key === "fpy");
-      if (fp) { fp.planned_source = "sap"; fp.label = "FPY (SAP, KW nach Istendtermin)"; fp.digits = 1; log.push("seh.fpy -> SAP"); }
+      if (fp) { fp.src = "sap"; fp.planned_source = "sap"; fp.label = "FPY (SAP, KW nach Istendtermin)"; fp.digits = 1; log.push("seh.fpy -> SAP"); }
     }
     m.trend = ["prod", "vorrat_1m", "vorrat_total", "offen_kw", "leistung"].concat(k === "seh" ? ["fpy"] : []).filter(x => has(m, x));
     log.push(k + ".trend = " + m.trend.join(","));
@@ -46,7 +46,7 @@ function patchConfig(c) {
   }
   // 5) Forecast: DW nur fertige Dichtewächter, Dichtesensoren als eigene Zeile DS (DW1 Rüstpapiere, DL6 Nachschub nicht zugeordnet)
   if (c.forecast_prefix) {
-    c.forecast_prefix.DW = ["D10", "D11", "D12", "D13", "D20", "D21", "D22", "D23", "D30", "D31", "D40", "DB1", "DB2", "DEF", "DW2", "DW"];
+    c.forecast_prefix.DW = ["D10", "D11", "D12", "D13", "D20", "D21", "D22", "D23", "D30", "D31", "D40", "DB1", "DB2", "DEF", "DW2"];   // ohne "DW": sonst landet DW1 wieder bei DW (Korrektur Cockpit 2026-10-16)
     c.forecast_prefix.DS = ["DS1", "DS2", "DSN", "DS"];
     log.push("forecast_prefix.DW = " + c.forecast_prefix.DW.join(",")); log.push("forecast_prefix.DS = " + c.forecast_prefix.DS.join(","));
   }

@@ -222,8 +222,8 @@ public sealed class ShopfloorConfig
 
     private ShopfloorConfig(string json)
     {
-        RawJson = json;
         var root = JsonNode.Parse(json) as JsonObject ?? throw new InvalidDataException("Shopfloor-Konfiguration ist kein JSON-Objekt.");
+        RawJson = NormalizePlannedSource(root) ? root.ToJsonString(RawOptions) : json;
 
         foreach (var m in root["modules"] as JsonArray ?? [])
         {
@@ -268,6 +268,28 @@ public sealed class ShopfloorConfig
         if (root["forecast_prefix"] is JsonObject fp)
             foreach (var kv in fp)
                 ForecastPrefix[kv.Key] = Strings(kv.Value);
+    }
+
+    private static readonly JsonSerializerOptions RawOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
+    /// <summary>
+    /// Fabios Pakete schreiben die Quelle eines Felds wie im Python-Original als <c>planned_source</c>; der Port liest
+    /// <c>src</c>. Am 2026-10-16 blieb FPY SEH deshalb erst still auf MES. Steht <c>planned_source</c> am Feld, gilt es
+    /// als neuere Angabe: es wird nach <c>src</c> uebernommen und entfernt, auch fuer die Oberflaeche (/api/config).
+    /// </summary>
+    private static bool NormalizePlannedSource(JsonObject root)
+    {
+        var changed = false;
+        foreach (var m in (root["modules"] as JsonArray ?? []).OfType<JsonObject>())
+            foreach (var f in (m["fields"] as JsonArray ?? []).OfType<JsonObject>())
+            {
+                if (SfJson.GetString(f, "planned_source") is not { Length: > 0 } ps)
+                    continue;
+                f["src"] = ps;
+                f.Remove("planned_source");
+                changed = true;
+            }
+        return changed;
     }
 
     private static List<string> Strings(JsonNode? n)

@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Shopfloor: Ampel wieder loeschbar, Config liest `planned_source` (Fabios Patches ohne Korrektur), DW-Liste in Fabios Skriptkopie | `wwwroot/shopfloor/app.js`, `Services/Shopfloor/ShopfloorConfig.cs`, Shopfloor-Tests, `docs/shopfloor_paket_2026-10-16/3_Config/config_patch.js` | in Arbeit 2026-10-16 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

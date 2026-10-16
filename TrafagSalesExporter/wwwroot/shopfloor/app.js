@@ -840,7 +840,15 @@ async function renderAmpel(m) {
     try { await api("POST", "api/daily", { module: m.key, day, changes }); toast("Status gespeichert"); renderAmpel(m); }
     catch (e) { toast("Nicht gespeichert: " + e.message, true); }
   };
-  box.querySelectorAll("[data-amp]").forEach(b => b.onclick = () => save({ ampel: b.dataset.amp, ampel_pct: num(parseNum($("#ampPct").value)), ampel_text: $("#ampTxt").value.trim() || null }));
+  // 2026-10-16: nochmals auf die heute gesetzte Farbe klicken entfernt den heutigen Status (vorher nicht loeschbar);
+  // danach gilt wieder der letzte Status der Vortage. Eine Farbe aus einem Vortag wird mit dem Klick fuer heute bestaetigt.
+  box.querySelectorAll("[data-amp]").forEach(b => {
+    const setToday = a && a.day === day && a.ampel === b.dataset.amp;
+    if (setToday) b.title = "Nochmals klicken entfernt den heutigen Status";
+    b.onclick = () => setToday
+      ? save({ ampel: null, ampel_pct: null, ampel_text: null })
+      : save({ ampel: b.dataset.amp, ampel_pct: num(parseNum($("#ampPct").value)), ampel_text: $("#ampTxt").value.trim() || null });
+  });
   $("#ampPct").onchange = e => save({ ampel_pct: e.target.value === "" ? null : parseNum(e.target.value) });
   $("#ampTxt").onchange = e => save({ ampel_text: e.target.value.trim() || null });
 }

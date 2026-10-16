@@ -57,6 +57,23 @@ public class ShopfloorForecastTests
     }
 
     [Fact]
+    public void Planned_Source_Aus_Fabios_Paketen_Gilt_Als_Quelle()
+    {
+        // Fabios config_patch.js setzt planned_source (Python-Original); der Port liest src (Fall 2026-10-16)
+        var config = ShopfloorConfig.FromJson("""
+            {"modules":[{"key":"seh","kind":"daily","fields":[{"key":"fpy","label":"FPY (SAP, Woche)","type":"num","src":"mes","planned_source":"sap"},{"key":"prod","label":"Produktion","type":"num","src":"sap"}]}]}
+            """);
+        Assert.Equal("sap", config.Modules["seh"].Fields[0].Src);
+        Assert.Equal("sap", config.Modules["seh"].Fields[1].Src);
+        Assert.DoesNotContain("planned_source", config.RawJson);
+        Assert.Contains("FPY (SAP, Woche)", config.RawJson);   // Umlaute/Klammern unveraendert
+        Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(config.RawJson, "\"src\":\"sap\"").Count);
+
+        const string ohne = """{"modules":[{"key":"x","fields":[{"key":"a","src":"mes"}]}]}""";
+        Assert.Same(ohne, ShopfloorConfig.FromJson(ohne).RawJson);   // ohne planned_source: Datei unveraendert ausgeliefert
+    }
+
+    [Fact]
     public void Explizite_Abteilung_Hat_Vorrang()
     {
         var order = new JsonObject { ["abteilung"] = "seh", ["disponent"] = "EL1" };
