@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-15
+Stand: 2026-10-16
 
 ## Deploy-Ablauf seit 2026-10-13 (Entscheid Ingo)
 
@@ -66,6 +66,11 @@ Stand: 2026-10-15
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 07:06, Shopfloor: Paket Fabio 2026-10-16 (`b2103a4`, Doku `5c1e29e`).** Auftrag Ingo („bitte einspielen“),
+  WAL vorher 124 KB (kein Einkauf-Delta). Release-Worktree `1240/1240` (Titel/Testzahl im Runner-Protokoll sind die alten),
+  `BiDashboard.dll` `07:03:00`, SHA256 `B207E6D61E44A4460C244D986C8B9882195388294198CABB6FFDE594258EEA9C`, bitgleich, zehn Routen 200,
+  Alarm nur `-wal`/`-shm`. Nachpruefung in Ingos Chrome: `api/config` mit Ampel in zehn Modulen und DS-Praefixen, Seite
+  „Lieferzeiten“, Ampel-Karte SEH, Forecast mit Zeile DS (DS1 40, DS2 7 Auftraege) und DW1 (52) ohne Abteilung; keine JS-Fehler.
 - **Deploy 2026-10-15 12:48, Einkauf: Platzhalter NA ohne Anteil (`7b62544`, Doku `d4e8cdb`).** Auftrag Ingo. `1235/1235`,
   `BiDashboard.dll` `12:48:13`, SHA256 `018A5D4646E5C377D807C196FE6EEBF4C466F749B90503963FAC684987A02BEA`, bitgleich, zehn
   Routen 200, Alarm nur `-wal`/`-shm`. **WAL vorher 53,8 MB** (deutlich mehr als 14,5 MB um 12:12): ob ein Einkauf-Lauf

@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Shopfloor-Deploy-Paket Fabio 2026-10-16 (Patch 03 Wuensche Tobler, Config Patch 04) | `wwwroot/shopfloor/app.js`, `style.css`, `Services/Shopfloor/shopfloor_config.json`, `ShopfloorForecast.cs`, Shopfloor-Tests, `docs/shopfloor_paket_2026-10-16/` | **Im Repo fertig (`b2103a4`), Release-Worktree 1240/1240, Deploy wartet auf VPN** (Server nicht erreichbar 2026-10-16). Danach Abschnitt 14 in `SHOPFLOOR_2026-10-07.md` und `rag/DEPLOYMENT.md` nachtragen |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Shopfloor-Paket Fabio 2026-10-16 (Patch 03 Tobler, Config-Patch 04, zwei Korrekturen) | 2026-10-16 | **Abgeschlossen, deployed 07:06 (`b2103a4`), Reservierung frei.** 1240/1240, bitgleich, Alarm nur WAL/SHM, im Chrome geprueft. Offen: Jobs J2 bis J11 nicht gebaut, ZD05 04:00 (Entscheid Ingo). `SHOPFLOOR_2026-10-07.md` Abschnitt 14 |
 | Claude | Fiori-App ZC23 live mit Selektion (Zc23Set, P_APP, ZSTR_ZC23_APP), Trafag-Logo | 2026-10-15 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912738` offen (Report, Struktur, MPC/DPC), App `ZFI_ZC23` `$TMP`; Q2 gleich `ZPOWERBI_KDAUF`; Freigabe/P76 Ingo. `saptasks/fiori_zc23/NOTES.md` |
 | Claude | Erste Fiori-App `ZFI_ERSTE_APP` (nur Lesen, `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet`), T76 `$TMP`, Harness fuer Erfassungs-Apps | 2026-10-15 | **Abgeschlossen, Reservierung frei.** Upload per RFC `/UI5/REPO_LOAD_FROM_ZIP` (SapProbe `@datei:`), im Browser geprueft (50 Zeilen); kein Transport. `saptasks/fiori_erste_app/NOTES.md` |
 | Claude | ZC23 Formel-Doku als Word (`docs/ZC23_Materialanteil_Formeln_2026-10-15.docx`), Generator `Tools/BuildZc23Formeln` | 2026-10-15 | **Abgeschlossen, nur Doku, Reservierung frei.** Commit `5fef8d6`, Nachtrag Generator und Doku-Verweise; OpenXML geprueft, visuell nicht gesichtet |

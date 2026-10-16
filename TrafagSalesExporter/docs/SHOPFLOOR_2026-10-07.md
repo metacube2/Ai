@@ -332,6 +332,9 @@ Server-Adresse und Token. Alle Feldnamen seiner zwei Beispiele sind in der Konfi
 ## 14. Paket Fabio vom 2026-10-16: Patch 03 und Config-Patch 04 (Stand 2026-10-16)
 
 Abgelegt unter `docs/shopfloor_paket_2026-10-16/` (aus `Shopfloor_Deploy_2026-10-16.zip`). Commit `b2103a4`.
+**Produktiv seit 2026-10-16 07:06**, in Ingos Chrome geprueft: Lieferzeiten-Seite, Ampel-Karte, Forecast DS (DS1/DS2) getrennt,
+DW1 ohne Abteilung. Der Speichertest der neuen Felder lief nur als Unit-Test, nicht mit Produktivdaten. DS zeigt „Leistung fehlt“,
+bis die Leistung (Stk/FTE) im Forecast erfasst ist.
 
 **Eingespielt mit Fabios Skripten, je zuerst `--check`:**
 
