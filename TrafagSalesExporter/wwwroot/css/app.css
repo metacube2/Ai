@@ -1042,6 +1042,17 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .um-table table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .um-table th, .um-table td { border: 1px solid var(--mud-palette-lines-default); padding: 4px 8px; text-align: left; vertical-align: top; }
 .um-table th { background: rgba(200, 80, 30, 0.12); }
+/* Stuecklisten-Netz „Gehirn“ im Spend-Aufriss (2026-10-16, js/bombrain.js) */
+.bb-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin: 8px 0 10px; }
+.bb-slider { min-width: 220px; max-width: 320px; flex: 1; }
+.bb-host { height: 620px; border-radius: 10px; overflow: hidden; background: #07090d; position: relative; }
+.bb-legend { position: absolute; left: 12px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px 12px; max-width: 70%; font-size: 11.5px; color: #e9ecef; pointer-events: none; }
+.bb-legend span { display: inline-flex; align-items: center; gap: 5px; background: rgba(0, 0, 0, .45); padding: 2px 7px; border-radius: 10px; }
+.bb-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.bb-info { display: none; position: absolute; right: 12px; top: 12px; width: 270px; padding: 10px 12px; border-radius: 8px; background: rgba(10, 12, 18, .82); color: #f1f3f5; font-size: 12.5px; line-height: 1.45; border-left: 3px solid #C8501E; }
+.bb-info .bb-t { color: #ced4da; margin-bottom: 4px; }
+.bb-info .bb-h { color: #868e96; font-size: 11px; margin-top: 6px; }
+.bb-tip { display: none; position: absolute; pointer-events: none; padding: 5px 8px; border-radius: 6px; background: rgba(10, 12, 18, .88); color: #f1f3f5; font-size: 12px; max-width: 320px; }
 /* Bild im Handbuch (2026-10-16, Prozessgrafik Operations): volle Breite, weisser Grund auch im Dunkelmodus */
 .um-figure { margin: 10px 0 16px; }
 .um-figure img { width: 100%; height: auto; display: block; background: #fff; border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; }

@@ -1,0 +1,112 @@
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Services
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject BomInheritanceService Inheritance
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+@* Stuecklisten-Netz als „Gehirn“ (Wunsch Ingo 2026-10-16, Prototyp): zuoberst im Spend-Aufriss. Stränge = Stuecklisten-
+   beziehungen Eltern -> Kind, Farbe umschaltbar (LZ-Code, Lieferantenrisiko, Stufe), Kreuzpunkte = Materialien mit vielen
+   Verwendungen werden gross. WebGL in js/bombrain.js (3d-force-graph lokal). Daten: BomBrainGraph. *@
+
+<MudPaper Class="pa-3 purchasing-section-shell mb-3" Outlined="true">
+    <div class="purchasing-section-head">
+        <div>
+            <MudText Typo="Typo.h6">@T("Stücklisten-Netz („Gehirn“)", "Bill of materials network (“brain”)")</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-explorer-muted">
+                @T("Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate.",
+                   "Each strand is a bill of materials relation from top to bottom: end products sit outside like the cortex, assemblies in between, components inside. Where many strands meet there is a crossing point: a part used in many products. Click a node to highlight its paths up and down. Data as in “Usage & risk”: only components with a lead-time code, suppliers of the last 24 months.")
+            </MudText>
+        </div>
+        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Small">@T("Prototyp", "Prototype")</MudChip>
+    </div>
+
+    <div class="bb-controls">
+        <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+            @foreach (var (key, de, en) in Modes)
+            {
+                <MudButton Variant="@(_mode == key ? Variant.Filled : Variant.Outlined)" OnClick="() => SetModeAsync(key)">@T(de, en)</MudButton>
+            }
+        </MudButtonGroup>
+        <div class="bb-slider">
+            <MudText Typo="Typo.caption">@T("Kreuzpunkte ab", "Crossing points from") @_minCross @T("Verwendungen", "uses")</MudText>
+            <MudSlider T="int" Value="_minCross" ValueChanged="SetMinCrossAsync" Min="2" Max="200" Step="1" Size="Size.Small" />
+        </div>
+        <MudText Typo="Typo.caption" Class="purchasing-explorer-muted">@_status</MudText>
+    </div>
+
+    <div @ref="_host" class="bb-host"></div>
+</MudPaper>
+
+@code {
+    private static readonly (string Key, string De, string En)[] Modes =
+    [
+        ("lz", "LZ-Code", "Lead-time code"),
+        ("risk", "Lieferantenrisiko", "Supplier risk"),
+        ("role", "Stufe", "Level")
+    ];
+
+    private ElementReference _host;
+    private string _mode = "lz";
+    private int _minCross = 20;
+    private string _status = string.Empty;
+    private bool _rendered;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+        _status = T("Netz wird geladen …", "Loading network …");
+        StateHasChanged();
+        try
+        {
+            var data = await BomBrainGraph.LoadAsync(Inheritance, DbFactory);
+            if (data.Nodes.Count == 0)
+            {
+                _status = T("Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden).", "No bill of materials data cached.");
+                StateHasChanged();
+                return;
+            }
+            await JS.InvokeAsync<object>("trafagBomBrain.render", _host, data, new { mode = _mode, minCross = _minCross });
+            _rendered = true;
+            _status = string.Format(T("{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}", "{0} materials, {1} strands, {2} lead-time codes, as of {3}"),
+                data.Nodes.Count.ToString("N0"), data.Links.Count.ToString("N0"), data.LzCodes.Count,
+                data.LoadedAtUtc?.ToLocalTime().ToString("dd.MM.yyyy") ?? "-");
+        }
+        catch (Exception ex) when (ex is not TaskCanceledException)
+        {
+            _status = T("Netz nicht verfügbar: ", "Network unavailable: ") + ex.GetBaseException().Message;
+        }
+        StateHasChanged();
+    }
+
+    private async Task SetModeAsync(string mode)
+    {
+        _mode = mode;
+        if (_rendered)
+            await JS.InvokeVoidAsync("trafagBomBrain.setMode", _host, mode);
+    }
+
+    private async Task SetMinCrossAsync(int value)
+    {
+        _minCross = value;
+        if (_rendered)
+            await JS.InvokeVoidAsync("trafagBomBrain.setMinCross", _host, value);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_rendered)
+                await JS.InvokeVoidAsync("trafagBomBrain.dispose", _host);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+}

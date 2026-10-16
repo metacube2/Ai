@@ -387,6 +387,8 @@
                            DetailRows="@SupplierDetailRows" />
         break;
     case "aufriss":
+        @* Stuecklisten-Netz („Gehirn“), Wunsch Ingo 2026-10-16: zuoberst im Spend-Aufriss *@
+        <PurchasingBomBrain />
         <PurchasingSpendExplorer SpendYears="@_liveState.SpendYears"
                                  Perspectives="@_liveState.SpendPerspectiveRows"
                                  CascadeRows="@_liveState.SpendCascadeRows"
