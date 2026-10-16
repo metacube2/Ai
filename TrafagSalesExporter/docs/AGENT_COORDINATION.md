@@ -37,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Benutzerhandbuch Kapitel Operations erweitert (Geschaeftsprozess, alle Shopfloor-Seiten mit Interpretation, Glossar) | 2026-10-16 | **Abgeschlossen, Reservierung frei.** `10_operations.md`, Word neu (Verzeichnis aktualisiert), Handbuch-Tests 56/56; Deploy siehe `rag/DEPLOYMENT.md` |
 | Claude | Operations-Reiter ohne Login (`Shopfloor:OpenForAll = true`) | 2026-10-16 | **Abgeschlossen, deployed 07:48 (`70a02b1`, Tests `1c03156`), Reservierung frei.** 1241/1241, bitgleich, ohne Alarm. Endpunkt-Tests setzen `OpenForAll=false` selbst |
 | Claude | Shopfloor: Ampel loeschbar, Config liest `planned_source`, korrigierte Kopie `config_patch.js` | 2026-10-16 | **Abgeschlossen, deployed 07:37 (`e6c007f`), Reservierung frei.** 1241/1241, bitgleich, Alarm nur WAL/SHM, in Chrome geprueft. `SHOPFLOOR_2026-10-07.md` Abschnitt 14 |
 | Claude | Shopfloor ZD05-Abgleich 04:00 und 12:45 (Entscheid Ingo), Speichertest Ampel produktiv | 2026-10-16 | **Abgeschlossen, deployed 07:28 (`a285009`), Reservierung frei.** 1240/1240, bitgleich, Alarm nur WAL/SHM; Testampel gesetzt und wieder entfernt. `SHOPFLOOR_2026-10-07.md` Abschnitt 14 |

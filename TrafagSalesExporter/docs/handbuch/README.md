@@ -1,6 +1,6 @@
 # Benutzerhandbuch (betriebswirtschaftlich)
 
-Stand: 2026-10-09
+Stand: 2026-10-16
 
 Anwenderhandbuch aller Cockpit-Module aus betriebswirtschaftlicher Sicht: je Seite „Wozu",
 „Was man sieht", „Wie gerechnet wird", „Einsatz im Arbeitsalltag" (nach Rolle) und
@@ -11,7 +11,7 @@ im Trafag-CI, als Word-Datei und als eigener Reiter auf oberster Menueebene.
 
 | Was | Ort |
 |---|---|
-| Quelle (eine Datei je Kapitel, `00_` bis `10_`; `09_trafag_reddit.md` seit 2026-10-09; `08_projekte.md` am 2026-10-09 fuer Trafag Projekte neu geschrieben; `10_operations.md` seit 2026-10-14 fuer Operations KPI und Shopfloor, dazu in `00_einleitung.md` Rolle Produktion/Operations und Abschnitt Kopfleiste) | `wwwroot/handbuch/kapitel/*.md` |
+| Quelle (eine Datei je Kapitel, `00_` bis `10_`; `09_trafag_reddit.md` seit 2026-10-09; `08_projekte.md` am 2026-10-09 fuer Trafag Projekte neu geschrieben; `10_operations.md` seit 2026-10-14 fuer Operations KPI und Shopfloor (am 2026-10-16 auf Wunsch Ingo stark erweitert: Geschaeftsprozess Shop-Floor-Meeting, jede Shopfloor-Seite mit Interpretation, Ampel, Lieferzeiten, Logistik nach ZC27, Glossar), dazu in `00_einleitung.md` Rolle Produktion/Operations und Abschnitt Kopfleiste) | `wwwroot/handbuch/kapitel/*.md` |
 | Word-Datei (Download im Reiter) | `wwwroot/handbuch/Trafag_Cockpit_Handbuch.docx` |
 | Schreibvorgabe fuer Kapitel (Format, Aufbau, Ton) | `docs/handbuch/VORGABE.md` |
 | Generator Markdown nach Word | `Tools/HandbuchDocx` |

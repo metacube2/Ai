@@ -2,6 +2,12 @@
 
 Stand: 2026-10-16
 
+## Benutzerhandbuch: Kapitel Operations erweitert, 2026-10-16
+
+- Neuer Abschnitt zum Geschaeftsprozess (taegliches Shop-Floor-Meeting, Stand D-1), jede Shopfloor-Seite mit Wozu, Inhalt,
+  Rechnung, Einsatz nach Rolle, Interpretation und Grenzen (Ampel, Lieferzeiten, Rueckstaende, PPD, Forecast mit DS, Logistik nach
+  ZC27, Verkauf mit Book to Bill, CZ/MTF/Sensoren, Schnittstelle); Glossar von 9 auf 21 Begriffe. Word-Datei neu.
+
 ## Operations (Shopfloor): Mengen aus SAP vorbereitet, 2026-10-16 (`2bc54bd`, T76)
 
 - Neue SAP-Sets `ShopRmSet` (ZC27-Logik) und `ShopProdSet` in T76, gegen ZC27 gleich. Das Cockpit rechnet daraus Logistik
