@@ -67,6 +67,9 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploys 2026-10-16 10:17 und 10:19, Menue dezenter (`cf238ff`, `2a7d7c7`).** Wunsch Ingo „dezenter, kein Rosa“: gedeckte Rot-/Ziegeltoene,
+  schwaecherer Glanz, langsamer Lauf; alle Kaesten mit gleichem Rand. Je `1247/1247`, bitgleich (zuletzt SHA256 `FC08CF88CE7A59167224EF571A975D9FCC5C4E583380B8FBC0B0DA976EFFA90E`),
+  zehn Routen 200, Alarm nur WAL/SHM (auch shopfloor.db). In Chrome geprueft.
 - **Deploy 2026-10-16 10:13, Menue: alle Hauptbereiche farbig (`1931084`).** WAL vorher 552 KB, `1247/1247`, `BiDashboard.dll` `10:12:58`,
   SHA256 `6306A270600003330EBFFD819BC82E09CB8F796E3B7BF5175F1002C4EBA2E0B6`, bitgleich, zehn Routen 200, Alarm nur `-wal`/`-shm`. In Chrome geprueft:
   Home orange pulsierend, Finance/HR/Einkauf/Verkauf/Logistik je eigener Rotton, Admin grau.

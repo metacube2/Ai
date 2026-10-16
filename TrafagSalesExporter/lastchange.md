@@ -4,7 +4,8 @@ Stand: 2026-10-16
 
 ## Menue: alle Hauptbereiche farbig, Admin grau, Home pulsiert, 2026-10-16 (`1931084`)
 
-- Wunsch Ingo: Finance (Bordeaux), HR (Himbeere), Einkauf (Weinrot), Verkauf (Korallrot), Logistik (Ziegelrot) wie Operations hervorgehoben
+- *Ueberholt (10:17, „dezenter, kein Rosa“):* Finance Backstein, HR Rostrot, Einkauf Dunkelrot, Verkauf Terrakotta, Logistik Ziegelbraun, leiser animiert.
+- Erste Fassung 10:13: Finance (Bordeaux), HR (Himbeere), Einkauf (Weinrot), Verkauf (Korallrot), Logistik (Ziegelrot) wie Operations hervorgehoben
   und animiert; Admin Bereich grau hinterlegt; Home im Trafag-Orange mit Pulsieren. `NavMenuNode.razor`, `app.css`.
 
 ## Operations: Mengen aus SAP live, Handbuch mit Prozessgrafik und Schnellueberblick, 2026-10-16
