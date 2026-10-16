@@ -44,7 +44,7 @@ public sealed class ShopfloorOptions
     public bool SapSyncEnabled { get; set; }
 
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
-    public List<string> SapSyncTimes { get; set; } = ["05:45", "12:45"];
+    public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45
 
     public string SapPlant { get; set; } = "1100";
 

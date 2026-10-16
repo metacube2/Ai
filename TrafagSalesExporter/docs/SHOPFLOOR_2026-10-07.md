@@ -333,7 +333,9 @@ Server-Adresse und Token. Alle Feldnamen seiner zwei Beispiele sind in der Konfi
 
 Abgelegt unter `docs/shopfloor_paket_2026-10-16/` (aus `Shopfloor_Deploy_2026-10-16.zip`). Commit `b2103a4`.
 **Produktiv seit 2026-10-16 07:06**, in Ingos Chrome geprueft: Lieferzeiten-Seite, Ampel-Karte, Forecast DS (DS1/DS2) getrennt,
-DW1 ohne Abteilung. Der Speichertest der neuen Felder lief nur als Unit-Test, nicht mit Produktivdaten. DS zeigt „Leistung fehlt“,
+DW1 ohne Abteilung. Speichertest mit Freigabe Ingo produktiv: Ampel SEH Orange am 16.10. gesetzt (blieb nach Neuladen, oranger Punkt
+auf der Startseite) und per API mit `null` wieder entfernt (Zeile leer, Startseite wieder „noch nicht erfasst“, Verlauf zeigt beides).
+In der Oberflaeche laesst sich eine gesetzte Ampel nicht mehr loeschen (erneuter Klick setzt sie nur wieder); Hinweis an Fabio. DS zeigt „Leistung fehlt“,
 bis die Leistung (Stk/FTE) im Forecast erfasst ist.
 
 **Eingespielt mit Fabios Skripten, je zuerst `--check`:**
@@ -361,6 +363,6 @@ bis die Leistung (Stk/FTE) im Forecast erfasst ist.
 
 **Nicht Teil dieses Einspielens (Fabios Schritte 2 bis 8a):** Die Jobs J2 bis J11 (Verkauf CO-PA, Logistik nach ZC27, Tagesmengen,
 Auftragsvorrat, FPY SEH) sind weder im Paket (kein Programm, nur Excel mit Quelle und Selektion) noch im Cockpit gebaut. Deshalb
-ist auch kein Erstlauf moeglich. ZD05 (J1) laeuft im Cockpit selbst (`Shopfloor:SapSyncTimes` 05:45 und 12:45 an Werktagen); die
-Umstellung auf 04:00 ist nicht gemacht (Entscheid Ingo offen). Offen von Fabio: Lieferzeit-Ziele (Daniel Tobler), Kuerzel
+ist auch kein Erstlauf moeglich. ZD05 (J1) laeuft im Cockpit selbst (`Shopfloor:SapSyncTimes`, Werktage). *Ueberholt:* „05:45 und
+12:45, Umstellung auf 04:00 offen“. Entscheid Ingo 2026-10-16: **04:00 und 12:45** (der Mittagslauf bleibt). Offen von Fabio: Lieferzeit-Ziele (Daniel Tobler), Kuerzel
 Ergebnisbereich CE1xxxx.

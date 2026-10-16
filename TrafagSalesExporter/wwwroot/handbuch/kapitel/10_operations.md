@@ -1,6 +1,6 @@
 # Operations
 
-Der Reiter Operations bündelt die Steuerung der Produktion. Unter **KPI** stehen die Kennzahlen der Operations, zuerst die Liefertreue der Trafag AG (Verkaufsorganisation 1100) mit OTD, OTIF und OTP. Unter **Shopfloor** liegt das digitale Shop-Floor-Board, das die Excel-Datei „PPA-Shop-Floor-File“ ersetzt: Pendenzen, Abteilungswerte, Rückstandslisten, Fehlteile, Forecast und die Auslastungsgrafik für das tägliche Shop-Floor-Meeting. Hauptnutzer sind die Leitung Operations, die Produktionsplanung (PPD), die Abteilungsleiter und Teamleiter der Produktion, Einkauf, Verkauf und Logistik. Der Zugang läuft über eine eigene Anmeldung (Benutzer „operations“) oder ein freigegebenes Windows-Konto. Die Liefertreue kommt monatlich direkt aus SAP, das Shopfloor wird werktags um 05:45 und 12:45 Uhr aus SAP ergänzt und sonst im Meeting von Hand gepflegt.
+Der Reiter Operations bündelt die Steuerung der Produktion. Unter **KPI** stehen die Kennzahlen der Operations, zuerst die Liefertreue der Trafag AG (Verkaufsorganisation 1100) mit OTD, OTIF und OTP. Unter **Shopfloor** liegt das digitale Shop-Floor-Board, das die Excel-Datei „PPA-Shop-Floor-File“ ersetzt: Pendenzen, Abteilungswerte, Rückstandslisten, Fehlteile, Forecast und die Auslastungsgrafik für das tägliche Shop-Floor-Meeting. Hauptnutzer sind die Leitung Operations, die Produktionsplanung (PPD), die Abteilungsleiter und Teamleiter der Produktion, Einkauf, Verkauf und Logistik. Der Zugang läuft über eine eigene Anmeldung (Benutzer „operations“) oder ein freigegebenes Windows-Konto. Die Liefertreue kommt monatlich direkt aus SAP, das Shopfloor wird werktags um 04:00 und 12:45 Uhr aus SAP ergänzt und sonst im Meeting von Hand gepflegt.
 
 ## KPI Übersicht
 
@@ -135,7 +135,7 @@ Die Positionen des Tages mit Unterdeckungsdatum, Lieferzeit-Code, Sicherheitsbes
 
 ### Wie gerechnet wird
 
-Die Daten kommen werktags um 05:45 und 12:45 Uhr aus SAP (Report ZD05, Disponenten 001 und 003). Bemerkung, Liefertermin und Code werden je Material vom Vortag übernommen. Die **Bewertungskennzahl** ist der Durchschnitt der vergebenen Codes über alle Positionen, deren Unterdeckung bis heute plus 3 Arbeitstage eintritt; das Ziel ist höchstens 1,20.
+Die Daten kommen werktags um 04:00 und 12:45 Uhr aus SAP (Report ZD05, Disponenten 001 und 003). Bemerkung, Liefertermin und Code werden je Material vom Vortag übernommen. Die **Bewertungskennzahl** ist der Durchschnitt der vergebenen Codes über alle Positionen, deren Unterdeckung bis heute plus 3 Arbeitstage eintritt; das Ziel ist höchstens 1,20.
 
 ### Einsatz im Arbeitsalltag
 
