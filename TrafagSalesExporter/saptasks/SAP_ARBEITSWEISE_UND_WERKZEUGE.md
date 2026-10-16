@@ -986,6 +986,13 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiFensterDump.vbs <Sitzung> [Fenster] [Tiefe]` | rekursiver Dump eines Fensters mit Id, Typ, Text und Tooltip. Erste Wahl, wenn eine Maske unbekannt ist |
 | `SapGuiStrukturAnlegen.vbs <Sitzung> <Name> <Kurztext>` | **Neue DDIC-Struktur in SE11 anlegen** (Schritte 1 bis 3 aus SE11 oben). Seit 2026-10-01 |
 | `SapGuiKlasseAendernMitAuftrag.vbs <Sitzung> <Klasse> <Auftrag>` | SE24, Klasse mit F6 im Aendern-Modus oeffnen, Reiter Methoden. **Gemessen 2026-10-01:** F6 fragt bei einer freigegebenen, nicht gesperrten Klasse nicht nach dem Auftrag; die Abfrage kommt erst beim Sichern der Methode, dann `KO008-TRKORR` ausdruecklich setzen |
+| `SapGuiVerbindungen.vbs` | NUR LESEN: alle Verbindungen mit System, Anwendungsserver, Verbindungsstring und Sitzungen. Zeigt z. B., dass die P76-GUI an `trasp76s` haengt, das OData aber ueber `travp762` laeuft (2026-10-16) |
+| `SapGuiNeueSitzungT76.vbs` | eigene neue T76-Sitzung oeffnen und Index melden (nie Ingos Sitzung uebernehmen) |
+| `SapGuiFensterStatus.vbs </app/con[x]/ses[y]>` | NUR LESEN: Fenstertitel wnd[0..2] und Statuszeile |
+| `SapGuiQuelltextLesen.vbs <Programm/Include> <Datei> <Sitzung>` | NUR LESEN: Quelltext per SE38 in UTF-8-Datei, auch Klassen-Includes (`...==CM01W`); Ersatz fuer `abap-read` ohne Passwort |
+| `SapGuiZc27Lauf.vbs <Sitzung> <ARBPL[,BIS]> <TT.MM.JJJJ> [Typencode]` | NUR LESEN: ZC27 starten und Gutmenge je Arbeitsplatz aus dem ALV summieren (Abgleich `ShopRmSet`) |
+| `SapGuiGridAusgeben.vbs <volle Sitzungs-Id>` | NUR LESEN: erstes ALV-Grid vollstaendig ausgeben |
+| `P76Pruefung_Shopfloor_2026-10-16.ps1` (Start: `P76Pruefung_Shopfloor_Start.cmd`) | NUR LESEN P76 mit SapProbe gegen `trasp76s`: E070/E071, REPOSRC, DD02L, abap-read, Gateway-Fehlerprotokoll; Passwort einmal verdeckt, bricht nach dem ersten Fehler ab. Vorlage fuer weitere P76-Pruefungen |
 | `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt den Status nicht aus. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
 | `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar |
 | `SapGuiOkCode.vbs <Sitzung> <Befehl>` | Befehl ins Befehlsfeld, adressiert ueber den **Sitzungsindex**. Ersatz fuer `SapGuiCommand.vbs`, wenn die aktuelle Transaktion unbekannt ist |
