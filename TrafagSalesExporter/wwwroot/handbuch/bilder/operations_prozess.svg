@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 880" width="1400" height="880" font-family="Open Sans, Segoe UI, Arial, sans-serif">
+<defs><marker id="pf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#C8501E"/></marker><marker id="pfg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8A8A8A"/></marker></defs>
+<rect width="1400" height="880" fill="#FFFFFF"/>
+<rect x="0" y="0" width="1400" height="74" fill="#C8501E"/>
+<text x="30" y="46" font-size="26" font-weight="700" fill="#FFFFFF">Operations: Prozess und Datenfluss</text>
+<text x="560" y="45" font-size="14" fill="#FFFFFF">Shopfloor-Board, SAP und tägliches Shop-Floor-Meeting</text>
+<rect x="1250" y="12" width="124" height="50" rx="6" fill="#FFFFFF"/>
+<image x="1258" y="14" width="108" height="46" href="data:image/jpeg;base64,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"/>
+<text x="30" y="112" font-size="13" font-weight="700" fill="#B5481B" letter-spacing="1.5">1  QUELLEN</text>
+<line x1="30" y1="119" x2="90" y2="119" stroke="#C8501E" stroke-width="3"/>
+<rect x="30" y="130" width="360" height="72" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="42" y="152" font-size="15" font-weight="700" fill="#3C3C3C">SAP: Fehlteile ZD05</text>
+<text x="42" y="171" font-size="12.5" fill="#555">Unterdeckung mit Umterminierung</text>
+<text x="42" y="188" font-size="12.5" fill="#555">Disponent 001, 003 · werktags</text>
+<line x1="390" y1="166" x2="448" y2="430" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<rect x="30" y="214" width="360" height="72" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="42" y="236" font-size="15" font-weight="700" fill="#3C3C3C">SAP: Plan- und Fertigungsaufträge</text>
+<text x="42" y="255" font-size="12.5" fill="#555">offene Menge je Eckendtermin</text>
+<text x="42" y="272" font-size="12.5" fill="#555">nächste 28 Tage → Forecast</text>
+<line x1="390" y1="250" x2="448" y2="430" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<rect x="30" y="298" width="360" height="72" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="42" y="320" font-size="15" font-weight="700" fill="#3C3C3C">SAP: Rückmeldungen (Logik ZC27)</text>
+<text x="42" y="339" font-size="12.5" fill="#555">Gutmenge nach Erfassungsdatum</text>
+<text x="42" y="356" font-size="12.5" fill="#555">Logistik und Tagesmenge TR5</text>
+<line x1="390" y1="334" x2="448" y2="430" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<rect x="30" y="382" width="360" height="72" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="42" y="404" font-size="15" font-weight="700" fill="#3C3C3C">SAP: Fertigungsaufträge Istende</text>
+<text x="42" y="423" font-size="12.5" fill="#555">WE-Menge und Gesamtmenge</text>
+<text x="42" y="440" font-size="12.5" fill="#555">Tagesmenge und FPY SEH</text>
+<line x1="390" y1="418" x2="448" y2="430" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<rect x="30" y="466" width="360" height="72" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="42" y="488" font-size="15" font-weight="700" fill="#3C3C3C">SAP: Liefertreue (monatlich)</text>
+<text x="42" y="507" font-size="12.5" fill="#555">Aufträge, Lieferungen, Warenausgang</text>
+<text x="42" y="524" font-size="12.5" fill="#555">ab dem 2. des Monats</text>
+<line x1="390" y1="502" x2="448" y2="430" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<rect x="30" y="550" width="360" height="72" rx="8" fill="#FFFFFF" stroke="#8A8A8A" stroke-width="1.6"/>
+<text x="42" y="572" font-size="15" font-weight="700" fill="#3C3C3C">MES</text>
+<text x="42" y="591" font-size="12.5" fill="#555">FPY TR5, TX, DW, CZ</text>
+<line x1="390" y1="586" x2="448" y2="430" stroke="#8A8A8A" stroke-width="2" marker-end="url(#pfg)"/>
+<rect x="30" y="634" width="360" height="72" rx="8" fill="#F3E6E0" stroke="#B5481B" stroke-width="1.6"/>
+<text x="42" y="656" font-size="15" font-weight="700" fill="#3C3C3C">Von Hand im Board</text>
+<text x="42" y="675" font-size="12.5" fill="#555">Teamleiter, PPD, Einkauf, Verkauf,</text>
+<text x="42" y="692" font-size="12.5" fill="#555">Logistik: Ziele, Personal, Ampel</text>
+<line x1="390" y1="670" x2="448" y2="430" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<text x="460" y="112" font-size="13" font-weight="700" fill="#B5481B" letter-spacing="1.5">2  COCKPIT OPERATIONS</text>
+<line x1="460" y1="119" x2="520" y2="119" stroke="#C8501E" stroke-width="3"/>
+<rect x="450" y="124" width="500" height="594" rx="10" fill="#FBF7F5" stroke="#C8501E" stroke-width="1.6"/>
+<rect x="465" y="138" width="470" height="44" rx="6" fill="#C8501E"/>
+<text x="480" y="158" font-size="14" font-weight="700" fill="#FFFFFF">SAP-Abgleich werktags 04:00 und 12:45 Uhr</text>
+<text x="480" y="175" font-size="12" fill="#FFFFFF">Eintrag vom Tag D = Stand bis D-1 · Montag: Fr bis So</text>
+<rect x="465" y="198" width="223" height="84" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="477" y="220" font-size="15" font-weight="700" fill="#3C3C3C">Abteilungen</text>
+<text x="477" y="239" font-size="12.5" fill="#555">SEH · TR5 · TX · DW</text>
+<text x="477" y="256" font-size="12.5" fill="#555">Vorrat, Tagesmenge, Ziel,</text>
+<text x="477" y="273" font-size="12.5" fill="#555">Personal, FPY</text>
+<rect x="712" y="198" width="223" height="84" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="724" y="220" font-size="15" font-weight="700" fill="#3C3C3C">PPD</text>
+<text x="724" y="239" font-size="12.5" fill="#555">Menge in Verzug je Abteilung</text>
+<text x="724" y="256" font-size="12.5" fill="#555">Terminverschiebungen</text>
+<text x="724" y="273" font-size="12.5" fill="#555">Prio-Liste Fehlmaterial</text>
+<rect x="465" y="298" width="223" height="70" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="477" y="320" font-size="15" font-weight="700" fill="#3C3C3C">Ampel und Lieferzeiten</text>
+<text x="477" y="339" font-size="12.5" fill="#555">Status je Bereich, Erfüllung %</text>
+<text x="477" y="356" font-size="12.5" fill="#555">Lieferzeit gegen Ziel, Grund</text>
+<rect x="712" y="298" width="223" height="70" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="724" y="320" font-size="15" font-weight="700" fill="#3C3C3C">Logistik</text>
+<text x="724" y="339" font-size="12.5" fill="#555">verpackt (Ist) je Arbeitsplatz</text>
+<text x="724" y="356" font-size="12.5" fill="#555">gegen Tagesmenge (Soll)</text>
+<rect x="465" y="384" width="223" height="70" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="477" y="406" font-size="15" font-weight="700" fill="#3C3C3C">Einkauf ZD05</text>
+<text x="477" y="425" font-size="12.5" fill="#555">Zu besprechen, Code, Termin</text>
+<text x="477" y="442" font-size="12.5" fill="#555">Bewertungskennzahl ≤ 1,20</text>
+<rect x="712" y="384" width="223" height="70" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="724" y="406" font-size="15" font-weight="700" fill="#3C3C3C">Verkauf</text>
+<text x="724" y="425" font-size="12.5" fill="#555">Auftragseingang, Umsatz,</text>
+<text x="724" y="442" font-size="12.5" fill="#555">Go-for-it, Book to Bill</text>
+<rect x="465" y="470" width="223" height="70" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="477" y="492" font-size="15" font-weight="700" fill="#3C3C3C">Forecast und PPA-Grafik</text>
+<text x="477" y="511" font-size="12.5" fill="#555">Menge gegen Kapazität</text>
+<text x="477" y="528" font-size="12.5" fill="#555">Auslastung 85 bis 105 %</text>
+<rect x="712" y="470" width="223" height="70" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="724" y="492" font-size="15" font-weight="700" fill="#3C3C3C">Listen</text>
+<text x="724" y="511" font-size="12.5" fill="#555">Pendenzen, Rückstände, TVAV,</text>
+<text x="724" y="528" font-size="12.5" fill="#555">Angebote, CZ ↔ CH, Einkauf</text>
+<rect x="465" y="556" width="470" height="58" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="477" y="578" font-size="15" font-weight="700" fill="#3C3C3C">KPI Liefertreue: OTD · OTIF · OTP</text>
+<text x="477" y="597" font-size="12.5" fill="#555">monatlich, Abweichungsliste nach Kunde und Material</text>
+<rect x="465" y="630" width="470" height="72" rx="8" fill="#F3E6E0" stroke="#B5481B" stroke-width="1.6"/>
+<text x="477" y="652" font-size="15" font-weight="700" fill="#3C3C3C">Startseite: Ablauf des Meetings</text>
+<text x="477" y="671" font-size="12.5" fill="#555">Pflichtpunkte erfasst ja oder nein, Ampelpunkte je Bereich,</text>
+<text x="477" y="688" font-size="12.5" fill="#555">offene und überfällige Pendenzen, Rückstände, Kennzahl ZD05</text>
+<line x1="712" y1="240" x2="690" y2="240" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<line x1="682" y1="282" x2="726" y2="298" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<text x="692" y="294" font-size="10.5" fill="#C8501E" font-weight="600">Soll</text>
+<line x1="505" y1="282" x2="505" y2="298" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<path d="M 465 262 L 457 262 L 457 505 L 463 505" fill="none" stroke="#C8501E" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#pf)"/>
+<text x="459" y="380" font-size="10.5" fill="#C8501E" font-weight="600" transform="rotate(-90 453 380)">Leistung</text>
+<text x="1010" y="112" font-size="13" font-weight="700" fill="#B5481B" letter-spacing="1.5">3  MEETING UND WIRKUNG</text>
+<line x1="1010" y1="119" x2="1070" y2="119" stroke="#C8501E" stroke-width="3"/>
+<rect x="1000" y="130" width="370" height="92" rx="8" fill="#B5481B" stroke="#B5481B" stroke-width="1.6"/>
+<text x="1012" y="152" font-size="16" font-weight="700" fill="#FFFFFF">Tägliches Shop-Floor-Meeting</text>
+<text x="1012" y="171" font-size="12.5" fill="#FFFFFF">10 bis 20 Minuten, Ablauf von oben nach unten</text>
+<text x="1012" y="188" font-size="12.5" fill="#FFFFFF">Freitag erweitert: CZ, MTF, GFS, Q, IT</text>
+<rect x="1000" y="246" width="370" height="78" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="1012" y="268" font-size="15" font-weight="700" fill="#3C3C3C">Abweichungen besprechen</text>
+<text x="1012" y="287" font-size="12.5" fill="#555">rote und orange Ampeln, ZD05 „Zu besprechen“,</text>
+<text x="1012" y="304" font-size="12.5" fill="#555">überfällige Pendenzen und Rückstände</text>
+<rect x="1000" y="348" width="370" height="78" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="1012" y="370" font-size="15" font-weight="700" fill="#3C3C3C">Massnahmen festhalten</text>
+<text x="1012" y="389" font-size="12.5" fill="#555">Pendenz mit Termin, neuer Liefertermin,</text>
+<text x="1012" y="406" font-size="12.5" fill="#555">Terminanfragen beantworten</text>
+<rect x="1000" y="450" width="370" height="78" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="1012" y="472" font-size="15" font-weight="700" fill="#3C3C3C">Umsetzen</text>
+<text x="1012" y="491" font-size="12.5" fill="#555">Personal verschieben, Schicht öffnen,</text>
+<text x="1012" y="508" font-size="12.5" fill="#555">Bestellung vorziehen, Termin in SAP</text>
+<rect x="1000" y="552" width="370" height="78" rx="8" fill="#FFFFFF" stroke="#C8501E" stroke-width="1.6"/>
+<text x="1012" y="574" font-size="15" font-weight="700" fill="#3C3C3C">Wirkung prüfen</text>
+<text x="1012" y="593" font-size="12.5" fill="#555">Tageswerte am nächsten Morgen,</text>
+<text x="1012" y="610" font-size="12.5" fill="#555">Liefertreue im Monatsbericht</text>
+<line x1="1185.0" y1="222" x2="1185.0" y2="244" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<line x1="1185.0" y1="324" x2="1185.0" y2="346" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<line x1="1185.0" y1="426" x2="1185.0" y2="448" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<line x1="1185.0" y1="528" x2="1185.0" y2="550" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<line x1="950" y1="176" x2="998" y2="176" stroke="#C8501E" stroke-width="2" marker-end="url(#pf)"/>
+<text x="952" y="168" font-size="11.5" fill="#C8501E" font-weight="600">Board</text>
+<path d="M 1185.0 630 L 1185.0 790 L 210 790 L 210 718" fill="none" stroke="#B5481B" stroke-width="2.2" stroke-dasharray="8 5" marker-end="url(#pf)"/>
+<text x="470" y="782" font-size="13" font-weight="600" fill="#B5481B">Änderungen in SAP (Termine, Bestellungen, Rückmeldungen) fliessen in den nächsten Abgleich</text>
+<line x1="30" y1="826" x2="1370" y2="826" stroke="#C8501E" stroke-width="2"/>
+<text x="30" y="852" font-size="12.5" fill="#3C3C3C">Orange: aus SAP · Grau: MES · Hell hinterlegt: von Hand erfasst. Werte von Hand überschreibt die SAP-Lieferung nicht.</text>
+<text x="1370" y="852" font-size="12.5" fill="#8A8A8A" text-anchor="end">Trafag AG · Stand 16.10.2026</text>
+</svg>

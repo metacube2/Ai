@@ -395,3 +395,8 @@ J1 bis J11 sind eine Liste von Datenabfragen, keine SAP-Jobs.
   zu bleiben. ZD05 bleibt auf 04:00 und 12:45 (Entscheid Ingo, obwohl Fabio 05:45 reichen wuerde).
 - **Nicht gebaut:** J2/J3 Verkauf (Ergebnisbereich, Wertfelder, Merkmal Produktsparte fehlen; Fabio hat keine Berechtigung fuer
   KEA0, Ingo schaut nach), J6 Auftragsvorrat (ZC22), Historie nachladen (erst nach der Pruefung, nur leere Tage).
+
+*Nachtrag 2026-10-16 09:51:* **produktiv.** Transporte in P76, Vorschau gleich Fabios Kontrollwerten (Logistik 13.10. alle fuenf Felder,
+FPY SEH KW38 bis KW41), `Shopfloor:SapMengenEnabled = true` (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben. Falle P76: zwei
+Anwendungsserver, der Gateway-Cache musste auf `travp762` geleert werden (Einzelheiten `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7).
+Die Aussage „Schalter aus“ oben ist damit ueberholt.

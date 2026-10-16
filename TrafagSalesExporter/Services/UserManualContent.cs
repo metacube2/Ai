@@ -7,7 +7,8 @@ namespace TrafagSalesExporter.Services;
 /// <summary>
 /// Benutzerhandbuch (2026-10-06): liest die Kapitel-Markdowns aus wwwroot/handbuch/kapitel, dieselben,
 /// aus denen Tools/HandbuchDocx die Word-Datei baut. Unterstuetzt nur das Subset aus
-/// docs/handbuch/VORGABE.md: #, ##, ###, Absatz, "- " Aufzaehlung, **fett**, |Tabelle|.
+/// docs/handbuch/VORGABE.md: #, ##, ###, Absatz, "- " Aufzaehlung, **fett**, |Tabelle|, seit 2026-10-16 auch eine
+/// Bildzeile ![Bildunterschrift](bilder/datei.svg) (Pfad relativ zu wwwroot/handbuch; Word nimmt die gleichnamige PNG).
 /// </summary>
 public static class UserManualContent
 {
@@ -49,6 +50,11 @@ public static class UserManualContent
                 continue;
             }
             if (line.StartsWith("### ")) { blocks.Add(new('h', line[4..].Trim(), [], [])); continue; }
+            if (ImageLine.Match(line.Trim()) is { Success: true } img)
+            {
+                blocks.Add(new('i', img.Groups[1].Value, [img.Groups[2].Value], []));
+                continue;
+            }
             if (IsBullet(line))
             {
                 var items = new List<string>();
@@ -77,6 +83,9 @@ public static class UserManualContent
         if (sections[0].Blocks.Count == 0) sections.RemoveAt(0);
         return new Chapter(title, sections);
     }
+
+    /// <summary>Bildzeile ![Unterschrift](bilder/datei.svg); nur Pfade unter bilder/, ohne "..".</summary>
+    public static readonly Regex ImageLine = new(@"^!\[([^\]]*)\]\((bilder/[A-Za-z0-9_\-]+\.(?:svg|png))\)$");
 
     private static bool IsBullet(string line) => line.StartsWith("- ") || line.StartsWith("* ");
 

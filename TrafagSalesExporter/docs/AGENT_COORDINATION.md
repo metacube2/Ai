@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Shopfloor-Datenabfragen aus SAP (Fabio 16.10.): J5 Logistik nach ZC27, J8 Tagesmengen SEH/TR5, J11 FPY SEH; leerer Tagessatz wird geloescht | `Services/Shopfloor/*`, Shopfloor-Tests, SAP T76: `ZCL_ZPOWERBI_EINKAUF_MPC_EXT`/`DPC_EXT`, neue Strukturen `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD`, `docs/abap/ZSHOP_RM_ADD.abap` | **Wartet auf Transport (Ingo).** T76 aktiv und gegen ZC27 gleich; Cockpit `2bc54bd` produktiv 09:00, Schreiben aus. Danach: Vorschau in P76 gegen Kontrollwerte, `SapMengenEnabled` ein, Doku abschliessen |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +36,8 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Handbuch Operations: Prozessgrafik (Trafag CI) und Schnellueberblick; Handbuch kann Bilder | 2026-10-16 | **Abgeschlossen, Reservierung frei.** SVG/PNG aus `Tools/HandbuchGrafik`, Parser/Reiter/Word, Test; Deploy siehe `rag/DEPLOYMENT.md` |
+| Claude | Shopfloor-Mengen aus SAP (J5 Logistik, J8 SEH/TR5, J11 FPY SEH) | 2026-10-16 | **Abgeschlossen, produktiv 09:51 (`9d6b5d2`), Reservierung frei.** P76 gleich Kontrollwerten, Erstlauf geschrieben. `saptasks/shopfloor_sap/NOTES.md` |
 | Claude | Benutzerhandbuch Kapitel Operations erweitert (Geschaeftsprozess, alle Shopfloor-Seiten mit Interpretation, Glossar) | 2026-10-16 | **Abgeschlossen, Reservierung frei.** `10_operations.md`, Word neu (Verzeichnis aktualisiert), Handbuch-Tests 56/56; Deploy siehe `rag/DEPLOYMENT.md` |
 | Claude | Operations-Reiter ohne Login (`Shopfloor:OpenForAll = true`) | 2026-10-16 | **Abgeschlossen, deployed 07:48 (`70a02b1`, Tests `1c03156`), Reservierung frei.** 1241/1241, bitgleich, ohne Alarm. Endpunkt-Tests setzen `OpenForAll=false` selbst |
 | Claude | Shopfloor: Ampel loeschbar, Config liest `planned_source`, korrigierte Kopie `config_patch.js` | 2026-10-16 | **Abgeschlossen, deployed 07:37 (`e6c007f`), Reservierung frei.** 1241/1241, bitgleich, Alarm nur WAL/SHM, in Chrome geprueft. `SHOPFLOOR_2026-10-07.md` Abschnitt 14 |

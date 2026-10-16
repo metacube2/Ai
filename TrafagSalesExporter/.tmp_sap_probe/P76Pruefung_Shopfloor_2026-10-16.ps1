@@ -3,13 +3,13 @@
 # Transporte, Objektliste, Quelltext-Stand (ZM_OFFENE_KDAUF, MPC/DPC), Strukturen, Gateway-Fehlerprotokoll.
 # Aufruf in der Claude-Code-Sitzung:
 #   ! powershell -NoProfile -ExecutionPolicy Bypass -File .\.tmp_sap_probe\P76Pruefung_Shopfloor_2026-10-16.ps1
-# Das Passwort wird einmal verdeckt abgefragt, nur fuer diese Laeufe in der Umgebung gehalten und nirgends gespeichert.
+# Anwendungsserver P76 = trasp76s (travp762 ist der Web-Server; Fall 2026-10-16). Das Passwort wird einmal verdeckt abgefragt, nur fuer diese Laeufe in der Umgebung gehalten und nirgends gespeichert.
 $ErrorActionPreference = 'Continue'
 $probe = Join-Path $PSScriptRoot 'bin\x86\Release\net48\SapProbe.exe'
 $out = Join-Path $env:TEMP 'p76_pruefung_shopfloor'
 New-Item -ItemType Directory -Path $out -Force | Out-Null
 $log = Join-Path $out 'pruefung.log'
-$g = @('--ashost', 'travp762.sap.trafag.com', '--client', '100', '--quiet', '--no-password-prompt')
+$g = @('--ashost', 'trasp76s.sap.trafag.com', '--client', '100', '--quiet', '--no-password-prompt')
 
 $sec = Read-Host 'SAP-Passwort fuer KOI in P76/100 (nur lesen)' -AsSecureString
 $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
@@ -17,7 +17,10 @@ try {
     $env:SAP_NCO_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
     function P([string]$titel, [string[]]$a) {
         "=== $titel ===" | Tee-Object -FilePath $log -Append
-        (& $probe @g @a 2>&1) | ForEach-Object { [string]$_ } | Tee-Object -FilePath $log -Append
+        $r = (& $probe @g @a 2>&1) | ForEach-Object { [string]$_ }
+        $r | Tee-Object -FilePath $log -Append
+        # Nach dem ersten Fehler abbrechen: jeder weitere Lauf waere ein weiterer Anmeldeversuch (Sperrgefahr).
+        if ($r -match 'ERROR') { "ABBRUCH nach Fehler, keine weiteren Anmeldungen." | Tee-Object -FilePath $log -Append; throw 'SapProbe-Fehler' }
     }
     Remove-Item $log -ErrorAction SilentlyContinue
     $tr = "TRKORR IN ('T76K912728','T76K912736','T76K912738','T76K912740')"

@@ -2,6 +2,13 @@
 
 Stand: 2026-10-16
 
+## Operations: Mengen aus SAP live, Handbuch mit Prozessgrafik und Schnellueberblick, 2026-10-16
+
+- Logistik (ZC27), Tagesmengen SEH/TR5 und FPY SEH kommen seit 09:51 automatisch aus P76 (`9d6b5d2`); vorher gegen Fabios
+  Kontrollwerte geprueft, alle gleich. Erstlauf fuer den 16.10. geschrieben.
+- Handbuch Kapitel Operations: neuer Abschnitt „Schnellueberblick“ mit Prozessgrafik im Trafag-CI (Quellen, Cockpit, Meeting,
+  Rueckwirkung auf SAP), Seitentabelle und Tagesrhythmus; Handbuch kann jetzt Bilder (Reiter SVG, Word PNG).
+
 ## Benutzerhandbuch: Kapitel Operations erweitert, 2026-10-16
 
 - Neuer Abschnitt zum Geschaeftsprozess (taegliches Shop-Floor-Meeting, Stand D-1), jede Shopfloor-Seite mit Wozu, Inhalt,

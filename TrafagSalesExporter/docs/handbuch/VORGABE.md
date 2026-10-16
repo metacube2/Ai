@@ -32,7 +32,8 @@ Eine Markdown-Datei mit nur diesen Elementen:
   `### Grenzen und Fallstricke`
 - Absaetze (Leerzeile dazwischen), Aufzaehlungen mit `- `, Fettdruck `**...**`
 - Einfache Tabellen mit `|` (Kopfzeile + `|---|` Zeile), sparsam
-- Keine Bilder, keine Links, kein Code-Block, keine weiteren Ebenen.
+- Keine Links, kein Code-Block, keine weiteren Ebenen. Bilder nur als eigene Zeile `![Bildunterschrift](bilder/datei.svg)`
+  (seit 2026-10-16; dazu muss `bilder/datei.png` fuer Word existieren, Trafag-CI: Orange #C8501E, dunkel #B5481B, Open Sans).
 
 Am Anfang des Kapitels (nach `#`) ein Einleitungsabsatz: wofuer das Modul da ist, wer es
 hauptsaechlich nutzt, wo es im Menue liegt, woher die Daten kommen und wie aktuell sie sind.

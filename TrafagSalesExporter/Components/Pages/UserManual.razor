@@ -70,6 +70,9 @@ else
                                 case 'l':
                                     <ul>@foreach (var item in b.Items) { <li>@Inline(item)</li> }</ul>
                                     break;
+                                case 'i':
+                                    <figure class="um-figure"><img src="handbuch/@b.Items[0]" alt="@b.Text" loading="lazy" /><figcaption>@b.Text</figcaption></figure>
+                                    break;
                                 case 't':
                                     <div class="um-table"><table>
                                         <thead><tr>@foreach (var cell in b.Rows[0]) { <th>@Inline(cell)</th> }</tr></thead>

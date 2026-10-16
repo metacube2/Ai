@@ -1024,6 +1024,10 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .um-table table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .um-table th, .um-table td { border: 1px solid var(--mud-palette-lines-default); padding: 4px 8px; text-align: left; vertical-align: top; }
 .um-table th { background: rgba(200, 80, 30, 0.12); }
+/* Bild im Handbuch (2026-10-16, Prozessgrafik Operations): volle Breite, weisser Grund auch im Dunkelmodus */
+.um-figure { margin: 10px 0 16px; }
+.um-figure img { width: 100%; height: auto; display: block; background: #fff; border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; }
+.um-figure figcaption { font-size: 12px; color: var(--mud-palette-text-secondary); margin-top: 4px; }
 
 /* Trafag Reddit (2026-10-09): Forum mit Abstimmung. Praefix "frm-". Farben aus den MudBlazor-Variablen, Akzent Trafag-Orange. */
 .frm-page { --frm-accent: #C8501E; --frm-up: #E8590C; --frm-down: #5C7CFA; --frm-ok: #2F9E44; --frm-line: var(--mud-palette-lines-default); max-width: 1320px; margin: 0 auto; }

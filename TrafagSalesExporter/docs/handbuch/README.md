@@ -15,6 +15,7 @@ im Trafag-CI, als Word-Datei und als eigener Reiter auf oberster Menueebene.
 | Word-Datei (Download im Reiter) | `wwwroot/handbuch/Trafag_Cockpit_Handbuch.docx` |
 | Schreibvorgabe fuer Kapitel (Format, Aufbau, Ton) | `docs/handbuch/VORGABE.md` |
 | Generator Markdown nach Word | `Tools/HandbuchDocx` |
+| Bilder (seit 2026-10-16): SVG fuer den Reiter, gleichnamige PNG fuer Word; Prozessgrafik Operations aus `Tools/HandbuchGrafik/operations_prozess.py`, PNG mit `render_png.ps1` (Edge headless) | `wwwroot/handbuch/bilder/` |
 | Reiter im Cockpit | `/handbuch`, `Components/Pages/UserManual.razor`, Parser `Services/UserManualContent.cs`, Menueeintrag `user-manual` (Sortierung 5, nach Home) |
 
 Der Reiter liest dieselben Markdown-Dateien wie der Generator. Wer ein Kapitel aendert, muss

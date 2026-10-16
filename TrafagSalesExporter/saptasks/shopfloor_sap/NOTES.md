@@ -1,6 +1,7 @@
 # Shopfloor: Mengen aus SAP (ShopRmSet, ShopProdSet)
 
-Stand: 2026-10-16, in T76 fertig und gegen ZC27 geprüft; Cockpit-Abruf produktiv mit ausgeschaltetem Schreiben.
+Stand: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
+*Ueberholt:* „Cockpit-Abruf mit ausgeschaltetem Schreiben“ (bis 09:50).
 Auftrag: Mail Fabio 16.10. (Datenabfragen J5 Logistik, J8 Tagesmengen SEH/TR5, J11 FPY SEH), von Ingo weitergeleitet.
 
 ## 1. Objekte in T76
@@ -59,8 +60,21 @@ Schalter `Shopfloor:SapMengenEnabled` (aus). Vorschau `GET shopfloor/api/sap/men
 
 ## 6. Offen
 
-- Ingo: Transporte nach P76, Caches leeren.
+- *Erledigt 16.10.:* Transporte nach P76, Caches leeren (siehe 7).
 - Danach Vorschau fuer den 14.10. (ERSDA 13.10.) gegen Fabios Kontrollwerte: MLE01 673, MLE02 526, MLE04 542, MLM01 193,
   MLE08+09 1'065; FPY SEH KW38 bis KW41 gegen 99.8 / 99.7 / 97.1 / 99.5. Erst dann `SapMengenEnabled = true`.
 - Historie nachladen (Verkauf ab 01.01., Logistik/Tagesmengen ab 01.10.) erst danach, nur leere Tage.
 - Nicht gebaut: J2/J3 Verkauf (Ergebnisbereich, Wertfelder, Merkmal fehlen; KEA0 bei Ingo), J6 Auftragsvorrat (ZC22).
+
+## 7. P76 (2026-10-16)
+
+- Ingo hat `T76K912728`, `T76K912736`, `T76K912740`, `T76K912738` importiert. SapProbe-Pruefung (`.tmp_sap_probe/P76Pruefung_Shopfloor_2026-10-16.ps1`,
+  Anwendungsserver **`trasp76s`**, nicht `travp762`): alle vier in E070/E071, `ZM_OFFENE_KDAUF`, MPC und DPC zeilengleich mit dem Repo, Strukturen aktiv.
+- **Falle:** P76 hat zwei Anwendungsserver. Das OData laeuft ueber `travp762` (10.194.64.30), die SAP GUI war an `trasp76s` (10.194.64.19).
+  Cache-Leeren auf `trasp76s` half nicht (weiter 404 „metadata definition is incorrect“). Erst `/IWFND/CACHE_CLEANUP` auf `travp762`
+  (Ingo per SM51) gab die Sets frei.
+- Vorschau 14.10. (ERSDA 13.10.): MLE01 673, MLE02 526, MLM01 193, MLE04 542, MLE08+09 1'065 (465 + 600): **alle gleich** Fabios ZC27-Werten.
+  FPY SEH KW38 99.8, KW39 99.7, KW40 97.1, KW41 99.5: **alle gleich**. TR5-Tagesmenge 13.10.: 815; SEH 2'431.
+- Erstlauf 16.10. (Stand 15.10.): Logistik MLE01 24, MLE02 792, MLM01 149, MLE04 779, MLE08+09 532; TR5 854; SEH 1'837; FPY SEH 99.7 (KW 42 bis Do).
+  Geschrieben als „SAP-Schnittstelle“, Quelle SAP an jedem Feld, die von der Logistik gesetzte Ampel blieb.
+- Offen: Historie nachladen (Logistik/Tagesmengen ab 01.10., nur leere Tage) erst auf Wunsch Fabio; Gegenkontrolle der Tagesmengen SEH/TR5 durch Fabio.

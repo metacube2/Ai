@@ -195,6 +195,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
 | `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
 | `docs/abap/ZSHOP_RM_ADD.abap` | ABAP ShopRmSet (ZC27-Logik) und ShopProdSet (Istendtermin, Gesamt-/WE-Menge) fuer Operations (Shopfloor), T76K912740 + T76K912738 |
+| `Tools/HandbuchGrafik/` | Prozessgrafik Operations fuer das Handbuch (`operations_prozess.py` -> SVG, `render_png.ps1` -> PNG fuer Word) |
+| `wwwroot/handbuch/bilder/` | Bilder des Handbuchs (SVG fuer den Reiter, PNG fuer Word) |
 | `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, Feld-Mapping (Abschnitt 12), offene Schritte |
 | `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
 | `docs/ARBEITSSTAND_2026-10-14_15.md` | Zusammenfassung aller Arbeiten vom 14. und 15.10.2026 mit Stand je Punkt, offenen Fragen an Fabio und offenen Punkten bei Ingo |

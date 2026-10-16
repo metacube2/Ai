@@ -53,6 +53,7 @@ body.Append(PageBreak());
 var all = files;
 
 var first = true;
+uint imageId = 100;
 foreach (var file in all)
 {
     if (!first) body.Append(PageBreak());
@@ -65,6 +66,18 @@ foreach (var file in all)
         if (line.StartsWith("# ")) { body.Append(P(line[2..], "Heading1")); continue; }
         if (line.StartsWith("## ")) { body.Append(P(line[3..], "Heading2")); continue; }
         if (line.StartsWith("### ")) { body.Append(P(line[4..], "Heading3")); continue; }
+        // Bildzeile ![Unterschrift](bilder/datei.svg): Word nimmt die gleichnamige PNG (2026-10-16)
+        var img = Regex.Match(line.Trim(), @"^!\[([^\]]*)\]\((bilder/[A-Za-z0-9_\-]+)\.(?:svg|png)\)$");
+        if (img.Success)
+        {
+            var png = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file))!, "..", img.Groups[2].Value + ".png");
+            if (File.Exists(png))
+            {
+                body.Append(new Paragraph(new Run(Picture(main, png, 16.3, ++imageId))));
+                body.Append(P(img.Groups[1].Value, "Meta"));
+            }
+            continue;
+        }
         if (line.StartsWith("- ") || line.StartsWith("* "))
         {
             body.Append(Bullet(line[2..]));
@@ -244,6 +257,39 @@ static string AddFooter(MainDocumentPart main)
         new Run(new RunProperties(new Color { Val = Grey }, new FontSize { Val = "16" }), new Text("1")),
         new Run(new RunProperties(new Color { Val = Grey }, new FontSize { Val = "16" }), new FieldChar { FieldCharType = FieldCharValues.End })));
     return main.GetIdOfPart(part);
+}
+
+// Bild aus PNG in voller Breite (cm), Seitenverhaeltnis aus dem PNG-Kopf (2026-10-16, Prozessgrafik Operations).
+static Drawing Picture(MainDocumentPart main, string pngPath, double widthCm, uint id)
+{
+    var part = main.AddImagePart(ImagePartType.Png);
+    var bytes = File.ReadAllBytes(pngPath);
+    using (var s = new MemoryStream(bytes)) part.FeedData(s);
+    var w = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+    var h = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+    const long EmuPerCm = 360000;
+    var cx = (long)(widthCm * EmuPerCm);
+    var cy = cx * h / w;
+    var relId = main.GetIdOfPart(part);
+    var name = Path.GetFileName(pngPath);
+    return new Drawing(new DocumentFormat.OpenXml.Drawing.Wordprocessing.Inline(
+        new DocumentFormat.OpenXml.Drawing.Wordprocessing.Extent { Cx = cx, Cy = cy },
+        new DocumentFormat.OpenXml.Drawing.Wordprocessing.DocProperties { Id = id, Name = name },
+        new DocumentFormat.OpenXml.Drawing.Graphic(new DocumentFormat.OpenXml.Drawing.GraphicData(
+            new DocumentFormat.OpenXml.Drawing.Pictures.Picture(
+                new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureProperties(
+                    new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualDrawingProperties { Id = id, Name = name },
+                    new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureDrawingProperties()),
+                new DocumentFormat.OpenXml.Drawing.Pictures.BlipFill(
+                    new DocumentFormat.OpenXml.Drawing.Blip { Embed = relId },
+                    new DocumentFormat.OpenXml.Drawing.Stretch(new DocumentFormat.OpenXml.Drawing.FillRectangle())),
+                new DocumentFormat.OpenXml.Drawing.Pictures.ShapeProperties(
+                    new DocumentFormat.OpenXml.Drawing.Transform2D(
+                        new DocumentFormat.OpenXml.Drawing.Offset { X = 0, Y = 0 },
+                        new DocumentFormat.OpenXml.Drawing.Extents { Cx = cx, Cy = cy }),
+                    new DocumentFormat.OpenXml.Drawing.PresetGeometry { Preset = DocumentFormat.OpenXml.Drawing.ShapeTypeValues.Rectangle })))
+        { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" }))
+    { DistanceFromTop = 0U, DistanceFromBottom = 0U, DistanceFromLeft = 0U, DistanceFromRight = 0U });
 }
 
 static string AddLogo(MainDocumentPart main, string path)
