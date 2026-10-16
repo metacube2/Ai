@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-10-15 (Kurzstand 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -9,6 +9,14 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
+- **2026-10-16:** **Shopfloor** bekommt Mengen aus SAP: Logistik nach ZC27 (`ZPP_RM_MENGEN`), Tagesmengen SEH/TR5 und FPY SEH ueber die
+  neuen Sets `ShopRmSet`/`ShopProdSet` (Transporte `T76K912740` + `T76K912738` in P76), gegen Fabios Kontrollwerte gleich, live seit 09:51
+  (`saptasks/shopfloor_sap/NOTES.md`). Fabios Paket vom 16.10. eingespielt (Ampel, Lieferzeiten, Forecast DS, `SHOPFLOOR_2026-10-07.md` 14/15).
+  **Operations offen fuer alle Windows-Benutzer** (`Shopfloor:OpenForAll = true`), ZD05-Abgleich **04:00 und 12:45** (Entscheid Ingo).
+  Falle P76: zwei Anwendungsserver, Gateway-Cache auf `travp762` leeren. **Menue:** alle Hauptbereiche farbig (gedeckte Rottoene), Admin
+  grau, Home pulsiert. **Handbuch:** Kapitel Operations mit Geschaeftsprozess, Schnellueberblick und Prozessgrafik (Trafag-CI); das Handbuch
+  kann jetzt Bilder. **Einkauf:** Stuecklisten-Netz „Gehirn“ (WebGL-Prototyp) zuoberst im Spend-Aufriss. Offen: J2/J3 Verkauf (KEA0),
+  J6 Auftragsvorrat, Lieferzeit-Ziele, ganze Stueckliste aus SAP.
 - **2026-10-14/15:** **Operations** ist eine Menuegruppe mit **KPI** (Liefertreue OTD / OTIF / OTP nach Spezifikation Fabio
   Palma, live aus SAP ueber die CDS-Services, Abnahme Jan-Sep 2026 bestanden, Monatsabruf mit Wiederholung alle 2 h,
   `docs/OPERATIONS_KPI_2026-10-14.md`) und **Shopfloor** (Feldmapping aus Fabios Excel, Disponenten je Abteilung, Patches
