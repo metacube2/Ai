@@ -67,6 +67,8 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 10:52, Handbuch Einkauf: Abschnitt Stuecklisten-Netz (`1823bac`).** `1248/1248`, bitgleich, zehn Routen 200, Alarm nur WAL/SHM
+  (beide DBs); Kapitel 02 auf dem Server mit neuem Abschnitt.
 - **Deploy 2026-10-16 10:48, Einkauf Spend-Aufriss: Stuecklisten-Netz „Gehirn“ (`d188806` + Uebersetzungen `d6ca646`).** WAL vorher 482 KB,
   Release-Worktree `1248/1248`, `BiDashboard.dll` `10:47:46`, SHA256 `AC22186FFB6AE7B6E37A1EED922A11D38A1F7218552FC106D8BDC7C256C046A6`,
   bitgleich, zehn Routen 200, Alarm nur WAL/SHM. In Chrome geprueft: Netz geladen, Klick C18947 (2'258 Verwendungen), Farbumschaltung.
