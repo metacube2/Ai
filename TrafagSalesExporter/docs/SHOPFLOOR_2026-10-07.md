@@ -335,7 +335,9 @@ Abgelegt unter `docs/shopfloor_paket_2026-10-16/` (aus `Shopfloor_Deploy_2026-10
 **Produktiv seit 2026-10-16 07:06**, in Ingos Chrome geprueft: Lieferzeiten-Seite, Ampel-Karte, Forecast DS (DS1/DS2) getrennt,
 DW1 ohne Abteilung. Speichertest mit Freigabe Ingo produktiv: Ampel SEH Orange am 16.10. gesetzt (blieb nach Neuladen, oranger Punkt
 auf der Startseite) und per API mit `null` wieder entfernt (Zeile leer, Startseite wieder „noch nicht erfasst“, Verlauf zeigt beides).
-In der Oberflaeche laesst sich eine gesetzte Ampel nicht mehr loeschen (erneuter Klick setzt sie nur wieder); Hinweis an Fabio. DS zeigt „Leistung fehlt“,
+*Ueberholt:* „in der Oberflaeche nicht loeschbar“. Seit `e6c007f` (produktiv 07:37) entfernt ein zweiter Klick auf die heute
+gesetzte Farbe den heutigen Status (Hinweis im Tooltip); eine Farbe aus einem Vortag wird mit dem Klick fuer heute bestaetigt. Produktiv
+geprueft: Rot gesetzt, nochmals geklickt, Zeile leer, Startseite „noch nicht erfasst“. DS zeigt „Leistung fehlt“,
 bis die Leistung (Stk/FTE) im Forecast erfasst ist.
 
 **Eingespielt mit Fabios Skripten, je zuerst `--check`:**
@@ -366,3 +368,8 @@ Auftragsvorrat, FPY SEH) sind weder im Paket (kein Programm, nur Excel mit Quell
 ist auch kein Erstlauf moeglich. ZD05 (J1) laeuft im Cockpit selbst (`Shopfloor:SapSyncTimes`, Werktage). *Ueberholt:* „05:45 und
 12:45, Umstellung auf 04:00 offen“. Entscheid Ingo 2026-10-16: **04:00 und 12:45** (der Mittagslauf bleibt). Offen von Fabio: Lieferzeit-Ziele (Daniel Tobler), Kuerzel
 Ergebnisbereich CE1xxxx.
+
+**Fabios Pakete ohne Nacharbeit (2026-10-16, `e6c007f`):** `ShopfloorConfig` uebernimmt ein `planned_source` am Feld nach `src` und
+entfernt es (auch in `/api/config`); ohne `planned_source` wird die Datei unveraendert ausgeliefert. Test
+`Planned_Source_Aus_Fabios_Paketen_Gilt_Als_Quelle`. In der abgelegten Kopie `3_Config/config_patch.js` ist die DW-Liste ohne `DW`
+und FPY setzt zusaetzlich `src`; Fabio sollte diese Fassung in seine Vorlage uebernehmen. Weiter offen: Jobs J2 bis J11, Lieferzeit-Ziele.

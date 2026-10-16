@@ -67,6 +67,9 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 07:37, Shopfloor: Ampel loeschbar, `planned_source` aus Fabios Paketen (`e6c007f`).** WAL vorher 556 KB, `1241/1241`,
+  `BiDashboard.dll` `07:37:22`, SHA256 `F6013EE429E8AAE7420D1B6C8073EBAEBAE6FD641F245E4F1BD7AF05EE443944`, bitgleich, zehn Routen 200, Alarm
+  nur `-wal`/`-shm`. Monitor-Pfaddatei ohne BOM. In Chrome geprueft: Ampel setzen und per zweitem Klick entfernen.
 - **Deploy 2026-10-16 07:28, Shopfloor: ZD05-Abgleich 04:00 und 12:45 (`a285009`).** Entscheid Ingo. WAL vorher 260 KB, `1240/1240`,
   `BiDashboard.dll` `07:28:07`, SHA256 `30706F0782FEBEEBE734CBF5950A9E3F636687A51889806224CCA855D3B09D84`, bitgleich, zehn Routen 200,
   Alarm nur `-wal`/`-shm`. Server-`appsettings.json` zeigt `SapSyncTimes` 04:00/12:45, Handbuch Kapitel 10 und Word neu.

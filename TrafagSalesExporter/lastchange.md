@@ -6,7 +6,7 @@ Stand: 2026-10-16
 
 - Fabios Patch 03 (Wuensche D. Tobler) und Config-Patch 04 eingespielt: Verlaufskacheln, Ampel pro Bereich, Menue
   „Lieferzeiten“ mit Grund, PPD ohne Verzug MTS, Forecast mit eigener Zeile DS. Zwei Korrekturen am Paket (FPY SEH ueber
-  `src`, DW1/DL6 ohne Abteilung). ZD05-Abgleich seit 07:28 um 04:00 und 12:45 (`a285009`). Die SAP-Jobs J2 bis J11 sind nicht gebaut. Details `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 14.
+  `src`, DW1/DL6 ohne Abteilung). ZD05-Abgleich seit 07:28 um 04:00 und 12:45 (`a285009`). Ampel per zweitem Klick loeschbar, `planned_source` aus Fabios Paketen wird gelesen (`e6c007f`). Die SAP-Jobs J2 bis J11 sind nicht gebaut. Details `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 14.
 
 ## SAP Fiori: App ZC23 live mit Selektion, 2026-10-15 (T76 fertig, Transport `T76K912738` offen)
 
