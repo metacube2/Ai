@@ -50,6 +50,8 @@ public sealed class ShopfloorEndpointTests : IAsyncLifetime
         {
             ["Shopfloor:DatabasePath"] = Path.Combine(_dir, "shopfloor.db"),
             ["Shopfloor:AllowedUsers:0"] = "tester",
+            // Die Tests pruefen die Sperre; produktiv steht OpenForAll seit 2026-10-16 auf true (appsettings.json)
+            ["Shopfloor:OpenForAll"] = "false",
             ["Shopfloor:ApiToken"] = "geheim",
             ["Shopfloor:LoginUsername"] = "operations",
             ["Shopfloor:LoginPasswordHash"] = TrafagSalesExporter.Services.AccessPasswordSettingsWriter.HashPassword("testpasswort")
