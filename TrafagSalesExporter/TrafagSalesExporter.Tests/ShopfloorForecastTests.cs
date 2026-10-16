@@ -11,9 +11,13 @@ public class ShopfloorForecastTests
     [InlineData("EL8", "TX")]
     [InlineData("EK1", "TR5")]
     [InlineData("EKB", "TR5")]
-    [InlineData("DS2", "DW")]
-    [InlineData("DSN", "DW")]
-    [InlineData("DL6", "DW")]
+    [InlineData("DS2", "DS")]
+    [InlineData("DSN", "DS")]
+    [InlineData("DS1", "DS")]
+    [InlineData("DL6", "?")]
+    [InlineData("DW1", "?")]
+    [InlineData("DW2", "DW")]
+    [InlineData("DB1", "DW")]
     [InlineData("D10", "DW")]
     [InlineData("SB1", "SEH")]
     [InlineData("SE1", "SEH")]
@@ -44,9 +48,10 @@ public class ShopfloorForecastTests
     {
         var config = ShopfloorConfig.Load(Path.Combine(ShopfloorTestEnv.ShopfloorDir, "shopfloor_config.json"));
         var auto = config.ModuleList.SelectMany(m => m.Fields.Select(f => (m, f))).Where(x => x.f.Src != "manuell").ToList();
+        // Paket 2026-10-16: Verzug MTS entfernt, FPY SEH aus SAP (J11)
         Assert.Equal(129, auto.Count(x => x.f.Src == "sap"));
         var mes = auto.Where(x => x.f.Src == "mes").ToList();
-        Assert.Equal(5, mes.Count);
+        Assert.Equal(4, mes.Count);
         Assert.All(mes, x => Assert.Equal("fpy", x.f.Key));
         Assert.All(auto, x => Assert.NotNull(x.f.Sap));
     }

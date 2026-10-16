@@ -1,0 +1,42 @@
+Shopfloor / BI-Dashboard: Deploy-Paket für 16.10.2026 (Stand 15.10.2026, Fabio Palma)
+
+Reihenfolge Deploy: siehe Excel, Blatt «Deploy 16.10.» (grün = bereit, gelb = noch nicht)
+
+WICHTIG: ERSTLAUF SOFORT NACH DEM HOCHLADEN
+  Nach dem Deploy alle bereiten Jobs (J1 ZD05, J2/J3 Verkauf, J5 Logistik, J6 Auftragsvorrat, J8 Tagesmengen)
+  einmal manuell starten (SE38/SA38 bzw. SM36 «sofort»), nicht bis 04:00 warten.
+  Stichtag = heute, Mengen = vorheriger Arbeitstag. Danach Dashboard prüfen (Felder gefüllt, Quelle SAP)
+  und Fabio informieren für den Abgleich gegen ZC27 / KE30 / COOIS / ZC22.
+  Anschliessend einmalig Historie nachladen (Verkauf ab 01.01.2026, Logistik + Tagesmengen ab 01.10.2026),
+  nur leere Tage füllen, manuelle Werte nicht überschreiben, zuerst mit 1 Tag testen.
+
+1_Schnittstelle
+  Shopfloor_SAP_Schnittstelle_2026-10-15.xlsx
+     Deploy 16.10.   Checkliste
+     Übersicht       Anzahl Felder SAP/MES
+     Jobs 04-00      alle Lieferjobs mit Quelle, Selektion, Zeitbezug, Status
+     Verkauf CO-PA   Satzart, Nettoerlös-Formel, Produktsparten, Kontrollwerte Sep/Okt 2026
+     Feld-Mapping    134 Felder: Zielname, SAP-Quelle, Selektion, Status
+     Disponenten     Zuordnung Abteilung -> Disponent (Werk 1100)
+     ZD05 Anforderung
+  feldliste.json     dasselbe maschinenlesbar
+  beispiele/*.json   Beispielinhalte (Verkauf Sep 2026, Logistik 13.10.); Hülle/Format wie beim bestehenden ZD05-Push
+
+2_Patch (01 + 02 sind bereits live, neu 03 Wünsche D. Tobler)
+  apply_patch.js + patches/*.json   Frontend (app.js, style.css), siehe 2_Patch/LIESMICH.txt
+  Prüfen: node apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check
+  Anwenden: node apply_patch.js "<Pfad>\BiDashboard\shopfloor"   (legt .bak an, bricht ohne Änderung ab, wenn etwas nicht passt)
+
+3_Config (neu)
+  apply_config.js + config_patch.js   Anpassung shopfloor_config.json (PPD ohne MTS, Verlaufskacheln, Ampel-Felder,
+                                      Lieferzeit-Grund/-Ziel, Forecast DW/DS). Prüfen mit --check, legt .bak an.
+  Reihenfolge: zuerst 3_Config, dann 2_Patch, dann Erstlauf der Jobs.
+
+Festlegungen
+  - Übergabe täglich 04:00 an POST /api/integration/push; Mengen = vorheriger Arbeitstag (Montag: Fr+Sa+So)
+  - Abteilungen in der Produktion über Disponent (SEH S*, TR5 EK*, TX EL*, DW D*), im Verkauf über CO-PA-Produktsparte (0003 DW, 0005 Transmitter)
+  - Verkauf: CO-PA wie KE30 Z0001-000006, Nettoerlös, Satzart A (AE) / F (Umsatz), BUKRS 1100
+  - Logistik + TR5-Tagesmenge: Logik aus ZPP_RM_MENGEN (ZC27) als gemeinsamer Funktionsbaustein (ERSDA, STOKZ = ' ', STZHL = 0, letzter Vorgang)
+  - SEH-Tagesmenge: COOIS Layout /SEH 001, WE-Menge, Istendtermin Vortag
+  - Auftragsvorrat: ZC22 (ZM_OFFENE_FAUF), Buckets Woche bis Sonntag, 1 Mt = Monatsende, 2/3 Mt, Gesamt
+  - MES liefert nur FPY; CZ zurückgestellt

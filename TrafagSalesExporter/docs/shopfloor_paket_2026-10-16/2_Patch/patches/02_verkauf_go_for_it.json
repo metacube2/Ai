@@ -1,0 +1,24 @@
+{
+  "id": "02_verkauf_go_for_it",
+  "datum": "2026-10-14",
+  "beschreibung": "Verkauf: Go-for-it-Ziel einmal pro Monat, Kacheln oben (Ziel, Umsatz IST in % vom Ziel, Rest, AE / Book to Bill)",
+  "marker": "function renderGoForIt(",
+  "app_js": [
+    {
+      "name": "Platz für Go-for-it-Kacheln",
+      "old": "    <div id=\"trendBox\"></div>\n    <div id=\"chartBox\"></div>",
+      "new": "    ${m.key === \"verkauf\" ? '<div id=\"goalBox\"></div>' : \"\"}\n    <div id=\"trendBox\"></div>\n    <div id=\"chartBox\"></div>"
+    },
+    {
+      "name": "Go-for-it bei jedem Neuzeichnen",
+      "old": "function renderDailyGrid(m) {\n  const narrow = window.matchMedia(\"(max-width:760px)\").matches;",
+      "new": "function renderDailyGrid(m) {\n  if (m.key === \"verkauf\") renderGoForIt(m);\n  const narrow = window.matchMedia(\"(max-width:760px)\").matches;"
+    },
+    {
+      "name": "Go-for-it-Funktion",
+      "old": "/* Verlaufs-Kacheln (2026-10-08):",
+      "new": "/* Go-for-it-Ziel Verkauf (2026-10-14): einmal pro Monat erfasst und oben im Bericht angezeigt.\n   Konvention wie im Shopfloor-File: der Eintrag vom Tag D enthält den Stand bis D-1. Darum gehört der\n   Eintrag vom Monatsersten noch zum Vormonat (Berichtsmonat = Monat von D-1). */\nfunction gfiMonth(d) { return iso(addDaysD(parseIso(d), -1)).slice(0, 7); }\nasync function renderGoForIt(m) {\n  const box = $(\"#goalBox\"); if (!box) return;\n  const ref = S.activeDay || todayIso(); const M = gfiMonth(ref);\n  const first = M + \"-02\"; const nxt = iso(addDaysD(parseIso(M + \"-01\"), 32)).slice(0, 7) + \"-01\";\n  let recs = {};\n  try { recs = ((await loadRange([m.key], first, nxt)) || {})[m.key] || {}; } catch (e) { box.innerHTML = \"\"; return; }\n  const days = Object.keys(recs).sort().filter(d => gfiMonth(d) === M);\n  const withGoal = days.filter(d => num((recs[d].data || {}).goforit) != null);\n  const goalDay = withGoal.length ? withGoal[withGoal.length - 1] : null;\n  const goal = goalDay ? num(recs[goalDay].data.goforit) : null;\n  const upto = days.filter(d => d <= ref);\n  const last = k => { for (let i = upto.length - 1; i >= 0; i--) { const v = num((recs[upto[i]].data || {})[k]); if (v != null) return v; } return null; };\n  const ist = last(\"umsatz_ist\"), ae = last(\"ae_aktuell\"), plan = last(\"umsatz_plan\");\n  const pct = goal && ist != null ? ist / goal * 100 : null;\n  const mName = MONTHS[Number(M.slice(5, 7)) - 1] + \" \" + M.slice(0, 4);\n  const bar = v => `<div class=\"bar\"><i style=\"width:${Math.min(100, v || 0)}%;background:${(v || 0) >= 100 ? \"var(--ok)\" : \"var(--brand)\"}\"></i></div>`;\n  box.innerHTML = `<div class=\"kpis gfi\">\n    <div class=\"kpi\"><div class=\"v\">${goal != null ? fmtNum(goal) : \"–\"}<span class=\"muted\" style=\"font-size:16px\"> CHF</span></div>\n      <div class=\"l\">Go-for-it-Ziel ${esc(mName)}</div>\n      <label class=\"gfi-edit muted\" style=\"font-size:12px\">Ziel festlegen <input type=\"number\" step=\"1000\" min=\"0\" class=\"field-in\" id=\"gfiIn\" value=\"${goal != null ? goal : \"\"}\" style=\"width:130px\"></label></div>\n    <div class=\"kpi\"><div class=\"v\">${ist != null ? fmtNum(ist) : \"–\"}</div><div class=\"l\">Umsatz IST ${esc(mName)}${pct != null ? ` · <b>${fmtNum(pct, 1)} %</b> vom Ziel` : \"\"}</div>${pct != null ? bar(pct) : \"\"}</div>\n    <div class=\"kpi\"><div class=\"v\">${goal != null && ist != null ? fmtNum(Math.max(0, goal - ist)) : \"–\"}</div><div class=\"l\">fehlt bis Go-for-it${plan != null ? ` · geplant (ZC23) ${fmtNum(plan)}` : \"\"}</div></div>\n    <div class=\"kpi\"><div class=\"v\">${ae != null ? fmtNum(ae) : \"–\"}</div><div class=\"l\">Auftragseingang ${esc(mName)}${ae != null && ist ? ` · Book to Bill ${fmtNum(ae / ist, 2)}` : \"\"}</div></div>\n  </div>`;\n  const inp = $(\"#gfiIn\");\n  if (inp) inp.onchange = async () => {\n    const v = inp.value === \"\" ? null : Number(inp.value);\n    const day = goalDay || first;   // ein Wert pro Monat: bestehenden Eintrag überschreiben, sonst am 2. des Monats ablegen\n    try { await api(\"POST\", \"api/daily\", { module: m.key, day, changes: { goforit: v } }); toast(`Go-for-it ${mName} gespeichert`); renderGoForIt(m); }\n    catch (e) { toast(\"Nicht gespeichert: \" + e.message, true); }\n  };\n}\n/* Verlaufs-Kacheln (2026-10-08):"
+    }
+  ],
+  "style_css": "\n/* Verkauf: Go-for-it-Kacheln (2026-10-14) */\n.kpis.gfi{margin-bottom:14px}\n.kpis.gfi .gfi-edit{display:flex;gap:6px;align-items:center;margin-top:6px}\n"
+}

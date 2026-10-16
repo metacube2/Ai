@@ -1,0 +1,31 @@
+Shopfloor-Patches vom 14.10.2026 (nur Frontend: app.js und style.css im Ordner /BiDashboard/shopfloor/)
+
+01_zd05_zu_besprechen
+  Einkauf ZD05: neuer Filter «Zu besprechen» mit Anzahl. Zu besprechen = neu seit letztem Import ODER noch ohne Code
+  ODER Liefertermin überschritten. Zeilen mit orangem Rand und Markierung (neu / ohne Code / LT überfällig).
+  Im laufenden Shop-Floor ist der Filter automatisch aktiv. Startseite: Punkt 10 zeigt zusätzlich «x ohne Code».
+
+02_verkauf_go_for_it
+  Verkauf: Kacheln oben im Bericht: Go-for-it-Ziel des Monats (einmal pro Monat erfassen, Feld «Ziel festlegen»),
+  Umsatz IST in % vom Ziel, fehlender Betrag, Auftragseingang mit Book to Bill.
+  Konvention wie bisher: Eintrag vom Tag D = Stand bis D-1, der Monatserste gehört zum Vormonat.
+  Das Ziel wird im bestehenden Feld goforit gespeichert (kein Backend, keine neue Tabelle).
+
+03_wuensche_tobler (neu 15.10.2026)
+  - Verlaufskacheln: Auswahl je Modul aus Config (trend): SEH/TR5/TX/DW mit Auftragsvorrat 1 Mte;
+    PPD mit Verzug total/SEH/TR5/TX/DW und Terminverschiebungen total/SEH/TR5/TX/DW
+  - Ampel pro Bereich: Karte oben auf der Abteilungsseite (Grün/Orange/Rot, Erfüllung %, Bemerkung),
+    Punkt im Ablauf auf der Startseite
+  - Lieferzeiten-Übersicht: neuer Menüpunkt «Lieferzeiten» (aktuell / Ziel / Status / Verlauf / Grund)
+  - Forecast: Dichtesensoren als eigene Zeile DS (Leistung Stk/FTE manuell erfassen)
+  Benötigt die Config-Anpassung aus 3_Config (sonst bleiben Ampel und Grund ausgeblendet, Rest läuft).
+  Getestet 15.10.2026 gegen die produktive app.js (01/02 bereits drin, 03 alle Stellen 1x, Syntax ok) und
+  mit Echtdaten im Browser (PPD 10 Kacheln, DW 5 Kacheln inkl. Vorrat 1 Mte, Lieferzeiten 13 Zeilen).
+
+Anwenden
+  1. Prüfen ohne zu schreiben:  node apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check
+  2. Anwenden:                  node apply_patch.js "<Pfad>\BiDashboard\shopfloor"
+  Das Skript legt app.js.bak und style.css.bak an, bricht ohne Änderung ab, wenn eine Stelle nicht exakt passt,
+  und überspringt Patches, die schon drin sind. Rückgängig: .bak-Dateien zurückkopieren.
+
+Getestet am 14.10.2026 gegen die produktive app.js (alle Stellen genau 1x gefunden, Syntax ok, Anzeige mit Echtdaten geprüft).

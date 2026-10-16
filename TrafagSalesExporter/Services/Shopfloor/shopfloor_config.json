@@ -784,18 +784,27 @@
      "unit": "Wo"
     },
     {
+     "key": "lz_grund",
+     "label": "Grund lange Lieferzeit",
+     "type": "long",
+     "group": "Lieferzeiten & Qualität"
+    },
+    {
      "key": "fpy",
-     "label": "FPY",
+     "label": "FPY (SAP, KW nach Istendtermin)",
      "type": "num",
      "col": "Y",
-     "src": "mes",
+     "src": "sap",
      "group": "Lieferzeiten & Qualität",
      "unit": "%",
      "sap": {
-      "vorschlag_tabelle": "– (MES-Datenbank)",
-      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
-      "status": "offen"
-     }
+      "vorschlag_tabelle": "–",
+      "vorschlag_odata": "C_MFGORDERITEMSCRAPAMTQRY_CDS (P_DisplayCurrency='CHF', P_ExchangeRateType='M'): WE-Menge / Gesamtmenge je Auftrag",
+      "selektion": "ProductionPlant 1100, MRPController S*, Istendtermin in der KW des Vortags (Montag: Vorwoche)",
+      "status": "definiert",
+      "bemerkung": "Job J11 (Paket Fabio 2026-10-16); TR5, TX, DW: FPY weiter aus dem MES"
+     },
+     "digits": 1
     },
     {
      "key": "bemerkungen",
@@ -803,7 +812,35 @@
      "type": "long",
      "col": "AN",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
+   ],
+   "trend": [
+    "prod",
+    "vorrat_1m",
+    "vorrat_total",
+    "offen_kw",
+    "leistung",
+    "fpy"
    ]
   },
   {
@@ -1371,6 +1408,12 @@
      "unit": "Wo"
     },
     {
+     "key": "lz_grund",
+     "label": "Grund lange Lieferzeit",
+     "type": "long",
+     "group": "Lieferzeiten & Qualität"
+    },
+    {
      "key": "fpy",
      "label": "FPY",
      "type": "num",
@@ -1390,7 +1433,34 @@
      "type": "long",
      "col": "AN",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
+   ],
+   "trend": [
+    "prod",
+    "vorrat_1m",
+    "vorrat_total",
+    "offen_kw",
+    "leistung"
    ]
   },
   {
@@ -2050,6 +2120,12 @@
      "unit": "Wo"
     },
     {
+     "key": "lz_grund",
+     "label": "Grund lange Lieferzeit",
+     "type": "long",
+     "group": "Lieferzeiten & Qualität"
+    },
+    {
      "key": "hot_anteil",
      "label": "Hot-Anteil",
      "type": "num",
@@ -2077,7 +2153,34 @@
      "type": "long",
      "col": "AY",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
+   ],
+   "trend": [
+    "prod",
+    "vorrat_1m",
+    "vorrat_total",
+    "offen_kw",
+    "leistung"
    ]
   },
   {
@@ -2717,6 +2820,12 @@
      "unit": "Wo"
     },
     {
+     "key": "lz_grund",
+     "label": "Grund lange Lieferzeit",
+     "type": "long",
+     "group": "Lieferzeiten & Qualität"
+    },
+    {
      "key": "fpy",
      "label": "FPY",
      "type": "num",
@@ -2736,7 +2845,34 @@
      "type": "long",
      "col": "AW",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
+   ],
+   "trend": [
+    "prod",
+    "vorrat_1m",
+    "vorrat_total",
+    "offen_kw",
+    "leistung"
    ]
   },
   {
@@ -3108,22 +3244,6 @@
      }
     },
     {
-     "key": "verzug_mts",
-     "label": "Verzug MTS",
-     "type": "num",
-     "col": "E",
-     "group": "Mengen in Verzug",
-     "unit": "Stk.",
-     "src": "sap",
-     "sap": {
-      "vorschlag_tabelle": "AFKO / AFPO",
-      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
-      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
-      "selektion": "leer – kein MTS-Disponent",
-      "status": "offen"
-     }
-    },
-    {
      "key": "verzug_tr5",
      "label": "Verzug TR5",
      "type": "num",
@@ -3175,7 +3295,7 @@
      "key": "verzug_total",
      "label": "Total in Verzug",
      "type": "calc",
-     "calc": "v.verzug_seh + v.verzug_mts + v.verzug_tr5 + v.verzug_tx + v.verzug_dw",
+     "calc": "v.verzug_seh + v.verzug_tr5 + v.verzug_tx + v.verzug_dw",
      "group": "Mengen in Verzug",
      "unit": "Stk."
     },
@@ -3283,7 +3403,39 @@
      "opts": "ppd_zust",
      "free": true,
      "group": "Zuständigkeiten PPD"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
+   ],
+   "trend": [
+    "verzug_total",
+    "verzug_seh",
+    "verzug_tr5",
+    "verzug_tx",
+    "verzug_dw",
+    "tv_total",
+    "tv_seh",
+    "tv_tr5",
+    "tv_tx",
+    "tv_dw"
    ]
   },
   {
@@ -4165,6 +4317,26 @@
      "type": "long",
      "col": "Z",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
    ]
   },
@@ -4281,6 +4453,26 @@
      "type": "long",
      "col": "P",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
    ]
   },
@@ -4693,6 +4885,26 @@
      "type": "long",
      "col": "V",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
    ]
   },
@@ -5140,6 +5352,26 @@
      "type": "long",
      "col": "BL",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
    ]
   },
@@ -5275,6 +5507,26 @@
      "type": "long",
      "col": "Q",
      "group": "Bemerkungen"
+    },
+    {
+     "key": "ampel",
+     "label": "Status Bereich (Ampel)",
+     "type": "select",
+     "opts": "ampel",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_pct",
+     "label": "Status Bereich Erfüllung",
+     "type": "num",
+     "unit": "%",
+     "group": "Status Bereich"
+    },
+    {
+     "key": "ampel_text",
+     "label": "Status Bereich Bemerkung",
+     "type": "text",
+     "group": "Status Bereich"
     }
    ]
   },
@@ -5643,6 +5895,11 @@
    "nur bis 19:00",
    "ohne Leitung",
    "keine Schicht"
+  ],
+  "ampel": [
+   "grün",
+   "orange",
+   "rot"
   ]
  },
  "agenda": [
@@ -5812,8 +6069,21 @@
    "TX"
   ],
   "DW": [
-   "D",
-   "DW"
+   "D10",
+   "D11",
+   "D12",
+   "D13",
+   "D20",
+   "D21",
+   "D22",
+   "D23",
+   "D30",
+   "D31",
+   "D40",
+   "DB1",
+   "DB2",
+   "DEF",
+   "DW2"
   ],
   "CZ": [
    "017",
@@ -5829,6 +6099,12 @@
    "027",
    "028",
    "CZ"
+  ],
+  "DS": [
+   "DS1",
+   "DS2",
+   "DSN",
+   "DS"
   ]
  },
  "notify_rules": {

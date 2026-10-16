@@ -231,7 +231,7 @@ function buildNav() {
   const a = S.cfg.agenda;
   let h = a.map(it => `<a href="#/m/${it.module}" data-m="${it.module}" class="${it.sub ? "sub" : ""}">
       <span class="dot ${it.must ? "must" : ""}"></span><span>${esc(navLabel(it))}${it.friday ? ' <span class="muted">(Fr)</span>' : ""}</span><span class="cnt" data-cnt="${it.module}"></span></a>`).join("");
-  $("#nav").innerHTML = `<a href="#/" data-m="home"><span class="dot must"></span><span><b>Shop-Floor heute</b></span></a><div class="sep">Ablauf</div>` + h;
+  $("#nav").innerHTML = `<a href="#/" data-m="home"><span class="dot must"></span><span><b>Shop-Floor heute</b></span></a><a href="#/lz" data-m="lz"><span class="dot"></span><span>Lieferzeiten</span></a><div class="sep">Ablauf</div>` + h;
   updateNavCounts();
 }
 async function updateNavCounts() {
@@ -255,7 +255,7 @@ async function route() {
   const parts = h.split("/").filter(Boolean);
   S.route = parts;
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("active",
-    (parts[0] === "m" && a.dataset.m === parts[1]) || (!parts.length && a.dataset.m === "home")));
+    (parts[0] === "m" && a.dataset.m === parts[1]) || (!parts.length && a.dataset.m === "home") || (parts[0] === "lz" && a.dataset.m === "lz")));
   const v = $("#view"); v.innerHTML = '<div class="empty">Lade…</div>'; window.scrollTo(0, 0);
   try {
     if (!parts.length) await viewHome();
@@ -267,6 +267,7 @@ async function route() {
       else if (m.key === "zd05") await viewZd05();
       else if (m.key === "forecast") await viewForecast();
     }
+    else if (parts[0] === "lz") await viewLz();
     else if (parts[0] === "schnittstelle") await viewSchema();
     else if (parts[0] === "mail") await viewMail();
     else v.innerHTML = '<div class="empty">Seite nicht gefunden.</div>';
@@ -339,6 +340,7 @@ async function viewHome(silent) {
   const st = await api("GET", "api/agenda?day=" + day);
   S.agendaStatus = st;
   let zh = null; try { zh = await api("GET", "api/zd05/history"); } catch (e) { }   // nur fuer die Kennzahl-Sparkline, optional
+  const amp = await loadAmpelAll();   // Ampel pro Bereich (2026-10-15)
   const items = S.cfg.agenda;
   let must = 0, mustDone = 0; const mustDots = [];   // mustDots: je Pflichtpunkt erledigt ja/nein (Chips unter dem Ring)
   const rows = items.map((it, i) => {
@@ -367,7 +369,7 @@ async function viewHome(silent) {
     } else stat = `<span class="muted">Übersicht</span>`;
     const cur = S.meeting && S.meeting.idx === i ? " current" : "";
     return `<li class="${it.must ? "must" : ""} ${it.sub ? "sub" : ""} ${skip ? "skip" : ""}${cur}">
-      <a href="#/m/${it.module}${m.kind === "daily" ? "?day=" + day : ""}"><span class="mark"></span><span class="lbl">${esc(it.label)}</span><span class="st">${stat}</span></a></li>`;
+      <a href="#/m/${it.module}${m.kind === "daily" ? "?day=" + day : ""}"><span class="mark"></span><span class="lbl">${esc(it.label)}${ampelDot(amp[it.module])}</span><span class="st">${stat}</span></a></li>`;
   }).join("");
   const pct = must ? Math.round(mustDone / must * 100) : 0;
   const rsOpen = ["rs_seh", "rs_tr5", "rs_tx", "rs_dw"].reduce((t, k) => t + ((st[k] || {}).open || 0), 0);
@@ -786,6 +788,7 @@ async function viewDaily(m) {
     <div class="head"><div class="grow"><h1>${esc(m.title)}</h1>
       <p class="lede">Werte direkt in die Tabelle eintragen – gespeichert wird beim Verlassen des Feldes. Enter springt zum nächsten Feld.</p></div>
       <button class="btn" data-export="${m.key}">Export (CSV)</button></div>
+    ${(m.fields || []).some(f => f.key === "ampel") ? '<div id="ampelBox"></div>' : ""}
     ${m.key === "verkauf" ? '<div id="goalBox"></div>' : ""}
     <div id="trendBox"></div>
     <div id="chartBox"></div>
@@ -812,6 +815,82 @@ async function viewDaily(m) {
   renderDailyGrid(m);
   renderDailyTrend(m);
   renderDailyChart(m);
+  renderAmpel(m);
+}
+/* ---------------------------------------------------------------- Ampel pro Bereich (2026-10-15)
+   Teamleiter oder Stellvertretung setzen Grün / Orange / Rot plus Prozentwert und kurze Begründung.
+   Gespeichert im Tagesdatensatz des Moduls (Felder ampel, ampel_pct, ampel_text aus shopfloor_config.json). */
+const AMPEL = { "grün": { cls: "ok", lab: "Grün", txt: "alles im grünen Bereich" }, "orange": { cls: "warn", lab: "Orange", txt: "es klemmt, Handlungsbedarf" }, "rot": { cls: "bad", lab: "Rot", txt: "akutes Problem, sofortiger Handlungsbedarf" } };
+function ampelLast(recs) {
+  const days = Object.keys(recs || {}).sort();
+  for (let i = days.length - 1; i >= 0; i--) { const d = recs[days[i]]; if (d && d.data && d.data.ampel) return { day: days[i], ...d.data, by: d.updated_by, at: d.updated_at }; }
+  return null;
+}
+async function renderAmpel(m) {
+  const box = $("#ampelBox"); if (!box) return;
+  const day = todayIso();
+  let r = {}; try { r = ((await loadRange([m.key], iso(addDaysD(new Date(), -14)), day)) || {})[m.key] || {}; } catch (e) { box.innerHTML = ""; return; }
+  const a = ampelLast(r); const cur = a ? AMPEL[a.ampel] : null;
+  box.innerHTML = `<div class="ampel-card ${cur ? cur.cls : ""}">
+    <div class="ampel-head"><b>Status ${esc(m.short)}</b>${a ? `<span class="muted">Stand ${esc(fmtDate(a.day))}${a.by ? " · " + esc(a.by) : ""}</span>` : '<span class="muted">noch kein Status erfasst</span>'}</div>
+    <div class="ampel-row"><div class="ampel-btns" role="group" aria-label="Ampel">${Object.entries(AMPEL).map(([k, v]) => `<button class="amp ${v.cls}" data-amp="${k}" aria-pressed="${a && a.ampel === k}" title="${esc(v.txt)}"><i></i>${v.lab}</button>`).join("")}</div>
+      <label class="ampel-pct">Erfüllung <input type="number" min="0" max="200" step="1" class="field-in" id="ampPct" value="${a && a.ampel_pct != null ? a.ampel_pct : ""}"> %</label>
+      <input class="field-in ampel-txt" id="ampTxt" placeholder="Kurz: was klemmt / was ist zu tun" value="${esc((a && a.ampel_text) || "")}"></div></div>`;
+  const save = async changes => {
+    try { await api("POST", "api/daily", { module: m.key, day, changes }); toast("Status gespeichert"); renderAmpel(m); }
+    catch (e) { toast("Nicht gespeichert: " + e.message, true); }
+  };
+  box.querySelectorAll("[data-amp]").forEach(b => b.onclick = () => save({ ampel: b.dataset.amp, ampel_pct: num(parseNum($("#ampPct").value)), ampel_text: $("#ampTxt").value.trim() || null }));
+  $("#ampPct").onchange = e => save({ ampel_pct: e.target.value === "" ? null : parseNum(e.target.value) });
+  $("#ampTxt").onchange = e => save({ ampel_text: e.target.value.trim() || null });
+}
+async function loadAmpelAll() {
+  const keys = S.cfg.modules.filter(m => m.kind === "daily" && (m.fields || []).some(f => f.key === "ampel")).map(m => m.key);
+  if (!keys.length) return {};
+  try { const r = await loadRange(keys, iso(addDaysD(new Date(), -14)), todayIso()); const o = {}; keys.forEach(k => o[k] = ampelLast(r[k])); return o; } catch (e) { return {}; }
+}
+function ampelDot(a) {
+  if (!a || !AMPEL[a.ampel]) return "";
+  const v = AMPEL[a.ampel];
+  return `<span class="ampel-dot ${v.cls}" title="Status ${esc(v.lab)}${a.ampel_pct != null ? " · " + a.ampel_pct + " %" : ""}${a.ampel_text ? " · " + esc(a.ampel_text) : ""} (${esc(fmtDate(a.day))})"></span>${a.ampel_pct != null ? `<span class="ampel-pctx">${fmtNum(a.ampel_pct)} %</span>` : ""}`;
+}
+
+/* ---------------------------------------------------------------- Lieferzeiten-Übersicht (2026-10-15)
+   Alle Felder lz_* der Abteilungen: aktueller Wert, Zielwert (Feldattribut «ziel» in shopfloor_config.json),
+   Abweichung und Grund (Feld lz_grund je Abteilung, Eingabe direkt hier). */
+async function viewLz() {
+  const mods = S.cfg.modules.filter(m => m.kind === "daily" && (m.fields || []).some(f => /^lz_/.test(f.key) && f.type === "num"));
+  const to = todayIso(); const r = await loadRange(mods.map(m => m.key), iso(addDaysD(new Date(), -60)), to);
+  const sec = mods.map(m => {
+    const recs = r[m.key] || {}; const days = Object.keys(recs).sort();
+    const lzf = m.fields.filter(f => /^lz_/.test(f.key) && f.type === "num");
+    let grund = null, grundDay = null;
+    for (let i = days.length - 1; i >= 0; i--) { const g = (recs[days[i]].data || {}).lz_grund; if (g) { grund = g; grundDay = days[i]; break; } }
+    let anyOver = false;
+    const rows = lzf.map(f => {
+      const vals = days.map(d => num((recs[d].data || {})[f.key]));
+      const hist = vals.filter(x => x != null);
+      const cur = hist.length ? hist[hist.length - 1] : null, prev = hist.length > 1 ? hist[hist.length - 2] : null;
+      let curDay = null; for (let i = days.length - 1; i >= 0; i--) if (num((recs[days[i]].data || {})[f.key]) != null) { curDay = days[i]; break; }
+      const ziel = num(f.ziel);
+      const over = cur != null && ziel != null && cur > ziel; if (over) anyOver = true;
+      const st = cur == null ? '<span class="muted">keine Daten</span>' : ziel == null ? '<span class="pill">kein Ziel</span>' : over ? `<span class="pill bad">+${fmtNum(cur - ziel, 1)} Wo über Ziel</span>` : '<span class="pill ok">im Ziel</span>';
+      return `<tr class="${over ? "od" : ""}"><td>${esc(f.label.replace(/^Lieferzeit\s*/i, "") || f.label)}</td>
+        <td class="n"><b>${cur != null ? fmtNum(cur, 1) : "–"}</b> <span class="muted">Wo</span>${prev != null && cur != null && cur !== prev ? ` <small class="${cur > prev ? "up" : "dn"}">${cur > prev ? "▲" : "▼"} ${fmtNum(Math.abs(cur - prev), 1)}</small>` : ""}<div class="sub">${curDay ? esc(fmtDate(curDay)) : ""}</div></td>
+        <td class="n">${ziel != null ? fmtNum(ziel, 1) + ' <span class="muted">Wo</span>' : '<span class="muted">–</span>'}</td>
+        <td>${st}</td><td style="width:160px">${hist.length > 2 ? gxSpark(vals, { h: 28, label: f.label, ref: ziel != null ? ziel : undefined }) : ""}</td></tr>`;
+    }).join("");
+    return `<section class="lz-sec"><h2>${esc(m.title)}</h2>
+      <div class="tbl-wrap"><table class="lz"><thead><tr><th>Lieferzeit</th><th class="r">Aktuell</th><th class="r">Ziel</th><th>Status</th><th>Verlauf</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${(m.fields || []).some(f => f.key === "lz_grund") ? `<label class="lz-grund ${anyOver ? "need" : ""}"><span>Grund der langen Lieferzeit${anyOver ? " <b>(bitte erfassen)</b>" : ""}${grundDay ? ` <span class="muted">· Stand ${esc(fmtDate(grundDay))}</span>` : ""}</span>
+        <textarea class="field-in" rows="2" data-lzg="${m.key}" placeholder="${anyOver ? "Warum liegt die Lieferzeit über dem Ziel? Massnahme?" : "optional"}">${esc(grund || "")}</textarea></label>` : ""}</section>`;
+  }).join("");
+  $("#view").innerHTML = `<div class="head"><div class="grow"><h1>Lieferzeiten</h1>
+    <p class="lede">Aktuelle Lieferzeit je Produktgruppe gegen Zielwert. Liegt eine Lieferzeit über dem Ziel, erfasst der Teamleiter den Grund. Zielwerte: shopfloor_config.json (Attribut «ziel» am Feld).</p></div></div>${sec || '<div class="empty">Keine Lieferzeit-Felder konfiguriert.</div>'}`;
+  document.querySelectorAll("[data-lzg]").forEach(t => t.onchange = async () => {
+    try { await api("POST", "api/daily", { module: t.dataset.lzg, day: todayIso(), changes: { lz_grund: t.value.trim() || null } }); toast("Grund gespeichert"); }
+    catch (e) { toast("Nicht gespeichert: " + e.message, true); }
+  });
 }
 /* Go-for-it-Ziel Verkauf (2026-10-14): einmal pro Monat erfasst und oben im Bericht angezeigt.
    Konvention wie im Shopfloor-File: der Eintrag vom Tag D enthält den Stand bis D-1. Darum gehört der
@@ -865,10 +944,14 @@ async function renderDailyTrend(m) {
     S.daily = save;
     const cand = m.fields.filter(f => (f.type === "num" || f.type === "calc") && !/personal/i.test(f.group || "") && f.key !== "frei" && f.key !== "krank");
     if (m.chart && m.chart.bar) cand.sort((a, b) => (b.key === m.chart.bar) - (a.key === m.chart.bar));
+    // 2026-10-15: feste Auswahl/Reihenfolge je Modul über m.trend (shopfloor_config.json), sonst wie bisher max. 4
+    const tsel = Array.isArray(m.trend) && m.trend.length ? m.trend : null;
+    if (tsel) { cand.splice(0, cand.length, ...tsel.map(k => m.fields.find(f => f.key === k)).filter(Boolean)); }
+    const tmax = tsel ? tsel.length : 4;
     const tiles = [];
     for (const f of cand) {
       const vals = rows.map(v => num(v[f.key]));
-      if (vals.filter(x => x != null).length < 5) continue;
+      if (vals.filter(x => x != null).length < (tsel ? 2 : 5)) continue;
       const last = vals.filter(x => x != null).slice(-2);
       const cur = last[last.length - 1], prev = last.length > 1 ? last[0] : null;
       const dlt = prev != null ? cur - prev : null;
@@ -876,7 +959,7 @@ async function renderDailyTrend(m) {
         <div class="tv"><b>${fmtNum(cur, f.digits)}</b><small class="${dlt > 0 ? "up" : dlt < 0 ? "dn" : ""}">${f.unit ? esc(f.unit) : ""}${dlt != null && dlt !== 0 ? ` ${dlt > 0 ? "▲" : "▼"} ${fmtNum(Math.abs(dlt), f.digits)}` : ""}</small></div>
         ${gxSpark(vals, { h: 38, label: f.label })}
         <div class="tf"><span>${fmtDate(days[0]).slice(0, 6)}</span><span>letzte ${days.length} Erfassungen</span><span>${fmtDate(days[days.length - 1]).slice(0, 6)}</span></div></div>`);
-      if (tiles.length >= 4) break;
+      if (tiles.length >= tmax) break;
     }
     box.innerHTML = tiles.length ? `<div class="trend">${tiles.join("")}</div>` : "";
   } catch (e) { box.innerHTML = ""; }
@@ -1485,6 +1568,7 @@ async function zdImportAbc(file) {
 const FC_DEPTS = [
   { dept: "SEH", mod: "seh", shifts: ["ma1", "ma2"] }, { dept: "TR5", mod: "tr5", shifts: ["ma1", "ma2"] },
   { dept: "TX", mod: "tx", shifts: ["ma1", "ma2", "ma3"] }, { dept: "DW", mod: "dw", shifts: ["ma1", "ma2", "ma3"] },
+  { dept: "DS", mod: "dw", shifts: [] },   // 2026-10-15: Dichtesensoren separat (Disponenten DS1, DS2, DSN); Leistung Stk/FTE manuell erfassen
   { dept: "CZ", mod: "cz", shifts: ["ma1", "ma2", "ma3"] }];
 const SHIFT_LBL = { ma1: "Schicht 1 Früh", ma2: "Schicht 2 Spät", ma3: "Schicht 3 Nacht" };
 const FC = { sel: "TX", data: null, hist: null, monday: null, showOrders: false };

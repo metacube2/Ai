@@ -13,19 +13,22 @@ public static class ShopfloorForecast
 {
     /// <summary>
     /// Zuordnung Disponent/Fertigungssteuerer zu Abteilung (laengster passender Anfang gewinnt). Stand
-    /// Shopfloor_SAP_Feldmapping.xlsx vom 2026-10-14, Werk 1100: SEH = S*, TR5 = EK*, TX = EL*, DW = D*, CZ = 017-028
-    /// (exakt, damit 010-016 nicht mitlaufen). Massgebend ist forecast_prefix in shopfloor_config.json.
+    /// Shopfloor_SAP_Feldmapping.xlsx vom 2026-10-14, Werk 1100: SEH = S*, TR5 = EK*, TX = EL*, CZ = 017-028
+    /// (exakt, damit 010-016 nicht mitlaufen). Seit dem Paket vom 2026-10-16 (Wunsch D. Tobler) DW nur fertige
+    /// Dichtewaechter (D10-D40, DB1/DB2, DEF, DW2) und Dichtesensoren als eigene Zeile DS; DW1 (Ruestpapiere) und
+    /// DL6 (Nachschub) bleiben ohne Abteilung. Massgebend ist forecast_prefix in shopfloor_config.json.
     /// </summary>
     public static readonly Dictionary<string, string[]> DefaultPrefix = new()
     {
         ["SEH"] = ["S", "SEH"],
         ["TR5"] = ["EK", "TR5"],
         ["TX"] = ["EL", "TX"],
-        ["DW"] = ["D", "DW"],
-        ["CZ"] = ["017", "018", "019", "020", "021", "022", "023", "024", "025", "026", "027", "028", "CZ"]
+        ["DW"] = ["D10", "D11", "D12", "D13", "D20", "D21", "D22", "D23", "D30", "D31", "D40", "DB1", "DB2", "DEF", "DW2"],
+        ["CZ"] = ["017", "018", "019", "020", "021", "022", "023", "024", "025", "026", "027", "028", "CZ"],
+        ["DS"] = ["DS1", "DS2", "DSN", "DS"]
     };
 
-    public static readonly string[] Depts = ["SEH", "TR5", "TX", "DW", "CZ"];
+    public static readonly string[] Depts = ["SEH", "TR5", "TX", "DW", "CZ", "DS"];
 
     public static string AssignDept(JsonObject r, IReadOnlyDictionary<string, string[]>? prefixes = null)
     {

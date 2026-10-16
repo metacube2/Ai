@@ -71,6 +71,23 @@ public class ShopfloorStoreTests
     }
 
     [Fact]
+    public void Ampel_Und_Lieferzeit_Grund_Werden_Gespeichert()
+    {
+        // Paket Fabio 2026-10-16 (Config Patch 04): neue Felder pro Bereich
+        using var env = new ShopfloorTestEnv();
+        env.Store.PostDaily(ShopfloorTestEnv.Obj("""{"module":"seh","day":"2026-10-16","changes":{"ampel":"orange","ampel_pct":"87,5","ampel_text":"Engpass Pruefstand","lz_grund":"Material fehlt"}}"""), "ik");
+        env.Store.PostDaily(ShopfloorTestEnv.Obj("""{"module":"logistik","day":"2026-10-16","changes":{"ampel":"grün"}}"""), "ik");
+
+        var seh = env.Store.GetDaily("seh", "2026-10-16", "2026-10-16")["seh"]!["2026-10-16"]!["data"]!.AsObject();
+        Assert.Equal("orange", (string)seh["ampel"]!);
+        Assert.Equal(87.5, (double)seh["ampel_pct"]!, 3);
+        Assert.Equal("Engpass Pruefstand", (string)seh["ampel_text"]!);
+        Assert.Equal("Material fehlt", (string)seh["lz_grund"]!);
+        var log = env.Store.GetDaily("logistik", "2026-10-16", "2026-10-16")["logistik"]!["2026-10-16"]!["data"]!.AsObject();
+        Assert.Equal("grün", (string)log["ampel"]!);
+    }
+
+    [Fact]
     public void Push_Findet_Liste_Per_Match_Und_Legt_Mit_Create_An()
     {
         using var env = new ShopfloorTestEnv();

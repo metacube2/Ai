@@ -1,0 +1,14 @@
+{
+  "_hinweis": "Beispielinhalt. Hülle/Authentifizierung wie beim bestehenden ZD05-Push bzw. connectors/README.md. Werte = KE30 Sep 2026, im Dashboard am 2026-10-01 abgelegt (Stand bis Vortag).",
+  "module": "verkauf",
+  "day": "2026-10-01",
+  "source": "SAP",
+  "values": {
+    "ae_aktuell": 6531197.94,
+    "ae_dw": 2768728.51,
+    "ae_tx": 2684433.17,
+    "umsatz_ist": 7878114.69,
+    "u_dw": 3613791.49,
+    "u_tx": 2940107.89
+  }
+}

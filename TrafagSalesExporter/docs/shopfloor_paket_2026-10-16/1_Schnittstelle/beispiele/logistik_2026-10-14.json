@@ -1,0 +1,14 @@
+{
+  "_hinweis": "Beispielinhalt, Hülle wie beim ZD05-Push. Kontrollwerte TL Logistik: ZC27 ERSDA 13.10.2026. MLM01 im Excel falsch übertragen, Wert aus erstem Testlauf nehmen.",
+  "module": "logistik",
+  "day": "2026-10-14",
+  "rueckmeldedatum": "2026-10-13",
+  "source": "SAP",
+  "values": {
+    "tr5_mle01": 673,
+    "tr5_mle02": 526,
+    "tx_mlm01": null,
+    "dw_mle04": 542,
+    "tx_mle08": 1065
+  }
+}

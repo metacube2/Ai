@@ -1,0 +1,44 @@
+{
+  "id": "01_zd05_zu_besprechen",
+  "datum": "2026-10-14",
+  "beschreibung": "ZD05: Filter und Markierung «Zu besprechen» (neu / ohne Code / Liefertermin überfällig)",
+  "marker": "function zdTalk(",
+  "app_js": [
+    {
+      "name": "zdTalk-Funktion",
+      "old": "const ZD_CODE = { 0: \"0 Pt. – z. B. Eingabefehler, Lieferantenbeistellmaterial\", 1: \"1 Pt. – Fehlmaterial für SIBE / Vorproduktion\", 2: \"2 Pt. – Kundenaufträge sind betroffen\" };",
+      "new": "const ZD_CODE = { 0: \"0 Pt. – z. B. Eingabefehler, Lieferantenbeistellmaterial\", 1: \"1 Pt. – Fehlmaterial für SIBE / Vorproduktion\", 2: \"2 Pt. – Kundenaufträge sind betroffen\" };\n// Zu besprechen im Shop-Floor (2026-10-14): neu seit letztem Import, noch ohne Code (nicht bewertet) oder Liefertermin überschritten.\n// Wie im Excel (#NV bis der Einkauf bewertet): eine neue Position bleibt markiert, bis ein Code gesetzt ist.\nfunction zdTalk(r, today) {\n  const why = [];\n  if (r.neu) why.push(\"neu\");\n  if (!(r.code === 0 || r.code === 1 || r.code === 2)) why.push(\"ohne Code\");\n  const lt = r.liefertermin; if (/^\\d{4}-\\d{2}-\\d{2}$/.test(lt || \"\") && lt < (today || todayIso())) why.push(\"überfällig\");\n  return why;\n}"
+    },
+    {
+      "name": "Meeting-Standardfilter",
+      "old": "  day = day || q.get(\"day\") || \"\";\n  const [d, h] = await Promise.all([api(\"GET\", \"api/zd05\"",
+      "new": "  day = day || q.get(\"day\") || \"\";\n  if (S.meeting && ZD.filter.only === \"all\") ZD.filter.only = \"talk\";   // im laufenden Shop-Floor direkt die zu besprechenden Positionen\n  const [d, h] = await Promise.all([api(\"GET\", \"api/zd05\""
+    },
+    {
+      "name": "Filterknopf Zu besprechen",
+      "old": "[[\"all\", \"Alle\"], [\"h\", \"Im Horizont\"], [\"c2\", \"Code 2\"], [\"nc\", \"Ohne Code\"], [\"neu\", \"Neu\"]].map(([v, l]) => `<button data-zf=\"${v}\" aria-pressed=\"${ZD.filter.only === v}\">${l}</button>`).join(\"\")",
+      "new": "[[\"all\", \"Alle\"], [\"talk\", \"Zu besprechen\"], [\"h\", \"Im Horizont\"], [\"c2\", \"Code 2\"], [\"nc\", \"Ohne Code\"], [\"neu\", \"Neu\"]].map(([v, l]) => `<button data-zf=\"${v}\" aria-pressed=\"${ZD.filter.only === v}\">${l}${v === \"talk\" ? ` <b>${d.rows.filter(r => zdTalk(r).length).length}</b>` : \"\"}</button>`).join(\"\")"
+    },
+    {
+      "name": "Filterlogik",
+      "old": "if (f === \"neu\" && !r.neu) return false;",
+      "new": "if (f === \"neu\" && !r.neu) return false; if (f === \"talk\" && !zdTalk(r).length) return false;"
+    },
+    {
+      "name": "Zeilenmarkierung",
+      "old": "    return `<tr data-m=\"${esc(r.material)}\" class=\"${inH ? \"inh\" : \"\"}\">",
+      "new": "    const why = zdTalk(r, today);\n    return `<tr data-m=\"${esc(r.material)}\" class=\"${inH ? \"inh\" : \"\"}${why.length ? \" talk\" : \"\"}\" title=\"${why.length ? \"Zu besprechen: \" + esc(why.join(\", \")) : \"\"}\">"
+    },
+    {
+      "name": "Pills in der Zeile",
+      "old": "${r.neu ? ' <span class=\"pill info\">neu</span>' : \"\"}",
+      "new": "${r.neu ? ' <span class=\"pill info\">neu</span>' : \"\"}${why.includes(\"überfällig\") ? ' <span class=\"pill bad\">LT überfällig</span>' : \"\"}${why.includes(\"ohne Code\") && !r.neu ? ' <span class=\"pill warn\">ohne Code</span>' : \"\"}"
+    },
+    {
+      "name": "Startseite ohne Code",
+      "old": "${k.code2 ? `<span class=\"pill warn\">${k.code2} × Code 2</span>` : \"\"}",
+      "new": "${k.code2 ? `<span class=\"pill warn\">${k.code2} × Code 2</span>` : \"\"}${k.ohne_code ? `<span class=\"pill warn\">${k.ohne_code} ohne Code</span>` : \"\"}"
+    }
+  ],
+  "style_css": "\n/* ZD05: zu besprechen im Shop-Floor (2026-10-14) */\ntable.zd tr.talk td:first-child{box-shadow:inset 4px 0 0 var(--warn)}\ntable.zd tr.talk td{background:color-mix(in srgb,var(--warn) 6%,transparent)}\n.seg button b{margin-left:4px}\n"
+}
