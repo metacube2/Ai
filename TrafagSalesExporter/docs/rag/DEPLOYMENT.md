@@ -14,7 +14,8 @@ Stand: 2026-10-16
   `trafag_exporter.db.before-verkauf-korrekturen-20261002-142056.bak` (rund zehn Tage alt). Nicht angefasst:
   Ordner `deploy_backups\` und zwei `.bak` unter `output\`.
 - **Monitor-Fenster** (Wunsch Ingo): vor dem Deploy oeffnen, es liest das Protokoll nur mit:
-  Protokollpfad in `.tmp_tools/DeployMonitor/DeployMonitor.logpath.txt` schreiben, dann
+  Protokollpfad in `.tmp_tools/DeployMonitor/DeployMonitor.logpath.txt` schreiben (**ohne BOM**, nicht mit `Set-Content -Encoding utf8`;
+  sonst wartet das Fenster ewig, Fall 2026-10-16), dann
   `explorer.exe "<Repo>\.tmp_tools\DeployMonitor\ZeigeLetztenDeploy.cmd"`; nur ueber `explorer.exe` erscheint das
   Fenster auf Ingos Desktop (ein direktes `Start-Process` aus Claudes Shell blieb am 2026-10-13 unsichtbar).
   Danach der Runner mit Ausgabe in genau diese Datei. Das Fenster zeigt Schritt, Fortschrittsbalken, Laufzeit
