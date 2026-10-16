@@ -85,6 +85,11 @@ public class ShopfloorStoreTests
         Assert.Equal("Material fehlt", (string)seh["lz_grund"]!);
         var log = env.Store.GetDaily("logistik", "2026-10-16", "2026-10-16")["logistik"]!["2026-10-16"]!["data"]!.AsObject();
         Assert.Equal("grün", (string)log["ampel"]!);
+
+        // Ampel wieder entfernen: der dann leere Tagessatz verschwindet, der Verlauf bleibt
+        env.Store.PostDaily(ShopfloorTestEnv.Obj("""{"module":"logistik","day":"2026-10-16","changes":{"ampel":null}}"""), "ik");
+        Assert.Null(env.Store.GetDaily("logistik", "2026-10-16", "2026-10-16")["logistik"]!["2026-10-16"]);
+        Assert.Equal(2, env.Store.GetHistory("logistik", "2026-10-16").Count);
     }
 
     [Fact]

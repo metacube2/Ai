@@ -208,7 +208,11 @@ public sealed class ShopfloorStore
                 data.Remove(k);
         }
         ApplyMeta(meta, ch.Select(kv => kv.Key).ToList(), source);
-        if (row is not null)
+        // 2026-10-16: ist nach der Aenderung kein Wert mehr uebrig (z. B. Ampel wieder entfernt), wird der Tagessatz
+        // geloescht statt leer stehen zu bleiben; der Verlauf behaelt beide Schritte.
+        if (row is not null && data.Count == 0)
+            ShopfloorDb.Exec(con, "DELETE FROM daily WHERE module=? AND day=?", module, day);
+        else if (row is not null)
             ShopfloorDb.Exec(con, "UPDATE daily SET data=?, meta=?, version=version+1, updated_at=?, updated_by=? WHERE module=? AND day=?",
                 SfJson.Dump(data), SfJson.Dump(meta), ts, user, module, day);
         else
