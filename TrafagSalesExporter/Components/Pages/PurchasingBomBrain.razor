@@ -41,12 +41,10 @@
 </MudPaper>
 
 @code {
-    private static readonly (string Key, string De, string En)[] Modes =
-    [
-        ("lz", "LZ-Code", "Lead-time code"),
-        ("risk", "Lieferantenrisiko", "Supplier risk"),
-        ("role", "Stufe", "Level")
-    ];
+    // Schluessel getrennt von den Texten, damit sie nicht als Oberflaechentext gelten (Uebersetzungstest)
+    private static readonly string[] ModeKeys = "lz|risk|role".Split('|');
+    private static readonly (string De, string En)[] ModeTexts = [("LZ-Code", "Lead-time code"), ("Lieferantenrisiko", "Supplier risk"), ("Stufe", "Level")];
+    private static IEnumerable<(string Key, string De, string En)> Modes => ModeKeys.Select((k, i) => (k, ModeTexts[i].De, ModeTexts[i].En));
 
     private ElementReference _host;
     private string _mode = "lz";

@@ -10,6 +10,15 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Stuecklisten-Netz „Gehirn“ (2026-10-16)
+            ["Stücklisten-Netz („Gehirn“)"] = "Stückliste-Netz («Hirni»)",
+            ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Jede Strang isch e Stücklistebeziehig vo obe nach unge: d Ändprodukt lige usse wie d Hirnrinde, d Baugruppe drzwüsche, d Komponänte inne. Wo viu Sträng zämeloufe, hockt e Chrüzpunkt: es Teil, wo i viune Produkt drinnesteckt. Klick uf e Punkt hebt sini Bahne nach obe u unge füre. Datebasis wie «Verwändig & Risiko»: nume Komponänte mit LZ-Code, Liferante vo de letschte 24 Mönet.",
+            ["Prototyp"] = "Prototyp",
+            ["Kreuzpunkte ab"] = "Chrüzpünkt ab",
+            ["Netz wird geladen …"] = "Netz wird glade …",
+            ["Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden)."] = "Ke Stückliste-Date im Cache (Logistik > Stücklisteanalyse lade).",
+            ["{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}"] = "{0} Materialie, {1} Sträng, {2} LZ-Codes, Stand {3}",
+            ["Netz nicht verfügbar: "] = "Netz nid verfüegbar: ",
             ["Operations: Login nötig"] = "Operations: Login nötig",
             ["Aus: Alle mit Windows-Anmeldung sehen und bearbeiten den Shopfloor ohne eigenes Login. Ein: nur mit Operations-Login oder freigegebenem Windows-Konto."] = "Us: Aui mit Windows-Aamäldig gseh u bearbeite dr Shopfloor ohni eigets Login. I: nume mit Operations-Login oder freigäbnem Windows-Konto.",
             ["Login nötig"] = "Login nötig",

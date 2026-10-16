@@ -20,6 +20,15 @@ internal static class PurchasingUiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Stuecklisten-Netz „Gehirn“ (2026-10-16)
+                ["Stücklisten-Netz („Gehirn“)"] = "Red de listas de materiales («cerebro»)",
+                ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Cada hebra es una relación de la lista de materiales de arriba abajo: los productos finales están fuera como la corteza cerebral, los subconjuntos en medio y los componentes dentro. Donde convergen muchas hebras hay un punto de cruce: una pieza que está en muchos productos. Haga clic en un punto para resaltar sus rutas hacia arriba y hacia abajo. Datos como en «Uso y riesgo»: solo componentes con código LZ, proveedores de los últimos 24 meses.",
+                ["Prototyp"] = "Prototipo",
+                ["Kreuzpunkte ab"] = "Puntos de cruce desde",
+                ["Netz wird geladen …"] = "Cargando red …",
+                ["Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden)."] = "No hay datos de listas de materiales en caché (cargar Logística > Análisis de listas de materiales).",
+                ["{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}"] = "{0} materiales, {1} hebras, {2} códigos LZ, estado {3}",
+                ["Netz nicht verfügbar: "] = "Red no disponible: ",
                 ["Bestellwert im Zeitraum"] = "Valor de pedido en el periodo",
                 ["Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten: alle Lieferanten, Warengruppen und Materialien stehen hier. Ein Materialeintrag MIT Bindestrich ist ein echter Artikel, OHNE Bindestrich eine Textbestellung ohne Artikelstamm."] = "Al desplegar un proveedor se ve el gasto por grupo de material; al desplegar un grupo de material se ven los números de material. Desde el 27.08.2026 ya no se recorta nada: aparecen todos los proveedores, grupos de material y materiales. Una entrada de material CON guion es un artículo real, SIN guion es un pedido de texto sin registro maestro.",
                 ["Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."] = "Volumen de compras en CHF por proveedor y año. Cuenta el valor de la posición del pedido en la fecha del pedido, es decir, volumen pedido y no entrada de mercancía ni factura. Las divisas usan el tipo de cambio del documento de pedido. Completo desde el 27.08.2026, ya no se recorta a los proveedores más grandes.",
@@ -148,6 +157,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Stuecklisten-Netz „Gehirn“ (2026-10-16)
+                ["Stücklisten-Netz („Gehirn“)"] = "Rete delle distinte base («cervello»)",
+                ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Ogni filo è una relazione di distinta base dall'alto verso il basso: i prodotti finiti stanno all'esterno come la corteccia, i sottoassiemi nel mezzo, i componenti all'interno. Dove convergono molti fili c'è un punto di incrocio: un pezzo presente in molti prodotti. Fare clic su un punto per evidenziare i suoi percorsi verso l'alto e verso il basso. Dati come in «Utilizzo e rischio»: solo componenti con codice LZ, fornitori degli ultimi 24 mesi.",
+                ["Prototyp"] = "Prototipo",
+                ["Kreuzpunkte ab"] = "Punti di incrocio da",
+                ["Netz wird geladen …"] = "Caricamento rete …",
+                ["Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden)."] = "Nessun dato di distinta base nella cache (caricare Logistica > Analisi distinte base).",
+                ["{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}"] = "{0} materiali, {1} fili, {2} codici LZ, stato {3}",
+                ["Netz nicht verfügbar: "] = "Rete non disponibile: ",
                 ["Bestellwert im Zeitraum"] = "Valore ordinato nel periodo",
                 ["Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten: alle Lieferanten, Warengruppen und Materialien stehen hier. Ein Materialeintrag MIT Bindestrich ist ein echter Artikel, OHNE Bindestrich eine Textbestellung ohne Artikelstamm."] = "Espandendo un fornitore si vede la spesa per gruppo merci; espandendo un gruppo merci si vedono i singoli codici materiale. Dal 27.08.2026 non viene più troncato nulla: sono elencati tutti i fornitori, gruppi merci e materiali. Una voce materiale CON trattino è un articolo reale, SENZA trattino è un ordine testuale senza anagrafica.",
                 ["Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."] = "Volume di acquisto in CHF per fornitore e anno. Conta il valore della posizione ordine alla data ordine, quindi volume ordinato e non entrata merci né fattura. Le valute estere usano il cambio del documento ordine. Completo dal 27.08.2026, non più troncato ai fornitori maggiori.",
@@ -276,6 +294,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Stuecklisten-Netz „Gehirn“ (2026-10-16)
+                ["Stücklisten-Netz („Gehirn“)"] = "बीओएम नेटवर्क («मस्तिष्क»)",
+                ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "हर धागा ऊपर से नीचे तक एक बीओएम संबंध है: अंतिम उत्पाद मस्तिष्क की बाहरी परत की तरह बाहर हैं, असेंबली बीच में और कंपोनेंट अंदर। जहाँ कई धागे मिलते हैं वहाँ एक क्रॉसिंग बिंदु है: ऐसा पुर्ज़ा जो कई उत्पादों में लगता है। किसी बिंदु पर क्लिक करने से उसके ऊपर और नीचे के रास्ते उभरते हैं। डेटा «उपयोग और जोखिम» जैसा: केवल LZ कोड वाले कंपोनेंट, पिछले 24 महीनों के आपूर्तिकर्ता।",
+                ["Prototyp"] = "प्रोटोटाइप",
+                ["Kreuzpunkte ab"] = "क्रॉसिंग बिंदु कम से कम",
+                ["Netz wird geladen …"] = "नेटवर्क लोड हो रहा है …",
+                ["Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden)."] = "कैश में बीओएम डेटा नहीं है (लॉजिस्टिक्स > बीओएम विश्लेषण लोड करें)।",
+                ["{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}"] = "{0} सामग्री, {1} धागे, {2} LZ कोड, स्थिति {3}",
+                ["Netz nicht verfügbar: "] = "नेटवर्क उपलब्ध नहीं: ",
                 ["Bestellwert im Zeitraum"] = "अवधि में ऑर्डर मूल्य",
                 ["Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten: alle Lieferanten, Warengruppen und Materialien stehen hier. Ein Materialeintrag MIT Bindestrich ist ein echter Artikel, OHNE Bindestrich eine Textbestellung ohne Artikelstamm."] = "आपूर्तिकर्ता खोलने पर सामग्री समूह के अनुसार व्यय दिखता है; सामग्री समूह खोलने पर अलग-अलग सामग्री संख्याएँ दिखती हैं। 27.08.2026 से कुछ भी नहीं काटा जाता: सभी आपूर्तिकर्ता, सामग्री समूह और सामग्रियाँ यहाँ हैं। हाइफ़न वाली सामग्री प्रविष्टि वास्तविक वस्तु है, बिना हाइफ़न वाली बिना मास्टर रिकॉर्ड का टेक्स्ट ऑर्डर है।",
                 ["Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."] = "आपूर्तिकर्ता और वर्ष के अनुसार CHF में क्रय मात्रा। ऑर्डर तिथि पर ऑर्डर मद मूल्य गिना जाता है, यानी ऑर्डर किया गया आयतन, न कि माल प्राप्ति या चालान। विदेशी मुद्राएँ ऑर्डर दस्तावेज़ की दर से बदली जाती हैं। 27.08.2026 से पूर्ण, अब सबसे बड़े आपूर्तिकर्ताओं तक सीमित नहीं।",
@@ -404,6 +431,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Stuecklisten-Netz „Gehirn“ (2026-10-16)
+                ["Stücklisten-Netz („Gehirn“)"] = "Rrjeti i listave të materialeve («truri»)",
+                ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Çdo fije është një lidhje e listës së materialeve nga lart poshtë: produktet përfundimtare janë jashtë si korteksi, nënmontimet në mes, komponentët brenda. Ku takohen shumë fije ka një pikë kryqëzimi: një pjesë që gjendet në shumë produkte. Klikoni një pikë për të theksuar rrugët e saj lart e poshtë. Të dhënat si te «Përdorimi dhe rreziku»: vetëm komponentë me kod LZ, furnitorë të 24 muajve të fundit.",
+                ["Prototyp"] = "Prototip",
+                ["Kreuzpunkte ab"] = "Pika kryqëzimi nga",
+                ["Netz wird geladen …"] = "Rrjeti po ngarkohet …",
+                ["Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden)."] = "Nuk ka të dhëna të listave të materialeve në memorie (ngarkoni Logjistika > Analiza e listave të materialeve).",
+                ["{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}"] = "{0} materiale, {1} fije, {2} kode LZ, gjendja {3}",
+                ["Netz nicht verfügbar: "] = "Rrjeti nuk është i disponueshëm: ",
                 ["Bestellwert im Zeitraum"] = "Vlera e porositur në periudhë",
                 ["Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten: alle Lieferanten, Warengruppen und Materialien stehen hier. Ein Materialeintrag MIT Bindestrich ist ein echter Artikel, OHNE Bindestrich eine Textbestellung ohne Artikelstamm."] = "Zgjerimi i një furnitori tregon shpenzimin sipas grupit të mallrave; zgjerimi i një grupi mallrash tregon numrat individualë të materialit. Që nga 27.08.2026 asgjë nuk shkurtohet: janë këtu të gjithë furnitorët, grupet e mallrave dhe materialet. Një zë materiali ME vizë është artikull i vërtetë, PA vizë është porosi teksti pa regjistër bazë.",
                 ["Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."] = "Vëllimi i blerjeve në CHF sipas furnitorit dhe vitit. Numërohet vlera e pozicionit të porosisë në datën e porosisë, pra vëllim i porositur dhe jo pranim malli apo faturë. Monedhat e huaja përdorin kursin e dokumentit të porosisë. I plotë që nga 27.08.2026, nuk shkurtohet më te furnitorët më të mëdhenj.",
@@ -532,6 +568,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Stuecklisten-Netz „Gehirn“ (2026-10-16)
+                ["Stücklisten-Netz („Gehirn“)"] = "Ürün ağacı ağı («beyin»)",
+                ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Her iplik yukarıdan aşağıya bir ürün ağacı ilişkisidir: nihai ürünler beyin kabuğu gibi dışta, alt montajlar ortada, bileşenler içtedir. Birçok ipliğin birleştiği yerde bir kesişme noktası vardır: birçok üründe kullanılan bir parça. Bir noktaya tıklayınca yukarı ve aşağı yolları vurgulanır. Veriler «Kullanım ve risk» ile aynı: yalnızca LZ kodlu bileşenler, son 24 ayın tedarikçileri.",
+                ["Prototyp"] = "Prototip",
+                ["Kreuzpunkte ab"] = "Kesişme noktaları en az",
+                ["Netz wird geladen …"] = "Ağ yükleniyor …",
+                ["Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden)."] = "Önbellekte ürün ağacı verisi yok (Lojistik > Ürün ağacı analizini yükleyin).",
+                ["{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}"] = "{0} malzeme, {1} iplik, {2} LZ kodu, durum {3}",
+                ["Netz nicht verfügbar: "] = "Ağ kullanılamıyor: ",
                 ["Bestellwert im Zeitraum"] = "Dönemdeki sipariş değeri",
                 ["Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten: alle Lieferanten, Warengruppen und Materialien stehen hier. Ein Materialeintrag MIT Bindestrich ist ein echter Artikel, OHNE Bindestrich eine Textbestellung ohne Artikelstamm."] = "Bir tedarikçiyi açmak malzeme grubuna göre harcamayı gösterir; malzeme grubunu açmak tek tek malzeme numaralarını gösterir. 27.08.2026 tarihinden beri hiçbir şey kısaltılmıyor: tüm tedarikçiler, malzeme grupları ve malzemeler burada. Tire İÇEREN bir malzeme kaydı gerçek bir üründür, tire İÇERMEYEN ise ana kaydı olmayan metin siparişidir.",
                 ["Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."] = "Tedarikçi ve yıla göre CHF cinsinden satın alma hacmi. Sipariş kalemi değeri sipariş tarihinde sayılır, yani sipariş edilen hacim; mal girişi veya fatura değil. Yabancı para birimleri sipariş belgesindeki kuru kullanır. 27.08.2026 tarihinden beri eksiksiz, artık en büyük tedarikçilerle sınırlı değil.",
@@ -660,6 +705,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Stuecklisten-Netz „Gehirn“ (2026-10-16)
+                ["Stücklisten-Netz („Gehirn“)"] = "Hap tetlh mIr («yab»)",
+                ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Hoch tlhegh Hap tetlh rar: Dung bIng. Doch naQ Hur, Hap ghom botlh, Hap mach qoD. tlheghmey law' ghomDaq: Hap law' lo'bogh. Daq yIwIv; Hap He Dung bIng je 'angmoH. De' «lo' Qob je» rur: LZ code ghajbogh Hap neH, ngevwI' 24 jar.",
+                ["Prototyp"] = "nab",
+                ["Kreuzpunkte ab"] = "rar Daq",
+                ["Netz wird geladen …"] = "mIr lI'lI' …",
+                ["Keine Stücklistendaten im Cache (Logistik > Stücklistenanalyse laden)."] = "Hap tetlh De' tu'lu'be'.",
+                ["{0} Materialien, {1} Stränge, {2} LZ-Codes, Stand {3}"] = "{0} Hap, {1} tlhegh, {2} LZ code, {3}",
+                ["Netz nicht verfügbar: "] = "mIr tu'lu'be': ",
                 ["Bestellwert im Zeitraum"] = "poH order value",
                 ["Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten: alle Lieferanten, Warengruppen und Materialien stehen hier. Ein Materialeintrag MIT Bindestrich ist ein echter Artikel, OHNE Bindestrich eine Textbestellung ohne Artikelstamm."] = "vendor poSmoH: material group spend cha'. material group poSmoH: material number cha'. 27.08.2026 vaj pagh chIp: Hoch vendor, Hoch material group, Hoch material naDev. hyphen ghaj material: article ngoq. hyphen ghajbe': text order, master record ghajbe'.",
                 ["Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."] = "CHF purchase volume, vendor je DIS. order date order item value togh: order volume, goods receipt ghajbe', invoice ghajbe'. foreign currency: order document rate lo'. 27.08.2026 naQ, vendor tIn neH chIpbe'.",
