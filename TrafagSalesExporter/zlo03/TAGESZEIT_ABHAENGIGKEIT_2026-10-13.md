@@ -51,6 +51,9 @@ Batch-Erklaerung vom April traegt also nicht.
 - Die Fixes 10 bis 18 (`CLAUDE.md` in diesem Ordner) betreffen Mengenformat, Nummernformat und
   „Exklusiv", nicht die Tageszeit. Sie sind ausserdem nicht in `Z_ZLO03_TURBO2` (Wochen_Todo
   Zeile 9, PM-01).
+  *Nachtrag 2026-10-16:* Eine Minimalfassung von FIX 12 ist in T76 aktiv (`T76K912742`), siehe
+  `MK_B63485_FIX12_2026-10-16.md`. Der Rest gilt weiter. `Z_ZLO03_TURBO2` wurde dafuer gelesen und
+  schreibt keine Z-Tabellen; `ZM_LZCODE20_BG` hat in P76 nur auskommentierten Code.
 
 ## 4. Verbleibende Kandidaten (ungeprueft)
 
@@ -60,7 +63,12 @@ Batch-Erklaerung vom April traegt also nicht.
    Programme beim Aufruf selbst die Quelltabellen (`ZPOWERBI_VC_TXT`, `ZMD04_CALC` oder die
    Ziele der Materialisierung), sieht jedes gleichzeitige ZLO03 fuer die Dauer des Laufs zu
    wenig. Das passt zu „Lauf 2 weniger, Lauf 3 wieder alles". Wahrscheinlichster Kandidat.
-3. **Einplanung im Maerz/April war anders**, etwa ein zusaetzlicher Lauf am Nachmittag, der heute
+3. **Neu 2026-10-16, ungeprueft, starker Kandidat:** Reihenfolge der Saetze. `LT_POWERBI` kommt per
+   `FOR ALL ENTRIES` und unsortiert. Ist im Bottom-Up die erste Zeile einer VKNR eine Textposition, bleibt
+   deren Text leer, und ohne `P_TXTPO` loescht `DELETE gt_ktab WHERE maktx IS INITIAL` die ganze VKNR. Die
+   Anzahl VKNR kann so von Lauf zu Lauf schwanken, passend zu B64404 (5, 2, 1, 5). Pruefen: in P76
+   `ZPOWERBI_VC_TXT` mit `KOMPNR = B64404` auf `POSTYP = T` lesen. FIX 12 behebt das, wenn es zutrifft.
+4. **Einplanung im Maerz/April war anders**, etwa ein zusaetzlicher Lauf am Nachmittag, der heute
    nicht mehr eingeplant ist. Protokolle aus dem April sind vermutlich geloescht.
 
 ## 5. Naechste Schritte

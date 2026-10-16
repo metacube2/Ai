@@ -4,7 +4,7 @@ Stand: 2026-10-16
 
 ## SAP ZLO03: FIX 12 in `Z_ZLO03_TURBO2` (MK-Abweichung B63485), 2026-10-16, T76 `T76K912742`
 
-- Beleg aus P76 (nur lesend): B63485 hat vier Textpositionen (46123/24/26/28); die Kennzahlen wurden nur beim ersten Treffer
+- Mechanismus in P76 belegt (nur lesend), Nachweis am Fall erst nach Import: B63485 hat vier Textpositionen (46123/24/26/28); die Kennzahlen wurden nur beim ersten Treffer
   gefuellt, bei einer Textposition blieben MK, Bestand und Kosten 0. Fix in beiden Zweigen, in T76 aktiv; Import P76 durch Ingo.
 - Ueberholt: die Aussage in `zlo03/CLAUDE.md`, die Textpositions-These sei widerlegt. `zlo03/MK_B63485_FIX12_2026-10-16.md`.
 
