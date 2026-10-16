@@ -196,6 +196,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
 | `docs/abap/ZSHOP_RM_ADD.abap` | ABAP ShopRmSet (ZC27-Logik) und ShopProdSet (Istendtermin, Gesamt-/WE-Menge) fuer Operations (Shopfloor), T76K912740 + T76K912738 |
 | `Tools/HandbuchGrafik/` | Prozessgrafik Operations fuer das Handbuch (`operations_prozess.py` -> SVG, `render_png.ps1` -> PNG fuer Word) |
+| `wwwroot/js/bombrain.js` | Stuecklisten-Netz „Gehirn“ (three.js), Einkauf > Spend-Aufriss; Daten `Services/Logistics/BomBrainGraph.cs`, Komponente `Components/Pages/PurchasingBomBrain.razor` |
 | `wwwroot/handbuch/bilder/` | Bilder des Handbuchs (SVG fuer den Reiter, PNG fuer Word) |
 | `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, Feld-Mapping (Abschnitt 12), offene Schritte |
 | `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |

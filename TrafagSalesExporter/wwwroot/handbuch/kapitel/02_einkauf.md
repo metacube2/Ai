@@ -163,6 +163,28 @@ Aktive Lieferanten sind die Lieferanten mit mindestens einer Bestellposition ung
 - «Performance Score» und «Qualität» stehen bewusst auf «-». Es gibt keine angebundene Quelle für Ist-Wareneingangsdaten oder Reklamationen. Die frühere Anzeige mit einem festen Prozentwert war ein Platzhalter und wurde am 07.08.2026 entfernt.
 - Es gibt keine Lieferantenbewertung. «Aktiv» bedeutet nur, dass im Zeitraum bestellt wurde.
 
+## Spend-Aufriss: Stücklisten-Netz („Gehirn“)
+
+### Wozu
+
+Ganz oben im Spend-Aufriss zeigt eine dreidimensionale Grafik die Stücklisten als Netz, ähnlich den Nervenbahnen eines Gehirns. Sie macht sichtbar, welche Teile in vielen Produkten stecken. Fällt so ein Teil aus, trifft es viele Endprodukte auf einmal. Die Grafik ist ein Prototyp (seit 16.10.2026).
+
+### Was man sieht
+
+Jeder Strang ist eine Stücklistenbeziehung von oben nach unten. Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, leuchtet ein **Kreuzpunkt**. Die Farbe ist umschaltbar: nach **LZ-Code**, nach **Lieferantenrisiko** (unkritisch, nur ein Lieferant, überfällige Bestellung, kein Einkauf in 24 Monaten) oder nach **Stufe** (Endprodukt, Baugruppe, Komponente). Ein Regler legt fest, ab wie vielen Verwendungen ein Punkt als Kreuzpunkt gross dargestellt wird. Ziehen dreht das Netz, das Mausrad zoomt, ein Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor und zeigt Material, Text, LZ-Code, Verwendungen und Lieferantenrisiko.
+
+### Wie gerechnet wird
+
+Datenbasis ist dieselbe wie bei „Verwendung & Risiko“ in der Logistik: die Stücklistenpaare aus der Stücklistenanalyse (nur Komponenten mit LZ-Code), der LZ-Code je Material aus dem Einkauf und die Lieferanten der letzten 24 Monate. Eine Komponente liegt im Schwerpunkt der Produkte, in denen sie steckt; Teile mit vielen Verwendungen rücken so in die Mitte. Stand am 16.10.2026: 11'005 Materialien, 24'979 Stränge, 15 LZ-Codes, Stücklistenstand 02.09.2026.
+
+### Einsatz im Arbeitsalltag
+
+**Einkauf:** Kreuzpunkte mit nur einem Lieferanten oder überfälligen Bestellungen sind die ersten Kandidaten für eine Zweitquelle oder einen höheren Sicherheitsbestand. **Leitung Supply Chain:** im Modus Lieferantenrisiko sehen, ob rote Bahnen bis in viele Endprodukte reichen. Beispiel: der Skala-Grundkörper C18947 steckt in 2'258 Endprodukten.
+
+### Grenzen und Fallstricke
+
+Es fehlen alle Komponenten ohne LZ-Code; die ganze Stückliste braucht ein eigenes SAP-Set. Der Stücklistenstand ist so alt wie die letzte Stücklistenanalyse in der Logistik. Die Lage im Raum zeigt Zusammenhänge, keine Mengen oder Werte.
+
 ## Spend-Aufriss
 
 ### Wozu

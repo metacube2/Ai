@@ -67,6 +67,11 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 10:48, Einkauf Spend-Aufriss: Stuecklisten-Netz „Gehirn“ (`d188806` + Uebersetzungen `d6ca646`).** WAL vorher 482 KB,
+  Release-Worktree `1248/1248`, `BiDashboard.dll` `10:47:46`, SHA256 `AC22186FFB6AE7B6E37A1EED922A11D38A1F7218552FC106D8BDC7C256C046A6`,
+  bitgleich, zehn Routen 200, Alarm nur WAL/SHM. In Chrome geprueft: Netz geladen, Klick C18947 (2'258 Verwendungen), Farbumschaltung.
+  **Fehler davor:** Deploy 10:40 (`d188806`) lief parallel zum Testlauf, der 1 Fehler meldete (fehlende Uebersetzungen); Betrieb nicht
+  gestoert (Rueckfall Deutsch), mit `d6ca646` behoben. Einkauf-Datenservice danach geprueft: kein abgebrochener Lauf.
 - **Deploys 2026-10-16 10:17 und 10:19, Menue dezenter (`cf238ff`, `2a7d7c7`).** Wunsch Ingo „dezenter, kein Rosa“: gedeckte Rot-/Ziegeltoene,
   schwaecherer Glanz, langsamer Lauf; alle Kaesten mit gleichem Rand. Je `1247/1247`, bitgleich (zuletzt SHA256 `FC08CF88CE7A59167224EF571A975D9FCC5C4E583380B8FBC0B0DA976EFFA90E`),
   zehn Routen 200, Alarm nur WAL/SHM (auch shopfloor.db). In Chrome geprueft.

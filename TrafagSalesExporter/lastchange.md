@@ -2,6 +2,12 @@
 
 Stand: 2026-10-16
 
+## Einkauf: Stücklisten-Netz „Gehirn“ im Spend-Aufriss, 2026-10-16 (`d188806`, `d6ca646`)
+
+- Prototyp zuoberst im Spend-Aufriss: Stuecklisten als leuchtendes Netz (WebGL, three.js), Endprodukte aussen, Komponenten innen,
+  Kreuzpunkte gross; Farbe umschaltbar LZ-Code/Lieferantenrisiko/Stufe; Klick hebt Bahnen hervor. 11'005 Materialien, 24'979 Straenge.
+- Handbuch Einkauf um den Abschnitt ergaenzt.
+
 ## Menue: alle Hauptbereiche farbig, Admin grau, Home pulsiert, 2026-10-16 (`1931084`)
 
 - *Ueberholt (10:17, „dezenter, kein Rosa“):* Finance Backstein, HR Rostrot, Einkauf Dunkelrot, Verkauf Terrakotta, Logistik Ziegelbraun, leiser animiert.

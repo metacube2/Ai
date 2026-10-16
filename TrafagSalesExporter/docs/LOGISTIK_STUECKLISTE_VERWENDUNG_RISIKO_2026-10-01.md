@@ -51,3 +51,17 @@ Teilmenge): Wirkungsbreite, Tiefe, vererbtes Lieferantenrisiko.
 Neues Set aus `MAST/STKO/STPO` (mehrstufig, nur lesend, mit Schutz wie Logistik live, eigener
 Transport). Dann zusätzlich: Umsatz je Komponente, Komplexität und Gleichteile, kumulierte
 Wiederbeschaffungszeit (kritischer Pfad), Kostenhochrechnung, Stoffvererbung (PPWR).
+
+## Nachtrag 2026-10-16: Stuecklisten-Netz („Gehirn“) im Einkauf > Spend-Aufriss (Prototyp)
+
+Wunsch Ingo: die Vererbungsbaeume wie Nervenbahnen eines Gehirns, Farbe je Code, Kreuzpunkte sichtbar. Entscheide: Farbe
+umschaltbar (LZ-Code, Lieferantenrisiko, Stufe), Prototyp mit dieser Teilmenge, Ort zuoberst im Spend-Aufriss, WebGL fuer Edge.
+
+- Daten: `Services/Logistics/BomBrainGraph.cs` aus `BomInheritanceService` plus `PurchasingMaterialLzCache` (Knoten mit Stufe,
+  Risiko, LZ-Code, Verwendungen; Kanten Eltern -> Kind). Test `BomBrainGraphTests`.
+- Darstellung: `Components/Pages/PurchasingBomBrain.razor`, `wwwroot/js/bombrain.js` mit three.js (schon im Cockpit). Ein
+  Linienpuffer fuer alle Straenge, ein Punktpuffer fuer alle Knoten, feste Anordnung (Endprodukte auf Ellipsoid-Schale in zwei
+  Haelften, Komponenten im Schwerpunkt ihrer Verwendungen nach innen). *Ueberholt:* erste Fassung mit `3d-force-graph` (ein Objekt
+  je Strang) wieder entfernt.
+- Live 16.10.2026 10:48 (`d6ca646`): 11'005 Materialien, 24'979 Straenge, 15 LZ-Codes; Klick auf C18947 zeigt 2'258 Verwendungen.
+- Spaeter: ganze Stueckliste aus SAP (MAST/STKO/STPO), Produktsparte als vierte Farbgebung, Filter „nur Kreuzpunkte“.

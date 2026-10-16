@@ -27,6 +27,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 | **Einkauf Interaktiv**: neun animierte Ansichten auf den Bestellungen (Lieferanten-Galaxie, Rennen, Einkaufsfluss, Sonnenstrahl, Simulator, Wiederbestell-Rhythmus, Kalender, Warengruppen-Netzwerk, 3D), gleiche Bausteine wie Verkauf Interaktiv | `docs/VERKAUF_2026-10-02.md` Abschnitt „Interaktiv“ |
 | **Logistik live**: Kommissionierung und Produktion aus SAP, Umschalter 3D-Lagerplatzansicht, Abruf nur bei offener Seite, Schutz fuer P76, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` | `docs/LOGISTIK_LIVE_2026-10-01.md` |
 | **Verwendung & Risiko**: mehrstufige Verwendung der LZ-Code-Komponenten, vererbtes Lieferantenrisiko; warum kein Umsatz je Komponente | `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` |
+| **Stuecklisten-Netz „Gehirn“** (Spend-Aufriss, WebGL-Prototyp, Farbe LZ-Code/Risiko/Stufe, Kreuzpunkte) | `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` Nachtrag 2026-10-16 |
 | Logistik-Stuecklisten-Dashboard, Top-Down und Bottom-Up | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` |
 | Oberflaechensprachen und Projektsuite (Projektsuite ueberholt, siehe `docs/TRAFAG_PROJEKTE_2026-10-09.md`) | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 
