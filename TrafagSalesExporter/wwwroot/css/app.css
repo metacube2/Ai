@@ -31,7 +31,23 @@ body,
 .nav-hl-grey > .mud-nav-link .mud-nav-link-text { color: #212529 !important; font-weight: 800 !important; }
 .nav-hl-grey > .mud-nav-link .mud-nav-link-icon { color: #343A40 !important; animation: nav-hl-bounce 3s ease-in-out infinite; }
 .nav-hl-grey > .mud-nav-link:hover, .nav-hl-grey > .mud-nav-link.active { filter: brightness(1.05); }
-@media (prefers-reduced-motion: reduce) { .nav-hl-grey > .mud-nav-link, .nav-hl-grey > .mud-nav-link .mud-nav-link-icon, .nav-hl-net > .mud-nav-link::before, .nav-hl-net > .mud-nav-link .mud-nav-link-text::before, .nav-hl > .mud-nav-link, .nav-hl > .mud-nav-link .mud-nav-link-icon { animation: none; } }
+/* 2026-10-16 (Wunsch Ingo): alle Hauptbereiche farbig, je ein eigener Rotton, gleiche Animation wie Operations.
+   r1 Finance Bordeaux, r2 HR Himbeere, r3 Einkauf Weinrot, r4 Verkauf Korallrot, r5 Logistik Ziegelrot. */
+.nav-hl[class*="nav-hl-r"] > .mud-nav-link { animation: nav-hl-flow 3.2s linear infinite, nav-hl-glow-var 2.4s ease-in-out infinite; }
+.nav-hl.nav-hl-r1 > .mud-nav-link { --hl-glow: rgba(165, 28, 48, .8); background-image: linear-gradient(110deg, #6E0A1A 0%, #A51C30 35%, #D9475A 50%, #A51C30 65%, #6E0A1A 100%); }
+.nav-hl.nav-hl-r2 > .mud-nav-link { --hl-glow: rgba(214, 51, 108, .8); background-image: linear-gradient(110deg, #8F1538 0%, #D6336C 35%, #F06595 50%, #D6336C 65%, #8F1538 100%); }
+.nav-hl.nav-hl-r3 > .mud-nav-link { --hl-glow: rgba(156, 37, 80, .8); background-image: linear-gradient(110deg, #5C1530 0%, #9C2550 35%, #C2255C 50%, #9C2550 65%, #5C1530 100%); }
+.nav-hl.nav-hl-r4 > .mud-nav-link { --hl-glow: rgba(255, 107, 107, .8); background-image: linear-gradient(110deg, #C92A2A 0%, #F03E3E 35%, #FF8787 50%, #F03E3E 65%, #C92A2A 100%); }
+.nav-hl.nav-hl-r5 > .mud-nav-link { --hl-glow: rgba(232, 89, 12, .8); background-image: linear-gradient(110deg, #9A2A0A 0%, #D9480F 35%, #FF7043 50%, #D9480F 65%, #9A2A0A 100%); }
+@keyframes nav-hl-glow-var { 0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, .25); } 50% { box-shadow: 0 2px 16px var(--hl-glow); } }
+/* Home pulsiert im Trafag-Orange (CI #C8501E) */
+.nav-hl.nav-hl-home > .mud-nav-link { background-image: linear-gradient(110deg, #B5481B 0%, #C8501E 35%, #F08A5D 50%, #C8501E 65%, #B5481B 100%); animation: nav-hl-flow 3.2s linear infinite, nav-hl-pulse 1.8s ease-in-out infinite; }
+@keyframes nav-hl-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200, 80, 30, .55); } 50% { transform: scale(1.035); box-shadow: 0 0 0 7px rgba(200, 80, 30, 0); } }
+/* Admin Bereich grau hinterlegt (dunkler als das Handbuch, damit er sich abhebt) */
+.nav-hl-grey.nav-hl-admin > .mud-nav-link { background-image: linear-gradient(110deg, #868E96 0%, #ADB5BD 40%, #DEE2E6 50%, #ADB5BD 60%, #868E96 100%); }
+.nav-hl-grey.nav-hl-admin > .mud-nav-link .mud-nav-link-text, .nav-hl-grey.nav-hl-admin > .mud-nav-link .mud-nav-link-icon, .nav-hl-grey.nav-hl-admin > .mud-nav-link .mud-nav-link-expand-icon { color: #1B1E21 !important; }
+.nav-hl > .mud-nav-link .mud-nav-link-expand-icon { color: #fff !important; }
+@media (prefers-reduced-motion: reduce) { .nav-hl.nav-hl-home > .mud-nav-link, .nav-hl[class*="nav-hl-r"] > .mud-nav-link, .nav-hl-grey > .mud-nav-link, .nav-hl-grey > .mud-nav-link .mud-nav-link-icon, .nav-hl-net > .mud-nav-link::before, .nav-hl-net > .mud-nav-link .mud-nav-link-text::before, .nav-hl > .mud-nav-link, .nav-hl > .mud-nav-link .mud-nav-link-icon { animation: none; } }
 
 /* -------------------------------------------------------------------------
    Hell/Dunkel (MainLayout.razor, js/theme.js, 2026-09-29)
