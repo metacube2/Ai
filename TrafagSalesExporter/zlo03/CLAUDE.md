@@ -287,6 +287,9 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
 
 - `ZM_LZCODE20_OPT.abap` — vollständiges korrigiertes Programm
 - `ZM_LZCODE20_OPT_fixes.md` — frühere Fix-Beschreibung, teils überholt
-  (die dort beschriebene Textpositions-These wurde widerlegt: B63485 hat
-  in den 8475-VKNR keine Textpositionen — die eigentliche Ursache ist
-  vermutlich das KOMPNR-Format, siehe Datenfalle 2)
+  (*Überholt am 2026-10-16:* Hier stand, die Textpositions-These sei widerlegt und
+  die Ursache vermutlich das KOMPNR-Format. Beides falsch: B63485 hat in P76 vier
+  Textpositionen in 46123/46124/46126/46128, und die These stimmt. Siehe
+  `MK_B63485_FIX12_2026-10-16.md`)
+- `MK_B63485_FIX12_2026-10-16.md` — Beleg aus P76 und **FIX 12 in `Z_ZLO03_TURBO2`**
+  (T76 aktiv, Transport `T76K912742`); die übrigen Fixes sind weiter nur lokal

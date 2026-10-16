@@ -36,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | ZLO03: MK-Abweichung B63485 belegt, FIX 12 in `Z_ZLO03_TURBO2` | 2026-10-16 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912742`, aktiv, rueckgelesen; Funktionstest erst in P76 moeglich (T76 ohne Daten), Import Ingo. `zlo03/MK_B63485_FIX12_2026-10-16.md` |
 | Claude | Arbeitsplatz Ingo: iPhone-Hotspot trennt alle 2 Min (Ereignisprotokoll, nur lesend) | 2026-10-16 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** Geloest durch neuen Hotspot-Namen (frisches Profil). `docs/router/plattform.md` Abschnitt WLAN-Aussetzer, Nachtrag |
 | Claude | Einkauf Spend-Aufriss: Stuecklisten-Netz „Gehirn“ (WebGL-Prototyp) | 2026-10-16 | **Abgeschlossen, deployed 10:48 (`d6ca646`), Reservierung frei.** In Chrome geprueft; Fehler parallel Deploy/Test in LEARNINGS |
 | Claude | Menue: alle Hauptbereiche farbig (Rottoene), Admin grau, Home pulsiert | 2026-10-16 | **Abgeschlossen, deployed 10:13 (`1931084`), Reservierung frei.** In Chrome geprueft |

@@ -173,6 +173,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `zlo03/CLAUDE.md` | bereichsspezifische Arbeitsregeln ZLO03 |
 | `zlo03/EXKLUSIV_LOGIK_2026-10-08.md` | ZLO03: Bedeutung von „Exklusiv“, Fall B63491 |
 | `zlo03/TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md` | ZLO03: Ergebnisse je nach Tageszeit, Jobliste, Kandidaten |
+| `zlo03/MK_B63485_FIX12_2026-10-16.md` | ZLO03: MK-Abweichung B63485, Beleg P76, FIX 12 in `Z_ZLO03_TURBO2` |
 
 ## Projekt und Koordination
 
