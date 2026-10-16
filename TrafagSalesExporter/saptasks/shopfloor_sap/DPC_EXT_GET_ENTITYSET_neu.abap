@@ -1572,7 +1572,7 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
       ENDLOOP.
     ENDLOOP.
 
-*   Schutz: Pflichtfilter, hoechstens 10 Arbeitsplaetze und 7 Tage, nicht aelter als 400 Tage
+*   Schutz: Pflichtfilter, hoechstens 30 Arbeitsplaetze und 7 Tage, nicht aelter als 400 Tage
     DESCRIBE TABLE lr_rm_arbpl LINES lv_rm_n.
     DESCRIBE TABLE lr_rm_ersda LINES lv_rm_m.
     lv_rm_alt = sy-datum - 400.
@@ -1582,8 +1582,8 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
         lv_rm_m = 0.
       ENDIF.
     ENDLOOP.
-    IF lv_rm_werks IS INITIAL OR lv_rm_n < 1 OR lv_rm_n > 10 OR lv_rm_m < 1 OR lv_rm_m > 7.
-      lv_rm_msg = 'ShopRmSet braucht Werks, Arbpl (1-10) und Ersda (JJJJMMTT, 1-7 Tage, max. 400 Tage zurueck).'.
+    IF lv_rm_werks IS INITIAL OR lv_rm_n < 1 OR lv_rm_n > 30 OR lv_rm_m < 1 OR lv_rm_m > 7.
+      lv_rm_msg = 'ShopRmSet braucht Werks, Arbpl (1-30) und Ersda (JJJJMMTT, 1-7 Tage, max. 400 Tage zurueck).'.
       RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
         EXPORTING
           textid  = /iwbep/cx_mgw_busi_exception=>business_error

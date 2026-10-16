@@ -20,7 +20,7 @@
 *&   Summiert wird die Gutmenge LMNGA (ZC27 zeigt die Einzelzeilen, die Summe bildet der Teamleiter).
 *&
 *& Filter (alle EQ, mehrfach = ODER):
-*&   ShopRmSet  : Werks (Pflicht), Arbpl (Pflicht, 1..10), Ersda (Pflicht, JJJJMMTT, 1..7 Tage, hoechstens
+*&   ShopRmSet  : Werks (Pflicht), Arbpl (Pflicht, 1..30; ZC27-Variante /PPA EXX72 hat 11), Ersda (Pflicht, JJJJMMTT, 1..7 Tage, hoechstens
 *&                400 Tage zurueck), Typcd (optional; mit * als Muster, z. B. 8*)
 *&   ShopProdSet: Werks (Pflicht), Datum (Pflicht, Istendtermin AFKO-GETRI, 1..7 Tage, hoechstens 400 Tage
 *&                zurueck), Dispo (optional; mit * als Muster, z. B. S*)
@@ -214,7 +214,7 @@
       ENDLOOP.
     ENDLOOP.
 
-*   Schutz: Pflichtfilter, hoechstens 10 Arbeitsplaetze und 7 Tage, nicht aelter als 400 Tage
+*   Schutz: Pflichtfilter, hoechstens 30 Arbeitsplaetze und 7 Tage, nicht aelter als 400 Tage
     DESCRIBE TABLE lr_rm_arbpl LINES lv_rm_n.
     DESCRIBE TABLE lr_rm_ersda LINES lv_rm_m.
     lv_rm_alt = sy-datum - 400.
@@ -224,8 +224,8 @@
         lv_rm_m = 0.
       ENDIF.
     ENDLOOP.
-    IF lv_rm_werks IS INITIAL OR lv_rm_n < 1 OR lv_rm_n > 10 OR lv_rm_m < 1 OR lv_rm_m > 7.
-      lv_rm_msg = 'ShopRmSet braucht Werks, Arbpl (1-10) und Ersda (JJJJMMTT, 1-7 Tage, max. 400 Tage zurueck).'.
+    IF lv_rm_werks IS INITIAL OR lv_rm_n < 1 OR lv_rm_n > 30 OR lv_rm_m < 1 OR lv_rm_m > 7.
+      lv_rm_msg = 'ShopRmSet braucht Werks, Arbpl (1-30) und Ersda (JJJJMMTT, 1-7 Tage, max. 400 Tage zurueck).'.
       RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
         EXPORTING
           textid  = /iwbep/cx_mgw_busi_exception=>business_error
