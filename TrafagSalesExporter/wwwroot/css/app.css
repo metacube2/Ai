@@ -34,7 +34,7 @@ body,
 /* 2026-10-16 (Wunsch Ingo): alle Hauptbereiche farbig, gleiche Animation wie Operations. Nachmittag: dezenter, kein Rosa/Weinrot;
    gedeckte Rot- und Ziegeltoene, schwaecherer Glanz, langsamer Lauf, leises Gluehen.
    r1 Finance Backstein, r2 HR Rostrot, r3 Einkauf Dunkelrot, r4 Verkauf Terrakotta, r5 Logistik Ziegelbraun. */
-.nav-hl > .mud-nav-link { width: calc(100% - 16px); }
+.nav-hl > .mud-nav-link, .nav-hl-grey > .mud-nav-link { width: calc(100% - 16px); }
 .nav-hl[class*="nav-hl-r"] > .mud-nav-link { box-shadow: 0 1px 6px rgba(0, 0, 0, .3); animation: nav-hl-flow 6s linear infinite, nav-hl-glow-var 3.6s ease-in-out infinite; }
 .nav-hl.nav-hl-r1 > .mud-nav-link { --hl-glow: rgba(155, 44, 44, .45); background-image: linear-gradient(110deg, #7A1C1C 0%, #9B2C2C 38%, #B24646 50%, #9B2C2C 62%, #7A1C1C 100%); }
 .nav-hl.nav-hl-r2 > .mud-nav-link { --hl-glow: rgba(169, 67, 47, .45); background-image: linear-gradient(110deg, #842B1C 0%, #A3402C 38%, #B95A45 50%, #A3402C 62%, #842B1C 100%); }
