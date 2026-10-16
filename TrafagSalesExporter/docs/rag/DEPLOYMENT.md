@@ -66,6 +66,9 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 07:28, Shopfloor: ZD05-Abgleich 04:00 und 12:45 (`a285009`).** Entscheid Ingo. WAL vorher 260 KB, `1240/1240`,
+  `BiDashboard.dll` `07:28:07`, SHA256 `30706F0782FEBEEBE734CBF5950A9E3F636687A51889806224CCA855D3B09D84`, bitgleich, zehn Routen 200,
+  Alarm nur `-wal`/`-shm`. Server-`appsettings.json` zeigt `SapSyncTimes` 04:00/12:45, Handbuch Kapitel 10 und Word neu.
 - **Deploy 2026-10-16 07:06, Shopfloor: Paket Fabio 2026-10-16 (`b2103a4`, Doku `5c1e29e`).** Auftrag Ingo („bitte einspielen“),
   WAL vorher 124 KB (kein Einkauf-Delta). Release-Worktree `1240/1240` (Titel/Testzahl im Runner-Protokoll sind die alten),
   `BiDashboard.dll` `07:03:00`, SHA256 `B207E6D61E44A4460C244D986C8B9882195388294198CABB6FFDE594258EEA9C`, bitgleich, zehn Routen 200,
