@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Menue: alle Hauptbereiche farbig (Rottoene), Admin grau, Home pulsiert (Wunsch Ingo) | `Components/Layout/NavMenuNode.razor`, `wwwroot/css/app.css` | in Arbeit 2026-10-16 |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Menue: alle Hauptbereiche farbig (Rottoene), Admin grau, Home pulsiert | 2026-10-16 | **Abgeschlossen, deployed 10:13 (`1931084`), Reservierung frei.** In Chrome geprueft |
 | Claude | Handbuch Operations: Prozessgrafik (Trafag CI) und Schnellueberblick; Handbuch kann Bilder | 2026-10-16 | **Abgeschlossen, Reservierung frei.** SVG/PNG aus `Tools/HandbuchGrafik`, Parser/Reiter/Word, Test; Deploy siehe `rag/DEPLOYMENT.md` |
 | Claude | Shopfloor-Mengen aus SAP (J5 Logistik, J8 SEH/TR5, J11 FPY SEH) | 2026-10-16 | **Abgeschlossen, produktiv 09:51 (`9d6b5d2`), Reservierung frei.** P76 gleich Kontrollwerten, Erstlauf geschrieben. `saptasks/shopfloor_sap/NOTES.md` |
 | Claude | Benutzerhandbuch Kapitel Operations erweitert (Geschaeftsprozess, alle Shopfloor-Seiten mit Interpretation, Glossar) | 2026-10-16 | **Abgeschlossen, Reservierung frei.** `10_operations.md`, Word neu (Verzeichnis aktualisiert), Handbuch-Tests 56/56; Deploy siehe `rag/DEPLOYMENT.md` |

@@ -2,6 +2,11 @@
 
 Stand: 2026-10-16
 
+## Menue: alle Hauptbereiche farbig, Admin grau, Home pulsiert, 2026-10-16 (`1931084`)
+
+- Wunsch Ingo: Finance (Bordeaux), HR (Himbeere), Einkauf (Weinrot), Verkauf (Korallrot), Logistik (Ziegelrot) wie Operations hervorgehoben
+  und animiert; Admin Bereich grau hinterlegt; Home im Trafag-Orange mit Pulsieren. `NavMenuNode.razor`, `app.css`.
+
 ## Operations: Mengen aus SAP live, Handbuch mit Prozessgrafik und Schnellueberblick, 2026-10-16
 
 - Logistik (ZC27), Tagesmengen SEH/TR5 und FPY SEH kommen seit 09:51 automatisch aus P76 (`9d6b5d2`); vorher gegen Fabios
