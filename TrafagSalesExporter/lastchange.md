@@ -2,6 +2,12 @@
 
 Stand: 2026-10-16
 
+## Operations (Shopfloor): Mengen aus SAP vorbereitet, 2026-10-16 (`2bc54bd`, T76)
+
+- Neue SAP-Sets `ShopRmSet` (ZC27-Logik) und `ShopProdSet` in T76, gegen ZC27 gleich. Das Cockpit rechnet daraus Logistik
+  (MLE01/02/04, MLM01, MLE08+09), Tagesmengen SEH/TR5 und FPY SEH; Vorschau `sap/mengen` produktiv, Schreiben aus bis zum
+  Transport nach P76 und dem Abgleich mit Fabios Kontrollwerten. Details `saptasks/shopfloor_sap/NOTES.md`.
+
 ## Operations ohne Login, 2026-10-16 07:48 (`70a02b1`)
 
 - Auftrag Ingo: `Shopfloor:OpenForAll = true`, alle Windows-Benutzer sehen und bearbeiten den Shopfloor ohne Anmeldung. Der Admin-Schalter

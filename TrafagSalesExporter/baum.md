@@ -162,6 +162,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` | **SAP effizient bedienen: Zugangswege, Skriptbestand, Aktivierungsfallen, Gateway/OData. Pflichtlektuere vor jeder SAP-Aktion, verlinkt aus `router.md` Regel 5 und `docs/rag/init.md`** |
 | `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` | ZC23 Materialanteil und Arbeit CZ: Formeln, Beispiel B87813, Bedienung, Grenzen, Pruefung (Word, Generator `.tmp_tools/BuildZc23Formeln`) |
 | `saptasks/fiori_zc23/` | Fiori-App ZC23: `NOTES.md`, Generator `erzeugen.py`, `methoden_bauen.py`, MPC/DPC vorher/neu, Struktur-Feldliste, App `webapp/` |
+| `saptasks/shopfloor_sap/` | Shopfloor-Mengen aus SAP: `NOTES.md`, `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
 | `saptasks/fiori_erste_app/` | Erste Fiori-App: `NOTES.md` (Harness, Voraussetzungen, Upload-Wege, Link), Quelle `webapp/` |
 | `saptasks/zc23_materialanteil/` | ZC23 Materialanteil: Analyse und Vorschlag `NOTES.md`, Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |
 | `saptasks/zm_offene_kdauf/` | ZM_OFFENE_KDAUF beschleunigen: Original, REF, OPT (zum Zurueckkopieren), CMP, Funktionsgruppe ZKDAUF_PAR (`Z_KDAUF_PAR_RECHNEN.abap`, `LZKDAUF_PARTOP.abap`), Nummerntest `Z_KDAUF_NR_TEST.abap`, Original-Quellen `Z_BASISPREISLISTE.abap`/`LZZLO1*.abap`, Bausteine `teile/`, `bauen.js`, `einspielen.sh`, Laufprotokolle `lauf*.txt`, Tabellenabzug `zpowerbi_opt.csv`; Stand, Ergebnisse und Offenes in `NOTES.md` |
@@ -193,6 +194,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, 3D-Lagerplatzansicht, offene Schritte |
 | `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
 | `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
+| `docs/abap/ZSHOP_RM_ADD.abap` | ABAP ShopRmSet (ZC27-Logik) und ShopProdSet (Istendtermin, Gesamt-/WE-Menge) fuer Operations (Shopfloor), T76K912740 + T76K912738 |
 | `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, Feld-Mapping (Abschnitt 12), offene Schritte |
 | `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
 | `docs/ARBEITSSTAND_2026-10-14_15.md` | Zusammenfassung aller Arbeiten vom 14. und 15.10.2026 mit Stand je Punkt, offenen Fragen an Fabio und offenen Punkten bei Ingo |

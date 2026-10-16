@@ -373,3 +373,25 @@ Ergebnisbereich CE1xxxx.
 entfernt es (auch in `/api/config`); ohne `planned_source` wird die Datei unveraendert ausgeliefert. Test
 `Planned_Source_Aus_Fabios_Paketen_Gilt_Als_Quelle`. In der abgelegten Kopie `3_Config/config_patch.js` ist die DW-Liste ohne `DW`
 und FPY setzt zusaetzlich `src`; Fabio sollte diese Fassung in seine Vorlage uebernehmen. Weiter offen: Jobs J2 bis J11, Lieferzeit-Ziele.
+
+## 15. Mengen aus SAP: Logistik (J5), Tagesmengen (J8), FPY SEH (J11) (Stand 2026-10-16)
+
+Auftrag: Fabios Mail vom 16.10. (von Ingo weitergeleitet). Klarstellung Fabio: das Cockpit holt per OData selbst, die Jobs
+J1 bis J11 sind eine Liste von Datenabfragen, keine SAP-Jobs.
+
+- **SAP:** neue Sets `ShopRmSet` (Logik von ZC27 `ZPP_RM_MENGEN`, in T76 gelesen) und `ShopProdSet` (Fertigungsauftraege
+  je Istendtermin). In T76 aktiv und gegen ZC27 gleich (MLE01 197, MLE08/09 306/1'044, Variante `/PPA EXX72` 836).
+  Transport `T76K912740` (Strukturen) und `T76K912738` (Klassen, dort noch vom ZC23-Ausbau gesperrt); Ingo transportiert.
+  Einzelheiten `saptasks/shopfloor_sap/NOTES.md`.
+- **Cockpit** (`2bc54bd`, produktiv 09:00): `ShopfloorSapMengen` im SAP-Abgleich (04:00, 12:45). Eintrag vom Tag D = Stand bis
+  D-1, Montag Freitag bis Sonntag. Logistik MLE01/MLE02/MLM01/MLE04 je eigener ZC27-Lauf, MLE08+MLE09 zusammen; `tr5.prod` mit
+  der EXX72-Gruppe (11 Arbeitsplaetze, Typencode 8*); `seh.prod` = WE-Menge S* am Vortag; `seh.fpy` = WE / Gesamt der KW des
+  Vortags. Manuell erfasste Werte werden nicht ueberschrieben. Schalter `Shopfloor:SapMengenEnabled` **aus**, bis die
+  Vorschau `GET shopfloor/api/sap/mengen?tag=2026-10-14` in P76 Fabios Kontrollwerte trifft (MLE01 673, MLE02 526, MLE04 542,
+  MLM01 193, MLE08+09 1'065). Heute liefert sie 502 „Set noch nicht transportiert“.
+- **Weitere Punkte aus der Mail:** Ampel, Ampel-Text, Erfuellung und Lieferzeit-Grund produktiv gespeichert und wieder entfernt
+  (geprueft 16.10.). Versionsnummer in `index.html` ist nicht noetig: `/shopfloor/*` geht seit 2026-10-08 mit `no-cache` und
+  ETag raus, der Browser holt neue Dateien ohne Strg+F5. Ein geleerter Tagessatz wird seit `180f9ef` geloescht statt leer
+  zu bleiben. ZD05 bleibt auf 04:00 und 12:45 (Entscheid Ingo, obwohl Fabio 05:45 reichen wuerde).
+- **Nicht gebaut:** J2/J3 Verkauf (Ergebnisbereich, Wertfelder, Merkmal Produktsparte fehlen; Fabio hat keine Berechtigung fuer
+  KEA0, Ingo schaut nach), J6 Auftragsvorrat (ZC22), Historie nachladen (erst nach der Pruefung, nur leere Tage).

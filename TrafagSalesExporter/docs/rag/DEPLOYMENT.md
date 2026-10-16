@@ -67,6 +67,10 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 09:00, Shopfloor: Mengen aus SAP mit Vorschau, Schreiben aus (`2bc54bd`, davor `180f9ef` leerer Tagessatz
+  wird geloescht).** WAL vorher 544 KB, `1246/1246`, `BiDashboard.dll` `09:00:00`, SHA256
+  `273CA91B9658CA1E30411F6274CC4B45B6C6F69DA43377C2A5307028496D2EAA`, bitgleich, zehn Routen 200, Alarm nur `-wal`/`-shm` (auch
+  `shopfloor.db`). `GET shopfloor/api/sap/mengen?tag=2026-10-14` antwortet 502 „Set noch nicht transportiert“ (erwartet).
 - **Deploy 2026-10-16 07:48, Operations ohne Login (`Shopfloor:OpenForAll = true`, `70a02b1`, Tests `1c03156`).** Auftrag Ingo. WAL vorher 136 KB,
   `1241/1241`, `BiDashboard.dll` `07:48:40`, SHA256 `FAB1D51FFF49F9F2231BFB988A02195BB6D0B12288D77EE5769228C2FEAF366A`, bitgleich, zehn Routen 200,
   ohne Alarm. Server-`appsettings.json` zeigt `OpenForAll: true`. Wirkung fuer andere Benutzer nicht selbst geprueft (Ingo ist in `AllowedUsers`).

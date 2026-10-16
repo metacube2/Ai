@@ -52,6 +52,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **`ZM_OFFENE_KDAUF` beschleunigen: `_OPT` (etwa 1/35 bis 1/50 der Laufzeit, identisch), Parallelbaustein `Z_KDAUF_PAR_RECHNEN`, Korrekturschalter, Vergleich `_CMP`, in T76 eingesetzt, Transport `T76K912728` bereit, Import P76 offen** | `saptasks/zm_offene_kdauf/NOTES.md` |
 | **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) standardmaessig sichtbar, mit Werk (`ZZPEG_WERKS`), Layout `/ P00 TX`, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
 | **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`, seit 2026-10-09 in P76** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
+| **Operations (Shopfloor): `ShopRmSet` (ZC27 `ZPP_RM_MENGEN`) und `ShopProdSet` (Istendtermin), Logistik/Tagesmengen/FPY SEH; T76 aktiv, Transport `T76K912740` + `T76K912738` offen** | `saptasks/shopfloor_sap/NOTES.md`, Code `docs/abap/ZSHOP_RM_ADD.abap` |
 | **Einkauf: `EinkKontraktSet` (Mengenkontrakte wie ME3L, EKAB) und `EinkMatLzSet` (LZ-/Sortiments-Code), Strukturen in `T76K912724`, Klassen in `T76K912718`, beide seit 2026-10-09 in P76** | `docs/abap/ZEINK_KONTRAKT_ADD.abap`, `docs/rag/PURCHASING.md` |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
