@@ -185,6 +185,24 @@ public static class ShopfloorEndpoints
     }
 
     // ------------------------------------------------------------ Hilfen
+    private static async Task<IResult> Mengen(HttpContext c, bool write)
+    {
+        var tag = c.Request.Query["tag"].ToString();
+        var day = DateOnly.FromDateTime(DateTime.Today);
+        if (tag.Length > 0 && !DateOnly.TryParseExact(tag, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out day))
+            return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
+        try
+        {
+            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().MengenAsync(day, write, c.RequestAborted);
+            return J(c, result);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Results.Json(new { ok = false, meldung = ex.GetBaseException().Message }, statusCode: 502);
+        }
+    }
+
     private static JsonObject KpiStatus(KpiLiefertreueSync sync, string? cut)
     {
         var result = new JsonObject
@@ -326,6 +344,9 @@ public static class ShopfloorEndpoints
         });
         // SAP-Abgleich (ShopZd05Set, ShopAufSet), 2026-10-07: Status und Abgleich auf Knopfdruck.
         g.MapGet("/sap/status", (HttpContext c) => J(c, c.RequestServices.GetRequiredService<ShopfloorSapSync>().LastResult.DeepClone()));
+        // Mengen des Vortags (J5, J8, J11), 2026-10-16: GET = Vorschau ohne Schreiben, POST = schreiben (manuelle Werte bleiben).
+        g.MapGet("/sap/mengen", async Task<IResult> (HttpContext c) => await Mengen(c, false));
+        g.MapPost("/sap/mengen", async Task<IResult> (HttpContext c) => await Mengen(c, true));
         g.MapPost("/sap/sync", async Task<IResult> (HttpContext c) =>
         {
             try

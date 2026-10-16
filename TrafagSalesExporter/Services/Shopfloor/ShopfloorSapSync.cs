@@ -91,12 +91,8 @@ public sealed class ShopfloorSapSync : BackgroundService
         try
         {
             var options = _options.CurrentValue;
-            var (baseUrl, user, password) = await ResolveConnectionAsync(_services, ct);
-            // ZD05 rechnet je Disponent rund 15 bis 20 s (T76, 2026-10-07); deshalb grosszuegiges Zeitlimit.
-            using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{user}:{password}")));
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var (client, baseUrl) = await CreateClientAsync(ct);
+            using var clientScope = client;
 
             var zd05 = new List<JsonElement>();
             foreach (var dispo in options.Zd05Dispo.Where(d => !string.IsNullOrWhiteSpace(d)))
@@ -126,6 +122,19 @@ public sealed class ShopfloorSapSync : BackgroundService
                 ["ergebnis"] = results
             };
             _logger.LogInformation("Shopfloor: SAP-Abgleich {Zd05} ZD05-Positionen, {Orders} Auftraege", zd05.Count, orders.Count);
+            // Mengen des Vortags (J5, J8, J11), 2026-10-16; ein Fehler hier stoppt ZD05 und Forecast nicht.
+            if (options.SapMengenEnabled)
+            {
+                try
+                {
+                    LastResult["mengen"] = await MengenCoreAsync(client, baseUrl, DateOnly.FromDateTime(DateTime.Today), true, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    LastResult["mengen"] = new JsonObject { ["ok"] = false, ["meldung"] = ex.GetBaseException().Message };
+                    _logger.LogWarning(ex, "Shopfloor: Mengen aus SAP fehlgeschlagen.");
+                }
+            }
             return LastResult;
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -142,6 +151,47 @@ public sealed class ShopfloorSapSync : BackgroundService
         {
             _gate.Release();
         }
+    }
+
+    /// <summary>
+    /// Mengen fuer den Tag D (J5 Logistik, J8 SEH/TR5, J11 FPY SEH). Ohne <paramref name="write"/> nur Vorschau, sonst
+    /// ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/mengen?tag=JJJJ-MM-TT.
+    /// </summary>
+    public async Task<JsonObject> MengenAsync(DateOnly day, bool write, CancellationToken ct)
+    {
+        var (client, baseUrl) = await CreateClientAsync(ct);
+        using (client)
+            return await MengenCoreAsync(client, baseUrl, day, write, ct);
+    }
+
+    private async Task<JsonObject> MengenCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
+    {
+        var plant = _options.CurrentValue.SapPlant;
+        var result = await ShopfloorSapMengen.ComputeAsync(day, plant, (set, filter) => ReadAsync(client, baseUrl, set, filter, ct));
+        result["ok"] = true;
+        result["geschrieben"] = false;
+        if (!write)
+            return result;
+        var store = _stores.Store;
+        var dayIso = (string)result["day"]!;
+        var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+        result["uebersprungen_manuell"] = skipped;
+        result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
+        result["geschrieben"] = true;
+        _logger.LogInformation("Shopfloor: Mengen aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
+        return result;
+    }
+
+    private async Task<(HttpClient Client, string BaseUrl)> CreateClientAsync(CancellationToken ct)
+    {
+        var (baseUrl, user, password) = await ResolveConnectionAsync(_services, ct);
+        // ZD05 rechnet je Disponent rund 15 bis 20 s (T76, 2026-10-07); deshalb grosszuegiges Zeitlimit.
+        var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{user}:{password}")));
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        return (client, baseUrl);
     }
 
     /// <summary>ShopZd05Set -> Zeilen wie der ZD05-Excel-Import (Feldnamen aus zd05.py AUTO).</summary>
@@ -225,7 +275,7 @@ public sealed class ShopfloorSapSync : BackgroundService
             using var response = await client.GetAsync(url, ct);
             if (!response.IsSuccessStatusCode)
                 throw new HttpRequestException($"SAP OData {set} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase})" +
-                    (response.StatusCode == System.Net.HttpStatusCode.NotFound ? ", Set vermutlich noch nicht transportiert (T76K912718)." : "."));
+                    (response.StatusCode == System.Net.HttpStatusCode.NotFound ? ", Set vermutlich noch nicht transportiert (ShopRm/ShopProd: T76K912740 + T76K912738)." : "."));
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
             var pageRows = document.RootElement.TryGetProperty("d", out var d) && d.TryGetProperty("results", out var r) && r.ValueKind == JsonValueKind.Array
                 ? r.EnumerateArray().Select(e => e.Clone()).ToList()

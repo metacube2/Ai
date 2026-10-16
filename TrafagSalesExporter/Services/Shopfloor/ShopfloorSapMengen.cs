@@ -1,0 +1,171 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
+namespace TrafagSalesExporter.Services.Shopfloor;
+
+/// <summary>
+/// Operations (Shopfloor), 2026-10-16, Mail Fabio „Datenabfragen J5, J8, J11“: Mengen des Vortags aus SAP.
+/// <list type="bullet">
+/// <item>J5 Logistik: ZC27-Logik (ShopRmSet, Gutmenge je Arbeitsplatz nach Erfassungsdatum ERSDA, ohne Stornos, nur der
+/// letzte Vorgang an den gewaehlten Arbeitsplaetzen). Jede Gruppe ist ein eigener ZC27-Lauf, wie der Teamleiter ihn macht.</item>
+/// <item>J8 TR5: dieselbe Logik mit der ZC27-Variante /PPA EXX72 (elf Arbeitsplaetze, Typencode 8*), gelesen in T76 am 2026-10-16.</item>
+/// <item>J8 SEH: ShopProdSet, WE-Menge der Fertigungsauftraege mit Istendtermin am Vortag, Disponent S* (wie COOIS /SEH 001).</item>
+/// <item>J11 FPY SEH: WE-Menge / Gesamtmenge der Auftraege mit Istendtermin in der KW des Vortags (Montag: Vorwoche).</item>
+/// </list>
+/// Eintrag vom Tag D = Stand bis D-1; am Montag zaehlen Freitag, Samstag und Sonntag zusammen. Manuell erfasste Werte
+/// werden nicht ueberschrieben. ABAP: docs/abap/ZSHOP_RM_ADD.abap. Doku: docs/SHOPFLOOR_2026-10-07.md Abschnitt 15.
+/// </summary>
+public static class ShopfloorSapMengen
+{
+    public const string RmSet = "ShopRmSet";
+    public const string ProdSet = "ShopProdSet";
+    public const string SehDispo = "S*";
+
+    public sealed record RmGroup(string Module, string Field, string[] Arbpl, string? Typcd = null);
+
+    /// <summary>Zuordnung laut Mail Fabio vom 2026-10-16 (Punkt 4) und ZC27-Variante /PPA EXX72.</summary>
+    public static readonly RmGroup[] RmGroups =
+    [
+        new("logistik", "tr5_mle01", ["MLE01"]),
+        new("logistik", "tr5_mle02", ["MLE02"]),
+        new("logistik", "tx_mlm01", ["MLM01"]),
+        new("logistik", "dw_mle04", ["MLE04"]),
+        new("logistik", "tx_mle08", ["MLE08", "MLE09"]),
+        new("tr5", "prod", ["EDF72", "EDB72", "EAC72", "EAP72", "EAN72", "EAM72", "EDD72", "EEX72", "EAS72", "EDS72", "EVA72"], "8*")
+    ];
+
+    /// <summary>Rueckmelde- bzw. Istendtage fuer den Eintrag vom Tag D: Vortag, am Montag Freitag bis Sonntag.</summary>
+    public static List<DateOnly> SourceDays(DateOnly day)
+        => day.DayOfWeek == DayOfWeek.Monday ? [day.AddDays(-3), day.AddDays(-2), day.AddDays(-1)] : [day.AddDays(-1)];
+
+    /// <summary>KW (Montag bis Sonntag) des Vortags, nur bis zum Vortag; am Montag ist das die ganze Vorwoche.</summary>
+    public static List<DateOnly> FpyWeek(DateOnly day)
+    {
+        var vortag = day.AddDays(-1);
+        var monday = vortag.AddDays(-(((int)vortag.DayOfWeek + 6) % 7));
+        return Enumerable.Range(0, 7).Select(monday.AddDays).Where(d => d <= vortag).ToList();
+    }
+
+    /// <summary>Rechnet alle Werte fuer den Tag D. Schreibt nichts. <paramref name="read"/> liest ein Set mit Filter.</summary>
+    public static async Task<JsonObject> ComputeAsync(DateOnly day, string plant,
+        Func<string, string, Task<List<JsonElement>>> read)
+    {
+        var days = SourceDays(day);
+        var values = new JsonObject();
+        var detail = new JsonArray();
+
+        var ersda = Or("Ersda", days);
+        foreach (var g in RmGroups)
+        {
+            var filter = $"Werks eq '{plant}' and ({string.Join(" or ", g.Arbpl.Select(a => $"Arbpl eq '{a}'"))}) and {ersda}"
+                         + (g.Typcd is null ? string.Empty : $" and Typcd eq '{g.Typcd}'");
+            var rows = await read(RmSet, filter);
+            var menge = rows.Sum(r => Int(r, "Lmnga"));
+            Put(values, g.Module, g.Field, menge);
+            var je = new JsonObject();
+            foreach (var r in rows.GroupBy(r => Text(r, "Arbpl")).OrderBy(x => x.Key, StringComparer.Ordinal))
+                je[r.Key] = r.Sum(x => Int(x, "Lmnga"));
+            detail.Add(new JsonObject
+            {
+                ["feld"] = $"{g.Module}.{g.Field}",
+                ["arbeitsplaetze"] = string.Join("+", g.Arbpl),
+                ["typencode"] = g.Typcd,
+                ["menge"] = menge,
+                ["rueckmeldungen"] = rows.Sum(r => Int(r, "Anzahl")),
+                ["je_arbeitsplatz"] = je
+            });
+        }
+
+        var seh = await read(ProdSet, $"Werks eq '{plant}' and Dispo eq '{SehDispo}' and {Or("Datum", days)}");
+        var sehMenge = seh.Sum(r => Int(r, "Wemng"));
+        Put(values, "seh", "prod", sehMenge);
+        detail.Add(new JsonObject
+        {
+            ["feld"] = "seh.prod",
+            ["disponent"] = SehDispo,
+            ["menge"] = sehMenge,
+            ["auftraege"] = seh.Sum(r => Int(r, "Anzahl"))
+        });
+
+        var week = FpyWeek(day);
+        List<JsonElement> fpyRows = week.Count == 0 ? [] : await read(ProdSet, $"Werks eq '{plant}' and Dispo eq '{SehDispo}' and {Or("Datum", week)}");
+        var gesamt = fpyRows.Sum(r => Int(r, "Gamng"));
+        var we = fpyRows.Sum(r => Int(r, "Wemng"));
+        if (gesamt > 0)
+            Put(values, "seh", "fpy", Math.Round(100.0 * we / gesamt, 1));
+        detail.Add(new JsonObject
+        {
+            ["feld"] = "seh.fpy",
+            ["woche"] = week.Count == 0 ? null : $"{week[0]:yyyy-MM-dd} bis {week[^1]:yyyy-MM-dd}",
+            ["we_menge"] = we,
+            ["gesamtmenge"] = gesamt,
+            ["auftraege"] = fpyRows.Sum(r => Int(r, "Anzahl"))
+        });
+
+        return new JsonObject
+        {
+            ["day"] = Iso(day),
+            ["quelltage"] = new JsonArray(days.Select(d => (JsonNode?)Iso(d)).ToArray()),
+            ["werte"] = values,
+            ["detail"] = detail
+        };
+    }
+
+    /// <summary>
+    /// Push-Items aus den Werten; Felder mit einem manuell erfassten Wert (Wert da, aber ohne SAP-Quelle) bleiben aus.
+    /// <paramref name="existing"/> liefert je Modul den Tagessatz (data, meta) oder null.
+    /// </summary>
+    public static (JsonArray Items, JsonArray Skipped) BuildItems(JsonObject computed, Func<string, JsonObject?> existing)
+    {
+        var day = (string)computed["day"]!;
+        var items = new JsonArray();
+        var skipped = new JsonArray();
+        foreach (var (module, node) in (JsonObject)computed["werte"]!)
+        {
+            var row = existing(module);
+            var data = row?["data"] as JsonObject;
+            var meta = row?["meta"] as JsonObject;
+            var fields = new JsonObject();
+            foreach (var (key, value) in (JsonObject)node!)
+            {
+                var hasValue = data?[key] is not null;
+                var fromSap = string.Equals((string?)meta?[key]?["src"], "SAP", StringComparison.OrdinalIgnoreCase);
+                if (hasValue && !fromSap)
+                {
+                    skipped.Add($"{module}.{key}");
+                    continue;
+                }
+                fields[key] = value?.DeepClone();
+            }
+            if (fields.Count > 0)
+                items.Add(new JsonObject { ["module"] = module, ["day"] = day, ["fields"] = fields });
+        }
+        return (items, skipped);
+    }
+
+    private static string Or(string property, IEnumerable<DateOnly> days)
+        => "(" + string.Join(" or ", days.Select(d => $"{property} eq '{d:yyyyMMdd}'")) + ")";
+
+    private static void Put(JsonObject values, string module, string field, JsonNode value)
+    {
+        if (values[module] is not JsonObject m)
+            values[module] = m = new JsonObject();
+        m[field] = value;
+    }
+
+    private static string Iso(DateOnly d) => d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    private static string Text(JsonElement x, string name)
+        => x.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()?.Trim() ?? string.Empty : string.Empty;
+
+    private static int Int(JsonElement x, string name)
+        => x.TryGetProperty(name, out var v)
+            ? v.ValueKind switch
+            {
+                JsonValueKind.Number when v.TryGetInt32(out var i) => i,
+                JsonValueKind.String when int.TryParse(v.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var s) => s,
+                _ => 0
+            }
+            : 0;
+}

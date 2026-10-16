@@ -43,6 +43,12 @@ public sealed class ShopfloorOptions
     /// <summary>SAP-Abgleich (ShopZd05Set, ShopAufSet). Erst einschalten, wenn T76K912718 in P76 ist.</summary>
     public bool SapSyncEnabled { get; set; }
 
+    /// <summary>
+    /// Mengen des Vortags aus SAP schreiben (J5 Logistik, J8 SEH/TR5, J11 FPY SEH; ShopRmSet/ShopProdSet), 2026-10-16.
+    /// Erst einschalten, wenn die Vorschau (GET sap/mengen) in P76 gegen ZC27 stimmt.
+    /// </summary>
+    public bool SapMengenEnabled { get; set; }
+
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
     public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45
 
