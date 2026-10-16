@@ -2,6 +2,11 @@
 
 Stand: 2026-10-16
 
+## Doku: Arbeitsplatz Ingo, iPhone-Hotspot trennt alle zwei Minuten, 2026-10-16
+
+- Nachtrag im Abschnitt „wiederkehrende WLAN-Aussetzer“ in `docs/router/plattform.md`: Muster aus dem Ereignisprotokoll, Ausschluesse,
+  Loesung durch neuen Hotspot-Namen (frisches Profil), naechste Schritte falls es zurueckkehrt. Nur Doku.
+
 ## Einkauf: Stücklisten-Netz „Gehirn“ im Spend-Aufriss, 2026-10-16 (`d188806`, `d6ca646`)
 
 - Prototyp zuoberst im Spend-Aufriss: Stuecklisten als leuchtendes Netz (WebGL, three.js), Endprodukte aussen, Komponenten innen,

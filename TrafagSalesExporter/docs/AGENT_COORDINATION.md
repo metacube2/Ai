@@ -36,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Arbeitsplatz Ingo: iPhone-Hotspot trennt alle 2 Min (Ereignisprotokoll, nur lesend) | 2026-10-16 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** Geloest durch neuen Hotspot-Namen (frisches Profil). `docs/router/plattform.md` Abschnitt WLAN-Aussetzer, Nachtrag |
 | Claude | Einkauf Spend-Aufriss: Stuecklisten-Netz „Gehirn“ (WebGL-Prototyp) | 2026-10-16 | **Abgeschlossen, deployed 10:48 (`d6ca646`), Reservierung frei.** In Chrome geprueft; Fehler parallel Deploy/Test in LEARNINGS |
 | Claude | Menue: alle Hauptbereiche farbig (Rottoene), Admin grau, Home pulsiert | 2026-10-16 | **Abgeschlossen, deployed 10:13 (`1931084`), Reservierung frei.** In Chrome geprueft |
 | Claude | Handbuch Operations: Prozessgrafik (Trafag CI) und Schnellueberblick; Handbuch kann Bilder | 2026-10-16 | **Abgeschlossen, Reservierung frei.** SVG/PNG aus `Tools/HandbuchGrafik`, Parser/Reiter/Word, Test; Deploy siehe `rag/DEPLOYMENT.md` |

@@ -297,6 +297,47 @@ die Standortdienste aus sind, mit dem irrefuehrenden Zusatz, es brauche erhoehte
 `Get-NetAdapter`, `Get-NetAdapterAdvancedProperty` und das Ereignisprotokoll liefern
 dieselben Angaben ohne diese Huerde.
 
+### Nachtrag 2026-10-16: iPhone-Hotspot trennt alle zwei Minuten
+
+Ingo war unterwegs und mit dem Laptop am iPhone-Hotspot `Metacube` (Adresse
+`172.20.10.x`, das Netz eines iPhone-Hotspots). Er meldete, das Internet breche immer
+wieder ab. Das Ereignisprotokoll zeigte ein **exaktes Muster**: Jede Verbindung (`8001`)
+endete **zwei Minuten spaeter** mit einer Trennung (`8003`), Ursache „Das Netzwerk wurde
+vom Benutzer getrennt“, davor jeweils `11004` „Funksicherheit angehalten“. Zwischen 12:30
+und 12:48 waren es sieben Abbrueche in Folge. Dazwischen lief das Internet normal, 10 von 10
+Pings mit rund 32 ms.
+
+Ausgeschlossen wurde:
+
+* **Treiber und Funk:** kein Treiberfehler, und vor wie nach der Loesung dieselbe
+  Verbindung (802.11ax, WPA2-Personal, AES, 229 Mbps).
+* **Firmenrichtlinie:** Die Zulassungsliste enthaelt nur `trafag-802.1x`, die
+  Blockierungsliste ist leer, `fBlockNonDomain = 0`.
+* **Andere Programme:** kein Prozess und keine geplante Aufgabe, die zum Takt passt.
+* **iPhone-Einstellungen allein:** Ingo hat unter anderem „Kompatibilitaet maximieren“ und
+  den Stromsparmodus ausgeschaltet. Danach gab es um 12:45 und 12:48 weiter Abbrueche.
+
+**Geloest hat es ein neuer Hotspot-Name.** Ingo hat den Hotspot in `Metacubez` umbenannt.
+Windows hat dafuer ein frisches Profil angelegt, und seit 12:49 lief die Verbindung ohne
+Abbruch, nachgeprueft bis 12:58. Die wahrscheinliche Ursache ist ein fehlerhaftes altes
+Profil: Es war als „Manuelle Verbindung“ gespeichert, und Windows fuehrte das Netz doppelt
+als `Metacube 2`. Das genaue Detail ist ohne Adminrechte nicht auslesbar. Dass der Neustart
+des Hotspots mitgeholfen hat, laesst sich nicht ausschliessen.
+
+Was daraus folgt:
+
+* Das **Trafag-VPN fiel hier nur als Folge** der WLAN-Abbrueche (RasMan `20268` kurz nach
+  `8003`). Das ist ein anderer Fall als der Fehler 829 im Heimnetz.
+* Kehrt das Muster zurueck, zuerst das Hotspot-Profil loeschen (*Bekannte Netzwerke
+  verwalten*) und neu verbinden. Das alte Profil `Metacube` sollte geloescht werden.
+* Falls das nicht reicht, waeren die naechsten Schritte: WLAN-Energiesparen auf Akku auf
+  Hoechstleistung (Energieplan „TRAFAG AG“, auf Akku stand „Mittel“), im Treiber
+  „MIMO-Energiesparmodus“ auf „Keine SMPS“ und „Roaming-Dynamik“ auf „1. Am niedrigsten“,
+  als letzter Versuch „Wireless-Modus 802.11n/ac/ax“ auf „3. 802.11ac“. Die
+  Treibereinstellungen brauchen Adminrechte, also die IT (siehe oben).
+* Pruefweg: `WLAN-AutoConfig/Operational` mit `8001`/`8003` und die Abstaende
+  vergleichen, dazu `NetworkProfile/Operational` mit `10000`/`10001` fuer den Profilnamen.
+
 ## Fallen in diesem Ast
 
 Die vier Deploy-Fallen stehen ausfuehrlich in `docs/DEPLOYMENT.md` Abschnitt 4. Kurz:
