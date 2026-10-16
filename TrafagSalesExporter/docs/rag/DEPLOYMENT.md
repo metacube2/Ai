@@ -67,6 +67,9 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 10:02, Handbuch Operations: Schnellueberblick mit Prozessgrafik, Bildzeilen (`2fd32d6`).** WAL vorher 573 KB,
+  `1247/1247`, `BiDashboard.dll` `10:02:02`, SHA256 `256F65E1BCC031032C3D8150107E6E09BB943208DA0A29713F1655F3F50FC448`, bitgleich, zehn Routen 200,
+  ohne Alarm. Reiter Handbuch in Chrome: Grafik geladen (1400 x 880), auch im Dunkelmodus auf weissem Grund; Word-Seite 116 mit Grafik.
 - **Deploy 2026-10-16 09:51, Shopfloor: Mengen aus SAP eingeschaltet (`9d6b5d2`).** Nach P76-Pruefung (Vorschau gleich ZC27/FPY-Kontrollwerten).
   WAL vorher 358 KB, `1246/1246`, `BiDashboard.dll` `09:50:47`, SHA256 `DBD71E805EA19A1079FBECDA24E16046AFC599C769B815DC003039C1ACFB2A22`, bitgleich,
   zehn Routen 200, Alarm nur `-wal`/`-shm`. Erstlauf `POST shopfloor/api/sap/mengen?tag=2026-10-16` geschrieben (logistik, tr5, seh).
