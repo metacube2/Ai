@@ -6,7 +6,7 @@ Flipper-Backbox trifft Kurzwellen-Shack. Seit 2026-10-15.
 
 ## Ablauf
 
-1. **Runde ausrufen:** Titel, Ort, Notiz, Dauer, Name und Mail eingeben und
+1. **Termin erfassen:** Titel, Ort, Notiz, Dauer, Name und Mail eingeben und
    Termine vorschlagen (einzeln oder „+ 4 Freitage“). Der Organisator bekommt
    per Mail den Link für alle und den geheimen Admin-Link.
 2. **Eintragen:** Wer den Link hat, drückt bei jedem Termin den Bumper
@@ -32,7 +32,7 @@ Browser merkt sich die Token in `localStorage`, Mailadressen sieht nur der Admin
 | Optik | `public/dmd.js` (Dot-Matrix-Display mit 128×32 Punkten), `public/fx.js` (Copper-Balken, Sternenfeld, Sinus-Laufschrift, S-Meter und Wasserfall aus den Analysern der Audiokette) |
 | Gags | Boot-Diskette als Klick für den Ton (Autoplay-Sperre). Fünfmal schnell aufs DMD tippen ergibt TILT und setzt die Punkte zurück. |
 
-Der Ton startet erst nach einem Klick: Auf der Diskette „DISK EINLEGEN ♪“
+Der Ton startet erst nach einem Klick: Auf der Diskette „TERMIN ERFASSEN ♪“
 oder später mit dem Knopf ⏻. Die Regler und der Ton-Zustand bleiben im Browser
 gespeichert.
 

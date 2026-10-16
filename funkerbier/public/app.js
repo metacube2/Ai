@@ -1,6 +1,6 @@
 // Funkerbier – Terminsuche. Vanilla JS, kein Build. Quelle Ai/funkerbier/.
 import { Dmd } from './dmd.js?v=1';
-import { Funk, BAENDER } from './audio.js?v=1';
+import { Funk, BAENDER } from './audio.js?v=2';
 import { hintergrund, laufschrift, instrumente } from './fx.js?v=1';
 
 const $ = (s) => document.querySelector(s);
@@ -84,17 +84,17 @@ power.addEventListener('click', async () => {
   speicher.schreiben('ton', funk.an);
   powerAnzeigen();
 });
-let bandIndex = speicher.lesen('band', 2) % BAENDER.length;
+let bandIndex = speicher.lesen('band70', 5) % BAENDER.length;
 function vfoAnzeigen() {
   const b = BAENDER[bandIndex];
   const khz = Math.round((b.qrg % 1) * 1000);
   $('.vfo-band').textContent = b.band;
   $('.vfo-mode').textContent = b.mode;
-  $('.vfo-qrg').textContent = `${Math.floor(b.qrg)}.${String(khz).padStart(3, '0')}.${String(Math.floor(Math.random() * 100)).padStart(2, '0')}`;
+  $('.vfo-qrg').textContent = `${Math.floor(b.qrg)}.${String(khz).padStart(3, '0')} MHz`;
 }
 $('#vfo').addEventListener('click', () => {
   bandIndex = (bandIndex + 1) % BAENDER.length;
-  speicher.schreiben('band', bandIndex);
+  speicher.schreiben('band70', bandIndex);
   funk.bandWechseln(BAENDER[bandIndex]);
   vfoAnzeigen();
   dmd.zeige('QSY ' + BAENDER[bandIndex].band, { gross: true, dauer: 1000, sofort: true });
@@ -169,7 +169,7 @@ function heute(plusTage = 0) {
 
 function zeigeStart() {
   document.title = 'Funkerbier QRV';
-  dmd.setzeIdle(['FUNKERBIER', 'CQ CQ CQ DE BIER.INGOK.CH', punkteText, 'NEUE RUNDE AUSRUFEN!', 'INSERT COIN']);
+  dmd.setzeIdle(['FUNKERBIER', 'CQ CQ CQ DE BIER.INGOK.CH', punkteText, 'TERMIN ERFASSEN!', 'INSERT COIN']);
   let termine = [];
   const chips = h('div', { class: 'chips', 'aria-label': 'Vorgeschlagene Termine' });
   const datum = h('input', { type: 'date', value: heute(7), 'aria-label': 'Datum' });
@@ -202,13 +202,13 @@ function zeigeStart() {
   const f = {
     titel: h('input', { name: 'titel', value: 'Funkerbier', maxlength: 80, required: true }),
     ort: h('input', { name: 'ort', maxlength: 120, placeholder: 'z. B. Restaurant Sonne, Stammtisch-Ecke' }),
-    notiz: h('textarea', { name: 'notiz', maxlength: 1000, placeholder: 'Handfunke mitbringen, QRG 145.500 für die Anfahrt …' }),
+    notiz: h('textarea', { name: 'notiz', maxlength: 1000, placeholder: 'Handfunke mitbringen, QRG 438.650 MHz für die Anfahrt …' }),
     wer: h('input', { name: 'wer', maxlength: 40, required: true, autocomplete: 'name', value: speicher.lesen('name', '') }),
     mail: h('input', { name: 'mail', type: 'email', maxlength: 120, required: true, autocomplete: 'email', value: speicher.lesen('mail', '') }),
     dauer: h('select', { name: 'dauer' }, ...[[120, '2 Stunden'], [180, '3 Stunden'], [240, '4 Stunden'], [360, 'Open End (6 h)']].map(([v, t]) => h('option', { value: v, selected: v === 180 }, t))),
     website: h('input', { name: 'website', tabindex: '-1', autocomplete: 'off' }),
   };
-  const knopf = h('button', { class: 'knopf knopf-gross', type: 'submit' }, '► CQ AUSRUFEN');
+  const knopf = h('button', { class: 'knopf knopf-gross', type: 'submit' }, '► TERMIN ERFASSEN');
   const abschuss = h('div', { class: 'abschuss' }, h('span', { class: 'flipper' }), knopf, h('span', { class: 'flipper rechts' }));
 
   const form = h('form', { novalidate: true, onsubmit: async (e) => {
@@ -257,11 +257,11 @@ function zeigeStart() {
   const runden = speicher.lesen('runden', []);
   app.replaceChildren(
     h('div', { class: 'zwei-spalten' },
-      fenster('CQ CQ · NEUE RUNDE AUSRUFEN', form),
+      fenster('TERMIN ERFASSEN', form),
       h('div', { style: 'display:grid;gap:18px' },
         fenster('SO LÄUFT DAS QSO',
           h('ol', { class: 'schritte' },
-            h('li', {}, 'Termine vorschlagen und ausrufen.'),
+            h('li', {}, 'Termine vorschlagen und erfassen.'),
             h('li', {}, 'Den Link an die Runde schicken.'),
             h('li', {}, 'Alle drücken ihre Bumper: grün = JA, gelb = VIELLEICHT, rot = NEIN. Dafür gibt es eine QSL-Mail.'),
             h('li', {}, 'Du legst den Termin fest. Alle bekommen eine Mail mit Kalendereintrag. JACKPOT!')),
@@ -295,7 +295,7 @@ async function zeigeRunde(id, tok) {
   try {
     d = await api({ a: 'runde', id, admin, ich }, 'GET');
   } catch (err) {
-    app.replaceChildren(fenster('KEIN SIGNAL', h('p', {}, err.message), h('p', {}, h('a', { href: '#/' }, '← Neue Runde ausrufen'))));
+    app.replaceChildren(fenster('KEIN SIGNAL', h('p', {}, err.message), h('p', {}, h('a', { href: '#/' }, '← Termin erfassen'))));
     dmd.zeige('NO SIGNAL', { art: 'blink', gross: true, sofort: true });
     return;
   }

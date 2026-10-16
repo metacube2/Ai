@@ -13,6 +13,7 @@ export const BAENDER = [
   { band: '20M', qrg: 14.285, mode: 'USB', filter: 2100, cw: 640 },
   { band: '10M', qrg: 28.4, mode: 'USB', filter: 2600, cw: 700 },
   { band: '2M', qrg: 145.5, mode: 'FM', filter: 3200, cw: 800 },
+  { band: '70CM', qrg: 438.65, mode: 'FM', filter: 3200, cw: 820 },
 ];
 
 export class Funk {
@@ -21,7 +22,7 @@ export class Funk {
     this.an = false;
     this.pegel = { musik: 0.6, rauschen: 0.35, sfx: 0.7 };
     this.beiZeile = () => {};
-    this.band = BAENDER[2];
+    this.band = BAENDER[5];
   }
 
   get bereit() { return !!this.ctx; }
