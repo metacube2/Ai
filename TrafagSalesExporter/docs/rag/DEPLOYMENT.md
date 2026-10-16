@@ -67,6 +67,9 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-16 09:18, Benutzerhandbuch Kapitel Operations erweitert (`db76079`).** WAL vorher 185 KB, `1246/1246`,
+  `BiDashboard.dll` `09:17:57`, SHA256 `1B5D8D7EFEFDC5078A9306FECA00025AA58A792A7A639FC753E8AD5C8C5FF023`, bitgleich, zehn Routen 200, Alarm nur
+  `-wal`/`-shm` und Checkpoint beider DBs. Reiter Handbuch in Chrome geprueft (neue Abschnitte sichtbar), Word-Download 200.
 - **Deploy 2026-10-16 09:00, Shopfloor: Mengen aus SAP mit Vorschau, Schreiben aus (`2bc54bd`, davor `180f9ef` leerer Tagessatz
   wird geloescht).** WAL vorher 544 KB, `1246/1246`, `BiDashboard.dll` `09:00:00`, SHA256
   `273CA91B9658CA1E30411F6274CC4B45B6C6F69DA43377C2A5307028496D2EAA`, bitgleich, zehn Routen 200, Alarm nur `-wal`/`-shm` (auch
