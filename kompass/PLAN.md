@@ -1,6 +1,6 @@
 # Kompass – ADHS-Alltags-Dashboard (Plan für Claude Code)
 
-Stand 2026-10-17. Dieser Plan ist die Arbeitsgrundlage für Claude Code. Er hält die
+Stand 2026-10-17. **Stufe 1 ist gebaut und in Betrieb** (siehe [README.md](README.md)); offen ist nur die Definition of Done durch den Benutzer (echter Push bestätigt). Dieser Plan ist die Arbeitsgrundlage für Claude Code. Er hält die
 Entscheidungen des Benutzers fest (Fragebogen vom 2026-10-17), das Datenmodell, die
 Ausbaustufen und die Regeln für die Umsetzung. Zuerst ganz lesen, dann Stufe für
 Stufe bauen. Erst wenn eine Stufe die Definition of Done erfüllt, kommt die nächste.
