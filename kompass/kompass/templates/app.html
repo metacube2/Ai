@@ -1,0 +1,34 @@
+{% extends "basis.html" %}
+{% block koerper %}app{% endblock %}
+{% block koerper_daten %} data-erstpasswort="{{ 1 if erstpasswort else 0 }}"{% endblock %}
+{% block kopf %}<script type="module" src="{{ url_for('static', filename='app.js') }}?v=1"></script>{% endblock %}
+{% block inhalt %}
+<header class="kopf">
+  <a class="marke" href="#heute" aria-label="Kompass, zur Startansicht"><img src="{{ url_for('static', filename='icon.svg') }}" alt="" width="30" height="30"><span>Kompass</span></a>
+  <form class="erfassen" id="erfassen" autocomplete="off">
+    <label class="unsichtbar" for="erfassen-feld">Gedanken erfassen</label>
+    <input id="erfassen-feld" name="text" maxlength="500" placeholder="Gedanken festhalten …" enterkeyhint="done">
+    <button class="knopf" type="submit" aria-label="Erfassen">＋</button>
+  </form>
+  <a class="timer-chip" id="timer-chip" href="#fokus" hidden></a>
+  <a class="symbol-knopf" href="#einstellungen" aria-label="Einstellungen" title="Einstellungen">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+  </a>
+</header>
+
+<nav class="leiste" aria-label="Bereiche">
+  <a href="#heute" data-ziel="heute"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg><span>Heute</span><kbd>1</kbd></a>
+  <a href="#eingang" data-ziel="eingang"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13.5l2.5-8h12l2.5 8v5h-17z"/><path d="M3.5 13.5h5l1 2h5l1-2h5"/></svg><span>Eingang</span><b class="zahl" id="zahl-eingang" hidden></b><kbd>2</kbd></a>
+  <a href="#routinen" data-ziel="routinen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5l1.5 1.5L8.5 5M4 12.5l1.5 1.5 3-3M4 18.5l1.5 1.5 3-3M11.5 6.5h8.5M11.5 12.5h8.5M11.5 18.5h8.5"/></svg><span>Routinen</span><kbd>3</kbd></a>
+  <a href="#papier" data-ziel="papier"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8.5L19 7.5V21H6z"/><path d="M14 3v5h5M9 12h7M9 15.5h7M9 19h4"/></svg><span>Papier</span><kbd>4</kbd></a>
+  <a href="#fokus" data-ziel="fokus"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg><span>Fokus</span><kbd>5</kbd></a>
+</nav>
+
+<main id="ansicht" class="ansicht" tabindex="-1" aria-live="polite"></main>
+<aside class="seite" id="seite" aria-label="Fokus"></aside>
+<div class="toast" id="toast" role="status" hidden></div>
+
+
+<dialog id="dialog" class="dialog"><form method="dialog" id="dialog-form"></form></dialog>
+<form id="logout" method="post" action="/logout" hidden><input type="hidden" name="csrf" value="{{ csrf_token() }}"></form>
+{% endblock %}
