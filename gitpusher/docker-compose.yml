@@ -1,0 +1,14 @@
+services:
+  gitpusher:
+    build: .
+    container_name: gitpusher
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    volumes:
+      - gitpusher-data:/gitpusher/data
+      - gitpusher-deployments:/deployments
+
+volumes:
+  gitpusher-data:
+  gitpusher-deployments:

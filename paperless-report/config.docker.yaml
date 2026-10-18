@@ -1,0 +1,49 @@
+paperless:
+  url: "http://paperlessngx-webserver-1:8000"
+  token: ""
+  timeout: 60
+
+custom_fields:
+  betrag: "betrag"
+  rechnungsdatum: "rechnungsdatum"
+  kategorie: "kategorie"
+  zahlungsart: "zahlungsart"
+  periode: "periode"
+  notiz: "notiz"
+
+defaults:
+  currency: "CHF"
+  date_field: "archive_date"
+  invoice_tag: "rechnung"
+
+tags:
+  - rechnung
+  - quittung
+  - steuern
+  - krankenkasse
+  - versicherung
+
+categories:
+  - Wohnen
+  - Gesundheit
+  - Mobilitaet
+  - Versicherungen
+  - Steuern
+  - Lebensmittel
+  - Freizeit
+  - Diverses
+
+output:
+  format: "html"
+  path: "./output"
+  filename_pattern: "finanzbericht_{year}"
+
+cache:
+  enabled: true
+  path: "./.cache"
+  ttl: 900
+
+logging:
+  level: "INFO"
+  file: ""
+  colorize: false

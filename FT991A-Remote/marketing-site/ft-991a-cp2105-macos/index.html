@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FT-991A CP2105 ports on macOS: CAT troubleshooting | MacYaesu</title>
+  <meta name="description" content="FT-991A CAT not answering on macOS? Enhanced vs. Standard CP2105 port, RTS, baud rate, echo-only replies and busy ports, with a symptom table.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/macyaesu/ft-991a-cp2105-macos/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="FT-991A CP2105 ports on macOS: CAT troubleshooting">
+  <meta property="og:description" content="Symptoms and fixes when the FT-991A does not answer CAT commands on a Mac.">
+  <meta property="og:url" content="https://www.aiscom.ch/macyaesu/ft-991a-cp2105-macos/">
+  <meta property="og:image" content="https://www.aiscom.ch/macyaesu/main.png">
+  <link rel="stylesheet" href="../guide.css?v=20261006">
+</head>
+<body>
+  <nav class="guide-nav">
+    <a class="guide-brand" href="https://www.aiscom.ch/macyaesu/">MacYaesu</a>
+    <a href="https://www.aiscom.ch/macyaesu/ft-991a-mac/">Setup guide</a>
+  </nav>
+
+  <main class="guide">
+    <p class="kicker">Troubleshooting</p>
+    <h1>FT-991A CP2105 ports on macOS: why CAT doesn't answer</h1>
+    <p class="lead">The port is open, but the radio stays silent. On the Mac this almost always comes down to one of the causes below. The table helps you find yours.</p>
+
+    <h2>Symptoms and causes</h2>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+        <tr>
+          <td>No <code>/dev/cu.usbserial-*</code> port at all</td>
+          <td>Cable, USB port or missing driver</td>
+          <td>Try another cable and port. On older macOS, install the Silicon Labs VCP driver.</td>
+        </tr>
+        <tr>
+          <td>Port opens, but there is no reply at all</td>
+          <td>Standard port instead of Enhanced port</td>
+          <td>Use the other port of the pair. On our radio it was the one ending in <code>0</code>.</td>
+        </tr>
+        <tr>
+          <td>Right port, still no reply</td>
+          <td>RTS is off while menu 033 CAT RTS is ENABLE</td>
+          <td>Switch RTS on in the software, or set the menu to DISABLE.</td>
+        </tr>
+        <tr>
+          <td>Garbage or nothing at all, sometimes</td>
+          <td>Baud rate differs from menu 031 CAT RATE</td>
+          <td>Set both sides to exactly the same rate.</td>
+        </tr>
+        <tr>
+          <td>You only get your own command back, e.g. <code>FA;</code></td>
+          <td>Echo from the wrong device, not an answer from the radio</td>
+          <td>Check the port. A real reply carries a value, e.g. <code>FA014074000;</code>.</td>
+        </tr>
+        <tr>
+          <td>"Resource busy" when opening</td>
+          <td>Another program holds the port (WSJT-X, fldigi, a logger)</td>
+          <td>Only one program can open the CAT port. Close the other one, or let one program share control.</td>
+        </tr>
+        <tr>
+          <td>Replies with <code>?;</code>, radio reacts slowly</td>
+          <td>Commands sent too fast (polling)</td>
+          <td>Poll less often and leave gaps between commands.</td>
+        </tr>
+      </table>
+    </div>
+
+    <h2>The quick test</h2>
+    <p>Send <code>ID;</code>. The FT-991A answers with <code>ID0670;</code>. If you see exactly that, port, speed and RTS are correct, and any remaining problem is in the software.</p>
+
+    <h2>Why we wrote this</h2>
+    <p>We hit every one of these problems while building <a href="https://www.aiscom.ch/macyaesu/">MacYaesu</a>, a native macOS app for the FT-991A. The app now recognizes the Enhanced port and offers it first. It ignores echoes and only reports "connected" after a real <code>ID;</code> handshake. It also writes a CAT trace with every command and reply, so you can see which of the cases above applies.</p>
+
+    <div class="cta">
+      <strong>Try it with your own radio.</strong>
+      <p>15-minute demo, no registration. Full version 49 CHF one-time. Requires macOS 15 or newer.</p>
+      <a class="button" href="https://www.aiscom.ch/macyaesu/MacYaesu.dmg">Download demo</a>
+      <a href="https://www.aiscom.ch/macyaesu/ft-991a-mac/">Full setup guide</a>
+    </div>
+  </main>
+
+  <footer class="guide-footer">
+    <a href="https://www.aiscom.ch/en/legal/imprint">Imprint</a>
+    <a href="https://www.aiscom.ch/en/legal/privacy">Privacy</a>
+  </footer>
+</body>
+</html>

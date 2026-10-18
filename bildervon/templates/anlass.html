@@ -1,0 +1,29 @@
+{% extends "basis.html" %}
+{% block titel %}{{ anlass.titel if anlass else 'Neuer Anlass' }} · Bilder von uns{% endblock %}
+{% block inhalt %}
+<section class="held klein">
+  <p class="eyebrow"><a href="{{ url_for('admin') }}">← Verwalten</a></p>
+  <h1 class="riesig"><span class="verlauf">{{ anlass.titel if anlass else 'Neuer Anlass' }}</span></h1>
+</section>
+<form method="post" class="glas panel formular">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <div class="feldreihe">
+    <label class="feld schmal"><input name="jahr" type="number" min="1900" max="2200" value="{{ anlass.jahr if anlass else jahr_vorschlag }}" placeholder=" " required><span>Jahr</span></label>
+    <label class="feld"><input name="titel" value="{{ anlass.titel if anlass }}" placeholder=" " required><span>Titel – Weihnachten, Hochzeit, Ferien …</span></label>
+    <label class="feld schmal"><input name="datum" value="{{ anlass.datum if anlass }}" placeholder=" "><span>Datum / Monat</span></label>
+  </div>
+  <label class="feld"><textarea name="beschreibung" rows="2" placeholder=" ">{{ anlass.beschreibung if anlass }}</textarea><span>Beschreibung</span></label>
+
+  <h3>Links</h3>
+  <p class="leise">Freigabe-Links aus Nextcloud, Immich oder PhotoPrism (nur https). Leere Zeilen werden ignoriert.</p>
+  {% for l in links %}{% set d = l.dienst %}{% set u = l.url %}{% set b = l.bezeichnung %}{% include "linkzeile.html" %}{% endfor %}
+  {% for _ in range(leere_zeilen) %}{% set d = 'nextcloud' %}{% set u = '' %}{% set b = '' %}{% include "linkzeile.html" %}{% endfor %}
+
+  <h3>Sichtbar für</h3>
+  {% if not familien %}<p class="leise">Lege zuerst unter „Verwalten“ eine Familie an.</p>{% endif %}
+  <div class="chips">
+    {% for f in familien %}<label class="chip"><input type="checkbox" name="familie" value="{{ f.id }}" {{ 'checked' if f.id in freigegeben }}><span><i class="avatar">{{ f.name[:1]|upper }}</i>{{ f.name }}</span></label>{% endfor %}
+  </div>
+  <div class="aktionen"><a class="geist text" href="{{ url_for('admin') }}">Abbrechen</a><button class="glow">Speichern</button></div>
+</form>
+{% endblock %}

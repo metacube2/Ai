@@ -1,0 +1,65 @@
+{% extends "basis.html" %}
+{% block titel %}Verwalten · Bilder von uns{% endblock %}
+{% block inhalt %}
+<section class="held klein">
+  <p class="eyebrow">Admin</p>
+  <h1 class="riesig"><span class="verlauf">Verwalten</span></h1>
+  <div class="kennzahlen">
+    <div class="glas zahlkachel"><b>{{ anlaesse|length }}</b><span>Anlässe</span></div>
+    <div class="glas zahlkachel"><b>{{ familien|length }}</b><span>Familien</span></div>
+    <div class="glas zahlkachel"><b>{{ anlaesse|map(attribute='links')|map('length')|sum }}</b><span>Links</span></div>
+  </div>
+</section>
+
+<div class="abschnitt-kopf"><h2>Anlässe</h2><a class="glow" href="{{ url_for('anlass_bearbeiten') }}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Neuer Anlass</a></div>
+<section class="glas panel">
+  {% if not anlaesse %}<p class="leise">Noch keine Anlässe.</p>{% endif %}
+  <ul class="zeilenliste">
+    {% for a in anlaesse %}
+    <li>
+      <span class="jahrmarke farbe-{{ a.id % 6 }}">{{ a.jahr }}</span>
+      <a class="titel" href="{{ url_for('anlass_bearbeiten', anlass_id=a.id) }}">{{ a.titel }}<small>{{ a.links|length }} Link{{ '' if a.links|length == 1 else 's' }} · {{ a.familien|join(', ') or 'für niemanden freigegeben' }}</small></a>
+      <form method="post" action="{{ url_for('anlass_loeschen', anlass_id=a.id) }}" class="loeschen"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="geist gefahr" title="Löschen" aria-label="Löschen"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></form>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<div class="abschnitt-kopf"><h2>Familien</h2></div>
+<section class="glas panel">
+  <ul class="zeilenliste">
+    {% for f in familien %}
+    <li class="aufklapp">
+      <details>
+        <summary><span class="avatar">{{ f.name[:1]|upper }}</span><span class="titel">{{ f.name }}<small>Login: {{ f.login }}</small></span><svg class="chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <form method="post" action="{{ url_for('familie_speichern') }}" class="feldreihe">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ f.id }}">
+          <label class="feld"><input name="name" value="{{ f.name }}" placeholder=" " required><span>Name</span></label>
+          <label class="feld"><input name="login" value="{{ f.login }}" placeholder=" " required><span>Login</span></label>
+          <label class="feld"><input name="passwort" type="password" placeholder=" " autocomplete="new-password"><span>Neues Passwort (leer = bleibt)</span></label>
+          <button class="glow">Speichern</button>
+        </form>
+        <form method="post" action="{{ url_for('familie_loeschen', familie_id=f.id) }}" class="loeschen"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="geist gefahr text">Familie löschen</button></form>
+      </details>
+    </li>
+    {% else %}<li class="leise">Noch keine Familie angelegt.</li>{% endfor %}
+  </ul>
+  <h3>Neue Familie</h3>
+  <form method="post" action="{{ url_for('familie_speichern') }}" class="feldreihe">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label class="feld"><input name="name" placeholder=" " required><span>Name, z.B. Familie Muster</span></label>
+    <label class="feld"><input name="login" placeholder=" " required><span>Login</span></label>
+    <label class="feld"><input name="passwort" type="password" minlength="8" autocomplete="new-password" placeholder=" " required><span>Passwort (min. 8)</span></label>
+    <button class="glow">Anlegen</button>
+  </form>
+</section>
+
+<div class="abschnitt-kopf"><h2>Dein Passwort</h2></div>
+<section class="glas panel">
+  <form method="post" action="{{ url_for('admin_passwort') }}" class="feldreihe">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label class="feld"><input name="passwort" type="password" minlength="12" autocomplete="new-password" placeholder=" " required><span>Neues Admin-Passwort (min. 12)</span></label>
+    <button class="glow">Ändern</button>
+  </form>
+</section>
+{% endblock %}

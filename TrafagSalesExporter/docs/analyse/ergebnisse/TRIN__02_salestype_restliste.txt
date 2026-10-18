@@ -1,0 +1,209 @@
+﻿Server-Analyse (nur lesend)
+Datei    : TRIN__02_salestype_restliste.sql
+Standort : TRIN (Indien)
+Quelle   : SAGE
+Host     : 20.197.20.60:30015
+Schema   : TRAFAG_LIVE
+Zeitpunkt: 2026-08-05 11:20:41
+Statements: 6
+
+=== Runde 2: Verteilung des Sales Type und die Restliste fuer RanVijay ===
+SALES_TYPE | VENDOR | ARTIKEL | RECHNUNGSZEILEN
+FFM | ohne Vendor | 1184 | 5830
+LRD | mit Vendor | 93 | 454
+-- | ohne Vendor | 65 | 112
+-- | mit Vendor | 64 | 264
+LRD | ohne Vendor | 30 | 256
+FFM | mit Vendor | 10 | 78
+CM | ohne Vendor | 2 | 23
+NULL | ohne Vendor | 1 | 1
+-- 8 Zeile(n), 311 ms
+
+=== 2 RESTLISTE: Artikel, die einen Preferred Vendor brauchen und keinen haben ===
+ARTIKEL | BEZEICHNUNG | SALES_TYPE | RECHNUNGSZEILEN | MENGE
+DM000083 | GDMINSULATIONASSY (Hyosung Part no-DYB0407018H0001) | LRD | 108 | 2920.000000
+DM000084 | GDMINSULATIONASSY, Customer Part no-DYB0407074H0001 | LRD | 27 | 394.000000
+PT000023 | NAT(8252) Pressure Transmitter(54273) With Adapter 2100623 (GD00A23000905) | LRD | 26 | 836.000000
+DM000190 | Gas Density Sensor_57552 (Modbus Output),customer part no-GD00A23000906 with Adaptor G1/2" M | LRD | 22 | 651.000000
+IC15415 | Outer Bellow Assembly (Non LPI) | CM | 13 | 24000.000000
+IC15037 | Outer Bellows Assembly With LPI | CM | 10 | 12000.000000
+DM000017 | Rain cover X6 with thermal insulation(F90162)_HE00P23Z80602 | LRD | 8 | 329.000000
+PT000005 | EPI 250V WITH CONNECTOR (56305) (Part No. 134A088) | LRD | 6 | 635.000000
+PS000674 | P2.5-BRASS-1SPDT(26)_3759 | LRD | 6 | 7.000000
+DM000318 | Density Monitor (Hybrid)_65441_Customer part no. 2GHV121856A5250 | LRD | 4 | 239.000000
+DM000319 | Density Monitor(Hybrid)_65437_Customer part no.2GHV121856A5250 | LRD | 4 | 83.000000
+H90101 | BRAZING ROD SILVER 56/41% 156F D2.0 | LRD | 4 | 1.900000
+DM000260 | DENSITYMONITOR_64540,Customer Part No. : 2GHV112102R1526 | LRD | 4 | 20.000000
+DM000212 | DENSITYMONITOR_60680 (Hybrid) , Customer Part No. P6803957-011 | LRD | 4 | 477.000000
+DM000061 | DENSITYMONITOR_60655 , Customer  Part No. 940237011 | LRD | 4 | 75.000000
+DM000205 | DENSITYMONITOR_49602, Customer part no. 2GHV112102R1006 | LRD | 4 | 14.000000
+TS000208 | DTP 8180 Display Temperature Switch(63721) | LRD | 3 | 21.000000
+PS000755 | PK40-SS-1SPDT_11507 | LRD | 3 | 3.000000
+DM000280 | DENSITYMONITOR_64617, Customer part no.2GHV112102R1516 | LRD | 2 | 7.000000
+DM000278 | DENSITYMONITOR_64615, Customer part no. 2GHV112102R1514 | LRD | 2 | 87.000000
+DM000277 | DENSITYMONITOR_64614, Customer part no. 2GHV112102R1506 | LRD | 2 | 10.000000
+DM000213 | DENSITYMONITOR_60452 (Hybrid) , Customer Part No. P6803957-002 | LRD | 2 | 146.000000
+PS000754 | P1.5-BRASS-1SPDT(26)_3790 | LRD | 2 | 3.000000
+DM000241 | DENSITYMONITOR_52534 (Hybrid) Customer Part No. DYD0100164H0001 | LRD | 1 | 34.000000
+PT000054 | 8264 Pressure Transmitter(40804) | LRD | 1 | 1.000000
+PT000058 | NAT (60008) 8252 Pressure Transmitter | LRD | 1 | 1.000000
+PT000055 | 8380 DPC0.2PAP1 Pressure transmitter (53863) | LRD | 1 | 10.000000
+PT000063 | 8380 PRESSURE TRANSMITTER DPC (0-10 bar)  (48989) | LRD | 1 | 1.000000
+PT000064 | 8380 PRESSURE TRANSMITTER DPC (0-25 bar)(50773) | LRD | 1 | 1.000000
+FA000028 | Welding Machine (Complete) | LRD | 1 | 2.000000
+FA000029 | Welding Machine (Complete) | LRD | 1 | 1.000000
+DM000162 | DENSITYMONITOR_63332 Customer Part No. - 1HDG112102R0525 | LRD | 1 | 4.000000
+-- 32 Zeile(n), 308 ms
+
+=== 3 Ungepflegter Sales Type: Anzahl (diese Artikel sind fachlich noch gar nicht eingeordnet) ===
+ARTIKEL_OHNE_SALES_TYPE | RECHNUNGSZEILEN
+130 | 377
+-- 1 Zeile(n), 308 ms
+
+=== 4 Ungepflegter Sales Type: die betroffenen Artikel ===
+ARTIKEL | BEZEICHNUNG | SALES_TYPE | VENDOR | RECHNUNGSZEILEN
+C16354 | "Weather Protection cover for 87X6 , code -46" | -- | V0078 | 47
+D34570 | "Thermal insulation tube for 87X6 , code -06" | -- | V0078 | 36
+IC41038 | Mounting Flange 2X8X/8801 | -- | V0134 | 15
+R65044 | Disc(Closing Bottom MS)D8 | -- | V0078 | 14
+2100332 | "Manifold 2 Valve 1/2 NPT(F) x1/2NPT(F) SS316 drain 1/2""NPT(F" | -- |  | 9
+IC23177 | Mounting plate  WIKA/LIBO  87XX | -- | V0247 | 8
+R65037 | NIPPLE 1416 G1/2’ MS | -- | V0078 | 8
+H20101 | Copper Capillary tube D12/10 | -- | V0078 | 8
+R65045 | End Cap MS D10 | -- | V0078 | 8
+F60048 | Protection tube  Brass 8316  G=200K with accessories | -- |  | 7
+R65164 | Disc Ø13 for Protection tube | -- | V0078 | 7
+H20108 | Brass Capillary tube D15/13 | -- |  | 7
+ID15024 | Cover Glass | -- | V0055 | 6
+F60046 | Protection Tube 8316 G=110 mm Brass Ni plated ID/OD: 8/10 mm  with accessories | -- |  | 6
+R65161 | NIPPLE 8316 G1/2’ MS D10 | -- | V0078 | 5
+IC39573 | Flange 2X8X/8801 | -- | V0134 | 4
+C39665 | O-RING 13.3x2.4 CIIR 70SH | -- | V0078 | 4
+IR85018 | Sensing Device-121 (SS bulb) | -- | V0034 | 4
+H05270 | Bellow Sleeve GP-OS  L380 ID Ø 40 (NG36 SS) | -- | V0078 | 4
+H05277 | Bellow Sleeve 10 320/1 PP Transparent (NG10 SS) | -- | V0078 | 4
+H17500 | Bimetallic strip 1.4mm | -- | V0078 | 4
+H05227 | Bellow Sleeve TP14  L200 ID Ø 16 (NG15 BR) | -- |  | 4
+R65162 | NIPPEL 8317 G1/2"  MS   D12 | -- | V0078 | 4
+H05255 | Bellow Sleeve  TP22  L200 ID Ø 24 (NG22 SS) | -- |  | 4
+IC32412 | Sensing Device -021 (bulb)-IN | -- | V0058 | 4
+DM000289 | DENSITYMONITOR_64738 , Customer Part No.:1HYS900349-105 | -- | V0078 | 3
+2100623 | Adaptor SS316L 1/4"BSP(F)x1/2BSP(M) | -- |  | 3
+IC38455 | Sensor tube 87X9 | -- |  | 3
+R65272 | NIPPLE 1419 G1/2’ MS | -- | V0078 | 3
+R65074 | NIPPLE 1417 G1/2"’ Brass | -- | V0078 | 3
+IC38557 | Base Plate 87XX (Casting) | -- | V0040 | 3
+IC38571 | Cover with Opening (Casting) | -- | V0040 | 3
+2100288 | Adaptor SS 316 1/8BSP(M)x1/4BSP(F) | -- |  | 3
+IC32413 | Sensor Bulb (Typ 022)-Cu | -- |  | 3
+IC41212 | WEATHER COVER RADIAL 87x9 COMP. | -- |  | 2
+F60050 | PROTECTION TUBE SS 8411 G=110K with accessories | -- |  | 2
+IR85060 | Brass Closing Pin for Sensor Bulb | -- | V0071 | 2
+R65210 | NIPPLE 8319 G1/2' MS D14 | -- | V0078 | 2
+IC36013 | Tube  87x9 | -- | V0076 | 2
+2100096 | Adaptor SS316 1/4BSP(M)x1/2NPT(M) | -- | V0110 | 2
+2100641 | Adaptor SS316L 3/8"BSP(F)x1/2BSP(M) for Gas density Sensor | -- | V0110 | 2
+2100014 | Tag Plate (S.S) | -- | V0496 | 2
+5100463 | "Thermowell 1412", SS316L_G1/2"_IL-110mm | -- |  | 2
+R65029 | NIPPLE 1216 G1/2’ MS D10 | -- | V0078 | 2
+IR65290 | Slotted Washer 7.4x14x1.5 Brass Ni plated | -- |  | 2
+R65158 | Rubber seal D15/5/5 | -- | V0078 | 2
+IR65146 | Slotted Screw for fastening-G3/8 Brass Nickle plated | -- |  | 2
+R64009 | PERFOR.PIPE D17 L=265MM BRASS | -- | V0078 | 2
+IK30000 | Hexagon NutB M10 MS | -- | V0057 | 2
+R65365 | CENTRE DISC f.perf.protection tube iD 4 | -- | V0078 | 2
+HC15247 | BOURDON TUBE LOW PRESSURE INDICATOR | -- | V0078 | 2
+C16421 | Density monitor Foam Cover code 37 | -- | V0078 | 2
+IR14183 | Mounting Braket (Thermostat) | -- | V0408 | 2
+c40867 | NIPPEL 1439 G1/2" | -- |  | 2
+F60073 | Protection Tube  SS 8411 G=400mm with accessories | -- |  | 2
+2100127 | "Snubber SS 304, 1/4BSP(M)x1/4BSP(F)" | -- | V0007 | 2
+IR64515 | Protection tube 1211 L=400 mm | -- |  | 2
+SM000037 | Solenoid valve coil (8W) | -- |  | 1
+SM000034 | Lamp 40mA | -- |  | 1
+SM000033 | T315 mA | -- |  | 1
+SM000032 | T250mA | -- |  | 1
+SM000023 | Fuse T0.5A | -- |  | 1
+SM000031 | Fuse T6.3A | -- |  | 1
+SM000024 | Fuse T1A L | -- |  | 1
+SM000025 | Fuse T1A H | -- |  | 1
+SM000030 | Fuse T5.0A | -- |  | 1
+SM000029 | Fuse T4.0A | -- |  | 1
+SM000026 | Fuse T1.25A | -- |  | 1
+H05226 | Bellow Sleeve TP20 L200 ID Ø 22 (NG20 BR) | -- |  | 1
+SM000027 | Fuse T1.6A | -- |  | 1
+SM000028 | Fuse T2.0A | -- |  | 1
+IE00806 | Cable gland M25x1.5 for DM 8....16mm | -- | V0065 | 1
+IR64759 | Protection tube8316, IL-110mm ID-8mm,OD-10mm | -- | V0042 | 1
+R65098 | NIPPLE 1341 G1/2’ MS | -- |  | 1
+R65060 | NIPPEL 1217 G1/2a MS D12 | -- | V0078 | 1
+F60047 | Protection tube  Brass 8316  G=150K with accessories | -- |  | 1
+ID34626 With Mars Cover | Cover Assembly With Cable Gland M25X1.5 | -- |  | 1
+F60051 | PROTECTION TUBE SS 8411 G=150K with accessories | -- |  | 1
+F60091 | Special Protection tube IL=48mm, with Fastening Screw | -- |  | 1
+F60090 | Protection tube  Brass 1217  G=110 K with accessories | -- |  | 1
+F60052 | PROTECTION TUBE SS 8411 G=200K with accessories | -- |  | 1
+IR64282 | Protection tube 1411 L=150 mm | -- |  | 1
+SM000044 | Suppressor Capacitor | -- |  | 1
+R65160 | Fixation nut M10 | -- | V0078 | 1
+H05240 | Bellow Sleeve Quader Block Pac BK14 20 (NG15 SS) | -- |  | 1
+SM000043 | Protection Glass (Small) | -- |  | 1
+SM000042 | Protection Glass (Large) | -- |  | 1
+SM000041 | Mixture gas Regulator | -- |  | 1
+SM000039 | Adaptor for flow meter tubing | -- |  | 1
+SM000038 | Timer for welding machine | -- |  | 1
+R13025 | Housing LP Industat light grey | -- | V0443 | 1
+IR64705 | Protection tube 8411 L=150 mm | -- |  | 1
+2100230 | Adaptor SS-316 (1/2BSP(M)x1/2NPT(M) | -- | V0058 | 1
+2100429 | "Manifold 5 valve 1/2 NPT(F) x1/2NPT(F) SS316 drain 1/2""NPT(F)" | -- |  | 1
+R23019 | Housing plastic for Alterostat-Duostat | -- |  | 1
+5100197 | Thermowell SS316L IL - 400mm | -- | V0034 | 1
+IR13011 | Cover Assembly for Ministat Limistat | -- |  | 1
+2100062 | Adaptor SS-316 ( 1/8 BSP(M)x1/4NPT(F) | -- |  | 1
+E00692 | PCB Plug Connector 2X3 pin | -- |  | 1
+ID15013 | Distance Bush | -- | V0016 | 1
+IR13010 | Cover Assembly for Ministat Internal Adjustment | -- |  | 1
+E01382 | SWITCH SAIA XCC3Z8 M.OES (>18..<60µm) | -- | V0078 | 1
+IE01830 | Female Connector DIN43650-A_PG11 | -- | V0037 | 1
+B55555 | Plastic scarp | -- |  | 1
+IC28302 | Mounting Flange | -- | V0056 | 1
+IK80105 | Closing Mechanism clamp assembly | -- |  | 1
+2100235 | "Adaptor SS-316 , 1/4BSP(M)x1/4NPT(M)" | -- | V0034 | 1
+IR85059 | Closing Pin for Sensor Bulb | -- | V0058 | 1
+FA000048 | MANUAL STACKER CUMI 1016 | NULL |  | 1
+IC17508 | Tube bottom Density monitor | -- | V0054 | 1
+SM000022 | Relay C2-A20 | -- |  | 1
+SM000021 | Main Contactor 230V  DIL 00M | -- |  | 1
+SM000020 | Main Switch Typ AT08A197 | -- |  | 1
+SM000019 | Motor Brush Typ Bu-004 | -- |  | 1
+D85020 | Bellows NG10 (density monitor) | -- | V0078 | 1
+R64016 | PERFORATED PIPE D17 L=215MM Steel | -- | V0078 | 1
+F60059 | Protection tube  Brass nickel plated 8318  G=150K | -- |  | 1
+K16512 | ScrewTaptite M3x8 | -- | V0078 | 1
+R15132 | Arestor(Switching Point Locking) | -- | V0078 | 1
+R15106 | FASTENING SCREW M5X15 | -- | V0078 | 1
+R15205 | Support for MS | -- | V0078 | 1
+2100416 | Screw M5x12 (Mounting bracket fixing) | -- | V0066 | 1
+2100025 | Mounting Plate for PS | -- | V0058 | 1
+2100107 | Adaptor SS-316 1/4BSP(M)x3/8BSP(M) | -- |  | 1
+F51216 | Protection Tube 1216 G=415mm with accessories | -- |  | 1
+R64007 | PERFOR.PIPE D17 L=605 MM BRASS | -- | V0078 | 1
+R65096 | NIPPLE 1241 G1/2’ MS | -- | V0078 | 1
+F60054 | PROTECTION TUBE BRASS 8319 G=065 | -- |  | 1
+R74627 | Scale 0...30°C on turning knob (Ministat) | -- | V0078 | 1
+IR13012 | Cover Assembly for Ministat External Adjustment | -- |  | 1
+-- 130 Zeile(n), 450 ms
+
+=== 5 Gegenprobe: FFM-Artikel, bei denen trotzdem ein Vendor steht (Widerspruch oder Sonderfall) ===
+FFM_MIT_VENDOR
+10
+-- 1 Zeile(n), 306 ms
+
+=== 6 Fuellgrad des Feldes auf dem gesamten aktiven Lagerartikelstamm ===
+SALES_TYPE | ARTIKEL
+NULL | 2838
+FFM | 1829
+-- | 465
+LRD | 199
+CM | 6
+-- 5 Zeile(n), 305 ms
