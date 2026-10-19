@@ -17,8 +17,8 @@ Einkauf	Texte Produktgruppen D1/D5	Bereit		2026-10-01
 Einkauf	Logistik live: Kommissionierung, Produktion, 3D-Lager, Produktivität, Kapazität	Bereit, Ausbau 05.10. produktiv	Passwort für Namen (Ingo)	2026-10-05
 Einkauf	Stückliste: Verwendung & Risiko über mehrere Stufen	Bereit		2026-10-01
 Einkauf	Zwei kleine Entscheide (Beschriftung, SAP-Schlüssel)	Offen	Ingo	2026-09-29
-SAP	ZZPRDAT Produktionsdatum: gemeinsamer Test	Läuft	Test 12.10. (Lucas, Marco, Adil)	2026-10-01
-SAP	ZLO03 Mengen und Materialien: Test und Transport	Offen	Ingo	2026-08-14
+SAP	ZZPRDAT Produktionsdatum: gemeinsamer Test	Läuft	Test verschoben auf Woche 26.10. (Lucas, Marco, Adil)	2026-10-12
+SAP	ZLO03: Fehler „offene MK 0 / Komponente fehlt“ behoben, in T76 am nachgestellten Fall bestätigt	Wartet	Import T76K912742 nach P76 (Ingo)	2026-10-19
 SAP	ZC12 Nullmengen: Fehlersuche einschalten	Offen	Ingo	2026-09-07
 SAP	ZRL2 Mengenrabatt Trafag AT	Bereit		2026-09-30
 Railway	Umsatz-Gesamtsicht aller Standorte	Bereit		2026-09-29
@@ -33,6 +33,9 @@ Einkauf	Einkauf über offenen Bestellwert nach Elikz-Fix informieren	Wartet	Ingo
 Finance	TR IT verkauft Indien-Ware ohne Konzernkosten TR IN (Sachnummer fehlt, ISS-007.4)	Wartet	Prüfung B1-Artikelstamm TR IT	2026-10-07
 Finance	Kostenwährung zum Budget- oder Tageskurs	Wartet	Andreas	2026-10-07
 Logistik	ZM_OFFENE_FAUF mit Bedarfsverursacher (T76K912714 am 09.10. in P76)	Läuft	Fabio: Layout in P76 prüfen, Fall BANF Werk 1200	2026-10-09
-Plattform	Operations (Shopfloor): SAP-Abgleich läuft seit 09.10.; Abteilungen für 1'912 Aufträge klären, Freigabe Leitung Produktion	Wartet	Leitung Produktion	2026-10-09
+Plattform	Operations (Shopfloor): für alle offen, Mengen aus SAP auf dem Produktionstag (Logistik, SEH, TR5, DW), ZD05 04:00/12:45	Läuft	Fabio: TX-Arbeitsplatz; Ingo: TX-Vorrat aus ZC22 bauen	2026-10-19
 Plattform	Trafag Reddit: Forum mit Abstimmung, für alle sichtbar	Läuft	Ingo: Ankündigung entscheiden	2026-10-09
 Plattform	Trafag Projekte: Board, Backlog/Sprints, Zeitachse, Kalender, Diagramme	Läuft	Ingo: erstes echtes Projekt anlegen	2026-10-09
+SAP	ZC23: Materialanteil und Arbeit CZ, 3,5-mal schneller gerechnet, Fiori-App-Anschluss	Bereit		2026-10-16
+Einkauf	Stücklisten-Netz „Gehirn“ im Spend-Aufriss (Prototyp)	Bereit		2026-10-16
+Projekte	DCP: Testphase freigegeben, nächste Schritte	Offen	Klären, worum es geht (Ingo)	2026-10-19
