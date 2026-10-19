@@ -36,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | ZLO03 FIX 12: Test in T76 mit nachgestelltem Fall | 2026-10-19 | **Abgeschlossen, nur T76 (lokale Testobjekte, Testdaten), Reservierung frei.** Alt: B63485 fehlt, neu: MK 5009; sonst gleich. Import P76 Ingo |
 | Claude | Shopfloor-Mengen: Produktionstag statt Abfragetag, DW prod (DL790), Umbuchung 15. bis 19.10. | 2026-10-19 | **Abgeschlossen, deployed 10:04 (`c3c45cd`), Reservierung frei.** 1250/1250, bitgleich, Alarm nur WAL/SHM; Sa/So-Nullen korrigiert (LEARNINGS). TX aus ZC22 offen |
 | Claude | ZLO03: MK-Abweichung B63485, Mechanismus belegt, FIX 12 in `Z_ZLO03_TURBO2` | 2026-10-16 | **Abgeschlossen in T76, Reservierung frei.** Transport `T76K912742`, aktiv, rueckgelesen; Funktionstest erst in P76 moeglich (T76 ohne Daten), Import Ingo. `zlo03/MK_B63485_FIX12_2026-10-16.md` |
 | Claude | Arbeitsplatz Ingo: iPhone-Hotspot trennt alle 2 Min (Ereignisprotokoll, nur lesend) | 2026-10-16 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** Geloest durch neuen Hotspot-Namen (frisches Profil). `docs/router/plattform.md` Abschnitt WLAN-Aussetzer, Nachtrag |

@@ -2,6 +2,11 @@
 
 Stand: 2026-10-16
 
+## SAP ZLO03: FIX 12 in T76 am nachgestellten Fall bestaetigt, 2026-10-19
+
+- Testdaten `ZPOWERBI_VC_TXT` in T76 gefuellt, Textposition B63485/46123 vor die echte Position gelegt. Alte Fassung: B63485 fehlt;
+  mit FIX 12: MK 5'009 wie `ZMD04_CALC`, uebrige 122 Zeilen gleich. `T76K912742` bereit fuer P76. `zlo03/MK_B63485_FIX12_2026-10-16.md` Abschnitt 6.
+
 ## Operations: Mengen aus SAP auf dem Produktionstag, DW prod, 2026-10-19 (`ded2b65`, `c4dca10`, `c3c45cd`)
 
 - Logistik und Produktionsmengen stehen auf dem Produktionstag (ERSDA/Istendtermin), Montagsregel weg; Abgleich schreibt heute und
