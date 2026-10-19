@@ -84,6 +84,14 @@ Oder für Release-Build:
 1. Product → Archive
 2. Distribute App → Copy App
 
+## Weitergabe (notarisiert)
+
+Seit 2026-10-19 mit Developer ID (Team 3HF7RG7BPA) signiert und von Apple notarisiert.
+`Tools/verteilen.sh` baut Release, signiert mit Hardened Runtime und Entitlements, packt das DMG, notarisiert
+und heftet das Ticket an (`dist/MacYaesu.dmg`). Für den Website-Deploy `dist/MacYaesu.dmg` nach `MacYaesu.dmg`
+kopieren (siehe `instructions/homelab/aiscom-website.md`). Live auf www.aiscom.ch/macyaesu/ ist seit
+2026-10-19 die notarisierte 1.1. Offen: Testkauf, MWST/Merchant of Record, Forenposts.
+
 ## Vertriebsseite
 
 Eine eigenständige Landingpage für Marketing/Vertrieb liegt unter:
