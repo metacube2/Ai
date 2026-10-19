@@ -7,22 +7,22 @@ namespace TrafagSalesExporter.Tests;
 public class ShopfloorSapMengenTests
 {
     [Fact]
-    public void Montag_Zaehlt_Freitag_Bis_Sonntag_Sonst_Der_Vortag()
+    public void Abgleich_Schreibt_Heute_Und_Drei_Tage_Davor_Montag_Holt_Das_Wochenende()
     {
-        Assert.Equal([new DateOnly(2026, 10, 9), new DateOnly(2026, 10, 10), new DateOnly(2026, 10, 11)],
-            ShopfloorSapMengen.SourceDays(new DateOnly(2026, 10, 12)));
-        Assert.Equal([new DateOnly(2026, 10, 13)], ShopfloorSapMengen.SourceDays(new DateOnly(2026, 10, 14)));
+        // Seit 2026-10-19 Produktionstag statt Abfragetag: Montag 19.10. schreibt Fr 16., Sa 17., So 18. und Mo 19.
+        Assert.Equal([new DateOnly(2026, 10, 16), new DateOnly(2026, 10, 17), new DateOnly(2026, 10, 18), new DateOnly(2026, 10, 19)],
+            ShopfloorSapMengen.SyncDays(new DateOnly(2026, 10, 19)));
     }
 
     [Fact]
-    public void Fpy_Woche_Ist_Die_KW_Des_Vortags_Bis_Zum_Vortag()
+    public void Fpy_Woche_Ist_Die_KW_Des_Tages_Bis_Zu_Diesem_Tag()
     {
-        var montag = ShopfloorSapMengen.FpyWeek(new DateOnly(2026, 10, 12));   // Vortag Sonntag -> KW 41 ganz
-        Assert.Equal(new DateOnly(2026, 10, 5), montag[0]);
-        Assert.Equal(new DateOnly(2026, 10, 11), montag[^1]);
-        Assert.Equal(7, montag.Count);
-        var mittwoch = ShopfloorSapMengen.FpyWeek(new DateOnly(2026, 10, 14)); // Vortag Dienstag -> Mo und Di
-        Assert.Equal([new DateOnly(2026, 10, 12), new DateOnly(2026, 10, 13)], mittwoch);
+        var sonntag = ShopfloorSapMengen.FpyWeek(new DateOnly(2026, 10, 11));   // KW 41 ganz
+        Assert.Equal(new DateOnly(2026, 10, 5), sonntag[0]);
+        Assert.Equal(new DateOnly(2026, 10, 11), sonntag[^1]);
+        Assert.Equal(7, sonntag.Count);
+        var dienstag = ShopfloorSapMengen.FpyWeek(new DateOnly(2026, 10, 13)); // Mo und Di
+        Assert.Equal([new DateOnly(2026, 10, 12), new DateOnly(2026, 10, 13)], dienstag);
     }
 
     [Fact]
@@ -46,19 +46,23 @@ public class ShopfloorSapMengenTests
             return Task.FromResult(JsonDocument.Parse(json).RootElement.EnumerateArray().Select(e => e.Clone()).ToList());
         }
 
-        var r = await ShopfloorSapMengen.ComputeAsync(new DateOnly(2026, 10, 14), "1100", Read);
+        var r = await ShopfloorSapMengen.ComputeAsync(new DateOnly(2026, 10, 13), "1100", Read);   // Produktionstag 13.10.
 
         var log = r["werte"]!["logistik"]!;
         Assert.Equal(673, (int)log["tr5_mle01"]!);
         Assert.Equal(1065, (int)log["tx_mle08"]!);
         Assert.Equal(0, (int)log["tx_mlm01"]!);
         Assert.Equal(0, (int)r["werte"]!["tr5"]!["prod"]!);
+        Assert.Equal(0, (int)r["werte"]!["dw"]!["prod"]!);
+        Assert.Equal("2026-10-13", (string)r["day"]!);
         Assert.Equal(480, (int)r["werte"]!["seh"]!["prod"]!);
         Assert.Equal(99.2, (double)r["werte"]!["seh"]!["fpy"]!, 3);   // 1190 / 1200
 
         // MLE08 und MLE09 sind ein gemeinsamer ZC27-Lauf, die uebrigen Arbeitsplaetze einzeln
         Assert.Contains(calls, c => c.Filter == "Werks eq '1100' and (Arbpl eq 'MLE08' or Arbpl eq 'MLE09') and (Ersda eq '20261013')");
         Assert.Contains(calls, c => c.Filter == "Werks eq '1100' and (Arbpl eq 'MLE01') and (Ersda eq '20261013')");
+        // DW wie Logistik, Arbeitsplatz DL790 (Mail Fabio 2026-10-17)
+        Assert.Contains(calls, c => c.Filter == "Werks eq '1100' and (Arbpl eq 'DL790') and (Ersda eq '20261013')");
         // TR5 wie ZC27-Variante /PPA EXX72: elf Arbeitsplaetze, Typencode 8*
         var tr5 = Assert.Single(calls, c => c.Filter.Contains("'EDF72'"));
         Assert.EndsWith("and Typcd eq '8*'", tr5.Filter);

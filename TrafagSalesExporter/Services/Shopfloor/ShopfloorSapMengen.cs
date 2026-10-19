@@ -5,16 +5,19 @@ using System.Text.Json.Nodes;
 namespace TrafagSalesExporter.Services.Shopfloor;
 
 /// <summary>
-/// Operations (Shopfloor), 2026-10-16, Mail Fabio „Datenabfragen J5, J8, J11“: Mengen des Vortags aus SAP.
+/// Operations (Shopfloor), 2026-10-16, Mail Fabio „Datenabfragen J5, J8, J11“: Mengen aus SAP.
 /// <list type="bullet">
 /// <item>J5 Logistik: ZC27-Logik (ShopRmSet, Gutmenge je Arbeitsplatz nach Erfassungsdatum ERSDA, ohne Stornos, nur der
 /// letzte Vorgang an den gewaehlten Arbeitsplaetzen). Jede Gruppe ist ein eigener ZC27-Lauf, wie der Teamleiter ihn macht.</item>
 /// <item>J8 TR5: dieselbe Logik mit der ZC27-Variante /PPA EXX72 (elf Arbeitsplaetze, Typencode 8*), gelesen in T76 am 2026-10-16.</item>
-/// <item>J8 SEH: ShopProdSet, WE-Menge der Fertigungsauftraege mit Istendtermin am Vortag, Disponent S* (wie COOIS /SEH 001).</item>
-/// <item>J11 FPY SEH: WE-Menge / Gesamtmenge der Auftraege mit Istendtermin in der KW des Vortags (Montag: Vorwoche).</item>
+/// <item>J8 SEH: ShopProdSet, WE-Menge der Fertigungsauftraege mit Istendtermin am Tag, Disponent S* (wie COOIS /SEH 001).</item>
+/// <item>DW: ZC27-Logik am Arbeitsplatz DL790 (Mail Fabio 2026-10-17, Punkt 2).</item>
+/// <item>J11 FPY SEH: WE-Menge / Gesamtmenge der Auftraege mit Istendtermin in der KW des Tages, bis zu diesem Tag.</item>
 /// </list>
-/// Eintrag vom Tag D = Stand bis D-1; am Montag zaehlen Freitag, Samstag und Sonntag zusammen. Manuell erfasste Werte
-/// werden nicht ueberschrieben. ABAP: docs/abap/ZSHOP_RM_ADD.abap. Doku: docs/SHOPFLOOR_2026-10-07.md Abschnitt 15.
+/// Seit 2026-10-19 (Feedback Logistik ueber Fabio): Eintrag vom Tag D = Produktionstag D (ERSDA bzw. Istendtermin = D),
+/// nicht mehr Abfragetag mit Stand D-1. Die Montagsregel Freitag bis Sonntag entfaellt. Der automatische Abgleich schreibt
+/// die letzten Tage neu (<see cref="SyncDays"/>), damit Wochenende und Nachbuchungen stimmen. Manuell erfasste Werte
+/// werden nicht ueberschrieben. ABAP: docs/abap/ZSHOP_RM_ADD.abap. Doku: saptasks/shopfloor_sap/NOTES.md.
 /// </summary>
 public static class ShopfloorSapMengen
 {
@@ -32,26 +35,30 @@ public static class ShopfloorSapMengen
         new("logistik", "tx_mlm01", ["MLM01"]),
         new("logistik", "dw_mle04", ["MLE04"]),
         new("logistik", "tx_mle08", ["MLE08", "MLE09"]),
-        new("tr5", "prod", ["EDF72", "EDB72", "EAC72", "EAP72", "EAN72", "EAM72", "EDD72", "EEX72", "EAS72", "EDS72", "EVA72"], "8*")
+        new("tr5", "prod", ["EDF72", "EDB72", "EAC72", "EAP72", "EAN72", "EAM72", "EDD72", "EEX72", "EAS72", "EDS72", "EVA72"], "8*"),
+        new("dw", "prod", ["DL790"])
     ];
 
-    /// <summary>Rueckmelde- bzw. Istendtage fuer den Eintrag vom Tag D: Vortag, am Montag Freitag bis Sonntag.</summary>
-    public static List<DateOnly> SourceDays(DateOnly day)
-        => day.DayOfWeek == DayOfWeek.Monday ? [day.AddDays(-3), day.AddDays(-2), day.AddDays(-1)] : [day.AddDays(-1)];
+    /// <summary>Wie viele Tage vor heute der automatische Abgleich neu schreibt. 3 deckt am Montag Freitag bis Sonntag ab.</summary>
+    public const int SyncDaysBack = 3;
 
-    /// <summary>KW (Montag bis Sonntag) des Vortags, nur bis zum Vortag; am Montag ist das die ganze Vorwoche.</summary>
+    /// <summary>Produktionstage, die der automatische Abgleich am Tag <paramref name="today"/> schreibt: heute (laufend) und
+    /// die drei Tage davor. Am Wochenende laeuft kein Abgleich; am Montag kommen so Freitag, Samstag und Sonntag nach.</summary>
+    public static List<DateOnly> SyncDays(DateOnly today)
+        => Enumerable.Range(0, SyncDaysBack + 1).Select(i => today.AddDays(i - SyncDaysBack)).ToList();
+
+    /// <summary>KW (Montag bis Sonntag) des Tages, nur bis zu diesem Tag.</summary>
     public static List<DateOnly> FpyWeek(DateOnly day)
     {
-        var vortag = day.AddDays(-1);
-        var monday = vortag.AddDays(-(((int)vortag.DayOfWeek + 6) % 7));
-        return Enumerable.Range(0, 7).Select(monday.AddDays).Where(d => d <= vortag).ToList();
+        var monday = day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+        return Enumerable.Range(0, 7).Select(monday.AddDays).Where(d => d <= day).ToList();
     }
 
-    /// <summary>Rechnet alle Werte fuer den Tag D. Schreibt nichts. <paramref name="read"/> liest ein Set mit Filter.</summary>
+    /// <summary>Rechnet alle Werte fuer den Produktionstag D. Schreibt nichts. <paramref name="read"/> liest ein Set mit Filter.</summary>
     public static async Task<JsonObject> ComputeAsync(DateOnly day, string plant,
         Func<string, string, Task<List<JsonElement>>> read)
     {
-        var days = SourceDays(day);
+        List<DateOnly> days = [day];
         var values = new JsonObject();
         var detail = new JsonArray();
 

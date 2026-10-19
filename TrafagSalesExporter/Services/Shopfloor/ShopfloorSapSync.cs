@@ -122,12 +122,16 @@ public sealed class ShopfloorSapSync : BackgroundService
                 ["ergebnis"] = results
             };
             _logger.LogInformation("Shopfloor: SAP-Abgleich {Zd05} ZD05-Positionen, {Orders} Auftraege", zd05.Count, orders.Count);
-            // Mengen des Vortags (J5, J8, J11), 2026-10-16; ein Fehler hier stoppt ZD05 und Forecast nicht.
+            // Mengen je Produktionstag (J5, J8, J11, DW), 2026-10-16; seit 2026-10-19 heute und die drei Tage davor
+            // (Produktionstag statt Abfragetag). Ein Fehler hier stoppt ZD05 und Forecast nicht.
             if (options.SapMengenEnabled)
             {
                 try
                 {
-                    LastResult["mengen"] = await MengenCoreAsync(client, baseUrl, DateOnly.FromDateTime(DateTime.Today), true, ct);
+                    var tage = new JsonArray();
+                    foreach (var tag in ShopfloorSapMengen.SyncDays(DateOnly.FromDateTime(DateTime.Today)))
+                        tage.Add(await MengenCoreAsync(client, baseUrl, tag, true, ct));
+                    LastResult["mengen"] = tage;
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
                 {
@@ -154,7 +158,7 @@ public sealed class ShopfloorSapSync : BackgroundService
     }
 
     /// <summary>
-    /// Mengen fuer den Tag D (J5 Logistik, J8 SEH/TR5, J11 FPY SEH). Ohne <paramref name="write"/> nur Vorschau, sonst
+    /// Mengen fuer den Produktionstag D (J5 Logistik, J8 SEH/TR5, J11 FPY SEH, DW). Ohne <paramref name="write"/> nur Vorschau, sonst
     /// ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/mengen?tag=JJJJ-MM-TT.
     /// </summary>
     public async Task<JsonObject> MengenAsync(DateOnly day, bool write, CancellationToken ct)
