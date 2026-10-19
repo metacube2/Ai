@@ -12,6 +12,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-19 | SapProbe `table-read` in T76/200 lieferte fuer `AGR_*` und `USR02` immer `TABLE_WITHOUT_DATA`, auch fuer vorhandene Daten; `LIKE '/GIB/%'` scheiterte, `LIKE '/GIB%'` ging | Leeres Ergebnis bei Rollen-/Benutzertabellen nicht als „gibt es nicht“ werten; Gegenprobe mit sicher vorhandenem Wert, sonst in der GUI lesen (PFCG, SU01) | `saptasks/gib_dcp/NOTES.md` |
 | 2026-10-19 | Shopfloor: Umstellung auf Produktionstag sofort produktiv nachgebucht; fuer Sa/So wurden Nullen geschrieben (vorher gab es dort keine Tagessaetze), zwei Nachdeploys | Vor dem Schreiben in Produktion die Vorschau (`GET`) fuer **alle** Zieltage ansehen, auch Wochenende; ein Bereich ohne jede SAP-Zeile ist „keine Daten“, nicht 0 | `c3c45cd` |
 | 2026-10-19 | Shopfloor-POST aus PowerShell ohne Header `X-User` lieferte 403 „Ungueltige Anfrage“ | Aenderungen an `shopfloor/api` immer mit `-Headers @{ 'X-User' = '...' }` und `-UseDefaultCredentials` | `ShopfloorEndpoints.Guard` |
 | 2026-10-16 | T76: neue eigene Sitzung geoeffnet, dann aber mit festem Index 1 weitergearbeitet; Index 1 war Ingos Sitzung, der Testreport wurde dort angelegt | Nach `SapGuiNeueSitzungT76.vbs` den gemeldeten Index verwenden, nie einen festen; vor jedem Schreibschritt `SapGuiVerbindungen.vbs` und den Fenstertitel pruefen | `zlo03/Z_KOI_VC_TXT_KOPIE.abap` |

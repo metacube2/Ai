@@ -1,6 +1,12 @@
 # Last Change
 
-Stand: 2026-10-16
+Stand: 2026-10-19
+
+## SAP: Testuser UBIG mit GIB-DCP-Rolle in T76/200, 2026-10-19
+
+- Auftrag Ingo: User `UBIG` in T76 Mandant 200 angelegt, nur Rolle `/GIB/DCP_SUPERVISOR` (Profil generiert, abgeglichen).
+  Kennwort von SAP zufaellig erzeugt; Ingo setzt das Initialkennwort selbst. Bestand der GIB-Rollen und Transaktionen in
+  `saptasks/gib_dcp/NOTES.md`. Laut Ingo sind die GIB-Module installiert und die Pilotphase ist abgeschlossen.
 
 ## Doku: Word GIB Dispo-Cockpit DCP, 2026-10-19
 

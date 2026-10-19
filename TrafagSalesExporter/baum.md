@@ -162,6 +162,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` | **SAP effizient bedienen: Zugangswege, Skriptbestand, Aktivierungsfallen, Gateway/OData. Pflichtlektuere vor jeder SAP-Aktion, verlinkt aus `router.md` Regel 5 und `docs/rag/init.md`** |
 | `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` | ZC23 Materialanteil und Arbeit CZ: Formeln, Beispiel B87813, Bedienung, Grenzen, Pruefung (Word, Generator `.tmp_tools/BuildZc23Formeln`) |
 | `saptasks/fiori_zc23/` | Fiori-App ZC23: `NOTES.md`, Generator `erzeugen.py`, `methoden_bauen.py`, MPC/DPC vorher/neu, Struktur-Feldliste, App `webapp/` |
+| `saptasks/gib_dcp/` | GIB Dispo-Cockpit in T76: `NOTES.md` (Bestand Rollen/Transaktionen, Testuser UBIG) |
 | `saptasks/shopfloor_sap/` | Shopfloor-Mengen aus SAP: `NOTES.md`, `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
 | `saptasks/fiori_erste_app/` | Erste Fiori-App: `NOTES.md` (Harness, Voraussetzungen, Upload-Wege, Link), Quelle `webapp/` |
 | `saptasks/zc23_materialanteil/` | ZC23 Materialanteil: Analyse und Vorschlag `NOTES.md`, Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |

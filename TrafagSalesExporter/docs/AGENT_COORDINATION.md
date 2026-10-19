@@ -36,6 +36,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | T76/200: Testuser `UBIG` nur mit `/GIB/DCP_SUPERVISOR` (Auftrag Ingo) | 2026-10-19 | **Abgeschlossen in T76/200, kein Deploy, Reservierung frei.** Eigene Sitzung, Kennwort zufaellig erzeugt (setzt Ingo), Profil `T-P4550180` generiert und abgeglichen. `saptasks/gib_dcp/NOTES.md` |
 | Claude | Word-Doku ZC23 Materialanteil: Beschleunigung 47,7 s -> 13,5 s | 2026-10-19 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx`, in Word als PDF geprueft |
 | Claude | ZLO03 FIX 12: Test in T76 mit nachgestelltem Fall | 2026-10-19 | **Abgeschlossen, nur T76 (lokale Testobjekte, Testdaten), Reservierung frei.** Alt: B63485 fehlt, neu: MK 5009; sonst gleich. Import P76 Ingo |
 | Claude | Shopfloor-Mengen: Produktionstag statt Abfragetag, DW prod (DL790), Umbuchung 15. bis 19.10. | 2026-10-19 | **Abgeschlossen, deployed 10:04 (`c3c45cd`), Reservierung frei.** 1250/1250, bitgleich, Alarm nur WAL/SHM; Sa/So-Nullen korrigiert (LEARNINGS). TX aus ZC22 offen |
