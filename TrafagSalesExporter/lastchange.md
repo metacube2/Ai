@@ -2,6 +2,11 @@
 
 Stand: 2026-10-16
 
+## Doku: Word GIB Dispo-Cockpit DCP, 2026-10-19
+
+- `docs/GIB_DispoCockpit_DCP_Zusammenfassung_2026-10-19.docx` (3 Seiten): Module DCC/DCO/DCP/DCF, was DCP macht, Technik, Rollout-Schritte,
+  Ueberschneidung mit Operations, ZM_OFFENE_FAUF, Logistik live und Einkauf, offene Fragen. Aus oeffentlichen Quellen, Trafag-Umfang offen.
+
 ## Doku: Word ZC23 Materialanteil, Beschleunigung, 2026-10-19
 
 - `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx` (4 Seiten) mit Generator `word_beschleunigung.js`. Nur Doku.
