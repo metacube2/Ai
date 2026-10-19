@@ -199,3 +199,12 @@ Word `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` (Formeln, Beispiel, Bedi
 (Generator versioniert unter `Tools/BuildZc23Formeln`; bis zum Nachtrag lag er nur im ignorierten `.tmp_tools`).
 Die Vorschau ueber Word-COM (PDF-Export) hing am 15.10.; die eigene versteckte Word-Instanz wurde beendet, geprueft ist das
 Dokument ueber OpenXML-Validierung und Pflichttexte.
+
+## Word-Doku zur Beschleunigung (2026-10-19, Wunsch Ingo)
+
+`ZC23_Materialanteil_Beschleunigung_2026-10-19.docx` (4 Seiten): Ausgangslage, Messung (47,7 s -> 13,5 s, Schalter aus 7,5 s),
+warum die erste Fassung langsam war (Einzelzugriffe je Kalkulation und je Position, Commit `bed8097`), die sechs Massnahmen
+der schnellen Fassung mit Codeausschnitten, Uebersicht der Zugriffe, Grenzen, Nachweise. Erzeugt mit
+`word_beschleunigung.js` (npm `docx` 9.5.1, `node word_beschleunigung.js <ziel.docx>`), Inhaltsverzeichnis danach in Word
+aktualisiert. Hinweis: Der Import von `T76K912736` nach P76 ist am 16.10. erfolgt; die Aussage „Import P76 offen“ weiter oben
+ist ueberholt.

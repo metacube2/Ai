@@ -165,6 +165,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `saptasks/shopfloor_sap/` | Shopfloor-Mengen aus SAP: `NOTES.md`, `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
 | `saptasks/fiori_erste_app/` | Erste Fiori-App: `NOTES.md` (Harness, Voraussetzungen, Upload-Wege, Link), Quelle `webapp/` |
 | `saptasks/zc23_materialanteil/` | ZC23 Materialanteil: Analyse und Vorschlag `NOTES.md`, Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |
+| `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx` | Word-Doku: wie der Materialanteil von 47,7 s auf 13,5 s beschleunigt wurde; Generator `word_beschleunigung.js` |
 | `saptasks/zm_offene_kdauf/` | ZM_OFFENE_KDAUF beschleunigen: Original, REF, OPT (zum Zurueckkopieren), CMP, Funktionsgruppe ZKDAUF_PAR (`Z_KDAUF_PAR_RECHNEN.abap`, `LZKDAUF_PARTOP.abap`), Nummerntest `Z_KDAUF_NR_TEST.abap`, Original-Quellen `Z_BASISPREISLISTE.abap`/`LZZLO1*.abap`, Bausteine `teile/`, `bauen.js`, `einspielen.sh`, Laufprotokolle `lauf*.txt`, Tabellenabzug `zpowerbi_opt.csv`; Stand, Ergebnisse und Offenes in `NOTES.md` |
 | `docs/ZZPRDAT_Loesung_2026-09-03.docx` | ZZPRDAT-Loesungsdokument fuer den Fachbereich |
 | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` | Anschreiben zur Abnahme, Vorlage fuer den Outlook-Entwurf |

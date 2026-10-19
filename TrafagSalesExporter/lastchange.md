@@ -2,6 +2,10 @@
 
 Stand: 2026-10-16
 
+## Doku: Word ZC23 Materialanteil, Beschleunigung, 2026-10-19
+
+- `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx` (4 Seiten) mit Generator `word_beschleunigung.js`. Nur Doku.
+
 ## SAP ZLO03: FIX 12 in T76 am nachgestellten Fall bestaetigt, 2026-10-19
 
 - Testdaten `ZPOWERBI_VC_TXT` in T76 gefuellt, Textposition B63485/46123 vor die echte Position gelegt. Alte Fassung: B63485 fehlt;
