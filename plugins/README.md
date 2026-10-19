@@ -2,7 +2,7 @@
 
 **Alle** Effekte sind Plugins: Jede `.py`-Datei in diesem Ordner (oder in
 `~/.bildeffekte/plugins`) bringt Effekte mit. Beim Start werden sie automatisch
-geladen, im laufenden Programm über den Knopf **🧩 Plugins neu laden**.
+geladen, im laufenden Programm über den Knopf **🧩** (Plugins neu laden).
 
 Ein Plugin kennt nur das Paket `bildeffekte` (Schnittstellen, Hilfsmittel,
 Container) – niemals `video.py`. Umgekehrt kennt das Programm keine einzelne
@@ -60,8 +60,7 @@ class InvertEffect(IEffectStrategy):
 
 Bild-Effekte können optional `category = "…"` setzen. Jede Kategorie erscheint als
 Untermenü der Effekt-Auswahl (z. B. `"Glitch"`, `"Retro & VHS"`, `"Verwandlungen"`);
-ohne Angabe steht der Effekt auf der obersten Ebene. `category = "Kontur-Labor"`
-bekommt eine eigene Sektion. `supports_drag = True` aktiviert das Ziehen in der
+ohne Angabe steht der Effekt auf der obersten Ebene. `supports_drag = True` aktiviert das Ziehen in der
 Vorschau; die letzte Mausbewegung steht als `(x, y, dx, dy)` in
 `config['warp_drag']`, mit normierten Koordinaten und `None` nach dem Loslassen.
 

@@ -48,8 +48,8 @@ RGB-Bilder an dieselbe Effekt- und Bildmerkmale-Pipeline.
 
 Bild-Plugins ordnen sich über `category` einer Gruppe zu: Jede Kategorie wird ein
 Untermenü der Effekt-Auswahl (`EffectPicker` in `video.py`), die Standardkategorie
-„Bild-Effekte“ steht auf der obersten Ebene. Nur „Kontur-Labor“ bekommt eine eigene
-Sektion. Mit `supports_drag`
+„Bild-Effekte“ steht auf der obersten Ebene; auch „Kontur-Labor“ ist ein Untermenü.
+Mit `supports_drag`
 erhält ein Effekt normierte Mausbewegungen aus der Vorschau über den Event-Bus
 als `config['warp_drag']`; im Aufnahme-Thread wird daraus die Bildverformung.
 

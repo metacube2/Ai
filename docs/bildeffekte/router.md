@@ -21,7 +21,7 @@ vom Bild gesteuert werden. Oberfläche in PySide6, alle Effekte sind Plugins.
 
 | Datei | Wofür |
 | --- | --- |
-| `bedienung.md` | Starten, Quelle und Bereich wählen, Effekte kombinieren (Kette), Vollbild, Aufnahme, virtuelle Kamera für Teams/Zoom, Morph-Zielbild, Ton-Geräte und Tastenkürzel |
+| `bedienung.md` | Starten, Fensteraufbau mit Klapp-Bereichen, Quelle und Bereich wählen, Effekte kombinieren (Kette), Vollbild, Aufnahme, virtuelle Kamera für Teams/Zoom, Morph-Zielbild, Ton-Geräte und Tastenkürzel |
 | `effekte.md` | Alle Bild- und Ton-Effekte mit Beschreibung und gemessener Rechenzeit |
 | `architektur.md` | Container, Threads, Audio-Pipeline, Kopplung Bild ↔ Ton |
 | `messwerte.md` | Wie gemessen wurde, alle Zahlen, was ungetestet ist |

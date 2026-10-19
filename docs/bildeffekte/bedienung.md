@@ -1,6 +1,6 @@
 # Bildeffekte — Bedienung
 
-Stand: 2026-09-22
+Stand: 2026-09-26
 
 ## Starten
 
@@ -21,21 +21,29 @@ Bildschirmquelle nur ein schwarzes Bild, weist die Statuszeile darauf hin.
 
 ## Bild
 
+**Aufbau des Fensters:** Oben steht immer die Hauptleiste mit Start, Stop, Effekt,
+＋ Anhängen, Aufnehmen, Als Kamera und Vollbild. Darunter liegen die Klapp-Schalter
+**Quelle**, **Kette** und **Ton**. Ein Klick klappt den Bereich auf oder zu. Auch
+zugeklappt zeigt jeder Schalter die aktuelle Einstellung, etwa
+„Ton: Farb-Vokale, Mix 100 %“. Die App merkt sich, welche Bereiche offen sind.
+Zugeklappt belegt die Bedienung bei 1040×700 rund 86 px, das Livebild den Rest.
+Die Gesichtsmorph-Zeile erscheint nur bei Effekten, die sie nutzen.
+
 | Bedienelement | Wirkung |
 | --- | --- |
-| **Quelle** | Standard ist „Bildschirm“. Kameras erscheinen mit ihrem Namen, etwa „FaceTime HD-Kamera“. Die Reihenfolge ist die von OpenCV, nach Geräte-ID sortiert, nicht die von macOS. „OBS Virtual Camera“ ist als eigene Ausgabe markiert und lässt sich nicht als Quelle starten, sonst entstünde eine Rückkopplung. Ohne `pyobjc-framework-AVFoundation` erscheinen nur „Kamera 0–3“ |
+| **Quelle** (Klapp-Bereich) | Standard ist „Bildschirm“. Kameras erscheinen mit ihrem Namen, etwa „FaceTime HD-Kamera“. Die Reihenfolge ist die von OpenCV, nach Geräte-ID sortiert, nicht die von macOS. „OBS Virtual Camera“ ist als eigene Ausgabe markiert und lässt sich nicht als Quelle starten, sonst entstünde eine Rückkopplung. Ohne `pyobjc-framework-AVFoundation` erscheinen nur „Kamera 0–3“ |
 | **Bereich** | Nur bei „Bildschirm": `x,y,Breite,Höhe` in Bildschirmpunkten, mindestens 16×16 |
 | **Bereich wählen…** | Bildschirm wird abgedunkelt, Rahmen mit der Maus aufziehen. Esc oder Rechtsklick bricht ab |
 | **Start / Stop** | Aufnahme mit 30 Bildern pro Sekunde |
-| **Nächste Zelle** | Nur beim Effekt „Mosaik": schaltet die aktive Kachel weiter |
-| **Effekt** | Menü der Bild-Effekte, nach Gruppen geordnet (Grundlagen, Glitch, Retro & VHS, Natur & Material, Verwandlungen, Gesichter, Raum & Illusion, Audio-reaktiv). „Original“ steht oben, der Knopf zeigt Gruppe › Effekt |
-| **Kette** | Mehrere Bild-Effekte nacheinander. **＋ Effekt anhängen** setzt einen Effekt hinter den ausgewählten. Die Chips zeigen die Reihenfolge; ein Klick auf einen Chip wählt ihn aus, dann ändern **Effekt**, Gesichtsmorph und Dramatik diesen Effekt. **◀ ▶** verschieben, **✕** entfernt ihn. Jeder Effekt kann nur einmal vorkommen. Rechenzeiten addieren sich |
-| **Kontur-Labor** | Eigene Sektion mit vier aus Kanten und Kontrast berechneten Effekten |
-| **Gesichtsmorph** | Erscheint beim Matrix-Agenten: eigenes JPG/JPEG wählen oder mit „Standard-Agent“ zur mitgelieferten Vorlage zurückkehren. **🎭 Dramatik** verformt so stark wie in der Filmszene (rot = an) |
-| **⛶ Vollbild** | Ausgabebild als eigenes Vollbildfenster öffnen; Esc oder Klick auf das Bild beendet es |
+| **Nächste Zelle** | Erscheint nur beim Effekt „Mosaik": schaltet die aktive Kachel weiter |
+| **Effekt** | Menü der Bild-Effekte, nach Gruppen geordnet (Grundlagen, Glitch, Retro & VHS, Natur & Material, Verwandlungen, Gesichter, Kontur-Labor, Raum & Illusion, Audio-reaktiv). „Original“ steht oben. Der Knopf zeigt den Effektnamen, der Tooltip Gruppe › Effekt |
+| **＋ Anhängen** | Setzt einen weiteren Effekt hinter den ausgewählten (Kette) |
+| **Kette** (Klapp-Bereich) | Mehrere Bild-Effekte nacheinander. Die Chips zeigen die Reihenfolge; ein Klick auf einen Chip wählt ihn aus, dann ändern **Effekt**, Gesichtsmorph und Dramatik diesen Effekt. **◀ ▶** verschieben, **✕** entfernt ihn. Jeder Effekt kann nur einmal vorkommen. Rechenzeiten addieren sich |
+| **Gesichtsmorph** | Eine Zeile, erscheint nur beim Matrix-Agenten: eigenes JPG/JPEG wählen oder mit „Standard-Agent“ zur mitgelieferten Vorlage zurückkehren. **🎭 Dramatik** verformt so stark wie in der Filmszene (rot = an) |
+| **⛶** (Vollbild) | Ausgabebild als eigenes Vollbildfenster öffnen; Esc oder Klick auf das Bild beendet es |
 | **⏺ Aufnehmen** | Nur bei laufendem Video: speichert das Ausgabebild als MP4 (H.264, 30 fps, ohne Ton) nach `~/Movies/Bildeffekte/Bildeffekte_<Datum_Uhrzeit>_<Effekt>.mp4`. Der Knopf zeigt „REC mm:ss“; nochmal klicken oder Stop beendet und speichert, die Statuszeile nennt den Pfad. Rechnet ein Effekt langsamer als 30 fps, werden Bilder wiederholt, damit das Video in Echtzeit abläuft |
 | **📷 Als Kamera** | Sendet das Ausgabebild als virtuelle Kamera **„OBS Virtual Camera“** (1280×720, 30 fps, andere Formate mit schwarzem Rand). Teams, Zoom und FaceTime wählen sie wie eine normale Kamera, siehe „In Teams zeigen“. Läuft unabhängig von Start/Stop: Ohne neues Bild wird das letzte wiederholt |
-| **🧩 Plugins neu laden** | Liest den Ordner `plugins` neu ein, ohne Neustart |
+| **🧩** (rechts neben den Klapp-Schaltern) | Plugins neu laden: liest den Ordner `plugins` neu ein, ohne Neustart |
 
 **Tastenkürzel:** Leertaste startet und stoppt, **N** schaltet die Mosaik-Zelle weiter.
 
@@ -83,6 +91,8 @@ Ohne Apple Vision nutzt der Effekt die einfachere Kontrastmaske. Findet er
 keine brauchbare Silhouette, zeigt er das eingefrorene Bild.
 
 ## Ton
+
+Alles im Klapp-Bereich **Ton**: Ton-Effekt und Mix in der ersten Zeile, Eingang und Ausgang in der zweiten.
 
 | Bedienelement | Wirkung |
 | --- | --- |

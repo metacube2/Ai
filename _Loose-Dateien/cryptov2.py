@@ -20,11 +20,18 @@ Sync "Pilotton 1200/1800 Hz" (Variante C, Stil 70er/80er):
       je 2 Frames BARKER-13 | ZÄHLER (11) | CRC-8 (8).
     - Schmale Bandsperren (±55 Hz) halten Sprache und Pilot auseinander.
     1200 und 1800 Hz haben ganzzahlig viele Schwingungen pro Segment.
+
+Sync "BBC 1830 Hz" (nach dem Original Vericrypt/Cryptophon 1100):
+    Ein einzelner FSK-Pilotton 1830 ± 100 Hz (1730/1930 Hz) mitten im Sprachband,
+    gleicher Rahmen wie "FSK 3.8/4.4 kHz". Eine breite Bandsperre räumt das
+    Pilotband in der Sprache frei, der Empfänger entfernt den Pilot vor dem
+    Entwürfeln. Klingt hohler als der Pilotton, hat keine Zeitbasiskorrektur.
 """
 
 import hashlib
 import math
 import queue
+import sys
 import threading
 from dataclasses import dataclass, replace
 from enum import Enum
@@ -32,8 +39,11 @@ from typing import Optional, List, Tuple
 
 import numpy as np
 import sounddevice as sd
-import tkinter as tk
-from tkinter import ttk
+from PySide6.QtCore import Qt, QTimer, QRectF, QPointF
+from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox, QGridLayout,
+                               QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+                               QPushButton, QScrollArea, QVBoxLayout, QWidget)
 from scipy.signal import butter, ellip, ellipord, sosfilt, sosfiltfilt
 
 
@@ -48,6 +58,7 @@ class SyncMode(Enum):
     """Synchronisationsverfahren (Sender und Empfänger müssen gleich eingestellt sein)."""
     FSK = "fsk"
     PILOT = "pilot"
+    BBC = "bbc"
 
 
 @dataclass
@@ -215,13 +226,17 @@ class FSKModem:
         self.margin = 2 * self.samples_per_bit
         self.phase = 0.0
         self.sync_template = np.array(int_to_bits(self.SYNC_WORD, self.SYNC_BITS)) * 2.0 - 1.0
-        self._highpass = ellip(8, 0.5, 70, 3500, btype='high', fs=sample_rate, output='sos')
+        self._band_filter = self.receive_filter(sample_rate)
         self._min_energy = (self.MIN_AMPLITUDE * self.samples_per_bit / 2) ** 2
 
     def build_frame_bits(self, counter: int) -> List[int]:
         counter_bytes = counter.to_bytes(2, 'big')
         return (int_to_bits(self.SYNC_WORD, 16) + int_to_bits(counter, 16)
                 + int_to_bits(crc8(counter_bytes), 8) + [1, 0] * 4)
+
+    def receive_filter(self, sample_rate: int) -> np.ndarray:
+        """Trennt im Empfänger das FSK-Band von der Sprache."""
+        return ellip(8, 0.5, 70, 3500, btype='high', fs=sample_rate, output='sos')
 
     def speech_notches(self) -> List[np.ndarray]:
         return []   # FSK liegt über der Sprache, der Tiefpass reicht
@@ -244,7 +259,7 @@ class FSKModem:
         d[a] in [-1, 1]: +1 = Mark, -1 = Space.
         """
         spb = self.samples_per_bit
-        x = sosfiltfilt(self._highpass, x.astype(np.float64))  # nullphasig: kein Zeitversatz
+        x = sosfiltfilt(self._band_filter, x.astype(np.float64))  # nullphasig: kein Zeitversatz
         n = np.arange(len(x))
 
         def energy(freq):
@@ -288,6 +303,28 @@ class FSKModem:
         if bits_to_int(bits[32:40]) != crc8(counter.to_bytes(2, 'big')):
             return p, None, float(score[best])
         return p, counter, float(score[best])
+
+
+class BBCPilotModem(FSKModem):
+    """
+    FSK-Pilotton nach dem Original (Vericrypt/Cryptophon 1100): 1830 Hz ± 100 Hz.
+    Ein einzelner Ton, der je Bit zwischen 1730 und 1930 Hz umspringt, mitten im
+    Sprachband. Rahmen und Empfänger wie FSKModem, nur mit Bandpass statt Hochpass.
+    """
+
+    MARK_FREQ = 1730
+    SPACE_FREQ = 1930
+    BAND = (1580, 2080)         # Pilotband, 100 Baud belegen etwa ±200 Hz um 1830 Hz
+    PASS_MARGIN = 80            # Übergang bis zur ungedämpften Sprache
+
+    def receive_filter(self, sample_rate: int) -> np.ndarray:
+        return ellip(6, 0.5, 60, self.BAND, btype='bandpass', fs=sample_rate, output='sos')
+
+    def speech_notches(self) -> List[np.ndarray]:
+        lo, hi = self.BAND
+        order, wn = ellipord([lo - self.PASS_MARGIN, hi + self.PASS_MARGIN], [lo, hi],
+                             0.5, 50, fs=self.sample_rate)
+        return [ellip(order, 0.5, 50, wn, btype='bandstop', fs=self.sample_rate, output='sos')]
 
 
 def raised_cosine(t: np.ndarray, rolloff: float) -> np.ndarray:
@@ -760,7 +797,7 @@ class AudioProcessor:
         if sync_mode == SyncMode.PILOT:
             return PilotToneModem(self.sample_rate, self.scrambler.frame_samples,
                                   self.scrambler.segment_samples)
-        modem = FSKModem(self.sample_rate)
+        modem = BBCPilotModem(self.sample_rate) if sync_mode == SyncMode.BBC else FSKModem(self.sample_rate)
         assert self.scrambler.frame_samples == modem.FRAME_BITS * modem.samples_per_bit
         return modem
 
@@ -784,10 +821,9 @@ class AudioProcessor:
         self.encoder = FrameEncoder(self.sample_rate, self.scrambler, self.modem)
         self.decoder = FrameDecoder(self.sample_rate, self.scrambler, self.modem,
                                     self._speech_delay(self.modem))
-        pilot = sync_mode == SyncMode.PILOT
-        self.clock_recovery = PilotClockRecovery(self.sample_rate) if pilot else None
-        # Pilottöne fortlaufend entfernen, solange sie noch lückenlos sind (vor dem Entwürfeln)
-        self.speech_buffer = RingBuffer(capacity) if pilot else None
+        self.clock_recovery = PilotClockRecovery(self.sample_rate) if sync_mode == SyncMode.PILOT else None
+        # Pilottöne im Sprachband fortlaufend entfernen, solange sie noch lückenlos sind (vor dem Entwürfeln)
+        self.speech_buffer = RingBuffer(capacity) if self.modem.speech_notches() else None
         self.pilot_removers = [StreamingFilter(sos) for sos in self.modem.speech_notches()]
         self.clear_inverter = FrequencyInverter(self.sample_rate)
         self.clear_bandpass = StreamingFilter(
@@ -849,8 +885,8 @@ class AudioProcessor:
                 data = self.clear_bandpass.process(data)
             return data.astype(np.float32)
 
-        if settings.crypto_mode == CryptoMode.DECRYPT and self.clock_recovery is not None:
-            nominal = self.clock_recovery.process(data)
+        if settings.crypto_mode == CryptoMode.DECRYPT and self.speech_buffer is not None:
+            nominal = self.clock_recovery.process(data) if self.clock_recovery is not None else data
             self.in_buffer.write(nominal)
             for remover in self.pilot_removers:
                 nominal = remover.process(nominal)
@@ -903,13 +939,158 @@ class LevelMeter:
         return self.input_db, self.output_db
 
 
-class AudioEffectsApp:
+BG = '#1a1a2e'
+PANEL = '#0a0a1a'
+ACCENT = '#0f0'
+
+STYLESHEET = f"""
+QWidget {{ background: {BG}; color: #eee; font-family: Menlo, Monaco, 'Courier New', monospace; font-size: 12px; }}
+QGroupBox {{ border: 1px solid #333; border-radius: 4px; margin-top: 14px; padding: 10px 8px 8px 8px; }}
+QGroupBox::title {{ subcontrol-origin: margin; left: 10px; padding: 0 4px; color: {ACCENT}; }}
+QComboBox, QLineEdit {{ background: #2a2a4e; border: 1px solid #444; border-radius: 3px; padding: 4px 6px; }}
+QComboBox QAbstractItemView {{ background: #2a2a4e; selection-background-color: #0a4a0a; }}
+QPushButton {{ background: #2a2a4e; border: 1px solid #444; border-radius: 3px; padding: 6px 12px; }}
+QPushButton:hover {{ border-color: #888; }}
+QPushButton:checked {{ background: #0a3a0a; border-color: {ACCENT}; color: {ACCENT}; }}
+QPushButton#start {{ font-size: 14px; font-weight: bold; padding: 10px 30px; }}
+QCheckBox {{ padding: 5px 0; spacing: 8px; }}
+QScrollArea {{ border: none; }}
+"""
+
+
+class NoWheelComboBox(QComboBox):
+    """Mausrad scrollt die Seite statt das Audiogerät (und damit den Stream) zu wechseln."""
+
+    def wheelEvent(self, event):
+        event.ignore()
+
+
+class WideCheckBox(QCheckBox):
+    """Die ganze Zeile ist anklickbar, nicht nur Kästchen und Text."""
+
+    def hitButton(self, pos) -> bool:
+        return self.rect().contains(pos)
+
+
+class SegmentRing(QWidget):
+    """Zeigt die aktuelle Permutation der 16 Segmente, Frame-Zähler und Sync-Status."""
+
+    COLORS = ['#2a1a1a', '#1a2a1a', '#1a1a2a', '#2a2a1a',
+              '#2a1a2a', '#1a2a2a', '#2a2a2a', '#3a1a1a',
+              '#1a3a1a', '#1a1a3a', '#3a3a1a', '#3a1a3a',
+              '#1a3a3a', '#3a3a3a', '#4a1a1a', '#1a4a1a']
+
+    def __init__(self, processor: AudioProcessor):
+        super().__init__()
+        self.processor = processor
+        self.setMinimumHeight(170)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.fillRect(self.rect(), QColor(PANEL))
+
+        cx, cy = self.width() / 2, self.height() / 2
+        r_outer = min(cx, cy) - 10
+        r_inner = r_outer - 28
+        outer = QRectF(cx - r_outer, cy - r_outer, 2 * r_outer, 2 * r_outer)
+        inner = QRectF(cx - r_inner, cy - r_inner, 2 * r_inner, 2 * r_inner)
+
+        processor = self.processor
+        crypto_mode = processor.get_settings().crypto_mode
+        active = crypto_mode != CryptoMode.OFF
+        current_seg = processor.current_segment
+        perm = processor.current_permutation
+        n = VericryptScrambler.FRAME_SEGMENTS
+        span = 360 / n
+        p.setFont(QFont('Menlo', 9))
+
+        for i in range(n):
+            start = 90 - i * span     # Qt: Grad gegen den Uhrzeigersinn ab 3 Uhr; Segment 0 oben
+            path = QPainterPath()
+            path.arcMoveTo(outer, start)
+            path.arcTo(outer, start, -span)
+            path.arcTo(inner, start - span, span)
+            path.closeSubpath()
+
+            if not active:
+                fill, outline = '#1a1a2a', '#333'
+            elif i == current_seg:
+                fill, outline = ACCENT, ACCENT
+            else:
+                fill, outline = self.COLORS[int(perm[i]) % len(self.COLORS)], '#444'
+            p.setPen(QPen(QColor(outline), 1))
+            p.setBrush(QColor(fill))
+            p.drawPath(path)
+
+            mid = math.radians(start - span / 2)
+            r_text = (r_outer + r_inner) / 2
+            tx, ty = cx + r_text * math.cos(mid), cy - r_text * math.sin(mid)
+            p.setPen(QColor('#000' if active and i == current_seg else '#777'))
+            p.drawText(QRectF(tx - 12, ty - 8, 24, 16), Qt.AlignCenter, str(int(perm[i]) if active else i))
+
+        if crypto_mode == CryptoMode.DECRYPT:
+            caption, color = ("SYNC", ACCENT) if processor.sync_locked else ("NO SYNC", '#f44')
+        else:
+            caption, color = "FRAME", '#666'
+        p.setPen(QColor(color))
+        p.drawText(QRectF(cx - 50, cy - 22, 100, 16), Qt.AlignCenter, caption)
+        p.setPen(QColor(ACCENT))
+        p.setFont(QFont('Menlo', 15, QFont.Bold))
+        p.drawText(QRectF(cx - 60, cy - 4, 120, 24), Qt.AlignCenter, f"{processor.frame_counter:05d}")
+        p.end()
+
+
+class LevelBars(QWidget):
+    """Ein- und Ausgangspegel in dB (−60 … 0)."""
+
+    def __init__(self, level_meter: LevelMeter):
+        super().__init__()
+        self.level_meter = level_meter
+        self.setMinimumHeight(84)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.fillRect(self.rect(), QColor(PANEL))
+        left, right = 45, self.width() - 10
+        usable = right - left
+
+        def db_to_width(db):
+            return max(0.0, min(1.0, (db + 60) / 60)) * usable
+
+        input_db, output_db = self.level_meter.get_current()
+        p.setFont(QFont('Menlo', 9))
+        for y, label, db, colors in (
+                (12, "IN", input_db, ('#0f0', '#ff0', '#f00')),
+                (42, "OUT", output_db, ('#0af', '#f0f', '#f00'))):
+            p.setPen(QColor('#0a0'))
+            p.drawText(QRectF(8, y, 36, 16), Qt.AlignVCenter | Qt.AlignLeft, label)
+            p.setPen(QColor('#333'))
+            p.setBrush(QColor('#1a1a2a'))
+            p.drawRect(QRectF(left, y, usable, 16))
+            color = colors[0] if db < -6 else colors[1] if db < -3 else colors[2]
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(color))
+            p.drawRect(QRectF(left, y, db_to_width(db), 16))
+
+        p.setFont(QFont('Menlo', 8))
+        for db in (-48, -24, -12, -6, 0):
+            x = left + db_to_width(db)
+            p.setPen(QColor('#444'))
+            p.drawLine(QPointF(x, 62), QPointF(x, 68))
+            p.drawText(QRectF(x - 15, 68, 30, 12), Qt.AlignCenter, str(db))
+        p.end()
+
+
+class AudioEffectsApp(QMainWindow):
     """Hauptanwendung."""
 
     SAMPLE_RATE = 44100
     CHUNK_SIZE = 1024
 
     def __init__(self):
+        super().__init__()
         self.processor = AudioProcessor(self.SAMPLE_RATE, self.CHUNK_SIZE)
         self.level_meter = LevelMeter()
         self.stream: Optional[sd.Stream] = None
@@ -919,6 +1100,10 @@ class AudioEffectsApp:
         self.output_devices = []
 
         self._setup_gui()
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._update_gui)
+        self.timer.start(30)
 
     def _refresh_devices(self):
         """Aktualisiert die Liste der Audio-Geräte."""
@@ -934,7 +1119,7 @@ class AudioEffectsApp:
                 if dev['max_output_channels'] > 0:
                     self.output_devices.append((i, name))
         except Exception as e:
-            self.status_var.set(f"Geräteabfrage fehlgeschlagen: {e}")
+            self.status_label.setText(f"Geräteabfrage fehlgeschlagen: {e}")
 
     def _populate_device_combos(self):
         """Füllt die Comboboxen und behält die aktuelle Auswahl bei."""
@@ -943,21 +1128,24 @@ class AudioEffectsApp:
         for combo, devices, selected in (
                 (self.input_combo, self.input_devices, settings.input_device),
                 (self.output_combo, self.output_devices, settings.output_device)):
-            combo['values'] = ["Default"] + [d[1] for d in devices]
+            combo.blockSignals(True)
+            combo.clear()
+            combo.addItems(["Default"] + [d[1] for d in devices])
             ids = [d[0] for d in devices]
-            combo.current(ids.index(selected) + 1 if selected in ids else 0)
+            combo.setCurrentIndex(ids.index(selected) + 1 if selected in ids else 0)
+            combo.blockSignals(False)
 
     def _do_refresh_devices(self):
         self._refresh_devices()
         self._populate_device_combos()
         self._on_device_change()
 
-    def _on_device_change(self, event=None):
+    def _on_device_change(self, *_):
         """Ermittelt Device-IDs, aktualisiert Settings, startet Stream neu falls aktiv."""
-        input_sel = self.input_combo.current()
+        input_sel = self.input_combo.currentIndex()
         input_id = None if input_sel <= 0 else self.input_devices[input_sel - 1][0]
 
-        output_sel = self.output_combo.current()
+        output_sel = self.output_combo.currentIndex()
         output_id = None if output_sel <= 0 else self.output_devices[output_sel - 1][0]
 
         old = self.processor.get_settings()
@@ -985,13 +1173,13 @@ class AudioEffectsApp:
                 dtype=np.float32
             )
             self.stream.start()
-            self.button_text.set("⏹ STOP")
+            self.start_button.setText("⏹ STOP")
             self._on_settings_change()
             return True
         except Exception as e:
             self._stop_stream()
-            self.status_var.set(f"FEHLER: {e}")
-            self.button_text.set("▶ START")
+            self.status_label.setText(f"FEHLER: {e}")
+            self.start_button.setText("▶ START")
             return False
 
     def _stop_stream(self):
@@ -1003,304 +1191,212 @@ class AudioEffectsApp:
             except Exception as e:
                 print(f"Stream-Stop Fehler: {e}")
 
+    @staticmethod
+    def _toggle_group(parent_layout: QHBoxLayout, options, default: str, on_change) -> QButtonGroup:
+        """Reihe exklusiver Umschaltknöpfe; die ganze Knopffläche ist anklickbar."""
+        group = QButtonGroup(parent_layout)
+        group.setExclusive(True)
+        for text, value in options:
+            button = QPushButton(text)
+            button.setCheckable(True)
+            button.setChecked(value == default)
+            button.setProperty('value', value)
+            button.setCursor(Qt.PointingHandCursor)
+            group.addButton(button)
+            parent_layout.addWidget(button)
+        parent_layout.addStretch()
+        group.buttonClicked.connect(lambda _: on_change())
+        return group
+
+    @staticmethod
+    def _group_value(group: QButtonGroup) -> str:
+        return group.checkedButton().property('value')
+
     def _setup_gui(self):
-        self.root = tk.Tk()
-        self.root.title("Vericrypt-Style Scrambler")
-        self.root.geometry("700x720")
-        self.root.configure(bg='#1a1a2e')
-        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+        self.setWindowTitle("Vericrypt-Style Scrambler")
+        self.resize(1000, 600)
+        self.setStyleSheet(STYLESHEET)
 
-        style = ttk.Style()
-        style.theme_use('clam')
-        style.configure('TCheckbutton', background='#1a1a2e', foreground='#eee')
-        style.configure('TRadiobutton', background='#1a1a2e', foreground='#eee')
-        style.configure('TButton', padding=10)
-        style.configure('TLabel', background='#1a1a2e', foreground='#eee')
-        style.configure('TLabelframe', background='#1a1a2e', foreground='#0f0')
-        style.configure('TLabelframe.Label', background='#1a1a2e', foreground='#0f0')
-        style.configure('TEntry', fieldbackground='#2a2a4e')
-        style.configure('TFrame', background='#1a1a2e')
-        style.configure('TCombobox', fieldbackground='#2a2a4e')
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        self.setCentralWidget(scroll)
+        content = QWidget()
+        scroll.setWidget(content)
+        page = QVBoxLayout(content)
+        page.setContentsMargins(15, 10, 15, 15)
+        page.setSpacing(8)
+        columns = QHBoxLayout()
+        columns.setSpacing(15)
+        # Links Einstellungen, rechts Anzeige und START: passt ohne Scrollen auf kleine Bildschirme
+        left, right = QVBoxLayout(), QVBoxLayout()
+        left.setSpacing(8)
+        right.setSpacing(8)
+        columns.addLayout(left, 3)
+        columns.addLayout(right, 2)
 
-        # Scrollbarer Container
-        container = ttk.Frame(self.root)
-        container.pack(fill='both', expand=True)
-
-        self.scroll_canvas = tk.Canvas(container, bg='#1a1a2e', highlightthickness=0)
-        scrollbar = ttk.Scrollbar(container, orient='vertical', command=self.scroll_canvas.yview)
-
-        self.scrollable_frame = ttk.Frame(self.scroll_canvas)
-        self.scrollable_frame.bind(
-            '<Configure>',
-            lambda e: self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox('all'))
-        )
-
-        self._canvas_window = self.scroll_canvas.create_window(
-            (0, 0), window=self.scrollable_frame, anchor='nw'
-        )
-        self.scroll_canvas.configure(yscrollcommand=scrollbar.set)
-
-        def _on_mousewheel(event):
-            # macOS liefert kleine Deltas (±1..±n), Windows ±120 — nur das Vorzeichen zählt
-            if event.delta:
-                self.scroll_canvas.yview_scroll(-1 if event.delta > 0 else 1, 'units')
-
-        def _on_mousewheel_linux_up(event):
-            self.scroll_canvas.yview_scroll(-1, 'units')
-
-        def _on_mousewheel_linux_down(event):
-            self.scroll_canvas.yview_scroll(1, 'units')
-
-        def _bind_mousewheel(widget):
-            widget.bind('<MouseWheel>', _on_mousewheel)
-            widget.bind('<Button-4>', _on_mousewheel_linux_up)
-            widget.bind('<Button-5>', _on_mousewheel_linux_down)
-
-        _bind_mousewheel(self.scroll_canvas)
-        self._bind_mousewheel_to_widget = _bind_mousewheel
-
-        scrollbar.pack(side='right', fill='y')
-        self.scroll_canvas.pack(side='left', fill='both', expand=True)
-
-        def _on_canvas_resize(event):
-            self.scroll_canvas.itemconfig(self._canvas_window, width=event.width)
-
-        self.scroll_canvas.bind('<Configure>', _on_canvas_resize)
-
-        # Ab hier: Alle Widgets in self.scrollable_frame
-        main_frame = self.scrollable_frame
-
-        # Header
-        ttk.Label(
-            main_frame,
-            text="≡ VERICRYPT ≡",
-            font=('Courier', 18, 'bold'),
-            foreground='#0f0'
-        ).pack(pady=10)
-
-        ttk.Label(
-            main_frame,
-            text="Time-Division Speech Scrambler (BBC 1979 Style)",
-            font=('Courier', 9),
-            foreground='#888'
-        ).pack()
+        title = QLabel("≡ VERICRYPT ≡")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet(f"color: {ACCENT}; font-size: 22px; font-weight: bold;")
+        page.addWidget(title)
+        subtitle = QLabel("Time-Division Speech Scrambler (BBC 1979 Style)")
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setStyleSheet("color: #888; font-size: 11px;")
+        page.addWidget(subtitle)
+        page.addLayout(columns)
 
         # Status früh anlegen: _refresh_devices meldet Fehler darüber
-        self.status_var = tk.StringVar(value="BEREIT")
+        self.status_label = QLabel("BEREIT")
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("color: #ff0; font-size: 13px;")
 
-        # Audio Device Frame
-        device_frame = ttk.LabelFrame(main_frame, text="🎤 AUDIO DEVICES", padding=10)
-        device_frame.pack(fill='x', padx=15, pady=10)
-
+        # Audio-Geräte
+        device_box = QGroupBox("🎤 AUDIO DEVICES")
+        device_layout = QGridLayout(device_box)
         self._refresh_devices()
-
-        # Input Device
-        input_frame = ttk.Frame(device_frame)
-        input_frame.pack(fill='x', pady=(0, 5))
-
-        ttk.Label(input_frame, text="INPUT:", width=8).pack(side='left')
-        self.input_combo = ttk.Combobox(input_frame, state='readonly', width=45)
-        self.input_combo.pack(side='left', fill='x', expand=True, padx=(5, 0))
-        self.input_combo.bind('<<ComboboxSelected>>', self._on_device_change)
-
-        # Output Device
-        output_frame = ttk.Frame(device_frame)
-        output_frame.pack(fill='x')
-
-        ttk.Label(output_frame, text="OUTPUT:", width=8).pack(side='left')
-        self.output_combo = ttk.Combobox(output_frame, state='readonly', width=45)
-        self.output_combo.pack(side='left', fill='x', expand=True, padx=(5, 0))
-        self.output_combo.bind('<<ComboboxSelected>>', self._on_device_change)
-
-        refresh_btn = ttk.Button(device_frame, text="🔄", width=3, command=self._do_refresh_devices)
-        refresh_btn.pack(side='right', pady=(5, 0))
-
+        self.input_combo = NoWheelComboBox()
+        self.output_combo = NoWheelComboBox()
+        device_layout.addWidget(QLabel("INPUT:"), 0, 0)
+        device_layout.addWidget(self.input_combo, 0, 1)
+        device_layout.addWidget(QLabel("OUTPUT:"), 1, 0)
+        device_layout.addWidget(self.output_combo, 1, 1)
+        refresh_button = QPushButton("🔄")
+        refresh_button.setToolTip("Geräteliste neu einlesen")
+        refresh_button.clicked.connect(self._do_refresh_devices)
+        device_layout.addWidget(refresh_button, 0, 2, 2, 1)
+        device_layout.setColumnStretch(1, 1)
         self._populate_device_combos()
+        self.input_combo.currentIndexChanged.connect(self._on_device_change)
+        self.output_combo.currentIndexChanged.connect(self._on_device_change)
+        left.addWidget(device_box)
 
-        # Crypto-Frame
-        crypto_frame = ttk.LabelFrame(main_frame, text="⚡ CRYPTO", padding=10)
-        crypto_frame.pack(fill='x', padx=15, pady=10)
+        # Crypto
+        crypto_box = QGroupBox("⚡ CRYPTO")
+        crypto_layout = QVBoxLayout(crypto_box)
 
-        self.crypto_mode_var = tk.StringVar(value="off")
+        mode_row = QHBoxLayout()
+        mode_row.addWidget(self._bold_label("MODE:"))
+        self.mode_group = self._toggle_group(
+            mode_row, (("CLEAR", CryptoMode.OFF.value), ("🔒 ENCRYPT", CryptoMode.ENCRYPT.value),
+                       ("🔓 DECRYPT", CryptoMode.DECRYPT.value)),
+            CryptoMode.OFF.value, self._on_settings_change)
+        crypto_layout.addLayout(mode_row)
 
-        modes_frame = ttk.Frame(crypto_frame)
-        modes_frame.pack(fill='x')
+        sync_row = QHBoxLayout()
+        sync_row.addWidget(self._bold_label("SYNC:"))
+        self.sync_group = self._toggle_group(
+            sync_row, (("FSK 3.8/4.4 kHz", SyncMode.FSK.value),
+                       ("Pilotton 1200/1800 Hz (Funk)", SyncMode.PILOT.value),
+                       ("BBC 1830 Hz (Original)", SyncMode.BBC.value)),
+            SyncMode.FSK.value, self._on_settings_change)
+        crypto_layout.addLayout(sync_row)
 
-        for text, value in (("CLEAR", "off"), ("🔒 ENCRYPT", "encrypt"), ("🔓 DECRYPT", "decrypt")):
-            ttk.Radiobutton(
-                modes_frame, text=text,
-                variable=self.crypto_mode_var, value=value,
-                command=self._on_settings_change
-            ).pack(side='left', padx=(0, 20))
+        key_row = QHBoxLayout()
+        key_row.addWidget(self._bold_label("KEY: "))
+        self.key_edit = QLineEdit("123456")
+        self.key_edit.setMaxLength(6)
+        self.key_edit.setFixedWidth(110)
+        self.key_edit.setAlignment(Qt.AlignCenter)
+        self.key_edit.setStyleSheet("font-size: 17px; font-weight: bold;")
+        self.key_edit.textEdited.connect(lambda _: self._on_settings_change())
+        key_row.addWidget(self.key_edit)
+        self.key_hint = QLabel("(6-stellig: 000000-999999)")
+        self.key_hint.setStyleSheet("color: #666;")
+        key_row.addWidget(self.key_hint)
+        key_row.addStretch()
+        crypto_layout.addLayout(key_row)
 
-        # Sync-Verfahren
-        sync_frame = ttk.Frame(crypto_frame)
-        sync_frame.pack(fill='x', pady=(10, 0))
+        self.info_label = QLabel()
+        self.info_label.setStyleSheet("color: #0a0; font-size: 11px;")
+        self.info_label.setWordWrap(True)
+        crypto_layout.addWidget(self.info_label)
+        left.addWidget(crypto_box)
 
-        ttk.Label(sync_frame, text="SYNC:", font=('Courier', 10, 'bold')).pack(side='left', padx=(0, 10))
-        self.sync_mode_var = tk.StringVar(value=SyncMode.FSK.value)
-        for text, value in (("FSK 3.8/4.4 kHz", SyncMode.FSK.value),
-                            ("Pilotton 1200/1800 Hz (Funk)", SyncMode.PILOT.value)):
-            ttk.Radiobutton(
-                sync_frame, text=text,
-                variable=self.sync_mode_var, value=value,
-                command=self._on_settings_change
-            ).pack(side='left', padx=(0, 20))
+        # Effekte
+        effects_box = QGroupBox("⚙ EFFEKTE")
+        effects_layout = QVBoxLayout(effects_box)
+        self.inversion_check = WideCheckBox("Frequenzinversion (Voice Inverter, bei ENCRYPT und DECRYPT gleich setzen)")
+        self.bandpass_check = WideCheckBox("Bandpass 300-3400 Hz (Telefon)")
+        for check in (self.inversion_check, self.bandpass_check):
+            check.setCursor(Qt.PointingHandCursor)
+            check.toggled.connect(lambda _: self._on_settings_change())
+            effects_layout.addWidget(check)
+        left.addWidget(effects_box)
+        left.addStretch()
 
-        # Schlüssel
-        key_frame = ttk.Frame(crypto_frame)
-        key_frame.pack(fill='x', pady=(15, 5))
+        # Segment-Ring
+        ring_box = QGroupBox("◎ SEGMENT-RING")
+        ring_layout = QVBoxLayout(ring_box)
+        self.ring = SegmentRing(self.processor)
+        ring_layout.addWidget(self.ring)
+        right.addWidget(ring_box)
 
-        ttk.Label(key_frame, text="KEY:", font=('Courier', 10, 'bold')).pack(side='left')
+        # Pegel
+        meter_box = QGroupBox("📊 PEGEL")
+        meter_layout = QVBoxLayout(meter_box)
+        self.meters = LevelBars(self.level_meter)
+        meter_layout.addWidget(self.meters)
+        right.addWidget(meter_box)
 
-        self.crypto_key_var = tk.StringVar(value="123456")
-        key_entry = ttk.Entry(
-            key_frame,
-            textvariable=self.crypto_key_var,
-            width=8,
-            font=('Courier', 14, 'bold'),
-            justify='center'
-        )
-        key_entry.pack(side='left', padx=(10, 10))
-        key_entry.bind('<KeyRelease>', lambda e: self._on_settings_change())
+        right.addWidget(self.status_label)
+        self.start_button = QPushButton("▶ START")
+        self.start_button.setObjectName('start')
+        self.start_button.setCursor(Qt.PointingHandCursor)
+        self.start_button.clicked.connect(self._toggle_stream)
+        right.addWidget(self.start_button, alignment=Qt.AlignCenter)
+        right.addStretch()
 
-        self.key_hint_var = tk.StringVar(value="(6-stellig: 000000-999999)")
-        self.key_hint = ttk.Label(key_frame, textvariable=self.key_hint_var, foreground='#666')
-        self.key_hint.pack(side='left')
+        self._on_settings_change()
 
-        # Info
-        info_frame = ttk.Frame(crypto_frame)
-        info_frame.pack(fill='x', pady=(10, 0))
-
-        self.info_var = tk.StringVar(value="▸ 30ms Segmente  ▸ FSK 3.8/4.4 kHz, nur Soundkarte/Band  ▸ Latenz ~0.5s / ~1s")
-        ttk.Label(
-            info_frame,
-            textvariable=self.info_var,
-            foreground='#0a0',
-            font=('Courier', 8)
-        ).pack()
-
-        # Effekte-Frame
-        effects_frame = ttk.LabelFrame(main_frame, text="⚙ EFFEKTE", padding=10)
-        effects_frame.pack(fill='x', padx=15, pady=10)
-
-        self.inversion_var = tk.BooleanVar(value=False)
-        self.bandpass_var = tk.BooleanVar(value=False)
-
-        ttk.Checkbutton(
-            effects_frame,
-            text="Frequenzinversion (Voice Inverter, bei ENCRYPT und DECRYPT gleich setzen)",
-            variable=self.inversion_var,
-            command=self._on_settings_change
-        ).pack(anchor='w')
-
-        ttk.Checkbutton(
-            effects_frame,
-            text="Bandpass 300-3400 Hz (Telefon)",
-            variable=self.bandpass_var,
-            command=self._on_settings_change
-        ).pack(anchor='w')
-
-        # Ring-Visualisierung
-        ring_frame = ttk.LabelFrame(main_frame, text="◎ SEGMENT-RING", padding=10)
-        ring_frame.pack(fill='x', padx=15, pady=10)
-
-        self.ring_canvas = tk.Canvas(
-            ring_frame,
-            bg='#0a0a1a',
-            height=150,
-            highlightthickness=1,
-            highlightbackground='#333'
-        )
-        self.ring_canvas.pack(fill='x')
-
-        # Pegel-Anzeige
-        meter_frame = ttk.LabelFrame(main_frame, text="📊 PEGEL", padding=10)
-        meter_frame.pack(fill='x', padx=15, pady=10)
-
-        self.meter_canvas = tk.Canvas(
-            meter_frame,
-            bg='#0a0a1a',
-            height=80,
-            highlightthickness=1,
-            highlightbackground='#333'
-        )
-        self.meter_canvas.pack(fill='both', expand=True)
-
-        # Status
-        ttk.Label(
-            main_frame,
-            textvariable=self.status_var,
-            font=('Courier', 10),
-            foreground='#ff0'
-        ).pack(pady=5)
-
-        self.button_text = tk.StringVar(value="▶ START")
-        self.toggle_button = ttk.Button(
-            main_frame,
-            textvariable=self.button_text,
-            command=self._toggle_stream
-        )
-        self.toggle_button.pack(pady=10)
-
-        ttk.Frame(main_frame, height=20).pack()
-
-        self.root.after(100, self._bind_scroll_to_children)
-
-        self.root.focus_set()
-        self._update_gui()
-
-    def _bind_scroll_to_children(self):
-        """Bindet Mousewheel rekursiv, Comboboxen ausgenommen."""
-        def _recurse(widget):
-            if not isinstance(widget, ttk.Combobox):
-                self._bind_mousewheel_to_widget(widget)
-                for child in widget.winfo_children():
-                    _recurse(child)
-
-        _recurse(self.scrollable_frame)
+    @staticmethod
+    def _bold_label(text: str) -> QLabel:
+        label = QLabel(text)
+        label.setStyleSheet("font-weight: bold;")
+        label.setFixedWidth(52)
+        return label
 
     def _parse_key(self) -> Optional[int]:
-        text = self.crypto_key_var.get().strip()
+        text = self.key_edit.text().strip()
         if text.isdigit() and len(text) <= 6:
             return int(text)
         return None
 
     def _on_settings_change(self):
-        crypto_mode = CryptoMode(self.crypto_mode_var.get())
-        sync_mode = SyncMode(self.sync_mode_var.get())
+        crypto_mode = CryptoMode(self._group_value(self.mode_group))
+        sync_mode = SyncMode(self._group_value(self.sync_group))
 
         if sync_mode == SyncMode.PILOT:
-            self.info_var.set("▸ 30ms Segmente  ▸ Pilot 1200/1800 Hz im Sprachband  ▸ Latenz ~0.6s / ~1.6s")
+            self.info_label.setText("▸ 30ms Segmente  ▸ Pilot 1200/1800 Hz im Sprachband  ▸ Latenz ~0.6s / ~1.6s")
+        elif sync_mode == SyncMode.BBC:
+            self.info_label.setText("▸ 30ms Segmente  ▸ FSK-Pilot 1830±100 Hz wie das Original  ▸ Latenz ~0.5s / ~1s")
         else:
-            self.info_var.set("▸ 30ms Segmente  ▸ FSK 3.8/4.4 kHz, nur Soundkarte/Band  ▸ Latenz ~0.5s / ~1s")
+            self.info_label.setText("▸ 30ms Segmente  ▸ FSK 3.8/4.4 kHz, nur Soundkarte/Band  ▸ Latenz ~0.5s / ~1s")
 
         updates = dict(
-            inversion=self.inversion_var.get(),
-            bandpass=self.bandpass_var.get(),
+            inversion=self.inversion_check.isChecked(),
+            bandpass=self.bandpass_check.isChecked(),
             crypto_mode=crypto_mode,
             sync_mode=sync_mode,
         )
         key = self._parse_key()
         if key is None:
             # Ungültige Eingabe nicht still durch einen Default-Key ersetzen
-            self.key_hint_var.set("⚠ ungültig — alter Key aktiv")
-            self.key_hint.configure(foreground='#f44')
+            self.key_hint.setText("⚠ ungültig — alter Key aktiv")
+            self.key_hint.setStyleSheet("color: #f44;")
         else:
             updates['crypto_key'] = key
-            self.key_hint_var.set(f"(aktiv: {key:06d})")
-            self.key_hint.configure(foreground='#666')
+            self.key_hint.setText(f"(aktiv: {key:06d})")
+            self.key_hint.setStyleSheet("color: #666;")
 
         self.processor.update_settings(**updates)
 
         if crypto_mode == CryptoMode.ENCRYPT:
-            self.status_var.set("🔒 ENCRYPT - Aufnahme auf Tape")
+            self.status_label.setText("🔒 ENCRYPT - Aufnahme auf Tape")
         elif crypto_mode == CryptoMode.DECRYPT:
-            self.status_var.set("🔓 DECRYPT - Wiedergabe von Tape")
+            self.status_label.setText("🔓 DECRYPT - Wiedergabe von Tape")
         elif self.stream:
-            self.status_var.set("▶ CLEAR - Durchgang")
+            self.status_label.setText("▶ CLEAR - Durchgang")
         else:
-            self.status_var.set("BEREIT")
+            self.status_label.setText("BEREIT")
 
     def _audio_callback(self, indata, outdata, frames, time, status):
         try:
@@ -1324,12 +1420,13 @@ class AudioEffectsApp:
             self._start_stream()
         else:
             self._stop_stream()
-            self.button_text.set("▶ START")
-            self.status_var.set("GESTOPPT")
+            self.start_button.setText("▶ START")
+            self.status_label.setText("GESTOPPT")
 
-    def _on_close(self):
+    def closeEvent(self, event):
+        self.timer.stop()
         self._stop_stream()
-        self.root.destroy()
+        super().closeEvent(event)
 
     def _update_gui(self):
         while True:
@@ -1340,114 +1437,17 @@ class AudioEffectsApp:
             if msg_type == 'level':
                 self.level_meter.update(*data)
             elif msg_type == 'status':
-                self.status_var.set(data)
+                self.status_label.setText(data)
 
-        self._draw_meters()
-        self._draw_ring()
-        self.root.after(30, self._update_gui)
-
-    def _draw_meters(self):
-        canvas = self.meter_canvas
-        canvas.delete('all')
-
-        width = canvas.winfo_width()
-        if width < 10:
-            return
-
-        input_db, output_db = self.level_meter.get_current()
-
-        def db_to_width(db):
-            normalized = (db + 60) / 60
-            return max(0, min(1, normalized)) * (width - 60)
-
-        canvas.create_text(10, 20, text="IN", fill='#0a0', anchor='w', font=('Courier', 9))
-        canvas.create_rectangle(45, 12, width - 10, 28, fill='#1a1a2a', outline='#333')
-        in_w = db_to_width(input_db)
-        color = '#0f0' if input_db < -6 else '#ff0' if input_db < -3 else '#f00'
-        canvas.create_rectangle(45, 12, 45 + in_w, 28, fill=color, outline='')
-
-        canvas.create_text(10, 50, text="OUT", fill='#0a0', anchor='w', font=('Courier', 9))
-        canvas.create_rectangle(45, 42, width - 10, 58, fill='#1a1a2a', outline='#333')
-        out_w = db_to_width(output_db)
-        color = '#0af' if output_db < -6 else '#f0f' if output_db < -3 else '#f00'
-        canvas.create_rectangle(45, 42, 45 + out_w, 58, fill=color, outline='')
-
-        for db in [-48, -24, -12, -6, 0]:
-            x = 45 + db_to_width(db)
-            canvas.create_line(x, 62, x, 70, fill='#333')
-            canvas.create_text(x, 75, text=str(db), fill='#444', font=('', 7))
-
-    def _draw_ring(self):
-        """Zeichnet den Segment-Ring."""
-        canvas = self.ring_canvas
-        canvas.delete('all')
-
-        width = canvas.winfo_width()
-        height = canvas.winfo_height()
-        if width < 50 or height < 50:
-            return
-
-        cx, cy = width // 2, height // 2
-        radius_outer = min(cx, cy) - 10
-        radius_inner = radius_outer - 25
-
-        num_segments = VericryptScrambler.FRAME_SEGMENTS
-        processor = self.processor
-        crypto_mode = processor.get_settings().crypto_mode
-        current_seg = processor.current_segment
-        perm = processor.current_permutation
-
-        colors = ['#2a1a1a', '#1a2a1a', '#1a1a2a', '#2a2a1a',
-                  '#2a1a2a', '#1a2a2a', '#2a2a2a', '#3a1a1a',
-                  '#1a3a1a', '#1a1a3a', '#3a3a1a', '#3a1a3a',
-                  '#1a3a3a', '#3a3a3a', '#4a1a1a', '#1a4a1a']
-
-        for i in range(num_segments):
-            angle_start = (i / num_segments) * 2 * math.pi - math.pi / 2
-            angle_end = ((i + 1) / num_segments) * 2 * math.pi - math.pi / 2
-
-            points = []
-            for a in [angle_start, (angle_start + angle_end) / 2, angle_end]:
-                points.extend([cx + radius_outer * math.cos(a), cy + radius_outer * math.sin(a)])
-            for a in [angle_end, (angle_start + angle_end) / 2, angle_start]:
-                points.extend([cx + radius_inner * math.cos(a), cy + radius_inner * math.sin(a)])
-
-            if crypto_mode == CryptoMode.OFF:
-                fill, outline = '#1a1a2a', '#333'
-            elif i == current_seg:
-                fill, outline = '#0f0', '#0f0'
-            else:
-                fill, outline = colors[int(perm[i]) % len(colors)], '#444'
-
-            canvas.create_polygon(points, fill=fill, outline=outline)
-
-            mid_angle = (angle_start + angle_end) / 2
-            text_r = (radius_outer + radius_inner) / 2
-            tx = cx + text_r * math.cos(mid_angle)
-            ty = cy + text_r * math.sin(mid_angle)
-
-            label = str(int(perm[i])) if crypto_mode != CryptoMode.OFF else str(i)
-            text_color = '#000' if i == current_seg and crypto_mode != CryptoMode.OFF else '#666'
-            canvas.create_text(tx, ty, text=label, fill=text_color, font=('Courier', 8))
-
-        canvas.create_oval(cx - radius_inner + 10, cy - radius_inner + 10,
-                           cx + radius_inner - 10, cy + radius_inner - 10,
-                           fill='#0a0a1a', outline='#333')
-
-        if crypto_mode == CryptoMode.DECRYPT:
-            locked = processor.sync_locked
-            caption, caption_color = ("SYNC", '#0f0') if locked else ("NO SYNC", '#f44')
-        else:
-            caption, caption_color = "FRAME", '#666'
-        canvas.create_text(cx, cy - 10, text=caption, fill=caption_color, font=('Courier', 8))
-        canvas.create_text(cx, cy + 10, text=f"{processor.frame_counter:05d}", fill='#0f0',
-                           font=('Courier', 14, 'bold'))
-
-    def run(self):
-        self.root.mainloop()
-        self._stop_stream()
+        self.meters.update()
+        self.ring.update()
 
 
 if __name__ == '__main__':
-    app = AudioEffectsApp()
-    app.run()
+    qt_app = QApplication(sys.argv)
+    qt_app.setStyle('Fusion')
+    window = AudioEffectsApp()
+    window.show()
+    exit_code = qt_app.exec()
+    window._stop_stream()
+    sys.exit(exit_code)

@@ -44,7 +44,7 @@ Messverfahren siehe `messwerte.md`.
 
 ## Kontur-Labor
 
-Diese vier Bild-Effekte stehen in einer eigenen Sektion der Oberfläche. Die
+Diese vier Bild-Effekte stehen im Untermenü „Kontur-Labor“ der Effektauswahl. Die
 Kanten werden nach lokalem Kontrastausgleich mit an das Bild angepassten
 Schwellen gemessen. Das erkennt auch schwache Konturen, aber keine Körperteile
 als solche. Beim Magnetfeld kann man eine Stelle im Vorschaubild mit der Maus

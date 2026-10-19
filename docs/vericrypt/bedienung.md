@@ -7,7 +7,7 @@ Stand: 2026-09-16
 - **Schreibtisch:** Doppelklick auf `Vericrypt.command`
 - **Terminal:** `cd Ai && ../venv/bin/python _Loose-Dateien/cryptov2.py`
 
-Benötigt numpy, scipy und sounddevice; alle sind im venv vorhanden. macOS fragt beim
+Benötigt numpy, scipy, sounddevice und PySide6 (Oberfläche); alle sind im venv vorhanden. macOS fragt beim
 ersten Start nach dem Mikrofon.
 
 ## Fenster
@@ -33,7 +33,8 @@ ersten Start nach dem Mikrofon.
 | Verfahren | Wofür | Latenz Senden / Empfangen |
 | --- | --- | --- |
 | **FSK 3,8/4,4 kHz** | Nur Soundkarte oder Tonband. Über Funk und Telefon **nicht** nutzbar, weil diese nur bis etwa 3 kHz übertragen | ~0,5 s / ~1 s |
-| **Pilotton 1200/1800 Hz** | Im Sprachband, damit auch über Funk und Telefon. Nähe am historischen Vorbild | ~0,6 s / ~1,6 s |
+| **Pilotton 1200/1800 Hz** | Im Sprachband, damit auch über Funk und Telefon. Zwei Dauertöne, hält Bandgleichlauf am besten aus | ~0,6 s / ~1,6 s |
+| **BBC 1830 Hz (Original)** | Ein FSK-Ton, der zwischen 1730 und 1930 Hz springt, wie beim Vericrypt 1100. Funktauglich, klingt aber hohler (Kerbe 1580–2080 Hz) und verträgt kaum Bandgleichlauffehler | ~0,5 s / ~1 s |
 
 **Beide Seiten müssen dasselbe Verfahren und denselben Schlüssel benutzen.** Das
 Umschalten wirkt sofort, auch während der Stream läuft.

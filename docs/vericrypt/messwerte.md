@@ -38,6 +38,27 @@ versehen, ergibt sich 0,98. Die Differenz ist das, was die Kerben wegnehmen.
 - Der Pilotton hält Tempo- und Gleichlauffehler konstant aus, weil die Zeitbasis
   laufend nachgeführt wird.
 
+## BBC 1830 Hz (ergänzt 2026-09-23)
+
+Mit einem neuen, einfacheren Messskript gemessen (Scratchpad, nicht eingecheckt). Die
+absoluten Werte liegen niedriger als oben und sind **nur untereinander** vergleichbar.
+
+| Kanal | FSK 3,8/4,4 kHz | Pilotton | BBC 1830 Hz |
+| --- | ---: | ---: | ---: |
+| ideal | 0,88 | 0,87 | 0,88 |
+| leise + Rauschen | 0,87 | 0,86 | 0,86 |
+| Band 0,5 % zu schnell | 0,87 | 0,87 | 0,85 |
+| Band 1 % zu langsam | 0,61 | **0,87** | 0,60 |
+| Funk + Rauschen + 0,5 % | 0,76² | 0,79 | 0,79 |
+| falscher Schlüssel | 0,25 | 0,24 | 0,24 |
+
+² Der Funkkanal war hier ein Butterworth-Bandpass 6. Ordnung, der 3,8 kHz nicht
+vollständig sperrt; über echten Funk bleibt FSK ohne Sync.
+
+BBC 1830 Hz: Sync nach 1,0 s, danach durchgehend gelockt. Pilot im Kanal −29 dBFS,
+nach DECRYPT −79 dBFS im Pilotband; in Sprechpausen bleibt ein Rest von −59 dBFS an
+den Kanten der Sperre (1490 und 2190 Hz).
+
 ## Weitere Messungen
 
 | Messung | Wert |

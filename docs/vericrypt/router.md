@@ -21,7 +21,7 @@ zerlegt und permutiert, ein Synchronsignal hält Sender und Empfänger zusammen.
 
 | Frage | Antwort |
 | --- | --- |
-| Welches Sync-Verfahren wofür? | **Pilotton 1200/1800 Hz** für Funk und Telefon, **FSK 3,8/4,4 kHz** nur für Soundkarte und Tonband |
+| Welches Sync-Verfahren wofür? | **Pilotton 1200/1800 Hz** für Funk und Telefon, **FSK 3,8/4,4 kHz** nur für Soundkarte und Tonband, **BBC 1830 Hz** klingt wie das Original |
 | Entschlüsselt die alte Version? | Nein. Vor der Überarbeitung kam nur Rauschen heraus, auch ohne Störung |
 | Wie gut ist es jetzt? | Korrelation 1,00 im idealen Kanal, 0,88 über einen simulierten Funkkanal |
 | Sind alte Aufnahmen noch lesbar? | Nein, das Format hat sich geändert. Sie waren aber auch vorher nicht entschlüsselbar |

@@ -55,6 +55,20 @@ Im Sprachband, damit funk- und telefontauglich.
 Permutieren lückenlos. Gemessen: Bei 1210 Hz bleiben nach dem Kerbfilter −6 dB übrig,
 bei 1200 Hz praktisch nichts.
 
+## Verfahren 3: BBC 1830 Hz (Original)
+
+Nachbildung des Pilottons im Vericrypt/Cryptophon 1100: **ein** FSK-Ton
+1830 ± 100 Hz (Mark 1730 Hz, Space 1930 Hz), 100 Baud, gleicher Rahmen wie Verfahren 1.
+
+- Bandsperre 1580–2080 Hz (≥ 50 dB, Durchlass ab ±80 Hz davor und dahinter) räumt
+  das Pilotband in der Sprache frei; der Empfänger entfernt den Pilot mit derselben
+  Sperre vor dem Entwürfeln
+- Empfänger wie Verfahren 1, nur mit Bandpass 1580–2080 Hz statt Hochpass
+- Keine Zeitbasiskorrektur: Bandgleichlauf wird nur über den Alpha-Beta-Filter
+  nachgeführt
+- Bitfolge und Baudrate des Originals sind nicht dokumentiert; übernommen sind nur
+  Frequenz, Hub, 30-ms-Segmente und der sechsstellige Schlüssel
+
 ## Frequenzinversion
 
 Spiegelung um 3300 Hz mit Vor- und Nachfilter. Ohne Nachfilter bleibt das obere
@@ -64,7 +78,10 @@ eine konstante Phasendrehung aller Anteile, die praktisch unhörbar ist.
 ## Historische Vorbilder
 
 - **Vericrypt 1100** von Brown, Boveri & Cie (BBC) — Zeitsegment-Scrambler, unter
-  anderem in Polizeinetzen. „BBC" ist hier nicht die britische Rundfunkanstalt
+  anderem in Polizeinetzen. „BBC" ist hier nicht die britische Rundfunkanstalt.
+  30-ms-Segmente, FSK-Pilot 1830 Hz (± 100 Hz), 6-stelliger Tagesschlüssel plus fester
+  Grundschlüssel, Zufallsgenerator mit ca. 8,5 h Periode, ca. 1,5 s Einrasten,
+  ca. 0,5 s Verzögerung. Vorbild für Verfahren 3
 - **US 3,610,828** — Takt- und Rahmensignal (2150 Hz und 67 Hz) werden offen
   mitgesendet und beim Empfänger mit Kerbfiltern entfernt. Das entspricht dem
   Pilotton-Verfahren
@@ -74,7 +91,9 @@ eine konstante Phasendrehung aller Anteile, die praktisch unhörbar ist.
 
 Quellen: [prc68.com – Voice Scrambler US Patents](http://www.prc68.com/I/VoiceX.shtml),
 [US4268720A](https://patents.google.com/patent/US4268720A/en),
-[NCJRS zum Vericrypt 1100](https://www.ojp.gov/ncjrs/virtual-library/abstracts/integration-time-division-speech-scrambling-police)
+[NCJRS zum Vericrypt 1100](https://www.ojp.gov/ncjrs/virtual-library/abstracts/integration-time-division-speech-scrambling-police),
+[Crypto Museum – BBC Vericrypt 1100](https://www.cryptomuseum.com/crypto/bbc/vericrypt/index.htm),
+[Klaus Paffenholz – BBC Cryptophon 1100](https://www.klaus-paffenholz.de/bos-funk/bbc-vericrypt-1100/cryptophon1100dt.html)
 
 ## Verworfene Varianten
 

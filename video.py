@@ -45,9 +45,9 @@ from bildeffekte import (AUDIO_BANDS, PROFILE_ROWS, AudioFeatureSnapshot, Contai
                          IVideoFeatures, NoisePool, OnsetDetector, PixelGrid, PluginModule, StftAudioEffect,
                          VideoFeatureSnapshot, odd, rand_int, random_box, scale_image, shift_image,
                          to_rgb_colormap)
-from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, QRect, QSettings, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QCursor, QGuiApplication, QImage, QKeySequence, QPainter, QPalette, QPen, QShortcut
-from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
                                QMenu, QPushButton, QSizePolicy, QSlider, QVBoxLayout, QWidget)
 from scipy import signal
 
@@ -1147,9 +1147,10 @@ class EffectPicker(QPushButton):
         if self._current is None:
             self.setText(self.PLACEHOLDER)
         else:
+            # Nur der Name: bei schmalem Fenster würde sonst die Gruppe den Effektnamen verdrängen.
             group = self._groups[self._current]
-            text = self._current if group is None else f"{group}  ›  {self._current}"
-            self.setText(self._escape(text))
+            self.setText(self._escape(self._current))
+            self.setToolTip(self._current if group is None else f"{group}  ›  {self._current}")
 
     @staticmethod
     def _escape(text: str) -> str:
@@ -1368,6 +1369,7 @@ class EffectWindow(QMainWindow):
     """Hauptfenster. Alle Widgets werden nur im GUI-Thread angefasst."""
 
     MIN_REGION = 16
+    SUMMARY_LENGTH = 28
 
     def __init__(self, event_bus: IEventBus, effect_names: List[str], audio: AudioController,
                  plugins: Optional[PluginManager] = None, processor: Optional[EffectProcessor] = None):
@@ -1415,7 +1417,60 @@ class EffectWindow(QMainWindow):
         layout.setContentsMargins(12, 12, 12, 6)
         layout.setSpacing(8)
 
-        source_row = QHBoxLayout()
+        # Oben nur eine Hauptleiste und eine Zeile mit Klapp-Schaltern, damit das Livebild
+        # den meisten Platz bekommt. Aufgeklappte Bereiche merkt sich QSettings.
+        self._settings = QSettings()
+        self._sections: Dict[str, Tuple[QPushButton, QWidget, str]] = {}
+        self._summaries: Dict[str, str] = {}
+
+        main_row = QHBoxLayout()
+        self.btn_start = QPushButton("▶  Start")
+        self.btn_next = QPushButton("Nächste Zelle")
+        self.btn_stop = QPushButton("■  Stop")
+        self.btn_start.setObjectName("primary")
+        self.btn_start.setToolTip("Start/Stop: Leertaste")
+        self.btn_next.setToolTip("Taste N")
+        for button, slot in ((self.btn_start, self.start_effect),
+                             (self.btn_next, self.next_cell), (self.btn_stop, self.stop_effect)):
+            button.clicked.connect(slot)
+            main_row.addWidget(button)
+        main_row.addSpacing(8)
+        main_row.addWidget(QLabel("Effekt:"))
+        self.effect_picker = EffectPicker()
+        self.effect_picker.setMinimumWidth(140)   # lange Namen dürfen abgeschnitten werden
+        self.effect_picker.effect_selected.connect(self.change_effect)
+        main_row.addWidget(self.effect_picker, 1)
+        self.add_picker = EffectPicker()
+        self.add_picker.PLACEHOLDER = "＋ Anhängen"
+        self.add_picker.setToolTip("Weiteren Effekt hinter dem ausgewählten anwenden, z. B. Matrix-Agent → VHS")
+        self.add_picker.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.add_picker.effect_selected.connect(self._append_video_effect)
+        main_row.addWidget(self.add_picker)
+        main_row.addSpacing(8)
+        self.btn_record = QPushButton("⏺  Aufnehmen")
+        self.btn_record.setCheckable(True)
+        self.btn_record.setToolTip("Ausgabebild als MP4 speichern (ohne Ton) nach ~/Movies/Bildeffekte. "
+                                   "Nochmal klicken oder Stop beendet die Aufnahme.")
+        self.btn_record.toggled.connect(self._toggle_recording)
+        main_row.addWidget(self.btn_record)
+        self._recorder: Optional[VideoRecorder] = None
+        self.btn_camera = QPushButton("📷  Als Kamera")
+        self.btn_camera.setCheckable(True)
+        self.btn_camera.setToolTip("Ausgabebild als virtuelle Kamera senden (OBS Virtual Camera). "
+                                   "In Teams/Zoom unter Kamera \"OBS Virtual Camera\" wählen.")
+        self.btn_camera.toggled.connect(self._toggle_virtual_camera)
+        main_row.addWidget(self.btn_camera)
+        self._virtual_camera: Optional[VirtualCamera] = None
+        self.btn_fullscreen = QPushButton("⛶")
+        self.btn_fullscreen.setToolTip("Ausgabebild im Vollbild zeigen; Esc beendet das Vollbild")
+        self.btn_fullscreen.clicked.connect(self.open_fullscreen)
+        main_row.addWidget(self.btn_fullscreen)
+        layout.addLayout(main_row)
+
+        # Quelle und Bereich in einer Zeile
+        self.source_panel = QWidget()
+        source_row = QHBoxLayout(self.source_panel)
+        source_row.setContentsMargins(0, 0, 0, 0)
         source_row.addWidget(QLabel("Quelle:"))
         self.source_combo = QComboBox()
         self.source_combo.addItem("Bildschirm", ('screen', None))
@@ -1428,55 +1483,28 @@ class EffectWindow(QMainWindow):
             else:
                 label = name
             self.source_combo.addItem(label, ('camera', index))
+        self.source_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.source_combo.setMinimumContentsLength(12)
         self.source_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.source_combo.currentIndexChanged.connect(self._on_source_changed)
-        source_row.addWidget(self.source_combo, 1)
-        layout.addLayout(source_row)
-
-        region_row = QHBoxLayout()
+        source_row.addWidget(self.source_combo, 2)
         self.region_label = QLabel("Bereich:")
-        region_row.addWidget(self.region_label)
+        source_row.addWidget(self.region_label)
         self.region_edit = QLineEdit("100,100,800,450")
         self.region_edit.setPlaceholderText("x, y, Breite, Höhe")
         self.region_edit.setMinimumWidth(120)
         self.region_edit.returnPressed.connect(self.start_effect)
-        region_row.addWidget(self.region_edit, 1)
-
+        self.region_edit.textChanged.connect(lambda _: self._update_source_summary())
+        source_row.addWidget(self.region_edit, 1)
         self.btn_pick = QPushButton("Bereich wählen…")
         self.btn_pick.clicked.connect(self.pick_region)
-        region_row.addWidget(self.btn_pick)
-        layout.addLayout(region_row)
-
-        transport_row = QHBoxLayout()
-        self.btn_start = QPushButton("▶  Start")
-        self.btn_next = QPushButton("Nächste Zelle")
-        self.btn_stop = QPushButton("■  Stop")
-        self.btn_start.setObjectName("primary")
-        self.btn_start.setToolTip("Start/Stop: Leertaste")
-        self.btn_next.setToolTip("Taste N")
-        for button, slot in ((self.btn_start, self.start_effect),
-                             (self.btn_next, self.next_cell), (self.btn_stop, self.stop_effect)):
-            button.clicked.connect(slot)
-            transport_row.addWidget(button)
-        transport_row.addStretch(1)
-        layout.addLayout(transport_row)
-
-        effect_row = QHBoxLayout()
-        effect_row.addWidget(QLabel("Effekt:"))
-        self.effect_picker = EffectPicker()
-        self.effect_picker.effect_selected.connect(lambda name: self._select_video_effect(name, self.contour_picker))
-        effect_row.addWidget(self.effect_picker, 1)
-
-        self.btn_plugins = QPushButton("🧩 Plugins neu laden")
-        self.btn_plugins.setToolTip("Effekte aus dem Ordner 'plugins' neu einlesen")
-        self.btn_plugins.clicked.connect(self.reload_plugins)
-        self.btn_plugins.setEnabled(self.plugins is not None and self.processor is not None)
-        effect_row.addWidget(self.btn_plugins)
-        layout.addLayout(effect_row)
+        source_row.addWidget(self.btn_pick)
 
         # Effektkette: Chips in Reihenfolge der Anwendung; der markierte Chip ist
         # der Effekt, den das Menü oben und die Einstellungen darunter bearbeiten.
-        chain_row = QHBoxLayout()
+        self.chain_panel = QWidget()
+        chain_row = QHBoxLayout(self.chain_panel)
+        chain_row.setContentsMargins(0, 0, 0, 0)
         chain_row.addWidget(QLabel("Kette:"))
         self.chain_chips = QHBoxLayout()
         self.chain_chips.setSpacing(4)
@@ -1491,83 +1519,64 @@ class EffectWindow(QMainWindow):
         self.btn_chain_remove = QPushButton("✕")
         self.btn_chain_remove.setToolTip("Ausgewählten Effekt aus der Kette nehmen")
         self.btn_chain_remove.clicked.connect(lambda: self.event_bus.publish('remove_slot', None))
-        self.add_picker = EffectPicker()
-        self.add_picker.PLACEHOLDER = "＋ Effekt anhängen"
-        self.add_picker.setToolTip("Weiteren Effekt hinter dem ausgewählten anwenden, z. B. VHS → Matrix-Agent")
-        self.add_picker.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.add_picker.effect_selected.connect(self._append_video_effect)
         for button in (self.btn_chain_left, self.btn_chain_right, self.btn_chain_remove):
             button.setFixedWidth(36)
             chain_row.addWidget(button)
-        chain_row.addWidget(self.add_picker)
-        layout.addLayout(chain_row)
 
-        self.target_group = QGroupBox("Gesichtsmorph")
-        target_layout = QVBoxLayout(self.target_group)
-        target_row = QHBoxLayout()
+        self.audio_panel = QWidget()
+        self.audio_panel.setLayout(self._build_audio_controls())
+        self.audio_info = QLabel("")
+        self.audio_info.setObjectName("hint")
+        self.audio_info.setWordWrap(True)
+        self.audio_panel.layout().addWidget(self.audio_info)
+
+        section_row = QHBoxLayout()
+        section_row.setSpacing(6)
+        for key, title, panel, default in (("source", "Quelle", self.source_panel, True),
+                                           ("chain", "Kette", self.chain_panel, False),
+                                           ("audio", "Ton", self.audio_panel, False)):
+            section_row.addWidget(self._section(key, title, panel, default))
+        section_row.addStretch(1)
+        self.btn_plugins = QPushButton("🧩")
+        self.btn_plugins.setToolTip("Plugins neu laden: Effekte aus dem Ordner 'plugins' neu einlesen")
+        self.btn_plugins.clicked.connect(self.reload_plugins)
+        self.btn_plugins.setEnabled(self.plugins is not None and self.processor is not None)
+        section_row.addWidget(self.btn_plugins)
+        layout.addLayout(section_row)
+        for panel in (self.source_panel, self.chain_panel, self.audio_panel):
+            layout.addWidget(panel)
+
+        # Gesichtsmorph: eine Zeile, nur sichtbar, wenn der gewählte Effekt sie nutzt.
+        self.target_group = QWidget()
+        target_row = QHBoxLayout(self.target_group)
+        target_row.setContentsMargins(0, 0, 0, 0)
+        target_row.addWidget(QLabel("Gesichtsmorph:"))
         self.btn_target = QPushButton("JPG wählen …")
         self.btn_target.clicked.connect(self._choose_target_image)
         self.btn_target_default = QPushButton("Standard-Agent")
         self.btn_target_default.clicked.connect(self._clear_target_image)
         target_row.addWidget(self.btn_target)
         target_row.addWidget(self.btn_target_default)
-        target_row.addStretch(1)
+        self.target_label = QLabel("Standard-Agent")
+        self.target_label.setObjectName("hint")
+        self.target_label.setMinimumWidth(0)
+        self.target_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        target_row.addWidget(self.target_label, 1)
         self.btn_drama = QPushButton("🎭  Dramatik")
         self.btn_drama.setCheckable(True)
         self.btn_drama.setToolTip("Verformung so stark wie in der Filmszene: Schwellungen wandern über das Gesicht, "
                                   "der Mund reißt auf, die Person wehrt sich. Umschalten startet die Übernahme neu.")
         self.btn_drama.toggled.connect(self._toggle_drama)
         target_row.addWidget(self.btn_drama)
-        target_layout.addLayout(target_row)
         self._drama = {}
-        self.target_label = QLabel("Standard-Agent")
-        self.target_label.setWordWrap(True)
-        self.target_label.setMinimumWidth(0)
-        self.target_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        target_layout.addWidget(self.target_label)
         layout.addWidget(self.target_group)
         self.target_group.hide()
         self._target_timer = QTimer(self)
         self._target_timer.setInterval(100)
         self._target_timer.timeout.connect(self._poll_target_image)
-
-        self.contour_group = QGroupBox("Kontur-Labor")
-        contour_row = QHBoxLayout(self.contour_group)
-        contour_row.addWidget(QLabel("Kontur-Effekt:"))
-        self.contour_picker = EffectPicker()
-        self.contour_picker.effect_selected.connect(lambda name: self._select_video_effect(name, self.effect_picker))
-        contour_row.addWidget(self.contour_picker, 1)
-        layout.addWidget(self.contour_group)
         self._populate_video_effects(effect_names)
-        layout.addLayout(self._build_audio_controls())
-
-        self.audio_info = QLabel("")
-        self.audio_info.setObjectName("hint")
-        self.audio_info.setWordWrap(True)
-        layout.addWidget(self.audio_info)
-
-        preview_row = QHBoxLayout()
-        preview_row.addWidget(QLabel("Ausgabe"))
-        preview_row.addStretch(1)
-        self.btn_record = QPushButton("⏺  Aufnehmen")
-        self.btn_record.setCheckable(True)
-        self.btn_record.setToolTip("Ausgabebild als MP4 speichern (ohne Ton) nach ~/Movies/Bildeffekte. "
-                                   "Nochmal klicken oder Stop beendet die Aufnahme.")
-        self.btn_record.toggled.connect(self._toggle_recording)
-        preview_row.addWidget(self.btn_record)
-        self._recorder: Optional[VideoRecorder] = None
-        self.btn_camera = QPushButton("📷  Als Kamera")
-        self.btn_camera.setCheckable(True)
-        self.btn_camera.setToolTip("Ausgabebild als virtuelle Kamera senden (OBS Virtual Camera). "
-                                   "In Teams/Zoom unter Kamera \"OBS Virtual Camera\" wählen.")
-        self.btn_camera.toggled.connect(self._toggle_virtual_camera)
-        preview_row.addWidget(self.btn_camera)
-        self._virtual_camera: Optional[VirtualCamera] = None
-        self.btn_fullscreen = QPushButton("⛶  Vollbild")
-        self.btn_fullscreen.setToolTip("Ausgabebild im Vollbild zeigen; Esc beendet das Vollbild")
-        self.btn_fullscreen.clicked.connect(self.open_fullscreen)
-        preview_row.addWidget(self.btn_fullscreen)
-        layout.addLayout(preview_row)
+        self._update_source_summary()
+        self._update_audio_summary()
 
         self.video = VideoWidget()
         layout.addWidget(self.video, 1)
@@ -1591,38 +1600,78 @@ class EffectWindow(QMainWindow):
         QShortcut(QKeySequence(Qt.Key.Key_N), self, activated=self.next_cell)
         self._update_buttons()
 
+    def _section(self, key: str, title: str, panel: QWidget, default: bool) -> QPushButton:
+        """Klapp-Schalter für einen Bedienbereich; der Zustand bleibt über Neustarts erhalten."""
+        button = QPushButton()
+        button.setObjectName("section")
+        button.setCheckable(True)
+        self._sections[key] = (button, panel, title)
+        expanded = self._settings.value(f"ui/{key}", default, type=bool)
+        button.setChecked(expanded)
+        panel.setVisible(expanded)
+        button.toggled.connect(lambda on, k=key: self._toggle_section(k, on))
+        self._set_summary(key)
+        return button
+
+    def _toggle_section(self, key: str, expanded: bool) -> None:
+        _, panel, _ = self._sections[key]
+        panel.setVisible(expanded)
+        self._settings.setValue(f"ui/{key}", expanded)
+        self._set_summary(key)
+
+    def _set_summary(self, key: str, summary: Optional[str] = None) -> None:
+        """Beschriftung: Pfeil, Titel und Kurzinfo, damit man auch zugeklappt sieht, was eingestellt ist."""
+        if key not in self._sections:
+            return
+        if summary is not None:
+            self._summaries[key] = summary
+        button, _, title = self._sections[key]
+        summary = self._summaries.get(key, "")
+        text = f"{'▾' if button.isChecked() else '▸'}  {title}"
+        if summary:
+            # Kurz halten, sonst bestimmt die Beschriftung die Mindestbreite des Fensters.
+            short = summary if len(summary) <= self.SUMMARY_LENGTH else summary[:self.SUMMARY_LENGTH - 1] + "…"
+            text += f":  {short}"
+        button.setText(EffectPicker._escape(text))
+        button.setToolTip(f"{title} ein- oder ausklappen" + (f"\n{summary}" if summary else ""))
+
+    def _update_source_summary(self) -> None:
+        text = self.source_combo.currentText()
+        if self.source_combo.currentData()[0] == 'screen':
+            text += f"  {self.region_edit.text()}"
+        self._set_summary("source", text)
+
+    def _update_audio_summary(self) -> None:
+        name = self.audio_combo.currentText()
+        self._set_summary("audio", name if name == "Aus" else f"{name}, Mix {self.mix_slider.value()} %")
+
     def _on_source_changed(self) -> None:
         is_screen = self.source_combo.currentData()[0] == 'screen'
         self.region_label.setVisible(is_screen)
         self.region_edit.setVisible(is_screen)
         self.btn_pick.setVisible(is_screen)
+        self._update_source_summary()
 
     def _populate_video_effects(self, names: List[str]) -> None:
         current = (self.processor.current_strategy.name if self.processor is not None
                    and self.processor.current_strategy is not None else names[0] if names else None)
-        # Kategorie "Bild-Effekte" (Standard) = oberste Menüebene, sonst Untermenü in Reihenfolge des Auftretens
+        # Kategorie "Bild-Effekte" (Standard) = oberste Menüebene, sonst Untermenü in Reihenfolge des Auftretens;
+        # das Kontur-Labor ist ein Untermenü wie die anderen Gruppen.
         regular: Dict[Optional[str], List[Tuple[str, str]]] = {None: []}
-        contour: List[Tuple[str, str]] = []
         for name in names:
             effect = self.processor.effect_strategies.get(name) if self.processor is not None else None
             category = getattr(effect, 'category', 'Bild-Effekte')
             entry = (name, getattr(effect, 'description', '') or '')
-            if category == 'Kontur-Labor':
-                contour.append(entry)
-            else:
-                regular.setdefault(None if category == 'Bild-Effekte' else category, []).append(entry)
+            regular.setdefault(None if category == 'Bild-Effekte' else category, []).append(entry)
         self.effect_picker.set_effects(list(regular.items()))
-        self.add_picker.set_effects(list(regular.items()) + ([('Kontur-Labor', contour)] if contour else []))
+        self.add_picker.set_effects(list(regular.items()))
         self.add_picker.set_current(None)
         if self.processor is not None:
             self._on_chain_changed((self.processor.chain_names, self.processor.selected))
-        self.contour_picker.set_effects([(None, contour)])
-        self.contour_group.setVisible(bool(contour))
         self._sync_video_selections(current)
 
     def _sync_video_selections(self, name: Optional[str]) -> None:
-        for picker in (self.effect_picker, self.contour_picker):
-            picker.set_current(name)
+        self.effect_picker.set_current(name)
 
     def _append_video_effect(self, name: str) -> None:
         self.add_picker.set_current(None)
@@ -1633,6 +1682,7 @@ class EffectWindow(QMainWindow):
         while self.chain_chips.count():
             item = self.chain_chips.takeAt(0)
             if item.widget() is not None:
+                item.widget().hide()   # deleteLater wirkt erst im nächsten Durchlauf der Ereignisschleife
                 item.widget().deleteLater()
         for index, name in enumerate(names):
             if index:
@@ -1647,13 +1697,12 @@ class EffectWindow(QMainWindow):
         self.btn_chain_left.setEnabled(several and selected > 0)
         self.btn_chain_right.setEnabled(several and selected < len(names) - 1)
         self.btn_chain_remove.setEnabled(several)
-
-    def _select_video_effect(self, name: str, other: EffectPicker) -> None:
-        other.set_current(None)
-        self.change_effect(name)
+        self._set_summary("chain", " → ".join(names))
 
     def _build_audio_controls(self) -> QVBoxLayout:
         controls = QVBoxLayout()
+        controls.setContentsMargins(0, 0, 0, 0)
+        # Zeile 1: Ton-Effekt und Mix, Zeile 2: Ein- und Ausgang
         effect_row = QHBoxLayout()
         effect_row.addWidget(QLabel("Ton-Effekt:"))
         self.audio_combo = QComboBox()
@@ -1666,11 +1715,8 @@ class EffectWindow(QMainWindow):
         self.audio_combo.setMinimumContentsLength(10)
         self.audio_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.audio_combo.currentTextChanged.connect(self._on_audio_effect)
-        effect_row.addWidget(self.audio_combo, 1)
-        controls.addLayout(effect_row)
-
-        mix_row = QHBoxLayout()
-        mix_row.addWidget(QLabel("Mix:"))
+        effect_row.addWidget(self.audio_combo, 2)
+        effect_row.addWidget(QLabel("Mix:"))
         self.mix_slider = QSlider(Qt.Orientation.Horizontal)
         self.mix_slider.setRange(0, 100)
         self.mix_slider.setValue(100)
@@ -1678,22 +1724,19 @@ class EffectWindow(QMainWindow):
         self.mix_label = QLabel("100 %")
         self.mix_label.setMinimumWidth(40)
         self.mix_slider.valueChanged.connect(self._on_mix)
-        mix_row.addWidget(self.mix_slider, 1)
-        mix_row.addWidget(self.mix_label)
-        controls.addLayout(mix_row)
+        effect_row.addWidget(self.mix_slider, 1)
+        effect_row.addWidget(self.mix_label)
+        controls.addLayout(effect_row)
 
         inputs, outputs = list_audio_devices()
-        input_row = QHBoxLayout()
-        input_row.addWidget(QLabel("Eingang:"))
+        device_row = QHBoxLayout()
+        device_row.addWidget(QLabel("Eingang:"))
         self.input_combo = self._device_combo(inputs)
-        input_row.addWidget(self.input_combo, 1)
-        controls.addLayout(input_row)
-
-        output_row = QHBoxLayout()
-        output_row.addWidget(QLabel("Ausgang:"))
+        device_row.addWidget(self.input_combo, 1)
+        device_row.addWidget(QLabel("Ausgang:"))
         self.output_combo = self._device_combo(outputs)
-        output_row.addWidget(self.output_combo, 1)
-        controls.addLayout(output_row)
+        device_row.addWidget(self.output_combo, 1)
+        controls.addLayout(device_row)
         self.input_combo.currentIndexChanged.connect(self._on_devices)
         self.output_combo.currentIndexChanged.connect(self._on_devices)
         return controls
@@ -1735,10 +1778,12 @@ class EffectWindow(QMainWindow):
     def _on_audio_effect(self, name: str) -> None:
         self.audio.select_effect(None if name == "Aus" else name)
         self._update_audio_info()
+        self._update_audio_summary()
 
     def _on_mix(self, value: int) -> None:
         self.mix_label.setText(f"{value} %")
         self.audio.set_mix(value / 100.0)
+        self._update_audio_summary()
 
     def _on_devices(self) -> None:
         self.audio.set_devices(self.input_combo.currentData(), self.output_combo.currentData())
@@ -2060,6 +2105,7 @@ class EffectWindow(QMainWindow):
         self.btn_start.setEnabled(not self._running)
         self.btn_stop.setEnabled(self._running)
         self.btn_next.setEnabled(self._running and self._uses_cells)
+        self.btn_next.setVisible(self._uses_cells)
         self.source_combo.setEnabled(not self._running)
         is_screen = self.source_combo.currentData()[0] == 'screen'
         self.region_edit.setEnabled(not self._running and is_screen)
@@ -2109,6 +2155,9 @@ def apply_dark_theme(app: QApplication) -> None:
         QLineEdit, QComboBox { padding: 5px 8px; border-radius: 6px; background: #1a1b1f; border: 1px solid #41434d; }
         QStatusBar { color: #b8b8c0; }
         QLabel#hint { color: #8c8c96; }
+        QPushButton#section { padding: 3px 12px; border-radius: 12px; background: transparent; color: #b8b8c0; }
+        QPushButton#section:hover { background: #30323a; }
+        QPushButton#section:checked { background: #23304a; border-color: #3d7df5; color: white; }
     """)
 
 # ----------------- Anwendungsstart -----------------
@@ -2147,6 +2196,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("Bildeffekte")
+    app.setOrganizationName("Bildeffekte")
     apply_dark_theme(app)
 
     event_bus = Container.resolve(IEventBus)
