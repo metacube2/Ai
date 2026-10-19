@@ -400,3 +400,8 @@ J1 bis J11 sind eine Liste von Datenabfragen, keine SAP-Jobs.
 FPY SEH KW38 bis KW41), `Shopfloor:SapMengenEnabled = true` (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben. Falle P76: zwei
 Anwendungsserver, der Gateway-Cache musste auf `travp762` geleert werden (Einzelheiten `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7).
 Die Aussage „Schalter aus“ oben ist damit ueberholt.
+
+*Nachtrag 2026-10-19 10:04:* **Produktionstag statt Abfragetag** (Feedback Logistik ueber Fabio). Eintrag vom Tag D = ERSDA bzw.
+Istendtermin D; die Aussage „Eintrag vom Tag D = Stand bis D-1, Montag Freitag bis Sonntag“ oben ist ueberholt. Der Abgleich
+schreibt heute und die drei Tage davor; ein Bereich ohne Rueckmeldung bleibt leer statt 0. Neu `dw.prod` aus DL790. 15. bis
+19.10. umgebucht. TX aus ZC22 noch nicht gebaut. Einzelheiten `saptasks/shopfloor_sap/NOTES.md` Abschnitt 8.

@@ -67,6 +67,11 @@ Stand: 2026-10-16
 
 ## Kurzstand
 
+- **Deploy 2026-10-19 09:54, 09:57 und 10:04, Shopfloor: Mengen auf dem Produktionstag, DW prod (`ded2b65`, `c4dca10`, `c3c45cd`).**
+  WAL vorher 745 / 202 / 383 KB, Release-Worktree `1248` / `1249` / `1250` gruen vor jedem Publish, zuletzt `BiDashboard.dll` `10:04:49`,
+  SHA256 `826E5E5FA59BA78FC895C12F445EF102B3B3122526BE8CCB997FECA225122E6E`, bitgleich, zehn Routen 200, Alarm nur WAL/SHM und Checkpoint.
+  Danach 15. bis 19.10. per POST (`X-User`-Header noetig) neu geschrieben, Logistik-Tage 15./16./19.10. gespeichert, Sa/So leer.
+  Hinweis: der Protokollabsatz des Runners nannte als Titel noch den alten Einkauf-Text; massgebend ist der Funktionscommit.
 - **Deploy 2026-10-16 10:52, Handbuch Einkauf: Abschnitt Stuecklisten-Netz (`1823bac`).** `1248/1248`, bitgleich, zehn Routen 200, Alarm nur WAL/SHM
   (beide DBs); Kapitel 02 auf dem Server mit neuem Abschnitt.
 - **Deploy 2026-10-16 10:48, Einkauf Spend-Aufriss: Stuecklisten-Netz „Gehirn“ (`d188806` + Uebersetzungen `d6ca646`).** WAL vorher 482 KB,

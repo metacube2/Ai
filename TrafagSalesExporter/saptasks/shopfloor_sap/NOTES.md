@@ -1,6 +1,6 @@
 # Shopfloor: Mengen aus SAP (ShopRmSet, ShopProdSet)
 
-Stand: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
+Stand: 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
 *Ueberholt:* „Cockpit-Abruf mit ausgeschaltetem Schreiben“ (bis 09:50).
 Auftrag: Mail Fabio 16.10. (Datenabfragen J5 Logistik, J8 Tagesmengen SEH/TR5, J11 FPY SEH), von Ingo weitergeleitet.
 
@@ -44,7 +44,7 @@ Ohne Filter 400 mit Meldung; `ShopProdSet` Werk 1100, 14.04., S* liefert je Disp
 ## 4. Cockpit
 
 `Services/Shopfloor/ShopfloorSapMengen.cs`, eingebunden in `ShopfloorSapSync` (gleiche Zeiten wie ZD05, 04:00 und 12:45):
-Eintrag vom Tag D = Stand bis D-1, Montag Freitag bis Sonntag. Gruppen: MLE01 → `logistik.tr5_mle01`, MLE02 → `tr5_mle02`,
+*Ueberholt am 2026-10-19 (Abschnitt 8):* Eintrag vom Tag D = Stand bis D-1, Montag Freitag bis Sonntag. Gruppen: MLE01 → `logistik.tr5_mle01`, MLE02 → `tr5_mle02`,
 MLM01 → `tx_mlm01`, MLE04 → `dw_mle04`, MLE08+MLE09 → `tx_mle08` (je eigener Lauf), EXX72-Gruppe → `tr5.prod`;
 SEH: WE-Menge S* → `seh.prod`; FPY SEH = WE / Gesamt der KW des Vortags → `seh.fpy`. Manuell erfasste Werte bleiben.
 Schalter `Shopfloor:SapMengenEnabled` (aus). Vorschau `GET shopfloor/api/sap/mengen?tag=JJJJ-MM-TT`, schreiben `POST`.
@@ -78,3 +78,33 @@ Schalter `Shopfloor:SapMengenEnabled` (aus). Vorschau `GET shopfloor/api/sap/men
 - Erstlauf 16.10. (Stand 15.10.): Logistik MLE01 24, MLE02 792, MLM01 149, MLE04 779, MLE08+09 532; TR5 854; SEH 1'837; FPY SEH 99.7 (KW 42 bis Do).
   Geschrieben als „SAP-Schnittstelle“, Quelle SAP an jedem Feld, die von der Logistik gesetzte Ampel blieb.
 - Offen: Historie nachladen (Logistik/Tagesmengen ab 01.10., nur leere Tage) erst auf Wunsch Fabio; Gegenkontrolle der Tagesmengen SEH/TR5 durch Fabio.
+
+## 8. Produktionstag statt Abfragetag, DW prod (2026-10-19, Feedback Logistik ueber Fabio)
+
+Mail Fabio, von Ingo am 19.10. weitergegeben. Commits `ded2b65`, `c4dca10`, `c3c45cd`, produktiv 2026-10-19 10:04.
+
+- **Tag der Werte:** Logistik (MLE01/02/04/08+09, MLM01) und die Produktionsmengen (SEH, TR5, DW) stehen auf dem
+  **Produktionstag** (ERSDA bzw. Istendtermin = D), nicht mehr auf dem Abfragetag. Die SOLL-Zeilen der Logistik holen prod
+  vom selben Tag. Die Montagsregel Fr+Sa+So entfaellt. FPY SEH = KW des Produktionstags bis zu diesem Tag.
+- **Abgleich 04:00/12:45:** schreibt heute (laufend) und die drei Tage davor neu (`SyncDays`), am Montag also Fr, Sa, So einzeln.
+  Vorrat, offen_kw, Verzug kommen nicht aus diesem Abgleich und bleiben auf dem Abfragetag.
+- **Bereich ohne Rueckmeldung** an einem Tag (Wochenende): keine Nullen, frueher aus SAP geschriebene Werte werden entfernt
+  (null loescht, leerer Tagessatz verschwindet). Je Bereich, weil SEH auch samstags Istenden hat (17.10.: SEH 751, Logistik
+  nichts). Hat ein Bereich mindestens eine Zeile, bleibt 0 eine 0.
+- **DW prod:** ZC27-Logik am Arbeitsplatz **DL790**, Summe LMNGA je ERSDA (`dw.prod`). 14.10. 1'033 (41 Rueckmeldungen),
+  15.10. 761 (37), 16.10. 761 (39, gleiche Summe zufaellig), 19.10. bis 10:05 207 (8). Gegenkontrolle mit ZC27 durch Fabio offen.
+- **Umbuchung:** 15. bis 19.10. per `POST shopfloor/api/sap/mengen?tag=` neu geschrieben. Der 15.10. traegt die Werte, die
+  vorher auf dem 16.10. standen (MLE01 24, MLE02 792, MLM01 149, MLE04 779, MLE08+09 532, TR5 854, SEH 1'837, FPY 99.7);
+  der 16.10. seine eigenen (322 / 1'121 / 78 / 543 / 424, TR5 904, SEH 3'900); 17./18.10. ohne Logistik, 18.10. ganz leer;
+  der 19.10. ohne die alte Summe Fr bis So. Die Ampel der Logistik vom 16.10. (orange) blieb.
+- **Falle:** POST ohne Header `X-User` liefert 403 „Ungueltige Anfrage“ (Schutz gegen Fremdaufrufe). Mit
+  `Invoke-RestMethod -UseDefaultCredentials -Headers @{ 'X-User' = 'SAP-Schnittstelle' }`.
+- **Fehler dabei:** der erste Lauf schrieb fuer Sa/So Nullen in die Produktion; korrigiert mit `c4dca10`/`c3c45cd` und
+  erneutem Schreiben, Tagessaetze 17./18.10. Logistik danach weg (LEARNINGS).
+
+### Noch nicht gebaut (Punkt 3 der Mail, TX)
+
+- vorrat_total, vorrat_1m bis 3m, offen_kw, plan5 aus **ZC22**, Disponent EL*: im Cockpit gibt es dafuer noch keine SAP-Logik
+  (auch nicht fuer SEH/TR5, dort erfasst Fabio); braucht ZC22 lesen und ein eigenes Set (J6).
+- TX prod (ZC27 wie TR5): Arbeitsplatz/Variante klaert Fabio. TX fpy: MES Reportico `YIELDGESAMT`, ASIC_TX, nicht SAP.
+- prod_s1/s2, Verzug, Terminverschiebungen, Hot-Anteil (Tagesplanungstool) und alle manuellen Vorgaben: bewusst nicht.

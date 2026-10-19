@@ -2,6 +2,11 @@
 
 Stand: 2026-10-16
 
+## Operations: Mengen aus SAP auf dem Produktionstag, DW prod, 2026-10-19 (`ded2b65`, `c4dca10`, `c3c45cd`)
+
+- Logistik und Produktionsmengen stehen auf dem Produktionstag (ERSDA/Istendtermin), Montagsregel weg; Abgleich schreibt heute und
+  drei Tage zurueck; Bereich ohne Rueckmeldung bleibt leer. Neu DW prod aus DL790. 15. bis 19.10. umgebucht. Produktiv 10:04.
+
 ## SAP ZLO03: FIX 12 in `Z_ZLO03_TURBO2` (MK-Abweichung B63485), 2026-10-16, T76 `T76K912742`
 
 - Mechanismus in P76 belegt (nur lesend), Nachweis am Fall erst nach Import: B63485 hat vier Textpositionen (46123/24/26/28); die Kennzahlen wurden nur beim ersten Treffer
