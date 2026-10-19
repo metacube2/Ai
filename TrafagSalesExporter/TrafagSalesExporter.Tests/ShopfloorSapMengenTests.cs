@@ -52,8 +52,8 @@ public class ShopfloorSapMengenTests
         Assert.Equal(673, (int)log["tr5_mle01"]!);
         Assert.Equal(1065, (int)log["tx_mle08"]!);
         Assert.Equal(0, (int)log["tx_mlm01"]!);
-        Assert.Equal(0, (int)r["werte"]!["tr5"]!["prod"]!);
-        Assert.Equal(0, (int)r["werte"]!["dw"]!["prod"]!);
+        Assert.Null(r["werte"]!["tr5"]!["prod"]);   // ohne Zeile aus SAP: leer statt 0 (seit 2026-10-19)
+        Assert.Null(r["werte"]!["dw"]!["prod"]);
         Assert.Equal("2026-10-13", (string)r["day"]!);
         Assert.Equal(480, (int)r["werte"]!["seh"]!["prod"]!);
         Assert.Equal(99.2, (double)r["werte"]!["seh"]!["fpy"]!, 3);   // 1190 / 1200
@@ -86,6 +86,24 @@ public class ShopfloorSapMengenTests
         env.Store.ApplyPush(new ShopfloorPush { Items = ShopfloorSapMengen.BuildItems(r, Existing).Items }, "SAP");
         Assert.Null(Existing("logistik"));   // Tagessatz mit den alten Nullen ist weg
         Assert.Null(Existing("dw"));
+    }
+
+    [Fact]
+    public async Task Bereich_Ohne_Rueckmeldung_Bleibt_Leer_Andere_Bereiche_Mit_Zeilen_Behalten_Ihre_Nullen()
+    {
+        // Samstag 17.10.2026: SEH hat Istenden, die Logistik keine einzige Rueckmeldung
+        Task<List<JsonElement>> Read(string set, string filter)
+        {
+            var json = set == ShopfloorSapMengen.ProdSet ? """[{"Dispo":"SE1","Gamng":751,"Wemng":751,"Anzahl":10}]"""
+                : filter.Contains("'MLE02'") ? """[{"Arbpl":"MLE02","Lmnga":0,"Anzahl":1}]""" : "[]";
+            return Task.FromResult(JsonDocument.Parse(json).RootElement.EnumerateArray().Select(e => e.Clone()).ToList());
+        }
+        var r = await ShopfloorSapMengen.ComputeAsync(new DateOnly(2026, 10, 17), "1100", Read);
+        Assert.False((bool)r["ohne_produktion"]!);
+        Assert.Equal(751, (int)r["werte"]!["seh"]!["prod"]!);
+        Assert.Equal(0, (int)r["werte"]!["logistik"]!["tr5_mle01"]!);   // Logistik hat eine Zeile (MLE02): 0 bleibt 0
+        Assert.Null(r["werte"]!["tr5"]!["prod"]);                        // TR5 ohne Zeile: leer
+        Assert.Null(r["werte"]!["dw"]!["prod"]);
     }
 
     [Fact]

@@ -61,7 +61,7 @@ public static class ShopfloorSapMengen
         List<DateOnly> days = [day];
         var values = new JsonObject();
         var detail = new JsonArray();
-        var rueckmeldungen = 0;
+        var zeilen = new Dictionary<string, int>(StringComparer.Ordinal);   // Zeilen aus SAP je Bereich
 
         var ersda = Or("Ersda", days);
         foreach (var g in RmGroups)
@@ -69,7 +69,7 @@ public static class ShopfloorSapMengen
             var filter = $"Werks eq '{plant}' and ({string.Join(" or ", g.Arbpl.Select(a => $"Arbpl eq '{a}'"))}) and {ersda}"
                          + (g.Typcd is null ? string.Empty : $" and Typcd eq '{g.Typcd}'");
             var rows = await read(RmSet, filter);
-            rueckmeldungen += rows.Count;
+            zeilen[g.Module] = zeilen.GetValueOrDefault(g.Module) + rows.Count;
             var menge = rows.Sum(r => Int(r, "Lmnga"));
             Put(values, g.Module, g.Field, menge);
             var je = new JsonObject();
@@ -87,7 +87,7 @@ public static class ShopfloorSapMengen
         }
 
         var seh = await read(ProdSet, $"Werks eq '{plant}' and Dispo eq '{SehDispo}' and {Or("Datum", days)}");
-        rueckmeldungen += seh.Count;
+        zeilen["seh"] = zeilen.GetValueOrDefault("seh") + seh.Count;
         var sehMenge = seh.Sum(r => Int(r, "Wemng"));
         Put(values, "seh", "prod", sehMenge);
         detail.Add(new JsonObject
@@ -113,18 +113,25 @@ public static class ShopfloorSapMengen
             ["auftraege"] = fpyRows.Sum(r => Int(r, "Anzahl"))
         });
 
-        // Tag ohne jede Rueckmeldung und ohne Istende (Wochenende, Feiertag): keine Nullen schreiben, sondern frueher aus SAP
-        // geschriebene Werte entfernen (null loescht das Feld, ein leerer Tagessatz verschwindet). Fall 17./18.10.2026.
-        var ohneProduktion = rueckmeldungen == 0;
-        if (ohneProduktion)
-            foreach (var (_, node) in values)
-                foreach (var key in ((JsonObject)node!).Select(kv => kv.Key).ToList())
-                    ((JsonObject)node!)[key] = null;
+        // Bereich ohne jede Rueckmeldung bzw. Istende am Tag (Wochenende, Feiertag): keine Nullen schreiben, sondern frueher
+        // aus SAP geschriebene Werte entfernen (null loescht das Feld, ein leerer Tagessatz verschwindet). Je Bereich, weil
+        // SEH auch samstags Istenden hat (17.10.2026: SEH 751, Logistik nichts). Hat ein Bereich Zeilen, bleibt 0 eine 0.
+        var leer = new JsonArray();
+        foreach (var (module, node) in values)
+        {
+            if (zeilen.GetValueOrDefault(module) > 0)
+                continue;
+            leer.Add(module);
+            foreach (var key in ((JsonObject)node!).Select(kv => kv.Key).ToList())
+                ((JsonObject)node!)[key] = null;
+        }
+        var ohneProduktion = leer.Count == values.Count;
 
         return new JsonObject
         {
             ["day"] = Iso(day),
             ["ohne_produktion"] = ohneProduktion,
+            ["bereiche_ohne_rueckmeldung"] = leer,
             ["quelltage"] = new JsonArray(days.Select(d => (JsonNode?)Iso(d)).ToArray()),
             ["werte"] = values,
             ["detail"] = detail
