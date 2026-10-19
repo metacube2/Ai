@@ -72,6 +72,23 @@ public class ShopfloorSapMengenTests
     }
 
     [Fact]
+    public async Task Tag_Ohne_Rueckmeldung_Schreibt_Keine_Nullen_Sondern_Entfernt_SAP_Werte()
+    {
+        Task<List<JsonElement>> Leer(string set, string filter) => Task.FromResult(new List<JsonElement>());
+        var r = await ShopfloorSapMengen.ComputeAsync(new DateOnly(2026, 10, 17), "1100", Leer);   // Samstag
+        Assert.True((bool)r["ohne_produktion"]!);
+        Assert.Null(r["werte"]!["logistik"]!["tr5_mle01"]);
+
+        using var env = new ShopfloorTestEnv();
+        var alt = JsonNode.Parse("""{"day":"2026-10-17","werte":{"logistik":{"tr5_mle01":0},"dw":{"prod":0}}}""")!.AsObject();
+        env.Store.ApplyPush(new ShopfloorPush { Items = ShopfloorSapMengen.BuildItems(alt, _ => null).Items }, "SAP");
+        JsonObject? Existing(string m) => env.Store.GetDaily(m, "2026-10-17", "2026-10-17")[m]?["2026-10-17"] as JsonObject;
+        env.Store.ApplyPush(new ShopfloorPush { Items = ShopfloorSapMengen.BuildItems(r, Existing).Items }, "SAP");
+        Assert.Null(Existing("logistik"));   // Tagessatz mit den alten Nullen ist weg
+        Assert.Null(Existing("dw"));
+    }
+
+    [Fact]
     public void Manuelle_Werte_Werden_Nicht_Ueberschrieben()
     {
         var computed = JsonNode.Parse("""
