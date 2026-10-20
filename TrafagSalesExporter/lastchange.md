@@ -2,6 +2,11 @@
 
 Stand: 2026-10-20
 
+## Doku: HR-Cockpit SAP-Abruf als produktiv nachgefuehrt, 2026-10-20
+
+- `docs/rag/HR_KPI.md` und lastchange sagten noch „`HrKpiSet` nicht in P76“ bzw. „SAP-Datei nicht automatisiert“. Live geprueft:
+  beide SAP-Dateien in `hrdata` taeglich um 05:07 geschrieben (heute), Rexx-Dateien vom 08.07. Aussagen als ueberholt markiert.
+
 ## Projekte: Abschlussrunde Dashboard und Data Lake eingeladen, 2026-10-20
 
 - Ingo hat die Runde mit Finance, Einkauf, Supply Chain, HR und Sales (90 Min.) am 2026-10-20 in Outlook verschickt.
@@ -473,11 +478,13 @@ Stand: 2026-10-20
 - `c51445c`: Kader ist, wer in Rexx `Leitung j/n` = ja hat (Ingo, Wochen_Todo 66). Fuer sie gelten 8,1 h
   statt 8,0 h bei Krankheitstagen, Langzeitgrenze und FTE aus der Sollzeit. 800/800. `docs/HR_KPI.md` 8.5.
 
-## HR-Cockpit: SAP-Datei automatisch ueber OData, 2026-09-30 (Cockpit produktiv seit 01.10. 09:12, `HrKpiSet` noch nicht in P76)
+## HR-Cockpit: SAP-Datei automatisch ueber OData, 2026-09-30 (Cockpit produktiv seit 01.10. 09:12, `HrKpiSet` seit 01.10. in P76)
 
 - `4051506`: EntitySet `HrKpiSet` (T76, Transport `T76K912530` mit dem Journal) und Tagesabruf im
   Cockpit, der `hrdata/HR_KPI_Export.xlsx` schreibt. Ersetzt den Handstart von `Z_HR_KPI_CONS`.
   Nur Cockpit-Felder, keine Namen, kein Lohn. Bis zum Transport bleibt die Handdatei stehen.
+- *Ueberholt „noch nicht in P76“:* `T76K912530` am 2026-10-01 nach P76 importiert, erster Abruf 09:46 (1'168 Personen).
+  Am 2026-10-20 auf dem Server geprueft: `hrdata/HR_KPI_Export.xlsx` und `HR_Absenzen_SAP.xlsx` von heute 05:07, Rexx-Dateien weiter vom 08.07.
 
 ## HR-Cockpit: Absenz-Ampel der Uebersicht ab 5 % rot, 2026-09-30, produktiv 01.10. 09:12
 

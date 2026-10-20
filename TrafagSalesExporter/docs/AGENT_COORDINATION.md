@@ -37,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Doku: HR-Cockpit SAP-Abruf (`HrKpiSet`, `HrAbsenzSet`) als produktiv nachgefuehrt, live auf dem Server geprueft | 2026-10-20 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `docs/rag/HR_KPI.md`, `lastchange.md`; Dateien in `hrdata` von heute 05:07 |
 | Claude | Doku: Abschlussrunde Dashboard/Data Lake und PS-Nachtrag in lastchange, PROJEKTSTATUS (PM-10 bis PM-13), Vorhaben_HERMES | 2026-10-20 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** PM-11 an HERMES-Stand (erledigt 13.10.) angeglichen |
 | Claude | SAP PS Einfuehrung (Auftrag Chef): Demo T76/100, Doku, Folien | 2026-10-20 | **Abgeschlossen, kein Deploy, Reservierung frei.** `DEMO-PS` + Teilprojekte, OKKP „Projekte aktiv“ nur T76 im lokalen Auftrag `T76K912750` (NICHT FREIGEBEN), KB21N-Beleg 311258907, Folien 11-15 in pptx-Kopie. `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | Claude | T76/200: Testuser `UBIG` nur mit `/GIB/DCP_SUPERVISOR` (Auftrag Ingo) | 2026-10-19 | **Abgeschlossen in T76/200, kein Deploy, Reservierung frei.** Eigene Sitzung, Kennwort zufaellig erzeugt (setzt Ingo), Profil `T-P4550180` generiert und abgeglichen. `saptasks/gib_dcp/NOTES.md` |

@@ -1,22 +1,26 @@
 # RAG HR KPI
 
-Stand: 2026-09-30
+Stand: 2026-10-20
 
 ## Kurzstand
+
+- **2026-10-20 live geprueft: SAP-Abruf laeuft taeglich.** In `hrdata` auf dem Server sind `HR_KPI_Export.xlsx` und
+  `HR_Absenzen_SAP.xlsx` heute um 05:07 geschrieben. Die Rexx-Dateien sind weiter vom 08.07. (Upgreat offen), wer danach
+  eingetreten ist, fehlt in der Personenbasis.
 
 - **2026-09-30: Arbeitstag 8,0 h statt 8,4 h** (Entscheid Ingo, deckt sich mit Sonjas Tagessoll
   8 h bei 100 %). `e3545c4`, eine Konstante `HoursPerWorkday` fuer Krankheitstage, 61-Tage-Grenze
   und FTE aus Sollzeit; rund 5 % mehr Krankheitstage. **Produktiv seit 2026-09-30 09:36** (`docs/rag/DEPLOYMENT.md`).
   Ueberarbeitete Mail an Sonja liegt als `.eml` in Downloads. Details `docs/HR_KPI.md` 8.4.
-- **2026-09-30: automatischer SAP-Import gebaut, NICHT produktiv.** EntitySet `HrKpiSet` in
+- **2026-09-30: automatischer SAP-Import gebaut** (*ueberholt „NICHT produktiv“: seit 01.10. produktiv, siehe unten*). EntitySet `HrKpiSet` in
   `ZPOWERBI_EINKAUF_SRV` rechnet live aus PA0001/0002/0007/2001 (nur Cockpit-Felder, keine Namen,
   kein Lohn), in T76 aktiv und im Gateway Client mit 200 geprueft, Transport `T76K912530` gemeinsam
   mit dem Journal. Cockpit holt taeglich ab 05:00 ab und schreibt `hrdata/HR_KPI_Export.xlsx`
   (`4051506`, 795/795). Seit 01.10. in P76 (200) und produktiv, erster Abruf 02.10. ab 05:00. Wertestichprobe 01.10. bestanden. Abruf holt bewusst den laufenden Monat (Entscheid 01.10.); Unfalltage-Kacheln deshalb „laufender Monat“ (`931f151`). Erster Abruf 01.10. 09:46: 1'168 Personen. **Seit 01.10. 10:50 produktiv: Krankheit und Ferien je Fall aus SAP `PA2001`** ueber `HrAbsenzSet` (P76 importiert, `T76K912644`) und `hrdata/HR_Absenzen_SAP.xlsx` (erster Abruf 10:52, 4'948 Faelle); ohne Datei weiter Rexx. Personenbasis noch Rexx vom 08.07. Krankheitsarten 0220/0230/0240/0260/0270, von HR zu bestaetigen; mit SAP-Datei ohne Zeitraumfilter laufendes Jahr, vor dem Vorjahr Rueckfall auf Rexx (`c12b34a`, `HR_KPI.md` 8.7). `docs/HR_KPI.md` 8.6.
 - **2026-09-30 HR-Sitzung:** Kader 8,1 h, normale Mitarbeitende 8,0 h (Kader = Rexx `Leitung j/n` = ja, `c51445c`, produktiv seit 01.10. 09:12); Rexx
   erfasst Absenzen je Fall mit Von/Bis und Status (neuer Bericht noetig); Absenz-Ampel bis 4,99 %
-  gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (produktiv seit 01.10.). SAP-Datei `HR_KPI_Export` ist NICHT automatisiert (Report
-  `Z_HR_KPI_CONS` von Hand), Ziel taeglich. Details `docs/HR_KPI.md` 8.5 und 8.6.
+  gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (produktiv seit 01.10.). SAP-Datei `HR_KPI_Export` war damals NICHT automatisiert (Report
+  `Z_HR_KPI_CONS` von Hand); *ueberholt: seit 01.10. taeglich ueber `HrKpiSet`*. Details `docs/HR_KPI.md` 8.5 und 8.6.
 - **2026-09-30: kein Rexx-Hub.** Automatischer Export der vier Rexx-Berichte soll ueber Upgreat
   (Ueli Kunzmann) laufen, Mail am 30.09. versendet, Antwort offen. dormakaba nach Rexx laeuft schon
   seit 02.09. alle 15 Minuten. Details `docs/HR_KPI.md` 8.3.
