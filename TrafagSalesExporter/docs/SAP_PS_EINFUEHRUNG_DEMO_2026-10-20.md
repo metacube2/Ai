@@ -6,8 +6,8 @@ Rechnungen aufs Projekt, und ist das einfach oder schwierig? Zielbild laut Notiz
 Innenauftraege, sondern ueber das PS-Modul; Planung und Risiken in TPG ProjectPowerPack (Folien
 `20260223 - Abgleich TPG - Trafag.pptx`, Stufe 2/3 „Anbindung SAP Zeitrueckmeldung/Finanzdaten“).
 
-Alles unten ist in **T76 Mandant 100** gemessen und durchgespielt (Testsystem, Claudes eigene Sitzung). P76 ist nicht
-geprueft. Screenshots: `docs/img/ps_demo_2026-10-20/`.
+Durchgespielt ist alles in **T76 Mandant 100** (Testsystem, Claudes eigene Sitzung). **P76 ist am 2026-10-20 nur lesend
+geprueft** (Abschnitt 3a): gleicher Stand wie T76 vor der Demo. Screenshots: `docs/img/ps_demo_2026-10-20/`.
 
 ## 1. Kurzfazit fuer den Chef
 
@@ -47,6 +47,19 @@ Welche Bedeutung Philip meint, ist mit ihm zu klaeren.
 | 6 | Kostenstelle 230 hat keinen Stammsatz fuer Leistungsart 100 im Jahr 2026; Kostenstellen 100, 200, 240 ff. haben einen (CSSL) | KB21N-Meldung |
 | 7 | TPG ProjectPowerPack ist nicht im SAP installiert (kein Namensraum `/TPG*`, keine Transaktion) | SapProbe |
 
+## 3a. Stand P76 (nur lesend, 2026-10-20, `.tmp_sap_probe/P76Pruefung_PS.ps1`)
+
+| Punkt | P76 |
+| --- | --- |
+| Komponente „Projekte“ im KoKrs 1000 (TKA00-PRJKT) | **aus** (nur Auftraege aktiv) |
+| Projektprofile | nur `0000001`, `0000002` (SAP-Standard) |
+| Projekte (PROJ) / PSP-Elemente (PRPS) | **keine** |
+| CATS-Profile / Zeitsaetze CATSDB seit 01.01.2026 | `SAP`, `HR-ONLY` / **keine** |
+| Innenauftraege (AUTYP 01) seit 2025 | 44 neue (Z015 13, Z003 11, Z012 8, Z002 5, Z011 4, Z014 3); Auftrag 100362 aus Folie 10 ist Z011 „Neu 87x9 DW“ |
+| Kostenstellen mit Leistungsart 2026 (CSSL) | 394 mit LstArt 100, 394 mit 200 |
+
+Fazit: Projekte laufen in P76 heute als Innenauftraege; PS ist dort genauso wenig eingerichtet wie in T76.
+
 ## 4. Durchgespielt (Demo in T76/100)
 
 | Schritt | Transaktion | Ergebnis | Bild |
@@ -65,9 +78,15 @@ Welche Bedeutung Philip meint, ist mit ihm zu klaeren.
 KB21N ist dieselbe Buchung, die CATS im Hintergrund erzeugt (CAT2 erfassen, CAT7 in die Kostenrechnung uebernehmen):
 Stunden x Tarif der Senderkostenstelle entlasten die Kostenstelle und belasten das Teilprojekt.
 
-**Nicht durchgespielt:** externe Kosten per Rechnung. Weg in SAP: Bestellung ME21N mit Kontierungstyp **P** (Projekt),
-Wareneingang MIGO, Rechnung MIRO, oder ohne Bestellung FB60 mit PSP-Element in der Aufwandszeile. Ob die Sachkonten das
-Feld PSP-Element zulassen (Feldstatus), ist ungeprueft.
+**Externe Kosten (durchgespielt):**
+
+| Schritt | Transaktion | Ergebnis | Bild |
+| --- | --- | --- | --- |
+| Bestellung mit Kontierung P | ME21N | Lieferant 66228, EKORG 1100, EKGRP 110, Position KontTyp P, 1 LE, 1'500 CHF, Warengruppe 01, Werk 1100, Sachkonto 45011, PSP `DEMO-PS.2`, ohne WE. SAP meldete „Normalbestellung 45148479 angelegt“, **die Verbuchung brach aber ab** (SM13: nur `RV_MESSAGE_UPDATE` = Nachrichtenausgabe, alle Bestell- und Kontierungsbausteine „Init“). Bestellung existiert nicht; T76-Problem der Nachrichtenfindung, nicht PS | 15 |
+| Rechnung ohne Bestellung | FB60 | Lieferant 66228, 1'500 CHF, V0, Zeile Sachkonto 45011 mit PSP `DEMO-PS.2` (Spalte PROJK), FI-Beleg **19102004** | (16, nicht in Folien: zeigt Bankverbindung) |
+| Projekt-Istkosten | CJI3 | `DEMO-PS.1` 396 CHF (90000) + `DEMO-PS.2` 1'500 CHF (45011) = **1'896 CHF** | 17 |
+
+Das Feld PSP-Element ist in der FB60-Zeile fuer Konto 45011 erlaubt (Feldstatus passt).
 
 ## 5. Transaktionen
 
@@ -97,12 +116,14 @@ Feld PSP-Element zulassen (Feldstatus), ist ungeprueft.
 ## 6a. Folien
 
 In `20260223 - Abgleich TPG - Trafag (mit SAP PS).pptx` (Repo-Wurzel, nicht versioniert; Original unveraendert daneben) stehen
-nach Folie 10 „Stufe 2/3 - Anbindung SAP Zeitrueckmeldung/Finanzdaten“ fuenf neue Folien 11 bis 15: Alternative zu
-Innenauftraegen (PS-Struktur und Kostenfluesse), Demo Projekt anlegen, Demo Projektzeit buchen (KB21N -> CJI3), Fazit,
-Transaktionen. Gebaut per PowerPoint-COM im Stil der Vorlage (Arial Narrow, Trafag-Orange), Skript im Scratchpad.
+nach Folie 10 „Stufe 2/3 - Anbindung SAP Zeitrueckmeldung/Finanzdaten“ sechs neue Folien 11 bis 16: Alternative zu
+Innenauftraegen (PS-Struktur und Kostenfluesse), Demo Projekt anlegen, Demo Projektzeit buchen (KB21N -> CJI3), Demo externe
+Kosten (ME21N Kontierung P, FB60 -> CJI3), Fazit mit P76-Befund, Transaktionen. Gebaut per PowerPoint-COM im Stil der Vorlage (Arial Narrow, Trafag-Orange), Skript im Scratchpad.
 
 ## 7. Aufraeumen in T76
 
+- FI-Beleg 19102004 (Kreditorenrechnung 1'500 CHF auf `DEMO-PS.2`) bleibt als Demo stehen; zurueck mit FB08 stornieren.
+- SM13 enthaelt den abgebrochenen Verbuchungssatz der Bestellung (20.10. 11:06:30, ME21N); nicht nachbuchen, bei Bedarf loeschen.
 - Projekt `DEMO-PS` (Status FREI) und CO-Beleg 311258907 bleiben als Demo stehen. Zurueck: Beleg mit KB24N stornieren,
   Projekt auf „technisch abgeschlossen“ und mit Loeschvormerkung versehen.
 - Customizing: Haken „Projekte“ in OKKP fuer KoKrs 1000 ist in T76 gesetzt. **Auftrag `T76K912750` ist lokal und darf

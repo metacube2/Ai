@@ -12,6 +12,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-20 | ME21N meldete „Normalbestellung 45148479 angelegt“, die Bestellung stand aber nie in EKKO: Verbuchung abgebrochen (SM13, `RV_MESSAGE_UPDATE`), Expressinfo kam erst beim naechsten Bildwechsel | Nach jedem „angelegt/gebucht“ in SAP in der Datenbank (SapProbe) oder per Anzeige-Transaktion gegenpruefen; Expressinformation sofort lesen, SM13 pruefen | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | 2026-10-20 | SAP-Screenshot per `HardCopy` lieferte ein 160x28-Bild (schwarz), weil das eigene SAP-Fenster minimiert war; Dialogfenster (`wnd[1]`) gingen trotzdem | Vor `HardCopy` auf `wnd[0]` das Fenster mit `Maximize` holen und `Iconic` pruefen; bei gesperrtem PC sind Screenshots unzuverlaessig, also Bilder machen, solange Ingo am Platz ist | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | 2026-10-20 | ZLO03 in T76/200 aendern scheiterte: „Objekt gesperrt in nicht fuer diesen Mandanten bestimmte Aufgabe T76K912743“ | Ein Objekt im offenen Auftrag nur im Mandanten des Auftrags aendern (hier 100); vorher `E070`/`E071` lesen | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
 | 2026-10-20 | `cscript` liess ein leeres Argument `""` weg, das Skript griff auf `Arguments(3)` zu und brach ab, waehrend der SAP-Speicherdialog offen blieb | In VBS-Aufrufen keine leeren Argumente; Platzhalter wie `-` verwenden | Sitzung 20.10. |
