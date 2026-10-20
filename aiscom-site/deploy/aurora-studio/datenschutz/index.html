@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aurora Studio: Datenschutz | AISCOM</title>
+  <meta name="description" content="Datenschutzerklärung der Mac-App Aurora Studio: Die App sammelt keine Daten und sendet nichts an AISCOM.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/aurora-studio/datenschutz/">
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #13213b;
+      --surface-2: #1a2b4d;
+      --text: #f5f7fb;
+      --muted: #a8b3c7;
+      --accent: #87ceeb;
+      --line: rgba(135, 206, 235, 0.18);
+      --ok: #7ad3a1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top right, rgba(135, 206, 235, 0.1), transparent 30%),
+        linear-gradient(180deg, #091120, var(--bg));
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px;
+    }
+    header > a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    header nav a { margin-left: 18px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
+    header nav a:first-child { margin-left: 0; }
+    header nav a:hover { color: var(--accent); }
+
+    main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+    section { margin-top: 56px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    p { color: var(--muted); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--accent);
+      color: #08121f;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    }
+    .card p { margin: 0; }
+    .card a { color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--text); }
+    td { color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+
+    form { display: grid; gap: 10px; max-width: 420px; }
+    label { font-size: 0.9rem; color: var(--text); }
+    input[type=email] {
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0d1a30;
+      color: var(--text);
+      font: inherit;
+    }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .status.ok { color: var(--ok); }
+
+    details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+    summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details p { margin: 8px 0 0; }
+
+    footer {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    main a { color: var(--accent); }
+    code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/de">AISCOM</a>
+    <nav>
+      <a href="/de#produkte">Produkte</a>
+      <a href="/aurora-studio/">Aurora Studio</a>
+      <a href="/de/contact">Kontakt</a>
+    </nav>
+  </header>
+  <main>
+    <p class="eyebrow">Aurora Studio für macOS</p>
+    <h1>Datenschutz</h1>
+    <p class="lead">Kurz gesagt: Aurora Studio sammelt keine Daten über Sie und sendet nichts an AISCOM. Bild und Ton gehen nur dorthin, wohin Sie selbst senden.</p>
+
+    <section>
+      <h2>Was die App tut</h2>
+      <p>Aurora Studio mischt Bild und Ton aus Kameras, Mikrofonen, Ihrem Bildschirm und Dateien auf Ihrem Mac, nimmt das Ergebnis auf und sendet es auf Wunsch live an Plattformen, die Sie selbst eintragen (z. B. YouTube, Facebook, Twitch oder einen eigenen RTMP-Server). Die Verbindung zu diesen Diensten baut Ihr Mac direkt auf; AISCOM ist daran nicht beteiligt. Für das, was dort mit Ihrer Sendung geschieht, gelten die Datenschutzbestimmungen der jeweiligen Plattform.</p>
+      <p>Die App enthält keine Statistik-, Werbe- oder Tracking-Funktionen, kein Benutzerkonto und keine Absturzberichte an AISCOM.</p>
+    </section>
+
+    <section>
+      <h2>Was auf Ihrem Mac gespeichert wird</h2>
+      <p>Einstellungen, Szenen und Sendeziele liegen im Datenordner der App. Aufnahmen landen in dem Ordner, den Sie wählen (Standard: <code>Filme/Aurora Studio</code>). Stream-Schlüssel und Zugangsschlüssel speichert die App nur im Schlüsselbund von macOS und zeigt sie in Protokollen nie an. Wenn Sie die App löschen, können Sie diese Daten mit ihr entfernen.</p>
+    </section>
+
+    <section>
+      <h2>Funktionen mit Netzverbindung</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Funktion</th><th>Wohin</th><th>Was</th></tr>
+          <tr><td>Senden</td><td>die von Ihnen eingetragenen Plattformen</td><td>Bild und Ton der Sendung</td></tr>
+          <tr><td>Chat anzeigen</td><td>Twitch (nur lesend, ohne Anmeldung)</td><td>Ihr Mac ruft den Chat des Kanals ab, den Sie angeben</td></tr>
+          <tr><td>Netzquellen</td><td>die Adressen, die Sie als Quelle eintragen</td><td>Abruf des Videostroms</td></tr>
+          <tr><td>Gäste per Link</td><td>nur Ihr lokales Netz bzw. Ihr eigenes VPN</td><td>Bild und Ton des Gastes direkt an Ihren Mac</td></tr>
+          <tr><td>Fernsteuerung</td><td>nur Ihr lokales Netz</td><td>Befehle von Stream Deck oder Companion</td></tr>
+        </table>
+      </div>
+      <p>Ohne diese Funktionen arbeitet die App vollständig offline.</p>
+    </section>
+
+    <section>
+      <h2>Live-Untertitel</h2>
+      <p>Die Spracherkennung und die Übersetzung laufen auf Ihrem Mac (Apple Speech und Translation). Es wird kein Ton und kein Text ins Netz gesendet. Fehlende Sprachmodelle lädt macOS nur, wenn Sie in der App ausdrücklich auf „Laden“ klicken.</p>
+    </section>
+
+    <section>
+      <h2>Gäste per Link</h2>
+      <p>Wer als Gast einen Link öffnet, sieht vor der Freigabe von Kamera und Mikrofon einen Hinweis zu Sendung, Aufnahme und Veranstalter und muss ausdrücklich zustimmen. Bild und Ton des Gastes gehen nur an den Mac der Regie, ohne Server von AISCOM oder Dritten. Verantwortlich für die Sendung und damit für die Daten der Gäste ist, wer die Sendung veranstaltet – nicht AISCOM.</p>
+    </section>
+
+    <section>
+      <h2>Berechtigungen</h2>
+      <p>macOS fragt nach dem Zugriff auf Kamera, Mikrofon, Bildschirmaufnahme, Spracherkennung und lokales Netzwerk, jeweils erst, wenn Sie die zugehörige Funktion nutzen. Die App verwendet den Zugriff nur für diese Funktion. Sie können ihn jederzeit unter Systemeinstellungen → Datenschutz &amp; Sicherheit widerrufen.</p>
+    </section>
+
+    <section>
+      <h2>Kauf</h2>
+      <p><strong>Mac App Store:</strong> Kauf und Zahlung wickelt Apple ab; AISCOM erhält dabei keine persönlichen Daten. Es gilt die Datenschutzrichtlinie von Apple. Für die Website selbst gilt die <a href="/de/legal/privacy">allgemeine Datenschutzerklärung</a>.</p>
+    </section>
+
+    <section>
+      <h2>Verantwortlich und Kontakt</h2>
+      <p>Ingo Kohler, AISCOM, 8052 Zürich, Schweiz, <a href="mailto:ingo.kohler.zh@gmail.com">ingo.kohler.zh@gmail.com</a> (siehe <a href="/de/legal/imprint">Impressum</a>). Fragen, Auskunft oder Löschung nach dem Schweizer Datenschutzgesetz (DSG) bzw. der DSGVO: bitte per E-Mail.</p>
+      <p>Stand: 20. Oktober 2026</p>
+    </section>
+
+    <section lang="en">
+      <h2>In English</h2>
+      <p>Aurora Studio does not collect any data about you and sends nothing to AISCOM. There is no analytics, advertising, tracking, user account or crash reporting. Video and audio are sent only to the streaming platforms you configure yourself; Twitch chat is read anonymously. Live captions and translation run on your Mac. Guests join only over your local network or your own VPN, after explicit consent. Stream keys are stored in the macOS keychain. Contact: <a href="mailto:ingo.kohler.zh@gmail.com">ingo.kohler.zh@gmail.com</a>.</p>
+    </section>
+  </main>
+  <footer>
+    &copy; AISCOM &middot; <a href="/de/legal/imprint">Impressum</a> &middot; <a href="/de/legal/privacy">Datenschutz</a>
+  </footer>
+</body>
+</html>
