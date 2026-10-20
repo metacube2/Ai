@@ -25,7 +25,6 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | SAP PS Einfuehrung (Auftrag Chef Oskar): Demo in T76/100 (Projekt DEMO-PS, Customizing "Projekte aktiv" KoKrs 1000 auf Wunsch Ingo, eigener Auftrag NICHT FREIGEBEN), Screenshots, Folien in "20260223 - Abgleich TPG - Trafag.pptx" | nur T76/100, `docs/` (neu), pptx-Kopie | **Demo und Doku fertig (commit), Folien offen** |
 | Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; RoHS folgt | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **T76 aktiv, rueckgelesen, Lauf ok; Test mit Werten offen** |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
@@ -38,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | SAP PS Einfuehrung (Auftrag Chef): Demo T76/100, Doku, Folien | 2026-10-20 | **Abgeschlossen, kein Deploy, Reservierung frei.** `DEMO-PS` + Teilprojekte, OKKP „Projekte aktiv“ nur T76 im lokalen Auftrag `T76K912750` (NICHT FREIGEBEN), KB21N-Beleg 311258907, Folien 11-15 in pptx-Kopie. `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | Claude | T76/200: Testuser `UBIG` nur mit `/GIB/DCP_SUPERVISOR` (Auftrag Ingo) | 2026-10-19 | **Abgeschlossen in T76/200, kein Deploy, Reservierung frei.** Eigene Sitzung, Kennwort zufaellig erzeugt (setzt Ingo), Profil `T-P4550180` generiert und abgeglichen. `saptasks/gib_dcp/NOTES.md` |
 | Claude | Word-Doku ZC23 Materialanteil: Beschleunigung 47,7 s -> 13,5 s | 2026-10-19 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx`, in Word als PDF geprueft |
 | Claude | ZLO03 FIX 12: Test in T76 mit nachgestelltem Fall | 2026-10-19 | **Abgeschlossen, nur T76 (lokale Testobjekte, Testdaten), Reservierung frei.** Alt: B63485 fehlt, neu: MK 5009; sonst gleich. Import P76 Ingo |

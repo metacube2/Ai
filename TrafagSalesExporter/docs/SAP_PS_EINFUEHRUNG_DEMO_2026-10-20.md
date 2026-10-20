@@ -94,6 +94,13 @@ Feld PSP-Element zulassen (Feldstatus), ist ungeprueft.
 7. Entscheid Zeiterfassung: rexx bleibt fuehrend mit Schnittstelle nach SAP, oder Erfassung direkt in SAP (CAT2/Fiori).
 8. Anbindung TPG ProjectPowerPack an SAP (Stufe 2/3): mit Philip Steiger und TPG klaeren.
 
+## 6a. Folien
+
+In `20260223 - Abgleich TPG - Trafag (mit SAP PS).pptx` (Repo-Wurzel, nicht versioniert; Original unveraendert daneben) stehen
+nach Folie 10 „Stufe 2/3 - Anbindung SAP Zeitrueckmeldung/Finanzdaten“ fuenf neue Folien 11 bis 15: Alternative zu
+Innenauftraegen (PS-Struktur und Kostenfluesse), Demo Projekt anlegen, Demo Projektzeit buchen (KB21N -> CJI3), Fazit,
+Transaktionen. Gebaut per PowerPoint-COM im Stil der Vorlage (Arial Narrow, Trafag-Orange), Skript im Scratchpad.
+
 ## 7. Aufraeumen in T76
 
 - Projekt `DEMO-PS` (Status FREI) und CO-Beleg 311258907 bleiben als Demo stehen. Zurueck: Beleg mit KB24N stornieren,
