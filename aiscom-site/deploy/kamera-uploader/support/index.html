@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kamera-Import: Support | AISCOM</title>
+  <meta name="description" content="Hilfe zur Mac-App Kamera-Import: Kamera verbinden, Zielordner, SFTP mit eigenem Schlüssel, Kontakt.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/kamera-uploader/support/">
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #13213b;
+      --surface-2: #1a2b4d;
+      --text: #f5f7fb;
+      --muted: #a8b3c7;
+      --accent: #87ceeb;
+      --line: rgba(135, 206, 235, 0.18);
+      --ok: #7ad3a1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top right, rgba(135, 206, 235, 0.1), transparent 30%),
+        linear-gradient(180deg, #091120, var(--bg));
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px;
+    }
+    header > a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    header nav a { margin-left: 18px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
+    header nav a:first-child { margin-left: 0; }
+    header nav a:hover { color: var(--accent); }
+
+    main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+    section { margin-top: 56px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    p { color: var(--muted); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--accent);
+      color: #08121f;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    }
+    .card p { margin: 0; }
+    .card a { color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--text); }
+    td { color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+
+    form { display: grid; gap: 10px; max-width: 420px; }
+    label { font-size: 0.9rem; color: var(--text); }
+    input[type=email] {
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0d1a30;
+      color: var(--text);
+      font: inherit;
+    }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .status.ok { color: var(--ok); }
+
+    details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+    summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details p { margin: 8px 0 0; }
+
+    footer {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    main a { color: var(--accent); }
+    code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/de">AISCOM</a>
+    <nav>
+      <a href="/de#produkte">Produkte</a>
+      <a href="/macyaesu/">MacYaesu</a>
+      <a href="/de/contact">Kontakt</a>
+    </nav>
+  </header>
+  <main>
+    <p class="eyebrow">Kamera-Import für macOS</p>
+    <h1>Support</h1>
+    <p class="lead">Fragen, Fehler oder Wünsche bitte per E-Mail an <a href="mailto:metacube@gmail.com?subject=Kamera-Import%20Support">metacube@gmail.com</a>, Betreff „Kamera-Import“. Hilfreich sind macOS-Version, Kameramodell und der genaue Wortlaut einer Meldung.</p>
+
+    <section>
+      <h2>Häufige Fragen</h2>
+      <details>
+        <summary>Was brauche ich?</summary>
+        <p>Einen Mac mit macOS 14 oder neuer und eine Kamera, die sich per USB als Kamera (PTP) meldet, z. B. die meisten Canon-, Nikon- und Sony-Modelle.</p>
+      </details>
+      <details>
+        <summary>Die Kamera wird nicht gefunden.</summary>
+        <p>Kamera einschalten und per Kabel verbinden (nicht nur laden). Andere Programme schliessen, die die Kamera belegen, etwa Fotos, Digitale Bilder oder Hersteller-Software. Beim ersten Mal den Zugriff auf Kamera bzw. Wechseldatenträger erlauben; nachträglich unter Systemeinstellungen → Datenschutz &amp; Sicherheit.</p>
+      </details>
+      <details>
+        <summary>Welche Dateien lädt die App?</summary>
+        <p>Nur die, die im Zielordner noch fehlen (gleicher Name und gleiche Grösse). Auf der Kamera wird nichts gelöscht.</p>
+      </details>
+      <details>
+        <summary>Wie richte ich ein SFTP-Ziel ein?</summary>
+        <p>Unter Ziel → SFTP die Adresse eintragen, z. B. <code>sftp://name@rechner:22/fotos</code>. Dann „Schlüssel erzeugen“, mit „Kopieren“ den öffentlichen Schlüssel holen und ihn auf dem Server eintragen (eine Zeile in <code>~/.ssh/authorized_keys</code>, bei SFTPGo und vielen NAS unter „Public keys“). „Verbinden und prüfen“ zeigt den Fingerabdruck des Servers zum Vergleich. Die App fragt nie nach einem Passwort.</p>
+      </details>
+      <details>
+        <summary>„Host key verification failed“</summary>
+        <p>Der Server meldet einen anderen Schlüssel als beim ersten Verbinden. Das kann eine Neuinstallation des Servers sein oder ein Angriff. Erst beim Betreiber nachfragen, dann in der App „Gespeicherten Server-Schlüssel vergessen“ wählen und neu verbinden.</p>
+      </details>
+      <details>
+        <summary>App Store oder Website: was ist der Unterschied?</summary>
+        <p>Beide können dasselbe. Die Fassung aus dem Mac App Store ist mit dem Kauf freigeschaltet, ohne Lizenzschlüssel. Die Fassung von dieser Website wird mit einem Lizenzschlüssel freigeschaltet; die Demo lädt bis zu 50 Dateien. Einstellungen werden zwischen den Fassungen nicht übernommen.</p>
+      </details>
+      <details>
+        <summary>Rückerstattung</summary>
+        <p>Käufe im Mac App Store erstattet Apple über <a href="https://reportaproblem.apple.com">reportaproblem.apple.com</a>. Käufe über diese Website bitte per E-Mail melden.</p>
+      </details>
+    </section>
+
+    <section>
+      <h2>Weitere Seiten</h2>
+      <p><a href="/kamera-uploader/">Produktseite</a> &middot; <a href="/kamera-uploader/datenschutz/">Datenschutz der App</a></p>
+    </section>
+  </main>
+  <footer>
+    &copy; AISCOM &middot; <a href="/de/legal/imprint">Impressum</a> &middot; <a href="/de/legal/privacy">Datenschutz</a>
+  </footer>
+</body>
+</html>
