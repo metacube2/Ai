@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; RoHS folgt | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **T76 aktiv, rueckgelesen, Lauf ok; Test mit Werten offen** |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

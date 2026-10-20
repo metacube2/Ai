@@ -1,6 +1,13 @@
 # Last Change
 
-Stand: 2026-10-19
+Stand: 2026-10-20
+
+## SAP: ZLO03 FIX 19 Spalten REACH, SVHC, PFAS-Gehalt, 2026-10-20
+
+- Wunsch Florian Waechter: Stoff-Compliance in ZLO03. Befund: in P76 nur Klasse `Z_PACK_REGULATION` (8 Merkmale, kein RoHS),
+  `ZCOMP_STOFF` nur in T76 und leer. FIX 19 liest `REACHCOM`, `SVHCCOMP`, `PFAS` aus `AUSP` und gibt drei Spalten hinter
+  `Postyp` aus. T76 aktiv, im Auftrag `T76K912742` zusammen mit FIX 12 (Entscheid Ingo). Lauf `8475*` fehlerfrei, Spalten leer.
+  Doku `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md`. RoHS: Adil soll ein Merkmal anlegen.
 
 ## SAP: Testuser UBIG mit GIB-DCP-Rolle in T76/200, 2026-10-19
 

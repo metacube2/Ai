@@ -177,6 +177,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `zlo03/TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md` | ZLO03: Ergebnisse je nach Tageszeit, Jobliste, Kandidaten |
 | `docs/GIB_DispoCockpit_DCP_Zusammenfassung_2026-10-19.docx` | Word: GIB Dispo-Cockpit, Modul DCP (Planning), was es macht, Rollout P76, Bezug zum Cockpit (aus oeffentlichen Quellen) |
 | `zlo03/MK_B63485_FIX12_2026-10-16.md` | ZLO03: MK-Abweichung B63485, Beleg P76, FIX 12 in `Z_ZLO03_TURBO2` |
+| `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` | ZLO03 FIX 19: Stoff-Compliance-Spalten, Befund je Merkmal (P76 `Z_PACK_REGULATION`), Test T76 |
+| `zlo03/Z_ZLO03_TURBO2_FIX19_2026-10-20.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19 (T76 aktiv) |
 | `zlo03/Z_ZLO03_TURBO2_vor_FIX12_2026-10-16.abap`, `zlo03/Z_ZLO03_TURBO2_FIX12_2026-10-16.abap` | Quelltext `Z_ZLO03_TURBO2` vor und nach FIX 12 (T76/P76-Stand 2026-10-16) |
 | `zlo03/Z_KOI_VC_TXT_KOPIE.abap`, `zlo03/Z_KOI_VC_TXT_TESTID.abap` | lokale T76-Testreports: Testdaten `ZPOWERBI_VC_TXT` und Testzeile fuer FIX 12 |
 

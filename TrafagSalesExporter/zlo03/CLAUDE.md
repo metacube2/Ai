@@ -110,6 +110,7 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 16 | `ausgabe_spalten_details` | `sy-subrc` nach jedem READ einzeln sichern |
 | 17 | Selektionsbild | Werk als Parameter statt Konstante |
 | 18 | neu `run_diagnose` | Diagnosemodus `p_diag` |
+| 19 | `Z_ZLO03_TURBO2`: neu `load_compliance_cache`, `get_compliance`, `create_excel_output` | Spalten REACH, SVHC, PFAS-Gehalt aus `Z_PACK_REGULATION` (2026-10-20, T76 aktiv, Auftrag `T76K912742`), siehe `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 
@@ -291,5 +292,7 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
   die Ursache vermutlich das KOMPNR-Format. Beides falsch: B63485 hat in P76 vier
   Textpositionen in 46123/46124/46126/46128, und die These stimmt. Siehe
   `MK_B63485_FIX12_2026-10-16.md`)
+- `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` — **FIX 19 in `Z_ZLO03_TURBO2`** (REACH/SVHC/PFAS), liegt seit 2026-10-20
+  im selben Auftrag `T76K912742` wie FIX 12
 - `MK_B63485_FIX12_2026-10-16.md` — Beleg aus P76 und **FIX 12 in `Z_ZLO03_TURBO2`**
   (T76 aktiv, Transport `T76K912742`); die übrigen Fixes sind weiter nur lokal
