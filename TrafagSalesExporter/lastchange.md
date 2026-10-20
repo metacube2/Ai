@@ -2,6 +2,13 @@
 
 Stand: 2026-10-20
 
+## Projekte: Abschlussrunde Dashboard und Data Lake eingeladen, 2026-10-20
+
+- Ingo hat die Runde mit Finance, Einkauf, Supply Chain, HR und Sales (90 Min.) am 2026-10-20 in Outlook verschickt.
+  Agenda: Ziel (5), Stand Dashboard (15), Runde durch die Bereiche (40), Data Lake Zielbild und Datenverantwortung (15),
+  Abschluss und Abnahme je Bereich (10), naechste Schritte (5). Entwurf `Downloads/Einladung_Abschlussrunde_Dashboard_DataLake_2026-10-20.eml`.
+  Nachgefuehrt in Status_kurz, Wochen_Todo 116 und PROJEKTSTATUS (PM-10, PM-12).
+
 ## SAP PS: Einfuehrung und Demo in T76, 2026-10-20
 
 - Auftrag Chef: wie funktioniert PS (Zeit/Leistung auf Projekte, Teilprojekte, externe Kosten), einfach oder schwierig.
@@ -9,6 +16,10 @@ Stand: 2026-10-20
   (Standardprofil auf 0001, Komponente Projekte im KoKrs 1000 aus, CATS-Profil ohne Projektspalte). Auf Wunsch Ingo
   „Projekte aktiv“ in OKKP nur in T76, lokaler Auftrag `T76K912750` ohne Ziel. KB21N 6 h auf `DEMO-PS.1` (396 CHF, Beleg
   311258907), in CJI3 sichtbar. Doku `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md`, Bilder `docs/img/ps_demo_2026-10-20/`.
+- Nachtrag: externe Kosten durchgespielt (Bestellung ME21N mit Kontierung P; in T76 brach die Verbuchung an der Nachricht ab,
+  deshalb Rechnung FB60 1'500 CHF auf `DEMO-PS.2`, Beleg 19102004); CJI3 zeigt zusammen 1'896 CHF. P76 lesend geprueft:
+  PS nicht eingerichtet, keine Projekte, keine CATS-Zeiten, Projekte laufen als Innenauftraege (44 seit 2025).
+- Folien 11 bis 16 in der Kopie `20260223 - Abgleich TPG - Trafag (mit SAP PS).pptx` (18 Folien, Original unveraendert).
 
 ## SAP: ZLO03 FIX 19 Spalten REACH, SVHC, PFAS-Gehalt, 2026-10-20
 
