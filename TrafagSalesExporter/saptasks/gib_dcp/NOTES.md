@@ -47,7 +47,8 @@ Offen:
 
 ## 3. Stolperstein Lesewerkzeug
 
-SapProbe `table-read` (RFC_READ_TABLE) lieferte in T76/200 fuer `AGR_USERS`, `AGR_TEXTS`, `AGR_1016`,
-`AGR_TCODES` und `USR02` immer `TABLE_WITHOUT_DATA`, auch fuer Ingos eigene Rollen. Ausserdem
-scheiterte `LIKE '/GIB/%'`, waehrend `LIKE '/GIB%'` ging. Rollentexte und Zuordnungen deshalb in der
-GUI gelesen (PFCG-Einstieg zeigt die Kurzbeschreibung, SU01-Rollengrid zeigt Status und Profil).
+SapProbe `table-read` lieferte am 19.10. fuer `AGR_USERS`, `AGR_TEXTS`, `AGR_1016`, `AGR_TCODES`, `USR02` und `TSTC`
+`TABLE_WITHOUT_DATA`. Rollentexte und Zuordnungen wurden deshalb in der GUI gelesen (PFCG, SU01).
+*Korrigiert am 2026-10-20:* Die Ursache war der Aufruf, nicht SAP. In PowerShell wird `--fields A,B` ohne
+Anfuehrungszeichen zu einer Liste zerlegt; mit `--fields 'A,B'` lesen dieselben Abfragen korrekt. Die damalige
+Deutung („in Mandant 200 nicht lesbar“, „`LIKE '/GIB/%'` scheitert“) ist ueberholt.
