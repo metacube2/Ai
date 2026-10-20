@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-10-15 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-10-20 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -12,6 +12,11 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-20 | SAP-Screenshot per `HardCopy` lieferte ein 160x28-Bild (schwarz), weil das eigene SAP-Fenster minimiert war; Dialogfenster (`wnd[1]`) gingen trotzdem | Vor `HardCopy` auf `wnd[0]` das Fenster mit `Maximize` holen und `Iconic` pruefen; bei gesperrtem PC sind Screenshots unzuverlaessig, also Bilder machen, solange Ingo am Platz ist | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
+| 2026-10-20 | ZLO03 in T76/200 aendern scheiterte: „Objekt gesperrt in nicht fuer diesen Mandanten bestimmte Aufgabe T76K912743“ | Ein Objekt im offenen Auftrag nur im Mandanten des Auftrags aendern (hier 100); vorher `E070`/`E071` lesen | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
+| 2026-10-20 | `cscript` liess ein leeres Argument `""` weg, das Skript griff auf `Arguments(3)` zu und brach ab, waehrend der SAP-Speicherdialog offen blieb | In VBS-Aufrufen keine leeren Argumente; Platzhalter wie `-` verwenden | Sitzung 20.10. |
+| 2026-10-20 | KB21N: Untermasken-Id wechselte zwischen zwei Aufrufen (`SAPLK23F1:2510` / `2520`); nach einer E-Meldung war nur noch das Fehlerfeld eingabebereit, weitere `set` scheiterten | Untermaske nach jedem Einstieg per Dump ermitteln; nach E-Meldung Transaktion neu starten statt weiter zu setzen | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
+| 2026-10-20 | Customizing in T76 (OKKP) haette in einem normalen Auftrag mit Ziel P76 landen koennen; „kritischer Transport: Steuerkennzeichen im Kostenrechnungskreis“ | Test-Customizing nur in einem eigenen **lokalen** Auftrag ohne Zielsystem (Feld Ziel leeren, SAP warnt „wird nicht transportiert“), Text „NICHT FREIGEBEN“ | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | 2026-10-19 | SapProbe `table-read` meldete `TABLE_WITHOUT_DATA` fuer vorhandene Daten (`AGR_*`, `USR02`, `TSTC`). Ursache am 20.10. gefunden: `--fields A,B` ohne Anfuehrungszeichen zerlegt PowerShell in eine Liste, SAP bekommt falsche Feldnamen. Die Deutung vom 19.10. („Tabellen in Mandant 200 nicht lesbar“, „`LIKE '/GIB/%'` scheitert“) war falsch | In PowerShell `--fields 'A,B,C'` immer in Anfuehrungszeichen; `TABLE_WITHOUT_DATA` zuerst als Aufruffehler pruefen, nicht als leere Tabelle werten | `saptasks/gib_dcp/NOTES.md` Abschnitt 3 |
 | 2026-10-19 | Shopfloor: Umstellung auf Produktionstag sofort produktiv nachgebucht; fuer Sa/So wurden Nullen geschrieben (vorher gab es dort keine Tagessaetze), zwei Nachdeploys | Vor dem Schreiben in Produktion die Vorschau (`GET`) fuer **alle** Zieltage ansehen, auch Wochenende; ein Bereich ohne jede SAP-Zeile ist „keine Daten“, nicht 0 | `c3c45cd` |
 | 2026-10-19 | Shopfloor-POST aus PowerShell ohne Header `X-User` lieferte 403 „Ungueltige Anfrage“ | Aenderungen an `shopfloor/api` immer mit `-Headers @{ 'X-User' = '...' }` und `-UseDefaultCredentials` | `ShopfloorEndpoints.Guard` |

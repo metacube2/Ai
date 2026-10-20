@@ -69,6 +69,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | ZLO03: Ergebnisse je nach Tageszeit verschieden (Meldung Ann-Katrin, ungeloest) | `zlo03/TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md` |
 | GIB Dispo-Cockpit, Modul DCP (SAP-Add-on, Rollout P76 geplant Anfang November 2026): was es macht, Ueberschneidung mit dem Cockpit, offene Fragen | `docs/GIB_DispoCockpit_DCP_Zusammenfassung_2026-10-19.docx` |
 | GIB in T76: Namensraeume, DCP-Transaktionen und -Rollen; Testuser `UBIG` (T76/200, nur `/GIB/DCP_SUPERVISOR`) | `saptasks/gib_dcp/NOTES.md` |
+| SAP PS (Projektsystem): Einfuehrung, Demo-Projekt `DEMO-PS` in T76, Zeit auf Projekt (KB21N/CATS), Transaktionen, Befunde (PS fuer Trafag nicht eingerichtet), Fazit fuer den Chef | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | ZLO03: offene MK Top-Down 0 / Bottom-Up 3100 (B63485), Textpositionen, **FIX 12 in `Z_ZLO03_TURBO2`** (T76, `T76K912742`) | `zlo03/MK_B63485_FIX12_2026-10-16.md` |
 | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS-Gehalt aus Klasse `Z_PACK_REGULATION` (Florian), Befund je Merkmal T76/P76, RoHS fehlt in P76; im selben Auftrag `T76K912742` wie FIX 12 | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |

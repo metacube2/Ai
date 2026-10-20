@@ -2,6 +2,14 @@
 
 Stand: 2026-10-20
 
+## SAP PS: Einfuehrung und Demo in T76, 2026-10-20
+
+- Auftrag Chef: wie funktioniert PS (Zeit/Leistung auf Projekte, Teilprojekte, externe Kosten), einfach oder schwierig.
+  In T76/100 Projekt `DEMO-PS` mit zwei Teilprojekten angelegt und freigegeben; Befund: PS fuer Trafag nicht eingerichtet
+  (Standardprofil auf 0001, Komponente Projekte im KoKrs 1000 aus, CATS-Profil ohne Projektspalte). Auf Wunsch Ingo
+  „Projekte aktiv“ in OKKP nur in T76, lokaler Auftrag `T76K912750` ohne Ziel. KB21N 6 h auf `DEMO-PS.1` (396 CHF, Beleg
+  311258907), in CJI3 sichtbar. Doku `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md`, Bilder `docs/img/ps_demo_2026-10-20/`.
+
 ## SAP: ZLO03 FIX 19 Spalten REACH, SVHC, PFAS-Gehalt, 2026-10-20
 
 - Wunsch Florian Waechter: Stoff-Compliance in ZLO03. Befund: in P76 nur Klasse `Z_PACK_REGULATION` (8 Merkmale, kein RoHS),
