@@ -8,6 +8,7 @@
   <url><loc>https://www.aiscom.ch/kamera-uploader/</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.aiscom.ch/kamera-uploader/support/</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://www.aiscom.ch/kamera-uploader/datenschutz/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://www.aiscom.ch/kamera-uploader/lizenz/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://www.aiscom.ch/aurora-studio/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.aiscom.ch/aurora-studio/support/</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://www.aiscom.ch/aurora-studio/datenschutz/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
