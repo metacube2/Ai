@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antennen-Studio für macOS | AISCOM</title>
+  <meta name="description" content="Antennen-Studio: Antennensimulation mit NEC für den Mac. NEC-2 und zweiter Rechenkern eingebaut, geprüft gegen Theorie, Selbsttest und Modellprüfung. Demo kostenlos.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/antennen-studio/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Antennen-Studio für macOS">
+  <meta property="og:description" content="Antennen mit NEC simulieren, auf dem Mac, mit eingebauter Prüfung gegen falsche Ergebnisse.">
+  <meta property="og:url" content="https://www.aiscom.ch/antennen-studio/">
+  <link rel="icon" href="/favicon.ico">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Antennen-Studio",
+      "operatingSystem": "macOS 14 oder neuer",
+      "applicationCategory": "UtilitiesApplication",
+      "url": "https://www.aiscom.ch/antennen-studio/",
+      "downloadUrl": "https://www.aiscom.ch/antennen-studio/Antennen-Studio.zip",
+      "offers": { "@type": "Offer", "price": "24.00", "priceCurrency": "CHF" }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #13213b;
+      --surface-2: #1a2b4d;
+      --text: #f5f7fb;
+      --muted: #a8b3c7;
+      --accent: #87ceeb;
+      --line: rgba(135, 206, 235, 0.18);
+      --ok: #7ad3a1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top right, rgba(135, 206, 235, 0.1), transparent 30%),
+        linear-gradient(180deg, #091120, var(--bg));
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px;
+    }
+    header > a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    header nav a { margin-left: 18px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
+    header nav a:first-child { margin-left: 0; }
+    header nav a:hover { color: var(--accent); }
+
+    main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+    section { margin-top: 56px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    p { color: var(--muted); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--accent);
+      color: #08121f;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    }
+    .card p { margin: 0; }
+    .card a { color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--text); }
+    td { color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+
+    form { display: grid; gap: 10px; max-width: 420px; }
+    label { font-size: 0.9rem; color: var(--text); }
+    input[type=email] {
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0d1a30;
+      color: var(--text);
+      font: inherit;
+    }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .status.ok { color: var(--ok); }
+
+    details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+    summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details p { margin: 8px 0 0; }
+
+    footer {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/de">AISCOM</a>
+    <nav>
+      <a href="/de#produkte">Produkte</a>
+      <a href="/macyaesu/">MacYaesu</a>
+      <a href="/de/contact">Kontakt</a>
+    </nav>
+  </header>
+
+  <main>
+    <p class="eyebrow">macOS-App · Antennensimulation mit NEC · Beta</p>
+    <h1>Antennen-Studio</h1>
+    <p class="lead">Antennen als Drähte beschreiben, mit Variablen und Formeln, und auf dem Mac rechnen: Impedanz, SWR, Gewinn, Strahlungsdiagramm in 3D, Frequenzgang und Smith-Diagramm, ein Optimierer – und eine eingebaute Prüfung, die vor falschen Ergebnissen warnt.</p>
+    <div class="actions">
+      <a class="button" href="./Antennen-Studio.zip" download>Demo herunterladen</a>
+      <a class="button secondary" href="#kaufen">Vollversion 24 CHF (Beta-Preis)</a>
+    </div>
+    <p class="meta">macOS 14 oder neuer · Demo: eigene Modelle bis 60 Segmente, alle Beispiele ohne Grenze · von Apple notarisiert</p>
+
+    <section>
+      <h2>Was die App macht</h2>
+      <div class="grid">
+        <div class="card"><h3>NEC-2 eingebaut</h3><p>Gerechnet wird mit nec2c, der C-Fassung des seit Jahrzehnten bewährten NEC-2, mit Bodenmodellen. Ein Modell rechnet in Millisekunden.</p></div>
+        <div class="card"><h3>Zweite Meinung</h3><p>Ein zweiter, unabhängiger Rechenkern (momwire) ist eingebaut. Nichts wird nachgeladen. Wählst du ihn, rechnet die App zum Vergleich auch mit NEC-2 und warnt bei Abweichungen.</p></div>
+        <div class="card"><h3>Prüft sich selbst</h3><p>Selbsttest mit Fällen bekannter Lösung, Modellprüfung nach den NEC-Regeln (Segmente, unverbundene Drähte), Gütetest über den mittleren Gewinn.</p></div>
+        <div class="card"><h3>Sehen statt raten</h3><p>3D-Ansicht mit Stromverteilung und Strom-Animation, Azimut- und Elevationsdiagramm, Frequenzgang mit SWR-Bandbreite und Smith-Diagramm.</p></div>
+        <div class="card"><h3>Optimierer</h3><p>Markierte Variablen werden verändert, bis die Ziele erreicht sind: SWR, Gewinn, Vor/Rück, Resonanz.</p></div>
+        <div class="card"><h3>Feldstärke</h3><p>E- und H-Feld in einer Ebene, umgerechnet auf deine Sendeleistung, verglichen mit den Grenzwerten der NISV (ICNIRP). Eine Abschätzung, kein amtlicher Nachweis.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Beispiele zum Loslegen</h2>
+      <p>Kurzwelle: Dipol 20 m, Inverted-V 40 m, 3-Element-Yagi, Groundplane, Quad. UKW: Dipole und 5-Element-Yagis für 2 m und 70 cm, eine 70-cm-Kollinear (2 × 5/8 λ), Wendelantenne. Dazu ein Handfunkgerät mit kurzer Antenne und zwei 868-MHz-Antennen für kleine Funkmodule. Jedes Beispiel sagt dazu, was es kann und was nicht.</p>
+    </section>
+
+    <section>
+      <h2>Geprüft gegen Theorie</h2>
+      <p>Die Rechnungen sind gegen bekannte Lösungen geprüft, mit festen Toleranzen: Halbwellendipol (Gewinn 2,16 statt 2,15 dBi), kurzer Dipol (Strahlungswiderstand +0,8 %), Monopol über idealem Boden (halber Dipol, +3,01 dB), Energieerhaltung (mittlerer Gewinn 0,999–1,000), Abstrahlwinkel über Boden (32,0° statt 31,9°), Nahfeld gegen eine eigene Rechnung aus den Strömen (unter 1 %).</p>
+      <p>Grenzen, die bleiben: NEC-2 kennt keine isolierten Drähte und keinen Metallboom; dicke Drähte und kurze Antennen mit Verlängerungsspule rechnen die Kerne etwas verschieden. Die App sagt das jeweils dazu. Eine Messung an der echten Antenne ersetzt keine Simulation.</p>
+    </section>
+
+    <section>
+      <h2>Beta</h2>
+      <p>Die Rechnungen sind geprüft, die App wird aber noch weiterentwickelt, und es können Fehler auftauchen. Darum gilt der Beta-Preis von 24 CHF; nach der Beta kostet die Vollversion 49 CHF. Wer jetzt kauft, bekommt alle Updates der Version 1 ohne Aufpreis. Fehler bitte an <a href="mailto:metacube@gmail.com?subject=Antennen-Studio" style="color: var(--accent)">metacube@gmail.com</a>.</p>
+    </section>
+
+    <section id="kaufen">
+      <h2>Vollversion kaufen</h2>
+      <p>Einmalig 24 CHF (Beta-Preis). Die Zahlung läuft über PayPal. Nach bestätigtem Zahlungseingang kommt der Lizenzschlüssel an die hier angegebene E-Mail-Adresse; er wird in der App unter „Lizenz …“ eingetragen. Updates der Version 1 sind inklusive.</p>
+      <form id="buy" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+        <label for="license-email">E-Mail für den Lizenzschlüssel</label>
+        <input id="license-email" name="os0" type="email" autocomplete="email" required placeholder="name@example.com">
+        <input type="hidden" name="cmd" value="_xclick">
+        <input type="hidden" name="business" value="metacube@gmail.com">
+        <input type="hidden" name="item_name" value="Antennen-Studio Vollversion (Beta)">
+        <input type="hidden" name="item_number" value="ANTENNENSTUDIO-1.0">
+        <input type="hidden" name="amount" value="24.00">
+        <input type="hidden" name="currency_code" value="CHF">
+        <input type="hidden" name="no_shipping" value="1">
+        <input type="hidden" name="on0" value="Lizenz-E-Mail">
+        <input type="hidden" name="return" value="https://www.aiscom.ch/antennen-studio/?payment=success#kaufen">
+        <input type="hidden" name="cancel_return" value="https://www.aiscom.ch/antennen-studio/?payment=cancelled#kaufen">
+        <input type="hidden" name="rm" value="2">
+        <input type="hidden" name="charset" value="utf-8">
+        <p class="meta">Mit dem Kauf gelten die <a href="./lizenz/" style="color: var(--accent)">Lizenzbedingungen</a> (Nutzungsrecht, Updates, Haftung).</p>
+        <button class="button" type="submit">Mit PayPal kaufen</button>
+      </form>
+      <p id="payment-status" class="status" hidden></p>
+      <p class="meta">Fragen zur Lizenz: <a href="mailto:metacube@gmail.com?subject=Antennen-Studio" style="color: var(--accent)">metacube@gmail.com</a></p>
+    </section>
+
+    <section id="download">
+      <h2>Download</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Version</th><td>1.0 Beta (Build 2), von Apple notarisiert</td></tr>
+          <tr><th>System</th><td>macOS 14 (Sonoma) oder neuer. Apple Silicon: beide Rechenkerne. Intel: nur NEC-2.</td></tr>
+          <tr><th>Demo</th><td>alle Funktionen; eigene Modelle bis 60 Segmente, die Beispiele ohne Grenze</td></tr>
+          <tr><th>Datei</th><td><a href="./Antennen-Studio.zip" download style="color: var(--accent)">Antennen-Studio.zip</a> (57 MB)</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Häufige Fragen</h2>
+      <details>
+        <summary>Wie installiere ich die App?</summary>
+        <p>ZIP öffnen, „Antennen-Studio“ in den Ordner „Programme“ ziehen und starten. Die App ist von Apple geprüft (notarisiert); macOS fragt beim ersten Start einmal nach.</p>
+      </details>
+      <details>
+        <summary>Warum ist die App so gross?</summary>
+        <p>Der zweite Rechenkern bringt seine eigene Rechenumgebung mit (Python mit numpy und scipy), damit nichts aus dem Netz nachgeladen werden muss.</p>
+      </details>
+      <details>
+        <summary>Ist das NEC-4 oder NEC-5?</summary>
+        <p>Nein. Eingebaut ist NEC-2. Der zweite Kern rechnet mit einem eigenen Verfahren und kann ein Ein-/Ausgabeformat wie NEC-5 sowie eine Näherung an das NEC-5-Verfahren; NEC-4 und NEC-5 selbst sind lizenzpflichtig und nicht enthalten.</p>
+      </details>
+      <details>
+        <summary>Kann ich meine 4nec2- oder NEC-Dateien öffnen?</summary>
+        <p>Ja, .nec-Dateien im NEC-2- und 4nec2-Format (mit SY-Variablen) lassen sich öffnen und speichern.</p>
+      </details>
+      <details>
+        <summary>Was sammelt die App?</summary>
+        <p>Nichts. Die App rechnet nur auf deinem Mac, sendet nichts und hat kein Konto.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    &copy; AISCOM &middot; <a href="/de/legal/imprint">Impressum</a> &middot; <a href="/de/legal/privacy">Datenschutz</a> &middot; <a href="./lizenz/">Lizenzbedingungen</a>
+  </footer>
+
+  <script>
+    (function () {
+      var state = new URLSearchParams(window.location.search).get("payment");
+      var box = document.getElementById("payment-status");
+      if (state === "success") {
+        box.textContent = "Danke für den Kauf. Der Lizenzschlüssel kommt nach Prüfung der Zahlung per E-Mail.";
+        box.className = "status ok";
+        box.hidden = false;
+      } else if (state === "cancelled") {
+        box.textContent = "Die Zahlung wurde abgebrochen. Es wurde nichts belastet.";
+        box.hidden = false;
+      }
+    })();
+  </script>
+</body>
+</html>

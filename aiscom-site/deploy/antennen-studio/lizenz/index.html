@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antennen-Studio: Lizenzbedingungen | AISCOM</title>
+  <meta name="description" content="Lizenzbedingungen und Haftung für die Mac-App Antennen-Studio.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/antennen-studio/lizenz/">
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #13213b;
+      --surface-2: #1a2b4d;
+      --text: #f5f7fb;
+      --muted: #a8b3c7;
+      --accent: #87ceeb;
+      --line: rgba(135, 206, 235, 0.18);
+      --ok: #7ad3a1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top right, rgba(135, 206, 235, 0.1), transparent 30%),
+        linear-gradient(180deg, #091120, var(--bg));
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px;
+    }
+    header > a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    header nav a { margin-left: 18px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
+    header nav a:first-child { margin-left: 0; }
+    header nav a:hover { color: var(--accent); }
+
+    main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+    section { margin-top: 56px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    p { color: var(--muted); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--accent);
+      color: #08121f;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    }
+    .card p { margin: 0; }
+    .card a { color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--text); }
+    td { color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+
+    form { display: grid; gap: 10px; max-width: 420px; }
+    label { font-size: 0.9rem; color: var(--text); }
+    input[type=email] {
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0d1a30;
+      color: var(--text);
+      font: inherit;
+    }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .status.ok { color: var(--ok); }
+
+    details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+    summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details p { margin: 8px 0 0; }
+
+    footer {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    main a { color: var(--accent); }
+    code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/de">AISCOM</a>
+    <nav>
+      <a href="/de#produkte">Produkte</a>
+      <a href="/macyaesu/">MacYaesu</a>
+      <a href="/de/contact">Kontakt</a>
+    </nav>
+  </header>
+  <main>
+    <p class="eyebrow">Antennen-Studio für macOS</p>
+    <h1>Lizenzbedingungen</h1>
+    <p class="meta">Stand: 21. Oktober 2026</p>
+    <section>
+      <h2>1. Nutzungsrecht</h2>
+      <p>Mit dem Kauf der Vollversion erhältst du ein zeitlich unbeschränktes, nicht übertragbares Recht, Antennen-Studio auf deinen eigenen Macs zu nutzen. Der Lizenzschlüssel gehört zu deiner E-Mail-Adresse und darf nicht weitergegeben oder veröffentlicht werden. Die Demo darf frei genutzt und weitergegeben werden.</p>
+    </section>
+    <section>
+      <h2>2. Updates</h2>
+      <p>Updates der Version 1 sind im Preis enthalten. Ein Anspruch auf bestimmte Updates oder Funktionen besteht nicht.</p>
+    </section>
+    <section>
+      <h2>3. Gewährleistung</h2>
+      <p>Die Software wird so geliefert, wie sie ist. Bitte prüfe mit der kostenlosen Demo vor dem Kauf, ob sie mit deinem Mac und deinem Einsatzzweck funktioniert. Fehler meldest du an <a href="mailto:metacube@gmail.com" style="color: var(--accent)">metacube@gmail.com</a>; wir bemühen uns um eine Behebung, versprechen aber keine Frist.</p>
+      <p>Antennen-Studio ist eine Beta-Version. Die Rechnungen sind gegen bekannte Lösungen geprüft, trotzdem können Fehler auftreten.</p>
+    </section>
+    <section>
+      <h2>4. Haftung</h2>
+      <p>Soweit gesetzlich zulässig, ist die Haftung für Schäden aus der Nutzung oder der Unmöglichkeit der Nutzung der Software ausgeschlossen, insbesondere für Datenverlust, entgangenen Gewinn und Folgeschäden. Vorbehalten bleibt die Haftung für absichtlich oder grobfahrlässig verursachte Schäden sowie eine zwingende gesetzliche Haftung.</p>
+      <p>Antennen-Studio liefert Simulationen, keine Messungen. Ergebnisse hängen vom Modell ab und können von der gebauten Antenne abweichen; prüfe wichtige Werte mit einer Messung. Die Feldstärkeberechnung ist eine Abschätzung und ersetzt keinen amtlichen Nachweis nach der NISV. Für Planung, Bau und Betrieb einer Antenne (Statik, Blitzschutz, Abstand zu Stromleitungen, Bewilligungen) bist du selbst verantwortlich.</p>
+    </section>
+    <section>
+      <h2>5. Fremde Bestandteile</h2>
+      <p>Bestandteile anderer Urheber stehen unter ihren eigenen Lizenzen; die Hinweise liegen der App bei.</p>
+    </section>
+    <section>
+      <h2>6. Recht</h2>
+      <p>Es gilt schweizerisches Recht. Anbieter: Ingo Kohler, AISCOM, 8052 Zürich (<a href="/de/legal/imprint" style="color: var(--accent)">Impressum</a>).</p>
+    </section>
+    <section>
+      <h2>In English</h2>
+      <p>The full version grants you a perpetual, non-transferable licence to use Antennen-Studio on your own Macs; do not share your key. Version 1 updates are included. The software is provided as is – please try the free demo first. To the extent permitted by law, liability for damages (including data loss and consequential damages) is excluded, except for intent and gross negligence. Swiss law applies.</p>
+    </section>
+  </main>
+  <footer>
+    &copy; AISCOM &middot; <a href="/de/legal/imprint">Impressum</a> &middot; <a href="/de/legal/privacy">Datenschutz</a>
+  </footer>
+</body>
+</html>
