@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-10-20 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-10-21 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -12,6 +12,8 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-21 | Qdrant-Index eine Woche nicht neu aufgebaut (Stand 13.10.), obwohl Doku-Commits liefen; die Suche lieferte damit den alten Stand | Nach Doku-Commits `Tools/Qdrant/Reindex-Docs.ps1` laufen lassen; Alter pruefen: `config.json` unter `C:\Users\koi\tools\qdrant\storage\collections\trafag_docs` | `Tools/Qdrant/README.md` Abschnitt 4 |
+| 2026-10-21 | `Reindex-Docs.ps1 2>&1` brach ab: PowerShell 5.1 machte aus dem fastembed-Hinweis auf stderr einen Fehler (`NativeCommandError`, `ErrorActionPreference = Stop`) | Skript ohne `2>&1` aufrufen oder `index_docs.py` per Bash mit `uv run --python 3.12` und den Umgebungsvariablen aus dem Skript starten | Wochen_Todo 118 |
 | 2026-10-20 | ME21N meldete „Normalbestellung 45148479 angelegt“, die Bestellung stand aber nie in EKKO: Verbuchung abgebrochen (SM13, `RV_MESSAGE_UPDATE`), Expressinfo kam erst beim naechsten Bildwechsel | Nach jedem „angelegt/gebucht“ in SAP in der Datenbank (SapProbe) oder per Anzeige-Transaktion gegenpruefen; Expressinformation sofort lesen, SM13 pruefen | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | 2026-10-20 | SAP-Screenshot per `HardCopy` lieferte ein 160x28-Bild (schwarz), weil das eigene SAP-Fenster minimiert war; Dialogfenster (`wnd[1]`) gingen trotzdem | Vor `HardCopy` auf `wnd[0]` das Fenster mit `Maximize` holen und `Iconic` pruefen; bei gesperrtem PC sind Screenshots unzuverlaessig, also Bilder machen, solange Ingo am Platz ist | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | 2026-10-20 | ZLO03 in T76/200 aendern scheiterte: „Objekt gesperrt in nicht fuer diesen Mandanten bestimmte Aufgabe T76K912743“ | Ein Objekt im offenen Auftrag nur im Mandanten des Auftrags aendern (hier 100); vorher `E070`/`E071` lesen | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |

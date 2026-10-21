@@ -1,6 +1,14 @@
 # Last Change
 
-Stand: 2026-10-20
+Stand: 2026-10-21
+
+## Status: Wochen_Todo, Abgleich Code gegen Doku, Qdrant-Index, 2026-10-21
+
+- Code-Commits seit 01.10. gegen Doku geprueft: nach dem letzten Deploy `c3c45cd` (19.10.) gibt es keinen App-Code; produktiver Stand
+  und HEAD stimmen ueberein. Einzige Abweichung ist die fremde, unkommittierte Finance_All-Automatik (Wochen_Todo 117, Entscheid Ingo).
+- Qdrant-Index neu aufgebaut: 4245 Abschnitte statt 3884, vorheriger Stand 13.10. Reindex-Skript bricht bei umgeleiteter
+  Fehlerausgabe ab (Wochen_Todo 118, LEARNINGS). Zeile 15 (Journal-Ladelauf CH/AT) mit Pruefhinweis versehen.
+- Mail und Teams nicht durchgesehen (M365-Sitzung abgelaufen).
 
 ## Doku: HR-Cockpit SAP-Abruf als produktiv nachgefuehrt, 2026-10-20
 
