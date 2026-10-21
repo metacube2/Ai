@@ -2,6 +2,13 @@
 
 Stand: 2026-10-21
 
+## SAP PS: Rolle je Zeitbuchung (Frage Philip Steiger), Demo T76, 2026-10-21
+
+- Antwort: Rolle als eigene Leistungsart (gleicher Tarif moeglich). In T76/100 auf Freigabe Ingo: KL01 `PL`, `ENG`, `TST`, KP26
+  66 CHF/h auf Kostenstelle 240, KB21N Beleg 311258908 (Personalnummer 3216: 2 h PL, 4 h ENG, 3 h TST), CJI3 zeigt Rolle,
+  Stunden und Person. Doku Abschnitt 4b in `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md`, Bilder 19-22, Folien 17-19 in
+  `20260223 - Abgleich TPG - Trafag SAP PS.pptx` (nicht versioniert).
+
 ## Status: Wochen_Todo, Abgleich Code gegen Doku, Qdrant-Index, 2026-10-21
 
 - Code-Commits seit 01.10. gegen Doku geprueft: nach dem letzten Deploy `c3c45cd` (19.10.) gibt es keinen App-Code; produktiver Stand

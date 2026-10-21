@@ -37,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | SAP PS: Frage Philip „Rolle je Zeitbuchung“, Demo T76/100 (eigene Sitzung, Freigabe Ingo), Folien 17-19 | 2026-10-21 | **Abgeschlossen, kein Deploy, Reservierung frei.** KL01 PL/ENG/TST, KP26 KoSt 240, KB21N Beleg 311258908, in CJI3 geprueft; Doku 4b, Bilder 19-22, Aufraeumen in Abschnitt 7; Sitzung geschlossen |
 | Claude | Wochen_Todo nachgefuehrt, Abgleich Code gegen Doku seit 01.10., Qdrant-Index neu aufgebaut | 2026-10-21 | **Abgeschlossen, nur Doku/Status, kein Deploy, Reservierung frei.** Kein App-Code nach dem letzten Deploy `c3c45cd`; Abweichung nur die fremde, unkommittierte Finance_All-Automatik (neu Zeile 117). Index 4245 Abschnitte (vorher 3884, Stand 13.10.); Neu Zeile 118 (Reindex-Skript robust machen), Notiz Zeile 15. Mail nicht geprueft (M365-Sitzung abgelaufen) |
 | Claude | Doku: HR-Cockpit SAP-Abruf (`HrKpiSet`, `HrAbsenzSet`) als produktiv nachgefuehrt, live auf dem Server geprueft | 2026-10-20 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `docs/rag/HR_KPI.md`, `lastchange.md`; Dateien in `hrdata` von heute 05:07 |
 | Claude | Doku: Abschlussrunde Dashboard/Data Lake und PS-Nachtrag in lastchange, PROJEKTSTATUS (PM-10 bis PM-13), Vorhaben_HERMES | 2026-10-20 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** PM-11 an HERMES-Stand (erledigt 13.10.) angeglichen |

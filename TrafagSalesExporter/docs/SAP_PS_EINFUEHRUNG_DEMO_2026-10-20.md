@@ -1,6 +1,6 @@
 # SAP PS (Projektsystem): Einfuehrung und Demo in T76
 
-Stand: 2026-10-20. Auftrag des Chefs an Ingo, Anlass Sitzung mit Philip Steiger (PMO): Wie funktioniert die
+Stand: 2026-10-21 (Nachtrag 4b: Rolle je Zeitbuchung). Auftrag des Chefs an Ingo, Anlass Sitzung mit Philip Steiger (PMO): Wie funktioniert die
 Leistungs- und Zeiterfassung auf Projekten in SAP, wie bucht man auf Teilprojekte, wie kommen externe Kosten aus
 Rechnungen aufs Projekt, und ist das einfach oder schwierig? Zielbild laut Notiz: Zeiterfassung in SAP nicht mehr auf
 Innenauftraege, sondern ueber das PS-Modul; Planung und Risiken in TPG ProjectPowerPack (Folien
@@ -88,6 +88,27 @@ Stunden x Tarif der Senderkostenstelle entlasten die Kostenstelle und belasten d
 
 Das Feld PSP-Element ist in der FB60-Zeile fuer Konto 45011 erlaubt (Feldstatus passt).
 
+## 4b. Frage Philip Steiger: Rolle oder Funktion je Zeitbuchung (2026-10-21)
+
+Frage (Teams 21.10.): Kann man einer Zeitbuchung eine Rolle mitgeben, um spaeter auszuwerten, wie viel auf Fuehrung,
+Engineering oder Test ging, unabhaengig von der Person, auch wenn dieselbe Person als Projektleiter und als Mitarbeiter bucht?
+
+**Antwort: ja, ueber die Leistungsart.** Jede Rolle wird eine eigene Leistungsart; der Tarif darf gleich sein. Jede
+Buchung traegt Sender-Kostenstelle, Leistungsart, Empfaenger (PSP-Element), Menge und Personalnummer.
+
+| Schritt | Transaktion | Ergebnis | Bild |
+| --- | --- | --- | --- |
+| Bestand gelesen | SE16N CSLT | KoKrs 1000 hat nur 100 Personenstunden, 200 Maschinenstunden, 300 Personenstd indirekt | - |
+| Rollen anlegen | KL01 | `PL` Projektleitung, `ENG` Engineering, `TST` Test und Zulassung; Vorlage 100, gueltig ab 01.01.2026, Kostenart 90000, Tarifkennzeichen 3 | 19 |
+| Tarif planen | KP26 | Version 0, 2026, Periode 1-12, Kostenstelle 240: alle drei 66 CHF/h | 20 |
+| Buchen | KB21N, Erfassungsvariante „Alle“ (hat Spalte PersNr) | Personalnummer 3216: 2 h PL und 4 h ENG auf `DEMO-PS.1`, 3 h TST auf `DEMO-PS.2`; CO-Beleg **311258908** (132 + 264 + 198 CHF) | 21 |
+| Auswertung | CJI3, Layout um Partner-Kstl, ParLeistungsart, Menge, Personalnummer, Bezeichnung erweitert | jede Zeile zeigt Rolle, Stunden, Person; DEMO-PS gesamt 2490 CHF | 22 |
+
+Im Alltag waehlt die Person die Leistungsart je Zeile im Arbeitszeitblatt CAT2 (Spalte im Zeiterfassungsprofil freigeben,
+CAC1); ein Vorschlagswert je Person ist ueber die Zeiterfassungsvorgaben moeglich. Alternativen: eigenes PSP-Element je
+Arbeitspaket (vermischt Struktur und Rolle) oder Netzplanvorgang mit Arbeitsplatz (aufwendiger). Voraussetzung: Tarif je
+Leistungsart auf jeder Kostenstelle der Projektmitarbeitenden (KP26, jaehrlich).
+
 ## 5. Transaktionen
 
 | Zweck | Transaktion |
@@ -120,6 +141,10 @@ nach Folie 10 „Stufe 2/3 - Anbindung SAP Zeitrueckmeldung/Finanzdaten“ sechs
 Innenauftraegen (PS-Struktur und Kostenfluesse), Demo Projekt anlegen, Demo Projektzeit buchen (KB21N -> CJI3), Demo externe
 Kosten (ME21N Kontierung P, FB60 -> CJI3), Fazit mit P76-Befund, Transaktionen. Gebaut per PowerPoint-COM im Stil der Vorlage (Arial Narrow, Trafag-Orange), Skript im Scratchpad.
 
+Nachtrag 21.10.: Ingo hat die Folien in `20260223 - Abgleich TPG - Trafag SAP PS.pptx` uebernommen (Folie 13 umbenannt) und
+Philip geschickt. Dort stehen jetzt nach Folie 16 drei neue Folien 17 bis 19 zu Abschnitt 4b: Antwort und Alltag, Einrichtung
+(KL01, KP26), Buchung und Auswertung (KB21N, CJI3). Sicherung vor der Aenderung im Scratchpad.
+
 ## 7. Aufraeumen in T76
 
 - FI-Beleg 19102004 (Kreditorenrechnung 1'500 CHF auf `DEMO-PS.2`) bleibt als Demo stehen; zurueck mit FB08 stornieren.
@@ -129,3 +154,5 @@ Kosten (ME21N Kontierung P, FB60 -> CJI3), Fazit mit P76-Befund, Transaktionen. 
 - Customizing: Haken „Projekte“ in OKKP fuer KoKrs 1000 ist in T76 gesetzt. **Auftrag `T76K912750` ist lokal und darf
   nicht freigegeben werden**; zum Zuruecknehmen in OKKP den Haken entfernen (geht nur, solange keine Projektkosten mehr
   stehen, also erst nach Storno).
+- Nachtrag 21.10.: CO-Beleg 311258908 (Rollen-Demo) mit KB24N stornieren; Tarifplanung KP26 Kostenstelle 240 fuer PL/ENG/TST
+  loeschen; danach Leistungsarten `PL`, `ENG`, `TST` mit KL04 loeschen (geht erst ohne Plan- und Istwerte).
