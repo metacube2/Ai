@@ -41,6 +41,9 @@ Stand: 2026-10-22
 
 ## Handbestellwesen: Altdaten-Import, 2026-10-22
 
+- Deployed 14:22 (`3609b3e`), bitgleich, Alarm nur SHM. Dump liegt auf dem Server unter `hbdaten\import\db.sql`; Pruefen und
+  Importieren macht Ingo unter `/handbestellwesen/import`.
+
 - Admin-Kachel „Altdaten-Import“ (Pruefen, dann Importieren in leere DB), Fehler der PHP-Daten korrigiert statt uebernommen
   (Platzhalter, Text im Betrag als `WertText`, Datumstexte, Doubletten, Zaehler). Probelauf echter Dump: 12'629 Bestellungen.
   Konzept 6.3. Suite 1285/1285.

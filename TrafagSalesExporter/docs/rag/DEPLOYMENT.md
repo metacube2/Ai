@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-22 13:38)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-22 14:22)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,11 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-10-22 14:22, Handbestellwesen Altdaten-Import (`3609b3e`).** Keine Sicherung (Wochensicherung 13:37). Release-
+  Worktree auf `3609b3e`; Whisper-Quellen seit `798585d` per `Compile Remove="whisper\**"` ausgeschlossen. Suite 1285/1285 im
+  Arbeitsbaum. DLL `14:22:44`, SHA256 `D0B51181...032972B7`, bitgleich, zehn Routen 200, Alarm nur `trafag_exporter.db-shm`.
+  Runner mit `--no-build` gestartet, weil der Runner von 13:24 nach „Fertig“ haengen blieb (PID 23600, auch `taskkill /F`
+  half 5 Min. nicht) und seine DLL sperrte; der Runner-Code war unveraendert. Dump liegt unter `hbdaten\import\db.sql`.
 - **Deploy 2026-10-22 13:38, Einkauf-Feedback Erich/Sandro/Marco und Modul Handbestellwesen (`77778a5`), Freigabe Ingo.**
   Erst nach Ende des Einkauf-Deltas (gestartet 12:29, Vorberechnung danach, WAL 241 MB, nicht mehr wachsend). Wochensicherung
   `trafag_exporter.db.before-wochensicherung-20261022-132426.bak` (seitenweise, 797 s + 29 s). Release-Worktree auf `77778a5`,
