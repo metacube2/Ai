@@ -661,35 +661,41 @@ public sealed class HrKpiServiceTests : IDisposable
     }
 
     [Theory]
-    [InlineData("ja", 8.1)]
-    [InlineData(" Ja ", 8.1)]
-    [InlineData("nein", 8.0)]
+    [InlineData("10", 8.2)]
+    [InlineData(" 10 ", 8.2)]
+    [InlineData("15", 8.0)]
+    [InlineData("19", 8.0)]
     [InlineData("", 8.0)]
-    public void Kader_Mit_Leitung_Ja_Hat_8_1_Stunden(string leitung, double expected)
+    [InlineData(null, 8.0)]
+    public void Kader_Mitarbeiterkreis_10_Hat_8_2_Stunden(string? mitarbeiterkreis, double expected)
     {
-        // HR 2026-09-30: Kader 8,1 h, sonst 8,0 h. Kader = Rexx "Leitung j/n" = ja (Ingo 2026-10-01).
-        Assert.Equal((decimal)expected, HrKpiDashboardBuilder.HoursPerWorkdayFor(leitung));
+        // Ingo 2026-10-22: Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, 8,2 h; sonst 8,0 h.
+        Assert.Equal((decimal)expected, HrKpiDashboardBuilder.HoursPerWorkdayFor(mitarbeiterkreis));
     }
 
     [Fact]
-    public async Task BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden()
+    public async Task BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_2_Stunden()
     {
+        // Kader kommt aus SAP (Mitarbeiterkreis 10), nicht mehr aus Rexx "Leitung j/n".
+        WriteWorkbook(Path.Combine(_folder, "HR_KPI_Export.xlsx"),
+            ["Personalnummer", "Mitarbeiterkreis"],
+            [[1001, "10"], [1002, "15"]]);
         WriteWorkbook(Path.Combine(_folder, "Abwesenheitinstunden.xlsx"),
             [
                 "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation", "Stelle", "Leitung j/n", "Personal Status",
                 "Krankheit angetreten (Stunden Ind.)", "Krank nicht buchbar angetreten (Stunden Ind.)"
             ],
             [
-                // 488 h: bei 8,0 h genau 61 Tage (langzeitkrank), bei 8,1 h nur 60,2 Tage.
-                [1001, "Alpha, Anna", "Org A", "Teamleiterin", "ja", "Aktiv", 488.0, 0],
-                [1002, "Beta, Bruno", "Org B", "Engineer", "nein", "Aktiv", 488.0, 0]
+                // 488 h: bei 8,0 h genau 61 Tage (langzeitkrank), bei 8,2 h nur 59,5 Tage. "Leitung j/n" zaehlt nicht mehr.
+                [1001, "Alpha, Anna", "Org A", "Teamleiterin", "nein", "Aktiv", 488.0, 0],
+                [1002, "Beta, Bruno", "Org B", "Engineer", "ja", "Aktiv", 488.0, 0]
             ]);
 
         var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
 
         var kader = Assert.Single(result.Absences, row => row.Personalnummer == 1001);
         Assert.False(kader.IstLangzeitkrank);
-        Assert.Equal(60.2m, kader.KrankheitstageGesamt);
+        Assert.Equal(59.5m, kader.KrankheitstageGesamt);
         var normal = Assert.Single(result.Absences, row => row.Personalnummer == 1002);
         Assert.True(normal.IstLangzeitkrank);
         Assert.Equal(61m, normal.KrankheitstageGesamt);

@@ -288,7 +288,7 @@ Kopfzeilen und Werteverteilungen, keine Namen; Sonde `.tmp_tools/HrHeaders0930`)
 
 | Thema | Ergebnis HR | Stand Cockpit | Offen |
 | --- | --- | --- | --- |
-| Arbeitstag | **Kadermitarbeitende 8,1 h, normale Mitarbeitende 8,0 h** | seit 30.09. einheitlich 8,0 h (8.4) | Kaderkennzeichen fehlt in allen Dateien. Kandidaten: SAP `Mitarbeiterkreis` (Monatszeilen 10=55, 15=754, 19=18, 20=308, 30=4; welcher Wert Kader ist, weiss nur HR) oder Rexx `Leitung j/n`. Rexx `Ø taegliche Sollarbeitszeit (Woche)` hilft nicht (Werte wie 5,71 = 40 h / 7 Tage). *Erledigt am 2026-10-01 in `c51445c`, produktiv seit 2026-10-01 09:12:* Ingo bestimmt Rexx **`Leitung j/n` = ja** als Kaderkennzeichen (gemessen in den Dateien vom 26.05. in `C:	emp`: `Abwesenheitinstunden.xlsx` und `Saldiperstichdatum.xlsx` je 44 ja / 218 nein, `Personalausgeschieden.xlsx` 108 nein, `Exportkommengehen.xlsx` ohne die Spalte). `HoursPerWorkdayFor` gibt dann 8,1 h, sonst 8,0 h; gilt fuer Krankheitstage, 61-Tage-Grenze und FTE aus der Sollzeit. Tests `Kader_Mit_Leitung_Ja_Hat_8_1_Stunden` und `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden`, 800/800. Hinweis: in Rexx kann eine Person der Geschaeftsfuehrung `Leitung = nein` haben; ob jeder Kader so gepflegt ist, liegt bei HR |
+| Arbeitstag | **Kadermitarbeitende 8,1 h, normale Mitarbeitende 8,0 h** *(ueberholt am 2026-10-22: Kader 8,2 h, Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, siehe 8.7)* | seit 30.09. einheitlich 8,0 h (8.4) | Kaderkennzeichen fehlt in allen Dateien. Kandidaten: SAP `Mitarbeiterkreis` (Monatszeilen 10=55, 15=754, 19=18, 20=308, 30=4; welcher Wert Kader ist, weiss nur HR) oder Rexx `Leitung j/n`. Rexx `Ø taegliche Sollarbeitszeit (Woche)` hilft nicht (Werte wie 5,71 = 40 h / 7 Tage). *Erledigt am 2026-10-01 in `c51445c`, produktiv seit 2026-10-01 09:12:* Ingo bestimmt Rexx **`Leitung j/n` = ja** als Kaderkennzeichen (gemessen in den Dateien vom 26.05. in `C:	emp`: `Abwesenheitinstunden.xlsx` und `Saldiperstichdatum.xlsx` je 44 ja / 218 nein, `Personalausgeschieden.xlsx` 108 nein, `Exportkommengehen.xlsx` ohne die Spalte). `HoursPerWorkdayFor` gibt dann 8,1 h, sonst 8,0 h; gilt fuer Krankheitstage, 61-Tage-Grenze und FTE aus der Sollzeit. Tests `Kader_Mit_Leitung_Ja_Hat_8_1_Stunden` und `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden`, 800/800. Hinweis: in Rexx kann eine Person der Geschaeftsfuehrung `Leitung = nein` haben; ob jeder Kader so gepflegt ist, liegt bei HR |
 | Abwesenheiten | In Rexx wird jeder Fall mit **Von/Bis** erfasst und hat einen **Status** (genehmigt / nicht genehmigt) | `Abwesenheitinstunden.xlsx` ist eine Zeile je Person mit Summen; auch die Spalten „genehmigt" sind Summen | Neuer Rexx-Bericht **eine Zeile je Fall** (Person, Art, Von, Bis, Stunden, Status) als fuenfte Datei. Macht die Krankenquote periodengenau und erlaubt „nur genehmigt". Beispieldatei von Sonja noetig. *Gemessen am 2026-10-01* an `Abwesenheitinstunden.xlsx` (#744, Stand 26.05., 262 Personen): `Krankheit angetreten (Zeitraum)` ist bei 187 Personen gefuellt, immer mit **genau einem** Zeitraum (letzter Fall); 74 davon ohne Stunden im Exportzeitraum (Fall 2024/2025), 46 passen zu Stunden / 8, bei 63 sind die Stunden groesser als der Zeitraum (mehrere Faelle). #744 hat keine Ferienspalte. Zusaetzliche Spalten im Personenbericht machen die Quote also nicht periodengenau |
 | Absenz-Ampel | **bis 4,99 % gelb, ab 5 % rot** | Krankenquote gruen < 3 %, gelb 3 bis < 5 %, rot ab 5 % (`HrKpi:Absence*ThresholdPercent`): passt *Erledigt am 2026-09-30 in `81140fa`, produktiv seit 2026-10-01 09:12:* Die Uebersichtskachel „Krankheitstage" warnte erst **ueber** fest verdrahteten 5 % (`absenceRate > 0.05m`); jetzt ab der konfigurierten Rot-Grenze (`ReachesAbsenceRed`, `>=`), Test `Absenzampel_Ist_Ab_Fuenf_Prozent_Rot`, 791/791. Gruen unter 3 % hat HR nicht erwaehnt, gilt als unveraendert |
 
@@ -377,3 +377,17 @@ Stammdaten SAP `#735`.
 - Kurzstand, Zugang und Anwenderdoku: `docs/rag/HR_KPI.md`
 - Fachpruefung Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`
 - Anwenderdoku HR: `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`
+
+### 8.7 Kader neu: SAP-Mitarbeiterkreis 10, 8,2 h (Entscheid Ingo 2026-10-22)
+
+Ingo am 22.10.: „Korrektur fuer 8 Stunden, Feld dafuer Arbeitsverhaeltnis (10 ML mit Kadervertrag) waere Schluessel fuer 8,2
+dezimal“. Die Rexx-Exporte fuehren das Feld nicht (Arbeitsverhaeltnis dort nur befristet/unbefristet); der taegliche
+SAP-Abruf `HrKpiSet` liefert den Mitarbeiterkreis. T503T (T76, gelesen 2026-10-22): 10 „ML mit Kadervertrag“, 15 Monatslohn,
+19 Lehrling, 20 Stundenlohn, 30 Heimarbeit.
+
+- `HrKpiDashboardBuilder.HoursPerWorkdayFor(mitarbeiterkreis)`: Kreis 10 -> **8,2 h**, sonst 8,0 h; ohne SAP-Zeile 8,0 h.
+  Gilt fuer FTE aus der Sollzeit, Krankheitstage aus Rexx #744 (Zuordnung ueber die Personalnummer zur SAP-Zeile) und aus
+  SAP `PA2001`, und damit fuer die 61-Tage-Langzeitgrenze.
+- Rexx „Leitung j/n“ zaehlt nicht mehr als Kader (bis 22.10.: 45 Personen; nach Kreis 10 rund 19 der Rexx-Liste).
+- Tests `Kader_Mitarbeiterkreis_10_Hat_8_2_Stunden`, `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_2_Stunden`;
+  Suite 1288/1288.

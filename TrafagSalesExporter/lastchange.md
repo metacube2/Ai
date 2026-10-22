@@ -39,6 +39,11 @@ Stand: 2026-10-22
 - Nicht angefasst, als Folgearbeit benannt: die Koordinations- und Abschlussregel steht viermal (`CLAUDE.md`,
   `AGENTS.md`, `router.md` Regel 6, `docs/router/projekt.md`); `CLAUDE.md` war von einer anderen Sitzung geaendert.
 
+## HR-Cockpit: Kader = SAP-Mitarbeiterkreis 10, 8,2 h, 2026-10-22
+
+- Entscheid Ingo: Kader ist der Mitarbeiterkreis 10 „ML mit Kadervertrag“ (T503T) mit 8,2 h je Tag statt Rexx „Leitung j/n“
+  mit 8,1 h. Wirkt auf FTE aus Sollzeit, Krankheitstage und Langzeitgrenze. Suite 1288/1288. `docs/HR_KPI.md` 8.7.
+
 ## Handbestellwesen: moderne Oberflaeche /bestellwesen, 2026-10-22
 
 - Neue Seite mit MudBlazor, gleiche Logik: Kacheln, Kreditor-Suche, Live-Pruefung der Berechtigung, Freigeber-Vorschlag,

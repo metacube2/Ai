@@ -48,7 +48,7 @@ internal sealed class HrKpiDashboardBuilder
         var timeRows = LoadTimeRows(context);
         var sapRows = LoadSapRows(context, out var duplicateSapNumbers);
         var employees = LoadEmployees(context, timeRows, sapRows);
-        var absences = LoadAbsences(context);
+        var absences = LoadAbsences(context, sapRows);
         var leavers = LoadLeavers(context);
         var excludedRows =
             employees.RemoveAll(x => IsExcludedTestPerson(x.NameVoll)) +
@@ -245,7 +245,7 @@ internal sealed class HrKpiDashboardBuilder
             var percent = sap?.BeschaeftigungsgradProzent;
             var arbeitzeitmodell = time?.Arbeitszeitmodell ?? string.Empty;
             var leitung = ReadString(row, headers, "Leitung j/n", "Leitung");
-            var fte = ResolveFte(percent, arbeitzeitmodell, time?.AvgSollzeitTag, HoursPerWorkdayFor(leitung));
+            var fte = ResolveFte(percent, arbeitzeitmodell, time?.AvgSollzeitTag, HoursPerWorkdayFor(sap?.Mitarbeiterkreis));
 
             var nameParts = SplitName(name);
             var urlaubsanspruch = ReadDecimal(row, headers, "Urlaubsanspruch", "Urlaubsanspruch_Raw");
@@ -357,7 +357,7 @@ internal sealed class HrKpiDashboardBuilder
         return grouped.ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
     }
 
-    private List<HrAbsenceRow> LoadAbsences(ImportContext context)
+    private List<HrAbsenceRow> LoadAbsences(ImportContext context, IReadOnlyDictionary<string, SapRow> sapRows)
     {
         return context.ReadRows(_dataSources.AbsenceFile, "Rexx #744 Absenzen", (row, headers) =>
         {
@@ -366,7 +366,11 @@ internal sealed class HrKpiDashboardBuilder
             var kurz = ReadDecimal(row, headers, "Krankheit angetreten (Stunden Ind.)", "Krankheit_Kurz_Std");
             var lang = ReadDecimal(row, headers, "Krank nicht buchbar angetreten (Stunden Ind.)", "Krankheit_Lang_Std");
             var gesamt = kurz + lang;
-            var stundenProTag = HoursPerWorkdayFor(ReadString(row, headers, "Leitung j/n", "Leitung"));
+            // Kader ueber SAP-Mitarbeiterkreis 10 (2026-10-22); Rexx #744 fuehrt kein Arbeitsverhaeltnis mit Kadervertrag.
+            var pernrAbsenz = ReadInt(row, headers, "Personalnummer");
+            if (!sapRows.TryGetValue(BuildPersonalKey(pernrAbsenz), out var sapAbsenz) && pernrAbsenz.HasValue)
+                sapRows.TryGetValue(pernrAbsenz.Value.ToString(CultureInfo.InvariantCulture), out sapAbsenz);
+            var stundenProTag = HoursPerWorkdayFor(sapAbsenz?.Mitarbeiterkreis);
             var tage = Math.Round(gesamt / stundenProTag, 1);
             return new HrAbsenceRow
             {
@@ -442,7 +446,7 @@ internal sealed class HrKpiDashboardBuilder
             if (!int.TryParse(sapCase.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) ||
                 !byNumber.TryGetValue(pernr, out var employee))
                 continue;
-            var stundenProTag = HoursPerWorkdayFor(employee.Leitung);
+            var stundenProTag = HoursPerWorkdayFor(employee.Mitarbeiterkreis);
             var bis = sapCase.Bis;
             var stunden = sapCase.Stunden > 0 ? sapCase.Stunden : sapCase.Abwesenheitstage * stundenProTag;
             if (bis.Year >= 9000)
@@ -1574,10 +1578,14 @@ internal sealed class HrKpiDashboardBuilder
     internal const decimal HoursPerWorkday = 8.0m;
 
     /// <summary>
-    /// Kadermitarbeitende arbeiten 8,1 h je Tag (HR-Sitzung 2026-09-30). Kader ist, wer in Rexx
-    /// „Leitung j/n“ = ja hat (Ingo 2026-10-01, Wochen_Todo 66).
+    /// Kadermitarbeitende arbeiten 8,2 h je Tag (Ingo 2026-10-22; vorher 8,1 h nach der HR-Sitzung vom 2026-09-30).
+    /// Kader ist, wer in SAP den Mitarbeiterkreis 10 „ML mit Kadervertrag“ hat (T503T, gelesen 2026-10-22). Bis
+    /// 2026-10-22 galt Rexx „Leitung j/n“ = ja (45 Personen); nach Mitarbeiterkreis 10 sind es deutlich weniger.
     /// </summary>
-    internal const decimal HoursPerWorkdayKader = 8.1m;
+    internal const decimal HoursPerWorkdayKader = 8.2m;
+
+    /// <summary>SAP-Mitarbeiterkreis (PA0001-PERSK) „ML mit Kadervertrag“.</summary>
+    internal const string KaderMitarbeiterkreis = "10";
 
     /// <summary>
     /// BU/NBU kommen aus HrKpiSet fuer den laufenden Monat bis heute (Entscheid 2026-10-01,
@@ -1587,11 +1595,12 @@ internal sealed class HrKpiDashboardBuilder
 
     internal const string AccidentDaysPeriodNote = "nur laufender Monat bis heute, unabhaengig vom Zeitraumfilter";
 
-    internal static decimal HoursPerWorkdayFor(string? leitung)
-        => IsLeitung(leitung) ? HoursPerWorkdayKader : HoursPerWorkday;
+    /// <summary>Stunden je Arbeitstag nach SAP-Mitarbeiterkreis: 10 = Kader 8,2 h, sonst 8,0 h. Ohne SAP-Zeile 8,0 h.</summary>
+    internal static decimal HoursPerWorkdayFor(string? mitarbeiterkreis)
+        => IstKader(mitarbeiterkreis) ? HoursPerWorkdayKader : HoursPerWorkday;
 
-    internal static bool IsLeitung(string? leitung)
-        => (leitung ?? string.Empty).Trim().ToLowerInvariant() is "ja" or "j" or "yes" or "y" or "x" or "1" or "true";
+    internal static bool IstKader(string? mitarbeiterkreis)
+        => (mitarbeiterkreis ?? string.Empty).Trim().TrimStart('0') == KaderMitarbeiterkreis;
 
     /// <summary>
     /// Restferien-Ampel nach Vorgabe HR (Sonja Richter): im ersten Quartal sind bis 5 Tage
