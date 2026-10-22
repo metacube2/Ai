@@ -11,6 +11,8 @@ Stand: 2026-10-22
   T76 aktiv, rueckgelesen identisch, Lauf `8475*` oeffnete Excel direkt, Inhalt byteweise gleich. Auftrag `T76K912742`.
 - Offen: welches Programm ZLO03 in P76 startet (ungeprueft), andere Z-Reports mit gleichem Muster.
   Doku `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md`.
+- Nachtrag: `T76K912742` am 22.10. von Ingo freigegeben (mit FIX 12, 19, 20). Auf Wunsch Ingo FIX 21 vorbereitet
+  (echtes `.xlsx` per `CL_ABAP_ZIP`, Prototyp zellgleich mit dem Text-Import), nicht in SAP, neuer Auftrag noetig.
 
 ## SAP: ZLO03 Spalte RoHS (Nachtrag FIX 19), 2026-10-22
 

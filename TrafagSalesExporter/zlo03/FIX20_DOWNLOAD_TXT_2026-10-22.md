@@ -1,7 +1,8 @@
 # ZLO03 FIX 20: Download als .txt, weil Excel Text-.xls blockiert
 
-Stand: 2026-10-22. Status: **in T76 aktiv, im Auftrag `T76K912742`** (zusammen mit FIX 12 und FIX 19; das Objekt ist dort
-gesperrt, ein anderer Auftrag ist nicht moeglich). Freigabe und Import nach P76 macht Ingo.
+Stand: 2026-10-22. Status: **in T76 aktiv, Auftrag `T76K912742` am 22.10. von Ingo freigegeben** (zusammen mit FIX 12
+und FIX 19). Import nach P76 macht Ingo; ob er schon erfolgt ist, ist hier nicht geprueft.
+**Nachfolger FIX 21 (echtes `.xlsx`, Wunsch Ingo) ist vorbereitet, aber nicht in SAP**, Abschnitt 6.
 
 ## 1. Meldung
 
@@ -62,4 +63,30 @@ Kein echtes `.xlsx`: das braeuchte eine Bibliothek (abap2xlsx oder XCO) und waer
    `zlo03/CLAUDE.md`). Ist es dort ein anderes Programm, kommt FIX 20 bei den Benutzern nicht an. Pruefung nur lesend und
    nur auf Auftrag Ingo.
 2. **Andere Z-Reports** mit `GUI_DOWNLOAD` `'ASC'` unter `.xls` haben dasselbe Problem; Liste noch nicht erstellt.
-3. Import `T76K912742` nach P76 (Ingo).
+3. Import `T76K912742` nach P76 (Ingo). Freigegeben am 22.10.
+
+## 6. FIX 21: echte Excel-Datei (.xlsx), vorbereitet
+
+Ingo am 22.10.: „jetzt ist aber txt Endung, kannst du nicht echtes Excel schreiben“. Als ich FIX 21 in T76 sichern
+wollte, war `T76K912742` bereits freigegeben (`E070` Status R). Gesichert habe ich deshalb nichts; ein neuer Auftrag
+ist Ingos Entscheid.
+
+Ansatz (Quelltext `Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap`, Vorstand FIX 20): neue FORMs `build_xlsx`, `xlsx_add`,
+`ist_zahl`, `xml_escape`. ZLO03 baut die Teile einer minimalen Arbeitsmappe selbst (Content-Types, Beziehungen,
+`workbook.xml` mit `fullCalcOnLoad`, `styles.xml` mit fetter Kopfzeile, `sheet1.xml`) und packt sie mit `CL_ABAP_ZIP`;
+Download `GUI_DOWNLOAD` `BIN` mit `bin_filesize`, Oeffnen mit dem Standardprogramm fuer `.xlsx`. Regeln wie beim
+frueheren Text-Import: `-?Ziffern[.Ziffern]` als Zahl, Formeln mit englischen Namen (`SUMPRODUCT`, `SUM`) und Komma,
+alles andere als Text. Kopfzeile fett und fixiert. Keine Zusatzbibliothek (abap2xlsx, XCO); SALV-Export haette alles als
+Text abgelegt und die Formeln verloren.
+
+Gepruefter Prototyp (Python, dieselben XML-Teile und Regeln) gegen den Text-Import in Excel, Zelle fuer Zelle
+`Value2` und `Formula`:
+
+| Datei | Groesse | Unterschiede |
+| --- | --- | --- |
+| T76-Lauf `8475*` | 126 x 182 | 0 Werte, 0 Formeln |
+| Ingos P76-Datei vom 22.10. | 331 x 2'097 | 0 Werte, 0 Formeln |
+
+Nicht geprueft: der ABAP-Quelltext selbst (Syntaxcheck, Lauf in T76), Laufzeit bei rund 700'000 Zellen. Naechster
+Schritt nach Entscheid Ingo: neuer Auftrag, Sichern, Aktivieren, Lauf `8475*` und eine breite Selektion, Vergleich wie
+oben.
