@@ -6,7 +6,9 @@ Stand: 2026-10-22
 
 - Alte PHP-Anwendung analysiert (Passwoerter im Code, SQL-Injection, Freigabelimit nur im Browser, privater Hoster,
   Nummernkollision). Entscheide Ingo: Modul im Dashboard, Altdaten uebernehmen, Stammdaten erst lokal dann SAP,
-  Oberflaeche wie im PHP. Kein Code. Wartet auf MySQL-Dump. `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md`;
+  Oberflaeche wie im PHP. Nachtrag: Betrieb lokal bei Trafag (nicht externer Hoster), Benutzer ohne SAP-Konto, Plugin/KISS,
+  AD, spaeter Schreiben nach SAP (Lizenzfrage). Kein Code. Wartet auf MySQL-Dump. Wochen_Todo 98 geschlossen (Delta 14.10.
+  war erfolgreich). `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md`;
   `handbestellwesen/` in `.gitignore`.
 
 ## SAP: ZLO03 FIX 20, „defekte Excel“ ist eine Excel-Sperre, Download als .txt, 2026-10-22

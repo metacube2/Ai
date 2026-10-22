@@ -1,6 +1,7 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-10-22. Status: **Konzept, Entscheide Ingo eingeholt, noch kein Code.** Wartet auf den MySQL-Dump.
+Stand: 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
+Schreiben nach SAP). Status: **Konzept, Entscheide Ingo eingeholt, noch kein Code.** Wartet auf den MySQL-Dump.
 
 ## 1. Auftrag und Entscheide
 
@@ -13,6 +14,9 @@ Ingo am 22.10.: Die alte PHP-Handbestellsoftware, die ein Student geschrieben ha
 | Aufbau | **Modul im Dashboard** (nicht eigene Anwendung) |
 | Altdaten | **Uebernehmen**; Ingo besorgt einen `mysqldump` |
 | Stammdaten | **Phase 1 lokal gepflegt, Phase 2 aus SAP** |
+| Ziel | **Abloesen** auf neue Technik und sicher machen; Benutzer ueber AD; KISS; Plugin-Bauweise; Dashboard-Logik mitnutzen, dazu Schreiben in die eigene DB und nach SAP |
+| Betrieb heute | **von Trafag selbst gehostet, lokal**; gilt wegen des PHP-Codes als unsicher (Ingo) |
+| Benutzer | Mitarbeitende **ohne SAP-Konto**, „Kruecke“ fuer Kleinmengenbestellungen ausserhalb von SAP |
 
 ## 2. Ist-Befund der PHP-Anwendung
 
@@ -41,7 +45,7 @@ Tabellen laut Code: `tab_offenebestellungen`, `archive`, `delete_archive`, `tab_
 | | Befund |
 | --- | --- |
 | 🔴 | Datenbankpasswort fest im Code (41 Stellen in 28 Dateien) und im Backup-Skript; ein zweites Zugangspaar fuer eine fremde Datenbank „Vertragsnummernverwaltung“. **Nach der Abloesung beide Passwoerter aendern lassen.** |
-| 🔴 | Betrieb beim privaten Hoster des Studenten (Konto `michae60`, Domain `handbestellwesen.guentensperger.co.uk`), nicht bei Trafag. Eigentum und Vertrag klaert Ingo. |
+| 🟠 | Die Pfade im Code (Konto `michae60`, Domain `handbestellwesen.guentensperger.co.uk`, Hoster-Kennung in `.htaccess`) stammen aus einem frueheren Betrieb bei einem externen Hoster. **Laut Ingo laeuft die Anwendung heute lokal bei Trafag** (Korrektur 2026-10-22; die erste Analyse hatte einen privaten Hoster angenommen). Ob beim alten Hoster noch eine Kopie mit Daten liegt, ist offen. |
 | 🔴 | SQL-Injection in jeder Seite (Formularwerte direkt im SQL). |
 | 🔴 | Freigabelimit wird nur im Browser geprueft; Server speichert jeden Betrag. Freigeben und Loeschen kann jeder. |
 | 🟠 | Ein gemeinsames Basic-Auth-Login, keine Benutzer, keine Nachvollziehbarkeit. |
@@ -72,6 +76,16 @@ eigene SQLite-Datenbank, Zugriff ueber Windows-Konto.
 | Protokoll | wer hat wann angelegt, freigegeben, Wareneingang gebucht, geloescht |
 | Mail | optional, wie im Original vorgesehen: Besteller bei Wareneingang benachrichtigen (Entscheid offen) |
 
+### 3.0 Bauweise: Plugin, KISS
+
+- Ein in sich geschlossenes Modul: eigener Ordner (`Modules/Handbestellwesen/` mit Seiten, Diensten, Datenmodell), eigene
+  Datenbank, **eine** Registrierung in `Program.cs` (`AddHandbestellwesen()`), ein Schalter `Handbestellwesen:Enabled` in
+  `appsettings.json`. Aus heisst: kein Menuepunkt, keine Route, keine Tabellen. So bleibt das Dashboard unberuehrt.
+- Mitgenutzt wird, was es schon gibt: Windows-Anmeldung und AD-Gruppen, Layout/Menue, `SapGatewayService` fuer SAP-Lesen,
+  Sicherung der Datenbank wie bei Shopfloor, Deploy-Weg.
+- Keine eigenen Rahmenwerke, keine Microservices, keine Warteschlangen. Vier Tabellen fachlich (Bestellung, Zaehler,
+  Stammdaten, Protokoll), wenige Seiten.
+
 ### 3.1 Oberflaeche wie im PHP (Wunsch Ingo 2026-10-22)
 
 „Das GUI soll wie im PHP sein, mit den Buttons und Farben; wenn es die Buttons nicht genau so gibt, aehnlich.“ Nur die
@@ -98,14 +112,21 @@ herum. Die Bestellnummer erscheint nicht mehr als Browser-Alert, sondern als Hin
 2. **Stammdaten aus SAP.** Kreditoren, Kostenstellen, Sachkonten ueber den vorhandenen `SapGatewayService` lesen. Vorher
    pruefen, ob die Nummern der PHP-Anwendung (z. B. dreistellige Kostenstellen wie `875`) zu SAP passen. P76 nur auf
    Auftrag Ingo. Tabellen- und Feldnamen live pruefen, nicht aus Erinnerung.
-3. **Abloesung.** Parallelbetrieb kurz, Stichtag, PHP-Anwendung abschalten, Passwoerter aendern, Hosting kuendigen.
+3. **Schreiben nach SAP** (Wunsch Ingo). Erst klaeren, *was* in SAP entstehen soll (Bestellanforderung, Bestellung oder
+   nur eine Buchung) und **ob die Lizenz das erlaubt**: Die Benutzer haben bewusst kein SAP-Konto. Schreibt das Dashboard
+   in ihrem Auftrag ueber einen technischen Benutzer, kann SAP das als indirekte Nutzung werten, die lizenzpflichtig ist.
+   Vor dem Bau mit dem SAP-Lizenzverantwortlichen klaeren. Technisch braeuchte es einen schreibenden Gateway-Service in
+   T76, Transport nach P76 durch Ingo.
+4. **Abloesung.** Kurzer Parallelbetrieb, Stichtag, PHP-Anwendung abschalten, Datenbankpasswoerter aendern.
 
 ## 5. Offene Punkte
 
 | Nr | Punkt | Wer |
 | --- | --- | --- |
-| 1 | MySQL-Dump (Struktur und Daten) | Ingo |
+| 1 | MySQL-Dump (Struktur und Daten). Im uebergebenen Ordner liegt keiner, nur das Skript `backup/dbBackup.sh`; es legt Sicherungen auf dem Server unter `…/admin/backup/<JJJJMMTT>/` ab. Dort nachsehen oder auf dem Server `mysqldump` ausfuehren (Passwort von Hand eingeben, nicht im Befehl) | Ingo |
 | 2 | Fachlicher Owner und Freigabe vor Inbetriebnahme oder Ankuendigung (Einkauf? Finanz?) | Ingo |
 | 3 | Wer bestellt, wer gibt frei, wer bucht Wareneingang; AD-Gruppen oder Kontenliste | Ingo / Owner |
 | 4 | Werden Rechnungsbetrag und Mail beim Wareneingang noch gebraucht? | Owner |
-| 5 | Hosting beim Studenten: Eigentum, Vertrag, Kuendigung; Passwoerter aendern | Ingo |
+| 5 | Datenbankpasswoerter nach der Abloesung aendern; pruefen, ob beim frueheren externen Hoster noch Daten liegen | Ingo |
+| 6 | Was soll in SAP entstehen, und ist das lizenzrechtlich fuer Benutzer ohne SAP-Konto zulaessig? | Ingo / SAP-Lizenz |
+| 7 | AD-Gruppen fuer Besteller, Freigeber, Wareneingang, Admin | Ingo / IT |
