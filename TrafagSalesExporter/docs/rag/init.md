@@ -11,8 +11,8 @@ Stand: 2026-10-01 (Verweis auf `LEARNINGS.md` ergaenzt; Kopfzeile am 2026-10-13 
    `MANUAL_IMPORT.md`, `DEPLOYMENT.md`). Das ist derselbe Ladeweg wie in `router.md`
    und `CLAUDE.md` (angeglichen am 2026-09-29).
 3. `lastchange.md` (Repo-Wurzel) nur bei Bedarf: Aenderungsstand mit dem juengsten Abschnitt
-   oben, aber **nicht** auf sieben Tage begrenzt, sondern rund 2'000 Zeilen einschliesslich
-   Juli-Historie
+   oben; seit dem 2026-10-22 nur noch die Abschnitte seit Oktober 2026 (rund 560 Zeilen), aeltere
+   verbatim in `docs/archiv/`
 4. `persona.md` (Repo-Wurzel) — Arbeitsregeln und fachliche Grenzen, sobald fachliche
    Verantwortung im Spiel ist
 5. **Sobald SAP im Spiel ist: `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`, vor der
@@ -23,7 +23,8 @@ Stand: 2026-10-01 (Verweis auf `LEARNINGS.md` ergaenzt; Kopfzeile am 2026-10-13 
    geht. Am 2026-09-10 hat allein `Sessions=0` zwei Stunden gekostet, weil die Ursache
    am Server lag und nicht am Arbeitsplatz.
 
-Aelteres liegt im Archiv (`docs/raw_md_archive/`) und wird nicht standardmaessig geladen.
+Aelteres liegt im Archiv (`docs/archiv/`, davor nur noch in Git, siehe `docs/archiv/README.md`) und
+wird nicht standardmaessig geladen.
 Den vollstaendigen Bestand listet `baum.md`; das ist ein Pruefindex, keine Lesereihenfolge.
 
 Ist unklar, in welcher Datei eine Aussage steht, gibt es zusaetzlich das MCP-Werkzeug

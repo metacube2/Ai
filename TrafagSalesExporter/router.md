@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-10-14
+Stand: 2026-10-22 (Regel 6: Historie und Archiv `docs/archiv/`)
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
@@ -62,9 +62,11 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
    `docs/AGENT_COORDINATION.md` lesen, den eigenen Bereich eintragen und beim Abschluss
    mit Status und Nachweis aktualisieren. Eintraege mit `abgeschlossen`, `deployed`,
    `frei` oder `Historie` sind keine laufende Arbeit. Die Datei fuehrt seit dem
-   2026-09-09 nur laufende Arbeit und einen Kurzindex der letzten sieben Tage; der
-   Volltext des Abgeschlossenen steht in `docs/AGENT_COORDINATION_HISTORIE.md` und ist
-   Nachschlagewerk, nicht Pflichtlektuere. Eine reine Auskunft ohne jede Aenderung
+   2026-09-09 nur laufende Arbeit und einen Kurzindex der letzten sieben Tage; alles
+   Abgeschlossene steht in `docs/AGENT_COORDINATION_HISTORIE.md` (Volltext bis 2026-09-29,
+   danach die verschobenen Kurzindex-Zeilen) und ist Nachschlagewerk, nicht Pflichtlektuere.
+   Verschobene Historie der Arbeitsdateien (`lastchange.md`, `rag/DEPLOYMENT.md`) liegt seit
+   dem 2026-10-22 in `docs/archiv/`. Eine reine Auskunft ohne jede Aenderung
    braucht diesen Schritt nicht, siehe `CLAUDE.md` Abschnitt 3a.
 7. **Arbeitsregeln, Tests und fachliche Grenzen:** `persona.md`.
 8. **Ingo testet immer auf dem deployten Produktivstand, nie lokal.** Eine leere oder

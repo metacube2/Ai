@@ -121,7 +121,10 @@ direkt auf dem Share bearbeitet, verliert die Aenderung ohne Meldung. Sie stehen
 ## 5. Ablauf eines Produktivdeploys
 
 1. Release-Tests lokal laufen lassen, Anzahl notieren.
-2. Konsistente Vorher-Sicherung der Produktivdatenbank ueber die SQLite-`BackupDatabase`-API
+2. *Ueberholt seit 2026-10-13 (Entscheid Ingo):* die Sicherung macht der Runner `DeployHeadless`
+   selbst einmal pro Woche (`--backup` erzwingt, `--no-backup` unterdrueckt), siehe
+   `docs/rag/DEPLOYMENT.md` Abschnitt „Deploy-Ablauf seit 2026-10-13“. Alte Regel: Konsistente
+   Vorher-Sicherung der Produktivdatenbank ueber die SQLite-`BackupDatabase`-API
    anlegen (`trafag_exporter.db.before-<thema>-<zeitstempel>.bak`) — **aber nur, wenn nicht
    schon eine passende Sicherung existiert, siehe Abschnitt 5a.**
 3. Deploy-Konsole im Prueflauf starten, Bestandsaufnahme pruefen.
@@ -137,6 +140,10 @@ der Entwicklungsmaschine aus das Passwortpanel. Der `200` belegt Erreichbarkeit,
 Anzeige. Dafuer braucht es einen angemeldeten Sichtprueflauf.
 
 ## 5a. Keine redundante Sicherung anlegen — VERBINDLICH
+
+*Einordnung 2026-10-22:* Seit dem 2026-10-13 sichert der Runner selbst einmal pro Woche
+(`docs/rag/DEPLOYMENT.md`, „Deploy-Ablauf seit 2026-10-13“). Die Regel unten gilt weiter fuer jede
+von Hand ausgeloeste Sicherung (`--backup`, `--only-backup`).
 
 **Regel: Vor dem Anlegen einer Sicherung pruefen, ob auf der Freigabe schon eine `.bak`
 liegt, deren Groesse UND Schreibzeit zur aktuellen `trafag_exporter.db` passen. Wenn ja,

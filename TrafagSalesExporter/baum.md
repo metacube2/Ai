@@ -1,13 +1,19 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-10-14
+Stand: 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
 Aufgabe gilt `router.md` -> Unterrouter -> Detaildatei. Hier steht jede Markdown-Datei des
-Repositorys genau einmal, damit nichts unauffindbar wird.
+Repositorys genau einmal, damit nichts unauffindbar wird. Nicht-Markdown-Dateien (ABAP, Word,
+SVG, Pakete) stehen nur dort, wo sie zum Verstaendnis eines Themas gehoeren.
 
 Nicht enthalten: `whisper/python/Lib/site-packages/**` (33 Vendor-Lizenz- und
 Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
+
+Pruefung der Vollstaendigkeit (Bash im Projektordner): jede Datei aus `git ls-files '*.md'` muss
+hier mit Pfad vorkommen, und jeder hier genannte `.md`-Pfad muss existieren oder ausdruecklich
+als „nur in Git“ oder „nicht versioniert“ markiert sein.
 
 ## Einstieg
 
@@ -16,9 +22,11 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `router.md` | einziger globaler Einstieg, Vorrangregeln und Themenaeste |
 | `baum.md` | diese Datei, Vollstaendigkeitsindex |
 | `AGENTS.md` | Einstieg fuer Codex, verweist auf `router.md` |
-| `CLAUDE.md` | Einstieg fuer Claude Code, verweist auf `router.md` |
+| `CLAUDE.md` | Einstieg fuer Claude Code, verweist auf `router.md`; einzige Fassung der Koordinations- und Abschlussregel mit Begruendung |
 | `persona.md` | Arbeitsregeln, Tests, fachliche Grenzen |
-| `lastchange.md` | aktueller Aenderungsstand |
+| `docs/rag/init.md` | Ladereihenfolge fuer eine neue Sitzung und Kurzform der Abschlussregel (versioniert) |
+| `lastchange.md` | Aenderungsstand seit Oktober 2026, juengster Abschnitt oben; aelteres in `docs/archiv/` |
+| `docs/rag/LEARNINGS.md` | **Gemachte Fehler mit Regel, eine Zeile je Fehler. Pflichtlektuere, verlinkt aus `router.md` (Einstieg und Regel 9) und `CLAUDE.md` 3** |
 
 ## Unterrouter
 
@@ -72,6 +80,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md` | Journal fuer die Konsolidierung, Zielbild Andreas |
 | `docs/FINANCE_FACHPRUEFUNG_2026-09-07.md` | Fachpruefung und Umsetzungspakete vom 07.09.2026 |
 | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` | Diagramm fuer Andreas: Grundregel, vier Belegstufen statt Sonderfaelle, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, fuenf Schalter, Statuskette. Erzeugt aus `.tmp_tools/BuildSupplierWorkflowSvg` |
+| `wwwroot/handbuch/kapitel/01_finance.md` | Benutzerhandbuch Kapitel Finance (Quelle fuer Reiter und Word, siehe Abschnitt Benutzerhandbuch) |
+| `wwwroot/handbuch/kapitel/03_verkauf.md` | Benutzerhandbuch Kapitel Verkauf |
 
 ## Standortdaten und Exporte
 
@@ -96,7 +106,6 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | Datei | Rolle |
 | --- | --- |
 | `docs/rag/PURCHASING.md` | Kurzstand |
-| `docs/rag/LEARNINGS.md` | **Gemachte Fehler mit Regel, eine Zeile je Fehler. Pflichtlektuere, verlinkt aus `router.md` (Einstieg und Regel 9) und `CLAUDE.md` 3** |
 | `docs/PURCHASING_DASHBOARD_2026-06-05.md` | Hauptdoku, Formeln, Cache |
 | `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` | **zusammengefuehrt**: umgesetzt, offen, zurueckgestellt |
 | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` | welche Indikatoren echt rechnen |
@@ -105,7 +114,16 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` | Produktgruppen aus SAP OData |
 | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` | Supply-Chain-Reiter |
 | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` | Stuecklisten-Dashboard |
+| `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` | Verwendung & Risiko: Messung der Datenlage, Regeln, Ausbau mit voller Stueckliste |
+| `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, 3D-Lagerplatzansicht, offene Schritte |
 | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` | Sprachen, Projektsuite (Projektsuite seit 2026-10-09 ueberholt) |
+| `docs/EINKAUF_SITZUNG_2026-10-22.md` | Ergebnisse Einkaufssitzung 22.10.: Dashboard-Zwischenstand, Feedbackliste, Lieferantenbewertung, Handbestellwesen |
+| `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` | Handbestellwesen: Abloesung PHP-Anwendung durch Dashboard-Modul, Befund, Zielbild, GUI wie PHP, Phasen, offene Punkte |
+| `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Registrierung, Seite) |
+| `wwwroot/css/handbestellwesen.css` | Optik Handbestellwesen wie die PHP-Anwendung |
+| `wwwroot/js/bombrain.js` | Stuecklisten-Netz „Gehirn“ (three.js), Einkauf > Spend-Aufriss; Daten `Services/Logistics/BomBrainGraph.cs`, Komponente `Components/Pages/PurchasingBomBrain.razor` |
+| `wwwroot/handbuch/kapitel/02_einkauf.md` | Benutzerhandbuch Kapitel Einkauf |
+| `wwwroot/handbuch/kapitel/04_logistik.md` | Benutzerhandbuch Kapitel Logistik |
 
 ## HR
 
@@ -114,41 +132,75 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/rag/HR_KPI.md` | Kurzstand, Zugang |
 | `docs/HR_KPI.md` | **zusammengefuehrt**: Fachlogik, Formeln, Grenzen |
 | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` | Fachpruefung |
+| `wwwroot/handbuch/kapitel/05_hr.md` | Benutzerhandbuch Kapitel HR |
 
 ## Plattform
 
 | Datei | Rolle |
 | --- | --- |
-| `docs/rag/DEPLOYMENT.md` | aktuell verifizierter Produktivstand |
-| `docs/DEPLOYMENT.md` | **zusammengefuehrt**: Verfahren, Konsole, Fallen |
+| `docs/rag/DEPLOYMENT.md` | Deploy-Ablauf seit 2026-10-13, Fallen, Kurzstand der Deploys seit 2026-10-13; aeltere Deploys in `docs/archiv/` |
+| `docs/DEPLOYMENT.md` | **zusammengefuehrt**: Verfahren, Konsole, Fallen (Sicherungsregel seit 2026-10-13 ueberholt, dort markiert) |
 | `docs/NUGET_SICHERHEIT_2026-09-01.md` | aktueller NuGet-Audit, Sicherheitsbefund und Updatepfad |
 | `docs/PLATTFORM_TEMPO_2026-09-28.md` | Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, Cockpit-Wechselkurse, SQLite-Cache |
 | `docs/DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md` | Datenquellen und Firewall-Ziele des Servers `tragvapp401` |
 | `docs/rag/ARCHITECTURE.md` | Architektur, Kurzstand |
 | `docs/rag/ADMIN.md` | Admin, Kurzstand |
-| `docs/rag/PROJECT.md` | Projektstand, Kurzstand |
 | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` | Admin und Startseite |
 | `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` | Menuestruktur |
 | `docs/REQUIREMENTS.md` | Gesamtfunktionalitaet, reverse-engineered |
 | `docs/PROGRAMM_DIAGRAMME.md` | Diagramme |
 | `docs/PAUSENSPIEL.md` | **zusammengefuehrt**: Nebenfeature |
 | `docs/CCUSAGE_INSTALL_ANLEITUNG.md` | Werkzeuganleitung |
+| `docs/NUTZUNG_2026-10-14.md` | Geringe Nutzung des Dashboards: Befund, Ursachen, Massnahmen, anonyme Nutzungsmessung und naechste Schritte |
+| `docs/UI_BERNDEUTSCH_GLOSSAR.md` | Stil und Glossar fuer den Berndeutsch-Katalog |
+| `docs/NETZWERK_2026-10-02.md` | Reiter Netzwerk mit zwoelf Unterreitern (inkl. AD, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht): Entscheide, Schutzregeln, Messungen, Befunde |
+| `docs/WELTLAGE_2026-10-05.md` | Reiter Weltlage: Auftrag, Quellen und Firewall, Verknüpfung je Abteilung, Rechenregeln, Seiten, Grenzen |
+| `docs/TRAFAG_PROJEKTE_2026-10-09.md` | Reiter Trafag Projekte: Projektmanagement wie Jira/Trello/Planner, Rechte, Technik, Tabellen, Statusfarben, Deploy, offene Punkte |
+| `docs/TRAFAG_REDDIT_2026-10-09.md` | Reiter Trafag Reddit: Forum mit Abstimmung (Reddit + StackOverflow), Funktionen, Technik, Tabellen, Identitaet, Deploy, offene Punkte |
+| `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, Feld-Mapping (Abschnitt 12), offene Schritte |
+| `docs/OPERATIONS_KPI_2026-10-14.md` | Operations > KPI: Liefertreue OTD / OTIF / OTP (Spezifikation Fabio), Port der Referenzlogik, Abruf aus den CDS-Services, Abnahme, offene Punkte |
+| `docs/operations_kpi/` | Fabios Paket vom 2026-10-14: Spezifikation (docx), Referenz (JS-Abzug, Python-Aufbau, Vorlage, Beispielseite, Abnahmedaten mit Kundendaten), PDF- und Excel-Beispiel |
+| `docs/shopfloor_paket_2026-10-14/` | Fabios Paket vom 2026-10-14: Schnittstelle Shopfloor-SAP (Excel, Feldliste, Push-Beispiele mit abweichendem Format) und Frontend-Patches mit `apply_patch.js` |
+| `docs/shopfloor_paket_2026-10-16/` | Fabios Deploy-Paket vom 2026-10-16: Schnittstellen-Excel (Jobs J1 bis J11, Deploy-Checkliste), Patch 03 Wuensche D. Tobler, Config-Patch 04 mit `apply_config.js` |
+| `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |
 | `.tmp_sap_probe/ddic_lzcode/README.md` | Notiz im SapProbe-Arbeitsordner |
+
+### Benutzerhandbuch
+
+| Datei | Rolle |
+| --- | --- |
+| `docs/handbuch/README.md` | Benutzerhandbuch: Ablage, Word-Generator, Neuerzeugung, bei der Erarbeitung aufgefallene Widersprueche |
+| `docs/handbuch/VORGABE.md` | Schreibvorgabe fuer Handbuchkapitel (Aufbau je Seite, Format fuer den Word-Generator) |
+| `wwwroot/handbuch/kapitel/00_einleitung.md` | Kapitel Einleitung und Wegweiser; die Fachkapitel 01 bis 05 stehen oben bei ihrem Themenast |
+| `wwwroot/handbuch/kapitel/06_weltlage.md` | Kapitel Weltlage |
+| `wwwroot/handbuch/kapitel/07_netzwerk.md` | Kapitel Netzwerk |
+| `wwwroot/handbuch/kapitel/08_projekte.md` | Kapitel Trafag Projekte |
+| `wwwroot/handbuch/kapitel/09_trafag_reddit.md` | Kapitel Trafag Reddit |
+| `wwwroot/handbuch/kapitel/10_operations.md` | Kapitel Operations (Geschaeftsprozess, Shopfloor-Seiten, KPI, Glossar) |
+| `wwwroot/handbuch/bilder/` | Bilder des Handbuchs (SVG fuer den Reiter, PNG fuer Word) |
+| `Tools/HandbuchGrafik/` | Prozessgrafik Operations fuer das Handbuch (`operations_prozess.py` -> SVG, `render_png.ps1` -> PNG fuer Word) |
 
 ## SAP und ABAP
 
 | Datei | Rolle |
 | --- | --- |
+| `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` | **SAP effizient bedienen: Zugangswege, Skriptbestand, Aktivierungsfallen, Gateway/OData. Pflichtlektuere vor jeder SAP-Aktion, verlinkt aus `router.md` Regel 5 und `docs/rag/init.md`** |
+| `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` | SAP-Berechtigungsfall Wolfurt (Rahmenvertrag 46010612): Ursache lesend in P76, Strategie fuer Berechtigungsfaelle, Lesewerkzeug P76 |
 | `docs/abap/README_LZCODE_WEBSERVICE.md` | ZLO03-Webservice |
 | `docs/abap/README_PRODSPARTE.md` | Produktsparten-Provider |
 | `docs/abap/README_PRODUCT_GROUP_SAP_ODATA.md` | Produktgruppen per OData, SEGW |
 | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md` | Analysereport STPRS und Journal |
 | `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` | Journal-EntitySet CH/AT: Messung auf T76, Fuellgrade, Bauplan |
+| `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` | Report ZM_OFFENE_FAUF: Bedarfsverursacher-Felder, Transport T76K912714, Test, Offenes |
+| `docs/abap/ZM_OFFENE_FAUF.abap`, `docs/abap/ZM_OFFENE_FAUF_vorher_2026-10-07.abap` | Quelltext neu und vorher (Rueckbau) |
 | `docs/abap/ZFIN_JOURNAL_PRUEFUNG.abap` | Pruefreport dazu, rein lesend |
 | `docs/abap/Z_HR_KPI_CONS.abap` | HR-Report von Hand (Ausgangsstand 30.09., aus T76 gelesen) |
 | `docs/abap/ZPOWERBI_EINKAUF_MPC_EXT_DEFINE.abap` | Gesamtquelle `DEFINE`: FinanzJournal und HrKpi, aktiv T76 |
 | `docs/abap/ZPOWERBI_EINKAUF_DPC_EXT_GET_ENTITYSET.abap` | Gesamtquelle `GET_ENTITYSET`: FinanzJournal und HrKpi, aktiv T76 |
 | `docs/abap/ZHR_KPI_MPC_DEFINE_ADD.abap`, `docs/abap/ZHR_KPI_DPC_GET_ENTITYSET_ADD.abap` | nur der HR-Einschub, zum Lesen |
+| `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
+| `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
+| `docs/abap/ZSHOP_RM_ADD.abap` | ABAP ShopRmSet (ZC27-Logik) und ShopProdSet (Istendtermin, Gesamt-/WE-Menge) fuer Operations (Shopfloor), T76K912740 + T76K912738 |
 | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` | Konditionsart ZRL2 EkOrg 1200, Transport `T76K912628`, in P76 seit 30.09. |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping |
 | `docs/rag/PRODUCT_MAPPING.md` | Produktmapping, Kurzstand |
@@ -159,32 +211,36 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `saptasks/zzprdat-kontext.md` | ZZPRDAT-Arbeitsstand und Analyseverlauf |
 | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` | ZZPRDAT: Transportauftrag T76K912490, Objektliste, Nachtest |
 | `saptasks/ZZPRDAT_T76_PROTOTYP_2026-09-03.md` | ZZPRDAT-Prototyp in $TMP (ueberholt) |
-| `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` | **SAP effizient bedienen: Zugangswege, Skriptbestand, Aktivierungsfallen, Gateway/OData. Pflichtlektuere vor jeder SAP-Aktion, verlinkt aus `router.md` Regel 5 und `docs/rag/init.md`** |
 | `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` | ZC23 Materialanteil und Arbeit CZ: Formeln, Beispiel B87813, Bedienung, Grenzen, Pruefung (Word, Generator `.tmp_tools/BuildZc23Formeln`) |
-| `saptasks/fiori_zc23/` | Fiori-App ZC23: `NOTES.md`, Generator `erzeugen.py`, `methoden_bauen.py`, MPC/DPC vorher/neu, Struktur-Feldliste, App `webapp/` |
-| `saptasks/gib_dcp/` | GIB Dispo-Cockpit in T76: `NOTES.md` (Bestand Rollen/Transaktionen, Testuser UBIG) |
-| `saptasks/shopfloor_sap/` | Shopfloor-Mengen aus SAP: `NOTES.md`, `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
-| `saptasks/fiori_erste_app/` | Erste Fiori-App: `NOTES.md` (Harness, Voraussetzungen, Upload-Wege, Link), Quelle `webapp/` |
-| `saptasks/zc23_materialanteil/` | ZC23 Materialanteil: Analyse und Vorschlag `NOTES.md`, Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |
+| `saptasks/fiori_zc23/NOTES.md` | Fiori-App ZC23: Stand, Selektion, Transport; im Ordner Generator `erzeugen.py`, `methoden_bauen.py`, MPC/DPC vorher/neu, Struktur-Feldliste, App `webapp/` |
+| `saptasks/gib_dcp/NOTES.md` | GIB Dispo-Cockpit in T76: Bestand Rollen/Transaktionen, Testuser UBIG |
+| `saptasks/shopfloor_sap/NOTES.md` | Shopfloor-Mengen aus SAP; im Ordner `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
+| `saptasks/fiori_erste_app/NOTES.md` | Erste Fiori-App: Harness, Voraussetzungen, Upload-Wege, Link; Quelle `webapp/` |
+| `saptasks/zc23_materialanteil/NOTES.md` | ZC23 Materialanteil: Analyse und Vorschlag; im Ordner Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |
 | `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx` | Word-Doku: wie der Materialanteil von 47,7 s auf 13,5 s beschleunigt wurde; Generator `word_beschleunigung.js` |
-| `saptasks/zm_offene_kdauf/` | ZM_OFFENE_KDAUF beschleunigen: Original, REF, OPT (zum Zurueckkopieren), CMP, Funktionsgruppe ZKDAUF_PAR (`Z_KDAUF_PAR_RECHNEN.abap`, `LZKDAUF_PARTOP.abap`), Nummerntest `Z_KDAUF_NR_TEST.abap`, Original-Quellen `Z_BASISPREISLISTE.abap`/`LZZLO1*.abap`, Bausteine `teile/`, `bauen.js`, `einspielen.sh`, Laufprotokolle `lauf*.txt`, Tabellenabzug `zpowerbi_opt.csv`; Stand, Ergebnisse und Offenes in `NOTES.md` |
+| `saptasks/zm_offene_kdauf/NOTES.md` | ZM_OFFENE_KDAUF beschleunigen: Stand, Ergebnisse und Offenes; im Ordner Original, REF, OPT (zum Zurueckkopieren), CMP, Funktionsgruppe ZKDAUF_PAR (`Z_KDAUF_PAR_RECHNEN.abap`, `LZKDAUF_PARTOP.abap`), Nummerntest `Z_KDAUF_NR_TEST.abap`, Original-Quellen `Z_BASISPREISLISTE.abap`/`LZZLO1*.abap`, Bausteine `teile/`, `bauen.js`, `einspielen.sh`, Laufprotokolle `lauf*.txt`, Tabellenabzug `zpowerbi_opt.csv` |
 | `docs/ZZPRDAT_Loesung_2026-09-03.docx` | ZZPRDAT-Loesungsdokument fuer den Fachbereich |
 | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` | Anschreiben zur Abnahme, Vorlage fuer den Outlook-Entwurf |
-| `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md` | ZLO03-Systemabgleich |
-| `zlo03/ZM_LZCODE20_OPT_fixes.md` | ZLO03-Codefixes |
-| `zlo03/CLAUDE.md` | bereichsspezifische Arbeitsregeln ZLO03 |
-| `zlo03/EXKLUSIV_LOGIK_2026-10-08.md` | ZLO03: Bedeutung von „Exklusiv“, Fall B63491 |
-| `zlo03/TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md` | ZLO03: Ergebnisse je nach Tageszeit, Jobliste, Kandidaten |
 | `docs/GIB_DispoCockpit_DCP_Zusammenfassung_2026-10-19.docx` | Word: GIB Dispo-Cockpit, Modul DCP (Planning), was es macht, Rollout P76, Bezug zum Cockpit (aus oeffentlichen Quellen) |
 | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` | SAP PS: Einfuehrung, Demo in T76 (Projekt, Teilprojekte, Zeitbuchung, CJI3), Befunde, Transaktionen, Fazit |
 | `docs/img/ps_demo_2026-10-20/` | 20 Screenshots der PS-Demo in T76 (CJ20N, CJ01, CJ02, CAT2, KB21N, OKKP, ME21N, CJI3; 19-22 Rolle je Zeitbuchung: KL01, KP26, KB21N, CJI3) |
+
+### ZLO03
+
+| Datei | Rolle |
+| --- | --- |
+| `zlo03/CLAUDE.md` | bereichsspezifische Arbeitsregeln ZLO03 |
+| `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md` | ZLO03-Systemabgleich (Stand 2026-10-22 nicht versioniert, nur im Arbeitsbaum) |
+| `zlo03/ZM_LZCODE20_OPT_fixes.md` | ZLO03-Codefixes (Stand 2026-10-22 nicht versioniert, nur im Arbeitsbaum) |
+| `zlo03/EXKLUSIV_LOGIK_2026-10-08.md` | ZLO03: Bedeutung von „Exklusiv“, Fall B63491 |
+| `zlo03/TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md` | ZLO03: Ergebnisse je nach Tageszeit, Jobliste, Kandidaten |
 | `zlo03/MK_B63485_FIX12_2026-10-16.md` | ZLO03: MK-Abweichung B63485, Beleg P76, FIX 12 in `Z_ZLO03_TURBO2` |
 | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` | ZLO03 FIX 19: Stoff-Compliance-Spalten (RoHS seit 22.10.), Befund je Merkmal (P76 `Z_PACK_REGULATION`), Test T76 |
+| `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md` | ZLO03 FIX 20: Excel blockiert Text-.xls (ExtensionHardening), Download als .txt, Test T76; Abschnitt 6 FIX 21 (.xlsx) |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_2026-10-20.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19, Stand 20.10. (abgeloest) |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19 inkl. Spalte RoHS (abgeloest durch FIX 20) |
 | `zlo03/Z_ZLO03_TURBO2_FIX20_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12, FIX 19 inkl. RoHS und FIX 20 (T76 aktiv seit 22.10.) |
 | `zlo03/Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 21 (echtes .xlsx), T76 aktiv seit 22.10., Auftrag T76K912752 |
-| `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md` | ZLO03 FIX 20: Excel blockiert Text-.xls (ExtensionHardening), Download als .txt, Test T76 |
 | `zlo03/Z_ZLO03_TURBO2_vor_FIX12_2026-10-16.abap`, `zlo03/Z_ZLO03_TURBO2_FIX12_2026-10-16.abap` | Quelltext `Z_ZLO03_TURBO2` vor und nach FIX 12 (T76/P76-Stand 2026-10-16) |
 | `zlo03/Z_KOI_VC_TXT_KOPIE.abap`, `zlo03/Z_KOI_VC_TXT_TESTID.abap` | lokale T76-Testreports: Testdaten `ZPOWERBI_VC_TXT` und Testzeile fuer FIX 12 |
 
@@ -192,70 +248,40 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 
 | Datei | Rolle |
 | --- | --- |
-| `docs/AGENT_COORDINATION.md` | **vor jeder Arbeit lesen**, Reservierungen |
-| `docs/AGENT_COORDINATION_HISTORIE.md` | Volltext abgeschlossener Koordinationseintraege, Nachschlagewerk |
-| `docs/UEBERGABE_2026-09-08.md` | Uebergabestand mit offenen Punkten und Reihenfolge |
-| `docs/HR_EINKAUF_REVIEW_2026-09-29.md` | HR- und Einkaufscockpit Konsistenzreview vom 29.09. (Codex) mit lokalem Reparaturstand |
-| `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
+| `docs/AGENT_COORDINATION.md` | **vor jeder Arbeit lesen**, Reservierungen und Kurzindex der letzten sieben Tage |
+| `docs/AGENT_COORDINATION_HISTORIE.md` | abgeschlossene Koordinationseintraege: Volltext bis 2026-09-29, danach verschobene Kurzindex-Zeilen; Nachschlagewerk |
+| `docs/rag/PROJECT.md` | Projektstand, Kurzstand |
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
-| `docs/WELTLAGE_2026-10-05.md` | Reiter Weltlage: Auftrag, Quellen und Firewall, Verknüpfung je Abteilung, Rechenregeln, Seiten, Grenzen |
-| `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` | Report ZM_OFFENE_FAUF: Bedarfsverursacher-Felder, Transport T76K912714, Test, Offenes |
-| `docs/abap/ZM_OFFENE_FAUF.abap`, `docs/abap/ZM_OFFENE_FAUF_vorher_2026-10-07.abap` | Quelltext neu und vorher (Rueckbau) |
-| `docs/handbuch/README.md` | Benutzerhandbuch: Ablage, Word-Generator, Neuerzeugung, bei der Erarbeitung aufgefallene Widersprueche |
-| `docs/handbuch/VORGABE.md` | Schreibvorgabe fuer Handbuchkapitel (Aufbau je Seite, Format fuer den Word-Generator) |
-| `docs/NETZWERK_2026-10-02.md` | Reiter Netzwerk mit zwoelf Unterreitern (inkl. AD, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht): Entscheide, Schutzregeln, Messungen, Befunde |
-| `docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md` | Verwendung & Risiko: Messung der Datenlage, Regeln, Ausbau mit voller Stueckliste |
-| `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, 3D-Lagerplatzansicht, offene Schritte |
-| `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
-| `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
-| `docs/abap/ZSHOP_RM_ADD.abap` | ABAP ShopRmSet (ZC27-Logik) und ShopProdSet (Istendtermin, Gesamt-/WE-Menge) fuer Operations (Shopfloor), T76K912740 + T76K912738 |
-| `Tools/HandbuchGrafik/` | Prozessgrafik Operations fuer das Handbuch (`operations_prozess.py` -> SVG, `render_png.ps1` -> PNG fuer Word) |
-| `wwwroot/js/bombrain.js` | Stuecklisten-Netz „Gehirn“ (three.js), Einkauf > Spend-Aufriss; Daten `Services/Logistics/BomBrainGraph.cs`, Komponente `Components/Pages/PurchasingBomBrain.razor` |
-| `wwwroot/handbuch/bilder/` | Bilder des Handbuchs (SVG fuer den Reiter, PNG fuer Word) |
-| `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Registrierung, Seite) |
-| `wwwroot/css/handbestellwesen.css` | Optik Handbestellwesen wie die PHP-Anwendung |
-| `docs/EINKAUF_SITZUNG_2026-10-22.md` | Ergebnisse Einkaufssitzung 22.10.: Dashboard-Zwischenstand, Feedbackliste, Lieferantenbewertung, Handbestellwesen |
-| `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` | Handbestellwesen: Abloesung PHP-Anwendung durch Dashboard-Modul, Befund, Zielbild, GUI wie PHP, Phasen, offene Punkte |
-| `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, Feld-Mapping (Abschnitt 12), offene Schritte |
-| `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
-| `docs/ARBEITSSTAND_2026-10-14_15.md` | Zusammenfassung aller Arbeiten vom 14. und 15.10.2026 mit Stand je Punkt, offenen Fragen an Fabio und offenen Punkten bei Ingo |
-| `docs/shopfloor_paket_2026-10-14/` | Fabios Paket vom 2026-10-14: Schnittstelle Shopfloor-SAP (Excel, Feldliste, Push-Beispiele mit abweichendem Format) und Frontend-Patches mit `apply_patch.js` |
-| `docs/shopfloor_paket_2026-10-16/` | Fabios Deploy-Paket vom 2026-10-16: Schnittstellen-Excel (Jobs J1 bis J11, Deploy-Checkliste), Patch 03 Wuensche D. Tobler, Config-Patch 04 mit `apply_config.js` |
-| `docs/NUTZUNG_2026-10-14.md` | Geringe Nutzung des Dashboards: Befund, Ursachen, Massnahmen, anonyme Nutzungsmessung und naechste Schritte |
-| `docs/OPERATIONS_KPI_2026-10-14.md` | Operations > KPI: Liefertreue OTD / OTIF / OTP (Spezifikation Fabio), Port der Referenzlogik, Abruf aus den CDS-Services, Abnahme, offene Punkte |
-| `docs/operations_kpi/` | Fabios Paket vom 2026-10-14: Spezifikation (docx), Referenz (JS-Abzug, Python-Aufbau, Vorlage, Beispielseite, Abnahmedaten mit Kundendaten), PDF- und Excel-Beispiel |
-| `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |
-| `docs/TRAFAG_PROJEKTE_2026-10-09.md` | Reiter Trafag Projekte: Projektmanagement wie Jira/Trello/Planner, Rechte, Technik, Tabellen, Statusfarben, Deploy, offene Punkte |
-| `docs/TRAFAG_REDDIT_2026-10-09.md` | Reiter Trafag Reddit: Forum mit Abstimmung (Reddit + StackOverflow), Funktionen, Technik, Tabellen, Identitaet, Deploy, offene Punkte |
-| `docs/UI_BERNDEUTSCH_GLOSSAR.md` | Stil und Glossar fuer den Berndeutsch-Katalog |
 | `projektmanagement/Status_kurz.tsv`, `projektmanagement/Status_kurz.xlsx` | Status kurz fuer den Chef (Quelle und erzeugte A4-Seite), seit 2026-10-01 |
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |
 | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | 180-Tage-Roadmap |
+| `docs/UEBERGABE_2026-09-08.md` | Uebergabestand vom 2026-09-09 mit offenen Punkten und Reihenfolge (nicht mehr der aktuelle Einstieg) |
+| `docs/ARBEITSSTAND_2026-10-14_15.md` | Zusammenfassung aller Arbeiten vom 14. und 15.10.2026 mit Stand je Punkt, offenen Fragen an Fabio und offenen Punkten bei Ingo |
+| `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
+| `docs/HR_EINKAUF_REVIEW_2026-09-29.md` | HR- und Einkaufscockpit Konsistenzreview vom 29.09. (Codex) mit lokalem Reparaturstand |
+| `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
 
-## Historie — kein Sollstand
+## Archiv — kein Sollstand
 
 Diese Dateien beantworten **keine** Statusfrage. Sie belegen, was zu einem Zeitpunkt galt.
 
 | Datei | Rolle |
 | --- | --- |
-| `docs/raw_md_archive/LASTCHANGE_ARCHIV_bis_2026-07-12.md` | Aenderungsstand bis 2026-07-12 |
-| `docs/raw_md_archive/LASTCHANGE_ARCHIV_2026-07-13_bis_2026-07-30.md` | Aenderungsstand bis 2026-07-30 |
-| `docs/raw_md_archive/RAG_ROUTER_ARCHIV_2026-07-31.md` | Routerstand vor der Aufteilung |
-| `docs/raw_md_archive/RAG_KURZDATEIEN_ARCHIV_ueberholte_eintraege.md` | aus Kurzdateien entfernte Eintraege |
-| `docs/raw_md_archive/HISTORY_CANONICAL.md.raw` | kanonische Detailhistorie (keine `.md`-Endung) |
+| `docs/archiv/README.md` | Uebersicht der Archive und der nur noch in Git vorhandenen Dateien |
+| `docs/archiv/LASTCHANGE_ARCHIV_2026-08-01_bis_2026-09-30.md` | Abschnitte aus `lastchange.md` 2026-07-30 bis 2026-09-30, verschoben 2026-10-22 |
+| `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md` | Kurzstand-Eintraege aus `docs/rag/DEPLOYMENT.md` 2026-08-03 bis 2026-10-09, verschoben 2026-10-22 |
 
-> **Hinweis 2026-09-29:** Die fuenf Archivdateien oben liegen nicht mehr im Arbeitsbaum. Sie
-> wurden am 2026-09-01 im Commit `835b317` ("Railway-Export und Finance-Status nachziehen")
-> geloescht, vermutlich versehentlich, zusammen mit `original_history_raws.zip`. Der Inhalt ist
-> nicht verloren: `git show 835b317^:TrafagSalesExporter/docs/raw_md_archive/<Datei>` holt
-> jede Datei zurueck. Ob sie wiederhergestellt werden, entscheidet Ingo.
+**Nur noch in Git** (geloescht am 2026-09-01 in `835b317`, vermutlich versehentlich; Entscheid Ingo
+2026-10-22: nicht wiederherstellen; Abruf `git show 835b317^:TrafagSalesExporter/docs/raw_md_archive/<Datei>`):
+`LASTCHANGE_ARCHIV_bis_2026-07-12.md`, `LASTCHANGE_ARCHIV_2026-07-13_bis_2026-07-30.md`,
+`RAG_ROUTER_ARCHIV_2026-07-31.md`, `RAG_KURZDATEIEN_ARCHIV_ueberholte_eintraege.md`,
+`HISTORY_CANONICAL.md.raw`, `original_history_raws.zip`. Inhalt je Datei in `docs/archiv/README.md`.
 
 ## Ausserhalb der Fachdokumentation
 
 | Datei | Warum hier |
 | --- | --- |
 | `whisper/README.md`, `whisper/ANLEITUNG.md`, `whisper/HANDOFF.md` | Transkriptionswerkzeug, kein Projektwissen; nicht versioniert |
-| `docs/rag/init.md` | lokale Hilfsdatei, nicht versioniert |
 | `Tools/BahnmarktDeWorkbook/README.md`, `Tools/BahnWorkbookDb4/README.md`, `Tools/DeCustomerBackfill/README.md`, `Tools/DeCustomerMapping/README.md`, `Tools/Qdrant/README.md` | Bedienungsanleitungen der Werkzeuge, kein Fachstand |
 | `whisper/python/Lib/site-packages/**` | Fremdcode, 33 Lizenz- und Vorlagendateien |
 

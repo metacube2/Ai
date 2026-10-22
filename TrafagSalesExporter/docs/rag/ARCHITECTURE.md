@@ -154,7 +154,7 @@ vorher in `docs/AGENT_COORDINATION.md` abstimmen.
 
 - Diagramme: `docs/PROGRAMM_DIAGRAMME.md`
 - Produktmapping: `docs/rag/PRODUCT_MAPPING.md`
-- technischer Handoff und alter LLM-Systemkontext: `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`
+- technischer Handoff und alter LLM-Systemkontext: `HISTORY_CANONICAL.md.raw`, nur noch in Git (`docs/archiv/README.md`)
 
 - MENUE-HERVORHEBUNG (2026-10-13/16): `NavMenuNode.razor` ordnet Menueschluessel CSS-Klassen zu (`.nav-hl`, `nav-hl-r1..r5` gedeckte Rottoene je Hauptbereich, `nav-hl-home` pulsiert, `nav-hl-grey`/`nav-hl-admin`), Animationen in `app.css`, `prefers-reduced-motion` beachtet.
 - STUECKLISTEN-GEHIRN (2026-10-16): `Components/Pages/PurchasingBomBrain.razor` zuoberst im Spend-Aufriss, Daten `Services/Logistics/BomBrainGraph.cs` (aus `BomInheritanceService` + `PurchasingMaterialLzCache`), Darstellung `wwwroot/js/bombrain.js` mit three.js (ein Linien-, ein Punktpuffer, feste Anordnung). Keine Registrierung in `Program.cs` noetig.

@@ -40,7 +40,8 @@ beantwortet es **nicht** — dafuer gilt das Issue-Log.
 - Das frueher hier gefuehrte ChatGPT-Rohprotokoll `projektmanagement/kontext.txt` ist
   entfernt. Es hatte am 2026-08-14 zwei Punkte falsch als offen gefuehrt. Gueltig ist
   `projektmanagement/PROJEKTSTATUS.md`.
-- Historie liegt in `docs/raw_md_archive/` und ist **kein** Sollstand.
+- Historie liegt in `docs/archiv/` (seit 2026-10-22; das aeltere `docs/raw_md_archive/` nur noch
+  in Git, siehe `docs/archiv/README.md`) und ist **kein** Sollstand.
 
 ## Vollstaendigkeit
 

@@ -86,7 +86,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md`.
 - Aktuelle fachliche Detailstaende und offene Punkte stehen ausschliesslich in
   den Themen-Kurzdateien und im kanonischen Live-Abgleich; alte Deploy-Nachweise
-  stehen in `lastchange.md` beziehungsweise `docs/raw_md_archive/`.
+  stehen in `lastchange.md` beziehungsweise `docs/archiv/` (seit 2026-10-22).
 - Management-/Roadmap-Doku neu: `docs/INGO_TODOS_180_TAGE_2026-06-18.docx`, Quelle `docs/INGO_TODOS_180_TAGE_2026-06-18.md`. Sie beschreibt Ingos 180-Tage-Fokus: Sales Management Cockpit/Data-Lake als Prioritaet 1, HR Dashboard und Einkaufs Dashboard als Prioritaet 2/3, Q3/Q4-Meilensteine, Abhaengigkeiten, Risiken und naechste Schritte.
 - Abgrenzung fuer 180 Tage: S/4HANA Compatibility Check/RPC-/RFC-Themen bleiben bei Lucas; Infrastruktur/Security/Server/Netzwerk bleiben bei Alex/Ramon/Upgreat. Ingo bleibt bei Analytics, BI, Reporting-/Z-Funktionsbezug und .NET/ASP-Webseiten.
 - Wichtig DE/Sparten: Alphaplan `ArtikelNummer` wird als lokale Materialnummer importiert, aber nicht als garantiert identische TR-AG-/SAP-`MATNR` normalisiert. Nicht gematchte Nummern erscheinen weiterhin als `Nicht im TR-AG-Stamm`.
@@ -107,7 +107,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Rohquellen Nur Bei Bedarf
 
-- kanonische Detailhistorie: `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`, seit `835b317`
-  (2026-09-01) nicht mehr im Arbeitsbaum, nur ueber `git show 835b317^:...` erreichbar
-- exakte Originaldateien zur Wiederherstellung: `docs/raw_md_archive/original_history_raws.zip`
+- kanonische Detailhistorie `HISTORY_CANONICAL.md.raw` und Originaldateien `original_history_raws.zip`:
+  seit `835b317` (2026-09-01) nur noch in Git, Entscheid Ingo 2026-10-22 nicht wiederherstellen;
+  Abruf und Inhalt in `docs/archiv/README.md`. Neue Archive seit 2026-10-22 unter `docs/archiv/`
 - Dokumentstatus: `baum.md`

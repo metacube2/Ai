@@ -10,7 +10,7 @@ juengste direkt gepruefte Beleg zum jeweiligen Thema.
 
 Formeln/Mechanik: `docs/rag/FINANCE_FORMELN.md`. Historische Messungen und
 ersetzte Zwischenstaende stehen in den Detaildokumenten und in
-`docs/raw_md_archive/`.
+`docs/archiv/` (aelter als 2026-07-30 nur noch in Git, `docs/archiv/README.md`).
 
 ## Kurzstand
 
@@ -340,4 +340,4 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - IT Detail: `docs/FINANCE_IT_VORGEHEN_2026-05-18.md`
 - UK Korrektur: `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md`
 - ES Detail: `docs/STANDORT_ES_SAGE.md`
-- alter Finance-Handoff: `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`
+- alter Finance-Handoff: `HISTORY_CANONICAL.md.raw`, nur noch in Git (`docs/archiv/README.md`)
