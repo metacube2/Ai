@@ -174,6 +174,10 @@ public class DatabaseSeedService : IDatabaseSeedService
             var existing = db.NavigationMenuItems.FirstOrDefault(x => x.Key == item.Key);
             if (existing is null)
             {
+                // Handbestellwesen 2026-10-22: erst sichtbar, wenn die Altdaten importiert sind; Ingo blendet es unter
+                // Admin > Menuestruktur ein. Danach entscheidet nur noch die Menuestruktur.
+                if (item.Key == "handbestellwesen")
+                    item.IsVisible = false;
                 db.NavigationMenuItems.Add(item);
                 changed = true;
                 continue;
@@ -302,6 +306,31 @@ public class DatabaseSeedService : IDatabaseSeedService
 
         if (changed)
             db.SaveChanges();
+
+        HideUnclearPurchasingViewsOnce(db);
+    }
+
+    /// <summary>Unsichtbarer Merker: die Ausblendung vom 2026-10-22 ist erledigt und wird nicht wiederholt.</summary>
+    internal const string PurchasingFeedbackHideMarkerKey = "migration-2026-10-22-einkauf-ausblenden";
+
+    /// <summary>Feedback Erich/Sandro/Marco 2026-10-22 (Auftrag Ingo): bis zum Zwischenstand Ende Oktober zeigt das
+    /// Einkaufs-Dashboard nur, was belastbar ist. Bestellbedarf & Deckung und Materialabhaengigkeit lesen den
+    /// Verwendungs-Cache, der produktiv nur 86 Zeilen zu 5 Materialien hat; "Interaktiv" konnte niemand deuten.
+    /// Einmalig ausgeblendet; ein Admin kann sie unter Menuestruktur wieder einblenden, ohne dass der Start sie erneut versteckt.</summary>
+    private static void HideUnclearPurchasingViewsOnce(AppDbContext db)
+    {
+        if (db.NavigationMenuItems.Any(x => x.Key == PurchasingFeedbackHideMarkerKey))
+            return;
+        foreach (var key in new[] { "purchasing-coverage", "purchasing-material-dependency", "purchasing-interactive" })
+        {
+            var item = db.NavigationMenuItems.FirstOrDefault(x => x.Key == key);
+            if (item is not null)
+                item.IsVisible = false;
+        }
+        var marker = Link(PurchasingFeedbackHideMarkerKey, "finance-admin", "Merker Einkauf-Ausblendung 2026-10-22", "Marker purchasing hide 2026-10-22", "Settings", string.Empty, 999);
+        marker.IsVisible = false;
+        db.NavigationMenuItems.Add(marker);
+        db.SaveChanges();
     }
 
     private static List<NavigationMenuItem> BuildDefaultNavigationMenuItems() =>

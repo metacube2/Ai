@@ -80,6 +80,28 @@ public class NavigationMenuSeedTests
         Assert.Contains(db.NavigationMenuItems, x => x.Key == "user-manual" && x.ParentKey == null && x.Href == "handbuch");
     }
 
+    // Feedback Einkauf 2026-10-22: unklare Ansichten einmalig ausblenden, ein Admin kann sie wieder einblenden.
+    [Fact]
+    public void SeedDefaults_Blendet_Unklare_Einkaufsansichten_Einmalig_Aus()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using var db = new AppDbContext(options);
+        db.Database.EnsureCreated();
+        var seed = new DatabaseSeedService();
+        seed.SeedDefaults(db);
+
+        foreach (var key in new[] { "purchasing-coverage", "purchasing-material-dependency", "purchasing-interactive" })
+            Assert.False(db.NavigationMenuItems.Single(x => x.Key == key).IsVisible);
+        Assert.True(db.NavigationMenuItems.Single(x => x.Key == "purchasing-delivery-performance").IsVisible);
+
+        db.NavigationMenuItems.Single(x => x.Key == "purchasing-interactive").IsVisible = true;
+        db.SaveChanges();
+        seed.SeedDefaults(db);
+        Assert.True(db.NavigationMenuItems.Single(x => x.Key == "purchasing-interactive").IsVisible);
+    }
+
     private static readonly string[] AdminChildKeys =
     [
         "admin-sessions",

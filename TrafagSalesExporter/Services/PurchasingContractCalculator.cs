@@ -42,7 +42,12 @@ public sealed record PurchasingContractRow(
     decimal OpenValueChf,
     DateTime? ValidTo,
     bool IsExpired,
-    bool MissingRate);
+    bool MissingRate,
+    string? SupersededBy = null)
+{
+    /// <summary>Nie abgerufen, waehrend eine gleichartige Position desselben Kontrakts voll abgerufen ist (Feedback Sandro 2026-10-22).</summary>
+    public bool IsSuperseded => SupersededBy is not null;
+}
 
 public sealed record PurchasingContractSummary(
     decimal TotalChf,
@@ -51,7 +56,9 @@ public sealed record PurchasingContractSummary(
     int ExpiredContractCount,
     int ItemCount,
     int ExpiredItemCount,
-    int MissingRateItemCount)
+    int MissingRateItemCount,
+    decimal SupersededChf = 0m,
+    int SupersededItemCount = 0)
 {
     public static PurchasingContractSummary Empty { get; } = new(0m, 0m, 0, 0, 0, 0, 0);
 }
@@ -217,12 +224,59 @@ public static class PurchasingContractCalculator
             rows.Add(Calculate(item, today));
         }
 
+        rows = MarkSuperseded(rows);
         return new PurchasingContractEvaluation(rows, Summarize(rows), otherType, otherCompany);
+    }
+
+    /// <summary>
+    /// Feedback Sandro 2026-10-22, Kontrakt 46009671: Pos. 10 (AE16062) nie abgerufen, Pos. 20 (E16062, verkuerzte
+    /// Nummer) voll abgerufen. In SAP ist Pos. 10 weder geloescht noch gesperrt, ME3L zeigt sie als offen; wirtschaftlich
+    /// ist sie ersetzt. Regel: Position ohne jeden Abruf, wenn im selben Kontrakt eine andere Position mit gleichem Text
+    /// oder gleicher Materialnummer bis auf einen vorangestellten Buchstaben ihre Zielmenge erreicht hat. Solche
+    /// Positionen zaehlen nicht zum offenen Wert, sondern werden getrennt ausgewiesen (in SAP loeschen lassen).
+    /// </summary>
+    public static List<PurchasingContractRow> MarkSuperseded(List<PurchasingContractRow> rows)
+    {
+        var byContract = rows.GroupBy(row => row.Ebeln, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
+        var result = new List<PurchasingContractRow>(rows.Count);
+        foreach (var row in rows)
+        {
+            PurchasingContractRow? successor = null;
+            if (row.CalledQuantity == 0m && row.TargetQuantity > 0m)
+            {
+                successor = byContract[row.Ebeln].FirstOrDefault(other =>
+                    !string.Equals(other.Ebelp, row.Ebelp, StringComparison.OrdinalIgnoreCase) &&
+                    other.TargetQuantity > 0m &&
+                    other.CalledQuantity >= other.TargetQuantity &&
+                    (SameText(other.Text, row.Text) || SameMaterialBase(other.Matnr, row.Matnr)));
+            }
+            result.Add(successor is null ? row : row with { SupersededBy = $"{successor.Ebelp} {successor.Matnr}".Trim() });
+        }
+        return result;
+    }
+
+    private static bool SameText(string a, string b)
+        => !string.IsNullOrWhiteSpace(a) && string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Gleich, oder gleich bis auf einen vorangestellten Buchstaben (AE16062 / E16062).</summary>
+    private static bool SameMaterialBase(string a, string b)
+    {
+        a = (a ?? string.Empty).Trim();
+        b = (b ?? string.Empty).Trim();
+        if (a.Length == 0 || b.Length == 0)
+            return false;
+        if (a.Equals(b, StringComparison.OrdinalIgnoreCase))
+            return true;
+        static bool Stripped(string longer, string shorter)
+            => longer.Length == shorter.Length + 1 && char.IsLetter(longer[0]) && longer[1..].Equals(shorter, StringComparison.OrdinalIgnoreCase);
+        return Stripped(a, b) || Stripped(b, a);
     }
 
     public static PurchasingContractSummary Summarize(IReadOnlyCollection<PurchasingContractRow> rows)
     {
-        var open = rows.Where(row => row.OpenValueChf > 0m).ToList();
+        var superseded = rows.Where(row => row.IsSuperseded && row.OpenValueChf > 0m).ToList();
+        var open = rows.Where(row => row.OpenValueChf > 0m && !row.IsSuperseded).ToList();
         var expired = open.Where(row => row.IsExpired).ToList();
         return new PurchasingContractSummary(
             open.Sum(row => row.OpenValueChf),
@@ -231,6 +285,8 @@ public static class PurchasingContractCalculator
             expired.Select(row => row.Ebeln).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
             open.Count,
             expired.Count,
-            rows.Count(row => row.MissingRate));
+            rows.Count(row => row.MissingRate),
+            superseded.Sum(row => row.OpenValueChf),
+            superseded.Count);
     }
 }

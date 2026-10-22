@@ -2,6 +2,15 @@
 
 Stand: 2026-10-22
 
+## Einkauf: Feedback Erich/Sandro/Marco umgesetzt, 2026-10-22
+
+- Kontraktpositionen „vermutlich ersetzt“ (46009671 Pos. 10, insgesamt 4 Pos. CHF 1,29 Mio.) nicht mehr im offenen Wert;
+  Filter abgelaufene Kontrakte; Altposten (Textpositionen, Termin > 1 Jahr vorbei, 168 Pos. CHF 3,1 Mio.) nicht mehr
+  offen/ueberfaellig; Hinweis „Zeitraum nicht angewendet“ und „Rechnet“; Lagerwert je Disponent; Top-Spend-Zeile weg;
+  Bestellbedarf & Deckung, Materialabhaengigkeit, Interaktiv ausgeblendet (Verwendungs-Cache nur 5 Materialien),
+  „Gehirn“ eingeklappt. Reiter Handbestellwesen wird unsichtbar angelegt. Suite 1279/1279.
+  `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-10-22.
+
 ## Einkauf: Handbestellwesen lebt weiter, Nutzung wird festgehalten, 2026-10-22
 
 - Entscheid nach der Sitzung (Ingo): weiterbetreiben, aber festhalten, wer es wann wie viel braucht. Modul ergaenzt:

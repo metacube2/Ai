@@ -35,6 +35,46 @@ public class PurchasingContractTests : IDisposable
         => new("4600000001", "10", bukrs, bsart, "L1", "Lieferant", "M1", "Text", "ST", currency, rate,
             validTo, deletion, target, netPrice, priceUnit, called);
 
+    // ---------- Ersetzte Positionen (Feedback Sandro 2026-10-22, Kontrakt 46009671) ----------
+
+    [Fact]
+    public void Evaluate_Nie_Abgerufene_Position_Neben_Voll_Abgerufener_Gleichartiger_Zaehlt_Nicht_Als_Offen()
+    {
+        var today = new DateTime(2026, 10, 22);
+        var items = new[]
+        {
+            new PurchasingContractItem("46009671", "00010", "1100", "MK", "66961", "MICRO CRYSTAL SA", "AE16062", "QUARZ SENSOR", "ST", "CHF", 1m, new DateTime(2026, 6, 30), "", 100000m, 5.10m, 1m, 0m),
+            new PurchasingContractItem("46009671", "00020", "1100", "MK", "66961", "MICRO CRYSTAL SA", "E16062", "QUARZ SENSOR", "ST", "CHF", 1m, new DateTime(2026, 6, 30), "", 90000m, 5.10m, 1m, 94306m),
+            // Anderer Kontrakt mit nie abgerufener Position, aber ohne Nachfolger: bleibt offen.
+            new PurchasingContractItem("46000002", "00010", "1100", "MK", "1", "X", "M9", "Anderes", "ST", "CHF", 1m, null, "", 10m, 2m, 1m, 0m),
+        };
+
+        var evaluation = PurchasingContractCalculator.Evaluate(items, today);
+
+        var replaced = evaluation.Rows.Single(row => row.Ebelp == "00010" && row.Ebeln == "46009671");
+        Assert.True(replaced.IsSuperseded);
+        Assert.Equal("00020 E16062", replaced.SupersededBy);
+        Assert.Equal(20m, evaluation.Summary.TotalChf);
+        Assert.Equal(510000m, evaluation.Summary.SupersededChf);
+        Assert.Equal(1, evaluation.Summary.SupersededItemCount);
+    }
+
+    [Fact]
+    public void Evaluate_Teilweise_Abgerufene_Nachbarposition_Ersetzt_Nicht()
+    {
+        // 46009450: gleiches Material in drei Positionen, Pos. 10 erst teilweise abgerufen -> keine Ersetzung.
+        var items = new[]
+        {
+            new PurchasingContractItem("46009450", "00010", "1100", "MK", "1", "X", "E11155", "T", "ST", "CHF", 1m, null, "", 219375m, 1m, 1m, 120000m),
+            new PurchasingContractItem("46009450", "00020", "1100", "MK", "1", "X", "E11155", "T", "ST", "CHF", 1m, null, "", 146160m, 1m, 1m, 0m),
+        };
+
+        var evaluation = PurchasingContractCalculator.Evaluate(items, new DateTime(2026, 10, 22));
+
+        Assert.DoesNotContain(evaluation.Rows, row => row.IsSuperseded);
+        Assert.Equal(0m, evaluation.Summary.SupersededChf);
+    }
+
     // ---------- Rechenregeln ----------
 
     [Theory]

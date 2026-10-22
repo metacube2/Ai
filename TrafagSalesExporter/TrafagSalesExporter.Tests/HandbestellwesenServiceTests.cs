@@ -196,6 +196,7 @@ public sealed class HandbestellwesenServiceTests : IDisposable
         var item = db.NavigationMenuItems.Single(x => x.Key == "handbestellwesen");
         Assert.Null(item.ParentKey);
         Assert.Equal("handbestellwesen", item.Href);
+        Assert.False(item.IsVisible); // erst nach dem Datenimport einblenden
     }
 
     private sealed class Factory(string verbindung) : IDbContextFactory<HbDbContext>

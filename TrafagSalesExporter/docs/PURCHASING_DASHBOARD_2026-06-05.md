@@ -1292,3 +1292,25 @@ Tests, NuGet-Audit ohne bekannte Schwachstelle sowie produktiver Deploy am 2026-
 ## Nachtrag 2026-10-13: Standardzeitraum laufendes Jahr
 
 Wunsch Ingo: `/einkauf` oeffnet immer mit Januar des laufenden Kalenderjahres bis zum aktuellen Monat (heute 01.2026 bis 10.2026), ab 01.01.2027 automatisch 01.2027. `PurchasingDashboardFilter.Default(today)` liefert den 01.01. des Jahres; die Seite leitet `BuildDefaultFromMonth` daraus ab, damit die Vorwaermung im Hintergrund denselben Schluessel trifft. Der feste Jahresdeckel 2026 in `BuildCurrentFilter`/`ClampMonth` ist entfernt, er haette ab 2027 nur noch bis Dezember 2026 gerechnet. Der Knopf „2020 bis heute“ setzt jetzt ausdruecklich 2020-01 bis heute (vorher Ruecksprung auf den Standard). Folge: Mehrjahresansichten wie „Bestellwert nach Lieferant und Jahr“ zeigen standardmaessig nur das laufende Jahr. Commit `4b9ebb1`, produktiv 2026-10-13, geprueft: Seite zeigt 01.2026 bis 10.2026, 6'101 Bestellungen.
+
+## Nachtrag 2026-10-22: Feedback Erich, Sandro, Marco umgesetzt (Auftrag Ingo „setze alles um“)
+
+Quelle: `Feedback Dashboard_20261022.docx` (Repo-Wurzel, nicht committet), Sitzung `docs/EINKAUF_SITZUNG_2026-10-22.md`.
+Befunde gegen eine Kopie der Produktiv-DB vom 22.10. 12:47 (nur lesend).
+
+| Wer | Feedback | Befund | Umsetzung |
+| --- | --- | --- | --- |
+| Sandro | Kontrakt 46009671 Micro Crystal „kpl. bezogen“, Dashboard zeigt 0 abgerufen / 100'000 offen | Pos. 10 `AE16062` (100'000) nie abgerufen, Pos. 20 `E16062` (verkuerzte Nummer, 90'000) mit 94'306 abgerufen. Pos. 10 hat in SAP kein Loeschkennzeichen, ME3L zeigt sie offen. 4 solche Positionen, CHF 1,29 Mio. | Regel `PurchasingContractCalculator.MarkSuperseded`: nie abgerufen + andere Position desselben Kontrakts mit gleichem Text oder gleicher Nummer bis auf einen vorangestellten Buchstaben hat ihre Zielmenge erreicht -> „vermutlich ersetzt“, nicht im offenen Wert, getrennt ausgewiesen (Hinweis „in SAP loeschen lassen“). Erklaert einen Teil von Armins Abweichung zu ME3L (Todo 88). |
+| Erich | Filter fuer abgelaufene Kontrakte | - | Umschalter „Groesste offene / Nur abgelaufene / Vermutlich ersetzt“ ueber der Kontrakttabelle, abgelaufene vollstaendig statt Top 10 |
+| Marco, Erich | Ueberfaellig 241 Pos. / CHF 3,5 Mio. zu hoch, Lieferperformance mit alten Daten | Ueberfaellig: Material 34 Pos. CHF 0,15 Mio.; Textpositionen < 1 Jahr 42 Pos. CHF 0,33 Mio.; **Textpositionen > 1 Jahr 168 Pos. CHF 3,1 Mio.** (z. B. „probe card“ 2023) | Textposition ohne Material mit Liefertermin > 365 Tage vorbei = **Altposten**: nicht offen, nicht ueberfaellig, auch nicht in der Lieferperformance; Zeile „Altposten (nicht eingerechnet)“ mit Anzahl und Wert. `PurchasingDashboardService.StaleTextItemSql`. Senkt offenen Bestellwert und ueberfaelligen Wert. |
+| Erich | „100 %“, Zahlen springen nach 1 Min | Datumsfelder geaendert, aber nicht angewendet; Kacheln nannten schon den neuen Zeitraum, rechneten mit dem alten | Beschriftung immer der angewendete Zeitraum; Warnung „Zeitraum geaendert, aber noch nicht angewendet“; Ring zeigt waehrend der Berechnung „Rechnet“; Hinweis „bis zu 2 Minuten“ |
+| Erich | Lagerwert je Disponent 001-005 | Verlauf ist je Disponent gespeichert | Tabelle „Je Disponent“ unter dem Wochenverlauf, Wert und Veraenderung zur Vorwoche |
+| Erich | „Top Spend Lieferant“ bringt nichts | wiederholt das Diagramm | Zeile entfernt |
+| Erich, Marco | Bestellbedarf & Deckung zeigt 0; Materialabhaengigkeit unklar | `MaterialUsageCache` produktiv nur 86 Zeilen / 5 Materialien (alter Teststand) | Menuepunkte einmalig ausgeblendet (Merker `migration-2026-10-22-einkauf-ausblenden`, Admin kann wieder einblenden). Reparatur = Ladejob fuer alle Komponenten, spaeter |
+| Erich | Interaktiv, „Gehirn“: was sagt das aus? | - | Interaktiv ausgeblendet (wie oben); „Gehirn“ im Spend-Aufriss eingeklappt hinter „Stuecklisten-Netz (Prototyp) anzeigen“ |
+| Marco | Lieferanten-Ansicht sagt nichts | - | geht in die Lieferantenbewertung ein (Todo 122) |
+| Marco | Spend-Aufriss meistgenutzt | - | bleibt |
+| Sandro | Zeitraum „nur bis 2026“ | unklar: frueher als 2020 oder Zukunft? | **Rueckfrage an Sandro offen** |
+
+Tests: Kontrakt-Ersetzung (2), Altposten (1), Ausblendung einmalig (1), Handbestellwesen-Reiter unsichtbar; Uebersetzungen
+fuer 15 neue Texte in allen Sprachen. Suite 1279/1279.

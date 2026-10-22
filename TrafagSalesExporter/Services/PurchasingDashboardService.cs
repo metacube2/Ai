@@ -75,10 +75,15 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         {
             var days = await _stockValueStore.LoadHistoryAsync(PurchasingValuationArea, cancellationToken);
             state.StockValueWeeklyHistory = StockValueHistory.ToWeekly(days, PurchasingPlanners).ToList();
+            // Feedback Erich 2026-10-22: Verlauf auch je Disponent, weil z. B. 004 Ware fuehrt, die nicht in Produkte geht.
+            state.StockValueWeeklyByPlanner = PurchasingPlanners.ToDictionary(
+                planner => planner,
+                planner => StockValueHistory.ToWeekly(days, [planner]).ToList());
         }
         catch (Exception)
         {
             state.StockValueWeeklyHistory = [];
+            state.StockValueWeeklyByPlanner = [];
         }
     }
 
@@ -344,7 +349,7 @@ FROM PurchasingContractCache;";
                 return;
 
             var evaluation = PurchasingContractCalculator.Evaluate(items, DateTime.Today);
-            var openRows = evaluation.Rows.Where(row => row.OpenValueChf > 0m).ToList();
+            var openRows = evaluation.Rows.Where(row => row.OpenValueChf > 0m && !row.IsSuperseded).ToList();
             state.ContractDataAvailable = true;
             state.ContractDataLoadedAtUtc = loadedAt;
             state.QuantityContractOpenValueChf = evaluation.Summary.TotalChf;
@@ -359,6 +364,16 @@ FROM PurchasingContractCache;";
                 .OrderByDescending(row => row.OpenValueChf)
                 .Take(ContractTopRowCount)
                 .ToList();
+            // Feedback 2026-10-22: Filter "nur abgelaufene" (Erich) und getrennt ausgewiesene ersetzte Positionen (Sandro).
+            state.QuantityContractExpiredRows = openRows
+                .Where(row => row.IsExpired)
+                .OrderByDescending(row => row.OpenValueChf)
+                .ToList();
+            state.QuantityContractSupersededRows = evaluation.Rows
+                .Where(row => row.IsSuperseded && row.OpenValueChf > 0m)
+                .OrderByDescending(row => row.OpenValueChf)
+                .ToList();
+            state.QuantityContractSupersededValueChf = evaluation.Summary.SupersededChf;
             state.QuantityContractSupplierRows = openRows
                 .GroupBy(row => row.Supplier, StringComparer.OrdinalIgnoreCase)
                 .Select(group => new PurchasingLiveChartPoint(group.Key, group.Sum(row => row.OpenValueChf)))
@@ -377,6 +392,10 @@ FROM PurchasingContractCache;";
             state.ContractDataAvailable = false;
         }
     }
+
+    /// <summary>Textposition ohne Material, deren Liefertermin mehr als ein Jahr zurueckliegt (Altposten, nicht offen).</summary>
+    internal static string StaleTextItemSql(string itemAlias, string scheduleAlias)
+        => $"(TRIM(COALESCE({itemAlias}.Matnr, '')) = '' AND date({scheduleAlias}.Eindt) < date('now', 'localtime', '-365 day'))";
 
     private static async Task<bool> TryLoadCacheStateAsync(AppDbContext db, PurchasingDashboardLiveState state, PurchasingDashboardFilter filter, CancellationToken cancellationToken)
     {
@@ -397,7 +416,10 @@ FROM PurchasingContractCache;";
         // das Kennzeichen als 'True'/'False', nicht als 'X' (Befund 2026-10-05: der Ausschluss griff nie);
         // da alle Offen-Queries EKPO als p joinen, ist der Ausschluss hier zentral eingehaengt.
         var endDelivered = filter.ExcludeEndDelivered ? " AND COALESCE(p.Elikz, '') NOT IN ('X', 'True', '1')" : string.Empty;
-        var eketOpenPeriod = $"1 = 1{endDelivered}";
+        // Feedback Marco/Erich 2026-10-22: 168 Textpositionen ohne Material, Liefertermin ueber ein Jahr vorbei, nie
+        // geliefert, machten CHF 3,1 Mio. des ueberfaelligen Werts aus. Sie zaehlen nicht mehr als offen, sondern als
+        // Altposten (StaleText*), damit der Einkauf sie in SAP endliefert oder loescht.
+        var eketOpenPeriod = $"1 = 1{endDelivered} AND NOT {StaleTextItemSql("p", "e")}";
         // Ueberfaellig: offene Einteilung, deren Liefertermin bereits in der Vergangenheit liegt.
         var eketOverduePeriod = $"{eketOpenPeriod} AND date(e.Eindt) < date('now', 'localtime')";
         // Zwei Positionsfilter (beide inkl. Belegtyp-Trennung auf k):
@@ -491,6 +513,21 @@ FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
 WHERE " + openItemFilter + " AND " + eketOverduePeriod + @"
+  AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
+        state.StaleTextPositionCount = await ExecuteScalarIntAsync(conn, @"
+SELECT COUNT(DISTINCT e.Ebeln || '|' || e.Ebelp)
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
+WHERE " + openItemFilter + " AND 1 = 1" + endDelivered + " AND " + StaleTextItemSql("p", "e") + @"
+  AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
+        state.StaleTextValueChf = await ExecuteScalarDecimalAsync(conn, @"
+SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+    " + ChfUnitPriceSql() + @"), 0)
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
+WHERE " + openItemFilter + " AND 1 = 1" + endDelivered + " AND " + StaleTextItemSql("p", "e") + @"
   AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
         state.OverduePositionRows = await ExecuteAnalysisRowsAsync(conn, @"
 SELECT

@@ -38,6 +38,9 @@ Idee: **Bewertung selbst in SAP (Fiori), alles rundherum im Dashboard.**
 - **Ingo braucht dafuer:** Datenquellen, also SAP-Tabellen oder Transaktionen, in denen die Werte stehen.
 - Spannung zu Punkt 1 (keine neuen Funktionen bis Ende Oktober): der Pilot gehoert in die Zeit danach, Termin offen.
 
+**Nachtrag 22.10.:** Feedbackliste erhalten (`Feedback Dashboard_20261022.docx`) und umgesetzt, Einzelheiten
+`docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-10-22. Offen: Rueckfrage an Sandro zum Zeitraum.
+
 ## 3. Handbestellwesen
 
 - Anlass: **Vorfall am 21.10.**; die PHP-Anwendung ist so alt, dass sie sich sicherheitstechnisch nicht mehr halten

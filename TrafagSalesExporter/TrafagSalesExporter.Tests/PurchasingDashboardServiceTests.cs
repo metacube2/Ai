@@ -265,6 +265,27 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_Alte_Textposition_Zaehlt_Als_Altposten_Nicht_Als_Offen()
+    {
+        // Feedback Marco 2026-10-22: alte Textpositionen ohne Wareneingang blaehten den ueberfaelligen Wert auf.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, LastLoadedAtUtc) VALUES ('T1', '2022-06-01', 'L1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Menge, Netwr, LastLoadedAtUtc) VALUES ('T1', '10', '', 'probe card', '1', '700', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Menge, Netwr, LastLoadedAtUtc) VALUES ('T1', '20', 'M1', 'Material', '1', '50', '2026-01-01');");
+        // Textposition, Termin weit ueber ein Jahr vorbei -> Altposten.
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('T1', '10', '1', '2022-06-02', '1', '0', '2026-01-01');");
+        // Materialposition mit gleichem alten Termin bleibt ueberfaellig.
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('T1', '20', '1', '2022-06-02', '1', '0', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2022, 1, 1), new DateTime(2022, 12, 31)));
+
+        Assert.Equal(50m, state.OpenValueSample);
+        Assert.Equal(50m, state.OverdueValueSample);
+        Assert.Equal(1, state.OverduePositionCount);
+        Assert.Equal(1, state.StaleTextPositionCount);
+        Assert.Equal(700m, state.StaleTextValueChf);
+    }
+
+    [Fact]
     public async Task LoadAsync_ArticlePriceTrend_Computes_YoY_Trend_Per_Article()
     {
         // Phase 1.2: Preisentwicklung je Artikel = mengengewichteter Ø-Stueckpreis je Jahr mit

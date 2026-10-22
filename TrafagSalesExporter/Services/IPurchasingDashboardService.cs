@@ -71,6 +71,9 @@ public sealed class PurchasingDashboardLiveState
     public int QuantityContractOtherDocTypeItemCount { get; set; }
     public int QuantityContractOtherCompanyItemCount { get; set; }
     public List<PurchasingContractRow> QuantityContractTopRows { get; set; } = [];
+    public List<PurchasingContractRow> QuantityContractExpiredRows { get; set; } = [];
+    public List<PurchasingContractRow> QuantityContractSupersededRows { get; set; } = [];
+    public decimal QuantityContractSupersededValueChf { get; set; }
     public List<PurchasingLiveChartPoint> QuantityContractSupplierRows { get; set; } = [];
     // Volumen (CHF) je Lebenszyklus-Code (MARA-ZZLZCOD) und Sortiments-Code (MARA-ZZLZCODSORT),
     // Materialien ohne Code als "ohne Code". Quelle EinkMatLzSet -> PurchasingMaterialLzCache.
@@ -81,6 +84,9 @@ public sealed class PurchasingDashboardLiveState
     public decimal OverdueValueSample { get; set; }
     public decimal OverdueQuantitySample { get; set; }
     public int OverduePositionCount { get; set; }
+    /// <summary>Altposten: Textpositionen ohne Material, Liefertermin ueber ein Jahr vorbei; nicht in offen/ueberfaellig.</summary>
+    public int StaleTextPositionCount { get; set; }
+    public decimal StaleTextValueChf { get; set; }
     // Lagerwert der Einkaufsteile (MBEW-SALK3, abgegrenzt auf die Einkaufsdisponenten).
     // Wunsch von Armin, siehe docs/EINKAUF_LAGERWERT_2026-08-18.md.
     //
@@ -105,6 +111,8 @@ public sealed class PurchasingDashboardLiveState
     // summiert. Gesammelt ab dem Deploy; der erste Punkt ist der dann gespeicherte Kachelstand
     // und kann aelter sein. Davor gibt es keine Punkte.
     public List<StockValueWeekPoint> StockValueWeeklyHistory { get; set; } = [];
+    /// <summary>Wochenverlauf je Disponent 001-005 (Feedback Erich 2026-10-22).</summary>
+    public Dictionary<string, List<StockValueWeekPoint>> StockValueWeeklyByPlanner { get; set; } = [];
     public string TopSupplierLabel { get; set; } = string.Empty;
     public string TopMaterialGroupLabel { get; set; } = string.Empty;
     public string TopArticleLabel { get; set; } = string.Empty;

@@ -560,6 +560,7 @@ JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE CAST(e.Menge AS REAL) > CAST(e.Wemng AS REAL)
   AND COALESCE(p.Loekz, '') = '' AND COALESCE(p.Elikz, '') NOT IN ('X', 'True', '1')
+  AND NOT {PurchasingDashboardService.StaleTextItemSql("p", "e")}
   AND COALESCE(p.Mstae, '') NOT IN ('98', '99')
   AND (COALESCE(k.Bstyp, '') = '' OR (k.Bstyp = 'F' AND COALESCE(k.Bsart, '') <> 'UB'))
 GROUP BY CASE WHEN ltrim(upper(trim(p.Matnr)), '0') = '' THEN '0' ELSE ltrim(upper(trim(p.Matnr)), '0') END, Supplier;";

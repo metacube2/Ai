@@ -59,8 +59,16 @@
     <div class="purchasing-hero-metrics">
         <div class="purchasing-radar" style="@BuildReadinessDonutStyle()">
             <div>
-                <strong>@DataReadinessPercent.ToString("N0")%</strong>
-                <span>@T("Geladen", "Loaded")</span>
+                @if (_liveLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                    <span>@T("Rechnet", "Calculating")</span>
+                }
+                else
+                {
+                    <strong>@DataReadinessPercent.ToString("N0")%</strong>
+                    <span>@T("Geladen", "Loaded")</span>
+                }
             </div>
         </div>
         <div class="purchasing-hero-note">
@@ -83,7 +91,7 @@
                    "Ordered values and supplier count use the order date (EKKO.BEDAT). Open values include all years; stock value has its own load timestamp.")
             </MudText>
         </div>
-        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@FilterLabel</MudChip>
+        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@AppliedFilterLabel</MudChip>
     </MudStack>
     <div class="purchasing-filter-grid">
         <MudDatePicker Date="@GetFilterFromDate()"
@@ -119,10 +127,17 @@
         {
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="purchasing-filter-loading">
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
-                <MudText Typo="Typo.body2" Color="Color.Primary">@T("Laedt...", "Loading...")</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Primary">@T("Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern.", "Calculating... a new period can take up to 2 minutes.")</MudText>
             </MudStack>
         }
     </div>
+    @if (FilterPending)
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+            @T("Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin", "Period changed but not applied yet. The figures still show")
+            <strong>@_appliedFilterLabel</strong>. @T("Bitte „Anwenden“ druecken.", "Please press \"Apply\".")
+        </MudAlert>
+    }
 </MudPaper>
 
 @if (_showingPreviousData)
@@ -329,10 +344,30 @@
                         }
                     </div>
                 }
-                @if (_liveState.QuantityContractTopRows.Count > 0)
+                @if (_liveState.QuantityContractSupersededRows.Count > 0)
                 {
-                    <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">@T("Groesste offene Kontraktpositionen", "Largest open contract items")</MudText>
-                    <MudTable Items="@_liveState.QuantityContractTopRows" Dense="true" Hover="true" Striped="true">
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                        @T("Nicht eingerechnet:", "Not included:")
+                        @_liveState.QuantityContractSupersededRows.Count.ToString("N0")
+                        @T("vermutlich ersetzte Positionen ueber", "probably superseded items worth")
+                        @FormatChf(_liveState.QuantityContractSupersededValueChf).
+                        @T("Nie abgerufen, waehrend eine gleichartige Position desselben Kontrakts voll abgerufen ist (z. B. alte und verkuerzte Materialnummer). ME3L zeigt sie noch als offen; in SAP loeschen lassen.", "Never called off while a similar item of the same contract is fully called off (e.g. old and shortened material number). ME3L still shows them as open; have them deleted in SAP.")
+                    </MudAlert>
+                }
+                @if (_liveState.QuantityContractTopRows.Count > 0 || _liveState.QuantityContractSupersededRows.Count > 0)
+                {
+                    <div class="d-flex flex-wrap align-center gap-2 mt-2 mb-1">
+                        <MudText Typo="Typo.subtitle1">@ContractListTitle</MudText>
+                        <MudChipSet T="string" @bind-SelectedValue="_contractListMode" SelectionMode="SelectionMode.SingleSelection" CheckMark="false" Size="Size.Small" Variant="Variant.Outlined">
+                            <MudChip T="string" Value="@("all")" Default="true">@T("Groesste offene", "Largest open")</MudChip>
+                            <MudChip T="string" Value="@("expired")" Color="Color.Warning">@T("Nur abgelaufene", "Expired only") (@_liveState.QuantityContractExpiredRows.Count.ToString("N0"))</MudChip>
+                            @if (_liveState.QuantityContractSupersededRows.Count > 0)
+                            {
+                                <MudChip T="string" Value="@("superseded")" Color="Color.Info">@T("Vermutlich ersetzt", "Probably superseded") (@_liveState.QuantityContractSupersededRows.Count.ToString("N0"))</MudChip>
+                            }
+                        </MudChipSet>
+                    </div>
+                    <MudTable Items="@ContractListRows" Dense="true" Hover="true" Striped="true">
                         <HeaderContent>
                             <MudTh>@T("Kontrakt", "Contract")</MudTh>
                             <MudTh>@T("Lieferant", "Supplier")</MudTh>
@@ -357,6 +392,10 @@
                                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(context.IsExpired ? Color.Warning : Color.Success)">
                                     @(context.IsExpired ? T("Ja", "Yes") : T("Nein", "No"))
                                 </MudChip>
+                                @if (context.IsSuperseded)
+                                {
+                                    <MudText Typo="Typo.caption" Class="d-block">@T("ersetzt durch Pos.", "superseded by item") @context.SupersededBy</MudText>
+                                }
                             </MudTd>
                         </RowTemplate>
                     </MudTable>
@@ -387,8 +426,18 @@
                            DetailRows="@SupplierDetailRows" />
         break;
     case "aufriss":
-        @* Stuecklisten-Netz („Gehirn“), Wunsch Ingo 2026-10-16: zuoberst im Spend-Aufriss *@
-        <PurchasingBomBrain />
+        @* Stuecklisten-Netz („Gehirn“), Wunsch Ingo 2026-10-16: zuoberst im Spend-Aufriss. Seit dem Feedback vom
+           2026-10-22 (Erich: „Was will man damit aussagen?“) eingeklappt; der Spend-Aufriss selbst ist die meistgenutzte Ansicht. *@
+        @if (_showBomBrain)
+        {
+            <PurchasingBomBrain />
+        }
+        else
+        {
+            <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Hub" Class="mb-2" OnClick="() => _showBomBrain = true">
+                @T("Stuecklisten-Netz (Prototyp) anzeigen", "Show BOM network (prototype)")
+            </MudButton>
+        }
         <PurchasingSpendExplorer SpendYears="@_liveState.SpendYears"
                                  Perspectives="@_liveState.SpendPerspectiveRows"
                                  CascadeRows="@_liveState.SpendCascadeRows"
@@ -893,6 +942,38 @@
                             </tbody>
                         </MudSimpleTable>
                     }
+                    @if (_liveState.StockValueWeeklyByPlanner.Count > 0 && _liveState.StockValueWeeklyHistory.Count > 0)
+                    {
+                        <MudText Typo="Typo.subtitle2" Class="mt-3 mb-1">@T("Je Disponent", "By MRP controller")</MudText>
+                        <MudSimpleTable Dense="true" Hover="true" Style="overflow-x:auto">
+                            <thead><tr>
+                                <th>@T("Kalenderwoche", "Calendar week")</th>
+                                @foreach (var planner in _liveState.StockValueWeeklyByPlanner.Keys)
+                                {
+                                    <th style="text-align:right">@planner</th>
+                                }
+                            </tr></thead>
+                            <tbody>
+                                @foreach (var week in _liveState.StockValueWeeklyHistory.AsEnumerable().Reverse())
+                                {
+                                    <tr>
+                                        <td>@FormatStockWeek(week)</td>
+                                        @foreach (var planner in _liveState.StockValueWeeklyByPlanner)
+                                        {
+                                            var (value, change) = PlannerWeekCell(planner.Value, week);
+                                            <td style="text-align:right">
+                                                @FormatChf(value)
+                                                @if (change is not null)
+                                                {
+                                                    <br /><small style="@(change < 0 ? "color:#2e7d32" : "color:#c62828")">@($"{(change >= 0 ? "+" : "-")}{Math.Abs(change.Value):N0}")</small>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
                 </MudPaper>
             </MudItem>
             <MudItem xs="12" lg="8">
@@ -1078,6 +1159,24 @@
             .ToList();
     }
 
+    // Feedback 2026-10-22: Erich will abgelaufene Kontrakte schnell finden, Sandro die nie abgerufenen Ersatzfaelle sehen.
+    private string _contractListMode = "all";
+    private bool _showBomBrain;
+
+    private List<PurchasingContractRow> ContractListRows => _contractListMode switch
+    {
+        "expired" => _liveState.QuantityContractExpiredRows,
+        "superseded" => _liveState.QuantityContractSupersededRows,
+        _ => _liveState.QuantityContractTopRows
+    };
+
+    private string ContractListTitle => _contractListMode switch
+    {
+        "expired" => T("Abgelaufene Kontraktpositionen mit offener Menge", "Expired contract items with open quantity"),
+        "superseded" => T("Vermutlich ersetzte Kontraktpositionen", "Probably superseded contract items"),
+        _ => T("Groesste offene Kontraktpositionen", "Largest open contract items")
+    };
+
     private static string ContractMaterialText(PurchasingContractRow row)
         => string.IsNullOrWhiteSpace(row.Matnr)
             ? row.Text
@@ -1201,6 +1300,15 @@
 
             return rows;
         }
+    }
+
+    /// <summary>Wert eines Disponenten in dieser Woche und die Veraenderung zur vorherigen vorhandenen Woche.</summary>
+    private static (decimal Value, decimal? Change) PlannerWeekCell(List<StockValueWeekPoint> points, StockValueWeekPoint week)
+    {
+        var index = points.FindIndex(p => p.IsoYear == week.IsoYear && p.IsoWeek == week.IsoWeek);
+        if (index < 0)
+            return (0m, null);
+        return (points[index].Value, index > 0 ? points[index].Value - points[index - 1].Value : null);
     }
 
     private string FormatStockValueTimestamp()
@@ -2053,7 +2161,8 @@
         // (OpenValueSample). Marco hat das selbst bemerkt. Jetzt eine Zeile.
         new("Offener Bestellwert (= disponierter Zulauf)", "Open order value (= planned inbound)", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "offene EKET-Menge (Menge minus Wareneingang) mal Stueckwert, laut geladenem SAP-Stand ueber alle Jahre", _liveState.EketLoaded ? DataSourceLabel : "Simulation"),
         new("Ueberfaelliger Wert", "Overdue value", _liveState.EketLoaded ? FormatChf(_liveState.OverdueValueSample) : "-", "davon der Teil mit Liefertermin EKET.Eindt vor heute", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP"),
-        new("Ueberfaellige Positionen", "Overdue items", _liveState.EketLoaded ? _liveState.OverduePositionCount.ToString("N0") : "-", "Anzahl Bestellpositionen mit mindestens einer ueberfaelligen offenen Einteilung", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP")
+        new("Ueberfaellige Positionen", "Overdue items", _liveState.EketLoaded ? _liveState.OverduePositionCount.ToString("N0") : "-", "Anzahl Bestellpositionen mit mindestens einer ueberfaelligen offenen Einteilung", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP"),
+        new("Altposten (nicht eingerechnet)", "Legacy items (not included)", _liveState.EketLoaded ? $"{_liveState.StaleTextPositionCount:N0} / {FormatChf(_liveState.StaleTextValueChf)}" : "-", "Textpositionen ohne Material, Liefertermin ueber ein Jahr vorbei, nie geliefert. Zaehlen nicht als offen oder ueberfaellig; in SAP endliefern oder loeschen", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP")
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> ContractDetailRows =>
@@ -2067,7 +2176,7 @@
     private IReadOnlyList<PurchasingSectionDetailRow> SupplierDetailRows =>
     [
         new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKO + aktive EKPO", _liveState.EkkoLoaded ? DataSourceLabel : "Wartet auf SAP"),
-        new("Top Spend Lieferant", "Top spend supplier", TopSpendLabel, "Lieferant / Spend CHF", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
+        // "Top Spend Lieferant" entfernt (Feedback Erich 2026-10-22): wiederholte nur das Diagramm darueber.
         new("Preisentwicklung", "Price trend", _liveState.EkpoLoaded ? DataSourceLabel : "wartet auf EKPO", "Netwr CHF/Stk", _liveState.EkpoLoaded ? DataSourceLabel : "Wartet auf SAP"),
         new("Liefertermintreue", "Delivery reliability", "-", "Ist-Wareneingangsdatum fehlt; EKET.EINDT ist nur der geplante Termin", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP")
     ];
@@ -2076,7 +2185,7 @@
     {
         Navigation.LocationChanged += HandleLocationChanged;
         UiText.Changed += HandleLanguageChanged;
-        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter()); TrackPreviousData();
+        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter()); TrackPreviousData(); MarkFilterApplied();
         _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
         _liveLoading = false;
 
@@ -2125,7 +2234,14 @@
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
-    private string WithFilter(string german, string english) => $"{T(german, english)} {FilterLabel}";
+    // Feedback Erich 2026-10-22: Kacheln nannten den eingegebenen Zeitraum, rechneten aber noch mit dem zuletzt
+    // angewendeten; die Zahlen sprangen erst nach dem Anwenden. Beschriftung jetzt immer der angewendete Zeitraum.
+    private string _appliedFilterLabel = string.Empty;
+    private string AppliedFilterLabel => _appliedFilterLabel.Length == 0 ? FilterLabel : _appliedFilterLabel;
+    private bool FilterPending => !_liveLoading && _appliedFilterLabel.Length > 0 && !string.Equals(FilterLabel, _appliedFilterLabel, StringComparison.Ordinal);
+    private void MarkFilterApplied() => _appliedFilterLabel = FilterLabel;
+
+    private string WithFilter(string german, string english) => $"{T(german, english)} {AppliedFilterLabel}";
     private static string FormatChf(double value) => $"CHF {value:N0}";
     private static string FormatChf(decimal value) => $"CHF {value:N0}";
     // Standardansicht. Muss zu PurchasingDashboardFilter.Default passen: genau diesen Filter
@@ -2195,7 +2311,7 @@
     {
         _liveLoading = true;
         StateHasChanged();
-        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter()); TrackPreviousData();
+        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter()); TrackPreviousData(); MarkFilterApplied();
         _liveLoading = false;
         StateHasChanged();
         if (CurrentPurchasingPage == "3d")

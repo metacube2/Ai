@@ -10,6 +10,22 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Einkauf Feedback 2026-10-22
+            ["Rechnet"] = "Rächnet",
+            ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "Rächnet... e nöie Zytruum cha bis zu 2 Minute gah.",
+            ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "Zytruum gänderet, aber no nid aagwändet. D Zahle zeige geng no",
+            ["Bitte „Anwenden“ druecken."] = "Bitte «Aawände» drücke.",
+            ["vermutlich ersetzte Positionen ueber"] = "vermuetlech ersetzti Positione über",
+            ["Nie abgerufen, waehrend eine gleichartige Position desselben Kontrakts voll abgerufen ist (z. B. alte und verkuerzte Materialnummer). ME3L zeigt sie noch als offen; in SAP loeschen lassen."] = "Nie abgrüeft, derwyl e glychartigi Position vom glyche Kontrakt vou abgrüeft isch (z. B. aute u verchürzti Materialnummere). ME3L zeigt se no aus offe; im SAP la lösche.",
+            ["Groesste offene"] = "Gröschti offeni",
+            ["Nur abgelaufene"] = "Nume abgloffeni",
+            ["Vermutlich ersetzt"] = "Vermuetlech ersetzt",
+            ["ersetzt durch Pos."] = "ersetzt dür Pos.",
+            ["Stuecklisten-Netz (Prototyp) anzeigen"] = "Stückliste-Netz (Prototyp) aazeige",
+            ["Je Disponent"] = "Pro Disponänt",
+            ["Abgelaufene Kontraktpositionen mit offener Menge"] = "Abgloffeni Kontraktpositione mit offener Mängi",
+            ["Vermutlich ersetzte Kontraktpositionen"] = "Vermuetlech ersetzti Kontraktpositione",
+            ["Altposten (nicht eingerechnet)"] = "Autposchte (nid ygrächnet)",
             // Stuecklisten-Netz „Gehirn“ (2026-10-16)
             ["Stücklisten-Netz („Gehirn“)"] = "Stückliste-Netz («Hirni»)",
             ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Jede Strang isch e Stücklistebeziehig vo obe nach unge: d Ändprodukt lige usse wie d Hirnrinde, d Baugruppe drzwüsche, d Komponänte inne. Wo viu Sträng zämeloufe, hockt e Chrüzpunkt: es Teil, wo i viune Produkt drinnesteckt. Klick uf e Punkt hebt sini Bahne nach obe u unge füre. Datebasis wie «Verwändig & Risiko»: nume Komponänte mit LZ-Code, Liferante vo de letschte 24 Mönet.",
