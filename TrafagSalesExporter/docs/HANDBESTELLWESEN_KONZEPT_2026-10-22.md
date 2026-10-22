@@ -254,6 +254,24 @@ Ingo hat um 14:27 importiert (Protokoll „Import Altdaten“, 12'629 Bestellung
 Korrigiert: Die Pruef-Anzeige zaehlte eingegangene Bestellungen vor dem Doubletten-Filter (11'044 statt 11'018); die
 Daten selbst waren richtig. Offen: Entscheid Ingo zu Doppelklick-Doubletten, alten offenen Bestellungen und Kreditor-Dubletten.
 
+### 6.5 Bereinigung (Auftrag Ingo 2026-10-22: bereinige die Datensaetze)
+
+Admin-Kachel „Bereinigung“, erst „Vorschau“, dann je ein Knopf. Nichts wird physisch geloescht, jede Aenderung steht im
+Protokoll (`Bereinigung: ...`). `HbService.BereinigungVorschauAsync` / `BereinigenAsync`, Test
+`Bereinigung_Storniert_Doppelklick_Und_Bucht_Alte_Offene_Aus`.
+
+| Fall | Regel | Erwartet nach Datenpruefung 6.4 |
+| --- | --- | --- |
+| Doppelklick-Doubletten | gleiche Bestellung (Besteller, Kreditor, Text, Wert, Wert-Text) innerhalb von 5 Min zweimal gespeichert; behalten wird eingegangen vor offen, sonst die fruehere; die andere -> geloescht | 25 Paare (19 beide eingegangen, 3 beide offen, 3 gemischt) |
+| Alte offene Bestellungen | angelegt vor dem Stichtag (Standard heute minus 1 Jahr), nie als eingegangen gebucht -> neuer Status **Ausgebucht**, erscheint im Archiv | rund 930 |
+
+Nicht automatisch bereinigt, weil fachlich zu entscheiden: 93 Kreditor-Namen mit mehreren Nummern (in Phase 2 kommen
+Kreditoren aus SAP), Mitarbeiter ohne Kostenstelle/Limit (Pflege durch Admin), 50 offene Bestellungen von Bestellern ohne
+Mitarbeitereintrag (ehemalige Mitarbeitende; werden mit dem Stichtag meist ausgebucht), 3 inhaltlich gleiche Bestellungen mit
+mehr als 5 Minuten Abstand (koennen echte Nachbestellungen sein).
+
+Deploy: 2026-10-22 14:40 (37e5d7b), bitgleich, zehn Routen 200, Alarm nur WAL/SHM-Checkpoint beim Herunterfahren. Die Knoepfe drueckt Ingo; die Vorschau zeigt jede betroffene Nummer.
+
 ## 7. Naechste Schritte
 
 1. Dump liegt vor (6.2), Import gebaut (6.3) -> auf dem Server pruefen und importieren (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der

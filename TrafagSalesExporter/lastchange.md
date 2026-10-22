@@ -39,6 +39,11 @@ Stand: 2026-10-22
 - Nicht angefasst, als Folgearbeit benannt: die Koordinations- und Abschlussregel steht viermal (`CLAUDE.md`,
   `AGENTS.md`, `router.md` Regel 6, `docs/router/projekt.md`); `CLAUDE.md` war von einer anderen Sitzung geaendert.
 
+## Handbestellwesen: Datenpruefung und Bereinigung, 2026-10-22
+
+- Nach Ingos Import (14:27) geprueft: keine doppelten Nummern; 25 Doppelklick-Doubletten, rund 930 offene aelter als 1 Jahr.
+  Admin-Kachel „Bereinigung“ (Vorschau, Doubletten stornieren, alte offene ausbuchen, protokolliert). Deploy 2026-10-22 14:40 (37e5d7b), bitgleich, zehn Routen 200, Alarm nur WAL/SHM-Checkpoint beim Herunterfahren.
+
 ## Handbestellwesen: Altdaten-Import, 2026-10-22
 
 - Deployed 14:22 (`3609b3e`), bitgleich, Alarm nur SHM. Dump liegt auf dem Server unter `hbdaten\import\db.sql`; Pruefen und
