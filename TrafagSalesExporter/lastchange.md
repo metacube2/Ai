@@ -39,6 +39,12 @@ Stand: 2026-10-22
 - Nicht angefasst, als Folgearbeit benannt: die Koordinations- und Abschlussregel steht viermal (`CLAUDE.md`,
   `AGENTS.md`, `router.md` Regel 6, `docs/router/projekt.md`); `CLAUDE.md` war von einer anderen Sitzung geaendert.
 
+## Handbestellwesen: moderne Oberflaeche /bestellwesen, 2026-10-22
+
+- Neue Seite mit MudBlazor, gleiche Logik: Kacheln, Kreditor-Suche, Live-Pruefung der Berechtigung, Freigeber-Vorschlag,
+  Doppelbestellungs-Hinweis, Nummer kopieren, Filter offene, Stammdaten/Nutzung fuer Admin. Deploy 14:52 (`d7478cd`), ohne
+  Alarm. Konzept 6.6.
+
 ## Handbestellwesen: Datenpruefung und Bereinigung, 2026-10-22
 
 - Nach Ingos Import (14:27) geprueft: keine doppelten Nummern; 25 Doppelklick-Doubletten, rund 930 offene aelter als 1 Jahr.

@@ -272,6 +272,24 @@ mehr als 5 Minuten Abstand (koennen echte Nachbestellungen sein).
 
 Deploy: 2026-10-22 14:40 (37e5d7b), bitgleich, zehn Routen 200, Alarm nur WAL/SHM-Checkpoint beim Herunterfahren. Die Knoepfe drueckt Ingo; die Vorschau zeigt jede betroffene Nummer.
 
+### 6.6 Moderne Oberflaeche `/bestellwesen` (Wunsch Ingo 2026-10-22)
+
+„Design ueberarbeiten auf einer neuen Seite, moderne Komponenten, Geschaeftslogik gleich, evtl. besserer Workflow.“
+`Modules/Handbestellwesen/BestellwesenModern.razor`, MudBlazor wie das Dashboard, ruft nur `HbService` auf (keine neue
+Geschaeftslogik). Die klassische Seite `/handbestellwesen` bleibt (Import, Bereinigung, PHP-Optik).
+
+| Bereich | Neu gegenueber PHP/klassisch |
+| --- | --- |
+| Kopf | Kacheln „Meine offenen“, „Wartet auf meine Freigabe“, „Offene Bestellungen“, „Diesen Monat bestellt“; Klick filtert die Liste |
+| Neue Bestellung | Kreditor-Suche (Nummer, Name, Ort) statt Liste mit 4'092 Eintraegen; Kostenstelle mit der eigenen vorbelegt; Pruefung live (selbst berechtigt oder Freigabe noetig); bei genau einer berechtigten Person ist sie vorgeschlagen; Hinweis, wenn dieselbe Bestellung heute schon gespeichert wurde (gegen Doppelklick-Doubletten); fehlende Angaben werden genannt |
+| Nach dem Speichern | grosse Nummer, „Nummer kopieren“, „Aehnlich bestellen“ (Felder bleiben), „Neue Bestellung“ |
+| Offene | Filter Alle / Meine / Wartet auf meine Freigabe / Bereit fuer Wareneingang, Suche, Status-Chips, Aktionen nur wo erlaubt, mit Rueckfrage |
+| Archiv | Suche, hoechstens 2'000 Treffer |
+| Admin | Stammdaten mit Suche und Bearbeiten-Feld, Kostenstellen zeigen ihre Freigeber; Nutzung mit Monatsbalken |
+
+Deploy 2026-10-22 14:52 (`d7478cd`), ohne Alarm, `/bestellwesen` HTTP 200. Nicht im Browser angesehen (Erweiterung nicht
+verbunden). Der Reiter im Menue zeigt weiter auf `/handbestellwesen`; welche Seite er oeffnen soll, entscheidet Ingo.
+
 ## 7. Naechste Schritte
 
 1. Dump liegt vor (6.2), Import gebaut (6.3) -> auf dem Server pruefen und importieren (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der

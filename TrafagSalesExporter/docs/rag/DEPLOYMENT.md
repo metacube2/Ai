@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-22 14:40)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-22 14:52)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,8 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-10-22 14:52, Handbestellwesen moderne Seite `/bestellwesen` (`d7478cd`).** Suite 1286/1286, DLL `14:52:06`,
+  SHA256 `8625EE08...986F1A28`, bitgleich, zehn Routen 200, ohne Alarm; `/bestellwesen` 200.
 - **Deploy 2026-10-22 14:40, Handbestellwesen Bereinigung (`37e5d7b`).** Suite 1286/1286, DLL `14:40:44`, SHA256 `56B53211...C421E26A`,
   bitgleich, zehn Routen 200. Alarm: `-wal` (148 KB) und `-shm` beim Herunterfahren eingecheckpointet, `.db` +4 KB; danach neu angelegt.
 - **Deploy 2026-10-22 14:22, Handbestellwesen Altdaten-Import (`3609b3e`).** Keine Sicherung (Wochensicherung 13:37). Release-
