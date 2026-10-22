@@ -1,0 +1,796 @@
+@page "/bestellwesen"
+@page "/bestellwesen/{Tab}"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@inject HbService Hb
+@inject IOptionsMonitor<HbOptions> Options
+@inject AuthenticationStateProvider AuthState
+@inject ISnackbar Snackbar
+@inject IDialogService Dialogs
+@inject IJSRuntime JS
+
+@* Handbestellwesen, moderne Oberflaeche (Wunsch Ingo 2026-10-22): gleiche Geschaeftslogik (HbService), MudBlazor wie das
+   Dashboard, besserer Ablauf. Die klassische Ansicht /handbestellwesen bleibt (Import, Bereinigung).
+   Doku docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md Abschnitt 6.6 *@
+<PageTitle>Bestellwesen</PageTitle>
+
+@if (!Options.CurrentValue.Enabled)
+{
+    <MudAlert Severity="Severity.Info">Das Handbestellwesen ist nicht aktiviert.</MudAlert>
+    return;
+}
+@if (_ich is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    return;
+}
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3" Wrap="Wrap.Wrap">
+    <div>
+        <MudText Typo="Typo.h4">Bestellwesen</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Bestellnummern lösen, freigeben, Wareneingang buchen</MudText>
+    </div>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        @if (_ich.Mitarbeiter is { } me)
+        {
+            <MudChip T="string" Icon="@Icons.Material.Filled.Person" Variant="Variant.Outlined">@me.Kurzzeichen · @me.Name · Limit CHF @Chf(me.Limit)</MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Color="Color.Warning" Icon="@Icons.Material.Filled.PersonOff" Variant="Variant.Outlined">@_ich.Konto: kein Mitarbeitereintrag</MudChip>
+        }
+        @if (_ich.IstAdmin) { <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">Admin</MudChip> }
+        <MudButton Href="handbestellwesen" Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.History">Klassische Ansicht</MudButton>
+    </MudStack>
+</MudStack>
+
+@if (_ich.Mitarbeiter is null && !_ich.IstAdmin)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-3">Für dein Windows-Konto „@_ich.Konto“ gibt es keinen Mitarbeitereintrag. Bestellen ist erst möglich, wenn ein Admin dich im Mitarbeiterverzeichnis erfasst.</MudAlert>
+}
+
+<MudGrid Spacing="2" Class="mb-3">
+    @Kachel("Meine offenen", $"{_meineOffen.Count:N0}", $"CHF {Chf(_meineOffen.Sum(x => x.Bestellwert))}", Icons.Material.Filled.ShoppingCart, Color.Primary, () => ZeigeOffene("meine"))
+    @Kachel("Wartet auf meine Freigabe", $"{_meineFreigaben.Count:N0}", _meineFreigaben.Count == 0 ? "nichts zu tun" : "bitte prüfen", Icons.Material.Filled.HowToReg, _meineFreigaben.Count > 0 ? Color.Warning : Color.Success, () => ZeigeOffene("freigaben"))
+    @Kachel("Offene Bestellungen", $"{_offen.Count:N0}", $"CHF {Chf(_offen.Sum(x => x.Bestellwert))}", Icons.Material.Filled.FolderOpen, Color.Info, () => ZeigeOffene("alle"))
+    @Kachel("Diesen Monat bestellt", $"{_diesenMonat:N0}", DateTime.Today.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("de-CH")), Icons.Material.Filled.CalendarMonth, Color.Default, null)
+</MudGrid>
+
+<MudTabs @bind-ActivePanelIndex="_tab" Elevation="0" Rounded="true" Border="true" PanelClass="pa-4" ApplyEffectsToContainer="true">
+    @* ---------------- Neue Bestellung ---------------- *@
+    <MudTabPanel Text="Neue Bestellung" Icon="@Icons.Material.Filled.AddShoppingCart">
+        @if (_ergebnis is { } neu)
+        {
+            <MudPaper Class="pa-6 mb-4" Elevation="0" Style="border:2px solid var(--mud-palette-success); border-radius:12px">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Style="font-size:56px" />
+                    <div>
+                        <MudText Typo="Typo.subtitle1">Deine Bestellnummer</MudText>
+                        <MudText Typo="Typo.h3" Style="font-family:monospace; letter-spacing:2px">@HbService.FormatNummer(neu.Bestellnummer)</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            @(neu.Status == HbStatus.FreigabeOffen ? $"Wartet auf Freigabe durch {neu.FreigeberKurzzeichen}." : "Keine Freigabe nötig.") Bitte die Nummer beim Lieferanten als Bestellreferenz angeben.
+                        </MudText>
+                    </div>
+                    <MudSpacer />
+                    <MudStack Spacing="1">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="() => KopierenAsync(neu.Bestellnummer)">Nummer kopieren</MudButton>
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Repeat" OnClick="AehnlichBestellen">Ähnlich bestellen</MudButton>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" OnClick="NeueBestellung">Neue Bestellung</MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        }
+        else
+        {
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="7">
+                    <MudStack Spacing="3">
+                        <MudAutocomplete T="HbKreditor" Label="Kreditor (Nummer, Name oder Ort)" @bind-Value="_kreditor" SearchFunc="SucheKreditor"
+                                         ToStringFunc="@(k => k is null ? null : $"{k.Name} · {k.Ort} ({k.Nr})")" MaxItems="30" ResetValueOnEmptyText="true"
+                                         Variant="Variant.Outlined" AdornmentIcon="@Icons.Material.Filled.Search" Clearable="true" ShowProgressIndicator="true" />
+                        @if (_kreditor is { } k)
+                        {
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary ml-1">@k.Strasse, @k.Plz @k.Ort, @k.Land</MudText>
+                        }
+                        <MudTextField @bind-Value="_text" Label="Was wird bestellt?" Lines="3" Variant="Variant.Outlined" Counter="0"
+                                      Placeholder="z. B. 50 Stk. Schrauben M4 x 12, rostfrei" />
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField T="decimal?" @bind-Value="_wert" @bind-Value:after="PruefeAsync" Label="Bestellwert" Variant="Variant.Outlined"
+                                                 Adornment="Adornment.End" AdornmentText="CHF" Min="0" HideSpinButtons="true" Format="N2" Culture="@_ch" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudSelect T="string" @bind-Value="_kostenstelle" @bind-Value:after="PruefeAsync" Label="Kostenstelle" Variant="Variant.Outlined">
+                                    @foreach (var ks in _kostenstellen) { <MudSelectItem Value="@ks.Nr">@ks.Nr · @ks.Bezeichnung</MudSelectItem> }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+                        <MudAutocomplete T="HbSachkonto" Label="Sachkonto" @bind-Value="_sachkonto" SearchFunc="SucheSachkonto"
+                                         ToStringFunc="@(s => s is null ? null : $"{s.Nr} · {s.Bezeichnung}")" MaxItems="100" Variant="Variant.Outlined" Clearable="true" />
+                        @if (_ich.IstAdmin)
+                        {
+                            <MudSelect T="string" @bind-Value="_besteller" @bind-Value:after="PruefeAsync" Label="Bestellen für (nur Admin)" Variant="Variant.Outlined" Clearable="true">
+                                @foreach (var m in _mitarbeiter.Where(x => x.Aktiv)) { <MudSelectItem Value="@m.Kurzzeichen">@m.Kurzzeichen · @m.Name</MudSelectItem> }
+                            </MudSelect>
+                        }
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" md="5">
+                    <MudPaper Outlined="true" Class="pa-4" Style="border-radius:12px">
+                        <MudText Typo="Typo.h6" Class="mb-2">Prüfung</MudText>
+                        @if (_berechtigt is null)
+                        {
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Bestellwert und Kostenstelle eingeben, dann zeigt sich hier, ob eine Freigabe nötig ist.</MudText>
+                        }
+                        else if (_berechtigt == true)
+                        {
+                            <MudAlert Severity="Severity.Success" Dense="true">Du darfst diesen Betrag selbst bestellen.</MudAlert>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">Der Betrag liegt über deiner Berechtigung (CHF @Chf(BestellerLimit)). Eine berechtigte Person muss freigeben.</MudAlert>
+                            @if (_freigeber.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Error" Dense="true">Für Kostenstelle @_kostenstelle ist niemand mit genügend Berechtigung erfasst. Bitte beim Admin melden.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudSelect T="string" @bind-Value="_freigeberWahl" Label="Freigabe durch" Variant="Variant.Outlined">
+                                    @foreach (var f in _freigeber) { <MudSelectItem Value="@f.Kurzzeichen">@f.Kurzzeichen · @f.Name (bis CHF @Chf(f.Limit))</MudSelectItem> }
+                                </MudSelect>
+                            }
+                        }
+                        @if (_doublette is { } d)
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-3">
+                                Fast gleiche Bestellung schon heute gespeichert: @HbService.FormatNummer(d.Bestellnummer) um @d.AngelegtAm.ToString("HH:mm"). Wirklich nochmals bestellen?
+                            </MudAlert>
+                        }
+                        <MudDivider Class="my-4" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true" Disabled="@(!KannSpeichern || _speichert)"
+                                   StartIcon="@Icons.Material.Filled.Send" OnClick="SpeichernAsync">
+                            @if (_speichert) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                            Bestellnummer lösen
+                        </MudButton>
+                        @if (!KannSpeichern && !_speichert)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-2">Fehlt noch: @string.Join(", ", Fehlend)</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudTabPanel>
+
+    @* ---------------- Offene ---------------- *@
+    <MudTabPanel Text="Offene" Icon="@Icons.Material.Filled.FolderOpen" BadgeData="@(_meineFreigaben.Count > 0 ? _meineFreigaben.Count : null)" BadgeColor="Color.Warning">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3" Wrap="Wrap.Wrap">
+            <MudChipSet T="string" @bind-SelectedValue="_filter" SelectionMode="SelectionMode.SingleSelection" CheckMark="true" Variant="Variant.Outlined">
+                <MudChip T="string" Value="@("alle")" Default="true">Alle (@_offen.Count)</MudChip>
+                <MudChip T="string" Value="@("meine")">Meine (@_meineOffen.Count)</MudChip>
+                <MudChip T="string" Value="@("freigaben")" Color="Color.Warning">Wartet auf meine Freigabe (@_meineFreigaben.Count)</MudChip>
+                <MudChip T="string" Value="@("eingang")" Color="Color.Info">Bereit für Wareneingang (@_offen.Count(x => x.Status == HbStatus.Offen))</MudChip>
+            </MudChipSet>
+            <MudSpacer />
+            <MudTextField @bind-Value="_suche" Immediate="true" DebounceInterval="250" Placeholder="Suchen (Nummer auch mit Leerzeichen, Text, Kreditor, KoSt)"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:320px" />
+        </MudStack>
+        @Liste(OffeneGefiltert, true)
+    </MudTabPanel>
+
+    @* ---------------- Archiv ---------------- *@
+    <MudTabPanel Text="Archiv" Icon="@Icons.Material.Filled.Inventory">
+        <MudStack Row="true" Spacing="2" Class="mb-3">
+            <MudTextField @bind-Value="_archivSuche" Placeholder="Archiv durchsuchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" OnKeyUp="@(e => e.Key == "Enter" ? ArchivLadenAsync() : Task.CompletedTask)" Style="min-width:320px" />
+            <MudButton Variant="Variant.Outlined" OnClick="ArchivLadenAsync" StartIcon="@Icons.Material.Filled.Search">Suchen</MudButton>
+        </MudStack>
+        @if (_archiv is null)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Suchbegriff eingeben oder ohne Begriff „Suchen“ für die neuesten Einträge.</MudText>
+        }
+        else
+        {
+            @Liste(_archiv, false)
+        }
+    </MudTabPanel>
+
+    @if (_ich.IstAdmin)
+    {
+        @* ---------------- Stammdaten ---------------- *@
+        <MudTabPanel Text="Stammdaten" Icon="@Icons.Material.Filled.Settings">
+            <MudTabs Elevation="0" Rounded="true" PanelClass="pt-3">
+                <MudTabPanel Text="@($"Mitarbeiter ({_mitarbeiter.Count})")">
+                    <MudTable Items="_mitarbeiter" Dense="true" Hover="true" Filter="@(m => Treffer(_stammSuche, m.Kurzzeichen, m.Vorname, m.Nachname, m.Konto, m.Kostenstelle))" RowsPerPage="25">
+                        <ToolBarContent>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="() => BearbeiteMitarbeiter(new HbMitarbeiter())">Neu</MudButton>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="_stammSuche" Immediate="true" Placeholder="Suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" />
+                        </ToolBarContent>
+                        <HeaderContent><MudTh>Kurzzeichen</MudTh><MudTh>Name</MudTh><MudTh>Konto</MudTh><MudTh Style="text-align:right">Limit CHF</MudTh><MudTh>KoSt</MudTh><MudTh>Rollen</MudTh><MudTh></MudTh></HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Kurzzeichen</MudTd>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>@context.Konto</MudTd>
+                            <MudTd Style="text-align:right">@Chf(context.Limit)</MudTd>
+                            <MudTd>@context.Kostenstelle</MudTd>
+                            <MudTd>
+                                @if (!context.Aktiv) { <MudChip T="string" Size="Size.Small">inaktiv</MudChip> }
+                                @if (context.IstWareneingang) { <MudChip T="string" Size="Size.Small" Color="Color.Info">Wareneingang</MudChip> }
+                                @if (context.IstAdmin) { <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Admin</MudChip> }
+                            </MudTd>
+                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteMitarbeiter(context)" /></MudTd>
+                        </RowTemplate>
+                        <PagerContent><MudTablePager /></PagerContent>
+                    </MudTable>
+                </MudTabPanel>
+                <MudTabPanel Text="@($"Kreditoren ({_kreditoren.Count})")">
+                    <MudTable Items="_kreditoren" Dense="true" Hover="true" Filter="@(k => Treffer(_stammSuche, k.Nr, k.Name, k.Ort))" RowsPerPage="25">
+                        <ToolBarContent>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => BearbeiteKreditor(null)">Neu</MudButton>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="_stammSuche" Immediate="true" Placeholder="Suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" />
+                        </ToolBarContent>
+                        <HeaderContent><MudTh>Nr.</MudTh><MudTh>Name</MudTh><MudTh>Strasse</MudTh><MudTh>PLZ Ort</MudTh><MudTh>Land</MudTh><MudTh></MudTh></HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Nr</MudTd><MudTd>@context.Name</MudTd><MudTd>@context.Strasse</MudTd><MudTd>@context.Plz @context.Ort</MudTd><MudTd>@context.Land</MudTd>
+                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteKreditor(context)" /></MudTd>
+                        </RowTemplate>
+                        <PagerContent><MudTablePager /></PagerContent>
+                    </MudTable>
+                </MudTabPanel>
+                <MudTabPanel Text="@($"Kostenstellen ({_kostenstellen.Count})")">
+                    <MudTable Items="_kostenstellen" Dense="true" Hover="true">
+                        <ToolBarContent><MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => BearbeiteKostenstelle(null)">Neu</MudButton></ToolBarContent>
+                        <HeaderContent><MudTh>Kostenstelle</MudTh><MudTh>Bezeichnung</MudTh><MudTh>Leiter</MudTh><MudTh>Freigeber (Limit)</MudTh><MudTh></MudTh></HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Nr</MudTd><MudTd>@context.Bezeichnung</MudTd><MudTd>@context.Leiter</MudTd>
+                            <MudTd>@FreigeberText(context.Nr)</MudTd>
+                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteKostenstelle(context)" /></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+                <MudTabPanel Text="@($"Sachkonten ({_sachkonten.Count})")">
+                    <MudTable Items="_sachkonten" Dense="true" Hover="true">
+                        <ToolBarContent><MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => BearbeiteSachkonto(null)">Neu</MudButton></ToolBarContent>
+                        <HeaderContent><MudTh>Sachkonto</MudTh><MudTh>Bezeichnung</MudTh><MudTh></MudTh></HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Nr</MudTd><MudTd>@context.Bezeichnung</MudTd>
+                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteSachkonto(context)" /></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+            </MudTabs>
+
+            @if (_edit is not null)
+            {
+                <MudPaper Outlined="true" Class="pa-4 mt-4" Style="border-radius:12px; max-width:720px">
+                    <MudText Typo="Typo.h6" Class="mb-3">@_editTitel</MudText>
+                    @switch (_edit)
+                    {
+                        case HbMitarbeiter m:
+                            <MudGrid Spacing="2">
+                                <MudItem xs="6" sm="3"><MudTextField @bind-Value="m.Kurzzeichen" Label="Kurzzeichen" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="6" sm="4"><MudTextField @bind-Value="m.Vorname" Label="Vorname" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" sm="5"><MudTextField @bind-Value="m.Nachname" Label="Nachname" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="m.Mail" Label="E-Mail" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="m.Konto" Label="Windows-Konto" HelperText="ohne Domäne, z. B. koi" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="6"><MudNumericField T="decimal" @bind-Value="m.Limit" Label="Bestellberechtigung" Adornment="Adornment.End" AdornmentText="CHF" Variant="Variant.Outlined" HideSpinButtons="true" /></MudItem>
+                                <MudItem xs="6">
+                                    <MudSelect T="string" @bind-Value="m.Kostenstelle" Label="Kostenstelle" Variant="Variant.Outlined" Clearable="true">
+                                        @foreach (var ks in _kostenstellen) { <MudSelectItem Value="@ks.Nr">@ks.Nr · @ks.Bezeichnung</MudSelectItem> }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudSwitch T="bool" @bind-Value="m.IstWareneingang" Label="Wareneingang" Color="Color.Info" />
+                                    <MudSwitch T="bool" @bind-Value="m.IstAdmin" Label="Admin" Color="Color.Secondary" />
+                                    <MudSwitch T="bool" @bind-Value="m.Aktiv" Label="aktiv" Color="Color.Success" />
+                                </MudItem>
+                            </MudGrid>
+                            break;
+                        case HbKreditor k:
+                            <MudGrid Spacing="2">
+                                <MudItem xs="4"><MudTextField @bind-Value="k.Nr" Label="Kreditor-Nr." Variant="Variant.Outlined" Disabled="@(!_editNeu)" /></MudItem>
+                                <MudItem xs="8"><MudTextField @bind-Value="k.Name" Label="Name" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12"><MudTextField @bind-Value="k.Strasse" Label="Strasse" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="3"><MudTextField @bind-Value="k.Plz" Label="PLZ" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="6"><MudTextField @bind-Value="k.Ort" Label="Ort" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="3"><MudTextField @bind-Value="k.Land" Label="Land" Variant="Variant.Outlined" /></MudItem>
+                            </MudGrid>
+                            break;
+                        case HbKostenstelle ks:
+                            <MudGrid Spacing="2">
+                                <MudItem xs="4"><MudTextField @bind-Value="ks.Nr" Label="Kostenstelle" Variant="Variant.Outlined" Disabled="@(!_editNeu)" /></MudItem>
+                                <MudItem xs="8"><MudTextField @bind-Value="ks.Bezeichnung" Label="Bezeichnung" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="6"><MudTextField @bind-Value="ks.Leiter" Label="Leiter (Kurzzeichen)" Variant="Variant.Outlined" /></MudItem>
+                            </MudGrid>
+                            break;
+                        case HbSachkonto s:
+                            <MudGrid Spacing="2">
+                                <MudItem xs="4"><MudTextField @bind-Value="s.Nr" Label="Sachkonto" Variant="Variant.Outlined" Disabled="@(!_editNeu)" /></MudItem>
+                                <MudItem xs="8"><MudTextField @bind-Value="s.Bezeichnung" Label="Bezeichnung" Variant="Variant.Outlined" /></MudItem>
+                            </MudGrid>
+                            break;
+                    }
+                    <MudStack Row="true" Spacing="2" Class="mt-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="StammSpeichernAsync">Speichern</MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="() => _edit = null">Abbrechen</MudButton>
+                    </MudStack>
+                </MudPaper>
+            }
+        </MudTabPanel>
+
+        @* ---------------- Nutzung ---------------- *@
+        <MudTabPanel Text="Nutzung" Icon="@Icons.Material.Filled.QueryStats">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-3" Wrap="Wrap.Wrap">
+                <MudDatePicker @bind-Date="_nutzVon" Label="von" Variant="Variant.Outlined" Margin="Margin.Dense" DateFormat="dd.MM.yyyy" />
+                <MudDatePicker @bind-Date="_nutzBis" Label="bis" Variant="Variant.Outlined" Margin="Margin.Dense" DateFormat="dd.MM.yyyy" />
+                <MudButton Variant="Variant.Outlined" OnClick="NutzungLadenAsync" StartIcon="@Icons.Material.Filled.Refresh">Anzeigen</MudButton>
+                <MudSpacer />
+                <MudButton Href="handbestellwesen/import" Variant="Variant.Text" Size="Size.Small">Altdaten-Import</MudButton>
+                <MudButton Href="handbestellwesen/bereinigung" Variant="Variant.Text" Size="Size.Small">Bereinigung</MudButton>
+            </MudStack>
+            @if (_nutzung is { } n)
+            {
+                <MudText Typo="Typo.body1" Class="mb-3"><b>@n.Bestellungen.ToString("N0")</b> Bestellungen, <b>CHF @Chf(n.Summe)</b>, von <b>@n.Personen</b> Personen</MudText>
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" lg="7">
+                        <MudTable Items="n.JePerson" Dense="true" Hover="true" RowsPerPage="15">
+                            <ToolBarContent><MudText Typo="Typo.subtitle1">Je Person</MudText></ToolBarContent>
+                            <HeaderContent><MudTh>Kurzz.</MudTh><MudTh>Name</MudTh><MudTh Style="text-align:right">Best.</MudTh><MudTh Style="text-align:right">CHF</MudTh><MudTh Style="text-align:right">Aufrufe</MudTh><MudTh>zuletzt</MudTh></HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.Schluessel</MudTd><MudTd>@context.Name</MudTd><MudTd Style="text-align:right">@context.Bestellungen</MudTd>
+                                <MudTd Style="text-align:right">@Chf(context.Summe)</MudTd><MudTd Style="text-align:right">@context.Aufrufe</MudTd><MudTd>@context.Letzte?.ToString("dd.MM.yyyy")</MudTd>
+                            </RowTemplate>
+                            <PagerContent><MudTablePager /></PagerContent>
+                        </MudTable>
+                    </MudItem>
+                    <MudItem xs="12" lg="5">
+                        <MudPaper Outlined="true" Class="pa-3">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Je Monat</MudText>
+                            @{ var max = n.JeMonat.Count == 0 ? 1 : n.JeMonat.Max(x => x.Bestellungen); }
+                            @foreach (var m in n.JeMonat)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+                                    <MudText Typo="Typo.caption" Style="width:60px">@m.Monat</MudText>
+                                    <MudProgressLinear Value="@(m.Bestellungen * 100.0 / max)" Color="Color.Primary" Size="Size.Large" Rounded="true" Style="flex:1" />
+                                    <MudText Typo="Typo.caption" Style="width:140px; text-align:right">@m.Bestellungen · CHF @Chf(m.Summe)</MudText>
+                                </MudStack>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            }
+        </MudTabPanel>
+    }
+</MudTabs>
+
+@code {
+    [Parameter] public string? Tab { get; set; }
+
+    private static readonly CultureInfo _ch = CultureInfo.GetCultureInfo("de-CH");
+    private HbBenutzer? _ich;
+    private int _tab;
+
+    private List<HbBestellung> _offen = [];
+    private List<HbBestellung> _meineOffen = [];
+    private List<HbBestellung> _meineFreigaben = [];
+    private List<HbBestellung>? _archiv;
+    private int _diesenMonat;
+    private List<HbKreditor> _kreditoren = [];
+    private List<HbMitarbeiter> _mitarbeiter = [];
+    private List<HbKostenstelle> _kostenstellen = [];
+    private List<HbSachkonto> _sachkonten = [];
+
+    // Neue Bestellung
+    private HbKreditor? _kreditor;
+    private string _text = string.Empty;
+    private decimal? _wert;
+    private string? _kostenstelle;
+    private HbSachkonto? _sachkonto;
+    private string? _besteller;
+    private bool? _berechtigt;
+    private List<HbMitarbeiter> _freigeber = [];
+    private string? _freigeberWahl;
+    private HbBestellung? _doublette;
+    private HbBestellung? _ergebnis;
+    private bool _speichert;
+
+    // Listen
+    private string _filter = "alle";
+    private string _suche = string.Empty;
+    private string _archivSuche = string.Empty;
+
+    // Stammdaten
+    private string _stammSuche = string.Empty;
+    private object? _edit;
+    private bool _editNeu;
+    private string _editTitel = string.Empty;
+
+    // Nutzung
+    private DateTime? _nutzVon = new DateTime(DateTime.Today.Year, 1, 1);
+    private DateTime? _nutzBis = DateTime.Today;
+    private HbNutzung? _nutzung;
+    private bool _aufrufErfasst;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Options.CurrentValue.Enabled)
+            return;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _ich = await Hb.BenutzerAsync(state.User.Identity?.Name);
+        if (!_aufrufErfasst)
+        {
+            await Hb.ProtokolliereAufrufAsync(_ich);
+            _aufrufErfasst = true;
+        }
+        _tab = (Tab ?? string.Empty).ToLowerInvariant() switch { "offen" => 1, "archiv" => 2, "stammdaten" => _ich.IstAdmin ? 3 : 0, "nutzung" => _ich.IstAdmin ? 4 : 0, _ => 0 };
+        await LadenAsync();
+        _kostenstelle ??= _ich.Mitarbeiter?.Kostenstelle is { Length: > 0 } eigene ? eigene : null;
+        if (_tab == 4) await NutzungLadenAsync();
+    }
+
+    private async Task LadenAsync()
+    {
+        _kreditoren = await Hb.KreditorenAsync();
+        _mitarbeiter = await Hb.MitarbeiterAsync();
+        _kostenstellen = await Hb.KostenstellenAsync();
+        _sachkonten = await Hb.SachkontenAsync();
+        _offen = await Hb.BestellungenAsync(false);
+        var ich = _ich!.Kurzzeichen;
+        _meineOffen = _offen.Where(x => Gleich(x.BestellerKurzzeichen, ich)).ToList();
+        _meineFreigaben = _offen.Where(x => x.Status == HbStatus.FreigabeOffen && (Gleich(x.FreigeberKurzzeichen, ich) || _ich.IstAdmin)).ToList();
+        var monat = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        _diesenMonat = _offen.Count(x => x.AngelegtAm >= monat) + (await Hb.BestellungenAsync(true)).Count(x => x.AngelegtAm >= monat);
+    }
+
+    // ---------- Neue Bestellung ----------
+
+    private HbMitarbeiter? Besteller => _ich!.IstAdmin && !string.IsNullOrEmpty(_besteller)
+        ? _mitarbeiter.FirstOrDefault(x => x.Kurzzeichen == _besteller)
+        : _ich!.Mitarbeiter;
+
+    private decimal BestellerLimit => Besteller?.Limit ?? 0m;
+
+    private IEnumerable<string> Fehlend
+    {
+        get
+        {
+            if (Besteller is null) yield return "Mitarbeitereintrag";
+            if (_kreditor is null) yield return "Kreditor";
+            if (string.IsNullOrWhiteSpace(_text)) yield return "Text";
+            if (_wert is not > 0) yield return "Bestellwert";
+            if (string.IsNullOrEmpty(_kostenstelle)) yield return "Kostenstelle";
+            if (_sachkonto is null) yield return "Sachkonto";
+            if (_berechtigt == false && string.IsNullOrEmpty(_freigeberWahl)) yield return "Freigabe durch";
+        }
+    }
+
+    private bool KannSpeichern => !Fehlend.Any();
+
+    private Task<IEnumerable<HbKreditor>> SucheKreditor(string? text, CancellationToken token)
+    {
+        IEnumerable<HbKreditor> treffer = string.IsNullOrWhiteSpace(text)
+            ? _kreditoren.Take(30)
+            : _kreditoren.Where(k => Treffer(text, k.Nr, k.Name, k.Ort))
+                .OrderByDescending(k => k.Nr.StartsWith(text.Trim(), StringComparison.OrdinalIgnoreCase) || k.Name.StartsWith(text.Trim(), StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(treffer);
+    }
+
+    private Task<IEnumerable<HbSachkonto>> SucheSachkonto(string? text, CancellationToken token)
+        => Task.FromResult(string.IsNullOrWhiteSpace(text) ? _sachkonten.AsEnumerable() : _sachkonten.Where(s => Treffer(text, s.Nr, s.Bezeichnung)));
+
+    private async Task PruefeAsync()
+    {
+        var b = Besteller;
+        if (b is null || _wert is not > 0 || string.IsNullOrEmpty(_kostenstelle))
+        {
+            _berechtigt = null;
+            _freigeber = [];
+            return;
+        }
+        _berechtigt = _wert <= b.Limit;
+        _freigeber = _berechtigt == false ? await Hb.FreigeberAsync(_kostenstelle, _wert.Value, b.Kurzzeichen) : [];
+        // Workflow 2026-10-22: gibt es genau eine berechtigte Person, ist sie vorgeschlagen.
+        if (_freigeber.Count == 1) _freigeberWahl = _freigeber[0].Kurzzeichen;
+        else if (_freigeber.All(f => f.Kurzzeichen != _freigeberWahl)) _freigeberWahl = null;
+        if (_berechtigt == true) _freigeberWahl = null;
+    }
+
+    private async Task SpeichernAsync()
+    {
+        // Schutz gegen Doppelklick-Doubletten (im PHP 25 Faelle): gleiche Bestellung heute schon gespeichert?
+        var kurz = Besteller?.Kurzzeichen;
+        var gleich = _offen.FirstOrDefault(x => Gleich(x.BestellerKurzzeichen, kurz) && x.KreditorNr == _kreditor?.Nr &&
+                                               x.Bestellwert == _wert && x.AngelegtAm.Date == DateTime.Today &&
+                                               string.Equals(x.Text.Trim(), _text.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (gleich is not null && _doublette is null)
+        {
+            _doublette = gleich;
+            return; // Hinweis anzeigen; ein zweiter Klick speichert bewusst
+        }
+
+        _speichert = true;
+        try
+        {
+            _ergebnis = await Hb.AnlegenAsync(_ich!, new HbBestellEingabe
+            {
+                KreditorNr = _kreditor?.Nr ?? string.Empty,
+                Text = _text,
+                Bestellwert = _wert,
+                BestellerKurzzeichen = _besteller ?? string.Empty,
+                Kostenstelle = _kostenstelle ?? string.Empty,
+                FreigeberKurzzeichen = _freigeberWahl,
+                Sachkonto = _sachkonto?.Nr ?? string.Empty
+            });
+            _doublette = null;
+            Snackbar.Add($"Bestellnummer {HbService.FormatNummer(_ergebnis.Bestellnummer)} gelöst.", Severity.Success);
+            await LadenAsync();
+        }
+        catch (HbException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _speichert = false;
+        }
+    }
+
+    private void NeueBestellung()
+    {
+        _ergebnis = null;
+        _kreditor = null;
+        _text = string.Empty;
+        _wert = null;
+        _sachkonto = null;
+        _berechtigt = null;
+        _freigeberWahl = null;
+        _doublette = null;
+        _kostenstelle = _ich?.Mitarbeiter?.Kostenstelle is { Length: > 0 } eigene ? eigene : _kostenstelle;
+    }
+
+    private void AehnlichBestellen()
+    {
+        // Felder bleiben stehen, nur das Ergebnis verschwindet; Betrag und Text lassen sich anpassen.
+        _ergebnis = null;
+        _doublette = null;
+    }
+
+    private async Task KopierenAsync(string nummer)
+    {
+        var text = HbService.FormatNummer(nummer);
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+            Snackbar.Add($"{text} kopiert.", Severity.Info);
+        }
+        catch (JSException)
+        {
+            Snackbar.Add("Kopieren nicht möglich; bitte markieren und kopieren.", Severity.Warning);
+        }
+    }
+
+    // ---------- Listen und Aktionen ----------
+
+    private void ZeigeOffene(string filter)
+    {
+        _filter = filter;
+        _tab = 1;
+    }
+
+    private IEnumerable<HbBestellung> OffeneGefiltert
+    {
+        get
+        {
+            var liste = _filter switch
+            {
+                "meine" => _meineOffen,
+                "freigaben" => _meineFreigaben,
+                "eingang" => _offen.Where(x => x.Status == HbStatus.Offen),
+                _ => _offen
+            };
+            if (string.IsNullOrWhiteSpace(_suche))
+                return liste;
+            var ohneLeer = _suche.Replace(" ", string.Empty);
+            return liste.Where(x => x.Bestellnummer.Contains(ohneLeer, StringComparison.OrdinalIgnoreCase) ||
+                                    Treffer(_suche, x.Text, x.KreditorNr, KreditorName(x.KreditorNr), x.BestellerKurzzeichen, x.Kostenstelle, x.WertText));
+        }
+    }
+
+    private async Task ArchivLadenAsync() => _archiv = (await Hb.BestellungenAsync(true, _archivSuche)).Take(2000).ToList();
+
+    private bool DarfFreigeben(HbBestellung b) => b.Status == HbStatus.FreigabeOffen && (_ich!.IstAdmin || Gleich(b.FreigeberKurzzeichen, _ich.Kurzzeichen));
+    private bool DarfEingang(HbBestellung b) => b.Status == HbStatus.Offen && (_ich!.IstWareneingang || Gleich(b.BestellerKurzzeichen, _ich.Kurzzeichen));
+    private bool DarfLoeschen(HbBestellung b) => b.Status is HbStatus.Offen or HbStatus.FreigabeOffen && (_ich!.IstAdmin || Gleich(b.BestellerKurzzeichen, _ich.Kurzzeichen));
+
+    private async Task AktionAsync(HbBestellung b, string titel, string frage, string ja, Func<HbBenutzer, int, Task> aktion)
+    {
+        var ok = await Dialogs.ShowMessageBox(titel, $"{frage} ({HbService.FormatNummer(b.Bestellnummer)}, {b.Text})", yesText: ja, cancelText: "Abbrechen");
+        if (ok != true)
+            return;
+        try
+        {
+            await aktion(_ich!, b.Id);
+            Snackbar.Add($"{titel}: {HbService.FormatNummer(b.Bestellnummer)}", Severity.Success);
+            await LadenAsync();
+            if (_archiv is not null) await ArchivLadenAsync();
+        }
+        catch (HbException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private RenderFragment Liste(IEnumerable<HbBestellung> items, bool aktionen) => __builder =>
+    {
+        <MudTable Items="items" Dense="true" Hover="true" Striped="true" RowsPerPage="25" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Nummer</MudTh><MudTh>Datum</MudTh><MudTh>Besteller</MudTh><MudTh>Kreditor</MudTh><MudTh>Text</MudTh>
+                <MudTh Style="text-align:right">Wert CHF</MudTh><MudTh>KoSt</MudTh><MudTh>Status</MudTh>
+                @if (aktionen) { <MudTh></MudTh> }
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Nummer" Style="white-space:nowrap; font-family:monospace">@HbService.FormatNummer(context.Bestellnummer)</MudTd>
+                <MudTd DataLabel="Datum">@context.AngelegtAm.ToString("dd.MM.yyyy")</MudTd>
+                <MudTd DataLabel="Besteller">@context.BestellerKurzzeichen</MudTd>
+                <MudTd DataLabel="Kreditor">@(context.KreditorNr.Length == 0 ? "ohne" : KreditorName(context.KreditorNr) ?? context.KreditorNr)</MudTd>
+                <MudTd DataLabel="Text"><div style="max-width:360px; white-space:pre-line">@context.Text</div></MudTd>
+                <MudTd DataLabel="Wert" Style="text-align:right">@(context.WertText ?? Chf(context.Bestellwert))</MudTd>
+                <MudTd DataLabel="KoSt">@context.Kostenstelle</MudTd>
+                <MudTd DataLabel="Status">@StatusChip(context)</MudTd>
+                @if (aktionen)
+                {
+                    <MudTd Style="white-space:nowrap">
+                        @if (DarfFreigeben(context))
+                        {
+                            <MudTooltip Text="Freigeben"><MudIconButton Icon="@Icons.Material.Filled.HowToReg" Color="Color.Warning" Size="Size.Small"
+                                OnClick="@(() => AktionAsync(context, "Freigegeben", "Bestellung freigeben?", "Freigeben", Hb.FreigebenAsync))" /></MudTooltip>
+                        }
+                        @if (DarfEingang(context))
+                        {
+                            <MudTooltip Text="Ware eingegangen"><MudIconButton Icon="@Icons.Material.Filled.MoveToInbox" Color="Color.Success" Size="Size.Small"
+                                OnClick="@(() => AktionAsync(context, "Wareneingang gebucht", "Ware eingegangen?", "Gebucht", Hb.WareneingangAsync))" /></MudTooltip>
+                        }
+                        @if (DarfLoeschen(context))
+                        {
+                            <MudTooltip Text="Löschen"><MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error" Size="Size.Small"
+                                OnClick="@(() => AktionAsync(context, "Gelöscht", "Bestellung wirklich löschen?", "Löschen", Hb.LoeschenAsync))" /></MudTooltip>
+                        }
+                    </MudTd>
+                }
+            </RowTemplate>
+            <NoRecordsContent><MudText Typo="Typo.body2" Class="pa-4">Keine Bestellungen.</MudText></NoRecordsContent>
+            <PagerContent><MudTablePager RowsPerPageString="Zeilen:" /></PagerContent>
+        </MudTable>
+    };
+
+    private RenderFragment StatusChip(HbBestellung b) => __builder =>
+    {
+        switch (b.Status)
+        {
+            case HbStatus.FreigabeOffen:
+                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Freigabe offen · @b.FreigeberKurzzeichen</MudChip>
+                break;
+            case HbStatus.Offen:
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@(b.FreigegebenAm is null ? "Bestellt" : "Freigegeben")</MudChip>
+                break;
+            case HbStatus.Eingegangen:
+                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Eingegangen @b.EingangAm?.ToString("dd.MM.yyyy")</MudChip>
+                break;
+            case HbStatus.Ausgebucht:
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Ausgebucht</MudChip>
+                break;
+            default:
+                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">Gelöscht</MudChip>
+                break;
+        }
+    };
+
+    private RenderFragment Kachel(string titel, string wert, string unten, string icon, Color farbe, Action? klick) => __builder =>
+    {
+        <MudItem xs="12" sm="6" lg="3">
+            <MudPaper Outlined="true" Class="pa-4" Style="@($"border-radius:12px; {(klick is null ? "" : "cursor:pointer")}")" @onclick="@(() => klick?.Invoke())">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <MudAvatar Color="@farbe" Variant="Variant.Filled"><MudIcon Icon="@icon" /></MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@titel</MudText>
+                        <MudText Typo="Typo.h5">@wert</MudText>
+                        <MudText Typo="Typo.caption">@unten</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    };
+
+    // ---------- Stammdaten ----------
+
+    private string FreigeberText(string kostenstelle)
+    {
+        var f = _mitarbeiter.Where(m => m.Aktiv && m.Kostenstelle == kostenstelle && m.Limit > 0).OrderByDescending(m => m.Limit)
+            .Select(m => $"{m.Kurzzeichen} ({Chf(m.Limit)})").ToList();
+        return f.Count == 0 ? "niemand" : Csv(f);
+    }
+
+    private void BearbeiteMitarbeiter(HbMitarbeiter m)
+    {
+        _edit = new HbMitarbeiter
+        {
+            Id = m.Id, Kurzzeichen = m.Kurzzeichen, Vorname = m.Vorname, Nachname = m.Nachname, Mail = m.Mail, Konto = m.Konto,
+            Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, Aktiv = m.Aktiv
+        };
+        _editNeu = m.Id == 0;
+        _editTitel = _editNeu ? "Mitarbeiter erfassen" : $"Mitarbeiter {m.Kurzzeichen} bearbeiten";
+    }
+
+    private void BearbeiteKreditor(HbKreditor? k)
+    {
+        _edit = k is null ? new HbKreditor() : new HbKreditor { Nr = k.Nr, Name = k.Name, Strasse = k.Strasse, Plz = k.Plz, Ort = k.Ort, Land = k.Land };
+        _editNeu = k is null;
+        _editTitel = _editNeu ? "Kreditor erfassen" : $"Kreditor {k!.Nr} bearbeiten";
+    }
+
+    private void BearbeiteKostenstelle(HbKostenstelle? k)
+    {
+        _edit = k is null ? new HbKostenstelle() : new HbKostenstelle { Nr = k.Nr, Bezeichnung = k.Bezeichnung, Leiter = k.Leiter };
+        _editNeu = k is null;
+        _editTitel = _editNeu ? "Kostenstelle erfassen" : $"Kostenstelle {k!.Nr} bearbeiten";
+    }
+
+    private void BearbeiteSachkonto(HbSachkonto? s)
+    {
+        _edit = s is null ? new HbSachkonto() : new HbSachkonto { Nr = s.Nr, Bezeichnung = s.Bezeichnung };
+        _editNeu = s is null;
+        _editTitel = _editNeu ? "Sachkonto erfassen" : $"Sachkonto {s!.Nr} bearbeiten";
+    }
+
+    private async Task StammSpeichernAsync()
+    {
+        try
+        {
+            switch (_edit)
+            {
+                case HbMitarbeiter m: await Hb.SpeichereMitarbeiterAsync(_ich!, m); break;
+                case HbKreditor k: await Hb.SpeichereKreditorAsync(_ich!, k, _editNeu); break;
+                case HbKostenstelle ks: await Hb.SpeichereKostenstelleAsync(_ich!, ks, _editNeu); break;
+                case HbSachkonto s: await Hb.SpeichereSachkontoAsync(_ich!, s, _editNeu); break;
+            }
+            Snackbar.Add("Gespeichert.", Severity.Success);
+            _edit = null;
+            await LadenAsync();
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _ich = await Hb.BenutzerAsync(state.User.Identity?.Name);
+        }
+        catch (HbException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task NutzungLadenAsync()
+    {
+        try
+        {
+            _nutzung = await Hb.NutzungAsync(_ich!, (_nutzVon ?? DateTime.Today.AddYears(-1)).Date, (_nutzBis ?? DateTime.Today).Date.AddDays(1));
+        }
+        catch (HbException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    // ---------- Hilfen ----------
+
+    private string? KreditorName(string nr) => _kreditoren.FirstOrDefault(k => k.Nr == nr)?.Name;
+    private static bool Gleich(string? a, string? b) => !string.IsNullOrEmpty(a) && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+    private static string Chf(decimal d) => d.ToString("#,0.00", _ch);
+    private static string Csv(IEnumerable<string> teile) => string.Join(", ", teile);
+
+    private static bool Treffer(string? suche, params string?[] felder)
+    {
+        if (string.IsNullOrWhiteSpace(suche))
+            return true;
+        var s = suche.Trim();
+        return felder.Any(f => !string.IsNullOrEmpty(f) && f.Contains(s, StringComparison.OrdinalIgnoreCase));
+    }
+}
