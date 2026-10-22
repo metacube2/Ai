@@ -288,3 +288,67 @@ public class RecorderLiveTests
         Assert.Single(Directory.GetFiles(dir, "*.wav")); // temp tracks removed
     }
 }
+
+public class VuMeterTests
+{
+    [Fact]
+    public void Scale_is_voltage_linear_with_plus3_at_full_deflection()
+    {
+        Assert.Equal(1.0, WhisperStudio.Controls.VuMeter.PositionForVu(3), 6);
+        Assert.Equal(0.708, WhisperStudio.Controls.VuMeter.PositionForVu(0), 3);
+        Assert.Equal(0.0708, WhisperStudio.Controls.VuMeter.PositionForVu(-20), 4);
+    }
+
+    [Fact]
+    public void Minus18_dBFS_rms_reads_0_VU_and_overload_pins_needle()
+    {
+        var rms = Math.Pow(10, -18 / 20.0);
+        Assert.Equal(WhisperStudio.Controls.VuMeter.PositionForVu(0), WhisperStudio.Controls.VuMeter.PositionForRms(rms), 6);
+        Assert.Equal(0, WhisperStudio.Controls.VuMeter.PositionForRms(0));
+        Assert.Equal(1.06, WhisperStudio.Controls.VuMeter.PositionForRms(1.0), 6);
+    }
+
+    [Fact]
+    public void Measure_returns_peak_and_rms_for_16bit()
+    {
+        var samples = new short[] { 16384, -16384, 16384, -16384 }; // square wave at half scale
+        var bytes = new byte[samples.Length * 2];
+        Buffer.BlockCopy(samples, 0, bytes, 0, bytes.Length);
+        var (peak, rms) = Recorder.Measure(bytes, bytes.Length, new WaveFormat(16000, 16, 1));
+        Assert.Equal(0.5f, peak, 3);
+        Assert.Equal(0.5f, rms, 3);
+    }
+
+    [Fact]
+    public void Renders_face_to_png_when_requested()
+    {
+        var target = Environment.GetEnvironmentVariable("WS_VU_PNG");
+        if (string.IsNullOrEmpty(target)) return;
+        Exception? error = null;
+        var t = new Thread(() =>
+        {
+            try
+            {
+                foreach (var (suffix, rms, peak) in new[] { ("rest", 0.0, 0.0), ("speech", 0.1, 0.5), ("loud", 0.3, 0.98) })
+                {
+                    var vu = new WhisperStudio.Controls.VuMeter { Width = 340, Height = 190, Rms = rms, Peak = peak };
+                    vu.Measure(new System.Windows.Size(340, 190));
+                    vu.Arrange(new System.Windows.Rect(0, 0, 340, 190));
+                    vu.SetNeedleForTest(rms, peak >= 0.891);
+                    vu.UpdateLayout();
+                    var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap(680, 380, 192, 192, System.Windows.Media.PixelFormats.Pbgra32);
+                    bmp.Render(vu);
+                    var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                    using var fs = File.Create(target.Replace(".png", $"_{suffix}.png"));
+                    enc.Save(fs);
+                }
+            }
+            catch (Exception ex) { error = ex; }
+        });
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start();
+        t.Join();
+        Assert.Null(error);
+    }
+}

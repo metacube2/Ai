@@ -15,6 +15,8 @@ Stand: 2026-10-22
 - Nicht geprueft: Bedienung mit der Maus (Drag&Drop, Tabelle bearbeiten, KI-Knoepfe). Kein Deploy, Werkzeug laeuft lokal.
 - Nachtrag: Alte WinForms-GUI `whisper/gui/WhisperGui` auf Wunsch Ingo entfernt (Quellen bis `ae599c2` in Git), die
   Desktop-Verknuepfung „Whisper“ startet jetzt das Studio.
+- Nachtrag: Aufnahmeseite mit analogem VU-Meter (Zeiger, roter Bereich ab 0 VU, PEAK-Lampe ab -1 dBFS) statt Pegelbalken,
+  Wunsch Ingo. `Controls/VuMeter.cs`, `Recorder.Measure` (Spitze und RMS), 35 Tests gruen, Release neu gebaut.
 - Details: `whisper/HANDOFF.md`.
 
 ## Doku: Markdown-Aufraeumen, Archiv `docs/archiv/`, 2026-10-22

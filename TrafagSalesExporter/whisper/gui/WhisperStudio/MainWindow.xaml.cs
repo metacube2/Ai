@@ -72,7 +72,7 @@ public partial class MainWindow : Window
         _queue.CollectionChanged += (_, _) => UpdateQueueState();
         _ticker.Tick += (_, _) => OnTick();
         _ticker.Start();
-        _recorder.Level += level => Dispatcher.BeginInvoke(() => LevelMeter.Value = level);
+        _recorder.Level += (peak, rms) => Dispatcher.BeginInvoke(() => { LevelMeter.Peak = peak; LevelMeter.Rms = rms; });
         RecordTitleBox.TextChanged += (_, _) => UpdateRecordHint();
 
         Drop += OnDrop;
@@ -484,7 +484,7 @@ public partial class MainWindow : Window
             RecordGlyph.Text = "";
             RecordButton.IsEnabled = true;
             MicBox.IsEnabled = SystemAudioBox.IsEnabled = true;
-            LevelMeter.Value = 0;
+            LevelMeter.Peak = LevelMeter.Rms = 0;
             UpdateRecordHint();
         }
     }

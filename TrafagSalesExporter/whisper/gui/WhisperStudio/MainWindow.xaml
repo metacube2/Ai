@@ -1,6 +1,7 @@
 ﻿<Window x:Class="WhisperStudio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vu="clr-namespace:WhisperStudio.Controls"
         Title="Whisper Studio" Width="1240" Height="820" MinWidth="960" MinHeight="620"
         WindowStartupLocation="CenterScreen" AllowDrop="True">
     <Grid>
@@ -187,15 +188,16 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Button x:Name="RecordButton" Click="Record_Click" Width="64" Height="64" Padding="0">
                                 <TextBlock x:Name="RecordGlyph" Text="&#xE7C8;" Style="{StaticResource IconText}" FontSize="26" Foreground="#C8102E" />
                             </Button>
                             <StackPanel Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center">
                                 <TextBlock x:Name="RecordTime" Text="00:00:00" FontSize="30" FontWeight="Light" FontFamily="Segoe UI Variable Display, Segoe UI" />
-                                <ProgressBar x:Name="LevelMeter" Height="6" Maximum="1" Margin="0,6,0,4" />
-                                <TextBlock x:Name="RecordStatus" Text="Bereit." Opacity="0.7" />
+                                <TextBlock x:Name="RecordStatus" Text="Bereit." Opacity="0.7" Margin="0,4,0,0" TextWrapping="Wrap" />
                             </StackPanel>
+                            <vu:VuMeter x:Name="LevelMeter" Grid.Column="2" Width="300" Margin="16,0,0,0" VerticalAlignment="Center" />
                         </Grid>
                     </Border>
                 </StackPanel>

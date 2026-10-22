@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
@@ -29,7 +29,7 @@ public sealed class Recorder : IDisposable
     private TaskCompletionSource? _micStopped;
     private TaskCompletionSource? _loopStopped;
 
-    public event Action<float>? Level; // peak 0..1 of the microphone
+    public event Action<float, float>? Level; // microphone peak and RMS, both 0..1 of full scale
     public TimeSpan Elapsed => _clock.Elapsed;
     public bool IsRecording => _clock.IsRunning;
 
@@ -60,7 +60,8 @@ public sealed class Recorder : IDisposable
         _mic.DataAvailable += (_, e) =>
         {
             _micWriter?.Write(e.Buffer, 0, e.BytesRecorded);
-            Level?.Invoke(Peak(e.Buffer, e.BytesRecorded, _mic.WaveFormat));
+            var (peak, rms) = Measure(e.Buffer, e.BytesRecorded, _mic.WaveFormat);
+            Level?.Invoke(peak, rms);
         };
         _mic.RecordingStopped += (_, _) => _micStopped.TrySetResult();
 
@@ -178,24 +179,30 @@ public sealed class Recorder : IDisposable
         return mono.WaveFormat.SampleRate == 16000 ? mono : new WdlResamplingSampleProvider(mono, 16000);
     }
 
-    private static float Peak(byte[] buffer, int bytes, WaveFormat fmt)
+    internal static (float Peak, float Rms) Measure(byte[] buffer, int bytes, WaveFormat fmt)
     {
         float max = 0;
+        double sum = 0;
+        var n = 0;
         if (fmt.Encoding == WaveFormatEncoding.IeeeFloat || (fmt is WaveFormatExtensible && fmt.BitsPerSample == 32))
         {
-            for (var i = 0; i + 4 <= bytes; i += 4)
+            for (var i = 0; i + 4 <= bytes; i += 4, n++)
             {
-                max = Math.Max(max, Math.Abs(BitConverter.ToSingle(buffer, i)));
+                var v = BitConverter.ToSingle(buffer, i);
+                max = Math.Max(max, Math.Abs(v));
+                sum += v * v;
             }
         }
         else if (fmt.BitsPerSample == 16)
         {
-            for (var i = 0; i + 2 <= bytes; i += 2)
+            for (var i = 0; i + 2 <= bytes; i += 2, n++)
             {
-                max = Math.Max(max, Math.Abs(BitConverter.ToInt16(buffer, i) / 32768f));
+                var v = BitConverter.ToInt16(buffer, i) / 32768f;
+                max = Math.Max(max, Math.Abs(v));
+                sum += v * v;
             }
         }
-        return Math.Min(1f, max);
+        return (Math.Min(1f, max), n == 0 ? 0f : (float)Math.Min(1.0, Math.Sqrt(sum / n)));
     }
 
     private static void TryDelete(string? path)
