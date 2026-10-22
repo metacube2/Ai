@@ -1,0 +1,14 @@
+# Local-only runtime, cache and personal data - never commit (see HANDOFF.md)
+python/
+cache/
+downloads/
+temp/
+input/
+output/
+gui/WhisperGui/publish/
+backup/
+llm/
+gui/*/bin/
+gui/*/obj/
+.claude/settings.local.json
+__pycache__/

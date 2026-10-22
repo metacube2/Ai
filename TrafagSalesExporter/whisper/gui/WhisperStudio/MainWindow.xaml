@@ -1,0 +1,342 @@
+﻿<Window x:Class="WhisperStudio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Whisper Studio" Width="1240" Height="820" MinWidth="960" MinHeight="620"
+        WindowStartupLocation="CenterScreen" AllowDrop="True">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Navigation -->
+        <Border Grid.Column="0" Background="#0A808080" BorderBrush="#22808080" BorderThickness="0,0,1,0">
+            <DockPanel Margin="10,16,10,12">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,20">
+                    <TextBlock Text="&#xE720;" Style="{StaticResource IconText}" FontSize="22" Foreground="#C8102E" />
+                    <TextBlock Text="Whisper Studio" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Bottom" x:Name="NavFooter" Opacity="0.55" FontSize="11" Margin="8,0" TextWrapping="Wrap" />
+                <ListBox x:Name="Nav" BorderThickness="0" Background="Transparent" SelectionChanged="Nav_SelectionChanged">
+                    <ListBoxItem Tag="Transcribe" Padding="10,9">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" Style="{StaticResource IconText}" /><TextBlock Text="Transkribieren" Margin="12,0,0,0" /></StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="Record" Padding="10,9">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7C8;" Style="{StaticResource IconText}" /><TextBlock Text="Aufnahme" Margin="12,0,0,0" /></StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="Editor" Padding="10,9">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" Style="{StaticResource IconText}" /><TextBlock Text="Editor &amp; KI" Margin="12,0,0,0" /></StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="History" Padding="10,9">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE81C;" Style="{StaticResource IconText}" /><TextBlock Text="Verlauf" Margin="12,0,0,0" /></StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="Settings" Padding="10,9">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" Style="{StaticResource IconText}" /><TextBlock Text="Einstellungen" Margin="12,0,0,0" /></StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="28,20,28,16">
+
+            <!-- ============ Transkribieren ============ -->
+            <Grid x:Name="PageTranscribe">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Transkribieren" Style="{StaticResource PageTitle}" />
+                    <TextBlock Style="{StaticResource PageSubtitle}"
+                               Text="Dateien oder Ordner hineinziehen. Datum, Uhrzeit und Titel bestimmen den Dateinamen und lassen sich in der Liste ändern." />
+                </StackPanel>
+
+                <Border Grid.Row="1" Style="{StaticResource Card}">
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,18,6">
+                            <TextBlock Text="Sprache" Style="{StaticResource SectionLabel}" />
+                            <ComboBox x:Name="LanguageBox" Width="150" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,18,6">
+                            <TextBlock Text="Modell" Style="{StaticResource SectionLabel}" />
+                            <ComboBox x:Name="ModelBox" Width="190" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,18,6">
+                            <TextBlock Text="Aufgabe" Style="{StaticResource SectionLabel}" />
+                            <ComboBox x:Name="TaskBox" Width="230" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,18,6">
+                            <TextBlock Text="Zusätzlich speichern" Style="{StaticResource SectionLabel}" />
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox x:Name="ExportDocxBox" Content="Word" Margin="0,0,12,0" />
+                                <CheckBox x:Name="ExportSrtBox" Content="SRT" Margin="0,0,12,0" />
+                                <CheckBox x:Name="ExportVttBox" Content="VTT" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,0,6">
+                            <TextBlock Text="Optionen" Style="{StaticResource SectionLabel}" />
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox x:Name="TimestampsBox" Content="Zeitstempel im Text" Margin="0,0,12,0" />
+                                <CheckBox x:Name="SkipExistingBox" Content="Vorhandene überspringen" />
+                            </StackPanel>
+                        </StackPanel>
+                    </WrapPanel>
+                </Border>
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid>
+                        <DataGrid x:Name="QueueGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  HeadersVisibility="Column" GridLinesVisibility="None" SelectionMode="Extended"
+                                  MouseDoubleClick="QueueGrid_MouseDoubleClick" RowHeight="40">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="" Width="40" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StatusGlyph}" Foreground="{Binding StatusBrush}" FontFamily="{StaticResource IconFont}"
+                                                       FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="{Binding StatusText}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Aufnahme" Binding="{Binding RecordedAtText, UpdateSourceTrigger=LostFocus}" Width="190" />
+                                <DataGridTextColumn Header="Titel" Binding="{Binding Title, UpdateSourceTrigger=LostFocus}" Width="*" />
+                                <DataGridTextColumn Header="Quelle" Binding="{Binding DisplayName}" Width="*" IsReadOnly="True" />
+                                <DataGridTemplateColumn Header="Fortschritt" Width="190" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid VerticalAlignment="Center" Margin="4,0">
+                                                <ProgressBar Height="6" Maximum="100" Value="{Binding Percent, Mode=OneWay}" IsIndeterminate="{Binding IsPreparing}" />
+                                                <TextBlock Text="{Binding ProgressText}" FontSize="11" Opacity="0.75" Margin="0,16,0,0" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <StackPanel x:Name="QueueEmptyHint" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.55">
+                            <TextBlock Text="&#xE896;" Style="{StaticResource IconText}" FontSize="40" HorizontalAlignment="Center" />
+                            <TextBlock Text="Audio- oder Videodateien hierher ziehen" FontSize="15" Margin="0,10,0,0" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" Width="170">
+                        <Button x:Name="AddFilesButton" Click="AddFiles_Click" HorizontalAlignment="Stretch" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Dateien" Margin="8,0,0,0" /></StackPanel>
+                        </Button>
+                        <Button Click="AddFolder_Click" HorizontalAlignment="Stretch" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B7;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Ordner" Margin="8,0,0,0" /></StackPanel>
+                        </Button>
+                        <Button Click="Remove_Click" HorizontalAlignment="Stretch" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74D;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Entfernen" Margin="8,0,0,0" /></StackPanel>
+                        </Button>
+                        <Button Click="ClearDone_Click" HorizontalAlignment="Stretch" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE894;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Erledigte leeren" Margin="8,0,0,0" /></StackPanel>
+                        </Button>
+                        <Button Click="OpenOutput_Click" HorizontalAlignment="Stretch">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE838;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Ausgabeordner" Margin="8,0,0,0" /></StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,12,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock x:Name="BatchStatus" Text="Bereit." FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <ProgressBar x:Name="BatchProgress" Height="6" Maximum="1000" Margin="0,8,0,4" />
+                            <TextBlock x:Name="BatchDetail" Opacity="0.7" FontSize="12" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                            <Button x:Name="CancelButton" Click="Cancel_Click" IsEnabled="False" Margin="0,0,8,0" Padding="14,6">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71A;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Abbrechen" Margin="8,0,0,0" /></StackPanel>
+                            </Button>
+                            <Button x:Name="StartButton" Click="Start_Click" Style="{DynamicResource AccentButtonStyle}" Padding="18,6">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Transkription starten" Margin="8,0,0,0" /></StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ============ Aufnahme ============ -->
+            <ScrollViewer x:Name="PageRecord" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+                    <TextBlock Text="Aufnahme" Style="{StaticResource PageTitle}" />
+                    <TextBlock Style="{StaticResource PageSubtitle}"
+                               Text="Nimmt das Mikrofon und auf Wunsch den Systemton auf (das, was Teams abspielt). Beides wird zu einer Datei gemischt. Teilnehmende vorher informieren." />
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Mikrofon" Style="{StaticResource SectionLabel}" />
+                            <ComboBox x:Name="MicBox" Margin="0,0,0,12" />
+                            <CheckBox x:Name="SystemAudioBox" Content="Systemton mitschneiden (Teams-Ton der anderen Teilnehmenden)" Margin="0,0,0,8" />
+                            <CheckBox x:Name="AutoTranscribeBox" Content="Nach dem Stoppen automatisch transkribieren" Margin="0,0,0,12" />
+                            <TextBlock Text="Titel" Style="{StaticResource SectionLabel}" />
+                            <TextBox x:Name="RecordTitleBox" Margin="0,0,0,4" />
+                            <TextBlock x:Name="RecordFileHint" Opacity="0.6" FontSize="12" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="RecordButton" Click="Record_Click" Width="64" Height="64" Padding="0">
+                                <TextBlock x:Name="RecordGlyph" Text="&#xE7C8;" Style="{StaticResource IconText}" FontSize="26" Foreground="#C8102E" />
+                            </Button>
+                            <StackPanel Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="RecordTime" Text="00:00:00" FontSize="30" FontWeight="Light" FontFamily="Segoe UI Variable Display, Segoe UI" />
+                                <ProgressBar x:Name="LevelMeter" Height="6" Maximum="1" Margin="0,6,0,4" />
+                                <TextBlock x:Name="RecordStatus" Text="Bereit." Opacity="0.7" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ============ Editor & KI ============ -->
+            <Grid x:Name="PageEditor" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Editor &amp; KI" Style="{StaticResource PageTitle}" />
+                    <TextBlock x:Name="EditorFileLabel" Style="{StaticResource PageSubtitle}" Text="Kein Transkript geöffnet. Im Verlauf eines auswählen oder nach einer Transkription hier weiterarbeiten." />
+                </StackPanel>
+                <WrapPanel Grid.Row="1" Margin="0,0,0,10">
+                    <Button Click="EditorOpen_Click" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8E5;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Öffnen" Margin="8,0,0,0" /></StackPanel>
+                    </Button>
+                    <Button x:Name="EditorSaveButton" Click="EditorSave_Click" Margin="0,0,8,6" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74E;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Speichern" Margin="8,0,0,0" /></StackPanel>
+                    </Button>
+                    <Button x:Name="EditorExportButton" Click="EditorExport_Click" Margin="0,0,8,6" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A1;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Word / SRT / VTT" Margin="8,0,0,0" /></StackPanel>
+                    </Button>
+                    <Button x:Name="EditorShowButton" Click="EditorShow_Click" Margin="0,0,8,6" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE838;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Im Explorer" Margin="8,0,0,0" /></StackPanel>
+                    </Button>
+                </WrapPanel>
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="EditorBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                             FontSize="14" Padding="10" TextChanged="EditorBox_TextChanged" VerticalContentAlignment="Top" />
+                    <GridSplitter Grid.Column="1" Width="12" HorizontalAlignment="Stretch" Background="Transparent" />
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Border Style="{StaticResource Card}" Padding="12">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="&#xE99A;" Style="{StaticResource IconText}" />
+                                    <TextBlock Text="Lokale KI" FontWeight="SemiBold" Margin="8,0,0,0" />
+                                    <TextBlock x:Name="AiState" Opacity="0.65" Margin="10,0,0,0" FontSize="12" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <WrapPanel>
+                                    <Button x:Name="AiProtocolButton" Click="AiProtocol_Click" Margin="0,0,8,6" Style="{DynamicResource AccentButtonStyle}">Protokoll erstellen</Button>
+                                    <Button x:Name="AiCleanButton" Click="AiClean_Click" Margin="0,0,8,6">In Hochdeutsch glätten</Button>
+                                    <Button x:Name="AiTranslateButton" Click="AiTranslate_Click" Margin="0,0,8,6">Übersetzen nach</Button>
+                                    <ComboBox x:Name="AiLanguageBox" Width="140" Margin="0,0,8,6" />
+                                    <Button x:Name="AiCancelButton" Click="AiCancel_Click" Margin="0,0,0,6" IsEnabled="False">Stopp</Button>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <TextBox x:Name="AiOutputBox" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                 FontSize="14" Padding="10" VerticalContentAlignment="Top" />
+                        <Grid Grid.Row="2" Margin="0,8,0,0">
+                            <TextBlock x:Name="AiStatus" Opacity="0.7" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,140,0" />
+                            <Button x:Name="AiSaveButton" Click="AiSave_Click" HorizontalAlignment="Right" IsEnabled="False">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74E;" Style="{StaticResource IconText}" FontSize="13" /><TextBlock Text="Ergebnis speichern" Margin="8,0,0,0" /></StackPanel>
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Grid>
+
+            <!-- ============ Verlauf ============ -->
+            <Grid x:Name="PageHistory" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Verlauf" Style="{StaticResource PageTitle}" />
+                    <TextBlock Style="{StaticResource PageSubtitle}" Text="Alle Transkripte im Ausgabeordner, neueste zuerst. Die Suche durchsucht Titel und Volltext. Doppelklick öffnet im Editor." />
+                </StackPanel>
+                <Grid Grid.Row="1" Margin="0,0,0,10">
+                    <TextBox x:Name="HistorySearch" TextChanged="HistorySearch_TextChanged" Padding="32,6,8,6" />
+                    <TextBlock Text="&#xE721;" Style="{StaticResource IconText}" FontSize="14" Margin="10,0,0,0" Opacity="0.6" IsHitTestVisible="False" HorizontalAlignment="Left" />
+                </Grid>
+                <DataGrid x:Name="HistoryGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                          GridLinesVisibility="None" MouseDoubleClick="HistoryGrid_MouseDoubleClick" RowHeight="36">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Datum" Binding="{Binding DateText}" Width="140" />
+                        <DataGridTextColumn Header="Titel" Binding="{Binding Title}" Width="*" />
+                        <DataGridTextColumn Header="Ordner" Binding="{Binding Folder}" Width="160" />
+                        <DataGridTextColumn Header="Dateien" Binding="{Binding Extras}" Width="190" />
+                        <DataGridTextColumn Header="Grösse" Binding="{Binding SizeText}" Width="80" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <!-- ============ Einstellungen ============ -->
+            <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+                    <TextBlock Text="Einstellungen" Style="{StaticResource PageTitle}" />
+                    <TextBlock Style="{StaticResource PageSubtitle}" Text="Alles bleibt im Ordner whisper. Es wird nichts installiert und nichts ins Internet geschickt." />
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Darstellung" Style="{StaticResource SectionLabel}" />
+                            <ComboBox x:Name="ThemeBox" Width="200" HorizontalAlignment="Left" SelectionChanged="ThemeBox_SelectionChanged" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Lokale KI (llama.cpp)" Style="{StaticResource SectionLabel}" />
+                            <TextBlock x:Name="LlmInstallState" TextWrapping="Wrap" Margin="0,0,0,10" Opacity="0.8" />
+                            <TextBlock Text="Endpunkt (OpenAI-kompatibel)" Opacity="0.7" FontSize="12" />
+                            <TextBox x:Name="LlmUrlBox" Margin="0,2,0,8" />
+                            <TextBlock Text="Modellname" Opacity="0.7" FontSize="12" />
+                            <TextBox x:Name="LlmModelBox" Margin="0,2,0,8" />
+                            <CheckBox x:Name="LlmAutoStartBox" Content="Lokalen Server beim Bedarf automatisch starten" Margin="0,0,0,10" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Click="LlmSave_Click" Margin="0,0,8,0">Speichern</Button>
+                                <Button Click="LlmTest_Click">Verbindung testen</Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Ordner" Style="{StaticResource SectionLabel}" />
+                            <TextBlock x:Name="PathsInfo" TextWrapping="Wrap" Opacity="0.8" FontFamily="Cascadia Mono, Consolas" FontSize="12" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Protokoll" Style="{StaticResource SectionLabel}" />
+                            <TextBox x:Name="LogBox" IsReadOnly="True" Height="220" FontFamily="Cascadia Mono, Consolas" FontSize="12"
+                                     TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
