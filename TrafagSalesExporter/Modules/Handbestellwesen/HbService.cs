@@ -1,0 +1,295 @@
+using System.Collections.Concurrent;
+using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+
+namespace TrafagSalesExporter.Modules.Handbestellwesen;
+
+/// <summary>
+/// Fachlogik des Handbestellwesens. Alle Pruefungen laufen hier auf dem Server; die PHP-Anwendung pruefte das
+/// Bestelllimit nur im Browser und liess Freigeben und Loeschen fuer jeden zu.
+/// </summary>
+public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptionsMonitor<HbOptions> options, TimeProvider clock)
+{
+    // Nummernvergabe nacheinander je Datenbank; zusaetzlich schuetzt der eindeutige Index auf Bestellnummer.
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> WriteLocks = new(StringComparer.OrdinalIgnoreCase);
+
+    private DateTime Jetzt => clock.GetLocalNow().DateTime;
+
+    // ---------- Benutzer ----------
+
+    /// <summary>Windows-Login ohne Domaene, klein geschrieben (TRAFAG\Koi -> koi).</summary>
+    public static string KurzKonto(string? login)
+    {
+        var name = (login ?? string.Empty).Trim();
+        var sep = name.LastIndexOf('\\');
+        if (sep >= 0) name = name[(sep + 1)..];
+        var at = name.IndexOf('@');
+        if (at > 0) name = name[..at];
+        return name.ToLowerInvariant();
+    }
+
+    public async Task<HbBenutzer> BenutzerAsync(string? login)
+    {
+        var konto = KurzKonto(login);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var ma = konto.Length == 0 ? null : await db.Mitarbeiter.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Aktiv && x.Konto.ToLower() == konto);
+        var admin = options.CurrentValue.AdminUsers.Any(a => KurzKonto(a) == konto) || ma?.IstAdmin == true;
+        return new HbBenutzer(konto, ma, admin && konto.Length > 0);
+    }
+
+    // ---------- Lesen ----------
+
+    public async Task<List<HbBestellung>> BestellungenAsync(bool archiv, string? suche = null)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var q = db.Bestellungen.AsNoTracking();
+        q = archiv
+            ? q.Where(x => x.Status == HbStatus.Eingegangen)
+            : q.Where(x => x.Status == HbStatus.Offen || x.Status == HbStatus.FreigabeOffen);
+        var liste = await q.OrderByDescending(x => x.Id).ToListAsync();
+        if (string.IsNullOrWhiteSpace(suche))
+            return liste;
+
+        // Volltextsuche wie im PHP-Filter, aber Leerzeichen in der Bestellnummer duerfen mitgetippt werden.
+        var s = suche.Trim();
+        var ohneLeer = s.Replace(" ", string.Empty);
+        bool Treffer(string? v) => !string.IsNullOrEmpty(v) && v.Contains(s, StringComparison.OrdinalIgnoreCase);
+        return liste.Where(x =>
+                x.Bestellnummer.Contains(ohneLeer, StringComparison.OrdinalIgnoreCase) ||
+                Treffer(x.KreditorNr) || Treffer(x.Text) || Treffer(x.BestellerKurzzeichen) ||
+                Treffer(x.FreigeberKurzzeichen) || Treffer(x.Kostenstelle) || Treffer(x.Sachkonto) ||
+                Treffer(x.Bestellwert.ToString(CultureInfo.InvariantCulture)))
+            .ToList();
+    }
+
+    public async Task<List<HbKreditor>> KreditorenAsync()
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        return await db.Kreditoren.AsNoTracking().OrderBy(x => x.Name).ToListAsync();
+    }
+
+    public async Task<List<HbMitarbeiter>> MitarbeiterAsync()
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        return await db.Mitarbeiter.AsNoTracking().OrderBy(x => x.Kurzzeichen).ToListAsync();
+    }
+
+    public async Task<List<HbKostenstelle>> KostenstellenAsync()
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        return await db.Kostenstellen.AsNoTracking().OrderBy(x => x.Nr).ToListAsync();
+    }
+
+    public async Task<List<HbSachkonto>> SachkontenAsync()
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        return await db.Sachkonten.AsNoTracking().OrderBy(x => x.Nr).ToListAsync();
+    }
+
+    /// <summary>Personen, die fuer diese Kostenstelle diesen Betrag freigeben duerfen (checkberechtigung.php).</summary>
+    public async Task<List<HbMitarbeiter>> FreigeberAsync(string kostenstelle, decimal bestellwert, string? ohneKurzzeichen = null)
+    {
+        var alle = await MitarbeiterAsync();
+        return alle.Where(x => x.Aktiv && x.Kostenstelle == kostenstelle && x.Limit >= bestellwert &&
+                               !string.Equals(x.Kurzzeichen, ohneKurzzeichen, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    // ---------- Bestellnummer ----------
+
+    /// <summary>E + JJ + Kostenstelle + 4-stellige Nummer, wie bisher.</summary>
+    public static string BildeNummer(int jahr, string kostenstelle, int nummer)
+        => $"E{jahr % 100:D2}{kostenstelle}{nummer:D4}";
+
+    /// <summary>Anzeige mit Leerzeichen: E26 875 0012.</summary>
+    public static string FormatNummer(string? nummer)
+    {
+        if (string.IsNullOrEmpty(nummer) || nummer.Length < 8)
+            return nummer ?? string.Empty;
+        return $"{nummer[..3]} {nummer[3..^4]} {nummer[^4..]}";
+    }
+
+    // ---------- Schreiben ----------
+
+    public async Task<HbBestellung> AnlegenAsync(HbBenutzer benutzer, HbBestellEingabe e)
+    {
+        if (benutzer.Mitarbeiter is null && !benutzer.IstAdmin)
+            throw new HbException($"Für das Konto „{benutzer.Konto}“ gibt es keinen Mitarbeitereintrag. Bitte beim Admin melden.");
+
+        var text = (e.Text ?? string.Empty).Trim();
+        if (text.Length == 0) throw new HbException("Bitte einen Bestelltext eingeben.");
+        if (e.Bestellwert is not > 0) throw new HbException("Bitte einen Bestellwert grösser als 0 eingeben.");
+        var wert = decimal.Round(e.Bestellwert.Value, 2);
+
+        // Nur ein Admin darf fuer jemand anderen bestellen; sonst bestellt der Angemeldete selbst.
+        var besteller = benutzer.IstAdmin && !string.IsNullOrWhiteSpace(e.BestellerKurzzeichen)
+            ? e.BestellerKurzzeichen.Trim()
+            : benutzer.Kurzzeichen;
+        if (besteller.Length == 0) throw new HbException("Bitte ein Kurzzeichen wählen.");
+
+        var sperre = WriteLocks.GetOrAdd(DbSchluessel(), _ => new SemaphoreSlim(1, 1));
+        await sperre.WaitAsync();
+        try
+        {
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var ma = await db.Mitarbeiter.AsNoTracking().FirstOrDefaultAsync(x => x.Kurzzeichen == besteller && x.Aktiv)
+                     ?? throw new HbException($"Kurzzeichen „{besteller}“ ist nicht erfasst oder nicht aktiv.");
+            if (!await db.Kreditoren.AnyAsync(x => x.Nr == e.KreditorNr)) throw new HbException("Bitte einen Kreditor wählen.");
+            if (!await db.Kostenstellen.AnyAsync(x => x.Nr == e.Kostenstelle)) throw new HbException("Bitte eine Kostenstelle wählen.");
+            if (!await db.Sachkonten.AnyAsync(x => x.Nr == e.Sachkonto)) throw new HbException("Bitte ein Sachkonto wählen.");
+
+            string? freigeber = null;
+            if (wert > ma.Limit)
+            {
+                if (string.IsNullOrWhiteSpace(e.FreigeberKurzzeichen))
+                    throw new HbException($"Der Bestellwert liegt über Ihrer Berechtigung von CHF {ma.Limit:N2}. Bitte eine berechtigte Person für die Freigabe wählen.");
+                var berechtigte = await FreigeberAsync(e.Kostenstelle, wert, besteller);
+                freigeber = berechtigte.FirstOrDefault(x => string.Equals(x.Kurzzeichen, e.FreigeberKurzzeichen, StringComparison.OrdinalIgnoreCase))?.Kurzzeichen
+                            ?? throw new HbException("Die gewählte Person darf diesen Betrag für diese Kostenstelle nicht freigeben.");
+            }
+
+            var jetzt = Jetzt;
+            await using var tx = await db.Database.BeginTransactionAsync();
+            var z = await db.Zaehler.FirstOrDefaultAsync(x => x.Jahr == jetzt.Year && x.Kostenstelle == e.Kostenstelle);
+            if (z is null)
+            {
+                z = new HbZaehler { Jahr = jetzt.Year, Kostenstelle = e.Kostenstelle, LetzteNummer = 0 };
+                db.Zaehler.Add(z);
+            }
+            z.LetzteNummer++;
+
+            var b = new HbBestellung
+            {
+                Bestellnummer = BildeNummer(jetzt.Year, e.Kostenstelle, z.LetzteNummer),
+                KreditorNr = e.KreditorNr,
+                Text = text,
+                Bestellwert = wert,
+                BestellerKurzzeichen = ma.Kurzzeichen,
+                FreigeberKurzzeichen = freigeber,
+                Kostenstelle = e.Kostenstelle,
+                Sachkonto = e.Sachkonto,
+                Status = freigeber is null ? HbStatus.Offen : HbStatus.FreigabeOffen,
+                AngelegtAm = jetzt,
+                AngelegtVon = benutzer.Konto
+            };
+            db.Bestellungen.Add(b);
+            Protokolliere(db, benutzer, "Angelegt", b.Bestellnummer,
+                $"Kreditor {b.KreditorNr}, CHF {b.Bestellwert.ToString("0.00", CultureInfo.InvariantCulture)}, Besteller {b.BestellerKurzzeichen}" +
+                (freigeber is null ? string.Empty : $", Freigabe durch {freigeber}"));
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+            return b;
+        }
+        finally
+        {
+            sperre.Release();
+        }
+    }
+
+    public Task FreigebenAsync(HbBenutzer benutzer, int id) => AendereAsync(benutzer, id, "Freigegeben", b =>
+    {
+        if (b.Status != HbStatus.FreigabeOffen) throw new HbException("Diese Bestellung wartet nicht auf eine Freigabe.");
+        if (!benutzer.IstAdmin && !string.Equals(benutzer.Kurzzeichen, b.FreigeberKurzzeichen, StringComparison.OrdinalIgnoreCase))
+            throw new HbException($"Nur {b.FreigeberKurzzeichen} kann diese Bestellung freigeben.");
+        b.Status = HbStatus.Offen;
+        b.FreigegebenAm = Jetzt;
+        b.FreigegebenVon = benutzer.Konto;
+    });
+
+    public Task WareneingangAsync(HbBenutzer benutzer, int id) => AendereAsync(benutzer, id, "Ware eingegangen", b =>
+    {
+        if (b.Status == HbStatus.FreigabeOffen) throw new HbException("Die Bestellung ist noch nicht freigegeben.");
+        if (b.Status != HbStatus.Offen) throw new HbException("Diese Bestellung ist nicht mehr offen.");
+        if (!benutzer.IstWareneingang && !string.Equals(benutzer.Kurzzeichen, b.BestellerKurzzeichen, StringComparison.OrdinalIgnoreCase))
+            throw new HbException("Den Wareneingang buchen kann der Besteller, der Wareneingang oder ein Admin.");
+        b.Status = HbStatus.Eingegangen;
+        b.EingangAm = Jetzt;
+        b.EingangVon = benutzer.Konto;
+    });
+
+    public Task LoeschenAsync(HbBenutzer benutzer, int id) => AendereAsync(benutzer, id, "Gelöscht", b =>
+    {
+        if (b.Status is not (HbStatus.Offen or HbStatus.FreigabeOffen)) throw new HbException("Nur offene Bestellungen ohne Wareneingang können gelöscht werden.");
+        if (!benutzer.IstAdmin && !string.Equals(benutzer.Kurzzeichen, b.BestellerKurzzeichen, StringComparison.OrdinalIgnoreCase))
+            throw new HbException("Löschen kann nur der Besteller oder ein Admin.");
+        b.Status = HbStatus.Geloescht;
+        b.GeloeschtAm = Jetzt;
+        b.GeloeschtVon = benutzer.Konto;
+    });
+
+    private async Task AendereAsync(HbBenutzer benutzer, int id, string aktion, Action<HbBestellung> aenderung)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var b = await db.Bestellungen.FirstOrDefaultAsync(x => x.Id == id) ?? throw new HbException("Bestellung nicht gefunden.");
+        aenderung(b);
+        Protokolliere(db, benutzer, aktion, b.Bestellnummer, string.Empty);
+        await db.SaveChangesAsync();
+    }
+
+    // ---------- Stammdaten (nur Admin) ----------
+
+    public async Task SpeichereKreditorAsync(HbBenutzer benutzer, HbKreditor k, bool neu)
+    {
+        NurAdmin(benutzer);
+        k.Nr = k.Nr.Trim();
+        if (k.Nr.Length == 0 || string.IsNullOrWhiteSpace(k.Name)) throw new HbException("Kreditor-Nr. und Name sind Pflicht.");
+        await SpeichereAsync(benutzer, db => db.Kreditoren, k, neu, x => x.Nr == k.Nr, "Kreditor", k.Nr);
+    }
+
+    public async Task SpeichereKostenstelleAsync(HbBenutzer benutzer, HbKostenstelle k, bool neu)
+    {
+        NurAdmin(benutzer);
+        k.Nr = k.Nr.Trim();
+        if (k.Nr.Length == 0 || !k.Nr.All(char.IsAsciiDigit)) throw new HbException("Die Kostenstelle muss eine Nummer sein.");
+        await SpeichereAsync(benutzer, db => db.Kostenstellen, k, neu, x => x.Nr == k.Nr, "Kostenstelle", k.Nr);
+    }
+
+    public async Task SpeichereSachkontoAsync(HbBenutzer benutzer, HbSachkonto s, bool neu)
+    {
+        NurAdmin(benutzer);
+        s.Nr = s.Nr.Trim();
+        if (s.Nr.Length == 0) throw new HbException("Die Sachkonto-Nr. ist Pflicht.");
+        await SpeichereAsync(benutzer, db => db.Sachkonten, s, neu, x => x.Nr == s.Nr, "Sachkonto", s.Nr);
+    }
+
+    public async Task SpeichereMitarbeiterAsync(HbBenutzer benutzer, HbMitarbeiter m)
+    {
+        NurAdmin(benutzer);
+        m.Kurzzeichen = m.Kurzzeichen.Trim();
+        m.Konto = KurzKonto(m.Konto);
+        if (m.Kurzzeichen.Length == 0 || string.IsNullOrWhiteSpace(m.Nachname)) throw new HbException("Kurzzeichen und Nachname sind Pflicht.");
+        await using var db = await dbFactory.CreateDbContextAsync();
+        if (await db.Mitarbeiter.AnyAsync(x => x.Kurzzeichen == m.Kurzzeichen && x.Id != m.Id))
+            throw new HbException($"Das Kurzzeichen „{m.Kurzzeichen}“ gibt es schon.");
+        if (m.Konto.Length > 0 && await db.Mitarbeiter.AnyAsync(x => x.Konto == m.Konto && x.Id != m.Id))
+            throw new HbException($"Das Windows-Konto „{m.Konto}“ ist schon einem anderen Kurzzeichen zugeordnet.");
+        if (m.Id == 0) db.Mitarbeiter.Add(m); else db.Mitarbeiter.Update(m);
+        Protokolliere(db, benutzer, m.Id == 0 ? "Mitarbeiter angelegt" : "Mitarbeiter geändert", m.Kurzzeichen,
+            $"Limit CHF {m.Limit.ToString("0.00", CultureInfo.InvariantCulture)}, KoSt {m.Kostenstelle}, Konto {m.Konto}, aktiv {m.Aktiv}");
+        await db.SaveChangesAsync();
+    }
+
+    private async Task SpeichereAsync<T>(HbBenutzer benutzer, Func<HbDbContext, DbSet<T>> set, T eintrag, bool neu,
+        System.Linq.Expressions.Expression<Func<T, bool>> gleich, string art, string nr) where T : class
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var vorhanden = await set(db).AnyAsync(gleich);
+        if (neu && vorhanden) throw new HbException($"{art} {nr} gibt es schon.");
+        if (!neu && !vorhanden) throw new HbException($"{art} {nr} nicht gefunden.");
+        if (neu) set(db).Add(eintrag); else set(db).Update(eintrag);
+        Protokolliere(db, benutzer, neu ? $"{art} angelegt" : $"{art} geändert", nr, string.Empty);
+        await db.SaveChangesAsync();
+    }
+
+    private static void NurAdmin(HbBenutzer benutzer)
+    {
+        if (!benutzer.IstAdmin) throw new HbException("Stammdaten pflegen darf nur ein Admin.");
+    }
+
+    private void Protokolliere(HbDbContext db, HbBenutzer benutzer, string aktion, string bezug, string details)
+        => db.Protokoll.Add(new HbProtokoll { Zeit = Jetzt, Benutzer = benutzer.Konto, Aktion = aktion, Bezug = bezug, Details = details });
+
+    private string DbSchluessel() => options.CurrentValue.DatabasePath;
+}

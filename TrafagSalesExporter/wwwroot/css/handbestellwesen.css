@@ -1,0 +1,137 @@
+/* Handbestellwesen 2026-10-22: Optik der PHP-Anwendung (style.css, navigation.php) nachgebaut.
+   Farben der Kacheln wie im Original. Bewusst hell, auch im dunklen Dashboard-Theme. */
+
+.hb {
+    display: flex;
+    align-items: flex-start;
+    background: #fff;
+    color: #000;
+    font-family: Verdana, sans-serif;
+    min-height: calc(100vh - 80px);
+}
+
+.hb h1 { font-family: Verdana, sans-serif; font-size: 2em; font-weight: bold; padding-top: 15px; margin: 0 0 10px; color: #000; }
+.hb h3 { font-family: Verdana, sans-serif; margin: 10px 0 0; color: #000; }
+.hb p { padding: 6px 0; margin: 0; }
+
+/* Linke Leiste */
+.hb-nav {
+    width: 200px;
+    flex: 0 0 200px;
+    border-right: 1px solid #000;
+    align-self: stretch;
+    padding-bottom: 20px;
+}
+.hb-logo { width: 160px; margin: 10px 0 5px 10px; display: block; }
+
+.hb-kachel, .hb-klein {
+    display: flex;
+    width: 180px;
+    margin: 10px 0 0 10px;
+    color: #fff !important;
+    text-decoration: none !important;
+    cursor: pointer;
+    text-align: center;
+    font-family: Verdana, sans-serif;
+}
+.hb-kachel {
+    height: 100px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 15px;
+}
+.hb-kachel .mud-icon-root { font-size: 40px; width: 40px; height: 40px; color: #fff; }
+.hb-klein {
+    height: 24px;
+    padding-top: 4px;
+    justify-content: center;
+    background-color: #FFAE3B;
+    font-size: 14px;
+    color: #000 !important;
+}
+.hb-k1 { background-color: #FE6C30; }
+.hb-k2 { background-color: #1B5FAA; }
+.hb-k3 { background-color: #01A95C; }
+.hb-k4 { background-color: #CCCC00; }
+.hb-kachel:hover, .hb-klein:hover { filter: brightness(1.08); }
+
+.hb-wer { margin: 20px 0 0 10px; font-size: 12px; color: #444; }
+
+/* Inhalt */
+.hb-inhalt { flex: 1 1 auto; padding: 0 20px 30px 20px; max-width: 1040px; }
+
+.hb-form { width: 510px; display: flex; flex-direction: column; }
+.hb-feld {
+    width: 500px;
+    height: 40px;
+    padding: 4px;
+    margin-top: 10px;
+    font-family: Verdana, sans-serif;
+    font-size: 18px;
+    box-sizing: border-box;
+    border: 1px solid #767676;
+    background: #fff;
+    color: #000;
+}
+.hb-betrag { width: 400px; }
+.hb-chf { font-size: 16px; padding-left: 20px; }
+.hb-fest { display: flex; align-items: center; background: #f2f2f2; }
+.hb-text { width: 500px; margin-top: 10px; font-family: Verdana, sans-serif; font-size: 18px; box-sizing: border-box; color: #000; background: #fff; }
+.hb-speichern { cursor: pointer; background: #efefef; }
+.hb-speichern:disabled { cursor: wait; }
+.hb-haken { margin-top: 8px; font-size: 16px; }
+
+.hb-kreditor { border-collapse: collapse; margin-top: 6px; width: 500px; }
+.hb-kreditor td { border: 1px solid #000; padding: 2px 6px; font-size: 14px; }
+
+.hb-gruen { color: green; margin-top: 4px; }
+.hb-rot { color: red; margin-top: 4px; }
+.hb-meldung { margin: 10px 0; padding: 8px 12px; border: 1px solid; }
+.hb-meldung-rot { color: #b00000; border-color: #b00000; background: #fff0f0; }
+.hb-meldung-gruen { color: #006b2d; border-color: #01A95C; background: #effaf3; }
+.hb-nummer { margin: 10px 0; padding: 12px; font-size: 20px; border: 2px solid #FE6C30; background: #fff4ee; width: 476px; }
+
+.hb-filter { display: flex; gap: 8px; margin: 10px 0; }
+.hb-such, .hb-knopf-grau {
+    border: 1px solid #000;
+    border-radius: 2px;
+    height: 30px;
+    font-family: Verdana, sans-serif;
+    font-size: 16px;
+    padding-left: 4px;
+}
+.hb-such { width: 350px; }
+.hb-knopf-grau { width: 200px; background-color: lightgrey; cursor: pointer; color: #000; }
+
+/* Bestellungen: je Bestellung eine umrandete Tabelle mit zwei Kopfzeilen, wie im PHP */
+.hb-bestellung { border-collapse: collapse; border: 2px solid #000; margin: 0 0 16px 0; width: 1000px; }
+.hb-bestellung th, .hb-bestellung td { border: 2px solid #000; padding: 4px 6px; text-align: left; vertical-align: top; font-size: 14px; }
+.hb-bestellung th { font-weight: bold; }
+.hb-ausw { width: 60px; }
+.hb-breit { width: 400px; }
+.hb-nowrap { white-space: nowrap; }
+.hb-zahl { text-align: right; white-space: nowrap; }
+.hb-eingang {
+    width: 180px;
+    height: 30px;
+    background-color: #FE883D;
+    color: #fff;
+    border: none;
+    border-radius: 2%;
+    box-shadow: 0 0 12px gray;
+    cursor: pointer;
+    font-family: Verdana, sans-serif;
+}
+.hb button { font-family: Verdana, sans-serif; cursor: pointer; }
+
+.hb-tab { border-collapse: collapse; margin-top: 10px; }
+.hb-tab th, .hb-tab td { border: 1px solid #000; padding: 3px 8px; font-size: 14px; text-align: left; }
+.hb-inaktiv td { color: #999; }
+
+@media (max-width: 900px) {
+    .hb { flex-direction: column; }
+    .hb-nav { width: 100%; flex-basis: auto; border-right: none; display: flex; flex-wrap: wrap; }
+    .hb-form, .hb-feld, .hb-text, .hb-bestellung { width: 100%; }
+}

@@ -4,6 +4,10 @@ Stand: 2026-10-22
 
 ## Einkauf: Handbestellwesen, Konzept zur Abloesung der PHP-Anwendung, 2026-10-22
 
+- **Phase 1 programmiert, nicht deployed:** neuer Reiter `/handbestellwesen` (Kacheln und Farben wie im PHP), Modul
+  `Modules/Handbestellwesen/`, eigene DB `hbdaten/handbestellwesen.db` mit Sicherung, Limit/Freigabe/Wareneingang/Loeschen
+  auf dem Server geprueft, Protokoll je Aktion. Tests 9 neu, Suite 1274/1274. Import der Altdaten folgt mit dem Dump.
+
 - Alte PHP-Anwendung analysiert (Passwoerter im Code, SQL-Injection, Freigabelimit nur im Browser, privater Hoster,
   Nummernkollision). Entscheide Ingo: Modul im Dashboard, Altdaten uebernehmen, Stammdaten erst lokal dann SAP,
   Oberflaeche wie im PHP. Nachtrag: Betrieb lokal bei Trafag (nicht externer Hoster), Benutzer ohne SAP-Konto, Plugin/KISS,

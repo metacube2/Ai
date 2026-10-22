@@ -361,6 +361,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("hr-dashboard", "hr", "HR Dashboard", "HR dashboard", "Dashboard", "hr-kpi", 10, "All"),
         Link("hr-training", "hr", "HR KPI Schulung", "HR KPI training", "School", "hr-kpi/schulung", 20),
         Group("purchasing", null, "Einkauf", "Purchasing", "ShoppingCart", 30),
+        // Handbestellwesen 2026-10-22 (Auftrag Ingo): Abloesung der PHP-Anwendung, eigener Reiter, Modul unter Modules/Handbestellwesen.
+        Link("handbestellwesen", null, "Handbestellwesen", "Manual orders", "Inventory", "handbestellwesen", 31),
         Link("purchasing-dashboard", "purchasing", "Einkauf Dashboard", "Purchasing dashboard", "Dashboard", "einkauf", 10, "All"),
         Link("purchasing-spend", "purchasing", "Spend", "Spend", "Payments", "einkauf/spend", 20, "All"),
         Link("purchasing-open-orders", "purchasing", "Offene Bestellungen", "Open orders", "PendingActions", "einkauf/offene-bestellungen", 30, "All"),

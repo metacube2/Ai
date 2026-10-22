@@ -1,7 +1,8 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
 Stand: 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
-Schreiben nach SAP). Status: **Konzept, Entscheide Ingo eingeholt, noch kein Code.** Wartet auf den MySQL-Dump.
+Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** (Abschnitt 6). Altdaten-Import wartet auf den
+MySQL-Dump (Tobias).
 
 ## 1. Auftrag und Entscheide
 
@@ -131,3 +132,49 @@ herum. Die Bestellnummer erscheint nicht mehr als Browser-Alert, sondern als Hin
 | 5 | Datenbankpasswoerter nach der Abloesung aendern; pruefen, ob beim frueheren externen Hoster noch Daten liegen | Ingo |
 | 6 | Was soll in SAP entstehen, und ist das lizenzrechtlich fuer Benutzer ohne SAP-Konto zulaessig? | Ingo / SAP-Lizenz |
 | 7 | AD-Gruppen fuer Besteller, Freigeber, Wareneingang, Admin | Ingo / IT |
+
+## 6. Umsetzung Phase 1 (2026-10-22, nicht deployed)
+
+Auftrag Ingo: „Ich reiche die DB-Inhalte nach, mach schon mal den Code mit neuem Reiter.“
+
+| Teil | Datei |
+| --- | --- |
+| Datenmodell (Bestellung, Zaehler, Kreditor, Mitarbeiter, Kostenstelle, Sachkonto, Protokoll) | `Modules/Handbestellwesen/HbModels.cs`, `HbDbContext.cs` |
+| Fachlogik, alle Pruefungen auf dem Server | `Modules/Handbestellwesen/HbService.cs` |
+| Registrierung, Datenbank anlegen, Sicherung alle 6 h (eine Datei je Tag, 60 Tage) | `Modules/Handbestellwesen/HbRegistration.cs` |
+| Seite `/handbestellwesen/{bereich}` mit Kacheln wie im PHP | `Modules/Handbestellwesen/HandbestellwesenPage.razor`, `wwwroot/css/handbestellwesen.css` |
+| Reiter „Handbestellwesen“ auf oberster Ebene (Sortierung 31, nach Einkauf) | `Services/DatabaseSeedService.cs` |
+| Eine Zeile Registrierung | `Program.cs` |
+| Konfiguration `Handbestellwesen` (`Enabled`, `DatabasePath`, `AdminUsers` = `koi`, `BackupKeepDays`) | `appsettings.json` |
+| Tests (9) | `TrafagSalesExporter.Tests/HandbestellwesenServiceTests.cs` |
+
+Datenbank: `<ContentRoot>\hbdaten\handbestellwesen.db` (WAL), Sicherungen unter `hbdaten\backup\`. Lokal in `.gitignore`.
+
+Regeln, wie umgesetzt (zur Bestaetigung durch den fachlichen Owner):
+
+- **Wer bin ich:** Windows-Konto -> Mitarbeitereintrag ueber das Feld `Konto`. Ohne Eintrag kann man nichts bestellen.
+  Die Altdaten haben kein Konto; nach dem Import muss es ein Admin je Kurzzeichen eintragen. Admin sind die Konten in
+  `Handbestellwesen:AdminUsers` und Mitarbeiter mit Haken „Admin“.
+- **Besteller** ist der Angemeldete selbst; nur ein Admin darf ein anderes Kurzzeichen waehlen (im PHP konnte jeder fuer
+  jeden bestellen).
+- **Limit:** Liegt der Wert ueber der Berechtigung des Bestellers, muss eine Person derselben Kostenstelle mit genuegend
+  Berechtigung gewaehlt werden (wie `checkberechtigung.php`), jetzt auf dem Server geprueft. Status „Freigabe offen“.
+- **Freigeben** darf nur die gewaehlte Person oder ein Admin. **Neu:** Wareneingang erst nach der Freigabe.
+- **Wareneingang** buchen Besteller, Mitarbeiter mit Haken „Wareneingang“ oder Admin; die Bestellung geht ins Archiv.
+- **Loeschen** nur ohne Wareneingang, durch Besteller oder Admin; geloescht wird nicht physisch, sondern mit Status.
+- **Nummer:** Zaehler je (Jahr, Kostenstelle) in einer Transaktion, eindeutiger Index; 20 gleichzeitige Bestellungen
+  ergeben im Test 20 verschiedene Nummern, `87` und `875` zaehlen getrennt.
+- **Suche** findet die Bestellnummer auch mit Leerzeichen (im PHP musste man sie entfernen).
+- **Rechnungsbetrag** ist als Feld vorhanden und wird angezeigt, aber noch nicht erfassbar (offener Punkt 4).
+
+Tests: 9/9 Handbestellwesen, ganze Suite 1274/1274 gruen. **Nicht im Browser angesehen:** ein lokaler Start haette die
+Hintergrunddienste (SAP-Abrufe, Exporte) mitgestartet. Ansehen nach Entscheid Ingo, siehe Abschnitt 7.
+
+## 7. Naechste Schritte
+
+1. Dump von Tobias -> Import-Werkzeug (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
+   Zaehlerstaende.
+2. Oberflaeche ansehen: entweder Deploy (Reiter sofort fuer alle sichtbar, vorher Freigabe Fachabteilung) oder lokal mit
+   abgeschalteten Hintergrunddiensten. Entscheid Ingo.
+3. Fachlichen Owner die Regeln aus Abschnitt 6 bestaetigen lassen.
+4. Zugriff fuer Mitarbeitende ohne Dashboard-Zugang (`Security:AccessGroups`), AD-Gruppe mit IT klaeren.

@@ -47,6 +47,8 @@ builder.Services.AddAuthorization(options =>
 
 // Operations (Shopfloor) 2026-10-07: PPA-Shopfloor im Cockpit, Zugriff ueber Shopfloor:AllowedUsers, docs/SHOPFLOOR_2026-10-07.md.
 builder.Services.AddShopfloor(builder.Configuration);
+// Handbestellwesen 2026-10-22: Plugin-Modul, Schalter Handbestellwesen:Enabled, docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md.
+TrafagSalesExporter.Modules.Handbestellwesen.HbRegistration.AddHandbestellwesen(builder.Services, builder.Configuration);
 
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient(nameof(ExchangeRateImportService));

@@ -1,0 +1,482 @@
+@page "/handbestellwesen"
+@page "/handbestellwesen/{Bereich}"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@inject HbService Hb
+@inject IOptionsMonitor<HbOptions> Options
+@inject AuthenticationStateProvider AuthState
+
+@* Handbestellwesen 2026-10-22 (Auftrag Ingo): Abloesung der PHP-Anwendung. Oberflaeche bewusst wie im PHP
+   (Kacheln und Farben aus style.css/navigation.php), Technik neu. Doku docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md *@
+<PageTitle>Handbestellwesen</PageTitle>
+<HeadContent><link href="css/handbestellwesen.css?v=1" rel="stylesheet" /></HeadContent>
+
+<div class="hb">
+    <nav class="hb-nav">
+        <img src="trafag.jpg" alt="Trafag" class="hb-logo" />
+        <a class="hb-kachel hb-k1" href="handbestellwesen"><MudIcon Icon="@Icons.Material.Filled.Inventory2" /><span>Bestellnummer lösen</span></a>
+        <a class="hb-kachel hb-k2" href="handbestellwesen/offen"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" /><span>Offene Bestellungen</span></a>
+        <a class="hb-kachel hb-k3" href="handbestellwesen/archiv"><MudIcon Icon="@Icons.Material.Filled.Inventory" /><span>Archiv</span></a>
+        <a class="hb-kachel hb-k4" href="handbestellwesen/filter"><MudIcon Icon="@Icons.Material.Filled.FilterAlt" /><span>Filter</span></a>
+        <a class="hb-klein" href="handbestellwesen/kreditoren">Kreditorenstamm</a>
+        <a class="hb-klein" href="handbestellwesen/mitarbeiter">Mitarbeiterverzeichnis</a>
+        <a class="hb-klein" href="handbestellwesen/kostenstellen">Kostenstelle</a>
+        <a class="hb-klein" href="handbestellwesen/sachkonten">Sachkonten</a>
+        @if (_benutzer is not null)
+        {
+            <div class="hb-wer">
+                Angemeldet: <b>@_benutzer.Konto</b><br />
+                @if (_benutzer.Mitarbeiter is not null)
+                {
+                    <span>@_benutzer.Mitarbeiter.Kurzzeichen - @_benutzer.Mitarbeiter.Name</span>
+                }
+                else
+                {
+                    <span class="hb-rot">kein Mitarbeitereintrag</span>
+                }
+                @if (_benutzer.IstAdmin) { <br /><span>Admin</span> }
+            </div>
+        }
+    </nav>
+
+    <main class="hb-inhalt">
+        @if (!Options.CurrentValue.Enabled)
+        {
+            <h1>Handbestellwesen</h1>
+            <p>Das Handbestellwesen ist nicht aktiviert (<code>Handbestellwesen:Enabled</code>).</p>
+        }
+        else if (_benutzer is null)
+        {
+            <p>Wird geladen …</p>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(_fehler))
+            {
+                <div class="hb-meldung hb-meldung-rot">@_fehler</div>
+            }
+            @if (!string.IsNullOrEmpty(_info))
+            {
+                <div class="hb-meldung hb-meldung-gruen">@_info</div>
+            }
+
+            @switch (_bereich)
+            {
+                case "offen":
+                    <h1>Offene Bestellungen</h1>
+                    <p>@(_liste.Count == 0 ? "Keine offenen Bestellungen registriert" : $"{_liste.Count} offene Bestellungen registriert")</p>
+                    @BestellListe(_liste, true)
+                    break;
+
+                case "archiv":
+                    <h1>Archiv</h1>
+                    <p>@(_liste.Count == 0 ? "Keine Bestellungen archiviert" : $"{_liste.Count} Bestellungen archiviert")</p>
+                    @BestellListe(_liste, false)
+                    break;
+
+                case "filter":
+                    <h1>Offene und archivierte Bestellungen - Filter</h1>
+                    <div class="hb-filter">
+                        <input class="hb-such" placeholder="Durchsuchen Sie alle Felder" @bind="_suche" @bind:event="oninput" />
+                        <button class="hb-knopf-grau" @onclick="() => FilternAsync(false)">Offene filtern</button>
+                        <button class="hb-knopf-grau" @onclick="() => FilternAsync(true)">Archiv filtern</button>
+                    </div>
+                    @if (_gefiltert)
+                    {
+                        <p>@_liste.Count @(_filterArchiv ? "archivierte" : "offene") Bestellungen gefunden</p>
+                        @BestellListe(_liste, !_filterArchiv)
+                    }
+                    break;
+
+                case "kreditoren":
+                    <h1>Kreditorenverzeichnis</h1>
+                    @if (_benutzer.IstAdmin)
+                    {
+                        <div class="hb-form">
+                            <h3>@(_kredNeu ? "Kreditor hinzufügen" : $"Kreditor {_kred.Nr} bearbeiten")</h3>
+                            <input class="hb-feld" placeholder="Kreditor (Nr.)" @bind="_kred.Nr" disabled="@(!_kredNeu)" />
+                            <input class="hb-feld" placeholder="Name" @bind="_kred.Name" />
+                            <input class="hb-feld" placeholder="Strasse" @bind="_kred.Strasse" />
+                            <input class="hb-feld" placeholder="PLZ" @bind="_kred.Plz" />
+                            <input class="hb-feld" placeholder="Ort" @bind="_kred.Ort" />
+                            <input class="hb-feld" placeholder="Land" @bind="_kred.Land" />
+                            <button class="hb-feld hb-speichern" @onclick="KreditorSpeichernAsync">Speichern</button>
+                            @if (!_kredNeu) { <button class="hb-knopf-grau" @onclick="() => { _kred = new(); _kredNeu = true; }">Neu</button> }
+                        </div>
+                    }
+                    <p>@_kreditoren.Count Kreditoren registriert</p>
+                    <table class="hb-tab">
+                        <tr><th>Nr.</th><th>Name</th><th>Strasse</th><th>PLZ</th><th>Ort</th><th>Land</th><th></th></tr>
+                        @foreach (var k in _kreditoren)
+                        {
+                            <tr><td>@k.Nr</td><td>@k.Name</td><td>@k.Strasse</td><td>@k.Plz</td><td>@k.Ort</td><td>@k.Land</td>
+                                <td>@if (_benutzer.IstAdmin) { <button @onclick="() => { _kred = Kopie(k); _kredNeu = false; }">Bearbeiten</button> }</td></tr>
+                        }
+                    </table>
+                    break;
+
+                case "mitarbeiter":
+                    <h1>Mitarbeiterverzeichnis</h1>
+                    @if (_benutzer.IstAdmin)
+                    {
+                        <div class="hb-form">
+                            <h3>@(_ma.Id == 0 ? "Mitarbeiter hinzufügen" : $"Mitarbeiter {_ma.Kurzzeichen} bearbeiten")</h3>
+                            <input class="hb-feld" placeholder="Kurzzeichen" @bind="_ma.Kurzzeichen" />
+                            <input class="hb-feld" placeholder="Vorname" @bind="_ma.Vorname" />
+                            <input class="hb-feld" placeholder="Nachname" @bind="_ma.Nachname" />
+                            <input class="hb-feld" placeholder="E-Mail" @bind="_ma.Mail" />
+                            <input class="hb-feld" placeholder="Windows-Konto (z. B. koi)" @bind="_ma.Konto" />
+                            <input class="hb-feld" placeholder="Bestellberechtigung CHF" @bind="_maLimit" />
+                            <select class="hb-feld" @bind="_ma.Kostenstelle">
+                                <option value="">Kostenstelle</option>
+                                @foreach (var k in _kostenstellen) { <option value="@k.Nr">@k.Nr - @k.Bezeichnung</option> }
+                            </select>
+                            <label class="hb-haken"><input type="checkbox" @bind="_ma.IstWareneingang" /> Wareneingang</label>
+                            <label class="hb-haken"><input type="checkbox" @bind="_ma.IstAdmin" /> Admin</label>
+                            <label class="hb-haken"><input type="checkbox" @bind="_ma.Aktiv" /> aktiv</label>
+                            <button class="hb-feld hb-speichern" @onclick="MitarbeiterSpeichernAsync">Speichern</button>
+                            @if (_ma.Id != 0) { <button class="hb-knopf-grau" @onclick="() => { _ma = new(); _maLimit = string.Empty; }">Neu</button> }
+                        </div>
+                    }
+                    <p>@_mitarbeiter.Count Mitarbeiter registriert</p>
+                    <table class="hb-tab">
+                        <tr><th>Kurzzeichen</th><th>Name</th><th>Mail</th><th>Konto</th><th>Berechtigung CHF</th><th>KoSt</th><th>WE</th><th>Admin</th><th>aktiv</th><th></th></tr>
+                        @foreach (var m in _mitarbeiter)
+                        {
+                            <tr class="@(m.Aktiv ? null : "hb-inaktiv")"><td>@m.Kurzzeichen</td><td>@m.Name</td><td>@m.Mail</td><td>@m.Konto</td>
+                                <td class="hb-zahl">@Chf(m.Limit)</td><td>@m.Kostenstelle</td><td>@(m.IstWareneingang ? "ja" : "")</td><td>@(m.IstAdmin ? "ja" : "")</td><td>@(m.Aktiv ? "ja" : "nein")</td>
+                                <td>@if (_benutzer.IstAdmin) { <button @onclick="() => { _ma = Kopie(m); _maLimit = m.Limit.ToString(CultureInfo.InvariantCulture); }">Bearbeiten</button> }</td></tr>
+                        }
+                    </table>
+                    break;
+
+                case "kostenstellen":
+                    <h1>Kostenstellen</h1>
+                    @if (_benutzer.IstAdmin)
+                    {
+                        <div class="hb-form">
+                            <h3>@(_kostNeu ? "Kostenstelle hinzufügen" : $"Kostenstelle {_kost.Nr} bearbeiten")</h3>
+                            <input class="hb-feld" placeholder="Kostenstelle" @bind="_kost.Nr" disabled="@(!_kostNeu)" />
+                            <input class="hb-feld" placeholder="Bezeichnung" @bind="_kost.Bezeichnung" />
+                            <input class="hb-feld" placeholder="Kostenstellenleiter (Kurzzeichen)" @bind="_kost.Leiter" />
+                            <button class="hb-feld hb-speichern" @onclick="KostenstelleSpeichernAsync">Speichern</button>
+                            @if (!_kostNeu) { <button class="hb-knopf-grau" @onclick="() => { _kost = new(); _kostNeu = true; }">Neu</button> }
+                        </div>
+                    }
+                    <table class="hb-tab">
+                        <tr><th>Kostenstelle</th><th>Bezeichnung</th><th>Leiter</th><th></th></tr>
+                        @foreach (var k in _kostenstellen)
+                        {
+                            <tr><td>@k.Nr</td><td>@k.Bezeichnung</td><td>@k.Leiter</td>
+                                <td>@if (_benutzer.IstAdmin) { <button @onclick="() => { _kost = Kopie(k); _kostNeu = false; }">Bearbeiten</button> }</td></tr>
+                        }
+                    </table>
+                    break;
+
+                case "sachkonten":
+                    <h1>Sachkonten</h1>
+                    @if (_benutzer.IstAdmin)
+                    {
+                        <div class="hb-form">
+                            <h3>@(_sachNeu ? "Sachkonto hinzufügen" : $"Sachkonto {_sach.Nr} bearbeiten")</h3>
+                            <input class="hb-feld" placeholder="Sachkonto" @bind="_sach.Nr" disabled="@(!_sachNeu)" />
+                            <input class="hb-feld" placeholder="Bezeichnung" @bind="_sach.Bezeichnung" />
+                            <button class="hb-feld hb-speichern" @onclick="SachkontoSpeichernAsync">Speichern</button>
+                            @if (!_sachNeu) { <button class="hb-knopf-grau" @onclick="() => { _sach = new(); _sachNeu = true; }">Neu</button> }
+                        </div>
+                    }
+                    <table class="hb-tab">
+                        <tr><th>Sachkonto</th><th>Bezeichnung</th><th></th></tr>
+                        @foreach (var s in _sachkonten)
+                        {
+                            <tr><td>@s.Nr</td><td>@s.Bezeichnung</td>
+                                <td>@if (_benutzer.IstAdmin) { <button @onclick="() => { _sach = Kopie(s); _sachNeu = false; }">Bearbeiten</button> }</td></tr>
+                        }
+                    </table>
+                    break;
+
+                default:
+                    <h1>Bestellnummer lösen</h1>
+                    @if (_neueNummer is not null)
+                    {
+                        <div class="hb-nummer">Die Bestellnummer ist: <b>@_neueNummer</b></div>
+                    }
+                    <div class="hb-form">
+                        <select class="hb-feld" @bind="_e.KreditorNr">
+                            <option value="">Kreditor</option>
+                            @foreach (var k in _kreditoren) { <option value="@k.Nr">@k.Name ---- @k.Ort</option> }
+                        </select>
+                        @if (_kreditoren.FirstOrDefault(x => x.Nr == _e.KreditorNr) is { } kr)
+                        {
+                            <table class="hb-kreditor">
+                                <tr><td colspan="2">@kr.Nr</td></tr>
+                                <tr><td colspan="2">@kr.Name</td></tr>
+                                <tr><td colspan="2">@kr.Strasse</td></tr>
+                                <tr><td>@kr.Plz</td><td>@kr.Ort</td></tr>
+                                <tr><td colspan="2">@kr.Land</td></tr>
+                            </table>
+                        }
+                        <textarea rows="4" class="hb-text" placeholder="Text" @bind="_e.Text"></textarea>
+                        <div><input class="hb-feld hb-betrag" placeholder="Bestellwert" @bind="_wert" @bind:after="PruefeBerechtigungAsync" /> <span class="hb-chf">in CHF</span></div>
+
+                        @if (_benutzer.IstAdmin)
+                        {
+                            <select class="hb-feld" @bind="_e.BestellerKurzzeichen" @bind:after="PruefeBerechtigungAsync">
+                                <option value="">Kurzzeichen</option>
+                                @foreach (var m in _mitarbeiter.Where(x => x.Aktiv)) { <option value="@m.Kurzzeichen">@m.Kurzzeichen - @m.Name</option> }
+                            </select>
+                        }
+                        else
+                        {
+                            <div class="hb-feld hb-fest">@(_benutzer.Mitarbeiter is null ? "Kein Kurzzeichen" : $"{_benutzer.Kurzzeichen} - {_benutzer.Mitarbeiter.Name}")</div>
+                        }
+                        @if (_berechtigt == true) { <div class="hb-gruen">Berechtigt Bestellungen in diesem Betrag einzutragen.</div> }
+                        @if (_berechtigt == false) { <div class="hb-rot">Nicht berechtigt Bestellungen in diesem Betrag einzutragen. Bitte eine berechtigte Person wählen.</div> }
+
+                        <select class="hb-feld" @bind="_e.Kostenstelle" @bind:after="PruefeBerechtigungAsync">
+                            <option value="">Kostenstelle</option>
+                            @foreach (var k in _kostenstellen) { <option value="@k.Nr">@k.Nr - @k.Bezeichnung</option> }
+                        </select>
+                        @if (_berechtigt == false && !string.IsNullOrEmpty(_e.Kostenstelle))
+                        {
+                            <select class="hb-feld" @bind="_e.FreigeberKurzzeichen">
+                                <option value="">Berechtigte Person</option>
+                                @foreach (var f in _freigeber) { <option value="@f.Kurzzeichen">@f.Kurzzeichen - @f.Name</option> }
+                            </select>
+                            @if (_freigeber.Count == 0) { <div class="hb-rot">Für diese Kostenstelle ist niemand mit genügend Berechtigung erfasst.</div> }
+                        }
+
+                        <select class="hb-feld" @bind="_e.Sachkonto">
+                            <option value="">Sachkonto</option>
+                            @foreach (var s in _sachkonten) { <option value="@s.Nr">@s.Nr - @s.Bezeichnung</option> }
+                        </select>
+                        <button class="hb-feld hb-speichern" disabled="@_speichert" @onclick="SpeichernAsync">Speichern</button>
+                    </div>
+                    break;
+            }
+        }
+    </main>
+</div>
+
+@code {
+    [Parameter] public string? Bereich { get; set; }
+
+    private string _bereich = string.Empty;
+    private HbBenutzer? _benutzer;
+    private string? _fehler;
+    private string? _info;
+
+    private List<HbBestellung> _liste = [];
+    private List<HbKreditor> _kreditoren = [];
+    private List<HbMitarbeiter> _mitarbeiter = [];
+    private List<HbKostenstelle> _kostenstellen = [];
+    private List<HbSachkonto> _sachkonten = [];
+
+    // Bestellnummer loesen
+    private HbBestellEingabe _e = new();
+    private string _wert = string.Empty;
+    private bool? _berechtigt;
+    private List<HbMitarbeiter> _freigeber = [];
+    private string? _neueNummer;
+    private bool _speichert;
+
+    // Filter
+    private string _suche = string.Empty;
+    private bool _gefiltert;
+    private bool _filterArchiv;
+
+    // Stammdaten
+    private HbKreditor _kred = new();
+    private bool _kredNeu = true;
+    private HbMitarbeiter _ma = new();
+    private string _maLimit = string.Empty;
+    private HbKostenstelle _kost = new();
+    private bool _kostNeu = true;
+    private HbSachkonto _sach = new();
+    private bool _sachNeu = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _bereich = (Bereich ?? string.Empty).ToLowerInvariant();
+        _fehler = null;
+        _info = null;
+        _gefiltert = false;
+        if (!Options.CurrentValue.Enabled)
+            return;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _benutzer = await Hb.BenutzerAsync(state.User.Identity?.Name);
+        await LadenAsync();
+    }
+
+    private async Task LadenAsync()
+    {
+        _kreditoren = await Hb.KreditorenAsync();
+        _mitarbeiter = await Hb.MitarbeiterAsync();
+        _kostenstellen = await Hb.KostenstellenAsync();
+        _sachkonten = await Hb.SachkontenAsync();
+        _liste = _bereich switch
+        {
+            "offen" => await Hb.BestellungenAsync(false),
+            "archiv" => await Hb.BestellungenAsync(true),
+            _ => []
+        };
+    }
+
+    private RenderFragment BestellListe(List<HbBestellung> liste, bool aktionen) => __builder =>
+    {
+        foreach (var b in liste)
+        {
+            var kred = _kreditoren.FirstOrDefault(x => x.Nr == b.KreditorNr);
+            <table class="hb-bestellung">
+                <tr><th class="hb-ausw">Ausw</th><th>Bestellnr</th><th>Kreditor</th><th class="hb-breit">Bestelltext</th><th>Bestellwert</th><th>Kurzzeichen</th></tr>
+                <tr>
+                    <td>@if (aktionen && b.Status is HbStatus.Offen or HbStatus.FreigabeOffen) { <button class="hb-loeschen" @onclick="() => AktionAsync(b, Hb.LoeschenAsync)">Löschen</button> }</td>
+                    <td class="hb-nowrap">@HbService.FormatNummer(b.Bestellnummer)</td>
+                    <td>@b.KreditorNr<br /><small>@kred?.Name</small></td>
+                    <td>@b.Text</td>
+                    <td class="hb-zahl">@Chf(b.Bestellwert)</td>
+                    <td>@(b.FreigeberKurzzeichen is null ? b.BestellerKurzzeichen : b.BestellerKurzzeichen + "," + b.FreigeberKurzzeichen)</td>
+                </tr>
+                <tr><th>Kostenstelle</th><th>Sachkonto</th><th>Bestellfreigabe</th><th>Wareneingang</th><th>Rechnungsbetrag</th><th>Speicherdatum</th></tr>
+                <tr>
+                    <td>@b.Kostenstelle</td>
+                    <td>@b.Sachkonto</td>
+                    <td>
+                        @if (b.Status == HbStatus.FreigabeOffen)
+                        {
+                            @if (aktionen) { <span>Freigabe erteilen durch </span><button @onclick="() => AktionAsync(b, Hb.FreigebenAsync)">@b.FreigeberKurzzeichen</button> }
+                            else { <span>offen bei @b.FreigeberKurzzeichen</span> }
+                        }
+                        else if (b.FreigegebenAm is not null) { <span>Freigabe erteilt am<br />@Datum(b.FreigegebenAm)</span> }
+                        else { <span>nicht nötig</span> }
+                    </td>
+                    <td>
+                        @if (b.EingangAm is not null) { @Datum(b.EingangAm) }
+                        else if (aktionen && b.Status == HbStatus.Offen) { <button class="hb-eingang" @onclick="() => AktionAsync(b, Hb.WareneingangAsync)">Waren eingegangen</button> }
+                    </td>
+                    <td class="hb-zahl">@(b.Rechnungsbetrag is null ? "" : "CHF " + Chf(b.Rechnungsbetrag.Value))</td>
+                    <td>@Datum(b.AngelegtAm)</td>
+                </tr>
+            </table>
+        }
+    };
+
+    private async Task AktionAsync(HbBestellung b, Func<HbBenutzer, int, Task> aktion)
+    {
+        _fehler = null;
+        _info = null;
+        try
+        {
+            await aktion(_benutzer!, b.Id);
+            _info = $"Bestellung {HbService.FormatNummer(b.Bestellnummer)} gespeichert.";
+        }
+        catch (HbException ex)
+        {
+            _fehler = ex.Message;
+        }
+        if (_gefiltert) await FilternAsync(_filterArchiv); else await LadenAsync();
+    }
+
+    private async Task FilternAsync(bool archiv)
+    {
+        _filterArchiv = archiv;
+        _gefiltert = true;
+        _liste = await Hb.BestellungenAsync(archiv, _suche);
+    }
+
+    private async Task PruefeBerechtigungAsync()
+    {
+        _e.Bestellwert = ParseBetrag(_wert);
+        var besteller = _benutzer!.IstAdmin && !string.IsNullOrEmpty(_e.BestellerKurzzeichen)
+            ? _mitarbeiter.FirstOrDefault(x => x.Kurzzeichen == _e.BestellerKurzzeichen)
+            : _benutzer.Mitarbeiter;
+        if (besteller is null || _e.Bestellwert is not > 0)
+        {
+            _berechtigt = null;
+            return;
+        }
+        _berechtigt = _e.Bestellwert <= besteller.Limit;
+        _freigeber = _berechtigt == false && !string.IsNullOrEmpty(_e.Kostenstelle)
+            ? await Hb.FreigeberAsync(_e.Kostenstelle, _e.Bestellwert.Value, besteller.Kurzzeichen)
+            : [];
+        if (_berechtigt == true) _e.FreigeberKurzzeichen = null;
+    }
+
+    private async Task SpeichernAsync()
+    {
+        _fehler = null;
+        _info = null;
+        _neueNummer = null;
+        _speichert = true;
+        try
+        {
+            _e.Bestellwert = ParseBetrag(_wert);
+            var b = await Hb.AnlegenAsync(_benutzer!, _e);
+            _neueNummer = HbService.FormatNummer(b.Bestellnummer);
+            _e = new HbBestellEingabe();
+            _wert = string.Empty;
+            _berechtigt = null;
+        }
+        catch (HbException ex)
+        {
+            _fehler = ex.Message;
+        }
+        finally
+        {
+            _speichert = false;
+        }
+    }
+
+    private Task KreditorSpeichernAsync() => StammAsync(async () => { await Hb.SpeichereKreditorAsync(_benutzer!, _kred, _kredNeu); _kred = new(); _kredNeu = true; });
+    private Task KostenstelleSpeichernAsync() => StammAsync(async () => { await Hb.SpeichereKostenstelleAsync(_benutzer!, _kost, _kostNeu); _kost = new(); _kostNeu = true; });
+    private Task SachkontoSpeichernAsync() => StammAsync(async () => { await Hb.SpeichereSachkontoAsync(_benutzer!, _sach, _sachNeu); _sach = new(); _sachNeu = true; });
+
+    private Task MitarbeiterSpeichernAsync() => StammAsync(async () =>
+    {
+        _ma.Limit = ParseBetrag(_maLimit) ?? 0;
+        await Hb.SpeichereMitarbeiterAsync(_benutzer!, _ma);
+        _ma = new();
+        _maLimit = string.Empty;
+    });
+
+    private async Task StammAsync(Func<Task> speichern)
+    {
+        _fehler = null;
+        _info = null;
+        try
+        {
+            await speichern();
+            _info = "Gespeichert.";
+            await LadenAsync();
+            // Eigene Rechte koennen sich geaendert haben (z. B. Konto zugeordnet).
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _benutzer = await Hb.BenutzerAsync(state.User.Identity?.Name);
+        }
+        catch (HbException ex)
+        {
+            _fehler = ex.Message;
+        }
+    }
+
+    /// <summary>Nimmt 1234.50, 1'234.50, 1234,50 und 1 234,50 an.</summary>
+    internal static decimal? ParseBetrag(string? text)
+    {
+        var t = (text ?? string.Empty).Replace("'", "").Replace("’", "").Replace(" ", "").Replace("CHF", "", StringComparison.OrdinalIgnoreCase).Trim();
+        if (t.Length == 0) return null;
+        if (t.Contains(',') && !t.Contains('.')) t = t.Replace(',', '.');
+        else t = t.Replace(",", "");
+        return decimal.TryParse(t, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) ? d : null;
+    }
+
+    private static string Chf(decimal d) => d.ToString("#,0.00", CultureInfo.GetCultureInfo("de-CH"));
+    private static string Datum(DateTime? d) => d?.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private static HbKreditor Kopie(HbKreditor k) => new() { Nr = k.Nr, Name = k.Name, Strasse = k.Strasse, Plz = k.Plz, Ort = k.Ort, Land = k.Land };
+    private static HbKostenstelle Kopie(HbKostenstelle k) => new() { Nr = k.Nr, Bezeichnung = k.Bezeichnung, Leiter = k.Leiter };
+    private static HbSachkonto Kopie(HbSachkonto s) => new() { Nr = s.Nr, Bezeichnung = s.Bezeichnung };
+    private static HbMitarbeiter Kopie(HbMitarbeiter m) => new()
+    {
+        Id = m.Id, Kurzzeichen = m.Kurzzeichen, Vorname = m.Vorname, Nachname = m.Nachname, Mail = m.Mail, Konto = m.Konto,
+        Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, Aktiv = m.Aktiv
+    };
+}
