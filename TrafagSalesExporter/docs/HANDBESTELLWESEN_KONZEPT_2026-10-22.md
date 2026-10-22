@@ -290,6 +290,12 @@ Geschaeftslogik). Die klassische Seite `/handbestellwesen` bleibt (Import, Berei
 Deploy 2026-10-22 14:52 (`d7478cd`), ohne Alarm, `/bestellwesen` HTTP 200. Nicht im Browser angesehen (Erweiterung nicht
 verbunden). Der Reiter im Menue zeigt weiter auf `/handbestellwesen`; welche Seite er oeffnen soll, entscheidet Ingo.
 
+### 6.7 Admins
+
+`Handbestellwesen:AdminUsers` = `koi`, `gun` (Armin Guentensperger, Auftrag Ingo 2026-10-22, deployed 15:22). Armin ist
+auch Mitarbeiter (Limit CHF 7000, KoSt 900). Die Dashboard-Sperre `Security:Enabled` ist aus; jedes Windows-Konto erreicht
+die Seiten, Rechte im Modul kommen aus Mitarbeitereintrag und Admin-Liste.
+
 ## 7. Naechste Schritte
 
 1. Dump liegt vor (6.2), Import gebaut (6.3) -> auf dem Server pruefen und importieren (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
