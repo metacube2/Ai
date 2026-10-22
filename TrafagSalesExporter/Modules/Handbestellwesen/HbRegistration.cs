@@ -17,6 +17,7 @@ public static class HbRegistration
             o.UseSqlite(VerbindungFuer(DatenbankPfad(sp.GetRequiredService<IHostEnvironment>(), sp.GetRequiredService<IOptionsMonitor<HbOptions>>().CurrentValue))));
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<HbService>();
+        services.AddSingleton<HbImportService>();
         services.AddHostedService<HbStartUndSicherung>();
         return services;
     }
@@ -26,6 +27,10 @@ public static class HbRegistration
         var pfad = string.IsNullOrWhiteSpace(o.DatabasePath) ? Path.Combine("hbdaten", "handbestellwesen.db") : o.DatabasePath;
         return Path.IsPathRooted(pfad) ? pfad : Path.Combine(env.ContentRootPath, pfad);
     }
+
+    /// <summary>Hier legt man den Dump der PHP-Anwendung fuer den Altdaten-Import ab: hbdaten\import\db.sql.</summary>
+    public static string ImportPfad(IHostEnvironment env, HbOptions o)
+        => Path.Combine(Path.GetDirectoryName(DatenbankPfad(env, o))!, "import", "db.sql");
 
     public static string VerbindungFuer(string pfad)
         => new SqliteConnectionStringBuilder { DataSource = pfad, DefaultTimeout = 15 }.ToString();
@@ -50,6 +55,7 @@ internal sealed class HbStartUndSicherung(
             {
                 await db.Database.EnsureCreatedAsync(stoppingToken);
                 await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", stoppingToken);
+                await ErgaenzeSpaltenAsync(db, stoppingToken);
             }
             logger.LogInformation("Handbestellwesen: Datenbank bereit unter {Pfad}", pfad);
 
@@ -66,6 +72,25 @@ internal sealed class HbStartUndSicherung(
         {
             logger.LogError(ex, "Handbestellwesen: Start oder Sicherung fehlgeschlagen");
         }
+    }
+
+    /// <summary>EnsureCreated legt nur neue Datenbanken an; spaeter hinzugekommene Spalten werden hier nachgezogen.</summary>
+    internal static async Task ErgaenzeSpaltenAsync(HbDbContext db, CancellationToken ct)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await conn.OpenAsync(ct);
+        var vorhanden = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "PRAGMA table_info(Bestellung);";
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+                vorhanden.Add(reader.GetString(1));
+        }
+        // 2026-10-22: WertText fuer Altdaten mit Text statt Betrag ("KV").
+        if (!vorhanden.Contains("WertText"))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Bestellung ADD COLUMN WertText TEXT NULL;", ct);
     }
 
     private void Sichere(string pfad)

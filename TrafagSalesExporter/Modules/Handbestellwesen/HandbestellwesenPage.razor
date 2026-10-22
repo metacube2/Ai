@@ -5,6 +5,8 @@
 @inject HbService Hb
 @inject IOptionsMonitor<HbOptions> Options
 @inject AuthenticationStateProvider AuthState
+@inject HbImportService Import
+@inject Microsoft.Extensions.Hosting.IHostEnvironment Env
 
 @* Handbestellwesen 2026-10-22 (Auftrag Ingo): Abloesung der PHP-Anwendung. Oberflaeche bewusst wie im PHP
    (Kacheln und Farben aus style.css/navigation.php), Technik neu. Doku docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md *@
@@ -25,6 +27,7 @@
         @if (_benutzer?.IstAdmin == true)
         {
             <a class="hb-klein hb-k-nutzung" href="handbestellwesen/nutzung">Nutzung</a>
+            <a class="hb-klein hb-k-nutzung" href="handbestellwesen/import">Altdaten-Import</a>
         }
         @if (_benutzer is not null)
         {
@@ -199,6 +202,52 @@
                     </table>
                     break;
 
+                case "import":
+                    <h1>Altdaten-Import</h1>
+                    @if (!_benutzer.IstAdmin)
+                    {
+                        <p>Den Import sieht nur ein Admin.</p>
+                    }
+                    else
+                    {
+                        <p>Quelle: <code>@HbRegistration.ImportPfad(Env, Options.CurrentValue)</code> (Dump der PHP-Datenbank, z. B. aus HeidiSQL oder mysqldump).
+                           Importiert wird nur in eine leere Datenbank. Danach die Datei vom Server entfernen.</p>
+                        <div class="hb-filter">
+                            <button class="hb-knopf-grau" disabled="@_importLaeuft" @onclick="ImportPruefenAsync">Prüfen</button>
+                            @if (_importBericht is { Importiert: false })
+                            {
+                                <button class="hb-knopf-grau" disabled="@_importLaeuft" @onclick="ImportierenAsync">Importieren</button>
+                            }
+                        </div>
+                        @if (_importLaeuft) { <p>Läuft …</p> }
+                        @if (_importBericht is { } ib)
+                        {
+                            <h3>@(ib.Importiert ? "Importiert" : "Prüfung (noch nichts geschrieben)")</h3>
+                            <table class="hb-tab">
+                                <tr><th>Quelle</th><th>Zeilen</th></tr>
+                                @foreach (var q in ib.QuellZeilen) { <tr><td>@q.Key</td><td class="hb-zahl">@q.Value.ToString("N0")</td></tr> }
+                            </table>
+                            <table class="hb-tab">
+                                <tr><th>Ziel</th><th>Anzahl</th></tr>
+                                <tr><td>Bestellungen offen</td><td class="hb-zahl">@ib.Offen.ToString("N0")</td></tr>
+                                <tr><td>Bestellungen Freigabe offen</td><td class="hb-zahl">@ib.FreigabeOffen.ToString("N0")</td></tr>
+                                <tr><td>Bestellungen eingegangen (Archiv)</td><td class="hb-zahl">@ib.Eingegangen.ToString("N0")</td></tr>
+                                <tr><td>Bestellungen gelöscht</td><td class="hb-zahl">@ib.Geloescht.ToString("N0")</td></tr>
+                                <tr><td>Kreditoren</td><td class="hb-zahl">@ib.Kreditoren.ToString("N0")</td></tr>
+                                <tr><td>Mitarbeiter</td><td class="hb-zahl">@ib.Mitarbeiter.ToString("N0")</td></tr>
+                                <tr><td>Kostenstellen</td><td class="hb-zahl">@ib.Kostenstellen.ToString("N0")</td></tr>
+                                <tr><td>Sachkonten</td><td class="hb-zahl">@ib.Sachkonten.ToString("N0")</td></tr>
+                                <tr><td>Zähler</td><td class="hb-zahl">@ib.Zaehler.ToString("N0")</td></tr>
+                            </table>
+                            @if (ib.Hinweise.Count > 0)
+                            {
+                                <h3>Hinweise</h3>
+                                <ul>@foreach (var h in ib.Hinweise) { <li>@h</li> }</ul>
+                            }
+                        }
+                    }
+                    break;
+
                 case "nutzung":
                     <h1>Nutzung</h1>
                     @if (!_benutzer.IstAdmin)
@@ -333,6 +382,50 @@
     private bool _gefiltert;
     private bool _filterArchiv;
 
+    // Altdaten-Import
+    private HbImportBericht? _importBericht;
+    private bool _importLaeuft;
+
+    private async Task<string?> DumpLesenAsync()
+    {
+        var pfad = HbRegistration.ImportPfad(Env, Options.CurrentValue);
+        if (!File.Exists(pfad))
+        {
+            _fehler = $"Keine Datei unter {pfad}.";
+            return null;
+        }
+        return await File.ReadAllTextAsync(pfad, System.Text.Encoding.UTF8);
+    }
+
+    private async Task ImportPruefenAsync() => await ImportLaufAsync(false);
+    private async Task ImportierenAsync() => await ImportLaufAsync(true);
+
+    private async Task ImportLaufAsync(bool schreiben)
+    {
+        _fehler = null;
+        _info = null;
+        _importLaeuft = true;
+        try
+        {
+            var sql = await DumpLesenAsync();
+            if (sql is null) return;
+            _importBericht = schreiben ? await Import.ImportierenAsync(_benutzer!, sql) : await Import.PruefenAsync(sql);
+            if (schreiben)
+            {
+                _info = "Altdaten importiert.";
+                await LadenAsync();
+            }
+        }
+        catch (HbException ex)
+        {
+            _fehler = ex.Message;
+        }
+        finally
+        {
+            _importLaeuft = false;
+        }
+    }
+
     // Nutzung: Standard laufendes Jahr bis heute
     private bool _aufrufErfasst;
     private DateTime _nutzVon = new(DateTime.Today.Year, 1, 1);
@@ -407,9 +500,9 @@
                 <tr>
                     <td>@if (aktionen && b.Status is HbStatus.Offen or HbStatus.FreigabeOffen) { <button class="hb-loeschen" @onclick="() => AktionAsync(b, Hb.LoeschenAsync)">Löschen</button> }</td>
                     <td class="hb-nowrap">@HbService.FormatNummer(b.Bestellnummer)</td>
-                    <td>@b.KreditorNr<br /><small>@kred?.Name</small></td>
+                    <td>@(b.KreditorNr.Length == 0 ? "ohne Kreditor" : b.KreditorNr)<br /><small>@kred?.Name</small></td>
                     <td>@b.Text</td>
-                    <td class="hb-zahl">@Chf(b.Bestellwert)</td>
+                    <td class="hb-zahl">@(b.WertText ?? Chf(b.Bestellwert))</td>
                     <td>@(b.FreigeberKurzzeichen is null ? b.BestellerKurzzeichen : b.BestellerKurzzeichen + "," + b.FreigeberKurzzeichen)</td>
                 </tr>
                 <tr><th>Kostenstelle</th><th>Sachkonto</th><th>Bestellfreigabe</th><th>Wareneingang</th><th>Rechnungsbetrag</th><th>Speicherdatum</th></tr>

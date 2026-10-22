@@ -40,6 +40,8 @@ public sealed class HbBestellung
     public string KreditorNr { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public decimal Bestellwert { get; set; }
+    /// <summary>Altdaten: Text statt Betrag im PHP-Feld (z. B. "KV" fuer Kostenvoranschlag, "Service-Vertrag"); dann ist Bestellwert 0.</summary>
+    public string? WertText { get; set; }
     public string BestellerKurzzeichen { get; set; } = string.Empty;
     public string? FreigeberKurzzeichen { get; set; }
     public string Kostenstelle { get; set; } = string.Empty;

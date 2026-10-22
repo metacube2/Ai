@@ -39,6 +39,12 @@ Stand: 2026-10-22
 - Nicht angefasst, als Folgearbeit benannt: die Koordinations- und Abschlussregel steht viermal (`CLAUDE.md`,
   `AGENTS.md`, `router.md` Regel 6, `docs/router/projekt.md`); `CLAUDE.md` war von einer anderen Sitzung geaendert.
 
+## Handbestellwesen: Altdaten-Import, 2026-10-22
+
+- Admin-Kachel „Altdaten-Import“ (Pruefen, dann Importieren in leere DB), Fehler der PHP-Daten korrigiert statt uebernommen
+  (Platzhalter, Text im Betrag als `WertText`, Datumstexte, Doubletten, Zaehler). Probelauf echter Dump: 12'629 Bestellungen.
+  Konzept 6.3. Suite 1285/1285.
+
 ## Deploy 2026-10-22 13:38: Einkauf-Feedback und Modul Handbestellwesen
 
 - `77778a5` produktiv nach Ende des Einkauf-Deltas, Wochensicherung, bitgleich, zehn Routen 200, ohne Alarm. Reiter

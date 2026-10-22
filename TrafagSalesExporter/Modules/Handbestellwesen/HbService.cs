@@ -59,7 +59,7 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         return liste.Where(x =>
                 x.Bestellnummer.Contains(ohneLeer, StringComparison.OrdinalIgnoreCase) ||
                 Treffer(x.KreditorNr) || Treffer(x.Text) || Treffer(x.BestellerKurzzeichen) ||
-                Treffer(x.FreigeberKurzzeichen) || Treffer(x.Kostenstelle) || Treffer(x.Sachkonto) ||
+                Treffer(x.FreigeberKurzzeichen) || Treffer(x.Kostenstelle) || Treffer(x.Sachkonto) || Treffer(x.WertText) ||
                 Treffer(x.Bestellwert.ToString(CultureInfo.InvariantCulture)))
             .ToList();
     }

@@ -205,9 +205,37 @@ Beides liegt ungetrackt in `handbestellwesen/` (`db.sql`, `public.zip` entpackt 
   `htaccess` (ohne Punkt) und verweist auf den alten Hoster-Pfad: **der Basic-Auth-Schutz ist damit nicht aktiv**; ob der
   Webserver anders schuetzt, ist offen (Ingo).
 
+### 6.3 Altdaten-Import (2026-10-22)
+
+`Modules/Handbestellwesen/HbImport.cs`: `HbDumpParser` liest die INSERT-Befehle (HeidiSQL/mysqldump, MySQL-Escapes),
+`HbImportService` rechnet um und schreibt nur in eine **leere** Datenbank, nur als Admin. Bedienung: Admin-Kachel
+„Altdaten-Import“, Quelle `hbdaten\import\db.sql` auf dem Server, erst „Pruefen“ (schreibt nichts), dann „Importieren“.
+
+Fehler der PHP-Anwendung werden beim Import korrigiert, nicht uebernommen (Wunsch Ingo):
+
+| PHP-Fehler | Im Import |
+| --- | --- |
+| Platzhalter „Kreditor“/„Kostenstelle“/„Sachkonto“ gespeichert, wenn nichts gewaehlt wurde (erste `<option>` ohne value) | leer, Anzeige „ohne Kreditor“ |
+| Text im Betragsfeld („KV“, „?“, „Service-Vertrag“) | Betrag 0, Text in neuer Spalte `WertText` erhalten und angezeigt |
+| Datum als englischer Text, „000“/„---“ als „nicht gesetzt“ | echte Datumswerte bzw. leer |
+| `kurzzeichen` = „Besteller,Freigeber“ | zwei Felder |
+| Bestellnummern doppelt (Archiv, offen, geloescht) | eine Bestellung je Nummer, Archiv vor offen vor geloescht |
+| Wareneingang gebucht, aber nie ins Archiv verschoben | Status „eingegangen“ |
+| Zaehler `tab_bestellnummer` mit LIKE-Praefix | je Jahr und Kostenstelle, nie kleiner als die hoechste uebernommene Nummer |
+| HTML-Entitaeten, doppelte Kreditor-Nummern/Kurzzeichen | aufgeloest, letzter Stand |
+
+Windows-Konto der Mitarbeiter wird mit dem Kurzzeichen vorbelegt (Trafag-Konten = Kurzzeichen, z. B. `koi`); bitte
+stichprobenweise pruefen.
+
+Probelauf mit dem echten Dump in eine Temp-DB (3,6 s): 1'290 offen, 11'044 eingegangen, 322 geloescht, 4'092 Kreditoren,
+109 Mitarbeiter, 55 Kostenstellen, 62 Sachkonten, 392 Zaehler; offene Bestellungen zusammen CHF 1,21 Mio. Hinweise: 383
+Betraege als Text (KV 169x), 564 ohne Kreditor, 45 doppelte Nummern, 22 leere Datensaetze (Datum 01.01.2000), 50 offene
+Bestellungen mit Besteller ohne Mitarbeitereintrag, **930 offene Bestellungen aelter als ein Jahr** (vermutlich nie als
+eingegangen gebucht; Entscheid Ingo, ob nach dem Import gesammelt archivieren). Tests `HandbestellwesenImportTests` (6).
+
 ## 7. Naechste Schritte
 
-1. Dump liegt vor (6.2) -> Import-Werkzeug (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
+1. Dump liegt vor (6.2), Import gebaut (6.3) -> auf dem Server pruefen und importieren (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
    Zaehlerstaende.
 2. Oberflaeche ansehen: entweder Deploy (Reiter sofort fuer alle sichtbar; Weiterbetrieb ist entschieden) oder lokal mit
    abgeschalteten Hintergrunddiensten. Entscheid Ingo.
