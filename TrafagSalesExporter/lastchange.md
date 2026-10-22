@@ -2,6 +2,13 @@
 
 Stand: 2026-10-22
 
+## Einkauf: Handbestellwesen, Konzept zur Abloesung der PHP-Anwendung, 2026-10-22
+
+- Alte PHP-Anwendung analysiert (Passwoerter im Code, SQL-Injection, Freigabelimit nur im Browser, privater Hoster,
+  Nummernkollision). Entscheide Ingo: Modul im Dashboard, Altdaten uebernehmen, Stammdaten erst lokal dann SAP,
+  Oberflaeche wie im PHP. Kein Code. Wartet auf MySQL-Dump. `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md`;
+  `handbestellwesen/` in `.gitignore`.
+
 ## SAP: ZLO03 FIX 20, „defekte Excel“ ist eine Excel-Sperre, Download als .txt, 2026-10-22
 
 - Meldung Ingo: ZLO03 erzeugt seit einiger Zeit defekte Excel. Befund: Die Datei ist Tab-Text unter `.xls`; Excel weist

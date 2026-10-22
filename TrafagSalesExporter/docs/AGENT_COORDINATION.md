@@ -25,6 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Claude | Handbestellwesen: Abloesung der PHP-Anwendung durch Modul im Dashboard (Auftrag Ingo 22.10.) | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md`, kuenftig `Components/Pages/Handbestellwesen*`, `Services/Handbestellwesen/`; `handbestellwesen/` bleibt ungetrackt (Passwoerter) | **Konzept fertig, kein Code. Wartet auf MySQL-Dump (Ingo)** |
 | Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; **Nachtrag 2026-10-22: Spalte RoHS** (Merkmal `ROHS`, von Adil am 21.10. angelegt) | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **`T76K912742` (FIX 12, 19 inkl. RoHS, 20) am 22.10. von Ingo freigegeben. FIX 21 (.xlsx) in T76 aktiv, neuer Auftrag `T76K912752`, getestet; offen: Freigabe/Import `T76K912752` (Ingo), Test mit Werten, Programm hinter ZLO03 in P76** |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.

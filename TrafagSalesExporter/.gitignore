@@ -24,3 +24,6 @@ netsh
 
 # Alphaplan DPAPI credential (machine+user bound, never commit)
 AlphaplanExportPackage/scripte/alphaplan-sql-cred.xml
+
+# Alte PHP-Anwendung Handbestellwesen: enthaelt Passwoerter im Klartext, nie committen
+handbestellwesen/
