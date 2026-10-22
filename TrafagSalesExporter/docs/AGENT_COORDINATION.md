@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; **Nachtrag 2026-10-22: Spalte RoHS** (Merkmal `ROHS`, von Adil am 21.10. angelegt) | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **`T76K912742` (FIX 12, 19 inkl. RoHS, 20) am 22.10. von Ingo freigegeben. FIX 21 (.xlsx) nur im Repo, wartet auf neuen Auftrag (Ingo); offen: Test mit Werten, Programm hinter ZLO03 in P76** |
+| Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; **Nachtrag 2026-10-22: Spalte RoHS** (Merkmal `ROHS`, von Adil am 21.10. angelegt) | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **`T76K912742` (FIX 12, 19 inkl. RoHS, 20) am 22.10. von Ingo freigegeben. FIX 21 (.xlsx) in T76 aktiv, neuer Auftrag `T76K912752`, getestet; offen: Freigabe/Import `T76K912752` (Ingo), Test mit Werten, Programm hinter ZLO03 in P76** |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | ZLO03 FIX 21: Download als echte `.xlsx` (Wunsch Ingo) | 2026-10-22 | **Abgeschlossen in T76, kein Deploy.** Neuer Auftrag `T76K912752`, aktiv, rueckgelesen, 0 Unterschiede zum Textinhalt, Lasttest 2,2 Mio. Zellen 14 s. `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md` Abschnitt 6 |
 | Claude | ZLO03 FIX 20: „defekte Excel“ = Excel-Sperre fuer Text-.xls (`ExtensionHardening = 2`), Download als `.txt` | 2026-10-22 | **Abgeschlossen in T76, kein Deploy.** `download_dialog` `.txt` + `excel.exe`, aktiv, rueckgelesen identisch, Lauf oeffnet Excel, Inhalt gleich; in `T76K912742`. `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md` |
 | Claude | ZLO03 Spalte RoHS (Nachtrag FIX 19, Mail Adil) | 2026-10-22 | **Abgeschlossen in T76, kein Deploy.** Merkmal `ROHS` (T76, 21.10.) gelesen, Spalte RoHS vor REACH, aktiv 08:00, rueckgelesen identisch, Lauf `8475*` 182 Spalten; in `T76K912742`. FIX-19-Reservierung bleibt aktiv (Test mit Werten, P76) |
 | Claude | SAP PS: Frage Philip „Rolle je Zeitbuchung“, Demo T76/100 (eigene Sitzung, Freigabe Ingo), Folien 17-19 | 2026-10-21 | **Abgeschlossen, kein Deploy, Reservierung frei.** KL01 PL/ENG/TST, KP26 KoSt 240, KB21N Beleg 311258908, in CJI3 geprueft; Doku 4b, Bilder 19-22, Aufraeumen in Abschnitt 7; Sitzung geschlossen |

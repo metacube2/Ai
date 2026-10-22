@@ -2,7 +2,7 @@
 
 Stand: 2026-10-22. Status: **in T76 aktiv, Auftrag `T76K912742` am 22.10. von Ingo freigegeben** (zusammen mit FIX 12
 und FIX 19). Import nach P76 macht Ingo; ob er schon erfolgt ist, ist hier nicht geprueft.
-**Nachfolger FIX 21 (echtes `.xlsx`, Wunsch Ingo) ist vorbereitet, aber nicht in SAP**, Abschnitt 6.
+**Nachfolger FIX 21 (echtes `.xlsx`, Wunsch Ingo) ist in T76 aktiv, neuer Auftrag `T76K912752`**, Abschnitt 6.
 
 ## 1. Meldung
 
@@ -65,7 +65,7 @@ Kein echtes `.xlsx`: das braeuchte eine Bibliothek (abap2xlsx oder XCO) und waer
 2. **Andere Z-Reports** mit `GUI_DOWNLOAD` `'ASC'` unter `.xls` haben dasselbe Problem; Liste noch nicht erstellt.
 3. Import `T76K912742` nach P76 (Ingo). Freigegeben am 22.10.
 
-## 6. FIX 21: echte Excel-Datei (.xlsx), vorbereitet
+## 6. FIX 21: echte Excel-Datei (.xlsx), T76 aktiv
 
 Ingo am 22.10.: „jetzt ist aber txt Endung, kannst du nicht echtes Excel schreiben“. Als ich FIX 21 in T76 sichern
 wollte, war `T76K912742` bereits freigegeben (`E070` Status R). Gesichert habe ich deshalb nichts; ein neuer Auftrag
@@ -87,6 +87,15 @@ Gepruefter Prototyp (Python, dieselben XML-Teile und Regeln) gegen den Text-Impo
 | T76-Lauf `8475*` | 126 x 182 | 0 Werte, 0 Formeln |
 | Ingos P76-Datei vom 22.10. | 331 x 2'097 | 0 Werte, 0 Formeln |
 
-Nicht geprueft: der ABAP-Quelltext selbst (Syntaxcheck, Lauf in T76), Laufzeit bei rund 700'000 Zellen. Naechster
-Schritt nach Entscheid Ingo: neuer Auftrag, Sichern, Aktivieren, Lauf `8475*` und eine breite Selektion, Vergleich wie
-oben.
+Einspielen nach Auftrag Ingo („mach ein neuen Auftrag und spiel Excel-Fix ein“), eigene Sitzung T76/100:
+
+| Schritt | Ergebnis |
+| --- | --- |
+| Sichern | Auftragsdialog, neuer Workbench-Auftrag **`T76K912752`** „ZLO03 FIX 21 Download als echte Excel-Datei xlsx“ |
+| Aktivieren | Syntax ok, nur `Z_ZLO03_TURBO2` markiert, „Objekt(e) wurde(n) aktiviert“ |
+| Rueckgelesen | identisch mit der Patchdatei (3'781 Zeilen) |
+| Lauf `8475*` | Speicherdialog schlaegt `Material_Verwendung.xlsx` vor; Excel oeffnete die Datei direkt, ohne Reparaturhinweis; 74'914 Byte, gleich gross wie der Prototyp |
+| Vergleich mit Textlauf | Excel-Format 51 (xlsx), 126 x 182, **0 Wert- und 0 Formelunterschiede**, Kopfzeile fett, `=SUMPRODUCT($E$3:$AX$3,E4:AX4)` |
+| Lasttest `84*` | 722 x 3'114 (2,2 Mio. Zellen), Aufbau und Download 14 s, 5,9 MB, in Excel ohne Fehler geoeffnet |
+
+Offen: Freigabe und Import `T76K912752` nach P76 (Ingo); der Auftrag muss **nach** `T76K912742` importiert werden.

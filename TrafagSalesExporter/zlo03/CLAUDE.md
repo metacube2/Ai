@@ -112,7 +112,7 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 18 | neu `run_diagnose` | Diagnosemodus `p_diag` |
 | 19 | `Z_ZLO03_TURBO2`: neu `load_compliance_cache`, `get_compliance`, `create_excel_output` | Spalten REACH, SVHC, PFAS-Gehalt aus `Z_PACK_REGULATION` (2026-10-20), Nachtrag Spalte RoHS aus Merkmal `ROHS` (2026-10-22); T76 aktiv, Auftrag `T76K912742`, siehe `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
 | 20 | `Z_ZLO03_TURBO2`: `download_dialog` | Download als `.txt` und Oeffnen mit Excel statt `.xls`: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie `ExtensionHardening = 2`), Befund 2026-10-22; T76 aktiv, Auftrag `T76K912742`, siehe `FIX20_DOWNLOAD_TXT_2026-10-22.md` |
-| 21 | `Z_ZLO03_TURBO2`: `download_dialog`, neu `build_xlsx` | echte `.xlsx` statt Tab-Text (Wunsch Ingo 2026-10-22); **nur vorbereitet, nicht in SAP** (`T76K912742` war schon freigegeben), Quelltext `Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap` |
+| 21 | `Z_ZLO03_TURBO2`: `download_dialog`, neu `build_xlsx` | echte `.xlsx` statt Tab-Text (Wunsch Ingo 2026-10-22); T76 aktiv, neuer Auftrag `T76K912752` (`T76K912742` war schon freigegeben), zellgleich mit dem Text-Inhalt; Quelltext `Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 

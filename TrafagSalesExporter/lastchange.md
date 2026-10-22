@@ -12,7 +12,9 @@ Stand: 2026-10-22
 - Offen: welches Programm ZLO03 in P76 startet (ungeprueft), andere Z-Reports mit gleichem Muster.
   Doku `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md`.
 - Nachtrag: `T76K912742` am 22.10. von Ingo freigegeben (mit FIX 12, 19, 20). Auf Wunsch Ingo FIX 21 vorbereitet
-  (echtes `.xlsx` per `CL_ABAP_ZIP`, Prototyp zellgleich mit dem Text-Import), nicht in SAP, neuer Auftrag noetig.
+  (echtes `.xlsx` per `CL_ABAP_ZIP`, Prototyp zellgleich mit dem Text-Import). Danach auf Auftrag Ingo eingespielt:
+  neuer Auftrag `T76K912752`, aktiv, rueckgelesen, Lauf oeffnet Excel direkt, 0 Unterschiede zum Textinhalt, Lasttest
+  722 x 3'114 Zellen in 14 s. Import nach `T76K912742` (Ingo).
 
 ## SAP: ZLO03 Spalte RoHS (Nachtrag FIX 19), 2026-10-22
 
