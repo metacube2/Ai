@@ -72,6 +72,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | SAP PS (Projektsystem): Einfuehrung, Demo-Projekt `DEMO-PS` in T76, Zeit auf Projekt (KB21N/CATS), Transaktionen, Befunde (PS fuer Trafag nicht eingerichtet), Fazit fuer den Chef | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | ZLO03: offene MK Top-Down 0 / Bottom-Up 3100 (B63485), Textpositionen, **FIX 12 in `Z_ZLO03_TURBO2`** (T76, `T76K912742`) | `zlo03/MK_B63485_FIX12_2026-10-16.md` |
 | ZLO03 FIX 19: Spalten RoHS, REACH, SVHC, PFAS-Gehalt aus Klasse `Z_PACK_REGULATION` (Florian), Befund je Merkmal T76/P76, RoHS-Merkmal `ROHS` seit 21.10. (Nachtrag 22.10.); im selben Auftrag `T76K912742` wie FIX 12 | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
+| ZLO03 „defekte Excel“: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie `ExtensionHardening = 2`); FIX 20 Download als `.txt` und Oeffnen mit Excel, Sofortloesung Umbenennen | `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |
 
 ## Systeme

@@ -2,6 +2,16 @@
 
 Stand: 2026-10-22
 
+## SAP: ZLO03 FIX 20, „defekte Excel“ ist eine Excel-Sperre, Download als .txt, 2026-10-22
+
+- Meldung Ingo: ZLO03 erzeugt seit einiger Zeit defekte Excel. Befund: Die Datei ist Tab-Text unter `.xls`; Excel weist
+  das ab, seit die Gruppenrichtlinie `ExtensionHardening = 2` gilt (auch alte Dateien vom August). Als `.txt` oeffnet
+  dieselbe Datei korrekt (331 x 2'097). Sofortloesung: umbenennen in `.txt`.
+- FIX 20 in `Z_ZLO03_TURBO2` (`download_dialog`): Vorschlag `.txt`, Oeffnen mit `excel.exe`, Rueckfall Standardprogramm.
+  T76 aktiv, rueckgelesen identisch, Lauf `8475*` oeffnete Excel direkt, Inhalt byteweise gleich. Auftrag `T76K912742`.
+- Offen: welches Programm ZLO03 in P76 startet (ungeprueft), andere Z-Reports mit gleichem Muster.
+  Doku `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md`.
+
 ## SAP: ZLO03 Spalte RoHS (Nachtrag FIX 19), 2026-10-22
 
 - Adil hat in T76 das Merkmal `ROHS` angelegt („RoHS Compliant“, CHAR 3, COM/UNC/UND, Klasse `Z_PACK_REGULATION`).

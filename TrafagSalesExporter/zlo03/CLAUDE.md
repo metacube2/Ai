@@ -111,6 +111,7 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 17 | Selektionsbild | Werk als Parameter statt Konstante |
 | 18 | neu `run_diagnose` | Diagnosemodus `p_diag` |
 | 19 | `Z_ZLO03_TURBO2`: neu `load_compliance_cache`, `get_compliance`, `create_excel_output` | Spalten REACH, SVHC, PFAS-Gehalt aus `Z_PACK_REGULATION` (2026-10-20), Nachtrag Spalte RoHS aus Merkmal `ROHS` (2026-10-22); T76 aktiv, Auftrag `T76K912742`, siehe `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
+| 20 | `Z_ZLO03_TURBO2`: `download_dialog` | Download als `.txt` und Oeffnen mit Excel statt `.xls`: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie `ExtensionHardening = 2`), Befund 2026-10-22; T76 aktiv, Auftrag `T76K912742`, siehe `FIX20_DOWNLOAD_TXT_2026-10-22.md` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 
@@ -293,6 +294,8 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
   Textpositionen in 46123/46124/46126/46128, und die These stimmt. Siehe
   `MK_B63485_FIX12_2026-10-16.md`)
 - `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` — **FIX 19 in `Z_ZLO03_TURBO2`** (REACH/SVHC/PFAS, seit 2026-10-22 auch RoHS), liegt seit 2026-10-20
-  im selben Auftrag `T76K912742` wie FIX 12; aktueller Quelltext `Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap`
+  im selben Auftrag `T76K912742` wie FIX 12
+- `FIX20_DOWNLOAD_TXT_2026-10-22.md` — **FIX 20 in `Z_ZLO03_TURBO2`** (Download `.txt` statt `.xls`, Excel-Sperre);
+  aktueller Quelltext `Z_ZLO03_TURBO2_FIX20_2026-10-22.abap` (FIX 12, 19 inkl. RoHS, 20)
 - `MK_B63485_FIX12_2026-10-16.md` — Beleg aus P76 und **FIX 12 in `Z_ZLO03_TURBO2`**
   (T76 aktiv, Transport `T76K912742`); die übrigen Fixes sind weiter nur lokal
