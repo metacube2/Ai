@@ -29,8 +29,16 @@ public enum HbStatus
     /// <summary>Ware eingegangen, entspricht dem Archiv der PHP-Anwendung.</summary>
     Eingegangen = 2,
     /// <summary>Geloescht (nur ohne Wareneingang), entspricht delete_archive.</summary>
-    Geloescht = 3
+    Geloescht = 3,
+    /// <summary>Bereinigung 2026-10-22: alte offene Bestellung ohne gebuchten Wareneingang, administrativ abgeschlossen.</summary>
+    Ausgebucht = 4
 }
+
+/// <summary>Vorschau der Bereinigung: Doppelklick-Doubletten und alte offene Bestellungen.</summary>
+public sealed record HbBereinigung(
+    List<(HbBestellung Behalten, HbBestellung Storno)> Doubletten,
+    List<HbBestellung> AlteOffene,
+    DateTime Stichtag);
 
 public sealed class HbBestellung
 {

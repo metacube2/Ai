@@ -46,7 +46,7 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         await using var db = await dbFactory.CreateDbContextAsync();
         var q = db.Bestellungen.AsNoTracking();
         q = archiv
-            ? q.Where(x => x.Status == HbStatus.Eingegangen)
+            ? q.Where(x => x.Status == HbStatus.Eingegangen || x.Status == HbStatus.Ausgebucht)
             : q.Where(x => x.Status == HbStatus.Offen || x.Status == HbStatus.FreigabeOffen);
         var liste = await q.OrderByDescending(x => x.Id).ToListAsync();
         if (string.IsNullOrWhiteSpace(suche))
@@ -293,6 +293,76 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
 
         return new HbNutzung(von, bis, bestellungen.Count, bestellungen.Sum(x => x.Bestellwert),
             jePerson.Count(x => x.Bestellungen > 0), jePerson, jeKost, jeMonat);
+    }
+
+    // ---------- Bereinigung (Auftrag Ingo 2026-10-22: bereinige die Datensaetze) ----------
+
+    /// <summary>
+    /// Doppelklick-Doubletten: gleiche Bestellung (Besteller, Kreditor, Text, Wert, Wert-Text) innerhalb von 5 Minuten
+    /// zweimal gespeichert, mit zwei Nummern. Behalten wird der weitere Stand (eingegangen vor offen), bei Gleichstand die
+    /// fruehere. Alte offene: angelegt vor dem Stichtag und nie als eingegangen gebucht.
+    /// </summary>
+    public async Task<HbBereinigung> BereinigungVorschauAsync(HbBenutzer benutzer, DateTime stichtag)
+    {
+        NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var aktiv = await db.Bestellungen.AsNoTracking()
+            .Where(x => x.Status != HbStatus.Geloescht && x.Status != HbStatus.Ausgebucht).ToListAsync();
+        var doubletten = new List<(HbBestellung, HbBestellung)>();
+        var storniert = new HashSet<int>();
+        foreach (var gruppe in aktiv.GroupBy(x => (x.BestellerKurzzeichen.ToLowerInvariant(), x.KreditorNr, x.Text.Trim().ToLowerInvariant(), x.Bestellwert, x.WertText ?? "")))
+        {
+            var liste = gruppe.OrderBy(x => x.AngelegtAm).ThenBy(x => x.Id).ToList();
+            for (var i = 1; i < liste.Count; i++)
+            {
+                var a = liste[i - 1];
+                var b = liste[i];
+                if (storniert.Contains(a.Id) || (b.AngelegtAm - a.AngelegtAm).TotalMinutes > 5)
+                    continue;
+                var behalten = b.Status == HbStatus.Eingegangen && a.Status != HbStatus.Eingegangen ? b : a;
+                var storno = ReferenceEquals(behalten, a) ? b : a;
+                doubletten.Add((behalten, storno));
+                storniert.Add(storno.Id);
+            }
+        }
+        var alte = aktiv.Where(x => (x.Status == HbStatus.Offen || x.Status == HbStatus.FreigabeOffen) && x.AngelegtAm < stichtag && !storniert.Contains(x.Id))
+            .OrderBy(x => x.AngelegtAm).ToList();
+        return new HbBereinigung(doubletten, alte, stichtag);
+    }
+
+    public async Task<(int Doubletten, int Ausgebucht)> BereinigenAsync(HbBenutzer benutzer, DateTime stichtag, bool doubletten, bool alteOffene)
+    {
+        var vorschau = await BereinigungVorschauAsync(benutzer, stichtag);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var jetzt = Jetzt;
+        var nD = 0;
+        var nA = 0;
+        if (doubletten)
+        {
+            foreach (var (behalten, storno) in vorschau.Doubletten)
+            {
+                var b = await db.Bestellungen.FirstAsync(x => x.Id == storno.Id);
+                b.Status = HbStatus.Geloescht;
+                b.GeloeschtAm = jetzt;
+                b.GeloeschtVon = benutzer.Konto;
+                Protokolliere(db, benutzer, "Bereinigung: Doublette storniert", b.Bestellnummer,
+                    $"doppelt gespeichert zu {behalten.Bestellnummer}; vorheriger Status {storno.Status}");
+                nD++;
+            }
+        }
+        if (alteOffene)
+        {
+            foreach (var alt in vorschau.AlteOffene)
+            {
+                var b = await db.Bestellungen.FirstAsync(x => x.Id == alt.Id);
+                b.Status = HbStatus.Ausgebucht;
+                Protokolliere(db, benutzer, "Bereinigung: alte offene ausgebucht", b.Bestellnummer,
+                    $"angelegt {b.AngelegtAm:dd.MM.yyyy}, Stichtag {stichtag:dd.MM.yyyy}, vorheriger Status {alt.Status}");
+                nA++;
+            }
+        }
+        await db.SaveChangesAsync();
+        return (nD, nA);
     }
 
     // ---------- Stammdaten (nur Admin) ----------

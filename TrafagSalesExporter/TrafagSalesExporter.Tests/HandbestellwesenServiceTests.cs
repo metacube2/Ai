@@ -183,6 +183,39 @@ public sealed class HandbestellwesenServiceTests : IDisposable
         await Assert.ThrowsAsync<HbException>(() => _hb.NutzungAsync(abc, new DateTime(2026, 1, 1), new DateTime(2027, 1, 1)));
     }
 
+    // Bereinigung 2026-10-22: Doppelklick-Doubletten stornieren, alte offene ausbuchen, alles protokolliert.
+    [Fact]
+    public async Task Bereinigung_Storniert_Doppelklick_Und_Bucht_Alte_Offene_Aus()
+    {
+        using (var db = _factory.CreateDbContext())
+        {
+            HbBestellung B(string nr, int minute, HbStatus st, string text = "Div.", int jahr = 2026) => new()
+            {
+                Bestellnummer = nr, KreditorNr = "65017", Text = text, Bestellwert = 10m, BestellerKurzzeichen = "abc",
+                Kostenstelle = "875", Sachkonto = "67099", Status = st, AngelegtAm = new DateTime(jahr, 10, 1, 9, minute, 0), AngelegtVon = "import"
+            };
+            db.Bestellungen.AddRange(
+                B("E268750101", 0, HbStatus.Offen), B("E268750102", 2, HbStatus.Eingegangen),   // Doppelklick: eingegangene bleibt
+                B("E268750103", 0, HbStatus.Offen, "Anders"), B("E268750104", 30, HbStatus.Offen, "Anders"), // 30 Min: keine Doublette
+                B("E238750001", 0, HbStatus.Offen, "Alt", 2023));
+            db.SaveChanges();
+        }
+        var admin = await Wer("admin");
+        var vorschau = await _hb.BereinigungVorschauAsync(admin, new DateTime(2025, 10, 22));
+        var (behalten, storno) = Assert.Single(vorschau.Doubletten);
+        Assert.Equal(("E268750102", "E268750101"), (behalten.Bestellnummer, storno.Bestellnummer));
+        Assert.Equal("E238750001", Assert.Single(vorschau.AlteOffene).Bestellnummer);
+        await Assert.ThrowsAsync<HbException>(async () => await _hb.BereinigungVorschauAsync(await Wer("abc"), DateTime.Today));
+
+        var (d, a) = await _hb.BereinigenAsync(admin, new DateTime(2025, 10, 22), true, true);
+        Assert.Equal((1, 1), (d, a));
+        using var check = _factory.CreateDbContext();
+        Assert.Equal(HbStatus.Geloescht, check.Bestellungen.Single(x => x.Bestellnummer == "E268750101").Status);
+        Assert.Equal(HbStatus.Ausgebucht, check.Bestellungen.Single(x => x.Bestellnummer == "E238750001").Status);
+        Assert.Equal(2, check.Protokoll.Count(x => x.Aktion.StartsWith("Bereinigung")));
+        Assert.Contains(await _hb.BestellungenAsync(archiv: true), x => x.Bestellnummer == "E238750001");
+    }
+
     [Fact]
     public void Menue_Enthaelt_Reiter_Handbestellwesen()
     {

@@ -28,6 +28,7 @@
         {
             <a class="hb-klein hb-k-nutzung" href="handbestellwesen/nutzung">Nutzung</a>
             <a class="hb-klein hb-k-nutzung" href="handbestellwesen/import">Altdaten-Import</a>
+            <a class="hb-klein hb-k-nutzung" href="handbestellwesen/bereinigung">Bereinigung</a>
         }
         @if (_benutzer is not null)
         {
@@ -248,6 +249,41 @@
                     }
                     break;
 
+                case "bereinigung":
+                    <h1>Bereinigung</h1>
+                    @if (!_benutzer.IstAdmin)
+                    {
+                        <p>Die Bereinigung sieht nur ein Admin.</p>
+                    }
+                    else
+                    {
+                        <p>Nichts wird physisch gelöscht; jede Änderung steht im Protokoll mit Name und Zeit.</p>
+                        <div class="hb-filter">
+                            <label>Offene ausbuchen, wenn angelegt vor <input type="date" class="hb-such hb-datum" @bind="_bereinigStichtag" /></label>
+                            <button class="hb-knopf-grau" @onclick="BereinigungVorschauAsync">Vorschau</button>
+                        </div>
+                        @if (_bereinigung is { } br)
+                        {
+                            <h3>Doppelklick-Doubletten: @br.Doubletten.Count</h3>
+                            <p>Gleiche Bestellung innerhalb von 5 Minuten zweimal gespeichert. Die rechte Nummer wird storniert.</p>
+                            <table class="hb-tab">
+                                <tr><th>Behalten</th><th>Stornieren</th><th>Besteller</th><th>Text</th><th>Wert</th><th>Datum</th></tr>
+                                @foreach (var (behalten, storno) in br.Doubletten)
+                                {
+                                    <tr><td>@HbService.FormatNummer(behalten.Bestellnummer) (@behalten.Status)</td><td>@HbService.FormatNummer(storno.Bestellnummer) (@storno.Status)</td>
+                                        <td>@storno.BestellerKurzzeichen</td><td>@storno.Text</td><td class="hb-zahl">@(storno.WertText ?? Chf(storno.Bestellwert))</td><td>@Datum(storno.AngelegtAm)</td></tr>
+                                }
+                            </table>
+                            <h3>Alte offene Bestellungen vor dem @br.Stichtag.ToString("dd.MM.yyyy"): @br.AlteOffene.Count (CHF @Chf(br.AlteOffene.Sum(x => x.Bestellwert)))</h3>
+                            <p>Nie als eingegangen gebucht. Sie werden ausgebucht und erscheinen danach im Archiv.</p>
+                            <div class="hb-filter">
+                                <button class="hb-knopf-grau" disabled="@_bereinigLaeuft" @onclick="() => BereinigenAsync(true, false)">Doubletten stornieren</button>
+                                <button class="hb-knopf-grau" disabled="@_bereinigLaeuft" @onclick="() => BereinigenAsync(false, true)">Alte offene ausbuchen</button>
+                            </div>
+                        }
+                    }
+                    break;
+
                 case "nutzung":
                     <h1>Nutzung</h1>
                     @if (!_benutzer.IstAdmin)
@@ -381,6 +417,33 @@
     private string _suche = string.Empty;
     private bool _gefiltert;
     private bool _filterArchiv;
+
+    // Bereinigung: Standard-Stichtag ein Jahr zurueck
+    private DateTime _bereinigStichtag = DateTime.Today.AddYears(-1);
+    private HbBereinigung? _bereinigung;
+    private bool _bereinigLaeuft;
+
+    private async Task BereinigungVorschauAsync()
+    {
+        _fehler = null;
+        try { _bereinigung = await Hb.BereinigungVorschauAsync(_benutzer!, _bereinigStichtag.Date); }
+        catch (HbException ex) { _fehler = ex.Message; }
+    }
+
+    private async Task BereinigenAsync(bool doubletten, bool alteOffene)
+    {
+        _fehler = null;
+        _info = null;
+        _bereinigLaeuft = true;
+        try
+        {
+            var (d, a) = await Hb.BereinigenAsync(_benutzer!, _bereinigStichtag.Date, doubletten, alteOffene);
+            _info = doubletten ? $"{d} Doubletten storniert." : $"{a} alte offene Bestellungen ausgebucht.";
+            await BereinigungVorschauAsync();
+        }
+        catch (HbException ex) { _fehler = ex.Message; }
+        finally { _bereinigLaeuft = false; }
+    }
 
     // Altdaten-Import
     private HbImportBericht? _importBericht;
@@ -519,7 +582,8 @@
                         else { <span>nicht nötig</span> }
                     </td>
                     <td>
-                        @if (b.EingangAm is not null) { @Datum(b.EingangAm) }
+                        @if (b.Status == HbStatus.Ausgebucht) { <span>ausgebucht (Bereinigung)</span> }
+                        else if (b.EingangAm is not null) { @Datum(b.EingangAm) }
                         else if (aktionen && b.Status == HbStatus.Offen) { <button class="hb-eingang" @onclick="() => AktionAsync(b, Hb.WareneingangAsync)">Waren eingegangen</button> }
                     </td>
                     <td class="hb-zahl">@(b.Rechnungsbetrag is null ? "" : "CHF " + Chf(b.Rechnungsbetrag.Value))</td>
