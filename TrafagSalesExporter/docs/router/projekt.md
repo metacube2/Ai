@@ -1,6 +1,6 @@
 # Unterrouter Projekt
 
-Zurueck: `router.md`. Stand: 2026-10-15.
+Zurueck: `router.md`. Stand: 2026-10-22 (Archivverweis `docs/archiv/`).
 
 Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand.
 

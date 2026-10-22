@@ -1,6 +1,7 @@
 # Deployment: Server, Publish, Deploy-Konsole und Fallen
 
-Stand: 2026-08-17. Zusammengefuehrt aus `DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`,
+Stand: 2026-10-22 (Sicherungsregel in 5 und 5a seit 2026-10-13 als ueberholt markiert; Inhalt sonst vom
+2026-08-17). Zusammengefuehrt aus `DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`,
 `DEPLOY_KONSOLE_2026-08-07.md`, `DEPLOY_GESAMTSTAND_2026-08-11.md` und
 `LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md`.
 

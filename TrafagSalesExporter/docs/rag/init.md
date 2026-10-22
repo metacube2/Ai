@@ -1,6 +1,6 @@
 # RAG-Einstieg: Ladereihenfolge und Abschlussregel
 
-Stand: 2026-10-01 (Verweis auf `LEARNINGS.md` ergaenzt; Kopfzeile am 2026-10-13 nachgefuehrt)
+Stand: 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026-10-01 Verweis auf `LEARNINGS.md`)
 
 ## Ladereihenfolge fuer eine neue Sitzung
 

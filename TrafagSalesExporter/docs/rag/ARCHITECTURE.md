@@ -1,6 +1,6 @@
 # RAG Architecture
 
-Stand: 2026-10-19 (Operations-Zeile: Mengen auf dem Produktionstag, DW prod; 2026-10-16 Operations-Zeile: SAP-Mengen, offen fuer alle; Menue-Hervorhebung, Handbuch-Bilder, Stuecklisten-Gehirn; 2026-10-15 Startseite, CPU-Anzeige, Nutzungsmessung; 2026-10-14 Operations-Zeile: Feld-Mapping; 2026-10-06 Benutzerhandbuch, Icon-Pruefung, Pruefbefund-Fixes ergaenzt; Abschnitt „Code-Architektur" vom
+Stand: 2026-10-22 nur Archivverweis; fachlich 2026-10-19 (Operations-Zeile: Mengen auf dem Produktionstag, DW prod; 2026-10-16 Operations-Zeile: SAP-Mengen, offen fuer alle; Menue-Hervorhebung, Handbuch-Bilder, Stuecklisten-Gehirn; 2026-10-15 Startseite, CPU-Anzeige, Nutzungsmessung; 2026-10-14 Operations-Zeile: Feld-Mapping; 2026-10-06 Benutzerhandbuch, Icon-Pruefung, Pruefbefund-Fixes ergaenzt; Abschnitt „Code-Architektur" vom
 2026-09-28; der Kurzstand darunter stammt sonst vom 2026-05-27 und ist fachlich weiter gueltig,
 beschreibt aber nicht die seither dazugekommenen Bereiche Einkauf, Journal, Marktsegmente,
 Serveranalyse und HR)
