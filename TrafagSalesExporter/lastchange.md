@@ -39,6 +39,12 @@ Stand: 2026-10-22
 - Nicht angefasst, als Folgearbeit benannt: die Koordinations- und Abschlussregel steht viermal (`CLAUDE.md`,
   `AGENTS.md`, `router.md` Regel 6, `docs/router/projekt.md`); `CLAUDE.md` war von einer anderen Sitzung geaendert.
 
+## Deploy 2026-10-22 13:38: Einkauf-Feedback und Modul Handbestellwesen
+
+- `77778a5` produktiv nach Ende des Einkauf-Deltas, Wochensicherung, bitgleich, zehn Routen 200, ohne Alarm. Reiter
+  Handbestellwesen unsichtbar angelegt. Dump (`db.sql`, 8 Tabellen) und neueste PHP-Dateien erhalten, Befund im Konzept 6.2
+  (Basic-Auth-Datei heisst `htaccess` ohne Punkt, Schutz nicht aktiv).
+
 ## Einkauf: Feedback Erich/Sandro/Marco umgesetzt, 2026-10-22
 
 - Kontraktpositionen „vermutlich ersetzt“ (46009671 Pos. 10, insgesamt 4 Pos. CHF 1,29 Mio.) nicht mehr im offenen Wert;

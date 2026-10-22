@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-19)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-22 13:38)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,13 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-10-22 13:38, Einkauf-Feedback Erich/Sandro/Marco und Modul Handbestellwesen (`77778a5`), Freigabe Ingo.**
+  Erst nach Ende des Einkauf-Deltas (gestartet 12:29, Vorberechnung danach, WAL 241 MB, nicht mehr wachsend). Wochensicherung
+  `trafag_exporter.db.before-wochensicherung-20261022-132426.bak` (seitenweise, 797 s + 29 s). Release-Worktree auf `77778a5`,
+  ohne Finance_All. Tests: Suite 1279/1279 im Arbeitsbaum am selben Commit (Runner-Text nennt die alte Zahl). DLL
+  `13:38:46`, SHA256 `2B66E17B...BB2F42F`, bitgleich, zehn Routen 200, ohne Alarm. Server-Log: „Handbestellwesen: Datenbank
+  bereit unter C:\inetpub\wwwcust\BiDashboard\hbdaten\handbestellwesen.db“. Nicht im Browser angesehen (Erweiterung nicht
+  verbunden). Reiter Handbestellwesen wird unsichtbar angelegt.
 - **Deploy 2026-10-19 09:54, 09:57 und 10:04, Shopfloor: Mengen auf dem Produktionstag, DW prod (`ded2b65`, `c4dca10`, `c3c45cd`).**
   WAL vorher 745 / 202 / 383 KB, Release-Worktree `1248` / `1249` / `1250` gruen vor jedem Publish, zuletzt `BiDashboard.dll` `10:04:49`,
   SHA256 `826E5E5FA59BA78FC895C12F445EF102B3B3122526BE8CCB997FECA225122E6E`, bitgleich, zehn Routen 200, Alarm nur WAL/SHM und Checkpoint.

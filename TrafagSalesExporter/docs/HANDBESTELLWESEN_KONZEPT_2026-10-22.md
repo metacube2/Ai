@@ -189,9 +189,25 @@ Hintergrunddienste (SAP-Abrufe, Exporte) mitgestartet. Ansehen nach Entscheid In
 Hinweis: Die Auswertung ist namentlich. Benutzer sollten wissen, dass Aufrufe und Bestellungen ausgewertet werden
 (offener Punkt 9).
 
+### 6.2 Dump und neueste PHP-Dateien erhalten (2026-10-22 nachmittags)
+
+Beides liegt ungetrackt in `handbestellwesen/` (`db.sql`, `public.zip` entpackt nach `public_2026-10-22/`).
+
+- **Dump** (`db.sql`, HeidiSQL, MariaDB 12.3.2 unter Windows, Datenbank `trag_bestellwesen`, utf8mb4): alle 8 Tabellen.
+  `archive` 11'044, `delete_archive` 340, `kurzzeichen` 109, `tab_bestellnummer` 392, `tab_kostenstelle` 55,
+  `tab_kreditorenstamm` 4'111, `tab_offenebestellungen` 1'290 (teils seit 2022 offen), `tab_sachkonto` 62.
+  Spalten wie im Code vermutet: Betraege und Datumsangaben als Text, `bestellberechtiung` als Ganzzahl, `kurzzeichen` der
+  Bestellung als „Besteller,Freigeber“.
+- **Neueste PHP-Dateien:** Betrieb lokal unter `C:/webapps/handbestellwesen`, Zugangsdaten jetzt zentral in
+  `db_config.php` (neuer DB-Benutzer, MariaDB auf 127.0.0.1). Sonst nur kleine Aenderungen (z. B. `?? ""` fuer PHP 8).
+  Unveraendert: SQL-Injection, `LIKE`-Nummernvergabe, `E21%`, viermal `mysqli_affected_rows()` ohne Verbindung,
+  alte Passwoerter weiter in `backup/dbBackup.sh` und `autoarchive/deletevertrag.---`. Die Datei `.htaccess` heisst jetzt
+  `htaccess` (ohne Punkt) und verweist auf den alten Hoster-Pfad: **der Basic-Auth-Schutz ist damit nicht aktiv**; ob der
+  Webserver anders schuetzt, ist offen (Ingo).
+
 ## 7. Naechste Schritte
 
-1. Dump von Tobias -> Import-Werkzeug (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
+1. Dump liegt vor (6.2) -> Import-Werkzeug (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
    Zaehlerstaende.
 2. Oberflaeche ansehen: entweder Deploy (Reiter sofort fuer alle sichtbar; Weiterbetrieb ist entschieden) oder lokal mit
    abgeschalteten Hintergrunddiensten. Entscheid Ingo.
