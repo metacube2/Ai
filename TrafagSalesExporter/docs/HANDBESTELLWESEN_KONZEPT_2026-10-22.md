@@ -112,7 +112,8 @@ herum. Die Bestellnummer erscheint nicht mehr als Browser-Alert, sondern als Hin
 2. **Stammdaten aus SAP.** Kreditoren, Kostenstellen, Sachkonten ueber den vorhandenen `SapGatewayService` lesen. Vorher
    pruefen, ob die Nummern der PHP-Anwendung (z. B. dreistellige Kostenstellen wie `875`) zu SAP passen. P76 nur auf
    Auftrag Ingo. Tabellen- und Feldnamen live pruefen, nicht aus Erinnerung.
-3. **Schreiben nach SAP** (Wunsch Ingo). Erst klaeren, *was* in SAP entstehen soll (Bestellanforderung, Bestellung oder
+3. **Schreiben nach SAP** (Wunsch Ingo; **zurueckgestellt, Entscheid Ingo 2026-10-22: vorerst nur in die eigene
+   Datenbank schreiben**, gleiche Technik wie das Dashboard, EF Core/SQLite). Erst klaeren, *was* in SAP entstehen soll (Bestellanforderung, Bestellung oder
    nur eine Buchung) und **ob die Lizenz das erlaubt**: Die Benutzer haben bewusst kein SAP-Konto. Schreibt das Dashboard
    in ihrem Auftrag ueber einen technischen Benutzer, kann SAP das als indirekte Nutzung werten, die lizenzpflichtig ist.
    Vor dem Bau mit dem SAP-Lizenzverantwortlichen klaeren. Technisch braeuchte es einen schreibenden Gateway-Service in
