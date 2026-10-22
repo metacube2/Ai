@@ -228,6 +228,73 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         await db.SaveChangesAsync();
     }
 
+    // ---------- Nutzung (Entscheid 2026-10-22: weiterbetreiben, aber festhalten, wer es wann wie viel braucht) ----------
+
+    public const string AktionAufruf = "Aufruf";
+
+    /// <summary>Haelt fest, dass jemand das Handbestellwesen geoeffnet hat; hoechstens ein Eintrag je Konto und Tag.</summary>
+    public async Task ProtokolliereAufrufAsync(HbBenutzer benutzer)
+    {
+        if (benutzer.Konto.Length == 0)
+            return;
+        var heute = Jetzt.Date;
+        await using var db = await dbFactory.CreateDbContextAsync();
+        if (await db.Protokoll.AnyAsync(x => x.Aktion == AktionAufruf && x.Benutzer == benutzer.Konto && x.Zeit >= heute))
+            return;
+        Protokolliere(db, benutzer, AktionAufruf, string.Empty, benutzer.Kurzzeichen);
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Bestellungen (ohne geloeschte) und Aufrufe im Zeitraum [von, bis), je Person, Kostenstelle und Monat. Nur Admin.</summary>
+    public async Task<HbNutzung> NutzungAsync(HbBenutzer benutzer, DateTime von, DateTime bis)
+    {
+        NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var bestellungen = await db.Bestellungen.AsNoTracking()
+            .Where(x => x.AngelegtAm >= von && x.AngelegtAm < bis && x.Status != HbStatus.Geloescht)
+            .ToListAsync();
+        var aufrufe = await db.Protokoll.AsNoTracking()
+            .Where(x => x.Aktion == AktionAufruf && x.Zeit >= von && x.Zeit < bis)
+            .ToListAsync();
+        var mitarbeiter = await db.Mitarbeiter.AsNoTracking().ToListAsync();
+
+        string NameVon(string kurz) => mitarbeiter.FirstOrDefault(m => m.Kurzzeichen == kurz)?.Name ?? string.Empty;
+        string KurzVonKonto(string konto) => mitarbeiter.FirstOrDefault(m => m.Konto == konto)?.Kurzzeichen ?? konto;
+
+        var aufrufeJeKurz = aufrufe.GroupBy(a => KurzVonKonto(a.Benutzer))
+            .ToDictionary(g => g.Key, g => (Anzahl: g.Count(), Erste: g.Min(x => x.Zeit), Letzte: g.Max(x => x.Zeit)), StringComparer.OrdinalIgnoreCase);
+        var bestellJeKurz = bestellungen.GroupBy(b => b.BestellerKurzzeichen, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+        var jePerson = bestellJeKurz.Keys.Union(aufrufeJeKurz.Keys, StringComparer.OrdinalIgnoreCase)
+            .Select(kurz =>
+            {
+                var b = bestellJeKurz.GetValueOrDefault(kurz) ?? [];
+                aufrufeJeKurz.TryGetValue(kurz, out var a);
+                var zeiten = b.Select(x => x.AngelegtAm).ToList();
+                if (a.Anzahl > 0) { zeiten.Add(a.Erste); zeiten.Add(a.Letzte); }
+                return new HbNutzungZeile(kurz, NameVon(kurz), b.Count, b.Sum(x => x.Bestellwert), a.Anzahl,
+                    zeiten.Count == 0 ? null : zeiten.Min(), zeiten.Count == 0 ? null : zeiten.Max());
+            })
+            .OrderByDescending(x => x.Bestellungen).ThenByDescending(x => x.Aufrufe).ThenBy(x => x.Schluessel)
+            .ToList();
+
+        var jeKost = bestellungen.GroupBy(b => b.Kostenstelle)
+            .Select(g => new HbNutzungZeile(g.Key, string.Empty, g.Count(), g.Sum(x => x.Bestellwert), 0,
+                g.Min(x => x.AngelegtAm), g.Max(x => x.AngelegtAm)))
+            .OrderByDescending(x => x.Summe)
+            .ToList();
+
+        var jeMonat = bestellungen.GroupBy(b => b.AngelegtAm.ToString("yyyy-MM", CultureInfo.InvariantCulture))
+            .Select(g => new HbNutzungMonat(g.Key, g.Count(), g.Sum(x => x.Bestellwert),
+                g.Select(x => x.BestellerKurzzeichen).Distinct(StringComparer.OrdinalIgnoreCase).Count()))
+            .OrderBy(x => x.Monat)
+            .ToList();
+
+        return new HbNutzung(von, bis, bestellungen.Count, bestellungen.Sum(x => x.Bestellwert),
+            jePerson.Count(x => x.Bestellungen > 0), jePerson, jeKost, jeMonat);
+    }
+
     // ---------- Stammdaten (nur Admin) ----------
 
     public async Task SpeichereKreditorAsync(HbBenutzer benutzer, HbKreditor k, bool neu)

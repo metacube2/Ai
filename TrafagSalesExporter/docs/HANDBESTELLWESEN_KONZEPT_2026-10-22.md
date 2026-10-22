@@ -1,9 +1,9 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
 Stand: 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
-Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** (Abschnitt 6). **Grundsatzentscheid offen:** In der
-Einkaufssitzung vom 22.10. stand Abschalten statt Ablösen im Raum; Inbetriebnahme erst nach diesem Entscheid
-(`docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 3). Altdaten-Import wartet auf den
+Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** (Abschnitt 6). **Entscheid 22.10. (nach der Einkaufssitzung,
+mitgeteilt von Ingo): Das Handbestellwesen lebt weiter, aber die Nutzung wird festgehalten** (wer, wann, wie viel),
+Abschnitt 6.1. Altdaten-Import wartet auf den
 MySQL-Dump (Tobias).
 
 ## 1. Auftrag und Entscheide
@@ -134,7 +134,8 @@ herum. Die Bestellnummer erscheint nicht mehr als Browser-Alert, sondern als Hin
 | 5 | Datenbankpasswoerter nach der Abloesung aendern; pruefen, ob beim frueheren externen Hoster noch Daten liegen | Ingo |
 | 6 | Was soll in SAP entstehen, und ist das lizenzrechtlich fuer Benutzer ohne SAP-Konto zulaessig? | Ingo / SAP-Lizenz |
 | 7 | AD-Gruppen fuer Besteller, Freigeber, Wareneingang, Admin | Ingo / IT |
-| 8 | **Abschalten oder migriertes Modul in Betrieb nehmen?** Wer entscheidet? (Sitzung 22.10.; Anlass Vorfall 21.10.) | Geschaeftsleitung / Einkauf |
+| 8 | ~~Abschalten oder weiterbetreiben?~~ **Entschieden 22.10.: weiterbetreiben, Nutzung festhalten** | erledigt |
+| 9 | Benutzer informieren, dass Aufrufe und Bestellungen namentlich ausgewertet werden (Transparenz) | Ingo / Owner |
 
 ## 6. Umsetzung Phase 1 (2026-10-22, nicht deployed)
 
@@ -173,11 +174,26 @@ Regeln, wie umgesetzt (zur Bestaetigung durch den fachlichen Owner):
 Tests: 9/9 Handbestellwesen, ganze Suite 1274/1274 gruen. **Nicht im Browser angesehen:** ein lokaler Start haette die
 Hintergrunddienste (SAP-Abrufe, Exporte) mitgestartet. Ansehen nach Entscheid Ingo, siehe Abschnitt 7.
 
+### 6.1 Nutzung festhalten (Entscheid 2026-10-22)
+
+„Es lebt weiter, aber loggen, wer es braucht, wann, wie viel.“ Umgesetzt:
+
+- **Aufrufe:** Wer das Handbestellwesen oeffnet, wird einmal je Konto und Tag im Protokoll festgehalten (Aktion
+  `Aufruf`). So sieht man auch, wer nur schaut und nicht bestellt.
+- **Bestellungen** tragen Besteller, Zeit und Betrag ohnehin; jede Aktion steht im Protokoll.
+- **Kachel „Nutzung“** (nur Admin), Zeitraum waehlbar, Standard laufendes Jahr: Summe Bestellungen und CHF, Anzahl
+  Personen; Tabellen je Person (Bestellungen, Summe, Aufrufe, erste/letzte Nutzung), je Kostenstelle, je Monat.
+  Geloeschte Bestellungen zaehlen nicht.
+- Test `Nutzung_Je_Person_Kostenstelle_Monat_Ohne_Geloeschte_Mit_Aufrufen`; Suite 1275/1275.
+
+Hinweis: Die Auswertung ist namentlich. Benutzer sollten wissen, dass Aufrufe und Bestellungen ausgewertet werden
+(offener Punkt 9).
+
 ## 7. Naechste Schritte
 
 1. Dump von Tobias -> Import-Werkzeug (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
    Zaehlerstaende.
-2. Oberflaeche ansehen: entweder Deploy (Reiter sofort fuer alle sichtbar, vorher Freigabe Fachabteilung) oder lokal mit
+2. Oberflaeche ansehen: entweder Deploy (Reiter sofort fuer alle sichtbar; Weiterbetrieb ist entschieden) oder lokal mit
    abgeschalteten Hintergrunddiensten. Entscheid Ingo.
 3. Fachlichen Owner die Regeln aus Abschnitt 6 bestaetigen lassen.
 4. Zugriff fuer Mitarbeitende ohne Dashboard-Zugang (`Security:AccessGroups`), AD-Gruppe mit IT klaeren.

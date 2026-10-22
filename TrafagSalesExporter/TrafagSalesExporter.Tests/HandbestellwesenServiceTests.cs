@@ -151,6 +151,38 @@ public sealed class HandbestellwesenServiceTests : IDisposable
         Assert.Empty(await _hb.BestellungenAsync(archiv: false, suche: "gibtsnicht"));
     }
 
+    // Entscheid 2026-10-22: weiterbetreiben, aber festhalten, wer es wann wie viel braucht.
+    [Fact]
+    public async Task Nutzung_Je_Person_Kostenstelle_Monat_Ohne_Geloeschte_Mit_Aufrufen()
+    {
+        var abc = await Wer("abc");
+        await _hb.AnlegenAsync(abc, Eingabe("875", 100m));
+        await _hb.AnlegenAsync(abc, Eingabe("87", 50.5m));
+        var weg = await _hb.AnlegenAsync(abc, Eingabe("875", 999m, "chf"));
+        await _hb.LoeschenAsync(abc, weg.Id);
+        await _hb.AnlegenAsync(await Wer("chf"), Eingabe("875", 2000m));
+
+        await _hb.ProtokolliereAufrufAsync(abc);
+        await _hb.ProtokolliereAufrufAsync(abc); // gleicher Tag zaehlt einmal
+        await _hb.ProtokolliereAufrufAsync(await Wer("kln")); // nur geschaut, nichts bestellt
+
+        var n = await _hb.NutzungAsync(await Wer("admin"), new DateTime(2026, 1, 1), new DateTime(2027, 1, 1));
+
+        Assert.Equal(3, n.Bestellungen);
+        Assert.Equal(2150.5m, n.Summe);
+        Assert.Equal(2, n.Personen);
+        var p = n.JePerson.Single(x => x.Schluessel == "abc");
+        Assert.Equal((2, 150.5m, 1), (p.Bestellungen, p.Summe, p.Aufrufe));
+        var k = n.JePerson.Single(x => x.Schluessel == "kln");
+        Assert.Equal((0, 1), (k.Bestellungen, k.Aufrufe));
+        Assert.Equal("875", n.JeKostenstelle[0].Schluessel);
+        Assert.Equal(2100m, n.JeKostenstelle[0].Summe);
+        var monat = Assert.Single(n.JeMonat);
+        Assert.Equal(("2026-10", 3, 2), (monat.Monat, monat.Bestellungen, monat.Personen));
+
+        await Assert.ThrowsAsync<HbException>(() => _hb.NutzungAsync(abc, new DateTime(2026, 1, 1), new DateTime(2027, 1, 1)));
+    }
+
     [Fact]
     public void Menue_Enthaelt_Reiter_Handbestellwesen()
     {

@@ -2,6 +2,12 @@
 
 Stand: 2026-10-22
 
+## Einkauf: Handbestellwesen lebt weiter, Nutzung wird festgehalten, 2026-10-22
+
+- Entscheid nach der Sitzung (Ingo): weiterbetreiben, aber festhalten, wer es wann wie viel braucht. Modul ergaenzt:
+  Aufruf je Konto und Tag im Protokoll, Kachel „Nutzung“ (nur Admin) mit Auswertung je Person, Kostenstelle und Monat.
+  Test neu, Suite 1275/1275. Nicht deployed.
+
 ## Einkauf: Sitzung 2026-10-22
 
 - Ergebnisse festgehalten (`docs/EINKAUF_SITZUNG_2026-10-22.md`): Einkaufs-Dashboard bis 28.10. stabilisieren, keine

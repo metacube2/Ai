@@ -22,6 +22,10 @@
         <a class="hb-klein" href="handbestellwesen/mitarbeiter">Mitarbeiterverzeichnis</a>
         <a class="hb-klein" href="handbestellwesen/kostenstellen">Kostenstelle</a>
         <a class="hb-klein" href="handbestellwesen/sachkonten">Sachkonten</a>
+        @if (_benutzer?.IstAdmin == true)
+        {
+            <a class="hb-klein hb-k-nutzung" href="handbestellwesen/nutzung">Nutzung</a>
+        }
         @if (_benutzer is not null)
         {
             <div class="hb-wer">
@@ -195,6 +199,50 @@
                     </table>
                     break;
 
+                case "nutzung":
+                    <h1>Nutzung</h1>
+                    @if (!_benutzer.IstAdmin)
+                    {
+                        <p>Die Nutzungsauswertung sehen nur Admins.</p>
+                    }
+                    else
+                    {
+                        <div class="hb-filter">
+                            <label>von <input type="date" class="hb-such hb-datum" @bind="_nutzVon" /></label>
+                            <label>bis <input type="date" class="hb-such hb-datum" @bind="_nutzBis" /></label>
+                            <button class="hb-knopf-grau" @onclick="NutzungLadenAsync">Anzeigen</button>
+                        </div>
+                        @if (_nutzung is { } n)
+                        {
+                            <p><b>@n.Bestellungen</b> Bestellungen, <b>CHF @Chf(n.Summe)</b>, von <b>@n.Personen</b> Personen (ohne gelöschte; Aufrufe = Tage, an denen jemand die Seite geöffnet hat)</p>
+                            <h3>Je Person</h3>
+                            <table class="hb-tab">
+                                <tr><th>Kurzzeichen</th><th>Name</th><th>Bestellungen</th><th>Summe CHF</th><th>Aufrufe</th><th>erste Nutzung</th><th>letzte Nutzung</th></tr>
+                                @foreach (var z in n.JePerson)
+                                {
+                                    <tr><td>@z.Schluessel</td><td>@z.Name</td><td class="hb-zahl">@z.Bestellungen</td><td class="hb-zahl">@Chf(z.Summe)</td><td class="hb-zahl">@z.Aufrufe</td><td>@Datum(z.Erste)</td><td>@Datum(z.Letzte)</td></tr>
+                                }
+                            </table>
+                            <h3>Je Kostenstelle</h3>
+                            <table class="hb-tab">
+                                <tr><th>Kostenstelle</th><th>Bezeichnung</th><th>Bestellungen</th><th>Summe CHF</th><th>letzte Bestellung</th></tr>
+                                @foreach (var z in n.JeKostenstelle)
+                                {
+                                    <tr><td>@z.Schluessel</td><td>@_kostenstellen.FirstOrDefault(k => k.Nr == z.Schluessel)?.Bezeichnung</td><td class="hb-zahl">@z.Bestellungen</td><td class="hb-zahl">@Chf(z.Summe)</td><td>@Datum(z.Letzte)</td></tr>
+                                }
+                            </table>
+                            <h3>Je Monat</h3>
+                            <table class="hb-tab">
+                                <tr><th>Monat</th><th>Bestellungen</th><th>Summe CHF</th><th>Personen</th></tr>
+                                @foreach (var m in n.JeMonat)
+                                {
+                                    <tr><td>@m.Monat</td><td class="hb-zahl">@m.Bestellungen</td><td class="hb-zahl">@Chf(m.Summe)</td><td class="hb-zahl">@m.Personen</td></tr>
+                                }
+                            </table>
+                        }
+                    }
+                    break;
+
                 default:
                     <h1>Bestellnummer lösen</h1>
                     @if (_neueNummer is not null)
@@ -285,6 +333,12 @@
     private bool _gefiltert;
     private bool _filterArchiv;
 
+    // Nutzung: Standard laufendes Jahr bis heute
+    private bool _aufrufErfasst;
+    private DateTime _nutzVon = new(DateTime.Today.Year, 1, 1);
+    private DateTime _nutzBis = DateTime.Today;
+    private HbNutzung? _nutzung;
+
     // Stammdaten
     private HbKreditor _kred = new();
     private bool _kredNeu = true;
@@ -305,7 +359,28 @@
             return;
         var state = await AuthState.GetAuthenticationStateAsync();
         _benutzer = await Hb.BenutzerAsync(state.User.Identity?.Name);
+        if (!_aufrufErfasst)
+        {
+            // Wer das Handbestellwesen braucht: ein Eintrag je Konto und Tag (Entscheid 2026-10-22).
+            await Hb.ProtokolliereAufrufAsync(_benutzer);
+            _aufrufErfasst = true;
+        }
         await LadenAsync();
+        if (_bereich == "nutzung" && _benutzer.IstAdmin)
+            await NutzungLadenAsync();
+    }
+
+    private async Task NutzungLadenAsync()
+    {
+        _fehler = null;
+        try
+        {
+            _nutzung = await Hb.NutzungAsync(_benutzer!, _nutzVon.Date, _nutzBis.Date.AddDays(1));
+        }
+        catch (HbException ex)
+        {
+            _fehler = ex.Message;
+        }
     }
 
     private async Task LadenAsync()

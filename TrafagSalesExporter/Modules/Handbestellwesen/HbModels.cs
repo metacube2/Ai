@@ -139,5 +139,14 @@ public sealed class HbBestellEingabe
     public string Sachkonto { get; set; } = string.Empty;
 }
 
+/// <summary>Nutzung je Person oder Kostenstelle im Zeitraum (Entscheid 2026-10-22: weiterbetreiben, aber Nutzung festhalten).</summary>
+public sealed record HbNutzungZeile(string Schluessel, string Name, int Bestellungen, decimal Summe, int Aufrufe, DateTime? Erste, DateTime? Letzte);
+
+public sealed record HbNutzungMonat(string Monat, int Bestellungen, decimal Summe, int Personen);
+
+public sealed record HbNutzung(
+    DateTime Von, DateTime Bis, int Bestellungen, decimal Summe, int Personen,
+    List<HbNutzungZeile> JePerson, List<HbNutzungZeile> JeKostenstelle, List<HbNutzungMonat> JeMonat);
+
 /// <summary>Fachlicher Fehler mit Meldung fuer die Oberflaeche.</summary>
 public sealed class HbException(string message) : Exception(message);

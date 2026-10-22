@@ -52,6 +52,9 @@ Idee: **Bewertung selbst in SAP (Fiori), alles rundherum im Dashboard.**
 - **Offen: wer entscheidet ueber Abschalten oder Weiterbetrieb.** Ingo: kann migrieren, wartet aber auf den
   Abschaltentscheid; die Entscheidung muss auf passender Ebene gefaellt und dann durchgesetzt werden.
 
+**Nachtrag 22.10. (Ingo, nach der Sitzung): Das Handbestellwesen lebt weiter; die Nutzung wird festgehalten (wer, wann,
+wie viel).** Umgesetzt im Modul, `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` Abschnitt 6.1.
+
 ## 4. Aufgaben
 
 | Nr | Aufgabe | Wer | Wochen_Todo |
@@ -61,4 +64,4 @@ Idee: **Bewertung selbst in SAP (Fiori), alles rundherum im Dashboard.**
 | 3 | Word-Dokument und Dashboard-Entwurf Lieferantenbewertung schicken | Einkauf (Armin/Marco) | 122 |
 | 4 | Datenquellen (SAP-Tabellen/Transaktionen) fuer die Lieferantenbewertung nennen | Einkauf | 122 |
 | 5 | Fiori-Parametrisierung der neuen Lieferantenbewertung (Voraussetzung) | Einkauf mit NTT | 122 |
-| 6 | Entscheid Handbestellwesen: abschalten oder migriertes Modul in Betrieb nehmen; Entscheidungstraeger bestimmen | Geschaeftsleitung/Einkauf | 120 |
+| 6 | ~~Entscheid Handbestellwesen~~ entschieden 22.10.: weiterbetreiben, Nutzung festhalten | erledigt | 120 |

@@ -51,6 +51,8 @@
     font-size: 14px;
     color: #000 !important;
 }
+.hb-k-nutzung { background-color: #bdbdbd; }
+.hb-datum { width: 170px; }
 .hb-k1 { background-color: #FE6C30; }
 .hb-k2 { background-color: #1B5FAA; }
 .hb-k3 { background-color: #01A95C; }
