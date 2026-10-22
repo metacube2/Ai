@@ -390,4 +390,4 @@ SAP-Abruf `HrKpiSet` liefert den Mitarbeiterkreis. T503T (T76, gelesen 2026-10-2
   SAP `PA2001`, und damit fuer die 61-Tage-Langzeitgrenze.
 - Rexx „Leitung j/n“ zaehlt nicht mehr als Kader (bis 22.10.: 45 Personen; nach Kreis 10 rund 19 der Rexx-Liste).
 - Tests `Kader_Mitarbeiterkreis_10_Hat_8_2_Stunden`, `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_2_Stunden`;
-  Suite 1288/1288.
+  Suite 1288/1288. Produktiv seit 2026-10-22 15:48.

@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-22 15:22)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-22 15:48)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,8 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-10-22 15:48, HR-Cockpit Kader = Mitarbeiterkreis 10, 8,2 h (`ede56b6`).** Suite 1288/1288, DLL `15:48:48` bitgleich,
+  zehn Routen 200, Alarm nur WAL/SHM-Checkpoint beim Herunterfahren.
 - **Deploy 2026-10-22 15:22, Handbestellwesen Admin `gun` (`1f04d02`, nur appsettings).** DLL `15:22:54` bitgleich, zehn Routen 200,
   Alarm nur WAL/SHM-Checkpoint beim Herunterfahren; Server-`appsettings.json` zeigt `"AdminUsers": [ "koi", "gun" ]`.
 - **Deploy 2026-10-22 14:52, Handbestellwesen moderne Seite `/bestellwesen` (`d7478cd`).** Suite 1286/1286, DLL `14:52:06`,
