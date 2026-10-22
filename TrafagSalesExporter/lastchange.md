@@ -2,6 +2,13 @@
 
 Stand: 2026-10-22
 
+## Einkauf: Sitzung 2026-10-22
+
+- Ergebnisse festgehalten (`docs/EINKAUF_SITZUNG_2026-10-22.md`): Einkaufs-Dashboard bis 28.10. stabilisieren, keine
+  neuen Funktionen; Feedbackliste Erich/Sandro/Marco kommt; neuer Wunsch Lieferantenbewertung/-entwicklung (Pilot
+  danach, Datenquellen offen); Handbestellwesen: Abschalten statt Abloesen steht im Raum, Entscheid offen.
+  Wochen_Todo 120 angepasst, 121 und 122 neu.
+
 ## Einkauf: Handbestellwesen, Konzept zur Abloesung der PHP-Anwendung, 2026-10-22
 
 - **Phase 1 programmiert, nicht deployed:** neuer Reiter `/handbestellwesen` (Kacheln und Farben wie im PHP), Modul

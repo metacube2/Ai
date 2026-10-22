@@ -1,7 +1,9 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
 Stand: 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
-Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** (Abschnitt 6). Altdaten-Import wartet auf den
+Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** (Abschnitt 6). **Grundsatzentscheid offen:** In der
+Einkaufssitzung vom 22.10. stand Abschalten statt Ablösen im Raum; Inbetriebnahme erst nach diesem Entscheid
+(`docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 3). Altdaten-Import wartet auf den
 MySQL-Dump (Tobias).
 
 ## 1. Auftrag und Entscheide
@@ -132,6 +134,7 @@ herum. Die Bestellnummer erscheint nicht mehr als Browser-Alert, sondern als Hin
 | 5 | Datenbankpasswoerter nach der Abloesung aendern; pruefen, ob beim frueheren externen Hoster noch Daten liegen | Ingo |
 | 6 | Was soll in SAP entstehen, und ist das lizenzrechtlich fuer Benutzer ohne SAP-Konto zulaessig? | Ingo / SAP-Lizenz |
 | 7 | AD-Gruppen fuer Besteller, Freigeber, Wareneingang, Admin | Ingo / IT |
+| 8 | **Abschalten oder migriertes Modul in Betrieb nehmen?** Wer entscheidet? (Sitzung 22.10.; Anlass Vorfall 21.10.) | Geschaeftsleitung / Einkauf |
 
 ## 6. Umsetzung Phase 1 (2026-10-22, nicht deployed)
 

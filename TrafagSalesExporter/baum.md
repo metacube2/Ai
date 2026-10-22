@@ -214,6 +214,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `wwwroot/handbuch/bilder/` | Bilder des Handbuchs (SVG fuer den Reiter, PNG fuer Word) |
 | `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Registrierung, Seite) |
 | `wwwroot/css/handbestellwesen.css` | Optik Handbestellwesen wie die PHP-Anwendung |
+| `docs/EINKAUF_SITZUNG_2026-10-22.md` | Ergebnisse Einkaufssitzung 22.10.: Dashboard-Zwischenstand, Feedbackliste, Lieferantenbewertung, Handbestellwesen |
 | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` | Handbestellwesen: Abloesung PHP-Anwendung durch Dashboard-Modul, Befund, Zielbild, GUI wie PHP, Phasen, offene Punkte |
 | `docs/SHOPFLOOR_2026-10-07.md` | Reiter Operations (Shopfloor): PPA-Shopfloor als C#-Port im Cockpit, Endpunkte, Zugriffsregel (Freigabe Leitung Produktion), Datenbank und Sicherung, Schnittstelle, Feld-Mapping (Abschnitt 12), offene Schritte |
 | `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
