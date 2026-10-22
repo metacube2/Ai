@@ -1,6 +1,6 @@
 ﻿# Whisper Deployment Handoff
 
-Stand: 2026-10-22 (Whisper Studio: neue WPF-Oberflaeche, Benennung Datum_Uhrzeit_Titel, Word/SRT/VTT, Aufnahme mit Systemton, Editor, Verlauf, lokale KI)
+Stand: 2026-10-22 (alte WinForms-GUI entfernt; Whisper Studio: neue WPF-Oberflaeche, Benennung Datum_Uhrzeit_Titel, Word/SRT/VTT, Aufnahme mit Systemton, Editor, Verlauf, lokale KI)
 Pfad: `C:\Users\koi\source\repos\Ai\TrafagSalesExporter\whisper`
 Ziel: Lokale Teams-Audioaufnahme und Transkription in `.txt`, ohne Adminrechte und komplett in diesem Unterordner.
 
@@ -30,7 +30,7 @@ Fertig eingerichtet und getestet:
 - Mikrofon-Geraete koennen gelistet werden.
 - Ausgabe in `.txt` funktioniert.
 - Alles bleibt im Ordner `whisper`.
-- Whisper Studio (`gui\WhisperStudio`) als Hauptoberflaeche, siehe Abschnitt "Whisper Studio". Alte Desktop-GUI (`gui\WhisperGui`) weiterhin vorhanden, inkl. Batch-Warteschlange (mehrere Dateien reinziehen, werden nacheinander abgearbeitet, je Datei eine eigene `.txt`), siehe Abschnitt "Desktop-GUI" unten.
+- Whisper Studio (`gui\WhisperStudio`) als Hauptoberflaeche, siehe Abschnitt "Whisper Studio". Die alte WinForms-GUI (`gui\WhisperGui`) wurde am 2026-10-22 entfernt (Wunsch Ingo); ihre Quellen liegen in der Git-Historie bis Commit `ae599c2`.
 
 Aktuelle Groesse des Ordners nach Setup: ca. 5 GB (`python` ~0.3 GB, `cache\models` ~4.6 GB mit tiny/medium/large-v3).
 
@@ -54,11 +54,11 @@ Der ganze `whisper`-Ordner kann per Datei-Kopie (USB-Stick, Netzlaufwerk, OneDri
 - `transcribe.ps1`/`record_mic.ps1` und die Python-Skripte ermitteln ihren Wurzelordner ueber `$PSScriptRoot` bzw. `Path(__file__)`, also relativ. Kein Pfad ist hart codiert.
 - `cache\models` (heruntergeladene Whisper-Modelle) reist mit, es muss nichts neu heruntergeladen werden, solange die Kopie vollstaendig war.
 - Ausnahme: `python\Scripts\pip.exe`, `huggingface-cli.exe` und aehnliche Launcher-EXEs von pip haben den Installationspfad fest eingebaut und funktionieren nach dem Verschieben nicht mehr direkt. Betrifft nicht die normale Nutzung (Transkription/Aufnahme laeuft ueber `python.exe script.py`), nur falls jemand `pip`/`huggingface-cli` direkt aufrufen will. Workaround: `python.exe -m pip ...` statt `pip.exe ...`.
-- Die GUI (`gui\WhisperGui\bin\...\WhisperGui.exe`, Debug/Release-Build) ist standardmaessig **framework-abhaengig** und braucht auf dem Ziel-PC die .NET 9 Desktop Runtime. Fuer einen PC ohne .NET-Installation stattdessen den self-contained Single-File-Build aus `gui\WhisperGui\publish\WhisperGui.exe` mitnehmen (Erzeugung siehe unten) - der laeuft ohne jede Vorinstallation.
+- Das Studio (`gui\WhisperStudio\bin\Release\net9.0-windows\WhisperStudio.exe`) ist standardmaessig **framework-abhaengig** und braucht auf dem Ziel-PC die .NET 9 Desktop Runtime. Fuer einen PC ohne .NET-Installation den self-contained Build erzeugen (Befehl im Abschnitt "Whisper Studio") und `publish\WhisperStudio.exe` mitnehmen. Die lokale KI in `llm\` reist mit.
 - Zielrechner muss Windows x64 sein; sehr alte CPUs ohne AVX2 koennten bei `ctranslate2` Probleme machen (in der Praxis bei Firmen-Laptops kein Thema).
 - Keine Adminrechte fuer die Nutzung noetig, wie bisher.
 
-Kurz: **Ja, alles ist nach dem Kopieren direkt lauffaehig** - mit der einzigen Ausnahme, dass fuer die GUI entweder .NET 9 auf dem Ziel-PC vorhanden sein muss oder der self-contained Build (`publish\WhisperGui.exe`) mitgenommen wird.
+Kurz: **Ja, alles ist nach dem Kopieren direkt lauffaehig** - mit der einzigen Ausnahme, dass fuer die GUI entweder .NET 9 auf dem Ziel-PC vorhanden sein muss oder der self-contained Build (`publish\WhisperStudio.exe`) mitgenommen wird.
 
 ## Ordnerstruktur
 
@@ -76,7 +76,6 @@ whisper\
   gui\
     WhisperStudio\          WPF-Hauptoberflaeche (seit 2026-10-22)
     WhisperStudio.Tests\    xUnit-Tests zum Studio
-    WhisperGui\              alte C#/WinForms-GUI (Rueckfallebene)
   llm\                     lokale KI: bin\llama-server.exe, models\*.gguf (nicht in Git)
   input\                   Aufnahme-/Eingabedateien
   output\                  TXT-Ausgaben
@@ -84,7 +83,8 @@ whisper\
     models\                faster-whisper Modellcache
     pip\                   Pip-Downloadcache
     hf\                    Hugging-Face Cache
-    gui_settings.json      zuletzt genutzte GUI-Einstellungen (Ordner, Sprache, Modell)
+    studio_settings.json   Einstellungen des Studios (Sprache, Modell, Exporte, Mikrofon, KI-Endpunkt)
+    gui_settings.json      Einstellungen der entfernten alten GUI (unbenutzt, darf geloescht werden)
   downloads\               heruntergeladene Installer/Bootstrap-Dateien
   temp\                    lokales Temp-Verzeichnis
 ```
@@ -224,7 +224,7 @@ Empfohlene Tests nach Aenderungen:
 
 ## Whisper Studio (WPF, ab 2026-10-22) - Hauptoberflaeche
 
-`gui\WhisperStudio` ersetzt die WinForms-GUI als Bedienoberflaeche. `gui\WhisperGui` bleibt als Rueckfallebene erhalten und funktioniert weiter.
+`gui\WhisperStudio` ersetzt die WinForms-GUI als Bedienoberflaeche. Die alte GUI wurde am selben Tag entfernt (Abschnitt unten).
 
 - Technik: .NET 9 WPF mit `ThemeMode="System"` (Fluent/Windows-11-Optik, folgt Hell/Dunkel; in den Einstellungen umstellbar). Pakete: `NAudio.Wasapi`/`NAudio.Core` 2.2.1 (Aufnahme), `DocumentFormat.OpenXml` 3.1.1 (Word). Tests: `gui\WhisperStudio.Tests` (xUnit, 31 Tests: Benennung, Fortsetzen ueber die `.json`-Quelle, SRT/VTT, DOCX, Aufteilen fuer die KI, Codeblock-Entfernung, Fortschrittszeile, Mischen der Aufnahmespuren. Drei davon pruefen nur, wenn eine Umgebungsvariable gesetzt ist: `WS_LLM_URL=http://127.0.0.1:8088/v1` (echtes Protokoll, 25 s), `WS_WHISPER_MEDIA=<kurze Sprachdatei>` (Whisper tiny + Export, 25 s), `WS_RECORD=1` (3 s echte Aufnahme Mikrofon + Systemton). Am 2026-10-22 alle gruen.).
 - Bereiche (linke Navigation): Transkribieren, Aufnahme, Editor & KI, Verlauf, Einstellungen.
@@ -252,11 +252,11 @@ Tests: `dotnet test whisper\gui\WhisperStudio.Tests`.
 
 Bekannte Grenzen: Die KI auf CPU braucht fuer ein einstuendiges Meeting einige Minuten; bei sehr langen Meetings kann die zweite Protokollstufe das 8k-Kontextfenster ueberschreiten. Die Studio-Oberflaeche wurde per Bildschirmfoto geprueft, die Aufnahme per Test mit echtem Mikrofon und Systemton. Ein Bedienlauf mit Maus (Drag&Drop, Tabelle bearbeiten, KI-Knoepfe) steht noch aus.
 
-## Alte Desktop-GUI (C#/WinForms, Rueckfallebene)
+## Alte Desktop-GUI (C#/WinForms) - am 2026-10-22 entfernt, nur noch Historie
 
-Unter `gui\WhisperGui` liegt eine kleine .NET-9-WinForms-Anwendung als Bedienoberflaeche fuer `transcribe.ps1`.
+Der Ordner `gui\WhisperGui` wurde am 2026-10-22 auf Wunsch von Ingo geloescht, nachdem das Studio uebernommen war; die Desktop-Verknuepfung "Whisper" zeigt auf das Studio. Quellen in der Git-Historie bis Commit `ae599c2`, Zip-Sicherung in `whisper\backup\`. Die folgende Beschreibung bleibt als Entwurfsbegruendung stehen, weil das Studio dieselben Regeln uebernommen hat (Fortsetzen ueber den natuerlichen Namen vor dem Reservieren, Kollisionsschutz, Exit-Codes, `Written:`, Fortschrittsprotokoll). Alles, was dort ueber `scripts\transcribe.py` steht, gilt unveraendert.
 
-Funktionen:
+Funktionen (Stand bei der Entfernung):
 
 - Mehrere Dateien auswaehlen (Dialog mit Mehrfachauswahl oder Drag&Drop mehrerer Dateien gleichzeitig) fuer Audio/Video. Sie landen in einer Warteschlange (`ListBox`) mit Status je Datei (wartend/laeuft/fertig/Fehler/abgebrochen).
 - "Ordner hinzufuegen..." (oder einen Ordner ins Fenster ziehen) durchsucht den Ordner rekursiv (`Directory.EnumerateFiles ... SearchOption.AllDirectories`) nach Mediendateien (Endungen in `MediaExtensions`: wav/mp3/m4a/mp4/mov/aac/flac/wma/ogg/opus/mkv/webm/avi/wmv/3gp/amr) und legt alle gefundenen Dateien in die Warteschlange. Pro Datei wird der relative Unterordner zum gewaehlten Wurzelordner (`QueueItem.RelativeDir`) gemerkt.
@@ -274,25 +274,6 @@ Funktionen:
 - Nach jeder erfolgreich transkribierten Datei wird deren `.txt` automatisch geladen und im "Ergebnis"-Tab angezeigt (jeweils die zuletzt fertiggestellte); ein Doppelklick auf eine fertige Datei in der Warteschlange oeffnet ihre Textdatei direkt im Standardeditor.
 - "Ausgabeordner oeffnen" und "Ergebnis im Editor oeffnen" fuer den Windows-Explorer/Standardeditor.
 - Sprache/Modell/Zeitstempel und der zuletzt genutzte Ordner (fuer den Dateidialog) werden in `cache\gui_settings.json` gemerkt und beim naechsten Start vorbelegt. Die Warteschlange selbst wird nicht gespeichert (startet bei jedem GUI-Start leer).
-
-Bauen und starten:
-
-```powershell
-cd whisper\gui\WhisperGui
-dotnet build
-.\bin\Debug\net9.0-windows\WhisperGui.exe
-```
-
-Die GUI ermittelt ihren `whisper`-Wurzelordner automatisch, indem sie von ihrem Startverzeichnis aus nach oben nach `transcribe.ps1` sucht. Sie muss also innerhalb von `whisper\...` bleiben, kann aber beliebig tief liegen (z. B. auch in einem `publish`-Ordner).
-
-### Self-contained Build (kein .NET auf Ziel-PC noetig)
-
-```powershell
-cd whisper\gui\WhisperGui
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
-```
-
-Erzeugt `gui\WhisperGui\publish\WhisperGui.exe` (~110 MB, enthaelt die .NET-Runtime). Dieser Build laeuft auf jedem Windows-x64-PC ohne Vorinstallation und eignet sich fuer den Umzug auf einen anderen Rechner (siehe Abschnitt "Umzug auf einen anderen PC"). `publish\` ist in `.gitignore` ausgeschlossen und muss nach Codeaenderungen neu erzeugt werden.
 
 ### Ideen fuer die GUI
 

@@ -13,6 +13,8 @@ Stand: 2026-10-22
 - Entwickelt in der Kopie `.tmp_tools/whisper_kopie`, weil im Original ein Lauf aktiv war; uebernommen per Skript mit
   Zip-Sicherung `whisper/backup/whisper_quellen_20261022_130852.zip`. Seither sind die Quellen von `whisper/` in Git.
 - Nicht geprueft: Bedienung mit der Maus (Drag&Drop, Tabelle bearbeiten, KI-Knoepfe). Kein Deploy, Werkzeug laeuft lokal.
+- Nachtrag: Alte WinForms-GUI `whisper/gui/WhisperGui` auf Wunsch Ingo entfernt (Quellen bis `ae599c2` in Git), die
+  Desktop-Verknuepfung „Whisper“ startet jetzt das Studio.
 - Details: `whisper/HANDOFF.md`.
 
 ## Doku: Markdown-Aufraeumen, Archiv `docs/archiv/`, 2026-10-22

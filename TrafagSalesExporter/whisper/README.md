@@ -63,12 +63,4 @@ dotnet build -c Release
 .\bin\Release\net9.0-windows\WhisperStudio.exe
 ```
 
-## Old GUI
-
-The older WinForms app lives in `gui\WhisperGui` (file picker, start button, live log, result view). See ANLEITUNG.md/HANDOFF.md for details. Build and run:
-
-```powershell
-cd whisper\gui\WhisperGui
-dotnet build
-.\bin\Debug\net9.0-windows\WhisperGui.exe
-```
+The older WinForms app (`gui\WhisperGui`) was removed on 2026-10-22; its sources remain in git history up to commit `ae599c2`.

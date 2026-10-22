@@ -154,29 +154,13 @@ Starten: `whisper\gui\WhisperStudio\bin\Release\net9.0-windows\WhisperStudio.exe
 - **Editor & KI:** Transkript korrigieren und speichern. "Protokoll erstellen", "In Hochdeutsch glätten" und "Übersetzen nach" laufen mit einer lokalen KI auf diesem Laptop, es geht nichts ins Internet. Das dauert auf dem Laptop einige Minuten. Ergebnis prüfen, die KI kann sich irren, dann "Ergebnis speichern".
 - **Verlauf:** alle Transkripte, neueste zuerst, mit Suche. Doppelklick öffnet im Editor.
 
-## Alte grafische Oberfläche (GUI)
+## Gut zu wissen
 
-Statt der PowerShell-Befehle kann auch die kleine Desktop-App genutzt werden:
-
-```powershell
-cd whisper\gui\WhisperGui
-dotnet build
-.\bin\Debug\net9.0-windows\WhisperGui.exe
-```
-
-In der GUI:
-
-1. Dateien oder ganze Ordner zur Warteschlange hinzufügen:
-   - "Dateien hinzufügen..." für einzelne Dateien (Mehrfachauswahl möglich), oder mehrere Dateien ins Fenster ziehen.
-   - "Ordner hinzufügen..." für einen ganzen Ordner: Er wird **rekursiv** nach Mediendateien (Audio/Video) in allen Unterordnern durchsucht, alle gefundenen Dateien landen in der Warteschlange. Ein Ordner kann auch direkt ins Fenster gezogen werden.
-2. Sprache und Modell einstellen (gelten für die ganze Warteschlange). Option **"Vorhandene überspringen"** (standardmäßig an): Dateien, für die in `output` schon eine (nicht leere) Textdatei liegt, werden nicht erneut transkribiert. So macht ein abgebrochener oder erneut gestarteter Batch dort weiter, wo er aufgehört hat. Zum kompletten Neu-Transkribieren das Häkchen entfernen.
-3. "Start Batch-Transkription" klicken. Die Dateien werden nacheinander abgearbeitet, der Status je Datei (wartend/läuft/fertig/übersprungen/Fehler) wird in der Liste angezeigt. Der obere Balken zeigt den Fortschritt der laufenden Datei in Prozent, daneben stehen Audiolänge, bisherige Laufzeit und die geschätzte Restzeit. Solange das Modell geladen wird, läuft der Balken nur hin und her. Der untere Balken zeigt den Fortschritt der ganzen Warteschlange. Der Balken springt in Schritten, weil Whisper das Audio in Abschnitten von etwa 30 Sekunden verarbeitet. Dateien ohne Audiospur (z.B. Videos ohne Ton) werden automatisch übersprungen.
-4. Für jede Datei entsteht eine eigene Textdatei in `output`:
-   - Einzeln hinzugefügte Dateien landen direkt in `output` (Dateiname = Eingabedateiname).
-   - Bei einem hinzugefügten Ordner wird die **Unterordnerstruktur in `output` gespiegelt**: eine Datei unter `<Ordner>\2026-01\meeting.wav` ergibt `output\2026-01\meeting.txt`. So bleiben gleichnamige Dateien aus verschiedenen Unterordnern getrennt.
-   - **Es wird nie eine vorhandene Textdatei überschrieben.** Liegt der Zielname schon da – weil zwei Eingabedateien darauf zielen (z.B. `meeting.wav` und `meeting.mp3` im selben Ordner) oder weil eine frühere Transkription noch dort liegt und "Vorhandene überspringen" aus ist – bekommt die neue Datei den Namen der verarbeiteten Datei plus Zeitstempel: `meeting_20260807_132804.txt`. Im Log steht dann "Vorhanden: meeting.txt bleibt erhalten."
-   Das Ergebnis der zuletzt fertiggestellten Datei erscheint im Tab "Ergebnis"; ein Doppelklick auf eine fertige Datei in der Warteschlange öffnet deren Textdatei direkt im Editor.
-5. Mit "Entfernen"/"Liste leeren" können noch nicht gestartete Dateien aus der Warteschlange genommen werden, mit "Ausgabeordner öffnen" gelangt man zu allen erzeugten Textdateien.
+- **Ordner hinzufügen** durchsucht auch alle Unterordner. Die Unterordnerstruktur wird in `output` gespiegelt, gleichnamige Dateien aus verschiedenen Ordnern bleiben also getrennt.
+- **Vorhandene überspringen** (standardmäßig an): Dateien, für die schon ein Transkript da ist, werden nicht nochmals transkribiert. Ein abgebrochener Stapel macht so dort weiter, wo er aufgehört hat. Das klappt auch, wenn der Titel geändert wurde.
+- **Es wird nie ein vorhandenes Transkript überschrieben.** Ist der Name schon belegt, bekommt die neue Datei einen Zeitstempel angehängt.
+- Dateien ohne Tonspur (zum Beispiel Bildschirmvideos ohne Ton) werden übersprungen.
+- Die frühere kleine Oberfläche (`WhisperGui`) wurde am 22.10.2026 entfernt. Die Desktop-Verknüpfung "Whisper" startet das Studio.
 
 ## Schnellbeispiel
 
