@@ -1,6 +1,14 @@
 # Last Change
 
-Stand: 2026-10-21
+Stand: 2026-10-22
+
+## SAP: ZLO03 Spalte RoHS (Nachtrag FIX 19), 2026-10-22
+
+- Adil hat in T76 das Merkmal `ROHS` angelegt („RoHS Compliant“, CHAR 3, COM/UNC/UND, Klasse `Z_PACK_REGULATION`).
+  ZLO03 (`Z_ZLO03_TURBO2`) gibt jetzt vier Spalten hinter `Postyp` aus: RoHS, REACH, SVHC, PFAS-Gehalt.
+- T76 aktiv (22.10. 08:00), rueckgelesen identisch, im offenen Auftrag `T76K912742`. Lauf `8475*` fehlerfrei, 182 Spalten,
+  Werte leer (T76 ohne gepflegte Materialien). Ob `ROHS` in P76 existiert, ist ungeprueft.
+- Doku `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` Abschnitt 6, Quelltext `zlo03/Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap`.
 
 ## SAP PS: Rolle je Zeitbuchung (Frage Philip Steiger), Demo T76, 2026-10-21
 
@@ -46,7 +54,7 @@ Stand: 2026-10-21
 - Wunsch Florian Waechter: Stoff-Compliance in ZLO03. Befund: in P76 nur Klasse `Z_PACK_REGULATION` (8 Merkmale, kein RoHS),
   `ZCOMP_STOFF` nur in T76 und leer. FIX 19 liest `REACHCOM`, `SVHCCOMP`, `PFAS` aus `AUSP` und gibt drei Spalten hinter
   `Postyp` aus. T76 aktiv, im Auftrag `T76K912742` zusammen mit FIX 12 (Entscheid Ingo). Lauf `8475*` fehlerfrei, Spalten leer.
-  Doku `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md`. RoHS: Adil soll ein Merkmal anlegen.
+  Doku `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md`. RoHS: Adil soll ein Merkmal anlegen (*erledigt, Spalte seit 22.10.*).
 
 ## SAP: Testuser UBIG mit GIB-DCP-Rolle in T76/200, 2026-10-19
 

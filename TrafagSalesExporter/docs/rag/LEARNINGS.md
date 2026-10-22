@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-10-21 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-10-22 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -12,6 +12,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-22 | SAP GUI: `CreateSession` legte ohne Fehlermeldung keine Sitzung an; Ingo oeffnete eine zweite Verbindung, danach eine P76-Verbindung. Die eigene T76-Sitzung (Id `/app/con[1]/ses[0]`) lag dann an `Children(0)`, P76 an `Children(1)`: ein Skript mit festem Index `Children(1)` lief auf P76 (der T76-Guard brach ab) | Sitzung nur ueber `.Id` plus `SystemName`/`Client` waehlen, nie ueber den Index in `Children`; Skripte mit festem `Children(0)` (z. B. `SapGuiAktivierenListe.vbs`) nicht nutzen, wenn mehrere Verbindungen offen sind | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` Abschnitt 6 |
 | 2026-10-21 | PowerShell-Folienskript brach ab: typografische Anfuehrungszeichen „…“ in einem Text beenden in PowerShell den String; zudem ist `Cat` ein Alias fuer `Get-Content` (eigene Funktion `Cat` griff nie) | In PowerShell-Strings keine „“‘’ verwenden; eigene Funktionen nicht wie Aliase nennen (`Get-Alias Name` pruefen). Nach Abbruch die offene Praesentation ohne Speichern schliessen | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` 6a |
 | 2026-10-21 | Qdrant-Index eine Woche nicht neu aufgebaut (Stand 13.10.), obwohl Doku-Commits liefen; die Suche lieferte damit den alten Stand | Nach Doku-Commits `Tools/Qdrant/Reindex-Docs.ps1` laufen lassen; Alter pruefen: `config.json` unter `C:\Users\koi\tools\qdrant\storage\collections\trafag_docs` | `Tools/Qdrant/README.md` Abschnitt 4 |
 | 2026-10-21 | `Reindex-Docs.ps1 2>&1` brach ab: PowerShell 5.1 machte aus dem fastembed-Hinweis auf stderr einen Fehler (`NativeCommandError`, `ErrorActionPreference = Stop`) | Skript ohne `2>&1` aufrufen oder `index_docs.py` per Bash mit `uv run --python 3.12` und den Umgebungsvariablen aus dem Skript starten | Wochen_Todo 118 |

@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-10-21
+Stand: 2026-10-22
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; RoHS folgt | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **T76 aktiv, rueckgelesen, Lauf ok; Test mit Werten offen** |
+| Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; **Nachtrag 2026-10-22: Spalte RoHS** (Merkmal `ROHS`, von Adil am 21.10. angelegt) | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **in Arbeit (RoHS-Nachtrag), Test mit Werten offen** |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -37,6 +37,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | ZLO03 Spalte RoHS (Nachtrag FIX 19, Mail Adil) | 2026-10-22 | **Abgeschlossen in T76, kein Deploy.** Merkmal `ROHS` (T76, 21.10.) gelesen, Spalte RoHS vor REACH, aktiv 08:00, rueckgelesen identisch, Lauf `8475*` 182 Spalten; in `T76K912742`. FIX-19-Reservierung bleibt aktiv (Test mit Werten, P76) |
 | Claude | SAP PS: Frage Philip „Rolle je Zeitbuchung“, Demo T76/100 (eigene Sitzung, Freigabe Ingo), Folien 17-19 | 2026-10-21 | **Abgeschlossen, kein Deploy, Reservierung frei.** KL01 PL/ENG/TST, KP26 KoSt 240, KB21N Beleg 311258908, in CJI3 geprueft; Doku 4b, Bilder 19-22, Aufraeumen in Abschnitt 7; Sitzung geschlossen |
 | Claude | Wochen_Todo nachgefuehrt, Abgleich Code gegen Doku seit 01.10., Qdrant-Index neu aufgebaut | 2026-10-21 | **Abgeschlossen, nur Doku/Status, kein Deploy, Reservierung frei.** Kein App-Code nach dem letzten Deploy `c3c45cd`; Abweichung nur die fremde, unkommittierte Finance_All-Automatik (neu Zeile 117). Index 4245 Abschnitte (vorher 3884, Stand 13.10.); Neu Zeile 118 (Reindex-Skript robust machen), Notiz Zeile 15. Mail nicht geprueft (M365-Sitzung abgelaufen) |
 | Claude | Doku: HR-Cockpit SAP-Abruf (`HrKpiSet`, `HrAbsenzSet`) als produktiv nachgefuehrt, live auf dem Server geprueft | 2026-10-20 | **Abgeschlossen, nur Doku, kein Deploy, Reservierung frei.** `docs/rag/HR_KPI.md`, `lastchange.md`; Dateien in `hrdata` von heute 05:07 |

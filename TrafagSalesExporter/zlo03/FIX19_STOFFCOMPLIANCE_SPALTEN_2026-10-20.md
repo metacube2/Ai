@@ -1,8 +1,11 @@
-# ZLO03 FIX 19: Spalten REACH, SVHC, PFAS-Gehalt (Wunsch Florian Waechter)
+# ZLO03 FIX 19: Spalten RoHS, REACH, SVHC, PFAS-Gehalt (Wunsch Florian Waechter)
 
-Stand: 2026-10-20. Status: **in T76 aktiv, im Auftrag `T76K912742` zusammen mit FIX 12** (Entscheid Ingo,
-Variante B). Gelaufen ist es bisher nur mit leeren Spalten, weil in T76 kein Material Werte hat. Test mit
-gepflegten Werten offen. RoHS fehlt, weil es in P76 kein Merkmal dafuer gibt (Adil legt es an, Vorschlag `ROHSCOM`).
+Stand: 2026-10-22. Status: **in T76 aktiv, im Auftrag `T76K912742` zusammen mit FIX 12** (Entscheid Ingo,
+Variante B). **Nachtrag 2026-10-22: Spalte RoHS** aus dem Merkmal `ROHS`, das Adil am 21.10. angelegt hat (Abschnitt 6).
+Gelaufen ist es bisher nur mit leeren Spalten, weil in T76 kein Material Werte hat. Test mit gepflegten Werten offen.
+
+*Ueberholt am 2026-10-22:* Hier stand, RoHS fehle, weil es kein Merkmal gebe (Vorschlag `ROHSCOM`). Adil hat das
+Merkmal unter dem Namen `ROHS` angelegt; ZLO03 gibt es seit dem 22.10. aus.
 
 ## 1. Anfrage
 
@@ -24,7 +27,7 @@ transportiert. Die interne Merkmalsnummer `ATINN` ist in T76 und P76 verschieden
 | `REACHCOM` | Reach Compliant | CHAR 3 | COM / UNC / UND | 53, alle COM | Spalte **REACH** |
 | `SVHCCOMP` | SVHC Compliant | CHAR 3 | COM / UNC / UND | 141, alle COM | Spalte **SVHC** |
 | `PFAS` | PFAS Content | NUM 3 | frei | 168, alle 0 | Spalte **PFAS-Gehalt** |
-| RoHS | – | – | – | **gibt es nicht** | folgt, sobald das Merkmal existiert |
+| RoHS | – | – | – | **gab es am 20.10. nicht** | seit 22.10. Spalte **RoHS**, Merkmal `ROHS` (Abschnitt 6) |
 | `RECYCLAB` | Recyclability Class | CHAR 8 | A bis E | 5 | nicht ausgegeben |
 | `RECYCONT` | Total Recycled Content | NUM 3 | frei | 167 | nicht ausgegeben |
 | `PCR` | PCR Content | NUM 3 | frei | 169 | nicht ausgegeben |
@@ -70,5 +73,37 @@ Skripting unerreichbar; Ingo klickt „Zulassen“ (ohne „Entscheidung merken�
 1. **Test mit Werten:** entweder in T76 an B63485 eine Testklassifizierung `Z_PACK_REGULATION` anlegen (Entscheid Ingo
    offen) oder nach dem Import in P76 an einem gepflegten Material pruefen (zum Beispiel H05256: REACH COM, SVHC COM, PFAS 0).
 2. **Import:** `T76K912742` bringt jetzt FIX 12 **und** FIX 19 nach P76.
-3. **RoHS:** Adil legt ein Merkmal an (Vorschlag `ROHSCOM`, CHAR 3, COM/UNC/UND, Klasse `Z_PACK_REGULATION`); danach
-   eine Spalte RoHS in ZLO03 (eine Zeile in `load_compliance_cache` und eine Spalte in `create_excel_output`).
+3. ~~**RoHS:** Adil legt ein Merkmal an~~ *Erledigt am 2026-10-22*, siehe Abschnitt 6.
+4. **RoHS in P76:** ob das Merkmal `ROHS` in P76 schon existiert, ist ungeprueft (P76 nur auf Auftrag Ingo). Das Programm
+   sucht die Merkmale ueber den Namen; fehlt `ROHS` in P76, bleibt die Spalte dort leer, ohne Fehler.
+
+## 6. Nachtrag 2026-10-22: Spalte RoHS
+
+Adil meldete am 22.10. per Mail an Ingo und Fabio („erledigt“), Weiterleitung von Florians Wunsch „RoHs/Reach/PFAS“.
+
+Befund T76/100, nur lesend per SapProbe:
+
+| Tabelle | Inhalt |
+| --- | --- |
+| `CABN` | `ROHS`, ATINN 1438, CHAR 3, angelegt 21.10.2026 (Name `ROHS`, nicht der Vorschlag `ROHSCOM`) |
+| `CABNT` | „RoHS Compliant“ |
+| `CAWN` | COM, UNC, UND (wie REACH und SVHC) |
+| `KSML` | Klasse `Z_PACK_REGULATION` (CLINT 489), Position 009 |
+| `AUSP` | noch kein Material mit Wert |
+
+Daneben gibt es in T76 die alten Merkmale `ZCOMP_ROHS_STATUS` und `ZCOMP_ROHS_DATE` der nie transportierten Klasse
+`ZCOMP_STOFF`; ZLO03 liest sie nicht.
+
+Aenderung (`*** FIX 19`-Kommentar ergaenzt, Quelltext `Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap`, 8 Zeilen mehr als der
+Stand vom 20.10.): Feld `rohs` in `ty_compl`, `ROHS` in der Merkmalsliste von `load_compliance_cache` und im `CASE`,
+Kopf `RoHS` **vor** `REACH` (Reihenfolge wie in Florians Mail), Wert je Datenzeile.
+
+| Schritt | Ergebnis |
+| --- | --- |
+| Vorher | `REPOSRC` aktiv 20.10. 08:51:58, Repo-Datei identisch mit dem damals Rueckgelesenen |
+| Sitzung | `CreateSession` legte keine Sitzung an (ohne Fehler); Ingo hat eine eigene T76-Verbindung geoeffnet, Sitzungs-Id `/app/con[1]/ses[0]` |
+| Aendern, Sichern | ohne Auftragsabfrage (Objekt in `T76K912743`) |
+| Aktivieren | nur `Z_ZLO03_TURBO2` markiert, `Z_REICHW` uebergangen; „Objekt(e) wurde(n) aktiviert“, `REPOSRC` A 22.10. 08:00:06 |
+| Rueckgelesen | identisch mit der Patchdatei (3'531 Zeilen) |
+| Lauf Top-Down `8475*` | 123 Datenzeilen, B63485 enthalten, Kopf und Datenzeilen 182 Spalten (vorher 181), Spalten RoHS, REACH, SVHC, PFAS-Gehalt hinter `Postyp`, alle leer (T76 ohne Werte) |
+| Vergleich mit Lauf 20.10. | ohne die neue Spalte gleich bis auf Stammdaten, die sich in T76 seither geaendert haben (Sicherheitsbestand 39 Zeilen, ein Materialstatus, eine Bezeichnung) |

@@ -179,8 +179,9 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` | SAP PS: Einfuehrung, Demo in T76 (Projekt, Teilprojekte, Zeitbuchung, CJI3), Befunde, Transaktionen, Fazit |
 | `docs/img/ps_demo_2026-10-20/` | 20 Screenshots der PS-Demo in T76 (CJ20N, CJ01, CJ02, CAT2, KB21N, OKKP, ME21N, CJI3; 19-22 Rolle je Zeitbuchung: KL01, KP26, KB21N, CJI3) |
 | `zlo03/MK_B63485_FIX12_2026-10-16.md` | ZLO03: MK-Abweichung B63485, Beleg P76, FIX 12 in `Z_ZLO03_TURBO2` |
-| `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` | ZLO03 FIX 19: Stoff-Compliance-Spalten, Befund je Merkmal (P76 `Z_PACK_REGULATION`), Test T76 |
-| `zlo03/Z_ZLO03_TURBO2_FIX19_2026-10-20.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19 (T76 aktiv) |
+| `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` | ZLO03 FIX 19: Stoff-Compliance-Spalten (RoHS seit 22.10.), Befund je Merkmal (P76 `Z_PACK_REGULATION`), Test T76 |
+| `zlo03/Z_ZLO03_TURBO2_FIX19_2026-10-20.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19, Stand 20.10. (abgeloest) |
+| `zlo03/Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19 inkl. Spalte RoHS (T76 aktiv seit 22.10.) |
 | `zlo03/Z_ZLO03_TURBO2_vor_FIX12_2026-10-16.abap`, `zlo03/Z_ZLO03_TURBO2_FIX12_2026-10-16.abap` | Quelltext `Z_ZLO03_TURBO2` vor und nach FIX 12 (T76/P76-Stand 2026-10-16) |
 | `zlo03/Z_KOI_VC_TXT_KOPIE.abap`, `zlo03/Z_KOI_VC_TXT_TESTID.abap` | lokale T76-Testreports: Testdaten `ZPOWERBI_VC_TXT` und Testzeile fuer FIX 12 |
 
