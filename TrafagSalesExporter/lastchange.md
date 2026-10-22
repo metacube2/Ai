@@ -2,6 +2,19 @@
 
 Stand: 2026-10-22
 
+## Whisper Studio: neue Oberflaeche, lokale KI, `whisper/` versioniert, 2026-10-22
+
+- Auftrag Ingo: Fortschrittsanzeige, dann Ausbau zum „Whisper Studio“ mit moderner Oberflaeche. Entscheide Ingo:
+  Dateiname `JJJJ-MM-TT_HHMM_Titel`, KI nur lokal, Funktionen Aufnahme, Word/SRT/VTT, Editor und Verlauf, KI-Protokoll.
+- Neu `whisper/gui/WhisperStudio` (WPF, Fluent) und `whisper/gui/WhisperStudio.Tests` (31 Tests gruen, darunter echte
+  Laeufe von KI, Whisper und Aufnahme). `transcribe.py`/`.ps1`: Fortschrittszeilen, `-Task translate`, `.json` mit Segmenten.
+- Lokale KI: llama.cpp `llama-server` b11799 und Qwen2.5-3B-Instruct Q4 (2,1 GB) in `whisper/llm/` (nicht versioniert).
+  Protokoll eines kurzen Testtextes in 25 s.
+- Entwickelt in der Kopie `.tmp_tools/whisper_kopie`, weil im Original ein Lauf aktiv war; uebernommen per Skript mit
+  Zip-Sicherung `whisper/backup/whisper_quellen_20261022_130852.zip`. Seither sind die Quellen von `whisper/` in Git.
+- Nicht geprueft: Bedienung mit der Maus (Drag&Drop, Tabelle bearbeiten, KI-Knoepfe). Kein Deploy, Werkzeug laeuft lokal.
+- Details: `whisper/HANDOFF.md`.
+
 ## Doku: Markdown-Aufraeumen, Archiv `docs/archiv/`, 2026-10-22
 
 - Auftrag Ingo: alle Markdown-Dateien aufraeumen, keine Redundanzen, keine Informationen verlieren. Nur Doku,

@@ -1,7 +1,7 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
 Stand: 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
-Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt)
+Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
 Aufgabe gilt `router.md` -> Unterrouter -> Detaildatei. Hier steht jede Markdown-Datei des
@@ -281,7 +281,7 @@ Diese Dateien beantworten **keine** Statusfrage. Sie belegen, was zu einem Zeitp
 
 | Datei | Warum hier |
 | --- | --- |
-| `whisper/README.md`, `whisper/ANLEITUNG.md`, `whisper/HANDOFF.md` | Transkriptionswerkzeug, kein Projektwissen; nicht versioniert |
+| `whisper/README.md`, `whisper/ANLEITUNG.md`, `whisper/HANDOFF.md` | Transkriptionswerkzeug (Whisper Studio), kein Projektwissen; Quellen und Doku seit 2026-10-22 versioniert, Laufzeitdaten (`python/`, `cache/`, `llm/`, `input/`, `output/`) nicht. Technischer Stand in `HANDOFF.md` |
 | `Tools/BahnmarktDeWorkbook/README.md`, `Tools/BahnWorkbookDb4/README.md`, `Tools/DeCustomerBackfill/README.md`, `Tools/DeCustomerMapping/README.md`, `Tools/Qdrant/README.md` | Bedienungsanleitungen der Werkzeuge, kein Fachstand |
 | `whisper/python/Lib/site-packages/**` | Fremdcode, 33 Lizenz- und Vorlagendateien |
 
