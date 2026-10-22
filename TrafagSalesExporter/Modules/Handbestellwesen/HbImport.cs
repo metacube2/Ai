@@ -290,8 +290,10 @@ public sealed class HbImportService(IDbContextFactory<HbDbContext> dbFactory, Ti
             var b = Basis(r, HbStatus.Eingegangen);
             b.EingangAm = Datum(T(r, "wareneingang")) ?? Datum(T(r, "archivedatum"));
             b.EingangVon = "import";
+            // 2026-10-22: erst nach dem Doubletten-Filter zaehlen; vorher zeigte "Pruefen" 26 Eingaenge zu viel.
+            var vorher = bestellungen.Count;
             Hinzu(b);
-            bericht.Eingegangen++;
+            if (bestellungen.Count > vorher) bericht.Eingegangen++;
         }
         foreach (var r in Rows("tab_offenebestellungen"))
         {

@@ -130,6 +130,8 @@ public sealed class HandbestellwesenImportTests : IDisposable
         var bericht = await _import.PruefenAsync(Dump);
         Assert.False(bericht.Importiert);
         Assert.Equal(2, bericht.Eingegangen);
+        Assert.Equal(1, bericht.Offen); // die Doublette E268750001 zaehlt nicht
+        Assert.Equal(1, bericht.FreigabeOffen);
         using var db = _factory.CreateDbContext();
         Assert.Empty(db.Bestellungen);
     }

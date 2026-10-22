@@ -233,6 +233,27 @@ Betraege als Text (KV 169x), 564 ohne Kreditor, 45 doppelte Nummern, 22 leere Da
 Bestellungen mit Besteller ohne Mitarbeitereintrag, **930 offene Bestellungen aelter als ein Jahr** (vermutlich nie als
 eingegangen gebucht; Entscheid Ingo, ob nach dem Import gesammelt archivieren). Tests `HandbestellwesenImportTests` (6).
 
+### 6.4 Import produktiv und Datenpruefung (2026-10-22 14:27)
+
+Ingo hat um 14:27 importiert (Protokoll „Import Altdaten“, 12'629 Bestellungen). Pruefung auf einer Kopie der Modul-DB:
+
+| Pruefung | Ergebnis |
+| --- | --- |
+| Bestand | 1'289 offen (CHF 1,21 Mio.), 11'018 eingegangen, 322 geloescht; 4'092 Kreditoren, 109 Mitarbeiter, 55 KoSt, 62 Sachkonten, 392 Zaehler |
+| Doppelte Bestellnummern | **0** |
+| Gleiche Bestellung zweimal (Besteller, Kreditor, Text, Wert, Tag) | 28 Paare, davon 25 innerhalb von 5 Minuten (Doppelklick im PHP, zwei Nummern) |
+| Kreditoren mit gleichem Namen und verschiedener Nummer | 93 Namen |
+| Mitarbeiter | keine doppelten Namen oder Konten; 97 von 109 ohne Kostenstelle, 61 mit Limit 0 |
+| Offene Bestellungen mit unbekannter KoSt / Sachkonto / Besteller / ohne Kreditor | 13 / 13 / 50 / 61 |
+| Nummer passt nicht zur Kostenstelle (nachtraeglich geaendert) | 234 |
+| Zaehler kleiner als hoechste Nummer | 0 |
+| Datum Eingang vor Anlage, Datum in der Zukunft | 0, 0 |
+| Ausreisser | eine geloeschte Bestellung mit CHF 10'000'000'000'000 (zaehlt nirgends) |
+| Offene nach Alter | < 1 Jahr 359, 1-3 Jahre 499, > 3 Jahre 431 |
+
+Korrigiert: Die Pruef-Anzeige zaehlte eingegangene Bestellungen vor dem Doubletten-Filter (11'044 statt 11'018); die
+Daten selbst waren richtig. Offen: Entscheid Ingo zu Doppelklick-Doubletten, alten offenen Bestellungen und Kreditor-Dubletten.
+
 ## 7. Naechste Schritte
 
 1. Dump liegt vor (6.2), Import gebaut (6.3) -> auf dem Server pruefen und importieren (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
