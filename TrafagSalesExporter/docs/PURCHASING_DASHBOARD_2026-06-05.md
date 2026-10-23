@@ -1327,3 +1327,11 @@ zwei Knoepfe „Produktgruppe : Lieferant“ und „Produktgruppe : Warengruppe�
   „ohne Produktgruppe“.
 - Der Hinweis zur Zuordnung erscheint bei beiden Einstiegen.
 - Test: Produktgruppen-Test prueft gleiche Summen je Gruppe und die Ebenen; Suite 1288/1288.
+
+## Nachtrag 2026-10-23 (2): Produktgruppen-Sichten ohne Deckelung
+
+Rueckmeldung Einkauf mit Bildschirmfoto: unter einer Produktgruppe endete die Warengruppenliste in „uebrige (23)“.
+Ursache: Die Produktgruppen-Einstiege (seit 2026-10-15) waren als einzige noch auf 20/15/10 gedeckelt, obwohl seit dem
+2026-08-27 alle anderen Einstiege ungedeckelt sind (`NoCap`, Wunsch Marco/Ingo). Behoben: beide Produktgruppen-Sichten und
+der Rueckfall ohne Verwendungs-Cache zeigen alle Produktgruppen, Lieferanten, Warengruppen und Materialien einzeln.
+Test `LoadAsync_ProductGroupPerspectives_Show_All_Positions_Without_Remainder_Row`; Suite 1289/1289.

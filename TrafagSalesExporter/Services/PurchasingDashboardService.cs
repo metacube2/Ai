@@ -1577,7 +1577,7 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
             var fallback = new SpendPerspective(
                 "productgroup", "Produktgruppe", "Product group",
                 [new SpendDimension("productgroup", "Produktgruppe", "Product group", "'ohne Produktgruppe'"), SupplierDimension, ArticleDimension],
-                [20, 15, 10]);
+                [NoCap, NoCap, NoCap]);
             var fallbackRows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, fallback, cancellationToken);
             var fallbackMg = fallback with { Levels = [fallback.Levels[0], MaterialGroupDimension, ArticleDimension] };
             var fallbackMgRows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, fallbackMg, cancellationToken);
@@ -1784,8 +1784,10 @@ WHERE COALESCE(trim(VknrDispo), '') <> '';";
             unmappedDispatchers = reader.GetInt32(1);
         }
 
-        var perspectiveRows = BuildCascadeLevel(rows, 0, years, [20, 15, 10]);
-        var materialGroupRows = BuildCascadeLevel(mgRows, 0, years, [20, 15, 10]);
+        // Wie alle anderen Einstiege seit 2026-08-27 ohne Deckelung (siehe NoCap). Die Produktgruppen-Sichten
+        // standen noch auf 20/15/10 und buendelten den Rest in „uebrige (n)“; Einkauf 2026-10-23: alle Positionen zeigen.
+        var perspectiveRows = BuildCascadeLevel(rows, 0, years, [NoCap, NoCap, NoCap]);
+        var materialGroupRows = BuildCascadeLevel(mgRows, 0, years, [NoCap, NoCap, NoCap]);
         return new ProductGroupPerspectiveBuildResult(
             emptyPerspective with { Rows = perspectiveRows },
             new PurchasingProductGroupAllocationSummary(

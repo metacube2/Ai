@@ -2,6 +2,11 @@
 
 Stand: 2026-10-23
 
+## Einkauf: Produktgruppen-Sichten ohne „uebrige (n)“, 2026-10-23
+
+- Wunsch Einkauf „alle Positionen anzeigen“: Produktgruppen-Einstiege waren als einzige noch auf 20/15/10 gedeckelt;
+  jetzt ungedeckelt wie alle anderen seit 2026-08-27. Suite 1289/1289.
+
 ## Einkauf: Spend-Aufriss Produktgruppe : Warengruppe, 2026-10-23
 
 - Zweiter Produktgruppen-Einstieg Produktgruppe -> Warengruppe -> Material (Wunsch Einkauf, Budgeterstellung); der

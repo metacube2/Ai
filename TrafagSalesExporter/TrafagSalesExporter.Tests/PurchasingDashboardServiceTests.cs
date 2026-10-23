@@ -809,6 +809,31 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_ProductGroupPerspectives_Show_All_Positions_Without_Remainder_Row()
+    {
+        // Einkauf 2026-10-23: unter einer Produktgruppe stand nach 15 Warengruppen „uebrige (23)“.
+        // 25 Materialien in 25 Warengruppen muessen in beiden Produktgruppen-Sichten einzeln erscheinen.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('PGX', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('PGX', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', 'SAP OData', '2026-01-01');");
+        for (var i = 1; i <= 25; i++)
+        {
+            await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('PGX', '{i * 10}', 'M{i:D2}', 'WG{i:D2}', 'WG{i:D2}', '1', '{i}', '2026-01-01');");
+            await ExecuteAsync($"INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V{i}', '001', 'M{i:D2}', '2026-01-01');");
+        }
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        var byMaterialGroup = Assert.Single(Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup-materialgroup").Rows);
+        Assert.Equal(25, byMaterialGroup.Children.Count);
+        Assert.DoesNotContain(byMaterialGroup.Children, child => child.Label.StartsWith("uebrige", StringComparison.Ordinal));
+        var bySupplier = Assert.Single(Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup").Rows);
+        var supplier = Assert.Single(bySupplier.Children);
+        Assert.Equal(25, supplier.Children.Count);
+        Assert.DoesNotContain(supplier.Children, child => child.Label.StartsWith("uebrige", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LoadAsync_ProductGroupPerspective_Uses_Component_Dispo_Cache_From_Purchasing_Run()
     {
         // Punkt 4 Gespraech Armin 2026-10-08: Die Verwendung kommt jetzt auch aus dem Einkauf-Lauf
