@@ -20,7 +20,7 @@ export class Funk {
   constructor() {
     this.ctx = null;
     this.an = false;
-    this.pegel = { musik: 0.6, rauschen: 0.35, sfx: 0.7 };
+    this.pegel = { musik: 0.1, rauschen: 0.1, sfx: 0.1 };
     this.beiZeile = () => {};
     this.band = BAENDER[5];
   }

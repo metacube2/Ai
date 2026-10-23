@@ -1,6 +1,6 @@
 // Funkerbier – Terminsuche. Vanilla JS, kein Build. Quelle Ai/funkerbier/.
 import { Dmd } from './dmd.js?v=1';
-import { Funk, BAENDER } from './audio.js?v=2';
+import { Funk, BAENDER } from './audio.js?v=3';
 import { hintergrund, laufschrift, instrumente } from './fx.js?v=1';
 
 const $ = (s) => document.querySelector(s);
@@ -70,12 +70,13 @@ function punkteDazu(n) {
 const punkteText = () => 'SCORE ' + String(punkte).padStart(7, '0');
 
 // ---- Audio-Bedienung -------------------------------------------------------
-const pegel = speicher.lesen('pegel', { musik: 60, rauschen: 35, sfx: 70 });
+// Standard 10 %: lauter erschreckte Besucher (2026-10-23); neuer Schluessel, damit alte gespeicherte Pegel nicht gelten
+const pegel = speicher.lesen('pegel2', { musik: 10, rauschen: 10, sfx: 10 });
 for (const k of ['musik', 'rauschen', 'sfx']) {
   const r = $('#regler-' + k);
   r.value = pegel[k];
   funk.pegel[k] = pegel[k] / 100;
-  r.addEventListener('input', () => { pegel[k] = Number(r.value); speicher.schreiben('pegel', pegel); funk.setze(k, pegel[k] / 100); });
+  r.addEventListener('input', () => { pegel[k] = Number(r.value); speicher.schreiben('pegel2', pegel); funk.setze(k, pegel[k] / 100); });
 }
 const power = $('#power');
 function powerAnzeigen() { power.setAttribute('aria-pressed', String(funk.an)); power.textContent = funk.an ? '⏻ TON AN' : '⏻ TON AUS'; }
