@@ -85,16 +85,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: linear-gradient(135deg, #2b0a3d, #11001c 60%, #3d0a2a);
   border: 4px solid var(--gelb); border-radius: 18px 18px 6px 6px;
   box-shadow: 0 0 0 4px var(--schwarz), 0 0 28px #ff2a6d88, inset 0 0 30px #000;
-  padding: 10px 14px 14px; position: relative;
+  padding: 6px 12px 8px; position: relative;
 }
 .marke {
   font: 22px/1 var(--pixel); color: var(--cyan); text-shadow: 3px 3px 0 var(--pink), 0 0 12px var(--cyan);
-  letter-spacing: 2px; margin-bottom: 10px; display: flex; align-items: baseline; gap: 6px;
+  letter-spacing: 2px; margin-bottom: 4px; display: flex; align-items: baseline; gap: 6px;
 }
 .marke span { color: var(--gelb); text-shadow: 3px 3px 0 var(--pink), 0 0 12px var(--gelb); }
 .marke small { font-size: 10px; color: var(--gruen); text-shadow: none; margin-left: auto; animation: blinken 1.6s steps(2) infinite; }
 #dmd {
-  display: block; width: 100%; max-width: 680px; margin: 0 auto; height: auto; background: #0c0400; border-radius: 4px;
+  /* kompakt (2026-10-23): Kopf darf das Formular nicht unter den Bildrand druecken */
+  display: block; height: 64px; width: auto; max-width: 100%; margin: 0 auto; background: #0c0400; border-radius: 4px;
   border: 3px solid #000; box-shadow: inset 0 0 18px #000, 0 0 16px #ff7a0033; cursor: pointer;
 }
 .backbox.wackeln { animation: wackeln .5s linear 2; }
@@ -108,28 +109,28 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---- Frontplatte (Transceiver) ----------------------------------------- */
 .frontplatte {
-  margin-top: 10px; display: grid; grid-template-columns: 180px 1fr 1.3fr auto; gap: 10px; align-items: stretch;
+  margin-top: 6px; display: grid; grid-template-columns: 130px 1fr 1.3fr auto; gap: 8px; align-items: stretch;
   background: linear-gradient(#3a3f47, #23272d); border: 2px solid #59606b; border-radius: 6px;
-  padding: 10px; box-shadow: inset 0 1px 0 #7c8591, 0 4px 0 #000;
+  padding: 6px; box-shadow: inset 0 1px 0 #7c8591, 0 4px 0 #000;
 }
 .instrument { position: relative; background: #0b0f14; border: 2px solid #000; border-radius: 4px; overflow: hidden; }
-.instrument canvas { display: block; width: 100%; height: 90px; }
+.instrument canvas { display: block; width: 100%; height: 52px; }
 .beschriftung { position: absolute; left: 6px; bottom: 2px; font: 8px var(--pixel); color: #7d8796; }
 .vfo {
   display: grid; grid-template-areas: "band mode" "qrg qrg"; align-content: center; gap: 4px 8px;
   background: #031a06; border: 2px solid #000; border-radius: 4px; color: var(--gruen); cursor: pointer;
-  padding: 8px 12px; text-shadow: 0 0 8px #39ff1499; box-shadow: inset 0 0 14px #000;
+  padding: 4px 10px; text-shadow: 0 0 8px #39ff1499; box-shadow: inset 0 0 14px #000;
 }
 .vfo-band { grid-area: band; font: 10px var(--pixel); color: #9dffa0; text-align: left; }
 .vfo-mode { grid-area: mode; font: 10px var(--pixel); color: var(--gelb); text-align: right; }
-.vfo-qrg { grid-area: qrg; font: 38px/1 var(--term); letter-spacing: 2px; text-align: center; }
+.vfo-qrg { grid-area: qrg; font: 26px/1 var(--term); letter-spacing: 2px; text-align: center; }
 .mischpult { display: grid; gap: 4px; align-content: center; min-width: 170px; }
 .mischpult label { display: grid; font: 8px var(--pixel); color: #b8c2cf; gap: 2px; }
 .mischpult input[type=range] { width: 100%; accent-color: var(--orange); }
 .power[aria-pressed="true"] { background: var(--gruen); color: var(--schwarz); }
 
 /* ---- Inhalt / Workbench-Fenster ---------------------------------------- */
-main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 120px; display: grid; gap: 18px; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 24px; display: grid; gap: 18px; }
 .fenster {
   background: var(--blau); border: 2px solid var(--weiss); box-shadow: 6px 6px 0 #000c;
   min-width: 0;
@@ -265,13 +266,14 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 120px; display: gri
 .punktzahl { font: 10px var(--pixel); color: var(--gelb); }
 
 /* Laufschrift unten */
-.fuss { position: fixed; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 5; background: linear-gradient(#0000, #000c 30%); }
+/* nicht mehr fixiert (2026-10-23): die Laufschrift lag ueber Datumsfeld und Knoepfen */
+.fuss { pointer-events: none; background: linear-gradient(#0000, #000c 30%); }
 #scroller { display: block; width: 100%; height: 56px; }
 .fuss p { margin: 0; background: #000c; text-align: center; font-size: 16px; color: #6f86a6; padding: 2px 16px 4px; }
 
 @media (max-width: 860px) {
   .frontplatte { grid-template-columns: 1fr 1fr; }
-  .wasserfall-rahmen { grid-column: 1 / -1; order: 3; }
+  .wasserfall-rahmen { display: none; }   /* schmal: Platz fuer das Formular */
   .mischpult { grid-column: 1 / -1; order: 4; grid-template-columns: 1fr 1fr 1fr auto; align-items: end; }
   .zwei-spalten { grid-template-columns: 1fr; }
 }
@@ -279,8 +281,9 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 120px; display: gri
   body { font-size: 21px; }
   .marke { font-size: 16px; }
   .frontplatte { grid-template-columns: 110px 1fr; padding: 8px; gap: 8px; }
-  .instrument canvas { height: 70px; }
-  .vfo-qrg { font-size: 30px; }
+  .instrument canvas { height: 44px; }
+  #dmd { height: 48px; }
+  .vfo-qrg { font-size: 22px; }
   .mischpult { grid-template-columns: 1fr 1fr; }
   .mischpult .power { grid-column: 1 / -1; }
   .reihe { grid-template-columns: 1fr; }
@@ -290,7 +293,7 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 120px; display: gri
   .bumper { width: 58px; height: 58px; font-size: 8px; border-width: 4px; }
   #scroller { height: 40px; }
   .fuss p { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  main { padding-bottom: 90px; }
+  main { padding-bottom: 16px; }
   .flipper { width: 54px; height: 20px; }
   .fenster-inhalt { padding: 12px; }
   .abschuss .knopf-gross { font-size: 11px; padding: 12px 10px; }
