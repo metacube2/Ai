@@ -2,6 +2,11 @@
 
 Stand: 2026-10-22
 
+## Einkauf: Spend-Aufriss Produktgruppe : Warengruppe, 2026-10-23
+
+- Zweiter Produktgruppen-Einstieg Produktgruppe -> Warengruppe -> Material (Wunsch Einkauf, Budgeterstellung); der
+  bisherige heisst jetzt „Produktgruppe : Lieferant“. Gleiche Summen, gleiche 1/n-Verteilung. Suite 1288/1288.
+
 ## Whisper Studio: neue Oberflaeche, lokale KI, `whisper/` versioniert, 2026-10-22
 
 - Auftrag Ingo: Fortschrittsanzeige, dann Ausbau zum „Whisper Studio“ mit moderner Oberflaeche. Entscheide Ingo:

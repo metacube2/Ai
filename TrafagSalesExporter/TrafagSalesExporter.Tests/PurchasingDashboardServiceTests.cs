@@ -671,7 +671,7 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.Equal(
-            ["supplier", "region", "materialgroup", "productgroup", "currency", "lzcode", "lzsort"],
+            ["supplier", "region", "materialgroup", "productgroup", "productgroup-materialgroup", "currency", "lzcode", "lzsort"],
             state.SpendPerspectiveRows.Select(perspective => perspective.Key));
 
         // Region-Perspektive steigt beim Lieferantenland ein und geht vier Ebenen tief.
@@ -788,6 +788,15 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Legacy", StringComparison.Ordinal));
         Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Excel", StringComparison.Ordinal));
         Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
+
+        // Wunsch Einkauf 2026-10-23: zweiter Einstieg Produktgruppe -> Warengruppe -> Material, gleiche Summen je Gruppe.
+        var mg = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup-materialgroup");
+        Assert.Equal(["Produktgruppe", "Warengruppe", "Material"], mg.LevelLabelsDe);
+        Assert.Equal(
+            perspective.Rows.OrderBy(r => r.Label).Select(r => (r.Label, r.Total)),
+            mg.Rows.OrderBy(r => r.Label).Select(r => (r.Label, r.Total)));
+        Assert.Equal("Produktgruppe : Lieferant", perspective.LabelDe);
+        Assert.Equal("Produktgruppe : Warengruppe", mg.LabelDe);
 
         Assert.Equal(240m, state.ProductGroupAllocation.AssignedSpendChf);
         Assert.Equal(50m, state.ProductGroupAllocation.UnassignedSpendChf);

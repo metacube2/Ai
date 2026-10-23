@@ -1314,3 +1314,16 @@ Befunde gegen eine Kopie der Produktiv-DB vom 22.10. 12:47 (nur lesend).
 
 Tests: Kontrakt-Ersetzung (2), Altposten (1), Ausblendung einmalig (1), Handbestellwesen-Reiter unsichtbar; Uebersetzungen
 fuer 15 neue Texte in allen Sprachen. Suite 1279/1279.
+
+## Nachtrag 2026-10-23: Spend-Aufriss Produktgruppe : Warengruppe (Wunsch Einkauf, Budgeterstellung)
+
+Anfrage: zusaetzliche mehrstufige Sicht Produktgruppe -> Warengruppe -> Artikel neben Produktgruppe -> Lieferant -> Artikel,
+zwei Knoepfe „Produktgruppe : Lieferant“ und „Produktgruppe : Warengruppe“.
+
+- `ExecuteProductGroupPerspectiveAsync` liest die Warengruppe (`MaraMatkl`, sonst `Matkl`, Text aus dem T023T-Katalog) in
+  derselben 1/n-verteilten Abfrage mit und baut daraus zwei Perspektiven: `productgroup` („Produktgruppe : Lieferant“,
+  bisheriger Schluessel) und neu `productgroup-materialgroup` („Produktgruppe : Warengruppe“). Summen je Produktgruppe sind
+  identisch, die 1/n-Verteilung bei Mehrfachverwendung gilt fuer beide. Ohne Verwendungs-Cache: beide Einstiege nur mit
+  „ohne Produktgruppe“.
+- Der Hinweis zur Zuordnung erscheint bei beiden Einstiegen.
+- Test: Produktgruppen-Test prueft gleiche Summen je Gruppe und die Ebenen; Suite 1288/1288.

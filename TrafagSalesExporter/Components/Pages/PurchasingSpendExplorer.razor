@@ -52,7 +52,7 @@
         </MudAlert>
     }
 
-    @if (ActivePerspectiveKey == "productgroup")
+    @if (ActivePerspectiveKey.StartsWith("productgroup", StringComparison.Ordinal))
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
             @T("Zuordnung: Einkaufsmaterial -> ZLO03-Komponente -> Disponent des verwendenden Kopfmaterials -> ZC23-Produktgruppe. Wird eine Komponente in mehreren unterschiedlichen Produktgruppen verwendet, wird ihr Spend gleichmaessig 1/n verteilt. Dadurch bleibt die Summe exakt erhalten. Fehlende ZC23-Texte erscheinen ehrlich als 'Disponent <Code>'.",

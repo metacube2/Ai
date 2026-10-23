@@ -625,6 +625,11 @@ LIMIT 12;", cancellationToken);
         state.SpendPerspectiveRows.Insert(
             Math.Min(3, state.SpendPerspectiveRows.Count),
             productGroupResult.Perspective);
+        // Wunsch Einkauf 2026-10-23 (Budgeterstellung): zweiter Produktgruppen-Einstieg Produktgruppe -> Warengruppe -> Material,
+        // aus derselben 1/n-Verteilung, also mit identischer Summe je Produktgruppe.
+        state.SpendPerspectiveRows.Insert(
+            Math.Min(4, state.SpendPerspectiveRows.Count),
+            productGroupResult.MaterialGroupPerspective);
         state.ProductGroupAllocation = productGroupResult.Summary;
         // Lieferanten-Perspektive bleibt der Standardeinstieg und damit die Quelle fuer die
         // bisherige, nicht umschaltbare Kaskadenanzeige.
@@ -1528,7 +1533,10 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
 
     private sealed record ProductGroupPerspectiveBuildResult(
         PurchasingSpendPerspectiveResult Perspective,
-        PurchasingProductGroupAllocationSummary Summary);
+        PurchasingProductGroupAllocationSummary Summary,
+        PurchasingSpendPerspectiveResult MaterialGroupPerspective);
+
+    internal const string ProductGroupMaterialGroupPerspectiveKey = "productgroup-materialgroup";
 
     /// <summary>
     /// Produktgruppen-Aufriss ueber die belegte Kette Einkaufsmaterial (EKPO-MATNR) ->
@@ -1548,13 +1556,17 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
     {
         var levelsDe = (IReadOnlyList<string>)["Produktgruppe", "Lieferant", "Material"];
         var levelsEn = (IReadOnlyList<string>)["Product group", "Supplier", "Material"];
+        var mgLevelsDe = (IReadOnlyList<string>)["Produktgruppe", "Warengruppe", "Material"];
+        var mgLevelsEn = (IReadOnlyList<string>)["Product group", "Material group", "Material"];
+        var emptyMaterialGroupPerspective = new PurchasingSpendPerspectiveResult(
+            ProductGroupMaterialGroupPerspectiveKey, "Produktgruppe : Warengruppe", "Product group : material group", mgLevelsDe, mgLevelsEn, []);
         var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
         var emptyPerspective = new PurchasingSpendPerspectiveResult(
-            "productgroup", "Produktgruppe", "Product group", levelsDe, levelsEn, []);
+            "productgroup", "Produktgruppe : Lieferant", "Product group : supplier", levelsDe, levelsEn, []);
         if (years.Count == 0)
-            return new ProductGroupPerspectiveBuildResult(emptyPerspective, PurchasingProductGroupAllocationSummary.Empty);
+            return new ProductGroupPerspectiveBuildResult(emptyPerspective, PurchasingProductGroupAllocationSummary.Empty, emptyMaterialGroupPerspective);
 
         var usageReady = await TableExistsAsync(conn, "MaterialUsageCache", cancellationToken) &&
                          await ColumnExistsAsync(conn, "MaterialUsageCache", "VknrDispo", cancellationToken);
@@ -1567,11 +1579,14 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
                 [new SpendDimension("productgroup", "Produktgruppe", "Product group", "'ohne Produktgruppe'"), SupplierDimension, ArticleDimension],
                 [20, 15, 10]);
             var fallbackRows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, fallback, cancellationToken);
+            var fallbackMg = fallback with { Levels = [fallback.Levels[0], MaterialGroupDimension, ArticleDimension] };
+            var fallbackMgRows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, fallbackMg, cancellationToken);
             var fallbackUnassignedSpend = fallbackRows.Sum(row => row.Total);
             var fallbackUnassignedMaterials = await CountSpendMaterialsAsync(conn, filter, spendItemFilter, cancellationToken);
             return new ProductGroupPerspectiveBuildResult(
                 emptyPerspective with { Rows = fallbackRows },
-                new PurchasingProductGroupAllocationSummary(0m, fallbackUnassignedSpend, 0m, 0, fallbackUnassignedMaterials, 0, 0, 0));
+                new PurchasingProductGroupAllocationSummary(0m, fallbackUnassignedSpend, 0m, 0, fallbackUnassignedMaterials, 0, 0, 0),
+                emptyMaterialGroupPerspective with { Rows = fallbackMgRows });
         }
 
         // Zwei Quellen fuer (Komponente, Disponent der verkuerzten Nummer): die Stuecklistenanalyse (nur von Hand
@@ -1664,6 +1679,7 @@ GroupCounts AS (
 )";
 
         var rows = new List<CascadeRow>();
+        var mgRows = new List<CascadeRow>();
         await using (var command = conn.CreateCommand())
         {
             command.CommandText = $@"
@@ -1671,6 +1687,7 @@ WITH {usageGroupsCte},
 AllocatedPositions AS (
     SELECT COALESCE(ug.ProductGroup, 'ohne Produktgruppe') AS ProductGroup,
            {SupplierLabelSql("k.Lifnr", "k.SupplierName")} AS Supplier,
+           {MaterialGroupDimension.Sql} AS MaterialGroup,
            {ArticleDimension.Sql} AS Article,
            CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
            {ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} /
@@ -1683,17 +1700,21 @@ AllocatedPositions AS (
       AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
       AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN {MinSpendYear} AND {maxSpendYear}
 )
-SELECT ProductGroup, Supplier, Article, Year, SUM(AllocatedValue) AS Value
+SELECT ProductGroup, Supplier, MaterialGroup, Article, Year, SUM(AllocatedValue) AS Value
 FROM AllocatedPositions
-GROUP BY ProductGroup, Supplier, Article, Year;";
+GROUP BY ProductGroup, Supplier, MaterialGroup, Article, Year;";
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
-                rows.Add(new CascadeRow(
-                    [reader.GetString(0), reader.GetString(1), reader.GetString(2)],
-                    reader.GetInt32(3),
-                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
+                var productGroup = reader.GetString(0);
+                var supplier = reader.GetString(1);
+                var materialGroup = PurchasingMaterialGroupTextCatalog.Resolve(reader.IsDBNull(2) ? "ohne Warengruppe" : reader.GetString(2));
+                var article = reader.GetString(3);
+                var year = reader.GetInt32(4);
+                var value = Convert.ToDecimal(reader.GetValue(5), CultureInfo.InvariantCulture);
+                rows.Add(new CascadeRow([productGroup, supplier, article], year, value));
+                mgRows.Add(new CascadeRow([productGroup, materialGroup, article], year, value));
             }
         }
 
@@ -1764,6 +1785,7 @@ WHERE COALESCE(trim(VknrDispo), '') <> '';";
         }
 
         var perspectiveRows = BuildCascadeLevel(rows, 0, years, [20, 15, 10]);
+        var materialGroupRows = BuildCascadeLevel(mgRows, 0, years, [20, 15, 10]);
         return new ProductGroupPerspectiveBuildResult(
             emptyPerspective with { Rows = perspectiveRows },
             new PurchasingProductGroupAllocationSummary(
@@ -1774,7 +1796,8 @@ WHERE COALESCE(trim(VknrDispo), '') <> '';";
                 unassignedMaterials,
                 multiGroupMaterials,
                 mappedDispatchers,
-                unmappedDispatchers));
+                unmappedDispatchers),
+            emptyMaterialGroupPerspective with { Rows = materialGroupRows });
     }
 
     private static string NormalizeMaterialKeySql(string expression)
