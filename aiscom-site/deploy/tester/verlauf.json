@@ -1,5 +1,12 @@
 [
  {
+  "guid": "fotogedaechtnis-mac-0.1-1",
+  "titel": "Fotogedächtnis 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.",
+  "datum": "2026-10-24T16:23:41.643275+02:00"
+ },
+ {
   "guid": "obhut-mac-0.1-2",
   "titel": "Obhut 0.1 (Build 2) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",
@@ -35,11 +42,25 @@
   "datum": "2026-10-24T16:07:46.356026+02:00"
  },
  {
+  "guid": "obhut-android-0.1-1",
+  "titel": "Obhut 0.1 (Build 1) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Betreuung alternder Eltern in der Familie koordinieren, auf Android. Gleiches Datenformat wie Mac und iPhone.",
+  "datum": "2026-10-24T16:06:19.481831+02:00"
+ },
+ {
   "guid": "stretcher-mac-0.2-5",
   "titel": "Stretcher 0.2 (Build 5) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",
   "text": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
   "datum": "2026-10-24T16:05:59.356385+02:00"
+ },
+ {
+  "guid": "fotogedaechtnis-ios-0.1-1",
+  "titel": "Fotogedächtnis 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Fotoarchiv mit lokaler KI-Suche auf dem iPhone, mit Apple Intelligence, wo verfügbar. 10 von 10 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T15:56:13.725000+02:00"
  },
  {
   "guid": "caurora-ios-0.4.5-1",

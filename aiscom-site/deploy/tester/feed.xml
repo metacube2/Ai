@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
   <language>de-ch</language>
-  <lastBuildDate>Sat, 24 Oct 2026 14:12:35 +0000</lastBuildDate>
+  <lastBuildDate>Sat, 24 Oct 2026 14:24:43 +0000</lastBuildDate>
+  <item>
+    <title>Fotogedächtnis 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">fotogedaechtnis-mac-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 16:23:41 +0200</pubDate>
+    <description>Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.</description>
+  </item>
   <item>
     <title>Obhut 0.1 (Build 2) für macOS</title>
     <link>https://www.aiscom.ch/tester/#mac</link>
@@ -43,11 +50,25 @@
     <description>NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).</description>
   </item>
   <item>
+    <title>Obhut 0.1 (Build 1) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">obhut-android-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 16:06:19 +0200</pubDate>
+    <description>Betreuung alternder Eltern in der Familie koordinieren, auf Android. Gleiches Datenformat wie Mac und iPhone.</description>
+  </item>
+  <item>
     <title>Stretcher 0.2 (Build 5) für macOS</title>
     <link>https://www.aiscom.ch/tester/#mac</link>
     <guid isPermaLink="false">stretcher-mac-0.2-5</guid>
     <pubDate>Sat, 24 Oct 2026 16:05:59 +0200</pubDate>
     <description>Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.</description>
+  </item>
+  <item>
+    <title>Fotogedächtnis 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">fotogedaechtnis-ios-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 15:56:13 +0200</pubDate>
+    <description>Fotoarchiv mit lokaler KI-Suche auf dem iPhone, mit Apple Intelligence, wo verfügbar. 10 von 10 Klicktests bestanden. Installation über TestFlight.</description>
   </item>
   <item>
     <title>cAurora 0.4.5 (Build 1) für iPhone/iPad</title>

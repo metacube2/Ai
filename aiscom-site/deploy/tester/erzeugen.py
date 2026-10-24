@@ -78,6 +78,13 @@ MAC = APPS = [
         "datei": "Obhut.dmg",
         "kurz": "Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.",
     },
+    {
+        "name": "Fotogedächtnis",
+        "kennung": "fotogedaechtnis",
+        "dmg": GIT / "fotogedaechtnis/build/verteilen/Fotogedaechtnis.dmg",
+        "datei": "Fotogedaechtnis.dmg",
+        "kurz": "Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.",
+    },
 ]
 
 
@@ -99,10 +106,18 @@ IOS = [
      "app": GIT / "obhut-app/build/ios-simulator/Obhut.app",
      "test": GIT / "obhut-app/build/mobiltest.xcresult",
      "kurz": "Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone."},
+    {"name": "Fotogedächtnis", "kennung": "fotogedaechtnis",
+     "app": GIT / "fotogedaechtnis/build/ios-simulator/Fotogedaechtnis.app",
+     "test": GIT / "fotogedaechtnis/build/mobiltest.xcresult",
+     "kurz": "Fotoarchiv mit lokaler KI-Suche auf dem iPhone, mit Apple Intelligence, wo verfügbar."},
 ]
 
 # Android: signierte Release-APKs; Version, Paket und Mindest-Android aus aapt, Signatur aus apksigner
 ANDROID = [
+    {"name": "Obhut", "kennung": "obhut",
+     "apk": GIT / "obhut-android/app/build/outputs/apk/release/app-release.apk",
+     "datei": "Obhut.apk",
+     "kurz": "Betreuung alternder Eltern in der Familie koordinieren, auf Android. Gleiches Datenformat wie Mac und iPhone."},
     {"name": "cAurora", "kennung": "caurora",
      "apk": GIT / "cAuroraAndroid/app/build/outputs/apk/release/app-release.apk",
      "datei": "cAurora.apk",
@@ -188,7 +203,7 @@ def xcresult(p: Path):
     if r.returncode != 0:
         return None
     j = json.loads(r.stdout)
-    gesamt = j.get("passedTests", 0) + j.get("failedTests", 0) + j.get("skippedTests", 0)
+    gesamt = j.get("passedTests", 0) + j.get("failedTests", 0)   # uebersprungene (z. B. Bildschirmfoto-Lauf) zaehlen nicht
     geraet = (j.get("devicesAndConfigurations") or [{}])[0].get("device", {})
     return j.get("passedTests", 0), gesamt, datetime.fromtimestamp(j.get("finishTime", 0)).strftime("%d.%m.%Y"), \
         f"{geraet.get('deviceName', '?')}, iOS {geraet.get('osVersion', '?')}", \
