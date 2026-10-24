@@ -85,6 +85,14 @@ MAC = APPS = [
         "datei": "Fotogedaechtnis.dmg",
         "kurz": "Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.",
     },
+    {
+        "name": "Mietprüfer",
+        "kennung": "mietpruefer",
+        "dmg": GIT / "mietpruefer/build/verteilen/Mietpruefer.dmg",
+        "app": GIT / "mietpruefer/build/verteilen/dd/Build/Products/Release/Mietpruefer.app",
+        "datei": "Mietpruefer.dmg",
+        "kurz": "Mietzinssenkung, Mieterhöhung und Nebenkosten nach Schweizer Mietrecht nachrechnen, Brief als PDF. Deutsch, Französisch, Italienisch, Englisch.",
+    },
 ]
 
 
@@ -110,6 +118,10 @@ IOS = [
      "app": GIT / "fotogedaechtnis/build/ios-simulator/Fotogedaechtnis.app",
      "test": GIT / "fotogedaechtnis/build/mobiltest.xcresult",
      "kurz": "Fotoarchiv mit lokaler KI-Suche auf dem iPhone, mit Apple Intelligence, wo verfügbar."},
+    {"name": "Mietprüfer", "kennung": "mietpruefer",
+     "app": GIT / "mietpruefer/build/ios-simulator/Mietpruefer.app",
+     "test": GIT / "mietpruefer/build/mobiltest.xcresult",
+     "kurz": "Schweizer Mietrecht auf dem iPhone: Senkung, Erhöhung, Nebenkosten prüfen und Brief erstellen."},
 ]
 
 # Android: signierte Release-APKs; Version, Paket und Mindest-Android aus aapt, Signatur aus apksigner

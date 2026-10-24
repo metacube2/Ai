@@ -1,5 +1,19 @@
 [
  {
+  "guid": "mietpruefer-mac-0.1-1",
+  "titel": "Mietprüfer 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Mietzinssenkung, Mieterhöhung und Nebenkosten nach Schweizer Mietrecht nachrechnen, Brief als PDF. Deutsch, Französisch, Italienisch, Englisch.",
+  "datum": "2026-10-24T17:16:25.594655+02:00"
+ },
+ {
+  "guid": "mietpruefer-ios-0.1-1",
+  "titel": "Mietprüfer 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Schweizer Mietrecht auf dem iPhone: Senkung, Erhöhung, Nebenkosten prüfen und Brief erstellen. 12 von 12 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T17:14:57.532000+02:00"
+ },
+ {
   "guid": "fotogedaechtnis-mac-0.1-1",
   "titel": "Fotogedächtnis 0.1 (Build 1) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",

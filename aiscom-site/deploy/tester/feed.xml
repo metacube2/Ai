@@ -6,7 +6,21 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
   <language>de-ch</language>
-  <lastBuildDate>Sat, 24 Oct 2026 14:24:43 +0000</lastBuildDate>
+  <lastBuildDate>Sat, 24 Oct 2026 15:26:06 +0000</lastBuildDate>
+  <item>
+    <title>Mietprüfer 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">mietpruefer-mac-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 17:16:25 +0200</pubDate>
+    <description>Mietzinssenkung, Mieterhöhung und Nebenkosten nach Schweizer Mietrecht nachrechnen, Brief als PDF. Deutsch, Französisch, Italienisch, Englisch.</description>
+  </item>
+  <item>
+    <title>Mietprüfer 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">mietpruefer-ios-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 17:14:57 +0200</pubDate>
+    <description>Schweizer Mietrecht auf dem iPhone: Senkung, Erhöhung, Nebenkosten prüfen und Brief erstellen. 12 von 12 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
   <item>
     <title>Fotogedächtnis 0.1 (Build 1) für macOS</title>
     <link>https://www.aiscom.ch/tester/#mac</link>
