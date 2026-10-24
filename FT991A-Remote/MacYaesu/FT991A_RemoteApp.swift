@@ -8,6 +8,9 @@
 
 import SwiftUI
 import AppKit
+#if SPARKLE
+import Sparkle
+#endif
 
 @main
 struct FT991A_RemoteApp: App {
@@ -22,6 +25,7 @@ struct FT991A_RemoteApp: App {
     init() {
         let services = RadioServiceContainer.live()
         _radioViewModel = StateObject(wrappedValue: RadioViewModel(services: services))
+        Aktualisierung.starten()
     }
 
     var body: some Scene {
@@ -45,6 +49,7 @@ struct FT991A_RemoteApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
+            AktualisierungsBefehle()
             CommandGroup(replacing: .newItem) { }
 
             CommandMenu("Radio") {
@@ -145,3 +150,52 @@ enum AppLanguage: String, Codable, CaseIterable {
         }
     }
 }
+
+// MARK: - Automatische Updates (Sparkle)
+// Gleich wie sparkle-aiscom/Aktualisierung.swift; hier eingefuegt, weil MacYesu.xcodeproj keine Ordner-Synchronisierung hat
+// (eine neue Datei muesste von Hand ins Projekt). Sparkle nur mit Schalter SPARKLE (Tools/verteilen.sh).
+@MainActor
+enum Aktualisierung {
+    #if SPARKLE
+    private static let steuerung = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    #endif
+
+    /// beim Start aufrufen (startet die automatische Pruefung)
+    static func starten() {
+        #if SPARKLE
+        _ = steuerung
+        #endif
+    }
+
+    static func suchen() {
+        #if SPARKLE
+        steuerung.checkForUpdates(nil)
+        #endif
+    }
+
+    static var menueText: String {
+        switch Locale.preferredLanguages.first?.prefix(2) {
+        case "en": return "Check for Updates…"
+        case "fr": return "Rechercher des mises à jour…"
+        case "it": return "Cerca aggiornamenti…"
+        case "es": return "Buscar actualizaciones…"
+        case "ja": return "アップデートを確認…"
+        case "zh": return "检查更新…"
+        default: return "Nach Updates suchen …"
+        }
+    }
+}
+
+/// im App-Menue unter „Über …“
+struct AktualisierungsBefehle: Commands {
+    var body: some Commands {
+        #if SPARKLE
+        CommandGroup(after: .appInfo) {
+            Button(Aktualisierung.menueText) { Aktualisierung.suchen() }
+        }
+        #else
+        EmptyCommands()
+        #endif
+    }
+}
+

@@ -8,11 +8,17 @@
 #         Tools/verteilen.sh --ohne-notar  nur bauen, signieren, DMG (kein Kontakt zu Apples Notardienst; nicht weitergeben)
 set -eu
 cd "${0:A:h}/.."
-TESTER=0; OHNE_NOTAR=0
+TESTER=0; OHNE_NOTAR=0; OHNE_UPDATE=0; UPDATE_VERKAUF=0
+# Sparkle (automatische Updates, ~/Projects/Git/sparkle-aiscom): Kanal macyaesu-tester bzw. macyaesu (Verkauf, Updateliste
+# nur mit --update-verkauf, damit Kaeufer erst nach Freigabe aktualisiert werden)
+SPARKLE=${0:A:h}/../../../sparkle-aiscom
+source $SPARKLE/gemeinsam.zsh
 for arg in "$@"; do
   case $arg in
     --tester) TESTER=1 ;;
     --ohne-notar) OHNE_NOTAR=1 ;;
+    --ohne-update) OHNE_UPDATE=1 ;;
+    --update-verkauf) UPDATE_VERKAUF=1 ;;
     *) print -u2 "Unbekannter Schalter: $arg"; exit 1 ;;
   esac
 done
@@ -31,12 +37,12 @@ TEAM=$(print -- $IDENTITAET | sed -E 's/.*\(([A-Z0-9]{10})\)$/\1/')
 print "Signiere mit: $IDENTITAET"
 
 # Tester-Fassung: eigener Build-Ordner und eigene DMG, damit die Verkaufs-DMG nie ueberschrieben wird
-if (( TESTER )); then ZIEL=build/verteilen-tester; AUSGABE=dist/$APPNAME-Tester.dmg; BEDINGUNGEN='$(inherited) MACYAESU_TESTER'
-else ZIEL=build/verteilen; AUSGABE=dist/$APPNAME.dmg; BEDINGUNGEN='$(inherited)'; fi
+if (( TESTER )); then ZIEL=build/verteilen-tester; AUSGABE=dist/$APPNAME-Tester.dmg; BEDINGUNGEN='$(inherited) MACYAESU_TESTER SPARKLE'; KANAL=macyaesu-tester; NAME=$APPNAME-Tester
+else ZIEL=build/verteilen; AUSGABE=dist/$APPNAME.dmg; BEDINGUNGEN='$(inherited) SPARKLE'; KANAL=macyaesu; NAME=$APPNAME; fi
 rm -rf $ZIEL && mkdir -p $ZIEL dist
 xcodebuild -project $PROJEKT -scheme $SCHEMA -configuration Release -derivedDataPath $ZIEL/dd \
   CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$IDENTITAET" DEVELOPMENT_TEAM=$TEAM PROVISIONING_PROFILE_SPECIFIER= \
-  SWIFT_ACTIVE_COMPILATION_CONDITIONS="$BEDINGUNGEN" \
+  SWIFT_ACTIVE_COMPILATION_CONDITIONS="$BEDINGUNGEN" ${(f)"$(sparkle_buildflags)"} \
   OTHER_CODE_SIGN_FLAGS="--timestamp" build | grep -E "error:|BUILD (SUCCEEDED|FAILED)"
 APP="$ZIEL/dd/Build/Products/Release/$APPNAME.app"
 [[ -d "$APP" ]] || { print -u2 "Build fehlgeschlagen"; exit 1 }
@@ -45,6 +51,8 @@ APP="$ZIEL/dd/Build/Products/Release/$APPNAME.app"
 find "$APP/Contents" -type f -perm -u+x ! -path "*/MacOS/*" -print0 | while IFS= read -r -d '' f; do
   if file "$f" | grep -q "Mach-O"; then codesign --force --options runtime --timestamp --sign "$IDENTITAET" "$f"; fi
 done
+# Sparkle erst nach der Schleife (sie wuerde Downloader.xpc ohne seine Berechtigungen neu signieren)
+$SPARKLE/einbetten.sh "$APP" "$IDENTITAET" $KANAL
 codesign --force --options runtime --timestamp --entitlements $ENTITLEMENTS --sign "$IDENTITAET" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
 # Gegenprobe Fassung (Rauchtest): der Tester-Text steckt nur im Tester-Build; grep -c statt -q (SIGPIPE)
@@ -65,3 +73,8 @@ xcrun stapler staple $DMG
 spctl --assess --type open --context context:primary-signature --verbose=2 $DMG
 cp $DMG $AUSGABE
 print "Fertig: $AUSGABE"
+if (( ! OHNE_UPDATE )) && (( TESTER || UPDATE_VERKAUF )); then
+  V=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
+  B=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Contents/Info.plist")
+  $SPARKLE/veroeffentlichen.sh $KANAL $DMG $NAME-$V-$B
+fi
