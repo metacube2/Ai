@@ -34,7 +34,7 @@ curl -sI https://www.aiscom.ch/tester/Stretcher.dmg | grep -i "content-length"
 curl -s https://www.aiscom.ch/tester/Stretcher.dmg | shasum -a 256
 ```
 
-Stand 2026-10-24: Aurora 1.0 (3), Kamera-Import 1.0 (7), Antennen-Studio 1.0 (6, Build 7 folgt), MacYaesu 1.1 (2),
+Stand 2026-10-24: Aurora 1.0 (3), Kamera-Import 1.0 (7), Antennen-Studio 1.0 (7), MacYaesu 1.1 (2),
 Stretcher 0.2 (2). Kamera-Import Build 8 (Einordnung gut/schlecht) ist bewusst nicht hier, nur lokal zum Testen.
 
 Nicht auf der Seite: Zeigerwerk (braucht VU1-Hardware, Lizenz-Prüfschlüssel offen).
