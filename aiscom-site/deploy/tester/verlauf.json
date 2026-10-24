@@ -1,0 +1,72 @@
+[
+ {
+  "guid": "stretcher-mac-0.2-3",
+  "titel": "Stretcher 0.2 (Build 3) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
+  "datum": "2026-10-24T15:02:08.848687+02:00"
+ },
+ {
+  "guid": "obhut-ios-0.1-1",
+  "titel": "Obhut 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone. 11 von 11 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T14:32:39.963000+02:00"
+ },
+ {
+  "guid": "stretcher-ios-0.2-2",
+  "titel": "Stretcher 0.2 (Build 2) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge. 10 von 10 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T14:26:54.838000+02:00"
+ },
+ {
+  "guid": "antennen-studio-ios-1.0-7",
+  "titel": "Antennen-Studio 1.0 (Build 7) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut). 17 von 17 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T14:20:17.599000+02:00"
+ },
+ {
+  "guid": "obhut-mac-0.1-1",
+  "titel": "Obhut 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.",
+  "datum": "2026-10-24T13:40:05.897663+02:00"
+ },
+ {
+  "guid": "antennen-studio-mac-1.0-7",
+  "titel": "Antennen-Studio 1.0 (Build 7) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).",
+  "datum": "2026-10-24T12:52:38.311171+02:00"
+ },
+ {
+  "guid": "aurora-studio-mac-1.0-3",
+  "titel": "Aurora Studio 1.0 (Build 3) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.",
+  "datum": "2026-10-24T11:39:29.503296+02:00"
+ },
+ {
+  "guid": "kamera-import-mac-1.0-7",
+  "titel": "Kamera-Import 1.0 (Build 7) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.",
+  "datum": "2026-10-24T09:59:51+02:00"
+ },
+ {
+  "guid": "macyaesu-mac-1.1-2",
+  "titel": "MacYaesu 1.1 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.",
+  "datum": "2026-10-24T09:58:03.254911+02:00"
+ },
+ {
+  "guid": "caurora-android-0.4.5-10",
+  "titel": "cAurora 0.4.5 (Build 10) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen.",
+  "datum": "2026-10-09T23:41:05.213132+02:00"
+ }
+]

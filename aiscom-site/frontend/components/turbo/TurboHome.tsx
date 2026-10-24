@@ -146,6 +146,11 @@ export default function TurboHome({ locale, dictionary }: { locale: Locale; dict
             </a>
           </p>
         ))}
+        <p className="tv-hell">
+          <a href="/feed.xml" type="application/rss+xml" className="tv-knopf tv-klein">
+            ◉ {dictionary.products.rss_text}
+          </a>
+        </p>
       </TvFenster>
 
       {/* Zeitreise zur ersten Homepage (statisch unter /nextvision/) */}

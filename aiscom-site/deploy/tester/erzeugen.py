@@ -19,6 +19,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "feed"))
+import rss  # noqa: E402
+
 GIT = Path.home() / "Projects/Git"
 HIER = Path(__file__).resolve().parent
 
@@ -183,7 +186,8 @@ def xcresult(p: Path):
     gesamt = j.get("passedTests", 0) + j.get("failedTests", 0) + j.get("skippedTests", 0)
     geraet = (j.get("devicesAndConfigurations") or [{}])[0].get("device", {})
     return j.get("passedTests", 0), gesamt, datetime.fromtimestamp(j.get("finishTime", 0)).strftime("%d.%m.%Y"), \
-        f"{geraet.get('deviceName', '?')}, iOS {geraet.get('osVersion', '?')}"
+        f"{geraet.get('deviceName', '?')}, iOS {geraet.get('osVersion', '?')}", \
+        datetime.fromtimestamp(j.get("finishTime", 0)).astimezone().isoformat()
 
 
 def daten_ios(a):
@@ -275,7 +279,34 @@ def karte(d):
 </article>"""
 
 
-def seite(apps, ios, android):
+def feed_eintraege(apps, ios, android):
+    """Jede Fassung auf der Seite ist ein Feed-Eintrag; Datum = Datei (DMG/APK) bzw. Ende des Klicktestlaufs"""
+    neu = []
+    for d in apps:
+        datum = datetime.fromtimestamp(d["dmg"].stat().st_mtime).astimezone()
+        neu.append({"guid": f"{d['kennung']}-mac-{d['version']}-{d['build']}", "titel": f"{d['name']} {d['version']} (Build {d['build']}) für macOS",
+                    "link": f"https://www.aiscom.ch/tester/#mac", "text": d["kurz"], "datum": datum.isoformat()})
+    for d in ios:
+        if not d["test"]:
+            continue
+        datum = datetime.fromisoformat(d["test"][4])
+        neu.append({"guid": f"{d['kennung']}-ios-{d['version']}-{d['build']}", "titel": f"{d['name']} {d['version']} (Build {d['build']}) für iPhone/iPad",
+                    "link": "https://www.aiscom.ch/tester/#ios", "text": f"{d['kurz']} {d['test'][0]} von {d['test'][1]} Klicktests bestanden. Installation über TestFlight.",
+                    "datum": datum.isoformat()})
+    for d in android:
+        datum = datetime.fromtimestamp(d["apk"].stat().st_mtime).astimezone()
+        neu.append({"guid": f"{d['kennung']}-android-{d['version']}-{d['build']}", "titel": f"{d['name']} {d['version']} (Build {d['build']}) für Android",
+                    "link": "https://www.aiscom.ch/tester/#android", "text": d["kurz"], "datum": datum.isoformat()})
+    return neu
+
+
+def neuigkeiten(verlauf):
+    zeilen = "".join(f'<li><time>{datetime.fromisoformat(e["datum"]).strftime("%d.%m.%Y")}</time> {e["titel"]}</li>' for e in verlauf[:6])
+    return f'''<section class="neu"><h3>Neueste Fassungen</h3><ul>{zeilen}</ul>
+    <a class="rss" href="feed.xml" type="application/rss+xml">RSS-Feed abonnieren</a></section>'''
+
+
+def seite(apps, ios, android, verlauf):
     alle_notarisiert = all(d["notarisiert"] for d in apps)
     schritt3 = (
         "<li><b>Starten</b> wie jede andere App – die Apps sind von Apple beglaubigt.</li>"
@@ -295,6 +326,7 @@ def seite(apps, ios, android):
 <title>Testversionen | AISCOM</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/favicon.ico">
+<link rel="alternate" type="application/rss+xml" title="AISCOM Testversionen" href="feed.xml">
 <style>
 :root {{ --bg:#0a1628; --surface:#13213b; --surface-2:#1a2b4d; --text:#f5f7fb; --muted:#a8b3c7; --accent:#87ceeb; --line:rgba(135,206,235,.18); }}
 * {{ box-sizing:border-box; }}
@@ -330,6 +362,10 @@ h3 {{ font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--
 .reiter a[aria-selected="true"] {{ background:linear-gradient(135deg,#9ad9f3,#5fb6dc); color:#06121f; border-color:transparent; }}
 .reiter small {{ opacity:.7; font-weight:500; margin-left:6px; }}
 .platt[hidden] {{ display:none; }}
+.neu {{ background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px 24px; margin:0 0 26px; }}
+.neu ul {{ margin:6px 0 10px; padding-left:0; list-style:none; }} .neu li {{ margin:3px 0; }}
+.neu time {{ color:var(--muted); font:13px ui-monospace,Menlo,monospace; margin-right:10px; }}
+.rss {{ display:inline-block; padding:6px 14px; border-radius:999px; background:#f26522; color:#fff; text-decoration:none; font-weight:600; font-size:14px; }}
 .hinweis {{ margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }}
 footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
 @media (max-width:520px) {{ .karten {{ grid-template-columns:1fr; }} .kopf {{ flex-direction:column; }} }}
@@ -340,6 +376,8 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
   <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad und Android, alle als Vollversion.</p>
+
+  {neuigkeiten(verlauf)}
 
   <nav class="reiter" role="tablist">
     <a href="#mac" role="tab" data-p="mac">macOS<small>{len(apps)}</small></a>
@@ -423,7 +461,10 @@ if __name__ == "__main__":
             print(f"FEHLT (Android): {a['apk']}", file=sys.stderr)
             sys.exit(1)
         android.append(daten_android(a))
-    (HIER / "index.html").write_text(seite(fertig, ios, android), encoding="utf-8")
+    verlauf = rss.verlauf_ergaenzen(HIER / "verlauf.json", feed_eintraege(fertig, ios, android))
+    (HIER / "feed.xml").write_text(rss.feed("AISCOM – Testversionen", "https://www.aiscom.ch/tester/", "https://www.aiscom.ch/tester/feed.xml",
+                                            "Neue Testfassungen für Mac, iPhone/iPad und Android.", verlauf), encoding="utf-8")
+    (HIER / "index.html").write_text(seite(fertig, ios, android, verlauf), encoding="utf-8")
     for d in fertig:
         print(f"Mac {d['name']}: {d['version']} ({d['build']}) {d['groesse']} "
               f"{'Developer ID' if d['developer_id'] else 'ad hoc'}{', notarisiert' if d['notarisiert'] else ''} sha256 {d['sha'][:16]}… → {d['datei']}")

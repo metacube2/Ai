@@ -6,6 +6,7 @@
 <title>Testversionen | AISCOM</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/favicon.ico">
+<link rel="alternate" type="application/rss+xml" title="AISCOM Testversionen" href="feed.xml">
 <style>
 :root { --bg:#0a1628; --surface:#13213b; --surface-2:#1a2b4d; --text:#f5f7fb; --muted:#a8b3c7; --accent:#87ceeb; --line:rgba(135,206,235,.18); }
 * { box-sizing:border-box; }
@@ -41,6 +42,10 @@ h3 { font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--a
 .reiter a[aria-selected="true"] { background:linear-gradient(135deg,#9ad9f3,#5fb6dc); color:#06121f; border-color:transparent; }
 .reiter small { opacity:.7; font-weight:500; margin-left:6px; }
 .platt[hidden] { display:none; }
+.neu { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px 24px; margin:0 0 26px; }
+.neu ul { margin:6px 0 10px; padding-left:0; list-style:none; } .neu li { margin:3px 0; }
+.neu time { color:var(--muted); font:13px ui-monospace,Menlo,monospace; margin-right:10px; }
+.rss { display:inline-block; padding:6px 14px; border-radius:999px; background:#f26522; color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
 .hinweis { margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }
 footer { margin-top:36px; color:var(--muted); font-size:13px; }
 @media (max-width:520px) { .karten { grid-template-columns:1fr; } .kopf { flex-direction:column; } }
@@ -51,6 +56,9 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
   <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad und Android, alle als Vollversion.</p>
+
+  <section class="neu"><h3>Neueste Fassungen</h3><ul><li><time>24.10.2026</time> Stretcher 0.2 (Build 3) für macOS</li><li><time>24.10.2026</time> Obhut 0.1 (Build 1) für iPhone/iPad</li><li><time>24.10.2026</time> Stretcher 0.2 (Build 2) für iPhone/iPad</li><li><time>24.10.2026</time> Antennen-Studio 1.0 (Build 7) für iPhone/iPad</li><li><time>24.10.2026</time> Obhut 0.1 (Build 1) für macOS</li><li><time>24.10.2026</time> Antennen-Studio 1.0 (Build 7) für macOS</li></ul>
+    <a class="rss" href="feed.xml" type="application/rss+xml">RSS-Feed abonnieren</a></section>
 
   <nav class="reiter" role="tablist">
     <a href="#mac" role="tab" data-p="mac">macOS<small>6</small></a>
@@ -269,7 +277,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </section>
   </div>
 
-  <footer>Stand 24.10.2026 15:02. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <footer>Stand 24.10.2026 15:05. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 function zeigen() {

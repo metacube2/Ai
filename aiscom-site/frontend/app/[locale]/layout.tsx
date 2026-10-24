@@ -19,6 +19,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: dictionary.meta.title,
     description: dictionary.meta.description,
+    // RSS-Feed der App-Versionen (statisch von Apache: /feed.xml, erzeugt mit deploy/feed/erzeugen.py)
+    alternates: { types: { 'application/rss+xml': 'https://www.aiscom.ch/feed.xml' } },
   };
 }
 

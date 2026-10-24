@@ -1,0 +1,37 @@
+[
+ {
+  "guid": "antennen-studio-seite",
+  "titel": "Antennen-Studio: Produktseite",
+  "link": "https://www.aiscom.ch/antennen-studio/",
+  "text": "NEC-Antennensimulation für den Mac mit 3D-Ansicht, Diagrammen, Frequenzgang und Optimierer.",
+  "datum": "2026-10-21T09:12:06+00:00"
+ },
+ {
+  "guid": "kamera-import-mac-1.0-2",
+  "titel": "Kamera-Import 1.0 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/kamera-uploader/",
+  "text": "Lädt von der Kamera nur die fehlenden Fotos und Videos, auf den Mac oder per SFTP.",
+  "datum": "2026-10-21T07:38:29+00:00"
+ },
+ {
+  "guid": "aurora-studio-seite",
+  "titel": "Aurora Studio: Produktseite",
+  "link": "https://www.aiscom.ch/aurora-studio/",
+  "text": "Live-Bildmischer und Tonpult für Livestreams auf dem Mac.",
+  "datum": "2026-10-20T21:03:15+00:00"
+ },
+ {
+  "guid": "macyaesu-mac-1.1-2",
+  "titel": "MacYaesu 1.1 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/macyaesu/",
+  "text": "Fernsteuerung für den Yaesu FT-991A auf dem Mac: CAT-Steuerung, Logbuch, Audio.",
+  "datum": "2026-10-19T13:51:13+00:00"
+ },
+ {
+  "guid": "caurora-android-0.4.5-10",
+  "titel": "cAurora 0.4.5 für Android",
+  "link": "https://www.aurora-weather-livecam.com/app/",
+  "text": "Android-App zur Aurora-Livecam in Dürnten: Livebild, Zeitraffer, Ereignisse, Wetter. Kostenlos.",
+  "datum": "2026-10-09T21:43:43+00:00"
+ }
+]

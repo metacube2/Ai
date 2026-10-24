@@ -180,7 +180,8 @@
         "live": "https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA/live"
       }
     ],
-    "live_text": "Aurora Livecam rund um die Uhr live auf YouTube"
+    "live_text": "Aurora Livecam rund um die Uhr live auf YouTube",
+    "rss_text": "Neue App-Versionen per RSS-Feed abonnieren"
   },
   "retro": {
     "title": "Zeitreise",

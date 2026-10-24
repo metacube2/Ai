@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>AISCOM – neue App-Versionen</title>
+  <link>https://www.aiscom.ch/de</link>
+  <atom:link href="https://www.aiscom.ch/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>Neue Versionen der Apps von AISCOM (Mac und Android).</description>
+  <language>de-ch</language>
+  <lastBuildDate>Sat, 24 Oct 2026 13:04:32 +0000</lastBuildDate>
+  <item>
+    <title>Antennen-Studio: Produktseite</title>
+    <link>https://www.aiscom.ch/antennen-studio/</link>
+    <guid isPermaLink="false">antennen-studio-seite</guid>
+    <pubDate>Wed, 21 Oct 2026 09:12:06 +0000</pubDate>
+    <description>NEC-Antennensimulation für den Mac mit 3D-Ansicht, Diagrammen, Frequenzgang und Optimierer.</description>
+  </item>
+  <item>
+    <title>Kamera-Import 1.0 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/kamera-uploader/</link>
+    <guid isPermaLink="false">kamera-import-mac-1.0-2</guid>
+    <pubDate>Wed, 21 Oct 2026 07:38:29 +0000</pubDate>
+    <description>Lädt von der Kamera nur die fehlenden Fotos und Videos, auf den Mac oder per SFTP.</description>
+  </item>
+  <item>
+    <title>Aurora Studio: Produktseite</title>
+    <link>https://www.aiscom.ch/aurora-studio/</link>
+    <guid isPermaLink="false">aurora-studio-seite</guid>
+    <pubDate>Tue, 20 Oct 2026 21:03:15 +0000</pubDate>
+    <description>Live-Bildmischer und Tonpult für Livestreams auf dem Mac.</description>
+  </item>
+  <item>
+    <title>MacYaesu 1.1 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/macyaesu/</link>
+    <guid isPermaLink="false">macyaesu-mac-1.1-2</guid>
+    <pubDate>Mon, 19 Oct 2026 13:51:13 +0000</pubDate>
+    <description>Fernsteuerung für den Yaesu FT-991A auf dem Mac: CAT-Steuerung, Logbuch, Audio.</description>
+  </item>
+  <item>
+    <title>cAurora 0.4.5 für Android</title>
+    <link>https://www.aurora-weather-livecam.com/app/</link>
+    <guid isPermaLink="false">caurora-android-0.4.5-10</guid>
+    <pubDate>Fri, 09 Oct 2026 21:43:43 +0000</pubDate>
+    <description>Android-App zur Aurora-Livecam in Dürnten: Livebild, Zeitraffer, Ereignisse, Wetter. Kostenlos.</description>
+  </item>
+</channel>
+</rss>

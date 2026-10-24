@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>AISCOM – Testversionen</title>
+  <link>https://www.aiscom.ch/tester/</link>
+  <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
+  <language>de-ch</language>
+  <lastBuildDate>Sat, 24 Oct 2026 13:05:32 +0000</lastBuildDate>
+  <item>
+    <title>Stretcher 0.2 (Build 3) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">stretcher-mac-0.2-3</guid>
+    <pubDate>Sat, 24 Oct 2026 15:02:08 +0200</pubDate>
+    <description>Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.</description>
+  </item>
+  <item>
+    <title>Obhut 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">obhut-ios-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 14:32:39 +0200</pubDate>
+    <description>Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone. 11 von 11 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Stretcher 0.2 (Build 2) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">stretcher-ios-0.2-2</guid>
+    <pubDate>Sat, 24 Oct 2026 14:26:54 +0200</pubDate>
+    <description>Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge. 10 von 10 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Antennen-Studio 1.0 (Build 7) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">antennen-studio-ios-1.0-7</guid>
+    <pubDate>Sat, 24 Oct 2026 14:20:17 +0200</pubDate>
+    <description>NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut). 17 von 17 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Obhut 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">obhut-mac-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 13:40:05 +0200</pubDate>
+    <description>Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.</description>
+  </item>
+  <item>
+    <title>Antennen-Studio 1.0 (Build 7) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">antennen-studio-mac-1.0-7</guid>
+    <pubDate>Sat, 24 Oct 2026 12:52:38 +0200</pubDate>
+    <description>NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).</description>
+  </item>
+  <item>
+    <title>Aurora Studio 1.0 (Build 3) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">aurora-studio-mac-1.0-3</guid>
+    <pubDate>Sat, 24 Oct 2026 11:39:29 +0200</pubDate>
+    <description>Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.</description>
+  </item>
+  <item>
+    <title>Kamera-Import 1.0 (Build 7) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">kamera-import-mac-1.0-7</guid>
+    <pubDate>Sat, 24 Oct 2026 09:59:51 +0200</pubDate>
+    <description>Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.</description>
+  </item>
+  <item>
+    <title>MacYaesu 1.1 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">macyaesu-mac-1.1-2</guid>
+    <pubDate>Sat, 24 Oct 2026 09:58:03 +0200</pubDate>
+    <description>Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.</description>
+  </item>
+  <item>
+    <title>cAurora 0.4.5 (Build 10) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">caurora-android-0.4.5-10</guid>
+    <pubDate>Fri, 09 Oct 2026 23:41:05 +0200</pubDate>
+    <description>Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen.</description>
+  </item>
+</channel>
+</rss>

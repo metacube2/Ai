@@ -219,6 +219,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </a>
             </p>
           ))}
+          <p className="mt-4 text-center">
+            <a href="/feed.xml" type="application/rss+xml" className="inline-flex items-center gap-2 rounded-full bg-[#F26522] px-5 py-2 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5">
+              ◉ {dictionary.products.rss_text}
+            </a>
+          </p>
           <Reveal>
             <a href={dictionary.retro.href} className="group mt-12 mx-auto block max-w-2xl glass rounded-2xl p-6 text-center transition-transform hover:-translate-y-1">
               <p className="text-sm uppercase tracking-widest text-accent">⏳ {dictionary.retro.title}</p>

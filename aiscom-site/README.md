@@ -24,6 +24,7 @@ Betrieb, Server, Deploy und Sicherheit sind bewusst nicht in diesem
 | `frontend/components/visual/` | Grafik- und Animationsbausteine (siehe unten) |
 | `deploy/kamera-uploader/` | Statische Platzhalterseite `/kamera-uploader/` |
 | `deploy/tester/` | Tester-Seite `/tester/` (nicht verlinkt): `erzeugen.py` baut `index.html` aus den gebauten DMGs (Version, Build, Datum, Grösse, SHA-256), `bilder/` App-Icons; die DMGs liegen nicht im Repo |
+| `deploy/feed/` | RSS-Feed `/feed.xml` der App-Versionen (`erzeugen.py`, Verlauf `verlauf.json`), siehe README dort |
 | `deploy/` | Einmaliger Umstieg 2026-10-04 (Dienst, Proxy, Sitemap), `pruefen.sh` |
 
 ## Design
