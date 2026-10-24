@@ -1,5 +1,12 @@
 [
  {
+  "guid": "kamera-import-android-1.0-1",
+  "titel": "Kamera-Import 1.0 (Build 1) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet.",
+  "datum": "2026-10-24T22:46:23.152752+02:00"
+ },
+ {
   "guid": "antennen-studio-android-1.0-1",
   "titel": "Antennen-Studio 1.0 (Build 1) für Android",
   "link": "https://www.aiscom.ch/tester/#android",

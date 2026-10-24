@@ -144,6 +144,11 @@ ANDROID = [
      "datei": "Antennen-Studio.apk",
      "kurz": "Antennen mit NEC-2 simulieren: 3D-Modell, Richtdiagramme, SWR, Smith-Diagramm, Optimierer, Live-Regler. "
              "Rechenkern nec2c (GPLv3) wie auf Mac und iPhone, Ergebnisse zahlengleich."},
+    {"name": "Kamera-Import", "kennung": "kamera-import",
+     "apk": GIT / "kamera-import-android/dist/kamera-import-1.0.apk",
+     "datei": "Kamera-Import.apk",
+     "kurz": "Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und "
+             "Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet."},
 ]
 
 # E-Books: EPUB aus dem Buchprojekt (Wortzahl und Pruefung stehen in dessen README); Umschlag als Bild unter bilder/
