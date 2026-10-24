@@ -1,0 +1,80 @@
+# Die Woche ohne Wind
+@ Laufenburg und Nant de Drance · Februar 2030
+
+[bild]
+
+Am Montag, dem 11. Februar 2030, lag über Mitteleuropa ein Hochdruckgebiet, das sich nicht bewegen wollte. Die Meteorologen nannten es eine «Dunkelflaute»: kalte, windstille Tage unter einer Hochnebeldecke, durch die kaum Sonne drang. Die Windräder in der Nordsee standen still. Die Solarfelder in Deutschland lieferten ein Zehntel ihrer Leistung. In Frankreich waren elf Kernreaktoren wegen Revisionen und einem Streik vom Netz. Und in der Schweiz zeigten die Thermometer im Mittelland seit neun Tagen Minusgrade.
+
+Marco Steiner war zweiundfünfzig, Netzingenieur bei der nationalen Netzgesellschaft und an diesem Montag Chef der Nachtschicht in der Leitstelle in Laufenburg. Die Leitstelle war ein fensterloser Raum mit einer Bildschirmwand, auf der das Höchstspannungsnetz der Schweiz als feines Geflecht aus Linien leuchtete. Grün hiess: alles gut. Gelb hiess: aufpassen. Rot hatte Marco in zwanzig Jahren nur zweimal gesehen.
+
+Um 18.20 Uhr wurde die Linie zwischen Laufenburg und dem deutschen Netz gelb.
+
+## Der Strom, der fehlt
+
+Die Schweiz hatte im Winter schon immer zu wenig eigenen Strom. Im Sommer flossen die Flüsse voll, die Stauseen füllten sich, die Wasserkraftwerke lieferten mehr, als das Land brauchte. Im Winter war es umgekehrt. Dann kaufte man im Ausland, vor allem in Deutschland und Frankreich, und verliess sich darauf, dass die Nachbarn genug hatten. In normalen Wintern war das kein Problem. Dieser Winter war nicht normal.
+
+Die Zahl, auf die Marco starrte, hiess «Importkapazität verfügbar», und sie sank. Deutschland brauchte seinen Strom selbst. Frankreich ebenso. Italien, das sonst über die Schweiz Strom aus dem Norden bezog, kaufte, was es kriegen konnte, und trieb die Preise in die Höhe. Um 19 Uhr kostete eine Megawattstunde an der Börse elfmal so viel wie im Sommer.
+
+Neben Marco sass Aylin Demir, achtundzwanzig, Data Scientist, seit zwei Jahren bei der Netzgesellschaft. Sie war für das zuständig, was im Haus «Dirigent» hiess: ein System, das nicht das Netz steuerte, das tat es nie, sondern das alles zusammenrechnete, was in den nächsten Stunden und Tagen passieren könnte. Verbrauch, Wetter, Wasserstände in den Speicherseen, Preise, Fahrpläne der Kraftwerke, Ausfälle, Notreserven. Und, seit einem Jahr, die Flexibilität.
+
+«Flexibilität» war das Wort, das in diesem Winter die Schweiz retten sollte, und Marco hatte es lange nicht leiden können. Es klang nach Beratungsfirma. Was es meinte, war einfach: Wenn Strom knapp wird, muss nicht nur mehr erzeugt werden. Es kann auch weniger verbraucht werden, im richtigen Moment, an der richtigen Stelle. Eine Wärmepumpe, die zwei Stunden später heizt, merkt niemand. Ein Elektroauto, das statt um 19 Uhr um 2 Uhr lädt, merkt niemand. Ein Kühlhaus, das seine Temperatur um ein Grad sinken lässt, bevor es knapp wird, und dann drei Stunden pausiert, merkt niemand. Aber eine Million Wärmepumpen, sechshunderttausend Autos und viertausend Kühlhäuser merkt das Netz.
+
+## Der Dirigent
+
+Der Dirigent war 2028 aus einem Forschungsprojekt der ETH und der EPFL hervorgegangen und lief seitdem auf Rechnern in einem Bunker im Berner Oberland, getrennt vom Internet, verbunden nur mit den Systemen der Netzgesellschaft und der Energieversorger. Er war kein einzelnes Programm, sondern eine Familie von Modellen: eines für den Verbrauch, das jedes Quartier der Schweiz einzeln kannte; eines für das Wetter, das die Prognosen von Meteo Schweiz verfeinerte; eines für die Wasserkraft, das wusste, wie viel Wasser in jedem Stausee lag und wie viel man im März noch brauchen würde; und eines, das Aylin «die Partitur» nannte und das ausrechnete, wann wer wie viel Strom verbrauchen oder liefern sollte, damit das Netz stabil blieb und die Schweiz im März nicht mit leeren Seen dastand.
+
+Die Partitur wurde nicht befohlen. Sie wurde angeboten. Jeder Haushalt, jede Firma, jede Gemeinde, die mitmachte, bekam über ihren Energieversorger ein Angebot: Wenn du deine Wärmepumpe heute von 18 bis 20 Uhr pausieren lässt, bekommst du so und so viel Gutschrift. Wer zustimmte, musste nichts tun. Die Geräte taten es selbst, gesteuert über ein kleines Kästchen im Keller, das die Energieversorger seit 2027 gratis einbauten, und das, das war wichtig gewesen in der Abstimmung, jederzeit mit einem Knopf überstimmt werden konnte.
+
+Bis zu diesem Februar waren das freundliche Zahlen gewesen. Ein paar Megawatt hier, ein paar dort. Niemand wusste, was geschehen würde, wenn man wirklich darauf angewiesen war.
+
+---
+
+Um 20.10 Uhr sagte Aylin: «Der Dirigent sagt für Mittwoch, 18 Uhr, eine Lücke von 1400 Megawatt voraus. Wahrscheinlichkeit siebzig Prozent.»
+
+Marco rechnete im Kopf. Vierzehnhundert Megawatt war mehr als die Leistung des Kernkraftwerks Gösgen. Wenn diese Lücke kam und nicht geschlossen wurde, würde das Netz zuerst die Frequenz verlieren und dann, um sich selbst zu schützen, ganze Regionen abschalten. Es gab dafür einen Plan, der in einem Ordner stand und den niemand je anwenden wollte: die kontrollierten Abschaltungen, Region für Region, vier Stunden lang.
+
+«Was schlägt er vor?»
+
+Aylin drehte den Bildschirm zu ihm. Die Partitur für Mittwoch sah aus wie ein Notenblatt mit tausend Stimmen. Ganz oben die grossen Instrumente: die Pumpspeicherwerke. Nant de Drance im Unterwallis, Linth-Limmern im Glarnerland, Grimsel im Berner Oberland. Ihre Seen waren noch halb voll, und der Dirigent schlug vor, sie am Mittwoch zwischen 17 und 21 Uhr mit voller Leistung laufen zu lassen, statt sie gleichmässig über die Woche zu verteilen. Darunter die Flusskraftwerke, die Gaskraftwerke der Reserve, die man vor zwei Jahren gebaut hatte und die seither still gestanden hatten. Und darunter, in einer langen Reihe feiner Linien, die Flexibilität: 1,1 Millionen Wärmepumpen, 640 000 Autobatterien, 210 000 Hausbatterien, Kühlhäuser, Klärwerke, Zementwerke, Aluminiumschmelzen, Rechenzentren.
+
+«Wenn alle mitmachen», sagte Aylin, «schliessen wir die Lücke. Wenn zwei Drittel mitmachen, auch noch. Darunter wird es knapp.»
+
+## Mittwoch
+
+Die Netzgesellschaft tat am Dienstagmorgen etwas, das sie noch nie getan hatte: Sie wandte sich direkt an die Bevölkerung. Die Medienmitteilung war kurz. Sie erklärte die Lage, nannte die Uhrzeit und bat darum, am Mittwochabend die Angebote der Energieversorger anzunehmen und, wer konnte, zwischen 17 und 21 Uhr auf Waschmaschine, Backofen und Tumbler zu verzichten. Am Schluss stand ein Satz, über den die Kommunikationsabteilung lange gestritten hatte: «Wir glauben, dass wir es gemeinsam schaffen.»
+
+Die Reaktionen kamen schnell und waren gemischt. Eine Zeitung titelte «Bundesbern bittet um Gnade». Ein Nationalrat forderte den sofortigen Bau von zwei Kernkraftwerken, was für Mittwoch nicht hilfreich war. Aber die Zahl, die Aylin den ganzen Dienstag beobachtete, stieg: die Zahl der angenommenen Angebote. Um 12 Uhr 410 000. Um 18 Uhr 890 000. Um Mitternacht 1,3 Millionen.
+
+Am Mittwoch um 16 Uhr kam Marco in die Leitstelle, obwohl er erst um 18 Uhr Dienst hatte. Die meisten seiner Kollegen waren schon da. Jemand hatte Gipfeli mitgebracht. Auf der Bildschirmwand war das Netz grün.
+
+Um 17 Uhr fuhren die Pumpspeicher hoch. In der Kaverne von Nant de Drance, sechshundert Meter tief im Fels zwischen zwei Stauseen, begannen sechs Maschinen sich mit voller Leistung zu drehen, neunhundert Megawatt, und das Wasser des oberen Sees schoss durch die Druckleitung hinunter.
+
+Um 17.30 Uhr begann die Flexibilität. Auf Aylins Bildschirm sah man es als Kurve, die nach unten knickte: Der Verbrauch der Schweiz, der um diese Zeit an einem kalten Februartag normalerweise steil anstieg, flachte ab. In einer Million Kellern hielten Wärmepumpen inne. In Garagen hörten Ladekabel auf zu summen. In einer Aluminiumhütte im Wallis wurde die Schmelze für drei Stunden heruntergefahren, gegen eine Entschädigung, die der Dirigent ausgehandelt hatte.
+
+Um 18.04 Uhr fiel in Frankreich ein weiterer Reaktor aus. Die Importkapazität sank um weitere dreihundert Megawatt. Die Linie nach Frankreich wurde gelb, dann orange.
+
+Marco stand auf. «Aylin?»
+
+«Ich seh's», sagte sie. Der Dirigent rechnete. Nach neun Sekunden erschien eine neue Partitur. Sie zog die Pumpspeicher von Linth-Limmern um eine halbe Stunde vor, verschob dreihunderttausend Autobatterien von «nicht laden» auf «ins Netz zurückspeisen» und schickte an die Rechenzentren in Zürich und Genf ein Angebot, ihre nicht dringenden Berechnungen für zwei Stunden nach Norwegen zu verlagern, wo das Wasser in den Speichern noch reichte.
+
+Die Autobesitzer, die beim Kauf ein Häkchen gesetzt hatten, dass ihr Auto im Notfall Strom zurückgeben durfte, bekamen eine Nachricht aufs Telefon. *Ihr Auto hilft gerade mit 7 kW, das Netz stabil zu halten. Ihre Batterie ist morgen um 7 Uhr wieder auf 80 Prozent. Danke.* Viele machten einen Screenshot und schickten ihn ihren Freunden.
+
+Um 18.40 Uhr stand die Frequenz bei 49,93 Hertz. Tief, aber im sicheren Bereich. Um 19.30 Uhr bei 49,97. Um 21 Uhr bei 50,00.
+
+## Danach
+
+Es gab an jenem Abend in der Schweiz keine Abschaltung. Es gab auch keinen Jubel, weil die meisten Menschen nicht bemerkt hatten, dass etwas auf dem Spiel stand. Sie hatten ihre Wärmepumpe pausieren lassen, das Auto nicht geladen und am nächsten Morgen eine kleine Gutschrift auf der Stromrechnung gesehen.
+
+In der Leitstelle in Laufenburg sass Marco um 21.15 Uhr vor dem letzten Gipfeli und sah Aylin an. «Weisst du, was ich die ganze Zeit gedacht habe?»
+
+«Dass du in Pension gehen solltest?»
+
+Er lachte. «Dass das Netz zum ersten Mal ein Orchester war. Bisher waren wir Feuerwehr. Wir haben gelöscht, wenn es brannte. Heute haben wir gespielt.»
+
+Die Woche ohne Wind wurde in der Schweiz später zum Wendepunkt der Energiepolitik, wenn auch nicht so, wie viele es erwartet hatten. Es wurden keine neuen Grosskraftwerke beschlossen. Stattdessen wurde das kleine Kästchen im Keller Standard, die Rückspeisung aus Autobatterien gesetzlich geregelt und der Ausbau der alpinen Solaranlagen beschleunigt, die im Winter über dem Nebel mehr Strom lieferten als die im Mittelland. Und der Dirigent bekam eine neue Aufgabe: Er durfte jetzt auch im Sommer mitreden, wenn es zu viel Strom gab, und Wärmepumpen dazu bringen, Häuser vorzuheizen, Boiler aufzuladen und Wasser in die Stauseen hinaufzupumpen, wenn die Sonne zu stark schien.
+
+Aylin Demir leitet heute die Abteilung, die den Dirigenten weiterentwickelt. Als Lea sie fragte, was sie am meisten überrascht habe, sagte sie: «Dass die Leute mitgemacht haben. Wir hatten in den Modellen mit sechzig Prozent gerechnet. Es waren siebenundachtzig. Das war kein Algorithmus. Das war die Schweiz.»
+
+> !Stand heute
+> Das Pumpspeicherkraftwerk Nant de Drance im Wallis mit 900 Megawatt Leistung ist seit 2022 in Betrieb. Die Schweiz ist im Winter seit Jahren auf Stromimporte angewiesen; die «Winterstromlücke» ist ein zentrales Thema der Energiepolitik.
+> Die Netzgesellschaft Swissgrid steuert das Übertragungsnetz von Laufenburg aus. Das gezielte Verschieben von Verbrauch («Flexibilität») und das Zurückspeisen aus Autobatterien («bidirektionales Laden») werden in Pilotprojekten erprobt.

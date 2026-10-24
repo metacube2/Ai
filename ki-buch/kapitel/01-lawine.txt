@@ -1,0 +1,97 @@
+# Die Nacht am Flüelapass
+@ Davos · Februar 2029
+
+[bild]
+
+Um 23.40 Uhr zeigte der Bildschirm eine Zahl, die Seraina Bundi noch nie gesehen hatte.
+
+Sie sass allein im Lagezimmer des Lawinenwarndienstes, im dritten Stock eines nüchternen Gebäudes an der Flüelastrasse, von dem aus man bei Tag auf die Hänge des Jakobshorns sah. Bei Nacht sah man nur das eigene Spiegelbild in der Scheibe, eine Frau Mitte vierzig mit zu kurzem Haar und einer Wolljacke, die sie seit dem Studium trug. Draussen fiel seit drei Tagen Schnee, schwer und nass auf eine Schicht, die im Dezember bei klirrender Kälte zu Zucker geworden war. Jeder im Haus wusste, was das bedeutete. Die Frage war nur, wo.
+
+Die Zahl stand im Fenster des neuen Modells, das sie im Haus schlicht «den Zwilling» nannten. Er rechnete für jeden Hang im Kanton Graubünden, aufgelöst auf zwanzig Meter, wie sich die Schneedecke in den nächsten sechs Stunden verhalten würde. Er bekam die Messwerte von über zweihundert automatischen Stationen, die Wetterprognose von Meteo Schweiz, die Radarbilder, die Satellitenaufnahmen des Vortags und, seit diesem Winter, die Erschütterungsdaten der Glasfaserkabel, die unter den Passstrassen lagen und jedes Knacken im Berg aufzeichneten wie ein Stethoskop.
+
+Für den Nordhang oberhalb von Tschuggen, einer Häusergruppe an der Flüelapassstrasse, stand dort: *Auslösewahrscheinlichkeit spontan, Grösse 4: 0,61.*
+
+Einundsechzig Prozent. Grösse vier bedeutete eine Lawine, die Häuser zerstören und Wald umlegen konnte.
+
+---
+
+Seraina hatte siebzehn Winter in diesem Haus verbracht. Sie hatte gelernt, Schneeprofile zu lesen wie andere Menschen Handschriften, sie hatte auf Hängen gestanden und gespürt, wie die Decke unter den Skiern mit einem dumpfen «Wumm» zusammensackte, und sie hatte zwei Kollegen beerdigt. Sie wusste, dass die Natur sich nicht an Wahrscheinlichkeiten hielt. Sie wusste auch, dass Menschen sich nicht an Warnungen hielten, wenn man zu oft warnte.
+
+In Tschuggen wohnten im Winter vierzehn Menschen. Ein Hotel war geschlossen, zwei Ferienwohnungen belegt. Eine Evakuation mitten in der Nacht, bei Sturm, über eine Strasse, die selbst im Gefahrenbereich lag, war kein harmloser Akt. Die Polizei würde fragen, warum. Die Gemeinde würde fragen, warum. Und wenn nichts geschah, würden alle in einem Jahr wieder fragen, warum.
+
+«Erklär mir das», sagte sie laut.
+
+Der Zwilling hatte, anders als seine Vorgänger, eine Stimme, aber Seraina bevorzugte die Schrift. Auf dem Bildschirm erschien eine Liste, nüchtern wie ein Laborbericht.
+
+*Hauptbeitrag 1: Neuschnee 92 cm in 60 Stunden auf Schwachschicht aus kantigen Kristallen in 1,1 m Tiefe (Profil Station Flüela Hospiz, Messung 14.02., Penetrationstest).*
+*Hauptbeitrag 2: Windverfrachtung Südwest, Spitzen 78 km/h, Einwehung in Rinne Nordhang, Akkumulation geschätzt plus 40 bis 70 cm.*
+*Hauptbeitrag 3: Faseroptische Erschütterung Abschnitt km 14,2 bis 14,9: 23 Ereignisse seit 21 Uhr, Muster vergleichbar mit Vorläufern der Abgänge Vals 2027 und Andermatt 2028.*
+*Unsicherheit: hoch. Grund: Schneehöhe im Anrissgebiet nicht direkt gemessen, nur geschätzt. Vorschlag: Drohnenflug mit Radar, sobald Wind unter 50 km/h.*
+
+Das Letzte war es, was sie am Zwilling mochte. Er sagte, was er nicht wusste.
+
+Seraina sah auf die Windanzeige. Zweiundsechzig. Kein Drohnenflug in der nächsten Stunde.
+
+## Das Bauchgefühl
+
+Als sie jung gewesen war, hatte ein alter Warner namens Gion Darms ihr erklärt, dass man eine Lawinenprognose nicht rechnet, sondern riecht. «Du hast tausend Zahlen», hatte er gesagt, «und am Ende stehst du da und musst sagen: ja oder nein. Die Zahlen helfen dir. Aber sie entscheiden nicht. Das machst du.»
+
+Gion war seit sechs Jahren pensioniert und lebte in Klosters. Seraina rief ihn an. Er nahm nach dem vierten Klingeln ab und klang, als hätte er nicht geschlafen.
+
+«Ich hab's gesehen», sagte er, bevor sie etwas sagen konnte. Natürlich. Die Warndienstdaten waren öffentlich, und Gion konnte nicht aufhören. «Einundsechzig.»
+
+«Was riechst du?»
+
+Er lachte kurz. «Ich rieche, dass ich alt bin. Ich hätte das vor zehn Jahren nicht gesehen. Die Rinne über Tschuggen hat seit 1999 nicht mehr ausgelöst. Ich hätte gesagt: Erheblich, Stufe drei, Leute bleiben drinnen. Fertig.»
+
+«Und jetzt?»
+
+Gion schwieg eine Weile. Im Hintergrund hörte Seraina eine Uhr ticken.
+
+«Weisst du, was mich überzeugt?», sagte er schliesslich. «Nicht die Zahl. Die Erschütterungen. Dreiundzwanzig Mal hat der Berg sich bewegt. Das haben wir früher nie gehört. Wir haben gewartet, bis es knallt. Jetzt hört man ihn atmen.» Er hielt inne. «Aber ich sitze nicht auf deinem Stuhl.»
+
+---
+
+Um 23.58 Uhr rief Seraina den Gemeindeführungsstab von Davos an. Um 0.20 Uhr standen zwei Fahrzeuge der Feuerwehr und ein Pistenfahrzeug an der Abzweigung nach Tschuggen. Um 0.47 Uhr sassen vierzehn Menschen, darunter ein Säugling und eine Frau mit Gehstock, im Saal des Kongresszentrums, tranken Tee und waren schlecht gelaunt.
+
+Ein Mann aus Zürich, der mit seiner Familie in einer der Ferienwohnungen gewesen war, kam zu Seraina, die inzwischen selbst ins Kongresszentrum gefahren war, und fragte, ob ihr klar sei, dass er morgen früh einen Flug nach Singapur habe und sein Gepäck noch in der Wohnung stehe.
+
+«Ja», sagte Seraina. «Es tut mir leid.»
+
+«Auf welcher Grundlage?»
+
+Sie hätte sagen können: auf der Grundlage eines Modells. Sie hätte die Zahl nennen können, einundsechzig Prozent, und hätte gesehen, wie er im Kopf rechnete und dachte: Also neununddreissig Prozent, dass ihr mich umsonst aus dem Bett geholt habt. Stattdessen sagte sie: «Der Berg hat heute Nacht dreiundzwanzig Mal gezuckt. Ich wollte nicht warten, bis er es ein vierundzwanzigstes Mal tut.»
+
+Der Mann sah sie lange an. Dann ging er zu seiner Frau zurück und sagte etwas, das Seraina nicht hörte.
+
+## Vier Uhr zwölf
+
+Der Wind liess um drei Uhr nach. Um 3.30 Uhr startete eine Drohne des Warndienstes vom Parkplatz beim Bahnhof Davos Dorf, stieg auf zweitausendvierhundert Meter und flog mit ihrem Radar über das Anrissgebiet. Die Bilder kamen um 3.51 Uhr an. Die Schneehöhe in der Rinne war nicht siebzig Zentimeter höher als in der Umgebung. Sie war hundertdreissig Zentimeter höher.
+
+Der Zwilling rechnete neu. *Auslösewahrscheinlichkeit spontan, Grösse 4: 0,83.*
+
+Seraina stand am Fenster des Kongresszentrums, als um 4.12 Uhr die Fasersensoren an der Passstrasse ein Signal meldeten, das nicht mehr wie ein Zucken aussah, sondern wie ein Erdbeben. Sie hörte nichts. Davos lag zu weit weg. Sie sah nur, wie auf dem Bildschirm in ihrer Hand der Abschnitt km 14,2 bis 14,9 von Gelb auf Rot sprang und danach vollständig verstummte, weil die Kabel nicht mehr da waren.
+
+Am Morgen flog ein Helikopter der Rega über Tschuggen. Die Lawine war in der Rinne angebrochen, hatte sich über den Wald ergossen und war bis zur Strasse und darüber hinaus gefahren. Von den drei Häusern, die am nächsten am Hang gestanden hatten, war eines verschwunden. Die beiden anderen waren bis zum ersten Stock mit Schnee gefüllt. In einem davon hatte die Familie aus Zürich geschlafen.
+
+---
+
+Der Mann aus Zürich schrieb drei Wochen später einen Brief an den Warndienst. Er schrieb ihn von Hand, was in diesen Jahren schon selten war. Er schrieb, dass er sich für seinen Ton entschuldige, dass seine Tochter jetzt Lawinenforscherin werden wolle und dass er gerne wüsste, wie dieser Zwilling funktioniere, weil er selbst Software baue und sich frage, ob er jemals etwas so Wichtiges gebaut habe.
+
+Seraina hängte den Brief nicht an die Wand. Sie legte ihn in eine Schublade, zu den Fotos von den zwei Kollegen, die sie beerdigt hatte.
+
+## Was sich änderte
+
+Im Sommer nach jenem Winter wurde in der Schweiz viel über Tschuggen geredet, und das meiste davon war falsch. Die Zeitungen schrieben, eine künstliche Intelligenz habe vierzehn Menschen gerettet. Seraina korrigierte das in jedem Interview. «Ein Mensch hat entschieden», sagte sie, «aber er hatte zum ersten Mal genug gehört, um richtig zu entscheiden.»
+
+Wichtiger als die Schlagzeilen war, was danach still geschah. Der Bund beschloss, die Glasfaserkabel unter allen Alpenpässen als Sensoren zu nutzen, was billig war, weil die Kabel ohnehin schon lagen. Die Kantone Wallis, Uri, Tessin und Bern schlossen ihre Messnetze an den Zwilling an. Und der Warndienst tat etwas, worüber in den Fachzeitschriften noch Jahre später gestritten wurde: Er veröffentlichte nicht nur seine Warnungen, sondern das ganze Modell, mit allen Gewichten und Trainingsdaten. Wer wollte, konnte es auf dem eigenen Rechner laufen lassen.
+
+Gion Darms lud es am ersten Tag herunter. Er liess es auf seinem alten Laptop in Klosters laufen, auf dem Küchentisch, neben der tickenden Uhr. Er sagte später, er habe nächtelang zugesehen, wie es rechnete, und dabei das Gefühl gehabt, einem jungen Kollegen über die Schulter zu schauen, der etwas besser kann als man selbst, aber noch nicht weiss, wie viel er nicht weiss.
+
+«Das Gefährliche», sagte er zu Lea, als sie ihn im Januar 2045 besuchte, mit sechsundachtzig Jahren immer noch auf demselben Stuhl, «war nie die Maschine. Das Gefährliche war immer, dass wir aufhören, selber hinzuschauen. Seraina hat nie aufgehört. Darum hat es funktioniert.»
+
+Seraina Bundi leitet den Warndienst bis heute. Auf ihrem Schreibtisch steht ein Bildschirm mit dem Zwilling und daneben, in einem alten Holzrahmen, ein Schneeprofil von Hand gezeichnet, aus ihrem ersten Winter.
+
+> !Stand heute
+> Das WSL-Institut für Schnee- und Lawinenforschung SLF in Davos gibt im Winter täglich das Lawinenbulletin für die Schweiz heraus. Es arbeitet seit einigen Jahren mit Modellen des maschinellen Lernens, die den Prognostikern eine Einschätzung der Gefahrenstufe vorschlagen; die Entscheidung bleibt beim Menschen.
+> Glasfaserkabel lassen sich mit einem Verfahren namens «Distributed Acoustic Sensing» als kilometerlange Erschütterungssensoren nutzen. In der Forschung wird damit unter anderem die Überwachung von Lawinen, Murgängen und Felsstürzen erprobt.

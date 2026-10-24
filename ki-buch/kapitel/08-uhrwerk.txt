@@ -1,0 +1,82 @@
+# Das Uhrwerk
+@ Vallée de Joux · Oktober 2034
+
+[bild]
+
+Im Vallée de Joux, einem Hochtal im Waadtländer Jura, liegt im Winter der Schnee so lange, dass die Bauern früher fünf Monate im Jahr nichts zu tun hatten. Also bauten sie Uhren. Erst Bestandteile, dann ganze Werke, dann die kompliziertesten Uhren der Welt, mit Mondphasen, ewigen Kalendern, Minutenrepetitionen, die die Zeit mit kleinen Hämmern auf Tonfedern schlagen. Zweihundert Jahre lang wurde dieses Wissen von Hand weitergegeben, von Meister zu Lehrling, in Werkstätten mit grossen Fenstern, die nach Norden schauten, weil das Licht dort gleichmässig war.
+
+Théo Golay war der letzte, der es noch so gelernt hatte, oder jedenfalls fühlte es sich für ihn so an. Er war einundsechzig, Uhrmacher in dritter Generation, und er hatte vierzig Jahre lang für eine der grossen Manufakturen des Tals Komplikationen gebaut. Seit drei Jahren hatte er eine eigene Werkstatt in einem alten Bauernhaus in Le Brassus, mit zwei Werkbänken, einem Fenster nach Norden und einem Lehrling, der nicht dorthin passte.
+
+Der Lehrling hiess Yannick Bühler, war siebzehn, kam aus Biel und konnte nicht stillsitzen.
+
+## Die Hände
+
+Uhrmacherei ist zu einem grossen Teil die Kunst des Stillsitzens. Man sitzt an einer Werkbank, die höher ist als ein normaler Tisch, damit die Arbeit auf Augenhöhe liegt, stützt die Unterarme auf, klemmt eine Lupe ins Auge und bewegt Teile, die kleiner sind als ein Sandkorn, mit Pinzetten, deren Spitzen man nicht berühren darf, weil schon das Fett der Haut sie verdirbt. Eine Unruhwelle, die Achse des schwingenden Rades, das den Takt der Uhr gibt, hat an ihren Enden einen Durchmesser von sieben Hundertstelmillimetern. Wer zittert, bricht sie.
+
+Yannick zitterte nicht. Das war das Erstaunliche. Seine Hände waren ruhig wie die eines Chirurgen. Aber sein Kopf war es nicht. Er konnte keine Stunde an einer Arbeit bleiben, ohne aufzuspringen, ans Fenster zu gehen, etwas nachzuschauen, eine Frage zu stellen. In der Berufsschule in Le Sentier hatte man ihm geraten, einen anderen Beruf zu wählen. Théo hatte ihn trotzdem genommen, weil er bei der Schnupperlehre etwas getan hatte, was Théo in vierzig Jahren nicht gesehen hatte: Er hatte ein Werk, das er noch nie gesehen hatte, nach zehn Minuten Betrachten richtig zerlegt und richtig wieder zusammengesetzt, ohne Anleitung.
+
+«Wie hast du das gemacht?», hatte Théo gefragt.
+
+«Ich hab mir vorgestellt, wo die Kraft hinwill», hatte Yannick gesagt.
+
+## Die Brille
+
+Im Herbst 2034 bekam die Werkstatt in Le Brassus Besuch von einer jungen Frau aus Lausanne, Ingenieurin an der EPFL, die ein Projekt leitete, an dem sich alle grossen Manufakturen des Tals beteiligten. Das Projekt hatte einen französischen Namen, der übersetzt «das lebendige Gedächtnis» hiess, und es war aus einer Angst entstanden.
+
+Die Angst war einfach. Die Menschen, die die kompliziertesten Uhren der Welt bauen konnten, wurden alt. Eine Minutenrepetition zu regulieren, so dass die Hämmer im richtigen Abstand und mit dem richtigen Klang schlagen, lernte man nicht aus Büchern. Man lernte es in zehn, fünfzehn Jahren an der Seite eines Meisters. Und es gab immer weniger Meister und immer weniger junge Menschen, die fünfzehn Jahre an einer Werkbank verbringen wollten.
+
+Das Projekt wollte das Wissen nicht ersetzen. Es wollte es aufzeichnen. Die Ingenieurin, sie hiess Chloé Perrin, brachte eine Brille mit, leicht wie eine Lesebrille, mit zwei Kameras und einem Mikrofon, und Handschuhe aus einem Stoff, der dünner war als Haut und jede Bewegung der Finger erfasste. Dazu einen Rechner, nicht grösser als ein Buch, der in der Werkstatt blieb.
+
+«Wir möchten, dass Sie arbeiten wie immer», sagte sie zu Théo. «Und dabei erzählen, was Sie tun. Oder auch nicht erzählen. Das System lernt aus beidem.»
+
+Théo war skeptisch. Er hatte Kollegen, die in den Zwanzigerjahren erlebt hatten, wie Fabriken in Asien mit Robotern Uhrwerke bauten, die in Massen günstiger waren als alles aus dem Jura. Er hatte gesehen, wie Werkstätten schlossen. «Und dann», sagte er, «baut eine Maschine meine Repetition nach, und ich kann nach Hause gehen.»
+
+Chloé schüttelte den Kopf. «Eine Maschine kann keine Repetition regulieren. Wir haben es versucht. Die Toleranzen sind zu fein, das Material zu unberechenbar, jede Tonfeder klingt anders. Das kann nur ein Mensch. Wir wollen, dass es auch in dreissig Jahren noch Menschen gibt, die es können.»
+
+---
+
+Théo trug die Brille sechs Monate lang. Er baute in dieser Zeit drei Minutenrepetitionen, eine Grande Sonnerie und zwei ewige Kalender. Er erzählte dabei mehr, als er je jemandem erzählt hatte, weil die Brille nicht ungeduldig wurde und weil er beim Erzählen merkte, wie viel er wusste, ohne es zu wissen. Dass er die Hämmer nicht mit dem Auge reguliert, sondern mit dem Ohr, und dass er dabei den Kopf leicht nach links neigt, weil sein rechtes Ohr seit einem Unfall in der Jugend schlechter hört. Dass er die Tonfedern nicht biegt, sondern streichelt, weil sie sich merken, wie man sie behandelt hat. Dass er an Föhntagen keine Feinregulierung macht, weil der Luftdruck den Klang verändert.
+
+Das System lernte. Es lernte nicht, eine Repetition zu bauen. Es lernte, einem Menschen dabei zuzuschauen und zu erkennen, was gerade geschieht.
+
+## Yannick
+
+Im Frühling 2035 setzte Théo Yannick die Brille auf.
+
+Die Brille tat beim Lehrling etwas anderes als beim Meister. Sie zeichnete nicht auf, sie begleitete. Wenn Yannick an einer Hammerfeder arbeitete, zeigte sie ihm, unsichtbar für alle anderen, in einer Ecke seines Blickfelds, wie Théo an derselben Stelle gearbeitet hatte: die Bewegung seiner Finger, den Winkel der Pinzette, die Pause, bevor er den Druck erhöhte. Wenn Yannick zu fest drückte, vibrierte ein Finger des Handschuhs ganz leicht. Wenn er den Kopf hob, um aus dem Fenster zu schauen, wartete die Brille. Wenn er zurückkam, zeigte sie ihm, wo er aufgehört hatte.
+
+Und wenn Yannick etwas tat, was Théo nie getan hatte, sagte die Brille nichts. Das war eine Entscheidung gewesen, über die Chloé und Théo lange gestritten hatten.
+
+«Er muss Fehler machen dürfen», hatte Théo gesagt. «Und er muss Dinge anders machen dürfen. Sonst wird er eine Kopie von mir, und eine Kopie ist nichts wert.»
+
+Also zeigte die Brille nur, wenn Yannick fragte, oder wenn er etwas tat, das ein Teil zerstören würde.
+
+---
+
+Yannick lernte in zwei Jahren, wofür Théo zehn gebraucht hatte. Das lag nicht nur an der Brille. Es lag daran, dass die Brille ihm erlaubte, so zu lernen, wie sein Kopf funktionierte: in Sprüngen, mit Unterbrechungen, mit Fragen zwischendurch. Er musste nicht mehr eine Stunde stillsitzen, um eine Bewegung zu verstehen. Er konnte sie zehnmal ansehen, in Zeitlupe, von der Seite, und dann selbst versuchen. Er konnte nachts um elf in der Werkstatt sitzen, wenn Théo längst schlief, und fragen: Wie hat er das bei der zweiten Repetition gemacht, als die Tonfeder zu hoch klang?
+
+Im Herbst 2037 regulierte Yannick seine erste eigene Minutenrepetition. Théo stand hinter ihm, die Hände in den Taschen, und hörte zu, wie die Hämmer schlugen: drei tiefe Töne für die Stunden, zwei Doppeltöne für die Viertelstunden, vier hohe für die Minuten. Viertel nach drei und vier Minuten.
+
+Es klang nicht wie Théos Repetitionen. Es klang heller, die Pausen zwischen den Doppeltönen waren eine Spur kürzer, als Théo sie gemacht hätte.
+
+«Falsch?», fragte Yannick.
+
+Théo schwieg eine Weile. «Nein», sagte er dann. «Anders. Es klingt nach dir.»
+
+## Das lebendige Gedächtnis
+
+Das Projekt aus Lausanne zeichnete bis 2040 das Wissen von hundertzwölf Uhrmacherinnen und Uhrmachern auf, nicht nur im Vallée de Joux, sondern im ganzen Jurabogen, in Genf und in Schaffhausen. Daneben auch Graveure, Emailmalerinnen, Guillocheure und Kettenmacher, Handwerke, die vom Aussterben bedroht waren. Die Aufzeichnungen gehören nicht den Manufakturen, sondern einer Stiftung, und sie stehen allen Berufsschulen zur Verfügung.
+
+Die Uhrenindustrie selbst veränderte sich in diesen Jahren weniger, als viele befürchtet und manche gehofft hatten. Die Massenproduktion wanderte weiter in Fabriken, in denen Roboter mit einer Präzision arbeiteten, die kein Mensch erreichte. Aber die Uhren, für die Sammler in Genf und Singapur Hunderttausende bezahlten, wurden weiter von Menschen gebaut. Nur waren es mehr Menschen als vorher. Die Zahl der Lehrlinge in den Uhrmacherberufen stieg zwischen 2034 und 2044 um ein Drittel, und unter ihnen waren auffällig viele, die in der Schule als «schwierig» gegolten hatten.
+
+Théo Golay ist im vergangenen Jahr gestorben. Lea besuchte die Werkstatt in Le Brassus im Februar 2045. Yannick Bühler arbeitet dort jetzt mit zwei eigenen Lehrlingen, einer jungen Frau aus Eritrea und einem Jungen aus La Chaux-de-Fonds, der nicht sprechen kann und sich mit Gebärden verständigt.
+
+Auf der Werkbank lag eine Uhr in einem kleinen Glaskasten. Yannick nahm sie heraus und drückte den Schieber an der Seite des Gehäuses. Die Hämmer schlugen. Zwei Uhr, drei Viertel, elf Minuten.
+
+«Das war Théos letzte», sagte er. «Er hat sie nicht mehr fertig gemacht. Ich habe die Tonfedern nach seinen Aufzeichnungen reguliert. Mit seinem Kopf nach links geneigt.»
+
+Er lächelte. «Mein rechtes Ohr ist eigentlich gut. Aber so klingt es richtig.»
+
+> !Stand heute
+> Das Vallée de Joux gilt als eine Wiege der komplizierten mechanischen Uhrmacherei; die handwerklichen Fertigkeiten der Uhrmacherei der Schweiz und Frankreichs stehen seit 2020 auf der UNESCO-Liste des immateriellen Kulturerbes.
+> Datenhandschuhe und Brillen mit Kameras, die Handbewegungen erfassen, werden in Forschung und Industrie erprobt, um Fertigkeiten aufzuzeichnen und weiterzugeben. In vielen Handwerksberufen fehlt es an Nachwuchs.

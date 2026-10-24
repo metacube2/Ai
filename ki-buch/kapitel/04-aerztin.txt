@@ -1,0 +1,82 @@
+# Die Ärztin von Scuol
+@ Unterengadin · November 2028
+
+[bild]
+
+Die Praxis von Dr. Ladina Pinggera lag im Erdgeschoss eines Engadinerhauses mit Sgraffiti an der Fassade, zwei Gassen hinter dem Dorfplatz von Scuol. Im Wartezimmer stand ein Kachelofen, an der Wand hing eine Landkarte des Unterengadins aus den Fünfzigerjahren, und auf dem Fenstersims lag ein Stapel Zeitschriften, die niemand las, weil alle auf ihre Telefone schauten.
+
+Ladina war die einzige Hausärztin für vier Dörfer. Ihr Vorgänger hatte die Praxis zwei Jahre lang auszuschreiben versucht, bevor er mit achtundsiebzig aufgab und sie ihr, der Tochter des Dorfschmieds aus Ftan, praktisch geschenkt hatte, unter der Bedingung, dass sie mindestens zehn Jahre bleibe. Das war vor sechs Jahren gewesen. Sie hatte seither keinen einzigen Tag Ferien gemacht, der länger als eine Woche war.
+
+An diesem Dienstag im November hatte sie dreiunddreissig Patientinnen und Patienten. Die neunzehnte hiess Mengia Bezzola, war sieben Jahre alt und kam mit ihrer Mutter, weil sie seit Wochen müde war.
+
+## Müde
+
+Müde war in einer Hausarztpraxis das häufigste Wort nach «Husten». Hinter «müde» konnte sich alles verbergen: zu wenig Schlaf, zu viel Bildschirm, eine Grippe, die nicht ganz weg war, Eisenmangel, eine Schilddrüse, Kummer in der Schule. Und in sehr seltenen Fällen etwas, das man in einem Leben als Hausärztin vielleicht zweimal sah.
+
+Ladina untersuchte Mengia gründlich. Sie hörte Herz und Lunge ab, tastete den Bauch, schaute in den Hals, fragte nach dem Appetit, nach dem Stuhlgang, nach der Schule. Das Mädchen war blass, aber nicht auffällig. Die Leber war vielleicht etwas gross. Vielleicht. Bei einer Siebenjährigen, die sich auf der Liege wand und kicherte, weil es kitzelte, war das schwer zu sagen.
+
+Sie nahm Blut ab und schickte es nicht nach Chur ins Labor, wie sie es früher getan hätte, sondern steckte das Röhrchen in das kleine Analysegerät neben dem Waschbecken, das der Kanton im Jahr zuvor allen Praxen in Randregionen finanziert hatte. Zwölf Minuten später hatte sie das Blutbild, die Leberwerte, die Entzündungswerte und ein paar Dutzend weitere Parameter.
+
+Und sie hatte Aria.
+
+---
+
+Aria war der Name, den Ladina ihrer Assistenz gegeben hatte, nach der ersten Opernaufführung, die sie als Studentin in Zürich gesehen hatte. Offiziell hiess das System anders. Es war eine Software, die der Kanton Graubünden zusammen mit dem Kantonsspital und einer Gruppe von Hausärztinnen entwickelt hatte und die auf einem kleinen Rechner in Ladinas Praxis lief, nicht in einer Cloud. Das war die Bedingung gewesen, die der Ärzteverband gestellt hatte. Keine Patientendaten verliessen die Praxis, ausser die Patientin wollte es.
+
+Aria hörte zu, wenn Ladina mit Patienten sprach, sofern diese zugestimmt hatten, und schrieb die Krankengeschichte mit. Das allein hatte Ladina jeden Tag zwei Stunden geschenkt, die sie früher abends am Küchentisch mit Diktieren verbracht hatte. Aber Aria tat mehr. Sie las jeden Laborwert, jede Notiz, jede Medikamentenliste und verglich sie mit allem, was die Medizin wusste. Und manchmal, nicht oft, meldete sie sich.
+
+Bei Mengia meldete sie sich mit einem kleinen gelben Punkt am Bildschirmrand. Ladina klickte darauf.
+
+*Hinweis, niedrige Priorität: Kombination aus leichter Thrombozytopenie (138), grenzwertig erhöhter alkalischer Phosphatase, anamnestisch Müdigkeit seit 6 Wochen, Nasenbluten zweimal (Notiz Mutter), palpatorisch fragliche Hepatomegalie. Einzelbefunde unspezifisch. In Kombination selten bei Kindern. Differenzialdiagnosen zum Ausschluss: Virusinfekt (wahrscheinlichste Erklärung), Speicherkrankheit (z. B. Morbus Gaucher Typ 1, Prävalenz ca. 1 : 40 000 bis 1 : 60 000), hämatologische Erkrankung. Vorschlag: Ultraschall Abdomen, Kontrolle Blutbild in 2 Wochen. Begründung und Quellen anzeigen?*
+
+Ladina las den Hinweis zweimal. Morbus Gaucher. Sie hatte das Wort zum letzten Mal im Staatsexamen gehört. Eine erbliche Stoffwechselkrankheit, bei der ein Enzym fehlt und sich Fettstoffe in Milz, Leber und Knochenmark ablagern. Sehr selten. Behandelbar, wenn man es früh merkte. Unbehandelt schleichend zerstörerisch.
+
+Die wahrscheinlichste Erklärung, sagte Aria selbst, war ein Virus. Ladina hatte im November zehn Kinder mit Virusinfekten pro Woche.
+
+## Die Frage
+
+Hier, sagte Ladina später zu Lea, als sie im Januar 2045 in derselben Praxis sassen, hier liege der Kern der ganzen Sache, und er habe mit Technik wenig zu tun.
+
+«Jede Ärztin weiss, dass sie Seltenes übersieht. Das ist keine Nachlässigkeit, das ist Statistik. Wenn du hundertmal Hufgetrappel hörst, denkst du an Pferde, nicht an Zebras. Das bringt man uns im Studium bei, und es ist richtig. Wer bei jedem müden Kind an Morbus Gaucher denkt, macht die Kinder kaputt mit Untersuchungen. Das Problem ist nur: Manchmal ist es eben doch ein Zebra. Und dann kommt das Kind nach drei Jahren und sechs Ärzten endlich in eine Universitätsklinik, und dort sagt jemand: Warum hat das niemand früher gesehen?»
+
+Sie hatte vor Aria selbst zwei solche Fälle erlebt. Einen Jungen mit einer seltenen Muskelkrankheit, die erst mit neun erkannt wurde. Eine junge Frau mit einer Gefässentzündung, die ein Jahr lang als Migräne behandelt worden war.
+
+«Was Aria geändert hat», sagte Ladina, «ist nicht, dass sie klüger ist als ich. Sie ist nicht klüger. Sie hat kein Gefühl für das Kind auf der Liege, sie sieht nicht, wie die Mutter schaut. Aber sie vergisst nichts. Und sie traut sich, das Zebra zu nennen, ohne dass es ihr peinlich ist. Ich muss dann nur entscheiden, ob ich hinschaue.»
+
+---
+
+Ladina schaute hin. Sie machte den Ultraschall selbst, mit dem tragbaren Gerät, das sie seit dem Vorjahr hatte und das an ihr Tablet angeschlossen wurde. Die Milz war vergrössert. Deutlich.
+
+Sie bat die Mutter, Seraina Bezzola, eine Schreinerin aus Sent, noch einen Moment zu bleiben, nachdem Mengia mit einem Kinderbuch ins Wartezimmer gegangen war.
+
+«Es ist wahrscheinlich nichts Schlimmes», sagte Ladina, und sie meinte es so. «Aber ich möchte etwas ausschliessen. Dafür braucht es einen Bluttest, der nur in wenigen Labors gemacht wird. Ich würde ihn gerne veranlassen. Und ich würde gerne die Befunde, wenn Sie einverstanden sind, an eine Kollegin im Kinderspital Zürich schicken, die sich mit solchen Krankheiten auskennt.»
+
+Seraina Bezzola sah sie an. «Was meinen Sie mit solchen Krankheiten?»
+
+Ladina erklärte es. Sie erklärte es ohne das Wort «Zebra» und ohne die Prävalenzen. Sie sagte, dass es sehr seltene Stoffwechselkrankheiten gebe, dass die meisten Kinder mit Mengias Befunden keine hätten, dass es aber gute Behandlungen gebe, wenn doch, und dass man sie früh finden wolle.
+
+«Und das hat Ihnen der Computer gesagt?»
+
+«Der Computer hat mich daran erinnert», sagte Ladina. «Entschieden habe ich.»
+
+## Der Brief aus Zürich
+
+Das Ergebnis des Enzymtests kam elf Tage später. Die Aktivität der Glukozerebrosidase lag bei acht Prozent des Normalwerts. Eine genetische Untersuchung bestätigte den Befund eine Woche darauf: Morbus Gaucher Typ 1.
+
+Die Kollegin im Kinderspital, eine Stoffwechselspezialistin namens Dr. Katrin Odermatt, rief Ladina an einem Freitagabend an. «Ich wollte es Ihnen persönlich sagen», sagte sie. «Wir haben in der Schweiz vielleicht zwei Dutzend Kinder mit dieser Krankheit. Die meisten werden mit zehn, zwölf, manchmal erst als Erwachsene diagnostiziert, wenn die Knochen schon geschädigt sind. Mengia ist sieben, und ihre Knochen sind gesund. Sie wird eine Enzymersatztherapie bekommen, alle zwei Wochen eine Infusion, und sie wird ein ziemlich normales Leben führen.»
+
+Ladina sass nach dem Anruf lange am Küchentisch. Dann schrieb sie eine Notiz in Arias Rückmeldungsfeld, das sie sonst nie benutzte: *Danke. Diagnose bestätigt. Kind 7 J., früh erkannt.* Sie wusste, dass die Rückmeldungen anonymisiert gesammelt wurden, damit das System lernte. Sie wusste auch, dass es albern war, einer Software zu danken.
+
+## Die vier Dörfer
+
+Mengias Geschichte war kein Einzelfall, und genau das machte sie wichtig. In den Jahren nach 2028 zeigte sich in den Daten des Bundesamts für Gesundheit ein Muster, das niemand vorhergesagt hatte: Die Zeit bis zur Diagnose seltener Krankheiten sank in der Schweiz, und sie sank am stärksten nicht in den Städten, sondern in den Randregionen. Dort, wo die Hausärztinnen am meisten allein waren, half ihnen die Erinnerung am meisten.
+
+Es zeigte sich noch ein zweites Muster, über das weniger geschrieben wurde. Junge Ärztinnen und Ärzte begannen, sich wieder für Landpraxen zu interessieren. In Umfragen nannten sie drei Gründe: weniger Papierkram, weil die Assistenz die Krankengeschichten schrieb; die Gewissheit, mit schwierigen Fällen nicht allein zu sein, weil die Assistenz sie mit Spezialisten verband; und das Gefühl, wieder Ärztin sein zu dürfen statt Sachbearbeiterin.
+
+Ladina bekam 2033 eine Kollegin, eine junge Ärztin aus Lausanne, die Rumantsch lernte und mit ihrem Mann in Scuol ein Haus kaufte. Seitdem macht Ladina jedes Jahr drei Wochen Ferien.
+
+Mengia Bezzola ist heute vierundzwanzig, Schreinerin wie ihre Mutter und Skilehrerin im Winter. Als Lea sie fragte, ob sie sich an jenen Tag in der Praxis erinnere, schüttelte sie den Kopf. «Ich weiss nur, dass das Kinderbuch im Wartezimmer von einem Steinbock handelte», sagte sie. «Und dass Ladina mir nachher ein Glas mit Gummibärchen geschenkt hat. Das macht sie bis heute, wenn ich zur Kontrolle komme.»
+
+> !Stand heute
+> In der Schweiz gelten Krankheiten als selten, wenn höchstens fünf von zehntausend Menschen betroffen sind; zusammen betreffen die rund 7000 bekannten seltenen Krankheiten etwa eine halbe Million Menschen im Land. Bis zur richtigen Diagnose vergehen oft Jahre.
+> Software, die Arztgespräche mitschreibt und zusammenfasst, wird in Spitälern und Praxen bereits eingesetzt. Systeme zur Diagnoseunterstützung bei seltenen Krankheiten sind Gegenstand von Forschung und ersten Anwendungen. Gerade in Randregionen fehlen vielerorts Hausärztinnen und Hausärzte.

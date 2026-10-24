@@ -1,0 +1,74 @@
+# Molekül 7
+@ Basel · März 2033
+
+[bild]
+
+Das Bakterium hatte keinen schönen Namen. Es hiess *Klebsiella pneumoniae*, Stamm ST-307, und es hatte im Winter 2032 auf drei Intensivstationen in Norditalien und einer in Lugano elf Menschen getötet. Es war gegen alles resistent, was die Medizin in ihrem Arsenal hatte, auch gegen Colistin, das man nur gab, wenn nichts anderes mehr half, weil es die Nieren angriff. Die Ärzte in Lugano hatten den letzten Patienten, einen fünfundfünfzigjährigen Bauarbeiter nach einer Operation am offenen Bauch, mit einem Cocktail aus drei alten Antibiotika behandelt, von denen sie wussten, dass keines allein wirkte, in der Hoffnung, dass sie zusammen vielleicht doch etwas ausrichteten. Er hatte überlebt. Niemand wusste genau, warum.
+
+Im Februar 2033 lag eine Probe dieses Stammes, tiefgefroren bei minus achtzig Grad, in einem Kühlschrank im fünften Stock eines Laborgebäudes am Rhein. Und im Rechenzentrum im Keller desselben Gebäudes arbeitete seit sechs Wochen eine Maschine an der Frage, wie man es töten konnte.
+
+## Die Wüste
+
+Lukas Vischer war Chemiker, einundvierzig, und er hatte seine ganze Laufbahn in einer Disziplin verbracht, die er selbst «die Wüste» nannte. Neue Antibiotika zu entdecken war seit den Achtzigerjahren immer schwieriger geworden. Die einfachen Funde, die Moleküle, die Pilze und Bodenbakterien seit Jahrmillionen gegeneinander einsetzten, hatte man im zwanzigsten Jahrhundert geerntet. Danach kamen Jahrzehnte, in denen kaum eine neue Klasse dazukam. Die grossen Pharmafirmen zogen sich zurück, weil sich ein Antibiotikum, das man nur im Notfall einsetzen durfte, damit es nicht wirkungslos wurde, nicht verkaufen liess.
+
+Lukas arbeitete für ein Konsortium, das 2029 in Basel gegründet worden war, als Antwort auf genau dieses Problem: zwei Pharmafirmen, die Universität Basel, das Schweizerische Tropen- und Public-Health-Institut, die ETH und, das war neu, der Bund, der die Hälfte der Kosten trug und dafür verlangte, dass alles, was gefunden wurde, zu Preisen verkauft werden musste, die sich auch Spitäler in Afrika leisten konnten. Das Konsortium hiess offiziell nach einem lateinischen Wort für «Schutzwall». In Basel nannte es jeder einfach «den Damm».
+
+Was den Damm von früheren Versuchen unterschied, war die Maschine im Keller. Sie hiess bei den Chemikern «Alchemist», was Lukas peinlich fand und trotzdem benutzte.
+
+---
+
+Der Alchemist war kein einzelnes Programm. Er war ein Kreislauf. Am Anfang stand ein Modell, das gelernt hatte, wie Moleküle aussehen, die in Bakterienzellen eindringen können. Das war das eigentliche Problem bei den gefährlichsten Keimen, den sogenannten gramnegativen: Sie haben zwei Membranen, und die äussere ist eine Festung, durch die die meisten Wirkstoffe nicht hindurchkommen. Das Modell hatte aus Hunderttausenden von Messungen gelernt, welche Formen, Ladungen und Grössen die Festung überwinden.
+
+Ein zweites Modell kannte die Angriffspunkte: die Enzyme, die Bakterien zum Leben brauchen, ihre dreidimensionale Gestalt, berechnet aus ihrem Erbgut, und die Taschen und Furchen auf ihrer Oberfläche, in die ein Wirkstoff passen musste. Ein drittes Modell schätzte, ob ein Molekül für menschliche Zellen giftig wäre. Ein viertes, ob man es überhaupt herstellen konnte.
+
+Und dann, und das war der Teil, den Lukas faszinierend fand, schlug der Alchemist Moleküle vor. Nicht aus Katalogen, sondern neu erfunden. Er setzte sie aus Bausteinen zusammen, bewertete sie mit allen vier Modellen, verwarf sie, veränderte sie, setzte sie neu zusammen. Millionen am Tag. Die besten zweihundert jeder Woche wurden von einem Laborroboter im vierten Stock synthetisiert, in kleinsten Mengen, und gegen die Bakterien getestet. Die Ergebnisse flossen zurück in die Modelle. Und der Kreislauf begann von vorn.
+
+## Woche sechs
+
+In den ersten fünf Wochen gegen ST-307 hatte der Alchemist tausend Moleküle vorgeschlagen, die der Roboter hergestellt hatte. Neunhundertachtzig davon wirkten gar nicht. Siebzehn wirkten schwach. Drei wirkten, aber zerstörten in der Zellkultur auch menschliche Nierenzellen.
+
+In der sechsten Woche, an einem Dienstag, kam die Laborantin Fatima Rexhepi, die den Roboter betreute, mit einem Ausdruck in Lukas' Büro. Ausdrucke waren selten geworden. Fatima druckte nur aus, wenn sie etwas für so wichtig hielt, dass sie es in der Hand halten wollte.
+
+«Nummer 7 aus Serie 41», sagte sie. «Minimale Hemmkonzentration ein halbes Mikrogramm pro Milliliter. Gegen ST-307 und gegen alle anderen zwölf Stämme in der Testreihe. Keine Toxizität bei Nierenzellen bis zum Hundertfachen.»
+
+Lukas nahm den Ausdruck. Das Molekül, das darauf abgebildet war, sah aus wie nichts, was er kannte. Ein Ring mit zwei Stickstoffatomen, ein langer, gewundener Schwanz, eine Ladung an einer Stelle, wo kein Chemiker sie hingesetzt hätte.
+
+«Wo greift es an?»
+
+«Das wissen wir noch nicht», sagte Fatima. «Der Alchemist hat es gegen das Enzym LpxC entworfen. Aber die Hemmung von LpxC erklärt die Wirkung nicht. Es muss noch etwas anderes treffen.»
+
+Das war der Moment, sagte Lukas später, in dem er zum ersten Mal Angst bekam. Nicht vor der Maschine. Vor der Versuchung.
+
+## Die Versuchung
+
+«Verstehen Sie», sagte er zu Lea, als sie im März 2045 in seinem Büro sassen, das inzwischen zwei Stockwerke höher lag und einen Blick über den Rhein auf das Münster bot, «wir hatten ein Molekül, das ein Bakterium tötete, gegen das nichts half. Elf Menschen waren gestorben. In Lugano lagen zu diesem Zeitpunkt zwei weitere Patienten mit diesem Keim. Jeder Instinkt sagte: Schnell. Macht es. Gebt es ihnen.»
+
+«Und?»
+
+«Und wir wussten nicht, warum es wirkt. Ein Wirkstoff, dessen Mechanismus man nicht versteht, kann Dinge tun, die man nicht erwartet. In anderen Organen. In anderen Menschen. Nach Wochen. Die Geschichte der Medizin ist voll von solchen Überraschungen.»
+
+Die Diskussion im Damm dauerte drei Tage und wurde, wie Lukas sagte, «unschweizerisch laut». Eine Gruppe wollte sofort einen Antrag auf Notfallanwendung bei Swissmedic stellen, der Heilmittelbehörde. Eine andere wollte zuerst verstehen. Am Ende setzte sich ein Kompromiss durch, der später als «Basler Regel» bekannt wurde: Eine Maschine darf einen Wirkstoff vorschlagen, aber ein Mensch muss erklären können, wie er wirkt, bevor er einem Menschen gegeben wird. Ausnahme nur, wenn ein Patient ohne ihn sicher stirbt, er selbst oder seine Angehörigen zustimmen und eine unabhängige Ethikkommission einverstanden ist.
+
+Die zwei Patienten in Lugano bekamen Molekül 7 nicht. Einer von ihnen starb in der folgenden Woche. Der andere überlebte mit dem alten Cocktail.
+
+«Ich denke jeden Tag an ihn», sagte Lukas. «An den, der gestorben ist. Ich weiss nicht, ob es richtig war. Ich weiss nur, dass es die Regel war, die wir vorher beschlossen hatten, und dass Regeln, die man im Notfall bricht, keine Regeln sind.»
+
+---
+
+Den Mechanismus fand man fünf Wochen später, und gefunden hat ihn, das betonte Lukas jedes Mal, ein Mensch. Eine Doktorandin namens Jana Kovač, die mit Kryo-Elektronenmikroskopie die Strukturen der Proteine in den behandelten Bakterien untersuchte. Sie sah, dass Molekül 7 nicht nur LpxC hemmte, sondern sich mit seinem gewundenen Schwanz in einen Transportkanal der äusseren Membran legte, den das Bakterium brauchte, um Bausteine für diese Membran nach aussen zu bringen. Das Bakterium wurde an zwei Stellen gleichzeitig getroffen: Es konnte die Bausteine seiner Festung nicht mehr herstellen und nicht mehr transportieren. Darum wirkte das Molekül so stark. Und darum, auch das zeigte Jana, entwickelten die Bakterien in den Versuchen auch nach Hunderten von Generationen keine Resistenz.
+
+Den Doppeltreffer hatte der Alchemist nicht geplant. Er hatte ihn gefunden, ohne zu wissen, was er gefunden hatte.
+
+## Das Gesetz des Damms
+
+Molekül 7 bekam später einen Namen, Bondomycin, nach dem Dorf Bondo im Bergell, in dem Fatima Rexhepis Grossvater, der als Bauarbeiter aus dem Kosovo gekommen war, nach dem Bergsturz am Piz Cengalo von 2017 beim Wiederaufbau geholfen hatte. Die klinischen Studien dauerten bis 2037. Seit 2038 ist es in der Schweiz und in der EU zugelassen, seit 2039 in sechsundvierzig weiteren Ländern, zu einem Preis, der etwa einem Zehntel dessen entspricht, was ein neues Krebsmedikament kostet.
+
+Es wird selten eingesetzt. Das ist Absicht. Jede Packung ist registriert, jede Anwendung wird gemeldet. Bondomycin ist eine Reserve, und wie jede Reserve wirkt sie nur, solange man sie nicht verschwendet.
+
+Der Damm fand bis 2045 vier weitere neue Antibiotika, zwei Mittel gegen Pilzinfektionen und einen Wirkstoff gegen Malaria, der in einer einzigen Tablette wirkt. Die Basler Regel gilt heute in fast allen Ländern, in denen mit solchen Maschinen geforscht wird. Sie steht in einer internationalen Leitlinie der Weltgesundheitsorganisation, die in Genf beschlossen wurde, eine Strassenbahnstunde von dort entfernt, wo Lukas Vischer an jenem Dienstag den Ausdruck in der Hand hielt.
+
+«Die Maschine hat uns schneller gemacht», sagte er zum Abschied. «Aber das Schwierigste war nicht, schneller zu sein. Das Schwierigste war, an der richtigen Stelle langsam zu bleiben.»
+
+> !Stand heute
+> Antibiotikaresistenzen gehören laut Weltgesundheitsorganisation zu den grössten Bedrohungen der Gesundheit; seit Jahrzehnten kommen kaum neue Antibiotikaklassen auf den Markt. 2020 fanden Forschende am MIT mit einem Deep-Learning-Modell den Wirkstoffkandidaten Halicin, 2023 den Kandidaten Abaucin gegen *Acinetobacter baumannii*.
+> In der Region Basel arbeiten grosse Pharmafirmen, Hochschulen und Start-ups an KI-gestützter Wirkstoffsuche. Die Struktur von Proteinen lässt sich heute mit Programmen wie AlphaFold aus der Erbinformation vorhersagen.

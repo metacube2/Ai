@@ -1,0 +1,36 @@
+# Prolog: Zwanzig Jahre
+@ Chur · Januar 2045
+
+[bild]
+
+Der Auftrag kam an einem Dienstag, als der Föhn die Schneefelder über Chur in graue Flecken verwandelt hatte. Lea Caflisch sass in der Redaktionsküche, die Hände um eine Tasse Kräutertee, und hörte ihrer Chefin zu, die mit dem Löffel auf den Tisch tippte, als wolle sie jedes Wort einzeln einschlagen.
+
+«Zwanzig Jahre», sagte Mirjam Arquint. «Vor zwanzig Jahren hat dieses Land gestritten, ob künstliche Intelligenz uns die Arbeit stiehlt, die Kinder verblödet oder die Demokratie zerlegt. Heute redet niemand mehr darüber, so wie niemand über Strom redet. Ich will wissen, wie das passiert ist. Nicht die Pressemitteilungen. Die Nächte. Die Leute, die damals einen Entscheid fällen mussten, als noch niemand wusste, ob die Maschine recht hat.»
+
+Lea war vierunddreissig. Sie war vierzehn gewesen, als die ersten Sprachmodelle in die Schulzimmer platzten, und sie erinnerte sich gut an die Elternabende, an denen Väter mit verschränkten Armen sagten, das sei das Ende des Denkens. Sie erinnerte sich auch an ihre Grossmutter in Disentis, die zum ersten Mal in ihrem Leben einen Text auf Rumantsch von einer Maschine vorgelesen bekam und danach lange still war.
+
+«Wie viele Geschichten?», fragte Lea.
+
+«So viele, wie du findest. Fang in den Bergen an. Da hat es angefangen, sagen alle. Wo es gefährlich ist, lernt man schneller.»
+
+---
+
+Lea packte am selben Abend. Einen Rucksack, ein Notizbuch aus Papier, weil sie dem Papier mehr traute als sich selbst, und ihren Assistenten, den sie seit Jahren einfach «Tschiv» nannte, nach dem Steinbock, der als Kind auf ihrem Lieblingsbuch abgebildet gewesen war. Tschiv lief auf ihrem Telefon und auf ihrer Brille, aber er lief nicht in einer fernen Rechenhalle in Kalifornien. Er lief bei ihr. Das war das Erste, was sich geändert hatte, und es war so selbstverständlich geworden, dass sie es vergessen hatte.
+
+«Tschiv», sagte sie in der Bahn nach Landquart, «wann haben wir aufgehört, unsere Daten in die Cloud zu schicken?»
+
+«Nicht an einem bestimmten Tag», antwortete die ruhige Stimme in ihrem Ohr. «Es war eine Kette kleiner Entscheide. Die Geräte wurden stark genug, die Modelle klein genug, und ein paar Spitäler, Gemeinden und Banken weigerten sich irgendwann, Patientendaten, Steuerakten oder Kontobewegungen ausser Landes zu geben. Die meisten Menschen haben den Unterschied nie bemerkt. Sie haben nur bemerkt, dass das Telefon nicht mehr fragte, ob es zuhören darf.»
+
+Lea schrieb in ihr Notizbuch: *Die grossen Veränderungen sind leise.* Dann strich sie es durch. Es klang wie ein Kalenderspruch. Sie schrieb darunter: *Finde die lauten Nächte.*
+
+## Was dieses Buch ist
+
+Die folgenden Kapitel erzählen von solchen Nächten. Von einer Lawinenwarnerin in Davos, die einer Zahl mehr glauben musste als ihrem Bauchgefühl. Von einem Netzingenieur, der im Februar 2030 zusah, wie der Strom knapp wurde. Von einer Hausärztin im Unterengadin, einem Chemiker in Basel, einer Übersetzerin im Bundeshaus, einem Uhrmacher im Vallée de Joux, einer Älplerin, einem Gotthard-Techniker, einer Diplomatin in Genf, einem Lehrer in Bümpliz, einer Physikerin am CERN, einer Postautochauffeuse, einem Schreiner im Appenzellerland und einer Tochter, die ihre Mutter daheim alt werden lassen wollte.
+
+Die Menschen sind erfunden, die Orte nicht. Die Technik ist erfunden, aber nicht aus der Luft gegriffen: Fast alles, was hier geschieht, beginnt mit etwas, das es heute schon gibt. Am Ende jedes Kapitels steht in einem Kasten, was das ist.
+
+Die Schweiz hat keine Rohstoffe, keine Weltkonzerne der Informatik und keine Armee von Programmierern, die es mit dem Silicon Valley aufnehmen könnte. Sie hat Berge, die töten können, vier Sprachen, eine Demokratie, in der das Volk viermal im Jahr das letzte Wort hat, ein dichtes Netz von Hochschulen, eine Tradition der Präzision und eine tiefe Abneigung dagegen, sich von irgendwem etwas vorschreiben zu lassen. Das, so wird sich zeigen, war kein schlechter Ausgangspunkt.
+
+> !Stand heute
+> Die Hochschulen ETH Zürich und EPFL haben 2025 zusammen mit dem Nationalen Hochleistungsrechenzentrum CSCS in Lugano ein offenes Sprachmodell namens Apertus veröffentlicht. Es wurde auf dem Schweizer Rechner «Alps» trainiert, ist mit Quelltext und Trainingsdaten offen gelegt und soll ausdrücklich auch kleinere Sprachen wie Rätoromanisch und Schweizerdeutsch abdecken.
+> Gleichzeitig wandern immer mehr KI-Funktionen von Rechenzentren auf die Geräte selbst: Telefone und Computer erkennen heute Bilder, Sprache und Text, ohne dass die Daten das Gerät verlassen.

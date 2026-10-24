@@ -1,0 +1,74 @@
+# Die Alp
+@ Alp Flix, Surses · August 2030
+
+[bild]
+
+Die Nachricht kam um 3.17 Uhr, und Anna Caduff war wach, bevor ihr Telefon das zweite Mal vibrierte. Auf einer Alp schläft man im Sommer nicht tief. Man schläft wie ein Tier, das weiss, dass es etwas zu hüten hat.
+
+*Herde Nord: Unruhe. 34 Tiere in Bewegung Richtung Bachtobel. Wärmebild Drohne 2: ein Tier, Grösse passend Wolf, 380 m nordöstlich, Annäherung. Zweites Signal unklar.*
+
+Anna zog die Hose über das Nachthemd, die Jacke darüber, griff die Stirnlampe und den Stock und war draussen, bevor sie wach war. Die Luft auf zweitausend Metern roch nach Gras und kaltem Stein. Über dem Piz Platta hing ein halber Mond. Irgendwo unten bellte Bruno, der Herdenschutzhund, tief und wütend, und dann ein zweiter Hund, Lina, heller.
+
+## Das Jahr der Wölfe
+
+Anna war dreiunddreissig und verbrachte ihren elften Sommer auf der Alp Flix, einer Hochebene über dem Dorf Sur im Surses, die in den Reiseführern als eine der schönsten Moorlandschaften der Schweiz beschrieben wurde. Für Anna war sie vor allem ein Arbeitsplatz: dreihundertzwanzig Schafe von sieben Bauern aus dem Tal, verteilt auf drei Herden, auf einer Weidefläche von vierhundert Hektaren, die von Moorseen, Bächen, Felsbändern und Lärchenwäldern durchzogen war.
+
+Und seit einigen Jahren Wolfsgebiet.
+
+Die Wölfe waren in den Neunzigerjahren aus Italien in die Schweiz zurückgekommen, zuerst einzelne, dann Paare, dann Rudel. Um 2030 lebten im Land mehrere Dutzend Rudel, die meisten in Graubünden und im Wallis. Für die einen waren sie ein Zeichen, dass die Natur sich erholte. Für die anderen, vor allem für die Schafhalter, ein Albtraum. Ein Wolf, der in eine ungeschützte Herde gerät, tötet oft nicht ein Schaf, sondern zehn, weil der Jagdtrieb nicht aufhört, solange die Beute flieht.
+
+Das Jahr 2029 war schlimm gewesen. Auf der Nachbaralp hatte ein Rudel in einer Nacht dreiundzwanzig Schafe gerissen. Zwei Bauern hatten danach aufgehört, ihre Tiere auf die Alp zu schicken. Im Dorf wurde laut darüber geredet, dass man die Wölfe alle schiessen solle, und genauso laut darüber, dass die Bauern selber schuld seien, wenn sie ihre Herden nicht schützten.
+
+Anna hatte beides satt. Sie wollte ihre Schafe schützen, ohne Wölfe zu töten, wenn es ging, und Wölfe töten lassen, wenn es nicht anders ging. Und sie wollte nachts manchmal schlafen.
+
+## Die Augen
+
+Das System, das die Alp Flix seit dem Frühling 2030 nutzte, war ein Pilotprojekt des Kantons, des Bundesamts für Umwelt und der landwirtschaftlichen Beratungszentrale. Es bestand aus Dingen, die einzeln nicht neu waren, aber zusammen etwas Neues ergaben.
+
+Jedes zehnte Schaf trug ein Halsband mit einem Sender, der Position und Bewegung meldete. Wenn eine Herde ruhig graste, bewegten sich die Halsbänder langsam und verstreut. Wenn sie flüchtete, schnell und in eine Richtung. Das System erkannte den Unterschied in Sekunden und konnte sogar unterscheiden, ob die Herde vor einem Hund, einem Wanderer, einem Gewitter oder etwas anderem floh.
+
+An sechs Stellen standen Kameras mit Wärmebild auf Masten, die mit Solarzellen betrieben wurden. Zwei Drohnen mit Wärmekameras warteten in einer Hütte und starteten selbst, wenn die Halsbänder Unruhe meldeten. Und alles lief zusammen auf einem kleinen Rechner in Annas Hütte, der die Bilder auswertete, ohne sie ins Tal zu schicken. Das war wichtig gewesen. Die Alp war ein Naturschutzgebiet, und niemand wollte, dass Bilder von Wanderern, die nachts im Moor zelteten, irgendwo in einer Datenbank landeten.
+
+Was das System erkannte, war nicht nur, dass ein Wolf da war. Es erkannte, welcher Wolf. Jeder Wolf hat ein eigenes Muster im Fell, eine eigene Art zu gehen, eine eigene Grösse. Aus den Bildern der Kameras und den genetischen Proben, die Wildhüter seit Jahren aus Kot und Haaren sammelten, wusste das System, welche Wölfe in der Gegend lebten, welche zu welchem Rudel gehörten und welche schon einmal Schafe gerissen hatten.
+
+---
+
+Anna rannte nicht, man rennt nicht auf einer Alp in der Nacht. Sie ging schnell, mit der Stirnlampe auf dem Pfad, und hörte in ihrem Ohr die ruhige Stimme des Systems, das sie «Hirt» nannte, weil ihr nichts Besseres eingefallen war.
+
+«Tier eins ist F28», sagte der Hirt. «Weibchen, Beverin-Rudel, drei Jahre. Bisher keine Risse auf geschützten Weiden bekannt. Zweites Signal jetzt bestätigt: M41, Männchen, ohne Rudel, zwei Jahre. Achtung: M41 ist verantwortlich für zwei Risse auf der Alp Muttans im Juli, genetisch bestätigt.»
+
+Anna blieb stehen. Ein junger Rüde ohne Rudel war das Gefährlichste, was einer Herde passieren konnte. Er hatte niemanden, von dem er lernte, dass Schafe hinter Zäunen und mit Hunden zu viel Ärger machten. Er hatte Hunger und keine Erfahrung.
+
+«Wo?»
+
+«M41 ist 210 Meter von Herde Nord entfernt, im Bachtobel, und bewegt sich auf die Herde zu. F28 hält Abstand, 400 Meter. Hunde sind bei der Herde. Vorschlag: Licht und Ton an Mast 4. Drohne 2 auf M41.»
+
+«Mach.»
+
+An Mast 4, oberhalb des Bachtobels, gingen grelle Lichter an, die in unregelmässigen Abständen blitzten, und ein Lautsprecher spielte ein Geräusch, das Anna jedes Mal Gänsehaut machte: die Stimmen von Menschen, die durcheinander riefen, und das Bellen grosser Hunde. Gleichzeitig senkte sich Drohne 2 auf vierzig Meter über den Wolf und schaltete ihren eigenen Scheinwerfer ein.
+
+Auf dem Bildschirm ihres Telefons sah Anna das Wärmebild: ein heller Fleck im Bachtobel, der stehen blieb. Den Kopf hob. Sich duckte. Und dann, nach zehn Sekunden, die sich anfühlten wie eine Minute, kehrtmachte und bachabwärts verschwand.
+
+## Was die Zahlen sagten
+
+In jener Nacht verlor Anna kein Schaf. In jenem Sommer verlor sie zwei, beide durch einen Steinschlag. Auf den sechs Alpen im Pilotprojekt wurden 2030 insgesamt elf Schafe von Wölfen gerissen. Im Jahr davor waren es auf denselben Alpen neunundachtzig gewesen.
+
+Wichtiger als diese Zahl war eine andere. Das System hatte nicht nur Wölfe vertrieben. Es hatte genau aufgezeichnet, welcher Wolf was tat. Und es zeigte sich, was Wildbiologen schon lange vermutet hatten: Die allermeisten Risse gingen auf wenige Tiere zurück. Auf junge Einzelgänger wie M41 und auf zwei, drei Wölfe in jedem Kanton, die gelernt hatten, dass Schafe leichte Beute sind, und es ihren Jungen beibrachten.
+
+Im Herbst 2030 bewilligte der Kanton Graubünden den Abschuss von M41, nachdem er ein drittes Mal auf eine geschützte Herde losgegangen war. Es war der erste Abschuss, über den im Kanton nicht gestritten wurde, weil jeder die Daten sehen konnte. Ein Naturschutzverband schrieb in seiner Stellungnahme, man bedaure den Abschuss, halte ihn aber für begründet. Ein Bauernverband schrieb, es sei das erste Mal, dass der Staat schnell genug reagiert habe.
+
+F28 und ihr Rudel leben bis heute im Gebiet. In den Daten des Hirts gibt es keine einzige Aufzeichnung, dass sie eine geschützte Herde angegriffen hätten. Sie fressen Rehe und Hirsche, wie es sich für Wölfe gehört.
+
+---
+
+Als Lea im August 2045 auf die Alp Flix kam, war Anna Caduff achtundvierzig und hatte den Sommer zum sechsundzwanzigsten Mal oben verbracht. Sie hütete inzwischen keine Schafe mehr, sondern eine Herde Mutterkühe, und sie bildete im Frühling junge Hirtinnen und Hirten aus, an einer Schule im Tal, die es 2030 noch nicht gegeben hatte.
+
+«Weisst du, was das Beste war?», sagte sie, als sie am Abend vor ihrer Hütte sassen und zusahen, wie das Licht über den Moorseen golden wurde. «Nicht die Drohnen. Nicht dass ich weniger Schafe verloren habe. Das Beste war, dass ich im Dorf wieder mit allen reden konnte. Mit den Bauern und mit den Leuten vom Naturschutz. Vorher hat jeder seine eigene Wahrheit gehabt. Die einen haben gesagt, alle Wölfe sind Mörder, die anderen, alle Bauern sind faul. Dann lagen die Daten auf dem Tisch, und alle haben gesehen: Es ist komplizierter. Es ist M41. Es ist nicht der Wolf.»
+
+Sie zeigte auf den Hang gegenüber, wo im letzten Licht ein grauer Schatten zwischen den Lärchen entlangzog und dann verschwand.
+
+«Das ist eine von F28s Enkelinnen», sagte sie. «Der Hirt sagt, sie heisst F77. Ich sag ihr Grischa.»
+
+> !Stand heute
+> Der Wolf ist seit 1995 in die Schweiz zurückgekehrt; inzwischen leben mehrere hundert Tiere in Dutzenden Rudeln, die meisten in Graubünden und im Wallis. Herdenschutz mit Zäunen und Hunden wird vom Bund unterstützt, die Regulierung der Bestände ist politisch umstritten.
+> Wildtiere lassen sich heute anhand von Kamerabildern und genetischen Proben einzelnen Individuen zuordnen. Halsbänder mit Bewegungssensoren und Drohnen mit Wärmebildkameras werden im Herdenschutz und in der Wildtierforschung erprobt.

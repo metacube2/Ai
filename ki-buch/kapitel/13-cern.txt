@@ -1,0 +1,76 @@
+# Die Spur im Rauschen
+@ Meyrin, CERN · Juli 2038
+
+[bild]
+
+Die Kollision Nummer 4 117 902 553 286 im Lauf 512 044 des Detektors ATLAS fand am 3. Juli 2038 um 2.14 Uhr und 37,000 004 118 Sekunden statt, hundert Meter unter einem Maisfeld an der Grenze zwischen der Schweiz und Frankreich. Zwei Protonen, beschleunigt auf 99,999 999 Prozent der Lichtgeschwindigkeit, trafen frontal aufeinander, und aus der Energie ihres Zusammenstosses entstanden für den Bruchteil einer Billionstelsekunde Teilchen, die es im Universum seit dem Urknall kaum mehr gab.
+
+Niemand sah es. In jeder Sekunde fanden im Detektor etwa zwei Milliarden solcher Kollisionen statt, und fast alle waren langweilig. Die Elektronik des Detektors musste in Millionstelsekunden entscheiden, welche davon sie aufbewahren sollte und welche nicht. Sie bewahrte etwa eine von hunderttausend. Die anderen verschwanden für immer.
+
+Kollision Nummer 4 117 902 553 286 wäre ebenfalls verschwunden. Sie sah, nach allen Regeln, die Physikerinnen und Physiker in vierzig Jahren geschrieben hatten, langweilig aus. Aber sie wurde aufbewahrt, weil ein System, das niemand vollständig verstand, sie seltsam fand.
+
+## Die Wächterin des Rauschens
+
+Ines Monteiro war vierunddreissig, Physikerin aus Porto, und arbeitete seit sechs Jahren am CERN. Sie gehörte zu einer kleinen Gruppe, die für einen neuen Teil der Datenauswahl zuständig war, den man im Experiment «den Anomaliefilter» nannte und der seit dem Start des Hochluminositäts-Betriebs 2030 lief.
+
+Die klassische Datenauswahl funktionierte wie ein Türsteher mit einer Liste. Physiker hatten aufgeschrieben, wonach sie suchten: Teilchen mit hoher Energie, bestimmte Kombinationen von Myonen, fehlende Energie, die auf unsichtbare Teilchen hindeutete. Kollisionen, die auf der Liste standen, kamen herein. Alle anderen nicht. Das war sehr erfolgreich gewesen. So hatte man 2012 das Higgs-Boson gefunden.
+
+Aber es hatte einen grundsätzlichen Fehler. Man fand nur, was man suchte. Und nach dem Higgs hatte man nichts mehr gefunden. Fünfundzwanzig Jahre lang. Die Theorien, die vorhergesagt hatten, was es jenseits des Higgs geben müsste, die Supersymmetrie, die zusätzlichen Dimensionen, die dunklen Photonen, lagen eine nach der anderen im Archiv der Ideen, die die Natur abgelehnt hatte. In der Teilchenphysik hatte sich eine Stimmung breitgemacht, die man auf Konferenzen «die Wüste» nannte. Es war dasselbe Wort, das Lukas Vischer in Basel für die Antibiotika verwendet hatte, aber das wusste Ines nicht.
+
+Der Anomaliefilter hatte keine Liste. Er war auf den Elektronikkarten des Detektors selbst eingebaut, ein neuronales Netz, so klein, dass es in einer Millionstelsekunde rechnen konnte, und er hatte nur eines gelernt: wie eine normale Kollision aussieht. Milliarden von Beispielen. Er wusste nicht, was neue Physik war. Er wusste nur, was alte Physik war. Und wenn er etwas sah, das nicht dazu passte, bewahrte er es auf.
+
+---
+
+Das Problem mit einem Filter, der das Ungewöhnliche aufbewahrt, ist, dass das meiste Ungewöhnliche Müll ist. Ein Kabel, das kurz flackert. Ein kosmisches Teilchen aus dem All, das zufällig durch den Detektor fliegt. Ein Rechenfehler. In den ersten Jahren hatte der Anomaliefilter vor allem kaputte Elektronik gefunden, was nützlich war, aber nicht das, wofür man ihn gebaut hatte.
+
+Ines verbrachte ihre Tage damit, die Anomalien zu sortieren. Mit Hilfe eines zweiten Systems, das grösser war und in einem Rechenzentrum auf dem Gelände lief, ordnete sie sie in Gruppen: Elektronik, kosmische Strahlung, bekannte seltene Prozesse, Unbekanntes. Die Gruppe «Unbekanntes» war nach acht Jahren Betrieb immer noch leer, wenn man genau hinsah. Alles, was zuerst unbekannt ausgesehen hatte, hatte sich bei näherer Prüfung als bekannt herausgestellt.
+
+Bis zum Herbst 2038.
+
+## Siebzehn
+
+Im September zeigte ihr das Sortiersystem eine Gruppe, die es nicht einordnen konnte. Siebzehn Kollisionen aus dem Sommer, verteilt über drei Monate. Jede davon hatte etwas gemeinsam, das man mit blossem Auge nicht sah: Zwei Bündel von Teilchen flogen in entgegengesetzte Richtungen davon, wie bei Tausenden anderer Kollisionen, aber in beiden Bündeln tauchten mit einer kleinen Verzögerung, ein paar Millimeter vom Kollisionspunkt entfernt, neue Teilchen auf. Als ob etwas Unsichtbares entstanden, ein Stück weit geflogen und dann zerfallen wäre.
+
+Und die Masse dieses Unsichtbaren, rekonstruiert aus seinen Zerfallsprodukten, war bei allen siebzehn Kollisionen gleich. Etwa neunzehn Gigaelektronenvolt. Ein Teilchen, das etwa zwanzigmal so schwer wäre wie ein Proton und das es nach dem Standardmodell der Physik nicht gab.
+
+Ines sass vor dem Bildschirm und spürte etwas, das sie aus Büchern über die Geschichte der Physik kannte und nie selbst erlebt hatte. Dann tat sie, was man ihr beigebracht hatte. Sie versuchte, es kaputt zu machen.
+
+---
+
+Sie brauchte vier Monate. Sie prüfte, ob die siebzehn Kollisionen zu einer bestimmten Zeit stattgefunden hatten, in der ein Teil des Detektors gestört war. Nein. Ob sie im gleichen Bereich des Detektors lagen. Nein. Ob sie durch einen Rechenfehler in der Rekonstruktion entstanden sein konnten. Sie liess die Rekonstruktion von drei unabhängigen Gruppen wiederholen, mit drei verschiedenen Programmen. Das Ergebnis blieb. Sie liess das Sortiersystem nach ähnlichen Kollisionen in den Daten der Jahre davor suchen, die von der alten Datenauswahl aufbewahrt worden waren. Es fand vier. Alle mit derselben Masse.
+
+Einundzwanzig Kollisionen. Für eine Entdeckung in der Teilchenphysik ist das sehr wenig. Die Physiker verlangen für eine Entdeckung, dass die Wahrscheinlichkeit, das Ergebnis durch Zufall zu erhalten, kleiner ist als eins zu 3,5 Millionen. Die einundzwanzig Kollisionen lagen bei eins zu zwanzigtausend. Eine «Evidenz», keine Entdeckung.
+
+Im Januar 2039 informierte Ines die Leitung des Experiments. Im Februar wurde eine Gruppe von vierzig Physikerinnen und Physikern gebildet, die ihre Analyse prüfen sollte, ohne sie zu kennen. Sie wussten nur, in welchem Bereich sie suchen sollten, und mussten selbst herausfinden, was dort war. Das ist eine Regel in der Teilchenphysik, die verhindern soll, dass man findet, was man finden will.
+
+Die Gruppe fand dasselbe.
+
+## Was die Maschine nicht wusste
+
+Ines stellte die Ergebnisse im Juli 2039 im grossen Hörsaal des CERN vor, vor fünfhundert Menschen im Saal und hunderttausend, die online zusahen. Sie sprach eine Stunde. Sie zeigte die einundzwanzig Kollisionen, die Prüfungen, die Masse. Sie sagte nicht, dass man ein neues Teilchen gefunden habe. Sie sagte, man habe einen Hinweis gefunden, und das Experiment CMS auf der anderen Seite des Rings solle in seinen eigenen Daten nachsehen.
+
+Danach stand ein alter Physiker im Saal auf, ein Theoretiker aus Zürich, der in seinem Leben an drei Theorien gearbeitet hatte, die die Natur alle abgelehnt hatte. Er fragte: «Frau Monteiro, wer hat das entdeckt? Sie oder die Maschine?»
+
+Es wurde still im Saal. Ines hatte die Frage erwartet. Sie hatte vier Monate lang darüber nachgedacht.
+
+«Die Maschine hat es aufbewahrt», sagte sie. «Sie wusste nicht, was es war. Sie wusste nur, dass es anders war. Wenn ich ihr die siebzehn Kollisionen gezeigt und gefragt hätte, was das ist, hätte sie keine Antwort gehabt. Sie kennt keine Physik. Sie kennt nur das Gewöhnliche.» Sie hielt inne. «Aber ohne sie hätten wir es nie gesehen. Die alte Datenauswahl hat in fünfzehn Jahren vier dieser Kollisionen aufbewahrt, rein zufällig, weil sie zufällig auf einer Liste für etwas anderes standen. Die Maschine hat in drei Monaten siebzehn gefunden.»
+
+Der alte Physiker nickte langsam. «Dann ist sie wie ein guter Doktorand», sagte er. «Merkt, dass etwas seltsam ist, und weiss nicht, warum. Das ist mehr, als die meisten können.» Es gab Gelächter im Saal.
+
+## Das Teilchen
+
+Das Experiment CMS fand das Signal im Herbst 2040 in seinen eigenen Daten, mit einem Anomaliefilter, den es inzwischen ebenfalls eingebaut hatte. Zusammen überschritten die beiden Experimente im Frühling 2041 die Schwelle von eins zu 3,5 Millionen.
+
+Das Teilchen hat noch keinen endgültigen Namen. In den Fachzeitschriften heisst es nach seiner Masse X(19). Die Theoretiker streiten bis heute darüber, was es ist: ein Botenteilchen einer bisher unbekannten Kraft, ein Bestandteil der dunklen Materie, die einen Viertel des Universums ausmacht und die bisher niemand direkt gesehen hat, oder etwas, an das noch niemand gedacht hat. Es gibt über dreihundert Arbeiten dazu.
+
+Was es sicher ist: die erste Entdeckung eines neuen Teilchens seit dem Higgs-Boson. Und die erste, die nicht gefunden wurde, weil jemand vorhergesagt hatte, wo es zu suchen sei.
+
+---
+
+Ines Monteiro ist heute einundvierzig und leitet am CERN die Gruppe, die den Anomaliefilter für den geplanten Nachfolger des grossen Beschleunigers entwickelt. Sie lebt in einem Dorf im Pays de Gex, auf der französischen Seite der Grenze, und fährt jeden Morgen mit dem Velo durch die Maisfelder ins Labor, über dem Ring, in dem die Protonen kreisen.
+
+«Weisst du, was mich am meisten bewegt hat?», sagte sie zu Lea, als sie im Juli 2045 in der Cafeteria des CERN sassen, zwischen Physikern aus siebzig Ländern, die auf Englisch, Französisch, Italienisch, Chinesisch und Hindi über ihr Mittagessen redeten. «Dass die Maschine nur funktioniert hat, weil wir ihr beigebracht hatten, bescheiden zu sein. Sie sollte nicht wissen, was neu ist. Sie sollte nur wissen, was sie schon kennt, und ehrlich sein, wenn etwas nicht passt.» Sie lächelte. «Das wäre für uns Physiker auch keine schlechte Regel.»
+
+> !Stand heute
+> Am CERN bei Genf wurde 2012 das Higgs-Boson entdeckt. Der Large Hadron Collider soll um 2030 in einen Hochluminositäts-Betrieb gehen, der ein Vielfaches an Kollisionen liefert. Die Detektoren speichern nur einen winzigen Bruchteil der Kollisionen; die Auswahl («Trigger») läuft in Mikrosekunden.
+> Schnelle neuronale Netze auf programmierbaren Chips (FPGA) werden für die Trigger der Experimente entwickelt und getestet, auch solche zur «Anomalieerkennung», die nicht nach bestimmten Signalen suchen, sondern nach allem, was vom Gewohnten abweicht. Für eine Entdeckung verlangt die Teilchenphysik eine Signifikanz von fünf Standardabweichungen.
