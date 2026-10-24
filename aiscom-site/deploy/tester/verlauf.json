@@ -1,5 +1,12 @@
 [
  {
+  "guid": "stretcher-android-0.2-1",
+  "titel": "Stretcher 0.2 (Build 1) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Klänge extrem dehnen (Paulstretch, Phase-Vocoder, Sinusmodell) und die Verfahren vergleichen, auf Android. Rechnet gleich wie die Mac-Fassung; je Lauf bis 30 s, auf kleinen Geräten 15 s.",
+  "datum": "2026-10-24T19:52:21.347889+02:00"
+ },
+ {
   "guid": "mietpruefer-mac-0.1-1",
   "titel": "Mietprüfer 0.1 (Build 1) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",

@@ -134,6 +134,11 @@ ANDROID = [
      "apk": GIT / "cAuroraAndroid/app/build/outputs/apk/release/app-release.apk",
      "datei": "cAurora.apk",
      "kurz": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen."},
+    {"name": "Stretcher", "kennung": "stretcher",
+     "apk": GIT / "stretcher-android/app/build/outputs/apk/release/app-release.apk",
+     "datei": "Stretcher.apk",
+     "kurz": "Klänge extrem dehnen (Paulstretch, Phase-Vocoder, Sinusmodell) und die Verfahren vergleichen, auf Android. "
+             "Rechnet gleich wie die Mac-Fassung; je Lauf bis 30 s, auf kleinen Geräten 15 s."},
 ]
 
 # E-Books: EPUB aus dem Buchprojekt (Wortzahl und Pruefung stehen in dessen README); Umschlag als Bild unter bilder/

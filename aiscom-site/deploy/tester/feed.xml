@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
   <language>de-ch</language>
-  <lastBuildDate>Sat, 24 Oct 2026 15:57:14 +0000</lastBuildDate>
+  <lastBuildDate>Sat, 24 Oct 2026 18:00:53 +0000</lastBuildDate>
+  <item>
+    <title>Stretcher 0.2 (Build 1) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">stretcher-android-0.2-1</guid>
+    <pubDate>Sat, 24 Oct 2026 19:52:21 +0200</pubDate>
+    <description>Klänge extrem dehnen (Paulstretch, Phase-Vocoder, Sinusmodell) und die Verfahren vergleichen, auf Android. Rechnet gleich wie die Mac-Fassung; je Lauf bis 30 s, auf kleinen Geräten 15 s.</description>
+  </item>
   <item>
     <title>Mietprüfer 0.1 (Build 1) für macOS</title>
     <link>https://www.aiscom.ch/tester/#mac</link>
