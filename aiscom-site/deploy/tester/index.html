@@ -51,7 +51,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <ol>
       <li><b>DMG öffnen</b> (Doppelklick auf die geladene Datei). Es erscheint ein Fenster mit der App und einer Verknüpfung <b>„Programme“</b>.</li>
       <li><b>App auf „Programme“ ziehen.</b> Danach das DMG-Fenster schliessen und das Laufwerk auswerfen; die App startest du aus dem Programme-Ordner oder über Spotlight.</li>
-      <li><b>Erster Start:</b> Rechtsklick auf die App › <b>Öffnen</b> › „Öffnen“ bestätigen. Blockiert macOS trotzdem: Systemeinstellungen › Datenschutz &amp; Sicherheit › unten <b>„Trotzdem öffnen“</b>. Nur beim ersten Start nötig.</li>
+      <li><b>Starten</b> wie jede andere App – die Apps sind von Apple beglaubigt.</li>
       <li><b>Neue Fassung:</b> einfach wieder hineinziehen und „Ersetzen“ wählen. Einstellungen und Daten bleiben erhalten.</li>
     </ol>
   </section>
@@ -71,8 +71,8 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </a>
   <dl class="meta">
     <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
-    <dt>Signatur</dt><dd>Developer ID</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">de893d0116abbe3fa013736ec8429448306ce91afb27b35497aa8810ea74843d</code></dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">2ff1abea65508189424cdcc9c3abd5ee8b2099fef6555e98587f656a647462e4</code></dd>
   </dl>
 </article>
 <article class="karte" id="kamera-import">
@@ -89,8 +89,8 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </a>
   <dl class="meta">
     <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
-    <dt>Signatur</dt><dd>Developer ID</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">0f09b9cdbc86572e9bc97889a21bd375a9ff6bfe197cf7b9ac6a47222580e285</code></dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">aac297218e0046d8a4db5b55bb2e04e977c8cc0e2e0e454d16cdac4ea479f719</code></dd>
   </dl>
 </article>
 <article class="karte" id="antennen-studio">
@@ -107,8 +107,8 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </a>
   <dl class="meta">
     <dt>System</dt><dd>macOS 14 oder neuer, Apple Silicon</dd>
-    <dt>Signatur</dt><dd>Developer ID</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">9cdf926af6e09d4558348e7497e4851c2c57bfe549843f284e3ab0341d188376</code></dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">729f5fc0012d133a85ca8a7a1b352767b76fe6a5ef8f49f9e18a04a76b5ea613</code></dd>
   </dl>
 </article>
 <article class="karte" id="macyaesu">
@@ -125,8 +125,8 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </a>
   <dl class="meta">
     <dt>System</dt><dd>macOS 15 oder neuer, Apple Silicon</dd>
-    <dt>Signatur</dt><dd>Developer ID</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">8e7f9ba11e530b252b377ef598f610a8bd948b5755b4e2f2d2f77b167f257982</code></dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">b3eb83741dc33ab13dbd67a0ed539ca947de5e62d1aaabb2a729011d67b08658</code></dd>
   </dl>
 </article>
 <article class="karte" id="stretcher">
@@ -149,7 +149,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
 </article>
   </section>
 
-  <footer>Stand 24.10.2026 09:39. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <footer>Stand 24.10.2026 09:59. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 document.querySelectorAll('.sha').forEach(e => e.addEventListener('click', () => { navigator.clipboard?.writeText(e.textContent); e.title = 'kopiert'; }));
