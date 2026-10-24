@@ -10,13 +10,14 @@ Stretcher haben keine Demo-Grenze. Kein Schlüssel steht auf der Seite.
 Neue Fassung veröffentlichen:
 
 ```zsh
-# 1. DMGs bauen (Developer ID; --ohne-notar = ohne Apples Notardienst, dann braucht der erste Start Rechtsklick › Öffnen;
-#    Notarisierung nur mit OK des Benutzers)
-(cd ~/Projects/Git/aurora-studio-mac && werkzeuge/verteilen.sh --ohne-notar)              # build/verteilen/Aurora Studio.dmg
-(cd ~/Projects/Git/kamera-import && ./verteilen.sh --tester --ohne-notar)                 # dist/KameraImport-Tester.dmg
-(cd ~/Projects/Git/antennen-studio-mac && werkzeuge/verteilen.sh --tester --ohne-notar)   # build/verteilen-tester/Antennen-Studio-Tester.dmg
-(cd ~/Projects/Git/Ai/FT991A-Remote && Tools/verteilen.sh --tester --ohne-notar)          # dist/MacYaesu-Tester.dmg
-(cd ~/Projects/Git/stretcher-mac && werkzeuge/verteilen.sh --ohne-notar)                  # build/verteilen/Stretcher.dmg
+# 1. DMGs notarisiert bauen (Benutzer-OK seit 2026-10-24 fuer die Tester-Seite). Vorher pruefen, dass der Bildschirm
+#    entsperrt ist (ioreg … IOConsoleLocked), sonst findet notarytool den Zugang im Schluesselbund nicht.
+#    --ohne-notar nur zum Pruefen (erster Start dann per Rechtsklick › Öffnen), nicht weitergeben.
+(cd ~/Projects/Git/aurora-studio-mac && werkzeuge/verteilen.sh)                 # build/verteilen/Aurora Studio.dmg
+(cd ~/Projects/Git/kamera-import && ./verteilen.sh --tester)                    # dist/KameraImport-Tester.dmg
+(cd ~/Projects/Git/antennen-studio-mac && werkzeuge/verteilen.sh --tester)      # build/verteilen-tester/Antennen-Studio-Tester.dmg
+(cd ~/Projects/Git/Ai/FT991A-Remote && Tools/verteilen.sh --tester)             # dist/MacYaesu-Tester.dmg
+(cd ~/Projects/Git/stretcher-mac && werkzeuge/verteilen.sh)                     # build/verteilen/Stretcher.dmg
 # 2. Seite erzeugen (liest DMGs und App-Pakete; Notarisierung erkennt es selbst per `stapler validate`)
 python3 erzeugen.py
 # 3. Einspielen (Pfade unter /var/www/ sind in deploy-lxc.sh für 104 freigegeben)
@@ -33,4 +34,7 @@ curl -sI https://www.aiscom.ch/tester/Stretcher.dmg | grep -i "content-length"
 curl -s https://www.aiscom.ch/tester/Stretcher.dmg | shasum -a 256
 ```
 
-Nicht auf der Seite (Stand 2026-10-24): Zeigerwerk (braucht VU1-Hardware, Lizenz-Prüfschlüssel offen).
+Stand 2026-10-24: Aurora 1.0 (3), Kamera-Import 1.0 (7), Antennen-Studio 1.0 (6, Build 7 folgt), MacYaesu 1.1 (2),
+Stretcher 0.2 (2). Kamera-Import Build 8 (Einordnung gut/schlecht) ist bewusst nicht hier, nur lokal zum Testen.
+
+Nicht auf der Seite: Zeigerwerk (braucht VU1-Hardware, Lizenz-Prüfschlüssel offen).
