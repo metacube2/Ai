@@ -92,6 +92,11 @@ und heftet das Ticket an (`dist/MacYaesu.dmg`). Für den Website-Deploy `dist/Ma
 kopieren (siehe `instructions/homelab/aiscom-website.md`). Live auf www.aiscom.ch/macyaesu/ ist seit
 2026-10-19 die notarisierte 1.1. Offen: Testkauf, MWST/Merchant of Record, Forenposts.
 
+**Tester-Fassung** (seit 2026-10-24): `Tools/verteilen.sh --tester` baut mit Compile-Schalter `MACYAESU_TESTER`
+(`SettingsController.istTester`: `isActivated` immer wahr, Einstellungen zeigen „Vollversion (Testfassung)“) nach
+`dist/MacYaesu-Tester.dmg` für www.aiscom.ch/tester/ (eigener Build-Ordner `build/verteilen-tester`, Verkaufs-DMG bleibt
+unberührt; Rauchtest per `strings`). `--ohne-notar` baut und signiert nur. Nie verkaufen.
+
 ## Vertriebsseite
 
 Eine eigenständige Landingpage für Marketing/Vertrieb liegt unter:

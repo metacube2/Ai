@@ -76,7 +76,7 @@ struct ActivationSettingsView: View {
                         .fill(settingsController.isActivated ? Color.green : (settingsController.isTrialExpired ? Color.red : Color.orange))
                         .frame(width: 10, height: 10)
 
-                    Text(settingsController.isActivated ? "Aktiviert" : (settingsController.isTrialExpired ? "Testzeit abgelaufen" : "Testversion aktiv"))
+                    Text(settingsController.isActivated ? (SettingsController.istTester ? "Vollversion (Testfassung)" : "Aktiviert") : (settingsController.isTrialExpired ? "Testzeit abgelaufen" : "Testversion aktiv"))
                 }
 
                 if !settingsController.isActivated {

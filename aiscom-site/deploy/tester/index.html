@@ -44,7 +44,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
 <main>
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
-  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import und Antennen-Studio für den Mac, alle als Vollversion.</p>
+  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu und Stretcher für den Mac, alle als Vollversion.</p>
 
   <section class="schritte">
     <h3>Installation</h3>
@@ -111,9 +111,45 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">9cdf926af6e09d4558348e7497e4851c2c57bfe549843f284e3ab0341d188376</code></dd>
   </dl>
 </article>
+<article class="karte" id="macyaesu">
+  <div class="kopf">
+    <img src="bilder/macyaesu.png" alt="" width="96" height="96">
+    <div>
+      <h2>MacYaesu</h2>
+      <p class="kurz">Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.</p>
+    </div>
+  </div>
+  <a class="laden" href="MacYaesu.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>MacYaesu.dmg</b><small>Version 1.1 (Build 2) · 2 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 13 oder neuer, FT-991A per USB</dd>
+    <dt>Signatur</dt><dd>Developer ID</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">8e7f9ba11e530b252b377ef598f610a8bd948b5755b4e2f2d2f77b167f257982</code></dd>
+  </dl>
+</article>
+<article class="karte" id="stretcher">
+  <div class="kopf">
+    <img src="bilder/stretcher.png" alt="" width="96" height="96">
+    <div>
+      <h2>Stretcher</h2>
+      <p class="kurz">Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Stretcher.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Stretcher.dmg</b><small>Version 0.1 (Build 1) · 1 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">109af9eee200ba01ee66af7115b70b7dd882b8b67d55c1d3466a4924f2d99d58</code></dd>
+  </dl>
+</article>
   </section>
 
-  <footer>Stand 24.10.2026 09:22. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <footer>Stand 24.10.2026 09:31. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 document.querySelectorAll('.sha').forEach(e => e.addEventListener('click', () => { navigator.clipboard?.writeText(e.textContent); e.title = 'kopiert'; }));

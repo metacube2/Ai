@@ -56,6 +56,13 @@ final class SettingsController: ObservableObject {
 
     static let availableBaudRates = [4800, 9600, 19200, 38400, 57600, 115200]
     private static let trialDurationSeconds = 15 * 60
+    /// Tester-Fassung (Compile-Schalter MACYAESU_TESTER, Tools/verteilen.sh --tester): aktiviert ohne Schluessel,
+    /// fuer www.aiscom.ch/tester/. Nie verkaufen.
+    #if MACYAESU_TESTER
+    static let istTester = true
+    #else
+    static let istTester = false
+    #endif
     private static let licenseSecret = "MacYaesu-License-v1::FT991A::Offline"
 
     init() {
@@ -147,7 +154,7 @@ final class SettingsController: ObservableObject {
 
         licenseEmail = Self.normalizeLicenseEmail(settings.licenseEmail)
         licenseKey = Self.normalizeLicenseKey(settings.licenseKey)
-        isActivated = Self.isValidLicense(email: licenseEmail, key: licenseKey)
+        isActivated = Self.istTester || Self.isValidLicense(email: licenseEmail, key: licenseKey)
     }
 
     private func saveSettings() {

@@ -7,8 +7,8 @@ Aufruf (im Ordner deploy/tester/):
 Die DMG-Pfade und App-Pakete stehen in APPS; die DMGs selbst liegen nicht im Repo (gross), sie werden mit
 instructions/scripts/deploy-lxc.sh 104 <dmg> /var/www/html/tester/<name>.dmg eingespielt (siehe README).
 Die Seite zeigt nur Downloads und die Installationsschritte, keine Testpunkte oder Hinweise (Benutzer 2026-10-24).
-Alle Apps sind Vollversionen: Kamera-Import und Antennen-Studio als Tester-Fassung ohne Lizenzschluessel
-(verteilen.sh --tester), Aurora Studio hat keine Demo-Grenze."""
+Alle Apps sind Vollversionen: Kamera-Import, Antennen-Studio und MacYaesu als Tester-Fassung ohne Lizenzschluessel
+(verteilen.sh --tester), Aurora Studio und Stretcher haben keine Demo-Grenze."""
 import hashlib
 import os
 import plistlib
@@ -46,6 +46,24 @@ APPS = [
         "app": GIT / "antennen-studio-mac/build/verteilen-tester/dd/Build/Products/Release/Antennen-Studio.app",
         "datei": "AntennenStudio.dmg",
         "kurz": "NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).",
+        "system": "macOS 14 oder neuer, Apple Silicon",
+    },
+    {
+        "name": "MacYaesu",
+        "kennung": "macyaesu",
+        "dmg": GIT / "Ai/FT991A-Remote/dist/MacYaesu-Tester.dmg",
+        "app": GIT / "Ai/FT991A-Remote/build/verteilen-tester/dd/Build/Products/Release/MacYaesu.app",
+        "datei": "MacYaesu.dmg",
+        "kurz": "Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.",
+        "system": "macOS 13 oder neuer, FT-991A per USB",
+    },
+    {
+        "name": "Stretcher",
+        "kennung": "stretcher",
+        "dmg": GIT / "stretcher-mac/build/verteilen/Stretcher.dmg",
+        "app": GIT / "stretcher-mac/build/verteilen/dd/Build/Products/Release/Stretcher.app",
+        "datei": "Stretcher.dmg",
+        "kurz": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
         "system": "macOS 14 oder neuer, Apple Silicon",
     },
 ]
@@ -169,7 +187,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
 <main>
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
-  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import und Antennen-Studio für den Mac, alle als Vollversion.</p>
+  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu und Stretcher für den Mac, alle als Vollversion.</p>
 
   <section class="schritte">
     <h3>Installation</h3>
