@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
   <language>de-ch</language>
-  <lastBuildDate>Sat, 24 Oct 2026 18:00:53 +0000</lastBuildDate>
+  <lastBuildDate>Sat, 24 Oct 2026 19:55:16 +0000</lastBuildDate>
+  <item>
+    <title>Antennen-Studio 1.0 (Build 1) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">antennen-studio-android-1.0-1</guid>
+    <pubDate>Sat, 24 Oct 2026 21:52:51 +0200</pubDate>
+    <description>Antennen mit NEC-2 simulieren: 3D-Modell, Richtdiagramme, SWR, Smith-Diagramm, Optimierer, Live-Regler. Rechenkern nec2c (GPLv3) wie auf Mac und iPhone, Ergebnisse zahlengleich.</description>
+  </item>
   <item>
     <title>Stretcher 0.2 (Build 1) für Android</title>
     <link>https://www.aiscom.ch/tester/#android</link>

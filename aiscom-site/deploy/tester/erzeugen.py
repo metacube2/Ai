@@ -139,6 +139,11 @@ ANDROID = [
      "datei": "Stretcher.apk",
      "kurz": "Klänge extrem dehnen (Paulstretch, Phase-Vocoder, Sinusmodell) und die Verfahren vergleichen, auf Android. "
              "Rechnet gleich wie die Mac-Fassung; je Lauf bis 30 s, auf kleinen Geräten 15 s."},
+    {"name": "Antennen-Studio", "kennung": "antennen-studio",
+     "apk": GIT / "antennen-studio-android/app/build/outputs/apk/release/app-release.apk",
+     "datei": "Antennen-Studio.apk",
+     "kurz": "Antennen mit NEC-2 simulieren: 3D-Modell, Richtdiagramme, SWR, Smith-Diagramm, Optimierer, Live-Regler. "
+             "Rechenkern nec2c (GPLv3) wie auf Mac und iPhone, Ergebnisse zahlengleich."},
 ]
 
 # E-Books: EPUB aus dem Buchprojekt (Wortzahl und Pruefung stehen in dessen README); Umschlag als Bild unter bilder/
