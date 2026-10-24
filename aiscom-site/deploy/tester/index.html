@@ -18,7 +18,7 @@ header .logo { font:700 13px ui-monospace,Menlo,monospace; letter-spacing:4px; c
 header .logo i { width:11px; height:11px; border-radius:50%; background:var(--accent); display:inline-block; box-shadow:0 0 12px var(--accent); }
 h1 { font-size:clamp(28px,4vw,40px); line-height:1.15; margin:6px 0 10px; }
 .unter { color:var(--muted); font-size:17px; max-width:760px; margin:0 0 28px; }
-.karten { display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:24px; }
+.karten { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr)); gap:24px; }
 .karte { background:linear-gradient(180deg,var(--surface),#0f1b33); border:1px solid var(--line); border-radius:18px; padding:26px; box-shadow:0 20px 50px rgba(0,0,0,.35); }
 .kopf { display:flex; gap:18px; align-items:flex-start; }
 .kopf img { border-radius:22px; flex:none; filter:drop-shadow(0 8px 18px rgba(0,0,0,.45)); }
@@ -36,6 +36,12 @@ h2 { margin:0 0 6px; font-size:26px; }
 h3 { font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }
 .schritte { background:var(--surface-2); border:1px solid var(--line); border-radius:18px; padding:24px 28px; margin:0; }
 .schritte ol { margin:0; padding-left:22px; } .schritte li { margin-bottom:10px; }
+.reiter { display:flex; gap:8px; margin:0 0 26px; flex-wrap:wrap; }
+.reiter a { padding:10px 20px; border-radius:999px; border:1px solid var(--line); color:var(--text); text-decoration:none; font-weight:600; background:var(--surface); }
+.reiter a[aria-selected="true"] { background:linear-gradient(135deg,#9ad9f3,#5fb6dc); color:#06121f; border-color:transparent; }
+.reiter small { opacity:.7; font-weight:500; margin-left:6px; }
+.platt[hidden] { display:none; }
+.hinweis { margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }
 footer { margin-top:36px; color:var(--muted); font-size:13px; }
 @media (max-width:520px) { .karten { grid-template-columns:1fr; } .kopf { flex-direction:column; } }
 </style>
@@ -44,8 +50,15 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
 <main>
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
-  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu, Stretcher und Obhut für den Mac, alle als Vollversion.</p>
+  <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad und Android, alle als Vollversion.</p>
 
+  <nav class="reiter" role="tablist">
+    <a href="#mac" role="tab" data-p="mac">macOS<small>6</small></a>
+    <a href="#ios" role="tab" data-p="ios">iPhone / iPad<small>3</small></a>
+    <a href="#android" role="tab" data-p="android">Android<small>1</small></a>
+  </nav>
+
+  <div class="platt" id="p-mac" role="tabpanel">
   <section class="schritte">
     <h3>Installation</h3>
     <ol>
@@ -55,7 +68,6 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
       <li><b>Neue Fassung:</b> einfach wieder hineinziehen und „Ersetzen“ wählen. Einstellungen und Daten bleiben erhalten.</li>
     </ol>
   </section>
-
   <section class="karten" style="margin-top:32px">
 <article class="karte" id="aurora-studio">
   <div class="kopf">
@@ -85,12 +97,12 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </div>
   <a class="laden" href="KameraImport.dmg" download>
     <span class="pfeil">⬇</span>
-    <span><b>KameraImport.dmg</b><small>Version 1.0 (Build 8) · 2 MB · 24.10.2026</small></span>
+    <span><b>KameraImport.dmg</b><small>Version 1.0 (Build 7) · 2 MB · 24.10.2026</small></span>
   </a>
   <dl class="meta">
     <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
     <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">19d4ac4aea7a9464a2682093a872e733f44a756b080db42674e7f4647aaa29c0</code></dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">aac297218e0046d8a4db5b55bb2e04e977c8cc0e2e0e454d16cdac4ea479f719</code></dd>
   </dl>
 </article>
 <article class="karte" id="antennen-studio">
@@ -166,10 +178,107 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </dl>
 </article>
   </section>
+  </div>
 
-  <footer>Stand 24.10.2026 13:40. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <div class="platt" id="p-ios" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li>Apple erlaubt iPhone-Apps ausserhalb des App Store nur über <b>TestFlight</b>. Du bekommst eine <b>Einladung per E-Mail</b>.</li>
+      <li>Die App <b>TestFlight</b> aus dem App Store laden, in der E-Mail auf „Testen starten“ tippen, dann „Installieren“.</li>
+      <li><b>Neue Fassung:</b> TestFlight meldet sie und aktualisiert auf Tipp.</li>
+    </ol>
+  </section>
+  <section class="karten" style="margin-top:32px">
+<article class="karte" id="ios-antennen-studio">
+  <div class="kopf">
+    <img src="bilder/antennen-studio.png" alt="" width="96" height="96">
+    <div>
+      <h2>Antennen-Studio</h2>
+      <p class="kurz">NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut).</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>1.0 (Build 7)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>17 von 17 Klicktests bestanden (iPhone 17, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-stretcher">
+  <div class="kopf">
+    <img src="bilder/stretcher.png" alt="" width="96" height="96">
+    <div>
+      <h2>Stretcher</h2>
+      <p class="kurz">Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.2 (Build 2)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>10 von 10 Klicktests bestanden (iPhone 17, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-obhut">
+  <div class="kopf">
+    <img src="bilder/obhut.png" alt="" width="96" height="96">
+    <div>
+      <h2>Obhut</h2>
+      <p class="kurz">Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>11 von 11 Klicktests bestanden (iPhone 17, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+  </section>
+  </div>
+
+  <div class="platt" id="p-android" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li><b>APK auf dem Android-Gerät laden</b> (Link direkt auf dem Handy öffnen).</li>
+      <li>Die geladene Datei antippen. Beim ersten Mal fragt Android, ob der Browser Apps installieren darf: <b>„Zulassen“</b>, dann <b>„Installieren“</b>.</li>
+      <li><b>Neue Fassung:</b> neue APK gleich installieren, sie ersetzt die alte; Daten bleiben erhalten.</li>
+    </ol>
+  </section>
+  <section class="karten" style="margin-top:32px">
+<article class="karte" id="android-caurora">
+  <div class="kopf">
+    <img src="bilder/caurora.png" alt="" width="96" height="96">
+    <div>
+      <h2>cAurora</h2>
+      <p class="kurz">Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen.</p>
+    </div>
+  </div>
+  <a class="laden" href="cAurora.apk" download>
+    <span class="pfeil">⬇</span>
+    <span><b>cAurora.apk</b><small>Version 0.4.5 (Build 10) · 8 MB · 09.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android 8 oder neuer</dd>
+    <dt>Signatur</dt><dd>signiert, Zertifikat 59868e10ec67de56…</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">b93ee07dded6ceb0cec2ec0ac9e91f7de43fdfdcb87279d91646ab3a7a95f006</code></dd>
+  </dl>
+</article>
+  </section>
+  </div>
+
+  <footer>Stand 24.10.2026 14:34. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
+function zeigen() {
+  const p = (location.hash || '#mac').slice(1).split('-')[0];
+  const gueltig = ['mac', 'ios', 'android'].includes(p) ? p : 'mac';
+  document.querySelectorAll('.platt').forEach(e => e.hidden = e.id !== 'p-' + gueltig);
+  document.querySelectorAll('.reiter a').forEach(a => a.setAttribute('aria-selected', a.dataset.p === gueltig));
+}
+window.addEventListener('hashchange', zeigen); zeigen();
 document.querySelectorAll('.sha').forEach(e => e.addEventListener('click', () => { navigator.clipboard?.writeText(e.textContent); e.title = 'kopiert'; }));
 </script>
 </body>

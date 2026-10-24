@@ -7,6 +7,8 @@ Aufruf (im Ordner deploy/tester/):
 Die DMG-Pfade und App-Pakete stehen in APPS; die DMGs selbst liegen nicht im Repo (gross), sie werden mit
 instructions/scripts/deploy-lxc.sh 104 <dmg> /var/www/html/tester/<name>.dmg eingespielt (siehe README).
 Die Seite zeigt nur Downloads und die Installationsschritte, keine Testpunkte oder Hinweise (Benutzer 2026-10-24).
+Drei Reiter je Plattform (Benutzer 2026-10-24): macOS (DMGs, notarisiert), iPhone/iPad (im Simulator gepruefte
+Fassungen; Verteilung nur ueber TestFlight, Testergebnis aus dem xcresult), Android (signierte APKs, Version aus aapt).
 Alle Apps sind Vollversionen: Kamera-Import, Antennen-Studio und MacYaesu als Tester-Fassung ohne Lizenzschluessel
 (verteilen.sh --tester), Aurora Studio und Stretcher haben keine Demo-Grenze."""
 import hashlib
@@ -20,7 +22,7 @@ from pathlib import Path
 GIT = Path.home() / "Projects/Git"
 HIER = Path(__file__).resolve().parent
 
-APPS = [
+MAC = APPS = [
     {
         "name": "Aurora Studio",
         "kennung": "aurora-studio",
@@ -32,7 +34,8 @@ APPS = [
     {
         "name": "Kamera-Import",
         "kennung": "kamera-import",
-        "dmg": GIT / "kamera-import/dist/KameraImport-Tester.dmg",
+        # Build 8 (gut/schlecht-Sortierung) nur lokal beim Benutzer (2026-10-24); verteilt bleibt Build 7
+        "dmg": GIT / "kamera-import/dist/tester-live/KameraImport-Tester-Build7.dmg",
         "app": GIT / "kamera-import/build/verteilen-tester/dd/Build/Products/Release/KameraImport.app",
         "datei": "KameraImport.dmg",
         "kurz": "Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.",
@@ -74,6 +77,33 @@ APPS = [
 ]
 
 
+# iPhone/iPad: App-Paket des Simulator-Baus (Version) und letzter voller Klicktestlauf (build/mobiltest.xcresult)
+IOS = [
+    {"name": "Antennen-Studio", "kennung": "antennen-studio",
+     "app": GIT / "antennen-studio-mac/build/dd-ios/Build/Products/Debug-iphonesimulator/Antennen-Studio.app",
+     "test": GIT / "antennen-studio-mac/build/mobiltest.xcresult",
+     "kurz": "NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut)."},
+    {"name": "Stretcher", "kennung": "stretcher",
+     "app": GIT / "stretcher-mac/build/dd-ios/Build/Products/Debug-iphonesimulator/Stretcher.app",
+     "test": GIT / "stretcher-mac/build/mobiltest.xcresult",
+     "kurz": "Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge."},
+    {"name": "Obhut", "kennung": "obhut",
+     "app": GIT / "obhut-app/build/dd-ios/Build/Products/Debug-iphonesimulator/Obhut.app",
+     "test": GIT / "obhut-app/build/mobiltest.xcresult",
+     "kurz": "Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone."},
+]
+
+# Android: signierte Release-APKs; Version, Paket und Mindest-Android aus aapt, Signatur aus apksigner
+ANDROID = [
+    {"name": "cAurora", "kennung": "caurora",
+     "apk": GIT / "cAuroraAndroid/app/build/outputs/apk/release/app-release.apk",
+     "datei": "cAurora.apk",
+     "kurz": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen."},
+]
+
+BUILD_TOOLS = Path.home() / "Library/Android/sdk/build-tools/36.1.0"
+
+
 def sha256(p: Path) -> str:
     h = hashlib.sha256()
     with p.open("rb") as f:
@@ -110,8 +140,23 @@ def system(a, info) -> str:
 
 
 def daten(a):
-    info = plistlib.loads((a["app"] / "Contents/Info.plist").read_bytes())
+    """Version, Signatur und System aus der App IM DMG (nicht aus dem Bauordner), damit Seite und Download zusammenpassen"""
+    import tempfile
     dmg = a["dmg"]
+    punkt = tempfile.mkdtemp(prefix="tester-dmg-")
+    subprocess.run(["hdiutil", "attach", "-nobrowse", "-readonly", "-noautoopen", "-mountpoint", punkt, str(dmg)],
+                   check=True, capture_output=True)
+    try:
+        app = next(Path(punkt).glob("*.app"))
+        a = {**a, "app": app}
+        info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
+        d = _daten(a, info, dmg)
+    finally:
+        subprocess.run(["hdiutil", "detach", punkt, "-quiet"], capture_output=True)
+    return d
+
+
+def _daten(a, info, dmg):
     return {
         **a,
         "system": system(a, info),
@@ -123,6 +168,88 @@ def daten(a):
         "developer_id": developer_id(a["app"]),
         "notarisiert": notarisiert(dmg),
     }
+
+
+def xcresult(p: Path):
+    """(bestanden, gesamt, Datum) des letzten Klicktestlaufs oder None"""
+    if not p.exists():
+        return None
+    import json
+    umgebung = {**os.environ, "DEVELOPER_DIR": os.environ.get("DEVELOPER_DIR", "/Volumes/ExtOsX/Programme/Xcode.app/Contents/Developer")}
+    r = subprocess.run(["xcrun", "xcresulttool", "get", "test-results", "summary", "--path", str(p)], capture_output=True, text=True, env=umgebung)
+    if r.returncode != 0:
+        return None
+    j = json.loads(r.stdout)
+    gesamt = j.get("passedTests", 0) + j.get("failedTests", 0) + j.get("skippedTests", 0)
+    geraet = (j.get("devicesAndConfigurations") or [{}])[0].get("device", {})
+    return j.get("passedTests", 0), gesamt, datetime.fromtimestamp(j.get("finishTime", 0)).strftime("%d.%m.%Y"), \
+        f"{geraet.get('deviceName', '?')}, iOS {geraet.get('osVersion', '?')}"
+
+
+def daten_ios(a):
+    info = plistlib.loads((a["app"] / "Info.plist").read_bytes())
+    return {**a, "version": info.get("CFBundleShortVersionString", "?"), "build": info.get("CFBundleVersion", "?"),
+            "mindest": info.get("MinimumOSVersion", "?"), "test": xcresult(a["test"])}
+
+
+def daten_android(a):
+    apk = a["apk"]
+    b = subprocess.run([str(BUILD_TOOLS / "aapt"), "dump", "badging", str(apk)], capture_output=True, text=True).stdout
+    import re
+    feld = lambda muster: (re.search(muster, b) or [None, "?"])[1]
+    java = {**os.environ, "JAVA_HOME": "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home"}
+    java["PATH"] = java["JAVA_HOME"] + "/bin:" + java.get("PATH", "")
+    sig = subprocess.run([str(BUILD_TOOLS / "apksigner"), "verify", "--print-certs", str(apk)], capture_output=True, text=True, env=java)
+    zert = (re.search(r"certificate SHA-256 digest: ([0-9a-f]+)", sig.stdout) or [None, ""])[1]
+    sdk = feld(r"sdkVersion:'(\d+)'")
+    android = {"21": "5", "23": "6", "24": "7", "26": "8", "28": "9", "29": "10", "30": "11", "31": "12", "33": "13", "34": "14", "35": "15"}.get(sdk, f"API {sdk}")
+    return {**a, "version": feld(r"versionName='([^']+)'"), "build": feld(r"versionCode='(\d+)'"),
+            "android": android, "signiert": sig.returncode == 0, "zert": zert[:16],
+            "datum": datetime.fromtimestamp(apk.stat().st_mtime).strftime("%d.%m.%Y"), "groesse": groesse(apk), "sha": sha256(apk)}
+
+
+def karte_ios(d):
+    t = d["test"]
+    test = f"{t[0]} von {t[1]} Klicktests bestanden ({t[3]}, {t[2]})" if t else "noch kein voller Testlauf"
+    return f"""
+<article class="karte" id="ios-{d['kennung']}">
+  <div class="kopf">
+    <img src="bilder/{d['kennung']}.png" alt="" width="96" height="96">
+    <div>
+      <h2>{d['name']}</h2>
+      <p class="kurz">{d['kurz']}</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>{d['version']} (Build {d['build']})</dd>
+    <dt>System</dt><dd>iOS {d['mindest']} oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>{test}</dd>
+  </dl>
+</article>"""
+
+
+def karte_android(d):
+    signatur = f"signiert, Zertifikat {d['zert']}…" if d["signiert"] else "nicht signiert"
+    return f"""
+<article class="karte" id="android-{d['kennung']}">
+  <div class="kopf">
+    <img src="bilder/{d['kennung']}.png" alt="" width="96" height="96">
+    <div>
+      <h2>{d['name']}</h2>
+      <p class="kurz">{d['kurz']}</p>
+    </div>
+  </div>
+  <a class="laden" href="{d['datei']}" download>
+    <span class="pfeil">⬇</span>
+    <span><b>{d['datei']}</b><small>Version {d['version']} (Build {d['build']}) · {d['groesse']} · {d['datum']}</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android {d['android']} oder neuer</dd>
+    <dt>Signatur</dt><dd>{signatur}</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">{d['sha']}</code></dd>
+  </dl>
+</article>"""
 
 
 def karte(d):
@@ -148,7 +275,7 @@ def karte(d):
 </article>"""
 
 
-def seite(apps):
+def seite(apps, ios, android):
     alle_notarisiert = all(d["notarisiert"] for d in apps)
     schritt3 = (
         "<li><b>Starten</b> wie jede andere App – die Apps sind von Apple beglaubigt.</li>"
@@ -158,6 +285,8 @@ def seite(apps):
     )
     stand = datetime.now().strftime("%d.%m.%Y %H:%M")
     karten = "".join(karte(d) for d in apps)
+    karten_ios = "".join(karte_ios(d) for d in ios)
+    karten_android = "".join(karte_android(d) for d in android)
     return f"""<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -178,7 +307,7 @@ header .logo {{ font:700 13px ui-monospace,Menlo,monospace; letter-spacing:4px; 
 header .logo i {{ width:11px; height:11px; border-radius:50%; background:var(--accent); display:inline-block; box-shadow:0 0 12px var(--accent); }}
 h1 {{ font-size:clamp(28px,4vw,40px); line-height:1.15; margin:6px 0 10px; }}
 .unter {{ color:var(--muted); font-size:17px; max-width:760px; margin:0 0 28px; }}
-.karten {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:24px; }}
+.karten {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr)); gap:24px; }}
 .karte {{ background:linear-gradient(180deg,var(--surface),#0f1b33); border:1px solid var(--line); border-radius:18px; padding:26px; box-shadow:0 20px 50px rgba(0,0,0,.35); }}
 .kopf {{ display:flex; gap:18px; align-items:flex-start; }}
 .kopf img {{ border-radius:22px; flex:none; filter:drop-shadow(0 8px 18px rgba(0,0,0,.45)); }}
@@ -196,6 +325,12 @@ h2 {{ margin:0 0 6px; font-size:26px; }}
 h3 {{ font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }}
 .schritte {{ background:var(--surface-2); border:1px solid var(--line); border-radius:18px; padding:24px 28px; margin:0; }}
 .schritte ol {{ margin:0; padding-left:22px; }} .schritte li {{ margin-bottom:10px; }}
+.reiter {{ display:flex; gap:8px; margin:0 0 26px; flex-wrap:wrap; }}
+.reiter a {{ padding:10px 20px; border-radius:999px; border:1px solid var(--line); color:var(--text); text-decoration:none; font-weight:600; background:var(--surface); }}
+.reiter a[aria-selected="true"] {{ background:linear-gradient(135deg,#9ad9f3,#5fb6dc); color:#06121f; border-color:transparent; }}
+.reiter small {{ opacity:.7; font-weight:500; margin-left:6px; }}
+.platt[hidden] {{ display:none; }}
+.hinweis {{ margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }}
 footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
 @media (max-width:520px) {{ .karten {{ grid-template-columns:1fr; }} .kopf {{ flex-direction:column; }} }}
 </style>
@@ -204,8 +339,15 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
 <main>
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
-  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu, Stretcher und Obhut für den Mac, alle als Vollversion.</p>
+  <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad und Android, alle als Vollversion.</p>
 
+  <nav class="reiter" role="tablist">
+    <a href="#mac" role="tab" data-p="mac">macOS<small>{len(apps)}</small></a>
+    <a href="#ios" role="tab" data-p="ios">iPhone / iPad<small>{len(ios)}</small></a>
+    <a href="#android" role="tab" data-p="android">Android<small>{len(android)}</small></a>
+  </nav>
+
+  <div class="platt" id="p-mac" role="tabpanel">
   <section class="schritte">
     <h3>Installation</h3>
     <ol>
@@ -215,13 +357,46 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
       <li><b>Neue Fassung:</b> einfach wieder hineinziehen und „Ersetzen“ wählen. Einstellungen und Daten bleiben erhalten.</li>
     </ol>
   </section>
-
   <section class="karten" style="margin-top:32px">{karten}
   </section>
+  </div>
+
+  <div class="platt" id="p-ios" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li>Apple erlaubt iPhone-Apps ausserhalb des App Store nur über <b>TestFlight</b>. Du bekommst eine <b>Einladung per E-Mail</b>.</li>
+      <li>Die App <b>TestFlight</b> aus dem App Store laden, in der E-Mail auf „Testen starten“ tippen, dann „Installieren“.</li>
+      <li><b>Neue Fassung:</b> TestFlight meldet sie und aktualisiert auf Tipp.</li>
+    </ol>
+  </section>
+  <section class="karten" style="margin-top:32px">{karten_ios}
+  </section>
+  </div>
+
+  <div class="platt" id="p-android" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li><b>APK auf dem Android-Gerät laden</b> (Link direkt auf dem Handy öffnen).</li>
+      <li>Die geladene Datei antippen. Beim ersten Mal fragt Android, ob der Browser Apps installieren darf: <b>„Zulassen“</b>, dann <b>„Installieren“</b>.</li>
+      <li><b>Neue Fassung:</b> neue APK gleich installieren, sie ersetzt die alte; Daten bleiben erhalten.</li>
+    </ol>
+  </section>
+  <section class="karten" style="margin-top:32px">{karten_android}
+  </section>
+  </div>
 
   <footer>Stand {stand}. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
+function zeigen() {{
+  const p = (location.hash || '#mac').slice(1).split('-')[0];
+  const gueltig = ['mac', 'ios', 'android'].includes(p) ? p : 'mac';
+  document.querySelectorAll('.platt').forEach(e => e.hidden = e.id !== 'p-' + gueltig);
+  document.querySelectorAll('.reiter a').forEach(a => a.setAttribute('aria-selected', a.dataset.p === gueltig));
+}}
+window.addEventListener('hashchange', zeigen); zeigen();
 document.querySelectorAll('.sha').forEach(e => e.addEventListener('click', () => {{ navigator.clipboard?.writeText(e.textContent); e.title = 'kopiert'; }}));
 </script>
 </body>
@@ -232,12 +407,28 @@ document.querySelectorAll('.sha').forEach(e => e.addEventListener('click', () =>
 if __name__ == "__main__":
     fertig = []
     for a in APPS:
-        if not a["dmg"].exists() or not a["app"].exists():
-            print(f"FEHLT: {a['dmg']} oder {a['app']}", file=sys.stderr)
+        if not a["dmg"].exists():
+            print(f"FEHLT: {a['dmg']}", file=sys.stderr)
             sys.exit(1)
         fertig.append(daten(a))
-    (HIER / "index.html").write_text(seite(fertig), encoding="utf-8")
+    ios = []
+    for a in IOS:
+        if not a["app"].exists():
+            print(f"FEHLT (iOS): {a['app']}", file=sys.stderr)
+            sys.exit(1)
+        ios.append(daten_ios(a))
+    android = []
+    for a in ANDROID:
+        if not a["apk"].exists():
+            print(f"FEHLT (Android): {a['apk']}", file=sys.stderr)
+            sys.exit(1)
+        android.append(daten_android(a))
+    (HIER / "index.html").write_text(seite(fertig, ios, android), encoding="utf-8")
     for d in fertig:
-        print(f"{d['name']}: {d['version']} ({d['build']}) {d['groesse']} "
+        print(f"Mac {d['name']}: {d['version']} ({d['build']}) {d['groesse']} "
               f"{'Developer ID' if d['developer_id'] else 'ad hoc'}{', notarisiert' if d['notarisiert'] else ''} sha256 {d['sha'][:16]}… → {d['datei']}")
+    for d in ios:
+        print(f"iOS {d['name']}: {d['version']} ({d['build']}) Test {d['test']}")
+    for d in android:
+        print(f"Android {d['name']}: {d['version']} ({d['build']}) Android {d['android']} {'signiert ' + d['zert'] if d['signiert'] else 'UNSIGNIERT'} sha256 {d['sha'][:16]}… → {d['datei']}")
     print("index.html geschrieben")
