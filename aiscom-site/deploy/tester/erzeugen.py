@@ -37,8 +37,9 @@ MAC = APPS = [
     {
         "name": "Kamera-Import",
         "kennung": "kamera-import",
-        # Build 8 (gut/schlecht-Sortierung) nur lokal beim Benutzer (2026-10-24); verteilt bleibt Build 7
-        "dmg": GIT / "kamera-import/dist/tester-live/KameraImport-Tester-Build7.dmg",
+        # Build 8 (gut/schlecht-Sortierung) nur lokal beim Benutzer (2026-10-24); verteilt wird Stand Build 7 plus Sparkle
+        # als Build 9 (Arbeitsordner kamera-import-b7-sparkle, Zweig tester-sparkle)
+        "dmg": GIT / "kamera-import/dist/tester-live/KameraImport-Tester-Build9.dmg",
         "app": GIT / "kamera-import/build/verteilen-tester/dd/Build/Products/Release/KameraImport.app",
         "datei": "KameraImport.dmg",
         "kurz": "Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.",
@@ -83,15 +84,19 @@ MAC = APPS = [
 # iPhone/iPad: App-Paket des Simulator-Baus (Version) und letzter voller Klicktestlauf (build/mobiltest.xcresult)
 IOS = [
     {"name": "Antennen-Studio", "kennung": "antennen-studio",
-     "app": GIT / "antennen-studio-mac/build/dd-ios/Build/Products/Debug-iphonesimulator/Antennen-Studio.app",
+     "app": GIT / "antennen-studio-mac/build/ios-simulator/Antennen-Studio.app",
      "test": GIT / "antennen-studio-mac/build/mobiltest.xcresult",
      "kurz": "NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut)."},
     {"name": "Stretcher", "kennung": "stretcher",
-     "app": GIT / "stretcher-mac/build/dd-ios/Build/Products/Debug-iphonesimulator/Stretcher.app",
+     "app": GIT / "stretcher-mac/build/ios-simulator/Stretcher.app",
      "test": GIT / "stretcher-mac/build/mobiltest.xcresult",
      "kurz": "Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge."},
+    {"name": "cAurora", "kennung": "caurora",
+     "app": GIT / "caurora-ios/build/ios-simulator/cAurora.app",
+     "test": GIT / "caurora-ios/build/mobiltest.xcresult",
+     "kurz": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse und Wetter auf dem iPhone. Sechs Sprachen."},
     {"name": "Obhut", "kennung": "obhut",
-     "app": GIT / "obhut-app/build/dd-ios/Build/Products/Debug-iphonesimulator/Obhut.app",
+     "app": GIT / "obhut-app/build/ios-simulator/Obhut.app",
      "test": GIT / "obhut-app/build/mobiltest.xcresult",
      "kurz": "Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone."},
 ]

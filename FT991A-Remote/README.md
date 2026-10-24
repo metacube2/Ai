@@ -184,3 +184,9 @@ MIT License
 Entwickelt für Amateurfunk-Enthusiasten.
 
 73!
+
+## Automatische Updates (Sparkle, seit 2026-10-24)
+
+`verteilen.sh` bettet Sparkle 2.10.0 ein und veröffentlicht die Updateliste unter
+`https://www.aiscom.ch/updates/<kanal>/appcast.xml` (Bausteine und Schlüssel: [`sparkle-aiscom`](../../sparkle-aiscom/README.md)).
+Menü „Nach Updates suchen …“. Kanal `macyaesu-tester` (Tester), `macyaesu` (Verkauf, nur `--update-verkauf`). Der Swift-Baustein steht am Ende von `FT991A_RemoteApp.swift` (klassisches Xcode-Projekt).

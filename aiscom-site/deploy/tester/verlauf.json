@@ -1,5 +1,54 @@
 [
  {
+  "guid": "obhut-mac-0.1-2",
+  "titel": "Obhut 0.1 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.",
+  "datum": "2026-10-24T16:11:19.314179+02:00"
+ },
+ {
+  "guid": "macyaesu-mac-1.1-3",
+  "titel": "MacYaesu 1.1 (Build 3) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.",
+  "datum": "2026-10-24T16:10:31.449156+02:00"
+ },
+ {
+  "guid": "kamera-import-mac-1.0-9",
+  "titel": "Kamera-Import 1.0 (Build 9) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.",
+  "datum": "2026-10-24T16:09:51.378526+02:00"
+ },
+ {
+  "guid": "aurora-studio-mac-1.0-4",
+  "titel": "Aurora Studio 1.0 (Build 4) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.",
+  "datum": "2026-10-24T16:08:58.744220+02:00"
+ },
+ {
+  "guid": "antennen-studio-mac-1.0-8",
+  "titel": "Antennen-Studio 1.0 (Build 8) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).",
+  "datum": "2026-10-24T16:07:46.356026+02:00"
+ },
+ {
+  "guid": "stretcher-mac-0.2-5",
+  "titel": "Stretcher 0.2 (Build 5) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
+  "datum": "2026-10-24T16:05:59.356385+02:00"
+ },
+ {
+  "guid": "caurora-ios-0.4.5-1",
+  "titel": "cAurora 0.4.5 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse und Wetter auf dem iPhone. Sechs Sprachen. 23 von 24 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T15:38:48.214000+02:00"
+ },
+ {
   "guid": "stretcher-mac-0.2-3",
   "titel": "Stretcher 0.2 (Build 3) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",
