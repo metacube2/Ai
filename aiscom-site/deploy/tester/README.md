@@ -37,6 +37,10 @@ curl -s https://www.aiscom.ch/tester/Stretcher.dmg | shasum -a 256
 Stand 2026-10-24: Aurora 1.0 (3), Kamera-Import 1.0 (7), Antennen-Studio 1.0 (7), MacYaesu 1.1 (2),
 Stretcher 0.2 (2), Obhut 0.1 (1, `obhut-app/werkzeuge/verteilen.sh`). Mietprüfer 0.1 (1) seit 2026-10-24 (`mietpruefer/werkzeuge/verteilen.sh`, Tester-Fassung `MIET_TESTER`, Sparkle-Kanal `mietpruefer-tester`; iPhone-Karte aus dem vollen Klicktestlauf 12/12). Kamera-Import Build 8 (Einordnung gut/schlecht) ist bewusst nicht hier, nur lokal zum Testen.
 
+Reiter **Buch** (seit 2026-10-24): E-Book „Die Schweiz denkt mit“ (`Ai/ki-buch/ausgabe/…epub`, Liste `BUECHER` in `erzeugen.py`,
+Umschlag `bilder/ki-buch.png` aus `ausgabe/umschlag.png`); einspielen nach `/var/www/html/tester/Die-Schweiz-denkt-mit.epub`
+(Apache liefert `application/epub+zip`).
+
 Nicht auf der Seite: Zeigerwerk (braucht VU1-Hardware, Lizenz-Prüfschlüssel offen).
 
 

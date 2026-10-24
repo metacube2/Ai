@@ -136,6 +136,15 @@ ANDROID = [
      "kurz": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen."},
 ]
 
+# E-Books: EPUB aus dem Buchprojekt (Wortzahl und Pruefung stehen in dessen README); Umschlag als Bild unter bilder/
+BUECHER = [
+    {"name": "Die Schweiz denkt mit", "kennung": "ki-buch",
+     "epub": GIT / "Ai/ki-buch/ausgabe/Die-Schweiz-denkt-mit.epub",
+     "datei": "Die-Schweiz-denkt-mit.epub",
+     "kurz": "Zukunftsgeschichten über künstliche Intelligenz in der Schweiz, 2027–2045: eine Reporterin reist durchs Land, "
+             "jedes Kapitel ein anderes Jahr. Gut 100 Seiten mit Bildern, am Ende jedes Kapitels „Stand heute“."},
+]
+
 BUILD_TOOLS = Path.home() / "Library/Android/sdk/build-tools/36.1.0"
 
 
@@ -288,6 +297,31 @@ def karte_android(d):
 </article>"""
 
 
+def daten_buch(a):
+    e = a["epub"]
+    return {**a, "datum": datetime.fromtimestamp(e.stat().st_mtime).strftime("%d.%m.%Y"), "groesse": groesse(e), "sha": sha256(e)}
+
+
+def karte_buch(d):
+    return f"""
+<article class="karte" id="buch-{d['kennung']}">
+  <div class="kopf">
+    <img src="bilder/{d['kennung']}.png" alt="" width="96" height="96" style="object-fit:contain">
+    <div>
+      <h2>{d['name']}</h2>
+      <p class="kurz">{d['kurz']}</p>
+    </div>
+  </div>
+  <a class="laden" href="{d['datei']}" download>
+    <span class="pfeil">⬇</span>
+    <span><b>{d['datei']}</b><small>E-Book (EPUB 3) · {d['groesse']} · {d['datum']}</small></span>
+  </a>
+  <dl class="meta">
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">{d['sha']}</code></dd>
+  </dl>
+</article>"""
+
+
 def karte(d):
     signatur = ("Developer ID" if d["developer_id"] else "ad hoc") + (", von Apple beglaubigt" if d["notarisiert"] else "")
     return f"""
@@ -311,7 +345,7 @@ def karte(d):
 </article>"""
 
 
-def feed_eintraege(apps, ios, android):
+def feed_eintraege(apps, ios, android, buecher=()):
     """Jede Fassung auf der Seite ist ein Feed-Eintrag; Datum = Datei (DMG/APK) bzw. Ende des Klicktestlaufs"""
     neu = []
     for d in apps:
@@ -329,6 +363,10 @@ def feed_eintraege(apps, ios, android):
         datum = datetime.fromtimestamp(d["apk"].stat().st_mtime).astimezone()
         neu.append({"guid": f"{d['kennung']}-android-{d['version']}-{d['build']}", "titel": f"{d['name']} {d['version']} (Build {d['build']}) für Android",
                     "link": "https://www.aiscom.ch/tester/#android", "text": d["kurz"], "datum": datum.isoformat()})
+    for d in buecher:
+        datum = datetime.fromtimestamp(d["epub"].stat().st_mtime).astimezone()
+        neu.append({"guid": f"{d['kennung']}-epub-{d['sha'][:12]}", "titel": f"E-Book „{d['name']}“",
+                    "link": "https://www.aiscom.ch/tester/#buch", "text": d["kurz"], "datum": datum.isoformat()})
     return neu
 
 
@@ -338,7 +376,7 @@ def neuigkeiten(verlauf):
     <a class="rss" href="feed.xml" type="application/rss+xml">RSS-Feed abonnieren</a></section>'''
 
 
-def seite(apps, ios, android, verlauf):
+def seite(apps, ios, android, verlauf, buecher=()):
     alle_notarisiert = all(d["notarisiert"] for d in apps)
     schritt3 = (
         "<li><b>Starten</b> wie jede andere App – die Apps sind von Apple beglaubigt.</li>"
@@ -350,6 +388,7 @@ def seite(apps, ios, android, verlauf):
     karten = "".join(karte(d) for d in apps)
     karten_ios = "".join(karte_ios(d) for d in ios)
     karten_android = "".join(karte_android(d) for d in android)
+    karten_buch = "".join(karte_buch(d) for d in buecher)
     return f"""<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -415,6 +454,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
     <a href="#mac" role="tab" data-p="mac">macOS<small>{len(apps)}</small></a>
     <a href="#ios" role="tab" data-p="ios">iPhone / iPad<small>{len(ios)}</small></a>
     <a href="#android" role="tab" data-p="android">Android<small>{len(android)}</small></a>
+    <a href="#buch" role="tab" data-p="buch">Buch<small>{len(buecher)}</small></a>
   </nav>
 
   <div class="platt" id="p-mac" role="tabpanel">
@@ -457,12 +497,25 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
   </section>
   </div>
 
+  <div class="platt" id="p-buch" role="tabpanel">
+  <section class="schritte">
+    <h3>Lesen</h3>
+    <ol>
+      <li><b>EPUB laden</b> (auf dem Gerät, auf dem gelesen wird).</li>
+      <li><b>iPhone, iPad, Mac:</b> Datei antippen bzw. doppelklicken, sie öffnet sich in <b>Apple Books</b>.</li>
+      <li><b>Android, Windows:</b> eine EPUB-App, z. B. Google Play Books („Datei hochladen“) oder Thorium Reader. <b>E-Reader:</b> Tolino liest EPUB direkt, Kindle über „Send to Kindle“.</li>
+    </ol>
+  </section>
+  <section class="karten" style="margin-top:32px">{karten_buch}
+  </section>
+  </div>
+
   <footer>Stand {stand}. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 function zeigen() {{
   const p = (location.hash || '#mac').slice(1).split('-')[0];
-  const gueltig = ['mac', 'ios', 'android'].includes(p) ? p : 'mac';
+  const gueltig = ['mac', 'ios', 'android', 'buch'].includes(p) ? p : 'mac';
   document.querySelectorAll('.platt').forEach(e => e.hidden = e.id !== 'p-' + gueltig);
   document.querySelectorAll('.reiter a').forEach(a => a.setAttribute('aria-selected', a.dataset.p === gueltig));
 }}
@@ -493,10 +546,16 @@ if __name__ == "__main__":
             print(f"FEHLT (Android): {a['apk']}", file=sys.stderr)
             sys.exit(1)
         android.append(daten_android(a))
-    verlauf = rss.verlauf_ergaenzen(HIER / "verlauf.json", feed_eintraege(fertig, ios, android))
+    buecher = []
+    for a in BUECHER:
+        if not a["epub"].exists():
+            print(f"FEHLT (Buch): {a['epub']}", file=sys.stderr)
+            sys.exit(1)
+        buecher.append(daten_buch(a))
+    verlauf = rss.verlauf_ergaenzen(HIER / "verlauf.json", feed_eintraege(fertig, ios, android, buecher))
     (HIER / "feed.xml").write_text(rss.feed("AISCOM – Testversionen", "https://www.aiscom.ch/tester/", "https://www.aiscom.ch/tester/feed.xml",
                                             "Neue Testfassungen für Mac, iPhone/iPad und Android.", verlauf), encoding="utf-8")
-    (HIER / "index.html").write_text(seite(fertig, ios, android, verlauf), encoding="utf-8")
+    (HIER / "index.html").write_text(seite(fertig, ios, android, verlauf, buecher), encoding="utf-8")
     for d in fertig:
         print(f"Mac {d['name']}: {d['version']} ({d['build']}) {d['groesse']} "
               f"{'Developer ID' if d['developer_id'] else 'ad hoc'}{', notarisiert' if d['notarisiert'] else ''} sha256 {d['sha'][:16]}… → {d['datei']}")
@@ -504,4 +563,6 @@ if __name__ == "__main__":
         print(f"iOS {d['name']}: {d['version']} ({d['build']}) Test {d['test']}")
     for d in android:
         print(f"Android {d['name']}: {d['version']} ({d['build']}) Android {d['android']} {'signiert ' + d['zert'] if d['signiert'] else 'UNSIGNIERT'} sha256 {d['sha'][:16]}… → {d['datei']}")
+    for d in buecher:
+        print(f"Buch {d['name']}: {d['groesse']} sha256 {d['sha'][:16]}… → {d['datei']}")
     print("index.html geschrieben")

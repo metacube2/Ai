@@ -64,6 +64,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <a href="#mac" role="tab" data-p="mac">macOS<small>8</small></a>
     <a href="#ios" role="tab" data-p="ios">iPhone / iPad<small>6</small></a>
     <a href="#android" role="tab" data-p="android">Android<small>2</small></a>
+    <a href="#buch" role="tab" data-p="buch">Buch<small>1</small></a>
   </nav>
 
   <div class="platt" id="p-mac" role="tabpanel">
@@ -376,12 +377,41 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </section>
   </div>
 
-  <footer>Stand 24.10.2026 17:26. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <div class="platt" id="p-buch" role="tabpanel">
+  <section class="schritte">
+    <h3>Lesen</h3>
+    <ol>
+      <li><b>EPUB laden</b> (auf dem Gerät, auf dem gelesen wird).</li>
+      <li><b>iPhone, iPad, Mac:</b> Datei antippen bzw. doppelklicken, sie öffnet sich in <b>Apple Books</b>.</li>
+      <li><b>Android, Windows:</b> eine EPUB-App, z. B. Google Play Books („Datei hochladen“) oder Thorium Reader. <b>E-Reader:</b> Tolino liest EPUB direkt, Kindle über „Send to Kindle“.</li>
+    </ol>
+  </section>
+  <section class="karten" style="margin-top:32px">
+<article class="karte" id="buch-ki-buch">
+  <div class="kopf">
+    <img src="bilder/ki-buch.png" alt="" width="96" height="96" style="object-fit:contain">
+    <div>
+      <h2>Die Schweiz denkt mit</h2>
+      <p class="kurz">Zukunftsgeschichten über künstliche Intelligenz in der Schweiz, 2027–2045: eine Reporterin reist durchs Land, jedes Kapitel ein anderes Jahr. Gut 100 Seiten mit Bildern, am Ende jedes Kapitels „Stand heute“.</p>
+    </div>
+  </div>
+  <a class="laden" href="Die-Schweiz-denkt-mit.epub" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Die-Schweiz-denkt-mit.epub</b><small>E-Book (EPUB 3) · 324 kB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">020fcd5138c9407cda77a3d7fcf4bf5a5432b33ba931d64e910833e46b8f6681</code></dd>
+  </dl>
+</article>
+  </section>
+  </div>
+
+  <footer>Stand 24.10.2026 17:57. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 function zeigen() {
   const p = (location.hash || '#mac').slice(1).split('-')[0];
-  const gueltig = ['mac', 'ios', 'android'].includes(p) ? p : 'mac';
+  const gueltig = ['mac', 'ios', 'android', 'buch'].includes(p) ? p : 'mac';
   document.querySelectorAll('.platt').forEach(e => e.hidden = e.id !== 'p-' + gueltig);
   document.querySelectorAll('.reiter a').forEach(a => a.setAttribute('aria-selected', a.dataset.p === gueltig));
 }
