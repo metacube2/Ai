@@ -63,6 +63,14 @@ APPS = [
         "datei": "Stretcher.dmg",
         "kurz": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
     },
+    {
+        "name": "Obhut",
+        "kennung": "obhut",
+        "dmg": GIT / "obhut-app/build/verteilen/Obhut.dmg",
+        "app": GIT / "obhut-app/build/verteilen/dd/Build/Products/Release/Obhut.app",
+        "datei": "Obhut.dmg",
+        "kurz": "Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.",
+    },
 ]
 
 
@@ -196,7 +204,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
 <main>
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
-  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu und Stretcher für den Mac, alle als Vollversion.</p>
+  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu, Stretcher und Obhut für den Mac, alle als Vollversion.</p>
 
   <section class="schritte">
     <h3>Installation</h3>

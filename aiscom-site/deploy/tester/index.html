@@ -44,7 +44,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
 <main>
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
-  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu und Stretcher für den Mac, alle als Vollversion.</p>
+  <p class="unter">Aktuelle Fassungen von Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu, Stretcher und Obhut für den Mac, alle als Vollversion.</p>
 
   <section class="schritte">
     <h3>Installation</h3>
@@ -147,9 +147,27 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">98a4c5a15ba9502f06eaea06d6c55e024f9d9d365bea1b4aedc741fff5996796</code></dd>
   </dl>
 </article>
+<article class="karte" id="obhut">
+  <div class="kopf">
+    <img src="bilder/obhut.png" alt="" width="96" height="96">
+    <div>
+      <h2>Obhut</h2>
+      <p class="kurz">Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.</p>
+    </div>
+  </div>
+  <a class="laden" href="Obhut.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Obhut.dmg</b><small>Version 0.1 (Build 1) · 2 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">f7a1a73ef66467d01b67754f599af9ffea664a0d437ee7043378507f38a56d1e</code></dd>
+  </dl>
+</article>
   </section>
 
-  <footer>Stand 24.10.2026 12:52. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <footer>Stand 24.10.2026 13:40. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 document.querySelectorAll('.sha').forEach(e => e.addEventListener('click', () => { navigator.clipboard?.writeText(e.textContent); e.title = 'kopiert'; }));
