@@ -28,7 +28,6 @@ APPS = [
         "app": GIT / "aurora-studio-mac/build/verteilen/dd/Build/Products/Release/Aurora Studio.app",
         "datei": "AuroraStudio.dmg",
         "kurz": "Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.",
-        "system": "macOS 14 oder neuer, Apple Silicon empfohlen",
     },
     {
         "name": "Kamera-Import",
@@ -37,7 +36,6 @@ APPS = [
         "app": GIT / "kamera-import/build/verteilen-tester/dd/Build/Products/Release/KameraImport.app",
         "datei": "KameraImport.dmg",
         "kurz": "Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.",
-        "system": "macOS 14 oder neuer, Intel und Apple Silicon",
     },
     {
         "name": "Antennen-Studio",
@@ -46,6 +44,7 @@ APPS = [
         "app": GIT / "antennen-studio-mac/build/verteilen-tester/dd/Build/Products/Release/Antennen-Studio.app",
         "datei": "AntennenStudio.dmg",
         "kurz": "NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).",
+        # eingebetteter momwire-Kern (Python) ist nur arm64, darum nicht aus dem Hauptprogramm ableiten
         "system": "macOS 14 oder neuer, Apple Silicon",
     },
     {
@@ -55,7 +54,6 @@ APPS = [
         "app": GIT / "Ai/FT991A-Remote/build/verteilen-tester/dd/Build/Products/Release/MacYaesu.app",
         "datei": "MacYaesu.dmg",
         "kurz": "Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.",
-        "system": "macOS 13 oder neuer, FT-991A per USB",
     },
     {
         "name": "Stretcher",
@@ -64,7 +62,6 @@ APPS = [
         "app": GIT / "stretcher-mac/build/verteilen/dd/Build/Products/Release/Stretcher.app",
         "datei": "Stretcher.dmg",
         "kurz": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
-        "system": "macOS 14 oder neuer, Apple Silicon",
     },
 ]
 
@@ -93,11 +90,23 @@ def notarisiert(dmg: Path) -> bool:
     return subprocess.run(["xcrun", "stapler", "validate", str(dmg)], capture_output=True, env=umgebung).returncode == 0
 
 
+def system(a, info) -> str:
+    """Mindestsystem und Architekturen aus dem App-Paket, nichts von Hand (Vorgabe in APPS nur bei eingebetteten Kernen)"""
+    if a.get("system"):
+        return a["system"]
+    binaer = a["app"] / "Contents/MacOS" / a["app"].stem
+    archs = set(subprocess.run(["lipo", "-archs", str(binaer)], capture_output=True, text=True).stdout.split())
+    cpu = "Intel und Apple Silicon" if archs >= {"x86_64", "arm64"} else ("Apple Silicon" if archs == {"arm64"} else "Intel")
+    mindest = info.get("LSMinimumSystemVersion", "?").split(".")[0]
+    return f"macOS {mindest} oder neuer, {cpu}"
+
+
 def daten(a):
     info = plistlib.loads((a["app"] / "Contents/Info.plist").read_bytes())
     dmg = a["dmg"]
     return {
         **a,
+        "system": system(a, info),
         "version": info.get("CFBundleShortVersionString", "?"),
         "build": info.get("CFBundleVersion", "?"),
         "datum": datetime.fromtimestamp(dmg.stat().st_mtime).strftime("%d.%m.%Y"),
