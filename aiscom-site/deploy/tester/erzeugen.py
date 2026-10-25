@@ -71,6 +71,14 @@ MAC = APPS = [
         "kurz": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
     },
     {
+        "name": "TapLoop",
+        "kennung": "taploop",
+        "dmg": GIT / "taploop-mac/build/verteilen/TapLoop.dmg",
+        "app": GIT / "taploop-mac/build/verteilen/dd/Build/Products/Release/TapLoop.app",
+        "datei": "TapLoop.dmg",
+        "kurz": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+    },
+    {
         "name": "Obhut",
         "kennung": "obhut",
         "dmg": GIT / "obhut-app/build/verteilen/Obhut.dmg",
