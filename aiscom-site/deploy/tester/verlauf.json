@@ -1,5 +1,19 @@
 [
  {
+  "guid": "taploop-mac-0.1-2",
+  "titel": "TapLoop 0.1 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T09:30:15.471339+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-1",
+  "titel": "TapLoop 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T09:20:59.047585+01:00"
+ },
+ {
   "guid": "kamera-import-android-1.0-1",
   "titel": "Kamera-Import 1.0 (Build 1) für Android",
   "link": "https://www.aiscom.ch/tester/#android",

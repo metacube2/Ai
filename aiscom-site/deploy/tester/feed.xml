@@ -6,7 +6,21 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
   <language>de-ch</language>
-  <lastBuildDate>Sat, 24 Oct 2026 20:57:22 +0000</lastBuildDate>
+  <lastBuildDate>Sun, 25 Oct 2026 08:30:51 +0000</lastBuildDate>
+  <item>
+    <title>TapLoop 0.1 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-0.1-2</guid>
+    <pubDate>Sun, 25 Oct 2026 09:30:15 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
+  <item>
+    <title>TapLoop 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-0.1-1</guid>
+    <pubDate>Sun, 25 Oct 2026 09:20:59 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
   <item>
     <title>Kamera-Import 1.0 (Build 1) für Android</title>
     <link>https://www.aiscom.ch/tester/#android</link>
