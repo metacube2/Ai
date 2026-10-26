@@ -55,8 +55,8 @@
     @if (ActivePerspectiveKey.StartsWith("productgroup", StringComparison.Ordinal))
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
-            @T("Zuordnung: Einkaufsmaterial -> ZLO03-Komponente -> Disponent des verwendenden Kopfmaterials -> ZC23-Produktgruppe. Wird eine Komponente in mehreren unterschiedlichen Produktgruppen verwendet, wird ihr Spend gleichmaessig 1/n verteilt. Dadurch bleibt die Summe exakt erhalten. Fehlende ZC23-Texte erscheinen ehrlich als 'Disponent <Code>'.",
-               "Allocation: purchasing material -> ZLO03 component -> planner of the using header material -> SAP ZC23 product group. If a component is used in several different product groups, its spend is split evenly 1/n. This preserves the total exactly. Missing SAP mappings are shown honestly as 'Planner <code>'.")
+            @T("Zuordnung wie im SAP-Report ZM_OFFENE_KDAUF: Einkaufsmaterial -> eigener Disponent (MARC-DISPO, Werk 1100) -> SAP ZDISPO_GRP/ZDISPO_SPART. Jedes Material steht in genau einer Produktgruppe, die Summe bleibt exakt. Ist ein Disponent in SAP mehreren Gruppen zugeordnet, gilt die kleinste Gruppennummer. Disponenten ohne SAP-Regel erscheinen als 'Disponent <Code>'.",
+               "Allocation as in the SAP report ZM_OFFENE_KDAUF: purchasing material -> its own MRP controller (MARC-DISPO, plant 1100) -> SAP ZDISPO_GRP/ZDISPO_SPART. Each material is in exactly one product group, the total stays exact. If SAP assigns a controller to several groups, the lowest group code applies. Controllers without an SAP rule appear as 'Planner <code>'.")
         </MudAlert>
         <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mb-2">
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">
@@ -66,7 +66,7 @@
                 @T("Ohne Produktgruppe", "Without product group"): @FormatChf(ProductGroupAllocation.UnassignedSpendChf)
             </MudChip>
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
-                @T("Mehrfachverwendung", "Multiple use"): @ProductGroupAllocation.MultiGroupMaterialCount @T("Materialien", "materials") / @FormatChf(ProductGroupAllocation.MultiGroupSpendChf)
+                @T("Mehrdeutige SAP-Regel", "Ambiguous SAP rule"): @ProductGroupAllocation.MultiGroupMaterialCount @T("Materialien", "materials") / @FormatChf(ProductGroupAllocation.MultiGroupSpendChf)
             </MudChip>
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnmappedDispatcherCount > 0 ? Color.Warning : Color.Success)">
                 SAP ZDISPO/ZC23: @ProductGroupAllocation.MappedDispatcherCount @T("zugeordnet", "mapped"), @ProductGroupAllocation.UnmappedDispatcherCount @T("offen", "open")

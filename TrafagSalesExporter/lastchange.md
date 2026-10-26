@@ -1,6 +1,12 @@
 # Last Change
 
-Stand: 2026-10-23
+Stand: 2026-10-26
+
+## Einkauf: Produktgruppe aus eigenem Disponenten wie ZM_OFFENE_KDAUF, 2026-10-26
+
+- Entscheid Ingo: MARC-DISPO (Werk 1100) des Einkaufsmaterials -> ZDISPO_GRP/ZDISPO_SPART -> genau eine Gruppe; keine
+  Vererbung ueber die Verwendung, keine 1/n-Verteilung. Mehrdeutige SAP-Regeln (DS1/DS2, 016): kleinste Gruppennummer.
+  Neue Spalte `MarcDispo`, fuellt der naechste Einkauf-Lauf. Suite 1288/1288.
 
 ## Einkauf: Produktgruppen-Sichten ohne „uebrige (n)“, 2026-10-23
 

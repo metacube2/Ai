@@ -33,6 +33,7 @@ CREATE TABLE PurchasingEkpoCache (
     MaraMatkl TEXT NOT NULL DEFAULT '',
     MaraAbc TEXT NOT NULL DEFAULT '',
     MaraXyz TEXT NOT NULL DEFAULT '',
+    MarcDispo TEXT NOT NULL DEFAULT '',
     Maktx TEXT NOT NULL DEFAULT '',
     Mstae TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (Ebeln, Ebelp)
@@ -69,12 +70,13 @@ CREATE TABLE PurchasingEkpoCache (
 
         var updated = await ApplyAsync(
             statusMap: new() { ["C34882"] = new PurchasingDataRefreshService.MaterialMasterInfo("98", "30.01.00") },
-            classificationMap: new() { ["C34882"] = new PurchasingDataRefreshService.MaterialClassification("A", "Z") });
+            classificationMap: new() { ["C34882"] = new PurchasingDataRefreshService.MaterialClassification("A", "Z", "DS1") });
 
         Assert.Equal(1, updated);
         Assert.Equal("30.01.00", ReadSingle("MaraMatkl"));
         Assert.Equal("A", ReadSingle("MaraAbc"));
         Assert.Equal("Z", ReadSingle("MaraXyz"));
+        Assert.Equal("DS1", ReadSingle("MarcDispo"));
         Assert.Equal("98", ReadSingle("Mstae"));
     }
 

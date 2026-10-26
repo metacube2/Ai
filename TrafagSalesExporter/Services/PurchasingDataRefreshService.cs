@@ -521,8 +521,8 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $SupplierCountry, $Bukrs,
     private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, IReadOnlyDictionary<string, MaterialClassification> classificationMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, MaraMatkl, MaraAbc, MaraXyz, Maktx, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, $Maktx, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, MaraMatkl, MaraAbc, MaraXyz, MarcDispo, Maktx, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, $MarcDispo, $Maktx, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -541,6 +541,8 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, 
                 // gejoint. Leer, wo nicht klassifiziert.
                 ["$MaraAbc"] = ResolveAbc(classificationMap, GetText(row, "Matnr")),
                 ["$MaraXyz"] = ResolveXyz(classificationMap, GetText(row, "Matnr")),
+                // Eigener Disponent (MARC-DISPO, Werk 1100) fuer die Produktgruppe wie ZM_OFFENE_KDAUF.
+                ["$MarcDispo"] = ResolveDispo(classificationMap, GetText(row, "Matnr")),
                 // Materialtext aus MAKT (Deutsch bevorzugt), ueber Matnr gejoint. Leer, wenn das
                 // Material keinen Text hat; die Anzeige faellt dann auf die Materialnummer zurueck.
                 ["$Maktx"] = ResolveMaterialText(materialStatusMap, GetText(row, "Matnr")),
@@ -620,6 +622,7 @@ CREATE TEMP TABLE IF NOT EXISTS PurchasingMaterialStaging (
     MaraMatkl TEXT NOT NULL DEFAULT '',
     MaraAbc TEXT NOT NULL DEFAULT '',
     MaraXyz TEXT NOT NULL DEFAULT '',
+    MarcDispo TEXT NOT NULL DEFAULT '',
     Maktx TEXT NOT NULL DEFAULT '',
     Mstae TEXT NOT NULL DEFAULT ''
 );", cancellationToken);
@@ -629,8 +632,8 @@ CREATE TEMP TABLE IF NOT EXISTS PurchasingMaterialStaging (
         await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingMaterialStaging;", cancellationToken);
 
         const string insertSql = @"
-INSERT OR REPLACE INTO PurchasingMaterialStaging (Matnr, MaraMatkl, MaraAbc, MaraXyz, Maktx, Mstae)
-VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Maktx, $Mstae);";
+INSERT OR REPLACE INTO PurchasingMaterialStaging (Matnr, MaraMatkl, MaraAbc, MaraXyz, MarcDispo, Maktx, Mstae)
+VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $MarcDispo, $Maktx, $Mstae);";
         foreach (var matnr in cachedMaterials)
             await ExecuteWithParametersAsync(conn, transaction, insertSql, new()
             {
@@ -638,6 +641,7 @@ VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Maktx, $Mstae);";
                 ["$MaraMatkl"] = ResolveMaterialGroup(materialStatusMap, matnr),
                 ["$MaraAbc"] = ResolveAbc(classificationMap, matnr),
                 ["$MaraXyz"] = ResolveXyz(classificationMap, matnr),
+                ["$MarcDispo"] = ResolveDispo(classificationMap, matnr),
                 ["$Maktx"] = ResolveMaterialText(materialStatusMap, matnr),
                 ["$Mstae"] = ResolveMaterialStatus(materialStatusMap, matnr)
             }, cancellationToken);
@@ -660,14 +664,16 @@ VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Maktx, $Mstae);";
 UPDATE PurchasingEkpoCache
 SET MaraMatkl = (SELECT s.MaraMatkl FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
     MaraAbc   = (SELECT s.MaraAbc   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
-    MaraXyz   = (SELECT s.MaraXyz   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr)," + textAssignment + @"
+    MaraXyz   = (SELECT s.MaraXyz   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
+    MarcDispo = (SELECT s.MarcDispo FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr)," + textAssignment + @"
     Mstae     = (SELECT s.Mstae     FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr)
 WHERE EXISTS (
     SELECT 1 FROM PurchasingMaterialStaging s
     WHERE s.Matnr = PurchasingEkpoCache.Matnr
       AND (s.MaraMatkl <> COALESCE(PurchasingEkpoCache.MaraMatkl, '')
         OR s.MaraAbc   <> COALESCE(PurchasingEkpoCache.MaraAbc, '')
-        OR s.MaraXyz   <> COALESCE(PurchasingEkpoCache.MaraXyz, '')" + textCondition + @"
+        OR s.MaraXyz   <> COALESCE(PurchasingEkpoCache.MaraXyz, '')
+        OR s.MarcDispo <> COALESCE(PurchasingEkpoCache.MarcDispo, '')" + textCondition + @"
         OR s.Mstae     <> COALESCE(PurchasingEkpoCache.Mstae, '')));";
         return await updateCommand.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -688,6 +694,9 @@ WHERE EXISTS (
         var exists = Convert.ToInt32(await check.ExecuteScalarAsync(cancellationToken) ?? 0, CultureInfo.InvariantCulture) > 0;
         if (!exists)
             await ExecuteAsync(conn, transaction, "ALTER TABLE PurchasingMaterialStaging ADD COLUMN Maktx TEXT NOT NULL DEFAULT '';", cancellationToken);
+        check.CommandText = "SELECT COUNT(*) FROM pragma_table_info('PurchasingMaterialStaging') WHERE name = 'MarcDispo';";
+        if (Convert.ToInt32(await check.ExecuteScalarAsync(cancellationToken) ?? 0, CultureInfo.InvariantCulture) == 0)
+            await ExecuteAsync(conn, transaction, "ALTER TABLE PurchasingMaterialStaging ADD COLUMN MarcDispo TEXT NOT NULL DEFAULT '';", cancellationToken);
     }
 
     private async Task<Dictionary<string, MaterialMasterInfo>> LoadMaterialMasterMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
@@ -921,7 +930,9 @@ WHERE EXISTS (
         // Zeilen, live verifiziert 2026-07-23) - deshalb EIN ungepagter Request statt
         // ReadAllRowsAsync (das wuerde endlos paging-loopen). Werk 1100 wird client-seitig
         // gefiltert, weil das Set den serverseitigen $filter nicht zuverlaessig anwendet.
-        var abcUrl = $"{baseUrl}MARCSet?$format=json&$select={Uri.EscapeDataString("Matnr,Werks,Maabc")}";
+        // Seit 2026-10-26 auch Dispo (MARC-DISPO, Werk 1100): Produktgruppe aus dem eigenen Disponenten wie im
+        // Report ZM_OFFENE_KDAUF. Dasselbe Set liest SapGatewayStockValueReader schon mit $select=Matnr,Werks,Dispo.
+        var abcUrl = $"{baseUrl}MARCSet?$format=json&$select={Uri.EscapeDataString("Matnr,Werks,Maabc,Dispo")}";
         using (var abcResponse = await client.GetAsync(abcUrl, cancellationToken))
         {
             if (!abcResponse.IsSuccessStatusCode)
@@ -938,8 +949,8 @@ WHERE EXISTS (
                 if (key.Length == 0)
                     continue;
                 map[key] = map.TryGetValue(key, out var existing)
-                    ? existing with { Abc = GetText(row, "Maabc") }
-                    : new MaterialClassification(GetText(row, "Maabc"), string.Empty);
+                    ? existing with { Abc = GetText(row, "Maabc"), Dispo = GetText(row, "Dispo") }
+                    : new MaterialClassification(GetText(row, "Maabc"), string.Empty, GetText(row, "Dispo"));
             }
         }
 
@@ -953,13 +964,19 @@ WHERE EXISTS (
                 continue;
             map[key] = map.TryGetValue(key, out var existing)
                 ? existing with { Xyz = GetText(row, "Maxyz") }
-                : new MaterialClassification(string.Empty, GetText(row, "Maxyz"));
+                : new MaterialClassification(string.Empty, GetText(row, "Maxyz"), string.Empty);
         }
 
         return map;
     }
 
-    internal sealed record MaterialClassification(string Abc, string Xyz);
+    internal sealed record MaterialClassification(string Abc, string Xyz, string Dispo);
+
+    private static string ResolveDispo(IReadOnlyDictionary<string, MaterialClassification> map, string matnr)
+    {
+        var key = NormalizeMatnr(matnr);
+        return key.Length > 0 && map.TryGetValue(key, out var c) ? c.Dispo.Trim() : string.Empty;
+    }
 
     private static string ResolveAbc(IReadOnlyDictionary<string, MaterialClassification> map, string matnr)
     {

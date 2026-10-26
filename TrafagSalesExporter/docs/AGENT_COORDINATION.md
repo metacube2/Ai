@@ -41,6 +41,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude (9e) | Einkauf Produktgruppe wie ZM_OFFENE_KDAUF (eigener Disponent, eine Gruppe) | 2026-10-26 | abgeschlossen, Reservierung frei. Refresh, Schema (`MarcDispo`), Dashboard-Zuordnung, Spend-Aufriss-Texte, Tests; Suite 1288/1288; Deploy siehe `docs/rag/DEPLOYMENT.md`. |
 | Claude (9e) | Einkauf Spend-Aufriss: Produktgruppen-Sichten ohne Deckelung | 2026-10-23 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs` (`NoCap` statt 20/15/10), Test neu; Suite 1289/1289; Deploy siehe `docs/rag/DEPLOYMENT.md`. |
 | Claude | Whisper Studio: analoges VU-Meter auf der Aufnahmeseite | 2026-10-22 | abgeschlossen, Reservierung frei. `whisper/gui/WhisperStudio/Controls/VuMeter.cs`, `Recorder.Measure`, Doku HANDOFF/ANLEITUNG; 35 Tests gruen; kein Deploy (lokales Werkzeug). |
 | Claude | Whisper Studio: Fortschrittsanzeige, dann Ausbau (WPF, Datum_Uhrzeit_Titel, Word/SRT/VTT, Aufnahme mit Systemton, Editor, Verlauf, lokale KI) | 2026-10-22 | **Abgeschlossen, kein Deploy (lokales Werkzeug), Reservierung frei.** Entwickelt in `.tmp_tools/whisper_kopie`, nach Freigabe Ingo ins Original uebernommen (Zip-Sicherung in `whisper/backup/`). `whisper/` seit `ae599c2` versioniert (nur Quellen/Doku). 31 Tests gruen inkl. echter KI-, Whisper- und Aufnahmelaeufe; Bedienung mit Maus ungeprueft. Doku `whisper/HANDOFF.md`, `lastchange.md`, `baum.md` |

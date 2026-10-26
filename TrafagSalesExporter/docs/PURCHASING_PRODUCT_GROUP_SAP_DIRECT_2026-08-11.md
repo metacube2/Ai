@@ -1,7 +1,43 @@
 # Einkaufs-Produktgruppen direkt aus SAP
 
-Stand: 2026-10-08 (Abschnitt „Nachtrag 2026-10-08“: Verwendung je Komponente aus dem Einkauf-Lauf; die
-Abschnitte darunter sind der Stand vom 2026-08-11/12, die Zuordnungsregeln gelten unveraendert)
+Stand: 2026-10-26 (**Nachtrag 2026-10-26: Produktgruppe aus dem eigenen Disponenten des Materials wie im Report
+ZM_OFFENE_KDAUF, genau eine Gruppe, keine Vererbung und keine 1/n-Verteilung mehr.** Die Nachtraege und Abschnitte
+darunter beschreiben die ueberholte Vererbung ueber die Verwendung und sind Historie.)
+
+## Nachtrag 2026-10-26: Produktgruppe wie ZM_OFFENE_KDAUF, eigener Disponent, genau eine Gruppe
+
+**Anlass:** Einkauf (23.10.) meldete zwei Zeilen „D5 - FP_DICHTESEN1/2“ und „DS - FP_DICHTESENS“ mit gleicher Summe
+726'126.91. Ursache war die doppelte SAP-Regel DS1/DS2 -> D5 und DS zusammen mit der 1/n-Verteilung.
+
+**Befund SAP-Quellcode (gelesen 2026-10-26):** ZLO03 (`Z_ZLO03_TURBO2`, alle Fix-Staende) weist ZDISPO_GRP und
+ZDISPO_SPART nicht aus. Die Produktgruppe je Material steht im Report **ZM_OFFENE_KDAUF**
+(`saptasks/zm_offene_kdauf/ZM_OFFENE_KDAUF_produktiv.abap`, Zeilen 868-908 und 1026-1028): Disponent aus `MARC-DISPO`
+des Materials im Werk `p_werk` (Vorgabe 1100), dann Schleife ueber `ZDISPO_GRP JOIN ZDISPO_SPART` ohne `ORDER BY`;
+Muster mit `*` werden am Stern abgeschnitten (`CP`), jeder Treffer **ueberschreibt** `DISPO_DES`. Im Excel steht also
+genau ein Text (DESCR, kein Code), der der zuletzt gelesenen passenden Regel; die Reihenfolge ist nicht festgelegt.
+
+**Entscheid Ingo 2026-10-26:** „mach es wie zlo03 [gemeint: der Report], andere Logik ist falsch“. Ein Material steht
+immer in genau einer Gruppe.
+
+**Umsetzung:**
+
+- Neue Spalte `PurchasingEkpoCache.MarcDispo`, gefuellt im Full Load und im Delta aus demselben `MARCSet`-Abruf wie
+  ABC (`$select=Matnr,Werks,Maabc,Dispo`, Werk 1100 clientseitig); die Nachklassifizierung schreibt sie auch auf alte
+  Bestellungen.
+- `ExecuteProductGroupPerspectiveAsync`: Material -> `MarcDispo` -> Regel aus `PurchasingSpendDisponentRule` (nur
+  SAP OData) -> eine Gruppe. Reihenfolge: exakter Treffer vor Muster, laengeres Muster vor kuerzerem; bleiben danach
+  mehrere Gruppen, gewinnt die **kleinste Gruppennummer** (DS1/DS2 -> D5, 016 -> H). Das ist bewusst fest, waehrend der
+  Report dort zufaellig waehlt. Kein Disponent -> „ohne Produktgruppe“; Disponent ohne Regel -> „Disponent <Code>“;
+  NA bleibt als eigene Zeile sichtbar.
+- Keine 1/n-Verteilung mehr. Die Kachel „Mehrfachverwendung“ heisst jetzt „Mehrdeutige SAP-Regel“ und zaehlt Materialien,
+  deren Disponent in SAP mehreren gleichwertigen Gruppen zugeordnet ist (Felder `MultiGroup*` weiterverwendet).
+- `PurchasingComponentDispoLoader` und `MaterialUsageCache` bleiben unangetastet, die Produktgruppe nutzt sie nicht mehr.
+  Ob der Bottom-Up-Abruf (rund 8 Minuten je Lauf) noch fuer etwas anderes gebraucht wird, entscheidet Ingo.
+- Bis zum ersten Lauf nach dem Deploy ist `MarcDispo` leer, dann steht alles unter „ohne Produktgruppe“.
+- Tests: `LoadAsync_ProductGroupPerspective_Uses_Own_Dispo_Of_Material_Like_ZM_OFFENE_KDAUF`,
+  `LoadAsync_ProductGroupPerspective_DS1_Lands_In_One_Group_And_Exact_Beats_Pattern`, Nachklassifizierung schreibt
+  `MarcDispo`; Suite 1288/1288.
+- Die richtige Bereinigung bleibt in SAP: DS1/DS2 und 016 in `ZDISPO_GRP` nur einer Gruppe zuordnen.
 
 ## Nachtrag 2026-10-08: Produktgruppe kam fast nie an (Gespraech Armin, Punkt 4)
 
@@ -33,9 +69,9 @@ bleiben wie unten.
    In T76 ist `ZDISPO_SPART` korrekt („HW_ZUBEHÖR“), andere Gateway-Texte (Lieferanten, Materialtexte) kommen ohne
    Ersatzzeichen an. Vermutlich ist der Text in P76 so gespeichert; in SM30 auf P76 pruefen.
 2. **Doppelte Regeln:** `DS1` und `DS2` zeigen auf D5 und DS, `016` auf H und H2. Das sind echte Doppelnennungen
-   in `ZDISPO_GRP`; der Spend wird dort 50/50 verteilt. Ob das so gewollt ist, mit Armin klaeren.
+   in `ZDISPO_GRP`; der Spend wird dort 50/50 verteilt. Ob das so gewollt ist, mit Armin klaeren. *Ueberholt am 2026-10-26: keine Verteilung mehr, kleinste Gruppennummer gewinnt (D5, H).*
 3. Materialien, die selbst verkauft werden (Handelsware ohne Stuecklistenverwendung), bekommen weiterhin keine
-   Gruppe. Eine Zuordnung ueber den eigenen Disponenten waere eine neue Regel und nur nach Freigabe einzubauen.
+   Gruppe. Eine Zuordnung ueber den eigenen Disponenten waere eine neue Regel und nur nach Freigabe einzubauen. *Ueberholt am 2026-10-26: von Ingo freigegeben und umgesetzt.*
 
 **Pruefen nach dem Deploy:** Meldung im Einkauf-Lauf („Produktgruppen-Verwendung: … gefragt, … offen“), nach dem
 Aufbau Anteil „Zugeordnet“ im Spend-Aufriss gegen die Obergrenze oben.
@@ -76,6 +112,8 @@ Zwei SAP-Nacharbeiten blockieren den Betrieb nicht:
 Die Anwendung ist auf eine ausschliessliche SAP-Datenstrecke umgestellt:
 
 `EKPO -> ZLO03/VknrDispo -> SAP ZDISPO_GRP -> SAP ZDISPO_SPART -> lokaler Cache -> Dashboard`
+
+*Ueberholt am 2026-10-26:* jetzt `EKPO -> MARC-DISPO (Werk 1100) -> SAP ZDISPO_GRP -> SAP ZDISPO_SPART -> eine Gruppe`, siehe Nachtrag 2026-10-26.
 
 *Ueberholt am 2026-10-08:* „ZLO03/VknrDispo“ kam bis dahin nur aus der Stuecklistenanalyse (86 Zeilen); seither
 liefert der Einkauf-Lauf die Verwendung je Komponente, siehe Nachtrag oben.

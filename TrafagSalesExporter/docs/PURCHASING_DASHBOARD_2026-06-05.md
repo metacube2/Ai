@@ -1335,3 +1335,11 @@ Ursache: Die Produktgruppen-Einstiege (seit 2026-10-15) waren als einzige noch a
 2026-08-27 alle anderen Einstiege ungedeckelt sind (`NoCap`, Wunsch Marco/Ingo). Behoben: beide Produktgruppen-Sichten und
 der Rueckfall ohne Verwendungs-Cache zeigen alle Produktgruppen, Lieferanten, Warengruppen und Materialien einzeln.
 Test `LoadAsync_ProductGroupPerspectives_Show_All_Positions_Without_Remainder_Row`; Suite 1289/1289.
+
+## Nachtrag 2026-10-26: Produktgruppe aus dem eigenen Disponenten (wie ZM_OFFENE_KDAUF)
+
+Die Produktgruppen-Einstiege ordnen jedes Einkaufsmaterial ueber seinen eigenen Disponenten (MARC-DISPO, Werk 1100)
+genau einer Gruppe zu; die Vererbung ueber die Verwendung und die 1/n-Verteilung sind entfallen. Anlass: doppelte
+Zeilen D5/DS mit gleicher Summe. Details und Regel bei mehrdeutigen SAP-Zuordnungen:
+`docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`, Nachtrag 2026-10-26. Die Nachtraege 2026-10-23 zur
+„1/n-Verteilung“ sind insoweit ueberholt.

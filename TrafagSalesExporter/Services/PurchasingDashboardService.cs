@@ -180,9 +180,6 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     // damit die Sicht beim Jahreswechsel nicht still das aktuelle Jahr verliert.
     private const int MinSpendYear = 2020;
 
-    /// <summary>SAP-Gruppe fuer "keine Produktgruppe" in ZDISPO_SPART (DISPO NA, DESCR N/A), 2026-10-15.</summary>
-    private const string ProductGroupPlaceholderCode = "NA";
-
     private static int MaxSpendYear(PurchasingDashboardFilter filter)
         => Math.Max(DateTime.Today.Year, filter.ToDate.Year);
 
@@ -1539,14 +1536,12 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
     internal const string ProductGroupMaterialGroupPerspectiveKey = "productgroup-materialgroup";
 
     /// <summary>
-    /// Produktgruppen-Aufriss ueber die belegte Kette Einkaufsmaterial (EKPO-MATNR) ->
-    /// ZLO03-Komponente (KOMPNR) -> Disponent des verwendenden Kopfmaterials (VKNR_DISPO) ->
-    /// SAP-ZC23/ZDISPO-Bezeichnung im lokalen OData-Cache PurchasingSpendDisponentRule.
+    /// Produktgruppen-Aufriss wie im Report ZM_OFFENE_KDAUF (seit 2026-10-26, Entscheid Ingo):
+    /// Einkaufsmaterial (EKPO-MATNR) -> eigener Disponent (MARC-DISPO, Werk 1100, Spalte MarcDispo) ->
+    /// SAP ZDISPO_GRP/ZDISPO_SPART im lokalen Cache PurchasingSpendDisponentRule -> genau EINE Gruppe.
     ///
-    /// Eine Komponente kann in Kopfmaterialien mehrerer Produktgruppen vorkommen. Sie wird dann
-    /// zu gleichen Teilen auf die UNTERSCHIEDLICHEN Gruppen verteilt. Das ist bewusst keine
-    /// Verbrauchsschaetzung: ohne freigegebenen Zurechnungsschluessel ist 1/n die einzige
-    /// neutrale Regel, die keine Gruppe bevorzugt und den Gesamtspend exakt erhaelt.
+    /// *Ueberholt am 2026-10-26:* Bis dahin lief die Zuordnung ueber die Verwendung (ZLO03-Komponente ->
+    /// Disponent des verwendenden Kopfmaterials) und verteilte Mehrfachverwendung 1/n auf mehrere Gruppen.
     /// </summary>
     private static async Task<ProductGroupPerspectiveBuildResult> ExecuteProductGroupPerspectiveAsync(
         SqliteConnection conn,
@@ -1568,12 +1563,11 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         if (years.Count == 0)
             return new ProductGroupPerspectiveBuildResult(emptyPerspective, PurchasingProductGroupAllocationSummary.Empty, emptyMaterialGroupPerspective);
 
-        var usageReady = await TableExistsAsync(conn, "MaterialUsageCache", cancellationToken) &&
-                         await ColumnExistsAsync(conn, "MaterialUsageCache", "VknrDispo", cancellationToken);
-        if (!usageReady)
+        var dispoReady = await ColumnExistsAsync(conn, "PurchasingEkpoCache", "MarcDispo", cancellationToken);
+        if (!dispoReady)
         {
-            // Der Einkauf bleibt voll sichtbar, auch wenn der ZLO03-Cache noch nicht migriert oder
-            // geladen ist. Keine Zeile wird still verworfen oder einer erfundenen Gruppe gegeben.
+            // Der Einkauf bleibt voll sichtbar, auch wenn die Spalte MarcDispo noch nicht migriert ist.
+            // Keine Zeile wird still verworfen oder einer erfundenen Gruppe gegeben.
             var fallback = new SpendPerspective(
                 "productgroup", "Produktgruppe", "Product group",
                 [new SpendDimension("productgroup", "Produktgruppe", "Product group", "'ohne Produktgruppe'"), SupplierDimension, ArticleDimension],
@@ -1589,119 +1583,95 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
                 emptyMaterialGroupPerspective with { Rows = fallbackMgRows });
         }
 
-        // Zwei Quellen fuer (Komponente, Disponent der verkuerzten Nummer): die Stuecklistenanalyse (nur von Hand
-        // eingegebene Nummern) und seit 2026-10-08 der Einkauf-Lauf je bestellter Komponente
-        // (PurchasingComponentDispoLoader). Doppelte Paare fallen in UsageGroups per DISTINCT weg.
-        var hasComponentDispo = await TableExistsAsync(conn, "PurchasingComponentDispoCache", cancellationToken);
-        var usageSourceCte = hasComponentDispo
-            ? @"UsageSource AS (
-    SELECT Kompnr, VknrDispo FROM MaterialUsageCache
-    UNION ALL
-    SELECT Kompnr, VknrDispo FROM PurchasingComponentDispoCache
-),
-"
-            : @"UsageSource AS (
-    SELECT Kompnr, VknrDispo FROM MaterialUsageCache
-),
-";
+        // Seit 2026-10-26 wie der Report ZM_OFFENE_KDAUF (Entscheid Ingo): Disponent des Materials selbst
+        // (MARC-DISPO, Werk 1100) -> ZDISPO_GRP/ZDISPO_SPART -> genau EINE Produktgruppe. Die fruehere Vererbung
+        // ueber die Verwendung (Komponente -> Kopfmaterial -> dessen Disponent, 1/n verteilt) ist fachlich falsch.
+        // Mehrere passende Regeln: exakter Treffer vor Muster, laengeres Muster vor kuerzerem. Bleiben danach
+        // mehrere Gruppen (in SAP doppelt gepflegt, z. B. DS1/DS2 -> D5 und DS, 016 -> H und H2), gewinnt die
+        // kleinste Gruppennummer, damit das Ergebnis fest ist. Der Report nimmt dort die zuletzt gelesene Regel
+        // ohne ORDER BY, also keine feste Reihenfolge. Solche Faelle zaehlt die Kachel „Mehrdeutige SAP-Regel“.
+        var dispo = "upper(trim(COALESCE(p.MarcDispo, '')))";
         var hasSapProductGroupRules = await TableExistsAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
-        var sapProductGroupCtes = hasSapProductGroupRules
+        var resolvedCte = hasSapProductGroupRules
             ? @"SapProductGroupDispatchers AS (
-    SELECT DISTINCT trim(VknrDispo) AS Disponent
-    FROM UsageSource
-    WHERE COALESCE(trim(VknrDispo), '') <> ''
+    SELECT DISTINCT upper(trim(MarcDispo)) AS Disponent
+    FROM PurchasingEkpoCache
+    WHERE COALESCE(trim(MarcDispo), '') <> ''
 ),
 SapProductGroupCandidates AS (
     SELECT d.Disponent,
-           r.ProductGroup,
-           r.ProductGroupText,
+           trim(r.ProductGroup) AS ProductGroup,
+           trim(COALESCE(r.ProductGroupText, '')) AS ProductGroupText,
            DENSE_RANK() OVER (
                PARTITION BY d.Disponent
                ORDER BY
-                   CASE WHEN upper(trim(r.DisponentPattern)) = upper(d.Disponent) THEN 0 ELSE 1 END,
+                   CASE WHEN upper(trim(r.DisponentPattern)) = d.Disponent THEN 0 ELSE 1 END,
                    length(trim(r.DisponentPattern)) DESC
            ) AS MatchRank
     FROM SapProductGroupDispatchers d
     INNER JOIN PurchasingSpendDisponentRule r
-        ON upper(trim(r.DisponentPattern)) = upper(d.Disponent)
+        ON upper(trim(r.DisponentPattern)) = d.Disponent
         OR (
             substr(trim(r.DisponentPattern), -1, 1) = '*'
-            AND upper(d.Disponent) LIKE upper(substr(trim(r.DisponentPattern), 1, length(trim(r.DisponentPattern)) - 1)) || '%'
+            AND d.Disponent LIKE upper(substr(trim(r.DisponentPattern), 1, length(trim(r.DisponentPattern)) - 1)) || '%'
         )
     WHERE upper(trim(r.Source)) LIKE 'SAP ODATA%'
+      AND COALESCE(trim(r.ProductGroup), '') <> ''
 ),
-SapProductGroupResolved AS (
-    SELECT DISTINCT Disponent, ProductGroup, ProductGroupText
+SapProductGroupTier AS (
+    SELECT Disponent, ProductGroup, MAX(ProductGroupText) AS ProductGroupText
     FROM SapProductGroupCandidates
     WHERE MatchRank = 1
+    GROUP BY Disponent, ProductGroup
 ),
-"
-            : string.Empty;
-        var mapJoin = hasSapProductGroupRules
-            ? "LEFT JOIN SapProductGroupResolved x ON upper(x.Disponent) = upper(trim(u.VknrDispo))"
-            : string.Empty;
-        var mappedCode = hasSapProductGroupRules ? "COALESCE(NULLIF(trim(x.ProductGroup), ''), '')" : "''";
-        var mappedText = hasSapProductGroupRules ? "COALESCE(NULLIF(trim(x.ProductGroupText), ''), '')" : "''";
+SapProductGroupResolved AS (
+    SELECT Disponent, ProductGroup, ProductGroupText, IsAmbiguous
+    FROM (
+        SELECT Disponent, ProductGroup, ProductGroupText,
+               ROW_NUMBER() OVER (PARTITION BY Disponent ORDER BY ProductGroup) AS Pick,
+               CASE WHEN COUNT(*) OVER (PARTITION BY Disponent) > 1 THEN 1 ELSE 0 END AS IsAmbiguous
+        FROM SapProductGroupTier
+    )
+    WHERE Pick = 1
+)"
+            : @"SapProductGroupResolved AS (
+    SELECT '' AS Disponent, '' AS ProductGroup, '' AS ProductGroupText, 0 AS IsAmbiguous
+    WHERE 0
+)";
         var productGroupLabel = $@"CASE
-            WHEN {mappedCode} <> '' AND {mappedText} <> '' THEN {mappedCode} || ' - ' || {mappedText}
-            WHEN {mappedCode} <> '' THEN {mappedCode}
-            ELSE 'Disponent ' || trim(u.VknrDispo)
+            WHEN {dispo} = '' THEN 'ohne Produktgruppe'
+            WHEN COALESCE(x.ProductGroup, '') <> '' AND COALESCE(x.ProductGroupText, '') <> '' THEN x.ProductGroup || ' - ' || x.ProductGroupText
+            WHEN COALESCE(x.ProductGroup, '') <> '' THEN x.ProductGroup
+            ELSE 'Disponent ' || {dispo}
         END";
-        var usageMaterialKey = NormalizeMaterialKeySql("u.Kompnr");
+        var mapJoin = $"LEFT JOIN SapProductGroupResolved x ON x.Disponent = {dispo}";
         var purchasingMaterialKey = NormalizeMaterialKeySql("p.Matnr");
         var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
-        // Die SAP-Gruppe NA ("N/A", ZDISPO_SPART) ist ein Platzhalter fuer Disponenten ohne Produktgruppe, keine
-        // Produktgruppe. Hat ein Material daneben eine echte Gruppe, nimmt NA bei der 1/n-Verteilung keinen Anteil
-        // (Fall B53173 halb in T2, halb in NA, Ingo 2026-10-15). Nur unter NA verwendete Materialien bleiben dort sichtbar.
-        var placeholderFlag = $"CASE WHEN upper({mappedCode}) = '{ProductGroupPlaceholderCode}' THEN 1 ELSE 0 END";
-        var usageGroupsCte = $@"
-{usageSourceCte}{sapProductGroupCtes}UsageGroupsAll AS (
-    SELECT DISTINCT {usageMaterialKey} AS MaterialKey,
-           {productGroupLabel} AS ProductGroup,
-           {placeholderFlag} AS IsPlaceholder
-    FROM UsageSource u
-    {mapJoin}
-    WHERE COALESCE(trim(u.Kompnr), '') <> ''
-      AND COALESCE(trim(u.VknrDispo), '') <> ''
-),
-UsageGroups AS (
-    SELECT a.MaterialKey, a.ProductGroup
-    FROM UsageGroupsAll a
-    WHERE a.IsPlaceholder = 0
-       OR NOT EXISTS (SELECT 1 FROM UsageGroupsAll b WHERE b.MaterialKey = a.MaterialKey AND b.IsPlaceholder = 0)
-),
-GroupCounts AS (
-    SELECT MaterialKey, COUNT(*) AS GroupCount
-    FROM UsageGroups
-    GROUP BY MaterialKey
-)";
 
         var rows = new List<CascadeRow>();
         var mgRows = new List<CascadeRow>();
         await using (var command = conn.CreateCommand())
         {
             command.CommandText = $@"
-WITH {usageGroupsCte},
-AllocatedPositions AS (
-    SELECT COALESCE(ug.ProductGroup, 'ohne Produktgruppe') AS ProductGroup,
+WITH {resolvedCte},
+Positions AS (
+    SELECT {productGroupLabel} AS ProductGroup,
            {SupplierLabelSql("k.Lifnr", "k.SupplierName")} AS Supplier,
            {MaterialGroupDimension.Sql} AS MaterialGroup,
            {ArticleDimension.Sql} AS Article,
            CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
-           {ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} /
-               CASE WHEN COALESCE(gc.GroupCount, 0) > 0 THEN gc.GroupCount ELSE 1 END AS AllocatedValue
+           {ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} AS Value
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-    LEFT JOIN UsageGroups ug ON ug.MaterialKey = {purchasingMaterialKey}
-    LEFT JOIN GroupCounts gc ON gc.MaterialKey = {purchasingMaterialKey}
+    {mapJoin}
     WHERE {spendItemFilter}
       AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
       AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN {MinSpendYear} AND {maxSpendYear}
 )
-SELECT ProductGroup, Supplier, MaterialGroup, Article, Year, SUM(AllocatedValue) AS Value
-FROM AllocatedPositions
+SELECT ProductGroup, Supplier, MaterialGroup, Article, Year, SUM(Value) AS Value
+FROM Positions
 GROUP BY ProductGroup, Supplier, MaterialGroup, Article, Year;";
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -1718,66 +1688,63 @@ GROUP BY ProductGroup, Supplier, MaterialGroup, Article, Year;";
             }
         }
 
+        // Kennzahlen: zugeordnet = Disponent mit SAP-Regel; ohne = kein Disponent oder keine Regel;
+        // mehrdeutig = Disponent mit mehreren gleichwertigen SAP-Gruppen (feste Wahl, siehe oben).
         decimal assignedSpend;
         decimal unassignedSpend;
-        decimal multiGroupSpend;
+        decimal ambiguousSpend;
         int assignedMaterials;
         int unassignedMaterials;
-        int multiGroupMaterials;
+        int ambiguousMaterials;
         await using (var summaryCommand = conn.CreateCommand())
         {
             summaryCommand.CommandText = $@"
-WITH {usageGroupsCte},
+WITH {resolvedCte},
 PositionFacts AS (
     SELECT {purchasingMaterialKey} AS MaterialKey,
            {ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} AS Value,
-           COALESCE(gc.GroupCount, 0) AS GroupCount
+           CASE WHEN COALESCE(x.ProductGroup, '') <> '' THEN 1 ELSE 0 END AS Mapped,
+           COALESCE(x.IsAmbiguous, 0) AS Ambiguous
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-    LEFT JOIN GroupCounts gc ON gc.MaterialKey = {purchasingMaterialKey}
+    {mapJoin}
     WHERE {spendItemFilter}
       AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
 )
 SELECT
-    COALESCE(SUM(CASE WHEN GroupCount > 0 THEN Value ELSE 0 END), 0),
-    COALESCE(SUM(CASE WHEN GroupCount = 0 THEN Value ELSE 0 END), 0),
-    COALESCE(SUM(CASE WHEN GroupCount > 1 THEN Value ELSE 0 END), 0),
-    COUNT(DISTINCT CASE WHEN GroupCount > 0 THEN MaterialKey END),
-    COUNT(DISTINCT CASE WHEN GroupCount = 0 THEN MaterialKey END),
-    COUNT(DISTINCT CASE WHEN GroupCount > 1 THEN MaterialKey END)
+    COALESCE(SUM(CASE WHEN Mapped = 1 THEN Value ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN Mapped = 0 THEN Value ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN Ambiguous = 1 THEN Value ELSE 0 END), 0),
+    COUNT(DISTINCT CASE WHEN Mapped = 1 THEN MaterialKey END),
+    COUNT(DISTINCT CASE WHEN Mapped = 0 THEN MaterialKey END),
+    COUNT(DISTINCT CASE WHEN Ambiguous = 1 THEN MaterialKey END)
 FROM PositionFacts;";
             await using var reader = await summaryCommand.ExecuteReaderAsync(cancellationToken);
             await reader.ReadAsync(cancellationToken);
             assignedSpend = Convert.ToDecimal(reader.GetValue(0), CultureInfo.InvariantCulture);
             unassignedSpend = Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture);
-            multiGroupSpend = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
+            ambiguousSpend = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
             assignedMaterials = reader.GetInt32(3);
             unassignedMaterials = reader.GetInt32(4);
-            multiGroupMaterials = reader.GetInt32(5);
+            ambiguousMaterials = reader.GetInt32(5);
         }
 
-        var mappedDispatchers = 0;
-        var unmappedDispatchers = 0;
+        int mappedDispatchers;
+        int unmappedDispatchers;
         await using (var mappingCommand = conn.CreateCommand())
         {
-            mappingCommand.CommandText = hasSapProductGroupRules
-                ? $@"
-WITH {usageSourceCte}{sapProductGroupCtes}MappedDispatchers AS (
-    SELECT trim(u.VknrDispo) AS Disponent,
-           {mappedCode} AS ProductGroup
-    FROM UsageSource u
-    {mapJoin}
-    WHERE COALESCE(trim(u.VknrDispo), '') <> ''
+            mappingCommand.CommandText = $@"
+WITH {resolvedCte},
+Dispatchers AS (
+    SELECT DISTINCT upper(trim(MarcDispo)) AS Disponent
+    FROM PurchasingEkpoCache
+    WHERE COALESCE(trim(MarcDispo), '') <> ''
 )
 SELECT
-    COUNT(DISTINCT CASE WHEN ProductGroup <> '' THEN Disponent END),
-    COUNT(DISTINCT CASE WHEN ProductGroup = '' THEN Disponent END)
-FROM MappedDispatchers;"
-                : $@"
-WITH {usageSourceCte.TrimEnd().TrimEnd(',')}
-SELECT 0, COUNT(DISTINCT trim(VknrDispo))
-FROM UsageSource
-WHERE COALESCE(trim(VknrDispo), '') <> '';";
+    COUNT(CASE WHEN x.Disponent IS NOT NULL THEN 1 END),
+    COUNT(CASE WHEN x.Disponent IS NULL THEN 1 END)
+FROM Dispatchers d
+LEFT JOIN SapProductGroupResolved x ON x.Disponent = d.Disponent;";
             await using var reader = await mappingCommand.ExecuteReaderAsync(cancellationToken);
             await reader.ReadAsync(cancellationToken);
             mappedDispatchers = reader.GetInt32(0);
@@ -1793,10 +1760,10 @@ WHERE COALESCE(trim(VknrDispo), '') <> '';";
             new PurchasingProductGroupAllocationSummary(
                 assignedSpend,
                 unassignedSpend,
-                multiGroupSpend,
+                ambiguousSpend,
                 assignedMaterials,
                 unassignedMaterials,
-                multiGroupMaterials,
+                ambiguousMaterials,
                 mappedDispatchers,
                 unmappedDispatchers),
             emptyMaterialGroupPerspective with { Rows = materialGroupRows });

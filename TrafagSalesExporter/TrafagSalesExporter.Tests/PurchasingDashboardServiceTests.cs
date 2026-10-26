@@ -754,42 +754,45 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_ProductGroupPerspective_Allocates_MultiUse_Material_Without_DoubleCounting()
+    public async Task LoadAsync_ProductGroupPerspective_Uses_Own_Dispo_Of_Material_Like_ZM_OFFENE_KDAUF()
     {
+        // Entscheid Ingo 2026-10-26: Produktgruppe wie im Report ZM_OFFENE_KDAUF aus dem eigenen Disponenten des
+        // Materials (MARC-DISPO), genau eine Gruppe je Material. Die Verwendung (MaterialUsageCache) zaehlt nicht mehr.
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('PG1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '10', '000M1', '1', '120', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '20', 'M2', '1', '80', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '30', 'M3', '1', '50', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '40', 'M4', '1', '40', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '10', '000M1', '001', '1', '120', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '20', 'M2', '002', '1', '80', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '30', 'M3', '', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '40', 'M4', 'el7', '1', '40', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '50', 'M5', 'ZZZ', '1', '30', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('PG1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
 
-        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V1', '001', 'M1', '2026-01-01');");
+        // Alte Vererbung ueber die Verwendung: M1 steckt in einem Produkt von Disponent 002. Darf nicht mehr wirken.
         await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V2', '002', 'M1', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V3', '001', 'M2', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V4', 'EL7', 'M4', '2026-01-01');");
-        // Alte manuelle Zuordnungen sind nur noch Legacy-Daten und duerfen die SAP-Regeln
-        // nicht uebersteuern.
+        // Alte manuelle Zuordnungen sind nur noch Legacy-Daten und duerfen die SAP-Regeln nicht uebersteuern.
         await ExecuteAsync("INSERT INTO PurchasingProductGroupMap (Disponent, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('001', 'ALT', 'Legacy darf nicht fuehren', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'XLS', 'Excel darf nicht fuehren', 'zdispo_grp.xlsx', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', 'SAP OData', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('002', 'PG-B', 'Zubehoer', 'SAP OData', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('EL*', 'T2', 'FP_TRANSM. TX', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('EL*', 'T3', 'Zweite Produktgruppe', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('EL*', 'T3', 'Zweite Produktgruppe', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('EL*', 'T2', 'FP_TRANSM. TX', 'SAP OData', '2026-01-01');");
 
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
         var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(290m, perspective.Rows.Sum(row => row.Total));
-        Assert.Equal(140m, Assert.Single(perspective.Rows, row => row.Label == "PG-A - Sensorik").Total);
-        Assert.Equal(60m, Assert.Single(perspective.Rows, row => row.Label == "PG-B - Zubehoer").Total);
-        Assert.Equal(20m, Assert.Single(perspective.Rows, row => row.Label == "T2 - FP_TRANSM. TX").Total);
-        Assert.Equal(20m, Assert.Single(perspective.Rows, row => row.Label == "T3 - Zweite Produktgruppe").Total);
+        Assert.Equal(320m, perspective.Rows.Sum(row => row.Total));
+        Assert.Equal(120m, Assert.Single(perspective.Rows, row => row.Label == "PG-A - Sensorik").Total);   // ganz, keine Aufteilung
+        Assert.Equal(80m, Assert.Single(perspective.Rows, row => row.Label == "PG-B - Zubehoer").Total);
+        Assert.Equal(40m, Assert.Single(perspective.Rows, row => row.Label == "T2 - FP_TRANSM. TX").Total); // kleinste Gruppennummer
+        Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("T3", StringComparison.Ordinal));
+        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
+        Assert.Equal(30m, Assert.Single(perspective.Rows, row => row.Label == "Disponent ZZZ").Total);
         Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Legacy", StringComparison.Ordinal));
         Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Excel", StringComparison.Ordinal));
-        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
+        // Jedes Material genau einmal im Baum.
+        Assert.Equal(5, perspective.Rows.SelectMany(group => group.Children).SelectMany(supplier => supplier.Children).Count());
 
-        // Wunsch Einkauf 2026-10-23: zweiter Einstieg Produktgruppe -> Warengruppe -> Material, gleiche Summen je Gruppe.
+        // Zweiter Einstieg Produktgruppe -> Warengruppe -> Material, gleiche Summen je Gruppe.
         var mg = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup-materialgroup");
         Assert.Equal(["Produktgruppe", "Warengruppe", "Material"], mg.LevelLabelsDe);
         Assert.Equal(
@@ -799,13 +802,39 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal("Produktgruppe : Warengruppe", mg.LabelDe);
 
         Assert.Equal(240m, state.ProductGroupAllocation.AssignedSpendChf);
-        Assert.Equal(50m, state.ProductGroupAllocation.UnassignedSpendChf);
-        Assert.Equal(160m, state.ProductGroupAllocation.MultiGroupSpendChf);
+        Assert.Equal(80m, state.ProductGroupAllocation.UnassignedSpendChf);
+        Assert.Equal(40m, state.ProductGroupAllocation.MultiGroupSpendChf);       // mehrdeutige SAP-Regel EL*
         Assert.Equal(3, state.ProductGroupAllocation.AssignedMaterialCount);
-        Assert.Equal(1, state.ProductGroupAllocation.UnassignedMaterialCount);
-        Assert.Equal(2, state.ProductGroupAllocation.MultiGroupMaterialCount);
+        Assert.Equal(2, state.ProductGroupAllocation.UnassignedMaterialCount);
+        Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);
         Assert.Equal(3, state.ProductGroupAllocation.MappedDispatcherCount);
-        Assert.Equal(0, state.ProductGroupAllocation.UnmappedDispatcherCount);
+        Assert.Equal(1, state.ProductGroupAllocation.UnmappedDispatcherCount);
+    }
+
+    [Fact]
+    public async Task LoadAsync_ProductGroupPerspective_DS1_Lands_In_One_Group_And_Exact_Beats_Pattern()
+    {
+        // Fall Einkauf 2026-10-23: D5 und DS standen mit gleicher Summe doppelt da, weil DS1/DS2 in ZDISPO_GRP beiden
+        // Gruppen zugeordnet sind. Jetzt genau eine Gruppe (kleinste Nummer D5). Exakte Regel DS -> D1 schlaegt das Muster D*.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('DS1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('DS1', '10', 'X1', 'DS1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('DS1', '20', 'X2', 'DS', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('DS1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('DS1', 'DS', 'FP_DICHTESENS', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('DS1', 'D5', 'FP_DICHTESEN1/2', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('DS', 'D1', 'FP_DICHTESEN', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('D*', 'ZZ', 'Muster', 'SAP OData', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
+        Assert.Equal(150m, perspective.Rows.Sum(row => row.Total));
+        Assert.Equal(100m, Assert.Single(perspective.Rows, row => row.Label == "D5 - FP_DICHTESEN1/2").Total);
+        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "D1 - FP_DICHTESEN").Total);
+        Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("DS -", StringComparison.Ordinal));
+        Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("ZZ", StringComparison.Ordinal));
+        Assert.Equal(100m, state.ProductGroupAllocation.MultiGroupSpendChf);
+        Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);
     }
 
     [Fact]
@@ -817,10 +846,7 @@ public class PurchasingDashboardServiceTests : IDisposable
         await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('PGX', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', 'SAP OData', '2026-01-01');");
         for (var i = 1; i <= 25; i++)
-        {
-            await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('PGX', '{i * 10}', 'M{i:D2}', 'WG{i:D2}', 'WG{i:D2}', '1', '{i}', '2026-01-01');");
-            await ExecuteAsync($"INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V{i}', '001', 'M{i:D2}', '2026-01-01');");
-        }
+            await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('PGX', '{i * 10}', 'M{i:D2}', 'WG{i:D2}', 'WG{i:D2}', '001', '1', '{i}', '2026-01-01');");
 
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
@@ -831,71 +857,6 @@ public class PurchasingDashboardServiceTests : IDisposable
         var supplier = Assert.Single(bySupplier.Children);
         Assert.Equal(25, supplier.Children.Count);
         Assert.DoesNotContain(supplier.Children, child => child.Label.StartsWith("uebrige", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public async Task LoadAsync_ProductGroupPerspective_Uses_Component_Dispo_Cache_From_Purchasing_Run()
-    {
-        // Punkt 4 Gespraech Armin 2026-10-08: Die Verwendung kommt jetzt auch aus dem Einkauf-Lauf
-        // (PurchasingComponentDispoCache, Schluessel normalisiert). Dasselbe Paar in beiden Quellen zaehlt einmal.
-        ExecuteSync(DatabaseSchemaSql.GetPurchasingComponentDispoCacheCreateSql());
-        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('PG2', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG2', '10', '000000000000004711', '1', '100', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG2', '20', 'M2', '1', '80', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG2', '30', 'M9', '1', '30', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('PG2', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
-
-        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V3', '001', 'M2', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('M2', 'V3', '001', '2026-10-08');");
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('4711', 'V5', '002', '2026-10-08');");
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('4711', 'V6', '001', '2026-10-08');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', 'SAP OData', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('002', 'PG-B', 'Zubehoer', 'SAP OData', '2026-01-01');");
-
-        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
-
-        Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
-        var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(210m, perspective.Rows.Sum(row => row.Total));
-        Assert.Equal(130m, Assert.Single(perspective.Rows, row => row.Label == "PG-A - Sensorik").Total);   // 80 + 100/2
-        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "PG-B - Zubehoer").Total);
-        Assert.Equal(30m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
-        Assert.Equal(180m, state.ProductGroupAllocation.AssignedSpendChf);
-        Assert.Equal(100m, state.ProductGroupAllocation.MultiGroupSpendChf);
-        Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);
-    }
-
-    [Fact]
-    public async Task LoadAsync_ProductGroupPerspective_Placeholder_NA_Takes_No_Share_Next_To_Real_Group()
-    {
-        // Fall Ingo 2026-10-15: B53173 stand halb in T2 und halb in "NA - N/A". NA ist in SAP (ZDISPO_SPART) der
-        // Platzhalter fuer "keine Produktgruppe" und darf neben einer echten Gruppe keinen Anteil bekommen.
-        ExecuteSync(DatabaseSchemaSql.GetPurchasingComponentDispoCacheCreateSql());
-        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('NA1', '2025-03-01', 'L1', 'Bepro AG', 'F', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('NA1', '10', 'B53173', '1', '100', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('NA1', '20', 'NUR-NA', '1', '40', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('NA1', '30', 'ZWEI-ECHT', '1', '60', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('NA1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
-
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('B53173', 'V1', 'T2D', '2026-10-15');");
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('B53173', 'V2', 'XXX', '2026-10-15');");
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('NUR-NA', 'V3', 'XXX', '2026-10-15');");
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('ZWEI-ECHT', 'V4', 'T2D', '2026-10-15');");
-        await ExecuteAsync("INSERT INTO PurchasingComponentDispoCache (Kompnr, Vknr, VknrDispo, LastLoadedAtUtc) VALUES ('ZWEI-ECHT', 'V5', 'D2D', '2026-10-15');");
-        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V0', 'T2D', 'DUMMY', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('T2D', 'T2', 'FP_TRANSM. TX', 'SAP OData', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('D2D', 'D2', 'FP_DICHTEWAECH', 'SAP OData', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('XXX', 'NA', 'N/A', 'SAP OData', '2026-01-01');");
-
-        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
-
-        Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
-        var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(200m, perspective.Rows.Sum(row => row.Total));                                   // nichts geht verloren
-        Assert.Equal(130m, Assert.Single(perspective.Rows, row => row.Label == "T2 - FP_TRANSM. TX").Total);   // 100 + 60/2
-        Assert.Equal(30m, Assert.Single(perspective.Rows, row => row.Label == "D2 - FP_DICHTEWAECH").Total);
-        Assert.Equal(40m, Assert.Single(perspective.Rows, row => row.Label == "NA - N/A").Total);    // nur NA bleibt sichtbar
-        Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);                       // nur ZWEI-ECHT
     }
 
     private void CreatePurchasingCacheTables()
@@ -927,6 +888,7 @@ CREATE TABLE PurchasingEkpoCache (
     MaraMatkl TEXT NOT NULL DEFAULT '',
     MaraAbc TEXT NOT NULL DEFAULT '',
     MaraXyz TEXT NOT NULL DEFAULT '',
+    MarcDispo TEXT NOT NULL DEFAULT '',
     Maktx TEXT NOT NULL DEFAULT '',
     Menge TEXT NOT NULL DEFAULT '0',
     Meins TEXT NOT NULL DEFAULT '',

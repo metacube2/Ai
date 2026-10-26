@@ -2097,6 +2097,8 @@ internal static class UiTextBerneseTranslations
             ["Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten."] = "Mehreri Währige im Filter: Chachle mit `Mixed` addiere lokali Bträg numerisch, si si ke umgrächnete Summe. Für e belastbare Betrag bitte es Land oder e Währig filtere oder `Group-Waehrung (CHF)` iischalte.",
             ["Mehrfach verwendete Komponenten"] = "Mehrfach verwendeti Komponänte",
             ["Mehrfachverwendung"] = "Mehrfachverwändig",
+            ["Zuordnung wie im SAP-Report ZM_OFFENE_KDAUF: Einkaufsmaterial -> eigener Disponent (MARC-DISPO, Werk 1100) -> SAP ZDISPO_GRP/ZDISPO_SPART. Jedes Material steht in genau einer Produktgruppe, die Summe bleibt exakt. Ist ein Disponent in SAP mehreren Gruppen zugeordnet, gilt die kleinste Gruppennummer. Disponenten ohne SAP-Regel erscheinen als 'Disponent <Code>'."] = "Zuordnig wie im SAP-Report ZM_OFFENE_KDAUF: Ychoufsmaterial -> eigete Disponänt (MARC-DISPO, Wärk 1100) -> SAP ZDISPO_GRP/ZDISPO_SPART. Jedes Material steit i gnau einere Produktgruppe, d Summe blibt exakt. Isch e Disponänt i SAP mehrere Gruppe zuegordnet, gilt di chlinschti Gruppenummere. Disponänte ohni SAP-Regle erschyne als 'Disponent <Code>'.",
+            ["Mehrdeutige SAP-Regel"] = "Mehrdütigi SAP-Regle",
             ["Meldung"] = "Meldig",
             ["Meldung(en), darunter ein Fehler"] = "Meldig(e), drunger e Fähler",
             ["Meldung(en), darunter eine Warnung"] = "Meldig(e), drunger e Warnig",

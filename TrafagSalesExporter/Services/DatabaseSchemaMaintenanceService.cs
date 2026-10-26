@@ -478,6 +478,9 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         // Materialnummer zeigt. MARA fuehrt keinen Text; Quelle ist MAKTSet ueber EKPO.Matnr.
         // Bleibt leer, bis ein Full Load oder Delta gelaufen ist.
         AddColumnIfMissing(db, "PurchasingEkpoCache", "Maktx", "TEXT NOT NULL DEFAULT ''");
+        // Eigener Disponent des Materials (MARC-DISPO, Werk 1100) fuer die Produktgruppe wie im Report
+        // ZM_OFFENE_KDAUF (Entscheid Ingo 2026-10-26). Bleibt leer, bis ein Full Load oder Delta gelaufen ist.
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "MarcDispo", "TEXT NOT NULL DEFAULT ''");
 
         // Waehrung (Waers/Wkurs) fuer CHF-Bewertung und Konnr fuer die Kontrakt-Abgrenzung.
         // Diese Felder werden bereits aus SAP gelesen, lagen bei Bestandsdaten aber nur im RawJson.
