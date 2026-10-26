@@ -1,5 +1,12 @@
 [
  {
+  "guid": "taploop-ios-1.0-36",
+  "titel": "TapLoop 1.0 (Build 36) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 3 von 3 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-26T11:47:55.507000+01:00"
+ },
+ {
   "guid": "taploop-mac-0.1-34",
   "titel": "TapLoop 0.1 (Build 34) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",

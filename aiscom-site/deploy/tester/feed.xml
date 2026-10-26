@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
   <language>de-ch</language>
-  <lastBuildDate>Mon, 26 Oct 2026 10:15:46 +0000</lastBuildDate>
+  <lastBuildDate>Mon, 26 Oct 2026 10:49:55 +0000</lastBuildDate>
+  <item>
+    <title>TapLoop 1.0 (Build 36) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">taploop-ios-1.0-36</guid>
+    <pubDate>Mon, 26 Oct 2026 11:47:55 +0100</pubDate>
+    <description>Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 3 von 3 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
   <item>
     <title>TapLoop 0.1 (Build 34) für macOS</title>
     <link>https://www.aiscom.ch/tester/#mac</link>
@@ -279,13 +286,6 @@
     <guid isPermaLink="false">antennen-studio-mac-1.0-7</guid>
     <pubDate>Sat, 24 Oct 2026 12:52:38 +0200</pubDate>
     <description>NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).</description>
-  </item>
-  <item>
-    <title>Aurora Studio 1.0 (Build 3) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">aurora-studio-mac-1.0-3</guid>
-    <pubDate>Sat, 24 Oct 2026 11:39:29 +0200</pubDate>
-    <description>Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.</description>
   </item>
 </channel>
 </rss>
