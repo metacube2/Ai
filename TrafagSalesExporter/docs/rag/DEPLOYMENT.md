@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-23 09:05)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-26 09:39)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,10 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-10-26 09:39, Produktgruppe aus eigenem Disponenten wie ZM_OFFENE_KDAUF (`0dc3c68`).** Kein Einkauf-Lauf aktiv
+  (Delta 12:30 fuellt die neue Spalte `MarcDispo`, bis dahin steht alles unter „ohne Produktgruppe“), keine Sicherung
+  (Wochenregel), Suite 1288/1288, DLL `09:39:39` bitgleich, zehn Routen 200, Spalte im Schema (WAL) gesehen, Alarm nur
+  WAL/SHM-Checkpoint.
 - **Deploy 2026-10-23 09:05, Produktgruppen-Sichten ohne Deckelung (`8b4a93d`).** Kein Einkauf-Lauf aktiv, keine Sicherung
   (Wochenregel), Suite 1289/1289, DLL `09:05:47` bitgleich, zehn Routen 200, Alarm nur WAL/SHM-Checkpoint.
 - **Deploy 2026-10-23 07:46, Spend-Aufriss Produktgruppe : Warengruppe (`c025b55`).** Kein Einkauf-Lauf aktiv (Start 12:30), keine
