@@ -615,24 +615,15 @@ LIMIT 12;", cancellationToken);
         // vorhandene Cache-Daten (Beleg-WG/Matnr); Region/ABC/XYZ fuellen sich erst nach dem
         // naechsten Einkauf-Full-Load. Alle laufen nur beim Datenladen (OnInitialized/Filter),
         // nicht pro Render.
-        state.SpendPerspectiveRows = await ExecuteSpendPerspectivesAsync(conn, filter, spendItemFilter, cancellationToken);
-        var productGroupResult = await ExecuteProductGroupPerspectiveAsync(conn, filter, spendItemFilter, cancellationToken);
-        // Produktgruppe ist eine eigene, summenerhaltend allokierte Perspektive und kann deshalb
-        // nicht durch das einfache SQL-Grouping der vier direkten Einkaufsdimensionen laufen.
-        state.SpendPerspectiveRows.Insert(
-            Math.Min(3, state.SpendPerspectiveRows.Count),
-            productGroupResult.Perspective);
-        // Wunsch Einkauf 2026-10-23 (Budgeterstellung): zweiter Produktgruppen-Einstieg Produktgruppe -> Warengruppe -> Material,
-        // aus derselben 1/n-Verteilung, also mit identischer Summe je Produktgruppe.
-        state.SpendPerspectiveRows.Insert(
-            Math.Min(4, state.SpendPerspectiveRows.Count),
-            productGroupResult.MaterialGroupPerspective);
-        // Wunsch Ingo 2026-10-26: zweite Disponenten-Sicht nach Verwendung (ZLO03) direkt hinter "Disponent".
-        var disponentIndex = state.SpendPerspectiveRows.FindIndex(perspective => perspective.Key == "disponent");
-        state.SpendPerspectiveRows.Insert(
-            disponentIndex >= 0 ? disponentIndex + 1 : state.SpendPerspectiveRows.Count,
-            await ExecuteDisponentUsagePerspectiveAsync(conn, filter, spendItemFilter, cancellationToken));
-        state.ProductGroupAllocation = productGroupResult.Summary;
+        (state.SpendPerspectiveRows, state.ProductGroupAllocation) =
+            await BuildSpendBreakdownAsync(conn, filter, spendItemFilter, cancellationToken);
+        // Entscheid Ingo 2026-10-26: Schalter "Nur Einkaufsteile" im Spend-Aufriss, Vorgabe an. Dieselben Sichten
+        // ein zweites Mal, nur fuer Positionen mit Einkaufsdisponent 001 bis 005; Umschalten ohne neue DB-Runde.
+        if (await ColumnExistsAsync(conn, "PurchasingEkpoCache", "MarcDispo", cancellationToken))
+        {
+            (state.PurchasingPartsSpendPerspectiveRows, state.PurchasingPartsProductGroupAllocation) =
+                await BuildSpendBreakdownAsync(conn, filter, $"{spendItemFilter} AND {PurchasingPartsFilterSql("p")}", cancellationToken);
+        }
         // Lieferanten-Perspektive bleibt der Standardeinstieg und damit die Quelle fuer die
         // bisherige, nicht umschaltbare Kaskadenanzeige.
         state.SpendCascadeRows = state.SpendPerspectiveRows
@@ -1501,6 +1492,40 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         return new(disponent.Key, disponent.LabelDe, disponent.LabelEn,
             [disponent, SupplierDimension, MaterialGroupDimension, ArticleDimension],
             [NoCap, NoCap, NoCap, NoCap]);
+    }
+
+    /// <summary>
+    /// Positionen, deren Material einen Einkaufsdisponenten traegt (<see cref="PurchasingPlanners"/>, MARC-DISPO
+    /// Werk 1100 in <c>PurchasingEkpoCache.MarcDispo</c>). Grundlage des Schalters "Nur Einkaufsteile" im
+    /// Spend-Aufriss (Entscheid Ingo 2026-10-26).
+    /// </summary>
+    internal static string PurchasingPartsFilterSql(string alias) =>
+        $"upper(trim(COALESCE({alias}.MarcDispo, ''))) IN ({string.Join(", ", PurchasingPlanners.Select(planner => $"'{planner}'"))})";
+
+    /// <summary>
+    /// Alle Einstiege des Spend-Aufrisses fuer einen Positionsfilter: die direkten Sichten, die zwei
+    /// Produktgruppen-Sichten und die Disponenten-Sicht nach Verwendung, in der Reihenfolge der Knoepfe.
+    /// </summary>
+    private static async Task<(List<PurchasingSpendPerspectiveResult> Perspectives, PurchasingProductGroupAllocationSummary Allocation)> BuildSpendBreakdownAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string itemFilter,
+        CancellationToken cancellationToken)
+    {
+        var perspectives = await ExecuteSpendPerspectivesAsync(conn, filter, itemFilter, cancellationToken);
+        var productGroupResult = await ExecuteProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken);
+        // Produktgruppe ist eine eigene, summenerhaltend allokierte Perspektive und kann deshalb
+        // nicht durch das einfache SQL-Grouping der vier direkten Einkaufsdimensionen laufen.
+        perspectives.Insert(Math.Min(3, perspectives.Count), productGroupResult.Perspective);
+        // Wunsch Einkauf 2026-10-23 (Budgeterstellung): zweiter Produktgruppen-Einstieg Produktgruppe -> Warengruppe -> Material,
+        // aus derselben Zuordnung, also mit identischer Summe je Produktgruppe.
+        perspectives.Insert(Math.Min(4, perspectives.Count), productGroupResult.MaterialGroupPerspective);
+        // Wunsch Ingo 2026-10-26: zweite Disponenten-Sicht nach Verwendung (ZLO03) direkt hinter "Disponent".
+        var disponentIndex = perspectives.FindIndex(perspective => perspective.Key == "disponent");
+        perspectives.Insert(
+            disponentIndex >= 0 ? disponentIndex + 1 : perspectives.Count,
+            await ExecuteDisponentUsagePerspectiveAsync(conn, filter, itemFilter, cancellationToken));
+        return (perspectives, productGroupResult.Summary);
     }
 
     internal const string DisponentUsagePerspectiveKey = "disponent-usage";

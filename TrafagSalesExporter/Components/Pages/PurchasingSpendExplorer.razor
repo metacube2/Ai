@@ -22,11 +22,25 @@
 
     @* Perspektivenwahl (Marco 2026-07-30). Alle Perspektiven sind serverseitig vorberechnet, das
        Umschalten kostet also keine DB-Runde. *@
-    @if (Perspectives.Count > 1)
+    @if (PartsPerspectives.Count > 0)
+    {
+        <MudSwitch T="bool" @bind-Value="_onlyPurchasingParts" Color="Color.Primary" Class="mt-2 mb-0">
+            @T("Nur Einkaufsteile (Disponent 001 bis 005)", "Purchased parts only (MRP controller 001 to 005)")
+        </MudSwitch>
+        @if (_onlyPurchasingParts)
+        {
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block">
+                @T("Alle Einstiege zeigen nur Positionen, deren Material einen Einkaufsdisponenten 001 bis 005 hat. Ausschalten zeigt den ganzen Einkauf. Die Diagramme darunter zeigen immer den ganzen Einkauf.",
+                   "All entry points show only items whose material has a purchasing MRP controller 001 to 005. Switch off to see all purchasing. The charts below always show all purchasing.")
+            </MudText>
+        }
+    }
+
+    @if (ShownPerspectives.Count > 1)
     {
         <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mt-2 mb-1" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.caption" Class="purchasing-explorer-muted">@T("Einstieg:", "Entry point:")</MudText>
-            @foreach (var perspective in Perspectives)
+            @foreach (var perspective in ShownPerspectives)
             {
                 var isActive = perspective.Key == ActivePerspectiveKey;
                 <MudButton Size="Size.Small"
@@ -76,16 +90,16 @@
         </MudAlert>
         <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mb-2">
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">
-                @T("Zugeordnet", "Assigned"): @FormatChf(ProductGroupAllocation.AssignedSpendChf)
+                @T("Zugeordnet", "Assigned"): @FormatChf(ShownAllocation.AssignedSpendChf)
             </MudChip>
-            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnassignedSpendChf > 0 ? Color.Warning : Color.Success)">
-                @T("Ohne Produktgruppe", "Without product group"): @FormatChf(ProductGroupAllocation.UnassignedSpendChf)
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ShownAllocation.UnassignedSpendChf > 0 ? Color.Warning : Color.Success)">
+                @T("Ohne Produktgruppe", "Without product group"): @FormatChf(ShownAllocation.UnassignedSpendChf)
             </MudChip>
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
-                @T("Mehrdeutige SAP-Regel", "Ambiguous SAP rule"): @ProductGroupAllocation.MultiGroupMaterialCount @T("Materialien", "materials") / @FormatChf(ProductGroupAllocation.MultiGroupSpendChf)
+                @T("Mehrdeutige SAP-Regel", "Ambiguous SAP rule"): @ShownAllocation.MultiGroupMaterialCount @T("Materialien", "materials") / @FormatChf(ShownAllocation.MultiGroupSpendChf)
             </MudChip>
-            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnmappedDispatcherCount > 0 ? Color.Warning : Color.Success)">
-                SAP ZDISPO/ZC23: @ProductGroupAllocation.MappedDispatcherCount @T("zugeordnet", "mapped"), @ProductGroupAllocation.UnmappedDispatcherCount @T("offen", "open")
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ShownAllocation.UnmappedDispatcherCount > 0 ? Color.Warning : Color.Success)">
+                SAP ZDISPO/ZC23: @ShownAllocation.MappedDispatcherCount @T("zugeordnet", "mapped"), @ShownAllocation.UnmappedDispatcherCount @T("offen", "open")
             </MudChip>
         </MudStack>
     }
@@ -405,6 +419,17 @@
     [Parameter] public IReadOnlyList<PurchasingSpendPerspectiveResult> Perspectives { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSpendCascadeNode> CascadeRows { get; set; } = [];
     [Parameter] public PurchasingProductGroupAllocationSummary ProductGroupAllocation { get; set; } = PurchasingProductGroupAllocationSummary.Empty;
+    // Schalter "Nur Einkaufsteile" (Entscheid Ingo 2026-10-26, Vorgabe an): dieselben Sichten nur fuer Disponent 001 bis 005.
+    [Parameter] public IReadOnlyList<PurchasingSpendPerspectiveResult> PartsPerspectives { get; set; } = [];
+    [Parameter] public PurchasingProductGroupAllocationSummary PartsProductGroupAllocation { get; set; } = PurchasingProductGroupAllocationSummary.Empty;
+
+    private bool _onlyPurchasingParts = true;
+
+    private IReadOnlyList<PurchasingSpendPerspectiveResult> ShownPerspectives
+        => _onlyPurchasingParts && PartsPerspectives.Count > 0 ? PartsPerspectives : Perspectives;
+
+    private PurchasingProductGroupAllocationSummary ShownAllocation
+        => _onlyPurchasingParts && PartsPerspectives.Count > 0 ? PartsProductGroupAllocation : ProductGroupAllocation;
     [Parameter] public IReadOnlyList<PurchasingRegionPieGroup> RegionGroups { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> AbcRows { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> XyzRows { get; set; } = [];
@@ -417,12 +442,12 @@
     private string? _activePerspectiveKey;
 
     private string ActivePerspectiveKey
-        => _activePerspectiveKey is not null && Perspectives.Any(p => p.Key == _activePerspectiveKey)
+        => _activePerspectiveKey is not null && ShownPerspectives.Any(p => p.Key == _activePerspectiveKey)
             ? _activePerspectiveKey
-            : Perspectives.FirstOrDefault()?.Key ?? string.Empty;
+            : ShownPerspectives.FirstOrDefault()?.Key ?? string.Empty;
 
     private PurchasingSpendPerspectiveResult? ActivePerspective
-        => Perspectives.FirstOrDefault(p => p.Key == ActivePerspectiveKey);
+        => ShownPerspectives.FirstOrDefault(p => p.Key == ActivePerspectiveKey);
 
     private IReadOnlyList<PurchasingSpendCascadeNode> ActiveRows
         => ActivePerspective?.Rows ?? CascadeRows;

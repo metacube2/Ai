@@ -1494,6 +1494,8 @@ internal static class UiTextBerneseTranslations
             ["Dimensionen"] = "Dimensione",
             ["Direkt aus dem Einkauf-Cache berechnet, keine Simulation."] = "Diräkt us em Einkauf-Cache berächnet, ke Simulation.",
             ["Disponent"] = "Disponänt",
+            ["Nur Einkaufsteile (Disponent 001 bis 005)"] = "Nume Ychoufsteili (Disponänt 001 bis 005)",
+            ["Alle Einstiege zeigen nur Positionen, deren Material einen Einkaufsdisponenten 001 bis 005 hat. Ausschalten zeigt den ganzen Einkauf. Die Diagramme darunter zeigen immer den ganzen Einkauf."] = "Alli Ystiege zeige nume Positione, wo ds Material e Ychoufsdisponänt 001 bis 005 het. Usschalte zeigt dr ganz Ychouf. D Diagramm drunger zeige geng dr ganz Ychouf.",
             ["Disponent der verkürzten Nummer, in der das Einkaufsmaterial verbaut ist (Stücklistenauflösung wie ZLO03). Ist ein Material in Nummern mehrerer Disponenten verbaut, wird sein Wert zu gleichen Teilen verteilt, damit die Gesamtsumme exakt bleibt. Materialien ohne bekannte Verwendung stehen unter ohne Verwendung."] = "Disponänt vor verchürzte Nummere, wo ds Ychoufsmaterial drin verbout isch (Stücklischteuflösig wie ZLO03). Isch es Material i Nummere vo mehrere Disponänte verbout, wird sy Wärt glychmässig verteilt, dass d Gesamtsumme exakt blibt. Materialie ohni bekannti Verwändig stöh under ohne Verwendung.",
             ["Disponent Verwendung (ZLO03)"] = "Disponänt Verwändig (ZLO03)",
             ["Disponent Verwendung"] = "Disponänt Verwändig",

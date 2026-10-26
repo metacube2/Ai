@@ -141,6 +141,11 @@ public sealed class PurchasingDashboardLiveState
     // damit der zugerechnete Spend die Einkaufs-Gesamtsumme nicht vervielfacht.
     public PurchasingProductGroupAllocationSummary ProductGroupAllocation { get; set; } =
         PurchasingProductGroupAllocationSummary.Empty;
+    // Schalter "Nur Einkaufsteile" im Spend-Aufriss (Entscheid Ingo 2026-10-26): dieselben Sichten nur fuer
+    // Positionen mit Einkaufsdisponent 001 bis 005. Leer, solange die Spalte MarcDispo fehlt.
+    public List<PurchasingSpendPerspectiveResult> PurchasingPartsSpendPerspectiveRows { get; set; } = [];
+    public PurchasingProductGroupAllocationSummary PurchasingPartsProductGroupAllocation { get; set; } =
+        PurchasingProductGroupAllocationSummary.Empty;
     // Region-Anteil je (Top-)Warengruppe fuer die Kuchendiagramme. Fuellt sich erst mit dem
     // naechsten Einkauf-Full-Load (SupplierCountry).
     public List<PurchasingRegionPieGroup> RegionByMaterialGroupRows { get; set; } = [];

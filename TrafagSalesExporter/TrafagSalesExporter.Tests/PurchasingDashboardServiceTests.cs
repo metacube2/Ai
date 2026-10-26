@@ -754,6 +754,35 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_PurchasingParts_Switch_Limits_All_Breakdowns_To_Planners_001_To_005()
+    {
+        // Entscheid Ingo 2026-10-26: Schalter "Nur Einkaufsteile" fuer alle Sichten des Spend-Aufrisses.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('E1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('E1', '10', 'M1', '001', '1', '120', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('E1', '20', 'M2', ' 005', '1', '80', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('E1', '30', 'M3', 'A99', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('E1', '40', '', '', '1', '30', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('E1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'H', 'HW_ZUKAUFSORT', 'SAP OData', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        // Ganzer Einkauf unveraendert.
+        Assert.Equal(280m, Assert.Single(state.SpendPerspectiveRows, row => row.Key == "supplier").Rows.Sum(row => row.Total));
+        // Gleiche Einstiege in gleicher Reihenfolge, aber nur 001 bis 005.
+        Assert.Equal(
+            state.SpendPerspectiveRows.Select(row => row.Key),
+            state.PurchasingPartsSpendPerspectiveRows.Select(row => row.Key));
+        foreach (var perspective in state.PurchasingPartsSpendPerspectiveRows)
+            Assert.Equal(200m, perspective.Rows.Sum(row => row.Total));
+        var disponent = Assert.Single(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "disponent");
+        Assert.Equal(["001", "005"], disponent.Rows.Select(row => row.Label).Order());
+        var productGroup = Assert.Single(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "productgroup");
+        Assert.Equal(120m, Assert.Single(productGroup.Rows, row => row.Label == "H - HW_ZUKAUFSORT").Total);
+        Assert.Equal(200m, state.PurchasingPartsProductGroupAllocation.AssignedSpendChf + state.PurchasingPartsProductGroupAllocation.UnassignedSpendChf);
+    }
+
+    [Fact]
     public async Task LoadAsync_Disponent_Perspectives_Group_By_Own_Dispo_And_By_Usage_Dispo()
     {
         // Wunsch Ingo 2026-10-26: gruppieren nach DISPOKENNZ wie ZC23 (eigener MARC-DISPO, 001, 002 ...) und
