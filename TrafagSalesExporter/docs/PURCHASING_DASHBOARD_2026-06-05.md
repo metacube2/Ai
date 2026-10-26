@@ -1336,6 +1336,21 @@ Ursache: Die Produktgruppen-Einstiege (seit 2026-10-15) waren als einzige noch a
 der Rueckfall ohne Verwendungs-Cache zeigen alle Produktgruppen, Lieferanten, Warengruppen und Materialien einzeln.
 Test `LoadAsync_ProductGroupPerspectives_Show_All_Positions_Without_Remainder_Row`; Suite 1289/1289.
 
+## Nachtrag 2026-10-26 (3): Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“
+
+Wunsch Ingo: Der Einkauf soll in den Disponenten-Gruppierungen nur 001 bis 005 sehen, „oder auch bei anderen
+Gruppierungen, weil das sind Einkaufsteile“. Entscheid auf Rueckfrage: **Schalter im Spend-Aufriss, Vorgabe an.**
+
+- Der Server rechnet alle Einstiege ein zweites Mal mit dem Filter `MarcDispo IN PurchasingPlanners` (001 bis 005,
+  dieselbe Liste wie beim Lagerwert der Einkaufsteile). Der Schalter wechselt ohne neue DB-Runde.
+- Gilt fuer alle Einstiege inklusive Produktgruppe und beide Disponenten-Sichten. Die Diagramme darunter (Region, ABC,
+  XYZ, LZ) zeigen weiterhin den ganzen Einkauf; das steht unter dem Schalter.
+- Groessenordnung nach Prod-DB 26.10.: 001 bis 005 tragen rund drei Viertel des Bestellwerts. Nicht dabei sind
+  Positionen ohne Disponent (meist ohne Material), A99 und Fertigungsdisponenten (DW1, 025 ...).
+- Rechenzeit: Die Aufriss-Abfragen laufen beim Laden doppelt; produktiv nicht gemessen.
+
+Commit `c3147e1`, Suite 1290/1290.
+
 ## Nachtrag 2026-10-26 (2): zwei Disponenten-Sichten im Spend-Aufriss
 
 Wunsch Ingo: zusaetzlich nach dem ZC23-Feld **DISPOKENNZ** gruppieren (Spalte `DISPO` in `ZMM_UEB_KDAUF`, Datenelement

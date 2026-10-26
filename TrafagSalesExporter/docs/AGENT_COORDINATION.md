@@ -41,6 +41,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude (9e) | Einkauf Spend-Aufriss: Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“, Vorgabe an | 2026-10-26 | abgeschlossen, Reservierung frei. Service/State/Explorer/Dashboard, Uebersetzungen, Test; Commit `c3147e1`, Suite 1290/1290; Deploy siehe `docs/rag/DEPLOYMENT.md`. |
 | Claude (9e) | Einkauf Spend-Aufriss: Einstiege „Disponent“ (DISPOKENNZ wie ZC23) und „Disponent Verwendung (ZLO03)“ | 2026-10-26 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs`, Explorer-Hinweise, Uebersetzungen, Test; Commit `bddf9f9`, Suite 1289/1289; deployed 14:38 (von Ingo gestartet). |
 | Claude (9e) | Einkauf Produktgruppe wie ZM_OFFENE_KDAUF (eigener Disponent, eine Gruppe) | 2026-10-26 | abgeschlossen, Reservierung frei. Refresh, Schema (`MarcDispo`), Dashboard-Zuordnung, Spend-Aufriss-Texte, Tests; Suite 1288/1288; Deploy siehe `docs/rag/DEPLOYMENT.md`. |
 | Claude (9e) | Einkauf Spend-Aufriss: Produktgruppen-Sichten ohne Deckelung | 2026-10-23 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs` (`NoCap` statt 20/15/10), Test neu; Suite 1289/1289; Deploy siehe `docs/rag/DEPLOYMENT.md`. |

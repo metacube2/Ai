@@ -2,6 +2,11 @@
 
 Stand: 2026-10-26
 
+## Einkauf: Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“ im Spend-Aufriss, 2026-10-26
+
+- Entscheid Ingo: Schalter fuer alle Einstiege, Vorgabe an; ausgeschaltet ganzer Einkauf. Diagramme unveraendert ganzer
+  Einkauf. Commit `c3147e1`, Suite 1290/1290. Deploy siehe `docs/rag/DEPLOYMENT.md`.
+
 ## Einkauf: Spend-Aufriss nach Disponent (zwei Sichten), 2026-10-26
 
 - Wunsch Ingo: gruppieren nach ZC23-Feld DISPOKENNZ (eigener MARC-DISPO, 001, 002 ...) und zusaetzlich nach dem
