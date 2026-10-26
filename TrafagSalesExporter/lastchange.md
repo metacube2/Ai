@@ -6,7 +6,7 @@ Stand: 2026-10-26
 
 - Entscheid Ingo: MARC-DISPO (Werk 1100) des Einkaufsmaterials -> ZDISPO_GRP/ZDISPO_SPART -> genau eine Gruppe; keine
   Vererbung ueber die Verwendung, keine 1/n-Verteilung. Mehrdeutige SAP-Regeln (DS1/DS2, 016): kleinste Gruppennummer.
-  Neue Spalte `MarcDispo`, fuellt der naechste Einkauf-Lauf. Suite 1288/1288. Deployed 2026-10-26 09:39.
+  Neue Spalte `MarcDispo`, fuellt der naechste Einkauf-Lauf. Suite 1288/1288. Deployed 2026-10-26 09:39, Delta danach von Ingo von Hand gestartet (Ergebnis nicht nachgeprueft).
 
 ## Einkauf: Produktgruppen-Sichten ohne „uebrige (n)“, 2026-10-23
 

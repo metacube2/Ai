@@ -72,7 +72,7 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 ## Kurzstand
 
 - **Deploy 2026-10-26 09:39, Produktgruppe aus eigenem Disponenten wie ZM_OFFENE_KDAUF (`0dc3c68`).** Kein Einkauf-Lauf aktiv
-  (Delta 12:30 fuellt die neue Spalte `MarcDispo`, bis dahin steht alles unter „ohne Produktgruppe“), keine Sicherung
+  (den Delta, der die neue Spalte `MarcDispo` fuellt, startete Ingo danach von Hand; bis zu dessen Ende steht alles unter „ohne Produktgruppe“, Ergebnis auf Wunsch Ingo nicht nachgeprueft), keine Sicherung
   (Wochenregel), Suite 1288/1288, DLL `09:39:39` bitgleich, zehn Routen 200, Spalte im Schema (WAL) gesehen, Alarm nur
   WAL/SHM-Checkpoint.
 - **Deploy 2026-10-23 09:05, Produktgruppen-Sichten ohne Deckelung (`8b4a93d`).** Kein Einkauf-Lauf aktiv, keine Sicherung

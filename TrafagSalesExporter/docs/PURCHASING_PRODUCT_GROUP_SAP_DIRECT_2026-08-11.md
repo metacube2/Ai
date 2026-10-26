@@ -38,6 +38,8 @@ immer in genau einer Gruppe.
   `LoadAsync_ProductGroupPerspective_DS1_Lands_In_One_Group_And_Exact_Beats_Pattern`, Nachklassifizierung schreibt
   `MarcDispo`; Suite 1288/1288.
 - Die richtige Bereinigung bleibt in SAP: DS1/DS2 und 016 in `ZDISPO_GRP` nur einer Gruppe zuordnen.
+- Produktiv seit 2026-10-26 09:39 (`0dc3c68`); den fuellenden Delta startete Ingo von Hand, das Ergebnis ist auf seinen
+  Wunsch nicht nachgeprueft. Offen: Entscheid Ingo, ob der Bottom-Up-Abruf `PurchasingComponentDispoLoader` abgeschaltet wird.
 
 ## Nachtrag 2026-10-08: Produktgruppe kam fast nie an (Gespraech Armin, Punkt 4)
 
