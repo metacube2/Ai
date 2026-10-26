@@ -41,7 +41,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
-| Claude (9e) | Einkauf Spend-Aufriss: Einstiege „Disponent“ (DISPOKENNZ wie ZC23) und „Disponent Verwendung (ZLO03)“ | 2026-10-26 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs`, Explorer-Hinweise, Uebersetzungen, Test; Commit `bddf9f9`, Suite 1289/1289; Deploy vom Auto-Modus blockiert, startet Ingo. |
+| Claude (9e) | Einkauf Spend-Aufriss: Einstiege „Disponent“ (DISPOKENNZ wie ZC23) und „Disponent Verwendung (ZLO03)“ | 2026-10-26 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs`, Explorer-Hinweise, Uebersetzungen, Test; Commit `bddf9f9`, Suite 1289/1289; deployed 14:38 (von Ingo gestartet). |
 | Claude (9e) | Einkauf Produktgruppe wie ZM_OFFENE_KDAUF (eigener Disponent, eine Gruppe) | 2026-10-26 | abgeschlossen, Reservierung frei. Refresh, Schema (`MarcDispo`), Dashboard-Zuordnung, Spend-Aufriss-Texte, Tests; Suite 1288/1288; Deploy siehe `docs/rag/DEPLOYMENT.md`. |
 | Claude (9e) | Einkauf Spend-Aufriss: Produktgruppen-Sichten ohne Deckelung | 2026-10-23 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs` (`NoCap` statt 20/15/10), Test neu; Suite 1289/1289; Deploy siehe `docs/rag/DEPLOYMENT.md`. |
 | Claude | Whisper Studio: analoges VU-Meter auf der Aufnahmeseite | 2026-10-22 | abgeschlossen, Reservierung frei. `whisper/gui/WhisperStudio/Controls/VuMeter.cs`, `Recorder.Measure`, Doku HANDOFF/ANLEITUNG; 35 Tests gruen; kein Deploy (lokales Werkzeug). |

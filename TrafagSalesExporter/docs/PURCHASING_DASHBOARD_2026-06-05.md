@@ -1354,7 +1354,7 @@ unter 001 bis 006 = Gruppe H „HW_ZUKAUFSORT“; die Produktgruppen-Sicht ist d
 „Disponent Verwendung“ braucht den Bottom-Up-Abruf `PurchasingComponentDispoLoader`; er soll deshalb **nicht**
 abgeschaltet werden (die am Vormittag offene Frage ist damit beantwortet, solange diese Sicht gewuenscht ist).
 
-Commit `bddf9f9`, Suite 1289/1289. Deploy: vom Auto-Modus blockiert, Ingo startet ihn, Stand siehe `docs/rag/DEPLOYMENT.md`.
+Commit `bddf9f9`, Suite 1289/1289. Deployed 2026-10-26 14:38 (von Ingo gestartet), siehe `docs/rag/DEPLOYMENT.md`.
 
 ## Nachtrag 2026-10-26: Produktgruppe aus dem eigenen Disponenten (wie ZM_OFFENE_KDAUF)
 

@@ -6,7 +6,7 @@ Stand: 2026-10-26
 
 - Wunsch Ingo: gruppieren nach ZC23-Feld DISPOKENNZ (eigener MARC-DISPO, 001, 002 ...) und zusaetzlich nach dem
   Disponenten der verkuerzten Nummer aus ZLO03 (1/n verteilt). Beide Summen exakt. Commit `bddf9f9`, Suite 1289/1289.
-  Deploy vom Auto-Modus blockiert, startet Ingo. Bottom-Up-Abruf bleibt deshalb an.
+  Deployed 2026-10-26 14:38 (von Ingo gestartet). Bottom-Up-Abruf bleibt deshalb an.
 
 ## Einkauf: Produktgruppe aus eigenem Disponenten wie ZM_OFFENE_KDAUF, 2026-10-26
 
