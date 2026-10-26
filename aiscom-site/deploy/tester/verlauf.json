@@ -1,5 +1,12 @@
 [
  {
+  "guid": "taploop-mac-1.0-38",
+  "titel": "TapLoop 1.0 (Build 38) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-26T13:53:49.415057+01:00"
+ },
+ {
   "guid": "taploop-ios-1.0-36",
   "titel": "TapLoop 1.0 (Build 36) für iPhone/iPad",
   "link": "https://www.aiscom.ch/tester/#ios",
