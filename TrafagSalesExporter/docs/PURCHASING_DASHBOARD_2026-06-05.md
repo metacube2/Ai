@@ -1336,6 +1336,26 @@ Ursache: Die Produktgruppen-Einstiege (seit 2026-10-15) waren als einzige noch a
 der Rueckfall ohne Verwendungs-Cache zeigen alle Produktgruppen, Lieferanten, Warengruppen und Materialien einzeln.
 Test `LoadAsync_ProductGroupPerspectives_Show_All_Positions_Without_Remainder_Row`; Suite 1289/1289.
 
+## Nachtrag 2026-10-26 (2): zwei Disponenten-Sichten im Spend-Aufriss
+
+Wunsch Ingo: zusaetzlich nach dem ZC23-Feld **DISPOKENNZ** gruppieren (Spalte `DISPO` in `ZMM_UEB_KDAUF`, Datenelement
+`Z_DISP_KZ` „Dispokuerzel“, gefuellt aus MARC-DISPO; in T76 per DD03L/DD04T gelesen). Nicht gemeint sind die
+ZLO03-Felder Dispomerkmal (DISMM) und Dispolosgroesse (DISLS). Danach „mach beide“, deshalb zwei neue Einstiege direkt
+hinter „Produktgruppe : Warengruppe“:
+
+| Einstieg | Ebenen | Quelle | Summe |
+| --- | --- | --- | --- |
+| „Disponent“ (`disponent`) | Disponent -> Lieferant -> Warengruppe -> Material | `PurchasingEkpoCache.MarcDispo` (eigener MARC-DISPO, Werk 1100), leer = „ohne Disponent“ | exakt, eine Zeile je Position |
+| „Disponent Verwendung (ZLO03)“ (`disponent-usage`) | Disponent Verwendung -> Lieferant -> Material | VknrDispo der verkuerzten Nummer aus `MaterialUsageCache` und `PurchasingComponentDispoCache` | exakt, bei mehreren Disponenten 1/n verteilt; ohne Treffer „ohne Verwendung“ |
+
+Prod-Befund 26.10. (immutable gelesen, Anzahl Positionen): MarcDispo 001 (76'368), 003 (68'998), leer (46'205), A99
+(32'889), 004 (14'815), danach DW1, 025, 002 und weitere. Damit landet der Grossteil der Einkaufsteile in SAP ZDISPO
+unter 001 bis 006 = Gruppe H „HW_ZUKAUFSORT“; die Produktgruppen-Sicht ist dadurch stark auf H konzentriert. Die Sicht
+„Disponent Verwendung“ braucht den Bottom-Up-Abruf `PurchasingComponentDispoLoader`; er soll deshalb **nicht**
+abgeschaltet werden (die am Vormittag offene Frage ist damit beantwortet, solange diese Sicht gewuenscht ist).
+
+Commit `bddf9f9`, Suite 1289/1289. Deploy: vom Auto-Modus blockiert, Ingo startet ihn, Stand siehe `docs/rag/DEPLOYMENT.md`.
+
 ## Nachtrag 2026-10-26: Produktgruppe aus dem eigenen Disponenten (wie ZM_OFFENE_KDAUF)
 
 Die Produktgruppen-Einstiege ordnen jedes Einkaufsmaterial ueber seinen eigenen Disponenten (MARC-DISPO, Werk 1100)

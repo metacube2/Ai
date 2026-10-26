@@ -31,7 +31,7 @@ immer in genau einer Gruppe.
   NA bleibt als eigene Zeile sichtbar.
 - Keine 1/n-Verteilung mehr. Die Kachel „Mehrfachverwendung“ heisst jetzt „Mehrdeutige SAP-Regel“ und zaehlt Materialien,
   deren Disponent in SAP mehreren gleichwertigen Gruppen zugeordnet ist (Felder `MultiGroup*` weiterverwendet).
-- `PurchasingComponentDispoLoader` und `MaterialUsageCache` bleiben unangetastet, die Produktgruppe nutzt sie nicht mehr.
+- `PurchasingComponentDispoLoader` und `MaterialUsageCache` bleiben unangetastet, die Produktgruppe nutzt sie nicht mehr. Seit dem Nachmittag 2026-10-26 nutzt sie der neue Einstieg „Disponent Verwendung (ZLO03)“, siehe `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-10-26 (2).
   Ob der Bottom-Up-Abruf (rund 8 Minuten je Lauf) noch fuer etwas anderes gebraucht wird, entscheidet Ingo.
 - Bis zum ersten Lauf nach dem Deploy ist `MarcDispo` leer, dann steht alles unter „ohne Produktgruppe“.
 - Tests: `LoadAsync_ProductGroupPerspective_Uses_Own_Dispo_Of_Material_Like_ZM_OFFENE_KDAUF`,
@@ -39,7 +39,7 @@ immer in genau einer Gruppe.
   `MarcDispo`; Suite 1288/1288.
 - Die richtige Bereinigung bleibt in SAP: DS1/DS2 und 016 in `ZDISPO_GRP` nur einer Gruppe zuordnen.
 - Produktiv seit 2026-10-26 09:39 (`0dc3c68`); den fuellenden Delta startete Ingo von Hand, das Ergebnis ist auf seinen
-  Wunsch nicht nachgeprueft. Offen: Entscheid Ingo, ob der Bottom-Up-Abruf `PurchasingComponentDispoLoader` abgeschaltet wird.
+  Wunsch nicht nachgeprueft. *Ueberholt:* Offen war der Entscheid, ob der Bottom-Up-Abruf `PurchasingComponentDispoLoader` abgeschaltet wird; er bleibt an, weil der Einstieg „Disponent Verwendung (ZLO03)“ ihn braucht (Wunsch Ingo 26.10. nachmittags).
 
 ## Nachtrag 2026-10-08: Produktgruppe kam fast nie an (Gespraech Armin, Punkt 4)
 

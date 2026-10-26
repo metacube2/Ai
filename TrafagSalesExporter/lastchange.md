@@ -2,6 +2,12 @@
 
 Stand: 2026-10-26
 
+## Einkauf: Spend-Aufriss nach Disponent (zwei Sichten), 2026-10-26
+
+- Wunsch Ingo: gruppieren nach ZC23-Feld DISPOKENNZ (eigener MARC-DISPO, 001, 002 ...) und zusaetzlich nach dem
+  Disponenten der verkuerzten Nummer aus ZLO03 (1/n verteilt). Beide Summen exakt. Commit `bddf9f9`, Suite 1289/1289.
+  Deploy vom Auto-Modus blockiert, startet Ingo. Bottom-Up-Abruf bleibt deshalb an.
+
 ## Einkauf: Produktgruppe aus eigenem Disponenten wie ZM_OFFENE_KDAUF, 2026-10-26
 
 - Entscheid Ingo: MARC-DISPO (Werk 1100) des Einkaufsmaterials -> ZDISPO_GRP/ZDISPO_SPART -> genau eine Gruppe; keine
