@@ -52,6 +52,22 @@
         </MudAlert>
     }
 
+    @if (ActivePerspectiveKey == "disponent")
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+            @T("Disponent des Einkaufsmaterials selbst (MARC-DISPO, Werk 1100), wie die Spalte DISPOKENNZ (Dispokürzel) im SAP-Report ZM_OFFENE_KDAUF (ZC23). Positionen ohne Material oder ohne Disponent stehen unter ohne Disponent. Die Gesamtsumme bleibt gleich wie bei den anderen Einstiegen.",
+               "MRP controller of the purchased material itself (MARC-DISPO, plant 1100), like the column DISPOKENNZ in the SAP report ZM_OFFENE_KDAUF (ZC23). Items without a material or without a controller appear under ohne Disponent. The total stays the same as for the other entry points.")
+        </MudAlert>
+    }
+
+    @if (ActivePerspectiveKey == "disponent-usage")
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+            @T("Disponent der verkürzten Nummer, in der das Einkaufsmaterial verbaut ist (Stücklistenauflösung wie ZLO03). Ist ein Material in Nummern mehrerer Disponenten verbaut, wird sein Wert zu gleichen Teilen verteilt, damit die Gesamtsumme exakt bleibt. Materialien ohne bekannte Verwendung stehen unter ohne Verwendung.",
+               "MRP controller of the shortened number the purchased material is built into (BOM explosion as in ZLO03). If a material is used in numbers of several controllers, its value is split in equal parts so the total stays exact. Materials without a known usage appear under ohne Verwendung.")
+        </MudAlert>
+    }
+
     @if (ActivePerspectiveKey.StartsWith("productgroup", StringComparison.Ordinal))
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">

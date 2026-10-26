@@ -627,6 +627,11 @@ LIMIT 12;", cancellationToken);
         state.SpendPerspectiveRows.Insert(
             Math.Min(4, state.SpendPerspectiveRows.Count),
             productGroupResult.MaterialGroupPerspective);
+        // Wunsch Ingo 2026-10-26: zweite Disponenten-Sicht nach Verwendung (ZLO03) direkt hinter "Disponent".
+        var disponentIndex = state.SpendPerspectiveRows.FindIndex(perspective => perspective.Key == "disponent");
+        state.SpendPerspectiveRows.Insert(
+            disponentIndex >= 0 ? disponentIndex + 1 : state.SpendPerspectiveRows.Count,
+            await ExecuteDisponentUsagePerspectiveAsync(conn, filter, spendItemFilter, cancellationToken));
         state.ProductGroupAllocation = productGroupResult.Summary;
         // Lieferanten-Perspektive bleibt der Standardeinstieg und damit die Quelle fuer die
         // bisherige, nicht umschaltbare Kaskadenanzeige.
@@ -1478,6 +1483,106 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
             JoinSql: tableAvailable ? $"LEFT JOIN PurchasingMaterialLzCache lz ON lz.Matnr = {NormalizeMaterialKeySql("p.Matnr")}" : string.Empty);
     }
 
+    internal const string NoDisponentLabel = "ohne Disponent";
+
+    /// <summary>
+    /// Aufriss-Dimension "Disponent" = eigener Disponent des Einkaufsmaterials (MARC-DISPO, Werk 1100,
+    /// Spalte <c>MarcDispo</c>), wie die Spalte DISPOKENNZ (Dispokuerzel) im SAP-Report ZM_OFFENE_KDAUF (ZC23) mit
+    /// Werten 001, 002 usw. Wunsch Ingo 2026-10-26. Die Spalte haengt direkt an der Bestellposition,
+    /// die Summe bleibt also exakt. Fehlt sie (aeltere Datenbank), steht alles unter "ohne Disponent".
+    /// </summary>
+    private static SpendDimension BuildDisponentDimension(bool columnAvailable) =>
+        new("disponent", "Disponent", "MRP controller",
+            columnAvailable ? $"COALESCE(NULLIF(upper(trim(p.MarcDispo)), ''), '{NoDisponentLabel}')" : $"'{NoDisponentLabel}'");
+
+    private static SpendPerspective BuildDisponentPerspective(bool columnAvailable)
+    {
+        var disponent = BuildDisponentDimension(columnAvailable);
+        return new(disponent.Key, disponent.LabelDe, disponent.LabelEn,
+            [disponent, SupplierDimension, MaterialGroupDimension, ArticleDimension],
+            [NoCap, NoCap, NoCap, NoCap]);
+    }
+
+    internal const string DisponentUsagePerspectiveKey = "disponent-usage";
+    internal const string NoUsageLabel = "ohne Verwendung";
+
+    /// <summary>
+    /// Zweite Disponenten-Sicht (Wunsch Ingo 2026-10-26 "mach beide"): Disponent der verkuerzten Nummer, in der das
+    /// Einkaufsmaterial verbaut ist (VknrDispo aus der ZLO03-Stuecklistenaufloesung, Caches
+    /// <c>MaterialUsageCache</c> und <c>PurchasingComponentDispoCache</c>). Ein Material in mehreren Nummern mit
+    /// verschiedenen Disponenten wird 1/n verteilt, damit die Gesamtsumme exakt bleibt. Materialien ohne bekannte
+    /// Verwendung stehen unter "ohne Verwendung". Die Produktgruppe nutzt diese Quelle seit 2026-10-26 nicht mehr.
+    /// </summary>
+    private static async Task<PurchasingSpendPerspectiveResult> ExecuteDisponentUsagePerspectiveAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var levelsDe = (IReadOnlyList<string>)["Disponent Verwendung", "Lieferant", "Material"];
+        var levelsEn = (IReadOnlyList<string>)["MRP controller of usage", "Supplier", "Material"];
+        var result = new PurchasingSpendPerspectiveResult(
+            DisponentUsagePerspectiveKey, "Disponent Verwendung (ZLO03)", "MRP controller of usage (ZLO03)", levelsDe, levelsEn, []);
+        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
+            .ToList();
+        if (years.Count == 0)
+            return result;
+
+        var sources = new List<string>();
+        if (await TableExistsAsync(conn, "MaterialUsageCache", cancellationToken) &&
+            await ColumnExistsAsync(conn, "MaterialUsageCache", "VknrDispo", cancellationToken))
+            sources.Add("SELECT Kompnr, VknrDispo FROM MaterialUsageCache");
+        if (await TableExistsAsync(conn, "PurchasingComponentDispoCache", cancellationToken))
+            sources.Add("SELECT Kompnr, VknrDispo FROM PurchasingComponentDispoCache");
+        if (sources.Count == 0)
+            sources.Add("SELECT '' AS Kompnr, '' AS VknrDispo WHERE 0");
+
+        var usageSourceSql = string.Join(" UNION ALL ", sources);
+        var purchasingMaterialKey = NormalizeMaterialKeySql("p.Matnr");
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var rows = new List<CascadeRow>();
+        await using (var command = conn.CreateCommand())
+        {
+            command.CommandText = $@"
+WITH UsageSource AS (
+    {usageSourceSql}
+),
+UsageDispos AS (
+    SELECT DISTINCT {NormalizeMaterialKeySql("u.Kompnr")} AS MaterialKey, upper(trim(u.VknrDispo)) AS Disponent
+    FROM UsageSource u
+    WHERE COALESCE(trim(u.Kompnr), '') <> '' AND COALESCE(trim(u.VknrDispo), '') <> ''
+),
+DispoCounts AS (
+    SELECT MaterialKey, COUNT(*) AS DispoCount FROM UsageDispos GROUP BY MaterialKey
+)
+SELECT COALESCE(ud.Disponent, '{NoUsageLabel}') AS Disponent,
+       {SupplierLabelSql("k.Lifnr", "k.SupplierName")} AS Supplier,
+       {ArticleDimension.Sql} AS Article,
+       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+       SUM({ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} / COALESCE(dc.DispoCount, 1)) AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+LEFT JOIN UsageDispos ud ON ud.MaterialKey = {purchasingMaterialKey}
+LEFT JOIN DispoCounts dc ON dc.MaterialKey = {purchasingMaterialKey}
+WHERE {spendItemFilter}
+  AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
+  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN {MinSpendYear} AND {MaxSpendYear(filter)}
+GROUP BY 1, 2, 3, 4;";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                rows.Add(new CascadeRow(
+                    [reader.GetString(0), reader.GetString(1), reader.GetString(2)],
+                    reader.GetInt32(3),
+                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
+            }
+        }
+
+        return result with { Rows = BuildCascadeLevel(rows, 0, years, [NoCap, NoCap, NoCap]) };
+    }
+
     private static IReadOnlyList<SpendPerspective> BuildLzPerspectives(bool tableAvailable)
     {
         var lzCode = BuildLzDimension(false, tableAvailable);
@@ -1513,7 +1618,13 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
     {
         var results = new List<PurchasingSpendPerspectiveResult>();
         var lzAvailable = await TableExistsAsync(conn, "PurchasingMaterialLzCache", cancellationToken);
-        foreach (var perspective in SpendPerspectives.Concat(BuildLzPerspectives(lzAvailable)))
+        var dispoAvailable = await ColumnExistsAsync(conn, "PurchasingEkpoCache", "MarcDispo", cancellationToken);
+        // Disponent steht nach Warengruppe; die zwei Produktgruppen-Sichten werden danach davor eingeschoben.
+        var perspectives = SpendPerspectives.Take(3)
+            .Append(BuildDisponentPerspective(dispoAvailable))
+            .Concat(SpendPerspectives.Skip(3))
+            .Concat(BuildLzPerspectives(lzAvailable));
+        foreach (var perspective in perspectives)
         {
             var rows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, perspective, cancellationToken);
             results.Add(new PurchasingSpendPerspectiveResult(

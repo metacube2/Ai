@@ -671,7 +671,7 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.Equal(
-            ["supplier", "region", "materialgroup", "productgroup", "productgroup-materialgroup", "currency", "lzcode", "lzsort"],
+            ["supplier", "region", "materialgroup", "productgroup", "productgroup-materialgroup", "disponent", "disponent-usage", "currency", "lzcode", "lzsort"],
             state.SpendPerspectiveRows.Select(perspective => perspective.Key));
 
         // Region-Perspektive steigt beim Lieferantenland ein und geht vier Ebenen tief.
@@ -751,6 +751,40 @@ public class PurchasingDashboardServiceTests : IDisposable
         var incomplete = Assert.Single(state.AbcXyzActionRows, row => row.Abc == "B" && row.Xyz == "-");
         Assert.Equal(70m, incomplete.SpendChf);
         Assert.Contains("Stammdaten", incomplete.ActionDe);
+    }
+
+    [Fact]
+    public async Task LoadAsync_Disponent_Perspectives_Group_By_Own_Dispo_And_By_Usage_Dispo()
+    {
+        // Wunsch Ingo 2026-10-26: gruppieren nach DISPOKENNZ wie ZC23 (eigener MARC-DISPO, 001, 002 ...) und
+        // zusaetzlich nach dem Disponenten der verkuerzten Nummer aus ZLO03 ("mach beide").
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '10', '000M1', '001', '1', '120', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '20', 'M2', ' 003', '1', '80', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '30', 'M3', '', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('D1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+        // M1 steckt in Nummern zweier Disponenten (doppelte Zeile zaehlt nur einmal), M2 in einer, M3 nirgends.
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V1', '012', 'M1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V2', 'DS1', '0M1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V3', '012', 'M1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V4', '019', 'M2', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        var own = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "disponent");
+        Assert.Equal(["Disponent", "Lieferant", "Warengruppe", "Material"], own.LevelLabelsDe);
+        Assert.Equal(250m, own.Rows.Sum(row => row.Total));
+        Assert.Equal(120m, Assert.Single(own.Rows, row => row.Label == "001").Total);
+        Assert.Equal(80m, Assert.Single(own.Rows, row => row.Label == "003").Total);
+        Assert.Equal(50m, Assert.Single(own.Rows, row => row.Label == "ohne Disponent").Total);
+
+        var usage = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "disponent-usage");
+        Assert.Equal(["Disponent Verwendung", "Lieferant", "Material"], usage.LevelLabelsDe);
+        Assert.Equal(250m, usage.Rows.Sum(row => row.Total));
+        Assert.Equal(60m, Assert.Single(usage.Rows, row => row.Label == "012").Total);
+        Assert.Equal(60m, Assert.Single(usage.Rows, row => row.Label == "DS1").Total);
+        Assert.Equal(80m, Assert.Single(usage.Rows, row => row.Label == "019").Total);
+        Assert.Equal(50m, Assert.Single(usage.Rows, row => row.Label == "ohne Verwendung").Total);
     }
 
     [Fact]
