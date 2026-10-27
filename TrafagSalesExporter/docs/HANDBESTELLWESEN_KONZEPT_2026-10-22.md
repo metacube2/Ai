@@ -137,7 +137,7 @@ herum. Die Bestellnummer erscheint nicht mehr als Browser-Alert, sondern als Hin
 | 8 | ~~Abschalten oder weiterbetreiben?~~ **Entschieden 22.10.: weiterbetreiben, Nutzung festhalten** | erledigt |
 | 9 | Benutzer informieren, dass Aufrufe und Bestellungen namentlich ausgewertet werden (Transparenz) | Ingo / Owner |
 
-## 6. Umsetzung Phase 1 (2026-10-22, nicht deployed)
+## 6. Umsetzung Phase 1 (2026-10-22; „nicht deployed“ ueberholt, deployed 22.10. 13:38, Reiter sichtbar seit 27.10.)
 
 Auftrag Ingo: „Ich reiche die DB-Inhalte nach, mach schon mal den Code mit neuem Reiter.“
 
@@ -300,11 +300,28 @@ Menue ist weiterhin unsichtbar und zeigt auf `/handbestellwesen`; Einblenden unt
 auch Mitarbeiter (Limit CHF 7000, KoSt 900). Die Dashboard-Sperre `Security:Enabled` ist aus; jedes Windows-Konto erreicht
 die Seiten, Rechte im Modul kommen aus Mitarbeitereintrag und Admin-Liste.
 
+### 6.8 Betriebsbereitschaft und Freigabe-Regel (2026-10-27)
+
+Befund auf einer Kopie der Tagessicherung vom 27.10. 02:38 (nur gelesen): seit dem Import keine neue Bestellung, Bereinigung
+(6.5) noch nicht ausgefuehrt (1'289 offen), alle 109 Mitarbeitenden mit Konto, aber nur 12 mit Kostenstelle und 48 mit
+Limit > 0. Mit der strengen Freigabe-Regel (Freigeber nur aus derselben Kostenstelle) haetten **929 von 1'032 Bestellungen
+der letzten 12 Monate keinen Freigeber** gefunden; die PHP-Anwendung pruefte das Limit nur im Browser.
+
+Entscheid Ingo 2026-10-27 (Variante 1a): **Freigabe wie PHP**, jede aktive Person mit genuegend Limit, dieselbe
+Kostenstelle steht zuerst in der Auswahl. Umschaltbar auf die strenge Regel mit `Handbestellwesen:FreigabeNurGleicheKostenstelle`
+= `true` in `appsettings.json` (Variante 1b), sobald Kostenstellen gepflegt sind. Commit `a0030e8`, Suite 1291/1291.
+
+Die PHP-Anwendung ist abgeschaltet (Auskunft Ingo 2026-10-27, wegen einer PHP-Luecke im Internet). Damit gibt es keine
+parallele Nummernvergabe mehr. Nicht geprueft: ob zwischen dem Dump (22.10.) und dem Abschalten in PHP noch bestellt wurde;
+solche Nummern fehlen in der neuen Datenbank und koennten erneut vergeben werden. Der Menue-Reiter ist seit dem 27.10.
+sichtbar (Ingo).
+
+Weiter offen fuer den Betrieb: Rechnungsbetrag erfassen und Mail beim Wareneingang (Punkt 4), Bereinigung ausfuehren,
+Zugriff und Grundtests (Mail Ingo an die Beteiligten).
+
 ## 7. Naechste Schritte
 
-1. Dump liegt vor (6.2), Import gebaut (6.3) -> auf dem Server pruefen und importieren (Umlaute ISO-8859-1, Datumstexte, „000“, `kurzzeichen` mit Komma) und Abgleich der
-   Zaehlerstaende.
-2. Oberflaeche ansehen: entweder Deploy (Reiter sofort fuer alle sichtbar; Weiterbetrieb ist entschieden) oder lokal mit
-   abgeschalteten Hintergrunddiensten. Entscheid Ingo.
+1. ~~Dump pruefen und importieren~~ erledigt 22.10. (6.4). Offen: klaeren, ob nach dem Dump noch in PHP bestellt wurde.
+2. ~~Oberflaeche ansehen / Deploy~~ deployed, Reiter seit 27.10. sichtbar; Grundtests durch die Anwender stehen aus.
 3. Fachlichen Owner die Regeln aus Abschnitt 6 bestaetigen lassen.
 4. Zugriff fuer Mitarbeitende ohne Dashboard-Zugang (`Security:AccessGroups`), AD-Gruppe mit IT klaeren.

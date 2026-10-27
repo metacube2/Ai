@@ -2,6 +2,13 @@
 
 Stand: 2026-10-27
 
+## Handbestellwesen: Freigabe wie PHP, umschaltbar, 2026-10-27
+
+- Entscheid Ingo (1a): Freigeben darf jede aktive Person mit genuegend Limit, gleiche Kostenstelle zuerst. Schalter
+  `Handbestellwesen:FreigabeNurGleicheKostenstelle` fuer die strenge Regel. Grund: 929 von 1'032 Bestellungen der letzten
+  12 Monate haetten sonst keinen Freigeber. PHP ist abgeschaltet, Reiter sichtbar. Commit `a0030e8`, Suite 1291/1291.
+  Details Konzept 6.8. Deploy siehe `docs/rag/DEPLOYMENT.md`.
+
 ## Handbestellwesen klassisch: Link „Zur neuen Version“, 2026-10-27
 
 - Wunsch Ingo: Auf `/handbestellwesen` steht oben unter dem Logo ein blauer Link auf `/bestellwesen`. Commit `9ef7787`,
