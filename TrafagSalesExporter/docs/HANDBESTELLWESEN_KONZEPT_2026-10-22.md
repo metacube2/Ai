@@ -352,7 +352,7 @@ fuer neue Eintraege ueberholt.
 - **AD-Eintraege:** Konto, Kurzzeichen, Name und Mail gesperrt (Pflege im AD), Knopf „Aus AD aktualisieren“; Limit,
   Kostenstelle, Wareneingang, Admin und aktiv bleiben im Dashboard pflegbar.
 - **Altbestand** (109 Eintraege aus der PHP-Datenbank): voll pflegbar wie bisher, auch loeschen/deaktivieren (6.9).
-- Commit `3ff16f5`, Suite 1294/1294. Folge: Faellt die AD-Suche auf dem Server aus, kann niemand Neues erfasst werden.
+- Commit `3ff16f5`, Suite 1294/1294, deployed 2026-10-27 13:45. Folge: Faellt die AD-Suche auf dem Server aus, kann niemand Neues erfasst werden.
 
 ## 7. Naechste Schritte
 
