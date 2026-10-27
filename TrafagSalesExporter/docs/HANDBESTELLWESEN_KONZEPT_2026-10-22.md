@@ -320,6 +320,24 @@ Weiter offen fuer den Betrieb: Rechnungsbetrag erfassen und Mail beim Wareneinga
 Zugriff und Grundtests (Mail Ingo an die Beteiligten am 27.10. versendet: Wer darf zugreifen, eigenes Windows-Konto statt
 gemeinsamem Login, Liste Name/KoSt/Limit/Freigabe/Wareneingang, ein bis zwei Personen fuer Grundtests; Antwort ausstehend).
 
+### 6.9 Stammdaten loeschen, Mitarbeitende aus dem AD (2026-10-27)
+
+Wunsch Ingo: Kreditorenstamm, Mitarbeiterverzeichnis, Kostenstelle und Sachkonten muessen hinzugefuegt und geloescht
+werden koennen (wie im PHP), Namen aus dem AD, neue Leute legt die IT im AD an. Hinzufuegen und Bearbeiten gab es schon.
+
+- **Loeschen** (nur Admin, in beiden Masken, mit Rueckfrage, im Protokoll): Kreditor, Kostenstelle und Sachkonto nur, wenn
+  keine Bestellung sie nutzt; die Kostenstelle zusaetzlich nur ohne eingetragene Mitarbeitende (ihr Nummernzaehler geht mit).
+  Mitarbeitende ohne Bestellungen werden geloescht, mit Bestellungen **deaktiviert** (bleiben fuer Archiv und Suche). Den
+  eigenen Eintrag kann man nicht loeschen. Grund: physisches Loeschen im PHP hinterliess z. B. 50 offene Bestellungen
+  ohne Mitarbeitereintrag. Entscheid durch Claude, von Ingo uebersteuerbar.
+- **Aus dem AD uebernehmen** (Mitarbeiter neu): Suche ueber Name oder Kuerzel unter den aktiven AD-Konten
+  (`HbAdSuche`, gleicher Filter wie die Personensuche in Trafag Projekte), „Uebernehmen“ fuellt Vorname, Nachname, Mail
+  und Windows-Konto; Kurzzeichen = Konto (so bei allen 109 Eintraegen, Stand 27.10.). Kostenstelle und Limit traegt der
+  Admin ein. Ist das Konto schon erfasst, kommt ein Hinweis. Kein automatischer Abgleich mit dem AD: Wer neu im AD ist,
+  wird beim Erfassen gesucht und uebernommen.
+- Commit `a8e9eec`, Suite 1293/1293. Offen: ob IT-Konten Mitarbeitende pflegen duerfen, ohne Admin zu sein (heute nur
+  Admins `koi`, `gun` und Mitarbeitende mit Haken „Admin“).
+
 ## 7. Naechste Schritte
 
 1. ~~Dump pruefen und importieren~~ erledigt 22.10. (6.4). Offen: klaeren, ob nach dem Dump noch in PHP bestellt wurde.

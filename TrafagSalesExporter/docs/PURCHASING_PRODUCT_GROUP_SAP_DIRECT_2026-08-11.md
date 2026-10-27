@@ -1,8 +1,16 @@
 # Einkaufs-Produktgruppen direkt aus SAP
 
-Stand: 2026-10-26 (**Nachtrag 2026-10-26: Produktgruppe aus dem eigenen Disponenten des Materials wie im Report
+Stand: 2026-10-27 (**Nachtrag 2026-10-27: Anzeige nur der SAP-Text, z. B. „FP_DICHTEWÄCH“ statt „D2 - FP_DICHTEWÄCH“.**
+**Nachtrag 2026-10-26: Produktgruppe aus dem eigenen Disponenten des Materials wie im Report
 ZM_OFFENE_KDAUF, genau eine Gruppe, keine Vererbung und keine 1/n-Verteilung mehr.** Die Nachtraege und Abschnitte
 darunter beschreiben die ueberholte Vererbung ueber die Verwendung und sind Historie.)
+
+## Nachtrag 2026-10-27: Anzeige nur der Text aus ZDISPO_SPART
+
+Wunsch Ingo: „D2 ist der Primaerschluessel, angezeigt soll nur FP_DICHTEWÄCH.“ Die Produktgruppe heisst im Spend-Aufriss
+jetzt nur `ZDISPO_SPART-DESCR` wie `DISPO_DES` im Report; der Schluessel `DISPO` erscheint nur, wenn SAP keinen Text hat.
+Beispiele und Zeilen weiter unten mit „H - HW_ZUKAUFSORT“, „D5 - FP_DICHTESEN1/2“ usw. sind in diesem Punkt ueberholt.
+Zuordnung unveraendert. Commit `0917d9e`, Suite 1293/1293.
 
 ## Nachtrag 2026-10-26: Produktgruppe wie ZM_OFFENE_KDAUF, eigener Disponent, genau eine Gruppe
 

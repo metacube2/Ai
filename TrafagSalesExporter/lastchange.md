@@ -2,6 +2,16 @@
 
 Stand: 2026-10-27
 
+## Einkauf Produktgruppe nur mit SAP-Text, 2026-10-27
+
+- Wunsch Ingo: Spend-Aufriss zeigt „FP_DICHTEWÄCH“ statt „D2 - FP_DICHTEWÄCH“. Commit `0917d9e`, Suite 1293/1293.
+  Deploy siehe `docs/rag/DEPLOYMENT.md`.
+
+## Handbestellwesen: Stammdaten loeschen, Mitarbeitende aus dem AD, 2026-10-27
+
+- Loeschen nur ohne Bestellungen (Mitarbeitende mit Bestellungen werden deaktiviert), AD-Suche fuellt Name, Mail, Konto.
+  Commit `a8e9eec`, Suite 1293/1293. Details Konzept 6.9. Deploy siehe `docs/rag/DEPLOYMENT.md`.
+
 ## Handbestellwesen: Freigabe wie PHP, umschaltbar, 2026-10-27
 
 - Entscheid Ingo (1a): Freigeben darf jede aktive Person mit genuegend Limit, gleiche Kostenstelle zuerst. Schalter
