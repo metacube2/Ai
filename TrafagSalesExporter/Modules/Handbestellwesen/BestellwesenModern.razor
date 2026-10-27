@@ -219,6 +219,7 @@
                                 @if (!context.Aktiv) { <MudChip T="string" Size="Size.Small">inaktiv</MudChip> }
                                 @if (context.IstWareneingang) { <MudChip T="string" Size="Size.Small" Color="Color.Info">Wareneingang</MudChip> }
                                 @if (context.IstAdmin) { <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Admin</MudChip> }
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@(context.AusAd ? "AD" : "Altbestand")</MudChip>
                             </MudTd>
                             <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteMitarbeiter(context)" /></MudTd>
                         </RowTemplate>
@@ -289,12 +290,21 @@
                                     </MudList>
                                 }
                             }
+                            @* Entscheid Ingo 2026-10-27: neue nur aus dem AD; bei AD-Eintraegen sind Konto, Name und Mail gesperrt
+                               (Pflege im AD), Altbestand bleibt voll pflegbar. *@
+                            @if (_editNeu && !m.AusAd)
+                            {
+                                <MudAlert Severity="Severity.Info" Dense="true">Neue Mitarbeitende nur über die AD-Suche: Person suchen und anklicken.</MudAlert>
+                            }
+                            else
+                            {
+                            <MudText Typo="Typo.body2" Class="mb-2">Herkunft: <b>@(m.AusAd ? "AD (Name, Mail und Konto werden im AD gepflegt)" : "Altbestand aus der PHP-Datenbank")</b></MudText>
                             <MudGrid Spacing="2">
-                                <MudItem xs="6" sm="3"><MudTextField @bind-Value="m.Kurzzeichen" Label="Kurzzeichen" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="6" sm="4"><MudTextField @bind-Value="m.Vorname" Label="Vorname" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" sm="5"><MudTextField @bind-Value="m.Nachname" Label="Nachname" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="m.Mail" Label="E-Mail" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="m.Konto" Label="Windows-Konto" HelperText="ohne Domäne, z. B. koi" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="6" sm="3"><MudTextField @bind-Value="m.Kurzzeichen" Label="Kurzzeichen" Variant="Variant.Outlined" Disabled="@m.AusAd" /></MudItem>
+                                <MudItem xs="6" sm="4"><MudTextField @bind-Value="m.Vorname" Label="Vorname" Variant="Variant.Outlined" Disabled="@m.AusAd" /></MudItem>
+                                <MudItem xs="12" sm="5"><MudTextField @bind-Value="m.Nachname" Label="Nachname" Variant="Variant.Outlined" Disabled="@m.AusAd" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="m.Mail" Label="E-Mail" Variant="Variant.Outlined" Disabled="@m.AusAd" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="m.Konto" Label="Windows-Konto" HelperText="ohne Domäne, z. B. koi" Variant="Variant.Outlined" Disabled="@m.AusAd" /></MudItem>
                                 <MudItem xs="6"><MudNumericField T="decimal" @bind-Value="m.Limit" Label="Bestellberechtigung" Adornment="Adornment.End" AdornmentText="CHF" Variant="Variant.Outlined" HideSpinButtons="true" /></MudItem>
                                 <MudItem xs="6">
                                     <MudSelect T="string" @bind-Value="m.Kostenstelle" Label="Kostenstelle" Variant="Variant.Outlined" Clearable="true">
@@ -307,6 +317,7 @@
                                     <MudSwitch T="bool" @bind-Value="m.Aktiv" Label="aktiv" Color="Color.Success" />
                                 </MudItem>
                             </MudGrid>
+                            }
                             break;
                         case HbKreditor k:
                             <MudGrid Spacing="2">
@@ -333,8 +344,13 @@
                             break;
                     }
                     <MudStack Row="true" Spacing="2" Class="mt-3">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="StammSpeichernAsync">Speichern</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="StammSpeichernAsync"
+                                   Disabled="@(_edit is HbMitarbeiter { Id: 0, AusAd: false })">Speichern</MudButton>
                         <MudButton Variant="Variant.Text" OnClick="() => _edit = null">Abbrechen</MudButton>
+                        @if (_edit is HbMitarbeiter { AusAd: true } adm && adm.Id != 0)
+                        {
+                            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Sync" OnClick="() => AusAdAktualisierenAsync(adm.Id)">Aus AD aktualisieren</MudButton>
+                        }
                         @if (!_editNeu)
                         {
                             <MudSpacer />
@@ -742,7 +758,7 @@
         _edit = new HbMitarbeiter
         {
             Id = m.Id, Kurzzeichen = m.Kurzzeichen, Vorname = m.Vorname, Nachname = m.Nachname, Mail = m.Mail, Konto = m.Konto,
-            Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, Aktiv = m.Aktiv
+            Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, Aktiv = m.Aktiv, AusAd = m.AusAd
         };
         _editNeu = m.Id == 0;
         _editTitel = _editNeu ? "Mitarbeiter erfassen" : $"Mitarbeiter {m.Kurzzeichen} bearbeiten";
@@ -818,6 +834,21 @@
                 case HbSachkonto s: await Hb.LoescheSachkontoAsync(_ich!, s.Nr); break;
             }
             Snackbar.Add(meldung, Severity.Success);
+            _edit = null;
+            await LadenAsync();
+        }
+        catch (HbException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task AusAdAktualisierenAsync(int id)
+    {
+        try
+        {
+            await Hb.AktualisiereAusAdAsync(_ich!, id);
+            Snackbar.Add("Aus dem AD aktualisiert.", Severity.Success);
             _edit = null;
             await LadenAsync();
         }

@@ -106,6 +106,9 @@ public sealed class HbMitarbeiter
     public bool IstWareneingang { get; set; }
     public bool IstAdmin { get; set; }
     public bool Aktiv { get; set; } = true;
+    /// <summary>Aus dem AD uebernommen (Entscheid Ingo 2026-10-27): Konto, Kurzzeichen, Name und Mail kommen aus dem AD und
+    /// sind hier nicht editierbar. false = Altbestand aus der PHP-Datenbank, voll pflegbar. Neue Eintraege nur noch aus dem AD.</summary>
+    public bool AusAd { get; set; }
 
     public string Name => $"{Vorname} {Nachname}".Trim();
 }

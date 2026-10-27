@@ -81,17 +81,22 @@ internal sealed class HbStartUndSicherung(
         var conn = db.Database.GetDbConnection();
         if (conn.State != System.Data.ConnectionState.Open)
             await conn.OpenAsync(ct);
-        var vorhanden = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        await using (var cmd = conn.CreateCommand())
+        async Task<HashSet<string>> SpaltenAsync(string tabelle)
         {
-            cmd.CommandText = "PRAGMA table_info(Bestellung);";
+            var vorhanden = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"PRAGMA table_info({tabelle});";
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
                 vorhanden.Add(reader.GetString(1));
+            return vorhanden;
         }
         // 2026-10-22: WertText fuer Altdaten mit Text statt Betrag ("KV").
-        if (!vorhanden.Contains("WertText"))
+        if (!(await SpaltenAsync("Bestellung")).Contains("WertText"))
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE Bestellung ADD COLUMN WertText TEXT NULL;", ct);
+        // 2026-10-27: Herkunft AD oder Altbestand.
+        if (!(await SpaltenAsync("Mitarbeiter")).Contains("AusAd"))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN AusAd INTEGER NOT NULL DEFAULT 0;", ct);
     }
 
     private void Sichere(string pfad)

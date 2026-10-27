@@ -149,11 +149,20 @@
                                         <button class="hb-knopf-grau" @onclick="() => AdUebernehmenAsync(p)">Übernehmen</button></div>
                                 }
                             }
-                            <input class="hb-feld" placeholder="Kurzzeichen" @bind="_ma.Kurzzeichen" />
-                            <input class="hb-feld" placeholder="Vorname" @bind="_ma.Vorname" />
-                            <input class="hb-feld" placeholder="Nachname" @bind="_ma.Nachname" />
-                            <input class="hb-feld" placeholder="E-Mail" @bind="_ma.Mail" />
-                            <input class="hb-feld" placeholder="Windows-Konto (z. B. koi)" @bind="_ma.Konto" />
+                            @* Entscheid Ingo 2026-10-27: neue nur aus dem AD; bei AD-Eintraegen sind Konto, Name und Mail gesperrt
+                               (Pflege im AD), Altbestand bleibt voll pflegbar. *@
+                            @if (_ma.Id == 0 && !_ma.AusAd)
+                            {
+                                <div>Neue Mitarbeitende nur über die AD-Suche oben.</div>
+                            }
+                            else
+                            {
+                            <div>Herkunft: <b>@(_ma.AusAd ? "AD (Name, Mail und Konto werden im AD gepflegt)" : "Altbestand aus der PHP-Datenbank")</b></div>
+                            <input class="hb-feld" placeholder="Kurzzeichen" @bind="_ma.Kurzzeichen" disabled="@_ma.AusAd" />
+                            <input class="hb-feld" placeholder="Vorname" @bind="_ma.Vorname" disabled="@_ma.AusAd" />
+                            <input class="hb-feld" placeholder="Nachname" @bind="_ma.Nachname" disabled="@_ma.AusAd" />
+                            <input class="hb-feld" placeholder="E-Mail" @bind="_ma.Mail" disabled="@_ma.AusAd" />
+                            <input class="hb-feld" placeholder="Windows-Konto (z. B. koi)" @bind="_ma.Konto" disabled="@_ma.AusAd" />
                             <input class="hb-feld" placeholder="Bestellberechtigung CHF" @bind="_maLimit" />
                             <select class="hb-feld" @bind="_ma.Kostenstelle">
                                 <option value="">Kostenstelle</option>
@@ -163,9 +172,11 @@
                             <label class="hb-haken"><input type="checkbox" @bind="_ma.IstAdmin" /> Admin</label>
                             <label class="hb-haken"><input type="checkbox" @bind="_ma.Aktiv" /> aktiv</label>
                             <button class="hb-feld hb-speichern" @onclick="MitarbeiterSpeichernAsync">Speichern</button>
+                            }
                             @if (_ma.Id != 0)
                             {
                                 <button class="hb-knopf-grau" @onclick="() => { _ma = new(); _maLimit = string.Empty; _loeschen = null; }">Neu</button>
+                                @if (_ma.AusAd) { <button class="hb-knopf-grau" @onclick="MitarbeiterAusAdAktualisierenAsync">Aus AD aktualisieren</button> }
                                 @if (_loeschen == "ma") { <button class="hb-knopf-rot" @onclick="MitarbeiterLoeschenAsync">Wirklich löschen</button><button class="hb-knopf-grau" @onclick="() => _loeschen = null">Abbrechen</button> }
                                 else { <button class="hb-knopf-grau" @onclick='() => _loeschen = "ma"'>Löschen</button> }
                             }
@@ -173,11 +184,11 @@
                     }
                     <p>@_mitarbeiter.Count Mitarbeiter registriert</p>
                     <table class="hb-tab">
-                        <tr><th>Kurzzeichen</th><th>Name</th><th>Mail</th><th>Konto</th><th>Berechtigung CHF</th><th>KoSt</th><th>WE</th><th>Admin</th><th>aktiv</th><th></th></tr>
+                        <tr><th>Kurzzeichen</th><th>Name</th><th>Mail</th><th>Konto</th><th>Berechtigung CHF</th><th>KoSt</th><th>WE</th><th>Admin</th><th>aktiv</th><th>Herkunft</th><th></th></tr>
                         @foreach (var m in _mitarbeiter)
                         {
                             <tr class="@(m.Aktiv ? null : "hb-inaktiv")"><td>@m.Kurzzeichen</td><td>@m.Name</td><td>@m.Mail</td><td>@m.Konto</td>
-                                <td class="hb-zahl">@Chf(m.Limit)</td><td>@m.Kostenstelle</td><td>@(m.IstWareneingang ? "ja" : "")</td><td>@(m.IstAdmin ? "ja" : "")</td><td>@(m.Aktiv ? "ja" : "nein")</td>
+                                <td class="hb-zahl">@Chf(m.Limit)</td><td>@m.Kostenstelle</td><td>@(m.IstWareneingang ? "ja" : "")</td><td>@(m.IstAdmin ? "ja" : "")</td><td>@(m.Aktiv ? "ja" : "nein")</td><td>@(m.AusAd ? "AD" : "Altbestand")</td>
                                 <td>@if (_benutzer.IstAdmin) { <button @onclick="() => { _ma = Kopie(m); _maLimit = m.Limit.ToString(CultureInfo.InvariantCulture); }">Bearbeiten</button> }</td></tr>
                         }
                     </table>
@@ -723,6 +734,15 @@
         return geloescht ? $"{kz} gelöscht." : $"{kz} hat Bestellungen und wurde deshalb deaktiviert statt gelöscht.";
     });
 
+    private Task MitarbeiterAusAdAktualisierenAsync() => StammAsync(async () =>
+    {
+        var kz = _ma.Kurzzeichen;
+        await Hb.AktualisiereAusAdAsync(_benutzer!, _ma.Id);
+        _ma = new();
+        _maLimit = string.Empty;
+        return $"{kz} aus dem AD aktualisiert.";
+    });
+
     private async Task AdTasteAsync(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await AdSuchenAsync();
@@ -792,6 +812,6 @@
     private static HbMitarbeiter Kopie(HbMitarbeiter m) => new()
     {
         Id = m.Id, Kurzzeichen = m.Kurzzeichen, Vorname = m.Vorname, Nachname = m.Nachname, Mail = m.Mail, Konto = m.Konto,
-        Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, Aktiv = m.Aktiv
+        Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, Aktiv = m.Aktiv, AusAd = m.AusAd
     };
 }

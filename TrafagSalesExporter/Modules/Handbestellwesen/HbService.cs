@@ -9,7 +9,7 @@ namespace TrafagSalesExporter.Modules.Handbestellwesen;
 /// Fachlogik des Handbestellwesens. Alle Pruefungen laufen hier auf dem Server; die PHP-Anwendung pruefte das
 /// Bestelllimit nur im Browser und liess Freigeben und Loeschen fuer jeden zu.
 /// </summary>
-public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptionsMonitor<HbOptions> options, TimeProvider clock)
+public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptionsMonitor<HbOptions> options, TimeProvider clock, IHbAdSuche? adSuche = null)
 {
     // Nummernvergabe nacheinander je Datenbank; zusaetzlich schuetzt der eindeutige Index auf Bestellnummer.
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> WriteLocks = new(StringComparer.OrdinalIgnoreCase);
@@ -399,10 +399,27 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
     public async Task SpeichereMitarbeiterAsync(HbBenutzer benutzer, HbMitarbeiter m)
     {
         NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        // Entscheid Ingo 2026-10-27: neue Mitarbeitende nur aus dem AD; Konto, Kurzzeichen, Name und Mail von AD-Eintraegen
+        // kommen aus dem AD (auf dem Server nachgeschlagen, nicht aus dem Formular). Altbestand (AusAd = false) bleibt pflegbar.
+        if (m.Id == 0)
+        {
+            var ad = await AdPersonAsync(m.Konto)
+                ?? throw new HbException("Neue Mitarbeitende werden nur aus dem AD übernommen. Bitte im AD suchen und „Übernehmen“ wählen.");
+            UebernimmAd(m, ad);
+        }
+        else
+        {
+            var alt = await db.Mitarbeiter.AsNoTracking().FirstOrDefaultAsync(x => x.Id == m.Id) ?? throw new HbException("Mitarbeiter nicht gefunden.");
+            m.AusAd = alt.AusAd;
+            if (alt.AusAd)
+            {
+                m.Konto = alt.Konto; m.Kurzzeichen = alt.Kurzzeichen; m.Vorname = alt.Vorname; m.Nachname = alt.Nachname; m.Mail = alt.Mail;
+            }
+        }
         m.Kurzzeichen = m.Kurzzeichen.Trim();
         m.Konto = KurzKonto(m.Konto);
         if (m.Kurzzeichen.Length == 0 || string.IsNullOrWhiteSpace(m.Nachname)) throw new HbException("Kurzzeichen und Nachname sind Pflicht.");
-        await using var db = await dbFactory.CreateDbContextAsync();
         if (await db.Mitarbeiter.AnyAsync(x => x.Kurzzeichen == m.Kurzzeichen && x.Id != m.Id))
             throw new HbException($"Das Kurzzeichen „{m.Kurzzeichen}“ gibt es schon.");
         if (m.Konto.Length > 0 && await db.Mitarbeiter.AnyAsync(x => x.Konto == m.Konto && x.Id != m.Id))
@@ -487,7 +504,41 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         var konto = KurzKonto(p.Konto);
         await using var db = await dbFactory.CreateDbContextAsync();
         if (await db.Mitarbeiter.AnyAsync(x => x.Konto == konto || x.Kurzzeichen == konto)) return null;
-        return new HbMitarbeiter { Kurzzeichen = konto, Konto = konto, Vorname = p.Vorname, Nachname = p.Nachname.Length > 0 ? p.Nachname : p.Anzeige, Mail = p.Mail, Aktiv = true };
+        var m = new HbMitarbeiter { Aktiv = true };
+        UebernimmAd(m, p);
+        return m;
+    }
+
+    /// <summary>Name und Mail eines AD-Eintrags erneut aus dem AD lesen (Pflege dort, Entscheid Ingo 2026-10-27).</summary>
+    public async Task AktualisiereAusAdAsync(HbBenutzer benutzer, int id)
+    {
+        NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var m = await db.Mitarbeiter.FirstOrDefaultAsync(x => x.Id == id) ?? throw new HbException("Mitarbeiter nicht gefunden.");
+        if (!m.AusAd) throw new HbException($"{m.Kurzzeichen} stammt aus dem Altbestand, nicht aus dem AD.");
+        var ad = await AdPersonAsync(m.Konto) ?? throw new HbException($"Konto {m.Konto} ist im AD nicht (mehr) aktiv.");
+        UebernimmAd(m, ad);
+        Protokolliere(db, benutzer, "Mitarbeiter aus AD aktualisiert", m.Kurzzeichen, $"{m.Vorname} {m.Nachname}, {m.Mail}");
+        await db.SaveChangesAsync();
+    }
+
+    private async Task<HbAdPerson?> AdPersonAsync(string? konto)
+    {
+        var k = KurzKonto(konto);
+        if (k.Length == 0 || adSuche is null) return null;
+        var treffer = await adSuche.SucheAsync(k);
+        return treffer.FirstOrDefault(x => string.Equals(KurzKonto(x.Konto), k, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void UebernimmAd(HbMitarbeiter m, HbAdPerson p)
+    {
+        var konto = KurzKonto(p.Konto);
+        m.Konto = konto;
+        m.Kurzzeichen = konto;
+        m.Vorname = p.Vorname;
+        m.Nachname = p.Nachname.Length > 0 ? p.Nachname : p.Anzeige;
+        m.Mail = p.Mail;
+        m.AusAd = true;
     }
 
     private async Task SpeichereAsync<T>(HbBenutzer benutzer, Func<HbDbContext, DbSet<T>> set, T eintrag, bool neu,

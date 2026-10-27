@@ -154,6 +154,53 @@ public sealed class HandbestellwesenServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Neue_Mitarbeitende_Nur_Aus_Ad_Ad_Felder_Gesperrt_Altbestand_Pflegbar()
+    {
+        // Entscheid Ingo 2026-10-27: AD- und DB-Mitarbeitende unterscheiden; neue nur aus dem AD.
+        var ad = new AdStub(new HbAdPerson("neu", "Nina", "Neu", "nina.neu@trafag.com", "Neu Nina"));
+        var hb = new HbService(_factory, new OptionsMonitorStub(new HbOptions { DatabasePath = _pfad, AdminUsers = ["admin"] }),
+            new FesteZeit(new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero)), ad);
+        var admin = await hb.BenutzerAsync("TRAFAG\\admin");
+
+        // Von Hand ohne AD-Konto: abgelehnt.
+        await Assert.ThrowsAsync<HbException>(() => hb.SpeichereMitarbeiterAsync(admin, new HbMitarbeiter { Kurzzeichen = "xyz", Nachname = "Hand", Konto = "xyz" }));
+
+        // Aus dem AD: Name und Mail kommen vom Server-Nachschlag, nicht aus dem Formular.
+        var vorlage = (await hb.MitarbeiterAusAdAsync(ad.Personen[0]))!;
+        vorlage.Nachname = "Gefaelscht";
+        vorlage.Limit = 1000m;
+        await hb.SpeichereMitarbeiterAsync(admin, vorlage);
+        var neu = (await hb.MitarbeiterAsync()).Single(x => x.Kurzzeichen == "neu");
+        Assert.True(neu.AusAd);
+        Assert.Equal(("Neu", 1000m), (neu.Nachname, neu.Limit));
+
+        // AD-Eintrag: Name nicht aenderbar, Limit schon.
+        neu.Nachname = "Anders";
+        neu.Limit = 2000m;
+        await hb.SpeichereMitarbeiterAsync(admin, neu);
+        neu = (await hb.MitarbeiterAsync()).Single(x => x.Kurzzeichen == "neu");
+        Assert.Equal(("Neu", 2000m), (neu.Nachname, neu.Limit));
+
+        // Altbestand: voll pflegbar.
+        var kln = (await hb.MitarbeiterAsync()).Single(x => x.Kurzzeichen == "kln");
+        Assert.False(kln.AusAd);
+        kln.Nachname = "Kleiner";
+        await hb.SpeichereMitarbeiterAsync(admin, kln);
+        Assert.Equal("Kleiner", (await hb.MitarbeiterAsync()).Single(x => x.Kurzzeichen == "kln").Nachname);
+
+        // Aus AD aktualisieren nur fuer AD-Eintraege.
+        await hb.AktualisiereAusAdAsync(admin, neu.Id);
+        await Assert.ThrowsAsync<HbException>(() => hb.AktualisiereAusAdAsync(admin, kln.Id));
+    }
+
+    private sealed class AdStub(params HbAdPerson[] personen) : IHbAdSuche
+    {
+        public HbAdPerson[] Personen { get; } = personen;
+        public Task<IReadOnlyList<HbAdPerson>> SucheAsync(string? begriff) =>
+            Task.FromResult<IReadOnlyList<HbAdPerson>>(Personen.Where(p => p.Konto.StartsWith(begriff ?? "", StringComparison.OrdinalIgnoreCase)).ToList());
+    }
+
+    [Fact]
     public async Task Unter_Limit_Ohne_Freigabe_Offen()
     {
         var b = await _hb.AnlegenAsync(await Wer("abc"), Eingabe("875", 500m, "chf"));
