@@ -18,7 +18,8 @@ Eigenes Modul, eigener Reiter (seit 27.10. sichtbar), ersetzt die PHP-Anwendung 
 Masken auf derselben Datenbank `hbdaten\handbestellwesen.db`: `/handbestellwesen` (klassisch, mit Link „Zur neuen Version“)
 und `/bestellwesen` (neu). Freigabe wie PHP: jede aktive Person mit genuegend Limit; strenge Regel per
 `Handbestellwesen:FreigabeNurGleicheKostenstelle`. Stammdaten loeschen (nur ohne Bestellungen, Mitarbeitende sonst
-deaktiviert) und Mitarbeitende aus dem AD uebernehmen, Konzept 6.9. Offen: Zugriff/Rollen, Grundtests, Limit und Kostenstelle der
+deaktiviert) und Mitarbeitende aus dem AD uebernehmen, Konzept 6.9. Neue Mitarbeitende nur noch aus dem AD (Name, Mail,
+Konto dort gepflegt), Altbestand aus PHP voll pflegbar, Konzept 6.10. Offen: Zugriff/Rollen, Grundtests, Limit und Kostenstelle der
 Mitarbeitenden, Bereinigung, Rechnungsbetrag/Mail. Details `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` 6.8.
 
 ## Schalter Nur Einkaufsteile 2026-10-26

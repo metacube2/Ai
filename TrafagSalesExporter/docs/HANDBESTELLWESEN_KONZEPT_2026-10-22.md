@@ -338,6 +338,22 @@ werden koennen (wie im PHP), Namen aus dem AD, neue Leute legt die IT im AD an. 
 - Commit `a8e9eec`, Suite 1293/1293. Offen: ob IT-Konten Mitarbeitende pflegen duerfen, ohne Admin zu sein (heute nur
   Admins `koi`, `gun` und Mitarbeitende mit Haken „Admin“).
 
+### 6.10 AD- und Altbestand-Mitarbeitende (2026-10-27)
+
+Entscheid Ingo: „Unterscheidung AD-User und DB-User; DB-User pflegbar, aber keine neuen erstellbar, nur noch via AD neue
+erstellbar und dort wartbar.“ Damit ist die Formulierung in 6.9 („Kurzzeichen und Nachname sind Pflicht“, Erfassen von Hand)
+fuer neue Eintraege ueberholt.
+
+- Neue Spalte `Mitarbeiter.AusAd` (beim Start per `ALTER TABLE` nachgezogen, Altbestand = 0). Anzeige „Herkunft“ AD oder
+  Altbestand in beiden Masken.
+- **Neu nur aus dem AD:** Das Formular fuer neue Mitarbeitende zeigt erst nach „Übernehmen“ aus der AD-Suche Felder. Der
+  Server schlaegt das Konto beim Speichern selbst im AD nach (nur aktive Konten) und nimmt Konto, Kurzzeichen, Vor-, Nachname
+  und Mail von dort, nicht aus dem Formular.
+- **AD-Eintraege:** Konto, Kurzzeichen, Name und Mail gesperrt (Pflege im AD), Knopf „Aus AD aktualisieren“; Limit,
+  Kostenstelle, Wareneingang, Admin und aktiv bleiben im Dashboard pflegbar.
+- **Altbestand** (109 Eintraege aus der PHP-Datenbank): voll pflegbar wie bisher, auch loeschen/deaktivieren (6.9).
+- Commit `3ff16f5`, Suite 1294/1294. Folge: Faellt die AD-Suche auf dem Server aus, kann niemand Neues erfasst werden.
+
 ## 7. Naechste Schritte
 
 1. ~~Dump pruefen und importieren~~ erledigt 22.10. (6.4). Offen: klaeren, ob nach dem Dump noch in PHP bestellt wurde.

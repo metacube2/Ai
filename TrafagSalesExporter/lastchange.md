@@ -2,6 +2,12 @@
 
 Stand: 2026-10-27
 
+## Handbestellwesen: neue Mitarbeitende nur aus dem AD, 2026-10-27
+
+- Entscheid Ingo: AD- und Altbestand-Eintraege unterschieden (Spalte `AusAd`); neue nur aus dem AD, dort gepflegt (Name,
+  Mail, Konto gesperrt, „Aus AD aktualisieren“); Altbestand voll pflegbar. Commit `3ff16f5`, Suite 1294/1294. Konzept 6.10.
+  Deploy siehe `docs/rag/DEPLOYMENT.md`.
+
 ## Einkauf Produktgruppe nur mit SAP-Text, 2026-10-27
 
 - Wunsch Ingo: Spend-Aufriss zeigt „FP_DICHTEWÄCH“ statt „D2 - FP_DICHTEWÄCH“. Commit `0917d9e`, Suite 1293/1293.
