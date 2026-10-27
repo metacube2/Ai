@@ -778,7 +778,7 @@ public class PurchasingDashboardServiceTests : IDisposable
         var disponent = Assert.Single(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "disponent");
         Assert.Equal(["001", "005"], disponent.Rows.Select(row => row.Label).Order());
         var productGroup = Assert.Single(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(120m, Assert.Single(productGroup.Rows, row => row.Label == "H - HW_ZUKAUFSORT").Total);
+        Assert.Equal(120m, Assert.Single(productGroup.Rows, row => row.Label == "HW_ZUKAUFSORT").Total);
         Assert.Equal(200m, state.PurchasingPartsProductGroupAllocation.AssignedSpendChf + state.PurchasingPartsProductGroupAllocation.UnassignedSpendChf);
     }
 
@@ -844,9 +844,9 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
         var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
         Assert.Equal(320m, perspective.Rows.Sum(row => row.Total));
-        Assert.Equal(120m, Assert.Single(perspective.Rows, row => row.Label == "PG-A - Sensorik").Total);   // ganz, keine Aufteilung
-        Assert.Equal(80m, Assert.Single(perspective.Rows, row => row.Label == "PG-B - Zubehoer").Total);
-        Assert.Equal(40m, Assert.Single(perspective.Rows, row => row.Label == "T2 - FP_TRANSM. TX").Total); // kleinste Gruppennummer
+        Assert.Equal(120m, Assert.Single(perspective.Rows, row => row.Label == "Sensorik").Total);   // ganz, keine Aufteilung
+        Assert.Equal(80m, Assert.Single(perspective.Rows, row => row.Label == "Zubehoer").Total);
+        Assert.Equal(40m, Assert.Single(perspective.Rows, row => row.Label == "FP_TRANSM. TX").Total); // kleinste Gruppennummer
         Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("T3", StringComparison.Ordinal));
         Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
         Assert.Equal(30m, Assert.Single(perspective.Rows, row => row.Label == "Disponent ZZZ").Total);
@@ -892,8 +892,8 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
         Assert.Equal(150m, perspective.Rows.Sum(row => row.Total));
-        Assert.Equal(100m, Assert.Single(perspective.Rows, row => row.Label == "D5 - FP_DICHTESEN1/2").Total);
-        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "D1 - FP_DICHTESEN").Total);
+        Assert.Equal(100m, Assert.Single(perspective.Rows, row => row.Label == "FP_DICHTESEN1/2").Total);
+        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "FP_DICHTESEN").Total);
         Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("DS -", StringComparison.Ordinal));
         Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("ZZ", StringComparison.Ordinal));
         Assert.Equal(100m, state.ProductGroupAllocation.MultiGroupSpendChf);

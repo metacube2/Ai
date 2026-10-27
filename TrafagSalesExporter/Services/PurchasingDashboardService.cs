@@ -1776,7 +1776,9 @@ SapProductGroupResolved AS (
 )";
         var productGroupLabel = $@"CASE
             WHEN {dispo} = '' THEN 'ohne Produktgruppe'
-            WHEN COALESCE(x.ProductGroup, '') <> '' AND COALESCE(x.ProductGroupText, '') <> '' THEN x.ProductGroup || ' - ' || x.ProductGroupText
+            -- Anzeige nur der SAP-Text (ZDISPO_SPART-DESCR) wie DISPO_DES im Report; der Schluessel DISPO nur ohne Text
+            -- (Wunsch Ingo 2026-10-27).
+            WHEN COALESCE(x.ProductGroupText, '') <> '' THEN x.ProductGroupText
             WHEN COALESCE(x.ProductGroup, '') <> '' THEN x.ProductGroup
             ELSE 'Disponent ' || {dispo}
         END";
