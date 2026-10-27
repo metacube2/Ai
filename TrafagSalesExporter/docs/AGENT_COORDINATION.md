@@ -41,6 +41,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude (9e) | Handbestellwesen klassisch: Link „Zur neuen Version“ auf `/bestellwesen` (Auftrag Ingo) | 2026-10-27 | abgeschlossen, Reservierung frei. `Modules/Handbestellwesen/HandbestellwesenPage.razor`, `wwwroot/css/handbestellwesen.css`, Konzept 6.6; Commit `9ef7787`, Suite 1290/1290; Deploy siehe `docs/rag/DEPLOYMENT.md`. |
 | Claude | ZZPRDAT: Live-Pruefung T76 vom 26.10. und fremde Testauftraege nachdokumentiert (Auftrag Ingo „fuehre punkte nach“) | 2026-10-27 | **Abgeschlossen, nur Doku, SAP nur lesend, kein Deploy, Reservierung frei.** Transportplan (neuer Abschnitt in 6a), Kontext, `rag/PROJECT.md`, PM-03, Status_kurz, Wochen_Todo 56 samt `.xlsx`, `lastchange.md`, zwei Zeilen in LEARNINGS. Issue-Log bewusst nicht beruehrt (fuehrt keine SAP-Vorhaben) |
 | Claude (9e) | Einkauf Spend-Aufriss: Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“, Vorgabe an | 2026-10-26 | abgeschlossen, Reservierung frei. Service/State/Explorer/Dashboard, Uebersetzungen, Test; Commit `c3147e1`, Suite 1290/1290; deployed 2026-10-27 08:26 (von Ingo gestartet). |
 | Claude (9e) | Einkauf Spend-Aufriss: Einstiege „Disponent“ (DISPOKENNZ wie ZC23) und „Disponent Verwendung (ZLO03)“ | 2026-10-26 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs`, Explorer-Hinweise, Uebersetzungen, Test; Commit `bddf9f9`, Suite 1289/1289; deployed 14:38 (von Ingo gestartet). |

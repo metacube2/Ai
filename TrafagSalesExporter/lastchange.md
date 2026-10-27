@@ -1,6 +1,11 @@
 # Last Change
 
-Stand: 2026-10-26
+Stand: 2026-10-27
+
+## Handbestellwesen klassisch: Link „Zur neuen Version“, 2026-10-27
+
+- Wunsch Ingo: Auf `/handbestellwesen` steht oben unter dem Logo ein blauer Link auf `/bestellwesen`. Commit `9ef7787`,
+  Suite 1290/1290. Details `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` 6.6. Deploy siehe `docs/rag/DEPLOYMENT.md`.
 
 ## SAP ZZPRDAT: Live-Pruefung vor dem Abnahmetest, 2026-10-26
 

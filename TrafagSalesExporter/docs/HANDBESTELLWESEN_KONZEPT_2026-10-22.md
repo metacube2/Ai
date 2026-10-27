@@ -290,6 +290,10 @@ Geschaeftslogik). Die klassische Seite `/handbestellwesen` bleibt (Import, Berei
 Deploy 2026-10-22 14:52 (`d7478cd`), ohne Alarm, `/bestellwesen` HTTP 200. Nicht im Browser angesehen (Erweiterung nicht
 verbunden). Der Reiter im Menue zeigt weiter auf `/handbestellwesen`; welche Seite er oeffnen soll, entscheidet Ingo.
 
+Nachtrag 2026-10-27 (Wunsch Ingo): Die klassische Seite hat oben unter dem Logo einen blauen Link „Zur neuen Version“ auf
+`/bestellwesen` (Commit `9ef7787`, Suite 1290/1290). Die Gegenrichtung „Klassische Ansicht“ gab es schon. Der Reiter im
+Menue ist weiterhin unsichtbar und zeigt auf `/handbestellwesen`; Einblenden unter Admin › Menuestruktur (Ingo).
+
 ### 6.7 Admins
 
 `Handbestellwesen:AdminUsers` = `koi`, `gun` (Armin Guentensperger, Auftrag Ingo 2026-10-22, deployed 15:22). Armin ist
