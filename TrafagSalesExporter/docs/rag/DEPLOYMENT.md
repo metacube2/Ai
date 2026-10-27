@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-27 10:02)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-27 11:05)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,7 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-10-27 11:05, Produktgruppe nur SAP-Text und Handbestellwesen Stammdaten loeschen/AD-Uebernahme (`0917d9e`, enthaelt `a8e9eec`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel), Suite 1293/1293, DLL `11:05:07` (enthaelt `HbAdSuche`), CSS mit `hb-knopf-rot`, `app_offline.htm` entfernt, HTTPS antwortet 401. AD-Suche und Loeschen im Browser noch nicht angesehen.
 - **Deploy 2026-10-27 10:02, Handbestellwesen: Freigabe wie PHP, umschaltbar (`a0030e8`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel), Suite 1291/1291, DLL `10:02:32`, `app_offline.htm` entfernt, `appsettings.json` auf dem Server mit `FreigabeNurGleicheKostenstelle` (false), HTTPS antwortet 401. Von Ingo um 10:03 ein zweites Mal gestartet (gleicher Commit): DLL bitgleich (SHA256 `659FAA4F...C0D621`), zehn Routen 200, Alarm nur WAL/SHM-Checkpoint beim Herunterfahren (harmlos; Protokollabsatz des Runners nennt einen alten Text). Im Browser noch nicht angesehen.
 - **Deploy 2026-10-27 09:47, Handbestellwesen klassisch: Link „Zur neuen Version“ (`9ef7787`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel), Suite 1290/1290, DLL `09:47:27`, `app_offline.htm` entfernt, CSS mit `hb-k-neu` auf dem Server, HTTPS antwortet 401 (Anmeldung). Im Browser noch nicht angesehen.
 - **Deploy 2026-10-27 08:26, Spend-Aufriss Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“ (`c3147e1`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel, letzte 22.10.), Suite 1290/1290, DLL `08:26:53`, `app_offline.htm` entfernt, HTTPS antwortet 401 (Anmeldung). Im Browser noch nicht angesehen.
