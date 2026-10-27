@@ -113,6 +113,47 @@ public sealed class HandbestellwesenServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Stammdaten_Loeschen_Nur_Ohne_Bestellungen_Mitarbeiter_Sonst_Deaktiviert()
+    {
+        // Wunsch Ingo 2026-10-27: Stammdaten hinzufuegen und loeschen wie im PHP, ohne Bestellungen zu verwaisen.
+        var admin = await Wer("admin");
+        await _hb.SpeichereKreditorAsync(admin, new HbKreditor { Nr = "70000", Name = "Neu AG" }, neu: true);
+        await _hb.SpeichereSachkontoAsync(admin, new HbSachkonto { Nr = "68000", Bezeichnung = "Test" }, neu: true);
+        await _hb.SpeichereKostenstelleAsync(admin, new HbKostenstelle { Nr = "999", Bezeichnung = "Leer" }, neu: true);
+        await _hb.AnlegenAsync(await Wer("abc"), Eingabe("875", 100m));
+
+        await Assert.ThrowsAsync<HbException>(() => _hb.LoescheKreditorAsync(admin, "65017"));
+        await Assert.ThrowsAsync<HbException>(() => _hb.LoescheSachkontoAsync(admin, "67099"));
+        await Assert.ThrowsAsync<HbException>(() => _hb.LoescheKostenstelleAsync(admin, "875"));
+        var abc = await Wer("abc");
+        await Assert.ThrowsAsync<HbException>(() => _hb.LoescheKreditorAsync(abc, "70000"));
+
+        await _hb.LoescheKreditorAsync(admin, "70000");
+        await _hb.LoescheSachkontoAsync(admin, "68000");
+        await _hb.LoescheKostenstelleAsync(admin, "999");
+        Assert.DoesNotContain(await _hb.KreditorenAsync(), x => x.Nr == "70000");
+        Assert.DoesNotContain(await _hb.SachkontenAsync(), x => x.Nr == "68000");
+        Assert.DoesNotContain(await _hb.KostenstellenAsync(), x => x.Nr == "999");
+
+        var alle = await _hb.MitarbeiterAsync();
+        Assert.False(await _hb.LoescheMitarbeiterAsync(admin, alle.Single(x => x.Kurzzeichen == "abc").Id));
+        Assert.False((await _hb.MitarbeiterAsync()).Single(x => x.Kurzzeichen == "abc").Aktiv);
+        Assert.True(await _hb.LoescheMitarbeiterAsync(admin, alle.Single(x => x.Kurzzeichen == "kln").Id));
+        Assert.DoesNotContain(await _hb.MitarbeiterAsync(), x => x.Kurzzeichen == "kln");
+    }
+
+    [Fact]
+    public async Task Mitarbeiter_Aus_Ad_Uebernehmen_Kurzzeichen_Ist_Konto()
+    {
+        var neu = await _hb.MitarbeiterAusAdAsync(new HbAdPerson("NEU", "Nina", "Neu", "nina.neu@trafag.com", "Neu Nina"));
+        Assert.NotNull(neu);
+        Assert.Equal("neu", neu!.Kurzzeichen);
+        Assert.Equal("neu", neu.Konto);
+        Assert.Equal(("Nina", "Neu", "nina.neu@trafag.com"), (neu.Vorname, neu.Nachname, neu.Mail));
+        Assert.Null(await _hb.MitarbeiterAusAdAsync(new HbAdPerson("abc", "A", "B", "", "B A")));
+    }
+
+    [Fact]
     public async Task Unter_Limit_Ohne_Freigabe_Offen()
     {
         var b = await _hb.AnlegenAsync(await Wer("abc"), Eingabe("875", 500m, "chf"));

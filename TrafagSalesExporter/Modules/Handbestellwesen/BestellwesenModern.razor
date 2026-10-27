@@ -8,6 +8,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService Dialogs
 @inject IJSRuntime JS
+@inject IHbAdSuche AdSuche
 
 @* Handbestellwesen, moderne Oberflaeche (Wunsch Ingo 2026-10-22): gleiche Geschaeftslogik (HbService), MudBlazor wie das
    Dashboard, besserer Ablauf. Die klassische Ansicht /handbestellwesen bleibt (Import, Bereinigung).
@@ -269,6 +270,25 @@
                     @switch (_edit)
                     {
                         case HbMitarbeiter m:
+                            @if (_editNeu)
+                            {
+                                @* Namen aus dem AD (Wunsch Ingo 2026-10-27): neue Leute legt die IT im AD an, hier werden sie uebernommen. *@
+                                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
+                                    <MudTextField @bind-Value="_adBegriff" Label="Im AD suchen" Placeholder="Name oder Kürzel" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" OnKeyDown="AdTasteAsync" Style="min-width:220px" />
+                                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Search" OnClick="AdSuchenAsync">Suchen</MudButton>
+                                </MudStack>
+                                @if (_adGesucht && _adTreffer.Count == 0) { <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">Keine aktive Person im AD gefunden.</MudAlert> }
+                                @if (_adTreffer.Count > 0)
+                                {
+                                    <MudList T="HbAdPerson" Dense="true" Class="mb-2">
+                                        @foreach (var p in _adTreffer)
+                                        {
+                                            <MudListItem T="HbAdPerson" Icon="@Icons.Material.Filled.Person" OnClick="() => AdUebernehmenAsync(p)"
+                                                         Text="@($"{p.Anzeige} ({p.Konto}){(string.IsNullOrEmpty(p.Mail) ? "" : $", {p.Mail}")}")" />
+                                        }
+                                    </MudList>
+                                }
+                            }
                             <MudGrid Spacing="2">
                                 <MudItem xs="6" sm="3"><MudTextField @bind-Value="m.Kurzzeichen" Label="Kurzzeichen" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="6" sm="4"><MudTextField @bind-Value="m.Vorname" Label="Vorname" Variant="Variant.Outlined" /></MudItem>
@@ -315,6 +335,11 @@
                     <MudStack Row="true" Spacing="2" Class="mt-3">
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="StammSpeichernAsync">Speichern</MudButton>
                         <MudButton Variant="Variant.Text" OnClick="() => _edit = null">Abbrechen</MudButton>
+                        @if (!_editNeu)
+                        {
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="StammLoeschenAsync">Löschen</MudButton>
+                        }
                     </MudStack>
                 </MudPaper>
             }
@@ -765,6 +790,71 @@
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    private async Task StammLoeschenAsync()
+    {
+        var (was, hinweis) = _edit switch
+        {
+            HbMitarbeiter m => ($"Mitarbeiter {m.Kurzzeichen}", " Hat die Person Bestellungen, wird sie stattdessen deaktiviert."),
+            HbKreditor k => ($"Kreditor {k.Nr}", ""),
+            HbKostenstelle ks => ($"Kostenstelle {ks.Nr}", ""),
+            HbSachkonto s => ($"Sachkonto {s.Nr}", ""),
+            _ => ("", "")
+        };
+        if (was.Length == 0) return;
+        var ok = await Dialogs.ShowMessageBox("Löschen", $"{was} wirklich löschen?{hinweis}", yesText: "Löschen", cancelText: "Abbrechen");
+        if (ok != true) return;
+        try
+        {
+            var meldung = $"{was} gelöscht.";
+            switch (_edit)
+            {
+                case HbMitarbeiter m:
+                    if (!await Hb.LoescheMitarbeiterAsync(_ich!, m.Id)) meldung = $"{was} hat Bestellungen und wurde deshalb deaktiviert statt gelöscht.";
+                    break;
+                case HbKreditor k: await Hb.LoescheKreditorAsync(_ich!, k.Nr); break;
+                case HbKostenstelle ks: await Hb.LoescheKostenstelleAsync(_ich!, ks.Nr); break;
+                case HbSachkonto s: await Hb.LoescheSachkontoAsync(_ich!, s.Nr); break;
+            }
+            Snackbar.Add(meldung, Severity.Success);
+            _edit = null;
+            await LadenAsync();
+        }
+        catch (HbException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private string _adBegriff = string.Empty;
+    private IReadOnlyList<HbAdPerson> _adTreffer = [];
+    private bool _adGesucht;
+
+    private async Task AdTasteAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await AdSuchenAsync();
+    }
+
+    private async Task AdSuchenAsync()
+    {
+        _adTreffer = await AdSuche.SucheAsync(_adBegriff);
+        _adGesucht = true;
+    }
+
+    private async Task AdUebernehmenAsync(HbAdPerson p)
+    {
+        var m = await Hb.MitarbeiterAusAdAsync(p);
+        if (m is null)
+        {
+            Snackbar.Add($"{p.Anzeige} ({p.Konto}) ist schon im Mitarbeiterverzeichnis.", Severity.Warning);
+            return;
+        }
+        _edit = m;
+        _adTreffer = [];
+        _adGesucht = false;
+        _adBegriff = string.Empty;
+        Snackbar.Add("Aus dem AD übernommen. Bitte Kostenstelle und Bestellberechtigung ergänzen und speichern.", Severity.Info);
     }
 
     private async Task NutzungLadenAsync()

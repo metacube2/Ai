@@ -108,6 +108,8 @@
 }
 .hb-such { width: 350px; }
 .hb-knopf-grau { width: 200px; background-color: lightgrey; cursor: pointer; color: #000; }
+.hb-knopf-rot { width: 200px; height: 30px; margin: 4px 0; border: 1px solid #b00020; background-color: #b00020; color: #fff; cursor: pointer; }
+.hb-ad-treffer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0; font-size: 13px; }
 
 /* Bestellungen: je Bestellung eine umrandete Tabelle mit zwei Kopfzeilen, wie im PHP */
 .hb-bestellung { border-collapse: collapse; border: 2px solid #000; margin: 0 0 16px 0; width: 1000px; }

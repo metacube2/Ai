@@ -413,6 +413,83 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         await db.SaveChangesAsync();
     }
 
+    // Loeschen (Wunsch Ingo 2026-10-27, wie im PHP). Physisch geloescht wird nur, was keine Bestellung (und bei der
+    // Kostenstelle kein Nummernzaehler) mehr braucht; sonst blieben Bestellungen mit unbekanntem Kreditor, Besteller usw.
+    // zurueck, wie die 50 offenen Bestellungen ohne Mitarbeitereintrag aus dem PHP. Mitarbeitende mit Bestellungen werden
+    // stattdessen deaktiviert.
+
+    public async Task LoescheKreditorAsync(HbBenutzer benutzer, string nr)
+    {
+        NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var k = await db.Kreditoren.FirstOrDefaultAsync(x => x.Nr == nr) ?? throw new HbException($"Kreditor {nr} nicht gefunden.");
+        var n = await db.Bestellungen.CountAsync(x => x.KreditorNr == nr);
+        if (n > 0) throw new HbException($"Kreditor {nr} kommt in {n:N0} Bestellungen vor und kann nicht gelöscht werden.");
+        db.Kreditoren.Remove(k);
+        Protokolliere(db, benutzer, "Kreditor gelöscht", nr, k.Name);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task LoescheKostenstelleAsync(HbBenutzer benutzer, string nr)
+    {
+        NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var k = await db.Kostenstellen.FirstOrDefaultAsync(x => x.Nr == nr) ?? throw new HbException($"Kostenstelle {nr} nicht gefunden.");
+        var n = await db.Bestellungen.CountAsync(x => x.Kostenstelle == nr);
+        if (n > 0) throw new HbException($"Kostenstelle {nr} kommt in {n:N0} Bestellungen vor und kann nicht gelöscht werden.");
+        var ma = await db.Mitarbeiter.CountAsync(x => x.Kostenstelle == nr);
+        if (ma > 0) throw new HbException($"Kostenstelle {nr} ist bei {ma} Mitarbeitenden eingetragen. Bitte dort zuerst ändern.");
+        db.Kostenstellen.Remove(k);
+        db.Zaehler.RemoveRange(db.Zaehler.Where(x => x.Kostenstelle == nr));
+        Protokolliere(db, benutzer, "Kostenstelle gelöscht", nr, k.Bezeichnung);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task LoescheSachkontoAsync(HbBenutzer benutzer, string nr)
+    {
+        NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var s = await db.Sachkonten.FirstOrDefaultAsync(x => x.Nr == nr) ?? throw new HbException($"Sachkonto {nr} nicht gefunden.");
+        var n = await db.Bestellungen.CountAsync(x => x.Sachkonto == nr);
+        if (n > 0) throw new HbException($"Sachkonto {nr} kommt in {n:N0} Bestellungen vor und kann nicht gelöscht werden.");
+        db.Sachkonten.Remove(s);
+        Protokolliere(db, benutzer, "Sachkonto gelöscht", nr, s.Bezeichnung);
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Ohne Bestellungen: loeschen. Mit Bestellungen: deaktivieren (bleibt fuer Archiv und Suche erhalten).
+    /// Rueckgabe true = geloescht, false = deaktiviert.</summary>
+    public async Task<bool> LoescheMitarbeiterAsync(HbBenutzer benutzer, int id)
+    {
+        NurAdmin(benutzer);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var m = await db.Mitarbeiter.FirstOrDefaultAsync(x => x.Id == id) ?? throw new HbException("Mitarbeiter nicht gefunden.");
+        if (string.Equals(m.Konto, benutzer.Konto, StringComparison.OrdinalIgnoreCase))
+            throw new HbException("Den eigenen Eintrag kann man nicht löschen.");
+        var n = await db.Bestellungen.CountAsync(x => x.BestellerKurzzeichen == m.Kurzzeichen || x.FreigeberKurzzeichen == m.Kurzzeichen);
+        if (n > 0)
+        {
+            m.Aktiv = false;
+            Protokolliere(db, benutzer, "Mitarbeiter deaktiviert", m.Kurzzeichen, $"statt gelöscht, {n} Bestellungen");
+            await db.SaveChangesAsync();
+            return false;
+        }
+        db.Mitarbeiter.Remove(m);
+        Protokolliere(db, benutzer, "Mitarbeiter gelöscht", m.Kurzzeichen, $"{m.Vorname} {m.Nachname}".Trim());
+        await db.SaveChangesAsync();
+        return true;
+    }
+
+    /// <summary>Vorlage fuer einen neuen Mitarbeitereintrag aus dem AD. Kurzzeichen = Windows-Konto (so sind alle 109
+    /// Eintraege gepflegt, Stand 27.10.). Null, wenn das Konto schon eingetragen ist.</summary>
+    public async Task<HbMitarbeiter?> MitarbeiterAusAdAsync(HbAdPerson p)
+    {
+        var konto = KurzKonto(p.Konto);
+        await using var db = await dbFactory.CreateDbContextAsync();
+        if (await db.Mitarbeiter.AnyAsync(x => x.Konto == konto || x.Kurzzeichen == konto)) return null;
+        return new HbMitarbeiter { Kurzzeichen = konto, Konto = konto, Vorname = p.Vorname, Nachname = p.Nachname.Length > 0 ? p.Nachname : p.Anzeige, Mail = p.Mail, Aktiv = true };
+    }
+
     private async Task SpeichereAsync<T>(HbBenutzer benutzer, Func<HbDbContext, DbSet<T>> set, T eintrag, bool neu,
         System.Linq.Expressions.Expression<Func<T, bool>> gleich, string art, string nr) where T : class
     {

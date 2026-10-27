@@ -6,12 +6,13 @@
 @inject IOptionsMonitor<HbOptions> Options
 @inject AuthenticationStateProvider AuthState
 @inject HbImportService Import
+@inject IHbAdSuche AdSuche
 @inject Microsoft.Extensions.Hosting.IHostEnvironment Env
 
 @* Handbestellwesen 2026-10-22 (Auftrag Ingo): Abloesung der PHP-Anwendung. Oberflaeche bewusst wie im PHP
    (Kacheln und Farben aus style.css/navigation.php), Technik neu. Doku docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md *@
 <PageTitle>Handbestellwesen</PageTitle>
-<HeadContent><link href="css/handbestellwesen.css?v=2" rel="stylesheet" /></HeadContent>
+<HeadContent><link href="css/handbestellwesen.css?v=3" rel="stylesheet" /></HeadContent>
 
 <div class="hb">
     <nav class="hb-nav">
@@ -111,7 +112,12 @@
                             <input class="hb-feld" placeholder="Ort" @bind="_kred.Ort" />
                             <input class="hb-feld" placeholder="Land" @bind="_kred.Land" />
                             <button class="hb-feld hb-speichern" @onclick="KreditorSpeichernAsync">Speichern</button>
-                            @if (!_kredNeu) { <button class="hb-knopf-grau" @onclick="() => { _kred = new(); _kredNeu = true; }">Neu</button> }
+                            @if (!_kredNeu)
+                            {
+                                <button class="hb-knopf-grau" @onclick="() => { _kred = new(); _kredNeu = true; _loeschen = null; }">Neu</button>
+                                @if (_loeschen == "kred") { <button class="hb-knopf-rot" @onclick="KreditorLoeschenAsync">Wirklich löschen</button><button class="hb-knopf-grau" @onclick="() => _loeschen = null">Abbrechen</button> }
+                                else { <button class="hb-knopf-grau" @onclick='() => _loeschen = "kred"'>Löschen</button> }
+                            }
                         </div>
                     }
                     <p>@_kreditoren.Count Kreditoren registriert</p>
@@ -131,6 +137,18 @@
                     {
                         <div class="hb-form">
                             <h3>@(_ma.Id == 0 ? "Mitarbeiter hinzufügen" : $"Mitarbeiter {_ma.Kurzzeichen} bearbeiten")</h3>
+                            @if (_ma.Id == 0)
+                            {
+                                @* Namen aus dem AD (Wunsch Ingo 2026-10-27): neue Leute legt die IT im AD an, hier werden sie uebernommen. *@
+                                <input class="hb-feld" placeholder="Im AD suchen (Name oder Kürzel)" @bind="_adBegriff" @bind:event="oninput" @onkeydown="AdTasteAsync" />
+                                <button class="hb-knopf-grau" @onclick="AdSuchenAsync">Im AD suchen</button>
+                                @if (_adGesucht && _adTreffer.Count == 0) { <div class="hb-rot">Keine aktive Person im AD gefunden.</div> }
+                                @foreach (var p in _adTreffer)
+                                {
+                                    <div class="hb-ad-treffer"><span>@p.Anzeige (@p.Konto)@(string.IsNullOrEmpty(p.Mail) ? "" : $", {p.Mail}")</span>
+                                        <button class="hb-knopf-grau" @onclick="() => AdUebernehmenAsync(p)">Übernehmen</button></div>
+                                }
+                            }
                             <input class="hb-feld" placeholder="Kurzzeichen" @bind="_ma.Kurzzeichen" />
                             <input class="hb-feld" placeholder="Vorname" @bind="_ma.Vorname" />
                             <input class="hb-feld" placeholder="Nachname" @bind="_ma.Nachname" />
@@ -145,7 +163,12 @@
                             <label class="hb-haken"><input type="checkbox" @bind="_ma.IstAdmin" /> Admin</label>
                             <label class="hb-haken"><input type="checkbox" @bind="_ma.Aktiv" /> aktiv</label>
                             <button class="hb-feld hb-speichern" @onclick="MitarbeiterSpeichernAsync">Speichern</button>
-                            @if (_ma.Id != 0) { <button class="hb-knopf-grau" @onclick="() => { _ma = new(); _maLimit = string.Empty; }">Neu</button> }
+                            @if (_ma.Id != 0)
+                            {
+                                <button class="hb-knopf-grau" @onclick="() => { _ma = new(); _maLimit = string.Empty; _loeschen = null; }">Neu</button>
+                                @if (_loeschen == "ma") { <button class="hb-knopf-rot" @onclick="MitarbeiterLoeschenAsync">Wirklich löschen</button><button class="hb-knopf-grau" @onclick="() => _loeschen = null">Abbrechen</button> }
+                                else { <button class="hb-knopf-grau" @onclick='() => _loeschen = "ma"'>Löschen</button> }
+                            }
                         </div>
                     }
                     <p>@_mitarbeiter.Count Mitarbeiter registriert</p>
@@ -170,7 +193,12 @@
                             <input class="hb-feld" placeholder="Bezeichnung" @bind="_kost.Bezeichnung" />
                             <input class="hb-feld" placeholder="Kostenstellenleiter (Kurzzeichen)" @bind="_kost.Leiter" />
                             <button class="hb-feld hb-speichern" @onclick="KostenstelleSpeichernAsync">Speichern</button>
-                            @if (!_kostNeu) { <button class="hb-knopf-grau" @onclick="() => { _kost = new(); _kostNeu = true; }">Neu</button> }
+                            @if (!_kostNeu)
+                            {
+                                <button class="hb-knopf-grau" @onclick="() => { _kost = new(); _kostNeu = true; _loeschen = null; }">Neu</button>
+                                @if (_loeschen == "kost") { <button class="hb-knopf-rot" @onclick="KostenstelleLoeschenAsync">Wirklich löschen</button><button class="hb-knopf-grau" @onclick="() => _loeschen = null">Abbrechen</button> }
+                                else { <button class="hb-knopf-grau" @onclick='() => _loeschen = "kost"'>Löschen</button> }
+                            }
                         </div>
                     }
                     <table class="hb-tab">
@@ -192,7 +220,12 @@
                             <input class="hb-feld" placeholder="Sachkonto" @bind="_sach.Nr" disabled="@(!_sachNeu)" />
                             <input class="hb-feld" placeholder="Bezeichnung" @bind="_sach.Bezeichnung" />
                             <button class="hb-feld hb-speichern" @onclick="SachkontoSpeichernAsync">Speichern</button>
-                            @if (!_sachNeu) { <button class="hb-knopf-grau" @onclick="() => { _sach = new(); _sachNeu = true; }">Neu</button> }
+                            @if (!_sachNeu)
+                            {
+                                <button class="hb-knopf-grau" @onclick="() => { _sach = new(); _sachNeu = true; _loeschen = null; }">Neu</button>
+                                @if (_loeschen == "sach") { <button class="hb-knopf-rot" @onclick="SachkontoLoeschenAsync">Wirklich löschen</button><button class="hb-knopf-grau" @onclick="() => _loeschen = null">Abbrechen</button> }
+                                else { <button class="hb-knopf-grau" @onclick='() => _loeschen = "sach"'>Löschen</button> }
+                            }
                         </div>
                     }
                     <table class="hb-tab">
@@ -506,6 +539,10 @@
     private bool _kostNeu = true;
     private HbSachkonto _sach = new();
     private bool _sachNeu = true;
+    private string? _loeschen;
+    private string _adBegriff = string.Empty;
+    private IReadOnlyList<HbAdPerson> _adTreffer = [];
+    private bool _adGesucht;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -673,14 +710,58 @@
         _maLimit = string.Empty;
     });
 
-    private async Task StammAsync(Func<Task> speichern)
+    private Task KreditorLoeschenAsync() => StammAsync(async () => { await Hb.LoescheKreditorAsync(_benutzer!, _kred.Nr); var nr = _kred.Nr; _kred = new(); _kredNeu = true; return $"Kreditor {nr} gelöscht."; });
+    private Task KostenstelleLoeschenAsync() => StammAsync(async () => { await Hb.LoescheKostenstelleAsync(_benutzer!, _kost.Nr); var nr = _kost.Nr; _kost = new(); _kostNeu = true; return $"Kostenstelle {nr} gelöscht."; });
+    private Task SachkontoLoeschenAsync() => StammAsync(async () => { await Hb.LoescheSachkontoAsync(_benutzer!, _sach.Nr); var nr = _sach.Nr; _sach = new(); _sachNeu = true; return $"Sachkonto {nr} gelöscht."; });
+
+    private Task MitarbeiterLoeschenAsync() => StammAsync(async () =>
+    {
+        var kz = _ma.Kurzzeichen;
+        var geloescht = await Hb.LoescheMitarbeiterAsync(_benutzer!, _ma.Id);
+        _ma = new();
+        _maLimit = string.Empty;
+        return geloescht ? $"{kz} gelöscht." : $"{kz} hat Bestellungen und wurde deshalb deaktiviert statt gelöscht.";
+    });
+
+    private async Task AdTasteAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await AdSuchenAsync();
+    }
+
+    private async Task AdSuchenAsync()
+    {
+        _adTreffer = await AdSuche.SucheAsync(_adBegriff);
+        _adGesucht = true;
+    }
+
+    private async Task AdUebernehmenAsync(HbAdPerson p)
     {
         _fehler = null;
         _info = null;
+        var m = await Hb.MitarbeiterAusAdAsync(p);
+        if (m is null)
+        {
+            _fehler = $"{p.Anzeige} ({p.Konto}) ist schon im Mitarbeiterverzeichnis.";
+            return;
+        }
+        _ma = m;
+        _maLimit = string.Empty;
+        _adTreffer = [];
+        _adGesucht = false;
+        _adBegriff = string.Empty;
+        _info = "Aus dem AD übernommen. Bitte Kostenstelle und Bestellberechtigung ergänzen und speichern.";
+    }
+
+    private Task StammAsync(Func<Task> speichern) => StammAsync(async () => { await speichern(); return "Gespeichert."; });
+
+    private async Task StammAsync(Func<Task<string>> aktion)
+    {
+        _fehler = null;
+        _info = null;
+        _loeschen = null;
         try
         {
-            await speichern();
-            _info = "Gespeichert.";
+            _info = await aktion();
             await LadenAsync();
             // Eigene Rechte koennen sich geaendert haben (z. B. Konto zugeordnet).
             var state = await AuthState.GetAuthenticationStateAsync();

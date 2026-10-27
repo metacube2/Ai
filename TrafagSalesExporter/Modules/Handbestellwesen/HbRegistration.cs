@@ -18,6 +18,7 @@ public static class HbRegistration
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<HbService>();
         services.AddSingleton<HbImportService>();
+        services.AddSingleton<IHbAdSuche, HbAdSuche>();
         services.AddHostedService<HbStartUndSicherung>();
         return services;
     }
