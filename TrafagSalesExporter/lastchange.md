@@ -2,6 +2,17 @@
 
 Stand: 2026-10-26
 
+## SAP ZZPRDAT: Live-Pruefung vor dem Abnahmetest, 2026-10-26
+
+- In T76/100 nur lesend geprueft (RFC ueber SapProbe, in SAP nichts geaendert, P76 nicht beruehrt): Der aktive
+  Quelltext ist identisch mit `saptasks/zzprdat/produktiv/`, die letzte Aenderung war am 07.09., das BAdI
+  `Z_ZZPRDAT_UPDATE` ist aktiv, `T76K912490`/`T76K912491` sind offen, und es gibt keinen weiteren Transport.
+- Neu dokumentiert sind sieben Testauftraege der Benutzer TAN/FPA (1241831 bis 1241844, 08. bis 23.09.). Sie passen
+  zum Sollverhalten, die Aenderungsbelege wurden nicht gelesen.
+- Nachgefuehrt: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` (Abschnitt „Live-Pruefung vom 2026-10-26“), `saptasks/zzprdat-kontext.md`,
+  `docs/rag/PROJECT.md`, `projektmanagement/PROJEKTSTATUS.md` (PM-03), `Status_kurz.tsv`, `Wochen_Todo.tsv` (Zeile 56)
+  samt `.xlsx`, `docs/rag/LEARNINGS.md`. Ergebnis des Abnahmetests noch offen.
+
 ## Einkauf: Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“ im Spend-Aufriss, 2026-10-26
 
 - Entscheid Ingo: Schalter fuer alle Einstiege, Vorgabe an; ausgeschaltet ganzer Einkauf. Diagramme unveraendert ganzer

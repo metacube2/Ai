@@ -1,6 +1,10 @@
 # Kontext: Produktionsdatum ZZPRDAT (PP / Fertigungsauftrag)
 
-Arbeitsstand für die Fortsetzung im CLI. Stand: 12.10.2026 (Technik unverändert seit 07.09.2026).
+Arbeitsstand für die Fortsetzung im CLI. Stand: 26.10.2026 (Technik unverändert seit 07.09.2026, am 26.10. live bestätigt).
+
+## Nachtrag 26.10.2026: Live-Prüfung vor dem Abnahmetest
+
+In T76/100 nur lesend geprüft: Der aktive Quelltext ist identisch mit `saptasks/zzprdat/produktiv/`. Alle Includes wurden zuletzt am 07.09. geändert, das BAdI `Z_ZZPRDAT_UPDATE` ist aktiv, `T76K912490`/`T76K912491` sind weiter offen, und es gibt keinen weiteren Transport mit ZZPRDAT-Objekten. Neu bekannt sind sieben Fertigungsaufträge der Benutzer TAN und FPA vom 08. bis 23.09. (1241831, 1241832, 1241840 bis 1241844). Nicht freigegebene sind leer, freigegebene tragen ein Datum. Bei 1241842 steht das Datum nach einer Terminverschiebung offenbar fest, das ist aber nicht über Änderungsbelege geprüft. Tabelle und Einzelheiten: `saptasks/ZZPRDAT_TRANSPORTPLAN.md`, Abschnitt „Live-Pruefung vom 2026-10-26“. Das Ergebnis des Abnahmetests ist noch nicht eingetragen.
 
 ## Nachtrag 12.10.2026: Abnahmetest verschoben
 

@@ -1,6 +1,6 @@
 # ZZPRDAT: Weg vom Testaufbau zum Transport
 
-Stand: 2026-10-12 (Technik unverändert seit 2026-09-07). **Abnahmetest verschoben:** Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
+Stand: 2026-10-26 (Technik unverändert seit 2026-09-07, am 26.10. live bestätigt, siehe Abschnitt 6a „Live-Pruefung vom 2026-10-26“). **Abnahmetest verschoben:** Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
 
 Stand der Technik: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
 gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
@@ -289,6 +289,42 @@ Reports und seine reale Ausfuehrung.
 
 Kein Auftrag angelegt, freigegeben oder geaendert; keine BAdI-/V2-Aenderung, keine
 Transportfreigabe und kein P76-Zugriff. Der Drucknachweis aus Abschnitt 6 bleibt offen.
+
+### Live-Pruefung vom 2026-10-26: Loesung unveraendert, fremde Testauftraege
+
+Vor dem verschobenen Abnahmetest am 26.10.2026 in T76/100 gemessen, ausschliesslich lesend
+(RFC ueber SapProbe; in SAP nichts angelegt oder geaendert, P76 nicht beruehrt).
+
+**Die Loesung ist seit dem 07.09.2026 unveraendert.**
+
+| Pruefung | Ergebnis |
+|---|---|
+| Aktiver Quelltext gegen `saptasks/zzprdat/produktiv/` (Gross-/Kleinschreibung und Leerzeilen normalisiert) | `Z_ZZPRDAT_SET` (`LZPP_ZZPRDATU01`), `BEFORE_UPDATE` (`CM008`), `AT_RELEASE` (`CM009`) und `Z_ZZPRDAT_CHECK` identisch. `AT_SAVE` (`CM003`) ist in beiden Fassungen leer; nur der Erklaerkommentar steht allein im Repo |
+| Letzte Aenderung laut `TRDIR` | alle ZZPRDAT-Includes spaetestens 07.09.2026, alle durch `KOI` |
+| BAdI-Implementierung `Z_ZZPRDAT_UPDATE` (`SXC_ATTR`) | aktiv, Aktivierung 07.09.2026 |
+| Transporte (`E070`) | `T76K912490` und `T76K912491` Status `D`, nicht freigegeben |
+| Weitere Transporte mit ZZPRDAT-Objekten (`E071`) | keine |
+
+**Nach dem 07.09. haben Fachbenutzer in T76 eigene Fertigungsauftraege angelegt.** Sie stehen
+in keiner frueheren Notiz. Werte direkt aus `AUFK`/`AFKO`, Stand 26.10.2026:
+
+| Auftrag | Art | Angelegt von / am | Freigabe (`FTRMI`) | Eckendtermin heute (`GLTRP`) | `ZZPRDAT` |
+|---|---|---|---|---|---|
+| 1241831 | PP22 | TAN, 08.09. | keine | 24.09.2026 | leer |
+| 1241832 | PP22 | TAN, 08.09. | 08.09. | 11.09.2026 | 11.09.2026 |
+| 1241840 | PP22 | TAN, 09.09. | 09.09. | 10.09.2026 | 10.09.2026 |
+| 1241841 | PP21 | TAN, 10.09. | keine | 24.04.2026 | leer |
+| 1241842 | PP22 | TAN, 10.09. | 10.09. | 30.04.2026 | 22.05.2026 |
+| 1241843 | PP22 | TAN, 14.09. | 14.09. | 18.09.2026 | 18.09.2026 |
+| 1241844 | PP21 | FPA, 23.09. | 23.09. | 12.10.2026 | 12.10.2026 |
+
+Das Bild passt zum Sollverhalten: nicht freigegebene Auftraege bleiben leer, freigegebene
+tragen ein Datum. Bei 1241842 weicht das Datum vom heutigen Eckendtermin ab; das ist mit
+einer Terminverschiebung nach der Freigabe vereinbar (Write-once). **Nicht geprueft** ist,
+ob es wirklich so ablief: Die Aenderungsbelege (`CDHDR`/`CDPOS`) wurden nicht gelesen, und
+mit TAN und FPA ist nicht gesprochen worden. Wer die Benutzer sind, ist hier nicht belegt.
+
+Ergebnis des Abnahmetests selbst: noch nicht eingetragen.
 
 ## 7. Risiko im Produktivsystem und wie man es begrenzt
 
