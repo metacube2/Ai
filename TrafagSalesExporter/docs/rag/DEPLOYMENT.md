@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-26 14:38)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-27 08:26)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,7 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-10-27 08:26, Spend-Aufriss Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“ (`c3147e1`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel, letzte 22.10.), Suite 1290/1290, DLL `08:26:53`, `app_offline.htm` entfernt, HTTPS antwortet 401 (Anmeldung). Im Browser noch nicht angesehen.
 - **Deploy 2026-10-26 14:38, Spend-Aufriss Disponent (DISPOKENNZ wie ZC23) und Disponent Verwendung (ZLO03) (`bddf9f9`).** Von Ingo per `!` gestartet (Auto-Modus blockte), nach dem Einkauf-Delta. Keine Sicherung (Wochenregel), Suite 1289/1289, DLL `14:38:21`, `app_offline.htm` entfernt, HTTPS antwortet 401 (Anmeldung). Im Browser noch nicht angesehen.
 - **Deploy 2026-10-26 09:39, Produktgruppe aus eigenem Disponenten wie ZM_OFFENE_KDAUF (`0dc3c68`).** Kein Einkauf-Lauf aktiv
   (den Delta, der die neue Spalte `MarcDispo` fuellt, startete Ingo danach von Hand; bis zu dessen Ende steht alles unter „ohne Produktgruppe“, Ergebnis auf Wunsch Ingo nicht nachgeprueft), keine Sicherung
