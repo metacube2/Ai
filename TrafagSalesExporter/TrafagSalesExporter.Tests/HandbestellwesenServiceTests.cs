@@ -80,13 +80,36 @@ public sealed class HandbestellwesenServiceTests : IDisposable
         var abc = await Wer("abc");
         var ohne = await Assert.ThrowsAsync<HbException>(() => _hb.AnlegenAsync(abc, Eingabe("875", 600m)));
         Assert.Contains("über Ihrer Berechtigung", ohne.Message);
-        // kln hat nur 800, darf 900 nicht freigeben; we sitzt auf einer anderen Kostenstelle.
+        // kln hat nur 800, darf 900 nicht freigeben; we hat Limit 0 (Kostenstellen-Regel: siehe Test Freigabe_Wie_Php...).
         await Assert.ThrowsAsync<HbException>(() => _hb.AnlegenAsync(abc, Eingabe("875", 900m, "kln")));
         await Assert.ThrowsAsync<HbException>(() => _hb.AnlegenAsync(abc, Eingabe("875", 900m, "we")));
 
         var ok = await _hb.AnlegenAsync(abc, Eingabe("875", 900m, "chf"));
         Assert.Equal(HbStatus.FreigabeOffen, ok.Status);
         Assert.Equal("chf", ok.FreigeberKurzzeichen);
+    }
+
+    [Fact]
+    public async Task Freigabe_Wie_Php_Jede_Kostenstelle_Umschaltbar_Auf_Gleiche_Kostenstelle()
+    {
+        // Entscheid Ingo 2026-10-27: Standard wie PHP; die strenge Regel ist per Einstellung zuschaltbar.
+        using (var db = _factory.CreateDbContext())
+        {
+            db.Mitarbeiter.Add(new HbMitarbeiter { Kurzzeichen = "fin", Nachname = "Finanz", Konto = "fin", Limit = 20000m, Kostenstelle = "" });
+            db.SaveChanges();
+        }
+        var abc = await Wer("abc");
+
+        var freigeber = await _hb.FreigeberAsync("875", 900m, "abc");
+        Assert.Equal(["chf", "fin"], freigeber.Select(x => x.Kurzzeichen));
+        var b = await _hb.AnlegenAsync(abc, Eingabe("875", 900m, "fin"));
+        Assert.Equal(HbStatus.FreigabeOffen, b.Status);
+        Assert.Equal("fin", b.FreigeberKurzzeichen);
+
+        var streng = new HbService(_factory, new OptionsMonitorStub(new HbOptions { DatabasePath = _pfad, AdminUsers = ["admin"], FreigabeNurGleicheKostenstelle = true }),
+            new FesteZeit(new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero)));
+        Assert.Equal(["chf"], (await streng.FreigeberAsync("875", 900m, "abc")).Select(x => x.Kurzzeichen));
+        await Assert.ThrowsAsync<HbException>(() => streng.AnlegenAsync(abc, Eingabe("875", 900m, "fin")));
     }
 
     [Fact]

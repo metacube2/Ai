@@ -378,7 +378,7 @@
                                 <option value="">Berechtigte Person</option>
                                 @foreach (var f in _freigeber) { <option value="@f.Kurzzeichen">@f.Kurzzeichen - @f.Name</option> }
                             </select>
-                            @if (_freigeber.Count == 0) { <div class="hb-rot">Für diese Kostenstelle ist niemand mit genügend Berechtigung erfasst.</div> }
+                            @if (_freigeber.Count == 0) { <div class="hb-rot">@(Options.CurrentValue.FreigabeNurGleicheKostenstelle ? "Für diese Kostenstelle ist niemand mit genügend Berechtigung erfasst." : "Niemand mit genügend Berechtigung erfasst.")</div> }
                         }
 
                         <select class="hb-feld" @bind="_e.Sachkonto">

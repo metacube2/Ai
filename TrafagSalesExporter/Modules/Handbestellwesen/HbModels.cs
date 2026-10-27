@@ -18,6 +18,10 @@ public sealed class HbOptions
 
     /// <summary>Tagesbackups so viele Tage behalten.</summary>
     public int BackupKeepDays { get; set; } = 60;
+
+    /// <summary>Freigabe ueber dem Limit (Entscheid Ingo 2026-10-27): aus = wie PHP, jede aktive Person mit genuegend
+    /// Limit darf freigeben; an = nur Personen derselben Kostenstelle (setzt gepflegte Kostenstellen voraus).</summary>
+    public bool FreigabeNurGleicheKostenstelle { get; set; }
 }
 
 public enum HbStatus

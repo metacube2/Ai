@@ -88,12 +88,17 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         return await db.Sachkonten.AsNoTracking().OrderBy(x => x.Nr).ToListAsync();
     }
 
-    /// <summary>Personen, die fuer diese Kostenstelle diesen Betrag freigeben duerfen (checkberechtigung.php).</summary>
+    /// <summary>Personen, die diesen Betrag freigeben duerfen. Standard wie PHP: jede aktive Person mit genuegend Limit,
+    /// dieselbe Kostenstelle zuerst. Mit <see cref="HbOptions.FreigabeNurGleicheKostenstelle"/> nur dieselbe Kostenstelle
+    /// (checkberechtigung.php). Entscheid Ingo 2026-10-27: 929 von 1'032 Bestellungen der letzten 12 Monate haetten mit der
+    /// strengen Regel keinen Freigeber gefunden, weil nur 12 von 109 Mitarbeitenden eine Kostenstelle haben.</summary>
     public async Task<List<HbMitarbeiter>> FreigeberAsync(string kostenstelle, decimal bestellwert, string? ohneKurzzeichen = null)
     {
+        var nurGleiche = options.CurrentValue.FreigabeNurGleicheKostenstelle;
         var alle = await MitarbeiterAsync();
-        return alle.Where(x => x.Aktiv && x.Kostenstelle == kostenstelle && x.Limit >= bestellwert &&
+        return alle.Where(x => x.Aktiv && x.Limit >= bestellwert && (!nurGleiche || x.Kostenstelle == kostenstelle) &&
                                !string.Equals(x.Kurzzeichen, ohneKurzzeichen, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.Kostenstelle == kostenstelle ? 0 : 1)
             .ToList();
     }
 
