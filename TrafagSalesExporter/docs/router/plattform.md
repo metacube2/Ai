@@ -1,6 +1,6 @@
 # Unterrouter Plattform
 
-Zurueck: `router.md`. Stand: 2026-10-14.
+Zurueck: `router.md`. Stand: 2026-10-27 (Architektur mit Gesamtlandkarte); davor 2026-10-14.
 
 Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen,
 Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
@@ -13,7 +13,7 @@ Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
 | **Verfahren, Deploy-Konsole, die vier Fallen** | `docs/DEPLOYMENT.md` |
 | **Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, `/einkauf` 100 s, Management-Cockpit 41 s (Wechselkurse je Zeile per SQL)** | `docs/PLATTFORM_TEMPO_2026-09-28.md` |
 | **NuGet-Sicherheitsbefund und Updatepfad** | `docs/NUGET_SICHERHEIT_2026-09-01.md` |
-| Architektur, Kurzstand | `docs/rag/ARCHITECTURE.md` |
+| Architektur, Kurzstand; seit 2026-10-27 mit Gesamtlandkarte aller gebauten Loesungen (Quelle, Anbindung, Daten, Modul, Nutzung) | `docs/rag/ARCHITECTURE.md`, interaktiv `docs/LOESUNGSLANDKARTE_2026-10-27.html` |
 | Admin-Bereich, Kurzstand | `docs/rag/ADMIN.md` |
 | Admin-Bereich und Startseite | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` |
 | Zusammenfuehrung der Admin-Menues | `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` |

@@ -1,0 +1,245 @@
+<title>Trafag Lösungslandkarte</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: Fluss von links nach rechts in fünf Spalten (Quelle → Anbindung → Daten & Regeln → Modul → Nutzung), darunter SAP-Eigenentwicklungen und Werkzeuge; Klick zeigt die Zusammenhänge als Linien */
+:root{
+  --bg:#f6f4f2; --panel:#ffffff; --fg:#1f1d1c; --muted:#6b6560; --line:#ddd6d0;
+  --accent:#c8501e; --accent-soft:#f3dccf;
+  --c-fin:#2f6f8f; --c-eink:#4f7d3a; --c-hr:#8a4f8f; --c-ops:#b07a12; --c-plat:#5a6270; --c-sap:#1f5fa8;
+  --f-disp:"Archivo",system-ui,sans-serif; --f-body:"Source Sans 3",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17181a; --panel:#212225; --fg:#ece8e4; --muted:#a39c95; --line:#36373b;
+  --accent:#f08a4b; --accent-soft:#3d2a20;
+  --c-fin:#6fb3d4; --c-eink:#8fc46f; --c-hr:#c98fce; --c-ops:#e0b04a; --c-plat:#a3abb8; --c-sap:#78aef0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17181a; --panel:#212225; --fg:#ece8e4; --muted:#a39c95; --line:#36373b;
+  --accent:#f08a4b; --accent-soft:#3d2a20;
+  --c-fin:#6fb3d4; --c-eink:#8fc46f; --c-hr:#c98fce; --c-ops:#e0b04a; --c-plat:#a3abb8; --c-sap:#78aef0; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1500px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.6rem,3vw,2.3rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);max-width:62ch;margin:6px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:600 12px var(--f-body);letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:5px 10px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip[aria-pressed="true"]{border-color:var(--fg)}
+.chip:focus-visible,.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.map{position:relative}
+svg#wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.cols{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;position:relative}
+.col h2,.band h2{font:700 11px var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;gap:8px;align-items:baseline}
+.col h2 b{color:var(--accent);font-family:var(--f-mono);font-weight:400}
+.stack{display:flex;flex-direction:column;gap:7px}
+.node{position:relative;z-index:1;text-align:left;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--k);border-radius:6px;padding:7px 9px;cursor:pointer;color:var(--fg);font:inherit;width:100%;transition:opacity .15s,border-color .15s}
+.node .t{font-weight:600;font-size:13.5px;line-height:1.25;display:block}
+.node .d{font-size:12px;color:var(--muted);display:block;margin-top:2px}
+.dim .node{opacity:.28}
+.dim .node.on{opacity:1}
+.node.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.bands{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-top:22px}
+.band .stack{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px}
+.detail{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px}
+.detail h3{font:800 1.25rem var(--f-disp);margin:0 0 4px}
+.detail .kind{font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.detail p{margin:8px 0;max-width:68ch}
+.detail code{font:12px var(--f-mono);background:var(--accent-soft);padding:1px 5px;border-radius:3px;word-break:break-word}
+.rel h4{font:700 11px var(--f-disp);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.rel ul{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:5px}
+.rel button{font:13px var(--f-body);background:transparent;border:1px solid var(--line);border-left:3px solid var(--k);color:var(--fg);border-radius:4px;padding:3px 8px;cursor:pointer}
+.foot{color:var(--muted);font-size:12.5px;margin-top:16px;max-width:90ch}
+.wire{fill:none;stroke-width:1.6}
+@media (max-width:1100px){.cols{grid-template-columns:repeat(3,minmax(0,1fr))}.bands{grid-template-columns:1fr}}
+@media (max-width:700px){.cols{grid-template-columns:minmax(0,1fr)}svg#wires{display:none}.detail{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.node{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Lösungs<span>landkarte</span> Trafag</h1>
+      <p class="sub">Alles, was rund um das BI-Dashboard gebaut wurde, vom Quellsystem bis zur Person, die die Zahl liest. Eine Kachel anklicken zeigt, woher sie Daten bekommt und wohin sie liefert.</p>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Bereich filtern"></div>
+  </header>
+
+  <div class="map" id="map">
+    <svg id="wires" aria-hidden="true"></svg>
+    <div class="cols" id="cols"></div>
+    <div class="bands" id="bands"></div>
+  </div>
+
+  <section class="detail" id="detail" aria-live="polite"></section>
+  <p class="foot">Quelle: <code>router.md</code>, Unterrouter unter <code>docs/router/</code> und <code>docs/rag/ARCHITECTURE.md</code>, Stand 27.10.2026. Die Karte zeigt die fachlichen Zusammenhänge, keine vollständige Klassenliste. Transporte und Detailstände stehen in den genannten Dateien.</p>
+</div>
+
+<script>
+const AREAS={fin:["Finance","--c-fin"],eink:["Einkauf & Logistik","--c-eink"],hr:["HR","--c-hr"],ops:["Operations","--c-ops"],plat:["Plattform","--c-plat"],sap:["SAP","--c-sap"]};
+const COLS=[["src","Quellsysteme"],["in","Anbindung"],["data","Daten & Regeln"],["mod","Module im Dashboard"],["use","Nutzung & Ausgabe"]];
+const BANDS=[["sapdev","SAP-Eigenentwicklungen (T76 → P76)"],["tool","Werkzeuge für Bau und Betrieb"]];
+// id, Spalte, Bereich, Titel, Kurztext, Beschreibung, Doku
+const N=[
+["p76","src","sap","SAP P76","Produktion, Gateway auf travp762","Das führende ERP der Trafag AG. Das Dashboard liest ausschliesslich über OData-Sets; RFC und SapProbe laufen gegen trasp76s, das Testsystem ist T76.","saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md"],
+["b1","src","fin","SAP B1 / HANA","CH/AT-Nebenstandorte und B1-Länder","Quellsysteme der B1-Länder mit eigenen Feldern, Credentials und Firewallregeln.","docs/QUELLSYSTEME_SAP_B1.md"],
+["sage","src","fin","Sage Spanien","Export mit Buchungsdatum","Spanischer Standort, Export per eigener SQL und rclone; PostingDate seit 26.08. entschieden.","docs/STANDORT_ES_SAGE.md"],
+["alpha","src","fin","Alphaplan Deutschland","CSV-Paar Rechnungskopf/-zeilen","Deutscher Standort, Delta-Export per PowerShell als ZIP; Bahnmarkt-Belege werden nachgezogen.","docs/STANDORT_DE_ALPHAPLAN.md"],
+["xls","src","fin","Excel UK, IT, IN","manuelle Lieferungen","Standorte ohne direkte Anbindung liefern Dateien; Sonderregeln je Land (UK Zeilenwert, IN Sales Type, IT Prüfpfad).","docs/rag/MANUAL_IMPORT.md"],
+["ad","src","plat","Active Directory","Konten, Computer, OUs, GPO, DNS","Liefert Anzeigenamen für Forum und Projekte, die Kontoprüfung im Handbestellwesen und den Netzwerk-Reiter. Nie Geheimnisse, nie mit Anmeldedaten scannen.","docs/NETZWERK_2026-10-02.md"],
+["ext","src","fin","Externe Wirtschaftsdaten","GDELT, FRED, Eurostat, IMF, EZB","Offene Quellen ohne Anmeldung für die Weltlage; nicht erreichbar heisst „Firewall blockiert“.","docs/WELTLAGE_2026-10-05.md"],
+["fabio","src","ops","Fabios Konfigurationspakete","Feld-Mapping Shopfloor","Excel- und JSON-Pakete für Feld-Mapping, Abteilung je Disponent und Forecast-Präfixe; vor dem Einspielen gegen den C#-Port prüfen.","docs/SHOPFLOOR_2026-10-07.md"],
+
+["gwEink","in","eink","ZPOWERBI_EINKAUF_SRV","EKPO, Kontrakte (EKAB), MatLz, Produktgruppen","Gateway-Service für Bestellungen, Mengenkontrakte wie ME3L, LZ-/Sortimentscode und Produktgruppen (ZDISPO). Wird auch von Power BI gelesen.","docs/rag/PURCHASING.md"],
+["gwHr","in","hr","HrKpiSet, HrAbsenzSet","Personal und Absenzen je Fall","Tagesabruf mit eigenem Fälligkeitsstempel je Datei; nach Deploy startet der Abruf neu.","docs/HR_KPI.md"],
+["gwJour","in","fin","Journal-Set CH/AT","Hauptbuch für Finance_All","Hauptbuchzeilen für die Konsolidierung, Fälligkeitsdatum vorbereitet; Konzernkonto-Mapping offen.","docs/FINANCE_JOURNAL.md"],
+["gwLog","in","eink","LogTaSet, LogLiefSet, LogRueckSet","Kommissionierung live","Abruf nur bei offener Seite und mit Schutz für P76; Einwand Serverlast durch Polling offen.","docs/LOGISTIK_LIVE_2026-10-01.md"],
+["gwShop","in","ops","Shop-Sets","ZD05, Aufträge, RM-Mengen, Istende","ShopZd05Set, ShopAufSet, ShopRmSet (ZC27-Logik) und ShopProdSet; Abgleich 04:00 und 12:45 auf den Produktionstag.","docs/SHOPFLOOR_2026-10-07.md"],
+["gwCds","in","ops","CDS-Services Liefertreue","OTD, OTIF, OTP","Spezifikation Fabio vom 14.10.; Fehler werden mit SAP-Meldungstext gezeigt.","docs/OPERATIONS_KPI_2026-10-14.md"],
+["export","in","fin","Exportpakete ES und DE","eigene SQL, PowerShell, rclone","Die Queries sind unsere: bevor ein Standort um Pflege gebeten wird, zuerst prüfen, ob die Export-SQL das Feld nur nicht liest.","AlphaplanExportPackage/, SageSpainExportPackage/"],
+["import","in","fin","Manual Import","ZIP, CSV, Excel mit Dedupe","Import der Dateilieferungen mit Dublettenprüfung und Betriebsfallen je Land.","docs/rag/MANUAL_IMPORT.md"],
+["orch","in","plat","Export-Orchestrierung","TimerBackgroundService","Zeitgesteuerte Läufe, die alle Länder in die zentrale Tabelle laden und die Excel-Dateien erzeugen.","docs/rag/ARCHITECTURE.md"],
+["worldsvc","in","fin","WorldDataService","Hintergrunddienst Weltlage","Holt die externen Reihen in eigene Tabellen World*; läuft nur in Produktion.","docs/WELTLAGE_2026-10-05.md"],
+["probe","in","plat","NetworkProbeService","alle 5 Minuten, feste Zielliste","Prüft Verfügbarkeit und schreibt täglich einen AD-Schnappschuss; keine Scans.","docs/NETZWERK_2026-10-02.md"],
+
+["central","data","fin","CentralSalesRecords","zentrale Verkaufszeilen","Gemeinsame Basis für Finance, Verkauf und Excel; rund 84'000 Zeilen, wächst täglich. Liegt in trafag_exporter.db auf dem Server.","docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md"],
+["rules","data","fin","FinanceRuleEngine","Intercompany, Filter, Marge","Dieselbe Regelengine für Cockpit und zentrale Excel, damit GUI und Datei übereinstimmen.","docs/rag/FINANCE_FORMELN.md"],
+["fx","data","fin","Kurstabelle","Kursprofile, Budget 2026, EZB","Umrechnung in CHF nach Kursprofil (z. B. CurrentDailyRate); nie aus dem Methodennamen ableiten.","docs/FINANCE_KURS_WORKFLOW_2026-06-09.md"],
+["cost","data","fin","Standardkosten & Supplier","Konzernkosten TR AG/IT/IN","Kostenbasis, Supplier-Klassifikation, Länderstatus, CH-Werkstamm-Fallback; Kaskade nach erster interner Stufe geschnitten (Entscheid Andreas 09.09.).","docs/FINANCE_STANDARDKOSTEN.md"],
+["sparten","data","sap","Produktsparten-Mapping","eigene Mapping-Schicht","Sparten aus der SAP-Referenz als flache Tabelle, nicht als versteckte Finance-Regel.","docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md"],
+["einkcache","data","eink","Einkaufscache","Bestellungen, Lagerwert, Produktgruppen","Delta-Lauf rund 45 bis 55 Minuten; vor jedem Deploy prüfen, ob er läuft.","docs/PURCHASING_DASHBOARD_2026-06-05.md"],
+["bom","data","eink","Stücklistenanalyse","Vererbung, LZ-Code, Risiko","BomInheritanceService und LZ-Cache aus dem ZLO03-Webservice; Grundlage für Verwendung & Risiko und das Gehirn.","docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md"],
+["hrdata","data","hr","HR-Datenordner","Tagesdateien je Set","Abgelegte Abrufe aus HrKpiSet und HrAbsenzSet, Grundlage des HR-KPI-Builders.","docs/rag/HR_KPI.md"],
+["shopdb","data","ops","shopfloor.db","eigene SQLite, kpi_snapshot","Tagessätze je Bereich, Liefertreue-Schnappschüsse und Ausschlüsse.","docs/SHOPFLOOR_2026-10-07.md"],
+["appdb","data","plat","App-Tabellen","World*, Network*, Pm*, Forum*, Usage*","Eigene Tabellen der Plattformmodule in trafag_exporter.db, angelegt über Schema-SQL.","docs/rag/ARCHITECTURE.md"],
+["handdb","data","eink","Handbestellwesen-Stamm","Mitarbeitende AD und Altbestand","Spalte AusAd unterscheidet AD-Einträge (gesperrt) vom pflegbaren Altbestand; neue nur aus dem AD.","docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md"],
+
+["mFin","mod","fin","Finance Cockpit","Management Analyse, Soll/Ist, Gruppenmarge","Hinter dem Finance-Passwort; Tabs je Land stimmen mit Sales_All überein.","docs/rag/FINANCE.md"],
+["mCtrl","mod","fin","Controlling","Umsatzbrücke, Hochrechnung","Unterreiter ohne Passwort, Eigeninitiative; offene Fragen auf der Seite.","docs/CONTROLLING_2026-10-05.md"],
+["mMarkt","mod","fin","Marktsegmente & Railway","Bahnmarkt, Marktumfrage","Segmentzuordnung mit Railway-Export per Mausklick.","docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md"],
+["mVerk","mod","fin","Verkauf","Kunden, Rückgang, Prognose, Interaktiv","SalesDataService baut Verkaufszeilen in CHF; ohne Marge und ohne Verkäuferauswertung.","docs/VERKAUF_2026-10-02.md"],
+["mWelt","mod","fin","Weltlage","Radar je Abteilung, Länder, Rohstoffe","Verknüpft externe Reihen mit Verkauf, Einkaufscache und Kursen; unter Finance Cockpit.","docs/WELTLAGE_2026-10-05.md"],
+["mEink","mod","eink","Einkauf","Spend, Kontrakte, Lagerwert, ABC/XYZ","Spend-Aufriss ungedeckelt (NoCap), Produktgruppen direkt aus SAP; bis 28.10. stabilisieren, nichts Neues.","docs/rag/PURCHASING.md"],
+["mEinkI","mod","eink","Einkauf Interaktiv","neun animierte Ansichten","Bestellpositionen als SalesFact in den Verkauf-Ansichten.","docs/rag/ARCHITECTURE.md"],
+["mSupply","mod","eink","Supply Chain","Fehlteile, Deckung, Lieferperformance","Reiter auf dem Einkaufscache, mit Zeitfenster für Überfälliges.","docs/router/einkauf.md"],
+["mRisk","mod","eink","Verwendung & Risiko","mit Stücklisten-Gehirn (WebGL)","Mehrstufige Verwendung der LZ-Komponenten und vererbtes Lieferantenrisiko; three.js-Netz zuoberst im Spend-Aufriss.","docs/LOGISTIK_STUECKLISTE_VERWENDUNG_RISIKO_2026-10-01.md"],
+["mLog","mod","eink","Logistik live","Kommissionierung, 3D-Lagerplätze","Live-Abruf aus SAP nur bei offener Seite.","docs/LOGISTIK_LIVE_2026-10-01.md"],
+["mHand","mod","eink","Handbestellwesen","Ablösung der PHP-Anwendung","Modul im Dashboard mit Oberfläche wie im PHP, Freigabelogik gegen echte Stammdaten geprüft.","docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md"],
+["mHr","mod","hr","HR-KPI-Cockpit","Fluktuation, Absenzen","Hinter eigenem HR-Zugang; Schweizer Praxis geprüft.","docs/rag/HR_KPI.md"],
+["mShop","mod","ops","Operations Shopfloor","PPA-Shopfloor im Cockpit","Statische JS-Oberfläche mit C#-Backend, offen für alle seit 16.10.","docs/SHOPFLOOR_2026-10-07.md"],
+["mKpi","mod","ops","Operations KPI","Liefertreue der Trafag AG","OTD, OTIF und OTP mit Ausschlüssen.","docs/OPERATIONS_KPI_2026-10-14.md"],
+["mNet","mod","plat","Netzwerk","Netzkarte, AD, GPO, Migration","Verfügbarkeit, AD-Infrastruktur, Migrationswellen und Bericht.","docs/NETZWERK_2026-10-02.md"],
+["mProj","mod","plat","Trafag Projekte","Projektverwaltung wie Jira/Trello","Ersetzt die Poor Man's Suite; für alle freigegeben am 09.10. (Entscheid Ingo).","docs/TRAFAG_PROJEKTE_2026-10-09.md"],
+["mForum","mod","plat","Trafag Reddit","internes Forum","Autor ist der Windows-Login mit AD-Anzeigenamen.","docs/TRAFAG_REDDIT_2026-10-09.md"],
+["mHb","mod","plat","Benutzerhandbuch","Reiter und Word im Trafag-CI","Kapitel unter wwwroot/handbuch/kapitel, Word über Tools/HandbuchDocx.","docs/handbuch/README.md"],
+["mAdmin","mod","plat","Admin & Startseite","Nutzung, Menü, Standortgrafik","Anonyme Nutzungsmessung, Menüstruktur, Schalter in der DB statt appsettings.","docs/rag/ADMIN.md"],
+
+["uFin","use","fin","Finance (Andreas)","Prüfung, Konsolidierung","Sieht vor allem Sales_All; entscheidet Fachfragen wie Kostenkaskade und Buchungsdatum.","docs/FINANCE_ENTSCHEIDE.md"],
+["xlsOut","use","fin","Excel-Ausgaben","Sales_All, Finance_All, Nachweis","Dieselben Regeln wie das Cockpit; Sales_All enthält keine Cost Source und keinen Status.","docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md"],
+["pbi","use","eink","Power BI","liest ZPOWERBI_EINKAUF und _KDAUF","Bestehende Power-BI-Berichte lesen direkt aus SAP, nicht aus dem Dashboard.","docs/PURCHASING_DASHBOARD_2026-06-05.md"],
+["uEink","use","eink","Einkauf & Disposition","Armin, Erich, Sandro, Marco","Fachnutzer für Spend, Lagerwert, Produktgruppen und Handbestellungen.","docs/router/einkauf.md"],
+["uHr","use","hr","HR","Personalkennzahlen","Nutzt das HR-KPI-Cockpit und die Anwenderdoku.","docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx"],
+["uOps","use","ops","Produktion (Fabio)","Shopfloor, Liefertreue","Liefert Spezifikationen und Mapping, nutzt Shopfloor und KPI.","docs/OPERATIONS_KPI_2026-10-14.md"],
+["uIt","use","plat","IT und Netz","Verfügbarkeit, AD-Altlasten","Netzwerk-Reiter und Migrationsbericht.","docs/NETZWERK_2026-10-02.md"],
+["uAll","use","plat","Alle Mitarbeitenden","Projekte, Forum, Handbuch","Offene Bereiche des Dashboards.","docs/rag/ADMIN.md"],
+["uMgmt","use","plat","Geschäftsleitung","Management-Flughöhe, Wochen-Todo","Interims-Vorgesetzter seit 09/2026 mit HERMES-Sicht in Wochen_Todo.xlsx.","projektmanagement/Wochen_Todo.tsv"],
+
+["zlo03","sapdev","sap","ZLO03 / Z_ZLO03_TURBO2","Stücklistenanalyse, Webservice ZM_LZCODE20_OPT","Top-Down und Bottom-Up, FIX 12 (Textpositionen), FIX 19 (RoHS, REACH, SVHC, PFAS), FIX 20 (Download als .txt).","docs/abap/README_LZCODE_WEBSERVICE.md"],
+["zc23","sapdev","sap","ZC23 Materialanteil & Arbeit CZ","mit Fiori-App ZC23","Neue Spalten aus ZM03-Logik, seit 16.10. in P76; Fiori-App mit Zc23Set für offene Kundenaufträge.","saptasks/fiori_zc23/NOTES.md"],
+["kdauf","sapdev","sap","ZM_OFFENE_KDAUF_OPT","1/35 bis 1/50 der Laufzeit","Beschleunigte Fassung mit Parallelbaustein; schreibt ZPOWERBI_KDAUF fort.","saptasks/zm_offene_kdauf/NOTES.md"],
+["fauf","sapdev","sap","ZM_OFFENE_FAUF","Bedarfsverursacher mit Werk","Pegging standardmässig sichtbar, Layout / P00 TX.","docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md"],
+["zzprdat","sapdev","sap","ZZPRDAT","Transport T76K912490, Abnahme offen","Lösungsdokument mit Testfällen für den Fachbereich.","saptasks/zzprdat-kontext.md"],
+["ppwr","sapdev","sap","PPWR / Stoffcompliance","Klasse Z_PACK_REGULATION","Merkmale für Verpackung und Stoffe, Mandant 100; speist die Compliance-Spalten in ZLO03.","docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md"],
+["zgw","sapdev","sap","Gateway-Klassen (SEGW)","MPC/DPC für alle Sets","Eigene GET_ENTITYSET-Umsetzungen; nach Modelländerung beide Caches leeren.","docs/router/sap.md"],
+["zrl2","sapdev","sap","Konditionsart ZRL2","Mengenrabatt Lieferant AT","Customizing mit Mandantenfalle.","docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md"],
+
+["deploy","tool","plat","DeployHeadless & Monitor","Release-Worktree, SHA-Vergleich","Deploy nur als eigener Bash-Aufruf; DB-Sicherung wöchentlich; vorher Einkauf-Delta prüfen.","docs/rag/DEPLOYMENT.md"],
+["sapprobe","tool","sap","SapProbe & GUI-Skripte","lesen, schreiben, aktivieren","RFC-Lesewerkzeug und VBS-Skripte; Sitzung immer über Id und SystemName wählen.","saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md"],
+["qdrant","tool","plat","Qdrant-Dokusuche","qdrant-find über alle .md","Nach Doku-Commits neu indexieren.","Tools/Qdrant/README.md"],
+["todo","tool","plat","Wochen_Todo-Generator","TSV → XLSX mit HERMES-Sicht","Über uv-Cache-Python; Blatt Zusammenfassung von Hand nachführen.","projektmanagement/Wochen_Todo.tsv"],
+["hbgen","tool","plat","HandbuchDocx & Grafik","Word im Trafag-CI","Baut aus denselben Kapiteln die Word-Datei und die Prozessgrafiken.","docs/handbuch/README.md"]
+];
+// [von, nach, Bezeichnung]
+const E=[
+["p76","gwEink"],["p76","gwHr"],["p76","gwJour"],["p76","gwLog"],["p76","gwShop"],["p76","gwCds"],
+["b1","orch","HANA/B1-Leser"],["sage","export"],["alpha","export"],["xls","import"],["export","import","ZIP/CSV"],["import","orch"],
+["orch","central"],["central","rules"],["fx","rules"],["cost","rules"],["sparten","rules"],
+["rules","mFin"],["rules","mCtrl"],["rules","mMarkt"],["rules","mVerk"],["rules","xlsOut"],["gwJour","xlsOut","Finance_All"],
+["mFin","uFin"],["xlsOut","uFin"],["mCtrl","uFin"],["mMarkt","uFin"],["mFin","uMgmt"],["mVerk","uMgmt"],
+["ext","worldsvc"],["worldsvc","appdb"],["appdb","mWelt"],["mVerk","mWelt"],["fx","mWelt"],["einkcache","mWelt"],["mWelt","uMgmt"],
+["gwEink","einkcache"],["einkcache","mEink"],["einkcache","mEinkI"],["einkcache","mSupply"],["einkcache","bom"],["bom","mRisk"],
+["mEink","uEink"],["mSupply","uEink"],["mRisk","uEink"],["mEinkI","uEink"],["gwEink","pbi"],
+["gwLog","mLog"],["mLog","uEink"],
+["ad","handdb","Kontoprüfung"],["handdb","mHand"],["mHand","uEink"],
+["gwHr","hrdata"],["hrdata","mHr"],["mHr","uHr"],
+["gwShop","shopdb"],["gwCds","shopdb"],["fabio","shopdb","Mapping"],["shopdb","mShop"],["shopdb","mKpi"],["mShop","uOps"],["mKpi","uOps"],
+["ad","probe"],["probe","appdb"],["appdb","mNet"],["mNet","uIt"],
+["ad","mForum","Anzeigename"],["appdb","mForum"],["appdb","mProj"],["mForum","uAll"],["mProj","uAll"],["mHb","uAll"],["appdb","mAdmin"],["central","mAdmin","Standortgrafik"],
+["zlo03","bom","LZ-Webservice"],["ppwr","zlo03","FIX 19"],["zc23","gwShop","ZC27-Logik"],["kdauf","pbi","ZPOWERBI_KDAUF"],["zgw","gwEink"],["zgw","gwHr"],["zgw","gwLog"],["zgw","gwShop"],["zgw","gwJour"],["zgw","p76"],
+["zc23","uEink"],["fauf","uEink"],["zzprdat","p76"],["zrl2","p76"],["sparten","zgw","Referenz-Set"],
+["deploy","mAdmin","Server"],["sapprobe","zgw"],["sapprobe","zlo03"],["hbgen","mHb"],["todo","uMgmt"],["qdrant","mHb","Doku"]
+];
+
+const byId=Object.fromEntries(N.map(n=>[n[0],n]));
+const adj={};N.forEach(n=>adj[n[0]]=[]);
+E.forEach(([a,b,l])=>{adj[a].push({id:b,dir:"out",l});adj[b].push({id:a,dir:"in",l});});
+let sel="p76", area=null;
+
+const cols=document.getElementById("cols"), bands=document.getElementById("bands"), svg=document.getElementById("wires"), map=document.getElementById("map");
+function nodeBtn(n){const b=document.createElement("button");b.className="node";b.id="n-"+n[0];b.style.setProperty("--k",`var(${AREAS[n[2]][1]})`);
+  b.innerHTML=`<span class="t"></span><span class="d"></span>`;b.querySelector(".t").textContent=n[3];b.querySelector(".d").textContent=n[4];
+  b.addEventListener("click",()=>select(n[0]));return b;}
+COLS.forEach(([k,label],i)=>{const c=document.createElement("div");c.className="col";c.innerHTML=`<h2><b>${i+1}</b><span>${label}</span></h2><div class="stack"></div>`;
+  N.filter(n=>n[1]===k).forEach(n=>c.querySelector(".stack").appendChild(nodeBtn(n)));cols.appendChild(c);});
+BANDS.forEach(([k,label])=>{const c=document.createElement("div");c.className="band";c.innerHTML=`<h2>${label}</h2><div class="stack"></div>`;
+  N.filter(n=>n[1]===k).forEach(n=>c.querySelector(".stack").appendChild(nodeBtn(n)));bands.appendChild(c);});
+
+const chips=document.getElementById("chips");
+function chip(key,label,color){const b=document.createElement("button");b.className="chip";b.setAttribute("aria-pressed",String(area===key));
+  b.innerHTML=color?`<i style="background:var(${color})"></i>`:"";b.append(label);b.addEventListener("click",()=>{area=area===key?null:key;renderChips();applyDim();});return b;}
+function renderChips(){chips.innerHTML="";chips.appendChild(chip(null,"Alle"));Object.entries(AREAS).forEach(([k,[l,c]])=>chips.appendChild(chip(k,l,c)));}
+
+function select(id){sel=id;applyDim();renderDetail();}
+function applyDim(){
+  const on=new Set();
+  if(area){N.forEach(n=>{if(n[2]===area)on.add(n[0]);});}
+  else{on.add(sel);adj[sel].forEach(r=>on.add(r.id));}
+  map.classList.add("dim");
+  N.forEach(n=>{const el=document.getElementById("n-"+n[0]);el.classList.toggle("on",on.has(n[0]));el.classList.toggle("sel",!area&&n[0]===sel);});
+  drawWires(on);
+}
+function drawWires(on){
+  const mr=map.getBoundingClientRect();svg.setAttribute("viewBox",`0 0 ${mr.width} ${mr.height}`);svg.innerHTML="";
+  if(getComputedStyle(svg).display==="none")return;
+  const edges=area?E.filter(([a,b])=>on.has(a)&&on.has(b)):E.filter(([a,b])=>a===sel||b===sel);
+  edges.forEach(([a,b])=>{
+    const ra=document.getElementById("n-"+a).getBoundingClientRect(), rb=document.getElementById("n-"+b).getBoundingClientRect();
+    let x1,y1,x2,y2;
+    if(rb.left>=ra.right-4){x1=ra.right-mr.left;y1=ra.top+ra.height/2-mr.top;x2=rb.left-mr.left;y2=rb.top+rb.height/2-mr.top;}
+    else if(ra.left>=rb.right-4){x1=ra.left-mr.left;y1=ra.top+ra.height/2-mr.top;x2=rb.right-mr.left;y2=rb.top+rb.height/2-mr.top;}
+    else{x1=ra.left+ra.width/2-mr.left;y1=(rb.top>ra.top?ra.bottom:ra.top)-mr.top;x2=rb.left+rb.width/2-mr.left;y2=(rb.top>ra.top?rb.top:rb.bottom)-mr.top;}
+    const dx=Math.max(30,Math.abs(x2-x1)/2), horiz=Math.abs(x2-x1)>20;
+    const d=horiz?`M${x1},${y1} C${x1+(x2>x1?dx:-dx)},${y1} ${x2-(x2>x1?dx:-dx)},${y2} ${x2},${y2}`:`M${x1},${y1} C${x1},${(y1+y2)/2} ${x2},${(y1+y2)/2} ${x2},${y2}`;
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);p.setAttribute("class","wire");
+    p.style.stroke=`var(${AREAS[byId[area?a:(a===sel?b:a)][2]][1]})`;p.style.opacity=area?".45":".85";svg.appendChild(p);
+    const c=document.createElementNS("http://www.w3.org/2000/svg","circle");c.setAttribute("cx",x2);c.setAttribute("cy",y2);c.setAttribute("r","3");c.style.fill=p.style.stroke;svg.appendChild(c);
+  });
+}
+function renderDetail(){
+  const n=byId[sel], det=document.getElementById("detail");
+  const ins=adj[sel].filter(r=>r.dir==="in"), outs=adj[sel].filter(r=>r.dir==="out");
+  const colName=(COLS.concat(BANDS).find(c=>c[0]===n[1])||[,""])[1];
+  det.innerHTML=`<div><div class="kind"></div><h3></h3><p class="desc"></p><p>Doku: <code></code></p></div>
+    <div class="rel"><h4>Bekommt von</h4><ul class="ins"></ul><h4>Liefert an</h4><ul class="outs"></ul></div>`;
+  det.querySelector(".kind").textContent=`${AREAS[n[2]][0]} · ${colName}`;det.querySelector("h3").textContent=n[3];
+  det.querySelector(".desc").textContent=n[5];det.querySelector("code").textContent=n[6];
+  const fill=(ul,list)=>{if(!list.length){ul.innerHTML="<li style='color:var(--muted)'>nichts in der Karte</li>";return;}
+    list.forEach(r=>{const li=document.createElement("li"),b=document.createElement("button");const m=byId[r.id];
+      b.style.setProperty("--k",`var(${AREAS[m[2]][1]})`);b.textContent=m[3]+(r.l?` (${r.l})`:"");b.addEventListener("click",()=>select(r.id));li.appendChild(b);ul.appendChild(li);});};
+  fill(det.querySelector(".ins"),ins);fill(det.querySelector(".outs"),outs);
+}
+renderChips();applyDim();renderDetail();
+addEventListener("resize",()=>applyDim());
+if(document.fonts)document.fonts.ready.then(()=>applyDim());
+</script>

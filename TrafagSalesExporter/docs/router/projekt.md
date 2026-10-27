@@ -1,6 +1,6 @@
 # Unterrouter Projekt
 
-Zurueck: `router.md`. Stand: 2026-10-22 (Archivverweis `docs/archiv/`).
+Zurueck: `router.md`. Stand: 2026-10-27 (Loesungslandkarte); davor 2026-10-22 (Archivverweis `docs/archiv/`).
 
 Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand.
 
@@ -29,6 +29,7 @@ nachtragen und die Reservierung freigeben. Eintraege mit `abgeschlossen`, `deplo
 | **Zusammenfassung 14./15.10.2026**: alles Erledigte mit Stand, Fragen an Fabio (Logistik J5, Verkauf J2/J3), offene Punkte Ingo | `docs/ARBEITSSTAND_2026-10-14_15.md` |
 | Ansprechpartner und Standortempfaenger | `docs/ANSPRECHPARTNER.md` |
 | **Themenlandkarte**: alle Themen auf einer Seite, Datenquellen, Abhaengigkeiten, Ansprechpartner, offene Blocker (SVG, Stand 2026-10-15; neu erzeugen mit `projektmanagement/themenlandkarte.py`) | `docs/THEMENLANDKARTE_2026-10-15.svg` |
+| **Loesungslandkarte**: technischer Datenfluss aller gebauten Loesungen (Quelle, Anbindung, Daten, Modul, Nutzung), interaktiv; Textfassung in `docs/rag/ARCHITECTURE.md` (Stand 2026-10-27) | `docs/LOESUNGSLANDKARTE_2026-10-27.html` |
 
 **Abgrenzung:** `PROJEKTSTATUS.md` fuehrt Ingos Arbeitspakete. Finance-Detailfragen
 beantwortet es **nicht** — dafuer gilt das Issue-Log.

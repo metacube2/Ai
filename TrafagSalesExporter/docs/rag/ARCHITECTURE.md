@@ -1,9 +1,45 @@
 # RAG Architecture
 
-Stand: 2026-10-22 nur Archivverweis; fachlich 2026-10-19 (Operations-Zeile: Mengen auf dem Produktionstag, DW prod; 2026-10-16 Operations-Zeile: SAP-Mengen, offen fuer alle; Menue-Hervorhebung, Handbuch-Bilder, Stuecklisten-Gehirn; 2026-10-15 Startseite, CPU-Anzeige, Nutzungsmessung; 2026-10-14 Operations-Zeile: Feld-Mapping; 2026-10-06 Benutzerhandbuch, Icon-Pruefung, Pruefbefund-Fixes ergaenzt; Abschnitt „Code-Architektur" vom
-2026-09-28; der Kurzstand darunter stammt sonst vom 2026-05-27 und ist fachlich weiter gueltig,
-beschreibt aber nicht die seither dazugekommenen Bereiche Einkauf, Journal, Marktsegmente,
-Serveranalyse und HR)
+Stand: 2026-10-27 (neuer Abschnitt „Gesamtlandkarte“ mit allen Bereichen, Landkarte `docs/LOESUNGSLANDKARTE_2026-10-27.html`); davor 2026-10-22 nur Archivverweis; fachlich 2026-10-19 (Operations-Zeile: Mengen auf dem Produktionstag, DW prod; 2026-10-16 Operations-Zeile: SAP-Mengen, offen fuer alle; Menue-Hervorhebung, Handbuch-Bilder, Stuecklisten-Gehirn; 2026-10-15 Startseite, CPU-Anzeige, Nutzungsmessung; 2026-10-14 Operations-Zeile: Feld-Mapping; 2026-10-06 Benutzerhandbuch, Icon-Pruefung, Pruefbefund-Fixes ergaenzt; Abschnitt „Code-Architektur" vom
+2026-09-28; der Kurzstand darunter stammt sonst vom 2026-05-27 und ist fachlich weiter gueltig.
+*Ueberholt am 2026-10-27:* Der fruehere Hinweis, die Datei beschreibe Einkauf, Journal,
+Marktsegmente, Serveranalyse und HR nicht, gilt nicht mehr; diese Bereiche stehen jetzt im
+Abschnitt „Gesamtlandkarte“ direkt unter diesem Kopf)
+
+## Gesamtlandkarte: alle gebauten Loesungen (Stand 2026-10-27)
+
+Zusammengestellt am 2026-10-27 aus `router.md`, den Unterroutern und dem Kurzstand unten, nicht
+gegen den Code gemessen. Die interaktive Fassung mit Linien je Zusammenhang liegt in
+`docs/LOESUNGSLANDKARTE_2026-10-27.html` (im Browser oeffnen, eine Kachel anklicken). Details stehen
+jeweils in der Datei, die der Unterrouter nennt.
+
+Fluss von links nach rechts: **Quelle -> Anbindung -> Daten und Regeln -> Modul -> Nutzung.**
+
+| Bereich | Quelle | Anbindung | Daten und Regeln | Modul im Dashboard | Nutzung |
+| --- | --- | --- | --- | --- | --- |
+| Finance | SAP P76, SAP B1/HANA (CH/AT, B1-Laender), Sage ES, Alphaplan DE, Excel UK/IT/IN | B1-Leser, Exportpakete ES/DE (eigene SQL), Manual Import, Export-Orchestrierung (`TimerBackgroundService`) | `CentralSalesRecords`, `FinanceRuleEngine` mit Intercompany, Kurstabelle, Standardkosten und Supplier, Produktsparten-Mapping | Finance Cockpit (Management Analyse, Soll/Ist, Gruppenmarge, Finance Details), Controlling, Marktsegmente und Railway, Verkauf (mit Interaktiv) | Finance (Andreas), Geschaeftsleitung; Excel `Sales_All`, Nachweis-Excel |
+| Journal | SAP P76 (CH/AT) | Journal-Set (Transport mit `HrKpiSet`) | Hauptbuchzeilen, Faelligkeitsdatum vorbereitet, Konzernkonto-Mapping offen | — (Excel) | `Finance_All` fuer die Konsolidierung; Automatik unkommittiert im Arbeitsbaum |
+| Weltlage | GDELT, FRED, Eurostat, IMF, EZB | `WorldDataService` (nur Produktion) | Tabellen `World*`, verknuepft mit Verkauf, Einkaufscache und Kursen | Weltlage unter Finance Cockpit | Geschaeftsleitung, Abteilungen |
+| Einkauf | SAP P76 | `ZPOWERBI_EINKAUF_SRV` (EKPO, `EinkKontraktSet`, `EinkMatLzSet`, Produktgruppen ZDISPO) | Einkaufscache (Delta 45 bis 55 Min.), Lagerwert MBEW/MBEWH, Stuecklistenanalyse aus dem ZLO03-Webservice | Einkauf (Spend-Aufriss ungedeckelt, Kontrakte, Lagerwert, Produktgruppen ABC/XYZ), Einkauf Interaktiv, Supply Chain, Verwendung und Risiko mit Stuecklisten-Gehirn | Einkauf und Disposition; Power BI liest denselben Service direkt |
+| Logistik live | SAP P76 | `LogTaSet`, `LogLiefSet`, `LogRueckSet` (nur bei offener Seite) | keine Speicherung, kurzer Merker | Logistik live mit 3D-Lagerplaetzen | Lager und Kommissionierung |
+| Handbestellwesen | Active Directory, Altbestand aus der PHP-Anwendung | AD-Kontopruefung im Server | Stamm Mitarbeitende mit `AusAd` (AD gesperrt, Altbestand pflegbar), Freigabe umschaltbar | `Modules/Handbestellwesen/` (ersetzt die PHP-Anwendung) | Besteller und Freigeber |
+| HR | SAP P76 | `HrKpiSet`, `HrAbsenzSet` (Tagesabruf) | HR-Datenordner, `HrKpiDashboardBuilder` | HR-KPI-Cockpit (eigener Zugang) | HR |
+| Operations | SAP P76, Fabios Konfigurationspakete | `ShopZd05Set`, `ShopAufSet`, `ShopRmSet`, `ShopProdSet`; CDS-Services Liefertreue | eigene `shopfloor.db` (Tagessaetze, `kpi_snapshot`) | Operations Shopfloor, Operations KPI (OTD/OTIF/OTP) | Produktion (Fabio) |
+| Plattform | Active Directory, feste Netzwerkzielliste | `NetworkProbeService`, `AdSnapshotService` | Tabellen `Network*`, `Pm*`, `Forum*`, `Usage*` | Netzwerk, Trafag Projekte, Trafag Reddit, Benutzerhandbuch, Admin und Startseite | IT, alle Mitarbeitenden |
+| Serveranalyse | Systeme, die nur der Server erreicht | Abfragen ueber den Server | — | — | Abschnitt Serveranalyse in `docs/router/plattform.md` |
+
+**SAP-Eigenentwicklungen (T76 -> P76):** ZLO03 (`Z_ZLO03_TURBO2`, Webservice `ZM_LZCODE20_OPT`,
+speist die Stuecklistenanalyse; FIX 19 holt Compliance-Spalten aus PPWR `Z_PACK_REGULATION`), ZC23
+Materialanteil und Arbeit CZ mit Fiori-App, `ZM_OFFENE_KDAUF_OPT` (schreibt `ZPOWERBI_KDAUF` fuer
+Power BI), `ZM_OFFENE_FAUF` Bedarfsverursacher, ZZPRDAT, Konditionsart ZRL2, Produktsparten- und
+Produktgruppen-Provider sowie die Gateway-Klassen (MPC/DPC) aller Sets oben. Einstieg `docs/router/sap.md`.
+
+**Werkzeuge:** DeployHeadless mit Monitor (`docs/rag/DEPLOYMENT.md`), SapProbe und GUI-Skripte
+(`saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`), Qdrant-Dokusuche (`Tools/Qdrant/`),
+Wochen_Todo-Generator, `Tools/HandbuchDocx` und `Tools/HandbuchGrafik`.
+
+Abgrenzung zur Themenlandkarte vom 2026-10-15 (`docs/THEMENLANDKARTE_2026-10-15.svg`): jene zeigt
+Themen, Ansprechpartner und Blocker, diese hier den technischen Datenfluss der gebauten Loesungen.
 
 ## Code-Architektur: Befund vom 2026-09-28
 

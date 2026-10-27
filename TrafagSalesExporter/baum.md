@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Stand: 2026-10-27 (Loesungslandkarte nachgetragen); davor 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
 Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
@@ -143,7 +143,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/NUGET_SICHERHEIT_2026-09-01.md` | aktueller NuGet-Audit, Sicherheitsbefund und Updatepfad |
 | `docs/PLATTFORM_TEMPO_2026-09-28.md` | Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, Cockpit-Wechselkurse, SQLite-Cache |
 | `docs/DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md` | Datenquellen und Firewall-Ziele des Servers `tragvapp401` |
-| `docs/rag/ARCHITECTURE.md` | Architektur, Kurzstand |
+| `docs/rag/ARCHITECTURE.md` | Architektur, Kurzstand, Gesamtlandkarte aller Loesungen (seit 2026-10-27) |
 | `docs/rag/ADMIN.md` | Admin, Kurzstand |
 | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` | Admin und Startseite |
 | `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` | Menuestruktur |
@@ -258,6 +258,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/UEBERGABE_2026-09-08.md` | Uebergabestand vom 2026-09-09 mit offenen Punkten und Reihenfolge (nicht mehr der aktuelle Einstieg) |
 | `docs/ARBEITSSTAND_2026-10-14_15.md` | Zusammenfassung aller Arbeiten vom 14. und 15.10.2026 mit Stand je Punkt, offenen Fragen an Fabio und offenen Punkten bei Ingo |
 | `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
+| `docs/LOESUNGSLANDKARTE_2026-10-27.html` | Loesungslandkarte (interaktiv, im Browser oeffnen): alle gebauten Loesungen von der Quelle bis zur Nutzung, SAP-Eigenentwicklungen und Werkzeuge, Zusammenhaenge per Klick; Textfassung in `docs/rag/ARCHITECTURE.md` Abschnitt Gesamtlandkarte |
 | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` | HR- und Einkaufscockpit Konsistenzreview vom 29.09. (Codex) mit lokalem Reparaturstand |
 | `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
 
