@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad und Android.</description>
   <language>de-ch</language>
-  <lastBuildDate>Tue, 27 Oct 2026 12:37:59 +0000</lastBuildDate>
+  <lastBuildDate>Tue, 27 Oct 2026 19:26:35 +0000</lastBuildDate>
+  <item>
+    <title>TapLoop 1.0 (Build 41) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-1.0-41</guid>
+    <pubDate>Tue, 27 Oct 2026 20:26:01 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
   <item>
     <title>Makrowerk 0.1 (Build 1) für iPhone/iPad</title>
     <link>https://www.aiscom.ch/tester/#ios</link>
@@ -279,13 +286,6 @@
     <guid isPermaLink="false">ki-buch-epub-020fcd5138c9</guid>
     <pubDate>Sat, 24 Oct 2026 15:00:50 +0200</pubDate>
     <description>Zukunftsgeschichten über künstliche Intelligenz in der Schweiz, 2027–2045: eine Reporterin reist durchs Land, jedes Kapitel ein anderes Jahr. Gut 100 Seiten mit Bildern, am Ende jedes Kapitels „Stand heute“.</description>
-  </item>
-  <item>
-    <title>Obhut 0.1 (Build 1) für iPhone/iPad</title>
-    <link>https://www.aiscom.ch/tester/#ios</link>
-    <guid isPermaLink="false">obhut-ios-0.1-1</guid>
-    <pubDate>Sat, 24 Oct 2026 14:32:39 +0200</pubDate>
-    <description>Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone. 11 von 11 Klicktests bestanden. Installation über TestFlight.</description>
   </item>
 </channel>
 </rss>
