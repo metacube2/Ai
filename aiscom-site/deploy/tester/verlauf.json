@@ -1,5 +1,26 @@
 [
  {
+  "guid": "makrowerk-ios-0.1-1",
+  "titel": "Makrowerk 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Fokusserie auf dem iPhone aufnehmen (Linse Schritt für Schritt, Fokus-Peaking) und stapeln; quer und aufgeklappt wie am Mac. 5 von 5 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-27T10:38:11.163000+01:00"
+ },
+ {
+  "guid": "makrowerk-mac-0.1-1",
+  "titel": "Makrowerk 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Fokus-Stacking für Supermakro: Serie laden (auch RAW), ausrichten, stapeln, vorher/nachher vergleichen, Tiefenkarte, Lückenbericht, Bewegungsschutz, Retusche-Pinsel. Deutsch, Englisch.",
+  "datum": "2026-10-27T10:35:46.510795+01:00"
+ },
+ {
+  "guid": "taploop-ios-1.0-39",
+  "titel": "TapLoop 1.0 (Build 39) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 5 von 5 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-27T08:09:19.993000+01:00"
+ },
+ {
   "guid": "taploop-mac-1.0-38",
   "titel": "TapLoop 1.0 (Build 38) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",
