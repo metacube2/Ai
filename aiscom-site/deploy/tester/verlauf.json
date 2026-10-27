@@ -1,5 +1,12 @@
 [
  {
+  "guid": "screencam-mac-0.1-1",
+  "titel": "ScreenCam 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Bildschirm aufnehmen mit Systemton und Mikrofon, Bildschirmfotos mit Editor (Pfeil, Rahmen, Text, Verpixeln, Zuschneiden) und Texterkennung.",
+  "datum": "2026-10-27T20:37:13.255088+01:00"
+ },
+ {
   "guid": "taploop-mac-1.0-41",
   "titel": "TapLoop 1.0 (Build 41) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",

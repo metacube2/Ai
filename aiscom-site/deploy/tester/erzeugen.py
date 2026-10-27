@@ -76,7 +76,7 @@ MAC = APPS = [
         "dmg": GIT / "taploop-mac/build/verteilen/TapLoop.dmg",
         "app": GIT / "taploop-mac/build/verteilen/dd/Build/Products/Release/TapLoop.app",
         "datei": "TapLoop.dmg",
-        "kurz": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+        "kurz": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, 32 Platten in der Kiste, nahtloser Plattenwechsel, Wellenform, Farbwelle oder Spektrum im Ring, Tonart im Etikett, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
     },
     {
         "name": "Obhut",
@@ -100,6 +100,14 @@ MAC = APPS = [
         "app": GIT / "makrowerk/build/verteilen/dd/Build/Products/Release/Makrowerk.app",
         "datei": "Makrowerk.dmg",
         "kurz": "Fokus-Stacking für Supermakro: Serie laden (auch RAW), ausrichten, stapeln, vorher/nachher vergleichen, Tiefenkarte, Lückenbericht, Bewegungsschutz, Retusche-Pinsel. Deutsch, Englisch.",
+    },
+    {
+        "name": "ScreenCam",
+        "kennung": "screencam",
+        "dmg": GIT / "screencam-mac/build/verteilen/ScreenCam.dmg",
+        "app": GIT / "screencam-mac/build/verteilen/dd/Build/Products/Release/ScreenCam.app",
+        "datei": "ScreenCam.dmg",
+        "kurz": "Bildschirm aufnehmen mit Systemton und Mikrofon, Bildschirmfotos mit Editor (Pfeil, Rahmen, Text, Verpixeln, Zuschneiden) und Texterkennung.",
     },
     {
         "name": "Mietprüfer",
