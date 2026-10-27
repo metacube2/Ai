@@ -119,7 +119,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` | Sprachen, Projektsuite (Projektsuite seit 2026-10-09 ueberholt) |
 | `docs/EINKAUF_SITZUNG_2026-10-22.md` | Ergebnisse Einkaufssitzung 22.10.: Dashboard-Zwischenstand, Feedbackliste, Lieferantenbewertung, Handbestellwesen |
 | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` | Handbestellwesen: Abloesung PHP-Anwendung durch Dashboard-Modul, Befund, Zielbild, GUI wie PHP, Phasen, offene Punkte |
-| `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Registrierung, Seite) |
+| `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Import, Registrierung, Seiten `/handbestellwesen` klassisch und `/bestellwesen` neu) |
 | `wwwroot/css/handbestellwesen.css` | Optik Handbestellwesen wie die PHP-Anwendung |
 | `wwwroot/js/bombrain.js` | Stuecklisten-Netz „Gehirn“ (three.js), Einkauf > Spend-Aufriss; Daten `Services/Logistics/BomBrainGraph.cs`, Komponente `Components/Pages/PurchasingBomBrain.razor` |
 | `wwwroot/handbuch/kapitel/02_einkauf.md` | Benutzerhandbuch Kapitel Einkauf |

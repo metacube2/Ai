@@ -317,7 +317,8 @@ solche Nummern fehlen in der neuen Datenbank und koennten erneut vergeben werden
 sichtbar (Ingo).
 
 Weiter offen fuer den Betrieb: Rechnungsbetrag erfassen und Mail beim Wareneingang (Punkt 4), Bereinigung ausfuehren,
-Zugriff und Grundtests (Mail Ingo an die Beteiligten).
+Zugriff und Grundtests (Mail Ingo an die Beteiligten am 27.10. versendet: Wer darf zugreifen, eigenes Windows-Konto statt
+gemeinsamem Login, Liste Name/KoSt/Limit/Freigabe/Wareneingang, ein bis zwei Personen fuer Grundtests; Antwort ausstehend).
 
 ## 7. Naechste Schritte
 

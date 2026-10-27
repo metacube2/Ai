@@ -12,6 +12,14 @@ nachgewiesen (`docs/PLATTFORM_TEMPO_2026-09-28.md`, `ISS-017`).
 Kurzdatei fuer Spend, offene Bestellungen, Kontrakte und Lieferanten. Historie
 und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
+## Handbestellwesen 2026-10-27
+
+Eigenes Modul, eigener Reiter (seit 27.10. sichtbar), ersetzt die PHP-Anwendung (abgeschaltet wegen PHP-Luecke). Zwei
+Masken auf derselben Datenbank `hbdaten\handbestellwesen.db`: `/handbestellwesen` (klassisch, mit Link „Zur neuen Version“)
+und `/bestellwesen` (neu). Freigabe wie PHP: jede aktive Person mit genuegend Limit; strenge Regel per
+`Handbestellwesen:FreigabeNurGleicheKostenstelle`. Offen: Zugriff/Rollen, Grundtests, Limit und Kostenstelle der
+Mitarbeitenden, Bereinigung, Rechnungsbetrag/Mail. Details `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` 6.8.
+
 ## Schalter Nur Einkaufsteile 2026-10-26
 
 Spend-Aufriss: Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“, Vorgabe an, gilt fuer alle Einstiege (Filter
