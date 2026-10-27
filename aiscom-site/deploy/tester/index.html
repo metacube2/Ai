@@ -48,6 +48,15 @@ h3 { font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--a
 .rss { display:inline-block; padding:6px 14px; border-radius:999px; background:#f26522; color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
 .hinweis { margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }
 footer { margin-top:36px; color:var(--muted); font-size:13px; }
+.gruppe { margin:0 0 40px; }
+.gruppentitel { display:flex; align-items:center; gap:10px; font-size:18px; letter-spacing:.5px; text-transform:none; color:var(--text); margin:0 0 4px; }
+.gruppentitel small { font-size:13px; color:var(--muted); font-weight:500; }
+.gruppentitel .punkt { width:12px; height:12px; border-radius:50%; display:inline-block; }
+.gruppe-test .punkt { background:#4ade80; box-shadow:0 0 10px #4ade80; }
+.gruppe-entwicklung .punkt { background:#f43f5e; box-shadow:0 0 10px #f43f5e; }
+.gruppe-fertig .punkt { background:#4ade80; box-shadow:0 0 10px #4ade80; }
+.gruppentext { color:var(--muted); margin:0 0 16px; font-size:14px; }
+.leer { color:var(--muted); font-style:italic; margin:0; padding:14px 18px; border:1px dashed var(--line); border-radius:14px; }
 @media (max-width:520px) { .karten { grid-template-columns:1fr; } .kopf { flex-direction:column; } }
 </style>
 </head>
@@ -77,25 +86,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
       <li><b>Neue Fassung:</b> einfach wieder hineinziehen und „Ersetzen“ wählen. Einstellungen und Daten bleiben erhalten.</li>
     </ol>
   </section>
-  <section class="karten" style="margin-top:32px">
-<article class="karte" id="aurora-studio">
-  <div class="kopf">
-    <img src="bilder/aurora-studio.png" alt="" width="96" height="96">
-    <div>
-      <h2>Aurora Studio</h2>
-      <p class="kurz">Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.</p>
-    </div>
-  </div>
-  <a class="laden" href="AuroraStudio.dmg" download>
-    <span class="pfeil">⬇</span>
-    <span><b>AuroraStudio.dmg</b><small>Version 1.0 (Build 4) · 23 MB · 24.10.2026</small></span>
-  </a>
-  <dl class="meta">
-    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
-    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">5b47d052f53e99156348547a5759ca850af324ade9ae5794039c6fb1e2ba4265</code></dd>
-  </dl>
-</article>
+  <div style="margin-top:32px"><div class="gruppe gruppe-test"><h3 class="gruppentitel"><span class="punkt"></span>Zum Testen bereit<small>2</small></h3><p class="gruppentext">Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!</p><section class="karten">
 <article class="karte" id="kamera-import">
   <div class="kopf">
     <img src="bilder/kamera-import.png" alt="" width="96" height="96">
@@ -112,6 +103,42 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
     <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">08a49a8a9366909e7c125b4246833eff19e3d8bef3a848960c3558028e817b6e</code></dd>
+  </dl>
+</article>
+<article class="karte" id="taploop">
+  <div class="kopf">
+    <img src="bilder/taploop.png" alt="" width="96" height="96">
+    <div>
+      <h2>TapLoop</h2>
+      <p class="kurz">Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</p>
+    </div>
+  </div>
+  <a class="laden" href="TapLoop.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>TapLoop.dmg</b><small>Version 1.0 (Build 38) · 10 MB · 26.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">322999ba35df5a72950aceb8b20e0e9a8009948e02e0eaba1105d8edf8c9d6d7</code></dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>8</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
+<article class="karte" id="aurora-studio">
+  <div class="kopf">
+    <img src="bilder/aurora-studio.png" alt="" width="96" height="96">
+    <div>
+      <h2>Aurora Studio</h2>
+      <p class="kurz">Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.</p>
+    </div>
+  </div>
+  <a class="laden" href="AuroraStudio.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>AuroraStudio.dmg</b><small>Version 1.0 (Build 4) · 23 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">5b47d052f53e99156348547a5759ca850af324ade9ae5794039c6fb1e2ba4265</code></dd>
   </dl>
 </article>
 <article class="karte" id="antennen-studio">
@@ -166,24 +193,6 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
     <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">391378c54a9804e52f17a2538c2c9db4d6e8987843213c753c4e761d8b322b59</code></dd>
-  </dl>
-</article>
-<article class="karte" id="taploop">
-  <div class="kopf">
-    <img src="bilder/taploop.png" alt="" width="96" height="96">
-    <div>
-      <h2>TapLoop</h2>
-      <p class="kurz">Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</p>
-    </div>
-  </div>
-  <a class="laden" href="TapLoop.dmg" download>
-    <span class="pfeil">⬇</span>
-    <span><b>TapLoop.dmg</b><small>Version 1.0 (Build 38) · 10 MB · 26.10.2026</small></span>
-  </a>
-  <dl class="meta">
-    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
-    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">322999ba35df5a72950aceb8b20e0e9a8009948e02e0eaba1105d8edf8c9d6d7</code></dd>
   </dl>
 </article>
 <article class="karte" id="obhut">
@@ -257,8 +266,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">afc07ba224c9ee53917ad26df2984323e98fff881bdccc0ed46bd5f730afdadf</code></dd>
   </dl>
-</article>
-  </section>
+</article></section></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
   </div>
 
   <div class="platt" id="p-ios" role="tabpanel">
@@ -270,7 +278,22 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
       <li><b>Neue Fassung:</b> TestFlight meldet sie und aktualisiert auf Tipp.</li>
     </ol>
   </section>
-  <section class="karten" style="margin-top:32px">
+  <div style="margin-top:32px"><div class="gruppe gruppe-test"><h3 class="gruppentitel"><span class="punkt"></span>Zum Testen bereit<small>1</small></h3><p class="gruppentext">Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!</p><section class="karten">
+<article class="karte" id="ios-taploop">
+  <div class="kopf">
+    <img src="bilder/taploop.png" alt="" width="96" height="96">
+    <div>
+      <h2>TapLoop</h2>
+      <p class="kurz">Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>1.0 (Build 39)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>5 von 5 Klicktests bestanden (iPhone 17 Pro, iOS 26.5, 27.10.2026)</dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>7</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
 <article class="karte" id="ios-antennen-studio">
   <div class="kopf">
     <img src="bilder/antennen-studio.png" alt="" width="96" height="96">
@@ -346,21 +369,6 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>Geprüft</dt><dd>10 von 10 Klicktests bestanden (iPhone Air, iOS 26.5, 24.10.2026)</dd>
   </dl>
 </article>
-<article class="karte" id="ios-taploop">
-  <div class="kopf">
-    <img src="bilder/taploop.png" alt="" width="96" height="96">
-    <div>
-      <h2>TapLoop</h2>
-      <p class="kurz">Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts.</p>
-    </div>
-  </div>
-  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
-  <dl class="meta">
-    <dt>Version</dt><dd>1.0 (Build 39)</dd>
-    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
-    <dt>Geprüft</dt><dd>5 von 5 Klicktests bestanden (iPhone 17 Pro, iOS 26.5, 27.10.2026)</dd>
-  </dl>
-</article>
 <article class="karte" id="ios-makrowerk">
   <div class="kopf">
     <img src="bilder/makrowerk.png" alt="" width="96" height="96">
@@ -390,8 +398,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
     <dt>Geprüft</dt><dd>12 von 12 Klicktests bestanden (iPhone 17 Pro Max, iOS 26.5, 24.10.2026)</dd>
   </dl>
-</article>
-  </section>
+</article></section></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
   </div>
 
   <div class="platt" id="p-android" role="tabpanel">
@@ -403,7 +410,25 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
       <li><b>Neue Fassung:</b> neue APK gleich installieren, sie ersetzt die alte; Daten bleiben erhalten.</li>
     </ol>
   </section>
-  <section class="karten" style="margin-top:32px">
+  <div style="margin-top:32px"><div class="gruppe gruppe-test"><h3 class="gruppentitel"><span class="punkt"></span>Zum Testen bereit<small>1</small></h3><p class="gruppentext">Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!</p><section class="karten">
+<article class="karte" id="android-kamera-import">
+  <div class="kopf">
+    <img src="bilder/kamera-import.png" alt="" width="96" height="96">
+    <div>
+      <h2>Kamera-Import</h2>
+      <p class="kurz">Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet.</p>
+    </div>
+  </div>
+  <a class="laden" href="Kamera-Import.apk" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Kamera-Import.apk</b><small>Version 1.0 (Build 1) · 12 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android 8 oder neuer</dd>
+    <dt>Signatur</dt><dd>signiert, Zertifikat a4c16632b418c3d2…</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">6abfd118c83b1f9943f0b6b4602d0f0041256041bcc0630a276ae386c42536f2</code></dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>4</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
 <article class="karte" id="android-obhut">
   <div class="kopf">
     <img src="bilder/obhut.png" alt="" width="96" height="96">
@@ -475,26 +500,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>Signatur</dt><dd>signiert, Zertifikat a4c16632b418c3d2…</dd>
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">2a164e0b11595e77aa7cd65b0ba882cfc8ea7084f1b8677a9e4dfbf3d78b3a28</code></dd>
   </dl>
-</article>
-<article class="karte" id="android-kamera-import">
-  <div class="kopf">
-    <img src="bilder/kamera-import.png" alt="" width="96" height="96">
-    <div>
-      <h2>Kamera-Import</h2>
-      <p class="kurz">Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet.</p>
-    </div>
-  </div>
-  <a class="laden" href="Kamera-Import.apk" download>
-    <span class="pfeil">⬇</span>
-    <span><b>Kamera-Import.apk</b><small>Version 1.0 (Build 1) · 12 MB · 24.10.2026</small></span>
-  </a>
-  <dl class="meta">
-    <dt>System</dt><dd>Android 8 oder neuer</dd>
-    <dt>Signatur</dt><dd>signiert, Zertifikat a4c16632b418c3d2…</dd>
-    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">6abfd118c83b1f9943f0b6b4602d0f0041256041bcc0630a276ae386c42536f2</code></dd>
-  </dl>
-</article>
-  </section>
+</article></section></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
   </div>
 
   <div class="platt" id="p-buch" role="tabpanel">
@@ -526,7 +532,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </section>
   </div>
 
-  <footer>Stand 27.10.2026 10:44. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <footer>Stand 27.10.2026 13:37. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 function zeigen() {

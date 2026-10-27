@@ -187,6 +187,34 @@ BUECHER = [
 BUILD_TOOLS = Path.home() / "Library/Android/sdk/build-tools/36.1.0"
 
 
+# Stand je App (Wunsch Benutzer 2026-10-27): „Zum Testen bereit“, „In Entwicklung“, „Fertig“. Gilt fuer alle Plattformen
+# der App; nicht aufgefuehrte Apps sind „In Entwicklung“. Fertig = im Store freigegeben.
+STAND = {
+    "taploop": "test",
+    "kamera-import": "test",
+}
+KATEGORIEN = [
+    ("test", "Zum Testen bereit", "Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!"),
+    ("entwicklung", "In Entwicklung", "Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet."),
+    ("fertig", "Fertig", "Im App Store freigegeben."),
+]
+
+
+def stand(d) -> str:
+    return STAND.get(d["kennung"], "entwicklung")
+
+
+def gruppiert(liste, kartenfunktion) -> str:
+    """Karten einer Plattform nach Stand gruppiert, jede Gruppe mit Ueberschrift; leere Gruppen mit kurzem Hinweis"""
+    teile = []
+    for schluessel, titel, text in KATEGORIEN:
+        karten = "".join(kartenfunktion(d) for d in liste if stand(d) == schluessel)
+        inhalt = f'<section class="karten">{karten}</section>' if karten else '<p class="leer">Noch keine App in dieser Gruppe.</p>'
+        teile.append(f'<div class="gruppe gruppe-{schluessel}"><h3 class="gruppentitel"><span class="punkt"></span>{titel}'
+                     f'<small>{sum(1 for d in liste if stand(d) == schluessel)}</small></h3><p class="gruppentext">{text}</p>{inhalt}</div>')
+    return "".join(teile)
+
+
 def sha256(p: Path) -> str:
     h = hashlib.sha256()
     with p.open("rb") as f:
@@ -424,9 +452,9 @@ def seite(apps, ios, android, verlauf, buecher=()):
         "Systemeinstellungen › Datenschutz &amp; Sicherheit › unten <b>„Trotzdem öffnen“</b>. Nur beim ersten Start nötig.</li>"
     )
     stand = datetime.now().strftime("%d.%m.%Y %H:%M")
-    karten = "".join(karte(d) for d in apps)
-    karten_ios = "".join(karte_ios(d) for d in ios)
-    karten_android = "".join(karte_android(d) for d in android)
+    karten = gruppiert(apps, karte)
+    karten_ios = gruppiert(ios, karte_ios)
+    karten_android = gruppiert(android, karte_android)
     karten_buch = "".join(karte_buch(d) for d in buecher)
     return f"""<!DOCTYPE html>
 <html lang="de">
@@ -478,6 +506,15 @@ h3 {{ font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--
 .rss {{ display:inline-block; padding:6px 14px; border-radius:999px; background:#f26522; color:#fff; text-decoration:none; font-weight:600; font-size:14px; }}
 .hinweis {{ margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }}
 footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
+.gruppe {{ margin:0 0 40px; }}
+.gruppentitel {{ display:flex; align-items:center; gap:10px; font-size:18px; letter-spacing:.5px; text-transform:none; color:var(--text); margin:0 0 4px; }}
+.gruppentitel small {{ font-size:13px; color:var(--muted); font-weight:500; }}
+.gruppentitel .punkt {{ width:12px; height:12px; border-radius:50%; display:inline-block; }}
+.gruppe-test .punkt {{ background:#4ade80; box-shadow:0 0 10px #4ade80; }}
+.gruppe-entwicklung .punkt {{ background:#f43f5e; box-shadow:0 0 10px #f43f5e; }}
+.gruppe-fertig .punkt {{ background:#4ade80; box-shadow:0 0 10px #4ade80; }}
+.gruppentext {{ color:var(--muted); margin:0 0 16px; font-size:14px; }}
+.leer {{ color:var(--muted); font-style:italic; margin:0; padding:14px 18px; border:1px dashed var(--line); border-radius:14px; }}
 @media (max-width:520px) {{ .karten {{ grid-template-columns:1fr; }} .kopf {{ flex-direction:column; }} }}
 </style>
 </head>
@@ -506,8 +543,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
       <li><b>Neue Fassung:</b> einfach wieder hineinziehen und „Ersetzen“ wählen. Einstellungen und Daten bleiben erhalten.</li>
     </ol>
   </section>
-  <section class="karten" style="margin-top:32px">{karten}
-  </section>
+  <div style="margin-top:32px">{karten}</div>
   </div>
 
   <div class="platt" id="p-ios" role="tabpanel">
@@ -519,8 +555,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
       <li><b>Neue Fassung:</b> TestFlight meldet sie und aktualisiert auf Tipp.</li>
     </ol>
   </section>
-  <section class="karten" style="margin-top:32px">{karten_ios}
-  </section>
+  <div style="margin-top:32px">{karten_ios}</div>
   </div>
 
   <div class="platt" id="p-android" role="tabpanel">
@@ -532,8 +567,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
       <li><b>Neue Fassung:</b> neue APK gleich installieren, sie ersetzt die alte; Daten bleiben erhalten.</li>
     </ol>
   </section>
-  <section class="karten" style="margin-top:32px">{karten_android}
-  </section>
+  <div style="margin-top:32px">{karten_android}</div>
   </div>
 
   <div class="platt" id="p-buch" role="tabpanel">

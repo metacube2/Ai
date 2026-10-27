@@ -7,6 +7,11 @@ Installationsschritte. Sonst nichts: keine Testpunkte, Grenzen oder Hinweise (Be
 (`verteilen.sh --tester`, Compile-Schalter `KAMERA_TESTER`, `ANTENNEN_TESTER`, `MACYAESU_TESTER`), Aurora Studio und
 Stretcher haben keine Demo-Grenze. Kein Schlüssel steht auf der Seite.
 
+**Gruppen** (Wunsch Benutzer 2026-10-27): Jeder Plattform-Reiter zeigt „Zum Testen bereit“ (grün), „In Entwicklung“
+(rot) und „Fertig“ (grün, = im Store freigegeben). Zuordnung im Wörterbuch `STAND` in `erzeugen.py` nach `kennung`;
+nicht aufgeführte Apps sind „In Entwicklung“. Stand 2026-10-27: TapLoop und Kamera-Import testbereit, alle anderen in
+Entwicklung, noch keine fertig.
+
 Neue Fassung veröffentlichen:
 
 ```zsh
