@@ -52,6 +52,8 @@
     color: #000 !important;
 }
 .hb-k-nutzung { background-color: #bdbdbd; }
+.hb-k-neu { background-color: #1B5FAA; color: #fff !important; gap: 6px; align-items: center; font-weight: bold; }
+.hb-k-neu .mud-icon-root { color: #fff; }
 .hb-datum { width: 170px; }
 .hb-k1 { background-color: #FE6C30; }
 .hb-k2 { background-color: #1B5FAA; }

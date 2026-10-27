@@ -11,11 +11,13 @@
 @* Handbestellwesen 2026-10-22 (Auftrag Ingo): Abloesung der PHP-Anwendung. Oberflaeche bewusst wie im PHP
    (Kacheln und Farben aus style.css/navigation.php), Technik neu. Doku docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md *@
 <PageTitle>Handbestellwesen</PageTitle>
-<HeadContent><link href="css/handbestellwesen.css?v=1" rel="stylesheet" /></HeadContent>
+<HeadContent><link href="css/handbestellwesen.css?v=2" rel="stylesheet" /></HeadContent>
 
 <div class="hb">
     <nav class="hb-nav">
         <img src="trafag.jpg" alt="Trafag" class="hb-logo" />
+        @* Link auf die neue Version /bestellwesen (Wunsch Ingo 2026-10-27) *@
+        <a class="hb-klein hb-k-neu" href="bestellwesen"><MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small" /><span>Zur neuen Version</span></a>
         <a class="hb-kachel hb-k1" href="handbestellwesen"><MudIcon Icon="@Icons.Material.Filled.Inventory2" /><span>Bestellnummer lösen</span></a>
         <a class="hb-kachel hb-k2" href="handbestellwesen/offen"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" /><span>Offene Bestellungen</span></a>
         <a class="hb-kachel hb-k3" href="handbestellwesen/archiv"><MudIcon Icon="@Icons.Material.Filled.Inventory" /><span>Archiv</span></a>
