@@ -42,7 +42,8 @@ else
 
     // Hervorgehobene Eintraege (Wunsch Ingo 2026-10-13): rot, weisse fette Schrift, animiert. CSS .nav-hl in app.css.
     // 2026-10-16 (Wunsch Ingo): alle Hauptbereiche farbig, je ein eigener gedeckter Rotton (nav-hl-r1..r5, Nachmittag dezenter), Admin grau, Home pulsiert.
-    private static readonly Dictionary<string, string> Highlighted = "management-home=nav-hl nav-hl-home;projects=nav-hl;operations=nav-hl;network=nav-hl nav-hl-net;trafag-reddit=nav-hl nav-hl-orange;user-manual=nav-hl-grey;finance=nav-hl nav-hl-r1;hr=nav-hl nav-hl-r2;purchasing=nav-hl nav-hl-r3;sales=nav-hl nav-hl-r4;logistics=nav-hl nav-hl-r5;finance-admin=nav-hl-grey nav-hl-admin".Split(';').Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1], StringComparer.OrdinalIgnoreCase);
+    // 2026-10-27 (Wunsch Ingo): Handbestellwesen gleich animiert, aber in Gruen (nav-hl-green).
+    private static readonly Dictionary<string, string> Highlighted = "management-home=nav-hl nav-hl-home;handbestellwesen=nav-hl nav-hl-green;projects=nav-hl;operations=nav-hl;network=nav-hl nav-hl-net;trafag-reddit=nav-hl nav-hl-orange;user-manual=nav-hl-grey;finance=nav-hl nav-hl-r1;hr=nav-hl nav-hl-r2;purchasing=nav-hl nav-hl-r3;sales=nav-hl nav-hl-r4;logistics=nav-hl nav-hl-r5;finance-admin=nav-hl-grey nav-hl-admin".Split(';').Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1], StringComparer.OrdinalIgnoreCase);
     private string? LinkClass => Highlighted.GetValueOrDefault(Item.Key);
 
     [Inject] private IUiTextService UiText { get; set; } = default!;

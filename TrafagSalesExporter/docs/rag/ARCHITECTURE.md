@@ -1,6 +1,6 @@
 # RAG Architecture
 
-Stand: 2026-10-27 (neuer Abschnitt „Gesamtlandkarte“ mit allen Bereichen, Landkarte `docs/LOESUNGSLANDKARTE_2026-10-27.html`); davor 2026-10-22 nur Archivverweis; fachlich 2026-10-19 (Operations-Zeile: Mengen auf dem Produktionstag, DW prod; 2026-10-16 Operations-Zeile: SAP-Mengen, offen fuer alle; Menue-Hervorhebung, Handbuch-Bilder, Stuecklisten-Gehirn; 2026-10-15 Startseite, CPU-Anzeige, Nutzungsmessung; 2026-10-14 Operations-Zeile: Feld-Mapping; 2026-10-06 Benutzerhandbuch, Icon-Pruefung, Pruefbefund-Fixes ergaenzt; Abschnitt „Code-Architektur" vom
+Stand: 2026-10-27 (Menue Handbestellwesen gruen; neuer Abschnitt „Gesamtlandkarte“ mit allen Bereichen, Landkarte `docs/LOESUNGSLANDKARTE_2026-10-27.html`); davor 2026-10-22 nur Archivverweis; fachlich 2026-10-19 (Operations-Zeile: Mengen auf dem Produktionstag, DW prod; 2026-10-16 Operations-Zeile: SAP-Mengen, offen fuer alle; Menue-Hervorhebung, Handbuch-Bilder, Stuecklisten-Gehirn; 2026-10-15 Startseite, CPU-Anzeige, Nutzungsmessung; 2026-10-14 Operations-Zeile: Feld-Mapping; 2026-10-06 Benutzerhandbuch, Icon-Pruefung, Pruefbefund-Fixes ergaenzt; Abschnitt „Code-Architektur" vom
 2026-09-28; der Kurzstand darunter stammt sonst vom 2026-05-27 und ist fachlich weiter gueltig.
 *Ueberholt am 2026-10-27:* Der fruehere Hinweis, die Datei beschreibe Einkauf, Journal,
 Marktsegmente, Serveranalyse und HR nicht, gilt nicht mehr; diese Bereiche stehen jetzt im
@@ -193,4 +193,5 @@ vorher in `docs/AGENT_COORDINATION.md` abstimmen.
 - technischer Handoff und alter LLM-Systemkontext: `HISTORY_CANONICAL.md.raw`, nur noch in Git (`docs/archiv/README.md`)
 
 - MENUE-HERVORHEBUNG (2026-10-13/16): `NavMenuNode.razor` ordnet Menueschluessel CSS-Klassen zu (`.nav-hl`, `nav-hl-r1..r5` gedeckte Rottoene je Hauptbereich, `nav-hl-home` pulsiert, `nav-hl-grey`/`nav-hl-admin`), Animationen in `app.css`, `prefers-reduced-motion` beachtet.
+  *Nachtrag 2026-10-27:* Handbestellwesen (`handbestellwesen`) mit derselben Animation wie die Hauptbereiche, aber gedecktem Gruen (`nav-hl-green`).
 - STUECKLISTEN-GEHIRN (2026-10-16): `Components/Pages/PurchasingBomBrain.razor` zuoberst im Spend-Aufriss, Daten `Services/Logistics/BomBrainGraph.cs` (aus `BomInheritanceService` + `PurchasingMaterialLzCache`), Darstellung `wwwroot/js/bombrain.js` mit three.js (ein Linien-, ein Punktpuffer, feste Anordnung). Keine Registrierung in `Program.cs` noetig.
