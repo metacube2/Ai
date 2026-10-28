@@ -82,6 +82,14 @@
         </MudAlert>
     }
 
+    @if (ActivePerspectiveKey == "usage-productgroup")
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+            @T("Einkaufsvolumen nach der Produktgruppe, in deren Produkten das Material verbaut ist: Einkaufsmaterial -> verkürzte Nummern aus der Stücklistenauflösung (ZLO03) -> deren Disponent -> SAP ZDISPO_GRP/ZDISPO_SPART. Verteilt wird nach der Anzahl verwendender Nummern, die Gesamtsumme bleibt exakt. Material ohne bekannte Verwendung und Textbestellungen stehen unter ohne Verwendung. Grundlage ist der Bestellwert im gewählten Zeitraum, nicht der Materialanteil der Standardkalkulation aus ZC23.",
+               "Purchasing volume by the product group whose products contain the material: purchased material -> shortened numbers from the BOM explosion (ZLO03) -> their MRP controller -> SAP ZDISPO_GRP/ZDISPO_SPART. The value is split by the number of using numbers, the total stays exact. Material without a known usage and text orders appear under ohne Verwendung. The basis is the ordered value in the selected period, not the material share of the ZC23 standard costing.")
+        </MudAlert>
+    }
+
     @if (ActivePerspectiveKey.StartsWith("productgroup", StringComparison.Ordinal))
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">

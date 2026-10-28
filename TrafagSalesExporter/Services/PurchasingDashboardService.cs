@@ -1520,6 +1520,10 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         // Wunsch Einkauf 2026-10-23 (Budgeterstellung): zweiter Produktgruppen-Einstieg Produktgruppe -> Warengruppe -> Material,
         // aus derselben Zuordnung, also mit identischer Summe je Produktgruppe.
         perspectives.Insert(Math.Min(4, perspectives.Count), productGroupResult.MaterialGroupPerspective);
+        // Wunsch aus der Sitzung 2026-10-28: Produktgruppe nach Verwendung : Warengruppe direkt dahinter.
+        perspectives.Insert(
+            Math.Min(5, perspectives.Count),
+            await ExecuteUsageProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken));
         // Wunsch Ingo 2026-10-26: zweite Disponenten-Sicht nach Verwendung (ZLO03) direkt hinter "Disponent".
         var disponentIndex = perspectives.FindIndex(perspective => perspective.Key == "disponent");
         perspectives.Insert(
@@ -1608,6 +1612,111 @@ GROUP BY 1, 2, 3, 4;";
         return result with { Rows = BuildCascadeLevel(rows, 0, years, [NoCap, NoCap, NoCap]) };
     }
 
+    internal const string UsageProductGroupPerspectiveKey = "usage-productgroup";
+
+    /// <summary>
+    /// Produktgruppe nach Verwendung (Wunsch aus der Sitzung 2026-10-28, Auftrag Ingo): Welcher Teil des Einkaufsvolumens
+    /// einer Produktgruppe entfaellt auf welche Warengruppe, z. B. bestueckte Leiterplatten im Dichtewaechter. Einkaufsmaterial
+    /// -> verkuerzte Nummern, in denen es verbaut ist (ZLO03-Aufloesung) -> deren Disponent -> SAP ZDISPO_GRP/ZDISPO_SPART.
+    /// Verteilt wird nach Anzahl verwendender Nummern, nicht zu gleichen Teilen je Gruppe: ein Teil in 50 Dichtewaechtern und
+    /// einem Sensor geht zu 50/51 an den Dichtewaechter. Die Gesamtsumme bleibt exakt; ohne bekannte Verwendung (auch
+    /// Textbestellungen) steht der Wert unter "ohne Verwendung". Die Produktgruppe nach eigenem Disponenten bleibt unveraendert.
+    /// </summary>
+    private static async Task<PurchasingSpendPerspectiveResult> ExecuteUsageProductGroupPerspectiveAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var levelsDe = (IReadOnlyList<string>)["Produktgruppe (Verwendung)", "Warengruppe", "Material"];
+        var levelsEn = (IReadOnlyList<string>)["Product group (usage)", "Material group", "Material"];
+        var result = new PurchasingSpendPerspectiveResult(
+            UsageProductGroupPerspectiveKey, "Produktgruppe nach Verwendung : Warengruppe", "Product group by usage : material group", levelsDe, levelsEn, []);
+        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
+            .ToList();
+        if (years.Count == 0)
+            return result;
+
+        // Erst je Kompnr und Disponent zaehlen, dann normalisieren: die 1,6 Mio. Zeilen des Bottom-up-Caches sind schon
+        // sauber und je (Kompnr, Vknr) eindeutig (Primaerschluessel). So 4 s statt 28 s auf der Produktivkopie vom 2026-10-28.
+        var counts = new List<string>();
+        var bigCache = await TableExistsAsync(conn, "PurchasingComponentDispoCache", cancellationToken);
+        if (bigCache)
+            counts.Add("SELECT Kompnr, VknrDispo AS Disponent, COUNT(*) AS VknrCount FROM PurchasingComponentDispoCache WHERE VknrDispo <> '' GROUP BY Kompnr, VknrDispo");
+        if (await TableExistsAsync(conn, "MaterialUsageCache", cancellationToken) &&
+            await ColumnExistsAsync(conn, "MaterialUsageCache", "VknrDispo", cancellationToken))
+        {
+            var notInBig = bigCache
+                ? "AND NOT EXISTS (SELECT 1 FROM PurchasingComponentDispoCache c WHERE c.Kompnr = m.Kompnr AND c.Vknr = m.Vknr)"
+                : string.Empty;
+            counts.Add($@"SELECT m.Kompnr, m.VknrDispo AS Disponent, COUNT(DISTINCT m.Vknr) AS VknrCount FROM MaterialUsageCache m
+    WHERE COALESCE(trim(m.Kompnr), '') <> '' AND COALESCE(trim(m.Vknr), '') <> '' AND COALESCE(trim(m.VknrDispo), '') <> '' {notInBig}
+    GROUP BY m.Kompnr, m.VknrDispo");
+        }
+        if (counts.Count == 0)
+            counts.Add("SELECT '' AS Kompnr, '' AS Disponent, 0 AS VknrCount WHERE 0");
+
+        var hasRules = await TableExistsAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
+        var resolvedCte = SapProductGroupResolvedCteSql(
+            hasRules,
+            "SELECT DISTINCT Disponent FROM UsageCounts");
+        var purchasingMaterialKey = NormalizeMaterialKeySql("p.Matnr");
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var rows = new List<CascadeRow>();
+        await using (var command = conn.CreateCommand())
+        {
+            command.CommandText = $@"
+WITH UsageRaw AS (
+    {string.Join(" UNION ALL ", counts)}
+),
+UsageCounts AS (
+    SELECT {NormalizeMaterialKeySql("Kompnr")} AS MaterialKey, upper(trim(Disponent)) AS Disponent, VknrCount
+    FROM UsageRaw
+),
+{resolvedCte},
+UsageGroups AS (
+    SELECT u.MaterialKey,
+           CASE
+               WHEN COALESCE(x.ProductGroupText, '') <> '' THEN x.ProductGroupText
+               WHEN COALESCE(x.ProductGroup, '') <> '' THEN x.ProductGroup
+               ELSE 'Disponent ' || u.Disponent
+           END AS ProductGroup,
+           SUM(u.VknrCount) AS VknrCount
+    FROM UsageCounts u
+    LEFT JOIN SapProductGroupResolved x ON x.Disponent = u.Disponent
+    GROUP BY 1, 2
+),
+UsageTotals AS (
+    SELECT MaterialKey, SUM(VknrCount) AS Total FROM UsageGroups GROUP BY MaterialKey
+)
+SELECT COALESCE(ug.ProductGroup, '{NoUsageLabel}') AS ProductGroup,
+       {MaterialGroupDimension.Sql} AS MaterialGroup,
+       {ArticleDimension.Sql} AS Article,
+       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+       SUM({ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} * COALESCE(1.0 * ug.VknrCount / ut.Total, 1)) AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+LEFT JOIN UsageGroups ug ON ug.MaterialKey = {purchasingMaterialKey}
+LEFT JOIN UsageTotals ut ON ut.MaterialKey = {purchasingMaterialKey}
+WHERE {spendItemFilter}
+  AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
+  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN {MinSpendYear} AND {MaxSpendYear(filter)}
+GROUP BY 1, 2, 3, 4;";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                rows.Add(new CascadeRow(
+                    [reader.GetString(0), PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)), reader.GetString(2)],
+                    reader.GetInt32(3),
+                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
+            }
+        }
+
+        return result with { Rows = BuildCascadeLevel(rows, 0, years, [NoCap, NoCap, NoCap]) };
+    }
+
     private static IReadOnlyList<SpendPerspective> BuildLzPerspectives(bool tableAvailable)
     {
         var lzCode = BuildLzDimension(false, tableAvailable);
@@ -1669,6 +1778,57 @@ GROUP BY 1, 2, 3, 4;";
         PurchasingProductGroupAllocationSummary Summary,
         PurchasingSpendPerspectiveResult MaterialGroupPerspective);
 
+    /// <summary>
+    /// SAP-Regeln ZDISPO_GRP/ZDISPO_SPART als CTE <c>SapProductGroupResolved</c> (Disponent, ProductGroup,
+    /// ProductGroupText, IsAmbiguous) fuer die Disponenten aus <paramref name="dispatcherSql"/>. Gemeinsam genutzt von
+    /// der Produktgruppe (eigener Disponent) und der Produktgruppe nach Verwendung (Disponent der verkuerzten Nummer).
+    /// </summary>
+    private static string SapProductGroupResolvedCteSql(bool hasRules, string dispatcherSql)
+        => hasRules
+            ? $@"SapProductGroupDispatchers AS (
+    {dispatcherSql}
+),
+SapProductGroupCandidates AS (
+    SELECT d.Disponent,
+           trim(r.ProductGroup) AS ProductGroup,
+           trim(COALESCE(r.ProductGroupText, '')) AS ProductGroupText,
+           DENSE_RANK() OVER (
+               PARTITION BY d.Disponent
+               ORDER BY
+                   CASE WHEN upper(trim(r.DisponentPattern)) = d.Disponent THEN 0 ELSE 1 END,
+                   length(trim(r.DisponentPattern)) DESC
+           ) AS MatchRank
+    FROM SapProductGroupDispatchers d
+    INNER JOIN PurchasingSpendDisponentRule r
+        ON upper(trim(r.DisponentPattern)) = d.Disponent
+        OR (
+            substr(trim(r.DisponentPattern), -1, 1) = '*'
+            AND d.Disponent LIKE upper(substr(trim(r.DisponentPattern), 1, length(trim(r.DisponentPattern)) - 1)) || '%'
+        )
+    WHERE upper(trim(r.Source)) LIKE 'SAP ODATA%'
+      AND COALESCE(trim(r.ProductGroup), '') <> ''
+),
+SapProductGroupTier AS (
+    SELECT Disponent, ProductGroup, MAX(ProductGroupText) AS ProductGroupText
+    FROM SapProductGroupCandidates
+    WHERE MatchRank = 1
+    GROUP BY Disponent, ProductGroup
+),
+SapProductGroupResolved AS (
+    SELECT Disponent, ProductGroup, ProductGroupText, IsAmbiguous
+    FROM (
+        SELECT Disponent, ProductGroup, ProductGroupText,
+               ROW_NUMBER() OVER (PARTITION BY Disponent ORDER BY ProductGroup) AS Pick,
+               CASE WHEN COUNT(*) OVER (PARTITION BY Disponent) > 1 THEN 1 ELSE 0 END AS IsAmbiguous
+        FROM SapProductGroupTier
+    )
+    WHERE Pick = 1
+)"
+            : @"SapProductGroupResolved AS (
+    SELECT '' AS Disponent, '' AS ProductGroup, '' AS ProductGroupText, 0 AS IsAmbiguous
+    WHERE 0
+)";
+
     internal const string ProductGroupMaterialGroupPerspectiveKey = "productgroup-materialgroup";
 
     /// <summary>
@@ -1728,52 +1888,9 @@ GROUP BY 1, 2, 3, 4;";
         // ohne ORDER BY, also keine feste Reihenfolge. Solche Faelle zaehlt die Kachel „Mehrdeutige SAP-Regel“.
         var dispo = "upper(trim(COALESCE(p.MarcDispo, '')))";
         var hasSapProductGroupRules = await TableExistsAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
-        var resolvedCte = hasSapProductGroupRules
-            ? @"SapProductGroupDispatchers AS (
-    SELECT DISTINCT upper(trim(MarcDispo)) AS Disponent
-    FROM PurchasingEkpoCache
-    WHERE COALESCE(trim(MarcDispo), '') <> ''
-),
-SapProductGroupCandidates AS (
-    SELECT d.Disponent,
-           trim(r.ProductGroup) AS ProductGroup,
-           trim(COALESCE(r.ProductGroupText, '')) AS ProductGroupText,
-           DENSE_RANK() OVER (
-               PARTITION BY d.Disponent
-               ORDER BY
-                   CASE WHEN upper(trim(r.DisponentPattern)) = d.Disponent THEN 0 ELSE 1 END,
-                   length(trim(r.DisponentPattern)) DESC
-           ) AS MatchRank
-    FROM SapProductGroupDispatchers d
-    INNER JOIN PurchasingSpendDisponentRule r
-        ON upper(trim(r.DisponentPattern)) = d.Disponent
-        OR (
-            substr(trim(r.DisponentPattern), -1, 1) = '*'
-            AND d.Disponent LIKE upper(substr(trim(r.DisponentPattern), 1, length(trim(r.DisponentPattern)) - 1)) || '%'
-        )
-    WHERE upper(trim(r.Source)) LIKE 'SAP ODATA%'
-      AND COALESCE(trim(r.ProductGroup), '') <> ''
-),
-SapProductGroupTier AS (
-    SELECT Disponent, ProductGroup, MAX(ProductGroupText) AS ProductGroupText
-    FROM SapProductGroupCandidates
-    WHERE MatchRank = 1
-    GROUP BY Disponent, ProductGroup
-),
-SapProductGroupResolved AS (
-    SELECT Disponent, ProductGroup, ProductGroupText, IsAmbiguous
-    FROM (
-        SELECT Disponent, ProductGroup, ProductGroupText,
-               ROW_NUMBER() OVER (PARTITION BY Disponent ORDER BY ProductGroup) AS Pick,
-               CASE WHEN COUNT(*) OVER (PARTITION BY Disponent) > 1 THEN 1 ELSE 0 END AS IsAmbiguous
-        FROM SapProductGroupTier
-    )
-    WHERE Pick = 1
-)"
-            : @"SapProductGroupResolved AS (
-    SELECT '' AS Disponent, '' AS ProductGroup, '' AS ProductGroupText, 0 AS IsAmbiguous
-    WHERE 0
-)";
+        var resolvedCte = SapProductGroupResolvedCteSql(
+            hasSapProductGroupRules,
+            "SELECT DISTINCT upper(trim(MarcDispo)) AS Disponent FROM PurchasingEkpoCache WHERE COALESCE(trim(MarcDispo), '') <> ''");
         var productGroupLabel = $@"CASE
             WHEN {dispo} = '' THEN 'ohne Produktgruppe'
             -- Anzeige nur der SAP-Text (ZDISPO_SPART-DESCR) wie DISPO_DES im Report; der Schluessel DISPO nur ohne Text

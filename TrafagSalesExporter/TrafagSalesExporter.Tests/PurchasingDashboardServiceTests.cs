@@ -671,7 +671,7 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.Equal(
-            ["supplier", "region", "materialgroup", "productgroup", "productgroup-materialgroup", "disponent", "disponent-usage", "currency", "lzcode", "lzsort"],
+            ["supplier", "region", "materialgroup", "productgroup", "productgroup-materialgroup", "usage-productgroup", "disponent", "disponent-usage", "currency", "lzcode", "lzsort"],
             state.SpendPerspectiveRows.Select(perspective => perspective.Key));
 
         // Region-Perspektive steigt beim Lieferantenland ein und geht vier Ebenen tief.
@@ -814,6 +814,39 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal(60m, Assert.Single(usage.Rows, row => row.Label == "DS1").Total);
         Assert.Equal(80m, Assert.Single(usage.Rows, row => row.Label == "019").Total);
         Assert.Equal(50m, Assert.Single(usage.Rows, row => row.Label == "ohne Verwendung").Total);
+    }
+
+    [Fact]
+    public async Task LoadAsync_UsageProductGroup_Splits_By_Number_Of_Using_Numbers_And_Keeps_Total()
+    {
+        // Wunsch aus der Sitzung 2026-10-28: Einkaufsvolumen je Produktgruppe der Produkte, in denen das Teil verbaut ist,
+        // aufgeteilt nach Warengruppe. Gewichtet nach Anzahl verwendender Nummern, nicht zu gleichen Teilen je Gruppe.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('U1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('U1', '10', 'M1', '10.08.00', '001', '1', '300', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('U1', '20', 'M2', '20.01.01', '002', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Menge, Netwr, LastLoadedAtUtc) VALUES ('U1', '30', '', 'Textbestellung', '1', '20', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('U1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('DH*', 'DH', 'FP_DW-HYBRID', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('EK*', 'T5', 'FP_TRANSM.TR', 'SAP OData', '2026-01-01');");
+        // M1 steckt in zwei Hybrid-Nummern und einer Transmitter-Nummer: 2/3 zu 1/3. M2 in einer Nummer ohne SAP-Regel.
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V1', 'DH1', 'M1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V2', 'DH2', 'M1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V3', 'EK2', 'M1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V4', 'ZZ9', 'M2', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        foreach (var rows in new[] { state.SpendPerspectiveRows, state.PurchasingPartsSpendPerspectiveRows })
+            Assert.Contains(rows, row => row.Key == "usage-productgroup");
+        var usage = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "usage-productgroup");
+        Assert.Equal(["Produktgruppe (Verwendung)", "Warengruppe", "Material"], usage.LevelLabelsDe);
+        Assert.Equal(370m, usage.Rows.Sum(row => row.Total));
+        var hybrid = Assert.Single(usage.Rows, row => row.Label == "FP_DW-HYBRID");
+        Assert.Equal(200m, hybrid.Total);
+        Assert.StartsWith("10.08.00", Assert.Single(hybrid.Children).Label);
+        Assert.Equal(100m, Assert.Single(usage.Rows, row => row.Label == "FP_TRANSM.TR").Total);
+        Assert.Equal(50m, Assert.Single(usage.Rows, row => row.Label == "Disponent ZZ9").Total);
+        Assert.Equal(20m, Assert.Single(usage.Rows, row => row.Label == "ohne Verwendung").Total);
     }
 
     [Fact]
