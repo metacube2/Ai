@@ -73,10 +73,30 @@
         </div>
         <div class="purchasing-hero-note">
             <strong>@DataReadinessText</strong>
-            <span>@PurchasingStatusText</span>
+            @* Die Ladestatus-Meldung kann sehr lang werden und verzog den Kopf; deshalb gekuerzt, voller Text im Popup. *@
+            <span class="purchasing-hero-status">@PurchasingStatusText</span>
+            @if (!_liveLoading)
+            {
+                <MudButton Variant="Variant.Text" Size="Size.Small" Class="purchasing-hero-status-more"
+                           StartIcon="@Icons.Material.Outlined.Info" OnClick="@(() => _statusDialogOpen = true)">
+                    @T("Ladeprotokoll", "Load log")
+                </MudButton>
+            }
         </div>
     </div>
 </MudPaper>
+
+<MudDialog @bind-Visible="_statusDialogOpen" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@T("Ladeprotokoll Einkaufsdaten", "Purchasing data load log")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="purchasing-status-dialog-text">@PurchasingStatusText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _statusDialogOpen = false)">@T("Schliessen", "Close")</MudButton>
+    </DialogActions>
+</MudDialog>
 
 <MudPaper Class="pa-3 mb-4 purchasing-filter-panel" Outlined="true">
     @if (_liveLoading)
@@ -1050,6 +1070,7 @@
     private PurchasingDashboardLiveState _liveState = new();
     private PurchasingDataRefreshStatus _refreshStatus = new();
     private bool _liveLoading = true;
+    private bool _statusDialogOpen;
     private bool _refreshStartRejected;
     private bool _showingPreviousData;
     private CancellationTokenSource? _previousDataPollCts;
@@ -2875,6 +2896,25 @@
     .purchasing-hero-note span {
         color: rgba(255,255,255,.76);
         font-size: .9rem;
+    }
+
+    .purchasing-hero-status {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+    }
+
+    .purchasing-hero-status-more {
+        align-self: flex-start;
+        color: rgba(255,255,255,.86) !important;
+        padding-left: 0 !important;
+    }
+
+    .purchasing-status-dialog-text {
+        white-space: pre-line;
+        overflow-wrap: anywhere;
     }
 
     .purchasing-kpi {
