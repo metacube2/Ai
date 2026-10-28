@@ -1,6 +1,12 @@
 # Last Change
 
-Stand: 2026-10-27
+Stand: 2026-10-28
+
+## Einkauf: Ladestatus im Kopf gekuerzt, voller Text im Popup, 2026-10-28
+
+- Wunsch Ingo: Die lange Ladestatus-Meldung rechts im Kopf des Einkauf-Cockpits verzog den Kopfbereich. Sie ist jetzt auf
+  drei Zeilen gekuerzt; der Knopf „Ladeprotokoll“ zeigt den vollen Text in einem Popup. Commits `ae67f7e`, `abf3a92`,
+  `5c568b0` (Uebersetzungen inkl. Berndeutsch), Suite im Release-Worktree 1279/1279. Deploy siehe `docs/rag/DEPLOYMENT.md`.
 
 ## Handbestellwesen: neue Mitarbeitende nur aus dem AD, 2026-10-27
 
