@@ -1,0 +1,616 @@
+{
+ "stand": "2026-10-28",
+ "quelle": "OpenStreetMap (natural=peak, ODbL), Hoehenmodell Terrarium (AWS Open Data)",
+ "standort": {
+  "lat": 47.27082,
+  "lon": 8.87238,
+  "hoehe_m": 569.7
+ },
+ "kamera": {
+  "gier": 231.355,
+  "neigung": 8.835,
+  "roll": 0.768,
+  "f_px": 2254.4,
+  "k1": -0.2583,
+  "k2": 0.0663,
+  "cx": 95.9,
+  "cy": -14.0
+ },
+ "bild": {
+  "breite": 3072,
+  "hoehe": 1728,
+  "referenz": "referenz_20261025_090059.jpg"
+ },
+ "versatz_standard": {
+  "dx": -19.1,
+  "dy": 17.9
+ },
+ "versatz_url": "peakfinder-versatz.txt",
+ "genauigkeit": {
+  "horizont_px_median": 2.28,
+  "horizont_px_p90": 6.39,
+  "gipfel": [
+   {
+    "name": "Grosser Mythen",
+    "dx": 0.9,
+    "dy": 0.6
+   },
+   {
+    "name": "Klein Mythen",
+    "dx": -0.9,
+    "dy": -0.2
+   }
+  ],
+  "sonne": [
+   {
+    "az": 251.46,
+    "el": 1.96,
+    "dx": 10.0,
+    "dy": 7.9
+   },
+   {
+    "az": 252.83,
+    "el": 0.87,
+    "dx": -6.8,
+    "dy": 31.6
+   },
+   {
+    "az": 253.51,
+    "el": 0.35,
+    "dx": 6.8,
+    "dy": 4.7
+   },
+   {
+    "az": 194.41,
+    "el": 28.77,
+    "dx": -3.0,
+    "dy": null
+   },
+   {
+    "az": 196.29,
+    "el": 28.46,
+    "dx": -4.0,
+    "dy": null
+   },
+   {
+    "az": 197.64,
+    "el": 28.21,
+    "dx": -3.9,
+    "dy": null
+   },
+   {
+    "az": 199.31,
+    "el": 27.88,
+    "dx": -4.5,
+    "dy": null
+   },
+   {
+    "az": 200.99,
+    "el": 27.51,
+    "dx": -4.9,
+    "dy": null
+   },
+   {
+    "az": 202.49,
+    "el": 27.15,
+    "dx": -1.9,
+    "dy": null
+   },
+   {
+    "az": 204.14,
+    "el": 26.73,
+    "dx": -1.0,
+    "dy": null
+   },
+   {
+    "az": 205.61,
+    "el": 26.32,
+    "dx": -1.6,
+    "dy": 0.8
+   },
+   {
+    "az": 207.3,
+    "el": 25.83,
+    "dx": 0.7,
+    "dy": 4.7
+   },
+   {
+    "az": 208.73,
+    "el": 25.38,
+    "dx": 2.1,
+    "dy": 2.8
+   },
+   {
+    "az": 210.29,
+    "el": 24.86,
+    "dx": 3.1,
+    "dy": 7.6
+   },
+   {
+    "az": 211.69,
+    "el": 24.38,
+    "dx": 1.6,
+    "dy": 5.8
+   },
+   {
+    "az": 213.23,
+    "el": 23.81,
+    "dx": 4.1,
+    "dy": 9.3
+   },
+   {
+    "az": 214.73,
+    "el": 23.23,
+    "dx": 5.1,
+    "dy": 9.1
+   },
+   {
+    "az": 216.23,
+    "el": 22.62,
+    "dx": 4.9,
+    "dy": 8.3
+   },
+   {
+    "az": 217.87,
+    "el": 21.92,
+    "dx": 4.9,
+    "dy": 7.3
+   },
+   {
+    "az": 219.05,
+    "el": 21.39,
+    "dx": 3.9,
+    "dy": 6.8
+   },
+   {
+    "az": 220.36,
+    "el": 20.78,
+    "dx": 2.9,
+    "dy": 6.7
+   },
+   {
+    "az": 222.13,
+    "el": 19.93,
+    "dx": 3.0,
+    "dy": 6.9
+   },
+   {
+    "az": 223.12,
+    "el": 19.43,
+    "dx": 1.8,
+    "dy": 5.5
+   },
+   {
+    "az": 224.68,
+    "el": 18.61,
+    "dx": 0.8,
+    "dy": 6.0
+   },
+   {
+    "az": 225.93,
+    "el": 17.94,
+    "dx": -0.5,
+    "dy": 3.5
+   },
+   {
+    "az": 227.29,
+    "el": 17.18,
+    "dx": -3.4,
+    "dy": -0.1
+   },
+   {
+    "az": 228.51,
+    "el": 16.47,
+    "dx": -5.1,
+    "dy": -6.4
+   },
+   {
+    "az": 229.99,
+    "el": 15.59,
+    "dx": -5.0,
+    "dy": -11.2
+   },
+   {
+    "az": 231.18,
+    "el": 14.86,
+    "dx": -3.5,
+    "dy": -18.7
+   },
+   {
+    "az": 232.49,
+    "el": 14.03,
+    "dx": -3.1,
+    "dy": -21.6
+   },
+   {
+    "az": 233.78,
+    "el": 13.2,
+    "dx": -1.8,
+    "dy": -20.3
+   },
+   {
+    "az": 234.8,
+    "el": 12.52,
+    "dx": -4.3,
+    "dy": -10.0
+   },
+   {
+    "az": 236.0,
+    "el": 11.7,
+    "dx": -3.1,
+    "dy": -4.2
+   },
+   {
+    "az": 237.25,
+    "el": 10.83,
+    "dx": -2.9,
+    "dy": -6.4
+   },
+   {
+    "az": 238.5,
+    "el": 9.93,
+    "dx": -5.2,
+    "dy": 0.2
+   },
+   {
+    "az": 239.73,
+    "el": 9.04,
+    "dx": -5.0,
+    "dy": -7.0
+   },
+   {
+    "az": 240.94,
+    "el": 8.13,
+    "dx": -5.7,
+    "dy": -9.0
+   },
+   {
+    "az": 242.15,
+    "el": 7.22,
+    "dx": -4.1,
+    "dy": -43.7
+   },
+   {
+    "az": 243.11,
+    "el": 6.48,
+    "dx": -3.1,
+    "dy": -40.1
+   }
+  ],
+  "passpunkte_im_ausgleich": [
+   "Grosser Mythen",
+   "Klein Mythen",
+   "Sonne x39"
+  ],
+  "pruefung": {
+   "bild": "screenshot_20261027_150057.jpg",
+   "versatz": [
+    -19.1,
+    17.6
+   ],
+   "dx": -0.2,
+   "dy": 2.2
+  }
+ },
+ "gipfel": [
+  {
+   "name": "Etzel",
+   "hoehe": 1098,
+   "dist_km": 13.1,
+   "az": 217.36,
+   "el": 2.267,
+   "x": 1087.3,
+   "y": 1088.7,
+   "rang": 4810,
+   "unsicher": false
+  },
+  {
+   "name": "Wildspitz",
+   "hoehe": 1206,
+   "dist_km": 17.9,
+   "az": 228.09,
+   "el": 1.962,
+   "x": 1500.4,
+   "y": 1117.1,
+   "rang": 4141,
+   "unsicher": false
+  },
+  {
+   "name": "Grosser Mythen",
+   "hoehe": 1898,
+   "dist_km": 30.2,
+   "az": 207.49,
+   "el": 2.402,
+   "x": 731.9,
+   "y": 1057.6,
+   "rang": 3319,
+   "unsicher": false
+  },
+  {
+   "name": "Klein Mythen",
+   "hoehe": 1810,
+   "dist_km": 29.3,
+   "az": 209.07,
+   "el": 2.313,
+   "x": 786.6,
+   "y": 1065.8,
+   "rang": 3291,
+   "unsicher": false
+  },
+  {
+   "name": "Druesberg",
+   "hoehe": 2282,
+   "dist_km": 29.8,
+   "az": 185.65,
+   "el": 3.175,
+   "x": 81.9,
+   "y": 942.8,
+   "rang": 3262,
+   "unsicher": true
+  },
+  {
+   "name": "Albishorn",
+   "hoehe": 909,
+   "dist_km": 24.8,
+   "az": 265.04,
+   "el": 0.686,
+   "x": 2844.5,
+   "y": 1120.6,
+   "rang": 3004,
+   "unsicher": false
+  },
+  {
+   "name": "Pfiiffegg",
+   "hoehe": 1278,
+   "dist_km": 13.5,
+   "az": 183.35,
+   "el": 2.942,
+   "x": 24.7,
+   "y": 940.8,
+   "rang": 2428,
+   "unsicher": true
+  },
+  {
+   "name": "Stöcklichrüz",
+   "hoehe": 1247,
+   "dist_km": 13.0,
+   "az": 197.6,
+   "el": 2.921,
+   "x": 412.1,
+   "y": 1003.0,
+   "rang": 2425,
+   "unsicher": false
+  },
+  {
+   "name": "Ängihöchi",
+   "hoehe": 1138,
+   "dist_km": 17.6,
+   "az": 227.22,
+   "el": 1.784,
+   "x": 1466.2,
+   "y": 1123.2,
+   "rang": 1396,
+   "unsicher": false
+  },
+  {
+   "name": "Tomislochhöchi",
+   "hoehe": 1145,
+   "dist_km": 17.4,
+   "az": 226.49,
+   "el": 1.821,
+   "x": 1437.5,
+   "y": 1120.9,
+   "rang": 1378,
+   "unsicher": false
+  },
+  {
+   "name": "Bruusthöchi",
+   "hoehe": 1177,
+   "dist_km": 22.9,
+   "az": 235.44,
+   "el": 1.426,
+   "x": 1788.1,
+   "y": 1141.4,
+   "rang": 1036,
+   "unsicher": false
+  },
+  {
+   "name": "Urirotstock",
+   "hoehe": 2928,
+   "dist_km": 52.2,
+   "az": 209.44,
+   "el": 2.385,
+   "x": 799.7,
+   "y": 1064.1,
+   "rang": 988,
+   "unsicher": false
+  },
+  {
+   "name": "Schlieren",
+   "hoehe": 2830,
+   "dist_km": 51.7,
+   "az": 209.88,
+   "el": 2.303,
+   "x": 814.9,
+   "y": 1068.5,
+   "rang": 912,
+   "unsicher": false
+  },
+  {
+   "name": "Chli Aubrig",
+   "hoehe": 1642,
+   "dist_km": 18.2,
+   "az": 182.44,
+   "el": 3.307,
+   "x": 3.3,
+   "y": 922.9,
+   "rang": 907,
+   "unsicher": true
+  },
+  {
+   "name": "Wissigstock",
+   "hoehe": 2887,
+   "dist_km": 54.8,
+   "az": 210.48,
+   "el": 2.207,
+   "x": 835.9,
+   "y": 1073.9,
+   "rang": 841,
+   "unsicher": false
+  },
+  {
+   "name": "Bürglen",
+   "hoehe": 915,
+   "dist_km": 25.3,
+   "az": 266.8,
+   "el": 0.682,
+   "x": 2897.4,
+   "y": 1115.1,
+   "rang": 837,
+   "unsicher": false
+  },
+  {
+   "name": "Nüsellstock",
+   "hoehe": 1479,
+   "dist_km": 24.1,
+   "az": 213.72,
+   "el": 2.066,
+   "x": 952.6,
+   "y": 1088.1,
+   "rang": 833,
+   "unsicher": false
+  },
+  {
+   "name": "Höch Tändli",
+   "hoehe": 1523,
+   "dist_km": 24.7,
+   "az": 212.66,
+   "el": 2.117,
+   "x": 913.9,
+   "y": 1083.4,
+   "rang": 831,
+   "unsicher": false
+  },
+  {
+   "name": "Engelberger Rotstock",
+   "hoehe": 2818,
+   "dist_km": 54.4,
+   "az": 211.59,
+   "el": 2.156,
+   "x": 875.4,
+   "y": 1079.0,
+   "rang": 809,
+   "unsicher": false
+  },
+  {
+   "name": "Brunnistock",
+   "hoehe": 2952,
+   "dist_km": 53.0,
+   "az": 207.55,
+   "el": 2.367,
+   "x": 733.9,
+   "y": 1059.1,
+   "rang": 796,
+   "unsicher": false
+  },
+  {
+   "name": "Chläbdächer",
+   "hoehe": 2177,
+   "dist_km": 29.5,
+   "az": 184.4,
+   "el": 3.003,
+   "x": 50.5,
+   "y": 943.4,
+   "rang": 776,
+   "unsicher": true
+  },
+  {
+   "name": "Blackenstock",
+   "hoehe": 2931,
+   "dist_km": 54.1,
+   "az": 208.07,
+   "el": 2.287,
+   "x": 751.7,
+   "y": 1063.8,
+   "rang": 773,
+   "unsicher": false
+  },
+  {
+   "name": "Gitschenhöreli",
+   "hoehe": 2907,
+   "dist_km": 52.8,
+   "az": 207.45,
+   "el": 2.327,
+   "x": 730.2,
+   "y": 1060.3,
+   "rang": 742,
+   "unsicher": false
+  },
+  {
+   "name": "Forstberg",
+   "hoehe": 2215,
+   "dist_km": 30.2,
+   "az": 187.01,
+   "el": 2.996,
+   "x": 116.3,
+   "y": 955.6,
+   "rang": 737,
+   "unsicher": true
+  },
+  {
+   "name": "Haggenspitz",
+   "hoehe": 1762,
+   "dist_km": 28.9,
+   "az": 209.17,
+   "el": 2.25,
+   "x": 789.8,
+   "y": 1068.5,
+   "rang": 729,
+   "unsicher": false
+  },
+  {
+   "name": "Piet",
+   "hoehe": 1965,
+   "dist_km": 26.1,
+   "az": 185.21,
+   "el": 2.963,
+   "x": 70.5,
+   "y": 948.7,
+   "rang": 723,
+   "unsicher": true
+  },
+  {
+   "name": "Höch Hund",
+   "hoehe": 2215,
+   "dist_km": 29.7,
+   "az": 183.66,
+   "el": 3.06,
+   "x": 32.4,
+   "y": 937.9,
+   "rang": 713,
+   "unsicher": true
+  },
+  {
+   "name": "Sparenfirst",
+   "hoehe": 1136,
+   "dist_km": 20.0,
+   "az": 232.16,
+   "el": 1.544,
+   "x": 1659.6,
+   "y": 1136.1,
+   "rang": 672,
+   "unsicher": false
+  },
+  {
+   "name": "Schnabel",
+   "hoehe": 861,
+   "dist_km": 25.6,
+   "az": 268.24,
+   "el": 0.552,
+   "x": 2939.6,
+   "y": 1115.2,
+   "rang": 237,
+   "unsicher": false
+  }
+ ]
+}

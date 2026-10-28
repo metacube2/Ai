@@ -4049,6 +4049,7 @@ body.theme-neo footer {
 
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <link rel="stylesheet" href="css/aurora-refresh.css?v=20261007">
+<link rel="stylesheet" href="css/peakfinder.css?v=20261028">
 </head>
 <body class="<?php echo $settingsManager->getDefaultTheme(); ?>">
 
@@ -4903,6 +4904,8 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
     };
 </script>
 <script src="js/video-zoom.js?v=20261007"></script>
+<script src="js/peakfinder-daten.js?v=20261028"></script>
+<script src="js/peakfinder.js?v=20261028"></script>
 
 <!-- TIMELAPSE CONTROLLER -->
 <script>

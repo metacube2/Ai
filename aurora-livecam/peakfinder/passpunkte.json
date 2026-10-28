@@ -1,0 +1,603 @@
+{
+ "_hinweis": "Passpunkte der Peakfinder-Kalibrierung. Pixel im Kamerabild 3072 x 1728. Gipfel-Pixel gelten im Referenzbild; Sonnen-Pixel im jeweiligen Bild, versatz = gemessene Bildverschiebung dieses Bilds gegen die Referenz (abgleich.versatz), damit Referenzlage = Pixel - versatz.",
+ "referenz": "referenz_20261025_090059.jpg",
+ "standort_start": {
+  "lat": 47.278682,
+  "lon": 8.860951,
+  "quelle": "Dorfkern Oberduernten (windy/App), Kamera steht in der Naehe"
+ },
+ "start": {
+  "gier": 225.6,
+  "neigung": 9.0,
+  "roll": 1.45,
+  "f": 2070.0
+ },
+ "gipfel": [
+  {
+   "name": "Grosser Mythen",
+   "osm": 440302682,
+   "x": 731.0,
+   "y": 1057.0,
+   "sigma": 1.5,
+   "herkunft": "Spitze des linken Zahns, von Hand im Referenzbild (4-fach vergroessert) abgelesen"
+  },
+  {
+   "name": "Klein Mythen",
+   "osm": 610954338,
+   "x": 787.5,
+   "y": 1066.0,
+   "sigma": 1.5,
+   "herkunft": "Spitze des rechten Zahns, wie oben"
+  }
+ ],
+ "sonne": [
+  {
+   "bild": "screenshot_20261022_180909.jpg",
+   "x": 2380,
+   "y": 1135,
+   "versatz": [
+    -3.9,
+    36.7
+   ],
+   "sigma": [
+    15,
+    15
+   ],
+   "herkunft": "Mitte des Sonnenflecks knapp ueber dem Horizont, von Hand; Blendung begrenzt auf etwa 15 px"
+  },
+  {
+   "bild": "screenshot_20261022_181637.jpg",
+   "x": 2445,
+   "y": 1150,
+   "versatz": [
+    -4.1,
+    36.1
+   ],
+   "sigma": [
+    15,
+    15
+   ],
+   "herkunft": "wie oben"
+  },
+  {
+   "bild": "screenshot_20261022_182018.jpg",
+   "x": 2455,
+   "y": 1195,
+   "versatz": [
+    -4.0,
+    35.8
+   ],
+   "sigma": [
+    15,
+    20
+   ],
+   "herkunft": "Sonne sitzt auf dem Grat, teilweise verdeckt"
+  }
+ ],
+ "pruefung": [
+  {
+   "bild": "screenshot_20261027_150057.jpg",
+   "gipfel": "Grosser Mythen",
+   "x": 713,
+   "y": 1073,
+   "herkunft": "Kontrolle in der Kameralage seit 27.10. (nicht im Ausgleich)"
+  }
+ ],
+ "sonne_bahn": [
+  {
+   "bild": "screenshot_20261027_130008.jpg",
+   "x": 480.4,
+   "y": null,
+   "versatz": [
+    -17.5,
+    20.4
+   ],
+   "sigma": [
+    10,
+    null
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250), oben abgeschnitten: nur x"
+  },
+  {
+   "bild": "screenshot_20261027_130700.jpg",
+   "x": 526.4,
+   "y": null,
+   "versatz": [
+    -17.5,
+    20.3
+   ],
+   "sigma": [
+    10,
+    null
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250), oben abgeschnitten: nur x"
+  },
+  {
+   "bild": "screenshot_20261027_131200.jpg",
+   "x": 559.5,
+   "y": null,
+   "versatz": [
+    -17.6,
+    20.3
+   ],
+   "sigma": [
+    10,
+    null
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250), oben abgeschnitten: nur x"
+  },
+  {
+   "bild": "screenshot_20261027_131812.jpg",
+   "x": 601.9,
+   "y": null,
+   "versatz": [
+    -17.7,
+    20.0
+   ],
+   "sigma": [
+    10,
+    null
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250), oben abgeschnitten: nur x"
+  },
+  {
+   "bild": "screenshot_20261027_132429.jpg",
+   "x": 645.5,
+   "y": null,
+   "versatz": [
+    -17.7,
+    19.9
+   ],
+   "sigma": [
+    10,
+    null
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250), oben abgeschnitten: nur x"
+  },
+  {
+   "bild": "screenshot_20261027_133009.jpg",
+   "x": 681.9,
+   "y": null,
+   "versatz": [
+    -17.8,
+    19.8
+   ],
+   "sigma": [
+    10,
+    null
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250), oben abgeschnitten: nur x"
+  },
+  {
+   "bild": "screenshot_20261027_133625.jpg",
+   "x": 725.4,
+   "y": null,
+   "versatz": [
+    -17.7,
+    19.6
+   ],
+   "sigma": [
+    10,
+    null
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250), oben abgeschnitten: nur x"
+  },
+  {
+   "bild": "screenshot_20261027_134205.jpg",
+   "x": 766.5,
+   "y": 164.4,
+   "versatz": [
+    -17.8,
+    19.5
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_134837.jpg",
+   "x": 811.5,
+   "y": 181.4,
+   "versatz": [
+    -18.0,
+    19.2
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_135413.jpg",
+   "x": 851.2,
+   "y": 202.0,
+   "versatz": [
+    -18.1,
+    19.0
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_140025.jpg",
+   "x": 895.7,
+   "y": 219.6,
+   "versatz": [
+    -18.8,
+    19.6
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_140601.jpg",
+   "x": 939.1,
+   "y": 241.7,
+   "versatz": [
+    -19.0,
+    19.5
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_141213.jpg",
+   "x": 983.7,
+   "y": 261.3,
+   "versatz": [
+    -19.0,
+    19.2
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_141822.jpg",
+   "x": 1030.7,
+   "y": 284.8,
+   "versatz": [
+    -18.2,
+    18.4
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_142434.jpg",
+   "x": 1078.9,
+   "y": 310.5,
+   "versatz": [
+    -18.2,
+    18.3
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_143125.jpg",
+   "x": 1132.4,
+   "y": 340.0,
+   "versatz": [
+    -18.2,
+    18.1
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_143625.jpg",
+   "x": 1172.8,
+   "y": 361.8,
+   "versatz": [
+    -18.1,
+    17.9
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_144201.jpg",
+   "x": 1218.0,
+   "y": 386.2,
+   "versatz": [
+    -18.1,
+    17.6
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_144941.jpg",
+   "x": 1278.6,
+   "y": 420.4,
+   "versatz": [
+    -18.2,
+    17.2
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_145401.jpg",
+   "x": 1314.4,
+   "y": 441.8,
+   "versatz": [
+    -18.1,
+    17.1
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_150057.jpg",
+   "x": 1369.8,
+   "y": 474.7,
+   "versatz": [
+    -19.1,
+    17.6
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_150633.jpg",
+   "x": 1416.0,
+   "y": 504.4,
+   "versatz": [
+    -19.0,
+    17.6
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_151245.jpg",
+   "x": 1468.5,
+   "y": 538.2,
+   "versatz": [
+    -19.0,
+    17.2
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_151821.jpg",
+   "x": 1514.9,
+   "y": 572.6,
+   "versatz": [
+    -19.2,
+    17.0
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_152513.jpg",
+   "x": 1569.7,
+   "y": 612.3,
+   "versatz": [
+    -19.2,
+    16.7
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_153049.jpg",
+   "x": 1613.1,
+   "y": 648.8,
+   "versatz": [
+    -19.0,
+    16.5
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_153701.jpg",
+   "x": 1662.0,
+   "y": 684.5,
+   "versatz": [
+    -19.0,
+    16.5
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_154313.jpg",
+   "x": 1709.6,
+   "y": 716.3,
+   "versatz": [
+    -19.1,
+    16.3
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_154810.jpg",
+   "x": 1751.1,
+   "y": 732.6,
+   "versatz": [
+    -19.1,
+    16.1
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_155402.jpg",
+   "x": 1796.0,
+   "y": 759.0,
+   "versatz": [
+    -19.0,
+    16.1
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_160014.jpg",
+   "x": 1843.8,
+   "y": 795.0,
+   "versatz": [
+    -19.2,
+    15.7
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_160630.jpg",
+   "x": 1894.5,
+   "y": 823.1,
+   "versatz": [
+    -19.0,
+    15.4
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_161242.jpg",
+   "x": 1941.6,
+   "y": 864.9,
+   "versatz": [
+    -19.0,
+    15.2
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_161854.jpg",
+   "x": 1989.1,
+   "y": 902.2,
+   "versatz": [
+    -19.0,
+    15.5
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_162507.jpg",
+   "x": 2033.9,
+   "y": 971.9,
+   "versatz": [
+    -18.9,
+    15.2
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  },
+  {
+   "bild": "screenshot_20261027_163007.jpg",
+   "x": 2069.6,
+   "y": 996.4,
+   "versatz": [
+    -19.0,
+    15.0
+   ],
+   "sigma": [
+    10,
+    10
+   ],
+   "herkunft": "Schwerpunkt des gesaettigten Sonnenflecks (automatisch, min(R,G,B)>=250)"
+  }
+ ],
+ "bevorzugt": {
+  "_hinweis": "Leitgipfel: bekommen auf der Seite zuerst einen Platz, wenn sich Marken ueberdecken",
+  "namen": [
+   "Grosser Mythen",
+   "Klein Mythen",
+   "Etzel",
+   "Druesberg",
+   "Wildspitz",
+   "Albishorn"
+  ]
+ }
+}

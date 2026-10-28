@@ -1,0 +1,120 @@
+/* Peakfinder ueber dem Live-Video (js/peakfinder.js), 2026-10-28 */
+.pf-ebene {
+    --pf-s: 1;
+    --pf-farbe: #fff;
+    --pf-schatten: 0 1px 2px rgba(0, 0, 0, .9), 0 0 6px rgba(0, 0, 0, .6);
+    --pf-akzent: #5ee0b0;
+    position: absolute;
+    left: 0; top: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+.pf-ebene.pf-aus .pf-marke,
+.pf-ebene.pf-aus .pf-karte { display: none; }
+
+.pf-marke {
+    position: absolute;
+    transform: translate(-50%, -100%) scale(var(--pf-s));
+    transform-origin: 50% 100%;
+    display: flex; flex-direction: column-reverse; align-items: center;
+    background: none; border: 0; margin: 0; padding: 0 4px;
+    color: var(--pf-farbe); cursor: pointer;
+    pointer-events: auto;
+    font: 600 12px/1.15 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+.pf-marke[hidden], .pf-marke.pf-still { display: none; }
+/* am Bildrand den Namen nach innen setzen, der Punkt bleibt auf dem Gipfel */
+.pf-marke.pf-l { align-items: flex-start; transform: translate(-9px, -100%) scale(var(--pf-s)); transform-origin: 9px 100%; }
+.pf-marke.pf-r { align-items: flex-end; transform: translate(calc(-100% + 9px), -100%) scale(var(--pf-s)); transform-origin: calc(100% - 9px) 100%; }
+/* Zeiger: Linie vom Namen bis knapp ueber den Gipfel */
+.pf-punkt {
+    width: 7px; height: 7px; margin-top: 1px;
+    border: 1.5px solid var(--pf-farbe); border-radius: 50%;
+    background: rgba(0, 0, 0, .25);
+    box-shadow: 0 0 3px rgba(0, 0, 0, .8);
+    position: relative;
+}
+.pf-marke.pf-mit-name .pf-punkt::before {
+    content: ""; position: absolute; left: 50%; bottom: 100%;
+    width: 1px; height: 14px; background: rgba(255, 255, 255, .75);
+    transform: translateX(-50%);
+}
+.pf-name {
+    display: none;
+    margin-bottom: 15px;
+    white-space: nowrap;
+    text-shadow: var(--pf-schatten);
+    letter-spacing: .01em;
+}
+.pf-marke.pf-mit-name .pf-name { display: block; }
+.pf-marke.pf-unsicher .pf-name { opacity: .8; font-style: italic; }
+/* Trefferflaeche fuer Finger groesser als der Punkt */
+.pf-marke::after { content: ""; position: absolute; left: -8px; right: -8px; top: -6px; bottom: -10px; }
+.pf-marke:hover .pf-name, .pf-marke:focus-visible .pf-name { display: block; color: var(--pf-akzent); }
+.pf-marke:hover .pf-punkt, .pf-marke.pf-aktiv .pf-punkt { border-color: var(--pf-akzent); background: var(--pf-akzent); }
+.pf-marke.pf-aktiv .pf-name { display: none; }
+.pf-marke:focus-visible { outline: 2px solid var(--pf-akzent); outline-offset: 2px; border-radius: 4px; }
+
+.pf-karte {
+    position: absolute;
+    transform: translate(-50%, calc(-100% - 46px)) scale(var(--pf-s));
+    transform-origin: 50% 100%;
+    min-width: 150px; max-width: 240px;
+    padding: 8px 28px 8px 10px;
+    background: rgba(10, 22, 40, .88);
+    color: #fff; border-radius: 8px;
+    border: 1px solid rgba(94, 224, 176, .5);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .45);
+    font: 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+    pointer-events: auto;
+    z-index: 3;
+}
+.pf-karte[hidden] { display: none; }
+.pf-karte strong { display: block; font-size: 15px; color: var(--pf-akzent); }
+.pf-karte span { display: block; white-space: nowrap; }
+.pf-karte em { display: block; font-size: 11px; opacity: .75; margin-top: 2px; }
+.pf-karte.pf-links { transform: translate(calc(-100% + 18px), calc(-100% - 46px)) scale(var(--pf-s)); transform-origin: 100% 100%; }
+.pf-karte.pf-rechts { transform: translate(-18px, calc(-100% - 46px)) scale(var(--pf-s)); transform-origin: 0 100%; }
+.pf-karte.pf-unten { transform: translate(-50%, 18px) scale(var(--pf-s)); transform-origin: 50% 0; }
+.pf-karte.pf-unten.pf-links { transform: translate(calc(-100% + 18px), 18px) scale(var(--pf-s)); }
+.pf-karte.pf-unten.pf-rechts { transform: translate(-18px, 18px) scale(var(--pf-s)); }
+.pf-zu {
+    position: absolute; top: 4px; right: 4px;
+    width: 22px; height: 22px; padding: 0;
+    border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, .12); color: #fff;
+    font: 16px/22px system-ui, sans-serif; cursor: pointer;
+}
+.pf-zu:hover { background: rgba(255, 255, 255, .25); }
+
+/* Schaltleiste unten rechts im Video (zoomt nicht mit) */
+.pf-leiste {
+    position: absolute; right: 12px; bottom: 12px;
+    display: flex; gap: 6px; z-index: 31;
+}
+.video-container.pf-verdeckt .pf-leiste { display: none; }
+.pf-knopf, .pf-vollbild {
+    border: 1px solid rgba(255, 255, 255, .35);
+    background: rgba(0, 0, 0, .55); color: #fff;
+    border-radius: 999px; padding: 6px 12px;
+    font: 600 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    cursor: pointer;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    transition: background .15s, transform .15s;
+}
+.pf-vollbild { padding: 6px 10px; font-size: 15px; }
+.pf-knopf:hover, .pf-vollbild:hover { background: rgba(0, 0, 0, .75); transform: scale(1.04); }
+.pf-knopf[aria-pressed="true"] { border-color: #5ee0b0; color: #5ee0b0; }
+.pf-knopf:focus-visible, .pf-vollbild:focus-visible { outline: 2px solid #5ee0b0; outline-offset: 2px; }
+
+/* Vollbild des ganzen Videobereichs, damit die Marken sichtbar bleiben */
+.video-container:fullscreen { padding-bottom: 0 !important; height: 100% !important; width: 100% !important; border-radius: 0 !important; }
+.video-container:-webkit-full-screen { padding-bottom: 0 !important; height: 100% !important; width: 100% !important; border-radius: 0 !important; }
+.video-container:fullscreen #live-video-wrapper { border-radius: 0; }
+
+@media (max-width: 600px) {
+    .pf-marke { font-size: 10.5px; }
+    .pf-leiste { right: 8px; bottom: 8px; }
+    .pf-knopf { padding: 5px 9px; font-size: 12px; }
+}
