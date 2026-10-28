@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-28 Nachmittag, `c501053`)
+Stand: 2026-10-22 (Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo; letzter Deploy 2026-10-28, `8653f6b`)
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -74,6 +74,7 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 - **Deploy 2026-10-27 11:05, Produktgruppe nur SAP-Text und Handbestellwesen Stammdaten loeschen/AD-Uebernahme (`0917d9e`, enthaelt `a8e9eec`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel), Suite 1293/1293, DLL `11:05:07` (enthaelt `HbAdSuche`), CSS mit `hb-knopf-rot`, `app_offline.htm` entfernt, HTTPS antwortet 401. AD-Suche und Loeschen im Browser noch nicht angesehen.
 - **Deploy 2026-10-27 13:45, Handbestellwesen AD- und Altbestand-Mitarbeitende, neue nur aus dem AD (`3ff16f5`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel), DLL `13:45:30` (enthaelt `AktualisiereAusAdAsync`), `app_offline.htm` entfernt, HTTPS antwortet 401. Spalte `Mitarbeiter.AusAd` wird beim Start nachgezogen; AD-Suche im Browser noch nicht angesehen.
 - **Deploy 2026-10-27 15:20, Leerlauf ohne Aenderung.** Release-Worktree stand noch auf `3ff16f5`, der Runner lieferte denselben Stand erneut aus (DLL `13:45:30` unveraendert, Neustart der App). Ursache und Regel in `LEARNINGS.md`.
+- **Deploy 2026-10-28, Spend-Aufriss Produktgruppe nach Verwendung : Warengruppe (`8653f6b`).** Auf Auftrag Ingo („ja deploy“). Release-Worktree auf `8653f6b`, 1280/1280 gruen, bitgleich, zehn Routen 200 inkl. `/einkauf/aufriss`, keine Alarme. Im Browser nicht angesehen. Protokoll `.tmp_deploy_2026-10-28_verwendung.log`.
 - **Deploy 2026-10-28, Spend-Inhalt im Spend-Aufriss, Reiter Spend ausgeblendet (`c501053`).** Auf Auftrag Ingo („deployen mit tool“). Release-Worktree auf `c501053`, 1279/1279 gruen, bitgleich, zehn Routen 200 inkl. `/einkauf/aufriss`, keine Alarme. Im Browser nicht angesehen. Protokoll `.tmp_deploy_2026-10-28_spend.log`.
 - **Deploy 2026-10-28 10:05, Einkauf Bild im Kopf (`8a568e5`).** Auf Auftrag Ingo („bitte deployen“). Keine Sicherung (Wochenregel). Release-Worktree auf `8a568e5`, 1279/1279 gruen, bitgleich, `/einkauf` 200, Bild `einkauf/warenkorb-sensoren.jpg` liefert 200 (88'328 Bytes). Alarm nur WAL/SHM und `.db` veraendert. Im Browser nicht angesehen (Chrome-Erweiterung nicht verbunden). Protokoll `.tmp_deploy_2026-10-28_bild.log`.
 - **Deploy 2026-10-28 09:45, Einkauf Ladestatus gekuerzt mit Popup „Ladeprotokoll“ (`5c568b0`).** Auf Auftrag Ingo. Keine Sicherung (Wochenregel). Release-Worktree auf `5c568b0`, dort 1279/1279 gruen. Bitgleich, Routen 200 inkl. `/einkauf`. Alarm nur WAL/SHM und `.db` veraendert (Checkpoint beim Herunterfahren). Im Browser noch nicht angesehen. Protokoll `.tmp_deploy_2026-10-28_ladeprotokoll.log`.
