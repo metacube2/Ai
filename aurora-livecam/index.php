@@ -1342,6 +1342,98 @@ class ContactManager {
     private $gmailUser;
     private $gmailAppPassword;
 
+    // Spamschutz (2026-10-18): Seit September kamen ueber 200 Bot-Anfragen (formtests.info) in Schueben
+    // von bis zu 25 in wenigen Sekunden, jede wurde per Mail weitergeleitet. Gleiche Bausteine wie das
+    // Gaestebuch: Honigtopf, signiertes Zeitstempel-Token (selber Schluessel, eigener Zweck), Tempolimit.
+    private const KEY_FILE = '/etc/caurora/guestbook.key';
+    private const PROXY_IP = '192.168.178.111';
+    private const MIN_SECONDS = 4;
+    private const MAX_SECONDS = 7200;
+    private const MAX_PER_HOUR_IP = 3;
+    private const MAX_PER_HOUR_ALL = 10;
+
+    private function spamKey(): string {
+        $key = @file_get_contents(self::KEY_FILE);
+        return $key !== false && strlen(trim($key)) >= 32 ? trim($key) : hash('sha256', __FILE__ . php_uname());
+    }
+
+    private function spamToken(): string {
+        $time = (string) time();
+        return $time . '.' . hash_hmac('sha256', 'kontakt|' . $time, $this->spamKey());
+    }
+
+    private function spamTokenZeit(string $token): ?int {
+        if (!preg_match('~^(\d{9,11})\.([a-f0-9]{64})$~', $token, $m)) {
+            return null;
+        }
+        return hash_equals(hash_hmac('sha256', 'kontakt|' . $m[1], $this->spamKey()), $m[2]) ? (int) $m[1] : null;
+    }
+
+    private function spamClientIp(): string {
+        $remote = $_SERVER['REMOTE_ADDR'] ?? '';
+        // Nur dem eigenen Reverse Proxy glauben, sonst waere die IP faelschbar.
+        if ($remote === self::PROXY_IP && !empty($_SERVER['HTTP_X_REAL_IP'])) {
+            return (string) $_SERVER['HTTP_X_REAL_IP'];
+        }
+        return $remote;
+    }
+
+    private function spamRateFile(): string {
+        return sys_get_temp_dir() . '/caurora_kontakt_rate.json';
+    }
+
+    private function spamRate(): array {
+        $data = json_decode((string) @file_get_contents($this->spamRateFile()), true) ?: [];
+        $ip = hash('sha256', $this->spamClientIp()); // keine Klartext-IPs speichern
+        $ab = time() - 3600;
+        $eigene = count(array_filter($data[$ip] ?? [], fn($t) => $t > $ab));
+        $alle = 0;
+        foreach ($data as $zeiten) {
+            $alle += count(array_filter($zeiten, fn($t) => $t > $ab));
+        }
+        return [$eigene, $alle];
+    }
+
+    private function spamMerken(): void {
+        $file = $this->spamRateFile();
+        $data = json_decode((string) @file_get_contents($file), true) ?: [];
+        $ip = hash('sha256', $this->spamClientIp());
+        $data[$ip][] = time();
+        foreach ($data as $k => $zeiten) {
+            $data[$k] = array_values(array_filter($zeiten, fn($t) => $t > time() - 3600));
+            if (!$data[$k]) unset($data[$k]);
+        }
+        @file_put_contents($file, json_encode($data), LOCK_EX);
+    }
+
+    /** Grund, warum die Anfrage verworfen wird, sonst null. */
+    private function spamGrund(): ?string {
+        if (!empty($_POST['website'])) {
+            return 'honigtopf';
+        }
+        $ausgestellt = $this->spamTokenZeit((string) ($_POST['kt_token'] ?? ''));
+        if ($ausgestellt === null) {
+            return 'token';
+        }
+        $alter = time() - $ausgestellt;
+        if ($alter < self::MIN_SECONDS) {
+            return 'zu_schnell';
+        }
+        if ($alter > self::MAX_SECONDS) {
+            return 'abgelaufen';
+        }
+        [$eigene, $alle] = $this->spamRate();
+        if ($eigene >= self::MAX_PER_HOUR_IP || $alle >= self::MAX_PER_HOUR_ALL) {
+            return 'tempo';
+        }
+        return null;
+    }
+
+    private function spamProtokoll(string $grund): void {
+        @file_put_contents(sys_get_temp_dir() . '/caurora_kontakt_blocked.log',
+            date('Y-m-d H:i:s') . ' ' . $grund . "\n", FILE_APPEND | LOCK_EX);
+    }
+
     public function __construct() {
         global $appSecrets;
         $gmail = $appSecrets['gmail'] ?? [];
@@ -1354,6 +1446,11 @@ class ContactManager {
         return '
         <form method="post" id="contact-form">
             <input type="hidden" name="contact" value="1">
+            <input type="hidden" name="kt_token" value="' . $this->spamToken() . '">
+            <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                <label for="kt-website">Website</label>
+                <input type="text" id="kt-website" name="website" tabindex="-1" autocomplete="off">
+            </div>
             <label for="name"
                    data-en="Name:"
                    data-de="Name:"
@@ -1397,6 +1494,20 @@ class ContactManager {
     }
 
     public function handleSubmission($name, $email, $message) {
+        $grund = $this->spamGrund();
+        if ($grund !== null) {
+            $this->spamProtokoll($grund);
+            if ($grund === 'honigtopf') {
+                // Bots bekommen "gesendet", damit sie nichts daraus lernen; nichts wird gespeichert oder verschickt.
+                return ['success' => true, 'message' => 'Vielen Dank! Ihre Nachricht wurde gesendet.'];
+            }
+            $texte = [
+                'tempo' => 'Zu viele Nachrichten in kurzer Zeit. Bitte versuchen Sie es später noch einmal.',
+                'zu_schnell' => 'Bitte einen Moment warten und dann erneut senden.',
+            ];
+            return ['success' => false, 'message' => $texte[$grund] ?? 'Bitte laden Sie die Seite neu und senden Sie die Nachricht erneut.'];
+        }
+        $this->spamMerken();
         if (empty($name) || empty($email) || empty($message)) {
             return ['success' => false, 'message' => 'Alle Felder sind erforderlich'];
         }
@@ -2315,7 +2426,12 @@ class AdminManager {
     }
 
     public function displayGalleryImages($isAdmin = false) {
-        $output = '<div id="gallery-images" style="display:flex; flex-wrap:wrap; gap:10px;">';
+        // Admin: eigene Kennung mit Umbruch und Scrollbereich. Mit derselben Kennung wie die oeffentliche
+        // Galerie erzwang deren CSS (nowrap) bei 863 Bildern eine 140'000 px breite Zeile, der Admin-Bereich
+        // rutschte nach rechts und war nicht mehr bedienbar (2026-10-22).
+        $output = $isAdmin
+            ? '<div id="admin-gallery-images" style="display:flex; flex-wrap:wrap; gap:10px; max-height:420px; overflow-y:auto; overflow-x:hidden; padding:4px;">'
+            : '<div id="gallery-images" style="display:flex; flex-wrap:wrap; gap:10px;">';
         $files = glob("uploads/*.{jpg,jpeg,png,gif}", GLOB_BRACE);
 
         if ($files) {
