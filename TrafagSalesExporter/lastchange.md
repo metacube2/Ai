@@ -7,7 +7,9 @@ Stand: 2026-10-28
 - Wunsch Ingo: Die Matrix „Kaskadierung Lieferant / Jahr“ (aufklappbar bis Warengruppe und Material) ist jetzt eine eigene
   Komponente `PurchasingSupplierYearMatrix` und steht unten im Spend-Aufriss. Der alte Reiter Spend wird beim Start einmalig
   ausgeblendet (Merker `migration-2026-10-28-einkauf-spend-ausblenden`), die Route `/einkauf/spend` bleibt; ein Admin kann ihn
-  unter Menuestruktur wieder einblenden. Commit `45b2158`, Suite im Release-Worktree 1279/1279.
+  unter Menuestruktur wieder einblenden. Commit `45b2158`. Nachtrag: der ganze Inhalt des alten Reiters (Kacheln, Spend pro
+  Lieferant, Datenstatus, Volumen nach Warengruppe/Region/Waehrung, Matrix, Quellen) steht jetzt unter dem Aufriss, Commit
+  `c501053`, Suite im Release-Worktree 1279/1279, deployed 2026-10-28.
 
 ## Einkauf: Bild im Kopf, 2026-10-28
 
