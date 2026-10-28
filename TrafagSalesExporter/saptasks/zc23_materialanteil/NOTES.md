@@ -208,3 +208,27 @@ der schnellen Fassung mit Codeausschnitten, Uebersicht der Zugriffe, Grenzen, Na
 `word_beschleunigung.js` (npm `docx` 9.5.1, `node word_beschleunigung.js <ziel.docx>`), Inhaltsverzeichnis danach in Word
 aktualisiert. Hinweis: Der Import von `T76K912736` nach P76 ist am 16.10. erfolgt; die Aussage „Import P76 offen“ weiter oben
 ist ueberholt.
+
+## Wunsch aus der Sitzung 2026-10-28: Kostenstruktur des Materialanteils je Produktgruppe
+
+Gespraech nach der Sitzung (Transkript Whisper, Gespraechspartner im Transkript nicht genannt). Beispiel: Produktgruppe aus
+ZC23 ueber den Disponenten, Umsatz 13,797 Mio., Standardwert 6,6 Mio., davon Materialanteil 3,7 Mio. Gewuenscht ist die
+Zusammensetzung des Materialanteils nach Warengruppe der Einkaufsteile (MARA-MATKL, z. B. 10.08 bestueckte Leiterplatte),
+um Preiserhoehungen je Warengruppe auf die Produktgruppe umzurechnen (Leiterplatten +20 % bei einem Drittel Anteil = rund
++7 % Material). Beim Einkaufsvolumen „Hybriddichte“ nannte der Anfragende 7,3 Mio., davon geschaetzt 2 Mio. Leiterplatten.
+
+Entscheide Ingo 2026-10-28: (1) fuer alle sichtbar, (2) Basis waehlbar, (3) Feinheit waehlbar, (4) zuerst reine Aufteilung.
+
+**Phase 1, umgesetzt 2026-10-28 (Commit `8653f6b`):** Neuer Einstieg im Spend-Aufriss „Produktgruppe nach Verwendung :
+Warengruppe“ (Produktgruppe -> Warengruppe -> Material). Basis ist das **Einkaufsvolumen** im gewaehlten Bestellzeitraum,
+nicht der Materialanteil der Standardkalkulation: Einkaufsmaterial -> verkuerzte Nummern aus der ZLO03-Aufloesung
+(`PurchasingComponentDispoCache`, Stand 23. bis 26.10.) -> deren Disponent -> ZDISPO_GRP/ZDISPO_SPART. Gewichtet nach Anzahl
+verwendender Nummern, Summe exakt. Feinheit ueber das Aufklappen (Warengruppe oder einzelnes Material). Pruefung auf der
+Produktivkopie 2026-10-28 (2026 bis heute, Netwr roh): FP_DW-HYBRID 4,50 Mio., groesste Warengruppe 10.08.00 mit 0,82 Mio.;
+Summe 33,77 Mio. = Gesamteinkauf; „ohne Verwendung“ 3,32 Mio. (inkl. Textbestellungen). Laufzeit des Verwendungsteils 4 s.
+
+**Phase 2, offen:** Basis „Materialanteil aus der Standardkalkulation“ wie ZC23 (Umsatz oder offene Auftraege x Material
+je Stueck). Das Dashboard hat dafuer keine Mengen aus der Kalkulation; noetig ist eine Erweiterung von
+`materialanteil_rechnen` in ZC23 (je Zukaufteil die Warengruppe mitschreiben, Summe je Produktgruppe x Warengruppe) und ein
+neues Gateway-Set, Entwicklung in T76, Transport nach P76. Erst danach ist die Basis im Dashboard waehlbar. Was-waere-wenn
+(Preisaenderung je Warengruppe) folgt nach Entscheid Ingo erst nach der reinen Aufteilung.

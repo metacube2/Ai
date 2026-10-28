@@ -2,6 +2,13 @@
 
 Stand: 2026-10-28
 
+## Einkauf Spend-Aufriss: Produktgruppe nach Verwendung : Warengruppe, 2026-10-28
+
+- Wunsch aus der Sitzung 28.10. (Kostenstruktur Material je Produktgruppe, Phase 1): neuer Einstieg Produktgruppe nach
+  Verwendung -> Warengruppe -> Material, Basis Einkaufsvolumen, gewichtet nach verwendenden Nummern (ZLO03), Summe exakt.
+  SAP-Regel-CTE gemeinsam mit der Produktgruppe genutzt. Commit `8653f6b`, Suite im Release-Worktree 1280/1280. Phase 2
+  (Materialanteil aus der Standardkalkulation, ZC23 erweitern) offen: `saptasks/zc23_materialanteil/NOTES.md`, Wochen_Todo 123.
+
 ## Einkauf: Matrix Lieferant / Jahr im Spend-Aufriss, Reiter Spend ausgeblendet, 2026-10-28
 
 - Wunsch Ingo: Die Matrix „Kaskadierung Lieferant / Jahr“ (aufklappbar bis Warengruppe und Material) ist jetzt eine eigene
