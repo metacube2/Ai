@@ -2,6 +2,12 @@
 
 Stand: 2026-10-28
 
+## Einkauf: Bild im Kopf, 2026-10-28
+
+- Wunsch Ingo: Bild „Warenkorb mit Sensoren“ (`wwwroot/einkauf/warenkorb-sensoren.jpg`, 676x560, 88 KB) zwischen Titel
+  und Ladestand, auf die Kopfhoehe eingepasst; der schwarze Bildgrund verschwindet per `mix-blend-mode: screen`, unter
+  1250 px ausgeblendet. Commit `8a568e5`, Suite im Release-Worktree 1279/1279.
+
 ## Einkauf: Ladestatus im Kopf gekuerzt, voller Text im Popup, 2026-10-28
 
 - Wunsch Ingo: Die lange Ladestatus-Meldung rechts im Kopf des Einkauf-Cockpits verzog den Kopfbereich. Sie ist jetzt auf
