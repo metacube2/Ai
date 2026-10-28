@@ -308,6 +308,26 @@ public class DatabaseSeedService : IDatabaseSeedService
             db.SaveChanges();
 
         HideUnclearPurchasingViewsOnce(db);
+        HideOldSpendTabOnce(db);
+    }
+
+    /// <summary>Unsichtbarer Merker: die Ausblendung des alten Reiters Spend vom 2026-10-28 ist erledigt.</summary>
+    internal const string PurchasingSpendHideMarkerKey = "migration-2026-10-28-einkauf-spend-ausblenden";
+
+    /// <summary>Wunsch Ingo 2026-10-28: Die Matrix Lieferant / Jahr steht jetzt auch im Spend-Aufriss, der alte Reiter
+    /// Spend wird damit nicht mehr gebraucht. Einmalig ausgeblendet, die Route /einkauf/spend bleibt erreichbar; ein Admin
+    /// kann den Reiter unter Menuestruktur wieder einblenden, ohne dass der Start ihn erneut versteckt.</summary>
+    private static void HideOldSpendTabOnce(AppDbContext db)
+    {
+        if (db.NavigationMenuItems.Any(x => x.Key == PurchasingSpendHideMarkerKey))
+            return;
+        var item = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "purchasing-spend");
+        if (item is not null)
+            item.IsVisible = false;
+        var marker = Link(PurchasingSpendHideMarkerKey, "finance-admin", "Merker Einkauf-Spend-Ausblendung 2026-10-28", "Marker purchasing spend hide 2026-10-28", "Settings", string.Empty, 999);
+        marker.IsVisible = false;
+        db.NavigationMenuItems.Add(marker);
+        db.SaveChanges();
     }
 
     /// <summary>Unsichtbarer Merker: die Ausblendung vom 2026-10-22 ist erledigt und wird nicht wiederholt.</summary>

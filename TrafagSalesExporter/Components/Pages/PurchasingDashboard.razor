@@ -473,6 +473,8 @@
                                  LzCodeRows="@_liveState.LzCodeSpendRows"
                                  LzSortRows="@_liveState.LzSortSpendRows"
                                  AbcXyzActionRows="@_liveState.AbcXyzActionRows" />
+        @* Matrix Lieferant / Jahr aus dem alten Reiter Spend (Wunsch Ingo 2026-10-28), damit dieser entfallen kann. *@
+        <PurchasingSupplierYearMatrix Years="@_liveState.SpendYears" Rows="@_liveState.SupplierYearSpendRows" />
         break;
     case "ideen":
         <MudGrid Spacing="2">
