@@ -6,7 +6,7 @@ Stand: 2026-10-28
 
 - Wunsch Ingo: Bild „Warenkorb mit Sensoren“ (`wwwroot/einkauf/warenkorb-sensoren.jpg`, 676x560, 88 KB) zwischen Titel
   und Ladestand, auf die Kopfhoehe eingepasst; der schwarze Bildgrund verschwindet per `mix-blend-mode: screen`, unter
-  1250 px ausgeblendet. Commit `8a568e5`, Suite im Release-Worktree 1279/1279.
+  1250 px ausgeblendet. Commit `8a568e5`, Suite im Release-Worktree 1279/1279. Deployed 2026-10-28 10:05.
 
 ## Einkauf: Ladestatus im Kopf gekuerzt, voller Text im Popup, 2026-10-28
 
