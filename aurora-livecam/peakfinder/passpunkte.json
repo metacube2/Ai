@@ -2,9 +2,9 @@
  "_hinweis": "Passpunkte der Peakfinder-Kalibrierung. Pixel im Kamerabild 3072 x 1728. Gipfel-Pixel gelten im Referenzbild; Sonnen-Pixel im jeweiligen Bild, versatz = gemessene Bildverschiebung dieses Bilds gegen die Referenz (abgleich.versatz), damit Referenzlage = Pixel - versatz.",
  "referenz": "referenz_20261025_090059.jpg",
  "standort_start": {
-  "lat": 47.278682,
-  "lon": 8.860951,
-  "quelle": "Dorfkern Oberduernten (windy/App), Kamera steht in der Naehe"
+  "lat": 47.27082,
+  "lon": 8.87238,
+  "quelle": "Ausgleich 2026-10-28 (Start Dorfkern Oberduernten 47.278682/8.860951, windy/App); Grate werden von hier aus gesammelt"
  },
  "start": {
   "gier": 225.6,

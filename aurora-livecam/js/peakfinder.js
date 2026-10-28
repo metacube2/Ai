@@ -189,6 +189,9 @@
             u.textContent = text('rand');
             karte.append(u);
         }
+        const q = document.createElement('small');
+        q.textContent = '© OpenStreetMap-Mitwirkende';
+        karte.append(q);
         karte.hidden = false;
         D.gipfel.forEach((h) => h._el.classList.toggle('pf-aktiv', h === g));
         lage();

@@ -74,6 +74,7 @@
 .pf-karte strong { display: block; font-size: 15px; color: var(--pf-akzent); }
 .pf-karte span { display: block; white-space: nowrap; }
 .pf-karte em { display: block; font-size: 11px; opacity: .75; margin-top: 2px; }
+.pf-karte small { display: block; font-size: 10px; opacity: .55; margin-top: 4px; }
 .pf-karte.pf-links { transform: translate(calc(-100% + 18px), calc(-100% - 46px)) scale(var(--pf-s)); transform-origin: 100% 100%; }
 .pf-karte.pf-rechts { transform: translate(-18px, calc(-100% - 46px)) scale(var(--pf-s)); transform-origin: 0 100%; }
 .pf-karte.pf-unten { transform: translate(-50%, 18px) scale(var(--pf-s)); transform-origin: 50% 0; }

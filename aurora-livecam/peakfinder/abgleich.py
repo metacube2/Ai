@@ -32,7 +32,7 @@ ZUSTAND = Path("/var/lib/caurora-peakfinder/zustand.json")
 REFERENZ = Path("/var/lib/caurora-peakfinder/referenz_band.png")
 AUSGABE = Path("/var/www/html/peakfinder-versatz.txt")
 BILD = Path("/var/www/html/image/current.jpg")
-STANDORT = (47.27082, 8.87238)   # Kamerastandort aus der Kalibrierung (nur fuer Tag/Nacht)
+STANDORT = (47.27157, 8.87329)   # Kamerastandort aus der Kalibrierung (nur fuer Tag/Nacht)
 BAND = (540, 840)          # Zeilen im 1536 x 864-Bild
 MAX_VERSATZ = 120.0        # px bei 3072; groesser = Messung unbrauchbar
 TOLERANZ = 3.0             # px, drei Messungen muessen so nah beieinander liegen
