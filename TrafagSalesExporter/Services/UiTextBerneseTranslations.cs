@@ -12,6 +12,8 @@ internal static class UiTextBerneseTranslations
         {
             // Einkauf Feedback 2026-10-22
             ["Rechnet"] = "Rächnet",
+            ["Ladeprotokoll"] = "Ladeprotokoll",
+            ["Ladeprotokoll Einkaufsdaten"] = "Ladeprotokoll Iichoufsdate",
             ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "Rächnet... e nöie Zytruum cha bis zu 2 Minute gah.",
             ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "Zytruum gänderet, aber no nid aagwändet. D Zahle zeige geng no",
             ["Bitte „Anwenden“ druecken."] = "Bitte «Aawände» drücke.",
