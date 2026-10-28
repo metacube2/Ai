@@ -9,6 +9,8 @@ internal static class UiTextGeneratedTranslations
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Rechnet"] = "Calculando",
+                ["Ladeprotokoll"] = "Registro de carga",
+                ["Ladeprotokoll Einkaufsdaten"] = "Registro de carga de datos de compras",
                 ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "Calculando... un periodo nuevo puede tardar hasta 2 minutos.",
                 ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "Periodo cambiado pero aún no aplicado. Las cifras siguen mostrando",
                 ["Bitte „Anwenden“ druecken."] = "Pulse «Aplicar».",
@@ -2691,6 +2693,8 @@ internal static class UiTextGeneratedTranslations
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Rechnet"] = "In calcolo",
+                ["Ladeprotokoll"] = "Log di caricamento",
+                ["Ladeprotokoll Einkaufsdaten"] = "Log di caricamento dati acquisti",
                 ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "In calcolo... un nuovo periodo può richiedere fino a 2 minuti.",
                 ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "Periodo modificato ma non ancora applicato. Le cifre mostrano ancora",
                 ["Bitte „Anwenden“ druecken."] = "Premere «Applica».",
@@ -5373,6 +5377,8 @@ internal static class UiTextGeneratedTranslations
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Rechnet"] = "गणना हो रही है",
+                ["Ladeprotokoll"] = "लोड लॉग",
+                ["Ladeprotokoll Einkaufsdaten"] = "खरीद डेटा लोड लॉग",
                 ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "गणना हो रही है... नई अवधि में 2 मिनट तक लग सकते हैं।",
                 ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "अवधि बदली गई पर अभी लागू नहीं हुई। आंकड़े अभी भी दिखा रहे हैं",
                 ["Bitte „Anwenden“ druecken."] = "कृपया «लागू करें» दबाएँ।",
@@ -8055,6 +8061,8 @@ internal static class UiTextGeneratedTranslations
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Rechnet"] = "Po llogarit",
+                ["Ladeprotokoll"] = "Regjistri i ngarkimit",
+                ["Ladeprotokoll Einkaufsdaten"] = "Regjistri i ngarkimit të të dhënave të blerjeve",
                 ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "Po llogarit... një periudhë e re mund të zgjasë deri në 2 minuta.",
                 ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "Periudha u ndryshua por ende nuk është zbatuar. Shifrat tregojnë ende",
                 ["Bitte „Anwenden“ druecken."] = "Ju lutem shtypni «Zbato».",
@@ -10737,6 +10745,8 @@ internal static class UiTextGeneratedTranslations
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Rechnet"] = "Hesaplanıyor",
+                ["Ladeprotokoll"] = "Yükleme günlüğü",
+                ["Ladeprotokoll Einkaufsdaten"] = "Satın alma verileri yükleme günlüğü",
                 ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "Hesaplanıyor... yeni bir dönem 2 dakikaya kadar sürebilir.",
                 ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "Dönem değişti ancak henüz uygulanmadı. Rakamlar hâlâ şunu gösteriyor:",
                 ["Bitte „Anwenden“ druecken."] = "Lütfen «Uygula»ya basın.",
@@ -13419,6 +13429,8 @@ internal static class UiTextGeneratedTranslations
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Rechnet"] = "mI' toghlu'",
+                ["Ladeprotokoll"] = "lI' ghItlh",
+                ["Ladeprotokoll Einkaufsdaten"] = "je' De' lI' ghItlh",
                 ["Rechnet... ein neuer Zeitraum kann bis zu 2 Minuten dauern."] = "mI' toghlu'... poH chu' 2 tup Sach.",
                 ["Zeitraum geaendert, aber noch nicht angewendet. Die Zahlen zeigen weiterhin"] = "poH choHlu' 'ach lo'lu'be'. mI'mey 'ang",
                 ["Bitte „Anwenden“ druecken."] = "«lo'» yIghItlh.",
