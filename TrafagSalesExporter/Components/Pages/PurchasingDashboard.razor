@@ -473,8 +473,23 @@
                                  LzCodeRows="@_liveState.LzCodeSpendRows"
                                  LzSortRows="@_liveState.LzSortSpendRows"
                                  AbcXyzActionRows="@_liveState.AbcXyzActionRows" />
-        @* Matrix Lieferant / Jahr aus dem alten Reiter Spend (Wunsch Ingo 2026-10-28), damit dieser entfallen kann. *@
-        <PurchasingSupplierYearMatrix Years="@_liveState.SpendYears" Rows="@_liveState.SupplierYearSpendRows" />
+        @* Inhalt des alten Reiters Spend (Kacheln, Spend pro Lieferant, Zusatzdiagramme, Matrix Lieferant / Jahr) unter dem
+           Aufriss, Wunsch Ingo 2026-10-28; der Reiter Spend selbst ist ausgeblendet. *@
+        <div class="mt-3">
+            <PurchasingSection TitleDe="Bestellwert nach Lieferant und Jahr"
+                               TitleEn="Ordered value by supplier and year"
+                               DescriptionDe="Beschaffungsvolumen in CHF nach Lieferant und Jahr. Gezählt wird der Bestellpositionswert am Bestelldatum, also bestelltes Volumen und nicht Wareneingang oder Rechnung. Fremdwährungen mit dem Kurs vom Bestellbeleg. Seit dem 27.08.2026 vollständig, ohne Kürzung auf die grössten Lieferanten."
+                               DescriptionEn="Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."
+                               ChartTitleDe="Spend pro Lieferant im aktuellen Jahr"
+                               ChartTitleEn="Spend by supplier in the current year"
+                               Kpis="@SpendKpis"
+                               ChartRows="@SpendChartRows"
+                               StatusRows="@SpendStatusRows"
+                               DetailRows="@SpendDetailRows"
+                               SpendMatrixYears="@_liveState.SpendYears"
+                               SpendMatrixRows="@_liveState.SupplierYearSpendRows"
+                               ExtraCharts="@SpendExtraCharts" />
+        </div>
         break;
     case "ideen":
         <MudGrid Spacing="2">
