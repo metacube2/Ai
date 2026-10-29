@@ -1,0 +1,15 @@
+@* Risikoregister (2026-10-29): Matrix 5x5 und Liste mit Kritikalitaet. Platzhalter, wird ausgebaut. *@
+@inject IUiTextService UiText
+@inject IPmService Pm
+
+<div class="pm-rk"></div>
+
+@code {
+    [Parameter, EditorRequired] public int ProjectId { get; set; }
+    [Parameter, EditorRequired] public PmBoard Board { get; set; } = default!;
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public int Version { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+}

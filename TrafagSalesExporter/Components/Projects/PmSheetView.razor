@@ -1,0 +1,15 @@
+@* Smartsheet-Ansicht (2026-10-29): Raster mit Gliederung links, Gantt rechts. Platzhalter, wird ausgebaut. *@
+@inject IUiTextService UiText
+@inject IPmService Pm
+
+<div class="pm-sh"></div>
+
+@code {
+    [Parameter, EditorRequired] public int ProjectId { get; set; }
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public bool CanManage { get; set; }
+    [Parameter] public int Version { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+}
