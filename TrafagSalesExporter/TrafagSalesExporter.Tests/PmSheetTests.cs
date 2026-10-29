@@ -437,6 +437,37 @@ public sealed class PmSheetTests : IDisposable
         Assert.Null(PmSheetLayout.AddPredecessor("3, 5+2", 5));
     }
 
+    [Fact]
+    public void Risk_Labels_Are_Translated_And_Distinct_In_Every_Language()
+    {
+        // Kritikalitaet, Status, Kategorie und die Stufen 1-5 der Oberflaeche (PmRiskLabels) muessen in jeder Sprache
+        // eigene, nicht leere Namen haben, sonst sind Filter und Matrix nicht unterscheidbar.
+        foreach (var language in new[] { "de", "en", "es", "it", "hi", "sq", "tr", "tlh", "bärndütsch" })
+        {
+            var ui = new UiTextService();
+            ui.SetLanguage(language);
+            var groups = new[]
+            {
+                PmRiskLevels.All.Select(l => TrafagSalesExporter.Components.Projects.PmRiskLabels.Level(ui, l)).ToArray(),
+                PmRiskStatuses.All.Select(s => TrafagSalesExporter.Components.Projects.PmRiskLabels.Status(ui, s)).ToArray(),
+                PmRiskCategories.All.Select(c => TrafagSalesExporter.Components.Projects.PmRiskLabels.Category(ui, c)).ToArray(),
+                Enumerable.Range(1, 5).Select(i => TrafagSalesExporter.Components.Projects.PmRiskLabels.Probability(ui, i)).ToArray(),
+                Enumerable.Range(1, 5).Select(i => TrafagSalesExporter.Components.Projects.PmRiskLabels.Impact(ui, i)).ToArray(),
+            };
+            foreach (var labels in groups)
+            {
+                Assert.All(labels, l => Assert.False(string.IsNullOrWhiteSpace(l)));
+                Assert.True(labels.Length == labels.Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                    $"{language}: {string.Join(" | ", labels)}");
+            }
+        }
+
+        var spanish = new UiTextService();
+        spanish.SetLanguage("es");
+        Assert.NotEqual("Kritisch", TrafagSalesExporter.Components.Projects.PmRiskLabels.Level(spanish, PmRiskLevels.Critical));
+        Assert.NotEqual("Notfallplan", spanish.Text("Notfallplan", "Contingency plan"));
+    }
+
     private sealed class TestDbContextFactory(DbContextOptions<AppDbContext> options) : IDbContextFactory<AppDbContext>
     {
         public AppDbContext CreateDbContext() => new(options);
