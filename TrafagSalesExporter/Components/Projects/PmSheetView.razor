@@ -1,8 +1,391 @@
-@* Smartsheet-Ansicht (2026-10-29): Raster mit Gliederung links, Gantt rechts. Platzhalter, wird ausgebaut. *@
+@* Smartsheet-Ansicht (2026-10-29, Wunsch Ingo): Raster mit Gliederung links, Gantt rechts, beide mit gleicher
+   Zeilenhoehe und gleichem senkrechtem Bildlauf. Zellen werden per Klick bearbeitet (Enter speichert, Esc bricht ab),
+   Balken per Maus gezogen (pm-gantt.js). Jede Aenderung laeuft ueber IPmService; der Server rastet auf Arbeitstage
+   und schiebt Nachfolger und Sammelzeilen nach. Gerechnet wird in PmSheetLayout, hier wird nur dargestellt.
+   Die Zeilennummer links ist die Aufgabennummer, weil die Spalte Vorgaenger mit diesen Nummern arbeitet. *@
+@implements IAsyncDisposable
 @inject IUiTextService UiText
 @inject IPmService Pm
+@inject IJSRuntime JS
+@using L = TrafagSalesExporter.Services.Projects.PmSheetLayout
+@using C = TrafagSalesExporter.Services.Projects.PmSheetLayout.Columns
 
-<div class="pm-sh"></div>
+<div class="pm-sh" @ref="_root">
+    <div class="pm-sh-toolbar">
+        @if (CanEdit)
+        {
+            <button type="button" class="pm-sh-tool" title="@T("Zeile unter der markierten einfügen", "Insert row below the selected one")" @onclick="InsertRow">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" /><span>@T("Zeile", "Row")</span>
+            </button>
+            <button type="button" class="pm-sh-tool" title="@T("Einrücken", "Indent")" disabled="@(Selected is null)" @onclick="Indent">
+                <MudIcon Icon="@Icons.Material.Filled.FormatIndentIncrease" Size="Size.Small" />
+            </button>
+            <button type="button" class="pm-sh-tool" title="@T("Ausrücken", "Outdent")" disabled="@(Selected is null || Selected.Level == 0)" @onclick="Outdent">
+                <MudIcon Icon="@Icons.Material.Filled.FormatIndentDecrease" Size="Size.Small" />
+            </button>
+            <button type="button" class="pm-sh-tool" title="@T("Zeile nach oben", "Move row up")" disabled="@(!CanMove(true))" @onclick="() => Move(true)">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" />
+            </button>
+            <button type="button" class="pm-sh-tool" title="@T("Zeile nach unten", "Move row down")" disabled="@(!CanMove(false))" @onclick="() => Move(false)">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" />
+            </button>
+            <span class="pm-sh-sep"></span>
+        }
+        <button type="button" class="pm-sh-tool" title="@T("Alle aufklappen", "Expand all")" @onclick="ExpandAll">
+            <MudIcon Icon="@Icons.Material.Filled.UnfoldMore" Size="Size.Small" />
+        </button>
+        <button type="button" class="pm-sh-tool" title="@T("Alle zuklappen", "Collapse all")" @onclick="CollapseAll">
+            <MudIcon Icon="@Icons.Material.Filled.UnfoldLess" Size="Size.Small" />
+        </button>
+        <span class="pm-sh-sep"></span>
+        <span class="pm-sh-seg" role="group" aria-label="@T("Zeitskala", "Time scale")">
+            @foreach (var zoom in L.Zooms.All)
+            {
+                var z = zoom;
+                <button type="button" class="@(_zoom == z ? "pm-on" : "")" @onclick="() => SetZoom(z)">@ZoomLabel(z)</button>
+            }
+        </span>
+        <button type="button" class="pm-sh-tool" title="@T("Zum heutigen Tag springen", "Jump to today")" @onclick="JumpToToday">
+            <MudIcon Icon="@Icons.Material.Filled.Today" Size="Size.Small" /><span>@T("Heute", "Today")</span>
+        </button>
+        <button type="button" class="pm-sh-tool @(_showCritical ? "pm-on" : "")" title="@T("Kritischen Pfad rot hervorheben", "Highlight the critical path in red")" @onclick="() => _showCritical = !_showCritical">
+            <MudIcon Icon="@Icons.Material.Filled.Timeline" Size="Size.Small" /><span>@T("Kritischer Pfad", "Critical path")</span>
+        </button>
+        <button type="button" class="pm-sh-tool @(_showBaseline ? "pm-on" : "")" title="@T("Basisplan unter den Balken anzeigen", "Show the baseline below the bars")" @onclick="() => _showBaseline = !_showBaseline">
+            <MudIcon Icon="@Icons.Material.Filled.ClearAll" Size="Size.Small" /><span>@T("Basisplan", "Baseline")</span>
+        </button>
+        @if (CanManage)
+        {
+            @if (_confirmClear)
+            {
+                <span class="pm-sh-confirm">
+                    @T("Basisplan wirklich löschen?", "Really delete the baseline?")
+                    <button type="button" class="pm-sh-tool pm-sh-danger" @onclick="() => Baseline(true)">@T("Löschen", "Delete")</button>
+                    <button type="button" class="pm-sh-tool" @onclick="() => _confirmClear = false">@T("Abbrechen", "Cancel")</button>
+                </span>
+            }
+            else
+            {
+                <button type="button" class="pm-sh-tool" title="@T("Aktuelle Termine als Basisplan einfrieren", "Freeze the current dates as the baseline")" @onclick="() => Baseline(false)">
+                    <MudIcon Icon="@Icons.Material.Filled.PushPin" Size="Size.Small" /><span>@T("Basisplan setzen", "Set baseline")</span>
+                </button>
+                @if (HasBaseline)
+                {
+                    <button type="button" class="pm-sh-tool" title="@T("Basisplan löschen", "Delete baseline")" @onclick="() => _confirmClear = true">
+                        <MudIcon Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" />
+                    </button>
+                }
+            }
+        }
+        <span class="pm-grow"></span>
+        <span class="pm-sh-search">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+            <input type="search" placeholder="@T("Zeilen suchen", "Search rows")" value="@_search" @oninput="e => SetSearch(e.Value?.ToString())" />
+        </span>
+        <select class="pm-sh-select" value="@_person" title="@T("Nach Person filtern", "Filter by person")" @onchange="e => SetPerson(e.Value?.ToString())">
+            <option value="">@T("Alle Personen", "Everyone")</option>
+            @foreach (var person in People)
+            {
+                <option value="@person.Login">@PmText.PersonName(person.Name)</option>
+            }
+        </select>
+        <button type="button" class="pm-sh-tool @(_overdueOnly ? "pm-on" : "")" @onclick="ToggleOverdue">
+            <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Small" /><span>@T("Überfällig", "Overdue")</span>
+        </button>
+        <span class="pm-sh-menu">
+            <button type="button" class="pm-sh-tool @(_columnsOpen ? "pm-on" : "")" title="@T("Spalten ein- und ausblenden", "Show and hide columns")" @onclick="() => _columnsOpen = !_columnsOpen">
+                <MudIcon Icon="@Icons.Material.Filled.ViewColumn" Size="Size.Small" /><span>@T("Spalten", "Columns")</span>
+            </button>
+            @if (_columnsOpen)
+            {
+                <div class="pm-sh-pop">
+                    @foreach (var column in C.Optional)
+                    {
+                        var col = column;
+                        <label><input type="checkbox" checked="@(!_hidden.Contains(col))" @onchange="() => ToggleColumn(col)" /> @ColumnLabel(col)</label>
+                    }
+                </div>
+            }
+        </span>
+    </div>
+
+    @if (_sheet is null)
+    {
+        <div class="pm-empty">@(_loaded ? T("Das Projekt ist nicht verfügbar.", "The project is not available.") : T("Raster wird geladen …", "Loading grid …"))</div>
+    }
+    else
+    {
+        <div class="pm-sh-split">
+            @* ---------- Raster ---------- *@
+            <div class="pm-sh-pane pm-sh-gridpane" tabindex="0" @ref="_gridPane" @onkeydown="GridKey">
+                <div class="pm-sh-grid" style="width:@(GridWidth)px">
+                    <div class="pm-sh-hrow">
+                        <div class="pm-sh-h pm-sh-c-num"></div>
+                        <div class="pm-sh-h pm-sh-c-title" style="width:@(C.Width(C.Title))px">@ColumnLabel(C.Title)</div>
+                        @foreach (var column in VisibleColumns)
+                        {
+                            <div class="pm-sh-h" style="width:@(C.Width(column))px" title="@ColumnHelp(column)">@ColumnLabel(column)</div>
+                        }
+                    </div>
+                    @foreach (var row in _visible)
+                    {
+                        var r = row;
+                        <div @key="r.Id" class="pm-sh-row @(r.Id == _selected ? "pm-sh-sel" : "") @(r.HasChildren ? "pm-sh-sum-row" : "")">
+                            <div class="pm-sh-c pm-sh-c-num" title="@T("Nummer für die Spalte Vorgänger", "Number for the predecessors column")" @onclick="() => SelectRow(r.Id)">@r.Number</div>
+                            <div class="pm-sh-c pm-sh-c-title @CellClass(r, C.Title)" style="width:@(C.Width(C.Title))px">
+                                @if (IsEditing(r, C.Title))
+                                {
+                                    <input class="pm-sh-edit" @ref="_editor" value="@_editValue" @oninput="e => _editValue = e.Value?.ToString() ?? string.Empty" @onkeydown="EditKey" @onblur="Commit" />
+                                }
+                                else
+                                {
+                                    <span class="pm-sh-indent" style="width:@(r.Level * 18)px"></span>
+                                    @if (r.HasChildren)
+                                    {
+                                        <button type="button" class="pm-sh-toggle" title="@(_collapsed.Contains(r.Id) ? T("Aufklappen", "Expand") : T("Zuklappen", "Collapse"))" @onclick="() => ToggleCollapse(r.Id)">
+                                            <MudIcon Icon="@(_collapsed.Contains(r.Id) ? Icons.Material.Filled.ArrowRight : Icons.Material.Filled.ArrowDropDown)" Size="Size.Small" />
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="pm-sh-toggle-gap"></span>
+                                    }
+                                    @if (r.IsMilestone)
+                                    {
+                                        <i class="pm-sh-ms-icon" title="@T("Meilenstein", "Milestone")"></i>
+                                    }
+                                    <span class="pm-sh-title" @onclick="() => CellClick(r, C.Title)">@r.Title</span>
+                                    <button type="button" class="pm-sh-key" title="@T("Aufgabe öffnen", "Open issue")" @onclick="() => OnOpen.InvokeAsync(r.Id)">@r.Key</button>
+                                }
+                            </div>
+                            @foreach (var column in VisibleColumns)
+                            {
+                                var col = column;
+                                <div class="pm-sh-c pm-sh-c-@col @CellClass(r, col)" style="width:@(C.Width(col))px" @onclick="() => CellClick(r, col)">
+                                    @if (IsEditing(r, col))
+                                    {
+                                        @switch (col)
+                                        {
+                                            case C.Assignee:
+                                                <select class="pm-sh-edit" @ref="_editor" value="@_editValue" @onchange="e => CommitValue(e.Value)" @onkeydown="EditKey" @onblur="Commit">
+                                                    <option value="">@T("Nicht zugewiesen", "Unassigned")</option>
+                                                    @foreach (var person in People)
+                                                    {
+                                                        <option value="@person.Login">@PmText.PersonName(person.Name)</option>
+                                                    }
+                                                </select>
+                                                break;
+                                            case C.Status:
+                                                <select class="pm-sh-edit" @ref="_editor" value="@_editValue" @onchange="e => CommitValue(e.Value)" @onkeydown="EditKey" @onblur="Commit">
+                                                    @foreach (var boardColumn in _sheet.Board.Columns.OrderBy(x => x.SortOrder))
+                                                    {
+                                                        <option value="@boardColumn.Id">@boardColumn.Name</option>
+                                                    }
+                                                </select>
+                                                break;
+                                            case C.Priority:
+                                                <select class="pm-sh-edit" @ref="_editor" value="@_editValue" @onchange="e => CommitValue(e.Value)" @onkeydown="EditKey" @onblur="Commit">
+                                                    @foreach (var priority in TrafagSalesExporter.Models.PmPriorities.All)
+                                                    {
+                                                        <option value="@priority">@PmLabels.Priority(UiText, priority)</option>
+                                                    }
+                                                </select>
+                                                break;
+                                            case C.Start:
+                                            case C.End:
+                                                <input type="date" class="pm-sh-edit" @ref="_editor" value="@_editValue" @oninput="e => _editValue = e.Value?.ToString() ?? string.Empty" @onkeydown="EditKey" @onblur="Commit" />
+                                                break;
+                                            case C.Duration:
+                                            case C.Percent:
+                                                <input type="number" min="0" max="@(col == C.Percent ? 100 : 2000)" class="pm-sh-edit" @ref="_editor" value="@_editValue" @oninput="e => _editValue = e.Value?.ToString() ?? string.Empty" @onkeydown="EditKey" @onblur="Commit" />
+                                                break;
+                                            default:
+                                                <input class="pm-sh-edit" @ref="_editor" value="@_editValue" placeholder="@T("z. B. 3, 5+2", "e.g. 3, 5+2")" @oninput="e => _editValue = e.Value?.ToString() ?? string.Empty" @onkeydown="EditKey" @onblur="Commit" />
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @switch (col)
+                                        {
+                                            case C.Assignee:
+                                                @if (r.AssigneeLogin.Length > 0)
+                                                {
+                                                    <PmAvatar Login="@r.AssigneeLogin" Name="@r.AssigneeName" Small="true" />
+                                                    <span class="pm-sh-ellipsis">@PmText.PersonName(r.AssigneeName)</span>
+                                                }
+                                                break;
+                                            case C.Status:
+                                                <i class="pm-sh-dot @StatusClass(r)" title="@StatusHelp(r)"></i>
+                                                <span class="pm-sh-ellipsis">@r.ColumnName</span>
+                                                break;
+                                            case C.Start:
+                                                @L.DateText(r.Start)
+                                                break;
+                                            case C.End:
+                                                <span class="@(r.IsOverdue ? "pm-sh-late" : "")">@L.DateText(r.End)</span>
+                                                break;
+                                            case C.Duration:
+                                                @if (r.Start is not null)
+                                                {
+                                                    @r.Duration
+                                                }
+                                                break;
+                                            case C.Predecessors:
+                                                @r.Predecessors
+                                                break;
+                                            case C.Percent:
+                                                <span class="pm-sh-pct"><i style="width:@(r.Percent)%"></i></span>
+                                                <span>@r.Percent %</span>
+                                                break;
+                                            case C.Priority:
+                                                @if (r.Priority is "High" or "Highest")
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Class="pm-sh-flag" />
+                                                }
+                                                <span class="pm-sh-ellipsis">@PmLabels.Priority(UiText, r.Priority)</span>
+                                                break;
+                                            case C.Risk:
+                                                @if (r.RiskLevel.Length > 0)
+                                                {
+                                                    <span class="pm-sh-risk @L.RiskClass(r.RiskLevel)" title="@string.Format(T("{0} aktive Risiken", "{0} active risks"), r.RiskCount)">@RiskLabel(r.RiskLevel)</span>
+                                                }
+                                                break;
+                                            case C.Critical:
+                                                @if (r.IsCritical && !r.HasChildren)
+                                                {
+                                                    <span title="@T("Auf dem kritischen Pfad: jede Verspätung verschiebt das Projektende", "On the critical path: any delay moves the project end")">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Class="pm-sh-crit-icon" />
+                                                    </span>
+                                                }
+                                                else if (r.FloatDays > 0 && !r.HasChildren && r.Start is not null)
+                                                {
+                                                    <span class="pm-muted pm-small" title="@string.Format(T("{0} Arbeitstage Puffer", "{0} working days of float"), r.FloatDays)">+@r.FloatDays</span>
+                                                }
+                                                break;
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    @if (_visible.Count == 0)
+                    {
+                        <div class="pm-sh-none">@(_sheet.Rows.Count == 0 ? T("Noch keine Zeilen. Füge oben eine Zeile ein.", "No rows yet. Insert a row above.") : T("Keine Zeile passt zum Filter.", "No row matches the filter."))</div>
+                    }
+                </div>
+            </div>
+
+            <div class="pm-sh-splitter" title="@T("Breite ziehen", "Drag to resize")"></div>
+
+            @* ---------- Gantt ---------- *@
+            <div class="pm-sh-pane pm-sh-ganttpane">
+                <div class="pm-sh-gantt" style="width:@L.Px(_width)px"
+                     data-from="@L.IsoDate(_from)" data-dw="@L.Px(_dw)" data-off="@_nonWorkIndexes" data-edit="@(CanEdit ? "1" : "0")">
+                    <div class="pm-sh-scale">
+                        <div class="pm-sh-scale-top">
+                            @foreach (var seg in _top)
+                            {
+                                <span style="left:@L.Px(seg.X)px;width:@L.Px(seg.Width)px">@TopLabel(seg.Day)</span>
+                            }
+                        </div>
+                        <div class="pm-sh-scale-bottom">
+                            @foreach (var seg in _bottom)
+                            {
+                                <span class="@(IsNonWorkday(seg.Day) ? "pm-sh-off" : "")" style="left:@L.Px(seg.X)px;width:@L.Px(seg.Width)px">@BottomLabel(seg.Day)</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="pm-sh-gbody" style="height:@(_visible.Count * L.RowHeight)px">
+                        @if (_zoom != L.Zooms.Months)
+                        {
+                            @foreach (var run in _nonWork)
+                            {
+                                <div class="pm-sh-offday" style="left:@L.Px(run.Index * _dw)px;width:@L.Px(run.Days * _dw)px" title="@NonWorkHelp(run.Index, run.Days)"></div>
+                            }
+                        }
+                        @if (_todayX is { } tx)
+                        {
+                            <div class="pm-sh-today" style="left:@L.Px(tx)px" title="@T("Heute", "Today")"></div>
+                        }
+                        @foreach (var row in _visible)
+                        {
+                            var r = row;
+                            <div @key="r.Id" class="pm-sh-grow @(r.Id == _selected ? "pm-sh-sel" : "")">
+                                @if (r.Start is { } s && r.End is { } e)
+                                {
+                                    var (left, right) = L.BarEdges(_from, r, _dw);
+                                    var crit = _showCritical && r.IsCritical;
+                                    var drag = CanDrag(r);
+                                    @if (_showBaseline && r.BaselineStart is { } bs && r.BaselineEnd is { } be)
+                                    {
+                                        <div class="pm-sh-base" style="left:@L.Px(L.X(_from, bs, _dw))px;width:@L.Px(L.Width(bs, be, _dw))px"
+                                             title="@($"{T("Basisplan", "Baseline")}: {bs:dd.MM.yyyy} – {be:dd.MM.yyyy}")"></div>
+                                    }
+                                    <div class="pm-sh-bar @BarClass(r, crit)" style="left:@L.Px(left)px;width:@L.Px(right - left)px"
+                                         data-id="@r.Id" data-s="@L.Index(_from, s)" data-e="@L.Index(_from, e)" data-dur="@r.Duration"
+                                         data-ms="@(r.IsMilestone ? "1" : "0")" data-drag="@(drag ? "1" : "0")"
+                                         title="@BarHelp(r)">
+                                        @if (!r.HasChildren && !r.IsMilestone)
+                                        {
+                                            <i class="pm-sh-prog" style="width:@(r.Percent)%"></i>
+                                        }
+                                        @if (drag)
+                                        {
+                                            @if (!r.IsMilestone)
+                                            {
+                                                <span class="pm-sh-grip pm-sh-grip-l"></span>
+                                                <span class="pm-sh-grip pm-sh-grip-r"></span>
+                                            }
+                                            <span class="pm-sh-link" title="@T("Auf einen anderen Balken ziehen: legt eine Abhängigkeit an", "Drag onto another bar to create a dependency")"></span>
+                                        }
+                                    </div>
+                                    <span class="pm-sh-blabel" style="left:@L.Px(right + 18)px">@BarLabel(r)</span>
+                                }
+                            </div>
+                        }
+                        <svg class="pm-sh-arrows" width="@L.Px(_width)" height="@(_visible.Count * L.RowHeight)" aria-hidden="true">
+                            <defs>
+                                <marker id="pm-sh-ah-@ProjectId" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                                    <path d="M0 0 L8 4 L0 8 z" class="pm-sh-ah"></path>
+                                </marker>
+                                <marker id="pm-sh-ahc-@ProjectId" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                                    <path d="M0 0 L8 4 L0 8 z" class="pm-sh-ah pm-sh-ah-crit"></path>
+                                </marker>
+                            </defs>
+                            @foreach (var arrow in _arrows)
+                            {
+                                var red = _showCritical && arrow.Critical;
+                                var marker = $"url(#{(red ? "pm-sh-ahc-" : "pm-sh-ah-")}{ProjectId})";
+                                <path d="@arrow.Path" class="pm-sh-arrow @(red ? "pm-sh-arrow-crit" : "")"
+                                      marker-end="@marker"></path>
+                            }
+                        </svg>
+                        @* Gehoert pm-gantt.js: Vorschau beim Ziehen. Blazor rendert hier nie Kinder hinein. *@
+                        <div class="pm-sh-ghosts"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pm-sh-legend">
+            <span><i class="pm-sh-sw pm-sh-sw-bar"></i>@T("Aufgabe", "Task")</span>
+            <span><i class="pm-sh-sw pm-sh-sw-sum"></i>@T("Sammelzeile", "Summary row")</span>
+            <span><i class="pm-sh-ms-icon"></i>@T("Meilenstein", "Milestone")</span>
+            <span><i class="pm-sh-sw pm-sh-sw-crit"></i>@T("Kritischer Pfad", "Critical path")</span>
+            <span><i class="pm-sh-sw pm-sh-sw-base"></i>@T("Basisplan", "Baseline")</span>
+            <span class="pm-grow"></span>
+            <span>@string.Format(T("{0} Zeilen, {1} auf dem kritischen Pfad", "{0} rows, {1} on the critical path"), _sheet.Rows.Count, _sheet.CriticalCount)</span>
+            @if (_sheet.Start is { } ps && _sheet.End is { } pe)
+            {
+                <span>@ps.ToString("dd.MM.yyyy") – @pe.ToString("dd.MM.yyyy")</span>
+            }
+        </div>
+        @if (CanEdit)
+        {
+            <div class="pm-sh-hint">@T("Balken ziehen verschiebt, die Ränder ändern Start und Ende, der Punkt rechts legt eine Abhängigkeit an. Doppelklick öffnet die Aufgabe.", "Drag a bar to move it, its edges change start and end, the dot on the right creates a dependency. Double-click opens the issue.")</div>
+        }
+    }
+</div>
 
 @code {
     [Parameter, EditorRequired] public int ProjectId { get; set; }
@@ -12,4 +395,570 @@
     [Parameter] public int Version { get; set; }
     [Parameter] public EventCallback<int> OnOpen { get; set; }
     [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+
+    private sealed record Arrow(string Path, bool Critical);
+
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("de-CH");
+    private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
+
+    private ElementReference _root;
+    private ElementReference _gridPane;
+    private ElementReference _editor;
+    private DotNetObjectReference<PmSheetView>? _ref;
+    private bool _jsReady;
+
+    private PmSheet? _sheet;
+    private bool _loaded;
+    private int _loadSeq;
+    private int _loadedProject;
+    private int _loadedVersion = -1;
+
+    // Ansicht
+    private string _zoom = L.Zooms.Weeks;
+    private bool _showCritical;
+    private bool _showBaseline;
+    private bool _confirmClear;
+    private bool _columnsOpen;
+    private bool _scrollToToday = true;
+    private readonly HashSet<int> _collapsed = [];
+    private readonly HashSet<string> _hidden = [];
+    private string _search = string.Empty;
+    private string _person = string.Empty;
+    private bool _overdueOnly;
+
+    // Auswahl und Bearbeitung
+    private int? _selected;
+    private string _selectedColumn = C.Title;
+    private (int Id, string Column)? _edit;
+    private string _editValue = string.Empty;
+    private string _editOriginal = string.Empty;
+    private bool _focusEditor;
+    private bool _focusGrid;
+    private bool _keyHandled;
+
+    // Gerechnete Darstellung (Recompute)
+    private IReadOnlyList<PmSheetRow> _visible = [];
+    private DateTime _from = DateTime.Today;
+    private double _dw = L.DayWidth(L.Zooms.Weeks);
+    private double _width;
+    private double? _todayX;
+    private IReadOnlyList<L.Segment> _top = [];
+    private IReadOnlyList<L.Segment> _bottom = [];
+    private IReadOnlyList<(int Index, int Days)> _nonWork = [];
+    private HashSet<int> _nonWorkSet = [];
+    private string _nonWorkIndexes = string.Empty;
+    private List<Arrow> _arrows = [];
+
+    private PmSheetRow? Selected => _selected is { } id ? _sheet?.Rows.FirstOrDefault(r => r.Id == id) : null;
+
+    private bool HasBaseline => _sheet?.Rows.Any(r => r.BaselineStart is not null) == true;
+
+    private IEnumerable<string> VisibleColumns => C.Optional.Where(c => !_hidden.Contains(c));
+
+    private int GridWidth => C.Width(C.Number) + C.Width(C.Title) + VisibleColumns.Sum(C.Width);
+
+    // Mitglieder plus Projektleitung, nach Name.
+    private IEnumerable<PmPerson> People
+    {
+        get
+        {
+            if (_sheet is null)
+                return [];
+            var project = _sheet.Board.Project;
+            var people = project.Members.ToList();
+            if (project.LeadLogin.Length > 0 && people.All(p => !string.Equals(p.Login, project.LeadLogin, StringComparison.OrdinalIgnoreCase)))
+                people.Add(new PmPerson(project.LeadLogin, project.LeadName));
+            return people.OrderBy(p => PmText.PersonName(p.Name), StringComparer.CurrentCultureIgnoreCase);
+        }
+    }
+
+    // ---------- Laden ----------
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ProjectId == _loadedProject && Version == _loadedVersion)
+            return;
+        if (ProjectId != _loadedProject)
+        {
+            _collapsed.Clear();
+            _selected = null;
+            _edit = null;
+            _scrollToToday = true;
+        }
+        _loadedProject = ProjectId;
+        _loadedVersion = Version;
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        var seq = ++_loadSeq;
+        var sheet = await Pm.GetSheetAsync(ProjectId, User);
+        if (seq != _loadSeq)
+            return;
+        _sheet = sheet;
+        _loaded = true;
+        if (_selected is { } id && sheet?.Rows.Any(r => r.Id == id) != true)
+            _selected = null;
+        Recompute();
+    }
+
+    private void Recompute()
+    {
+        if (_sheet is null)
+            return;
+        _visible = L.VisibleRows(_sheet.Rows, _collapsed, Filter());
+        (_from, var to) = L.Range(_sheet.Start, _sheet.End, DateTime.Today, _zoom);
+        _dw = L.DayWidth(_zoom);
+        _width = L.Width(_from, to, _dw);
+        _todayX = L.X(_from, DateTime.Today, _dw) + _dw / 2;
+        _top = L.TopScale(_from, to, _zoom);
+        _bottom = L.BottomScale(_from, to, _zoom);
+        _nonWork = L.NonWorkdayRuns(_from, to);
+        _nonWorkSet = _nonWork.SelectMany(run => Enumerable.Range(run.Index, run.Days)).ToHashSet();
+        _nonWorkIndexes = L.NonWorkdayIndexes(_from, to);
+
+        var index = new Dictionary<int, int>();
+        for (var i = 0; i < _visible.Count; i++)
+            index[_visible[i].Id] = i;
+        var byId = _sheet.Rows.ToDictionary(r => r.Id);
+        _arrows = [];
+        foreach (var link in _sheet.Links)
+        {
+            if (!index.TryGetValue(link.PredecessorId, out var a) || !index.TryGetValue(link.SuccessorId, out var b))
+                continue;
+            var pred = byId[link.PredecessorId];
+            var succ = byId[link.SuccessorId];
+            if (pred.Start is null || pred.End is null || succ.Start is null || succ.End is null)
+                continue;
+            var fromX = L.BarEdges(_from, pred, _dw).Right;
+            var toX = L.BarEdges(_from, succ, _dw).Left;
+            _arrows.Add(new Arrow(L.ArrowPath(a, fromX, b, toX), pred.IsCritical && succ.IsCritical));
+        }
+    }
+
+    private Func<PmSheetRow, bool>? Filter()
+    {
+        var search = _search.Trim();
+        if (search.Length == 0 && _person.Length == 0 && !_overdueOnly)
+            return null;
+        return r => (search.Length == 0 || r.Title.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                        || r.Key.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    && (_person.Length == 0 || string.Equals(r.AssigneeLogin, _person, StringComparison.OrdinalIgnoreCase))
+                    && (!_overdueOnly || r.IsOverdue);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            if (!_jsReady)
+            {
+                _ref ??= DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("pmGantt.init", _root, _ref);
+                _jsReady = true;
+            }
+            if (_sheet is not null && _scrollToToday && _todayX is { } x)
+            {
+                _scrollToToday = false;
+                await JS.InvokeVoidAsync("pmGantt.scrollToX", _root, x);
+            }
+            if (_focusEditor && _edit is not null)
+            {
+                _focusEditor = false;
+                await _editor.FocusAsync();
+            }
+            else if (_focusGrid && _sheet is not null)
+            {
+                _focusGrid = false;
+                await _gridPane.FocusAsync(preventScroll: true);
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+            // Vorab-Darstellung ohne Verbindung: das Skript wird beim naechsten Durchgang gestartet.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_jsReady)
+                await JS.InvokeVoidAsync("pmGantt.dispose", _root);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (TaskCanceledException)
+        {
+        }
+        _ref?.Dispose();
+    }
+
+    // ---------- Ansicht ----------
+
+    private void SetZoom(string zoom)
+    {
+        _zoom = zoom;
+        _scrollToToday = true;
+        Recompute();
+    }
+
+    private void JumpToToday() => _scrollToToday = true;
+
+    private void SetSearch(string? value)
+    {
+        _search = value ?? string.Empty;
+        Recompute();
+    }
+
+    private void SetPerson(string? value)
+    {
+        _person = value ?? string.Empty;
+        Recompute();
+    }
+
+    private void ToggleOverdue()
+    {
+        _overdueOnly = !_overdueOnly;
+        Recompute();
+    }
+
+    private void ToggleColumn(string column)
+    {
+        if (!_hidden.Remove(column))
+            _hidden.Add(column);
+    }
+
+    private void ToggleCollapse(int id)
+    {
+        if (!_collapsed.Remove(id))
+            _collapsed.Add(id);
+        Recompute();
+    }
+
+    private void ExpandAll()
+    {
+        _collapsed.Clear();
+        Recompute();
+    }
+
+    private void CollapseAll()
+    {
+        if (_sheet is null)
+            return;
+        foreach (var r in _sheet.Rows.Where(r => r.HasChildren && r.Level == 0))
+            _collapsed.Add(r.Id);
+        Recompute();
+    }
+
+    private void SelectRow(int id)
+    {
+        _selected = id;
+        _edit = null;
+    }
+
+    // ---------- Bearbeiten ----------
+
+    private bool CanEditCell(PmSheetRow row, string column) =>
+        CanEdit && C.Field(column).Length > 0 && !(row.HasChildren && C.IsRolledUp(column));
+
+    private bool CanDrag(PmSheetRow row) => CanEdit && !row.HasChildren && row.Start is not null && row.End is not null;
+
+    private bool IsEditing(PmSheetRow row, string column) => _edit is { } e && e.Id == row.Id && e.Column == column;
+
+    private void CellClick(PmSheetRow row, string column)
+    {
+        _selected = row.Id;
+        _selectedColumn = column;
+        if (IsEditing(row, column))
+            return;
+        BeginEdit(row, column);
+    }
+
+    private void BeginEdit(PmSheetRow row, string column)
+    {
+        if (!CanEditCell(row, column))
+        {
+            _edit = null;
+            return;
+        }
+        _edit = (row.Id, column);
+        _editValue = column switch
+        {
+            C.Title => row.Title,
+            C.Assignee => row.AssigneeLogin,
+            C.Status => row.ColumnId.ToString(Invariant),
+            C.Start => L.IsoDate(row.Start),
+            C.End => L.IsoDate(row.End),
+            C.Duration => row.Start is null ? string.Empty : row.Duration.ToString(Invariant),
+            C.Percent => row.Percent.ToString(Invariant),
+            C.Predecessors => row.Predecessors,
+            C.Priority => row.Priority,
+            _ => string.Empty
+        };
+        _editOriginal = _editValue;
+        _focusEditor = true;
+    }
+
+    // Enter speichert und springt wie in Smartsheet eine Zeile tiefer, Esc verwirft.
+    private async Task EditKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            _keyHandled = true;
+            var at = _visible.ToList().FindIndex(r => r.Id == _edit?.Id);
+            await Commit();
+            if (at >= 0 && at + 1 < _visible.Count)
+                _selected = _visible[at + 1].Id;
+            _focusGrid = true;
+        }
+        else if (e.Key is "Escape" or "Esc")
+        {
+            _keyHandled = true;
+            _edit = null;
+            _focusGrid = true;
+        }
+    }
+
+    private async Task CommitValue(object? value)
+    {
+        _editValue = value?.ToString() ?? string.Empty;
+        await Commit();
+    }
+
+    private async Task Commit()
+    {
+        if (_edit is not { } edit)
+            return;
+        _edit = null;
+        var value = _editValue;
+        if (value == _editOriginal)
+            return;
+        await Run(() => Pm.UpdateSheetFieldAsync(User, edit.Id, C.Field(edit.Column), value));
+    }
+
+    // Pfeiltasten wechseln die Zelle, Enter oder F2 bearbeitet sie. Tasten aus dem Editor kommen hier auch an
+    // (Bubbling) und werden uebergangen.
+    private void GridKey(KeyboardEventArgs e)
+    {
+        if (_keyHandled)
+        {
+            _keyHandled = false;
+            return;
+        }
+        if (_edit is not null || _visible.Count == 0)
+            return;
+        var columns = new List<string> { C.Title };
+        columns.AddRange(VisibleColumns);
+        var rowAt = _visible.ToList().FindIndex(r => r.Id == _selected);
+        var colAt = Math.Max(columns.IndexOf(_selectedColumn), 0);
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                rowAt = Math.Min(rowAt + 1, _visible.Count - 1);
+                break;
+            case "ArrowUp":
+                rowAt = Math.Max(rowAt - 1, 0);
+                break;
+            case "ArrowRight":
+                colAt = Math.Min(colAt + 1, columns.Count - 1);
+                break;
+            case "ArrowLeft":
+                colAt = Math.Max(colAt - 1, 0);
+                break;
+            case "Enter":
+            case "F2":
+                if (rowAt >= 0)
+                    BeginEdit(_visible[rowAt], columns[colAt]);
+                return;
+            default:
+                return;
+        }
+        _selected = _visible[Math.Max(rowAt, 0)].Id;
+        _selectedColumn = columns[colAt];
+    }
+
+    // ---------- Werkzeugleiste ----------
+
+    private async Task InsertRow()
+    {
+        var id = 0;
+        await Run(async () => id = await Pm.InsertRowAsync(User, ProjectId, _selected, T("Neue Zeile", "New row")));
+        if (id > 0 && _sheet?.Rows.FirstOrDefault(r => r.Id == id) is { } row)
+            CellClick(row, C.Title);
+    }
+
+    private Task Indent() => _selected is { } id ? Run(() => Pm.IndentAsync(User, id)) : Task.CompletedTask;
+
+    private Task Outdent() => _selected is { } id ? Run(() => Pm.OutdentAsync(User, id)) : Task.CompletedTask;
+
+    private bool CanMove(bool up) => _sheet is not null && _selected is { } id && L.MoveTarget(_sheet.Rows, id, up).CanMove;
+
+    private Task Move(bool up)
+    {
+        if (_sheet is null || _selected is not { } id)
+            return Task.CompletedTask;
+        var (canMove, before) = L.MoveTarget(_sheet.Rows, id, up);
+        return canMove ? Run(() => Pm.MoveRowAsync(User, id, before)) : Task.CompletedTask;
+    }
+
+    private async Task Baseline(bool clear)
+    {
+        _confirmClear = false;
+        await Run(() => Pm.SetBaselineAsync(User, ProjectId, clear));
+        if (!clear)
+            _showBaseline = true;
+    }
+
+    // Fehler meldet die Seite oben; danach wird immer neu geladen, damit das Raster den Serverstand zeigt.
+    private async Task Run(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+        await Load();
+    }
+
+    // ---------- Aufrufe aus pm-gantt.js ----------
+
+    // Ein Aufruf beim Loslassen. fromIso ist der Anfang der Skala, mit der das Skript gerechnet hat.
+    [JSInvokable]
+    public async Task BarDropped(int taskId, string mode, string fromIso, int startIndex, int endIndex)
+    {
+        if (_sheet?.Rows.FirstOrDefault(r => r.Id == taskId) is not { } row || !CanDrag(row))
+            return;
+        if (!DateTime.TryParseExact(fromIso, "yyyy-MM-dd", Invariant, System.Globalization.DateTimeStyles.None, out var from))
+            return;
+        if (L.DropDates(from, row, mode, startIndex, endIndex) is not { } dates)
+            return;
+        if (dates.Start == row.Start?.Date && dates.End == row.End?.Date)
+            return;
+        _selected = taskId;
+        await Run(() => Pm.RescheduleAsync(User, taskId, dates.Start, dates.End));
+        StateHasChanged();
+    }
+
+    // Abhaengigkeit per Ziehen: der Zielbalken bekommt den gezogenen als Vorgaenger.
+    [JSInvokable]
+    public async Task LinkDropped(int fromTaskId, int toTaskId)
+    {
+        if (!CanEdit || fromTaskId == toTaskId || _sheet is null)
+            return;
+        var pred = _sheet.Rows.FirstOrDefault(r => r.Id == fromTaskId);
+        var succ = _sheet.Rows.FirstOrDefault(r => r.Id == toTaskId);
+        if (pred is null || succ is null || L.AddPredecessor(succ.Predecessors, pred.Number) is not { } text)
+            return;
+        _selected = toTaskId;
+        await Run(() => Pm.UpdateSheetFieldAsync(User, toTaskId, PmService.SheetFields.Predecessors, text));
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public Task BarClicked(int taskId)
+    {
+        _selected = taskId;
+        _edit = null;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task BarOpen(int taskId) => OnOpen.InvokeAsync(taskId);
+
+    // ---------- Darstellung ----------
+
+    private string CellClass(PmSheetRow row, string column) =>
+        (CanEditCell(row, column) ? "pm-sh-editable" : C.Field(column).Length > 0 && CanEdit ? "pm-sh-locked" : string.Empty)
+        + (row.Id == _selected && column == _selectedColumn ? " pm-sh-cur" : string.Empty);
+
+    private static string StatusClass(PmSheetRow row) =>
+        row.IsOverdue ? "pm-sh-dot-late" : "pm-sh-dot-" + row.Category.ToLowerInvariant();
+
+    private string StatusHelp(PmSheetRow row) =>
+        row.IsOverdue ? T("Überfällig", "Overdue") : PmLabels.Category(UiText, row.Category);
+
+    private static string BarClass(PmSheetRow row, bool critical) =>
+        (row.HasChildren ? "pm-sh-sum" : row.IsMilestone ? "pm-sh-ms" : "pm-sh-task")
+        + (critical ? " pm-sh-crit" : string.Empty)
+        + (row.Category == TrafagSalesExporter.Models.PmCategories.Done ? " pm-sh-done" : string.Empty);
+
+    private string BarHelp(PmSheetRow row)
+    {
+        var dates = row.IsMilestone ? $"{row.Start:dd.MM.yyyy}" : $"{row.Start:dd.MM.yyyy} – {row.End:dd.MM.yyyy}";
+        var text = $"{row.Key} {row.Title}\n{dates}";
+        if (!row.IsMilestone)
+            text += "\n" + string.Format(T("{0} Arbeitstage, {1} % erledigt", "{0} working days, {1} % done"), row.Duration, row.Percent);
+        return text;
+    }
+
+    private static string BarLabel(PmSheetRow row) =>
+        row.AssigneeName.Length > 0 ? $"{row.Title} · {PmText.PersonName(row.AssigneeName)}" : row.Title;
+
+    private bool IsNonWorkday(DateTime day) => _zoom == L.Zooms.Days && _nonWorkSet.Contains(L.Index(_from, day));
+
+    private string NonWorkHelp(int index, int days)
+    {
+        var holiday = Enumerable.Range(index, days).Select(i => _from.AddDays(i)).FirstOrDefault(L.IsHoliday);
+        return holiday == default ? string.Empty : string.Format(T("Feiertag {0}", "Public holiday {0}"), holiday.ToString("dd.MM.yyyy"));
+    }
+
+    private string TopLabel(DateTime day) => _zoom == L.Zooms.Months ? day.Year.ToString(Invariant) : day.ToString("MMMM yyyy", Culture);
+
+    private string BottomLabel(DateTime day) => _zoom switch
+    {
+        L.Zooms.Days => day.Day.ToString(Invariant),
+        L.Zooms.Months => day.ToString("MMM", Culture),
+        _ => string.Format(T("KW {0}", "W{0}"), L.IsoWeek(day))
+    };
+
+    private string ZoomLabel(string zoom) => zoom switch
+    {
+        L.Zooms.Days => T("Tage", "Days"),
+        L.Zooms.Months => T("Monate", "Months"),
+        _ => T("Wochen", "Weeks")
+    };
+
+    private string RiskLabel(string level) => level switch
+    {
+        TrafagSalesExporter.Models.PmRiskLevels.Critical => T("Kritisch", "Critical"),
+        TrafagSalesExporter.Models.PmRiskLevels.High => T("Hoch", "High"),
+        TrafagSalesExporter.Models.PmRiskLevels.Medium => T("Mittel", "Medium"),
+        _ => T("Niedrig", "Low")
+    };
+
+    private string ColumnLabel(string column) => column switch
+    {
+        C.Title => T("Aufgabe", "Task"),
+        C.Assignee => T("Zugewiesen", "Assigned to"),
+        C.Status => T("Status", "Status"),
+        C.Start => T("Start", "Start"),
+        C.End => T("Ende", "End"),
+        C.Duration => T("Dauer", "Duration"),
+        C.Predecessors => T("Vorgänger", "Predecessors"),
+        C.Percent => T("% erledigt", "% complete"),
+        C.Priority => T("Priorität", "Priority"),
+        C.Risk => T("Risiken", "Risks"),
+        C.Critical => T("Kritisch", "Critical"),
+        _ => column
+    };
+
+    private string ColumnHelp(string column) => column switch
+    {
+        C.Duration => T("Dauer in Arbeitstagen; 0 macht die Zeile zum Meilenstein", "Duration in working days; 0 turns the row into a milestone"),
+        C.Predecessors => T("Nummern der Vorgänger mit Komma, Versatz in Arbeitstagen, z. B. 3, 5+2", "Predecessor numbers separated by commas, lag in working days, e.g. 3, 5+2"),
+        C.Critical => T("Auf dem kritischen Pfad, sonst Puffer in Arbeitstagen", "On the critical path, otherwise float in working days"),
+        _ => string.Empty
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
 }

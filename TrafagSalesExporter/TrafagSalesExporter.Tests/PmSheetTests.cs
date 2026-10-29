@@ -315,6 +315,128 @@ public sealed class PmSheetTests : IDisposable
         await Assert.ThrowsAsync<PmException>(() => _service.SetBaselineAsync(Guest, project, clear: true));
     }
 
+    // ---------- Raster und Gantt: Rechenhilfen der Oberflaeche (PmSheetLayout) ----------
+
+    private static PmSheetRow SheetRow(int id, int level, DateTime? start = null, DateTime? end = null, int duration = 0,
+        bool milestone = false, string title = "Zeile", bool hasChildren = false, string predecessors = "") =>
+        new(id, $"PM-{id}", id, "Task", title, level, null, hasChildren, start, end, duration, milestone, 0, predecessors,
+            false, 0, 1, "Offen", "Todo", "Medium", string.Empty, string.Empty, [], false, null, null, string.Empty, 0);
+
+    [Fact]
+    public void Layout_Range_Starts_On_Monday_And_Pads_For_Dragging()
+    {
+        var today = new DateTime(2026, 10, 29); // Donnerstag
+        var (from, to) = PmSheetLayout.Range(Mon, Mon.AddDays(4), today, PmSheetLayout.Zooms.Weeks);
+        Assert.Equal(DayOfWeek.Monday, from.DayOfWeek);
+        Assert.True(from <= today.AddDays(-14));
+        Assert.Equal(DayOfWeek.Sunday, to.DayOfWeek);
+        Assert.True(to >= Mon.AddDays(4 + 91));
+
+        var (mFrom, mTo) = PmSheetLayout.Range(null, null, today, PmSheetLayout.Zooms.Months);
+        Assert.Equal(1, mFrom.Day);
+        Assert.Equal(DateTime.DaysInMonth(mTo.Year, mTo.Month), mTo.Day);
+        Assert.True(mTo > today.AddDays(56));
+    }
+
+    [Fact]
+    public void Layout_Pixels_And_Dates_Round_Trip_With_Inclusive_End()
+    {
+        var dw = PmSheetLayout.DayWidth(PmSheetLayout.Zooms.Days);
+        Assert.Equal(0, PmSheetLayout.X(Mon, Mon, dw));
+        Assert.Equal(3 * dw, PmSheetLayout.X(Mon, Mon.AddDays(3), dw));
+        Assert.Equal(dw, PmSheetLayout.Width(Mon, Mon, dw));
+        Assert.Equal(5 * dw, PmSheetLayout.Width(Mon, Mon.AddDays(4), dw));
+        Assert.Equal(Mon.AddDays(3), PmSheetLayout.DayAt(Mon, 3 * dw + dw - 0.1, dw));
+        Assert.Equal(Mon.AddDays(-1), PmSheetLayout.DayAt(Mon, -1, dw));
+    }
+
+    [Fact]
+    public void Layout_Scale_Covers_The_Range_And_Weeks_Start_On_Monday()
+    {
+        var (from, to) = PmSheetLayout.Range(Mon, Mon.AddDays(30), Mon, PmSheetLayout.Zooms.Weeks);
+        var dw = PmSheetLayout.DayWidth(PmSheetLayout.Zooms.Weeks);
+        var total = PmSheetLayout.Width(from, to, dw);
+        var weeks = PmSheetLayout.BottomScale(from, to, PmSheetLayout.Zooms.Weeks);
+        Assert.All(weeks, w => Assert.Equal(DayOfWeek.Monday, w.Day.DayOfWeek));
+        Assert.Equal(total, weeks.Sum(w => w.Width), 3);
+        var months = PmSheetLayout.TopScale(from, to, PmSheetLayout.Zooms.Weeks);
+        Assert.Equal(total, months.Sum(m => m.Width), 3);
+        Assert.Equal(0, months[0].X);
+        Assert.Equal(45, PmSheetLayout.IsoWeek(Mon));
+    }
+
+    [Fact]
+    public void Layout_NonWorkdays_Include_Weekend_And_Christmas()
+    {
+        var from = new DateTime(2026, 12, 21); // Montag
+        var runs = PmSheetLayout.NonWorkdayRuns(from, from.AddDays(13));
+        // Fr 25.12. bis So 27.12. am Stueck, dann Neujahr (Fr 1.1.) mit dem Wochenende.
+        Assert.Contains((4, 3), runs);
+        Assert.Contains((11, 3), runs);
+        Assert.True(PmSheetLayout.IsHoliday(new DateTime(2026, 12, 25)));
+        Assert.False(PmSheetLayout.IsHoliday(new DateTime(2026, 12, 27)));
+        Assert.Contains("5", PmSheetLayout.NonWorkdayIndexes(from, from.AddDays(6)).Split(','));
+    }
+
+    [Fact]
+    public void Layout_Collapse_And_Filter_Keep_The_Outline_Readable()
+    {
+        var rows = new[] { SheetRow(1, 0, hasChildren: true, title: "Epic"), SheetRow(2, 1, hasChildren: true), SheetRow(3, 2, title: "Treffer"), SheetRow(4, 1), SheetRow(5, 0) };
+        Assert.Equal([1, 5], PmSheetLayout.VisibleRows(rows, new HashSet<int> { 1 }, null).Select(r => r.Id));
+        Assert.Equal([1, 2, 4, 5], PmSheetLayout.VisibleRows(rows, new HashSet<int> { 2 }, null).Select(r => r.Id));
+        // Filter: Treffer plus seine Elternzeilen.
+        Assert.Equal([1, 2, 3], PmSheetLayout.VisibleRows(rows, new HashSet<int>(), r => r.Title == "Treffer").Select(r => r.Id));
+        var parents = PmSheetLayout.OutlineParents(rows);
+        Assert.Equal(2, parents[3]);
+        Assert.Equal(1, parents[4]);
+        Assert.Null(parents[5]);
+    }
+
+    [Fact]
+    public void Layout_Move_Target_Stays_Within_The_Same_Group()
+    {
+        var rows = new[] { SheetRow(1, 0, hasChildren: true), SheetRow(2, 1), SheetRow(3, 1), SheetRow(4, 1), SheetRow(5, 0) };
+        Assert.Equal((true, (int?)2), PmSheetLayout.MoveTarget(rows, 3, up: true));
+        Assert.Equal((false, (int?)null), PmSheetLayout.MoveTarget(rows, 2, up: true));
+        Assert.Equal((true, (int?)4), PmSheetLayout.MoveTarget(rows, 2, up: false));
+        Assert.Equal((true, (int?)null), PmSheetLayout.MoveTarget(rows, 3, up: false));
+        Assert.Equal((false, (int?)null), PmSheetLayout.MoveTarget(rows, 4, up: false));
+        Assert.Equal((true, (int?)1), PmSheetLayout.MoveTarget(rows, 5, up: true));
+    }
+
+    [Fact]
+    public void Layout_Drop_Keeps_Working_Day_Duration_When_Moving()
+    {
+        // Mo bis Fr (5 Arbeitstage) um zwei Tage verschoben: Mi bis Di der Folgewoche, nicht Mi bis So.
+        var row = SheetRow(1, 0, Mon, Mon.AddDays(4), 5);
+        Assert.Equal((Mon.AddDays(2), Mon.AddDays(8)), PmSheetLayout.DropDates(Mon, row, PmSheetLayout.DragModes.Move, 2, 6));
+        // Linker Griff hinter das Ende: Start = Ende.
+        Assert.Equal((Mon.AddDays(4), Mon.AddDays(4)), PmSheetLayout.DropDates(Mon, row, PmSheetLayout.DragModes.Start, 9, 4));
+        Assert.Equal((Mon, Mon.AddDays(9)), PmSheetLayout.DropDates(Mon, row, PmSheetLayout.DragModes.End, 0, 9));
+        var milestone = SheetRow(2, 0, Mon, Mon, 0, milestone: true);
+        Assert.Equal((Mon.AddDays(7), Mon.AddDays(7)), PmSheetLayout.DropDates(Mon, milestone, PmSheetLayout.DragModes.Move, 5, 5));
+        Assert.Null(PmSheetLayout.DropDates(Mon, SheetRow(3, 0), PmSheetLayout.DragModes.Move, 1, 1));
+    }
+
+    [Fact]
+    public void Layout_Arrow_Runs_Right_Angled_And_Back_Between_Rows()
+    {
+        var h = PmSheetLayout.RowHeight;
+        Assert.Equal($"M100 {h / 2} H108 V{h + h / 2} H200", PmSheetLayout.ArrowPath(0, 100, 1, 200));
+        // Nachfolger beginnt links vom Vorgaengerende: Weg zwischen den Zeilen zurueck.
+        Assert.Equal($"M100 {h / 2} H108 V{h} H72 V{h + h / 2} H80", PmSheetLayout.ArrowPath(0, 100, 1, 80));
+        var edges = PmSheetLayout.BarEdges(Mon, SheetRow(1, 0, Mon.AddDays(1), Mon.AddDays(1), 0, milestone: true), 30);
+        Assert.Equal((45 - PmSheetLayout.MilestoneHalf, 45 + PmSheetLayout.MilestoneHalf), edges);
+    }
+
+    [Fact]
+    public void Layout_Add_Predecessor_Appends_Once()
+    {
+        Assert.Equal("3", PmSheetLayout.AddPredecessor(string.Empty, 3));
+        Assert.Equal("3, 5+2", PmSheetLayout.AddPredecessor("5+2", 3));
+        Assert.Null(PmSheetLayout.AddPredecessor("3, 5+2", 5));
+    }
+
     private sealed class TestDbContextFactory(DbContextOptions<AppDbContext> options) : IDbContextFactory<AppDbContext>
     {
         public AppDbContext CreateDbContext() => new(options);
