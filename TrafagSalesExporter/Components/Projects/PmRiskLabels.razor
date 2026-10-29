@@ -1,0 +1,70 @@
+@* Risikoregister (2026-10-29): uebersetzte Namen fuer Kritikalitaet, Status, Kategorie und die Stufen von
+   Wahrscheinlichkeit und Auswirkung. Als .razor-Datei, damit der Uebersetzungstest die Textpaare findet. *@
+@using TrafagSalesExporter.Models
+@code {
+    public static string Level(IUiTextService ui, string level) => level switch
+    {
+        PmRiskLevels.Critical => ui.Text("Kritisch", "Critical"),
+        PmRiskLevels.High => ui.Text("Hoch", "High"),
+        PmRiskLevels.Medium => ui.Text("Mittel", "Medium"),
+        PmRiskLevels.Low => ui.Text("Tief", "Low"),
+        _ => ui.Text("Keine Risiken", "No risks")
+    };
+
+    public static string Status(IUiTextService ui, string status) => status switch
+    {
+        PmRiskStatuses.Mitigating => ui.Text("In Bearbeitung", "Mitigating"),
+        PmRiskStatuses.Occurred => ui.Text("Eingetreten", "Occurred"),
+        PmRiskStatuses.Closed => ui.Text("Geschlossen", "Closed"),
+        _ => ui.Text("Offen", "Open")
+    };
+
+    public static string Category(IUiTextService ui, string category) => category switch
+    {
+        PmRiskCategories.Cost => ui.Text("Kosten", "Cost"),
+        PmRiskCategories.Technology => ui.Text("Technik", "Technology"),
+        PmRiskCategories.Resources => ui.Text("Ressourcen", "Resources"),
+        PmRiskCategories.Quality => ui.Text("Qualität", "Quality"),
+        PmRiskCategories.External => ui.Text("Extern", "External"),
+        PmRiskCategories.Compliance => ui.Text("Compliance", "Compliance"),
+        _ => ui.Text("Termin", "Schedule")
+    };
+
+    // Stufen 1 bis 5 der Wahrscheinlichkeit.
+    public static string Probability(IUiTextService ui, int value) => value switch
+    {
+        1 => ui.Text("Sehr unwahrscheinlich", "Very unlikely"),
+        2 => ui.Text("Unwahrscheinlich", "Unlikely"),
+        3 => ui.Text("Möglich", "Possible"),
+        4 => ui.Text("Wahrscheinlich", "Likely"),
+        _ => ui.Text("Fast sicher", "Almost certain")
+    };
+
+    // Stufen 1 bis 5 der Auswirkung auf Termin, Kosten oder Qualitaet.
+    public static string Impact(IUiTextService ui, int value) => value switch
+    {
+        1 => ui.Text("Unbedeutend", "Negligible"),
+        2 => ui.Text("Gering", "Minor"),
+        3 => ui.Text("Spürbar", "Moderate"),
+        4 => ui.Text("Schwer", "Major"),
+        _ => ui.Text("Existenzgefährdend", "Severe")
+    };
+
+    public static string ProbabilityHelp(IUiTextService ui, int value) => value switch
+    {
+        1 => ui.Text("Tritt kaum je ein, unter 5 Prozent.", "Hardly ever happens, below 5 percent."),
+        2 => ui.Text("Kann eintreten, ist aber nicht zu erwarten, etwa 5 bis 25 Prozent.", "Could happen but is not expected, about 5 to 25 percent."),
+        3 => ui.Text("Kann ebenso gut eintreten wie nicht, etwa 25 bis 50 Prozent.", "Might as well happen as not, about 25 to 50 percent."),
+        4 => ui.Text("Ist eher zu erwarten, etwa 50 bis 80 Prozent.", "Is rather to be expected, about 50 to 80 percent."),
+        _ => ui.Text("Tritt so gut wie sicher ein, über 80 Prozent.", "Will almost certainly happen, above 80 percent.")
+    };
+
+    public static string ImpactHelp(IUiTextService ui, int value) => value switch
+    {
+        1 => ui.Text("Kaum spürbar für Termin, Kosten oder Qualität.", "Barely noticeable for schedule, cost or quality."),
+        2 => ui.Text("Kleiner Verzug oder Mehraufwand, im Team auffangbar.", "Small delay or extra effort, the team can absorb it."),
+        3 => ui.Text("Spürbarer Verzug, Mehrkosten oder Qualitätsmangel, braucht eine Massnahme.", "Noticeable delay, extra cost or quality gap, needs a measure."),
+        4 => ui.Text("Meilenstein oder Budget gefährdet, braucht einen Entscheid des Auftraggebers.", "Milestone or budget at risk, needs a decision by the sponsor."),
+        _ => ui.Text("Projektziel nicht mehr erreichbar oder Schaden für Trafag.", "Project goal can no longer be reached or harm to Trafag.")
+    };
+}

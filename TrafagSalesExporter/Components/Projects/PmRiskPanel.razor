@@ -1,0 +1,264 @@
+@* Risiko erfassen oder bearbeiten im Seitenpanel (2026-10-29), im Stil des Aufgabenpanels. Anders als dort wird
+   erst mit "Speichern" geschrieben, weil ein neues Risiko zuerst einen Titel braucht. Ohne Bearbeitungsrecht
+   bleibt alles lesbar, aber gesperrt. *@
+@using TrafagSalesExporter.Models
+@using RiskItem = TrafagSalesExporter.Services.Projects.PmRiskView
+@inject IUiTextService UiText
+@inject IPmService Pm
+
+<div class="pm-panel-backdrop" @onclick="Close"></div>
+<aside class="pm-panel pm-rk-panel">
+    <header class="pm-panel-head">
+        <MudIcon Icon="@Icons.Material.Outlined.ReportProblem" Size="Size.Small" />
+        @if (Risk is not null)
+        {
+            <b class="pm-key">@Risk.Key</b>
+        }
+        else
+        {
+            <b>@T("Neues Risiko", "New risk")</b>
+        }
+        @if (IsArchived)
+        {
+            <span class="pm-status-chip">@T("Archiviert", "Archived")</span>
+        }
+        <span class="pm-grow"></span>
+        @if (CanEdit && Risk is not null)
+        {
+            <button type="button" class="pm-icon-btn" disabled="@_busy" title="@(IsArchived ? T("Wiederherstellen", "Restore") : T("Archivieren", "Archive"))" @onclick="ToggleArchive">
+                <MudIcon Icon="@(IsArchived ? Icons.Material.Outlined.Unarchive : Icons.Material.Outlined.Archive)" Size="Size.Small" />
+            </button>
+        }
+        <button type="button" class="pm-icon-btn" title="@T("Schliessen", "Close")" @onclick="Close"><MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" /></button>
+    </header>
+    <div class="pm-panel-cover pm-rk-lv-@Level.ToLowerInvariant() pm-rk-cover"></div>
+
+    <div class="pm-panel-body">
+        @if (_error is { } err)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+        }
+
+        @if (Editable)
+        {
+            <input class="pm-title-input" value="@_edit.Title" maxlength="@PmService.TitleMax" placeholder="@T("Was könnte schiefgehen?", "What could go wrong?")" @oninput="e => _edit.Title = e.Value?.ToString() ?? string.Empty" />
+        }
+        else
+        {
+            <h2 class="pm-title-input">@_edit.Title</h2>
+        }
+
+        <div class="pm-rk-score-box pm-rk-lv-@Level.ToLowerInvariant()">
+            <span class="pm-rk-score-num">@Score</span>
+            <span>
+                <b>@PmRiskLabels.Level(UiText, Level)</b>
+                <span class="pm-small pm-muted">@string.Format(T("Wahrscheinlichkeit {0} × Auswirkung {1}", "Probability {0} × impact {1}"), _edit.Probability, _edit.Impact)</span>
+            </span>
+        </div>
+
+        <label class="pm-flabel">@T("Wahrscheinlichkeit", "Probability")</label>
+        <div class="pm-rk-scale">
+            @for (var i = 1; i <= 5; i++)
+            {
+                var value = i;
+                <button type="button" class="pm-rk-step @(_edit.Probability == value ? "pm-on" : "")" disabled="@(!Editable)" title="@PmRiskLabels.ProbabilityHelp(UiText, value)" @onclick="() => _edit.Probability = value">
+                    <b>@value</b><span>@PmRiskLabels.Probability(UiText, value)</span>
+                </button>
+            }
+        </div>
+        <div class="pm-small pm-muted">@PmRiskLabels.ProbabilityHelp(UiText, _edit.Probability)</div>
+
+        <label class="pm-flabel">@T("Auswirkung auf Termin, Kosten oder Qualität", "Impact on schedule, cost or quality")</label>
+        <div class="pm-rk-scale">
+            @for (var i = 1; i <= 5; i++)
+            {
+                var value = i;
+                <button type="button" class="pm-rk-step @(_edit.Impact == value ? "pm-on" : "")" disabled="@(!Editable)" title="@PmRiskLabels.ImpactHelp(UiText, value)" @onclick="() => _edit.Impact = value">
+                    <b>@value</b><span>@PmRiskLabels.Impact(UiText, value)</span>
+                </button>
+            }
+        </div>
+        <div class="pm-small pm-muted">@PmRiskLabels.ImpactHelp(UiText, _edit.Impact)</div>
+
+        <div class="pm-fields pm-mt">
+            <label>@T("Kategorie", "Category")</label>
+            <select class="pm-input" disabled="@(!Editable)" value="@_edit.Category" @onchange="e => _edit.Category = e.Value?.ToString() ?? PmRiskCategories.Schedule">
+                @foreach (var category in PmRiskCategories.All)
+                {
+                    <option value="@category">@PmRiskLabels.Category(UiText, category)</option>
+                }
+            </select>
+
+            <label>@T("Status", "Status")</label>
+            <select class="pm-input" disabled="@(!Editable)" value="@_edit.Status" @onchange="e => _edit.Status = e.Value?.ToString() ?? PmRiskStatuses.Open">
+                @foreach (var status in PmRiskStatuses.All)
+                {
+                    <option value="@status">@PmRiskLabels.Status(UiText, status)</option>
+                }
+            </select>
+
+            <label>@T("Verantwortlich", "Owner")</label>
+            <div class="pm-row">
+                <PmAvatar Login="@_edit.OwnerLogin" Name="@OwnerName" Small="true" />
+                <select class="pm-input" disabled="@(!Editable)" value="@_edit.OwnerLogin" @onchange="e => _edit.OwnerLogin = e.Value?.ToString() ?? string.Empty">
+                    <option value="">@T("Niemand", "Nobody")</option>
+                    @foreach (var m in Board.Project.Members)
+                    {
+                        <option value="@m.Login">@PmText.PersonName(m.Name)</option>
+                    }
+                </select>
+                @if (Editable && IsMember && !string.Equals(_edit.OwnerLogin, User.Login, StringComparison.OrdinalIgnoreCase))
+                {
+                    <button type="button" class="pm-link pm-small" @onclick="() => _edit.OwnerLogin = User.Login">@T("Ich", "Me")</button>
+                }
+            </div>
+
+            <label>@T("Verknüpfte Aufgabe", "Linked task")</label>
+            <div class="pm-row">
+                <select class="pm-input" disabled="@(!Editable)" value="@(_edit.TaskId?.ToString() ?? string.Empty)" @onchange="SetTask">
+                    <option value="">@T("Keine", "None")</option>
+                    @foreach (var task in Board.Tasks.OrderBy(t => t.Number))
+                    {
+                        <option value="@task.Id">@task.Key · @task.Title</option>
+                    }
+                </select>
+                @if (_edit.TaskId is { } taskId)
+                {
+                    <button type="button" class="pm-icon-btn" title="@T("Aufgabe öffnen", "Open task")" @onclick="() => OnOpenTask.InvokeAsync(taskId)"><MudIcon Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" /></button>
+                }
+            </div>
+
+            <label>@T("Überprüfung am", "Review on")</label>
+            <input type="date" class="pm-input" disabled="@(!Editable)" value="@(_edit.ReviewDate?.ToString("yyyy-MM-dd") ?? string.Empty)" @onchange="SetReview" />
+        </div>
+
+        <label class="pm-flabel">@T("Beschreibung", "Description")</label>
+        <textarea class="pm-input pm-rk-text" rows="3" disabled="@(!Editable)" placeholder="@T("Ursache und mögliche Folge", "Cause and possible consequence")" value="@_edit.Description" @oninput="e => _edit.Description = e.Value?.ToString() ?? string.Empty"></textarea>
+
+        <label class="pm-flabel">@T("Massnahme (Vorbeugung)", "Mitigation (prevention)")</label>
+        <textarea class="pm-input pm-rk-text" rows="3" disabled="@(!Editable)" placeholder="@T("Was senkt Wahrscheinlichkeit oder Auswirkung?", "What lowers probability or impact?")" value="@_edit.Mitigation" @oninput="e => _edit.Mitigation = e.Value?.ToString() ?? string.Empty"></textarea>
+
+        <label class="pm-flabel">@T("Notfallplan", "Contingency plan")</label>
+        <textarea class="pm-input pm-rk-text" rows="3" disabled="@(!Editable)" placeholder="@T("Was tun wir, wenn es eintritt?", "What do we do if it happens?")" value="@_edit.Contingency" @oninput="e => _edit.Contingency = e.Value?.ToString() ?? string.Empty"></textarea>
+
+        @if (Risk is not null)
+        {
+            <div class="pm-small pm-muted pm-mt">@string.Format(T("Zuletzt geändert am {0}", "Last changed on {0}"), Risk.UpdatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</div>
+        }
+
+        <div class="pm-row pm-mt">
+            @if (Editable)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_busy || _edit.Title.Trim().Length == 0)" OnClick="Save">@T("Speichern", "Save")</MudButton>
+            }
+            <MudButton Variant="Variant.Text" OnClick="Close">@(Editable ? T("Abbrechen", "Cancel") : T("Schliessen", "Close"))</MudButton>
+            @if (!CanEdit)
+            {
+                <span class="pm-muted pm-small">@T("Nur Mitglieder des Projekts können Risiken bearbeiten.", "Only project members can edit risks.")</span>
+            }
+            else if (IsArchived)
+            {
+                <span class="pm-muted pm-small">@T("Archivierte Risiken zuerst wiederherstellen, um sie zu bearbeiten.", "Restore archived risks first to edit them.")</span>
+            }
+        </div>
+    </div>
+</aside>
+
+@code {
+    [Parameter, EditorRequired] public int ProjectId { get; set; }
+    [Parameter, EditorRequired] public PmBoard Board { get; set; } = default!;
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public bool CanEdit { get; set; }
+    // Null = neues Risiko.
+    [Parameter] public RiskItem? Risk { get; set; }
+    [Parameter] public bool IsArchived { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<int> OnOpenTask { get; set; }
+
+    private PmRiskInput _edit = new();
+    private int _loadedId;
+    private bool _initialized;
+    private bool _busy;
+    private (string German, string English)? _error;
+
+    private bool Editable => CanEdit && !IsArchived;
+
+    private int Score => PmRiskLevels.Score(_edit.Probability, _edit.Impact);
+
+    private string Level => PmRiskLevels.Of(Score);
+
+    private bool IsMember => Board.Project.Members.Any(m => string.Equals(m.Login, User.Login, StringComparison.OrdinalIgnoreCase));
+
+    private string OwnerName => Board.Project.Members.FirstOrDefault(m => string.Equals(m.Login, _edit.OwnerLogin, StringComparison.OrdinalIgnoreCase))?.Name
+        ?? (Risk is not null && string.Equals(Risk.OwnerLogin, _edit.OwnerLogin, StringComparison.OrdinalIgnoreCase) ? Risk.OwnerName : string.Empty);
+
+    protected override void OnParametersSet()
+    {
+        // Eingaben nur beim Wechsel des Risikos neu fuellen, damit ein Neuzeichnen des Elternteils nichts verwirft.
+        var id = Risk?.Id ?? 0;
+        if (_initialized && id == _loadedId)
+            return;
+        _initialized = true;
+        _loadedId = id;
+        _error = null;
+        _edit = Risk is null
+            ? new PmRiskInput { OwnerLogin = IsMember ? User.Login : string.Empty, ReviewDate = DateTime.Today.AddDays(14) }
+            : new PmRiskInput
+            {
+                Id = Risk.Id, Title = Risk.Title, Description = Risk.Description, Category = Risk.Category,
+                Probability = Risk.Probability, Impact = Risk.Impact, Status = Risk.Status, OwnerLogin = Risk.OwnerLogin,
+                Mitigation = Risk.Mitigation, Contingency = Risk.Contingency, TaskId = Risk.TaskId, ReviewDate = Risk.ReviewDate
+            };
+    }
+
+    private void SetTask(ChangeEventArgs e) =>
+        _edit.TaskId = int.TryParse(e.Value?.ToString(), out var id) ? id : null;
+
+    private void SetReview(ChangeEventArgs e) =>
+        _edit.ReviewDate = DateTime.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d) ? d.Date : null;
+
+    private async Task Save()
+    {
+        if (_busy)
+            return;
+        _busy = true;
+        try
+        {
+            await Pm.SaveRiskAsync(User, ProjectId, _edit);
+            await OnSaved.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ToggleArchive()
+    {
+        if (_busy || Risk is null)
+            return;
+        _busy = true;
+        try
+        {
+            await Pm.SetRiskArchivedAsync(User, Risk.Id, !IsArchived);
+            await OnSaved.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task Close() => OnClose.InvokeAsync();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

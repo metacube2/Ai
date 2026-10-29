@@ -1,1 +1,94 @@
 /* Trafag Projekte: Risikoregister und Vorhaben-Uebernahme (2026-10-29). Praefix pm-rk-. */
+
+/* Stufenfarben gruen/gelb/orange/rot. Jede Zelle und jedes Badge traegt zusaetzlich Zahl oder Wort, damit die
+   Stufe auch ohne Farbsehen lesbar bleibt. Im dunklen Modus etwas gedaempft. */
+.pm-rk-lv-low { --pm-rk-c: #2F9E44; }
+.pm-rk-lv-medium { --pm-rk-c: #E9B500; }
+.pm-rk-lv-high { --pm-rk-c: #F07800; }
+.pm-rk-lv-critical { --pm-rk-c: #E03131; }
+html[data-theme="dark"] .pm-rk-lv-low { --pm-rk-c: #3A9F55; }
+html[data-theme="dark"] .pm-rk-lv-medium { --pm-rk-c: #C9A227; }
+html[data-theme="dark"] .pm-rk-lv-high { --pm-rk-c: #D9731A; }
+html[data-theme="dark"] .pm-rk-lv-critical { --pm-rk-c: #D9484A; }
+
+.pm-rk { display: flex; flex-direction: column; gap: 12px; }
+
+/* Kopf mit Kennzahlen */
+.pm-rk-kpis { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.pm-rk-kpi { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 104px; padding: 8px 12px; border: 1px solid var(--pm-line); border-radius: 10px; background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); font: inherit; text-align: left; }
+.pm-rk-kpi > b { font-size: 1.35rem; line-height: 1.1; }
+.pm-rk-kpi > span { font-size: .74rem; color: var(--mud-palette-text-secondary); }
+button.pm-rk-kpi { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+button.pm-rk-kpi:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+.pm-rk-kpi.pm-on { outline: 2px solid var(--pm-accent); outline-offset: -1px; }
+.pm-rk-kpi-level { border-left: 5px solid var(--pm-rk-c); }
+.pm-rk-kpi-overdue { border-left: 5px solid var(--pm-danger, #E03131); }
+.pm-rk-kpi-overdue > b { color: var(--pm-danger, #E03131); }
+
+/* Badge und Wert */
+.pm-rk-badge { display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 6px; border-left: 3px solid var(--pm-rk-c, #8E99A4); background: color-mix(in srgb, var(--pm-rk-c, #8E99A4) 20%, transparent); color: var(--mud-palette-text-primary); font-size: .72rem; font-weight: 800; white-space: nowrap; }
+.pm-rk-badge .mud-icon-root { font-size: 14px; }
+.pm-rk-score { display: inline-grid; place-items: center; min-width: 26px; height: 22px; padding: 0 5px; border-radius: 6px; background: var(--pm-rk-c); color: #fff; font-size: .78rem; font-weight: 800; }
+.pm-rk-lv-medium.pm-rk-score { color: #1f1f1f; }
+
+/* Matrix und Top-Liste */
+.pm-rk-top { display: grid; grid-template-columns: minmax(0, 3fr) minmax(240px, 2fr); gap: 12px; }
+@media (max-width: 900px) { .pm-rk-top { grid-template-columns: 1fr; } }
+.pm-rk-matrix-wrap { display: flex; align-items: stretch; gap: 6px; }
+.pm-rk-axis-y { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-size: .74rem; font-weight: 700; color: var(--mud-palette-text-secondary); }
+.pm-rk-axis-x { margin: 4px 0 0 140px; text-align: center; font-size: .74rem; font-weight: 700; color: var(--mud-palette-text-secondary); }
+.pm-rk-matrix { flex: 1; display: grid; grid-template-columns: 120px repeat(5, minmax(44px, 1fr)); gap: 4px; }
+.pm-rk-rowhead, .pm-rk-colhead { display: flex; align-items: center; gap: 6px; font-size: .72rem; color: var(--mud-palette-text-secondary); }
+.pm-rk-rowhead b, .pm-rk-colhead b { color: var(--mud-palette-text-primary); font-size: .82rem; }
+.pm-rk-colhead { flex-direction: column; gap: 0; text-align: center; }
+.pm-rk-cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 52px; padding: 2px; border: 2px solid transparent; border-radius: 8px; background: color-mix(in srgb, var(--pm-rk-c) 72%, var(--mud-palette-surface)); color: #1f1f1f; font: inherit; cursor: pointer; transition: transform .12s, box-shadow .12s; }
+html[data-theme="dark"] .pm-rk-cell { background: color-mix(in srgb, var(--pm-rk-c) 52%, var(--mud-palette-surface)); color: #fff; }
+.pm-rk-cell-empty { background: color-mix(in srgb, var(--pm-rk-c) 30%, var(--mud-palette-surface)); }
+html[data-theme="dark"] .pm-rk-cell-empty { background: color-mix(in srgb, var(--pm-rk-c) 22%, var(--mud-palette-surface)); color: var(--mud-palette-text-secondary); }
+.pm-rk-cell:hover { transform: scale(1.04); box-shadow: 0 3px 10px rgba(0,0,0,.18); }
+.pm-rk-cell.pm-on { border-color: var(--mud-palette-text-primary); }
+.pm-rk-cell-score { font-size: .68rem; font-weight: 700; opacity: .8; }
+.pm-rk-cell-count { display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; background: rgba(0,0,0,.72); color: #fff; font-size: .82rem; }
+.pm-rk-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.pm-rk-top-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--mud-palette-text-primary); font: inherit; text-align: left; cursor: pointer; }
+.pm-rk-top-item:hover { background: var(--mud-palette-action-default-hover); }
+.pm-rk-top-item .pm-grow { display: flex; flex-direction: column; min-width: 0; }
+.pm-rk-top-item b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .86rem; }
+
+/* Liste */
+.pm-rk-table td.pm-rk-td-text { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mud-palette-text-secondary); }
+.pm-rk-table tr.pm-rk-inactive td { opacity: .65; }
+.pm-rk-table tr.pm-rk-archived td { opacity: .5; font-style: italic; }
+.pm-rk-st-open { --pm-s: var(--pm-open, #C98A12); }
+.pm-rk-st-mitigating { --pm-s: var(--pm-progress, #1E88E5); }
+.pm-rk-st-occurred { --pm-s: var(--pm-danger, #E03131); }
+.pm-rk-st-closed { --pm-s: var(--pm-done, #2F9E44); }
+
+/* Seitenpanel */
+.pm-rk-cover { height: 6px; background: var(--pm-rk-c); }
+.pm-rk-score-box { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; padding: 10px 12px; border-radius: 10px; border-left: 6px solid var(--pm-rk-c); background: color-mix(in srgb, var(--pm-rk-c) 14%, transparent); }
+.pm-rk-score-box > span:last-child { display: flex; flex-direction: column; }
+.pm-rk-score-num { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--pm-rk-c); color: #fff; font-size: 1.3rem; font-weight: 800; }
+.pm-rk-lv-medium .pm-rk-score-num { color: #1f1f1f; }
+.pm-rk-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.pm-rk-step { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; border: 1px solid var(--pm-line); border-radius: 8px; background: transparent; color: var(--mud-palette-text-primary); font: inherit; font-size: .7rem; text-align: center; cursor: pointer; }
+.pm-rk-step b { font-size: .95rem; }
+.pm-rk-step:hover:not(:disabled) { background: var(--mud-palette-action-default-hover); }
+.pm-rk-step.pm-on { border-color: var(--pm-accent); background: rgba(200, 80, 30, .12); color: var(--pm-accent); }
+.pm-rk-step:disabled { cursor: default; opacity: .75; }
+.pm-rk-step.pm-on:disabled { opacity: 1; }
+.pm-rk-text { resize: vertical; min-height: 64px; line-height: 1.45; }
+
+/* Uebernahme der Vorhaben */
+/* Knopf in der Kennzahlenzeile des Kopfs (der Kopf ist ein Raster mit drei Spalten, ein vierter Knopf braeche um). */
+.pm-rk-hero-btn { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 3px 12px; border: 1px solid rgba(255,255,255,.45); border-radius: 14px; background: rgba(255,255,255,.16); color: #fff; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; transition: background .15s; }
+.pm-rk-hero-btn:hover, .pm-rk-hero-btn.pm-on { background: rgba(255,255,255,.3); }
+.pm-rk-hero-btn .mud-icon-root { font-size: 16px; }
+.pm-rk-import { margin-bottom: 12px; }
+.pm-rk-hints { margin: 8px 0 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.pm-rk-hints li { display: flex; align-items: flex-start; gap: 6px; }
+.pm-rk-hints .mud-icon-root { font-size: 16px; margin-top: 1px; color: var(--pm-accent); }
+.pm-rk-import-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.pm-rk-import-result { padding: 10px 12px; border-radius: 10px; border-left: 4px solid var(--pm-done, #2F9E44); background: color-mix(in srgb, var(--pm-done, #2F9E44) 12%, transparent); }
+
+@media (prefers-reduced-motion: reduce) { .pm-rk-cell, button.pm-rk-kpi { transition: none; } .pm-rk-cell:hover, button.pm-rk-kpi:hover { transform: none; } }

@@ -1,8 +1,235 @@
-@* Risikoregister (2026-10-29): Matrix 5x5 und Liste mit Kritikalitaet. Platzhalter, wird ausgebaut. *@
+@* Risikoregister (2026-10-29, Wunsch Ingo „auch Risikobewertung, Kritikalitaet“): Kennzahlen, Risikomatrix 5x5
+   (Wahrscheinlichkeit senkrecht, Auswirkung waagrecht), Liste mit Filtern und Seitenpanel zum Erfassen. Die Stufe
+   folgt aus Wahrscheinlichkeit x Auswirkung (PmRiskLevels). Archivierte Risiken zaehlen weder in Kennzahlen noch
+   in der Matrix. PmRiskView (DTO) traegt kein Archiv-Kennzeichen; deshalb wird bei "Archivierte zeigen" zweimal
+   geladen und die Differenz als archiviert markiert. *@
+@using TrafagSalesExporter.Models
+@using RiskItem = TrafagSalesExporter.Services.Projects.PmRiskView
 @inject IUiTextService UiText
 @inject IPmService Pm
 
-<div class="pm-rk"></div>
+<div class="pm-rk">
+    <div class="pm-rk-kpis">
+        <div class="pm-rk-kpi">
+            <b>@ActiveRisks.Count</b><span>@T("aktive Risiken", "active risks")</span>
+        </div>
+        @foreach (var level in LevelsDescending)
+        {
+            var l = level;
+            var count = ActiveRisks.Count(r => r.Level == l);
+            <button type="button" class="pm-rk-kpi pm-rk-kpi-level pm-rk-lv-@l.ToLowerInvariant() @(_level == l ? "pm-on" : "")" title="@T("Nach Stufe filtern", "Filter by level")" @onclick="() => _level = _level == l ? string.Empty : l">
+                <b>@count</b><span>@PmRiskLabels.Level(UiText, l)</span>
+            </button>
+        }
+        <div class="pm-rk-kpi">
+            @if (MaxLevel.Length > 0)
+            {
+                <span class="pm-rk-badge pm-rk-lv-@MaxLevel.ToLowerInvariant()">@PmRiskLabels.Level(UiText, MaxLevel)</span>
+            }
+            else
+            {
+                <b>–</b>
+            }
+            <span>@T("höchste Stufe", "highest level")</span>
+        </div>
+        <button type="button" class="pm-rk-kpi @(OverdueCount > 0 ? "pm-rk-kpi-overdue" : "") @(_overdueOnly ? "pm-on" : "")" title="@T("Nur überfällige Überprüfungen zeigen", "Show overdue reviews only")" @onclick="() => _overdueOnly = !_overdueOnly">
+            <b>@OverdueCount</b><span>@T("Überprüfungen überfällig", "reviews overdue")</span>
+        </button>
+        <span class="pm-grow"></span>
+        @if (CanEdit)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="NewRisk">@T("Neues Risiko", "New risk")</MudButton>
+        }
+    </div>
+
+    <div class="pm-rk-top">
+        <section class="pm-chart-card pm-rk-matrix-card">
+            <h4>@T("Risikomatrix", "Risk matrix")
+                <span class="pm-muted pm-small">@T("Zahl oben = Wert, Zahl unten = aktive Risiken. Klick filtert die Liste.", "Top number = score, bottom number = active risks. Click filters the list.")</span>
+            </h4>
+            <div class="pm-rk-matrix-wrap">
+                <div class="pm-rk-axis-y">@T("Wahrscheinlichkeit", "Probability")</div>
+                <div class="pm-rk-matrix">
+                    @for (var p = 5; p >= 1; p--)
+                    {
+                        var prob = p;
+                        <div class="pm-rk-rowhead" title="@PmRiskLabels.ProbabilityHelp(UiText, prob)"><b>@prob</b><span>@PmRiskLabels.Probability(UiText, prob)</span></div>
+                        @for (var i = 1; i <= 5; i++)
+                        {
+                            var imp = i;
+                            var score = PmRiskLevels.Score(prob, imp);
+                            var level = PmRiskLevels.Of(score);
+                            var inCell = ActiveRisks.Where(r => r.Probability == prob && r.Impact == imp).ToList();
+                            <button type="button" class="pm-rk-cell pm-rk-lv-@level.ToLowerInvariant() @(IsCell(prob, imp) ? "pm-on" : "") @(inCell.Count == 0 ? "pm-rk-cell-empty" : "")"
+                                    title="@CellTitle(prob, imp, level, inCell)" @onclick="() => ToggleCell(prob, imp)">
+                                <span class="pm-rk-cell-score">@score</span>
+                                @if (inCell.Count > 0)
+                                {
+                                    <b class="pm-rk-cell-count">@inCell.Count</b>
+                                }
+                            </button>
+                        }
+                    }
+                    <div></div>
+                    @for (var i = 1; i <= 5; i++)
+                    {
+                        var imp = i;
+                        <div class="pm-rk-colhead" title="@PmRiskLabels.ImpactHelp(UiText, imp)"><b>@imp</b><span>@PmRiskLabels.Impact(UiText, imp)</span></div>
+                    }
+                </div>
+            </div>
+            <div class="pm-rk-axis-x">@T("Auswirkung", "Impact")</div>
+            <div class="pm-rk-legend">
+                @foreach (var level in PmRiskLevels.All)
+                {
+                    <span class="pm-rk-badge pm-rk-lv-@level.ToLowerInvariant()">@PmRiskLabels.Level(UiText, level)</span>
+                }
+                <span class="pm-muted pm-small">@T("Wert = Wahrscheinlichkeit × Auswirkung: 1–4 tief, 5–9 mittel, 10–15 hoch, 16–25 kritisch.", "Score = probability × impact: 1–4 low, 5–9 medium, 10–15 high, 16–25 critical.")</span>
+            </div>
+        </section>
+
+        <section class="pm-chart-card pm-rk-top-card">
+            <h4>@T("Grösste Risiken", "Top risks")</h4>
+            @if (ActiveRisks.Count == 0)
+            {
+                <div class="pm-muted pm-small">@T("Keine aktiven Risiken erfasst.", "No active risks recorded.")</div>
+            }
+            @foreach (var risk in ActiveRisks.Take(5))
+            {
+                var r = risk;
+                <button type="button" class="pm-rk-top-item" @onclick="() => Open(r)">
+                    <span class="pm-rk-score pm-rk-lv-@r.Level.ToLowerInvariant()">@r.Score</span>
+                    <span class="pm-grow"><b>@r.Title</b><span class="pm-small pm-muted">@r.Key · @PmRiskLabels.Category(UiText, r.Category) · @PmRiskLabels.Status(UiText, r.Status)</span></span>
+                </button>
+            }
+        </section>
+    </div>
+
+    <div class="pm-filters pm-mt">
+        <select class="pm-input pm-filter-select" value="@_status" @onchange="e => _status = e.Value?.ToString() ?? string.Empty">
+            <option value="">@T("Alle Status", "All statuses")</option>
+            <option value="@ActiveFilter">@T("Nur aktive", "Active only")</option>
+            @foreach (var status in PmRiskStatuses.All)
+            {
+                <option value="@status">@PmRiskLabels.Status(UiText, status)</option>
+            }
+        </select>
+        <select class="pm-input pm-filter-select" value="@_category" @onchange="e => _category = e.Value?.ToString() ?? string.Empty">
+            <option value="">@T("Alle Kategorien", "All categories")</option>
+            @foreach (var category in PmRiskCategories.All)
+            {
+                <option value="@category">@PmRiskLabels.Category(UiText, category)</option>
+            }
+        </select>
+        <select class="pm-input pm-filter-select" value="@_level" @onchange="e => _level = e.Value?.ToString() ?? string.Empty">
+            <option value="">@T("Alle Stufen", "All levels")</option>
+            @foreach (var level in LevelsDescending)
+            {
+                <option value="@level">@PmRiskLabels.Level(UiText, level)</option>
+            }
+        </select>
+        <label class="pm-small pm-row"><input type="checkbox" checked="@_mineOnly" @onchange="e => _mineOnly = e.Value is true" /> @T("Nur meine", "Mine only")</label>
+        <label class="pm-small pm-row"><input type="checkbox" checked="@_showArchived" @onchange="ToggleArchived" /> @T("Archivierte zeigen", "Show archived")</label>
+        @if (_cell is { } cell)
+        {
+            <button type="button" class="pm-chip pm-on" @onclick="() => _cell = null">@string.Format(T("Zelle W{0} × A{1}", "Cell P{0} × I{1}"), cell.Probability, cell.Impact) ✕</button>
+        }
+        @if (HasFilter)
+        {
+            <button type="button" class="pm-link pm-small" @onclick="ResetFilter">@T("Filter zurücksetzen", "Reset filter")</button>
+        }
+        <span class="pm-grow"></span>
+        <span class="pm-muted pm-small">@string.Format(T("{0} von {1} Risiken", "{0} of {1} risks"), Visible.Count, _risks.Count)</span>
+    </div>
+
+    @if (!_loaded)
+    {
+        <div class="pm-panel-loading"><MudProgressCircular Indeterminate="true" Size="Size.Small" /></div>
+    }
+    else if (_risks.Count == 0)
+    {
+        <div class="pm-empty">
+            <MudIcon Icon="@Icons.Material.Outlined.ReportProblem" Style="font-size:56px" />
+            <h3>@T("Noch keine Risiken erfasst.", "No risks recorded yet.")</h3>
+            <p>@T("Was könnte Termin, Kosten oder Qualität gefährden? Je Risiko Wahrscheinlichkeit und Auswirkung schätzen, eine Massnahme festlegen und einen Verantwortlichen bestimmen.", "What could threaten schedule, cost or quality? For each risk estimate probability and impact, set a mitigation and name an owner.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="pm-table-wrap">
+            <table class="pm-table pm-rk-table">
+                <thead>
+                    <tr>
+                        <th>@T("Schlüssel", "Key")</th>
+                        <th>@T("Titel", "Title")</th>
+                        <th>@T("Kategorie", "Category")</th>
+                        <th title="@T("Wahrscheinlichkeit", "Probability")">@T("W", "P")</th>
+                        <th title="@T("Auswirkung", "Impact")">@T("A", "I")</th>
+                        <th>@T("Wert", "Score")</th>
+                        <th>@T("Kritikalität", "Criticality")</th>
+                        <th>@T("Status", "Status")</th>
+                        <th>@T("Verantwortlich", "Owner")</th>
+                        <th>@T("Aufgabe", "Task")</th>
+                        <th>@T("Überprüfung bis", "Review by")</th>
+                        <th>@T("Massnahme", "Mitigation")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var risk in Visible)
+                    {
+                        var r = risk;
+                        var archived = _archivedIds.Contains(r.Id);
+                        <tr class="@(archived ? "pm-rk-archived" : "") @(PmRiskStatuses.IsActive(r.Status) ? "" : "pm-rk-inactive")" @onclick="() => Open(r)">
+                            <td><span class="pm-key">@r.Key</span></td>
+                            <td class="pm-td-title">@r.Title
+                                @if (archived) { <span class="pm-status-chip">@T("Archiviert", "Archived")</span> }</td>
+                            <td>@PmRiskLabels.Category(UiText, r.Category)</td>
+                            <td title="@PmRiskLabels.Probability(UiText, r.Probability)">@r.Probability</td>
+                            <td title="@PmRiskLabels.Impact(UiText, r.Impact)">@r.Impact</td>
+                            <td><span class="pm-rk-score pm-rk-lv-@r.Level.ToLowerInvariant()">@r.Score</span></td>
+                            <td><span class="pm-rk-badge pm-rk-lv-@r.Level.ToLowerInvariant()">@PmRiskLabels.Level(UiText, r.Level)</span></td>
+                            <td><span class="pm-status-chip pm-rk-st-@r.Status.ToLowerInvariant()">@PmRiskLabels.Status(UiText, r.Status)</span></td>
+                            <td>
+                                @if (r.OwnerLogin.Length > 0)
+                                {
+                                    <span class="pm-row"><PmAvatar Login="@r.OwnerLogin" Name="@r.OwnerName" Small="true" /> @PmText.PersonName(r.OwnerName)</span>
+                                }
+                                else
+                                {
+                                    <span class="pm-muted">–</span>
+                                }
+                            </td>
+                            <td>
+                                @if (r.TaskId is { } taskId)
+                                {
+                                    <button type="button" class="pm-link" title="@r.TaskTitle" @onclick="() => OnOpen.InvokeAsync(taskId)" @onclick:stopPropagation="true">@r.TaskKey</button>
+                                }
+                            </td>
+                            <td>
+                                @if (r.ReviewDate is { } review)
+                                {
+                                    <span class="pm-due @(r.ReviewOverdue ? "pm-overdue" : "")" title="@(r.ReviewOverdue ? T("Überprüfung überfällig", "Review overdue") : string.Empty)">@review.ToString("dd.MM.yyyy")</span>
+                                }
+                            </td>
+                            <td class="pm-rk-td-text" title="@r.Mitigation">@Short(r.Mitigation)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (Visible.Count == 0)
+            {
+                <div class="pm-empty-col">@T("Kein Risiko passt zum Filter.", "No risk matches the filter.")</div>
+            }
+        </div>
+    }
+</div>
+
+@if (_panelOpen)
+{
+    <PmRiskPanel ProjectId="ProjectId" Board="Board" User="User" CanEdit="CanEdit" Risk="_panelRisk"
+                 IsArchived="@(_panelRisk is not null && _archivedIds.Contains(_panelRisk.Id))"
+                 OnSaved="Saved" OnClose="() => _panelOpen = false" OnOpenTask="OpenTaskFromPanel" />
+}
 
 @code {
     [Parameter, EditorRequired] public int ProjectId { get; set; }
@@ -12,4 +239,148 @@
     [Parameter] public int Version { get; set; }
     [Parameter] public EventCallback<int> OnOpen { get; set; }
     [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+
+    // Filterwert fuer "nur aktive" (offen, in Bearbeitung, eingetreten); kein Status heisst so.
+    private const string ActiveFilter = "*active";
+
+    private static readonly string[] LevelsDescending = PmRiskLevels.All.Reverse().ToArray();
+
+    private sealed record Cell(int Probability, int Impact);
+
+    private List<RiskItem> _risks = [];
+    private HashSet<int> _archivedIds = [];
+    private bool _loaded;
+    private int _loadedProject = -1;
+    private int _loadedVersion = -1;
+    private bool _showArchived;
+    private string _status = string.Empty;
+    private string _category = string.Empty;
+    private string _level = string.Empty;
+    private bool _mineOnly;
+    private bool _overdueOnly;
+    private Cell? _cell;
+    private bool _panelOpen;
+    private RiskItem? _panelRisk;
+
+    // Aktive, nicht archivierte Risiken fuer Kennzahlen und Matrix, sortiert nach Wert absteigend.
+    private List<RiskItem> ActiveRisks => _risks
+        .Where(r => !_archivedIds.Contains(r.Id) && PmRiskStatuses.IsActive(r.Status))
+        .OrderByDescending(r => r.Score).ThenBy(r => r.Number).ToList();
+
+    private string MaxLevel => ActiveRisks.Count == 0 ? string.Empty : ActiveRisks.Select(r => r.Level).MaxBy(PmRiskLevels.Rank)!;
+
+    private int OverdueCount => ActiveRisks.Count(r => r.ReviewOverdue);
+
+    private bool HasFilter => _status.Length > 0 || _category.Length > 0 || _level.Length > 0 || _mineOnly || _overdueOnly || _cell is not null;
+
+    // Liste: nicht archiviert vor archiviert, aktiv vor erledigt, dann Wert absteigend.
+    private List<RiskItem> Visible => _risks
+        .Where(r => _status.Length == 0 || (_status == ActiveFilter ? PmRiskStatuses.IsActive(r.Status) : r.Status == _status))
+        .Where(r => _category.Length == 0 || r.Category == _category)
+        .Where(r => _level.Length == 0 || r.Level == _level)
+        .Where(r => !_mineOnly || string.Equals(r.OwnerLogin, User.Login, StringComparison.OrdinalIgnoreCase))
+        .Where(r => !_overdueOnly || r.ReviewOverdue)
+        .Where(r => _cell is null || (r.Probability == _cell.Probability && r.Impact == _cell.Impact))
+        .OrderBy(r => _archivedIds.Contains(r.Id))
+        .ThenByDescending(r => PmRiskStatuses.IsActive(r.Status))
+        .ThenByDescending(r => r.Score)
+        .ThenBy(r => r.Number)
+        .ToList();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Nur bei neuem Projekt oder neuer Version laden; jedes andere Neuzeichnen des Elternteils ignorieren.
+        if (ProjectId == _loadedProject && Version == _loadedVersion)
+            return;
+        _loadedProject = ProjectId;
+        _loadedVersion = Version;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var current = await Pm.GetRisksAsync(ProjectId, User, includeArchived: false);
+            if (_showArchived)
+            {
+                var all = await Pm.GetRisksAsync(ProjectId, User, includeArchived: true);
+                var currentIds = current.Select(r => r.Id).ToHashSet();
+                _archivedIds = all.Where(r => !currentIds.Contains(r.Id)).Select(r => r.Id).ToHashSet();
+                _risks = all.ToList();
+            }
+            else
+            {
+                _archivedIds = [];
+                _risks = current.ToList();
+            }
+            if (_panelRisk is not null)
+                _panelRisk = _risks.FirstOrDefault(r => r.Id == _panelRisk.Id);
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+
+    private async Task ToggleArchived(ChangeEventArgs e)
+    {
+        _showArchived = e.Value is true;
+        await LoadAsync();
+    }
+
+    private bool IsCell(int probability, int impact) => _cell is { } c && c.Probability == probability && c.Impact == impact;
+
+    private void ToggleCell(int probability, int impact) =>
+        _cell = IsCell(probability, impact) ? null : new Cell(probability, impact);
+
+    private string CellTitle(int probability, int impact, string level, List<RiskItem> inCell)
+    {
+        var head = string.Format(T("W{0} × A{1} = {2}: {3}", "P{0} × I{1} = {2}: {3}"), probability, impact, probability * impact, PmRiskLabels.Level(UiText, level));
+        return inCell.Count == 0 ? head : head + "\n" + string.Join('\n', inCell.Select(r => $"{r.Key} {r.Title}"));
+    }
+
+    private void ResetFilter()
+    {
+        _status = _category = _level = string.Empty;
+        _mineOnly = _overdueOnly = false;
+        _cell = null;
+    }
+
+    private static string Short(string text)
+    {
+        var value = (text ?? string.Empty).ReplaceLineEndings(" ").Trim();
+        return value.Length <= 70 ? value : value[..67].TrimEnd() + " …";
+    }
+
+    private void NewRisk()
+    {
+        _panelRisk = null;
+        _panelOpen = true;
+    }
+
+    private void Open(RiskItem risk)
+    {
+        _panelRisk = risk;
+        _panelOpen = true;
+    }
+
+    private async Task Saved()
+    {
+        _panelOpen = false;
+        _panelRisk = null;
+        await LoadAsync();
+    }
+
+    private async Task OpenTaskFromPanel(int taskId)
+    {
+        _panelOpen = false;
+        await OnOpen.InvokeAsync(taskId);
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
 }
