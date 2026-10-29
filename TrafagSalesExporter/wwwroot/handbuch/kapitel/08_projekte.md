@@ -35,7 +35,7 @@ Ein Projekt wird mit einer Vorlage angelegt, die Spalten und Arbeitsweise vorgib
 
 ### Was man sieht
 
-Drei Vorlagen: **Kanban-Board** (Trello, Spalten Zu erledigen, In Arbeit, Review, Erledigt), **Scrum mit Sprints** (Jira, Spalten Zu erledigen, In Arbeit, Test, Erledigt und ein erster Sprint), **Planner mit Buckets** (Ideen, Geplant, In Arbeit, Erledigt). Dazu Name, Schlüssel (2 bis 6 Grossbuchstaben, wird aus dem Namen vorgeschlagen), Beschreibung, Farbe und Symbol.
+Fünf Vorlagen: **Kanban-Board** (Trello, Spalten Zu erledigen, In Arbeit, Review, Erledigt), **Scrum mit Sprints** (Jira, Spalten Zu erledigen, In Arbeit, Test, Erledigt und ein erster Sprint), **Planner mit Buckets** (Ideen, Geplant, In Arbeit, Erledigt), seit dem 29. Oktober 2026 **Produktentwicklung** (Phasen bis M2 Design-Freeze und M3 produktiv mit fertigem Plan, Abhängigkeiten und Standardrisiken) und **IT-Projekt nach HERMES** (Initialisierung, Konzept, Realisierung, Einführung mit Entscheidungspunkten). Bei den beiden neuen Vorlagen wird der Plan ab dem Startdatum gerechnet. Dazu Name, Schlüssel (2 bis 6 Grossbuchstaben, wird aus dem Namen vorgeschlagen), Beschreibung, Farbe und Symbol.
 
 ### Wie gerechnet wird
 
@@ -223,7 +223,135 @@ Das Demoprojekt HDEMO zeigt ein ausgefülltes Beispiel.
 ### Grenzen und Fallstricke
 
 Projekte ohne HERMES-Angaben erscheinen nicht auf der Landkarte, nur als Liste darüber. Abnahme und Abschluss
-lassen sich erst nach der Freigabe eintragen. Die Vorhaben aus der Wochen-Todo werden nicht automatisch übernommen.
+lassen sich erst nach der Freigabe eintragen. Die Vorhaben aus der Wochen-Todo kommen nicht von selbst; seit dem 29. Oktober 2026 übernimmt sie der Knopf „Vorhaben aus Wochen_Todo übernehmen“ in der Übersicht (siehe unten).
+
+## Raster & Gantt
+
+### Wozu
+
+Die Ansicht für die Terminplanung, wie man sie aus Smartsheet kennt: links eine Tabelle mit allen Zeilen des Projekts, rechts das Gantt-Diagramm. Termine, Dauern und Abhängigkeiten werden hier geplant; Board, Backlog und Liste zeigen dieselben Aufgaben.
+
+### Was man sieht
+
+- **Tabelle:** Nr. (die Aufgabennummer), Aufgabe mit Einrückung (Epic, Aufgabe, Unteraufgabe; Sammelzeilen auf- und zuklappbar), Zugewiesen, Status, Start, Ende, Dauer in Arbeitstagen, Vorgänger, % erledigt, Priorität, Risiko und Kritisch.
+- **Gantt:** Balken je Zeile mit dunklerem Fortschrittsanteil, Sammelzeilen als schwarze Klammer, Meilensteine als Raute, Pfeile von Vorgänger zu Nachfolger, Heute-Linie, Wochenenden und Zürcher Feiertage schattiert. Eingeschaltet: kritischer Pfad rot und Basisplan als grauer Balken darunter.
+- **Werkzeugleiste:** Zeile einfügen, einrücken, ausrücken, hoch, runter, alle auf- und zuklappen, Zoom Tage, Wochen, Monate, Heute, Basisplan setzen oder löschen (nur Projektleitung), Suche, Person, Überfällig und Spalten ein- und ausblenden.
+
+### Wie gerechnet wird
+
+- **Arbeitstage:** Montag bis Freitag ohne die gesetzlichen Feiertage des Kantons Zürich. Ein Termin auf einem freien Tag rückt auf den nächsten Arbeitstag. Das Ende zählt mit; ein Meilenstein hat die Dauer 0.
+- **Vorgänger:** Nummern mit Komma, zum Beispiel „3, 5+2“ heisst „nach 3 und zwei Arbeitstage nach 5“. Der Nachfolger beginnt am Arbeitstag nach dem Ende des Vorgängers plus Versatz. Verschiebt sich der Vorgänger, rückt der Nachfolger mit, auch nach vorne.
+- **Ziehen:** Ein ganzer Balken verschiebt Start und Ende bei gleicher Dauer; die Griffe links und rechts ändern Start oder Ende. Wird ein Nachfolger früher gezogen als erlaubt, rastet er auf den frühesten Start; später erhöht den Versatz zum Vorgänger. Vom Punkt am Balkenende auf einen anderen Balken ziehen legt eine Abhängigkeit an.
+- **Sammelzeilen:** Start und Ende sind die früheste und späteste Unterzeile, der Fortschritt ist nach Dauer gewichtet. Sie lassen sich nicht ziehen.
+- **Kritischer Pfad:** Zeilen ohne Puffer bis zum Projektende; eine Verschiebung dort verschiebt das Projektende. In der Spalte Kritisch steht sonst der Puffer in Arbeitstagen.
+- **Erledigt:** Eine Aufgabe in einer Spalte der Art „Erledigt“ hat 100 %.
+- **Basisplan:** friert die aktuellen Termine ein, um später Plan und Ist zu vergleichen.
+
+### Einsatz im Arbeitsalltag
+
+- **Projektleiter:** Den Plan mit Phasen als Epics aufbauen, Vorgänger eintragen und den Basisplan setzen, sobald der Plan freigegeben ist. In der Statusrunde den kritischen Pfad einschalten und die roten Zeilen besprechen.
+- **Teammitglied:** % erledigt und Termine der eigenen Zeilen nachführen; die Nachfolger passen sich von selbst an.
+
+### Grenzen und Fallstricke
+
+Es gibt nur Ende-Anfang-Abhängigkeiten. Die Gliederung hat drei Ebenen (Epic, Aufgabe, Unteraufgabe). Monats- und Tagesnamen der Skala sind immer deutsch. Ein Leser sieht die Ansicht, kann aber nichts ziehen oder ändern.
+
+## Risiken
+
+### Wozu
+
+Das Risikoregister des Projekts: Risiken erfassen, nach einer einheitlichen Skala bewerten, in Franken beziffern, mit Massnahmen und Verantwortlichen führen und ihren Verlauf verfolgen.
+
+### Was man sieht
+
+- **Kopf:** aktive Risiken je Stufe, höchste Stufe, überfällige Überprüfungen, Summe Erwartungswert und Summe Reserve.
+- **Risikomatrix 5×5:** Wahrscheinlichkeit senkrecht, Auswirkung waagrecht; jede Zelle zeigt den Wert und die Anzahl Risiken, ein Klick filtert die Liste.
+- **Liste und Seitenpanel:** Titel, Kategorie, Wahrscheinlichkeit, Auswirkung, Wert, Kritikalität, Status, Verantwortlich, verknüpfte Aufgabe, Überprüfung, Massnahme, Notfallplan, Kosten bei Eintritt, Erwartungswert und Reserve.
+- **Risiko-Burndown:** Verlauf der aktiven Risiken und des Erwartungswerts über die Zeit.
+- Auf jeder Projektkarte ein Abzeichen mit der höchsten Stufe, im Portfolio eine Spalte Risiko.
+
+### Wie gerechnet wird
+
+- **Kritikalität** = Wahrscheinlichkeit × Auswirkung (je 1 bis 5): 1 bis 4 tief, 5 bis 9 mittel, 10 bis 15 hoch, 16 bis 25 kritisch.
+- **Erwartungswert** = Kosten bei Eintritt × Wahrscheinlichkeit, mit 10, 30, 50, 70 und 90 % für die Stufen 1 bis 5.
+- **Reserve:** von Hand je Risiko, als Vorschlag der Erwartungswert; die Summe gehört ins Projektbudget.
+- **Aktiv** sind die Status offen, in Bearbeitung und eingetreten; geschlossene und archivierte zählen nicht.
+- **Burndown:** je Projekt und Tag ein Stand, bei jeder Änderung neu geschrieben.
+
+### Einsatz im Arbeitsalltag
+
+- **Projektleiter:** Zu Projektbeginn die Standardrisiken der Vorlage übernehmen und anpassen, jedes Risiko einer Person zuordnen und ein Überprüfungsdatum setzen. Hohe und kritische Risiken in jeder Statusrunde.
+- **PMO und Finanzen:** Die Summe der Reserven je Projekt zeigt, was aus kaufmännischer Vorsicht einzuplanen ist (Sitzung vom 29. Oktober 2026).
+
+### Grenzen und Fallstricke
+
+Die Skala und die Standardrisiken sind ein Startvorschlag; verbindlich macht sie erst das PMO. Die Franken sind Schätzungen und werden nicht nach SAP übertragen.
+
+## Projektstrukturplan
+
+### Wozu
+
+Der Projektstrukturplan ist die Schnittstelle zu SAP PS: je Element Geld und Zeit, so wie es Finanzen und Controlling brauchen.
+
+### Was man sieht
+
+PSP-Elemente mit Code (zum Beispiel LIN.01.02), Bezeichnung, Start, Ende, Soll-Stunden, Soll-Franken, Kostenart CAPEX oder OPEX und Verantwortlich; darunter die Summen und der Export als CSV für Excel und SAP.
+
+### Wie gerechnet wird
+
+Der Code folgt der Gliederung aus Raster & Gantt. Die Summe eines Elements ist der eigene Wert plus alle Unterelemente; CAPEX und OPEX zählen nur die eigenen Werte jeder Zeile, damit nichts doppelt läuft.
+
+### Einsatz im Arbeitsalltag
+
+- **Projektleiter:** Zur Freigabe Soll-Stunden und Soll-Franken je Arbeitspaket eintragen und die Kostenart wählen, dann den Export an das Controlling geben.
+
+### Grenzen und Fallstricke
+
+Nach SAP wird nichts geschrieben; der Export ist eine Vorlage. Ist-Werte aus SAP fehlen noch.
+
+## Entscheide
+
+### Wozu
+
+Das Decision Log hält fest, wer wann was entschieden hat und warum, damit spätere Fragen ohne Mailsuche beantwortet sind.
+
+### Was man sieht
+
+Je Entscheid Schlüssel (zum Beispiel LIN-D1), Datum, Titel, Status (vorgeschlagen, entschieden, verworfen, abgelöst), Gremium oder Person, Begründung, Alternativen und eine verknüpfte Aufgabe.
+
+### Wie gerechnet wird
+
+Ein entschiedener Eintrag braucht ein Datum. Die Liste ist nach Datum sortiert, neueste zuerst.
+
+### Einsatz im Arbeitsalltag
+
+- **Projektleiter:** Jeden Entscheid aus Lenkungsausschuss oder Statusrunde gleich eintragen und mit der betroffenen Aufgabe verknüpfen.
+
+### Grenzen und Fallstricke
+
+Ein abgelöster Entscheid bleibt sichtbar; den neuen als eigenen Eintrag erfassen.
+
+## Vorhaben aus der Wochen-Todo übernehmen
+
+### Wozu
+
+Bringt die Vorhaben PM-01 und folgende aus der Wochen-Todo als eigene Projekte in Trafag Projekte.
+
+### Was man sieht
+
+In der Übersicht der Knopf „Vorhaben aus Wochen_Todo übernehmen“: zwei Dateien hochladen (Vorhaben_HERMES.tsv, dazu optional Wochen_Todo.tsv), danach das Ergebnis mit Links zu den Projekten.
+
+### Wie gerechnet wird
+
+Je Vorhaben ein Projekt mit dem Schlüssel PM01, PM02 und so weiter, die HERMES-Angaben aus der Datei und die Zeilen der Wochen-Todo mit derselben ID als Aufgaben. Ein erneuter Abgleich ändert dieselben Projekte; die Datei bleibt führend.
+
+### Einsatz im Arbeitsalltag
+
+- **Ingo:** Nach dem Nachführen der Wochen-Todo beide Dateien erneut hochladen.
+
+### Grenzen und Fallstricke
+
+Neue Projekte sind privat; nur das Team sieht sie. Die Sichtbarkeit lässt sich in den Einstellungen umstellen.
 
 ## Kennzahlen-Glossar
 
@@ -236,3 +364,8 @@ lassen sich erst nach der Freigabe eintragen. Die Vorhaben aus der Wochen-Todo w
 | Story Points | Geschätzter Aufwand | Von Hand je Aufgabe, 0 bis 100 |
 | Burndown | Restaufwand im Sprint | Story Points (sonst Anzahl) der unerledigten Sprint-Aufgaben je Tag |
 | Durchsatz | Tempo des Teams | Angelegte und erledigte Aufgaben je Kalenderwoche |
+| Dauer | Länge einer Zeile | Arbeitstage von Start bis Ende, beide eingeschlossen, ohne Wochenenden und Zürcher Feiertage |
+| Kritischer Pfad | Zeilen ohne Puffer | Rückwärtsrechnung vom Projektende über die Vorgänger |
+| Kritikalität Risiko | Gewicht eines Risikos | Wahrscheinlichkeit mal Auswirkung, je 1 bis 5 |
+| Erwartungswert | Erwartete Kosten eines Risikos | Kosten bei Eintritt mal Wahrscheinlichkeit in Prozent |
+| Soll-Franken gesamt | Budget eines PSP-Elements | Eigener Wert plus alle Unterelemente |

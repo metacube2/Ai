@@ -1,6 +1,6 @@
 # Trafag Projekte (Projektmanagement wie Jira, Trello und Planner)
 
-Stand: 2026-10-13 (HERMES-Angaben, Portfolio und Demoprojekt ergänzt; nachmittags private Projekte, Rolle Leser und Abgleich der Wochen_Todo, Abschnitt „Sichtbarkeit und Wochen_Todo“)
+Stand: 2026-10-29 (Smartsheet-Ansicht Raster & Gantt, Risikoregister, PMO aus der Sitzung vom 29.10., Uebernahme der Vorhaben, Abschnitt „Smartsheet-Ansicht, Risiken und PMO“; davor 2026-10-13: HERMES-Angaben, Portfolio und Demoprojekt ergänzt; nachmittags private Projekte, Rolle Leser und Abgleich der Wochen_Todo, Abschnitt „Sichtbarkeit und Wochen_Todo“)
 
 Auftrag Ingo 2026-10-09: die „Poor Man's Project Management Suite“ durch eine richtige Lösung ersetzen,
 „ein Jira-Trello-Projektmanagementsystem, Funktionen von Jira, Ansicht Trello möglich und das Beste von
@@ -137,5 +137,94 @@ Auftrag Ingo: „bring meine Wochen_Todo in die Trafag Projekte, stell auf priva
 ## Offen
 
 - Keine Mail-Benachrichtigung bei Zuweisung oder Kommentar.
-- Abhängigkeiten zwischen Aufgaben (blockiert durch) gibt es nicht.
+- ~~Abhängigkeiten zwischen Aufgaben (blockiert durch) gibt es nicht.~~ *Erledigt 2026-10-29: Ende-Anfang-Abhängigkeiten mit Versatz in der Smartsheet-Ansicht, siehe unten.*
 - Abgleich mit Philip Steiger (Project Power Pack) bleibt sinnvoll, blockiert aber nichts.
+  *Nachtrag 2026-10-29:* Philip testet das Project Power Pack weiter (Entscheid offen, `docs/SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md`); vor einer breiten Ankündigung der Smartsheet-Ansicht mit Philip bzw. Oskar abstimmen.
+
+## Smartsheet-Ansicht, Risiken und PMO (2026-10-29)
+
+Auftrag Ingo am 2026-10-29: „ein Modus, der genau wie Smartsheet aussieht, gleiche Funktionalität hat und sich vollständig
+mit dem bestehenden Workflow einfügt; Balken in der Zeitachse per Maus verschieben, Zeiträume passen sich automatisch an;
+alle Vorteile von Smartsheet“, dazu „Risikobewertung, Kritikalität“ und „alle bestehenden Projekte aus der Wochen_Todo
+eintragen“. Am selben Tag nach der Sitzung SAP PS/Projektwerkzeug (`docs/SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md`):
+Risiken in Franken, Vorlage Produktentwicklung, Projektstrukturplan für SAP, Decision Log. Entscheide Ingo: Vorhaben je ein
+Projekt; Terminierung wie Smartsheet (Vorgänger, Nachfolger rücken mit, Arbeitstage, Sammelzeilen); Guide mit Rundgang,
+Assistent und Projektprüfung (Phase 2); „sofort für alle“. Gebaut in Phasen; Phase 1 und PMO am 2026-10-29.
+
+### Raster & Gantt (Reiter `sheet`)
+
+- **Raster:** Nr. (Aufgabennummer, die auch die Vorgänger-Spalte nutzt), Aufgabe mit Einrückung und Auf-/Zuklappen,
+  Zugewiesen, Status, Start, Ende, Dauer (Arbeitstage), Vorgänger („3, 5+2“), % erledigt, Priorität, Risiko, Kritisch.
+  Bearbeiten per Klick in die Zelle, Enter speichert, Esc bricht ab, Pfeiltasten wechseln die Zelle. Werkzeugleiste: Zeile
+  einfügen, Ein-/Ausrücken, hoch/runter, alle auf-/zuklappen, Zoom Tage/Wochen/Monate, Heute, kritischer Pfad,
+  Basisplan anzeigen sowie setzen/löschen (Projektleitung), Suche, Person, Überfällig, Spalten ein-/ausblenden.
+- **Gantt:** Skala mit Wochenenden und Zürcher Feiertagen, Heute-Linie, Balken mit Fortschritt, Sammelzeilen als Klammer,
+  Meilensteine als Raute, kritischer Pfad rot, Basisplan grau, rechtwinklige Abhängigkeitspfeile. Ziehen in
+  `wwwroot/js/pm-gantt.js`: Balken verschieben, linken/rechten Griff ziehen, Vorschau rastet auf Arbeitstage, beim Loslassen
+  ein Aufruf an den Server; vom Punkt am Balkenende auf einen anderen Balken ziehen legt eine Abhängigkeit an.
+- **Gliederung** = Epic → Aufgabe → Unteraufgabe; Ein-/Ausrücken setzen `EpicId`/`ParentId`, damit Board, Backlog und Liste
+  dieselbe Struktur sehen. Zeilenfolge `PmTasks.SheetOrder` (ohne eigene Folge gilt der Rang).
+- **Regeln** (`Services/Projects/PmSchedule.cs`, Tests `PmSheetTests`): Arbeitstage Mo bis Fr ohne Zürcher Feiertage, Ende
+  inklusive, Meilenstein Dauer 0; Ende-Anfang mit Versatz in Arbeitstagen, der Nachfolger folgt in beide Richtungen;
+  ein Balken später als erlaubt erhöht den Versatz zum bestimmenden Vorgänger, früher rastet er auf den frühesten Start;
+  Sammelzeilen nehmen Spanne und dauergewichteten Fortschritt der Kinder und sind nicht ziehbar; Zyklen abgewiesen;
+  kritischer Pfad per Rückwärtsrechnung (Puffer 0); Zeile in einer Erledigt-Spalte = 100 %.
+- **Ein Einstieg für alle Terminänderungen:** `PmService.ApplyScheduleAsync` läuft auch nach Aufgabenpanel, Kalender,
+  Board-Spaltenwechsel, Archivieren, Wochen_Todo-Abgleich und Vorlagen, damit kein alter Weg Abhängigkeiten bricht.
+- Technik: `Components/Projects/PmSheetView.razor`, `Services/Projects/PmService.Sheet.cs`, `PmSheetLayout.cs` (Pixel, Skala,
+  Pfeilwege, mit Tests), `wwwroot/css/pm-sheet.css` (`pm-sh-`), Tabelle `PmTaskLinks`, Spalten `PmTasks.PercentComplete`,
+  `IsMilestone`, `SheetOrder`, `BaselineStart`, `BaselineEnd`.
+- Aussehen an Smartsheet angelehnt, ohne Logo oder Marke von Smartsheet.
+
+### Risiken (Reiter `risks`)
+
+- Kopf mit aktiven Risiken je Stufe, höchster Stufe, überfälligen Überprüfungen, Summen Erwartungswert und Reserve;
+  Risikomatrix 5×5 (Zelle mit Wert und Anzahl, Klick filtert), die fünf grössten Risiken, Liste mit Filtern, Seitenpanel.
+- Kritikalität = Wahrscheinlichkeit × Auswirkung: 1–4 tief, 5–9 mittel, 10–15 hoch, 16–25 kritisch (`PmRiskLevels`).
+- **In Franken** (Sitzung 29.10.): Kosten bei Eintritt, Erwartungswert = Kosten × Wahrscheinlichkeit (Stufe 1–5 = 10, 30,
+  50, 70, 90 %), Reserve (Contingency) je Risiko und Summe je Projekt. **Risiko-Burndown** aus einem Tagesstand je Projekt
+  (`PmRiskSnapshots`, bei jeder Änderung überschrieben).
+- **PMO-Vorlage** (`Services/Projects/PmRiskTemplates.cs`): eine Skala für Wahrscheinlichkeit und Auswirkung mit Franken- und
+  Terminschwellen, Standardrisiken je Projektart (Produktentwicklung, IT-Projekt, allgemein), per Knopf übernehmbar. Die
+  Inhalte sind ein Startvorschlag; Inhaber der Vorlage wäre das PMO.
+- Risiko-Badge auf den Projektkarten, Spalte Risiko im Portfolio. Tabellen `PmRisks`.
+
+### Vorlagen mit fertigem Plan
+
+- **Produktentwicklung** nach Philips Smartsheet-Vorlage: M1 Projektstart; Phase 1 Spezifikation und Entwicklung
+  (Spezifikation, Fertigungskonzept, Softwarekonzept Betriebsmittelbau, Design mit Design-FMEA, Mechanik, Hardware/PCB,
+  Firmware, Konzept Produktverpackung, Typenschild, Prototypen); M2 Design-Freeze; Phase 2 Industrialisierung; M3 Produktiv;
+  Phase 3 Optimierung; Projektabschluss. Verkettet über Abhängigkeiten mit Vorschlagsdauern, plus Standardrisiken.
+- **IT-Projekt nach HERMES:** Initialisierung, Konzept, Realisierung, Einführung mit je einem Entscheidungspunkt.
+- Technik: `Services/Projects/PmService.Templates.cs`, `PmTemplates.ProductDevelopment`/`ItProject`.
+
+### Projektstrukturplan für SAP PS (Reiter `wbs`)
+
+- Je Element Soll-Stunden, Soll-Franken, Kostenart CAPEX/OPEX; Codes wie PSP-Elemente (`LIN.01.02`), Summen nach oben;
+  CSV-Export (Semikolon, UTF-8) als Vorlage für SAP PS. Nach SAP wird nichts geschrieben; das ist die in der Sitzung
+  genannte Schnittstelle zwischen Projektwerkzeug und PS. Spalten `PmTasks.PlannedHours`, `PlannedCostChf`, `CostType`.
+
+### Decision Log (Reiter `decisions`)
+
+- Je Entscheid Titel, Entscheid, Begründung, Alternativen, Status (vorgeschlagen, entschieden, verworfen, abgelöst), Datum,
+  Gremium/Person, verknüpfte Aufgabe; Schlüssel `LIN-D1`. Tabelle `PmDecisions`.
+
+### Übernahme der Vorhaben
+
+- Übersicht, Knopf „Vorhaben aus Wochen_Todo übernehmen“: `Vorhaben_HERMES.tsv` (Pflicht) und `Wochen_Todo.tsv` hochladen.
+  Je Vorhaben PM-nn ein Projekt `PMnn` (ExternalRef `PM-nn`), HERMES-Angaben aus der TSV, Aufgaben aus den Wochen_Todo-Zeilen
+  mit ID oder Vorhaben PM-nn. **Neue Projekte sind privat** mit dem Hochladenden als Leitung (wie der Wunsch vom 13.10.);
+  Sichtbarkeit danach in den Einstellungen umstellbar. Wiederholbar, die TSV bleibt führend. Technik
+  `PmService.Vorhaben.cs`, `Components/Projects/PmVorhabenImport.razor`.
+
+### Texte
+
+Eigener Katalog je Ansicht `Services/Projects/PmUiTextCatalog.{Sheet,Risk,Guide}.cs` mit allen Sprachen inklusive
+Berndeutsch; er füllt in `UiTextService` nur Lücken und überschreibt keine bestehende Übersetzung. Test
+`Projects_Catalog_Has_Every_Language_Without_Duplicates_And_Keeps_Placeholders`.
+
+### Offen
+
+- Phase 2: Guide (Rundgang, Projekt-Assistent, geführte Projektprüfung).
+- Phase 3: Auslastung je Person, Automatisierungen und Erinnerungen, Formulare für Anfragen, Excel-Export des Rasters.
+- Abstimmung mit Philip Steiger (Project Power Pack) vor breiter Ankündigung.
