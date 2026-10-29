@@ -195,6 +195,27 @@ Ann-Katrin meldet seit Maerz 2026 unterschiedlich grosse Ergebnisse zu verschied
 am Nachmittag. Die Batch-Jobs enden laut SM37 um etwa 06:32 und erklaeren das nicht. Ungeloest,
 Kandidaten und naechste Schritte in `TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md`.
 
+### G) Top-Down-Pruefung vom 2026-10-29 (fuer FIX 24, noch nicht umgesetzt)
+
+Nach FIX 23 gefragt (Ingo: „notieren, spaeter machen“). Belegt in T76, Quelltext Stand FIX 23:
+
+1. **Stueckkosten auf 2 Nachkommastellen gerundet** (`ty_ktab-stueckkosten TYPE p DECIMALS 2`, in `fill_ktab` STPRS bzw.
+   VERPR / PEINH). Alle Wert-Spalten (`wert_feste_zug` bis `wert_endbestand`) rechnen mit dem gerundeten Preis. Bei PEINH > 1
+   falsch: B64003 0.01 je 1000 -> 0.00, alle Werte 0; AK70879 10.31 je 100 -> 0.10 statt 0.1031 (rund 3 % zu tief).
+   Loesung: Werte aus dem ungerundeten Preis, Stueckkosten mit mehr Stellen ausgeben (wie `stk_bom` in FIX 23).
+2. **Parameter `p_days` („Verbraeuche zurueck in Tagen“, 360) wirkt nicht:** setzt nur `gv_datum_von`, das nirgends gelesen
+   wird; der Verbrauch kommt fest aus `ZMD04_CALC` (Zeitraum des Nachtjobs). Loesung: Feld ausblenden oder Zeitraum des Jobs
+   nennen; Verbrauch je eingegebenem Zeitraum selbst rechnen waere ein groesserer Umbau.
+3. **Textpositionen im Bedarf** (`process_main`, MTAB: `IF postyp <> 'T' OR p_txtpo = 'X'` vor `COLLECT`): mit gesetztem
+   `p_txtpo` zaehlt die Menge einer Textposition zum Bedarf; steht eine Komponente als L- und T-Position im selben Geraet
+   (Fall B63485), steigt der Bedarf allein durch das Kaestchen. Loesung: T-Positionen nie in MTAB summieren.
+4. **Verdacht Mehrstufigkeit:** in 41019 steht D85020 auf Stufe 02 und 03 (je 1 ST), COLLECT ergibt 2 je Geraet. Ohne
+   Elternfeld in `ZPOWERBI_VC_TXT` (Punkt A) nicht entscheidbar, ob doppelt oder richtig; ausserdem gilt eine Menge ab Stufe 2
+   je uebergeordneter Baugruppe, nicht je Geraet (bei Mengen > 1 zu wenig Bedarf). Passt zu Punkt E (CS15 42 vs. ZLO03 21).
+   Naechster Schritt: 41019 lesend gegen CS12 (mehrstufig) in T76 vergleichen, erst dann aendern.
+5. Kommentar in FIX 22 („Werk p_werks“) ist falsch: `Z_ZLO03_TURBO2` kennt kein `p_werks`, das Werk ist die Konstante
+   `gc_werks = '1100'` (FIX 17 gab es nur in `ZM_LZCODE20_OPT`). Beim naechsten Fix berichtigen.
+
 ---
 
 ## Verifikationsplan
