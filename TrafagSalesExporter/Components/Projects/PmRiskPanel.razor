@@ -117,7 +117,7 @@
             <div class="pm-row">
                 <select class="pm-input" disabled="@(!Editable)" value="@(_edit.TaskId?.ToString() ?? string.Empty)" @onchange="SetTask">
                     <option value="">@T("Keine", "None")</option>
-                    @foreach (var task in Board.Tasks.OrderBy(t => t.Number))
+                    @foreach (var task in Board.Epics.Concat(Board.Tasks).DistinctBy(t => t.Id).OrderBy(t => t.Number))
                     {
                         <option value="@task.Id">@task.Key · @task.Title</option>
                     }
