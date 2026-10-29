@@ -577,6 +577,12 @@
         catch (JSDisconnectedException)
         {
         }
+        catch (JSException)
+        {
+            // Z. B. veraltetes pm-gantt.js aus dem Browsercache oder ein Editor, der nicht mehr da ist:
+            // die Ansicht bleibt bedienbar, die Verbindung darf daran nicht abbrechen.
+            _focusEditor = false;
+        }
         catch (InvalidOperationException)
         {
             // Vorab-Darstellung ohne Verbindung: das Skript wird beim naechsten Durchgang gestartet.
@@ -591,6 +597,9 @@
                 await JS.InvokeVoidAsync("pmGantt.dispose", _root);
         }
         catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
         {
         }
         catch (TaskCanceledException)
@@ -785,11 +794,16 @@
 
     // ---------- Werkzeugleiste ----------
 
+    // Neue Zeile unter der markierten und gleich den Namen bearbeiten. Ein aktiver Filter wird aufgehoben, sonst
+    // waere die neue Zeile unsichtbar.
     private async Task InsertRow()
     {
+        _search = string.Empty;
+        _person = string.Empty;
+        _overdueOnly = false;
         var id = 0;
         await Run(async () => id = await Pm.InsertRowAsync(User, ProjectId, _selected, T("Neue Zeile", "New row")));
-        if (id > 0 && _sheet?.Rows.FirstOrDefault(r => r.Id == id) is { } row)
+        if (id > 0 && _visible.FirstOrDefault(r => r.Id == id) is { } row)
             CellClick(row, C.Title);
     }
 

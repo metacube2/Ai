@@ -57,12 +57,15 @@ window.pmGantt = (function () {
         st.onDragKey = e => { if (e.key === 'Escape') cancelDrag(st); };
         st.onScroll = e => onScroll(st, e);
         st.onDbl = e => onDoubleClick(st, e);
+        // Der Bereich, in dem der Benutzer gerade rollt, fuehrt; der andere folgt nur.
+        st.onActive = e => { const p = e.target instanceof Element ? e.target.closest('.pm-sh-pane') : null; if (p) st.active = p; };
 
         root.addEventListener('pointerdown', st.onDown);
         root.addEventListener('dblclick', st.onDbl);
         root.addEventListener('keydown', st.onKey);
         // scroll blubbert nicht: in der Capture-Phase am Wurzelelement abfangen.
         root.addEventListener('scroll', st.onScroll, true);
+        ['wheel', 'pointerdown', 'touchstart', 'keydown'].forEach(n => root.addEventListener(n, st.onActive, { capture: true, passive: true }));
         states.set(root, st);
         restoreSplit(root);
     }
@@ -75,6 +78,7 @@ window.pmGantt = (function () {
         root.removeEventListener('dblclick', st.onDbl);
         root.removeEventListener('keydown', st.onKey);
         root.removeEventListener('scroll', st.onScroll, true);
+        ['wheel', 'pointerdown', 'touchstart', 'keydown'].forEach(n => root.removeEventListener(n, st.onActive, { capture: true }));
         if (st.tip && st.tip.parentNode) st.tip.parentNode.removeChild(st.tip);
         states.delete(root);
     }
@@ -88,17 +92,16 @@ window.pmGantt = (function () {
 
     // ---------- Bildlauf und Tastatur ----------
 
+    // Nur der aktive Bereich gibt den senkrechten Bildlauf vor; das Scroll-Ereignis des nachgefuehrten Bereichs
+    // wird uebergangen, damit beide nicht gegeneinander ziehen. Ohne bekannte Eingabe fuehrt der rollende Bereich.
     function onScroll(st, e) {
         const t = e.target;
-        if (!(t instanceof Element) || st.syncing) return;
+        if (!(t instanceof Element) || !t.classList.contains('pm-sh-pane')) return;
+        if (st.active && st.active.isConnected && t !== st.active) return;
         let other = null;
         if (t.classList.contains('pm-sh-gridpane')) other = st.root.querySelector('.pm-sh-ganttpane');
         else if (t.classList.contains('pm-sh-ganttpane')) other = st.root.querySelector('.pm-sh-gridpane');
-        if (other && other.scrollTop !== t.scrollTop) {
-            st.syncing = true;
-            other.scrollTop = t.scrollTop;
-            requestAnimationFrame(() => { st.syncing = false; });
-        }
+        if (other && other.scrollTop !== t.scrollTop) other.scrollTop = t.scrollTop;
     }
 
     function onKeyDown(st, e) {
