@@ -2,6 +2,13 @@
 
 Stand: 2026-10-29
 
+## Doku: Sitzung SAP PS und Projektmanagement-Werkzeug zusammengefasst, 2026-10-29
+
+- Aufnahme mit Whisper `large-v3` transkribiert, Zusammenfassung als `docs/SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md`
+  (Wunsch Ingo „für zukünftige Tasks“): Projektwerkzeug oben (Philip testet Project Power Pack, Entscheid offen), SAP PS nur
+  Geld und Zeit, Schnittstelle Projektstrukturplan; Lucas fragt NTT Data an, Philip liefert Testprojekte 133.2 und 103.46.
+  Router SAP, `baum.md`, PROJEKTSTATUS PM-10/PM-13, Wochen_Todo 43 und neu 126 samt `.xlsx`.
+
 ## Wuensche Armin: ZLO03 FIX 22 (Disponent, Warengruppe) und ZC23-Gruppe BM fuer Disponent 026, 2026-10-29
 
 - ZLO03 Top-Down: Spalten Disponent (`MARC-DISPO`) und Warengruppe (`MARA-MATKL`) hinter PFAS-Gehalt, im .xlsx als Text
