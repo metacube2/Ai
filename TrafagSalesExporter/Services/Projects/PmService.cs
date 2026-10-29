@@ -52,6 +52,15 @@ public interface IPmService
     Task SetRiskArchivedAsync(PmUser user, int riskId, bool archived);
     Task<IReadOnlyDictionary<int, PmRiskSummary>> GetRiskSummariesAsync(PmUser user);
     Task<PmVorhabenResult> SyncVorhabenAsync(PmUser user, string vorhabenTsv, string? wochenTodoTsv);
+    // PMO aus der Sitzung 2026-10-29: Risiko-Burndown, Standardrisiken, Projektstrukturplan, Decision Log
+    Task<IReadOnlyList<PmRiskBurndownPoint>> GetRiskBurndownAsync(int projectId, PmUser user);
+    Task<int> AddStandardRisksAsync(PmUser user, int projectId, string template);
+    Task<PmWbs?> GetWbsAsync(int projectId, PmUser user);
+    Task UpdateWbsFieldAsync(PmUser user, int taskId, string field, string? value);
+    Task<string> ExportWbsCsvAsync(int projectId, PmUser user);
+    Task<IReadOnlyList<PmDecisionView>> GetDecisionsAsync(int projectId, PmUser user, bool includeArchived = false);
+    Task<int> SaveDecisionAsync(PmUser user, int projectId, PmDecisionInput input);
+    Task SetDecisionArchivedAsync(PmUser user, int decisionId, bool archived);
 }
 
 /// <summary>
@@ -149,6 +158,8 @@ public sealed partial class PmService : IPmService
                 db.PmSprints.Add(new PmSprint { ProjectId = project.Id, Name = $"{key} Sprint 1", State = PmSprintStates.Planned });
             Log(db, project.Id, null, user, $"hat das Projekt {key} angelegt");
             await db.SaveChangesAsync();
+            // Vorlagen Produktentwicklung und IT-Projekt bringen einen fertigen Plan mit (2026-10-29).
+            await SeedTemplateAsync(db, project, user, input.StartDate ?? DateTime.Today);
             _notifier.Publish(0);
             return project.Id;
         }

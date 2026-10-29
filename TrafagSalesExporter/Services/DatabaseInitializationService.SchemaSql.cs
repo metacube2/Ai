@@ -416,7 +416,10 @@ CREATE TABLE PmTasks (
     IsMilestone INTEGER NOT NULL DEFAULT 0,
     SheetOrder REAL NOT NULL DEFAULT 0,
     BaselineStart TEXT NULL,
-    BaselineEnd TEXT NULL
+    BaselineEnd TEXT NULL,
+    PlannedHours REAL NOT NULL DEFAULT 0,
+    PlannedCostChf REAL NOT NULL DEFAULT 0,
+    CostType TEXT NOT NULL DEFAULT ''
 );";
         yield return @"
 CREATE TABLE PmChecklistItems (
@@ -491,6 +494,39 @@ CREATE TABLE PmRisks (
     ReviewDate TEXT NULL,
     CreatedAtUtc TEXT NOT NULL,
     UpdatedAtUtc TEXT NOT NULL,
+    IsArchived INTEGER NOT NULL DEFAULT 0,
+    CostImpactChf REAL NOT NULL DEFAULT 0,
+    ContingencyChf REAL NOT NULL DEFAULT 0
+);";
+        // Risiko-Burndown und Decision Log (Sitzung 2026-10-29).
+        yield return @"
+CREATE TABLE PmRiskSnapshots (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Day TEXT NOT NULL,
+    ActiveCount INTEGER NOT NULL DEFAULT 0,
+    CriticalCount INTEGER NOT NULL DEFAULT 0,
+    TotalScore INTEGER NOT NULL DEFAULT 0,
+    ExpectedValueChf REAL NOT NULL DEFAULT 0,
+    ContingencyChf REAL NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE PmDecisions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Number INTEGER NOT NULL DEFAULT 0,
+    Title TEXT NOT NULL DEFAULT '',
+    Decision TEXT NOT NULL DEFAULT '',
+    Rationale TEXT NOT NULL DEFAULT '',
+    Alternatives TEXT NOT NULL DEFAULT '',
+    Status TEXT NOT NULL DEFAULT 'Proposed',
+    DecidedOn TEXT NULL,
+    DecidedBy TEXT NOT NULL DEFAULT '',
+    TaskId INTEGER NULL,
+    AuthorLogin TEXT NOT NULL DEFAULT '',
+    AuthorName TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL,
     IsArchived INTEGER NOT NULL DEFAULT 0
 );";
     }
@@ -510,7 +546,9 @@ CREATE TABLE PmRisks (
         "CREATE INDEX IF NOT EXISTS IX_PmActivities_Project ON PmActivities (ProjectId, AtUtc)",
         "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmTaskLinks_Pair ON PmTaskLinks (PredecessorId, SuccessorId)",
         "CREATE INDEX IF NOT EXISTS IX_PmTaskLinks_Project ON PmTaskLinks (ProjectId)",
-        "CREATE INDEX IF NOT EXISTS IX_PmRisks_Project ON PmRisks (ProjectId, IsArchived)"
+        "CREATE INDEX IF NOT EXISTS IX_PmRisks_Project ON PmRisks (ProjectId, IsArchived)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmRiskSnapshots_Day ON PmRiskSnapshots (ProjectId, Day)",
+        "CREATE INDEX IF NOT EXISTS IX_PmDecisions_Project ON PmDecisions (ProjectId, IsArchived)"
     ];
 
     // Trafag Reddit (2026-10-09): Forum, Doku docs/TRAFAG_REDDIT_2026-10-09.md.
