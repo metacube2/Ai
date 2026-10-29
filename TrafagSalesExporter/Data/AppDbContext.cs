@@ -41,6 +41,8 @@ public class AppDbContext : DbContext
     public DbSet<PmComment> PmComments => Set<PmComment>();
     public DbSet<PmActivity> PmActivities => Set<PmActivity>();
     public DbSet<PmHermes> PmHermes => Set<PmHermes>();
+    public DbSet<PmTaskLink> PmTaskLinks => Set<PmTaskLink>();
+    public DbSet<PmRisk> PmRisks => Set<PmRisk>();
     public DbSet<ForumCommunity> ForumCommunities => Set<ForumCommunity>();
     public DbSet<ForumPost> ForumPosts => Set<ForumPost>();
     public DbSet<ForumComment> ForumComments => Set<ForumComment>();

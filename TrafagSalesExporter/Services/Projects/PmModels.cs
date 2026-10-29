@@ -196,3 +196,48 @@ public static class PmStyle
         _ => MudBlazor.Icons.Material.Filled.DragHandle
     };
 }
+
+// ---------- Smartsheet-Ansicht und Risiken (2026-10-29) ----------
+
+// Eine Zeile des Rasters. Level 0 = oberste Ebene (Epic oder Aufgabe ohne Epic), 1 = unter einem Epic,
+// 2 = Unteraufgabe. Start/End/Duration sind bei Sammelzeilen gerechnet.
+public sealed record PmSheetRow(
+    int Id, string Key, int Number, string Type, string Title, int Level, int? RollupParentId, bool HasChildren,
+    DateTime? Start, DateTime? End, int Duration, bool IsMilestone, int Percent, string Predecessors,
+    bool IsCritical, int FloatDays, int ColumnId, string ColumnName, string Category, string Priority,
+    string AssigneeLogin, string AssigneeName, IReadOnlyList<string> Labels, bool IsOverdue,
+    DateTime? BaselineStart, DateTime? BaselineEnd, string RiskLevel, int RiskCount);
+
+public sealed record PmSheetLink(int PredecessorId, int SuccessorId, int LagDays);
+
+public sealed record PmSheet(
+    PmBoard Board, IReadOnlyList<PmSheetRow> Rows, IReadOnlyList<PmSheetLink> Links,
+    DateTime? Start, DateTime? End, int CriticalCount, PmRiskSummary Risks);
+
+public sealed record PmRiskView(
+    int Id, int Number, string Key, string Title, string Description, string Category, int Probability, int Impact,
+    int Score, string Level, string Status, string OwnerLogin, string OwnerName, string Mitigation, string Contingency,
+    int? TaskId, string TaskKey, string TaskTitle, DateTime? ReviewDate, bool ReviewOverdue, DateTime UpdatedAtUtc);
+
+public sealed record PmRiskSummary(int Active, int Critical, int High, int Medium, int Low, string MaxLevel)
+{
+    public static readonly PmRiskSummary Empty = new(0, 0, 0, 0, 0, string.Empty);
+}
+
+public sealed class PmRiskInput
+{
+    public int? Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = PmRiskCategories.Schedule;
+    public int Probability { get; set; } = 3;
+    public int Impact { get; set; } = 3;
+    public string Status { get; set; } = PmRiskStatuses.Open;
+    public string OwnerLogin { get; set; } = string.Empty;
+    public string Mitigation { get; set; } = string.Empty;
+    public string Contingency { get; set; } = string.Empty;
+    public int? TaskId { get; set; }
+    public DateTime? ReviewDate { get; set; }
+}
+
+public sealed record PmVorhabenResult(int ProjectsCreated, int ProjectsUpdated, int TasksCreated, int TasksUpdated, IReadOnlyList<string> Keys);

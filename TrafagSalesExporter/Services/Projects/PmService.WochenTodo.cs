@@ -35,13 +35,35 @@ public sealed partial class PmService
             var columns = await db.PmColumns.Where(c => c.ProjectId == projectId).OrderBy(c => c.SortOrder).ToListAsync();
             if (columns.Count == 0)
                 throw new PmException("Das Projekt hat keine Spalten.", "The project has no columns.");
-            var existing = await db.PmTasks.Where(t => t.ProjectId == projectId && t.ExternalRef.StartsWith(WochenTodoPrefix)).ToListAsync();
-            var byRef = existing.GroupBy(t => t.ExternalRef).ToDictionary(g => g.Key, g => g.First());
             var leadIsMember = await db.PmMembers.AnyAsync(m => m.ProjectId == projectId && m.Login == user.Login);
-            var maxRank = await db.PmTasks.Where(t => t.ProjectId == projectId).Select(t => (double?)t.Rank).MaxAsync() ?? 0;
-            var now = DateTime.UtcNow;
-            int created = 0, updated = 0, unchanged = 0, skipped = 0;
+            var result = await UpsertWochenTodoRowsAsync(db, project, columns, rows, user, leadIsMember);
+            project.UpdatedAtUtc = DateTime.UtcNow;
+            Log(db, projectId, null, user, $"hat die Wochen_Todo abgeglichen: {result.Created} neu, {result.Updated} geändert, {result.Unchanged} unverändert");
+            await db.SaveChangesAsync();
+            await ApplyScheduleAsync(db, projectId);
+            await db.SaveChangesAsync();
+            _notifier.Publish(projectId);
+            _notifier.Publish(0);
+            return result;
+        }
+        finally
+        {
+            WriteGate.Release();
+        }
+    }
 
+    // Legt Zeilen der Wochen_Todo als Aufgaben an oder gleicht sie ab (ExternalRef "WT-<Nr>"); speichert nicht.
+    // Gemeinsam fuer den Abgleich je Projekt und die Uebernahme der Vorhaben (2026-10-29).
+    internal static async Task<PmImportResult> UpsertWochenTodoRowsAsync(
+        AppDbContext db, PmProject project, List<PmColumn> columns, IReadOnlyList<WochenTodoRow> rows, PmUser user, bool leadIsMember)
+    {
+        var projectId = project.Id;
+        var existing = await db.PmTasks.Where(t => t.ProjectId == projectId && t.ExternalRef.StartsWith(WochenTodoPrefix)).ToListAsync();
+        var byRef = existing.GroupBy(t => t.ExternalRef).ToDictionary(g => g.Key, g => g.First());
+        var maxRank = await db.PmTasks.Where(t => t.ProjectId == projectId).Select(t => (double?)t.Rank).MaxAsync() ?? 0;
+        var now = DateTime.UtcNow;
+        int created = 0, updated = 0, unchanged = 0, skipped = 0;
+        {
             foreach (var row in rows)
             {
                 if (row.Topic.Length == 0)
@@ -111,18 +133,8 @@ public sealed partial class PmService
                     unchanged++;
                 }
             }
-
-            project.UpdatedAtUtc = now;
-            Log(db, projectId, null, user, $"hat die Wochen_Todo abgeglichen: {created} neu, {updated} geändert, {unchanged} unverändert");
-            await db.SaveChangesAsync();
-            _notifier.Publish(projectId);
-            _notifier.Publish(0);
-            return new PmImportResult(created, updated, unchanged, skipped);
         }
-        finally
-        {
-            WriteGate.Release();
-        }
+        return new PmImportResult(created, updated, unchanged, skipped);
     }
 
     internal static IReadOnlyList<WochenTodoRow> ParseWochenTodo(string? tsv)
