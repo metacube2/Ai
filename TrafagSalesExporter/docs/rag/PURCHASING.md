@@ -43,6 +43,8 @@ ZM_OFFENE_KDAUF, genau eine Gruppe je Material, keine Vererbung ueber die Verwen
 Mehrere gleichwertige SAP-Regeln (DS1/DS2 -> D5/DS, 016 -> H/H2): kleinste Gruppennummer gewinnt, Kachel „Mehrdeutige
 SAP-Regel“. Spalte `PurchasingEkpoCache.MarcDispo` fuellt erst der naechste Einkauf-Lauf. ZLO03 selbst kennt ZDISPO
 nicht. Details: `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`, Nachtrag 2026-10-26.
+Seit 2026-10-29 in P76 neue Gruppe `BM` = `BG_MECHANIK` fuer Disponent `026` (Wunsch Armin, Nachtrag 2026-10-29).
+ZLO03 zeigt im Top-Down ab FIX 22 (`T76K912777`, T76, Import offen) Disponent und Warengruppe je Komponente.
 
 ## Produktgruppe 2026-10-08 (produktiv 15:03) *(ueberholt am 2026-10-26, siehe oben)*
 

@@ -2,6 +2,15 @@
 
 Stand: 2026-10-29
 
+## Wuensche Armin: ZLO03 FIX 22 (Disponent, Warengruppe) und ZC23-Gruppe BM fuer Disponent 026, 2026-10-29
+
+- ZLO03 Top-Down: Spalten Disponent (`MARC-DISPO`) und Warengruppe (`MARA-MATKL`) hinter PFAS-Gehalt, im .xlsx als Text
+  (`026` bleibt `026`). T76 aktiv in neuem Auftrag `T76K912777` (`T76K912752` war schon freigegeben), rueckgelesen
+  identisch (3'813 Zeilen), Lauf Typencode `8475*` 126 x 184. Freigabe und Import nach P76 offen (Ingo).
+  `zlo03/FIX22_DISPO_MATKL_2026-10-29.md`.
+- ZC23/ZDISPO: in P76 neue Gruppe `BM` = `BG_MECHANIK` und `026` -> `BM`; SM30 von Claude ausgefuellt, von Ingo gesichert,
+  lesend gegengeprueft. `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` Nachtrag 2026-10-29. Wochen_Todo 124, 125.
+
 ## Doku: Widersprueche in allen Markdown-Dateien aufgeloest, 2026-10-29
 
 - Auftrag Ingo („alle 163“): alle getrackten `*.md` ausser Archiv und Koordinations-Historie in sieben Aesten geprueft

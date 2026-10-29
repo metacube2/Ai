@@ -93,6 +93,8 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-29 | Ingo gefragt, ob FIX 22 in `T76K912752` soll, ohne den Auftragsstatus zu pruefen; der Auftrag war laengst freigegeben (`E070` R), die Entscheidung beruhte auf einer falschen Annahme | Vor jeder Frage „in welchen Auftrag“ den Status in `E070` lesen (`table-read E070 --where "TRKORR = '...' OR STRKORR = '...'"`) | `zlo03/FIX22_DISPO_MATKL_2026-10-29.md` 3 |
+| 2026-10-29 | ZLO03-Testlauf mit `8475*` im Feld Material: „Keine Daten gefunden“; `8475*` ist ein Typencode (`S_TYPCD`). Dazu: `SapGuiSitzungSchliessen.vbs` bricht mit „Bad index type“ ab (Index als `CLng`) | ZLO03-Testfaelle `8475*` immer in `S_TYPCD`; eigene T76-Sitzung mit `/i` schliessen | `zlo03/FIX22_DISPO_MATKL_2026-10-29.md` 3 |
 | 2026-10-15 | Wiederholt (Fall 2026-10-01): Ein GUI-Skript bekam `/UI5/UI5_REPOSITORY_LOAD` ueber Bash und suchte `C:/PROGRAM FILES/GIT/UI5/...` | SAP-Namen mit fuehrendem `/` nur ueber PowerShell an Skripte geben | `saptasks/fiori_erste_app/NOTES.md` 5 |
 | 2026-10-15 | `/n/UI5/UI5_REPOSITORY_LOAD` als OK-Code landete im SESSION_MANAGER: das ist ein Report, keine Transaktion | Reports ueber SE38 (`RS38M-PROGRAMM`, F8) starten; vorher in `TSTC` pruefen, ob es eine Transaktion gibt | `saptasks/fiori_erste_app/NOTES.md` 5 |
 | 2026-10-15 | ZIP fuer das UI5-Repository mit `[IO.Compression.ZipFile]::CreateFromDirectory` (PowerShell 5.1) gebaut: Pfade mit `\`; ausserdem scheitert `ConvertFrom-Json` an gueltigem JSON mit leerem Schluessel `""` (manifest.json) | ZIP mit Python `zipfile` und `/` bauen; JSON mit Node `JSON.parse` pruefen | `saptasks/fiori_erste_app/NOTES.md` 4 |

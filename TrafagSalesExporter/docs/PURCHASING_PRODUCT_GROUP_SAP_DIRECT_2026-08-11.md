@@ -1,9 +1,18 @@
 # Einkaufs-Produktgruppen direkt aus SAP
 
-Stand: 2026-10-27 (**Nachtrag 2026-10-27: Anzeige nur der SAP-Text, z. B. „FP_DICHTEWÄCH“ statt „D2 - FP_DICHTEWÄCH“.**
+Stand: 2026-10-29 (**Nachtrag 2026-10-29: Gruppe BM „BG_MECHANIK“ fuer Disponent 026 in P76.** **Nachtrag 2026-10-27: Anzeige nur der SAP-Text, z. B. „FP_DICHTEWÄCH“ statt „D2 - FP_DICHTEWÄCH“.**
 **Nachtrag 2026-10-26: Produktgruppe aus dem eigenen Disponenten des Materials wie im Report
 ZM_OFFENE_KDAUF, genau eine Gruppe, keine Vererbung und keine 1/n-Verteilung mehr.** Die Nachtraege und Abschnitte
 darunter beschreiben die ueberholte Vererbung ueber die Verwendung und sind Historie.)
+
+## Nachtrag 2026-10-29: neue Gruppe BM „BG_MECHANIK“ fuer Disponent 026 (P76)
+
+Wunsch Armin 29.10.: neuer Disponent `026` in ZC23 mit dem Eintrag „BG_Mechanik“. In P76 gab es vorher weder `026` in
+`ZDISPO_GRP` (45 Zeilen) noch eine Mechanik-Gruppe in `ZDISPO_SPART` (22 Zeilen, naechste war `MP` = `BG_MECHKOMPCZ`
+fuer `018`). Entscheid Ingo: neue Gruppe `BM`. Claude hat die beiden SM30-Fenster in P76 ausgefuellt, ohne zu sichern;
+Ingo hat gesichert (ohne Transportabfrage). Lesend gegengeprueft: `ZDISPO_SPART` 23 Zeilen mit `BM` = `BG_MECHANIK`,
+`ZDISPO_GRP` 46 Zeilen mit `BM` / `026`. Das Einkaufs-Dashboard und ZM_OFFENE_KDAUF nehmen die Gruppe beim naechsten Lauf
+von selbst; in T76 fehlen beide Zeilen.
 
 ## Nachtrag 2026-10-27: Anzeige nur der Text aus ZDISPO_SPART
 
