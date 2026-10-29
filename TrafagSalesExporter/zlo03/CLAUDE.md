@@ -197,7 +197,9 @@ Kandidaten und naechste Schritte in `TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md`.
 
 ### G) Top-Down-Pruefung vom 2026-10-29 (fuer FIX 24, noch nicht umgesetzt)
 
-Nach FIX 23 gefragt (Ingo: „notieren, spaeter machen“). Belegt in T76, Quelltext Stand FIX 23:
+Nach FIX 23 gefragt (Ingo: „notieren, spaeter machen“). Belegt in T76, Quelltext Stand FIX 23. Geprueft wurde der
+Top-Down-Pfad mit Daten (41019); Bottom-Up nur im Code nachgelesen: Punkte 1, 2 und 4 gelten dort gleich (gemeinsamer
+Code bzw. Parameter), Punkt 3 ist dort schaerfer (siehe dort).
 
 1. **Stueckkosten auf 2 Nachkommastellen gerundet** (`ty_ktab-stueckkosten TYPE p DECIMALS 2`, in `fill_ktab` STPRS bzw.
    VERPR / PEINH). Alle Wert-Spalten (`wert_feste_zug` bis `wert_endbestand`) rechnen mit dem gerundeten Preis. Bei PEINH > 1
@@ -209,6 +211,9 @@ Nach FIX 23 gefragt (Ingo: „notieren, spaeter machen“). Belegt in T76, Quell
 3. **Textpositionen im Bedarf** (`process_main`, MTAB: `IF postyp <> 'T' OR p_txtpo = 'X'` vor `COLLECT`): mit gesetztem
    `p_txtpo` zaehlt die Menge einer Textposition zum Bedarf; steht eine Komponente als L- und T-Position im selben Geraet
    (Fall B63485), steigt der Bedarf allein durch das Kaestchen. Loesung: T-Positionen nie in MTAB summieren.
+   **Bottom-Up:** dort summiert die MTAB-Zuordnung ohne jede Pruefung der Positionsart, also auch ohne `p_txtpo`; eine
+   L- und eine T-Position derselben Komponente im selben Kopfmaterial ergeben die doppelte Menge je Geraet. Moeglicher
+   Zusammenhang mit Ann-Katrins Befund B63485 (Bottom-Up 3100 Stk, Top-Down 0). Mit Daten noch nicht geprueft.
 4. **Verdacht Mehrstufigkeit:** in 41019 steht D85020 auf Stufe 02 und 03 (je 1 ST), COLLECT ergibt 2 je Geraet. Ohne
    Elternfeld in `ZPOWERBI_VC_TXT` (Punkt A) nicht entscheidbar, ob doppelt oder richtig; ausserdem gilt eine Menge ab Stufe 2
    je uebergeordneter Baugruppe, nicht je Geraet (bei Mengen > 1 zu wenig Bedarf). Passt zu Punkt E (CS15 42 vs. ZLO03 21).
