@@ -84,11 +84,11 @@
         <div class="pm-rk-money pm-mt">
             <div>
                 <label class="pm-flabel">@T("Kosten bei Eintritt (CHF)", "Cost if it occurs (CHF)")</label>
-                <input type="number" min="0" step="1000" class="pm-input" disabled="@(!Editable)" @bind="_edit.CostImpactChf" @bind:event="oninput" />
+                <input type="number" min="0" step="1000" class="pm-input" disabled="@(!Editable)" placeholder="0" @bind="CostInput" @bind:event="oninput" />
             </div>
             <div>
                 <label class="pm-flabel">@T("Reserve (CHF)", "Contingency reserve (CHF)")</label>
-                <input type="number" min="0" step="1000" class="pm-input" disabled="@(!Editable)" @bind="_edit.ContingencyChf" @bind:event="oninput" />
+                <input type="number" min="0" step="1000" class="pm-input" disabled="@(!Editable)" placeholder="0" @bind="ContingencyInput" @bind:event="oninput" />
             </div>
         </div>
         <div class="pm-rk-ev">
@@ -236,6 +236,19 @@
     private int Percent => PmRiskLevels.ProbabilityPercent(_edit.Probability);
 
     private double ExpectedValue => PmRiskLevels.ExpectedValue(_edit.Probability, _edit.CostImpactChf);
+
+    // Leeres Feld = 0 CHF. Nullable, damit ein geleertes Feld nicht auf den alten Wert zurueckspringt.
+    private double? CostInput
+    {
+        get => _edit.CostImpactChf == 0 ? null : _edit.CostImpactChf;
+        set => _edit.CostImpactChf = Math.Max(value ?? 0, 0);
+    }
+
+    private double? ContingencyInput
+    {
+        get => _edit.ContingencyChf == 0 ? null : _edit.ContingencyChf;
+        set => _edit.ContingencyChf = Math.Max(value ?? 0, 0);
+    }
 
     private void SetTask(ChangeEventArgs e) =>
         _edit.TaskId = int.TryParse(e.Value?.ToString(), out var id) ? id : null;
