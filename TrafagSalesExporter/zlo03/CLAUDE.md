@@ -218,6 +218,17 @@ Code bzw. Parameter), Punkt 3 ist dort schaerfer (siehe dort).
    Elternfeld in `ZPOWERBI_VC_TXT` (Punkt A) nicht entscheidbar, ob doppelt oder richtig; ausserdem gilt eine Menge ab Stufe 2
    je uebergeordneter Baugruppe, nicht je Geraet (bei Mengen > 1 zu wenig Bedarf). Passt zu Punkt E (CS15 42 vs. ZLO03 21).
    Naechster Schritt: 41019 lesend gegen CS12 (mehrstufig) in T76 vergleichen, erst dann aendern.
+**Datenpruefung 2026-10-29 (T76, Stand FIX 23, Laeufe von Ingo gespeichert):**
+
+| Befund | Top-Down | Bottom-Up |
+| --- | --- | --- |
+| 1 Rundung | belegt: 58944, K50057 (0.02 je 10): Stueckkosten 0.00, Endbestand 9'833 ST, Wert Endbestand 0.00 statt rund 19.67 CHF. Auswertung VC_TXT (rund 1 Mio. Zeilen, unvollstaendig gelesen): 506 Komponenten mit PEINH > 1, davon 16 auf 0.00 gerundet (z. B. K15232 in 301, K50057 in 139 Kopfmaterialien), 142 mit >= 5 % Abweichung | gleicher Code; Kopfmaterialien haben fast immer PEINH 1, praktisch kaum betroffen |
+| 2 `p_days` | im Code belegt (Wert nie gelesen) | gleich |
+| 3 Textpositionen | belegt: 46123/B63485 ohne `p_txtpo` 1 ST, mit `p_txtpo` 2 ST | belegt: Bottom-Up B63485 zeigt 46123 = 2 ST, alle anderen 1 ST, ohne `p_txtpo` |
+| 4 Mehrstufigkeit | teilweise: 40738/K15030 auf Stufe 01 und 02 ist richtig (direkt und ueber U47123 laut STPO), Summe 2 stimmt. Ob Mengen ab Stufe 02 die Menge der Baugruppe enthalten, ist ohne Elternfeld nicht pruefbar | gleich |
+
+Hinweis zur Pruefung: viele Kopfmaterialien in VC_TXT haben in T76 eine Loeschvormerkung (z. B. 27620, 41454), ZLO03 meldet dann „Keine Daten gefunden“.
+
 5. Kommentar in FIX 22 („Werk p_werks“) ist falsch: `Z_ZLO03_TURBO2` kennt kein `p_werks`, das Werk ist die Konstante
    `gc_werks = '1100'` (FIX 17 gab es nur in `ZM_LZCODE20_OPT`). Beim naechsten Fix berichtigen.
 
