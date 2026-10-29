@@ -239,11 +239,13 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` | ZLO03 FIX 19: Stoff-Compliance-Spalten (RoHS seit 22.10.), Befund je Merkmal (P76 `Z_PACK_REGULATION`), Test T76 |
 | `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md` | ZLO03 FIX 20: Excel blockiert Text-.xls (ExtensionHardening), Download als .txt, Test T76; Abschnitt 6 FIX 21 (.xlsx) |
 | `zlo03/FIX22_DISPO_MATKL_2026-10-29.md` | ZLO03 FIX 22: Top-Down mit Disponent (MARC-DISPO) und Warengruppe (MARA-MATKL), Wunsch Armin, Test T76 |
+| `zlo03/FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` | ZLO03 FIX 23: Top-Down Mengen und Stueckkosten in der Stuecklisten-Einheit ueber MARM (Fall H05039 KAR/ST, Meldung Armin), Test T76 |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_2026-10-20.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19, Stand 20.10. (abgeloest) |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19 inkl. Spalte RoHS (abgeloest durch FIX 20) |
 | `zlo03/Z_ZLO03_TURBO2_FIX20_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12, FIX 19 inkl. RoHS und FIX 20 (T76 aktiv seit 22.10.) |
 | `zlo03/Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 21 (echtes .xlsx), T76 aktiv seit 22.10., Auftrag T76K912752 |
 | `zlo03/Z_ZLO03_TURBO2_FIX22_DISPO_MATKL_2026-10-29.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 22 (Top-Down Disponent und Warengruppe), T76 aktiv seit 29.10., Auftrag T76K912777 |
+| `zlo03/Z_ZLO03_TURBO2_FIX23_EINHEIT_2026-10-29.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 23 (Stuecklisten-Einheit), T76 aktiv seit 29.10., Auftrag T76K912781 |
 | `zlo03/Z_ZLO03_TURBO2_vor_FIX12_2026-10-16.abap`, `zlo03/Z_ZLO03_TURBO2_FIX12_2026-10-16.abap` | Quelltext `Z_ZLO03_TURBO2` vor und nach FIX 12 (T76/P76-Stand 2026-10-16) |
 | `zlo03/Z_KOI_VC_TXT_KOPIE.abap`, `zlo03/Z_KOI_VC_TXT_TESTID.abap` | lokale T76-Testreports: Testdaten `ZPOWERBI_VC_TXT` und Testzeile fuer FIX 12 |
 
