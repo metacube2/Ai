@@ -314,7 +314,7 @@ TYPES:
   tt_count_raw  TYPE STANDARD TABLE OF ty_count_raw WITH DEFAULT KEY.
 
 *&---------------------------------------------------------------------*
-*& FIX 23: Einheit der Stueckliste statt Basiseinheit (Top-Down)
+*& FIX 23: Einheit der Stueckliste statt Basiseinheit (Top-Down; Bottom-Up nur Komponentenspalte)
 *&---------------------------------------------------------------------*
 TYPES:
   " MARM: wie viele Basiseinheiten eine Alternativeinheit ist (UMREZ / UMREN)
@@ -724,10 +724,8 @@ FORM process_main.
   " ===================================================================
   PERFORM load_verbrauch_bulk USING lt_all_matnr.
 
-  " FIX 23: Einheit der Stueckliste je Komponente bestimmen (nur Top-Down)
-  IF p_topd = 'X'.
-    PERFORM load_bom_units USING lt_powerbi lt_all_matnr.
-  ENDIF.
+  " FIX 23: Einheit der Stueckliste je Komponente bestimmen (Top-Down und Bottom-Up)
+  PERFORM load_bom_units USING lt_powerbi lt_all_matnr.
 
   " ===================================================================
   " SCHRITT 7: Exklusivität aus ZMD04_CALC laden
@@ -764,12 +762,10 @@ FORM process_main.
     " FIX 23: Hat die Komponente eine Stuecklisten-Einheit mit MARM-Faktor (z. B. ST bei Basis KAR),
     " bleibt die Menge in dieser Einheit. Vorher rechnete UNIT_CONVERSION_SIMPLE ST zu KAR 1:1 um
     " (beide einheitenlos), die Menge stand also in ST neben einem Preis je KAR.
-    DATA: lv_bom_unit_fix23 TYPE sy-subrc.  " FIX 23
-    lv_bom_unit_fix23 = 4.
-    IF p_topd = 'X'.
-      READ TABLE gt_bom_unit WITH TABLE KEY kompnr = ls_powerbi-kompnr TRANSPORTING NO FIELDS.
-      lv_bom_unit_fix23 = sy-subrc.
-    ENDIF.
+    DATA: lv_bom_unit_fix23 TYPE sy-subrc,      " FIX 23
+          ls_bom_unit_fix23 TYPE ty_bom_unit.   " FIX 23
+    READ TABLE gt_bom_unit WITH TABLE KEY kompnr = ls_powerbi-kompnr TRANSPORTING NO FIELDS.
+    lv_bom_unit_fix23 = sy-subrc.
     IF lv_bom_unit_fix23 = 0.
       PERFORM bom_unit_menge USING ls_powerbi CHANGING lv_menge.
     ELSE.
@@ -881,6 +877,12 @@ FORM process_main.
         IF sy-subrc = 0.
           ls_vtab-meins = ls_stamm_v-meins.
           ls_vtab-mstae = ls_stamm_v-mstae.
+        ENDIF.
+        " FIX 23: Die Mengen der Spalte stehen in der Stuecklisten-Einheit, die Kopfzeile nennt sie auch
+        " (vorher stand hier die Basiseinheit, z. B. KAR ueber Mengen in ST).
+        READ TABLE gt_bom_unit INTO ls_bom_unit_fix23 WITH TABLE KEY kompnr = ls_powerbi-kompnr.
+        IF sy-subrc = 0.
+          ls_vtab-meins = ls_bom_unit_fix23-meinh.
         ENDIF.
         INSERT ls_vtab INTO TABLE gt_vtab.
       ENDIF.

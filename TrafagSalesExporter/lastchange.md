@@ -4,7 +4,7 @@ Stand: 2026-10-29
 
 ## ZLO03 FIX 23: Top-Down in Stücklisten-Einheit (Meldung Armin), 2026-10-29
 
-- H05039 in 41019: Basis KAR (1 KAR = 600 ST, Standardpreis je KAR), Stückliste in ST; `UNIT_CONVERSION_SIMPLE` setzte ST 1:1
+- H05039 in 41019: Basis KAR (1 KAR = 600 ST, Standardpreis je KAR), Stückliste in ST (Top-Down und Bottom-Up-Komponentenspalte); `UNIT_CONVERSION_SIMPLE` setzte ST 1:1
   in KAR um, Bedarfsmenge × Stückkosten war 600-mal zu hoch. Jetzt über MARM: Mengen und Stückkosten in der Einheit der
   Stückliste, Werte in CHF unverändert. T76 aktiv in `T76K912781`, rückgelesen identisch, Lauf 41019 geprüft (0.014133 CHF je ST).
   Freigabe und Import offen (Ingo). `zlo03/FIX23_EINHEIT_STUECKLISTE_2026-10-29.md`, Wochen_Todo 128.
