@@ -217,9 +217,11 @@ public sealed record PmSheet(
 public sealed record PmRiskView(
     int Id, int Number, string Key, string Title, string Description, string Category, int Probability, int Impact,
     int Score, string Level, string Status, string OwnerLogin, string OwnerName, string Mitigation, string Contingency,
-    int? TaskId, string TaskKey, string TaskTitle, DateTime? ReviewDate, bool ReviewOverdue, DateTime UpdatedAtUtc);
+    int? TaskId, string TaskKey, string TaskTitle, DateTime? ReviewDate, bool ReviewOverdue, DateTime UpdatedAtUtc,
+    double CostImpactChf = 0, double ExpectedValueChf = 0, double ContingencyChf = 0, int ProbabilityPercent = 0);
 
-public sealed record PmRiskSummary(int Active, int Critical, int High, int Medium, int Low, string MaxLevel)
+public sealed record PmRiskSummary(int Active, int Critical, int High, int Medium, int Low, string MaxLevel,
+    double ExpectedValueChf = 0, double ContingencyChf = 0)
 {
     public static readonly PmRiskSummary Empty = new(0, 0, 0, 0, 0, string.Empty);
 }
@@ -238,6 +240,8 @@ public sealed class PmRiskInput
     public string Contingency { get; set; } = string.Empty;
     public int? TaskId { get; set; }
     public DateTime? ReviewDate { get; set; }
+    public double CostImpactChf { get; set; }
+    public double ContingencyChf { get; set; }
 }
 
 public sealed record PmVorhabenResult(int ProjectsCreated, int ProjectsUpdated, int TasksCreated, int TasksUpdated, IReadOnlyList<string> Keys);

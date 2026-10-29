@@ -397,6 +397,12 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         AddColumnIfMissing(db, "PmTasks", "BaselineStart", "TEXT NULL");
         AddColumnIfMissing(db, "PmTasks", "BaselineEnd", "TEXT NULL");
         AddColumnIfMissing(db, "PmProjects", "ExternalRef", "TEXT NOT NULL DEFAULT ''");
+        // Sitzung 2026-10-29: Projektstrukturplan (Soll-Stunden, Soll-Franken, Kostenart) und Risiken in Franken.
+        AddColumnIfMissing(db, "PmTasks", "PlannedHours", "REAL NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmTasks", "PlannedCostChf", "REAL NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmTasks", "CostType", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "PmRisks", "CostImpactChf", "REAL NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmRisks", "ContingencyChf", "REAL NOT NULL DEFAULT 0");
     }
 
     private static void EnsureForumTables(AppDbContext db)
