@@ -2,6 +2,20 @@
 
 Stand: 2026-10-29
 
+## Trafag Projekte: Smartsheet-Ansicht, Risiken, PMO, Vorhaben, 2026-10-29
+
+- Auftrag Ingo: Smartsheet-Modus mit gleicher Funktion, Balken ziehen mit automatischer Anpassung, Risikobewertung mit
+  Kritikalität, alle Vorhaben der Wochen_Todo als Projekte; nach der Sitzung SAP PS zusätzlich Risiken in Franken mit
+  Burndown und PMO-Vorlage, Vorlage Produktentwicklung, Projektstrukturplan für SAP, Decision Log.
+- Neu: Reiter Raster & Gantt, Risiken, Projektstrukturplan, Entscheide; Vorlagen Produktentwicklung und IT-Projekt mit
+  fertigem Plan; Knopf „Vorhaben aus Wochen_Todo übernehmen“ (Projekte PMnn, privat). Terminierung in Arbeitstagen ohne
+  Zürcher Feiertage mit Ende-Anfang-Abhängigkeiten, Sammelzeilen und kritischem Pfad, ein Einstieg für alle Terminwege.
+- Zusammengeführt als `1e3300d` (Branches `feature/projekte-smartsheet`, `-risk`, `-pmo`), Suite `1311/1311`, deployed
+  2026-10-29 12:23 bitgleich ohne Alarm. Im Browser noch nicht gesehen (Chrome-Erweiterung, Edge headless ohne Blazor).
+- Doku: `docs/TRAFAG_PROJEKTE_2026-10-09.md` Abschnitt „Smartsheet-Ansicht, Risiken und PMO“, Handbuch Kapitel 8,
+  `docs/rag/DEPLOYMENT.md`. Offen: Phase 2 Guide, Phase 3 Auslastung/Automatisierungen/Formulare/Excel des Rasters,
+  Abstimmung mit Philip vor breiter Ankündigung.
+
 ## Doku: Sitzung SAP PS und Projektmanagement-Werkzeug zusammengefasst, 2026-10-29
 
 - Aufnahme mit Whisper `large-v3` transkribiert, Zusammenfassung als `docs/SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md`
