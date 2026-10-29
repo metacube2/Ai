@@ -1,10 +1,12 @@
 # SAP OData Spezifikation: VBRP-WAVWR in FinanzdataSchweizOeSet (CH/AT Kostenbasis)
 
-Stand: 2026-07-16
+Stand: 2026-10-29 (Deploy-, Server- und Kostenvorrang-Aussagen markiert; fachlich 2026-07-16)
 Zielgruppe: SAP-/ABAP-Team (Service-Owner von `ZPOWERBI_EINKAUF_SRV`)
 App-Seite: umgesetzt (2026-07-16, siehe Abschnitt 12) — `WavwrDc`/`StprsHc` live in
 `FinanzdataSchweizOeSet` verifiziert, App-Mapping auf `travt762` fertig, 243/243 Tests
 gruen. Rueckwirkender ABAP-Lauf bisher nur bis 2025, Produktiv-Deploy steht noch aus.
+*(ueberholt am 2026-10-29: am 2026-07-16 deployed, Abschnitt 13 und 14; die App liest CH/AT
+inzwischen von `travp762`, `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 9; `ISS-002` erledigt)*
 Fachlich ist die Wahl WAVWR (statt STPRS) geklaert, siehe Abschnitt 4 — keine offene
 Andreas-Frage mehr.
 
@@ -78,6 +80,14 @@ was fuer ein Audit-/Pruefbuch-Feature sogar ein Vorteil ist (reproduzierbare his
 Margen). Falls jemals ein separates Pricing-/Sortiments-Feature entstehen sollte, waere
 dort `STPRS` (weiterhin ueber `mbewSet`, mit dem bekannten Performance-Thema) die
 richtige Wahl — betrifft aber nicht die Gruppenmarge.
+
+*Nachgefuehrt am 2026-10-29: Im heutigen Code gilt das fuer die Gruppenmarge nur, solange kein
+Konzernkostensatz greift. CH/AT-Zeilen sind per TSC-Regel intern mit liefernder Gesellschaft
+TR AG (`GroupMarginSupplierClassifier`, `IntercompanySellingTsc`), und die erste Regel
+`GroupStandardCost` in `Services/GroupMarginCalculator.cs` nimmt dann den aktuellen
+`MBEW-STPRS` aus `GroupStandardCosts`. `WAVWR` wirkt dort nur als lokale Kostenbasis ohne
+Konzerntreffer. Dieselbe Folge benennt `docs/FINANCE_FACHPRUEFUNG_2026-09-07.md` B5; ein
+fachlicher Entscheid dazu ist nicht dokumentiert und im Issue-Log nicht gefuehrt.*
 
 ## 5. Offene rein technische Fragen (SAP-Entwickler zu bestaetigen)
 
@@ -160,6 +170,8 @@ Scan ersetzt zu werden.
 - Loest NICHT das separate Problem „CH/AT sieht 2026 nicht" (`Sites.SapServiceUrl` zeigt
   auf `travt762` statt `travp762`) — das ist eine reine App-Konfigurationsaenderung,
   keine SAP-Aenderung, sollte aber in derselben Abstimmung mit adressiert werden.
+  *(ueberholt am 2026-10-29: erledigt, die App liest `travp762`, `docs/FINANCE_STANDARDKOSTEN.md`
+  Abschnitt 9)*
 
 ## 11. Umsetzungsfortschritt 2026-07-16 (SAP-Seite)
 
@@ -322,12 +334,17 @@ Export-Pipeline nach `ZSCHWEIZ`):
   - `PersistGroupStandardCostsAsync` (TR-AG-Konzernkosten fuer andere TSC, z. B.
     TR IN/TR IT als interne Abnehmer) haengt weiterhin am kaputten `mbewSet`-Read —
     durch den heutigen Wechsel weder geloest noch verschlechtert, bleibt offen.
+    *(ueberholt am 2026-10-29: `GroupStandardCosts` fuer TR AG ist umgesetzt und war am
+    2026-08-05 mit 63'506 Zeilen produktiv befuellt, `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`
+    Abschnitt 6a; TR IT und TR IN seit 2026-08-25 aus B1-Belegkosten,
+    `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 3)*
   - Rueckwirkender Lauf nur bis 2025 gemacht, nicht fuer die komplette Historie.
   - `VGTYP`-Verifikation der Lieferbezug-Hypothese weiterhin nicht abschliessend
     verifiziert.
   - Produktiv-Deploy dieser App-Aenderung steht noch aus (bisher nur gegen
     `travt762` verifiziert, siehe `Sites.SapServiceUrl`-Altproblem in
-    `docs/FINANCE_STANDARDKOSTEN.md`).
+    `docs/FINANCE_STANDARDKOSTEN.md`). *(ueberholt am 2026-10-29: deployed am 2026-07-16,
+    Abschnitt 13 oben und Abschnitt 14; die App liest inzwischen `travp762`)*
 
 ## 14. C#-seitiger Fix fuer den NETWR_HC-Skalierungsfehler (2026-07-16, spaeter Abend)
 

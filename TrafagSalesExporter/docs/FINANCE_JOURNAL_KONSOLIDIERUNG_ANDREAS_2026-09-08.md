@@ -1,6 +1,6 @@
 # Journal fuer die Konsolidierung: Zielbild Andreas vom 2026-09-08
 
-Stand: 2026-09-08. Ergaenzt `docs/FINANCE_JOURNAL.md`, ersetzt es nicht. Dort steht das
+Stand: 2026-10-29 (Faelligkeitsdatum, Ausgleichsfelder und CH/AT-Journal nachgefuehrt; fachlich 2026-09-08, Nachtraege 2026-09-09 und 2026-09-29). Ergaenzt `docs/FINANCE_JOURNAL.md`, ersetzt es nicht. Dort steht das
 bestehende Feld-Mapping und die Technik; hier steht, was Andreas fuer die Konsolidierung
 zusaetzlich braucht und was dafuer noch fehlt.
 
@@ -8,6 +8,9 @@ Grundlage sind Andreas' Feldliste und die Layoutskizze `db1_fin.xlsx`, beides am
 2026-09-08 von Ingo weitergegeben.
 
 ## 1. Faelligkeitsdatum vorbereitet; Konzernkonto und Quellbelegung bleiben offen
+
+*Ueberholt am 2026-10-29 fuer den Titel: das Faelligkeitsdatum ist produktiv und geladen
+(Abschnitt 2); offen bleiben Konzernkonto und Quellbelegung.*
 
 Andreas' Liste deckt sich fast vollstaendig mit dem Mapping in `docs/FINANCE_JOURNAL.md`.
 Vorhanden sind Gesellschaft, Quellsystem, Journal Entry ID und Zeilen-ID, Buchungsdatum,
@@ -17,12 +20,17 @@ zweite Dimension, Buchungstext, Belegart, Quelldokumentnummer, das Manuell-Kennz
 das Stornokennzeichen und der Extraktionszeitpunkt.
 
 Das Faelligkeitsdatum ist inzwischen lokal implementiert und live in allen vier
-B1-Gesellschaften zu 100 % belegt. Deploy und erneutes Laden stehen noch aus.
+B1-Gesellschaften zu 100 % belegt. Deploy und erneutes Laden stehen noch aus. *(ueberholt am
+2026-10-29: deployed am 2026-09-08 14:02, danach alle vier B1-Gesellschaften neu geladen,
+Abschnitt 2 und 6 sowie `docs/FINANCE_JOURNAL.md` Live-Feldpruefung)*
 Kostenstelle und Dimension 2 existieren technisch, sind aber direkt in allen vier
 Quellen leer; Dimension 2-5 sind inaktiv. Fuer das Konzernkonto fehlt weiterhin Andreas'
 Mapping. Vollstaendiger Nachweis in `FINANCE_JOURNAL.md`, Abschnitt Live-Feldpruefung.
 
 ## 2. Faelligkeitsdatum: umgesetzt und produktiv, Nachladen offen
+
+*Ueberholt am 2026-10-29 fuer den Titel: das Nachladen der vier B1-Gesellschaften ist erledigt
+(Abschnitt 6); offen ist nur der Journal-Ladelauf CH/AT, `ISS-006`.*
 
 > **Deployed am 2026-09-08 um 14:02**, Commit `646a998`, `675/675` Release-Tests gruen,
 > Blockkopie `trafag_exporter.db.before-journal-duedate-20260908-135738.bak`, Server-DLL
@@ -30,6 +38,11 @@ Mapping. Vollstaendiger Nachweis in `FINANCE_JOURNAL.md`, Abschnitt Live-Feldpru
 > nach einem **erneuten Ladelauf** je Gesellschaft gefuellt, und der **SAP-Gateway-Leser
 > fuer CH/AT ist nicht mit angepasst** — dort gibt es weiterhin kein Faelligkeitsdatum.
 > Der Rest dieses Abschnitts beschreibt den Stand vor dem Deploy.
+>
+> *Ueberholt am 2026-10-29: Die vier B1-Gesellschaften sind nach dem Deploy neu geladen
+> (`docs/FINANCE_JOURNAL.md`, „Produktiv seit 2026-09-08"). Fuer CH/AT liest der Leser des
+> neuen `FinanzJournalSet` das Nettofaelligkeitsdatum `Faedt`; das Set ist seit dem 2026-10-01
+> in P76 (`T76K912530`), der Journal-Ladelauf CH/AT ist offen, `ISS-006`.*
 
 In der Skizze heisst die Spalte `due date`. `Models/FinancialJournalEntry.cs` fuehrt
 dafuer jetzt `DueDate` als nullable Datum; Schema-Maintenance, HANA-Reader und Export
@@ -39,6 +52,8 @@ sind durchverbunden. Ohne Nachladen bleiben alte Datenbankzeilen leer.
 ueber FR/IT/US/IN vollstaendig gefuellt. Das Datum der Buchungszeile weicht in 16'708
 Faellen vom Kopfdatum `OJDT.DueDate` ab; deshalb wird ausdruecklich das Zeilendatum gelesen.
 Es ist kein Zahlungs- oder Ausgleichsdatum. Diese zusaetzliche Fachfrage klaert Ingo noch.
+*(ueberholt am 2026-10-29: die Ausgleichsfelder sind seit dem Deploy vom 2026-09-10 08:53
+produktiv; welche Bedeutung als `date paid` fuehrend wird, entscheidet Andreas, `ISS-006.1`)*
 
 ## 3. Luecke 2: Konzernkonto-Mapping
 
@@ -108,6 +123,8 @@ Juli sowie IN 264'911 Zeilen bis September ist durch das Nachladen ueberholt.
 Von neun Gesellschaften liefern vier Hauptbuchdaten. CH/AT haengt an der noch
 ungeprueften Feldabbildung des vorhandenen `FinanzdataSchweizOeSet` gegen die
 Erwartung `FinanzJournalSet`, siehe `ISS-006`. DE/UK/ES haben noch keine Journalquelle.
+*(ueberholt am 2026-10-29: `FinanzJournalSet` ist am 2026-09-11 auf T76 gebaut und seit dem
+2026-10-01 in P76 (`T76K912530`); offen ist der Journal-Ladelauf CH/AT, `ISS-006`)*
 
 ## 7. Abgrenzung gegen `Sales_All`
 
@@ -142,6 +159,9 @@ Das Detailblatt folgt Andreas' Skizze: `entity`, `db/cr` mit 40 fuer Soll und 50
 Haben, `accnt`, `acct desrc`, `amount` mit Vorzeichen, `entry text`, `posting date`,
 `entry ID`. **`due date` und `Konzernkonto` sind als Spalten da, aber leer** — beides ist
 noch nicht vorhanden und soll sichtbar fehlen statt stillschweigend zu verschwinden.
+*(ueberholt am 2026-10-29 fuer `due date`: seit dem Deploy vom 2026-09-08 14:02 und dem Neuladen
+der vier B1-Gesellschaften gefuellt, `docs/FINANCE_JOURNAL.md`; `Konzernkonto` bleibt leer, bis
+Andreas das Mapping liefert)*
 
 Das Blatt `Konten` ist der praktische Teil der Nachlieferung: Andreas fuellt dort die
 Spalte `Konzernkonto` aus und hat damit den Kontenplan, ohne ihn von Hand aufzustellen.

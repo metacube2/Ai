@@ -1,6 +1,6 @@
 # Prozessablauf Finance Dashboard
 
-Stand: 2026-06-30
+Stand: 2026-10-29 (Kursregeln nach dem Budgetkurs-Entscheid vom 2026-10-07 markiert; fachlich 2026-06-30 mit Nachtraegen bis 2026-09-29)
 
 ## Kurzfazit
 
@@ -188,6 +188,12 @@ Der Vorteil dieser Trennung: Das Dashboard ist nicht davon abhaengig, ob jemand 
 
 Die Umrechnung in CHF passiert nicht automatisch beim Laenderexport und nicht automatisch beim Erzeugen von `Sales_All_*`.
 
+*Ueberholt am 2026-10-29 fuer `Sales_All`: Das Blatt `Finance Details` traegt die Spalten
+`Net Sales CHF` und seit 2026-10-06 auch Kosten und Marge in CHF, umgerechnet nach dem
+Kursprofil (Standard seit 2026-10-07 der Budgetkurs je Finance-Jahr),
+`Services/ExcelExportService.cs`, `docs/rag/FINANCE_FORMELN.md` Abschnitt 3b. Die
+Hauswaehrungswerte bleiben daneben unveraendert.*
+
 Standardmaessig bleiben die Werte in der jeweiligen Landes- bzw. Hauswaehrung.
 
 Beispiele:
@@ -209,6 +215,8 @@ Eine CHF-Umrechnung erfolgt nur in speziellen Anzeige- oder Transformationspfade
 - in Analyse-/Diagnose-Sichten mit Anzeige-Waehrung `CHF`,
 - wenn explizit eine `ConvertCurrency`-Transformation konfiguriert ist,
 - oder in separaten Budget-CHF-/Kontrollsichten, falls fachlich freigegeben.
+- *(nachgefuehrt am 2026-10-29: ausserdem in Pruefbuch, Gruppenmarge, Pivot, Nachweis-Excel und
+  den CHF-Spalten von `Sales_All` nach dem Kursprofil, siehe Vermerk oben)*
 
 Wichtig fuer Finance:
 
@@ -319,13 +327,16 @@ Wichtig fuer die fachliche Pruefung:
   Kursprofil-Schalter ist deployed, Standard und produktiv ist der Tageskurs. Er wirkt aber
   nicht einheitlich: mit dem Schalter „Group-Waehrung (CHF)" rechnet das Cockpit fix zum 31.12.,
   die Kostenwaehrung immer zum heutigen Kurs. Geltende Regeln: `docs/rag/FINANCE_FORMELN.md`
-  Abschnitt 3b.
+  Abschnitt 3b. *(ueberholt am 2026-10-29: seit dem Entscheid vom 2026-10-07 ist der Budgetkurs
+  je Finance-Jahr (`BudgetRate`) Standard, `cbc528b`; der Schalter „Group-Waehrung (CHF)" folgt
+  seit 2026-10-07 10:06 ebenfalls dem Profil, `ISS-018.1` erledigt. Die Kostenwaehrung wird im
+  Modus `Convert` weiter zum heutigen Kurs umgerechnet.)*
 - Die Berechnungen sind technisch getestet; die fachliche Abnahme der Kurse, Kostenbasis und Lieferantenlogik muss Finance/Andreas anhand von Stichproben bestaetigen.
 
 Bekannte, noch offene Punkte (kein Fehler in `Marge CHF`, aber zu beachten):
 
 - **Behoben** (Stand 2026-09-29): Die Margen rechnen heute mit der in die Verkaufswaehrung umgerechneten Kostenbasis, bei `Mask` wird maskiert. Offen ist stattdessen der Kursumweg `ISS-018` A2. Frueherer Text: `Marge Original` und `Marge %` rechnen Umsatz und Kostenbasis in ihren jeweiligen Originalwaehrungen. Wenn Verkaufswaehrung und Standardkostenwaehrung abweichen, mischen diese beiden Spalten zwei Waehrungen. `Marge CHF` ist korrekt, weil dort beide Seiten getrennt nach CHF umgerechnet werden.
-- **Behoben** (Stand 2026-09-29): Der Pivot enthaelt nur das gewaehlte Jahr und rechnet mit dem 31.12. des eigenen Zeilenjahres; offen ist, dass der Schalter das Kursprofil ignoriert (`ISS-018.1`). Frueherer Text: Der `Finance Pivot` rechnet bei aktivem Schalter `Group-Waehrung (CHF)` historische Jahre mit dem Kurs des gewaehlten Jahres statt mit dem jeweiligen Jahreskurs. Ohne Group-Schalter (Normalfall) ist der Pivot korrekt mit dem eigenen Jahreskurs je Zeile.
+- **Behoben** (Stand 2026-09-29): Der Pivot enthaelt nur das gewaehlte Jahr und rechnet mit dem 31.12. des eigenen Zeilenjahres; offen ist, dass der Schalter das Kursprofil ignoriert (`ISS-018.1`) *(ueberholt am 2026-10-29: erledigt und produktiv seit 2026-10-07 10:06, der Schalter folgt dem Kursprofil `BudgetRate`)*. Frueherer Text: Der `Finance Pivot` rechnet bei aktivem Schalter `Group-Waehrung (CHF)` historische Jahre mit dem Kurs des gewaehlten Jahres statt mit dem jeweiligen Jahreskurs. Ohne Group-Schalter (Normalfall) ist der Pivot korrekt mit dem eigenen Jahreskurs je Zeile.
 
 ## 7. Finance Pivot nach Andreas' Excel `sta.xlsx`
 
@@ -375,6 +386,9 @@ Berechnung:
 Net Sales in CHF
 = Net Sales Original * CHF-Jahreskurs
 ```
+
+*Ueberholt am 2026-10-29: Der Pivot rechnet nach dem Kursprofil, Standard seit 2026-10-07 der
+Budgetkurs je Finance-Jahr (`BudgetRate`); siehe `docs/rag/FINANCE_FORMELN.md` Abschnitt 3b.*
 
 Es werden nur Finance-Zeilen mit `Include = true` und vorhandenem CHF-Kurs in die Pivot-Summen aufgenommen.
 

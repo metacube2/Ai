@@ -100,7 +100,9 @@ Ausserhalb von Finance rechnet die zentrale Auswertung mit dem Datum der Belegze
 (`ExchangeRateDateField`, Standard `PostingDate` -> `InvoiceDate` -> `ExtractionDate`). Fehlt ein
 Kurs, wird nie geschaetzt: die Zeile bleibt je nach Ausgabe in Lokalwaehrung mit Hinweis, zaehlt 0
 oder bleibt leer. Code-Kommentare und der Cockpit-Hinweistext, die ein einheitliches Profil fuer
-alle Sichten behaupten, sind falsch und gehoeren zur Reparatur `ISS-018.1`.
+alle Sichten behaupten, sind falsch und gehoeren zur Reparatur `ISS-018.1`. *(Nachtrag 2026-10-29: `ISS-018.1` ist
+seit 07.10. erledigt, der Kommentar in `Services/ManagementCockpitService.cs` beim CHF-Kurs sagt trotzdem noch „Default
+bleibt der bisherige Tageskurs“; seit dem Budgetkurs-Standard ist der Kursumweg A2 nach Code-Lesung wirksam, `ISS-018`.)*
 
 Die folgende Formel beschreibt die zentrale Auswertung ausserhalb von Finance (Regel oben,
 letzter Absatz); fuer die Finance-Sichten gelten die drei Regeln:

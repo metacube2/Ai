@@ -1,6 +1,6 @@
 # Finance-Anzeige: vollstaendige Durchsicht 2026-08-06
 
-Stand: 2026-08-06, deployed 11:06
+Stand: 2026-10-29 (Abschnitte 1 und 5a als ueberholt markiert; fachlich 2026-08-06, deployed 11:06)
 
 Anlass: nach dem Zusammenfuehren der Gruppenmargen-Rechnung in eine Klasse
 (`GroupMarginCalculator`, Deploy 2026-08-06 09:41) die Frage, ob damit auch alle
@@ -42,12 +42,17 @@ Naheliegend waere gewesen, auf `GroupMarginStatuses.IsOpen` zu pruefen. Das waer
 - **Kostenwaehrung abweichend**: die Kostenbasis IST bekannt, nur in einer anderen Waehrung als
   der Umsatz. Die Marge in Originalwaehrung bleibt offen (man wuerde Waehrungen mischen), die
   **CHF-Marge bleibt korrekt rechenbar**, weil beide Seiten einzeln nach CHF umgerechnet werden.
+  *(ueberholt am 2026-10-29: seit dem Beschluss vom 2026-08-27 ist `Convert` der Code-Standard,
+  die Kostenbasis wird in die Verkaufswaehrung umgerechnet; `Mask` bleibt waehlbare Ausnahme,
+  `Models/ExportSettings.cs` Zeile 28)*
 
 Beide Faelle sind „offen", nur der erste ist „ohne Kostenbasis". Deshalb neu
 `GroupMarginStatuses.IsCostBasisKnown`. Der Unterschied ist durch einen bereits vorhandenen
 Test gepinnt (`AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Masks_Margin_By_Default`
 erwartet dort weiterhin `MarginChf = 43`) — er war der Pruefstein dafuer, dass der Fix nicht
-zu grob greift.
+zu grob greift. *(ueberholt am 2026-10-29: der Test heisst seit `686e1e1` vom 2026-08-27
+`AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Converts_By_Default`; das Mask-Verhalten pinnt
+`..._Stays_Open_When_Mask_Is_Chosen`, beide in `ManagementCockpitServiceTests.cs`)*
 
 ### Groessenordnung
 
@@ -109,6 +114,10 @@ deren Quellsysteme kein Lieferantenfeld liefern (siehe
 ## 5. Offen
 
 ### 5a. Statustext `"OK"` steht als Zeichenkette in der Excel-Formel (nicht behoben)
+
+*Ueberholt am 2026-10-29: behoben in `b699fa5`, produktiv seit 2026-09-29 15:58; die Formel
+interpoliert jetzt `GroupMarginStatuses.Ok` (`Services/ExcelExportService.cs` Zeile 791-792),
+`ISS-027` erledigt.*
 
 **Wo:** `Services/ExcelExportService.cs`, Blatt „Gruppenmarge Details", die beiden
 Formelzuweisungen fuer Marge und Marge-%:

@@ -1,6 +1,6 @@
 # Manual-Import und Delta-Stand
 
-Stand: 2026-06-12
+Stand: 2026-10-29 (DE-Kundenfelder nachgefuehrt; fachlich 2026-06-12)
 
 Diese Datei beschreibt, wie manuelle Excel-/CSV-Importe aktuell behandelt werden und wie neue Eintraege bzw. Delta-Dateien verarbeitet werden.
 
@@ -86,7 +86,7 @@ Finance-Logik:
 - `VatSum... = BruttoPreisEndSumme - NettoPreisEndSumme`.
 - `CreditNote` bzw. Gutschriften (`GS`/`G...`) werden negativ gerechnet.
 - Waehrung ist fachlich aktuell EUR.
-- `CustomerNumber = RechnungsAdressenID`; Kundenname und Kundenland sind im aktuellen CSV-Paar nicht enthalten.
+- `CustomerNumber = RechnungsAdressenID`; Kundenname und Kundenland sind im aktuellen CSV-Paar nicht enthalten. *(ueberholt am 2026-10-29: seit 2026-09-09 tragen die DE-Zeilen die fachliche Kundennummer mit Name, Land und Branche, aus `AdressNummer-Kunde` oder der Zuordnung `GermanCustomerInvoiceMapping`; offen sind Gutschriftzeilen und Doppelnummern, `ISS-016`, `Services/ManualExcelImportService.cs`)*
 - `Material = ArtikelNummer`. Das ist eine lokale Alphaplan-Artikelnummer, nicht automatisch eine TR-AG-/SAP-`MATNR`.
 
 Offen:

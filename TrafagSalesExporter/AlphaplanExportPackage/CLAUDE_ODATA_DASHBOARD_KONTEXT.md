@@ -2,6 +2,11 @@
 
 Diese Notiz beschreibt den realen Stand im Projekt `TrafagSalesExporter` / `BiDashboard`. Bitte nicht generisch daneben bauen, sondern in diese bestehende Architektur einpassen.
 
+*Ueberholt am 2026-10-29: Die Notiz beschreibt einen frueheren Stand (zuletzt geaendert am
+2026-06-15, `09afce2`). Heute normalisiert der Import-Join `Matnr` selbst, `ProductDivisionMapSet` ist inaktiv und
+`Übrige` ist ein eigener Status; die betroffenen Stellen sind unten markiert. Geltende
+Beschreibung: `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` und `docs/rag/PRODUCT_MAPPING.md`.*
+
 ## 1. OData-Anbindung
 
 DI-Registrierung in `Program.cs`:
@@ -113,6 +118,9 @@ Materialnummer:
 - Beim OData-Import-Join wird aktuell nur `Trim()` gemacht.
 - Fuehrende Nullen werden im Import-Join aktuell nicht entfernt.
 - In der Management-Analyse wird spaeter normalisiert.
+- *(ueberholt am 2026-10-29: `MappedSalesRecordComposer.NormalizeKeyValue` normalisiert
+  Materialschluessel im Import-Join ueber `MaterialKeyNormalizer`, also auch ohne fuehrende Nullen;
+  der Hinweis unten ist damit erledigt)*
 
 Normalisierung in `ManagementCockpitService.NormalizeMaterialKey(...)`:
 
@@ -131,7 +139,9 @@ Wichtig: Wenn ein neuer OData-Service `Matnr` 18-stellig mit fuehrenden Nullen l
 
 ## 3. Bestehende Produktsparten-Mapping-Logik
 
-Die alte Logik existiert noch und ist aktiv.
+Die alte Logik existiert noch und ist aktiv. *(ueberholt am 2026-10-29: Alias `M`
+`ProductDivisionMapSet` ist im Seed inaktiv (`IsActive = false`), der Join `Z.Prodh = M.Paph1`
+greift nicht mehr; aktiv ist nur `Z.Matnr = P.Matnr`)*
 
 Aktuelle SAP-Quellen fuer `ZSCHWEIZ` im Seed (`DatabaseSeedService`):
 
@@ -209,7 +219,9 @@ private static bool IsAssignedProductReference(FinanceAggregationRow row)
 
 Wichtig:
 
-- `Uebrige` / `Übrige` gibt es aktuell nicht als eigenen Status.
+- `Uebrige` / `Übrige` gibt es aktuell nicht als eigenen Status. *(ueberholt am 2026-10-29: `Übrige`
+  ist eigener Status fuer `ProductDivisionCode = 0008`, `ManagementCockpitService` Zeile 86,
+  `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` Abschnitt Spartenanalyse)*
 - Ein Material ohne Referenztreffer wird aktuell separat als `Nicht im TR-AG-Stamm` ausgewiesen.
 - Das soll nicht automatisch mit `Nicht zugeordnet` zusammengeworfen werden.
 
@@ -284,5 +296,5 @@ Nicht ungeprueft zusammenwerfen:
 
 - `Nicht zugeordnet`: Referenztreffer vorhanden, aber SAP konnte keine Sparte ableiten.
 - `Nicht im TR-AG-Stamm`: Material hat gar keinen Referenztreffer.
-- `Übrige`: soll vermutlich eigene gueltige Kategorie werden, ist aktuell aber noch kein separater Dashboard-Status.
+- `Übrige`: soll vermutlich eigene gueltige Kategorie werden, ist aktuell aber noch kein separater Dashboard-Status. *(ueberholt am 2026-10-29: inzwischen eigener Status, siehe Abschnitt 4)*
 

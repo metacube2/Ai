@@ -1,6 +1,6 @@
 # Finance-Dashboard: Indikatoren durchgesehen
 
-Stand: 2026-08-07, Nachtrag 2026-09-29 in Abschnitt 2h
+Stand: 2026-10-29 (Gutschriftenerkennung in Abschnitt 4 und 9 als erledigt markiert); fachlich 2026-08-07, Nachtrag 2026-09-29 in Abschnitt 2h
 
 Status: produktiv deployed und verifiziert am 2026-08-07 10:22 MESZ,
 Funktionscommits `0c8cff5` und `b2e7c4f`, `455/455` Tests. Nachweis in Abschnitt 6.
@@ -251,7 +251,9 @@ gepflegt werden muessen die Sollwerte fachlich (Andreas).
   Der eine Fall, in dem die Belegart zaehlen wuerde (Gutschriftbeleg mit
   positivem Betrag), wird verfehlt; im Bestand gibt es genau `1` solche Zeile
   (`TRUS|CRN`). Zusaetzlich matcht `"rec"` als blosser Teilstring global, obwohl
-  die spanische Belegart `REC` gemeint ist.
+  die spanische Belegart `REC` gemeint ist. *(ueberholt am 2026-10-29: behoben in `b699fa5`,
+  produktiv seit 2026-09-29 15:58; Belegarten `G2`, `S1`, `S2`, `CRN`, `CN` und `REC` werden
+  exakt erkannt, der Teilstring `rec` ist entfernt, `ISS-026` erledigt)*
 
 ## 5. Ausdruecklich NICHT gemessen
 
@@ -374,4 +376,6 @@ UTF-8-JSON, Skript rein ASCII, Datei explizit als UTF-8 eingelesen.
   aktuell gegen nichts geprueft.
 - **Belegarten `F5`/`F8`** fachlich entscheiden, siehe Abschnitt 4.
 - Die drei Fachfragen aus Abschnitt 4 und die fuenf ungemessenen Punkte aus
-  Abschnitt 5 bleiben unveraendert offen.
+  Abschnitt 5 bleiben unveraendert offen. *(ueberholt am 2026-10-29: die
+  Gutschriftenerkennung aus Abschnitt 4 ist erledigt, `ISS-026`; `F5`/`F8` bleibt offen als
+  `ISS-022`)*

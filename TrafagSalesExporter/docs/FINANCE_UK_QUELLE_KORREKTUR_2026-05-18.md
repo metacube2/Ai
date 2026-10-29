@@ -1,6 +1,6 @@
 # UK / England Quelle - Korrektur
 
-Stand: 2026-05-18
+Stand: 2026-10-29 (UK-Abnahme vom 2026-08-11 nachgefuehrt; fachlich 2026-05-18)
 
 ## Wichtige Korrektur
 
@@ -56,6 +56,10 @@ Aktueller Re-Export nach der Anpassung:
 | Ist | `3'533'710.09 GBP` |
 | Soll LC | `3'538'972.00 GBP` |
 | Differenz | `-5'261.91 GBP` |
+
+*Ueberholt am 2026-10-29: UK 2025 ist am 2026-08-11 mit `3'529'861.80 GBP` (99,7 % des Solls,
+`1'867` Zeilen) abgenommen, nachdem ein Backfill im Juli Stueckpreise statt Zeilenwerte geliefert
+hatte; `ISS-011`, `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`.*
 
 Die Zahl blieb unveraendert, weil die vorhandenen UK-Zeilen bereits negative Betragszeilen enthalten. Die neue Regel verhindert aber, dass kuenftige Sage-Credit-Notes mit positivem Betrag versehentlich als Umsatz addiert werden.
 

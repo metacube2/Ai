@@ -1,6 +1,6 @@
 # ABAP-Analysereport: Standardpreis + Journal (CH/AT)
 
-Stand: 2026-07-14
+Stand: 2026-10-29 (Ergebnisse und Entscheide markiert; fachlich 2026-07-14)
 Report: `ZFIN_ANALYSE_STPRS_JOURNAL.abap`
 Ziel: **travp762 (PRODUKTIV)** — ausdruecklich nicht travt762.
 
@@ -36,7 +36,15 @@ Mengen zuerst mit nur einem Buchungskreis testen.
 | 6 | Reicht `BSIS` fuer das Hauptbuch-Journal, oder brauchen wir `BSEG`? | `BSIS/BSID/BSIK` enthalten nur **offene** Posten; ausgeglichene liegen in `BSAS/BSAD/BSAK`. Die Zahlen zeigen, wie gross die Luecke waere. Davon haengt ab, ob die geplante OData-Spezifikation (`FinanzJournalSet`) ueberhaupt noch noetig ist |
 | 7 | Welche Belegarten (`BLART`) gelten als "manuelle Buchung"? | Das Dashboard nimmt aktuell `SA` an — diese Annahme muss Finance bestaetigen |
 
+*Ueberholt am 2026-10-29 fuer Teil 5: Die App liest CH/AT inzwischen von `travp762`
+(`docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 9). Fuer Teil 6: `FinanzJournalSet` ist gebaut und
+seit dem 2026-10-01 in P76 (`T76K912530`), `ISS-006`.*
+
 ## Was danach passiert
+
+*Ueberholt am 2026-10-29: Gewaehlt wurde der `WAVWR`-Weg mit Fallback `STPRS_HC`, beide als
+Felder in `FinanzdataSchweizOeSet`, produktiv seit 2026-07-16 (`ISS-002`,
+`docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md`).*
 
 - **Ist `WAVWR` gut gefuellt (Teil 4a):** wir lesen den Kostenwert direkt aus der Faktura.
   Kein neues SAP-Objekt noetig, nur ein zusaetzliches Feld im bestehenden EntitySet
@@ -48,6 +56,11 @@ Mengen zuerst mit nur einem Buchungskreis testen.
   und das muss mit Andreas geklaert werden, statt eine Scheingenauigkeit zu bauen.
 
 ## Offene fachliche Fragen an Andreas (unabhaengig vom Report)
+
+*Ueberholt am 2026-10-29 fuer Frage 1 und 2: Andreas hat am 2026-07-27 Konzern-Herstellkosten
+fuer TR AG, TR IT und TR IN festgelegt und am 2026-09-09 den Schnitt nach der ersten internen
+Lieferstufe entschieden, also die Kosten der liefernden Gesellschaft (`ISS-007.3`,
+`docs/FINANCE_STANDARDKOSTEN.md` Abschnitte 3 und 12). Frage 3 ist hier nicht nachgefuehrt.*
 
 1. Welche Kostenart ist gemeint: lokaler Einstandswert der Rechnungszeile oder
    Konzern-Herstellkosten?

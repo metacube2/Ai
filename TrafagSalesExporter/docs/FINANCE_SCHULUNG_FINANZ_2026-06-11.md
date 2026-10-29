@@ -1,6 +1,6 @@
 # Finance Schulung fuer Finance-Anwender
 
-Stand: 2026-06-17
+Stand: 2026-10-29 (Kurswirkung der Finance-CHF-Sichten nachgefuehrt; fachlich 2026-06-17)
 
 Zweck: Diese Schulungsunterlage beschreibt den aktuellen Finance-Prozess vom Standortexport bis zu Dashboard, zentraler Excel und Soll/Ist-Vergleich. Sie ist fuer Finance, Finance Keyuser und Wirtschaftspruefung gedacht.
 
@@ -135,7 +135,7 @@ Ordner mit Sales_ProcessedMergeInput_*.csv
 
 Das ist die nachvollziehbare Variante fuer Finance/Revision. Finance kann die CSV-Dateien oeffnen, summieren und gegen die zentrale Excel pruefen.
 
-Kontrollregel: Wenn der Audit-Modus aktiv ist, muessen fuer alle relevanten Standorte aktuelle `Sales_ProcessedMergeInput_*.csv` im Standort-Exportordner vorhanden sein.
+Kontrollregel: Wenn der Audit-Modus aktiv ist, muessen fuer alle relevanten Standorte aktuelle `Sales_ProcessedMergeInput_*.csv` im Standort-Exportordner vorhanden sein. *(ueberholt am 2026-10-29: fehlen sie, liest die App die neueste `Finance_Dashboard_Audit_All_*.csv` als Rueckfall, `Services/CentralSalesDataProvider.cs`)*
 
 ## Waehrungsumrechnung
 
@@ -176,6 +176,12 @@ Die App sucht Kurse so:
 | ERP-Feld `DocumentRate` | gespeicherte Quellinformation, nicht automatisch die App-Umrechnung |
 
 Die Standardfreigabe erfolgt zuerst in lokaler Hauswaehrung. Eine CHF- oder EUR-Sicht ist eine separate Reporting-/Analysefrage.
+
+*Nachgefuehrt am 2026-10-29: Die Tabelle oben ist der Stand vom 2026-06-17. Seither rechnen
+Gruppenmarge, Finance Pruefbuch, Finance Pivot, Nachweis-Excel und die CHF-Spalten in `Sales_All`
+nach dem Kursprofil; Standard ist seit dem Entscheid vom 2026-10-07 der Budgetkurs je
+Finance-Jahr (`BudgetRate`, `cbc528b`, `ISS-018.1`). Geltende Regeln:
+`docs/rag/FINANCE_FORMELN.md` Abschnitt 3b.*
 
 ## Datumsfeld fuer Kurse
 
@@ -449,7 +455,7 @@ Aktueller Pruefstand 2026-06-17: Die produktiv erzeugten `Finance_Dashboard_Nach
 
 | Symptom | Wahrscheinliche Ursache | Pruefung |
 | --- | --- | --- |
-| Audit-Modus aktiv, aber Dashboard leer/Fehler | keine `Sales_ProcessedMergeInput_*.csv` im Exportordner | Standortexport erneut starten, Pfad pruefen |
+| Audit-Modus aktiv, aber Dashboard leer/Fehler | keine `Sales_ProcessedMergeInput_*.csv` im Exportordner *(ueberholt am 2026-10-29: Fehler erst, wenn auch keine `Finance_Dashboard_Audit_All_*.csv` vorliegt)* | Standortexport erneut starten, Pfad pruefen |
 | CSV fehlt im SharePoint-Landesordner | Standortexport lief vor Audit-CSV-Upload-Stand oder SharePoint-Upload fehlgeschlagen | aktuellen Export erneut starten, Log pruefen |
 | zentrale Excel wirkt alt | nach Standortexport nicht neu erzeugt oder falsche zentrale Quelle aktiv | Export Dashboard und Settings pruefen |
 | Nachweis-Excel fehlt | zentrale Datei wurde vor dem Nachweis-Stand erzeugt oder lokaler zentraler Exportordner ist falsch | `Zentrale Datei neu erzeugen`, Pfad `Lokaler Pfad Zentrale Datei und Nachweis` pruefen |

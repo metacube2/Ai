@@ -1,6 +1,6 @@
 # TR IT Referenzkost je Artikel: Vorschlag von Andreas vom 2026-09-09
 
-Stand: 2026-09-29, Messergebnis in Abschnitt 4a, Paolas Antwort in Abschnitt 7a, ihre Mail vom
+Stand: 2026-10-29 (Abschnitt 2 auf die versendete Antwort aus 7b nachgefuehrt); fachlich 2026-09-29, Messergebnis in Abschnitt 4a, Paolas Antwort in Abschnitt 7a, ihre Mail vom
 2026-09-29 und Ingos am selben Tag versendete Antwort in Abschnitt 7b, ihre Rueckfrage zum Lagerumfang
 und die Aufteilung je Lager in Abschnitt 7c.
 Gehoert zu `ISS-007.1` (Bewertungsmethode) und `ISS-007.2` (Referenzkost aus dem Bestand).
@@ -46,7 +46,10 @@ priorisiert, erneute Betrachtung im naechsten Jahr.** Damit gilt fuer `ISS-007.1
   erledigt. Sie wird wieder gebraucht, sobald das Thema 2027 aufgerufen wird.
 - ~~Offen bleibt nur die Rueckmeldung an Paola.~~ **Am 2026-09-29 versendet** (Text in Abschnitt 7b). **Sie hat am 2026-09-10 geantwortet und will die
   Referenzkost selbst pruefen; das ist erledigt und sollte ihr abgenommen werden.** Gueltiger
-  Textvorschlag und ihr Wortlaut in Abschnitt 7a, nicht mehr in Abschnitt 7.
+  Textvorschlag und ihr Wortlaut in Abschnitt 7a, nicht mehr in Abschnitt 7. *(ueberholt am
+  2026-10-29: versendet wurde am 2026-09-29 der Text aus Abschnitt 7b, der 7a ersetzt; offen sind
+  laut `ISS-007.2` Paolas Rueckmeldung und danach der Fachentscheid Andreas. Ob der Entwurf aus
+  Abschnitt 7c zum Lagerumfang versendet wurde, ist nicht dokumentiert)*
 
 ## 3. Was von Andreas' Frage bereits beantwortet ist
 

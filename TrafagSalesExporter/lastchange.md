@@ -7,7 +7,10 @@ Stand: 2026-10-29
 - Auftrag Ingo („alle 163“): alle getrackten `*.md` ausser Archiv und Koordinations-Historie in sieben Aesten geprueft
   (Einstieg/RAG, Finance, Einkauf/Logistik, SAP, HR/Operations/Plattform, Projektstatus, Handbuch). Aufgeloest nur mit
   Beleg (Code, git log, Deploy-Protokoll, Issue-Log, spaeterer datierter Eintrag); datierte Aussagen sind als
-  *ueberholt am …* markiert, nicht umgeschrieben. Rund 110 Stellen in etwa 80 Dateien.
+  *ueberholt am …* markiert, nicht umgeschrieben. Rund 110 Stellen in etwa 80 Dateien (`4b1f20c`). Nachpruefung im
+  Folge-Commit: 21 Finance-Dateien, die der erste Durchgang nur per Suche gesehen hatte, vollstaendig gelesen (rund 60
+  weitere Stellen), dazu `.tmp_sap_probe/ddic_lzcode/README.md` und die Befunde 1, 2, 7, 8 der Konsistenzpruefung vom 29.09.
+  Neuer Befund: Kursumweg A2 (`ISS-018`) ist seit dem Budgetkurs-Standard vom 07.10. nach Code-Lesung wirksam, nicht latent.
 - Schwerpunkte: „nicht deployed“ nach dem Deploy (Einkauf, Netzwerk, Logistik, Journal-Ausgleichsfelder); `T76K912530`
   seit 01.10. und `T76K912728/36/38/40` seit 16.10. in P76; Produktgruppe ohne 1/n seit 26.10.; Kader 8,2 h
   (Mitarbeiterkreis 10) seit 22.10.; `docs/HR_KPI.md` 8.6 neu betitelt, doppelte 8.7 als 8.8; Koordinations-/Abschlussregel
@@ -18,7 +21,9 @@ Stand: 2026-10-29
   Wochen_Todo 9, 66, 93, 114 und Status_kurz (Kader, ZLO03, ZC12) nachgefuehrt, `.xlsx` neu erzeugt.
 - Nicht geaendert, nur gemeldet: `zlo03/` und `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` (reserviert), `CLAUDE.md`
   und `Tools/Qdrant/README.md` (fremde unkommittierte Aenderungen). Offene Entscheide fuer Ingo im Chat vom 29.10.
-- Qdrant: Index war seit dem abgebrochenen Lauf vom 27.10. nur zu 1'248 von rund 4'400 Abschnitten gefuellt; neu aufgebaut.
+- Qdrant: Index war seit dem abgebrochenen Lauf vom 27.10. nur zu 1'248 von rund 4'400 Abschnitten gefuellt. Neu aufgebaut nach dem Folge-Commit,
+  direkt ueber `uv run --python 3.12 Tools/Qdrant/index_docs.py` (Reindex-Docs.ps1 bricht mit Umleitung unter PowerShell 5.1
+  ab, Wochen_Todo 118): 165 Dateien, 4'467 Abschnitte, `points/count` = 4'467, Exitcode 0.
 
 ## Einkauf Spend-Aufriss: Produktgruppe nach Verwendung : Warengruppe, 2026-10-28
 

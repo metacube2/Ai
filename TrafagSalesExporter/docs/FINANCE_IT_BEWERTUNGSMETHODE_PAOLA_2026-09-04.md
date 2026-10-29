@@ -1,6 +1,6 @@
 # TR IT Bewertungsmethode: Antwort von Paola Castagna, 2026-09-04
 
-Stand: 2026-09-04, Nachtraege vom 2026-09-09, 2026-09-10 und 2026-09-29 in Abschnitt 7.
+Stand: 2026-10-29 (Abschnitt 3 als ueberholt markiert); 2026-09-04, Nachtraege vom 2026-09-09, 2026-09-10 und 2026-09-29 in Abschnitt 7.
 Gehoert zu `ISS-007.1`.
 
 **Achtung, der Kernbefund in Abschnitt 2 ist seit dem 2026-09-29 ueberholt.** Paolas
@@ -43,6 +43,10 @@ widerlegt.
 > stehen; der geltende Stand steht in Abschnitt 7.
 
 ## 3. Der einzige verbleibende Weg
+
+*Ueberholt am 2026-10-29: Seit Paolas Mail vom 2026-09-29 ist dies nicht mehr der einzige Weg;
+die Umstellung am bestehenden Artikel geht mit Bestand null und abgeschlossenen Belegen,
+siehe Abschnitt 7 und `ISS-007.1`.*
 
 Eine Angleichung an die Konzernvorgabe waere nur als vollstaendiges Neucodierungsprojekt
 moeglich, in fuenf Schritten:
@@ -101,7 +105,11 @@ priorisiert ist; er ist der erste Punkt, den man mit ANG klaert, falls das Thema
 wird. Zur Referenzkost schreibt sie, sie koenne das wegen der aktuellen Arbeitslast nicht sofort
 ansehen, wolle es aber so bald wie moeglich pruefen und sich melden.
 
-**Diese Pruefung ist nicht mehr noetig und sollte ihr abgenommen werden.** Wir haben die Frage
+**Diese Pruefung ist nicht mehr noetig und sollte ihr abgenommen werden.** *(nachgefuehrt am
+2026-10-29: die Antwort an Paola ist am 2026-09-29 versendet, `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`
+Abschnitt 7b; offen sind laut `ISS-007.2` ihre Rueckmeldung und danach der Fachentscheid Andreas;
+ob die Antwort auf ihre Rueckfrage zum Lagerumfang, dort Abschnitt 7c, versendet wurde, ist nicht
+dokumentiert)* Wir haben die Frage
 am 2026-09-09 zentral und rein lesend gegen `it01_p` gemessen: `OITM.StockValue` und
 `OITM.OnHand` sind gepflegt und stimmen auf den Cent mit dem kumulierten Bestandsjournal.
 Wortlaut ihrer Mail und der Antwortvorschlag stehen in `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`

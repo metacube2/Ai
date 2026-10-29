@@ -1,6 +1,6 @@
 # Finance Berechnungsformeln pro Land
 
-Stand: 2026-06-12
+Stand: 2026-10-29 (ueberholte Aussagen zu ES-Datum, DE-Kundennummer, IT-Kundenausschluss und UK-Stand markiert; fachlich 2026-06-12)
 
 Nachtrag 2026-06-12:
 
@@ -30,6 +30,10 @@ Die Jahresabgrenzung ist:
 ```text
 Jahr = Year(PostingDate ?? InvoiceDate ?? ExtractionDate)
 ```
+
+*Ueberholt am 2026-10-29: Das Jahr kommt heute aus `FinanceRuleEngine.ResolveFinanceDate`; fuer
+Spanien zaehlt seit 2026-08-26 das Rechnungsdatum (Regel `UseInvoiceDate`, `ISS-004.2`), siehe
+`docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`.*
 
 Fuer 2025 werden die Zeilen je Land gruppiert. Die Gruppierung laeuft ueber `ResolveReferenceKey(Land, Tsc)`.
 
@@ -189,7 +193,7 @@ PositionOnInvoice = ZeilenPosition
 Material = ArtikelNummer
 Name = ArtikelBezeichnung
 Quantity = BEAnzahl
-CustomerNumber = RechnungsAdressenID
+CustomerNumber = RechnungsAdressenID   [Ueberholt am 2026-10-29: seit 2026-09-09 fachliche Kundennummer, AdressNummer-Kunde oder Zuordnung GermanCustomerInvoiceMapping; ISS-016, Services/ManualExcelImportService.cs]
 PurchaseOrderNumber = BestellNummer oder IhrAuftrag
 SalesCurrency / DocumentCurrency / CompanyCurrency = EUR
 PostingDate / InvoiceDate = Datum oder BelegDatum
@@ -400,6 +404,9 @@ AND h."CardCode" NOT IN (
 )
 ```
 
+*Ueberholt am 2026-10-29: Der Kundenausschluss (`NOT IN`) ist seit `f77840a` (2026-09-29)
+entfernt; es gilt nur noch der Kontenfilter 47005%/NOT 4700504%, `ISS-021`.*
+
 Formel im Vergleich:
 
 ```text
@@ -489,6 +496,9 @@ Bekannter Stand:
 Ist ca. 3'533'710.09 GBP
 Differenz ca. -5'261.91 GBP
 ```
+
+*Ueberholt am 2026-10-29: UK 2025 ist am 2026-08-11 mit `3'529'861.80 GBP` (99,7 % des Solls,
+`1'867` Zeilen) abgenommen, `ISS-011`, `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`.*
 
 Offen:
 

@@ -1,6 +1,11 @@
 # Finance Fragenkatalog: Budget-CHF-Spalten
 
-Stand: 2026-06-15
+Stand: 2026-10-29 (Kursentscheid 2026-10-07 und DE-Jahresregel nachgefuehrt; fachlich 2026-06-15)
+
+*Nachgefuehrt am 2026-10-29: Seit dem Entscheid von Ingo vom 2026-10-07 rechnet Finance-CHF
+standardmaessig mit dem Budgetkurs je Finance-Jahr (Kursprofil `BudgetRate`, `cbc528b`,
+`ISS-008`, `ISS-018.1`). Offen bleiben laut Issue-Log weiterhin Freigabe der Kurse,
+Pflegeprozess und Fehlkursverhalten; die Fragen unten gelten insoweit weiter.*
 
 Zweck: Dieses Dokument ist als fachlicher Fragenkatalog fuer den Finanzchef gedacht. Ziel ist eine zusaetzliche Budget-CHF-Sicht im zentralen Excel/Dashboard, ohne die bestehenden Local-Currency-Originalwerte zu ersetzen.
 
@@ -29,7 +34,7 @@ Noch offen ist vor allem:
 | CHF-Umrechnung | CHF-Sicht nur separat mit Budgetkursen; keine SNB-/Tageskurse fuer den Standardabgleich. | `FINANCE_ENTSCHEIDE.md` |
 | Budget-CHF-Rolle | Budget-CHF ist Kontroll-/Reporting-Kandidat und ersetzt nicht den Standardabgleich in Hauswaehrung. | `FINANCE_KURS_WORKFLOW_2026-06-09.md`, `rag/FINANCE.md` |
 | Indien | Indien wird in INR ausgewertet; CHF-Budgetwert ist nicht der Hauptvergleich. | `FINANCE_ENTSCHEIDE.md`, `FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` |
-| Jahresabgrenzung | FinanceDate basiert auf PostingDate, sonst InvoiceDate, sonst ExtractionDate; DE kann per Finance-Regel auf 2025 gezwungen werden. | `FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |
+| Jahresabgrenzung | FinanceDate basiert auf PostingDate, sonst InvoiceDate, sonst ExtractionDate; DE kann per Finance-Regel auf 2025 gezwungen werden. *(ueberholt am 2026-10-29: die DE-ForceYear-Regel ist seit `b877cf2` vom 2026-06-29 deaktiviert, DE folgt dem Rechnungsdatum; Spanien zaehlt seit 2026-08-26 nach Rechnungsdatum, `ISS-004.2`)* | `FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |
 | Zentrales Excel | `Finance Summary` und `Finance Details` wenden keine UI-Zielwaehrung an; sie bleiben nach vorhandener Finance-Waehrung gruppiert. | `FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |
 | ERP-Belegkurs | `DocumentRate` ist Quellinformation aus ERP/SAP/B1, aber nicht automatisch der Kurs fuer Dashboard-/Budget-CHF. | `FINANCE_KURS_WORKFLOW_2026-06-09.md` |
 
@@ -203,6 +208,10 @@ Dashboard: Finance Summary und Laenderansicht
 ### 7. DE / Alphaplan 2026
 
 Aktueller Stand: DE/Alphaplan wird per Finance-Regel noch auf Finance-Jahr 2025 gezwungen. Damit wuerde auch die Budget-CHF-Spalte fuer diese DE-Zeilen Budget 2025 verwenden.
+
+*Ueberholt am 2026-10-29: Die DE-ForceYear-Regel ist seit `b877cf2` (2026-06-29) deaktiviert, das
+Finance-Jahr folgt dem Rechnungsdatum (`Services/DatabaseSeedService.cs`); die Frage unten ist
+damit beantwortet.*
 
 Offene Finance-Frage:
 

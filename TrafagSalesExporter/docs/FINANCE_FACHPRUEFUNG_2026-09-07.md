@@ -1,8 +1,23 @@
 # Finance-Dashboard: Fachprüfung und Umsetzungsvorlage
 
-Stand: 2026-09-07. Auftrag: Dokumentation und Berechnung auf innere Stimmigkeit und
+Stand: 2026-10-29 (Status der Befunde unten markiert; Analysestand 2026-09-07). Auftrag: Dokumentation und Berechnung auf innere Stimmigkeit und
 betriebswirtschaftliche Fehler prüfen; Ergebnis so beschreiben, dass ein einfacheres
 Modell die abgegrenzten Reparaturen umsetzen kann.
+
+*Ueberholt am 2026-10-29 fuer den Status der Befunde: Die Pruefung vom 2026-09-29
+(`docs/FINANCE_REVIEW_2026-09-29.md`, Issue-Log `ISS-018` bis `ISS-018.7`) hat sie neu
+nummeriert. A1 (CHF-Label) ist dort A3 und seit 2026-09-29 10:22 behoben (`91fd9dc`,
+`ISS-018.2`). A2 (Kursumweg) und A3 (DB-Summe, dort A6) sind unter `ISS-018` gesammelt;
+A3 ist latent, solange kein Fix/Variabel-Split geliefert wird. A2 galt am 2026-09-29 als latent,
+weil produktiv der Tageskurs lief; seit dem Standard `BudgetRate` vom 2026-10-07 ist seine
+Voraussetzung erfuellt, denn die Kostenumrechnung in die Verkaufswaehrung nimmt im Code weiter
+den heutigen Kurs (`GroupMarginCostCurrencyConverter.ResolveRateDate`), die CHF-Umrechnung den
+Budgetkurs. Gemessen ist die Wirkung nicht. B1 ist `ISS-018.7`, B2 ist `ISS-018.5` und
+`ISS-018.6`, alle offen als Fachentscheid; B3 und B6 (Extraktionsdatum, Marktsegmente) stehen
+unter `ISS-018`. B4 (Konsolidierung, Innenumsatz) gehoert zu `ISS-009` und `ISS-010`, offen bei
+Andreas. B5 (heutige Kosten statt historischer Ist-Kosten) ist im Issue-Log nicht gefuehrt. Seit dem Entscheid vom
+2026-10-07 ist der Budgetkurs je Finance-Jahr das Standard-CHF-Kursprofil (`cbc528b`). Der
+Bericht bleibt als Analysestand vom 2026-09-07 stehen.*
 
 ## 1. Ergebnis und Grenzen
 

@@ -1,6 +1,6 @@
 # Finance Datenfluss fuer Andreas
 
-Stand: 2026-06-12
+Stand: 2026-10-29 (ueberholte Aussagen zu IT-Kundenausschluss, Spartenreferenz und Finance-Datum markiert; fachlich 2026-06-12)
 
 Zweck: Diese Notiz beschreibt den tatsaechlichen technischen Datenfluss im Finance Cockpit: wo Daten geholt werden, wann Felder veraendert werden, wann Wechselkurse wirken, wie die zentrale Excel entsteht und welche Quelle die Sparteninformationen liefert.
 
@@ -69,7 +69,7 @@ Einstellungen > Export Einstellungen > Audit-CSV / nachvollziehbarer Datenfluss
 | `Zentrale Auswertung aus Audit-CSV` | Finance Summary, Management Analyse, Soll/Ist und zentrale Excel lesen die neuesten Audit-CSV je TSC statt `CentralSalesRecords`. |
 | `Lokaler Standardpfad Standort-Dateien` | Ordner fuer Standort-Excel und Audit-CSV. |
 
-Wenn `Zentrale Auswertung aus Audit-CSV` aktiv ist, sucht die App im Standort-Exportordner je TSC die neueste passende CSV. Wenn keine `Sales_ProcessedMergeInput_*.csv` vorhanden ist, ist der Audit-Modus nicht auswertbar.
+Wenn `Zentrale Auswertung aus Audit-CSV` aktiv ist, sucht die App im Standort-Exportordner je TSC die neueste passende CSV. Wenn keine `Sales_ProcessedMergeInput_*.csv` vorhanden ist, ist der Audit-Modus nicht auswertbar. *(ueberholt am 2026-10-29: ohne Standort-CSV faellt die App auf die neueste `Finance_Dashboard_Audit_All_*.csv` zurueck; erst wenn beide fehlen, ist der Modus nicht auswertbar, `Services/CentralSalesDataProvider.cs`, `docs/rag/FINANCE.md` Abschnitt Audit-CSV)*
 
 ## Datenquellen pro Quelltyp
 
@@ -116,7 +116,7 @@ Italien hat zusaetzlich einen HANA-Filter:
 
 - `AcctCode LIKE '47005%'`
 - `AcctCode NOT LIKE '4700504%'`
-- bestimmte `CardCode`-Ausschluesse.
+- bestimmte `CardCode`-Ausschluesse. *(ueberholt am 2026-10-29: der Kundenausschluss ist seit `f77840a` vom 2026-09-29 entfernt, es gilt nur der Kontenfilter, `ISS-021`)*
 
 Diese HANA-Filter greifen bereits beim Datenholen, also vor Transformation, Excel und `CentralSalesRecords`.
 
@@ -128,7 +128,7 @@ Betroffen:
 | --- | --- | --- |
 | CH / AT | `ZSCHWEIZ` | SAP OData `ZPOWERBI_EINKAUF_SRV` |
 
-Warnstand 2026-06-15: Diese aktuell konfigurierte alte Service-URL liefert fuer `ProductDivisionRefSet` auf `travp762` 42'501 Zeilen, aber alle mit `Wwpsp=UNASS`, `IsAssigned=false`, `0008=0`. Fuer den neuen vollstaendigen Referenzservice muss die Dashboard-Konfiguration auf die korrekte neue SAP-Service-URL zeigen. Der Import bricht bei einem solchen komplett unzugeordneten Referenzlauf ab, damit bestehende Dashboard-Daten nicht ueberschrieben werden.
+Warnstand 2026-06-15: Diese aktuell konfigurierte alte Service-URL liefert fuer `ProductDivisionRefSet` auf `travp762` 42'501 Zeilen, aber alle mit `Wwpsp=UNASS`, `IsAssigned=false`, `0008=0`. Fuer den neuen vollstaendigen Referenzservice muss die Dashboard-Konfiguration auf die korrekte neue SAP-Service-URL zeigen. Der Import bricht bei einem solchen komplett unzugeordneten Referenzlauf ab, damit bestehende Dashboard-Daten nicht ueberschrieben werden. *(ueberholt am 2026-10-29: nach dem SAP-Fix vom 2026-06-15 liefert `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` `48'897` Zeilen, davon `48'895` zugeordnet, siehe `docs/rag/PRODUCT_MAPPING.md`)*
 
 Aktive OData-Quellen:
 
@@ -324,7 +324,7 @@ sonst ExtractionDate
 
 Ausnahme:
 
-- DE kann per Finance-Regel auf Jahr 2025 gezwungen werden; der neue Alphaplan-Import liest trotzdem Full + `delta` und filtert danach ueber die Export-/Finance-Datumslogik.
+- DE kann per Finance-Regel auf Jahr 2025 gezwungen werden; der neue Alphaplan-Import liest trotzdem Full + `delta` und filtert danach ueber die Export-/Finance-Datumslogik. *(ueberholt am 2026-10-29: die DE-ForceYear-Regel ist seit `b877cf2` vom 2026-06-29 deaktiviert, DE folgt dem Rechnungsdatum. Fuer Spanien zaehlt seit 2026-08-26 das Rechnungsdatum, Regel `UseInvoiceDate`, `ISS-004.2`)*
 
 Include/Exclude:
 

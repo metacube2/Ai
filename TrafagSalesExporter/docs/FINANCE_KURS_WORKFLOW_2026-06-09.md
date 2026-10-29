@@ -1,6 +1,6 @@
 # Finance Kurs-Workflow
 
-Stand: 2026-06-12
+Stand: 2026-10-29 (Kursprofil der Finance-CHF-Sichten im Kurzfazit nachgefuehrt; fachlich 2026-06-12)
 
 Zweck: Diese Doku beschreibt isoliert den Weg eines Umrechnungskurses vom einzelnen Land bis zur Analyse eines zentralen Dashboard-Wertes. Sie ersetzt nicht die allgemeine Finance-Datenflussdoku, sondern schneidet nur das Thema Kurs/Waehrung heraus.
 Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
@@ -21,6 +21,13 @@ Aktuelle Kurs-/Waehrungsgrafik: `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg`
 - Die fuehrende `Finance Summary` und das zentrale Excel nutzen Hauswaehrung je Land. Die App-Kurstabelle wird dort nicht still angewendet.
 - Eine echte App-Umrechnung passiert nur in Analyse-/Anzeige-Sichten mit Zielwaehrung, in einer expliziten `ConvertCurrency`-Transformation oder im separaten Budget-CHF-Kandidaten.
 - Wenn in einer Zielwaehrung kein Kurs gefunden wird, fliesst diese Zeile mit `0` in die Anzeige-Summe ein und wird als fehlender Kurs gezaehlt.
+
+*Ueberholt am 2026-10-29 fuer die Finance-CHF-Sichten: Pruefbuch, Gruppenmarge, Finance-Pivot,
+Nachweis-Excel und die CHF-Spalten in `Sales_All` rechnen nach dem Kursprofil
+`GroupMarginChfRateMode`. Standard ist seit dem Entscheid vom 2026-10-07 der Budgetkurs je
+Finance-Jahr (`BudgetRate`, `cbc528b`), auch der Schalter „Group-Waehrung (CHF)" folgt ihm
+(`ISS-018.1`). Fehlt einer Waehrung das Budget, bleibt CHF dort leer. Geltende Regeln:
+`docs/rag/FINANCE_FORMELN.md` Abschnitt 3b. Der Standard-Ist bleibt in Hauswaehrung.*
 
 ## Begriffe
 

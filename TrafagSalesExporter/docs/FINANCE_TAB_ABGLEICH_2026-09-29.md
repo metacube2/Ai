@@ -1,6 +1,6 @@
 # Management Analyse: Tabs gegen Sales_All, 2026-09-29
 
-Stand: 2026-09-29. Auftrag von Ingo: „mache abgleich". Nur lesend, kein App-Code geaendert.
+Stand: 2026-10-29 (ISS-018.1 und Indien-Ursache als erledigt markiert); fachlich 2026-09-29, Nachweis 2026-09-30. Auftrag von Ingo: „mache abgleich". Nur lesend, kein App-Code geaendert.
 
 ## 1. Ergebnis
 
@@ -50,6 +50,8 @@ Bekannt und bestaetigt, nicht neu:
 **Neu beziffert, zu ISS-018.1:** Der CHF-Schalter aendert fuer 2025 Gruppenmarge und Pivot von
 107'325'998.49 CHF (Kursprofil) auf 109'662'589.33 CHF (Jahresendkurs), also um 2,34 Mio. CHF.
 Fuer 2026 sind beide Werte gleich. Der Pivot ist damit genauso betroffen wie die Gruppenmarge.
+*(ueberholt am 2026-10-29: `ISS-018.1` ist erledigt und produktiv seit 2026-10-07 10:06; der
+Schalter folgt seither dem Kursprofil, Standard ist der Budgetkurs je Finance-Jahr, `cbc528b`)*
 
 ## 3. Befund Italien: Doppelzeilen aus der Lieferantenadresse (ISS-021)
 
@@ -101,7 +103,7 @@ Andere Standorte, Datenstand 29.09.:
 | --- | --- | --- | --- |
 | TRIT | 4'980 / 3'573 | 3'789'405.26 / 3'014'800.15 EUR | Lieferantenadresse |
 | TRFR | 10 / 10 | 20'256.00 / 8'796.80 EUR | Lieferantenadresse |
-| TRIN | 17 / 13 | 3'521'534.94 / 4'099'475.00 INR | anders, Lieferantenland gleich; nicht untersucht |
+| TRIN | 17 / 13 | 3'521'534.94 / 4'099'475.00 INR | anders, Lieferantenland gleich; nicht untersucht *(ueberholt am 2026-10-29: gleiche Ursache wie `ISS-021`, behoben, `ISS-030`)* |
 | uebrige | 0 | 0 | |
 
 **Folge fuer den Soll/Ist-Vergleich:** Der Rhino-Sollwert fuer Italien 2025 passte bisher nur,
@@ -129,7 +131,9 @@ Oberflaeche und `Sales_All`. Andreas vor dem Deploy informieren.
 - Nicht nachgerechnet: Daten-Heartbeat und Datenstatus (Zaehlungen, keine Betraege), Rohdaten
   Diagnose (sagt selbst, dass sie nicht mit Finance abstimmbar ist), Rechenwege innerhalb der
   Gruppenmarge (ISS-018).
-- Die Ursache der indischen Mehrfachpositionen ist nicht untersucht.
+- Die Ursache der indischen Mehrfachpositionen ist nicht untersucht. *(ueberholt am 2026-10-29:
+  gleiche Ursache wie `ISS-021`, in HANA `TRAFAG_LIVE` bestaetigt und mit der Korrektur von 15:02
+  behoben, TRIN 30 -> 0 in Abschnitt 6, `ISS-030` erledigt)*
 
 ## 5. Nachmessung Konto 47005 gegen Rechnungspositionen, 2026-09-29 nachmittags
 

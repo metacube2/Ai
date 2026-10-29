@@ -1,6 +1,6 @@
 # DDIC-Feldlisten fuer ZSTR_LZCODE_USAGE / ZSTR_LZCODE_PARENT
 
-Stand: 2026-07-21 (Feldliste 2026-07-21 am Live-System verifiziert)
+Stand: 2026-10-29 (Anlage in SE11 und Feldnamen-Abweichung nachgefuehrt); 2026-07-21 (Feldliste 2026-07-21 am Live-System verifiziert)
 
 **Status: Kopiervorlage fuer die MANUELLE SE11-Anlage.** Der urspruenglich geplante
 Tool-Weg (SapProbe `rfc-call DDIF_TABL_PUT --table ...`) ist NICHT gangbar: `DDIF_TABL_PUT`/
@@ -8,6 +8,13 @@ Tool-Weg (SapProbe `rfc-call DDIF_TABL_PUT --table ...`) ist NICHT gangbar: `DDI
 'remote' aufrufbar"). Diese Dateien dienen daher als reine Referenz-/Abtippvorlage fuer SE11,
 nicht als `--table`-Eingabe. Details: `docs/abap/README_LZCODE_WEBSERVICE.md`, Abschnitt
 „Live-Verifikation 2026-07-21".
+
+*Ueberholt am 2026-10-29: Beide Strukturen sind am 2026-07-21 manuell in SE11 angelegt und
+feldweise verifiziert (`docs/abap/README_LZCODE_WEBSERVICE.md`, Abschnitt „SE11 - Benoetigte
+DDIC-Strukturen"). `DDIF_STRU_PUT` gibt es nicht, der richtige Baustein `DDIF_TABL_PUT` ist auf
+T76 nicht RFC-freigegeben; die Abschnitte unten zum `rfc-call`-Weg sind damit hinfaellig.
+Abweichung zur Vorlage: das Waehrungsfeld heisst in SE11 `WAERS`, nicht `WAERUNG` wie in
+`usage_fields.csv`.*
 
 `usage_fields.csv` und `parent_fields.csv` enthalten die Feldliste aus
 `docs/abap/README_LZCODE_WEBSERVICE.md` (Abschnitt "SE11 - Benoetigte DDIC-Strukturen") in einer

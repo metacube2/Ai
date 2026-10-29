@@ -1,9 +1,13 @@
 # Trafag India: Sales Type statt Preferred Vendor
 
-Stand: 2026-08-05
+Stand: 2026-10-29 (ueberholte Status- und Pflegeaussagen markiert; fachlich 2026-08-05 mit Nachtraegen 2026-08-06 und 2026-08-27)
 
 Status: **Feld ermittelt und auf Produktivdaten ausgewertet.** Offen ist nur noch die
-Umsetzung im Export (Abschnitt 7) und die Antwort an Indien (Abschnitt 8).
+Umsetzung im Export (Abschnitt 7) und die Antwort an Indien (Abschnitt 8). *(ueberholt am
+2026-10-29: die Umsetzung ist am 2026-08-05 15:48 deployed und seit dem TRIN-Export vom
+2026-08-06 wirksam, Abschnitt 7 und 7b; der Widerspruch Sales Type gegen Lieferant ist am
+2026-08-27 entschieden, Abschnitt 3b-Nachtrag. Offen bleiben die Antwort an Indien, Abschnitt 8,
+und der Nachtrag in `docs/FINANCE_ENTSCHEIDE.md`)*
 
 Grundlage: Call mit RanVijay Kumar (Trafag India) vom 2026-08-05, Transkript
 `C:\Users\koi\OneDrive - Trafag AG\Desktop\kumar\Data\audio.wav` (Whisper large-v3), plus zwei
@@ -103,7 +107,7 @@ Exportumfang) — 1'449 Artikel, 7'018 Zeilen. Lauf 2026-08-05 11:20.
 | `--` | nicht gepflegt | 65 | 112 | Sales Type fehlt |
 | `LRD` | nicht gepflegt | 30 | 256 | **Pflegefall** |
 | `FFM` | gepflegt | 10 | 78 | Widerspruch, einzeln klaeren |
-| `CM` | nicht gepflegt | 2 | 23 | ~~Pflegefall~~ **ueberholt:** kein Pflegefall, `CM` ist Eigenfertigung im Auftrag (Abschnitt 3a) |
+| `CM` | nicht gepflegt | 2 | 23 | ~~Pflegefall~~ **ueberholt:** kein Pflegefall, `CM` ist Eigenfertigung im Auftrag (Abschnitt 2a) |
 | leer (NULL) | nicht gepflegt | 1 | 1 | Sales Type fehlt |
 
 Zwei unabhaengige Konsistenzproben, beide bestanden:
@@ -199,7 +203,7 @@ Alle drei Artikelklassen zusammen ergeben fuer TRIN:
 | --- | ---: | --- |
 | `FFM` (Eigenfertigung) | 5'830 | ja, ohne jede Stammdatenpflege in Indien |
 | `LRD` mit Lieferant | 454 | ja, schon heute |
-| Rest (`LRD` ohne Vendor, `--`, NULL; `CM` ist laut Abschnitt 3a kein Pflegefall) | 734 | erst nach Pflege in Indien |
+| Rest (`LRD` ohne Vendor, `--`, NULL; `CM` ist laut Abschnitt 2a kein Pflegefall) | 734 | erst nach Pflege in Indien |
 
 **Von den 6'236 heute maskierten TRIN-Zeilen werden rund 5'830 (93 %) allein durch das Lesen
 dieses Feldes klassifizierbar** — ohne dass Indien einen einzigen Artikel anfassen muss. Die
@@ -286,6 +290,8 @@ Schutzmechanismen:
   ersetzen. Lesen aus Dateien ist die kleinere Moeglichkeit, nicht die groessere.
 
 Fernbedienung: `.tmp_tools/ServerAnalysis/Run-ServerAnalysis.ps1 -Action Run | Fetch | Clean`.
+*(ueberholt am 2026-10-29: das Skript liegt versioniert unter `docs/analyse/Run-ServerAnalysis.ps1`,
+siehe Abschnitt 9; unter `.tmp_tools/ServerAnalysis/` gibt es es nicht mehr)*
 
 Geprueft am 2026-08-05: die Ergebnisdateien sind **nicht** ueber das Web erreichbar
 (`GET /BiDashboard/_analysis/results/…` -> HTTP `404`). Das ist wichtig, weil sie
@@ -408,7 +414,7 @@ Andreas ist zu informieren (Gegenstueck zum Supplier-Regel-Entscheid aus
 
 Deployed, `406/406` Tests gruen, Nachweis in `docs/rag/DEPLOYMENT.md`. **Gefuellt werden die
 Felder erst mit dem naechsten TRIN-Export** (Timer 12:00); die Spalten sind produktiv vorhanden
-und leer.
+und leer. *(ueberholt am 2026-10-29: seit dem TRIN-Export vom 2026-08-06 06:54 gefuellt, Abschnitt 7b)*
 
 Was gebaut wurde:
 
@@ -465,7 +471,9 @@ anderen Standorte stehen erwartungsgemaess auf 0 — nur Indien fuehrt diese UDF
   **keine** Marge. Vorher zeigten sie eine Marge auf dem IC-Einkaufspreis — plausibel aussehend
   und falsch. Sie zaehlen in der Pruefsumme „Gruppenmarge offene Kostenbasis".
 - Ein vorhandener Lieferantentext geht weiterhin vor dem Sales Type. Damit bleibt das Verhalten
-  der 10 widerspruechlichen Artikel unveraendert, bis Indien geantwortet hat.
+  der 10 widerspruechlichen Artikel unveraendert, bis Indien geantwortet hat. *(ueberholt am
+  2026-10-29: seit dem Entscheid vom 2026-08-27 geht der gepflegte Sales Type vor, Abschnitt
+  3b-Nachtrag)*
 
 ### 7d. Nachtrag 2026-08-06: die Rechnung stand zweimal da — und war bereits auseinandergelaufen
 
@@ -511,6 +519,8 @@ Lieferantentext und Sales Type beide vor, gewinnt fuer die *Klassifikation* der 
 (Zeile gilt als extern), fuer die *Kostenbasis* aber der Sales Type (`LRD` laesst sie offen). Das
 war schon vorher so. Betroffen sind die 10 widerspruechlichen Artikel aus 3b. Ein Test haelt das
 Verhalten fest, damit es nicht unbemerkt kippt — aufloesen kann es nur Indiens Antwort.
+*(ueberholt am 2026-10-29: die Asymmetrie ist mit dem Entscheid vom 2026-08-27 aufgeloest, beide
+Wege folgen dem Sales Type, Abschnitt 3b-Nachtrag)*
 
 Abgesichert durch `GroupMarginConsistencyTests`: dieselbe Zeile laeuft durch **beide**
 oeffentlichen Einstiegspunkte (Excel-Nachweis und `AnalyzeFinanceSummaryAsync`), Status,
@@ -556,14 +566,16 @@ Erzeugt: `output/TRIN_Sales_Type_Offen_2026-08-05.xlsx`
 (`.tmp_tools/BuildTrinSalesTypeExcel`, Quelle ist die Ergebnisdatei von Runde 3), vier
 Blaetter:
 
-1. **1 Vendor needed** — die 2 `CM`-Artikel.
+1. **1 Vendor needed** — die 2 `CM`-Artikel. *(ueberholt am 2026-10-29: `CM` ist kein Pflegefall,
+   Abschnitt 2a und 3b; dieses Blatt gehoert nicht in die Mail)*
 2. **2 Sales Type needed** — die 66 Artikel ohne jede Angabe.
 3. **3 Please confirm** — die 10 `FFM`-Artikel mit Lieferant.
 4. **Summary** — die Verteilung aus Abschnitt 3 mit der jeweiligen Handlung, inklusive der
    drei Faelle, die ausdruecklich **keine** Arbeit erfordern.
 
 Kernsatz fuer die Mail: von den 1'271 Artikelnummern der letzten Mail brauchen **66** einen
-Sales Type, bei **10** brauchen wir eine Bestaetigung, **2** waeren schoen. Alles uebrige ist
+Sales Type, bei **10** brauchen wir eine Bestaetigung, **2** waeren schoen *(ueberholt am
+2026-10-29: die 2 `CM`-Artikel brauchen nichts, Abschnitt 2a)*. Alles uebrige ist
 bereits verwertbar, weil der Sales Type genau das aussagt, was das Lieferantenfeld aussagen
 sollte.
 
@@ -615,6 +627,10 @@ legt die Datei auf den Server, setzt den Trigger, wartet und holt das Ergebnis. 
 `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/` ihn auf.
 
 ## 10. Naechste Schritte
+
+*Ueberholt am 2026-10-29: Schritt 2 ist mit Abschnitt 6b und 7b erledigt, Schritt 4 ist am
+2026-08-05 15:48 deployed und seit dem 2026-08-06 wirksam (Abschnitt 7 und 7b). Schritt 3
+laeuft als `ISS-010` (offen bei Andreas). Offen bleiben Schritt 1, 5 und 6.*
 
 1. Mail an RanVijay mit dem Excel, Cc Andreas — **offen**. Inhalt: 66 Artikel Sales Type, 10
    Artikel bestaetigen, die Regelfrage zu `LRD` (Abschnitt 3c) und die Prozessfrage zum
