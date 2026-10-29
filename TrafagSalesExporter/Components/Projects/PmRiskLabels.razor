@@ -1,0 +1,69 @@
+@* Risikoregister (2026-10-29): uebersetzte Namen fuer Kritikalitaet, Status, Kategorie und die Stufen von
+   Wahrscheinlichkeit und Auswirkung. Als .razor-Datei, damit der Uebersetzungstest die Textpaare findet. *@
+@using TrafagSalesExporter.Models
+@code {
+    public static string Level(IUiTextService ui, string level) => level switch
+    {
+        PmRiskLevels.Critical => ui.Text("Kritisch", "Critical"),
+        PmRiskLevels.High => ui.Text("Hoch", "High"),
+        PmRiskLevels.Medium => ui.Text("Mittel", "Medium"),
+        PmRiskLevels.Low => ui.Text("Tief", "Low"),
+        _ => ui.Text("Keine Risiken", "No risks")
+    };
+
+    public static string Status(IUiTextService ui, string status) => status switch
+    {
+        PmRiskStatuses.Mitigating => ui.Text("In Bearbeitung", "Mitigating"),
+        PmRiskStatuses.Occurred => ui.Text("Eingetreten", "Occurred"),
+        PmRiskStatuses.Closed => ui.Text("Geschlossen", "Closed"),
+        _ => ui.Text("Offen", "Open")
+    };
+
+    public static string Category(IUiTextService ui, string category) => category switch
+    {
+        PmRiskCategories.Cost => ui.Text("Kosten", "Cost"),
+        PmRiskCategories.Technology => ui.Text("Technik", "Technology"),
+        PmRiskCategories.Resources => ui.Text("Ressourcen", "Resources"),
+        PmRiskCategories.Quality => ui.Text("Qualität", "Quality"),
+        PmRiskCategories.External => ui.Text("Extern", "External"),
+        PmRiskCategories.Compliance => ui.Text("Compliance", "Compliance"),
+        _ => ui.Text("Termin", "Schedule")
+    };
+
+    // Stufen 1 bis 5 der Wahrscheinlichkeit.
+    public static string Probability(IUiTextService ui, int value) => value switch
+    {
+        1 => ui.Text("Sehr unwahrscheinlich", "Very unlikely"),
+        2 => ui.Text("Unwahrscheinlich", "Unlikely"),
+        3 => ui.Text("Möglich", "Possible"),
+        4 => ui.Text("Wahrscheinlich", "Likely"),
+        _ => ui.Text("Fast sicher", "Almost certain")
+    };
+
+    // Stufen 1 bis 5 der Auswirkung auf Termin, Kosten oder Qualitaet.
+    public static string Impact(IUiTextService ui, int value) => value switch
+    {
+        1 => ui.Text("Unbedeutend", "Negligible"),
+        2 => ui.Text("Gering", "Minor"),
+        3 => ui.Text("Spürbar", "Moderate"),
+        4 => ui.Text("Gross", "Major"),
+        _ => ui.Text("Existenziell", "Severe")
+    };
+
+    // Beschreibung der Stufen aus der PMO-Skala (PmRiskTemplates), damit Matrix, Panel und Vorlage EINE Skala nutzen.
+    // Die deutschen Texte stehen im Katalog PmUiTextCatalog.Guide.
+    public static string ProbabilityHelp(IUiTextService ui, int value) => Scale(ui, PmRiskTemplates.ProbabilityScale, value);
+
+    public static string ImpactHelp(IUiTextService ui, int value) => Scale(ui, PmRiskTemplates.ImpactScale, value);
+
+    private static string Scale(IUiTextService ui, IReadOnlyList<PmRiskTemplates.ScaleLevel> scale, int value)
+    {
+        var level = scale.FirstOrDefault(s => s.Value == Math.Clamp(value, 1, 5)) ?? scale[^1];
+        return ui.Text(level.German, level.English);
+    }
+
+    // Franken mit Schweizer Tausenderapostroph (70'000), unabhaengig von der Sprache der Oberflaeche.
+    private static readonly System.Globalization.NumberFormatInfo ChfFormat = new() { NumberGroupSeparator = "'", NumberDecimalSeparator = "." };
+
+    public static string Chf(double value) => Math.Round(value).ToString("#,##0", ChfFormat);
+}

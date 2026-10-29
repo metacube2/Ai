@@ -38,6 +38,29 @@ public interface IPmService
     Task<IReadOnlyList<PmActivityView>> GetActivityAsync(int projectId, int take = 40);
     Task<IReadOnlyList<PmPerson>> GetKnownPeopleAsync();
     Task SaveHermesAsync(PmUser user, int projectId, PmHermesInput input);
+    // Smartsheet-Ansicht, Risiken und Vorhaben (2026-10-29)
+    Task<PmSheet?> GetSheetAsync(int projectId, PmUser user);
+    Task RescheduleAsync(PmUser user, int taskId, DateTime start, DateTime end);
+    Task UpdateSheetFieldAsync(PmUser user, int taskId, string field, string? value);
+    Task IndentAsync(PmUser user, int taskId);
+    Task OutdentAsync(PmUser user, int taskId);
+    Task MoveRowAsync(PmUser user, int taskId, int? beforeTaskId);
+    Task<int> InsertRowAsync(PmUser user, int projectId, int? afterTaskId, string title);
+    Task SetBaselineAsync(PmUser user, int projectId, bool clear);
+    Task<IReadOnlyList<PmRiskView>> GetRisksAsync(int projectId, PmUser user, bool includeArchived = false);
+    Task<int> SaveRiskAsync(PmUser user, int projectId, PmRiskInput input);
+    Task SetRiskArchivedAsync(PmUser user, int riskId, bool archived);
+    Task<IReadOnlyDictionary<int, PmRiskSummary>> GetRiskSummariesAsync(PmUser user);
+    Task<PmVorhabenResult> SyncVorhabenAsync(PmUser user, string vorhabenTsv, string? wochenTodoTsv);
+    // PMO aus der Sitzung 2026-10-29: Risiko-Burndown, Standardrisiken, Projektstrukturplan, Decision Log
+    Task<IReadOnlyList<PmRiskBurndownPoint>> GetRiskBurndownAsync(int projectId, PmUser user);
+    Task<int> AddStandardRisksAsync(PmUser user, int projectId, string template);
+    Task<PmWbs?> GetWbsAsync(int projectId, PmUser user);
+    Task UpdateWbsFieldAsync(PmUser user, int taskId, string field, string? value);
+    Task<string> ExportWbsCsvAsync(int projectId, PmUser user);
+    Task<IReadOnlyList<PmDecisionView>> GetDecisionsAsync(int projectId, PmUser user, bool includeArchived = false);
+    Task<int> SaveDecisionAsync(PmUser user, int projectId, PmDecisionInput input);
+    Task SetDecisionArchivedAsync(PmUser user, int decisionId, bool archived);
 }
 
 /// <summary>
@@ -135,6 +158,8 @@ public sealed partial class PmService : IPmService
                 db.PmSprints.Add(new PmSprint { ProjectId = project.Id, Name = $"{key} Sprint 1", State = PmSprintStates.Planned });
             Log(db, project.Id, null, user, $"hat das Projekt {key} angelegt");
             await db.SaveChangesAsync();
+            // Vorlagen Produktentwicklung und IT-Projekt bringen einen fertigen Plan mit (2026-10-29).
+            await SeedTemplateAsync(db, project, user, input.StartDate ?? DateTime.Today);
             _notifier.Publish(0);
             return project.Id;
         }
@@ -332,6 +357,7 @@ public sealed partial class PmService : IPmService
             db.PmTasks.Add(task);
             project.UpdatedAtUtc = now;
             await db.SaveChangesAsync();
+            await ApplyScheduleAsync(db, projectId);
             Log(db, projectId, task.Id, user, $"hat {project.Key}-{task.Number} angelegt: {task.Title}");
             await db.SaveChangesAsync();
             _notifier.Publish(projectId);
@@ -396,6 +422,8 @@ public sealed partial class PmService : IPmService
             return;
         task.UpdatedAtUtc = DateTime.UtcNow;
         project.UpdatedAtUtc = task.UpdatedAtUtc;
+        // Neue Termine oder Status: Nachfolger, Sammelzeilen und Fortschritt mitziehen (Smartsheet-Ansicht).
+        await ApplyScheduleAsync(db, task.ProjectId);
         Log(db, task.ProjectId, task.Id, user, $"hat {key} geändert: {string.Join(", ", changes)}");
         await db.SaveChangesAsync();
         _notifier.Publish(task.ProjectId);
@@ -420,6 +448,7 @@ public sealed partial class PmService : IPmService
             {
                 var key = await db.PmProjects.Where(p => p.Id == task.ProjectId).Select(p => p.Key).FirstAsync();
                 Log(db, task.ProjectId, task.Id, user, $"hat {key}-{task.Number} nach „{column.Name}“ verschoben");
+                await ApplyScheduleAsync(db, task.ProjectId);
             }
             await db.SaveChangesAsync();
             _notifier.Publish(task.ProjectId);
@@ -498,6 +527,7 @@ public sealed partial class PmService : IPmService
                 child.EpicId = null;
         }
         var key = await db.PmProjects.Where(p => p.Id == task.ProjectId).Select(p => p.Key).FirstAsync();
+        await ApplyScheduleAsync(db, task.ProjectId);
         Log(db, task.ProjectId, task.Id, user, archived ? $"hat {key}-{task.Number} archiviert" : $"hat {key}-{task.Number} wiederhergestellt");
         await db.SaveChangesAsync();
         _notifier.Publish(task.ProjectId);

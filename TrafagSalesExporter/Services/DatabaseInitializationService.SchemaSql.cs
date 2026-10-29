@@ -352,7 +352,8 @@ CREATE TABLE PmProjects (
     IsArchived INTEGER NOT NULL DEFAULT 0,
     Visibility TEXT NOT NULL DEFAULT 'Public',
     CreatedAtUtc TEXT NOT NULL,
-    UpdatedAtUtc TEXT NOT NULL
+    UpdatedAtUtc TEXT NOT NULL,
+    ExternalRef TEXT NOT NULL DEFAULT ''
 );";
         yield return @"
 CREATE TABLE PmMembers (
@@ -410,7 +411,15 @@ CREATE TABLE PmTasks (
     UpdatedAtUtc TEXT NOT NULL,
     CompletedAtUtc TEXT NULL,
     IsArchived INTEGER NOT NULL DEFAULT 0,
-    ExternalRef TEXT NOT NULL DEFAULT ''
+    ExternalRef TEXT NOT NULL DEFAULT '',
+    PercentComplete INTEGER NOT NULL DEFAULT 0,
+    IsMilestone INTEGER NOT NULL DEFAULT 0,
+    SheetOrder REAL NOT NULL DEFAULT 0,
+    BaselineStart TEXT NULL,
+    BaselineEnd TEXT NULL,
+    PlannedHours REAL NOT NULL DEFAULT 0,
+    PlannedCostChf REAL NOT NULL DEFAULT 0,
+    CostType TEXT NOT NULL DEFAULT ''
 );";
         yield return @"
 CREATE TABLE PmChecklistItems (
@@ -457,6 +466,69 @@ CREATE TABLE PmHermes (
     ClosedOn TEXT NULL,
     UpdatedAtUtc TEXT NOT NULL
 );";
+        // Smartsheet-Ansicht: Abhaengigkeiten Ende-Anfang und Risikoregister (2026-10-29).
+        yield return @"
+CREATE TABLE PmTaskLinks (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    PredecessorId INTEGER NOT NULL,
+    SuccessorId INTEGER NOT NULL,
+    LagDays INTEGER NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE PmRisks (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Number INTEGER NOT NULL DEFAULT 0,
+    Title TEXT NOT NULL DEFAULT '',
+    Description TEXT NOT NULL DEFAULT '',
+    Category TEXT NOT NULL DEFAULT 'Schedule',
+    Probability INTEGER NOT NULL DEFAULT 3,
+    Impact INTEGER NOT NULL DEFAULT 3,
+    Status TEXT NOT NULL DEFAULT 'Open',
+    OwnerLogin TEXT NOT NULL DEFAULT '',
+    OwnerName TEXT NOT NULL DEFAULT '',
+    Mitigation TEXT NOT NULL DEFAULT '',
+    Contingency TEXT NOT NULL DEFAULT '',
+    TaskId INTEGER NULL,
+    ReviewDate TEXT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL,
+    IsArchived INTEGER NOT NULL DEFAULT 0,
+    CostImpactChf REAL NOT NULL DEFAULT 0,
+    ContingencyChf REAL NOT NULL DEFAULT 0
+);";
+        // Risiko-Burndown und Decision Log (Sitzung 2026-10-29).
+        yield return @"
+CREATE TABLE PmRiskSnapshots (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Day TEXT NOT NULL,
+    ActiveCount INTEGER NOT NULL DEFAULT 0,
+    CriticalCount INTEGER NOT NULL DEFAULT 0,
+    TotalScore INTEGER NOT NULL DEFAULT 0,
+    ExpectedValueChf REAL NOT NULL DEFAULT 0,
+    ContingencyChf REAL NOT NULL DEFAULT 0
+);";
+        yield return @"
+CREATE TABLE PmDecisions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ProjectId INTEGER NOT NULL,
+    Number INTEGER NOT NULL DEFAULT 0,
+    Title TEXT NOT NULL DEFAULT '',
+    Decision TEXT NOT NULL DEFAULT '',
+    Rationale TEXT NOT NULL DEFAULT '',
+    Alternatives TEXT NOT NULL DEFAULT '',
+    Status TEXT NOT NULL DEFAULT 'Proposed',
+    DecidedOn TEXT NULL,
+    DecidedBy TEXT NOT NULL DEFAULT '',
+    TaskId INTEGER NULL,
+    AuthorLogin TEXT NOT NULL DEFAULT '',
+    AuthorName TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL,
+    IsArchived INTEGER NOT NULL DEFAULT 0
+);";
     }
 
     internal static readonly string[] PmIndexSql =
@@ -471,7 +543,12 @@ CREATE TABLE PmHermes (
         "CREATE INDEX IF NOT EXISTS IX_PmTasks_Assignee ON PmTasks (AssigneeLogin)",
         "CREATE INDEX IF NOT EXISTS IX_PmChecklistItems_Task ON PmChecklistItems (TaskId)",
         "CREATE INDEX IF NOT EXISTS IX_PmComments_Task ON PmComments (TaskId)",
-        "CREATE INDEX IF NOT EXISTS IX_PmActivities_Project ON PmActivities (ProjectId, AtUtc)"
+        "CREATE INDEX IF NOT EXISTS IX_PmActivities_Project ON PmActivities (ProjectId, AtUtc)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmTaskLinks_Pair ON PmTaskLinks (PredecessorId, SuccessorId)",
+        "CREATE INDEX IF NOT EXISTS IX_PmTaskLinks_Project ON PmTaskLinks (ProjectId)",
+        "CREATE INDEX IF NOT EXISTS IX_PmRisks_Project ON PmRisks (ProjectId, IsArchived)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS UX_PmRiskSnapshots_Day ON PmRiskSnapshots (ProjectId, Day)",
+        "CREATE INDEX IF NOT EXISTS IX_PmDecisions_Project ON PmDecisions (ProjectId, IsArchived)"
     ];
 
     // Trafag Reddit (2026-10-09): Forum, Doku docs/TRAFAG_REDDIT_2026-10-09.md.

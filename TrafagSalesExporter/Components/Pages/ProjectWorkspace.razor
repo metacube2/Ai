@@ -67,7 +67,7 @@
             <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">@string.Format(T("Du kannst dieses Projekt ansehen. Ändern dürfen nur Mitglieder; ins Team aufnehmen kann dich {0}.", "You can view this project. Members can make changes; {0} can add you."), PmText.PersonName(p.LeadName))</MudAlert>
         }
 
-        @if (_view is not "settings" and not "activity")
+        @if (_view is not "settings" and not "activity" and not "sheet" and not "risks" and not "wbs" and not "decisions")
         {
             <div class="pm-filters">
                 <div class="pm-filter-search">
@@ -168,6 +168,18 @@
                 case "list":
                     <PmListView Cards="Filtered" Columns="_board.Columns" CanEdit="_board.CanEdit" ProjectKey="@p.Key" OnOpen="OpenTask" OnStatus="ChangeStatus" />
                     break;
+                case "sheet":
+                    <PmSheetView ProjectId="p.Id" User="_user" CanEdit="_board.CanEdit" CanManage="_board.CanManage" Version="_version" OnOpen="OpenTask" OnError="ShowError" />
+                    break;
+                case "risks":
+                    <PmRiskView ProjectId="p.Id" Board="_board" User="_user" CanEdit="_board.CanEdit" Version="_version" OnOpen="OpenTask" OnError="ShowError" />
+                    break;
+                case "wbs":
+                    <PmWbsView ProjectId="p.Id" User="_user" CanEdit="_board.CanEdit" Version="_version" OnOpen="OpenTask" OnError="ShowError" />
+                    break;
+                case "decisions":
+                    <PmDecisionView ProjectId="p.Id" Board="_board" User="_user" CanEdit="_board.CanEdit" Version="_version" OnOpen="OpenTask" OnError="ShowError" />
+                    break;
                 case "timeline":
                     <PmTimelineView Cards="Filtered" Epics="_board.Epics" OnOpen="OpenTask" />
                     break;
@@ -261,6 +273,8 @@
     private string _label = string.Empty;
     private int? _epic;
     private string _swimlanes = "none";
+    // Zaehler fuer Raster und Risiken (2026-10-29): steigt bei jedem Neuladen, damit die Ansichten frisch lesen.
+    private int _version;
     private bool _hideOldDone = true;
 
     private bool _quickCreate;
@@ -272,9 +286,13 @@
         new("board", Icons.Material.Outlined.ViewKanban, "Board"),
         new("backlog", Icons.Material.Outlined.FormatListBulleted, "Backlog"),
         new("list", Icons.Material.Outlined.TableRows, T("Liste", "List")),
+        new("sheet", Icons.Material.Outlined.ViewQuilt, T("Raster & Gantt", "Grid & Gantt")),
         new("timeline", Icons.Material.Outlined.ViewTimeline, T("Zeitachse", "Timeline")),
         new("calendar", Icons.Material.Outlined.CalendarMonth, T("Kalender", "Calendar")),
         new("charts", Icons.Material.Outlined.DonutLarge, T("Diagramme", "Charts")),
+        new("risks", Icons.Material.Outlined.ReportProblem, T("Risiken", "Risks")),
+        new("wbs", Icons.Material.Outlined.AccountTree, T("Projektstrukturplan", "Work breakdown")),
+        new("decisions", Icons.Material.Outlined.Gavel, T("Entscheide", "Decisions")),
         new("activity", Icons.Material.Outlined.History, T("Aktivität", "Activity")),
         new("settings", Icons.Material.Outlined.Settings, T("Einstellungen", "Settings")),
     ];
@@ -382,6 +400,7 @@
     private async Task Reload()
     {
         await LoadBoardAsync();
+        _version++;
         if (_openTaskId is { } taskId)
             _detail = await Pm.GetTaskAsync(taskId, _user);
         if (_view == "activity")

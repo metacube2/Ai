@@ -90,17 +90,21 @@ public class UiTextServiceTests
             var purchasingTranslations = PurchasingUiTextGeneratedTranslations.All[language];
             var logisticsTranslations = LogisticsUiTextGeneratedTranslations.All[language];
             var supplyChainTranslations = SupplyChainUiTextGeneratedTranslations.All[language];
+            var pmTranslations = TrafagSalesExporter.Services.Projects.PmUiTextCatalog.All[language];
             var missing = expected.Keys
                 .Where(key => !translations.ContainsKey(key) &&
                               !purchasingTranslations.ContainsKey(key) &&
                               !logisticsTranslations.ContainsKey(key) &&
-                              !supplyChainTranslations.ContainsKey(key))
+                              !supplyChainTranslations.ContainsKey(key) &&
+                              !pmTranslations.ContainsKey(key))
                 .ToArray();
             Assert.True(missing.Length == 0, $"{language} is missing: {string.Join(" | ", missing)}");
 
             foreach (var pair in expected)
             {
-                var translated = translations.TryGetValue(pair.Key, out var generalTranslation)
+                var translated = pmTranslations.TryGetValue(pair.Key, out var pmTranslation)
+                    ? pmTranslation
+                    : translations.TryGetValue(pair.Key, out var generalTranslation)
                     ? generalTranslation
                     : purchasingTranslations.TryGetValue(pair.Key, out var purchasingTranslation)
                         ? purchasingTranslation
@@ -291,4 +295,26 @@ public class UiTextServiceTests
         .Select(match => match.Value)
         .OrderBy(value => value, StringComparer.Ordinal)
         .ToArray();
+
+    [Fact]
+    public void Projects_Catalog_Has_Every_Language_Without_Duplicates_And_Keeps_Placeholders()
+    {
+        // Trafag Projekte (2026-10-29): ein Eintrag je Text mit allen Sprachen inklusive Berndeutsch.
+        var entries = TrafagSalesExporter.Services.Projects.PmUiTextCatalog.Entries.ToList();
+        var duplicates = entries.GroupBy(e => e.De, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key).ToArray();
+        Assert.True(duplicates.Length == 0, $"duplicate: {string.Join(" | ", duplicates)}");
+        foreach (var e in entries)
+        {
+            foreach (var translated in new[] { e.Es, e.It, e.Hi, e.Sq, e.Tr, e.Tlh, e.Gsw })
+            {
+                Assert.False(string.IsNullOrWhiteSpace(translated), $"{e.De} has an empty translation");
+                Assert.Equal(Placeholders(e.De), Placeholders(translated));
+            }
+        }
+
+        var service = new UiTextService();
+        service.SetLanguage("bärndütsch");
+        foreach (var e in entries.Take(3))
+            Assert.Equal(e.Gsw, service.Text(e.De, "x"));
+    }
 }

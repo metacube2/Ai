@@ -24,6 +24,8 @@ public sealed class PmProject
     public string Visibility { get; set; } = PmVisibility.Public;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+    // Herkunft eines uebernommenen Vorhabens, z. B. "PM-01" aus der Wochen_Todo (2026-10-29).
+    public string ExternalRef { get; set; } = string.Empty;
 }
 
 public sealed class PmMember
@@ -87,6 +89,149 @@ public sealed class PmTask
     public bool IsArchived { get; set; }
     // Herkunft einer importierten Aufgabe, z. B. "WT-95" fuer Zeile 95 der Wochen_Todo (2026-10-13).
     public string ExternalRef { get; set; } = string.Empty;
+    // Smartsheet-Ansicht (2026-10-29): Fortschritt 0 bis 100, Meilenstein (Dauer 0) und Zeilenfolge im Raster.
+    // Die Gliederung kommt aus Epic -> Aufgabe -> Unteraufgabe, nicht aus einer eigenen Spalte.
+    public int PercentComplete { get; set; }
+    public bool IsMilestone { get; set; }
+    public double SheetOrder { get; set; }
+    // Basisplan: eingefrorene Termine zum Vergleich mit dem aktuellen Plan (Phase 3).
+    public DateTime? BaselineStart { get; set; }
+    public DateTime? BaselineEnd { get; set; }
+    // Projektstrukturplan fuer SAP PS (Sitzung 2026-10-29): Soll-Stunden, Soll-Franken und Kostenart je Element.
+    public double PlannedHours { get; set; }
+    public double PlannedCostChf { get; set; }
+    public string CostType { get; set; } = string.Empty;
+}
+
+// Abhaengigkeit Ende-Anfang (Smartsheet "FS") mit Versatz in Arbeitstagen, 2026-10-29.
+public sealed class PmTaskLink
+{
+    public int Id { get; set; }
+    public int ProjectId { get; set; }
+    public int PredecessorId { get; set; }
+    public int SuccessorId { get; set; }
+    public int LagDays { get; set; }
+}
+
+// Risikoregister je Projekt (2026-10-29, Wunsch Ingo): Wahrscheinlichkeit und Auswirkung 1 bis 5,
+// Kritikalitaet aus dem Produkt (PmRiskLevels).
+public sealed class PmRisk
+{
+    public int Id { get; set; }
+    public int ProjectId { get; set; }
+    public int Number { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = PmRiskCategories.Schedule;
+    public int Probability { get; set; } = 3;
+    public int Impact { get; set; } = 3;
+    public string Status { get; set; } = PmRiskStatuses.Open;
+    public string OwnerLogin { get; set; } = string.Empty;
+    public string OwnerName { get; set; } = string.Empty;
+    public string Mitigation { get; set; } = string.Empty;
+    public string Contingency { get; set; } = string.Empty;
+    public int? TaskId { get; set; }
+    public DateTime? ReviewDate { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsArchived { get; set; }
+    // Quantitativ (Sitzung 2026-10-29): Kosten bei Eintritt und eingeplante Reserve (Contingency) in CHF.
+    public double CostImpactChf { get; set; }
+    public double ContingencyChf { get; set; }
+}
+
+// Tagesstand des Risikoregisters fuer den Risiko-Burndown (eine Zeile je Projekt und Tag).
+public sealed class PmRiskSnapshot
+{
+    public int Id { get; set; }
+    public int ProjectId { get; set; }
+    public DateTime Day { get; set; }
+    public int ActiveCount { get; set; }
+    public int CriticalCount { get; set; }
+    public int TotalScore { get; set; }
+    public double ExpectedValueChf { get; set; }
+    public double ContingencyChf { get; set; }
+}
+
+// Decision Log je Projekt (Sitzung 2026-10-29): wer hat wann was entschieden und warum.
+public sealed class PmDecision
+{
+    public int Id { get; set; }
+    public int ProjectId { get; set; }
+    public int Number { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Decision { get; set; } = string.Empty;
+    public string Rationale { get; set; } = string.Empty;
+    public string Alternatives { get; set; } = string.Empty;
+    public string Status { get; set; } = PmDecisionStatuses.Proposed;
+    public DateTime? DecidedOn { get; set; }
+    public string DecidedBy { get; set; } = string.Empty;
+    public int? TaskId { get; set; }
+    public string AuthorLogin { get; set; } = string.Empty;
+    public string AuthorName { get; set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsArchived { get; set; }
+}
+
+public static class PmDecisionStatuses
+{
+    public const string Proposed = "Proposed";
+    public const string Decided = "Decided";
+    public const string Revoked = "Revoked";
+    public const string Superseded = "Superseded";
+    public static readonly string[] All = [Proposed, Decided, Revoked, Superseded];
+}
+
+public static class PmCostTypes
+{
+    public const string Capex = "Capex";
+    public const string Opex = "Opex";
+    public static readonly string[] All = [Capex, Opex];
+}
+
+public static class PmRiskCategories
+{
+    public const string Schedule = "Schedule";
+    public const string Cost = "Cost";
+    public const string Technology = "Technology";
+    public const string Resources = "Resources";
+    public const string Quality = "Quality";
+    public const string External = "External";
+    public const string Compliance = "Compliance";
+    public static readonly string[] All = [Schedule, Cost, Technology, Resources, Quality, External, Compliance];
+}
+
+public static class PmRiskStatuses
+{
+    public const string Open = "Open";
+    public const string Mitigating = "Mitigating";
+    public const string Occurred = "Occurred";
+    public const string Closed = "Closed";
+    public static readonly string[] All = [Open, Mitigating, Occurred, Closed];
+    public static bool IsActive(string status) => status is Open or Mitigating or Occurred;
+}
+
+// Kritikalitaet aus Wahrscheinlichkeit x Auswirkung (5x5-Matrix): 1-4 tief, 5-9 mittel, 10-15 hoch, 16-25 kritisch.
+public static class PmRiskLevels
+{
+    public const string Low = "Low";
+    public const string Medium = "Medium";
+    public const string High = "High";
+    public const string Critical = "Critical";
+    public static readonly string[] All = [Low, Medium, High, Critical];
+    public static int Score(int probability, int impact) => Math.Clamp(probability, 1, 5) * Math.Clamp(impact, 1, 5);
+    public static string Of(int score) => score switch
+    {
+        >= 16 => Critical,
+        >= 10 => High,
+        >= 5 => Medium,
+        _ => Low
+    };
+    public static int Rank(string level) => Array.IndexOf(All, level);
+    // Wahrscheinlichkeit als Prozent fuer den Erwartungswert (PMO-Skala): 1 = 10 %, 2 = 30 %, 3 = 50 %, 4 = 70 %, 5 = 90 %.
+    public static int ProbabilityPercent(int probability) => Math.Clamp(probability, 1, 5) * 20 - 10;
+    public static double ExpectedValue(int probability, double costImpactChf) => Math.Round(Math.Max(costImpactChf, 0) * ProbabilityPercent(probability) / 100.0, 2);
 }
 
 public sealed class PmChecklistItem
@@ -184,8 +329,11 @@ public static class PmTemplates
     public const string Kanban = "Kanban";
     public const string Scrum = "Scrum";
     public const string Planner = "Planner";
+    // Sitzung 2026-10-29: Produktentwicklung nach Philips Phasen (M2 Design-Freeze, M3 produktiv) und IT-Projekt nach HERMES.
+    public const string ProductDevelopment = "ProductDevelopment";
+    public const string ItProject = "ItProject";
 
-    public static readonly string[] All = [Kanban, Scrum, Planner];
+    public static readonly string[] All = [Kanban, Scrum, Planner, ProductDevelopment, ItProject];
 }
 
 public static class PmRoles

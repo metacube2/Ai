@@ -1,0 +1,195 @@
+@* Decision Log (Sitzung 2026-10-29): wer hat wann was entschieden und warum. Liste mit Suche und Statusfilter,
+   Klick oeffnet das Seitenpanel zum Bearbeiten (wie beim Risiko). Archivierte Entscheide erst mit "Archivierte
+   zeigen". Bearbeiten duerfen nur Mitglieder (CanEdit). *@
+@using TrafagSalesExporter.Models
+@using DecisionItem = TrafagSalesExporter.Services.Projects.PmDecisionView
+@inject IUiTextService UiText
+@inject IPmService Pm
+
+<div class="pm-dec">
+    <div class="pm-filters">
+        <div class="pm-filter-search">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+            <input type="search" placeholder="@T("Entscheide durchsuchen", "Search decisions")" value="@_search" @oninput="e => _search = e.Value?.ToString() ?? string.Empty" />
+        </div>
+        <select class="pm-input pm-filter-select" value="@_status" @onchange="e => _status = e.Value?.ToString() ?? string.Empty">
+            <option value="">@T("Alle Status", "All statuses")</option>
+            @foreach (var status in PmDecisionStatuses.All)
+            {
+                <option value="@status">@PmDecisionLabels.Status(UiText, status)</option>
+            }
+        </select>
+        <label class="pm-small pm-row"><input type="checkbox" checked="@_showArchived" @onchange="ToggleArchived" /> @T("Archivierte zeigen", "Show archived")</label>
+        <span class="pm-grow"></span>
+        <span class="pm-muted pm-small">@string.Format(T("{0} von {1} Entscheiden", "{0} of {1} decisions"), Visible.Count, _decisions.Count)</span>
+        @if (CanEdit)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="NewDecision">@T("Neuer Entscheid", "New decision")</MudButton>
+        }
+    </div>
+
+    @if (!_loaded)
+    {
+        <div class="pm-panel-loading"><MudProgressCircular Indeterminate="true" Size="Size.Small" /></div>
+    }
+    else if (_decisions.Count == 0)
+    {
+        <div class="pm-empty">
+            <MudIcon Icon="@Icons.Material.Outlined.Gavel" Style="font-size:56px" />
+            <h3>@T("Noch keine Entscheide erfasst.", "No decisions recorded yet.")</h3>
+            <p>@T("Hier steht, wer wann was entschieden hat, mit Begründung und verworfenen Alternativen. So bleibt nachvollziehbar, warum das Projekt so läuft.", "This records who decided what and when, with the rationale and rejected alternatives. That keeps it traceable why the project runs the way it does.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="pm-table-wrap">
+            <table class="pm-table pm-dec-table">
+                <thead>
+                    <tr>
+                        <th>@T("Schlüssel", "Key")</th>
+                        <th>@T("Datum", "Date")</th>
+                        <th>@T("Titel", "Title")</th>
+                        <th>@T("Status", "Status")</th>
+                        <th>@T("Entschieden von", "Decided by")</th>
+                        <th>@T("Aufgabe", "Task")</th>
+                        <th>@T("Entscheid", "Decision")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var decision in Visible)
+                    {
+                        var d = decision;
+                        <tr class="@(d.IsArchived ? "pm-dec-archived" : "")" @onclick="() => Open(d)">
+                            <td><span class="pm-key">@d.Key</span></td>
+                            <td class="pm-dec-date">@(d.DecidedOn?.ToString("dd.MM.yyyy") ?? string.Empty)</td>
+                            <td class="pm-td-title">@d.Title
+                                @if (d.IsArchived) { <span class="pm-status-chip">@T("Archiviert", "Archived")</span> }</td>
+                            <td><span class="pm-status-chip pm-dec-st-@d.Status.ToLowerInvariant()">@PmDecisionLabels.Status(UiText, d.Status)</span></td>
+                            <td>@d.DecidedBy</td>
+                            <td>
+                                @if (d.TaskId is { } taskId)
+                                {
+                                    <button type="button" class="pm-link" @onclick="() => OnOpen.InvokeAsync(taskId)" @onclick:stopPropagation="true">@d.TaskKey</button>
+                                }
+                            </td>
+                            <td class="pm-dec-td-text" title="@d.Decision">@Short(d.Decision)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (Visible.Count == 0)
+            {
+                <div class="pm-empty-col">@T("Kein Entscheid passt zum Filter.", "No decision matches the filter.")</div>
+            }
+        </div>
+    }
+</div>
+
+@if (_panelOpen)
+{
+    <PmDecisionPanel ProjectId="ProjectId" Board="Board" User="User" CanEdit="CanEdit" Decision="_panelDecision"
+                     OnSaved="Saved" OnClose="() => _panelOpen = false" OnOpenTask="OpenTaskFromPanel" />
+}
+
+@code {
+    [Parameter, EditorRequired] public int ProjectId { get; set; }
+    [Parameter, EditorRequired] public PmBoard Board { get; set; } = default!;
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public int Version { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+
+    private List<DecisionItem> _decisions = [];
+    private bool _loaded;
+    private int _loadedProject = -1;
+    private int _loadedVersion = -1;
+    private bool _showArchived;
+    private string _search = string.Empty;
+    private string _status = string.Empty;
+    private bool _panelOpen;
+    private DecisionItem? _panelDecision;
+
+    // Reihenfolge vom Dienst (neuester Entscheid zuerst), archivierte ans Ende.
+    private List<DecisionItem> Visible => _decisions
+        .Where(d => _status.Length == 0 || d.Status == _status)
+        .Where(d => Matches(d))
+        .OrderBy(d => d.IsArchived)
+        .ToList();
+
+    private bool Matches(DecisionItem d)
+    {
+        var q = _search.Trim();
+        if (q.Length == 0)
+            return true;
+        return new[] { d.Key, d.Title, d.Decision, d.Rationale, d.Alternatives, d.DecidedBy, d.TaskKey }
+            .Any(v => v.Contains(q, StringComparison.OrdinalIgnoreCase));
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Nur bei neuem Projekt oder neuer Version laden; jedes andere Neuzeichnen des Elternteils ignorieren.
+        if (ProjectId == _loadedProject && Version == _loadedVersion)
+            return;
+        _loadedProject = ProjectId;
+        _loadedVersion = Version;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _decisions = (await Pm.GetDecisionsAsync(ProjectId, User, includeArchived: _showArchived)).ToList();
+            if (_panelDecision is not null)
+                _panelDecision = _decisions.FirstOrDefault(d => d.Id == _panelDecision.Id);
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+
+    private async Task ToggleArchived(ChangeEventArgs e)
+    {
+        _showArchived = e.Value is true;
+        await LoadAsync();
+    }
+
+    private static string Short(string text)
+    {
+        var value = (text ?? string.Empty).ReplaceLineEndings(" ").Trim();
+        return value.Length <= 80 ? value : value[..77].TrimEnd() + " …";
+    }
+
+    private void NewDecision()
+    {
+        _panelDecision = null;
+        _panelOpen = true;
+    }
+
+    private void Open(DecisionItem decision)
+    {
+        _panelDecision = decision;
+        _panelOpen = true;
+    }
+
+    private async Task Saved()
+    {
+        _panelOpen = false;
+        _panelDecision = null;
+        await LoadAsync();
+    }
+
+    private async Task OpenTaskFromPanel(int taskId)
+    {
+        _panelOpen = false;
+        await OnOpen.InvokeAsync(taskId);
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

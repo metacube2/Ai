@@ -39,12 +39,23 @@
             <span><b>@_projects.Sum(p => p.Open + p.InProgress)</b> @T("offene Aufgaben", "open issues")</span>
             <span><b>@_projects.Sum(p => p.Overdue)</b> @T("überfällig", "overdue")</span>
             <span><b>@_mine.Count</b> @T("für mich", "for me")</span>
+            @if (_user.IsKnown)
+            {
+                <button type="button" class="pm-rk-hero-btn @(_importing ? "pm-on" : "")" title="@T("Vorhaben PM-01 ff. aus Vorhaben_HERMES.tsv und Wochen_Todo.tsv als Projekte anlegen oder abgleichen", "Create or sync undertakings PM-01 ff. from Vorhaben_HERMES.tsv and Wochen_Todo.tsv as projects")" @onclick="() => _importing = !_importing">
+                    <MudIcon Icon="@Icons.Material.Outlined.UploadFile" Size="Size.Small" /> @T("Vorhaben aus Wochen_Todo übernehmen", "Import undertakings from weekly to-do")
+                </button>
+            }
         </div>
     </header>
 
     @if (_error is { } err)
     {
         <MudAlert Severity="Severity.Warning" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+    }
+
+    @if (_importing && _user.IsKnown)
+    {
+        <PmVorhabenImport User="_user" OnDone="LoadAsync" OnClose="() => _importing = false" />
     }
 
     @if (_creating)
@@ -74,6 +85,17 @@
                 <div class="pm-create-wide">
                     <label class="pm-flabel">@T("Beschreibung", "Description")</label>
                     <input class="pm-input" value="@_new.Description" placeholder="@T("Ziel und Umfang in einem Satz", "Goal and scope in one sentence")" @oninput="e => _new.Description = e.Value?.ToString() ?? string.Empty" />
+                </div>
+                @* Startdatum (Sitzung 2026-10-29): die Vorlagen mit fertigem Plan rechnen ihre Termine ab diesem Tag. *@
+                <div class="pm-create-wide">
+                    <label class="pm-flabel">@T("Projektstart", "Project start")</label>
+                    <div class="pm-row pm-wrap">
+                        <input type="date" class="pm-input pm-create-date" value="@(_new.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)" @onchange="SetStartDate" />
+                        @if (HasPlan(_new.Template))
+                        {
+                            <span class="pm-muted pm-small">@string.Format(T("Der Plan der Vorlage wird ab {0} gerechnet.", "The template plan is scheduled from {0}."), (_new.StartDate ?? DateTime.Today).ToString("dd.MM.yyyy"))</span>
+                        }
+                    </div>
                 </div>
                 <div>
                     <label class="pm-flabel">@T("Farbe", "Colour")</label>
@@ -132,7 +154,7 @@
     }
     else if (_tab == "portfolio")
     {
-        <PmHermesPortfolio Projects="@_projects" />
+        <PmHermesPortfolio Projects="@_projects" Risks="@_risks" />
     }
     else if (_tab == "projects")
     {
@@ -210,6 +232,12 @@
                             @if (project.Members.Count > 6) { <span class="pm-avatar pm-avatar-sm pm-avatar-more">+@(project.Members.Count - 6)</span> }
                         </span>
                         <span class="pm-grow"></span>
+                        @if (_risks.TryGetValue(project.Id, out var risk) && risk.MaxLevel.Length > 0)
+                        {
+                            <span class="pm-rk-badge pm-rk-lv-@risk.MaxLevel.ToLowerInvariant()" title="@string.Format(T("{0} aktive Risiken, höchste Stufe: {1}", "{0} active risks, highest level: {1}"), risk.Active, PmRiskLabels.Level(UiText, risk.MaxLevel))">
+                                <MudIcon Icon="@Icons.Material.Outlined.ReportProblem" Size="Size.Small" />@risk.Active
+                            </span>
+                        }
                         @if (project.Overdue > 0)
                         {
                             <span class="pm-badge pm-overdue"><MudIcon Icon="@Icons.Material.Filled.WarningAmber" Size="Size.Small" />@project.Overdue</span>
@@ -259,6 +287,9 @@
     private PmUser _user = PmUser.Anonymous;
     private IReadOnlyList<PmProjectSummary> _projects = [];
     private IReadOnlyList<PmMyTask> _mine = [];
+    // Risikolage je Projekt (2026-10-29) fuer das Badge auf der Karte und die Portfolio-Spalte.
+    private IReadOnlyDictionary<int, PmRiskSummary> _risks = new Dictionary<int, PmRiskSummary>();
+    private bool _importing;
     private string _tab = "projects";
     private string _search = string.Empty;
     private bool _showArchived;
@@ -313,6 +344,7 @@
     {
         _projects = await Pm.GetProjectsAsync(_user, _showArchived);
         _mine = await Pm.GetMyTasksAsync(_user);
+        _risks = await Pm.GetRiskSummariesAsync(_user);
     }
 
     private async Task ToggleArchived(ChangeEventArgs e)
@@ -328,6 +360,12 @@
             _new.Key = PmService.SuggestKey(_new.Name);
     }
 
+    private static bool HasPlan(string template) =>
+        template is TrafagSalesExporter.Models.PmTemplates.ProductDevelopment or TrafagSalesExporter.Models.PmTemplates.ItProject;
+
+    private void SetStartDate(ChangeEventArgs e) =>
+        _new.StartDate = DateTime.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d) ? d.Date : null;
+
     private async Task Create()
     {
         if (_busy)
@@ -337,7 +375,8 @@
         {
             var id = await Pm.CreateProjectAsync(_user, _new);
             var key = (await Pm.GetProjectsAsync(_user)).First(x => x.Id == id).Key;
-            Nav.NavigateTo($"projekte/{key}?view=settings");
+            // Vorlagen mit fertigem Plan direkt im Raster oeffnen, die anderen in den Einstellungen (Team einladen).
+            Nav.NavigateTo(HasPlan(_new.Template) ? $"projekte/{key}?view=sheet" : $"projekte/{key}?view=settings");
         }
         catch (PmException ex)
         {

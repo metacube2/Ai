@@ -390,6 +390,19 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         // 2026-10-13: Sichtbarkeit je Projekt und Herkunft importierter Aufgaben (Wochen_Todo).
         AddColumnIfMissing(db, "PmProjects", "Visibility", "TEXT NOT NULL DEFAULT 'Public'");
         AddColumnIfMissing(db, "PmTasks", "ExternalRef", "TEXT NOT NULL DEFAULT ''");
+        // 2026-10-29: Smartsheet-Ansicht (Fortschritt, Meilenstein, Zeilenfolge, Basisplan) und Herkunft der Vorhaben.
+        AddColumnIfMissing(db, "PmTasks", "PercentComplete", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmTasks", "IsMilestone", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmTasks", "SheetOrder", "REAL NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmTasks", "BaselineStart", "TEXT NULL");
+        AddColumnIfMissing(db, "PmTasks", "BaselineEnd", "TEXT NULL");
+        AddColumnIfMissing(db, "PmProjects", "ExternalRef", "TEXT NOT NULL DEFAULT ''");
+        // Sitzung 2026-10-29: Projektstrukturplan (Soll-Stunden, Soll-Franken, Kostenart) und Risiken in Franken.
+        AddColumnIfMissing(db, "PmTasks", "PlannedHours", "REAL NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmTasks", "PlannedCostChf", "REAL NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmTasks", "CostType", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "PmRisks", "CostImpactChf", "REAL NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "PmRisks", "ContingencyChf", "REAL NOT NULL DEFAULT 0");
     }
 
     private static void EnsureForumTables(AppDbContext db)

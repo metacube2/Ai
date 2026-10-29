@@ -1,0 +1,139 @@
+@* Uebernahme der Vorhaben PM-01 ff. aus der Wochen_Todo (2026-10-29, Entscheid Ingo „je Vorhaben ein Projekt“).
+   Vorhaben_HERMES.tsv ist Pflicht, Wochen_Todo.tsv liefert optional die Aufgaben. Beide Dateien werden beim
+   Auswaehlen gelesen, erst der Knopf schreibt. Der Abgleich ist wiederholbar, die TSV bleibt fuehrend. *@
+@inject IUiTextService UiText
+@inject IPmService Pm
+
+<section class="pm-chart-card pm-rk-import">
+    <h4>
+        <MudIcon Icon="@Icons.Material.Outlined.UploadFile" Size="Size.Small" /> @T("Vorhaben aus Wochen_Todo übernehmen", "Import undertakings from weekly to-do")
+        <span class="pm-grow"></span>
+        <button type="button" class="pm-icon-btn" title="@T("Schliessen", "Close")" @onclick="() => OnClose.InvokeAsync()"><MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" /></button>
+    </h4>
+    <div class="pm-muted pm-small">@T("Je Vorhaben PM-01, PM-02 … entsteht ein Projekt mit dem Schlüssel PM01, PM02 … samt HERMES-Angaben. Aus der Wochen_Todo kommen die Aufgaben, die zu einem Vorhaben gehören.", "Each undertaking PM-01, PM-02 … becomes a project with the key PM01, PM02 … including its HERMES details. The weekly to-do supplies the tasks that belong to an undertaking.")</div>
+    <ul class="pm-small pm-rk-hints">
+        <li><MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" /> @T("Neue Projekte sind privat: nur das Team sieht sie. Die Sichtbarkeit lässt sich später in den Einstellungen des Projekts umstellen.", "New projects are private: only the team sees them. Visibility can be changed later in the project settings.")</li>
+        <li><MudIcon Icon="@Icons.Material.Outlined.Sync" Size="Size.Small" /> @T("Die TSV-Dateien bleiben führend. Der Abgleich ist wiederholbar und aktualisiert bestehende Projekte und Aufgaben, statt sie doppelt anzulegen.", "The TSV files stay authoritative. The sync can be repeated and updates existing projects and tasks instead of creating duplicates.")</li>
+    </ul>
+
+    <div class="pm-rk-import-grid">
+        <div>
+            <label class="pm-flabel">@T("Vorhaben_HERMES.tsv (Pflicht)", "Vorhaben_HERMES.tsv (required)")</label>
+            <InputFile OnChange="ReadVorhaben" accept=".tsv,.txt,text/tab-separated-values" disabled="@_busy" />
+            @if (_vorhabenName.Length > 0)
+            {
+                <div class="pm-small pm-mt"><MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" /> @_vorhabenName</div>
+            }
+        </div>
+        <div>
+            <label class="pm-flabel">@T("Wochen_Todo.tsv (optional, für die Aufgaben)", "Wochen_Todo.tsv (optional, for the tasks)")</label>
+            <InputFile OnChange="ReadTodo" accept=".tsv,.txt,text/tab-separated-values" disabled="@_busy" />
+            @if (_todoName.Length > 0)
+            {
+                <div class="pm-small pm-mt"><MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" /> @_todoName</div>
+            }
+        </div>
+    </div>
+
+    @if (_error is { } err)
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+    }
+
+    <div class="pm-row pm-mt">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_busy || _vorhaben is null)" OnClick="Sync">@T("Übernehmen", "Import")</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="() => OnClose.InvokeAsync()">@T("Schliessen", "Close")</MudButton>
+        @if (_busy)
+        {
+            <span class="pm-small">@T("Gleiche ab …", "Syncing …")</span>
+        }
+    </div>
+
+    @if (_result is { } r)
+    {
+        <div class="pm-rk-import-result pm-mt">
+            <b>@T("Abgleich fertig", "Sync finished")</b>
+            <div class="pm-small">@string.Format(T("Projekte: {0} neu, {1} aktualisiert. Aufgaben: {2} neu, {3} aktualisiert.", "Projects: {0} new, {1} updated. Tasks: {2} new, {3} updated."), r.ProjectsCreated, r.ProjectsUpdated, r.TasksCreated, r.TasksUpdated)</div>
+            @if (r.Keys.Count > 0)
+            {
+                <div class="pm-row pm-mt">
+                    @foreach (var key in r.Keys)
+                    {
+                        <a class="pm-chip" href="@($"projekte/{key}")">@key</a>
+                    }
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public EventCallback OnDone { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private const long MaxBytes = 5 * 1024 * 1024;
+
+    private string? _vorhaben;
+    private string? _todo;
+    private string _vorhabenName = string.Empty;
+    private string _todoName = string.Empty;
+    private bool _busy;
+    private PmVorhabenResult? _result;
+    private (string German, string English)? _error;
+
+    private async Task ReadVorhaben(InputFileChangeEventArgs e)
+    {
+        var text = await ReadAsync(e.File);
+        _vorhaben = text;
+        _vorhabenName = text is null ? string.Empty : e.File.Name;
+    }
+
+    private async Task ReadTodo(InputFileChangeEventArgs e)
+    {
+        var text = await ReadAsync(e.File);
+        _todo = text;
+        _todoName = text is null ? string.Empty : e.File.Name;
+    }
+
+    // Datei sofort lesen, damit der Verweis auf die Browserdatei nicht bis zum Klick gehalten werden muss.
+    private async Task<string?> ReadAsync(IBrowserFile file)
+    {
+        _error = null;
+        _result = null;
+        try
+        {
+            using var reader = new StreamReader(file.OpenReadStream(MaxBytes), System.Text.Encoding.UTF8);
+            return await reader.ReadToEndAsync();
+        }
+        catch (IOException)
+        {
+            _error = ("Die Datei liess sich nicht lesen (höchstens 5 MB).", "The file could not be read (5 MB at most).");
+            return null;
+        }
+    }
+
+    private async Task Sync()
+    {
+        if (_busy || _vorhaben is null)
+            return;
+        _busy = true;
+        _error = null;
+        _result = null;
+        try
+        {
+            _result = await Pm.SyncVorhabenAsync(User, _vorhaben, _todo);
+            await OnDone.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

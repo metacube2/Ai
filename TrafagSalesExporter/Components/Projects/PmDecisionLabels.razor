@@ -1,0 +1,12 @@
+@* Decision Log (Sitzung 2026-10-29): uebersetzte Namen der Status. Als .razor-Datei, damit der Uebersetzungstest
+   die Textpaare findet. *@
+@using TrafagSalesExporter.Models
+@code {
+    public static string Status(IUiTextService ui, string status) => status switch
+    {
+        PmDecisionStatuses.Decided => ui.Text("Entschieden", "Decided"),
+        PmDecisionStatuses.Revoked => ui.Text("Verworfen", "Rejected"),
+        PmDecisionStatuses.Superseded => ui.Text("Abgelöst", "Superseded"),
+        _ => ui.Text("Vorgeschlagen", "Proposed")
+    };
+}
