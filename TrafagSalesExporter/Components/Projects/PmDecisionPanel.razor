@@ -1,0 +1,211 @@
+@* Entscheid erfassen oder bearbeiten im Seitenpanel (Sitzung 2026-10-29), im Stil des Risikopanels: erst mit
+   "Speichern" wird geschrieben. Ein gefaellter Entscheid braucht ein Datum; beim Wechsel auf "Entschieden" wird
+   deshalb heute vorgeschlagen. Ohne Bearbeitungsrecht bleibt alles lesbar, aber gesperrt. *@
+@using TrafagSalesExporter.Models
+@using DecisionItem = TrafagSalesExporter.Services.Projects.PmDecisionView
+@inject IUiTextService UiText
+@inject IPmService Pm
+
+<div class="pm-panel-backdrop" @onclick="Close"></div>
+<aside class="pm-panel pm-dec-panel">
+    <header class="pm-panel-head">
+        <MudIcon Icon="@Icons.Material.Outlined.Gavel" Size="Size.Small" />
+        @if (Decision is not null)
+        {
+            <b class="pm-key">@Decision.Key</b>
+        }
+        else
+        {
+            <b>@T("Neuer Entscheid", "New decision")</b>
+        }
+        @if (IsArchived)
+        {
+            <span class="pm-status-chip">@T("Archiviert", "Archived")</span>
+        }
+        <span class="pm-grow"></span>
+        @if (CanEdit && Decision is not null)
+        {
+            <button type="button" class="pm-icon-btn" disabled="@_busy" title="@(IsArchived ? T("Wiederherstellen", "Restore") : T("Archivieren", "Archive"))" @onclick="ToggleArchive">
+                <MudIcon Icon="@(IsArchived ? Icons.Material.Outlined.Unarchive : Icons.Material.Outlined.Archive)" Size="Size.Small" />
+            </button>
+        }
+        <button type="button" class="pm-icon-btn" title="@T("Schliessen", "Close")" @onclick="Close"><MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" /></button>
+    </header>
+    <div class="pm-panel-cover pm-dec-cover pm-dec-st-@_edit.Status.ToLowerInvariant()"></div>
+
+    <div class="pm-panel-body">
+        @if (_error is { } err)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@T(err.German, err.English)</MudAlert>
+        }
+
+        @if (Editable)
+        {
+            <input class="pm-title-input" value="@_edit.Title" maxlength="@PmService.TitleMax" placeholder="@T("Was wurde entschieden?", "What was decided?")" @oninput="e => _edit.Title = e.Value?.ToString() ?? string.Empty" />
+        }
+        else
+        {
+            <h2 class="pm-title-input">@_edit.Title</h2>
+        }
+
+        <label class="pm-flabel">@T("Status", "Status")</label>
+        <div class="pm-dec-statuses">
+            @foreach (var status in PmDecisionStatuses.All)
+            {
+                var s = status;
+                <button type="button" class="pm-chip pm-dec-st-@s.ToLowerInvariant() @(_edit.Status == s ? "pm-on" : "")" disabled="@(!Editable)" @onclick="() => SetStatus(s)">@PmDecisionLabels.Status(UiText, s)</button>
+            }
+        </div>
+
+        <div class="pm-fields pm-mt">
+            <label>@T("Datum", "Date")</label>
+            <input type="date" class="pm-input" disabled="@(!Editable)" value="@(_edit.DecidedOn?.ToString("yyyy-MM-dd") ?? string.Empty)" @onchange="SetDate" />
+
+            <label>@T("Gremium oder Person", "Board or person")</label>
+            <input class="pm-input" disabled="@(!Editable)" maxlength="200" value="@_edit.DecidedBy" placeholder="@T("z. B. Lenkungsausschuss, Geschäftsleitung", "e.g. steering committee, management")" @oninput="e => _edit.DecidedBy = e.Value?.ToString() ?? string.Empty" />
+
+            <label>@T("Verknüpfte Aufgabe", "Linked task")</label>
+            <div class="pm-row">
+                <select class="pm-input" disabled="@(!Editable)" value="@(_edit.TaskId?.ToString() ?? string.Empty)" @onchange="SetTask">
+                    <option value="">@T("Keine", "None")</option>
+                    @foreach (var task in Board.Epics.Concat(Board.Tasks).DistinctBy(t => t.Id).OrderBy(t => t.Number))
+                    {
+                        <option value="@task.Id">@task.Key · @task.Title</option>
+                    }
+                </select>
+                @if (_edit.TaskId is { } taskId)
+                {
+                    <button type="button" class="pm-icon-btn" title="@T("Aufgabe öffnen", "Open task")" @onclick="() => OnOpenTask.InvokeAsync(taskId)"><MudIcon Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" /></button>
+                }
+            </div>
+        </div>
+
+        <label class="pm-flabel">@T("Entscheid", "Decision")</label>
+        <textarea class="pm-input pm-rk-text" rows="3" disabled="@(!Editable)" placeholder="@T("Was gilt ab jetzt?", "What applies from now on?")" value="@_edit.Decision" @oninput="e => _edit.Decision = e.Value?.ToString() ?? string.Empty"></textarea>
+
+        <label class="pm-flabel">@T("Begründung", "Rationale")</label>
+        <textarea class="pm-input pm-rk-text" rows="3" disabled="@(!Editable)" placeholder="@T("Warum so und nicht anders?", "Why this way and not another?")" value="@_edit.Rationale" @oninput="e => _edit.Rationale = e.Value?.ToString() ?? string.Empty"></textarea>
+
+        <label class="pm-flabel">@T("Alternativen", "Alternatives")</label>
+        <textarea class="pm-input pm-rk-text" rows="3" disabled="@(!Editable)" placeholder="@T("Welche Möglichkeiten wurden geprüft und verworfen?", "Which options were examined and rejected?")" value="@_edit.Alternatives" @oninput="e => _edit.Alternatives = e.Value?.ToString() ?? string.Empty"></textarea>
+
+        @if (Decision is not null)
+        {
+            <div class="pm-small pm-muted pm-mt">@string.Format(T("Erfasst von {0}, zuletzt geändert am {1}", "Recorded by {0}, last changed on {1}"), PmText.PersonName(Decision.AuthorName), Decision.UpdatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</div>
+        }
+
+        <div class="pm-row pm-mt">
+            @if (Editable)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_busy || _edit.Title.Trim().Length == 0)" OnClick="Save">@T("Speichern", "Save")</MudButton>
+            }
+            <MudButton Variant="Variant.Text" OnClick="Close">@(Editable ? T("Abbrechen", "Cancel") : T("Schliessen", "Close"))</MudButton>
+            @if (!CanEdit)
+            {
+                <span class="pm-muted pm-small">@T("Nur Mitglieder des Projekts können Entscheide bearbeiten.", "Only project members can edit decisions.")</span>
+            }
+            else if (IsArchived)
+            {
+                <span class="pm-muted pm-small">@T("Archivierte Entscheide zuerst wiederherstellen, um sie zu bearbeiten.", "Restore archived decisions first to edit them.")</span>
+            }
+        </div>
+    </div>
+</aside>
+
+@code {
+    [Parameter, EditorRequired] public int ProjectId { get; set; }
+    [Parameter, EditorRequired] public PmBoard Board { get; set; } = default!;
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public bool CanEdit { get; set; }
+    // Null = neuer Entscheid.
+    [Parameter] public DecisionItem? Decision { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<int> OnOpenTask { get; set; }
+
+    private PmDecisionInput _edit = new();
+    private int _loadedId;
+    private bool _initialized;
+    private bool _busy;
+    private (string German, string English)? _error;
+
+    private bool IsArchived => Decision?.IsArchived ?? false;
+
+    private bool Editable => CanEdit && !IsArchived;
+
+    protected override void OnParametersSet()
+    {
+        // Eingaben nur beim Wechsel des Entscheids neu fuellen, damit ein Neuzeichnen des Elternteils nichts verwirft.
+        var id = Decision?.Id ?? 0;
+        if (_initialized && id == _loadedId)
+            return;
+        _initialized = true;
+        _loadedId = id;
+        _error = null;
+        _edit = Decision is null
+            ? new PmDecisionInput()
+            : new PmDecisionInput
+            {
+                Id = Decision.Id, Title = Decision.Title, Decision = Decision.Decision, Rationale = Decision.Rationale,
+                Alternatives = Decision.Alternatives, Status = Decision.Status, DecidedOn = Decision.DecidedOn,
+                DecidedBy = Decision.DecidedBy, TaskId = Decision.TaskId
+            };
+    }
+
+    private void SetStatus(string status)
+    {
+        _edit.Status = status;
+        if (status == PmDecisionStatuses.Decided && _edit.DecidedOn is null)
+            _edit.DecidedOn = DateTime.Today;
+    }
+
+    private void SetTask(ChangeEventArgs e) =>
+        _edit.TaskId = int.TryParse(e.Value?.ToString(), out var id) ? id : null;
+
+    private void SetDate(ChangeEventArgs e) =>
+        _edit.DecidedOn = DateTime.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d) ? d.Date : null;
+
+    private async Task Save()
+    {
+        if (_busy)
+            return;
+        _busy = true;
+        try
+        {
+            await Pm.SaveDecisionAsync(User, ProjectId, _edit);
+            await OnSaved.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ToggleArchive()
+    {
+        if (_busy || Decision is null)
+            return;
+        _busy = true;
+        try
+        {
+            await Pm.SetDecisionArchivedAsync(User, Decision.Id, !IsArchived);
+            await OnSaved.InvokeAsync();
+        }
+        catch (PmException ex)
+        {
+            _error = (ex.German, ex.English);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task Close() => OnClose.InvokeAsync();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

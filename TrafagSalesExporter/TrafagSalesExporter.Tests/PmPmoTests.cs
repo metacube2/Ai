@@ -166,6 +166,31 @@ public sealed class PmPmoTests : IDisposable
         Assert.Equal(2, (await _service.GetDecisionsAsync(id, Lead, includeArchived: true)).Count);
     }
 
+    [Fact]
+    public async Task Risk_View_Carries_Archive_Flag_So_The_List_Loads_Once()
+    {
+        var id = await _service.CreateProjectAsync(Lead, new PmProjectInput { Name = "Linie 4 Umbau", Key = "LIN" });
+        var kept = await _service.SaveRiskAsync(Lead, id, new PmRiskInput { Title = "Lieferverzug" });
+        var gone = await _service.SaveRiskAsync(Lead, id, new PmRiskInput { Title = "Alt" });
+        await _service.SetRiskArchivedAsync(Lead, gone, true);
+
+        Assert.DoesNotContain(await _service.GetRisksAsync(id, Lead), r => r.IsArchived);
+        var all = await _service.GetRisksAsync(id, Lead, includeArchived: true);
+        Assert.True(all.Single(r => r.Id == gone).IsArchived);
+        Assert.False(all.Single(r => r.Id == kept).IsArchived);
+    }
+
+    [Fact]
+    public void Pmo_Scale_Texts_Are_Translated_In_Every_Projects_Language()
+    {
+        // Die Stufenbeschreibungen sind C#-Paare in PmRiskTemplates und werden dynamisch uebersetzt; der Razor-Test
+        // findet sie nicht, deshalb hier.
+        var texts = PmRiskTemplates.ProbabilityScale.Concat(PmRiskTemplates.ImpactScale).Select(s => s.German).ToList();
+        Assert.Equal(10, texts.Count);
+        foreach (var language in PmUiTextCatalog.Languages)
+            Assert.All(texts, t => Assert.True(PmUiTextCatalog.All[language].ContainsKey(t), $"{language} fehlt: {t}"));
+    }
+
     private sealed class TestDbContextFactory(DbContextOptions<AppDbContext> options) : IDbContextFactory<AppDbContext>
     {
         public AppDbContext CreateDbContext() => new(options);

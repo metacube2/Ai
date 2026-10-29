@@ -29,7 +29,7 @@ public sealed partial class PmService
             r.TaskId, task is null ? string.Empty : $"{projectKey}-{task.Number}", task?.Title ?? string.Empty,
             r.ReviewDate, r.ReviewDate is { } d && d.Date < DateTime.Today && PmRiskStatuses.IsActive(r.Status), r.UpdatedAtUtc,
             r.CostImpactChf, PmRiskLevels.ExpectedValue(r.Probability, r.CostImpactChf), r.ContingencyChf,
-            PmRiskLevels.ProbabilityPercent(r.Probability));
+            PmRiskLevels.ProbabilityPercent(r.Probability), IsArchived: r.IsArchived);
     }
 
     internal static PmRiskSummary SummarizeRisks(IEnumerable<PmRisk> risks)

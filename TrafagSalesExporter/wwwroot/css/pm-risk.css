@@ -92,3 +92,66 @@ html[data-theme="dark"] .pm-rk-cell-empty { background: color-mix(in srgb, var(-
 .pm-rk-import-result { padding: 10px 12px; border-radius: 10px; border-left: 4px solid var(--pm-done, #2F9E44); background: color-mix(in srgb, var(--pm-done, #2F9E44) 12%, transparent); }
 
 @media (prefers-reduced-motion: reduce) { .pm-rk-cell, button.pm-rk-kpi { transition: none; } .pm-rk-cell:hover, button.pm-rk-kpi:hover { transform: none; } }
+
+/* PMO-Erweiterung (Sitzung 2026-10-29): Franken je Risiko, Risiko-Burndown */
+.pm-rk-money { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.pm-rk-ev { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--mud-palette-action-default-hover); }
+.pm-rk-ev b { font-variant-numeric: tabular-nums; }
+.pm-rk-kpi-chf > b { font-variant-numeric: tabular-nums; }
+.pm-rk-kpi-short { border-left: 5px solid var(--pm-open, #C98A12); }
+.pm-rk-table th.pm-rk-num, .pm-rk-table td.pm-rk-num { text-align: right; font-variant-numeric: tabular-nums; }
+.pm-rk-burn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pm-rk-burn-chart .pm-line-chart { max-height: 150px; }
+.pm-rk-burn-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 2px; }
+.pm-rk-burn-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Projektstrukturplan, Praefix pm-wbs- */
+.pm-wbs { display: flex; flex-direction: column; gap: 12px; }
+.pm-wbs-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.pm-wbs-hint { display: flex; align-items: flex-start; gap: 8px; max-width: 720px; padding: 8px 12px; border-left: 4px solid var(--pm-accent); border-radius: 8px; background: color-mix(in srgb, var(--pm-accent) 8%, transparent); font-size: .84rem; }
+.pm-wbs-hint .pm-muted { display: block; font-size: .76rem; }
+.pm-wbs-search { width: 200px; }
+.pm-wbs-table td.pm-wbs-code { font-variant-numeric: tabular-nums; }
+.pm-wbs-table th.pm-wbs-num, .pm-wbs-table td.pm-wbs-num { text-align: right; font-variant-numeric: tabular-nums; }
+.pm-wbs-table td.pm-wbs-num { white-space: nowrap; }
+.pm-wbs-table td.pm-wbs-date { font-variant-numeric: tabular-nums; }
+.pm-wbs-table tr.pm-wbs-sumrow td { background: color-mix(in srgb, var(--mud-palette-text-primary) 4%, transparent); font-weight: 700; }
+.pm-wbs-table tr.pm-wbs-sumrow.pm-wbs-lv0 td { background: color-mix(in srgb, var(--pm-accent) 9%, transparent); }
+.pm-wbs-total { display: inline-block; margin-right: 6px; color: var(--mud-palette-text-secondary); font-weight: 700; }
+.pm-wbs-input { width: 84px; padding: 2px 6px; text-align: right; font-variant-numeric: tabular-nums; }
+.pm-wbs-input-chf { width: 108px; }
+.pm-wbs-select { width: 92px; padding: 2px 4px; }
+.pm-wbs-ms { color: var(--pm-accent); font-weight: 700; white-space: nowrap; }
+.pm-wbs-ct { display: inline-block; margin: 0 2px 0 8px; padding: 0 6px; border-radius: 5px; font-size: .7rem; font-weight: 800; background: color-mix(in srgb, var(--pm-wbs-c, #8E99A4) 20%, transparent); border-left: 3px solid var(--pm-wbs-c, #8E99A4); }
+.pm-wbs-ct:first-child { margin-left: 0; }
+.pm-wbs-ct-capex { --pm-wbs-c: #1E88E5; }
+.pm-wbs-ct-opex { --pm-wbs-c: #8E44AD; }
+html[data-theme="dark"] .pm-wbs-ct-capex { --pm-wbs-c: #4A9BE0; }
+html[data-theme="dark"] .pm-wbs-ct-opex { --pm-wbs-c: #A66CC4; }
+.pm-wbs-foot td { border-top: 2px solid var(--pm-line); background: var(--mud-palette-surface); }
+
+/* Decision Log, Praefix pm-dec- */
+.pm-dec { display: flex; flex-direction: column; gap: 12px; }
+.pm-dec-st-proposed { --pm-s: var(--pm-open, #C98A12); }
+.pm-dec-st-decided { --pm-s: var(--pm-done, #2F9E44); }
+.pm-dec-st-revoked { --pm-s: var(--pm-danger, #E03131); }
+.pm-dec-st-superseded { --pm-s: #8E99A4; }
+.pm-dec-cover { height: 6px; background: var(--pm-s); }
+.pm-dec-table tr { cursor: pointer; }
+.pm-dec-table tr.pm-dec-archived td { opacity: .5; font-style: italic; }
+.pm-dec-table td.pm-dec-date { font-variant-numeric: tabular-nums; }
+.pm-dec-table td.pm-dec-td-text { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mud-palette-text-secondary); }
+.pm-dec-statuses { display: flex; flex-wrap: wrap; gap: 6px; }
+.pm-dec-statuses .pm-chip { border-left: 3px solid var(--pm-s); }
+.pm-dec-statuses .pm-chip.pm-on { background: color-mix(in srgb, var(--pm-s) 18%, transparent); border-color: var(--pm-s); }
+.pm-dec-statuses .pm-chip:disabled { cursor: default; opacity: .75; }
+.pm-dec-statuses .pm-chip.pm-on:disabled { opacity: 1; }
+
+/* Vorlagen mit fertigem Plan im Formular "Neues Projekt": kleine Gantt-Balken statt Karten */
+.pm-template-productdevelopment, .pm-template-itproject { flex-direction: column; gap: 5px; }
+.pm-template-productdevelopment i, .pm-template-itproject i { flex: 1; border-radius: 3px; background: var(--pm-accent); opacity: .75; }
+.pm-template-productdevelopment i:nth-child(1), .pm-template-itproject i:nth-child(1) { margin-right: 60%; }
+.pm-template-productdevelopment i:nth-child(2), .pm-template-itproject i:nth-child(2) { margin: 0 25% 0 35%; }
+.pm-template-productdevelopment i:nth-child(3), .pm-template-itproject i:nth-child(3) { margin-left: 70%; }
+.pm-template-itproject i { background: var(--pm-progress, #1E88E5); }
+.pm-create-date { width: 170px; }

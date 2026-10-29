@@ -80,6 +80,26 @@
         </div>
         <div class="pm-small pm-muted">@PmRiskLabels.ImpactHelp(UiText, _edit.Impact)</div>
 
+        @* Quantitative Bewertung (Sitzung 2026-10-29): Erwartungswert = Kosten bei Eintritt x Wahrscheinlichkeit in Prozent. *@
+        <div class="pm-rk-money pm-mt">
+            <div>
+                <label class="pm-flabel">@T("Kosten bei Eintritt (CHF)", "Cost if it occurs (CHF)")</label>
+                <input type="number" min="0" step="1000" class="pm-input" disabled="@(!Editable)" @bind="_edit.CostImpactChf" @bind:event="oninput" />
+            </div>
+            <div>
+                <label class="pm-flabel">@T("Reserve (CHF)", "Contingency reserve (CHF)")</label>
+                <input type="number" min="0" step="1000" class="pm-input" disabled="@(!Editable)" @bind="_edit.ContingencyChf" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="pm-rk-ev">
+            <span class="pm-small pm-muted">@T("Erwartungswert", "Expected value")</span>
+            <b>@($"{Percent} % × {PmRiskLabels.Chf(_edit.CostImpactChf)} = {PmRiskLabels.Chf(ExpectedValue)} CHF")</b>
+            @if (Editable && ExpectedValue > 0 && Math.Abs(_edit.ContingencyChf - ExpectedValue) > 0.005)
+            {
+                <button type="button" class="pm-link pm-small" @onclick="() => _edit.ContingencyChf = ExpectedValue">@T("Erwartungswert als Reserve übernehmen", "Use expected value as reserve")</button>
+            }
+        </div>
+
         <div class="pm-fields pm-mt">
             <label>@T("Kategorie", "Category")</label>
             <select class="pm-input" disabled="@(!Editable)" value="@_edit.Category" @onchange="e => _edit.Category = e.Value?.ToString() ?? PmRiskCategories.Schedule">
@@ -208,9 +228,14 @@
             {
                 Id = Risk.Id, Title = Risk.Title, Description = Risk.Description, Category = Risk.Category,
                 Probability = Risk.Probability, Impact = Risk.Impact, Status = Risk.Status, OwnerLogin = Risk.OwnerLogin,
-                Mitigation = Risk.Mitigation, Contingency = Risk.Contingency, TaskId = Risk.TaskId, ReviewDate = Risk.ReviewDate
+                Mitigation = Risk.Mitigation, Contingency = Risk.Contingency, TaskId = Risk.TaskId, ReviewDate = Risk.ReviewDate,
+                CostImpactChf = Risk.CostImpactChf, ContingencyChf = Risk.ContingencyChf
             };
     }
+
+    private int Percent => PmRiskLevels.ProbabilityPercent(_edit.Probability);
+
+    private double ExpectedValue => PmRiskLevels.ExpectedValue(_edit.Probability, _edit.CostImpactChf);
 
     private void SetTask(ChangeEventArgs e) =>
         _edit.TaskId = int.TryParse(e.Value?.ToString(), out var id) ? id : null;

@@ -86,6 +86,17 @@
                     <label class="pm-flabel">@T("Beschreibung", "Description")</label>
                     <input class="pm-input" value="@_new.Description" placeholder="@T("Ziel und Umfang in einem Satz", "Goal and scope in one sentence")" @oninput="e => _new.Description = e.Value?.ToString() ?? string.Empty" />
                 </div>
+                @* Startdatum (Sitzung 2026-10-29): die Vorlagen mit fertigem Plan rechnen ihre Termine ab diesem Tag. *@
+                <div class="pm-create-wide">
+                    <label class="pm-flabel">@T("Projektstart", "Project start")</label>
+                    <div class="pm-row pm-wrap">
+                        <input type="date" class="pm-input pm-create-date" value="@(_new.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)" @onchange="SetStartDate" />
+                        @if (HasPlan(_new.Template))
+                        {
+                            <span class="pm-muted pm-small">@string.Format(T("Der Plan der Vorlage wird ab {0} gerechnet.", "The template plan is scheduled from {0}."), (_new.StartDate ?? DateTime.Today).ToString("dd.MM.yyyy"))</span>
+                        }
+                    </div>
+                </div>
                 <div>
                     <label class="pm-flabel">@T("Farbe", "Colour")</label>
                     <div class="pm-swatches">
@@ -349,6 +360,12 @@
             _new.Key = PmService.SuggestKey(_new.Name);
     }
 
+    private static bool HasPlan(string template) =>
+        template is TrafagSalesExporter.Models.PmTemplates.ProductDevelopment or TrafagSalesExporter.Models.PmTemplates.ItProject;
+
+    private void SetStartDate(ChangeEventArgs e) =>
+        _new.StartDate = DateTime.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d) ? d.Date : null;
+
     private async Task Create()
     {
         if (_busy)
@@ -358,7 +375,8 @@
         {
             var id = await Pm.CreateProjectAsync(_user, _new);
             var key = (await Pm.GetProjectsAsync(_user)).First(x => x.Id == id).Key;
-            Nav.NavigateTo($"projekte/{key}?view=settings");
+            // Vorlagen mit fertigem Plan direkt im Raster oeffnen, die anderen in den Einstellungen (Team einladen).
+            Nav.NavigateTo(HasPlan(_new.Template) ? $"projekte/{key}?view=sheet" : $"projekte/{key}?view=settings");
         }
         catch (PmException ex)
         {

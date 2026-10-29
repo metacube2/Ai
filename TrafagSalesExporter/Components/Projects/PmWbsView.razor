@@ -1,0 +1,236 @@
+@* Projektstrukturplan (Sitzung 2026-10-29): Schnittstelle zwischen Projektwerkzeug und SAP PS. Je Element Soll-Stunden,
+   Soll-Franken und Kostenart (CAPEX/OPEX); Sammelzeilen zeigen die Summe ihrer Unterelemente grau und duerfen trotzdem
+   eigene Werte tragen (z. B. Phasenleitung). Gliederung und Termine kommen aus dem Raster. Der CSV-Export ist die
+   Vorlage fuer PS; nach SAP wird nichts geschrieben. *@
+@using TrafagSalesExporter.Models
+@inject IUiTextService UiText
+@inject IPmService Pm
+@inject IJSRuntime JsRuntime
+
+<div class="pm-wbs">
+    <div class="pm-wbs-head">
+        <div class="pm-wbs-hint">
+            <MudIcon Icon="@Icons.Material.Outlined.AccountTree" Size="Size.Small" />
+            <span>@T("Schnittstelle zu SAP PS: je Element Geld und Zeit; nach SAP wird nichts geschrieben.", "Interface to SAP PS: money and time per element; nothing is written to SAP.")
+                <span class="pm-muted">@T("Gliederung und Termine stammen aus dem Raster.", "Structure and dates come from the grid.")</span></span>
+        </div>
+        <span class="pm-grow"></span>
+        <input type="search" class="pm-input pm-wbs-search" placeholder="@T("Elemente suchen", "Search elements")" value="@_search" @oninput="e => _search = e.Value?.ToString() ?? string.Empty" />
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.FileDownload" Disabled="@(_wbs is null || _wbs.Rows.Count == 0 || _busy)" OnClick="ExportCsv">@T("Als CSV für Excel/SAP exportieren", "Export as CSV for Excel/SAP")</MudButton>
+    </div>
+
+    @if (_wbs is null)
+    {
+        <div class="pm-panel-loading"><MudProgressCircular Indeterminate="true" Size="Size.Small" /></div>
+    }
+    else if (_wbs.Rows.Count == 0)
+    {
+        <div class="pm-empty">
+            <MudIcon Icon="@Icons.Material.Outlined.AccountTree" Style="font-size:56px" />
+            <h3>@T("Noch keine Elemente im Projektstrukturplan.", "No elements in the work breakdown structure yet.")</h3>
+            <p>@T("Der Projektstrukturplan entsteht aus der Gliederung im Raster: Phasen als Sammelzeilen, Arbeitspakete darunter.", "The work breakdown structure follows the outline in the grid: phases as summary rows, work packages below.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="pm-table-wrap">
+            <table class="pm-table pm-wbs-table">
+                <thead>
+                    <tr>
+                        <th>@T("PSP-Element", "WBS element")</th>
+                        <th>@T("Bezeichnung", "Description")</th>
+                        <th>@T("Typ", "Type")</th>
+                        <th>@T("Start", "Start")</th>
+                        <th>@T("Ende", "End")</th>
+                        <th class="pm-wbs-num">@T("Soll-Stunden", "Planned hours")</th>
+                        <th class="pm-wbs-num">@T("Soll-CHF", "Planned CHF")</th>
+                        <th>@T("Kostenart", "Cost type")</th>
+                        <th>@T("Verantwortlich", "Owner")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in VisibleRows)
+                    {
+                        var r = row;
+                        <tr class="@(r.HasChildren ? "pm-wbs-sumrow" : "") pm-wbs-lv@(Math.Min(r.Level, 4))">
+                            <td class="pm-wbs-code" style="padding-left:@(8 + r.Level * 18)px"><span class="pm-key">@r.Code</span></td>
+                            <td class="pm-td-title">
+                                <button type="button" class="pm-link" title="@r.Key" @onclick="() => OnOpen.InvokeAsync(r.TaskId)">@r.Title</button>
+                            </td>
+                            <td>
+                                @if (r.IsMilestone)
+                                {
+                                    <span class="pm-wbs-ms">◆ @T("Meilenstein", "Milestone")</span>
+                                }
+                                else
+                                {
+                                    @PmLabels.Type(UiText, r.Type)
+                                }
+                            </td>
+                            <td class="pm-wbs-date">@(r.Start?.ToString("dd.MM.yyyy") ?? string.Empty)</td>
+                            <td class="pm-wbs-date">@(r.End?.ToString("dd.MM.yyyy") ?? string.Empty)</td>
+                            <td class="pm-wbs-num">
+                                @if (r.HasChildren)
+                                {
+                                    <span class="pm-wbs-total" title="@T("Summe mit Unterelementen", "Total including sub-elements")">Σ @Hours(r.TotalHours)</span>
+                                }
+                                @if (CanEdit)
+                                {
+                                    <input type="number" min="0" step="1" class="pm-input pm-wbs-input" value="@Inv(r.OwnHours)" placeholder="@(r.HasChildren ? T("eigene", "own") : "0")"
+                                           title="@(r.HasChildren ? T("Eigene Stunden dieses Elements, zusätzlich zu den Unterelementen", "Own hours of this element, in addition to the sub-elements") : string.Empty)"
+                                           @onchange="e => Update(r, PmService.WbsFields.Hours, e.Value)" />
+                                }
+                                else if (!r.HasChildren || r.OwnHours > 0)
+                                {
+                                    <span>@Hours(r.OwnHours)</span>
+                                }
+                            </td>
+                            <td class="pm-wbs-num">
+                                @if (r.HasChildren)
+                                {
+                                    <span class="pm-wbs-total" title="@T("Summe mit Unterelementen", "Total including sub-elements")">Σ @PmRiskLabels.Chf(r.TotalCostChf)</span>
+                                }
+                                @if (CanEdit)
+                                {
+                                    <input type="number" min="0" step="100" class="pm-input pm-wbs-input pm-wbs-input-chf" value="@Inv(r.OwnCostChf)" placeholder="@(r.HasChildren ? T("eigene", "own") : "0")"
+                                           title="@(r.HasChildren ? T("Eigene Franken dieses Elements, zusätzlich zu den Unterelementen", "Own francs of this element, in addition to the sub-elements") : string.Empty)"
+                                           @onchange="e => Update(r, PmService.WbsFields.Cost, e.Value)" />
+                                }
+                                else if (!r.HasChildren || r.OwnCostChf > 0)
+                                {
+                                    <span>@PmRiskLabels.Chf(r.OwnCostChf)</span>
+                                }
+                            </td>
+                            <td>
+                                @if (CanEdit)
+                                {
+                                    <select class="pm-input pm-wbs-select" value="@r.CostType" @onchange="e => Update(r, PmService.WbsFields.CostType, e.Value)">
+                                        <option value="">–</option>
+                                        @foreach (var costType in PmCostTypes.All)
+                                        {
+                                            <option value="@costType">@costType.ToUpperInvariant()</option>
+                                        }
+                                    </select>
+                                }
+                                else if (r.CostType.Length > 0)
+                                {
+                                    <span class="pm-wbs-ct pm-wbs-ct-@r.CostType.ToLowerInvariant()">@r.CostType.ToUpperInvariant()</span>
+                                }
+                            </td>
+                            <td>
+                                @if (r.AssigneeName.Length > 0)
+                                {
+                                    <span>@PmText.PersonName(r.AssigneeName)</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="pm-wbs-foot">
+                        <td colspan="5"><b>@T("Summe Projekt", "Project total")</b> <span class="pm-muted pm-small">@_wbs.ProjectKey · @_wbs.ProjectName</span></td>
+                        <td class="pm-wbs-num"><b>@Hours(_wbs.TotalHours)</b></td>
+                        <td class="pm-wbs-num"><b>@PmRiskLabels.Chf(_wbs.TotalCostChf)</b></td>
+                        <td colspan="2" class="pm-small">
+                            <span class="pm-wbs-ct pm-wbs-ct-capex">CAPEX</span> @PmRiskLabels.Chf(_wbs.CapexChf)
+                            <span class="pm-wbs-ct pm-wbs-ct-opex">OPEX</span> @PmRiskLabels.Chf(_wbs.OpexChf)
+                            <span class="pm-muted">@T("ohne Kostenart", "without cost type") @PmRiskLabels.Chf(_wbs.OpenCostTypeChf)</span>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            @if (VisibleRows.Count == 0)
+            {
+                <div class="pm-empty-col">@T("Kein Element passt zur Suche.", "No element matches the search.")</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public int ProjectId { get; set; }
+    [Parameter, EditorRequired] public PmUser User { get; set; } = PmUser.Anonymous;
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public int Version { get; set; }
+    [Parameter] public EventCallback<int> OnOpen { get; set; }
+    [Parameter] public EventCallback<(string German, string English)> OnError { get; set; }
+
+    private PmWbs? _wbs;
+    private int _loadedProject = -1;
+    private int _loadedVersion = -1;
+    private string _search = string.Empty;
+    private bool _busy;
+
+    // Suche filtert auf passende Elemente; der PSP-Code zeigt weiterhin die Einordnung im Plan.
+    private List<PmWbsRow> VisibleRows => _wbs is null
+        ? []
+        : _search.Trim().Length == 0
+            ? _wbs.Rows.ToList()
+            : _wbs.Rows.Where(r => Contains(r.Title) || Contains(r.Code) || Contains(r.Key) || Contains(r.AssigneeName)).ToList();
+
+    private bool Contains(string value) => value.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Nur bei neuem Projekt oder neuer Version laden; jedes andere Neuzeichnen des Elternteils ignorieren.
+        if (ProjectId == _loadedProject && Version == _loadedVersion)
+            return;
+        _loadedProject = ProjectId;
+        _loadedVersion = Version;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _wbs = await Pm.GetWbsAsync(ProjectId, User);
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+    }
+
+    private async Task Update(PmWbsRow row, string field, object? value)
+    {
+        try
+        {
+            await Pm.UpdateWbsFieldAsync(User, row.TaskId, field, value?.ToString());
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+        await LoadAsync();
+    }
+
+    private async Task ExportCsv()
+    {
+        if (_busy || _wbs is null)
+            return;
+        _busy = true;
+        try
+        {
+            var csv = await Pm.ExportWbsCsvAsync(ProjectId, User);
+            var fileName = $"PSP_{_wbs.ProjectKey}_{DateTime.Today.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture)}.csv";
+            await JsRuntime.InvokeVoidAsync("trafagDownload.saveTextFile", fileName, csv, "text/csv;charset=utf-8");
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string Hours(double value) => value.ToString("#,##0.##", HoursFormat);
+
+    private static readonly System.Globalization.NumberFormatInfo HoursFormat = new() { NumberGroupSeparator = "'", NumberDecimalSeparator = "." };
+
+    private static string Inv(double value) => value == 0 ? string.Empty : value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

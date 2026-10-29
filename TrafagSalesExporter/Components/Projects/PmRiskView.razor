@@ -1,8 +1,9 @@
 @* Risikoregister (2026-10-29, Wunsch Ingo „auch Risikobewertung, Kritikalitaet“): Kennzahlen, Risikomatrix 5x5
    (Wahrscheinlichkeit senkrecht, Auswirkung waagrecht), Liste mit Filtern und Seitenpanel zum Erfassen. Die Stufe
    folgt aus Wahrscheinlichkeit x Auswirkung (PmRiskLevels). Archivierte Risiken zaehlen weder in Kennzahlen noch
-   in der Matrix. PmRiskView (DTO) traegt kein Archiv-Kennzeichen; deshalb wird bei "Archivierte zeigen" zweimal
-   geladen und die Differenz als archiviert markiert. *@
+   in der Matrix; das DTO traegt dafuer IsArchived (seit 2026-10-29, vorher wurde doppelt geladen).
+   PMO-Erweiterung (Sitzung 2026-10-29): Franken je Risiko (Erwartungswert = Kosten bei Eintritt x Wahrscheinlichkeit,
+   Reserve), Summen im Kopf, Risiko-Burndown aus dem Tagesstand und Standardrisiken der Projektvorlage. *@
 @using TrafagSalesExporter.Models
 @using RiskItem = TrafagSalesExporter.Services.Projects.PmRiskView
 @inject IUiTextService UiText
@@ -35,12 +36,26 @@
         <button type="button" class="pm-rk-kpi @(OverdueCount > 0 ? "pm-rk-kpi-overdue" : "") @(_overdueOnly ? "pm-on" : "")" title="@T("Nur überfällige Überprüfungen zeigen", "Show overdue reviews only")" @onclick="() => _overdueOnly = !_overdueOnly">
             <b>@OverdueCount</b><span>@T("Überprüfungen überfällig", "reviews overdue")</span>
         </button>
+        <div class="pm-rk-kpi pm-rk-kpi-chf" title="@T("Summe aus Kosten bei Eintritt × Wahrscheinlichkeit der aktiven Risiken", "Sum of cost if it occurs × probability of the active risks")">
+            <b>@PmRiskLabels.Chf(ExpectedValueSum)</b><span>@T("Erwartungswert in CHF", "expected value in CHF")</span>
+        </div>
+        <div class="pm-rk-kpi pm-rk-kpi-chf @(ContingencySum + 0.005 < ExpectedValueSum ? "pm-rk-kpi-short" : "")"
+             title="@(ContingencySum + 0.005 < ExpectedValueSum ? T("Die Reserve deckt den Erwartungswert nicht.", "The reserve does not cover the expected value.") : T("Summe der Reserven der aktiven Risiken", "Sum of the reserves of the active risks"))">
+            <b>@PmRiskLabels.Chf(ContingencySum)</b><span>@T("Reserve in CHF", "reserve in CHF")</span>
+        </div>
         <span class="pm-grow"></span>
         @if (CanEdit)
         {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.PlaylistAdd" Disabled="_busy" OnClick="AddStandardRisks"
+                       title="@T("Vorschläge der PMO-Vorlage für diese Projektart; schon erfasste Titel werden übersprungen.", "Suggestions from the PMO template for this kind of project; titles already recorded are skipped.")">@T("Standardrisiken übernehmen", "Add standard risks")</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="NewRisk">@T("Neues Risiko", "New risk")</MudButton>
         }
     </div>
+
+    @if (_info is not null)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" ShowCloseIcon="true" CloseIconClicked="() => _info = null">@_info</MudAlert>
+    }
 
     <div class="pm-rk-top">
         <section class="pm-chart-card pm-rk-matrix-card">
@@ -105,6 +120,24 @@
         </section>
     </div>
 
+    <section class="pm-chart-card pm-rk-burn">
+        <h4>@T("Risiko-Burndown", "Risk burndown")
+            <span class="pm-muted pm-small">@T("Ein Stand je Tag, bei jeder Änderung an einem Risiko nachgeführt.", "One point per day, updated with every change to a risk.")</span>
+        </h4>
+        @if (_burn.Count == 0)
+        {
+            <div class="pm-muted pm-small">@T("Der Verlauf beginnt mit der nächsten Änderung an einem Risiko.", "The history starts with the next change to a risk.")</div>
+        }
+        else
+        {
+            <div class="pm-rk-burn-grid">
+                @BurnChart(T("Aktive Risiken", "Active risks"), _burn.Select(p => (double)p.Active).ToList(), _burn.Select(p => (double)p.Critical).ToList(), T("davon kritisch", "of which critical"), false)
+                @BurnChart(T("Summe Score", "Total score"), _burn.Select(p => (double)p.TotalScore).ToList(), null, string.Empty, false)
+                @BurnChart(T("Erwartungswert in CHF", "expected value in CHF"), _burn.Select(p => p.ExpectedValueChf).ToList(), _burn.Select(p => p.ContingencyChf).ToList(), T("Reserve", "Reserve"), true)
+            </div>
+        }
+    </section>
+
     <div class="pm-filters pm-mt">
         <select class="pm-input pm-filter-select" value="@_status" @onchange="e => _status = e.Value?.ToString() ?? string.Empty">
             <option value="">@T("Alle Status", "All statuses")</option>
@@ -167,6 +200,8 @@
                         <th title="@T("Auswirkung", "Impact")">@T("A", "I")</th>
                         <th>@T("Wert", "Score")</th>
                         <th>@T("Kritikalität", "Criticality")</th>
+                        <th class="pm-rk-num" title="@T("Kosten bei Eintritt × Wahrscheinlichkeit", "Cost if it occurs × probability")">@T("Erwartungswert", "Expected value")</th>
+                        <th class="pm-rk-num">@T("Reserve", "Reserve")</th>
                         <th>@T("Status", "Status")</th>
                         <th>@T("Verantwortlich", "Owner")</th>
                         <th>@T("Aufgabe", "Task")</th>
@@ -178,7 +213,7 @@
                     @foreach (var risk in Visible)
                     {
                         var r = risk;
-                        var archived = _archivedIds.Contains(r.Id);
+                        var archived = r.IsArchived;
                         <tr class="@(archived ? "pm-rk-archived" : "") @(PmRiskStatuses.IsActive(r.Status) ? "" : "pm-rk-inactive")" @onclick="() => Open(r)">
                             <td><span class="pm-key">@r.Key</span></td>
                             <td class="pm-td-title">@r.Title
@@ -188,6 +223,8 @@
                             <td title="@PmRiskLabels.Impact(UiText, r.Impact)">@r.Impact</td>
                             <td><span class="pm-rk-score pm-rk-lv-@r.Level.ToLowerInvariant()">@r.Score</span></td>
                             <td><span class="pm-rk-badge pm-rk-lv-@r.Level.ToLowerInvariant()">@PmRiskLabels.Level(UiText, r.Level)</span></td>
+                            <td class="pm-rk-num" title="@(r.CostImpactChf > 0 ? $"{r.ProbabilityPercent} % × {PmRiskLabels.Chf(r.CostImpactChf)} CHF" : string.Empty)">@(r.CostImpactChf > 0 ? PmRiskLabels.Chf(r.ExpectedValueChf) : "–")</td>
+                            <td class="pm-rk-num">@(r.ContingencyChf > 0 ? PmRiskLabels.Chf(r.ContingencyChf) : "–")</td>
                             <td><span class="pm-status-chip pm-rk-st-@r.Status.ToLowerInvariant()">@PmRiskLabels.Status(UiText, r.Status)</span></td>
                             <td>
                                 @if (r.OwnerLogin.Length > 0)
@@ -227,7 +264,7 @@
 @if (_panelOpen)
 {
     <PmRiskPanel ProjectId="ProjectId" Board="Board" User="User" CanEdit="CanEdit" Risk="_panelRisk"
-                 IsArchived="@(_panelRisk is not null && _archivedIds.Contains(_panelRisk.Id))"
+                 IsArchived="@(_panelRisk?.IsArchived ?? false)"
                  OnSaved="Saved" OnClose="() => _panelOpen = false" OnOpenTask="OpenTaskFromPanel" />
 }
 
@@ -248,7 +285,9 @@
     private sealed record Cell(int Probability, int Impact);
 
     private List<RiskItem> _risks = [];
-    private HashSet<int> _archivedIds = [];
+    private IReadOnlyList<PmRiskBurndownPoint> _burn = [];
+    private string? _info;
+    private bool _busy;
     private bool _loaded;
     private int _loadedProject = -1;
     private int _loadedVersion = -1;
@@ -264,8 +303,12 @@
 
     // Aktive, nicht archivierte Risiken fuer Kennzahlen und Matrix, sortiert nach Wert absteigend.
     private List<RiskItem> ActiveRisks => _risks
-        .Where(r => !_archivedIds.Contains(r.Id) && PmRiskStatuses.IsActive(r.Status))
+        .Where(r => !r.IsArchived && PmRiskStatuses.IsActive(r.Status))
         .OrderByDescending(r => r.Score).ThenBy(r => r.Number).ToList();
+
+    private double ExpectedValueSum => ActiveRisks.Sum(r => r.ExpectedValueChf);
+
+    private double ContingencySum => ActiveRisks.Sum(r => Math.Max(r.ContingencyChf, 0));
 
     private string MaxLevel => ActiveRisks.Count == 0 ? string.Empty : ActiveRisks.Select(r => r.Level).MaxBy(PmRiskLevels.Rank)!;
 
@@ -281,7 +324,7 @@
         .Where(r => !_mineOnly || string.Equals(r.OwnerLogin, User.Login, StringComparison.OrdinalIgnoreCase))
         .Where(r => !_overdueOnly || r.ReviewOverdue)
         .Where(r => _cell is null || (r.Probability == _cell.Probability && r.Impact == _cell.Impact))
-        .OrderBy(r => _archivedIds.Contains(r.Id))
+        .OrderBy(r => r.IsArchived)
         .ThenByDescending(r => PmRiskStatuses.IsActive(r.Status))
         .ThenByDescending(r => r.Score)
         .ThenBy(r => r.Number)
@@ -301,19 +344,8 @@
     {
         try
         {
-            var current = await Pm.GetRisksAsync(ProjectId, User, includeArchived: false);
-            if (_showArchived)
-            {
-                var all = await Pm.GetRisksAsync(ProjectId, User, includeArchived: true);
-                var currentIds = current.Select(r => r.Id).ToHashSet();
-                _archivedIds = all.Where(r => !currentIds.Contains(r.Id)).Select(r => r.Id).ToHashSet();
-                _risks = all.ToList();
-            }
-            else
-            {
-                _archivedIds = [];
-                _risks = current.ToList();
-            }
+            _risks = (await Pm.GetRisksAsync(ProjectId, User, includeArchived: _showArchived)).ToList();
+            _burn = await Pm.GetRiskBurndownAsync(ProjectId, User);
             if (_panelRisk is not null)
                 _panelRisk = _risks.FirstOrDefault(r => r.Id == _panelRisk.Id);
         }
@@ -332,6 +364,78 @@
         _showArchived = e.Value is true;
         await LoadAsync();
     }
+
+    // PMO-Vorlage: Standardrisiken der Projektart (Board.Project.Template) uebernehmen, vorhandene Titel ueberspringen.
+    private async Task AddStandardRisks()
+    {
+        if (_busy)
+            return;
+        _busy = true;
+        try
+        {
+            var added = await Pm.AddStandardRisksAsync(User, ProjectId, Board.Project.Template);
+            _info = added > 0
+                ? string.Format(T("{0} Standardrisiken übernommen.", "{0} standard risks added."), added)
+                : T("Alle Standardrisiken sind schon erfasst.", "All standard risks are already recorded.");
+            await LoadAsync();
+        }
+        catch (PmException ex)
+        {
+            await OnError.InvokeAsync((ex.German, ex.English));
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    // Kleines Liniendiagramm fuer den Burndown: Hauptlinie und optional eine gestrichelte Vergleichslinie gleicher Einheit.
+    private const double BurnW = 300, BurnH = 120, BurnL = 52, BurnB = 18, BurnTop = 8;
+
+    private RenderFragment BurnChart(string title, IReadOnlyList<double> main, IReadOnlyList<double>? second, string secondLabel, bool chf)
+    {
+        var max = Math.Max(1, Math.Max(main.Max(), second is { Count: > 0 } ? second.Max() : 0));
+        string Label(double v) => chf ? PmRiskLabels.Chf(v) : Math.Round(v).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return @<div class="pm-rk-burn-chart">
+            <div class="pm-small pm-rk-burn-legend">
+                <span><i class="pm-sw pm-sw-line"></i><b>@title</b> @Label(main[^1])</span>
+                @if (second is { Count: > 0 })
+                {
+                    <span class="pm-muted"><i class="pm-sw pm-sw-dash"></i>@secondLabel @Label(second[^1])</span>
+                }
+            </div>
+            <svg viewBox="0 0 @Inv(BurnW) @Inv(BurnH)" class="pm-line-chart" role="img" aria-label="@title">
+                @foreach (var tick in new[] { 0d, max })
+                {
+                    <g>
+                        <line x1="@Inv(BurnL)" x2="@Inv(BurnW - 6)" y1="@Inv(BurnY(tick, max))" y2="@Inv(BurnY(tick, max))" class="pm-grid" />
+                        <text x="@Inv(BurnL - 4)" y="@Inv(BurnY(tick, max) + 4)" class="pm-axis" text-anchor="end">@Label(tick)</text>
+                    </g>
+                }
+                <text x="@Inv(BurnL)" y="@Inv(BurnH - 4)" class="pm-axis">@_burn[0].Day.ToString("dd.MM.")</text>
+                <text x="@Inv(BurnW - 6)" y="@Inv(BurnH - 4)" class="pm-axis" text-anchor="end">@_burn[^1].Day.ToString("dd.MM.")</text>
+                @if (second is { Count: > 0 })
+                {
+                    <polyline points="@BurnPoints(second, max)" class="pm-line-ideal" />
+                }
+                <polyline points="@BurnPoints(main, max)" class="pm-line-actual" />
+                @for (var i = 0; i < main.Count; i++)
+                {
+                    var index = i;
+                    <circle cx="@Inv(BurnX(index, main.Count))" cy="@Inv(BurnY(main[index], max))" r="3" class="pm-line-dot"><title>@_burn[index].Day.ToString("dd.MM.yyyy"): @Label(main[index])@(second is { Count: > 0 } ? $" · {secondLabel} {Label(second[index])}" : string.Empty)</title></circle>
+                }
+            </svg>
+        </div>;
+    }
+
+    private static double BurnX(int index, int count) => BurnL + (BurnW - BurnL - 6) * (count <= 1 ? 1 : index / (double)(count - 1));
+
+    private static double BurnY(double value, double max) => BurnTop + (BurnH - BurnTop - BurnB) * (1 - value / max);
+
+    private static string BurnPoints(IReadOnlyList<double> values, double max) =>
+        string.Join(" ", values.Select((v, i) => $"{Inv(BurnX(i, values.Count))},{Inv(BurnY(v, max))}"));
+
+    private static string Inv(double v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
     private bool IsCell(int probability, int impact) => _cell is { } c && c.Probability == probability && c.Impact == impact;
 
@@ -371,6 +475,7 @@
 
     private async Task Saved()
     {
+        _info = null;
         _panelOpen = false;
         _panelRisk = null;
         await LoadAsync();

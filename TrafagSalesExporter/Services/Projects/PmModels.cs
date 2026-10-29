@@ -218,7 +218,7 @@ public sealed record PmRiskView(
     int Id, int Number, string Key, string Title, string Description, string Category, int Probability, int Impact,
     int Score, string Level, string Status, string OwnerLogin, string OwnerName, string Mitigation, string Contingency,
     int? TaskId, string TaskKey, string TaskTitle, DateTime? ReviewDate, bool ReviewOverdue, DateTime UpdatedAtUtc,
-    double CostImpactChf = 0, double ExpectedValueChf = 0, double ContingencyChf = 0, int ProbabilityPercent = 0);
+    double CostImpactChf = 0, double ExpectedValueChf = 0, double ContingencyChf = 0, int ProbabilityPercent = 0, bool IsArchived = false);
 
 public sealed record PmRiskSummary(int Active, int Critical, int High, int Medium, int Low, string MaxLevel,
     double ExpectedValueChf = 0, double ContingencyChf = 0)
