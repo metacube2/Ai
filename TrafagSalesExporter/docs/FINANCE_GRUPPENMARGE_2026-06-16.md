@@ -1,6 +1,6 @@
 # Finance Gruppenmarge
 
-Stand: 2026-06-16
+Stand: 2026-10-29 (ueberholte Aussagen markiert; fachlich 2026-06-16 mit Nachtraegen bis 2026-09-02)
 
 ## Zweck
 
@@ -46,6 +46,8 @@ Lokale Pruefung der zentralen Datenbank am 2026-06-16:
 - CH/TRCH: fuer 2025 sind `StandardCost` und Supplier-Felder in den geprueften zentralen Zeilen leer bzw. 0. Gruppenmarge ist damit offen.
 - IN/TRIN und IT/TRIT haben teilweise Standardkosten und interne Lieferanten, aber weiterhin offene Zeilen.
 - ES/FR/UK/US zeigen bekannte Kostenbasis aus vorhandenen Standardkosten, haben aber ebenfalls offene Zeilen je nach Datenbestand.
+
+*Ueberholt am 2026-10-29 fuer CH/AT: die Kostenbasis kommt seit Juli 2026 aus `WAVWR_DC / FKIMG` mit Fallback `STPRS_HC` (`ISS-002` erledigt), Fuellgrad am 2026-08-12 CH 96,6 %, AT 99,9 % (`ISS-007`).*
 
 Konsequenz: Die Sicht darf aktuell nicht als finale Marge interpretiert werden. Sie zeigt, welche Laender/Sparten eine belastbare Kostenbasis haben und wo Daten oder fachliche Regeln fehlen.
 
@@ -129,6 +131,7 @@ nutzbaren Standardkosten-Wert je Material in SAP B1. Das ist keine Codefrage meh
 eine offene Frage an Andreas/TR-IT-Controlling: Wo (wenn ueberhaupt) wird die
 Herstellkosten-Kalkulation gefuehrt? TR IN war vom Entwicklungsrechner aus nicht
 erreichbar (Netzwerk/Firewall) und daher gar nicht pruefbar.
+*Ueberholt am 2026-10-29: Konzernkosten TR IT und TR IN kommen seit 2026-08-25 15:21 produktiv aus dem juengsten positiven B1-Belegwert `INV1/RIN1.StockPrice`, siehe Nachtrag 2026-07-27 unten und `docs/FINANCE_STANDARDKOSTEN.md`.*
 
 ### Nachtrag 2026-07-16: Produktiv noch nicht wirksam — Root Cause gefunden
 
@@ -160,6 +163,7 @@ danach ZSCHWEIZ-Import erneut anstossen und `GroupStandardCosts`/eine neu erzeug
 `Sales_All`- bzw. Nachweis-Datei erneut pruefen (gleiche Stichprobenmethode: Filter auf
 `SupplierName LIKE '%Trafag AG%'` im Blatt „Gruppenmarge Details", `CostSource` muss
 `Konzernkosten TR AG (MBEW-STPRS)` zeigen).
+*Ueberholt am 2026-10-29: Die Service-URL ist auf `travp762` korrigiert und `GroupStandardCosts` war am 2026-07-31 mit 63'506 Werten fuer 1100/CHF gefuellt, siehe `docs/FINANCE_STANDARDKOSTEN.md` und `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` Abschnitt 2.4.*
 
 ## Nachtrag 2026-07-17: Supplier-Felder sind quellensystemisch strukturell leer (globales Problem)
 
@@ -188,11 +192,19 @@ strukturelle Gruende:
 >
 > Die Lehre gilt ueber UK hinaus: die Zeile stand hier als *strukturelle* Quellenluecke,
 > war aber eine Luecke auf **unserer** Seite. Das ist Vorrangregel 3 im `router.md`. Fuer
-> Deutschland steht genau dieselbe Pruefung noch aus.
+> Deutschland steht genau dieselbe Pruefung noch aus. *(ueberholt am 2026-10-29: am
+> 2026-09-29 geprueft, unsere Alphaplan-Query liest keine Lieferantenspalte; offen ist der
+> Schemaauszug, `ISS-003.3`, `docs/FINANCE_SUPPLIER.md` Abschnitt 3)*
+>
+> *Praezisiert am 2026-10-29 fuer die Ueberschrift dieses Nachtrags: „strukturell leer" gilt
+> nur fuer CH/AT (`FinanzdataSchweizOeSet` ohne Lieferantenfeld); diese Zeilen werden seit
+> 2026-08-12 ueber den CH-Werkstamm-Fallback klassifiziert (`ISS-003.1`). UK war eine
+> Mapping-Luecke, DE ist eine Query-Luecke (Alphaplan fuehrt Lieferanten), ES ist ungeklaert
+> (`ISS-003.3`). Siehe `docs/FINANCE_SUPPLIER.md` Abschnitte 3 und 5.*
 
 **Fachliche Konsequenz, die ueber reine Datenluecken hinausgeht:** Sind alle drei
 Supplier-Felder leer, liefert `GroupMarginSupplierClassifier.Resolve` `Unklar`, und
-`ResolveGroupMarginStatus` setzt dadurch **unabhaengig von der Kostenbasis** immer
+`ResolveGroupMarginStatus` *(seit Commit `515ab9d` vom 2026-08-06 `GroupMarginCalculator.ResolveStatus`)* setzt dadurch **unabhaengig von der Kostenbasis** immer
 `Lieferant unklar` (siehe Konstante `Unclear` und die Statuslogik). Status `Lieferant
 unklar` zaehlt als offene Kostenbasis (`HasOpenGroupMarginCostBasis`), also bleiben
 `Marge`/`%` `-`.
@@ -209,6 +221,7 @@ Lieferkategorie gelten (statt ueber die leeren Supplier-Textfelder erkannt zu we
 damit die WAVWR-Kostenbasis in der Marge wirksam wird? Betrifft nur die
 Klassifikationsregel (`GroupMarginSupplierClassifier`), keine Kostenberechnung. Noch
 NICHT umgesetzt — reine Dokumentation des Befunds, Entscheidung liegt bei Andreas/Finance.
+*Ueberholt am 2026-10-29: umgesetzt als CH/AT-Regel und CH-Werkstamm-Fallback (`MARC` Werk 1100 setzt `Intern / TR_AG`), produktiv seit 2026-08-11 und 2026-08-12, `ISS-003.1` erledigt; offen bleibt nur die Ausnahmefrage bei externem Einkaufsbeleg, `ISS-003.4`, siehe `docs/FINANCE_SUPPLIER.md` Abschnitte 1 und 6.*
 
 ## Nachtrag 2026-07-27: Sitzung Andreas — 3-Tabellen-Architektur bestaetigt, Supplier-Widerspruch offen
 
@@ -220,12 +233,15 @@ Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN.md`. Kurz:
   bestaetigt: TR-AG/IT/IN -> jeweilige Konzerntabelle, sonst -> Standardkosten der
   verkaufenden Landesgesellschaft (unveraendert).
 - **Noch offen:** Technischer Anbindungsweg TR-IT/TR-IN (Live-SAP-B1-Zugriff vs.
-  monatlicher Andreas-Export mit nur letztem Stand je Material).
+  monatlicher Andreas-Export mit nur letztem Stand je Material). *(ueberholt am 2026-10-29:
+  entschieden fuer den Live-B1-Weg ueber `INV1/RIN1.StockPrice`, produktiv seit 2026-08-25 15:21)*
 - **Widerspruch zum Nachtrag 2026-07-17 (oben):** Andreas beobachtete am 2026-07-27
   live, dass `SupplierCountry` "meistens gefuellt" ist — steht im Gegensatz zum
   dokumentierten Befund "CH/AT/UK/ES strukturell immer leer" (fuer UK ist dieser Befund
   inzwischen widerlegt, siehe Korrektur unter der Tabelle im Nachtrag 2026-07-17). Noch NICHT verifiziert,
-  welche Aussage/welcher Datenstand zutrifft. Separat davon: neuer Verdachtsbefund,
+  welche Aussage/welcher Datenstand zutrifft. *(geklaert, nachgefuehrt am 2026-10-29: am
+  2026-08-12 gemessen, CH/AT/DE/ES 0 %, UK 100 %, IT 71,2 %; die Lieferantenfelder sind
+  entweder alle drei gefuellt oder alle leer, `ISS-003`)* Separat davon: neuer Verdachtsbefund,
   dass `SupplierNumber` bei sehr vielen Zeilen (60-79 Tsd., Zaehlung im Gespraech nicht
   eindeutig) fehlt — Ursache ungeklaert, Analyse von Ingo und Andreas zugesagt.
 - Aktionspunkte/Deadlines: siehe Sitzungsmitschrift Abschnitt 5 (Sync-Termin Ende der
@@ -243,7 +259,8 @@ Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN.md`. Kurz:
   Zahlen und offener Fachfragen: `docs/FINANCE_STANDARDKOSTEN.md`
   Abschnitt 5b Befund 6. Hinweis: Der Kommentar in `Models/GroupStandardCost.cs` (Zeile
   12-16) transportiert noch die alte, irrefuehrende Schlussfolgerung und sollte
-  nachgezogen werden.
+  nachgezogen werden. *(erledigt, nachgeprueft am 2026-10-29: der Kommentar nennt jetzt
+  `INV1/RIN1.StockPrice` als Quelle fuer TR IN/TR IT)*
 
 ## Naechste technische Schritte nach Fachfreigabe
 

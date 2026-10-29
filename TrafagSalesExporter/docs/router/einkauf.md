@@ -1,6 +1,6 @@
 # Unterrouter Einkauf
 
-Zurueck: `router.md`. Stand: 2026-09-28.
+Zurueck: `router.md`. Stand: 2026-10-29 (Deploystand Review 29.09. und Kontrakte 08.10.); davor 2026-09-28.
 
 Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
@@ -8,7 +8,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
 | Bedarf | Datei |
 | --- | --- |
-| Konsistenzreview und technische Reparaturen 29.09. (lokal, nicht deployed); Zuordnung bestehender Fachfragen | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` |
+| Konsistenzreview und technische Reparaturen 29.09. (*ueberholt „lokal, nicht deployed“: produktiv seit 2026-09-29 10:07, `eafd1c5`*); Zuordnung bestehender Fachfragen | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` |
 | Kurzstand Einkauf | `docs/rag/PURCHASING.md` |
 | Laufende Hauptdoku, Formeln, PBIX-Bezug, Cache und Refresh | `docs/PURCHASING_DASHBOARD_2026-06-05.md` |
 | **Was ist umgesetzt, was offen, was zurueckgestellt** | `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` |
@@ -19,7 +19,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 | --- | --- |
 | **Sitzung Einkauf 2026-10-22**: Zwischenstand Dashboard bis 28.10. (stabilisieren, nichts Neues), Feedbackliste Erich/Sandro/Marco, neuer Wunsch Lieferantenbewertung/-entwicklung (Zertifikate ISO 9001, Massnahmen, Audits), Grundsatzfrage Handbestellwesen abschalten | `docs/EINKAUF_SITZUNG_2026-10-22.md` |
 | **Handbestellwesen**: Abloesung der alten PHP-Anwendung durch ein Modul im Dashboard, Ist-Befund, Zielbild, Oberflaeche wie im PHP, Phasen. **Stand 2026-10-27: produktiv**, zwei Masken auf derselben Datenbank (`/handbestellwesen` klassisch, `/bestellwesen` neu), Reiter sichtbar, PHP abgeschaltet, Freigabe wie PHP (umschaltbar); offen Zugriff, Grundtests, Stammdatenpflege (Abschnitt 6.8) | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` |
-| **Offener Mengenkontraktwert wie ME3L (inkl. abgelaufen), Abgrenzung zu „Abrufbestellungen zu Kontrakten“, LZ-/Sortiments-Einstiege im Spend-Aufriss** (lokal 2026-10-08, nicht deployed) | `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-10-08, Kurzfassung `docs/rag/PURCHASING.md` |
+| **Offener Mengenkontraktwert wie ME3L (inkl. abgelaufen), Abgrenzung zu „Abrufbestellungen zu Kontrakten“, LZ-/Sortiments-Einstiege im Spend-Aufriss** (lokal 2026-10-08, nicht deployed; *ueberholt: produktiv seit 2026-10-08 15:03, `4ba0c07`*) | `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-10-08, Kurzfassung `docs/rag/PURCHASING.md` |
 | **Lagerwert der Einkaufsteile (Wunsch Armin) und Wochenverlauf, MB5L, MBEW/MBEWH, Disponenten 001-005** | `docs/EINKAUF_LAGERWERT_2026-08-18.md` — Kachel produktiv und gespeichert (Abschnitte 10 und 12), **Verlauf je Woche produktiv seit 2026-09-28**, Einkauf-Lauf 10.09.-28.09. ausgefallen, abgesichert (Abschnitt 13.6) (Abschnitt 13), MB5L-Abgleich offen |
 | Materialtext im Spend-Drilldown, MAKT/MAKTX, Sprachfilter | `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-08-18 |
 | Welche Indikatoren echt rechnen, welche leer sind | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` |

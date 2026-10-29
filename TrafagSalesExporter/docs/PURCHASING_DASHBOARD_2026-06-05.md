@@ -2,6 +2,10 @@
 
 ## Nachtrag 2026-10-08: Offener Mengenkontraktwert (wie ME3L) und LZ-/Sortiments-Dimensionen, lokal — nicht deployed
 
+*Ueberholt am 2026-10-29: „lokal — nicht deployed“ gilt nicht mehr. Produktiv seit dem Deploy 2026-10-08 15:03
+(`4ba0c07`), Transporte T76K912724 und T76K912718 am 2026-10-09 in P76, siehe
+`docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md` und `docs/rag/PURCHASING.md`.*
+
 Anlass: Besprechung mit Armin (Einkaufsleitung) am 2026-10-08. Die Kachel „Offener Wert der
 Kontraktabrufe“ (rund 5,2 Mio CHF) ist der offene Wert von **Bestellungen, die auf einen
 Kontrakt verweisen** (`EKKO.KONNR`), nicht der offene Wert der **Kontrakte selbst**. Armin will
@@ -55,6 +59,9 @@ Abgleich gegen ME3L (erwartet rund 15,5 Mio EUR + 2,7 Mio andere Waehrung). Ob n
 eigene Kontraktarten zaehlen sollen, ist mit Armin zu bestaetigen; ausgeschlossene Positionen
 werden unter dem Block gezaehlt. Spaltenbezeichnungen der Sets sind aus der Beschreibung
 uebernommen und beim ersten Lauf gegen `$metadata` zu pruefen. Abnahme im Browser und Deploy stehen aus.
+*Ueberholt am 2026-10-29: Deploy 2026-10-08 15:03, Transport in P76 und Einkauf-Lauf am 2026-10-09 erledigt (offener
+Kontraktwert CHF 18'670'239 inkl. abgelaufener Kontrakte); seit 2026-10-22 zaehlen „vermutlich ersetzte“
+Kontraktpositionen nicht mehr mit (Nachtrag 2026-10-22). Offen bleiben der ME3L-Abgleich und die Belegartfrage mit Armin.*
 
 **Ueberholt durch diesen Nachtrag:** die Aussage weiter unten, echte Mengenkontrakte brauchten
 noch Kontraktbelege aus SAP und `Kdate` fehle im Modell (Stand Phase 1.5 / Mapping-Review), sowie
@@ -63,6 +70,9 @@ Tabellenzeile „Kontrakt-Restwert“ im Formelabschnitt meint die Abrufbestellu
 Mengenkontraktwert.
 
 ## Nachtrag 2026-09-29: Konsistenzreparaturen, lokal — nicht deployed
+
+*Ueberholt am 2026-10-29: produktiv seit dem Deploy 2026-09-29 10:07 (`c1fdfa2`), siehe
+`docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`. „Diese lokale Fassung“ ist damit der Produktivstand.*
 
 - Jahres-Spend-Detailkennzahl aggregiert alle Lieferanten statt nur die Top-10-Grafik.
 - Top-Warengruppe nutzt wie Matrix und Diagramm MARA.MATKL, dann EKPO.MATKL.
@@ -78,7 +88,8 @@ Doppelaufgaben. Befunde, Tests und Zuordnung: `docs/HR_EINKAUF_REVIEW_2026-09-29
 
 ## Nachtrag 2026-09-10: verstaendliche Beschriftungen und SAP-Feldherkunft
 
-Repository-Stand, **noch nicht deployed**. Auf Wunsch von Ingo sind die Bezeichnungen
+Repository-Stand, **noch nicht deployed** *(ueberholt: produktiv seit dem Deploy 2026-09-10 09:40, `d5bc321`, siehe
+`docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`)*. Auf Wunsch von Ingo sind die Bezeichnungen
 fachlich geschaerft und die Quellfelder direkt an den Hauptkacheln sowie in der
 aufklappbaren Hilfe **Kennzahlen verstehen: SAP-Quellen und Felder** sichtbar.
 Die Hilfe steht auf allen Routen der gemeinsamen Einkaufsdashboard-Komponente.
@@ -168,7 +179,7 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
 - Tabs im Einkaufsdashboard:
   - Die frueheren Tabs wurden in echte linke Navigationspunkte unter `Einkauf` umgebaut.
 - `Einkauf Dashboard`: Uebersicht, SAP-Datenfluss, Live-Status und Analyseachsen.
-- `Spend`: Spend total vergangen nach Jahr, Lieferant, Warengruppe und Artikel.
+- `Spend`: Spend total vergangen nach Jahr, Lieferant, Warengruppe und Artikel. **Ueberholt seit 2026-10-28 (`45b2158`, `c501053`): der ganze Inhalt steht unter dem Spend-Aufriss, der Reiter `Spend` ist einmalig ausgeblendet (`DatabaseSeedService.HideOldSpendTabOnce`), die Route `/einkauf/spend` bleibt erreichbar.**
 - `Offene Bestellungen`: offene Werte, Mengen und Faelligkeiten.
 - `Kontrakte`: offene Verpflichtungen und Kontrakt-Restwerte.
 - `Lieferanten`: Lieferantenbasis, Performance und Datenstatus.
@@ -185,7 +196,7 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
 - Unterpunkt `Einkauf > Datenquellen` fuer SAP/OData-Verbindung, Quellen, Join-Fluss und Zielmappings.
 - Die Seite ist als Cockpit-Struktur umgesetzt und ueber den vorhandenen UI-Sprachservice mehrsprachig vorbereitet.
 - EKKO, EKPO und EKET werden per SAP/OData in lokale Cache-Tabellen geladen.
-- Das Cockpit liest zuerst den Cache und nutzt nur noch als Fallback eine begrenzte Live-Probe, falls noch kein Cache vorhanden ist.
+- Das Cockpit liest zuerst den Cache und nutzt nur noch als Fallback eine begrenzte Live-Probe, falls noch kein Cache vorhanden ist. **Ueberholt seit 2026-09-29 (`c1fdfa2`, C1): keine Live-Stichprobe mehr als CHF- oder Kontraktkennzahl, nur ein Hinweis auf den regulaeren Ladelauf.**
 - Seit 2026-06-18 ist der Zeitraumfilter standardmaessig auf 2020 bis aktuelles Jahr ausgerichtet. **Ueberholt seit 2026-10-13 (`4b9ebb1`): Standard ist jetzt Januar des laufenden Jahres bis heute; der Knopf „2020 bis heute“ zeigt die Mehrjahressicht.**
 - Seit 2026-06-18 gibt es eine Excel-aehnliche Kaskadierungstabelle Lieferant x Jahr mit Jahresspalten, Gesamtsumme und Top-down-Sortierung.
 - Spend im aktuellen Jahr wird pro Lieferant separat analysiert.
@@ -295,7 +306,7 @@ Technische Logik:
 - Nicht vorhandene OData-Felder wurden entfernt:
   - `EKKOSet.Bsart` existiert in diesem Service nicht.
   - `EKPOSet.Meins` existiert in diesem Service nicht.
-- Nach dem Full Load kann `Delta aktualisieren` genutzt werden. Delta liest geaenderte EKKO-Belege ab `Aedat` und laedt die zugehoerigen EKPO/EKET-Zeilen je Beleg nach.
+- Nach dem Full Load kann `Delta aktualisieren` genutzt werden. Delta liest geaenderte EKKO-Belege ab `Aedat` und laedt die zugehoerigen EKPO/EKET-Zeilen je Beleg nach. **Ueberholt seit 2026-07-06 (K2): `AEDAT` ist das Anlagedatum; das Delta laedt zusaetzlich alle Belege mit noch offenen Mengen nach, siehe `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` Abschnitt 2 und 3.**
 
 ## Live-Kennzahlen im Dashboard
 
@@ -311,7 +322,7 @@ Die Seite `/einkauf` zeigt nun echte Werte aus dem SAP-Cache:
 - Die Verpflichtungs-/Kontraktseite zeigt Top-Restverpflichtungen nach Lieferant, Artikel und Faelligkeitsmonat, nicht nur den Monatsverlauf.
 - Offene Verpflichtungen werden nicht mehr primaer als reine Vergangenheits-Zeitreihe interpretiert; fuer Einkauf ist die Zukunfts-/Faelligkeitssicht nach Lieferant und Artikel fachlich aussagekraeftiger.
 - Spend-, Offenwert- und Kontrakt-Diagramme verwenden Cache-Gruppierungen, sofern der Cache gefuellt ist.
-- Ist der Cache leer oder nicht erreichbar, faellt das Dashboard auf eine begrenzte SAP-Live-Probe zurueck.
+- Ist der Cache leer oder nicht erreichbar, faellt das Dashboard auf eine begrenzte SAP-Live-Probe zurueck. **Ueberholt seit 2026-09-29 (`c1fdfa2`, C1): bei unvollstaendigem Cache entsteht keine Live-Stichprobe mehr als CHF- oder Kontraktkennzahl, nur ein Hinweis auf den regulaeren Ladelauf (`PurchasingDashboardService`).**
 - Der Standardzeitraum ist seit 2026-06-18 auf 2020 bis heute ausgerichtet. Die Datumsabgrenzung erfolgt im Dashboard ueber `Von Monat` und `Bis Monat`. **Ueberholt seit 2026-10-13 (`4b9ebb1`): Standard ist jetzt Januar des laufenden Jahres bis heute; der Knopf „2020 bis heute“ zeigt die Mehrjahressicht.**
 
 ## PowerBI-Abgleich
@@ -890,7 +901,9 @@ gelesen wird.
   (2 neue Drilldown-Tests: Warengruppen-Aufriss inkl. MaraMatkl-Vorrang und
   Zeitraumfilter-Wirkung auf die Drill-Ebene).
 - Noch nicht deployed. NACH Deploy: Einkauf Full Load laufen lassen (fuellt `Mstae` wieder aus
-  `maracalcSet`; `MaraMatkl` bleibt leer bis zur SAP-Erweiterung).
+  `maracalcSet`; `MaraMatkl` bleibt leer bis zur SAP-Erweiterung). *Ueberholt: produktiv, Full Load
+  vom 24.07. verifiziert (`MaraMatkl` 80,7 %), siehe Abschnitt „Erledigter Zwischenstand vom 17.07“ oben und den
+  Praesentationsstand vom 2026-07-31.*
 
 ## Nachtrag 2026-08-18 Materialtext (MAKTX) fuer den Spend-Drilldown
 
@@ -1207,6 +1220,8 @@ Textbestellungen ohne Artikelstamm.
 ## Nachtrag 2026-08-27 Umsetzung: Deckelungen weg, Balken ausgerichtet, Kacheln erklaert
 
 Umgesetzt nach der Sichtpruefung oben, **noch nicht deployed**. `633/633` Tests gruen.
+*Ueberholt am 2026-10-29: produktiv seit dem Deploy 2026-08-27 15:28 (`686e1e1`, DLL enthaelt „Bestellwert im
+Zeitraum“), siehe `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`.*
 
 ### 1. Keine Deckelung mehr im Spend-Aufriss und in der Matrix
 
@@ -1324,7 +1339,8 @@ zwei Knoepfe „Produktgruppe : Lieferant“ und „Produktgruppe : Warengruppe�
   derselben 1/n-verteilten Abfrage mit und baut daraus zwei Perspektiven: `productgroup` („Produktgruppe : Lieferant“,
   bisheriger Schluessel) und neu `productgroup-materialgroup` („Produktgruppe : Warengruppe“). Summen je Produktgruppe sind
   identisch, die 1/n-Verteilung bei Mehrfachverwendung gilt fuer beide. Ohne Verwendungs-Cache: beide Einstiege nur mit
-  „ohne Produktgruppe“.
+  „ohne Produktgruppe“. *Ueberholt am 2026-10-26: beide Einstiege ordnen jedes Material ueber seinen eigenen MARC-DISPO
+  genau einer Gruppe zu, ohne 1/n-Verteilung, siehe Nachtrag 2026-10-26 unten und `0dc3c68`.*
 - Der Hinweis zur Zuordnung erscheint bei beiden Einstiegen.
 - Test: Produktgruppen-Test prueft gleiche Summen je Gruppe und die Ebenen; Suite 1288/1288.
 

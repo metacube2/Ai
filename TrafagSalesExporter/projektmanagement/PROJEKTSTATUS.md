@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-10-26 (PM-03 ZZPRDAT Live-Pruefung; 2026-10-20 PM-01 FIX 19, PM-10 bis PM-12 Abschlussrunde, PM-13 SAP PS neu; 2026-10-19 PM-01 ZLO03 nachgefuehrt; 2026-10-01 PM-04, PM-07, PM-09 nachgefuehrt; HERMES-Sicht und PM-10 bis PM-12 vom 2026-09-29; uebrige Punkte Stand 2026-09-11)
+Stand: 2026-10-29 (Konsistenzabgleich gegen Wochen_Todo, Issue-Log, lastchange und git: PM-01, PM-02, PM-03, PM-04, PM-05, PM-07, PM-08, PM-09, PM-13 nachgefuehrt; 2026-10-26 PM-03 ZZPRDAT Live-Pruefung; 2026-10-20 PM-01 FIX 19, PM-10 bis PM-12 Abschlussrunde, PM-13 SAP PS neu; 2026-10-19 PM-01 ZLO03 nachgefuehrt; 2026-10-01 PM-04, PM-07, PM-09 nachgefuehrt; HERMES-Sicht und PM-10 bis PM-12 vom 2026-09-29; uebrige Punkte Stand 2026-09-11)
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -30,18 +30,18 @@ nicht.
 
 | ID | Thema | Verantwortlich | Prioritaet | Status | Naechster Schritt | Letztes Update |
 |---|---|---|---|---|---|---|
-| PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | **2026-10-22:** „Defekte Excel“ geklaert: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie); FIX 20 speichert `.txt` und oeffnet mit Excel, T76 aktiv, im selben Auftrag. Spalte RoHS nachgetragen (Merkmal `ROHS`, von Adil am 21.10. angelegt), T76 aktiv, im selben Auftrag. **2026-10-20:** FIX 19 (Spalten REACH, SVHC, PFAS-Gehalt, Wunsch Florian) in T76 aktiv und im selben Auftrag `T76K912742`; RoHS fehlt in P76. **2026-10-19:** Fehler „offene MK 0“ (B63485, Meldung Ann-Katrin) als Programmfehler belegt und mit FIX 12 in `Z_ZLO03_TURBO2` behoben, in T76 am nachgestellten Fall bestaetigt (alte Fassung: Komponente fehlt, neue: MK wie `ZMD04_CALC`). Uebrige Fixes 10/11/15 weiter nur lokal. *Ueberholt:* „Diagnoselauf `p_diag`, Transport nach B76“ | Ingo: `T76K912742` freigeben und nach P76 importieren, dann Ann-Katrin antworten; Tageszeit-Meldung danach erneut pruefen (`zlo03/MK_B63485_FIX12_2026-10-16.md`, `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md`); RoHS-Merkmal mit Adil klaeren | 2026-10-20 |
-| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Die vorbereitete Fassung `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap` einspielen — sie ist **noch nicht im System** —, danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-07 |
+| PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | **2026-10-22 (Nachtrag):** `T76K912742` (FIX 12, 19 samt RoHS, 20) von Ingo freigegeben, Import nach P76 offen; FIX 21 (echtes `.xlsx`) in T76 aktiv im neuen Auftrag `T76K912752` (Commits `76d7b44`, `7a53e5d`, `zlo03/CLAUDE.md` FIX 21). Ob das Merkmal `ROHS` in P76 existiert, ist ungeprueft. **2026-10-22:** „Defekte Excel“ geklaert: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie); FIX 20 speichert `.txt` und oeffnet mit Excel, T76 aktiv, im selben Auftrag. Spalte RoHS nachgetragen (Merkmal `ROHS`, von Adil am 21.10. angelegt), T76 aktiv, im selben Auftrag. **2026-10-20:** FIX 19 (Spalten REACH, SVHC, PFAS-Gehalt, Wunsch Florian) in T76 aktiv und im selben Auftrag `T76K912742`; RoHS fehlt in P76 *(teilweise ueberholt am 2026-10-22: Merkmal `ROHS` in T76 angelegt und Spalte nachgetragen, siehe oben; P76 ungeprueft)*. **2026-10-19:** Fehler „offene MK 0“ (B63485, Meldung Ann-Katrin) als Programmfehler belegt und mit FIX 12 in `Z_ZLO03_TURBO2` behoben, in T76 am nachgestellten Fall bestaetigt (alte Fassung: Komponente fehlt, neue: MK wie `ZMD04_CALC`). Uebrige Fixes 10/11/15 weiter nur lokal. *Ueberholt:* „Diagnoselauf `p_diag`, Transport nach B76“ | Ingo: `T76K912742` nach P76 importieren (freigegeben am 22.10.), `T76K912752` freigeben und importieren, dann Ann-Katrin antworten; Tageszeit-Meldung danach erneut pruefen (`zlo03/MK_B63485_FIX12_2026-10-16.md`, `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md`); in P76 pruefen, ob das Merkmal `ROHS` existiert. *(ueberholt am 2026-10-29: „`T76K912742` freigeben“ und „RoHS-Merkmal mit Adil klaeren“, beides am 21./22.10. erledigt)* | 2026-10-22 |
+| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Die vorbereitete Fassung `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap` einspielen — sie ist **noch nicht im System** —, danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern. **2026-10-01:** T76 hat weiter den Vorher-Stand; Entscheid Ingo 15:13: „Editor in T76 so lassen, nichts tun“ (Wochen_Todo 3). Ob PM-02 damit ruht, ist nicht festgehalten | 2026-10-01 |
 | PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **Technik fertig in T76, Auftrag `T76K912490`/`T76K912491` weiter nicht freigegeben; am 2026-10-26 live bestaetigt: Quelltext identisch mit dem Repo, letzte Aenderung 07.09., BAdI aktiv.** Stand 07.09.: Konstruktionsfehler (`BEFORE_UPDATE` fuellte Altauftraege) am selben Tag behoben, alle sieben Wege plus Altauftragsfall und Write-once nachgemessen. Neu 26.10.: sieben Testauftraege der Benutzer TAN/FPA (1241831 bis 1241844) passen zum Sollverhalten, siehe `saptasks/ZZPRDAT_TRANSPORTPLAN.md`. Abnahmetest vom 12.10. auf die Woche ab 26.10. verschoben | Abnahmetest mit Lucas, Marco, Adil und Ingo durchfuehren und Ergebnis festhalten (Wochen_Todo 56); Marco prueft Etikett, Typenschild und den Zeitpunkt des Drucks gegenueber V2. Erst zuletzt den Auftrag freigeben | 2026-10-26 |
-| PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | **2026-10-01:** Texte D1/D5 im Dashboard, nach dem Auffrischen sofort der alte Stand mit Hinweis, neue Seite **Logistik live** (Kommissionierung und Produktion aus SAP, Abruf nur bei offener Seite, `docs/LOGISTIK_LIVE_2026-10-01.md`), alles produktiv. Weitgehend erledigt; die zwei SAP-Restpunkte stehen unveraendert offen. Seit 2026-09-10 verstaendlichere Kennzahlen und SAP-Quellenhilfe produktiv. **Seit 2026-09-28 Lagerwert-Verlauf je Woche produktiv** (Wunsch Einkauf, von Marco bestaetigt); der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus und laeuft wieder (siehe PM-09) **2026-09-29: Codex-Reparaturen produktiv seit 10:07:** Jahres-Spend ungekappt, einheitliche Warengruppe, keine Live-Stichproben-KPIs bei unvollstaendigem Cache, Warnung bei fehlenden Kursen (`docs/HR_EINKAUF_REVIEW_2026-09-29.md`). | Zwei SAP-Nacharbeiten anstossen; zusaetzlich die **nicht ausgelieferten drei Statusbeschriftungen** nachziehen und die neuen Texte produktiv sichtpruefen | 2026-09-29 |
+| PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | **2026-10-01:** Texte D1/D5 im Dashboard, nach dem Auffrischen sofort der alte Stand mit Hinweis, neue Seite **Logistik live** (Kommissionierung und Produktion aus SAP, Abruf nur bei offener Seite, `docs/LOGISTIK_LIVE_2026-10-01.md`), alles produktiv. Weitgehend erledigt; die zwei SAP-Restpunkte stehen unveraendert offen. Seit 2026-09-10 verstaendlichere Kennzahlen und SAP-Quellenhilfe produktiv. **Seit 2026-09-28 Lagerwert-Verlauf je Woche produktiv** (Wunsch Einkauf, von Marco bestaetigt); der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus und laeuft wieder (siehe PM-09) **2026-09-29: Codex-Reparaturen produktiv seit 10:07:** Jahres-Spend ungekappt, einheitliche Warengruppe, keine Live-Stichproben-KPIs bei unvollstaendigem Cache, Warnung bei fehlenden Kursen (`docs/HR_EINKAUF_REVIEW_2026-09-29.md`). | *(ueberholt am 2026-10-29: „Zwei SAP-Nacharbeiten anstossen; drei Statusbeschriftungen nachziehen“.)* Ingo entscheidet zwei Punkte: SEGW-Key nicht umsetzen und D1/D5 in SAP vorerst nicht pflegen (Wochen_Todo 16), und ob es beim heutigen Text „Bestellwert im Zeitraum“ bleibt, weil „Gebuchter Spend“ einem dokumentierten Entscheid mit Marco widerspricht (Wochen_Todo 33). **Seit 2026-10-22:** Feedback Erich/Sandro/Marco umgesetzt, Zwischenstand bis 28.10. stabilisieren, Kostenstruktur Material je Produktgruppe Phase 1 produktiv 28.10. (`8653f6b`), Handbestellwesen als Modul (Wochen_Todo 120 bis 123, `lastchange.md`) | 2026-10-28 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit. Die fuenf Ausgleichsfelder sind seit 2026-09-10 08:53 produktiv, `Finance_All` am selben Tag neu erzeugt | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option und die Bedeutung von `date paid` mit Andreas entscheiden | 2026-09-11 |
-| PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | **2026-10-01 produktiv:** SAP-HR-Felder (`HrKpiSet`) und Abwesenheiten je Fall (`HrAbsenzSet`) taeglich aus SAP, Krankenquote periodengenau, Kader 8,1 h, Ampel ab 5 % (`docs/HR_KPI.md` 8.6/8.7). Rexx-Exporte weiter von Upgreat abhaengig. Wartet auf externe Firma. **Die fachlichen Antworten von Sonja Richter sind seit 2026-09-28 umgesetzt und produktiv** (Langzeitkrank ab 61. Tag, Reminderprofile ohne FTE ausgeschlossen, Restferien-Ampel nach Quartal, zwei neue Prognosen) **2026-09-29: Codex-Reparaturen produktiv seit 10:07:** Zeitraum-/YTD-Logik, Personenquote, Jahresfilter, keine Tabellenkappung (`docs/HR_EINKAUF_REVIEW_2026-09-29.md`). | Mail-Entwurf an Sonja (28.09.) versenden; im naechsten Call periodengenaue Krankenquote und neue Exporte klaeren (Dateien vom 08.07./26.05.); Exporter der externen Firma abwarten | 2026-09-29 |
-| PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, Termin ueberschritten** | **Blocker 1 ist am 2026-09-09 geloest**, der deutsche Verkaufsbestand traegt jetzt fachliche Kundennummern und Namen. Blocker 2 besteht nur noch fuer die anderen Standorte fort | Neues Zieldatum mit Rohail vereinbaren; 30 Gutschriftenzeilen und drei Doppelnummern klaeren; Patrik die 171 uebrigen Vorschlaege pruefen lassen | 2026-09-11 |
-| PM-09 | Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf | Ingo | **Hoch** | **2026-10-01:** Einkauf zeigt nach einem Lauf sofort den bisherigen Stand (`4e2b55a`). **Am 2026-09-28 weitgehend erledigt und produktiv:** Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s -> 0,07 s, Server-Einkaufsberechnung 105 s -> 24 s durch SQLite-Cache; Nachtlauf gegen IIS-Leerlauf abgesichert, Einkauf-Lauf laeuft wieder | IT stellt den App-Pool auf Dauerbetrieb (ISS-017); Ingo prueft die Oberflaeche im Browser; Tageslauf am 29.09. beobachten | 2026-09-28 |
+| PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | **2026-10-01 produktiv:** SAP-HR-Felder (`HrKpiSet`) und Abwesenheiten je Fall (`HrAbsenzSet`) taeglich aus SAP, Krankenquote periodengenau, Kader 8,1 h *(ueberholt am 2026-10-22: Kader = SAP-Mitarbeiterkreis 10 mit 8,2 h, Entscheid Ingo, `ede56b6`, `docs/HR_KPI.md` 8.7)*, Ampel ab 5 % (`docs/HR_KPI.md` 8.6/8.7). Rexx-Exporte weiter von Upgreat abhaengig. Wartet auf externe Firma. **Die fachlichen Antworten von Sonja Richter sind seit 2026-09-28 umgesetzt und produktiv** (Langzeitkrank ab 61. Tag, Reminderprofile ohne FTE ausgeschlossen, Restferien-Ampel nach Quartal, zwei neue Prognosen) **2026-09-29: Codex-Reparaturen produktiv seit 10:07:** Zeitraum-/YTD-Logik, Personenquote, Jahresfilter, keine Tabellenkappung (`docs/HR_EINKAUF_REVIEW_2026-09-29.md`). | Mail-Entwurf an Sonja (28.09.) ergaenzen und versenden (Wochen_Todo 54); neue Exporte klaeren (Dateien vom 08.07./26.05.); bei Upgreat einen neuen Ansprechpartner fuer den Rexx-Export erfragen, weil Ueli Kunzmann am 01.10. antwortete, er sei nicht mehr zustaendig (Wochen_Todo 55). *(ueberholt am 2026-10-29: „periodengenaue Krankenquote klaeren“, geloest am 01.10. ueber `HrAbsenzSet`, Wochen_Todo 39)* | 2026-10-22 |
+| PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, Termin ueberschritten** | **Blocker 1 ist am 2026-09-09 geloest**, der deutsche Verkaufsbestand traegt jetzt fachliche Kundennummern und Namen. Blocker 2 besteht nur noch fuer die anderen Standorte fort | **2026-09-29:** Umsatz-Gesamtsicht aller Standorte geliefert und plausibilisiert (`ISS-019`, Nachtrag unten). Naechster Schritt: Top 15 Vorschlaege (70 % des Umsatzes) mit Andreas und Patrik bestaetigen, Schweiz ueber Andreas' AG-Sicht, ITEC verwerfen, DB4 mit Andreas und Rohail definieren (Wochen_Todo 48, 52); 30 Gutschriftenzeilen und drei Doppelnummern klaeren (Wochen_Todo 41). *(ueberholt am 2026-10-29: „Patrik die 171 uebrigen Vorschlaege pruefen lassen“)* | 2026-10-01 |
+| PM-09 | Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf | Ingo | **Hoch** | **2026-10-01:** Einkauf zeigt nach einem Lauf sofort den bisherigen Stand (`4e2b55a`). **Am 2026-09-28 weitgehend erledigt und produktiv:** Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s -> 0,07 s, Server-Einkaufsberechnung 105 s -> 24 s durch SQLite-Cache; Nachtlauf gegen IIS-Leerlauf abgesichert, Einkauf-Lauf laeuft wieder | IT stellt den App-Pool auf Dauerbetrieb (ISS-017, weiter offen); Ingo prueft die Oberflaeche im Browser; Antwort an Upgreat zum Tempo als `.eml` versenden (Wochen_Todo 57). *(ueberholt am 2026-10-29: „Tageslauf am 29.09. beobachten“; der Einkauf-Lauf laeuft seither taeglich, zuletzt geprueft am 22.10., Wochen_Todo 98)* | 2026-10-22 |
 | PM-10 | Abloesung Smartsheet (neu, HERMES) | Ingo | offen | Neu, noch kein Auftrag. **2026-10-20:** Thema der Abschlussrunde Dashboard und Data Lake (Einladung verschickt) | In der Abschlussrunde ansprechen, danach Projektauftrag in der Initialisierung schreiben, Stufe nach Aufwand festlegen | 2026-10-20 |
 | PM-11 | Data Lake: Leistung analysieren und messen (neu, HERMES) | Ingo | offen | **Erledigt laut Ingo am 2026-10-13** (so in `Vorhaben_HERMES.tsv`; hier am 2026-10-20 nachgezogen). Der naechste Schritt Data Lake (Zielbild, Datenverantwortung) ist Thema der Abschlussrunde vom 2026-10-20 | Beim naechsten Aufraeumen nach Abschnitt 3 verschieben | 2026-10-20 |
 | PM-12 | Power BI: je Dashboard ein Anwendervertreter (neu, HERMES) | Ingo | offen | Neu, Kleinauftrag. **2026-10-20:** Datenverantwortliche je Bereich und Power BI sind Agendapunkt 4 der Abschlussrunde | Dashboards auflisten und in der Abschlussrunde je Dashboard einen Anwendervertreter benennen | 2026-10-20 |
-| PM-13 | SAP PS: Leistungserfassung auf Projekte statt Innenauftraege (Auftrag Chef) | Ingo | Mittel | **2026-10-20:** Demo in T76 (Projekt `DEMO-PS`, Zeit per KB21N, externe Kosten, CJI3), P76 lesend: PS nicht eingerichtet; Fazit einfach zu bedienen, Einfuehrung mittel. Folien 11-16 im TPG-Abgleich (`docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md`) | Termin mit Philip Steiger, Entscheid Stufe 2/3; T76-Demoreste spaeter aufraeumen | 2026-10-20 |
+| PM-13 | SAP PS: Leistungserfassung auf Projekte statt Innenauftraege (Auftrag Chef) | Ingo | Mittel | **2026-10-20:** Demo in T76 (Projekt `DEMO-PS`, Zeit per KB21N, externe Kosten, CJI3), P76 lesend: PS nicht eingerichtet; Fazit einfach zu bedienen, Einfuehrung mittel. Folien 11-16 im TPG-Abgleich (`docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md`) | **2026-10-21:** Frage von Philip (Rolle je Zeitbuchung) beantwortet: Leistungsart je Rolle, Demo in T76, Folien 17-19 (Wochen_Todo 115). Naechster Schritt: Antwort an Philip senden (Ingo), Termin mit Philip Steiger, Entscheid Stufe 2/3; T76-Demoreste spaeter aufraeumen | 2026-10-21 |
 
 ---
 
@@ -70,12 +70,17 @@ Zwei Ursachen sind belegt und behoben:
 Die Transaktion `ZLO03` startet nicht `ZM_LZCODE20_OPT`, sondern
 `Z_ZLO03_TURBO2`. Das laufende Programm enthaelt nur die Fixes 1, 2, 4 und 5.
 Die Fixes 10 bis 18 sind also geschrieben, aber **nicht produktiv wirksam**.
+*Ueberholt am 2026-10-29: FIX 12, 19 und 20 sind in `Z_ZLO03_TURBO2` in T76 aktiv und im am 22.10.
+freigegebenen Auftrag `T76K912742`, FIX 21 im Auftrag `T76K912752`; Import nach P76 offen. Die
+Fixes 10, 11 und 15 sind weiter nur lokal, siehe Abschnitt 1 und `zlo03/CLAUDE.md`.*
 
 Kommunikationspflicht vor der Auslieferung: Die Spalte `Exklusiv` hat kuenftig
 drei statt zwei Werte. Neu ist `?` fuer nicht entscheidbare Faelle. Ann-Katrin
 Michel muss das wissen, bevor sie die naechste Auswertung interpretiert, denn
 ein falsch gesetztes `X` fuehrt zur Kuendigung eines noch benoetigten
 Mengenkontrakts. Falsch-negativ ist harmlos, falsch-positiv nicht.
+*Ueberholt am 2026-10-29: Ann-Katrin ist am 08.10. informiert worden und hat am selben Tag um 14:40
+bestaetigt (Wochen_Todo 10, `zlo03/EXKLUSIV_LOGIK_2026-10-08.md`).*
 
 Bewusst nicht behoben, weil fachlich zu klaeren: die funktionslose Spalte
 Elternmaterial, die fehlende Rekursion bei der Exklusivitaet, sowie die
@@ -296,7 +301,9 @@ uebersprungen. Drei Messungen ueber RFC gegen `AUFK`: der kuenstlich geleerte Al
 Datum, und beim Verschieben des Termins bleibt es stehen. Die Klasse steckt laut `E071`
 in der Aufgabe `T76K912491`, wandert also mit dem Auftrag mit. Einzelheiten, die beiden
 Nebenbefunde zu V2 und zum Nachweisreport und die noch offene Wiederholung der uebrigen
-sechs Wege stehen in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a.
+sechs Wege stehen in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a. *(ueberholt am 2026-10-29:
+die komplette Reihe, alle sieben Wege plus Altauftragsfall, ist am 2026-09-07 wiederholt worden,
+siehe Kopf von `saptasks/ZZPRDAT_TRANSPORTPLAN.md`)*
 
 **Das Anschreiben zur Abnahme ist am 2026-09-04 geschrieben, aber noch nicht versandt.** Es
 nennt, was vorher falsch war, die drei Ursachen, die sieben gemessenen Wege, den
@@ -309,6 +316,9 @@ verwirft an diesem Arbeitsplatz jede Zuweisung an den Nachrichtentext stillschwe
 `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` daneben und muss einmal hineinkopiert werden.
 Vor dem Versand sind also drei Handgriffe noetig: Adressen eintragen, Text einfuegen,
 absenden.
+*Ueberholt am 2026-10-29: Das Anschreiben wurde nicht versendet. Die Abnahme laeuft stattdessen als
+Testtermin (Einladung „Tests Produktionsdatum“ vom 12.10. an Lucas, Marco, Adil), am 12.10. auf die
+Woche ab 26.10. verschoben (Wochen_Todo 12 und 56).*
 
 Aufgenommen am 2026-07-27, urspruenglich als „BAdI-Kennzeichenfehler". Der Punkt
 ist am 2026-08-10 praezisiert worden und heisst seither ZZPRDAT.
@@ -322,6 +332,9 @@ siehe oben. Das Ziel selbst gilt unveraendert und ist erreicht.)
 **Abgleich am 2026-08-26.** Dieser Block stand noch auf dem Kenntnisstand vor der
 SapProbe-Pruefung vom 2026-07-27. Vier Angaben waren ueberholt und sind hier
 korrigiert.
+*Ueberholt am 2026-10-29: Der ganze Block bis zum Nachtrag vom 2026-09-29 ist der Stand vor der
+Umsetzung. Trigger (Freigabe), Quellfeld (`GLTRP`), Implementierung und die Testmatrix sind mit den
+Messungen vom 03., 04. und 07.09. erledigt, siehe oben; offen sind nur Abnahmetest und Transport.*
 
 1. **Die Ursache ist nicht der unbesuchte Tab, sondern fehlender Code.** Bisher
    stand hier, der Kundensubscreen der Erweiterung `PPCO0012` schreibe das Datum
@@ -387,7 +400,8 @@ Nachtraege vom 2026-07-27; die Abschnitte 3 und 7 beschreiben den Stand davor.
 **Nachtrag 2026-09-29 (aus Teams und Mail):** Lucas Castro hat fuer den 2026-09-17 einen Termin
 „Tests Produktionsdatum (Ingos Anpassung)“ mit Marco Di Menco und Adil angesetzt. Das Ergebnis ist
 nicht dokumentiert; die Aussage „Abnahmemail nicht versendet“ ist damit moeglicherweise ueberholt.
-Ingo klaert den Stand.
+Ingo klaert den Stand. *(ueberholt am 2026-10-29: geklaert am 12./13.10., das Anschreiben ist nicht
+versendet, die Abnahme laeuft als Testtermin, Wochen_Todo 12 und 56)*
 
 ### PM-04 Einkaufsdashboard: Spend mit Drilldown
 
@@ -433,6 +447,9 @@ und `Einteilungen im Zeitraum` statt `Einteilungen`, an vier Stellen in
 `Components/Pages/PurchasingDashboard.razor` und sechs in
 `Services/PurchasingUiTextCatalog.cs`. Ausserdem hat noch niemand die neuen Texte
 produktiv angesehen.
+*Ueberholt am 2026-10-29: Die drei Beschriftungen sind bewusst nicht nachgezogen worden, weil
+„Bestellwert im Zeitraum“ nach dem Abgleich mit Marco gewaehlt wurde; Ingo entscheidet, ob es dabei
+bleibt (Wochen_Todo 33).*
 
 #### Nachtrag 2026-09-28: Lagerwert-Verlauf und Ausfall des Einkauf-Laufs
 
@@ -455,7 +472,8 @@ Dort stehen zwoelf Issues mit eigenem Owner und eigenem Status.
 
 Die wichtigsten offenen Punkte von dort, nur als Verweis:
 
-- Datenzufluss TR FR steht seit dem 2026-07-30, Antwort aus Frankreich fehlt.
+- Datenzufluss TR FR steht seit dem 2026-07-30, Antwort aus Frankreich fehlt. *(ueberholt am
+  2026-10-29: `ISS-001.2` erledigt, Frankreich liefert laut Messung vom 29.09. wieder)*
 - CH/AT-Herstellerregel: der dafuer gebaute Umschalter ist seit 31.08.2026 produktiv;
   der Default behaelt die bisherige Regel bei, die Fachentscheidung von Andreas steht noch aus.
 - Moving Average bei TR IT mit Paola, Zieldatum Ende August 2026.
@@ -487,6 +505,11 @@ fachlicher Entscheid ueber rund 38 Branchenwerte. Siehe PM-08 und
 Endkennzeichen fehlten in der Auswertung, und die Abgrenzung offener Bestellungen solle „ohne
 Endlieferkennzeichen und ohne Loeschkennzeichen“ sein. Pruefen, ob das umgesetzt ist. Ingos Frage an
 Armin vom 2026-09-29, ob das Dashboard schneller ist, ist noch unbeantwortet.
+*Ueberholt am 2026-10-29: Offene Bestellwerte schliessen endgelieferte Positionen seit 2026-10-05/06
+aus (Elikz-Fix, `ISS-031`), stornierte Positionen (`Loekz`) sind aus dem Spend ausgeschlossen
+(`docs/rag/PURCHASING.md`); Armins Rueckmeldung zum Auffrischen ist seit 01.10. umgesetzt
+(Wochen_Todo 69). Den Einkauf ueber den gesunkenen offenen Bestellwert informieren steht noch aus
+(Wochen_Todo 78).*
 
 ### PM-07 HR: automatische Auswertung der REXX-Files
 
@@ -531,6 +554,10 @@ wird. Ausserdem seit 30.09. produktiv: Arbeitstag 8,0 h statt 8,4 h (`docs/HR_KP
 Am selben Tag gebaut, noch nicht produktiv: die SAP-Datei kommt taeglich automatisch ueber das
 EntitySet `HrKpiSet` statt ueber den Handstart des Reports; offen sind Wertestichprobe, Transport
 `T76K912530` nach P76 (gemeinsam mit dem Journal) und Deploy (`docs/HR_KPI.md` 8.6).
+*Ueberholt am 2026-10-29: `HrKpiSet` ist seit 01.10. produktiv (Transport in P76, Wertestichprobe
+bestanden, erster Abruf 09:46), dazu `HrAbsenzSet` (Wochen_Todo 65 und 67). Ueli Kunzmann hat am
+01.10. geantwortet, er sei nicht mehr fuer Trafag zustaendig; ein neuer Ansprechpartner bei Upgreat
+fehlt (Wochen_Todo 55).*
 
 ### PM-09 Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf
 
@@ -556,7 +583,8 @@ stellen, liegt als **ISS-017 bei der IT** (kein Fernzugriff auf `tragvapp401`).
 Details: `docs/PLATTFORM_TEMPO_2026-09-28.md`, `docs/EINKAUF_LAGERWERT_2026-08-18.md` 13.6 und 13.7.
 
 **Nachtrag 2026-09-29 (Teams):** Upgreat (Dardan) bat am 2026-09-23, zu pruefen, ob die Datenabfrage
-der Webapplikation schneller ist; eine Antwort steht aus.
+der Webapplikation schneller ist; eine Antwort steht aus. *(Stand 2026-10-01: Antwortentwurf liegt
+als `.eml` vor, Versand durch Ingo, Wochen_Todo 57)*
 
 ### PM-08 Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08
 
@@ -767,7 +795,7 @@ Messung; Stand, Rollen und Einstufung sind deshalb Vorschlaege. Die Pflege laeuf
 - **PM-11 Data Lake: Leistung.** Zuerst ein Kleinauftrag „Analyse und Messung", danach je
   nach Befund ein Vorhaben. **Nachtrag:** Andreas hat am 2026-09-28 um eine Abstimmung zum Data Lake
   am 2026-09-29 gebeten; er ist damit der naheliegende Auftraggeber. Abzugrenzen gegen PM-09, das die Geschwindigkeit der Webapp am
-  2026-09-28 bereits weitgehend behoben hat.
+  2026-09-28 bereits weitgehend behoben hat. *(Stand 2026-10-13: laut Ingo erledigt, Wochen_Todo 44)*
 - **PM-12 Power BI: Anwendervertreter je Dashboard.** Je Dashboard eine Person aus dem
   Fachbereich, die fachlich abnimmt und fuer die Datenqualitaet verantwortlich ist. Dafuer
   fehlt zuerst eine Liste der produktiven Dashboards.
@@ -833,7 +861,7 @@ Verdichtetes Archiv aus `kontext.txt`. Ein Eintrag je abgeschlossenem Punkt.
 |---|---|
 | Andreas Stoller | Finance, Intercompany-Abgrenzung, Standardkosten, offene Fachentscheide zur Gruppenmarge |
 | Santi Gomez | Spanien, Sage, CSV-Export |
-| Rohail Munir | Deutschland, DE File; braucht die Railway-Auswertung bis 2026-09-08 (PM-08) |
+| Rohail Munir | Deutschland, DE File; braucht die Railway-Auswertung bis 2026-09-08 (PM-08) *(Termin verstrichen, Gesamtsicht am 2026-09-29 geliefert, siehe PM-08)* |
 | Marco | Rhino, CHF-Konsolidierung |
 | Marco Di Menco | ZZPRDAT, Entscheidung Kopf- gegen Positionsebene |
 | Nadja | HR Cockpit, Plausibilisierung der Fluktuation |
@@ -896,7 +924,7 @@ Suche also zuerst fragen, wie der Sachverhalt im Code heissen wuerde, statt auf
 2. Ist ein Punkt erledigt, die Zeile aus Abschnitt 1 entfernen und als eine Zeile
    in Abschnitt 3 mit Datum und Ergebnis ablegen. Der Detailblock aus Abschnitt 2
    entfaellt dabei.
-3. Neue Aufgaben bekommen die naechste freie Nummer, also ab PM-06. Nummern
+3. Neue Aufgaben bekommen die naechste freie Nummer, derzeit PM-14. Nummern
    werden nicht wiederverwendet.
 4. Finance-Details gehoeren in
    `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, nicht hierher.

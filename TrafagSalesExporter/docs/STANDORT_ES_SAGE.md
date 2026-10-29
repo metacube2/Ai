@@ -1,6 +1,6 @@
 # Standort Spanien: Sage-Export und Upload
 
-Stand: 2026-08-17. Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
+Stand: 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
 und `SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md`.
 
 **Die Export-SQL gehoert uns**, nicht Spanien. Fehlt ein Feld, liest zuerst unsere Query
@@ -155,7 +155,8 @@ als Vergleichsgroesse verwendet werden.
   die nur die ersten 200 Eintraege las; seit dem 2026-09-29 um 09:25 korrigiert (`60cc569`).
 - Datenluecke Januar bis 27.05.2026: der Range-Export begann erst Ende Mai. Ein
   Nachtragsexport Januar bis Mai wurde am 2026-08-17 erzeugt (1'571 Zeilen,
-  `1'461'263.57 EUR`, `PostingDate` zu 100 % gefuellt) und hochgeladen.
+  `1'461'263.57 EUR`, `PostingDate` zu 100 % gefuellt) und hochgeladen. *(erledigt, nachgefuehrt
+  am 2026-10-29: `ISS-004.1` im Issue-Log erledigt)*
 
 Ansprechpartner: Santi Gomez, siehe `docs/ANSPRECHPARTNER.md`.
 

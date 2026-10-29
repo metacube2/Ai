@@ -1,6 +1,6 @@
 # Finance-Entscheide fuer Net Sales Actuals
 
-Stand: 2026-06-12
+Stand: 2026-10-29 (Widersprueche zu spaeteren Entscheiden markiert; fachlich 2026-06-12)
 
 ## Nachtrag 2026-06-12 Alphaplan DE
 
@@ -31,7 +31,7 @@ Aktueller Produktstand:
 - Dieser Reiter nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Die alte Management-/Rohdatenansicht bleibt nur als Diagnose-/Plausibilitaetssicht erhalten.
-- DE 2026 zeigt keinen Fehler mehr, sondern wegen DE/Alphaplan-2025-Zwang einen leeren Zustand mit Hinweis.
+- DE 2026 zeigt keinen Fehler mehr, sondern wegen DE/Alphaplan-2025-Zwang einen leeren Zustand mit Hinweis. *(ueberholt am 2026-10-29: DE liefert seit dem Alphaplan-CSV-Paar mit Delta laufend 2026er Zeilen, zuletzt gezaehlt am 2026-09-29, `ISS-029`)*
 
 Anwenderdoku:
 
@@ -72,7 +72,7 @@ Die Logik darf nicht auf einzelne Testzahlen optimiert werden. Sie muss je Jahr 
 | UK | Sage/Manual-Excel. Hauswaehrung `GBP` verwenden. Netto ohne VAT; Credit Notes muessen negativ in die Summe laufen. |
 | CH / AT | SAP-ZSCHWEIZ liefert Schweiz und Oesterreich aus gleichem System; Trennung ueber Buchungskreis bzw. Reporting-Land. |
 | DE | Alphaplan CSV-Paar `invoice_headers.csv`/`invoice_lines.csv`; Vollbestand plus `delta` werden zusammen gelesen und dedupliziert. Mapping nutzt `NettoPreisGesamt` als SalesPriceValue. Fachlich offen bleibt, welche Kundenlaender fuer den Sollwert eingeschlossen werden und ob `ArtikelNummer` zu TR-AG-/SAP-`MATNR` gemappt werden muss. |
-| ES | Sage-CSV. `ImporteNeto` als Nettozeile ohne VAT verwenden; Credit Notes/REC negativ; Datumsbasis ist `FechaFactura`, solange Finance nichts anderes vorgibt. |
+| ES | Sage-CSV. `ImporteNeto` als Nettozeile ohne VAT verwenden; Credit Notes/REC negativ; Datumsbasis ist `FechaFactura`, solange Finance nichts anderes vorgibt. *(entschieden am 2026-08-26, nachgefuehrt am 2026-10-29: Andreas meint mit Buchungsdatum fuer Spanien das Rechnungsdatum; Regel `UseInvoiceDate` mit `ScopeKey = ES`, produktiv seit 2026-08-26 15:26, Commit `91830c2`, `ISS-004.2`, `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`)* |
 
 ## Intercompany / 2nd Party
 
@@ -106,7 +106,7 @@ Ergebnis im Reporting:
 
 ## Aktuelle Kontrollpunkte
 
-- UK: Aktuell `3'533'710.09 GBP` bei `1'880` Zeilen gegen Soll LC `3'538'972.00 GBP`; Differenz `-5'261.91 GBP`. UK wird gegen Local Currency/GBP geprueft; der fruehere `CheckValue 3'749'865.00` ist fuer UK entfernt. Mapping ist Sage-Netto: `Sales Price/Value * Quantity`, Credit Notes werden bei erkennbarem Sage-Typ negativ erzwungen.
+- UK: Aktuell `3'533'710.09 GBP` bei `1'880` Zeilen gegen Soll LC `3'538'972.00 GBP`; Differenz `-5'261.91 GBP`. *(ueberholt am 2026-10-29: abgenommen am 2026-08-11 mit `3'529'861.80 GBP` = 99,7 % des Solls bei `1'867` Zeilen, `ISS-011`, `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`)* UK wird gegen Local Currency/GBP geprueft; der fruehere `CheckValue 3'749'865.00` ist fuer UK entfernt. Mapping ist Sage-Netto: `Sales Price/Value * Quantity`, Credit Notes werden bei erkennbarem Sage-Typ negativ erzwungen.
 - IN: Anzeige muss fachlich `INR` zeigen, auch wenn Quellzeilen verschiedene Belegwaehrungen enthalten.
 - IT: IC-Kundenliste final bestaetigen.
 - CH / AT: echtes SAP-Buchungsdatum pruefen, falls `ZSCHWEIZ` aktuell nur Fakturadatum liefert.
@@ -150,6 +150,8 @@ High-Advisories ueber vier Pakete. Details:
 ## UK / England Befund
 
 England/UK ist im System vorhanden und wird im FinanceProbe-Abgleich angezeigt.
+
+*Ueberholt am 2026-10-29: Befund und Naechste Schritte dieses Abschnitts und des folgenden Nachtrags sind erledigt. UK 2025 ist am 2026-08-11 abgenommen (`3'529'861.80 GBP`, `1'867` Zeilen, `ISS-011`), Nachweis `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`.*
 
 Aktueller Befund aus der Probe:
 
@@ -281,4 +283,4 @@ ClientSecretCredential authentication failed
 127.0.0.1:9 connection refused
 ```
 
-- Bis dieser Zugriff funktioniert, bleibt `CentralSalesRecords` fuer UK auf dem alten Importstand.
+- Bis dieser Zugriff funktioniert, bleibt `CentralSalesRecords` fuer UK auf dem alten Importstand. *(ueberholt am 2026-10-29: UK ist neu geladen und am 2026-08-11 abgenommen, `ISS-011`)*

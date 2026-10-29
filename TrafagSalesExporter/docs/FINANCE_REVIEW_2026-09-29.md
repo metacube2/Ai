@@ -4,6 +4,8 @@ Stand: 29.09.2026. Auftrag von Ingo: prüfen, ob alles konsistent ist und gröbe
 
 ## Ergebnis
 
+*Ueberholt am 2026-10-29 fuer den Status der Befunde (Issue-Log `ISS-018.1` bis `ISS-018.7`): A3 und A4 erledigt (seit 2026-09-29 10:22, `91fd9dc`), A1 erledigt und produktiv seit 2026-10-07 10:06, A5 teilweise erledigt; B1, B2 und B3.1 offen als Fachentscheid; A2, A6, B3.2, B4 und B5 unter `ISS-018` gesammelt. Der Bericht selbst bleibt als Analysestand vom 29.09. stehen.*
+
 **Das Finanz-Dashboard ist nicht durchgängig konsistent.** Sechs technische Befunde betreffen die Währungsrechnung, die Beschriftung und die Vollständigkeit der Exporte. Dazu kommen fachlich relevante Risiken bei Gutschriften, kostenlosen Waren, fehlenden Kosten und Periodenabgrenzung.
 
 Besonders wichtig: Der CHF-Anzeigeschalter kann bei unverändertem Kursprofil die Gruppenmarge ändern, ohne das Prüfbuch entsprechend zu ändern. Der Prüfbuch-Export liefert außerdem nur die bereits gekürzten Detaildaten, obwohl die Oberfläche ihn für eine vollständige Nachrechnung empfiehlt.

@@ -26,6 +26,7 @@ behoben. Eine der beiden Luecken setzt LDAP-Rollenauflosung voraus. Die Anwendun
 in `Program.cs` die IIS-Windows-Authentifizierung, ruft weder `AddNegotiate` auf noch
 loest sie LDAP-Rollen auf. Die direkte Negotiate-Paketreferenz ist deshalb sehr wahrscheinlich
 entbehrlich; das ist vor dem Entfernen per Build und Authentifizierungs-Smoke zu pruefen.
+*(Erledigt am 2026-09-03: entfernt und geprueft, siehe Tabelle und Produktivnachweis.)*
 
 Die Kiota-Luecke kann bei hostuebergreifenden Redirects sensible Header weitergeben. Die
 Graph-Verwendung liegt im SharePoint-Upload. `Microsoft.Graph 5.105.0` hebt zwar den

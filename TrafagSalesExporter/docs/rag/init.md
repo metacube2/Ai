@@ -1,6 +1,6 @@
 # RAG-Einstieg: Ladereihenfolge und Abschlussregel
 
-Stand: 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026-10-01 Verweis auf `LEARNINGS.md`)
+Stand: 2026-10-29 (Abschlussregel um LEARNINGS und Kurzauskunft ergaenzt wie `CLAUDE.md` 3 und 3a); davor 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026-10-01 Verweis auf `LEARNINGS.md`)
 
 ## Ladereihenfolge fuer eine neue Sitzung
 
@@ -11,7 +11,7 @@ Stand: 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026
    `MANUAL_IMPORT.md`, `DEPLOYMENT.md`). Das ist derselbe Ladeweg wie in `router.md`
    und `CLAUDE.md` (angeglichen am 2026-09-29).
 3. `lastchange.md` (Repo-Wurzel) nur bei Bedarf: Aenderungsstand mit dem juengsten Abschnitt
-   oben; seit dem 2026-10-22 nur noch die Abschnitte seit Oktober 2026 (rund 560 Zeilen), aeltere
+   oben; seit dem 2026-10-22 nur noch die Abschnitte seit Oktober 2026 (damals rund 560 Zeilen, am 2026-10-29 rund 730), aeltere
    verbatim in `docs/archiv/`
 4. `persona.md` (Repo-Wurzel) — Arbeitsregeln und fachliche Grenzen, sobald fachliche
    Verantwortung im Spiel ist
@@ -52,3 +52,9 @@ steht in `CLAUDE.md` Abschnitt 3; hier die Kurzform:
 6. Wurde Dokumentation geaendert: `Tools/Qdrant/Reindex-Docs.ps1` ausfuehren. Der
    Suchindex wird nicht automatisch nachgefuehrt und widerspricht sonst still den
    Dateien, die er abbildet — dieselbe Falle wie Punkt 4, nur eine Ebene tiefer.
+7. Ist ein Fehler passiert oder wiederholt worden: eine Zeile in `docs/rag/LEARNINGS.md`, im
+   selben Commit wie die Korrektur (`CLAUDE.md` 3 Punkt 6).
+
+**Ausnahme Kurzauskunft:** Eine reine Frage, bei der sich im Repository und im Produktivsystem
+nichts aendert, ist mit der Antwort im Chat erledigt, ohne Commit, Doku und Koordinationseintrag.
+Sobald doch etwas geaendert wird, gilt die Regel oben vollstaendig. Abgrenzung: `CLAUDE.md` 3a.

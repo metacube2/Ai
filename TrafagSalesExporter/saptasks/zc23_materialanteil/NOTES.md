@@ -1,6 +1,7 @@
 # ZC23: neue Spalte Materialanteil
 
-Stand: 2026-10-15, 14:00. **In T76 fertig, Transport `T76K912736` bereit (Freigabe und Import P76: Ingo).** Schnelle Fassung mit Schalter
+Stand: 2026-10-29 (Transportstand nachgeführt; Nachträge vom 19.10. und 28.10. am Ende). *Überholt am 2026-10-29:* „Transport bereit, Freigabe und Import P76 offen“: `T76K912736` ist am 16.10. von Ingo nach P76 importiert, siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7 und Wochen_Todo Zeile 104.
+Stand 2026-10-15, 14:00: **In T76 fertig, Transport `T76K912736` bereit (Freigabe und Import P76: Ingo).** Schnelle Fassung mit Schalter
 (Entscheid Ingo: a + b) in `ZM_OFFENE_KDAUF` aktiv, siehe „Beschleunigung und Schalter“.
 *Überholt:* Stand 13:30: **In T76 eingebaut und geprüft (Freigabe Ingo):** Transport `T76K912736` mit Struktur, Tabelle und
 OData-Modell; `ZM_OFFENE_KDAUF_OPT` ($TMP) mit Materialanteil aktiv, Werte stimmen. **Offen:** Laufzeit (48 s statt 5 s für
@@ -86,6 +87,8 @@ ZM03-Standortvergleich (Schwesterwerk am selben Standort zählt hier als Materia
 
 ## Einbau in T76 (noch offen, Reihenfolge)
 
+*Überholt am 2026-10-29: eingebaut am 15.10. (Abschnitt „Einbau in T76: Protokoll“), Transport `T76K912736` am 16.10. in P76.*
+
 1. **Neuer Transportauftrag** (T76K912728 ist seit 15.10. freigegeben). Beim Aktivieren nie den Vorschlag nehmen.
 2. SE11 `ZMM_UEB_KDAUF` (Struktur, Paket ZPP1): `MATPREIS` Typ `/PLMB/SPC_QUANT_QUANTITY` (wie STANDARDPREIS),
    `MATANTEIL` Typ `NETWR` mit Währungsreferenz `T001-WAERS` (wie STANDARDWERT), ab Zeile 60 anhängen
@@ -136,6 +139,8 @@ Standardwert nutzt `STPRS` ohne Preiseinheit; bei den geprüften Materialien ist
 
 ### Nächste Schritte
 
+*Überholt am 2026-10-29: Schritte 1 bis 3 erledigt (Schalter und schnelle Fassung 15.10., Quelltext in `ZM_OFFENE_KDAUF`, Import P76 16.10.); offen ist nur Schritt 4 (Wochen_Todo Zeile 104).*
+
 1. Laufzeit: vorschlagen ist Vorablesen von MARC (Beschaffungsart) und CKIS gesammelt statt je Position, oder ein Schalter
    „Materialanteil rechnen“. Entscheid Ingo.
 2. Danach Quelltext von OPT in `ZM_OFFENE_KDAUF` (`SapGuiSetReportSourceAuftrag.vbs 2 ZM_OFFENE_KDAUF <datei> T76K912736`).
@@ -163,7 +168,7 @@ ZM_OFFENE_KDAUF` (fremdes `Z_REICHW` in der Liste übergangen); aktive Fassung =
 Transport `T76K912736` / Aufgabe `T76K912737`: `ZMM_UEB_KDAUF`, `ZPOWERBI_KDAUF`, `ZCL_ZPOWERBI_EINKAUF_MPC_EXT DEFINE`,
 `ZM_OFFENE_KDAUF`.
 
-**Für Ingo:** Transport freigeben und nach P76 importieren; danach in P76 `/IWFND/CACHE_CLEANUP` und `/IWBEP/CACHE_CLEANUP`
+**Für Ingo:** *(Import und Caches erledigt am 16.10., siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7)* Transport freigeben und nach P76 importieren; danach in P76 `/IWFND/CACHE_CLEANUP` und `/IWBEP/CACHE_CLEANUP`
 für `ZPOWERBI_EINKAUF_MDL`, dann einmal ZC23 mit einer gewohnten Variante ansehen (neue Spalten „Materialanteil je Einheit“
 und „Materialanteil“, Block „Materialanteil“ im Selektionsbild). Laufzeit `BI UPDATE` als Job danach festhalten.
 

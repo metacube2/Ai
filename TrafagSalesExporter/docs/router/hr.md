@@ -1,6 +1,6 @@
 # Unterrouter HR
 
-Zurueck: `router.md`. Stand: 2026-09-30.
+Zurueck: `router.md`. Stand: 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv); davor 2026-09-30.
 
 HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
@@ -8,7 +8,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
 | Bedarf | Datei |
 | --- | --- |
-| Konsistenzreview und technische Reparaturen 29.09. (lokal, nicht deployed); Zuordnung bestehender Fachfragen | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` |
+| Konsistenzreview und technische Reparaturen 29.09. (*ueberholt „lokal, nicht deployed“: produktiv seit 2026-09-29 10:07, `eafd1c5`*); Zuordnung bestehender Fachfragen | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` |
 | Kurzstand, Zugang, Datenordner | `docs/rag/HR_KPI.md` |
 | **Fachlogik, Datenquellen, Formeln, behobene Fehler, Grenzen** | `docs/HR_KPI.md` |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
@@ -17,7 +17,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 ## Fallen in diesem Ast
 
 - **Seit 2026-09-30 kommt die SAP-Datei automatisch** ueber `HrKpiSet` (seit 01.10. in P76 und produktiv, erster Abruf 02.10. 05:00,
-  `docs/HR_KPI.md` 8.6). HR-Sitzung vom 30.09. (Kader 8,1 h, Absenzen je Fall, Ampel): 8.5. Absenzen je Fall aus SAP `PA2001` (`HrAbsenzSet`, produktiv seit 01.10. 10:50, ersetzt Rexx fuer Krankheit und Ferien): 8.7.
+  `docs/HR_KPI.md` 8.6). HR-Sitzung vom 30.09. (Kader 8,1 h *(ueberholt am 2026-10-22, siehe unten)*, Absenzen je Fall, Ampel): 8.5. Absenzen je Fall aus SAP `PA2001` (`HrAbsenzSet`, produktiv seit 01.10. 10:50, ersetzt Rexx fuer Krankheit und Ferien): 8.7.
 
 - **Arbeitstage sind nicht Montag bis Freitag.** `ZurichWorkdayCalendar` zieht die neun
   gesetzlichen Feiertage des Kantons Zuerich ab.
@@ -32,6 +32,8 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
   Reminderprofile ohne FTE und Sollzeit ausgeschlossen, Restferien-Ampel nach Quartal,
   zusaetzlich gleitende Prognose und Vorjahr. `docs/HR_KPI.md` Abschnitt 8.
 - **Seit 2026-09-30: ein Arbeitstag hat 8,0 h** (`HoursPerWorkday`), die frueheren 8,4 h sind ueberholt.
-  Kader (Rexx `Leitung j/n` = ja) 8,1 h ab `c51445c` (produktiv seit 01.10. 09:12).
+  *(Ueberholt am 2026-10-22: Kader (Rexx `Leitung j/n` = ja) 8,1 h ab `c51445c`.)* **Seit 2026-10-22: Kader =
+  SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“ mit 8,2 h** (`HoursPerWorkdayFor`, `ede56b6`, produktiv seit 2026-10-22 15:48);
+  Rexx `Leitung j/n` zaehlt nicht mehr. `docs/HR_KPI.md` 8.8.
 - *Ueberholt am 2026-09-28, die 8,4 h am 2026-09-30:* Mehrere Werte sind Annahmen ohne fachliche Bestaetigung (`8.4h = 1 Krankheitstag`,
   FTE-Fallback `0.5`, Ampelgrenzen). Siehe `docs/HR_KPI.md` Abschnitt 7.

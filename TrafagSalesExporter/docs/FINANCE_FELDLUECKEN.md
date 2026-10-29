@@ -1,6 +1,6 @@
 # Feldluecken je Standort: was fehlt, wer es besitzt, was nicht gefragt werden darf
 
-Stand: 2026-08-17. Zusammengefuehrt aus drei Vorgaengerdateien (Datenluecken 2026-07-28,
+Stand: 2026-10-29 (DE-Kundenfelder nachgefuehrt; Grundstand 2026-08-17). Zusammengefuehrt aus drei Vorgaengerdateien (Datenluecken 2026-07-28,
 Feldluecken Standorte 2026-07-30, Standort-Mails 2026-07-31), die alle als ueberholt
 markiert waren.
 
@@ -144,7 +144,7 @@ Zwei Praezisierungen:
 | Luecke | gemessen | Eigentuemer |
 | --- | --- | --- |
 | Lieferant (Nummer/Name/Land) | 7'171 von 7'171 leer | **uns** — Query liest keine Lieferantenspalte |
-| Kundenname und -land | 7'171 leer, Kundennummer 7'171 gefuellt | **uns** — `RechnungsAdressenID` wird selektiert, aber nie aufgeloest |
+| Kundenname und -land | 7'171 leer, Kundennummer 7'171 gefuellt *(ueberholt am 2026-10-29: am 2026-09-09 14:37 produktiv nachgezogen, 7'592 von 7'622 Zeilen mit fachlicher Kundennummer, Name, Land und Branche; offen 30 Gutschriftzeilen und drei Doppelnummern, `ISS-016`, `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9)* | **uns** — `RechnungsAdressenID` wird selektiert, aber nie aufgeloest |
 | Artikelbezeichnung | **erledigt am 09.09.2026**, zuvor 2'903 von 7'171 mit Font-Muell, zuletzt 3'089 von 7'615 | **uns** — die RTF-Schrifttabelle wurde beim Lesen nicht entfernt; Ursache und Korrektur in `docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 8 |
 | `ArtikelNummer` = TR-AG-/SAP-`MATNR`? | 0 leer, Gleichheit unbelegt | **Deutschland** — echte Fachfrage |
 

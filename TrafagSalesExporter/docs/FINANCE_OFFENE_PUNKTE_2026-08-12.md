@@ -7,6 +7,8 @@ Stand: 2026-08-12
 fachliche Begruendung; die Tabelle dort traegt die Spalten des Issue-Logs und laesst sich
 direkt nach Excel kopieren. Wenn beide auseinanderlaufen, gilt das TSV.
 
+*Ueberholt am 2026-10-29: Der Issue-Log fuehrt inzwischen `ISS-001` bis `ISS-031`. Seit diesem Stand erledigt sind unter anderem `ISS-001` (Datenzufluss AT/CH/FR), `ISS-004.1` und `ISS-004.2` (Spanien Januar bis Mai und Buchungsdatum, Fachentscheid Andreas vom 2026-08-26: Rechnungsdatum), `ISS-011` (UK 2025) und `ISS-012` (Legendenzeile). Den aktuellen Status nur aus dem TSV lesen.*
+
 Alle Zahlen sind am 2026-08-12 read-only gegen die produktive Datenbank gemessen, nicht aus
 aelteren Notizen uebernommen.
 

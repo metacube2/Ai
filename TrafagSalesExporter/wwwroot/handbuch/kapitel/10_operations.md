@@ -1,6 +1,6 @@
 # Operations
 
-Der Reiter Operations bündelt die Steuerung der Produktion am Standort Bubikon. Unter **KPI** stehen die Kennzahlen der Operations, zuerst die Liefertreue der Trafag AG (Verkaufsorganisation 1100) mit OTD, OTIF und OTP. Unter **Shopfloor** liegt das digitale Shop-Floor-Board, das die Excel-Datei „PPA-Shop-Floor-File“ ersetzt. Dort stehen Pendenzen, Abteilungswerte, Rückstandslisten, Fehlteile, Lieferzeiten, Forecast und die Auslastungsgrafik für das tägliche Shop-Floor-Meeting. Hauptnutzer sind die Leitung Operations und Supply Chain, die Produktionsplanung (PPD), die Abteilungs- und Teamleiter der Produktion sowie Einkauf, Verkauf, Logistik und Unterhalt. Seit dem 16.10.2026 ist das Shopfloor für alle Windows-Benutzer ohne eigene Anmeldung offen; eine Administratorin oder ein Administrator kann die Anmeldung (Benutzer „operations“) wieder einschalten. Die Liefertreue kommt monatlich direkt aus SAP. Das Shopfloor wird werktags um 04:00 und 12:45 Uhr aus SAP ergänzt (Fehlteile ZD05, Plan- und Fertigungsaufträge, Logistik-Mengen, Tagesmengen SEH und TR5, FPY SEH) und sonst im Meeting von Hand gepflegt.
+Der Reiter Operations bündelt die Steuerung der Produktion am Standort Bubikon. Unter **KPI** stehen die Kennzahlen der Operations, zuerst die Liefertreue der Trafag AG (Verkaufsorganisation 1100) mit OTD, OTIF und OTP. Unter **Shopfloor** liegt das digitale Shop-Floor-Board, das die Excel-Datei „PPA-Shop-Floor-File“ ersetzt. Dort stehen Pendenzen, Abteilungswerte, Rückstandslisten, Fehlteile, Lieferzeiten, Forecast und die Auslastungsgrafik für das tägliche Shop-Floor-Meeting. Hauptnutzer sind die Leitung Operations und Supply Chain, die Produktionsplanung (PPD), die Abteilungs- und Teamleiter der Produktion sowie Einkauf, Verkauf, Logistik und Unterhalt. Seit dem 16.10.2026 ist das Shopfloor für alle Windows-Benutzer ohne eigene Anmeldung offen; eine Administratorin oder ein Administrator kann die Anmeldung (Benutzer „operations“) wieder einschalten. Die Liefertreue kommt monatlich direkt aus SAP. Das Shopfloor wird werktags um 04:00 und 12:45 Uhr aus SAP ergänzt (Fehlteile ZD05, Plan- und Fertigungsaufträge, Logistik-Mengen, Tagesmengen SEH, TR5 und seit 19.10.2026 DW, FPY SEH) und sonst im Meeting von Hand gepflegt.
 
 ## Schnellüberblick
 
@@ -33,7 +33,7 @@ Diese Seite zeigt auf einen Blick, wie Operations zusammenhängt: woher die Zahl
 
 | Wann | Was passiert |
 |---|---|
-| werktags 04:00 | SAP-Abgleich: Fehlteile ZD05, Plan- und Fertigungsaufträge, Logistik-Mengen, Tagesmengen SEH und TR5, FPY SEH (Stand Vortag) |
+| werktags 04:00 | SAP-Abgleich: Fehlteile ZD05, Plan- und Fertigungsaufträge, Logistik-Mengen, Tagesmengen SEH, TR5 und DW, FPY SEH (seit 19.10.2026 auf dem Produktionstag, heute und die drei Tage davor) |
 | vor dem Meeting | Teamleiter erfassen Tagesziel, Personal, Ampel und Bemerkungen; Einkauf codiert neue Fehlteile; PPD führt Verzug nach |
 | Shop-Floor-Meeting | Ablauf auf der Startseite von oben nach unten, nur Abweichungen besprechen, Massnahmen als Pendenz festhalten |
 | werktags 12:45 | zweiter SAP-Abgleich mit den Buchungen des Vormittags |
@@ -57,7 +57,7 @@ Der Prozess folgt der Tagesordnung auf der Startseite. Zuerst kommen Highlights 
 
 ### Wie gerechnet wird
 
-Für alle Tageswerte gilt eine Regel: **Der Eintrag vom Tag D zeigt den Stand bis D-1.** Was am Montag besprochen wird, sind also die Mengen vom Freitag; bei automatisch gelieferten Mengen zählen am Montag Freitag, Samstag und Sonntag zusammen. Werte aus SAP tragen einen farbigen Punkt mit der Quelle und dem Lieferzeitpunkt. Was von Hand erfasst ist, überschreibt die SAP-Lieferung nicht.
+Für die von Hand erfassten Tageswerte gilt eine Regel: **Der Eintrag vom Tag D zeigt den Stand bis D-1.** Was am Montag besprochen wird, sind also die Mengen vom Freitag. Automatisch aus SAP gelieferte Mengen stehen dagegen seit dem 19.10.2026 auf dem **Produktionstag**: Der Eintrag vom Tag D enthält die Rückmeldungen mit Erfassungsdatum D beziehungsweise die Aufträge mit Istendtermin D. Der Abgleich schreibt jeweils den heutigen Tag und die drei Tage davor neu; ein Tag ohne jede Rückmeldung eines Bereichs (zum Beispiel ein Wochenende) bleibt leer statt null. Werte aus SAP tragen einen farbigen Punkt mit der Quelle und dem Lieferzeitpunkt. Was von Hand erfasst ist, überschreibt die SAP-Lieferung nicht.
 
 ### Einsatz im Arbeitsalltag
 
@@ -210,7 +210,7 @@ Die Seiten der vier Produktionsabteilungen sind das Herz des Meetings. SEH ferti
 
 Ø Geräte pro Tag 1. Monat ist der Auftragsvorrat 1 Monat geteilt durch 20 Arbeitstage. Die Abweichung ist produzierte Menge minus Tagesziel, die erreichte Tagesleistung ist produzierte Menge durch Tagesziel in Prozent. Verzug und Terminverschiebungen werden aus der PPD-Seite übernommen. Die Abteilung eines Auftrags ergibt sich aus dem Disponenten im Werk 1100: SEH Disponenten mit S, TR5 mit EK, TX mit EL, DW mit D, CZ 017 bis 028.
 
-Automatisch aus SAP seit dem 16.10.2026 (Abgleich 04:00 und 12:45 Uhr): die **produzierte Tagesmenge SEH** ist die WE-Menge der Fertigungsaufträge der Disponenten S* mit Istendtermin am Vortag, wie im COOIS-Layout /SEH 001. Die **produzierte Tagesmenge TR5** rechnet wie der Report ZC27 mit der Variante /PPA EXX72: Gutmenge der Rückmeldungen an elf Arbeitsplätzen mit Typencode 8*, nur der letzte Vorgang. **FPY SEH** ist WE-Menge geteilt durch Gesamtmenge der Aufträge mit Istendtermin in der Kalenderwoche des Vortags. FPY für TR5, TX, DW und CZ kommt aus dem MES.
+Automatisch aus SAP seit dem 16.10.2026 (Abgleich 04:00 und 12:45 Uhr): die **produzierte Tagesmenge SEH** ist die WE-Menge der Fertigungsaufträge der Disponenten S* mit Istendtermin am Tag des Eintrags (seit 19.10.2026; vorher am Vortag), wie im COOIS-Layout /SEH 001. Die **produzierte Tagesmenge TR5** rechnet wie der Report ZC27 mit der Variante /PPA EXX72: Gutmenge der Rückmeldungen an elf Arbeitsplätzen mit Typencode 8*, nur der letzte Vorgang. **FPY SEH** ist WE-Menge geteilt durch Gesamtmenge der Aufträge mit Istendtermin in der Kalenderwoche des Produktionstags bis zu diesem Tag (seit 19.10.2026; vorher Kalenderwoche des Vortags). Seit dem 19.10.2026 kommt auch die **produzierte Tagesmenge DW** aus SAP: Gutmenge der Rückmeldungen am Arbeitsplatz DL790 nach Erfassungsdatum, wie im Report ZC27; die Gegenkontrolle mit ZC27 durch die Supply Chain ist noch offen. FPY für TR5, TX, DW und CZ kommt aus dem MES.
 
 ### Einsatz im Arbeitsalltag
 
@@ -220,7 +220,7 @@ Automatisch aus SAP seit dem 16.10.2026 (Abgleich 04:00 und 12:45 Uhr): die **pr
 
 ### Grenzen und Fallstricke
 
-Die Werte gelten für den Vortag; am Montag für Freitag bis Sonntag. Ein Tagesziel, das niemand erfasst, macht Abweichung und Leistung leer. Felder, die später aus SAP kommen (zum Beispiel Auftragsvorrat), sind schon mit „SAP“ markiert, werden aber bis zur Freischaltung von Hand gepflegt; die Seite „Schnittstelle SAP / MES“ zeigt den Stand je Feld.
+Von Hand erfasste Werte gelten für den Vortag; die SAP-Mengen stehen auf dem Produktionstag (siehe oben). Ein Tagesziel, das niemand erfasst, macht Abweichung und Leistung leer. Felder, die später aus SAP kommen (zum Beispiel Auftragsvorrat), sind schon mit „SAP“ markiert, werden aber bis zur Freischaltung von Hand gepflegt; die Seite „Schnittstelle SAP / MES“ zeigt den Stand je Feld.
 
 ## Shopfloor: Status Bereich (Ampel)
 
@@ -378,7 +378,7 @@ Je Bereich die verpackten Mengen an den Arbeitsplätzen: TR5 (MLE01, MLE02), DW 
 
 ### Wie gerechnet wird
 
-Automatisch aus SAP seit dem 16.10.2026 (Abgleich 04:00 und 12:45 Uhr): Die Mengen rechnen genau wie der Report **ZC27**. Gezählt wird die Gutmenge der Rückmeldungen nach **Erfassungsdatum**, ohne stornierte Rückmeldungen und ohne Stornosätze. Je Auftrag zählt nur der letzte Vorgang an den gewählten Arbeitsplätzen. Jede Gruppe ist ein eigener ZC27-Lauf, MLE08 und MLE09 laufen zusammen. Erfasst wird der Vortag, am Montag Freitag bis Sonntag zusammen. Die Soll-Menge kommt aus der Tagesmenge der Abteilung.
+Automatisch aus SAP seit dem 16.10.2026 (Abgleich 04:00 und 12:45 Uhr): Die Mengen rechnen genau wie der Report **ZC27**. Gezählt wird die Gutmenge der Rückmeldungen nach **Erfassungsdatum**, ohne stornierte Rückmeldungen und ohne Stornosätze. Je Auftrag zählt nur der letzte Vorgang an den gewählten Arbeitsplätzen. Jede Gruppe ist ein eigener ZC27-Lauf, MLE08 und MLE09 laufen zusammen. Seit dem 19.10.2026 steht jede Menge auf dem Tag ihres Erfassungsdatums; ein Tag ohne Rückmeldung bleibt leer. Die Soll-Menge kommt aus der Tagesmenge der Abteilung.
 
 ### Einsatz im Arbeitsalltag
 
@@ -502,7 +502,7 @@ Automatische Lieferungen schreiben unter dem Namen „SAP-Schnittstelle“ und s
 
 ### Grenzen und Fallstricke
 
-Stand 16.10.2026 kommen aus SAP die Fehlteile ZD05, die Plan- und Fertigungsaufträge für den Forecast, die Logistik-Mengen, die Tagesmengen SEH und TR5 sowie FPY SEH. Die Logistik-Mengen und FPY SEH sind vor dem Einschalten mit Echtdaten gegen ZC27 und die Kontrollwerte der Supply Chain geprüft worden (13.10.2026 und KW 38 bis 41, alle gleich). Verkauf (CO-PA), Auftragsvorrat und Rückstandslisten folgen später.
+Stand 16.10.2026 kommen aus SAP die Fehlteile ZD05, die Plan- und Fertigungsaufträge für den Forecast, die Logistik-Mengen, die Tagesmengen SEH und TR5 sowie FPY SEH, seit dem 19.10.2026 auch die Tagesmenge DW. Die Logistik-Mengen und FPY SEH sind vor dem Einschalten mit Echtdaten gegen ZC27 und die Kontrollwerte der Supply Chain geprüft worden (13.10.2026 und KW 38 bis 41, alle gleich). Verkauf (CO-PA), Auftragsvorrat und Rückstandslisten folgen später.
 
 ## Kennzahlen-Glossar
 
@@ -515,11 +515,11 @@ Stand 16.10.2026 kommen aus SAP die Fehlteile ZD05, die Plan- und Fertigungsauft
 | Zu früh | vorgezogene Lieferungen | Positionen mit Warenausgang 5 oder mehr Arbeitstage vor dem bestätigten Termin |
 | Arbeitstage | Zähleinheit für Verzug und Lieferzeit | Montag bis Freitag, Feiertage werden nicht abgezogen |
 | Wunsch realistisch / zu kurz | Machbarkeit des Kundenwunsches | Lieferzeit vom Auftragsdatum bis zum Wunschtermin verglichen mit dem Median der bestätigten Lieferzeit derselben Produktgruppe (bei weniger als 20 Positionen der Gesamtmedian) |
-| Stand D-1 | Zeitbezug aller Tageswerte | der Eintrag vom Tag D zeigt den Vortag; am Montag zählen Freitag bis Sonntag |
+| Stand D-1 | Zeitbezug der von Hand erfassten Tageswerte | der Eintrag vom Tag D zeigt den Vortag; SAP-Mengen stehen seit dem 19.10.2026 auf dem Produktionstag |
 | Auftragsvorrat 1/2/3 Monate | Arbeit, die in diesem Zeitraum fällig wird | offene Menge der Aufträge mit Termin bis Ende des laufenden, nächsten oder übernächsten Monats |
 | Ø Geräte pro Tag 1. Monat | nötige Tagesleistung für den Vorrat | Auftragsvorrat 1 Monat geteilt durch 20 Arbeitstage |
 | Erreichte Tagesleistung | Zielerreichung des Tages | produzierte Menge geteilt durch Tagesziel in Prozent |
-| FPY (First Pass Yield) | Anteil ohne Nacharbeit oder Ausschuss | SEH: WE-Menge geteilt durch Gesamtmenge der Aufträge mit Istendtermin in der KW des Vortags; übrige Abteilungen aus dem MES |
+| FPY (First Pass Yield) | Anteil ohne Nacharbeit oder Ausschuss | SEH: WE-Menge geteilt durch Gesamtmenge der Aufträge mit Istendtermin in der KW des Produktionstags bis zu diesem Tag; übrige Abteilungen aus dem MES |
 | Logistik-Menge (ZC27) | verpackte Gutmenge je Arbeitsplatz | Gutmenge der Rückmeldungen nach Erfassungsdatum, ohne Stornos, nur der letzte Vorgang des Auftrags an den gewählten Arbeitsplätzen |
 | Abweichung Ist–Soll Logistik | Stau vor dem Versand | verpackte Menge minus produzierte Tagesmenge der Abteilung |
 | Total in Verzug | Menge hinter Plan | Summe der Verzugsmengen SEH, TR5, TX und DW (ohne MTS) |

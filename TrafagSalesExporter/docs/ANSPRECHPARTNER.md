@@ -62,11 +62,11 @@ BLP-Vorfall gestört.
 | Marco Di Menco | Business Owner Etiketten | Fachseite Etikettendruck, liefert Testdaten | *offen* |
 | Marco Widmer | Einkauf | Fachliche Abnahme Einkaufsdashboard, Review 2026-07-10 | *offen* |
 | Florian Wächter | Change Request / Anforderung | formale Anforderungsseite SAP | *offen* |
-| Andreas | Finance | Budget- und Margenlogik, Nachweise, Gruppenreporting, Review der Länderformeln | *offen*, **Nachname nicht dokumentiert** |
-| Sonja | HR | HR-Fachabnahme, Phase-2-Priorisierung HR-Dashboard | *offen*, **Nachname nicht dokumentiert** |
+| Andreas | Finance | Budget- und Margenlogik, Nachweise, Gruppenreporting, Review der Länderformeln | *offen*, **Nachname nicht dokumentiert** *(ueberholt am 2026-10-29: Andreas Stoller, z. B. `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`; Adresse weiter offen)* |
+| Sonja | HR | HR-Fachabnahme, Phase-2-Priorisierung HR-Dashboard | *offen*, **Nachname nicht dokumentiert** *(ueberholt am 2026-10-29: Sonja Richter, `docs/HR_KPI.md` Abschnitt 8; Adresse weiter offen)* |
 | Alex | Infrastruktur | Netzwerk, Server, Security | *offen*, **Nachname nicht dokumentiert** |
 | Ramon | Infrastruktur | Netzwerk, Server, Security | *offen*, **Nachname nicht dokumentiert** |
-| Ingo Kohler | IT Analytics Lead | Analytics, BI, Reporting-/Z-Funktionsbezug, .NET/ASP-Web | `ingo.kohler@trafag.com` |
+| Ingo Kohler | SAP Specialist *(Korrektur Ingo 2026-10-05, vorher hier „IT Analytics Lead“)* | Analytics, BI, Reporting-/Z-Funktionsbezug, .NET/ASP-Web | `ingo.kohler@trafag.com` |
 
 Quellen: `saptasks/zzprdat-kontext.md:189` ff. („## 11. Beteiligte", Rollen von Lucas, Marco
 Di Menco, Adil, Florian, Fabio), `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25` und `:159-166`
@@ -77,7 +77,7 @@ Di Menco, Adil, Florian, Fabio), `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25` 
 
 | Partei | Rolle | Kontakt |
 | --- | --- | --- |
-| Upgreat | Server, Zugriff, Netzwerk, SharePoint, Betrieb, Security-Rahmen; auch SAP-B1-Server | *offen* |
+| Upgreat | Server, Zugriff, Netzwerk, SharePoint, Betrieb, Security-Rahmen; auch SAP-B1-Server | *offen* *(Nachtrag 2026-10-29: Ueli Kunzmann, Rexx-Export und dormakaba-Task, `docs/HR_KPI.md` 8.3; Adresse offen)* |
 | NTT | SAP-B1-Server-/Applikationsprojekt | *offen* |
 | ANG | SAP-B1-Server-/Applikationsprojekt | *offen* |
 | VARONE | B1-Partner Trafag Italia (Moving-Average-Umstellung) | *offen* |
@@ -138,7 +138,7 @@ Alle drei sind in diesem Repo schon einmal echte Stolpersteine gewesen:
 
 1. **Adressen der internen Ansprechpartner** — Lucas, Adil, Fabio, Andreas, Sonja, Alex, Ramon.
    Das ist die praktisch wichtigste Lücke.
-2. **Nachnamen** von Andreas, Sonja, Alex, Ramon.
+2. **Nachnamen** von Andreas, Sonja, Alex, Ramon. *(Andreas Stoller und Sonja Richter seit 2026-10-29 eingetragen; Alex und Ramon offen.)*
 3. **Empfänger TRFR und TRUS** — beide haben eine echte, offene Bitte im Standort-Mailtext.
    Die versandfertigen Mails liegen bereits vor (`docs/FINANCE_FELDLUECKEN.md`),
    es fehlt ausschliesslich die Adresse.

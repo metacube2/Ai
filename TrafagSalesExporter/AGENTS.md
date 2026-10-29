@@ -34,6 +34,12 @@ Danach:
 Diese Schritte duerfen auch dann nicht uebersprungen werden, wenn der Auftrag bereits in
 einem Chat beschrieben wurde.
 
+**Eine Ausnahme, und nur diese:** Eine reine Kurzauskunft, bei der sich im Repository und im
+Produktivsystem nichts aendert, braucht weder Lektuere noch Eintrag. Sobald doch etwas
+geaendert wird, gilt dieser Abschnitt vollstaendig. Abgrenzung und Abschlussregel (Commit,
+Doku, Issue-Log, `docs/rag/LEARNINGS.md`): `CLAUDE.md` Abschnitte 3 und 3a, sie gelten auch
+hier.
+
 ## 3. Arbeitsweise
 
 Arbeitsregeln, Testerwartungen und fachliche Grenzen stehen in `persona.md`.

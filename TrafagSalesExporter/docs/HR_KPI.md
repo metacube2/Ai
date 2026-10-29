@@ -1,18 +1,21 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Aktueller Produktivstand: Commit `5ae7f31`, deployed am 2026-09-28 um 11:25 (Abschnitt 8).
+Aktueller Produktivstand des HR-Cockpits: Commit `ede56b6`, deployed am 2026-10-22 um 15:48 (Abschnitt 8.8).
+*(ueberholt am 2026-10-29: hier stand `5ae7f31` vom 2026-09-28 11:25, siehe `docs/rag/DEPLOYMENT.md`)*
 Historie: deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit `9435a5d`,
 Gesamtsuite `438/438` gruen.
 
 ## 1. Aufbau
 
 ### Reparaturstand 2026-09-29 — lokal, noch nicht deployed
+
+*Ueberholt am 2026-10-29: produktiv seit 2026-09-29 10:07 (`eafd1c5`), siehe `docs/rag/HR_KPI.md`.*
 
 Nach Konsistenzreview: Von/Bis hat fuer Berechnungsjahr und Vergleichswerte Vorrang;
 Monat/Quartal/YTD zaehlen ihre volle Kalenderperiode, nicht nur Austritte ab dem freien
@@ -114,6 +117,10 @@ Ampelgrenzen konfigurierbar ueber `HrKpi:AbsenceYellowThresholdPercent` und
 gelb unter 5.0 %, rot ab 5.0 %. Die verwendeten Grenzen stehen in der Kachelbeschreibung,
 damit HR sie sichtbar pruefen kann.
 
+*Ueberholt am 2026-10-29: Seit 2026-10-01 kommt die Krankheit je Fall aus SAP `PA2001`
+(`hrdata/HR_Absenzen_SAP.xlsx`) und ist periodengenau; der Hinweis „Zeitraum nicht bestimmbar"
+gilt nur noch ohne SAP-Datei oder fuer einen Zeitraum vor dem Vorjahr, siehe Abschnitt 8.7.*
+
 ## 5. Behobene Berechnungsfehler (Review 2026-07-06, alle umgesetzt)
 
 | ID | Fehler und Behebung |
@@ -143,7 +150,7 @@ Austrittsdatei nicht stabil vorhanden sind. Von/Bis hat Vorrang vor dem Austritt
 **Abnahmegrenze:** Die Tests beweisen technische Filterkonsistenz innerhalb der vorhandenen
 Quelldaten. Sie ersetzen keine fehlenden Quellfelder. Eine periodengenaue Krankenquote
 bleibt erst moeglich, wenn Rexx die Krankheitsstunden mit belastbarem Bezugszeitraum oder
-als datierte Einzelereignisse liefert.
+als datierte Einzelereignisse liefert. *(ueberholt am 2026-10-01: periodengenau ueber SAP `PA2001`, Abschnitt 8.7)*
 
 ## 7. Bewusst nicht geaendert, fachliche Bestaetigung offen
 
@@ -184,7 +191,7 @@ Wo die Antwort mehr als eine Umsetzung zuliess, hat Ingo am 2026-09-28 entschied
 
 *Ueberholt am 2026-09-30:* ~~Offen bleibt die **8,4-Stunden-Umrechnung** je Krankheitstag; danach wurde nicht gefragt.~~
 Entschieden, 8,0 h je Tag, siehe Abschnitt 8.4. Die Stunden in der Tabelle oben (Stunden / 8,4)
-gelten seither mit 8,0.
+gelten seither mit 8,0, fuer Kader (SAP-Mitarbeiterkreis 10) seit 2026-10-22 mit 8,2 (Abschnitt 8.8).
 
 ### 8.1 Periodengenaue Krankenquote: die Datumsfelder reichen nicht
 
@@ -205,12 +212,14 @@ Damit ist die Krankenquote nur dann periodengenau, wenn **der Export in Rexx sch
 gewuenschten Zeitraum eingegrenzt** wird, was HR mit „unter Abwesenheiten eingegrenzt"
 vermutlich meint. Die Anzeige bleibt bei einem Zeitraumfilter deshalb beim Hinweis
 „Zeitraum nicht bestimmbar". HR hat angeboten, das im naechsten Call gemeinsam anzusehen.
+*(ueberholt am 2026-10-01: mit der SAP-Datei aus `PA2001` ist die Krankenquote periodengenau, Abschnitt 8.7)*
 
 ### 8.2 Nebenbefund: die HR-Dateien auf dem Server sind alt
 
 Stand der Dateien in `hrdata` am 2026-09-28: die Rexx-Exporte vom **08.07.2026**, die SAP-Datei
 `HR_KPI_EXPORT.xlsx` vom **26.05.2026**. Das Cockpit zeigt also den Stand von Juli. Neue
 Mitarbeitende seit Mai haben keinen SAP-Beschaeftigungsgrad und laufen ueber die Sollzeit.
+*(SAP-Teil ueberholt am 2026-10-01: `HR_KPI_Export.xlsx` wird taeglich ueber `HrKpiSet` geschrieben, Abschnitt 8.6; die Rexx-Dateien sind weiter vom 08.07.)*
 
 ### 8.3 Offene Wuensche und Faeden aus der Mailhistorie (gesichtet 2026-09-29)
 
@@ -288,11 +297,14 @@ Kopfzeilen und Werteverteilungen, keine Namen; Sonde `.tmp_tools/HrHeaders0930`)
 
 | Thema | Ergebnis HR | Stand Cockpit | Offen |
 | --- | --- | --- | --- |
-| Arbeitstag | **Kadermitarbeitende 8,1 h, normale Mitarbeitende 8,0 h** *(ueberholt am 2026-10-22: Kader 8,2 h, Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, siehe 8.7)* | seit 30.09. einheitlich 8,0 h (8.4) | Kaderkennzeichen fehlt in allen Dateien. Kandidaten: SAP `Mitarbeiterkreis` (Monatszeilen 10=55, 15=754, 19=18, 20=308, 30=4; welcher Wert Kader ist, weiss nur HR) oder Rexx `Leitung j/n`. Rexx `Ø taegliche Sollarbeitszeit (Woche)` hilft nicht (Werte wie 5,71 = 40 h / 7 Tage). *Erledigt am 2026-10-01 in `c51445c`, produktiv seit 2026-10-01 09:12:* Ingo bestimmt Rexx **`Leitung j/n` = ja** als Kaderkennzeichen (gemessen in den Dateien vom 26.05. in `C:	emp`: `Abwesenheitinstunden.xlsx` und `Saldiperstichdatum.xlsx` je 44 ja / 218 nein, `Personalausgeschieden.xlsx` 108 nein, `Exportkommengehen.xlsx` ohne die Spalte). `HoursPerWorkdayFor` gibt dann 8,1 h, sonst 8,0 h; gilt fuer Krankheitstage, 61-Tage-Grenze und FTE aus der Sollzeit. Tests `Kader_Mit_Leitung_Ja_Hat_8_1_Stunden` und `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden`, 800/800. Hinweis: in Rexx kann eine Person der Geschaeftsfuehrung `Leitung = nein` haben; ob jeder Kader so gepflegt ist, liegt bei HR |
+| Arbeitstag | **Kadermitarbeitende 8,1 h, normale Mitarbeitende 8,0 h** *(ueberholt am 2026-10-22: Kader 8,2 h, Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, siehe 8.8)* | seit 30.09. einheitlich 8,0 h (8.4) | Kaderkennzeichen fehlt in allen Dateien. Kandidaten: SAP `Mitarbeiterkreis` (Monatszeilen 10=55, 15=754, 19=18, 20=308, 30=4; welcher Wert Kader ist, weiss nur HR) oder Rexx `Leitung j/n`. Rexx `Ø taegliche Sollarbeitszeit (Woche)` hilft nicht (Werte wie 5,71 = 40 h / 7 Tage). *Erledigt am 2026-10-01 in `c51445c`, produktiv seit 2026-10-01 09:12:* Ingo bestimmt Rexx **`Leitung j/n` = ja** als Kaderkennzeichen (gemessen in den Dateien vom 26.05. in `C:	emp`: `Abwesenheitinstunden.xlsx` und `Saldiperstichdatum.xlsx` je 44 ja / 218 nein, `Personalausgeschieden.xlsx` 108 nein, `Exportkommengehen.xlsx` ohne die Spalte). `HoursPerWorkdayFor` gibt dann 8,1 h, sonst 8,0 h; gilt fuer Krankheitstage, 61-Tage-Grenze und FTE aus der Sollzeit. Tests `Kader_Mit_Leitung_Ja_Hat_8_1_Stunden` und `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden`, 800/800. Hinweis: in Rexx kann eine Person der Geschaeftsfuehrung `Leitung = nein` haben; ob jeder Kader so gepflegt ist, liegt bei HR. *(Ueberholt am 2026-10-22: Kader = SAP-Mitarbeiterkreis 10 mit 8,2 h, `Leitung j/n` zaehlt nicht mehr, `ede56b6`, siehe 8.8)* |
 | Abwesenheiten | In Rexx wird jeder Fall mit **Von/Bis** erfasst und hat einen **Status** (genehmigt / nicht genehmigt) | `Abwesenheitinstunden.xlsx` ist eine Zeile je Person mit Summen; auch die Spalten „genehmigt" sind Summen | Neuer Rexx-Bericht **eine Zeile je Fall** (Person, Art, Von, Bis, Stunden, Status) als fuenfte Datei. Macht die Krankenquote periodengenau und erlaubt „nur genehmigt". Beispieldatei von Sonja noetig. *Gemessen am 2026-10-01* an `Abwesenheitinstunden.xlsx` (#744, Stand 26.05., 262 Personen): `Krankheit angetreten (Zeitraum)` ist bei 187 Personen gefuellt, immer mit **genau einem** Zeitraum (letzter Fall); 74 davon ohne Stunden im Exportzeitraum (Fall 2024/2025), 46 passen zu Stunden / 8, bei 63 sind die Stunden groesser als der Zeitraum (mehrere Faelle). #744 hat keine Ferienspalte. Zusaetzliche Spalten im Personenbericht machen die Quote also nicht periodengenau |
 | Absenz-Ampel | **bis 4,99 % gelb, ab 5 % rot** | Krankenquote gruen < 3 %, gelb 3 bis < 5 %, rot ab 5 % (`HrKpi:Absence*ThresholdPercent`): passt *Erledigt am 2026-09-30 in `81140fa`, produktiv seit 2026-10-01 09:12:* Die Uebersichtskachel „Krankheitstage" warnte erst **ueber** fest verdrahteten 5 % (`absenceRate > 0.05m`); jetzt ab der konfigurierten Rot-Grenze (`ReachesAbsenceRed`, `>=`), Test `Absenzampel_Ist_Ab_Fuenf_Prozent_Rot`, 791/791. Gruen unter 3 % hat HR nicht erwaehnt, gilt als unveraendert |
 
-### 8.6 SAP-Datei `HR_KPI_Export.xlsx` ist nicht automatisiert (Stand 2026-09-30)
+### 8.6 SAP-Datei `HR_KPI_Export.xlsx`: seit 2026-10-01 automatisiert (taeglicher Abruf `HrKpiSet`)
+
+*Ueberschrift berichtigt am 2026-10-29; bis 2026-09-30 lautete sie „ist nicht automatisiert". Der folgende
+Befund beschreibt den Stand vom 2026-09-30, produktiv ist der Abruf seit 2026-10-01 (Tabelle und Messungen unten).*
 
 Die Datei kommt aus dem ABAP-Report `Z_HR_KPI_CONS` bzw. `Z_HR_KPI_CONSOLIDATE`, von Hand
 gestartet (`powerbi/datenbeschaffung.txt`, `powerbi/infos.txt`: „CSV via Handstart"). Alle 1'139
@@ -335,13 +347,13 @@ Felder, die das Cockpit liest; keine Namen, kein Geburtsdatum, kein Lohn. Das Co
 | Struktur `ZSTR_HR_KPI` (16 Felder) | **aktiv in T76**, Paket `ZPP`, Transport `T76K912530`; per DD03L gegengelesen. Beim ersten Anlegen fehlte `TEILK`, weil `SapGuiStrukturFelder.vbs` an der Seitengrenze die neunte Zeile ueberschrieb (behoben) |
 | Modell `DEFINE` | **aktiv**, Gesamtquelle `docs/abap/ZPOWERBI_EINKAUF_MPC_EXT_DEFINE.abap` (Journal plus HR), Include `ZCL_ZPOWERBI_EINKAUF_MPC_EXT==CM001`, ueber RFC gegengelesen. Decimal: `EMPCT` DEC 5,2, `ABWTG` DEC 6,2 laut DD03L |
 | Daten `GET_ENTITYSET` | **aktiv**, Gesamtquelle `docs/abap/ZPOWERBI_EINKAUF_DPC_EXT_GET_ENTITYSET.abap`, Include `ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W`, ueber RFC gegengelesen |
-| Transport | DPC_EXT und MPC_EXT sind durch `T76K912530` (Journal, nicht freigegeben) gesperrt; HR geht damit **zusammen mit dem Journal** nach P76 (Entscheid Ingo fuer diesen Service) |
+| Transport | DPC_EXT und MPC_EXT sind durch `T76K912530` (Journal, nicht freigegeben *(Stand 2026-09-30; am 2026-10-01 nach P76 importiert)*) gesperrt; HR geht damit **zusammen mit dem Journal** nach P76 (Entscheid Ingo fuer diesen Service) |
 | Berechtigung | Der Data Provider liest PA-Tabellen per `SELECT`, ohne `P_ORGIN`-Pruefung: wer `ZPOWERBI_EINKAUF_SRV` lesen darf, sieht diese Felder |
 | Cockpit-Leser und Tagesabruf | `Services/HrKpi/SapGatewayHrKpiReader.cs` (`4051506`), nur Produktion, ab 05:00 einmal taeglich, Verbindung wie der Einkauf. 795/795 Tests, darunter der Rundweg Datei schreiben und mit dem echten HR-Leser lesen. **Produktiv seit 2026-10-01 09:12** (Stand `ba9cf5c`) |
 
-**Gemessen im Gateway Client T76, 2026-09-30** (Antwortrumpf nicht lesbar, nur Status und Laenge): `$metadata` 200 (342'123 Zeichen statt 341'032); `HrKpiSet` `$top=5` 200 in 0,7 s; Filter 2026/09 Seite 1 200 (560'915), Seite 2 mit `$skip=1000` 200 (84'670), Monat 13 200 mit leerer Liste; Gegenproben `MAKTSet` und `FinanzJournalSet` 200. **Die Werte selbst sind noch nicht zeilenweise gegen den Report gegengelesen.**
+**Gemessen im Gateway Client T76, 2026-09-30** (Antwortrumpf nicht lesbar, nur Status und Laenge): `$metadata` 200 (342'123 Zeichen statt 341'032); `HrKpiSet` `$top=5` 200 in 0,7 s; Filter 2026/09 Seite 1 200 (560'915), Seite 2 mit `$skip=1000` 200 (84'670), Monat 13 200 mit leerer Liste; Gegenproben `MAKTSet` und `FinanzJournalSet` 200. **Die Werte selbst sind noch nicht zeilenweise gegen den Report gegengelesen.** *(ueberholt am 2026-10-01: Wertestichprobe in P76 bestanden, siehe unten)*
 
-**Offen bis produktiv:** (1) Stichprobe der Werte gegen `Z_HR_KPI_CONS` fuer 09/2026 (Screenshot oder Browser mit Sitzung); *Erledigt am 2026-10-01:* (2) Transport `T76K912530` von Ingo nach P76 importiert; (3) Deploy des Cockpits um 09:12.
+**Offen bis produktiv:** (1) Stichprobe der Werte gegen `Z_HR_KPI_CONS` fuer 09/2026 (Screenshot oder Browser mit Sitzung) *(erledigt am 2026-10-01, Wertestichprobe P76 bestanden)*; *Erledigt am 2026-10-01:* (2) Transport `T76K912530` von Ingo nach P76 importiert; (3) Deploy des Cockpits um 09:12.
 
 **Gemessen im Gateway Client P76, 2026-10-01** (nach dem Import): `$metadata` 200 (343'930); `HrKpiSet` 2026/09 Seite 1 200 in 1,6 s (560'979), Seite 2 200 (93'147), 2026/10 200 (560'979); `MAKTSet` 200; `FinanzJournalSet` mit `Bukrs eq '1200' and Gjahr eq '2026'` 200 in 0,9 s (ohne Filter 500 nach 154 s, das ist der bekannte Vollscan, kein Transportfehler). Der Abruf des Cockpits um 09:14 lief vor dem Import auf 404 (AppEventLog 15372) und versucht es erst am 02.10. ab 05:00 wieder (einmal pro Tag), ausser die App startet neu. *Wertestichprobe am 2026-10-01 bestanden:* Ingo hat `HrKpiSet?$format=json&$top=3` (P76, Monat 10) eingefuegt; Personen 2004, 2005, 2007 stimmen in allen uebertragenen Feldern (Buchungskreis, Personalbereich, -teilbereich, Mitarbeitergruppe, -kreis, Teilzeit, Beschaeftigungsgrad, Geschlecht, Planstelle, Stellenschluessel, Abrechnungskreis, NBU/BU 0) mit der Handdatei `Z_HR_KPI_CONS` vom 26.05. ueberein. Auffaellig, aber in beiden gleich und damit SAP-Stammdaten: 2005 hat Teilzeit `X` bei 100 % und Planstelle 99999999. **Offen:** *Entschieden am 2026-10-01 (Ingo: „entscheide du anhand dashboard“):* der Abruf holt weiter den **laufenden Monat**. Das Cockpit nimmt aus SAP fast nur Stammdaten zum Stichtag (Beschaeftigungsgrad fuer FTE und Krankenquote, Teilzeit, Geschlecht, Planstelle), die neben den Rexx-Dateien mit heutigem Stand stehen; mit dem Vormonat fehlten Eintritte des laufenden Monats und Pensumwechsel. Nur die Kachel Unfalltage (BU/NBU) zeigt damit „Monat bis heute“ und ist am Monatsanfang fast 0. *Umgesetzt in `931f151`, produktiv 2026-10-01 09:44:* Kacheln heissen „Unfalltage laufender Monat“, „BU-/NBU-Tage laufender Monat“, Detail „nur laufender Monat bis heute, unabhaengig vom Zeitraumfilter“, Schulungsseite angepasst, Test `BuildAsync_Beschriftet_Unfalltage_Als_Laufenden_Monat`, 801/801. Offen als Vorschlag: BU/NBU ab Jahresbeginn im DPC liefern (neuer Transport).
 
@@ -358,7 +370,7 @@ Frage Ingo: lassen sich Abwesenheiten ueber SAP genauer bestimmen, sodass Rexx e
 | SAP T76 | Struktur `ZSTR_HR_ABSENZ` (Paket ZPP; PERNR PERSNO, GJAHR, AWART, BEGDA/ENDDA CHAR8, SEQNR, ABWTG, STDAZ ABSTD, KALTG; per DD03L alle neun aktiv), `DEFINE` und `GET_ENTITYSET` erweitert (`docs/abap/ZHR_ABSENZ_*_ADD.abap`, Gesamtstaende per RFC gegengelesen), **neuer Transport `T76K912644`** (Aufgabe `T76K912645`, alle drei Objekte). Cache `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` |
 | Gemessen Gateway Client T76 | `$metadata` 200 (345'782 statt 343'930), `HrAbsenzSet` 2026 Seite 1 200 (312'027), Seite 2 200 leer, 2025 200 (545'547); Gegenproben `HrKpiSet`, `MAKTSet`, gefiltertes `FinanzJournalSet` 200 |
 | Set | Filter nur `Gjahr`; jeder Fall, der das Jahr beruehrt, mit vollem Von/Bis; **alle Arten**, gesperrte Saetze (`SPRPS = X`) nicht |
-| Cockpit `c749d32` | `SapGatewayHrAbsenceReader`, Tagesdienst holt nach `HrKpiSet` Vorjahr und laufendes Jahr nach `hrdata/HR_Absenzen_SAP.xlsx` (eigener Fehlerpfad). Builder: **liegt die Datei vor, kommt die Krankheit aus SAP** (Arten 0220, 0230, 0240, 0260, 0270; 0210 Arzt nicht), je Fall nach Arbeitstagen auf den Zeitraum zugeschnitten, offenes Ende je Arbeitstag mit 8,0/8,1 h; ohne Zeitraumfilter laufendes Jahr bis heute; 61-Tage-Regel unveraendert. Neu in „Zeit und Ferien“: Ferien bezogen, Kompensation, Militaer/Zivilschutz im Zeitraum (Tage). Fehlt die Datei, rechnet alles wie bisher aus Rexx. 809/809 |
+| Cockpit `c749d32` | `SapGatewayHrAbsenceReader`, Tagesdienst holt nach `HrKpiSet` Vorjahr und laufendes Jahr nach `hrdata/HR_Absenzen_SAP.xlsx` (eigener Fehlerpfad). Builder: **liegt die Datei vor, kommt die Krankheit aus SAP** (Arten 0220, 0230, 0240, 0260, 0270; 0210 Arzt nicht), je Fall nach Arbeitstagen auf den Zeitraum zugeschnitten, offenes Ende je Arbeitstag mit 8,0/8,1 h *(Kader seit 2026-10-22 8,2 h, 8.8)*; ohne Zeitraumfilter laufendes Jahr bis heute; 61-Tage-Regel unveraendert. Neu in „Zeit und Ferien“: Ferien bezogen, Kompensation, Militaer/Zivilschutz im Zeitraum (Tage). Fehlt die Datei, rechnet alles wie bisher aus Rexx. 809/809 |
 | Nachbesserung `c12b34a` | (1) Ein Zeitraum vor dem 01.01. des Vorjahres (die Datei hat nur Vorjahr und laufendes Jahr) faellt mit Hinweis auf Rexx zurueck, statt eine leere, scheinbar verlaessliche 0-%-Quote zu zeigen. (2) Der Absenzen-Abruf hat einen eigenen Faelligkeitsstempel; ein Neustart nach dem Transport schreibt die Datei noch am selben Tag. (3) Offenes Ende: Stunden bis heute je Arbeitstag mal Pensum (FTE). 810/810 |
 | Verhalten neu | Mit SAP-Datei zeigt die Ansicht **ohne Zeitraumfilter das laufende Jahr bis heute**, nicht mehr die Spanne der Rexx-Daten; HR sieht damit andere Standardzahlen |
 | Pruefliste P76 nach dem Import | `$metadata` muss von 343'930 auf rund 345'782 Zeichen wachsen (T76-Zuwachs), sonst ist der Modellcache alt: `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` in P76. Dann `HrAbsenzSet` 200 mit Daten, Gegenproben `HrKpiSet`, `MAKTSet`, gefiltertes `FinanzJournalSet` |
@@ -372,13 +384,7 @@ Rexx-Berichtsnummern aus denselben Notizen, fuer die Anfrage bei Upgreat: Abwese
 `#744`, Export KOMMEN/GEHEN `#732`, Personal ausgeschieden `#381`, Abwesenheiten Uebersicht `#742`,
 Stammdaten SAP `#735`.
 
-## Querverweise
-
-- Kurzstand, Zugang und Anwenderdoku: `docs/rag/HR_KPI.md`
-- Fachpruefung Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`
-- Anwenderdoku HR: `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`
-
-### 8.7 Kader neu: SAP-Mitarbeiterkreis 10, 8,2 h (Entscheid Ingo 2026-10-22)
+### 8.8 Kader neu: SAP-Mitarbeiterkreis 10, 8,2 h (Entscheid Ingo 2026-10-22)
 
 Ingo am 22.10.: „Korrektur fuer 8 Stunden, Feld dafuer Arbeitsverhaeltnis (10 ML mit Kadervertrag) waere Schluessel fuer 8,2
 dezimal“. Die Rexx-Exporte fuehren das Feld nicht (Arbeitsverhaeltnis dort nur befristet/unbefristet); der taegliche
@@ -391,3 +397,11 @@ SAP-Abruf `HrKpiSet` liefert den Mitarbeiterkreis. T503T (T76, gelesen 2026-10-2
 - Rexx „Leitung j/n“ zaehlt nicht mehr als Kader (bis 22.10.: 45 Personen; nach Kreis 10 rund 19 der Rexx-Liste).
 - Tests `Kader_Mitarbeiterkreis_10_Hat_8_2_Stunden`, `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_2_Stunden`;
   Suite 1288/1288. Produktiv seit 2026-10-22 15:48.
+
+*Abschnittsnummer am 2026-10-29 von „8.7" (doppelt) auf 8.8 berichtigt und vor die Querverweise gestellt.*
+
+## Querverweise
+
+- Kurzstand, Zugang und Anwenderdoku: `docs/rag/HR_KPI.md`
+- Fachpruefung Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`
+- Anwenderdoku HR: `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`

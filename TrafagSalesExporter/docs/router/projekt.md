@@ -1,6 +1,6 @@
 # Unterrouter Projekt
 
-Zurueck: `router.md`. Stand: 2026-10-27 (Loesungslandkarte); davor 2026-10-22 (Archivverweis `docs/archiv/`).
+Zurueck: `router.md`. Stand: 2026-10-29 (Kurzauskunft-Ausnahme, Managementbericht nur in Git); davor 2026-10-27 (Loesungslandkarte), 2026-10-22 (Archivverweis `docs/archiv/`).
 
 Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand.
 
@@ -13,7 +13,8 @@ Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand.
 
 Eintragen, bevor die Arbeit beginnt; beim Abschluss Status, geaenderte Dateien und Nachweis
 nachtragen und die Reservierung freigeben. Eintraege mit `abgeschlossen`, `deployed`,
-`frei` oder `Historie` sind keine laufende Arbeit.
+`frei` oder `Historie` sind keine laufende Arbeit. Eine reine Auskunft ohne jede Aenderung
+braucht diesen Schritt nicht, siehe `CLAUDE.md` Abschnitt 3a.
 
 ## Status und Planung
 
@@ -24,7 +25,7 @@ nachtragen und die Reservierung freigeben. Eintraege mit `abgeschlossen`, `deplo
 | **Vorhaben nach HERMES fuer die Geschaeftsleitung**: Stufe, Auftraggeber, Anwendervertreter, Freigabe/Abnahme/Abschluss, Ampel; Vorlagen Projektauftrag und Abnahmeprotokoll | `projektmanagement/Vorhaben_HERMES.tsv` (Quelle), Ausgabe `projektmanagement/Wochen_Todo.xlsx` Blatt „HERMES Übersicht“, erzeugt mit `projektmanagement/wochen_todo_xlsx.py` |
 | **Offene Punkte im Finance Dashboard, Status je Punkt** | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, dazu `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` |
 | 180-Tage-Roadmap Analytics, BI, HR, Einkauf | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
-| **Managementbericht fuer den Vorgesetzten: Rolle, Scope-Abgrenzung, Entscheidungsbedarf** | `docs/Uebersicht_Aufgaben_Ingo_2026-09-02.docx`, erzeugt von `.tmp_tools/BuildChefUebersicht0902` |
+| **Managementbericht fuer den Vorgesetzten: Rolle, Scope-Abgrenzung, Entscheidungsbedarf** | `docs/Uebersicht_Aufgaben_Ingo_2026-09-02.docx`, erzeugt von `.tmp_tools/BuildChefUebersicht0902` *(seit 2026-09-08 nur in Git, geloescht in `4b7af80`; im Arbeitsbaum liegt unversioniert `docs/Uebersicht_Aufgaben_Ingo_2026-09-08_1.docx`)* |
 | Aktueller Aenderungsstand | `lastchange.md` |
 | **Zusammenfassung 14./15.10.2026**: alles Erledigte mit Stand, Fragen an Fabio (Logistik J5, Verkauf J2/J3), offene Punkte Ingo | `docs/ARBEITSSTAND_2026-10-14_15.md` |
 | Ansprechpartner und Standortempfaenger | `docs/ANSPRECHPARTNER.md` |

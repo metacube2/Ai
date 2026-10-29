@@ -36,7 +36,7 @@ Quer ueber alle Themen bleibt die Reduktion des Know-how-Risikos wichtig: techni
 
 ### Q3 2026 - bis Ende September
 
-1. Spain-Onboarding abschliessen
+1. Spain-Onboarding abschliessen *(ueberholt am 2026-10-29: Spanien laeuft produktiv ueber den Sage-CSV-Export, nicht ueber eine SQL-Server-Direktanbindung; `ISS-004.1`, `ISS-004.2` und `ISS-020` sind erledigt, siehe Issue-Log und `docs/STANDORT_ES_SAGE.md`)*
    - Sage 200 / SQL Server Datenquelle mit Santi Gomez stabil anbinden.
    - Bronze-Layer-Extraktion stabilisieren.
    - Silver-Transformation fuer Spanien aufsetzen.
@@ -55,7 +55,7 @@ Quer ueber alle Themen bleibt die Reduktion des Know-how-Risikos wichtig: techni
    - Lokale Materialnummern, insbesondere DE/Alphaplan, in die Zuordnungslogik aufnehmen.
    - Restklasse "Uebrige" bzw. 0008 bewusst behandeln und dokumentieren.
 
-4. ZLO03 / ZPOWERBI_VC_TXT Non-Determinismus klaeren
+4. ZLO03 / ZPOWERBI_VC_TXT Non-Determinismus klaeren *(teilweise ueberholt am 2026-10-29: FIX 12 behebt die Satzreihenfolge als Kandidat, im am 22.10. freigegebenen Auftrag `T76K912742`, Import nach P76 offen; die Meldung „je nach Tageszeit verschieden viele VKNR“ ist nach dem Import neu zu pruefen, Wochen_Todo 94)*
    - SELECT SINGLE ohne ORDER BY als Risiko fuer nicht reproduzierbare Zahlen bewerten.
    - Falls fuer das Cockpit relevant: deterministische Logik abstimmen und dokumentieren.
    - Technische Aenderungen an SAP-Objekten bleiben bei Lucas bzw. SAP-Verantwortlichen; Ingo liefert fachlichen Reporting-Impact und Testnachweise.
@@ -73,7 +73,7 @@ Quer ueber alle Themen bleibt die Reduktion des Know-how-Risikos wichtig: techni
    - Audit-CSV und Finance Dashboard Nachweis als wiederholbaren Review-Prozess verwenden.
    - Abweichungen mit klarer Ursache, Owner und Korrekturstatus dokumentieren.
 
-3. Refresh- und Performance-Tuning
+3. Refresh- und Performance-Tuning *(weitgehend erledigt am 2026-09-28, gemessen und produktiv, `docs/PLATTFORM_TEMPO_2026-09-28.md`; offen ist der App-Pool-Dauerbetrieb, `ISS-017`)*
    - Refresh-Zeiten der Pipelines und Dashboards messen.
    - Engpaesse vor dem Jahresend-Reporting beseitigen.
    - Stabilitaet der produktiven Deployments pruefen, inklusive App-Offline-Prozess und Datenbank-Sidecars.
@@ -111,7 +111,7 @@ Quer ueber alle Themen bleibt die Reduktion des Know-how-Risikos wichtig: techni
    - Aktive Lieferanten auf Basis echter Einkaufsbewegungen.
    - Filter fuer Loeschkennzeichen und Materialstatus MARA-MSTAE.
 
-2. Excel-aehnliche Kaskadierungstabelle umsetzen und fachlich pruefen
+2. Excel-aehnliche Kaskadierungstabelle umsetzen und fachlich pruefen *(umgesetzt und deployed am 2026-06-18 mit Lieferantennamen und Filtern fuer Loeschkennzeichen und MARA-MSTAE, `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-06-18; seit 2026-10-28 auch im Spend-Aufriss, `45b2158`)*
    - Lieferant in den Zeilen.
    - Jahre 2020 bis aktuelles Jahr in den Spalten.
    - Summen und Sortierung Top-down.
@@ -178,14 +178,14 @@ Quer ueber alle Themen bleibt die Reduktion des Know-how-Risikos wichtig: techni
 
 ## Konkrete naechste 10 Schritte
 
-1. Spain-Onboarding-Status mit Santi Gomez und Finance festziehen.
+1. Spain-Onboarding-Status mit Santi Gomez und Finance festziehen. *(erledigt, siehe Prioritaet 1, Q3 Punkt 1)*
 2. Offene Laenderformeln fuer IT, FR, IN, US, AT, ES, UK und DE in einer Entscheidungsliste abschliessen.
 3. Finance-Audit-Paket fuer Monats-/Quartalsreview definieren.
 4. HR-Phase-1-Abnahme mit Sonja terminieren und Abnahmeliste vorbereiten.
 5. Einkaufs-KPI-Scope mit Einkauf final bestaetigen.
-6. Quelle fuer Lieferantennamen und MARA-MSTAE im Einkaufsdashboard klaeren.
+6. Quelle fuer Lieferantennamen und MARA-MSTAE im Einkaufsdashboard klaeren. *(erledigt am 2026-06-18, `LFA1.NAME1`, MSTAE-Filter, `docs/PURCHASING_DASHBOARD_2026-06-05.md`)*
 7. Einkaufs-Matrix 2020 bis aktuelles Jahr gegen Referenzbild und Einkauf plausibilisieren.
-8. Refresh- und Performance-Baseline fuer die produktive Analytic Website messen.
+8. Refresh- und Performance-Baseline fuer die produktive Analytic Website messen. *(erledigt am 2026-09-28, `docs/PLATTFORM_TEMPO_2026-09-28.md`)*
 9. Runbook fuer Deployment, Datenrefresh und Wiederanlauf aktualisieren.
 10. Ende Q3 2026 einen Review mit Andreas zu Sales/Data-Lake, HR und Einkauf durchfuehren.
 

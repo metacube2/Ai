@@ -1,6 +1,6 @@
 # Einkauf
 
-Das Modul Einkauf im Trafag Cockpit zeigt, wie viel bestellt wurde, was noch auf dem Weg ist, bei welchen Lieferanten sich der Einkauf konzentriert und wo Material knapp wird. Hauptsächlich nutzen es Einkäufer, Disponenten, Controller und die Geschäftsleitung. Es liegt im Menü unter «Einkauf». Die Seiten sind: Einkauf Dashboard, Spend, Offene Bestellungen, Kontrakte, Lieferanten, Spend-Aufriss, Bestellbedarf & Deckung, Materialabhängigkeit, Lieferperformance, die Gruppe «Ideen», Kennzahlen-Katalog, PBIX Vorlage, 3D Simulation, Interaktiv und Datenquellen.
+Das Modul Einkauf im Trafag Cockpit zeigt, wie viel bestellt wurde, was noch auf dem Weg ist, bei welchen Lieferanten sich der Einkauf konzentriert und wo Material knapp wird. Hauptsächlich nutzen es Einkäufer, Disponenten, Controller und die Geschäftsleitung. Es liegt im Menü unter «Einkauf». Die Seiten im Menü sind: Einkauf Dashboard, Offene Bestellungen, Kontrakte, Lieferanten, Spend-Aufriss, Lieferperformance, die Gruppe «Ideen», Kennzahlen-Katalog, PBIX Vorlage, 3D Simulation und Datenquellen. Bestellbedarf & Deckung, Materialabhängigkeit und Interaktiv sind seit dem 22.10.2026 im Menü ausgeblendet, der frühere Reiter Spend seit dem 28.10.2026; sein Inhalt steht jetzt im Spend-Aufriss. Ein Administrator kann ausgeblendete Seiten unter Menüstruktur wieder einblenden. Sie sind unten trotzdem beschrieben.
 
 Die Daten stammen aus SAP: Bestellköpfe (EKKO), Bestellpositionen (EKPO) und Liefereinteilungen mit Terminen (EKET), dazu Lieferantenstamm, Materialstamm und der Lagerwert. Das Cockpit fragt SAP beim Seitenaufruf nicht live ab. Es liest einen gespeicherten Datenbestand, den ein Ladelauf auffrischt. Nachts läuft ein Delta-Lauf, der nur neue oder geänderte Belege nachlädt. Ein vollständiger Neuaufbau (Full Load) wird von Hand gestartet. Die Seite zeigt oben, wann der letzte Lauf endete. Die berechneten Zahlen bleiben bis zu 60 Minuten im Zwischenspeicher. Ist der Stand abgelaufen, zeigt die Seite zuerst den alten Stand und weist darauf hin, dass neu gerechnet wird. Die Zahlen wechseln dann nach etwa 20 bis 30 Sekunden von selbst.
 
@@ -19,16 +19,17 @@ Das Dashboard ist die Einstiegsseite. Es beantwortet in einem Blick: Wie viel wu
 
 Oben stehen eine Kopfzeile mit dem Ladestand der drei SAP-Quellen und ein Prozentring «Geladen». Darunter folgt der Zeitraumfilter mit «Von Monat» und «Bis Monat», dem Schalter für stornierte Positionen und den Knöpfen «Anwenden» und «2020 bis heute». Ein ausklappbarer Abschnitt «Kennzahlen verstehen» erklärt jede Kennzahl mit ihrer SAP-Herkunft.
 
-Fünf Kacheln zeigen die Hauptzahlen: Bestellwert im Zeitraum, Bestellungen im Zeitraum, offener Bestellwert inklusive Rückstände, aktive Lieferanten im Zeitraum und Lagerwert Einkaufsteile. Unter jeder Kachel steht ein Satz, was genau gezählt wird und was nicht.
+Sechs Kacheln zeigen die Hauptzahlen: Bestellwert im Zeitraum, Bestellungen im Zeitraum, offener Bestellwert inklusive Rückstände, offener Kontraktwert, aktive Lieferanten im Zeitraum und Lagerwert Einkaufsteile. Unter jeder Kachel steht ein Satz, was genau gezählt wird und was nicht.
 
-Weiter unten liegt der Verlauf des Lagerwerts je Kalenderwoche als Liniengrafik mit Tabelle. Dazu kommen der «SAP Datenfluss» mit dem Stand der drei Quellen, die «Management Insights» als Kurzaussagen und die «Analyseachsen» (Jahr, Lieferant, Warengruppe, Artikel, Region).
+Weiter unten liegt der Verlauf des Lagerwerts je Kalenderwoche als Liniengrafik mit Tabelle, darunter die Tabelle «Je Disponent» mit dem Wert je Disponent 001 bis 005 und der Veränderung zur Vorwoche. Dazu kommen der «SAP Datenfluss» mit dem Stand der drei Quellen, die «Management Insights» als Kurzaussagen und die «Analyseachsen» (Jahr, Lieferant, Warengruppe, Artikel, Region).
 
 ### Wie gerechnet wird
 
 - **Bestellwert im Zeitraum:** Summe der Netto-Positionswerte aller Bestellungen, deren Bestelldatum im Zeitraum liegt, in CHF. Das ist bestelltes Volumen, kein Wareneingang und keine Rechnung.
 - **Bestellungen:** Anzahl der unterschiedlichen Bestellnummern im Zeitraum. Eine Bestellung mit zwanzig Positionen zählt einmal.
 - **Aktive Lieferanten:** Anzahl der Lieferanten mit mindestens einer Bestellposition ungleich null im Zeitraum. Das ist keine Lieferantenbewertung.
-- **Offener Bestellwert:** Je Liefereinteilung die bestellte Menge minus die gebuchte Wareneingangsmenge, mal der Stückwert der Position in CHF. Stornierte Positionen, endgelieferte Positionen und Material mit Status 98 oder 99 (gesperrt oder auslaufend) sind ausgeschlossen. Der Wert ist unabhängig vom gewählten Zeitraum und enthält alle Jahre, damit alte Rückstände nicht verschwinden.
+- **Offener Bestellwert:** Je Liefereinteilung die bestellte Menge minus die gebuchte Wareneingangsmenge, mal der Stückwert der Position in CHF. Stornierte Positionen, endgelieferte Positionen und Material mit Status 98 oder 99 (gesperrt oder auslaufend) sind ausgeschlossen. Der Wert ist unabhängig vom gewählten Zeitraum und enthält alle Jahre, damit alte Rückstände nicht verschwinden. Seit dem 22.10.2026 nicht eingerechnet sind Altposten: Textpositionen ohne Material, deren Liefertermin mehr als ein Jahr vorbei ist.
+- **Offener Kontraktwert:** offener Wert der Mengenkontrakte wie in SAP ME3L, also je Kontraktposition Zielmenge minus abgerufene Menge, mal Nettopreis je Preiseinheit, in CHF. Abgelaufene Kontrakte zählen mit. Das ist nicht der offene Wert der Abrufbestellungen (siehe Kontrakte).
 - **Lagerwert Einkaufsteile:** bewerteter Gesamtbestand der Materialien der Disponenten 001 bis 005 im Bewertungskreis 1100. Der Wert zeigt immer den Stand des letzten erfolgreichen Abrufs, ein frei wählbarer Stichtag ist nicht möglich.
 - **Lagerwert-Verlauf:** Je Kalenderwoche wird der Stand des Einkauf-Laufs gespeichert und als Stand Ende Woche angezeigt. Der erste Verlaufspunkt stammt vom 10.09.2026, einen Rückblick davor gibt es nicht. Wochen ohne Lauf bleiben leer. Die senkrechte Achse beginnt nicht bei null, sondern beim tiefsten Wert.
 
@@ -48,11 +49,11 @@ Weiter unten liegt der Verlauf des Lagerwerts je Kalenderwoche als Liniengrafik 
 - Der Lagerwert ist fachlich noch nicht gegen die SAP-Auswertung MB5L abgeglichen.
 - Der Lagerwert und der offene Bestellwert haben eigene Zeitlogiken und folgen dem Zeitraumfilter nicht.
 
-## Spend
+## Spend (seit 28.10.2026 im Spend-Aufriss)
 
 ### Wozu
 
-Die Seite zeigt das Beschaffungsvolumen nach Lieferant und Jahr. Sie dient dazu, die grossen Lieferanten, deren Entwicklung und die Verteilung auf Warengruppen, Länder und Währungen zu erkennen.
+Der frühere Reiter Spend ist seit dem 28.10.2026 im Menü ausgeblendet. Sein ganzer Inhalt (Kacheln, Spend pro Lieferant, Zusatzdiagramme und Matrix) steht jetzt im Spend-Aufriss unter dem Aufriss, im Block «Bestellwert nach Lieferant und Jahr». Dieser Block zeigt das Beschaffungsvolumen nach Lieferant und Jahr. Sie dient dazu, die grossen Lieferanten, deren Entwicklung und die Verteilung auf Warengruppen, Länder und Währungen zu erkennen.
 
 ### Was man sieht
 
@@ -109,33 +110,37 @@ Gemäss der geltenden Regel sind endgelieferte Positionen, stornierte Positionen
 
 - Der Liefertermin ist der geplante Termin. Was wirklich geliefert wurde, steht nicht darin. Eine echte Liefertermintreue wird nicht berechnet.
 - Ist in SAP ein Wareneingang nicht gebucht oder eine Position nicht als endgeliefert gekennzeichnet, bleibt sie offen. Die Pflege in SAP wirkt erst nach dem nächsten vollständigen Ladelauf vollständig.
-- Alte, nie geschlossene Einteilungen bleiben sichtbar. Das ist beabsichtigt, kann aber zu einem hohen Rückstand führen, den es bereinigen sollte.
+- Alte, nie geschlossene Einteilungen bleiben sichtbar. Das ist beabsichtigt, kann aber zu einem hohen Rückstand führen, den es bereinigen sollte. Ausnahme seit dem 22.10.2026: Textpositionen ohne Material, deren Liefertermin mehr als ein Jahr vorbei ist, gelten als Altposten. Sie zählen weder als offen noch als überfällig und stehen getrennt in der Zeile «Altposten (nicht eingerechnet)» mit Anzahl und Wert; in SAP sollten sie endgeliefert oder gelöscht werden.
 - Der offene Wert hängt am Kurs des Belegs. Fehlen Kurse, ist er nicht belastbar.
 
 ## Kontrakte
 
 ### Wozu
 
-Die Seite zeigt Abrufe zu Rahmenverträgen, also was zu einem Kontrakt bestellt, aber noch nicht geliefert ist. Sie dient der Steuerung offener Restverpflichtungen.
+Die Seite zeigt zwei verschiedene Zahlen, die man nicht verwechseln darf: oben den offenen Wert der Mengenkontrakte selbst (wie SAP ME3L), darunter die Abrufbestellungen zu Kontrakten, also was zu einem Kontrakt bestellt, aber noch nicht geliefert ist. Sie dient der Steuerung offener Restverpflichtungen.
 
 ### Was man sieht
 
-Vier Kennzahlen: offener Wert der Kontraktabrufe, Einteilungen im Zeitraum (alle Belege), Top Verpflichtung und Letztes Bestelldatum. Das Diagramm «Top Verpflichtungen nach Lieferant und Artikel» zeigt die sechs grössten offenen Abrufe. Eine Tabelle und eine Statusliste ergänzen das Bild.
+Oben der Block «Offener Mengenkontraktwert (wie ME3L)» mit vier Kennzahlen: offener Kontraktwert, davon abgelaufen, Kontrakte / Positionen mit offener Menge und Anzahl abgelaufener Kontrakte. Dazu kommen der Stand der Kontraktdaten, der offene Kontraktwert nach Lieferant und eine Kontrakttabelle (Kontrakt, Lieferant, Material / Text, Zielmenge, abgerufen, offen, offener Wert, Laufzeit bis, abgelaufen). Ein Umschalter über der Tabelle wählt «Grösste offene», «Nur abgelaufene» oder «Vermutlich ersetzt». Sind die SAP-Kontraktdaten noch nicht geladen, steht «Kontraktdaten noch nicht verfügbar» statt einer Null.
+
+Darunter der Block «Abrufbestellungen zu Kontrakten» mit vier Kennzahlen: offener Wert der Abrufbestellungen, Einteilungen im Zeitraum (alle Belege), Top Verpflichtung und Letztes Bestelldatum. Das Diagramm «Top Verpflichtungen nach Lieferant und Artikel» zeigt die sechs grössten offenen Abrufe. Eine Tabelle und eine Statusliste ergänzen das Bild.
 
 ### Wie gerechnet wird
 
-Es wird die Formel des offenen Bestellwerts verwendet, aber eingeschränkt auf Bestellungen, die einen Kontraktbezug tragen. Kachel, Diagramm und Top Verpflichtung beruhen auf derselben Grundmenge. «Letztes Bestelldatum» ist das jüngste Bestelldatum im Zeitraum und kein Fälligkeitsdatum. Die Kachel «Einteilungen im Zeitraum» zählt alle Belege und ist nicht auf Kontraktabrufe begrenzt.
+Offener Kontraktwert: je Kontraktposition Zielmenge minus abgerufene Menge, nie negativ, mal Nettopreis je Preiseinheit, mit dem Belegkurs in CHF umgerechnet. Nur Mengenkontrakte (Belegart MK) im Buchungskreis 1100 ohne Löschkennzeichen, Stand heute und unabhängig vom Zeitraumfilter. Abgelaufene Kontrakte (Laufzeitende vor heute) zählen mit und werden getrennt ausgewiesen. Nicht eingerechnet sind seit dem 22.10.2026 vermutlich ersetzte Positionen: nie abgerufen, während eine gleichartige Position desselben Kontrakts (gleicher Text oder dieselbe Nummer bis auf einen vorangestellten Buchstaben) ihre Zielmenge erreicht hat. ME3L zeigt sie noch als offen; sie sollten in SAP gelöscht werden.
+
+Abrufbestellungen: Es wird die Formel des offenen Bestellwerts verwendet, aber eingeschränkt auf Bestellungen, die einen Kontraktbezug tragen. Kachel, Diagramm und Top Verpflichtung beruhen auf derselben Grundmenge. «Letztes Bestelldatum» ist das jüngste Bestelldatum im Zeitraum und kein Fälligkeitsdatum. Die Kachel «Einteilungen im Zeitraum» zählt alle Belege und ist nicht auf Kontraktabrufe begrenzt.
 
 ### Einsatz im Arbeitsalltag
 
-**Einkäufer:** Für die Pflege von Rahmenverträgen zeigt die Seite, bei welchem Lieferanten und Artikel die grösste offene Abrufverpflichtung liegt.
+**Einkäufer:** Für die Pflege von Rahmenverträgen zeigt die Seite, wie viel Restmenge in welchen Kontrakten steckt, welche abgelaufen sind und bei welchem Lieferanten und Artikel die grösste offene Abrufverpflichtung liegt. Die Liste «Vermutlich ersetzt» ist eine Bereinigungsliste für SAP.
 
-**Controller:** Der Wert ist ein Näherungswert für die abgerufene, aber noch nicht gelieferte Verpflichtung.
+**Controller:** Der offene Kontraktwert ist die noch nicht abgerufene Vertragsverpflichtung, der Wert der Abrufbestellungen die abgerufene, aber noch nicht gelieferte.
 
 ### Grenzen und Fallstricke
 
-- Der Wert ist eine Näherung für offene Abrufe und kein noch verfügbarer Vertragsrahmen. Echte Mengenkontrakte mit Ablaufdatum und Restmenge werden nicht abgebildet, weil die Kontraktbelege selbst bewusst ausgeschlossen sind.
-- Ohne Kontraktbezug in den Bestellungen steht der Wert auf null und das Diagramm bleibt leer. Das ist die richtige Aussage und kein Fehler.
+- Der offene Kontraktwert ist noch nicht vollständig gegen ME3L abgeglichen. Andere Kontraktarten (zum Beispiel Wertkontrakte WK) und andere Buchungskreise sind nicht eingerechnet.
+- Der Wert der Abrufbestellungen ist kein noch verfügbarer Vertragsrahmen. Ohne Kontraktbezug in den Bestellungen steht er auf null und das Diagramm bleibt leer. Das ist die richtige Aussage und kein Fehler.
 - Eine Vertragsauslastung in Prozent wird noch nicht berechnet.
 
 ## Lieferanten
@@ -167,7 +172,7 @@ Aktive Lieferanten sind die Lieferanten mit mindestens einer Bestellposition ung
 
 ### Wozu
 
-Ganz oben im Spend-Aufriss zeigt eine dreidimensionale Grafik die Stücklisten als Netz, ähnlich den Nervenbahnen eines Gehirns. Sie macht sichtbar, welche Teile in vielen Produkten stecken. Fällt so ein Teil aus, trifft es viele Endprodukte auf einmal. Die Grafik ist ein Prototyp (seit 16.10.2026).
+Ganz oben im Spend-Aufriss zeigt eine dreidimensionale Grafik die Stücklisten als Netz, ähnlich den Nervenbahnen eines Gehirns. Seit dem 22.10.2026 ist sie eingeklappt und erscheint erst nach einem Klick auf «Stücklisten-Netz (Prototyp) anzeigen». Sie macht sichtbar, welche Teile in vielen Produkten stecken. Fällt so ein Teil aus, trifft es viele Endprodukte auf einmal. Die Grafik ist ein Prototyp (seit 16.10.2026).
 
 ### Was man sieht
 
@@ -193,11 +198,13 @@ Der Spend-Aufriss zerlegt den Einkaufsspend in frei wählbare Ebenen. Er beantwo
 
 ### Was man sieht
 
-Oben wählt man den Einstieg: Lieferant, Warengruppe, Material, Produktgruppe, Beschaffungsregion oder Währung. Die Matrix zeigt dann den Spend je Jahr und lässt sich Ebene für Ebene aufklappen. Darunter liegen Kuchendiagramme je Top-Warengruppe mit dem Anteil nach Lieferland, Balken für das Volumen nach ABC und nach XYZ und die ABC/XYZ-Massnahmenmatrix. Bei der Produktgruppen-Sicht erscheinen Marken für zugeordneten Spend, Spend ohne Produktgruppe, Mehrfachverwendung und den Stand der SAP-Zuordnung.
+Oben wählt man den Einstieg: Lieferant, Beschaffungsregion, Warengruppe, Produktgruppe : Lieferant, Produktgruppe : Warengruppe, Produktgruppe nach Verwendung : Warengruppe, Disponent, Disponent Verwendung (ZLO03), Währung, Lebenszyklus-Code oder Sortiments-Code. Der Schalter «Nur Einkaufsteile (Disponent 001 bis 005)» ist vorgegeben eingeschaltet und gilt für alle Einstiege; ausgeschaltet zeigt der Aufriss den ganzen Einkauf. Die Matrix zeigt dann den Spend je Jahr und lässt sich Ebene für Ebene aufklappen. Darunter liegen Kuchendiagramme je Top-Warengruppe mit dem Anteil nach Lieferland, Balken für das Volumen nach ABC, nach XYZ, nach Lebenszyklus-Code und nach Sortiments-Code und die ABC/XYZ-Massnahmenmatrix; diese Diagramme zeigen immer den ganzen Einkauf. Bei den Produktgruppen-Sichten erscheinen Marken für zugeordneten Spend, Spend ohne Produktgruppe und Materialien mit mehrdeutiger SAP-Regel. Ganz unten steht seit dem 28.10.2026 der Inhalt des früheren Reiters Spend (siehe «Spend»).
 
 ### Wie gerechnet wird
 
-Grundlage ist wie im Spend der Netto-Positionswert in CHF zum Bestelldatum. Die Sicht «Produktgruppe» ordnet ein Einkaufsmaterial über die Stücklisten-Verwendung dem Disponenten des verwendenden Kopfmaterials und damit der SAP-Produktgruppe zu. Wird eine Komponente in mehreren Produktgruppen verwendet, wird ihr Spend gleichmässig auf diese Gruppen verteilt (ein Drittel bei drei Gruppen). Dadurch bleibt die Gesamtsumme exakt erhalten. Spend ohne Zuordnung bleibt sichtbar. Fehlt der Produktname einer Gruppe, steht «Disponent» mit dem Code.
+Grundlage ist wie im Spend der Netto-Positionswert in CHF zum Bestelldatum. Die Sichten «Produktgruppe : Lieferant» und «Produktgruppe : Warengruppe» ordnen seit dem 26.10.2026 jedes Einkaufsmaterial über seinen eigenen Disponenten (Werk 1100) genau einer SAP-Produktgruppe zu, wie der SAP-Report ZM_OFFENE_KDAUF. Passen mehrere gleichwertige SAP-Regeln, gewinnt die kleinste Gruppennummer; diese Materialien zählt die Marke «Mehrdeutige SAP-Regel». Spend ohne Zuordnung bleibt sichtbar. Fehlt der Produktname einer Gruppe, steht «Disponent» mit dem Code.
+
+Die Sicht «Produktgruppe nach Verwendung : Warengruppe» (seit 28.10.2026) folgt dagegen der Stücklisten-Verwendung: Einkaufsmaterial, verkürzte Nummern, in denen es verbaut ist, deren Disponent und damit die Produktgruppe. Verteilt wird nach der Anzahl verwendender Nummern; ein Teil in 50 Dichtewächtern und einem Sensor geht zu 50/51 an den Dichtewächter. Die Gesamtsumme bleibt exakt, ohne bekannte Verwendung steht der Wert unter «ohne Verwendung». «Disponent» gruppiert nach dem eigenen Disponenten des Materials, «Disponent Verwendung (ZLO03)» nach dem Disponenten der verkürzten Nummer, bei mehreren zu gleichen Teilen verteilt. Lebenszyklus- und Sortiments-Code stammen aus dem Materialstamm; Materialien ohne Code stehen unter «ohne Code».
 
 ABC ist das Wertklassen-Kennzeichen des Materialstamms, XYZ die Regelmässigkeit des Bedarfs aus einer SAP-Zusatztabelle. Die Massnahmenmatrix kombiniert beide mit Spend, Anzahl Materialien und Lieferanten und nennt je Klasse einen Prüfauftrag mit Priorität. Sie ändert nichts in SAP.
 
@@ -212,14 +219,14 @@ ABC ist das Wertklassen-Kennzeichen des Materialstamms, XYZ die Regelmässigkeit
 ### Grenzen und Fallstricke
 
 - ABC, XYZ und Lieferantenland sind nur so vollständig wie der letzte Full Load. Zuletzt dokumentiert waren Lieferantenland 100 %, ABC 78 %, XYZ 65 % und Warengruppe 80.7 % gefüllt. Wo die Spalte leer ist, erscheint «ohne ABC» oder ein Hinweis.
-- Die Produktgruppen-Zuordnung beruht auf dem Disponenten, nicht auf einer Stammdatenpflege je Material. Bis zu einem vollständigen Lauf der Stücklistendaten ist sie unvollständig. Der zuletzt dokumentierte Stand hatte nur 105 Verwendungszeilen mit Disponent.
+- Die Produktgruppen-Zuordnung beruht auf dem Disponenten, nicht auf einer Stammdatenpflege je Material. Weil die meisten Einkaufsteile die Disponenten 001 bis 006 tragen, ist die Sicht nach eigenem Disponenten stark auf die Gruppe H konzentriert. Die Sichten nach Verwendung erfassen nur Teile, die in ZLO03 eine verkürzte Nummer haben.
 - Die Texte für die Disponentengruppen D1 und D5 sind Ersatztexte des Cockpits. Ein später in SAP gepflegter Text hat Vorrang.
 
 ## Bestellbedarf & Deckung
 
 ### Wozu
 
-Die Seite verbindet den SAP-Endbestand eines Materials mit seinen offenen Bestellungen, den Planterminen und den Lieferanten. Sie zeigt, wo trotz offener Bestellung eine Deckungslücke bleibt und wo Bestellungen überfällig sind.
+Die Seite ist seit dem 22.10.2026 im Menü ausgeblendet, weil die zugrunde liegenden Verwendungsdaten produktiv nur wenige Materialien enthalten und die Seite deshalb fast nur Nullen zeigte. Sie verbindet den SAP-Endbestand eines Materials mit seinen offenen Bestellungen, den Planterminen und den Lieferanten. Sie zeigt, wo trotz offener Bestellung eine Deckungslücke bleibt und wo Bestellungen überfällig sind.
 
 ### Was man sieht
 
@@ -252,7 +259,7 @@ Die offene Menge berücksichtigt nur Bestellungen, keine endgelieferten und kein
 
 ### Wozu
 
-Die Seite zeigt, bei welchen Materialien der Einkauf von einem einzigen Lieferanten oder von einer starken Konzentration abhängt und wie breit das Material verwendet wird. Sie hilft, Versorgungsrisiken früh zu erkennen.
+Die Seite ist seit dem 22.10.2026 im Menü ausgeblendet, aus demselben Grund wie Bestellbedarf & Deckung. Sie zeigt, bei welchen Materialien der Einkauf von einem einzigen Lieferanten oder von einer starken Konzentration abhängt und wie breit das Material verwendet wird. Sie hilft, Versorgungsrisiken früh zu erkennen.
 
 ### Was man sieht
 
@@ -293,7 +300,7 @@ Ein gelber Hinweis oben stellt klar: Echte Liefertermintreue (OTIF) wird nicht b
 
 ### Wie gerechnet wird
 
-Je Material und Lieferant wird die offene Menge aus dem Bestellbestand gebildet. Priorität P1 bedeutet, dass eine Menge überfällig ist, P2, dass der nächste Plantermin innerhalb der nächsten 30 Tage liegt, und OK, dass der offene Termin später liegt. Gezählt werden nur offene Bestellungen ohne endgelieferte und stornierte Positionen.
+Je Material und Lieferant wird die offene Menge aus dem Bestellbestand gebildet. Priorität P1 bedeutet, dass eine Menge überfällig ist, P2, dass der nächste Plantermin innerhalb der nächsten 30 Tage liegt, und OK, dass der offene Termin später liegt. Gezählt werden nur offene Bestellungen ohne endgelieferte und stornierte Positionen und seit dem 22.10.2026 ohne Altposten (Textpositionen ohne Material, deren Liefertermin mehr als ein Jahr vorbei ist).
 
 ### Einsatz im Arbeitsalltag
 
@@ -528,7 +535,7 @@ Das Szenario multipliziert die dargestellten Werte mit dem Faktor. Bei den Indik
 
 ### Wozu
 
-«Interaktiv» ist eine Sammlung von neun animierten Ansichten auf die Bestellungen. Sie sind für das Entdecken von Mustern gedacht: Wer wächst, wer fällt zurück, wo wird nicht mehr nachbestellt. Die Ansichten entsprechen denen im Verkauf, mit vertauschten Rollen: Lieferant statt Kunde, Lieferland statt Kundenland, Hauptwarengruppe statt Sparte, Buchungskreis statt Gesellschaft, Bestellung statt Rechnung.
+«Interaktiv» ist seit dem 22.10.2026 im Menü ausgeblendet, weil aus dem Einkauf niemand die Ansichten deuten konnte. Es ist eine Sammlung von neun animierten Ansichten auf die Bestellungen. Sie sind für das Entdecken von Mustern gedacht: Wer wächst, wer fällt zurück, wo wird nicht mehr nachbestellt. Die Ansichten entsprechen denen im Verkauf, mit vertauschten Rollen: Lieferant statt Kunde, Lieferland statt Kundenland, Hauptwarengruppe statt Sparte, Buchungskreis statt Gesellschaft, Bestellung statt Rechnung.
 
 ### Was man sieht
 
@@ -594,9 +601,10 @@ Hier wird nichts gerechnet. Ein Full Load ist der vollständige Neuaufbau und au
 | Bestellungen | Anzahl Bestellbelege im Zeitraum | Unterschiedliche Bestellnummern, eine Bestellung zählt einmal |
 | Aktive Lieferanten | Lieferanten, bei denen im Zeitraum bestellt wurde | Unterschiedliche Lieferanten mit mindestens einer Position ungleich null |
 | Offene Menge | Bestellt, aber noch nicht im Wareneingang gebucht | Je Liefereinteilung eingeplante Menge minus gebuchte Wareneingangsmenge, nie negativ |
-| Offener Bestellwert | Wert des noch ausstehenden Zulaufs | Offene Menge mal Stückwert in CHF. Zeitraumunabhängig, ohne endgelieferte, stornierte und gesperrte Positionen, nur Bestellungen |
+| Offener Bestellwert | Wert des noch ausstehenden Zulaufs | Offene Menge mal Stückwert in CHF. Zeitraumunabhängig, ohne endgelieferte, stornierte und gesperrte Positionen und ohne Altposten, nur Bestellungen |
 | Überfälliger Wert | Teil des offenen Werts mit überschrittenem Plantermin | Offener Wert der Einteilungen mit Liefertermin vor heute |
-| Offener Wert der Kontraktabrufe | Näherung für offene Abrufe zu Rahmenverträgen | Offener Wert, beschränkt auf Bestellungen mit Kontraktbezug |
+| Offener Kontraktwert | Noch nicht abgerufene Restmenge der Mengenkontrakte, wie ME3L | Je Kontraktposition Zielmenge minus abgerufene Menge, mal Nettopreis je Preiseinheit, in CHF; inklusive abgelaufener Kontrakte, ohne vermutlich ersetzte Positionen |
+| Abrufbestellungen zu Kontrakten | Offene Abrufe zu Rahmenverträgen | Offener Wert, beschränkt auf Bestellungen mit Kontraktbezug |
 | Stückwert in CHF | Preis je Einheit einer Position | Positionswert in CHF geteilt durch Bestellmenge, null bei Menge null |
 | Preisindikator | Preisniveau und Preisveränderung | Mengengewichteter Durchschnitts-Stückpreis des jüngsten Jahres, mit Veränderung zum Vorjahr |
 | Top-Anteil | Konzentration auf einen Lieferanten | Anteil des grössten Lieferanten am Spend des Materials oder am Gesamtspend |

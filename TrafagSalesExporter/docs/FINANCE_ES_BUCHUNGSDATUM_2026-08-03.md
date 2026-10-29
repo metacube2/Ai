@@ -1,6 +1,6 @@
 # Spanien: Buchungsdatum (PostingDate) — Analyse, Umsetzung und Entscheid
 
-**Stand: 2026-09-02.** Die Datei beginnt mit der Analyse vom 2026-08-03 und traegt die
+**Stand: 2026-10-29 (offene Punkte gegen den Issue-Log nachgefuehrt; fachlich 2026-09-02).** Die Datei beginnt mit der Analyse vom 2026-08-03 und traegt die
 Umsetzung in den Abschnitten 8 bis 12. Der Dateiname behaelt sein Ursprungsdatum.
 
 ## Kurzstand ganz oben, damit niemand nur die Analyse liest
@@ -12,7 +12,7 @@ Umsetzung in den Abschnitten 8 bis 12. Der Dateiname behaelt sein Ursprungsdatum
 | Ist der Schluessel belegt? | Ja, live am 2026-08-17 auf dem spanischen Server: `CodigoEmpresa`/`Ejercicio`/`Serie`/`Factura`, 53 von 53 Treffern |
 | Kommt es an? | Teilweise: `1'523` von `7'071` TRES-Zeilen (21,5 %), gemessen 2026-09-02 gegen `Sales_All_2026-09-01.xlsx` |
 | Was rechnet Finance? | **Das Rechnungsdatum.** Entscheid Andreas 2026-08-26, umgesetzt als Regel `UseInvoiceDate` mit `ScopeKey = ES`, produktiv seit 2026-08-26 15:26 |
-| Was ist noch offen? | Nur der Dateitausch durch Santi Gomez, 7-Tage- gegen 35-Tage-Version |
+| Was ist noch offen? | ~~Nur der Dateitausch durch Santi Gomez, 7-Tage- gegen 35-Tage-Version~~ *(ueberholt am 2026-10-29: am 2026-09-02 entschieden, die 7-Tage-Version bleibt, kein Tausch; `ISS-004.2` erledigt. Der danach gefundene Importausfall seit Mitte Juli, `ISS-020`, ist seit 2026-09-29 09:25 behoben, `60cc569`, siehe `docs/STANDORT_ES_SAGE.md` Abschnitt 7)* |
 
 **Die Abschnitte 1 bis 7 sind der Analysestand vom 2026-08-03 und stehen als Historie.**
 Sie sind an mehreren Stellen ueberholt; die jeweilige Stelle sagt das. Wer den heutigen
@@ -327,7 +327,8 @@ das sehe, müssten die Daten nach dem Entry Date auf Tagesebene gezogen werden u
 dem Posting Date reported werden (potenziell auch in die Vergangenheit)."*
 
 Ingo hat dazu bislang **keine Antwort von Andreas erhalten**. Der Punkt bleibt offen zur
-Klaerung, nicht als entschiedene Fachvorgabe zu behandeln.
+Klaerung, nicht als entschiedene Fachvorgabe zu behandeln. *(ueberholt am 2026-10-29:
+beantwortet am 2026-08-26, Buchungsdatum heisst Rechnungsdatum, siehe Abschnitt 12)*
 
 Fachlich deckt sich Andreas' Vorschlag mit dem bereits gebauten Mechanismus aus Abschnitt
 9: das 35-Tage-Exportfenster plus Dedup ueber `SourceLineId` aktualisiert aeltere, noch
@@ -388,7 +389,8 @@ Anfrage reproduzierbar aus derselben CSV, `SourceLineId`
 ### 10f. Offene Punkte
 
 - Andreas' Antwort auf die Entry-Date-Frage steht aus; bis dahin `LineRegistrationDate`
-  nicht als bestaetigtes Feld behandeln.
+  nicht als bestaetigtes Feld behandeln. *(ueberholt am 2026-10-29: am 2026-08-26
+  beantwortet, Abschnitt 12)*
 - Ob und wodurch der Fuellgrad-Sprung von 21.1 % auf 98.2 % zustande kam (Santi hat das
   Serverskript ersetzt? Sonderlauf?), ist nicht geklaert.
 - Wie in Abschnitt 8/9: die taegliche Server-Export-Version bei Santi und der laufende
@@ -539,7 +541,9 @@ Sie ist harmlos und bleibt vorerst stehen; sie kann bei Gelegenheit ersatzlos en
 Ingo hat am 2026-08-26 festgelegt, dass die Spalte `posting date` im Sales_All unveraendert das
 Buchungsdatum aus der Quelle bleibt. Sie wird weder mit dem Rechnungsdatum ueberschrieben noch
 entfernt. Begruendung: So bleibt sichtbar, was Sage geliefert hat und was daraus gerechnet wird,
-und die echten Buchungsdaten, die nach Santis Dateitausch kommen, bleiben verwertbar.
+und die echten Buchungsdaten, die nach Santis Dateitausch kommen, bleiben verwertbar. *(ueberholt
+am 2026-10-29: der Dateitausch entfaellt, am 2026-09-02 entschieden; die Rohspalte bleibt
+Informationsspalte)*
 
 ### Deploystatus
 

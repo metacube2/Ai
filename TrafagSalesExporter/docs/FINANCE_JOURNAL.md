@@ -1,6 +1,6 @@
 # Finance Journal Import (Hauptbuch-Buchungszeilen)
 
-Stand: 2026-09-09. Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
+Stand: 2026-10-29 (CH/AT-Transport und Deploy der Ausgleichsfelder nachgefuehrt; fachlich 2026-09-09). Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
 `FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`.
 
 Zweck: Hauptbuchdaten je Tochtergesellschaft in die **separate** Tabelle
@@ -14,6 +14,8 @@ Zwei Quellsysteme schreiben in dieselbe Tabelle, die Spalte `SourceSystem` unter
 - **SAP ECC ueber OData** — CH/AT (`ZSCHWEIZ`). Das benoetigte Hauptbuch-EntitySet ist
   in P76 noch nicht vorhanden; `FinanzdataSchweizOeSet` wurde live als Verkaufsdatenquelle
   identifiziert. Der Journal-EntitySet-Name ist am Standort konfigurierbar.
+  *Ueberholt am 2026-10-29: `FinanzJournalSet` ist seit dem 2026-10-01 in P76 (Transport
+  `T76K912530` importiert); offen ist der produktive Journal-Ladelauf CH/AT, siehe `ISS-006`.*
 
 Nicht enthalten: die Manual-Excel-Laender DE, UK, ES — sie haben keine Buchhaltungsquelle.
 
@@ -175,7 +177,7 @@ Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 
 ## Offene Punkte
 
-1. **CH/AT: das EntitySet steht auf dem Testsystem, produktiv fehlt es noch.** **NACHTRAG 2026-09-11:** `FinanzJournalSet` ist auf `T76/100` gebaut, aktiv und geprueft: beide Redefinitionen ueber RFC gegengelesen, `$metadata` und Datenabruf `HTTP 200`, Werte gegen `BKPF`/`BSEG`/`SKAT` verglichen. Der Leser laedt je Buchungsperiode mit `$top=20000`, ein Jahreslauf dauert damit rund zwei Minuten statt der gemessenen 80. **Produktiv aendert das noch nichts:** Transport `T76K912530` ist nicht freigegeben, die App liest `travp762`. Bau, Messungen und Fallen: `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`. 1. **CH/AT wartet auf ein SAP-Journal-EntitySet.** **NACHTRAG 2026-09-10:** Die Vorpruefung ist erledigt und in `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` dokumentiert. Alle 25 DDIC-Felder existieren, Buchungskreise sind `1100` CH/CHF und `1200` AT/EUR bei Kontenplan `1000`. Fachliche Vorgabe Andreas vom selben Tag: **zuerst nur Oesterreich**, weil die Schweiz ueber 5 Mio Zeitbuchungszeilen je Jahr hat. Fuer AT 2025 bis 2026 ohne CO-Belege sind es 6'275 Belegkoepfe und 17'364 Positionen. **Wichtigster Messbefund: `PRCTR` ist zu 0 Prozent gefuellt**, `AUGDT` und `AUGBL` zu 22,1 Prozent, `ZFBDT` als Basis fuer das Faelligkeitsdatum zu 20,8 Prozent; alle 98 bebuchten Sachkonten haben einen `SKAT`-Text. Pruefreport `ZFIN_JOURNAL_PRUEFUNG` liegt aktiv in Paket `ZPP`, Transport `T76K912530`, nicht freigegeben. Urspruenglicher Text: Live-$metadata aus P76 am 2026-09-08:
+1. **CH/AT: das EntitySet steht auf dem Testsystem, produktiv fehlt es noch.** **NACHTRAG 2026-09-11:** `FinanzJournalSet` ist auf `T76/100` gebaut, aktiv und geprueft: beide Redefinitionen ueber RFC gegengelesen, `$metadata` und Datenabruf `HTTP 200`, Werte gegen `BKPF`/`BSEG`/`SKAT` verglichen. Der Leser laedt je Buchungsperiode mit `$top=20000`, ein Jahreslauf dauert damit rund zwei Minuten statt der gemessenen 80. **Produktiv aendert das noch nichts:** Transport `T76K912530` ist nicht freigegeben, die App liest `travp762`. *Ueberholt am 2026-10-29: Transport am 2026-10-01 nach P76 importiert, `FinanzJournalSet` dort mit `Bukrs`/`Gjahr`-Filter HTTP 200 in 0,9 s, ohne Filter HTTP 500 nach 154 s; der letzte Journal-Import vom 2026-09-10 war noch am fehlenden Set gescheitert. Offen ist der Ladelauf CH/AT, `ISS-006`.* Bau, Messungen und Fallen: `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`. Frueherer Stand dieses Punkts: **CH/AT wartet auf ein SAP-Journal-EntitySet.** **NACHTRAG 2026-09-10:** Die Vorpruefung ist erledigt und in `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` dokumentiert. Alle 25 DDIC-Felder existieren, Buchungskreise sind `1100` CH/CHF und `1200` AT/EUR bei Kontenplan `1000`. Fachliche Vorgabe Andreas vom selben Tag: **zuerst nur Oesterreich**, weil die Schweiz ueber 5 Mio Zeitbuchungszeilen je Jahr hat. Fuer AT 2025 bis 2026 ohne CO-Belege sind es 6'275 Belegkoepfe und 17'364 Positionen. **Wichtigster Messbefund: `PRCTR` ist zu 0 Prozent gefuellt**, `AUGDT` und `AUGBL` zu 22,1 Prozent, `ZFBDT` als Basis fuer das Faelligkeitsdatum zu 20,8 Prozent; alle 98 bebuchten Sachkonten haben einen `SKAT`-Text. Pruefreport `ZFIN_JOURNAL_PRUEFUNG` liegt aktiv in Paket `ZPP`, Transport `T76K912530`, nicht freigegeben. Urspruenglicher Text: Live-$metadata aus P76 am 2026-09-08:
    `FinanzdataSchweizOeSet` ist Verkaufs-/Fakturadaten mit `Vbeln`, `Posnr`, `Matnr` und
    `NetwrDc`; Journalfelder wie `Belnr`, `Buzei`, `Hkont`, `Dmbtr`, `Shkzg` und `Faedt`
    fehlen. `bkpfSet` enthaelt nur Kopfdaten. `bsisSet` enthaelt nur offene
@@ -354,7 +356,10 @@ und bei einer Position ohne Faelligkeit waere zuvor der 01.01.0001 als `DueDate`
 
 Validierung: 690/690 Release-Tests, darin die neuen Journaltests zu Mehrfachausgleich,
 Storno, B1-Platzhaltern und additivem Schemanachzug; Python-Exportpruefung mit alter und
-neuer Datenbank bestanden. Keine Produktivdaten geaendert, kein Deploy.
+neuer Datenbank bestanden. Keine Produktivdaten geaendert, kein Deploy. *Ueberholt am
+2026-10-29: die Ausgleichsfelder sind mit dem Deploy vom 2026-09-10 08:53 produktiv, siehe
+`docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`; gefuellt erst nach einem
+Ladelauf je Gesellschaft.*
 
 Validierung: 675/675 Release-Tests, darin 14/14 gezielte Journaltests mit idempotenter Schemaerweiterung,
 Erhalt alter Zeilen und Persistenz beim Refresh; Python-Exportpruefung mit alter und neuer

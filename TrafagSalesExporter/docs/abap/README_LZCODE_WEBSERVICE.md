@@ -1,6 +1,6 @@
 # ABAP Webservice fuer ZLO03 (ZM_LZCODE20_OPT)
 
-Stand: 2026-07-23 (numerische Materialnummern: Rohwert + MATN1 statt ALPHA)
+Stand: 2026-07-23 (numerische Materialnummern: Rohwert + MATN1 statt ALPHA), offene Punkte am Ende abgeglichen am 2026-10-29
 
 ## WICHTIG - Nachtrag 2026-07-23: numerische Materialnummern wurden nie gefunden (ALPHA war der Fehler)
 
@@ -582,9 +582,11 @@ Wichtig, bevor das als "fertig" gilt:
   (`.../ZPOWERBI_EINKAUF_SRV/<UsageSet>?$filter=Richtung eq 'TOPDOWN' and Vknr eq '<MATNR>'`),
   danach C#-Load ueber `MaterialUsageDataRefreshService.RunFullLoadAsync` - gegen TEST sind
   0 Zeilen erwartet (ZAT_VC leer), gegen PROD erst nach travt/travp-Umstellung.
+  *Ueberholt am 2026-10-29: Der Service laeuft gegen PROD (`travp762`), siehe Nachtrag 2026-07-23 oben (OData-Tests und App-Full-Load aus dem Produktionslog).*
 - Bottom-Up-Modus fachlich mit Einkauf/Lucas absichern, ob er ueberhaupt
   webservice-seitig gebraucht wird (Prioritaet 1 laut Report-Historie scheint
   Top-Down/PowerBI-Komponentenanalyse zu sein).
+  *Ueberholt am 2026-10-29: Bottom-Up wird gebraucht; der Einkauf liest `ZSTR_LZCODE_USAGESet` seit 2026-10-08 Bottom-Up je Komponente (`Services/PurchasingComponentDispoLoader.cs`, Wochen_Todo Zeile 89).*
 - `P_WVKNR` ("Weitere VKNRs anzeigen") und `P_TRANS` (transponierte Ausgabe)
   aus dem Report sind reine Excel-Darstellungsoptionen und bewusst NICHT
   Teil des Webservice-Entwurfs.

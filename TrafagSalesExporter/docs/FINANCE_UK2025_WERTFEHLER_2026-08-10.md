@@ -9,7 +9,7 @@ Stand: 2026-08-10. Diagnose **vor** dem Fix festgehalten.
 
 ## Kurzfassung
 
-Der UK-Backfill vom 2026-07-28 (`docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md`) hat die
+Der UK-Backfill vom 2026-07-28 (`docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md`, *seit Commit `25725c3` nur noch in Git*) hat die
 fehlenden 2025er Zeilen geliefert und wurde als erledigt verbucht. Die **Betraege** sind
 aber Stueckpreise statt Zeilenwerte:
 

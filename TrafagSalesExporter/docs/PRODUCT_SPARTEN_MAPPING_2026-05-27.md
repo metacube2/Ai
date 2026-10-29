@@ -1,6 +1,6 @@
 # Produktsparten-Mapping Group Sales Report
 
-Stand: 2026-06-11
+Stand: 2026-10-29 (Ueberholt-Vermerke nachgetragen; Inhalt vom 2026-06-11)
 
 ## Anlass
 
@@ -46,6 +46,10 @@ Noch nicht explizit vorhanden sind:
 - `Produkthierarchie`
 - `Produktfamilie`
 - `Produktsparte`
+
+*Ueberholt: Die Felder sind inzwischen vorhanden (`ProductHierarchyCode/Text`, `ProductFamilyCode/Text`,
+`ProductDivisionCode/Text`, `ProductMappingAssigned` in `Models/SalesRecord.cs` und `Models/CentralSalesRecord.cs`),
+siehe `docs/rag/PRODUCT_MAPPING.md`.*
 
 Relevante aktuelle Modelle:
 
@@ -110,6 +114,8 @@ ABAP-Artefakte wurden als Arbeitsstand im Repo abgelegt:
 Vorgeschlagene SAP-Architektur:
 
 1. `Z_PRODSPARTE_MAP_BUILD` liest eindeutige Kombinationen `PAPH1 -> WWPFA -> WWPSP` aus `CE11000`.
+   *Ueberholt am 2026-06-11: Die finale Fassung liest die KEDE/KEDR-Regeltabellen (`K9RT761000002/3`) direkt,
+   siehe `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` und `spartenlogic/Z_PRODSPARTE_MAP_BUILD.abap`.*
 2. Mehrdeutige `PAPH1` werden protokolliert und nicht in die Mapping-Tabelle geschrieben.
 3. Eindeutige Zuordnungen werden in `ZPRODSPARTE_MAP` geschrieben.
 4. `ZCL_PRODSPARTE_PROVIDER` liest verkaufsrelevante Materialien aus `MVKE`, Texte aus `MAKT`/`T179T`/`T25A0`/`T25A1` und verbindet sie mit `ZPRODSPARTE_MAP`.

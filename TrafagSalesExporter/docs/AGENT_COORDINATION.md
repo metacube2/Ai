@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-10-28
+Stand: 2026-10-29
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -27,9 +27,9 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | Einkaufs-Dashboard: Feedback Erich/Sandro/Marco vom 22.10. umsetzen (Auftrag Ingo „setze alles um“, P76/T76 lesend erlaubt) | `Services/Purchasing*`, `Components/Pages/Purchasing*`, Einkauf-Seiten, `docs/PURCHASING_DASHBOARD_2026-06-05.md`, `docs/rag/PURCHASING.md`, Tests Purchasing* | **Abgeschlossen, deployed 22.10. 13:38 (`77778a5`), bitgleich, ohne Alarm. Offen: Rueckfrage Sandro Zeitraum, Ansicht im Browser** |
 | Claude | Handbestellwesen: Abloesung der PHP-Anwendung durch Modul im Dashboard (Auftrag Ingo 22.10.) | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md`, kuenftig `Components/Pages/Handbestellwesen*`, `Services/Handbestellwesen/`; `handbestellwesen/` bleibt ungetrackt (Passwoerter) | **Phase 1 programmiert und committet (22.10.), Tests 1274/1274, nicht deployed, nicht im Browser gesehen. Entscheid 22.10.: weiterbetreiben, Nutzung festhalten (umgesetzt, Kachel Nutzung, Suite 1275/1275). Deployed 22.10. 13:38 (Reiter unsichtbar). Dump und neueste PHP-Dateien liegen vor; naechster Schritt Import-Werkzeug.** Zusaetzlich: `Modules/Handbestellwesen/`, `wwwroot/css/handbestellwesen.css`, ein Eintrag in `Services/DatabaseSeedService.cs` (Menue) und eine Zeile in `Program.cs` (nur eigener Hunk, fremde Aenderung dort bleibt unangetastet), Tests `TrafagSalesExporter.Tests/Handbestellwesen*` |
 | Claude | ZLO03 FIX 19: Spalten REACH, SVHC, PFAS (Klasse `Z_PACK_REGULATION`, AUSP), Wunsch Florian Waechter; **Nachtrag 2026-10-22: Spalte RoHS** (Merkmal `ROHS`, von Adil am 21.10. angelegt) | `Z_ZLO03_TURBO2` in T76 (Auftrag `T76K912742`, Variante B), `zlo03/` | **`T76K912742` (FIX 12, 19 inkl. RoHS, 20) am 22.10. von Ingo freigegeben. FIX 21 (.xlsx) in T76 aktiv, neuer Auftrag `T76K912752`, getestet; offen: Freigabe/Import `T76K912752` (Ingo), Test mit Werten, Programm hinter ZLO03 in P76** |
+
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -41,6 +41,8 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Doku: Widersprueche in allen Markdown-Dateien aufgeloest (Auftrag Ingo „alle 163“), sieben Subagenten je Themenast, Qdrant neu indexiert | 2026-10-29 | abgeschlossen, nur Doku/Status, kein Code, kein Deploy, Reservierung frei. 87 Dateien (Router, RAG, Fachdateien, saptasks, Handbuch-Kapitel, PROJEKTSTATUS), Issue-Log ISS-004/006.1/007.2, Wochen_Todo 9/66/93/114, Status_kurz samt `.xlsx`, LEARNINGS, `lastchange.md`; `UserManualContentTests` 4/4. Nicht angefasst: `zlo03/`, Handbestellwesen-Konzept, `CLAUDE.md` und `Tools/Qdrant/README.md` (fremde unkommittierte Aenderungen). Handbuch-Kapitel erst nach Deploy im Reiter, Word nicht neu erzeugt |
+| Claude | Einkaufs-Dashboard: Feedback Erich/Sandro/Marco vom 22.10. umsetzen (aus „Aktive Bereiche“ verschoben am 29.10.) | 2026-10-22 | abgeschlossen, deployed 22.10. 13:38 (`77778a5`), bitgleich, ohne Alarm. Offen: Rueckfrage Sandro Zeitraum, Ansicht im Browser |
 | Claude | Einkauf Spend-Aufriss: Einstieg Produktgruppe nach Verwendung : Warengruppe (Wunsch Sitzung 28.10., Auftrag Ingo) | 2026-10-28 | abgeschlossen, Reservierung frei. `Services/PurchasingDashboardService.cs` (`ExecuteUsageProductGroupPerspectiveAsync`, `SapProductGroupResolvedCteSql`), `PurchasingSpendExplorer.razor`, Uebersetzungen inkl. Berndeutsch, Test; `saptasks/zc23_materialanteil/NOTES.md`, Wochen_Todo 123 samt `.xlsx`, `lastchange.md`, `docs/rag/PURCHASING.md`; Commit `8653f6b`, Release-Worktree 1280/1280; deployed 2026-10-28 (Auftrag Ingo), bitgleich, ohne Alarm |
 | Claude | Einkauf: Matrix Lieferant / Jahr in den Spend-Aufriss, alter Reiter Spend ausgeblendet (Auftrag Ingo) | 2026-10-28 | abgeschlossen, Reservierung frei. `Components/Pages/PurchasingSupplierYearMatrix.razor` (neu), `PurchasingSection.razor`, `PurchasingDashboard.razor`, `Services/DatabaseSeedService.cs` (`HideOldSpendTabOnce`), `lastchange.md`, `docs/rag/PURCHASING.md`; Commits `45b2158`, `c501053` (ganzer Spend-Inhalt unter dem Aufriss), Release-Worktree 1279/1279; deployed 2026-10-28 (Auftrag Ingo), bitgleich, ohne Alarm |
 | Claude | Einkauf Kopfbereich: Bild Warenkorb mit Sensoren eingepasst (Auftrag Ingo) | 2026-10-28 | abgeschlossen, Reservierung frei. `Components/Pages/PurchasingDashboard.razor`, `wwwroot/einkauf/warenkorb-sensoren.jpg`, `lastchange.md`, `docs/rag/PURCHASING.md`; Commit `8a568e5`, Release-Worktree auf `8a568e5`, Suite 1279/1279; deployed 2026-10-28 10:05 (Auftrag Ingo), bitgleich, Bild liefert 200, im Browser nicht angesehen |

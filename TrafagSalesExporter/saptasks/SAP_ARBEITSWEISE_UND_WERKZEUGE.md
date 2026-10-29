@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-09-03, Nachträge bis 2026-10-13 am Ende
+Stand: 2026-09-03, Nachträge bis 2026-10-13 am Ende, dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**

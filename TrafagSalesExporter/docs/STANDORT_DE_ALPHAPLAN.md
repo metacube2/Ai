@@ -1,6 +1,6 @@
 # Standort Deutschland: Alphaplan-Export und Import
 
-Stand: 2026-09-09 (Abschnitt 8 neu, Abschnitte 5 und 6 nachgefuehrt).
+Stand: 2026-10-29 (Abschnitt 6 zu den Kundenfeldern nachgefuehrt; Abschnitt 8 und Abschnitte 5 und 6 vom 2026-09-09).
 Zusammengefuehrt aus `ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`
 und `ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`.
 
@@ -113,6 +113,10 @@ haengt die Spartenabdeckung genau daran.
   Punkt „saubere Bezeichnung aus dem Artikelstamm statt des RTF-Felds“ ist **ueberholt**:
   Der Schriftmuell entstand nicht in der Quelle, sondern beim Lesen, und ist seit dem
   09.09.2026 im Import behoben (Abschnitt 8). Ein Artikelstammtext ist dafuer nicht noetig.
+  *Nachgefuehrt am 2026-10-29: Kundennummer, Name, Land und Branche sind seit dem 2026-09-09
+  14:37 fuer 7'592 von 7'622 DE-Zeilen einmalig nachgezogen (Rohails `Rechnungen_20260909.xlsx`,
+  `ISS-016`, `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9). Die Query selbst loest
+  `RechnungsAdressenID` weiter nicht auf; der dauerhafte Join in `alphaplanExport.ps1` ist offen.*
 - Fachfrage an Deutschland: Ist `ArtikelNummer` gleich der TR-AG-/SAP-`MATNR`?
 - Offen, ob Alphaplan ueberhaupt einen Lieferanten auf der **Verkaufszeile** fuehrt oder
   nur einen Hauptlieferanten im Artikelstamm.

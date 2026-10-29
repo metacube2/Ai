@@ -2,7 +2,7 @@
 
 Das Trafag Cockpit führt Daten aus SAP, den Exporten der Standorte, den HR-Dateien, dem Shop-Floor-Meeting, dem Netzwerk und öffentlichen Quellen an einer Stelle zusammen. Dieses Handbuch erklärt jede Seite aus betriebswirtschaftlicher Sicht: wozu sie da ist, was die Grafik zeigt, wie die Zahl entsteht und in welcher Arbeitssituation man sie einsetzt. Technische Einzelheiten stehen in der Entwicklerdokumentation, nicht hier.
 
-Das Handbuch beschreibt den Stand der Software vom 14. Oktober 2026; die Grundfassung entstand am 5. Oktober, die Kapitel Trafag Projekte, Trafag Reddit und Operations kamen danach dazu. Es ist im Cockpit unter dem Reiter **Benutzerhandbuch** lesbar und als Word-Datei herunterladbar.
+Das Handbuch beschreibt den Stand der Software vom 14. Oktober 2026; die Grundfassung entstand am 5. Oktober, die Kapitel Trafag Projekte, Trafag Reddit und Operations kamen danach dazu. Am 29. Oktober 2026 sind die Kapitel Einkauf, HR, Trafag Projekte und Operations sowie einzelne Stellen in Finance auf den Stand vom 29. Oktober 2026 berichtigt worden. Es ist im Cockpit unter dem Reiter **Benutzerhandbuch** lesbar und als Word-Datei herunterladbar.
 
 ## So ist jede Seite beschrieben
 
@@ -22,8 +22,8 @@ Am Ende jedes Kapitels steht ein Kennzahlen-Glossar.
 |---|---|---|
 | **Controller** | Finance Cockpit (Soll/Ist Vergleich, Controlling mit Umsatzbrücke und Hochrechnung), Management Schnellübersicht, Gruppenmarge, Datenqualität, Abweichungen | Monatsabschluss, Hochrechnung, Abweichungsanalyse, Vorbereitung Verwaltungsrat |
 | **Geschäftsleitung** | Management Schnellübersicht und Entscheidungen, Controlling, Weltlage Radar, Verkauf Konzentration und Prognose | Monatsgespräch, Strategie, Risikobeurteilung |
-| **Einkäufer** | Einkauf Dashboard, Spend, Offene Bestellungen, Kontrakte, Lieferanten, Lieferperformance, Preisentwicklung, Einkauf Interaktiv | Lieferantenverhandlung, Jahresgespräch, Terminverfolgung, Bündelung |
-| **Disponent** | Bestellbedarf und Deckung, Materialabhängigkeit, Materialdisposition und Fehlteile, Dispositionsprüfung, Verwendung und Risiko | Fehlteile klären, Abkündigungen, Bestellvorschläge prüfen |
+| **Einkäufer** | Einkauf Dashboard, Spend-Aufriss (mit dem Inhalt des früheren Reiters Spend), Offene Bestellungen, Kontrakte, Lieferanten, Lieferperformance, Preisentwicklung | Lieferantenverhandlung, Jahresgespräch, Terminverfolgung, Bündelung |
+| **Disponent** | Materialdisposition und Fehlteile, Dispositionsprüfung, Verwendung und Risiko (Bestellbedarf und Deckung sowie Materialabhängigkeit sind seit dem 22.10.2026 ausgeblendet) | Fehlteile klären, Abkündigungen, Bestellvorschläge prüfen |
 | **Verkauf und Vertriebsleitung** | Verkauf Kunden, Rückgang, Neue und verlorene Kunden, Cross-Selling, Preisstreuung, Weltkarte, Verkauf Interaktiv | Kundenbesuch, Account-Planung, Preisgespräch, Budget |
 | **Logistik** | Logistik live (Übersicht, 3D-Lager, Produktivität, Kapazität), Stücklistenanalyse | Tagessteuerung, Schichtplanung, Kapazitätsabgleich mit der Produktion |
 | **HR** | HR Dashboard und HR KPI Schulung | Fluktuations- und Absenzenbericht, Quartalsauswertung |

@@ -110,7 +110,7 @@ Zwei SAP-Nacharbeiten blockieren den Betrieb nicht:
 *Stand 2026-10-01:* D1/D5 haben im Dashboard Ersatztexte (`3407868`, produktiv 11:21): D1 = `FP_DICHTESEN` (DISPO_KZ DS), D5 = `FP_DICHTESEN1/2` (DS1, DS2), Vorgabe Ingo, SAP vorerst nicht pflegen; ein spaeter in SAP gepflegter Text gewinnt. `ZDISPO_SPART` hat Auslieferungsklasse `A`, Pflege also direkt im System (SM30), kein Transport. SEGW-Key: Empfehlung, nicht umzusetzen (kein Nutzen fuer das Cockpit, Neugenerierung des Service mit Einkauf, Journal und HR noetig); Entscheid Ingo offen.
 
 1. `ZDISPO_SPART` liefert fuer die Codes `D1` und `D5` keinen Text. Die Anwendung
-   zeigt deshalb gemaess Fallback den jeweiligen SAP-Code an.
+   zeigt deshalb gemaess Fallback den jeweiligen SAP-Code an. *(ueberholt am 2026-10-01: Ersatztexte, siehe oben.)*
 2. In den produktiven OData-Metadaten hat `ZDISPO_GRP` derzeit nur `DISPO` als
    Key. Da `DISPO` in neun Gruppen mehrfach vorkommt, sollte SEGW auf den
    zusammengesetzten Key `DISPO_KZ + DISPO` korrigiert werden. Der aktuelle
@@ -147,7 +147,8 @@ Die bisherigen Excel-Dateien sind keine Laufzeitquelle mehr:
   wie der Einkaufs-Refresh.
 - Der Cache speichert die konkrete Quelle als `SAP OData: <EntitySet>`.
 - Exakte Disponenten, Sternmuster, laengstes Muster und Mehrfachzuordnungen
-  bleiben fachlich unveraendert. Die 1/n-Allokation bleibt summenerhaltend.
+  bleiben fachlich unveraendert. Die 1/n-Allokation bleibt summenerhaltend. *Ueberholt am 2026-10-26: keine
+  1/n-Allokation mehr in den Produktgruppen-Einstiegen, kleinste Gruppennummer gewinnt, siehe Nachtrag 2026-10-26.*
 - Die Datenquellenseite zeigt die Zahl der aus SAP gecachten Produktgruppenregeln.
 
 ## SAP-Bereitstellung

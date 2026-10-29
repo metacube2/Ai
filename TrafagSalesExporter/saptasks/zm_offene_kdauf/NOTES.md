@@ -1,6 +1,7 @@
 # ZM_OFFENE_KDAUF beschleunigen
 
-Stand: 2026-10-12 11:55, in T76 eingesetzt: `ZM_OFFENE_KDAUF` (ZC23) hat den neuen Quelltext, Transport `T76K912728` bereit; Freigabe und Import nach P76 offen (Ingo)
+Stand: 2026-10-12 11:55, Transportstand nachgeführt am 2026-10-29, in T76 eingesetzt: `ZM_OFFENE_KDAUF` (ZC23) hat den neuen Quelltext, Transport `T76K912728` bereit; Freigabe und Import nach P76 offen (Ingo)
+*Überholt am 2026-10-29: `T76K912728` ist seit 15.10. freigegeben und am 16.10. von Ingo nach P76 importiert (in P76 per E070/E071 geprüft, `ZM_OFFENE_KDAUF` zeilengleich mit dem Repo), siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7. Ob `S_RFC`, `P_PTASK` und Job `BI UPDATE` in P76 nachgezogen sind, ist nicht belegt (Abschnitt „Offen für P76“ ab Punkt 2).*
 
 Auftrag Ingo 2026-10-12: Der Report liefert richtige Zahlen, ist aber sehr langsam. Frühere
 schnelle Fassungen (verschiedene Claude-Versionen) hatten am Ende falsche Zahlen. Gearbeitet
@@ -94,7 +95,7 @@ Fertigungsaufträge zufällig; REF gegen REF zeigte das (6 Zeilen).
 
 ## Transport nach P76 (vorbereitet 2026-10-12 11:50)
 
-Auftrag **`T76K912728`** „ZM_OFFENE_KDAUF schnell (ZC23, ZKDAUF_PAR)“, Aufgabe `T76K912729`, beide offen:
+Auftrag **`T76K912728`** „ZM_OFFENE_KDAUF schnell (ZC23, ZKDAUF_PAR)“, Aufgabe `T76K912729`, beide offen *(überholt am 2026-10-29: freigegeben, am 16.10. in P76 importiert)*:
 
 | Objekt | Inhalt |
 | --- | --- |
@@ -118,7 +119,7 @@ Für P76 zu beachten:
 
 ## Offen für P76
 
-1. **Transport `T76K912728` freigeben und nach P76 importieren** (Ingo). *Erledigt in T76 2026-10-12 11:50:* Paket und Auftrag vorbereitet, Quelltext eingesetzt.
+1. **Transport `T76K912728` freigeben und nach P76 importieren** (Ingo). *Erledigt in T76 2026-10-12 11:50:* Paket und Auftrag vorbereitet, Quelltext eingesetzt. *Erledigt 2026-10-16:* Ingo hat den Transport nach P76 importiert (`saptasks/shopfloor_sap/NOTES.md` Abschnitt 7).
 2. **Dialogprozesse in P76** prüfen und `P_PTASK` danach setzen (T76 hat rund 20, Vorgabe 6).
 3. **Textelemente**: Der Korrekturblock braucht keine (Texte im Code). `P_VGL`, `P_PTASK`,
    `P_PPAK`, `P_BPMOD`, `P_FLMOD` sind NO-DISPLAY.

@@ -27,7 +27,7 @@ Andreas) als Aufgabe zugeteilt.
 | **Umsatzbrücke gegen Vorjahr** (Wasserfall, Sicht Gesamt, je Gesellschaft, je Sparte; Tabelle je Gesellschaft) | je Gesellschaft und Artikel in Lokalwährung. **Menge** = Stückveränderung mal Durchschnittspreis Vorjahr; **Mix** = Artikelmengeneffekt minus Menge; **Preis** = Preisveränderung je Artikel mal aktuelle Menge zum Vorjahreskurs; **Neue/weggefallene Artikel** = nur in einem Zeitraum verkauft; **Währung** = aktueller Lokalumsatz mal Kursveränderung (Kurs je Währung und Zeitraum = CHF-Summe / Lokalsumme); **Übrige** = Rest (Zeilen ohne Stück, Gutschriften ohne Menge, Rundung). Die Summe aller Effekte ist genau die Veränderung |
 | **Hochrechnung laufendes Jahr** je Gesellschaft und gesamt, Monatskurve gegen Vorjahr | Ist bis zum letzten vollständigen Monat plus Restmonate aus gleichem Monat im Vorjahr mal Wachstum seit Jahresbeginn (0.5 bis 2); verglichen mit dem vollen Vorjahr, wenn die Daten es ganz enthalten. Kein Budget |
 
-Excel-Export mit Brücke je Gesellschaft und Hochrechnung. Tests `ControllingAnalyticsTests` (6).
+Excel-Export mit Brücke je Gesellschaft und Hochrechnung. Tests `ControllingAnalyticsTests` (6; *seit den Korrekturen aus dem Pruefbefund sieben, Commit `3ad0dae`*).
 
 ## Offene Fragen (Eigeninitiative, keiner Person zugeteilt)
 

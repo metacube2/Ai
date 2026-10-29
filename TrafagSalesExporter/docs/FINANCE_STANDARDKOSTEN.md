@@ -915,7 +915,11 @@ die drei Konzernkostentabellen aus Abschnitt 3.
 **Das ist der heutige Standard der Berechnung.** `GroupMarginCostRules.GroupStandardCost`
 loest ueber `ResolveDeliveringEntity` genau eine Stufe auf, ohne Rekursion; extern faellt bis
 zum lokalen Standardpreis durch. Der Entscheid verlangt keinen Umbau, er schliesst einen
-offenen Punkt.
+offenen Punkt. *Eingeschraenkt am 2026-10-29 nach `ISS-007.4` (gemessen 2026-10-07): bei
+420 TRIT-Zeilen mit Lieferant Trafag Controls India finden nur 5 die Konzernkosten TR IN, 414
+fallen auf Italiens Einkaufspreis, weil die italienischen Artikelnummern keine
+Trafag-Sachnummer tragen. Das ist nicht von der akzeptierten Ungenauigkeit unten gedeckt und
+offen.*
 
 **Damit erledigt:** die Frage, ob der Schweizer `STPRS` unabhaengig von der liefernden
 Gesellschaft gilt, sobald die Schweiz das Material im Werk 1100 fuehrt. Antwort nein. Der

@@ -1,6 +1,6 @@
 # Marktsegmente und Marktumfrage in der Anwendung
 
-Stand: 2026-09-10
+Stand: 2026-10-29 (Ueberholt-Vermerk in Abschnitt 17; juengster Inhalt Abschnitt 20 vom 2026-09-29)
 
 Anlass: Patrik aus dem Vertrieb hat die Railway-Marktumfrage vom Mai 2026 geschickt mit dem
 Wunsch, den Bahnumsatz im Sales-Dashboard auswerten zu koennen. Ingo hat entschieden, dass
@@ -436,7 +436,9 @@ einer reinen Alphaplan-Bahnbranche. Die Pruefung verlangt exakt `00 Bahn` oder
 `05 rw Railways / Bahntechnik`; Mischbranchen bleiben offen. Von 7'615 DE-Verkaufszeilen
 sind 4'549 fachlich zugeordnet. 3'066 Zeilen tragen weiterhin einen sichtbar technischen
 Schluessel `ALPHAPLAN-ID:<ID>` und werden nicht ueber Nummernueberschneidungen,
-Lieferantennummern oder Namensaehnlichkeit zugeordnet.
+Lieferantennummern oder Namensaehnlichkeit zugeordnet. *Ueberholt am 2026-09-09 14:37: Mit Rohails Rechnungsliste
+sind 7'592 von 7'622 DE-Zeilen fachlich zugeordnet, 30 offen (Gutschriften), 24 Railway-Segmente bestaetigt, siehe
+`docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9.*
 
 Die 171 offenen Vorschlaege der anderen Standorte bleiben fachlich zu pruefen. Der
 deutsche Kundenstamm ist kein Nachweis fuer deren lokale Kundenschluessel. Aktuelle

@@ -46,7 +46,10 @@ Stand: 2026-06-16
 
 ## SAP-Zielbild
 
-- `Z_PRODSPARTE_MAP_BUILD` liest reale CO-PA-Ableitungen aus `CE11000`.
+- `Z_PRODSPARTE_MAP_BUILD` liest reale CO-PA-Ableitungen aus `CE11000`. *(Ueberholt: die finale Fassung
+  `spartenlogic/Z_PRODSPARTE_MAP_BUILD.abap` liest die Ableitungsregeln aus `KEDE`/`KEDR`, siehe
+  `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` „Finale Architektur“; die Fassung unter `docs/abap/` ist der erste
+  CE11000-Ansatz. Welche Fassung in SAP aktiv ist, ist im Repo nicht belegt.)*
 - Eindeutige `PAPH1 -> WWPFA -> WWPSP` werden in `ZPRODSPARTE_MAP` gespeichert.
 - Mehrdeutige PAPH1 werden protokolliert und nicht geschrieben.
 - `ZCL_PRODSPARTE_PROVIDER` liest `MVKE-PRODH`, Texte und Mapping.

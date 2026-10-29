@@ -43,6 +43,8 @@ Regel, dem lokalen Standardpreis aus der Verkaufszeile.
 Der Entscheid verlangt also keinen Umbau. Er **schliesst** einen offenen Punkt, und das ist
 sein Wert: bisher war unklar, ob die Kaskade tiefer greifen soll.
 
+*Eingeschraenkt am 2026-10-29 nach `ISS-007.4` (gemessen 2026-10-07): TR IT verkauft Ware von TR IN mit Italiens Einkaufspreis statt Konzernkosten TR IN, weil die italienischen Artikelnummern keine Trafag-Sachnummer tragen (414 von 420 Zeilen). Das ist nicht von der akzeptierten Thermostat-Ungenauigkeit gedeckt und offen; siehe Issue-Log.*
+
 ## 3. Was damit geschlossen ist
 
 Der seit dem 2026-08-27 offene Fachentscheid, ob der Schweizer `MBEW-STPRS` als

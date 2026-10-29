@@ -1,11 +1,16 @@
 # HR-KPI-Pruefung gegen Schweizer Praxis und HR-Best-Practices
 
-Stand: 2026-05-13, Umsetzungsstand am 2026-09-29 nachgefuehrt
+Stand: 2026-05-13, Umsetzungsstand am 2026-09-29 und 2026-10-29 nachgefuehrt
 
 > **Wichtig:** Die Bloecke „Aktueller Reiter" und „Status" beschreiben den App-Stand vom Mai.
 > Seit dem 2026-09-28 (`5ae7f31`, Deploy 11:25) gelten andere Regeln; massgeblich ist
 > `docs/HR_KPI.md` Abschnitt 8. Die Einschaetzungen zu Schweizer Praxis und externen Quellen
 > bleiben unveraendert und sind nicht neu geprueft. Ueberholte Stellen sind unten markiert.
+>
+> *Nachtrag 2026-10-29:* Seit 2026-10-01 kommt die SAP-Datei taeglich ueber `HrKpiSet` und die Krankheit
+> je Fall aus SAP `PA2001` (periodengenau, `hrdata/HR_Absenzen_SAP.xlsx`); seit 2026-10-22 gilt fuer Kader
+> (SAP-Mitarbeiterkreis 10) 8,2 h statt 8,0 h je Tag. Die Angaben „8,0 h" und „Zeitraum nicht bestimmbar"
+> unten gelten entsprechend eingeschraenkt; siehe `docs/HR_KPI.md` 8.6 bis 8.8.
 
 Zweck dieses Dokuments:
 
@@ -121,6 +126,7 @@ Aktueller Reiter:
 > **Ueberholt seit 2026-09-28**: Krankenquote = Krankheitstage / (FTE x Arbeitstage Kanton Zuerich im
 > Zeitraum); 21 Tage nur noch als Notfall ohne Zeitraum. Bei Zeitraumfilter zeigt die App
 > „Zeitraum nicht bestimmbar" und eine gelbe Ampel statt einer Quote.
+> *(ueberholt am 2026-10-01: mit der SAP-Datei aus `PA2001` ist die Quote auch mit Zeitraumfilter periodengenau, `docs/HR_KPI.md` 8.7)*
 
 Schweizer/BFS-nahe Praxis:
 
@@ -164,7 +170,7 @@ Status:
 
 Aktueller Reiter:
 
-- Krankheit kommt aus Rexx-Stunden.
+- Krankheit kommt aus Rexx-Stunden. *(ueberholt am 2026-10-01: aus SAP `PA2001` je Fall, Rexx nur noch ohne SAP-Datei, `docs/HR_KPI.md` 8.7)*
 - BU/NBU kommt aus SAP-HR-KPI-Datei.
 
 Pruefen:

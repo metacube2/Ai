@@ -1,6 +1,6 @@
 # Quellsysteme: SAP B1 ueber HANA und SAP OData
 
-Stand: 2026-08-17. Verdichtet aus `FINANCE_SAP_B1_KONNEKTOREN_ANDREAS_2026-07-01.md`.
+Stand: 2026-10-29 (Italien-Kundenausschluss nachgefuehrt; Grundstand 2026-08-17). Verdichtet aus `FINANCE_SAP_B1_KONNEKTOREN_ANDREAS_2026-07-01.md`.
 
 Technische Grundlage der Verkaufsstrecke fuer die HANA-Laender. Fuer das Hauptbuch siehe
 `docs/FINANCE_JOURNAL.md`, fuer die Manual-Excel-Laender `docs/rag/MANUAL_IMPORT.md`.
@@ -91,7 +91,10 @@ AND h."CardCode" NOT IN (
 
 - Der Kontenfilter zielt auf `47005 — Ricavi vendite e prestazioni`.
 - Der Ausschluss `4700504%` entfernt `autofattura`-Konten.
-- Die sechs Kunden sind historisch als Arbeitsfilter dokumentiert.
+- Die sechs Kunden sind historisch als Arbeitsfilter dokumentiert. *(ueberholt am
+  2026-10-29: der Kundenausschluss war ein nie freigegebener Prueffilter und ist seit
+  2026-09-29 15:23 entfernt, Commit `f77840a`, `ISS-021`; im Code steht nur noch der
+  Kontenfilter `47005%` ohne `4700504%`)*
 
 **Offen:** Diese Logik ist hart codiert und sollte fachlich final bestaetigt oder in eine
 pflegbare Finance-Regel ueberfuehrt werden.

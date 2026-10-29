@@ -26,6 +26,27 @@ Claude rein lesend gegen Code und Produktivdaten-Kopien geklärt.
 | 14 Archiv | gelöscht in `835b317` am 01.09., per `git show` wiederherstellbar; Wiederherstellung entscheidet Ingo |
 | 15 Ladeweg | `docs/rag/init.md` an `router.md` angeglichen; Umfangszusagen korrigiert |
 
+## Nachprüfung am 29.10.2026
+
+Stand der Befunde einen Monat später, geprüft gegen Code, `git log`, Issue-Log und Dateibestand.
+Die Befunde unten bleiben als Stand vom 29.09. stehen.
+
+| Befund | Stand 29.10. | Beleg |
+| --- | --- | --- |
+| 1 Standardkosten | am 29.09. nachgeführt; MARC-Fallback weiter offen, am 29.10. nicht erneut geprüft | `docs/FINANCE_STANDARDKOSTEN.md` |
+| 2 ES/UK | am 29.09. nachgeführt, am 29.10. nicht erneut geprüft | `docs/FINANCE_STANDARDKOSTEN.md` |
+| 3 IT/IN-Konzernkosten | erledigt, „weiterhin offen“ ist in der Formeldatei als frühere Aussage eingeordnet | `docs/rag/FINANCE_FORMELN.md` Abschnitt 4 |
+| 4 Mask/Convert | erledigt, Convert ist Code-Standard | `Models/ExportSettings.cs:28`, `docs/rag/FINANCE_FORMELN.md` Abschnitt 4, `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` („damals Default“) |
+| 5, 6 Kursregeln | seit 07.10. Budgetkurs als Standard (Entscheid Ingo); Fehler A1 (CHF-Schalter, Prüfbuch) erledigt und produktiv seit 07.10. 10:06; A2 bleibt latent unter `ISS-018` | `docs/rag/FINANCE_FORMELN.md` Kopf und Abschnitt 3, `ISS-018.1`; Prozessablauf-Datei am 29.10. nicht erneut geprüft |
+| 7, 8 Supplier, Indien | am 29.09. nachgeführt, am 29.10. nicht erneut geprüft | `docs/FINANCE_SUPPLIER.md`, `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` |
+| 9 Spanien | erledigt: Issue-Log und Wochen-Todo führen `ISS-004.2` übereinstimmend als erledigt, die 35-Tage-Forderung ist in `docs/STANDORT_ES_SAGE.md` gestrichen | Issue-Log, `projektmanagement/Wochen_Todo.tsv` |
+| 10 Juli-Livedatei | erledigt, überall als historische Messreferenz geführt | `baum.md`, `docs/router/finance.md`, `docs/rag/PROJECT.md`, `docs/rag/PURCHASING.md` |
+| 11 Einkauf | erledigt, 60-Minuten-Regel steht vor den datierten 15-Minuten-Messungen | `docs/rag/PURCHASING.md` Kurzstand |
+| 12 HR | erledigt; zusätzlich am 29.10. im HR-Router die Kaderregel vom 22.10. (Mitarbeiterkreis 10, 8,2 h) nachgeführt | `docs/router/hr.md`, `docs/HR_KPI.md` 8.8, `ede56b6` |
+| 13 baum.md | erledigt: jede Datei aus `git ls-files '*.md'` steht in `baum.md`; fehlende Pfade dort sind nur „zusammengeführt“-Namen oder Archivnamen „nur in Git“ | Abgleich am 29.10. |
+| 14 Archiv | erledigt am 22.10.: Archiv `docs/archiv/`, `docs/raw_md_archive/` nur noch in Git mit Abrufbefehl | `docs/archiv/README.md`, `baum.md` Abschnitt Archiv, `286ec97` |
+| 15 Ladeweg | erledigt: `docs/rag/init.md` folgt `router.md`; Umfang von `lastchange.md` am 22.10. gekürzt und in `init.md` mit Datum versehen | `docs/rag/init.md` |
+
 ## Ergebnis und Prüfumfang
 
 **Die Dokumentation ist nicht durchgängig konsistent.** Besonders relevant sind falsche aktuelle Aussagen über Standardkosten, widersprüchliche Kursbeschreibungen und offene Punkte, die an anderer Stelle bereits entschieden sind. Die Nachführung vom 29.09. hat wichtige Stellen berichtigt, aber nicht alle widersprechenden Absätze.

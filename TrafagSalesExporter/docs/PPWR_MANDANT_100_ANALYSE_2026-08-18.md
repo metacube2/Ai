@@ -3,7 +3,9 @@
 Stand: 18.08.2026
 Zielsystem: **T76, Mandant 100** (bisher 090)
 Status: Codekorrektur fertig, **Live in T76/100 nachgewiesen angelegt**. Offen: unabhaengige
-Sichtpruefung in `CL03`/`CT04`, Pilotzuordnung.
+Sichtpruefung in `CL03`/`CT04`, Pilotzuordnung. *Ueberholt am 2026-08-20: PM-06 laut Ingo komplett erledigt,
+Pilotmaterialien zugeordnet und CL30N-Abnahme gefahren (`projektmanagement/PROJEKTSTATUS.md`); ob damit auch die
+Schritte 4 bis 6 in Abschnitt 8 erledigt sind, ist nicht festgehalten.*
 
 Vorgaengerdokument: `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md`.
 Die fachliche Loesung — zwei Klassen der Klassenart `001`, 21 Merkmale, dreiwertige
@@ -181,7 +183,7 @@ werden:**
 | 4 | Programmnamen klaeren (`ZTEST55` gegen `ZPPWR_CLASS_SETUP`) | Ingo / Adil | offen |
 | 5 | Unabhaengige Sichtpruefung in `CL03` und `CT04` — Reihenfolge, Wertelisten, Bezeichnungen | Ingo / Adil | offen |
 | 6 | `Z_PACK_REGULATION` mit Adil klaeren (Abschnitt 8a), vor Beginn von Schritt 7 | Adil | offen, blockierend fuer Schritt 7 |
-| 7 | Pilotmaterialien zuordnen (`MM02`) und `CL30N`-Abnahme nach Abschnitt 9 des Anlageprotokolls | Einkauf/Marco fuer die Kandidatenliste, Stefan/Patrik/Marc fuer die Zuordnung | offen |
+| 7 | Pilotmaterialien zuordnen (`MM02`) und `CL30N`-Abnahme nach Abschnitt 9 des Anlageprotokolls | Einkauf/Marco fuer die Kandidatenliste, Stefan/Patrik/Marc fuer die Zuordnung | offen *(ueberholt: erledigt 2026-08-20 laut Ingo, Pilotmaterialien zugeordnet, CL30N-Abnahme gefahren; `projektmanagement/PROJEKTSTATUS.md` PM-06, Wochen_Todo 20)* |
 | 8 | Mandant-090-Frage aus Abschnitt 6 nur noch von historischem Interesse, da 100 jetzt der Zielmandant ist | – | gegenstandslos |
 
 ## 9. Messergebnis

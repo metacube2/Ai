@@ -185,7 +185,9 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
 
 ### 5.10 HR-KPI-Cockpit (`/hr-kpi`)
 - **REQ-HR-1** Datenquelle sind Rexx-/SAP-Dateien aus einem konfigurierbaren Datenordner
-  (`HrKpi:DataFolder`, pro Lauf anpassbar).
+  (`HrKpi:DataFolder`, pro Lauf anpassbar). *(Ergaenzt am 2026-10-29: Die SAP-Dateien `HR_KPI_Export.xlsx` und
+  `HR_Absenzen_SAP.xlsx` schreibt das Cockpit seit 2026-10-01 taeglich selbst aus OData `HrKpiSet`/`HrAbsenzSet`;
+  Rexx-Dateien weiter von Hand, `docs/HR_KPI.md` 8.6/8.7.)*
 - **REQ-HR-2** Funktionen: Anleitung, Datenfrische/-status, Ampeln, Periodenvergleich,
   Datenqualität, Austritte, Absenzen, Managementsicht (anonymisiert Personennamen), Drucken/PDF.
 - **REQ-HR-3** `Fluktuation YTD` = fluktuationsrelevante Austritte 01.01.–Stichtag / durchschnittlicher
@@ -231,7 +233,8 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
   aus-/einblenden (inkl. der Einkaufs-Unterpunkte).
 - **REQ-ADM-3** `Einstellungen`: Quellsysteme (zentrale SAP-URL/User/Passwort), Wechselkurse,
   Export-Einstellungen (Audit-CSV-Schalter, Exportordner, Kursanwendungsdatum), Feature-Schalter
-  (z.B. Strichmännchen).
+  (z.B. Strichmännchen). *(Praezisiert am 2026-10-29: der Strichmännchen-Schalter liegt laut Code in
+  `Components/Pages/AdminSessions.razor`, nicht in den Einstellungen.)*
 
 ### 5.13 Betrieb & Diagnose (`/logs`, `/diagnostics/interactive`, `/source-viewer`)
 - **REQ-OPS-1** Zentrales Logging (`ExportLogs`) mit sichtbarer Log-Ansicht.
@@ -241,9 +244,11 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
 ## 6. Übergreifende Anforderungen
 
 - **REQ-X-1** Jede Änderung wird über `dotnet test TrafagSalesExporter.sln` grün abgesichert
-  (aktueller Stand: 155/155 lokal); neue Logik bekommt Tests.
+  (aktueller Stand: 155/155 lokal; *ueberholt, Stand 2026-10-28: 1279/1279 im Release-Worktree, `docs/rag/DEPLOYMENT.md`*); neue Logik bekommt Tests.
 - **REQ-X-2** Deploy nur nach Rücksprache: `app_offline.htm` setzen, `dotnet publish -c Release`
   auf den UNC-Share, `app_offline.htm` entfernen, Port 443 prüfen; DB nicht mitpublizieren.
+  *(Ueberholt: Der Deploy laeuft ueber den Runner `.tmp_tools/DeployHeadless` mit Release-Worktree, Bitvergleich und
+  Routenpruefung; Ablauf und Regeln in `docs/rag/DEPLOYMENT.md`.)*
 - **REQ-X-3** Schema-Erweiterungen nur additiv über die Schema-Maintenance (Spalten ergänzen +
   RawJson-Backfill), keine destruktiven Migrations.
 - **REQ-X-4** Excel-Exporte sind entweder serverseitige Nachweisdateien (SharePoint) oder
@@ -251,6 +256,8 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
 - **REQ-X-5** Firewall-/Netz-Ziele (SAP OData `10.194.64.29:8000`, HANA BI1 `10.194.65.22:30015`,
   India HANA `20.197.20.60:30015`, SharePoint/Graph `trafagag.sharepoint.com:443`) werden vom
   produktiven Webserver aus benötigt, nicht vom Entwickler-PC.
+  *(Abweichung, 2026-10-29: Die produktive Konfiguration nennt fuer SAP OData `travp762.sap.trafag.com:8000`, per DNS
+  `10.194.64.30`, nicht `.29`; siehe `docs/DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md`.)*
 
 ## 7. Kern-Datenmodell (Auszug)
 

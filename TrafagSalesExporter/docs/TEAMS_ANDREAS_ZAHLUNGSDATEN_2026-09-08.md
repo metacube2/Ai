@@ -52,7 +52,7 @@ jeder Zusage, sonst bauen wir ein Feld, das nachher niemand so meinte.
 | Fachbegriff | Feld in B1 | Stand bei uns |
 |---|---|---|
 | Faelligkeitsdatum | `JDT1.DueDate` | gelesen seit Commit `646a998`, produktiv seit 2026-09-08 14:02 |
-| Ausgleichsdatum | `OITR.ReconDate` | nicht importiert |
+| Ausgleichsdatum | `OITR.ReconDate` | nicht importiert *(ueberholt am 2026-10-29: als `ReconciliationDate` neben `ClearingDate` aus `JDT1.MthDate` seit dem Deploy vom 2026-09-10 08:53 im Journal, `ISS-006.1`, `docs/FINANCE_JOURNAL.md`)* |
 | Zahlungsbelegdatum | `ORCT.DocDate` (Kunde), `OVPM.DocDate` (Lieferant) | nicht importiert |
 | Datum der Banküberweisung | `TrsfrDate` | nicht importiert |
 

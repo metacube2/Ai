@@ -6,6 +6,8 @@ Stand: 2026-05-18
 
 Italien ist aktuell der wichtigste offene Finance-Punkt, weil die Abweichung gegen Rhino / `check.xlsx` am groessten ist.
 
+*Ueberholt am 2026-10-29: Das Italien-Ist 2025 ist nach Behebung der Doppelzeilen (`ISS-021`, erledigt, nachgewiesen 2026-09-30) `7'697'203.62 EUR`, 0,36 % ueber Rhino; siehe `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md`.*
+
 Ziel ist nicht, eine Zahl passend zu rechnen, sondern die fachlich richtige Berechnungsmethode fuer Italien festzulegen und danach reproduzierbar im Finance-Abgleich zu verwenden.
 
 ## Aktueller Befund

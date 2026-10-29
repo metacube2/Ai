@@ -1,6 +1,6 @@
 # Unterrouter SAP
 
-Zurueck: `router.md`. Stand: 2026-09-11.
+Zurueck: `router.md`. Stand: 2026-10-22 (zuletzt ZLO03 FIX 20); davor 2026-09-11.
 
 ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation, OData/Gateway.
 
@@ -49,10 +49,10 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **Fiori-App ZC23: offene Kundenauftraege live mit Selektion (Zc23Set, P_APP, ZSTR_ZC23_APP), Trafag-Logo, Kacheln; T76 `T76K912738`** | `saptasks/fiori_zc23/NOTES.md` |
 | **Fiori-App (SAPUI5): erste Test-App `ZFI_ERSTE_APP`, wo und wie sie laeuft, Voraussetzungen T76, drei Upload-Wege, Harness fuer Erfassungs-Apps** | `saptasks/fiori_erste_app/NOTES.md` |
 | **ZC23 Spalten Materialanteil und Arbeit CZ: Analyse ZM03 (`ZLO_CALC_CZ_PREISE`), gebaut, Transport `T76K912736` (in P76 seit 16.10.), Formeln, Pruefung; Word-Doku Beschleunigung** | `saptasks/zc23_materialanteil/NOTES.md`, `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx` |
-| **`ZM_OFFENE_KDAUF` beschleunigen: `_OPT` (etwa 1/35 bis 1/50 der Laufzeit, identisch), Parallelbaustein `Z_KDAUF_PAR_RECHNEN`, Korrekturschalter, Vergleich `_CMP`, in T76 eingesetzt, Transport `T76K912728` bereit, Import P76 offen** | `saptasks/zm_offene_kdauf/NOTES.md` |
+| **`ZM_OFFENE_KDAUF` beschleunigen: `_OPT` (etwa 1/35 bis 1/50 der Laufzeit, identisch), Parallelbaustein `Z_KDAUF_PAR_RECHNEN`, Korrekturschalter, Vergleich `_CMP`, in T76 eingesetzt, Transport `T76K912728` (in P76 seit 16.10.)** | `saptasks/zm_offene_kdauf/NOTES.md` |
 | **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) standardmaessig sichtbar, mit Werk (`ZZPEG_WERKS`), Layout `/ P00 TX`, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
 | **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`, seit 2026-10-09 in P76** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
-| **Operations (Shopfloor): `ShopRmSet` (ZC27 `ZPP_RM_MENGEN`) und `ShopProdSet` (Istendtermin), Logistik/Tagesmengen/FPY SEH; T76 aktiv, Transport `T76K912740` + `T76K912738` offen** | `saptasks/shopfloor_sap/NOTES.md`, Code `docs/abap/ZSHOP_RM_ADD.abap` |
+| **Operations (Shopfloor): `ShopRmSet` (ZC27 `ZPP_RM_MENGEN`) und `ShopProdSet` (Istendtermin), Logistik/Tagesmengen/FPY SEH; Transport `T76K912740` + `T76K912738` (in P76 seit 16.10.)** | `saptasks/shopfloor_sap/NOTES.md`, Code `docs/abap/ZSHOP_RM_ADD.abap` |
 | **Einkauf: `EinkKontraktSet` (Mengenkontrakte wie ME3L, EKAB) und `EinkMatLzSet` (LZ-/Sortiments-Code), Strukturen in `T76K912724`, Klassen in `T76K912718`, beide seit 2026-10-09 in P76** | `docs/abap/ZEINK_KONTRAKT_ADD.abap`, `docs/rag/PURCHASING.md` |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |

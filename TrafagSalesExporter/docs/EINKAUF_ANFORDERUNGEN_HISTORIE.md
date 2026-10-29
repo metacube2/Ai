@@ -1,6 +1,6 @@
 # Einkaufs-Dashboard: Anforderungen, Korrekturen und offene Punkte
 
-Stand: 2026-08-17, Lagerwert-Abschnitt in 3 nachgetragen am 2026-09-28. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
+Stand: 2026-10-29 (Ueberholt-Vermerke in 3, 4 und 5 nachgetragen); Inhalt vom 2026-08-17, Lagerwert-Abschnitt in 3 nachgetragen am 2026-09-28. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
 (Formel-Review 2026-07-06, Umsetzungsplan und Vorbereitung 2026-07-09, Review Marco
 2026-07-10, Einkaufssitzungen 2026-07-23 und 2026-07-30).
 
@@ -73,7 +73,7 @@ Periode ohne Obergrenze auf heute.
 | Warengruppen-Texte | `PurchasingMaterialGroupTextCatalog` loest rund 72 T023T-Codes zu „Code - Text" auf; unbekannte Codes bleiben roher Code |
 | ZLO03 Excel-Paste | Komma, Semikolon, Leerzeichen, Tab, Zeilenumbruch; Duplikate raus |
 | ZLO03 Mehrfachabfrage | **Bypass**: eine SAP-Anfrage je Nummer statt OR-Gruppe |
-| Produktgruppen-Aufriss | `Produktgruppe -> Lieferant -> Material` ueber ZLO03-Disponent, mit summenerhaltender `1/n`-Allokation bei Mehrfachverwendung |
+| Produktgruppen-Aufriss | `Produktgruppe -> Lieferant -> Material` ueber ZLO03-Disponent, mit summenerhaltender `1/n`-Allokation bei Mehrfachverwendung. *Ueberholt am 2026-10-26 (`0dc3c68`): eigener MARC-DISPO des Materials, genau eine Gruppe, keine 1/n-Verteilung* |
 | ABC/XYZ-Massnahmenmatrix | mit konkretem Pruefauftrag je Klasse |
 
 ### Lagerwert der Einkaufsteile (2026-08-18 bis 2026-09-28)
@@ -96,12 +96,12 @@ Der Full Load vom 2026-07-24 lieferte: `SupplierCountry` 100 % gefuellt, `MaraAb
 
 | # | Punkt | Aufwand | Warum |
 | --- | --- | --- | --- |
-| 1 | **Laeuft das naechtliche Delta?** `MAX(Bedat)` gegen den Tag des letzten Full Loads pruefen | Minuten | Greift das Delta nicht, stehen alle Zahlen auf dem alten Stand — das schlaegt jeden anderen Punkt |
+| 1 | **Laeuft das naechtliche Delta?** `MAX(Bedat)` gegen den Tag des letzten Full Loads pruefen | Minuten | Greift das Delta nicht, stehen alle Zahlen auf dem alten Stand — das schlaegt jeden anderen Punkt. *Ueberholt: der Einkauf-Lauf ist seit 2026-09-28 wieder nachgewiesen; offen bleibt nur die Server-Einstellung (ISS-017), siehe `docs/EINKAUF_LAGERWERT_2026-08-18.md` 13.6/13.7* |
 | 2 | Delta-Meldung im Log ansehen: Laufzeit und Zahl nachklassifizierter Cachezeilen | Minuten | die einzige ungemessene Groesse am Delta-Fix |
 | 3 | ZLO03 mit mehreren Nummern gegen P76 laufen lassen | Minuten | Beweis, dass der Bypass greift. Die ABAP-Ursache ist **nicht** verifiziert |
 | 4 | ZLO03-Plausibilisierung Bottom-Up abschliessen | mittel | Vergleich SAP gegen Web ist begonnen, nicht beendet. Solange Marco zweifelt, nutzt er das Werkzeug nicht |
 | 5 | Wareneingangsdatum: echter Bedarf oder Randbemerkung? | gross | Braucht `EKBE`/`MSEG` als neue SAP-Quelle. **Nicht ohne explizite Priorisierung anfangen** |
-| 6 | SAP-Textpflege fuer die Disponentencodes `D1` und `D5` | klein | `D5` hat in der gelieferten Textdatei keine Beschreibung |
+| 6 | SAP-Textpflege fuer die Disponentencodes `D1` und `D5` | klein | `D5` hat in der gelieferten Textdatei keine Beschreibung. *Ueberholt am 2026-10-01 (`3407868`): Ersatztexte im Dashboard nach Vorgabe Ingo, SAP vorerst nicht pflegen* |
 | 7 | Power-BI-Basisliste: Authentifizierung defekt | offen | nur auf Marcos Zuruf, er hat nicht darauf bestanden |
 
 ### Warum ZLO03 Bottom-Up dringend ist
@@ -119,11 +119,13 @@ nicht reichen („Navitrack ist ein uraltes Produkt").
 ## 5. Zurueckgestellt
 
 - **Sortiments- und Lebenszyklusgueter** — in Arbeit ueber ZLO03, keine neue Anforderung.
-  Haengt an der abgeschlossenen Plausibilisierung.
+  Haengt an der abgeschlossenen Plausibilisierung. *Ueberholt am 2026-10-08: Spend-Aufriss-Einstiege
+  „Lebenszyklus-Code“ und „Sortiments-Code“ aus `EinkMatLzSet`, produktiv 2026-10-08 15:03.*
 - **Lieferanten-Factsheet und -Vergleich** („wie Galaxus") — aufgenommen, nicht terminiert.
 - **Echte Mengenkontrakte** im Register Kontrakte — **seit 2026-10-08 lokal umgesetzt, nicht deployed**
   (Wunsch Armin, „wie ME3L“, inkl. abgelaufener Kontrakte; wartet auf den SAP-Transport von
   `EinkKontraktSet`/`EinkMatLzSet`). Siehe `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-10-08.
+  *Ueberholt: produktiv seit 2026-10-08 15:03, Transporte am 2026-10-09 in P76; offen bleibt der ME3L-Abgleich mit Armin.*
 - **Termintreue-Kachel** — Prioritaet durch Marco bestaetigt, Umsetzung offen.
 
 ## 6. Argumentarium

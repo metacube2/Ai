@@ -56,6 +56,8 @@ Wiederbeschaffungszeit (kritischer Pfad), Kostenhochrechnung, Stoffvererbung (PP
 
 Wunsch Ingo: die Vererbungsbaeume wie Nervenbahnen eines Gehirns, Farbe je Code, Kreuzpunkte sichtbar. Entscheide: Farbe
 umschaltbar (LZ-Code, Lieferantenrisiko, Stufe), Prototyp mit dieser Teilmenge, Ort zuoberst im Spend-Aufriss, WebGL fuer Edge.
+*Ueberholt am 2026-10-22 (`77778a5`): Das Netz ist im Spend-Aufriss eingeklappt hinter „Stuecklisten-Netz (Prototyp)
+anzeigen“ (Feedback Erich, Nachtrag 2026-10-22 in `docs/PURCHASING_DASHBOARD_2026-06-05.md`).*
 
 - Daten: `Services/Logistics/BomBrainGraph.cs` aus `BomInheritanceService` plus `PurchasingMaterialLzCache` (Knoten mit Stufe,
   Risiko, LZ-Code, Verwendungen; Kanten Eltern -> Kind). Test `BomBrainGraphTests`.

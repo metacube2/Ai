@@ -60,6 +60,11 @@ Diese Zahlen sind nicht in diesem Auftrag gemessen, sondern uebernommen. Quelle 
 produktive Messung vom 2026-08-27 mit dem read-only Werkzeug `.tmp_tools/CheckRailwayDe`,
 festgehalten in `docs/AGENT_COORDINATION.md` und `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md`.
 
+*Ueberholt am 2026-09-09 fuer Deutschland:* Seit dem produktiven Nachzug 2026-09-09 14:37 tragen 7'592 von 7'622
+DE-Verkaufszeilen die fachliche Kundennummer, 24 Railway-Segmente sind bestaetigt; laut Export vom 2026-09-29 fehlen
+Kundenname und Kundenland nur noch in 145 bzw. 163 Zeilen. Siehe `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`
+Abschnitte 8 und 9 sowie `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 20.
+
 - `173` Railway-Vorschlaege ueber acht Standorte, davon **`0` bestaetigt**.
 - Deutschland hat `0` Vorschlaege, obwohl die Anfrage aus Deutschland kommt.
 - Bei allen `7'526` deutschen Verkaufszeilen fehlen Kundenname und Kundenland, die

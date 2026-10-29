@@ -302,6 +302,8 @@ damit die bereits korrekt gefüllten Sätze nicht angefasst werden.
 
 ## 12. Nächster Schritt
 
+*Überholt (Stand der Analyse vom Juli 2026): BAdI und Verbuchungsbaustein sind seit 2026-09-07 gebaut und im Auftrag `T76K912490`, siehe „Aktueller Kurzstand 07.09.2026“ und Nachtrag 26.10.2026 oben.*
+
 1. Änderungsbelege zu `1214608` prüfen (§5) — entscheidet, ob der Altcode als
    Referenz taugt.
 2. Rückfragen §9 an Lucas/Marco raus.

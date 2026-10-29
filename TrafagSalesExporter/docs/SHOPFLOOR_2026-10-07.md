@@ -7,6 +7,8 @@ Das PPA-Shopfloor (Ersatz fuer das Excel "PPA-Shop-Floor-File-2026") laeuft jetz
 Stand 2026-10-08: **produktiv seit 06:39** (`59d0531`), angesehen. Zugriff nur fuer `koi` (Ingo), bis die Leitung Produktion/Operations
 freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transport `T76K912718` in P76 ist (Abschnitt 8).
 *Ueberholt:* „nicht committet, Zugriff fuer niemanden" war der Stand des Worktrees.
+*Ueberholt am 2026-10-29:* „Zugriff nur fuer `koi`" und „SAP-Abgleich ausgeschaltet": seit 2026-10-16 `OpenForAll = true` (Abschnitt 3),
+`SapSyncEnabled = true` seit 2026-10-09 (Abschnitt 8), Abgleichzeiten 04:00 und 12:45 (`appsettings.json`, Abschnitt 14).
 
 Stand 2026-10-15: Fabios Patches ZD05 „Zu besprechen“ und Verkauf Go-for-it uebernommen; die Schnittstelle nimmt seit `f4e3f1b` auch das Push-Format seiner Beispiele an (Abschnitt 13).
 Stand 2026-10-14: Feld-Mapping aus `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` uebernommen (`b613f7c`): Abteilungen ueber den
@@ -172,7 +174,7 @@ keine dunkle Luecke am unteren Rand.
 
 Nicht umgesetzt: ein Verlauf der Ueberfaelligen (die API liefert keine Historie dazu; Ersatz ist die ZD05-Kennzahl-Sparkline).
 Geprueft wurde mit dem Demo-Backend des Originalpakets in Edge (hell und dunkel, alle 26 Routen ohne JS-Fehler); die echte Cockpit-Einbettung
-(Aufruf `/operations`) ist noch nicht im laufenden System gesehen worden.
+(Aufruf `/operations`) ist noch nicht im laufenden System gesehen worden. *(ueberholt: seit 2026-10-08 produktiv und angesehen, siehe Kopf)*
 
 ## 6. Konfiguration (Module, Felder, Listen) und Neuerzeugung
 
@@ -207,6 +209,7 @@ python Services/Shopfloor/GenerateConfig.py <Ordner mit modules_config.py, forec
 beides ueber `ApplyPush(..., "SAP")`: ZD05 ersetzt den Tagesstand (Bemerkung/Liefertermin/Code uebernommen), die Auftraege ersetzen den Forecast-Bestand.
 Damit entfallen der taegliche ZD05-Excel-Export und der COOIS-Export. Verbindung wie Logistik live/Einkauf (Site Einkauf, ZPOWERBI_EINKAUF_SRV).
 Endpunkte: `GET sap/status`, `POST sap/sync` (Abgleich sofort). Schalter `Shopfloor:SapSyncEnabled` steht auf **false**, bis T76K912718 in P76 importiert ist.
+*Ueberholt: `SapSyncEnabled = true` seit 2026-10-09 (Nachtrag unten); Zeiten seit 2026-10-16 04:00 und 12:45 statt 05:45 (Abschnitt 14).*
 
 **SAP-Seite (T76, Transport `T76K912718`):** Strukturen `ZSTR_SHOP_ZD05`, `ZSTR_SHOP_AUF`; `ZCL_ZPOWERBI_EINKAUF_MPC_EXT` DEFINE und
 `ZCL_ZPOWERBI_EINKAUF_DPC_EXT` GET_ENTITYSET, Quelltext `docs/abap/ZSHOP_ADD.abap`. `ShopZd05Set` ist die Logik von ZD05 (`ZMM_CHECK_UMTERMINIERUNG`)
@@ -275,7 +278,7 @@ mit 134 Schnittstellenfeldern, Blatt „Disponenten“ mit der SAP-Liste „Disp
    `forecast_prefix` von `shopfloor_config.json` (massgebend, `ShopfloorStore` liest es) und gleich in `ShopfloorForecast.DefaultPrefix`.
    *Geaendert:* 012 (PPD / Sensoren OEM) zaehlte bisher zu SEH (aus `forecast.py`), im Excel steht es auf „pruefen (SEH?)“ und ist jetzt
    ohne Abteilung. Ohne Abteilung bleiben ausserdem 001-005, 010, 012, 013, 015, 016, 030, 031, 099, A99, N15, PKA, TL1, TPT.
-   Die gespeicherten Forecast-Auftraege bekommen die neue Abteilung erst beim naechsten SAP-Abgleich (05:45, 12:45 oder `POST sap/sync`).
+   Die gespeicherten Forecast-Auftraege bekommen die neue Abteilung erst beim naechsten SAP-Abgleich (05:45, 12:45 oder `POST sap/sync`; seit 2026-10-16 04:00 statt 05:45).
 2. **Quelle:** aus dem MES kommen nur die fuenf FPY-Werte (`seh/tr5/tx/dw/cz.fpy`), alle anderen 129 Felder aus SAP. 26 Felder
    (Produzierte Mengen, CZ-Mengen, MTF-Verfuegbarkeit, Sensorbestaende) standen vorher auf `mes`.
 3. **Mapping je Feld:** jedes Feld in `shopfloor_config.json` hat ein Objekt `sap` mit `vorschlag_tabelle`, `vorschlag_feld`,
@@ -288,7 +291,7 @@ mit 134 Schnittstellenfeldern, Blatt „Disponenten“ mit der SAP-Liste „Disp
 
 - Uebergabe taeglich 04:00 an `integration/push`: im Excel festgelegt, gebaut ist der Abruf durch die App (`ShopfloorSapSync`
   05:45 und 12:45 ueber OData). Ein echter Push aus SAP braucht Token und eine IIS-Ausnahme (Abschnitt 3). Entscheid Ingo offen:
-  Abruf um 04:00 oder Push aus SAP.
+  Abruf um 04:00 oder Push aus SAP. *(Entschieden 2026-10-16: Abruf durch die App um 04:00 und 12:45, Abschnitt 14 und 15)*
 - Alle 134 Felder haben Status „offen“, die Spalten J-N sind leer. Fachlich ungeklaert: VkNr, Typencode, Z-Tabelle hinter ZC23,
   Aufteilung Disponent 024 (Stecker/Kabel/Print), CZ-Mengen ohne eigenen Disponenten (Ministaten, Navistaten, DTP 8180), DL790/DLQ72,
   Schichtzuordnung TX ueber die Rueckmeldezeit, Anlagenverfuegbarkeit MTF.

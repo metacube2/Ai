@@ -15,7 +15,7 @@ Legende: ✅ produktiv · ⏳ wartet auf jemanden · ➖ nicht nötig · ❌ nic
 | Monatsabruf KPI abgesichert: Versuche überstehen Neustart, Warnung bei fehlendem Vormonat, Eintrag in den Admin-Logs | ✅ 14.10. | `55b42d9` | Wunsch Fabio |
 | Fabios Patches: ZD05-Filter „Zu besprechen“, Verkauf mit Go-for-it-Kacheln | ✅ 15.10. 08:50 | `52b3b75` | Paket in `docs/shopfloor_paket_2026-10-14/` |
 | Schnittstelle nimmt Fabios Push-Format an (ohne `items`-Hülle, `values` statt `fields`, Adresse `/BiDashboard/api/integration/push`) | ✅ 15.10. 11:06 | `f4e3f1b` | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 13 |
-| ZD05 automatisch aus SAP | ✅ wie bisher | | Das Dashboard holt selbst, 05:45 und 12:45 |
+| ZD05 automatisch aus SAP | ✅ wie bisher | | Das Dashboard holt selbst, 05:45 und 12:45 *(ueberholt am 2026-10-16: 04:00 und 12:45, Entscheid Ingo, `docs/SHOPFLOOR_2026-10-07.md`)* |
 | Logistik-Mengen (Job J5, ZC27) automatisch | ⏳ Fragen an Fabio | | ohne SAP-Änderung baubar, siehe Abschnitt 6 |
 | Verkauf AE und Umsatz (Jobs J2/J3, CO-PA) automatisch | ⏳ Fragen an Fabio, danach SAP-Entwicklung | | neue OData-Abfrage in T76, Transport nach P76 |
 | SAP-Job und Einplanung SM36 um 04:00, wie in Fabios Chat beschrieben | ➖ | | Das Dashboard holt die Daten selbst, kein Push aus SAP nötig |
@@ -49,7 +49,7 @@ Legende: ✅ produktiv · ⏳ wartet auf jemanden · ➖ nicht nötig · ❌ nic
 | --- | --- | --- |
 | Handbuch: Kapitel 10 Operations, Rollenführer Produktion, Kopfleiste, Admin-Seite Passwörter | ✅ | `f38020f`, `1519cb3` |
 | `router.md`: Abschnitt, wie der Auto-Modus ohne Unterbruch weiterläuft | ✅ 14.10. | `af622af` |
-| Wochen_Todo durchgesehen (Zeilen 36, 87, 95, 96 nachgeführt, neu 97 bis 102) | ✅ TSV | `a9f8638`, `856b4d6`; `Wochen_Todo.xlsx` war in Excel offen und ist noch nicht neu erzeugt |
+| Wochen_Todo durchgesehen (Zeilen 36, 87, 95, 96 nachgeführt, neu 97 bis 102) | ✅ TSV | `a9f8638`, `856b4d6`; `Wochen_Todo.xlsx` war in Excel offen und ist noch nicht neu erzeugt *(ueberholt: seither mehrfach neu erzeugt, zuletzt mit Commit `affb3b5` am 2026-10-27)* |
 | RAG PROJECT und ARCHITECTURE auf Stand 15.10. | ✅ | `dbe700b` |
 | Themenlandkarte als SVG mit Generator | ✅ | `545d6e0`, `docs/THEMENLANDKARTE_2026-10-15.svg` |
 | Datenbanksicherung 14.10. 11:36, Deploy-Werkzeug mit Schalter `--only-backup` | ✅ | `7013249` |
@@ -85,13 +85,13 @@ Allgemein:
 11. Jobs J4, J6 bis J10 erst, wenn sie im Blatt „Jobs 04-00“ auf „definiert“ stehen.
 
 Noch ungeklärt: Fabio sah ZD05-Lieferungen um 14:45 (13.10.) und 14:21 (14.10.), die nicht zu den eingestellten
-Zeiten 05:45 und 12:45 passen. Nicht nachgeprüft.
+Zeiten 05:45 und 12:45 passen. Nicht nachgeprüft. *(Die Zeiten sind seit 2026-10-16 04:00 und 12:45.)*
 
 ## 7. Offene Punkte bei Ingo
 
 - Admin-Passwort auf der Seite Admin > Passwörter neu setzen.
 - Fabio Server-Adresse und Token für die Schnittstelle geben, Fragen aus Abschnitt 6 an ihn schicken.
 - Schmale SAP-Rolle für `POWERBI` beim Hauptadmin bestellen, bevor `ZF_BR_SALES_MANAGER` am 31.10.2026 abläuft.
-- Transport `T76K912728` (ZC23) freigeben und nach P76 importieren.
-- Entscheide aus Wochen_Todo: 98 (Einkauf-Delta 14.10.), 99 (Ablauf mit Fabio), 100 (Hashes aus dem Repository).
-- `Wochen_Todo.xlsx` schliessen, damit sie neu erzeugt werden kann.
+- Transport `T76K912728` (ZC23) freigeben und nach P76 importieren. *(ueberholt am 2026-10-29: am 15.10. freigegeben und von Ingo nach P76 importiert, am 16.10. in P76 geprueft, `saptasks/shopfloor_sap/NOTES.md`, `saptasks/zc23_materialanteil/NOTES.md`)*
+- Entscheide aus Wochen_Todo: 98 (Einkauf-Delta 14.10.), 99 (Ablauf mit Fabio), 100 (Hashes aus dem Repository). *(98 erledigt am 22.10.: Delta 14.10. erfolgreich, Lauf 15.10. sofort wiederholt)*
+- `Wochen_Todo.xlsx` schliessen, damit sie neu erzeugt werden kann. *(erledigt, siehe Abschnitt 4)*

@@ -1,5 +1,10 @@
 # Uebergabe: Stand am 2026-09-09
 
+*Ueberholt am 2026-10-29: Diese Datei ist nicht mehr der Einstieg fuer die naechste Sitzung,
+sondern der Stand vom 2026-09-09. Einstieg ist `router.md`, Gesamtstand `projektmanagement/Status_kurz.tsv`
+und `projektmanagement/PROJEKTSTATUS.md`, Finance-Status das Issue-Log (siehe `router.md`, Zeile „Wo stehen wir gerade?“).
+Die naechsten Schritte und offenen Reservierungen unten sind Stand 09.09. und kein Auftrag.*
+
 Diese Datei ist der Einstieg fuer die naechste Sitzung, egal ob Claude oder Codex. Sie
 sagt, was fertig ist, was als naechstes dran ist und welche Reihenfolge zwingend ist.
 Details stehen jeweils in der genannten Datei; hier steht nur, was man wissen muss, um

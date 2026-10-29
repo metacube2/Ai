@@ -1,6 +1,6 @@
 # Produktgruppen direkt aus SAP OData
 
-Stand: 2026-08-11
+Stand: 2026-10-29 (Ueberholt-Vermerke nachgetragen; Anleitung vom 2026-08-11, beide Sets seit 2026-08-12 produktiv)
 
 ## Ziel
 
@@ -12,6 +12,10 @@ Die fachliche Kette lautet:
 
 `EKPO-MATNR -> ZLO03-KOMPNR -> VKNR -> MARC-DISPO -> ZDISPO_GRP -> ZDISPO_SPART`
 
+*Ueberholt am 2026-10-26 (`0dc3c68`):* Fuer die Einstiege „Produktgruppe : Lieferant“ und „Produktgruppe : Warengruppe“
+gilt `EKPO-MATNR -> MARC-DISPO des Materials (Werk 1100) -> ZDISPO_GRP -> ZDISPO_SPART`, genau eine Gruppe je Material,
+siehe `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`, Nachtrag 2026-10-26.
+
 ## SAP-Objekte
 
 Im bestehenden Gateway-Service `ZPOWERBI_EINKAUF_SRV` werden zwei kleine
@@ -21,6 +25,10 @@ EntitySets benoetigt:
 | --- | --- | --- | --- |
 | `ZDISPO_GRPSet` | `ZDISPO_GRP` | `DISPO_KZ`, `DISPO` | `DISPO_KZ` + `DISPO` |
 | `ZDISPO_SPARTSet` | `ZDISPO_SPART` | `DISPO`, `DESCR` | `DISPO` |
+
+*Stand 2026-08-12 und 2026-10-01:* Produktiv hat `ZDISPO_GRPSet` nur `DISPO` als Key; der Read liefert trotzdem alle
+Zeilen. Die Korrektur auf `DISPO_KZ + DISPO` ist Empfehlung, nicht umgesetzt; Entscheid Ingo offen, siehe
+`docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`, Abschnitt „Produktiver Abschluss 2026-08-12“.
 
 Methodenruempfe:
 
@@ -56,7 +64,8 @@ ZDISPO-Listenausgaben; die Aktivierung selbst muss im SAP-System erfolgen.
   zusammen und ersetzt den lokalen Cache atomar.
 - Exakter Disponent gewinnt vor Sternmuster; das laengste passende Muster
   gewinnt. Mehrere Gruppen desselben Musters bleiben fuer die 1/n-Verteilung
-  erhalten.
+  erhalten. *Ueberholt am 2026-10-26: keine 1/n-Verteilung mehr, bei mehreren
+  gleichwertigen Gruppen gewinnt die kleinste Gruppennummer.*
 - Leere oder fehlende SAP-EntitySets erzeugen einen klaren Fehler. Der bestehende
   Cache wird dabei nicht geloescht.
 - Nur Cachezeilen mit `Source = SAP OData: ...` werden ausgewertet. Alte Excel-

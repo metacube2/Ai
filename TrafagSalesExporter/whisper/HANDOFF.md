@@ -327,7 +327,7 @@ Wichtig: Vor Nutzung externer Webservices Datenschutz/Firmenfreigabe pruefen.
 
 ## Bekannte Einschraenkungen
 
-- Aufnahme ueber Mikrofon nimmt das auf, was das Mikrofon hoert. Fuer direkte Systemaudio-Aufnahme kann VoiceMeeter oder ein Loopback-Geraet verwendet werden, falls firmenintern erlaubt.
+- Aufnahme ueber Mikrofon nimmt das auf, was das Mikrofon hoert. Fuer direkte Systemaudio-Aufnahme kann VoiceMeeter oder ein Loopback-Geraet verwendet werden, falls firmenintern erlaubt. *(Gilt nur noch fuer `record_mic.ps1`; das Studio nimmt den Systemton seit 2026-10-22 selbst per WASAPI-Loopback auf, Abschnitt "Whisper Studio".)*
 - Schweizerdeutsch wird nicht perfekt als Hochdeutsch ausgegeben.
 - `medium` auf CPU kann bei langen Meetings langsam sein.
 - `large-v3` braucht mehr Speicherplatz und Zeit.

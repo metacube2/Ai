@@ -1,6 +1,8 @@
 # Benutzerhandbuch (betriebswirtschaftlich)
 
-Stand: 2026-10-16
+Stand: 2026-10-29 (davor 2026-10-16). Die Kapitel Einleitung, Finance (Kursprofil), Einkauf, HR, Projekte und
+Operations sind am 2026-10-29 auf den Stand der App berichtigt; die Word-Fassung ist noch nicht neu erzeugt und die
+Markdown-Kapitel erscheinen im Reiter erst nach dem naechsten Deploy.
 
 Anwenderhandbuch aller Cockpit-Module aus betriebswirtschaftlicher Sicht: je Seite „Wozu",
 „Was man sieht", „Wie gerechnet wird", „Einsatz im Arbeitsalltag" (nach Rolle) und

@@ -127,7 +127,7 @@ angefasst.
 
 **Nachtrag 2026-09-01:** Der aktuelle NuGet-Audit weist insgesamt fuenf High-Advisories
 ueber vier Pakete aus. Der vollstaendige, datierte Befund steht in
-`docs/NUGET_SICHERHEIT_2026-09-01.md`.
+`docs/NUGET_SICHERHEIT_2026-09-01.md`. Seit 2026-09-03 behoben und produktiv (Negotiate entfernt).
 
 ## Geänderte Dateien
 

@@ -1,6 +1,6 @@
 # RAG HR KPI
 
-Stand: 2026-10-20
+Stand: 2026-10-29 (Abschnittsnummer Kader 8.8); davor 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
 
@@ -17,7 +17,7 @@ Stand: 2026-10-20
   kein Lohn), in T76 aktiv und im Gateway Client mit 200 geprueft, Transport `T76K912530` gemeinsam
   mit dem Journal. Cockpit holt taeglich ab 05:00 ab und schreibt `hrdata/HR_KPI_Export.xlsx`
   (`4051506`, 795/795). Seit 01.10. in P76 (200) und produktiv, erster Abruf 02.10. ab 05:00. Wertestichprobe 01.10. bestanden. Abruf holt bewusst den laufenden Monat (Entscheid 01.10.); Unfalltage-Kacheln deshalb „laufender Monat“ (`931f151`). Erster Abruf 01.10. 09:46: 1'168 Personen. **Seit 01.10. 10:50 produktiv: Krankheit und Ferien je Fall aus SAP `PA2001`** ueber `HrAbsenzSet` (P76 importiert, `T76K912644`) und `hrdata/HR_Absenzen_SAP.xlsx` (erster Abruf 10:52, 4'948 Faelle); ohne Datei weiter Rexx. Personenbasis noch Rexx vom 08.07. Krankheitsarten 0220/0230/0240/0260/0270, von HR zu bestaetigen; mit SAP-Datei ohne Zeitraumfilter laufendes Jahr, vor dem Vorjahr Rueckfall auf Rexx (`c12b34a`, `HR_KPI.md` 8.7). `docs/HR_KPI.md` 8.6.
-- **2026-10-22: Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, 8,2 h** (Ingo; vorher Rexx „Leitung j/n“ und 8,1 h). `docs/HR_KPI.md` 8.7.
+- **2026-10-22: Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, 8,2 h** (Ingo; vorher Rexx „Leitung j/n“ und 8,1 h). `ede56b6`, produktiv seit 2026-10-22 15:48. `docs/HR_KPI.md` 8.8.
 - **2026-09-30 HR-Sitzung:** *(Kaderregel ueberholt am 2026-10-22)* Kader 8,1 h, normale Mitarbeitende 8,0 h (Kader = Rexx `Leitung j/n` = ja, `c51445c`, produktiv seit 01.10. 09:12); Rexx
   erfasst Absenzen je Fall mit Von/Bis und Status (neuer Bericht noetig); Absenz-Ampel bis 4,99 %
   gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (produktiv seit 01.10.). SAP-Datei `HR_KPI_Export` war damals NICHT automatisiert (Report
@@ -29,7 +29,8 @@ Stand: 2026-10-20
 - **2026-09-29, Mailhistorie gesichtet:** offene Wuensche von Sonja vom 2026-02-03 (Ferien am Stueck,
   Fit-&-Wohl nach 6. Absenz oder 12 Krankheitstagen, Uebertrag Restferien) und die spaeteren KPIs
   (Stellenplan, Umfragen, Kununu, Time to hire, Lohnkosten) sind nicht umgesetzt. Rexx-Hub fuer den
-  automatischen Export ist seit 2026-07-29 von Nadja beauftragt (4'800 EUR p. a.), Stand offen. Mail
+  automatischen Export ist seit 2026-07-29 von Nadja beauftragt (4'800 EUR p. a.), Stand offen *(ueberholt am 2026-09-30:
+  kein Rexx-Hub, Export ueber Upgreat, siehe oben)*. Mail
   an Sonja liegt als Entwurf, Punkt 2 fehlt. Details: `docs/HR_KPI.md` Abschnitt 8.3.
 
 - **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, Uebersetzungen

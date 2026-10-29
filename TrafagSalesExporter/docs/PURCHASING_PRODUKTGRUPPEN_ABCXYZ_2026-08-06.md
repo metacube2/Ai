@@ -1,15 +1,25 @@
 # Einkauf Spend: Produktgruppen und ABC/XYZ
 
-Stand: 2026-08-11
+Stand: 2026-10-29 (Ueberholt-Vermerke nachgetragen; Inhalt vom 2026-08-11, Ergaenzung NA vom 2026-10-15)
 
 Aktueller Status: Die direkte SAP-OData-Strecke ist im Anwendungscode umgesetzt
 und mit `464/464` Tests verifiziert. Die SAP-EntitySets fehlen am 2026-08-11 noch
 im produktiven `$metadata`; deshalb ist dieser neue Stand noch nicht deployed.
 Vollstaendiger Nachweis und Aktivierungsreihenfolge:
 `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
+*Ueberholt am 2026-10-29: am 2026-08-11 15:51 deployed, die SAP-EntitySets sind seit 2026-08-12 produktiv aktiv
+(Abschnitt „Produktiver Abschluss 2026-08-12“ in `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`).*
 
 Historischer Produktivstand: Die Excel-ZDISPO-Ergaenzung wurde am 2026-08-06
 deployed. Sie bleibt bis zum gemeinsamen SAP-/App-Deploy auf dem Server aktiv.
+*(ueberholt am 2026-08-12: Excel ist keine aktive Mappingquelle mehr.)*
+
+*Ueberholt am 2026-10-26 (`0dc3c68`):* Die Einstiege „Produktgruppe : Lieferant“ und „Produktgruppe : Warengruppe“
+ordnen jedes Einkaufsmaterial ueber seinen eigenen `MARC-DISPO` (Werk 1100) genau einer Gruppe zu, wie der Report
+ZM_OFFENE_KDAUF. Die Kette ueber ZLO03 und die 1/n-Verteilung in den Entscheidungen 1 und 2 unten gelten fuer diese
+Einstiege nicht mehr; bei mehreren gleichwertigen SAP-Regeln gewinnt die kleinste Gruppennummer. Seit 2026-10-27
+(`0917d9e`) zeigt die Gruppe nur den SAP-Text. Details: `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`,
+Nachtraege 2026-10-26 und 2026-10-27.
 
 ## Klarstellung Warengruppe versus Produktgruppe (2026-08-11)
 
@@ -109,9 +119,11 @@ von Disposition, Sicherheitsbestand oder Lieferant.
   ZDISPO pruefen.
 - Fuer `DISPO D5` fehlte in der bisherigen SAP-Listenausgabe ein `DESCR`; die GUI zeigt
   deshalb ehrlich den Code `D5`. Fachlich klaeren, ob ein Name nachzuliefern ist.
-- SAP-EntitySets `ZDISPO_GRP` und `ZDISPO_SPART` aktivieren und live pruefen.
+  *Ueberholt am 2026-10-01 (`3407868`): D1 und D5 haben im Dashboard Ersatztexte nach Vorgabe Ingo; ein spaeter in SAP
+  gepflegter Text gewinnt.*
+- SAP-EntitySets `ZDISPO_GRP` und `ZDISPO_SPART` aktivieren und live pruefen. *Erledigt 2026-08-12.*
 - Nach Deploy den ZLO03-Full-Load ausfuehren, damit `VknrDispo` im Cache gefuellt
-  ist.
+  ist. *Ueberholt am 2026-10-26: die Produktgruppe nutzt `VknrDispo` nicht mehr.*
 - Summe des Produktgruppen-Aufrisses gegen den unverteilten Gesamt-Spend eines
   echten Zeitraums abstimmen.
 

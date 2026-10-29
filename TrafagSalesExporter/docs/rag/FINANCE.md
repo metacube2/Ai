@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
+Stand: 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -20,7 +20,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Audit-CSVs bei jedem Oeffnen neu eingelesen. Jetzt Kurse im Speicher (Schreiber melden
   Aenderungen ueber `NotifyRatesChanged`) und Datensaetze gecacht, solange sich die Quelle nicht
   aendert: lokal 3,7 s. Commit `5a26596`. Details `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 6.
- . "- MARKTSEGMENTE, AUTOMATIK GEMESSEN 2026-09-10: Die Segmentzuweisung laeuft **fuer Deutschland
+- MARKTSEGMENTE, AUTOMATIK GEMESSEN 2026-09-10: Die Segmentzuweisung laeuft **fuer Deutschland
   bereits automatisch**, fuer die anderen acht Standorte nicht, und der Unterschied liegt am
   Quellsystem, nicht am Programm. Von 196 Zuordnungen sind 25 bestaetigt, davon **24 aus TRDE**
   mit Quelle `Alphaplan Kundenstamm / Branche`; die uebrigen 171 sind weiter
@@ -36,7 +36,6 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   gepflegte Branche. Vollstaendige Liste und zwei Datenmaengel im Kundenstamm (Nummer `52`
   doppelt belegt, zwei Werte mit Komma am Ende) in
   `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 18.
-"
 - BAHNMARKT DE, SCHLUESSEL GELOEST 2026-09-09 12:51: Rohail Munir hat
   `Rechnungen_20260909.xlsx` geliefert, 60'539 Rechnungen mit `Rech.-Nr.` und der
   **fachlichen** `Adressnr._R`. Die interne `RechnungsAdressenID` wird als Bruecke nicht
@@ -100,7 +99,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Bewusst **nicht** eingebaut: ein
   abgeleitetes `date paid` und die Zahlungsbelege `ORCT`/`OVPM`; welche der vier
   Bedeutungen fuehrend wird, entscheidet Andreas. Gefuellt sind die Spalten erst nach
-  einem erneuten Ladelauf je Gesellschaft. **Nicht deployed.** Detail:
+  einem erneuten Ladelauf je Gesellschaft. **Nicht deployed.** *(Ueberholt am 2026-10-29: produktiv
+  seit 2026-09-10 08:53, `9ffe7af`/`8905e5d`/`8208c62`, siehe `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`.)* Detail:
   `docs/FINANCE_JOURNAL.md`, Abschnitt „Ausgleichsfelder".
 - ES BUCHUNGSDATUM, STAND 2026-09-02: das Feld ist eingebaut, live geprueft und die
   Fachfrage ist entschieden. Die spanische Export-SQL selektiert
@@ -119,7 +119,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   ~~OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
   Exportskripts tauscht~~ (ueberholt: am 2026-09-02 entschieden, die 7-Tage-Version bleibt;
   seit Mitte Juli kommen aber gar keine neuen Spanien-Zeilen an, `ISS-020`); die absolute Zahl `1'523` steht seit dem 2026-08-26
-  unveraendert, es kommen also derzeit keine neuen Buchungsdaten nach. Details:
+  unveraendert, es kommen also derzeit keine neuen Buchungsdaten nach. *(Ueberholt am 2026-10-29: `ISS-020` ist seit dem
+  2026-09-29 erledigt, Spanien liefert wieder, Zeilen bis 28.09. im Sales_All; Wochen_Todo 49, Issue-Log.)* Details:
   `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitte 8 bis 12.
 - UK 2025 ABGENOMMEN 2026-08-11: `3'529'861.80 GBP` = 99.7 % des Finance-Solls
   `3'538'972`, Marge +33.8 % statt −502.7 %, `1'867` Zeilen. Der bis dahin
@@ -226,7 +227,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `Sales_All` ueberein. `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md`.
 - **Konsistenzbefunde vom 2026-09-29 (`ISS-018`), gegen den Code bestaetigt, nicht repariert.**
   A3, A4 behoben und A5 ausgewiesen seit 2026-09-29 10:22 (`91fd9dc`). Offen und sichtbar: der
-  CHF-Schalter aendert die Gruppenmarge, das Pruefbuch nicht (A1, Kursfrage an Andreas); die
+  CHF-Schalter aendert die Gruppenmarge, das Pruefbuch nicht (A1, Kursfrage an Andreas)
+  *(ueberholt am 2026-10-29: A1 erledigt und produktiv seit 2026-10-07 10:06, `ISS-018.1`)*; die
   Cockpit-Exporte bleiben gekappt, vollstaendig ist allein das Nachweis-Excel. Fachlich offen fuer Andreas: Gutschriften mit Menge 0 (B1),
   kostenlose Ware (B2), interner Lieferant ohne Konzernkosten meldet „OK" (B3.1). Details:
   `docs/FINANCE_REVIEW_2026-09-29.md`.
@@ -234,11 +236,11 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Bedeutungsfrage ist offen. Andreas muss entscheiden, was fuehrend wird:
   Zahlungsbuchungsdatum, Ueberweisungsdatum, Datum des letzten Ausgleichs oder erst der
   vollstaendige Ausgleich. Erst danach eine einzelne fuehrende Kennzahl ableiten; bis
-  dahin zeigt `Finance_All` die Quelllage. Offen bleiben zusaetzlich der Deploy samt
-  Ladelauf je Gesellschaft und die Messung fuer Indien, das am 2026-09-09 nicht
+  dahin zeigt `Finance_All` die Quelllage. Offen bleiben zusaetzlich der Deploy *(ueberholt: produktiv seit
+  2026-09-10 08:53)* samt Ladelauf je Gesellschaft und die Messung fuer Indien, das am 2026-09-09 nicht
   erreichbar war.
 - Supplier-Mapping: 77'466 von 95'396 Live-Zeilen haben alle drei
-  Supplier-Felder leer. Die Rohdatenluecke bleibt offen, die Ursache je Quelle ist
+  Supplier-Felder leer *(Messung vom 2026-07-31; neuere Messungen im Issue-Log unter `ISS-003`)*. Die Rohdatenluecke bleibt offen, die Ursache je Quelle ist
   weiterhin zu klaeren. Seit dem Deploy vom 2026-08-12 maskiert die Gruppenmarge
   aber nur noch die Zeilen ohne belastbare Pruefgrundlage: der CH-Werkstamm
   entscheidet intern gegen `Lokal`, und `Lieferant unklar` bleibt nur bei fehlendem
@@ -248,7 +250,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - TR IT: Bewertungsmethode ist seit 2026-09-09 entschieden und zurueckgestellt, Andreas
   priorisiert sie nicht und will das Gesamtbild im naechsten Jahr erneut betrachten; die
   Intercompany-Bewertung mit Lucas Castro ruht mit dem Projekt. Offen ist die Rueckmeldung
-  an Paola und, als neuer Punkt `ISS-007.2`, die Messung der Referenzkost je Artikel aus
+  an Paola *(ueberholt: am 2026-09-29 versendet, siehe oben)* und, als neuer Punkt `ISS-007.2`, die Messung der Referenzkost je Artikel aus
   Bestandswert geteilt durch Bestandsmenge; die Messung liegt vor, offen ist nur der
   Fachentscheid und eine Rueckfrage an Italien. Der freigegebene Belegebenen-Weg ueber
   `INV1.StockPrice` bleibt davon unabhaengig. **Paola hat am 10.09. geantwortet:** ihr Befund
@@ -260,7 +262,9 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - CH/AT-Journal: SAP-EntitySet `FinanzJournalSet` ist seit dem 2026-09-11 auf
   **`T76/100` gebaut und geprueft** (beide Redefinitionen aktiv, `$metadata` und
   Datenabruf `HTTP 200`, Werte gegengelesen). **Produktiv fehlt es weiterhin:**
-  Transport `T76K912530` ist nicht freigegeben, und die App liest `travp762`.
+  Transport `T76K912530` ist nicht freigegeben, und die App liest `travp762`. *(Ueberholt am 2026-10-29:
+  `T76K912530` ist seit dem 2026-10-01 in P76, `FinanzJournalSet` mit Filter dort HTTP 200; offen bleibt der produktive
+  Journal-Ladelauf CH/AT, `ISS-006`, `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`.)*
   Der Leser laedt seit derselben Aenderung je Buchungsperiode (`Gjahr` plus
   `Monat`) mit `$top=20000`; ein Jahreslauf dauert damit rund zwei Minuten
   statt der gemessenen 80. Spezifikation: `docs/FINANCE_JOURNAL.md`,

@@ -4,6 +4,8 @@ Stand der Pruefung: 2026-07-31, 10:21 Uhr MESZ
 
 Status: **Kanonischer aktueller Stand fuer die unten behandelten Streitpunkte.**
 
+*Ueberholt am 2026-10-29: Die Datei ist eine historische Messreferenz vom Juli 2026, kein Vorrang fuer heute. Es gilt der juengste direkt gepruefte Beleg je Thema (`router.md` Regel 1, `docs/rag/FINANCE.md`), Status je Punkt im Issue-Log `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`. Einzelne Nachtraege unten.*
+
 Diese Datei klaert Aussagen, die in aelteren Arbeitsnotizen oder RAG-Kurzdateien
 widerspruechlich vorkommen. Fuer UK-2025, Supplier-Felder, Konzern-Standardkosten und
 Einkauf-Delta gilt diese Datei vor den aelteren datierten Zwischenstaenden.
@@ -98,7 +100,7 @@ Zwischenzustand festgestellt, bei dem nur ein Teil der drei Felder gefuellt ist.
 Folgerung:
 
 - UK ist vollstaendig und kein offener Supplier-Fall.
-- CH, AT, DE und ES sind weiterhin strukturell leer.
+- CH, AT, DE und ES sind weiterhin strukturell leer. *(praezisiert am 2026-10-29: „strukturell" gilt nur fuer CH/AT, weil `FinanzdataSchweizOeSet` kein Lieferantenfeld hat; klassifiziert werden diese Zeilen ueber den CH-Werkstamm-Fallback, `ISS-003.1`. DE ist eine Luecke unserer Query, Alphaplan fuehrt Lieferanten, die Beleg-CSVs lesen sie nicht. ES ist ungeklaert bis zum Schemaauszug, `ISS-003.3`. Siehe `docs/FINANCE_SUPPLIER.md` Abschnitte 3 und 5.)*
 - FR, IN, IT und US sind teilweise gefuellt; IT hat innerhalb dieser Gruppe die
   hoechste Abdeckung, aber nicht 100 Prozent.
 - Die Supplier-Luecke bleibt der zentrale Engpass fuer belastbare
@@ -111,6 +113,8 @@ Folgerung:
 | Bewertungskreis | Waehrung | Zeilen | Refresh |
 | --- | --- | ---: | --- |
 | 1100 | CHF | 63'506 | 2026-07-30 12:04 MESZ |
+
+*Ueberholt am 2026-10-29: seit dem 2026-08-25 15:21 stehen Konzernkosten auch fuer TR IT und TR IN (juengster positiver B1-Belegwert `INV1/RIN1.StockPrice`), siehe `docs/FINANCE_STANDARDKOSTEN.md` und `docs/rag/FINANCE.md`.*
 
 Damit ist die alte Aussage `GroupStandardCosts = 0` ueberholt. Die Tabelle fuer
 TR AG ist vorhanden und aktuell befuellt. Dass eine Verkaufszeile diese Kosten
@@ -149,6 +153,8 @@ Deshalb gilt aktuell:
 Die Aussage „das Delta laeuft produktiv“ darf bis zu diesem Nachweis nicht
 verwendet werden. Korrekt ist: „Delta-Fix deployed, erster Wirknachweis offen“.
 
+*Ueberholt am 2026-10-29: der Einkauf-Delta lief am 2026-08-12 um 10:03:42 MESZ mit `Success`, siehe `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md`; der spaetere Ausfall vom 10.09. bis 28.09.2026 hat eine andere Ursache (IIS-App-Pool, `ISS-017`).*
+
 ## 4. Bereits umgesetzte Einkaufsfunktion
 
 Die waehbare Einstiegsdimension im Reiter `Spend-Aufriss` ist umgesetzt und
@@ -158,7 +164,8 @@ einem historischen Kurzstand ist ueberholt.
 ## 5. Offene Punkte
 
 - Ersten Einkauf-Delta-Lauf nach Deploy pruefen und dieses Dokument mit
-  Laufzeit, Status, Zeilenzahlen und neuestem Belegdatum ergaenzen.
+  Laufzeit, Status, Zeilenzahlen und neuestem Belegdatum ergaenzen. *(erledigt, siehe
+  Nachtrag in Abschnitt 3)*
 - Supplier-Quellen fuer CH/AT, DE und ES fachlich/technisch festlegen.
 - Supplier-Fuellung fuer FR, IN, IT und US verbessern.
 - Die technische Jahresabdeckung nicht mit einer fachlichen

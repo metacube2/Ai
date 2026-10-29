@@ -120,6 +120,9 @@ Hinweise:
 
 ## Serverproblem
 
+*Ueberholt am 2026-10-29: Die App laeuft seit Juni 2026 produktiv auf dem Server; jeder Deploy prueft die Routen mit HTTPS 200
+(`docs/rag/DEPLOYMENT.md`). Der folgende Befund ist Stand 2026-05-21.*
+
 Die Veröffentlichung auf den Server wurde technisch ausgeführt, aber HTTPS-Aufrufe werden vor der App durch IIS/TLS blockiert.
 
 Beobachtung:

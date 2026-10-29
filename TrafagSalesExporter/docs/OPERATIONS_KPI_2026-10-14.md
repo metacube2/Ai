@@ -50,6 +50,7 @@ Rundung, Flags und den Excel-Export, ein Endpunkttest und ein Menue-Migrationste
 
 **Nicht nachgewiesen:** die Rechnung auf echten SAP-Rohdaten. Die Abnahmedaten sind bereits verdichtet; erst der erste Abruf aus SAP
 fuer `202609` zeigt, ob die Portierung auf Rohdaten dieselben Werte liefert (Toleranz laut Spezifikation 1 Prozentpunkt).
+*Ueberholt am 2026-10-14 10:33: auf SAP-Rohdaten nachgewiesen, Abnahme bestanden (3b).*
 
 ## 3. Zugriff auf SAP
 
@@ -61,8 +62,9 @@ fuer `202609` zeigt, ob die Portierung auf Rohdaten dieselben Werte liefert (Tol
 - **Offen und erst nach dem Deploy pruefbar:** ob der technische Benutzer beide Services aufrufen darf (S_SERVICE) und ob die
   CDS-Zugriffskontrolle (DCL) Zeilen wegfiltert. 403 meldet die Seite als fehlende Berechtigung; ein 200 mit deutlich weniger als
   16'134 faelligen Positionen fuer Jan-Sep 2026 deutet auf DCL, nicht auf die Logik.
+  *(Geklaert am 2026-10-14: fehlende Analyse-Berechtigung, mit `ZF_BR_SALES_MANAGER` fuer `POWERBI` behoben, kein DCL-Verlust, 3a/3b)*
 - Zeitplan: `Shopfloor:KpiSyncEnabled` (true), ab Kalendertag `KpiSyncDay` (2) fuer den Vormonat, solange fuer diesen Monat noch kein
-  SAP-Abzug vorliegt, hoechstens ein Versuch pro Tag, erster Versuch 3 Minuten nach dem Start. Nach dem Deploy am 14.10. laeuft also
+  SAP-Abzug vorliegt, hoechstens ein Versuch pro Tag *(ueberholt: seit `55b42d9` alle zwei Stunden, 3c)*, erster Versuch 3 Minuten nach dem Start. Nach dem Deploy am 14.10. laeuft also
   sofort der Abruf fuer `202609`, der Abnahmemonat.
 - Tabellenfelder der Spezifikation (`VBAP-CMTD_DELIV_DATE` usw.) werden fuer diesen Weg nicht gebraucht und sind **nicht geprueft**.
 

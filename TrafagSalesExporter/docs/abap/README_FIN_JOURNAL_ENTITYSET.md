@@ -1,7 +1,9 @@
 # Journal-EntitySet fuer CH/AT: Messung und Bauplan
 
-Stand: 2026-09-11. System `T76/100` (travt762), das ist eine rund sechs Monate alte
+Stand: 2026-09-11, Transportstand nachgefuehrt am 2026-10-29. System `T76/100` (travt762), das ist eine rund sechs Monate alte
 Kopie der Produktion.
+
+*Ueberholt am 2026-10-29: Transport `T76K912530` ist am 2026-10-01 von Ingo zusammen mit `HrKpiSet` nach P76 importiert. P76 Gateway Client: `FinanzJournalSet` mit `Bukrs`/`Gjahr`-Filter HTTP 200 in 0,9 s, ohne Filter HTTP 500 nach 154 s (Vollscan). Offen ist der produktive Journal-Ladelauf CH/AT, siehe Issue-Log `ISS-006` und `docs/HR_KPI.md` 8.6.*
 
 Zugehoerig: `docs/FINANCE_JOURNAL.md` (Feld-Mapping und Leser),
 `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` (Werkzeuge und Fallen).
@@ -125,7 +127,7 @@ Vier Punkte, die beim Bauen zaehlen:
 | --- | --- |
 | Report | `ZFIN_JOURNAL_PRUEFUNG`, aktiv |
 | Paket | `ZPP` |
-| Transportauftrag | **`T76K912530`** „Journal CH/AT: EntitySet fuer Finance Dashboard", **nicht freigegeben** |
+| Transportauftrag | **`T76K912530`** „Journal CH/AT: EntitySet fuer Finance Dashboard", **nicht freigegeben** *(ueberholt am 2026-10-29: am 2026-10-01 nach P76 importiert, `ISS-006`)* |
 | Quelle im Repository | `docs/abap/ZFIN_JOURNAL_PRUEFUNG.abap` |
 
 Der Report ist rein lesend, nur `SELECT` und `WRITE`.
@@ -149,10 +151,10 @@ ist damit ueberholt.
 | Werte zeilenweise gegengelesen | **erledigt**, Abschnitt 6c1; ein Fehler gefunden und behoben |
 | Gegenprobe bestehende Sets `MAKTSet`, `ZSP_CODESSet` | **HTTP 200**, unveraendert |
 
-Alles auf `T76/100`, Transport **`T76K912530`, nicht freigegeben**.
+Alles auf `T76/100`, Transport **`T76K912530`, nicht freigegeben** *(Stand 2026-09-11; am 2026-10-01 nach P76 importiert)*.
 
 **Seit 2026-09-30 enthaelt derselbe Transport auch das HR-EntitySet `HrKpiSet`** (Struktur `ZSTR_HR_KPI`, Einschuebe in `DEFINE` und `GET_ENTITYSET`), weil beide Methoden durch diesen Auftrag gesperrt sind; Entscheid Ingo fuer denselben Service. Journal und HR gehen deshalb nur **gemeinsam** nach P76. Gesamtquellen: `docs/abap/ZPOWERBI_EINKAUF_MPC_EXT_DEFINE.abap` und `docs/abap/ZPOWERBI_EINKAUF_DPC_EXT_GET_ENTITYSET.abap`; die Journal-Dateien `ZFIN_JOURNAL_*.abap` zeigen nur noch den Journal-Teil. Details `docs/HR_KPI.md` 8.6. Die App liest
-produktiv `travp762`; dort gibt es das EntitySet erst nach Transport.
+produktiv `travp762`; dort gibt es das EntitySet erst nach Transport. *(ueberholt am 2026-10-29: Transport am 2026-10-01 nach P76 importiert, `FinanzJournalSet` dort mit Filter HTTP 200, `ISS-006`)*
 
 ### Wie geprueft wurde, und warum nicht von aussen
 
@@ -440,8 +442,9 @@ Reserve, falls in der Produktion eine einzelne Periode der Schweiz zu gross wird
 
 ## 7. Offen
 
-- **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
-  es das Set nur auf Test, und der produktive Journalimport kann es nicht sehen.
+- ~~**Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
+  es das Set nur auf Test, und der produktive Journalimport kann es nicht sehen.~~
+  *(erledigt am 2026-10-01, nachgefuehrt am 2026-10-29: importiert, P76 mit Filter HTTP 200, ohne Filter HTTP 500 nach 154 s. Offen ist der produktive Journal-Ladelauf CH/AT im Admin, danach Werte gegen BKPF/BSEG pruefen, `ISS-006`.)*
   SapProbe ist bewusst nur fuer `T76/100` eingerichtet, nicht fuer `P76`.
 - Fachentscheid: `IsManual = Blart 'SA'` ist bisher eine **Annahme**. In Oesterreich gibt
   es 267 `SA`-Belege. Ob weitere Belegarten als manuell gelten, entscheidet Andreas.

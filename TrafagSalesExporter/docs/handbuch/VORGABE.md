@@ -20,7 +20,8 @@ Gedankenstriche, sachlich. Anrede neutral („man", „Sie" vermeiden wo moeglic
   kennzeichnen statt raten.
 - Erklaerungstexte, die schon in der Oberflaeche stehen (Untertitel, Hinweise, Tooltips), sind die
   beste Quelle fuer Absicht und Lesart.
-- Stand der Software: Commit `3ad0dae` (2026-10-05), inklusive der Pruefbefund-Korrekturen.
+- Stand der Software: Commit `3ad0dae` (2026-10-05), inklusive der Pruefbefund-Korrekturen. *(Das ist die
+  Grundfassung; einzelne Kapitel sind spaeter nachgefuehrt, zuletzt am 2026-10-29, siehe `docs/handbuch/README.md`.)*
 
 ## Ausgabeformat (strikt, wird automatisch nach Word umgesetzt)
 

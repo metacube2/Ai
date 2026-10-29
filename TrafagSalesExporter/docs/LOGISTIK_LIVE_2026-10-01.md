@@ -125,7 +125,7 @@ Warenausgang“, Paket `ZPP`. In T76 erledigt: `ZSTR_LOG_TA` + `BNAME`/`ENAME`/`
 1,1 s, 61 KB; `LogLiefSet` 08.10. (Zukunft) 200 leer (T76 ohne Zukunftsdaten), 30.10. (über 14 Tage) 200 leer; Gegenproben
 `LogRueckSet`, `HrKpiSet` 200. Grundlage war der per `abap-read` gelesene
 Live-Quelltext, nicht die Repo-Schnipsel; dieselben Ersetzungen stehen in `docs/abap/ZLOG_LIVE_*_ADD.abap`. Offen: beide
-Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, Gateway Client T76. Inhalt: `LogTaSet` + `BNAME` (TA angelegt von), `ENAME` (Entnahme quittiert von),
+Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, Gateway Client T76 *(ueberholt 11:40: erledigt, siehe oben)*. Inhalt: `LogTaSet` + `BNAME` (TA angelegt von), `ENAME` (Entnahme quittiert von),
 `QNAME` (quittiert von); `LogLiefSet` + `WADAT`, `WADAT_IST` und Uhrzeit der Warenbewegung aus `VBFA-ERZET`; Datum für
 `LogLiefSet` bis heute + 14 Tage (weiterhin ein Tag je Abfrage). Felder in T76 per RFC belegt (2026-10-05).
 
@@ -159,7 +159,7 @@ Wochenenden ohne Angebot (0.0 h). **Auffällig (offen, nicht geprüft):** Der la
 (DWM00 1323 %), ~~vermutlich Rückstand, der auf heute terminiert ist~~ **(überholt 2026-10-05, Review: Rückstand rollt nicht auf heute. Ursache ist, dass `KBED` den ganzen Restbedarf eines Vorgangs auf `FSTAD`, den Starttermin, legt; ein mehrtägiger Vorgang landet so an einem Tag. `ZLOG_KAP_ADD.abap` verteilt den Bedarf jetzt gleichmässig auf die Arbeitstage `FSTAD` bis `FENDD`, rechnet `KEINH` (H, MIN, S) in Stunden um und zählt verschiedene Vorgänge. Rückstand, dessen Zeitraum vor dem Fenster endet, steht nicht mehr auf dem ersten Tag. Wirkt erst nach dem nächsten Transport; Feldnamen `FENDD`/`KBEDID` vorher in SE11 prüfen.)**. Mit der Logistik oder AV gegenprüfen. Das Warnprotokoll von
 `T76K912662` hat Ingo nicht geschickt; ohne Wirkung auf die Funktion.
 
-**Schwäche im Cockpit (erledigt im Code 2026-10-05, Review; noch nicht deployed): Fehler werden nur 1 Minute gemerkt, ein HTTP-Timeout wird als Fehler gezeigt statt den Schaltkreis zu stören. Ursprünglich offen:** Ein Fehler beim Abruf von Kapazität oder Vorschau wird wie ein Erfolg 15 Minuten gemerkt. Nach
+**Schwäche im Cockpit (erledigt im Code 2026-10-05, Review; noch nicht deployed *(überholt: produktiv 2026-10-06 10:16 mit `f582814`, siehe Nachtrag Review unten)*): Fehler werden nur 1 Minute gemerkt, ein HTTP-Timeout wird als Fehler gezeigt statt den Schaltkreis zu stören. Ursprünglich offen:** Ein Fehler beim Abruf von Kapazität oder Vorschau wird wie ein Erfolg 15 Minuten gemerkt. Nach
 einem Import zeigt die Seite deshalb bis zu 15 Minuten weiter „fehlt“. Besser: Fehler nur 1 Minute merken.
 
 **MES (Frage Ingo 2026-10-05):** Antwort Ingo: **Eigenentwicklung**, der Entwickler hat wenig Zeit; Ingo klärt das später. Grundsatz: Daten des MES sieht das Cockpit nur, wenn das MES sie nach SAP zurückmeldet

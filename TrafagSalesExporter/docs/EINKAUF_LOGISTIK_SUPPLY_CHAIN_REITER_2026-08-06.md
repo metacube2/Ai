@@ -23,6 +23,11 @@ einen eigenen, nur lesenden `SupplyChainAnalysisService` und eigene Routen.
 | Logistik | Dispositionspruefung | `/logistik/dispositionspruefung` | MARC/MARA und ZMD04_CALC |
 | Einkauf | Lieferperformance | `/einkauf/lieferperformance` | belastbarer EKET-Plantermin-Rueckstand; Ist-Termin bewusst als Datenluecke |
 
+*Ueberholt am 2026-10-22 (`77778a5`):* Die Menuepunkte „Bestellbedarf & Deckung“ und „Materialabhaengigkeit“ sind
+einmalig ausgeblendet (`DatabaseSeedService.HideUnclearPurchasingViewsOnce`), weil der Verwendungs-Cache produktiv
+nur 86 Zeilen zu 5 Materialien hat. Die Routen bleiben, ein Admin kann sie wieder einblenden. Details:
+`docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-10-22.
+
 Jede Route besitzt eigene Kennzahlen, Prioritaetsbalken und Detailtabelle.
 Suche, Disponent, Produktgruppe und `Nur Handlungsbedarf` werden vor Kennzahlen,
 Balken und Detailzeilen angewendet. Die Detailtabelle ist auf die 1'000

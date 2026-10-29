@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-08-31. Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -479,6 +479,9 @@ damit von rund `71 %` auf `99.94 %`.
 Konsequenz: Die Uebergangsloesung ist wirkungslos, aber auch harmlos — sie fuellt ausschliesslich
 leere Felder und es gibt keine mehr. Sie bleibt vorerst liegen und wird beim naechsten
 ohnehin faelligen Deploy ersatzlos entfernt. Ein eigener Deploy nur zum Ausbau lohnt nicht.
+*Nachgeprueft am 2026-10-29: trotz vieler Deploys seither noch nicht entfernt, der Anwendungsschritt
+steht weiter in `Services/DataSources/HanaDataSourceAdapter.cs` (Tests
+`SupplierMaterialOverrideStoreTests.cs`). Ob er jetzt ausgebaut wird, ist offen.*
 
 **Neue kleine Luecke, die noch offen ist.** Von den `12` verbliebenen Zeilen sind `5` Dienst-
 und Bonusbelege ohne Artikelnummer (Weihnachtspraemie, Broschuerenaenderung, `PREMIO PER

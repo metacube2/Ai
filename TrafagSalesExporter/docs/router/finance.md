@@ -1,6 +1,6 @@
 # Unterrouter Finance
 
-Zurueck: `router.md`. Stand: 2026-09-29.
+Zurueck: `router.md`. Stand: 2026-10-06 (zuletzt Standardkosten und Marge in CHF in Finance Details); davor 2026-09-29.
 
 Finance Cockpit, Soll/Ist, Formeln, Marge, Standardkosten, Supplier, Journal,
 Marktsegmente.

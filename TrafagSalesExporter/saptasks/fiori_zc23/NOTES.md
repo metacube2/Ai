@@ -1,6 +1,6 @@
 # Fiori-App ZC23 (offene Kundenaufträge, live mit Selektion)
 
-Stand: 2026-10-15, in T76 fertig und geprüft. Transport `T76K912738` (Aufgabe `T76K912739`, offen),
+Stand: 2026-10-15, Transportstand nachgeführt am 2026-10-29, in T76 fertig und geprüft. Transport `T76K912738` (Aufgabe `T76K912739`, offen *(überholt am 2026-10-29: am 16.10. von Ingo nach P76 importiert, Caches auf `travp762` geleert, siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7 und Wochen_Todo Zeile 106)*),
 App `ZFI_ZC23` in `$TMP` (nicht transportiert). Wunsch Ingo: „ein cooles GUI für ZC23 mit schöner Ansicht,
 Trafag-Logo“; „die Logik müsste nur referenziert werden“; „die Selektionsbild-Auswahl müsste einfach mitgegeben werden“.
 
@@ -74,5 +74,6 @@ Die ganzen Methoden baut `methoden_bauen.py` aus dem Live-Stand (abap-read) plus
 - Ingo sieht die App an. Auffällig in Q2: `Neu.Menge`/`Neu.Nettowert` zeigen in vielen Zeilen 0; das ist der Wert aus
   ZC23 (`OMENGN`/`NETWR3N`), nicht von der App; fachlich nicht geprüft.
 - P76: `T76K912738` erst freigeben, wenn die App fachlich passt. Danach in P76 beide Gateway-Caches leeren.
+  *Überholt am 2026-10-29: Der Auftrag ging am 16.10. zusammen mit den Shopfloor-Sets nach P76 (die Klassen waren dort gesperrt), Caches geleert; siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitte 1 und 7. Offen bleibt nur die App selbst.*
   Die App selbst liegt in `$TMP`; für P76 bräuchte sie Paket und Transport (`IV_PACKAGE`, `IV_TRANSPORT_REQUEST`).
 - Eventuell Launchpad-Kachel.

@@ -225,6 +225,8 @@ Das ist der Dateistand, nicht der Nachweis einer fachlichen Exportperiode.
 Aktuelle Datums-/Ampelregeln treffen somit auf alte und unterschiedlich alte Quellen.
 Das kann eine Codereparatur allein nicht loesen: Exporte aktualisieren und gemeinsamen
 Stichtag sowie Absenzperiode bestaetigen. Keine Personalinhalte fuer diese Pruefung kopiert.
+*Ueberholt am 2026-10-29 fuer den SAP-Teil: `HR_KPI_Export.xlsx` und die Absenzen je Fall (`HR_Absenzen_SAP.xlsx`)
+kommen seit 2026-10-01 taeglich aus SAP, siehe `docs/HR_KPI.md` 8.6/8.7. Die Rexx-Dateien sind weiter vom 08.07.*
 
 ### C4 — Fachliche bzw. organisatorische Entscheidungen
 
@@ -234,7 +236,7 @@ Stichtag sowie Absenzperiode bestaetigen. Keine Personalinhalte fuer diese Pruef
   Personendaten seien anonymisiert (Zeile 574). Das ist keine Entfernung des Personenbezugs.
   Gewuenschten Empfaengerkreis und Detaillierungsgrad mit HR festlegen; daraus folgt,
   ob eine reine Aggregatsicht noetig ist. Keine rechtliche Gesamtbewertung vorgenommen.
-- **HR-Stunden/Teilzeit:** pauschale 8.4 Stunden pro Krankheitstag (seit 2026-09-30 8,0 h, entschieden) bleiben eine dokumentierte
+- **HR-Stunden/Teilzeit:** pauschale 8.4 Stunden pro Krankheitstag (seit 2026-09-30 8,0 h, entschieden; Kader seit 2026-10-22 8,2 h, `docs/HR_KPI.md` 8.8) bleiben eine dokumentierte
   Annahme. Die Personenquote teilt durch Arbeitstage ohne individuellen FTE-Faktor,
   die Gesamtquote dagegen durch FTE x Arbeitstage. Bedeutung der Personenquote klaeren,
   bevor diese unabhaengig von H3 fachlich umdefiniert wird.

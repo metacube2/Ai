@@ -148,7 +148,8 @@ Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nac
   wurde am 2026-08-11 ersetzt; produktiv akzeptiert die Strecke nur noch SAP OData.
   Mehrfach verwendete Komponenten
   werden summenerhaltend gleichmaessig `1/n` auf unterschiedliche
-  Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar. Die SAP-Platzhaltergruppe `NA` („N/A“)
+  Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar. *(Ueberholt am 2026-10-26: Produktgruppe aus dem
+  eigenen `MARC-DISPO`, genau eine Gruppe, keine 1/n-Verteilung mehr, siehe Abschnitt „Produktgruppe 2026-10-26“ oben, `0dc3c68`.)* Die SAP-Platzhaltergruppe `NA` („N/A“)
   zaehlt seit 2026-10-15 neben einer echten Gruppe nicht mit.
   Details: `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
 - ABC und XYZ werden seit 2026-08-06 zusaetzlich als gemeinsame
@@ -163,7 +164,8 @@ Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nac
 - Delta-Fix `66a34da` ist deployed und nicht mehr an `Sites.IsActive`
   gebunden. Beim Live-Check 2026-07-31 10:21 MESZ lag noch kein produktiver
   Delta-Lauf nach dem Deploy vor; korrekte Aussage bis zum Nachweis:
-  **Fix deployed, Live-Wirkung offen.**
+  **Fix deployed, Live-Wirkung offen.** *(Ueberholt: der Einkauf-Lauf ist seit dem 2026-09-28 wieder nachgewiesen,
+  siehe Kopf dieser Datei, `ISS-017`.)*
 - Letzter verifizierter Full Load vom 2026-07-24: `SupplierCountry` 100 %,
   `MaraAbc` 78 %, `MaraXyz` 65 % und `MaraMatkl` 80,7 % gefuellt. Der
   Spend-Aufriss zeigt damit echte Region-/ABC-/XYZ-Daten.
@@ -201,11 +203,11 @@ Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nac
 
 - Marco-Abnahme: Offenwert gegen SAP und WKURS-Richtung an einem echten
   Fremdwaehrungsbeleg pruefen.
-- ZLO03-Full-Load und fachliche Summenabnahme an einem echten
-  Mehrfachverwendungsfall; fehlende Produktnamen fuer `DISPO D1` und `D5`
-  klaeren.
+- *(Ueberholt am 2026-10-29: ZLO03-Full-Load und Summenabnahme an einem Mehrfachverwendungsfall sind seit dem
+  2026-10-26 gegenstandslos, weil die Produktgruppe nicht mehr ueber die Verwendung vererbt wird; `DISPO D1` und `D5`
+  zeigen seit dem 2026-10-01 einen Ersatztext, `3407868`.)*
 - SAP-SEGW-Key fuer `ZDISPO_GRP` von nur `DISPO` auf den zusammengesetzten Key
-  `DISPO_KZ + DISPO` korrigieren.
+  `DISPO_KZ + DISPO` korrigieren: Empfehlung liegt vor, **Entscheid Ingo offen**.
 
 ## Rohquellen Nur Bei Bedarf
 

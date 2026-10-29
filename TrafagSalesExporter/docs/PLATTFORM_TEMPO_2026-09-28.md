@@ -1,6 +1,6 @@
 # Tempo der Webapp: sofort sichtbare Oberflaeche und Ladezeiten
 
-Stand: 2026-09-28, zuletzt Abschnitt 6 (Management-Cockpit). Zurueck: `docs/router/plattform.md`.
+Stand: 2026-10-01, zuletzt Abschnitt 10 (Einkauf nach Delta-Lauf, `4e2b55a`); Grundmessung 2026-09-28. Zurueck: `docs/router/plattform.md`.
 
 ## 0. Stand auf einen Blick
 
@@ -96,7 +96,7 @@ als der Entwicklungsrechner; die Ursache (CPU, Speicher, Platte der VM) ist nich
 
 | Aenderung | Wirkung |
 | --- | --- |
-| `PurchasingDashboardSnapshotCache` liefert einen abgelaufenen Stand sofort und rechnet im Hintergrund nach (stale-while-revalidate, single-flight) | Nach Ablauf wartet niemand mehr. Nach `Clear()` (Einkauf-Lauf) wird bewusst nicht der alte Stand geliefert |
+| `PurchasingDashboardSnapshotCache` liefert einen abgelaufenen Stand sofort und rechnet im Hintergrund nach (stale-while-revalidate, single-flight) | Nach Ablauf wartet niemand mehr. Nach `Clear()` (Einkauf-Lauf) wird bewusst nicht der alte Stand geliefert *(ueberholt am 2026-10-01: seit `4e2b55a` wird der alte Stand mit Hinweis geliefert, Abschnitt 10)* |
 | Lebensdauer 60 statt 15 Minuten | Die Daten aendern sich nur durch Einkauf-Laeufe, die den Cache leeren; spart Rechenzeit auf dem Server |
 | `TimerBackgroundService` waermt `PurchasingDashboardFilter.Default` vor: eine Minute nach dem Start, danach alle fuenf Minuten, nur in Produktion | Die Standardansicht ist fertig, bevor jemand sie oeffnet, auch nach Neustart, Deploy und Einkauf-Lauf |
 
@@ -127,7 +127,7 @@ Weg. Werte lokal, zweiter (warmer) Lauf:
 | HR-KPI (alte Dateien aus `C:\temp`) | 0,3 bis 1 s | unveraendert |
 | Marktsegmente | 0,5 s | unveraendert |
 | Supply Chain (Standard) | 1,2 s | unveraendert |
-| Export-Dashboard | 2,3 s | **offen** |
+| Export-Dashboard | 2,3 s | **offen** *(erledigt in `c35d3fa`, 0,07 s, Abschnitt 7)* |
 | **Management-Cockpit** | **41 s** | **3,7 s** |
 
 Der Server ist fuer dieselbe Arbeit rund achtmal langsamer (Abschnitt 5.1). Das Cockpit lag dort

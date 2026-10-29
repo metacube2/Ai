@@ -1,6 +1,6 @@
 # ABAP Produktsparten-Mapping
 
-Stand: 2026-06-11
+Stand: 2026-10-29 (Ueberholt-Vermerk zum CE11000-Ansatz; Inhalt vom 2026-06-11)
 
 ## Dateien
 
@@ -9,6 +9,10 @@ Stand: 2026-06-11
 | `ZCL_PRODSPARTE_PROVIDER.abap` | Wiederverwendbare Provider-Klasse fuer ALV und spaeter OData |
 | `Z_PRODSPARTE_REPORT.abap` | Schlanker ALV-Testreport |
 | `Z_PRODSPARTE_MAP_BUILD.abap` | Baut `ZPRODSPARTE_MAP` aus eindeutigen CO-PA-Kombinationen |
+
+*Ueberholt (Architekturwechsel laut `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md`, „Finale Architektur“):*
+Der CE11000-Ansatz dieser Datei war der erste Weg. Die finale Fassung `spartenlogic/Z_PRODSPARTE_MAP_BUILD.abap` liest
+die KEDE/KEDR-Regeltabellen direkt. Die Aussagen zu `CE11000` weiter unten beschreiben den ersten Ansatz.
 
 ## Komponenten-Fallback 2026-06-11
 
