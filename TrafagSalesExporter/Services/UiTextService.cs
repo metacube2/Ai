@@ -1138,7 +1138,12 @@ public sealed class UiTextService : IUiTextService
         // Berndeutsch hat einen eigenen, vollstaendigen Katalog. Fehlt ein Text, ist Deutsch
         // naeher als Englisch.
         if (_currentLanguage is "gsw")
-            return UiTextBerneseTranslations.All.TryGetValue(german, out var bernese) ? bernese : german;
+            return UiTextBerneseTranslations.All.TryGetValue(german, out var bernese) ? bernese
+                : Projects.PmUiTextCatalog.All["gsw"].TryGetValue(german, out var pmBernese) ? pmBernese : german;
+        // Trafag Projekte seit 2026-10-29: eigener Katalog je Ansicht (Smartsheet, Risiken, Guide).
+        if (Projects.PmUiTextCatalog.All.TryGetValue(_currentLanguage, out var pmCatalog) &&
+            pmCatalog.TryGetValue(german, out var pmTranslation))
+            return pmTranslation;
 
         // New languages use the complete generated catalogue first. The older
         // languages retain their manually reviewed wording and only fill gaps
