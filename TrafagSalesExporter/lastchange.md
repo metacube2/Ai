@@ -1,6 +1,16 @@
 # Last Change
 
-Stand: 2026-10-29
+Stand: 2026-10-30
+
+## ZLO03 FIX 24: Stückkosten ungerundet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stück, 2026-10-30
+
+- Befunde G aus `zlo03/CLAUDE.md` umgesetzt, nachdem FIX 12 bis 23 am 29.10. in P76 importiert waren. Stückkosten jetzt mit
+  10 Nachkommastellen (vorher 2: K50057 mit 0.02 je 10 ergab 0.00 und Wert 0), Feld „Verbräuche zurück in Tagen“ ausgeblendet
+  (wirkungslos), Textpositionen zählen in Top-Down und Bottom-Up nicht mehr zum Bedarf, Bottom-Up-Details stehen in der
+  Einheit der Stückliste. G4 Mehrstufigkeit nicht geändert, erst gegen CS12 prüfen.
+- T76 aktiv in `T76K912785`, rückgelesen identisch. Fünf Läufe Zelle für Zelle gegen den Vortag: nur Stückkosten und Werte
+  ändern sich (58944: K50057 0.002, Wert 19.67), 46123/B63485 1 statt 2 ST in beiden Richtungen, H05039-Details in ST.
+  Freigabe und Import offen (Ingo). `zlo03/FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md`, Wochen_Todo 129.
 
 ## ZLO03 FIX 23: Top-Down in Stücklisten-Einheit (Meldung Armin), 2026-10-29
 

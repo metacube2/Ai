@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-10-29 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-10-30 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -93,6 +93,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-30 | ZLO03 FIX 23 stellte im Bottom-Up nur die Mengen der Komponentenspalte auf die Stücklisten-Einheit um; die transponierten Details derselben Spalte (`p_trans`, eigene FORM `ausgabe_spalten_details`) blieben in der Basiseinheit (H05039: Kopf ST, Bestand und Preis je KAR). Ging am 29.10. so nach P76, gefunden beim Lesen fuer FIX 24 | Bei einer Einheitenumstellung alle Ausgabepfade derselben Spalte suchen (`grep` nach dem Feld bzw. der Tabelle, z. B. `gt_md04_full_cache`, `gt_stamm_cache`) und jeden Schalter einmal mit Daten laufen lassen, nicht nur die Standardauswahl | `zlo03/FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` |
 | 2026-10-29 | ZLO03 rechnete Stücklistenmengen mit `UNIT_CONVERSION_SIMPLE` in die Basiseinheit; der Baustein kennt nur T006, nicht MARM, und setzte ST 1:1 in KAR um (H05039: 1 KAR = 600 ST), Bedarfsmenge × Stückkosten war 600-mal zu hoch | Materialbezogene Einheiten (Karton, Pack, Rolle) immer über `MARM` (UMREZ/UMREN) umrechnen; `UNIT_CONVERSION_SIMPLE` nur für Masseinheiten wie M/MM, KG/G | `zlo03/FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` |
 | 2026-10-29 | `SapGuiAuftragNeu.vbs` brach mit „invalid argument“ ab: die Kurzbeschreibung eines Transportauftrags hat höchstens 60 Zeichen | Auftragstext vor dem Aufruf auf 60 Zeichen kürzen | `zlo03/FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` 4 |
 | 2026-10-29 | Ingo gefragt, ob FIX 22 in `T76K912752` soll, ohne den Auftragsstatus zu pruefen; der Auftrag war laengst freigegeben (`E070` R), die Entscheidung beruhte auf einer falschen Annahme | Vor jeder Frage „in welchen Auftrag“ den Status in `E070` lesen (`table-read E070 --where "TRKORR = '...' OR STRKORR = '...'"`) | `zlo03/FIX22_DISPO_MATKL_2026-10-29.md` 3 |
@@ -141,6 +142,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-10-30 | Wiederholt (09.10.): `sed -i 's/.../\\n.../'` im Bash schrieb in ein Python-Patchskript statt `\n` einen echten Zeilenumbruch in ein Zeichenkettenliteral, das Skript brach mit SyntaxError ab. Dazu fand `t.index("FORM x.")` zuerst `PERFORM x.` | Skripte nur mit Write/Edit aendern, nie per `sed` mit Backslashes; FORM-Anfaenge in ABAP mit `"\nFORM x."` suchen | Sitzung FIX 24 |
 | 2026-10-29 | Wiederholt (27.10.): die Chrome-Erweiterung lehnt `https://trch-webapp-bidashboard…` als „browser-internal or unparseable URL“ ab; Edge headless (`--screenshot`, `--virtual-time-budget`) zeigt nur „Trafag Cockpit wird geladen“, weil die Blazor-Verbindung nicht aufgebaut wird. Trafag Projekte ging deshalb ohne eigene Sichtprüfung live | Fuer die Sichtpruefung eine Seite mit echtem Rendern einplanen (CDP mit Wartezeit auf die Blazor-Verbindung) oder Ingo eine Prüfliste geben; Agenten koennen lokal nicht starten, weil die Worktree-DB Zugangsdaten und Hintergrunddienste enthaelt | `docs/rag/DEPLOYMENT.md` 2026-10-29 |
 | 2026-10-29 | Drei Agenten parallel: zwei Kataloge bekamen denselben Schluessel „Aufgabe öffnen“ (Doppeltest rot), und der neue Projekte-Katalog stand zuerst vor den bestehenden Katalogen und haette deren Uebersetzungen ueberschrieben | Je Agent eigene Katalogdatei, ein neuer Katalog fuellt in `UiTextService` nur Luecken (zuletzt), nach jedem Zusammenfuehren den Doppeltest laufen lassen | `docs/TRAFAG_PROJEKTE_2026-10-09.md` Texte |
 | 2026-10-29 | Ein SVG-`<text>` direkt in einem `@foreach` innerhalb eines Code- oder RenderFragment-Blocks bricht den Build mit RZ1023 ab | Das `<text>` in ein `<g>` einpacken | `Components/Projects/PmRiskView.razor` |

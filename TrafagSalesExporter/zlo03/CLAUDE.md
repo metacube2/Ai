@@ -32,7 +32,7 @@ Neuausgabe des Programms.
 | System | travt762, S4CORE 108, SAP_BASIS 758 |
 | Test | T76/100 |
 | Transportziel | B76 |
-| Werk | 1100 (seit FIX 17 Selektionsparameter `p_werks`) |
+| Werk | 1100 (seit FIX 17 Selektionsparameter `p_werks`) *(ueberholt am 2026-10-30: gilt nur fuer `ZM_LZCODE20_OPT`; `Z_ZLO03_TURBO2` hinter ZLO03 hat die Konstante `gc_werks = '1100'`, kein `p_werks`)* |
 
 **Programm:** `ZM_LZCODE20_OPT`, Transaktion `ZLO03`
 *Ueberholt/zu pruefen (2026-10-08):* In T76 startet die Transaktion ZLO03 laut `TSTC` das Programm
@@ -115,6 +115,7 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 21 | `Z_ZLO03_TURBO2`: `download_dialog`, neu `build_xlsx` | echte `.xlsx` statt Tab-Text (Wunsch Ingo 2026-10-22); T76 aktiv, neuer Auftrag `T76K912752` (`T76K912742` war schon freigegeben), zellgleich mit dem Text-Inhalt; Quelltext `Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap` |
 | 22 | `Z_ZLO03_TURBO2`: Typen, `load_stammdaten_cache`, `fill_ktab`, `create_excel_output`, `build_xlsx` | Top-Down mit Spalten Disponent (`MARC-DISPO`) und Warengruppe (`MARA-MATKL`), als Text (Wunsch Armin 2026-10-29); T76 aktiv, neuer Auftrag `T76K912777` (`T76K912752` war schon freigegeben), siehe `FIX22_DISPO_MATKL_2026-10-29.md` |
 | 23 | `Z_ZLO03_TURBO2`: neu `load_bom_units`, `bom_unit_menge`, `apply_bom_unit` | Top-Down: Mengen und Stueckkosten in der Einheit der Stueckliste ueber MARM statt `UNIT_CONVERSION_SIMPLE` 1:1, Bottom-Up: Komponentenspalte ebenso (H05039: Basis KAR = 600 ST, Preis je KAR, Bedarf in ST; Meldung Armin 2026-10-29); T76 aktiv, Auftrag `T76K912781`, siehe `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` |
+| 24 | `Z_ZLO03_TURBO2`: `ty_ktab`, Selektionsbild, `process_main`, `fill_ktab`, `ausgabe_spalten_details`, neu `zahl_text`, `details_bom_unit` | Befunde G1, G2, G3, G5 (Stueckkosten mit 10 Stellen, `p_days` ausgeblendet, Textpositionen nie im Bedarf, Kommentar Werk) und Rest aus FIX 23 (Bottom-Up-Details in Stuecklisten-Einheit); T76 aktiv, Auftrag `T76K912785`, siehe `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 
@@ -196,6 +197,9 @@ am Nachmittag. Die Batch-Jobs enden laut SM37 um etwa 06:32 und erklaeren das ni
 Kandidaten und naechste Schritte in `TAGESZEIT_ABHAENGIGKEIT_2026-10-13.md`.
 
 ### G) Top-Down-Pruefung vom 2026-10-29 (fuer FIX 24, noch nicht umgesetzt)
+
+*Nachtrag 2026-10-30: G1, G2, G3 und G5 mit FIX 24 umgesetzt (T76 aktiv, `T76K912785`), siehe
+`FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md`. Offen bleibt nur G4 (Mehrstufigkeit, erst gegen CS12 pruefen).*
 
 Nach FIX 23 gefragt (Ingo: „notieren, spaeter machen“). Belegt in T76, Quelltext Stand FIX 23. Geprueft wurde der
 Top-Down-Pfad mit Daten (41019); Bottom-Up nur im Code nachgelesen: Punkte 1, 2 und 4 gelten dort gleich (gemeinsamer
@@ -340,7 +344,11 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
 - `MK_B63485_FIX12_2026-10-16.md` — Beleg aus P76 und **FIX 12 in `Z_ZLO03_TURBO2`**
   (T76 aktiv, Transport `T76K912742`); die übrigen Fixes sind weiter nur lokal
   *(ueberholt am 2026-10-29: FIX 12, 19, 20 in `T76K912742`, freigegeben 22.10.; FIX 21 in `T76K912752`, freigegeben;
-  FIX 22 in `T76K912777`, offen)*
+  FIX 22 in `T76K912777`, offen)* *(ueberholt am 2026-10-30: `T76K912777` und `T76K912781` freigegeben und laut Ingo am
+  29.10. nach P76 importiert; FIX 24 in `T76K912785`, offen)*
 - `FIX22_DISPO_MATKL_2026-10-29.md` — **FIX 22**: Top-Down mit Disponent und Warengruppe, aktueller Quelltext
 - `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` — **FIX 23**: Top-Down in Stuecklisten-Einheit (MARM), Quelltext `Z_ZLO03_TURBO2_FIX23_EINHEIT_2026-10-29.abap`, Auftrag `T76K912781`
   `Z_ZLO03_TURBO2_FIX22_DISPO_MATKL_2026-10-29.abap`, Auftrag `T76K912777`
+- `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` — **FIX 24**: Stueckkosten ungerundet, `p_days` ausgeblendet, Textpositionen
+  nie im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit; aktueller Quelltext `Z_ZLO03_TURBO2_FIX24_2026-10-29.abap`,
+  Auftrag `T76K912785`
