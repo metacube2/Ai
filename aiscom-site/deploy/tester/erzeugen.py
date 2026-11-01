@@ -117,6 +117,46 @@ MAC = APPS = [
         "datei": "Mietpruefer.dmg",
         "kurz": "Mietzinssenkung, Mieterhöhung und Nebenkosten nach Schweizer Mietrecht nachrechnen, Brief als PDF. Deutsch, Französisch, Italienisch, Englisch.",
     },
+    {
+        "name": "Bandchronik",
+        "kennung": "bandchronik",
+        "dmg": GIT / "bandchronik-release/build/verteilen/Bandchronik.dmg",
+        "app": GIT / "bandchronik-release/build/verteilen/dd/Build/Products/Release/Bandchronik.app",
+        "datei": "Bandchronik.dmg",
+        "kurz": "350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, 13 Sprachen.",
+    },
+    {
+        "name": "Bäderchronik",
+        "kennung": "baederchronik",
+        "dmg": GIT / "baederchronik-mac/build/verteilen/Baederchronik.dmg",
+        "app": GIT / "baederchronik-mac/build/verteilen/dd/Build/Products/Release/Baederchronik.app",
+        "datei": "Baederchronik.dmg",
+        "kurz": "Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. 13 Sprachen.",
+    },
+    {
+        "name": "Lautsprecherchronik",
+        "kennung": "lautsprecherchronik",
+        "dmg": GIT / "lautsprecherchronik-mac/build/verteilen/Lautsprecherchronik.dmg",
+        "app": GIT / "lautsprecherchronik-mac/build/verteilen/dd/Build/Products/Release/Lautsprecherchronik.app",
+        "datei": "Lautsprecherchronik.dmg",
+        "kurz": "58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. 13 Sprachen.",
+    },
+    {
+        "name": "Synthchronik",
+        "kennung": "synthchronik",
+        "dmg": GIT / "synthchronik-mac/build/verteilen/Synthchronik.dmg",
+        "app": GIT / "synthchronik-mac/build/verteilen/dd/Build/Products/Release/Synthchronik.app",
+        "datei": "Synthchronik.dmg",
+        "kurz": "Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. 13 Sprachen.",
+    },
+    {
+        "name": "Bergbahnchronik",
+        "kennung": "bergbahnchronik",
+        "dmg": GIT / "bergbahnchronik-mac/build/verteilen/Bergbahnchronik.dmg",
+        "app": GIT / "bergbahnchronik-mac/build/verteilen/dd/Build/Products/Release/Bergbahnchronik.app",
+        "datei": "Bergbahnchronik.dmg",
+        "kurz": "Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. 13 Sprachen.",
+    },
 ]
 
 
@@ -154,6 +194,26 @@ IOS = [
      "app": GIT / "mietpruefer/build/ios-simulator/Mietpruefer.app",
      "test": GIT / "mietpruefer/build/mobiltest.xcresult",
      "kurz": "Schweizer Mietrecht auf dem iPhone: Senkung, Erhöhung, Nebenkosten prüfen und Brief erstellen."},
+    {"name": "Bandchronik", "kennung": "bandchronik",
+     "app": GIT / "bandchronik-mac/build/ios-simulator/Bandchronik.app",
+     "test": GIT / "bandchronik-mac/build/mobiltest.xcresult",
+     "kurz": "350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, Auf iPhone, iPad und iPhone Duo."},
+    {"name": "Bäderchronik", "kennung": "baederchronik",
+     "app": GIT / "baederchronik-mac/build/ios-simulator/Baederchronik.app",
+     "test": GIT / "baederchronik-mac/build/mobiltest.xcresult",
+     "kurz": "Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. Auf iPhone, iPad und iPhone Duo."},
+    {"name": "Lautsprecherchronik", "kennung": "lautsprecherchronik",
+     "app": GIT / "lautsprecherchronik-mac/build/ios-simulator/Lautsprecherchronik.app",
+     "test": GIT / "lautsprecherchronik-mac/build/mobiltest.xcresult",
+     "kurz": "58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. Auf iPhone, iPad und iPhone Duo."},
+    {"name": "Synthchronik", "kennung": "synthchronik",
+     "app": GIT / "synthchronik-mac/build/ios-simulator/Synthchronik.app",
+     "test": GIT / "synthchronik-mac/build/mobiltest.xcresult",
+     "kurz": "Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. Auf iPhone, iPad und iPhone Duo."},
+    {"name": "Bergbahnchronik", "kennung": "bergbahnchronik",
+     "app": GIT / "bergbahnchronik-mac/build/ios-simulator/Bergbahnchronik.app",
+     "test": GIT / "bergbahnchronik-mac/build/mobiltest.xcresult",
+     "kurz": "Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. Auf iPhone, iPad und iPhone Duo."},
 ]
 
 # Android: signierte Release-APKs; Version, Paket und Mindest-Android aus aapt, Signatur aus apksigner
@@ -200,6 +260,11 @@ BUILD_TOOLS = Path.home() / "Library/Android/sdk/build-tools/36.1.0"
 STAND = {
     "taploop": "test",
     "kamera-import": "test",
+    "bandchronik": "test",
+    "baederchronik": "test",
+    "lautsprecherchronik": "test",
+    "synthchronik": "test",
+    "bergbahnchronik": "test",
 }
 KATEGORIEN = [
     ("test", "Zum Testen bereit", "Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!"),
