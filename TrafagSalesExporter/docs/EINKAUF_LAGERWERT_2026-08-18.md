@@ -1,6 +1,6 @@
 # Lagerwert der Einkaufsteile im Einkauf-Cockpit
 
-Stand: 2026-08-18, Nachtrag Verlauf je Woche 2026-09-28 (Abschnitt 13). Zurueck: `docs/router/einkauf.md`.
+Stand: 2026-08-18, Nachtrag Verlauf je Woche 2026-09-28 (Abschnitt 13). *Seit 2026-11-02 Disponenten 001 bis 006 (neuer Einkaufsdisponent 006, Entscheid Ingo, Commit `9a26acc`).* Zahlen weiter unten gelten fuer 001 bis 005. Zurueck: `docs/router/einkauf.md`.
 
 ## 0. Stand auf einen Blick
 

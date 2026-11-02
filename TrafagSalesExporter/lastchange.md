@@ -2,6 +2,16 @@
 
 Stand: 2026-11-02
 
+## Einkauf: Disponenten 001 bis 006 und Bauplan Materialanteil Phase 2, 2026-11-02
+
+- Neuer Einkaufsdisponent 006 (Entscheid Ingo): `PurchasingPlanners` jetzt 001 bis 006, wirkt im Schalter „Nur Einkaufsteile“ aller
+  Aufriss-Einstiege, im Lagerwert und im Verlauf je Disponent (rückwirkend, weil alle Disponenten gespeichert sind); Texte in allen
+  Sprachen, Handbuch Einkauf. Commit `9a26acc`, Release-Worktree 1318/1318, **nicht deployed**.
+- Bauplan `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md`: Schritt 1 über das vorhandene `Zc23Set`
+  (Absagegrund im Dashboard filtern), Schritt 2 braucht `P_APP` in ZLO03 und ein neues Set; Armins Bedarfsmenge war der
+  ZLO03-Verbrauch, nicht die ZC23-Menge (Frage F1). Entscheide Ingo und Absender Armin in `NOTES.md`.
+- Koordinationsdatei repariert: Zeile „ZLO03 FIX 19“ war in `1209baf` mitgelöscht worden, wiederhergestellt; LEARNINGS.
+
 ## Einkauf: Entwurf Lieferantenbewertung V6 und Rechenweg Materialanteil Phase 2 festgehalten, 2026-11-02
 
 - Nur Doku, kein Code. `a.txt`/`a.html` (Lieferantendashboard V6: vier Reiter, drei offene Entscheide A/B/C-Basis,

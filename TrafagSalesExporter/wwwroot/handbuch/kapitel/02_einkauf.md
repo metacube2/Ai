@@ -30,7 +30,7 @@ Weiter unten liegt der Verlauf des Lagerwerts je Kalenderwoche als Liniengrafik 
 - **Aktive Lieferanten:** Anzahl der Lieferanten mit mindestens einer Bestellposition ungleich null im Zeitraum. Das ist keine Lieferantenbewertung.
 - **Offener Bestellwert:** Je Liefereinteilung die bestellte Menge minus die gebuchte Wareneingangsmenge, mal der Stückwert der Position in CHF. Stornierte Positionen, endgelieferte Positionen und Material mit Status 98 oder 99 (gesperrt oder auslaufend) sind ausgeschlossen. Der Wert ist unabhängig vom gewählten Zeitraum und enthält alle Jahre, damit alte Rückstände nicht verschwinden. Seit dem 22.10.2026 nicht eingerechnet sind Altposten: Textpositionen ohne Material, deren Liefertermin mehr als ein Jahr vorbei ist.
 - **Offener Kontraktwert:** offener Wert der Mengenkontrakte wie in SAP ME3L, also je Kontraktposition Zielmenge minus abgerufene Menge, mal Nettopreis je Preiseinheit, in CHF. Abgelaufene Kontrakte zählen mit. Das ist nicht der offene Wert der Abrufbestellungen (siehe Kontrakte).
-- **Lagerwert Einkaufsteile:** bewerteter Gesamtbestand der Materialien der Disponenten 001 bis 005 im Bewertungskreis 1100. Der Wert zeigt immer den Stand des letzten erfolgreichen Abrufs, ein frei wählbarer Stichtag ist nicht möglich.
+- **Lagerwert Einkaufsteile:** bewerteter Gesamtbestand der Materialien der Disponenten 001 bis 006 im Bewertungskreis 1100 (Disponent 006 seit 02.11.2026). Der Wert zeigt immer den Stand des letzten erfolgreichen Abrufs, ein frei wählbarer Stichtag ist nicht möglich.
 - **Lagerwert-Verlauf:** Je Kalenderwoche wird der Stand des Einkauf-Laufs gespeichert und als Stand Ende Woche angezeigt. Der erste Verlaufspunkt stammt vom 10.09.2026, einen Rückblick davor gibt es nicht. Wochen ohne Lauf bleiben leer. Die senkrechte Achse beginnt nicht bei null, sondern beim tiefsten Wert.
 
 ### Einsatz im Arbeitsalltag
@@ -198,7 +198,7 @@ Der Spend-Aufriss zerlegt den Einkaufsspend in frei wählbare Ebenen. Er beantwo
 
 ### Was man sieht
 
-Oben wählt man den Einstieg: Lieferant, Beschaffungsregion, Warengruppe, Produktgruppe : Lieferant, Produktgruppe : Warengruppe, Produktgruppe nach Verwendung : Warengruppe, Disponent, Disponent Verwendung (ZLO03), Währung, Lebenszyklus-Code oder Sortiments-Code. Der Schalter «Nur Einkaufsteile (Disponent 001 bis 005)» ist vorgegeben eingeschaltet und gilt für alle Einstiege; ausgeschaltet zeigt der Aufriss den ganzen Einkauf. Die Matrix zeigt dann den Spend je Jahr und lässt sich Ebene für Ebene aufklappen. Darunter liegen Kuchendiagramme je Top-Warengruppe mit dem Anteil nach Lieferland, Balken für das Volumen nach ABC, nach XYZ, nach Lebenszyklus-Code und nach Sortiments-Code und die ABC/XYZ-Massnahmenmatrix; diese Diagramme zeigen immer den ganzen Einkauf. Bei den Produktgruppen-Sichten erscheinen Marken für zugeordneten Spend, Spend ohne Produktgruppe und Materialien mit mehrdeutiger SAP-Regel. Ganz unten steht seit dem 28.10.2026 der Inhalt des früheren Reiters Spend (siehe «Spend»).
+Oben wählt man den Einstieg: Lieferant, Beschaffungsregion, Warengruppe, Produktgruppe : Lieferant, Produktgruppe : Warengruppe, Produktgruppe nach Verwendung : Warengruppe, Disponent, Disponent Verwendung (ZLO03), Währung, Lebenszyklus-Code oder Sortiments-Code. Der Schalter «Nur Einkaufsteile (Disponent 001 bis 006)» ist vorgegeben eingeschaltet und gilt für alle Einstiege; ausgeschaltet zeigt der Aufriss den ganzen Einkauf. Die Matrix zeigt dann den Spend je Jahr und lässt sich Ebene für Ebene aufklappen. Darunter liegen Kuchendiagramme je Top-Warengruppe mit dem Anteil nach Lieferland, Balken für das Volumen nach ABC, nach XYZ, nach Lebenszyklus-Code und nach Sortiments-Code und die ABC/XYZ-Massnahmenmatrix; diese Diagramme zeigen immer den ganzen Einkauf. Bei den Produktgruppen-Sichten erscheinen Marken für zugeordneten Spend, Spend ohne Produktgruppe und Materialien mit mehrdeutiger SAP-Regel. Ganz unten steht seit dem 28.10.2026 der Inhalt des früheren Reiters Spend (siehe «Spend»).
 
 ### Wie gerechnet wird
 
@@ -608,7 +608,7 @@ Hier wird nichts gerechnet. Ein Full Load ist der vollständige Neuaufbau und au
 | Stückwert in CHF | Preis je Einheit einer Position | Positionswert in CHF geteilt durch Bestellmenge, null bei Menge null |
 | Preisindikator | Preisniveau und Preisveränderung | Mengengewichteter Durchschnitts-Stückpreis des jüngsten Jahres, mit Veränderung zum Vorjahr |
 | Top-Anteil | Konzentration auf einen Lieferanten | Anteil des grössten Lieferanten am Spend des Materials oder am Gesamtspend |
-| Lagerwert Einkaufsteile | Gebundenes Kapital in Einkaufsteilen | Bewerteter Gesamtbestand der Materialien der Disponenten 001 bis 005 im Bewertungskreis 1100, Stand des letzten Abrufs |
+| Lagerwert Einkaufsteile | Gebundenes Kapital in Einkaufsteilen | Bewerteter Gesamtbestand der Materialien der Disponenten 001 bis 006 im Bewertungskreis 1100, Stand des letzten Abrufs |
 | Endbestand | Voraussichtlicher Bestand nach Zu- und Abgängen | Wert aus der SAP-Disposition, nicht durch Bestellzugänge ergänzt |
 | Fehlmenge / Fehlwert | Unterdeckung bei negativem Endbestand | Fehlmenge ist der negative Endbestand, Fehlwert Fehlmenge mal Stückkosten. Fehlen die Stückkosten, wird nicht bewertet |
 | P1 / P2 / P3 | Prioritätsstufen der Versorgungsseiten | P1 sofort, P2 hoch, P3 prüfen, die Regeln stehen je Seite |

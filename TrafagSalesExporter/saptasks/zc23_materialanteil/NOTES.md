@@ -258,7 +258,7 @@ Einordnung (Claude): Das ist genau die Basis „Materialanteil“ aus Phase 2, n
 **Verkaufsmenge x Stuecklistenbedarf x Standardpreis** (Top-Down). Phase 1 im Spend-Aufriss rechnet dagegen das
 **Einkaufsvolumen** der Bestellungen und verteilt es ueber die Verwendung; beide Zahlen sind verschieden und duerfen
 nicht verglichen werden, ohne die Basis anzuschreiben. Abweichungen zum Dashboard: Disponenten **001 bis 006** statt
-001 bis 005 (Schalter „Nur Einkaufsteile“), Zeitbezug **bestaetigter Liefertermin** des Kundenauftrags statt
+001 bis 005 (Schalter „Nur Einkaufsteile“; *seit 2026-11-02 ueberall 001 bis 006, `9a26acc`*), Zeitbezug **bestaetigter Liefertermin** des Kundenauftrags statt
 Bestelldatum. Fuer eine Automatik braucht es ZC23 je VerkNr und Zeitraum plus den ZLO03-Top-Down-Bedarf je Komponente
 mit Materialgruppe und Standardpreis. Fuer die Werte wichtig: ZLO03 rechnet seit FIX 23 (in P76 seit 29.10.) in der
 Stuecklisten-Einheit; die ungerundeten Stueckkosten und Textpositionen ausserhalb des Bedarfs kommen erst mit FIX 24
@@ -269,7 +269,8 @@ Stuecklisten-Einheit; die ungerundeten Stueckkosten und Textpositionen ausserhal
 - **Basis ist „Termin bestaetigt“** des Kundenauftrags im gewaehlten Zeitraum.
 - **Absagegrund muss leer sein**; sonst zaehlen abgesagte Positionen mit, die der Kunde gar nicht bestellt hat.
 - Im Spend-Aufriss ein **neuer Einstieg mit rot markiertem Knopf**, mit mehreren aufklappbaren Stufen, **mindestens drei**.
-Noch offen vor dem Bau: welche drei Stufen genau, ob der Schalter „Nur Einkaufsteile (001 bis 005)“ der bestehenden
-Einstiege ebenfalls auf 001 bis 006 geht, und woher das Dashboard Verkaufsmenge je VerkNr und Stuecklistenbedarf je
+Geklaert am 2026-11-02: Absender des Rechenwegs ist **Armin** (laut Ingo). Die Stufen folgen aus seinem Text: **Produktgruppe ->
+Materialgruppe -> Einkaufsteil** (Summe Standardpreis x Bedarfsmenge). Der Schalter „Nur Einkaufsteile“ der bestehenden
+Einstiege steht seit `9a26acc` ebenfalls auf 001 bis 006. **Bauplan:** `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md` (Entscheid Ingo: erst Bauplan). Noch offen vor dem Bau: woher das Dashboard Verkaufsmenge je VerkNr und Stuecklistenbedarf je
 Komponente bekommt (heute nicht im Cache: ZC23 je VerkNr mit Termin bestaetigt und Absagegrund, ZLO03-Bedarfsmenge). Vor dem Bau mit dem Anfragenden klaeren: ob Disponent 006 dazugehoert, und ob „Termin bestaetigt“
 (auch bereits gelieferte Positionen) die gewuenschte Basis ist.

@@ -1354,6 +1354,8 @@ Test `LoadAsync_ProductGroupPerspectives_Show_All_Positions_Without_Remainder_Ro
 
 ## Nachtrag 2026-10-26 (3): Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“
 
+*Seit 2026-11-02 Disponenten 001 bis 006 (neuer Einkaufsdisponent 006, Entscheid Ingo, Commit `9a26acc`).* Gilt fuer Schalter, Lagerwert und Verlauf je Disponent; die Texte in allen Sprachen sind nachgezogen.
+
 Wunsch Ingo: Der Einkauf soll in den Disponenten-Gruppierungen nur 001 bis 005 sehen, „oder auch bei anderen
 Gruppierungen, weil das sind Einkaufsteile“. Entscheid auf Rueckfrage: **Schalter im Spend-Aufriss, Vorgabe an.**
 

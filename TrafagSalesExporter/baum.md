@@ -109,7 +109,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/PURCHASING_DASHBOARD_2026-06-05.md` | Hauptdoku, Formeln, Cache |
 | `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` | **zusammengefuehrt**: umgesetzt, offen, zurueckgestellt |
 | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` | welche Indikatoren echt rechnen |
-| `docs/EINKAUF_LAGERWERT_2026-08-18.md` | Lagerwert Einkaufsteile (Wunsch Armin), MB5L, MBEW/MBEWH, Disponenten 001-005 |
+| `docs/EINKAUF_LAGERWERT_2026-08-18.md` | Lagerwert Einkaufsteile (Wunsch Armin), MB5L, MBEW/MBEWH, Disponenten 001-006 (seit 2026-11-02) |
 | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` | Produktgruppen, ZC23, ABC/XYZ |
 | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` | Produktgruppen aus SAP OData |
 | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` | Supply-Chain-Reiter |
@@ -162,6 +162,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/operations_kpi/` | Fabios Paket vom 2026-10-14: Spezifikation (docx), Referenz (JS-Abzug, Python-Aufbau, Vorlage, Beispielseite, Abnahmedaten mit Kundendaten), PDF- und Excel-Beispiel |
 | `docs/shopfloor_paket_2026-10-14/` | Fabios Paket vom 2026-10-14: Schnittstelle Shopfloor-SAP (Excel, Feldliste, Push-Beispiele mit abweichendem Format) und Frontend-Patches mit `apply_patch.js` |
 | `docs/shopfloor_paket_2026-10-16/` | Fabios Deploy-Paket vom 2026-10-16: Schnittstellen-Excel (Jobs J1 bis J11, Deploy-Checkliste), Patch 03 Wuensche D. Tobler, Config-Patch 04 mit `apply_config.js` |
+| `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md` | Bauplan Materialanteil je Produktgruppe nach Materialgruppe (Spend-Aufriss Phase 2): Rechnung, vorhandene Bausteine (`Zc23Set`, ZLO03), SAP- und Dashboard-Schritte, offene Fragen |
 | `docs/einkauf_lieferantenbewertung/` | Entwurf Lieferantendashboard V6 vom Einkauf (Demo-HTML, fiktive Daten, 02.11.), beschrieben in `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5 |
 | `docs/shopfloor_paket_2026-11-01/` | Fabios Paket vom 2026-11-01: Patch 04 (PPD Terminverschiebungen aus den Rueckstandslisten, Schalter `tv_from_rs`), Patch 05 und Config Verkauf (Fiori statt ZC23, Transmitter = TR5 + TX), Schnittstellen-Excel mit J4 |
 | `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |

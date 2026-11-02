@@ -24,7 +24,7 @@ Mitarbeitenden, Bereinigung, Rechnungsbetrag/Mail. Details `docs/HANDBESTELLWESE
 
 ## Schalter Nur Einkaufsteile 2026-10-26
 
-Spend-Aufriss: Schalter „Nur Einkaufsteile (Disponent 001 bis 005)“, Vorgabe an, gilt fuer alle Einstiege (Filter
+Spend-Aufriss: Schalter „Nur Einkaufsteile (Disponent 001 bis 006)“ (006 seit 2026-11-02, vorher 001 bis 005), Vorgabe an, gilt fuer alle Einstiege (Filter
 `MarcDispo IN PurchasingPlanners`). Ausgeschaltet ganzer Einkauf. Diagramme darunter immer ganzer Einkauf. Details:
 `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-10-26 (3).
 
@@ -189,7 +189,7 @@ Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nac
 - Arbeitsweise aus dem Marco-Review: jeweils einen Reiter vollstaendig
   abnehmen, bevor der naechste erweitert wird.
 
-- Lagerwert Einkaufsteile (Disponenten 001-005, `MBEW.SALK3`, Bewertungskreis 1100): Kachel
+- Lagerwert Einkaufsteile (Disponenten 001-006, 006 seit 2026-11-02, Verlauf rechnet rueckwirkend mit; `MBEW.SALK3`, Bewertungskreis 1100): Kachel
   produktiv und in der Datenbank gespeichert, Wert fachlich **noch nicht gegen MB5L
   abgeglichen**. Seit 2026-09-28 zusaetzlich ein **Verlauf je Kalenderwoche, produktiv seit
   2026-09-28 09:33**: Tagesstand je Lauf in `PurchasingStockValueHistory`, Anzeige Stand Ende Woche,
