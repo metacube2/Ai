@@ -219,7 +219,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` | ZC23 Materialanteil und Arbeit CZ: Formeln, Beispiel B87813, Bedienung, Grenzen, Pruefung (Word, Generator `.tmp_tools/BuildZc23Formeln`) |
 | `saptasks/fiori_zc23/NOTES.md` | Fiori-App ZC23: Stand, Selektion, Transport; im Ordner Generator `erzeugen.py`, `methoden_bauen.py`, MPC/DPC vorher/neu, Struktur-Feldliste, App `webapp/` |
 | `saptasks/zeichnungsaenderung/NOTES.md` | Zeichnungsaenderung fuer die MS-Liste der Entwicklung: Befund Simons Excel (Direktzugriff `P76.MARA`/`MAKT`), vorhandene Sets, Entscheid naechtliche SharePoint-Liste, offene Punkte, SAP-Umsetzung `Zeivr` |
-| `saptasks/zreichw/NOTES.md` | ZREICHW Reichweitenanalyse: Befund Druck/Spool, Ankreuzfeld „Nur Spoolauftrag“ (`T76K912799`), Test T76, Befunde zur Optimierung; im Ordner Quelltext vorher/neu von `Z_KOI_REICHW_TURBO`, optimierte Kopie `Z_KOI_REICHW_OPT.abap` und Vergleichsreport `Z_KOI_REICHW_VGL.abap` |
+| `saptasks/zreichw/NOTES.md` | ZREICHW Reichweitenanalyse: Befund Druck/Spool, Ankreuzfeld „Nur Spoolauftrag“ (`T76K912799`), Test T76, Befunde zur Optimierung; im Ordner Quelltext vorher/neu von `Z_KOI_REICHW_TURBO`, optimierte Kopie `Z_KOI_REICHW_OPT.abap` und Vergleichsreport `Z_KOI_REICHW_VGL.abap`; Abschnitt 5 Uebergabe zum Weitermachen |
+| `saptasks/zreichw/werkzeuge/` | SAP-GUI-Hilfsskripte der ZREICHW-Arbeit (SE38 aendern/ersetzen/pruefen/aktivieren, ZREICHW- und Vergleichslauf, SP02) und das Erzeugungsskript der optimierten Kopie |
 | `saptasks/gib_dcp/NOTES.md` | GIB Dispo-Cockpit in T76: Bestand Rollen/Transaktionen, Testuser UBIG |
 | `saptasks/shopfloor_sap/NOTES.md` | Shopfloor-Mengen aus SAP; im Ordner `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
 | `saptasks/fiori_erste_app/NOTES.md` | Erste Fiori-App: Harness, Voraussetzungen, Upload-Wege, Link; Quelle `webapp/` |

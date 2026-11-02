@@ -1,6 +1,6 @@
 # ZREICHW Reichweitenanalyse (`Z_KOI_REICHW_TURBO`)
 
-Stand: 2026-11-02
+Stand: 2026-11-02 abends (Uebergabe in Abschnitt 5)
 
 ## 1. Ausgangslage
 
@@ -117,3 +117,52 @@ war.
 **Offen:** Entscheid Ingo, ob der Quelltext von `Z_KOI_REICHW_OPT` in `Z_KOI_REICHW_TURBO` uebernommen wird (dann am
 einfachsten in den noch offenen Auftrag `T76K912799`, ein Import fuer beides). Danach koennen die beiden lokalen
 Objekte geloescht werden.
+
+## 5. Weitermachen (Uebergabe 02.11. abends, Ingo schliesst die Sitzung)
+
+**Stand der Systeme**
+
+- T76: `Z_KOI_REICHW_TURBO` aktiv mit Ankreuzfeld „Nur Spoolauftrag“, im offenen Auftrag `T76K912799` (Aufgabe `T76K912800`,
+  nicht freigegeben). `Z_KOI_REICHW_OPT` und `Z_KOI_REICHW_VGL` lokal (`$TMP`), aktiv. Keine eigene GUI-Sitzung mehr offen.
+- P76: unveraendert, ZREICHW dort noch ohne Ankreuzfeld (Stand `T76K911529`).
+- Repository: alles committet bis `435d6d4` plus diese Uebergabe, nichts gepusht.
+
+**Naechste Schritte, in dieser Reihenfolge**
+
+1. Entscheid Ingo: Quelltext von `Z_KOI_REICHW_OPT` ins Original uebernehmen, ja oder nein.
+2. Bei Ja, in einer eigenen T76-Sitzung (nie Sitzung 0):
+   - `Z_KOI_REICHW_OPT.abap` aus diesem Ordner, Kopfkommentar „Report Z_KOI_REICHW_OPT“ auf `Z_KOI_REICHW_TURBO` zuruecksetzen.
+   - In SE38 `Z_KOI_REICHW_TURBO` aendern, Quelltext ersetzen, sichern; Auftrag `T76K912799` waehlen (kein neuer).
+   - Syntaxpruefung, nur dieses Objekt aktivieren (die inaktive `Z_REICHW` unmarkiert lassen), aktiven Stand per RFC
+     zuruecklesen und zeilengleich pruefen.
+   - Vergleich erneut laufen lassen: `Z_KOI_REICHW_VGL` vergleicht dann TURBO gegen OPT, beide muessen identisch sein, Laufzeit
+     beider etwa 2 s fuer Werk 1100. Danach einmal ZREICHW mit Haken „Nur Spoolauftrag“ (Spool ohne Ausgabeauftrag wie in Abschnitt 2).
+   - Danach `Z_KOI_REICHW_OPT` und `Z_KOI_REICHW_VGL` in T76 loeschen (lokal, kein Transport). Den Quelltext behalten wir hier.
+3. Ingo gibt `T76K912799` frei und importiert nach P76. Danach in P76 lesend pruefen (SE38 Version bzw. ZREICHW Selektionsbild
+   mit dem neuen Haken). Keine Gateway-Caches noetig, ZREICHW ist kein OData.
+4. Antwort an die anfragende Person (Teams, Ingo sendet selbst), Vorschlag:
+   „Ab sofort gibt es in ZREICHW im Block Ausgabe das Ankreuzfeld ‚Nur Spoolauftrag (nicht drucken)‘. Ist es gesetzt, wird die
+   Liste weder angezeigt noch gedruckt, sondern als Spoolauftrag abgelegt. Die Nummer steht unten in der Statuszeile, den Auftrag
+   findest du in SP01 bzw. unter System, Eigene Spoolauftraege. Ohne Haken laeuft alles wie bisher.“
+   Erst senden, wenn der Import in P76 durch ist.
+5. Fachabteilung: Befunde 5 bis 10 aus Abschnitt 3 vorlegen (veraendern die Reichweiten). Erst nach deren Entscheid umsetzen,
+   wieder an einer Kopie mit Vergleich gegen den Ist-Stand.
+
+**Werkzeuge** (Ordner `werkzeuge/`, aus dem Scratchpad der Sitzung gesichert, Aufruf mit `cscript //nologo`, erstes Argument
+ist immer die eigene Sitzungsnummer in T76, Sitzung 0 bricht ab):
+
+| Datei | Zweck |
+| --- | --- |
+| `se38aendern.vbs <ses> <programm>` | SE38, Programm im Aenderungsmodus oeffnen |
+| `se38ersetzen.vbs <ses> <fenstertext> <datei>` | ganzen Editorinhalt durch die UTF-8-Datei ersetzen und sichern (prueft vorher das Bild) |
+| `se38pruefen.vbs <ses>` / `syntaxliste.vbs <ses>` | Syntaxpruefung (Strg+F2) / Fehlerliste ausgeben |
+| `se38aktiv.vbs <ses>` | aktivieren |
+| `zreichw_lauf.vbs <ses> <von> <bis> <X/->` | ZREICHW mit Materialbereich, mit oder ohne Spool-Haken |
+| `vgl_lauf.vbs <ses> <von/-> <bis/-> <optionen> [dlow]` | Vergleichsreport starten; Optionen i r a (Rechenoptionen), o (OPT zuerst), l (Write-Liste) |
+| `sp02zeigen.vbs <ses>`, `t76dump.vbs <ses> [okcode]`, `t76nav.vbs <ses>` | Spool anzeigen, Bildinhalt ausgeben, zurueck |
+| `reichw_opt.py`, `load_opt.abap` | so wurde `Z_KOI_REICHW_OPT.abap` aus dem Original erzeugt (`python reichw_opt.py <quelle> load_opt.abap <ziel>`) |
+
+Neue Sitzung, Auftrag und Inaktivliste mit den festen Skripten aus `.tmp_sap_probe/` (`SapGuiNeueSitzungT76.vbs`,
+`SapGuiInaktiveMarkieren.vbs <ses> pruefen|aktivieren <name>`), schliessen mit `SapGuiSitzungSchliessen.vbs`; Quelltext per RFC
+zuruecklesen mit `.tmp_sap_probe/RunSapProbe.ps1` (ueber Bash `powershell -NoProfile -ExecutionPolicy Bypass -File`).
+`SapGuiSetReportSource.vbs` nicht verwenden, es greift irgendeine T76-Sitzung.
