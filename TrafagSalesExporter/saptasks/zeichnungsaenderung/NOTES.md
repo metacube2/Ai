@@ -92,3 +92,24 @@ bewusst in denselben Auftrag (Entscheid Ingo).
 Vor dem Aendern zu klaeren: Steckt `MARA001Set` in `MPC_EXT`/`DPC_EXT` oder im SEGW-generierten Teil
 (`ZCL_ZPOWERBI_EINKAUF_MPC`, Projekt in SEGW)? Im zweiten Fall sind es andere Objekte, und der Weg ist die
 SEGW-Property plus Neugenerierung, wie beim Anhaengen von `Matkl` am 2026-07-23.
+
+**Befund 02.11., nur lesend in T76 per SapProbe/RFC:**
+
+- `MARA001Set` gehoert zum **SEGW-generierten Entitaetstyp `MARA`** in der Basisklasse `ZCL_ZPOWERBI_EINKAUF_MPC`, Methode
+  `DEFINE_MARA` (Include `CM003`), gebunden an die DDIC-Struktur `MARA`. Properties heute: `Matkl`, `Mstae`, `Bismt`,
+  `Extwg`, `Mstav`, `Mstde`, `Matnr`, `Zztyp`, `Ersda`, `ZztypF4`, `Ernam`, `Zzlzcod`, `Mtart`, `Meins`, `Bstme`,
+  `Brgew`, `Ntgew`, `Gewei`, `Volum`. **`Zeivr` fehlt.**
+- Gelesen wird in `ZCL_ZPOWERBI_EINKAUF_DPC_EXT->MARA001SET_GET_ENTITYSET` (`CM002`) mit
+  `SELECT * FROM mara INTO CORRESPONDING FIELDS OF @wa_mara`. `ZEIVR` steht damit schon in jeder Zeile; es fehlt nur die
+  Property im Modell. **Die gesperrte `DPC_EXT` muss nicht geaendert werden.**
+- `MARA-ZEIVR`: Datenelement `DZEIVR`, `CHAR 2`. Also `Edm.String`, Laenge 2. In T76 gefuellt z. B. bei `B62179` (`D`),
+  `B70199` (`A`), `B70201` (`Z`). Diese Materialien eignen sich zum Ruecklesen.
+- Die Basisklasse `ZCL_ZPOWERBI_EINKAUF_MPC` und das SEGW-Projekt `ZPOWERBI_EINKAUF` (`IWPR`) liegen in keinem Auftrag ab
+  `T76K912700`. Zuletzt waren sie in den Juli-Auftraegen `T76K9093xx` bis `T76K9097xx`. `T76K912785`/`T76K912786` (Status
+  `D`, offen) enthalten nur `MPC_EXT DEFINE` und `DPC_EXT GET_ENTITYSET`.
+
+**Folge:** `Zeivr` kann mit eigenem Auftrag rein ueber SEGW kommen: Property im Entitaetstyp `MARA` anlegen und das
+Laufzeitartefakt neu generieren. Das aendert nur die Basisklassen und das SEGW-Projekt, die `_EXT`-Klassen bleiben
+unberuehrt, und der Weg ist derselbe wie im Juli bei `Matkl`/`Mstae`. Vorsicht: Die Generierung schreibt die Basisklassen
+`ZCL_ZPOWERBI_EINKAUF_MPC` und `_DPC` komplett neu. Danach muessen die anderen Sets (`MAKTSet`, `EKPOSet`, `ZloTopDownSet`
+usw.) weiter antworten, und `$select=Matnr,Mstae,Matkl` muss unveraendert gehen (Vorfall 404 vom 2026-07-02).
