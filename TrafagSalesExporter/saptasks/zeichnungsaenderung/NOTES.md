@@ -1,7 +1,7 @@
 # Zeichnungsaenderung: SAP-Daten fuer die MS-Liste
 
-Stand: 2026-11-02 12:10. Auftrag Ingo 02.11. Status: **Weg entschieden, `Zeivr` in T76 fertig (`T76K912793`, wartet
-auf Import P76), Dashboard-Teil wartet auf SharePoint-Berechtigung und Ablageort.**
+Stand: 2026-11-02 abends. Auftrag Ingo 02.11. Status: **Weg entschieden, `Zeivr` in P76 live (`T76K912793` importiert,
+Gateway 200), Dashboard-Teil wartet auf Zustimmung Lucas, SharePoint-Berechtigung und Ablageort.**
 
 ## 1. Anfrage
 
@@ -72,8 +72,8 @@ Simons Antworten (02.11.):
 | Zustimmung zum Weg | Lucas Castro | keine Antwort |
 | Schreibrecht des Dashboard-Servers im SharePoint (App-Berechtigung) | Alex Donato, laut Mail von Ingo beauftragt | keine Antwort |
 | Ablageort der Liste, Format fuer den Flow | Andreas Wild | keine Antwort |
-| `Zeivr` an `MARA001Set` | T76 erledigt 02.11. (`T76K912793`); Freigabe und Import P76 Ingo | siehe Abschnitt 6 |
-| Naechtlicher Abzug im Dashboard | Claude | wartet auf `Zeivr` in P76 und auf Ablageort und Berechtigung |
+| `Zeivr` an `MARA001Set` | erledigt: T76 02.11. mittags, P76 02.11. abends (`T76K912793`) | siehe Abschnitt 6 |
+| Naechtlicher Abzug im Dashboard | Claude | wartet auf Zustimmung, Ablageort und Berechtigung; SAP-Seite steht |
 
 Der Dashboard-Teil wird bewusst noch nicht gebaut: Ohne Ziel und Berechtigung waere er halb, und seine Registrierung
 beruehrt `Program.cs` bzw. `TimerBackgroundService.cs`, in denen die unfertige Finance_All-Automatik unkommittiert
@@ -83,9 +83,24 @@ liegt.
 
 *Erledigt 2026-11-02 12:05 in T76:* `Zeivr` haengt an `MARA001Set`, im **eigenen Auftrag `T76K912793`** (Aufgabe
 `T76K912794`, Text „Zeichnungsaenderung: Zeivr an MARA001Set“). Einziges Objekt: `LIMU METH ZCL_ZPOWERBI_EINKAUF_MPC_EXT
-DEFINE`. **Offen: Freigabe und Import nach P76 (Ingo)**, danach in P76 `/IWFND/CACHE_CLEANUP` (Modell
-`ZPOWERBI_EINKAUF_MDL`) und `/IWBEP/CACHE_CLEANUP`, und zwar auf `travp762`, nicht auf `trasp76s`
-(`saptasks/shopfloor_sap/NOTES.md` Abschnitt 7).
+DEFINE`. ~~Offen: Freigabe und Import nach P76 (Ingo), danach Caches auf `travp762`.~~ *(ueberholt, siehe unten)*
+
+*Erledigt 2026-11-02 abends in P76:* Ingo hat `T76K912793` freigegeben und zusammen mit `T76K912797` (PPD-Verzug der
+parallelen Sitzung, nur `DPC_EXT`) nach P76 importiert. Die parallele Sitzung hat auf Ingos Auftrag die Caches in einer
+eigenen Sitzung geleert. SM51 zeigte in P76 nur die Instanz `trasp76s`; `travp762` gibt es dort nicht als Instanz, der
+Hinweis oben auf `travp762` stimmte also nicht. Reihenfolge: `/IWFND`, dann `/IWBEP`; danach lieferte `Zeivr` noch 404,
+erst ein zweites `/IWFND/CACHE_CLEANUP` gab es frei (LEARNINGS 2026-11-02: zuerst `/IWBEP`, dann `/IWFND`). Gateway
+Client P76:
+
+| Anfrage | Status |
+| --- | --- |
+| `$metadata` | 200 (382'030) |
+| `MARA001Set?$select=Matnr,Zeivr` | 200 |
+| `MARA001Set?$select=Matnr,Mstae,Matkl` (wie der Einkauf-Lauf) | 200 |
+
+Belegt ist damit, dass P76 das Feld kennt und die bisherige Abfrage weiterlaeuft. Ob die Werte in P76 gefuellt ankommen,
+ist nicht eigens gemessen; in T76 ist es per Laengenvergleich belegt, und der Lesecode ist in beiden Systemen derselbe
+(`SELECT *`). Der erste Dashboard-Abzug zeigt es spaetestens. Quelle: `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7.
 
 Weg: Ingo liess am 02.11. ueber die parallele Sitzung ausrichten, die Aenderung in einem neuen eigenen Auftrag mit den
 SAP-Werkzeugen zu machen, nachdem er `T76K912785` freigegeben hatte. Gewaehlt wurde der Zusatz in `MPC_EXT DEFINE` statt

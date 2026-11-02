@@ -41,7 +41,9 @@ Stand: 2026-11-02
 - T76, 12:05: `Zeivr` (MARA-ZEIVR, CHAR 2) an `MARA001Set` ueber einen Zusatz in `ZCL_ZPOWERBI_EINKAUF_MPC_EXT->DEFINE`
   (`docs/abap/ZMARA_ZEIVR_ADD.abap`), eigener Auftrag `T76K912793`, aktiv und zeilengleich rueckgelesen. Gateway Client:
   altes `$select=Matnr,Mstae,Matkl` weiter 200, neues Feld 200 mit Werten (Laengenvergleich), `ZloTopDownSet` und `MAKTSet`
-  200. Lesecode unveraendert. Offen: Import P76 (Ingo). `SapGuiSitzungSchliessen.vbs` korrigiert (Index per `CLng()`).
+  200. Lesecode unveraendert. `SapGuiSitzungSchliessen.vbs` korrigiert (Index per `CLng()`).
+- P76, abends: Ingo hat `T76K912793` importiert, Caches auf `trasp76s` geleert (parallele Sitzung). `$metadata`, `Matnr,Zeivr`
+  und die alte Abfrage `Matnr,Mstae,Matkl` 200. SAP-Seite damit fertig; der Dashboard-Abzug wartet auf Lucas, Alex, Andreas.
 
 ## Einkauf: Disponenten 001 bis 006 und Bauplan Materialanteil Phase 2, 2026-11-02
 
