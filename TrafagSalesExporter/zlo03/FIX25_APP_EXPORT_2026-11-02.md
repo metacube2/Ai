@@ -1,6 +1,6 @@
 # ZLO03 FIX 25: Top-Down-Ergebnis fuer das Dashboard (P_APP, ZloTopDownSet)
 
-Stand: 2026-11-02, T76 aktiv, Auftrag `T76K912785` (zusammen mit FIX 24), Freigabe und Import offen (Ingo).
+Stand: 2026-11-02, T76 aktiv, Auftrag `T76K912785` (zusammen mit FIX 24), laut Ingo am 2026-11-02 nach P76 importiert.
 Zurueck: `zlo03/CLAUDE.md`. Fachlicher Zusammenhang: `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md`.
 
 ## Was geaendert ist

@@ -4,7 +4,7 @@ Stand: 2026-11-02, Bauplan, Entscheide Ingo zu F1/F2 und eigene Tabelle am Ende 
 SAP-Schritte 1 bis 3 in T76 aktiv im Auftrag `T76K912785` (ZLO03 FIX 25, `ZSTR_ZLO_TOPDOWN`, MPC/DPC, Caches geleert), geprueft mit
 41019 (`zlo03/FIX25_APP_EXPORT_2026-11-02.md`); Dashboard-Schritte 4 bis 6 in `d6c0287` (Lader im Einkauf-Lauf mit Probe vor dem
 Lesen, eigene Tabelle `PurchasingMaterialShare.razor`, roter Knopf, Texte, Tests 1325/1325), deployed 2026-11-02 11:18 (`f36e1e7`). F3 hat sich erledigt: FIX 25 liegt im
-selben Auftrag wie FIX 24. Offen: Freigabe und Import von `T76K912785` nach P76 (Ingo), Caches in P76 auf `travp762` leeren,
+selben Auftrag wie FIX 24. `T76K912785` laut Ingo am 2026-11-02 nach P76 importiert. Offen: Caches in P76 auf `travp762` leeren,
 erster Einkauf-Lauf, Abgleich einer Produktgruppe mit Armin, Laufzeit in P76 messen. Auftrag Ingo „erst Bauplan“. Grundlage: Rechenweg von Armin (Nachtrag 2026-11-02 in
 `NOTES.md`), Entscheide Ingo vom 2026-11-02, Quelltexte im Repo (gelesen, nicht in SAP gemessen). Zurueck: `NOTES.md`.
 
