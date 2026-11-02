@@ -2,6 +2,12 @@
 
 Stand: 2026-11-02
 
+## Operations KPI: Rubrik Kunden auf OTD / OTIF / OTP (Spezifikation Fabio), 2026-11-02
+
+- Zaehler je Auftraggeber und Monat im Monatsabruf, Namen fuer alle Kunden, Suche nach Nummer oder Name, Kacheln, Monatstabelle,
+  Trefferliste, „Abweichungen dieser Kunden“, Excel Kunden YTD / pro Monat (`aa12a39`, Tests 1358/1358), nicht deployed.
+- Nach dem Deploy Oktober neu abrufen, dann gegen Fabios Abnahmewerte pruefen (Hitachi 2'462 / 94.2 %, Kunde 682 Oktober).
+
 ## Shopfloor: PPD-Verzug wie ZC22 gebaut (Mail Fabio), 2026-11-02 nachmittags
 
 - Fabios Antwort: DW = `D*` ohne DW1/DL6, Eckendtermin ohne Untergrenze bis Vortag, positive Werte. ZC22-Logik aus dem Quelltext

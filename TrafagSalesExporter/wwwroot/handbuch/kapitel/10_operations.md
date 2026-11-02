@@ -103,6 +103,7 @@ Der Report beantwortet, wie zuverlässig die Trafag AG ihre Zusagen an die Kunde
 - Vier Kacheln: OTD, OTIF, OTP und „Nicht pünktlich (OTD)“ mit dem durchschnittlichen Verzug in Arbeitstagen.
 - Ein Diagramm mit drei Säulen je Monat (OTD blau, OTIF orange, OTP grün); der Wert ohne Toleranz ist als gestrichelte Marke eingezeichnet.
 - Die Monatstabelle mit fälligen Positionen, pünktlichen Positionen, fälligen und kompletten Aufträgen, Positionen nach Wunschtermin und den zu früh gelieferten Positionen.
+- Die Rubrik **Kunden** (seit November 2026): Kundennummer oder Name eingeben, mehrere Begriffe mit Komma, z. B. „Hitachi“ für alle Hitachi-Gesellschaften. Kacheln und Monatstabelle zählen die Treffer zusammen, die Trefferliste zeigt jeden Kunden einzeln; ein Klick wählt einen Kunden aus. „Abweichungen dieser Kunden“ springt in die Abweichungsliste, Excel liefert die Kundensicht je Jahr und Monat.
 - **OTP nach Machbarkeit:** ob der Wunschtermin des Kunden überhaupt realistisch war, mit Tabelle je Produktgruppe.
 - Die Analyse der verspäteten Positionen nach Verzugsklassen, die Top 10 Kunden und Top 10 Materialien, jeweils als Filter anklickbar.
 - Die **Abweichungsliste** aller zu späten oder zu frühen Positionen mit Filter, Sortierung und Export als Excel.

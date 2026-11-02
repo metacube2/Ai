@@ -3,6 +3,9 @@
 Auftrag: Mail Fabio Palma vom 2026-10-14 mit Spezifikation und Referenzpaket (`docs/operations_kpi/`). Menue nach Wunsch Ingo:
 **Operations** mit den Unterreitern **KPI** (darunter **OTD / OTIF / OTP**) und **Shopfloor** (der bisherige Reiter).
 
+**Nachtrag 2026-11-02:** Rubrik **Kunden** gebaut (Abschnitt 5, `aa12a39`), noch nicht deployed. Monatsabruf `202610` am 02.11. um
+00:26 ok (Summen gleich Fabios Referenz), die Berechtigung von `POWERBI` reicht also weiterhin (3b).
+
 Stand 2026-10-14 10:35: **produktiv und live aus SAP, Abnahme bestanden (3b)** (Deploy 10:04 `f51bdeb`, Korrektur 10:11 `982e193`, gepusht im manuellen Modus nach
 Freigabe Ingo). Seiten und Excel-Export zeigen seit 10:33 den SAP-Abzug. *Ueberholt (10:30):* „zeigen noch den Referenzabzug,
 Live-Abruf scheitert an der Berechtigung“ (Abschnitt 3a).
@@ -119,9 +122,48 @@ Ein Mailversand ist nicht eingerichtet (braucht eine App-Registrierung bei der I
 ## 4. Offene Punkte
 
 - **Schmale Rolle fuer `POWERBI` vor dem 31.10.** (siehe 3b), sonst scheitert der Abruf vom 02.11.
+  *Stand 2026-11-02:* Der Abruf vom 02.11. 00:26 lief durch (23'031 Auftrags-, 31'647 Lieferpositionen). Ob die Rolle verlaengert
+  wurde oder eine schmale Rolle zugeordnet ist, ist nicht geprueft; vor dem 02.12. in P76 (`AGR_USERS` fuer `POWERBI`) nachsehen.
 
 - *Erledigt 10:33:* Rolle fuer `POWERBI`, Abruf `202609`, Abnahme (3b).
 - *Erledigt 2026-10-14:* Feiertage nicht abziehen (Fabio, Spezifikation korrigiert).
 - Inhalt der KPI-Uebersicht (Fabio, separat).
 - Transitzeit bei Export-Positionen (Fabio, aus der Spezifikation).
 - Shopfloor-Feldmapping (`b613f7c`) geht mit demselben Deploy hinaus, siehe `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 12.
+
+## 5. Rubrik Kunden (Spezifikation Fabio 2026-11-02, Stand 2026-11-02)
+
+Auftrag: Mail Fabio vom 02.11. mit Tab „Erweiterung Kundensicht“ im Spezifikationsdokument (claude.ai-Dokument, Text von Ingo in den
+Chat kopiert) und Referenzdatei `Liefertreue_1100_Kunden_2026-10.xlsx` (**nicht im Repo, nicht vorliegend**; die Excel-Blaetter sind
+deshalb nach dem Spezifikationstext gebaut). Neu ist nur die Gruppierung nach Auftraggeber (SoldToParty); Definitionen, Ausschluesse
+und Abruf bleiben.
+
+**Berechnung** (`KpiLiefertreue.Compute`, im selben Durchlauf wie die Monatswerte): je Kunde und Monat die Zaehler n, puenktlich streng,
+puenktlich mit Toleranz, zu frueh (OTD nach Monat des bestaetigten Termins), Auftraege, komplett streng/mit Toleranz (OTIF nach Monat
+des spaetesten Termins, dem Auftraggeber des Auftrags zugeordnet, bei zwei Auftraggebern der groessere wie `MAX(SoldToParty)`), Positionen
+Wunsch, puenktlich streng/mit Toleranz (OTP nach Wunschmonat). Gespeichert im Stand als `kunden` (eine Zeile je Kunde und Monat).
+OTP ohne Toleranz gab es schon. Namen: `SoldToPartyText` fuer **alle** Kunden der Rubrik (vorher nur die der Abweichungsliste);
+das Protokoll im Stand (`log`) nennt die Zahl der Kunden und wie viele davon einen Namen haben.
+
+**Seite** (`wwwroot/shopfloor/kpi/board_template.html`, Abschnitt direkt unter den Monatswerten): Suchfeld (Ziffern = Kundennummer genau
+oder Anfang, sonst Teil des Namens, mehrere mit Komma), Mindestanzahl Positionen (alle / ab 10 / ab 50), Zuruecksetzen, drei Kacheln
+(YTD mit Toleranz, darunter Anzahl, ohne Toleranz, Berichtsmonat), Monatstabelle mit Summenzeile, Trefferliste (sortierbar, Standard
+Positionen absteigend, Klick waehlt einen Kunden, zweiter Klick hebt auf), Knopf „Abweichungen dieser Kunden“ (filtert die
+Abweichungsliste auf die Kunden, Art „zu spaet“, mit sichtbarem, loeschbarem Kundenfilter) und Excel (`GET kpi/liefertreue/kunden.xlsx?cut=&q=`,
+Blaetter „Kunden YTD“, „Kunden pro Monat“, „Definition“; mit Suche nur die Treffer). Kacheln und Monatstabelle summieren die Zaehler
+der Trefferliste und rechnen das Prozent danach. Der Filter Mindestanzahl gilt auch fuer die Summe (was in der Liste steht, wird gezaehlt).
+
+**Alte Staende** (vor dem 02.11. geholt, ohne `kunden`) zeigen einen Hinweis statt der Rubrik. **Der Stand `202610` vom 02.11. 00:26 hat
+die Kundensicht noch nicht; nach dem Deploy muss Oktober einmal neu abgerufen werden** (Knopf auf der KPI-Uebersicht oder
+`POST kpi/liefertreue/sync` mit `{"cut":"202610"}`), der automatische Abruf holt einen vorhandenen SAP-Stand nicht erneut.
+
+**Tests** (`KpiLiefertreueKundenTests`, Suite 1358/1358): Pruefregel 1 auf eigenen Rohzeilen (Summe ueber alle Kunden = jede
+Monatszahl), OTIF beim Auftraggeber, Kunde nur mit OTP-Positionen erscheint, Ausschluesse fehlen, Suche, Excel, Seite mit und ohne
+Kundensicht. Seitenlogik zusaetzlich mit Node und Beispieldaten durchgespielt (Summen, Suche, Sprung in die Abweichungsliste).
+
+**Abnahme (offen, nach Deploy und Neuabruf):** Gesamtsummen 17'238 / 9'943 / 17'041 (die Seite trifft sie schon), Suche „Hitachi“
+32 Kunden, 2'462 Positionen, OTD 94.2 % (86.3 %), OTIF 93.9 % (85.4 %) aus 1'204 Auftraegen, OTP 82.7 % (71.0 %) aus 2'432; Kunde 682
+im Oktober 86 / 89.5 %, 41 / 82.9 %, 94 / 80.9 %. Weitere Werte je Kunde im Spezifikationsdokument und in Fabios Excel.
+
+**Offene Punkte aus der Spezifikation (Entscheid Fabio):** Konzernzuordnung Kunde -> Kundengruppe statt Namenssuche; ausgeschlossene
+Kunden mit Hinweis „nicht in der Auswertung“ zeigen.
