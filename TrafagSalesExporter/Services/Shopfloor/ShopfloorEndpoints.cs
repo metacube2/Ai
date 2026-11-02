@@ -203,6 +203,24 @@ public static class ShopfloorEndpoints
         }
     }
 
+    private static async Task<IResult> Verkauf(HttpContext c, bool write)
+    {
+        var tag = c.Request.Query["tag"].ToString();
+        var day = DateOnly.FromDateTime(DateTime.Today);
+        if (tag.Length > 0 && !DateOnly.TryParseExact(tag, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out day))
+            return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
+        try
+        {
+            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VerkaufAsync(day, write, c.RequestAborted);
+            return J(c, result);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Results.Json(new { ok = false, meldung = ex.GetBaseException().Message }, statusCode: 502);
+        }
+    }
+
     private static JsonObject KpiStatus(KpiLiefertreueSync sync, string? cut)
     {
         var result = new JsonObject
@@ -347,6 +365,9 @@ public static class ShopfloorEndpoints
         // Mengen des Vortags (J5, J8, J11), 2026-10-16: GET = Vorschau ohne Schreiben, POST = schreiben (manuelle Werte bleiben).
         g.MapGet("/sap/mengen", async Task<IResult> (HttpContext c) => await Mengen(c, false));
         g.MapPost("/sap/mengen", async Task<IResult> (HttpContext c) => await Mengen(c, true));
+        // Verkauf J4 (erwarteter Umsatz Monat, Gutschriften aus Fiori «Umsatz prüfen»), 2026-11-02: GET = Vorschau, POST = schreiben.
+        g.MapGet("/sap/verkauf", async Task<IResult> (HttpContext c) => await Verkauf(c, false));
+        g.MapPost("/sap/verkauf", async Task<IResult> (HttpContext c) => await Verkauf(c, true));
         g.MapPost("/sap/sync", async Task<IResult> (HttpContext c) =>
         {
             try

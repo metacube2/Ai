@@ -518,3 +518,9 @@ table.zd tr.talk td{background:color-mix(in srgb,var(--warn) 6%,transparent)}
 .lz-sec{margin-bottom:22px} table.lz td.n{white-space:nowrap} table.lz tr.od td:first-child{box-shadow:inset 3px 0 0 var(--alarm)}
 .lz-grund{display:block;margin-top:8px} .lz-grund>span{display:block;font-size:13px;margin-bottom:4px} .lz-grund.need textarea{border-color:var(--alarm)}
 small.up{color:var(--alarm)} small.dn{color:var(--ok)}
+
+/* Patch 04 (2026-11-01): Terminverschiebungen aus Rückstandslisten */
+.src.rs{background:#6b4bb3;color:#fff}
+.tvinfo{margin:0 0 12px;padding:8px 12px;border-left:3px solid #6b4bb3;background:rgba(107,75,179,.08);font-size:13px;border-radius:4px}
+.tvinfo a{font-weight:600}
+td.rsv .out{opacity:.9}

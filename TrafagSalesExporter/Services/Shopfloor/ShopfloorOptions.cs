@@ -49,6 +49,12 @@ public sealed class ShopfloorOptions
     /// </summary>
     public bool SapMengenEnabled { get; set; }
 
+    /// <summary>
+    /// Verkauf J4 aus Fiori «Umsatz prüfen» schreiben (erwarteter Umsatz Monat, Gutschriften), 2026-11-02.
+    /// Erst einschalten, wenn die Vorschau (GET sap/verkauf) in P76 Fabios Kontrollwerte trifft.
+    /// </summary>
+    public bool SapVerkaufEnabled { get; set; }
+
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
     public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45
 

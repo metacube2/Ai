@@ -139,6 +139,19 @@ public sealed class ShopfloorSapSync : BackgroundService
                     _logger.LogWarning(ex, "Shopfloor: Mengen aus SAP fehlgeschlagen.");
                 }
             }
+            // Verkauf J4 (erwarteter Umsatz, Gutschriften), 2026-11-02: Stand bis gestern, auf den Abfragetag geschrieben.
+            if (options.SapVerkaufEnabled)
+            {
+                try
+                {
+                    LastResult["verkauf"] = await VerkaufCoreAsync(client, DateOnly.FromDateTime(DateTime.Today), true, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    LastResult["verkauf"] = new JsonObject { ["ok"] = false, ["meldung"] = ex.GetBaseException().Message };
+                    _logger.LogWarning(ex, "Shopfloor: Verkauf aus SAP fehlgeschlagen.");
+                }
+            }
             return LastResult;
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -184,6 +197,54 @@ public sealed class ShopfloorSapSync : BackgroundService
         result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
         result["geschrieben"] = true;
         _logger.LogInformation("Shopfloor: Mengen aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
+        return result;
+    }
+
+    /// <summary>
+    /// Verkauf J4 fuer den Abfragetag D (Monat des Vortags). Ohne <paramref name="write"/> nur Vorschau, sonst ueber ApplyPush
+    /// als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/verkauf?tag=JJJJ-MM-TT.
+    /// </summary>
+    public async Task<JsonObject> VerkaufAsync(DateOnly day, bool write, CancellationToken ct)
+    {
+        var (client, _) = await CreateClientAsync(ct);
+        using (client)
+            return await VerkaufCoreAsync(client, day, write, ct);
+    }
+
+    private async Task<JsonObject> VerkaufCoreAsync(HttpClient client, DateOnly day, bool write, CancellationToken ct)
+    {
+        var options = _options.CurrentValue;
+        var (serviceUrl, _, _) = await ResolveConnectionAsync(_services, ct);
+        var root = KpiLiefertreueSync.GatewayRoot(options.KpiGatewayRoot, serviceUrl);
+        var sapClient = string.IsNullOrWhiteSpace(options.KpiSapClient) ? "100" : options.KpiSapClient.Trim();
+        using var response = await client.GetAsync(ShopfloorSapVerkauf.Url(root, sapClient, ShopfloorSapVerkauf.ReportMonth(day)), ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"SAP C_SALESANALYTICSQRY_1_CDS: HTTP {(int)response.StatusCode} {response.ReasonPhrase}" + response.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Forbidden => " (dem technischen Benutzer fehlt die Berechtigung fuer diesen Service).",
+                System.Net.HttpStatusCode.NotFound => " (Service im Gateway nicht aktiviert).",
+                _ => "."
+            } + KpiLiefertreueSync.SapMessage(body));
+        using var document = JsonDocument.Parse(body);
+        var rows = document.RootElement.TryGetProperty("d", out var d) && d.TryGetProperty("results", out var r) && r.ValueKind == JsonValueKind.Array
+            ? r.EnumerateArray().Select(e => e.Clone()).ToList()
+            : throw new InvalidOperationException("SAP C_SALESANALYTICSQRY_1_CDS: Antwort ohne d.results.");
+
+        var result = ShopfloorSapVerkauf.Compute(day, rows);
+        result["ok"] = true;
+        result["geschrieben"] = false;
+        if (!write)
+            return result;
+        var store = _stores.Store;
+        var dayIso = (string)result["day"]!;
+        var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+        result["uebersprungen_manuell"] = skipped;
+        result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
+        result["geschrieben"] = true;
+        _logger.LogInformation("Shopfloor: Verkauf aus SAP fuer {Day} (Monat {Month}) geschrieben, {Skipped} manuelle Werte behalten",
+            dayIso, (string)result["monat"]!, skipped.Count);
         return result;
     }
 

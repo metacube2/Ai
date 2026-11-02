@@ -4705,17 +4705,19 @@
     },
     {
      "key": "umsatz_plan",
-     "label": "Geplanter Umsatz Monat (zc23)",
+     "label": "Erwarteter Umsatz Monat (Fiori Umsatz prüfen)",
      "type": "num",
      "col": "H",
      "group": "Auftragseingang & Umsatz",
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "Z-Tabelle hinter ZC23",
-      "vorschlag_feld": "zu klären (kundeneigene Transaktion)",
-      "vorschlag_odata": "eigener OData-Service / CDS-View nötig",
-      "status": "offen"
+      "vorschlag_tabelle": "Fiori «Umsatz prüfen» (ersetzt ZC23)",
+      "vorschlag_feld": "SlsVolumeNetAmtInDspCrcy + OpnOutbDelivsForInvcNetAmtInDC + OpenSalesOrdersNetAmountInDC",
+      "vorschlag_odata": "C_SALESANALYTICSQRY_1_CDS (P_DisplayCurrency='CHF', P_ExchangeRateType='M')",
+      "selektion": "SalesOrganization 1100, BillingDocDateYearMonth = Monat des Vortags (am 1. = Vormonat)",
+      "status": "definiert",
+      "bemerkung": "Job J4 (Paket Fabio 2026-11-01); Kontrolle 10/2026 8'827'624 CHF"
      }
     },
     {
@@ -4736,7 +4738,7 @@
     },
     {
      "key": "abw_plan",
-     "label": "Abweichung IST zu geplant",
+     "label": "Abweichung IST zu erwartet",
      "type": "calc",
      "calc": "v.umsatz_ist - v.umsatz_plan",
      "group": "Auftragseingang & Umsatz",
@@ -4745,7 +4747,7 @@
     },
     {
      "key": "erf_plan",
-     "label": "Umsatz IST zu zc23",
+     "label": "Umsatz IST zu erwartet",
      "type": "calc",
      "calc": "v.umsatz_plan ? v.umsatz_ist / v.umsatz_plan * 100 : null",
      "group": "Auftragseingang & Umsatz",
@@ -4753,24 +4755,8 @@
      "digits": 1
     },
     {
-     "key": "ae_tr5",
-     "label": "AE Abteilung TR5",
-     "type": "num",
-     "col": "M",
-     "group": "AE pro Bereich",
-     "unit": "CHF",
-     "src": "sap",
-     "sap": {
-      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
-      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
-      "vorschlag_odata": "API_SALES_ORDER_SRV",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
-     }
-    },
-    {
      "key": "ae_tx",
-     "label": "AE Transmitter TX + TR5",
+     "label": "AE Transmitter (TR5 + TX)",
      "type": "num",
      "col": "N",
      "group": "AE pro Bereich",
@@ -4804,29 +4790,13 @@
      "key": "ae_rest",
      "label": "AE restliche Bereiche",
      "type": "calc",
-     "calc": "v.ae_aktuell - v.ae_tr5 - v.ae_tx - v.ae_dw",
+     "calc": "v.ae_aktuell - v.ae_tx - v.ae_dw",
      "group": "AE pro Bereich",
      "unit": "CHF"
     },
     {
-     "key": "u_tr5",
-     "label": "Umsatz Abteilung TR5",
-     "type": "num",
-     "col": "Q",
-     "group": "Umsatz pro Bereich",
-     "unit": "CHF",
-     "src": "sap",
-     "sap": {
-      "vorschlag_tabelle": "VBRK / VBRP",
-      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
-      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
-     }
-    },
-    {
      "key": "u_tx",
-     "label": "Umsatz Transmitter TX + TR5",
+     "label": "Umsatz Transmitter (TR5 + TX)",
      "type": "num",
      "col": "R",
      "group": "Umsatz pro Bereich",
@@ -4860,7 +4830,7 @@
      "key": "u_rest",
      "label": "Umsatz restliche Bereiche",
      "type": "calc",
-     "calc": "v.umsatz_ist - v.u_tr5 - v.u_tx - v.u_dw",
+     "calc": "v.umsatz_ist - v.u_tx - v.u_dw",
      "group": "Umsatz pro Bereich",
      "unit": "CHF"
     },
@@ -4873,10 +4843,12 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBRK / VBRP",
-      "vorschlag_feld": "NETWR Fakturaart Gutschrift (z. B. G2)",
-      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
-      "status": "offen"
+      "vorschlag_tabelle": "Fiori «Umsatz prüfen»",
+      "vorschlag_feld": "CustCrdtMemoNetAmtInDspCrcy",
+      "vorschlag_odata": "C_SALESANALYTICSQRY_1_CDS (P_DisplayCurrency='CHF', P_ExchangeRateType='M')",
+      "selektion": "SalesOrganization 1100, BillingDocDateYearMonth = Monat des Vortags (am 1. = Vormonat)",
+      "status": "definiert",
+      "bemerkung": "Job J4 (Paket Fabio 2026-11-01); Kontrolle 10/2026 110'412 CHF"
      }
     },
     {

@@ -782,6 +782,7 @@ async function viewDaily(m) {
   S.week = monday(parseIso(focusDay));
   S.activeDay = focusDay;
   await loadWeek(m);
+  await syncTvFromRs(m);
   const days = [...Array(7)].map((_, i) => addDaysD(S.week, i));
   const kw = isoWeek(S.week);
   $("#view").innerHTML = `
@@ -790,6 +791,7 @@ async function viewDaily(m) {
       <button class="btn" data-export="${m.key}">Export (CSV)</button></div>
     ${(m.fields || []).some(f => f.key === "ampel") ? '<div id="ampelBox"></div>' : ""}
     ${m.key === "verkauf" ? '<div id="goalBox"></div>' : ""}
+    ${tvAutoOn(m) ? `<div id="tvInfo" class="tvinfo">${tvInfoHtml()}</div>` : ""}
     <div id="trendBox"></div>
     <div id="chartBox"></div>
     <div class="toolbar">
@@ -816,6 +818,40 @@ async function viewDaily(m) {
   renderDailyTrend(m);
   renderDailyChart(m);
   renderAmpel(m);
+}
+/* ---------------------------------------------------------------- PPD Terminverschiebungen aus Rückstandslisten (2026-11-01, Patch 04)
+   tv_seh/tv_tr5/tv_tx/tv_dw = Summe «Menge im Rückstand» (menge_rs) aller offenen Positionen der Liste rs_<abteilung>.
+   Offen = Status nicht erledigt/abgesagt/storniert (auch Tippfehler wie «erledgt»). Berechnet wird beim Öffnen von PPD,
+   nur für den heutigen Tag, und im Tagesdatensatz gespeichert (Verlauf/Kacheln). Vortage bleiben unverändert.
+   Einschalten ohne Code: in shopfloor_config.json beim Modul ppd "tv_from_rs": true (ohne Eintrag bleibt alles wie bisher, manuelle Erfassung). */
+const TV_CLOSED = /^\s*(erl|abgesagt|storn)/i;
+let TV_INFO = null;
+function tvAutoOn(m) { return !!(m && m.key === "ppd" && m.tv_from_rs === true); }
+function tvRsMods() { return S.cfg.modules.filter(x => x.kind === "list" && /^rs_/.test(x.key)); }
+function tvAuto(m, k) { return tvAutoOn(m) && tvRsMods().some(x => "tv_" + x.key.slice(3) === k) && (m.fields || []).some(f => f.key === k); }
+async function syncTvFromRs(m) {
+  if (!tvAutoOn(m)) return;
+  const day = todayIso(); const changes = {}; const info = [];
+  try {
+    for (const rm of tvRsMods()) {
+      const k = "tv_" + rm.key.slice(3); if (!(m.fields || []).some(f => f.key === k)) continue;
+      const recs = await loadRecords(rm.key); let qty = 0, pos = 0;
+      (recs || []).forEach(r => { const d = r.data || {}; if (TV_CLOSED.test(d[rm.status_field || "status"] || "")) return; const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });
+      changes[k] = qty; info.push({ k, dept: rm.dept || rm.key.slice(3).toUpperCase(), mod: rm.key, qty, pos });
+    }
+    TV_INFO = { at: new Date(), rows: info };
+    const cur = ((S.daily.ppd || {})[day] || {}).data || {};
+    const diff = {}; Object.keys(changes).forEach(k => { if (cur[k] !== changes[k]) diff[k] = changes[k]; });
+    if (!Object.keys(diff).length) return;
+    await api("POST", "api/daily", { module: m.key, day, changes: diff });
+    S.daily.ppd = S.daily.ppd || {}; const rec = S.daily.ppd[day] || (S.daily.ppd[day] = { data: {} }); rec.data = Object.assign({}, rec.data, diff);
+  } catch (e) { TV_INFO = { err: e.message }; }
+}
+function tvInfoHtml() {
+  if (!TV_INFO) return "";
+  if (TV_INFO.err) return `Terminverschiebungen aus den Rückstandslisten konnten nicht berechnet werden: ${esc(TV_INFO.err)}`;
+  const t = TV_INFO.rows.map(r => `<a href="#/m/${r.mod}">${esc(r.dept)}</a> ${fmtNum(r.qty)} Stk. (${r.pos} Pos.)`).join(" · ");
+  return `<b>Terminverschiebungen</b> automatisch aus den Rückstandslisten, offene Positionen, Stand ${TV_INFO.at.toTimeString().slice(0, 5)}: ${t}`;
 }
 /* ---------------------------------------------------------------- Ampel pro Bereich (2026-10-15)
    Teamleiter oder Stellvertretung setzen Grün / Orange / Rot plus Prozentwert und kurze Begründung.
@@ -925,7 +961,7 @@ async function renderGoForIt(m) {
       <div class="l">Go-for-it-Ziel ${esc(mName)}</div>
       <label class="gfi-edit muted" style="font-size:12px">Ziel festlegen <input type="number" step="1000" min="0" class="field-in" id="gfiIn" value="${goal != null ? goal : ""}" style="width:130px"></label></div>
     <div class="kpi"><div class="v">${ist != null ? fmtNum(ist) : "–"}</div><div class="l">Umsatz IST ${esc(mName)}${pct != null ? ` · <b>${fmtNum(pct, 1)} %</b> vom Ziel` : ""}</div>${pct != null ? bar(pct) : ""}</div>
-    <div class="kpi"><div class="v">${goal != null && ist != null ? fmtNum(Math.max(0, goal - ist)) : "–"}</div><div class="l">fehlt bis Go-for-it${plan != null ? ` · geplant (ZC23) ${fmtNum(plan)}` : ""}</div></div>
+    <div class="kpi"><div class="v">${goal != null && ist != null ? fmtNum(Math.max(0, goal - ist)) : "–"}</div><div class="l">fehlt bis Go-for-it${plan != null ? ` · erwartet (Fiori) ${fmtNum(plan)}` : ""}</div></div>
     <div class="kpi"><div class="v">${ae != null ? fmtNum(ae) : "–"}</div><div class="l">Auftragseingang ${esc(mName)}${ae != null && ist ? ` · Book to Bill ${fmtNum(ae / ist, 2)}` : ""}</div></div>
   </div>`;
   const inp = $("#gfiIn");
@@ -1008,7 +1044,7 @@ function renderDailyGrid(m) {
   for (const g of groups) {
     if (g.name) body += `<tr class="grp"><th colspan="${days.length + 1}">${esc(g.name)}</th></tr>`;
     for (const f of g.fields) {
-      body += `<tr class="${f.type === "calc" ? "calc" : ""}"${f.type === "calc" ? ` data-ck="${f.key}"` : ""}><th class="lab">${esc(f.label)}${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ""} ${f.src ? `<span class="src ${f.src}">${f.src.toUpperCase()}</span>` : ""}</th>`;
+      body += `<tr class="${f.type === "calc" ? "calc" : ""}"${f.type === "calc" ? ` data-ck="${f.key}"` : ""}><th class="lab">${esc(f.label)}${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ""} ${f.src ? `<span class="src ${f.src}">${f.src.toUpperCase()}</span>` : ""}${tvAuto(m, f.key) ? `<span class="src rs" title="Automatisch: Summe «Menge im Rückstand» der offenen Positionen der Rückstandsliste">RS</span>` : ""}</th>`;
       for (const d of days) {
         const wd = parseIso(d).getDay(); const cls = [d === today ? "today" : "", wd === 0 || wd === 6 ? "we" : ""];
         const r = recs[d]; const meta = r && r.meta && r.meta[f.key];
@@ -1022,6 +1058,7 @@ function renderDailyGrid(m) {
           const v = r ? r.data[f.key] : undefined;
           const over = f.limit && typeof v === "number" && v > f.limit ? " over" : "";
           const t = meta ? ` title="Geliefert von ${esc(meta.src)} am ${esc(fmtDate(meta.ts))} ${esc(meta.ts.slice(11, 16))}"` : "";
+          if (tvAuto(m, f.key)) { body += `<td class="${cls.join(" ")} rsv" title="Automatisch aus der Rückstandsliste (beim Öffnen von PPD für heute berechnet)"><div class="out">${esc(fmtNum(v))}</div></td>`; continue; }
           body += `<td class="${cls.join(" ")}"${t}>${gridInput(f, v, d, over)}</td>`;
         }
       }
