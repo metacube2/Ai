@@ -5,8 +5,9 @@ Stand: 2026-11-02
 ## Operations KPI: Rubrik Kunden auf OTD / OTIF / OTP (Spezifikation Fabio), 2026-11-02
 
 - Zaehler je Auftraggeber und Monat im Monatsabruf, Namen fuer alle Kunden, Suche nach Nummer oder Name, Kacheln, Monatstabelle,
-  Trefferliste, „Abweichungen dieser Kunden“, Excel Kunden YTD / pro Monat (`aa12a39`, Tests 1358/1358), nicht deployed.
-- Nach dem Deploy Oktober neu abrufen, dann gegen Fabios Abnahmewerte pruefen (Hitachi 2'462 / 94.2 %, Kunde 682 Oktober).
+  Trefferliste, „Abweichungen dieser Kunden“, Excel Kunden YTD / pro Monat (`aa12a39`, Tests 1358/1358).
+- Deploy 13:57 (`187f8a0`, mit dem PPD-Verzug bei ausgeschaltetem Schalter), Oktober um 14:02 neu abgerufen, Abnahme bestanden:
+  alle Pruefwerte Fabios exakt (alle Kunden, Hitachi 32 Kunden / 2'462 / 94.2 %, 682, 24157, 9204, 24940, 682 im Oktober).
 
 ## Shopfloor: PPD-Verzug wie ZC22 gebaut (Mail Fabio), 2026-11-02 nachmittags
 

@@ -3,7 +3,8 @@
 Auftrag: Mail Fabio Palma vom 2026-10-14 mit Spezifikation und Referenzpaket (`docs/operations_kpi/`). Menue nach Wunsch Ingo:
 **Operations** mit den Unterreitern **KPI** (darunter **OTD / OTIF / OTP**) und **Shopfloor** (der bisherige Reiter).
 
-**Nachtrag 2026-11-02:** Rubrik **Kunden** gebaut (Abschnitt 5, `aa12a39`), noch nicht deployed. Monatsabruf `202610` am 02.11. um
+**Nachtrag 2026-11-02:** Rubrik **Kunden** gebaut (Abschnitt 5, `aa12a39`), **produktiv seit 13:57 (`187f8a0`), Abnahme bestanden**
+(Oktober um 14:02 neu abgerufen, alle Pruefwerte Fabios exakt gleich). Monatsabruf `202610` am 02.11. um
 00:26 ok (Summen gleich Fabios Referenz), die Berechtigung von `POWERBI` reicht also weiterhin (3b).
 
 Stand 2026-10-14 10:35: **produktiv und live aus SAP, Abnahme bestanden (3b)** (Deploy 10:04 `f51bdeb`, Korrektur 10:11 `982e193`, gepusht im manuellen Modus nach
@@ -161,7 +162,11 @@ die Kundensicht noch nicht; nach dem Deploy muss Oktober einmal neu abgerufen we
 Monatszahl), OTIF beim Auftraggeber, Kunde nur mit OTP-Positionen erscheint, Ausschluesse fehlen, Suche, Excel, Seite mit und ohne
 Kundensicht. Seitenlogik zusaetzlich mit Node und Beispieldaten durchgespielt (Summen, Suche, Sprung in die Abweichungsliste).
 
-**Abnahme (offen, nach Deploy und Neuabruf):** Gesamtsummen 17'238 / 9'943 / 17'041 (die Seite trifft sie schon), Suche „Hitachi“
+**Abnahme: bestanden am 2026-11-02 14:05** (Deploy 13:57, Oktober neu abgerufen 14:02, Excel der Rubrik nachgerechnet, Seitenskript
+der ausgelieferten Seite mit den echten Daten in Node durchgespielt). Alle Werte exakt wie Fabios Tabelle: alle Kunden 17'238 / 92.3 %
+(82.8 %), 9'943 / 90.4 % (79.0 %), 17'041 / 75.8 % (60.6 %), Summe ueber alle Kunden = Seite (Pruefregel 1, auch im Monatsblatt);
+Hitachi 32 Kunden mit denselben Werten wie unten; 682, 24157, 9204, 24940 je auf die Kommastelle; 682 Oktober gleich. 3'576 Zeilen
+Kunde/Monat, 1'123 Kunden, alle mit Namen. *Ueberholt:* die folgende Zeile „offen“. Vorgabe war: Gesamtsummen 17'238 / 9'943 / 17'041 (die Seite trifft sie schon), Suche „Hitachi“
 32 Kunden, 2'462 Positionen, OTD 94.2 % (86.3 %), OTIF 93.9 % (85.4 %) aus 1'204 Auftraegen, OTP 82.7 % (71.0 %) aus 2'432; Kunde 682
 im Oktober 86 / 89.5 %, 41 / 82.9 %, 94 / 80.9 %. Weitere Werte je Kunde im Spezifikationsdokument und in Fabios Excel.
 

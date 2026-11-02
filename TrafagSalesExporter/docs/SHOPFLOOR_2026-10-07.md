@@ -524,8 +524,8 @@ Materialfilter wegfallen? Bis zur Antwort rechnet das Cockpit wie das Excel.
 Fehler statt Zahl, wenn das System den Modus nicht kennt), Aufruf im SAP-Abgleich 04:00/12:45 ueber `ShopfloorSapSync`, geschrieben
 auf den Abfragetag ueber `ApplyPush` (manuell erfasste Werte bleiben), Endpunkte `GET/POST shopfloor/api/sap/verzug?tag=`, Schalter
 `Shopfloor:SapVerzugEnabled` (Vorgabe aus), Config `ppd.verzug_*` mit Quelle und Selektion, Tests `ShopfloorSapVerzugTests`.
-Suite 1345/1345 im Release-Worktree. **Nicht deployed.**
+Suite 1345/1345 im Release-Worktree. *Nachtrag:* Code mit dem Deploy 2026-11-02 13:57 (`187f8a0`) produktiv, Schalter weiter aus.
 
-**Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912797` frei und importiert nach P76; (2) Deploy; (3) Vorschau
+**Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912797` frei und importiert nach P76; (2) Deploy (*erledigt 13:57*); (3) Vorschau
 `GET shopfloor/api/sap/verzug` in P76 gegen ZC22 (Fabio/Anh Nhi); (4) `SapVerzugEnabled = true`. Vor dem Import liefert die Vorschau
 die Meldung „Transport T76K912797 fehlt“, keine falsche Zahl.
