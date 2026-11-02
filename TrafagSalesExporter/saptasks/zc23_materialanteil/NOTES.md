@@ -262,5 +262,14 @@ nicht verglichen werden, ohne die Basis anzuschreiben. Abweichungen zum Dashboar
 Bestelldatum. Fuer eine Automatik braucht es ZC23 je VerkNr und Zeitraum plus den ZLO03-Top-Down-Bedarf je Komponente
 mit Materialgruppe und Standardpreis. Fuer die Werte wichtig: ZLO03 rechnet seit FIX 23 (in P76 seit 29.10.) in der
 Stuecklisten-Einheit; die ungerundeten Stueckkosten und Textpositionen ausserhalb des Bedarfs kommen erst mit FIX 24
-(`T76K912785`, Import offen). Ein Handergebnis aus P76 vor diesem Import kann bei Teilen mit Preiseinheit ueber 1 abweichen. Vor dem Bau mit dem Anfragenden klaeren: ob Disponent 006 dazugehoert, und ob „Termin bestaetigt“
+(`T76K912785`, Import offen). Ein Handergebnis aus P76 vor diesem Import kann bei Teilen mit Preiseinheit ueber 1 abweichen.
+
+**Entscheide Ingo 2026-11-02 fuer Phase 2:**
+- Einkaufsdisponenten **001 bis 006**: 006 ist ein neuer, wichtiger Disponent.
+- **Basis ist „Termin bestaetigt“** des Kundenauftrags im gewaehlten Zeitraum.
+- **Absagegrund muss leer sein**; sonst zaehlen abgesagte Positionen mit, die der Kunde gar nicht bestellt hat.
+- Im Spend-Aufriss ein **neuer Einstieg mit rot markiertem Knopf**, mit mehreren aufklappbaren Stufen, **mindestens drei**.
+Noch offen vor dem Bau: welche drei Stufen genau, ob der Schalter „Nur Einkaufsteile (001 bis 005)“ der bestehenden
+Einstiege ebenfalls auf 001 bis 006 geht, und woher das Dashboard Verkaufsmenge je VerkNr und Stuecklistenbedarf je
+Komponente bekommt (heute nicht im Cache: ZC23 je VerkNr mit Termin bestaetigt und Absagegrund, ZLO03-Bedarfsmenge). Vor dem Bau mit dem Anfragenden klaeren: ob Disponent 006 dazugehoert, und ob „Termin bestaetigt“
 (auch bereits gelieferte Positionen) die gewuenschte Basis ist.
