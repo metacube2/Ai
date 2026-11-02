@@ -221,6 +221,24 @@ public static class ShopfloorEndpoints
         }
     }
 
+    private static async Task<IResult> Verzug(HttpContext c, bool write)
+    {
+        var tag = c.Request.Query["tag"].ToString();
+        var day = DateOnly.FromDateTime(DateTime.Today);
+        if (tag.Length > 0 && !DateOnly.TryParseExact(tag, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out day))
+            return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
+        try
+        {
+            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VerzugAsync(day, write, c.RequestAborted);
+            return J(c, result);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Results.Json(new { ok = false, meldung = ex.GetBaseException().Message }, statusCode: 502);
+        }
+    }
+
     private static JsonObject KpiStatus(KpiLiefertreueSync sync, string? cut)
     {
         var result = new JsonObject
@@ -368,6 +386,9 @@ public static class ShopfloorEndpoints
         // Verkauf J4 (erwarteter Umsatz Monat, Gutschriften aus Fiori «Umsatz prüfen»), 2026-11-02: GET = Vorschau, POST = schreiben.
         g.MapGet("/sap/verkauf", async Task<IResult> (HttpContext c) => await Verkauf(c, false));
         g.MapPost("/sap/verkauf", async Task<IResult> (HttpContext c) => await Verkauf(c, true));
+        // PPD-Verzug je Abteilung wie ZC22 (ShopAufSet Typ VZ), 2026-11-02: GET = Vorschau, POST = schreiben.
+        g.MapGet("/sap/verzug", async Task<IResult> (HttpContext c) => await Verzug(c, false));
+        g.MapPost("/sap/verzug", async Task<IResult> (HttpContext c) => await Verzug(c, true));
         g.MapPost("/sap/sync", async Task<IResult> (HttpContext c) =>
         {
             try

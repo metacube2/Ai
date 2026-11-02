@@ -3236,11 +3236,12 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / AFPO",
-      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
-      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
+      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
+      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
+      "selektion": "Werk 1100, Disponent S*, Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
+      "status": "definiert",
+      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
      }
     },
     {
@@ -3252,11 +3253,12 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / AFPO",
-      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
-      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
+      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
+      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
+      "selektion": "Werk 1100, Disponent EK*, Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
+      "status": "definiert",
+      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
      }
     },
     {
@@ -3268,11 +3270,12 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / AFPO",
-      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
-      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
+      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
+      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
+      "selektion": "Werk 1100, Disponent EL*, Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
+      "status": "definiert",
+      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
      }
     },
     {
@@ -3284,11 +3287,12 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / AFPO",
-      "vorschlag_feld": "offene FA-Menge mit Eckendtermin AFKO-GLTRP < heute",
-      "vorschlag_odata": "API_PRODUCTION_ORDER_2_SRV",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
+      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
+      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
+      "selektion": "Werk 1100, Disponent D* ohne DW1/DL6 (inkl. DS1/DS2/DSN), Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
+      "status": "definiert",
+      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
      }
     },
     {

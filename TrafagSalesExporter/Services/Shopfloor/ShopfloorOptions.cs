@@ -55,6 +55,12 @@ public sealed class ShopfloorOptions
     /// </summary>
     public bool SapVerkaufEnabled { get; set; }
 
+    /// <summary>
+    /// PPD-Verzug je Abteilung wie ZC22 schreiben (ShopAufSet Typ VZ), 2026-11-02 (Mail Fabio). Erst einschalten, wenn der Transport
+    /// T76K912797 in P76 ist und die Vorschau (GET sap/verzug) zu ZC22 passt.
+    /// </summary>
+    public bool SapVerzugEnabled { get; set; }
+
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
     public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45
 

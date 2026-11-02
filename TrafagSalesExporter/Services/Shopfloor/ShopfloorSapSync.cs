@@ -152,6 +152,19 @@ public sealed class ShopfloorSapSync : BackgroundService
                     _logger.LogWarning(ex, "Shopfloor: Verkauf aus SAP fehlgeschlagen.");
                 }
             }
+            // PPD-Verzug je Abteilung wie ZC22 (ShopAufSet Typ VZ), 2026-11-02: Abfragetag, Eckendtermin bis Vortag.
+            if (options.SapVerzugEnabled)
+            {
+                try
+                {
+                    LastResult["verzug"] = await VerzugCoreAsync(client, baseUrl, DateOnly.FromDateTime(DateTime.Today), true, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    LastResult["verzug"] = new JsonObject { ["ok"] = false, ["meldung"] = ex.GetBaseException().Message };
+                    _logger.LogWarning(ex, "Shopfloor: PPD-Verzug aus SAP fehlgeschlagen.");
+                }
+            }
             return LastResult;
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -245,6 +258,36 @@ public sealed class ShopfloorSapSync : BackgroundService
         result["geschrieben"] = true;
         _logger.LogInformation("Shopfloor: Verkauf aus SAP fuer {Day} (Monat {Month}) geschrieben, {Skipped} manuelle Werte behalten",
             dayIso, (string)result["monat"]!, skipped.Count);
+        return result;
+    }
+
+    /// <summary>
+    /// PPD-Verzug fuer den Abfragetag D (offene Auftraege mit Eckendtermin vor D, wie ZC22). Ohne <paramref name="write"/> nur Vorschau,
+    /// sonst ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/verzug?tag=JJJJ-MM-TT.
+    /// </summary>
+    public async Task<JsonObject> VerzugAsync(DateOnly day, bool write, CancellationToken ct)
+    {
+        var (client, baseUrl) = await CreateClientAsync(ct);
+        using (client)
+            return await VerzugCoreAsync(client, baseUrl, day, write, ct);
+    }
+
+    private async Task<JsonObject> VerzugCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
+    {
+        var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVerzug.Filter(_options.CurrentValue.SapPlant, day), ct);
+        var result = ShopfloorSapVerzug.Compute(day, rows);
+        result["ok"] = true;
+        result["geschrieben"] = false;
+        if (!write)
+            return result;
+        var store = _stores.Store;
+        var dayIso = (string)result["day"]!;
+        var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+        result["uebersprungen_manuell"] = skipped;
+        result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
+        result["geschrieben"] = true;
+        _logger.LogInformation("Shopfloor: PPD-Verzug aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
         return result;
     }
 
