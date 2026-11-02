@@ -75,3 +75,28 @@ Arbeitsregeln, Testerwartungen und fachliche Grenzen stehen in `persona.md`.
 
 Bereichsspezifische `CLAUDE.md`-Dateien, zum Beispiel `zlo03/CLAUDE.md`, gelten zusaetzlich
 zu dieser Root-Datei.
+
+## 5. Deploy: immer mit dem Deploy-Werkzeug
+
+Wunsch Ingo vom 2026-11-02: **Deployt wird immer mit dem Werkzeug**, ohne dass Ingo es jedes Mal
+erwaehnen muss. Der Aufruf geht auch im Auto-Modus durch (am 2026-11-02 so gelaufen), wenn er genau
+so und allein abgesetzt wird, als Bash aus dem Projektordner:
+
+```
+dotnet run --project .tmp_tools/DeployHeadless -c Release > .tmp_deploy_<JJJJ-MM-TT>_<thema>.log 2>&1
+```
+
+Kein `;`, `&&`, `|`, kein vorangestelltes `cd`, kein zweiter Befehl daneben. Nie selbst
+`dotnet publish` aufrufen.
+
+Vorher:
+
+1. Release-Worktree auf den Commit ziehen (`git checkout --detach <commit>`) und dort die Tests
+   gruen laufen lassen.
+2. Pruefen, dass kein Einkauf-Delta laeuft. Laesst sich das nicht pruefen, Ingo fragen.
+3. Monitor-Fenster oeffnen.
+
+Nachher: Zeile mit „Commit“ im Protokoll gegen den gewuenschten Commit pruefen. Der Alarm
+„-wal/-shm verschwunden“ ist harmlos, wenn beide Dateien wieder da sind.
+
+Einzelheiten stehen in `docs/rag/DEPLOYMENT.md` oben und in `router.md` im Abschnitt Auto-Modus.
