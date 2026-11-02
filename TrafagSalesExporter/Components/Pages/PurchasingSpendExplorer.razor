@@ -50,7 +50,19 @@
                     @T(perspective.LabelDe, perspective.LabelEn)
                 </MudButton>
             }
+            @* Materialanteil je Produktgruppe (Phase 2, 2026-11-02): eigene Tabelle mit eigenem Datenstand, roter Knopf
+               (Entscheid Ingo). Keine Perspektive dieser Komponente, damit der Spend-Aufriss unveraendert bleibt. *@
+            <MudButton Size="Size.Small"
+                       Variant="@(_showMaterialShare ? Variant.Filled : Variant.Outlined)"
+                       Color="Color.Error"
+                       OnClick="() => _showMaterialShare = !_showMaterialShare">
+                @T("Materialanteil je Produktgruppe", "Material share by product group")
+            </MudButton>
         </MudStack>
+        @if (_showMaterialShare)
+        {
+            <PurchasingMaterialShare />
+        }
         <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block mb-2">
             @T("Ebenen", "Levels"): @ActiveLevelPath
         </MudText>
@@ -432,6 +444,7 @@
     [Parameter] public PurchasingProductGroupAllocationSummary PartsProductGroupAllocation { get; set; } = PurchasingProductGroupAllocationSummary.Empty;
 
     private bool _onlyPurchasingParts = true;
+    private bool _showMaterialShare;
 
     private IReadOnlyList<PurchasingSpendPerspectiveResult> ShownPerspectives
         => _onlyPurchasingParts && PartsPerspectives.Count > 0 ? PartsPerspectives : Perspectives;

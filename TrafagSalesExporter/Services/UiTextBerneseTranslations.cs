@@ -10,6 +10,15 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Materialanteil je Produktgruppe (2026-11-02)
+            ["Materialanteil je Produktgruppe"] = "Materialaateil pro Produktgruppe",
+            ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Materialaateil us bestätigte Chundenufträg (ZC23, Termin bestätigt im Zitruum, ohni Absagegrund) mau Stücklistebedarf (ZLO03 Top-Down, aui Stufe) mau Stückchöschte, nume Ychoufsteili vo de Disponänte 001 bis 006. Das isch nid ds Ychoufsvolume vo de angere Ystiege.",
+            ["Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist."] = "No keni Date. D Wärt chöme usem SAP-Set ZloTopDownSet; dr Ychoufslouf ladt se täglech, sobald dr SAP-Transport i P76 isch.",
+            ["Stand {0}, Termin bestätigt {1} bis {2}"] = "Stand {0}, Termin bestätigt {1} bis {2}",
+            ["Umsatz bestätigt"] = "Umsatz bestätigt",
+            ["Materialanteil"] = "Materialaateil",
+            ["Bedarfsmenge"] = "Bedarfsmängi",
+            ["Stückkosten"] = "Stückchöschte",
             // Einkauf Feedback 2026-10-22
             ["Rechnet"] = "Rächnet",
             ["Ladeprotokoll"] = "Ladeprotokoll",

@@ -20,6 +20,15 @@ internal static class PurchasingUiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Materialanteil je Produktgruppe (2026-11-02)
+                ["Materialanteil je Produktgruppe"] = "Proporción de material por grupo de productos",
+                ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Proporción de material de pedidos de cliente confirmados (ZC23, fecha confirmada en el periodo, sin motivo de rechazo) por demanda de lista de materiales (ZLO03 descendente, todos los niveles) por coste unitario, solo piezas de compra de los planificadores 001 a 006. No es el volumen de compras de los demás puntos de entrada.",
+                ["Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist."] = "Todavía no hay datos. Los valores provienen del conjunto SAP ZloTopDownSet; la ejecución de compras los carga a diario en cuanto el transporte SAP esté en P76.",
+                ["Stand {0}, Termin bestätigt {1} bis {2}"] = "Estado {0}, fecha confirmada {1} a {2}",
+                ["Umsatz bestätigt"] = "Facturación confirmada",
+                ["Materialanteil"] = "Proporción de material",
+                ["Bedarfsmenge"] = "Cantidad de demanda",
+                ["Stückkosten"] = "Coste unitario",
                 // Stuecklisten-Netz „Gehirn“ (2026-10-16)
                 ["Stücklisten-Netz („Gehirn“)"] = "Red de listas de materiales («cerebro»)",
                 ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Cada hebra es una relación de la lista de materiales de arriba abajo: los productos finales están fuera como la corteza cerebral, los subconjuntos en medio y los componentes dentro. Donde convergen muchas hebras hay un punto de cruce: una pieza que está en muchos productos. Haga clic en un punto para resaltar sus rutas hacia arriba y hacia abajo. Datos como en «Uso y riesgo»: solo componentes con código LZ, proveedores de los últimos 24 meses.",
@@ -164,6 +173,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Materialanteil je Produktgruppe (2026-11-02)
+                ["Materialanteil je Produktgruppe"] = "Quota materiale per gruppo prodotti",
+                ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Quota materiale da ordini cliente confermati (ZC23, data confermata nel periodo, senza motivo di rifiuto) per fabbisogno da distinta base (ZLO03 top-down, tutti i livelli) per costo unitario, solo parti d'acquisto dei pianificatori da 001 a 006. Non è il volume d'acquisto degli altri punti di ingresso.",
+                ["Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist."] = "Ancora nessun dato. I valori provengono dal set SAP ZloTopDownSet; il caricamento acquisti li carica ogni giorno non appena il trasporto SAP è in P76.",
+                ["Stand {0}, Termin bestätigt {1} bis {2}"] = "Stato {0}, data confermata da {1} a {2}",
+                ["Umsatz bestätigt"] = "Fatturato confermato",
+                ["Materialanteil"] = "Quota materiale",
+                ["Bedarfsmenge"] = "Quantità di fabbisogno",
+                ["Stückkosten"] = "Costo unitario",
                 // Stuecklisten-Netz „Gehirn“ (2026-10-16)
                 ["Stücklisten-Netz („Gehirn“)"] = "Rete delle distinte base («cervello»)",
                 ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Ogni filo è una relazione di distinta base dall'alto verso il basso: i prodotti finiti stanno all'esterno come la corteccia, i sottoassiemi nel mezzo, i componenti all'interno. Dove convergono molti fili c'è un punto di incrocio: un pezzo presente in molti prodotti. Fare clic su un punto per evidenziare i suoi percorsi verso l'alto e verso il basso. Dati come in «Utilizzo e rischio»: solo componenti con codice LZ, fornitori degli ultimi 24 mesi.",
@@ -308,6 +326,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Materialanteil je Produktgruppe (2026-11-02)
+                ["Materialanteil je Produktgruppe"] = "उत्पाद समूह के अनुसार सामग्री हिस्सा",
+                ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "पुष्ट ग्राहक ऑर्डर (ZC23, अवधि में पुष्ट तिथि, अस्वीकृति कारण के बिना) से सामग्री हिस्सा गुणा बीओएम मांग (ZLO03 टॉप-डाउन, सभी स्तर) गुणा इकाई लागत, केवल योजनाकार 001 से 006 के खरीद पुर्जे। यह अन्य प्रवेश बिंदुओं की खरीद मात्रा नहीं है।",
+                ["Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist."] = "अभी कोई डेटा नहीं। मान SAP सेट ZloTopDownSet से आते हैं; SAP ट्रांसपोर्ट P76 में आते ही खरीद रन इन्हें रोज़ लोड करता है।",
+                ["Stand {0}, Termin bestätigt {1} bis {2}"] = "स्थिति {0}, पुष्ट तिथि {1} से {2}",
+                ["Umsatz bestätigt"] = "पुष्ट बिक्री",
+                ["Materialanteil"] = "सामग्री हिस्सा",
+                ["Bedarfsmenge"] = "मांग मात्रा",
+                ["Stückkosten"] = "इकाई लागत",
                 // Stuecklisten-Netz „Gehirn“ (2026-10-16)
                 ["Stücklisten-Netz („Gehirn“)"] = "बीओएम नेटवर्क («मस्तिष्क»)",
                 ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "हर धागा ऊपर से नीचे तक एक बीओएम संबंध है: अंतिम उत्पाद मस्तिष्क की बाहरी परत की तरह बाहर हैं, असेंबली बीच में और कंपोनेंट अंदर। जहाँ कई धागे मिलते हैं वहाँ एक क्रॉसिंग बिंदु है: ऐसा पुर्ज़ा जो कई उत्पादों में लगता है। किसी बिंदु पर क्लिक करने से उसके ऊपर और नीचे के रास्ते उभरते हैं। डेटा «उपयोग और जोखिम» जैसा: केवल LZ कोड वाले कंपोनेंट, पिछले 24 महीनों के आपूर्तिकर्ता।",
@@ -452,6 +479,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Materialanteil je Produktgruppe (2026-11-02)
+                ["Materialanteil je Produktgruppe"] = "Pjesa e materialit sipas grupit të produkteve",
+                ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Pjesa e materialit nga porositë e konfirmuara të klientëve (ZC23, data e konfirmuar në periudhë, pa arsye refuzimi) herë nevojën sipas listës së materialeve (ZLO03 nga lart poshtë, të gjitha nivelet) herë koston për njësi, vetëm pjesë blerjeje të planifikuesve 001 deri 006. Ky nuk është vëllimi i blerjeve i hyrjeve të tjera.",
+                ["Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist."] = "Ende pa të dhëna. Vlerat vijnë nga grupi SAP ZloTopDownSet; ekzekutimi i blerjeve i ngarkon çdo ditë sapo transporti SAP të jetë në P76.",
+                ["Stand {0}, Termin bestätigt {1} bis {2}"] = "Gjendja {0}, data e konfirmuar {1} deri {2}",
+                ["Umsatz bestätigt"] = "Shitje e konfirmuar",
+                ["Materialanteil"] = "Pjesa e materialit",
+                ["Bedarfsmenge"] = "Sasia e nevojës",
+                ["Stückkosten"] = "Kosto për njësi",
                 // Stuecklisten-Netz „Gehirn“ (2026-10-16)
                 ["Stücklisten-Netz („Gehirn“)"] = "Rrjeti i listave të materialeve («truri»)",
                 ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Çdo fije është një lidhje e listës së materialeve nga lart poshtë: produktet përfundimtare janë jashtë si korteksi, nënmontimet në mes, komponentët brenda. Ku takohen shumë fije ka një pikë kryqëzimi: një pjesë që gjendet në shumë produkte. Klikoni një pikë për të theksuar rrugët e saj lart e poshtë. Të dhënat si te «Përdorimi dhe rreziku»: vetëm komponentë me kod LZ, furnitorë të 24 muajve të fundit.",
@@ -596,6 +632,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Materialanteil je Produktgruppe (2026-11-02)
+                ["Materialanteil je Produktgruppe"] = "Ürün grubuna göre malzeme payı",
+                ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Onaylı müşteri siparişlerinden (ZC23, dönem içinde onaylı tarih, ret nedeni olmadan) malzeme payı çarpı ürün ağacı ihtiyacı (ZLO03 yukarıdan aşağı, tüm seviyeler) çarpı birim maliyet; yalnızca 001 ile 006 planlayıcılarının satınalma parçaları. Bu, diğer girişlerdeki satınalma hacmi değildir.",
+                ["Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist."] = "Henüz veri yok. Değerler SAP kümesi ZloTopDownSet'ten gelir; SAP transportu P76'ya geçer geçmez satınalma çalıştırması bunları her gün yükler.",
+                ["Stand {0}, Termin bestätigt {1} bis {2}"] = "Durum {0}, onaylı tarih {1} ile {2}",
+                ["Umsatz bestätigt"] = "Onaylı ciro",
+                ["Materialanteil"] = "Malzeme payı",
+                ["Bedarfsmenge"] = "İhtiyaç miktarı",
+                ["Stückkosten"] = "Birim maliyet",
                 // Stuecklisten-Netz „Gehirn“ (2026-10-16)
                 ["Stücklisten-Netz („Gehirn“)"] = "Ürün ağacı ağı («beyin»)",
                 ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Her iplik yukarıdan aşağıya bir ürün ağacı ilişkisidir: nihai ürünler beyin kabuğu gibi dışta, alt montajlar ortada, bileşenler içtedir. Birçok ipliğin birleştiği yerde bir kesişme noktası vardır: birçok üründe kullanılan bir parça. Bir noktaya tıklayınca yukarı ve aşağı yolları vurgulanır. Veriler «Kullanım ve risk» ile aynı: yalnızca LZ kodlu bileşenler, son 24 ayın tedarikçileri.",
@@ -740,6 +785,15 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Materialanteil je Produktgruppe (2026-11-02)
+                ["Materialanteil je Produktgruppe"] = "Hap 'ay' ghom HablI'",
+                ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Hap 'ay': ZC23 je' Qapla' (jaj Qapla', Qo' meq Hutlh) DIch, ZLO03 Hap tetlh poQ (Hoch patlh) DIch, wa' Dap 'ar; nab pIn 001 vo' 006 je'meH Hap neH. ghItlhvam je'meH ghom latlh 'oHbe'.",
+                ["Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist."] = "De' tu'lu'be' DaH. SAP ZloTopDownSet De' 'oH; P76 SAP lup Qapchugh, je'meH Qap jaj Hoch De' lI'.",
+                ["Stand {0}, Termin bestätigt {1} bis {2}"] = "Dotlh {0}, jaj Qapla' {1} vo' {2}",
+                ["Umsatz bestätigt"] = "Qapla' Huch",
+                ["Materialanteil"] = "Hap 'ay'",
+                ["Bedarfsmenge"] = "poQ mI'",
+                ["Stückkosten"] = "wa' Dap 'ar",
                 // Stuecklisten-Netz „Gehirn“ (2026-10-16)
                 ["Stücklisten-Netz („Gehirn“)"] = "Hap tetlh mIr («yab»)",
                 ["Jeder Strang ist eine Stücklistenbeziehung von oben nach unten: Endprodukte liegen aussen wie die Hirnrinde, Baugruppen dazwischen, Komponenten innen. Wo viele Stränge zusammenlaufen, sitzt ein Kreuzpunkt: ein Teil, das in vielen Produkten steckt. Klick auf einen Punkt hebt seine Bahnen nach oben und unten hervor. Datenbasis wie „Verwendung & Risiko“: nur Komponenten mit LZ-Code, Lieferanten der letzten 24 Monate."] = "Hoch tlhegh Hap tetlh rar: Dung bIng. Doch naQ Hur, Hap ghom botlh, Hap mach qoD. tlheghmey law' ghomDaq: Hap law' lo'bogh. Daq yIwIv; Hap He Dung bIng je 'angmoH. De' «lo' Qob je» rur: LZ code ghajbogh Hap neH, ngevwI' 24 jar.",

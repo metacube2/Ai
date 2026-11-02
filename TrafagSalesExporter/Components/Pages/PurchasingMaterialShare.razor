@@ -1,0 +1,210 @@
+@using System.Globalization
+@using Microsoft.Data.Sqlite
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+@* Materialanteil je Produktgruppe nach Materialgruppe (Spend-Aufriss Phase 2, 2026-11-02, Bauplan
+   saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md). Eigene Tabelle mit eigenem Datenstand,
+   damit der bestehende Spend-Aufriss unveraendert bleibt (Entscheid Ingo). Daten laedt der Einkauf-Lauf
+   (PurchasingMaterialShareLoader), diese Komponente liest nur. *@
+
+<MudPaper Class="pa-3 mt-2 mb-2" Outlined="true">
+    <MudText Typo="Typo.subtitle1"><strong>@T("Materialanteil je Produktgruppe", "Material share by product group")</strong></MudText>
+    <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block mb-2">
+        @T("Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege.",
+           "Material share from confirmed sales orders (ZC23, confirmed date in the period, without rejection reason) times bill-of-material demand (ZLO03 top-down, all levels) times unit cost, purchased parts of MRP controllers 001 to 006 only. This is not the purchasing volume of the other entry points.")
+    </MudText>
+
+    @if (_state is null)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true">
+            @T("Noch keine Daten. Die Werte kommen aus dem SAP-Set ZloTopDownSet; der Einkauf-Lauf lädt sie täglich, sobald der SAP-Transport in P76 ist.",
+               "No data yet. The values come from the SAP set ZloTopDownSet; the purchasing run loads them daily once the SAP transport is in P76.")
+        </MudAlert>
+    }
+    else
+    {
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap">
+            <MudSelect T="string" Label="@T("Von Monat", "From month")" Value="_from" ValueChanged="OnFromChanged" Dense="true" Style="max-width:160px">
+                @foreach (var month in _months)
+                {
+                    <MudSelectItem Value="@month">@MonthLabel(month)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="string" Label="@T("Bis Monat", "To month")" Value="_to" ValueChanged="OnToChanged" Dense="true" Style="max-width:160px">
+                @foreach (var month in _months)
+                {
+                    <MudSelectItem Value="@month">@MonthLabel(month)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted">
+                @string.Format(CultureInfo.CurrentCulture, T("Stand {0}, Termin bestätigt {1} bis {2}", "As of {0}, confirmed dates {1} to {2}"),
+                               LoadedText(_state.LoadedAtUtc), MonthLabel(_state.MonthFrom), MonthLabel(_state.MonthTo))
+            </MudText>
+        </MudStack>
+
+        <div class="purchasing-matrix-scroll">
+            <table class="purchasing-matrix">
+                <thead>
+                    <tr>
+                        <th>@T("Bezeichnung", "Description")</th>
+                        <th>@T("Umsatz bestätigt", "Confirmed revenue")</th>
+                        <th>@T("Materialanteil", "Material share")</th>
+                        <th>@T("Anteil", "Share")</th>
+                        <th>@T("Bedarfsmenge", "Demand quantity")</th>
+                        <th>@T("Einheit", "Unit")</th>
+                        <th>@T("Stückkosten", "Unit cost")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var group in _rows)
+                    {
+                        <tr class="purchasing-cascade-l1">
+                            <td>
+                                @Toggle(group)
+                                <strong>@group.Label</strong>
+                            </td>
+                            <td>@Chf(group.Revenue)</td>
+                            <td><strong>@Chf(group.Value)</strong></td>
+                            <td>@Percent(group.Value, group.Revenue)</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        @if (_expanded.Contains(group.Key))
+                        {
+                            @foreach (var materialGroup in group.Children)
+                            {
+                                <tr class="purchasing-cascade-l2">
+                                    <td>@Toggle(materialGroup) @materialGroup.Label</td>
+                                    <td></td>
+                                    <td>@Chf(materialGroup.Value)</td>
+                                    <td>@Percent(materialGroup.Value, group.Value)</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                @if (_expanded.Contains(materialGroup.Key))
+                                {
+                                    @foreach (var part in materialGroup.Children)
+                                    {
+                                        <tr class="purchasing-cascade-l3">
+                                            <td>@part.Label</td>
+                                            <td></td>
+                                            <td>@Chf(part.Value)</td>
+                                            <td>@Percent(part.Value, materialGroup.Value)</td>
+                                            <td>@part.Quantity.ToString("N0", CultureInfo.CurrentCulture)</td>
+                                            <td>@part.Unit</td>
+                                            <td>@part.UnitCost.ToString("0.######", CultureInfo.CurrentCulture)</td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    <tr class="purchasing-cascade-l1">
+                        <td><strong>@T("Total", "Total")</strong></td>
+                        <td><strong>@Chf(_rows.Sum(r => r.Revenue))</strong></td>
+                        <td><strong>@Chf(_rows.Sum(r => r.Value))</strong></td>
+                        <td>@Percent(_rows.Sum(r => r.Value), _rows.Sum(r => r.Revenue))</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    private PurchasingMaterialShareState? _state;
+    private List<string> _months = [];
+    private string _from = string.Empty;
+    private string _to = string.Empty;
+    private IReadOnlyList<PurchasingMaterialShareNode> _rows = [];
+    private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await conn.OpenAsync();
+        _state = await PurchasingMaterialShareQuery.ReadStateAsync(conn, CancellationToken.None);
+        if (_state is null)
+            return;
+        _months = PurchasingMaterialShareQuery.Months(_state.MonthFrom, _state.MonthTo);
+        // Vorgabe wie Armins Auswertung: Januar des laufenden Jahres bis zum laufenden Monat.
+        var today = DateTime.Today;
+        _from = Clamp(today.ToString("yyyy", CultureInfo.InvariantCulture) + "01");
+        _to = Clamp(today.ToString("yyyyMM", CultureInfo.InvariantCulture));
+        await ReloadAsync();
+    }
+
+    private string Clamp(string month)
+        => _months.Count == 0 ? month
+            : string.CompareOrdinal(month, _months[0]) < 0 ? _months[0]
+            : string.CompareOrdinal(month, _months[^1]) > 0 ? _months[^1]
+            : month;
+
+    private async Task OnFromChanged(string value)
+    {
+        _from = value;
+        if (string.CompareOrdinal(_to, _from) < 0)
+            _to = _from;
+        await ReloadAsync();
+    }
+
+    private async Task OnToChanged(string value)
+    {
+        _to = value;
+        if (string.CompareOrdinal(_to, _from) < 0)
+            _from = _to;
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await conn.OpenAsync();
+        _rows = await PurchasingMaterialShareQuery.LoadAsync(conn, _from, _to, CancellationToken.None);
+    }
+
+    private RenderFragment Toggle(PurchasingMaterialShareNode node) => __builder =>
+    {
+        if (node.Children.Count == 0)
+            return;
+        <button type="button" class="purchasing-matrix-toggle" @onclick="() => ToggleKey(node.Key)"
+                title="@T("Naechste Ebene auf-/zuklappen", "Expand/collapse next level")">
+            @(_expanded.Contains(node.Key) ? "▾" : "▸")
+        </button>
+    };
+
+    private void ToggleKey(string key)
+    {
+        if (!_expanded.Remove(key))
+            _expanded.Add(key);
+    }
+
+    private static string MonthLabel(string month)
+        => month.Length == 6 ? month[4..] + "." + month[..4] : month;
+
+    private static string LoadedText(string utc)
+        => DateTime.TryParse(utc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var value)
+            ? value.ToLocalTime().ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture)
+            : utc;
+
+    private static string Chf(decimal value)
+        => value == 0m ? "-" : "CHF " + value.ToString("N0", CultureInfo.CurrentCulture);
+
+    private static string Percent(decimal value, decimal total)
+        => total <= 0m ? "-" : (value / total * 100m).ToString("0.#", CultureInfo.CurrentCulture) + " %";
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

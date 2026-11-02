@@ -227,6 +227,57 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
         }
     }
 
+    /// <summary>
+    /// Materialanteil je Produktgruppe nach Materialgruppe (Spend-Aufriss Phase 2, 2026-11-02, siehe
+    /// <see cref="PurchasingMaterialShareLoader"/>): ZC23 je Monat und ZLO03 Top-Down. WIRFT NICHT, ausser der Lauf selbst
+    /// wird abgebrochen: ein Fehler laesst den bisherigen Stand stehen.
+    /// </summary>
+    internal async Task<string> RefreshMaterialShareSafeAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var conn = (SqliteConnection)db.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await conn.OpenAsync(cancellationToken);
+
+            SapSingleRequestReader reader = (entitySet, select, filter, token)
+                => ReadSingleRequestAsync(client, baseUrl, entitySet, select, filter, token);
+            var result = await PurchasingMaterialShareLoader.RunAsync(
+                conn, reader, DateOnly.FromDateTime(DateTime.Today), () => DateTime.UtcNow, cancellationToken);
+            if (!result.Written)
+                await _logService.WriteAsync("Purchasing", "Materialanteil je Produktgruppe nicht aktualisiert", "Warning",
+                    details: result.Message);
+            return result.Message;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await _logService.WriteAsync("Purchasing", "Materialanteil je Produktgruppe konnte nicht gelesen werden", "Warning",
+                details: $"{ex.GetType().Name}: {ex.Message} — Der Einkauf-Lauf laeuft trotzdem weiter.");
+            return "Materialanteil=Fehler beim Lesen (Stand unveraendert).";
+        }
+    }
+
+    /// <summary>
+    /// Eine einzige Anfrage ohne $top/$skip: Zc23Set und ZloTopDownSet starten je Anfrage einen Report (SUBMIT) und
+    /// wuerden beim Blaettern jede Seite neu rechnen.
+    /// </summary>
+    private static async Task<List<Dictionary<string, object?>>> ReadSingleRequestAsync(HttpClient client, string baseUrl, string entitySet, string select, string filter, CancellationToken cancellationToken)
+    {
+        var url = $"{baseUrl}{entitySet}?$format=json&$select={Uri.EscapeDataString(select)}&$filter={Uri.EscapeDataString(filter)}";
+        using var response = await client.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"SAP OData {entitySet} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) Antwort={TrimForLog(error)}");
+        }
+        return ParseRows(await response.Content.ReadAsStringAsync(cancellationToken));
+    }
+
     public async Task<PurchasingDataRefreshStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
@@ -283,6 +334,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             // nicht mehr gefaehrden kann.
             var contractLzMessage = await RefreshContractsAndLzSafeAsync(client, connection.BaseUrl, supplierNameMap, cancellationToken);
             contractLzMessage += " " + await RefreshComponentDispoSafeAsync(client, connection.BaseUrl, cancellationToken);
+            contractLzMessage += " " + await RefreshMaterialShareSafeAsync(client, connection.BaseUrl, cancellationToken);
             await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;
@@ -366,6 +418,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             // nicht mehr gefaehrden kann.
             var contractLzMessage = await RefreshContractsAndLzSafeAsync(client, connection.BaseUrl, supplierNameMap, cancellationToken);
             contractLzMessage += " " + await RefreshComponentDispoSafeAsync(client, connection.BaseUrl, cancellationToken);
+            contractLzMessage += " " + await RefreshMaterialShareSafeAsync(client, connection.BaseUrl, cancellationToken);
             await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;
