@@ -111,7 +111,7 @@ public sealed class PurchasingDashboardLiveState
     // summiert. Gesammelt ab dem Deploy; der erste Punkt ist der dann gespeicherte Kachelstand
     // und kann aelter sein. Davor gibt es keine Punkte.
     public List<StockValueWeekPoint> StockValueWeeklyHistory { get; set; } = [];
-    /// <summary>Wochenverlauf je Disponent 001-005 (Feedback Erich 2026-10-22).</summary>
+    /// <summary>Wochenverlauf je Disponent 001-006 (Feedback Erich 2026-10-22).</summary>
     public Dictionary<string, List<StockValueWeekPoint>> StockValueWeeklyByPlanner { get; set; } = [];
     public string TopSupplierLabel { get; set; } = string.Empty;
     public string TopMaterialGroupLabel { get; set; } = string.Empty;
@@ -142,7 +142,7 @@ public sealed class PurchasingDashboardLiveState
     public PurchasingProductGroupAllocationSummary ProductGroupAllocation { get; set; } =
         PurchasingProductGroupAllocationSummary.Empty;
     // Schalter "Nur Einkaufsteile" im Spend-Aufriss (Entscheid Ingo 2026-10-26): dieselben Sichten nur fuer
-    // Positionen mit Einkaufsdisponent 001 bis 005. Leer, solange die Spalte MarcDispo fehlt.
+    // Positionen mit Einkaufsdisponent 001 bis 006. Leer, solange die Spalte MarcDispo fehlt.
     public List<PurchasingSpendPerspectiveResult> PurchasingPartsSpendPerspectiveRows { get; set; } = [];
     public PurchasingProductGroupAllocationSummary PurchasingPartsProductGroupAllocation { get; set; } =
         PurchasingProductGroupAllocationSummary.Empty;

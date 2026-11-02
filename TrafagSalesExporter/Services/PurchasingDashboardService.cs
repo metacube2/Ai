@@ -33,7 +33,8 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     /// fachlich dazugehoert, ist bei Armin noch nicht entschieden. Die Liste steht deshalb hier
     /// an einer Stelle und nicht verstreut in Abfragen — eine Aenderung ist eine Zeile.
     /// </summary>
-    public static readonly string[] PurchasingPlanners = ["001", "002", "003", "004", "005"];
+    // 006 seit 2026-11-02 (neuer Einkaufsdisponent, Entscheid Ingo); Lagerwert und Verlauf rechnen rueckwirkend mit, weil alle Disponenten gespeichert sind.
+    public static readonly string[] PurchasingPlanners = ["001", "002", "003", "004", "005", "006"];
 
     public PurchasingDashboardService(
         IDbContextFactory<AppDbContext> dbFactory,
@@ -618,7 +619,7 @@ LIMIT 12;", cancellationToken);
         (state.SpendPerspectiveRows, state.ProductGroupAllocation) =
             await BuildSpendBreakdownAsync(conn, filter, spendItemFilter, cancellationToken);
         // Entscheid Ingo 2026-10-26: Schalter "Nur Einkaufsteile" im Spend-Aufriss, Vorgabe an. Dieselben Sichten
-        // ein zweites Mal, nur fuer Positionen mit Einkaufsdisponent 001 bis 005; Umschalten ohne neue DB-Runde.
+        // ein zweites Mal, nur fuer Positionen mit Einkaufsdisponent 001 bis 006; Umschalten ohne neue DB-Runde.
         if (await ColumnExistsAsync(conn, "PurchasingEkpoCache", "MarcDispo", cancellationToken))
         {
             (state.PurchasingPartsSpendPerspectiveRows, state.PurchasingPartsProductGroupAllocation) =

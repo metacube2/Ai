@@ -25,13 +25,13 @@
     @if (PartsPerspectives.Count > 0)
     {
         <MudSwitch T="bool" @bind-Value="_onlyPurchasingParts" Color="Color.Primary" Class="mt-2 mb-0">
-            @T("Nur Einkaufsteile (Disponent 001 bis 005)", "Purchased parts only (MRP controller 001 to 005)")
+            @T("Nur Einkaufsteile (Disponent 001 bis 006)", "Purchased parts only (MRP controller 001 to 006)")
         </MudSwitch>
         @if (_onlyPurchasingParts)
         {
             <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block">
-                @T("Alle Einstiege zeigen nur Positionen, deren Material einen Einkaufsdisponenten 001 bis 005 hat. Ausschalten zeigt den ganzen Einkauf. Die Diagramme darunter zeigen immer den ganzen Einkauf.",
-                   "All entry points show only items whose material has a purchasing MRP controller 001 to 005. Switch off to see all purchasing. The charts below always show all purchasing.")
+                @T("Alle Einstiege zeigen nur Positionen, deren Material einen Einkaufsdisponenten 001 bis 006 hat. Ausschalten zeigt den ganzen Einkauf. Die Diagramme darunter zeigen immer den ganzen Einkauf.",
+                   "All entry points show only items whose material has a purchasing MRP controller 001 to 006. Switch off to see all purchasing. The charts below always show all purchasing.")
             </MudText>
         }
     }
@@ -427,7 +427,7 @@
     [Parameter] public IReadOnlyList<PurchasingSpendPerspectiveResult> Perspectives { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSpendCascadeNode> CascadeRows { get; set; } = [];
     [Parameter] public PurchasingProductGroupAllocationSummary ProductGroupAllocation { get; set; } = PurchasingProductGroupAllocationSummary.Empty;
-    // Schalter "Nur Einkaufsteile" (Entscheid Ingo 2026-10-26, Vorgabe an): dieselben Sichten nur fuer Disponent 001 bis 005.
+    // Schalter "Nur Einkaufsteile" (Entscheid Ingo 2026-10-26, Vorgabe an): dieselben Sichten nur fuer Disponent 001 bis 006.
     [Parameter] public IReadOnlyList<PurchasingSpendPerspectiveResult> PartsPerspectives { get; set; } = [];
     [Parameter] public PurchasingProductGroupAllocationSummary PartsProductGroupAllocation { get; set; } = PurchasingProductGroupAllocationSummary.Empty;
 
