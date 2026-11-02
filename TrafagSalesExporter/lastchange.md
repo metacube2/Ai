@@ -8,7 +8,7 @@ Stand: 2026-11-02
   `ZloTopDownSet` in MPC/DPC, Caches geleert; Test 41019 (H05039 3 ST zu 0.014133 CHF wie FIX 23). Ein Syntaxfehler in der ersten
   Fassung legte ZLO03 in T76 zehn Minuten lahm (LEARNINGS, Anleitung berichtigt).
 - Dashboard `d6c0287`: Lader im Einkauf-Lauf (ZC23 je Monat, Absagegrund leer, ZLO03 je Block, Disponent 001 bis 006, Probe vor dem
-  Lesen), eigene aufklappbare Tabelle mit rotem Knopf im Spend-Aufriss, Texte in allen Sprachen, Tests 1325/1325; nicht deployed.
+  Lesen), eigene aufklappbare Tabelle mit rotem Knopf im Spend-Aufriss, Texte in allen Sprachen, Tests 1325/1325; deployed 11:18 (`f36e1e7`).
 - Deploy 10:09 (`a445f30`): Disponent 006, Verkaufsabgleich Shopfloor, Handbuch. CLAUDE.md Abschnitt 5 (Deploy immer mit dem Werkzeug).
 
 ## Zeichnungsaenderung: SAP-Daten fuer die MS-Liste der Entwicklung, 2026-11-02
