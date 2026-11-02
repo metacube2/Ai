@@ -2,6 +2,13 @@
 
 Stand: 2026-11-02
 
+## SAP ZREICHW: nur Spoolauftrag statt Sofortdruck (Teams-Anfrage, Auftrag Ingo), 2026-11-02 abends
+
+- `Z_KOI_REICHW_TURBO` druckte nie selbst; gedruckt wurde ueber den Druckdialog des Grids mit „Sofort ausgeben“. Neu: Ankreuzfeld
+  „Nur Spoolauftrag (nicht drucken)“, die Liste geht ohne Sofortdruck in einen Spoolauftrag (SP01/SP02).
+- T76 eigener Auftrag `T76K912799`, aktiv, zurueckgelesen zeilengleich; Test: Spool 1264623 ohne Ausgabeauftrag, alle Spalten.
+- Offen: Freigabe und Import P76 (Ingo). Befunde zur Optimierung in `saptasks/zreichw/NOTES.md` Abschnitt 3, nicht umgesetzt.
+
 ## Operations KPI: Rubrik Kunden auf OTD / OTIF / OTP (Spezifikation Fabio), 2026-11-02
 
 - Zaehler je Auftraggeber und Monat im Monatsabruf, Namen fuer alle Kunden, Suche nach Nummer oder Name, Kacheln, Monatstabelle,
