@@ -526,6 +526,12 @@ auf den Abfragetag ueber `ApplyPush` (manuell erfasste Werte bleiben), Endpunkte
 `Shopfloor:SapVerzugEnabled` (Vorgabe aus), Config `ppd.verzug_*` mit Quelle und Selektion, Tests `ShopfloorSapVerzugTests`.
 Suite 1345/1345 im Release-Worktree. *Nachtrag:* Code mit dem Deploy 2026-11-02 13:57 (`187f8a0`) produktiv, Schalter weiter aus.
 
-**Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912797` frei und importiert nach P76; (2) Deploy (*erledigt 13:57*); (3) Vorschau
+**Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912797` frei und importiert nach P76 (*erledigt 02.11.*); (2) Deploy (*erledigt 13:57*); (3) Vorschau
 `GET shopfloor/api/sap/verzug` in P76 gegen ZC22 (Fabio/Anh Nhi); (4) `SapVerzugEnabled = true`. Vor dem Import liefert die Vorschau
 die Meldung „Transport T76K912797 fehlt“, keine falsche Zahl.
+
+*Nachtrag 2026-11-02 abends:* Ingo hat `T76K912797` und `T76K912793` (Zeivr, Sitzung 6d) nach P76 importiert. Vorschau
+`GET shopfloor/api/sap/verzug?tag=2026-11-02` aus P76: 188 Zeilen, TR5 507 (13 Auftraege), TX 64 (4), DW 60 (12), SEH 0. Gateway-Caches
+in P76 auf Auftrag Ingo geleert (eigene Sitzung, `trasp76s`, SM51 zeigt weiter nur diese Instanz). Gateway Client P76: `$metadata` 200
+(382'030), `ShopAufSet` Typ VZ 200, `MARA001Set?$select=Matnr,Zeivr` 200, alte Abfrage `Matnr,Mstae,Matkl` 200. **Offen:** Abgleich der
+Vorschau gegen ZC22 in P76 (Fabio/Anh Nhi oder auf Auftrag), danach `SapVerzugEnabled = true`.

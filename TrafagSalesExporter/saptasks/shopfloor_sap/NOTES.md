@@ -81,6 +81,11 @@ Schalter `Shopfloor:SapMengenEnabled` (aus). Vorschau `GET shopfloor/api/sap/men
   (`/IWFND/CACHE_CLEANUP` Modell `ZPOWERBI_EINKAUF_MDL`, `/IWBEP/CACHE_CLEANUP` alle Modelle) wurden deshalb auf `trasp76s` geleert
   (eigene Sitzung, `SapGuiP76Hilfe.vbs`); danach im P76-Gateway-Client `ZloTopDownSet` 200. Ob das Dashboard ueber `travp762:8000`
   dasselbe sieht, zeigt erst der naechste Einkauf-Lauf. Wie Ingo am 16.10. auf `travp762` kam, ist offen.
+  *Nachtrag 2026-11-02 abends (Import `T76K912797` PPD-Verzug, `T76K912793` Zeivr):* wieder nur `trasp76s_P76_00`. Erst
+  `/IWFND/CACHE_CLEANUP`, dann `/IWBEP/CACHE_CLEANUP` (alle Modelle, ohne Meldung in der Statusleiste): danach
+  `MARA001Set?$select=Matnr,Zeivr` **404**. Ein zweites `/IWFND/CACHE_CLEANUP` gab es frei (200, `$metadata` 381'841 auf 382'030).
+  **Reihenfolge daher: zuerst `/IWBEP`, dann `/IWFND`** (oder `/IWFND` am Schluss wiederholen), sonst baut eine Anfrage zwischen
+  den beiden Schritten den Frontend-Cache aus dem alten Backend-Modell neu auf. `ShopAufSet` Typ VZ 200.
 - Vorschau 14.10. (ERSDA 13.10.): MLE01 673, MLE02 526, MLM01 193, MLE04 542, MLE08+09 1'065 (465 + 600): **alle gleich** Fabios ZC27-Werten.
   FPY SEH KW38 99.8, KW39 99.7, KW40 97.1, KW41 99.5: **alle gleich**. TR5-Tagesmenge 13.10.: 815; SEH 2'431.
 - Erstlauf 16.10. (Stand 15.10.): Logistik MLE01 24, MLE02 792, MLM01 149, MLE04 779, MLE08+09 532; TR5 854; SEH 1'837; FPY SEH 99.7 (KW 42 bis Do).

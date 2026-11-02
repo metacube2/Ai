@@ -16,7 +16,9 @@ Stand: 2026-11-02
 - SAP T76, eigener Auftrag `T76K912797`: `ShopAufSet` Modus `Typ eq 'VZ'` (nur DPC, MPC unberuehrt). Abgleich gegen ZC22 je Auftrag
   gleich (DW 1'570 / 49'526, TR5 786 / 41'127, TX 1'349 / 73'895), 0,1 s statt 6 min.
 - Cockpit `27badb2`: Verzug je Abteilung, Endpunkte `sap/verzug`, Schalter `SapVerzugEnabled` aus, Tests 1345/1345, nicht deployed.
-- Offen: SEH ist mit Material 1-99999 immer 0 (alphanumerische Materialnummern), Rueckfrage an Fabio; Import P76 (Ingo).
+- Offen: SEH ist mit Material 1-99999 immer 0 (alphanumerische Materialnummern), Rueckfrage an Fabio.
+- Abends: Ingo hat `T76K912797` und `T76K912793` (Zeivr) nach P76 importiert, Gateway-Caches in P76 geleert. Vorschau 02.11. aus P76:
+  TR5 507, TX 64, DW 60, SEH 0; `Zeivr` 200 erst nach einem zweiten `/IWFND/CACHE_CLEANUP` (LEARNINGS). Offen: Abgleich mit ZC22, dann Schalter an.
 
 ## Einkauf Phase 2 gebaut: Materialanteil je Produktgruppe nach Materialgruppe, 2026-11-02
 
