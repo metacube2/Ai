@@ -295,7 +295,7 @@ mit 134 Schnittstellenfeldern, Blatt „Disponenten“ mit der SAP-Liste „Disp
 - Uebergabe taeglich 04:00 an `integration/push`: im Excel festgelegt, gebaut ist der Abruf durch die App (`ShopfloorSapSync`
   05:45 und 12:45 ueber OData). Ein echter Push aus SAP braucht Token und eine IIS-Ausnahme (Abschnitt 3). Entscheid Ingo offen:
   Abruf um 04:00 oder Push aus SAP. *(Entschieden 2026-10-16: Abruf durch die App um 04:00 und 12:45, Abschnitt 14 und 15)*
-- Alle 134 Felder haben Status „offen“, die Spalten J-N sind leer. Fachlich ungeklaert: VkNr, Typencode, Z-Tabelle hinter ZC23,
+- Alle 134 Felder haben Status „offen“, die Spalten J-N sind leer. Fachlich ungeklaert: VkNr, Typencode, Z-Tabelle hinter ZC23 (*ueberholt 2026-11-02: umsatz_plan kommt aus Fiori statt ZC23, Abschnitt 16*),
   Aufteilung Disponent 024 (Stecker/Kabel/Print), CZ-Mengen ohne eigenen Disponenten (Ministaten, Navistaten, DTP 8180), DL790/DLQ72,
   Schichtzuordnung TX ueber die Rueckmeldezeit, Anlagenverfuegbarkeit MTF.
 - Disponenten auf „pruefen“: EL1, EL4, EL5, EL6, EL8 (TX), DL6, DS1, DS2, DSN, DW1 (DW), SPB (SEH), sowie 010, 012, 013, PKA, TL1, TPT.
@@ -313,7 +313,7 @@ die `.bak`-Dateien des Skripts wurden nicht ins Repo uebernommen.
    („LT ueberfaellig“, „ohne Code“). Im laufenden Shop-Floor ist der Filter automatisch aktiv. Startseite Punkt ZD05 zeigt
    zusaetzlich „x ohne Code“.
 2. **Verkauf Go-for-it:** Kacheln oben im Verkauf: Go-for-it-Ziel des Monats (einmal pro Monat im Feld „Ziel festlegen“), Umsatz
-   IST in % vom Ziel, fehlender Betrag (mit geplantem Umsatz ZC23), Auftragseingang mit Book to Bill. Konvention: der Eintrag vom
+   IST in % vom Ziel, fehlender Betrag (mit geplantem Umsatz ZC23; *seit Patch 05 vom 2026-11-02 erwarteter Umsatz aus Fiori, Abschnitt 16*), Auftragseingang mit Book to Bill. Konvention: der Eintrag vom
    Tag D ist der Stand bis D-1, der Monatserste gehoert zum Vormonat; das Ziel steht im bestehenden Tageswert `goforit` (am 2. des
    Monats bzw. auf dem Tag, der es schon traegt). Kein Backend, keine neue Tabelle.
 
@@ -373,7 +373,7 @@ bis die Leistung (Stk/FTE) im Forecast erfasst ist.
 Auftragsvorrat, FPY SEH) sind weder im Paket (kein Programm, nur Excel mit Quelle und Selektion) noch im Cockpit gebaut. Deshalb
 ist auch kein Erstlauf moeglich. ZD05 (J1) laeuft im Cockpit selbst (`Shopfloor:SapSyncTimes`, Werktage). *Ueberholt:* „05:45 und
 12:45, Umstellung auf 04:00 offen“. Entscheid Ingo 2026-10-16: **04:00 und 12:45** (der Mittagslauf bleibt). Offen von Fabio: Lieferzeit-Ziele (Daniel Tobler), Kuerzel
-Ergebnisbereich CE1xxxx.
+Ergebnisbereich CE1xxxx. *Ueberholt 2026-11-02:* Ergebnisbereich 1000 / `CE11000` (Abschnitt 16; im Repo schon seit Juni aus dem Produktsparten-Mapping bekannt).
 
 **Fabios Pakete ohne Nacharbeit (2026-10-16, `e6c007f`):** `ShopfloorConfig` uebernimmt ein `planned_source` am Feld nach `src` und
 entfernt es (auch in `/api/config`); ohne `planned_source` wird die Datei unveraendert ausgeliefert. Test
@@ -460,12 +460,19 @@ das Excel enthaelt Kontrollwerte in CHF). Commit `82f4f52`, produktiv 2026-11-02
 | Wertfelder Nettoerloes | `VV100` Bruttoerloes, `VV110` Frachterloes, `VV200` Wiederverkaufsrabatt, `VV210` Mengenrabatt, `VV220` Sonstige Erloesminderung, `VV250` Waehrungsausgleich, `VV230` Verkaufsprovisionen, Skonto: `VV240` „Skonto kalk.“ oder `VV245` „Skonto echt FI“ |
 | Weitere Merkmale | `WWPFA` Produktfamilie, `WWTYP` Typencode, `PAPH1` Produkthierarchie, `VKORG`, `BUKRS`, `KNDNR`, `ARTNR`, `PALEDGER` Waehrungstyp |
 
-Offen fuer J2/J3: welches Skonto-Feld der KE30-Bericht Z0001-000006 abzieht (`VV240` oder `VV245`), und welcher Waehrungstyp `PALEDGER`
-gilt (in der T76-Stichprobe Maerz 2026 nur `01`); beides mit Fabio bzw. im Bericht klaeren. T76 hat nur Daten bis etwa April 2026, die
+*Nachtrag 2026-11-02 (Abgleich mit Repo und Fabios Paketen):* `CE11000` und `WWPSP` waren nicht neu, sie stehen seit Juni 2026 im
+Produktsparten-Mapping (`docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md`, `docs/abap/README_PRODSPARTE.md`); die Werte 0003 = DW und
+0005 = Transmitter hat Fabio am 16.10. geliefert. Waehrung: Fabio legt im Excel „Buchungskreiswaehrung CHF“ fest, und `CE11000` hat fuer
+Buchungskreis 1100, Satzart F nur `PALEDGER = 01` (T76, Abfrage `PALEDGER <> '01'` ohne Treffer); keine Frage noetig.
+Offen fuer J2/J3 nur noch, welches Skonto-Feld der KE30-Bericht Z0001-000006 abzieht (`VV240` oder `VV245`): **selbst entscheiden**, indem
+beide Varianten in P76 gegen Fabios Kontrollwerte Sep 2026 gerechnet werden (IST 7'878'114.69, AE 6'531'197.94), keine Frage an Fabio.
+Ebenso aus seinem Paket vom 16.10. (LIESMICH): nach dem ersten Lauf die Historie Verkauf ab 01.01.2026 nachladen, nur leere Tage. T76 hat nur Daten bis etwa April 2026, die
 Kontrollwerte Sep/Okt lassen sich erst in P76 nachrechnen. Lesen von `CE11000` braucht ein eigenes Set oder einen Report (zu gross fuer
 `RFC_READ_TABLE` ohne Verdichtung).
 
-**Fragen an Fabio aus Punkt 5 der Mail (PPD-Verzug aus ZC22, nicht gebaut):** `verzug_dw` mit Disponent `DW*` weicht von der Abteilung
-DW = `D*` ab (DW1 Ruestpapiere waere dabei, DB1/D10 nicht); Bedeutung der ZC22-Schalter „mit Vorgangsdaten“ und „mit Planauftraegen“ im
-Quelltext lesen, bevor die Logik nachgebaut wird; Selektion `verzug_seh` folgt; Untergrenze 01.01.2026 vorlaeufig. Dazu: Fabios Excel nennt
+**Fragen an Fabio aus Punkt 5 der Mail (PPD-Verzug aus ZC22, nicht gebaut):** nur eine: `verzug_dw` mit Disponent `DW*` weicht von der
+Abteilung DW = `D*` ab (DW1 Ruestpapiere waere dabei, DB1/D10 nicht); in Repo, Paketen und Sitzungsprotokollen gibt es dazu keine fruehere
+Antwort (geprueft 2026-11-02). Selbst zu tun: Bedeutung der ZC22-Schalter „mit Vorgangsdaten“ und „mit Planauftraegen“ im Quelltext lesen.
+Von Fabio bereits angekuendigt, nicht fragen: Selektion `verzug_seh` folgt, Untergrenze 01.01.2026 bis zur Klaerung. Mail-Entwurf an Fabio
+in Ingos Downloads (`Mail_Fabio_Shopfloor_Paket_2026-11-01_Fragen.eml`). Dazu: Fabios Excel nennt
 fuer J5/J8 noch „Vortag, Montag Fr+Sa+So“, bei uns gilt seit 2026-10-19 der Produktionstag (Abschnitt 15).

@@ -1,6 +1,6 @@
 # ABAP Produktsparten-Mapping
 
-Stand: 2026-10-29 (Ueberholt-Vermerk zum CE11000-Ansatz; Inhalt vom 2026-06-11)
+Stand: 2026-11-02 (offene Frage zu `CE11000` beantwortet); 2026-10-29 Ueberholt-Vermerk zum CE11000-Ansatz; Inhalt vom 2026-06-11
 
 ## Dateien
 
@@ -94,6 +94,7 @@ aber sinnvoll.
 - Ist `PAPH1 = MVKE-PRODH(5)` im Trafag-System exakt korrekt?
 - Sind `T25A0` fuer Produktfamilie und `T25A1` fuer Produktsparte die richtigen Texttabellen?
 - Ist `CE11000` der richtige CO-PA-Einzelposten fuer den relevanten Ergebnisbereich?
+  *Beantwortet 2026-11-02:* ja, `TKA01` ordnet Kostenrechnungskreis 1000 dem Ergebnisbereich 1000 zu (T76), siehe `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
 - Ist Fallback-Code `UNASS` in Feld `WWPSP` lang genug/zulässig?
 - Soll `VTWEG` zwingend selektiert werden statt "kleinster VTWEG gewinnt"?
 

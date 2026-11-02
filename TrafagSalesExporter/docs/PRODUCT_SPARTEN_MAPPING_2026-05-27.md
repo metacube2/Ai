@@ -1,6 +1,6 @@
 # Produktsparten-Mapping Group Sales Report
 
-Stand: 2026-10-29 (Ueberholt-Vermerke nachgetragen; Inhalt vom 2026-06-11)
+Stand: 2026-11-02 (offene Frage zu `CE11000` beantwortet); 2026-10-29 Ueberholt-Vermerke nachgetragen; Inhalt vom 2026-06-11
 
 ## Anlass
 
@@ -136,6 +136,7 @@ Noch zu pruefen:
 - Ist `PAPH1 = MVKE-PRODH(5)` im Trafag-System exakt korrekt?
 - Sind `T25A0` und `T25A1` die richtigen Text-/Customizingtabellen fuer Produktfamilie und Produktsparte?
 - Ist `CE11000` der richtige CO-PA-Einzelposten fuer den relevanten Ergebnisbereich?
+  *Beantwortet 2026-11-02:* ja, `TKA01` ordnet Kostenrechnungskreis 1000 dem Ergebnisbereich 1000 zu (T76), siehe `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
 - Ist der Fallback-Code `UNASS` in Feld `WWPSP` zulaessig/lang genug?
 - Soll `VTWEG` zwingend vorgegeben werden, statt den kleinsten Vertriebsweg zu verwenden?
 - Welche VKORG ist fuer TR AG im produktiven Lauf massgebend?

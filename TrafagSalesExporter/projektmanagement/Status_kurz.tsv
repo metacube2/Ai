@@ -33,7 +33,7 @@ Einkauf	Einkauf über offenen Bestellwert nach Elikz-Fix informieren	Wartet	Ingo
 Finance	TR IT verkauft Indien-Ware ohne Konzernkosten TR IN (Sachnummer fehlt, ISS-007.4)	Wartet	Prüfung B1-Artikelstamm TR IT	2026-10-07
 Finance	Kostenwährung zum Budget- oder Tageskurs	Wartet	Andreas	2026-10-07
 Logistik	ZM_OFFENE_FAUF mit Bedarfsverursacher (T76K912714 am 09.10. in P76)	Läuft	Fabio: Layout in P76 prüfen, Fall BANF Werk 1200	2026-10-09
-Plattform	Operations (Shopfloor): für alle offen, Mengen aus SAP auf dem Produktionstag (Logistik, SEH, TR5, DW), ZD05 04:00/12:45	Läuft	Fabio: TX-Arbeitsplatz; Ingo: TX-Vorrat aus ZC22 bauen	2026-10-19
+Plattform	Operations (Shopfloor): für alle offen, Mengen aus SAP auf dem Produktionstag (Logistik, SEH, TR5, DW), ZD05 04:00/12:45; seit 02.11. erwarteter Umsatz und Gutschriften aus Fiori, Paket 01.11. eingespielt	Läuft	Fabio: TX-Arbeitsplatz, Antwort DW* beim PPD-Verzug; Ingo: Deploy Schalter Verkauf, TX-Vorrat und PPD-Verzug aus ZC22, J2/J3 CO-PA	2026-11-02
 Plattform	Trafag Reddit: Forum mit Abstimmung, für alle sichtbar	Läuft	Ingo: Ankündigung entscheiden	2026-10-09
 Plattform	Trafag Projekte: Board, Backlog/Sprints, Zeitachse, Kalender, Diagramme	Läuft	Ingo: erstes echtes Projekt anlegen	2026-10-09
 SAP	ZC23: Materialanteil und Arbeit CZ, 3,5-mal schneller gerechnet, Fiori-App-Anschluss	Bereit		2026-10-16

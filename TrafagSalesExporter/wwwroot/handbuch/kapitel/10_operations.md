@@ -18,11 +18,11 @@ Diese Seite zeigt auf einen Blick, wie Operations zusammenhängt: woher die Zahl
 | Abteilungen SEH, TR5, TX, DW | Vorrat, Tagesmenge, Ziel, Personal, FPY, Lieferzeiten | SAP, MES, von Hand | Teamleiter | Haben wir gestern geschafft, was wir wollten? |
 | Ampel | Grün, Orange, Rot je Bereich mit Erfüllung | von Hand | Teamleiter | Wer braucht heute Hilfe? |
 | Lieferzeiten | Lieferzeit je Produktgruppe gegen Ziel, Grund | von Hand | Teamleiter | Halten wir unser Versprechen an den Markt? |
-| PPD | Menge in Verzug, Terminverschiebungen, Prio-Liste | von Hand (SAP geplant) | Disposition | Wird der Verzug kleiner? |
+| PPD | Menge in Verzug, Terminverschiebungen, Prio-Liste | von Hand (Verzug aus SAP geplant, Terminverschiebungen wahlweise aus den Rückstandslisten) | Disposition | Wird der Verzug kleiner? |
 | Rückstandslisten | Kundenpositionen mit Ursache und neuem Termin | von Hand (SAP geplant) | Disposition | Welche Kunden warten, und warum? |
 | Logistik | verpackte Menge gegen Tagesmenge | SAP (ZC27) | automatisch, Personal von Hand | Stauen sich fertige Geräte vor dem Versand? |
 | Einkauf ZD05 | Fehlteile mit Code und Termin, Bewertungskennzahl | SAP | Einkauf | Ist die Versorgung im Griff? |
-| Verkauf | Auftragseingang, Umsatz, Go-for-it, Book to Bill | von Hand (SAP geplant) | Verkauf | Kommt genug Arbeit herein? |
+| Verkauf | Auftragseingang, Umsatz, Go-for-it, Book to Bill | erwarteter Umsatz und Gutschriften aus SAP (Fiori), Auftragseingang und Umsatz von Hand (SAP geplant) | Verkauf | Kommt genug Arbeit herein? |
 | Forecast und PPA-Grafik | Menge gegen Kapazität je Tag, Vorrat über 26 Wochen | SAP und Board | PPD | Reicht das Personal nächste Woche? |
 | Listen | Pendenzen, TVAV, Angebote, CZ ↔ CH, Einkauf ↔ Produktion | von Hand | alle | Wer macht was bis wann? |
 | KPI Liefertreue | OTD, OTIF, OTP je Monat, Abweichungsliste | SAP | automatisch | Wie zuverlässig liefern wir? |
@@ -318,7 +318,7 @@ Die Terminverschiebungen SEH, TR5, TX und DW können seit dem 02.11.2026 automat
 
 ### Grenzen und Fallstricke
 
-Die Verzugsmengen sind für eine SAP-Lieferung vorgesehen, werden aber bis dahin von Hand erfasst. Die Terminverschiebungen bleiben eine manuelle Zählung.
+Die Verzugsmengen sind für eine SAP-Lieferung vorgesehen, werden aber bis dahin von Hand erfasst. Die Terminverschiebungen werden von Hand gezählt, solange die Automatik aus den Rückstandslisten ausgeschaltet ist; danach stimmen sie nur, wenn die Rückstandslisten gepflegt sind.
 
 ## Shopfloor: PPA-Grafik und Forecast
 

@@ -65,8 +65,9 @@ Schalter `Shopfloor:SapMengenEnabled` (aus). Vorschau `GET shopfloor/api/sap/men
   MLE08+09 1'065; FPY SEH KW38 bis KW41 gegen 99.8 / 99.7 / 97.1 / 99.5. Erst dann `SapMengenEnabled = true`.
 - Historie nachladen (Verkauf ab 01.01., Logistik/Tagesmengen ab 01.10.) erst danach, nur leere Tage.
 - Nicht gebaut: J2/J3 Verkauf (Ergebnisbereich, Wertfelder, Merkmal fehlen; KEA0 bei Ingo), J6 Auftragsvorrat (ZC22).
-  *Teilweise ueberholt am 2026-11-02:* KEA0 in T76 gelesen: Ergebnisbereich 1000, `CE11000`, Produktsparte `WWPSP`, Wertfelder
-  `VV100`/`VV110`/`VV200`/`VV210`/`VV220`/`VV230`/`VV250` und Skonto `VV240` oder `VV245` (offen). J4 Verkauf laeuft ueber Fiori
+  *Teilweise ueberholt am 2026-11-02:* KEA0 in T76 gelesen: Ergebnisbereich 1000, `CE11000`, Produktsparte `WWPSP` (beides seit Juni
+  aus dem Produktsparten-Mapping bekannt), Wertfelder `VV100`/`VV110`/`VV200`/`VV210`/`VV220`/`VV230`/`VV250` und Skonto `VV240` oder
+  `VV245` (selbst gegen Fabios Sep-Kontrollwerte entscheiden). J4 Verkauf laeuft ueber Fiori
   `C_SALESANALYTICSQRY_1_CDS`, kein eigenes Set. Einzelheiten `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
 
 ## 7. P76 (2026-10-16)
@@ -111,3 +112,6 @@ Mail Fabio, von Ingo am 19.10. weitergegeben. Commits `ded2b65`, `c4dca10`, `c3c
   (auch nicht fuer SEH/TR5, dort erfasst Fabio); braucht ZC22 lesen und ein eigenes Set (J6).
 - TX prod (ZC27 wie TR5): Arbeitsplatz/Variante klaert Fabio. TX fpy: MES Reportico `YIELDGESAMT`, ASIC_TX, nicht SAP.
 - prod_s1/s2, Verzug, Terminverschiebungen, Hot-Anteil (Tagesplanungstool) und alle manuellen Vorgaben: bewusst nicht.
+  *Ueberholt 2026-11-02 fuer Verzug und Terminverschiebungen:* Fabio will den PPD-Verzug aus ZC22 (Mail 01.11., Punkt 5, noch nicht
+  gebaut); die Terminverschiebungen koennen per Patch 04 aus den Rueckstandslisten kommen (Schalter `tv_from_rs`, aus).
+  `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
