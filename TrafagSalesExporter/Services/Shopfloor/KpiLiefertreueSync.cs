@@ -287,10 +287,14 @@ public sealed class KpiLiefertreueSync : BackgroundService
             var lt = KpiLiefertreue.Compute(q1.Select(ToOrder), q2.Select(ToDelivery), cut, DateOnly.FromDateTime(DateTime.Today),
                 Exclusions(), certs, trafag, texts);
             var (cus, prs) = KpiLiefertreue.ListKeys(lt);
+            // Namen fuer alle Auftraggeber der Kundensicht, nicht nur fuer die Abweichungsliste (Suche nach Namen, Fabio 2026-11-02)
+            var allCus = cus.Union(KpiLiefertreue.CustomerKeys(lt), StringComparer.Ordinal).ToList();
             var names = (JsonObject)lt["names"]!;
-            names["c"] = await Names(http, So, "SoldToParty", "SoldToParty_ID", "SoldToPartyText", cus, ct);
+            names["c"] = await Names(http, So, "SoldToParty", "SoldToParty_ID", "SoldToPartyText", allCus, ct);
             names["p"] = await Names(http, So, "Product", "Product_ID", "ProductText", prs, ct);
-            lt["log"] = new JsonArray($"certs {certs.Count}, trafag {trafag.Count}", $"so {q1.Count}", $"deliv {q2.Count}");
+            var cusNamed = allCus.Count(c => names["c"]![c] is not null);
+            lt["log"] = new JsonArray($"certs {certs.Count}, trafag {trafag.Count}", $"so {q1.Count}", $"deliv {q2.Count}",
+                $"kunden {allCus.Count}, mit Namen {cusNamed}");
 
             var source = $"SAP {DateTime.Now:dd.MM.yyyy HH:mm} ({user})";
             Db.Write(con => ShopfloorDb.Exec(con, "INSERT OR REPLACE INTO kpi_snapshot (kind, cut, data, source, created_at, created_by) VALUES (?,?,?,?,?,?)",

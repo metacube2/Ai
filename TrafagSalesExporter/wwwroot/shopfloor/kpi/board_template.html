@@ -96,6 +96,18 @@ td.dim{color:var(--muted)}
 #tblW{min-width:640px}
 #tblG{min-width:1000px}
 #tblG th[data-k]{cursor:pointer;user-select:none}
+/* Rubrik Kunden (Fabio 2026-11-02) */
+#tblKM{min-width:980px}
+#tblKL{min-width:900px}
+#tblKL th[data-k]{cursor:pointer;user-select:none}
+#tblKL tbody tr{cursor:pointer}
+#tblKL tbody tr:hover{background:var(--soft)}
+#tblKL tbody tr.on{background:var(--soft);box-shadow:inset 3px 0 0 var(--otd)}
+.filters #kQ{width:300px}
+a.btn{text-decoration:none;display:inline-block}
+.btn:disabled{opacity:.5;cursor:default}
+.kfilt{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;padding:2px 8px;border:1px solid var(--otd);border-radius:10px;color:var(--otd)}
+.kfilt button{all:unset;cursor:pointer;font-weight:700}
 .gap{display:inline-block;height:8px;border-radius:2px;background:var(--bad);vertical-align:middle;margin-right:6px;opacity:.75}
 </style>
 <script>
@@ -162,6 +174,33 @@ td.dim{color:var(--muted)}
   <section class="card">
     <h2>Monatswerte</h2>
     <div class="scroll"><table id="tblM"></table></div>
+  </section>
+
+  <section class="card" id="kunden">
+    <h2>Kunden</h2>
+    <p class="lead">OTD, OTIF und OTP für einzelne Auftraggeber oder für alle Treffer zusammen, z. B. alle Hitachi-Gesellschaften. Gleiche Definitionen und Ausschlüsse wie oben, gruppiert nach Auftraggeber (SoldToParty).</p>
+    <div id="kNone" class="hint" hidden>Für diesen Stand gibt es die Kundensicht noch nicht. Sie entsteht mit dem nächsten Abruf aus SAP (Operations &gt; KPI).</div>
+    <div id="kBody">
+      <div class="filters">
+        <label for="kQ">Kunde<input id="kQ" type="search" placeholder="Nummer oder Name, mehrere mit Komma: 682, 9204 · Hitachi"></label>
+        <label for="kMin">Mindestanzahl Positionen<select id="kMin"><option value="0">alle</option><option value="10">ab 10</option><option value="50">ab 50</option></select></label>
+        <button class="btn" id="kR" type="button">Zurücksetzen</button>
+        <button class="btn" id="kAbw" type="button">Abweichungen dieser Kunden</button>
+        <a class="btn" id="kXls" href="__KUNDENEXPORT__">Excel</a>
+        <span class="count" id="kCnt"></span>
+      </div>
+      <p class="eyebrow" id="kSel"></p>
+      <div class="kpis kpis-s">
+        <div class="kpi" style="--c:var(--otd)"><p class="eyebrow">OTD · Positionen</p><div class="v" id="kkOtd">–</div><div class="s" id="kkOtdS"></div></div>
+        <div class="kpi" style="--c:var(--otif)"><p class="eyebrow">OTIF · Aufträge</p><div class="v" id="kkOtif">–</div><div class="s" id="kkOtifS"></div></div>
+        <div class="kpi" style="--c:var(--otp)"><p class="eyebrow">OTP · Wunschtermin</p><div class="v" id="kkOtp">–</div><div class="s" id="kkOtpS"></div></div>
+      </div>
+      <div class="scroll" style="margin-top:16px"><table id="tblKM"></table></div>
+      <h3 class="h3">Trefferliste</h3>
+      <div class="scroll"><table id="tblKL"></table></div>
+      <div class="more"><button class="btn" id="kMore" type="button">Weitere 100 anzeigen</button></div>
+      <p class="hint">Kacheln und Monatstabelle zählen alle Kunden der Trefferliste zusammen (Zähler summiert, Prozent danach gerechnet). Klick auf eine Zeile zeigt nur diesen Kunden, ein zweiter Klick hebt die Auswahl auf. Ziffern suchen die Kundennummer (genau oder Anfang), Text sucht im Namen; mehrere Begriffe mit Komma. Ausgeschlossene Kunden (Trafag CZ, India, GFS) erscheinen nicht, weil sie nicht bewertet werden.</p>
+    </div>
   </section>
 
 
@@ -233,6 +272,7 @@ td.dim{color:var(--muted)}
       <label for="fI">Kundengruppe<select id="fI"><option value="">Alle</option><option value="x">Externe Kunden</option><option value="i">Trafag-Gesellschaften</option></select></label>
       <label for="fX">Auswertung<select id="fX"><option value="">Alle Positionen</option><option value="in">Nur bewertete</option><option value="ex">Nur ausgeschlossene</option></select></label>
       <button class="btn" id="fR" type="button">Filter zurücksetzen</button>
+      <span class="kfilt" id="fK" hidden></span>
       <span class="count" id="cnt"></span>
     </div>
     <div class="scroll"><table id="tblL"></table></div>
@@ -308,9 +348,9 @@ const R=LATE.late.map(r=>({so:r[0],it:r[1],cd:r[2],mo:r[2].slice(4,6),ist:r[3],w
 R.forEach(r=>{r.q=(r.so+' '+r.cu+' '+r.cn+' '+r.pr+' '+r.pn).toLowerCase();r.wds=r.wd==null?-1e6:r.wd;});
 const BK=[["offen",null,null],["5–9 AT",5,9],["10–19 AT",10,19],["20–39 AT",20,39],["40+ AT",40,1e9]];
 const inB=(r,b)=>b[1]==null?r.wd==null:(r.wd!=null&&r.wd>=b[1]&&r.wd<=b[2]);
-const st={q:'',m:'',t:'L',s:'',i:'',x:'',b:-1,cu:'',pr:'',sort:'wds',dir:-1,lim:100};
+const st={q:'',m:'',t:'L',s:'',i:'',x:'',b:-1,cu:'',pr:'',cs:null,sort:'wds',dir:-1,lim:100};
 Object.keys(MON).forEach(k=>$('fM').insertAdjacentHTML('beforeend',`<option value="${k}">${MON[k]}</option>`));
-function base(skip,onlyIn){return R.filter(r=>(onlyIn?(!r.ex&&r.ty==='L'):((!st.x||(st.x==='in'?!r.ex:!!r.ex))&&(!st.t||r.ty===st.t)))&&(!st.q||r.q.includes(st.q))&&(!st.m||r.mo===st.m)&&(!st.s||(st.s==='C'?r.st==='C':r.st!=='C'))&&(!st.i||(st.i==='i'?r.ic:!r.ic))&&(skip==='b'||st.b<0||inB(r,BK[st.b]))&&(skip==='cu'||!st.cu||r.cu===st.cu)&&(skip==='pr'||!st.pr||r.pr===st.pr));}
+function base(skip,onlyIn){return R.filter(r=>(onlyIn?(!r.ex&&r.ty==='L'):((!st.x||(st.x==='in'?!r.ex:!!r.ex))&&(!st.t||r.ty===st.t)))&&(!st.q||r.q.includes(st.q))&&(!st.m||r.mo===st.m)&&(!st.s||(st.s==='C'?r.st==='C':r.st!=='C'))&&(!st.i||(st.i==='i'?r.ic:!r.ic))&&(skip==='b'||st.b<0||inB(r,BK[st.b]))&&(skip==='cu'||!st.cu||r.cu===st.cu)&&(skip==='pr'||!st.pr||r.pr===st.pr)&&(!st.cs||st.cs.has(r.cu)));}
 const ICS=new Set(R.filter(r=>r.ic).map(r=>r.cu));
 const dt=s=>s?s.slice(6,8)+'.'+s.slice(4,6)+'.':'–';
 const dv=v=>v==null?'–':(v>0?'+':'')+v;
@@ -331,6 +371,8 @@ function render(){
   rows.slice(0,st.lim).forEach(r=>{h+=`<tr><td class="l">${r.so} / ${r.it}</td><td class="l wrap2">${esc(r.cn||r.cu)}${r.ic?'<span class="ic">IC</span>':''}${r.ex?'<br><span class="pill xx">'+XR[r.ex]+'</span>':''}</td><td class="l wrap2">${esc(r.pn)} <span class="c dim">${esc(r.pr)}</span></td><td class="l">${dt(r.cd)}</td><td class="l">${dt(r.ist)}${r.ng?' <span class="pill xx" title="kein Warenausgang gefunden, SAP-Kennzahl verwendet">SAP</span>':''}</td><td><span class="sev ${r.ty==='F'?'e':r.wd!=null&&r.wd>=20?'h':''}">${dv(r.wd)}</span></td><td class="l dim">${dt(r.rd)}</td><td class="dim">${dv(r.wr)}</td><td class="l">${r.st==='C'?'<span class="pill">geliefert</span>':'<span class="pill open">'+(r.st==='B'?'teilgeliefert':'offen')+'</span>'}</td><td>${f0(r.amt)}</td></tr>`;});
   $('tblL').innerHTML=h+'</tbody>';
   $('tblL').querySelectorAll('th[data-k]').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(st.sort===k)st.dir*=-1;else{st.sort=k;st.dir=(k==='wds'||k==='wr'||k==='amt')?-1:1;}render();});
+  $('fK').hidden=!st.cs;
+  if(st.cs){$('fK').innerHTML=`Kunden: ${f0(st.cs.size)} <button type="button" title="Kundenfilter aufheben" aria-label="Kundenfilter aufheben">×</button>`;$('fK').querySelector('button').onclick=()=>{st.cs=null;st.lim=100;render();};}
   const val=sum(rows.map(r=>r.amt));
   $('cnt').textContent=`${f0(rows.length)} Positionen · ${f0(val)} CHF`;
   $('more').hidden=rows.length<=st.lim;
@@ -341,9 +383,82 @@ $('fT').onchange=e=>{st.t=e.target.value;st.sort='wds';st.dir=st.t==='F'?1:-1;st
 $('fS').onchange=e=>{st.s=e.target.value;st.lim=100;render();};
 $('fI').onchange=e=>{st.i=e.target.value;st.lim=100;render();};
 $('fX').onchange=e=>{st.x=e.target.value;st.lim=100;render();};
-$('fR').onclick=()=>{Object.assign(st,{q:'',m:'',t:'L',s:'',i:'',x:'',b:-1,cu:'',pr:'',sort:'wds',dir:-1,lim:100});['fQ','fM','fS','fI','fX'].forEach(id=>$(id).value='');$('fT').value='L';render();};
+$('fR').onclick=()=>{Object.assign(st,{q:'',m:'',t:'L',s:'',i:'',x:'',b:-1,cu:'',pr:'',cs:null,sort:'wds',dir:-1,lim:100});['fQ','fM','fS','fI','fX'].forEach(id=>$(id).value='');$('fT').value='L';render();};
 $('more').onclick=()=>{st.lim+=100;render();};
 render();
+
+// ---- Kunden (Fabio 2026-11-02): je Auftraggeber und Monat dieselben Zaehler wie die Monatswerte
+/*__CU__*/
+(function(){
+  if(typeof CU==='undefined'||!CU){$('kNone').hidden=false;$('kBody').hidden=true;return;}
+  // r: [Kunde, Monat 1-12, n, s, t, e5, on, os, ot, pn, ps, pt]
+  const NM=CU.m.length;
+  const C=CU.c.map((c,i)=>({i,id:c[0],nr:String(c[0]).replace(/^0+/,''),name:c[1]||'',lc:(c[1]||'').toLowerCase(),m:[],y:new Array(10).fill(0)}));
+  CU.r.forEach(r=>{const c=C[r[0]];const v=r.slice(2);c.m[r[1]]=v;v.forEach((x,k)=>c.y[k]+=x);});
+  C.forEach(c=>{const y=c.y;c.n=y[0];c.late=y[0]-y[2];c.on=y[4];c.pn=y[7];c.e5=y[3];c.otd=y[0]?pct(y[2],y[0]):null;c.otif=y[4]?pct(y[6],y[4]):null;c.otp=y[7]?pct(y[9],y[7]):null;});
+  const ks={q:'',min:0,sel:null,sort:'n',dir:-1,lim:100};
+  const pc=v=>v==null?'–':f1(v)+' %';
+  const P=(a,b)=>b?f1(pct(a,b))+' %':'–';
+  function match(c){
+    const terms=ks.q.split(',').map(x=>x.trim()).filter(Boolean);
+    if(!terms.length)return true;
+    return terms.some(t=>/^\d+$/.test(t)?c.nr.startsWith(t.replace(/^0+/,'')):c.lc.includes(t.toLowerCase()));
+  }
+  const hits=()=>C.filter(c=>c.n>=ks.min&&match(c));
+  function agg(list){
+    const m=[];for(let i=1;i<=NM;i++)m[i]=new Array(10).fill(0);
+    list.forEach(c=>{for(let i=1;i<=NM;i++){const v=c.m[i];if(v)v.forEach((x,k)=>m[i][k]+=x);}});
+    const y=new Array(10).fill(0);for(let i=1;i<=NM;i++)m[i].forEach((x,k)=>y[k]+=x);
+    return {m,y};
+  }
+  function tiles(a){
+    const y=a.y,l=a.m[NM],lm=CU.m[NM-1];
+    $('kkOtd').textContent=P(y[2],y[0]);
+    $('kkOtdS').innerHTML=`<b>${f0(y[2])}</b> von ${f0(y[0])} Positionen · ohne Toleranz ${P(y[1],y[0])} · ${lm} <b>${P(l[2],l[0])}</b>`;
+    $('kkOtif').textContent=P(y[6],y[4]);
+    $('kkOtifS').innerHTML=`<b>${f0(y[6])}</b> von ${f0(y[4])} Aufträgen · ohne Toleranz ${P(y[5],y[4])} · ${lm} <b>${P(l[6],l[4])}</b>`;
+    $('kkOtp').textContent=P(y[9],y[7]);
+    $('kkOtpS').innerHTML=`<b>${f0(y[9])}</b> von ${f0(y[7])} Positionen · ohne Toleranz ${P(y[8],y[7])} · ${lm} <b>${P(l[9],l[7])}</b>`;
+  }
+  function months(a){
+    const cells=v=>`<td>${f0(v[0])}</td><td class="p">${P(v[2],v[0])}</td><td class="dim">${P(v[1],v[0])}</td><td>${f0(v[4])}</td><td class="p">${P(v[6],v[4])}</td><td class="dim">${P(v[5],v[4])}</td><td>${f0(v[7])}</td><td class="p">${P(v[9],v[7])}</td><td class="dim">${P(v[8],v[7])}</td><td>${f0(v[3])}</td>`;
+    let h=`<thead><tr><th class="l">Monat __YEAR__</th><th>Positionen</th><th>OTD</th><th>ohne Tol.</th><th>Aufträge</th><th>OTIF</th><th>ohne Tol.</th><th>Pos. Wunsch</th><th>OTP</th><th>ohne Tol.</th><th>Zu früh ≥ 5 AT</th></tr></thead><tbody>`;
+    for(let i=1;i<=NM;i++)h+=`<tr><td class="l">${CU.m[i-1]}</td>${cells(a.m[i])}</tr>`;
+    h+=`</tbody><tfoot><tr><td class="l">__PERIOD__</td>${cells(a.y)}</tr></tfoot>`;
+    $('tblKM').innerHTML=h;
+  }
+  const cols=[['name','Kunde','l'],['n','Positionen',''],['otd','OTD',''],['late','Nicht pünktlich',''],['on','Aufträge',''],['otif','OTIF',''],['pn','Pos. Wunsch',''],['otp','OTP',''],['e5','Zu früh','']];
+  function chosen(H){return ks.sel!=null?[C[ks.sel]]:H;}
+  function rk(){
+    const H=hits();
+    if(ks.sel!=null&&!H.some(c=>c.i===ks.sel))ks.sel=null;
+    const sel=chosen(H);
+    const a=agg(sel);tiles(a);months(a);
+    const c0=ks.sel!=null?C[ks.sel]:null;
+    $('kSel').textContent=c0?`Auswahl: ${c0.name||'(ohne Name)'} (${c0.id})`:(ks.q?`Auswahl: ${f0(H.length)} Kunden zur Suche „${ks.q}“`:`Auswahl: alle ${f0(H.length)} Kunden`);
+    const rows=H.slice().sort((a,b)=>{let x=a[ks.sort],y=b[ks.sort];if(x==null)x=-1e9;if(y==null)y=-1e9;if(typeof x==='string'){x=x.toLowerCase();y=String(y).toLowerCase();}return (x<y?-1:x>y?1:0)*ks.dir;});
+    let h='<thead><tr>'+cols.map(c=>`<th class="${c[2]}" data-k="${c[0]}">${c[1]}${ks.sort===c[0]?(ks.dir<0?' ▾':' ▴'):''}</th>`).join('')+'</tr></thead><tbody>';
+    rows.slice(0,ks.lim).forEach(c=>{h+=`<tr data-i="${c.i}" class="${ks.sel===c.i?'on':''}"><td class="l">${esc(c.name||'(ohne Name)')} <span class="c dim">${esc(c.id)}</span></td><td>${f0(c.n)}</td><td class="p">${pc(c.otd)}</td><td>${f0(c.late)}</td><td>${f0(c.on)}</td><td class="p">${pc(c.otif)}</td><td>${f0(c.pn)}</td><td class="p">${pc(c.otp)}</td><td>${f0(c.e5)}</td></tr>`;});
+    $('tblKL').innerHTML=h+'</tbody>';
+    $('tblKL').querySelectorAll('th[data-k]').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(ks.sort===k)ks.dir*=-1;else{ks.sort=k;ks.dir=k==='name'?1:-1;}rk();});
+    $('tblKL').querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>{const i=+tr.dataset.i;ks.sel=ks.sel===i?null:i;rk();});
+    $('kCnt').textContent=`${f0(H.length)} Kunden · ${f0(sum(H.map(c=>c.n)))} Positionen`;
+    $('kMore').hidden=rows.length<=ks.lim;
+    $('kAbw').disabled=!sel.length;
+    const xl=$('kXls');const q=c0?c0.id:(ks.q||'');xl.href=xl.getAttribute('href').split('&q=')[0]+(q?'&q='+encodeURIComponent(q):'');
+  }
+  $('kQ').oninput=e=>{ks.q=e.target.value.trim();ks.sel=null;ks.lim=100;rk();};
+  $('kMin').onchange=e=>{ks.min=+e.target.value;ks.sel=null;ks.lim=100;rk();};
+  $('kR').onclick=()=>{Object.assign(ks,{q:'',min:0,sel:null,sort:'n',dir:-1,lim:100});$('kQ').value='';$('kMin').value='0';rk();};
+  $('kMore').onclick=()=>{ks.lim+=100;rk();};
+  $('kAbw').onclick=()=>{
+    const sel=chosen(hits());
+    Object.assign(st,{q:'',m:'',t:'L',s:'',i:'',x:'',b:-1,cu:'',pr:'',cs:new Set(sel.map(c=>c.id)),sort:'wds',dir:-1,lim:100});
+    ['fQ','fM','fS','fI','fX'].forEach(id=>$(id).value='');$('fT').value='L';
+    render();$('liste').scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  rk();
+})();
 
 // ---- Wunschtermin-Machbarkeit
 /*__PG__*/

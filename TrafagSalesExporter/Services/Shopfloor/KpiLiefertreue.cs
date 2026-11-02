@@ -214,17 +214,23 @@ public static class KpiLiefertreue
 
         var m = new SortedDictionary<string, int[]>(StringComparer.Ordinal);   // n, s, t, e5, ng
         var p = new SortedDictionary<string, int[]>(StringComparer.Ordinal);   // n, s, t
-        var o = new Dictionary<string, (string Max, int N, int S, int T)>(StringComparer.Ordinal);
+        var o = new Dictionary<string, (string Max, int N, int S, int T, string Cu)>(StringComparer.Ordinal);
+        // Kundensicht (Fabio 2026-11-02): dieselben Zaehler je Auftraggeber und Monat, Schluessel "Kunde;JJJJMM".
+        // n, s, t, e5 (OTD nach bestaetigtem Monat), on, os, ot (OTIF nach spaetestem Monat des Auftrags), pn, ps, pt (OTP nach Wunschmonat)
+        var cm = new SortedDictionary<string, int[]>(StringComparer.Ordinal);
+        int[] Cust(string cu, string month) => cm.TryGetValue(cu + ";" + month, out var a) ? a : cm[cu + ";" + month] = new int[10];
         foreach (var i in items)
         {
             if (i.Ex.Length > 0) continue;
             if (i.Cm.Length > 0 && i.Cm.StartsWith(year, StringComparison.Ordinal))
             {
-                var cur = o.TryGetValue(i.So, out var v) ? v : ("0", 0, 0, 0);
+                var cur = o.TryGetValue(i.So, out var v) ? v : ("0", 0, 0, 0, "");
                 if (string.CompareOrdinal(i.Cm, cur.Item1) > 0) cur.Item1 = i.Cm;
                 cur.Item2++;
                 if (i.OkCs) cur.Item3++;
                 if (i.OkCt) cur.Item4++;
+                // Ein Auftrag hat einen Auftraggeber; MAX wie in der SQL der Spezifikation, falls doch einmal zwei vorkommen.
+                if (string.CompareOrdinal(i.Cu, cur.Item5) > 0) cur.Item5 = i.Cu;
                 o[i.So] = cur;
             }
             if (InC(i))
@@ -235,6 +241,11 @@ public static class KpiLiefertreue
                 if (i.OkCt) mm[2]++;
                 if (i.Lc is <= -5) mm[3]++;
                 if (i.NoGi) mm[4]++;
+                var cc = Cust(i.Cu, i.Cm);
+                cc[0]++;
+                if (i.OkCs) cc[1]++;
+                if (i.OkCt) cc[2]++;
+                if (i.Lc is <= -5) cc[3]++;
             }
             if (InR(i))
             {
@@ -242,6 +253,10 @@ public static class KpiLiefertreue
                 pp[0]++;
                 if (i.OkRs) pp[1]++;
                 if (i.OkRt) pp[2]++;
+                var cc = Cust(i.Cu, i.Rm);
+                cc[7]++;
+                if (i.OkRs) cc[8]++;
+                if (i.OkRt) cc[9]++;
             }
         }
         var om = new Dictionary<string, int[]>(StringComparer.Ordinal);
@@ -252,7 +267,14 @@ public static class KpiLiefertreue
             a[0]++;
             if (x.S == x.N) a[1]++;
             if (x.T == x.N) a[2]++;
+            var cc = Cust(x.Cu, x.Max);
+            cc[4]++;
+            if (x.S == x.N) cc[5]++;
+            if (x.T == x.N) cc[6]++;
         }
+        var kunden = new JsonArray();
+        foreach (var (k, v) in cm)
+            kunden.Add(k + ";" + string.Join(';', v));
 
         var otd = new JsonArray();
         foreach (var (k, v) in m)
@@ -327,6 +349,7 @@ public static class KpiLiefertreue
                 ["g"] = pgG
             },
             ["list"] = list,
+            ["kunden"] = kunden,
             ["names"] = new JsonObject { ["c"] = new JsonObject(), ["p"] = new JsonObject() },
             ["cut"] = cut,
             ["year"] = year,
@@ -343,6 +366,9 @@ public static class KpiLiefertreue
         var rows = Rows(lt, "list");
         return (rows.Select(x => x[6]).Distinct().ToList(), rows.Select(x => x[7]).Distinct().ToList());
     }
+
+    /// <summary>Auftraggeber der Kundensicht (fuer die Namensaufloesung); leer bei Staenden vor dem 2026-11-02.</summary>
+    public static List<string> CustomerKeys(JsonObject lt) => Rows(lt, "kunden").Select(x => x[0]).Distinct().ToList();
 
     private static List<string[]> Rows(JsonObject lt, string name)
         => (lt[name] as JsonArray ?? []).Select(x => (x?.GetValue<string>() ?? string.Empty).Split(';')).ToList();
@@ -416,6 +442,7 @@ public static class KpiLiefertreue
             ["late"] = late
         };
         var lateJs = "const LATE=" + lateObj.ToJsonString(Compact) + ";";
+        var cuJs = "const CU=" + CustomerBlock(lt, nc, lm) + ";";
 
         var s = template;
         var repl = new List<(string, string)>
@@ -427,10 +454,131 @@ public static class KpiLiefertreue
         foreach (var (k, v) in repl) s = s.Replace(k, v, StringComparison.Ordinal);
         return s.Replace("/*__D__*/", d, StringComparison.Ordinal)
                 .Replace("/*__PG__*/", pg, StringComparison.Ordinal)
-                .Replace("/*__LATE__*/", lateJs, StringComparison.Ordinal);
+                .Replace("/*__LATE__*/", lateJs, StringComparison.Ordinal)
+                .Replace("/*__CU__*/", cuJs, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Kundensicht fuer die Seite: m = Monatsnamen Jan bis Berichtsmonat, c = [Nummer, Name], r = [Kundenindex, Monat 1-12, n, s, t, e5,
+    /// on, os, ot, pn, ps, pt]. "null" fuer Staende vor dem 2026-11-02 (ohne "kunden"); die Seite zeigt dann einen Hinweis.
+    /// </summary>
+    private static string CustomerBlock(JsonObject lt, JsonObject names, int lastMonth)
+    {
+        if (lt["kunden"] is not JsonArray) return "null";
+        var rows = Rows(lt, "kunden");
+        var cus = rows.Select(x => x[0]).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var ci = cus.Select((c, i) => (c, i)).ToDictionary(x => x.c, x => x.i, StringComparer.Ordinal);
+        var r = new JsonArray();
+        foreach (var x in rows)
+        {
+            var a = new JsonArray(ci[x[0]], int.Parse(x[1].AsSpan(4, 2), CultureInfo.InvariantCulture));
+            for (var k = 2; k < 12; k++) a.Add(int.Parse(x[k], CultureInfo.InvariantCulture));
+            r.Add(a);
+        }
+        return new JsonObject
+        {
+            ["m"] = new JsonArray(MonthShort.Take(lastMonth).Select(x => (JsonNode?)JsonValue.Create(x)).ToArray()),
+            ["c"] = new JsonArray(cus.Select(c => (JsonNode?)new JsonArray(c, Name(names, c))).ToArray()),
+            ["r"] = r
+        }.ToJsonString(Compact);
+    }
+
+    /// <summary>
+    /// Suche der Kundensicht wie auf der Seite: Begriffe mit Komma getrennt, einer genuegt. Nur Ziffern = Kundennummer exakt oder
+    /// Anfang (fuehrende Nullen egal), sonst Teil des Namens; Gross-/Kleinschreibung egal. Leere Suche trifft alle.
+    /// </summary>
+    public static bool MatchCustomer(string? query, string number, string name)
+    {
+        var terms = (query ?? "").Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+        if (terms.Count == 0) return true;
+        var nr = number.TrimStart('0');
+        return terms.Any(q => q.All(char.IsAsciiDigit)
+            ? nr.StartsWith(q.TrimStart('0'), StringComparison.Ordinal)
+            : name.Contains(q, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string Name(JsonObject names, string key) => names[key]?.GetValue<string>() ?? "";
+
+    // ------------------------------------------------------------------ Excel Kundensicht (Fabio 2026-11-02)
+
+    /// <summary>
+    /// Blaetter "Kunden YTD" und "Kunden pro Monat" der Rubrik Kunden; <paramref name="query"/> wie die Suche der Seite, leer = alle Kunden.
+    /// null, wenn der Stand noch keine Kundensicht hat (vor dem 2026-11-02 geholt).
+    /// </summary>
+    public static byte[]? ExportCustomersXlsx(JsonObject lt, string? query = null)
+    {
+        if (lt["kunden"] is not JsonArray) return null;
+        var cut = lt["cut"]!.GetValue<string>();
+        var lm = int.Parse(cut.AsSpan(4, 2), CultureInfo.InvariantCulture);
+        var stand = DateOnly.ParseExact(lt["stand"]!.GetValue<string>(), "yyyy-MM-dd", CultureInfo.InvariantCulture).ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+        var nc = (lt["names"] as JsonObject)?["c"] as JsonObject ?? new JsonObject();
+        var rows = Rows(lt, "kunden").Where(x => MatchCustomer(query, x[0], Name(nc, x[0])))
+            .Select(x => (Cu: x[0], Month: x[1], V: x.Skip(2).Select(v => int.Parse(v, CultureInfo.InvariantCulture)).ToArray())).ToList();
+        var ytd = rows.GroupBy(x => x.Cu, StringComparer.Ordinal)
+            .Select(g => (Cu: g.Key, V: Enumerable.Range(0, 10).Select(k => g.Sum(x => x.V[k])).ToArray()))
+            .OrderByDescending(x => x.V[0]).ThenBy(x => x.Cu, StringComparer.Ordinal).ToList();
+
+        string[] head = ["Positionen", "Pünktlich", "OTD", "OTD ohne Tol.", "Nicht pünktlich", "Aufträge", "Komplett", "OTIF", "OTIF ohne Tol.",
+            "Positionen Wunsch", "Zum Wunschtermin", "OTP", "OTP ohne Tol.", "Zu früh ≥ 5 AT"];
+        using var wb = new XLWorkbook();
+        Sheet(wb.AddWorksheet("Kunden YTD"), ["Kunde Nr.", "Kunde"], ytd.Select(x => (new object[] { Num(x.Cu), Name(nc, x.Cu) }, x.V)));
+        Sheet(wb.AddWorksheet("Kunden pro Monat"), ["Kunde Nr.", "Kunde", "Monat"],
+            rows.OrderBy(x => x.Cu, StringComparer.Ordinal).ThenBy(x => x.Month, StringComparer.Ordinal)
+                .Select(x => (new object[] { Num(x.Cu), Name(nc, x.Cu), x.Month[..4] + "-" + x.Month[4..] }, x.V)));
+        var d = wb.AddWorksheet("Definition");
+        string[] defs =
+        [
+            "Kundensicht der Liefertreue: dieselben Zähler wie die Seite OTD / OTIF / OTP, gruppiert nach Auftraggeber (SoldToParty). Summe über alle Kunden = Monatswerte der Seite.",
+            "OTD und zu früh nach Monat des bestätigten Termins, OTIF nach Monat des spätesten bestätigten Termins des Auftrags (Auftraggeber des Auftrags), OTP nach Monat des Wunschtermins.",
+            "Prozente mit Toleranz (bis 4 AT nach dem Termin), ohne Toleranz auf den Tag. Mehrere Kunden: Zähler summieren, dann Prozent rechnen.",
+            "Nicht enthalten: Kunden und Materialien der Ausschlusstabelle (Operations > KPI), Zertifikate EN10204.",
+            $"Zeitraum {Period(lm)} {cut[..4]}, VKORG 1100, Stand {stand}" + (string.IsNullOrWhiteSpace(query) ? "." : $", Suche „{query.Trim()}“.")
+        ];
+        for (var i = 0; i < defs.Length; i++) d.Cell(i + 1, 1).Value = defs[i];
+        d.Column(1).Width = 150;
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+
+        void Sheet(IXLWorksheet ws, string[] keys, IEnumerable<(object[] Keys, int[] V)> data)
+        {
+            var cols = keys.Concat(head).ToArray();
+            for (var c = 0; c < cols.Length; c++)
+            {
+                var cell = ws.Cell(1, c + 1);
+                cell.Value = cols[c];
+                cell.Style.Font.Bold = true;
+                cell.Style.Font.FontColor = XLColor.White;
+                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#1F5F8B");
+            }
+            var row = 2;
+            foreach (var (k, v) in data)
+            {
+                var c = 1;
+                foreach (var key in k)
+                {
+                    var cell = ws.Cell(row, c++);
+                    if (key is long n) cell.Value = n; else cell.Value = key.ToString();
+                }
+                // v: n, s, t, e5, on, os, ot, pn, ps, pt
+                object?[] vals = [v[0], v[2], Q(v[2], v[0]), Q(v[1], v[0]), v[0] - v[2], v[4], v[6], Q(v[6], v[4]), Q(v[5], v[4]),
+                    v[7], v[9], Q(v[9], v[7]), Q(v[8], v[7]), v[3]];
+                foreach (var x in vals)
+                {
+                    var cell = ws.Cell(row, c++);
+                    if (x is int n) cell.Value = n;
+                    else if (x is double q) { cell.Value = q; cell.Style.NumberFormat.Format = "0.0%"; }
+                }
+                row++;
+            }
+            for (var c = 1; c <= cols.Length; c++) ws.Column(c).Width = c == 2 ? 40 : 12;
+            ws.SheetView.FreezeRows(1);
+            ws.Range(1, 1, Math.Max(1, row - 1), cols.Length).SetAutoFilter();
+        }
+
+        static object? Q(int a, int b) => b == 0 ? null : (double)a / b;
+        static object Num(string s) => long.TryParse(s, NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : s;
+    }
 
     // ------------------------------------------------------------------ Excel-Abweichungsliste (Port von build_liefertreue.py)
 

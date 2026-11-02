@@ -447,6 +447,17 @@ public static class ShopfloorEndpoints
             return Results.File(KpiLiefertreue.ExportXlsx(snap.Data), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Liefertreue_1100_verspaetet_{cut[..4]}-{cut[4..]}.xlsx");
         });
+        // Rubrik Kunden (Fabio 2026-11-02): Blaetter "Kunden YTD" und "Kunden pro Monat", ?q= wie die Suche der Seite
+        g.MapGet("/kpi/liefertreue/kunden.xlsx", (HttpContext c) =>
+        {
+            var snap = c.RequestServices.GetRequiredService<KpiLiefertreueSync>().Snapshot(c.Request.Query["cut"])
+                       ?? throw new ShopfloorException("Kein Stand vorhanden.", 404);
+            var cut = snap.Data["cut"]!.GetValue<string>();
+            var bytes = KpiLiefertreue.ExportCustomersXlsx(snap.Data, c.Request.Query["q"])
+                        ?? throw new ShopfloorException("Dieser Stand hat noch keine Kundensicht; sie entsteht mit dem nächsten Abruf.", 404);
+            return Results.File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Liefertreue_1100_Kunden_{cut[..4]}-{cut[4..]}.xlsx");
+        });
         g.MapPost("/kpi/liefertreue/sync", async Task<IResult> (HttpContext c) =>
         {
             var body = await Body(c);
@@ -475,7 +486,8 @@ public static class ShopfloorEndpoints
             var html = KpiLiefertreue.BuildBoard(snap.Value.Data, template, new Dictionary<string, string>
             {
                 ["__SOURCE__"] = System.Net.WebUtility.HtmlEncode(snap.Value.Source),
-                ["__EXPORT__"] = "../api/kpi/liefertreue/export.xlsx?cut=" + cut
+                ["__EXPORT__"] = "../api/kpi/liefertreue/export.xlsx?cut=" + cut,
+                ["__KUNDENEXPORT__"] = "../api/kpi/liefertreue/kunden.xlsx?cut=" + cut
             });
             // Warnhinweis, wenn der Vormonat nach dem Stichtag noch fehlt (Wunsch Fabio 2026-10-14)
             if (string.IsNullOrEmpty(c.Request.Query["cut"]) && sync.MissingWarning(DateTime.Now) is { } warn)
