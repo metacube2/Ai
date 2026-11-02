@@ -1,6 +1,6 @@
 # Shopfloor: Mengen aus SAP (ShopRmSet, ShopProdSet)
 
-Stand: 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
+Stand: 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
 *Ueberholt:* „Cockpit-Abruf mit ausgeschaltetem Schreiben“ (bis 09:50).
 Auftrag: Mail Fabio 16.10. (Datenabfragen J5 Logistik, J8 Tagesmengen SEH/TR5, J11 FPY SEH), von Ingo weitergeleitet.
 
@@ -65,6 +65,9 @@ Schalter `Shopfloor:SapMengenEnabled` (aus). Vorschau `GET shopfloor/api/sap/men
   MLE08+09 1'065; FPY SEH KW38 bis KW41 gegen 99.8 / 99.7 / 97.1 / 99.5. Erst dann `SapMengenEnabled = true`.
 - Historie nachladen (Verkauf ab 01.01., Logistik/Tagesmengen ab 01.10.) erst danach, nur leere Tage.
 - Nicht gebaut: J2/J3 Verkauf (Ergebnisbereich, Wertfelder, Merkmal fehlen; KEA0 bei Ingo), J6 Auftragsvorrat (ZC22).
+  *Teilweise ueberholt am 2026-11-02:* KEA0 in T76 gelesen: Ergebnisbereich 1000, `CE11000`, Produktsparte `WWPSP`, Wertfelder
+  `VV100`/`VV110`/`VV200`/`VV210`/`VV220`/`VV230`/`VV250` und Skonto `VV240` oder `VV245` (offen). J4 Verkauf laeuft ueber Fiori
+  `C_SALESANALYTICSQRY_1_CDS`, kein eigenes Set. Einzelheiten `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
 
 ## 7. P76 (2026-10-16)
 

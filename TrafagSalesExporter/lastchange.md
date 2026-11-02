@@ -1,6 +1,18 @@
 # Last Change
 
-Stand: 2026-10-30
+Stand: 2026-11-02
+
+## Shopfloor: Paket Fabio vom 01.11., Verkauf über Fiori (J4), KEA0, 2026-11-02
+
+- Patch 04 (PPD Terminverschiebungen aus den Rückstandslisten, standardmässig aus) und Patch 05 mit Fabios `apply_patch.js`
+  eingespielt, Verkaufs-Config mit `config_verkauf_fiori.js`: Transmitter = TR5 + TX (`ae_tr5`/`u_tr5` entfallen), erwarteter
+  Umsatz aus Fiori statt ZC23. Je zuerst `--check`, Ersetzungsstellen und Feldnamen gegen den Port geprüft.
+- J4 neu: `ShopfloorSapVerkauf` holt erwarteten Umsatz (Umsatz + offene Lieferungen + offene Aufträge) und Gutschriften aus
+  `C_SALESANALYTICSQRY_1_CDS`, Monat des Vortags, Vorschau `GET shopfloor/api/sap/verkauf`, Schalter `SapVerkaufEnabled`.
+- KEA0 in T76 gelesen: Ergebnisbereich 1000, `CE11000`, Produktsparte `WWPSP`, Wertfelder des Nettoerlöses; offen Skonto
+  `VV240`/`VV245` und `PALEDGER`. Commit `82f4f52`, Release-Worktree 1318/1318, produktiv 08:21 bitgleich ohne Alarm.
+  Vorschau 10/2026 = Fabios Kontrollwerte (8'827'624.28 / 110'412.21 CHF), heute per POST geschrieben, danach
+  `SapVerkaufEnabled = true` im Repo (wirkt nach dem nächsten Deploy). `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16, Wochen_Todo 130.
 
 ## ZLO03 FIX 24: Stückkosten ungerundet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stück, 2026-10-30
 

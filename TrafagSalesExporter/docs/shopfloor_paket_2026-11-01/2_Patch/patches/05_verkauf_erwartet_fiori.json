@@ -1,0 +1,14 @@
+{
+ "id": "05_verkauf_erwartet_fiori",
+ "datum": "2026-11-01",
+ "beschreibung": "Verkauf: Go-for-it-Kachel zeigt «erwartet (Fiori)» statt «geplant (ZC23)»",
+ "marker": "erwartet (Fiori)",
+ "app_js": [
+  {
+   "name": "Go-for-it-Kachel Text",
+   "old": "fehlt bis Go-for-it${plan != null ? ` · geplant (ZC23) ${fmtNum(plan)}` : \"\"}",
+   "new": "fehlt bis Go-for-it${plan != null ? ` · erwartet (Fiori) ${fmtNum(plan)}` : \"\"}"
+  }
+ ],
+ "style_css": ""
+}

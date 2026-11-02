@@ -1,0 +1,62 @@
+Shopfloor Patch 04 (01.11.2026): PPD Terminverschiebungen automatisch aus den Rückstandslisten
+
+Was es macht
+  - TV SEH / TV TR5 / TV TX / TV DW im PPD = Summe «Menge im Rückstand» aller offenen Positionen der
+    Rückstandslisten 3.1 RS SEH, 4.1 RS TR5, 5.1 RS TX, 6.1 RS DW (Quelle laut PPD, A. Tran).
+  - Offen = Status nicht «erledigt», «abgesagt» oder «storniert» (Tippfehler wie «erledgt», «ERLEDIGT» werden erkannt).
+  - Berechnet beim Öffnen von PPD, nur für heute, gespeichert im Tagesdatensatz (Verlauf und Kacheln laufen weiter).
+    Vortage bleiben unverändert. Die vier Felder sind dann schreibgeschützt und mit «RS» markiert.
+  - Infozeile oben im PPD: Menge und Anzahl Positionen je Abteilung, mit Link auf die Rückstandsliste.
+  - TV MTS und die Bemerkungen bleiben manuell.
+  - Nur Frontend (app.js, style.css). Kein Backend, keine neue Tabelle.
+
+WICHTIG: Der Patch ist standardmässig AUS
+  Ohne Eintrag in der Config läuft PPD genau wie bisher (manuelle Erfassung).
+  Eingeschaltet wird mit ppd "tv_from_rs": true, siehe Schritt 3.
+  Erst einschalten, wenn die Dispo die Rückstandslisten im Dashboard pflegt. Stand 01.11.2026 wurden die RS im
+  Dashboard zuletzt am 05.10.2026 geändert; die automatischen Werte wären heute veraltet
+  (Test 01.11.: SEH 300, TR5 1'146, TX 3'713, DW 823 Stk. gegenüber Excel 26.10.: TR5 909, TX 194, DW 273).
+
+Anwenden (Ordner /BiDashboard/shopfloor/)
+  1. Prüfen:     node 2_Patch\apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check
+  2. Anwenden:   node 2_Patch\apply_patch.js "<Pfad>\BiDashboard\shopfloor"
+     01-03 sind schon drin und werden übersprungen. Es entstehen app.js.bak und style.css.bak.
+     Hinweis: Die Ampel-Änderung vom 16.10. (nochmals klicken löscht den heutigen Status) bleibt erhalten.
+  3. Später einschalten:  node 3_Config\tv_aus_rs_schalten.js "<Pfad>\shopfloor_config.json"
+     Ausschalten:         node 3_Config\tv_aus_rs_schalten.js "<Pfad>\shopfloor_config.json" --aus
+  4. Browser: Strg+F5.
+
+Getestet 01.11.2026
+  - Gegen die produktive app.js (Stand 16.10., inkl. Ampel-Änderung): alle 5 Stellen genau 1x, Syntax ok,
+    zweiter Lauf überspringt den Patch.
+  - Im Browser mit Echtdaten, Speichern abgefangen (nichts geschrieben): Infozeile und 4 RS-Felder korrekt,
+    Total Terminverschiebungen 5'982.
+
+Rückgängig: app.js.bak und style.css.bak zurückkopieren bzw. tv_from_rs auf false.
+
+======================================================================================================
+Ergänzung Verkauf (01.11.2026, Entscheid F. Palma)
+
+  - Transmitter = TR5 + TX zusammen (Produktsparte 0005). Die nie befüllten Felder ae_tr5 / u_tr5 werden entfernt,
+    «restliche Bereiche» rechnen ohne sie.
+  - Weg von ZC23: «Geplanter Umsatz Monat (zc23)» wird «Erwarteter Umsatz Monat» aus Fiori «Umsatz prüfen».
+    Quelle: OData C_SALESANALYTICSQRY_1_CDS, Parameter P_DisplayCurrency='CHF', P_ExchangeRateType='M',
+    Filter SalesOrganization 1100, BillingDocDateYearMonth = Monat des Vortags (am 1. = Vormonat).
+    Wert = SlsVolumeNetAmtInDspCrcy + OpnOutbDelivsForInvcNetAmtInDC + OpenSalesOrdersNetAmountInDC.
+    Kontrolle 01.11.2026: 10/2026 8'827'624 CHF, 11/2026 6'584'145 CHF (= Grafik in Fiori).
+    Feldschlüssel umsatz_plan bleibt (Verlauf bleibt erhalten).
+  - Gutschriften: gleicher Service, CustCrdtMemoNetAmtInDspCrcy, Monat des Vortags (10/2026: 110'412 CHF).
+  - Periode für AE/Umsatz IST aus CO-PA bestätigt: Buchungsperiode, am Monatsersten der Vormonat komplett.
+  - Offen bei Ingo für AE/Umsatz IST (CO-PA): Ergebnisbereich, Wertfelder, Merkmal Produktsparte (KEA0).
+
+  Dateien
+    2_Patch\patches\05_verkauf_erwartet_fiori.json  Go-for-it-Kachel: «erwartet (Fiori)» statt «geplant (ZC23)»
+    3_Config\config_verkauf_fiori.js                 Config Verkauf (zuerst mit --check)
+    1_Schnittstelle\Shopfloor_SAP_Schnittstelle_2026-11-01.xlsx  Feld-Mapping, Jobs (J2-J4) und Blatt Verkauf nachgeführt
+
+  Reihenfolge
+    1. node 3_Config\config_verkauf_fiori.js "<Pfad>\shopfloor_config.json" --check, dann ohne --check
+    2. node 2_Patch\apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check, dann ohne --check (wendet 04 und 05 an)
+    3. Abfrage «erwarteter Umsatz» und «Gutschriften» einbauen (Fiori-Service oben), Strg+F5
+  Getestet 01.11.2026: Patch 05 gegen die produktive app.js (1x, Syntax ok); Config-Skript mit Testkonfiguration;
+  Werte im Fiori-Service direkt abgefragt.

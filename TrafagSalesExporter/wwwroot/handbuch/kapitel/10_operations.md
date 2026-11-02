@@ -308,6 +308,8 @@ PPD ist die Drehscheibe zwischen Verkauf, Einkauf und Produktion. Die Seite zeig
 
 Total in Verzug ist die Summe SEH, TR5, TX und DW. Die Mengen in Verzug erscheinen auch auf den Abteilungsseiten. Seit dem 16.10.2026 zählt MTS nicht mehr zum Verzug.
 
+Die Terminverschiebungen SEH, TR5, TX und DW können seit dem 02.11.2026 automatisch aus den Rückstandslisten kommen: Summe der Menge im Rückstand aller offenen Positionen der jeweiligen Liste, berechnet beim Öffnen der Seite für den heutigen Tag. Die Felder sind dann schreibgeschützt und tragen die Marke „RS“, eine Zeile oben zeigt Menge und Anzahl Positionen je Abteilung. Die Automatik ist ausgeschaltet, bis die Disposition die Rückstandslisten im Dashboard pflegt; bis dahin werden die Terminverschiebungen von Hand erfasst. MTS bleibt immer manuell.
+
 ### Einsatz im Arbeitsalltag
 
 **Disponenten:** Verzug und Terminverschiebungen täglich erfassen und die Prio-Liste für den Einkauf und die Logistik pflegen. **Leitung Operations:** im Verlauf sehen, ob der Verzug abgebaut wird.
@@ -442,11 +444,13 @@ Die Verkaufsseite verbindet das Meeting mit dem Markt: Kommen genug Aufträge he
 
 ### Was man sieht
 
-Oben drei Kacheln: das **Go-for-it-Ziel** des Monats mit dem Umsatz Ist in Prozent davon, der fehlende Betrag bis zum Ziel (mit dem geplanten Umsatz aus ZC23) und der Auftragseingang mit Book to Bill. Darunter die Tageswerte: Auftragseingang und Umsatz Ist kumuliert im Monat, Tagesumsatz, geplanter Umsatz aus ZC23, Abweichung, Auftragseingang und Umsatz je Bereich (TR5, Transmitter TX und TR5, DW, Rest), Gutschriften.
+Oben drei Kacheln: das **Go-for-it-Ziel** des Monats mit dem Umsatz Ist in Prozent davon, der fehlende Betrag bis zum Ziel (mit dem erwarteten Umsatz aus Fiori) und der Auftragseingang mit Book to Bill. Darunter die Tageswerte: Auftragseingang und Umsatz Ist kumuliert im Monat, Tagesumsatz, erwarteter Umsatz des Monats, Abweichung, Auftragseingang und Umsatz je Bereich (Transmitter TR5 und TX zusammen, DW, Rest), Gutschriften.
 
 ### Wie gerechnet wird
 
-Auftragseingang und Umsatz sind Monatswerte kumuliert bis zum Vortag; am Monatsersten gilt der ganze Vormonat. Der Tagesumsatz ist die Differenz zum vorherigen Eintrag. Book to Bill ist Auftragseingang geteilt durch Umsatz. Das Go-for-it-Ziel wird einmal pro Monat im Feld „Ziel festlegen“ erfasst. Vorgesehen ist die Lieferung aus SAP CO-PA wie im Bericht KE30 (Nettoerlös, Buchungskreis 1100); Stand 16.10.2026 werden die Werte von Hand erfasst.
+Auftragseingang und Umsatz sind Monatswerte kumuliert bis zum Vortag; am Monatsersten gilt der ganze Vormonat. Der Tagesumsatz ist die Differenz zum vorherigen Eintrag. Book to Bill ist Auftragseingang geteilt durch Umsatz. Das Go-for-it-Ziel wird einmal pro Monat im Feld „Ziel festlegen“ erfasst. Vorgesehen ist die Lieferung aus SAP CO-PA wie im Bericht KE30 (Nettoerlös, Buchungskreis 1100); Stand 02.11.2026 werden Auftragseingang und Umsatz Ist noch von Hand erfasst.
+
+Der erwartete Umsatz des Monats ersetzt seit dem 02.11.2026 den geplanten Umsatz aus ZC23. Er kommt aus der Fiori-App „Umsatz prüfen“: Umsatz plus offene Lieferungen plus offene Aufträge des Monats, Verkaufsorganisation 1100, in CHF. Die Gutschriften kommen aus derselben Quelle. Beide gelten wie die übrigen Verkaufswerte für den Monat des Vortags; ein von Hand erfasster Wert wird nicht überschrieben. Transmitter heisst seit diesem Datum TR5 und TX zusammen (Produktsparte 0005); die getrennten TR5-Felder sind entfallen.
 
 ### Einsatz im Arbeitsalltag
 
@@ -502,7 +506,7 @@ Automatische Lieferungen schreiben unter dem Namen „SAP-Schnittstelle“ und s
 
 ### Grenzen und Fallstricke
 
-Stand 16.10.2026 kommen aus SAP die Fehlteile ZD05, die Plan- und Fertigungsaufträge für den Forecast, die Logistik-Mengen, die Tagesmengen SEH und TR5 sowie FPY SEH, seit dem 19.10.2026 auch die Tagesmenge DW. Die Logistik-Mengen und FPY SEH sind vor dem Einschalten mit Echtdaten gegen ZC27 und die Kontrollwerte der Supply Chain geprüft worden (13.10.2026 und KW 38 bis 41, alle gleich). Verkauf (CO-PA), Auftragsvorrat und Rückstandslisten folgen später.
+Stand 16.10.2026 kommen aus SAP die Fehlteile ZD05, die Plan- und Fertigungsaufträge für den Forecast, die Logistik-Mengen, die Tagesmengen SEH und TR5 sowie FPY SEH, seit dem 19.10.2026 auch die Tagesmenge DW. Die Logistik-Mengen und FPY SEH sind vor dem Einschalten mit Echtdaten gegen ZC27 und die Kontrollwerte der Supply Chain geprüft worden (13.10.2026 und KW 38 bis 41, alle gleich). Verkauf (CO-PA), Auftragsvorrat und Rückstandslisten folgen später. Seit dem 02.11.2026 ist der erwartete Umsatz des Monats samt Gutschriften aus der Fiori-App „Umsatz prüfen“ angebunden.
 
 ## Kennzahlen-Glossar
 

@@ -10,6 +10,9 @@ freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transpor
 *Ueberholt am 2026-10-29:* „Zugriff nur fuer `koi`" und „SAP-Abgleich ausgeschaltet": seit 2026-10-16 `OpenForAll = true` (Abschnitt 3),
 `SapSyncEnabled = true` seit 2026-10-09 (Abschnitt 8), Abgleichzeiten 04:00 und 12:45 (`appsettings.json`, Abschnitt 14).
 
+Stand 2026-11-02: Fabios Paket vom 2026-11-01 eingespielt (Patch 04 Terminverschiebungen aus den Rückstandslisten, standardmässig aus; Patch 05;
+Verkauf Transmitter = TR5 + TX, erwarteter Umsatz aus Fiori statt ZC23), J4 Verkauf aus `C_SALESANALYTICSQRY_1_CDS` gebaut, KEA0 gelesen
+(Ergebnisbereich 1000, `CE11000`, Produktsparte `WWPSP`). Abschnitt 16.
 Stand 2026-10-15: Fabios Patches ZD05 „Zu besprechen“ und Verkauf Go-for-it uebernommen; die Schnittstelle nimmt seit `f4e3f1b` auch das Push-Format seiner Beispiele an (Abschnitt 13).
 Stand 2026-10-14: Feld-Mapping aus `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` uebernommen (`b613f7c`): Abteilungen ueber den
 Disponenten, Quelle SAP statt MES ausser FPY, Mapping je Feld auf der Seite „Schnittstelle SAP / MES“. Einzelheiten Abschnitt 12.
@@ -398,6 +401,7 @@ J1 bis J11 sind eine Liste von Datenabfragen, keine SAP-Jobs.
   zu bleiben. ZD05 bleibt auf 04:00 und 12:45 (Entscheid Ingo, obwohl Fabio 05:45 reichen wuerde).
 - **Nicht gebaut:** J2/J3 Verkauf (Ergebnisbereich, Wertfelder, Merkmal Produktsparte fehlen; Fabio hat keine Berechtigung fuer
   KEA0, Ingo schaut nach), J6 Auftragsvorrat (ZC22), Historie nachladen (erst nach der Pruefung, nur leere Tage).
+  *Teilweise ueberholt am 2026-11-02:* KEA0 ist gelesen (Abschnitt 16); J2/J3 bleiben ungebaut.
 
 *Nachtrag 2026-10-16 09:51:* **produktiv.** Transporte in P76, Vorschau gleich Fabios Kontrollwerten (Logistik 13.10. alle fuenf Felder,
 FPY SEH KW38 bis KW41), `Shopfloor:SapMengenEnabled = true` (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben. Falle P76: zwei
@@ -408,3 +412,60 @@ Die Aussage „Schalter aus“ oben ist damit ueberholt.
 Istendtermin D; die Aussage „Eintrag vom Tag D = Stand bis D-1, Montag Freitag bis Sonntag“ oben ist ueberholt. Der Abgleich
 schreibt heute und die drei Tage davor; ein Bereich ohne Rueckmeldung bleibt leer statt 0. Neu `dw.prod` aus DL790. 15. bis
 19.10. umgebucht. TX aus ZC22 noch nicht gebaut. Einzelheiten `saptasks/shopfloor_sap/NOTES.md` Abschnitt 8.
+
+## 16. Paket Fabio vom 2026-11-01: Patch 04/05, Verkauf ueber Fiori (J4), KEA0 (Stand 2026-11-02)
+
+Auftrag Ingo 02.11. („mach 1-3“), Mail Fabio mit `sf.zip`. Paket abgelegt unter `docs/shopfloor_paket_2026-11-01/` (Freigabe Ingo,
+das Excel enthaelt Kontrollwerte in CHF). Commit `82f4f52`, produktiv 2026-11-02 08:21.
+
+**1. Patches und Config, eingespielt mit Fabios Skripten, je zuerst `--check`:**
+
+- `2_Patch/apply_patch.js` auf `wwwroot/shopfloor`: 01 bis 03 uebersprungen, **04** (PPD: TV SEH/TR5/TX/DW = Summe `menge_rs` der offenen
+  Positionen von `rs_seh/tr5/tx/dw`, beim Oeffnen von PPD nur fuer heute gespeichert, Felder dann schreibgeschuetzt mit Marke „RS“) und
+  **05** (Go-for-it-Kachel „erwartet (Fiori)“ statt „geplant (ZC23)“) angewendet. Patch 04 ist **aus**, bis beim Modul `ppd`
+  `"tv_from_rs": true` steht (`3_Config/tv_aus_rs_schalten.js`). Fabio: erst einschalten, wenn die Dispo die Rueckstandslisten im
+  Dashboard pflegt (zuletzt geaendert 05.10.).
+- `3_Config/config_verkauf_fiori.js` auf `shopfloor_config.json`: `ae_tr5` und `u_tr5` entfernt (nie befuellt, Transmitter = TR5 + TX,
+  Produktsparte 0005), `ae_rest`/`u_rest` ohne sie, `umsatz_plan` heisst „Erwarteter Umsatz Monat (Fiori Umsatz prüfen)“ (Schluessel
+  bleibt, Verlauf bleibt). Das vom Skript gesetzte `planned_source` ist wieder entfernt (das Feld hatte schon `src: sap`); das SAP-Mapping
+  von `umsatz_plan` und `gutschriften` zeigt jetzt auf J4. Damit 127 SAP- und 4 MES-Felder (Test angepasst).
+- `.bak`-Dateien der Skripte nicht im Repo. Gegen die Feldnamen des Ports geprueft (LEARNINGS 2026-10-16): Patch 04 nutzt `loadRecords`,
+  `todayIso`, `S.daily`, `menge_rs`, `status_field`, `tv_*`; alles vorhanden, jede Ersetzungsstelle genau einmal.
+
+**2. J4 Verkauf aus Fiori «Umsatz prüfen»** (`Services/Shopfloor/ShopfloorSapVerkauf.cs`, im SAP-Abgleich 04:00/12:45):
+
+- `C_SALESANALYTICSQRY_1_CDS`, Set `C_SALESANALYTICSQRY_1(P_DisplayCurrency='CHF',P_ExchangeRateType='M')/Results`, nur die vier
+  Kennzahlen im `$select` (die Query verdichtet auf eine Zeile), Filter `SalesOrganization eq '1100' and BillingDocDateYearMonth eq 'JJJJMM'`.
+  Gateway-Wurzel und Mandant wie Operations KPI (`KpiGatewayRoot`, `KpiSapClient`), Benutzer der Einkauf-Verbindung.
+- `umsatz_plan` = `SlsVolumeNetAmtInDspCrcy` + `OpnOutbDelivsForInvcNetAmtInDC` + `OpenSalesOrdersNetAmountInDC`,
+  `gutschriften` = `CustCrdtMemoNetAmtInDspCrcy`. Monat = Monat des Vortags (am 1. der Vormonat), geschrieben auf den Abfragetag
+  (Konvention Verkauf: Eintrag D = Stand bis D-1). Manuell erfasste Werte bleiben (`ShopfloorSapMengen.BuildItems`).
+- Vorschau `GET shopfloor/api/sap/verkauf?tag=JJJJ-MM-TT`, schreiben `POST` (mit `X-User`). Schalter `Shopfloor:SapVerkaufEnabled`
+  stand mit `82f4f52` auf false, bis die Vorschau fuer den 01.11. Fabios Kontrollwerte traf: 10/2026 **8'827'624** bzw. **110'412** CHF.
+- *Erledigt 2026-11-02 08:36:* `82f4f52` produktiv seit 08:21 (bitgleich, ohne Alarm). Vorschau 01.11. (Monat 10/2026):
+  **8'827'624.28** erwarteter Umsatz (Umsatz 8'695'910.24 + offene Lieferungen 131'008.06 + offene Auftraege 705.98) und
+  **110'412.21** Gutschriften, **gleich Fabios Kontrollwerten**. Heute (Monat 11/2026) per `POST` geschrieben: 6'489'963.37 und
+  3'632.05, Quelle SAP, zurueckgelesen. Danach `SapVerkaufEnabled = true` im Repo; der automatische Abgleich 04:00/12:45 schreibt
+  erst nach dem naechsten Deploy (Stand siehe `docs/rag/DEPLOYMENT.md`).
+- Tests `ShopfloorSapVerkaufTests` (Monat des Vortags, URL, Summe, ohne Zeile nichts, manueller Wert bleibt).
+
+**3. KEA0 (fuer J2/J3 AE und Umsatz IST aus CO-PA), gelesen in T76 per SapProbe am 2026-11-02:**
+
+| Punkt | Wert |
+| --- | --- |
+| Ergebnisbereich | **1000** (`TKA01`: Kostenrechnungskreis 1000 „Trafag Group“) |
+| Tabelle Einzelposten | **`CE11000`** (kalkulatorische Ergebnisrechnung) |
+| Merkmal Produktsparte | **`WWPSP`** (`RKEG_WWPSP`); nicht `SPART` (SD-Sparte, in den Stichproben `01`) |
+| Satzart | `VRGAR` (A = Auftragseingang, F = Faktura); Periode `GJAHR`/`PERDE` |
+| Wertfelder Nettoerloes | `VV100` Bruttoerloes, `VV110` Frachterloes, `VV200` Wiederverkaufsrabatt, `VV210` Mengenrabatt, `VV220` Sonstige Erloesminderung, `VV250` Waehrungsausgleich, `VV230` Verkaufsprovisionen, Skonto: `VV240` „Skonto kalk.“ oder `VV245` „Skonto echt FI“ |
+| Weitere Merkmale | `WWPFA` Produktfamilie, `WWTYP` Typencode, `PAPH1` Produkthierarchie, `VKORG`, `BUKRS`, `KNDNR`, `ARTNR`, `PALEDGER` Waehrungstyp |
+
+Offen fuer J2/J3: welches Skonto-Feld der KE30-Bericht Z0001-000006 abzieht (`VV240` oder `VV245`), und welcher Waehrungstyp `PALEDGER`
+gilt (in der T76-Stichprobe Maerz 2026 nur `01`); beides mit Fabio bzw. im Bericht klaeren. T76 hat nur Daten bis etwa April 2026, die
+Kontrollwerte Sep/Okt lassen sich erst in P76 nachrechnen. Lesen von `CE11000` braucht ein eigenes Set oder einen Report (zu gross fuer
+`RFC_READ_TABLE` ohne Verdichtung).
+
+**Fragen an Fabio aus Punkt 5 der Mail (PPD-Verzug aus ZC22, nicht gebaut):** `verzug_dw` mit Disponent `DW*` weicht von der Abteilung
+DW = `D*` ab (DW1 Ruestpapiere waere dabei, DB1/D10 nicht); Bedeutung der ZC22-Schalter „mit Vorgangsdaten“ und „mit Planauftraegen“ im
+Quelltext lesen, bevor die Logik nachgebaut wird; Selektion `verzug_seh` folgt; Untergrenze 01.01.2026 vorlaeufig. Dazu: Fabios Excel nennt
+fuer J5/J8 noch „Vortag, Montag Fr+Sa+So“, bei uns gilt seit 2026-10-19 der Produktionstag (Abschnitt 15).
