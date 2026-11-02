@@ -1,6 +1,6 @@
 # Bauplan Phase 2: Materialanteil je Produktgruppe nach Materialgruppe
 
-Stand: 2026-11-02, Bauplan (nichts gebaut). Auftrag Ingo „erst Bauplan“. Grundlage: Rechenweg von Armin (Nachtrag 2026-11-02 in
+Stand: 2026-11-02, Bauplan (nichts gebaut), Entscheide Ingo zu F1/F2 und eigene Tabelle am Ende von Abschnitt 4. Auftrag Ingo „erst Bauplan“. Grundlage: Rechenweg von Armin (Nachtrag 2026-11-02 in
 `NOTES.md`), Entscheide Ingo vom 2026-11-02, Quelltexte im Repo (gelesen, nicht in SAP gemessen). Zurueck: `NOTES.md`.
 
 ## 1. Was gerechnet wird
@@ -56,8 +56,9 @@ Abgleich mit Armin klaeren (Frage F1).
    je VerkNr und Monat `Bmeng` summieren -> neue Tabelle `PurchasingZc23Cache`. Danach fuer die VerkNr mit Menge `ZloTopDownSet` in
    Bloecken -> `PurchasingBomDemandCache` (VerkNr, Komponente, Menge je 1 VerkNr, Disponent, Warengruppe, Stueckkosten).
    Schreibt nur bei vollstaendigem Lauf (wie die bestehenden Caches).
-5. **Neuer Einstieg „Materialanteil je Produktgruppe“** im Spend-Aufriss, Knopf rot (`Color.Error` fuer genau diesen Schluessel in
-   `PurchasingSpendExplorer.razor`), Stufen Produktgruppe -> Materialgruppe -> Einkaufsteil, Zeitraum des Aufrisses auf „Termin
+5. **Neuer, eigener Aufriss „Materialanteil je Produktgruppe“** als aufklappbare Tabelle in einer **eigenen Komponente** (Entscheid
+   Ingo 2026-11-02: der bestehende Spend-Aufriss bleibt unveraendert, falls etwas nicht passt). Ein rot markierter Knopf im Kopf des
+   Spend-Aufrisses oeffnet ihn; `PurchasingSpendExplorer.razor` bekommt nur diesen Knopf, keine neue Perspektive in seiner Logik. Stufen Produktgruppe -> Materialgruppe -> Einkaufsteil, Zeitraum des Aufrisses auf „Termin
    bestaetigt“, Schalter „Nur Einkaufsteile 001 bis 006“ wirkt wie bei allen Einstiegen. Ueber der Tabelle steht deutlich die Basis
    („Materialanteil aus bestaetigten Kundenauftraegen x Stueckliste, nicht Einkaufsvolumen“).
 6. Texte in allen Sprachen inkl. Berndeutsch, Tests (Rechnung, Absagegrund, 006, Stufen), Handbuch Kapitel Einkauf.
@@ -76,6 +77,9 @@ Abgleich mit Armin klaeren (Frage F1).
 | F1 | Menge: bestaetigte ZC23-Menge x Stueckliste (Entscheid „Termin bestaetigt“) statt ZLO03-Verbrauch, wie in Armins Excel? Abweichung akzeptiert? | Ingo / Armin |
 | F2 | Mehrstufigkeit: zaehlen Einkaufsteile in Unterbaugruppen voll mit (ZLO03 summiert alle Stufen; Befund G4 „Mehrstufigkeit teilweise“ in `zlo03/CLAUDE.md` noch offen gegen CS12)? | Ingo |
 | F3 | Erst nach dem P76-Import von FIX 24 bauen (ungerundete Stueckkosten, Textpositionen)? Empfehlung: ja | Ingo |
+
+**Entscheide Ingo 2026-11-02:** F1 ja, Menge = bestaetigte ZC23-Menge x Stueckliste, die Abweichung zu Armins Excel (Verbrauch) ist
+gewollt. F2 ja, die Summe ueber alle Stuecklistenstufen reicht. Darstellung als eigene, aufklappbare Tabelle (Schritt 5). F3 offen.
 
 ## 5. Aufwand (Schaetzung)
 
