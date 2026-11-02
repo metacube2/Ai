@@ -1,7 +1,7 @@
 # Zeichnungsaenderung: SAP-Daten fuer die MS-Liste
 
-Stand: 2026-11-02. Auftrag Ingo 02.11. Status: **Weg entschieden, SAP-Teil in Arbeit, Dashboard-Teil wartet
-auf SharePoint-Berechtigung und Ablageort.**
+Stand: 2026-11-02 12:10. Auftrag Ingo 02.11. Status: **Weg entschieden, `Zeivr` in T76 fertig (`T76K912793`, wartet
+auf Import P76), Dashboard-Teil wartet auf SharePoint-Berechtigung und Ablageort.**
 
 ## 1. Anfrage
 
@@ -72,7 +72,7 @@ Simons Antworten (02.11.):
 | Zustimmung zum Weg | Lucas Castro | keine Antwort |
 | Schreibrecht des Dashboard-Servers im SharePoint (App-Berechtigung) | Alex Donato, laut Mail von Ingo beauftragt | keine Antwort |
 | Ablageort der Liste, Format fuer den Flow | Andreas Wild | keine Antwort |
-| `Zeivr` an `MARA001Set` in T76, danach Import P76 | Claude in T76, Import Ingo | siehe Abschnitt 6 |
+| `Zeivr` an `MARA001Set` | T76 erledigt 02.11. (`T76K912793`); Freigabe und Import P76 Ingo | siehe Abschnitt 6 |
 | Naechtlicher Abzug im Dashboard | Claude | wartet auf `Zeivr` in P76 und auf Ablageort und Berechtigung |
 
 Der Dashboard-Teil wird bewusst noch nicht gebaut: Ohne Ziel und Berechtigung waere er halb, und seine Registrierung
@@ -81,9 +81,49 @@ liegt.
 
 ## 6. SAP-Umsetzung
 
-Noch nicht begonnen. Wird hier nachgetragen (Transport, Objekte, Rueckleseprobe).
+*Erledigt 2026-11-02 12:05 in T76:* `Zeivr` haengt an `MARA001Set`, im **eigenen Auftrag `T76K912793`** (Aufgabe
+`T76K912794`, Text „Zeichnungsaenderung: Zeivr an MARA001Set“). Einziges Objekt: `LIMU METH ZCL_ZPOWERBI_EINKAUF_MPC_EXT
+DEFINE`. **Offen: Freigabe und Import nach P76 (Ingo)**, danach in P76 `/IWFND/CACHE_CLEANUP` (Modell
+`ZPOWERBI_EINKAUF_MDL`) und `/IWBEP/CACHE_CLEANUP`, und zwar auf `travp762`, nicht auf `trasp76s`
+(`saptasks/shopfloor_sap/NOTES.md` Abschnitt 7).
 
-**Blocker 02.11. (Auskunft der parallelen Einkauf-Sitzung):** `ZCL_ZPOWERBI_EINKAUF_MPC_EXT` und `_DPC_EXT` liegen im
+Weg: Ingo liess am 02.11. ueber die parallele Sitzung ausrichten, die Aenderung in einem neuen eigenen Auftrag mit den
+SAP-Werkzeugen zu machen, nachdem er `T76K912785` freigegeben hatte. Gewaehlt wurde der Zusatz in `MPC_EXT DEFINE` statt
+SEGW: Die Sperre war weg, es gibt das Vorbild `ZPOWERBI_KDAUF` (ZC23, Felder nach `super->define( )` per
+`get_entity_type` plus erneutem `bind_structure`), und die Basisklassen werden nicht neu generiert. **Falle fuer spaeter:**
+Wer `Zeivr` zusaetzlich in SEGW beim Entitaetstyp `MARA` anlegt, erzeugt eine doppelte Property. Dann den Block in
+`MPC_EXT` entfernen.
+
+Ablauf und Belege:
+
+1. Live-Stand `MPC_EXT DEFINE` per `abap-read` gelesen (2791 Zeilen, enthaelt `ZloTopDownSet`), als
+   `MPC_EXT_DEFINE_vorher.abap` abgelegt. Zusatzblock `docs/abap/ZMARA_ZEIVR_ADD.abap` direkt vor `ENDMETHOD` eingefuegt,
+   `MPC_EXT_DEFINE_neu.abap` (2818 Zeilen).
+2. Eigene Sitzung (`SapGuiNeueSitzungT76.vbs`, ses[1]). Ingos Sitzungen blieben unberuehrt. SE24 mit F6 ohne
+   Transportabfrage, Methode mit `SapGuiKlassenMethodeQuelltext.vbs` gesichert. Dabei kam die Transportabfrage, also war
+   die Klasse nicht gesperrt. Neuer Auftrag mit `SapGuiAuftragNeu.vbs`. `T76K912785`/`786` standen in E070 auf `R`.
+3. Syntaxpruefung ohne Fehler, Aktivierung ueber das SE24-Einstiegsbild („Objekt(e) wurde(n) aktiviert“, ohne
+   Fehlerdialog).
+4. Ruecklesen per RFC: aktive Fassung **zeilengleich** mit `MPC_EXT_DEFINE_neu.abap` (2818 Zeilen).
+5. `/IWFND/CACHE_CLEANUP` (`ZPOWERBI_EINKAUF_MDL`) und `/IWBEP/CACHE_CLEANUP` (alle Modelle).
+6. Gateway Client T76:
+
+   | Anfrage | Status | content-length |
+   | --- | --- | --- |
+   | `$metadata` | 200 | 380'268 |
+   | `MARA001Set?$select=Matnr,Mstae,Matkl` (wie der Einkauf-Lauf) | 200 | 20'263'488 |
+   | `MARA001Set?$select=Matnr,Zeivr,Mstae` | 200 | 20'194'090 |
+   | `MARA001Set?$select=Matnr,Gibtsnicht` (Gegenprobe) | 404 | 586 |
+   | `ZloTopDownSet` Werks 1100, Vknr 41019 | 200 | 50'218 |
+   | `MAKTSet?$select=Matnr` | 200 | 44'672'881 |
+
+   **Werte kommen an:** `$select=Matnr,Zeivr` ist um 767'723 Bytes groesser als `$select=Matnr`. Erwartet bei gefuellten
+   Werten: 67'838 Zeilen in `MARA` (T76) x 11 Zeichen fuer `,"Zeivr":""` plus 21'504 Zeichen Indexwerte (21'432
+   Materialien mit Index) = 767'722. Ohne Werte waeren es 746'218 gewesen. Den Antwortrumpf selbst gibt der Gateway
+   Client ueber Scripting nicht her.
+7. Sitzung geschlossen. `SapGuiSitzungSchliessen.vbs` brach dabei mit „Bad index type“ ab und ist korrigiert (LEARNINGS).
+
+**Blocker 02.11. (ueberholt, Auftrag `T76K912785` am 02.11. freigegeben) (Auskunft der parallelen Einkauf-Sitzung):** `ZCL_ZPOWERBI_EINKAUF_MPC_EXT` und `_DPC_EXT` liegen im
 offenen Auftrag `T76K912785` (Aufgabe `T76K912786`, ZLO03 FIX 24 und `ZloTopDownSet`). Solange er offen ist, fragt SAP
 beim Aendern dieser Klassen nicht nach dem Auftrag und legt die Aenderung still dort hinein (LEARNINGS 2026-10-08 und
 2026-10-16). Ein eigener Transport geht fuer diese Klassen erst nach Freigabe von `T76K912785`, oder `Zeivr` geht
@@ -108,7 +148,7 @@ SEGW-Property plus Neugenerierung, wie beim Anhaengen von `Matkl` am 2026-07-23.
   `T76K912700`. Zuletzt waren sie in den Juli-Auftraegen `T76K9093xx` bis `T76K9097xx`. `T76K912785`/`T76K912786` (Status
   `D`, offen) enthalten nur `MPC_EXT DEFINE` und `DPC_EXT GET_ENTITYSET`.
 
-**Folge:** `Zeivr` kann mit eigenem Auftrag rein ueber SEGW kommen: Property im Entitaetstyp `MARA` anlegen und das
+**Folge** *(ueberholt am 2026-11-02: umgesetzt wurde der Zusatz in `MPC_EXT`, siehe oben)*: `Zeivr` kann mit eigenem Auftrag rein ueber SEGW kommen: Property im Entitaetstyp `MARA` anlegen und das
 Laufzeitartefakt neu generieren. Das aendert nur die Basisklassen und das SEGW-Projekt, die `_EXT`-Klassen bleiben
 unberuehrt, und der Weg ist derselbe wie im Juli bei `Matkl`/`Mstae`. Vorsicht: Die Generierung schreibt die Basisklassen
 `ZCL_ZPOWERBI_EINKAUF_MPC` und `_DPC` komplett neu. Danach muessen die anderen Sets (`MAKTSet`, `EKPOSet`, `ZloTopDownSet`
