@@ -1001,6 +1001,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `P76Pruefung_ZLO03_B63485.ps1` (Start: `P76Pruefung_ZLO03_Start.cmd`) | NUR LESEN P76: `ZMD04_CALC`, `ZPOWERBI_VC_TXT`, `MARA`, `REPOSRC` fuer den ZLO03-Fall B63485 (2026-10-16). Start ueber `explorer.exe <cmd>`; `Start-Process cmd` aus der Sitzung oeffnet kein sichtbares Fenster |
 | `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt den Status nicht aus. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
 | `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar |
+| `SapGuiP76Hilfe.vbs neu\|info\|ok\|dump\|press\|check\|set\|vkey\|grid\|tips ...` | **P76**, nur in einer eigenen Sitzung (bricht bei `ses[0]` ab): neue Sitzung oeffnen, OK-Code, Felder, Ankreuzfeld per `.Selected`, Grid und Knopf-Tooltips lesen; meldet je Schritt System und Anwendungsserver. Angelegt 2026-11-02 fuer das Leeren der Gateway-Caches in P76 |
+| `SapGuiGatewayStatusP76.vbs <Sitzung> <RequestUri>` | wie `SapGuiGatewayStatus.vbs`, aber fuer die P76-Verbindung (nur GET) |
 | `SapGuiOkCode.vbs <Sitzung> <Befehl>` | Befehl ins Befehlsfeld, adressiert ueber den **Sitzungsindex**. Ersatz fuer `SapGuiCommand.vbs`, wenn die aktuelle Transaktion unbekannt ist |
 
 ### Zustand pruefen

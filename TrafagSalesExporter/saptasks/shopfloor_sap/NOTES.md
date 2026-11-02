@@ -77,6 +77,10 @@ Schalter `Shopfloor:SapMengenEnabled` (aus). Vorschau `GET shopfloor/api/sap/men
 - **Falle:** P76 hat zwei Anwendungsserver. Das OData laeuft ueber `travp762` (10.194.64.30), die SAP GUI war an `trasp76s` (10.194.64.19).
   Cache-Leeren auf `trasp76s` half nicht (weiter 404 „metadata definition is incorrect“). Erst `/IWFND/CACHE_CLEANUP` auf `travp762`
   (Ingo per SM51) gab die Sets frei.
+  *Nachtrag 2026-11-02 (Import `T76K912785`):* SM51 zeigte in P76 nur **eine** Instanz `trasp76s_P76_00`, kein `travp762`. Die Caches
+  (`/IWFND/CACHE_CLEANUP` Modell `ZPOWERBI_EINKAUF_MDL`, `/IWBEP/CACHE_CLEANUP` alle Modelle) wurden deshalb auf `trasp76s` geleert
+  (eigene Sitzung, `SapGuiP76Hilfe.vbs`); danach im P76-Gateway-Client `ZloTopDownSet` 200. Ob das Dashboard ueber `travp762:8000`
+  dasselbe sieht, zeigt erst der naechste Einkauf-Lauf. Wie Ingo am 16.10. auf `travp762` kam, ist offen.
 - Vorschau 14.10. (ERSDA 13.10.): MLE01 673, MLE02 526, MLM01 193, MLE04 542, MLE08+09 1'065 (465 + 600): **alle gleich** Fabios ZC27-Werten.
   FPY SEH KW38 99.8, KW39 99.7, KW40 97.1, KW41 99.5: **alle gleich**. TR5-Tagesmenge 13.10.: 815; SEH 2'431.
 - Erstlauf 16.10. (Stand 15.10.): Logistik MLE01 24, MLE02 792, MLM01 149, MLE04 779, MLE08+09 532; TR5 854; SEH 1'837; FPY SEH 99.7 (KW 42 bis Do).
