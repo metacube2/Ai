@@ -2,6 +2,14 @@
 
 Stand: 2026-11-02
 
+## Einkauf: Entwurf Lieferantenbewertung V6 und Rechenweg Materialanteil Phase 2 festgehalten, 2026-11-02
+
+- Nur Doku, kein Code. `a.txt`/`a.html` (Lieferantendashboard V6: vier Reiter, drei offene Entscheide A/B/C-Basis,
+  Bewertungsrhythmus, zentrale Datenhaltung) in `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5, Demo abgelegt unter
+  `docs/einkauf_lieferantenbewertung/`. `b.txt`/`b.png` (ZC23 Termin bestätigt -> ZLO03 Top-Down -> Disponenten 001 bis 006 je
+  Materialgruppe, Standardpreis x Bedarfsmenge) als Nachtrag zu Phase 2 in `saptasks/zc23_materialanteil/NOTES.md`.
+  Die vier Dateien in der Repo-Wurzel kann Ingo löschen. Wochen_Todo 122/123, Router Einkauf, `rag/PURCHASING.md`, `baum.md`.
+
 ## Shopfloor: Paket Fabio vom 01.11., Verkauf über Fiori (J4), KEA0, 2026-11-02
 
 - Patch 04 (PPD Terminverschiebungen aus den Rückstandslisten, standardmässig aus) und Patch 05 mit Fabios `apply_patch.js`

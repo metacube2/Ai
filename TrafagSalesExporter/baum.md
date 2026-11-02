@@ -162,6 +162,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/operations_kpi/` | Fabios Paket vom 2026-10-14: Spezifikation (docx), Referenz (JS-Abzug, Python-Aufbau, Vorlage, Beispielseite, Abnahmedaten mit Kundendaten), PDF- und Excel-Beispiel |
 | `docs/shopfloor_paket_2026-10-14/` | Fabios Paket vom 2026-10-14: Schnittstelle Shopfloor-SAP (Excel, Feldliste, Push-Beispiele mit abweichendem Format) und Frontend-Patches mit `apply_patch.js` |
 | `docs/shopfloor_paket_2026-10-16/` | Fabios Deploy-Paket vom 2026-10-16: Schnittstellen-Excel (Jobs J1 bis J11, Deploy-Checkliste), Patch 03 Wuensche D. Tobler, Config-Patch 04 mit `apply_config.js` |
+| `docs/einkauf_lieferantenbewertung/` | Entwurf Lieferantendashboard V6 vom Einkauf (Demo-HTML, fiktive Daten, 02.11.), beschrieben in `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5 |
 | `docs/shopfloor_paket_2026-11-01/` | Fabios Paket vom 2026-11-01: Patch 04 (PPD Terminverschiebungen aus den Rueckstandslisten, Schalter `tv_from_rs`), Patch 05 und Config Verkauf (Fiori statt ZC23, Transmitter = TR5 + TX), Schnittstellen-Excel mit J4 |
 | `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |
 | `.tmp_sap_probe/ddic_lzcode/README.md` | Notiz im SapProbe-Arbeitsordner |

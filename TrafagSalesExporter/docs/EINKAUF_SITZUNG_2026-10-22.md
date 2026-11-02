@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -64,7 +64,75 @@ wie viel).** Umgesetzt im Modul, `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` A
 | --- | --- | --- | --- |
 | 1 | Feedbackliste Erich/Sandro/Marco erhalten und abarbeiten, Rueckfragen direkt an die Quelle | Ingo | 121 |
 | 2 | Einkaufs-Dashboard bis 28.10. stabilisieren, keine neuen Funktionen | Ingo | 121 |
-| 3 | Word-Dokument und Dashboard-Entwurf Lieferantenbewertung schicken | Einkauf (Armin/Marco) | 122 |
-| 4 | Datenquellen (SAP-Tabellen/Transaktionen) fuer die Lieferantenbewertung nennen | Einkauf | 122 |
+| 3 | Word-Dokument und Dashboard-Entwurf Lieferantenbewertung schicken | Einkauf (Armin/Marco) | 122; *Dashboard-Entwurf V6 am 02.11. erhalten (Abschnitt 5), Word-Dokument noch nicht* |
+| 4 | Datenquellen (SAP-Tabellen/Transaktionen) fuer die Lieferantenbewertung nennen | Einkauf | 122; *im Entwurf nur fachlich beschrieben (Abschnitt 5.3), Tabellen/Transaktionen fehlen weiter* |
 | 5 | Fiori-Parametrisierung der neuen Lieferantenbewertung (Voraussetzung) | Einkauf mit NTT | 122 |
 | 6 | ~~Entscheid Handbestellwesen~~ entschieden 22.10.: weiterbetreiben, Nutzung festhalten | erledigt | 120 |
+
+## 5. Nachtrag 2026-11-02: Dashboard-Entwurf Lieferantenbewertung V6 erhalten
+
+Von Ingo am 02.11. als `a.txt` (Begleittext) und `a.html` (Demo) weitergegeben; der Absender ist im Text nicht genannt
+(nach Aufgabe 3 vermutlich Armin oder Marco). Die Demo liegt unveraendert unter
+`docs/einkauf_lieferantenbewertung/Lieferantendashboard_V6_Entwurf_2026-11-02.html` (eine Datei, keine externen Quellen,
+nur fiktive Lieferanten; Eingaben speichert sie nur im Browser, `localStorage`/IndexedDB). Die Originaldateien in der
+Repo-Wurzel kann Ingo loeschen; alles Noetige steht hier.
+
+### 5.1 Begleittext (sinngemaess)
+
+Mit V6 komme man einem schlanken, Trafag-spezifischen Supplier-Relationship-Management naeher. Die wesentliche Verbesserung
+sei die Trennung zwischen **laufender Lieferantenperformance** und **gezielter Lieferantenentwicklung**, ohne zwei Systeme
+aufzubauen. Vor der produktiven Umsetzung seien drei Punkte zu entscheiden:
+
+| Nr | Entscheid | Vorschlag im Text |
+| --- | --- | --- |
+| E1 | A/B/C-Berechnung: Einkaufsvolumen der letzten zwoelf Monate oder dynamisch auf den gewaehlten Zeitraum? | V6 rechnet dynamisch |
+| E2 | Bewertungshistorie: wie oft werden die sieben Themenfelder beurteilt? | im Business Review, bei wesentlichen Veraenderungen unterjaehrig ergaenzen |
+| E3 | Datenhaltung fuer Zertifikate, Bewertungen, Audits und Dokumente | zentrale Speicherung noetig (Demo nur lokal im Browser) |
+
+### 5.2 Aufbau der Demo V6 (vier Reiter)
+
+1. **Lieferantenperformance (alle Lieferanten):** Filter Von/Bis Monat, Disponent, Warengruppe, EVO-Klasse, Einzellieferant.
+   EVO-Klasse nach Einkaufsvolumen (EVO) im gewaehlten Zeitraum und Filter: **A bis mindestens 70 %**, **B bis mindestens
+   90 %**, C Rest; der Lieferant, der die Grenze ueberschreitet, bleibt in der Klasse. Ausdruecklich **keine Leistungsnote**.
+   Tabelle: Lieferant, Disponent, Warengruppe, EVO-Klasse, EVO CHF, EVO kumuliert, SAP-Score, Q2 offen.
+2. **Lieferantenbewertung:** Berichtsjahr, Auswahl alle oder nur A („EVO-70-%-Lieferanten“), Q2-Status. Kacheln Anzahl
+   A-Lieferanten, EVO-Abdeckung kumuliert, Q2 gesamt/offen/abgeschlossen. Lieferantendetail mit **SAP-Score** aus den vier
+   S/4HANA-Fiori-Kriterien (Qualitaet, Liefer-/Mengentreue, Preis, Servicegrad; Gewichtung offen), **Q2-Meldungen** je
+   Lieferant und Material (Meldungsnummer, Beanstandungstext, Erfassungsdatum, Status), **Zertifikatsverwaltung** je
+   Lieferant (Typ/Norm, Nummer, vorhanden, Ablaufdatum, Bemerkung; Ampel abgelaufen / hoechstens 90 Tage / gueltig / fehlt;
+   CSV-Export; mehrere je Lieferant).
+3. **Lieferantenentwicklung:** Massnahmenliste (Lieferant, Massnahme, Verantwortung, Termin, Status). **Sieben Themenfelder**
+   aus dem „Supplier Rating Template“ (Excel) als Gespraechs- und Nachweisstruktur fuer Audit/Business Review: Skala
+   1 ungenuegend, 2 Mindestanforderung, 4 gut, 5 sehr gut, „nicht beurteilt“ ohne Wert; **kein Gesamtwert**, keine
+   Vermischung mit dem SAP-Score. Dazu Unterkriterien je Themenfeld mit datierter **Bewertungshistorie**.
+   **Business Review** (in der Regel alle zwei Jahre, Follow-up nach etwa sechs Monaten): Rueckblick/Zielerreichung,
+   Qualitaet/Q2/Lieferperformance/Kosten, Forecast/Kapazitaet/Risiken/Innovation/ESG, hoechstens fuenf Massnahmen, Status
+   geplant/durchgefuehrt/abgeschlossen. **Auditplanung** angelehnt an VDA 6.3 (Diskussionsraster, keine offizielle
+   Bewertung), Ziel 5 bis 10 Audits je Jahr, Auditart Lieferanten-/Prozessaudit/Follow-up, Ergebnis vierstufig, sechs
+   Pruefelder (QM, Prozessbeherrschung, Reklamationsmanagement, Lieferfaehigkeit/Kapazitaet, Dokumentation/Zertifikate,
+   Massnahmen/Follow-up).
+4. **Dokumente:** Upload je Lieferant mit Typ (Zertifikat, Auditbericht, Business Review, Notiz, Q2/Reklamation,
+   Massnahmen), Datum, Beschreibung. Produktiv gefordert: zentrale, berechtigte Ablage mit Links, Zertifikatseintrag und
+   Dokument verknuepft.
+
+### 5.3 Datenanforderungen aus der Demo (fachlich, ohne Tabellennamen)
+
+1. EVO je Lieferant und Geschaeftsjahr, absteigend bis mindestens 70 % kumuliert; Rueckgaben, Waehrung, Gesellschaften und
+   Grenzfall sind zu definieren.
+2. Fiori-Lieferantenbewertung: vier Kriterien mit Einzelwerten, Gesamtwert, Bewertungszeitraum, Stammdaten.
+3. Q2: Meldungsnummer, Lieferant, Material, Beanstandungstext, Erfassungsdatum, Status offen/abgeschlossen; Statusregel
+   (System-/Anwenderstatus) und Mehrfachmaterialien pruefen; fehlendes Material sichtbar machen.
+4. Zertifikate: Lieferant, Typ, vorhanden, gueltig bis, Dokumentenlink, Bemerkung, Pflegeverantwortung, Aenderungsdatum,
+   zentral gespeichert.
+5. Verknuepfung ueber den Lieferantenschluessel: EVO, Bewertung und Q2.
+
+### 5.4 Einordnung (Claude, 02.11.)
+
+- Passt zu Abschnitt 2: SAP-Teil (EVO, Fiori-Score, Q2) lesend, Eingabeteil (Zertifikate, Massnahmen, Themenfelder,
+  Reviews, Audits, Dokumente) in der Dashboard-DB mit Schreibrecht nur fuer Berechtigte. Entscheid E3 ist damit
+  fachlich vorgezeichnet (Dashboard-DB plus Dateiablage), formal aber noch offen.
+- EVO je Lieferant und Disponent/Warengruppe liefert der Einkaufscache schon (Spend-Aufriss Lieferant -> Warengruppe ->
+  Material). Die A/B/C-Klasse **je Lieferant** gibt es noch nicht; die bestehende ABC/XYZ-Klasse ist eine
+  **Material**-Klasse aus SAP (`MaraAbc`) und darf nicht verwechselt werden.
+- Voraussetzungen unveraendert: Fiori-Parametrisierung (Aufgabe 5), Q2 als Quelle (Meldungsart und Status) noch nicht
+  angebunden, Word-Dokument steht aus. Danach kleiner Pilot (Abschnitt 2).

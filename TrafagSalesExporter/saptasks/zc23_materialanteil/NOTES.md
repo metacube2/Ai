@@ -1,6 +1,6 @@
 # ZC23: neue Spalte Materialanteil
 
-Stand: 2026-10-29 (Transportstand nachgeführt; Nachträge vom 19.10. und 28.10. am Ende). *Überholt am 2026-10-29:* „Transport bereit, Freigabe und Import P76 offen“: `T76K912736` ist am 16.10. von Ingo nach P76 importiert, siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7 und Wochen_Todo Zeile 104.
+Stand: 2026-11-02 (Nachtrag Rechenweg Phase 2 am Ende); 2026-10-29 Transportstand nachgeführt, Nachträge vom 19.10. und 28.10. am Ende. *Überholt am 2026-10-29:* „Transport bereit, Freigabe und Import P76 offen“: `T76K912736` ist am 16.10. von Ingo nach P76 importiert, siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7 und Wochen_Todo Zeile 104.
 Stand 2026-10-15, 14:00: **In T76 fertig, Transport `T76K912736` bereit (Freigabe und Import P76: Ingo).** Schnelle Fassung mit Schalter
 (Entscheid Ingo: a + b) in `ZM_OFFENE_KDAUF` aktiv, siehe „Beschleunigung und Schalter“.
 *Überholt:* Stand 13:30: **In T76 eingebaut und geprüft (Freigabe Ingo):** Transport `T76K912736` mit Struktur, Tabelle und
@@ -237,3 +237,30 @@ je Stueck). Das Dashboard hat dafuer keine Mengen aus der Kalkulation; noetig is
 `materialanteil_rechnen` in ZC23 (je Zukaufteil die Warengruppe mitschreiben, Summe je Produktgruppe x Warengruppe) und ein
 neues Gateway-Set, Entwicklung in T76, Transport nach P76. Erst danach ist die Basis im Dashboard waehlbar. Was-waere-wenn
 (Preisaenderung je Warengruppe) folgt nach Entscheid Ingo erst nach der reinen Aufteilung.
+
+**Nachtrag 2026-11-02: Rechenweg des Anfragenden fuer Phase 2** (von Ingo als `b.txt`/`b.png` weitergegeben; Begleittext
+„Produktgruppen - Materialgruppenthematik aufgeschrieben, wie ich zu einem Resultat gekommen bin“, Absender nicht genannt;
+die Dateien kann Ingo loeschen, alles steht hier). So hat er das Ergebnis von Hand erzeugt:
+
+1. **ZC23-Auswertung:** Werk/Modus 1100, „Termin bestaetigt“ 01.01.2026 bis 29.10.2026, Materialnummer 1 bis 99999
+   (alle verkuerzten Nummern), sonst keine Selektion. Die Produktgruppe kommt ueber den Disponenten. Ergebnis je VerkNr:
+   Produktgruppe, Menge, Nettoumsatz, Standardpreis, Materialkosten. Die VerkNr werden nach Produktgruppe gruppiert und
+   sind der Input fuer Schritt 2.
+2. **ZLO03 Top-Down** mit den verkuerzten Nummern einer Produktgruppe. Ergebnis: Produktionsmaterial mit
+   Einkaufsdisponent, Materialgruppe, Standardpreis, Bedarfsmenge.
+3. **Excel:** nur Einkaufsdisponenten **001 bis 006**, gruppiert nach Materialgruppe, Summe je Artikel
+   Produktionsmaterialbedarf = Standardpreis x Bedarfsmenge.
+
+Unschaerfe laut Anfragendem: Die Abgrenzung ueber den Disponenten trennt nicht alles, z. B. laufen Dichtewaechter in der
+Erstfertigung ueber einen eigenen Disponenten, der nicht zwischen konventionell und hybrid unterscheidet.
+
+Einordnung (Claude): Das ist genau die Basis „Materialanteil“ aus Phase 2, nur nicht aus der Kalkulation, sondern als
+**Verkaufsmenge x Stuecklistenbedarf x Standardpreis** (Top-Down). Phase 1 im Spend-Aufriss rechnet dagegen das
+**Einkaufsvolumen** der Bestellungen und verteilt es ueber die Verwendung; beide Zahlen sind verschieden und duerfen
+nicht verglichen werden, ohne die Basis anzuschreiben. Abweichungen zum Dashboard: Disponenten **001 bis 006** statt
+001 bis 005 (Schalter „Nur Einkaufsteile“), Zeitbezug **bestaetigter Liefertermin** des Kundenauftrags statt
+Bestelldatum. Fuer eine Automatik braucht es ZC23 je VerkNr und Zeitraum plus den ZLO03-Top-Down-Bedarf je Komponente
+mit Materialgruppe und Standardpreis. Fuer die Werte wichtig: ZLO03 rechnet seit FIX 23 (in P76 seit 29.10.) in der
+Stuecklisten-Einheit; die ungerundeten Stueckkosten und Textpositionen ausserhalb des Bedarfs kommen erst mit FIX 24
+(`T76K912785`, Import offen). Ein Handergebnis aus P76 vor diesem Import kann bei Teilen mit Preiseinheit ueber 1 abweichen. Vor dem Bau mit dem Anfragenden klaeren: ob Disponent 006 dazugehoert, und ob „Termin bestaetigt“
+(auch bereits gelieferte Positionen) die gewuenschte Basis ist.

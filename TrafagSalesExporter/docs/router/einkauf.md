@@ -1,6 +1,6 @@
 # Unterrouter Einkauf
 
-Zurueck: `router.md`. Stand: 2026-10-29 (Deploystand Review 29.09. und Kontrakte 08.10.); davor 2026-09-28.
+Zurueck: `router.md`. Stand: 2026-11-02 (Entwurf Lieferantenbewertung V6, Rechenweg Materialanteil Phase 2); davor 2026-10-29.
 
 Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
@@ -17,6 +17,8 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
 | Thema | Datei |
 | --- | --- |
+| **Lieferantenbewertung Entwurf V6 (02.11.)**: vier Reiter, drei offene Entscheide, Datenanforderungen; Demo-HTML | `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5, `docs/einkauf_lieferantenbewertung/` |
+| **Materialanteil je Produktgruppe nach Warengruppe (Aufriss Phase 2)**: Rechenweg ZC23 -> ZLO03 -> Excel des Anfragenden (02.11.) | `saptasks/zc23_materialanteil/NOTES.md` Nachtrag 2026-11-02 |
 | **Sitzung Einkauf 2026-10-22**: Zwischenstand Dashboard bis 28.10. (stabilisieren, nichts Neues), Feedbackliste Erich/Sandro/Marco, neuer Wunsch Lieferantenbewertung/-entwicklung (Zertifikate ISO 9001, Massnahmen, Audits), Grundsatzfrage Handbestellwesen abschalten | `docs/EINKAUF_SITZUNG_2026-10-22.md` |
 | **Handbestellwesen**: Abloesung der alten PHP-Anwendung durch ein Modul im Dashboard, Ist-Befund, Zielbild, Oberflaeche wie im PHP, Phasen. **Stand 2026-10-27: produktiv**, zwei Masken auf derselben Datenbank (`/handbestellwesen` klassisch, `/bestellwesen` neu), Reiter sichtbar, PHP abgeschaltet, Freigabe wie PHP (umschaltbar); offen Zugriff, Grundtests, Stammdatenpflege (Abschnitt 6.8) | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` |
 | **Offener Mengenkontraktwert wie ME3L (inkl. abgelaufen), Abgrenzung zu „Abrufbestellungen zu Kontrakten“, LZ-/Sortiments-Einstiege im Spend-Aufriss** (lokal 2026-10-08, nicht deployed; *ueberholt: produktiv seit 2026-10-08 15:03, `4ba0c07`*) | `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-10-08, Kurzfassung `docs/rag/PURCHASING.md` |
