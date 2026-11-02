@@ -116,6 +116,7 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 22 | `Z_ZLO03_TURBO2`: Typen, `load_stammdaten_cache`, `fill_ktab`, `create_excel_output`, `build_xlsx` | Top-Down mit Spalten Disponent (`MARC-DISPO`) und Warengruppe (`MARA-MATKL`), als Text (Wunsch Armin 2026-10-29); T76 aktiv, neuer Auftrag `T76K912777` (`T76K912752` war schon freigegeben), siehe `FIX22_DISPO_MATKL_2026-10-29.md` |
 | 23 | `Z_ZLO03_TURBO2`: neu `load_bom_units`, `bom_unit_menge`, `apply_bom_unit` | Top-Down: Mengen und Stueckkosten in der Einheit der Stueckliste ueber MARM statt `UNIT_CONVERSION_SIMPLE` 1:1, Bottom-Up: Komponentenspalte ebenso (H05039: Basis KAR = 600 ST, Preis je KAR, Bedarf in ST; Meldung Armin 2026-10-29); T76 aktiv, Auftrag `T76K912781`, siehe `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` |
 | 24 | `Z_ZLO03_TURBO2`: `ty_ktab`, Selektionsbild, `process_main`, `fill_ktab`, `ausgabe_spalten_details`, neu `zahl_text`, `details_bom_unit` | Befunde G1, G2, G3, G5 (Stueckkosten mit 10 Stellen, `p_days` ausgeblendet, Textpositionen nie im Bedarf, Kommentar Werk) und Rest aus FIX 23 (Bottom-Up-Details in Stuecklisten-Einheit); T76 aktiv, Auftrag `T76K912785`, siehe `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` |
+| 25 | `Z_ZLO03_TURBO2`: Selektionsbild (`p_app` unsichtbar), START-OF-SELECTION, neu `app_export` | Top-Down-Ergebnis mit `P_APP` ins ABAP-Memory statt Excel, fuer das Dashboard-Set `ZloTopDownSet` (Materialanteil je Produktgruppe); T76 aktiv, im selben Auftrag `T76K912785` wie FIX 24, siehe `FIX25_APP_EXPORT_2026-11-02.md` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 
@@ -352,3 +353,4 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
 - `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` — **FIX 24**: Stueckkosten ungerundet, `p_days` ausgeblendet, Textpositionen
   nie im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit; aktueller Quelltext `Z_ZLO03_TURBO2_FIX24_2026-10-29.abap`,
   Auftrag `T76K912785`
+- `FIX25_APP_EXPORT_2026-11-02.md` — **FIX 25**: Ergebnis per `P_APP` ins Memory fuer `ZloTopDownSet`, Quelltext `Z_ZLO03_TURBO2_FIX25_2026-11-02.abap`, Auftrag `T76K912785`

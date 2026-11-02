@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-11-02 (letzter Deploy 2026-11-02 08:21, `82f4f52`); 2026-10-22 Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo
+Stand: 2026-11-02 (letzter Deploy 2026-11-02 10:09, `a445f30`); 2026-10-22 Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -71,6 +71,7 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Kurzstand
 
+- **Deploy 2026-11-02 10:09, Disponent 006 im Einkauf, Verkaufsabgleich Shopfloor eingeschaltet, Handbuchtexte (`a445f30`).** Vom Claude im Auto-Modus gestartet (Ingo: kein Einkauf-Delta), keine Sicherung (Wochensicherung von 08:20), Release-Worktree 1318/1318, bitgleich (`BiDashboard.dll` SHA256 `5C0D290F…E3E0`), zehn Routen 200; Exitcode 1 nur wegen `-wal`/`-shm`, beide um 10:10 neu angelegt. Danach schrieb der SAP-Abgleich um 10:12 den Verkauf selbst (`umsatz_plan` 6'508'620.84, Quelle SAP). Protokoll `.tmp_deploy_2026-11-02_einkauf006.log`.
 - **Deploy 2026-11-02 08:21, Shopfloor-Paket Fabio 01.11. (Patch 04 TV aus RS, aus; Patch 05; Verkauf Fiori statt ZC23) und J4 Verkauf mit Vorschau (`82f4f52`).** Auftrag Ingo („mach 1-3“, Deploy freigegeben, kein Einkauf-Delta laut Ingo). Wochensicherung faellig und angelegt (seitenweise, 695 s lokal). Release-Worktree auf `82f4f52`, Suite `1318/1318` gruen, bitgleich (`BiDashboard.dll` SHA256 `F90D6EB6…B8AB`), zehn Routen 200, ohne Alarm, 10 Dateien geaendert, 0 verschwunden. Der Protokollabsatz des Runners nennt Titel und Testzahl aus der Vorlage (`7b62544`, `1235/1235`); massgebend ist Zeile 10 „Commit 82f4f52“. Danach Vorschau `sap/verkauf` 01.11. = Fabios Kontrollwerte, heute per `POST` geschrieben; `SapVerkaufEnabled = true` liegt im Repo und wirkt erst mit dem naechsten Deploy. Protokoll `.tmp_deploy_2026-11-02_shopfloor.log`.
 - **Deploy 2026-10-27 11:05, Produktgruppe nur SAP-Text und Handbestellwesen Stammdaten loeschen/AD-Uebernahme (`0917d9e`, enthaelt `a8e9eec`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel), Suite 1293/1293, DLL `11:05:07` (enthaelt `HbAdSuche`), CSS mit `hb-knopf-rot`, `app_offline.htm` entfernt, HTTPS antwortet 401. AD-Suche und Loeschen im Browser noch nicht angesehen.
 - **Deploy 2026-10-27 13:45, Handbestellwesen AD- und Altbestand-Mitarbeitende, neue nur aus dem AD (`3ff16f5`).** Von Ingo per `!` gestartet. Keine Sicherung (Wochenregel), DLL `13:45:30` (enthaelt `AktualisiereAusAdAsync`), `app_offline.htm` entfernt, HTTPS antwortet 401. Spalte `Mitarbeiter.AusAd` wird beim Start nachgezogen; AD-Suche im Browser noch nicht angesehen.

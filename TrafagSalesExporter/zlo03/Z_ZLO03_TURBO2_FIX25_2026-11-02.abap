@@ -429,7 +429,7 @@ SELECTION-SCREEN BEGIN OF BLOCK b3 WITH FRAME TITLE TEXT-s03.
   " *** FIX 25: Schalter fuer den Aufruf aus dem Dashboard-Set ZloTopDownSet (SUBMIT aus
   " ZCL_ZPOWERBI_EINKAUF_DPC_EXT). Bisher ging das Ergebnis nur als Excel-Download hinaus, ein
   " Programm konnte es nicht lesen. Unsichtbar, im Dialog wirkungslos.
-  PARAMETERS: p_app AS CHECKBOX DEFAULT '' NO-DISPLAY.
+  PARAMETERS: p_app TYPE char1 NO-DISPLAY.  " FIX 25: AS CHECKBOX und NO-DISPLAY schliessen sich aus
 SELECTION-SCREEN END OF BLOCK b3.
 
 

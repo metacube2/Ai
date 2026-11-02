@@ -57,6 +57,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **Zeichnungsaenderung (Simon Klaey, MS-Liste): Benennung, Index `ZEIVR`, Status ueber `MARA001Set`/`MAKTSet`, naechtliche Liste im SharePoint statt Direktzugriff auf `P76.MARA`; Entscheid 02.11.** | `saptasks/zeichnungsaenderung/NOTES.md` |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
 | **CO-PA (KEA0): Ergebnisbereich 1000, Tabelle `CE11000`, Produktsparte `WWPSP`, Wertfelder des Nettoerloeses; Verkauf Shopfloor J4 ueber Fiori `C_SALESANALYTICSQRY_1_CDS`** (KEA0 gelesen 2026-11-02; `CE11000`/`WWPSP` schon seit Juni im Produktsparten-Mapping) | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16 |
+| **Einkauf Materialanteil je Produktgruppe (Phase 2): `ZloTopDownSet` (ZLO03 FIX 25, `P_APP`), Struktur `ZSTR_ZLO_TOPDOWN`, Auftrag `T76K912785` (T76 aktiv 2026-11-02)** | `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |
 | Uebergabe Produktsparten-Zuordnung | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` |

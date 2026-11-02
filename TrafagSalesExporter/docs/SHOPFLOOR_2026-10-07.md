@@ -446,7 +446,8 @@ das Excel enthaelt Kontrollwerte in CHF). Commit `82f4f52`, produktiv 2026-11-02
   **8'827'624.28** erwarteter Umsatz (Umsatz 8'695'910.24 + offene Lieferungen 131'008.06 + offene Auftraege 705.98) und
   **110'412.21** Gutschriften, **gleich Fabios Kontrollwerten**. Heute (Monat 11/2026) per `POST` geschrieben: 6'489'963.37 und
   3'632.05, Quelle SAP, zurueckgelesen. Danach `SapVerkaufEnabled = true` im Repo; der automatische Abgleich 04:00/12:45 schreibt
-  erst nach dem naechsten Deploy (Stand siehe `docs/rag/DEPLOYMENT.md`).
+  erst nach dem naechsten Deploy (Stand siehe `docs/rag/DEPLOYMENT.md`). *Erledigt 2026-11-02 10:12:* nach dem Deploy `a445f30` (10:09)
+  schrieb der Abgleich den Verkauf selbst (`umsatz_plan` 6'508'620.84 CHF, Quelle SAP-Schnittstelle).
 - Tests `ShopfloorSapVerkaufTests` (Monat des Vortags, URL, Summe, ohne Zeile nichts, manueller Wert bleibt).
 
 **3. KEA0 (fuer J2/J3 AE und Umsatz IST aus CO-PA), gelesen in T76 per SapProbe am 2026-11-02:**

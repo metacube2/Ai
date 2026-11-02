@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-09-03, Nachträge bis 2026-10-13 am Ende, dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
+Stand: 2026-09-03, Nachträge bis 2026-10-13 am Ende, Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**
@@ -224,6 +224,11 @@ Scripting-Schnittstelle nicht lesbar.
 Erkennen, was wirklich vorliegt: `Aktivieren` druecken und danach den Programmstatus
 messen. Steht `wnd[0]/usr/txtSTATUS_TEXT` auf `aktiv`, waren es Warnungen. Bei echten
 Syntaxfehlern aktiviert SAP nicht.
+
+*Widerlegt am 2026-11-02 (ZLO03 FIX 25):* SAP **hat** einen Report mit echtem Syntaxfehler aktiviert, nachdem in diesem Dialog
+`Aktivieren` gedrueckt wurde (`PARAMETERS ... AS CHECKBOX ... NO-DISPLAY`); der Aufruf brach danach mit `SYNTAX_ERROR` ab (ST22).
+Deshalb: im Dialog `Abbrechen` (`wnd[2]/usr/btnBUTTON_3`), Syntaxpruefung lesen, Fehler beheben und neu einspielen. Ein Durchlauf
+ohne diesen Dialog ist das Zeichen fuer fehlerfreien Quelltext. Nach jeder Aktivierung den neuen Weg einmal ausfuehren und ST22 pruefen.
 
 **Der Knopf heisst in SE38 `tbar[1]/btn[27]`, nicht `btn[21]`.** `btn[21]` gibt es dort
 nicht; der Aufruf scheitert mit „The control could not be found by id".
