@@ -2,6 +2,15 @@
 
 Stand: 2026-11-02
 
+## Shopfloor: PPD-Verzug wie ZC22 gebaut (Mail Fabio), 2026-11-02 nachmittags
+
+- Fabios Antwort: DW = `D*` ohne DW1/DL6, Eckendtermin ohne Untergrenze bis Vortag, positive Werte. ZC22-Logik aus dem Quelltext
+  gelesen (Menge = Positionsmenge PSMNG/GSMNG, Planauftraege nur mit Umsetzkennzeichen).
+- SAP T76, eigener Auftrag `T76K912797`: `ShopAufSet` Modus `Typ eq 'VZ'` (nur DPC, MPC unberuehrt). Abgleich gegen ZC22 je Auftrag
+  gleich (DW 1'570 / 49'526, TR5 786 / 41'127, TX 1'349 / 73'895), 0,1 s statt 6 min.
+- Cockpit `27badb2`: Verzug je Abteilung, Endpunkte `sap/verzug`, Schalter `SapVerzugEnabled` aus, Tests 1345/1345, nicht deployed.
+- Offen: SEH ist mit Material 1-99999 immer 0 (alphanumerische Materialnummern), Rueckfrage an Fabio; Import P76 (Ingo).
+
 ## Einkauf Phase 2 gebaut: Materialanteil je Produktgruppe nach Materialgruppe, 2026-11-02
 
 - SAP T76 (Auftrag `T76K912785`, zusammen mit ZLO03 FIX 24): ZLO03 FIX 25 (`P_APP`, Ergebnis ins Memory), Struktur `ZSTR_ZLO_TOPDOWN`,

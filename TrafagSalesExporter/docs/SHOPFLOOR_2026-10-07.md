@@ -477,3 +477,55 @@ Antwort (geprueft 2026-11-02). Selbst zu tun: Bedeutung der ZC22-Schalter „mit
 Von Fabio bereits angekuendigt, nicht fragen: Selektion `verzug_seh` folgt, Untergrenze 01.01.2026 bis zur Klaerung. Mail-Entwurf an Fabio
 in Ingos Downloads (`Mail_Fabio_Shopfloor_Paket_2026-11-01_Fragen.eml`). Dazu: Fabios Excel nennt
 fuer J5/J8 noch „Vortag, Montag Fr+Sa+So“, bei uns gilt seit 2026-10-19 der Produktionstag (Abschnitt 15).
+*Erledigt 2026-11-02 nachmittags:* Ingo hat die Mail geschickt, Fabio hat geantwortet (Definition PPD, A. Tran): DW = `D*` ohne
+DW1/DL6, also wie die Abteilung; dazu Untergrenze und Vorzeichen. Der PPD-Verzug ist gebaut, siehe Abschnitt 17. Der Mail-Entwurf ist
+damit erledigt.
+
+## 17. PPD-Verzug aus ZC22 (Mail Fabio 2026-11-02, Stand 2026-11-02)
+
+Auftrag Ingo („shopfloormail vorher“, vor der KPI-Kundensicht). Fabios Definition (Mail 02.11., Feldliste `ppd.verzug_*` im Excel
+`1.xlsx`, Blatt Feld-Mapping): ZC22 (`ZM_OFFENE_FAUF`), Werk 1100, mit Planauftraegen und Vorgangsdaten, ohne erledigte, Summe offene
+Menge, Abfragetag; Disponenten SEH `S*`, TR5 `EK*`, TX `EL*`, DW `D*` ohne DW1/DL6 (inkl. DS1/DS2/DSN); Material 1 bis 99999.
+**Mail und Excel weichen an zwei Stellen ab, die Mail gilt (neuer, ausdruecklich):** Eckendtermin *ohne* Untergrenze bis Vortag (das Excel
+nennt noch 01.01.2026, wie Anh Nhi; damit fiele ab Januar 2027 der Verzug aus 2026 weg) und **positive** Werte wie bisher im Dashboard
+(das Excel sagt „als negative Zahl gefuehrt“).
+
+**Was ZC22 tatsaechlich rechnet (Quelltext `docs/abap/ZM_OFFENE_FAUF.abap` gelesen):** Die Spalte heisst „Positionsmenge“ und ist
+`AFPO-PSMNG` (Gesamtmenge, nicht Gesamt minus geliefert) bzw. bei Planauftraegen `PLAF-GSMNG`. „Ohne erledigte“ = `ELIKZ` und `DNREL`
+leer (erste Position je Auftrag). „Mit Planauftraegen“ = `PLAF` mit `UMSKZ = X` und `BESKZ <> F`. „Mit Vorgangsdaten“ fuellt nur
+Vorgang und Arbeitsplatz und aendert die Summe nicht. Das bisherige `ShopAufSet` (Forecast) rechnet anders (PSMNG minus WEMNG, ohne
+UMSKZ, nur 60 Tage) und taugt deshalb nicht als Quelle.
+
+**SAP (T76, eigener Auftrag `T76K912797`, Aufgabe `T76K912798`, nur `ZCL_ZPOWERBI_EINKAUF_DPC_EXT` GET_ENTITYSET):** neuer Modus im
+bestehenden `ShopAufSet` mit Filter `Typ eq 'VZ'`: offene Fertigungsauftraege und Planauftraege wie ZC22, Eckendtermin vor dem
+Stichtag ohne Untergrenze, Zeilen mit Typ `VF`/`VP`, Menge = Positionsmenge. Kein neues Property, also keine Aenderung an der
+MPC-Klasse (die liegt im offenen Auftrag `T76K912793` der Sitzung Zeichnungsaenderung) und kein Cache-Leeren. Quelltext
+`docs/abap/ZSHOP_VERZUG_ADD.abap`, vorher/neu unter `saptasks/shopfloor_sap/DPC_EXT_GET_ENTITYSET_2026-11-02_verzug_*.abap`;
+aktiviert ohne Fehlerdialog, rueckgelesen identisch. Schutz: Stichtag hoechstens 7 Tage zurueck, mehr als 100'000 Zeilen = Fehler.
+
+**Abgleich in T76 am 2026-11-02** (lokaler Testreport, `SUBMIT ZM_OFFENE_FAUF` mit Fabios Selektion gegen den neuen Modus, je
+Auftrag verglichen):
+
+| Abteilung | ZC22 Auftraege / Menge | ShopAufSet VZ |
+| --- | --- | --- |
+| DW | 1'570 / 49'526 | gleich |
+| TR5 | 786 / 41'127 | gleich |
+| TX | 1'349 / 73'895 | gleich |
+| SEH | 0 / 0 | gleich |
+
+Unterschiede je Auftrag: 0. Laufzeit ZC22 rund 6 Minuten, der neue Modus 0,1 s. Gateway-Client T76: Modus VZ 200, bisheriger
+Forecast-Aufruf weiterhin 200, Stichtag 01.01.2026 400 (Schutz).
+
+**Offen, Rueckfrage an Fabio:** SEH ergibt mit „Material 1-99999“ immer 0. Alle offenen SEH-Auftraege in T76 haben alphanumerische
+Materialnummern (B62622, C11095, B55118 ...), der Bereich 1 bis 99999 trifft nur numerische Fertigprodukte. Soll fuer SEH der
+Materialfilter wegfallen? Bis zur Antwort rechnet das Cockpit wie das Excel.
+
+**Cockpit (`27badb2`):** `Services/Shopfloor/ShopfloorSapVerzug.cs` (Abteilung je Disponent, Material 1-99999, Summe positiv,
+Fehler statt Zahl, wenn das System den Modus nicht kennt), Aufruf im SAP-Abgleich 04:00/12:45 ueber `ShopfloorSapSync`, geschrieben
+auf den Abfragetag ueber `ApplyPush` (manuell erfasste Werte bleiben), Endpunkte `GET/POST shopfloor/api/sap/verzug?tag=`, Schalter
+`Shopfloor:SapVerzugEnabled` (Vorgabe aus), Config `ppd.verzug_*` mit Quelle und Selektion, Tests `ShopfloorSapVerzugTests`.
+Suite 1345/1345 im Release-Worktree. **Nicht deployed.**
+
+**Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912797` frei und importiert nach P76; (2) Deploy; (3) Vorschau
+`GET shopfloor/api/sap/verzug` in P76 gegen ZC22 (Fabio/Anh Nhi); (4) `SapVerzugEnabled = true`. Vor dem Import liefert die Vorschau
+die Meldung „Transport T76K912797 fehlt“, keine falsche Zahl.

@@ -204,6 +204,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/abap/ZHR_KPI_MPC_DEFINE_ADD.abap`, `docs/abap/ZHR_KPI_DPC_GET_ENTITYSET_ADD.abap` | nur der HR-Einschub, zum Lesen |
 | `docs/abap/ZEINK_KONTRAKT_ADD.abap` | ABAP EinkKontraktSet und EinkMatLzSet (Einkauf, Armin 2026-10-08), T76K912724 + T76K912718 |
 | `docs/abap/ZSHOP_ADD.abap` | ABAP ShopZd05Set (ZD05) und ShopAufSet fuer Operations (Shopfloor), Transport T76K912718 |
+| `docs/abap/ZSHOP_VERZUG_ADD.abap`, `saptasks/shopfloor_sap/DPC_EXT_GET_ENTITYSET_2026-11-02_verzug_vorher.abap`, `..._neu.abap` | PPD-Verzug wie ZC22 im ShopAufSet (Typ VZ), Auftrag T76K912797 |
 | `docs/abap/ZSHOP_RM_ADD.abap` | ABAP ShopRmSet (ZC27-Logik) und ShopProdSet (Istendtermin, Gesamt-/WE-Menge) fuer Operations (Shopfloor), T76K912740 + T76K912738 |
 | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` | Konditionsart ZRL2 EkOrg 1200, Transport `T76K912628`, in P76 seit 30.09. |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping |

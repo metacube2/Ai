@@ -116,6 +116,7 @@ Mail Fabio, von Ingo am 19.10. weitergegeben. Commits `ded2b65`, `c4dca10`, `c3c
   (auch nicht fuer SEH/TR5, dort erfasst Fabio); braucht ZC22 lesen und ein eigenes Set (J6).
 - TX prod (ZC27 wie TR5): Arbeitsplatz/Variante klaert Fabio. TX fpy: MES Reportico `YIELDGESAMT`, ASIC_TX, nicht SAP.
 - prod_s1/s2, Verzug, Terminverschiebungen, Hot-Anteil (Tagesplanungstool) und alle manuellen Vorgaben: bewusst nicht.
-  *Ueberholt 2026-11-02 fuer Verzug und Terminverschiebungen:* Fabio will den PPD-Verzug aus ZC22 (Mail 01.11., Punkt 5, noch nicht
-  gebaut); die Terminverschiebungen koennen per Patch 04 aus den Rueckstandslisten kommen (Schalter `tv_from_rs`, aus).
+  *Ueberholt 2026-11-02 fuer Verzug und Terminverschiebungen:* Fabio will den PPD-Verzug aus ZC22 (Mail 01.11., Punkt 5; *gebaut
+  2026-11-02 nachmittags:* `ShopAufSet` Typ VZ, Auftrag `T76K912797`, in T76 je Auftrag gleich ZC22, Cockpit `27badb2`, Schalter aus,
+  `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 17); die Terminverschiebungen koennen per Patch 04 aus den Rueckstandslisten kommen (Schalter `tv_from_rs`, aus).
   `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
