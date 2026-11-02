@@ -75,4 +75,45 @@ Das Programm stammt von einer frueheren Claude-Version. Beim Lesen aufgefallen, 
 
 Vorschlag: 1 bis 4 und 5 als eigener Auftrag mit Vorher/Nachher-Vergleich in T76 (gleiche Selektion, gleiche
 Ergebnistabelle ausser den Materialien ohne MBEW); 6 bis 9 erst nach Entscheid der Fachabteilung, weil sich die
-bekannten Reichweiten aendern.
+bekannten Reichweiten aendern. *Nachtrag:* Ingo entschied am selben Abend, nur ohne Ergebnisaenderung zu optimieren,
+an einer Kopie (Abschnitt 4); Punkt 5 bleibt deshalb bewusst wie bisher.
+
+## 4. Optimierte Kopie `Z_KOI_REICHW_OPT` (Auftrag Ingo 02.11. abends: „arbeite an Kopie, optimiere alles ohne dass sich was veraendert“)
+
+**Objekte in T76, beide lokal (`$TMP`, kein Transport):** `Z_KOI_REICHW_OPT` (Kopie von `Z_KOI_REICHW_TURBO` mit
+Textelementen, Quelltext `Z_KOI_REICHW_OPT.abap`, 1062 Zeilen, enthaelt auch „Nur Spoolauftrag“) und der
+Vergleichsreport `Z_KOI_REICHW_VGL` (`Z_KOI_REICHW_VGL.abap`). Das Original ist unberuehrt.
+
+**Was anders gemacht wird, Ergebnis gleich** (T76 ist S/4HANA, `SAP_BASIS` 758, `S4CORE` 108):
+
+1. Die Materialliste geht als interne Tabelle in die Abfragen (`INNER JOIN @gt_mat`), statt als Range mit tausenden
+   Einzelwerten in jedes `IN`. Bei Selektion ueber Materialnummern ist die Liste die MARA-Treffer, sonst wie bisher
+   alle Materialien mit frei verwendbarem Bestand im Werk.
+2. Bewegungen in der Datenbank verdichtet (`SUM` je Material, Soll/Haben, Bewegungsart) statt aller Einzelzeilen;
+   Buchungsdatum ueber `MSEG-BUDAT_MKPF` ohne Join auf MKPF (S/4: beides aus MATDOC). Einzelzeilen nur noch fuer die
+   Ausgabeart Write.
+3. MARD und MARDH je Material summiert in der Datenbank, nur die benoetigten Felder statt `SELECT *`.
+4. Langsamdreher (MC46): statt `MAX(Buchungsdatum)` ueber die ganze Historie nur „gibt es eine Bewegung ab heute -
+   365“ (gleichwertig).
+5. Texte: einmal in `STXH` nachsehen, welche `ZEK_`/`ZVK_`/`ZFI_`-Texte es gibt, `READ_TEXT` nur fuer diese.
+6. Alle Zugriffe je Material ueber Hash- oder sortierte Schluessel statt linearer Suche in Standardtabellen.
+7. Bewusst gleich gelassen: alle Rechenregeln samt der Befunde aus Abschnitt 3 (auch das stehenbleibende
+   `<fs_mbew>`, im Code kommentiert), Spalten, Reihenfolge der Zeilen (nach Materialnummer), ALV und Spool.
+
+**Vergleich in T76** mit `Z_KOI_REICHW_VGL` (beide Programme per `SUBMIT` mit gleicher Selektion, Ergebnistabelle
+ueber `cl_salv_bs_runtime_info`, jede Zelle verglichen):
+
+| Lauf | Zeilen | Zellen | Abweichend | alt | neu |
+| --- | --- | --- | --- | --- | --- |
+| Material 35799 bis 37009, Standardoptionen | 1'157 | 34'710 | 0 | 4,2 s | 1,5 s |
+| ganzes Werk 1100, 02.11.2025 bis 02.11.2026 | 5'076 | 152'280 | 0 | 155,5 s | 2,2 s |
+| ganzes Werk, alle drei Rechenoptionen umgestellt, neu zuerst | 5'076 | 152'280 | 0 | 134,5 s | 2,5 s |
+| ganzes Werk ab 15.01.2026 (Vormonat im Vorjahr) | 5'076 | 152'280 | 0 | 96,3 s | 2,0 s |
+| Ausgabeart Write, Material 35799 bis 37009, Listenzeilen sortiert | 38'551 Zeilen | | 0 | | |
+
+Die Debug-Liste wird sortiert verglichen, weil die Reihenfolge der Einzelbewegungen schon bisher die der Datenbank
+war.
+
+**Offen:** Entscheid Ingo, ob der Quelltext von `Z_KOI_REICHW_OPT` in `Z_KOI_REICHW_TURBO` uebernommen wird (dann am
+einfachsten in den noch offenen Auftrag `T76K912799`, ein Import fuer beides). Danach koennen die beiden lokalen
+Objekte geloescht werden.

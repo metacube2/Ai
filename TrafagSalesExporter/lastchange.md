@@ -7,7 +7,9 @@ Stand: 2026-11-02
 - `Z_KOI_REICHW_TURBO` druckte nie selbst; gedruckt wurde ueber den Druckdialog des Grids mit „Sofort ausgeben“. Neu: Ankreuzfeld
   „Nur Spoolauftrag (nicht drucken)“, die Liste geht ohne Sofortdruck in einen Spoolauftrag (SP01/SP02).
 - T76 eigener Auftrag `T76K912799`, aktiv, zurueckgelesen zeilengleich; Test: Spool 1264623 ohne Ausgabeauftrag, alle Spalten.
-- Offen: Freigabe und Import P76 (Ingo). Befunde zur Optimierung in `saptasks/zreichw/NOTES.md` Abschnitt 3, nicht umgesetzt.
+- Offen: Freigabe und Import P76 (Ingo). Befunde zur Optimierung in `saptasks/zreichw/NOTES.md` Abschnitt 3.
+- Danach optimierte Kopie `Z_KOI_REICHW_OPT` ($TMP) ohne Ergebnisaenderung: Werk 1100 von 155 s auf 2,2 s, gegen das Original
+  zellgleich (5'076 Zeilen, 152'280 Zellen, auch mit allen Optionen und Januarbeginn; Debug-Liste gleich). Uebernahme ins Original offen.
 
 ## Operations KPI: Rubrik Kunden auf OTD / OTIF / OTP (Spezifikation Fabio), 2026-11-02
 
