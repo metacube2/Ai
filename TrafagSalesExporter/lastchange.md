@@ -2,6 +2,16 @@
 
 Stand: 2026-11-02
 
+## Zeichnungsaenderung: SAP-Daten fuer die MS-Liste der Entwicklung, 2026-11-02
+
+- Anfrage Simon Klaey (ueber Andreas Wild, Alex Donato, Lucas Castro): Benennung, Index und Materialstatus sollen sich in
+  der MS-Liste nach Eingabe der Materialnummer fuellen. Simons Excel liest dafuer direkt `P76.MARA`/`P76.MAKT` per SQL;
+  die Formel findet bei rund einem Drittel keinen Index und zieht teils die franzoesische Benennung.
+- Entscheid (Mail Ingo, von Simon bestaetigt): `Zeivr` an `MARA001Set`, das Dashboard legt naechtlich eine Liste mit vier
+  Spalten im SharePoint ab, die MS-Liste liest sie mit Standard-Connectoren. Suche nur ueber die Materialnummer.
+- Offen: Zustimmung Lucas, SharePoint-Schreibrecht (Alex), Ablageort (Andreas). `saptasks/zeichnungsaenderung/NOTES.md`,
+  Router SAP, `baum.md`, Wochen_Todo 131.
+
 ## Einkauf: Disponenten 001 bis 006 und Bauplan Materialanteil Phase 2, 2026-11-02
 
 - Neuer Einkaufsdisponent 006 (Entscheid Ingo): `PurchasingPlanners` jetzt 001 bis 006, wirkt im Schalter „Nur Einkaufsteile“ aller
