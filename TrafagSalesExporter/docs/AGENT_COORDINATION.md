@@ -42,6 +42,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Inventar-Scan Bericht-Excel/Power BI vorbereitet (Auftrag Ingo „bereite vor“) | 2026-11-03 | abgeschlossen, Reservierung frei, kein App-Code, kein Deploy. `Tools/Inventar/` (Skript, README), nur auf eigenen Ordnern getestet; Ausfuehrung erst nach OK von Alex. Wochen_Todo 138, PROJEKTSTATUS, baum, LEARNINGS, lastchange |
 | Claude | Aufgabenliste des Chefs 03.11. eingeordnet | 2026-11-03 | abgeschlossen, nur Doku, Reservierung frei. Wochen_Todo 145 bis 147 neu, 138/139 ergaenzt, Sitzungsprotokoll 6, PROJEKTSTATUS, lastchange |
 | Claude | Trafag Projekte: Projekt PM14 angelegt (Auftrag Ingo „ja anlegen“) | 2026-11-03 | abgeschlossen, Reservierung frei, kein Code, kein Deploy. Per Chrome im Produktivdashboard: Uebernahme mit gefilterter Vorhaben-Datei (nur PM-14) und Importliste, 1 Projekt und 53 Aufgaben neu, privat. Wochen_Todo 139, PROJEKTSTATUS, LEARNINGS, lastchange |
 | Claude | PM-14 fuer Trafag Projekte vorbereitet; Wochen_Todo 55 (Rexx-Hub-Sitzung naechste Woche, Alex und Artjom) und 137 (Link an Dragan erledigt) | 2026-11-03 | abgeschlossen, nur Doku/Listen, Reservierung frei. Importdatei `projektmanagement/PM-14_TrafagProjekte_Import.tsv` (53 Aufgaben, Nr 9101 ff.) fuer den Abgleich im Projekt PM14; Hochladen im Dashboard macht Ingo (Chrome-Erweiterung kann das Dashboard nicht bedienen, LEARNINGS 2026-10-27). Wochen_Todo samt `.xlsx`, baum, lastchange |

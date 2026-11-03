@@ -2,6 +2,12 @@
 
 Stand: 2026-11-03
 
+## Inventar: Scan-Skript fuer Bericht-Excel und Power BI vorbereitet (Auftrag Ingo „bereite vor“), 2026-11-03
+
+- `Tools/Inventar/Scan-BerichtDateien.ps1` mit README: nur Metadaten, Benutzer/Passwoerter werden entfernt; getestet auf eigenen
+  Ordnern (Simons Excel als Power Query auf `tragvsqlc400` erkannt). Ausfuehrung erst nach OK von Alex. Wochen_Todo 138, PROJEKTSTATUS
+  PM-14, baum, LEARNINGS.
+
 ## Doku nachgefuehrt: Status kurz fuer den Chef, Rexx-Hub-Sitzung, Ansprechpartner (Frage Ingo „alle md nachgefahren?“), 2026-11-03
 
 - `Status_kurz.tsv` samt `.xlsx`: Rexx, Abwesenheiten, ZC22, Abschlussrunde, Trafag Projekte aktualisiert; neu ZREICHW, PM14,

@@ -274,6 +274,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |
 | `projektmanagement/PM-14_Datenqualitaet_Tasks.tsv` | PM-14: 30 Befunde zur Datenqualitaet, wer bereinigt was (Bereich, System, Zustaendigkeit, Status, Fundstelle) |
 | `projektmanagement/PM-14_Inventar_Abloesung.tsv` | PM-14: Inventar Power BI, Smartsheet, Excel- und Handablaeufe (abgeloest/parallel/abzuloesen), Stundenspalten zum Schaetzen |
+| `Tools/Inventar/Scan-BerichtDateien.ps1`, `Tools/Inventar/README.md` | PM-14: Bericht-Excel und Power-BI-Dateien auf Laufwerken finden, nur Metadaten (Verbindungen, Power-Query-Quellen, Verknuepfungen, Makros) |
 | `projektmanagement/PM-14_TrafagProjekte_Import.tsv` | PM-14 als Aufgabenliste im Wochen_Todo-Format (Nr 9101 ff.) fuer den Abgleich im Projekt PM14 in Trafag Projekte |
 | `projektmanagement/PM-14_Datenqualitaet_Abloesung.xlsx`, `pm14_listen_xlsx.py` | Excel aus den zwei PM-14-Listen mit Blatt Uebersicht; Erzeuger-Skript (uv-Python mit openpyxl) |
 | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | 180-Tage-Roadmap |

@@ -829,6 +829,8 @@ je Aufgabe, Sichtbarkeit fuer Oscar.
 **Aufgabenliste Chef 03.11.:** Dataowner-Dashboard (Wochen_Todo 145), Projektmanagement deaktivieren (Bedeutung unklar,
 Rueckfrage, Wochen_Todo 146), Datenqualitaet als Taskliste (PM14), Power-BI-/Smartsheet-Inventar mit Zaehlung der abgeloesten Excel
 und eingesparten Stunden (Wochen_Todo 138), Berechtigungskonzept mit AD-Abgleich (Wochen_Todo 147).
+**Inventar-Scan vorbereitet (03.11.):** `Tools/Inventar/Scan-BerichtDateien.ps1` findet Bericht-Excel (Datenverbindung,
+Power Query mit Quellen, externe Verknuepfungen, Makros) und `.pbix`, nur Metadaten; Ausfuehrung erst nach OK von Alex.
 
 ---
 
