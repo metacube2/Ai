@@ -1,6 +1,6 @@
 # ZREICHW Reichweitenanalyse (`Z_KOI_REICHW_TURBO`)
 
-Stand: 2026-11-02 abends (Uebergabe in Abschnitt 5)
+Stand: 2026-11-03 (schnelle Fassung ins Original uebernommen, Abschnitt 6; davor 2026-11-02 abends Uebergabe in Abschnitt 5)
 
 ## 1. Ausgangslage
 
@@ -114,11 +114,13 @@ ueber `cl_salv_bs_runtime_info`, jede Zelle verglichen):
 Die Debug-Liste wird sortiert verglichen, weil die Reihenfolge der Einzelbewegungen schon bisher die der Datenbank
 war.
 
-**Offen:** Entscheid Ingo, ob der Quelltext von `Z_KOI_REICHW_OPT` in `Z_KOI_REICHW_TURBO` uebernommen wird (dann am
+**Offen:** *(erledigt am 2026-11-03: uebernommen, Abschnitt 6)* Entscheid Ingo, ob der Quelltext von `Z_KOI_REICHW_OPT` in `Z_KOI_REICHW_TURBO` uebernommen wird (dann am
 einfachsten in den noch offenen Auftrag `T76K912799`, ein Import fuer beides). Danach koennen die beiden lokalen
 Objekte geloescht werden.
 
 ## 5. Weitermachen (Uebergabe 02.11. abends, Ingo schliesst die Sitzung)
+
+*Schritte 1 und 2 am 2026-11-03 erledigt (Abschnitt 6). Offen bleiben 3 (Freigabe/Import P76), 4 (Teams-Antwort) und 5 (Fachabteilung).*
 
 **Stand der Systeme**
 
@@ -166,3 +168,29 @@ Neue Sitzung, Auftrag und Inaktivliste mit den festen Skripten aus `.tmp_sap_pro
 `SapGuiInaktiveMarkieren.vbs <ses> pruefen|aktivieren <name>`), schliessen mit `SapGuiSitzungSchliessen.vbs`; Quelltext per RFC
 zuruecklesen mit `.tmp_sap_probe/RunSapProbe.ps1` (ueber Bash `powershell -NoProfile -ExecutionPolicy Bypass -File`).
 `SapGuiSetReportSource.vbs` nicht verwenden, es greift irgendeine T76-Sitzung.
+
+## 6. Schnelle Fassung ins Original uebernommen (Entscheid Ingo 2026-11-03 „ja uebernehmen, ich gebe dann frei“)
+
+Ausgefuehrt in T76 in einer eigenen Sitzung (Verbindung 1, Sitzung 1; Ingos Sitzung 0 unberuehrt), danach geschlossen.
+
+1. Vorher geprueft: der aktive Stand von `Z_KOI_REICHW_TURBO` war zeilengleich mit `Z_KOI_REICHW_TURBO_neu.abap`
+   (niemand hatte ihn seit dem 02.11. geaendert); Textsymbole und Parameter von OPT und TURBO identisch. Der Kopf des
+   Originals hiess schon immer „Report Z_KOI_REICHW_OPT“ / `REPORT z_koi_reichw_opt.`; das bleibt so.
+2. Neue Quelle `Z_KOI_REICHW_TURBO_schnell_2026-11-03.abap` = `Z_KOI_REICHW_OPT.abap`, nur die Kommentarzeilen 4 und 5
+   angepasst (1'062 Zeilen).
+3. SE38 aendern, Quelltext ersetzt, gesichert ohne Auftragsabfrage (Objekt lag schon in `T76K912799`); Syntaxpruefung
+   ohne Fehler; im Dialog „Inaktive Objekte“ nur `Z_KOI_REICHW_TURBO` ueber den Namen markiert und aktiviert (fremde
+   `Z_REICHW` unberuehrt).
+4. Aktiven Stand per RFC zurueckgelesen: **zeilengleich**, 1'062 Zeilen. `E071`: der Auftrag `T76K912799` (Aufgabe
+   `T76K912800`) enthaelt nur `LIMU REPS Z_KOI_REICHW_TURBO`; beide noch aenderbar (`D`).
+5. Vergleich `Z_KOI_REICHW_VGL` (TURBO gegen OPT), ganzes Werk 1100, 03.11.2025 bis 03.11.2026, Standardoptionen:
+   5'076 Zeilen, 152'280 Zellen, **0 Abweichungen**; Laufzeit TURBO **2,3 s** (vorher 155 s), OPT 2,1 s.
+6. ZREICHW mit Haken „Nur Spoolauftrag“, Material 35799 bis 37009: Spool **1265145** erzeugt, in `TSP02` kein
+   Ausgabeauftrag, also nicht gedruckt.
+7. `Z_KOI_REICHW_OPT` und `Z_KOI_REICHW_VGL` (beide `$TMP`) in SE38 geloescht, `TADIR` zeigt nur noch
+   `Z_KOI_REICHW` und `Z_KOI_REICHW_TURBO`. Die Quelltexte bleiben in diesem Ordner. Loeschskript:
+   `werkzeuge/se38loeschen.vbs` (erlaubt nur diese zwei Namen, nie Sitzung 0).
+
+**Offen:** Ingo gibt `T76K912799` frei und importiert nach P76; danach P76 lesend pruefen (Selektionsbild mit Haken,
+Laufzeit) und die Teams-Antwort aus Abschnitt 5 senden. Die Befunde 5 bis 10 (Abschnitt 3) bleiben bei der
+Fachabteilung. Fuer einen spaeteren Vergleich gegen den alten Stand liegt `Z_KOI_REICHW_TURBO_neu.abap` hier.

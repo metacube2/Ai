@@ -2,6 +2,13 @@
 
 Stand: 2026-11-03
 
+## SAP ZREICHW: schnelle Fassung ins Original uebernommen (Entscheid Ingo „ja uebernehmen“), 2026-11-03
+
+- T76: `Z_KOI_REICHW_TURBO` durch die schnelle Fassung ersetzt, im selben Auftrag `T76K912799` (nur `REPS Z_KOI_REICHW_TURBO`),
+  aktiv, per RFC zeilengleich zurueckgelesen. Vergleich ganzes Werk 1100: 152'280 Zellen, 0 Abweichungen, 2,3 s statt 155 s.
+  Spool-Test 1265145 ohne Ausgabeauftrag. Lokale Kopien `Z_KOI_REICHW_OPT`/`_VGL` geloescht.
+- Offen: Freigabe und Import P76 (Ingo), danach Teams-Antwort. Doku `saptasks/zreichw/NOTES.md` 6, Router SAP, Wochen_Todo 132.
+
 ## HR: Rexx-Schnittstelle nach SAP gefunden, Idee eigenes Programm mit Z-Tabelle (Auftrag Ingo „alles in md festhalten“), 2026-11-03
 
 - T76 nur gelesen: Eigenentwicklung der EXPRIS AG (Paket `Z_HR_PA_REXX`); Sonja Richter (`RIS`) importiert von Hand
