@@ -11,7 +11,7 @@ Nr	Art	Name	Bereich	Früher	Heute	Zustand	Std. alt pro Monat (schätzen)	Std. ei
 10	Handprozess	Täglicher ZD05- und COOIS-Export nach Excel	Produktion	täglich von Hand	automatischer Abgleich 04:00 und 12:45	abgelöst			SHOPFLOOR_2026-10-07.md
 11	Excel	Liefertreue OTD/OTIF/OTP (Fabios Skripte und Excel)	Operations	Skripte + Excel	monatlich live aus SAP, abgenommen 14.10. und 02.11.; „nur noch Dashboard“ geplant	parallel			OPERATIONS_KPI_2026-10-14.md
 12	Handprozess	HR_KPI_Export.xlsx (SAP-Report von Hand)	HR	Handstart Z_HR_KPI_CONS, Stand 26.05.	täglicher Abruf HrKpiSet seit 01.10.	abgelöst			HR_KPI.md 8.6
-13	Excel	Rexx-Exporte (4 Berichte)	HR	von Hand, zuletzt 08.07.	weiter von Hand; Upgreat-Ticket geschlossen, Angebot Rexx Hub 29.10.	abzulösen			HR_KPI.md 8.9; Wochen_Todo 55
+13	Excel	Rexx-Exporte (4 Berichte)	HR	von Hand, zuletzt 08.07.	weiter von Hand; Upgreat nicht zuständig (Ticket „Unable to solve“), Rexx Hub 4'800 EUR/Jahr statt 4 Einzelschnittstellen 5'600 EUR/Jahr, Entscheid mit Nadja	abzulösen			HR_KPI.md 8.9; Wochen_Todo 55
 14	Excel	Sales_All_*.xlsx (Konsolidierung Finance)	Finance	konsolidiertes Excel	vom Cockpit erzeugt; Andreas arbeitet weiter im Excel	parallel			NUTZUNG_2026-10-14.md; FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md
 15	Handprozess	Länderimporte UK/IT/IN, DE Alphaplan, ES Sage	Finance	manuelle Exporte	weiter manuell über SharePoint-Ordner	abzulösen			rag/MANUAL_IMPORT.md
 16	Excel	Railway-Kundenzuordnung	Sales	nicht dokumentiert	Bestätigen im Dashboard, Excel-Export per Klick	abgelöst			KONZEPT_RAILWAY_EXPORT_2026-09-01.md

@@ -28,4 +28,4 @@ Nr	Bereich	Befund	System (wo bereinigen)	Zuständig	Zuständig belegt	Status	Fun
 27	Innenumsatz	Konzerngesellschaften erscheinen als Kunden; Gefahr Doppelzählung, Abgrenzung ungeklärt.	Kundenstamm / Regel	Andreas Stoller	ja	Entscheid offen	ISS-010; Wochen_Todo 7
 28	Datenlieferung DE	Alphaplan liefert seit 23.09. kaum Rechnungen (Sept. 131 statt 300–480 Zeilen).	Alphaplan Delta-Export	Rohail / IT DE / Ingo	ja	Wartet auf DE	ISS-029; Wochen_Todo 61
 29	Einkauf SAP	ZDISPO_SPART: Umlaut-Ersatzzeichen und doppelte Regeln DS1/DS2/016.	SAP P76 ZDISPO_SPART	Einkauf / Ingo	Vorschlag	Offen	rag/PURCHASING.md
-30	HR	Rexx-Dateien vom 08.07. (neue Eintritte fehlen); Krankheit nicht im Absenz-Import; Ferien/Kompensation erst nach Sonjas Handimport.	Rexx → SAP, Upgreat-Lieferung	Sonja Richter / Upgreat / Ingo	ja	Wartet auf externe Firma	HR_KPI.md 8.9; Wochen_Todo 55, 133
+30	HR	Rexx-Dateien vom 08.07. (neue Eintritte fehlen); Krankheit nicht im Absenz-Import; Ferien/Kompensation erst nach Sonjas Handimport.	Rexx → SAP, Upgreat-Lieferung	Sonja Richter / Nadja Brandenberger (Rexx-Admin bei Trafag) / Ingo	ja	Wartet auf externe Firma	HR_KPI.md 8.9; Wochen_Todo 55, 133

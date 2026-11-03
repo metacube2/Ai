@@ -2,6 +2,13 @@
 
 Stand: 2026-11-03
 
+## HR Rexx: Mails zum Upgreat-Ticket und zum Rexx-Hub-Angebot gelesen (Outlook Web, Auftrag Ingo), 2026-11-03
+
+- Upgreat schloss Ticket #12699584 am 19.10. mit „Unable to solve“ (Rexx betreut Trafag selbst); Alex leitete am 29.10. Nadjas
+  Hub-Angebot weiter (8 Schnittstellen 11'200 EUR/Jahr, 4 weitere 5'600 EUR/Jahr, Hub 4'800 EUR/Jahr); Rexx +2 % ab 2027; Sonja:
+  HR konnte noch nichts testen. Nachgefuehrt: `saptasks/rexx_schnittstelle/NOTES.md` 11, `HR_KPI.md` 8.9, rag/HR_KPI,
+  ANSPRECHPARTNER (Rexx Systems Schweiz), Wochen_Todo 55, PM-14-Listen. Nur gelesen, nichts beantwortet.
+
 ## Projektmanagement: neues Vorhaben PM-14 Datenqualitaet und Abloesung (Sitzung Chef, Auftrag Ingo), 2026-11-03
 
 - PM-14 in PROJEKTSTATUS, HERMES-Sicht und Wochen_Todo 134; zwei Listen im Ordner `projektmanagement`: 30 Befunde zur

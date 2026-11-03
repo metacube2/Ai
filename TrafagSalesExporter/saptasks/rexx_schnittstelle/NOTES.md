@@ -188,3 +188,25 @@ Die Trafag-Verbindung ist also eine Eigenentwicklung; Auskunft geben nur EXPRIS,
   zur Basis 36), z. B. `ZCL_HR_PA_INTERFACE_REXX_READ=CM00E` fuer `START_PROCESS`.
 - Favoriten eines Benutzers: Tabelle `SMEN_BUFFC` (`UNAME`, `REPORT`, `TEXT`); hat hier die
   Z-Transaktionen verraten.
+
+## 11. Nachtrag 2026-11-03: Mailinhalte gelesen (Outlook Web im Browser, nur gelesen)
+
+- **Upgreat-Ticket #12699584:** eroeffnet 01.10. (Mail an Ueli), zugewiesen 02.10. (Gian-Luca Schmutz), 06.10. Noel Hagger
+  „pruefen intern“, am 19.10. geschlossen mit **„Unable to solve“**: nach Absprache mit Dardan Hasani betreut Upgreat Rexx
+  nicht, die Administration laufe ueber Trafag selbst, Ingo solle die eigene IT fragen.
+- **20.10. Ingo an Alex Donato:** wer administriert Rexx, kann Rexx die vier Berichte zeitgesteuert (SFTP/Netzwerkordner)
+  bereitstellen, gibt es eine Ausfallmeldung. Eine direkte Antwort von Alex ist nicht zu finden.
+- **29.10. Alex leitet „Angebot: AG36071 / Rexx Hub“ an Dardan Hasani und Ingo weiter, ohne eigenen Text.** Inhalt: Nadja hatte
+  Alex am 19.08. gebeten, den Hub aus IT-Sicht zu pruefen, bevor sie das Go gibt. Zahlen laut Mails: heute **8 Schnittstellen
+  in Rexx fuer 11'200 EUR pro Jahr**; 4 weitere einzeln je 1'400 EUR = 5'600 EUR pro Jahr; der **Hub 4'800 EUR pro Jahr** mit
+  beliebig vielen Schnittstellen. Rexx (Riccardo Schwick, Managing Partner Rexx Systems Schweiz AG, 10.08.): der Hub ersetzt
+  die bisherigen Schnittstellen nicht automatisch, sie lassen sich aber migrieren, dann entfallen deren Kosten. Beschreibung
+  `RexxHUB_Deutsch_27.07.2026.pdf` (5 MB) haengt an, nicht gelesen.
+- **15.10. Rexx-Preiserhoehung 2 % ab 01.01.2027**; Oscar Schwark am 27.10. an Rino Straessler: Budget 2027 mit Reserve fuer
+  Preiserhoehungen planen.
+- **Folgerungen:** (1) Der Weg ueber Upgreat ist zu, Rexx administriert Trafag selbst (HR, Nadja). (2) „8 Schnittstellen in
+  Rexx“ sind vermutlich auch die Dateien, die Sonja per `Z_HR_PA_REXX` nach SAP importiert (nicht belegt). (3) Ingos Entscheid
+  vom 30.09. „Hub wollen wir nicht“ steht gegen Nadjas Rechnung, dass der Hub guenstiger ist als vier Einzelschnittstellen;
+  das ist mit Nadja zu klaeren. (4) Die „4 weiteren Schnittstellen“ sind vermutlich Ingos vier Berichte.
+- **Sonja Richter 02.11.:** „stehen mittlerweile Live-Daten fuer uns zur Verfuegung? Weil testen konnten wir bis anhin ja noch
+  nichts.“ Ingo hat am 03.11. 07:03 geantwortet (Inhalt nicht gelesen). HR hat das Cockpit also noch nicht getestet.

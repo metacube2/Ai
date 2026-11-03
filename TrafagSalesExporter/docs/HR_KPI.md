@@ -440,7 +440,7 @@ Leitplanken und offene Entscheide: `saptasks/rexx_schnittstelle/NOTES.md` Abschn
 
 **Mails (nur Betreff gelesen):** Aus der Mail an Ueli Kunzmann wurde das **Upgreat-Ticket
 #12699584** (eroeffnet 01.10., geschlossen 19.10., Antwort Ingo 20.10.); am 29.10. kam
-„WG: Angebot: AG36071 / Rexx Hub“. Inhalt beider noch nicht gelesen. *Der Stand in 8.3 („Antwort
+„WG: Angebot: AG36071 / Rexx Hub“. *Nachtrag 2026-11-03, Inhalte gelesen:* Upgreat schloss das Ticket mit „Unable to solve“, Rexx betreut Trafag selbst; Alex leitete am 29.10. Nadjas Hub-Angebot weiter (heute 8 Schnittstellen 11'200 EUR/Jahr, 4 weitere 5'600 EUR/Jahr, Hub 4'800 EUR/Jahr); Sonja fragte am 02.11., ob HR schon Live-Daten testen kann. Einzelheiten `saptasks/rexx_schnittstelle/NOTES.md` 11. *Der Stand in 8.3 („Antwort
 Ueli offen“) ist damit ueberholt (2026-11-03).*
 
 ## Querverweise
