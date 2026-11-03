@@ -8,7 +8,8 @@ Stand: 2026-11-03
   `VC` in Werk 1200, nicht den Banf-Abruf; Layout `/ P00 TX` in P76 ohne Bedarfsverursacher-Spalten (nach dem 09.10. nie nachgezogen).
 - T76: neue Form `UMLAGERUNGSBEDARF` in `ZM_OFFENE_FAUF` (offene Umlagerungsbestellung `U1` bzw. offene BANF `U2`, kontiert auf
   den Kundenauftrag des Endbedarfs, aus dem Werk des Auftrags), Auftrag `T76K912825`, aktiv, zurueckgelesen, Test 63502 `U1 45148422/10`.
-- Offen: Freigabe/Import P76 (Ingo), danach Layout `/ P00 TX` in P76, Pruefung 46690 `U2 0010395862/00010`, Antwort an Anh Nhi.
+- Am 03.11. in P76 importiert (Ingo); Layout `/ P00 TX` in P76 angepasst und gesichert (Ueberschreiben von Ingo bestaetigt);
+  Pruefung 46690: `U1 45152789/10` (BANF inzwischen in Umlagerungsbestellung umgesetzt). Offen nur die Antwort an Anh Nhi.
   Doku `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md`, Router SAP, Wochen_Todo 136, LEARNINGS, SAP-Werkzeuge.
 
 ## HR Rexx: Mails zum Upgreat-Ticket und zum Rexx-Hub-Angebot gelesen (Outlook Web, Auftrag Ingo), 2026-11-03

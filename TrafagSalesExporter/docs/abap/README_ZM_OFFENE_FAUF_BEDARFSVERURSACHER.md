@@ -120,3 +120,12 @@ Vorher-Stand: `docs/abap/ZM_OFFENE_FAUF_vorher_2026-11-03.abap`.
    gesagt; Werkzeug `.tmp_sap_probe/SapGuiAlvListLayoutP76.vbs`). Pruefen mit Material 46690: `U2 0010395862/00010`.
    Name 1 bleibt, bis Fabio/Anh Nhi anders entscheiden.
 3. Antwort an Anh Nhi, Fabio, Sergio (Ingo).
+
+**Nachtrag 2026-11-03 nachmittags, P76:** `T76K912825` laut Ingo nach P76 transportiert. In eigener P76-Sitzung ZC22 fuer
+46690 mit dem globalen Layout `/ P00 TX`: Kundenauftrag und Kundenauftragspos. ausgeblendet, Dispositionselement, Nummer
+und Position Dispositionselement eingeblendet (Name 1 bleibt), gesichert global (nicht benutzerspezifisch, Filter/Sortierung/
+Zwischensummen wie bisher). Das Ueberschreiben hat der Auto-Modus blockiert, Ingo hat es im Dialog selbst bestaetigt.
+Frischer Lauf danach: Auftraege 2519235 und 2522216 zeigen **`U1 45152789/10`**: die BANF 0010395862 aus Anh Nhis Screenshot
+ist inzwischen in die Umlagerungsbestellung 45152789 umgesetzt, deshalb Bestellabruf statt Banf-Abruf. Erledigt bis auf die
+Antwort an Anh Nhi, Fabio, Sergio (Ingo). Hinweis: Wer ein eigenes Standardlayout gesichert hat, sieht die neuen Spalten erst,
+wenn er `/ P00 TX` waehlt oder sie selbst einblendet.
