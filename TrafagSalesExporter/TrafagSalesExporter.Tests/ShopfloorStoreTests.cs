@@ -71,6 +71,20 @@ public class ShopfloorStoreTests
     }
 
     [Fact]
+    public void Nur_Ampel_Gilt_Nicht_Als_Erfasst()
+    {
+        // Wochen_Todo 111 (2026-11-03): ein Tag mit nur der Ampel zaehlt auf der Startseite nicht als „erfasst“.
+        using var env = new ShopfloorTestEnv();
+        env.Store.PostDaily(ShopfloorTestEnv.Obj("""{"module":"seh","day":"2026-10-16","changes":{"ampel":"orange","ampel_pct":"87,5","ampel_text":"Engpass"}}"""), "ik");
+        Assert.Equal(0, (int)env.Store.AgendaStatus("2026-10-16")["seh"]!["filled"]!);
+
+        env.Store.PostDaily(ShopfloorTestEnv.Obj("""{"module":"seh","day":"2026-10-16","changes":{"lz_grund":"Material fehlt"}}"""), "ik");
+        Assert.Equal(1, (int)env.Store.AgendaStatus("2026-10-16")["seh"]!["filled"]!);
+
+        Assert.Equal(1, ShopfloorStore.CountFilledFigures(ShopfloorTestEnv.Obj("""{"ampel":"rot","menge":5,"text":"  ","leer":null}""")));
+    }
+
+    [Fact]
     public void Ampel_Und_Lieferzeit_Grund_Werden_Gespeichert()
     {
         // Paket Fabio 2026-10-16 (Config Patch 04): neue Felder pro Bereich

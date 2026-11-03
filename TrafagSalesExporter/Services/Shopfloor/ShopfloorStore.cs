@@ -306,13 +306,22 @@ public sealed class ShopfloorStore
             {
                 var r = ShopfloorDb.QueryOne(con, "SELECT data, updated_by, updated_at FROM daily WHERE module=? AND day=?", m.Key, day);
                 var inputs = m.Fields.Count(f => f.Type != "calc");
-                var filled = r is null ? 0 : SfJson.ParseObject(r.Str("data")).Count;
+                // 2026-11-03 (Wochen_Todo 111, Entscheid Ingo): „erfasst“ zaehlt nur Kennzahlenfelder mit Wert,
+                // nicht die Ampel (ampel, ampel_pct, ampel_text) und keine geleerten Werte. Vorher galt ein Tag schon
+                // als erfasst, wenn nur die Ampel gesetzt war.
+                var filled = r is null ? 0 : CountFilledFigures(SfJson.ParseObject(r.Str("data")));
                 res[m.Key] = new JsonObject { ["filled"] = filled, ["fields"] = inputs, ["by"] = r?.Str("updated_by"), ["at"] = r?.Str("updated_at") };
             }
         }
         res["zd05"] = ShopfloorZd05.StatusToday(con, day);
         return res;
     }
+
+    /// <summary>Anzahl Kennzahlenfelder mit Wert in einem Tagesdatensatz; Ampel-Felder und leere Werte zaehlen nicht.</summary>
+    public static int CountFilledFigures(JsonObject data)
+        => data.Count(kv => kv.Value is not null
+                            && !kv.Key.StartsWith("ampel", StringComparison.OrdinalIgnoreCase)
+                            && !(kv.Value is JsonValue v && v.TryGetValue<string>(out var s) && string.IsNullOrWhiteSpace(s)));
 
     public static string FmtCsv(JsonNode? v)
     {
