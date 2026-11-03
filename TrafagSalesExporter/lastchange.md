@@ -2,6 +2,11 @@
 
 Stand: 2026-11-03
 
+## Projektmanagement: PM-14 fuer Trafag Projekte vorbereitet, Wochen_Todo 55/137, 2026-11-03
+
+- `projektmanagement/PM-14_TrafagProjekte_Import.tsv`: 53 Aufgaben (DQ-01 bis DQ-30, INV-01 bis INV-19, Datenverantwortung, Aufwand) im Wochen_Todo-Format; Ingo laedt sie im Projekt PM14 ueber Abgleich Wochen_Todo hoch.
+- Wochen_Todo 55: Sitzung Rexx Hub naechste Woche mit Alex und Artjom (Nadja/Sonja laut Alex nicht noetig); 137 erledigt (Link an Dragan).
+
 ## Projekte: Abschlussrunde Dashboard und Data Lake gehalten, Protokoll aus dem Transkript, 2026-11-03
 
 - Rueckmeldungen Einkauf, Operations, HR, Finance, Produktion; Datenverantwortliche; Oscar: Power-BI-/Smartsheet-Inventar,
