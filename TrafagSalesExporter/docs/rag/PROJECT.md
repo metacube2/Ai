@@ -9,6 +9,13 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
+- **2026-11-03 Abschlussrunde Dashboard/Data Lake:** Einkauf nutzt aktiv, will HK/Standardpreis zum Materialanteil,
+  Streamlining und Lieferantenmanagement (Logik in SAP, Dashboard zeigt an); Operations OTD/OTIF/OTP live, Wunsch
+  Stammdatenfehler-Seite; HR wartet auf Rexx-Live-Daten (Sitzung mit Nadja, Alex, Artjom zum Hub); Finance muss die
+  Gruppenmargen noch testen. Oscar: Inventar Power BI/Smartsheet, Taskliste offener Wuensche mit Aufwand, Datenqualitaet und
+  Datenverantwortliche in Trafag Projekte, abgeloeste Z-Objekte loeschen. Datenherren: Produktion Dragan, Einkauf Marco
+  Widmer, Material/Debitoren Fabios Bereich, HR. `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md`.
+
 - **2026-10-16:** **Shopfloor** bekommt Mengen aus SAP: Logistik nach ZC27 (`ZPP_RM_MENGEN`), Tagesmengen SEH/TR5 und FPY SEH ueber die
   neuen Sets `ShopRmSet`/`ShopProdSet` (Transporte `T76K912740` + `T76K912738` in P76), gegen Fabios Kontrollwerte gleich, live seit 09:51
   (`saptasks/shopfloor_sap/NOTES.md`). Fabios Paket vom 16.10. eingespielt (Ampel, Lieferzeiten, Forecast DS, `SHOPFLOOR_2026-10-07.md` 14/15).

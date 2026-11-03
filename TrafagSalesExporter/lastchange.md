@@ -2,6 +2,13 @@
 
 Stand: 2026-11-03
 
+## Projekte: Abschlussrunde Dashboard und Data Lake gehalten, Protokoll aus dem Transkript, 2026-11-03
+
+- Rueckmeldungen Einkauf, Operations, HR, Finance, Produktion; Datenverantwortliche; Oscar: Power-BI-/Smartsheet-Inventar,
+  Taskliste offener Wuensche mit Aufwand und Datenqualitaet in Trafag Projekte, abgeloeste Z-Objekte loeschen.
+- `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md` (neu), Wochen_Todo 55 und 137 bis 144, PROJEKTSTATUS PM-10/11/12/14,
+  Router Projekt, rag/PROJECT, baum. Nur Doku.
+
 ## SAP ZC22: Banf-Abruf statt Kundenauftrag als Bedarfsverursacher bei Umlagerung (Wunsch Anh Nhi, Auftrag Ingo „mach du“), 2026-11-03
 
 - P76 gelesen: ZC22 zeigte fuer 46690 KndAuftr 419042; der Bedarfsverursacher (`MD_PEGGING_NODIALOG`) liefert den Endbedarf
