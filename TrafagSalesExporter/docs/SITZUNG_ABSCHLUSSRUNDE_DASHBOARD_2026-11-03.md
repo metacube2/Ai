@@ -81,8 +81,8 @@ Oscar: es braucht je Datentopf eine klar verantwortliche Person („nicht alle h
 | --- | --- | --- |
 | HR (Rexx und SAP-HR) | HR (Nadja, Sonja) | klar |
 | Produktionsdaten | **Dragan Radanovic** | in der Produktion keine Key User; Daten nicht den Teamleitern neben dem Tagesgeschaeft aufbuerden |
-| Logistikdaten (WM) | **separat**, Person nicht festgelegt | Dragan will klare Trennung Produktion/Logistik |
-| Materialstamm | Fabios Bereich (Team Stefan) | Name Fabio oder Teamleitung, „irrelevant“ |
+| Logistikdaten (WM) | **separat**, in der Sitzung offen; *Nachtrag 03.11. (Ingo): Neva Acikalin* | Dragan will klare Trennung Produktion/Logistik |
+| Materialstamm | Fabios Bereich (Team Stefan); *Nachtrag 03.11. (Ingo): Armin Guentensperger* | Name Fabio oder Teamleitung, „irrelevant“ |
 | Debitorenstamm | Fabios Bereich (Verkaufsadministration) | dito |
 | Lieferanten- und Einkaufsdaten | **Marco Widmer** | SAP-Key-User MM |
 | Finance | nicht besprochen; naheliegend Andreas Stoller | |
@@ -135,3 +135,5 @@ Admin-Anmeldung (`IAdminAccessService`). Tabelle `DataOwners`, beim ersten Anleg
 aus Abschnitt 3 (Produktion, Logistik offen, Materialstamm, Debitoren, Lieferanten/Einkauf, HR, Finance zu bestaetigen);
 spaeter geloeschte Eintraege kommen nicht zurueck. Code `c267651` (`Components/Pages/DataOwners.razor`,
 `Services/DataOwnerRules.cs`, `Models/DataOwner.cs`, Test `DataOwnerTests`), Release-Worktree 1360/1360.
+
+**Nachtrag 2026-11-03 (Ingo):** Logistikdaten Neva Acikalin, Materialstamm Armin Guentensperger; so in der Startbelegung der Seite.

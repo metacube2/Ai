@@ -35,8 +35,8 @@ public static class DataOwnerRules
     public static IReadOnlyList<DataOwner> InitialEntries() =>
     [
         Entry(10, "Produktionsdaten", "SAP PP", "Dragan Radanovic", "", "", "In der Produktion keine bekannten Key User."),
-        Entry(20, "Logistikdaten", "SAP WM", "", "", "", "Separat von der Produktion; Person in der Sitzung offen geblieben."),
-        Entry(30, "Materialstamm", "SAP MM", "Fabio Palma", "", "", "Team Stefan."),
+        Entry(20, "Logistikdaten", "SAP WM", "Neva Acikalin", "", "", "Separat von der Produktion (Ingo, 03.11.)."),
+        Entry(30, "Materialstamm", "SAP MM", "Armin Güntensperger", "", "", "Ingo, 03.11.; in der Sitzung zuerst bei Fabio (Team Stefan) genannt."),
         Entry(40, "Debitorenstamm", "SAP SD", "Fabio Palma", "", "", "Verkaufsadministration."),
         Entry(50, "Lieferanten- und Einkaufsdaten", "SAP MM", "Marco Widmer", "", "Marco Widmer", "SAP-Key-User MM."),
         Entry(60, "HR-Daten", "Rexx, SAP HR", "Nadja Brandenberger", "Sonja Richter", "", ""),
