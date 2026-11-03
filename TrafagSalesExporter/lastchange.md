@@ -2,6 +2,12 @@
 
 Stand: 2026-11-03
 
+## Trafag Projekte: Projekt PM14 Datenqualitaet und Abloesung angelegt (Auftrag Ingo „ja anlegen“), 2026-11-03
+
+- Ueber „Vorhaben aus Wochen_Todo uebernehmen“ mit nur dem Vorhaben PM-14 und `PM-14_TrafagProjekte_Import.tsv` (per Chrome,
+  Adresse mit `/BiDashboard/`): 1 Projekt neu, 53 Aufgaben neu; privat, Leitung Ingo. Wochen_Todo 139 in Arbeit, PROJEKTSTATUS,
+  LEARNINGS (Chrome-Sperre war die fehlende Pfadangabe).
+
 ## Projektmanagement: PM-14 fuer Trafag Projekte vorbereitet, Wochen_Todo 55/137, 2026-11-03
 
 - `projektmanagement/PM-14_TrafagProjekte_Import.tsv`: 53 Aufgaben (DQ-01 bis DQ-30, INV-01 bis INV-19, Datenverantwortung, Aufwand) im Wochen_Todo-Format; Ingo laedt sie im Projekt PM14 ueber Abgleich Wochen_Todo hoch.

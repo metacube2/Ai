@@ -823,6 +823,9 @@ Datenverantwortlichen und Key User sowie einen Bereich fuer inkonsistente Daten 
 Projekte ab (Wochen_Todo 139), die Listen hier sind die Vorlage. Power-BI- und Smartsheet-Inventar mit Alex (Wochen_Todo 138).
 Datenverantwortliche laut Sitzung: Produktion Dragan Radanovic, Logistik separat (offen), Materialstamm und Debitoren
 Fabios Bereich, Einkauf und Lieferanten Marco Widmer, HR Nadja und Sonja. Protokoll `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md`.
+**Nachtrag 2026-11-03 abends:** Projekt **PM14** in Trafag Projekte angelegt (Uebernahme mit nur dem Vorhaben PM-14 und
+`PM-14_TrafagProjekte_Import.tsv`): 53 Aufgaben, 43 zu erledigen, 6 in Arbeit, 4 erledigt; privat, Leitung Ingo. Offen: Aufwand
+je Aufgabe, Sichtbarkeit fuer Oscar.
 
 ---
 
