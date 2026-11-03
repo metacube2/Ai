@@ -196,7 +196,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md` | Analysereport STPRS und Journal |
 | `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` | Journal-EntitySet CH/AT: Messung auf T76, Fuellgrade, Bauplan |
 | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` | Report ZM_OFFENE_FAUF: Bedarfsverursacher-Felder, Transport T76K912714, Test, Offenes |
-| `docs/abap/ZM_OFFENE_FAUF.abap`, `docs/abap/ZM_OFFENE_FAUF_vorher_2026-10-07.abap` | Quelltext neu und vorher (Rueckbau) |
+| `docs/abap/ZM_OFFENE_FAUF.abap`, `docs/abap/ZM_OFFENE_FAUF_vorher_2026-10-07.abap`, `docs/abap/ZM_OFFENE_FAUF_vorher_2026-11-03.abap` | Quelltext neu und vorher (Rueckbau; Stand vor dem Umlagerungsbedarf vom 03.11.) |
 | `docs/abap/ZFIN_JOURNAL_PRUEFUNG.abap` | Pruefreport dazu, rein lesend |
 | `docs/abap/Z_HR_KPI_CONS.abap` | HR-Report von Hand (Ausgangsstand 30.09., aus T76 gelesen) |
 | `docs/abap/ZPOWERBI_EINKAUF_MPC_EXT_DEFINE.abap` | Gesamtquelle `DEFINE`: FinanzJournal und HrKpi, aktiv T76 |

@@ -985,4 +985,84 @@ form bedarfsverursacher.
   gt_uebauf-zzpeg_mng01 = ls_mdrq-mng01.
 * 2026-10-08 (Wunsch Fabio): Werk des Bedarfsverursachers, z.B. 1200 bei BANF im Werk 1200
   gt_uebauf-zzpeg_werks = ls_mdrq-werks.
+* 2026-11-03 (Wunsch Anh Nhi Tran, Ja Fabio Palma/Sergio Rodrigues): liegt der
+* Endbedarf in einem anderen Werk (Umlagerung, z.B. Kundenauftrag in 1200), statt
+* des Kundenauftrags den direkten Bedarf im Lieferwerk zeigen: offene Umlagerungs-
+* bestellung (U1 BS-Abr) oder offene BANF (U2 BA-Abr), kontiert auf den Kundenauftrag.
+  if ls_mdrq-werks <> iafpo-dwerk and not ls_mdrq-delps is initial.
+    perform umlagerungsbedarf using ls_mdrq.
+  endif.
 endform.                    " BEDARFSVERURSACHER
+
+*&---------------------------------------------------------------------*
+*&      Form  UMLAGERUNGSBEDARF
+*&---------------------------------------------------------------------*
+* 2026-11-03: Umlagerungsbestellung bzw. BANF im Empfangswerk, die auf den
+* Kundenauftrag des Endbedarfs kontiert ist und aus dem Werk des Auftrags
+* beliefert wird. Gefunden: Dispoelement U1 (Bestellabruf) bzw. U2 (Banf-Abruf)
+* mit Nummer/Position statt Kundenauftrag. Nicht gefunden: alles bleibt wie bisher.
+form umlagerungsbedarf using is_mdrq type mdrq.
+  data: l_c12   type mdrq-delnr,
+        l_vbeln type ekkn-vbeln,
+        l_vbelp type ekkn-vbelp,
+        l_ebeln type ekpo-ebeln,
+        l_ebelp type ekpo-ebelp,
+        l_banfn type eban-banfn,
+        l_bnfpo type eban-bnfpo.
+
+  l_c12 = is_mdrq-delnr.
+  condense l_c12 no-gaps.
+  call function 'CONVERSION_EXIT_ALPHA_INPUT'
+    exporting
+      input  = l_c12
+    importing
+      output = l_vbeln.
+  l_vbelp = is_mdrq-delps.
+
+* 1) offene Umlagerungsbestellung aus dem Werk des Auftrags
+  select k~ebeln k~ebelp up to 1 rows
+    from ekkn as k
+    inner join ekpo as p on p~ebeln = k~ebeln and p~ebelp = k~ebelp
+    inner join ekko as h on h~ebeln = k~ebeln
+    into (l_ebeln, l_ebelp)
+    where k~vbeln = l_vbeln
+      and k~vbelp = l_vbelp
+      and p~matnr = iafpo-matnr
+      and p~werks = is_mdrq-werks
+      and p~loekz = space
+      and p~elikz = space
+      and h~reswk = iafpo-dwerk
+    order by k~ebeln k~ebelp.
+  endselect.
+  if sy-subrc = 0.
+    gt_uebauf-zzpeg_delkz = 'U1'.
+    gt_uebauf-zzpeg_delnr = l_ebeln.
+    gt_uebauf-zzpeg_delps = l_ebelp.
+    clear gt_uebauf-zzpeg_delet.
+    concatenate l_ebeln '/' l_ebelp into gt_uebauf-zzpeg_extra.
+    exit.
+  endif.
+
+* 2) offene BANF (noch nicht ganz in Bestellung umgesetzt)
+  select b~banfn b~bnfpo up to 1 rows
+    from ebkn as k
+    inner join eban as b on b~banfn = k~banfn and b~bnfpo = k~bnfpo
+    into (l_banfn, l_bnfpo)
+    where k~vbeln = l_vbeln
+      and k~vbelp = l_vbelp
+      and b~matnr = iafpo-matnr
+      and b~werks = is_mdrq-werks
+      and b~reswk = iafpo-dwerk
+      and b~loekz = space
+      and b~ebakz = space
+      and b~bsmng < b~menge
+    order by b~banfn b~bnfpo.
+  endselect.
+  if sy-subrc = 0.
+    gt_uebauf-zzpeg_delkz = 'U2'.
+    gt_uebauf-zzpeg_delnr = l_banfn.
+    gt_uebauf-zzpeg_delps = l_bnfpo.
+    clear gt_uebauf-zzpeg_delet.
+    concatenate l_banfn '/' l_bnfpo into gt_uebauf-zzpeg_extra.
+  endif.
+endform.                    " UMLAGERUNGSBEDARF

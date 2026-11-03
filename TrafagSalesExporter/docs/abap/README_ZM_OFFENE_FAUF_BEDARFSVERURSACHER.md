@@ -1,6 +1,6 @@
 # ZM_OFFENE_FAUF: Bedarfsverursacher als einblendbare Felder
 
-Stand: 2026-10-09 (seit dem 08.10. standardmaessig eingeblendet, am 09.10. nach P76 transportiert). Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
+Stand: 2026-11-03 (Umlagerungsbedarf statt Kundenauftrag, Abschnitt am Ende; T76 aktiv, `T76K912825`); davor 2026-10-09 (seit dem 08.10. standardmaessig eingeblendet, am 09.10. nach P76 transportiert). Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
 Nummer, Daten zum Dispoelement) als zusaetzliche Felder im Report `ZM_OFFENE_FAUF`
 („Uebersicht offene Fertigungsauftraege"). *Ueberholt:* am 2026-10-07 standardmaessig ausgeblendet;
 seit 2026-10-08 auf Wunsch Ingo standardmaessig eingeblendet und ueber das Layout ausblendbar
@@ -15,7 +15,7 @@ mit `BALVBUFDEL` geleert, im Standardlayout `/ P00 TX` („Tisk trafag cz“) di
 Dispositionselement und Daten zum Dispoelement ans Ende gestellt und gesichert (Filter/Sortierung unveraendert).
 Gegenprobe Material 63500: Planauftrag 2359802 -> `VC 410313`, `410313/000010/0001`. Die Felder stehen im
 Spaltenvorrat ganz unten (Zeilen 37 bis 45 von 45), deshalb uebersieht man sie leicht. **In P76 nach dem Import von
-`T76K912714` dasselbe noch einmal** (Layouts sind Mandantendaten und kommen nicht mit dem Transport).
+`T76K912714` dasselbe noch einmal** (Layouts sind Mandantendaten und kommen nicht mit dem Transport). *Nachtrag 2026-11-03: das ist in P76 nie geschehen; `/ P00 TX` zeigte in P76 nur die alten Spalten bis Kundenauftrag/Position/Name 1.*
 
 **Nachtrag 2026-10-08 nachmittags:** Feld `ZZPEG_WERKS` (Position 59) in `ZMM_UEB_FAUF` und im Report ergaenzt,
 ebenfalls im Auftrag `T76K912714`, in T76 aktiv. Im Layout `/ P00 TX` als Spalte „Werk“ eingeblendet und gesichert
@@ -81,3 +81,42 @@ Import ebenfalls ins Layout aufnehmen.
   Verursacher eine Zeile gewuenscht ist, Report umbauen.
 * **Laufzeit**: der Baustein liest je Auftrag die Dispoliste; bei grossen Selektionen `P_PEG`
   ausschalten. In P76 noch nicht gemessen.
+
+## 2026-11-03: Umlagerungsbedarf (Banf-Abruf / Bestellabruf) statt Kundenauftrag
+
+**Anlass:** Mail Anh Nhi Tran 02.11. „Dispoelement in ZC22 ersichtlich“: in ZC22 die Bestellanforderung inklusive
+Dispoelement sehen statt Kundenauftrag mit Position (Screenshot MD04: Banf-Abruf `0010395862/00010`, Material 46690,
+Werk 1100, 30.10.2026, 7 ST). Fabio Palma und Sergio Rodrigues am 03.11. „bitte anpassen“; Auftrag Ingo „mach du“.
+
+**Befund P76 (gelesen 03.11., eigene Sitzung, Layout nicht gesichert):** ZC22 fuer 46690: Auftraege 2519235 (1) und
+2522216 (6) mit KndAuftr 419042/10 Andritz Hydro. Testweise eingeblendet: Bedarfsverursacher `VC 419042/10`, Werk **1200**,
+Dispobereich 1200, Anzahl 1 bzw. 2. Ursache: `MD_PEGGING_NODIALOG` verfolgt den Bedarf ueber die Werksgrenze bis zum
+Endbedarf (Kundenauftrag in 1200) und gibt die Zwischenstufe nicht aus (`EMDPSX` leer, in T76 mit `Z_PEG_TEST` geprueft;
+Quelltext `LM61BU02`). Das Layout allein reicht deshalb nicht. In P76 (SE16, nur Anzeige) ist die BANF `0010395862/00010`
+in `EBKN` auf Kundenauftrag `0000419042/000010` kontiert (7 ST, angelegt 30.10.2026).
+
+**Aenderung (T76, Auftrag `T76K912825`, Aufgabe `T76K912826`, nur `REPS ZM_OFFENE_FAUF`):** neue Form
+`UMLAGERUNGSBEDARF`, aufgerufen am Ende von `BEDARFSVERURSACHER`, wenn das Werk des ersten Endbedarfs vom Werk des
+Auftrags abweicht. Sie sucht zum Kundenauftrag des Endbedarfs:
+1. eine offene Umlagerungsbestellung (`EKKN` Kontierung auf den Kundenauftrag, `EKPO` gleiches Material, Werk = Werk des
+   Endbedarfs, nicht geloescht, nicht endgeliefert, `EKKO-RESWK` = Werk des Auftrags) -> `U1` (BS-Abr) mit Bestellung/Position;
+2. sonst eine offene BANF (`EBKN` Kontierung, `EBAN` gleiches Material, Werk des Endbedarfs, `RESWK` = Werk des Auftrags,
+   nicht geloescht, nicht erledigt, `BSMNG < MENGE`) -> `U2` (BA-Abr) mit BANF/Position.
+Gefunden: `ZZPEG_DELKZ`, `ZZPEG_DELNR`, `ZZPEG_DELPS`, `ZZPEG_EXTRA` (Nummer/Position) werden ersetzt, `ZZPEG_DELET` geleert;
+Werk, Dispobereich, Termin und Menge bleiben die des Endbedarfs. Nicht gefunden (z. B. Fertigung in anderem Werk ohne BANF,
+Material 39101 in T76): alles wie bisher. Endbedarf im eigenen Werk: unveraendert.
+
+**Test T76:** Syntax ohne Fehler, nur `ZM_OFFENE_FAUF` aktiviert (fremde `Z_REICHW` unberuehrt), per RFC zurueckgelesen
+gleich `docs/abap/ZM_OFFENE_FAUF.abap` (1'068 Zeilen). ZC22 Material 63502: Planauftrag 2404220 vorher `VC 411226` (1200),
+jetzt **`U1 45148422/10`, Werk 1200** (BANF 0010336115 dort schon in Bestellung NB mit `RESWK` 1100 umgesetzt); Auftraege mit
+Endbedarf in 1100 weiter `VC`. Material 39101: Endbedarf `VC 411294` in 1200 ohne BANF/Bestellung bleibt `VC`. Ein `U2`-Fall
+existiert in T76 nicht (keine offene, kontierte BANF mit abgedecktem Planauftrag); in P76 ist es Anh Nhis Fall.
+Vorher-Stand: `docs/abap/ZM_OFFENE_FAUF_vorher_2026-11-03.abap`.
+
+**Offen:**
+1. Ingo gibt `T76K912825` frei und importiert nach P76.
+2. Danach in P76 das globale Layout `/ P00 TX` („Tisk trafag cz“): Kundenauftrag und Kundenauftragspos. ausblenden,
+   Dispositionselement, Nummer Dispositionselement, Position Dispositionselement einblenden, sichern (Ingo hat „mach du“
+   gesagt; Werkzeug `.tmp_sap_probe/SapGuiAlvListLayoutP76.vbs`). Pruefen mit Material 46690: `U2 0010395862/00010`.
+   Name 1 bleibt, bis Fabio/Anh Nhi anders entscheiden.
+3. Antwort an Anh Nhi, Fabio, Sergio (Ingo).

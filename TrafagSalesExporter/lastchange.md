@@ -2,6 +2,15 @@
 
 Stand: 2026-11-03
 
+## SAP ZC22: Banf-Abruf statt Kundenauftrag als Bedarfsverursacher bei Umlagerung (Wunsch Anh Nhi, Auftrag Ingo „mach du“), 2026-11-03
+
+- P76 gelesen: ZC22 zeigte fuer 46690 KndAuftr 419042; der Bedarfsverursacher (`MD_PEGGING_NODIALOG`) liefert den Endbedarf
+  `VC` in Werk 1200, nicht den Banf-Abruf; Layout `/ P00 TX` in P76 ohne Bedarfsverursacher-Spalten (nach dem 09.10. nie nachgezogen).
+- T76: neue Form `UMLAGERUNGSBEDARF` in `ZM_OFFENE_FAUF` (offene Umlagerungsbestellung `U1` bzw. offene BANF `U2`, kontiert auf
+  den Kundenauftrag des Endbedarfs, aus dem Werk des Auftrags), Auftrag `T76K912825`, aktiv, zurueckgelesen, Test 63502 `U1 45148422/10`.
+- Offen: Freigabe/Import P76 (Ingo), danach Layout `/ P00 TX` in P76, Pruefung 46690 `U2 0010395862/00010`, Antwort an Anh Nhi.
+  Doku `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md`, Router SAP, Wochen_Todo 136, LEARNINGS, SAP-Werkzeuge.
+
 ## HR Rexx: Mails zum Upgreat-Ticket und zum Rexx-Hub-Angebot gelesen (Outlook Web, Auftrag Ingo), 2026-11-03
 
 - Upgreat schloss Ticket #12699584 am 19.10. mit „Unable to solve“ (Rexx betreut Trafag selbst); Alex leitete am 29.10. Nadjas
