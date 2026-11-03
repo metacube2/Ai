@@ -201,3 +201,5 @@ danach mit `/i` geschlossen; Ingos ses[0] unberuehrt):** Selektionsbild ZREICHW 
 Skriptwartezeit von 4 s; vorher in T76 rund 155 s). Damit ist der Import wirksam. Offen nur noch die Teams-Antwort (Abschnitt 5,
 Ingo sendet). Hinweis: `P76SitzungSchliessen.vbs` schliesst nur SE16/VA43/ME33K-Sitzungen; eine ZREICHW-Sitzung mit
 `SapGuiP76Hilfe.vbs ok <ses> /i` schliessen.
+
+**Abschluss 2026-11-03:** Ingo meldet „ist erledigt, scheint zu passen“. Das Thema ist abgeschlossen; die Befunde 5 bis 10 (Abschnitt 3) bleiben als eigene Frage bei der Fachabteilung.

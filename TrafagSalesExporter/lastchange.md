@@ -7,7 +7,7 @@ Stand: 2026-11-03
 - T76: `Z_KOI_REICHW_TURBO` durch die schnelle Fassung ersetzt, im selben Auftrag `T76K912799` (nur `REPS Z_KOI_REICHW_TURBO`),
   aktiv, per RFC zeilengleich zurueckgelesen. Vergleich ganzes Werk 1100: 152'280 Zellen, 0 Abweichungen, 2,3 s statt 155 s.
   Spool-Test 1265145 ohne Ausgabeauftrag. Lokale Kopien `Z_KOI_REICHW_OPT`/`_VGL` geloescht.
-- Am 03.11. von Ingo nach P76 importiert; P76 gelesen: Haken da, Werk 1100 in rund 5 s. Offen nur die Teams-Antwort. Doku `saptasks/zreichw/NOTES.md` 6, Router SAP, Wochen_Todo 132.
+- Am 03.11. von Ingo nach P76 importiert; P76 gelesen: Haken da, Werk 1100 in rund 5 s. Laut Ingo erledigt und passend (03.11.). Doku `saptasks/zreichw/NOTES.md` 6, Router SAP, Wochen_Todo 132.
 
 ## HR: Rexx-Schnittstelle nach SAP gefunden, Idee eigenes Programm mit Z-Tabelle (Auftrag Ingo „alles in md festhalten“), 2026-11-03
 
