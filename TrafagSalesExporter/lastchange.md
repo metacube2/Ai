@@ -2,6 +2,11 @@
 
 Stand: 2026-11-03
 
+## Projektmanagement: Aufgabenliste des Chefs vom 03.11. eingeordnet, 2026-11-03
+
+- Neu Wochen_Todo 145 (Dataowner-Dashboard), 146 (Projektmanagement deaktivieren, Rueckfrage an den Chef), 147
+  (Berechtigungskonzept mit AD-Abgleich); 138 und 139 ergaenzt. Sitzungsprotokoll Abschnitt 6, PROJEKTSTATUS PM-14. Nur Doku.
+
 ## Trafag Projekte: Projekt PM14 Datenqualitaet und Abloesung angelegt (Auftrag Ingo „ja anlegen“), 2026-11-03
 
 - Ueber „Vorhaben aus Wochen_Todo uebernehmen“ mit nur dem Vorhaben PM-14 und `PM-14_TrafagProjekte_Import.tsv` (per Chrome,

@@ -117,3 +117,13 @@ Fehlende Key-User-Funktion in der Organisation als Thema fuer das Berechtigungs-
 | 8 | Bestaende konzernweit: Entscheid Verkauf (Heiko/Patrick), zuerst Produktionstoechter CZ/IN | Ingo, Andreas | 143 |
 | 9 | Finance: Sales Gruppenstufe und Standardkosten testen und abnehmen | Andreas | 144 |
 | 10 | HR: Live-Daten, danach Test durch HR | Ingo, Sonja | 55, 133 |
+
+## 6. Nachtrag: Aufgabenliste des Chefs (03.11., von Ingo weitergegeben)
+
+| Punkt | Stand | Wochen_Todo |
+| --- | --- | --- |
+| Dataowner-Dashboard | neu | 145 |
+| Projektmanagement deaktivieren | Bedeutung unklar, Rueckfrage an den Chef; nichts geaendert (dort liegt PM14) | 146 |
+| Datenqualitaet: Befunde, wer bereinigt was, Wuensche zur Datenbereinigung als Taskliste | erfasst in PM14 (Trafag Projekte) | 139 |
+| Wo sind welche Power BI und Smartsheets; abgeloeste Excel zaehlen, eingesparte Stunden | Inventar mit Alex; Stunden noch zu schaetzen | 138 |
+| Berechtigungskonzept: Abgleich mit dem AD, wer darf was | neu | 147 |

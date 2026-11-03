@@ -826,6 +826,9 @@ Fabios Bereich, Einkauf und Lieferanten Marco Widmer, HR Nadja und Sonja. Protok
 **Nachtrag 2026-11-03 abends:** Projekt **PM14** in Trafag Projekte angelegt (Uebernahme mit nur dem Vorhaben PM-14 und
 `PM-14_TrafagProjekte_Import.tsv`): 53 Aufgaben, 43 zu erledigen, 6 in Arbeit, 4 erledigt; privat, Leitung Ingo. Offen: Aufwand
 je Aufgabe, Sichtbarkeit fuer Oscar.
+**Aufgabenliste Chef 03.11.:** Dataowner-Dashboard (Wochen_Todo 145), Projektmanagement deaktivieren (Bedeutung unklar,
+Rueckfrage, Wochen_Todo 146), Datenqualitaet als Taskliste (PM14), Power-BI-/Smartsheet-Inventar mit Zaehlung der abgeloesten Excel
+und eingesparten Stunden (Wochen_Todo 138), Berechtigungskonzept mit AD-Abgleich (Wochen_Todo 147).
 
 ---
 
