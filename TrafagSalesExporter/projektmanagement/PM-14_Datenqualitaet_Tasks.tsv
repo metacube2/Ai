@@ -1,0 +1,31 @@
+Nr	Bereich	Befund	System (wo bereinigen)	Zuständig	Zuständig belegt	Status	Fundstelle
+1	Marktsegmente	Branche in 8 von 9 Standorten nicht gepflegt (ZSCHWEIZ 0 von 52'276 Zeilen, TRSE/TRUK/TRUS 0, TRIT 10, TRIN 21, TRFR 221).	SAP P76, B1 FR/IT/IN/US, Sage, SE	Standorte, für B1 offen	Vorschlag	Offen	Issue-Log ISS-014.1; MARKTSEGMENTE_RAILWAY_2026-08-13.md 18
+2	Marktsegmente	Zuordnung Branche → Segment fehlt für 38 Alphaplan-Branchen (543 DE-Kunden, 97,9 % DE-Umsatz); heute nur Segment „Railway“.	Mapping CustomerMarketSegments	Vertrieb / Andreas Stoller	ja	Entscheid offen	Wochen_Todo 34; ISS-014
+3	Kundenstamm DE	Branchennummer „52“ steht für zwei Bezeichnungen (Wasserstoff / Allg. Anlagenbau).	Alphaplan Kundenstamm	Rohail Munir / Ingo	ja	Offen	Wochen_Todo 35
+4	Kundenstamm DE	Zwei Branchenwerte enden mit Komma („25 Allgemeiner Anlagenbau,“, „30 Haendler,“); mit Nr. 3 neun Kunden betroffen.	Alphaplan Kundenstamm	Rohail Munir / Ingo	ja	Offen	Wochen_Todo 35
+5	Kundenstamm DE	Kundennummern Sonepar, EMS, Magnetic Sense doppelt/mehrdeutig (40 Zeilen), richtige Firma festlegen.	Alphaplan Kundenstamm	Rohail Munir / Ingo	ja	Offen (Rest)	ISS-016; Wochen_Todo 41
+6	Kundenstamm DE	Letzte rund 30 DE-Gutschriftzeilen ohne fachliche Kundennummer, Gutschriftenauszug fehlt.	Alphaplan (Auszug)	Rohail Munir	ja	Wartet auf Auszug	ISS-016
+7	Railway	171 von 196 Railway-Zuordnungen sind ungeprüfte Namensvorschläge (TRCH 80, TRIT 40, TRFR 17, TRUK 13 …).	Mapping /marktsegmente	Patrik	ja	Offen	Wochen_Todo 25
+8	Railway	Top-15-Vorschläge (70 % Umsatz) bestätigen, CH über AG-Sicht; ITEC S.R.L. (Lohnfertiger IT) verwerfen.	Mapping /marktsegmente	Andreas / Patrik / Ingo	ja	Offen	Wochen_Todo 52; ISS-019
+9	Railway	Spanien Railway 2026 913 TEUR (2025: 387), fast nur CAF und Barat; nicht plausibilisiert.	Sage ES	Santi / Ingo	ja	Offen	Wochen_Todo 53
+10	Lieferant	DE und ES liefern 0 % Lieferantenfelder, DE ohne Kundenland; Export liest die Spalte nicht (keine Pflege, sondern Exportlücke).	Alphaplan, Sage ES (Export)	Ingo mit Rohail (DE), Santi (ES)	ja	Wartet auf Schemaauszug	ISS-003.3; Wochen_Todo 13
+11	Lieferant B1	IT/IN/FR/US: Lieferant aus Standardlieferant im Artikelstamm (OITM.CardCode), oft ungepflegt; hier lohnt Pflege je Artikel.	B1 Artikelstamm FR/IT/IN/US	Standorte	Vorschlag	Befund	FINANCE_SUPPLIER.md
+12	Lieferantenstamm IT	Lieferant „Trafag AG“ trägt in B1 IT das Land DE (7'072 von 14'536 TRIT-Zeilen).	B1 TR IT Lieferantenstamm	TR IT (Paola)	Vorschlag	Befund	FINANCE_STANDARDKOSTEN.md
+13	Standardkosten	5'274 lokale Zeilen ohne positiven Standardpreis, davon TRDE 2'252, TRFR 1'203.	Alphaplan DE, B1 FR	Standorte	ja	Entscheid offen (pflegen?)	ISS-003.2; Wochen_Todo 42
+14	Standardkosten FR	Bei rund der Hälfte der FR-Zeilen fehlt StockPrice (überschneidet sich mit Nr. 13).	B1 TR FR	TR FR	Vorschlag	Befund	FINANCE_STANDARDKOSTEN.md
+15	Materialstamm IT	420 TRIT-Zeilen mit Lieferant TR India ohne Trafag-Sachnummer; 414 fallen auf IT-Einkaufspreis statt Konzernkosten.	B1 TR IT Artikelstamm (Trafag-Nummer)	Ingo / TR IT	ja	Offen	ISS-007.4; Wochen_Todo 83
+16	Materialstamm IT	Fünf Artikel fehlen in Paolas Override-Liste (54290, GC11887, GC11902, GC11903, GC11905).	Override-Liste TR IT	Paola	Vorschlag	Offen	FINANCE_SUPPLIER.md
+17	Kostenkaskade CH	10'817 von 22'950 Kandidatenzeilen ohne Lieferantenfeld; heute Standard MARC Werk 1100.	SAP P76 Materialstamm	Andreas / Ingo	ja	Entscheid, Restfall offen	ISS-007.3
+18	Kostenbasis IT	Referenzkosten je Artikel brauchen Paolas Angabe, welche Lager physisch sind.	B1 TR IT Lager	Paola, dann Andreas	ja	Entscheid offen	ISS-007.2; Wochen_Todo 40
+19	Sales Type IN	41 Zeilen Sales Type FFM (Eigenfertigung) mit Fremdlieferant Cenlub Systems.	B1 TR IN Artikelstamm	Indien / Ingo	ja	Offen	Wochen_Todo 31
+20	Sales Type IT	Italien führt keinen Sales Type; Rolle je Artikel unbestimmt.	B1 TR IT	offen	nein	Befund	FINANCE_STANDARDKOSTEN.md
+21	Herstellerregel CH/AT	Gilt Intern/TR_AG auch bei externem Einkaufsbeleg (Stichprobe F88103, R13025)?	Regel auf P76-Daten	Andreas Stoller	ja	Entscheid offen	ISS-003.4; Wochen_Todo 5
+22	Journal	Konzernkonto-Mapping (lokal → Konzern, je Gesellschaft) fehlt; Blocker der Konsolidierung. Vorlage liegt vor.	Mapping-Tabelle	Andreas Stoller	ja	Offen	FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md
+23	Journal B1	Kostenstelle (ProfitCode) und Dimensionen 2–5 in allen vier B1-Quellen leer.	B1 FR/IT/US/IN	offen	nein	Befund	rag/FINANCE.md
+24	Sollwerte	Sollwerte 2026 fehlen für alle Länder; CH/CN/RU ohne Sollwert.	FinanceReferences	Andreas Stoller	ja	Wartet auf Daten	ISS-023/024; Wochen_Todo 60
+25	Belegarten CH	Proformabelege F5/F8 laufen in CH Net Sales (2025 1,91 Mio., 2026 5,97 Mio. CHF).	P76 / Regel je Belegart	Andreas / Ingo	ja	Entscheid offen	ISS-022; Wochen_Todo 59
+26	Gruppenmarge	Menge 0 mit Wertgutschrift (57 Zeilen), kostenlose Ware (CH 2025 1'843 Zeilen), interner Lieferant ohne Konzernkosten meldet OK.	Regeln Gruppenmarge	Andreas / Ingo	ja	Entscheid offen	ISS-018.5–.7; Wochen_Todo 47
+27	Innenumsatz	Konzerngesellschaften erscheinen als Kunden; Gefahr Doppelzählung, Abgrenzung ungeklärt.	Kundenstamm / Regel	Andreas Stoller	ja	Entscheid offen	ISS-010; Wochen_Todo 7
+28	Datenlieferung DE	Alphaplan liefert seit 23.09. kaum Rechnungen (Sept. 131 statt 300–480 Zeilen).	Alphaplan Delta-Export	Rohail / IT DE / Ingo	ja	Wartet auf DE	ISS-029; Wochen_Todo 61
+29	Einkauf SAP	ZDISPO_SPART: Umlaut-Ersatzzeichen und doppelte Regeln DS1/DS2/016.	SAP P76 ZDISPO_SPART	Einkauf / Ingo	Vorschlag	Offen	rag/PURCHASING.md
+30	HR	Rexx-Dateien vom 08.07. (neue Eintritte fehlen); Krankheit nicht im Absenz-Import; Ferien/Kompensation erst nach Sonjas Handimport.	Rexx → SAP, Upgreat-Lieferung	Sonja Richter / Upgreat / Ingo	ja	Wartet auf externe Firma	HR_KPI.md 8.9; Wochen_Todo 55, 133

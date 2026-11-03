@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-11-03 (PM-07 Rexx-Schnittstelle nach SAP); davor 2026-10-29 (Konsistenzabgleich gegen Wochen_Todo, Issue-Log, lastchange und git: PM-01, PM-02, PM-03, PM-04, PM-05, PM-07, PM-08, PM-09, PM-13 nachgefuehrt; 2026-10-26 PM-03 ZZPRDAT Live-Pruefung; 2026-10-20 PM-01 FIX 19, PM-10 bis PM-12 Abschlussrunde, PM-13 SAP PS neu; 2026-10-19 PM-01 ZLO03 nachgefuehrt; 2026-10-01 PM-04, PM-07, PM-09 nachgefuehrt; HERMES-Sicht und PM-10 bis PM-12 vom 2026-09-29; uebrige Punkte Stand 2026-09-11)
+Stand: 2026-11-03 (PM-14 neu; PM-07 Rexx-Schnittstelle nach SAP); davor 2026-10-29 (Konsistenzabgleich gegen Wochen_Todo, Issue-Log, lastchange und git: PM-01, PM-02, PM-03, PM-04, PM-05, PM-07, PM-08, PM-09, PM-13 nachgefuehrt; 2026-10-26 PM-03 ZZPRDAT Live-Pruefung; 2026-10-20 PM-01 FIX 19, PM-10 bis PM-12 Abschlussrunde, PM-13 SAP PS neu; 2026-10-19 PM-01 ZLO03 nachgefuehrt; 2026-10-01 PM-04, PM-07, PM-09 nachgefuehrt; HERMES-Sicht und PM-10 bis PM-12 vom 2026-09-29; uebrige Punkte Stand 2026-09-11)
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -42,6 +42,7 @@ nicht.
 | PM-11 | Data Lake: Leistung analysieren und messen (neu, HERMES) | Ingo | offen | **Erledigt laut Ingo am 2026-10-13** (so in `Vorhaben_HERMES.tsv`; hier am 2026-10-20 nachgezogen). Der naechste Schritt Data Lake (Zielbild, Datenverantwortung) ist Thema der Abschlussrunde vom 2026-10-20 | Beim naechsten Aufraeumen nach Abschnitt 3 verschieben | 2026-10-20 |
 | PM-12 | Power BI: je Dashboard ein Anwendervertreter (neu, HERMES) | Ingo | offen | Neu, Kleinauftrag. **2026-10-20:** Datenverantwortliche je Bereich und Power BI sind Agendapunkt 4 der Abschlussrunde | Dashboards auflisten und in der Abschlussrunde je Dashboard einen Anwendervertreter benennen | 2026-10-20 |
 | PM-13 | SAP PS: Leistungserfassung auf Projekte statt Innenauftraege (Auftrag Chef) | Ingo | Mittel | **2026-10-20:** Demo in T76 (Projekt `DEMO-PS`, Zeit per KB21N, externe Kosten, CJI3), P76 lesend: PS nicht eingerichtet; Fazit einfach zu bedienen, Einfuehrung mittel. Folien 11-16 im TPG-Abgleich (`docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md`) | **2026-10-29:** Sitzung mit Philip, Oskar, Lucas: zwei Ebenen (Projektwerkzeug oben, PS nur Geld und Zeit), Schnittstelle Projektstrukturplan; Lucas fragt NTT Data (Offerte/Einfuehrung PS), Philip liefert Testprojekte 133.2 und 103.46 zum Abbilden in PS (`docs/SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md`, Wochen_Todo 126). **2026-10-21:** Frage von Philip (Rolle je Zeitbuchung) beantwortet: Leistungsart je Rolle, Demo in T76, Folien 17-19 (Wochen_Todo 115). Naechster Schritt: Antwort an Philip senden (Ingo), Termin mit Philip Steiger, Entscheid Stufe 2/3; T76-Demoreste spaeter aufraeumen | 2026-10-21 |
+| PM-14 | Datenqualitaet und Abloesung Excel / Power BI / Smartsheet (neu, Sitzung Chef 03.11.) | Ingo | Hoch | **2026-11-03 neu:** 30 Befunde zur Datenqualitaet mit System, Zustaendigkeit und Status (12 bereinigen, 8 Fachentscheid, 5 warten, 5 ohne Massnahme; 8 ohne belegte Zustaendigkeit) und ein Inventar von 19 Power-BI-, Smartsheet-, Excel- und Handablaeufen (abgeloest 4, parallel 5, abzuloesen 4, uebrige laufend oder unklar). Eingesparte Stunden sind im Repo nirgends beziffert. Listen: `projektmanagement/PM-14_Datenqualitaet_Tasks.tsv`, `PM-14_Inventar_Abloesung.tsv`, Excel `PM-14_Datenqualitaet_Abloesung.xlsx` (`pm14_listen_xlsx.py`) | In der Sitzung Zustaendigkeit je Befund bestaetigen, Power-BI-Berichte ausserhalb Einkauf einsammeln (PM-12), Stunden je Abloesung schaetzen; danach TSV nachfuehren (Wochen_Todo 134) | 2026-11-03 |
 
 ---
 
@@ -799,6 +800,23 @@ Messung; Stand, Rollen und Einstufung sind deshalb Vorschlaege. Die Pflege laeuf
 - **PM-12 Power BI: Anwendervertreter je Dashboard.** Je Dashboard eine Person aus dem
   Fachbereich, die fachlich abnimmt und fuer die Datenqualitaet verantwortlich ist. Dafuer
   fehlt zuerst eine Liste der produktiven Dashboards.
+
+### PM-14 Datenqualitaet und Abloesung Excel / Power BI / Smartsheet (neu am 2026-11-03)
+
+Auftrag Ingo fuer die Sitzung mit dem Chef am 2026-11-03 (auch Abnahme Dashboard): (1) Datenqualitaet als Taskliste, wer
+was bereinigt, inklusive der vorhandenen Wuensche zur Datenbereinigung; (2) wo welche Power-BI-Berichte und Smartsheets
+liegen, wie viele Excel-Dateien abgeloest sind und wie viele Stunden Excel-Arbeit das einspart. Ablage im Ordner
+`projektmanagement` (Entscheid Ingo: dort, wo die anderen Listen liegen; nicht in Trafag Projekte).
+
+- `PM-14_Datenqualitaet_Tasks.tsv`: 30 Befunde aus Issue-Log, Wochen_Todo und Fachdoku, je Bereich, System, Zustaendigkeit
+  (Spalte „Zustaendig belegt“: ja oder Vorschlag), Status und Fundstelle. Fallzahlen vom jeweiligen Messtag (Aug. bis Okt.),
+  nicht neu gemessen.
+- `PM-14_Inventar_Abloesung.tsv`: 19 Zeilen Power BI (Einkauf `x.pbix` parallel, HR parallel, `ZPOWERBI_KDAUF` laeuft,
+  uebrige unbekannt), Smartsheet (Entwicklung laeuft, Nachfolger Project Power Pack oder Trafag Projekte), Excel- und
+  Handablaeufe. Die Stundenspalten sind leer und zum Schaetzen in der Sitzung gedacht.
+- `PM-14_Datenqualitaet_Abloesung.xlsx` mit Blatt Uebersicht (Zaehlungen), erzeugt mit `pm14_listen_xlsx.py`.
+- Bezug: PM-12 (Power BI je Anwendervertreter) und PM-10 (Smartsheet) haengen am Inventar; die Liste der Power-BI-Berichte
+  ausserhalb des Einkaufs fehlt weiterhin.
 
 ---
 

@@ -1,0 +1,20 @@
+Nr	Art	Name	Bereich	Früher	Heute	Zustand	Std. alt pro Monat (schätzen)	Std. eingespart pro Monat (schätzen)	Fundstelle / Bemerkung
+1	Power BI	Einkaufs-Report x.pbix (Volumen je Lieferant, Region, Warengruppe, Preisentwicklung)	Einkauf	Power BI auf ZPOWERBI_EINKAUF_SRV (EKPO/EKKO)	Inhalte im Einkaufs-Cockpit (ohne Lizenz); Power BI liest denselben Service weiter, nur für Einzelanalysen	parallel			PURCHASING_DASHBOARD_2026-06-05.md; Anleitung_PowerBI_Abloesung_Einkauf_2026-07-24.docx
+2	Power BI	li.pbix (Kopie/Vorlage von x.pbix)	Einkauf	-	-	unklar			nur Datei in der Repo-Wurzel, nirgends beschrieben
+3	Power BI	HR-Report (Fluktuation, seit 15.05.)	HR	Power BI mit SAP-Handdatei und Rexx-Excel	HR-KPI-Cockpit mit täglichem SAP-Abruf seit 01.10.; Kontrollwerte Power BI weiter verglichen	parallel			HR_KPI.md
+4	Power BI	Offene Kundenaufträge (Tabelle ZPOWERBI_KDAUF, Job BI UPDATE)	Verkauf / Produktion	ZM_OFFENE_KDAUF lief 1'227 s	ZM_OFFENE_KDAUF_OPT 23,6 s, schreibt weiter für Power BI	läuft			saptasks/zm_offene_kdauf/NOTES.md (nur Laufzeit belegt)
+5	Power BI	Weitere Berichte (Finance, Verkauf, Management)?	alle	unbekannt	Liste fehlt (PM-12)	unklar			in der Sitzung einsammeln: Workspace, Owner, Nutzer
+6	Smartsheet	Projektmanagement Entwicklung (Vorlage Produktentwicklung M1–M3)	Entwicklung	Smartsheet (Philip Steiger)	läuft; gilt als nicht zukunftsfähig, Ablösung PM-10 ohne Auftrag	läuft			PROJEKTSTATUS PM-10; SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md
+7	Smartsheet	Nachfolger A: Project Power Pack	Entwicklung	-	im Test (Philip, Oskar), Entscheid offen	unklar			PM-10
+8	Smartsheet	Nachfolger B: Trafag Projekte (Raster/Gantt, Risiken, PMO) im Dashboard	alle	-	produktiv seit 29.10., vor breiter Ankündigung mit Philip/Oskar abstimmen	läuft			TRAFAG_PROJEKTE_2026-10-09.md; Wochen_Todo 127
+9	Excel	Shopfloor-Excel PPA-Shop-Floor-File-2026	Produktion	Excel	Operations Shopfloor (offen seit 16.10.); Produktion arbeitet noch im Excel, Freigabe Leitung Produktion fehlt	parallel			SHOPFLOOR_2026-10-07.md; NUTZUNG_2026-10-14.md
+10	Handprozess	Täglicher ZD05- und COOIS-Export nach Excel	Produktion	täglich von Hand	automatischer Abgleich 04:00 und 12:45	abgelöst			SHOPFLOOR_2026-10-07.md
+11	Excel	Liefertreue OTD/OTIF/OTP (Fabios Skripte und Excel)	Operations	Skripte + Excel	monatlich live aus SAP, abgenommen 14.10. und 02.11.; „nur noch Dashboard“ geplant	parallel			OPERATIONS_KPI_2026-10-14.md
+12	Handprozess	HR_KPI_Export.xlsx (SAP-Report von Hand)	HR	Handstart Z_HR_KPI_CONS, Stand 26.05.	täglicher Abruf HrKpiSet seit 01.10.	abgelöst			HR_KPI.md 8.6
+13	Excel	Rexx-Exporte (4 Berichte)	HR	von Hand, zuletzt 08.07.	weiter von Hand; Upgreat-Ticket geschlossen, Angebot Rexx Hub 29.10.	abzulösen			HR_KPI.md 8.9; Wochen_Todo 55
+14	Excel	Sales_All_*.xlsx (Konsolidierung Finance)	Finance	konsolidiertes Excel	vom Cockpit erzeugt; Andreas arbeitet weiter im Excel	parallel			NUTZUNG_2026-10-14.md; FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md
+15	Handprozess	Länderimporte UK/IT/IN, DE Alphaplan, ES Sage	Finance	manuelle Exporte	weiter manuell über SharePoint-Ordner	abzulösen			rag/MANUAL_IMPORT.md
+16	Excel	Railway-Kundenzuordnung	Sales	nicht dokumentiert	Bestätigen im Dashboard, Excel-Export per Klick	abgelöst			KONZEPT_RAILWAY_EXPORT_2026-09-01.md
+17	Anwendung	Handbestellwesen (PHP, lokal)	Einkauf / alle	PHP mit fest eingetragenen Passwörtern	Modul im Dashboard seit 27.10.	abgelöst			HANDBESTELLWESEN_KONZEPT_2026-10-22.md (ob noch in PHP bestellt wird, ungeprüft)
+18	Excel	Zeichnungsänderung (Copy/Paste, Excel mit Direktzugriff P76)	Entwicklung	Copy/Paste bzw. Power Query auf P76	Feld Zeivr in P76 live, MS-Liste wartet auf Lucas/SharePoint	abzulösen			saptasks/zeichnungsaenderung/NOTES.md (Excel fehlerhaft bei 21'352 von 68'717 Materialien)
+19	Excel	Journal Finance_All (Konsolidierung)	Finance	Kontenplan von Hand	Excel-Automatik 4 min, nicht fertig ausgeliefert	abzulösen			FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md

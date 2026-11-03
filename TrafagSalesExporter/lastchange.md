@@ -2,6 +2,13 @@
 
 Stand: 2026-11-03
 
+## Projektmanagement: neues Vorhaben PM-14 Datenqualitaet und Abloesung (Sitzung Chef, Auftrag Ingo), 2026-11-03
+
+- PM-14 in PROJEKTSTATUS, HERMES-Sicht und Wochen_Todo 134; zwei Listen im Ordner `projektmanagement`: 30 Befunde zur
+  Datenqualitaet (wer bereinigt was) und Inventar von 19 Power-BI-, Smartsheet- und Excel-Ablaeufen, dazu
+  `PM-14_Datenqualitaet_Abloesung.xlsx` (`pm14_listen_xlsx.py`). Eingesparte Stunden nirgends beziffert, Spalten zum Schaetzen.
+- Neu Wochen_Todo 135: Klartext-Zugangsdaten der Tochtergesellschaften in der Produktiv-DB (Tabelle `Sites`). Kein Code, kein Deploy.
+
 ## SAP ZREICHW: schnelle Fassung ins Original uebernommen (Entscheid Ingo „ja uebernehmen“), 2026-11-03
 
 - T76: `Z_KOI_REICHW_TURBO` durch die schnelle Fassung ersetzt, im selben Auftrag `T76K912799` (nur `REPS Z_KOI_REICHW_TURBO`),

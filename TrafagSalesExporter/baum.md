@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-11-03 (saptasks/rexx_schnittstelle); davor 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Stand: 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle); davor 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
 Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
@@ -271,6 +271,9 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
 | `projektmanagement/Status_kurz.tsv`, `projektmanagement/Status_kurz.xlsx` | Status kurz fuer den Chef (Quelle und erzeugte A4-Seite), seit 2026-10-01 |
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |
+| `projektmanagement/PM-14_Datenqualitaet_Tasks.tsv` | PM-14: 30 Befunde zur Datenqualitaet, wer bereinigt was (Bereich, System, Zustaendigkeit, Status, Fundstelle) |
+| `projektmanagement/PM-14_Inventar_Abloesung.tsv` | PM-14: Inventar Power BI, Smartsheet, Excel- und Handablaeufe (abgeloest/parallel/abzuloesen), Stundenspalten zum Schaetzen |
+| `projektmanagement/PM-14_Datenqualitaet_Abloesung.xlsx`, `pm14_listen_xlsx.py` | Excel aus den zwei PM-14-Listen mit Blatt Uebersicht; Erzeuger-Skript (uv-Python mit openpyxl) |
 | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | 180-Tage-Roadmap |
 | `docs/UEBERGABE_2026-09-08.md` | Uebergabestand vom 2026-09-09 mit offenen Punkten und Reihenfolge (nicht mehr der aktuelle Einstieg) |
 | `docs/ARBEITSSTAND_2026-10-14_15.md` | Zusammenfassung aller Arbeiten vom 14. und 15.10.2026 mit Stand je Punkt, offenen Fragen an Fabio und offenen Punkten bei Ingo |
