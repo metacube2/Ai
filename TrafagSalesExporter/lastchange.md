@@ -2,6 +2,11 @@
 
 Stand: 2026-11-03
 
+## Wochen_Todo auf den Stand vom 03.11. gebracht (Frage Ingo), 2026-11-03
+
+- Erledigt: 86 (ZC22-Layout P76), 116 (Abschlussrunde), 134 (Aufgaben Chef eingeordnet). Nachgetragen: 43, 45, 54, 131, 133, 145.
+  Neu 148 (voller HR-Export fuer Sonja, Zusage heute).
+
 ## Inventar: Scan-Skript fuer Bericht-Excel und Power BI vorbereitet (Auftrag Ingo „bereite vor“), 2026-11-03
 
 - `Tools/Inventar/Scan-BerichtDateien.ps1` mit README: nur Metadaten, Benutzer/Passwoerter werden entfernt; getestet auf eigenen
