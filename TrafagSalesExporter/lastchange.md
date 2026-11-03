@@ -2,6 +2,12 @@
 
 Stand: 2026-11-03
 
+## CRM Dynamics 365 Sales: Befund und Idee lesende Anbindung festgehalten (Auftrag Ingo „notiere das alles in md“), 2026-11-03
+
+- `docs/CRM_DYNAMICS365_2026-11-03.md` (neu): Scorecard Opportunity Pipeline (Johannes) kommt aus Dynamics 365 Sales, nicht Navision; Kette, IDs,
+  Felder (`ava_sapid` = SAP-Kunde), Zahlen Stand 20.07., Vorschlag Dataverse Web API mit Leserolle, offene Fragen.
+  Router Standortdaten, baum, LEARNINGS (Power BI schickt Zugriffsanfragen automatisch). Kein Code, kein Deploy.
+
 ## Wochen_Todo auf den Stand vom 03.11. gebracht (Frage Ingo), 2026-11-03
 
 - Erledigt: 86 (ZC22-Layout P76), 116 (Abschlussrunde), 134 (Aufgaben Chef eingeordnet). Nachgetragen: 43, 45, 54, 131, 133, 145.

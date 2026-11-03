@@ -1,6 +1,6 @@
 # Unterrouter Standortdaten
 
-Zurueck: `router.md`. Stand: 2026-08-17.
+Zurueck: `router.md`. Stand: 2026-11-03.
 
 Exporte und Importe je Land, Feldluecken, Quellsysteme, Ansprechpartner.
 
@@ -30,6 +30,7 @@ dann fragen — das ist zweimal in einer Woche schiefgegangen. Details und die z
 | **Italien** — Pruefpfad Net Sales | `docs/FINANCE_IT_VORGEHEN_2026-05-18.md` |
 | **UK** — Quellkorrektur | `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md` |
 | **CH/AT und die B1-Laender** — Quellsysteme, Felder, Credentials, Firewall | `docs/QUELLSYSTEME_SAP_B1.md` |
+| **CRM Dynamics 365 Sales** (nicht Navision) — Power BI Opportunity Pipeline, Felder, Idee lesende Anbindung | `docs/CRM_DYNAMICS365_2026-11-03.md` |
 
 ## Weiteres
 

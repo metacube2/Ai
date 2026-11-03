@@ -42,6 +42,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | CRM Dynamics 365 Sales: Befund Power BI (Opportunity Pipeline Johannes) und Idee lesende Anbindung (Auftrag Ingo „notiere das alles in md“) | 2026-11-03 | abgeschlossen, nur Doku, kein Code, kein Deploy, Reservierung frei. `docs/CRM_DYNAMICS365_2026-11-03.md` (neu), Router Standortdaten, baum, LEARNINGS, lastchange. Power BI nur lesend; zwei automatische Zugriffsanfragen an Johannes (Abschnitt 9) |
 | Claude | Inventar-Scan Bericht-Excel/Power BI vorbereitet (Auftrag Ingo „bereite vor“) | 2026-11-03 | abgeschlossen, Reservierung frei, kein App-Code, kein Deploy. `Tools/Inventar/` (Skript, README), nur auf eigenen Ordnern getestet; Ausfuehrung erst nach OK von Alex. Wochen_Todo 138, PROJEKTSTATUS, baum, LEARNINGS, lastchange |
 | Claude | Aufgabenliste des Chefs 03.11. eingeordnet | 2026-11-03 | abgeschlossen, nur Doku, Reservierung frei. Wochen_Todo 145 bis 147 neu, 138/139 ergaenzt, Sitzungsprotokoll 6, PROJEKTSTATUS, lastchange |
 | Claude | Trafag Projekte: Projekt PM14 angelegt (Auftrag Ingo „ja anlegen“) | 2026-11-03 | abgeschlossen, Reservierung frei, kein Code, kein Deploy. Per Chrome im Produktivdashboard: Uebernahme mit gefilterter Vorhaben-Datei (nur PM-14) und Importliste, 1 Projekt und 53 Aufgaben neu, privat. Wochen_Todo 139, PROJEKTSTATUS, LEARNINGS, lastchange |

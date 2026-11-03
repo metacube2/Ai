@@ -233,6 +233,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` | Anschreiben zur Abnahme, Vorlage fuer den Outlook-Entwurf |
 | `docs/GIB_DispoCockpit_DCP_Zusammenfassung_2026-10-19.docx` | Word: GIB Dispo-Cockpit, Modul DCP (Planning), was es macht, Rollout P76, Bezug zum Cockpit (aus oeffentlichen Quellen) |
 | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` | SAP PS: Einfuehrung, Demo in T76 (Projekt, Teilprojekte, Zeitbuchung, CJI3), Befunde, Transaktionen, Fazit |
+| `docs/CRM_DYNAMICS365_2026-11-03.md` | CRM Dynamics 365 Sales: Herkunft der Power-BI-Scorecard Opportunity Pipeline, Felder (`ava_sapid`), Zahlen, Idee lesende Anbindung ans Dashboard |
 | `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md` | Protokoll Abschlussrunde Dashboard/Data Lake 03.11.: Rueckmeldungen je Bereich, Datenverantwortliche, Auftraege |
 | `docs/SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md` | Sitzung 29.10.: SAP PS und Projektmanagement-Werkzeug (Project Power Pack), Ebenen, offene Fragen, Vereinbarungen, Folgen PM-10/PM-13 |
 | `docs/img/ps_demo_2026-10-20/` | 20 Screenshots der PS-Demo in T76 (CJ20N, CJ01, CJ02, CAT2, KB21N, OKKP, ME21N, CJI3; 19-22 Rolle je Zeitbuchung: KL01, KP26, KB21N, CJI3) |
