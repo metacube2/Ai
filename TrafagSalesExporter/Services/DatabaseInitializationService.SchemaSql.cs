@@ -80,6 +80,22 @@ CREATE TABLE SupplierMaterialOverrides (
     ImportedAtUtc TEXT NOT NULL
 );";
 
+    // Datenverantwortung je Datentopf, 2026-11-03 (Models.DataOwner).
+    internal static string GetDataOwnersCreateSql() => @"
+CREATE TABLE DataOwners (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    DataDomain TEXT NOT NULL,
+    SourceSystem TEXT NOT NULL DEFAULT '',
+    Responsible TEXT NOT NULL DEFAULT '',
+    Deputy TEXT NOT NULL DEFAULT '',
+    KeyUser TEXT NOT NULL DEFAULT '',
+    Status TEXT NOT NULL DEFAULT 'Vorlaeufig',
+    Note TEXT NOT NULL DEFAULT '',
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    UpdatedAtUtc TEXT NOT NULL,
+    UpdatedBy TEXT NOT NULL DEFAULT ''
+);";
+
     internal static string GetExportLogsCreateSql() => @"
 CREATE TABLE ExportLogs (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

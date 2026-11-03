@@ -71,6 +71,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
         EnsureSupplierMaterialOverridesTable(db);
+        EnsureDataOwnersTable(db);
         EnsureCustomerMarketSegmentsTable(db);
         EnsureSegmentNamePatternsTable(db);
         EnsureMarketSurveyEntriesTable(db);
@@ -885,6 +886,59 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
         indexCommand.CommandText =
             "CREATE UNIQUE INDEX IF NOT EXISTS UX_SupplierMaterialOverrides_Tsc_Material ON SupplierMaterialOverrides (Tsc, MaterialKey);";
         indexCommand.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// Datenverantwortung je Datentopf (2026-11-03). Legt die Tabelle an und fuellt sie nur beim ersten Anlegen mit der
+    /// vorlaeufigen Belegung aus der Abschlussrunde; spaeter geloeschte Eintraege kommen nicht zurueck.
+    /// </summary>
+    internal static void EnsureDataOwnersTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        bool existed;
+        using (var check = conn.CreateCommand())
+        {
+            check.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'DataOwners';";
+            existed = Convert.ToInt64(check.ExecuteScalar()) > 0;
+        }
+
+        if (existed)
+            return;
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetDataOwnersCreateSql();
+            cmd.ExecuteNonQuery();
+        }
+
+        foreach (var entry in DataOwnerRules.InitialEntries())
+        {
+            using var insert = conn.CreateCommand();
+            insert.CommandText =
+                "INSERT INTO DataOwners (DataDomain, SourceSystem, Responsible, Deputy, KeyUser, Status, Note, SortOrder, UpdatedAtUtc, UpdatedBy) " +
+                "VALUES ($d, $s, $r, $dep, $k, $st, $n, $o, $u, $b);";
+            void Add(string name, object value)
+            {
+                var p = insert.CreateParameter();
+                p.ParameterName = name;
+                p.Value = value;
+                insert.Parameters.Add(p);
+            }
+            Add("$d", entry.DataDomain);
+            Add("$s", entry.SourceSystem);
+            Add("$r", entry.Responsible);
+            Add("$dep", entry.Deputy);
+            Add("$k", entry.KeyUser);
+            Add("$st", entry.Status);
+            Add("$n", entry.Note);
+            Add("$o", entry.SortOrder);
+            Add("$u", entry.UpdatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"));
+            Add("$b", entry.UpdatedBy);
+            insert.ExecuteNonQuery();
+        }
     }
 
     private static void EnsureGroupMaterialMastersTable(AppDbContext db)

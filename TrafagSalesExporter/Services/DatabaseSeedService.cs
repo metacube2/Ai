@@ -496,6 +496,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         // Trafag Projekte 2026-10-09 (Wunsch Ingo) ersetzt die Gruppe "Poor Man's Project Management Suite";
         // Board, Backlog, Liste, Zeitachse, Kalender, Diagramme. Doku docs/TRAFAG_PROJEKTE_2026-10-09.md.
         Link("projects", null, "Trafag Projekte", "Trafag Projects", "ViewKanban", "projekte", 40, "Prefix"),
+        // Datenverantwortung (Dataowner) 2026-11-03, Wunsch Chef nach der Abschlussrunde: lesen fuer alle, bearbeiten mit Admin-Login.
+        Link("data-owners", null, "Datenverantwortung", "Data ownership", "Verified", "datenverantwortung", 41, "All"),
     ];
 
     private static NavigationMenuItem Group(string key, string? parentKey, string titleDe, string titleEn, string icon, int sortOrder, bool expanded = false)

@@ -10,6 +10,20 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Datenverantwortung 2026-11-03
+            ["Datenverantwortung"] = "Dateverantwortig",
+            ["Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt."] = "Wär isch für weli Date verantwortlech? Vorläufigi Ytreg sy no nid bestätigt.",
+            ["Datentopf"] = "Datetopf",
+            ["System / Quelle"] = "System / Quelle",
+            ["Stellvertretung"] = "Stellvertretig",
+            ["Key User"] = "Key User",
+            ["Bemerkung"] = "Bemerkig",
+            ["Vorläufig"] = "Vorläufig",
+            ["Bestätigt"] = "Bestätigt",
+            ["Neuer Eintrag"] = "Nöie Ytrag",
+            ["Noch keine Einträge."] = "No keni Ytreg.",
+            ["Zum Bearbeiten im Admin-Bereich anmelden."] = "Zum Bearbeite im Admin-Bereich aamäude.",
+            ["Datentopf und Verantwortlich sind Pflicht."] = "Datetopf u Verantwortlech sy Pflicht.",
             // Materialanteil je Produktgruppe (2026-11-02)
             ["Materialanteil je Produktgruppe"] = "Materialaateil pro Produktgruppe",
             ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Materialaateil us bestätigte Chundenufträg (ZC23, Termin bestätigt im Zitruum, ohni Absagegrund) mau Stücklistebedarf (ZLO03 Top-Down, aui Stufe) mau Stückchöschte, nume Ychoufsteili vo de Disponänte 001 bis 006. Das isch nid ds Ychoufsvolume vo de angere Ystiege.",

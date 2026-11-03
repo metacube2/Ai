@@ -1,0 +1,210 @@
+@page "/datenverantwortung"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IUiTextService UiText
+@inject IAdminAccessService AdminAccess
+@inject AuthenticationStateProvider AuthState
+@inject ISnackbar Snackbar
+
+@* Datenverantwortung (Dataowner) 2026-11-03: Wunsch des Chefs nach der Abschlussrunde, Auftrag Ingo „Eingabeform fuer
+   Dataowner, wo ich vorlaeufige User eintragen kann“. Lesen fuer alle, Bearbeiten nach Admin-Anmeldung.
+   Regeln und Startbelegung: Services/DataOwnerRules.cs. Doku docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md. *@
+<PageTitle>@T("Datenverantwortung", "Data ownership")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">@T("Datenverantwortung", "Data ownership")</MudText>
+<MudText Typo="Typo.body2" Class="mb-4" Style="max-width:900px">
+    @T("Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt.", "Who is responsible for which data? Provisional entries are not yet confirmed.")
+</MudText>
+
+@if (_rows is null)
+{
+    <MudProgressLinear Indeterminate Color="Color.Primary" />
+}
+else
+{
+    @if (CanEdit && _edit is null)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4" OnClick="NewEntry">
+            @T("Neuer Eintrag", "New entry")
+        </MudButton>
+    }
+
+    @if (_edit is not null)
+    {
+        <MudPaper Outlined Class="pa-4 mb-4" Style="max-width:900px">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.DataDomain" Label="@T("Datentopf", "Data domain")" Required="true" MaxLength="DataOwnerRules.TextMax" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.SourceSystem" Label="@T("System / Quelle", "System / source")" MaxLength="DataOwnerRules.TextMax" /></MudItem>
+                <MudItem xs="12" sm="4"><MudTextField @bind-Value="_edit.Responsible" Label="@T("Verantwortlich", "Responsible")" Required="true" MaxLength="DataOwnerRules.TextMax" /></MudItem>
+                <MudItem xs="12" sm="4"><MudTextField @bind-Value="_edit.Deputy" Label="@T("Stellvertretung", "Deputy")" MaxLength="DataOwnerRules.TextMax" /></MudItem>
+                <MudItem xs="12" sm="4"><MudTextField @bind-Value="_edit.KeyUser" Label="@T("Key User", "Key user")" MaxLength="DataOwnerRules.TextMax" /></MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="string" @bind-Value="_edit.Status" Label="@T("Status", "Status")">
+                        <MudSelectItem T="string" Value="@DataOwnerStatus.Provisional">@T("Vorläufig", "Provisional")</MudSelectItem>
+                        <MudSelectItem T="string" Value="@DataOwnerStatus.Confirmed">@T("Bestätigt", "Confirmed")</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="8"><MudTextField @bind-Value="_edit.Note" Label="@T("Bemerkung", "Note")" Lines="2" MaxLength="DataOwnerRules.NoteMax" /></MudItem>
+            </MudGrid>
+            <MudStack Row Spacing="2" Class="mt-3">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@T("Speichern", "Save")</MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="CancelEdit">@T("Abbrechen", "Cancel")</MudButton>
+                @if (_edit.Id > 0)
+                {
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="DeleteAsync">@T("Löschen", "Delete")</MudButton>
+                }
+            </MudStack>
+        </MudPaper>
+    }
+
+    @if (_rows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">@T("Noch keine Einträge.", "No entries yet.")</MudAlert>
+    }
+    else
+    {
+        <MudSimpleTable Dense Hover Bordered Class="mb-4">
+            <thead>
+                <tr>
+                    <th>@T("Datentopf", "Data domain")</th>
+                    <th>@T("System / Quelle", "System / source")</th>
+                    <th>@T("Verantwortlich", "Responsible")</th>
+                    <th>@T("Stellvertretung", "Deputy")</th>
+                    <th>@T("Key User", "Key user")</th>
+                    <th>@T("Status", "Status")</th>
+                    <th>@T("Bemerkung", "Note")</th>
+                    <th>@T("Geändert", "Changed")</th>
+                    @if (CanEdit)
+                    {
+                        <th></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in _rows)
+                {
+                    <tr>
+                        <td><b>@row.DataDomain</b></td>
+                        <td>@row.SourceSystem</td>
+                        <td>@row.Responsible</td>
+                        <td>@row.Deputy</td>
+                        <td>@row.KeyUser</td>
+                        <td>
+                            <MudChip T="string" Size="Size.Small" Color="@(row.Status == DataOwnerStatus.Confirmed ? Color.Success : Color.Warning)">
+                                @StatusText(row.Status)
+                            </MudChip>
+                        </td>
+                        <td style="max-width:320px">@row.Note</td>
+                        <td style="white-space:nowrap">@row.UpdatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy") @row.UpdatedBy</td>
+                        @if (CanEdit)
+                        {
+                            <td><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Title="@T("Bearbeiten", "Edit")" OnClick="@(() => Edit(row))" /></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
+
+    @if (!CanEdit)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-2" Style="max-width:520px">@T("Zum Bearbeiten im Admin-Bereich anmelden.", "Sign in to the admin area to edit.")</MudAlert>
+        <AdminAccessPanel OnUnlocked="LoadAsync" />
+    }
+}
+
+@code {
+    private List<DataOwner>? _rows;
+    private DataOwner? _edit;
+    private string _login = string.Empty;
+
+    private bool CanEdit => AdminAccess.IsUnlocked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _login = TrafagSalesExporter.Services.Forum.ForumUserDirectory.ShortName(state.User.Identity?.Name);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        _rows = await db.DataOwners.AsNoTracking()
+            .OrderBy(x => x.SortOrder).ThenBy(x => x.DataDomain)
+            .ToListAsync();
+        StateHasChanged();
+    }
+
+    private void NewEntry()
+        => _edit = new DataOwner { Status = DataOwnerStatus.Provisional };
+
+    private void Edit(DataOwner row)
+        => _edit = new DataOwner
+        {
+            Id = row.Id, DataDomain = row.DataDomain, SourceSystem = row.SourceSystem, Responsible = row.Responsible,
+            Deputy = row.Deputy, KeyUser = row.KeyUser, Status = row.Status, Note = row.Note, SortOrder = row.SortOrder
+        };
+
+    private void CancelEdit() => _edit = null;
+
+    private async Task SaveAsync()
+    {
+        if (_edit is null || !CanEdit)
+            return;
+        DataOwnerRules.Normalize(_edit);
+        if (!DataOwnerRules.IsValid(_edit))
+        {
+            Snackbar.Add(T("Datentopf und Verantwortlich sind Pflicht.", "Data domain and responsible person are required."), Severity.Warning);
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var target = _edit.Id > 0 ? await db.DataOwners.FirstOrDefaultAsync(x => x.Id == _edit.Id) : null;
+        if (target is null)
+        {
+            var maxSort = await db.DataOwners.Select(x => (int?)x.SortOrder).MaxAsync() ?? 0;
+            target = new DataOwner { SortOrder = maxSort + 10 };
+            db.DataOwners.Add(target);
+        }
+        target.DataDomain = _edit.DataDomain;
+        target.SourceSystem = _edit.SourceSystem;
+        target.Responsible = _edit.Responsible;
+        target.Deputy = _edit.Deputy;
+        target.KeyUser = _edit.KeyUser;
+        target.Status = _edit.Status;
+        target.Note = _edit.Note;
+        target.UpdatedAtUtc = DateTime.UtcNow;
+        target.UpdatedBy = _login;
+        await db.SaveChangesAsync();
+
+        _edit = null;
+        Snackbar.Add(T("Gespeichert", "Saved"), Severity.Success);
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_edit is null || _edit.Id <= 0 || !CanEdit)
+            return;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var target = await db.DataOwners.FirstOrDefaultAsync(x => x.Id == _edit.Id);
+        if (target is not null)
+        {
+            db.DataOwners.Remove(target);
+            await db.SaveChangesAsync();
+        }
+        _edit = null;
+        await LoadAsync();
+    }
+
+    private string StatusText(string status)
+        => status == DataOwnerStatus.Confirmed ? T("Bestätigt", "Confirmed") : T("Vorläufig", "Provisional");
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

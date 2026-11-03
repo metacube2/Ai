@@ -28,6 +28,8 @@ public class AppDbContext : DbContext
     public DbSet<GroupStandardCost> GroupStandardCosts => Set<GroupStandardCost>();
     public DbSet<GroupMaterialMaster> GroupMaterialMasters => Set<GroupMaterialMaster>();
     public DbSet<SupplierMaterialOverride> SupplierMaterialOverrides => Set<SupplierMaterialOverride>();
+    // Datenverantwortung je Datentopf (2026-11-03), Seite /datenverantwortung.
+    public DbSet<DataOwner> DataOwners => Set<DataOwner>();
     public DbSet<CustomerMarketSegment> CustomerMarketSegments => Set<CustomerMarketSegment>();
     public DbSet<SegmentNamePattern> SegmentNamePatterns => Set<SegmentNamePattern>();
     public DbSet<MarketSurveyEntry> MarketSurveyEntries => Set<MarketSurveyEntry>();

@@ -8,6 +8,20 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Datenverantwortung 2026-11-03
+                ["Datenverantwortung"] = "Responsabilidad de datos",
+                ["Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt."] = "¿Quién es responsable de qué datos? Las entradas provisionales aún no están confirmadas.",
+                ["Datentopf"] = "Ámbito de datos",
+                ["System / Quelle"] = "Sistema / fuente",
+                ["Stellvertretung"] = "Suplente",
+                ["Key User"] = "Usuario clave",
+                ["Bemerkung"] = "Observación",
+                ["Vorläufig"] = "Provisional",
+                ["Bestätigt"] = "Confirmado",
+                ["Neuer Eintrag"] = "Nueva entrada",
+                ["Noch keine Einträge."] = "Todavía no hay entradas.",
+                ["Zum Bearbeiten im Admin-Bereich anmelden."] = "Para editar, inicie sesión en el área de administración.",
+                ["Datentopf und Verantwortlich sind Pflicht."] = "El ámbito de datos y el responsable son obligatorios.",
                 ["Rechnet"] = "Calculando",
                 ["Ladeprotokoll"] = "Registro de carga",
                 ["Ladeprotokoll Einkaufsdaten"] = "Registro de carga de datos de compras",
@@ -2692,6 +2706,20 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Datenverantwortung 2026-11-03
+                ["Datenverantwortung"] = "Responsabilità dei dati",
+                ["Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt."] = "Chi è responsabile di quali dati? Le voci provvisorie non sono ancora confermate.",
+                ["Datentopf"] = "Ambito di dati",
+                ["System / Quelle"] = "Sistema / fonte",
+                ["Stellvertretung"] = "Sostituto",
+                ["Key User"] = "Key user",
+                ["Bemerkung"] = "Nota",
+                ["Vorläufig"] = "Provvisorio",
+                ["Bestätigt"] = "Confermato",
+                ["Neuer Eintrag"] = "Nuova voce",
+                ["Noch keine Einträge."] = "Ancora nessuna voce.",
+                ["Zum Bearbeiten im Admin-Bereich anmelden."] = "Per modificare, accedi all'area di amministrazione.",
+                ["Datentopf und Verantwortlich sind Pflicht."] = "Ambito di dati e responsabile sono obbligatori.",
                 ["Rechnet"] = "In calcolo",
                 ["Ladeprotokoll"] = "Log di caricamento",
                 ["Ladeprotokoll Einkaufsdaten"] = "Log di caricamento dati acquisti",
@@ -5376,6 +5404,20 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Datenverantwortung 2026-11-03
+                ["Datenverantwortung"] = "डेटा ज़िम्मेदारी",
+                ["Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt."] = "कौन किस डेटा के लिए ज़िम्मेदार है? अस्थायी प्रविष्टियाँ अभी पुष्ट नहीं हैं।",
+                ["Datentopf"] = "डेटा क्षेत्र",
+                ["System / Quelle"] = "सिस्टम / स्रोत",
+                ["Stellvertretung"] = "प्रतिनिधि",
+                ["Key User"] = "मुख्य उपयोगकर्ता",
+                ["Bemerkung"] = "टिप्पणी",
+                ["Vorläufig"] = "अस्थायी",
+                ["Bestätigt"] = "पुष्ट",
+                ["Neuer Eintrag"] = "नई प्रविष्टि",
+                ["Noch keine Einträge."] = "अभी कोई प्रविष्टि नहीं।",
+                ["Zum Bearbeiten im Admin-Bereich anmelden."] = "संपादित करने के लिए एडमिन क्षेत्र में साइन इन करें।",
+                ["Datentopf und Verantwortlich sind Pflicht."] = "डेटा क्षेत्र और ज़िम्मेदार व्यक्ति आवश्यक हैं।",
                 ["Rechnet"] = "गणना हो रही है",
                 ["Ladeprotokoll"] = "लोड लॉग",
                 ["Ladeprotokoll Einkaufsdaten"] = "खरीद डेटा लोड लॉग",
@@ -8060,6 +8102,20 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Datenverantwortung 2026-11-03
+                ["Datenverantwortung"] = "Përgjegjësia për të dhënat",
+                ["Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt."] = "Kush është përgjegjës për cilat të dhëna? Hyrjet e përkohshme nuk janë konfirmuar ende.",
+                ["Datentopf"] = "Fusha e të dhënave",
+                ["System / Quelle"] = "Sistemi / burimi",
+                ["Stellvertretung"] = "Zëvendësi",
+                ["Key User"] = "Përdoruesi kyç",
+                ["Bemerkung"] = "Shënim",
+                ["Vorläufig"] = "I përkohshëm",
+                ["Bestätigt"] = "I konfirmuar",
+                ["Neuer Eintrag"] = "Hyrje e re",
+                ["Noch keine Einträge."] = "Ende asnjë hyrje.",
+                ["Zum Bearbeiten im Admin-Bereich anmelden."] = "Për të ndryshuar, hyni në zonën e administrimit.",
+                ["Datentopf und Verantwortlich sind Pflicht."] = "Fusha e të dhënave dhe përgjegjësi janë të detyrueshme.",
                 ["Rechnet"] = "Po llogarit",
                 ["Ladeprotokoll"] = "Regjistri i ngarkimit",
                 ["Ladeprotokoll Einkaufsdaten"] = "Regjistri i ngarkimit të të dhënave të blerjeve",
@@ -10744,6 +10800,20 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Datenverantwortung 2026-11-03
+                ["Datenverantwortung"] = "Veri sorumluluğu",
+                ["Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt."] = "Hangi verilerden kim sorumlu? Geçici kayıtlar henüz onaylanmadı.",
+                ["Datentopf"] = "Veri alanı",
+                ["System / Quelle"] = "Sistem / kaynak",
+                ["Stellvertretung"] = "Vekil",
+                ["Key User"] = "Anahtar kullanıcı",
+                ["Bemerkung"] = "Not",
+                ["Vorläufig"] = "Geçici",
+                ["Bestätigt"] = "Onaylandı",
+                ["Neuer Eintrag"] = "Yeni kayıt",
+                ["Noch keine Einträge."] = "Henüz kayıt yok.",
+                ["Zum Bearbeiten im Admin-Bereich anmelden."] = "Düzenlemek için yönetici alanında oturum açın.",
+                ["Datentopf und Verantwortlich sind Pflicht."] = "Veri alanı ve sorumlu zorunludur.",
                 ["Rechnet"] = "Hesaplanıyor",
                 ["Ladeprotokoll"] = "Yükleme günlüğü",
                 ["Ladeprotokoll Einkaufsdaten"] = "Satın alma verileri yükleme günlüğü",
@@ -13428,6 +13498,20 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Datenverantwortung 2026-11-03
+                ["Datenverantwortung"] = "De' ghaHtaHghach",
+                ["Wer ist für welche Daten verantwortlich? Vorläufige Einträge sind noch nicht bestätigt."] = "De' Hoch vISovmeH 'Iv ghaH? ghItlhmey lo'taHvIS wIHon ghobe'.",
+                ["Datentopf"] = "De' bal",
+                ["System / Quelle"] = "pat / Hal",
+                ["Stellvertretung"] = "latlh Duj",
+                ["Key User"] = "ngaQHa'moHwI' lo'wI'",
+                ["Bemerkung"] = "QIn mach",
+                ["Vorläufig"] = "DaH neH",
+                ["Bestätigt"] = "wIHon",
+                ["Neuer Eintrag"] = "ghItlh chu'",
+                ["Noch keine Einträge."] = "ghItlhmey tu'lu'be' DaH.",
+                ["Zum Bearbeiten im Admin-Bereich anmelden."] = "choHmeH, loHwI' Daq yI'el.",
+                ["Datentopf und Verantwortlich sind Pflicht."] = "De' bal ghaHtaHwI' je DaghItlhnIS.",
                 ["Rechnet"] = "mI' toghlu'",
                 ["Ladeprotokoll"] = "lI' ghItlh",
                 ["Ladeprotokoll Einkaufsdaten"] = "je' De' lI' ghItlh",
