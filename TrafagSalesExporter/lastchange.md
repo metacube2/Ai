@@ -2,6 +2,13 @@
 
 Stand: 2026-11-03
 
+## Doku nachgefuehrt: Status kurz fuer den Chef, Rexx-Hub-Sitzung, Ansprechpartner (Frage Ingo „alle md nachgefahren?“), 2026-11-03
+
+- `Status_kurz.tsv` samt `.xlsx`: Rexx, Abwesenheiten, ZC22, Abschlussrunde, Trafag Projekte aktualisiert; neu ZREICHW, PM14,
+  Seite Datenverantwortung, Berechtigungskonzept.
+- Rexx-Hub-Sitzung naechste Woche (Alex, Artjom) in rag/HR_KPI, HR_KPI 8.9, Rexx-Notizen; ANSPRECHPARTNER mit Artjom und
+  Abschnitt Datenverantwortliche.
+
 ## Datenverantwortung: neue Seite mit Eingabeformular fuer Dataowner (Wunsch Chef, Auftrag Ingo), 2026-11-03
 
 - `/datenverantwortung`: Datentopf, System, Verantwortlich, Stellvertretung, Key User, Status vorlaeufig/bestaetigt, Bemerkung;

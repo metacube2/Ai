@@ -12,7 +12,7 @@ Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP); davor 2026-10-29 (Abschnittsnum
   dafuer nach (Aussage „P76 immer aktuell“ ueberholt). Ferienkonten in PA2006, Austrittsart nur
   teilweise in SAP. Idee Ingo: eigenes Programm nur in Z-Tabellen, taeglicher Job; nicht gebaut,
   haengt an der Dateilieferung. Mails (03.11. gelesen): Upgreat schloss Ticket #12699584 am 19.10. mit „Unable to solve“, Rexx betreut
-  Trafag selbst (HR/Nadja); Hub-Angebot AG36071 4'800 EUR/Jahr gegen 4 Einzelschnittstellen 5'600 EUR/Jahr, Entscheid mit Nadja offen; Sonja: HR
+  Trafag selbst (HR/Nadja); Hub-Angebot AG36071 4'800 EUR/Jahr gegen 4 Einzelschnittstellen 5'600 EUR/Jahr, Entscheid offen; *Nachtrag 03.11. nachmittags: Sitzung Rexx Hub naechste Woche mit Alex und Artjom Yahno, Nadja und Sonja laut Alex nicht noetig*; Sonja: HR
   konnte noch nichts testen. `docs/HR_KPI.md` 8.9, `saptasks/rexx_schnittstelle/NOTES.md`.
 - **2026-10-20 live geprueft: SAP-Abruf laeuft taeglich.** In `hrdata` auf dem Server sind `HR_KPI_Export.xlsx` und
   `HR_Absenzen_SAP.xlsx` heute um 05:07 geschrieben. Die Rexx-Dateien sind weiter vom 08.07. (Upgreat offen), wer danach

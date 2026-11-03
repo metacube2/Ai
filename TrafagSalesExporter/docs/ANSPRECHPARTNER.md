@@ -78,7 +78,7 @@ Di Menco, Adil, Florian, Fabio), `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25` 
 | Partei | Rolle | Kontakt |
 | --- | --- | --- |
 | Upgreat | Server, Zugriff, Netzwerk, SharePoint, Betrieb, Security-Rahmen; auch SAP-B1-Server | *offen* *(Nachtrag 2026-10-29: Ueli Kunzmann, Rexx-Export und dormakaba-Task, `docs/HR_KPI.md` 8.3; Adresse offen. Nachtrag 2026-11-03: Ueli seit 01.10. nicht mehr fuer Trafag zustaendig; der Rexx-Export lief als Upgreat-Ticket #12699584, geschlossen am 19.10. „Unable to solve“: Upgreat betreut Rexx nicht; im Ticket Dardan Hasani, Noel Hagger, Gian-Luca Schmutz)* |
-| Rexx Systems Schweiz AG | Anbieter Rexx; Angebot Rexx Hub AG36071 | Riccardo Schwick (Managing Partner), Artjom Yahno; Ansprechpartnerin bei Trafag Nadja Brandenberger (Nachtrag 2026-11-03) |
+| Rexx Systems Schweiz AG | Anbieter Rexx; Angebot Rexx Hub AG36071 | Riccardo Schwick (Managing Partner), Artjom Yahno (Betreuer, Schnittstellen; Sitzung Rexx Hub ab KW 46); Ansprechpartnerin bei Trafag Nadja Brandenberger (Nachtrag 2026-11-03) |
 | EXPRIS AG | Hat 2023/24 die SAP-HR-Schnittstelle zu Rexx gebaut (Paket `Z_HR_PA_REXX`, Benutzer `EXPRIS`, `EXPRIS_SIWY`) | im Code „S. Wyden“ (Besprechung 18.04.2024), voller Name und Adresse offen; `saptasks/rexx_schnittstelle/NOTES.md` (Nachtrag 2026-11-03) |
 | NTT | SAP-B1-Server-/Applikationsprojekt | *offen* |
 | ANG | SAP-B1-Server-/Applikationsprojekt | *offen* |
@@ -147,3 +147,9 @@ Alle drei sind in diesem Repo schon einmal echte Stolpersteine gewesen:
 4. **Owner von BLP** (Abschnitt 4).
 5. **Absender der italienischen Eskalation vom 2026-07-28** (Abschnitt 1).
 6. **Kontakte bei Upgreat, NTT, ANG, VARONE** für den Eskalationsweg.
+
+## Datenverantwortliche (seit 2026-11-03)
+
+Vorlaeufige Datenverantwortliche je Datentopf aus der Abschlussrunde vom 03.11. und Ingos Nachtrag (Logistik Neva Acikalin,
+Materialstamm Armin Guentensperger) stehen im Dashboard auf der Seite **Datenverantwortung** (`/datenverantwortung`) und im
+Protokoll `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md` Abschnitt 3. Fuehrend ist die Seite im Dashboard.

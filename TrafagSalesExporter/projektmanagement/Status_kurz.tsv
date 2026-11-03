@@ -6,10 +6,10 @@ Finance	Journal CH/AT aus SAP	Läuft	Ladelauf auslösen (Ingo)	2026-10-01
 Finance	Daten Deutschland seit 24.09. lückenhaft	Wartet	IT Deutschland	2026-09-29
 Verkauf	Reiter Verkauf: Kunden, Rückgang, Konzentration, Cross-Selling, Preise, Prognose, Weltkarte	Bereit	Sichtprüfung Ingo	2026-10-02
 HR	Kader (SAP-Mitarbeiterkreis 10) 8,2 h, übrige 8,0 h je Arbeitstag	Bereit		2026-10-22
-HR	Abwesenheiten mit Von/Bis, nur genehmigte, Krankenquote je Zeitraum	Bereit		2026-10-01
+HR	Abwesenheiten mit Von/Bis, nur genehmigte, Krankenquote je Zeitraum	Bereit; Ferien/Kompensation erst nach Sonjas Rexx-Import in SAP		2026-10-01
 HR	Absenz-Ampel: bis 4,99 % gelb, ab 5 % rot	Bereit		2026-10-01
 HR	SAP-Daten täglich automatisch	Bereit		2026-10-01
-HR	Rexx-Berichte täglich automatisch	Wartet	Upgreat	2026-09-30
+HR	Rexx-Berichte täglich automatisch (Upgreat nicht zuständig, Rexx betreut Trafag selbst)	Wartet	Sitzung Rexx Hub nächste Woche (Ingo, Alex, Artjom Yahno)	2026-11-03
 HR	Krankheitsarten bestätigen	Wartet	Sonja	2026-10-01
 Einkauf	Seite nach dem Auffrischen sofort da	Bereit		2026-10-01
 Einkauf	Lagerwert-Verlauf je Woche	Bereit		2026-09-28
@@ -27,16 +27,20 @@ Plattform	Webapp schneller	Bereit		2026-09-28
 Plattform	Netzwerk-Reiter: Netzkarte, Verfügbarkeit, Netz oder Daten, Sicherheit	Bereit		2026-10-02
 Plattform	AD-Computerkonten im Netzwerk-Reiter einschalten	Erledigt		2026-10-02 07:34
 Plattform	Server im Dauerbetrieb	Wartet	IT	2026-09-28
-Projekte	Abschlussrunde Dashboard und Data Lake (Finance, Einkauf, Supply Chain, HR, Sales, 90 Min.); Smartsheet-Ablösung, Power-BI-Verantwortliche	Läuft	Einladung am 20.10. verschickt (Ingo)	2026-10-20
+Projekte	Abschlussrunde Dashboard und Data Lake (Finance, Einkauf, Supply Chain, HR, Sales, 90 Min.); Smartsheet-Ablösung, Power-BI-Verantwortliche	Erledigt 03.11.	Protokoll docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md; Aufgaben im Projekt PM14	2026-11-03
 Logistik	ABAP-Transport Prüfbefund Logistik live (Warenausgangszeit, Kapazität)	Wartet	SE11-Prüfung KBED, T76-Transport	2026-10-05
 Einkauf	Einkauf über offenen Bestellwert nach Elikz-Fix informieren	Wartet	Ingo	2026-10-06
 Finance	TR IT verkauft Indien-Ware ohne Konzernkosten TR IN (Sachnummer fehlt, ISS-007.4)	Wartet	Prüfung B1-Artikelstamm TR IT	2026-10-07
 Finance	Kostenwährung zum Budget- oder Tageskurs	Wartet	Andreas	2026-10-07
-Logistik	ZM_OFFENE_FAUF mit Bedarfsverursacher (T76K912714 am 09.10. in P76)	Läuft	Fabio: Layout in P76 prüfen, Fall BANF Werk 1200	2026-10-09
+Logistik	ZC22 (ZM_OFFENE_FAUF): bei Umlagerung BANF/Bestellung (U2/U1) statt Kundenauftrag; Layout / P00 TX in P76 angepasst	Bereit		2026-11-03
 Plattform	Operations (Shopfloor): für alle offen, Mengen aus SAP auf dem Produktionstag (Logistik, SEH, TR5, DW), ZD05 04:00/12:45; seit 02.11. erwarteter Umsatz und Gutschriften aus Fiori, Paket 01.11. eingespielt	Läuft	Fabio: TX-Arbeitsplatz, Antwort DW* beim PPD-Verzug; Ingo: Deploy Schalter Verkauf, TX-Vorrat und PPD-Verzug aus ZC22, J2/J3 CO-PA	2026-11-02
 Plattform	Trafag Reddit: Forum mit Abstimmung, für alle sichtbar	Läuft	Ingo: Ankündigung entscheiden	2026-10-09
-Plattform	Trafag Projekte: Board, Backlog/Sprints, Zeitachse, Kalender, Diagramme	Läuft	Ingo: erstes echtes Projekt anlegen	2026-10-09
+Plattform	Trafag Projekte: Board, Backlog/Sprints, Zeitachse, Kalender, Diagramme	Läuft	Erstes Projekt PM14 am 03.11. angelegt; Rückfrage Chef „Projektmanagement deaktivieren“	2026-11-03
 SAP	ZC23: Materialanteil und Arbeit CZ, 3,5-mal schneller gerechnet, Fiori-App-Anschluss	Bereit		2026-10-16
 Einkauf	Stücklisten-Netz „Gehirn“ im Spend-Aufriss (Prototyp)	Bereit		2026-10-16
 Projekte	GIB Dispo-Cockpit DCP (SAP-Add-on Planung): Module installiert, Pilot abgeschlossen, Testuser UBIG in T76/200	Läuft	Ingo: Kennwort UBIG setzen und testen; Projekt: Umfang, Rollen	2026-10-19
 Projekte	SAP PS: Demo in T76, Fazit einfach zu bedienen, Einfuehrung mittel (PS nicht eingerichtet, Zeit heute in rexx)	Läuft	Ingo: Folien, P76-Pruefung; Philip Steiger	2026-10-20
+SAP	ZREICHW Reichweitenanalyse: Option „Nur Spoolauftrag“, Werk 1100 in rund 5 s statt 155 s	Bereit		2026-11-03
+Projekte	Datenqualität und Ablösung (PM14): 30 Befunde wer bereinigt was, Inventar Power BI/Smartsheet/Excel	Läuft	Aufwand schätzen, Sichtbarkeit für Oscar, Stunden eingespart (Ingo)	2026-11-03
+Plattform	Seite Datenverantwortung (Dataowner) mit Eingabeformular, vorläufige Belegung	Bereit	Deploy nach dem Einkauf-Lauf	2026-11-03
+Plattform	Berechtigungskonzept: Abgleich mit dem AD, wer darf was	Offen	Ingo / Alex	2026-11-03

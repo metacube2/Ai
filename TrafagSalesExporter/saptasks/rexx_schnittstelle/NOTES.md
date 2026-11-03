@@ -210,3 +210,7 @@ Die Trafag-Verbindung ist also eine Eigenentwicklung; Auskunft geben nur EXPRIS,
   das ist mit Nadja zu klaeren. (4) Die „4 weiteren Schnittstellen“ sind vermutlich Ingos vier Berichte.
 - **Sonja Richter 02.11.:** „stehen mittlerweile Live-Daten fuer uns zur Verfuegung? Weil testen konnten wir bis anhin ja noch
   nichts.“ Ingo hat am 03.11. 07:03 geantwortet (Inhalt nicht gelesen). HR hat das Cockpit also noch nicht getestet.
+
+**Nachtrag 2026-11-03 nachmittags:** In der Abschlussrunde nannte Nadja Artjom Yahno als Rexx-Betreuer (seit rund einem Jahr,
+auch fuer Schnittstellen). Ingo hat die Sitzung zum Rexx Hub fuer naechste Woche geplant, mit Alex und Artjom; Nadja und Sonja
+braucht es laut Alex nicht. Davon haengen der Tagesexport (Abschnitt 7) und die Idee mit eigenem Programm ab.
