@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-11-02 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-11-03 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -93,6 +93,8 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-11-03 | `RunSapProbe.ps1 table-read PA2001 --fields "UNAME AEDTM"` meldete `TABLE_WITHOUT_DATA`; fast haette das als „PA2001 leer / keine Berechtigung“ gegolten. Ursache: Felder mit Leerzeichen statt Komma getrennt | `--fields` immer mit Kommas (`"UNAME,AEDTM"`); bei `TABLE_WITHOUT_DATA` erst mit einem einzelnen Feld gegenpruefen | `saptasks/rexx_schnittstelle/NOTES.md` 10 |
+| 2026-11-03 | Doku nahm an, PA2001 in P76 sei „immer aktuell“ (`HR_KPI.md` 8.7, 01.10.), ohne zu pruefen, wie die Saetze entstehen; tatsaechlich bucht Sonja Ferien/Kompensation/Militaer nur mit einem manuellen Rexx-Import nach | Bei SAP-Daten, die aus einem Fremdsystem kommen, zuerst Aenderer (`UNAME`/`AEDTM`) und Anlagetage lesen, bevor „aktuell“ behauptet wird | `docs/HR_KPI.md` 8.9 |
 | 2026-11-02 | Vergleichsreport ZREICHW: Textlisten `WITH EMPTY KEY` angelegt und mit `SORT` ohne `BY` sortiert; das sortiert nichts (nur die Syntaxwarnung fiel auf, vor dem ersten Lauf korrigiert) | Tabellen, die per `SORT itab.` sortiert werden, mit `WITH DEFAULT KEY` oder `SORT ... BY table_line`; Syntaxwarnungen immer lesen | `saptasks/zreichw/NOTES.md` 4 |
 | 2026-11-02 | OK-Code `/nSP01` bzw. `/nSP02` ueber Git Bash an ein VBS gegeben: SAP meldete „Transaktion C:/PROGRAM FILES/GIT existiert nicht“ (alter Fehler vom 2026-10-01 wiederholt) | Argumente mit fuehrendem `/` nur ueber PowerShell oder mit `MSYS_NO_PATHCONV=1` uebergeben | `saptasks/zreichw/NOTES.md` |
 | 2026-11-02 | P76 nach Import `T76K912793`: Caches in der Reihenfolge `/IWFND` dann `/IWBEP` geleert, danach `MARA001Set` mit `Zeivr` weiter 404; erst ein zweites `/IWFND/CACHE_CLEANUP` gab es frei | Nach einer Modellaenderung zuerst `/IWBEP/CACHE_CLEANUP`, dann `/IWFND/CACHE_CLEANUP`, danach im Gateway Client das neue Feld pruefen, nicht nur `$metadata` 200 | `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7 |
@@ -148,6 +150,8 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-11-03 | `perl -pi -e 's{\| 2026-10-22 \|\s*$}{...}'` auf `PROJEKTSTATUS.md`: `\s*` frass den Zeilenumbruch, die Zeile PM-07 verschmolz mit PM-08; per `git diff` bemerkt und repariert | In zeilenweisen Ersetzungen am Zeilenende `[ \t]*$` statt `\s*$`; nach jeder Massenersetzung `git diff` lesen | `projektmanagement/PROJEKTSTATUS.md` PM-07 |
+| 2026-11-03 | Outlook-Mails per COM (`Outlook.Application`) gelesen: Betreff und Datum kamen, Text und Absender blieben leer, `GetTable`-Spalten brachen mit `E_ABORT` ab (Outlook-Sicherheitsschutz) | Mailinhalte nur ueber den M365-Connector (`/mcp`) oder von Ingo; ueber COM nur Betreffzeilen, den Schutz nicht umgehen | `saptasks/rexx_schnittstelle/NOTES.md` 8 |
 | 2026-10-30 | Wiederholt (09.10.): `sed -i 's/.../\\n.../'` im Bash schrieb in ein Python-Patchskript statt `\n` einen echten Zeilenumbruch in ein Zeichenkettenliteral, das Skript brach mit SyntaxError ab. Dazu fand `t.index("FORM x.")` zuerst `PERFORM x.` | Skripte nur mit Write/Edit aendern, nie per `sed` mit Backslashes; FORM-Anfaenge in ABAP mit `"\nFORM x."` suchen | Sitzung FIX 24 |
 | 2026-10-29 | Wiederholt (27.10.): die Chrome-Erweiterung lehnt `https://trch-webapp-bidashboard…` als „browser-internal or unparseable URL“ ab; Edge headless (`--screenshot`, `--virtual-time-budget`) zeigt nur „Trafag Cockpit wird geladen“, weil die Blazor-Verbindung nicht aufgebaut wird. Trafag Projekte ging deshalb ohne eigene Sichtprüfung live | Fuer die Sichtpruefung eine Seite mit echtem Rendern einplanen (CDP mit Wartezeit auf die Blazor-Verbindung) oder Ingo eine Prüfliste geben; Agenten koennen lokal nicht starten, weil die Worktree-DB Zugangsdaten und Hintergrunddienste enthaelt | `docs/rag/DEPLOYMENT.md` 2026-10-29 |
 | 2026-10-29 | Drei Agenten parallel: zwei Kataloge bekamen denselben Schluessel „Aufgabe öffnen“ (Doppeltest rot), und der neue Projekte-Katalog stand zuerst vor den bestehenden Katalogen und haette deren Uebersetzungen ueberschrieben | Je Agent eigene Katalogdatei, ein neuer Katalog fuellt in `UiTextService` nur Luecken (zuletzt), nach jedem Zusammenfuehren den Doppeltest laufen lassen | `docs/TRAFAG_PROJEKTE_2026-10-09.md` Texte |

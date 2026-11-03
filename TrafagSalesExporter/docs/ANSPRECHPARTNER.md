@@ -77,7 +77,8 @@ Di Menco, Adil, Florian, Fabio), `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25` 
 
 | Partei | Rolle | Kontakt |
 | --- | --- | --- |
-| Upgreat | Server, Zugriff, Netzwerk, SharePoint, Betrieb, Security-Rahmen; auch SAP-B1-Server | *offen* *(Nachtrag 2026-10-29: Ueli Kunzmann, Rexx-Export und dormakaba-Task, `docs/HR_KPI.md` 8.3; Adresse offen)* |
+| Upgreat | Server, Zugriff, Netzwerk, SharePoint, Betrieb, Security-Rahmen; auch SAP-B1-Server | *offen* *(Nachtrag 2026-10-29: Ueli Kunzmann, Rexx-Export und dormakaba-Task, `docs/HR_KPI.md` 8.3; Adresse offen. Nachtrag 2026-11-03: Ueli seit 01.10. nicht mehr fuer Trafag zustaendig; der Rexx-Export lief als Upgreat-Ticket #12699584, geschlossen am 19.10.)* |
+| EXPRIS AG | Hat 2023/24 die SAP-HR-Schnittstelle zu Rexx gebaut (Paket `Z_HR_PA_REXX`, Benutzer `EXPRIS`, `EXPRIS_SIWY`) | im Code „S. Wyden“ (Besprechung 18.04.2024), voller Name und Adresse offen; `saptasks/rexx_schnittstelle/NOTES.md` (Nachtrag 2026-11-03) |
 | NTT | SAP-B1-Server-/Applikationsprojekt | *offen* |
 | ANG | SAP-B1-Server-/Applikationsprojekt | *offen* |
 | VARONE | B1-Partner Trafag Italia (Moving-Average-Umstellung) | *offen* |

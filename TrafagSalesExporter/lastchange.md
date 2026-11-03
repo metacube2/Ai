@@ -1,6 +1,17 @@
 # Last Change
 
-Stand: 2026-11-02
+Stand: 2026-11-03
+
+## HR: Rexx-Schnittstelle nach SAP gefunden, Idee eigenes Programm mit Z-Tabelle (Auftrag Ingo „alles in md festhalten“), 2026-11-03
+
+- T76 nur gelesen: Eigenentwicklung der EXPRIS AG (Paket `Z_HR_PA_REXX`); Sonja Richter (`RIS`) importiert von Hand
+  Stammdaten (`Z_HR_PA_REXX`), Absenzen (`Z_HR_REXX_PA_ABS`, Batch-Input PA30) und Kommen/Gehen (`Z_HR_REXX_PA_ZE`), kein Job.
+- Krankheit/Unfall nimmt der Absenz-Import nicht mit; Ferien, Kompensation und Militaer kommen nur mit dem Import nach SAP,
+  `HrAbsenzSet` hinkt dafuer nach (Aussage „P76 immer aktuell“ in `HR_KPI.md` 8.7 als ueberholt markiert).
+- Mails (nur Betreff): Upgreat-Ticket #12699584 am 19.10. geschlossen, Angebot AG36071 Rexx Hub 29.10.; Inhalt ungelesen.
+- Idee Ingo: eigenes Programm nur in Z-Tabellen, taeglicher Job; nicht gebaut. Doku `saptasks/rexx_schnittstelle/NOTES.md`
+  (neu, mit Quelltexten aus T76), `docs/HR_KPI.md` 8.9, rag/HR_KPI, Router HR, ANSPRECHPARTNER (EXPRIS), PROJEKTSTATUS PM-07,
+  Wochen_Todo 55/133, LEARNINGS (drei Zeilen). Kein Code, kein Deploy.
 
 ## SAP ZREICHW: nur Spoolauftrag statt Sofortdruck (Teams-Anfrage, Auftrag Ingo), 2026-11-02 abends
 

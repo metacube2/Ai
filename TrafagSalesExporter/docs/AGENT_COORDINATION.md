@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-11-02
+Stand: 2026-11-03
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -41,6 +41,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | HR: Rexx-Schnittstelle nach SAP untersucht (T76 lesend, Outlook-Betreffzeilen, Web), Idee Z-Tabelle + Tagesjob (Auftrag Ingo âalles in md festhaltenâ) | 2026-11-03 | abgeschlossen, nur Doku, SAP nur T76 lesend, kein Code, kein Deploy, Reservierung frei. `saptasks/rexx_schnittstelle/` (neu, NOTES + Quelltexte), `docs/HR_KPI.md` 8.9 (8.3/8.7 als ueberholt markiert), rag/HR_KPI, Router HR, ANSPRECHPARTNER, PROJEKTSTATUS PM-07, Wochen_Todo 55/133 samt `.xlsx`/Status_kurz, LEARNINGS, baum, lastchange. Offen: Mails Ticket #12699584/Angebot AG36071 lesen, P76 AL11 (Entscheid Ingo), Sonja/EXPRIS fragen |
 | Claude | ZREICHW Uebergabe fuer den 03.11. (Auftrag Ingo „alles in md festhalten“) | 2026-11-02 | abgeschlossen, Reservierung frei, nur Doku, kein SAP, kein Deploy. `saptasks/zreichw/NOTES.md` Abschnitt 5 (Stand, naechste Schritte, Teams-Antwort, Werkzeuge), Hilfsskripte nach `saptasks/zreichw/werkzeuge/`, baum, lastchange, Router SAP |
 | Claude | ZREICHW optimieren an einer Kopie, Ergebnis unveraendert (Auftrag Ingo 02.11.) | 2026-11-02 | abgeschlossen in T76, Reservierung frei, kein Transport, kein Deploy. `Z_KOI_REICHW_OPT` und `Z_KOI_REICHW_VGL` lokal (`$TMP`), Original unberuehrt; Werk 1100 155 s auf 2,2 s, zellgleich in vier Laeufen (auch Optionen, Januarbeginn), Debug-Liste gleich. Offen: Uebernahme ins Original (Entscheid Ingo). Doku `saptasks/zreichw/NOTES.md` 4, Router SAP, baum, lastchange, LEARNINGS, Wochen_Todo 132 |
 | Claude | ZREICHW Reichweitenanalyse (`Z_KOI_REICHW_TURBO`): Ankreuzfeld „Nur Spoolauftrag“ statt Sofortdruck (Teams-Anfrage, Auftrag Ingo) | 2026-11-02 | abgeschlossen in T76, Reservierung frei, kein Dashboard-Code, kein Deploy. T76 eigener Auftrag `T76K912799` (Aufgabe `T76K912800`, nur `REPS Z_KOI_REICHW_TURBO`), aktiv, zurueckgelesen zeilengleich, Test Spool 1264623 ohne Ausgabeauftrag; P76 nur gelesen (SE93, SM37). Offen: Freigabe/Import P76 (Ingo); Befunde zur Optimierung nicht umgesetzt. Doku `saptasks/zreichw/` (neu), Router SAP, baum, lastchange, LEARNINGS, Wochen_Todo 132 |

@@ -1,6 +1,6 @@
 # Unterrouter HR
 
-Zurueck: `router.md`. Stand: 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv); davor 2026-09-30.
+Zurueck: `router.md`. Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP, Idee Z-Tabelle/Tagesjob); davor 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv), 2026-09-30.
 
 HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
@@ -9,6 +9,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | Bedarf | Datei |
 | --- | --- |
 | Konsistenzreview und technische Reparaturen 29.09. (*ueberholt „lokal, nicht deployed“: produktiv seit 2026-09-29 10:07, `eafd1c5`*); Zuordnung bestehender Fachfragen | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` |
+| **Wie Rexx-Daten nach SAP kommen (EXPRIS-Schnittstelle `Z_HR_PA_REXX`, Sonja importiert von Hand), Felder nur SAP/beide/nur Rexx, Idee eigenes Programm mit Z-Tabelle als Tagesjob, Mails Upgreat-Ticket** | `saptasks/rexx_schnittstelle/NOTES.md`, Kurzfassung `docs/HR_KPI.md` 8.9 |
 | Kurzstand, Zugang, Datenordner | `docs/rag/HR_KPI.md` |
 | **Fachlogik, Datenquellen, Formeln, behobene Fehler, Grenzen** | `docs/HR_KPI.md` |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |

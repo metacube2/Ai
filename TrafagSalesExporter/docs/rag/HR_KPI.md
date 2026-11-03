@@ -1,9 +1,18 @@
 # RAG HR KPI
 
-Stand: 2026-10-29 (Abschnittsnummer Kader 8.8); davor 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP); davor 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
 
+- **2026-11-03: Rexx-Schnittstelle nach SAP gefunden (T76 lesend).** Eigenentwicklung der EXPRIS AG
+  (Paket `Z_HR_PA_REXX`): Sonja Richter (`RIS`) importiert von Hand Stammdaten (`Z_HR_PA_REXX`),
+  Absenzen (`Z_HR_REXX_PA_ABS`, Batch-Input PA30) und Kommen/Gehen (`Z_HR_REXX_PA_ZE`); Dateien vom
+  PC oder aus `/usr/sap/rexx`, kein Job in T76. **Krankheit/Unfall nimmt der Absenz-Import nicht mit**;
+  **Ferien, Kompensation und Militaer kommen nur mit Sonjas Import nach SAP**, `HrAbsenzSet` hinkt
+  dafuer nach (Aussage „P76 immer aktuell“ ueberholt). Ferienkonten in PA2006, Austrittsart nur
+  teilweise in SAP. Idee Ingo: eigenes Programm nur in Z-Tabellen, taeglicher Job; nicht gebaut,
+  haengt an der Dateilieferung. Mails: Upgreat-Ticket #12699584 am 19.10. geschlossen, Angebot
+  AG36071 Rexx Hub 29.10., beides ungelesen. `docs/HR_KPI.md` 8.9, `saptasks/rexx_schnittstelle/NOTES.md`.
 - **2026-10-20 live geprueft: SAP-Abruf laeuft taeglich.** In `hrdata` auf dem Server sind `HR_KPI_Export.xlsx` und
   `HR_Absenzen_SAP.xlsx` heute um 05:07 geschrieben. Die Rexx-Dateien sind weiter vom 08.07. (Upgreat offen), wer danach
   eingetreten ist, fehlt in der Personenbasis.
@@ -23,7 +32,7 @@ Stand: 2026-10-29 (Abschnittsnummer Kader 8.8); davor 2026-10-22 (Kader Mitarbei
   gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (produktiv seit 01.10.). SAP-Datei `HR_KPI_Export` war damals NICHT automatisiert (Report
   `Z_HR_KPI_CONS` von Hand); *ueberholt: seit 01.10. taeglich ueber `HrKpiSet`*. Details `docs/HR_KPI.md` 8.5 und 8.6.
 - **2026-09-30: kein Rexx-Hub.** Automatischer Export der vier Rexx-Berichte soll ueber Upgreat
-  (Ueli Kunzmann) laufen, Mail am 30.09. versendet, Antwort offen. dormakaba nach Rexx laeuft schon
+  (Ueli Kunzmann) laufen, Mail am 30.09. versendet, Antwort offen *(ueberholt am 2026-11-03: daraus Upgreat-Ticket #12699584, am 19.10. geschlossen; am 29.10. Angebot AG36071 Rexx Hub; Inhalt ungelesen)*. dormakaba nach Rexx laeuft schon
   seit 02.09. alle 15 Minuten. Details `docs/HR_KPI.md` 8.3.
 
 - **2026-09-29, Mailhistorie gesichtet:** offene Wuensche von Sonja vom 2026-02-03 (Ferien am Stueck,

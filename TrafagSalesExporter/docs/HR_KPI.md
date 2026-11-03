@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9); davor 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -249,7 +249,7 @@ Die Absenz-Ampel wuenscht Sonja mit gruen bis 3 %, gelb bis 4 %, rot ab 5 %; der
   `Personalausgeschieden`, je `.xlsx` mit unveraenderten Namen und Spalten) einmal taeglich in den
   HR-Datenordner auf dem BiDashboard-Server zu liefern, die alte Datei zu ueberschreiben und zu
   archivieren. Gefragt: ob Rexx die Berichte per SFTP bereitstellen kann, und ob Ausfaelle ueberwacht
-  werden. Pfad und Berechtigung klaert Ingo mit Ueli. **Offen:** Antwort Ueli; ob der von Nadja
+  werden. Pfad und Berechtigung klaert Ingo mit Ueli. **Offen:** Antwort Ueli *(ueberholt am 2026-11-03: Upgreat-Ticket #12699584, am 19.10. geschlossen, Inhalt ungelesen; Abschnitt 8.9)*; ob der von Nadja
   erteilte Hub-Auftrag bei Rexx zurueckgenommen werden muss. Die SAP-Datei `HR_KPI_Export` ist
   nicht Teil davon.
 - **Gegenrichtung schon automatisch: dormakaba nach Rexx (seit 2026-09-02).** Ueli Kunzmann hat auf
@@ -363,7 +363,7 @@ Felder, die das Cockpit liest; keine Namen, kein Geburtsdatum, kein Lohn. Das Co
 
 Frage Ingo: lassen sich Abwesenheiten ueber SAP genauer bestimmen, sodass Rexx entfaellt? Per RFC in **T76** gelesen (nur Art und Beginn, keine Personen): `PA2001` hat **eine Zeile je Fall mit Beginn und Ende**. Seit 01.01.2026 572 Faelle, juengster Beginn 31.03.2026 (Stand der T76-Kopie, nicht P76): 0260 Krankheit bis 60 Tage 254, 0100 Ferien 198, 0400 Kompensation 104, 0600 Militaer/Zivilschutz 9, 0500 Absenzen bezahlt 5, 0290 Unfall ab 3. Tag 1, 0270 Krankheit groesser 60 Tage 1 (Texte `T554T`). Damit waeren Krankenquote und Ferien periodengenau, ohne die Rexx-Liste je Fall (8.5). **Nicht belegt:** wie aktuell `PA2001` in P76 ist (vermutlich Uebernahme aus Rexx fuer die Lohnabrechnung, dann hinkt der laufende Monat nach), ob nur genehmigte Faelle ankommen, und ob die Zahl der Faelle der in Rexx entspricht. Naechster Schritt: in P76 die juengsten `PA2001`-Eintraege ansehen (SE16N, Ingo), dann ein zweites EntitySet `HrAbsenzSet` (Person, Art, Von, Bis, Tage, Stunden) im selben Muster wie `HrKpiSet`. Fuer Saldi, Restferien, GLZ und Austritte bleibt Rexx vorerst noetig.
 
-**Gebaut am 2026-10-01** (Ingo: P76 ist immer aktuell; Rexx bleibt, nur Krankenquote und Ferien aus SAP; Entscheide: Erweiterung im Code wie `HrKpiSet`, Tage und Stunden plus Kompensation und Militaer, **zweites Set je Fall** statt Monatssummen):
+**Gebaut am 2026-10-01** (Ingo: P76 ist immer aktuell *(ueberholt am 2026-11-03 fuer Ferien, Kompensation, Militaer: sie kommen nur mit Sonjas Rexx-Import nach SAP, Abschnitt 8.9)*; Rexx bleibt, nur Krankenquote und Ferien aus SAP; Entscheide: Erweiterung im Code wie `HrKpiSet`, Tage und Stunden plus Kompensation und Militaer, **zweites Set je Fall** statt Monatssummen):
 
 | Teil | Stand |
 | --- | --- |
@@ -399,6 +399,49 @@ SAP-Abruf `HrKpiSet` liefert den Mitarbeiterkreis. T503T (T76, gelesen 2026-10-2
   Suite 1288/1288. Produktiv seit 2026-10-22 15:48.
 
 *Abschnittsnummer am 2026-10-29 von „8.7" (doppelt) auf 8.8 berichtigt und vor die Querverweise gestellt.*
+
+### 8.9 Wie die Rexx-Daten nach SAP kommen; Felder nur in SAP, beide, nur in Rexx (2026-11-03)
+
+Untersucht in **T76, nur lesend** (P76 nicht angefasst). Volltext mit Tabellen, Mails und
+Quelltexten: `saptasks/rexx_schnittstelle/NOTES.md`.
+
+- **Schnittstelle:** Eigenentwicklung der **EXPRIS AG** (2023/24, Paket `Z_HR_PA_REXX`). Drei Importe
+  Rexx → SAP, die **Sonja Richter (`RIS`) von Hand** im Dialog startet: `Z_HR_PA_REXX` „Interface
+  REXX“ (Stammdaten, Vergleich Rexx/SAP ueber die AHV-Nummer, schreibt u. a. IT 0002/0007/0008,
+  Massnahmen Z1/Z2/Z3/Z5 „aus Rexx“), `Z_HR_REXX_PA_ABS` (Abwesenheiten per Batch-Input PA30) und
+  `Z_HR_REXX_PA_ZE` (Kommen/Gehen nach PA2011); dazu `Z_HR_REXX_PA_LA_EXP` SAP → Rexx (Lohnarten).
+  Dateien vom PC oder aus `/usr/sap/rexx` (Alias `DIR_REXX`). Kein Job in T76; wer `/usr/sap/rexx`
+  beschreibt, ist offen (P76 AL11).
+- **Krankheit, Kind-Krank und Unfall uebernimmt der Absenz-Import ausdruecklich nicht.** Sie stehen
+  trotzdem in PA2001, an anderen Tagen angelegt; vermutlich erfasst Sonja sie von Hand (nicht belegt).
+- **Folge fuer 8.7:** Ferien, Kompensation, Militaer und bezahlte Absenzen kommen nur mit Sonjas
+  Import nach SAP (in T76 am 20.11.2025, 17.12.2025 und 22.02.2026). *Die Aussage „P76 ist immer
+  aktuell“ in 8.7 gilt fuer diese Arten nicht (ueberholt am 2026-11-03):* der laufende Monat ist im
+  Cockpit in der Regel unvollstaendig.
+- **Neu fuer die Quellenfrage:** Ferienkonten liegen in SAP PA2006 (Kontingentarten 10 Anspruch,
+  11 Rest Vorjahr, 20 Kompensation, 30 Kader Zusatz); Austrittsart nur teilweise (ZC mit Grund,
+  Z5 „aus Rexx“ ohne Grund); Kommen/Gehen kommt monatlich nach SAP, ob SAP den GLZ-Saldo rechnet,
+  ist ungeprueft.
+
+**Felder des Cockpits nach Quelle** (Herkunft heute am Code belegt, `HrKpiDashboardBuilder.cs`;
+„beide“ heisst: SAP fuehrt das Feld nach den PA-Tabellen, nicht zeilenweise geprueft):
+
+| Quelle | Felder |
+| --- | --- |
+| **nur SAP** (`HrKpiSet`, `HrAbsenzSet`) | Beschaeftigungsgrad, Mitarbeiterkreis (Kader), Mitarbeitergruppe, Teilzeitkennzeichen, Geschlecht, Buchungskreis, Personalbereich, Personalteilbereich, Planstelle, Stellenschluessel, Abrechnungskreis, BU-/NBU-Tage, Kompensation und Militaer je Fall |
+| **beide**, heute aus SAP | Personalnummer (Schluessel), Krankheit je Fall, Ferien bezogen je Fall |
+| **beide**, heute aus Rexx | Name, Eintritt, Austritt, Status, Geburtsdatum, Organisation, Kostenstelle, Stelle, Sollzeit/Arbeitszeitmodell, Bruttolohn |
+| **nur Rexx** (Stand 03.11. vor der Untersuchung) | GLZ-Saldo, Ferienanspruch, Restferien, Ferien ausstehend (`Saldiperstichdatum`), Austrittsart (`Personalausgeschieden`), „Leitung j/n“ (seit 22.10. unbenutzt). *Nach dem Befund oben: Ferienkonten wohl auch in PA2006, Austrittsart teilweise; ungeprueft* |
+
+**Idee Ingo (03.11., nicht gebaut):** eigenes Programm, das die drei Importe buendelt, die fehlenden
+Felder mitnimmt und nur in eigene Z-Tabellen schreibt, taeglich als Job; darf nie Infotypen oder
+Loehne veraendern. Voraussetzung ist, dass Rexx die Dateien taeglich in `/usr/sap/rexx` ablegt.
+Leitplanken und offene Entscheide: `saptasks/rexx_schnittstelle/NOTES.md` Abschnitt 7.
+
+**Mails (nur Betreff gelesen):** Aus der Mail an Ueli Kunzmann wurde das **Upgreat-Ticket
+#12699584** (eroeffnet 01.10., geschlossen 19.10., Antwort Ingo 20.10.); am 29.10. kam
+„WG: Angebot: AG36071 / Rexx Hub“. Inhalt beider noch nicht gelesen. *Der Stand in 8.3 („Antwort
+Ueli offen“) ist damit ueberholt (2026-11-03).*
 
 ## Querverweise
 

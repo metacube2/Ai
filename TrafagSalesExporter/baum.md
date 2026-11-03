@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-10-27 (Loesungslandkarte nachgetragen); davor 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Stand: 2026-11-03 (saptasks/rexx_schnittstelle); davor 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
 Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
@@ -221,6 +221,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `saptasks/zeichnungsaenderung/NOTES.md` | Zeichnungsaenderung fuer die MS-Liste der Entwicklung: Befund Simons Excel (Direktzugriff `P76.MARA`/`MAKT`), vorhandene Sets, Entscheid naechtliche SharePoint-Liste, offene Punkte, SAP-Umsetzung `Zeivr` |
 | `saptasks/zreichw/NOTES.md` | ZREICHW Reichweitenanalyse: Befund Druck/Spool, Ankreuzfeld „Nur Spoolauftrag“ (`T76K912799`), Test T76, Befunde zur Optimierung; im Ordner Quelltext vorher/neu von `Z_KOI_REICHW_TURBO`, optimierte Kopie `Z_KOI_REICHW_OPT.abap` und Vergleichsreport `Z_KOI_REICHW_VGL.abap`; Abschnitt 5 Uebergabe zum Weitermachen |
 | `saptasks/zreichw/werkzeuge/` | SAP-GUI-Hilfsskripte der ZREICHW-Arbeit (SE38 aendern/ersetzen/pruefen/aktivieren, ZREICHW- und Vergleichslauf, SP02) und das Erzeugungsskript der optimierten Kopie |
+| `saptasks/rexx_schnittstelle/NOTES.md` | Rexx-Schnittstelle nach SAP (EXPRIS, Paket `Z_HR_PA_REXX`): Objekte, Aenderer, was der Absenz-Import uebernimmt, Folgen fuers HR-Cockpit, Idee eigenes Programm mit Z-Tabelle als Tagesjob, Mails, naechste Schritte |
+| `saptasks/rexx_schnittstelle/quelltexte_T76_2026-11-03/` | Quelltexte der EXPRIS-Programme und vier Methoden von `ZCL_HR_PA_INTERFACE_REXX_READ`, aus T76 gelesen |
 | `saptasks/gib_dcp/NOTES.md` | GIB Dispo-Cockpit in T76: Bestand Rollen/Transaktionen, Testuser UBIG |
 | `saptasks/shopfloor_sap/NOTES.md` | Shopfloor-Mengen aus SAP; im Ordner `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
 | `saptasks/fiori_erste_app/NOTES.md` | Erste Fiori-App: Harness, Voraussetzungen, Upload-Wege, Link; Quelle `webapp/` |
