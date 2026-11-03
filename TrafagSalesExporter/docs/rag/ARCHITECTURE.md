@@ -25,7 +25,7 @@ Fluss von links nach rechts: **Quelle -> Anbindung -> Daten und Regeln -> Modul 
 | Handbestellwesen | Active Directory, Altbestand aus der PHP-Anwendung | AD-Kontopruefung im Server | Stamm Mitarbeitende mit `AusAd` (AD gesperrt, Altbestand pflegbar), Freigabe umschaltbar | `Modules/Handbestellwesen/` (ersetzt die PHP-Anwendung) | Besteller und Freigeber |
 | HR | SAP P76 | `HrKpiSet`, `HrAbsenzSet` (Tagesabruf) | HR-Datenordner, `HrKpiDashboardBuilder` | HR-KPI-Cockpit (eigener Zugang) | HR |
 | Operations | SAP P76, Fabios Konfigurationspakete | `ShopZd05Set`, `ShopAufSet`, `ShopRmSet`, `ShopProdSet`; CDS-Services Liefertreue | eigene `shopfloor.db` (Tagessaetze, `kpi_snapshot`) | Operations Shopfloor, Operations KPI (OTD/OTIF/OTP) | Produktion (Fabio) |
-| Plattform | Active Directory, feste Netzwerkzielliste | `NetworkProbeService`, `AdSnapshotService` | Tabellen `Network*`, `Pm*`, `Forum*`, `Usage*` | Netzwerk, Trafag Projekte, Trafag Reddit, Benutzerhandbuch, Admin und Startseite | IT, alle Mitarbeitenden |
+| Plattform | Active Directory, feste Netzwerkzielliste | `NetworkProbeService`, `AdSnapshotService` | Tabellen `Network*`, `Pm*`, `Forum*`, `Usage*` | Netzwerk, Trafag Projekte, Trafag Reddit, Benutzerhandbuch, Admin und Startseite, Datenverantwortung (seit 03.11., Tabelle `DataOwners`) | IT, alle Mitarbeitenden |
 | Serveranalyse | Systeme, die nur der Server erreicht | Abfragen ueber den Server | — | — | Abschnitt Serveranalyse in `docs/router/plattform.md` |
 
 **SAP-Eigenentwicklungen (T76 -> P76):** ZLO03 (`Z_ZLO03_TURBO2`, Webservice `ZM_LZCODE20_OPT`,

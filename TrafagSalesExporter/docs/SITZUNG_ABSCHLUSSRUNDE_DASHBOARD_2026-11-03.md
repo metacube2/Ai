@@ -127,3 +127,11 @@ Fehlende Key-User-Funktion in der Organisation als Thema fuer das Berechtigungs-
 | Datenqualitaet: Befunde, wer bereinigt was, Wuensche zur Datenbereinigung als Taskliste | erfasst in PM14 (Trafag Projekte) | 139 |
 | Wo sind welche Power BI und Smartsheets; abgeloeste Excel zaehlen, eingesparte Stunden | Inventar mit Alex; Stunden noch zu schaetzen | 138 |
 | Berechtigungskonzept: Abgleich mit dem AD, wer darf was | neu | 147 |
+
+**Nachtrag 2026-11-03 nachmittags, Dataowner-Dashboard (Wochen_Todo 145):** neue Seite **Datenverantwortung**
+(`/datenverantwortung`, Menuepunkt auf oberster Ebene nach Trafag Projekte). Je Datentopf: System/Quelle, Verantwortlich,
+Stellvertretung, Key User, Status vorlaeufig/bestaetigt, Bemerkung, geaendert am/von. Lesen fuer alle, Bearbeiten nach
+Admin-Anmeldung (`IAdminAccessService`). Tabelle `DataOwners`, beim ersten Anlegen gefuellt mit der vorlaeufigen Belegung
+aus Abschnitt 3 (Produktion, Logistik offen, Materialstamm, Debitoren, Lieferanten/Einkauf, HR, Finance zu bestaetigen);
+spaeter geloeschte Eintraege kommen nicht zurueck. Code `c267651` (`Components/Pages/DataOwners.razor`,
+`Services/DataOwnerRules.cs`, `Models/DataOwner.cs`, Test `DataOwnerTests`), Release-Worktree 1360/1360.

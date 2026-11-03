@@ -2,6 +2,13 @@
 
 Stand: 2026-11-03
 
+## Datenverantwortung: neue Seite mit Eingabeformular fuer Dataowner (Wunsch Chef, Auftrag Ingo), 2026-11-03
+
+- `/datenverantwortung`: Datentopf, System, Verantwortlich, Stellvertretung, Key User, Status vorlaeufig/bestaetigt, Bemerkung;
+  lesen fuer alle, bearbeiten mit Admin-Login; Tabelle `DataOwners` mit Startbelegung aus der Abschlussrunde.
+- Code `c267651`, Release-Worktree 1360/1360; Deploy nach dem Einkauf-Lauf. Doku Sitzungsprotokoll 6, Router Plattform,
+  rag/ARCHITECTURE, Wochen_Todo 145.
+
 ## Projektmanagement: Aufgabenliste des Chefs vom 03.11. eingeordnet, 2026-11-03
 
 - Neu Wochen_Todo 145 (Dataowner-Dashboard), 146 (Projektmanagement deaktivieren, Rueckfrage an den Chef), 147

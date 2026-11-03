@@ -9,6 +9,7 @@ Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
 
 | Bedarf | Datei |
 | --- | --- |
+| **Datenverantwortung (Dataowner)**: Seite `/datenverantwortung`, Datentopf, Verantwortlich, Stellvertretung, Key User, Status; Bearbeiten mit Admin-Login; Startbelegung aus der Abschlussrunde 03.11. | `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md` Abschnitt 6, `Services/DataOwnerRules.cs` |
 | **Aktuell verifizierter Produktivstand** | `docs/rag/DEPLOYMENT.md` |
 | **Verfahren, Deploy-Konsole, die vier Fallen** | `docs/DEPLOYMENT.md` |
 | **Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, `/einkauf` 100 s, Management-Cockpit 41 s (Wechselkurse je Zeile per SQL)** | `docs/PLATTFORM_TEMPO_2026-09-28.md` |
