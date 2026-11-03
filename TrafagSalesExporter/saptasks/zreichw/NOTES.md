@@ -194,3 +194,10 @@ Ausgefuehrt in T76 in einer eigenen Sitzung (Verbindung 1, Sitzung 1; Ingos Sitz
 **Offen:** Ingo gibt `T76K912799` frei und importiert nach P76; danach P76 lesend pruefen (Selektionsbild mit Haken,
 Laufzeit) und die Teams-Antwort aus Abschnitt 5 senden. Die Befunde 5 bis 10 (Abschnitt 3) bleiben bei der
 Fachabteilung. Fuer einen spaeteren Vergleich gegen den alten Stand liegt `Z_KOI_REICHW_TURBO_neu.abap` hier.
+
+**Nachtrag 2026-11-03, P76 nach Import (Ingo: „ist im P“), nur lesend in eigener Sitzung (`SapGuiP76Hilfe.vbs`, ses[1],
+danach mit `/i` geschlossen; Ingos ses[0] unberuehrt):** Selektionsbild ZREICHW zeigt das Ankreuzfeld „Nur Spoolauftrag
+(nicht drucken)“ (`P_SPOOL`). Lauf ganzes Werk 1100 als ALV-Anzeige ohne Spool: **4'934 Zeilen in rund 5 s** (gemessen samt
+Skriptwartezeit von 4 s; vorher in T76 rund 155 s). Damit ist der Import wirksam. Offen nur noch die Teams-Antwort (Abschnitt 5,
+Ingo sendet). Hinweis: `P76SitzungSchliessen.vbs` schliesst nur SE16/VA43/ME33K-Sitzungen; eine ZREICHW-Sitzung mit
+`SapGuiP76Hilfe.vbs ok <ses> /i` schliessen.
