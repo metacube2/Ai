@@ -86,9 +86,9 @@
 
     protected override void OnParametersSet()
     {
-        _base = Result.Employees.Count == 0 && Result.TimelineLeavers.Count == 0
+        _base = Result.TimelineEmployees.Count == 0 && Result.TimelineLeavers.Count == 0
             ? null
-            : HrKpiInteractive.SimulatorBase(Result.Employees, Result.TimelineLeavers, Result.AnchorDate);
+            : HrKpiInteractive.SimulatorBase(Result.TimelineEmployees, Result.TimelineLeavers, Result.AnchorDate);
         Reset();
     }
 

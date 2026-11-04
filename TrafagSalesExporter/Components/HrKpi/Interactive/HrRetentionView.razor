@@ -84,7 +84,7 @@
 
     private void Load()
     {
-        _curves = HrKpiInteractive.Retention(Result.Employees, Result.TimelineLeavers, Result.AnchorDate, _relevantOnly, maxMonths: MaxMonths);
+        _curves = HrKpiInteractive.Retention(Result.TimelineEmployees, Result.TimelineLeavers, Result.AnchorDate, _relevantOnly, maxMonths: MaxMonths);
         var lowest = _curves.SelectMany(c => c.Points).Select(p => p.Share).DefaultIfEmpty(1).Min();
         _yMin = Math.Max(0, Math.Floor((lowest - 0.05) * 10) / 10);
         if (_yMin > 0.9) _yMin = 0.9;

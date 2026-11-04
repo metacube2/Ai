@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-11-03 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-11-04 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -155,6 +155,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-11-04 | HR Reiter Interaktiv (`81a5af9`): Galaxie, Bindungskurve und Simulator nahmen den Headcount aus der voll gefilterten Personenliste (Kostenstelle, GLZ, Restferien), die Austritte aber ohne diese Filter; mit GLZ = Rot waeren die Raten explodiert. Vor dem Deploy im Review gefunden | Bei neuen Zeitreihen Zaehler und Nenner mit demselben Filtervertrag nehmen wie die bestehende Kennzahl (HR: `TimelineEmployees` wie die Fluktuation, Abschnitt 6) und einen Test mit gesetztem Personenfilter schreiben | `docs/HR_KPI.md` 9 |
 | 2026-11-03 | Inventar-Skript unter `Set-StrictMode -Version 2`: `$con.webPr` auf einem XML-Knoten ohne dieses Kindelement warf „Eigenschaft nicht gefunden“, die Datei landete als „unklar“ (im Test auf eigenen Ordnern bemerkt) | Unter StrictMode Kindelemente per `SelectSingleNode('*[local-name()="x"]')` lesen, nicht ueber die Punkt-Notation | `Tools/Inventar/Scan-BerichtDateien.ps1` |
 | 2026-11-03 | Chrome-Erweiterung meldete fuer `https://trch-webapp-bidashboard.trafagch.local/projekte` „browser-internal or unparseable URL“ (wie am 27. und 29.10.); Ursache: die App laeuft unter dem Pfad `/BiDashboard/`. Mit `.../BiDashboard/projekte` lief alles, auch Datei-Upload | Dashboard-Adressen immer mit `/BiDashboard/` bilden; vor dem Aufgeben die offenen Tabs (`tabs_context_mcp`) auf die echte Adresse pruefen | `projektmanagement/PROJEKTSTATUS.md` PM-14 |
 | 2026-11-03 | `perl -pi -e 's{\| 2026-10-22 \|\s*$}{...}'` auf `PROJEKTSTATUS.md`: `\s*` frass den Zeilenumbruch, die Zeile PM-07 verschmolz mit PM-08; per `git diff` bemerkt und repariert | In zeilenweisen Ersetzungen am Zeilenende `[ \t]*$` statt `\s*$`; nach jeder Massenersetzung `git diff` lesen | `projektmanagement/PROJEKTSTATUS.md` PM-07 |

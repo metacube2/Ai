@@ -88,6 +88,9 @@ public sealed class HrKpiResult
     // Reiter Interaktiv (2026-11-04, docs/HR_KPI.md Abschnitt 9): Austritte aller Jahre (nur Strukturfilter wie der
     // Vorjahresvergleich), SAP-Absenzen je Fall der gefilterten aktiven Personen und der Stichtag der Fluktuation.
     public List<HrLeaverRow> TimelineLeavers { get; set; } = [];
+    // Aktive Mitarbeitende fuer Headcount-Zeitreihen: dieselben Filter wie die Fluktuation (ohne Kostenstelle, GLZ und
+    // Restferien, docs/HR_KPI.md Abschnitt 6), damit Zaehler (TimelineLeavers) und Nenner zusammenpassen.
+    public List<HrKpiEmployeeRow> TimelineEmployees { get; set; } = [];
     public List<TrafagSalesExporter.Services.HrAbsenceSapCase> AbsenceCases { get; set; } = [];
     public DateTime AnchorDate { get; set; } = DateTime.Today;
 }

@@ -822,6 +822,20 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Equal(new DateTime(2025, 12, 31), result.AnchorDate);
     }
 
+    [Fact]
+    public async Task BuildAsync_Zeitreihen_Des_Reiters_Interaktiv_Ignorieren_Kostenstelle_GLZ_Und_Restferien()
+    {
+        // Wie die Fluktuation (Abschnitt 6): Austritte kennen diese Felder nicht, also darf auch der Headcount sie nicht kennen.
+        var all = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+        var glz = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025, GlzAmpel = "Rot", KostenstelleText = "100 / Org A" });
+
+        Assert.True(glz.Employees.Count < all.Employees.Count);
+        Assert.Equal(all.TimelineEmployees.Count, glz.TimelineEmployees.Count);
+        Assert.Equal(
+            HrKpiInteractive.SimulatorBase(all.TimelineEmployees, all.TimelineLeavers, all.AnchorDate).HeadcountNow,
+            HrKpiInteractive.SimulatorBase(glz.TimelineEmployees, glz.TimelineLeavers, glz.AnchorDate).HeadcountNow);
+    }
+
     private static void AssertEveryVisibleBlockIsConsistent(HrKpiResult result, string because)
     {
         var employeeNumbers = result.Employees

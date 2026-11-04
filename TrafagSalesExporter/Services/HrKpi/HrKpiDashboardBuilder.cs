@@ -200,6 +200,7 @@ internal sealed class HrKpiDashboardBuilder
             .ToList();
         // Reiter Interaktiv: Zeitreihen brauchen Austritte ausserhalb des Datumsfilters und Absenzen je Fall.
         result.TimelineLeavers = comparisonLeavers;
+        result.TimelineEmployees = turnoverEmployees;
         result.AbsenceCases = sapAbsenceCases
             .Where(x => int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) &&
                         filteredEmployeeNumbers.Contains(pernr))

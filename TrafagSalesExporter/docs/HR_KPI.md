@@ -461,7 +461,7 @@ gegen die Abschnitte 3, 4 und 8. **Korrekt:** Feiertagskalender ZH und Ostern, 8
 | --- | --- | --- | --- |
 | 1 | Nenner der Krankenquote = Summe FTE x alle Arbeitstage des Zeitraums, ohne Eintrittsdatum | Wer im Juni eintrat, zaehlte ab 01.01. mit; in einer Ansicht 2025 auch alle Eintritte 2026. Quote zu tief, am staerksten bei vergangenen Jahren | `AbsenceDenominator`: je Person FTE x Arbeitstage ab Eintritt (`FteWorkdays`). Detail der Kachel nennt die FTE-Arbeitstage |
 | 2 | Quote je Person = Tage / Arbeitstage, ohne Pensum | Eine 50-%-Stelle, die den ganzen Zeitraum krank war, zeigte 50 % | `AggregateAbsencesByPerson` teilt durch die eigenen FTE-Arbeitstage (ab Eintritt) |
-| 3 | Prognose = Quartalsrate x 4 auch fuer ein angebrochenes Quartal | Am 04.11. nur 35 von 92 Tagen im Wert, Prognose rund Faktor 2,6 zu tief; am Quartalsanfang fast 0 | Vorgabe HR „x 4“ bleibt; ein laufendes Quartal wird vorher auf seine volle Laenge hochgerechnet (`QuarterProgress`, `ForecastFromQuarter`), HC Quartal nur bis zum Stichtagsmonat. Detail nennt „hochgerechnet aus n von m Tagen“ |
+| 3 | Prognose = Quartalsrate x 4 auch fuer ein angebrochenes Quartal | Am 04.11. nur 35 von 92 Tagen im Wert, Prognose rund Faktor 2,6 zu tief; am Quartalsanfang fast 0 | Vorgabe HR „x 4“ bleibt; ein laufendes Quartal wird vorher auf seine volle Laenge hochgerechnet (`QuarterProgress`, `ForecastFromQuarter`), HC Quartal nur bis zum Stichtagsmonat. Detail nennt „hochgerechnet aus n von m Tagen“. **Grenze:** Austritte haeufen sich am Monatsende; im ersten Quartalsmonat bleibt die Prognose deshalb meist nahe 0 und springt am ersten Monatsende um den Hochrechnungsfaktor. Alternative fuer einen Entscheid: nach abgeschlossenen Monaten statt Tagen hochrechnen |
 
 **Offen, braucht Entscheid Ingo oder HR (nicht geaendert):**
 
@@ -496,7 +496,11 @@ Darstellung `Components/HrKpi/Interactive/*View.razor`, CSS `six-` (vom Verkauf)
 | Was waere wenn | Regler Kuendigungen, sonstige Austritte, Eintritte je Monat (Vorschlag: Mittel der letzten 12 Monate); Headcount fortgeschrieben, Jahresfluktuation = (Ist + Regler x Restmonate) / Mittel der 12 Monats-Headcounts, gegen Vorjahr |
 
 Daten: `HrKpiResult.TimelineLeavers` (Austritte aller Jahre, nur Strukturfilter wie der Vorjahresvergleich),
-`AbsenceCases` (SAP-Faelle der gefilterten aktiven Personen), `AnchorDate` (Stichtag der Fluktuation).
+`TimelineEmployees` (aktive Personen mit denselben Filtern wie die Fluktuation, also ohne Kostenstelle, GLZ und
+Restferien; Abschnitt 6, Test `BuildAsync_Zeitreihen_Des_Reiters_Interaktiv_Ignorieren_Kostenstelle_GLZ_Und_Restferien`),
+`AbsenceCases` (SAP-Faelle der gefilterten aktiven Personen), `AnchorDate` (Stichtag der Fluktuation). Galaxie,
+Bindungskurve und Simulator nehmen den Headcount aus `TimelineEmployees`; Krankheitskalender, Fit & Wohl und Ferien sind
+Personensichten und folgen allen Filtern.
 Fit & Wohl und Ferien zeigen Namen, in der Managementsicht nur die Personalnummer.
 
 Grenzen: aktive Personen zaehlen rueckwirkend in ihrer heutigen Abteilung; Ferien hinken mit Sonjas Rexx-Import (8.9);

@@ -76,7 +76,7 @@
 
     protected override void OnParametersSet()
     {
-        _frames = HrKpiInteractive.OrgGalaxy(Result.Employees, Result.TimelineLeavers, Result.AnchorDate);
+        _frames = HrKpiInteractive.OrgGalaxy(Result.TimelineEmployees, Result.TimelineLeavers, Result.AnchorDate);
         _maxHc = Math.Max(10, _frames.SelectMany(f => f.Points).Select(p => (double)p.Headcount).DefaultIfEmpty(10).Max());
         _maxHc = Math.Ceiling(_maxHc / 10) * 10;
         _maxRate = Math.Max(20, _frames.SelectMany(f => f.Points).Select(p => p.RatePercent ?? 0).DefaultIfEmpty(20).Max());
