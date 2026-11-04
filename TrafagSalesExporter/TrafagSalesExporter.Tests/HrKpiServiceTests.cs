@@ -1294,6 +1294,28 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Contains("Unfallfaelle SAP und Rexx", tile.Detail);
     }
 
+    [Fact]
+    public async Task BuildAsync_Unfallkachel_Zaehlt_Auch_Den_Aus_775_Ergaenzten_Unfall()
+    {
+        // Produktiv 04.11.: Rexx kannte einen Unfall ab 02.11. nur ueber „Unfall angetreten (Zeitraum)“ (#775), die Kachel blieb 0,0.
+        var today = DateTime.Today;
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        var workdays = ZurichWorkdayCalendar.CountWorkdays(monthStart, today);
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001002", "0260", monthStart, monthStart, "000", 1m, 8m, 1m)],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+        WriteGesamt(
+        [
+            GesamtRow(1001, "Alpha, Anna", "Aktiv", "Org A", accident: $"{workdays * 8}:00", accidentPeriod: $"{monthStart:dd.MM.yyyy} - {today:dd.MM.yyyy}"),
+            GesamtRow(1002, "Beta, Bruno", "Aktiv", "Org B", sick: "8:00")
+        ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var tile = Assert.Single(result.Metrics, x => x.Label == "Unfalltage laufender Monat");
+        Assert.Equal(((decimal)workdays).ToString("N1"), tile.Value);
+    }
+
     [Theory]
     [InlineData("Cafeteria, Cafeteria", "Cafeteria")]
     [InlineData("Lehrlinge - Elektronik, Lehrlingsausbildung", "Lehrlinge - Elektronik")]

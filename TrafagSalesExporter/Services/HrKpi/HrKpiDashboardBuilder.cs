@@ -253,7 +253,21 @@ internal sealed class HrKpiDashboardBuilder
         result.Employees = employees;
         result.Absences = absences;
         result.Leavers = leavers;
-        var accidentCaseDays = sapAbsenceCases.Count > 0 ? AccidentDaysCurrentMonth(sapAbsenceCases, filteredEmployeeNumbers, DateTime.Today) : (decimal?)null;
+        // Faelle der gefilterten Personen mit Datum: SAP, Rexx #777 und die aus #775 ergaenzten juengsten Faelle (auch fuer Interaktiv).
+        var absenceCases = sapAbsenceCases
+            .Where(x => int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) &&
+                        filteredEmployeeNumbers.Contains(pernr))
+            .Concat(rexxGapRows
+                .Where(x => filteredEmployeeNumbers.Contains(x.Personalnummer!.Value))
+                .Select(x => new HrAbsenceSapCase(
+                    x.Personalnummer!.Value.ToString("00000000", CultureInfo.InvariantCulture), x.IstUnfall ? AccidentAbsenceTypes[0] : "0260",
+                    x.VonDatum!.Value, x.BisDatum!.Value, RexxGapSequence,
+                    ZurichWorkdayCalendar.CountWorkdays(x.VonDatum.Value, x.BisDatum!.Value), x.KrankheitGesamtStd,
+                    (x.BisDatum.Value - x.VonDatum.Value).Days + 1)))
+            .ToList();
+        var accidentCaseDays = absenceCases.Count > 0 || sapAbsenceCases.Count > 0
+            ? AccidentDaysCurrentMonth(absenceCases, filteredEmployeeNumbers, DateTime.Today)
+            : (decimal?)null;
         result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable, _dataSources.AbsenceRedThresholdPercent, _dataSources.AbsenceYellowThresholdPercent, accidentCaseDays);
         result.AbsenceRatesReliable = !periodScopingUnreliable;
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, comparisonLeavers,
@@ -311,17 +325,7 @@ internal sealed class HrKpiDashboardBuilder
         // Reiter Interaktiv: Zeitreihen brauchen Austritte ausserhalb des Datumsfilters und Absenzen je Fall.
         result.TimelineLeavers = comparisonLeavers;
         result.TimelineEmployees = turnoverEmployees;
-        result.AbsenceCases = sapAbsenceCases
-            .Where(x => int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) &&
-                        filteredEmployeeNumbers.Contains(pernr))
-            .Concat(rexxGapRows
-                .Where(x => filteredEmployeeNumbers.Contains(x.Personalnummer!.Value))
-                .Select(x => new HrAbsenceSapCase(
-                    x.Personalnummer!.Value.ToString("00000000", CultureInfo.InvariantCulture), x.IstUnfall ? AccidentAbsenceTypes[0] : "0260",
-                    x.VonDatum!.Value, x.BisDatum!.Value, RexxGapSequence,
-                    ZurichWorkdayCalendar.CountWorkdays(x.VonDatum.Value, x.BisDatum!.Value), x.KrankheitGesamtStd,
-                    (x.BisDatum.Value - x.VonDatum.Value).Days + 1)))
-            .ToList();
+        result.AbsenceCases = absenceCases;
         result.AnchorDate = turnoverPeriod.AnchorDate;
 
         if (employees.Count == 0)
