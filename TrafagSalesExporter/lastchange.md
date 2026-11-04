@@ -20,6 +20,13 @@ Stand: 2026-11-04
   Rexx-Krankmeldungen ergaenzen SAP (`BuildRexxGapSicknessRows`, am 04.11. 34 Faelle), SAP-Stand bei Ferien/Kompensation/
   Militaer sichtbar. Vier neue Tests, Suite 1381/1381, Probe gegen echte Serverdateien. Handbuch, Router, rag, LEARNINGS.
   **Produktiv seit 09:57** (`cfe2631`, Delta vorher geprueft).
+- Danach HR-Vorgaben aus Mails und Teams umgesetzt (`docs/HR_KPI.md` 8.12; Mails Nadja 10/2025, Sonja 02/2026 und 09/2026
+  in Outlook Web gelesen, Teams ohne Fachinhalt): Kurz/Lang je Krankheit ab dem 61. Tag (SAP-Faelle verbunden, 0270 lang),
+  Unfall 0290 in Quote, Krankheitskalender und Fit &amp; Wohl, Kachel „Quote ohne Langzeit“, Gelb auf der Uebersichtskachel,
+  Vorjahresvergleich gleicher Zeitraum, Von/Bis-Kachel mit Spanne und Headcount ueber die Spanne. Sechs neue Tests, Suite
+  1386/1386, Probe mit echten Daten. Neue Frage an HR: Kontrollwerte 2025 passen nicht zum Rexx-Export. Handbuch, Router,
+  rag, LEARNINGS, Wochen_Todo 149, Status_kurz.
+
 
 ## CRM Dynamics 365 Sales: Befund und Idee lesende Anbindung festgehalten (Auftrag Ingo „notiere das alles in md“), 2026-11-03
 

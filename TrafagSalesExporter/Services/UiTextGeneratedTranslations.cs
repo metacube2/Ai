@@ -9,6 +9,8 @@ internal static class UiTextGeneratedTranslations
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 // HR-Cockpit Interaktiv 2026-11-04
+                ["Unfall (SAP 0290) zählt mit, weil HR Krankheit und Unfall gemeinsam auswertet."] = "Los accidentes (SAP 0290) se incluyen porque RR. HH. evalúa enfermedad y accidentes conjuntamente.",
+                // HR-Cockpit Interaktiv 2026-11-04
                 ["Die jüngsten Ferien in SAP beginnen am"] = "Las vacaciones más recientes en SAP empiezan el",
                 ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Las vacaciones más recientes solo llegan a SAP con la importación de Rexx por parte de RR. HH. y faltan aquí hasta entonces.",
                 // HR-Cockpit Interaktiv 2026-11-04
@@ -2776,6 +2778,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // HR-Cockpit Interaktiv 2026-11-04
+                ["Unfall (SAP 0290) zählt mit, weil HR Krankheit und Unfall gemeinsam auswertet."] = "Gli infortuni (SAP 0290) sono inclusi perché HR valuta malattia e infortuni insieme.",
                 // HR-Cockpit Interaktiv 2026-11-04
                 ["Die jüngsten Ferien in SAP beginnen am"] = "Le ferie più recenti in SAP iniziano il",
                 ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Le ferie più recenti arrivano in SAP solo con l'importazione da Rexx da parte di HR e fino ad allora qui mancano.",
@@ -5545,6 +5549,8 @@ internal static class UiTextGeneratedTranslations
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 // HR-Cockpit Interaktiv 2026-11-04
+                ["Unfall (SAP 0290) zählt mit, weil HR Krankheit und Unfall gemeinsam auswertet."] = "दुर्घटना (SAP 0290) भी गिनी जाती है, क्योंकि HR बीमारी और दुर्घटना का एक साथ मूल्यांकन करता है।",
+                // HR-Cockpit Interaktiv 2026-11-04
                 ["Die jüngsten Ferien in SAP beginnen am"] = "SAP में सबसे नई छुट्टियाँ इस दिन शुरू होती हैं",
                 ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "नई छुट्टियाँ HR के Rexx आयात के साथ ही SAP में आती हैं और तब तक यहाँ नहीं दिखतीं।",
                 // HR-Cockpit Interaktiv 2026-11-04
@@ -8312,6 +8318,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // HR-Cockpit Interaktiv 2026-11-04
+                ["Unfall (SAP 0290) zählt mit, weil HR Krankheit und Unfall gemeinsam auswertet."] = "Aksidentet (SAP 0290) përfshihen, sepse HR i vlerëson sëmundjen dhe aksidentet së bashku.",
                 // HR-Cockpit Interaktiv 2026-11-04
                 ["Die jüngsten Ferien in SAP beginnen am"] = "Pushimet më të fundit në SAP fillojnë më",
                 ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Pushimet më të reja vijnë në SAP vetëm me importin nga Rexx nga HR dhe deri atëherë mungojnë këtu.",
@@ -11081,6 +11089,8 @@ internal static class UiTextGeneratedTranslations
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 // HR-Cockpit Interaktiv 2026-11-04
+                ["Unfall (SAP 0290) zählt mit, weil HR Krankheit und Unfall gemeinsam auswertet."] = "Kazalar (SAP 0290) da sayılır, çünkü İK hastalık ve kazayı birlikte değerlendirir.",
+                // HR-Cockpit Interaktiv 2026-11-04
                 ["Die jüngsten Ferien in SAP beginnen am"] = "SAP'deki en son tatil şu tarihte başlıyor",
                 ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Daha yeni tatiller SAP'ye ancak İK'nın Rexx içe aktarımıyla gelir ve o zamana kadar burada eksiktir.",
                 // HR-Cockpit Interaktiv 2026-11-04
@@ -13848,6 +13858,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // HR-Cockpit Interaktiv 2026-11-04
+                ["Unfall (SAP 0290) zählt mit, weil HR Krankheit und Unfall gemeinsam auswertet."] = "QIH (SAP 0290) je lo'lu', HR rop QIH je wa'DIch nuD.",
                 // HR-Cockpit Interaktiv 2026-11-04
                 ["Die jüngsten Ferien in SAP beginnen am"] = "SAP ghIQ chu' law' tagh jaj",
                 ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "HR Rexx lo'DI' neH SAP pawlu' ghIQ chu'; pa' Daq Hutlh.",

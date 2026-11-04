@@ -230,6 +230,13 @@ public sealed class HrAbsenceRow
     public string RexxKrankNichtBuchbarZeitraum { get; set; } = string.Empty;
     // Herkunft der Zeile: true, wenn sie ein aus Rexx ergaenzter Krankheitsfall ist (SAP hatte ihn noch nicht).
     public bool AusRexxErgaenzt { get; set; }
+    // Seit 2026-11-04: Zeile ist ein Fall mit Datum (SAP oder aus Rexx ergaenzt); Kurz/Lang steht dann schon fest
+    // (je Krankheit ab dem 61. Tag) und wird nicht mehr aus der Summe je Person abgeleitet.
+    public bool JeFall { get; set; }
+    // Unfall (SAP 0290); zaehlt in die Absenzquote, nicht in die 60-Tage-Regel.
+    public bool IstUnfall { get; set; }
+    public decimal UnfallStd { get; set; }
+    public decimal UnfalltageGesamt { get; set; }
 }
 
 public sealed class HrLeaverRow

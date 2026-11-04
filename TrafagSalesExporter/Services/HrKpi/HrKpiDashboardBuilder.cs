@@ -92,7 +92,7 @@ internal sealed class HrKpiDashboardBuilder
             // Kopie mit den vollen Von/Bis fuer den Reiter Interaktiv, bevor die Zeilen auf den Zeitraum zugeschnitten werden.
             rexxGapRows = gapRows.Select(x => new HrAbsenceRow { Personalnummer = x.Personalnummer, VonDatum = x.VonDatum, BisDatum = x.BisDatum, KrankheitGesamtStd = x.KrankheitGesamtStd }).ToList();
             absences = sapSickRows.Concat(gapRows).ToList();
-            result.Notices.Add($"Krankheit aus SAP PA2001: {sapSickRows.Count:N0} Faelle der Arten {string.Join(", ", SickAbsenceTypes)}, je Fall auf den Zeitraum zugeschnitten.");
+            result.Notices.Add($"Krankheit und Unfall aus SAP PA2001: {sapSickRows.Count:N0} Faelle der Arten {string.Join(", ", AbsenceRateTypes)}, je Fall auf den Zeitraum zugeschnitten; Langzeit ab dem 61. Tag einer Krankheit.");
             if (gapRows.Count > 0)
                 result.Notices.Add($"{gapRows.Count:N0} juengste Krankmeldungen aus Rexx ergaenzt, die in SAP noch fehlen (SAP-Krankheit reicht bis {sapSickRows.Max(x => x.VonDatum):dd.MM.yyyy}); Stunden = Arbeitstage x Tagesstunden x Pensum. Uebergang bis zur Rexx-Schnittstelle.");
         }
@@ -161,7 +161,7 @@ internal sealed class HrKpiDashboardBuilder
         result.Employees = employees;
         result.Absences = absences;
         result.Leavers = leavers;
-        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable, _dataSources.AbsenceRedThresholdPercent);
+        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable, _dataSources.AbsenceRedThresholdPercent, _dataSources.AbsenceYellowThresholdPercent);
         result.AbsenceRatesReliable = !periodScopingUnreliable;
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, comparisonLeavers,
             comparisonLeavers.Where(x => MatchesFluctuationFilter(x, normalizedOptions.FluktuationFilter)).ToList());
@@ -494,7 +494,8 @@ internal sealed class HrKpiDashboardBuilder
                 BisDatum = bis,
                 KrankheitKurzStd = stunden,
                 KrankheitGesamtStd = stunden,
-                StundenProArbeitstag = stundenProTag
+                StundenProArbeitstag = stundenProTag,
+                JeFall = true
             });
         }
         return rows;
@@ -502,6 +503,19 @@ internal sealed class HrKpiDashboardBuilder
 
     /// <summary>Krankheitsarten in PA2001 (T554T, Mitarbeiterkreis 02). 0210 Arzt und Therapie zaehlt nicht; HR bestaetigen lassen.</summary>
     internal static readonly string[] SickAbsenceTypes = ["0220", "0230", "0240", "0260", "0270"];
+
+    /// <summary>Unfall in PA2001 (0290 „Unfall ab 3. Tag“, T554T). Seit 2026-11-04 Teil der Absenzquote: HR fuehrt
+    /// „Krankheit &amp; Unfall“ als eine Auswertung (Mail Sonja Richter 2026-02-03, Nadja Brandenberger 2025-10-08).</summary>
+    internal static readonly string[] AccidentAbsenceTypes = ["0290"];
+
+    /// <summary>Alle Arten der Absenzquote (Krankheit und Unfall).</summary>
+    internal static readonly string[] AbsenceRateTypes = [.. SickAbsenceTypes, .. AccidentAbsenceTypes];
+
+    /// <summary>SAP-Art „Krank ab 61. Tag“; zaehlt immer als Langzeit, auch ohne vorangehenden Fall in der Datei.</summary>
+    internal const string LongTermSickType = "0270";
+
+    /// <summary>Kurzzeit bis 60 Tage, Langzeit ab dem 61. Tag je Krankheit (Nadja 2025-10-17: ab dem 61. Tag zahlt die Krankentaggeldversicherung).</summary>
+    internal const int ShortTermSickCalendarDays = 60;
     internal const string VacationAbsenceType = "0100";
     private const string SapAbsenceFileLabel = "SAP PA2001 Absenzen je Fall";
     internal const string CompensationAbsenceType = "0400";
@@ -547,8 +561,8 @@ internal sealed class HrKpiDashboardBuilder
             .Where(x => x.Personalnummer.HasValue)
             .GroupBy(x => x.Personalnummer!.Value)
             .ToDictionary(g => g.Key, g => g.First());
-        var rows = new List<HrAbsenceRow>();
-        foreach (var sapCase in cases.Where(x => SickAbsenceTypes.Contains(x.Abwesenheitsart)))
+        var prepared = new List<(int Pernr, HrKpiEmployeeRow Employee, string Art, DateTime Von, DateTime Bis, decimal Stunden, decimal StundenProTag)>();
+        foreach (var sapCase in cases.Where(x => AbsenceRateTypes.Contains(x.Abwesenheitsart)))
         {
             if (!int.TryParse(sapCase.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) ||
                 !byNumber.TryGetValue(pernr, out var employee))
@@ -564,19 +578,64 @@ internal sealed class HrKpiDashboardBuilder
                 var pensum = employee.Fte > 0 ? employee.Fte : 1m;
                 stunden = ZurichWorkdayCalendar.CountWorkdays(sapCase.Von, bis) * stundenProTag * pensum;
             }
-            rows.Add(new HrAbsenceRow
+            prepared.Add((pernr, employee, sapCase.Abwesenheitsart, sapCase.Von.Date, bis.Date, stunden, stundenProTag));
+        }
+
+        var rows = new List<HrAbsenceRow>();
+        HrAbsenceRow Row((int Pernr, HrKpiEmployeeRow Employee, string Art, DateTime Von, DateTime Bis, decimal Stunden, decimal StundenProTag) c,
+            DateTime von, DateTime bis, decimal stunden, bool lang)
+            => new()
             {
-                Personalnummer = pernr,
-                Name = employee.NameVoll,
-                Organisationseinheit = employee.Organisationseinheit,
-                Stelle = employee.Stelle,
+                Personalnummer = c.Pernr,
+                Name = c.Employee.NameVoll,
+                Organisationseinheit = c.Employee.Organisationseinheit,
+                Stelle = c.Employee.Stelle,
                 Status = "Aktiv",
-                VonDatum = sapCase.Von,
+                VonDatum = von,
                 BisDatum = bis,
-                KrankheitKurzStd = stunden,
+                KrankheitKurzStd = lang ? 0 : stunden,
+                KrankheitLangStd = lang ? stunden : 0,
                 KrankheitGesamtStd = stunden,
-                StundenProArbeitstag = stundenProTag
-            });
+                StundenProArbeitstag = c.StundenProTag,
+                JeFall = true,
+                IstUnfall = AccidentAbsenceTypes.Contains(c.Art)
+            };
+
+        // Unfall zaehlt in die Quote, aber nicht in die 60-Tage-Regel der Krankentaggeldversicherung.
+        rows.AddRange(prepared.Where(c => AccidentAbsenceTypes.Contains(c.Art)).Select(c => Row(c, c.Von, c.Bis, c.Stunden, false)));
+
+        // Krankheit je Person zu Krankheiten verbinden (kein Arbeitstag dazwischen, z. B. 0260 und danach 0270).
+        // Bis zum 60. Kalendertag einer Krankheit kurz, ab dem 61. lang (Vorgabe HR 2025-10-17 und 2026-02-03).
+        foreach (var person in prepared.Where(c => SickAbsenceTypes.Contains(c.Art)).GroupBy(c => c.Pernr))
+        {
+            DateTime? episodeStart = null;
+            DateTime episodeEnd = DateTime.MinValue;
+            foreach (var c in person.OrderBy(x => x.Von).ThenBy(x => x.Bis))
+            {
+                var continues = episodeStart.HasValue &&
+                                (c.Von <= episodeEnd.AddDays(1) || ZurichWorkdayCalendar.CountWorkdays(episodeEnd.AddDays(1), c.Von.AddDays(-1)) == 0);
+                if (!continues)
+                    episodeStart = c.Von;
+                if (c.Bis > episodeEnd || !continues)
+                    episodeEnd = c.Bis;
+
+                var longStart = episodeStart!.Value.AddDays(ShortTermSickCalendarDays);
+                if (c.Art == LongTermSickType || c.Von >= longStart)
+                {
+                    rows.Add(Row(c, c.Von, c.Bis, c.Stunden, true));
+                }
+                else if (c.Bis < longStart)
+                {
+                    rows.Add(Row(c, c.Von, c.Bis, c.Stunden, false));
+                }
+                else
+                {
+                    // Fall ueber den 60. Tag hinaus: Stunden nach Arbeitstagen auf kurz und lang aufteilen.
+                    var kurz = ProrateHours(c.Stunden, c.StundenProTag, c.Von, c.Bis, c.Von, longStart.AddDays(-1));
+                    rows.Add(Row(c, c.Von, longStart.AddDays(-1), kurz, false));
+                    rows.Add(Row(c, longStart, c.Bis, c.Stunden - kurz, true));
+                }
+            }
         }
 
         return rows;
@@ -603,10 +662,11 @@ internal sealed class HrKpiDashboardBuilder
             var stunden = ProrateHours(row.KrankheitGesamtStd, row.StundenProArbeitstag, von, bis, start, end);
             if (stunden <= 0)
                 continue;
+            var lang = row.KrankheitLangStd > 0;
             row.VonDatum = start;
             row.BisDatum = end;
-            row.KrankheitKurzStd = stunden;
-            row.KrankheitLangStd = 0;
+            row.KrankheitKurzStd = lang ? 0 : stunden;
+            row.KrankheitLangStd = lang ? stunden : 0;
             row.KrankheitGesamtStd = stunden;
             clipped.Add(row);
         }
@@ -811,10 +871,14 @@ internal sealed class HrKpiDashboardBuilder
             .Select(g =>
             {
                 var first = g.First();
-                // Kurz/lang nicht aus den Rexx-Feldern, sondern nach der 61-Tage-Regel je Person.
                 var gesamtStd = g.Sum(x => x.KrankheitKurzStd + x.KrankheitLangStd);
                 var stundenProTag = first.StundenProArbeitstag;
-                var (kurz, lang, istLangzeitkrank) = ClassifySickness(gesamtStd, stundenProTag);
+                // Faelle mit Datum (SAP, Rexx-Ergaenzung) bringen Kurz/Lang je Krankheit schon mit; nur die Rexx-Summen
+                // ohne Faelle werden je Person nach der 60-Tage-Grenze geteilt (ClassifySickness).
+                var (kurz, lang, istLangzeitkrank) = g.Any(x => x.JeFall)
+                    ? (g.Sum(x => x.KrankheitKurzStd), g.Sum(x => x.KrankheitLangStd), g.Sum(x => x.KrankheitLangStd) > 0)
+                    : ClassifySickness(gesamtStd, stundenProTag);
+                var unfallStd = g.Where(x => x.IstUnfall).Sum(x => x.KrankheitKurzStd + x.KrankheitLangStd);
                 var tage = Math.Round(gesamtStd / stundenProTag, 1);
                 var denominator = PersonDenominator(first.Personalnummer);
                 return new HrAbsenceRow
@@ -834,7 +898,10 @@ internal sealed class HrKpiDashboardBuilder
                     KrankheitstageLang = Math.Round(lang / stundenProTag, 1),
                     KrankenquoteMa = tage == 0 || denominator <= 0 ? 0 : tage / denominator,
                     IstLangzeitkrank = istLangzeitkrank,
-                    StundenProArbeitstag = stundenProTag
+                    StundenProArbeitstag = stundenProTag,
+                    JeFall = g.Any(x => x.JeFall),
+                    UnfallStd = unfallStd,
+                    UnfalltageGesamt = Math.Round(unfallStd / stundenProTag, 1)
                 };
             })
             .ToList();
@@ -872,7 +939,8 @@ internal sealed class HrKpiDashboardBuilder
         TurnoverPeriodScope period,
         AnalysisPeriod analysisPeriod,
         bool periodScopingUnreliable,
-        decimal absenceRedThresholdPercent)
+        decimal absenceRedThresholdPercent,
+        decimal absenceYellowThresholdPercent)
     {
         var activeCount = CountDistinctPersons(employees.Select(x => x.Personalnummer));
         var activeFixedCount = CountDistinctPersons(employees
@@ -898,10 +966,13 @@ internal sealed class HrKpiDashboardBuilder
             {
                 Label = "Krankheitstage",
                 Value = sickDays.ToString("N1"),
-                Detail = periodScopingUnreliable ? "Absenzquote: Zeitraum nicht bestimmbar" : $"Absenzquote FTE {absenceRate:P1}",
-                Severity = periodScopingUnreliable || ReachesAbsenceRed(absenceRate, absenceRedThresholdPercent) ? "Warning" : "Normal"
+                Detail = periodScopingUnreliable ? "Absenzquote: Zeitraum nicht bestimmbar" : $"Absenzquote FTE {absenceRate:P1} (Krankheit und Unfall)",
+                // Seit 2026-11-04 mit gelber Stufe wie die Kachel „Krankenquote“ (HR 2026-02-03: gruen bis 3 %, gelb bis 4 %, rot ab 5 %).
+                Severity = periodScopingUnreliable ? "Warning"
+                    : ReachesAbsenceRed(absenceRate, absenceRedThresholdPercent) ? "Error"
+                    : absenceRate * 100m >= absenceYellowThresholdPercent ? "Warning" : "Normal"
             },
-            new() { Label = period.ShowPeriodMetrics ? $"Fluktuation {period.Label}" : "Fluktuation Auswahl", Value = turnover.ToString("P1"), Detail = $"{relevantLeavers:N0} relevant von {employeeLeavers:N0} AN-Kuendigungen, Nenner {FormatHeadcount(turnoverDenominator)} HC", Severity = turnover > 0.12m ? "Warning" : "Normal" },
+            new() { Label = TurnoverTileLabel(period), Value = turnover.ToString("P1"), Detail = $"{relevantLeavers:N0} relevant von {employeeLeavers:N0} AN-Kuendigungen, Nenner {FormatHeadcount(turnoverDenominator)} HC" + (period.RangeStart.HasValue ? ", nicht annualisiert" : string.Empty), Severity = turnover > 0.12m ? "Warning" : "Normal" },
             new() { Label = "GLZ Schnitt", Value = avgBalance.ToString("N1"), Detail = $"{redBalance:N0} Personen > 100h absolut", Severity = redBalance > 0 ? "Warning" : "Normal" },
             new() { Label = AccidentDaysLabel, Value = employees.Sum(x => x.BuTage + x.NbuTage).ToString("N1"), Detail = $"BU {employees.Sum(x => x.BuTage):N1} / NBU {employees.Sum(x => x.NbuTage):N1}, {AccidentDaysPeriodNote}", Severity = "Normal" }
         ];
@@ -1070,13 +1141,20 @@ internal sealed class HrKpiDashboardBuilder
         // Keine rote/gruene Bewertung aus einer nicht belastbar eingegrenzten Quote ableiten.
         var absenceValueSeverity = periodScopingUnreliable ? "Warning" : absenceSeverity;
         var absenceRateValue = periodScopingUnreliable ? "Zeitraum nicht bestimmbar" : absenceRate.ToString("P1");
+        // Zweite Quote auf Wunsch HR (Nadja 2025-10-08: „Krankenquote 1x gesamt und 1x ohne Langzeitkrankheiten“):
+        // dieselbe Rechnung ohne die Tage ab dem 61. Tag einer Krankheit.
+        var shortRate = denominator <= 0 ? 0 : (totalSick - longSick) / denominator;
+        var shortRateValue = periodScopingUnreliable ? "Zeitraum nicht bestimmbar" : shortRate.ToString("P1");
+        var accidentDays = absences.Sum(x => x.UnfalltageGesamt);
+        var caseBased = absences.Any(x => x.JeFall);
 
         return
         [
-            new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen{scopingWarning}", Severity = absenceValueSeverity },
-            new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = $"Tage von Personen unter {LongTermSickDayThreshold:N0} Krankheitstagen (Stunden / {HoursPerWorkday:0.0}h, Kader {HoursPerWorkdayKader:0.0}h)", Severity = "Normal" },
-            new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = $"{longTermSickPersons:N0} Langzeitkranke ab dem {LongTermSickDayThreshold:N0}. Krankheitstag (Summe je Person)", Severity = longSick > shortSick ? "Warning" : "Normal" },
-            new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / {denominator:N0} FTE-Arbeitstage ({analysisPeriod.Workdays:N0} Arbeitstage ZH, je Person ab Eintritt), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
+            new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} Personen mit Absenzen" + (caseBased ? $", Krankheit und Unfall, davon {accidentDays:N1} Unfalltage" : string.Empty) + scopingWarning, Severity = absenceValueSeverity },
+            new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = $"Tage bis zum {LongTermSickDayThreshold - 1:N0}. Tag einer Krankheit, mit Unfall (Stunden / {HoursPerWorkday:0.0}h, Kader {HoursPerWorkdayKader:0.0}h)", Severity = "Normal" },
+            new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = $"{longTermSickPersons:N0} Langzeitkranke; Tage ab dem {LongTermSickDayThreshold:N0}. Tag einer Krankheit" + (caseBased ? " (je Krankheit, SAP)" : " (Summe je Person, Rexx ohne Faelle)"), Severity = longSick > shortSick ? "Warning" : "Normal" },
+            new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheit und Unfall / {denominator:N0} FTE-Arbeitstage ({analysisPeriod.Workdays:N0} Arbeitstage ZH, je Person ab Eintritt), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
+            new() { Label = "Quote ohne Langzeit", Value = shortRateValue, Detail = $"Wie die Krankenquote, ohne die Tage ab dem {LongTermSickDayThreshold:N0}. Tag einer Krankheit (Wunsch HR: Quote gesamt und ohne Langzeitkrankheit)", Severity = periodScopingUnreliable ? "Warning" : ResolveAbsenceSeverity(shortRate) },
             new() { Label = "BU-Tage laufender Monat", Value = bu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
             new() { Label = "NBU-Tage laufender Monat", Value = nbu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
             new() { Label = AccidentDaysLabel, Value = (bu + nbu).ToString("N1"), Detail = $"BU + NBU, {AccidentDaysPeriodNote}", Severity = "Normal" }
@@ -1139,27 +1217,38 @@ internal sealed class HrKpiDashboardBuilder
             .DefaultIfEmpty(DateTime.Today.Year)
             .Max();
         var previousYear = selectedYear - 1;
+        // Gleicher Zeitraum in beiden Jahren (seit 2026-11-04; HR 2026-02-03: „monatlich, pro Quartal … Vergleich zum
+        // Vorjahr“): im laufenden Jahr 01.01. bis Stichtag gegen 01.01. bis zum selben Tag des Vorjahres. Vorher lief das
+        // angebrochene Jahr gegen das ganze Vorjahr, das Delta war bis Dezember fast zwangslaeufig negativ.
+        var cutoff = period.AnchorDate.Year == selectedYear && period.AnchorDate.Date < new DateTime(selectedYear, 12, 31)
+            ? period.AnchorDate.Date
+            : new DateTime(selectedYear, 12, 31);
+        var partial = cutoff.Month != 12 || cutoff.Day != 31;
+        var previousCutoff = cutoff.AddYears(-1);
         var intervals = BuildTurnoverIntervals(employees, comparisonLeavers);
-        var selectedHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, 12).Select(month => (selectedYear, month)));
-        var previousHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, 12).Select(month => (previousYear, month)));
+        var selectedHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, cutoff.Month).Select(month => (selectedYear, month)));
+        var previousHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, cutoff.Month).Select(month => (previousYear, month)));
+        bool InSelected(HrLeaverRow x) => x.Austrittsjahr == selectedYear && x.Austrittsdatum!.Value.Date <= cutoff;
+        bool InPrevious(HrLeaverRow x) => x.Austrittsjahr == previousYear && x.Austrittsdatum!.Value.Date <= previousCutoff;
         var selectedLeaverCount = CountDistinctPersons(comparisonLeavers
-            .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == selectedYear)
+            .Where(x => x.IstFluktuationsrelevant && InSelected(x))
             .Select(x => x.Personalnummer));
         var previousLeaverCount = CountDistinctPersons(comparisonLeavers
-            .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == previousYear)
+            .Where(x => x.IstFluktuationsrelevant && InPrevious(x))
             .Select(x => x.Personalnummer));
         var selectedRate = selectedHeadcount == 0 ? 0 : selectedLeaverCount / selectedHeadcount;
         var previousRate = previousHeadcount == 0 ? 0 : previousLeaverCount / previousHeadcount;
         var deltaRate = selectedRate - previousRate;
-        var selectedAbs = CountDistinctPersons(comparisonLeavers.Where(x => x.Austrittsjahr == selectedYear).Select(x => x.Personalnummer));
-        var previousAbs = CountDistinctPersons(comparisonLeavers.Where(x => x.Austrittsjahr == previousYear).Select(x => x.Personalnummer));
+        var selectedAbs = CountDistinctPersons(comparisonLeavers.Where(InSelected).Select(x => x.Personalnummer));
+        var previousAbs = CountDistinctPersons(comparisonLeavers.Where(InPrevious).Select(x => x.Personalnummer));
+        var span = partial ? $" (je 01.01.-{FormatDateShort(cutoff)})" : string.Empty;
 
         return
         [
-            new() { Label = $"Headcount {selectedYear}", Value = FormatHeadcount(selectedHeadcount), Detail = $"Vorjahr {FormatHeadcount(previousHeadcount)}", Severity = "Normal" },
-            new() { Label = $"Austritte {selectedYear}", Value = selectedAbs.ToString("N0"), Detail = $"Vorjahr {previousAbs:N0}", Severity = selectedAbs > previousAbs ? "Warning" : "Normal" },
-            new() { Label = $"Fluktuation {selectedYear}", Value = selectedRate.ToString("P1"), Detail = $"Vorjahr {previousRate:P1}", Severity = selectedRate > 0.12m ? "Warning" : "Normal" },
-            new() { Label = "Delta Fluktuation", Value = deltaRate.ToString("+0.0%;-0.0%;0.0%"), Detail = $"{selectedYear} gegen {previousYear}", Severity = deltaRate > 0.02m ? "Warning" : "Normal" }
+            new() { Label = $"Headcount {selectedYear}", Value = FormatHeadcount(selectedHeadcount), Detail = $"Vorjahr {FormatHeadcount(previousHeadcount)}{span}", Severity = "Normal" },
+            new() { Label = $"Austritte {selectedYear}", Value = selectedAbs.ToString("N0"), Detail = $"Vorjahr {previousAbs:N0}{span}", Severity = selectedAbs > previousAbs ? "Warning" : "Normal" },
+            new() { Label = $"Fluktuation {selectedYear}", Value = selectedRate.ToString("P1"), Detail = $"Vorjahr {previousRate:P1}{span}", Severity = selectedRate > 0.12m ? "Warning" : "Normal" },
+            new() { Label = "Delta Fluktuation", Value = deltaRate.ToString("+0.0%;-0.0%;0.0%"), Detail = $"{selectedYear} gegen {previousYear}{span}", Severity = deltaRate > 0.02m ? "Warning" : "Normal" }
         ];
     }
 
@@ -1351,7 +1440,7 @@ internal sealed class HrKpiDashboardBuilder
 
         return new HrTurnoverVisuals
         {
-            RateTitle = period.ShowPeriodMetrics ? $"Jahres-Fluktuation {period.Label}" : "Fluktuation Auswahl",
+            RateTitle = period.RangeStart.HasValue ? TurnoverTileLabel(period) : period.ShowPeriodMetrics ? $"Jahres-Fluktuation {period.Label}" : "Fluktuation Auswahl",
             YearRatePercent = ratePercent,
             YearRateLabel = (ratePercent / 100m).ToString("P1"),
             GaugeColor = gaugeColor,
@@ -1420,6 +1509,15 @@ internal sealed class HrKpiDashboardBuilder
         IReadOnlyCollection<TurnoverEmploymentInterval> intervals,
         TurnoverPeriodScope period)
     {
+        // Von/Bis: mittlerer Headcount genau ueber die gewaehlten Monate (seit 2026-11-04; vorher Januar bis Stichtagsmonat).
+        if (period.RangeStart.HasValue && period.RangeEnd.HasValue)
+        {
+            var months = new List<(int Year, int Month)>();
+            for (var m = new DateTime(period.RangeStart.Value.Year, period.RangeStart.Value.Month, 1); m <= period.RangeEnd.Value; m = m.AddMonths(1))
+                months.Add((m.Year, m.Month));
+            return CalculateAverageFixedHeadcount(intervals, months);
+        }
+
         if (period.ShowPeriodMetrics && period.BreakdownYear.HasValue)
         {
             // Beim laufenden Jahr nur bis zum Stichtagsmonat mitteln (YTD), damit dieser Nenner
@@ -1577,8 +1675,17 @@ internal sealed class HrKpiDashboardBuilder
         var label = showPeriodMetrics && breakdownYear.HasValue
             ? breakdownYear.Value.ToString(CultureInfo.InvariantCulture)
             : BuildTurnoverSelectionLabel(options, selectedYears);
+        DateTime? rangeStart = null, rangeEnd = null;
+        if (hasRange)
+        {
+            var span = ResolveEmploymentPeriod(options)!.Value;
+            rangeStart = span.Start;
+            rangeEnd = span.End < anchorDate.Date ? span.End : anchorDate.Date;
+            if (rangeEnd < rangeStart)
+                rangeEnd = rangeStart;
+        }
 
-        return new TurnoverPeriodScope(breakdownYear, anchorDate, label, showPeriodMetrics);
+        return new TurnoverPeriodScope(breakdownYear, anchorDate, label, showPeriodMetrics, rangeStart, rangeEnd);
     }
 
 
@@ -1811,10 +1918,13 @@ internal sealed class HrKpiDashboardBuilder
     /// </summary>
     internal static (decimal KurzStd, decimal LangStd, bool IstLangzeitkrank) ClassifySickness(decimal gesamtStd, decimal hoursPerWorkday = HoursPerWorkday)
     {
+        // Seit 2026-11-04 nach Vorgabe HR „Kurzzeit bis 60 Tage, Langzeit ab 61. Tag“: die ersten 60 Tage bleiben kurz,
+        // nur die Tage ab dem 61. sind lang. Bis dahin wurde die ganze Krankheit lang (Entscheid 2026-09-28, ueberholt).
         var tage = Math.Round(gesamtStd / hoursPerWorkday, 1);
-        return tage >= LongTermSickDayThreshold
-            ? (0m, gesamtStd, true)
-            : (gesamtStd, 0m, false);
+        if (tage < LongTermSickDayThreshold)
+            return (gesamtStd, 0m, false);
+        var kurz = (LongTermSickDayThreshold - 1) * hoursPerWorkday;
+        return (kurz, gesamtStd - kurz, true);
     }
 
     private static decimal ResolveFte(decimal? employmentPercent, string workingTimeModel, decimal? averageHoursPerDay, decimal hoursPerWorkday)
@@ -2103,7 +2213,18 @@ internal sealed class HrKpiDashboardBuilder
         return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 
-    private sealed record TurnoverPeriodScope(int? BreakdownYear, DateTime AnchorDate, string Label, bool ShowPeriodMetrics);
+    /// <summary>RangeStart/RangeEnd seit 2026-11-04: bei Von/Bis die gewaehlte Spanne (Ende hoechstens Stichtag), sonst null.</summary>
+    private sealed record TurnoverPeriodScope(int? BreakdownYear, DateTime AnchorDate, string Label, bool ShowPeriodMetrics,
+        DateTime? RangeStart = null, DateTime? RangeEnd = null);
+
+    /// <summary>
+    /// Beschriftung der Fluktuationskachel. Bei Von/Bis nennt sie die Spanne statt des Jahres (Pruefung 2026-11-04:
+    /// „Fluktuation 2026“ zeigte z. B. nur Q3-Austritte).
+    /// </summary>
+    private static string TurnoverTileLabel(TurnoverPeriodScope period)
+        => period.RangeStart.HasValue && period.RangeEnd.HasValue
+            ? $"Fluktuation {period.RangeStart.Value:dd.MM.yyyy}-{period.RangeEnd.Value:dd.MM.yyyy}"
+            : period.ShowPeriodMetrics ? $"Fluktuation {period.Label}" : "Fluktuation Auswahl";
 
     private sealed record AnalysisPeriod(DateTime? Start, DateTime? End, decimal Workdays, string Label, bool HasPeriod);
 

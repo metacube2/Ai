@@ -92,7 +92,8 @@ auch `Kuendigung AN`. `Kuendigung AG` bleibt als Arbeitgeberkuendigung ausgeschl
 `Ruhestand` als Pensionierung.
 
 Kontrollwerte 2025: Austritte total `104`, `Kündigung AN` `42`, davon relevant `33`,
-durchschnittlicher Headcount rund `211.3`, Fluktuation rund `15.6 %`.
+durchschnittlicher Headcount rund `211.3`, Fluktuation rund `15.6 %`. *(Am 2026-11-04 nicht mehr nachvollziehbar: der
+Rexx-Export vom 04.11. hat fuer 2025 nur 49 Austritte und 6 „Kündigung AN“; Frage an HR offen, Abschnitt 8.12.)*
 
 ## 4. Krankenquote und Arbeitstage
 
@@ -187,7 +188,7 @@ Wo die Antwort mehr als eine Umsetzung zuliess, hat Ingo am 2026-09-28 entschied
 
 | # | Frage | Antwort HR | Umsetzung |
 | --- | --- | --- | --- |
-| 2 | Kurz- gegen Langzeitkrankheit | Die Rexx-Arten nicht unterscheiden, „Krankheit" ziehen; ab dem **61. Krankheitstag** gilt die Krankheit als Langzeitkrankheit | **Geaendert.** Beide Rexx-Felder zaehlen als Krankheit (Entscheid Ingo). Kurz/lang je Person nach `HrKpiDashboardBuilder.ClassifySickness`: Summe der Krankheitstage im Export (Stunden / 8,4) ab 61 = langzeitkrank, dann zaehlt die ganze Krankheit als lang. Rexx liefert keine einzelnen Faelle, deshalb die Summe (Entscheid Ingo). Kachel „Krankheit Lang" nennt die Anzahl Langzeitkranke |
+| 2 | Kurz- gegen Langzeitkrankheit *(Umsetzung ueberholt am 2026-11-04: je Krankheit ab dem 61. Tag, 8.12)* | Die Rexx-Arten nicht unterscheiden, „Krankheit" ziehen; ab dem **61. Krankheitstag** gilt die Krankheit als Langzeitkrankheit | **Geaendert.** Beide Rexx-Felder zaehlen als Krankheit (Entscheid Ingo). Kurz/lang je Person nach `HrKpiDashboardBuilder.ClassifySickness`: Summe der Krankheitstage im Export (Stunden / 8,4) ab 61 = langzeitkrank, dann zaehlt die ganze Krankheit als lang. Rexx liefert keine einzelnen Faelle, deshalb die Summe (Entscheid Ingo). Kachel „Krankheit Lang" nennt die Anzahl Langzeitkranke |
 | 3 | FTE-Fallback 0,5 | FTE ist bei echten Mitarbeitenden nie leer und entspricht der Sollzeit (0,8 = 32 h/Woche); leer nur bei Reminderprofilen wie ICT | **Geaendert.** Ohne SAP-Beschaeftigungsgrad **und** ohne Rexx-Sollzeit gilt eine Zeile als Reminderprofil und faellt aus allen Kennzahlen (Entscheid Ingo, `IstReminderprofil`). Nur wenn die Zeitdatei die Person gefunden hat: ein fehlgeschlagener Namens-Join schliesst niemanden aus. Fehlt nur SAP, gilt FTE = Sollzeit / 8,4 h; das FTE ist auf 0,1 bis 1,2 begrenzt. Die bekannten Profile „ICT Trafag" und „Empfaenger Reminder" standen schon in der Ausschlussliste |
 | 4 | GLZ-Ampel 50/100 h | Korrekt, positiv und negativ gleich, auch bei Teilzeit | unveraendert |
 | 5 | Restferien-Ampel | Q1: bis 5 Tage gruen, mehr rot. Ab Q2: jeder Resttag rot | **Geaendert**, `ResolveRestferienAmpel`, massgeblich ist das Quartal des heutigen Tags (die Saldidatei ist ein Stichtagsstand) |
@@ -474,7 +475,8 @@ gegen die Abschnitte 3, 4 und 8. **Korrekt:** Feiertagskalender ZH und Ostern, 8
 | 2 | Quote je Person = Tage / Arbeitstage, ohne Pensum | Eine 50-%-Stelle, die den ganzen Zeitraum krank war, zeigte 50 % | `AggregateAbsencesByPerson` teilt durch die eigenen FTE-Arbeitstage (ab Eintritt) |
 | 3 | Prognose = Quartalsrate x 4 auch fuer ein angebrochenes Quartal | Am 04.11. nur 35 von 92 Tagen im Wert, Prognose rund Faktor 2,6 zu tief; am Quartalsanfang fast 0 | Vorgabe HR „x 4“ bleibt; ein laufendes Quartal wird vorher auf seine volle Laenge hochgerechnet (`QuarterProgress`, `ForecastFromQuarter`), HC Quartal nur bis zum Stichtagsmonat. Detail nennt „hochgerechnet aus n von m Tagen“. **Grenze:** Austritte haeufen sich am Monatsende; im ersten Quartalsmonat bleibt die Prognose deshalb meist nahe 0 und springt am ersten Monatsende um den Hochrechnungsfaktor. Alternative fuer einen Entscheid: nach abgeschlossenen Monaten statt Tagen hochrechnen |
 
-**Offen, braucht Entscheid Ingo oder HR (nicht geaendert):**
+**Offen, braucht Entscheid Ingo oder HR (nicht geaendert):** *(ueberholt am 2026-11-04: 61-Tage-Regel, Vorjahresvergleich,
+Kachelbeschriftung und die gelbe Stufe sind nach den schriftlichen HR-Vorgaben umgesetzt, Abschnitt 8.12; Unfall zaehlt jetzt mit)*
 
 - **61-Tage-Regel:** gerechnet wird die Summe je Person im gefilterten Zeitraum, aus FTE-Stunden. In einer
   Monatsansicht ist „Krankheit Lang“ deshalb immer 0, mehrere kurze Faelle koennen im Jahr „lang“ ergeben, eine
@@ -512,6 +514,32 @@ Probe mit den echten Serverdateien (nur Kennzahlen): 260 Mitarbeitende, FTE 238,
 Rexx ergaenzt, 1'099,8 Krankheitstage, Krankenquote 2026 bis heute 2,3 %; Fluktuation YTD 4,8 % (11 relevante Austritte).
 Suite 1381/1381. **Produktiv seit 2026-11-04 09:57** (`cfe2631`, `docs/rag/DEPLOYMENT.md`). Dauerhafte Loesung:
 Rexx-Schnittstelle (Sitzung naechste Woche) oder ein Rexx-Bericht je Fall (#742).
+
+### 8.12 HR-Vorgaben aus Mails und Teams umgesetzt (2026-11-04)
+
+Auftrag Ingo: „alles umsetzen, Erkenntnisse Mails und Teams“. Gelesen (Outlook Web und Teams, nur lesend): Nadjas
+Antworten vom 2025-10-08 und 2025-10-17 (Thread „Power BI Schulung – Klaerungsfragen“), Sonjas Anforderungsliste vom
+2026-02-03 (selber Thread) und Sonjas Antworten vom 2026-09-14 („AW: Fragen zu HR Dashboard“, Grundlage von Abschnitt 8).
+Teams: Chats Sonja und Nadja ohne Fachinhalt; Nadja 2026-02-24 „beim Dashboard ist Sonja im Lead“; Filtervorgaben
+2026-05-13 (siehe 8.3). Wortlaut sinngemaess:
+
+| Vorgabe HR | Quelle | Umsetzung |
+| --- | --- | --- |
+| Langzeit ab dem 61. Tag, dann zahlt die Krankentaggeldversicherung; in SAP Arten „Krank bis 60 Tage“ und „Krank ab 61. Tag“; Kurzzeit bis 60 Tage | Nadja 2025-10-17, Sonja 2026-02-03 und 2026-09-14 | Je Krankheit (SAP-Faelle ohne Arbeitstag dazwischen verbunden): bis zum 60. Kalendertag kurz, ab dem 61. lang, ein Fall ueber die Grenze wird nach Arbeitstagen geteilt; 0270 immer lang. Rexx ohne Faelle: erste 60 Tage der Summe kurz, Rest lang. *Ueberholt:* „ganze Krankheit lang, Summe je Person“ (Entscheid 2026-09-28, Abschnitt 8 Zeile 2) |
+| Absenzquote unter „Krankheit &amp; Unfall“, Quartalsbericht „Krankheits- und Unfallstatistik (Absenzquote)“, Fit &amp; Wohl ueber Krankheit &amp; Unfall | Sonja 2026-02-03, Nadja 2025-10-08 | 0290 Unfall zaehlt in Krankenquote, Krankheitskalender und Fit &amp; Wohl; nicht in die 60-Tage-Regel. Kachel-Detail nennt Unfalltage |
+| „Krankenquote 1x gesamt und 1x ohne Langzeitkrankheiten“ | Nadja 2025-10-08 und 2025-10-17 | Neue Kachel „Quote ohne Langzeit“ (Tage ab dem 61. Tag weggelassen, gleicher Nenner) |
+| Ampel gruen bis 3 %, gelb bis 4 %, rot ab 5 % (Sitzung 30.09.: bis 4,99 % gelb) | Sonja 2026-02-03 | Uebersichtskachel „Krankheitstage“ jetzt mit Gelb ab der Gelb-Grenze und Rot ab der Rot-Grenze |
+| „Vergleich zum Vorjahr“ monatlich und je Quartal | Sonja 2026-02-03 | Periodenvergleich im laufenden Jahr: 01.01. bis Stichtag gegen denselben Zeitraum des Vorjahres; Detail „(je 01.01.-TT.MM.)“ |
+| (technisch) Fluktuationskachel bei Von/Bis | Pruefung 8.10 | Beschriftung „Fluktuation TT.MM.JJJJ-TT.MM.JJJJ“, Headcount-Mittel genau ueber die gewaehlten Monate, „nicht annualisiert“ |
+
+Probe mit den echten Serverdateien (2026 bis 04.11., nur Kennzahlen): Krankenquote 2,5 % (vorher 2,3 %, jetzt mit 56
+Unfalltagen), ohne Langzeit 2,2 %, 7 Langzeitkranke, Krankheit lang 112 Tage statt der ganzen Krankheit; Vorjahresvergleich
+2026 4,8 % gegen 2025 1,4 % je bis 04.11.
+
+**Neue Frage an HR:** Der Rexx-Export vom 04.11. hat fuer 2025 nur 49 Austritte (6 „Kündigung AN“, davon 3 Festangestellte;
+24 „Kündigung AG“). Die „Kontrollwerte 2025“ in Abschnitt 3 (104 Austritte, 42 AN-Kuendigungen, 33 relevant) passen
+dazu nicht; sie stammen aus einer aelteren oder anders abgegrenzten Datei. Offen bleiben ausserdem: aktive Befristete im
+Headcount, ob 0210/0220/0280 Krankheit sind, die Formel „Ferien bezogen“. Suite 1386/1386.
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

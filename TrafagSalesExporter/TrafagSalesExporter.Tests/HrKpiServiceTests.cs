@@ -543,9 +543,9 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.False(sixtyDays.IstLangzeitkrank);
         Assert.Equal(60m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyDays.KurzStd);
         Assert.True(sixtyOneDays.IstLangzeitkrank);
-        // Die ganze Krankheit wird lang, nicht erst die Tage ab dem 61.
-        Assert.Equal(0m, sixtyOneDays.KurzStd);
-        Assert.Equal(61m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyOneDays.LangStd);
+        // Seit 2026-11-04 nach Vorgabe HR („Kurzzeit bis 60 Tage, Langzeit ab 61. Tag“): nur der 61. Tag ist lang.
+        Assert.Equal(60m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyOneDays.KurzStd);
+        Assert.Equal(1m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyOneDays.LangStd);
     }
 
     [Fact]
@@ -623,7 +623,7 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.True(result.AbsenceRatesReliable);
         Assert.Equal("5.0", Assert.Single(result.TimeVacationMetrics, m => m.Label == "Ferien bezogen im Zeitraum").Value);
         Assert.Equal("1.0", Assert.Single(result.TimeVacationMetrics, m => m.Label == "Kompensation im Zeitraum").Value);
-        Assert.Contains(result.Notices, n => n.StartsWith("Krankheit aus SAP PA2001"));
+        Assert.Contains(result.Notices, n => n.StartsWith("Krankheit und Unfall aus SAP PA2001"));
     }
 
     [Fact]
@@ -636,7 +636,7 @@ public sealed class HrKpiServiceTests : IDisposable
 
         var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2024 });
 
-        Assert.DoesNotContain(result.Notices, n => n.StartsWith("Krankheit aus SAP PA2001"));
+        Assert.DoesNotContain(result.Notices, n => n.StartsWith("Krankheit und Unfall aus SAP PA2001"));
         Assert.Contains(result.Notices, n => n.StartsWith("Die SAP-Absenzen reichen bis 01.01.2025"));
     }
 
@@ -645,7 +645,7 @@ public sealed class HrKpiServiceTests : IDisposable
     {
         var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
 
-        Assert.DoesNotContain(result.Notices, n => n.StartsWith("Krankheit aus SAP PA2001"));
+        Assert.DoesNotContain(result.Notices, n => n.StartsWith("Krankheit und Unfall aus SAP PA2001"));
         Assert.DoesNotContain(result.TimeVacationMetrics, m => m.Label == "Ferien bezogen im Zeitraum");
     }
 
@@ -719,14 +719,14 @@ public sealed class HrKpiServiceTests : IDisposable
 
         var alpha = Assert.Single(result.Absences, row => row.Personalnummer == 1001);
         Assert.True(alpha.IstLangzeitkrank);
-        Assert.Equal(61m, alpha.KrankheitstageLang);
-        Assert.Equal(0m, alpha.KrankheitstageKurz);
+        Assert.Equal(1m, alpha.KrankheitstageLang);
+        Assert.Equal(60m, alpha.KrankheitstageKurz);
         var beta = Assert.Single(result.Absences, row => row.Personalnummer == 1002);
         Assert.False(beta.IstLangzeitkrank);
         Assert.Equal(2m, beta.KrankheitstageKurz);
 
         var longSick = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankheit Lang");
-        Assert.Equal("61.0", longSick.Value.Replace("’", "").Replace("'", ""));
+        Assert.Equal("1.0", longSick.Value.Replace("’", "").Replace("'", ""));
         Assert.StartsWith("1 Langzeitkranke", longSick.Detail);
     }
 
@@ -784,7 +784,7 @@ public sealed class HrKpiServiceTests : IDisposable
         var all = ZurichWorkdayCalendar.CountWorkdays(start, end);
         var expected = 1m * all + 0.5m * all + 0.5m * ZurichWorkdayCalendar.CountWorkdays(new DateTime(2025, 1, 15), end);
         var rate = Assert.Single(result.AbsenceMetrics, m => m.Label == "Krankenquote");
-        Assert.Contains($"Krankheitstage / {expected:N0} FTE-Arbeitstage", rate.Detail);
+        Assert.Contains($"Krankheit und Unfall / {expected:N0} FTE-Arbeitstage", rate.Detail);
     }
 
     [Fact]
@@ -920,6 +920,90 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Equal("Warning", vacation.Severity);
     }
 
+    [Fact]
+    public async Task BuildAsync_Teilt_SAP_Krankheit_Ab_Dem_61_Tag_Und_Zaehlt_Unfall_Mit()
+    {
+        // Vorgaben HR (Mails 2025-10-17 und 2026-02-03): Kurzzeit bis 60 Tage, Langzeit ab dem 61. Tag einer Krankheit;
+        // die Absenzquote umfasst Krankheit und Unfall.
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [
+                // Anna: eine Krankheit vom 06.01. bis 31.03.2025 in zwei Faellen (0260, danach 0270 ohne Arbeitstag dazwischen).
+                new("00001001", "0260", new(2025, 1, 6), new(2025, 2, 28), "000", 40m, 320m, 54m),
+                new("00001001", "0270", new(2025, 3, 3), new(2025, 3, 31), "000", 21m, 168m, 29m),
+                // Bruno: Unfall Mo 07. bis Fr 11.04.2025, 50 % (20 h).
+                new("00001002", "0290", new(2025, 4, 7), new(2025, 4, 11), "000", 5m, 20m, 5m)
+            ],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+
+        var anna = Assert.Single(result.Absences, row => row.Personalnummer == 1001);
+        Assert.True(anna.IstLangzeitkrank);
+        // Tag 61 der Krankheit ist der 07.03.2025: Februar-Fall ganz kurz, Maerz-Fall (0270) ganz lang.
+        Assert.Equal(40m, anna.KrankheitstageKurz);
+        Assert.Equal(21m, anna.KrankheitstageLang);
+        var bruno = Assert.Single(result.Absences, row => row.Personalnummer == 1002);
+        Assert.Equal(2.5m, bruno.UnfalltageGesamt);
+        Assert.Equal(2.5m, bruno.KrankheitstageGesamt);
+        Assert.False(bruno.IstLangzeitkrank);
+
+        var total = Assert.Single(result.AbsenceMetrics, m => m.Label == "Krankenquote");
+        var withoutLong = Assert.Single(result.AbsenceMetrics, m => m.Label == "Quote ohne Langzeit");
+        Assert.NotEqual(total.Value, withoutLong.Value);
+        Assert.Contains("Krankheit und Unfall", total.Detail);
+    }
+
+    [Fact]
+    public void Langzeit_Beginnt_Mitten_Im_Fall_Am_61_Kalendertag()
+    {
+        var employees = new[] { new HrKpiEmployeeRow { Personalnummer = 7, NameVoll = "X", Fte = 1m, Mitarbeitertyp = "Festangestellt", IstAktiv = true } };
+        // Ein einziger 0260-Fall vom 01.01. bis 31.03.2025: Tage 1 bis 60 (bis 01.03.) kurz, ab 02.03. lang.
+        var rows = HrKpiDashboardBuilder.BuildSapSicknessRows(
+            [new HrAbsenceSapCase("00000007", "0260", new(2025, 1, 1), new(2025, 3, 31), "000", 0m, 500m, 90m)], employees);
+
+        Assert.Equal(2, rows.Count);
+        Assert.Equal(new DateTime(2025, 3, 1), rows.Single(r => r.KrankheitKurzStd > 0).BisDatum);
+        Assert.Equal(new DateTime(2025, 3, 2), rows.Single(r => r.KrankheitLangStd > 0).VonDatum);
+        Assert.Equal(500m, rows.Sum(r => r.KrankheitGesamtStd));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Uebersichtskachel_Krankheit_Kennt_Gelb_Und_Rot()
+    {
+        var yellow = new HrKpiService(Options.Create(new HrKpiDataSourceOptions { DataFolder = _folder, AbsenceYellowThresholdPercent = 0.01m, AbsenceRedThresholdPercent = 50m }));
+        var red = new HrKpiService(Options.Create(new HrKpiDataSourceOptions { DataFolder = _folder, AbsenceYellowThresholdPercent = 0.01m, AbsenceRedThresholdPercent = 0.02m }));
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001001", "0260", new(2025, 3, 3), new(2025, 3, 7), "000", 5m, 40m, 5m)],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var y = await yellow.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+        var r = await red.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+
+        Assert.Equal("Warning", Assert.Single(y.Metrics, m => m.Label == "Krankheitstage").Severity);
+        Assert.Equal("Error", Assert.Single(r.Metrics, m => m.Label == "Krankheitstage").Severity);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Vorjahresvergleich_Nimmt_Den_Gleichen_Zeitraum()
+    {
+        // Stichtag 30.06.2025: 2025 bis 30.06. gegen 2024 bis 30.06.; Fionas Austritt vom 15.12.2024 zaehlt deshalb nicht.
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, FromDate = new DateTime(2025, 1, 1), ToDate = new DateTime(2025, 6, 30) });
+
+        var leavers = Assert.Single(result.PeriodComparisonMetrics, m => m.Label == "Austritte 2025");
+        Assert.Equal("Vorjahr 0 (je 01.01.-30.06.)", leavers.Detail);
+        Assert.Equal("3", leavers.Value);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Fluktuationskachel_Nennt_Den_Gewaehlten_Zeitraum()
+    {
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, FromDate = new DateTime(2025, 3, 1), ToDate = new DateTime(2025, 3, 31) });
+
+        var tile = Assert.Single(result.Metrics, m => m.Label.StartsWith("Fluktuation"));
+        Assert.Equal("Fluktuation 01.03.2025-31.03.2025", tile.Label);
+        Assert.EndsWith("nicht annualisiert", tile.Detail);
+    }
+
     private static void AssertEveryVisibleBlockIsConsistent(HrKpiResult result, string because)
     {
         var employeeNumbers = result.Employees
@@ -934,7 +1018,8 @@ public sealed class HrKpiServiceTests : IDisposable
 
         Assert.Equal(6, result.Metrics.Count);
         Assert.True(result.TurnoverMetrics.Count >= 6, because);
-        Assert.Equal(7, result.AbsenceMetrics.Count);
+        // Seit 2026-11-04 acht: zusaetzlich „Quote ohne Langzeit“ (Wunsch HR).
+        Assert.Equal(8, result.AbsenceMetrics.Count);
         Assert.Equal(8, result.TimeVacationMetrics.Count);
         Assert.Equal(4, result.PeriodComparisonMetrics.Count);
         Assert.Equal(5, result.TrafficLights.Count);

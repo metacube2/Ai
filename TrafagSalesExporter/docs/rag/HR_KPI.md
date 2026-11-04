@@ -4,6 +4,11 @@ Stand: 2026-11-04 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, pr
 
 ## Kurzstand
 
+- **2026-11-04: HR-Vorgaben aus den Mails umgesetzt** (`docs/HR_KPI.md` 8.12): Kurz/Lang je Krankheit ab dem 61. Tag,
+  Absenzquote = Krankheit und Unfall (0290), Kachel „Quote ohne Langzeit“, Gelb auf der Uebersichtskachel, Vorjahresvergleich
+  gleicher Zeitraum, Von/Bis-Kachel mit Spanne. Echte Daten 2026: Quote 2,5 %, ohne Langzeit 2,2 %. Offen fuer HR:
+  Kontrollwerte 2025 passen nicht zum Export (2025 nur 6 „Kündigung AN“), Befristete im Headcount, 0210/0220/0280, Ferienformel.
+
 - **2026-11-04 09:30: Rexx-Dateien in `hrdata` aktuell** (Ingos Exporte vom 04.11., alte vom 08.07. in
   `hrdata\archiv_rexx_2026-07-08`; Austritte 30.11.2023 bis 09.10.2026). Ab naechster Woche soll die Rexx-Schnittstelle
   liefern. *Danach (8.11, Auftrag Ingo „das Aktuellere nehmen“):* „Vertrag endend“/„Langzeitkrank“ zaehlen als angestellt,

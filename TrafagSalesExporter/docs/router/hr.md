@@ -14,6 +14,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | **Fachlogik, Datenquellen, Formeln, behobene Fehler, Grenzen** | `docs/HR_KPI.md` |
 | **Formelpruefung 04.11. (drei Korrekturen, offene Fachpunkte)** | `docs/HR_KPI.md` 8.10 |
 | **Uebergang bis Rexx-Schnittstelle: Rexx ergaenzt SAP-Krankheit, Status, Sollzeit-Spalte, SAP-Ferienstand** | `docs/HR_KPI.md` 8.11 |
+| **Was HR schriftlich vorgegeben hat (Mails 10/2025, 02/2026, 09/2026) und wie es umgesetzt ist: 61 Tage je Krankheit, Krankheit &amp; Unfall, Quote ohne Langzeit, Vorjahr gleicher Zeitraum** | `docs/HR_KPI.md` 8.12 |
 | **Reiter Interaktiv (Zeitraffer, Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Simulator)** | `docs/HR_KPI.md` 9 |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |
@@ -33,7 +34,9 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
   seit 2026-11-04 je Person erst ab Eintritt (`docs/HR_KPI.md` 8.10).
 - **Kostenstelle, GLZ und Restferien filtern die Fluktuation NICHT**, weil diese Felder in
   der Austrittsdatei nicht stabil vorhanden sind. Das ist als Test gepinnt.
-- **Seit 2026-09-28 nach Vorgabe HR:** langzeitkrank ab 61 Krankheitstagen je Person,
+- **Seit 2026-11-04 (8.12): Kurz/Lang je Krankheit, ab dem 61. Tag lang; Quote = Krankheit und Unfall; zusaetzlich Quote ohne
+  Langzeit.** Die fachlichen Antworten von HR stehen in den Mails (Nadja 10/2025, Sonja 02/2026 und 09/2026), nicht in Teams.
+- *Ueberholt am 2026-11-04 (61-Tage-Regel):* **Seit 2026-09-28 nach Vorgabe HR:** langzeitkrank ab 61 Krankheitstagen je Person,
   Reminderprofile ohne FTE und Sollzeit ausgeschlossen, Restferien-Ampel nach Quartal,
   zusaetzlich gleitende Prognose und Vorjahr. `docs/HR_KPI.md` Abschnitt 8.
 - **Seit 2026-09-30: ein Arbeitstag hat 8,0 h** (`HoursPerWorkday`), die frueheren 8,4 h sind ueberholt.

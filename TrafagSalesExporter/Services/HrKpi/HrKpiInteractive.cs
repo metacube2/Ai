@@ -270,7 +270,8 @@ public static class HrKpiInteractive
 
     // ------------------------------------------------------------------ Krankheitsverhalten
 
-    private static bool IsSick(HrAbsenceSapCase c) => HrKpiDashboardBuilder.SickAbsenceTypes.Contains(c.Abwesenheitsart);
+    // Krankheit und Unfall (seit 2026-11-04): HR wertet Fit &amp; Wohl und die Absenzquote ueber „Krankheit &amp; Unfall“ aus.
+    private static bool IsSick(HrAbsenceSapCase c) => HrKpiDashboardBuilder.AbsenceRateTypes.Contains(c.Abwesenheitsart);
 
     private static DateTime CaseEnd(HrAbsenceSapCase c, DateTime today) => c.Bis.Year >= 9000 ? (c.Von > today ? c.Von : today) : c.Bis.Date;
 

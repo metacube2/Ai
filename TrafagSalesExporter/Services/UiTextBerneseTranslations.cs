@@ -11,6 +11,8 @@ internal static class UiTextBerneseTranslations
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             // HR-Cockpit Interaktiv 2026-11-04
+            ["Unfall (SAP 0290) zählt mit, weil HR Krankheit und Unfall gemeinsam auswertet."] = "Unfau (SAP 0290) zeut mit, wüu HR Chrankheit u Unfau zäme uswärtet.",
+            // HR-Cockpit Interaktiv 2026-11-04
             ["Die jüngsten Ferien in SAP beginnen am"] = "Di jüngschte Ferie im SAP fö a am",
             ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Nöiere Ferie chöme ersch mit em Rexx-Import vo HR i ds SAP u fähle hie bis denn.",
             // HR-Cockpit Interaktiv 2026-11-04
