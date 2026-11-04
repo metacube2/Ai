@@ -19,6 +19,7 @@ Stand: 2026-11-04
   „Vertrag endend“/„Langzeitkrank“ zaehlen, Sollzeit-Spalte „Ø tägliche …“ erkannt (Vollzeit = FTE 1,0), juengste
   Rexx-Krankmeldungen ergaenzen SAP (`BuildRexxGapSicknessRows`, am 04.11. 34 Faelle), SAP-Stand bei Ferien/Kompensation/
   Militaer sichtbar. Vier neue Tests, Suite 1381/1381, Probe gegen echte Serverdateien. Handbuch, Router, rag, LEARNINGS.
+  **Produktiv seit 09:57** (`cfe2631`, Delta vorher geprueft).
 
 ## CRM Dynamics 365 Sales: Befund und Idee lesende Anbindung festgehalten (Auftrag Ingo „notiere das alles in md“), 2026-11-03
 

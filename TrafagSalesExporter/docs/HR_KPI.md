@@ -6,7 +6,8 @@ Stand: 2026-11-04 (Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Re
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Aktueller Produktivstand des HR-Cockpits: Commit `b65f059`, deployed am 2026-11-04 um 09:20 (Abschnitte 8.10 und 9);
+Aktueller Produktivstand des HR-Cockpits: Commit `cfe2631`, deployed am 2026-11-04 um 09:57 (Abschnitte 8.10, 8.11 und 9;
+davor `b65f059` um 09:20);
 Rexx-Dateien seit 2026-11-04 09:30 vom selben Tag (8.2).
 *(ueberholt am 2026-11-04: hier stand `ede56b6` vom 2026-10-22 15:48, Abschnitt 8.8)*
 *(ueberholt am 2026-10-29: hier stand `5ae7f31` vom 2026-09-28 11:25, siehe `docs/rag/DEPLOYMENT.md`)*
@@ -509,7 +510,8 @@ fehlten 70 der 202 juengsten Krankheitsfaelle in SAP, 33 davon aus Oktober/Novem
 
 Probe mit den echten Serverdateien (nur Kennzahlen): 260 Mitarbeitende, FTE 238,0; 949 SAP-Krankheitsfaelle plus 34 aus
 Rexx ergaenzt, 1'099,8 Krankheitstage, Krankenquote 2026 bis heute 2,3 %; Fluktuation YTD 4,8 % (11 relevante Austritte).
-Suite 1381/1381. Dauerhafte Loesung: Rexx-Schnittstelle (Sitzung naechste Woche) oder ein Rexx-Bericht je Fall (#742).
+Suite 1381/1381. **Produktiv seit 2026-11-04 09:57** (`cfe2631`, `docs/rag/DEPLOYMENT.md`). Dauerhafte Loesung:
+Rexx-Schnittstelle (Sitzung naechste Woche) oder ein Rexx-Bericht je Fall (#742).
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

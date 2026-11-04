@@ -9,6 +9,7 @@ Stand: 2026-11-04 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, pr
   liefern. *Danach (8.11, Auftrag Ingo „das Aktuellere nehmen“):* „Vertrag endend“/„Langzeitkrank“ zaehlen als angestellt,
   Sollzeit-Spalte „Ø tägliche …“ erkannt, juengste Rexx-Krankmeldungen ergaenzen SAP (am 04.11. 34 Faelle), Ferien/
   Kompensation/Militaer zeigen den SAP-Stand (27.07.) mit Warnung. SAP-Ferien kommen nur mit Sonjas Handimport.
+  **Produktiv seit 09:57 (`cfe2631`).** Sichtpruefung im Browser offen (HR-Login).
 - **2026-11-04: Formeln geprueft, drei Rechenfehler behoben, neuer Reiter „Interaktiv“** (*produktiv seit 09:20, `b65f059`;
   ueberholt: „nicht deployed“*). Krankenquote-Nenner je Person erst ab Eintritt, Quote je Person mit Pensum, Prognose rechnet ein
   laufendes Quartal vorher auf die volle Laenge hoch (vorher am 04.11. rund Faktor 2,6 zu tief). Offen fuer Entscheid:
