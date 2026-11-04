@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-04 (Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -642,6 +642,14 @@ Tests: 3 neue (`MergeRexxCases` bestaetigte Faelle ohne Ueberschneidung, teilwei
 Interaktiv). Suite 1401/1401. **Produktiv seit 2026-11-04 12:21** (`4bdbc18`, `docs/rag/DEPLOYMENT.md`), Datei seit 12:22 in
 `hrdata`; in Chrome gesehen: Hinweis „1'203 Faelle ergaenzt“, Krankheitstage 1'441.8, Quote 3.1 %, „Ferien am Stueck“ 101 von
 260 ohne Warnung, Fit & Wohl 31.
+
+
+### 8.15 Kachel „Unfalltage laufender Monat“ auch aus Unfallfaellen (2026-11-04)
+
+Befund aus der Liste „was noch nicht stimmt“: Die Kachel zeigte am 04.11. 0,0, weil sie nur BU + NBU aus der SAP-Tagesdatei
+(`HrKpiSet`) nahm, waehrend Rexx einen Unfall ab 02.11. kannte. Seit 2026-11-04 zaehlt zusaetzlich die Summe der Unfallfaelle
+0290 (SAP PA2001 und Rexx #777 bzw. ergaenzte juengste Faelle) im laufenden Monat bis heute (`AccidentDaysCurrentMonth`); der
+hoehere Wert gilt, das Detail nennt beide. BU und NBU getrennt kennt weiter nur SAP. Tests: 2 neue, Suite 1403/1403.
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

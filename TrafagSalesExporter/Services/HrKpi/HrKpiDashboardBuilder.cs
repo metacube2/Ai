@@ -253,7 +253,8 @@ internal sealed class HrKpiDashboardBuilder
         result.Employees = employees;
         result.Absences = absences;
         result.Leavers = leavers;
-        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable, _dataSources.AbsenceRedThresholdPercent, _dataSources.AbsenceYellowThresholdPercent);
+        var accidentCaseDays = sapAbsenceCases.Count > 0 ? AccidentDaysCurrentMonth(sapAbsenceCases, filteredEmployeeNumbers, DateTime.Today) : (decimal?)null;
+        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable, _dataSources.AbsenceRedThresholdPercent, _dataSources.AbsenceYellowThresholdPercent, accidentCaseDays);
         result.AbsenceRatesReliable = !periodScopingUnreliable;
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, comparisonLeavers,
             comparisonLeavers.Where(x => MatchesFluctuationFilter(x, normalizedOptions.FluktuationFilter)).ToList());
@@ -263,7 +264,7 @@ internal sealed class HrKpiDashboardBuilder
         // Zeitraum schrumpft - die Quote wird dadurch massiv ueberhoeht (Praxisfall: 20% statt 3-4%
         // fuer Juni 2026, weil "Adil" seine 48h aus Maerz stammten, aber die Datei keine Zeile
         // ausschliessen konnte). Deshalb Periodenwert klar als nicht verlaesslich kennzeichnen.
-        result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences, analysisPeriod, periodScopingUnreliable);
+        result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences, analysisPeriod, periodScopingUnreliable, accidentCaseDays);
         result.TimeVacationMetrics = BuildTimeVacationMetrics(employees, gesamtFile);
         if (sicknessFromSap)
             result.TimeVacationMetrics.AddRange(BuildSapOtherAbsenceMetrics(sapAbsenceCases, filteredEmployeeNumbers, analysisPeriod,
@@ -1374,7 +1375,8 @@ internal sealed class HrKpiDashboardBuilder
         AnalysisPeriod analysisPeriod,
         bool periodScopingUnreliable,
         decimal absenceRedThresholdPercent,
-        decimal absenceYellowThresholdPercent)
+        decimal absenceYellowThresholdPercent,
+        decimal? accidentCaseDays = null)
     {
         var activeCount = CountDistinctPersons(employees.Select(x => x.Personalnummer));
         var activeFixedCount = CountDistinctPersons(employees
@@ -1408,7 +1410,7 @@ internal sealed class HrKpiDashboardBuilder
             },
             new() { Label = TurnoverTileLabel(period), Value = turnover.ToString("P1"), Detail = $"{relevantLeavers:N0} relevant von {employeeLeavers:N0} AN-Kuendigungen, Nenner {FormatHeadcount(turnoverDenominator)} HC" + (period.RangeStart.HasValue ? ", nicht annualisiert" : string.Empty), Severity = turnover > 0.12m ? "Warning" : "Normal" },
             new() { Label = "GLZ Schnitt", Value = avgBalance.ToString("N1"), Detail = $"{redBalance:N0} Personen > 100h absolut", Severity = redBalance > 0 ? "Warning" : "Normal" },
-            new() { Label = AccidentDaysLabel, Value = employees.Sum(x => x.BuTage + x.NbuTage).ToString("N1"), Detail = $"BU {employees.Sum(x => x.BuTage):N1} / NBU {employees.Sum(x => x.NbuTage):N1}, {AccidentDaysPeriodNote}", Severity = "Normal" }
+            AccidentDaysMetric(employees.Sum(x => x.BuTage), employees.Sum(x => x.NbuTage), accidentCaseDays, overview: true)
         ];
     }
 
@@ -1548,11 +1550,41 @@ internal sealed class HrKpiDashboardBuilder
         return metrics;
     }
 
+    /// <summary>
+    /// Kachel „Unfalltage laufender Monat“. Bis 2026-11-04 nur BU + NBU aus der SAP-Tagesdatei; die zaehlt Unfaelle erst, wenn
+    /// SAP sie kennt (04.11.: 0,0, obwohl Rexx einen Unfall ab 02.11. hatte). Seit 2026-11-04 zaehlen auch die Unfallfaelle 0290
+    /// aus SAP PA2001 und Rexx (#777, Ergaenzungen) im laufenden Monat bis heute; es gilt der hoehere Wert. BU/NBU trennt nur SAP.
+    /// </summary>
+    private static HrKpiMetric AccidentDaysMetric(decimal bu, decimal nbu, decimal? caseDays, bool overview)
+    {
+        var sap = bu + nbu;
+        var fromCases = caseDays.HasValue && caseDays.Value > sap;
+        var value = fromCases ? caseDays!.Value : sap;
+        var detail = overview ? $"BU {bu:N1} / NBU {nbu:N1}" : "BU + NBU";
+        if (caseDays.HasValue)
+            detail += fromCases
+                ? $" aus SAP HR KPI ({sap:N1}); Unfallfaelle SAP und Rexx im Monat {caseDays:N1} Tage, der hoehere Wert zaehlt"
+                : $"; Unfallfaelle SAP und Rexx im Monat {caseDays:N1} Tage";
+        return new() { Label = AccidentDaysLabel, Value = value.ToString("N1"), Detail = $"{detail}, {AccidentDaysPeriodNote}", Severity = "Normal" };
+    }
+
+    /// <summary>Unfalltage (0290) im laufenden Monat bis heute aus den Faellen (SAP und Rexx), nur fuer die gefilterten Personen.</summary>
+    internal static decimal AccidentDaysCurrentMonth(IEnumerable<HrAbsenceSapCase> cases, IReadOnlySet<int> employeeNumbers, DateTime today)
+    {
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        return cases
+            .Where(x => AccidentAbsenceTypes.Contains(x.Abwesenheitsart) &&
+                        int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) &&
+                        employeeNumbers.Contains(pernr))
+            .Sum(x => ProratedDays(x, monthStart, today.Date));
+    }
+
     private List<HrKpiMetric> BuildAbsenceMetrics(
         IReadOnlyCollection<HrKpiEmployeeRow> employees,
         IReadOnlyCollection<HrAbsenceRow> absences,
         AnalysisPeriod analysisPeriod,
-        bool periodScopingUnreliable)
+        bool periodScopingUnreliable,
+        decimal? accidentCaseDays = null)
     {
         var totalSick = absences.Sum(x => x.KrankheitstageGesamt);
         var shortSick = absences.Sum(x => x.KrankheitstageKurz);
@@ -1591,7 +1623,7 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Quote ohne Langzeit", Value = shortRateValue, Detail = $"Wie die Krankenquote, ohne die Tage ab dem {LongTermSickDayThreshold:N0}. Tag einer Krankheit (Wunsch HR: Quote gesamt und ohne Langzeitkrankheit)", Severity = periodScopingUnreliable ? "Warning" : ResolveAbsenceSeverity(shortRate) },
             new() { Label = "BU-Tage laufender Monat", Value = bu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
             new() { Label = "NBU-Tage laufender Monat", Value = nbu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
-            new() { Label = AccidentDaysLabel, Value = (bu + nbu).ToString("N1"), Detail = $"BU + NBU, {AccidentDaysPeriodNote}", Severity = "Normal" }
+            AccidentDaysMetric(bu, nbu, accidentCaseDays, overview: false)
         ];
     }
 

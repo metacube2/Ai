@@ -1262,6 +1262,38 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Contains(result.FileStatuses, x => x.Label == "Rexx #777 Abwesenheiten je Fall" && x.Exists);
     }
 
+    [Fact]
+    public void AccidentDaysCurrentMonth_Zaehlt_Unfallfaelle_Des_Monats_Bis_Heute()
+    {
+        var today = new DateTime(2026, 11, 4);
+        HrAbsenceSapCase[] cases =
+        [
+            new("00000007", "0290", new(2026, 11, 2), new(2026, 11, 6), "REXX", 5m, 40m, 5m),   // 3 Arbeitstage bis heute
+            new("00000007", "0290", new(2026, 10, 26), new(2026, 10, 27), "001", 2m, 16m, 2m),  // Vormonat
+            new("00000007", "0260", new(2026, 11, 3), new(2026, 11, 3), "002", 1m, 8m, 1m),     // Krankheit
+            new("00000009", "0290", new(2026, 11, 3), new(2026, 11, 3), "003", 1m, 8m, 1m)      // nicht gefiltert
+        ];
+
+        Assert.Equal(3m, HrKpiDashboardBuilder.AccidentDaysCurrentMonth(cases, new HashSet<int> { 7 }, today));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Unfallkachel_Nimmt_Den_Hoeheren_Wert_Aus_SAP_Kpi_Und_Unfallfaellen()
+    {
+        var today = DateTime.Today;
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        var workdays = ZurichWorkdayCalendar.CountWorkdays(monthStart, today);
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001001", "0290", monthStart, today, "000", workdays, workdays * 8m, (today - monthStart).Days + 1)],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var tile = Assert.Single(result.Metrics, x => x.Label == "Unfalltage laufender Monat");
+        Assert.Equal(((decimal)workdays).ToString("N1"), tile.Value);
+        Assert.Contains("Unfallfaelle SAP und Rexx", tile.Detail);
+    }
+
     [Theory]
     [InlineData("Cafeteria, Cafeteria", "Cafeteria")]
     [InlineData("Lehrlinge - Elektronik, Lehrlingsausbildung", "Lehrlinge - Elektronik")]
