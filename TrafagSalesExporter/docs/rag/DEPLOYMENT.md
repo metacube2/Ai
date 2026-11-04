@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-11-02 (letzter Deploy 2026-11-02 13:57, `187f8a0`); 2026-10-22 Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo
+Stand: 2026-11-04 (letzter Deploy 2026-11-04 09:20, `b65f059`); davor 2026-11-02 (Deploy 13:57, `187f8a0`); 2026-10-22 Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
@@ -70,6 +70,9 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
+
+- **Deploy 2026-11-04 09:20, HR-Cockpit: drei Formelkorrekturen und Reiter Interaktiv (`81a5af9`, `b65f059`), mit Datenverantwortung (`c267651`, `2a1b28f`) und Shopfloor-Startseite (`63b0d78`).** Freigabe Ingo („Ja, kein Delta laeuft“, inklusive der fremden Commits), im Auto-Modus mit dem Werkzeug. Keine Sicherung (Wochensicherung vom 02.11.). Release-Worktree auf `b65f059`, Suite `1377/1377` gruen; Protokollzeile 2 „Commit b65f059“. DLL `09:18:48`, SHA256 `D10F560C…2711`, 9 Dateien geaendert; Wirknachweise `HrKpiInteractive`, `TimelineEmployees`, `ForecastFromQuarter`, `DataOwnerRules`; zehn Routen 200. Alarm nur `-wal`/`-shm` verschwunden und DB veraendert: beide um 09:20 wieder da, harmlos. Sichtpruefung des HR-Reiters offen (braucht HR-Login von Ingo). Protokoll `.tmp_deploy_2026-11-04_hr_interaktiv.log`.
+  *Nachtrag 2026-11-04 09:30:* Rexx-Dateien in `hrdata` auf Wunsch Ingo durch seine Exporte vom 04.11. ersetzt (alte vom 08.07. in `hrdata\archiv_rexx_2026-07-08`), siehe `docs/HR_KPI.md` 8.2.
 
 - **Deploy 2026-11-02 13:57, Operations KPI Rubrik Kunden und Shopfloor PPD-Verzug (Schalter aus) (`187f8a0`, Code `aa12a39` und `27badb2`).** Freigabe Ingo („Deployen und neu abrufen“, kein Einkauf-Delta), im Auto-Modus mit dem Werkzeug. Keine Sicherung (Wochensicherung 08:20), Release-Worktree 1358/1358, bitgleich (`BiDashboard.dll` SHA256 `834C5C12…5FE`), zehn Routen 200; Alarm nur `-wal`/`-shm` und `.db` veraendert (die `trafag_exporter.db-wal` war vor dem Neustart 243 MB gross und wurde beim Herunterfahren eingecheckpointet), beide um 13:58 neu angelegt. Danach Oktober neu abgerufen (14:02, 23'033 Auftrags-, 31'764 Lieferpositionen); Kundensicht gegen Fabios Abnahmewerte exakt gleich (`docs/OPERATIONS_KPI_2026-10-14.md` Abschnitt 5). Protokoll `.tmp_deploy_2026-11-02_kunden_verzug.log`.
 - **Deploy 2026-11-02 11:18, Einkauf Phase 2: Materialanteil je Produktgruppe als eigene Tabelle mit rotem Knopf, Lader im Einkauf-Lauf, Handbuch (`f36e1e7`).** Freigabe Ingo („du kannst deployen“), im Auto-Modus mit dem Werkzeug. Keine Sicherung (Wochenregel), Release-Worktree 1325/1325, bitgleich (`BiDashboard.dll` SHA256 `5841F497…C22F`), zehn Routen 200; Alarm nur `-wal`/`-shm` und `.db` veraendert, beide um 11:20 neu angelegt. Tabelle zeigt bis zum P76-Import von `T76K912785` „Noch keine Daten“. Protokoll `.tmp_deploy_2026-11-02_materialanteil.log`.

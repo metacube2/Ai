@@ -11,7 +11,10 @@ Stand: 2026-11-04
 - Reiter Interaktiv im HR-Cockpit (`docs/HR_KPI.md` 9): `Services/HrKpi/HrKpiInteractive.cs`, `Components/HrKpi/Interactive/`
   (acht Ansichten), CSS `hri-`, 66 Texte in sieben Sprachkatalogen, Tests `HrKpiInteractiveTests` und drei neue in
   `HrKpiServiceTests`. Schulungsseite und Handbuch Kapitel HR nachgefuehrt. Router HR, rag/HR_KPI, Wochen_Todo 149,
-  Status_kurz. Nicht deployed.
+  Status_kurz. *Ueberholt „nicht deployed“:* nach Nachbesserung Filtervertrag (`b65f059`) **produktiv seit 09:20**,
+  mit Datenverantwortung und Shopfloor-Startseite (`docs/rag/DEPLOYMENT.md`). Um 09:30 Rexx-Dateien in `hrdata` durch
+  Ingos Exporte vom 04.11. ersetzt (alte archiviert, `docs/HR_KPI.md` 8.2); dabei zwei offene Befunde (Sollzeit-Spalte
+  nicht erkannt, nur Status „Aktiv“), 8.10. LEARNINGS: GIF-Aufnahme der Chrome-Erweiterung ist kein Video.
 
 ## CRM Dynamics 365 Sales: Befund und Idee lesende Anbindung festgehalten (Auftrag Ingo „notiere das alles in md“), 2026-11-03
 

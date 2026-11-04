@@ -6,7 +6,9 @@ Stand: 2026-11-04 (Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Re
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Aktueller Produktivstand des HR-Cockpits: Commit `ede56b6`, deployed am 2026-10-22 um 15:48 (Abschnitt 8.8).
+Aktueller Produktivstand des HR-Cockpits: Commit `b65f059`, deployed am 2026-11-04 um 09:20 (Abschnitte 8.10 und 9);
+Rexx-Dateien seit 2026-11-04 09:30 vom selben Tag (8.2).
+*(ueberholt am 2026-11-04: hier stand `ede56b6` vom 2026-10-22 15:48, Abschnitt 8.8)*
 *(ueberholt am 2026-10-29: hier stand `5ae7f31` vom 2026-09-28 11:25, siehe `docs/rag/DEPLOYMENT.md`)*
 Historie: deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit `9435a5d`,
 Gesamtsuite `438/438` gruen.
@@ -224,6 +226,14 @@ Stand der Dateien in `hrdata` am 2026-09-28: die Rexx-Exporte vom **08.07.2026**
 `HR_KPI_EXPORT.xlsx` vom **26.05.2026**. Das Cockpit zeigt also den Stand von Juli. Neue
 Mitarbeitende seit Mai haben keinen SAP-Beschaeftigungsgrad und laufen ueber die Sollzeit.
 *(SAP-Teil ueberholt am 2026-10-01: `HR_KPI_Export.xlsx` wird taeglich ueber `HrKpiSet` geschrieben, Abschnitt 8.6; die Rexx-Dateien sind weiter vom 08.07.)*
+*Erledigt 2026-11-04 09:30 (Auftrag Ingo „neueste Files nutzen, nahtlos mit alten verbinden“):* die vier Rexx-Dateien
+in `hrdata` durch Ingos Exporte vom 04.11. ersetzt, die alten vom 08.07. liegen in `hrdata\archiv_rexx_2026-07-08`.
+Vorher verglichen (nur Kopfzeilen und Zaehlwerte): Spaltenkoepfe identisch; Saldi, Kommen/Gehen und Absenzen 265 statt 270
+Zeilen (Stichtagsstand); Austritte 128 statt 113, gleicher Beginn 30.11.2023, neu bis 09.10.2026. Die einzige nur im alten
+Bestand stehende Austrittszeile (24.04.2026, ohne Austrittsart) gehoert zu einer Person, die laut neuem Saldi-Export aktiv
+ist; der neue Export ersetzt den alten deshalb ohne Zusammenfuehren. Absenzfaelle in #744 bis 06.11.2026 (geplantes Ende
+einer laufenden Krankmeldung; gezaehlt wird nur bis heute).
+Ab naechster Woche soll die Rexx-Schnittstelle die Dateien liefern (Sitzung Rexx Hub, 8.9).
 
 ### 8.3 Offene Wuensche und Faeden aus der Mailhistorie (gesichtet 2026-09-29)
 
@@ -473,6 +483,12 @@ gegen die Abschnitte 3, 4 und 8. **Korrekt:** Feiertagskalender ZH und Ostern, 8
   ueber zwoelf Monate gegen das ganze Vorjahr; das Delta ist bis Dezember fast zwangslaeufig negativ.
 - **Uebersichtskachel bei Von/Bis:** heisst „Fluktuation 2026“, zeigt aber z. B. Q3-Austritte durch den Headcount
   Januar bis September.
+- **Nachtrag 2026-11-04 beim Pruefen der neuen Rexx-Exporte:** (a) Der Leser erkennt die echte Spalte
+  „Ø tägliche Sollarbeitszeit (Woche)“ nicht (Aliase nur „O taegliche …“ und kaputte Umlaut-Varianten; mit einer
+  Wegwerfprobe im eigenen Worktree belegt). Eine aktive Person ohne SAP-Beschaeftigungsgrad, die die Zeitdatei findet,
+  faellt dadurch als „Reminderprofil“ aus allen Kennzahlen. Zudem ist der Wert Wochenstunden / 7 (5,71 bei 40 h); als FTE
+  gelesen ergaebe er 0,71 statt 1. (b) Gezaehlt wird nur „Personal Status = Aktiv“; im Export vom 04.11. fehlen dadurch
+  9 „Vertrag endend“ und 1 „Langzeitkrank“ in Headcount, FTE und Absenzen. Beides nicht geaendert, Entscheid Ingo offen.
 - Kleinigkeiten: Kachel „Krankheitstage“ kennt nur rot, kein gelb; aktive Befristete zaehlen im Headcount (Typ nur aus
   dem Stellentext); 0290 Unfall zaehlt nicht als Krankheit; „Ferien bezogen = Anspruch − Rest − ausstehend“ ungeprueft
   gegen die Rexx-Logik; laufende Fluktuationswerte stehen auf 0, solange die Rexx-Dateien alt sind (8.2).
@@ -507,7 +523,8 @@ Grenzen: aktive Personen zaehlen rueckwirkend in ihrer heutigen Abteilung; Ferie
 ob ein Fit-&-Wohl-Gespraech stattfand, kennt das Cockpit nicht (Ruecklauf aus 8.3 nicht gebaut); der Simulator ist
 eine Spielwiese.
 
-Stand 2026-11-04: committet, Tests gruen, **nicht deployed** und noch nicht im Browser gesehen.
+*Ueberholt am 2026-11-04 09:20:* ~~committet, Tests gruen, nicht deployed~~. **Produktiv seit 2026-11-04 09:20**
+(`b65f059`, `docs/rag/DEPLOYMENT.md`); Sichtpruefung im Browser offen (HR-Login).
 
 ## Querverweise
 

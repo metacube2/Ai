@@ -1,11 +1,14 @@
 # RAG HR KPI
 
-Stand: 2026-11-04 (Formelpruefung, drei Korrekturen, Reiter Interaktiv); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-04 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
 
-- **2026-11-04: Formeln geprueft, drei Rechenfehler behoben, neuer Reiter „Interaktiv“** (committet, Tests gruen,
-  **nicht deployed**). Krankenquote-Nenner je Person erst ab Eintritt, Quote je Person mit Pensum, Prognose rechnet ein
+- **2026-11-04 09:30: Rexx-Dateien in `hrdata` aktuell** (Ingos Exporte vom 04.11., alte vom 08.07. in
+  `hrdata\archiv_rexx_2026-07-08`; Austritte 30.11.2023 bis 09.10.2026). Ab naechster Woche soll die Rexx-Schnittstelle
+  liefern. Offen: Sollzeit-Spalte „Ø tägliche …“ wird nicht erkannt, nur Status „Aktiv“ zaehlt (`docs/HR_KPI.md` 8.10).
+- **2026-11-04: Formeln geprueft, drei Rechenfehler behoben, neuer Reiter „Interaktiv“** (*produktiv seit 09:20, `b65f059`;
+  ueberholt: „nicht deployed“*). Krankenquote-Nenner je Person erst ab Eintritt, Quote je Person mit Pensum, Prognose rechnet ein
   laufendes Quartal vorher auf die volle Laenge hoch (vorher am 04.11. rund Faktor 2,6 zu tief). Offen fuer Entscheid:
   61-Tage-Regel je Fall statt Summe im Filterzeitraum (SAP 0260/0270), Vorjahresvergleich im laufenden Jahr, Beschriftung
   der Uebersichtskachel bei Von/Bis. Reiter Interaktiv mit acht animierten Ansichten (Kuendigungen im Zeitraffer,
