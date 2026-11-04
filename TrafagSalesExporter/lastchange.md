@@ -25,7 +25,7 @@ Stand: 2026-11-04
   Unfall 0290 in Quote, Krankheitskalender und Fit &amp; Wohl, Kachel „Quote ohne Langzeit“, Gelb auf der Uebersichtskachel,
   Vorjahresvergleich gleicher Zeitraum, Von/Bis-Kachel mit Spanne und Headcount ueber die Spanne. Sechs neue Tests, Suite
   1386/1386, Probe mit echten Daten. Neue Frage an HR: Kontrollwerte 2025 passen nicht zum Rexx-Export. Handbuch, Router,
-  rag, LEARNINGS, Wochen_Todo 149, Status_kurz.
+  rag, LEARNINGS, Wochen_Todo 149, Status_kurz. **Produktiv seit 10:21** (`69a63b6`, Delta vorher geprueft).
 
 
 ## CRM Dynamics 365 Sales: Befund und Idee lesende Anbindung festgehalten (Auftrag Ingo „notiere das alles in md“), 2026-11-03

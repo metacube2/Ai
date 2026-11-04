@@ -6,8 +6,8 @@ Stand: 2026-11-04 (Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Re
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Aktueller Produktivstand des HR-Cockpits: Commit `cfe2631`, deployed am 2026-11-04 um 09:57 (Abschnitte 8.10, 8.11 und 9;
-davor `b65f059` um 09:20);
+Aktueller Produktivstand des HR-Cockpits: Commit `69a63b6`, deployed am 2026-11-04 um 10:21 (Abschnitte 8.10 bis 8.12 und 9;
+davor `cfe2631` um 09:57 und `b65f059` um 09:20);
 Rexx-Dateien seit 2026-11-04 09:30 vom selben Tag (8.2).
 *(ueberholt am 2026-11-04: hier stand `ede56b6` vom 2026-10-22 15:48, Abschnitt 8.8)*
 *(ueberholt am 2026-10-29: hier stand `5ae7f31` vom 2026-09-28 11:25, siehe `docs/rag/DEPLOYMENT.md`)*
@@ -539,7 +539,8 @@ Unfalltagen), ohne Langzeit 2,2 %, 7 Langzeitkranke, Krankheit lang 112 Tage sta
 **Neue Frage an HR:** Der Rexx-Export vom 04.11. hat fuer 2025 nur 49 Austritte (6 „Kündigung AN“, davon 3 Festangestellte;
 24 „Kündigung AG“). Die „Kontrollwerte 2025“ in Abschnitt 3 (104 Austritte, 42 AN-Kuendigungen, 33 relevant) passen
 dazu nicht; sie stammen aus einer aelteren oder anders abgegrenzten Datei. Offen bleiben ausserdem: aktive Befristete im
-Headcount, ob 0210/0220/0280 Krankheit sind, die Formel „Ferien bezogen“. Suite 1386/1386.
+Headcount, ob 0210/0220/0280 Krankheit sind, die Formel „Ferien bezogen“. Suite 1386/1386. **Produktiv seit 2026-11-04
+10:21** (`69a63b6`, `docs/rag/DEPLOYMENT.md`).
 
 ## 9. Reiter Interaktiv (2026-11-04)
 
