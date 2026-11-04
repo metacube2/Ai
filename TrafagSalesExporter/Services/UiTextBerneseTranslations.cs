@@ -11,6 +11,9 @@ internal static class UiTextBerneseTranslations
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             // HR-Cockpit Interaktiv 2026-11-04
+            ["Die jüngsten Ferien in SAP beginnen am"] = "Di jüngschte Ferie im SAP fö a am",
+            ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Nöiere Ferie chöme ersch mit em Rexx-Import vo HR i ds SAP u fähle hie bis denn.",
+            // HR-Cockpit Interaktiv 2026-11-04
             ["Austrittsfluss"] = "Ustrittsfluss",
             ["Keine Austritte in der Auswahl."] = "Kei Ustritte i dr Uswau.",
             ["Breite der Ströme = Zahl der Personen. Links alle Austritte der Auswahl (Filter oben, auch Datum), Mitte der Grund, wie ihn das Cockpit für die Fluktuation einordnet, rechts die Verweildauer bis zum Austritt. Klick auf einen Knoten zeigt nur seine Ströme."] = "Breiti vo de Ström = Zau vo de Persone. Links aui Ustritte vo dr Uswau (Filter obe, ou Datum), i dr Mitti dr Grund, wi ne ds Cockpit für d Fluktuation yordnet, rächts d Verwyldouer bis zum Ustritt. E Klick uf e Chnote zeigt nume sini Ström.",

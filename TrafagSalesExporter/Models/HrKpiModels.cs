@@ -224,6 +224,12 @@ public sealed class HrAbsenceRow
     public bool IstLangzeitkrank { get; set; }
     // 8,0 h, fuer Kader (Rexx „Leitung j/n“ = ja) 8,1 h; siehe HrKpiDashboardBuilder.HoursPerWorkdayFor.
     public decimal StundenProArbeitstag { get; set; } = 8.0m;
+    // Rexx #744 „Krankheit angetreten (Zeitraum)“ und „Krank nicht buchbar angetreten (Zeitraum)“: Zeitraum des juengsten
+    // Falls je Person; dient seit 2026-11-04 nur dazu, in SAP noch fehlende juengste Krankheitsfaelle zu ergaenzen.
+    public string RexxKrankheitZeitraum { get; set; } = string.Empty;
+    public string RexxKrankNichtBuchbarZeitraum { get; set; } = string.Empty;
+    // Herkunft der Zeile: true, wenn sie ein aus Rexx ergaenzter Krankheitsfall ist (SAP hatte ihn noch nicht).
+    public bool AusRexxErgaenzt { get; set; }
 }
 
 public sealed class HrLeaverRow

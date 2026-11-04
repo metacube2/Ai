@@ -15,6 +15,10 @@ Stand: 2026-11-04
   mit Datenverantwortung und Shopfloor-Startseite (`docs/rag/DEPLOYMENT.md`). Um 09:30 Rexx-Dateien in `hrdata` durch
   Ingos Exporte vom 04.11. ersetzt (alte archiviert, `docs/HR_KPI.md` 8.2); dabei zwei offene Befunde (Sollzeit-Spalte
   nicht erkannt, nur Status „Aktiv“), 8.10. LEARNINGS: GIF-Aufnahme der Chrome-Erweiterung ist kein Video.
+- Danach Uebergang bis zur Rexx-Schnittstelle (`docs/HR_KPI.md` 8.11, Auftrag Ingo „das Aktuellere nehmen“): Status
+  „Vertrag endend“/„Langzeitkrank“ zaehlen, Sollzeit-Spalte „Ø tägliche …“ erkannt (Vollzeit = FTE 1,0), juengste
+  Rexx-Krankmeldungen ergaenzen SAP (`BuildRexxGapSicknessRows`, am 04.11. 34 Faelle), SAP-Stand bei Ferien/Kompensation/
+  Militaer sichtbar. Vier neue Tests, Suite 1381/1381, Probe gegen echte Serverdateien. Handbuch, Router, rag, LEARNINGS.
 
 ## CRM Dynamics 365 Sales: Befund und Idee lesende Anbindung festgehalten (Auftrag Ingo „notiere das alles in md“), 2026-11-03
 

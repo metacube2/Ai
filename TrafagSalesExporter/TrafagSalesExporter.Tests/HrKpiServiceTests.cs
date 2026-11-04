@@ -836,6 +836,90 @@ public sealed class HrKpiServiceTests : IDisposable
             HrKpiInteractive.SimulatorBase(glz.TimelineEmployees, glz.TimelineLeavers, glz.AnchorDate).HeadcountNow);
     }
 
+    [Fact]
+    public async Task BuildAsync_Zaehlt_Vertrag_Endend_Und_Langzeitkrank_Als_Angestellt()
+    {
+        // Export 04.11.2026: 9 „Vertrag endend“ und 1 „Langzeitkrank“ fielen bisher aus allen Kennzahlen.
+        RewriteEmployeeRows(
+        [
+            [1001, "Alpha, Anna", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2020, 1, 1), "Langzeitkrank", "0:00", 25, 8, 2, 100000, "CHF"],
+            [1002, "Beta, Bruno", "Org B", "200 / Org B", "Engineer", "n", new DateTime(2024, 2, 1), "Vertrag endend", "0:00", 25, 4, 1, 90000, "CHF"],
+            [1004, "Inactive, Ivan", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2021, 1, 1), "Inaktiv", "0:00", 25, 0, 0, 65000, "CHF"]
+        ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        Assert.Equal([1001, 1002], result.Employees.Select(x => x.Personalnummer!.Value).Order().ToArray());
+    }
+
+    [Fact]
+    public async Task BuildAsync_Erkennt_Die_Echte_Rexx_Sollzeitspalte()
+    {
+        // Rexx schreibt „Ø tägliche Sollarbeitszeit (Woche)“; bis 2026-11-04 nicht erkannt, Fiona (ohne SAP-Zeile) fiel als Reminderprofil heraus.
+        WriteWorkbook(Path.Combine(_folder, "Exportkommengehen.xlsx"),
+            ["Nachname, Vorname (Link Personal)", "Geburtsdatum", "Arbeitszeitmodell", "Ø tägliche Sollarbeitszeit (Woche)"],
+            [
+                ["Alpha, Anna", new DateTime(1990, 1, 1), "Vollzeit", 5.71],
+                ["Beta, Bruno", new DateTime(1991, 1, 1), "Teilzeit", 2.86],
+                ["Fallback, Fiona", new DateTime(1992, 1, 1), "Teilzeit", 4.0],
+                ["NoNumber, Nora", new DateTime(1993, 1, 1), "Vollzeit", 5.71]
+            ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var fiona = Assert.Single(result.Employees, x => x.Personalnummer == 1003);
+        Assert.Equal(0.5m, fiona.Fte);
+        // Vollzeit ohne SAP-Zeile ist 1,0, nicht 5,71 / 8.
+        Assert.Equal(1m, Assert.Single(result.Employees, x => x.NameVoll == "NoNumber, Nora").Fte);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Ergaenzt_Juengste_Rexx_Krankmeldung_Die_In_SAP_Fehlt()
+    {
+        WriteWorkbook(Path.Combine(_folder, "Abwesenheitinstunden.xlsx"),
+            [
+                "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation", "Stelle", "Personal Status",
+                "Krankheit angetreten (Stunden Ind.)", "Krank nicht buchbar angetreten (Stunden Ind.)", "Krankheit angetreten (Zeitraum)"
+            ],
+            [
+                // Anna: juengster Fall steht in SAP; Bruno: Fall vom 20. bis 24.10.2025 fehlt in SAP; Fiona: alter Fall weit vor SAP-Stand.
+                ["00001001", "Alpha, Anna", "Org A", "Engineer", "Aktiv", 40.0, 0, "13.10.2025 - 17.10.2025"],
+                ["00001002", "Beta, Bruno", "Org B", "Engineer", "Aktiv", 20.0, 0, "20.10.2025 - 24.10.2025"],
+                ["00001003", "Fallback, Fiona", "Org B", "Engineer", "Aktiv", 8.0, 0, "03.03.2025"]
+            ]);
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001001", "0260", new(2025, 10, 13), new(2025, 10, 17), "000", 5m, 40m, 5m)],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+
+        // Bruno 50 %: 5 Arbeitstage x 8 h x 0,5 = 20 h = 2,5 Tage.
+        var bruno = Assert.Single(result.Absences, row => row.Personalnummer == 1002);
+        Assert.Equal(20m, bruno.KrankheitGesamtStd);
+        Assert.Equal(40m, Assert.Single(result.Absences, row => row.Personalnummer == 1001).KrankheitGesamtStd);
+        Assert.DoesNotContain(result.Absences, row => row.Personalnummer == 1003);
+        Assert.Contains(result.Notices, n => n.Contains("aus Rexx ergaenzt"));
+        Assert.Contains(result.AbsenceCases, c => c.Folgenummer == "REXX" && c.Personalnummer == "00001002");
+    }
+
+    [Fact]
+    public async Task BuildAsync_Nennt_Den_Stand_Der_SAP_Ferien()
+    {
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [
+                new("00001001", "0260", new(2025, 3, 3), new(2025, 3, 7), "000", 5m, 40m, 5m),
+                new("00001002", "0100", new(2025, 7, 7), new(2025, 7, 11), "000", 5m, 20m, 5m)
+            ],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+
+        Assert.Contains(result.Notices, n => n.StartsWith("SAP-Ferien beginnen zuletzt am 07.07.2025"));
+        var vacation = Assert.Single(result.TimeVacationMetrics, m => m.Label == "Ferien bezogen im Zeitraum");
+        Assert.Contains("juengster SAP-Fall beginnt 07.07.2025", vacation.Detail);
+        Assert.Equal("Warning", vacation.Severity);
+    }
+
     private static void AssertEveryVisibleBlockIsConsistent(HrKpiResult result, string because)
     {
         var employeeNumbers = result.Employees

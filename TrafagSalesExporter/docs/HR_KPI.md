@@ -488,10 +488,28 @@ gegen die Abschnitte 3, 4 und 8. **Korrekt:** Feiertagskalender ZH und Ostern, 8
   Wegwerfprobe im eigenen Worktree belegt). Eine aktive Person ohne SAP-Beschaeftigungsgrad, die die Zeitdatei findet,
   faellt dadurch als „Reminderprofil“ aus allen Kennzahlen. Zudem ist der Wert Wochenstunden / 7 (5,71 bei 40 h); als FTE
   gelesen ergaebe er 0,71 statt 1. (b) Gezaehlt wird nur „Personal Status = Aktiv“; im Export vom 04.11. fehlen dadurch
-  9 „Vertrag endend“ und 1 „Langzeitkrank“ in Headcount, FTE und Absenzen. Beides nicht geaendert, Entscheid Ingo offen.
+  9 „Vertrag endend“ und 1 „Langzeitkrank“ in Headcount, FTE und Absenzen. *Erledigt 2026-11-04, siehe 8.11.*
 - Kleinigkeiten: Kachel „Krankheitstage“ kennt nur rot, kein gelb; aktive Befristete zaehlen im Headcount (Typ nur aus
   dem Stellentext); 0290 Unfall zaehlt nicht als Krankheit; „Ferien bezogen = Anspruch − Rest − ausstehend“ ungeprueft
   gegen die Rexx-Logik; laufende Fluktuationswerte stehen auf 0, solange die Rexx-Dateien alt sind (8.2).
+
+### 8.11 Uebergang bis zur Rexx-Schnittstelle: das Aktuellere gewinnt (2026-11-04)
+
+Auftrag Ingo: „alles, was aktueller ist, vom File nehmen, so dass die Anzeige im Dashboard stimmt“. Anlass: SAP PA2001
+hinkt nach (Abruf 04.11. 06:22): Ferien 0100 juengster Beginn 27.07., Kompensation 0400 29.07., bezahlte Absenzen 0500
+24.07., Militaer 0600 20.07. (nur mit Sonjas Rexx-Import, 8.9); Krankheit 0260 bis 23.10. Im Rexx-Export vom selben Tag
+fehlten 70 der 202 juengsten Krankheitsfaelle in SAP, 33 davon aus Oktober/November (gemessen nur ueber Zaehlwerte).
+
+| Teil | Umsetzung |
+| --- | --- |
+| Status | „Aktiv“, „Vertrag endend“ und „Langzeitkrank“ zaehlen als angestellt (`ActiveStatuses`); vorher nur „Aktiv“ |
+| Sollzeit | Spalte „Ø tägliche Sollarbeitszeit (Woche)“ wird erkannt (`NormalizeHeader` liest „ø“ als „o“). Der Wert ist Wochenstunden / Planungstage (5,71 = 40 h / 7, 6,67 = 40 h / 6) und taugt nicht als FTE; ohne SAP-Grad gilt deshalb „Vollzeit“ = 1,0 vor der Sollzeit. Betroffen: 4 aktive Personen ohne SAP-Zeile, die bisher als Reminderprofil ausfielen |
+| Krankheit | SAP je Fall plus der juengste Rexx-Fall je Person („Krankheit angetreten (Zeitraum)“, „Krank nicht buchbar angetreten (Zeitraum)“), wenn kein SAP-Krankheitsfall der Person ihn ueberschneidet und er hoechstens 30 Tage vor dem juengsten SAP-Fall oder spaeter beginnt (`BuildRexxGapSicknessRows`). Stunden = Arbeitstage ZH x 8,0/8,2 h x Pensum. Aeltere Abweichungen bleiben (eher Artzuordnung). Auch im Reiter Interaktiv (Folgenummer `REXX`). Grenze: Rexx nennt je Person nur den juengsten Fall; hatte jemand im Rueckstandsfenster zwei Faelle, fehlt der fruehere |
+| Ferien, Kompensation, Militaer | aus diesen Rexx-Dateien nicht je Fall ergaenzbar (#744 hat keine Ferien). Kachel-Detail nennt den juengsten SAP-Fall, Kachel gelb ab 30 Tagen Rueckstand, Hinweis oben und Warnung in „Ferien am Stueck“. „Ferien bezogen“ aus Rexx-Saldi ist aktuell |
+
+Probe mit den echten Serverdateien (nur Kennzahlen): 260 Mitarbeitende, FTE 238,0; 949 SAP-Krankheitsfaelle plus 34 aus
+Rexx ergaenzt, 1'099,8 Krankheitstage, Krankenquote 2026 bis heute 2,3 %; Fluktuation YTD 4,8 % (11 relevante Austritte).
+Suite 1381/1381. Dauerhafte Loesung: Rexx-Schnittstelle (Sitzung naechste Woche) oder ein Rexx-Bericht je Fall (#742).
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

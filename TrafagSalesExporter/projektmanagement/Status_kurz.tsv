@@ -11,7 +11,7 @@ HR	Absenz-Ampel: bis 4,99 % gelb, ab 5 % rot	Bereit		2026-10-01
 HR	SAP-Daten täglich automatisch	Bereit		2026-10-01
 HR	Rexx-Berichte täglich automatisch (Upgreat nicht zuständig, Rexx betreut Trafag selbst)	Wartet	Sitzung Rexx Hub nächste Woche (Ingo, Alex, Artjom Yahno)	2026-11-03
 HR	Krankheitsarten bestätigen	Wartet	Sonja	2026-10-01
-HR	HR-Cockpit: Formeln geprüft, drei Rechenfehler behoben; neuer Reiter Interaktiv (Zeitraffer, Bindungskurve, Fit & Wohl, Ferien am Stück u. a.)	Bereit (produktiv 04.11.); Rexx-Daten vom 04.11.	Ingo: Sichtprüfung; Entscheid 61-Tage-Regel, Sollzeit-Spalte, Status „Vertrag endend“/„Langzeitkrank“	2026-11-04
+HR	HR-Cockpit: Formeln geprüft, drei Rechenfehler behoben; neuer Reiter Interaktiv (Zeitraffer, Bindungskurve, Fit & Wohl, Ferien am Stück u. a.)	Bereit (produktiv 04.11.); Rexx-Daten vom 04.11.; Rexx ergänzt SAP-Krankheit bis zur Schnittstelle	Ingo: Sichtprüfung; Entscheid 61-Tage-Regel; SAP-Ferien hängen an Sonjas Rexx-Import (Stand 27.07.)	2026-11-04
 Einkauf	Seite nach dem Auffrischen sofort da	Bereit		2026-10-01
 Einkauf	Lagerwert-Verlauf je Woche	Bereit		2026-09-28
 Einkauf	Texte Produktgruppen D1/D5	Bereit		2026-10-01

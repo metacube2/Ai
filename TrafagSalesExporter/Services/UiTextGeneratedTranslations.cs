@@ -9,6 +9,9 @@ internal static class UiTextGeneratedTranslations
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 // HR-Cockpit Interaktiv 2026-11-04
+                ["Die jüngsten Ferien in SAP beginnen am"] = "Las vacaciones más recientes en SAP empiezan el",
+                ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Las vacaciones más recientes solo llegan a SAP con la importación de Rexx por parte de RR. HH. y faltan aquí hasta entonces.",
+                // HR-Cockpit Interaktiv 2026-11-04
                 ["Austrittsfluss"] = "Flujo de bajas",
                 ["Keine Austritte in der Auswahl."] = "No hay bajas en la selección.",
                 ["Breite der Ströme = Zahl der Personen. Links alle Austritte der Auswahl (Filter oben, auch Datum), Mitte der Grund, wie ihn das Cockpit für die Fluktuation einordnet, rechts die Verweildauer bis zum Austritt. Klick auf einen Knoten zeigt nur seine Ströme."] = "Ancho de los flujos = número de personas. A la izquierda todas las bajas de la selección (filtros de arriba, también la fecha), en el centro el motivo según la clasificación del cockpit para la rotación, a la derecha la antigüedad hasta la baja. Un clic en un nodo muestra solo sus flujos.",
@@ -2773,6 +2776,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // HR-Cockpit Interaktiv 2026-11-04
+                ["Die jüngsten Ferien in SAP beginnen am"] = "Le ferie più recenti in SAP iniziano il",
+                ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Le ferie più recenti arrivano in SAP solo con l'importazione da Rexx da parte di HR e fino ad allora qui mancano.",
                 // HR-Cockpit Interaktiv 2026-11-04
                 ["Austrittsfluss"] = "Flusso delle uscite",
                 ["Keine Austritte in der Auswahl."] = "Nessuna uscita nella selezione.",
@@ -5539,6 +5545,9 @@ internal static class UiTextGeneratedTranslations
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 // HR-Cockpit Interaktiv 2026-11-04
+                ["Die jüngsten Ferien in SAP beginnen am"] = "SAP में सबसे नई छुट्टियाँ इस दिन शुरू होती हैं",
+                ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "नई छुट्टियाँ HR के Rexx आयात के साथ ही SAP में आती हैं और तब तक यहाँ नहीं दिखतीं।",
+                // HR-Cockpit Interaktiv 2026-11-04
                 ["Austrittsfluss"] = "निकास प्रवाह",
                 ["Keine Austritte in der Auswahl."] = "चयन में कोई निकास नहीं।",
                 ["Breite der Ströme = Zahl der Personen. Links alle Austritte der Auswahl (Filter oben, auch Datum), Mitte der Grund, wie ihn das Cockpit für die Fluktuation einordnet, rechts die Verweildauer bis zum Austritt. Klick auf einen Knoten zeigt nur seine Ströme."] = "प्रवाह की चौड़ाई = व्यक्तियों की संख्या। बाईं ओर चयन के सभी निकास (ऊपर के फ़िल्टर, तिथि भी), बीच में कारण, जैसा कॉकपिट टर्नओवर के लिए वर्गीकृत करता है, दाईं ओर निकास तक सेवा अवधि। किसी नोड पर क्लिक करने से केवल उसके प्रवाह दिखते हैं।",
@@ -8303,6 +8312,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // HR-Cockpit Interaktiv 2026-11-04
+                ["Die jüngsten Ferien in SAP beginnen am"] = "Pushimet më të fundit në SAP fillojnë më",
+                ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Pushimet më të reja vijnë në SAP vetëm me importin nga Rexx nga HR dhe deri atëherë mungojnë këtu.",
                 // HR-Cockpit Interaktiv 2026-11-04
                 ["Austrittsfluss"] = "Rrjedha e largimeve",
                 ["Keine Austritte in der Auswahl."] = "Nuk ka largime në përzgjedhje.",
@@ -11069,6 +11081,9 @@ internal static class UiTextGeneratedTranslations
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 // HR-Cockpit Interaktiv 2026-11-04
+                ["Die jüngsten Ferien in SAP beginnen am"] = "SAP'deki en son tatil şu tarihte başlıyor",
+                ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "Daha yeni tatiller SAP'ye ancak İK'nın Rexx içe aktarımıyla gelir ve o zamana kadar burada eksiktir.",
+                // HR-Cockpit Interaktiv 2026-11-04
                 ["Austrittsfluss"] = "Ayrılış akışı",
                 ["Keine Austritte in der Auswahl."] = "Seçimde ayrılış yok.",
                 ["Breite der Ströme = Zahl der Personen. Links alle Austritte der Auswahl (Filter oben, auch Datum), Mitte der Grund, wie ihn das Cockpit für die Fluktuation einordnet, rechts die Verweildauer bis zum Austritt. Klick auf einen Knoten zeigt nur seine Ströme."] = "Akışların genişliği = kişi sayısı. Solda seçimdeki tüm ayrılışlar (yukarıdaki filtreler, tarih dahil), ortada kokpitin devir oranı için sınıflandırdığı neden, sağda ayrılışa kadar kıdem. Bir düğüme tıklamak yalnızca onun akışlarını gösterir.",
@@ -13833,6 +13848,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // HR-Cockpit Interaktiv 2026-11-04
+                ["Die jüngsten Ferien in SAP beginnen am"] = "SAP ghIQ chu' law' tagh jaj",
+                ["Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin."] = "HR Rexx lo'DI' neH SAP pawlu' ghIQ chu'; pa' Daq Hutlh.",
                 // HR-Cockpit Interaktiv 2026-11-04
                 ["Austrittsfluss"] = "mej tlhegh",
                 ["Keine Austritte in der Auswahl."] = "wIvlu'pu'bogh Daqvo' mejbe' vay'.",

@@ -22,6 +22,13 @@
     }
     else
     {
+        @if (_latest is { } latest && (DateTime.Today - latest).TotalDays > 30)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="my-2">
+                @T("Die jüngsten Ferien in SAP beginnen am", "The latest vacation in SAP starts on") @latest.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture).
+                @T("Neuere Ferien kommen erst mit dem Rexx-Import von HR nach SAP und fehlen hier bis dahin.", "Newer vacation only reaches SAP with the Rexx import by HR and is missing here until then.")
+            </MudAlert>
+        }
         var reached = _people.Count(Reached);
         var share = _people.Count == 0 ? 0 : (double)reached / _people.Count;
         <div class="hri-headline">
@@ -79,7 +86,13 @@
         Load();
     }
 
-    private void Load() => _people = HrKpiInteractive.VacationBlocks(Result.AbsenceCases, Result.Employees, _year, DateTime.Today);
+    private DateTime? _latest;
+
+    private void Load()
+    {
+        _people = HrKpiInteractive.VacationBlocks(Result.AbsenceCases, Result.Employees, _year, DateTime.Today);
+        _latest = HrKpiDashboardBuilder.LatestCaseStart(Result.AbsenceCases, HrKpiDashboardBuilder.VacationAbsenceType, DateTime.Today);
+    }
 
     private decimal Length(HrVacationPerson p) => _includePlanned ? p.LongestPlanned : p.LongestTaken;
 

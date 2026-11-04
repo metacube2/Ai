@@ -13,6 +13,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | Kurzstand, Zugang, Datenordner | `docs/rag/HR_KPI.md` |
 | **Fachlogik, Datenquellen, Formeln, behobene Fehler, Grenzen** | `docs/HR_KPI.md` |
 | **Formelpruefung 04.11. (drei Korrekturen, offene Fachpunkte)** | `docs/HR_KPI.md` 8.10 |
+| **Uebergang bis Rexx-Schnittstelle: Rexx ergaenzt SAP-Krankheit, Status, Sollzeit-Spalte, SAP-Ferienstand** | `docs/HR_KPI.md` 8.11 |
 | **Reiter Interaktiv (Zeitraffer, Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Simulator)** | `docs/HR_KPI.md` 9 |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |

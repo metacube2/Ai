@@ -76,11 +76,27 @@ internal sealed class HrKpiDashboardBuilder
                               (!requestedPeriod.HasValue || requestedPeriod.Value.Start >= sapCoverageStart);
         if (sapAbsenceCases.Count > 0 && !sicknessFromSap)
             result.Notices.Add($"Die SAP-Absenzen reichen bis {sapCoverageStart:dd.MM.yyyy} zurueck; fuer den gewaehlten Zeitraum kommt die Krankheit deshalb aus der Rexx-Absenzdatei.");
+        List<HrAbsenceRow> rexxGapRows = [];
         if (sicknessFromSap)
         {
-            absences = BuildSapSicknessRows(sapAbsenceCases, employees);
-            result.Notices.Add($"Krankheit aus SAP PA2001: {absences.Count:N0} Faelle der Arten {string.Join(", ", SickAbsenceTypes)}, je Fall auf den Zeitraum zugeschnitten. Die Rexx-Absenzdatei wird dafuer nicht verwendet.");
+            var rexxLatest = absences
+                .Where(x => x.Personalnummer.HasValue)
+                .SelectMany(x => new[] { ParseRexxPeriod(x.RexxKrankheitZeitraum), ParseRexxPeriod(x.RexxKrankNichtBuchbarZeitraum) }
+                    .Where(p => p.HasValue)
+                    .Select(p => (x.Personalnummer!.Value, p!.Value.Von, p.Value.Bis)))
+                .ToList();
+            var sapSickRows = BuildSapSicknessRows(sapAbsenceCases, employees);
+            var gapRows = BuildRexxGapSicknessRows(rexxLatest, sapSickRows, employees);
+            foreach (var gap in gapRows)
+                gap.AusRexxErgaenzt = true;
+            // Kopie mit den vollen Von/Bis fuer den Reiter Interaktiv, bevor die Zeilen auf den Zeitraum zugeschnitten werden.
+            rexxGapRows = gapRows.Select(x => new HrAbsenceRow { Personalnummer = x.Personalnummer, VonDatum = x.VonDatum, BisDatum = x.BisDatum, KrankheitGesamtStd = x.KrankheitGesamtStd }).ToList();
+            absences = sapSickRows.Concat(gapRows).ToList();
+            result.Notices.Add($"Krankheit aus SAP PA2001: {sapSickRows.Count:N0} Faelle der Arten {string.Join(", ", SickAbsenceTypes)}, je Fall auf den Zeitraum zugeschnitten.");
+            if (gapRows.Count > 0)
+                result.Notices.Add($"{gapRows.Count:N0} juengste Krankmeldungen aus Rexx ergaenzt, die in SAP noch fehlen (SAP-Krankheit reicht bis {sapSickRows.Max(x => x.VonDatum):dd.MM.yyyy}); Stunden = Arbeitstage x Tagesstunden x Pensum. Uebergang bis zur Rexx-Schnittstelle.");
         }
+        AddSapStaleNotices(result, sapAbsenceCases);
 
         result.OrganisationOptions = employees
             .Select(x => x.Organisationseinheit)
@@ -204,6 +220,13 @@ internal sealed class HrKpiDashboardBuilder
         result.AbsenceCases = sapAbsenceCases
             .Where(x => int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) &&
                         filteredEmployeeNumbers.Contains(pernr))
+            .Concat(rexxGapRows
+                .Where(x => filteredEmployeeNumbers.Contains(x.Personalnummer!.Value))
+                .Select(x => new HrAbsenceSapCase(
+                    x.Personalnummer!.Value.ToString("00000000", CultureInfo.InvariantCulture), "0260",
+                    x.VonDatum!.Value, x.BisDatum!.Value, RexxGapSequence,
+                    ZurichWorkdayCalendar.CountWorkdays(x.VonDatum.Value, x.BisDatum!.Value), x.KrankheitGesamtStd,
+                    (x.BisDatum.Value - x.VonDatum.Value).Days + 1)))
             .ToList();
         result.AnchorDate = turnoverPeriod.AnchorDate;
 
@@ -288,7 +311,7 @@ internal sealed class HrKpiDashboardBuilder
                     ? percent.Value < 100
                     : string.Equals(arbeitzeitmodell, "Teilzeit", StringComparison.OrdinalIgnoreCase),
                 Dienstjahre = YearsSince(entryDate),
-                IstAktiv = string.Equals(status, "Aktiv", StringComparison.OrdinalIgnoreCase),
+                IstAktiv = IsActiveStatus(status),
                 Mitarbeitertyp = BuildEmployeeType(ReadString(row, headers, "Stelle", "Stelle_Rexx")),
                 StundenSaldo = balance,
                 GlzAmpel = BuildTrafficLight(balance),
@@ -316,6 +339,15 @@ internal sealed class HrKpiDashboardBuilder
         .ToList();
     }
 
+    /// <summary>
+    /// Rexx-Status, die als angestellt zaehlen. Bis 2026-11-04 nur „Aktiv“; im Export vom 04.11. fielen dadurch 9 Personen
+    /// mit „Vertrag endend“ und 1 „Langzeitkrank“ aus Headcount, FTE und Absenzen (docs/HR_KPI.md 8.10).
+    /// </summary>
+    internal static readonly string[] ActiveStatuses = ["Aktiv", "Vertrag endend", "Langzeitkrank"];
+
+    internal static bool IsActiveStatus(string? status)
+        => ActiveStatuses.Any(x => string.Equals((status ?? string.Empty).Trim(), x, StringComparison.OrdinalIgnoreCase));
+
     private Dictionary<string, TimeRow> LoadTimeRows(ImportContext context)
     {
         var rows = context.ReadRows(_dataSources.TimeFile, "Rexx #732 Kommen/Gehen", (row, headers) =>
@@ -325,7 +357,8 @@ internal sealed class HrKpiDashboardBuilder
                 NormalizeKey(name),
                 ReadDate(row, headers, "Geburtsdatum"),
                 ReadString(row, headers, "Arbeitszeitmodell"),
-                ReadDecimal(row, headers, "O taegliche Sollarbeitszeit (Woche)", "Ã˜ tÃ¤gliche Sollarbeitszeit (Woche)", "ÃƒËœ tÃƒÂ¤gliche Sollarbeitszeit (Woche)"));
+                // Die echte Rexx-Schreibweise „Ø tägliche …“ wurde bis 2026-11-04 nicht erkannt (NormalizeHeader liess „ø“ stehen).
+                ReadDecimal(row, headers, "Ø tägliche Sollarbeitszeit (Woche)", "O taegliche Sollarbeitszeit (Woche)", "Ã˜ tÃ¤gliche Sollarbeitszeit (Woche)", "ÃƒËœ tÃƒÂ¤gliche Sollarbeitszeit (Woche)"));
         });
 
         return rows
@@ -396,11 +429,75 @@ internal sealed class HrKpiDashboardBuilder
                 KrankheitstageKurz = Math.Round(kurz / stundenProTag, 1),
                 KrankheitstageLang = Math.Round(lang / stundenProTag, 1),
                 KrankenquoteMa = tage == 0 ? 0 : tage / 21m,
-                StundenProArbeitstag = stundenProTag
+                StundenProArbeitstag = stundenProTag,
+                RexxKrankheitZeitraum = ReadString(row, headers, "Krankheit angetreten (Zeitraum)"),
+                RexxKrankNichtBuchbarZeitraum = ReadString(row, headers, "Krank nicht buchbar angetreten (Zeitraum)")
             };
         })
-        .Where(x => string.Equals(x.Status, "Aktiv", StringComparison.OrdinalIgnoreCase))
+        .Where(x => IsActiveStatus(x.Status))
         .ToList();
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex RexxDate = new(@"(\d{2})\.(\d{2})\.(\d{4})");
+
+    /// <summary>„TT.MM.JJJJ“ oder „TT.MM.JJJJ - TT.MM.JJJJ“ aus den Rexx-Spalten „(Zeitraum)“ (juengster Fall der Person).</summary>
+    internal static (DateTime Von, DateTime Bis)? ParseRexxPeriod(string value)
+    {
+        var dates = RexxDate.Matches(value ?? string.Empty)
+            .Select(m => new DateTime(int.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture), int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture), int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)))
+            .ToList();
+        if (dates.Count == 0)
+            return null;
+        var von = dates.Min();
+        var bis = dates.Max();
+        return (von, bis);
+    }
+
+    /// <summary>
+    /// Uebergang bis zur Rexx-Schnittstelle (Wunsch Ingo 2026-11-04 „alles was aktueller ist vom File nehmen“): SAP PA2001
+    /// hinkt bei Krankheit hinterher (Export 04.11.: juengster SAP-Fall 23.10., 33 juengste Rexx-Faelle aus Oktober und
+    /// November fehlten). Rexx #744 nennt je Person den Zeitraum des juengsten Krankheitsfalls. Fehlt dieser Fall in SAP
+    /// (kein SAP-Krankheitsfall der Person ueberschneidet ihn) und beginnt er hoechstens 30 Tage vor dem juengsten SAP-Fall
+    /// oder spaeter, wird er ergaenzt: Stunden = Arbeitstage ZH x Tagesstunden x Pensum. Aeltere Abweichungen bleiben
+    /// unangetastet, weil dort eher die Artzuordnung abweicht als SAP nachhinkt.
+    /// </summary>
+    internal static List<HrAbsenceRow> BuildRexxGapSicknessRows(
+        IEnumerable<(int Personalnummer, DateTime Von, DateTime Bis)> rexxLatest,
+        IReadOnlyCollection<HrAbsenceRow> sapRows,
+        IReadOnlyCollection<HrKpiEmployeeRow> employees)
+    {
+        if (sapRows.Count == 0)
+            return [];
+        var frontier = sapRows.Max(x => x.VonDatum ?? DateTime.MinValue).AddDays(-30);
+        var byNumber = employees.Where(x => x.Personalnummer.HasValue).GroupBy(x => x.Personalnummer!.Value).ToDictionary(g => g.Key, g => g.First());
+        var sapByPerson = sapRows.Where(x => x.Personalnummer.HasValue).GroupBy(x => x.Personalnummer!.Value).ToDictionary(g => g.Key, g => g.ToList());
+        var rows = new List<HrAbsenceRow>();
+        foreach (var (pernr, von, bis) in rexxLatest.Distinct())
+        {
+            if (von < frontier || !byNumber.TryGetValue(pernr, out var employee))
+                continue;
+            if (sapByPerson.TryGetValue(pernr, out var own) && own.Any(x => x.VonDatum <= bis && (x.BisDatum ?? x.VonDatum) >= von))
+                continue;
+            var stundenProTag = HoursPerWorkdayFor(employee.Mitarbeiterkreis);
+            var pensum = employee.Fte > 0 ? employee.Fte : 1m;
+            var stunden = ZurichWorkdayCalendar.CountWorkdays(von, bis) * stundenProTag * pensum;
+            if (stunden <= 0)
+                continue;
+            rows.Add(new HrAbsenceRow
+            {
+                Personalnummer = pernr,
+                Name = employee.NameVoll,
+                Organisationseinheit = employee.Organisationseinheit,
+                Stelle = employee.Stelle,
+                Status = "Aktiv",
+                VonDatum = von,
+                BisDatum = bis,
+                KrankheitKurzStd = stunden,
+                KrankheitGesamtStd = stunden,
+                StundenProArbeitstag = stundenProTag
+            });
+        }
+        return rows;
     }
 
     /// <summary>Krankheitsarten in PA2001 (T554T, Mitarbeiterkreis 02). 0210 Arzt und Therapie zaehlt nicht; HR bestaetigen lassen.</summary>
@@ -409,6 +506,8 @@ internal sealed class HrKpiDashboardBuilder
     private const string SapAbsenceFileLabel = "SAP PA2001 Absenzen je Fall";
     internal const string CompensationAbsenceType = "0400";
     internal const string MilitaryAbsenceType = "0600";
+    /// <summary>Folgenummer der aus Rexx ergaenzten Krankheitsfaelle im Reiter Interaktiv (kein echter SAP-Satz).</summary>
+    internal const string RexxGapSequence = "REXX";
 
     private List<HrAbsenceSapCase> LoadSapAbsenceCases(ImportContext context)
         => context.ReadRows(_dataSources.SapAbsenceFile, SapAbsenceFileLabel, (row, headers) =>
@@ -561,13 +660,34 @@ internal sealed class HrKpiDashboardBuilder
                         employeeNumbers.Contains(pernr))
             .Sum(x => ProratedDays(x, period.Start, period.End));
 
-        var detail = $"SAP PA2001, {period.Label}";
+        // Seit 2026-11-04 mit Datenstand: diese Arten kommen nur mit dem Rexx-Import von HR nach SAP (docs/HR_KPI.md 8.9).
+        string Detail(string awart)
+        {
+            var latest = LatestCaseStart(cases, awart, DateTime.Today);
+            return $"Tage, SAP PA2001, {period.Label}" + (latest.HasValue ? $"; juengster SAP-Fall beginnt {latest:dd.MM.yyyy}" : string.Empty);
+        }
+        string Severity(string awart) => IsStale(cases, awart, DateTime.Today) ? "Warning" : "Normal";
         return
         [
-            new() { Label = "Ferien bezogen im Zeitraum", Value = Days(VacationAbsenceType).ToString("N1"), Detail = $"Tage, {detail}", Severity = "Normal" },
-            new() { Label = "Kompensation im Zeitraum", Value = Days(CompensationAbsenceType).ToString("N1"), Detail = $"Tage, {detail}", Severity = "Normal" },
-            new() { Label = "Militaer/Zivilschutz im Zeitraum", Value = Days(MilitaryAbsenceType).ToString("N1"), Detail = $"Tage, {detail}", Severity = "Normal" }
+            new() { Label = "Ferien bezogen im Zeitraum", Value = Days(VacationAbsenceType).ToString("N1"), Detail = Detail(VacationAbsenceType), Severity = Severity(VacationAbsenceType) },
+            new() { Label = "Kompensation im Zeitraum", Value = Days(CompensationAbsenceType).ToString("N1"), Detail = Detail(CompensationAbsenceType), Severity = Severity(CompensationAbsenceType) },
+            new() { Label = "Militaer/Zivilschutz im Zeitraum", Value = Days(MilitaryAbsenceType).ToString("N1"), Detail = Detail(MilitaryAbsenceType), Severity = Severity(MilitaryAbsenceType) }
         ];
+    }
+
+    /// <summary>Beginn des juengsten SAP-Falls einer Art bis heute (geplante Faelle in der Zukunft zaehlen nicht).</summary>
+    internal static DateTime? LatestCaseStart(IEnumerable<HrAbsenceSapCase> cases, string awart, DateTime today)
+        => cases.Where(x => x.Abwesenheitsart == awart && x.Von.Date <= today.Date).Select(x => (DateTime?)x.Von.Date).Max();
+
+    /// <summary>Gilt als veraltet, wenn der juengste Fall mehr als 30 Tage zurueckliegt.</summary>
+    internal static bool IsStale(IEnumerable<HrAbsenceSapCase> cases, string awart, DateTime today)
+        => LatestCaseStart(cases, awart, today) is { } latest && (today.Date - latest).TotalDays > 30;
+
+    private static void AddSapStaleNotices(HrKpiResult result, IReadOnlyCollection<HrAbsenceSapCase> cases)
+    {
+        if (cases.Count == 0 || !IsStale(cases, VacationAbsenceType, DateTime.Today))
+            return;
+        result.Notices.Add($"SAP-Ferien beginnen zuletzt am {LatestCaseStart(cases, VacationAbsenceType, DateTime.Today):dd.MM.yyyy}: Ferien, Kompensation und Militaer kommen nur mit dem Rexx-Import von HR nach SAP. „Ferien bezogen im Zeitraum“, Kompensation, Militaer und „Ferien am Stueck“ sind deshalb nur bis dahin vollstaendig; „Ferien bezogen“ aus Rexx (Saldi) ist aktuell.");
     }
 
     internal static decimal ProratedDays(HrAbsenceSapCase sapCase, DateTime? periodStart, DateTime? periodEnd)
@@ -1702,11 +1822,13 @@ internal sealed class HrKpiDashboardBuilder
         if (employmentPercent.HasValue && employmentPercent.Value > 0)
             return employmentPercent.Value / 100m;
 
-        if (averageHoursPerDay.HasValue && averageHoursPerDay.Value > 0)
-            return Math.Clamp(averageHoursPerDay.Value / hoursPerWorkday, 0.1m, 1.2m);
-
+        // Seit 2026-11-04 vor der Sollzeit: die echte Rexx-Spalte „Ø tägliche Sollarbeitszeit (Woche)“ ist Wochenstunden
+        // geteilt durch die Planungstage (5,71 = 40 h / 7, 6,67 = 40 h / 6) und taugt fuer eine Vollzeitstelle nicht als FTE.
         if (string.Equals(workingTimeModel, "Vollzeit", StringComparison.OrdinalIgnoreCase))
             return 1m;
+
+        if (averageHoursPerDay.HasValue && averageHoursPerDay.Value > 0)
+            return Math.Clamp(averageHoursPerDay.Value / hoursPerWorkday, 0.1m, 1.2m);
 
         if (string.Equals(workingTimeModel, "Teilzeit", StringComparison.OrdinalIgnoreCase))
             return 0.5m;
@@ -1960,7 +2082,10 @@ internal sealed class HrKpiDashboardBuilder
         var builder = new StringBuilder(normalized.Length);
         foreach (var ch in normalized.ToLowerInvariant())
         {
-            if (char.IsLetterOrDigit(ch))
+            // „ø“ zerfaellt nicht in Buchstabe plus Zeichen; als „o“ lesen, damit „Ø tägliche …“ zu „o tagliche …“ wird.
+            if (ch == 'ø')
+                builder.Append('o');
+            else if (char.IsLetterOrDigit(ch))
                 builder.Append(ch);
         }
         return builder.ToString();
