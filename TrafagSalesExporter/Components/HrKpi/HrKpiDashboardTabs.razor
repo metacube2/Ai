@@ -176,6 +176,11 @@
             </div>
         </MudTabPanel>
 
+        @* Reiter Interaktiv (Wunsch Ingo 2026-11-04): animierte Ansichten analog Verkauf Interaktiv, docs/HR_KPI.md Abschnitt 9. *@
+        <MudTabPanel Text="@T("Interaktiv", "Interactive")" Icon="@Icons.Material.Filled.AutoAwesome">
+            <TrafagSalesExporter.Components.HrKpi.Interactive.HrInteractive Result="Result" />
+        </MudTabPanel>
+
         <MudTabPanel Text="@T("Datenstatus", "Data status")" Icon="@Icons.Material.Filled.FactCheck">
             @PrintToolbar("hr-kpi-print-data-status", T("Datenstatus als PDF", "Data status as PDF"))
             <div id="hr-kpi-print-data-status" class="hr-print-section">

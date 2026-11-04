@@ -1025,6 +1025,32 @@ polyline.dir-line-0, polyline.dir-line-1, polyline.dir-line-2, polyline.dir-line
 .six-col:hover .wh3d-cube > i, .six-col-sel .wh3d-cube > i { filter: brightness(1.45); border-color: #fff; }
 @media (prefers-reduced-motion: reduce) { .six-stage, .six-flow, .six-arc, .six-late, .six-life-dot, .six-cal-cell, .six-net-dot, .six-land-spin, .six-col .wh3d-cube { animation: none; } }
 
+/* HR-Cockpit Interaktiv (2026-11-04): acht animierte Ansichten, nutzt die six-Klassen mit, eigene Ergaenzungen Praefix hri-. */
+.hri-tab { font: inherit; cursor: pointer; }
+.hri-tab:not(.six-tab-active) { background: transparent; }
+.hri-headline { display: flex; align-items: baseline; gap: 10px; margin: 8px 0 4px; }
+.hri-big { font: 700 30px system-ui, sans-serif; color: var(--mud-palette-primary); display: inline-block; }
+.hri-click { cursor: pointer; border-radius: 6px; }
+.hri-curve { fill: none; stroke-width: 2.5; stroke-dasharray: 1; stroke-dashoffset: 1; animation: hri-draw 1.6s ease-out forwards; transition: opacity 0.3s; }
+@keyframes hri-draw { to { stroke-dashoffset: 0; } }
+.hri-months { display: flex; align-items: flex-end; gap: 8px; height: 190px; padding: 8px 0; }
+.hri-month { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; height: 100%; }
+.hri-month-bar { width: 70%; max-width: 46px; border-radius: 6px 6px 0 0; background: #E57373; transform-origin: bottom; animation: hri-rise 0.7s ease-out both; transition: height 0.5s ease; }
+@keyframes hri-rise { from { transform: scaleY(0); } }
+.hri-month-value { font-size: 11px; }
+.hri-month-label { font-size: 12px; color: var(--mud-palette-text-secondary); }
+.hri-weekdays { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.hri-weekday { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.hri-weekday-label { width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hri-weekday-track { position: relative; flex: 1; height: 20px; background: rgba(127, 127, 127, 0.08); border-radius: 4px; }
+.hri-weekday-bar { display: block; height: 100%; border-radius: 4px; background: #4FC3F7; transform-origin: left; animation: hri-grow 0.8s ease-out both; transition: width 0.5s ease; }
+.hri-weekday-bar.hri-high { background: #EF5350; }
+.hri-weekday-bar.hri-good { background: #66BB6A; }
+@keyframes hri-grow { from { transform: scaleX(0); } }
+.hri-weekday-ref { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--mud-palette-text-secondary); }
+.hri-sim-bar { transition: y 0.4s ease, height 0.4s ease; }
+@media (prefers-reduced-motion: reduce) { .hri-curve, .hri-month-bar, .hri-weekday-bar { animation: none; stroke-dashoffset: 0; } }
+
 /* Benutzerhandbuch (2026-10-06): Kapitelnavigation und Lesetext. */
 .um-nav { position: sticky; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto; }
 .um-chapter { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; }

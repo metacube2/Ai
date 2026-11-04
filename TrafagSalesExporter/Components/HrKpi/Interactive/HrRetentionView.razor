@@ -1,0 +1,130 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Bindungskurve je Eintrittsjahr (Kaplan-Meier, 2026-11-04). Die Kurven zeichnen sich beim Oeffnen;
+   der Regler zeigt die Werte eines Monats. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Bindungskurve", "Retention curve")</MudText>
+        <MudSwitch T="bool" Value="_relevantOnly" ValueChanged="SetRelevant" Color="Color.Primary" Label="@T("Nur fluktuationsrelevante", "Turnover-relevant only")" />
+        <span class="ll-mono" style="min-width:90px">@T("Monat", "Month") @_cursor</span>
+        <MudSlider T="int" Min="0" Max="MaxMonths" Value="_cursor" ValueChanged="@((int v) => _cursor = v)" Style="max-width:260px" />
+    </div>
+    @if (_curves.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("Zu wenig Daten.", "Not enough data.")</MudText>
+    }
+    else
+    {
+        <svg viewBox="0 0 1000 420" class="six-galaxy" @key="_drawKey">
+            @foreach (var gy in YTicks())
+            {
+                <line x1="60" y1="@F(Y(gy))" x2="980" y2="@F(Y(gy))" class="six-grid" />
+                <g><text x="52" y="@F(Y(gy) + 4)" class="nw-axis" style="text-anchor:end">@F(gy * 100) %</text></g>
+            }
+            @foreach (var m in new[] { 0, 12, 24, 36, 48, 60 })
+            {
+                <line x1="@F(X(m))" y1="20" x2="@F(X(m))" y2="380" class="six-grid" />
+                <g><text x="@F(X(m))" y="398" class="nw-axis">@m</text></g>
+            }
+            <text x="520" y="416" class="nw-axis">@T("Monate seit Eintritt", "Months since entry")</text>
+            <line x1="@F(X(_cursor))" y1="20" x2="@F(X(_cursor))" y2="380" class="six-life-today" />
+            @foreach (var (c, i) in _curves.Select((c, i) => (c, i)))
+            {
+                var cohort = c.Cohort;
+                var dim = _selected.HasValue && _selected != cohort;
+                <polyline pathLength="1" points="@Points(c)" class="hri-curve @(dim ? "six-dim" : "")" style="stroke:@HrUi.CohortColor(i);animation-delay:@F(i * 0.25)s" />
+                @if (ShareAt(c, _cursor) is { } share)
+                {
+                    <circle cx="@F(X(_cursor))" cy="@F(Y(share))" r="5" class="six-life-dot" style="fill:@HrUi.CohortColor(i)"><title>@cohort · @T("Monat", "Month") @_cursor: @HrUi.Pct(share)</title></circle>
+                }
+            }
+        </svg>
+        <div class="ll-list" style="max-height:none">
+            <div class="ll-row ll-muted">
+                <span style="width:110px">@T("Eintrittsjahr", "Entry year")</span>
+                <span style="width:80px">@T("Eintritte", "Entries")</span>
+                <span style="width:80px">@T("Austritte", "Exits")</span>
+                <span style="width:120px">@T("nach 12 Monaten", "after 12 months")</span>
+                <span style="width:120px">@T("nach 24 Monaten", "after 24 months")</span>
+                <span class="ll-grow">@T("beim gewählten Monat", "at the selected month")</span>
+            </div>
+            @foreach (var (c, i) in _curves.Select((c, i) => (c, i)))
+            {
+                var cohort = c.Cohort;
+                <div class="ll-row hri-click @(_selected == cohort ? "six-rhythm-sel" : "")" @onclick="@(() => _selected = _selected == cohort ? null : cohort)">
+                    <span style="width:110px"><span class="six-dot-status" style="display:inline-block;background:@HrUi.CohortColor(i)"></span> @cohort</span>
+                    <span class="ll-mono" style="width:80px">@c.Size</span>
+                    <span class="ll-mono" style="width:80px">@c.Exits</span>
+                    <span class="ll-mono" style="width:120px">@Show(ShareAt(c, 12))</span>
+                    <span class="ll-mono" style="width:120px">@Show(ShareAt(c, 24))</span>
+                    <span class="ll-mono ll-grow">@Show(ShareAt(c, _cursor))</span>
+                </div>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Jede Linie ist ein Eintrittsjahrgang der Festangestellten: welcher Anteil nach so vielen Monaten noch bei Trafag ist (Kaplan-Meier, wer noch da ist, zählt bis heute mit). Ein steiler Abfall in den ersten zwölf Monaten zeigt Frühfluktuation. Mit dem Schalter zählen nur fluktuationsrelevante Austritte; Pensionierungen und befristete Verträge senken die Kurve dann nicht. Jahrgänge vor dem Beginn der Austrittsdatei fehlen, weil ihre frühen Austritte darin nicht stehen.", "Each line is an entry cohort of permanent staff: the share still at Trafag after that many months (Kaplan-Meier, people still employed count up to today). A steep drop in the first twelve months shows early turnover. With the switch only turnover-relevant exits count; retirements and fixed-term contracts then do not lower the curve. Cohorts before the start of the exit file are missing because their early exits are not in it.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private const int MaxMonths = 60;
+    private IReadOnlyList<HrRetentionCurve> _curves = [];
+    private bool _relevantOnly;
+    private int _cursor = 12;
+    private int? _selected;
+    private int _drawKey;
+    private double _yMin = 0.5;
+
+    protected override void OnParametersSet() => Load();
+
+    private void Load()
+    {
+        _curves = HrKpiInteractive.Retention(Result.Employees, Result.TimelineLeavers, Result.AnchorDate, _relevantOnly, maxMonths: MaxMonths);
+        var lowest = _curves.SelectMany(c => c.Points).Select(p => p.Share).DefaultIfEmpty(1).Min();
+        _yMin = Math.Max(0, Math.Floor((lowest - 0.05) * 10) / 10);
+        if (_yMin > 0.9) _yMin = 0.9;
+        _drawKey++;
+    }
+
+    private void SetRelevant(bool value)
+    {
+        _relevantOnly = value;
+        Load();
+    }
+
+    private IEnumerable<double> YTicks()
+    {
+        for (var v = _yMin; v <= 1.0001; v += 0.1)
+            yield return Math.Round(v, 1);
+    }
+
+    private static double X(int month) => 60 + 920.0 * month / MaxMonths;
+    private double Y(double share) => 380 - Math.Clamp((share - _yMin) / Math.Max(0.05, 1 - _yMin), 0, 1) * 360;
+
+    private string Points(HrRetentionCurve c)
+    {
+        // Treppenkurve: der Anteil gilt bis zum naechsten Monat.
+        var parts = new List<string>();
+        HrRetentionPoint? previous = null;
+        foreach (var p in c.Points)
+        {
+            if (previous is not null)
+                parts.Add(F(X(p.Month)) + " " + F(Y(previous.Share)));
+            parts.Add(F(X(p.Month)) + " " + F(Y(p.Share)));
+            previous = p;
+        }
+        return string.Join(" ", parts);
+    }
+
+    private static double? ShareAt(HrRetentionCurve c, int month)
+        => c.Points.Any(p => p.Month >= month) ? c.Points.Last(p => p.Month <= month).Share : null;
+
+    private static string Show(double? share) => share.HasValue ? HrUi.Pct(share.Value) : "–";
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

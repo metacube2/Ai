@@ -1,6 +1,17 @@
 # Last Change
 
-Stand: 2026-11-03
+Stand: 2026-11-04
+
+## HR-Cockpit: Formeln geprueft, drei Rechenfehler behoben, neuer Reiter Interaktiv (Auftrag Ingo), 2026-11-04
+
+- Pruefung aller Formeln (`docs/HR_KPI.md` 8.10). Behoben in `HrKpiDashboardBuilder`: Krankenquote-Nenner je Person erst ab
+  Eintritt (`AbsenceDenominator`, `FteWorkdays`), Quote je Person mit Pensum, Prognose rechnet ein laufendes Quartal vorher auf
+  die volle Laenge hoch (`QuarterProgress`, `ForecastFromQuarter`). Offen fuer Entscheid: 61-Tage-Regel, Vorjahresvergleich im
+  laufenden Jahr, Kachelbeschriftung bei Von/Bis.
+- Reiter Interaktiv im HR-Cockpit (`docs/HR_KPI.md` 9): `Services/HrKpi/HrKpiInteractive.cs`, `Components/HrKpi/Interactive/`
+  (acht Ansichten), CSS `hri-`, 66 Texte in sieben Sprachkatalogen, Tests `HrKpiInteractiveTests` und drei neue in
+  `HrKpiServiceTests`. Schulungsseite und Handbuch Kapitel HR nachgefuehrt. Router HR, rag/HR_KPI, Wochen_Todo 149,
+  Status_kurz. Nicht deployed.
 
 ## CRM Dynamics 365 Sales: Befund und Idee lesende Anbindung festgehalten (Auftrag Ingo „notiere das alles in md“), 2026-11-03
 

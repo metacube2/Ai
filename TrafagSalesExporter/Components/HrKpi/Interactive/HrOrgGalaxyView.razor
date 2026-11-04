@@ -1,0 +1,123 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@implements IDisposable
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Abteilungs-Galaxie im Gapminder-Stil (2026-11-04). Je Quartal: x Headcount, y Fluktuation der letzten
+   zwoelf Monate, Groesse Austritte. Blasen gleiten ueber CSS-Uebergaenge (six-bubble). *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Abteilungs-Galaxie", "Department galaxy")</MudText>
+        <MudIconButton Icon="@(_playing ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="TogglePlay" />
+        <span class="ll-mono" style="min-width:90px">@FrameLabel</span>
+        <MudSlider T="int" Min="0" Max="@(Math.Max(0, _frames.Count - 1))" Value="_frame" ValueChanged="@((int v) => _frame = v)" Style="max-width:260px" />
+        <MudSwitch T="bool" @bind-Value="_trails" Color="Color.Primary" Label="@T("Spuren", "Trails")" />
+    </div>
+    @if (_frames.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("Zu wenig Daten.", "Not enough data.")</MudText>
+    }
+    else
+    {
+        var f = _frames[_frame];
+        <svg viewBox="0 0 1000 560" class="six-galaxy">
+            @foreach (var gx in new[] { 0.0, 0.25, 0.5, 0.75, 1.0 })
+            {
+                <line x1="@F(60 + gx * 920)" y1="20" x2="@F(60 + gx * 920)" y2="510" class="six-grid" />
+                <g><text x="@F(60 + gx * 920)" y="526" class="nw-axis">@F(Math.Round(gx * _maxHc))</text></g>
+            }
+            @foreach (var gy in Ticks())
+            {
+                <line x1="60" y1="@F(Y(gy))" x2="980" y2="@F(Y(gy))" class="six-grid" />
+                <g><text x="52" y="@F(Y(gy) + 4)" class="nw-axis" style="text-anchor:end">@gy %</text></g>
+            }
+            <text x="520" y="550" class="nw-axis">@T("Headcount am Quartalsende (Festangestellte)", "Headcount at quarter end (permanent staff)")</text>
+            <text x="14" y="270" class="nw-axis" transform="rotate(-90 14 270)">@T("Fluktuation der letzten 12 Monate", "Turnover of the last 12 months")</text>
+            <text x="980" y="500" class="six-watermark" style="text-anchor:end">@HrUi.Quarter(f.QuarterEnd)</text>
+            @if (_trails && _selected is not null)
+            {
+                <polyline points="@Trail(_selected)" class="six-trail" />
+            }
+            @foreach (var p in f.Points.OrderByDescending(p => p.AllExits))
+            {
+                var org = p.Org;
+                var sel = _selected == org;
+                var dim = _selected is not null && !sel;
+                var rateText = p.RatePercent.HasValue ? p.RatePercent.Value.ToString("0.0", CultureInfo.InvariantCulture) + " %" : "–";
+                <circle @key="org" class="six-bubble @(sel ? "six-sel" : "") @(dim ? "six-dim" : "") @(p.RatePercent.HasValue ? "" : "six-nogrowth")"
+                        style="cx:@F(X(p.Headcount))px;cy:@F(Y(p.RatePercent ?? 0))px;r:@F(R(p.AllExits))px;fill:@HrUi.Color(org)"
+                        @onclick="@(() => _selected = sel ? null : org)">
+                    <title>@org: HC @p.Headcount · Ø @p.AverageHeadcount.ToString("0.0", CultureInfo.InvariantCulture) · @rateText · @p.RelevantExits / @p.AllExits</title>
+                </circle>
+                @if (sel || _labelled.Contains(org))
+                {
+                    <g><text x="@F(X(p.Headcount))" y="@F(Y(p.RatePercent ?? 0) - R(p.AllExits) - 4)" class="six-label">@Cut(org)</text></g>
+                }
+            }
+        </svg>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Jede Blase ist eine Abteilung. Rechts = mehr Festangestellte am Quartalsende, oben = höhere Fluktuation (fluktuationsrelevante Austritte der letzten zwölf Monate durch den mittleren Headcount), Grösse = alle Austritte der zwölf Monate. Blasse Blasen: das Zwölfmonatsfenster beginnt vor den Austrittsdaten. Aktive Personen zählen rückwirkend in ihrer heutigen Abteilung. ▶ spielt die Quartale ab; Klick hebt eine Abteilung hervor.", "Each bubble is a department. Right = more permanent staff at quarter end, up = higher turnover (turnover-relevant exits of the last twelve months divided by the average headcount), size = all exits of the twelve months. Pale bubbles: the twelve-month window starts before the exit data. Active people count retroactively in their current department. ▶ plays the quarters; click highlights a department.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private IReadOnlyList<HrGalaxyFrame> _frames = [];
+    private int _frame;
+    private bool _playing;
+    private bool _trails = true;
+    private string? _selected;
+    private HashSet<string> _labelled = [];
+    private double _maxHc = 10;
+    private double _maxRate = 20;
+    private CancellationTokenSource? _play;
+
+    protected override void OnParametersSet()
+    {
+        _frames = HrKpiInteractive.OrgGalaxy(Result.Employees, Result.TimelineLeavers, Result.AnchorDate);
+        _maxHc = Math.Max(10, _frames.SelectMany(f => f.Points).Select(p => (double)p.Headcount).DefaultIfEmpty(10).Max());
+        _maxHc = Math.Ceiling(_maxHc / 10) * 10;
+        _maxRate = Math.Max(20, _frames.SelectMany(f => f.Points).Select(p => p.RatePercent ?? 0).DefaultIfEmpty(20).Max());
+        _maxRate = Math.Ceiling(_maxRate / 10) * 10;
+        _labelled = _frames.Count == 0 ? [] : _frames[^1].Points.OrderByDescending(p => p.Headcount).Take(8).Select(p => p.Org).ToHashSet();
+        _frame = Math.Max(0, _frames.Count - 1);
+    }
+
+    private string FrameLabel => _frames.Count == 0 ? "" : HrUi.Quarter(_frames[_frame].QuarterEnd) + (_frames[_frame].Partial ? " · " + T("Quartal unvollständig", "Quarter incomplete") : "");
+
+    private IEnumerable<int> Ticks() => Enumerable.Range(0, 5).Select(i => (int)(_maxRate / 4 * i));
+
+    private double X(int headcount) => 60 + 920 * Math.Clamp(headcount / _maxHc, 0, 1);
+    private double Y(double rate) => 510 - Math.Clamp(rate / _maxRate, 0, 1) * 490;
+    private static double R(int exits) => 5 + 4 * Math.Sqrt(exits);
+    private static string Cut(string s) => s.Length > 24 ? s[..23] + "…" : s;
+
+    private string Trail(string org)
+        => string.Join(" ", _frames.Take(_frame + 1).Select(f => f.Points.FirstOrDefault(p => p.Org == org)).OfType<HrGalaxyPoint>()
+            .Select(p => F(X(p.Headcount)) + "," + F(Y(p.RatePercent ?? 0))));
+
+    private void TogglePlay()
+    {
+        if (_playing) { _play?.Cancel(); _playing = false; return; }
+        _playing = true;
+        if (_frame >= _frames.Count - 1) _frame = 0;
+        _play = new CancellationTokenSource();
+        var token = _play.Token;
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(1100));
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+            {
+                if (_frame >= _frames.Count - 1) { _playing = false; await InvokeAsync(StateHasChanged); return; }
+                _frame++;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, token).ContinueWith(_ => { }, TaskScheduler.Default);
+    }
+
+    public void Dispose() { _play?.Cancel(); _play?.Dispose(); }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

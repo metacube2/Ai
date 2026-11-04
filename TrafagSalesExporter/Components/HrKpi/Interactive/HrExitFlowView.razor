@@ -1,0 +1,154 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Austrittsfluss Austritte → Grund → Verweildauer (2026-11-04), dazu das Monatsmuster der Austritte.
+   Zeichnung wie Verkauf Interaktiv „Umsatzfluss“; Klick auf einen Knoten zeigt nur seine Ströme. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Austrittsfluss", "Exit flow")</MudText>
+        @if (_focus is not null)
+        {
+            <MudChip T="string" Color="Color.Primary" OnClose="@(_ => _focus = null)">@Label(_focus)</MudChip>
+        }
+    </div>
+    @if (_layout.Nodes.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("Keine Austritte in der Auswahl.", "No exits in the selection.")</MudText>
+    }
+    else
+    {
+        <svg viewBox="0 0 1000 @F(_height)" class="six-sankey">
+            @foreach (var l in _layout.Links)
+            {
+                var on = _focus is null || l.Link.From == _focus || l.Link.To == _focus;
+                <path d="@l.Path" class="six-flow @(on ? "" : "six-dim")" style="stroke:@ColumnColor(l.FromColumn, l.FromColumn == 0 ? l.Link.To : l.Link.From);stroke-width:@F(Math.Max(1, l.Width))px">
+                    <title>@Label(l.Link.From) → @Label(l.Link.To): @l.Link.Value.ToString("N0", CultureInfo.InvariantCulture)</title>
+                </path>
+            }
+            @foreach (var n in _layout.Nodes)
+            {
+                var id = n.Node.Id;
+                var on = _focus is null || id == _focus || Connected(id);
+                <g class="six-node-g @(on ? "" : "six-dim")" @onclick="@(() => _focus = _focus == id ? null : id)">
+                    <rect x="@F(n.X)" y="@F(n.Y)" width="14" height="@F(Math.Max(2, n.H))" rx="3" class="six-node" style="fill:@ColumnColor(n.Node.Column, id)"><title>@Label(id): @n.Node.Value.ToString("N0", CultureInfo.InvariantCulture)</title></rect>
+                    @if (n.H >= 9)
+                    {
+                        <g><text x="@F(n.Node.Column == 2 ? n.X - 6 : n.X + 20)" y="@F(n.Y + n.H / 2 + 4)" class="six-node-label" style="text-anchor:@(n.Node.Column == 2 ? "end" : "start")">@Label(id) · @n.Node.Value.ToString("N0", CultureInfo.InvariantCulture)</text></g>
+                    }
+                </g>
+            }
+        </svg>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Breite der Ströme = Zahl der Personen. Links alle Austritte der Auswahl (Filter oben, auch Datum), Mitte der Grund, wie ihn das Cockpit für die Fluktuation einordnet, rechts die Verweildauer bis zum Austritt. Klick auf einen Knoten zeigt nur seine Ströme.", "Width of the flows = number of people. Left all exits of the selection (filters above, including date), middle the reason as the cockpit classifies it for turnover, right the length of service until the exit. Click a node to show only its flows.")</MudText>
+    }
+
+    <MudText Typo="Typo.subtitle1" Class="mt-4"><b>@T("In welchem Monat wird ausgetreten?", "In which month do people leave?")</b></MudText>
+    <div class="hri-months">
+        @for (var m = 0; m < 12; m++)
+        {
+            var value = _pattern[m];
+            <div class="hri-month" title="@HrUi.Month(m + 1): @value">
+                <span class="hri-month-value ll-mono">@value</span>
+                <span class="hri-month-bar" style="height:@F(4 + 140.0 * value / _patternMax)px;animation-delay:@F(m * 0.06)s"></span>
+                <span class="hri-month-label">@HrUi.Month(m + 1)</span>
+            </div>
+        }
+    </div>
+    <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Fluktuationsrelevante Austritte aller Jahre je Kalendermonat (Struktur-Filter oben, ohne Datumsfilter). Häufungen am Quartals- oder Jahresende hängen meist an den Kündigungsfristen.", "Turnover-relevant exits of all years per calendar month (structure filters above, without the date filter). Peaks at quarter or year end usually follow notice periods.")</MudText>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private sealed record PlacedNode(SankeyNode Node, double X, double Y, double H);
+    private sealed record PlacedLink(SankeyLink Link, string Path, double Width, int FromColumn);
+    private (List<PlacedNode> Nodes, List<PlacedLink> Links) _layout = ([], []);
+    private IReadOnlyList<SankeyLink> _links = [];
+    private string? _focus;
+    private double _height = 420;
+    private int[] _pattern = new int[12];
+    private int _patternMax = 1;
+
+    protected override void OnParametersSet()
+    {
+        _pattern = HrKpiInteractive.ExitMonthPattern(Result.TimelineLeavers, relevantOnly: true);
+        _patternMax = Math.Max(1, _pattern.Max());
+        var (nodes, links) = HrKpiInteractive.ExitFlow(Result.Leavers);
+        _links = links;
+        _focus = null;
+        if (nodes.Count == 0)
+        {
+            _layout = ([], []);
+            return;
+        }
+        var total = Math.Max(1m, nodes.Where(n => n.Column == 0).Sum(n => n.Value));
+        var gap = 10.0;
+        var maxCount = Enumerable.Range(0, 3).Max(c => nodes.Count(n => n.Column == c));
+        var usable = 360 - gap * Math.Max(0, maxCount - 1);
+        var scale = usable / (double)total;
+        var placed = new List<PlacedNode>();
+        _height = 420;
+        foreach (var col in Enumerable.Range(0, 3))
+        {
+            var y = 20.0;
+            foreach (var n in nodes.Where(n => n.Column == col))
+            {
+                var h = (double)n.Value * scale;
+                placed.Add(new PlacedNode(n, col switch { 0 => 120, 1 => 493, _ => 866 }, y, h));
+                y += h + gap;
+            }
+            _height = Math.Max(_height, y + 20);
+        }
+        var byId = placed.ToDictionary(p => p.Node.Id);
+        var outOffset = placed.ToDictionary(p => p.Node.Id, p => p.Y);
+        var inOffset = placed.ToDictionary(p => p.Node.Id, p => p.Y);
+        var placedLinks = new List<PlacedLink>();
+        foreach (var l in links.OrderBy(l => byId[l.From].Y).ThenBy(l => byId[l.To].Y))
+        {
+            var a = byId[l.From];
+            var b = byId[l.To];
+            var w = (double)l.Value * scale;
+            var y1 = outOffset[l.From] + w / 2;
+            var y2 = inOffset[l.To] + w / 2;
+            outOffset[l.From] += w;
+            inOffset[l.To] += w;
+            var x1 = a.X + 14;
+            var x2 = b.X;
+            var mx = (x1 + x2) / 2;
+            placedLinks.Add(new PlacedLink(l, $"M{F(x1)},{F(y1)} C{F(mx)},{F(y1)} {F(mx)},{F(y2)} {F(x2)},{F(y2)}", w, a.Node.Column));
+        }
+        _layout = (placed, placedLinks);
+    }
+
+    private bool Connected(string id) => _focus is not null && _links.Any(l => (l.From == _focus && l.To == id) || (l.To == _focus && l.From == id));
+
+    private string Label(string id)
+    {
+        if (id == "a:all")
+            return T("Austritte", "Exits");
+        var raw = id.Length > 2 ? id[2..] : id;
+        if (!id.StartsWith("t:", StringComparison.Ordinal))
+            return raw;
+        return raw switch
+        {
+            HrKpiInteractive.TenureUnder1 => T("unter 1 Jahr", "under 1 year"),
+            HrKpiInteractive.Tenure1To3 => T("1 bis 3 Jahre", "1 to 3 years"),
+            HrKpiInteractive.Tenure3To5 => T("3 bis 5 Jahre", "3 to 5 years"),
+            HrKpiInteractive.Tenure5To10 => T("5 bis 10 Jahre", "5 to 10 years"),
+            HrKpiInteractive.TenureOver10 => T("über 10 Jahre", "over 10 years"),
+            _ => T("Verweildauer unbekannt", "Length of service unknown")
+        };
+    }
+
+    // Relevante Austritte rot, die uebrigen Gruende grau-blau; Verweildauer gruen.
+    private static string ColumnColor(int column, string id) => column switch
+    {
+        0 => id.EndsWith("Fluktuationsrelevant", StringComparison.Ordinal) ? "#E57373" : "#F08A4B",
+        1 => id.EndsWith("Fluktuationsrelevant", StringComparison.Ordinal) ? "#E57373" : "#90A4AE",
+        _ => "#81C784"
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

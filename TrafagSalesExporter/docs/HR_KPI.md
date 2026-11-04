@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9); davor 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-04 (Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -42,10 +42,11 @@ als fachliche Vorlage in nachvollziehbare C#-Logik uebertragen.
 | Service | `Services/HrKpiService.cs` |
 | Aufbau | `Services/HrKpi/HrKpiDashboardBuilder.cs` |
 | Arbeitstage | `Services/HrKpi/ZurichWorkdayCalendar.cs` |
-| Tests | `TrafagSalesExporter.Tests/HrKpiServiceTests.cs` |
+| Tests | `TrafagSalesExporter.Tests/HrKpiServiceTests.cs`, `HrKpiInteractiveTests.cs` |
+| Reiter Interaktiv (seit 2026-11-04, Abschnitt 9) | `Services/HrKpi/HrKpiInteractive.cs`, `Components/HrKpi/Interactive/` |
 
-Reiter: `Ueberblick`, `Fluktuation`, `Absenzen`, `Zeit / Ferien`, `Mitarbeitende`,
-`Datenstatus`.
+Reiter: `Ueberblick`, `Fluktuation`, `Ampel`, `Absenzen`, `Zeit / Ferien`, `Mitarbeitende`,
+`Interaktiv` (seit 2026-11-04), `Datenstatus`, `Anleitung`.
 
 Filter: Datenordner, Austrittsjahr, Von/Bis Austritt, Organisation, Eintrittsjahr,
 Suche Name/Personalnummer, Kostenstelle, Mitarbeitertyp, Fluktuation, GLZ-Ampel,
@@ -71,7 +72,7 @@ Grundlage `formeln.docx`. **Nenner ist immer Headcount der Festangestellten, nic
 | --- | --- |
 | Monat | Arbeitnehmerkuendigungen des Monats / Headcount des Monats |
 | Quartal | Arbeitnehmerkuendigungen des Quartals / durchschnittlicher Headcount des Quartals |
-| Prognose Jahr | aktuelle Quartals-Fluktuation **x 4** — bewusst nicht vom 01.01. hochgerechnet, von HR bestaetigt |
+| Prognose Jahr | aktuelle Quartals-Fluktuation **x 4** — bewusst nicht vom 01.01. hochgerechnet, von HR bestaetigt. *Seit 2026-11-04 (8.10):* ein laufendes Quartal wird vorher auf seine volle Laenge hochgerechnet |
 | Prognose gleitend (seit 2026-09-28) | relevante Austritte der letzten 12 Monate bis Stichtag / durchschnittlicher Headcount dieser 12 Monate |
 | Vorjahr (seit 2026-09-28) | relevante Austritte des ganzen Vorjahres / durchschnittlicher Headcount des Vorjahres, mit Abstand der beiden Prognosen in Prozentpunkten |
 | YTD | fluktuationsrelevante Kuendigungen seit 01.01. bis Stichtag / durchschnittlicher Headcount im bisherigen Jahr |
@@ -96,6 +97,9 @@ Die Arbeitstage im Nenner sind **nicht** einfach Montag bis Freitag. `ZurichWork
 zieht die neun gesetzlichen, den Sonntagen gleichgestellten Feiertage des Kantons Zuerich
 ab: Neujahr, Karfreitag, Ostermontag, 1. Mai, Auffahrt, Pfingstmontag, 1. August,
 Weihnachten, Stephanstag.
+
+Krankenquote = Krankheitstage / Summe der FTE-Arbeitstage. *Seit 2026-11-04 (8.10):* je Person zaehlen die
+Arbeitstage erst ab dem Eintritt, und die Quote je Person teilt durch die eigenen FTE-Arbeitstage (mit Pensum).
 
 Bewegliche Feiertage werden je Jahr aus dem gregorianischen Ostersonntag berechnet. Ein
 Feiertag reduziert den Nenner nur, wenn er auf einen Wochentag faellt. Berchtoldstag und
@@ -227,7 +231,8 @@ Beim Durchsehen der Mails und Teams-Chats mit Sonja Richter und Nadja Brandenber
 davon war bisher hier dokumentiert.
 
 **Gewuenscht (Sonja, Mail vom 2026-02-03, Bereich Zeit- und Absenzwesen), weder umgesetzt noch
-beauftragt:**
+beauftragt:** *(teilweise ueberholt am 2026-11-04: Ferien am Stueck und die Fit-&-Wohl-Ausloeser zeigt der Reiter
+Interaktiv, Abschnitt 9; der Ruecklauf „Gespraech erfolgt“ und der Uebertrag Restferien sind weiter offen)*
 
 | Wunsch | Inhalt |
 | --- | --- |
@@ -442,6 +447,63 @@ Leitplanken und offene Entscheide: `saptasks/rexx_schnittstelle/NOTES.md` Abschn
 #12699584** (eroeffnet 01.10., geschlossen 19.10., Antwort Ingo 20.10.); am 29.10. kam
 „WG: Angebot: AG36071 / Rexx Hub“. *Nachtrag 2026-11-03, Inhalte gelesen:* Upgreat schloss das Ticket mit „Unable to solve“, Rexx betreut Trafag selbst; Alex leitete am 29.10. Nadjas Hub-Angebot weiter (heute 8 Schnittstellen 11'200 EUR/Jahr, 4 weitere 5'600 EUR/Jahr, Hub 4'800 EUR/Jahr); Sonja fragte am 02.11., ob HR schon Live-Daten testen kann. Einzelheiten `saptasks/rexx_schnittstelle/NOTES.md` 11. *Nachtrag 03.11. nachmittags: Abschlussrunde (Rexx-Ansprechpartner Artjom Yahno), Sitzung Rexx Hub naechste Woche mit Alex und Artjom; Nadja und Sonja laut Alex nicht noetig.* *Der Stand in 8.3 („Antwort
 Ueli offen“) ist damit ueberholt (2026-11-03).*
+
+### 8.10 Pruefung aller Formeln, 2026-11-04: drei Rechenfehler behoben, drei fachliche Punkte offen
+
+Frage Ingo: „sind alle Formeln im HR-Dashboard korrekt?“ Geprueft wurde der Rechenkern `HrKpiDashboardBuilder.cs`
+gegen die Abschnitte 3, 4 und 8. **Korrekt:** Feiertagskalender ZH und Ostern, 8,0/8,2 h, Krankenquote-Zaehler
+(Teilzeit in Zaehler und Nenner gleich gewichtet), Fluktuation Monat/Quartal/YTD/gleitend/Vorjahr, Ampeln (Absenz
+3/5 %, GLZ 50/100 h, Restferien nach Quartal), anteiliger Zuschnitt der SAP-Faelle, Doppelfaelle ueber den Jahreswechsel.
+
+**Behoben** (Auftrag Ingo „zuerst beheben“, Tests in `HrKpiServiceTests` und `HrKpiInteractiveTests`):
+
+| # | Fehler | Wirkung bisher | Jetzt |
+| --- | --- | --- | --- |
+| 1 | Nenner der Krankenquote = Summe FTE x alle Arbeitstage des Zeitraums, ohne Eintrittsdatum | Wer im Juni eintrat, zaehlte ab 01.01. mit; in einer Ansicht 2025 auch alle Eintritte 2026. Quote zu tief, am staerksten bei vergangenen Jahren | `AbsenceDenominator`: je Person FTE x Arbeitstage ab Eintritt (`FteWorkdays`). Detail der Kachel nennt die FTE-Arbeitstage |
+| 2 | Quote je Person = Tage / Arbeitstage, ohne Pensum | Eine 50-%-Stelle, die den ganzen Zeitraum krank war, zeigte 50 % | `AggregateAbsencesByPerson` teilt durch die eigenen FTE-Arbeitstage (ab Eintritt) |
+| 3 | Prognose = Quartalsrate x 4 auch fuer ein angebrochenes Quartal | Am 04.11. nur 35 von 92 Tagen im Wert, Prognose rund Faktor 2,6 zu tief; am Quartalsanfang fast 0 | Vorgabe HR „x 4“ bleibt; ein laufendes Quartal wird vorher auf seine volle Laenge hochgerechnet (`QuarterProgress`, `ForecastFromQuarter`), HC Quartal nur bis zum Stichtagsmonat. Detail nennt „hochgerechnet aus n von m Tagen“ |
+
+**Offen, braucht Entscheid Ingo oder HR (nicht geaendert):**
+
+- **61-Tage-Regel:** gerechnet wird die Summe je Person im gefilterten Zeitraum, aus FTE-Stunden. In einer
+  Monatsansicht ist „Krankheit Lang“ deshalb immer 0, mehrere kurze Faelle koennen im Jahr „lang“ ergeben, eine
+  50-%-Stelle erreicht die Grenze erst nach rund 122 Arbeitstagen. Die Summenregel vom 2026-09-28 war noetig, weil Rexx
+  keine Faelle hatte; SAP unterscheidet selbst 0260 „bis 60 Tage“ und 0270 „groesser 60 Tage“.
+- **Vorjahresvergleich im laufenden Jahr** (`BuildPeriodComparisonMetrics`): Austritte bis heute durch den Headcount
+  ueber zwoelf Monate gegen das ganze Vorjahr; das Delta ist bis Dezember fast zwangslaeufig negativ.
+- **Uebersichtskachel bei Von/Bis:** heisst „Fluktuation 2026“, zeigt aber z. B. Q3-Austritte durch den Headcount
+  Januar bis September.
+- Kleinigkeiten: Kachel „Krankheitstage“ kennt nur rot, kein gelb; aktive Befristete zaehlen im Headcount (Typ nur aus
+  dem Stellentext); 0290 Unfall zaehlt nicht als Krankheit; „Ferien bezogen = Anspruch − Rest − ausstehend“ ungeprueft
+  gegen die Rexx-Logik; laufende Fluktuationswerte stehen auf 0, solange die Rexx-Dateien alt sind (8.2).
+
+## 9. Reiter Interaktiv (2026-11-04)
+
+Wunsch Ingo: „baue einen Interaktiv-Reiter analog verkauf/interaktiv, halt fuer HR und seine Anforderungen, z. B.
+animiert Kuendigungen, Verhalten“. Reiter „Interaktiv“ im HR-Cockpit (hinter dem HR-Login, nutzt die Filter der Seite),
+eigene Reiterleiste mit acht Ansichten. Rechnung `Services/HrKpi/HrKpiInteractive.cs` (Tests `HrKpiInteractiveTests`),
+Darstellung `Components/HrKpi/Interactive/*View.razor`, CSS `six-` (vom Verkauf) und `hri-`.
+
+| Ansicht | Was und wie |
+| --- | --- |
+| Kuendigungen im Zeitraffer | Abteilungen nach Austritten der letzten zwoelf Monate (gleitend, distinct je Person), je Monat ein Bild, hoechstens 60; Schalter nur fluktuationsrelevante; fester Massstab ueber alle Monate |
+| Austrittsfluss | Sankey Austritte der Auswahl → Grund (wie die Fluktuation einordnet) → Verweildauer (unter 1, 1–3, 3–5, 5–10, ueber 10 Jahre, unbekannt); darunter relevante Austritte je Kalendermonat ueber alle Jahre |
+| Abteilungs-Galaxie | 14 groesste Abteilungen je Quartal (12 Quartale): x Headcount Festangestellte am Quartalsende, y relevante Austritte 12 Monate / Mittel aus fuenf Quartalsend-Headcounts, Groesse alle Austritte; blass, wenn das Fenster vor den Austrittsdaten beginnt |
+| Bindungskurve | Kaplan-Meier je Eintrittsjahr (bis 6 Jahrgaenge, 60 Monate); Ereignis = Austritt, mit Schalter nur relevante (andere zensiert); Jahrgaenge vor Beginn der Austrittsdatei fehlen |
+| Krankheitskalender | krankgemeldete Personen je Arbeitstag ZH aus SAP-Krankheitsarten; Wochentag des Beginns kurzer Krankheiten (hoechstens 3 Arbeitstage), Bezug 20 % |
+| Fit & Wohl | Wunsch Sonja (8.3): Gespraech nach der 6. Absenz (Beginn im Jahr) oder 12 Krankheitstagen (ABWTG anteilig bis heute); Faelle ohne Arbeitstag dazwischen = eine Absenz; Datum = Beginn der ausloesenden Absenz; ▶ spielt das Jahr ab |
+| Ferien am Stueck | Wunsch Sonja (8.3): laengster Block aus Art 0100 ohne Arbeitstag dazwischen, mindestens 10 Ferientage; bezogen = Block bis heute vorbei, Schalter mit geplanten; Anteil je Abteilung und Liste ohne |
+| Was waere wenn | Regler Kuendigungen, sonstige Austritte, Eintritte je Monat (Vorschlag: Mittel der letzten 12 Monate); Headcount fortgeschrieben, Jahresfluktuation = (Ist + Regler x Restmonate) / Mittel der 12 Monats-Headcounts, gegen Vorjahr |
+
+Daten: `HrKpiResult.TimelineLeavers` (Austritte aller Jahre, nur Strukturfilter wie der Vorjahresvergleich),
+`AbsenceCases` (SAP-Faelle der gefilterten aktiven Personen), `AnchorDate` (Stichtag der Fluktuation).
+Fit & Wohl und Ferien zeigen Namen, in der Managementsicht nur die Personalnummer.
+
+Grenzen: aktive Personen zaehlen rueckwirkend in ihrer heutigen Abteilung; Ferien hinken mit Sonjas Rexx-Import (8.9);
+ob ein Fit-&-Wohl-Gespraech stattfand, kennt das Cockpit nicht (Ruecklauf aus 8.3 nicht gebaut); der Simulator ist
+eine Spielwiese.
+
+Stand 2026-11-04: committet, Tests gruen, **nicht deployed** und noch nicht im Browser gesehen.
 
 ## Querverweise
 

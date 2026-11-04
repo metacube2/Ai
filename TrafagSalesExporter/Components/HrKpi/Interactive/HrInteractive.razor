@@ -1,0 +1,60 @@
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+
+@* HR-Cockpit, Reiter Interaktiv (Wunsch Ingo 2026-11-04, „analog verkauf/interaktiv, fuer HR und seine Anforderungen“):
+   acht animierte Ansichten mit eigener Reiterleiste. Rechnung in Services/HrKpi/HrKpiInteractive.cs, Doku docs/HR_KPI.md Abschnitt 9. *@
+<div class="six-tabs">
+    @foreach (var v in Views)
+    {
+        var key = v.Key;
+        <button type="button" class="six-tab hri-tab @(_view == key ? "six-tab-active" : "")" @onclick="@(() => _view = key)">
+            <MudIcon Icon="@v.Icon" Size="Size.Small" /><span>@v.Label</span>
+        </button>
+    }
+</div>
+
+<div class="six-stage" @key="_view">
+    @switch (_view)
+    {
+        case ViewFlow: <HrExitFlowView Result="Result" /> break;
+        case ViewGalaxy: <HrOrgGalaxyView Result="Result" /> break;
+        case ViewRetention: <HrRetentionView Result="Result" /> break;
+        case ViewSick: <HrSickCalendarView Result="Result" /> break;
+        case ViewFitWohl: <HrFitWohlView Result="Result" /> break;
+        case ViewVacation: <HrVacationView Result="Result" /> break;
+        case ViewSimulator: <HrSimulatorView Result="Result" /> break;
+        default: <HrExitRaceView Result="Result" /> break;
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private const string ViewRace = "zeitraffer";
+    private const string ViewFlow = "fluss";
+    private const string ViewGalaxy = "galaxie";
+    private const string ViewRetention = "bindung";
+    private const string ViewSick = "krankheit";
+    private const string ViewFitWohl = "fitwohl";
+    private const string ViewVacation = "ferien";
+    private const string ViewSimulator = "simulator";
+
+    private string _view = ViewRace;
+
+    private sealed record ViewTab(string Key, string Icon, string Label);
+
+    private IReadOnlyList<ViewTab> Views =>
+    [
+        new(ViewRace, Icons.Material.Filled.Leaderboard, T("Kündigungen im Zeitraffer", "Resignations in time-lapse")),
+        new(ViewFlow, Icons.Material.Filled.AltRoute, T("Austrittsfluss", "Exit flow")),
+        new(ViewGalaxy, Icons.Material.Filled.BubbleChart, T("Abteilungs-Galaxie", "Department galaxy")),
+        new(ViewRetention, Icons.Material.Filled.ShowChart, T("Bindungskurve", "Retention curve")),
+        new(ViewSick, Icons.Material.Filled.CalendarMonth, T("Krankheitskalender", "Sickness calendar")),
+        new(ViewFitWohl, Icons.Material.Filled.Favorite, T("Fit & Wohl", "Fit & well")),
+        new(ViewVacation, Icons.Material.Filled.BeachAccess, T("Ferien am Stück", "Vacation in one block")),
+        new(ViewSimulator, Icons.Material.Filled.Tune, T("Was wäre wenn", "What if"))
+    ];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

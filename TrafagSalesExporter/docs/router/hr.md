@@ -1,6 +1,6 @@
 # Unterrouter HR
 
-Zurueck: `router.md`. Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP, Idee Z-Tabelle/Tagesjob); davor 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv), 2026-09-30.
+Zurueck: `router.md`. Stand: 2026-11-04 (Formelpruefung mit drei Korrekturen, Reiter Interaktiv); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Idee Z-Tabelle/Tagesjob), 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv), 2026-09-30.
 
 HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
@@ -12,6 +12,8 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | **Wie Rexx-Daten nach SAP kommen (EXPRIS-Schnittstelle `Z_HR_PA_REXX`, Sonja importiert von Hand), Felder nur SAP/beide/nur Rexx, Idee eigenes Programm mit Z-Tabelle als Tagesjob, Mails Upgreat-Ticket** | `saptasks/rexx_schnittstelle/NOTES.md`, Kurzfassung `docs/HR_KPI.md` 8.9 |
 | Kurzstand, Zugang, Datenordner | `docs/rag/HR_KPI.md` |
 | **Fachlogik, Datenquellen, Formeln, behobene Fehler, Grenzen** | `docs/HR_KPI.md` |
+| **Formelpruefung 04.11. (drei Korrekturen, offene Fachpunkte)** | `docs/HR_KPI.md` 8.10 |
+| **Reiter Interaktiv (Zeitraffer, Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Simulator)** | `docs/HR_KPI.md` 9 |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |
 
@@ -26,7 +28,8 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
   `(Zeitraum)`-Spalten nennen nur den juengsten Fall, die Stunden sind kumuliert. Bei einem
   Zeitraumfilter laesst sich der Zaehler nicht auf den Nenner eingrenzen; die Anzeige zeigt
   dann bewusst keine Prozentzahl und eine gelbe Ampel statt einer scheinbar genauen Quote.
-- **Der Fluktuations-Nenner ist Headcount der Festangestellten, nicht FTE; die Krankenquote rechnet dagegen mit FTE.**
+- **Der Fluktuations-Nenner ist Headcount der Festangestellten, nicht FTE; die Krankenquote rechnet dagegen mit FTE**,
+  seit 2026-11-04 je Person erst ab Eintritt (`docs/HR_KPI.md` 8.10).
 - **Kostenstelle, GLZ und Restferien filtern die Fluktuation NICHT**, weil diese Felder in
   der Austrittsdatei nicht stabil vorhanden sind. Das ist als Test gepinnt.
 - **Seit 2026-09-28 nach Vorgabe HR:** langzeitkrank ab 61 Krankheitstagen je Person,

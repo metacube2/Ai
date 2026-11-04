@@ -1,8 +1,16 @@
 # RAG HR KPI
 
-Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP); davor 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-04 (Formelpruefung, drei Korrekturen, Reiter Interaktiv); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
+
+- **2026-11-04: Formeln geprueft, drei Rechenfehler behoben, neuer Reiter „Interaktiv“** (committet, Tests gruen,
+  **nicht deployed**). Krankenquote-Nenner je Person erst ab Eintritt, Quote je Person mit Pensum, Prognose rechnet ein
+  laufendes Quartal vorher auf die volle Laenge hoch (vorher am 04.11. rund Faktor 2,6 zu tief). Offen fuer Entscheid:
+  61-Tage-Regel je Fall statt Summe im Filterzeitraum (SAP 0260/0270), Vorjahresvergleich im laufenden Jahr, Beschriftung
+  der Uebersichtskachel bei Von/Bis. Reiter Interaktiv mit acht animierten Ansichten (Kuendigungen im Zeitraffer,
+  Austrittsfluss, Abteilungs-Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Was waere wenn);
+  setzt die HR-Wuensche Fit & Wohl und Ferien am Stueck aus Sonjas Mail vom 03.02. als Ansicht um. `docs/HR_KPI.md` 8.10 und 9.
 
 - **2026-11-03: Rexx-Schnittstelle nach SAP gefunden (T76 lesend).** Eigenentwicklung der EXPRIS AG
   (Paket `Z_HR_PA_REXX`): Sonja Richter (`RIS`) importiert von Hand Stammdaten (`Z_HR_PA_REXX`),
@@ -38,7 +46,8 @@ Stand: 2026-11-03 (Rexx-Schnittstelle nach SAP); davor 2026-10-29 (Abschnittsnum
 
 - **2026-09-29, Mailhistorie gesichtet:** offene Wuensche von Sonja vom 2026-02-03 (Ferien am Stueck,
   Fit-&-Wohl nach 6. Absenz oder 12 Krankheitstagen, Uebertrag Restferien) und die spaeteren KPIs
-  (Stellenplan, Umfragen, Kununu, Time to hire, Lohnkosten) sind nicht umgesetzt. Rexx-Hub fuer den
+  (Stellenplan, Umfragen, Kununu, Time to hire, Lohnkosten) sind nicht umgesetzt *(teilweise ueberholt am 2026-11-04:
+  Ferien am Stueck und Fit-&-Wohl-Ausloeser zeigt der Reiter Interaktiv; Ruecklauf und Uebertrag offen)*. Rexx-Hub fuer den
   automatischen Export ist seit 2026-07-29 von Nadja beauftragt (4'800 EUR p. a.), Stand offen *(ueberholt am 2026-09-30:
   kein Rexx-Hub, Export ueber Upgreat, siehe oben)*. Mail
   an Sonja liegt als Entwurf, Punkt 2 fehlt. Details: `docs/HR_KPI.md` Abschnitt 8.3.

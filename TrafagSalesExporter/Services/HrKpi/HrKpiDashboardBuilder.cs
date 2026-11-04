@@ -135,7 +135,7 @@ internal sealed class HrKpiDashboardBuilder
         var absenceRowsWithoutDates = absences.Count(x => !x.VonDatum.HasValue && !x.BisDatum.HasValue);
         absences = ApplyAbsenceFilters(absences, normalizedOptions, filteredEmployeeNumbers).ToList();
         // Absenzen pro Person zusammenfassen, damit Ranglisten/Tabellen Personen statt Einzelzeilen zeigen.
-        absences = AggregateAbsencesByPerson(absences, analysisPeriod.Workdays);
+        absences = AggregateAbsencesByPerson(absences, analysisPeriod, employees);
         leavers = ApplyLeaverFilters(leavers, normalizedOptions).ToList();
         var turnoverPeriod = ResolveTurnoverPeriodScope(normalizedOptions, leavers);
         // Rexx-Absenzen haben keine verlaesslichen Datumsfelder je Zeile. Bei einem Zeitraumfilter
@@ -198,6 +198,13 @@ internal sealed class HrKpiDashboardBuilder
             .OrderByDescending(x => x.Austrittsdatum)
             .Take(25)
             .ToList();
+        // Reiter Interaktiv: Zeitreihen brauchen Austritte ausserhalb des Datumsfilters und Absenzen je Fall.
+        result.TimelineLeavers = comparisonLeavers;
+        result.AbsenceCases = sapAbsenceCases
+            .Where(x => int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pernr) &&
+                        filteredEmployeeNumbers.Contains(pernr))
+            .ToList();
+        result.AnchorDate = turnoverPeriod.AnchorDate;
 
         if (employees.Count == 0)
             result.Notices.Add($"Keine aktiven Mitarbeitenden geladen. Pruefe {_dataSources.MainFile} und die Filter.");
@@ -660,10 +667,24 @@ internal sealed class HrKpiDashboardBuilder
 
     // Fasst mehrere Absenzzeilen je Person zu einer Zeile zusammen (Summe Krankheitsstunden), damit
     // Ranglisten und die Tabelle "Absenzen je Mitarbeiter" Personen statt Einzelereignisse zeigen.
-    // Die Pro-Person-Quote nutzt die Arbeitstage der Auswertungsperiode statt pauschal 21 Tage.
-    private static List<HrAbsenceRow> AggregateAbsencesByPerson(IReadOnlyCollection<HrAbsenceRow> rows, decimal workdays)
+    // Die Pro-Person-Quote teilt durch die eigenen FTE-Arbeitstage (Pensum, erst ab Eintritt), wie die
+    // Gesamtquote; bis 2026-11-04 fehlte das Pensum, eine 50-%-Stelle zeigte bei voller Krankheit 50 %.
+    private static List<HrAbsenceRow> AggregateAbsencesByPerson(
+        IReadOnlyCollection<HrAbsenceRow> rows,
+        AnalysisPeriod period,
+        IReadOnlyCollection<HrKpiEmployeeRow> employees)
     {
-        var denominator = workdays <= 0 ? 1m : workdays;
+        var byNumber = employees
+            .Where(x => x.Personalnummer.HasValue)
+            .GroupBy(x => x.Personalnummer!.Value)
+            .ToDictionary(g => g.Key, g => g.First());
+        decimal PersonDenominator(int? pernr)
+        {
+            var employee = pernr.HasValue ? byNumber.GetValueOrDefault(pernr.Value) : null;
+            var fte = employee is not null && employee.Fte > 0 ? employee.Fte : 1m;
+            return FteWorkdays(fte, employee?.Eintrittsdatum, period);
+        }
+
         return rows
             .GroupBy(x => x.Personalnummer.HasValue ? $"P:{x.Personalnummer.Value}" : $"N:{NormalizeKey(x.Name)}")
             .Select(g =>
@@ -674,6 +695,7 @@ internal sealed class HrKpiDashboardBuilder
                 var stundenProTag = first.StundenProArbeitstag;
                 var (kurz, lang, istLangzeitkrank) = ClassifySickness(gesamtStd, stundenProTag);
                 var tage = Math.Round(gesamtStd / stundenProTag, 1);
+                var denominator = PersonDenominator(first.Personalnummer);
                 return new HrAbsenceRow
                 {
                     Personalnummer = first.Personalnummer,
@@ -689,7 +711,7 @@ internal sealed class HrKpiDashboardBuilder
                     KrankheitstageGesamt = tage,
                     KrankheitstageKurz = Math.Round(kurz / stundenProTag, 1),
                     KrankheitstageLang = Math.Round(lang / stundenProTag, 1),
-                    KrankenquoteMa = tage == 0 ? 0 : tage / denominator,
+                    KrankenquoteMa = tage == 0 || denominator <= 0 ? 0 : tage / denominator,
                     IstLangzeitkrank = istLangzeitkrank,
                     StundenProArbeitstag = stundenProTag
                 };
@@ -739,7 +761,7 @@ internal sealed class HrKpiDashboardBuilder
         var turnoverDenominator = ResolveTurnoverDenominator(turnoverEmployees, turnoverIntervals, period);
         var fte = employees.Sum(x => x.Fte);
         var sickDays = absences.Sum(x => x.KrankheitstageGesamt);
-        var absenceDenominator = fte * analysisPeriod.Workdays;
+        var absenceDenominator = AbsenceDenominator(employees, analysisPeriod);
         var absenceRate = absenceDenominator <= 0 ? 0 : sickDays / absenceDenominator;
         var relevantLeavers = CountDistinctPersons(leavers.Where(x => x.IstFluktuationsrelevant).Select(x => x.Personalnummer));
         var employeeLeavers = CountDistinctPersons(leavers.Where(x => x.IstArbeitnehmerkuendigung).Select(x => x.Personalnummer));
@@ -814,7 +836,9 @@ internal sealed class HrKpiDashboardBuilder
         var currentMonth = period.AnchorDate.Month;
         var currentQuarter = ((currentMonth - 1) / 3) + 1;
         var monthHeadcount = CalculateMonthlyAverageFixedHeadcount(turnoverIntervals, year, currentMonth);
-        var quarterHeadcount = CalculateAverageFixedHeadcount(turnoverIntervals, BuildQuarterMonths(currentQuarter).Select(month => (year, month)));
+        // Angebrochenes Quartal: Headcount nur der Monate bis zum Stichtag, passend zu den Austritten bis Stichtag.
+        var quarterHeadcount = CalculateAverageFixedHeadcount(turnoverIntervals, BuildQuarterMonths(currentQuarter).Where(month => month <= currentMonth).Select(month => (year, month)));
+        var (quarterElapsedDays, quarterTotalDays) = QuarterProgress(year, currentQuarter, period.AnchorDate.Date);
         var yearMonths = Enumerable.Range(1, currentMonth).Select(month => (year, month)).ToList();
         var yearHeadcount = CalculateAverageFixedHeadcount(turnoverIntervals, yearMonths);
         var yearStart = new DateTime(year, 1, 1);
@@ -848,7 +872,12 @@ internal sealed class HrKpiDashboardBuilder
 
         var monthRate = monthHeadcount == 0 ? 0 : monthLeaverCount / monthHeadcount;
         var quarterRate = quarterHeadcount == 0 ? 0 : quarterLeaverCount / quarterHeadcount;
-        var forecastRate = quarterRate * 4;
+        // Vorgabe HR: Quartalsrate x 4. Ein angebrochenes Quartal wird vorher auf das ganze Quartal
+        // hochgerechnet (Pruefung 2026-11-04); sonst lag die Prognose am 04.11. um rund Faktor 2,6 zu tief.
+        var forecastRate = ForecastFromQuarter(quarterRate, quarterElapsedDays, quarterTotalDays);
+        var forecastDetail = quarterElapsedDays < quarterTotalDays
+            ? $"Quartalsrate x 4, hochgerechnet aus {quarterElapsedDays:N0} von {quarterTotalDays:N0} Tagen, nur Schaetzung"
+            : "Quartalsrate x 4, nur Schaetzung";
         var yearRate = yearHeadcount == 0 ? 0 : yearLeaverCount / yearHeadcount;
 
         // Zwei weitere Prognosen auf Wunsch HR (Sonja Richter): gleitend ueber die letzten zwoelf
@@ -879,10 +908,10 @@ internal sealed class HrKpiDashboardBuilder
         [
             new() { Label = "HC Monat", Value = FormatHeadcount(monthHeadcount), Detail = $"Avg HC {currentMonth:N0}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis", HelpText = $"Die durchschnittliche Personalzahl im Monat {currentMonth:N0}/{year}. Sie wird gebildet aus dem Personalstand am Monatsanfang plus dem am Monatsende, geteilt durch 2. Gezaehlt werden Koepfe, nicht Stellenprozente. Diese Zahl ist die Basis, durch die bei der Monats-Fluktuation geteilt wird." },
             new() { Label = "Fluktuation Monat", Value = monthRate.ToString("P1"), Detail = $"{monthLeaverCount:N0} relevante Austritte / HC {FormatHeadcount(monthHeadcount)}", Severity = monthRate > 0.03m ? "Warning" : "Normal", Theme = "Rate", HelpText = $"So wird gerechnet: die fuer die Fluktuation zaehlenden Austritte im Monat {currentMonth:N0}/{year} geteilt durch die durchschnittliche Personalzahl dieses Monats, dann als Prozent. Der Wert gilt nur fuer diesen einen Monat und ist NICHT auf ein ganzes Jahr hochgerechnet." },
-            new() { Label = "HC Quartal", Value = FormatHeadcount(quarterHeadcount), Detail = $"Avg HC Q{currentQuarter}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis", HelpText = $"Die durchschnittliche Personalzahl im Quartal Q{currentQuarter}/{year} (Mittelwert der drei Monatswerte). Gezaehlt werden Koepfe, nicht Stellenprozente. Diese Zahl ist die Basis, durch die bei der Quartals-Fluktuation geteilt wird." },
+            new() { Label = "HC Quartal", Value = FormatHeadcount(quarterHeadcount), Detail = $"Avg HC Q{currentQuarter}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis", HelpText = $"Die durchschnittliche Personalzahl im Quartal Q{currentQuarter}/{year} (Mittelwert der Monatswerte bis zum Stichtag, bei einem abgeschlossenen Quartal also aller drei Monate). Gezaehlt werden Koepfe, nicht Stellenprozente. Diese Zahl ist die Basis, durch die bei der Quartals-Fluktuation geteilt wird." },
             new() { Label = "Austritte Quartal", Value = quarterLeaverCount.ToString("N0"), Detail = $"Relevant Q{currentQuarter}/{year}", Severity = "Normal", Theme = "Relevant", HelpText = $"Anzahl der fuer die Fluktuation zaehlenden Austritte im Quartal Q{currentQuarter}/{year}. Jede Person wird nur einmal gezaehlt, auch wenn sie mehrfach in den Daten vorkommt." },
             new() { Label = "Fluktuation Quartal", Value = quarterRate.ToString("P1"), Detail = "Relevante Austritte / Avg HC Quartal", Severity = quarterRate > 0.08m ? "Warning" : "Normal", Theme = "Rate", HelpText = $"So wird gerechnet: die fuer die Fluktuation zaehlenden Austritte im Quartal Q{currentQuarter}/{year} geteilt durch die durchschnittliche Personalzahl des Quartals, dann als Prozent. Der Wert gilt nur fuer dieses Quartal und ist NICHT auf ein ganzes Jahr hochgerechnet." },
-            new() { Label = "Fluktuation Prognose", Value = forecastRate.ToString("P1"), Detail = "Quartalsrate x 4, nur Schaetzung", Severity = forecastRate > 0.12m ? "Warning" : "Normal", Theme = "Forecast", HelpText = "So wird gerechnet: die Fluktuation des aktuellen Quartals mal 4. Das ist nur eine grobe Hochrechnung, wie das ganze Jahr aussehen koennte, wenn es so weitergeht - also eine Schaetzung und kein tatsaechlicher Wert." },
+            new() { Label = "Fluktuation Prognose", Value = forecastRate.ToString("P1"), Detail = forecastDetail, Severity = forecastRate > 0.12m ? "Warning" : "Normal", Theme = "Forecast", HelpText = "So wird gerechnet: die Fluktuation des aktuellen Quartals mal 4. Ist das Quartal noch nicht vorbei, wird es zuerst auf das ganze Quartal hochgerechnet (Austritte bis heute geteilt durch die vergangenen Tage mal alle Tage des Quartals). Das ist nur eine grobe Hochrechnung, wie das ganze Jahr aussehen koennte, wenn es so weitergeht - also eine Schaetzung und kein tatsaechlicher Wert. Kurz nach Quartalsbeginn schwankt sie stark." },
             new() { Label = "Fluktuation Prognose gleitend", Value = rolling.Rate.ToString("P1"), Detail = $"Letzte 12 Monate: {rolling.Leavers:N0} relevante Austritte / Avg HC {FormatHeadcount(rolling.Headcount)}", Severity = rolling.Rate > 0.12m ? "Warning" : "Normal", Theme = "Forecast", HelpText = $"So wird gerechnet: die fuer die Fluktuation zaehlenden Austritte der letzten zwoelf Monate bis {FormatDateShort(period.AnchorDate)} geteilt durch die durchschnittliche Personalzahl in diesen zwoelf Monaten. Anders als die Quartalsprognose schwankt dieser Wert kaum, weil ein einzelnes starkes oder schwaches Quartal nur ein Viertel ausmacht. Der gewaehlte Datumsfilter wird dafuer bewusst nicht angewendet." },
             new() { Label = "Fluktuation Vorjahr", Value = previousYearRate.ToString("P1"), Detail = $"{previousYear}: {previousYearLeaverCount:N0} relevante Austritte / Avg HC {FormatHeadcount(previousYearHeadcount)}; Prognose {forecastRate - previousYearRate:+0.0%;-0.0%;0.0%}, gleitend {rolling.Rate - previousYearRate:+0.0%;-0.0%;0.0%}", Severity = "Normal", Theme = "Forecast", HelpText = $"Die tatsaechliche Fluktuation des ganzen Vorjahres {previousYear} als Vergleich zu den beiden Prognosen. Die Zahlen hinter 'Prognose' und 'gleitend' zeigen, um wie viele Prozentpunkte die jeweilige Prognose ueber (+) oder unter (-) dem Vorjahr liegt." },
             new() { Label = "HC Jahr bis Stichtag", Value = FormatHeadcount(yearHeadcount), Detail = $"Avg HC {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Basis", HelpText = $"Die durchschnittliche Personalzahl vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)} (Mittelwert der einzelnen Monatswerte). Gezaehlt werden Koepfe, nicht Stellenprozente. Diese Zahl ist die Basis fuer die Jahres-Fluktuation seit Jahresbeginn." },
@@ -903,8 +932,7 @@ internal sealed class HrKpiDashboardBuilder
         var shortSick = absences.Sum(x => x.KrankheitstageKurz);
         var longSick = absences.Sum(x => x.KrankheitstageLang);
         var longTermSickPersons = absences.Count(x => x.IstLangzeitkrank);
-        var fte = employees.Sum(x => x.Fte);
-        var denominator = fte * analysisPeriod.Workdays;
+        var denominator = AbsenceDenominator(employees, analysisPeriod);
         var absenceRate = denominator <= 0 ? 0 : totalSick / denominator;
         var absenceSeverity = ResolveAbsenceSeverity(absenceRate);
         var absenceThresholdDetail = $"Ampel: Gruen < {_dataSources.AbsenceYellowThresholdPercent:N1}%, Gelb < {_dataSources.AbsenceRedThresholdPercent:N1}%, Rot ab {_dataSources.AbsenceRedThresholdPercent:N1}%";
@@ -927,7 +955,7 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = $"Tage von Personen unter {LongTermSickDayThreshold:N0} Krankheitstagen (Stunden / {HoursPerWorkday:0.0}h, Kader {HoursPerWorkdayKader:0.0}h)", Severity = "Normal" },
             new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = $"{longTermSickPersons:N0} Langzeitkranke ab dem {LongTermSickDayThreshold:N0}. Krankheitstag (Summe je Person)", Severity = longSick > shortSick ? "Warning" : "Normal" },
-            new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage ZH), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
+            new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / {denominator:N0} FTE-Arbeitstage ({analysisPeriod.Workdays:N0} Arbeitstage ZH, je Person ab Eintritt), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "BU-Tage laufender Monat", Value = bu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
             new() { Label = "NBU-Tage laufender Monat", Value = nbu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
             new() { Label = AccidentDaysLabel, Value = (bu + nbu).ToString("N1"), Detail = $"BU + NBU, {AccidentDaysPeriodNote}", Severity = "Normal" }
@@ -1362,6 +1390,23 @@ internal sealed class HrKpiDashboardBuilder
             .Distinct()
             .Count();
 
+    /// <summary>Vergangene Kalendertage des Quartals bis zum Stichtag (mindestens 1) und Tage des ganzen Quartals.</summary>
+    internal static (int ElapsedDays, int TotalDays) QuarterProgress(int year, int quarter, DateTime anchorDate)
+    {
+        var start = new DateTime(year, ((Math.Clamp(quarter, 1, 4) - 1) * 3) + 1, 1);
+        var end = start.AddMonths(3).AddDays(-1);
+        var total = (end - start).Days + 1;
+        var elapsedEnd = anchorDate.Date < end ? anchorDate.Date : end;
+        var elapsed = Math.Clamp((elapsedEnd - start).Days + 1, 1, total);
+        return (elapsed, total);
+    }
+
+    /// <summary>Jahresprognose = Quartalsrate x 4; ein angebrochenes Quartal zuerst auf seine volle Laenge hochrechnen.</summary>
+    internal static decimal ForecastFromQuarter(decimal quarterToDateRate, int elapsedDays, int totalDays)
+        => elapsedDays <= 0 || elapsedDays >= totalDays
+            ? quarterToDateRate * 4
+            : quarterToDateRate * totalDays / elapsedDays * 4;
+
     private static IEnumerable<int> BuildQuarterMonths(int quarter)
     {
         var normalizedQuarter = Math.Clamp(quarter, 1, 4);
@@ -1558,6 +1603,27 @@ internal sealed class HrKpiDashboardBuilder
         }
 
         return new AnalysisPeriod(null, null, 21m, "Annahme 1 Monat (keine Datumsfelder)", false);
+    }
+
+    /// <summary>
+    /// Nenner der Krankenquote: Summe der FTE-Arbeitstage aller Personen im Zeitraum, je Person erst ab
+    /// Eintritt (Pruefung 2026-11-04). Vorher zaehlte jede heute aktive Person mit vollem FTE ueber den
+    /// ganzen Zeitraum, auch vor ihrem Eintritt; die Quote war dadurch zu tief.
+    /// </summary>
+    private static decimal AbsenceDenominator(IEnumerable<HrKpiEmployeeRow> employees, AnalysisPeriod period)
+        => employees.Sum(x => FteWorkdays(x.Fte, x.Eintrittsdatum, period));
+
+    private static decimal FteWorkdays(decimal fte, DateTime? entryDate, AnalysisPeriod period)
+        => FteWorkdays(fte, entryDate, period.Start, period.End, period.Workdays);
+
+    /// <summary>FTE mal Arbeitstage ZH im Zeitraum, beginnend fruehestens am Eintrittstag. Ohne Zeitraum oder Eintritt: alle Tage.</summary>
+    internal static decimal FteWorkdays(decimal fte, DateTime? entryDate, DateTime? periodStart, DateTime? periodEnd, decimal periodWorkdays)
+    {
+        if (!periodStart.HasValue || !periodEnd.HasValue || !entryDate.HasValue || entryDate.Value.Date <= periodStart.Value.Date)
+            return fte * periodWorkdays;
+        if (entryDate.Value.Date > periodEnd.Value.Date)
+            return 0m;
+        return fte * ZurichWorkdayCalendar.CountWorkdays(entryDate.Value.Date, periodEnd.Value.Date);
     }
 
     private static int CountDistinctPersons(IEnumerable<int?> personalNumbers)

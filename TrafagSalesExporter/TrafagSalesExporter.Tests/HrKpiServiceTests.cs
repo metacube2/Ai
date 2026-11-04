@@ -773,6 +773,55 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Contains("gleitend", previousYear.Detail);
     }
 
+    [Fact]
+    public async Task BuildAsync_Krankenquote_Zaehlt_FTE_Arbeitstage_Erst_Ab_Eintritt()
+    {
+        // Pruefung 2026-11-04: Fiona (FTE 0,5) trat am 15.01.2025 ein, Nora (FTE 1, ohne Personalnummer) erst am 01.02.2025.
+        var start = new DateTime(2025, 1, 1);
+        var end = new DateTime(2025, 1, 31);
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, FromDate = start, ToDate = end });
+
+        var all = ZurichWorkdayCalendar.CountWorkdays(start, end);
+        var expected = 1m * all + 0.5m * all + 0.5m * ZurichWorkdayCalendar.CountWorkdays(new DateTime(2025, 1, 15), end);
+        var rate = Assert.Single(result.AbsenceMetrics, m => m.Label == "Krankenquote");
+        Assert.Contains($"Krankheitstage / {expected:N0} FTE-Arbeitstage", rate.Detail);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Quote_Je_Person_Beruecksichtigt_Das_Pensum()
+    {
+        // Bruno hat 50 % und ist Mo 03.03. bis Fr 07.03.2025 ganz krank (5 x 4 h): seine Quote ist 100 %, nicht 50 %.
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001002", "0260", new(2025, 3, 3), new(2025, 3, 7), "000", 5m, 20m, 5m)],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, FromDate = new DateTime(2025, 3, 3), ToDate = new DateTime(2025, 3, 7) });
+
+        var bruno = Assert.Single(result.Absences, row => row.Personalnummer == 1002);
+        Assert.Equal(2.5m, bruno.KrankheitstageGesamt);
+        Assert.Equal(1m, bruno.KrankenquoteMa);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Liefert_Daten_Fuer_Den_Reiter_Interaktiv()
+    {
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [
+                new("00001001", "0260", new(2025, 3, 3), new(2025, 3, 7), "000", 5m, 40m, 5m),
+                new("00009999", "0260", new(2025, 3, 3), new(2025, 3, 7), "000", 5m, 40m, 5m)
+            ],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+
+        // Zeitreihen bekommen auch das Vorjahr (Fiona trat am 15.12.2024 aus), die Auswahl nicht.
+        Assert.Contains(result.TimelineLeavers, row => row.Personalnummer == 1003);
+        Assert.DoesNotContain(result.Leavers, row => row.Personalnummer == 1003);
+        // Absenzfaelle nur fuer aktive, gefilterte Personen.
+        Assert.Single(result.AbsenceCases);
+        Assert.Equal(new DateTime(2025, 12, 31), result.AnchorDate);
+    }
+
     private static void AssertEveryVisibleBlockIsConsistent(HrKpiResult result, string because)
     {
         var employeeNumbers = result.Employees

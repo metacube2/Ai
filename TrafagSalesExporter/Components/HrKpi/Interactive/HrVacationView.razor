@@ -1,0 +1,96 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Ferien am Stueck (2026-11-04), Wunsch HR aus der Mail von Sonja Richter vom 2026-02-03: hat jede Person
+   im Kalenderjahr mindestens zwei Wochen am Stueck bezogen, je Abteilung. Grundlage SAP PA2001 Art 0100. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Ferien am Stück", "Vacation in one block")</MudText>
+        @foreach (var y in _years)
+        {
+            var year = y;
+            <MudButton Size="Size.Small" Variant="@(year == _year ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" OnClick="@(() => SetYear(year))">@year</MudButton>
+        }
+        <MudSwitch T="bool" @bind-Value="_includePlanned" Color="Color.Primary" Label="@T("Geplante mitzählen", "Count planned ones")" />
+    </div>
+    @if (Result.AbsenceCases.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("Keine SAP-Absenzen je Fall vorhanden.", "No SAP absences per case available.")</MudText>
+    }
+    else
+    {
+        var reached = _people.Count(Reached);
+        var share = _people.Count == 0 ? 0 : (double)reached / _people.Count;
+        <div class="hri-headline">
+            <span class="hri-big six-anim" @key="reached">@HrUi.Pct(share)</span>
+            <span class="ll-muted">@reached @T("von", "of") @_people.Count @T("Personen hatten mindestens zwei Wochen am Stück", "people had at least two weeks in one block")</span>
+        </div>
+        <div class="hri-weekdays" @key="(_year, _includePlanned)">
+            @foreach (var (g, i) in Groups().Select((g, i) => (g, i)))
+            {
+                <div class="hri-weekday">
+                    <span class="hri-weekday-label" style="width:200px" title="@g.Org">@g.Org</span>
+                    <span class="hri-weekday-track">
+                        <span class="hri-weekday-bar hri-good" style="width:@F(100 * g.Share)%;animation-delay:@F(i * 0.05)s"></span>
+                    </span>
+                    <span class="ll-mono" style="width:110px">@HrUi.Pct(g.Share) · @g.Reached/@g.Total</span>
+                </div>
+            }
+        </div>
+        <MudText Typo="Typo.subtitle1" Class="mt-4"><b>@T("Noch ohne zwei Wochen am Stück", "Still without two weeks in one block")</b></MudText>
+        <div class="ll-list">
+            @foreach (var p in _people.Where(p => !Reached(p)).OrderBy(p => Length(p)).ThenBy(p => p.Organisation))
+            {
+                <div class="ll-row">
+                    <span class="ll-grow">@HrUi.Person(Result.Options.ManagementView, p.Personalnummer, p.Name)</span>
+                    <span style="width:200px" class="ll-grow">@p.Organisation</span>
+                    <span class="ll-mono" style="width:160px">@T("längster Block", "longest block") @Length(p).ToString("0.#", CultureInfo.InvariantCulture)</span>
+                </div>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Zwei Wochen am Stück heisst hier mindestens zehn Ferientage ohne Arbeitstag dazwischen; Wochenenden und Feiertage verbinden zwei Fälle. Bezogen zählt nur, was bis heute vorbei ist, mit dem Schalter auch bereits geplante Ferien. Grundlage sind die SAP-Ferienfälle (Art 0100); sie kommen erst mit dem Rexx-Import nach SAP und können deshalb einige Tage hinterherhinken.", "Two weeks in one block means at least ten vacation days without a working day in between; weekends and holidays connect two cases. Taken only counts what is over by today, with the switch also vacation already planned. Based on the SAP vacation cases (type 0100); they only reach SAP with the Rexx import and can therefore lag a few days behind.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private sealed record OrgShare(string Org, int Reached, int Total, double Share);
+
+    private IReadOnlyList<int> _years = [];
+    private int _year;
+    private bool _includePlanned;
+    private IReadOnlyList<HrVacationPerson> _people = [];
+
+    protected override void OnParametersSet()
+    {
+        _years = HrUi.CaseYears(Result.AbsenceCases.Where(c => c.Abwesenheitsart == HrKpiDashboardBuilder.VacationAbsenceType), DateTime.Today);
+        var wanted = Result.Options.Year ?? Result.AnchorDate.Year;
+        _year = _years.Contains(wanted) ? wanted : _years.FirstOrDefault(DateTime.Today.Year);
+        Load();
+    }
+
+    private void SetYear(int year)
+    {
+        _year = year;
+        Load();
+    }
+
+    private void Load() => _people = HrKpiInteractive.VacationBlocks(Result.AbsenceCases, Result.Employees, _year, DateTime.Today);
+
+    private decimal Length(HrVacationPerson p) => _includePlanned ? p.LongestPlanned : p.LongestTaken;
+
+    private bool Reached(HrVacationPerson p) => Length(p) >= HrKpiInteractive.VacationBlockWorkdays;
+
+    private IEnumerable<OrgShare> Groups()
+        => _people.GroupBy(p => p.Organisation)
+            .Select(g => new OrgShare(g.Key, g.Count(Reached), g.Count(), g.Count() == 0 ? 0 : (double)g.Count(Reached) / g.Count()))
+            .OrderByDescending(g => g.Total)
+            .ThenBy(g => g.Org)
+            .Take(16);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

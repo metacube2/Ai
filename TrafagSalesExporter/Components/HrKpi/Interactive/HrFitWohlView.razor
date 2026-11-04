@@ -1,0 +1,167 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@implements IDisposable
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Fit-&-Wohl-Ausloeser (2026-11-04), Wunsch HR aus der Mail von Sonja Richter vom 2026-02-03: Gespraech
+   nach der 6. Absenz oder nach 12 Krankheitstagen. ▶ spielt das Jahr Monat fuer Monat ab; jede Person erscheint
+   als Punkt in ihrer Abteilung, sobald sie die Grenze erreicht. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Fit & Wohl: wer braucht ein Gespräch?", "Fit & well: who needs a conversation?")</MudText>
+        @foreach (var y in _years)
+        {
+            var year = y;
+            <MudButton Size="Size.Small" Variant="@(year == _year ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" OnClick="@(() => SetYear(year))">@year</MudButton>
+        }
+        <MudIconButton Icon="@(_playing ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="TogglePlay" />
+        <span class="ll-mono" style="min-width:60px">@HrUi.Month(_month)</span>
+        <MudSlider T="int" Min="1" Max="_lastMonth" Value="_month" ValueChanged="@((int v) => _month = v)" Style="max-width:220px" />
+    </div>
+    @if (Result.AbsenceCases.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("Keine SAP-Absenzen je Fall vorhanden.", "No SAP absences per case available.")</MudText>
+    }
+    else
+    {
+        var shown = _cases.Where(c => c.TriggerDate.Month <= _month).ToList();
+        <div class="hri-headline">
+            <span class="hri-big six-anim" @key="shown.Count">@shown.Count</span>
+            <span class="ll-muted">@T("Personen haben die Grenze erreicht, Stand Ende", "people reached the threshold, as of the end of") @HrUi.Month(_month) @_year</span>
+        </div>
+        <svg viewBox="0 0 1000 @F(40 + _orgs.Count * 30)" class="six-galaxy">
+            @for (var m = 1; m <= 12; m++)
+            {
+                <line x1="@F(MonthX(m))" y1="16" x2="@F(MonthX(m))" y2="@F(24 + _orgs.Count * 30)" class="six-grid" />
+                <g><text x="@F(MonthX(m) + 34)" y="12" class="nw-axis">@HrUi.Month(m)</text></g>
+            }
+            <line x1="@F(MonthX(_month + 1))" y1="16" x2="@F(MonthX(_month + 1))" y2="@F(24 + _orgs.Count * 30)" class="six-life-today" />
+            @foreach (var (org, row) in _orgs.Select((o, i) => (o, i)))
+            {
+                <g><text x="196" y="@F(Row(row) + 4)" class="nw-axis" style="text-anchor:end">@Cut(org)</text></g>
+                <line x1="200" y1="@F(Row(row))" x2="980" y2="@F(Row(row))" class="six-life-axis" />
+            }
+            @foreach (var c in shown)
+            {
+                var row = _orgs.IndexOf(c.Organisation);
+                var stack = _stack.GetValueOrDefault(c.Personalnummer);
+                <circle @key="c.Personalnummer" cx="@F(DayX(c.TriggerDate))" cy="@F(Row(row) - 6 + stack * 5)" r="6" class="six-life-dot" style="fill:@ReasonColor(c.Reason)">
+                    <title>@HrUi.Person(Result.Options.ManagementView, c.Personalnummer, c.Name) · @c.TriggerDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) · @ReasonLabel(c.Reason)</title>
+                </circle>
+            }
+        </svg>
+        <div class="d-flex align-center flex-wrap" style="gap:14px;font-size:12px">
+            <span><span class="six-dot-status" style="display:inline-block;background:@ReasonColor(HrKpiInteractive.ReasonEpisodes)"></span> @ReasonLabel(HrKpiInteractive.ReasonEpisodes)</span>
+            <span><span class="six-dot-status" style="display:inline-block;background:@ReasonColor(HrKpiInteractive.ReasonDays)"></span> @ReasonLabel(HrKpiInteractive.ReasonDays)</span>
+            <span><span class="six-dot-status" style="display:inline-block;background:@ReasonColor(HrKpiInteractive.ReasonBoth)"></span> @ReasonLabel(HrKpiInteractive.ReasonBoth)</span>
+        </div>
+        <div class="ll-list mt-3">
+            <div class="ll-row ll-muted">
+                <span class="ll-grow">@T("Person", "Person")</span>
+                <span style="width:180px">@T("Abteilung", "Department")</span>
+                <span style="width:80px">@T("Absenzen", "Absences")</span>
+                <span style="width:100px">@T("Krankheitstage", "Sick days")</span>
+                <span style="width:100px">@T("erreicht am", "reached on")</span>
+                <span style="width:130px">@T("Grund", "Reason")</span>
+            </div>
+            @foreach (var c in shown.OrderByDescending(c => c.TriggerDate))
+            {
+                <div class="ll-row">
+                    <span class="ll-grow">@HrUi.Person(Result.Options.ManagementView, c.Personalnummer, c.Name)</span>
+                    <span style="width:180px" class="ll-grow">@c.Organisation</span>
+                    <span class="ll-mono" style="width:80px">@c.Episodes</span>
+                    <span class="ll-mono" style="width:100px">@c.Days.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                    <span class="ll-mono" style="width:100px">@c.TriggerDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture)</span>
+                    <span style="width:130px">@ReasonLabel(c.Reason)</span>
+                </div>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Regel von HR: ein Fit-&-Wohl-Gespräch nach der 6. Absenz oder nach 12 Krankheitstagen (Arbeitstage) im Kalenderjahr. Gezählt werden SAP-Krankheitsfälle der aktiven Personen in der Auswahl; Fälle ohne Arbeitstag dazwischen gelten als eine Absenz. Das Datum ist der Beginn der Absenz, mit der die Grenze erreicht wurde. Ob das Gespräch stattgefunden hat, kennt das Cockpit nicht.", "HR rule: a fit-and-well conversation after the 6th absence or after 12 sick days (working days) in the calendar year. Counted are SAP sickness cases of the active people in the selection; cases without a working day in between count as one absence. The date is the start of the absence with which the threshold was reached. The cockpit does not know whether the conversation took place.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private IReadOnlyList<int> _years = [];
+    private int _year;
+    private int _month = 12;
+    private int _lastMonth = 12;
+    private IReadOnlyList<HrFitWohlCase> _cases = [];
+    private List<string> _orgs = [];
+    private Dictionary<int, int> _stack = [];
+    private bool _playing;
+    private CancellationTokenSource? _play;
+
+    protected override void OnParametersSet()
+    {
+        _years = HrUi.CaseYears(Result.AbsenceCases, DateTime.Today);
+        var wanted = Result.Options.Year ?? Result.AnchorDate.Year;
+        _year = _years.Contains(wanted) ? wanted : _years.FirstOrDefault(DateTime.Today.Year);
+        Load();
+    }
+
+    private void SetYear(int year)
+    {
+        _play?.Cancel();
+        _playing = false;
+        _year = year;
+        Load();
+    }
+
+    private void Load()
+    {
+        _cases = HrKpiInteractive.FitWohl(Result.AbsenceCases, Result.Employees, _year, DateTime.Today);
+        _orgs = _cases.GroupBy(c => c.Organisation).OrderByDescending(g => g.Count()).ThenBy(g => g.Key).Select(g => g.Key).ToList();
+        // Punkte am selben Tag in derselben Abteilung leicht versetzen, damit keiner verdeckt ist.
+        _stack = _cases.GroupBy(c => (c.Organisation, c.TriggerDate.Date))
+            .SelectMany(g => g.Select((c, i) => (c.Personalnummer, i)))
+            .ToDictionary(x => x.Personalnummer, x => x.i % 3);
+        _lastMonth = _year == DateTime.Today.Year ? DateTime.Today.Month : 12;
+        _month = _lastMonth;
+    }
+
+    private static double MonthX(int month) => 200 + 780.0 * (month - 1) / 12;
+    private double DayX(DateTime day) => 200 + 780.0 * (day.DayOfYear - 1) / (DateTime.IsLeapYear(_year) ? 366 : 365);
+    private static double Row(int row) => 40 + row * 30;
+    private static string Cut(string s) => s.Length > 26 ? s[..25] + "…" : s;
+
+    private static string ReasonColor(string reason) => reason switch
+    {
+        HrKpiInteractive.ReasonEpisodes => "#FFA726",
+        HrKpiInteractive.ReasonDays => "#EF5350",
+        _ => "#8E24AA"
+    };
+
+    private string ReasonLabel(string reason) => reason switch
+    {
+        HrKpiInteractive.ReasonEpisodes => T("6. Absenz", "6th absence"),
+        HrKpiInteractive.ReasonDays => T("12 Krankheitstage", "12 sick days"),
+        _ => T("beides", "both")
+    };
+
+    private void TogglePlay()
+    {
+        if (_playing) { _play?.Cancel(); _playing = false; return; }
+        _playing = true;
+        if (_month >= _lastMonth) _month = 1;
+        _play = new CancellationTokenSource();
+        var token = _play.Token;
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(900));
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+            {
+                if (_month >= _lastMonth) { _playing = false; await InvokeAsync(StateHasChanged); return; }
+                _month++;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, token).ContinueWith(_ => { }, TaskScheduler.Default);
+    }
+
+    public void Dispose() { _play?.Cancel(); _play?.Dispose(); }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

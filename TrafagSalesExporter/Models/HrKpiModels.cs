@@ -85,6 +85,11 @@ public sealed class HrKpiResult
     public List<HrKpiEmployeeRow> CriticalTimeBalances { get; set; } = [];
     public List<HrLeaverRow> FluctuationRelevantLeavers { get; set; } = [];
     public HrTurnoverVisuals TurnoverVisuals { get; set; } = new();
+    // Reiter Interaktiv (2026-11-04, docs/HR_KPI.md Abschnitt 9): Austritte aller Jahre (nur Strukturfilter wie der
+    // Vorjahresvergleich), SAP-Absenzen je Fall der gefilterten aktiven Personen und der Stichtag der Fluktuation.
+    public List<HrLeaverRow> TimelineLeavers { get; set; } = [];
+    public List<TrafagSalesExporter.Services.HrAbsenceSapCase> AbsenceCases { get; set; } = [];
+    public DateTime AnchorDate { get; set; } = DateTime.Today;
 }
 
 public sealed class HrKpiFileStatus

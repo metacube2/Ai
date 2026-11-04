@@ -1,0 +1,139 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Krankheitskalender (2026-11-04). Krankgemeldete Personen je Arbeitstag aus SAP PA2001 und das
+   Wochentagsmuster kurzer Krankheiten. Nur Zahlen je Tag, keine Namen. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Krankheitskalender", "Sickness calendar")</MudText>
+        @foreach (var y in _years)
+        {
+            var year = y;
+            <MudButton Size="Size.Small" Variant="@(year == _year ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" OnClick="@(() => SetYear(year))">@year</MudButton>
+        }
+    </div>
+    @if (Result.AbsenceCases.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("Keine SAP-Absenzen je Fall vorhanden.", "No SAP absences per case available.")</MudText>
+    }
+    else
+    {
+        <svg viewBox="0 0 1000 150" class="six-cal" @key="_year">
+            @for (var m = 1; m <= 12; m++)
+            {
+                var first = new DateTime(_year, m, 1);
+                <g><text x="@F(40 + Week(first) * 17.5)" y="12" class="nw-axis" style="text-anchor:start">@HrUi.Month(m)</text></g>
+            }
+            @foreach (var (label, row) in new[] { (T("Mo", "Mon"), 0), (T("Mi", "Wed"), 2), (T("Fr", "Fri"), 4) })
+            {
+                <g><text x="34" y="@F(30 + row * 17.5)" class="nw-axis" style="text-anchor:end">@label</text></g>
+            }
+            @foreach (var d in _days)
+            {
+                var row = ((int)d.Day.DayOfWeek + 6) % 7;
+                <rect x="@F(40 + Week(d.Day) * 17.5)" y="@F(18 + row * 17.5)" width="15" height="15" rx="3" class="six-cal-cell"
+                      style="fill:@CellColor(d.Persons);animation-delay:@F(Week(d.Day) * 0.012)s">
+                    <title>@d.Day.ToString("ddd dd.MM.yyyy", CultureInfo.GetCultureInfo("de-CH")): @d.Persons @T("krank", "sick")</title>
+                </rect>
+            }
+        </svg>
+        <div class="d-flex align-center flex-wrap" style="gap:6px;font-size:12px">
+            <span class="ll-muted">@T("wenig", "low")</span>
+            @foreach (var q in new[] { 0.0, 0.25, 0.5, 0.75, 1.0 })
+            {
+                <span class="six-cal-key" style="background:@CellColor((int)Math.Round(q * _max))"></span>
+            }
+            <span class="ll-muted">@T("viel", "high")</span>
+            <span class="ll-grow"></span>
+            <span class="ll-muted">@T("Im Schnitt krank je Arbeitstag", "Average sick per working day") <b>@_average.ToString("0.0", CultureInfo.InvariantCulture)</b></span>
+            <span class="ll-muted">· @T("Spitzentag", "Peak day") <b>@(_peak is null ? "–" : _peak.Day.ToString("dd.MM.", CultureInfo.InvariantCulture) + " · " + _peak.Persons)</b></span>
+        </div>
+
+        <MudText Typo="Typo.subtitle1" Class="mt-4"><b>@T("An welchem Wochentag beginnen kurze Krankheiten?", "On which weekday do short sick leaves start?")</b></MudText>
+        <div class="hri-weekdays" @key="_year">
+            @foreach (var (w, i) in _weekdays.Select((w, i) => (w, i)))
+            {
+                var high = w.Share > 0.24;
+                <div class="hri-weekday">
+                    <span class="hri-weekday-label">@WeekdayLabel(w.Day)</span>
+                    <span class="hri-weekday-track">
+                        <span class="hri-weekday-bar @(high ? "hri-high" : "")" style="width:@F(100 * w.Share / _weekdayMax)%;animation-delay:@F(i * 0.08)s"></span>
+                        <span class="hri-weekday-ref" style="left:@F(100 * 0.2 / _weekdayMax)%"></span>
+                    </span>
+                    <span class="ll-mono" style="width:110px">@HrUi.Pct(w.Share) · @w.Starts</span>
+                </div>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Oben: wie viele aktive Personen der Auswahl an jedem Arbeitstag krank waren (SAP-Arten Krankheit, Wochenenden und Feiertage ZH ausgelassen). Unten: an welchem Wochentag Krankheiten von höchstens drei Arbeitstagen beginnen; ohne Muster läge jeder Tag bei 20 % (Strich). Ein deutlich höherer Montag oder Freitag ist ein Hinweis, kein Beleg; Einzelfälle prüft HR im Gespräch.", "Top: how many active people of the selection were sick on each working day (SAP sickness types, weekends and Zurich holidays left out). Bottom: on which weekday sick leaves of at most three working days start; without a pattern each day would be at 20 % (line). A clearly higher Monday or Friday is a hint, not proof; HR reviews individual cases in conversation.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private IReadOnlyList<int> _years = [];
+    private int _year;
+    private IReadOnlyList<HrSickDay> _days = [];
+    private IReadOnlyList<HrWeekdayShare> _weekdays = [];
+    private int _max = 1;
+    private double _weekdayMax = 0.3;
+    private double _average;
+    private HrSickDay? _peak;
+
+    protected override void OnParametersSet()
+    {
+        _years = HrUi.CaseYears(Result.AbsenceCases, DateTime.Today);
+        var wanted = Result.Options.Year ?? Result.AnchorDate.Year;
+        _year = _years.Contains(wanted) ? wanted : _years.FirstOrDefault(DateTime.Today.Year);
+        Load();
+    }
+
+    private void SetYear(int year)
+    {
+        _year = year;
+        Load();
+    }
+
+    private void Load()
+    {
+        _days = HrKpiInteractive.SickCalendar(Result.AbsenceCases, _year, DateTime.Today);
+        _max = Math.Max(1, _days.Select(d => d.Persons).DefaultIfEmpty(1).Max());
+        _average = _days.Count == 0 ? 0 : _days.Average(d => d.Persons);
+        _peak = _days.OrderByDescending(d => d.Persons).ThenBy(d => d.Day).FirstOrDefault();
+        var end = new DateTime(_year, 12, 31) < DateTime.Today ? new DateTime(_year, 12, 31) : DateTime.Today;
+        _weekdays = HrKpiInteractive.ShortSickStartWeekdays(Result.AbsenceCases, new DateTime(_year, 1, 1), end, DateTime.Today);
+        _weekdayMax = Math.Max(0.3, _weekdays.Select(w => w.Share).DefaultIfEmpty(0.3).Max());
+    }
+
+    private int Week(DateTime day)
+    {
+        var jan1 = new DateTime(_year, 1, 1);
+        var offset = ((int)jan1.DayOfWeek + 6) % 7;
+        return (day.DayOfYear - 1 + offset) / 7;
+    }
+
+    private string CellColor(int persons)
+    {
+        if (persons <= 0)
+            return "rgba(127,127,127,0.12)";
+        var t = Math.Clamp(persons / (double)_max, 0, 1);
+        // Von hellem Gelb zu kraeftigem Rot.
+        var g = (int)(220 - 170 * t);
+        var b = (int)(120 - 90 * t);
+        return $"rgb(240,{g},{b})";
+    }
+
+    private string WeekdayLabel(DayOfWeek day) => day switch
+    {
+        DayOfWeek.Monday => T("Montag", "Monday"),
+        DayOfWeek.Tuesday => T("Dienstag", "Tuesday"),
+        DayOfWeek.Wednesday => T("Mittwoch", "Wednesday"),
+        DayOfWeek.Thursday => T("Donnerstag", "Thursday"),
+        _ => T("Freitag", "Friday")
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

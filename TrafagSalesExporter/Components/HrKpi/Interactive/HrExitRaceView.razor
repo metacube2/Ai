@@ -1,0 +1,107 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@implements IDisposable
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Kuendigungen im Zeitraffer (2026-11-04). Abteilungen nach Austritten der letzten zwoelf Monate,
+   Monat fuer Monat abgespielt; die Balken gleiten auf ihren neuen Rang. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Kündigungen im Zeitraffer", "Resignations in time-lapse")</MudText>
+        <MudSwitch T="bool" Value="_relevantOnly" ValueChanged="SetRelevant" Color="Color.Primary" Label="@T("Nur fluktuationsrelevante", "Turnover-relevant only")" />
+        <MudIconButton Icon="@(_playing ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="TogglePlay" />
+        <span class="ll-mono" style="min-width:70px">@(_frames.Count == 0 ? "" : _frames[_frame].Month.ToString("MM.yyyy", CultureInfo.InvariantCulture))</span>
+        <MudSlider T="int" Min="0" Max="@(Math.Max(0, _frames.Count - 1))" Value="_frame" ValueChanged="@((int v) => _frame = v)" Style="max-width:260px" />
+    </div>
+    @if (_frames.Count == 0)
+    {
+        <MudText Class="ll-muted">@T("Zu wenig Daten.", "Not enough data.")</MudText>
+    }
+    else
+    {
+        var f = _frames[_frame];
+        <div class="hri-headline">
+            <span class="hri-big six-anim" @key="f.Total">@f.Total</span>
+            <span class="ll-muted">@T("Austritte in den zwölf Monaten bis", "Exits in the twelve months up to") @f.Month.ToString("MM.yyyy", CultureInfo.InvariantCulture)</span>
+        </div>
+        <div class="six-race" style="height:@(Top * RowHeight + 10)px">
+            @foreach (var key in _allKeys)
+            {
+                var rank = f.Bars.Select((b, i) => (b, i)).FirstOrDefault(x => x.b.Key == key);
+                var visible = rank.b is not null;
+                var value = visible ? rank.b!.Value : 0;
+                <div class="six-race-row @(visible ? "" : "six-race-out")" style="transform:translateY(@((visible ? rank.i : Top) * RowHeight)px)">
+                    <span class="six-race-name" title="@key">@key</span>
+                    <span class="six-race-track">
+                        <span class="six-race-bar" style="width:@F(100.0 * value / _max)%;background:@HrUi.Color(key)"></span>
+                    </span>
+                    <span class="six-race-value ll-mono">@value</span>
+                </div>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Jeder Balken ist eine Abteilung, seine Länge die Zahl der Personen, die in den zwölf Monaten bis zum gezeigten Monat ausgetreten sind (gleitend). ▶ spielt die Monate ab; die Balken überholen sich. Grundlage sind alle Austritte aus Rexx mit den Struktur-Filtern oben, ohne den Datumsfilter.", "Each bar is a department, its length the number of people who left in the twelve months up to the month shown (rolling). ▶ plays the months; the bars overtake each other. Based on all exits from Rexx with the structure filters above, without the date filter.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private const int Top = 12;
+    private const int RowHeight = 30;
+    private bool _relevantOnly = true;
+    private IReadOnlyList<HrRaceFrame> _frames = [];
+    private List<string> _allKeys = [];
+    private int _max = 1;
+    private int _frame;
+    private bool _playing;
+    private CancellationTokenSource? _play;
+
+    protected override void OnParametersSet() => Load();
+
+    private void Load()
+    {
+        _frames = HrKpiInteractive.ExitRace(Result.TimelineLeavers, Result.AnchorDate, _relevantOnly, Top);
+        _allKeys = _frames.SelectMany(f => f.Bars).Select(b => b.Key).Distinct().ToList();
+        // Ein fester Massstab ueber alle Monate: so sieht man, ob die Austritte insgesamt zu- oder abnehmen.
+        _max = Math.Max(1, _frames.SelectMany(f => f.Bars).Select(b => b.Value).DefaultIfEmpty(1).Max());
+        _frame = Math.Max(0, _frames.Count - 1);
+    }
+
+    private void SetRelevant(bool value)
+    {
+        Stop();
+        _relevantOnly = value;
+        Load();
+    }
+
+    private void Stop()
+    {
+        _play?.Cancel();
+        _playing = false;
+    }
+
+    private void TogglePlay()
+    {
+        if (_playing) { Stop(); return; }
+        _playing = true;
+        if (_frame >= _frames.Count - 1) _frame = 0;
+        _play = new CancellationTokenSource();
+        var token = _play.Token;
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(900));
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+            {
+                if (_frame >= _frames.Count - 1) { _playing = false; await InvokeAsync(StateHasChanged); return; }
+                _frame++;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, token).ContinueWith(_ => { }, TaskScheduler.Default);
+    }
+
+    public void Dispose() { _play?.Cancel(); _play?.Dispose(); }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

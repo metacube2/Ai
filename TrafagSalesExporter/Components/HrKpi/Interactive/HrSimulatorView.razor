@@ -1,0 +1,107 @@
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.SalesUi
+@inject IUiTextService UiText
+
+@* HR Interaktiv: Was waere wenn (2026-11-04). Regler fuer Kuendigungen, sonstige Austritte und Eintritte je Monat bis
+   Jahresende; Ergebnis Jahresfluktuation und Headcount gegen Vorjahr. Spielwiese, keine Planung. *@
+<MudPaper Class="pa-3" Outlined="true">
+    <div class="d-flex align-center flex-wrap" style="gap:12px">
+        <MudText Typo="Typo.h6" Class="ll-grow">@T("Was wäre wenn: Fluktuation bis Jahresende", "What if: turnover until year end")</MudText>
+        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Restore" OnClick="Reset">@T("Zurück auf die letzten 12 Monate", "Back to the last 12 months")</MudButton>
+    </div>
+    @if (_base is null)
+    {
+        <MudText Class="ll-muted">@T("Zu wenig Daten.", "Not enough data.")</MudText>
+    }
+    else
+    {
+        var sim = HrKpiInteractive.Simulate(_base, _relevant, _other, _hires);
+        var delta = sim.YearRate - _base.PreviousYearRate;
+        <MudGrid Class="mt-1">
+            <MudItem xs="12" md="5">
+                <div class="six-lever">
+                    <div class="d-flex"><span class="ll-grow">@T("Kündigungen je Monat (fluktuationsrelevant)", "Resignations per month (turnover-relevant)")</span><b class="ll-mono">@_relevant.ToString("0.0", CultureInfo.InvariantCulture)</b></div>
+                    <MudSlider T="double" Min="0" Max="@SliderMax(_base.RelevantPerMonth)" Step="0.5" @bind-Value="_relevant" />
+                </div>
+                <div class="six-lever">
+                    <div class="d-flex"><span class="ll-grow">@T("Sonstige Austritte je Monat", "Other exits per month")</span><b class="ll-mono">@_other.ToString("0.0", CultureInfo.InvariantCulture)</b></div>
+                    <MudSlider T="double" Min="0" Max="@SliderMax(_base.OtherPerMonth)" Step="0.5" @bind-Value="_other" />
+                </div>
+                <div class="six-lever">
+                    <div class="d-flex"><span class="ll-grow">@T("Eintritte je Monat", "Entries per month")</span><b class="ll-mono">@_hires.ToString("0.0", CultureInfo.InvariantCulture)</b></div>
+                    <MudSlider T="double" Min="0" Max="@SliderMax(_base.HiresPerMonth)" Step="0.5" @bind-Value="_hires" />
+                </div>
+                <MudText Typo="Typo.caption" Class="ll-muted d-block mt-2">
+                    @T("Vorschlag aus den letzten 12 Monaten", "Suggestion from the last 12 months"):
+                    @_base.RelevantPerMonth.ToString("0.0", CultureInfo.InvariantCulture) / @_base.OtherPerMonth.ToString("0.0", CultureInfo.InvariantCulture) / @_base.HiresPerMonth.ToString("0.0", CultureInfo.InvariantCulture)
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" md="7">
+                <div class="d-flex flex-wrap" style="gap:24px">
+                    <div>
+                        <div class="ll-muted">@T("Jahresfluktuation", "Annual turnover") @_base.Year</div>
+                        <div class="hri-big six-anim" @key="sim.YearRate">@HrUi.Pct(sim.YearRate)</div>
+                        <div class="ll-muted" style="color:@(delta > 0 ? "#E57373" : "#66BB6A")">@(delta >= 0 ? "+" : "")@((delta * 100).ToString("0.0", CultureInfo.InvariantCulture)) @T("Prozentpunkte zum Vorjahr", "percentage points vs previous year") (@HrUi.Pct(_base.PreviousYearRate))</div>
+                    </div>
+                    <div>
+                        <div class="ll-muted">@T("Relevante Austritte im Jahr", "Relevant exits in the year")</div>
+                        <div class="hri-big">@sim.ProjectedRelevant.ToString("0.#", CultureInfo.InvariantCulture)</div>
+                        <div class="ll-muted">@T("davon bis heute", "of which to date") @_base.YtdRelevant</div>
+                    </div>
+                    <div>
+                        <div class="ll-muted">@T("Headcount Jahresende", "Headcount year end")</div>
+                        <div class="hri-big">@sim.HeadcountYearEnd.ToString("0.#", CultureInfo.InvariantCulture)</div>
+                        <div class="ll-muted">@T("heute", "today") @_base.HeadcountNow.ToString("0", CultureInfo.InvariantCulture) · Ø @sim.AverageHeadcount.ToString("0.0", CultureInfo.InvariantCulture)</div>
+                    </div>
+                </div>
+                @{
+                    var maxHc = (double)Math.Max(1m, sim.Months.Select(m => m.Headcount).DefaultIfEmpty(1).Max());
+                    var minHc = Math.Max(0, Math.Floor((double)sim.Months.Select(m => m.Headcount).DefaultIfEmpty(0).Min() * 0.9));
+                }
+                <svg viewBox="0 0 640 200" class="six-sim mt-2">
+                    @foreach (var (m, i) in sim.Months.Select((m, i) => (m, i)))
+                    {
+                        var h = 10 + 150 * ((double)m.Headcount - minHc) / Math.Max(1, maxHc - minHc);
+                        <rect x="@F(10 + i * 52)" y="@F(170 - h)" width="40" height="@F(h)" rx="3" class="hri-sim-bar @(m.Projected ? "six-sim-new" : "six-sim-ytd")">
+                            <title>@HrUi.Month(m.Month.Month): @m.Headcount.ToString("0.0", CultureInfo.InvariantCulture)</title>
+                        </rect>
+                        <g><text x="@F(30 + i * 52)" y="188" class="nw-axis">@HrUi.Month(m.Month.Month)</text></g>
+                    }
+                </svg>
+            </MudItem>
+        </MudGrid>
+        <MudText Typo="Typo.caption" Class="ll-muted d-block">@T("Grau ist der durchschnittliche Headcount der Festangestellten je Monat bis heute, farbig die Fortschreibung mit den Reglern: Headcount des Vormonats plus Eintritte minus alle Austritte. Jahresfluktuation = relevante Austritte des ganzen Jahres (Ist bis heute plus Regler mal Restmonate) durch den Durchschnitt der zwölf Monate, wie der Vorjahreswert. Spielwiese, keine Planung.", "Grey is the average headcount of permanent staff per month to date, coloured the projection with the sliders: headcount of the previous month plus entries minus all exits. Annual turnover = relevant exits of the whole year (actual to date plus slider times remaining months) divided by the average of the twelve months, like the previous-year value. A playground, not a plan.")</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = default!;
+
+    private HrSimBase? _base;
+    private double _relevant;
+    private double _other;
+    private double _hires;
+
+    protected override void OnParametersSet()
+    {
+        _base = Result.Employees.Count == 0 && Result.TimelineLeavers.Count == 0
+            ? null
+            : HrKpiInteractive.SimulatorBase(Result.Employees, Result.TimelineLeavers, Result.AnchorDate);
+        Reset();
+    }
+
+    private void Reset()
+    {
+        if (_base is null)
+            return;
+        _relevant = _base.RelevantPerMonth;
+        _other = _base.OtherPerMonth;
+        _hires = _base.HiresPerMonth;
+    }
+
+    private static double SliderMax(double suggestion) => Math.Max(6, Math.Ceiling(suggestion * 3));
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
