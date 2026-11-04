@@ -282,8 +282,11 @@ else
     private string? _selectedVariantName;
     private List<string> _variantNames = [];
     private static readonly SemaphoreSlim SelectionStoreLock = new(1, 1);
+    // Seit 2026-11-04 genuegt die Gesamtabfrage #775 (ersetzt die vier Rexx-Einzeldateien), docs/HR_KPI.md 8.13.
+    // Name aus den Optionen, nicht als Text: benachbarte Texte liest der Uebersetzungstest als Paar Deutsch/Englisch.
     private static readonly string[] ExpectedUploadFileNames =
     [
+        new HrKpiDataSourceOptions().GesamtFile,
         "Saldiperstichdatum.xlsx",
         "Exportkommengehen.xlsx",
         "HR_KPI_Export.xlsx",

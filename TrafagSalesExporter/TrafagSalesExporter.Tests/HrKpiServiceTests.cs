@@ -1039,6 +1039,162 @@ public sealed class HrKpiServiceTests : IDisposable
             result.LeaversByOrganisation.Sum(row => row.Count));
     }
 
+    // ---- Rexx-Gesamtabfrage #775 (docs/HR_KPI.md 8.13) ----
+
+    private static readonly string[] GesamtHeaders =
+    [
+        "Personalnummer", "Nachname, Vorname (Link Personal)", "Personal Status", "Organisation", "Kostenstelle", "Stelle",
+        "Eintrittsdatum", "Austrittsdatum", "Austrittsart", "Geburtsdatum", "Ø tägliche Sollarbeitszeit (Woche)", "Stunden Saldo",
+        "Urlaubsanspruch", "Urlaub Rest", "Ferien ausstehend (Tage)", "Ferien angetreten (Tage)", "Krankheit angetreten (Stunden)",
+        "Krankheit (über 60 Tage) angetreten (Stunden)", "Unfall angetreten (Stunden)", "Kompensation angetreten (Stunden)",
+        "Militär / Zivildienst angetreten (Stunden)", "Krankheit angetreten (Zeitraum)", "Unfall angetreten (Zeitraum)"
+    ];
+
+    private void WriteGesamt(object?[][] rows, DateTime? stand = null)
+    {
+        var path = Path.Combine(_folder, "Hrcockpitgesamtdashboard.xlsx");
+        WriteWorkbook(path, GesamtHeaders, rows);
+        File.SetLastWriteTime(path, stand ?? DateTime.Now);
+    }
+
+    private static object?[] GesamtRow(int pernr, string name, string status, string org, DateTime? exit = null, string exitType = "",
+        decimal rest = 0, decimal open = 0, decimal taken = 0, string sick = "0:00", string sickLong = "0:00", string accident = "0:00",
+        string comp = "0:00", string military = "0:00", string sickPeriod = "", string accidentPeriod = "")
+        => [pernr, name, status, org, "100 / Org A", "Engineer", new DateTime(2020, 1, 1), exit, exitType, new DateTime(1990, 5, 5), 8.0, "12:30",
+            25, rest, open, taken, sick, sickLong, accident, comp, military, sickPeriod, accidentPeriod];
+
+    /// <summary>Erster Arbeitstag ZH ab dem 3. Januar des laufenden Jahres (1. und 2. Januar sind Feiertage).</summary>
+    private static DateTime FirstWorkdayOfYear()
+    {
+        var day = new DateTime(DateTime.Today.Year, 1, 3);
+        while (ZurichWorkdayCalendar.CountWorkdays(day, day) == 0)
+            day = day.AddDays(1);
+        return day;
+    }
+
+    [Fact]
+    public async Task BuildAsync_Liest_Mit_Gesamtabfrage_775_Nur_Diese_Datei()
+    {
+        WriteGesamt(
+        [
+            GesamtRow(1001, "Alpha, Anna", "Aktiv", "Org A", rest: 5, open: 2, taken: 10),
+            GesamtRow(1002, "Beta, Bruno", "Vertrag endend", "Org B", exit: DateTime.Today.AddMonths(2), rest: 1, open: 0, taken: 6),
+            GesamtRow(1005, "Gone, Gina", "Ausgeschieden", "Org A, Org Z", exit: DateTime.Today.AddYears(-1), exitType: "Kündigung AN"),
+            GesamtRow(1006, "Later, Leo", "Aktiv", "Org B", exit: DateTime.Today.AddMonths(1))
+        ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        Assert.Equal([1001, 1002, 1006], result.Employees.Select(x => x.Personalnummer!.Value).Order().ToArray());
+        var anna = Assert.Single(result.Employees, x => x.Personalnummer == 1001);
+        // Rest aus #775 ohne geplante Tage, im Cockpit wie bisher mit geplanten Tagen; bezogen direkt aus „Ferien angetreten“.
+        Assert.Equal(7m, anna.UrlaubRest);
+        Assert.Equal(10m, anna.Ferientage);
+        Assert.Equal(new DateTime(1990, 5, 5), anna.Geburtsdatum);
+        var bezogen = Assert.Single(result.TimeVacationMetrics, x => x.Label == "Ferien bezogen");
+        Assert.Contains("Ferien angetreten", bezogen.Detail);
+        // Austritt nur mit Status „Ausgeschieden“, Organisation = erste Zuordnung.
+        var gina = Assert.Single(result.TimelineLeavers);
+        Assert.Equal(1005, gina.Personalnummer);
+        Assert.Equal("Org A", gina.Organisationseinheit);
+        Assert.Contains(result.FileStatuses, x => x.Label == "Rexx #775 Gesamt" && x.Exists);
+        Assert.DoesNotContain(result.FileStatuses, x => x.Label.StartsWith("Rexx #757", StringComparison.Ordinal) || x.Label.StartsWith("Rexx #381", StringComparison.Ordinal));
+        Assert.Contains(result.Notices, x => x.Contains("Gesamtabfrage #775", StringComparison.Ordinal));
+        Assert.DoesNotContain(result.DataQualityIssues, x => x.Issue.Contains("Name-Join", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Mit_775_Gilt_Je_Person_Der_Hoehere_Wert_Aus_Rexx_Und_SAP()
+    {
+        var day = FirstWorkdayOfYear();
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [
+                new("00001001", "0260", day, day, "000", 1m, 8m, 1m),
+                new("00001002", "0260", day, day.AddDays(1), "000", 2m, 24m, 2m)
+            ],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+        WriteGesamt(
+        [
+            // Anna: Rexx 40 h Krankheit (8 h in SAP) und 16 h Unfall (nicht in SAP) -> 32 h und 16 h dazu.
+            GesamtRow(1001, "Alpha, Anna", "Aktiv", "Org A", sick: "40:00", accident: "16:00"),
+            // Bruno: SAP hat mehr als Rexx -> SAP bleibt.
+            GesamtRow(1002, "Beta, Bruno", "Aktiv", "Org B", sick: "8:00")
+        ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var anna = Assert.Single(result.Absences, x => x.Personalnummer == 1001);
+        Assert.Equal(56m, anna.KrankheitGesamtStd);
+        Assert.Equal(16m, anna.UnfallStd);
+        var bruno = Assert.Single(result.Absences, x => x.Personalnummer == 1002);
+        Assert.Equal(24m, bruno.KrankheitGesamtStd);
+        Assert.Contains(result.Notices, x => x.Contains("mehr Krankheit oder Unfall als SAP", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Mit_775_Nutzt_Die_Rexx_Summen_Nicht_Fuer_Andere_Zeitraeume()
+    {
+        var day = FirstWorkdayOfYear();
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001001", "0260", day, day, "000", 1m, 8m, 1m)],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+        WriteGesamt([GesamtRow(1001, "Alpha, Anna", "Aktiv", "Org A", sick: "40:00")]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, FromDate = day, ToDate = day });
+
+        var anna = Assert.Single(result.Absences, x => x.Personalnummer == 1001);
+        Assert.Equal(8m, anna.KrankheitGesamtStd);
+        Assert.Contains(result.Notices, x => x.Contains("nur die SAP-Faelle", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void BuildRexxTopUpRows_Teilt_Die_Differenz_In_Kurz_Und_Lang_Ohne_Doppelzaehlung()
+    {
+        var employee = new HrKpiEmployeeRow { Personalnummer = 7, NameVoll = "X, Y", Fte = 1m };
+        var start = new DateTime(2026, 1, 1);
+        var end = new DateTime(2026, 11, 4);
+        // SAP: 480 h kurz und 80 h lang (61-Tage-Regel), Rexx: 600 h gesamt, davon 40 h ueber 60 Tage.
+        HrAbsenceRow Sap(decimal kurz, decimal lang) => new() { Personalnummer = 7, KrankheitKurzStd = kurz, KrankheitLangStd = lang, JeFall = true };
+        var rows = HrKpiDashboardBuilder.BuildRexxTopUpRows(
+            [Sap(480, 80)], [new HrKpiDashboardBuilder.RexxAbsenceSums(7, 600, 40, 0)], [employee], start, end);
+
+        var row = Assert.Single(rows);
+        Assert.Equal(40m, row.KrankheitGesamtStd);
+        Assert.Equal(40m, row.KrankheitKurzStd);
+        Assert.Equal(0m, row.KrankheitLangStd);
+        Assert.True(row.AusRexxErgaenzt);
+        Assert.Equal(start, row.VonDatum);
+    }
+
+    [Theory]
+    [InlineData("2026-01-01", "2026-11-04", "2026-11-04", true)]
+    [InlineData("2026-01-01", "2026-11-05", "2026-11-04", true)]
+    [InlineData("2026-02-01", "2026-11-04", "2026-11-04", false)]
+    [InlineData("2026-01-01", "2026-10-31", "2026-11-04", false)]
+    public void RexxSumsCoverPeriod_Nur_Ab_Neujahr_Bis_Mindestens_Exporttag(string start, string end, string stand, bool expected)
+        => Assert.Equal(expected, HrKpiDashboardBuilder.RexxSumsCoverPeriod(DateTime.Parse(start), DateTime.Parse(end), DateTime.Parse(stand)));
+
+    [Fact]
+    public void BuildRexxGapSicknessRows_Markiert_Rexx_Unfaelle()
+    {
+        var employee = new HrKpiEmployeeRow { Personalnummer = 7, NameVoll = "X, Y", Fte = 1m };
+        HrAbsenceRow[] sap = [new() { Personalnummer = 8, VonDatum = new DateTime(2026, 10, 20), BisDatum = new DateTime(2026, 10, 20), JeFall = true }];
+
+        var rows = HrKpiDashboardBuilder.BuildRexxGapSicknessRows(
+            [(7, new DateTime(2026, 10, 27), new DateTime(2026, 10, 28))], sap, [employee], unfall: true);
+
+        var row = Assert.Single(rows);
+        Assert.True(row.IstUnfall);
+        Assert.Equal(16m, row.KrankheitGesamtStd);
+    }
+
+    [Theory]
+    [InlineData("Cafeteria, Cafeteria", "Cafeteria")]
+    [InlineData("Lehrlinge - Elektronik, Lehrlingsausbildung", "Lehrlinge - Elektronik")]
+    [InlineData("Auftrags- & Prozessmanagement", "Auftrags- & Prozessmanagement")]
+    public void FirstOrganisation_Nimmt_Die_Erste_Zuordnung(string value, string expected)
+        => Assert.Equal(expected, HrKpiDashboardBuilder.FirstOrganisation(value));
+
     private static void WriteFixtureFiles(string folder)
     {
         WriteWorkbook(Path.Combine(folder, "Saldiperstichdatum.xlsx"),

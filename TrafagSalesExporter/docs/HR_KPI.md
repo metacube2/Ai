@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-04 (Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-04 (Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -59,8 +59,13 @@ Restferien-Ampel.
 
 Konfiguration in `appsettings.json` unter `HrKpi`, Standardordner `C:\temp`:
 
+**Seit 2026-11-04 (Abschnitt 8.13):** Liegt `Hrcockpitgesamtdashboard.xlsx` (Rexx-Abfrage #775) im Ordner, ersetzt sie die
+vier Rexx-Einzeldateien unten (#757, #732, #744, #381); diese werden dann nicht mehr gelesen. Ohne #775 gilt die Tabelle
+unveraendert. Die SAP-Dateien bleiben in beiden Faellen.
+
 | Datei | Inhalt |
 | --- | --- |
+| `Hrcockpitgesamtdashboard.xlsx` (seit 2026-11-04) | Rexx #775, eine Zeile je Person: Stamm, Status, Austritt, Saldo, Ferien, Sollzeit, Geburtsdatum, Summen Krankheit/Unfall/Ferien/Kompensation/Militaer 01.01. bis Exporttag |
 | `Saldiperstichdatum.xlsx` | aktive Mitarbeitende, Saldi, Ferien, Organisation, Kostenstelle |
 | `Exportkommengehen.xlsx` | Arbeitszeitmodell, Sollzeit, Geburtsdatum |
 | `HR_KPI_Export.xlsx` | SAP-HR-Felder: Beschaeftigungsgrad, Geschlecht, BU/NBU, Planstelle |
@@ -508,7 +513,7 @@ fehlten 70 der 202 juengsten Krankheitsfaelle in SAP, 33 davon aus Oktober/Novem
 | Status | „Aktiv“, „Vertrag endend“ und „Langzeitkrank“ zaehlen als angestellt (`ActiveStatuses`); vorher nur „Aktiv“ |
 | Sollzeit | Spalte „Ø tägliche Sollarbeitszeit (Woche)“ wird erkannt (`NormalizeHeader` liest „ø“ als „o“). Der Wert ist Wochenstunden / Planungstage (5,71 = 40 h / 7, 6,67 = 40 h / 6) und taugt nicht als FTE; ohne SAP-Grad gilt deshalb „Vollzeit“ = 1,0 vor der Sollzeit. Betroffen: 4 aktive Personen ohne SAP-Zeile, die bisher als Reminderprofil ausfielen |
 | Krankheit | SAP je Fall plus der juengste Rexx-Fall je Person („Krankheit angetreten (Zeitraum)“, „Krank nicht buchbar angetreten (Zeitraum)“), wenn kein SAP-Krankheitsfall der Person ihn ueberschneidet und er hoechstens 30 Tage vor dem juengsten SAP-Fall oder spaeter beginnt (`BuildRexxGapSicknessRows`). Stunden = Arbeitstage ZH x 8,0/8,2 h x Pensum. Aeltere Abweichungen bleiben (eher Artzuordnung). Auch im Reiter Interaktiv (Folgenummer `REXX`). Grenze: Rexx nennt je Person nur den juengsten Fall; hatte jemand im Rueckstandsfenster zwei Faelle, fehlt der fruehere |
-| Ferien, Kompensation, Militaer | aus diesen Rexx-Dateien nicht je Fall ergaenzbar (#744 hat keine Ferien). Kachel-Detail nennt den juengsten SAP-Fall, Kachel gelb ab 30 Tagen Rueckstand, Hinweis oben und Warnung in „Ferien am Stueck“. „Ferien bezogen“ aus Rexx-Saldi ist aktuell |
+| Ferien, Kompensation, Militaer | aus diesen Rexx-Dateien nicht je Fall ergaenzbar (#744 hat keine Ferien). Kachel-Detail nennt den juengsten SAP-Fall, Kachel gelb ab 30 Tagen Rueckstand, Hinweis oben und Warnung in „Ferien am Stueck“. „Ferien bezogen“ aus Rexx-Saldi ist aktuell. *Ueberholt mit #775 (8.13): fuer 01.01. bis Exporttag je Person der hoehere Wert aus SAP und Rexx; „Ferien am Stueck“ bleibt SAP* |
 
 Probe mit den echten Serverdateien (nur Kennzahlen): 260 Mitarbeitende, FTE 238,0; 949 SAP-Krankheitsfaelle plus 34 aus
 Rexx ergaenzt, 1'099,8 Krankheitstage, Krankenquote 2026 bis heute 2,3 %; Fluktuation YTD 4,8 % (11 relevante Austritte).
@@ -539,8 +544,61 @@ Unfalltagen), ohne Langzeit 2,2 %, 7 Langzeitkranke, Krankheit lang 112 Tage sta
 **Neue Frage an HR:** Der Rexx-Export vom 04.11. hat fuer 2025 nur 49 Austritte (6 „Kündigung AN“, davon 3 Festangestellte;
 24 „Kündigung AG“). Die „Kontrollwerte 2025“ in Abschnitt 3 (104 Austritte, 42 AN-Kuendigungen, 33 relevant) passen
 dazu nicht; sie stammen aus einer aelteren oder anders abgegrenzten Datei. Offen bleiben ausserdem: aktive Befristete im
-Headcount, ob 0210/0220/0280 Krankheit sind, die Formel „Ferien bezogen“. Suite 1386/1386. **Produktiv seit 2026-11-04
+Headcount, ob 0210/0220/0280 Krankheit sind, die Formel „Ferien bezogen“ *(geklaert in 8.13: sie zog die geplanten Tage
+doppelt ab; mit #775 direkt „Ferien angetreten (Tage)“)*. Suite 1386/1386. **Produktiv seit 2026-11-04
 10:21** (`69a63b6`, `docs/rag/DEPLOYMENT.md`).
+
+### 8.13 Rexx-Gesamtabfrage #775 statt vier Einzeldateien (2026-11-04)
+
+Auftrag Ingo: „alle 5 Exporte in einer grossen Abfrage“, dann „pruefe besser vorher, dann baue alles ein und nimm Daten
+von dort, wo sie aktueller und genauer sind“. In Rexx (Personal › Abfrage) angelegt: private Abfrage **#775 „HR-Cockpit
+Gesamt (Dashboard)“**, eine Zeile je Person inklusive Ausgeschiedener (393 Zeilen am 04.11.), Filter „Zeitraum von/bis“
+01.01.2026 bis 04.11.2026, gespeichert. Rexx erlaubt hoechstens **50 Spalten**; #775 ist voll. Export als
+`Hrcockpitgesamtdashboard.xlsx` nach `hrdata`; liegt die Datei dort, liest das Cockpit nur sie (`HrKpiDataSourceOptions.GesamtFile`,
+Code-Vorgabe, nicht in `appsettings.json`), sonst die vier Einzeldateien wie bisher.
+
+**Befund vorher, Anzeigefehler seit 09:30:** Die gespeicherte Abfrage „Saldi per Stichdatum“ (#757) steht auf Stichtag
+31.12.2024 und Zeitraum Dezember 2024. Der Export vom Morgen lief damit; 249 von 265 „Urlaub Rest“ wichen vom Stand heute
+ab (Summe 510 statt 1'877 Tage), auch der Stundensaldo. Um 11:23 durch einen #757-Export mit Stichtag 04.11.2026 ersetzt
+(alte Datei in `hrdata\archiv_rexx_2026-07-08\Saldiperstichdatum_2026-11-04_0929_Stichtag2024.xlsx`); im Produktivcockpit
+gesehen: Ferien Rest 1'579.5.
+
+Abgleich #775 gegen die Einzelexporte (nur Zaehlwerte): keine Person fehlt; Eintritt, Austritt, Austrittsart, Kostenstelle,
+Sollzeit, Geburtsdatum, Anspruch und „Ferien ausstehend“ gleich (Abweichungen nur bei zwei Testpersonen). Spaltenwahl:
+
+| Feld im Cockpit | Spalte #775 | Hinweis |
+| --- | --- | --- |
+| Organisation | „Organisation“, erster Teil vor „, “ | Rexx schreibt mehrere Zuordnungen als „A, B“; erster Teil = „Organisation-1“ aus #381 (125 von 128) |
+| Austritte | Status „Ausgeschieden“ (128) | 29 weitere Personen haben ein kuenftiges Austrittsdatum und sind noch angestellt |
+| Urlaub Rest | „Urlaub Rest“ + „Ferien ausstehend (Tage)“ | #775 zieht geplante Tage ab (263 von 265: Rest #775 = Rest #757 heute − ausstehend); das Cockpit fuehrt Rest wie bisher mit geplanten Tagen |
+| Ferien bezogen | „Ferien angetreten (Tage)“ | alte Formel Anspruch − Rest − ausstehend zog die geplanten Tage doppelt ab (3'287.5 statt 4'666 Tage) |
+| Krankheit | „Krankheit angetreten (Stunden)“ + „Krankheit (über 60 Tage) angetreten (Stunden)“ | 1'208 + 27 Tage; „Krank nicht buchbar“ und „bis 3 Tage“ leer |
+| Unfall | „Unfall angetreten (Stunden)“ | 132 Tage; „Unfall gebucht gesamt“ enthaelt auch Kuenftiges |
+| Kompensation, Militaer | „… angetreten (Stunden)“ / 8,0 h (Kader 8,2 h) | |
+| Juengste Faelle | „Krankheit …“, „Krankheit (über 60 Tage) …“, „Unfall angetreten (Zeitraum)“ | Ergaenzung fehlender SAP-Faelle wie 8.11, jetzt auch fuer Unfall (0290) |
+| nicht genutzt | „Organisation/Stelle/Kostenstelle Austritt“ (enthalten ein Datum), „Arbeitszeitmodell-1“ (historischer Eintrag, bei 180 Vollzeit-Personen leer), Leitung, Lohn | FTE kommt aus SAP (alle Aktiven haben einen Grad), sonst aus der Sollzeit |
+
+Rechnung: SAP PA2001 bleibt die Grundlage je Fall (Zeitraumschnitt, Kurz/Lang je Krankheit, Interaktiv). Rexx ist
+fuehrend, SAP bekommt die Absenzen nur ueber Sonjas Import (8.9). Deckt der Zeitraum genau die Rexx-Summen ab (Beginn
+01.01. des Exportjahres, Ende am oder nach dem Exporttag, also die Standardansicht), gilt **je Person der hoehere Wert**:
+Krankheit und Unfall werden um die Differenz ohne einzelne Daten aufgestockt (`BuildRexxTopUpRows`, Langzeit hoechstens die
+Differenz bei „ueber 60 Tage“), Ferien, Kompensation und Militaer ebenso in den Kacheln „… im Zeitraum“. Bei anderen
+Zeitraeumen oder dem Vorjahr gelten nur die SAP-Faelle, mit Hinweis. Militaer zeigt, warum je Person: SAP und Rexx
+fuehren am 04.11. ganz verschiedene Personen (3 in SAP, 7 in Rexx), vermutlich andere Arten.
+
+Probe mit den echten Dateien (2026 bis 04.11., nur Kennzahlen), Einzeldateien → #775: Headcount 260, FTE 238,0,
+Austritte 128 und Fluktuation unveraendert; Unfalltage 56,0 → 131,9; Krankheits- und Unfalltage 1'155,8 → 1'429,3;
+Krankenquote 2,5 % → 3,0 % (ohne Langzeit 2,2 % → 2,8 %); bei 52 Personen hatte Rexx mehr (193,6 Tage Krankheit, 67,9
+Tage Unfall ergaenzt), 2 juengste Unfaelle als Fall ergaenzt; Ferien bezogen 3'287,5 → 4'666; Kompensation im Zeitraum
+503 → 1'236,5 Tage; Militaer 99 → 161 Tage.
+
+Pflege: #775 regelmaessig mit **Zeitraum 01.01. bis heute** exportieren (der gespeicherte Filter steht fest auf
+04.11.2026). Ist die Datei aelter als 7 Tage, zeigt das Cockpit einen Hinweis. Neue Felder nur gegen eine leere Spalte
+tauschen (50er-Grenze). Grenzen: die Aufstockung hat keine Daten, erscheint also nicht im Krankheitskalender oder in
+Fit & Wohl; Rexx-Arten ausserhalb „Krankheit“ (z. B. Kind krank) zaehlen nur, soweit SAP sie fuehrt.
+
+Tests: 12 neue in `HrKpiServiceTests` (Gesamtdatei ersetzt die Einzeldateien, hoeherer Wert je Person, kein Rexx bei
+anderem Zeitraum, Kurz/Lang-Teilung, Zeitraumregel, Rexx-Unfall, erste Organisation).
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

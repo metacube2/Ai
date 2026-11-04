@@ -30,6 +30,9 @@ public sealed class HrKpiDataSourceOptions
     public string SapAbsenceFile { get; set; } = "HR_Absenzen_SAP.xlsx";
     public string AbsenceFile { get; set; } = "Abwesenheitinstunden.xlsx";
     public string LeaverFile { get; set; } = "Personalausgeschieden.xlsx";
+    // Rexx-Gesamtabfrage #775 (seit 2026-11-04, docs/HR_KPI.md 8.13). Liegt sie im Datenordner, ersetzt sie
+    // MainFile, TimeFile, AbsenceFile und LeaverFile; sonst laufen die vier Einzeldateien wie bisher.
+    public string GesamtFile { get; set; } = "Hrcockpitgesamtdashboard.xlsx";
     public decimal AbsenceYellowThresholdPercent { get; set; } = 3m;
     public decimal AbsenceRedThresholdPercent { get; set; } = 5m;
 
@@ -47,6 +50,7 @@ public sealed class HrKpiDataSourceOptions
             SapAbsenceFile = NormalizeText(SapAbsenceFile, "HR_Absenzen_SAP.xlsx"),
             AbsenceFile = NormalizeText(AbsenceFile, "Abwesenheitinstunden.xlsx"),
             LeaverFile = NormalizeText(LeaverFile, "Personalausgeschieden.xlsx"),
+            GesamtFile = NormalizeText(GesamtFile, "Hrcockpitgesamtdashboard.xlsx"),
             AbsenceYellowThresholdPercent = yellow,
             AbsenceRedThresholdPercent = red
         };
@@ -228,6 +232,8 @@ public sealed class HrAbsenceRow
     // Falls je Person; dient seit 2026-11-04 nur dazu, in SAP noch fehlende juengste Krankheitsfaelle zu ergaenzen.
     public string RexxKrankheitZeitraum { get; set; } = string.Empty;
     public string RexxKrankNichtBuchbarZeitraum { get; set; } = string.Empty;
+    // Seit 2026-11-04 (#775): juengster Unfall der Person, ergaenzt fehlende SAP-Unfaelle (0290) wie bei Krankheit.
+    public string RexxUnfallZeitraum { get; set; } = string.Empty;
     // Herkunft der Zeile: true, wenn sie ein aus Rexx ergaenzter Krankheitsfall ist (SAP hatte ihn noch nicht).
     public bool AusRexxErgaenzt { get; set; }
     // Seit 2026-11-04: Zeile ist ein Fall mit Datum (SAP oder aus Rexx ergaenzt); Kurz/Lang steht dann schon fest
