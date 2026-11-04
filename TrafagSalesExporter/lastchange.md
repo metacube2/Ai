@@ -2,6 +2,13 @@
 
 Stand: 2026-11-04
 
+## HR-Cockpit: Rexx-Abwesenheiten je Fall #777, Interaktiv mit Datum (Auftrag Ingo „alles gruen“), 2026-11-04
+
+- Rexx: private Abfrage #777 in der Antragsliste (Von/Bis, Art, Status, Tagessoll). Cockpit: `MergeRexxCases` ergaenzt SAP um
+  1'203 bestaetigte Faelle mit Datum (nur nicht abgedeckte Tage). `4bdbc18`, 3 Tests, Suite 1401/1401, **produktiv seit 12:21**,
+  in Chrome geprueft (Ferien am Stueck 101 von 260, Fit & Wohl 31). Offen: rund 100 direkt in Rexx gebuchte Krankheitstage ohne
+  Datum (13 Personen). Doku HR_KPI 8.14, rag/HR_KPI, rag/DEPLOYMENT, Router HR, Schulungsseite, Handbuch, LEARNINGS, Wochen_Todo 149.
+
 ## HR-Cockpit: Rexx-Gesamtabfrage #775 statt vier Rexx-Dateien, das Aktuellere je Person (Auftrag Ingo), 2026-11-04
 
 - Rexx: private Abfrage #775 „HR-Cockpit Gesamt (Dashboard)“ (50 Spalten). Cockpit liest `Hrcockpitgesamtdashboard.xlsx` statt

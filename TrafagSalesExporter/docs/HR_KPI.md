@@ -6,9 +6,9 @@ Stand: 2026-11-04 (Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamta
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Aktueller Produktivstand des HR-Cockpits: Commit `6dd1a56`, deployed am 2026-11-04 um 11:46 (Rexx-Gesamtabfrage #775, 8.13;
-davor `69a63b6` um 10:21, `cfe2631` um 09:57 und `b65f059` um 09:20, Abschnitte 8.10 bis 8.12 und 9);
-Rexx-Daten seit 2026-11-04 11:46 aus `Hrcockpitgesamtdashboard.xlsx` vom selben Tag (8.13); die Einzeldateien vom 09:30 liegen noch als Rueckfall in `hrdata`.
+Aktueller Produktivstand des HR-Cockpits: Commit `4bdbc18`, deployed am 2026-11-04 um 12:21 (Rexx-Abwesenheiten je Fall #777, 8.14;
+davor `6dd1a56` um 11:46 mit #775, 8.13; `69a63b6` um 10:21, `cfe2631` um 09:57 und `b65f059` um 09:20, Abschnitte 8.10 bis 8.12 und 9);
+Rexx-Daten seit 2026-11-04 11:46 aus `Hrcockpitgesamtdashboard.xlsx` vom selben Tag (8.13), Faelle seit 12:22 aus `Hr-cockpit-absenzen-je-fall.xlsx` (8.14); die Einzeldateien vom 09:30 liegen noch als Rueckfall in `hrdata`.
 *(ueberholt am 2026-11-04 11:46: hier stand `69a63b6` vom 10:21)*
 *(ueberholt am 2026-11-04: hier stand `ede56b6` vom 2026-10-22 15:48, Abschnitt 8.8)*
 *(ueberholt am 2026-10-29: hier stand `5ae7f31` vom 2026-09-28 11:25, siehe `docs/rag/DEPLOYMENT.md`)*
@@ -639,7 +639,9 @@ Pflege: #777 wie #775 regelmaessig exportieren (kein Datumsfilter, liefert alle 
 #776 (Kopie von #775, ungenutzt, kann geloescht werden), #777; fremde Abfragen unveraendert.
 
 Tests: 3 neue (`MergeRexxCases` bestaetigte Faelle ohne Ueberschneidung, teilweise Ueberschneidung, Einbau in Absenzen und
-Interaktiv). Suite 1401/1401.
+Interaktiv). Suite 1401/1401. **Produktiv seit 2026-11-04 12:21** (`4bdbc18`, `docs/rag/DEPLOYMENT.md`), Datei seit 12:22 in
+`hrdata`; in Chrome gesehen: Hinweis „1'203 Faelle ergaenzt“, Krankheitstage 1'441.8, Quote 3.1 %, „Ferien am Stueck“ 101 von
+260 ohne Warnung, Fit & Wohl 31.
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

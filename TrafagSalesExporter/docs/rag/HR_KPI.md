@@ -1,8 +1,15 @@
 # RAG HR KPI
 
-Stand: 2026-11-04 11:46 (Rexx-Gesamtabfrage #775 produktiv, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-04 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
+
+- **2026-11-04 12:21: Rexx-Abwesenheiten je Fall #777** (`docs/HR_KPI.md` 8.14). Private Abfrage #777 in der Rexx-Antragsliste
+  (Von/Bis, Art, Status, Tagessoll je Antrag, ab 07.04.2026), Export `Hr-cockpit-absenzen-je-fall.xlsx` in `hrdata`. Bestaetigte
+  Faelle, die in SAP fehlen, kommen mit Datum dazu (1'203: Ferien 730, Kompensation 355, Krankheit 87, Unfall 24, Militaer 7).
+  Damit Krankheitskalender, Fit & Wohl (31) und „Ferien am Stueck“ (101 von 260) aktuell. Rest ohne Datum: rund 100
+  Krankheitstage bei 13 Personen, von HR direkt in Rexx gebucht und nie in SAP (eine Person 49,5 Tage); erst die
+  Rexx-Schnittstelle loest das. **Produktiv seit 12:21 (`4bdbc18`), in Chrome geprueft.**
 
 - **2026-11-04 11:46: Rexx-Gesamtabfrage #775 statt vier Rexx-Dateien** (`docs/HR_KPI.md` 8.13). Private Rexx-Abfrage #775
   „HR-Cockpit Gesamt (Dashboard)“ (50 Spalten, voll), Export `Hrcockpitgesamtdashboard.xlsx` in `hrdata` (seit 11:46, Stand
