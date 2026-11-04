@@ -4,6 +4,9 @@ Stand: 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); dav
 
 ## Kurzstand
 
+- **2026-11-04 13:00: Stand nach Ampel und fuenf Fragen an HR** (`docs/HR_KPI.md` 8.16), Mailentwurf in Ingos Downloads,
+  nicht gesendet. Antworten von HR offen.
+
 - **2026-11-04 12:41: Kachel „Unfalltage laufender Monat“** nimmt den hoeheren Wert aus SAP-Tagesdatei und Unfallfaellen
   (SAP, Rexx #777, aus #775 ergaenzt); vorher 0,0, jetzt 4,2 Tage im November (`docs/HR_KPI.md` 8.15). Produktiv `f86b0ed`.
 

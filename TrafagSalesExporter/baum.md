@@ -72,6 +72,9 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` | Marktsegmente und Marktumfrage |
 | `docs/CONTROLLING_2026-10-05.md` | Unterreiter Controlling: Herkunft (Eigeninitiative), Rechnung Brücke und Hochrechnung, offene Fragen |
 | `docs/VERKAUF_2026-10-02.md` | Reiter Verkauf: Entscheide (Quelle, Regeln, Kundenschlüssel), acht Unterreiter plus Interaktiv mit neun animierten Ansichten, Grenzen, Abgleich |
+| `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md` | Verkauf Monthly Review Gesellschaften: Auftrag, Entscheide, Phasen, Befund T&P-Dateien (nicht gebaut) |
+| `docs/monthly_review/MASKE_SPEZIFIKATION_2026-11-04.md` | Spezifikation des Entwurfs `maske.html` (Datenmodell, Ansichten, Berechnungen, Fehler) |
+| `docs/monthly_review/maske_entwurf_2026-11-04.html` | Ingos Entwurf der Monthly Review (Kopie aus der Repo-Wurzel) |
 | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` | Fragebogen zum Railway-Export |
 | `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` | Konzept Railway-Export per Mausklick |
 | `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` | Bahnmarkt DE: Branchenfund und fehlender Adressschluessel |

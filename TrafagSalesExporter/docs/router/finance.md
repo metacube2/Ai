@@ -41,6 +41,7 @@ Marktsegmente.
 | **Marktsegmente, Railway, Marktumfrage** | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` |
 | **Unterreiter Controlling** (Eigeninitiative): Umsatzbrücke Vorjahr (Menge, Mix, Preis, Währung), Hochrechnung laufendes Jahr, offene Fragen separat | `docs/CONTROLLING_2026-10-05.md` |
 | **Reiter Verkauf**: Kunden, Rückgang, neue und verlorene Kunden, Konzentration, Cross-Selling, Preisstreuung, Prognose, Weltkarte, Interaktiv (Galaxie, Rennen, Fluss, Sonnenstrahl, Simulator, Bestellrhythmus, Kalender, Netzwerk, 3D); gleiche Quelle und Regeln wie Finance, ohne Konzernkunden, CHF zum Belegdatum | `docs/VERKAUF_2026-10-02.md` |
+| **Verkauf: Monthly Review Gesellschaften** (Entwurf `maske.html`, Spezifikation, Phasen 1–3, nicht gebaut); **T&P-Dateien der Tochtergesellschaften nicht im internen BI** | `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md` |
 | Railway-Excel-Export per Mausklick: Konzept, Blaetter, Defaultwerte | `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` |
 | Railway-Export: Fragebogen zur Abstimmung mit Patrik | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` |
 

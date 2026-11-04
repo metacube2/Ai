@@ -659,6 +659,27 @@ Rexx-Zeitmanagement (Zeitbuchungsliste, Stoppuhr-Liste) am 04.11. lesend gepruef
 zu finden: Die Zeitbuchungsliste fuehrt nur Kommen/Gehen (3'304 Buchungen in vier Tagen); beim Oeffnen weiterer Filter und der
 Stoppuhr-Liste fror der Browser-Tab dreimal ein. Nicht weiter verfolgt (Ruecksprache Ingo).
 
+
+### 8.16 Stand nach Ampel und Fragen an HR (2026-11-04 13:00)
+
+Fuer die Mail an Sonja und Nadja zusammengestellt (Text im Chat, Entwurf als `HR-Cockpit_Stand_2026-11-04.eml` in Ingos
+Downloads; nicht gesendet).
+
+| Ampel | Bereich | Quelle |
+| --- | --- | --- |
+| gruen | Headcount, FTE, Ein- und Austritte, Austrittsgruende, Fluktuation inkl. Vorjahr gleicher Zeitraum | Rexx #775 |
+| gruen | Stundensaldi, Ferienanspruch, Ferien bezogen, Rest, ausstehend | Rexx #775 |
+| gruen | Krankheit und Unfall 2026 (Quote 3,1 %, ohne Langzeit 2,7 %), Kompensation, Militaer, Unfalltage laufender Monat | SAP und Rexx |
+| gruen | Interaktiv: Zeitraffer, Austrittsfluss, Galaxie, Bindungskurve, Was waere wenn, Ferien am Stueck (101 von 260) | Rexx, SAP |
+| gelb | Fit & Wohl (31) und Krankheitskalender: rund 100 Krankheitstage bei 13 Personen ohne Datum | SAP und Rexx #777 |
+| gelb | Absenzen einzelner Monate und Vorjahr: nur Faelle mit Datum, Rexx-Antragsliste erst ab 07.04.2026 | SAP, Rexx #777 |
+| gelb | Aktualitaet: Rexx-Exporte von Hand bis zur Schnittstelle | Ingo |
+| rot | Direkt in Rexx gebuchte Krankheit: nicht in SAP, kein Antrag | offen, Frage 1 |
+
+Fragen an HR: (1) Direkt in Rexx gebuchte Krankheit kommt nicht in SAP an, gewollt oder nachbuchen? (2) Befristete im
+Headcount und in der Fluktuation (Rexx: 94 von 393 befristet)? (3) SAP 0210, 0220, 0280 und „Kind/Angehoerige krank“ in die
+Krankenquote? (4) Aktuelle Kontrollwerte 2025? (5) Militaer/Zivildienst in Rexx unter einer anderen Art? Antworten offen.
+
 ## 9. Reiter Interaktiv (2026-11-04)
 
 Wunsch Ingo: „baue einen Interaktiv-Reiter analog verkauf/interaktiv, halt fuer HR und seine Anforderungen, z. B.

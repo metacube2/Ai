@@ -2,6 +2,12 @@
 
 Stand: 2026-11-04
 
+## Nachfuehrung zum Chatschluss (Auftrag Ingo „md nachfuehren“), 2026-11-04 13:10
+
+- Verkauf Monthly Review: Auftrag, Entscheide, Phasen und T&P-Befund in `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md`,
+  Spezifikation und Entwurf daneben (bisher nur im Scratchpad bzw. ungetrackt in der Wurzel). Router Finance, baum, VERKAUF (Marge),
+  Wochen_Todo 150, Koordination (pausiert). HR: Ampelstand und Fragen an HR in `docs/HR_KPI.md` 8.16, rag/HR_KPI, Wochen_Todo 149.
+
 ## HR-Cockpit: Kachel „Unfalltage laufender Monat“ aus SAP- und Rexx-Faellen (Auftrag Ingo), 2026-11-04
 
 - `AccidentDaysCurrentMonth`, hoeherer Wert aus SAP-Tagesdatei und Unfallfaellen; `dac3098` (12:36) und Korrektur `f86b0ed` (12:41,
