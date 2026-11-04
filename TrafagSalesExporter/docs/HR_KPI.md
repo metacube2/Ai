@@ -6,7 +6,8 @@ Stand: 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #7
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Aktueller Produktivstand des HR-Cockpits: Commit `4bdbc18`, deployed am 2026-11-04 um 12:21 (Rexx-Abwesenheiten je Fall #777, 8.14;
+Aktueller Produktivstand des HR-Cockpits: Commit `f86b0ed`, deployed am 2026-11-04 um 12:41 (Unfallkachel aus Faellen, 8.15);
+nach `4bdbc18` um 12:21 (Rexx-Abwesenheiten je Fall #777, 8.14);
 davor `6dd1a56` um 11:46 mit #775, 8.13; `69a63b6` um 10:21, `cfe2631` um 09:57 und `b65f059` um 09:20, Abschnitte 8.10 bis 8.12 und 9);
 Rexx-Daten seit 2026-11-04 11:46 aus `Hrcockpitgesamtdashboard.xlsx` vom selben Tag (8.13), Faelle seit 12:22 aus `Hr-cockpit-absenzen-je-fall.xlsx` (8.14); die Einzeldateien vom 09:30 liegen noch als Rueckfall in `hrdata`.
 *(ueberholt am 2026-11-04 11:46: hier stand `69a63b6` vom 10:21)*
@@ -650,6 +651,13 @@ Befund aus der Liste „was noch nicht stimmt“: Die Kachel zeigte am 04.11. 0,
 (`HrKpiSet`) nahm, waehrend Rexx einen Unfall ab 02.11. kannte. Seit 2026-11-04 zaehlt zusaetzlich die Summe der Unfallfaelle
 0290 (SAP PA2001 und Rexx #777 bzw. ergaenzte juengste Faelle) im laufenden Monat bis heute (`AccidentDaysCurrentMonth`); der
 hoehere Wert gilt, das Detail nennt beide. BU und NBU getrennt kennt weiter nur SAP. Tests: 2 neue, Suite 1403/1403.
+Erst deployed `dac3098` um 12:36; die Kachel blieb 0,0, weil die aus #775 ergaenzten juengsten Unfaelle (8.11) nicht mitzaehlten
+(und beim Pruefen noch der Filter „Festangestellt“ aus der Variante gesetzt war). Korrigiert in `f86b0ed` (1 Test, Suite
+1404/1404), **produktiv seit 2026-11-04 12:41**, ohne Filter gesehen: 4,2 Unfalltage im November.
+
+Rexx-Zeitmanagement (Zeitbuchungsliste, Stoppuhr-Liste) am 04.11. lesend geprueft, um direkt gebuchte Krankheit mit Datum
+zu finden: Die Zeitbuchungsliste fuehrt nur Kommen/Gehen (3'304 Buchungen in vier Tagen); beim Oeffnen weiterer Filter und der
+Stoppuhr-Liste fror der Browser-Tab dreimal ein. Nicht weiter verfolgt (Ruecksprache Ingo).
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

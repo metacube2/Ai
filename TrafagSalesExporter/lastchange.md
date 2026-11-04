@@ -2,6 +2,12 @@
 
 Stand: 2026-11-04
 
+## HR-Cockpit: Kachel „Unfalltage laufender Monat“ aus SAP- und Rexx-Faellen (Auftrag Ingo), 2026-11-04
+
+- `AccidentDaysCurrentMonth`, hoeherer Wert aus SAP-Tagesdatei und Unfallfaellen; `dac3098` (12:36) und Korrektur `f86b0ed` (12:41,
+  auch aus #775 ergaenzte Unfaelle), 3 Tests, Suite 1404/1404, produktiv, Kachel 4,2 statt 0,0. Rexx-Zeitmanagement lesend geprueft,
+  Tab fror dreimal ein. Doku HR_KPI 8.15, rag/HR_KPI, rag/DEPLOYMENT, LEARNINGS, Koordination.
+
 ## HR-Cockpit: Rexx-Abwesenheiten je Fall #777, Interaktiv mit Datum (Auftrag Ingo „alles gruen“), 2026-11-04
 
 - Rexx: private Abfrage #777 in der Antragsliste (Von/Bis, Art, Status, Tagessoll). Cockpit: `MergeRexxCases` ergaenzt SAP um

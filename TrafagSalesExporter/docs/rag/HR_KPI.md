@@ -1,8 +1,11 @@
 # RAG HR KPI
 
-Stand: 2026-11-04 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
+
+- **2026-11-04 12:41: Kachel „Unfalltage laufender Monat“** nimmt den hoeheren Wert aus SAP-Tagesdatei und Unfallfaellen
+  (SAP, Rexx #777, aus #775 ergaenzt); vorher 0,0, jetzt 4,2 Tage im November (`docs/HR_KPI.md` 8.15). Produktiv `f86b0ed`.
 
 - **2026-11-04 12:21: Rexx-Abwesenheiten je Fall #777** (`docs/HR_KPI.md` 8.14). Private Abfrage #777 in der Rexx-Antragsliste
   (Von/Bis, Art, Status, Tagessoll je Antrag, ab 07.04.2026), Export `Hr-cockpit-absenzen-je-fall.xlsx` in `hrdata`. Bestaetigte
