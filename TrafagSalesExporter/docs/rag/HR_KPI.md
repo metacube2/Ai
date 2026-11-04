@@ -1,13 +1,22 @@
 # RAG HR KPI
 
-Stand: 2026-11-04 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-04 11:46 (Rexx-Gesamtabfrage #775 produktiv, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
+
+- **2026-11-04 11:46: Rexx-Gesamtabfrage #775 statt vier Rexx-Dateien** (`docs/HR_KPI.md` 8.13). Private Rexx-Abfrage #775
+  „HR-Cockpit Gesamt (Dashboard)“ (50 Spalten, voll), Export `Hrcockpitgesamtdashboard.xlsx` in `hrdata` (seit 11:46, Stand
+  04.11.); liegt sie dort, liest das Cockpit nur sie, Schluessel Personalnummer. Fuer 01.01. bis Exporttag je Person der
+  hoehere Wert aus SAP und Rexx (Krankheit, Unfall, Ferien, Kompensation, Militaer), weil SAP nur ueber Sonjas Import
+  nachkommt. Echte Daten 2026: Unfall 56 → 131,9 Tage, Quote 2,5 → 3,0 % (gelb), Ferien bezogen 3'287,5 → 4'666 (alte
+  Formel zog geplante Tage doppelt ab). Pflege: #775 mit Zeitraum 01.01. bis heute exportieren, Hinweis nach 7 Tagen.
+  Vorher um 11:23 behoben: der Saldi-Export vom Morgen hatte Stichtag 31.12.2024 (Ferien Rest 510 statt 1'579,5).
+  **Produktiv seit 11:46 (`6dd1a56`), in Chrome geprueft** (Uebersicht, Hinweise, Interaktiv mit Krankheitskalender).
 
 - **2026-11-04: HR-Vorgaben aus den Mails umgesetzt** (`docs/HR_KPI.md` 8.12): Kurz/Lang je Krankheit ab dem 61. Tag,
   Absenzquote = Krankheit und Unfall (0290), Kachel „Quote ohne Langzeit“, Gelb auf der Uebersichtskachel, Vorjahresvergleich
   gleicher Zeitraum, Von/Bis-Kachel mit Spanne. Echte Daten 2026: Quote 2,5 %, ohne Langzeit 2,2 %. Offen fuer HR:
-  Kontrollwerte 2025 passen nicht zum Export (2025 nur 6 „Kündigung AN“), Befristete im Headcount, 0210/0220/0280, Ferienformel.
+  Kontrollwerte 2025 passen nicht zum Export (2025 nur 6 „Kündigung AN“), Befristete im Headcount, 0210/0220/0280, Ferienformel *(geklaert 8.13)*.
   **Produktiv seit 10:21 (`69a63b6`).**
 
 - **2026-11-04 09:30: Rexx-Dateien in `hrdata` aktuell** (Ingos Exporte vom 04.11., alte vom 08.07. in
@@ -15,7 +24,7 @@ Stand: 2026-11-04 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, pr
   liefern. *Danach (8.11, Auftrag Ingo „das Aktuellere nehmen“):* „Vertrag endend“/„Langzeitkrank“ zaehlen als angestellt,
   Sollzeit-Spalte „Ø tägliche …“ erkannt, juengste Rexx-Krankmeldungen ergaenzen SAP (am 04.11. 34 Faelle), Ferien/
   Kompensation/Militaer zeigen den SAP-Stand (27.07.) mit Warnung. SAP-Ferien kommen nur mit Sonjas Handimport.
-  **Produktiv seit 09:57 (`cfe2631`).** Sichtpruefung im Browser offen (HR-Login).
+  **Produktiv seit 09:57 (`cfe2631`).** *Sichtpruefung um 11:50 erledigt (siehe #775 oben).*
 - **2026-11-04: Formeln geprueft, drei Rechenfehler behoben, neuer Reiter „Interaktiv“** (*produktiv seit 09:20, `b65f059`;
   ueberholt: „nicht deployed“*). Krankenquote-Nenner je Person erst ab Eintritt, Quote je Person mit Pensum, Prognose rechnet ein
   laufendes Quartal vorher auf die volle Laenge hoch (vorher am 04.11. rund Faktor 2,6 zu tief). Offen fuer Entscheid:

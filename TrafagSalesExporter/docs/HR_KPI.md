@@ -6,9 +6,10 @@ Stand: 2026-11-04 (Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Prue
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Aktueller Produktivstand des HR-Cockpits: Commit `69a63b6`, deployed am 2026-11-04 um 10:21 (Abschnitte 8.10 bis 8.12 und 9;
-davor `cfe2631` um 09:57 und `b65f059` um 09:20);
-Rexx-Dateien seit 2026-11-04 09:30 vom selben Tag (8.2).
+Aktueller Produktivstand des HR-Cockpits: Commit `6dd1a56`, deployed am 2026-11-04 um 11:46 (Rexx-Gesamtabfrage #775, 8.13;
+davor `69a63b6` um 10:21, `cfe2631` um 09:57 und `b65f059` um 09:20, Abschnitte 8.10 bis 8.12 und 9);
+Rexx-Daten seit 2026-11-04 11:46 aus `Hrcockpitgesamtdashboard.xlsx` vom selben Tag (8.13); die Einzeldateien vom 09:30 liegen noch als Rueckfall in `hrdata`.
+*(ueberholt am 2026-11-04 11:46: hier stand `69a63b6` vom 10:21)*
 *(ueberholt am 2026-11-04: hier stand `ede56b6` vom 2026-10-22 15:48, Abschnitt 8.8)*
 *(ueberholt am 2026-10-29: hier stand `5ae7f31` vom 2026-09-28 11:25, siehe `docs/rag/DEPLOYMENT.md`)*
 Historie: deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit `9435a5d`,
@@ -598,7 +599,9 @@ tauschen (50er-Grenze). Grenzen: die Aufstockung hat keine Daten, erscheint also
 Fit & Wohl; Rexx-Arten ausserhalb „Krankheit“ (z. B. Kind krank) zaehlen nur, soweit SAP sie fuehrt.
 
 Tests: 12 neue in `HrKpiServiceTests` (Gesamtdatei ersetzt die Einzeldateien, hoeherer Wert je Person, kein Rexx bei
-anderem Zeitraum, Kurz/Lang-Teilung, Zeitraumregel, Rexx-Unfall, erste Organisation).
+anderem Zeitraum, Kurz/Lang-Teilung, Zeitraumregel, Rexx-Unfall, erste Organisation). Suite 1398/1398. **Produktiv seit
+2026-11-04 11:46** (`6dd1a56`, `docs/rag/DEPLOYMENT.md`), #775-Datei seit 11:46 in `hrdata`; in Chrome gesehen: Krankheitstage
+1'429.3, Absenzquote 3.0 % (gelb), Hinweise zu #775, Reiter Interaktiv mit Krankheitskalender bis November.
 
 ## 9. Reiter Interaktiv (2026-11-04)
 
@@ -631,7 +634,7 @@ ob ein Fit-&-Wohl-Gespraech stattfand, kennt das Cockpit nicht (Ruecklauf aus 8.
 eine Spielwiese.
 
 *Ueberholt am 2026-11-04 09:20:* ~~committet, Tests gruen, nicht deployed~~. **Produktiv seit 2026-11-04 09:20**
-(`b65f059`, `docs/rag/DEPLOYMENT.md`); Sichtpruefung im Browser offen (HR-Login).
+(`b65f059`, `docs/rag/DEPLOYMENT.md`); *Sichtpruefung im Browser am 2026-11-04 11:50 erledigt (Zeitraffer, Krankheitskalender).*
 
 ## Querverweise
 

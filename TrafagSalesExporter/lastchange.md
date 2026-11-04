@@ -2,6 +2,15 @@
 
 Stand: 2026-11-04
 
+## HR-Cockpit: Rexx-Gesamtabfrage #775 statt vier Rexx-Dateien, das Aktuellere je Person (Auftrag Ingo), 2026-11-04
+
+- Rexx: private Abfrage #775 „HR-Cockpit Gesamt (Dashboard)“ (50 Spalten). Cockpit liest `Hrcockpitgesamtdashboard.xlsx` statt
+  #757/#732/#744/#381, wenn sie in `hrdata` liegt; je Person der hoehere Wert aus SAP und Rexx fuer 01.01. bis Exporttag;
+  Rexx-Unfaelle ergaenzen SAP; Ferien bezogen direkt aus Rexx (alte Formel zog geplante Tage doppelt ab). `6dd1a56`, 12 Tests,
+  Suite 1398/1398, **produktiv seit 11:46**, in Chrome geprueft. Vorher 11:23: Saldi-Export mit Stichtag 31.12.2024 in `hrdata`
+  ersetzt. Doku `docs/HR_KPI.md` 8.13, rag/HR_KPI, rag/DEPLOYMENT, Router HR, Handbuch Kapitel HR, Schulungsseite, LEARNINGS (5),
+  Wochen_Todo 149, Koordination.
+
 ## HR-Cockpit: Formeln geprueft, drei Rechenfehler behoben, neuer Reiter Interaktiv (Auftrag Ingo), 2026-11-04
 
 - Pruefung aller Formeln (`docs/HR_KPI.md` 8.10). Behoben in `HrKpiDashboardBuilder`: Krankenquote-Nenner je Person erst ab

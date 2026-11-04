@@ -1,6 +1,6 @@
 # Unterrouter HR
 
-Zurueck: `router.md`. Stand: 2026-11-04 (Formelpruefung mit drei Korrekturen, Reiter Interaktiv); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Idee Z-Tabelle/Tagesjob), 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv), 2026-09-30.
+Zurueck: `router.md`. Stand: 2026-11-04 (Rexx-Gesamtabfrage #775 ersetzt die vier Rexx-Dateien; Formelpruefung mit drei Korrekturen, Reiter Interaktiv); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Idee Z-Tabelle/Tagesjob), 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv), 2026-09-30.
 
 HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
@@ -15,6 +15,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | **Formelpruefung 04.11. (drei Korrekturen, offene Fachpunkte)** | `docs/HR_KPI.md` 8.10 |
 | **Uebergang bis Rexx-Schnittstelle: Rexx ergaenzt SAP-Krankheit, Status, Sollzeit-Spalte, SAP-Ferienstand** | `docs/HR_KPI.md` 8.11 |
 | **Was HR schriftlich vorgegeben hat (Mails 10/2025, 02/2026, 09/2026) und wie es umgesetzt ist: 61 Tage je Krankheit, Krankheit &amp; Unfall, Quote ohne Langzeit, Vorjahr gleicher Zeitraum** | `docs/HR_KPI.md` 8.12 |
+| **Rexx-Gesamtabfrage #775 (`Hrcockpitgesamtdashboard.xlsx`) statt #757/#732/#744/#381; je Person der hoehere Wert aus SAP und Rexx; Spaltenwahl, 50-Spalten-Grenze, Pflege des Exports** | `docs/HR_KPI.md` 8.13 |
 | **Reiter Interaktiv (Zeitraffer, Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Simulator)** | `docs/HR_KPI.md` 9 |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |
@@ -24,6 +25,10 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 - **Seit 2026-09-30 kommt die SAP-Datei automatisch** ueber `HrKpiSet` (seit 01.10. in P76 und produktiv, erster Abruf 02.10. 05:00,
   `docs/HR_KPI.md` 8.6). HR-Sitzung vom 30.09. (Kader 8,1 h *(ueberholt am 2026-10-22, siehe unten)*, Absenzen je Fall, Ampel): 8.5. Absenzen je Fall aus SAP `PA2001` (`HrAbsenzSet`, produktiv seit 01.10. 10:50, ersetzt Rexx fuer Krankheit und Ferien): 8.7.
 
+- **Seit 2026-11-04 liest das Cockpit nur `Hrcockpitgesamtdashboard.xlsx` (Rexx #775), sobald sie in `hrdata` liegt;** die vier
+  Einzeldateien liegen dort noch als Rueckfall, werden aber nicht gelesen. Wer Saldi oder Austritte aktualisieren will, exportiert
+  #775 mit Zeitraum 01.01. bis heute. Gespeicherte Rexx-Abfragen behalten ihren Filter: #757 stand auf Stichtag 31.12.2024
+  (`docs/HR_KPI.md` 8.13).
 - **Arbeitstage sind nicht Montag bis Freitag.** `ZurichWorkdayCalendar` zieht die neun
   gesetzlichen Feiertage des Kantons Zuerich ab.
 - **`Abwesenheitinstunden.xlsx` hat keine verlaesslichen Datumsfelder je Fall.** Die
