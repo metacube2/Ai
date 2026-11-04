@@ -109,6 +109,20 @@ internal sealed class HrKpiDashboardBuilder
         // Krankheit je Fall aus SAP PA2001, sobald die Datei da ist (docs/HR_KPI.md 8.7). Die
         // Rexx-Summen bleiben nur Ersatz, weil sie sich auf keinen Zeitraum zuschneiden lassen.
         var sapAbsenceCases = LoadSapAbsenceCases(context);
+        // Seit 2026-11-04: Rexx-Faelle je Abwesenheit (#777) fuellen, was in SAP fehlt (SAP bekommt sie nur ueber den Import von HR).
+        if (context.HasFile(_dataSources.RexxCaseFile))
+        {
+            var rexxCases = LoadRexxCases(context);
+            var merged = MergeRexxCases(sapAbsenceCases, rexxCases, employees);
+            var added = merged.Skip(sapAbsenceCases.Count).ToList();
+            if (rexxCases.Count > 0)
+            {
+                var byType = string.Join(", ", added.GroupBy(x => x.Abwesenheitsart).OrderBy(g => g.Key)
+                    .Select(g => $"{RexxCaseTypeLabel(g.Key)} {g.Count():N0}"));
+                result.Notices.Add($"Rexx #777 (Abwesenheiten je Fall, ab {rexxCases.Min(x => x.Von):dd.MM.yyyy}): {added.Count:N0} Faelle mit Datum ergaenzt, die in SAP PA2001 fehlen ({(byType.Length == 0 ? "keine" : byType)}).");
+            }
+            sapAbsenceCases = merged;
+        }
         // Der Tagesabruf holt nur Vorjahr und laufendes Jahr. Ein frueherer Zeitraum faellt auf Rexx
         // zurueck, statt dort eine leere und damit scheinbar verlaessliche 0-%-Quote zu zeigen.
         var sapCoverageStart = ResolveSapCoverageStart(sapAbsenceCases, result.FileStatuses.LastOrDefault(x => x.Label == SapAbsenceFileLabel)?.LastModified);
@@ -826,6 +840,118 @@ internal sealed class HrKpiDashboardBuilder
             })
             .Where(x => x.Von != DateTime.MinValue && !string.IsNullOrWhiteSpace(x.Personalnummer))
             .ToList();
+
+    internal const string RexxCaseFileLabel = "Rexx #777 Abwesenheiten je Fall";
+
+    /// <summary>Eine Abwesenheit aus der Rexx-Antragsliste (#777).</summary>
+    internal sealed record RexxCase(int Personalnummer, string Art, string Status, DateTime Von, DateTime Bis, decimal Tage, decimal Stunden = 0);
+
+    /// <summary>
+    /// Rexx-Art (Spalte „Abwesenheit Buchung“) auf die SAP-Art, wie sie das Cockpit auswertet. Andere Arten (Kind/Angehörige-Krank,
+    /// Weiterbildung, Dienstreise, bezahlte Absenzen …) fuehrt das Cockpit nicht und laesst sie weg.
+    /// </summary>
+    internal static readonly IReadOnlyDictionary<string, string> RexxCaseTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Ferien"] = VacationAbsenceType,
+        ["Kompensation"] = CompensationAbsenceType,
+        ["Militär / Zivildienst"] = MilitaryAbsenceType,
+        ["Krankheit"] = "0260",
+        ["Krankheit (über 60 Tage)"] = LongTermSickType,
+        ["Unfall"] = AccidentAbsenceTypes[0]
+    };
+
+    /// <summary>Nur bestaetigte Faelle: „Genommen“ und „Genehmigt“; storniert, abgelehnt, geplant und Korrekturen zaehlen nicht.</summary>
+    internal static readonly string[] RexxCaseStatuses = ["Genommen", "Genehmigt"];
+
+    private static string RexxCaseTypeLabel(string awart)
+        => RexxCaseTypes.FirstOrDefault(x => x.Value == awart).Key ?? awart;
+
+    private List<RexxCase> LoadRexxCases(ImportContext context)
+        => context.ReadRows(_dataSources.RexxCaseFile, RexxCaseFileLabel, (row, headers) =>
+            {
+                var von = ReadDate(row, headers, "Abwesenheit von");
+                var bis = ReadDate(row, headers, "Abwesenheit bis") ?? von;
+                var pernr = ReadInt(row, headers, "Personalnummer");
+                return pernr.HasValue && von.HasValue
+                    ? new RexxCase(pernr.Value, ReadString(row, headers, "Abwesenheit Buchung"), ReadString(row, headers, "Abwesenheit Status"),
+                        von.Value, bis!.Value, ReadDecimal(row, headers, "Abwesenheit Tage"),
+                        // „Abwesenheit Tagessoll“ ist die Sollzeit des ganzen Falls in hh:mm (8:00 je Tag, Teilzeit 6:24, Kader 8:12).
+                        ParseTimeBalance(ReadString(row, headers, "Abwesenheit Tagessoll")))
+                    : null;
+            })
+            .Where(x => x is not null)
+            .Select(x => x!)
+            .ToList();
+
+    /// <summary>Gruppe fuer den Ueberschneidungstest: Krankheit und Unfall bilden eine Gruppe, damit ein Tag nicht doppelt zaehlt.</summary>
+    private static string OverlapGroup(string awart)
+        => AbsenceRateTypes.Contains(awart) ? "KRANK" : awart;
+
+    /// <summary>
+    /// Ergaenzt SAP PA2001 um Rexx-Faelle (#777), die in SAP fehlen (Wunsch Ingo 2026-11-04 „alles gruen“): ein bestaetigter
+    /// Rexx-Fall einer ausgewerteten Art kommt dazu, wenn kein SAP-Fall derselben Gruppe der Person ihn ueberschneidet.
+    /// Stunden = Rexx „Abwesenheit Tagessoll“ des Falls; fehlt er (0:00), Rexx-Tage x Tagesstunden (8,0, Kader 8,2) x Pensum.
+    /// Die SAP-Faelle bleiben unveraendert vorne, die Rexx-Faelle folgen mit Folgenummer „REXX“.
+    /// </summary>
+    internal static List<HrAbsenceSapCase> MergeRexxCases(
+        IReadOnlyList<HrAbsenceSapCase> sapCases, IEnumerable<RexxCase> rexxCases, IReadOnlyCollection<HrKpiEmployeeRow> employees)
+    {
+        var byNumber = employees.Where(x => x.Personalnummer.HasValue).GroupBy(x => x.Personalnummer!.Value).ToDictionary(g => g.Key, g => g.First());
+        var sapByPerson = sapCases
+            .Where(x => int.TryParse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
+            .GroupBy(x => int.Parse(x.Personalnummer, NumberStyles.Integer, CultureInfo.InvariantCulture))
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var merged = sapCases.ToList();
+        var seen = new HashSet<(int, string, DateTime, DateTime)>();
+        foreach (var c in rexxCases.OrderBy(x => x.Von))
+        {
+            if (!RexxCaseTypes.TryGetValue(c.Art.Trim(), out var awart) ||
+                !RexxCaseStatuses.Any(s => string.Equals(s, c.Status.Trim(), StringComparison.OrdinalIgnoreCase)) ||
+                c.Bis < c.Von || !byNumber.TryGetValue(c.Personalnummer, out var employee) ||
+                !seen.Add((c.Personalnummer, awart, c.Von.Date, c.Bis.Date)))
+                continue;
+            var group = OverlapGroup(awart);
+            var covered = sapByPerson.TryGetValue(c.Personalnummer, out var own)
+                ? own.Where(x => OverlapGroup(x.Abwesenheitsart) == group && x.Von.Date <= c.Bis.Date && x.Bis.Date >= c.Von.Date).ToList()
+                : [];
+            var tage = c.Tage > 0 ? c.Tage : ZurichWorkdayCalendar.CountWorkdays(c.Von, c.Bis);
+            var pensum = employee.Fte > 0 ? employee.Fte : 1m;
+            var stunden = c.Stunden > 0 ? c.Stunden : tage * HoursPerWorkdayFor(employee.Mitarbeiterkreis) * pensum;
+            var caseWorkdays = ZurichWorkdayCalendar.CountWorkdays(c.Von, c.Bis);
+            // Teilweise Ueberschneidung (04.11.: bei 22 Personen): nur die Tage, die SAP nicht abdeckt, anteilig nach Arbeitstagen.
+            foreach (var (von, bis) in UncoveredSegments(c.Von.Date, c.Bis.Date, covered))
+            {
+                var share = caseWorkdays > 0
+                    ? (decimal)ZurichWorkdayCalendar.CountWorkdays(von, bis) / caseWorkdays
+                    : (decimal)((bis - von).Days + 1) / ((c.Bis.Date - c.Von.Date).Days + 1);
+                if (share <= 0)
+                    continue;
+                merged.Add(new HrAbsenceSapCase(
+                    c.Personalnummer.ToString("00000000", CultureInfo.InvariantCulture), awart, von, bis, RexxGapSequence,
+                    Math.Round(tage * share, 2), Math.Round(stunden * share, 2), (bis - von).Days + 1));
+            }
+        }
+        return merged;
+    }
+
+    /// <summary>Zusammenhaengende Kalendertage von <paramref name="von"/> bis <paramref name="bis"/>, die kein Fall abdeckt.</summary>
+    private static IEnumerable<(DateTime Von, DateTime Bis)> UncoveredSegments(DateTime von, DateTime bis, IReadOnlyCollection<HrAbsenceSapCase> covered)
+    {
+        DateTime? start = null;
+        for (var day = von; day <= bis; day = day.AddDays(1))
+        {
+            var isCovered = covered.Any(x => x.Von.Date <= day && x.Bis.Date >= day);
+            if (!isCovered && start is null)
+                start = day;
+            if (isCovered && start is not null)
+            {
+                yield return (start.Value, day.AddDays(-1));
+                start = null;
+            }
+        }
+        if (start is not null)
+            yield return (start.Value, bis);
+    }
 
     /// <summary>
     /// Ab wann die SAP-Absenzdatei vollstaendig ist: 01.01. des Vorjahres ihres Schreibdatums

@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-04 (Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-04 (Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -66,6 +66,7 @@ unveraendert. Die SAP-Dateien bleiben in beiden Faellen.
 
 | Datei | Inhalt |
 | --- | --- |
+| `Hr-cockpit-absenzen-je-fall.xlsx` (seit 2026-11-04) | Rexx #777 (Antragsliste), eine Zeile je Abwesenheit mit Von/Bis, Art, Status, Sollzeit; ergaenzt SAP-Faelle (8.14) |
 | `Hrcockpitgesamtdashboard.xlsx` (seit 2026-11-04) | Rexx #775, eine Zeile je Person: Stamm, Status, Austritt, Saldo, Ferien, Sollzeit, Geburtsdatum, Summen Krankheit/Unfall/Ferien/Kompensation/Militaer 01.01. bis Exporttag |
 | `Saldiperstichdatum.xlsx` | aktive Mitarbeitende, Saldi, Ferien, Organisation, Kostenstelle |
 | `Exportkommengehen.xlsx` | Arbeitszeitmodell, Sollzeit, Geburtsdatum |
@@ -602,6 +603,43 @@ Tests: 12 neue in `HrKpiServiceTests` (Gesamtdatei ersetzt die Einzeldateien, ho
 anderem Zeitraum, Kurz/Lang-Teilung, Zeitraumregel, Rexx-Unfall, erste Organisation). Suite 1398/1398. **Produktiv seit
 2026-11-04 11:46** (`6dd1a56`, `docs/rag/DEPLOYMENT.md`), #775-Datei seit 11:46 in `hrdata`; in Chrome gesehen: Krankheitstage
 1'429.3, Absenzquote 3.0 % (gelb), Hinweise zu #775, Reiter Interaktiv mit Krankheitskalender bis November.
+
+
+### 8.14 Rexx-Abwesenheiten je Fall #777: Interaktiv und Fit & Wohl mit Datum (2026-11-04)
+
+Auftrag Ingo: „es soll alles gruen sein“ (nach 8.13 waren Krankheitskalender, Fit & Wohl und „Ferien am Stueck“ nicht
+aktuell, weil sie Faelle mit Datum brauchen und SAP Ferien nur bis 27.07. hatte). In Rexx (Start › Antragsliste) angelegt:
+private Abfrage **#777 „HR-Cockpit Absenzen je Fall (Dashboard)“**, Kopie der Standardabfrage #122 plus die Spalten
+Personalnummer, „Abwesenheit von/bis/Tage/halbe Tage/Status/Buchung/ID Buchung/Zeit“ und „Abwesenheit Tagessoll“ (= Sollzeit
+des ganzen Falls in hh:mm, z. B. 40:00 fuer eine Woche, 6:24 je Tag bei Teilzeit). Export `Hr-cockpit-absenzen-je-fall.xlsx`,
+2'683 Antraege ab 07.04.2026 (Start des Rexx-Antragswesens): Ferien 1'005, Kompensation 535, Krankheit 441, Unfall 60,
+Krankheit ueber 60 Tage 7, Militaer 9 (dazu Weiterbildung, Dienstreise u. a., die das Cockpit nicht fuehrt).
+
+Rechnung (`MergeRexxCases`): bestaetigte Faelle (Status „Genommen“, „Genehmigt“; nicht storniert, abgelehnt, geplant,
+Korrektur) der Arten Ferien → 0100, Kompensation → 0400, Militaer → 0600, Krankheit → 0260, Krankheit ueber 60 Tage → 0270,
+Unfall → 0290 kommen zu den SAP-Faellen, soweit kein SAP-Fall derselben Gruppe (Krankheit und Unfall eine Gruppe) dieselben
+Tage abdeckt; bei teilweiser Ueberschneidung nur die fehlenden Tage, Stunden anteilig nach Arbeitstagen. Stunden = Rexx
+„Tagessoll“, sonst Tage x 8,0/8,2 h x Pensum. Folgenummer `REXX`. Damit rechnen Zeitraumschnitt, Kurz/Lang, Krankheitskalender,
+Fit & Wohl, „Ferien am Stueck“ und die Kacheln „… im Zeitraum“ mit Datum; die Warnung „SAP-Ferien bis 27.07.“ entfaellt.
+Die Aufstockung aus #775 (8.13) bleibt als Rest ohne Datum.
+
+Probe mit den echten Dateien (04.11., nur Kennzahlen), vorher → nachher: 1'203 Faelle ergaenzt (Ferien 730, Kompensation 355,
+Krankheit 81, Krankheit ueber 60 Tage 6, Unfall 24, Militaer 7); juengster Ferien- und Kompensationsfall 27./29.07. → 04.11.;
+„Ferien am Stueck“ (mindestens 10 Tage bezogen) 55 → 101 Personen; Fit & Wohl 28 → 31; Quote 3,0 % → 3,1 %, ohne Langzeit
+2,8 % → 2,7 %; Rest ohne Datum 193,6 + 67,9 Tage bei 52 Personen → 122,6 + 11,0 Tage bei 28 Personen.
+
+**Grenze, offen:** Rund 100 Krankheitstage bei 13 Personen stehen in Rexx, aber weder in SAP noch in der Antragsliste (HR
+bucht sie direkt; eine Person allein 49,5 Tage mit 19 Buchungen, in SAP nur 10 Tage im Februar). Diese Tage zaehlen in Quote
+und Summen, haben aber kein Datum, fehlen also im Krankheitskalender und koennen Fit & Wohl verfehlen. Versucht und verworfen:
+#775-Kopie #776 mit Zeitraum je Monat (der Filter begrenzt „angetreten“ nicht, jeder Monat zeigte die Jahressumme) und der
+iCal-Link des Rexx-Kalenders (geheimer Zugangsschluessel, nicht verwendet). Loesung: Rexx-Schnittstelle oder Nachbuchung in SAP;
+Frage an Sonja, warum diese Faelle nicht importiert sind.
+
+Pflege: #777 wie #775 regelmaessig exportieren (kein Datumsfilter, liefert alle Antraege). Rexx-Abfragen von Claude: #775,
+#776 (Kopie von #775, ungenutzt, kann geloescht werden), #777; fremde Abfragen unveraendert.
+
+Tests: 3 neue (`MergeRexxCases` bestaetigte Faelle ohne Ueberschneidung, teilweise Ueberschneidung, Einbau in Absenzen und
+Interaktiv). Suite 1401/1401.
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

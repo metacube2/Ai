@@ -1188,6 +1188,80 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Equal(16m, row.KrankheitGesamtStd);
     }
 
+    // ---- Rexx-Abwesenheiten je Fall #777 (docs/HR_KPI.md 8.14) ----
+
+    [Fact]
+    public void MergeRexxCases_Ergaenzt_Nur_Bestaetigte_Faelle_Ohne_SAP_Ueberschneidung()
+    {
+        var anna = new HrKpiEmployeeRow { Personalnummer = 7, NameVoll = "X, Y", Fte = 0.5m };
+        HrAbsenceSapCase[] sap =
+        [
+            new("00000007", "0100", new(2026, 7, 20), new(2026, 7, 24), "001", 5m, 20m, 5m),
+            new("00000007", "0260", new(2026, 9, 1), new(2026, 9, 2), "002", 2m, 8m, 2m)
+        ];
+        HrKpiDashboardBuilder.RexxCase[] rexx =
+        [
+            new(7, "Ferien", "Genommen", new(2026, 7, 22), new(2026, 7, 23), 2m),       // ueberschneidet SAP-Ferien
+            new(7, "Ferien", "Genommen", new(2026, 8, 3), new(2026, 8, 14), 10m),       // fehlt in SAP
+            new(7, "Unfall", "Genommen", new(2026, 9, 2), new(2026, 9, 2), 1m),         // ueberschneidet SAP-Krankheit (gleiche Gruppe)
+            new(7, "Kompensation", "Storniert", new(2026, 10, 5), new(2026, 10, 5), 1m),
+            new(7, "Krankheit", "Genehmigt", new(2026, 10, 26), new(2026, 10, 27), 2m, 12.8m),  // Rexx-Sollzeit des Falls
+            new(7, "Dienstreise", "Genommen", new(2026, 10, 28), new(2026, 10, 28), 1m),
+            new(9, "Ferien", "Genommen", new(2026, 8, 3), new(2026, 8, 3), 1m)          // nicht angestellt
+        ];
+
+        var merged = HrKpiDashboardBuilder.MergeRexxCases(sap, rexx, [anna]);
+
+        var added = merged.Skip(2).ToList();
+        Assert.Equal(2, added.Count);
+        var ferien = Assert.Single(added, x => x.Abwesenheitsart == "0100");
+        Assert.Equal(new DateTime(2026, 8, 3), ferien.Von);
+        Assert.Equal(10m, ferien.Abwesenheitstage);
+        Assert.Equal(40m, ferien.Stunden); // 10 Tage x 8 h x 50 %
+        Assert.Equal("REXX", ferien.Folgenummer);
+        Assert.Single(added, x => x.Abwesenheitsart == "0260" && x.Von == new DateTime(2026, 10, 26) && x.Stunden == 12.8m);
+    }
+
+    [Fact]
+    public void MergeRexxCases_Nimmt_Bei_Teilweiser_Ueberschneidung_Nur_Die_Fehlenden_Tage()
+    {
+        var anna = new HrKpiEmployeeRow { Personalnummer = 7, NameVoll = "X, Y", Fte = 1m };
+        // SAP Ferien Mo 20.07. bis Fr 24.07.2026; Rexx Do 23.07. bis Fr 31.07.2026 (7 Arbeitstage, 56 h).
+        HrAbsenceSapCase[] sap = [new("00000007", "0100", new(2026, 7, 20), new(2026, 7, 24), "001", 5m, 40m, 5m)];
+        HrKpiDashboardBuilder.RexxCase[] rexx = [new(7, "Ferien", "Genommen", new(2026, 7, 23), new(2026, 7, 31), 7m, 56m)];
+
+        var added = Assert.Single(HrKpiDashboardBuilder.MergeRexxCases(sap, rexx, [anna]).Skip(1));
+
+        Assert.Equal(new DateTime(2026, 7, 25), added.Von);
+        Assert.Equal(new DateTime(2026, 7, 31), added.Bis);
+        Assert.Equal(5m, added.Abwesenheitstage);
+        Assert.Equal(40m, added.Stunden);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Nimmt_Rexx_Faelle_777_In_Absenzen_Und_Interaktiv_Auf()
+    {
+        var day = FirstWorkdayOfYear();
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001001", "0260", day, day, "000", 1m, 8m, 1m)],
+            Path.Combine(_folder, "HR_Absenzen_SAP.xlsx"));
+        var ferienVon = day.AddDays(7);
+        WriteWorkbook(Path.Combine(_folder, "Hr-cockpit-absenzen-je-fall.xlsx"),
+            ["ID Hauptantrag", "Abwesenheit von", "Abwesenheit Tage", "Abwesenheit Status", "Abwesenheit Buchung", "Abwesenheit bis", "Personalnummer"],
+            [
+                [1, ferienVon, 1, "Genommen", "Ferien", ferienVon, "00001001"],
+                [2, day, 1, "Genommen", "Krankheit", day, "00001001"]
+            ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        Assert.Contains(result.AbsenceCases, x => x.Abwesenheitsart == "0100" && x.Folgenummer == "REXX" && x.Von == ferienVon);
+        // Die Rexx-Krankheit am selben Tag wie der SAP-Fall zaehlt nicht doppelt.
+        Assert.Single(result.AbsenceCases, x => x.Abwesenheitsart == "0260");
+        Assert.Contains(result.Notices, x => x.Contains("Rexx #777", StringComparison.Ordinal));
+        Assert.Contains(result.FileStatuses, x => x.Label == "Rexx #777 Abwesenheiten je Fall" && x.Exists);
+    }
+
     [Theory]
     [InlineData("Cafeteria, Cafeteria", "Cafeteria")]
     [InlineData("Lehrlinge - Elektronik, Lehrlingsausbildung", "Lehrlinge - Elektronik")]

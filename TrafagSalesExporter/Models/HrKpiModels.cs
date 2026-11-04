@@ -33,6 +33,9 @@ public sealed class HrKpiDataSourceOptions
     // Rexx-Gesamtabfrage #775 (seit 2026-11-04, docs/HR_KPI.md 8.13). Liegt sie im Datenordner, ersetzt sie
     // MainFile, TimeFile, AbsenceFile und LeaverFile; sonst laufen die vier Einzeldateien wie bisher.
     public string GesamtFile { get; set; } = "Hrcockpitgesamtdashboard.xlsx";
+    // Rexx-Abfrage #777 in der Antragsliste: Abwesenheiten je Fall mit Von/Bis (seit 2026-11-04, docs/HR_KPI.md 8.14).
+    // Faelle, die in SAP PA2001 fehlen, kommen mit Datum dazu.
+    public string RexxCaseFile { get; set; } = "Hr-cockpit-absenzen-je-fall.xlsx";
     public decimal AbsenceYellowThresholdPercent { get; set; } = 3m;
     public decimal AbsenceRedThresholdPercent { get; set; } = 5m;
 
@@ -51,6 +54,7 @@ public sealed class HrKpiDataSourceOptions
             AbsenceFile = NormalizeText(AbsenceFile, "Abwesenheitinstunden.xlsx"),
             LeaverFile = NormalizeText(LeaverFile, "Personalausgeschieden.xlsx"),
             GesamtFile = NormalizeText(GesamtFile, "Hrcockpitgesamtdashboard.xlsx"),
+            RexxCaseFile = NormalizeText(RexxCaseFile, "Hr-cockpit-absenzen-je-fall.xlsx"),
             AbsenceYellowThresholdPercent = yellow,
             AbsenceRedThresholdPercent = red
         };
