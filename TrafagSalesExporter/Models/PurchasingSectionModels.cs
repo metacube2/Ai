@@ -23,6 +23,46 @@ public sealed record PurchasingSectionStatusRow(string LabelDe, string LabelEn, 
 
 public sealed record PurchasingSectionDetailRow(string LabelDe, string LabelEn, string Value, string Dimension, string Source);
 
+public enum PurchasingSectionDataState
+{
+    Waiting,
+    Simulation,
+    Loaded
+}
+
+/// <summary>
+/// Deutet die Spalte „Quelle“ einer Section (F8 Pruefung 2026-11-05). Bis dahin verglich <c>PurchasingSection</c> mit dem
+/// Literal „SAP live“; seit <c>d5bc321</c> (2026-09-10) steht dort aber <c>DataSourceLabel</c> („SAP-Datenbestand“ bzw.
+/// „SAP-Stichprobe“, uebersetzt), und jede Section mit geladenen Daten zeigte „Wartet auf SAP“. Jetzt gilt umgekehrt:
+/// geladen ist jede Quelle, die weder der Wartehinweis noch „Simulation“ ist. Die zwei Marker sind feste deutsche
+/// Literale aus <c>PurchasingDashboard.razor</c> und werden nicht uebersetzt uebergeben.
+/// </summary>
+public static class PurchasingSectionSource
+{
+    public const string WaitingMarker = "Wartet auf SAP";
+    public const string SimulationMarker = "Simulation";
+
+    public static PurchasingSectionDataState Classify(string? source)
+    {
+        if (string.IsNullOrWhiteSpace(source) || source.Trim().StartsWith("wartet", StringComparison.OrdinalIgnoreCase))
+            return PurchasingSectionDataState.Waiting;
+        return source.Trim().Equals(SimulationMarker, StringComparison.OrdinalIgnoreCase)
+            ? PurchasingSectionDataState.Simulation
+            : PurchasingSectionDataState.Loaded;
+    }
+
+    /// <summary>Gesamtstatus einer Section: geladen, sobald eine Zeile geladene SAP-Daten traegt.</summary>
+    public static PurchasingSectionDataState Resolve(IEnumerable<PurchasingSectionDetailRow> rows)
+    {
+        var states = rows.Select(row => Classify(row.Source)).ToList();
+        if (states.Contains(PurchasingSectionDataState.Loaded))
+            return PurchasingSectionDataState.Loaded;
+        return states.Contains(PurchasingSectionDataState.Simulation)
+            ? PurchasingSectionDataState.Simulation
+            : PurchasingSectionDataState.Waiting;
+    }
+}
+
 public sealed record PurchasingSupplierYearSpendRow(string Supplier, IReadOnlyDictionary<int, decimal> YearValues, decimal Total)
 {
     /// <summary>

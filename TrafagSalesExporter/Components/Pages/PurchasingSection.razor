@@ -30,6 +30,10 @@
                     <MudText Typo="Typo.subtitle1">@T(ChartTitleDe, ChartTitleEn)</MudText>
                     <MudIcon Icon="@Icons.Material.Filled.StackedBarChart" Color="Color.Info" Size="Size.Small" />
                 </div>
+                @if (!string.IsNullOrEmpty(ChartHintDe))
+                {
+                    <MudText Typo="Typo.caption" Class="purchasing-section-muted d-block mb-2">@T(ChartHintDe, ChartHintEn)</MudText>
+                }
                 <div class="purchasing-bars">
                     @foreach (var item in ChartRows)
                     {
@@ -103,7 +107,7 @@
             <MudTd>@context.Dimension</MudTd>
             <MudTd>
                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@ResolveSourceColor(context.Source)">
-                    @context.Source
+                    @ResolveSourceText(context.Source)
                 </MudChip>
             </MudTd>
         </RowTemplate>
@@ -121,6 +125,9 @@
     [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionChartRow> ChartRows { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionStatusRow> StatusRows { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionDetailRow> DetailRows { get; set; } = [];
+    // Optionaler Hinweis unter dem Diagrammtitel (F3 2026-11-05: Preisentwicklung ohne Vorjahr im Zeitraum).
+    [Parameter] public string ChartHintDe { get; set; } = string.Empty;
+    [Parameter] public string ChartHintEn { get; set; } = string.Empty;
     [Parameter] public IReadOnlyList<int> SpendMatrixYears { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSupplierYearSpendRow> SpendMatrixRows { get; set; } = [];
     // Zusaetzliche Balkenbloecke unter dem Hauptdiagramm (z.B. Volumen nach Warengruppe / Region /
@@ -131,26 +138,30 @@
     private static string BuildWidth(double percent)
         => Math.Clamp(percent, 3d, 100d).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
-    private static Color ResolveSourceColor(string source)
-        => source.Equals("SAP live", StringComparison.OrdinalIgnoreCase)
-            ? Color.Success
-            : source.Equals("Wartet auf SAP", StringComparison.OrdinalIgnoreCase)
-                ? Color.Warning
-                : Color.Primary;
+    // F8 Pruefung 2026-11-05: Status an den geladenen Stand gebunden (PurchasingSectionSource), nicht mehr an das seit
+    // 2026-09-10 nirgends mehr gesetzte Literal „SAP live“.
+    private static Color ResolveSourceColor(string source) => ResolveSourceColorForState(PurchasingSectionSource.Classify(source));
 
-    private Color ResolveSectionColor()
-        => DetailRows.Any(row => row.Source.Equals("SAP live", StringComparison.OrdinalIgnoreCase))
-            ? Color.Success
-            : DetailRows.Any(row => row.Source.Equals("Simulation", StringComparison.OrdinalIgnoreCase))
-                ? Color.Info
-                : Color.Warning;
+    private string ResolveSourceText(string source)
+        => PurchasingSectionSource.Classify(source) == PurchasingSectionDataState.Waiting
+            ? T("Wartet auf SAP", "Waiting for SAP")
+            : source;
 
-    private string ResolveSectionStatus()
-        => DetailRows.Any(row => row.Source.Equals("SAP live", StringComparison.OrdinalIgnoreCase))
-            ? T("Live + Analyse", "Live + analysis")
-            : DetailRows.Any(row => row.Source.Equals("Simulation", StringComparison.OrdinalIgnoreCase))
-                ? T("Simulation aktiv", "Simulation active")
-                : T("Wartet auf SAP", "Waiting for SAP");
+    private Color ResolveSectionColor() => ResolveSourceColorForState(PurchasingSectionSource.Resolve(DetailRows));
+
+    private static Color ResolveSourceColorForState(PurchasingSectionDataState state) => state switch
+    {
+        PurchasingSectionDataState.Loaded => Color.Success,
+        PurchasingSectionDataState.Simulation => Color.Info,
+        _ => Color.Warning
+    };
+
+    private string ResolveSectionStatus() => PurchasingSectionSource.Resolve(DetailRows) switch
+    {
+        PurchasingSectionDataState.Loaded => T("SAP-Daten geladen", "SAP data loaded"),
+        PurchasingSectionDataState.Simulation => T("Simulation aktiv", "Simulation active"),
+        _ => T("Wartet auf SAP", "Waiting for SAP")
+    };
 }
 
 <style>

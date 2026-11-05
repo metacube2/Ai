@@ -21,7 +21,7 @@ Oben stehen eine Kopfzeile mit dem Ladestand der drei SAP-Quellen und ein Prozen
 
 Sechs Kacheln zeigen die Hauptzahlen: Bestellwert im Zeitraum, Bestellungen im Zeitraum, offener Bestellwert inklusive Rückstände, offener Kontraktwert, aktive Lieferanten im Zeitraum und Lagerwert Einkaufsteile. Unter jeder Kachel steht ein Satz, was genau gezählt wird und was nicht.
 
-Weiter unten liegt der Verlauf des Lagerwerts je Kalenderwoche als Liniengrafik mit Tabelle, darunter die Tabelle «Je Disponent» mit dem Wert je Disponent 001 bis 005 und der Veränderung zur Vorwoche. Dazu kommen der «SAP Datenfluss» mit dem Stand der drei Quellen, die «Management Insights» als Kurzaussagen und die «Analyseachsen» (Jahr, Lieferant, Warengruppe, Artikel, Region).
+Weiter unten liegt der Verlauf des Lagerwerts je Kalenderwoche als Liniengrafik mit Tabelle, darunter die Tabelle «Je Disponent» mit dem Wert je Disponent 001 bis 006 (006 seit 02.11.2026) und der Veränderung zur Vorwoche. Dazu kommen der «SAP Datenfluss» mit dem Stand der drei Quellen, die «Management Insights» als Kurzaussagen und die «Analyseachsen» (Jahr, Lieferant, Warengruppe, Artikel, Region).
 
 ### Wie gerechnet wird
 
@@ -81,6 +81,7 @@ Die Warengruppe stammt aus dem Materialstamm, ersatzweise aus der Bestellpositio
 - Der Spend ist Bestellvolumen am Bestelldatum. Ein 2024 bestellter Auftrag, der erst 2025 geliefert wird, steht im Jahr 2024.
 - Fehlende Wechselkurse führen zu einer Warnung und zu nicht belastbaren CHF-Werten.
 - Der Zeitraumfilter wirkt auf alle Spend-Zahlen.
+- Lieferanten erscheinen mit dem Namen aus dem Lieferantenstamm. Zwei Namen, die sich nur in der Gross- und Kleinschreibung unterscheiden (zum Beispiel «THUBA AG» und «Thuba AG»), stehen als zwei Zeilen da, in der Matrix wie im Aufriss-Einstieg «Lieferant». Bis zum 05.11.2026 legte die Matrix solche Namen zusammen und verlor dabei Werte; seither ist die Summe der Matrix gleich der Summe des Aufrisses.
 
 ## Offene Bestellungen
 
@@ -151,11 +152,11 @@ Die Seite gibt den Überblick über die Lieferantenbasis: Wer liefert, wie viel 
 
 ### Was man sieht
 
-Vier Kennzahlen: aktive Lieferanten, Performance Score, Preisindikator und Qualität. Das Diagramm zeigt die Top-Lieferanten nach Spend im gewählten Zeitraum. Dazu kommen Statuszeilen (Lieferantenbasis, Preisentwicklung, Termintreue) und eine Detailtabelle.
+Vier Kennzahlen: aktive Lieferanten, Performance Score, Preisindikator und Qualität. Das Diagramm zeigt die Top-Lieferanten nach Spend im gewählten Zeitraum. Dazu kommen Statuszeilen (Lieferantenbasis, Preisentwicklung, Termintreue) und eine Detailtabelle. Die Marke oben rechts heisst «SAP-Daten geladen», sobald der gespeicherte SAP-Bestand vorliegt; «Wartet auf SAP» erscheint nur noch, wenn wirklich keine Daten da sind (bis 05.11.2026 stand sie fälschlich auch bei geladenen Daten, ebenso auf Offene Bestellungen, Kontrakte und den Ideen-Seiten).
 
 ### Wie gerechnet wird
 
-Aktive Lieferanten sind die Lieferanten mit mindestens einer Bestellposition ungleich null im Zeitraum, der Name stammt aus dem Lieferantenstamm. Der Preisindikator ist der mengengewichtete Durchschnitts-Stückpreis des jüngsten Jahres in CHF (Summe der Positionswerte geteilt durch Summe der Mengen), mit der Veränderung zum Vorjahr in Klammern. Er mischt Schrauben und Baugruppen und ist daher als Niveau wenig aussagekräftig, die Veränderung ist die eigentliche Aussage.
+Aktive Lieferanten sind die Lieferanten mit mindestens einer Bestellposition ungleich null im Zeitraum, der Name stammt aus dem Lieferantenstamm. Der Preisindikator ist der mengengewichtete Durchschnitts-Stückpreis des jüngsten Jahres in CHF (Summe der Positionswerte geteilt durch Summe der Mengen), mit der Veränderung zum Vorjahr in Klammern, wenn der Zeitraum ein Vorjahr enthält. Im Standardzeitraum (laufendes Jahr) steht stattdessen «kein Vorjahr im Zeitraum»; für den Vergleich den Zeitraum erweitern, zum Beispiel mit «2020 bis heute». Er mischt Schrauben und Baugruppen und ist daher als Niveau wenig aussagekräftig, die Veränderung ist die eigentliche Aussage.
 
 ### Einsatz im Arbeitsalltag
 
@@ -206,7 +207,7 @@ Grundlage ist wie im Spend der Netto-Positionswert in CHF zum Bestelldatum. Die 
 
 Die Sicht «Produktgruppe nach Verwendung : Warengruppe» (seit 28.10.2026) folgt dagegen der Stücklisten-Verwendung: Einkaufsmaterial, verkürzte Nummern, in denen es verbaut ist, deren Disponent und damit die Produktgruppe. Verteilt wird nach der Anzahl verwendender Nummern; ein Teil in 50 Dichtewächtern und einem Sensor geht zu 50/51 an den Dichtewächter. Die Gesamtsumme bleibt exakt, ohne bekannte Verwendung steht der Wert unter «ohne Verwendung». «Disponent» gruppiert nach dem eigenen Disponenten des Materials, «Disponent Verwendung (ZLO03)» nach dem Disponenten der verkürzten Nummer, bei mehreren zu gleichen Teilen verteilt. Lebenszyklus- und Sortiments-Code stammen aus dem Materialstamm; Materialien ohne Code stehen unter «ohne Code».
 
-Der rot markierte Knopf «Materialanteil je Produktgruppe» (seit 02.11.2026) öffnet eine eigene Tabelle, die nicht vom Einkaufsvolumen ausgeht, sondern vom Verkauf: bestätigte Kundenaufträge aus ZC23 im gewählten Monatsbereich (Termin bestätigt, ohne Absagegrund) mal Stücklistenbedarf je Gerät aus ZLO03 (Top-Down, alle Stufen) mal Stückkosten. Gezählt werden nur Einkaufsteile der Disponenten 001 bis 006. Aufklappbar sind Produktgruppe, Materialgruppe und Einkaufsteil; neben dem Materialanteil stehen der bestätigte Umsatz der Produktgruppe, der Anteil, die Bedarfsmenge, die Einheit der Stückliste und die Stückkosten. Die Daten lädt der tägliche Einkauf-Lauf, sobald das SAP-Set ZloTopDownSet in P76 ist; bis dahin zeigt die Tabelle einen Hinweis. Die Zahl ist mit Armins Handauswertung vergleichbar, weicht aber bewusst ab: dort steht der Verbrauch aus ZLO03, hier die bestätigte Auftragsmenge.
+Der rot markierte Knopf «Materialanteil je Produktgruppe» (seit 02.11.2026) öffnet eine eigene Tabelle, die nicht vom Einkaufsvolumen ausgeht, sondern vom Verkauf: bestätigte Kundenaufträge aus ZC23 im gewählten Monatsbereich (Termin bestätigt, ohne Absagegrund) mal Stücklistenbedarf je Gerät aus ZLO03 (Top-Down, alle Stufen) mal Stückkosten. Gezählt werden nur Einkaufsteile der Disponenten 001 bis 006. Aufklappbar sind Produktgruppe, Materialgruppe und Einkaufsteil; neben dem Materialanteil stehen der bestätigte Umsatz der Produktgruppe, der Anteil, die Bedarfsmenge, die Einheit der Stückliste und die Stückkosten. Der Anteil bezieht sich je Stufe auf die Ebene darüber und nennt seine Basis in der Zelle: bei der Produktgruppe «vom Umsatz», bei der Materialgruppe «der Produktgruppe», beim Teil «der Materialgruppe». Anteile unter 0.05 Prozent stehen seit dem 05.11.2026 als «< 0.1 %» statt «0 %». Die Daten lädt der tägliche Einkauf-Lauf, sobald das SAP-Set ZloTopDownSet in P76 ist; bis dahin zeigt die Tabelle einen Hinweis. Die Zahl ist mit Armins Handauswertung vergleichbar, weicht aber bewusst ab: dort steht der Verbrauch aus ZLO03, hier die bestätigte Auftragsmenge.
 
 ABC ist das Wertklassen-Kennzeichen des Materialstamms, XYZ die Regelmässigkeit des Bedarfs aus einer SAP-Zusatztabelle. Die Massnahmenmatrix kombiniert beide mit Spend, Anzahl Materialien und Lieferanten und nennt je Klasse einen Prüfauftrag mit Priorität. Sie ändert nichts in SAP.
 
@@ -304,6 +305,8 @@ Ein gelber Hinweis oben stellt klar: Echte Liefertermintreue (OTIF) wird nicht b
 
 Je Material und Lieferant wird die offene Menge aus dem Bestellbestand gebildet. Priorität P1 bedeutet, dass eine Menge überfällig ist, P2, dass der nächste Plantermin innerhalb der nächsten 30 Tage liegt, und OK, dass der offene Termin später liegt. Gezählt werden nur offene Bestellungen ohne endgelieferte und stornierte Positionen und seit dem 22.10.2026 ohne Altposten (Textpositionen ohne Material, deren Liefertermin mehr als ein Jahr vorbei ist).
 
+Ein Fall ist eine Kombination aus Material und Lieferant. Die Kachel «Plantermin-Risiken» zählt seit dem 05.11.2026 diese Fälle, genau wie die Prioritätsbalken P1 und P2, und nennt im Untertitel die Anzahl Materialien; vorher zählte sie Materialien unter der Beschriftung «Fälle». Der «Offene Wert CHF» ist der offene Bestellwert der Fälle im Filter. Mit «Nur Handlungsbedarf» (Vorgabe an) sind das nur überfällige und in 30 Tagen fällige Fälle; er ist dann kleiner als der offene Bestellwert auf der Startseite. Er ist nicht auf ZLO03 beschränkt: Materialien ohne ZLO03-Eintrag zählen mit. ZLO03/ZMD04 liefert hier nur Disponent und Produktgruppe; der Kasten «Datenstand und Abgrenzung» zeigt dessen Stand getrennt vom Stand der zuletzt geladenen Bestellbelege.
+
 ### Einsatz im Arbeitsalltag
 
 **Einkäufer:** Die P1-Liste ist die Mahnliste: Wer ist mit welcher Menge und welchem Wert im Verzug?
@@ -396,7 +399,7 @@ Die Seite zeigt, ob Einkaufspreise steigen oder fallen, als Entwicklung über di
 
 ### Was man sieht
 
-Vier Kennzahlen: Artikel im Trend, Anzahl Artikel mit Preisanstieg (über 2 Prozent gegenüber dem Vorjahr), Jahre und Datenbasis. Ein Balkendiagramm zeigt den Stückpreis je Jahr. Eine Hotlist zeigt die Artikel mit dem höchsten Spend und der Preisveränderung zum Vorjahr, mit Ampel: rot bei Anstieg über 2 Prozent, grün bei Rückgang über 2 Prozent, sonst gelb.
+Vier Kennzahlen: Artikel im Trend, Anzahl Artikel mit Preisanstieg (über 2 Prozent gegenüber dem Vorjahr), Jahre und Datenbasis. Ein Balkendiagramm zeigt den Stückpreis je Jahr in CHF mit zwei Nachkommastellen (bis 05.11.2026 auf ganze Franken gerundet, also meist «CHF 1»). Eine Hotlist zeigt die Artikel mit dem höchsten Spend und der Preisveränderung zum Vorjahr, mit Ampel: rot («hoch») bei Anstieg über 2 Prozent, grün («tief») bei Rückgang über 2 Prozent, sonst gelb («mittel»). Enthält der Zeitraum nur ein Jahr, wie im Standardzeitraum, steht unter dem Diagrammtitel ein Hinweis und in der Hotlist «kein Vorjahr im Zeitraum»; für den Vergleich den Zeitraum erweitern, zum Beispiel mit «2020 bis heute».
 
 ### Wie gerechnet wird
 
@@ -410,7 +413,7 @@ Der Stückpreis ist der mengengewichtete Durchschnitt in CHF je Jahr: Summe der 
 
 ### Grenzen und Fallstricke
 
-- Das Diagramm zeigt den **mengengewichteten Durchschnitt** je Jahr («Ø Stückpreis nach Jahr»), die Hotlist dagegen das **Minimum** je Artikel und Jahr wie in Power BI. Beide Zahlen sind also nicht direkt vergleichbar. Ein steigender Durchschnitt kann auch daher kommen, dass mehr teure Artikel bestellt wurden (Mix), nicht nur von Preiserhöhungen.
+- Das Diagramm zeigt den **mengengewichteten Durchschnitt** je Jahr über alle Artikel («Ø Stückpreis nach Jahr»), die Hotlist denselben mengengewichteten Durchschnitt je Artikel und Jahr. *(Korrigiert am 05.11.2026: hier stand, die Hotlist zeige das Minimum wie in Power BI; der Code rechnet aber den Durchschnitt, und so steht es jetzt auch auf der Seite.)* Ein steigender Durchschnitt kann auch daher kommen, dass mehr teure Artikel bestellt wurden (Mix), nicht nur von Preiserhöhungen.
 - Ein Durchschnitt über alle Artikel mischt sehr unterschiedliche Teile. Die Aussage liegt in der Veränderung, nicht im Niveau.
 
 ## Ideen: Spend-Konzentration
@@ -515,7 +518,7 @@ Die Seite stellt Einkaufskennzahlen räumlich dar und erlaubt, Preis- oder Kursa
 
 ### Was man sieht
 
-Man wählt einen Indikator (Spend, offener Bestellwert, offene Menge, offener Wert der Kontraktabrufe, Liefertermin-Risiko, Preisentwicklung, Spend-Konzentration, Datenqualität, Lieferantenperformance) und die Grafikart (Balken, Linie, Fläche, Kreis). Ein Regler zwischen 0.5 und 1.5 simuliert ein Preis- oder Wechselkurs-Szenario, die Schaltfläche «-10%» setzt es auf 0.9. Ein zweiter Regler skaliert die Beschriftung. Die Grafik lässt sich drehen. Unter dem Regler steht die Differenz in Zahlen.
+Man wählt einen Indikator (Spend, offener Bestellwert, offene Menge, offener Wert der Kontraktabrufe, Liefertermin-Risiko, Preisentwicklung, Spend-Konzentration, Datenqualität, Lieferantenperformance) und die Grafikart (Balken, Linie, Fläche, Kreis). Ein Regler zwischen 0.5 und 1.5 simuliert ein Preis- oder Wechselkurs-Szenario, die Schaltfläche «-10%» setzt es auf 0.9. Ein zweiter Regler skaliert die Beschriftung. Die Grafik lässt sich drehen. Unter dem Regler steht die Differenz in Zahlen, seit dem 05.11.2026 mit ihrer Basis: «auf Basis der n gezeigten Balken (zusammen …)». Bei Spend sind das zum Beispiel nur die grössten Lieferanten, nicht der ganze Einkauf. Bei der Preisentwicklung gilt die Differenz für den Ø-Stückpreis des jüngsten Jahres, weil sich Durchschnittspreise nicht addieren lassen.
 
 ### Wie gerechnet wird
 

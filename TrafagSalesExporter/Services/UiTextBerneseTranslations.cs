@@ -10,6 +10,26 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Einkauf Pruefung 2026-11-05
+            ["kein Vorjahr im Zeitraum"] = "kes Vorjahr im Zytruum",
+            ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} uf Bispiuwärt (Simulation), kei Trafag-Zahl",
+            ["{0} CHF/Stk auf den Ø-Stückpreis {1} (CHF {2})"] = "{0} CHF/Stk uf e Ø-Stückpris {1} (CHF {2})",
+            ["{0} {1} auf Basis der {2} gezeigten Balken (zusammen {3} {1})"] = "{0} {1} uf Basis vo de {2} zeigte Balke (zäme {3} {1})",
+            ["Die Spalte Anteil bezieht sich je Stufe auf die Ebene darüber: Produktgruppe vom Umsatz, Materialgruppe von der Produktgruppe, Teil von der Materialgruppe."] = "D Spaute Aateil bezieht sech uf jedi Stufe uf d Ebeni drüber: Produktgruppe vom Umsatz, Materialgruppe vo dr Produktgruppe, Teil vo dr Materialgruppe.",
+            ["vom Umsatz"] = "vom Umsatz",
+            ["der Produktgruppe"] = "vo dr Produktgruppe",
+            ["der Materialgruppe"] = "vo dr Materialgruppe",
+            ["SAP-Daten geladen"] = "SAP-Date glade",
+            ["ZLO03 / ZMD04 (nur Disponent und Produktgruppe)"] = "ZLO03 / ZMD04 (nume Disponänt u Produktgruppe)",
+            ["EKKO / EKPO / EKET (zuletzt geladene Belege)"] = "EKKO / EKPO / EKET (zletscht gladeni Beleg)",
+            ["@SelectedIdeaChartHintEn"] = "@SelectedIdeaChartHintEn",
+            ["Ø CHF/Stk des jüngsten Jahres im Zeitraum, Veränderung zum Vorjahr"] = "Ø CHF/Stk vom jüngschte Jahr im Zytruum, Veränderig zum Vorjahr",
+            ["Netto-Stückpreise als mengengewichteter Durchschnitt je Jahr und je Artikel, mit Veränderung zum Vorjahr im Zeitraum."] = "Netto-Stückpriise als mängegwichtete Durchschnitt pro Jahr u pro Artikel, mit dr Veränderig zum Vorjahr im Zytruum.",
+            ["Net unit prices as quantity-weighted average by year and by article, with the change against the prior year in the period."] = "Net unit prices as quantity-weighted average by year and by article, with the change against the prior year in the period.",
+            ["Ø je Artikel und Jahr, mengengewichtet"] = "Ø pro Artikel u Jahr, mängegwichtet",
+            ["Kein Vorjahresvergleich: der gewählte Zeitraum enthält nur ein Jahr. Für die Veränderung zum Vorjahr den Zeitraum erweitern, zum Beispiel mit dem Knopf „2020 bis heute“."] = "Kei Verglich mit em Vorjahr: dr gwählt Zytruum het nume eis Jahr. Für d Veränderig zum Vorjahr dr Zytruum erwytere, zum Bispiu mit em Chnopf „2020 bis hüt“.",
+            ["offener Bestellwert dieser Faelle (ueberfaellig oder in 30 Tagen faellig), nicht der ganze offene Bestellwert"] = "offene Bstellwärt vo dene Fäll (überfällig oder i 30 Täg fällig), nid dr ganz offe Bstellwärt",
+            ["offener Bestellwert aller Faelle im Filter"] = "offene Bstellwärt vo aune Fäll im Filter",
             // Verkauf Monthly Review 2026-11-05
             ["Monthly Review Gesellschaften"] = "Monthly Review Gsellschafte",
             ["Berichtsmonat"] = "Berichtsmonet",

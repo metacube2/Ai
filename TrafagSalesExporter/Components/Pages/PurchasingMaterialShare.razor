@@ -16,6 +16,8 @@
     <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block mb-2">
         @T("Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege.",
            "Material share from confirmed sales orders (ZC23, confirmed date in the period, without rejection reason) times bill-of-material demand (ZLO03 top-down, all levels) times unit cost, purchased parts of MRP controllers 001 to 006 only. This is not the purchasing volume of the other entry points.")
+        @T("Die Spalte Anteil bezieht sich je Stufe auf die Ebene darüber: Produktgruppe vom Umsatz, Materialgruppe von der Produktgruppe, Teil von der Materialgruppe.",
+           "The share column refers to the level above on each row: product group of revenue, material group of the product group, part of the material group.")
     </MudText>
 
     @if (_state is null)
@@ -69,7 +71,7 @@
                             </td>
                             <td>@Chf(group.Revenue)</td>
                             <td><strong>@Chf(group.Value)</strong></td>
-                            <td>@Percent(group.Value, group.Revenue)</td>
+                            <td>@Share(group.Value, group.Revenue, ShareOfRevenue)</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -82,7 +84,7 @@
                                     <td>@Toggle(materialGroup) @materialGroup.Label</td>
                                     <td></td>
                                     <td>@Chf(materialGroup.Value)</td>
-                                    <td>@Percent(materialGroup.Value, group.Value)</td>
+                                    <td>@Share(materialGroup.Value, group.Value, ShareOfProductGroup)</td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
@@ -95,7 +97,7 @@
                                             <td>@part.Label</td>
                                             <td></td>
                                             <td>@Chf(part.Value)</td>
-                                            <td>@Percent(part.Value, materialGroup.Value)</td>
+                                            <td>@Share(part.Value, materialGroup.Value, ShareOfMaterialGroup)</td>
                                             <td>@part.Quantity.ToString("N0", CultureInfo.CurrentCulture)</td>
                                             <td>@part.Unit</td>
                                             <td>@part.UnitCost.ToString("0.######", CultureInfo.CurrentCulture)</td>
@@ -109,7 +111,7 @@
                         <td><strong>@T("Total", "Total")</strong></td>
                         <td><strong>@Chf(_rows.Sum(r => r.Revenue))</strong></td>
                         <td><strong>@Chf(_rows.Sum(r => r.Value))</strong></td>
-                        <td>@Percent(_rows.Sum(r => r.Value), _rows.Sum(r => r.Revenue))</td>
+                        <td>@Share(_rows.Sum(r => r.Value), _rows.Sum(r => r.Revenue), ShareOfRevenue)</td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -203,8 +205,17 @@
     private static string Chf(decimal value)
         => value == 0m ? "-" : "CHF " + value.ToString("N0", CultureInfo.CurrentCulture);
 
-    private static string Percent(decimal value, decimal total)
-        => total <= 0m ? "-" : (value / total * 100m).ToString("0.#", CultureInfo.CurrentCulture) + " %";
+    // F9 Pruefung 2026-11-05: Die Spalte „Anteil“ hat je Stufe eine andere Basis; jede Zelle nennt sie jetzt.
+    // Kleine Anteile stehen als „< 0.1 %“ statt „0 %“. Die Rechnung selbst ist unveraendert.
+    private string ShareOfRevenue => T("vom Umsatz", "of revenue");
+    private string ShareOfProductGroup => T("der Produktgruppe", "of the product group");
+    private string ShareOfMaterialGroup => T("der Materialgruppe", "of the material group");
+
+    private static string Share(decimal value, decimal total, string basis)
+    {
+        var text = PurchasingMaterialShareQuery.FormatShare(value, total, CultureInfo.CurrentCulture);
+        return text == "-" ? text : text + " " + basis;
+    }
 
     private string T(string german, string english) => UiText.Text(german, english);
 }

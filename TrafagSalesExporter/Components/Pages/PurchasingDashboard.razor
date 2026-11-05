@@ -769,6 +769,8 @@
                                        DescriptionEn="@SelectedIdeaAnalysisDescriptionEn"
                                        ChartTitleDe="@SelectedIdeaChartTitleDe"
                                        ChartTitleEn="@SelectedIdeaChartTitleEn"
+                                       ChartHintDe="@SelectedIdeaChartHintDe"
+                                       ChartHintEn="@SelectedIdeaChartHintEn"
                                        Kpis="@SelectedIdeaKpis"
                                        ChartRows="@SelectedIdeaChartRows"
                                        StatusRows="@SelectedIdeaStatusRows"
@@ -799,7 +801,7 @@
                                 <MudTd>@context.Detail</MudTd>
                                 <MudTd>
                                     <MudChip T="string" Size="Size.Small" Color="@ResolveAnalysisSeverityColor(context.Severity)" Variant="Variant.Outlined">
-                                        @context.Severity
+                                        @ResolveAnalysisSeverityText(context.Severity)
                                     </MudChip>
                                 </MudTd>
                             </RowTemplate>
@@ -1462,7 +1464,7 @@
         // Mengengewichteter Durchschnitts-Stueckpreis des juengsten Jahres - dieselbe Reihe, die
         // der Reiter Preisentwicklung zeigt. Vorher stand hier der Gesamt-Spend des Zeitraums
         // unter einem Label, dessen Untertitel einen Stueckpreis verspricht.
-        new("Preisindikator", "Price indicator", LatestAverageUnitPriceLabel, "Netwr CHF/Stk braucht EKPO", "Netwr CHF/unit needs EKPO"),
+        new("Preisindikator", "Price indicator", LatestAverageUnitPriceLabel, "Ø CHF/Stk des jüngsten Jahres im Zeitraum, Veränderung zum Vorjahr", "Avg. CHF/unit of the latest year in the period, change against the prior year"),
         new("Qualitaet", "Quality", "-", "Reklamationsquelle noch nicht angebunden", "claim source not connected yet")
     ];
 
@@ -1478,7 +1480,10 @@
             // Der reine Preisstand mischt Schrauben und Baugruppen und ist als Niveau wenig wert;
             // erst die Veraenderung gegenueber dem Vorjahr ist eine Aussage. Beides zusammen,
             // damit der Wert zum Label "CHF/Stk" passt und trotzdem eine Richtung zeigt.
-            if (rows.Count < 2 || rows[^2].Value <= 0m)
+            // F3 2026-11-05: Im Standardzeitraum (laufendes Jahr) fehlt das Vorjahr; das wird gesagt statt still weggelassen.
+            if (rows.Count < 2)
+                return $"{label} ({T("kein Vorjahr im Zeitraum", "no prior year in period")})";
+            if (rows[^2].Value <= 0m)
                 return label;
             var change = (current - rows[^2].Value) / rows[^2].Value * 100m;
             return $"{label} ({change:+0.0;-0.0;0.0}%)";
@@ -1853,7 +1858,7 @@
 
     private IReadOnlyList<PurchasingIdeaKpi> PurchasingIdeaKpis =>
     [
-        new("Spend Management", "Spend management", "Spend CHF", "spend CHF", "Jahr / Lieferant / Warengruppe / Artikel", "EKKO+EKPO", _liveState.EkpoLoaded ? "Live-Probe" : "wartet auf EKPO", _liveState.EkpoLoaded ? "live sample" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Spend Management", "Spend management", "Spend CHF", "spend CHF", "Jahr / Lieferant / Warengruppe / Artikel", "EKKO+EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Spend Management", "Spend management", "Top-10-Lieferantenanteil %", "top-10 supplier share %", "Jahr / Warengruppe", "EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Lieferantenrisiko", "Supplier risk", "Risiko-Score 0-100", "Risk score 0-100", "Lieferant / Warengruppe / Artikel", "EKKO+EKPO+EKET", _liveState.EkpoLoaded && _liveState.EketLoaded ? "bereit" : "wartet auf Tabellen", _liveState.EkpoLoaded && _liveState.EketLoaded ? "ready" : "waiting for tables", _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Preisentwicklung", "Price trend", "Min je Artikel, Ø je Jahr", "Min per article, avg per year", "Artikel / Jahr", "EKPO+EKKO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
@@ -2020,11 +2025,28 @@
     private IReadOnlyList<PurchasingSectionChartRow> SelectedIdeaChartRows => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => BuildLiveChartRows(_liveState.DeliveryRiskChartRows, FormatChf),
-        "ideen/preisabweichung" => BuildLiveChartRows(_liveState.PriceVarianceChartRows, FormatChf),
+        // F3 Pruefung 2026-11-05: Stueckpreise mit zwei Nachkommastellen; FormatChf rundet auf ganze Franken und zeigte
+        // fuer alle Jahre „CHF 1“ (Wert um 1.13).
+        "ideen/preisabweichung" => BuildLiveChartRows(_liveState.PriceVarianceChartRows, FormatUnitPriceChf),
         "ideen/spend-konzentration" => BuildLiveChartRows(_liveState.SpendConcentrationChartRows, FormatChf),
         "ideen/datenqualitaet" => BuildLiveChartRows(_liveState.DataQualityChartRows, value => value.ToString("N0")),
         _ => []
     };
+
+    // Ohne zweites Jahr im Zeitraum gibt es keinen Vorjahresvergleich (Standardzeitraum seit 2026-10-13 = laufendes
+    // Jahr). Gerechnet wird weiter nur im gewaehlten Zeitraum; der Hinweis sagt, wie man den Vergleich bekommt.
+    private bool PriceTrendHasNoPriorYear
+        => CurrentPurchasingPage == "ideen/preisabweichung" && _liveState.EkpoLoaded && _liveState.PriceVarianceChartRows.Count < 2;
+
+    private string SelectedIdeaChartHintDe => PriceTrendHasNoPriorYear
+        ? "Kein Vorjahresvergleich: der gewählte Zeitraum enthält nur ein Jahr. Für die Veränderung zum Vorjahr den Zeitraum erweitern, zum Beispiel mit dem Knopf „2020 bis heute“."
+        : string.Empty;
+
+    private string SelectedIdeaChartHintEn => PriceTrendHasNoPriorYear
+        ? "No prior-year comparison: the selected period contains only one year. To see the change against the prior year, widen the period, for example with the button “2020 to today”."
+        : string.Empty;
+
+    private static string FormatUnitPriceChf(decimal value) => $"CHF {value:N2}";
 
     private IReadOnlyList<PurchasingSectionKpi> SelectedIdeaKpis => CurrentPurchasingPage switch
     {
@@ -2040,7 +2062,7 @@
             new("Artikel im Trend", "Articles in trend", _liveState.ArticlePriceTrendRows.Count.ToString("N0"), "Top nach Spend", "top by spend"),
             new("Preis gestiegen", "Price increased", _liveState.ArticlePriceTrendRows.Count(x => x.Severity == "High").ToString("N0"), "> +2% ggue. Vorjahr", "> +2% vs. prior year"),
             new("Jahre", "Years", _liveState.PriceVarianceChartRows.Count.ToString("N0"), "EKKO.Bedat", "EKKO.Bedat"),
-            new("Datenbasis", "Data basis", _liveState.EkpoLoaded ? "EKPO + EKKO" : "-", "Min je Artikel, Ø je Jahr", "Min per article, avg per year")
+            new("Datenbasis", "Data basis", _liveState.EkpoLoaded ? "EKPO + EKKO" : "-", "Ø je Artikel und Jahr, mengengewichtet", "Avg per article and year, quantity-weighted")
         ],
         "ideen/spend-konzentration" =>
         [
@@ -2121,7 +2143,9 @@
     private string SelectedIdeaAnalysisDescriptionDe => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Offene EKET-Mengen werden bewertet und nach Faelligkeit, Lieferant und Artikel priorisiert.",
-        "ideen/preisabweichung" => "Netto-Stueckpreise werden wie in PowerBI als Minimum je Artikel und Jahr gezeigt.",
+        // F3 2026-11-05: Code rechnet seit dem Indikatoren-Fix (ExecuteArticlePriceTrendRowsAsync) den mengengewichteten
+        // Durchschnitt, nicht mehr das Power-BI-Minimum; der Text sagte noch Minimum.
+        "ideen/preisabweichung" => "Netto-Stückpreise als mengengewichteter Durchschnitt je Jahr und je Artikel, mit Veränderung zum Vorjahr im Zeitraum.",
         "ideen/spend-konzentration" => "Lieferantenspend wird als Pareto ausgewertet, um Abhaengigkeit und Buendelungspotenzial zu zeigen.",
         "ideen/datenqualitaet" => "Pflichtfelder und Nullwerte im Einkauf-Cache werden als Qualitaetsampel gezaehlt.",
         _ => "Echte Analyse aus dem Einkauf-Cache."
@@ -2130,7 +2154,7 @@
     private string SelectedIdeaAnalysisDescriptionEn => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Open EKET quantities are valued and prioritised by due date, supplier and article.",
-        "ideen/preisabweichung" => "Net unit prices are shown like in Power BI as minimum by article and year.",
+        "ideen/preisabweichung" => "Net unit prices as quantity-weighted average by year and by article, with the change against the prior year in the period.",
         "ideen/spend-konzentration" => "Supplier spend is evaluated as pareto to show dependency and bundling potential.",
         "ideen/datenqualitaet" => "Required fields and zero values in the purchasing cache are counted as quality indicators.",
         _ => "Real analysis from the purchasing cache."
@@ -2389,6 +2413,15 @@
             "Low" => Color.Success,
             _ => Color.Info
         };
+
+    // Pruefung 2026-11-05 Punkt 10: die Ampel zeigte die internen englischen Werte High/Medium/Low.
+    private string ResolveAnalysisSeverityText(string severity) => severity switch
+    {
+        "High" => T("hoch", "high"),
+        "Medium" => T("mittel", "medium"),
+        "Low" => T("tief", "low"),
+        _ => severity
+    };
 
     private string TopSpendLabel => _liveState.EkpoLoaded && !string.IsNullOrWhiteSpace(_liveState.TopSupplierLabel) ? _liveState.TopSupplierLabel : BuildTopLabel(x => x.Spend, FormatChf);
     private string TopMaterialGroupLabel => _liveState.EkpoLoaded && !string.IsNullOrWhiteSpace(_liveState.TopMaterialGroupLabel) ? _liveState.TopMaterialGroupLabel : BuildTopLabel(x => x.Spend, FormatChf, "Warengruppe");
@@ -2782,12 +2815,36 @@
         if (!ScenarioAffectsPurchasingValue)
             return T("nicht auf diesen Indikator angewendet", "not applied to this indicator");
 
+        // F4 Pruefung 2026-11-05: Das Delta rechnet nur auf die gezeigten Balken (z. B. Top-Lieferanten), nicht auf den
+        // ganzen Spend. Die kleinere, ehrliche Loesung ist, die Basis zu nennen: die Grafik zeigt genau diese Werte, und
+        // eine Hochrechnung auf den Gesamtspend haette fuer jeden Indikator eine eigene Gesamtgroesse gebraucht.
+        var unit = Purchasing3dIndicators.First(x => x.Key == _purchasing3dIndicator).Unit;
         var liveRows = ResolvePurchasing3dLiveRows();
-        var baseTotal = liveRows.Count > 0
-            ? (double)liveRows.Sum(row => row.Value)
-            : Purchasing3dBaseRows.Sum(ResolvePurchasing3dValue);
+        if (liveRows.Count == 0)
+        {
+            var sampleTotal = Purchasing3dBaseRows.Sum(ResolvePurchasing3dValue);
+            return string.Format(CultureInfo.CurrentCulture,
+                T("{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl", "{0} {1} on sample values (simulation), not a Trafag figure"),
+                (sampleTotal * _purchasing3dFactor - sampleTotal).ToString("N0", CultureInfo.CurrentCulture), unit);
+        }
+
+        if (_purchasing3dIndicator == "priceVariance")
+        {
+            // Durchschnittspreise je Jahr lassen sich nicht addieren; das Delta gilt fuer den Stueckpreis des juengsten Jahres.
+            var latest = liveRows[^1];
+            return string.Format(CultureInfo.CurrentCulture,
+                T("{0} CHF/Stk auf den Ø-Stückpreis {1} (CHF {2})", "{0} CHF/unit on the avg. unit price {1} (CHF {2})"),
+                (latest.Value * (decimal)_purchasing3dFactor - latest.Value).ToString("N2", CultureInfo.CurrentCulture),
+                latest.Label,
+                latest.Value.ToString("N2", CultureInfo.CurrentCulture));
+        }
+
+        var baseTotal = (double)liveRows.Sum(row => row.Value);
         var delta = baseTotal * _purchasing3dFactor - baseTotal;
-        return $"{delta:N0} {Purchasing3dIndicators.First(x => x.Key == _purchasing3dIndicator).Unit}";
+        return string.Format(CultureInfo.CurrentCulture,
+            T("{0} {1} auf Basis der {2} gezeigten Balken (zusammen {3} {1})",
+              "{0} {1} based on the {2} bars shown (together {3} {1})"),
+            delta.ToString("N0", CultureInfo.CurrentCulture), unit, liveRows.Count, baseTotal.ToString("N0", CultureInfo.CurrentCulture));
     }
 
     private sealed record PurchasingKpiCard(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, Color Color, string ExplainDe = "", string ExplainEn = "", string ValueTitle = "");

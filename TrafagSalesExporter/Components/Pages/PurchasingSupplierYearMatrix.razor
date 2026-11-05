@@ -102,12 +102,13 @@
     [Parameter] public IReadOnlyList<int> Years { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSupplierYearSpendRow> Rows { get; set; } = [];
 
-    private readonly HashSet<string> _expandedSuppliers = new(StringComparer.OrdinalIgnoreCase);
+    // Ordinal wie die Zeilen selbst (F2 2026-11-05): "THUBA AG" und "Thuba AG" sind zwei Zeilen und klappen getrennt auf.
+    private readonly HashSet<string> _expandedSuppliers = new(StringComparer.Ordinal);
 
     // Dritte Ebene (Warengruppe -> Materialnummern, Entscheid Marco 2026-07-30). Der Schluessel
     // enthaelt den Lieferanten, weil dieselbe Warengruppe unter mehreren Lieferanten vorkommt und
     // sonst das Aufklappen bei "01 - Dummy" alle Lieferanten gleichzeitig oeffnen wuerde.
-    private readonly HashSet<string> _expandedGroups = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _expandedGroups = new(StringComparer.Ordinal);
 
     private void ToggleSupplier(string supplier)
     {

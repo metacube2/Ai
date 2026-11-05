@@ -107,7 +107,7 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
             ActualReceiptDateAvailable = actualReceiptDateAvailable,
             NoticeDe = noticeDe,
             NoticeEn = noticeEn,
-            Kpis = BuildKpis(kind, filtered, sourceMaterialCount),
+            Kpis = BuildKpis(kind, filtered, sourceMaterialCount, filter.OnlyActionable),
             RiskBuckets = BuildRiskBuckets(scoped),
             Rows = filtered.Take(1000).ToList()
         };
@@ -331,7 +331,8 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
     private static IReadOnlyList<SupplyChainKpi> BuildKpis(
         SupplyChainAnalysisKind kind,
         IReadOnlyList<SupplyChainAnalysisRow> rows,
-        int sourceMaterialCount)
+        int sourceMaterialCount,
+        bool onlyActionable)
     {
         var affected = rows.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count();
         // Materialien mit echter Fehlmenge, fuer die keine Stueckkosten gepflegt sind. Ihr
@@ -374,11 +375,23 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
                 new("Prioritaet P1", "Priority P1", rows.Count(row => row.RiskCode == "P1").ToString("N0"), "sofort pruefen", "review immediately"),
                 new("Keine Auto-Aenderung", "No automatic change", "0", "nur fachliche Pruefung", "functional review only")
             ],
+            // F6 Pruefung 2026-11-05: Eine Zeile ist ein Fall Material x Lieferant (GROUP BY in LoadDeliveryRowsAsync).
+            // Die Kachel zaehlte bisher Materialien (494) unter der Beschriftung "Faelle", die Prioritaetsbalken
+            // zaehlen Faelle (P1 + P2 = 555). Jetzt zaehlt die Kachel Faelle wie die Balken und nennt die Materialien dazu.
+            // Der offene Wert gilt fuer die Faelle im Filter: mit "Nur Handlungsbedarf" ohne spaetere Plantermine (OK).
+            // Er ist nicht auf ZLO03 begrenzt; Materialien ohne ZLO03-Eintrag zaehlen mit (EmptyRow).
             SupplyChainAnalysisKind.DeliveryPerformance =>
             [
-                new("Plantermin-Risiken", "Planned-date risks", affected.ToString("N0"), "offene Material-/Lieferantenfaelle", "open material/supplier cases"),
+                new("Plantermin-Risiken", "Planned-date risks", rows.Count.ToString("N0"),
+                    $"offene Material-/Lieferantenfaelle, {affected:N0} Materialien", $"open material/supplier cases, {affected:N0} materials"),
                 new("Ueberfaellige Menge", "Overdue quantity", rows.Sum(row => row.OverdueQuantity).ToString("N0"), "EKET-Plantermin vor heute", "EKET planned date before today"),
-                new("Offener Wert CHF", "Open value CHF", rows.Sum(row => row.OpenOrderValueChf).ToString("N0"), "offener Bestellwert", "open order value"),
+                new("Offener Wert CHF", "Open value CHF", rows.Sum(row => row.OpenOrderValueChf).ToString("N0"),
+                    onlyActionable
+                        ? "offener Bestellwert dieser Faelle (ueberfaellig oder in 30 Tagen faellig), nicht der ganze offene Bestellwert"
+                        : "offener Bestellwert aller Faelle im Filter",
+                    onlyActionable
+                        ? "open order value of these cases (overdue or due within 30 days), not the total open order value"
+                        : "open order value of all cases in the filter"),
                 new("Ist-Termin-Abdeckung", "Actual-date coverage", "0%", "EKBE/MSEG/MATDOC fehlt", "EKBE/MSEG/MATDOC missing")
             ],
             _ => []

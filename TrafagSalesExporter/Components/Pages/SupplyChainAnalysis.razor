@@ -96,8 +96,17 @@ else
             <MudPaper Class="pa-3 supply-panel" Outlined>
                 <MudText Typo="Typo.h6">@T("Datenstand und Abgrenzung", "Data state and scope")</MudText>
                 <div class="supply-status mt-3">
-                    <div><span>ZLO03 / ZMD04</span><strong>@FormatTimestamp(_result.MaterialUsageLoadedAtUtc)</strong></div>
-                    <div><span>EKKO / EKPO / EKET</span><strong>@FormatTimestamp(_result.PurchasingLoadedAtUtc)</strong></div>
+                    @if (_kind == SupplyChainAnalysisKind.DeliveryPerformance)
+                    {
+                        @* F6 Pruefung 2026-11-05: Hier liefert ZLO03/ZMD04 nur Disponent, Produktgruppe und Text; Mengen,
+                           Termine und Werte kommen aus EKET/EKPO mit dem Stand darunter. *@
+                        <div><span>@T("ZLO03 / ZMD04 (nur Disponent und Produktgruppe)", "ZLO03 / ZMD04 (planner and product group only)")</span><strong>@FormatTimestamp(_result.MaterialUsageLoadedAtUtc)</strong></div>
+                    }
+                    else
+                    {
+                        <div><span>ZLO03 / ZMD04</span><strong>@FormatTimestamp(_result.MaterialUsageLoadedAtUtc)</strong></div>
+                    }
+                    <div><span>@T("EKKO / EKPO / EKET (zuletzt geladene Belege)", "EKKO / EKPO / EKET (most recently loaded documents)")</span><strong>@FormatTimestamp(_result.PurchasingLoadedAtUtc)</strong></div>
                     <div><span>@T("Materialien im Quellumfang", "Materials in source scope")</span><strong>@_result.SourceMaterialCount.ToString("N0")</strong></div>
                     <div><span>@T("Materialien nach Filter", "Materials after filter")</span><strong>@_result.FilteredMaterialCount.ToString("N0")</strong></div>
                     @if (_kind == SupplyChainAnalysisKind.DeliveryPerformance)

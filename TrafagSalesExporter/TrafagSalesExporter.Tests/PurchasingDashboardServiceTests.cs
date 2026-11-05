@@ -425,6 +425,56 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SupplierYearMatrix_Keeps_Names_Differing_Only_In_Case_And_Matches_The_Spend_Breakdown()
+    {
+        // F2 Pruefung 2026-11-05: "THUBA AG" und "Thuba AG" (zwei Lieferantennummern) ueberschrieben sich je Jahr in
+        // der Matrix (OrdinalIgnoreCase-Dictionary), der Aufriss zeigte beide. Matrix = Aufriss = Gesamtspend.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('C1', '2025-03-01', 'L1', 'THUBA AG', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('C2', '2025-04-01', 'L2', 'Thuba AG', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C1', '10', 'M1', 'WG1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C2', '10', 'M2', 'WG1', '1', '200', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('C1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        Assert.Equal(300m, state.SpendChfSample);
+        Assert.Equal(300m, state.SupplierYearSpendRows.Sum(row => row.Total));
+        Assert.Equal(300m, state.SupplierYearSpendRows.Sum(row => row.YearValues[2025]));
+        var upper = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier == "THUBA AG");
+        var mixed = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier == "Thuba AG");
+        Assert.Equal(100m, upper.Total);
+        Assert.Equal(200m, mixed.Total);
+        // Drilldown bis zum Material auch fuer die zweite Schreibweise vorhanden.
+        Assert.Equal(200m, Assert.Single(mixed.MaterialGroups).Articles.Sum(article => article.Total));
+
+        var supplierPerspective = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier");
+        Assert.Equal(supplierPerspective.Rows.Count, state.SupplierYearSpendRows.Count);
+        Assert.Equal(supplierPerspective.Rows.Sum(row => row.Total), state.SupplierYearSpendRows.Sum(row => row.Total));
+    }
+
+    [Fact]
+    public async Task PriceTrend_Keeps_Decimals_And_Says_When_The_Period_Has_No_Prior_Year()
+    {
+        // F3 Pruefung 2026-11-05: Ø-Stueckpreis um 1.13 CHF; im Standardzeitraum (ein Jahr) gibt es keinen Vorjahresvergleich.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Waers, Wkurs, LastLoadedAtUtc) VALUES ('P1', '2025-03-01', 'L1', 'F', 'CHF', '1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Waers, Wkurs, LastLoadedAtUtc) VALUES ('P2', '2024-03-01', 'L1', 'F', 'CHF', '1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('P1', '10', 'M1', '100', '113', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('P2', '10', 'M1', '100', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('P1', '10', '1', '2025-04-01', '100', '100', '2026-01-01');");
+
+        var oneYear = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+        var price = Assert.Single(oneYear.PriceVarianceChartRows);
+        Assert.Equal(1.13m, Math.Round(price.Value, 2));
+        var article = Assert.Single(oneYear.ArticlePriceTrendRows);
+        Assert.Equal("Jahr 2025, kein Vorjahr im Zeitraum", article.Detail);
+
+        var twoYears = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2024, 1, 1), new DateTime(2025, 12, 31)));
+        Assert.Equal(2, twoYears.PriceVarianceChartRows.Count);
+        Assert.Contains("2024", Assert.Single(twoYears.ArticlePriceTrendRows).Detail);
+        Assert.Equal("High", Assert.Single(twoYears.ArticlePriceTrendRows).Severity);
+    }
+
+    [Fact]
     public async Task LoadAsync_MaterialGroupSpendRows_Enriches_Known_Codes_With_T023T_Text()
     {
         // Ingo-Lieferung 2026-07-24 (T023T-Export): bekannte Codes zeigen "Code - Text",

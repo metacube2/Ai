@@ -530,8 +530,8 @@ WHERE " + openItemFilter + " AND 1 = 1" + endDelivered + " AND " + StaleTextItem
         state.OverduePositionRows = await ExecuteAnalysisRowsAsync(conn, @"
 SELECT
     " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" || ' / ' || COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Label,
-    'CHF ' || printf('%,.0f', SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
-        " + ChfUnitPrice + @")) AS Value,
+    'CHF ' || replace(printf('%,.0f', SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+        " + ChfUnitPrice + @")), ',', '''') AS Value,
     'Faellig seit ' || COALESCE(MIN(e.Eindt), 'ohne Termin') AS Detail,
     'High' AS Severity
 FROM PurchasingEketCache e
@@ -761,8 +761,8 @@ ORDER BY CASE Label WHEN 'Ueberfaellig' THEN 1 WHEN '0-7 Tage' THEN 2 WHEN '8-30
         state.DeliveryRiskRows = await ExecuteAnalysisRowsAsync(conn, @"
 SELECT
     " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" || ' / ' || COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Label,
-    'CHF ' || printf('%,.0f', SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
-        " + ChfUnitPrice + @")) AS Value,
+    'CHF ' || replace(printf('%,.0f', SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+        " + ChfUnitPrice + @")), ',', '''') AS Value,
     'Faellig ' || COALESCE(MIN(e.Eindt), 'ohne Termin') AS Detail,
     CASE WHEN MIN(date(e.Eindt)) < date('now', 'localtime') THEN 'High' ELSE 'Medium' END AS Severity
 FROM PurchasingEketCache e
@@ -827,7 +827,8 @@ LIMIT 10;", cancellationToken);
         var concentrationRows = await ExecuteAnalysisRowsAsync(conn, @"
 SELECT
     " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label,
-    'CHF ' || printf('%,.0f', SUM(" + ChfNetValue + @")) AS Value,
+    -- Pruefung 2026-11-05 Punkt 10: Tausendertrennzeichen wie im uebrigen Dashboard (1'234'567 statt 1,234,567).
+    'CHF ' || replace(printf('%,.0f', SUM(" + ChfNetValue + @")), ',', '''') AS Value,
     COUNT(DISTINCT COALESCE(NULLIF(p.Matkl, ''), 'ohne Warengruppe')) || ' Warengruppen' AS Detail,
     CASE WHEN SUM(" + ChfNetValue + @") > 1000000 THEN 'High'
          WHEN SUM(" + ChfNetValue + @") > 250000 THEN 'Medium'
@@ -1154,7 +1155,11 @@ LIMIT 12;";
         var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
-        var rowsBySupplier = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.OrdinalIgnoreCase);
+        // F2 Pruefung 2026-11-05: Ordinal (gross/klein getrennt) wie das GROUP BY in SQLite und wie der Spend-Aufriss
+        // (BuildCascadeLevel). Mit OrdinalIgnoreCase fielen "THUBA AG" und "Thuba AG" (vermutlich zwei Lieferantennummern,
+        // nicht geprueft) in eine Zeile, und je Jahr ueberschrieb der zweite Wert den ersten statt zu addieren:
+        // 2020 bis heute fehlten 17'885 CHF gegenueber dem Aufriss.
+        var rowsBySupplier = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.Ordinal);
 
         await using var command = conn.CreateCommand();
         command.CommandText = @"
@@ -1183,7 +1188,9 @@ ORDER BY Supplier, Year;";
                     rowsBySupplier[supplier] = values;
                 }
 
-                values[year] = value;
+                // Addieren statt ueberschreiben: Wertverlust ist ausgeschlossen, auch wenn zwei SQL-Zeilen je
+                // Lieferant und Jahr ankommen.
+                values[year] = values.TryGetValue(year, out var existing) ? existing + value : value;
             }
         }
 
@@ -1216,7 +1223,8 @@ ORDER BY Supplier, Year;";
         var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
-        var valuesBySupplierGroup = new Dictionary<string, Dictionary<string, Dictionary<int, decimal>>>(StringComparer.OrdinalIgnoreCase);
+        // Ordinal wie ExecuteSupplierYearSpendRowsAsync (F2 2026-11-05), sonst fehlt der zweiten Schreibweise der Drilldown.
+        var valuesBySupplierGroup = new Dictionary<string, Dictionary<string, Dictionary<int, decimal>>>(StringComparer.Ordinal);
 
         await using var command = conn.CreateCommand();
         command.CommandText = @"
@@ -1244,7 +1252,7 @@ ORDER BY Supplier, MaterialGroup, Year;";
 
                 if (!valuesBySupplierGroup.TryGetValue(supplier, out var groups))
                 {
-                    groups = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.OrdinalIgnoreCase);
+                    groups = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.Ordinal);
                     valuesBySupplierGroup[supplier] = groups;
                 }
 
@@ -1254,7 +1262,8 @@ ORDER BY Supplier, MaterialGroup, Year;";
                     groups[materialGroup] = values;
                 }
 
-                values[year] = value;
+                // Addieren statt ueberschreiben (F2): zwei Rohcodes koennen auf denselben Katalogtext aufloesen.
+                values[year] = values.TryGetValue(year, out var existing) ? existing + value : value;
             }
         }
 
@@ -1272,7 +1281,7 @@ ORDER BY Supplier, MaterialGroup, Year;";
                 })
                 .OrderByDescending(group => group.Total)
                 .ToList(),
-            StringComparer.OrdinalIgnoreCase);
+            StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -1336,8 +1345,11 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
                     values[key] = yearValues;
                 }
 
-                yearValues[Convert.ToInt32(reader.GetValue(3), CultureInfo.InvariantCulture)] =
-                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture);
+                // Addieren statt ueberschreiben (F2 2026-11-05): zwei Warengruppen-Rohcodes mit demselben Katalogtext
+                // ergeben denselben Schluessel.
+                var articleYear = Convert.ToInt32(reader.GetValue(3), CultureInfo.InvariantCulture);
+                var articleValue = Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture);
+                yearValues[articleYear] = yearValues.TryGetValue(articleYear, out var existingValue) ? existingValue + articleValue : articleValue;
             }
         }
 
@@ -2362,7 +2374,9 @@ GROUP BY MaterialGroup, Region;";
         CancellationToken cancellationToken)
     {
         const int topArticleCount = 8;
-        var pricesByArticle = new Dictionary<string, SortedDictionary<int, decimal>>(StringComparer.OrdinalIgnoreCase);
+        // Ordinal wie das GROUP BY in SQLite (F2-Muster 2026-11-05): ein Bestelltext in zwei Schreibweisen sind zwei
+        // SQL-Gruppen; mit OrdinalIgnoreCase haette der zweite Durchschnittspreis den ersten still ersetzt.
+        var pricesByArticle = new Dictionary<string, SortedDictionary<int, decimal>>(StringComparer.Ordinal);
 
         await using var command = conn.CreateCommand();
         command.CommandText = @"
@@ -2414,7 +2428,8 @@ ORDER BY Article, Year;";
             var years = byYear.Keys.ToList();
             var currentYear = years[^1];
             var currentPrice = byYear[currentYear];
-            var detail = $"Jahr {currentYear}";
+            // F3 2026-11-05: ohne Vorjahr im Zeitraum ausdruecklich sagen, warum kein Vergleich steht.
+            var detail = $"Jahr {currentYear}, kein Vorjahr im Zeitraum";
             var severity = "Medium";
 
             if (years.Count >= 2)

@@ -137,6 +137,20 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
         return result;
     }
 
+    /// <summary>
+    /// Anteil fuer die Spalte „Anteil“ (F9 Pruefung 2026-11-05). Nur Darstellung, die Rechnung bleibt: ein Wert ueber
+    /// null, der gerundet 0 % ergaebe, steht als „&lt; 0.1 %“, damit er nicht wie „kein Anteil“ aussieht.
+    /// </summary>
+    public static string FormatShare(decimal value, decimal total, CultureInfo culture)
+    {
+        if (total <= 0m)
+            return "-";
+        var percent = value / total * 100m;
+        if (percent > 0m && percent < 0.05m)
+            return "< " + 0.1m.ToString("0.0", culture) + " %";
+        return percent.ToString("0.#", culture) + " %";
+    }
+
     private sealed class GroupAcc
     {
         public decimal Revenue;

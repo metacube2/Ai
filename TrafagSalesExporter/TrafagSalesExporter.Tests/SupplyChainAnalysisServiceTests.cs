@@ -100,6 +100,34 @@ public sealed class SupplyChainAnalysisServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task DeliveryPerformance_Kpi_Counts_Cases_Like_The_Priority_Bars_And_Names_The_Materials()
+    {
+        // F6 Pruefung 2026-11-05: Kachel zaehlte Materialien (494), die Balken Faelle Material x Lieferant (555).
+        // K-1 bei zwei Lieferanten = zwei Faelle, ein Material; K-2 spaeter faellig = OK, nicht im offenen Wert.
+        SeedPurchase("PO-1", "K-1", "Supplier A", 10m, 100m, 8m, 2m, DateTime.Today.AddDays(-2));
+        SeedPurchase("PO-2", "K-1", "Supplier B", 10m, 200m, 10m, 0m, DateTime.Today.AddDays(5));
+        SeedPurchase("PO-3", "K-2", "Supplier A", 10m, 500m, 10m, 0m, DateTime.Today.AddDays(90));
+
+        var result = await _service.LoadAsync(
+            SupplyChainAnalysisKind.DeliveryPerformance,
+            new SupplyChainAnalysisFilter(OnlyActionable: true));
+
+        var bars = result.RiskBuckets.Where(bucket => bucket.LabelDe.StartsWith("P1") || bucket.LabelDe.StartsWith("P2")).Sum(bucket => bucket.Count);
+        Assert.Equal(2, bars);
+        Assert.Equal(bars.ToString("N0"), result.Kpis[0].Value);
+        Assert.Contains("1 Materialien", result.Kpis[0].DetailDe);
+        // Offener Wert nur der zwei Faelle: 6/10 x 100 + 10/10 x 200 = 260, ohne den OK-Fall (500).
+        Assert.Equal(260m.ToString("N0"), result.Kpis[2].Value);
+        Assert.Contains("nicht der ganze offene Bestellwert", result.Kpis[2].DetailDe);
+
+        var all = await _service.LoadAsync(
+            SupplyChainAnalysisKind.DeliveryPerformance,
+            new SupplyChainAnalysisFilter(OnlyActionable: false));
+        Assert.Equal(760m.ToString("N0"), all.Kpis[2].Value);
+        Assert.Equal("offener Bestellwert aller Faelle im Filter", all.Kpis[2].DetailDe);
+    }
+
+    [Fact]
     public async Task PlanningAudit_CreatesSeparateReviewTasks_WithoutChangingSourceRows()
     {
         SeedUsage("M-1", "K-1", "019", "-5", "10", safetyStock: "0", reorderPoint: "0", mrpType: "");
