@@ -109,6 +109,9 @@ nicht vorhanden).
   `QmEnabled` (**Vorgabe false**), `QmEntitySet` (`QmMeldungSet`), `QmFilter` (optionaler `$filter`, leer), `QmCacheMinutes` (15),
   `QmErrorCacheSeconds` (60), `QmTimeoutSeconds` (60), `QmNotificationTypes` (`Q1`; leer = alle), `QmExcludeSystemStatus`
   (`MEAB`, `DLFL`), `QmCompanyCustomers` (zusaetzliche Zuordnungen, gehen den Vorgaben vor).
+  Einschalten heisst `QmEnabled: true` in der versionierten `appsettings.json` committen und deployen; eine Aenderung nur auf
+  dem Server ueberschreibt der naechste Deploy (LEARNINGS 2026-08-10). Listen in `appsettings.json` ergaenzen die Vorgaben
+  (der ConfigurationBinder haengt an), sie ersetzen sie nicht: `QmNotificationTypes: ["Q2"]` ergibt Q1 und Q2.
 - Ein Abruf fuer alle Betrachter, Erfolg 15 Minuten gemerkt, Fehler 1 Minute (LEARNINGS 2026-10-05). Ausgeschaltet kein
   SAP-Aufruf. Ausgeschaltet, Fehler (mit SAP-Text, 404-Hinweis „Set noch nicht in diesem System oder Gateway-Cache“) oder
   leer: Hinweisfeld „Einzelfall-Liste noch nicht geladen“ bzw. „Keine offenen Q1-Meldungen“ statt Fehler. Die Q-Faelle laden
