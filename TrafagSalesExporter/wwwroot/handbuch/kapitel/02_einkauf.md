@@ -49,17 +49,18 @@ Weiter unten liegt der Verlauf des Lagerwerts je Kalenderwoche als Liniengrafik 
 - Der Lagerwert ist fachlich noch nicht gegen die SAP-Auswertung MB5L abgeglichen.
 - Der Lagerwert und der offene Bestellwert haben eigene Zeitlogiken und folgen dem Zeitraumfilter nicht.
 
-## Spend (seit 28.10.2026 im Spend-Aufriss)
+## Spend (seit 05.11.2026 nur noch im Spend-Aufriss)
 
 ### Wozu
 
-Der frühere Reiter Spend ist seit dem 28.10.2026 im Menü ausgeblendet. Sein ganzer Inhalt (Kacheln, Spend pro Lieferant, Zusatzdiagramme und Matrix) steht jetzt im Spend-Aufriss unter dem Aufriss, im Block «Bestellwert nach Lieferant und Jahr». Dieser Block zeigt das Beschaffungsvolumen nach Lieferant und Jahr. Sie dient dazu, die grossen Lieferanten, deren Entwicklung und die Verteilung auf Warengruppen, Länder und Währungen zu erkennen.
+Der frühere Reiter Spend ist seit dem 28.10.2026 im Menü ausgeblendet. Seit dem 05.11.2026 gibt es auch seinen Block «Bestellwert nach Lieferant und Jahr» unter dem Aufriss nicht mehr, ebenso die Matrix «Kaskadierung Lieferant / Jahr». Alles, was dort stand, zeigt der Spend-Aufriss selbst, ohne Wiederholung:
 
-### Was man sieht
+- Spend je Lieferant und Jahr, aufklappbar bis zur Warengruppe und Materialnummer: Einstieg «Lieferant».
+- Volumen nach Warengruppe, Beschaffungsregion und Belegwährung: Einstiege «Warengruppe», «Beschaffungsregion» und «Währung».
+- Den ganzen Einkauf statt nur der Einkaufsteile zeigt der Aufriss, wenn der Schalter «Nur Einkaufsteile» aus ist.
+- Datenstand und Anzahl Bestellköpfe und Positionen stehen im Ladeprotokoll und im Datenservice.
 
-Vier Kennzahlen stehen oben: Spend in CHF, Jahre, Dimensionen und SAP-Status. Das Hauptdiagramm zeigt die zehn grössten Lieferanten des laufenden Jahres bis heute. Darunter folgen Balkenblöcke für das Volumen nach Warengruppe (die zwölf grössten), nach Beschaffungsregion (die zwölf grössten Lieferländer) und nach Belegwährung.
-
-Die Matrix «Kaskadierung Lieferant / Jahr» listet alle Lieferanten mit einer Spalte je Jahr und einer Gesamtspalte. Ein Klick auf den Pfeil klappt den Lieferanten in seine Warengruppen auf, ein weiterer Klick die Warengruppe in ihre Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten. Ein Materialeintrag mit Bindestrich ist ein echter Artikel, ein Eintrag ohne Bindestrich eine Textbestellung ohne Artikelstamm. Eine kursiv gesetzte Zeile «übrige» ist eine Sammelzeile und keine Materialnummer.
+Wer die alte Adresse `/einkauf/spend` aufruft, landet im Spend-Aufriss. Ein Materialeintrag mit Bindestrich ist ein echter Artikel, ein Eintrag ohne Bindestrich eine Textbestellung ohne Artikelstamm.
 
 ### Wie gerechnet wird
 
