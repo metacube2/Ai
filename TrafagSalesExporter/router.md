@@ -24,6 +24,12 @@ Umgebungsbeschreibung: `~/.claude/settings.json` (`autoMode.environment`). Sie g
 Mehr soll nicht noetig sein. Wer den ganzen Bestand sucht, nimmt `baum.md` — das ist ein
 Vollstaendigkeitsindex zur Pruefung, keine Lesereihenfolge.
 
+**Agenten (seit 2026-11-05, Wunsch Ingo):** Wer einen Teilauftrag an einen Agenten gibt, nimmt die passende feste
+Definition aus `.claude/agents/` (`sap-t76`, `einkauf`, `finance-verkauf`, `hr`). Sie enthalten Pflichtlektuere,
+fachliches Kernwissen und die Grundregeln (kein SAP-Passwort, nur T76 schreiben, keine Fachaussage ohne Beleg), damit
+Agenten nicht ohne Projektwissen starten. Ergebnisse von Agenten prueft die Hauptsitzung vor der Weitergabe an Ingo;
+aendert sich eine Regel in den RAG-Dateien, die Definition im selben Commit nachfuehren.
+
 Ist dagegen unklar, in welcher Datei eine Aussage ueberhaupt steht, hilft vorab das
 MCP-Werkzeug `qdrant-find`: eine semantische Suche ueber alle Markdown-Dateien,
 eingerichtet in `Tools/Qdrant/`. Sie nennt Datei und Abschnitt und ersetzt weder diesen

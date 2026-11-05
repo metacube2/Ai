@@ -1,6 +1,6 @@
 # Verkauf: Monthly Review Gesellschaften (Auftrag 2026-11-04)
 
-Stand: 2026-11-05. **Phase 1 und Abschnitt 4 (Q-Faelle live aus SAP) gebaut, committet, nicht deployed** (Abschnitt
+Stand: 2026-11-05. **Phase 1 und Abschnitt 4 (Q-Faelle live aus SAP) gebaut und produktiv seit 2026-11-05 10:33 (`47abb30`, im Browser geprueft)** *(ueberholt: „committet, nicht deployed“)* (Abschnitt
 „Umsetzung 2026-11-05“ unten). Der SAP-Abruf der Q-Faelle ist ausgeschaltet, bis der Transport mit `QmMeldungSet` in P76 ist.
 *Ueberholt (Stand 2026-11-04 13:10): „Nicht gebaut, pausiert. Nur Auftrag, Entscheide, Spezifikation und Befunde; kein Code, kein Deploy.“*
 
@@ -177,7 +177,7 @@ Befund des SAP-Agenten, Einzelheiten und Belege in `saptasks/qm_meldungen/NOTES.
 YTD, Prognose nach dem Berichtsmonat, Vorjahr vor Datenbeginn, bester/schwaechster Monat, Gruppe = Summe, Kunden) und
 `MonthlyReviewQmTests.cs` (Lesen mit Beispiel-JSON, Datum, Zuordnung, Filter, Alter, Kennzahlen, Altersklassen, TRCH,
 Liste, CSV, Dienst ausgeschaltet/Erfolg/Fehler/leer mit Cache, Seitenlesen bei ignoriertem `$top`). Ganze Suite: 1443/1443 gruen (Debug, Worktree).
-Keine Sichtpruefung im Browser (Agent kann die App lokal nicht starten, LEARNINGS 2026-10-29); sie gehoert zum Deploy.
+Keine Sichtpruefung im Browser (Agent kann die App lokal nicht starten, LEARNINGS 2026-10-29); sie gehoert zum Deploy. *Nachtrag 2026-11-05: nach dem Deploy 10:33 im Chrome geprueft (Gruppe, Q-Hinweis bei ausgeschaltetem Abruf).*
 
 ### Folgearbeit (bewusst offen)
 
