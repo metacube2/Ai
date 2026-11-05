@@ -1,6 +1,6 @@
 # Einkauf: Funktionspruefung im Produktivdashboard (2026-11-05)
 
-Stand: 2026-11-05 (Nachtrag am selben Tag: F2, F3, F4, F6, F8, F9 und Teile von Punkt 10 im Code behoben, Commit `6ab94a7`, Zweig des Einkauf-Agenten, **nicht deployed**; F5 geprueft, Befund unten; F1 und F7 offen). Auftrag Ingo: „kannst du mal die funktionen pruefen wie gestern hr ... das auch fuer einkauf“.
+Stand: 2026-11-05 (Nachtrag am selben Tag: F2, F3, F4, F6, F8, F9 und Teile von Punkt 10 im Code behoben, Commit `6ab94a7` als `01ab4b9` uebernommen und **deployed 2026-11-05 11:48 (`a17d623`)**, im Browser bestaetigt (F3 Stueckpreis CHF 1.13 mit Hinweis ohne Vorjahr, F8 „SAP-Daten geladen“) *(ueberholt: „nicht deployed“)*; F5 geprueft, Befund unten; F1 und F7 offen). Auftrag Ingo: „kannst du mal die funktionen pruefen wie gestern hr ... das auch fuer einkauf“.
 Geprueft am 2026-11-05 um 10:28 im Chrome auf `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/einkauf...`,
 nur gelesen und Ansichtsfilter bedient (keine Laeufe, keine Einstellungen). Datenstand: Delta 2026-11-04 14:58 erfolgreich,
 Standardzeitraum 2026-01 bis 2026-11. Keine Konsolenfehler. **Nichts davon ist behoben**, ausser wo vermerkt.
@@ -14,7 +14,7 @@ Standardzeitraum 2026-01 bis 2026-11. Keine Konsolenfehler. **Nichts davon ist b
 | `/einkauf/kontrakte` | ok | Umschalter stimmen (45 abgelaufene Positionen 131'158, „vermutlich ersetzt“ 2 Pos. 522'711); Kachel 44 Kontrakte vs. 45 Positionen |
 | `/einkauf/lieferanten` | Auffaelligkeit | Preisindikator CHF 1.13 ohne Vorjahresvergleich, Text „braucht EKPO“ ueberholt; *behoben `6ab94a7`* |
 | `/einkauf/aufriss`, 11 Einstiege | ok | Schalter an 30'510'805, aus 32'997'456 (= Kachel); 2020 bis heute 211'069'693; Einstiege untereinander stimmig |
-| Aufriss, Matrix Lieferant / Jahr | **Fehler** | 2020 bis heute 211'051'808 statt 211'069'693 (-17'885), siehe F2; *behoben `6ab94a7`, nicht deployed* |
+| Aufriss, Matrix Lieferant / Jahr | **Fehler** | 2020 bis heute 211'051'808 statt 211'069'693 (-17'885), siehe F2; *behoben `01ab4b9`, deployed 05.11. 11:48* |
 | Aufriss, Materialanteil je Produktgruppe | **Fehler** | HW_ZUKAUFSORT 957'060'506 bei Umsatz 3'643'696 (26'266 %), Total 1'226 %; FP_THERMOST. 615 %, siehe F1 |
 | `/einkauf/lieferperformance` | Auffaelligkeit | Kachel 494 „Faelle“ = Materialien, Balken P1+P2 = 555; „offener Bestellwert“ 7'315'040 ist nur der ZLO03-Umfang; ZLO03/ZMD04-Stand 02.09.2026 (*Korrektur: nicht ZLO03-Umfang, sondern ohne OK-Faelle; behoben `6ab94a7`, siehe F6*) |
 | `/einkauf/ideen/*` | ok bis Auffaelligkeit | Liefertermin-Risiko summiert auf 9'014'591; Spend-Konzentration Top 10 = 54,7 %; Preisentwicklung siehe F3; Datenqualitaet mischt Bestand (240'780) und Zeitraum (7'427) |
@@ -27,11 +27,11 @@ Filter der Lieferperformance.
 
 ## Fehlerliste (priorisiert)
 
-1. **F1 Materialanteil, Wafer (Ursache belegt):** Stuecklisten-Basismenge `STKO-BMENG` (3'738 bis 4'750 ST je Wafer) wird in
+1. **F1 Materialanteil, Wafer (Ursache belegt; FIX 26 in T76 umgesetzt, Auftrag `T76K912839`, Import P76 und Einkauf-Lauf offen):** Stuecklisten-Basismenge `STKO-BMENG` (3'738 bis 4'750 ST je Wafer) wird in
    `Z_ZLO03_TURBO2` ignoriert, ZLO03 rechnet 1 Rolle Wafer je Chip. Befund und Vorschlag FIX 26:
    `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` (T76 lesend). Richtig waeren rund CHF 214'000 bis 220'000 statt 956 Mio.
    **Weiterer Ausreisser FP_THERMOST. (615 %):** H20201 Kapillarrohr 4'329 KGM, H17500 Bimetall 2'040 MTR fuer 24'155 Umsatz;
-   vermutlich dieselbe Ursachenfamilie (Mengen-/Basismenge), nicht belegt. FP_FROSTI 84 % mit auffaellig gleichen Mengen
+   *Nachtrag 2026-11-05 (FIX-26-Agent, T76 belegt): andere Ursache. H20201/H17500 sind Selbststuecklisten (00045280/00045289, BMENG 1), dazu wird bei H20201 MM als KG gezaehlt; Beleg 63759: 116 KG statt 0.003 KG. Nicht Teil von FIX 26, Vorschlag in `zlo03/FIX26_BASISMENGE_2026-11-05.md` Abschnitt 6.* (Urspruenglich: „vermutlich dieselbe Ursachenfamilie, nicht belegt“.) FP_FROSTI 84 % mit auffaellig gleichen Mengen
    (20'802) bei mehreren Teilen, Verdacht Doppelzaehlung ueber Stufen oder Alternativstuecklisten. Dazu G4 (Mehrstufigkeit).
 2. **F2 Matrix Lieferant / Jahr verliert Spend bei Namen, die sich nur in Gross-/Kleinschreibung unterscheiden:** „THUBA AG“
    und „Thuba AG“ werden zu einer Zeile, je Jahr gewinnt ein Wert statt Summe (-17'885). Gleiche Dubletten bei Trafag AG /

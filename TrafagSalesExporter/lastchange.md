@@ -2,6 +2,13 @@
 
 Stand: 2026-11-05
 
+## Einkauf-Fixes deployed, ZLO03 FIX 26 in T76, Agenten-Definitionen (Auftraege Ingo), 2026-11-05 nachmittags
+
+- Einkauf F2, F3, F4, F6, F8, F9 (`01ab4b9`, Doku `a17d623`), 1460/1460, deployed 11:48, im Browser bestaetigt; F5: Delta haengt nicht an IsActive, laeuft im Timer-Slot (laut Doku 12:00).
+- ZLO03 FIX 26 in T76 (`T76K912839`, `zlo03/FIX26_BASISMENGE_2026-11-05.md`), P76 lesend: dieselben 6 Stuecklisten; FP_THERMOST. andere Ursache (Selbststuecklisten).
+- Agenten-Definitionen `.claude/agents/` (sap-t76, einkauf, finance-verkauf, hr), Verweis in `router.md`.
+- Neu Wochen_Todo 154: Einkaufsseite aufraeumen (Wiederholungen, mehrere Aufrisse zu einem), erst wenn die Werte stimmen (Wunsch Ingo).
+
 ## Verkauf Monthly Review mit Q-Faellen, SAP QmMeldungSet, Einkauf-Pruefung, Mails (Auftraege Ingo), 2026-11-05
 
 - **Monthly Review Gesellschaften** (Wunsch Patrick Hertach): Unterreiter `/verkauf/monthly-review`, Phase 1 und Abschnitt 4
