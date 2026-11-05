@@ -2,6 +2,12 @@
 
 Stand: 2026-11-05
 
+## Aufraeumen Wurzel und Arbeitskopien (Auftrag Ingo), 2026-11-05 nachmittags
+
+- Logs nach `.tmp_logs/` (`032722f`), sechs versionierte Dateien ohne Code-Verweis nach `docs/daten/` und `docs/abap/` (`e27d8af`).
+- Von Ingo selbst ausgefuehrt (Auto-Modus lehnte Loeschen ab), Skript von Claude: 20 saubere Worktrees entfernt (15 alte `C:\TMP\…release_*`, `dev_projekte*`, zwei Juni-Kopien, zwei Agenten-Worktrees vom 05.11.), Build-Reste geloescht (`build_verify`, `verify_probe_out*`, `bintest`, `Tests/bintest`, `.tmp_hb_build`, `binmon`, `__pycache__`), rund 20 GB.
+- Stehen gelassen: `C:\TMP\TrafagSalesExporter_release_eafd1c5` (Deploy-Werkzeug), neun Worktrees mit nicht committeten Aenderungen (dev_hri, localization_verify, release_a471ce2, sechs Agenten-Worktrees aus dem Oktober), `output/` (Excel-Auswertungen), Ordner aus Gruppe 3 (spartenlogic/.tmp_*, .tmp_pbix_x_extract, cinebbox-connect-downloader, ersetzt, AlphaplanExportPackage/delta) bis Entscheid Ingo.
+
 ## Uebergabe Stand 2026-11-05 15:00 (falls die Sitzung abbricht)
 
 **Zuletzt:** Antwort an Fabio Palma (IC-Preisfindung, Mail „AW: IC-Preisfindung automatisieren …“ vom 05.11. 14:04, allen antworten) als **Entwurf in Outlook Web gespeichert 14:59, nicht gesendet**; Inhalt: Preisliste 14 kommt in der IV an, Korrektur Kurs (M -> EURX 0.94, Kurstyp P unnoetig), ERL fuer Z001/Z002, Schritt 2 Job 4 bis 6 PT. Offen: Ingo traegt „KW __“ ein und sendet (oder gibt OK zum Senden).
