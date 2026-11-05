@@ -92,7 +92,8 @@
         </MudPaper>
     }
 
-    <PurchasingSupplierYearMatrix Years="@SpendMatrixYears" Rows="@SpendMatrixRows" />
+    @* Matrix „Kaskadierung Lieferant / Jahr“ entfernt am 2026-11-05 (Wunsch Ingo): doppelt zum Spend-Aufriss,
+       Einstieg „Lieferant“ (Lieferant > Warengruppe > Material je Jahr), seit F2 mit denselben Zeilen und Summen. *@
 
     <MudTable Items="@DetailRows" Dense="true" Hover="true" Striped="true">
         <HeaderContent>
@@ -128,8 +129,6 @@
     // Optionaler Hinweis unter dem Diagrammtitel (F3 2026-11-05: Preisentwicklung ohne Vorjahr im Zeitraum).
     [Parameter] public string ChartHintDe { get; set; } = string.Empty;
     [Parameter] public string ChartHintEn { get; set; } = string.Empty;
-    [Parameter] public IReadOnlyList<int> SpendMatrixYears { get; set; } = [];
-    [Parameter] public IReadOnlyList<PurchasingSupplierYearSpendRow> SpendMatrixRows { get; set; } = [];
     // Zusaetzliche Balkenbloecke unter dem Hauptdiagramm (z.B. Volumen nach Warengruppe / Region /
     // ABC / XYZ). Je Eintrag ein eigener Block; leere Bloecke werden uebersprungen.
     [Parameter] public IReadOnlyList<PurchasingSectionExtraChart> ExtraCharts { get; set; } = [];

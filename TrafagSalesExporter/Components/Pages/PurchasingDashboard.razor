@@ -262,8 +262,6 @@
                            ChartRows="@SpendChartRows"
                            StatusRows="@SpendStatusRows"
                            DetailRows="@SpendDetailRows"
-                           SpendMatrixYears="@_liveState.SpendYears"
-                           SpendMatrixRows="@_liveState.SupplierYearSpendRows"
                            ExtraCharts="@SpendExtraCharts" />
         break;
     case "offene-bestellungen":
@@ -473,7 +471,7 @@
                                  LzCodeRows="@_liveState.LzCodeSpendRows"
                                  LzSortRows="@_liveState.LzSortSpendRows"
                                  AbcXyzActionRows="@_liveState.AbcXyzActionRows" />
-        @* Inhalt des alten Reiters Spend (Kacheln, Spend pro Lieferant, Zusatzdiagramme, Matrix Lieferant / Jahr) unter dem
+        @* Inhalt des alten Reiters Spend (Kacheln, Spend pro Lieferant, Zusatzdiagramme; Matrix Lieferant / Jahr am 2026-11-05 entfernt) unter dem
            Aufriss, Wunsch Ingo 2026-10-28; der Reiter Spend selbst ist ausgeblendet. *@
         <div class="mt-3">
             <PurchasingSection TitleDe="Bestellwert nach Lieferant und Jahr"
@@ -486,8 +484,6 @@
                                ChartRows="@SpendChartRows"
                                StatusRows="@SpendStatusRows"
                                DetailRows="@SpendDetailRows"
-                               SpendMatrixYears="@_liveState.SpendYears"
-                               SpendMatrixRows="@_liveState.SupplierYearSpendRows"
                                ExtraCharts="@SpendExtraCharts" />
         </div>
         break;
