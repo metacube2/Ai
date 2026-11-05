@@ -1,0 +1,15 @@
+@* Hinweisfeld "noch nicht angebunden" der Monthly Review (2026-11-05), gelb gestrichelt wie die Gap-Kacheln. *@
+<div class="mrv-gap-panel">
+    <div class="mrv-gap-title"><span class="mrv-badge mrv-badge-gap">⚠ GAP</span> @Title</div>
+    @if (!string.IsNullOrEmpty(Text))
+    {
+        <div class="mrv-gap-text">@Text</div>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

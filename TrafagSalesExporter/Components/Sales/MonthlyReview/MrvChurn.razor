@@ -1,0 +1,54 @@
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+
+@* Neue nach oben, verlorene nach unten je Quartal (Monthly Review 2026-11-05, Spezifikation 4 chartChurn). Die Achse zeigt
+   Anzahlen ohne Minuszeichen (Spezifikation 6.2 Nr. 19); Verluste erst 6 Monate nach Quartalsende ("noch offen"). *@
+@if (Movements.Count == 0)
+{
+    <div class="ll-muted mrv-small">–</div>
+}
+else
+{
+    var max = Math.Max(1, Movements.Max(m => Math.Max(m.NewCustomers, m.LostKnown ? m.LostCustomers : 0))) * 1.1;
+    var band = 560.0 / Movements.Count;
+    var bw = Math.Min(28, band * 0.5);
+    const double mid = 112, half = 90;
+    <svg viewBox="0 0 600 236" class="mrv-chart" role="img" aria-label="@NewLabel / @LostLabel">
+        <line x1="36" y1="@F(mid)" x2="596" y2="@F(mid)" class="mrv-axis" />
+        @for (var i = 0; i < Movements.Count; i++)
+        {
+            var m = Movements[i];
+            var x = 36 + band * i + band / 2;
+            var up = half * m.NewCustomers / max;
+            var down = m.LostKnown ? half * m.LostCustomers / max : 0;
+            <g>
+                <title>@m.Quarter: @m.NewCustomers @NewLabel · @(m.LostKnown ? $"{m.LostCustomers} {LostLabel}" : OpenLabel)</title>
+                <rect x="@F(x - bw / 2)" y="@F(mid - up)" width="@F(bw)" height="@F(Math.Max(1, up))" rx="3" class="@(m.NewReliable ? "mrv-col" : "mrv-col-muted")" />
+                <text x="@F(x)" y="@F(mid - up - 4)" class="mrv-tick" style="text-anchor:middle">@m.NewCustomers</text>
+                @if (m.LostKnown)
+                {
+                    <g>
+                        <rect x="@F(x - bw / 2)" y="@F(mid)" width="@F(bw)" height="@F(Math.Max(1, down))" rx="3" class="mrv-col-neg" />
+                        <text x="@F(x)" y="@F(mid + down + 12)" class="mrv-tick" style="text-anchor:middle">@m.LostCustomers</text>
+                    </g>
+                }
+                else
+                {
+                    <g><text x="@F(x)" y="@F(mid + 14)" class="mrv-tick" style="text-anchor:middle">@OpenLabel</text></g>
+                }
+                <text x="@F(x)" y="230" class="mrv-tick" style="text-anchor:middle">@m.Quarter</text>
+            </g>
+        }
+    </svg>
+    <div class="mrv-legend">
+        <span><i class="mrv-sw mrv-col"></i>@NewLabel</span>
+        <span><i class="mrv-sw mrv-col-neg"></i>@LostLabel</span>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<SalesQuarterMovement> Movements { get; set; } = [];
+    [Parameter] public string NewLabel { get; set; } = string.Empty;
+    [Parameter] public string LostLabel { get; set; } = string.Empty;
+    [Parameter] public string OpenLabel { get; set; } = string.Empty;
+}

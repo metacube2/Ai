@@ -1,0 +1,63 @@
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+@inject IUiTextService UiText
+
+@* Top-Kunden der Monthly Review (2026-11-05), Spezifikation 2.1 custTable. Umsatz 12 Monate ueber alle Gesellschaften,
+   Veraenderung im Vergleichszeitraum des Reiters Verkauf (gleiche Monate, ganz in den Daten). *@
+@if (Rows.Count == 0)
+{
+    <div class="ll-muted mrv-small">@T("Keine Einträge für diese Auswahl.", "No entries for this selection.")</div>
+}
+else
+{
+    <div class="mrv-table-wrap">
+        <table class="mrv-table">
+            <thead>
+                <tr>
+                    <th class="mrv-num">#</th>
+                    <th>@T("Kunde", "Customer")</th>
+                    <th>@T("Land", "Country")</th>
+                    <th>@T("Gesellschaften", "Companies")</th>
+                    <th class="mrv-num">@T("Umsatz 12 Monate", "Sales 12 months")</th>
+                    <th class="mrv-num" title="@ChangePeriod">Δ @T("ggü. Vorjahr", "vs. previous year")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Rows.Count; i++)
+                {
+                    var r = Rows[i];
+                    var d = r.ChangePercent;
+                    <tr>
+                        <td class="mrv-num">@(i + 1)</td>
+                        <td class="mrv-ellipsis" title="@r.Name">@r.Name</td>
+                        <td>@(r.MainCountry.Length == 0 ? "–" : r.MainCountry)</td>
+                        <td class="mrv-small">@SalesUi.Csv(r.Companies)</td>
+                        <td class="mrv-num">@Amount(r.Last12)</td>
+                        <td class="mrv-num">
+                            @if (d is null)
+                            {
+                                <span class="ll-muted">@(r.Current > 0 ? T("neu", "new") : "–")</span>
+                            }
+                            else
+                            {
+                                <span class="@DeltaClass(d)">@Arrow(d) @Pct(d, 0)</span>
+                                @if (d >= 500)
+                                {
+                                    <span class="mrv-badge mrv-badge-calc">@T("Basiseffekt", "Base effect")</span>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<SalesCustomerSummary> Rows { get; set; } = [];
+    /// <summary>Vergleichszeitraum fuer den Tooltip, z. B. "11.2025–10.2026".</summary>
+    [Parameter] public string? ChangePeriod { get; set; }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

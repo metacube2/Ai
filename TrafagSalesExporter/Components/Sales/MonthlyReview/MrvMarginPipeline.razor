@@ -1,0 +1,16 @@
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+
+@* Abschnitte 2 (Marge) und 3 (Pipeline) der Monthly Review (2026-11-05): in Phase 1 bewusst nur als "noch nicht angebunden".
+   Marge je Gesellschaft folgt in Phase 2 aus der Gruppenmarge (GroupMarginCalculator), CRM-Pipeline hat keine Quelle. *@
+<MrvSection Number="2" Title="@T("Marge · Gruppenmarge & Deckungsbeitrag", "Margin · group margin & contribution")" />
+<MrvGapPanel Title="@T("Gruppenmarge je Gesellschaft: noch nicht angebunden", "Group margin per company: not yet connected")"
+             Text="@T("Folgt in Phase 2 aus der Gruppenmarge (Management Analyse), ohne Zeilen ohne Kostenbasis. Bis dahin gilt die Gruppenmarge in Finance. Deckungsbeitrag fix/variabel ist in den Daten nicht aufgeteilt.", "Follows in phase 2 from the group margin (management analysis), without lines lacking a cost basis. Until then the group margin in Finance applies. Contribution fixed/variable is not split in the data.")" />
+
+<MrvSection Number="3" Title="@T("Pipeline & Leads", "Pipeline & leads")" />
+<MrvGapPanel Title="@T("Keine Lead- und Opportunity-Daten", "No lead and opportunity data")"
+             Text="@T("Dynamics CRM ist nicht an das Reporting angebunden. Pipeline, Win-Rate und Leads können erst mit einer Anbindung gezeigt werden.", "Dynamics CRM is not connected to reporting. Pipeline, win rate and leads can only be shown once it is connected.")" />
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
+}

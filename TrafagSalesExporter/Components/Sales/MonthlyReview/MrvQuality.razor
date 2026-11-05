@@ -1,0 +1,185 @@
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+@inject IUiTextService UiText
+
+@* Abschnitt 4 "Qualitaet · offene Q-Faelle" der Monthly Review (2026-11-05), live aus SAP (QmMeldungSet) statt Power BI
+   "RMA Statistic". Gruppe: Spezifikation 2.3 Nr. 10-13, Gesellschaft: 2.4 Nr. 12-14. Ausgeschaltet, Fehler oder leer:
+   Hinweisfeld statt Fehler. Zahlen nie fest im Text (Spezifikation 6.1 Nr. 9). *@
+<MrvSection Number="4" Title="@T("Qualität · offene Q-Fälle", "Quality · open Q cases")" Sub="@Subtitle" />
+
+@if (Snapshot is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    <div class="ll-muted mrv-small mb-3">@T("Q-Fälle werden aus SAP gelesen …", "Reading Q cases from SAP …")</div>
+}
+else if (Snapshot.State == MonthlyReviewQmState.Disabled)
+{
+    <MrvGapPanel Title="@T("Einzelfall-Liste noch nicht geladen", "Case list not loaded yet")"
+                 Text="@T("Der Abruf der offenen QM-Meldungen aus SAP (QmMeldungSet) ist noch ausgeschaltet. Er wird eingeschaltet, sobald der Transport in P76 ist.", "Reading the open QM notifications from SAP (QmMeldungSet) is still switched off. It will be switched on once the transport is in P76.")" />
+}
+else if (Snapshot.State == MonthlyReviewQmState.Error)
+{
+    <MrvGapPanel Title="@T("Einzelfall-Liste noch nicht geladen", "Case list not loaded yet")"
+                 Text="@T("SAP hat die QM-Meldungen nicht geliefert. Ein neuer Versuch folgt nach einer Minute.", "SAP did not deliver the QM notifications. A new attempt follows after one minute.")">
+        <div class="ll-mono mrv-small mt-1">@Snapshot.Error</div>
+    </MrvGapPanel>
+}
+else if (Snapshot.State == MonthlyReviewQmState.Empty)
+{
+    <MrvGapPanel Title="@T("Keine offenen Q1-Meldungen", "No open Q1 notifications")"
+                 Text="@($"{T("SAP hat keine offene Q1-Meldung geliefert. Gelieferte Zeilen vor den Filtern:", "SAP delivered no open Q1 notification. Rows delivered before the filters:")} {Snapshot.RowsDelivered}")" />
+}
+else if (Company is null)
+{
+    var all = Snapshot.Cases;
+    var s = MonthlyReviewQm.Stats(all);
+    <div class="mrv-tiles">
+        <MrvTile Label="@T("Offene Q1-Meldungen", "Open Q1 notifications")" Value="@s.Count.ToString()"
+                 Detail="@($"{T("Rücksendung offen", "Return pending")}: {s.ReturnOpen}")" Footer="@T("Einzelfall-Liste unten", "Case list below")" />
+        <MrvTile Label="@T("Offen seit (Ø / Median)", "Open since (avg / median)")" Value="@($"{Days(s.AverageDays)} {T("Tage", "days")}")"
+                 Detail="@($"Median {Days(s.MedianDays)} {T("Tage", "days")}")" Footer="@T("ab Anlage der Meldung bis zum Abrufdatum", "from creation of the notification to the retrieval date")" />
+        <MrvTile Label="@T("Länger als 90 Tage offen", "Open longer than 90 days")" Value="@s.Over90.ToString()" Badge="@(s.Over90 > 0 ? "⚠" : null)" BadgeWarn="true"
+                 Detail="@($"{Share(s.Over90Share)} {T("der offenen Fälle", "of open cases")}")" Footer="@OldestText(s)" />
+    </div>
+    <div class="mrv-grid3">
+        <div class="mrv-card">
+            <h3>Status</h3>
+            <div class="mrv-cap">@T("Anzahl offener Meldungen", "Number of open notifications")</div>
+            <MrvHBar Items="@Bars(MonthlyReviewQm.CountBy(all, c => c.Status))" LabelWidth="150" AriaLabel="Status" />
+        </div>
+        <div class="mrv-card">
+            <h3>@T("Offen seit", "Open since")</h3>
+            <div class="mrv-cap">@T("Anzahl Meldungen nach Alter", "Number of notifications by age")</div>
+            <MrvHBar Items="@AgeBars(all)" LabelWidth="110" />
+        </div>
+        <div class="mrv-card">
+            <h3>@T("Gesellschaft / Kunde", "Company / customer")</h3>
+            <div class="mrv-cap">@T("Zuordnung über den Kunden der Meldung in SAP QM", "Assignment via the customer of the notification in SAP QM")</div>
+            <MrvHBar Items="@Bars(MonthlyReviewQm.CountBy(all, c => c.Company))" LabelWidth="140" />
+        </div>
+    </div>
+    <div class="mrv-grid2">
+        <div class="mrv-card">
+            <h3>@T("Produktlinie", "Product line")</h3>
+            <div class="mrv-cap">@T("Anzahl offener Meldungen", "Number of open notifications")</div>
+            <MrvHBar Items="@Bars(MonthlyReviewQm.CountBy(all, c => c.Row.ProductLine, MonthlyReviewQm.WithoutProductLine), 12)" LabelWidth="170" />
+        </div>
+        <div class="mrv-card">
+            <h3>@T("Offen seit je Status", "Open since per status")</h3>
+            <div class="mrv-cap">@T("Tage seit Anlage der Meldung", "Days since creation of the notification")</div>
+            <table class="mrv-table">
+                <thead><tr><th>Status</th><th class="mrv-num">@T("Fälle", "Cases")</th><th class="mrv-num">Ø @T("Tage", "days")</th><th class="mrv-num">Median</th><th class="mrv-num">&gt; 90 @T("Tage", "days")</th></tr></thead>
+                <tbody>
+                    @foreach (var r in MonthlyReviewQm.StatusAge(all))
+                    {
+                        <tr>
+                            <td>@r.Status</td>
+                            <td class="mrv-num">@r.Cases</td>
+                            <td class="mrv-num">@Days(r.AverageDays)</td>
+                            <td class="mrv-num">@Days(r.MedianDays)</td>
+                            <td class="mrv-num @(r.Over90 > 0 ? "mrv-dn" : string.Empty)">@r.Over90</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="mrv-card">
+        <h3>@T("Drilldown: offene Q1-Meldungen", "Drilldown: open Q1 notifications")</h3>
+        <div class="mrv-cap">@T("Filter nach Gesellschaft, Status und Bearbeiter · Sortierung per Spaltenkopf · „Offen seit“ ab Anlage der Meldung · CSV öffnet in Excel", "Filter by company, status and processor · sort by column header · \"open since\" from creation of the notification · CSV opens in Excel")</div>
+        <MrvCaseList Cases="all" FileId="alle" />
+    </div>
+}
+else
+{
+    var all = Snapshot.Cases;
+    var own = MonthlyReviewQm.ForCompany(all, Company);
+    var s = MonthlyReviewQm.Stats(own);
+    var g = MonthlyReviewQm.Stats(all);
+    var isCh = Company == "TRCH";
+    <div class="mrv-tiles">
+        <MrvTile Label="@(isCh ? T("Offene Q1-Meldungen mit Endkunden", "Open Q1 notifications with end customers") : T("Offene Q1-Meldungen (Gesellschaft als Kunde)", "Open Q1 notifications (company as customer)"))"
+                 Value="@s.Count.ToString()" Detail="@($"{T("von", "of")} {g.Count} {T("offenen Meldungen gesamt", "open notifications in total")}")"
+                 Footer="@(isCh ? T("Direktgeschäft und nicht zuordenbare Endkunden, inkl. Trafag AG intern", "Direct business and end customers that cannot be assigned, incl. Trafag AG internal") : T("Zuordnung über den Kunden der Meldung in SAP QM", "Assignment via the customer of the notification in SAP QM"))" />
+        @if (s.Count > 0)
+        {
+            <MrvTile Label="@T("Offen seit (Ø / Median)", "Open since (avg / median)")" Value="@($"{Days(s.AverageDays)} {T("Tage", "days")}")"
+                     Detail="@($"Median {Days(s.MedianDays)} {T("Tage", "days")} · {T("Gruppe", "Group")} Ø {Days(g.AverageDays)}")" Footer="@T("ab Anlage der Meldung bis zum Abrufdatum", "from creation of the notification to the retrieval date")" />
+            <MrvTile Label="@T("Länger als 90 Tage offen", "Open longer than 90 days")" Value="@s.Over90.ToString()" Badge="@(s.Over90 > 0 ? "⚠" : null)" BadgeWarn="true"
+                     Detail="@($"{Share(s.Over90Share)} {T("der offenen Fälle", "of open cases")}")" Footer="@OldestText(s)" />
+        }
+        <MrvTile Label="@T("Rücksendung offen (Gruppe)", "Return pending (group)")" Value="@g.ReturnOpen.ToString()"
+                 Detail="@($"{T("davon", "of which")} {Company}: {s.ReturnOpen}")" Footer="@T("Ware vom Kunden noch nicht zurück, Nachfassen durch den Verkauf", "Goods not yet returned by the customer, follow-up by sales")" />
+        @if (!isCh)
+        {
+            <MrvTile Gap="true" Label="@T("Endkunden-Fälle im Markt", "End-customer cases in the market")" Value="@T("Nicht zuordenbar", "Not assignable")"
+                     Why="@T("QM-Meldungen tragen nur den Kunden, nicht die verantwortliche Gesellschaft. Fälle von Endkunden im Markt der Gesellschaft laufen unter TRCH.", "QM notifications only carry the customer, not the responsible company. Cases of end customers in the company's market run under TRCH.")" />
+        }
+    </div>
+    @if (own.Count > 0)
+    {
+        <div class="mrv-grid2">
+            <div class="mrv-card">
+                @if (isCh)
+                {
+                    <h3>@T("Grösste Endkunden", "Largest end customers")</h3>
+                    <div class="mrv-cap">@T("Anzahl offener Meldungen", "Number of open notifications")</div>
+                    <MrvHBar Items="@Bars(MonthlyReviewQm.CountBy(own, c => c.Row.CustomerName), 10)" LabelWidth="210" />
+                }
+                else
+                {
+                    <h3>Status</h3>
+                    <div class="mrv-cap">@T("Anzahl offener Meldungen", "Number of open notifications")</div>
+                    <MrvHBar Items="@Bars(MonthlyReviewQm.CountBy(own, c => c.Status))" LabelWidth="150" />
+                }
+            </div>
+            <div class="mrv-card">
+                <h3>@T("Produktlinie", "Product line")</h3>
+                <div class="mrv-cap">@T("Anzahl offener Meldungen", "Number of open notifications")</div>
+                <MrvHBar Items="@Bars(MonthlyReviewQm.CountBy(own, c => c.Row.ProductLine, MonthlyReviewQm.WithoutProductLine), 12)" LabelWidth="170" />
+            </div>
+        </div>
+    }
+    <div class="mrv-card">
+        <h3>@T("Drilldown: offene Q1-Meldungen", "Drilldown: open Q1 notifications") · @Company</h3>
+        @if (own.Count == 0)
+        {
+            <div class="ll-muted mrv-small">@T("Keine offenen Meldungen mit der Gesellschaft als Kunde.", "No open notifications with the company as customer.")</div>
+        }
+        else
+        {
+            <div class="mrv-cap">@(isCh ? T("Endkunden und Trafag AG intern", "End customers and Trafag AG internal") : T("Meldungen mit der Gesellschaft als Kunde", "Notifications with the company as customer")) · @T("Sortierung per Spaltenkopf · CSV öffnet in Excel", "Sort by column header · CSV opens in Excel")</div>
+            <MrvCaseList Cases="own" FileId="@Company" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public MonthlyReviewQmSnapshot? Snapshot { get; set; }
+    /// <summary>Gesellschaftscode, null = Gruppe.</summary>
+    [Parameter] public string? Company { get; set; }
+
+    private string Subtitle => Snapshot?.FetchedAt is { } at
+        ? $"{T("SAP QM-Meldungen Q1 (Kundenreklamation), live aus SAP, Stand", "SAP QM notifications Q1 (customer complaints), live from SAP, as of")} {at:dd.MM.yyyy HH:mm}"
+        : T("SAP QM-Meldungen Q1 (Kundenreklamation), live aus SAP", "SAP QM notifications Q1 (customer complaints), live from SAP");
+
+    private string OldestText(MonthlyReviewQmStats s)
+        => s.Oldest is { } o ? $"{T("Ältester Fall", "Oldest case")}: {o.Number} · {Days(o.AgeDays)} {T("Tage", "days")} · {o.Status}" : string.Empty;
+
+    private static IReadOnlyList<MrvHBar.Bar> Bars(IReadOnlyList<MonthlyReviewQmCount> counts, int max = 20)
+    {
+        var top = counts.Take(max).Select(c => new MrvHBar.Bar(c.Label, c.Count, c.Count.ToString())).ToList();
+        var rest = counts.Skip(max).Sum(c => c.Count);
+        if (rest > 0)
+            top.Add(new MrvHBar.Bar($"+ {counts.Count - max}", rest, rest.ToString(), true));
+        return top;
+    }
+
+    // Bis 90 Tage gedaempft, darueber kraeftig: die Grenze der roten Markierung in der Liste.
+    private IReadOnlyList<MrvHBar.Bar> AgeBars(IEnumerable<MonthlyReviewQmCase> cases)
+        => MonthlyReviewQm.ByAge(cases)
+            .Select((b, i) => new MrvHBar.Bar(T(b.Label, MonthlyReviewQm.AgeBuckets[i].English), b.Count, b.Count.ToString(), i < 3))
+            .ToList();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

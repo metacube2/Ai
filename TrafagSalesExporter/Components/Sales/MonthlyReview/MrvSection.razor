@@ -1,0 +1,17 @@
+@* Abschnittskopf der Monthly Review (2026-11-05): nummeriertes Quadrat, Titel, grauer Untertitel (Spezifikation 2.1 sec). *@
+<div class="mrv-sec">
+    <div class="mrv-sec-n">@Number</div>
+    <div>
+        <h2 class="mrv-sec-title">@Title</h2>
+        @if (!string.IsNullOrEmpty(Sub))
+        {
+            <div class="mrv-sec-sub">@Sub</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Number { get; set; }
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Sub { get; set; }
+}

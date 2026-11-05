@@ -168,6 +168,8 @@ builder.Services.AddSingleton<AdDnsZoneService>();
 builder.Services.AddSingleton<AdSnapshotService>();
 // Reiter Verkauf (2026-10-02): Verkaufszeilen nach Finance-Regeln, in CHF, gemerkt bis neuer Quellstand.
 builder.Services.AddSingleton<SalesDataService>();
+// Verkauf Monthly Review (2026-11-05): Q-Faelle aus SAP, Schalter MonthlyReview:QmEnabled, docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md.
+builder.Services.AddMonthlyReview(builder.Configuration);
 // Reiter Weltlage (2026-10-05): externe Quellen ohne Anmeldung, nur in Produktion, docs/WELTLAGE_2026-10-05.md.
 builder.Services.AddHttpClient("Weltlage");
 builder.Services.AddSingleton<WorldDataService>();

@@ -1,0 +1,312 @@
+@page "/verkauf/monthly-review"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Components.Sales
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+@implements IDisposable
+@inject SalesDataService Sales
+@inject MonthlyReviewQmService Qm
+@inject IUiTextService UiText
+
+@* Verkauf, Unterreiter "Monthly Review Gesellschaften" (Auftrag Ingo 2026-11-04, Entwurf Patrick Hertach), Phase 1 und
+   Abschnitt 4 (Q-Faelle live aus SAP). Gruppe und je Gesellschaft live aus den Verkaufszeilen; Berichtsmonat = letzter
+   vollstaendiger Monat. Marge (Phase 2), TSC-Gesellschaften, Budget, Auftragseingang und Pipeline (Phase 3) als
+   "noch nicht angebunden". Doku docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md, Spezifikation daneben. *@
+<PageTitle>@T("Verkauf", "Sales") · @T("Monthly Review Gesellschaften", "Monthly review companies")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Verkauf", "Sales")</MudText>
+<SalesTabs />
+
+@if (_data is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.caption" Class="ll-muted">@T("Verkaufsdaten werden geladen, beim ersten Aufruf bis zu einer Minute …", "Loading sales data, up to a minute on first call …")</MudText>
+}
+else if (_data.Error is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">@_data.Error</MudAlert>
+}
+else if (_r is not null)
+{
+    var p = _r.Period;
+    <div class="mrv-page">
+        <div class="mrv-head">
+            <div class="mrv-eyebrow">Trafag · Sales</div>
+            <h1 class="mrv-h1">@T("Monthly Review Gesellschaften", "Monthly review companies")</h1>
+            <div class="ll-muted">@T("Berichtsmonat", "Report month") @p.MonthLabel · YTD @p.YtdLabel · @T("Datenstand", "Data as of") @_data.LoadedAt.ToString("dd.MM.yyyy HH:mm")</div>
+        </div>
+
+        <div class="mrv-chips" role="radiogroup" aria-label="@T("Gesellschaft wählen", "Choose company")">
+            <span class="mrv-chips-label">@T("Gesellschaft", "Company")</span>
+            <a href="verkauf/monthly-review" class="mrv-chip @(IsGroup ? "mrv-chip-on" : string.Empty)" role="radio" aria-checked="@IsGroup">@T("Gruppe", "Group")</a>
+            @foreach (var c in _r.Companies)
+            {
+                var on = string.Equals(_co, c.Code, StringComparison.OrdinalIgnoreCase);
+                <a href="@($"verkauf/monthly-review?co={c.Code}")" class="mrv-chip @(on ? "mrv-chip-on" : string.Empty)" role="radio" aria-checked="@on">@c.Code <small>@CompanyName(c.Code)</small></a>
+            }
+            <span class="mrv-chip mrv-chip-tsc" title="@T("Werte aus den TSC-Dateien (Excel), nicht im internen BI", "Values from the TSC files (Excel), not in the internal BI")">TRJP · TRCZ · M/S · M/S A · GFS <small>Phase 3</small></span>
+        </div>
+
+        @if (IsGroup)
+        {
+            var g = _r.Group;
+            var lastQ = _r.Customers.LatestKnownQuarter;
+            <MrvSection Number="1" Title="@T("Performance Gruppe", "Group performance")" Sub="@T("Umsatz nach Finance-Regeln, ohne Konzernkunden, CHF zum Kurs des Belegdatums.", "Sales by Finance rules, without group customers, CHF at the rate of the document date.")" />
+            <div class="mrv-tiles">
+                <MrvTile Label="@($"{T("Umsatz", "Sales")} {p.MonthLabel}")" Value="@Amount(g.Month)" HasDelta="true" Delta="g.MonthChange"
+                         DeltaLabel="@($"{T("ggü.", "vs.")} {p.PreviousMonthLabel}")" Spark="g.Spark" Footer="@($"{T("Vorjahresmonat", "Same month last year")} {Amount(g.MonthPrevious)}")" />
+                <MrvTile Label="@($"{T("Umsatz", "Sales")} YTD {p.YtdLabel}")" Value="@Amount(g.Ytd)" HasDelta="true" Delta="g.YtdChange" DeltaLabel="@T("ggü. Vorjahr", "vs. previous year")"
+                         Footer="@($"{T("Vorjahr", "Previous year")} {Amount(g.YtdPrevious)} · {T("12 Monate", "12 months")} {Amount(g.Last12)} · {_r.Companies.Count} {T("Gesellschaften im internen BI", "companies in the internal BI")}")" />
+                <MrvTile Label="@($"{T("Prognose Jahresende", "Year-end forecast")} {p.Year}")" Value="@Amount(g.ProjectedYear)" Badge="@T("statistisch", "statistical")"
+                         HasDelta="true" Delta="g.YearChange" DeltaLabel="@($"{T("ggü. Gesamtjahr", "vs. full year")} {p.Year - 1} ({Amount(g.PreviousYear)})")" Footer="@ForecastFooter(p)" />
+                <MrvTile Label="@T("Kunden mit Umsatz (12 Monate)", "Customers with sales (12 months)")" Value="@(_r.Customers.CustomersLast12.ToString("N0"))"
+                         Detail="@($"{_r.Customers.MultiCompanyCustomers:N0} {T("kaufen bei mehreren Gesellschaften", "buy from several companies")}")"
+                         Footer="@(lastQ is null ? null : $"{lastQ.Quarter}: {lastQ.NewCustomers} {T("neu", "new")} · {lastQ.LostCustomers} {T("verloren", "lost")}")" />
+                <MrvTile Gap="true" Label="@T("Budget & Auftragseingang", "Budget & order intake")" Value="@T("Noch nicht angebunden", "Not yet connected")" Why="@BudgetWhy" />
+            </div>
+            <div class="mrv-grid2">
+                <div class="mrv-card">
+                    <h3>@T("Umsatz je Monat", "Sales per month") @p.Year @T("gegen", "vs.") @(p.Year - 1) · @T("Gruppe", "Group")</h3>
+                    <div class="mrv-cap">@MonthCaption(p)</div>
+                    <MrvMonthChart Stats="g" Year="p.Year" ActualLabel="@($"{p.Year} {T("Ist", "actual")}")" ForecastLabel="@($"{p.Year} {T("Prognose", "forecast")}")"
+                                   PreviousLabel="@($"{p.Year - 1} {T("Ist", "actual")}")" AriaLabel="@T("Umsatz je Monat", "Sales per month")" />
+                </div>
+                <div class="mrv-card">
+                    <h3>@T("Wachstum YTD je Gesellschaft", "YTD growth per company")</h3>
+                    <div class="mrv-cap">@p.YtdLabel @T("ggü.", "vs.") @p.PreviousYtdLabel · @T("gestrichelt = Gruppe", "dashed = group")</div>
+                    <MrvHBar Items="GrowthBars" LabelWidth="200" Reference="@((double?)g.YtdChange)" ReferenceLabel="@($"{T("Gruppe", "Group")} {Pct(g.YtdChange)}")" />
+                </div>
+            </div>
+
+            <div class="mrv-card">
+                <h3>@T("Scorecard Gesellschaften", "Company scorecard")</h3>
+                <div class="mrv-cap">@T("Zeile anklicken öffnet die Monthly Review der Gesellschaft. Q1 = offene Q-Meldungen mit der Gesellschaft als Kunde, bei TRCH die Endkunden.", "Click a row to open the monthly review of the company. Q1 = open Q notifications with the company as customer, for TRCH the end customers.")</div>
+                <div class="mrv-table-wrap">
+                    <table class="mrv-table mrv-score">
+                        <thead>
+                            <tr>
+                                <th>@T("Ges.", "Co.")</th>
+                                <th class="mrv-num">YTD @p.Year</th>
+                                <th class="mrv-num">YTD @(p.Year - 1)</th>
+                                <th>Δ YTD</th>
+                                <th class="mrv-num">@p.MonthLabel</th>
+                                <th class="mrv-num">Δ @p.MonthLabel</th>
+                                <th class="mrv-num" title="@ForecastFooter(p)">@T("Prognose Jahresende", "Year-end forecast") @p.Year</th>
+                                <th class="mrv-num" title="@p.Next12Label">@T("Prognose 12 Monate", "Forecast 12 months")</th>
+                                <th>@T("Gruppenmarge", "Group margin")</th>
+                                <th class="mrv-num">Q1</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in _r.Companies)
+                            {
+                                var code = c.Code;
+                                <tr class="mrv-click" @onclick="() => Open(code)">
+                                    <td><b>@c.Code</b> <span class="ll-muted mrv-small">@CompanyName(c.Code)</span></td>
+                                    <td class="mrv-num">@Amount(c.Ytd)</td>
+                                    <td class="mrv-num">@Amount(c.YtdPrevious)</td>
+                                    <td>
+                                        <div class="mrv-div">
+                                            <span class="@DeltaClass(c.YtdChange)">@Pct(c.YtdChange)</span>
+                                            @{ var dv = (double)Math.Min(60m, Math.Abs(c.YtdChange ?? 0m)) / 60 * 50; }
+                                            <span class="mrv-div-track"><i class="@(c.YtdChange < 0 ? "mrv-div-neg" : "mrv-div-pos")" style="width:@F(dv)%"></i></span>
+                                        </div>
+                                    </td>
+                                    <td class="mrv-num">@Amount(c.Month)</td>
+                                    <td class="mrv-num"><span class="@DeltaClass(c.MonthChange)">@Arrow(c.MonthChange) @Pct(c.MonthChange)</span></td>
+                                    <td class="mrv-num">@Amount(c.ProjectedYear)<div class="ll-muted mrv-small">@Pct(c.YearChange) @T("ggü.", "vs.") @(p.Year - 1)</div></td>
+                                    <td class="mrv-num">@Amount(c.Forecast12)</td>
+                                    <td><span class="mrv-badge mrv-badge-calc">Phase 2</span></td>
+                                    <td class="mrv-num">@QCount(c.Code)</td>
+                                </tr>
+                            }
+                            <tr class="mrv-total">
+                                <td><b>@T("Gruppe", "Group")</b></td>
+                                <td class="mrv-num">@Amount(g.Ytd)</td>
+                                <td class="mrv-num">@Amount(g.YtdPrevious)</td>
+                                <td><span class="@DeltaClass(g.YtdChange)">@Pct(g.YtdChange)</span></td>
+                                <td class="mrv-num">@Amount(g.Month)</td>
+                                <td class="mrv-num"><span class="@DeltaClass(g.MonthChange)">@Arrow(g.MonthChange) @Pct(g.MonthChange)</span></td>
+                                <td class="mrv-num">@Amount(g.ProjectedYear)</td>
+                                <td class="mrv-num">@Amount(g.Forecast12)</td>
+                                <td></td>
+                                <td class="mrv-num">@(_qm?.State == MonthlyReviewQmState.Ok ? _qm.Cases.Count.ToString() : "–")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mrv-note">@T("Prognosen sind statistisch (Vorjahresmonat × Wachstum, keine Planung) und je Gesellschaft gerechnet, deshalb nicht additiv zur Gruppenprognose. Budget, Auftragseingang und Pipeline fehlen (Phase 3), die Gruppenmarge je Gesellschaft folgt in Phase 2.", "Forecasts are statistical (same month last year × growth, not a plan) and calculated per company, therefore not additive to the group forecast. Budget, order intake and pipeline are missing (phase 3), the group margin per company follows in phase 2.")</div>
+            </div>
+
+            <MrvMarginPipeline />
+            <MrvQuality Snapshot="_qm" />
+
+            <MrvSection Number="5" Title="@T("Kunden", "Customers")" Sub="@T("Kundenbewegung und Top-Kunden der Gruppe.", "Customer movement and top customers of the group.")" />
+            <div class="mrv-grid2">
+                <div class="mrv-card">
+                    <h3>@T("Neu gewonnene und verlorene Kunden je Quartal", "Customers won and lost per quarter")</h3>
+                    <div class="mrv-cap">@T("Gruppe · Verluste erst 6 Monate nach Quartalsende sichtbar · grau = im ersten Datenjahr nicht belastbar", "Group · losses visible only 6 months after quarter end · grey = not reliable in the first data year")</div>
+                    <MrvChurn Movements="_r.Customers.Movements" NewLabel="@T("neu", "new")" LostLabel="@T("verloren", "lost")" OpenLabel="@T("noch offen", "still open")" />
+                </div>
+                <div class="mrv-card">
+                    <h3>@T("Top 10 Kunden der Gruppe (12 Monate)", "Top 10 customers of the group (12 months)")</h3>
+                    <div class="mrv-cap">@T("Ohne Konzernkunden", "Without group customers") · @p.Last12Label</div>
+                    <MrvCustomers Rows="_r.Customers.Top(null)" ChangePeriod="@CurrentPeriod" />
+                </div>
+            </div>
+        }
+        else if (Selected is { } c)
+        {
+            var share = _r.Group.Ytd > 0 ? (double?)(double)(c.Ytd / _r.Group.Ytd) : null;
+            <div class="mrv-company-card">
+                <div class="mrv-eyebrow">@T("Gesellschaft", "Company")</div>
+                <div class="mrv-company-title">@CompanyTitle(c.Code, T)</div>
+                <div class="ll-muted">@T("Berichtsmonat", "Report month") @p.MonthLabel · YTD @p.YtdLabel</div>
+            </div>
+            <MrvSection Number="1" Title="Performance" Sub="@T("Umsatz nach Finance-Regeln, ohne Konzernkunden, CHF zum Kurs des Belegdatums.", "Sales by Finance rules, without group customers, CHF at the rate of the document date.")" />
+            <div class="mrv-tiles">
+                <MrvTile Label="@($"{T("Umsatz", "Sales")} {p.MonthLabel}")" Value="@Amount(c.Month)" HasDelta="true" Delta="c.MonthChange"
+                         DeltaLabel="@($"{T("ggü.", "vs.")} {p.PreviousMonthLabel}")" Spark="c.Spark" Footer="@($"{T("Vorjahresmonat", "Same month last year")} {Amount(c.MonthPrevious)} · {p.Last12Label}")" />
+                <MrvTile Label="@($"{T("Umsatz", "Sales")} YTD {p.YtdLabel}")" Value="@Amount(c.Ytd)" HasDelta="true" Delta="c.YtdChange" DeltaLabel="@T("ggü. Vorjahr", "vs. previous year")"
+                         Footer="@($"{T("Vorjahr", "Previous year")} {Amount(c.YtdPrevious)} · {T("12 Monate", "12 months")} {Amount(c.Last12)}")" />
+                <MrvTile Label="@($"{T("Prognose Jahresende", "Year-end forecast")} {p.Year}")" Value="@Amount(c.ProjectedYear)" Badge="@T("statistisch", "statistical")"
+                         HasDelta="true" Delta="c.YearChange" DeltaLabel="@($"{T("ggü. Gesamtjahr", "vs. full year")} {p.Year - 1} ({Amount(c.PreviousYear)})")" Footer="@ForecastFooter(p)" />
+                <MrvTile Label="@T("Prognose 12 Monate", "Forecast 12 months")" Value="@Amount(c.Forecast12)" Badge="@T("statistisch", "statistical")"
+                         HasDelta="true" Delta="c.Forecast12Change" DeltaLabel="@T("ggü. letzte 12 Monate", "vs. last 12 months")" Footer="@($"{p.Next12Label} · {T("Methode ohne Planung", "method without planning")}")" />
+                <MrvTile Gap="true" Label="@T("Budget & Auftragseingang", "Budget & order intake")" Value="@T("Noch nicht angebunden", "Not yet connected")" Why="@BudgetWhy" />
+            </div>
+            <div class="mrv-grid2">
+                <div class="mrv-card">
+                    <h3>@T("Umsatz je Monat", "Sales per month") @p.Year @T("gegen", "vs.") @(p.Year - 1)</h3>
+                    <div class="mrv-cap">@MonthCaption(p)</div>
+                    <MrvMonthChart Stats="c" Year="p.Year" ActualLabel="@($"{p.Year} {T("Ist", "actual")}")" ForecastLabel="@($"{p.Year} {T("Prognose", "forecast")}")"
+                                   PreviousLabel="@($"{p.Year - 1} {T("Ist", "actual")}")" AriaLabel="@T("Umsatz je Monat", "Sales per month")" />
+                </div>
+                <div class="mrv-card">
+                    <h3>@T("Einordnung", "Classification")</h3>
+                    <div class="mrv-cap">@T("Kennzahlen aus den verfügbaren Quellen", "Key figures from the available sources")</div>
+                    <table class="mrv-table mrv-kv">
+                        <tbody>
+                            <tr><td>@T("Umsatz letzte 12 Monate", "Sales last 12 months")</td><td class="mrv-num">@Amount(c.Last12)</td></tr>
+                            <tr><td>@T("Umsatz Gesamtjahr", "Sales full year") @(p.Year - 1)</td><td class="mrv-num">@Amount(c.PreviousYear)</td></tr>
+                            <tr><td>@T("Anteil am Gruppenumsatz YTD", "Share of group sales YTD")</td><td class="mrv-num">@Share(share)</td></tr>
+                            <tr><td>@T("Bester Monat", "Best month") @p.Year</td><td class="mrv-num">@MonthText(c.BestMonth, p)</td></tr>
+                            <tr><td>@T("Schwächster Monat", "Weakest month") @p.Year</td><td class="mrv-num">@MonthText(c.WorstMonth, p)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <MrvMarginPipeline />
+            <MrvQuality Snapshot="_qm" Company="@c.Code" />
+
+            <MrvSection Number="5" Title="@T("Kunden", "Customers")" Sub="@($"{T("Top-Kunden mit Beteiligung der Gesellschaft", "Top customers involving the company")}, {p.Last12Label}.")" />
+            <div class="mrv-card">
+                @{ var rows = _r.Customers.Top(c.Code); }
+                <h3>Top @rows.Count @T("Kunden", "Customers") · @c.Code</h3>
+                <div class="mrv-cap">@T("Umsatz = Kundenumsatz über alle beteiligten Gesellschaften, nicht nur diese", "Sales = customer sales across all companies involved, not only this one")</div>
+                <MrvCustomers Rows="rows" ChangePeriod="@CurrentPeriod" />
+            </div>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">@T("Für diese Gesellschaft gibt es keine Verkaufszeilen.", "There are no sales lines for this company.") (@_co)</MudAlert>
+        }
+
+        <div class="mrv-note mt-3">@T("Phase 1 der Monthly Review: Umsatz live aus dem internen BI, Q-Fälle live aus SAP. Noch nicht angebunden: Gruppenmarge je Gesellschaft (Phase 2), TSC-Gesellschaften, Budget, Auftragseingang und Pipeline (Phase 3).", "Phase 1 of the monthly review: sales live from the internal BI, Q cases live from SAP. Not yet connected: group margin per company (phase 2), TSC companies, budget, order intake and pipeline (phase 3).")</div>
+    </div>
+    <SalesStatus Data="_data" />
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "co")] public string? Co { get; set; }
+
+    private SalesDataset? _data;
+    private MonthlyReviewResult? _r;
+    private MonthlyReviewQmSnapshot? _qm;
+    private string _co = MonthlyReviewAnalytics.GroupCode;
+    private readonly CancellationTokenSource _cts = new();
+
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private bool IsGroup => string.Equals(_co, MonthlyReviewAnalytics.GroupCode, StringComparison.OrdinalIgnoreCase);
+    private MonthlyReviewScopeStats? Selected => _r?.Company(_co);
+    private string CurrentPeriod => _data is null ? string.Empty : SalesUi.CurrentPeriod(_data);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await Sales.GetAsync();
+        if (_data.Error is null)
+            _r = await Task.Run(() => MonthlyReviewAnalytics.Build(_data));
+        // Q-Faelle nach den Umsatzzahlen: ein langsamer oder fehlender SAP-Abruf haelt die Seite nicht auf.
+        _ = LoadQmAsync();
+    }
+
+    protected override void OnParametersSet()
+        => _co = string.IsNullOrWhiteSpace(Co) ? MonthlyReviewAnalytics.GroupCode : Co.Trim().ToUpperInvariant();
+
+    private async Task LoadQmAsync()
+    {
+        try
+        {
+            _qm = await Qm.GetAsync(_cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            _qm = new MonthlyReviewQmSnapshot { State = MonthlyReviewQmState.Error, FetchedAt = DateTime.Now, Error = ex.GetBaseException().Message };
+        }
+        if (_cts.IsCancellationRequested)
+            return;
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Seite inzwischen geschlossen.
+        }
+    }
+
+    private void Open(string code)
+        => Nav.NavigateTo($"verkauf/monthly-review?co={Uri.EscapeDataString(code)}");
+
+    private string CompanyName(string code)
+        => MonthlyReviewAnalytics.CompanyNames.TryGetValue(code, out var n) ? T(n.German, n.English) : string.Empty;
+
+    private string QCount(string code)
+        => _qm?.State == MonthlyReviewQmState.Ok ? MonthlyReviewQm.ForCompany(_qm.Cases, code).Count.ToString() : "–";
+
+    private IReadOnlyList<MrvHBar.Bar> GrowthBars
+        => _r is null ? [] : _r.Companies
+            .Where(c => c.YtdChange is not null)
+            .OrderByDescending(c => c.YtdChange)
+            .Select(c => new MrvHBar.Bar($"{c.Code} · {CompanyName(c.Code)}", (double)c.YtdChange!.Value, Pct(c.YtdChange)))
+            .ToList();
+
+    private string BudgetWhy => T("Budget und Auftragseingang je Gesellschaft sind nicht im internen BI. Anbindung in Phase 3 (TSC-Dateien, Power BI).", "Budget and order intake per company are not in the internal BI. Connection in phase 3 (TSC files, Power BI).");
+
+    private string ForecastFooter(MonthlyReviewPeriod p)
+        => p.HasForecastMonths
+            ? $"{T("Ist", "Actual")} {p.YtdLabel} + {T("Prognose", "forecast")} {p.ForecastMonthsLabel} {T("(Vorjahresmonat × Wachstum), keine Planung", "(same month last year × growth), not a plan")}"
+            : $"{T("Ist", "Actual")} {p.YtdLabel}";
+
+    private string MonthCaption(MonthlyReviewPeriod p)
+        => p.HasForecastMonths
+            ? $"CHF · {p.ForecastMonthsLabel} = {T("statistische Prognose", "statistical forecast")} · {T("Linie = Vorjahr", "line = previous year")}"
+            : $"CHF · {T("Linie = Vorjahr", "line = previous year")}";
+
+    private static string MonthText((int MonthIndex, decimal Value)? m, MonthlyReviewPeriod p)
+        => m is { } x ? $"{x.MonthIndex + 1:00}.{p.Year} · {Amount(x.Value)}" : "–";
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

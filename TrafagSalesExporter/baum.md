@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle); davor 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Stand: 2026-11-05 (Monthly Review Phase 1 gebaut, Beschreibung nachgefuehrt); davor 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle), 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
 Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
@@ -72,7 +72,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` | Marktsegmente und Marktumfrage |
 | `docs/CONTROLLING_2026-10-05.md` | Unterreiter Controlling: Herkunft (Eigeninitiative), Rechnung Brücke und Hochrechnung, offene Fragen |
 | `docs/VERKAUF_2026-10-02.md` | Reiter Verkauf: Entscheide (Quelle, Regeln, Kundenschlüssel), acht Unterreiter plus Interaktiv mit neun animierten Ansichten, Grenzen, Abgleich |
-| `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md` | Verkauf Monthly Review Gesellschaften: Auftrag, Entscheide, Phasen, Befund T&P-Dateien (nicht gebaut) |
+| `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md` | Verkauf Monthly Review Gesellschaften: Auftrag, Entscheide, Phasen, Befund T&P-Dateien; Umsetzung Phase 1 und Q-Faelle aus SAP (2026-11-05) |
 | `docs/monthly_review/MASKE_SPEZIFIKATION_2026-11-04.md` | Spezifikation des Entwurfs `maske.html` (Datenmodell, Ansichten, Berechnungen, Fehler) |
 | `docs/monthly_review/maske_entwurf_2026-11-04.html` | Ingos Entwurf der Monthly Review (Kopie aus der Repo-Wurzel) |
 | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` | Fragebogen zum Railway-Export |

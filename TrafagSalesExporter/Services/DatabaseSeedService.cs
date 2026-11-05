@@ -448,6 +448,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("sales-crosssell", "sales", "Cross-Selling", "Cross-selling", "JoinInner", "verkauf/cross-selling", 50, "All"),
         Link("sales-prices", "sales", "Preisstreuung", "Price spread", "PriceChange", "verkauf/preise", 60, "All"),
         Link("sales-forecast", "sales", "Saison und Prognose", "Season and forecast", "QueryStats", "verkauf/prognose", 70, "All"),
+        // Verkauf Monthly Review Gesellschaften 2026-11-05 (Entwurf Patrick Hertach), docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md.
+        Link("sales-monthly-review", "sales", "Monthly Review Gesellschaften", "Monthly review companies", "Summarize", "verkauf/monthly-review", 75),
         Link("sales-worldmap", "sales", "Weltkarte", "World map", "Public", "verkauf/weltkarte", 80, "All"),
         // Verkauf Interaktiv 2026-10-05: neun animierte Ansichten mit eigener Reiterleiste.
         Link("sales-interactive", "sales", "Interaktiv", "Interactive", "AutoAwesome", "verkauf/interaktiv", 90, "All"),

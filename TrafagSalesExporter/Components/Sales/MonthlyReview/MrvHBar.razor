@@ -1,0 +1,54 @@
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+
+@* Horizontale Balken der Monthly Review (2026-11-05), Spezifikation 4 chartHBar: Reihenfolge wie geliefert,
+   negative Werte rot nach links, optionale gestrichelte Referenzlinie. Tooltip ueber SVG-title. *@
+@if (Items.Count == 0)
+{
+    <div class="ll-muted mrv-small">–</div>
+}
+else
+{
+    var labelW = Math.Min(LabelWidth, 600 * 0.45);
+    var right = 70.0;
+    var top = Reference is null ? 4.0 : 20.0;
+    var height = top + Items.Count * 26 + 4;
+    var dmax = Math.Max(0, Math.Max(Items.Max(i => i.Value), Reference ?? 0));
+    var dmin = Math.Min(0, Items.Min(i => i.Value));
+    var span = Math.Max(1e-9, dmax - dmin);
+    var plotW = 600 - labelW - right;
+    double X(double v) => labelW + (v - dmin) / span * plotW;
+    var zero = X(0);
+    <svg viewBox="0 0 600 @F(height)" class="mrv-hbar" role="img" aria-label="@AriaLabel">
+        <line x1="@F(zero)" y1="@F(top - 2)" x2="@F(zero)" y2="@F(height - 2)" class="mrv-axis" />
+        @if (Reference is { } r)
+        {
+            <g>
+                <line x1="@F(X(r))" y1="12" x2="@F(X(r))" y2="@F(height - 2)" class="mrv-ref" />
+                <text x="@F(X(r))" y="10" class="mrv-ref-label" style="text-anchor:middle">@ReferenceLabel</text>
+            </g>
+        }
+        @for (var i = 0; i < Items.Count; i++)
+        {
+            var item = Items[i];
+            var y = top + i * 26;
+            var x0 = Math.Min(zero, X(item.Value));
+            var w = Math.Max(1, Math.Abs(X(item.Value) - zero));
+            <g>
+                <title>@item.Label: @item.Text</title>
+                <text x="@F(labelW - 8)" y="@F(y + 16)" class="mrv-hbar-label" style="text-anchor:end">@item.Label</text>
+                <rect x="@F(x0)" y="@F(y + 7)" width="@F(w)" height="12" rx="3" class="@(item.Value < 0 ? "mrv-bar-neg" : item.Muted ? "mrv-bar-muted" : "mrv-bar")" />
+                <text x="@F(Math.Max(zero, X(item.Value)) + 6)" y="@F(y + 17)" class="mrv-hbar-value">@item.Text</text>
+            </g>
+        }
+    </svg>
+}
+
+@code {
+    public sealed record Bar(string Label, double Value, string Text, bool Muted = false);
+
+    [Parameter] public IReadOnlyList<Bar> Items { get; set; } = [];
+    [Parameter] public double LabelWidth { get; set; } = 170;
+    [Parameter] public double? Reference { get; set; }
+    [Parameter] public string? ReferenceLabel { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+}

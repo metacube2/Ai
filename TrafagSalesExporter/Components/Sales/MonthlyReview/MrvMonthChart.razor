@@ -1,0 +1,102 @@
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+
+@* Umsatz je Monat Berichtsjahr gegen Vorjahr (Monthly Review 2026-11-05, Spezifikation 4 chartMonthly). Ist-Saeulen bis zum
+   Berichtsmonat, danach helle Saeulen der statistischen Prognose; Linie Vorjahr, unterbrochen, wo der Monat vor dem
+   Datenbeginn liegt. Der Berichtsmonat kommt aus den Daten, nicht aus einem festen Index. *@
+@{
+    var values = Enumerable.Range(0, 12)
+        .SelectMany(i => new[] { Stats.Actual[i], Stats.Forecast[i], Stats.Previous[i] })
+        .Where(v => v is not null).Select(v => (double)v!.Value).ToList();
+    var vmax = Math.Max(1, values.DefaultIfEmpty(0).Max()) * 1.08;
+    var vmin = Math.Min(0, values.DefaultIfEmpty(0).Min());
+    var step = NiceStep(vmax - vmin);
+    var lo = vmin < 0 ? -Math.Ceiling(-vmin / step) * step : 0;
+    var hi = Math.Max(step, Math.Ceiling(vmax / step) * step);
+    const double ml = 52, mr = 10, mt = 18, mb = 26, w = 600, h = 250;
+    var pw = w - ml - mr;
+    var ph = h - mt - mb;
+    var band = pw / 12;
+    var bw = Math.Min(24, band * 0.56);
+    double Y(double v) => mt + (hi - v) / (hi - lo) * ph;
+}
+<svg viewBox="0 0 600 250" class="mrv-chart" role="img" aria-label="@AriaLabel">
+    @for (var t = lo; t <= hi + step / 2; t += step)
+    {
+        <g>
+            <line x1="@F(ml)" y1="@F(Y(t))" x2="@F(w - mr)" y2="@F(Y(t))" class="@(Math.Abs(t) < step / 2 ? "mrv-axis" : "nw-grid")" />
+            <text x="@F(ml - 6)" y="@F(Y(t) + 4)" class="mrv-tick" style="text-anchor:end">@Amount((decimal)t)</text>
+        </g>
+    }
+    @for (var i = 0; i < 12; i++)
+    {
+        var x = ml + band * i + band / 2;
+        var isForecast = Stats.Actual[i] is null;
+        var v = Stats.Actual[i] ?? Stats.Forecast[i];
+        var prev = Stats.Previous[i];
+        <g>
+            <title>@($"{i + 1:00}.{Year}"): @Amount(v)@(isForecast && v is not null ? " (" + ForecastLabel + ")" : string.Empty) · @PreviousLabel @Amount(prev) · Δ @Pct(v is { } cur ? MonthlyReviewAnalytics.Pct(cur, prev) : null)</title>
+            @if (v is { } value)
+            {
+                var top = Y(Math.Max(0, (double)value));
+                var bottom = Y(Math.Min(0, (double)value));
+                <rect x="@F(x - bw / 2)" y="@F(top)" width="@F(bw)" height="@F(Math.Max(1, bottom - top))" rx="3" class="@(isForecast ? "mrv-col-fc" : "mrv-col")" />
+            }
+            <text x="@F(x)" y="@F(h - 8)" class="mrv-tick" style="text-anchor:middle">@($"{i + 1:00}")</text>
+            <rect x="@F(x - band / 2)" y="@F(mt)" width="@F(band)" height="@F(ph)" fill="transparent" />
+        </g>
+    }
+    @{
+        var segments = new List<List<(double X, double Y)>>();
+        List<(double X, double Y)>? current = null;
+        for (var i = 0; i < 12; i++)
+        {
+            if (Stats.Previous[i] is { } p)
+            {
+                current ??= [];
+                current.Add((ml + band * i + band / 2, Y((double)p)));
+            }
+            else if (current is not null)
+            {
+                segments.Add(current);
+                current = null;
+            }
+        }
+        if (current is not null) segments.Add(current);
+    }
+    @foreach (var seg in segments)
+    {
+        <g>
+            <polyline points="@Points(seg)" class="mrv-line-prev" />
+            @foreach (var pt in seg)
+            {
+                <circle cx="@F(pt.X)" cy="@F(pt.Y)" r="3" class="mrv-dot-prev" />
+            }
+        </g>
+    }
+</svg>
+<div class="mrv-legend">
+    <span><i class="mrv-sw mrv-col"></i>@ActualLabel</span>
+    <span><i class="mrv-sw mrv-col-fc"></i>@ForecastLabel</span>
+    <span><i class="mrv-sw-line"></i>@PreviousLabel</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public MonthlyReviewScopeStats Stats { get; set; } = default!;
+    [Parameter] public int Year { get; set; }
+    [Parameter] public string ActualLabel { get; set; } = string.Empty;
+    [Parameter] public string ForecastLabel { get; set; } = string.Empty;
+    [Parameter] public string PreviousLabel { get; set; } = string.Empty;
+    [Parameter] public string? AriaLabel { get; set; }
+
+    /// <summary>Schritt der Achse mit hoechstens 5 Teilen (1, 2, 2.5, 5 mal Zehnerpotenz), Spezifikation 4 niceScale.</summary>
+    private static double NiceStep(double range)
+    {
+        if (range <= 0) return 1;
+        var p = Math.Pow(10, Math.Floor(Math.Log10(range / 5)));
+        foreach (var m in new[] { 1, 2, 2.5, 5, 10, 20, 25, 50 })
+            if (Math.Ceiling(range / (m * p)) <= 5)
+                return m * p;
+        return 50 * p;
+    }
+}

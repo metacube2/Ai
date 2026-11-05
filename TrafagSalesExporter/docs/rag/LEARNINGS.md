@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-11-04 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-11-05 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -155,6 +155,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-11-05 | Agenten-Worktree (`.claude/worktrees/agent-…`) startete auf `main` (`cef6115`), dessen `TrafagSalesExporter/` beim Stand vom 17.08. steht: `docs/rag/LEARNINGS.md`, `docs/monthly_review/` und `Components/Sales/` fehlten. Der aktive Stand lag auf dem Zweig des Hauptarbeitsbaums (`feature/supplier-overrides-trit`, `52bf2ce`); vor jeder Aenderung bemerkt | Im Agenten-Worktree zuerst `git log -1 -- TrafagSalesExporter` und `git worktree list` (Zweig des Hauptarbeitsbaums) pruefen; steht der Worktree alt, den eigenen sauberen Zweig mit `git reset --hard <Commit des Hauptzweigs>` dorthin setzen und die Basis im Bericht nennen | `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md` Umsetzung 2026-11-05 |
 | 2026-11-04 | HR-Cockpit rechnete Langzeit seit 28.09. als „Summe je Person, dann ganze Krankheit lang“ und Unfall nicht in der Quote, obwohl Nadja (10/2025) und Sonja (02/2026) schriftlich „ab dem 61. Tag“, „Krankheit &amp; Unfall“ und „Quote ohne Langzeit“ vorgegeben hatten; nur die Mail vom 14.09. war in die Doku eingeflossen | Vor einer Fachregel alle Antworten der Fachabteilung im Wortlaut suchen (Outlook Web: Absender und Thema, auch alte Threads), nicht nur die juengste; Fundstellen in der Fachdatei zitieren | `docs/HR_KPI.md` 8.12 |
 | 2026-11-04 | Abgleich Rexx #744 gegen SAP-Absenzen meldete zuerst „0 von 202 Faellen in SAP“: Rexx schreibt die Personalnummer mit fuehrenden Nullen, das Pruefskript schnitt sie nur auf der SAP-Seite ab. Vor einer Aussage an Ingo bemerkt | Bei Abgleichen ueber Systeme den Schluessel auf beiden Seiten gleich normalisieren; ein Ergebnis von 0 % oder 100 % zuerst als Abgleichfehler pruefen | `docs/HR_KPI.md` 8.11 |
 | 2026-11-04 | Rexx-Export fuer ein Playbook „aufgezeichnet“: `gif_creator` der Chrome-Erweiterung nimmt nur Navigationen und Klicks auf, die Claude selbst ausfuehrt; Ingos eigene Klicks und Claudes Bildschirmfotos ergaben 0 Bilder. Ingo dachte an ein Video | Vor einer Aufnahme sagen, dass sie kein Video ist; fuer Ablaeufe, die Ingo selbst klickt, Screenshots je Schritt (`Win+Umschalt+S`) oder Claude klickt nach Ansage | diese Zeile |

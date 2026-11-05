@@ -1,0 +1,71 @@
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+
+@* Kachel der Monthly Review (2026-11-05). Gap = gelb gestrichelt, "noch nicht angebunden" (Spezifikation 2.1). Texte kommen uebersetzt. *@
+@if (Gap)
+{
+    <div class="mrv-tile mrv-tile-gap">
+        <div class="mrv-tile-label">@Label <span class="mrv-badge mrv-badge-gap">⚠ GAP</span></div>
+        <div class="mrv-tile-value mrv-tile-value-gap">@Value</div>
+        @if (!string.IsNullOrEmpty(Why))
+        {
+            <div class="mrv-tile-why">@Why</div>
+        }
+        @if (!string.IsNullOrEmpty(Footer))
+        {
+            <div class="mrv-tile-ft">@Footer</div>
+        }
+    </div>
+}
+else
+{
+    <div class="mrv-tile">
+        <div class="mrv-tile-label">
+            @Label
+            @if (!string.IsNullOrEmpty(Badge))
+            {
+                <span class="mrv-badge @(BadgeWarn ? "mrv-badge-gap" : "mrv-badge-calc")">@Badge</span>
+            }
+        </div>
+        <div class="mrv-tile-row">
+            <div class="mrv-tile-value">@Value</div>
+            @if (Spark is { Count: > 1 })
+            {
+                var spark = MrvUi.Spark(Spark);
+                <svg class="mrv-spark" viewBox="0 0 120 26" aria-hidden="true">
+                    <polyline points="@spark.Points" class="mrv-spark-line" />
+                    <circle cx="118" cy="@F(spark.LastY)" r="3" class="mrv-spark-dot" />
+                </svg>
+            }
+        </div>
+        @if (HasDelta)
+        {
+            <div class="mrv-tile-dl">
+                <span class="@DeltaClass(Delta)">@Arrow(Delta) @Pct(Delta)</span>
+                <span class="ll-muted">@DeltaLabel</span>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(Detail))
+        {
+            <div class="mrv-tile-dl">@Detail</div>
+        }
+        @if (!string.IsNullOrEmpty(Footer))
+        {
+            <div class="mrv-tile-ft">@Footer</div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public bool HasDelta { get; set; }
+    [Parameter] public decimal? Delta { get; set; }
+    [Parameter] public string? DeltaLabel { get; set; }
+    [Parameter] public string? Detail { get; set; }
+    [Parameter] public string? Footer { get; set; }
+    [Parameter] public string? Badge { get; set; }
+    [Parameter] public bool BadgeWarn { get; set; }
+    [Parameter] public IReadOnlyList<decimal>? Spark { get; set; }
+    [Parameter] public bool Gap { get; set; }
+    [Parameter] public string? Why { get; set; }
+}

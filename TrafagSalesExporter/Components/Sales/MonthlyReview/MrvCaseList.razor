@@ -1,0 +1,164 @@
+@using TrafagSalesExporter.Services
+@using static TrafagSalesExporter.Components.Sales.MonthlyReview.MrvUi
+@inject IUiTextService UiText
+@inject IJSRuntime JsRuntime
+
+@* Drilldown offene Q1-Meldungen der Monthly Review (2026-11-05), Spezifikation 2.2 caseList: Filter Gesellschaft, Status,
+   Bearbeiter, Suche ueber die angezeigten Spalten, Sortierung per Spaltenkopf (Leerwerte immer am Ende), 150 Zeilen und
+   "weitere", CSV fuer Excel. "Offen seit" in Tagen ab Anlage der Meldung bis zum Abrufdatum, rot ueber 90 Tage. *@
+<div class="mrv-list-tools">
+    <label>@T("Gesellschaft", "Company")
+        <select class="mrv-select" @bind="_company">
+            <option value="">@T("Alle", "All") (@Cases.Count)</option>
+            @foreach (var o in Options(c => c.Company))
+            {
+                <option value="@o">@o</option>
+            }
+        </select>
+    </label>
+    <label>Status
+        <select class="mrv-select" @bind="_status">
+            <option value="">@T("Alle", "All") (@Cases.Count)</option>
+            @foreach (var o in Options(c => c.Status))
+            {
+                <option value="@o">@o</option>
+            }
+        </select>
+    </label>
+    <label>@T("Bearbeiter", "Processor")
+        <select class="mrv-select" @bind="_processor">
+            <option value="">@T("Alle", "All") (@Cases.Count)</option>
+            @foreach (var o in Options(c => c.Processor))
+            {
+                <option value="@o">@o</option>
+            }
+        </select>
+    </label>
+    <label>@T("Suche", "Search")
+        <input class="mrv-input" type="search" @bind="_search" @bind:event="oninput" placeholder="@T("Meldung, Kunde, Material, Fehlerbild …", "Notification, customer, material, defect …")" />
+    </label>
+    <span class="ll-muted mrv-small">@Filtered.Count @T("von", "of") @Cases.Count @T("Einträgen", "entries")</span>
+    <button type="button" class="mrv-btn" @onclick="CsvAsync">⇩ CSV (Excel)</button>
+</div>
+
+@if (Filtered.Count == 0)
+{
+    <div class="ll-muted mrv-small">@T("Keine Einträge für diese Auswahl.", "No entries for this selection.")</div>
+}
+else
+{
+    <div class="mrv-table-wrap">
+        <table class="mrv-table">
+            <thead>
+                <tr>
+                    @foreach (var col in Columns)
+                    {
+                        <th class="mrv-sortable @(col.Numeric ? "mrv-num" : string.Empty)" title="@T("Sortieren", "Sort")" @onclick="() => SortBy(col.Key)">
+                            @T(col.German, col.English)@(_sort == col.Key ? (_desc ? " ▼" : " ▲") : string.Empty)
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Filtered.Take(_limit))
+                {
+                    <tr>
+                        <td class="ll-mono">@c.Number</td>
+                        <td>@c.Status</td>
+                        <td>@c.Company</td>
+                        <td class="mrv-ellipsis" title="@c.Row.CustomerName">@c.Row.CustomerName</td>
+                        <td class="mrv-ellipsis" title="@(c.Row.Material + " " + c.Row.MaterialText)">@c.Row.MaterialText</td>
+                        <td class="mrv-ellipsis" title="@c.Row.Defect">@c.Row.Defect</td>
+                        <td class="mrv-num">@Number(c.Row.Quantity)</td>
+                        <td>@Date(c.Row.Created)</td>
+                        <td class="mrv-num @(c.AgeDays > MonthlyReviewQm.OverdueDays ? "mrv-dn" : string.Empty)">@Days(c.AgeDays)@(c.AgeDays > MonthlyReviewQm.OverdueDays ? " ▲" : string.Empty)</td>
+                        <td>@Date(c.Row.Returned)</td>
+                        <td class="mrv-num">@Days(c.DaysSinceReturn)</td>
+                        <td>@Date(c.Row.MeasureCreated)</td>
+                        <td>@c.Processor</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Filtered.Count > _limit)
+    {
+        var more = Math.Min(500, Filtered.Count - _limit);
+        <button type="button" class="mrv-btn mt-2" @onclick="() => _limit += 500">@T("Weitere anzeigen", "Show more") (@more / @(Filtered.Count - _limit))</button>
+    }
+}
+
+@code {
+    private sealed record Column(MonthlyReviewQm.SortColumn Key, string German, string English, bool Numeric = false);
+
+    private static readonly Column[] Columns =
+    [
+        new(MonthlyReviewQm.SortColumn.Number, "Meldung", "Notification"),
+        new(MonthlyReviewQm.SortColumn.Status, "Status", "Status"),
+        new(MonthlyReviewQm.SortColumn.Company, "Ges.", "Co."),
+        new(MonthlyReviewQm.SortColumn.Customer, "Kunde", "Customer"),
+        new(MonthlyReviewQm.SortColumn.Material, "Material", "Material"),
+        new(MonthlyReviewQm.SortColumn.Defect, "Fehlerbild", "Defect"),
+        new(MonthlyReviewQm.SortColumn.Quantity, "Menge", "Quantity", true),
+        new(MonthlyReviewQm.SortColumn.Created, "Angelegt", "Created"),
+        new(MonthlyReviewQm.SortColumn.Age, "Offen seit (Tage)", "Open since (days)", true),
+        new(MonthlyReviewQm.SortColumn.Returned, "Rücklieferung", "Return"),
+        new(MonthlyReviewQm.SortColumn.ReturnAge, "Tage seit Rücklief.", "Days since return", true),
+        new(MonthlyReviewQm.SortColumn.Measure, "Massnahme angelegt", "Action created"),
+        new(MonthlyReviewQm.SortColumn.Processor, "Bearbeiter", "Processor")
+    ];
+
+    [Parameter] public IReadOnlyList<MonthlyReviewQmCase> Cases { get; set; } = [];
+    /// <summary>Teil des CSV-Dateinamens, z. B. "alle" oder der Gesellschaftscode.</summary>
+    [Parameter] public string FileId { get; set; } = "alle";
+
+    private string _company = string.Empty;
+    private string _status = string.Empty;
+    private string _processor = string.Empty;
+    private string _search = string.Empty;
+    private MonthlyReviewQm.SortColumn _sort = MonthlyReviewQm.SortColumn.Age;
+    private bool _desc = true;
+    private int _limit = 150;
+
+    private object? _filterKey;
+    private IReadOnlyList<MonthlyReviewQmCase> _filtered = [];
+
+    /// <summary>Gefilterte und sortierte Faelle; einmal je Aenderung von Filter, Suche, Sortierung oder Liste gerechnet.</summary>
+    private IReadOnlyList<MonthlyReviewQmCase> Filtered
+    {
+        get
+        {
+            var key = (Cases, _company, _status, _processor, _search, _sort, _desc);
+            if (!Equals(_filterKey, key))
+            {
+                _filtered = MonthlyReviewQm.Query(Cases, _company, _status, _processor, _search, _sort, _desc);
+                _filterKey = key;
+            }
+            return _filtered;
+        }
+    }
+
+    private IEnumerable<string> Options(Func<MonthlyReviewQmCase, string> key)
+        => Cases.Select(key).Where(v => v.Length > 0).Distinct().OrderBy(v => v, StringComparer.CurrentCultureIgnoreCase);
+
+    private void SortBy(MonthlyReviewQm.SortColumn column)
+    {
+        if (_sort == column)
+            _desc = !_desc;
+        else
+        {
+            _sort = column;
+            _desc = Columns.First(c => c.Key == column).Numeric || column is MonthlyReviewQm.SortColumn.Created;
+        }
+        _limit = 150;
+    }
+
+    private async Task CsvAsync()
+    {
+        var bytes = MonthlyReviewQm.ToCsv(Filtered);
+        await JsRuntime.InvokeVoidAsync("trafagDownload.saveBytes", $"Offene_Q1-Meldungen_{FileId}_{DateTime.Now:yyyyMMdd_HHmm}.csv",
+            Convert.ToBase64String(bytes), "text/csv;charset=utf-8");
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
