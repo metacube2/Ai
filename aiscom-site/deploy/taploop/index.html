@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TapLoop für macOS | AISCOM</title>
+  <meta name="description" content="TapLoop: Looper mit Plattentellern für den Mac. Eigene Loops aufnehmen und scratchen, alles im Takt. Neu: Video-Teller, Bild und Ton getrennt scratchbar, mit Kamera oder Videodatei und 97 Bildeffekten.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.aiscom.ch/taploop/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TapLoop für macOS">
+  <meta property="og:description" content="Eigene Loops werden zu Platten, die du scratchst. Neu: der Video-Teller – aussen das Bild, innen der Ton.">
+  <meta property="og:url" content="https://www.aiscom.ch/taploop/">
+  <meta property="og:image" content="https://www.aiscom.ch/taploop/taploop-fenster.png">
+  <link rel="icon" href="/favicon.ico">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TapLoop",
+      "operatingSystem": "macOS 14 oder neuer",
+      "applicationCategory": "MultimediaApplication",
+      "url": "https://www.aiscom.ch/taploop/",
+      "downloadUrl": "https://www.aiscom.ch/taploop/TapLoop.dmg",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CHF" }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #13213b;
+      --surface-2: #1a2b4d;
+      --text: #f5f7fb;
+      --muted: #a8b3c7;
+      --accent: #87ceeb;
+      --teal: #5eead4;
+      --line: rgba(135, 206, 235, 0.18);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top right, rgba(94, 234, 212, 0.08), transparent 32%),
+        linear-gradient(180deg, #091120, var(--bg));
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      max-width: 1120px; margin: 0 auto; padding: 18px 16px;
+    }
+    header > a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    header nav a { margin-left: 18px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
+    header nav a:first-child { margin-left: 0; }
+    header nav a:hover { color: var(--accent); }
+    main { max-width: 880px; margin: 0 auto; padding: 32px 16px 64px; }
+    section { margin-top: 56px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.76rem; font-weight: 700; }
+    h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    p { color: var(--muted); }
+    .hero { display: grid; grid-template-columns: 1fr minmax(0, 300px); gap: 32px; align-items: start; }
+    @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+    .video { width: 100%; max-width: 300px; aspect-ratio: 9 / 16; border-radius: 18px; border: 1px solid var(--line); background: #060c18; display: block; margin: 0 auto; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .button { display: inline-block; padding: 12px 20px; border-radius: 12px; border: 0; background: var(--accent); color: #08121f; font: inherit; font-weight: 700; text-decoration: none; }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card { padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(180deg, var(--surface), var(--surface-2)); }
+    .card p { margin: 0; }
+    .card.neu { border-color: rgba(94, 234, 212, 0.55); }
+    .marke { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--teal); color: #06231f; font-size: 0.72rem; font-weight: 700; vertical-align: middle; }
+    figure { margin: 0; }
+    figure img { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); display: block; }
+    figcaption { margin-top: 8px; font-size: 0.85rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--text); white-space: nowrap; }
+    td { color: var(--muted); }
+    td a, p a { color: var(--accent); }
+    .table-wrap { overflow-x: auto; }
+    details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+    summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details p { margin: 8px 0 0; }
+    footer { max-width: 880px; margin: 0 auto; padding: 0 16px 40px; color: var(--muted); font-size: 0.85rem; }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/de">AISCOM</a>
+    <nav>
+      <a href="/de#produkte">Produkte</a>
+      <a href="/macyaesu/">MacYaesu</a>
+      <a href="/antennen-studio/">Antennen-Studio</a>
+      <a href="/de/contact">Kontakt</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">macOS-App · Looper mit Plattentellern</p>
+        <h1>TapLoop</h1>
+        <p class="lead">Was du ins Mikrofon spielst, wird sofort zu einer Schallplatte, die du scratchen kannst – auf vier Tellern, alles im selben Takt. Neu ist der <strong style="color: var(--text)">Video-Teller</strong>: aussen ein Filmstreifen, innen der Ton, beides getrennt scratchbar.</p>
+        <div class="actions">
+          <a class="button" href="./TapLoop.dmg" download>Kostenlos herunterladen</a>
+          <a class="button secondary" href="#video-teller">Video-Teller ansehen</a>
+        </div>
+        <p class="meta">macOS 14 oder neuer · von Apple notarisiert · Version 1.0 (Build 44) · während der Testphase kostenlos, alle Funktionen</p>
+      </div>
+      <video class="video" id="video-teller" src="./TapLoop-Videoteller.mp4" poster="./TapLoop-Videoteller.jpg" controls playsinline preload="none" aria-label="Kurzvideo: der Video-Teller von TapLoop"></video>
+    </div>
+
+    <section>
+      <figure>
+        <img src="./taploop-fenster.png" alt="TapLoop-Fenster mit vier Plattentellern und dem Video-Teller in der Mitte" width="1700" height="960" loading="lazy">
+        <figcaption>Vier Looper-Teller, in der Mitte der Video-Teller mit Filmstreifen, darunter Lichtorgel, Crossfader und Pegelanzeige.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <h2>Was die App macht</h2>
+      <div class="grid">
+        <div class="card"><h3>Klick = Aufnahme</h3><p>Jeder Teller ist ein Looper wie ein Fusspedal: Klick nimmt auf, nächster Klick spielt die Schleife endlos, im Takt mit den anderen.</p></div>
+        <div class="card"><h3>Scratchen wie auf Vinyl</h3><p>Die Schleife liegt als Wellenform auf der Platte. Ziehen scratcht, dazu Bremsen, Backspin, 33/45, Filter und Crossfader.</p></div>
+        <div class="card"><h3>Tempo per Schnalzen</h3><p>Ins Mikrofon schnalzen oder klatschen setzt das Tempo; die erste Schleife wird auf ganze Schläge geschnitten, Tempowechsel ohne Tonhöhenänderung.</p></div>
+        <div class="card neu"><h3>Video-Teller <span class="marke">neu</span></h3><p>Aussen der Filmstreifen, innen der Titel, im Etikett das Bild. Aussen ziehen scratcht nur das Bild, innen nur den Ton, in der Mitte beides.</p></div>
+        <div class="card neu"><h3>Kamera oder Video <span class="marke">neu</span></h3><p>Kamera einschalten und Klick: Bild und Ton werden eine Schleife. Oder eine Videodatei laden – TapLoop nimmt einen Abschnitt, der zum Takt passt.</p></div>
+        <div class="card neu"><h3>97 Bildeffekte <span class="marke">neu</span></h3><p>VHS, Comic, Pop-Art, Ölgemälde, Kaleidoskop und viele mehr, mit Drehknopf eingemischt; manche reagieren auf Bässe und Höhen.</p></div>
+        <div class="card"><h3>Plattenkiste</h3><p>Acht Fächer je Teller mit eigenen und mitgelieferten Schleifen; der Wechsel kommt nahtlos am Schleifenende.</p></div>
+        <div class="card"><h3>Jamsession mitschneiden</h3><p>Die ganze Session mit Scratches und Effekten als eine Datei aufnehmen und als WAV oder M4A sichern.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Download</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Version</th><td>1.0 (Build 44), von Apple notarisiert, mit automatischen Updates</td></tr>
+          <tr><th>System</th><td>macOS 14 (Sonoma) oder neuer, Apple Silicon und Intel</td></tr>
+          <tr><th>Preis</th><td>Während der Testphase kostenlos, ohne Einschränkung</td></tr>
+          <tr><th>Datei</th><td><a href="./TapLoop.dmg" download>TapLoop.dmg</a> (25 MB) · SHA-256 <code style="font-size:0.8rem">2ad15d21597314eeaf73e1a5b875acd016734bb00e4b5ed42cd5dd3074754a2b</code></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Häufige Fragen</h2>
+      <details>
+        <summary>Wie installiere ich TapLoop?</summary>
+        <p>DMG öffnen, „TapLoop“ auf „Programme“ ziehen und starten. Die App ist von Apple geprüft (notarisiert); beim ersten Start fragt macOS einmal nach, beim ersten Aufnehmen nach dem Mikrofon.</p>
+      </details>
+      <details>
+        <summary>Brauche ich Zusatzgeräte?</summary>
+        <p>Nein. Das eingebaute Mikrofon genügt; mit Kopfhörern nimmt die neue Schleife die laufenden nicht mit auf. Audio-Interfaces mit mehreren Eingängen gehen auch.</p>
+      </details>
+      <details>
+        <summary>Was macht TapLoop mit Kamera und Mikrofon?</summary>
+        <p>Die Kamera läuft nur, wenn du am Video-Teller „Kamera“ einschaltest. Bild und Ton bleiben auf deinem Mac; gespeichert wird nur, was du selbst sicherst. TapLoop sendet nichts und hat kein Konto. Details: <a href="./datenschutz/">Datenschutz</a>.</p>
+      </details>
+      <details>
+        <summary>Welche Videos kann ich laden?</summary>
+        <p>Alles, was macOS abspielt (MP4, MOV …). TapLoop liest einen Abschnitt ab Anfang, der zum Takt passt: Bild auf den Filmstreifen, Ton auf den Innenring. Nimm Videos, an denen du die Rechte hast.</p>
+      </details>
+      <details>
+        <summary>Hilfe und Fehler melden</summary>
+        <p>Im Programm: Menü Hilfe und das Handbuch (PDF). Sonst: <a href="./support/">Support</a> oder <a href="mailto:metacube@gmail.com?subject=TapLoop">metacube@gmail.com</a>.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    &copy; AISCOM &middot; <a href="/de/legal/imprint">Impressum</a> &middot; <a href="./datenschutz/">Datenschutz TapLoop</a> &middot; <a href="./support/">Support</a> &middot; Zeitraffer im Video: Aurora-Livecam Zürichsee, Musik selbst erzeugt
+  </footer>
+</body>
+</html>

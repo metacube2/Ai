@@ -76,7 +76,7 @@ MAC = APPS = [
         "dmg": GIT / "taploop-mac/build/verteilen/TapLoop.dmg",
         "app": GIT / "taploop-mac/build/verteilen/dd/Build/Products/Release/TapLoop.app",
         "datei": "TapLoop.dmg",
-        "kurz": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, 32 Platten in der Kiste, nahtloser Plattenwechsel, Wellenform, Farbwelle oder Spektrum im Ring, Tonart im Etikett, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+        "kurz": "Vier Schleifenspieler als Plattenteller, neu mit Video-Teller in der Mitte: aussen Filmstreifen, innen der Titel, getrennt scratchbar, Kamera oder Videodatei, 97 Bildeffekte. Klick nimmt auf und spielt im Loop, Plattenkiste, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
     },
     {
         "name": "Obhut",
