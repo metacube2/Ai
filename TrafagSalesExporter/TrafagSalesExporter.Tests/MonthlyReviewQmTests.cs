@@ -19,7 +19,7 @@ public sealed class MonthlyReviewQmTests
         {"d":{"results":[
           {"__metadata":{"type":"ZPOWERBI_EINKAUF_SRV.QmMeldung"},"Qmnum":"000300012345","Qmart":"Q1","Status":"Rücksendung offen","Sysstat":"OSNO","Kunnr":"0000500731","Kunde":"Trafag Controls India Pvt. Ltd.","Matnr":"000000000000064776","Maktx":"NAH 8254","Menge":"5.000","Mengeneinheit":"ST","Fehlerbild":"Leckage","Angelegt":"20260701","Ruecklieferung":"","Produktion":"20260115","Massnahme":"20260710","Bearbeiter":"MUELLER","Produktlinie":"Dichtewächter"},
           {"Qmnum":"000300012346","Qmart":"Q1","Status":"in Bearbeitung","Sysstat":"OSNO","Kunnr":"0000123456","Kunde":"Siemens AG","Matnr":"H05039","Maktx":"Transmitter","Menge":"1","Mengeneinheit":"ST","Fehlerbild":"Signal","Angelegt":"20261020","Ruecklieferung":"20261101","Produktion":"00000000","Massnahme":"","Bearbeiter":"MEIER","Produktlinie":"TR5"},
-          {"Qmnum":"000300012347","Qmart":"Q1","Status":"Wareneingang","Sysstat":"OSNO MEAB","Kunnr":"1","Kunde":"Erledigt AG","Matnr":"1","Maktx":"x","Menge":"","Mengeneinheit":"","Fehlerbild":"","Angelegt":"20260101","Ruecklieferung":"","Produktion":"","Massnahme":"","Bearbeiter":"","Produktlinie":""},
+          {"Qmnum":"000300012347","Qmart":"Q1","Status":"Wareneingang","Sysstat":"MOFN MMAB","Kunnr":"1","Kunde":"Erledigt AG","Matnr":"1","Maktx":"x","Menge":"","Mengeneinheit":"","Fehlerbild":"","Angelegt":"20260101","Ruecklieferung":"","Produktion":"","Massnahme":"","Bearbeiter":"","Produktlinie":""},
           {"Qmnum":"000300012348","Qmart":"Q2","Status":"in Bearbeitung","Sysstat":"OSNO","Kunnr":"2","Kunde":"Lieferant AG","Matnr":"1","Maktx":"x","Menge":"2","Mengeneinheit":"ST","Fehlerbild":"","Angelegt":"20260901","Ruecklieferung":"","Produktion":"","Massnahme":"","Bearbeiter":"","Produktlinie":""},
           {"Qmnum":"000300012345","Qmart":"Q1","Status":"Rücksendung offen","Sysstat":"OSNO","Kunnr":"0000500731","Kunde":"Trafag Controls India Pvt. Ltd.","Matnr":"64776","Maktx":"NAH 8254","Menge":"5.000","Mengeneinheit":"ST","Fehlerbild":"Leckage","Angelegt":"20260701","Ruecklieferung":"","Produktion":"","Massnahme":"","Bearbeiter":"MUELLER","Produktlinie":"Dichtewächter"}
         ]}}
@@ -101,7 +101,7 @@ public sealed class MonthlyReviewQmTests
     {
         var cases = MonthlyReviewQm.BuildCases(MonthlyReviewQm.Parse(SampleJson), new MonthlyReviewOptions(), Reference);
 
-        Assert.Equal(2, cases.Count);                    // ohne MEAB, ohne Q2, Doppelte einmal
+        Assert.Equal(2, cases.Count);                    // ohne MMAB, ohne Q2, Doppelte einmal
         var india = cases.Single(c => c.Number == "300012345");
         Assert.Equal("TRIN", india.Company);
         Assert.Equal(Reference.DayNumber - new DateOnly(2026, 7, 1).DayNumber, india.AgeDays);

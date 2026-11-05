@@ -38,10 +38,12 @@ public sealed class MonthlyReviewOptions
     public List<string> QmNotificationTypes { get; set; } = ["Q1"];
 
     /// <summary>
-    /// Systemstatus, bei denen eine Meldung nicht mehr offen ist (Sysstat enthaelt den Code): MEAB Meldung abgeschlossen,
-    /// DLFL Loeschvormerkung. Schutz, falls das Set auch Erledigtes liefert.
+    /// Systemstatus, bei denen eine Meldung nicht mehr offen ist (Sysstat enthaelt den Code). Das Set liefert die Kurztexte
+    /// auf Deutsch (STATUS_TEXT_EDIT, Sprache D, in T76 belegt 2026-11-05): MMAB Meldung abgeschlossen (I0072),
+    /// LOeVM Loeschvormerkung (I0076); NOCO/DLFL sind die englischen Gegenstuecke als Rueckfall. Schutz, falls das Set auch
+    /// Erledigtes liefert; der SAP-Zweig filtert diese Status schon selbst (saptasks/qm_meldungen/NOTES.md).
     /// </summary>
-    public List<string> QmExcludeSystemStatus { get; set; } = ["MEAB", "DLFL"];
+    public List<string> QmExcludeSystemStatus { get; set; } = ["MMAB", "LÖVM", "NOCO", "DLFL"];
 
     /// <summary>
     /// Zusaetzliche Zuordnungen Kunde -> Gesellschaft. Werden vor den eingebauten Vorgaben

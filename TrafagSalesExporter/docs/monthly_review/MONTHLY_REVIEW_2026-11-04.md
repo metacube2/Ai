@@ -102,13 +102,15 @@ nicht vorhanden).
 
 ### Abschnitt 4: Q-Faelle live aus SAP
 
-- Quelle `GET /sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/QmMeldungSet` (Set wird parallel in T76 gebaut), Verbindung wie
+- Quelle `GET /sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/QmMeldungSet`, **in T76 gebaut am 2026-11-05, Auftrag `T76K912837`
+  (nicht freigegeben, Import P76 durch Ingo)**; Feld-Mapping, Definition „offen“ und Belege in `saptasks/qm_meldungen/NOTES.md`
+  (Abschnitt „SAP-Seite“ unten). Verbindung wie
   Shopfloor/Logistik live/Einkauf (`ShopfloorSapSync.ResolveConnectionAsync`). Client `Services/Sales/MonthlyReviewQmService.cs`,
   Rechnung `Services/Sales/MonthlyReviewQm.cs`, Seite `MrvQuality.razor` und `MrvCaseList.razor`.
 - Konfiguration Abschnitt `MonthlyReview` (`appsettings.json`, Registrierung `builder.Services.AddMonthlyReview(...)`):
   `QmEnabled` (**Vorgabe false**), `QmEntitySet` (`QmMeldungSet`), `QmFilter` (optionaler `$filter`, leer), `QmCacheMinutes` (15),
   `QmErrorCacheSeconds` (60), `QmTimeoutSeconds` (60), `QmNotificationTypes` (`Q1`; leer = alle), `QmExcludeSystemStatus`
-  (`MEAB`, `DLFL`), `QmCompanyCustomers` (zusaetzliche Zuordnungen, gehen den Vorgaben vor).
+  (`MMAB`, `LÖVM`, `NOCO`, `DLFL`; *korrigiert 2026-11-05: vorher `MEAB`/`DLFL`, das Set liefert aber deutsche Kurztexte*), `QmCompanyCustomers` (zusaetzliche Zuordnungen, gehen den Vorgaben vor).
   Einschalten heisst `QmEnabled: true` in der versionierten `appsettings.json` committen und deployen; eine Aenderung nur auf
   dem Server ueberschreibt der naechste Deploy (LEARNINGS 2026-08-10). Listen in `appsettings.json` ergaenzen die Vorgaben
   (der ConfigurationBinder haengt an), sie ersetzen sie nicht: `QmNotificationTypes: ["Q2"]` ergibt Q1 und Q2.
@@ -144,9 +146,30 @@ am Namen in SAP QM. Keine Nummern erfunden. Belegte Nummern lassen sich ohne Cod
 ergaenzen (`{ "Company": "TRAT", "CustomerNumbers": [ "..." ] }`). Nach dem ersten Abruf in P76 die Verteilung „Gesellschaft /
 Kunde“ gegen die Kunden in QM pruefen.
 
-**Annahmen, nach dem ersten Abruf zu pruefen:** das Set liefert nur offene Meldungen (Schutz: Systemstatus `MEAB`/`DLFL` faellt
-weg), `Qmart` heisst fuer Kundenreklamationen `Q1`, `Status` ist der Anwenderstatus-Text (Ruecksendung offen wird am Text
-„Ruecksendung“/„Rücksendung“ erkannt).
+**Annahmen, nach dem ersten Abruf zu pruefen:** das Set liefert nur offene Meldungen (Schutz: Systemstatus `MMAB`/`LÖVM`
+faellt weg), `Qmart` heisst fuer Kundenreklamationen `Q1` (in T76 belegt), `Status` ist der Anwenderstatus-Text (Ruecksendung
+offen wird am Text „Ruecksendung“/„Rücksendung“ erkannt).
+
+### SAP-Seite (T76, 2026-11-05)
+
+Befund des SAP-Agenten, Einzelheiten und Belege in `saptasks/qm_meldungen/NOTES.md`:
+
+- `T76K912837` (Aufgabe `T76K912838`): Struktur `ZSTR_QM_MELDUNG` (Paket ZPP, 17 Felder), Block in
+  `ZCL_ZPOWERBI_EINKAUF_MPC_EXT->DEFINE` und Zweig in `ZCL_ZPOWERBI_EINKAUF_DPC_EXT->GET_ENTITYSET`; zurueckgelesen, nur der
+  eigene Block neu, andere Sets laufen weiter. Caches `/IWBEP`, dann `/IWFND` geleert. `$metadata` 200, ganzes Set 313 Zeilen
+  in 1,4 s.
+- **„Offen“** = `QMART = 'Q1'` (TQ80_T „Kundenreklamation“), `KZLOESCH` leer, in JEST weder I0072 MMAB noch I0076 LÖVM aktiv.
+  T76 (Datenkopie bis etwa April 2026): 15'229 Q1, davon 313 offen (205 MOFN, 92 MRST zurueckgestellt, 16 MIAR), darunter
+  81 MOFN aus 2019, aelteste offene von 2013. Power BI zeigte in P76 131.
+- Mapping: `Fehlerbild` = Kurztext QMTXT (Fehlerpositionen nur bei 99 von 313, meist „zur Analyse“), `Menge` = RKMNG,
+  `Ruecklieferung` = RKDAT, `Produktion` = PRODDAT, `Massnahme` = fruehestes QMSM-ERDAT, `Bearbeiter` = Partnerrolle VW,
+  Name aus PA0001 (ohne HR-Berechtigungspruefung).
+- **Offen:** (1) `Status` bleibt in T76 leer, weil Q1 dort kein Statusschema hat (TQ80-STSMA leer); in P76 lesend pruefen
+  (TQ80, JSTO, TJ30T), sonst mit Patrick klaeren, woher Power BI den Status nimmt. (2) Ob MRST und alte MOFN als offen zaehlen,
+  entscheidet Patrick; filterbar ueber `Sysstat`/`Angelegt` ohne Transport. (3) `Produktlinie` bewusst leer (Power-BI-Linien
+  entsprechen keinem SAP-Feld); Vorschlag: Zuordnung im Dashboard ueber `Matnr`. (4) Namen oder Kuerzel bei Bearbeiter
+  (Entscheid Ingo). (5) Freigabe und Import `T76K912837` nach P76, dann `/IWBEP`, `/IWFND` leeren, `QmEnabled: true` committen
+  und deployen.
 
 ### Tests
 
