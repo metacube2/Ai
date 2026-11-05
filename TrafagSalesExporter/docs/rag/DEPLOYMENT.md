@@ -8,6 +8,7 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 
 ## Deploy-Ablauf seit 2026-10-13 (Entscheid Ingo)
 
+- **Protokollablage (seit 2026-11-05):** Die in diesem Dokument genannten `.tmp_deploy_<datum>_<thema>.log` bis 2026-11-05 liegen in `.tmp_logs/deploy/`, uebrige alte Logs in `.tmp_logs/` (nicht versioniert, `*.log` in `.gitignore`). Neue Protokolle entstehen weiter in der Wurzel (Befehlsform `CLAUDE.md` Abschnitt 5) und werden beim Aufraeumen dorthin verschoben.
 - **DB-Sicherung einmal pro Woche** (Entscheid Ingo 2026-10-13 nachmittags, nachdem eine Sicherung zu lange
   dauerte und abgebrochen wurde). `DeployHeadless` sichert von selbst, wenn die neueste `trafag_exporter.db.before-*.bak`
   auf dem Share aelter als sieben Tage ist (Etikett `wochensicherung`); `--backup` erzwingt eine Sicherung,
