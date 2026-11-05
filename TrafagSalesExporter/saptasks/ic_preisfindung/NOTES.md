@@ -1,13 +1,15 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-05 (Agent sap-t76, nur lesend in T76/100; keine Testbelege, keine Aenderung in T76)
+Stand: 2026-11-05 (Agent sap-t76, nur lesend in T76/100; keine Testbelege, keine Aenderung in T76). Nachtrag am selben
+Tag: P76 lesend verglichen (Abschnitt 7, Freigabe Ingo „mache punkt 1“).
 
 Unterlagen: `a.xlsx` (IC_Umsetzung_V1, Blaetter 2 bis 4) und `b.pdf` (IC-Preisboard) in der Repository-Wurzel.
 Geplanter Schritt 1 (Erweiterung ZICAA1 um Z999, Z000, Z001, Z002) ist **nicht** Teil dieser Pruefung und wurde nicht
 angefasst.
 
-Alle Belege stammen aus T76 (Datenkopie etwa Fruehjahr 2026). Fuer P76 sind sie Hinweise, kein Nachweis. P76 wurde in
-diesem Auftrag nicht gelesen.
+Alle Belege in den Abschnitten 1 bis 6 stammen aus T76 (Datenkopie etwa Fruehjahr 2026). Fuer P76 sind sie Hinweise,
+kein Nachweis. P76 wurde in diesem ersten Auftrag nicht gelesen; der spaetere Abgleich mit P76 (Kundenstamm und
+Kurstabellen) steht in Abschnitt 7.
 
 ## 0. Ergebnis in zwei Saetzen
 
@@ -210,8 +212,9 @@ Weg keine Rolle. Gaebe es fuer das Fakturadatum keinen P-Satz, nimmt `READ_EXCHA
 2. P-Kurs jaehrlich in OB08 pflegen (EUR → CHF); ohne neuen Satz laeuft der alte still weiter. CHF → EUR fuer P ist
    nicht gepflegt und XINVR fuer P nicht gesetzt; fuer die IV-Faktura nicht noetig, fuer andere Verwendungen von P
    (Kostenplanung) unveraendert.
-3. In P76 ist zu pruefen (nur lesend, eigener Auftrag), ob `KNVV-PLTYP` 14 und `KNVV-KURST` dort wie in T76 stehen,
-   ob TCURR P EUR → CHF 2026 = 0.94 ist und ob M EUR → CHF dort ebenfalls nach EURX umgeleitet wird.
+3. *(Erledigt am 2026-11-05, Abschnitt 7.)* In P76 ist zu pruefen (nur lesend, eigener Auftrag), ob `KNVV-PLTYP` 14
+   und `KNVV-KURST` dort wie in T76 stehen, ob TCURR P EUR → CHF 2026 = 0.94 ist und ob M EUR → CHF dort ebenfalls nach
+   EURX umgeleitet wird. Ergebnis: alles wie in T76; M EUR → CHF hat in P76 gar keinen eigenen TCURR-Satz.
 4. Wenn Z999/Z000 in ZICAA1 kommen, stehen PR00 (Stufe 011), IV01/IV02 (909/910) und VPRS weiter im Schema; heute
    kommt der Preis der IV-Fakturen aus PR00. Reihenfolge, Ausschluss oder Bedingung sind beim Schemaentwurf zu klaeren.
 5. Woher die 12 IV-Testfakturen in T76 stammen (MEEY_HAST, FPA, MEV, Juli bis Oktober 2026), ist offen; sie koennen
@@ -226,3 +229,81 @@ Weg keine Rolle. Gaebe es fuer das Fakturadatum keinen P-Satz, nimmt `READ_EXCHA
   gelesene Kurs, und gleiche Werte in M und P machen einen Test wertlos.
 - Bei interner Verrechnung (IV) gelten fuer Kopfdaten andere Wege als bei Kundenfakturen: Kurstyp aus KNVV wirkt dort
   auf den Buchungskurs. Fachaussagen zu SD-Kursen nur mit Blick auf `LV60AA95` treffen.
+
+## 7. P76 lesend 2026-11-05
+
+Freigabe Ingo 2026-11-05 („mache punkt 1“): nur `KNVV` (820/1100/01/01), `TCURR`, `TCURF`, `TCURV` fuer die Kurstypen
+P, M und EURX, EUR/CHF. Agent sap-t76.
+
+**Zugang:** angemeldete P76-GUI von Ingo (P76/100, Anwendungsserver `trasp76s`), eigene neue Sitzung
+`/app/con[1]/ses[2]` ueber `.tmp_sap_probe/P76Lesen.vbs neu:SE16`, Ingos Sitzung `ses[0]` (SE80) unberuehrt.
+Transaktionen SE16 (Listen und Einzelanzeige) und einmal SE16N (KNVV, Ankreuzfeld „Eintraege pflegen“ nicht
+angefasst). Kein Passwort, kein Anmeldebild, keine Aenderung, nichts gesichert, keine Caches. Am Ende mit
+`P76SitzungSchliessen.vbs` geschlossen; danach zeigte `SapGuiP76Hilfe.vbs info` nur noch `ses[0]` SE80. **Geschlossen: ja.**
+Nebenwirkung: SE16 generiert beim ersten Aufruf je Tabelle seinen Selektionsreport (`/1BCDWB/DBKNVV`, `DBTCURR`,
+`DBTCURF`, `DBTCURV`; Meldung „Programm ... existiert noch nicht in Bibliothek“). Das ist das normale Verhalten von SE16,
+keine Daten- oder Customizingaenderung.
+
+**Feldnamen:** Der T76-Abgleich in `DD03L` per RFC wurde vom Auto-Modus abgelehnt und nicht wiederholt. Die Feldnamen sind
+stattdessen in P76 belegt: Selektionsbilder von SE16 (TCURR: KURST, FCURR, TCURR, GDATU, UKURS, FFACT, TFACT; TCURF
+zusaetzlich ABWCT, ABWGA; TCURV: KURST, XINVR, BWAER, XBWRL, GKUZU, BKUZU, XFIXD, XEURO, XNORL) und Einzelanzeige
+„Tabelle KNVV anzeigen“ mit den Feldern `KNVV-PLTYP`, `KNVV-KURST`, `KNVV-WAERS`, `KNVV-KALKS`.
+
+GDATU invertiert: 79739898 = 01.01.2026, 79749898 = 01.01.2025, 80009898 = 01.01.1999, 81999898 = 01.01.1800.
+
+### 7.1 Werte P76 gegen T76
+
+| Punkt | Schluessel | P76 (2026-11-05) | T76 (Abschnitt 1.1, 3.1) | gleich? |
+| --- | --- | --- | --- | --- |
+| KNVV | 820 / 1100 / 01 / 01 | PLTYP **14**, KURST **leer**, WAERS **EUR**, KALKS **1** (dazu INCO1 DAP Wolfurt, ERNAM I001068, ERDAT 28.11.2002) | PLTYP 14, KURST leer, WAERS EUR, KALKS 1 | ja |
+| TCURR | P, EUR → CHF | 19 Saetze; 01.01.2026 **0.94000**, 01.01.2025 0.95, 2024 0.97, 2023 1.00, 2022 1.05 ... bis 01.12.2002 1.45; FFACT/TFACT 0 | 2026 0.94, 2025 0.95, 2024 0.97, 2023 1.00 | ja |
+| TCURR | P, CHF → EUR | **kein Eintrag** | kein Eintrag | ja |
+| TCURR | M, EUR → CHF | **kein Eintrag** (auch M mit FCURR EUR und beliebiger Zielwaehrung: keiner) | ein Satz 01.01.2026 0.94 | **nein**, ohne Wirkung (Umleitung, siehe TCURF) |
+| TCURR | M, CHF → EUR | **kein Eintrag** (M mit FCURR CHF nur DKK, GBP, GRD, JPY, NOK, SEK, USD) | nicht gelesen | – |
+| TCURR | EURX, EUR → CHF | **kein Eintrag** | nicht gelesen | – |
+| TCURR | EURX, CHF → EUR | 18 Saetze; 01.01.2026 **0.94000-** (Mengennotiz, 1 EUR = 0.94 CHF), 2025 0.95-, 2024 0.97-, 2023 1.00-, 2022 1.05- ... 01.01.1999 1.62232- | 2026 0.94-, davor 0.95-, 0.97- | ja |
+| TCURF | M, EUR → CHF | ab 01.01.1999: FFACT 1, TFACT 1, **ABWCT EURX**; ab 01.01.1800: 1 / 1, ABWCT leer | ab 01.01.1999 1 / 1, ABWCT EURX | ja |
+| TCURF | M, CHF → EUR | ab 01.01.1999: 1 / 1, **ABWCT EURX**; ab 01.01.1800: 1 / 1, ABWCT leer | ab 01.01.1999 1 / 1, ABWCT EURX | ja |
+| TCURF | P, EUR → CHF | ab 01.01.1999: 1 / 1, ABWCT **leer** | ab 01.01.1999 1 / 1, ABWCT leer | ja |
+| TCURF | P, CHF → EUR | **kein Eintrag** | kein Eintrag | ja |
+| TCURV | M | XINVR leer, BWAER leer, XBWRL leer, XEURO leer („Standardumrechnung zum Mittelkurs“) | nicht gelesen | – |
+| TCURV | P | XINVR **leer**, BWAER leer, XFIXD leer, XEURO leer („Standardumrechnung fuer die Kostenplanung“) | XINVR leer, BWAER leer | ja |
+| TCURV | EURX | BWAER **EUR**, XBWRL **Y**, XEURO **X**, XINVR leer („EWU-Vorschrift, variable Kurse“) | BWAER EUR, XBWRL Y, XEURO X | ja |
+
+Ueber die Freigabe hinaus gelesen: `TCURF` fuer EURX, EUR → CHF und CHF → EUR (je ein Satz ab 01.01.1800, 1 / 1, ABWCT
+leer). Das lag in derselben Abfrageschleife; es aendert nichts am Ergebnis und ist hier offen genannt.
+
+P- und EURX-Reihe laufen seit 2012 parallel: gleiche Stichtage (jeweils 01.01.) und gleiche Werte (2026 0.94, 2025 0.95,
+2024 0.97, 2023 1.00, 2022 1.05, 2018 1.10, 2016 1.05, 01.02.2015 1.00). Unterschiede nur davor (P 09.11.2011 1.20,
+EURX 01.01.2012 1.20; EURX 31.12.2002 1.45330 und 1999 1.62232 ohne P-Gegenstueck).
+
+### 7.2 Kernfrage: Rechnet eine IV-Faktura an 820 in P76 heute schon mit 0.94? Ja (aus den Tabellen belegt).
+
+Rechenweg mit den P76-Werten, Logik aus T76 (Abschnitt 3.2 und 3.4):
+
+1. `KNVV-KURST` von 820 ist in P76 leer → `VBRK-KURST` leer → `LV60AA95` setzt fuer den Buchungskurs der IV-Faktura
+   Kurstyp **M** und liest EUR → CHF zum Fakturadatum.
+2. `TCURF` M EUR → CHF, gueltig ab 01.01.1999, hat `ABWCT` EURX → `READ_EXCHANGE_RATE` rechnet mit Kurstyp **EURX**
+   (`LSCUNF01` FORM `ABWCT_EXIST`, in T76 gelesen).
+3. EURX hat Basiswaehrung EUR; gepflegt ist CHF → EUR, 01.01.2026 = 0.94- (Mengennotiz). Daraus folgt 1 EUR = **0.94 CHF**.
+   Dass P76 keinen direkten M-Satz EUR → CHF hat, spielt wegen der Umleitung keine Rolle.
+4. `VBRK-KURRF` = 0.94, und weil `TVCPF-PFKUR` fuer NLCC/NLC leer ist, wird `VBRP-KURSK` = `VBRK-KURRF` = 0.94
+   (Abschnitt 3.2). Die CHF-Kondition wird also mit 0.94 in EUR umgerechnet, die FI-Buchung laeuft mit 0.94.
+5. Mit Kurstyp P im Kunden 820 waere es P EUR → CHF 01.01.2026 = 0.94 (TCURF P ohne Umleitung) – **dieselbe Zahl**.
+
+Beispiel (Material 46690, wie Abschnitt 3.3): Z000 208.90 CHF je ST, 5 ST. Mit M/EURX: 208.90 / 0.94 = 222.23 EUR je ST,
+5 ST = 1'111.15 EUR; mit P: 208.90 / 0.94 = 222.23 EUR, 5 ST = 1'111.15 EUR. Kein Unterschied. FI: 1'111.15 EUR × 0.94
+= 1'044.48 CHF in beiden Faellen.
+
+**Folge:** Fuer 2026 ist Kurstyp P im Kunden 820 in P76 unnoetig; er aendert weder den Preis noch die Buchung. Er wuerde
+nur dann einen Unterschied machen, wenn Finance die P-Reihe und die EURX-Reihe einmal verschieden pflegt. Umgekehrt
+bedeutet das: Der „Mittelkurs“ M ist fuer EUR/CHF in P76 faktisch der jaehrlich feste EURX-Kurs, nicht ein Tageskurs.
+
+**Vermutungen (nicht belegt):**
+
+- Dass die echten IV-Fakturen an 820 in P76 `VBRK-KURRF` 0.94 tragen, ist aus den Kurstabellen abgeleitet. VBRK/BKPF in P76
+  waren nicht freigegeben und wurden nicht gelesen.
+- Der Programmablauf (`LV60AA95`, `LSCUNF01`, `LV61AA43`) ist in T76 gelesen; dass P76 denselben Stand ohne eigene
+  Erweiterung hat, ist angenommen (SAP-Standard, in T76 ohne Z/Y-Erweiterung), aber in P76 nicht geprueft.
+- Ohne neuen EURX-Satz zum 01.01.2027 laeuft M wie P still mit dem letzten Satz (0.94) weiter (Abschnitt 3.2 letzter
+  Absatz); beide Reihen muessen also jaehrlich gepflegt werden, wenn sich der Planungskurs aendert.
