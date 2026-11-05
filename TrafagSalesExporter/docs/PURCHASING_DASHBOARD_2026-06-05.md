@@ -539,7 +539,7 @@ Geplant aus dem Review (siehe Mapping-Doku, Abschnitt C): Termintreue-Kachel via
 
 ## Nachtrag 2026-07-09 Ergebnisse Analyse-Report (Z_PURCHASING_ANALYSE)
 
-Ingo hat `sap_purchasing_analyse_report.abap` (T76/100, Einkauf ab 2020) laufen lassen. Die
+Ingo hat `docs/abap/sap_purchasing_analyse_report.abap` (T76/100, Einkauf ab 2020) laufen lassen. Die
 Datenprofilierung bestaetigt mehrere Review-Punkte mit echten Zahlen und deckt einen neuen,
 fachlich wichtigen Befund auf (Beleg-Mix).
 

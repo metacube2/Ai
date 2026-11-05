@@ -442,7 +442,7 @@ sind 7'592 von 7'622 DE-Zeilen fachlich zugeordnet, 30 offen (Gutschriften), 24 
 
 Die 171 offenen Vorschlaege der anderen Standorte bleiben fachlich zu pruefen. Der
 deutsche Kundenstamm ist kein Nachweis fuer deren lokale Kundenschluessel. Aktuelle
-Arbeitsdateien: `Bahnmarkt_Rohail_2026-09-09.xlsx` und
+Arbeitsdateien: `docs/daten/Bahnmarkt_Rohail_2026-09-09.xlsx` und
 `Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx`. Vollstaendiger technischer und
 fachlicher Nachweis: `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`, Abschnitt 8.
 

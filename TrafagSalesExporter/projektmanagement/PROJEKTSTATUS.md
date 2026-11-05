@@ -746,7 +746,7 @@ Branchenwerte enden auf ein Komma. Details:
 `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 18.
 
 **Zum Termin:** der 2026-09-08 ist verstrichen, ohne dass etwas an Rohail versendet wurde.
-Die korrigierte DE-Pruefmappe `Bahnmarkt_Rohail_2026-09-09.xlsx` liegt erzeugt und
+Die korrigierte DE-Pruefmappe `docs/daten/Bahnmarkt_Rohail_2026-09-09.xlsx` liegt erzeugt und
 rueckgelesen bereit. Ein neues Zieldatum ist mit Rohail zu vereinbaren; das entscheidet
 Ingo, nicht diese Datei.
 
@@ -758,7 +758,7 @@ decken alle Standorte ab, in Lokalwaehrung ohne CHF-Summe und ohne Kosten. Gezae
 nur bestaetigte Zuordnungen: 25 von 196, davon 24 DE und 1 IN. Die 171 Vorschlaege der anderen
 Standorte (CH 80, IT 40, FR 17, UK 13, ES 9, AT 8, IN 3, US 1) warten auf Patrik (Blocker 2).
 Belastbar ist damit nur Deutschland (2025 rund 579 TEUR, 2026 bis 09.09. rund 432 TEUR). Die
-Datei `Bahnmarkt_Rohail_2026-09-09.xlsx` ist veraltet (20 statt 25 Kunden); fuer eine Weitergabe
+Datei `docs/daten/Bahnmarkt_Rohail_2026-09-09.xlsx` ist veraltet (20 statt 25 Kunden); fuer eine Weitergabe
 einen frischen Export ziehen.
 
 **DB4 konzernweit.** Die heutige DB4-Spalte (`Tools/BahnWorkbookDb4`) ist ein unbestaetigter

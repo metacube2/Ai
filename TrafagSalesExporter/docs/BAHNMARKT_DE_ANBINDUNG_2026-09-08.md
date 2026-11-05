@@ -17,7 +17,7 @@ Ergaenzt `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` und
 
 ## 1. Was geliefert wurde
 
-`Bahnmarkt_Datenaufbereitung_2026-09-08.xlsx` in der Repository-Wurzel, gelesen read-only
+`docs/daten/Bahnmarkt_Datenaufbereitung_2026-09-08.xlsx` in der Repository-Wurzel, gelesen read-only
 aus der produktiven Datenbank. Vier Blaetter: `Lesehinweis`, `Umsatz je Standort`,
 `Bahnkunden` mit Autofilter und `Datenluecken`.
 
@@ -238,7 +238,7 @@ SharePoint hat an der Excel Klassifizierungsbeziehungen ergaenzt.
 
 ### Dateien zum Weitergeben
 
-- `Bahnmarkt_Rohail_2026-09-09.xlsx`: aktuelle Gesamtauswertung mit demselben Dienst
+- `docs/daten/Bahnmarkt_Rohail_2026-09-09.xlsx`: aktuelle Gesamtauswertung mit demselben Dienst
   wie der Exportknopf auf `/marktsegmente`, alle Jahre und Standorte. Acht Blaetter:
   171 Vorschlaege, 20 bestaetigte Kunden (19 DE + 1 IN), 286 Umsatzsummenzeilen nach
   Jahr/Waehrung, 3'928 Detailzeilen, Marktumfrage und Datenluecken. Keine Kostenfelder.

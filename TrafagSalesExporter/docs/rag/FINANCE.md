@@ -66,7 +66,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   bleiben als `ALPHAPLAN-ID:<ID>` sichtbar offen: 2'427 historisch ableitbare Kandidaten,
   624 ohne Kandidat und 15 Konfliktzeilen. Finanzwerte, Mengen und Lieferantenschluessel
   sind unveraendert. Dashboard-CSV und Sales-Excel sind auf Server und SharePoint
-  verifiziert. Weitergabedateien: `Bahnmarkt_Rohail_2026-09-09.xlsx` und
+  verifiziert. Weitergabedateien: `docs/daten/Bahnmarkt_Rohail_2026-09-09.xlsx` und
   `Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx`. Detail und Grenzen:
   `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`, Abschnitt 8.
 - JOURNAL-FELDER, 2026-09-08: `JDT1.DueDate` live in FR/IT/US/IN vollstaendig belegt

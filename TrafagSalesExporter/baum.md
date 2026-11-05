@@ -74,6 +74,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/VERKAUF_2026-10-02.md` | Reiter Verkauf: Entscheide (Quelle, Regeln, Kundenschlüssel), acht Unterreiter plus Interaktiv mit neun animierten Ansichten, Grenzen, Abgleich |
 | `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md` | Verkauf Monthly Review Gesellschaften: Auftrag, Entscheide, Phasen, Befund T&P-Dateien; Umsetzung Phase 1 und Q-Faelle aus SAP (2026-11-05) |
 | `docs/monthly_review/MASKE_SPEZIFIKATION_2026-11-04.md` | Spezifikation des Entwurfs `maske.html` (Datenmodell, Ansichten, Berechnungen, Fehler) |
+| `docs/daten/` | Arbeits- und Weitergabedateien, am 2026-11-05 aus der Repo-Wurzel verschoben: `Bahnmarkt_Datenaufbereitung_2026-09-08.xlsx`, `Bahnmarkt_Rohail_2026-09-09.xlsx` (Bahnmarkt DE), `IC_Abgrenzung_Laender_Andreas_2026-06-02.xlsx` (IC-Abgrenzung je Land) |
+| `docs/abap/report.abap`, `docs/abap/sap_purchasing_analyse_report.abap`, `docs/abap/sap_purchasing_ekpo_eket_test_report.abap` | fruehe ABAP-Analysereports Einkauf, am 2026-11-05 aus der Repo-Wurzel verschoben |
 | `docs/monthly_review/maske_entwurf_2026-11-04.html` | Ingos Entwurf der Monthly Review (Kopie aus der Repo-Wurzel) |
 | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` | Fragebogen zum Railway-Export |
 | `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` | Konzept Railway-Export per Mausklick |
