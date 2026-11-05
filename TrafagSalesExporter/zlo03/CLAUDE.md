@@ -80,7 +80,7 @@ In **derselben Tabelle**:
 |---|---|---|---|
 | `MATNR` | MATNR | MATN1 | mit führenden Nullen |
 | `KOMPNR` | SOBJID | keiner | wie geschrieben |
-| `KOM_MSTAE` | MATNR | MATN1 | enthält faktisch einen Materialstatus |
+| `KOM_MSTAE` | MATNR | MATN1 | enthält faktisch einen Materialstatus *(ueberholt am 2026-11-05: enthaelt das Elternmaterial im MATN1-Ausgabeformat, Stufe 01 leer; siehe Punkt A)* |
 | `MAT_MSTAV` | SOBJID | keiner | enthält faktisch einen Materialstatus |
 | `STUFE` | MATNR | MATN1 | enthält faktisch eine Stufennummer |
 
@@ -117,6 +117,7 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 23 | `Z_ZLO03_TURBO2`: neu `load_bom_units`, `bom_unit_menge`, `apply_bom_unit` | Top-Down: Mengen und Stueckkosten in der Einheit der Stueckliste ueber MARM statt `UNIT_CONVERSION_SIMPLE` 1:1, Bottom-Up: Komponentenspalte ebenso (H05039: Basis KAR = 600 ST, Preis je KAR, Bedarf in ST; Meldung Armin 2026-10-29); T76 aktiv, Auftrag `T76K912781`, siehe `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` |
 | 24 | `Z_ZLO03_TURBO2`: `ty_ktab`, Selektionsbild, `process_main`, `fill_ktab`, `ausgabe_spalten_details`, neu `zahl_text`, `details_bom_unit` | Befunde G1, G2, G3, G5 (Stueckkosten mit 10 Stellen, `p_days` ausgeblendet, Textpositionen nie im Bedarf, Kommentar Werk) und Rest aus FIX 23 (Bottom-Up-Details in Stuecklisten-Einheit); T76 aktiv, Auftrag `T76K912785`, laut Ingo am 2026-11-02 nach P76 importiert, siehe `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` |
 | 25 | `Z_ZLO03_TURBO2`: Selektionsbild (`p_app` unsichtbar), START-OF-SELECTION, neu `app_export` | Top-Down-Ergebnis mit `P_APP` ins ABAP-Memory statt Excel, fuer das Dashboard-Set `ZloTopDownSet` (Materialanteil je Produktgruppe); T76 aktiv, im selben Auftrag `T76K912785` wie FIX 24, laut Ingo am 2026-11-02 nach P76 importiert, siehe `FIX25_APP_EXPORT_2026-11-02.md` |
+| 26 | `Z_ZLO03_TURBO2`: `ty_mtab`, neu `load_bmeng`, `process_main`, `app_export`, `create_excel_output` | Positionsmenge durch die Basismenge (`STKO-BMENG`) der Stueckliste des Elternmaterials (Stufe 01 VKNR, ab Stufe 02 `KOM_MSTAE`); Wafer je Chip 1 / 4'750 ROL statt 1 ROL (Dashboard HW_ZUKAUFSORT 957 Mio.); T76 aktiv, Auftrag `T76K912839`, nicht freigegeben; P76 hat dieselben 6 Stuecklisten mit BMENG <> 1 wie T76; siehe `FIX26_BASISMENGE_2026-11-05.md` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 
@@ -136,6 +137,13 @@ sie die nächste Auswertung interpretiert.
 ## Offene Punkte
 
 ### A) Elternmaterial-Spalte ist funktionslos
+
+*Ueberholt am 2026-11-05 (FIX 26):* Die Annahme unten stimmt fuer die T76-Daten nicht. `KOM_MSTAE` enthaelt das
+**Elternmaterial**: der Generator (`Z_VC_ZLO03`, `Z_VC_ZLO03_TXT`) schreibt `kom_mstae = CONVERSION_EXIT_MATN1_OUTPUT(parent_matnr)`
+und `MAT_MSTAE` die ID der Elternzeile. Beleg T76 `ZPOWERBI_VC_TXT`, VKNR 41019: Stufe 01 `KOM_MSTAE` leer, Stufe 02 D34544 mit
+`KOM_MSTAE` D34576 und `MAT_MSTAE` 00966183, K70957 mit C10418; VKNR 1050: K17001 auf Stufe 02 mit U47123 und `MAT_MSTAE` = ID der
+U47123-Zeile. FIX 26 nutzt das Feld fuer die Basismenge des Elternmaterials. P76 ist dafuer nicht geprueft. Ob die Spalte
+„Elternmaterial“ im Top-Down damit gefuellt werden kann, ist eine eigene Frage (Fachbereich).
 
 `load_elternmaterial_cache` liest `ZPOWERBI_VC_TXT-KOM_MSTAE` und schreibt es
 als Elternmaterialnummer. Das Feld enthält laut Datenbestand aber einen
@@ -354,3 +362,7 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
   nie im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit; aktueller Quelltext `Z_ZLO03_TURBO2_FIX24_2026-10-29.abap`,
   Auftrag `T76K912785`
 - `FIX25_APP_EXPORT_2026-11-02.md` — **FIX 25**: Ergebnis per `P_APP` ins Memory fuer `ZloTopDownSet`, Quelltext `Z_ZLO03_TURBO2_FIX25_2026-11-02.abap`, Auftrag `T76K912785`
+- `BEFUND_EINHEIT_WAFER_2026-11-05.md` — Befund Wafer je Chip (STKO-BMENG ignoriert), Grundlage fuer FIX 26
+- `FIX26_BASISMENGE_2026-11-05.md` — **FIX 26**: Menge durch die Basismenge der Elternstueckliste; aktueller Quelltext
+  `Z_ZLO03_TURBO2_FIX26_2026-11-05.abap`, Auftrag `T76K912839`; Testreport `Z_KOI_ZLO_FIX26_TEST.abap` ($TMP, T76); dazu
+  P76-Liste der Stuecklisten mit BMENG <> 1 und Befund FP_THERMOST (Selbststueckliste, MM gegen KG)

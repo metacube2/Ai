@@ -4,6 +4,12 @@ Stand: 2026-11-05. Nur lesende Diagnose in T76/100 (SapProbe `table-read`, `abap
 geändert, kein Report ausgeführt. Noch nichts umgesetzt; FIX 26 unten ist ein Vorschlag mit Codeskizze.
 Zurück: `zlo03/CLAUDE.md`.
 
+*Nachtrag 2026-11-05 nachmittags:* FIX 26 ist in T76 umgesetzt (Auftrag `T76K912839`, nicht freigegeben), alle Tests A bis F
+bestanden; P76 hat dieselben sechs Stücklisten mit `BMENG <> 1`. Abweichungen von der Skizze: Elternmaterialien werden aus den
+gelesenen Zeilen gesammelt (auch numerische `KOM_MSTAE` über MATN1), die Einheitenprüfung läuft über `MARA` im selben SELECT,
+gelöschte Stücklistenköpfe zählen nicht. Einzelheiten und der FP_THERMOST-Befund: `zlo03/FIX26_BASISMENGE_2026-11-05.md`.
+Nebenbefund 4 unten ist damit in `zlo03/CLAUDE.md` Punkt A nachgeführt.
+
 ## 1. Meldung
 
 Produktivdashboard, Einkauf › Spend-Aufriss › „Materialanteil je Produktgruppe“, 01.2026 bis 11.2026: Produktgruppe
