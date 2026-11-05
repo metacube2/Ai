@@ -13,7 +13,8 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Q-Faelle-Abschnitt gebaut, Abruf aus bis `T76K912837` (`QmMeldungSet`, offene Q1) in P76 ist
   (`docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md`). Einkauf-Pruefung im Chrome mit Fehlerliste
   (`docs/EINKAUF_PRUEFUNG_2026-11-05.md`); Materialanteil falsch wegen ignorierter Stuecklisten-Basismenge, FIX 26 offen.
-  Neu offen: IC-Preisfindung ZICAA1 fuer Fabio (Wochen_Todo 153), SPC-Adapter Adrian Jenni (151, Adrian geht Ende Jahr).
+  Neu offen: IC-Preisfindung ZICAA1 fuer Fabio (Wochen_Todo 153; T76/P76 lesend: Preisliste 14 kommt in der IV an, Kurs schon 0.94 ueber EURX, `saptasks/ic_preisfindung/NOTES.md`), SPC-Adapter Adrian Jenni (151, Adrian geht Ende Jahr).
+  Nachmittags: Einkauf-Fixes F2-F9 und Spend-Aufriss aufgeraeumt (Matrix und alter Spend-Block weg, deployed 12:37 `785325f`), ZLO03 FIX 26 in T76 (`T76K912839`), Agenten-Definitionen `.claude/agents/`. Uebergabe: `lastchange.md` oben.
 - **2026-11-03 Abschlussrunde Dashboard/Data Lake:** Einkauf nutzt aktiv, will HK/Standardpreis zum Materialanteil,
   Streamlining und Lieferantenmanagement (Logik in SAP, Dashboard zeigt an); Operations OTD/OTIF/OTP live, Wunsch
   Stammdatenfehler-Seite; HR wartet auf Rexx-Live-Daten (Sitzung mit Nadja, Alex, Artjom zum Hub); Finance muss die

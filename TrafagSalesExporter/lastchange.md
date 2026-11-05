@@ -2,6 +2,16 @@
 
 Stand: 2026-11-05
 
+## Uebergabe Stand 2026-11-05 15:00 (falls die Sitzung abbricht)
+
+**Zuletzt:** Antwort an Fabio Palma (IC-Preisfindung, Mail „AW: IC-Preisfindung automatisieren …“ vom 05.11. 14:04, allen antworten) als **Entwurf in Outlook Web gespeichert 14:59, nicht gesendet**; Inhalt: Preisliste 14 kommt in der IV an, Korrektur Kurs (M -> EURX 0.94, Kurstyp P unnoetig), ERL fuer Z001/Z002, Schritt 2 Job 4 bis 6 PT. Offen: Ingo traegt „KW __“ ein und sendet (oder gibt OK zum Senden).
+
+**IC-Preisfindung (Wochen_Todo 153):** T76 und P76 lesend geprueft, `saptasks/ic_preisfindung/NOTES.md` (Abschnitte bis 7). Naechste Schritte: Customizing ZICAA1 in T76 (Z999, Z000, Z001/Z002 mit ERL, Konditionsausschluss ZPR0/Z999/Z001, Reihenfolge neben PR00/IV01/IV02/VPRS klaeren), Tests T1-T10 mit Fabio/Sandro (`a.xlsx` Blatt 4), Baustein fuer Infosatzpflege in P76 pruefen (Schritt 2). Fabios Unterlagen liegen ungetrackt als `a.xlsx`/`b.pdf` in der Repo-Wurzel (Geschaeftsdaten, nicht committen).
+
+**Offen bei Ingo:** Transporte freigeben und nach P76 importieren: `T76K912839` (ZLO03 FIX 26 Basismenge, danach Einkauf-Lauf, Materialanteil HW_ZUKAUFSORT erwartet rund 1.27 Mio. statt 957 Mio.; Ann-Katrin/Sandro informieren) und `T76K912837` (QmMeldungSet, danach Caches /IWBEP dann /IWFND, `MonthlyReview:QmEnabled` true committen und deployen). Einkauf-Delta wurde 12:38 fuer den Deploy bewusst abgebrochen; Nachholen pruefen (Datenservice). Entscheide: Doppelungen Einkauf-Reiter (Wochen_Todo 154), FP_THERMOST.-Fix, Texte „Nachts laeuft automatisch ein Delta“, Patrick: Q-Statusfilter/Produktlinie/Bearbeiter; T76 aufraeumen `Z_KOI_ZLO_FIX26_TEST`.
+
+**Arbeitsweise neu:** Agenten nur mit `.claude/agents/` (sap-t76, einkauf, finance-verkauf, hr; wirken erst in einer neuen Sitzung als Typ, bis dahin Datei zuerst lesen lassen), SAP nie mit Passwort (`router.md` Abschnitt Agenten, LEARNINGS 05.11.).
+
 ## Einkauf-Fixes deployed, ZLO03 FIX 26 in T76, Agenten-Definitionen (Auftraege Ingo), 2026-11-05 nachmittags
 
 - Einkauf F2, F3, F4, F6, F8, F9 (`01ab4b9`, Doku `a17d623`), 1460/1460, deployed 11:48, im Browser bestaetigt; F5: Delta haengt nicht an IsActive, laeuft im Timer-Slot (laut Doku 12:00).
