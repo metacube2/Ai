@@ -167,6 +167,9 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/shopfloor_paket_2026-10-16/` | Fabios Deploy-Paket vom 2026-10-16: Schnittstellen-Excel (Jobs J1 bis J11, Deploy-Checkliste), Patch 03 Wuensche D. Tobler, Config-Patch 04 mit `apply_config.js` |
 | `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md` | Bauplan Materialanteil je Produktgruppe nach Materialgruppe (Spend-Aufriss Phase 2): Rechnung, vorhandene Bausteine (`Zc23Set`, ZLO03), SAP- und Dashboard-Schritte, offene Fragen |
 | `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `zlo03/Z_ZLO03_TURBO2_FIX25_2026-11-02.abap`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` | ZLO03 FIX 25 und `ZloTopDownSet` fuer den Materialanteil je Produktgruppe (T76 aktiv, `T76K912785`) |
+| `docs/EINKAUF_PRUEFUNG_2026-11-05.md` | Funktionspruefung aller Einkauf-Ansichten im Produktivdashboard (05.11.), Fehlerliste F1-F10 |
+| `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` | Befund Materialanteil Wafer: `STKO-BMENG` in `Z_ZLO03_TURBO2` ignoriert, Vorschlag FIX 26 (T76 nur gelesen) |
+| `saptasks/qm_meldungen/` | `QmMeldungSet` (offene Q1-Meldungen) fuer den Monthly Review: NOTES, Quelltexte vorher/nachher, RFC-Nachbau (T76, `T76K912837`) |
 | `docs/einkauf_lieferantenbewertung/` | Entwurf Lieferantendashboard V6 vom Einkauf (Demo-HTML, fiktive Daten, 02.11.), beschrieben in `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5 |
 | `docs/shopfloor_paket_2026-11-01/` | Fabios Paket vom 2026-11-01: Patch 04 (PPD Terminverschiebungen aus den Rueckstandslisten, Schalter `tv_from_rs`), Patch 05 und Config Verkauf (Fiori statt ZC23, Transmitter = TR5 + TX), Schnittstellen-Excel mit J4 |
 | `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |

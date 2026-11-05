@@ -17,6 +17,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
 | Thema | Datei |
 | --- | --- |
+| **Funktionspruefung Einkauf 05.11.** (alle Ansichten im Chrome, Fehlerliste F1-F10: Materialanteil Wafer 957 Mio., Matrix Lieferant/Jahr, Preisentwicklung, Nachtlauf) und Befund Wafer (Stuecklisten-Basismenge ignoriert, Vorschlag ZLO03 FIX 26) | `docs/EINKAUF_PRUEFUNG_2026-11-05.md`, `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` |
 | **Lieferantenbewertung Entwurf V6 (02.11.)**: vier Reiter, drei offene Entscheide, Datenanforderungen; Demo-HTML | `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5, `docs/einkauf_lieferantenbewertung/` |
 | **Materialanteil je Produktgruppe nach Warengruppe (Aufriss Phase 2)**: Rechenweg Armin ZC23 -> ZLO03 -> Excel (02.11.), Entscheide Ingo, **Bauplan** | `saptasks/zc23_materialanteil/NOTES.md` Nachtrag 2026-11-02, `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md` |
 | **Sitzung Einkauf 2026-10-22**: Zwischenstand Dashboard bis 28.10. (stabilisieren, nichts Neues), Feedbackliste Erich/Sandro/Marco, neuer Wunsch Lieferantenbewertung/-entwicklung (Zertifikate ISO 9001, Massnahmen, Audits), Grundsatzfrage Handbestellwesen abschalten | `docs/EINKAUF_SITZUNG_2026-10-22.md` |

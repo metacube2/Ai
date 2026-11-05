@@ -1,6 +1,17 @@
 # Last Change
 
-Stand: 2026-11-04
+Stand: 2026-11-05
+
+## Verkauf Monthly Review mit Q-Faellen, SAP QmMeldungSet, Einkauf-Pruefung, Mails (Auftraege Ingo), 2026-11-05
+
+- **Monthly Review Gesellschaften** (Wunsch Patrick Hertach): Unterreiter `/verkauf/monthly-review`, Phase 1 und Abschnitt 4
+  „Qualitaet · offene Q-Faelle“ live aus SAP (`26ab30b`, `8ff3685`, Korrektur Statuscodes `47abb30`), 1443/1443, deployed
+  10:33 (`docs/rag/DEPLOYMENT.md`). Q-Faelle-Abruf aus, bis `T76K912837` in P76 ist. `docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md`.
+- **SAP T76:** `QmMeldungSet` in `ZPOWERBI_EINKAUF_SRV`, Auftrag `T76K912837` (313 offene Q1 in T76), `saptasks/qm_meldungen/NOTES.md`.
+- **Einkauf:** Funktionspruefung aller Ansichten im Chrome, Fehlerliste `docs/EINKAUF_PRUEFUNG_2026-11-05.md`; Materialanteil
+  957 Mio. durch ignorierte Stuecklisten-Basismenge (`zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md`), FIX 26 freigegeben, noch nicht umgesetzt.
+- **Mails:** Antwort an Fabio Palma zur IC-Preisfindung (ZICAA1, Wochen_Todo 153) und an Adrian Jenni zur SPC-Adapterauswertung
+  (Wochen_Todo 151) gesendet. Wochen_Todo 150 bis 153 samt `.xlsx`, LEARNINGS (4), Router Einkauf, baum, Koordination.
 
 ## Nachfuehrung zum Chatschluss (Auftrag Ingo „md nachfuehren“), 2026-11-04 13:10
 
