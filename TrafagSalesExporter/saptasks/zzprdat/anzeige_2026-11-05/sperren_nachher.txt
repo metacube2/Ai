@@ -1,0 +1,27 @@
+# TLOCK nachher (2026-11-06, nach RSWBO099 fuer T76K911783 und T76K911784)
+OBJECT | TRKORR | AUTHOR | EDTFLAG
+-------+--------+--------+--------
+(no rows)
+Exitcode: 0
+# TLOCK HIKEY LIKE ZXCO1
+OBJECT | TRKORR | AUTHOR | EDTFLAG
+-------+--------+--------+--------
+(no rows)
+Exitcode: 0
+# E071 T76K911784
+TRKORR | AS4POS | PGMID | OBJECT | OBJ_NAME | LOCKFLAG
+-------+--------+-------+--------+----------+---------
+T76K911784 | 000001 | LIMU | REPS | ZXCO1O01 | 
+T76K911784 | 000002 | LIMU | DYNP | SAPLXCO10100 | 
+T76K911784 | 000003 | LIMU | REPS | ZXCO1I01 | 
+T76K911784 | 000004 | LIMU | REPS | ZXCO1U12 | 
+T76K911784 | 000005 | LIMU | REPS | ZXCO1U11 | 
+T76K911784 | 000006 | LIMU | REPS | ZXCO1TOP | 
+T76K911784 | 000007 | LIMU | REPS | ZXCO1U06 | 
+Exitcode: 0
+# E070
+TRKORR | TRFUNCTION | TRSTATUS | TARSYSTEM | AS4USER | AS4DATE | AS4TIME | STRKORR
+-------+------------+----------+-----------+---------+---------+---------+--------
+T76K911783 | K | D | P76 | MEEY_GEWA | 20261106 | 080535 | 
+T76K911784 | S | D |  | MEEY_GEWA | 20261106 | 080644 | T76K911783
+Exitcode: 0

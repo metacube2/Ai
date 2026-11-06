@@ -1,0 +1,5 @@
+﻿/app/con[0]/ses[1]/wnd[0]/usr/tabsTABSTRIP_0115/tabp+COI [GuiTab] TRAFAG Daten {}
+  /app/con[0]/ses[1]/wnd[0]/usr/tabsTABSTRIP_0115/tabp+COI/ssubSUBSCR_0115:SAPLCOKO1:0900 [GuiScrollContainer]  {}
+    /app/con[0]/ses[1]/wnd[0]/usr/tabsTABSTRIP_0115/tabp+COI/ssubSUBSCR_0115:SAPLCOKO1:0900/subSSCR115:SAPLXCO1:0100 [GuiSimpleContainer]  {}
+      /app/con[0]/ses[1]/wnd[0]/usr/tabsTABSTRIP_0115/tabp+COI/ssubSUBSCR_0115:SAPLCOKO1:0900/subSSCR115:SAPLXCO1:0100/lblTYPENSCHILD [GuiLabel] Produktionsdatum {}
+      /app/con[0]/ses[1]/wnd[0]/usr/tabsTABSTRIP_0115/tabp+COI/ssubSUBSCR_0115:SAPLCOKO1:0900/subSSCR115:SAPLXCO1:0100/txtCI_AUFK-ZZPRDAT [GuiTextField] 11.11.2026 {}

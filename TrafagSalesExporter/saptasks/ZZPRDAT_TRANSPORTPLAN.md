@@ -326,6 +326,18 @@ mit TAN und FPA ist nicht gesprochen worden. Wer die Benutzer sind, ist hier nic
 
 Ergebnis des Abnahmetests selbst: noch nicht eingetragen.
 
+### Abnahmesitzung 2026-11-05/06: Reiter zeigt das Datum nicht, Georgs offener Umbau
+
+*Erledigt 2026-11-06 08:11 in T76:* Beim Abnahmetest zeigte der Reiter „TRAFAG Daten“ bei Auftrag 1241847 kein Produktionsdatum, obwohl AUFK-ZZPRDAT 20261111 traegt (alle vier am 05.11. freigegebenen Auftraege korrekt gleich GLTRP). Ursache: In `ZXCO1U11` (EXIT_SAPLCOKO1_001, fuellt das Bildfeld `CI_AUFK-ZZPRDAT`) ist alles auskommentiert, auch die reine Anzeige. Der Include steckte in Georgs (MEEY_GEWA) offenem Auftrag `T76K911783` „PPCO0012 FAUF: Änd neu impl. / Progr #2“ (Mandant 090) mit sechs weiteren Objekten (`ZXCO1O01`, Bild `SAPLXCO1 0100`, `ZXCO1I01`, `ZXCO1U12`, `ZXCO1TOP`, `ZXCO1U06`). Auf Ingos Entscheid mit `RSWBO099` entsperrt (Aufgabe `T76K911784`, Auftrag bleibt bestehen), dann neuer Auftrag **`T76K912851`** nur mit `ZXCO1U11` (Anzeigezeilen `ci_aufk-zzprdat = i_caufvd-zzprdat.` und `gs_aufk-zzprdat = …`). CO03 1241847 zeigt jetzt 11.11.2026, Gegenprobe ohne Datum bleibt leer. Einzelheiten: `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md`.
+
+**Ueberholt damit:** die Aussage in Abschnitt 9, die alte Loesung sei „vollstaendig auskommentiert“ — das gilt nur fuer T76 und nur fuer Georgs offenen Stand, nicht fuer P76.
+
+**Vor jeder Freigabe von `T76K912490`/`T76K912851` offen (P76 lesend pruefen):**
+1. `ZXCO1TOP` in P76: Stehen `tables: ... ci_aufk` und `DATA: gs_aufk TYPE ci_aufk` drin? Wenn nicht, wird `SAPLXCO1` nach dem Import syntaxfehlerhaft (CO01/CO02/CO03 brechen ab). Sonst `gs_aufk`-Zeile streichen bzw. TOP mitnehmen.
+2. `ZXCO1U06` (EXIT_SAPLCOZV_001, Projekt `ZPP00005`): in T76 aktiv mit Georgs Stand 31.03.2026, schreibt `header_exp-zzprdat = header_imp-gltrp` bei Freigabe. **Zweiter Schreibweg neben dem BAdI** — die T76-Tests unterscheiden nicht, wer schreibt. Stand in P76 und Uebernahme von `HEADER_EXP-ZZPRDAT` klaeren (Georg).
+3. `ZXCO1U12` (EXIT_SAPLCOKO1_002, Rueckgabe Bild -> Auftrag) in T76 auskommentiert; in P76 pruefen, ob er den Bildwert beim Sichern zurueckschreibt.
+4. Georgs Auftrag `T76K911783` (jetzt ohne Sperren): mit Georg entscheiden.
+
 ## 7. Risiko im Produktivsystem und wie man es begrenzt
 
 Nach dem Import wird `BEFORE_UPDATE` bei jedem Sichern aufgerufen, registriert den
