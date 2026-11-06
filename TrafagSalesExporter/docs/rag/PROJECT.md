@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -89,6 +89,13 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   **Stand 2026-10-26:** live bestätigt, Quelltext identisch mit dem Repo, Transporte offen;
   sieben Testaufträge der Benutzer TAN/FPA (1241831 bis 1241844) passen zum
   Sollverhalten, Einzelheiten im Transportplan. Ergebnis des Abnahmetests noch offen.
+  **Stand 2026-11-06:** Bei der Abnahme zeigte der Reiter „TRAFAG Daten“ das Datum nicht
+  (`ZXCO1U11` auskommentiert in Georgs offenem Auftrag); behoben in T76, und alle
+  ZZPRDAT-Objekte liegen jetzt in `T76K912490`: Aufgabe `T76K912491` (BAdI-Loesung) und
+  Aufgabe `T76K912852` (`ZXCO1U11`, `ZXCO1O01`, `ZXCO1I01`, `ZXCO1U12`, `ZXCO1TOP`, `ZXCO1U06`,
+  Bild `SAPLXCO1 0100`; `T76K912851` darin verschmolzen). Mit `ZXCO1U06` geht ein zweiter
+  Schreibweg auf `ZZPRDAT` mit (Entscheid Ingo/Georg offen). Weiter nicht freigegeben;
+  Transportplan Abschnitt 1, Nachtrag 2026-11-06.
 
 - LIVE-PRUEFUNG 2026-07-31: UK-2025 ist produktiv vorhanden (1'867 Zeilen);
   `GroupStandardCosts` ist mit 63'506 TR-AG-Werten gefuellt; Supplier bleibt bei

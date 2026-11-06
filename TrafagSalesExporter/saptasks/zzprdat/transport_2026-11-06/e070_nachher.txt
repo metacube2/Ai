@@ -1,0 +1,26 @@
+# E070 nachher (2026-11-06, nach Verschmelzen 851->490 und Aufnahme in 852)
+
+TRKORR | TRFUNCTION | TRSTATUS | TARSYSTEM | AS4USER | AS4DATE | AS4TIME | STRKORR
+-------+------------+----------+-----------+---------+---------+---------+--------
+T76K912491 | S | D |  | KOI | 20260904 | 072518 | T76K912490
+T76K911783 | K | D | P76 | MEEY_GEWA | 20261106 | 080535 | 
+T76K911784 | S | D |  | MEEY_GEWA | 20261106 | 080644 | T76K911783
+T76K912490 | K | D | P76 | KOI | 20261106 | 083930 | 
+T76K912852 | S | D |  | KOI | 20261106 | 084342 | T76K912490
+Exitcode: 0
+# E070C
+
+TRKORR | CLIENT
+-------+-------
+T76K912490 | 100
+T76K912491 | 100
+T76K912852 | 100
+Exitcode: 0
+# E07T
+
+TRKORR | AS4TEXT
+-------+--------
+T76K912490 | ZZPRDAT: Produktionsdatum bei Auftragsfreigabe
+T76K912491 | ZZPRDAT: Produktionsdatum bei Auftragsfreigabe
+T76K912852 | ZZPRDAT: Anzeige Produktionsdatum im Reiter TRAFAG Daten
+Exitcode: 0

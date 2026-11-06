@@ -1,6 +1,6 @@
 # ZZPRDAT: Weg vom Testaufbau zum Transport
 
-Stand: 2026-10-26 (Technik unverändert seit 2026-09-07, am 26.10. live bestätigt, siehe Abschnitt 6a „Live-Pruefung vom 2026-10-26“). **Abnahmetest verschoben:** Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
+Stand: 2026-11-06 09:00. **Transport gebuendelt:** `T76K912851` (Anzeige `ZXCO1U11`) ist in `T76K912490` verschmolzen, Georgs sechs weitere XCO1-Objekte liegen in dessen Aufgabe `T76K912852`; Objektliste und Belege im Nachtrag 2026-11-06 zu Abschnitt 1. Nichts freigegeben, P76 nicht beruehrt. Frueherer Stand: 2026-10-26 (Technik unverändert seit 2026-09-07, am 26.10. live bestätigt, siehe Abschnitt 6a „Live-Pruefung vom 2026-10-26“). **Abnahmetest verschoben:** Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
 
 Stand der Technik: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
 gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
@@ -21,13 +21,14 @@ Dokument fuer den Fachbereich in `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
 | | |
 |---|---|
 | Auftrag | **`T76K912490`** |
-| Aufgabe | `T76K912491` (Entwicklung/Korrektur, KOI) |
+| Aufgaben | `T76K912491` (Entwicklung/Korrektur, KOI): BAdI-Loesung; seit 2026-11-06 zusaetzlich `T76K912852` (Entwicklung/Korrektur, KOI): Exit-Includes und Bild der Funktionsgruppe XCO1 |
 | Kurztext | ZZPRDAT: Produktionsdatum bei Auftragsfreigabe |
 | Typ | Workbench-Auftrag, Ziel `P76` |
 | Status | **aenderbar, bewusst nicht freigegeben** |
 | Paket | `ZPP1` |
 
-Objektliste, am 2026-09-04 aus SE01 gelesen:
+Objektliste, am 2026-09-04 aus SE01 gelesen (*ueberholt am 2026-11-06:* das ist nur noch die Aufgabe
+`T76K912491`; die vollstaendige Liste steht im Nachtrag 2026-11-06 am Ende dieses Abschnitts):
 
 | Typ | Objekt |
 |---|---|
@@ -45,6 +46,117 @@ einschliesslich seiner Verarbeitungsart.
 kaputt macht:** `Z_ZZPRDAT_SET` ist Verbuchungsbaustein mit **„Start verzoegert" (V2)**, am
 2026-09-04 nach der Aktivierung noch einmal gegengelesen. Bei V1 („Start sofort")
 ueberschreibt der SAP-Standard den Wert wieder.
+
+### Nachtrag 2026-11-06: alle ZZPRDAT-Objekte in `T76K912490` gebuendelt
+
+Auftrag Ingo vom 2026-11-06: „nimm alle objekte in mein auftrag was mit dem zzprdat zu tun haben“.
+Gearbeitet nur in T76/100, in einer eigenen GUI-Sitzung (danach geschlossen), ohne Passwort; nichts
+freigegeben, P76 nicht beruehrt. Stand vorher und nachher als Dateien in
+`saptasks/zzprdat/transport_2026-11-06/` (`e070_*`, `e071_*`, `tlock_*`).
+
+**Schritt 1, Verschmelzen von `T76K912851` in `T76K912490`.** SE09, Auswahlliste der aenderbaren
+Auftraege, Cursor auf `T76K912851`, Menue *Hilfsmittel > Reorganisieren > Auftraege verschmelzen...*
+(Dialog `SAPLSTRI` 0800). Der Dialog sagt selbst: „Der Inhalt des ersten Auftrags wird komplett in den
+zweiten Auftrag umgehaengt, danach wird der erste Auftrag geloescht.“ Erster Auftrag `T76K912851`,
+zweiter `T76K912490`, *Pruefen* (F5) ohne Einwand, *Weiter*. Meldung: „Auftraege wurden verschmolzen
+(verbleibender Auftrag: T76K912490)“. In der Einzelanzeige eines Auftrags steht derselbe Menuepunkt
+unter *Auftrag/Aufgabe*, verlangt dort aber den Aendern-Modus („Funktion nur fuer aenderbare Auftraege
+moeglich“).
+
+| Beleg nach dem Verschmelzen | Wert |
+| --- | --- |
+| `E070`/`E07T` `T76K912851` | kein Satz mehr (Auftrag geloescht) |
+| `E070` `T76K912852` | `S`, `D`, `STRKORR = T76K912490`, Text unveraendert „ZZPRDAT: Anzeige Produktionsdatum im Reiter TRAFAG Daten“ |
+| `E071` `T76K912490` Pos. 1 | `CORR MERG T76K912851 20261106 083930 KOI` (Protokolleintrag von SAP) |
+| `TLOCK` `ZXCO1U11` | weiter `T76K912852`, `KOI` |
+
+**Schritt 2, Georgs sechs weitere Objekte in Aufgabe `T76K912852`.** Der Weg ueber *Objekte aufnehmen >
+Frei gewaehlte Objekte* aus der Auftragsliste brach mit „Positionieren Sie den Cursor auf einem
+aenderbaren Auftrag“ ab, ohne etwas aufzunehmen (per `E071` geprueft). Gegangen ist: Doppelklick auf die
+Aufgabe, Reiter *Objekte*, *Anzeigen <-> Aendern* (Strg+F1), sechs Zeilen eingetragen, Enter (SAP
+erkennt „Reportsource“ bzw. „Dynpro“), Sichern: „Aenderungen wurden gesichert“. **Die von Hand
+eingetragenen Zeilen waren danach nicht gesperrt** (`LOCKFLAG` leer, kein `TLOCK`); erst *Alle markieren*
+und *Objekt sperren* setzte die Sperre. Das Bild heisst in `E071` `SAPLXCO10100` ohne Leerraum, wie in
+Georgs Aufgabe. Aufgabe 852 statt 491, damit alle Exit-Objekte der Funktionsgruppe XCO1 zusammen liegen
+und 491 die BAdI-Loesung bleibt; transportiert wird ohnehin der ganze Auftrag.
+
+**Objektliste von `T76K912490` am 2026-11-06 (`E071`, alle Aufgaben, `LOCKFLAG` X ausser dem Protokolleintrag):**
+
+| Aufgabe | Pos. | Objekt | Herkunft |
+| --- | --- | --- | --- |
+| `T76K912490` (Kopf) | 1 | `CORR MERG T76K912851 20261106 083930 KOI` | Protokoll des Verschmelzens, kein transportiertes Objekt |
+| `T76K912491` | 1 | `R3TR FUGR ZPP_ZZPRDAT` | BAdI-Loesung (seit 2026-09-04) |
+| `T76K912491` | 2 | `R3TR SXCI Z_ZZPRDAT_UPDATE` | BAdI-Loesung |
+| `T76K912491` | 3 | `R3TR CLAS ZCL_IM__ZZPRDAT_UPDATE` | BAdI-Loesung |
+| `T76K912491` | 4 | `R3TR ENHO Z_ZZPRDAT` | BAdI-Loesung |
+| `T76K912491` | 5 | `R3TR PROG Z_ZZPRDAT_CHECK` | Nachweisreport |
+| `T76K912852` | 1 | `LIMU REPS ZXCO1U11` | Anzeige im Reiter (`EXIT_SAPLCOKO1_001`), KOI 2026-11-06, aus `T76K912851` |
+| `T76K912852` | 2 | `LIMU REPS ZXCO1O01` | **neu 06.11.**, Georg 2026-03-18 (PBO Bild 0100) |
+| `T76K912852` | 3 | `LIMU DYNP SAPLXCO10100` | **neu 06.11.**, Bild des Reiters „TRAFAG Daten“ |
+| `T76K912852` | 4 | `LIMU REPS ZXCO1I01` | **neu 06.11.**, Georg 2026-03-18 (PAI Bild 0100) |
+| `T76K912852` | 5 | `LIMU REPS ZXCO1U12` | **neu 06.11.**, Georg 2026-03-31 (`EXIT_SAPLCOKO1_002`, in T76 auskommentiert) |
+| `T76K912852` | 6 | `LIMU REPS ZXCO1TOP` | **neu 06.11.**, Georg 2026-03-18 (`TABLES ci_aufk`, `DATA gs_aufk TYPE ci_aufk`) |
+| `T76K912852` | 7 | `LIMU REPS ZXCO1U06` | **neu 06.11.**, Georg 2026-03-31 (`EXIT_SAPLCOZV_001`, zweiter Schreibweg) |
+
+`TLOCK` danach: zwoelf Saetze, alle `KOI`; fuenf fuer 491, sieben fuer 852 (sechs `PROG`, ein `FUGX XCO1`
+fuer das Bild), also dieselben Objekttypen, die vorher Georgs Aufgabe gesperrt hatte.
+
+**Warum die sechs Objekte mitgehen.** Georgs offener Umbau der sieben Objekte (REPOSRC `MEEY_GEWA`
+2026-03-18 und 2026-03-31, frueher in seiner Aufgabe `T76K911784`, nie freigegeben) ist in T76 aktiv;
+gegen ihn ist die Anzeige getestet. `ZXCO1U11` setzt `gs_aufk-zzprdat`, und `gs_aufk` ist nur in
+`ZXCO1TOP` deklariert. Fehlt das in P76, waere `SAPLXCO1` nach einem Import nur von `ZXCO1U11`
+syntaxfehlerhaft und CO01/CO02/CO03 brechen ab (P76 nicht gelesen, deshalb vorsorglich mitgenommen).
+Alle drei Exits haengen am selben Programm: `TFDIR` `EXIT_SAPLCOKO1_001` Include 11,
+`EXIT_SAPLCOKO1_002` Include 12, `EXIT_SAPLCOZV_001` Include 06, jeweils `PNAME SAPLXCO1`. Mit den
+sieben Objekten kommt genau der in T76 gepruefte Stand der Funktionsgruppe nach P76.
+
+**Hinweis `ZXCO1U06`: das ist ein zweiter Schreibweg auf `ZZPRDAT`.** Der aktive Stand setzt bei
+`header_imp-ftrmi = sy-datum` und leerem `zzprdat` den Wert `header_exp-zzprdat = header_imp-gltrp`
+(`anzeige_2026-11-05/vorher_ZXCO1U06.abap`). Mit diesem Auftrag geht Georgs Stand vom 2026-03-31 nach
+P76. Eine fruehere Fassung ist bereits am 2025-12-02 in `T76K911416` „PPCO0007 FAUF: ProdDatum
+implement / Progr“ freigegeben worden (VRSD `ZXCO1U06` Version 0 mit `KORRNUM T76K911416`); der Weg kann
+in P76 also schon laufen, sofern importiert (Vermutung, P76-Importstand nicht geprueft). Ob er neben dem
+BAdI bleiben soll, entscheiden Ingo und Georg. Herausnehmen allein schaltet ihn nicht ab: Ohne
+`ZXCO1U06` in 490 bliebe in P76 die Fassung von 2025 wirksam (falls importiert). Abschalten hiesse, den
+Quelltext zu aendern; das ist nicht Teil dieses Auftrags.
+
+**Rueckleseabgleich.** Georgs Auftrag ist unveraendert: `E070` `T76K911783`/`T76K911784` Status `D`,
+Zeitstempel `20261106 080535`/`080644` wie vorher, `E071` der Aufgabe weiter dieselben sieben Zeilen mit
+leerem `LOCKFLAG`. An den Quelltexten hat sich nichts geaendert: `abap-read` der sechs Includes gegen
+`anzeige_2026-11-05/vorher_*.abap` bzw. `nachher_ZXCO1U11.abap`, `diff -B -w` jeweils Exitcode 0; REPOSRC-
+Stempel aller `ZXCO1*` und `SAPLXCO1` wie vor der Arbeit.
+
+**Pruefungen.** `abap-check SAPLXCO1`: „Syntax status OK, Error subrc 0“. Das prueft die aktive Fassung;
+sie ist hier die massgebliche, weil `DWINACTIV` fuer `%XCO1%` leer ist. ST22 06.11.2026: der
+Zaehler „Heute“ auf dem Einstiegsbild (Titel „Alle Mandanten“) zeigt 1 Laufzeitfehler; die Liste
+dazu: 08:02:12 `CALL_FUNCTION_NOT_REMOTE` in `SAPLSIFP` (KOI, Mandant 100), der bekannte Leseversuch vor
+der Anzeigeaenderung. Seither keiner.
+
+**Folge fuer Georg:** Die sieben Objekte sind jetzt fuer KOI in `T76K912852` gesperrt. Georg kann sie
+nicht mehr in seinem Auftrag aendern, und eine Freigabe von `T76K911783` duerfte an diesen Sperren
+scheitern, weil die Objekte dort noch in der Liste stehen (Vermutung, nicht getestet). Mit
+`T76K912490` geht ausserdem sein Zwischenstand mit, der teils halbfertig ist: in `ZXCO1O01` ist die
+einzige Zeile von `Fill_Prod_Date` auskommentiert, `ZXCO1I01` enthaelt nur
+`MOVE-CORRESPONDING ci_aufk TO ci_aufk`, `ZXCO1U12` ist ganz auskommentiert
+(`anzeige_2026-11-05/vorher_*.abap`). Funktional harmlos, aber Georg sollte es wissen.
+
+**Nur aufgelistet, nicht aufgenommen: was fuer die Wirkung in P76 sonst noch zaehlt.**
+
+| Objekt | Stand in T76 (Beleg) | Bewertung |
+| --- | --- | --- |
+| CMOD `ZPP00012` (Erweiterung PPCO0012: `EXIT_SAPLCOKO1_001/002`, Bild-Exit `SAPLCOKO1 0900 SSCR115 -> SAPLXCO1 0100`, Menue-Exit `SAPLCOCU +COI`; `MODSAP`) | `MODATTR STATUS A`, aktiviert 2025-11-30 von MEEY_GEWA. Letzte Transporte beide am 2026-03-31 freigegeben: `T76K911390` „ZPP00012 deaktivieren /2“ um 14:32:11, dann `T76K911398` „ZPP00012 AKTIVIEREN /2“ um 14:32:30 | Nichts offen in T76. In P76 aktiv, wenn beide in dieser Reihenfolge importiert sind (Vermutung). **Vor dem Import in STMS die Importhistorie P76 fuer 911390/911398 ansehen**; ohne aktives Projekt zeigt der Reiter nichts |
+| CMOD `ZPP00005` (PPCO0007: `EXIT_SAPLCOZV_001` -> `ZXCO1U06`) | `MODATTR STATUS A` seit 2013-09-27 (I001067), Transport `T76K905144` 2013 freigegeben | Nichts offen; das Projekt ist der Grund, warum `ZXCO1U06` ueberhaupt laeuft |
+| `ZZPRDAT` in `AUFK`/`CAUFVD`/`COCI_AUFK` | `DD03L`: ueber `CI_AUFK` -> Append `ZCO_ORD1` (MEEY_GEWA 2025-11-30) -> Datenelement `ZCO_GLTRP` (DATS). Transporte `T76K910856` „PP Produktionsdatum fuer Typenschild“ (2025-07-18) und `T76K911394` (2025-11-30), beide freigegeben; `T76K911110` (2025-10-27) ebenfalls | Nichts offen in T76. Ob in P76 importiert: nicht geprueft; ohne das Feld waeren `Z_ZZPRDAT_SET` und die Includes in P76 nicht uebersetzbar |
+| Hauptprogramm `SAPLXCO1` | REPOSRC MEEY_GEWA 2026-03-31 14:32:33, Inhalt nur die vier Standardzeilen `INCLUDE LXCO1TOP/LXCO1UXX/LXCO1F00/ZXCO1ZZZ`, in keinem Auftrag (`E071`), SAP-Objekt (`TADIR FUGS XCO1`, SAP) | Vermutung: Neugenerierung bei Georgs Aktivierung. Nicht aufnehmen |
+| `ZXCO1ZZZ` | MEEY_GEWA 2025-10-14, in `T76K911110` freigegeben; bindet `ZXCO1F01`, `ZXCO1F02`, `zxco1i01`, `zxco1o01` ein | Nichts offen |
+| `ZXCO1U01`, `ZXCO1U05`, `ZXCO1F01`, `ZXCO1F02` | letzte Aenderung 2025-07-02 oder frueher, alle freigegeben; kein Treffer fuer `zzprdat`, `prdat`, `gs_aufk`, `ci_aufk` im Quelltext | Gehoeren nicht zu ZZPRDAT |
+| Weitere Bilder der Funktionsgruppe | `D020S PROG SAPLXCO1`: nur `0100` | Bild ist aufgenommen |
+
+**Hinweis aus den T76-Versionen, kein P76-Beleg:** Der zuletzt freigegebene Stand von `ZXCO1TOP`,
+`ZXCO1O01`, `ZXCO1U11`, `ZXCO1U12` und Bild 0100 ist laut VRSD der aus `T76K911396` „PPCO0012 FAUF: Aend
+neu implement / Progr“ (2025-11-30), von `ZXCO1I01` der aus `T76K911110` (2025-10-27), von `ZXCO1U06`
+der aus `T76K911416` (2025-12-02). Diesen Stand hat P76 vermutlich heute; Georgs Aenderungen vom Maerz
+2026 kommen erst mit `T76K912490`.
 
 ## 2. Warum vor der Abnahme transportiert wurde
 
@@ -332,7 +444,13 @@ Ergebnis des Abnahmetests selbst: noch nicht eingetragen.
 
 **Ueberholt damit:** die Aussage in Abschnitt 9, die alte Loesung sei „vollstaendig auskommentiert“ — das gilt nur fuer T76 und nur fuer Georgs offenen Stand, nicht fuer P76.
 
-**Vor jeder Freigabe von `T76K912490`/`T76K912851` offen (P76 lesend pruefen):**
+*Nachtrag 2026-11-06:* `T76K912851` gibt es nicht mehr, er ist in `T76K912490` verschmolzen, und die
+sechs uebrigen Objekte liegen jetzt ebenfalls dort (Aufgabe `T76K912852`, Abschnitt 1 Nachtrag
+2026-11-06). Damit ist Punkt 1 der folgenden Liste durch die Mitnahme von `ZXCO1TOP` erledigt; Punkt 2
+wird zum Entscheid, ob `ZXCO1U06` mitgeht; Punkt 3 heisst jetzt, dass der auskommentierte T76-Stand von
+`ZXCO1U12` einen in P76 etwa aktiven Rueckschreibweg ersetzen wuerde.
+
+**Vor jeder Freigabe von `T76K912490` offen (P76 lesend pruefen), Stand 2026-11-06 mit den Nachtraegen oben:**
 1. `ZXCO1TOP` in P76: Stehen `tables: ... ci_aufk` und `DATA: gs_aufk TYPE ci_aufk` drin? Wenn nicht, wird `SAPLXCO1` nach dem Import syntaxfehlerhaft (CO01/CO02/CO03 brechen ab). Sonst `gs_aufk`-Zeile streichen bzw. TOP mitnehmen.
 2. `ZXCO1U06` (EXIT_SAPLCOZV_001, Projekt `ZPP00005`): in T76 aktiv mit Georgs Stand 31.03.2026, schreibt `header_exp-zzprdat = header_imp-gltrp` bei Freigabe. **Zweiter Schreibweg neben dem BAdI** — die T76-Tests unterscheiden nicht, wer schreibt. Stand in P76 und Uebernahme von `HEADER_EXP-ZZPRDAT` klaeren (Georg).
 3. `ZXCO1U12` (EXIT_SAPLCOKO1_002, Rueckgabe Bild -> Auftrag) in T76 auskommentiert; in P76 pruefen, ob er den Bildwert beim Sichern zurueckschreibt.
@@ -362,6 +480,11 @@ leere `ZZPRDAT`-Felder fuellt und vorhandene Werte niemals ueberschreibt. Grundl
 ist die fachlich bestaetigte Quelle, nach heutigem Stand `AFKO-GLTRP`.
 
 ## 9. Was mit der alten Loesung geschieht
+
+*Ueberholt am 2026-11-06:* `ZXCO1U11` (jetzt mit zwei Anzeigezeilen) und `ZXCO1U12` sind seit dem
+2026-11-06 Teil von `T76K912490` (Aufgabe `T76K912852`), zusammen mit `ZXCO1TOP`, `ZXCO1O01`,
+`ZXCO1I01`, `ZXCO1U06` und Bild 0100; siehe Abschnitt 1 Nachtrag 2026-11-06. Der folgende Absatz
+beschreibt den Stand vom September.
 
 Das Erweiterungsprojekt `ZPP00012` mit den Includes `ZXCO1U11` und `ZXCO1U12` bleibt
 unberuehrt; der dortige Code ist vollstaendig auskommentiert und laeuft nicht. Die neue

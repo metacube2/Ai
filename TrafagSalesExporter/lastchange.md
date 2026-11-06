@@ -2,6 +2,11 @@
 
 Stand: 2026-11-05
 
+## ZZPRDAT Abnahmesitzung und Transport gebuendelt (Auftrag Ingo), 2026-11-05/06
+
+- Abnahmetest: Logik schreibt korrekt (AUFK), Reiter „TRAFAG Daten“ zeigte nichts, weil `ZXCO1U11` in Georgs offenem Auftrag `T76K911783` (Mandant 090) auskommentiert war. Auf Ingos Entscheid Georgs Objekte entsperrt (`RSWBO099`, Aufgabe `T76K911784`), Anzeige eingebaut, CO03 1241847 zeigt 11.11.2026.
+- Alle ZZPRDAT-Objekte in `T76K912490` (Aufgaben `T76K912491` BAdI-Loesung, `T76K912852` XCO1-Objekte inkl. `ZXCO1TOP` gegen Syntaxfehler in P76). Nicht freigegeben. Offen: P76-Importstand ZPP00012/ZCO_ORD1, zweiter Schreibweg `ZXCO1U06`, Georg informieren. `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
+
 ## Aufraeumen Wurzel und Arbeitskopien (Auftrag Ingo), 2026-11-05 nachmittags
 
 - Logs nach `.tmp_logs/` (`032722f`), sechs versionierte Dateien ohne Code-Verweis nach `docs/daten/` und `docs/abap/` (`e27d8af`).

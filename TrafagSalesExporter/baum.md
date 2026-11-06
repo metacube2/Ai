@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-11-05 (Monthly Review Phase 1 gebaut, Beschreibung nachgefuehrt); davor 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle), 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Stand: 2026-11-06 (ZZPRDAT: `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md` nachgetragen, Ordner `transport_2026-11-06/`); davor 2026-11-05 (Monthly Review Phase 1 gebaut, Beschreibung nachgefuehrt); davor 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle), 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
 Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
@@ -222,7 +222,9 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` | Ruest- gegen Bearbeitungszeit |
 | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` | Uebergabe Spartenzuordnung |
 | `saptasks/zzprdat-kontext.md` | ZZPRDAT-Arbeitsstand und Analyseverlauf |
-| `saptasks/ZZPRDAT_TRANSPORTPLAN.md` | ZZPRDAT: Transportauftrag T76K912490, Objektliste, Nachtest |
+| `saptasks/ZZPRDAT_TRANSPORTPLAN.md` | ZZPRDAT: Transportauftrag T76K912490, Objektliste (seit 2026-11-06 mit den XCO1-Exit-Objekten in Aufgabe T76K912852), Nachtest |
+| `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md` | ZZPRDAT: Anzeige des Produktionsdatums im Reiter „TRAFAG Daten“ (`ZXCO1U11`), Entsperren von Georgs Auftrag, Test CO03; im Ordner Quelltexte vorher/nachher und Sperrlisten |
+| `saptasks/zzprdat/transport_2026-11-06/` | ZZPRDAT: E070/E071/TLOCK vor und nach dem Buendeln in T76K912490 (keine Markdown-Datei; Beschreibung im Transportplan Abschnitt 1) |
 | `saptasks/ZZPRDAT_T76_PROTOTYP_2026-09-03.md` | ZZPRDAT-Prototyp in $TMP (ueberholt) |
 | `docs/ZC23_Materialanteil_Formeln_2026-10-15.docx` | ZC23 Materialanteil und Arbeit CZ: Formeln, Beispiel B87813, Bedienung, Grenzen, Pruefung (Word, Generator `.tmp_tools/BuildZc23Formeln`) |
 | `saptasks/fiori_zc23/NOTES.md` | Fiori-App ZC23: Stand, Selektion, Transport; im Ordner Generator `erzeugen.py`, `methoden_bauen.py`, MPC/DPC vorher/neu, Struktur-Feldliste, App `webapp/` |

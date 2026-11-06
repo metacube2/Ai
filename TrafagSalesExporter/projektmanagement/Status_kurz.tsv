@@ -18,7 +18,7 @@ Einkauf	Texte Produktgruppen D1/D5	Bereit		2026-10-01
 Einkauf	Logistik live: Kommissionierung, Produktion, 3D-Lager, Produktivität, Kapazität	Bereit, Ausbau 05.10. produktiv	Passwort für Namen (Ingo)	2026-10-05
 Einkauf	Stückliste: Verwendung & Risiko über mehrere Stufen	Bereit		2026-10-01
 Einkauf	Zwei kleine Entscheide (Beschriftung, SAP-Schlüssel)	Offen	Ingo	2026-09-29
-SAP	ZZPRDAT Produktionsdatum: gemeinsamer Test	Läuft	Abnahmetest Woche ab 26.10. (Lucas, Marco, Adil); Technik am 26.10. live bestätigt, unverändert seit 07.09.	2026-10-12
+SAP	ZZPRDAT Produktionsdatum: gemeinsamer Test	Läuft	Abnahme 05./06.11.: Logik schreibt korrekt, Reiter-Anzeige behoben; alle Objekte (inkl. Georgs XCO1-Teile) in T76K912490, nicht freigegeben; vor Import P76-Stand (ZPP00012, ZCO_ORD1) und ZXCO1U06 mit Georg klaeren	2026-11-06
 SAP	ZLO03: FIX 12 bis 23 (offene MK, RoHS/REACH/SVHC/PFAS, Download .xlsx, Disponent/Warengruppe, Stuecklisten-Einheit) am 29.10. in P76 importiert; FIX 24 (Stueckkosten ungerundet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit) in T76K912785, getestet	Wartet	Freigabe und Import T76K912785 (Ingo), Armin antworten, Anwender informieren	2026-10-30
 SAP	ZC12 Nullmengen: Fehlersuche einschalten	Offen	Ingo (Entscheid 01.10.: Editor in T76 so lassen, nichts tun)	2026-10-01
 SAP	ZRL2 Mengenrabatt Trafag AT	Bereit		2026-09-30

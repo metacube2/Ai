@@ -1,0 +1,11 @@
+# E070 vorher (2026-11-06, vor dem Zusammenfuehren)
+
+TRKORR | TRFUNCTION | TRSTATUS | TARSYSTEM | AS4USER | AS4DATE | AS4TIME | STRKORR
+-------+------------+----------+-----------+---------+---------+---------+--------
+T76K912490 | K | D | P76 | KOI | 20260904 | 070041 | 
+T76K912491 | S | D |  | KOI | 20260904 | 072518 | T76K912490
+T76K911783 | K | D | P76 | MEEY_GEWA | 20261106 | 080535 | 
+T76K911784 | S | D |  | MEEY_GEWA | 20261106 | 080644 | T76K911783
+T76K912851 | K | D | P76 | KOI | 20261106 | 080938 | 
+T76K912852 | S | D |  | KOI | 20261106 | 080941 | T76K912851
+Exitcode: 0

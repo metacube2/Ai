@@ -266,7 +266,7 @@ transportiert.** Sie liegen im Paket `ZPP1` und im Workbench-Auftrag **`T76K9124
 Ingo hat vorgeschlagen, vor der Abnahme zu paketieren, damit der Fachbereich genau die
 Objekte abnimmt, die spaeter ausgeliefert werden. Im Auftrag stecken `FUGR ZPP_ZZPRDAT`
 (mit `Z_ZZPRDAT_SET`), `SXCI Z_ZZPRDAT_UPDATE`, `CLAS ZCL_IM__ZZPRDAT_UPDATE`,
-`ENHO Z_ZZPRDAT` und `PROG Z_ZZPRDAT_CHECK`.
+`ENHO Z_ZZPRDAT` und `PROG Z_ZZPRDAT_CHECK`. *Nachtrag 2026-11-06: dazu in Aufgabe `T76K912852` die Anzeige `ZXCO1U11` und Georgs XCO1-Objekte `ZXCO1O01`, Bild `SAPLXCO1 0100`, `ZXCO1I01`, `ZXCO1U12`, `ZXCO1TOP`, `ZXCO1U06` (Objektliste in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 1).*
 
 Der Nachtest auf diesem Stand lief am 2026-09-04 mit **neu angelegten** Auftraegen `1241817`
 bis `1241823`, weil der Baustein nur schreibt, wo `ZZPRDAT` initial ist; die alten

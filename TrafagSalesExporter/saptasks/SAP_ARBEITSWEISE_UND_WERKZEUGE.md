@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-09-03, Nachträge bis 2026-10-13 am Ende, Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
+Stand: 2026-09-03, Nachträge bis 2026-11-06 am Ende (zuletzt SE09: Auftraege verschmelzen, Objekte von Hand aufnehmen, `SapGuiT76Hilfe.vbs`), Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**
@@ -1002,6 +1002,7 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt den Status nicht aus. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
 | `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar |
 | `SapGuiP76Hilfe.vbs neu\|info\|ok\|dump\|press\|check\|set\|vkey\|grid\|tips ...` | **P76**, nur in einer eigenen Sitzung (bricht bei `ses[0]` ab): neue Sitzung oeffnen, OK-Code, Felder, Ankreuzfeld per `.Selected`, Grid und Knopf-Tooltips lesen; meldet je Schritt System und Anwendungsserver. Angelegt 2026-11-02 fuer das Leeren der Gateway-Caches in P76 |
+| `SapGuiT76Hilfe.vbs neu\|info\|ok\|dump\|press\|set\|vkey\|select\|check\|menus\|tree\|grid\|zu ...` | **T76/100**, Gegenstueck zu `SapGuiP76Hilfe.vbs`: `neu` oeffnet eine eigene Sitzung und merkt sich deren Id (`t76_eigene_sitzung.txt`), jeder weitere Befehl bricht ab, wenn die Sitzung nicht diese Id hat; Verbindung ueber `SystemName`/`Client`, nie ueber `Children(0)`. `zu` schliesst sie mit `/i`. Angelegt 2026-11-06 (ZZPRDAT, Transport buendeln in SE09) |
 | `SapGuiAlvListLayoutP76.vbs <Ses> list\|show "<Spalte>"\|hide "<Spalte>"` | **P76**, eigene Sitzung, offener Dialog „Layout aendern“ einer klassischen ALV-Liste (SAPLSKBH 0810): Spalten nach Namen ein- und ausblenden (Achtung: `APP_WL_SING` blendet ein, `APP_FL_SING` aus). Sichern macht das Skript nicht. Angelegt 2026-11-03 fuer ZC22 |
 | `SapGuiGatewayStatusP76.vbs <Sitzung> <RequestUri>` | wie `SapGuiGatewayStatus.vbs`, aber fuer die P76-Verbindung (nur GET) |
 | `SapGuiOkCode.vbs <Sitzung> <Befehl>` | Befehl ins Befehlsfeld, adressiert ueber den **Sitzungsindex**. Ersatz fuer `SapGuiCommand.vbs`, wenn die aktuelle Transaktion unbekannt ist |
@@ -1654,3 +1655,19 @@ Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.
 * **Lesen in P76 ueber Ingos angemeldete GUI**: `P76Lesen.vbs` (neue Sitzung nur mit Anzeige-TX, Ingos Sitzungen bleiben unberuehrt), `P76SitzungSchliessen.vbs`, Listen auswerten mit `SapListeZeilen.py`. Die uebrigen Skripte sperren P76 absichtlich. Anleitung, Feld-Ids fuer `AGR_TCODES`/`AGR_1251`/`AGR_1252`/`EKKO` und Fallen: `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` Abschnitt 5.
 * **Berechtigungsfaelle**: Vorgehen in sieben Schritten (Beleg klaeren, Betroffene klaeren, SU53, AGR_TCODES, AGR_1251/AGR_1252, Kandidaten suchen, nur Rollen zuordnen) in `saptasks/BERECHTIGUNG_RAHMENVERTRAG_AT_2026-10-13.md` Abschnitt 4.
 * P76 ist Produktion: auch lesend nur nach Ingos ausdruecklichem Auftrag; der Auto-Modus lehnt solche Zugriffe sonst ab.
+
+### Nachtrag 2026-11-06 (Transportauftraege buendeln, SE09)
+
+* **Auftraege verschmelzen**: SE09, Auswahlliste der aenderbaren Auftraege, Cursor auf den Quellauftrag,
+  *Hilfsmittel > Reorganisieren > Auftraege verschmelzen...* (`SAPLSTRI` 0800, Felder `KO021-TRKORR_BEF`
+  Quelle und `KO021-TRKORR_AFT` Ziel, F5 prueft). Der Quellauftrag wird geloescht, seine Aufgaben haengen
+  danach am Ziel, im Ziel steht ein Protokolleintrag `CORR MERG <Quelle> <Datum> <Zeit> <Benutzer>`. In
+  der Einzelanzeige (F5) ist der Menuepunkt nur im Aendern-Modus nutzbar.
+* **Objekte von Hand in eine Aufgabe aufnehmen**: Doppelklick auf die Aufgabe, Reiter *Objekte*, Strg+F1,
+  Zeilen in `tblSAPLSCTS_OLETC_OLE` (`TRE071X-PGMID/OBJECT/OBJ_NAME`) eintragen, Enter, Sichern. **Die
+  Zeilen sind danach nicht gesperrt**; *Alle markieren* und *Objekt sperren* (`btnDB_LOCK`) setzen
+  `LOCKFLAG` und `TLOCK`. Bildnamen in `E071` ohne Leerraum (`SAPLXCO10100`). *Objekte aufnehmen > Frei
+  gewaehlte Objekte* aus der Auftragsliste brach mit „Positionieren Sie den Cursor auf einem aenderbaren
+  Auftrag“ ab. Beispiel: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 1, Nachtrag 2026-11-06.
+* **Kurzdumps ueber RFC**: `table-read SNAP` meldet `TABLE_NOT_AVAILABLE`; ST22 in eigener Sitzung lesen
+  (`SapGuiT76Hilfe.vbs grid <ses> wnd[0]/usr/cntlRSSHOWRABAX_ALV_100/shellcont/shell`).

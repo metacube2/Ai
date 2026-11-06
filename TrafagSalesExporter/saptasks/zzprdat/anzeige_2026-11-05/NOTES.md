@@ -1,6 +1,14 @@
 # ZZPRDAT: Anzeige des Produktionsdatums im Reiter „TRAFAG Daten“
 
-Stand: 2026-11-06 08:15. Nur T76, Mandant 100. P76 wurde nicht angefasst.
+Stand: 2026-11-06 08:15, Nachtrag 09:00. Nur T76, Mandant 100. P76 wurde nicht angefasst.
+
+> **Nachtrag 2026-11-06 09:00 (Auftrag Ingo „nimm alle objekte in mein auftrag was mit dem zzprdat zu
+> tun haben“):** `T76K912851` ist in den ZZPRDAT-Auftrag `T76K912490` verschmolzen und existiert nicht
+> mehr; seine Aufgabe `T76K912852` haengt jetzt an 490 und enthaelt neben `ZXCO1U11` auch Georgs sechs
+> uebrige Objekte (`ZXCO1O01`, Bild `SAPLXCO1 0100`, `ZXCO1I01`, `ZXCO1U12`, `ZXCO1TOP`, `ZXCO1U06`),
+> alle von KOI gesperrt. Die Aussagen unten zu `T76K912851` und die Bedingung „ZXCO1TOP in P76 lesen“
+> sind damit ueberholt. Weg, Objektliste und Belege: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 1,
+> Nachtrag 2026-11-06; Stand vorher/nachher in `saptasks/zzprdat/transport_2026-11-06/`.
 
 Auftrag von Ingo am 2026-11-05/06: „mach neuen transport“ und „entsperre alles von georg dann ist es
 einfacher“.
@@ -9,7 +17,8 @@ einfacher“.
 `T76K912851` und ist aktiv, CO03 zeigt fuer Auftrag 1241847 im Reiter „TRAFAG Daten“ jetzt
 11.11.2026.
 
-**Bedingung vor der Freigabe von `T76K912851`:** In P76 `ZXCO1TOP` lesen. Die neue Zeile
+**Bedingung vor der Freigabe von `T76K912851`** (*ueberholt 2026-11-06: 851 ist in 490 verschmolzen,
+`ZXCO1TOP` geht mit 490 mit, siehe Nachtrag oben*): In P76 `ZXCO1TOP` lesen. Die neue Zeile
 `gs_aufk-zzprdat = i_caufvd-zzprdat.` braucht dort `DATA: gs_aufk TYPE ci_aufk.` und
 `TABLES: ci_aufk`. In T76 stehen beide in `ZXCO1TOP`, dessen aktiver Stand von Georg ist (REPOSRC
 MEEY_GEWA 20260318, offen in `T76K911784`, nicht importiert). Fehlt `gs_aufk` in P76, waere die
@@ -75,7 +84,7 @@ entfernt. Er bleibt mit seiner Objektliste bestehen, sperrt aber nichts mehr.
 
 | | |
 | --- | --- |
-| Auftrag | `T76K912851` „ZZPRDAT: Anzeige Produktionsdatum im Reiter TRAFAG Daten“, Workbench, Ziel P76, Mandant 100, KOI |
+| Auftrag | `T76K912851` „ZZPRDAT: Anzeige Produktionsdatum im Reiter TRAFAG Daten“, Workbench, Ziel P76, Mandant 100, KOI (*ueberholt 2026-11-06: in `T76K912490` verschmolzen und geloescht*) |
 | Aufgabe | `T76K912852` |
 | Objekt | `LIMU REPS ZXCO1U11` (einziges Objekt) |
 
@@ -113,6 +122,15 @@ der Leseversuch `RPY_DYNPRO_READ` per RFC (nicht remote-faehig), vor der Aenderu
 Nach der Aenderung kein Dump.
 
 ## 5. Fuer spaeter: vor einem Import nach P76
+
+*Nachtrag 2026-11-06 09:00:* Die sieben Objekte gehen jetzt alle mit `T76K912490` (Aufgabe
+`T76K912852`); der erste Punkt („wird nur T76K912851 importiert“) und der letzte Unterpunkt zu
+`ZXCO1TOP` sind damit ueberholt. Zwei Berichtigungen aus den Messungen vom 06.11.: (1) Zu `ZXCO1U06`
+ist die Vermutung „nur in T76“ zu eng; eine Fassung mit dem Schreibweg ist schon am 2025-12-02 in
+`T76K911416` „PPCO0007 FAUF: ProdDatum implement / Progr“ freigegeben worden (VRSD), kann also in P76
+laufen, falls importiert. (2) `ZPP00012` wurde laut `MODATTR` am 2025-11-30 aktiviert (`ADAT`); 20250702
+ist das Aenderungsdatum (`UDAT`). Die letzten Transporte des Projekts sind `T76K911390` (deaktivieren)
+und `T76K911398` (aktivieren), beide am 2026-03-31 freigegeben. Einzelheiten im Transportplan.
 
 * **Georgs Zwischenstand der sieben Objekte ist in T76 aktiv, aber nicht in P76.** Wird nur
   `T76K912851` importiert, kommt nur `ZXCO1U11` mit. Vor dem Import P76 lesend vergleichen
