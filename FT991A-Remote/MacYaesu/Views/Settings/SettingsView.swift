@@ -90,7 +90,10 @@ struct ActivationSettingsView: View {
                 TextField("E-Mail-Adresse", text: $enteredEmail)
                     .textFieldStyle(.roundedBorder)
 
-                TextField("Lizenzschlüssel eingeben", text: $enteredLicenseKey)
+                // Langer Schluessel (128 Zeichen): mehrzeilig, damit nichts abgeschnitten wirkt
+                TextField("Lizenzschlüssel aus der E-Mail einfügen (128 Zeichen)", text: $enteredLicenseKey, axis: .vertical)
+                    .lineLimit(2...4)
+                    .font(.system(.body, design: .monospaced))
                     .textFieldStyle(.roundedBorder)
 
                 Button("Aktivieren") {
@@ -108,7 +111,7 @@ struct ActivationSettingsView: View {
                         .foregroundColor(.secondary)
                 }
 
-                Text("Für diesen lokalen Build werden Aktivierungsschlüssel offline aus E-Mail-Adresse und Schlüssel geprüft.")
+                Text("Den Lizenzschlüssel aus der Kauf-E-Mail vollständig einfügen (Vierergruppen, 128 Zeichen). Die Prüfung erfolgt offline per Signatur; Leerzeichen und Zeilenumbrüche werden ignoriert.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

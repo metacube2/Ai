@@ -63,7 +63,6 @@ final class SettingsController: ObservableObject {
     #else
     static let istTester = false
     #endif
-    private static let licenseSecret = "MacYaesu-License-v1::FT991A::Offline"
 
     init() {
         settings = AppSettings.load()
@@ -107,8 +106,13 @@ final class SettingsController: ObservableObject {
             return false
         }
 
+        guard !LizenzPruefung.istAltesFormat(normalizedKey) else {
+            activationErrorMessage = LizenzPruefung.meldungAltesFormat
+            return false
+        }
+
         guard Self.isValidLicense(email: normalizedEmail, key: normalizedKey) else {
-            activationErrorMessage = "Der Lizenzschlüssel passt nicht zu dieser E-Mail-Adresse."
+            activationErrorMessage = "Der Lizenzschlüssel passt nicht zu dieser E-Mail-Adresse. Bitte den Schlüssel vollständig aus der E-Mail einfügen."
             return false
         }
 
@@ -155,6 +159,10 @@ final class SettingsController: ObservableObject {
         licenseEmail = Self.normalizeLicenseEmail(settings.licenseEmail)
         licenseKey = Self.normalizeLicenseKey(settings.licenseKey)
         isActivated = Self.istTester || Self.isValidLicense(email: licenseEmail, key: licenseKey)
+        // Gespeicherter Schluessel aus dem alten Verfahren: erklaeren statt still in die Testversion fallen
+        if !isActivated && LizenzPruefung.istAltesFormat(licenseKey) {
+            activationErrorMessage = LizenzPruefung.meldungAltesFormat
+        }
     }
 
     private func saveSettings() {
@@ -233,28 +241,69 @@ final class SettingsController: ObservableObject {
     }
 
     private static func normalizeLicenseKey(_ raw: String) -> String {
-        raw.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-    }
-
-    private static func expectedLicenseKey(for email: String) -> String {
-        let material = "\(normalizeLicenseEmail(email))|\(licenseSecret)"
-        let digest = SHA256.hash(data: Data(material.utf8))
-        let prefix = digest.prefix(8).map { String(format: "%02X", $0) }.joined()
-
-        return stride(from: 0, to: prefix.count, by: 4).map { start in
-            let first = prefix.index(prefix.startIndex, offsetBy: start)
-            let last = prefix.index(first, offsetBy: 4)
-            return String(prefix[first..<last])
-        }.joined(separator: "-")
+        LizenzPruefung.normalisiert(raw)
     }
 
     private static func isValidLicense(email: String, key: String) -> Bool {
-        let expected = Array(expectedLicenseKey(for: email).utf8)
-        let submitted = Array(normalizeLicenseKey(key).utf8)
-        guard expected.count == submitted.count else { return false }
-
-        return zip(expected, submitted).reduce(UInt8.zero) { difference, pair in
-            difference | (pair.0 ^ pair.1)
-        } == 0
+        LizenzPruefung.istGueltig(email: email, schluessel: key)
     }
 }
+
+// MARK: Anfang Lizenzpruefung
+/// Lizenzpruefung per Ed25519 (seit 2026-11-06). Der Schluessel ist die Signatur ueber „macyaesu|<e-mail>“
+/// (E-Mail getrimmt und kleingeschrieben), Base32 nach RFC 4648 ohne Auffuellung, in Vierergruppen mit „-“.
+/// Die App enthaelt nur den oeffentlichen Schluessel; ausgestellt wird mit
+/// `~/Projects/Git/aiscom-lizenz/lizenz.swift ausstellen macyaesu <e-mail>` (privater Schluessel im Schluesselbund).
+enum LizenzPruefung {
+    static let oeffentlicherSchluesselBase64 = "TuijD63uHjx0Oinqsu/3jwzcee/IoVj6JxpTC45aNzM="
+    static let meldungAltesFormat = "Dieser Schlüssel stammt aus dem alten Verfahren und gilt nicht mehr. Bitte einen neuen Schlüssel anfordern: metacube@gmail.com"
+
+    private static let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")
+
+    /// Nur Buchstaben und Ziffern, gross geschrieben – Bindestriche, Leerzeichen, Zeilenumbrueche fallen weg.
+    /// Buchstaben ausserhalb des Base32-Alphabets bleiben stehen und machen den Schluessel ungueltig.
+    static func bereinigt(_ roh: String) -> String {
+        String(roh.uppercased().filter { $0.isLetter || $0.isNumber })
+    }
+
+    /// Einheitliche Schreibweise zum Speichern und Anzeigen: Vierergruppen mit „-“.
+    static func normalisiert(_ roh: String) -> String {
+        let zeichen = Array(bereinigt(roh))
+        return stride(from: 0, to: zeichen.count, by: 4)
+            .map { String(zeichen[$0..<min($0 + 4, zeichen.count)]) }
+            .joined(separator: "-")
+    }
+
+    /// Altes Verfahren: XXXX-XXXX-XXXX-XXXX, 16 Hex-Zeichen.
+    static func istAltesFormat(_ roh: String) -> Bool {
+        let b = bereinigt(roh)
+        return b.count == 16 && b.allSatisfy { $0.isHexDigit }
+    }
+
+    /// Base32 (RFC 4648) ohne Auffuellung. Nil bei fremden Zeichen oder gesetzten Restbits (nur eine Schreibweise gilt).
+    static func entbase32(_ roh: String) -> Data? {
+        var puffer = 0, bits = 0, aus = Data()
+        for c in bereinigt(roh) {
+            guard let wert = alphabet.firstIndex(of: c) else { return nil }
+            puffer = ((puffer << 5) | wert) & 0xFFFF
+            bits += 5
+            if bits >= 8 {
+                aus.append(UInt8((puffer >> (bits - 8)) & 0xFF))
+                bits -= 8
+            }
+        }
+        guard bits < 5, puffer & ((1 << bits) - 1) == 0 else { return nil }
+        return aus
+    }
+
+    static func istGueltig(email: String, schluessel: String) -> Bool {
+        let normEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normEmail.isEmpty,
+              let signatur = entbase32(schluessel), signatur.count == 64,
+              let rohSchluessel = Data(base64Encoded: oeffentlicherSchluesselBase64),
+              let oeffentlich = try? Curve25519.Signing.PublicKey(rawRepresentation: rohSchluessel)
+        else { return false }
+        return oeffentlich.isValidSignature(signatur, for: Data(("macyaesu|" + normEmail).utf8))
+    }
+}
+// MARK: Ende Lizenzpruefung

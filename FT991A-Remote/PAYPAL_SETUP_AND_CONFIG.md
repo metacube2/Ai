@@ -25,14 +25,15 @@ finden ausschließlich bei PayPal statt.
 2. PayPal zeigt Produkt, Empfänger und Betrag und führt die Zahlung aus.
 3. Im PayPal-Händlerkonto prüfen: Status abgeschlossen, `49.00 CHF`,
    Artikelnummer `MACYAESU-1.1` und Lizenz-E-Mail vorhanden.
-4. Schlüssel im Projektordner erzeugen:
+4. Schlüssel mit `aiscom-lizenz` ausstellen (privater Ed25519-Schlüssel im
+   Schlüsselbund dieses Macs; `./generate-license.command` ruft dasselbe auf):
 
    ```bash
-   ./generate-license.command kunde@example.com
+   swift ~/Projects/Git/aiscom-lizenz/lizenz.swift ausstellen macyaesu kunde@example.com
    ```
 
-5. Schlüssel an exakt diese E-Mail-Adresse schicken. Die App akzeptiert ihn
-   nur zusammen mit der gebundenen Adresse.
+5. Schlüssel (128 Zeichen in Vierergruppen) an exakt diese E-Mail-Adresse
+   schicken. Die App akzeptiert ihn nur zusammen mit der gebundenen Adresse.
 
 Die Rückkehrseite zeigt nur eine Empfangsmeldung. Sie ist kein Zahlungsbeleg;
 ein Schlüssel wird erst nach Kontrolle der Transaktion ausgegeben.
@@ -55,8 +56,11 @@ Zahlungen in CHF empfangen kann.
 ## App und Download
 
 - Die Demo erlaubt 15 Minuten aktive Nutzung.
-- Ein Schlüssel wird aus normalisierter E-Mail und dem lokalen
-  Lizenzverfahren erzeugt und von der App tatsächlich geprüft.
+- Seit 2026-11-06 ist ein Schlüssel eine Ed25519-Signatur über
+  `macyaesu|<e-mail, getrimmt, klein>` (Base32, Vierergruppen). Die App
+  enthält nur den öffentlichen Schlüssel und prüft offline; Schlüssel des
+  alten Verfahrens (`XXXX-XXXX-XXXX-XXXX`) erkennt sie und bittet um einen
+  neuen. Käufer mit altem Schlüssel brauchen vor dem Update einen neuen.
 - Beliebige Texte oder ein gespeichertes Aktivierungs-Flag schalten die App
   nicht frei.
 - Das aktuelle Release liegt als `MacYaesu.dmg` neben der Website.
@@ -66,8 +70,8 @@ Vor Veröffentlichung prüfen:
 ```bash
 node --check marketing-site/config.js
 node --check marketing-site/app.js
-swift run --package-path Tools/LicenseTool license-tool verify \
-  kunde@example.com "$(./generate-license.command kunde@example.com)"
+swift ~/Projects/Git/aiscom-lizenz/lizenz.swift pruefen macyaesu \
+  kunde@example.com "$(swift ~/Projects/Git/aiscom-lizenz/lizenz.swift ausstellen macyaesu kunde@example.com)"
 ```
 
 Danach `index.html`, `styles.css`, `app.js`, `config.js`, `robots.txt`,

@@ -314,7 +314,9 @@ struct MainView: View {
                 TextField("E-Mail-Adresse", text: $activationEmailInput)
                     .textFieldStyle(.roundedBorder)
 
-                TextField("Lizenzschlüssel", text: $activationKeyInput)
+                TextField("Lizenzschlüssel aus der E-Mail einfügen (128 Zeichen)", text: $activationKeyInput, axis: .vertical)
+                    .lineLimit(2...4)
+                    .font(.system(.body, design: .monospaced))
                     .textFieldStyle(.roundedBorder)
 
                 if let activationErrorMessage = settingsController.activationErrorMessage {

@@ -97,6 +97,10 @@ kopieren (siehe `instructions/homelab/aiscom-website.md`). Live auf www.aiscom.c
 `dist/MacYaesu-Tester.dmg` für www.aiscom.ch/tester/ (eigener Build-Ordner `build/verteilen-tester`, Verkaufs-DMG bleibt
 unberührt; Rauchtest per `strings`). `--ohne-notar` baut und signiert nur. Nie verkaufen.
 
+**Lizenzschlüssel** (seit 2026-11-06): Ed25519-Signatur statt Hash mit eingebautem Geheimnis; die App enthält nur
+den öffentlichen Schlüssel (`LizenzPruefung` in `SettingsController.swift`). Ausstellen mit
+`swift ~/Projects/Git/aiscom-lizenz/lizenz.swift ausstellen macyaesu <e-mail>`. Alte Schlüssel gelten nicht mehr.
+
 ## Vertriebsseite
 
 Eine eigenständige Landingpage für Marketing/Vertrieb liegt unter:
