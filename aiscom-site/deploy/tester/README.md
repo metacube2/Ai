@@ -1,5 +1,14 @@
 # Tester-Seite (www.aiscom.ch/tester/)
 
+**Seit 2026-11-06 mit Passwort** (Wunsch Benutzer: nur er und Adi): Apache-Sperre `../aiscom-tester-schutz.conf`
+(cAiscom `/etc/apache2/conf-available/aiscom-tester-schutz.conf`, Passwortdatei `/etc/apache2/aiscom-tester.htpasswd`,
+Benutzer `tester`, Passwort beim Benutzer). Geschützt: `/tester/` und die Update-Kanäle der schlüsselfreien
+Tester-Fassungen (`/updates/{antennen-studio,fotogedaechtnis,kamera-import,macyaesu,mietpruefer,obhut,stretcher}-tester/`).
+Offen: `/updates/taploop-tester/` (öffentliche Seite /taploop/) und `/updates/aurora-studio/`. Folge: Sparkle-Updates der
+geschützten Tester-Fassungen laufen nicht mehr automatisch (401) – neue Fassungen über die Seite laden. Passwort ändern:
+`ssh root@192.168.178.161 pct exec 104 -- htpasswd -B /etc/apache2/aiscom-tester.htpasswd tester` (interaktiv, Benutzer).
+Prüfen: `curl -s -o /dev/null -w "%{http_code}" https://www.aiscom.ch/tester/` → 401.
+
 Download-Seite für Tester (nicht verlinkt, `noindex`): Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu und
 Stretcher als DMG mit Verknüpfung „Programme“ zum Hineinziehen, Icon, Version/Build/Datum/Grösse/SHA-256 je App und die
 Installationsschritte. Sonst nichts: keine Testpunkte, Grenzen oder Hinweise (Benutzer 2026-10-24). Alle Apps sind
