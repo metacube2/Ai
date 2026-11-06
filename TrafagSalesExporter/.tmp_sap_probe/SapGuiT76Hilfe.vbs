@@ -11,6 +11,7 @@
 '           t76.vbs vkey <ses> <n> [fenster]    -> Funktionstaste
 '           t76.vbs select <ses> <id>           -> Element auswaehlen (Menue, Radiobutton, Reiter)
 '           t76.vbs check <ses> <id> <0|1>      -> Ankreuzfeld setzen
+'           t76.vbs combo <ses> <id> <schluessel> -> Auswahlliste ueber den Schluessel (z. B. MIGO A01/R05)
 '           t76.vbs menus <ses>                 -> Menueleiste rekursiv mit Texten
 '           t76.vbs tree <ses> <baumId>         -> Baum: Knoten, Text, Spalten
 '           t76.vbs treesel <ses> <baumId> <key>-> Knoten markieren
@@ -121,6 +122,11 @@ Select Case cmd
   Case "select"
     ses.findById(WScript.Arguments(2)).Select
     WScript.Sleep 1500
+  Case "combo"
+    ' combo <ses> <id> <schluessel>  (ergaenzt 2026-11-06 IC Staffelbasis S7, MIGO)
+    ses.findById(WScript.Arguments(2)).Key = WScript.Arguments(3)
+    WScript.Sleep 1200
+    WScript.Echo "SCHLUESSEL=" & ses.findById(WScript.Arguments(2)).Key & " TEXT=" & ses.findById(WScript.Arguments(2)).Text
   Case "check"
     ses.findById(WScript.Arguments(2)).Selected = (WScript.Arguments(3) = "1")
     WScript.Echo "SELECTED=" & ses.findById(WScript.Arguments(2)).Selected

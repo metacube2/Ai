@@ -1,7 +1,8 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
 Stand: 2026-11-06 (Abschnitt 8: Staffelbasis Bestellmenge in T76 umgesetzt und getestet, Routine 601, Auftraege
-T76K912853 und T76K912856, nicht freigegeben). Abschnitte 0 bis 7 vom 2026-11-05 (Agent sap-t76, damals nur lesend in
+T76K912853 und T76K912856, nicht freigegeben; Abschnitt 8.8 vom Nachmittag: Tests S6/S7 und Gegenprobe, Testtabelle
+S1 bis S7, Zeile „Transportfertig“). Abschnitte 0 bis 7 vom 2026-11-05 (Agent sap-t76, damals nur lesend in
 T76/100; P76 lesend verglichen in Abschnitt 7, Freigabe Ingo „mache punkt 1“). Die Aussagen „keine Testbelege, keine
 Aenderung in T76“ in Abschnitt 4 gelten nur fuer den 05.11.
 
@@ -397,11 +398,12 @@ den P76-Fall: 50 ST × 30.30 = 1'515.00 EUR statt 50 × 118.69 = 5'934.50 EUR (R
 ST22 06.11.2026: ein einziger Kurzdump, 08:02:12 KOI `CALL_FUNCTION_NOT_REMOTE` in `SAPLSIFP`, also vor dieser Arbeit
 (ab etwa 12:40) und ohne Bezug. Keine Dumps aus VOFM, VF01, VA01.
 
-Nicht getestet:
+Nicht getestet (Stand 13:40; S6 und S7 am Nachmittag weiter bearbeitet, Ergebnis in Abschnitt 8.8):
 
 - S6 Bestellung in anderer Einheit als die Staffel (Zweig `MD_CONVERT_MATERIAL_UNIT`): in T76 sind alle beteiligten
-  Einheiten ST; nur im Quelltext geprueft.
-- S7 MIRO 1200 (IDoc INVOIC) ohne Preisdifferenz nach WE: nicht gemacht.
+  Einheiten ST; nur im Quelltext geprueft. *(Abschnitt 8.8: bestaetigt nicht testbar in T76.)*
+- S7 MIRO 1200 (IDoc INVOIC) ohne Preisdifferenz nach WE: nicht gemacht. *(Abschnitt 8.8: IDoc-Kette belegt, WE
+  gebucht, Rechnung noch nicht gebucht.)*
 - Fakturaerzeugung automatisch beim Warenausgang (P76-Ablauf laut Fabio); in T76 per VF01 von Hand. Die Preisfindung ist
   dieselbe (Kopiersteuerung NLCC/NLC Preisfindungsart B, Abschnitt 1.4).
 - IV-Storno (IVS) und interne Gutschrift (IG): nicht getestet; ohne Lieferbezug mit `VGTYP V` greift die Routine nicht.
@@ -420,7 +422,7 @@ bis 690456; IV 90381201 bis 90381203 mit FI-Belegen in 1100; 8 ST 2367 aus 1100/
 2. Nach dem Import in P76 pruefen: `RV62ANNN` enthaelt `INCLUDE RV62A601`, `TFRM PFRS 601 AKTIV X`, `RV62A601` aktiv;
    sonst in P76 VOFM *Formeln > Staffelbasis* 601 aktivieren bzw. RV80HGEN laufen lassen (macht Ingo).
 3. Vor dem Import mit Fabio den Fall S7 (MIRO 1200 gegen die IV) und die automatische Faktura beim WA in einer
-   Abnahme pruefen; Einheiten heute immer ST (Fabio, zu verifizieren).
+   Abnahme pruefen; Einheiten heute immer ST (Fabio, zu verifizieren). *(Stand S7 und offene Schritte: Abschnitt 8.8.)*
 4. Spaeter (V1): dieselbe Routine bei Z999/Z002 eintragen, erst wenn diese in ZICAA1 stehen. Alternative laut Fabio
    (eigene IC-Kopie von PR00, rund 950 PR00-Saetze 820 umziehen) nicht verfolgt.
 5. SAPLV61A ist in T76 neu generiert; offene SD-Sitzungen anderer Benutzer laden die neue Fassung beim naechsten Aufruf.
@@ -441,3 +443,156 @@ bis 690456; IV 90381201 bis 90381203 mit FI-Belegen in 1100; 8 ST 2367 aus 1100/
   in VL02N.
 - Bash-Heredoc mit vielen Backticks und Apostrophen brach ab (wiederholt, Regel 2026-10-12); Doku-Abschnitte mit dem
   Edit-Werkzeug anhaengen.
+
+### 8.8 Tests S6/S7 und Gegenprobe (06.11., Nachmittag)
+
+Auftrag Ingo 2026-11-06 („ja mach staffelbasis“): S6 und S7 in T76 durchfuehren, nichts freigeben, P76 nicht anfassen.
+Agent sap-t76. Zugang: RFC `RunSapProbe.ps1` (DPAPI-Ablage T76, nur lesen) und eine eigene GUI-Sitzung
+`/app/con[0]/ses[2]` (ueber `SapGuiT76Hilfe.vbs neu`); Ingos Sitzung `ses[0]` (SESSION_MANAGER) nicht benutzt. Kein
+Passwort, keine Aenderung an Customizing, Stammdaten oder Quelltext. Routine und V/06 unveraendert (zurueckgelesen
+15:40: `T685A` V/PR00 `KZBZG C`, `KOFRS 0000601`; `TFRM PFRS 601 AKTIV X`; `E070` T76K912853/54/55/56/57 alle
+`TRSTATUS D`, also offen).
+
+#### S6 Bestellmenge in anderer Einheit: nicht testbar in T76
+
+- In T76 gibt es fuer Kunde 820 nur sieben gueltige PR00-Saetze (`A305` KAPPL V, PR00, 1100/01/820, `DATBI` ab
+  06.11.2026): 2366, 2367, 2537, 39101, 46689, 46690, 63502 (`KONH-ERNAM`: FPA 01. und 04.11.2026, fuer 39101 und
+  63502 MEEY_HAST 03.07.2026, also nach der Datenkopie angelegte Testsaetze).
+- Keines dieser Materialien hat eine alternative Mengeneinheit: `MARM` zeigt je Material nur `ST` 1/1, `MARA-MEINS`
+  ST, `MARA-BSTME` leer, `MVKE` 1100/01 `VRKME` und `SCHME` leer.
+- Ein Material mit alternativer Einheit (z. B. H05039: `MARA-MEINS` KAR, `MARM` ST 1/600) hat keine PR00 fuer 820 und
+  in 1100/0001 `LABST` 0. 2367 hat nach den Tests von 13 Uhr in 1100/0001 `LABST` 0.
+- Angelegt wurde deshalb nichts (keine MARM-Einheit, keine Kondition, keine Bestandsbuchung).
+- Lesend belegt: Die Routine rechnet die Bestellmenge `EKPO-MENGE` aus `EKPO-MEINS` in die Staffeleinheit
+  `XKOMV-KONMS` um, ohne Staffeleinheit in `KOMP-VRKME` (`staffelbasis_601.abap` Zeilen 70 bis 96). Das ist dieselbe
+  Zieleinheit wie im Standard: `LV61AA73` FORM `STAFFELBASIS_ERMITTELN`, Zeilen 203 bis 219 (`xmenge = komp-mgame`, bei
+  `komp-vrkme NE xkomv-konms` und `konms` nicht leer Umrechnung nach `xkomv-konms`). Der Baustein
+  `MD_CONVERT_MATERIAL_UNIT` hat die Schnittstelle `I_MATNR` (MARA-MATNR), `I_IN_ME`/`I_OUT_ME` (MARA-MEINS), `I_MENGE`
+  und `E_MENGE` (EKPO-MENGE, QUAN 13,3) laut `FUPARAREF`, passt also ohne Typwandlung zu den Variablen der Routine.
+  Er rechnet laut LEARNINGS 2026-10-29 ueber MARM (UMREZ/UMREN), anders als `UNIT_CONVERSION_SIMPLE`.
+- Einzeltest des Bausteins: per RFC abgewiesen („Incompatible Call Rejected, see note 2295840“, obwohl `TFDIR-FMODE`
+  R), nicht wiederholt. Der geplante Ersatz, SE37-Testumgebung mit H05039, 2 KAR nach ST (erwartet 1'200 ST), war nicht
+  mehr moeglich, weil die GUI-Verbindung um 15:27 abriss (siehe S7). **Vermutung:** Ergebnis 1'200.000.
+- Rechenbeispiel, wie die Routine es tun wuerde (nicht getestet): Bestellung 2 KAR eines Materials mit 1 KAR = 600 ST,
+  Staffel in ST ab 1/500/1'000, Lieferung und Faktura 600 ST. Standard: Staffelbasis 600 ST → Stufe ab 500. Routine:
+  2 KAR → 1'200 ST, max(1'200, 600) = 1'200 → Stufe ab 1'000; Wert = Preis der Stufe ab 1'000 × 600 ST.
+
+#### S7 MIRO 1200 zur IV 90381202: IDoc-Kette belegt, WE gebucht, Rechnung noch nicht gebucht
+
+**Weg in T76 (im System belegt):** Die IV-Faktura erzeugt selbst die Eingangsrechnung in 1200, eine MIRO von Hand ist
+nicht der T76-Weg.
+
+| Schritt | Beleg | Quelle |
+| --- | --- | --- |
+| Nachricht an der IV | `NAST` V3 0090381202 `ZRD4`, Partner 820 (RE), `NACHA` 6 (EDI), `VSTAT` 1, 06.11. 13:31:40 | NAST |
+| IDoc ausgehend | 0000000015343208, INVOIC02, an LS EXPOWIN, Status 03 | EDIDC |
+| IDoc eingehend | 0000000015343209, INVOIC01, `MESCOD` MM, Sender LI 0000070953, Empfaenger KU 0000000820, Status 53, Meldung M8 661 „Beleg Nr. 0051128478 wurde hinzugefuegt“ | EDIDC, EDIDS, T100 |
+| Rechnungsbeleg 1200 | `RBKP` 0051128478/2026, BLART RE, BUKRS 1200, Lieferant 70953, `XBLNR` 0090381202, `RMWWR` 394.20 EUR, `KURSF` 1.00000, `TCODE` MR1M, `IVTYP` 4 (EDI), **`RBSTAT` 3 „Fehlerhaft“** | RBKP, DD07T |
+
+Dasselbe gilt fuer die anderen beiden Testfakturen (90381201 → IDoc 15343204 → 0051128477, 453.90 EUR; 90381203 → IDoc
+15343215 → 0051128479, 302.60 EUR), alle `RBSTAT` 3. Von den aelteren Fremdtests sind 0051128466 und 0051128473
+(MEEY_HAST, Juli/August) gebucht (`RBSTAT` 5), 0051128474 bis 0051128476 (FPA, 25.10.) ebenfalls „fehlerhaft“.
+
+**Warum „fehlerhaft“:** Die Rechnungsposition (`RBDRSEG` 0051128478/000001, Bestellung 45148502/00010) traegt
+`KZMEK` 1 „Ungeklaerter Fehler: Rechnung vorerfassen“ (Domaene `KZMEKORR`, gleich bei allen sechs fehlerhaften
+Rechnungen 0051128474 bis 479), Betrag und Menge der Position sind leer (`RBDRSEG` MENGE 0, WRBTR 0). Im MIR4-Bild der
+Vorher-Rechnung 0051128477 standen die IDoc-Werte in `DRSEG-RBWWR` 453.90 und `DRSEG-RBMNG` 3, `DRSEG-WEMNG` 0,
+Bestellnetto `DRSEG-NETPR` 51.51. Das Pruefprotokoll in MIR4
+(Springen > Meldungen) zeigt genau einen Fehler: „Rechnung enthaelt noch mindestens eine ungeklaerte Korrektur“.
+**Vermutung zur Ursache:** fehlender Wareneingang beim Eingang des IDocs. Dafuer spricht FPA 0051128476: Bestellpreis
+57.77 = IV-Preis 57.77, trotzdem fehlerhaft, IDoc 25.10. 19:10:16, WE erst 19:13:17 (`MKPF` 5001255586). Die
+urspruengliche Einzelmeldung der IDoc-Verarbeitung ist in EDIDS nicht gespeichert.
+
+**Wareneingang (gebucht):** Die Bestellposition hat Bestaetigungssteuerung `EKPO-BSTAE` 0004 (Anlieferung); MIGO
+„Wareneingang Auslieferung“ 80432794 meldete deshalb „Fuer Einkaufsbeleg 45148502 00010 ist kein Wareneingang
+moeglich“. Die Anlieferung entsteht aus der Nachricht `SPED` der Auslieferung (`NAST` V2, `VSZTP` 3, bei meinen
+Lieferungen `VSTAT` 0; bei FPA ueber den Transport verarbeitet). Ablauf:
+
+1. VL71, Nachrichtenart SPED, Medium 8, Lieferung 80432794 → „Alle selektierten Nachrichten wurden erfolgreich
+   verarbeitet“ (`NAST` VSTAT 1, 15:19:50). Ergebnis Anlieferung **0180000073** (`VBFA` Typ 7; `EKES` 45148502/00010
+   LA 3 ST).
+2. VL32N 0180000073 (2367, 3 ST, Werk 1200, Lagerort 0001, PSTYV ELN), „Wareneingang buchen“ → Materialbeleg
+   **5001255589**/2026 (`MKPF` TCODE2 VL32N, KOI, 15:21:01; `MSEG` 101, 3 ST, 154.53 EUR, BUKRS 1200; `EKBE` VGABE 1,
+   154.53 EUR). Werk 1200 ist nicht WM-gefuehrt (`T320` ohne Satz fuer 1200).
+
+Die Lieferung 80432793 (Vorher-IV 90381201) hat keine Anlieferung und keinen WE; ihre 3 ST stehen weiter im Transit.
+
+**Preisvergleich (gerechnet aus den Belegen):**
+
+| | Vorher: IV 90381201 / Rechnung 0051128477 | Nachher: IV 90381202 / Rechnung 0051128478 |
+| --- | --- | --- |
+| IV PR00 (`PRCD_ELEMENTS`, KNUMV 748082 / 748083) | 151.30 EUR je 1 ST, `KSTBS` 3 | 131.40 EUR je 1 ST, `KSTBS` 10 |
+| Rechnungsbetrag 3 ST | 453.90 EUR | 394.20 EUR |
+| Bestellung PB00 (KNUMV 1000158003, KNUMH 970133, Staffel nach Bestellmenge, `KSTBS` 10) | 131.40 EUR | 131.40 EUR |
+| Differenz auf Stufenebene | +19.90 EUR je ST, +59.70 EUR | **0.00** |
+| Bestellnetto T76 (PB00 − RL01 44 % − ZRL2 30 %) | 51.51 EUR je ST (515.09 / 10) | 51.51 EUR je ST |
+| WE-Wert 3 ST (5001255589) | (kein WE) | 154.53 EUR |
+| Differenz gegen T76-Bestellnetto | 453.90 − 154.53 = 299.37 EUR | 394.20 − 154.53 = **239.67 EUR** |
+| Kurs | Rechnung EUR in BUKRS 1200 (Hauswaehrung EUR, `T001`), `RBKP-KURSF` 1.00000; der IV-Kurs 0.94 (`VBRK-KURRF`) betrifft nur die FI-Buchung in 1100 (CHF) | dito |
+
+Rechnung Bestellnetto: 131.40 × 0.56 = 73.584; × 0.70 = 51.5088 → 51.51 EUR; 10 ST: 1'314.00 − 578.16 − 220.75 = 515.09 EUR
+(Werte aus `PRCD_ELEMENTS` 1000158003). Die Restdifferenz kommt nicht aus der IV, sondern aus den Einkaufsrabatten des
+T76-Infosatzes: `EINA` 5300015578 (2367/70953, FPA 30.09.) hat `LTSNR` leer, deshalb greifen RL01 und ZRL2 ueber
+`A044` (KNUMH 970106 RL01 −44 %, 970109 ZRL2 mit Mengenstaffel: `KONP` Grundwert −10 %, in der Bestellung bei
+`KSTBS` 10 −30 %). Fuer das Teilsortiment SPEZ gibt es in T76
+schon `A069` 70953/1200/SPEZ mit RL01 0 % (KNUMH 970107) und ZRL2 0 % (KNUMH 970110), Zugriffsfolge 0006 Stufe 020
+vor `A044` Stufe 030 (`T682I`). Mit `LTSNR` SPEZ, wie Fabio es in P76 am 04.11. fuer 2367 gepflegt hat
+(`IC_Umsetzung_V1.xlsx` Blatt 5, Infosatz P76 5300015770), waere das Bestellnetto 131.40 EUR = IV-Preis nachher, die
+Differenz 0.00 EUR; vorher blieben +59.70 EUR. Der T76-Infosatz wurde **nicht** geaendert.
+
+**Toleranz 1200 (T76, `T169G` PP):** obere Grenze absolut 100.00 EUR, obere Grenze 4 %, beide aktiv. **Vermutung,
+nicht gebucht:** 239.67 EUR (155 %) wuerde in T76 zur Zahlungssperre fuehren; im P76-Stand waere nachher 0.00 EUR ohne
+Sperre, vorher 59.70 EUR (15 %) ueber 4 % und damit gesperrt. P76-`T169G` wurde nicht gelesen.
+
+**Abbruch beim Buchen:** In MIR4 0051128478 im Aendern-Modus Betrag 394.20, Menge 3 und `KZMEK` „Kein Fehler“
+eingetragen, danach Enter. Um 15:27 riss die GUI-Verbindung ab („T76: connection to partner
+'trast76s.sap.trafag.com:3200' broken, WSAECONNRESET“, Windows-Meldungsfenster von SAP GUI). Die Skripte hingen,
+ich habe sie beendet und das Fenster mit „Nein“ geschlossen; danach `Verbindungen=0`, also auch Ingos idle Sitzung
+`ses[0]` weg. RFC lief weiter. Ergebnis per RFC geprueft: `RBKP` 0051128478 weiter `RBSTAT` 3, kein `RSEG`, kein `EKBE`
+VGABE 2; die Eingaben sind nicht gesichert. Neu anmelden kann ich nicht (Passwort), deshalb ist die Rechnung offen.
+
+**Panne:** Vorher hatte ich in MIR4 die Vorher-Rechnung 0051128477 im Aendern-Modus geoeffnet und
+`menu[0]/menu[2]` gewaehlt, das im Anzeigemodus „Beleg simulieren“ heisst, im Aendern-Modus aber „Merken“. SAP meldete
+„Rechnungsbeleg 51128477 / 2026 wurde gesichert“. Per RFC gegengeprueft: `RBSTAT` 3, `RBDRSEG` unveraendert (Menge und
+Betrag 0, `KZMEK` 1), kein `RSEG`, kein `EKBE`; inhaltlich nichts geaendert, nur neu gemerkt.
+
+**Offene Schritte S7 (naechste Sitzung, T76):** MIR4 0051128478/2026 → Anzeigen/Aendern → Position 1: Betrag 394.20,
+Menge 3, `KZMEK` „Kein Fehler“, Haken OK → Springen > Meldungen lesen → Rechnungsbeleg > Buchen (im Aendern-Modus
+`menu[0]/menu[3]`, Menues vorher neu auslesen) → per RFC `RBKP` (`RBSTAT` 5, `ZLSPR`), `RSEG`, `EKBE` VGABE 2,
+`BKPF` pruefen. Erwartet in T76: buchbar, Preisdifferenz 239.67 EUR, Zahlungssperre R (Vermutung, Toleranz PP). Die
+Vorher-Rechnung 0051128477 nicht buchen, sie bleibt als Vergleich fehlerhaft stehen.
+
+#### Gegenprobe Kundenfaktura F2 (ZVAA01): nur lesend, keine neue Preisfindung
+
+- Seit der Aktivierung (13:20) gibt es in T76 keine F2 (`VBRK` ab 01.11.2026: nur die drei IV 90381201 bis 203,
+  `KALSM` ZICAA1; ab 06.11. mit `KALSM` ZVAA01: keine).
+- Offene fakturierbare Kundenlieferungen 1100 (`LIKP` LFART LF, `FKSTK` A, `WBSTK` C): genau eine, 0080429152
+  (Kunde 500436, F90180 5 ST, Auftrag 0000408146/10 TA, `KALSM` ZVAA01, Auftragsmenge 5 ST = Liefermenge, USD, PR00
+  nicht aus `A305`). Das waere nur eine Komplettlieferung und zeigt so wenig wie S5. Die Preisfindung per VF01 ohne
+  Sichern war nach dem Verbindungsabriss nicht mehr moeglich.
+- Lesend belegt bleibt: Die Routine endet fuer ZVAA01 in der ersten Anweisung (`CHECK komk-kalsm = lc_kalsm_ic`,
+  `staffelbasis_601.abap` Zeile 39); `KOMK-KALSM` kommt aus `VBRK-KALSM`, und ZICAA1 ist nur ueber `KALVG` I
+  (Fakturaarten IG, IG2, IGA, IGS, IV, IVA, IVS) erreichbar (Abschnitt 8.2). S5 (VA01, ZVAA01) zeigte 151.30 EUR bei
+  3 ST wie ohne Routine. Ein isolierter Test einer F2 mit Teillieferung fehlt weiterhin.
+
+#### Testtabelle S1 bis S7 (Blatt 8, Ist)
+
+| Nr | Testfall (Fabio) | Ist in T76 | OK? |
+| --- | --- | --- | --- |
+| S1 | Bestellung 100 ST 54150, Lieferung 50 ST | 54150 hat in T76 keine PR00-820-Staffel; nachgestellt mit 2367: Bestellung 45148502 10 ST, Lieferung 80432794 3 ST, IV 90381202 `KSTBS` 10, 131.40 EUR (Stufe ab 10), 394.20 EUR | ja (Muster) |
+| S2 | Restlieferung zur selben Bestellung | 80432794 ist die zweite Teillieferung zu 45148502 (erste 80432793 vor der Routine, IV 90381201 151.30 EUR); nachher 131.40 EUR | ja (Muster) |
+| S3 | Bestellung 5 ST 46690, Lieferung 3 ST | 46690 ohne Bestand in 1100/0001; gleiches Muster wie S1 mit 2367 | ja (Muster) |
+| S4 | Komplettlieferung | 45148503 2 ST, Lieferung 80432795 2 ST, IV 90381203 `KSTBS` 2, 151.30 EUR, 302.60 EUR | ja |
+| S5 | Kundenauftrag ZVAA01 mit PR00 | VA01 TA 820/2367 3 ST, nicht gesichert, 151.30 EUR; F2-Gegenprobe nur lesend (oben) | ja (ohne F2-Teillieferung) |
+| S6 | Bestellmenge in anderer Einheit | nicht testbar in T76 (kein PR00-820-Material mit alternativer Einheit); Zweig gegen Standard `LV61AA73` gelesen, Bausteintest nicht moeglich | offen, nicht testbar in T76 |
+| S7 | MIRO 1200 (IDoc INVOIC) ohne Preisdifferenz nach WE | IDoc-Kette 90381202 → 15343208/15343209 → Rechnung 0051128478 (fehlerhaft, `KZMEK` 1); WE 5001255589 3 ST gebucht; Stufe gleich (131.40 = 131.40), Restdifferenz 239.67 EUR nur aus RL01/ZRL2 des T76-Infosatzes; Buchung wegen Verbindungsabriss nicht abgeschlossen | teilweise; Routine ok, MIRO-Buchung offen |
+
+**Transportfertig: ja, mit Vorbehalt.** Die Routine und der V/06-Eintrag sind mit S1 bis S5 in T76 belegt, und S7 zeigt
+auf Stufenebene, dass Bestellung und IV nachher denselben Preis tragen. Die beiden Vorbehalte betreffen nicht den Code:
+S6 ist in T76 nicht testbar (nur Quelltext gegen Standard), und „keine Preisdifferenz in MIRO“ haengt vom P76-Infosatz
+mit Teilsortiment SPEZ ab; die MIRO-Buchung in T76 ist nach dem Verbindungsabriss noch offen. Ob Ingo vor der Freigabe
+auf diese Buchung wartet, ist sein Entscheid.
+
+**Testbelege dieses Abschnitts in T76 (KOI, 06.11.):** Anlieferung 0180000073, Materialbeleg 5001255589 (101, 3 ST
+2367 in 1200/0001); `NAST` SPED 80432794 verarbeitet; Rechnung 0051128477 einmal unveraendert gemerkt. Nicht angelegt
+oder geaendert: Stammdaten, Konditionen, Infosatz, Customizing, Quelltext.
