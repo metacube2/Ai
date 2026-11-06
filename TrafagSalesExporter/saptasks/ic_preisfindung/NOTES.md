@@ -1,7 +1,9 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-05 (Agent sap-t76, nur lesend in T76/100; keine Testbelege, keine Aenderung in T76). Nachtrag am selben
-Tag: P76 lesend verglichen (Abschnitt 7, Freigabe Ingo „mache punkt 1“).
+Stand: 2026-11-06 (Abschnitt 8: Staffelbasis Bestellmenge in T76 umgesetzt und getestet, Routine 601, Auftraege
+T76K912853 und T76K912856, nicht freigegeben). Abschnitte 0 bis 7 vom 2026-11-05 (Agent sap-t76, damals nur lesend in
+T76/100; P76 lesend verglichen in Abschnitt 7, Freigabe Ingo „mache punkt 1“). Die Aussagen „keine Testbelege, keine
+Aenderung in T76“ in Abschnitt 4 gelten nur fuer den 05.11.
 
 Unterlagen: `a.xlsx` (IC_Umsetzung_V1, Blaetter 2 bis 4) und `b.pdf` (IC-Preisboard) in der Repository-Wurzel.
 Geplanter Schritt 1 (Erweiterung ZICAA1 um Z999, Z000, Z001, Z002) ist **nicht** Teil dieser Pruefung und wurde nicht
@@ -307,3 +309,135 @@ bedeutet das: Der „Mittelkurs“ M ist fuer EUR/CHF in P76 faktisch der jaehrl
   Erweiterung hat, ist angenommen (SAP-Standard, in T76 ohne Z/Y-Erweiterung), aber in P76 nicht geprueft.
 - Ohne neuen EURX-Satz zum 01.01.2027 laeuft M wie P still mit dem letzten Satz (0.94) weiter (Abschnitt 3.2 letzter
   Absatz); beide Reihen muessen also jaehrlich gepflegt werden, wenn sich der Planungskurs aendert.
+
+## 8. Staffelbasis Bestellmenge (06.11.)
+
+Auftrag Ingo 2026-11-06 („ja mach die umsetzung“) zu Fabios Vorschlag (Mail 06.11. 12:06, Blatt 8 „Staffelbasis“ in
+`IC_Umsetzung_V1.xlsx`). Nur T76/100, Agent sap-t76. P76 nicht gelesen und nicht angefasst, nichts freigegeben.
+
+### 8.1 Befund (Fall P76, nur aus der Beschreibung)
+
+Bestellung 1200 45152176/10, Material 54150, 100 ST zu 30.30 EUR (PR00 Kunde 820, Staffel ab 100 ST). Lieferung 1100
+80444806 mit 50 ST, IV-Faktura 90390967 nahm die Staffel ab 50 ST: 118.69 EUR/ST, 5'934.50 statt 1'515.00 EUR. Ursache:
+Die Staffelbasis der IV wird mit der fakturierten (gelieferten) Menge gesucht, die Bestellung 1200 rechnet mit der
+Bestellmenge.
+
+Beleg im Standard (T76, SAPLV61A): `LV61AA73` FORM `STAFFELBASIS_ERMITTELN`, Mengenstaffel (`KZBZG` C):
+`xmenge = komp-mgame`, bei abweichender Staffeleinheit `MATERIAL_UNIT_CONVERSION` in `xkomv-konms`, dann
+`xkomv-kstbs = xmenge`. `KOMP-MGAME` ist in der Faktura die fakturierte Menge.
+
+### 8.2 Mechanik, im System nachgesehen
+
+| Punkt | Beleg |
+| --- | --- |
+| VOFM-Gruppe Staffelbasis | `TFRM`/`TFRMT` Gruppe `PFRS` (Standard 001, 002, 012, 023, 043, 060, 202, 425, 500, 501; 425 = `FV62A425` CWM). VOFM-Menue *Formeln > Staffelbasis* zeigt dieselbe Liste |
+| Includes | Standard `FV62Annn` in `FV62ANNN`, Kunde `RV62Annn` in `RV62ANNN` („Formeln Staffelbasis“, vorher leer); beide in `SAPLV61A` (`D010INC`) |
+| Schnittstelle | `FORM frm_staffelbas_nnn.` ohne Parameter; Aufruf `LV61AA55` Zeilen 625 bis 633: `xkwert = xkomv-kstbs. frm_staffelbas-nr = xkomv-kofrs. PERFORM (frm_staffelbas) IN PROGRAM saplv61a IF FOUND. xkomv-kstbs = xkwert.` (gleich bei 837 und 1024). Verfuegbar: `KOMK`, `KOMP`, `XKOMV`, `XKWERT` (`LIKE komv-kwert`, `LV61ATOP` Zeile 145) |
+| Zahlenformat | `TRDIR-FIXPT` fuer `SAPLV61A` leer (ohne Festpunktarithmetik). `KOMV-KSTBS` CURR 15,2 erhaelt `KOMP-MGAME` QUAN 13,3 ungewandelt; die Staffelbasis traegt also Tausendstel (vgl. `FV62A023`, `FV62A202` `kstaf * 1000`). Die Routine fuehrt die Bestellmenge deshalb in `EKPO-MENGE`/`KOMP-MGAME` (3 Dezimalen) und verwendet keine Literale. Ergebnis im Test: `KSTBS` 10.000 bei 10 ST Bestellmenge, also richtig skaliert |
+| V/06-Feld | `T685A-KOFRS` „Routine fuer alternative Berechnung der Staffelbasis“, Bild „Staffelroutine“. PR00 vorher `0000000` |
+| Kontext Faktura | `KOMP-VGBEL/VGPOS` = Lieferung/Position, `KOMP-AUBEL/AUPOS` = Bestellung (VBRP 0090381200: AUBEL 0045148482/000010); `KOMK-KALSM` aus `VBRK-KALSM` |
+| ZICAA1 | nur `KALVG` I (`T683V` 1100/01/01, 1100/01/02, 1200/01/01), Fakturaarten IG, IG2, IGA, IGS, IV, IVA, IVS (`TVFK`), keine Auftragsart. `TA` hat `KALVG` A → ZVAA01 (`T683V` 1100/01/01/A/1) |
+| Nummer | 601 frei (keine `PFRS` 6xx in `TFRM`) |
+| Zugangsschluessel | **keiner verlangt.** VOFM zeigte nur zwei Informationen („R3TR PROG RV62A601 ist generiert, Aenderungen sind moeglich“, „Fuehren Sie nur dringende Reparaturen in fremden Namensraeumen durch“). Der Editor laeuft als Modifikation (Reparatur) |
+| Generierung | VOFM *Bearbeiten > Aktivieren* hat `RV62ANNN` selbst neu erzeugt (`INCLUDE RV62A601 . "IC Bestellmenge`), `TFRM PFRS 601 AKTIV X`, `GNDAT 20261106 GNZEI 132003`. Ein eigener RV80HGEN-Lauf war in T76 nicht noetig. `RV62ANNN`/`FV62ANNN` stehen in `E071` unter `RV80HGEN_TADIR_CORE` |
+
+### 8.3 Routine 601 „IC Bestellmenge“
+
+Quelltext: `saptasks/ic_preisfindung/staffelbasis_601.abap` (aktiv in T76, per `abap-read RV62A601` zurueckgelesen,
+inhaltsgleich; vorher gab es `RV62A601` nicht). Ablauf: nur `KOMK-KALSM = ZICAA1` und `XKOMV-KZBZG = C`;
+`KOMP-VGBEL/VGPOS` → `LIPS` (nur `VGTYP V`) → `EKPO` (`EBELP` aus `LIPS-VGPOS` NUMC 6 → NUMC 5, `LOEKZ` leer) →
+`MENGE`/`MEINS`. Zieleinheit `XKOMV-KONMS`, sonst `KOMP-VRKME`; weicht `EKPO-MEINS` ab, `MD_CONVERT_MATERIAL_UNIT`
+(MARM), bei Fehler Standard. Neue Staffelbasis = groesserer Wert aus umgerechneter Bestellmenge und bisheriger
+Staffelbasis. Jede fehlende Stufe (keine Lieferung, keine Bestellung, Auftrag statt Faktura, Simulation) endet mit
+`CHECK` und laesst die Staffelbasis unveraendert.
+
+Aktivierung: Include gesichert und ueber den Dialog „Inaktive Objekte“ nur `RV62A601` aktiviert (`Z_REICHW` stand
+daneben und blieb unberuehrt), kein Fehlerdialog. `abap-check SAPLV61A`: Syntax OK, dieselben neun Warnungen wie vorher
+(keine neue).
+
+Hinweis zur Arbeitsweise: VOFM *Aktivieren* aktiviert nur den TFRM-Eintrag und erzeugt `RV62ANNN`; das Include selbst
+bleibt inaktiv („aktiv (ueberarbeitet)“, aktive Fassung = leerer Rumpf), bis es im Editor mit Strg+F3 aktiviert wird.
+
+### 8.4 V/06 und Auftraege
+
+- V/06 PR00: Staffelroutine `601` (Text „IC Bestellmenge“) eingetragen. Rueckgelesen `T685A` V/PR00: `KZBZG C`,
+  `KOFRS 0000601`. Andere Konditionsarten mit Staffelroutine (unveraendert): KP03 23, LP03 (M) 23, LCFR 43, PBBS 202,
+  UTXD 500.
+- Workbench-Auftrag **T76K912853** „IC Staffelbasis Bestellmenge VOFM 601 (ZICAA1, PR00)“, Ziel P76, Aufgaben
+  T76K912854 (Reparatur, `R3TR PROG RV62A601`, gesperrt) und T76K912855 (`TABU TFRM`, `TABU TFRMT`; `E071K`
+  Schluessel `PFRS601` bzw. `DPFRS601`).
+- Customizing-Auftrag **T76K912856** „IC Staffelbasis: V/06 PR00 Staffelroutine 601“ (T000 Mandant 100 `CCCORACTIV 1`,
+  das Sichern verlangte einen Customizing-Auftrag), Aufgabe T76K912857 `VDAT VV_T685A_VA` mit Schluesseln T685/T685A/T685T
+  `100V PR00`. Vorgeschlagen war der fremde Auftrag T76K912750 „DEMO PS T76 Projekte aktiv - NICHT FREIGEBEN“; nicht benutzt.
+- Beide Auftraege offen, nicht freigegeben. `RV62ANNN` liegt in keinem der beiden; im Zielsystem muss es nach dem
+  Import neu erzeugt werden (Abschnitt 8.6).
+
+### 8.5 Tests in T76 (alle Belege KOI, 06.11.2026)
+
+Testmaterial 2367 (P40 PRESSOSTAT), weil 54150 in T76 keine PR00-820-Staffel hat und 46690 in 1100/0001 keinen Bestand.
+PR00 A305 1100/01/820/2367, KNUMH 0000970128, gueltig ab 01.11.2026, 166.00 EUR je 1 ST, Staffel (KONM, `KONMS` ST):
+ab 1 ST 166.00, ab 2 ST 151.30, ab 5 ST 134.00, ab 10 ST 131.40, ab 25 ST 129.00. Kein Konditionssatz angelegt.
+Bestand 1100/0001 vorher 8 ST (WM-Lagernummer 110, Quants 1G1).
+
+Kette wie bei den Altbelegen (FPA, 45148482): ME21N NB, Lieferant 70953, EKORG 1200, EKGRP 120, BUKRS 1200, Werk 1200
+(RESWK 1100 automatisch), VL10B (Versandstelle 1100), VL02N Menge, LT03 (Kommimenge 2) und LT12 (quittieren = WA),
+VF01 Fakturaart IV. Alle IV mit `KALSM ZICAA1`, Kunde 820, EUR, FI-Beleg in 1100 (BKPF `KURSF 0.94`).
+
+| Fall | Belege | PR00 Staffelbasis (`PRCD_ELEMENTS-KSTBS`) | PR00 Preis | Menge (`KAWRT`) | Wert | Ergebnis |
+| --- | --- | --- | --- | --- | --- | --- |
+| Vorher (ohne Routine), Teillieferung | Bestellung 45148502/10 ueber 10 ST; Lieferung 80432793 3 ST (TA 690454); IV **90381201** (13:12) | 3 | 151.30 EUR (ab 2) | 3 ST | **453.90 EUR** | Standard: Staffel nach Liefermenge (der P76-Fehler) |
+| Nachher, Restteil derselben Bestellung (Muster S1/S2/S3) | Lieferung 80432794 3 ST (TA 690455); IV **90381202** (13:31) | **10** | **131.40 EUR** (ab 10) | 3 ST | **394.20 EUR** | OK: Staffel nach Bestellmenge, Wert mit fakturierter Menge |
+| Nachher, Komplettlieferung (S4) | Bestellung 45148503/10 ueber 2 ST; Lieferung 80432795 2 ST (TA 690456); IV **90381203** | 2 | 151.30 EUR | 2 ST | **302.60 EUR** | OK: unveraendert (max(2, 2) = 2) |
+| Gegenprobe Kundenauftrag (S5) | VA01 TA, Auftraggeber 820, 2367 3 ST, **nicht gesichert** (VBAK ERNAM KOI 06.11. leer) | – | 151.30 EUR | 3 ST | 453.90 EUR | OK: ZVAA01 (TA/KALVG A, KALKS 1) unveraendert |
+
+Rechnung zum Fall nachher: Bestellmenge 10 ST, fakturiert 3 ST, Staffelbasis max(10, 3) = 10 → Stufe ab 10 = 131.40
+EUR/ST → 3 × 131.40 = 394.20 EUR (vorher 3 × 151.30 = 453.90 EUR). Preiseinheit `KPEIN` 1, Einheit ST. Uebertragen auf
+den P76-Fall: 50 ST × 30.30 = 1'515.00 EUR statt 50 × 118.69 = 5'934.50 EUR (Rechnung, nicht getestet).
+
+ST22 06.11.2026: ein einziger Kurzdump, 08:02:12 KOI `CALL_FUNCTION_NOT_REMOTE` in `SAPLSIFP`, also vor dieser Arbeit
+(ab etwa 12:40) und ohne Bezug. Keine Dumps aus VOFM, VF01, VA01.
+
+Nicht getestet:
+
+- S6 Bestellung in anderer Einheit als die Staffel (Zweig `MD_CONVERT_MATERIAL_UNIT`): in T76 sind alle beteiligten
+  Einheiten ST; nur im Quelltext geprueft.
+- S7 MIRO 1200 (IDoc INVOIC) ohne Preisdifferenz nach WE: nicht gemacht.
+- Fakturaerzeugung automatisch beim Warenausgang (P76-Ablauf laut Fabio); in T76 per VF01 von Hand. Die Preisfindung ist
+  dieselbe (Kopiersteuerung NLCC/NLC Preisfindungsart B, Abschnitt 1.4).
+- IV-Storno (IVS) und interne Gutschrift (IG): nicht getestet; ohne Lieferbezug mit `VGTYP V` greift die Routine nicht.
+- Neupreisfindung einer bestehenden IV per VF02: nicht versucht.
+- Der Schutz `KOMK-KALSM = ZICAA1` selbst ist nicht isoliert getestet: Die Gegenprobe S5 (Kundenauftrag) zeigt nur „kein
+  Schaden“, dort fehlt `KOMP-VGBEL` ohnehin. Eine Kundenfaktura mit Lieferbezug `VGTYP V` ausserhalb ZICAA1 gibt es in
+  T76 nicht.
+
+Testbelege bleiben in T76 stehen (Bestellungen 45148502, 45148503; Lieferungen 80432793, 80432794, 80432795; TA 690454
+bis 690456; IV 90381201 bis 90381203 mit FI-Belegen in 1100; 8 ST 2367 aus 1100/0001 ausgebucht).
+
+### 8.6 Offen und Aufgaben fuer Ingo
+
+1. Freigabe und Import nach P76: T76K912853 (Workbench) und T76K912856 (Customizing) **zusammen**; nur V/06 ohne Routine
+   liefe in P76 ins Leere (`PERFORM ... IF FOUND`), nur die Routine ohne V/06 waere wirkungslos.
+2. Nach dem Import in P76 pruefen: `RV62ANNN` enthaelt `INCLUDE RV62A601`, `TFRM PFRS 601 AKTIV X`, `RV62A601` aktiv;
+   sonst in P76 VOFM *Formeln > Staffelbasis* 601 aktivieren bzw. RV80HGEN laufen lassen (macht Ingo).
+3. Vor dem Import mit Fabio den Fall S7 (MIRO 1200 gegen die IV) und die automatische Faktura beim WA in einer
+   Abnahme pruefen; Einheiten heute immer ST (Fabio, zu verifizieren).
+4. Spaeter (V1): dieselbe Routine bei Z999/Z002 eintragen, erst wenn diese in ZICAA1 stehen. Alternative laut Fabio
+   (eigene IC-Kopie von PR00, rund 950 PR00-Saetze 820 umziehen) nicht verfolgt.
+5. SAPLV61A ist in T76 neu generiert; offene SD-Sitzungen anderer Benutzer laden die neue Fassung beim naechsten Aufruf.
+6. T76K912854 ist eine Reparatur (`E070-TRFUNCTION R`). Beim Freigeben fragt SAP nach dem Zuruecksetzen des
+   Reparaturkennzeichens; das ist bei VOFM-Routinen der Normalfall.
+7. Rueckbau in T76, falls Fabio anders entscheidet: V/06 PR00 Staffelroutine leeren (Customizing-Auftrag) und VOFM 601
+   deaktivieren; die Testbelege bleiben.
+
+### 8.7 Kandidaten fuer LEARNINGS
+
+- VOFM *Aktivieren* aktiviert das Kunden-Include nicht; die aktive Fassung blieb der leere Rumpf, `abap-read` zeigte es.
+  Nach VOFM immer das Include im Editor aktivieren und per `abap-read` zuruecklesen.
+- `RFC_READ_TABLE` mit `KOFRS <> '0000000'` lieferte `TABLE_WITHOUT_DATA`, obwohl sechs Saetze existieren; mit `>` kamen
+  sie. Bei `TABLE_WITHOUT_DATA` nach einem `<>`-Filter gegenpruefen.
+- `SapGuiTabelleSuchen.vbs` setzt `txt` vor den Feldnamen und sucht fest in Spalte 5; mit `txtV_T685A-KSCHL` lief es
+  ohne Treffer durch alle Bildlaufpositionen. In SM30-Sichten „Positionieren...“ (`btnVIM_POSI_PUSH`) nehmen.
+- Lieferungen aus 1100/0001 sind WM-pflichtig (Lagernummer 110): WA nur ueber LT03 + LT12 (Kommimenge 2), nicht direkt
+  in VL02N.
+- Bash-Heredoc mit vielen Backticks und Apostrophen brach ab (wiederholt, Regel 2026-10-12); Doku-Abschnitte mit dem
+  Edit-Werkzeug anhaengen.

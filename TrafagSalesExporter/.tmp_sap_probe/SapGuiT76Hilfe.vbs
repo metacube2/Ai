@@ -16,6 +16,7 @@
 '           t76.vbs treesel <ses> <baumId> <key>-> Knoten markieren
 '           t76.vbs treedbl <ses> <baumId> <key>-> Knoten doppelklicken
 '           t76.vbs grid <ses> <gridId>         -> ALV-Grid zeilenweise ausgeben
+'           t76.vbs gridsel <ses> <gridId> <z>  -> ALV-Grid-Zeilen markieren (nullbasiert, "0,1")
 '           t76.vbs zu <ses>                    -> eigene Sitzung mit /i schliessen
 Option Explicit
 Dim app, con, i, cmd, ses, idx, fso, idFile, eigeneId
@@ -155,6 +156,10 @@ Select Case cmd
       Next
       WScript.Echo Left(line, 400)
     Next
+  Case "gridsel"
+    ' gridsel <ses> <gridId> <zeilen>  (nullbasiert, kommagetrennt; ergaenzt 2026-11-06 IC Staffelbasis)
+    ses.findById(WScript.Arguments(2)).SelectedRows = WScript.Arguments(3)
+    WScript.Echo "MARKIERT=" & ses.findById(WScript.Arguments(2)).SelectedRows
   Case "treesel"
     ses.findById(WScript.Arguments(2)).SelectNode WScript.Arguments(3)
     WScript.Sleep 800
