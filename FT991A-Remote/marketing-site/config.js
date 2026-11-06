@@ -16,9 +16,9 @@ window.MACYAESU_CONFIG = {
   downloadFileName: "MacYaesu.dmg",
   demoMinutes: 15,
   releaseVersion: "1.1",
-  releaseBuild: "2",
-  releaseUpdated: "15.08.2026",
-  releaseSize: "3.0 MB",
+  releaseBuild: "3",
+  releaseUpdated: "06.11.2026",
+  releaseSize: "3.1 MB",
   updatesIncludedTextDe: "Regelmässige Updates sind kostenlos enthalten.",
   updatesIncludedTextEn: "Regular updates are included at no extra cost."
 };
