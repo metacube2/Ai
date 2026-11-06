@@ -450,6 +450,8 @@ sechs uebrigen Objekte liegen jetzt ebenfalls dort (Aufgabe `T76K912852`, Abschn
 wird zum Entscheid, ob `ZXCO1U06` mitgeht; Punkt 3 heisst jetzt, dass der auskommentierte T76-Stand von
 `ZXCO1U12` einen in P76 etwa aktiven Rueckschreibweg ersetzen wuerde.
 
+*Durchspieltest 2026-11-06 (Wunsch Ingo, eigene T76-Sitzung):* CO01 Material 36385, Werk 1100, PP22, 5 ST, Eckendtermin 20.11.2026, mit Freigabe -> Auftrag **1241850**, Status FREI FMAT ABRV; AUFK-ZZPRDAT 20261120 = AFKO-GLTRP, FTRMI 20261106. CO03 Reiter „TRAFAG Daten“ zeigt **20.11.2026** (Gegenprobe 1241847: 11.11.2026). Beobachtung: Beim ersten CO03 direkt nach dem Anlegen in derselben Sitzung war das Feld leer, beim erneuten Oeffnen gefuellt (vermutlich V2-Zeitpunkt bzw. Puffer); im Fachtest den Auftrag neu oeffnen. Schreibweg nicht unterscheidbar, solange `ZXCO1U06` in T76 aktiv ist.
+
 **Vor jeder Freigabe von `T76K912490` offen (P76 lesend pruefen), Stand 2026-11-06 mit den Nachtraegen oben:**
 1. `ZXCO1TOP` in P76: Stehen `tables: ... ci_aufk` und `DATA: gs_aufk TYPE ci_aufk` drin? Wenn nicht, wird `SAPLXCO1` nach dem Import syntaxfehlerhaft (CO01/CO02/CO03 brechen ab). Sonst `gs_aufk`-Zeile streichen bzw. TOP mitnehmen.
 2. `ZXCO1U06` (EXIT_SAPLCOZV_001, Projekt `ZPP00005`): in T76 aktiv mit Georgs Stand 31.03.2026, schreibt `header_exp-zzprdat = header_imp-gltrp` bei Freigabe. **Zweiter Schreibweg neben dem BAdI** — die T76-Tests unterscheiden nicht, wer schreibt. Stand in P76 und Uebernahme von `HEADER_EXP-ZZPRDAT` klaeren (Georg).
