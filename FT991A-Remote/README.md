@@ -89,10 +89,12 @@ Oder für Release-Build:
 Seit 2026-10-19 mit Developer ID (Team 3HF7RG7BPA) signiert und von Apple notarisiert.
 `Tools/verteilen.sh` baut Release, signiert mit Hardened Runtime und Entitlements, packt das DMG, notarisiert
 und heftet das Ticket an (`dist/MacYaesu.dmg`). Für den Website-Deploy `dist/MacYaesu.dmg` nach `MacYaesu.dmg`
-kopieren (siehe `instructions/homelab/aiscom-website.md`). Live auf www.aiscom.ch/macyaesu/: 1.1 (3), notarisiert,
-mit Ed25519-Lizenzprüfung, seit 2026-11-06 (vorher 1.1 (2) ab 2026-10-19; Stand 2026-11-08). Offen: Testkauf, MWST/Merchant of Record, Forenposts.
+kopieren (siehe `instructions/homelab/aiscom-website.md`). Live auf www.aiscom.ch/macyaesu/: **1.1 (4)** seit 2026-11-08 (notarisiert, Ed25519-Lizenz, Demo-Modus, Leistungsanzeige
+`RM1` behoben; auch im Sparkle-Kanal `macyaesu`, Käufer von 1.1 (3) bekommen das Update automatisch). Vorher 1.1 (3) ab
+2026-11-06, 1.1 (2) ab 2026-10-19. Offen: Testkauf, MWST/Merchant of Record, Forenposts, übrige Fehler aus der
+Windows-Portierung (Speicherlisten, CSV-Zeiten, Shift-PTT beim Tippen, siehe `instructions/desktop-ports.md`).
 
-**Demo-Modus** (seit 2026-11-08, noch in keinem verteilten Build): In der Portliste steht als letzter Eintrag
+**Demo-Modus** (seit 2026-11-08, verteilt ab 1.1 (4)): In der Portliste steht als letzter Eintrag
 „Demo-Funkgerät (ohne FT-991A)“ (`demo://ft-991a`). Damit verbindet MacYaesu ohne Gerät mit einem simulierten FT-991A
 (`DemoFunkgeraet` in `Services/SerialPortManager.swift`): gleicher Handshake (`ID;`/`FA;`), Antworten im FT-991A-Format
 durch denselben Parser, gesetzte Werte bleiben gespeichert, S-Meter als ruhiges Zufallssignal, Unbekanntes mit `?;`.
@@ -100,8 +102,7 @@ Das Demo-Gerät wird nie automatisch gewählt und nie von der Portsuche probiert
 Lizenzfreischaltung gelten unverändert. `MACYAESU_DEMO=1` (z. B. `open -n --env MACYAESU_DEMO=1 MacYaesu.app`) verbindet
 beim Start direkt mit dem Demo-Gerät und merkt sich den Port nicht (für Vorführung und Bildschirmfotos).
 Geprüft 2026-11-08 (Release-Bau, ad hoc signiert): „Verbunden · CAT alive“, CAT-Trace nur `RX class=valid`, Frontpanel mit
-14.195.000 Hz USB und S-Meter. Bekannt und nicht behoben: `RM1` (Leistung beim Senden) liest eine Ziffer zu viel
-(siehe `instructions/desktop-ports.md`), im Demo-Modus nur beim Senden sichtbar.
+14.195.000 Hz USB und S-Meter. `RM1` (Leistung beim Senden) liest seit 1.1 (4) die Instrumentziffer nicht mehr mit.
 
 **Tester-Fassung** (seit 2026-10-24): `Tools/verteilen.sh --tester` baut mit Compile-Schalter `MACYAESU_TESTER`
 (`SettingsController.istTester`: `isActivated` immer wahr, Einstellungen zeigen „Vollversion (Testfassung)“) nach

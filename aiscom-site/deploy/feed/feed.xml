@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Versionen der Apps von AISCOM (Mac und Android).</description>
   <language>de-ch</language>
-  <lastBuildDate>Sun, 08 Nov 2026 07:56:03 +0000</lastBuildDate>
+  <lastBuildDate>Sun, 08 Nov 2026 08:24:13 +0000</lastBuildDate>
+  <item>
+    <title>MacYaesu 1.1 (Build 4) für macOS</title>
+    <link>https://www.aiscom.ch/macyaesu/</link>
+    <guid isPermaLink="false">macyaesu-mac-1.1-4</guid>
+    <pubDate>Sun, 08 Nov 2026 08:23:54 +0000</pubDate>
+    <description>Fernsteuerung für den Yaesu FT-991A auf dem Mac: CAT-Steuerung, Logbuch, Audio.</description>
+  </item>
   <item>
     <title>Kamera-Import 1.0 (Build 10) für macOS</title>
     <link>https://www.aiscom.ch/kamera-uploader/</link>
