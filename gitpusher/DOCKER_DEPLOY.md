@@ -10,8 +10,8 @@ Für das Homelab ist `cDocker` / `pDocker` vorgesehen:
 - Proxmox-IP: `192.168.178.161`
 - Proxmox-User: `root`
 - Proxmox-Passwort: nicht im Repository ablegen; im Passwortmanager hinterlegen.
-- empfohlener interner Port: `8088`
-- Nginx Proxy Manager kann später auf `192.168.178.113:8088` zeigen.
+- empfohlener interner Port: `8097` (8088 ist seit Paperless Finance belegt; 8080–8096 auf cDocker vergeben, Stand 2026-11-08)
+- Nginx Proxy Manager kann später auf `192.168.178.113:8097` zeigen.
 
 ## Deployment auf cDocker
 
@@ -31,7 +31,7 @@ docker compose up -d --build
 Danach intern erreichbar:
 
 ```text
-http://192.168.178.113:8088
+http://192.168.178.113:8097
 ```
 
 ## Weitere Dienste auf cDocker / pDocker
@@ -83,7 +83,7 @@ Format:
 In Nginx Proxy Manager:
 
 - Forward Hostname/IP: `192.168.178.113`
-- Forward Port: `8088`
+- Forward Port: `8097`
 - Scheme: `http`
 - Websockets sind nicht erforderlich.
 

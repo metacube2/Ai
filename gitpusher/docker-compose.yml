@@ -4,7 +4,7 @@ services:
     container_name: gitpusher
     restart: unless-stopped
     ports:
-      - "8088:80"
+      - "8097:80"
     volumes:
       - gitpusher-data:/gitpusher/data
       - gitpusher-deployments:/deployments
