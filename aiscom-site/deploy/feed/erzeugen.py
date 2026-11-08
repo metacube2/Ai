@@ -29,6 +29,8 @@ MAC = [
      "text": "Fernsteuerung für den Yaesu FT-991A auf dem Mac: CAT-Steuerung, Logbuch, Audio."},
     {"kennung": "kamera-import", "name": "Kamera-Import", "seite": "https://www.aiscom.ch/kamera-uploader/", "datei": "KameraImport.dmg",
      "text": "Lädt von der Kamera nur die fehlenden Fotos und Videos, auf den Mac oder per SFTP."},
+    {"kennung": "taploop", "name": "TapLoop", "seite": "https://www.aiscom.ch/taploop/", "datei": "TapLoop.dmg",
+     "text": "Looper mit vier Plattentellern für den Mac: aufnehmen, scratchen, im Takt mischen. Kostenlos."},
 ]
 SEITEN = [
     {"kennung": "antennen-studio", "name": "Antennen-Studio", "seite": "https://www.aiscom.ch/antennen-studio/",
