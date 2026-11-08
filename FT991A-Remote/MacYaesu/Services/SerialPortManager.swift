@@ -117,6 +117,7 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
 
     @Published var bytesSent: UInt64 = 0
     @Published var bytesReceived: UInt64 = 0
+    private var demo: DemoFunkgeraet?
 
     // MARK: - Callbacks
 
@@ -171,18 +172,20 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
     // MARK: - Port Discovery
 
     func refreshPorts() {
-        availablePorts = findSerialPorts()
+        // Demo-Funkgeraet immer als letzter Eintrag: echte Ports haben Vorrang bei der Auswahl.
+        availablePorts = findSerialPorts() + [DemoFunkgeraet.port]
 
         if availablePorts.contains(where: { $0.path == selectedPortPath }) {
             return
         }
 
-        // Auto-select FT-991A port (CP210x / SLAB)
-        if let ft991a = availablePorts.first(where: { $0.isFT991A }) {
+        // Auto-select FT-991A port (CP210x / SLAB); das Demo-Funkgeraet wird nie von selbst gewaehlt
+        let echtePorts = availablePorts.filter { $0.path != DemoFunkgeraet.pfad }
+        if let ft991a = echtePorts.first(where: { $0.isFT991A }) {
             selectedPortPath = ft991a.path
-        } else if selectedPortPath.isEmpty, let first = availablePorts.first {
+        } else if selectedPortPath.isEmpty, let first = echtePorts.first {
             selectedPortPath = first.path
-        } else if let first = availablePorts.first {
+        } else if let first = echtePorts.first {
             selectedPortPath = first.path
         }
     }
@@ -354,6 +357,21 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
             currentPortSearchIndex = currentIndex + 1
         }
         connectionState = .connecting
+
+        // Demo-Modus: simuliertes FT-991A statt Port; derselbe Handshake (ID;/FA;) wie beim echten Geraet.
+        if path == DemoFunkgeraet.pfad {
+            demo = DemoFunkgeraet()
+            readBuffer.removeAll()
+            hasCATResponse = false
+            lastResponseAt = nil
+            lastError = nil
+            awaitingInitialCATResponse = true
+            startHandshakeTimer()
+            Logger.shared.startCATSession(portName: DemoFunkgeraet.port.name, portPath: path, baudRate: baudRate)
+            startHandshakeProbe()
+            Logger.shared.log("Demo-Modus: simuliertes FT-991A verbunden (keine Daten an ein Geraet)", level: .info)
+            return
+        }
         if let preferred = availablePorts.first(where: { $0.path == path })?.preferredCATLineMode,
            preferred == "rts-on" {
             lineMode = .rtsOn
@@ -397,7 +415,9 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
     }
 
     private func buildConnectionAttemptPaths() -> [String] {
-        let allPaths = availablePorts.map(\.path)
+        // Die automatische Portsuche probiert das Demo-Funkgeraet nie; es zaehlt nur, wenn es gewaehlt ist.
+        if selectedPortPath == DemoFunkgeraet.pfad { return [DemoFunkgeraet.pfad] }
+        let allPaths = availablePorts.map(\.path).filter { $0 != DemoFunkgeraet.pfad }
 
         if !selectedPortPath.isEmpty, !searchUSBPortsUntilFound {
             return allPaths.contains(selectedPortPath) ? [selectedPortPath] : []
@@ -409,7 +429,7 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
             orderedPaths.append(selectedPortPath)
         }
 
-        for port in availablePorts where !orderedPaths.contains(port.path) {
+        for port in availablePorts where !orderedPaths.contains(port.path) && port.path != DemoFunkgeraet.pfad {
             orderedPaths.append(port.path)
         }
 
@@ -458,6 +478,7 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
     }
 
     private func disconnectCurrentConnection(markDisconnected: Bool) {
+        demo = nil
         stopReading()
         stopHandshakeTimer()
         awaitingInitialCATResponse = false
@@ -633,6 +654,10 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
     // MARK: - Writing
 
     func send(_ data: Data) {
+        if let demo {
+            sendeAnDemo(data, demo)
+            return
+        }
         guard fileDescriptor != -1 else { return }
 
         writeQueue.async { [weak self] in
@@ -806,6 +831,94 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
 
     var isConnected: Bool {
         connectionState.isConnected
+    }
+
+    /// Ist das simulierte FT-991A verbunden (Demo-Modus)?
+    var istDemo: Bool { demo != nil }
+
+    private func sendeAnDemo(_ data: Data, _ demo: DemoFunkgeraet) {
+        // send() kommt auch aus Hintergrund-Warteschlangen: alles Weitere auf dem Hauptthread (Zaehler, Demo-Zustand).
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.sendeAnDemo(data, demo) }
+            return
+        }
+        guard self.demo === demo, let text = String(data: data, encoding: .ascii) else { return }
+        bytesSent += UInt64(data.count)
+        Logger.shared.catTrace("TX raw=\(text.trimmingCharacters(in: .whitespacesAndNewlines)) (Demo)")
+        let antwort = demo.verarbeite(text)
+        guard !antwort.isEmpty else { return }
+        // Kurze Verzoegerung wie ueber die Leitung, Antwort laeuft durch denselben Parser wie echte Daten.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { [weak self] in
+            guard let self, self.demo === demo, let antwortDaten = antwort.data(using: .ascii) else { return }
+            self.bytesReceived += UInt64(antwortDaten.count)
+            self.readBuffer.append(antwortDaten)
+            self.processBuffer()
+        }
+    }
+}
+
+// MARK: - Demo-Funkgeraet
+
+/// Simuliertes FT-991A fuer den Demo-Modus (Webseitenfassung ohne Geraet ausprobieren, Bildschirmfotos).
+/// Beantwortet die CAT-Lesebefehle der App im Format des echten Geraets und merkt sich gesetzte Werte;
+/// Setzbefehle bleiben wie beim Geraet ohne Antwort. Unbekanntes beantwortet es wie das Geraet mit „?;“.
+final class DemoFunkgeraet {
+    static let pfad = "demo://ft-991a"
+    static let port = SerialPort(path: pfad, name: "Demo-Funkgerät (ohne FT-991A)", isFT991A: false)
+
+    /// Laenge des Auswahlteils hinter dem Befehl (z. B. MD0, CN00, RM1): bis hier ist es ein Lesebefehl.
+    private static let auswahlLaenge: [String: Int] = [
+        "FA": 0, "FB": 0, "MD": 1, "AG": 1, "RG": 1, "SQ": 1, "MG": 0, "PC": 0, "SM": 1, "RM": 1,
+        "CT": 1, "CN": 2, "CO": 2, "NB": 1, "NR": 1, "NL": 1, "RL": 1, "BC": 1, "AC": 0, "FT": 0,
+        "ST": 0, "PA": 1, "TX": 0, "ID": 0,
+    ]
+
+    /// Gespeicherter Wert je Lesebefehl (Befehl + Auswahl) → Antwort ohne Befehl, z. B. "MD0" → "02" (USB).
+    private(set) var werte: [String: String] = [
+        "FA": "014195000", "FB": "007074000", "MD0": "02", "AG0": "0110", "RG0": "0255", "SQ0": "0000",
+        "MG": "050", "PC": "100", "CT0": "00", "CN00": "00012", "CN01": "01023", "CO00": "000000",
+        "CO01": "011000", "NB0": "00", "NR0": "00", "NL0": "0000", "RL0": "000", "BC0": "00", "AC": "000",
+        "FT": "0", "ST": "0", "PA0": "01", "TX": "0", "ID": "0670",
+    ]
+
+    private var signal: Double = 120
+    private var zufall = SystemRandomNumberGenerator()
+
+    /// Verarbeitet einen oder mehrere Befehle („FA;MD0;“) und liefert die Antworten aneinandergereiht.
+    func verarbeite(_ text: String) -> String {
+        text.split(separator: ";").map { antwort(auf: String($0).trimmingCharacters(in: .whitespacesAndNewlines)) }.joined()
+    }
+
+    private func antwort(auf befehl: String) -> String {
+        guard befehl.count >= 2 else { return "" }
+        let name = String(befehl.prefix(2))
+        let rest = String(befehl.dropFirst(2))
+        guard let auswahl = Self.auswahlLaenge[name] else { return "?;" }
+
+        if name == "SM" { return "SM0" + String(format: "%03d", naechstesSignal()) + ";" }
+        if name == "RM" {
+            let sendet = (werte["TX"] ?? "0") != "0"
+            let wert = rest.hasPrefix("6") ? (sendet ? 25 : 0) : (sendet ? Int(werte["PC"] ?? "100") ?? 100 : 0)
+            return "RM" + String(rest.prefix(1)) + String(format: "%03d", wert) + ";"
+        }
+
+        if rest.count <= auswahl {
+            let schluessel = name + rest
+            guard let wert = werte[schluessel] else { return "?;" }
+            return name + wert + ";"
+        }
+        // Setzbefehl: unter Befehl + Auswahl ablegen; das Geraet antwortet nicht.
+        let schluessel = name + String(rest.prefix(auswahl))
+        werte[schluessel] = rest
+        if name == "AC", rest.hasSuffix("2") || rest.hasSuffix("3") { werte["AC"] = "001" } // Abstimmen: Tuner danach an
+        return ""
+    }
+
+    /// S-Meter als ruhiges Zufallssignal um S7 bis S9 (0–255 wie beim FT-991A).
+    private func naechstesSignal() -> Int {
+        signal += Double.random(in: -18...18, using: &zufall)
+        signal = min(190, max(60, signal))
+        return Int(signal)
     }
 }
 

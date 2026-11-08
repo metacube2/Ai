@@ -167,6 +167,7 @@ struct MainView: View {
             radioViewModel.searchUSBPortsUntilFound = settingsController.searchUSBPortsUntilFound
             radioViewModel.isUsageLocked = settingsController.isTrialExpired && !settingsController.isActivated
             parrotAudioService.refreshDevices()
+            if Self.istDemoStart { attemptAutoConnectIfNeeded() }
         }
         .onDisappear {
             teardownKeyboardShortcuts()
@@ -176,6 +177,8 @@ struct MainView: View {
             attemptAutoConnectIfNeeded()
         }
         .onChange(of: radioViewModel.selectedPort) { newValue in
+            // Ein Demo-Start per Umgebungsvariable ueberschreibt den gemerkten echten Port nicht.
+            guard !Self.istDemoStart else { return }
             settingsController.rememberConnectionPreferences(portPath: newValue, baudRate: radioViewModel.baudRate)
         }
         .onChange(of: radioViewModel.baudRate) { newValue in
@@ -281,7 +284,18 @@ struct MainView: View {
         didApplyStartupPreferences = true
     }
 
+    /// Start mit MACYAESU_DEMO=1 (Vorfuehrung, Bildschirmfotos): Demo-Funkgeraet statt echtem Port.
+    static let istDemoStart = ProcessInfo.processInfo.environment["MACYAESU_DEMO"] == "1"
+
     private func attemptAutoConnectIfNeeded() {
+        // MACYAESU_DEMO=1: beim Start mit dem simulierten FT-991A verbinden (Vorfuehrung, Bildschirmfotos).
+        if Self.istDemoStart, !didAttemptAutoConnect,
+           !radioViewModel.isConnected, !settingsController.isTrialExpired {
+            didAttemptAutoConnect = true
+            radioViewModel.selectPort(DemoFunkgeraet.pfad)
+            radioViewModel.connect()
+            return
+        }
         guard settingsController.autoConnectOnLaunch,
               !didAttemptAutoConnect,
               !radioViewModel.isConnected,
