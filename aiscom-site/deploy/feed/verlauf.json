@@ -1,5 +1,12 @@
 [
  {
+  "guid": "kamera-import-mac-1.0-10",
+  "titel": "Kamera-Import 1.0 (Build 10) für macOS",
+  "link": "https://www.aiscom.ch/kamera-uploader/",
+  "text": "Lädt von der Kamera nur die fehlenden Fotos und Videos, auf den Mac oder per SFTP.",
+  "datum": "2026-11-08T07:55:52+00:00"
+ },
+ {
   "guid": "kamera-import-mac-1.0-8",
   "titel": "Kamera-Import 1.0 (Build 8) für macOS",
   "link": "https://www.aiscom.ch/kamera-uploader/",

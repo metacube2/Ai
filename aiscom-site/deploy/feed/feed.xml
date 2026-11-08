@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Versionen der Apps von AISCOM (Mac und Android).</description>
   <language>de-ch</language>
-  <lastBuildDate>Sun, 08 Nov 2026 07:48:18 +0000</lastBuildDate>
+  <lastBuildDate>Sun, 08 Nov 2026 07:56:03 +0000</lastBuildDate>
+  <item>
+    <title>Kamera-Import 1.0 (Build 10) für macOS</title>
+    <link>https://www.aiscom.ch/kamera-uploader/</link>
+    <guid isPermaLink="false">kamera-import-mac-1.0-10</guid>
+    <pubDate>Sun, 08 Nov 2026 07:55:52 +0000</pubDate>
+    <description>Lädt von der Kamera nur die fehlenden Fotos und Videos, auf den Mac oder per SFTP.</description>
+  </item>
   <item>
     <title>Kamera-Import 1.0 (Build 8) für macOS</title>
     <link>https://www.aiscom.ch/kamera-uploader/</link>
