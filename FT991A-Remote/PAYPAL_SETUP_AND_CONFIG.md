@@ -23,7 +23,7 @@ finden ausschließlich bei PayPal statt.
 
 1. Käufer gibt die E-Mail-Adresse für die Lizenz ein.
 2. PayPal zeigt Produkt, Empfänger und Betrag und führt die Zahlung aus.
-3. Im PayPal-Händlerkonto prüfen: Status abgeschlossen, `49.00 CHF`,
+3. Im PayPal-Konto prüfen (Privatkonto metacube@gmail.com, kein Geschäftskonto; Stand 2026-11-08): Status abgeschlossen, `49.00 CHF`,
    Artikelnummer `MACYAESU-1.1` und Lizenz-E-Mail vorhanden.
 4. Schlüssel mit `aiscom-lizenz` ausstellen (privater Ed25519-Schlüssel im
    Schlüsselbund dieses Macs; `./generate-license.command` ruft dasselbe auf):
