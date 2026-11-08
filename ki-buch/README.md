@@ -25,5 +25,5 @@ Siehe Ende dieser Datei (Wortzahl, Prüfergebnis), wird nach jedem Bau nachgetra
 
 Stand 2026-10-24: 18 Teile (Prolog, 16 Kapitel, Epilog), 26 187 Wörter (rund 93 Textseiten, mit 18 Bildern, Umschlag,
 Titelei und Inhalt gut 100 Seiten), 19 SVG-Bilder aus `werkzeuge/bilder.py`. `epubcheck` 5.4.0: 0 Fehler, 0 Warnungen.
-Kopie für den Benutzer: `~/Desktop/Die-Schweiz-denkt-mit.epub`. Konzept und wörtlicher Auftrag: [KONZEPT.md](KONZEPT.md).
+Ausgabe: `ausgabe/Die-Schweiz-denkt-mit.epub` (Desktop-Kopie am 2026-11-08 nicht mehr vorhanden). Konzept und wörtlicher Auftrag: [KONZEPT.md](KONZEPT.md).
 Bildschirmanzeigen der Maschinen (Zeilen `*…*`) stehen je als eigener Absatz in Schreibmaschinenschrift.
