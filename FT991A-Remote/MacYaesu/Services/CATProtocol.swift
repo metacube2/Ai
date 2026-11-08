@@ -229,8 +229,9 @@ class CATProtocol: ObservableObject, CATProtocolServiceType {
                     }
                 }
             case "RM":
-                // RM1 = power, RM6 = SWR
-                if let level = response.levelValue {
+                // RM1 = power, RM6 = SWR. Die erste Ziffer waehlt das Messinstrument und gehoert nicht zum Wert
+                // (vorher wurde "RM1050" als 1050 statt 50 gelesen, gefunden beim Windows-Port 2026-11-04).
+                if let level = Int(response.value.dropFirst().filter { $0.isNumber }) {
                     if response.value.hasPrefix("1") {
                         self.radioState.powerMeter = level
                     } else if response.value.hasPrefix("6") {
