@@ -3,13 +3,13 @@ title: AISCOM-Webseite (www.aiscom.ch) – Quellcode und Design
 topic: web.aiscom
 tags: [aiscom, website, nextjs, tailwind, css-animation, svg, macyaesu, kamera-uploader]
 status: current
-updated: 2026-10-04
+updated: 2026-11-08
 ---
 
 # AISCOM-Webseite
 
 Firmenseite AISCOM (IT-Dienstleistungen und 3D-Druck, Zürich) mit dem Bereich
-„Projekte im Verkauf“ (MacYaesu, Kamera-Uploader). Live: <https://www.aiscom.ch>.
+„Projekte im Verkauf“ (MacYaesu, Kamera-Uploader; Antennen-Studio mit pausiertem Kauf, TapLoop gratis). Live: <https://www.aiscom.ch>.
 
 Betrieb, Server, Deploy und Sicherheit sind bewusst nicht in diesem
 öffentlichen Repo dokumentiert, sondern im privaten Doku-Repo
@@ -22,7 +22,12 @@ Betrieb, Server, Deploy und Sicherheit sind bewusst nicht in diesem
 | `frontend/` | Next.js 14 (App Router), Tailwind, de/en/it, SQLite für Kontakt/Upload |
 | `frontend/locales/` | Alle öffentlichen Texte, inkl. Produktkarten (`products.items`) |
 | `frontend/components/visual/` | Grafik- und Animationsbausteine (siehe unten) |
-| `deploy/kamera-uploader/` | Statische Platzhalterseite `/kamera-uploader/` |
+| `deploy/kamera-uploader/` | Produktseite Kamera-Import `/kamera-uploader/` (PayPal, DMG, `lizenz/`, `datenschutz/`, `support/`) |
+| `deploy/antennen-studio/` | Produktseite `/antennen-studio/` (Demo-Download, Kauf pausiert seit 2026-10-21, `lizenz/`, nec2c-Quellarchiv) |
+| `deploy/aurora-studio/` | Produktseite `/aurora-studio/` mit `datenschutz/`, `support/` |
+| `deploy/taploop/` | Produktseite `/taploop/` (gratis Testphase, DMG, Video) mit `datenschutz/`, `support/` |
+| `deploy/chronik/` | `datenschutz/` und `support/` der Chronik-Apps |
+| `deploy/aiscom-tester-schutz.conf` | Apache-Passwortsperre für `/tester/` und `/updates/*-tester/` (seit 2026-11-06) |
 | `deploy/tester/` | Tester-Seite `/tester/` (nicht verlinkt): `erzeugen.py` baut `index.html` aus den gebauten DMGs (Version, Build, Datum, Grösse, SHA-256), `bilder/` App-Icons; die DMGs liegen nicht im Repo |
 | `deploy/feed/` | RSS-Feed `/feed.xml` der App-Versionen (`erzeugen.py`, Verlauf `verlauf.json`), siehe README dort |
 | `deploy/` | Einmaliger Umstieg 2026-10-04 (Dienst, Proxy, Sitemap), `pruefen.sh` |
@@ -56,9 +61,3 @@ npm ci --ignore-scripts --legacy-peer-deps   # eslint-config-next 16 neben eslin
 - Einen alten Testserver über den Port beenden (`lsof -ti tcp:3055 | xargs kill`);
   `pkill -f "next start"` trifft den Prozess `next-server` nicht.
 - `deploy/pruefen.sh` prüft die Live-Seite am Inhalt.
-
-## Kamera-Uploader
-
-Noch Platzhalter. Wenn die Unterlagen da sind: `deploy/kamera-uploader/index.html`
-zur Produktseite ausbauen, Texte in `frontend/locales/*.json` (`products.items`)
-anpassen, optional `CameraVisual` am echten Produkt ausrichten.

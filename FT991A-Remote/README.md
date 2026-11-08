@@ -89,8 +89,8 @@ Oder für Release-Build:
 Seit 2026-10-19 mit Developer ID (Team 3HF7RG7BPA) signiert und von Apple notarisiert.
 `Tools/verteilen.sh` baut Release, signiert mit Hardened Runtime und Entitlements, packt das DMG, notarisiert
 und heftet das Ticket an (`dist/MacYaesu.dmg`). Für den Website-Deploy `dist/MacYaesu.dmg` nach `MacYaesu.dmg`
-kopieren (siehe `instructions/homelab/aiscom-website.md`). Live auf www.aiscom.ch/macyaesu/ ist seit
-2026-10-19 die notarisierte 1.1. Offen: Testkauf, MWST/Merchant of Record, Forenposts.
+kopieren (siehe `instructions/homelab/aiscom-website.md`). Live auf www.aiscom.ch/macyaesu/: 1.1 (3), notarisiert,
+mit Ed25519-Lizenzprüfung, seit 2026-11-06 (vorher 1.1 (2) ab 2026-10-19; Stand 2026-11-08). Offen: Testkauf, MWST/Merchant of Record, Forenposts.
 
 **Tester-Fassung** (seit 2026-10-24): `Tools/verteilen.sh --tester` baut mit Compile-Schalter `MACYAESU_TESTER`
 (`SettingsController.istTester`: `isActivated` immer wahr, Einstellungen zeigen „Vollversion (Testfassung)“) nach

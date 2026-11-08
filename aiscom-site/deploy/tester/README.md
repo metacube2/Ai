@@ -9,8 +9,9 @@ geschützten Tester-Fassungen laufen nicht mehr automatisch (401) – neue Fassu
 `ssh root@192.168.178.161 pct exec 104 -- htpasswd -B /etc/apache2/aiscom-tester.htpasswd tester` (interaktiv, Benutzer).
 Prüfen: `curl -s -o /dev/null -w "%{http_code}" https://www.aiscom.ch/tester/` → 401.
 
-Download-Seite für Tester (nicht verlinkt, `noindex`): Aurora Studio, Kamera-Import, Antennen-Studio, MacYaesu und
-Stretcher als DMG mit Verknüpfung „Programme“ zum Hineinziehen, Icon, Version/Build/Datum/Grösse/SHA-256 je App und die
+Download-Seite für Tester (nicht verlinkt, `noindex`): alle Mac-Apps als DMG (Liste im Wörterbuch von `erzeugen.py`,
+Stand 2026-11-08 u. a. TapLoop, Makrowerk, ScreenCam, Mietprüfer, Fotogedächtnis, Obhut, Chronik-Apps), dazu
+Android-APKs und das E-Book; DMGs mit Verknüpfung „Programme“ zum Hineinziehen, Icon, Version/Build/Datum/Grösse/SHA-256 je App und die
 Installationsschritte. Sonst nichts: keine Testpunkte, Grenzen oder Hinweise (Benutzer 2026-10-24). Alle Apps sind
 **Vollversionen**: Kamera-Import, Antennen-Studio und MacYaesu als Tester-Fassung ohne Lizenzschlüssel
 (`verteilen.sh --tester`, Compile-Schalter `KAMERA_TESTER`, `ANTENNEN_TESTER`, `MACYAESU_TESTER`), Aurora Studio und
@@ -48,8 +49,8 @@ curl -sI https://www.aiscom.ch/tester/Stretcher.dmg | grep -i "content-length"
 curl -s https://www.aiscom.ch/tester/Stretcher.dmg | shasum -a 256
 ```
 
-Stand 2026-10-27 abends: TapLoop 1.0 (41) macOS (notarisiert, Sparkle taploop-tester, 28 synthetische Beispielplatten, Farbwelle/Taktuhr/Tonkreis). Stand 2026-10-27: Makrowerk 0.1 (1) neu (`makrowerk/werkzeuge/verteilen.sh`, ohne Sparkle, iPhone-Karte aus Klicktest 5/5 + Foto-Test übersprungen). Stand 2026-10-26: TapLoop 1.0 (38) macOS (notarisiert, Sparkle taploop-tester), iPhone-Karte 1.0 (36). Stand 2026-10-24: Aurora 1.0 (3), Kamera-Import 1.0 (7), Antennen-Studio 1.0 (7), MacYaesu 1.1 (2),
-Stretcher 0.2 (2), Obhut 0.1 (1, `obhut-app/werkzeuge/verteilen.sh`). Mietprüfer 0.1 (1) seit 2026-10-24 (`mietpruefer/werkzeuge/verteilen.sh`, Tester-Fassung `MIET_TESTER`, Sparkle-Kanal `mietpruefer-tester`; iPhone-Karte aus dem vollen Klicktestlauf 12/12). Kamera-Import Build 8 (Einordnung gut/schlecht) ist bewusst nicht hier, nur lokal zum Testen.
+Stand 2026-11-05 23:10: TapLoop 1.0 (44) macOS (Video-Teller, Sparkle taploop-tester). Stand 2026-10-24 abends (laut `verlauf.json`): Aurora 1.0 (4), Kamera-Import 1.0 (9), Antennen-Studio 1.0 (8), MacYaesu 1.1 (3), Stretcher 0.2 (5), Obhut 0.1 (2) – alle mit Sparkle. Stand 2026-10-27 abends: TapLoop 1.0 (41) macOS (notarisiert, Sparkle taploop-tester, 28 synthetische Beispielplatten, Farbwelle/Taktuhr/Tonkreis). Stand 2026-10-27: Makrowerk 0.1 (1) neu (`makrowerk/werkzeuge/verteilen.sh`, ohne Sparkle, iPhone-Karte aus Klicktest 5/5 + Foto-Test übersprungen). Stand 2026-10-26: TapLoop 1.0 (38) macOS (notarisiert, Sparkle taploop-tester), iPhone-Karte 1.0 (36). Stand 2026-10-24: Aurora 1.0 (3), Kamera-Import 1.0 (7), Antennen-Studio 1.0 (7), MacYaesu 1.1 (2),
+Stretcher 0.2 (2), Obhut 0.1 (1, `obhut-app/werkzeuge/verteilen.sh`). Mietprüfer 0.1 (1) seit 2026-10-24 (`mietpruefer/werkzeuge/verteilen.sh`, Tester-Fassung `MIET_TESTER`, Sparkle-Kanal `mietpruefer-tester`; iPhone-Karte aus dem vollen Klicktestlauf 12/12). Kamera-Import Build 8 (Einordnung gut/schlecht) ist nicht hier, aber seit 2026-11-06 die Website-Fassung (ohne Sparkle).
 
 Reiter **Buch** (seit 2026-10-24): E-Book „Die Schweiz denkt mit“ (`Ai/ki-buch/ausgabe/…epub`, Liste `BUECHER` in `erzeugen.py`,
 Umschlag `bilder/ki-buch.png` aus `ausgabe/umschlag.png`); einspielen nach `/var/www/html/tester/Die-Schweiz-denkt-mit.epub`

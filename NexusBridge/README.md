@@ -64,7 +64,8 @@ sich also sofort abspielen, in die Spur ziehen oder sichern. Die Anzeige
 zeichnet Quellspektrum, Referenzspektrum und angewandte Kurve.
 
 Fuer diesen Tab braucht das Konto das Recht **`restore`**; das Konto aus
-`config.env` (Rolle `user`) hat es nicht.
+`config.env` hat es seit spaetestens 2026-10-23 (alle Bereiche in
+`main_permissions`, `n8n/automation/users.json`).
 
 Ein Vorbehalt zur Superresolution: das Modell **erfindet** Obertoene, die nie
 aufgenommen wurden. Fuer Musik und Effekt egal, fuer Zeitzeugenmaterial ist das
