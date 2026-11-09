@@ -182,3 +182,5 @@ Form der Antwort (OData V2): `{"d":{"results":[{"__metadata":{...,"type":"ZPOWER
    Der Auftrag enthaelt nur die drei Objekte oben; er haengt an keinem offenen Auftrag.
 6. Die Personennamen (`Bearbeiter`) kommen aus `PA0001`. Ein SELECT im Gateway prueft keine HR-Berechtigung; falls das
    fuer das Dashboard nicht gewuenscht ist, Kuerzel statt Namen (Entscheid Ingo).
+
+*Nachtrag 2026-11-09 15:13, produktiv:* `T76K912837` in P76 importiert (Importqueue: Warnung, RC 4), Caches in P76 auf Auftrag Ingo geleert (eigene Sitzung, `/IWBEP/CACHE_CLEANUP` alle Modelle, dann `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL`; Gateway Client `QmMeldungSet?$top=5` 200, 6'510 Byte; `ShopAufSet` 200). `MonthlyReview:QmEnabled = true` (`88e19f6`), deployed 15:11 (`4585392`). Im Browser: **345 offene Q1-Meldungen**, Ø 988 / Median 389 Tage offen, 264 laenger als 90 Tage, aeltester Fall 107662 (4'963 Tage). **Auffaellig, offen:** alle Meldungen ohne Status („–“) und ohne Produktlinie; Feldzuordnung im Set bzw. Daten in P76 pruefen (Statuswerte MMAB/LOeVM/NOCO/DLFL aus T76 erscheinen nicht).

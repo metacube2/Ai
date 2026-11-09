@@ -2,6 +2,14 @@
 
 Stand: 2026-11-09
 
+## Eingeschaltet 15:11 (Auftrag Ingo „aktiviere was geht und schalte frei“), 2026-11-09
+
+- P76-Importqueue (Bild Ingo): `T76K912839`, `T76K912858`, `T76K912860` ok, `T76K912837` mit Warnung (RC 4).
+- Shopfloor Auftragsvorrat eingeschaltet (`SapVorratEnabled`, SEH-Tagesmenge-Config), heute geschrieben (SEH 157'571, TR5 63'921, TX 50'342, DW 117'271). Verzug weiter aus (Fabio).
+- Monthly Review Q-Faelle eingeschaltet (`QmEnabled`), Caches P76 geleert, 345 offene Q1-Meldungen; offen: Status und Produktlinie leer (pruefen).
+- ZC22 Systemstatus ungekuerzt live (`T76K912858`); Kollege Produktion: Spalte im Layout breiter ziehen.
+- Deploy 15:11 `4585392`. Uebergabe-Tabelle unten (09.11. abends) ist damit fuer 837/858/860 erledigt.
+
 ## Uebergabe Stand 2026-11-09 abends (Auftrag Ingo „alles in md, committen, pushen, falls ich neu starten will“)
 
 Gilt vor der Uebergabe vom 09.11. morgens weiter unten.

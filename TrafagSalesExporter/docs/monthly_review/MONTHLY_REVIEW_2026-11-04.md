@@ -102,6 +102,8 @@ nicht vorhanden).
 
 ### Abschnitt 4: Q-Faelle live aus SAP
 
+*Nachtrag 2026-11-09 15:13, produktiv:* `T76K912837` in P76 importiert (Importqueue: Warnung, RC 4), Caches in P76 auf Auftrag Ingo geleert (eigene Sitzung, `/IWBEP/CACHE_CLEANUP` alle Modelle, dann `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL`; Gateway Client `QmMeldungSet?$top=5` 200, 6'510 Byte; `ShopAufSet` 200). `MonthlyReview:QmEnabled = true` (`88e19f6`), deployed 15:11 (`4585392`). Im Browser: **345 offene Q1-Meldungen**, Ø 988 / Median 389 Tage offen, 264 laenger als 90 Tage, aeltester Fall 107662 (4'963 Tage). **Auffaellig, offen:** alle Meldungen ohne Status („–“) und ohne Produktlinie; Feldzuordnung im Set bzw. Daten in P76 pruefen (Statuswerte MMAB/LOeVM/NOCO/DLFL aus T76 erscheinen nicht).
+
 - Quelle `GET /sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/QmMeldungSet`, **in T76 gebaut am 2026-11-05, Auftrag `T76K912837`
   (nicht freigegeben, Import P76 durch Ingo)**; Feld-Mapping, Definition „offen“ und Belege in `saptasks/qm_meldungen/NOTES.md`
   (Abschnitt „SAP-Seite“ unten). Verbindung wie
