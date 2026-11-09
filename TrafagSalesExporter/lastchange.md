@@ -2,6 +2,35 @@
 
 Stand: 2026-11-09
 
+## Uebergabe Stand 2026-11-09 abends (Auftrag Ingo „alles in md, committen, pushen, falls ich neu starten will“)
+
+Gilt vor der Uebergabe vom 09.11. morgens weiter unten.
+
+**SAP-Transporte (Freigabe und Import nur Ingo):**
+
+| Transport | Inhalt | Stand | nach dem Import / naechster Schritt |
+| --- | --- | --- | --- |
+| `T76K912839` | ZLO03 FIX 26 Basismenge + FIX 27 (Excel alt plus „je 1 Stk“) | **in P76**, Einkauf-Lauf 13:29: HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio. | erledigt; Ann-Katrin/Sandro ueber die neuen Spalten informieren |
+| `T76K912860` | Shopfloor `ShopAufSet` Typ VR (Auftragsvorrat) | **in P76**, Vorschau = ZC22 exakt (SEH 1'914 / 157'556, DW 1'976 / 117'271, alle Buckets) | Ingo-OK: `Shopfloor:SapVorratEnabled = true`, `config_seh_tagesmenge_sap.js` (--check), Deploy, `POST sap/vorrat` fuer heute |
+| `T76K912837` | `QmMeldungSet` (Q-Faelle Monthly Review) | freigegeben 09.11.; Import P76 unbestaetigt | `/IWBEP` dann `/IWFND` leeren, `MonthlyReview:QmEnabled` true, Deploy |
+| `T76K912858` | ZC22 Systemstatus ungekuerzt (`ZMM_UEB_FAUF-STTXT` TEXT100, Form `STATUS_LANG`) | bereit in T76 | freigeben, importieren; wirkt sofort; Kollege Produktion: Spalte im Layout breiter ziehen |
+| `T76K912853` + `T76K912856` | IC-Staffelbasis (VOFM 601, V/06 PR00) | in T76 aktiv, **nicht transportiert**; Fabio testet zuerst in T76 | nur zusammen und erst nach Fabios OK |
+| `T76K912490` | ZZPRDAT | noch nicht | P76-Vorpruefung, Georg (`ZXCO1U06`, `T76K911783`), Fabio, Abnahme |
+
+**Shopfloor (Mail Fabio 09.11., Ampel im Chat):** a) Vorrat bereit zum Einschalten (oben); b) Verzug = ZC22 exakt, Schalter aus bis Fabio zu
+Material 1-99999 (SEH immer 0) und Layoutfilter `/ P00 TX` antwortet; c) DLQ72 und d) CE11000 nicht gebaut (naechste Aufgaben); TX `plan5`
+Definition offen; Backend-Schutz Patch 07 offen. Antwortentwurf an Fabio im Chat (Ziel a) Mi 11.11.). `docs/SHOPFLOOR_2026-10-07.md` 19.
+
+**Verkauf (Sitzung Patrick):** Sankey/Sparte deployed; ISS-032 offen (GFS/Poltraf als IC-Regel mit Andreas, Doppelzaehlung TRCH/Toechter
+per P76-Lesepruefung Rechnung 90390762 belegen); Liste `Downloads/Sparte_fehlt_PRODH_2026-11-09.xlsx`; Entscheid zentrale Spartenliste
+fuer Toechter offen. `docs/VERKAUF_2026-10-02.md` Abschnitt 2026-11-09.
+
+**Einkauf (Armin):** Materialanteil abnahmebereit; offen Armins Entscheid Materialnummer 1-99999 im Dashboard; Fragen 1-6 (Mailentwurf
+angeboten); V6 Lieferantenbewertung nicht gebaut (Logik SAP, Entscheide offen).
+
+**T76-Aufraeumen:** `$TMP`-Report `Z_KOI_ZLO_FIX26_TEST` enthaelt zurzeit den VR-Test (`saptasks/shopfloor_sap/Z_KOI_SHOP_VR_TEST.abap`),
+loeschen; meine T76/P76-Sitzungen sind geschlossen.
+
 ## Shopfloor Verzug P76 abgeglichen, Auftragsvorrat gebaut; Einkauf FIX 26 in P76 bestaetigt (Auftrag Ingo), 2026-11-09 nachmittags
 
 - PPD-Verzug: Vorschau P76 = ZC22 exakt (DW 9/185, TR5 11/465, TX 11/310, SEH 0); offen fuer Fabio: Layoutfilter `/ P00 TX` (Arbeitsplatz, Systemstatus) und Material 1-99999 (SEH immer 0). Schalter aus.
@@ -20,6 +49,8 @@ Stand: 2026-11-09
 - Patch 06 (RS offen = ohne Abschlussdatum) und 07 (SAP/MES-Werte gesperrt) deployed 07:23 (`fd345e7`). Configs DW lieferbereit (DLQ72) und SEH Tagesziel warten auf die SAP-Felder; Backend-Schutz fuer Patch 07 offen. Wochen_Todo 156, `docs/SHOPFLOOR_2026-10-07.md` 18.
 
 ## Uebergabe Stand 2026-11-09 (vor Neustart des PCs, Auftrag Ingo „alles md nachfuehren“)
+
+*Ueberholt durch die Uebergabe vom 09.11. abends oben (Transportstand).*
 
 **Offene SAP-Transporte (alle T76, nicht freigegeben; Freigabe und Import nur Ingo):**
 

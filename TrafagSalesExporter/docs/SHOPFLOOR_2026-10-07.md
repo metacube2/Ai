@@ -594,3 +594,9 @@ Exakt gleich. **Zwei Befunde fuer Fabio, vor dem Einschalten (`SapVerzugEnabled`
 **Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912860` frei und importiert; (2) Gateway-Caches P76 nur falls noetig (keine neue
 Property); (3) Vorschau `GET sap/vorrat` gegen ZC22 P76 (SEH heute 157'502); (4) `SapVorratEnabled = true`, danach Fabios
 `config_seh_tagesmenge_sap.js`.
+
+*Nachtrag 2026-11-09 abends:* Ingo hat `T76K912860` nach P76 importiert. Vorschau `GET sap/vorrat?tag=2026-11-09` gegen ZC22 P76 (eigene
+Sitzung, ohne Layoutfilter, `%PC`): **SEH 1'914 Auftraege, total 157'556, 3 Mte 70'175, 2 Mte 47'960, 1 Mte 31'191, KW 8'840, Tag 144;
+DW 1'976, 117'271 / 85'101 / 58'570 / 38'008 / 15'189 — je Bucket gleich.** Erster Abruf hatte SEH einen Auftrag (60 Stk.) mehr, der
+zwischen den Abfragen erledigt wurde. TR5 62'958, TX 50'325 (gleiche Logik). SEH-Tageswert 144 statt Fabios 2'814 (Stand Samstag fuer
+Montag; die Montagsauftraege sind inzwischen gemeldet). Einschalten (`SapVorratEnabled`, SEH-Config) wartet auf Ingos OK.
