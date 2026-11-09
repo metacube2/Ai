@@ -49,7 +49,8 @@ public class ShopfloorForecastTests
         var config = ShopfloorConfig.Load(Path.Combine(ShopfloorTestEnv.ShopfloorDir, "shopfloor_config.json"));
         var auto = config.ModuleList.SelectMany(m => m.Fields.Select(f => (m, f))).Where(x => x.f.Src != "manuell").ToList();
         // Paket 2026-10-16: Verzug MTS entfernt, FPY SEH aus SAP (J11); Paket 2026-11-01: ae_tr5/u_tr5 entfernt (Transmitter = TR5 + TX)
-        Assert.Equal(127, auto.Count(x => x.f.Src == "sap"));
+        // 2026-11-09: seh.ziel (Offene Tagesmenge) mit planned_source sap (Fabios config_seh_tagesmenge_sap.js) -> 128
+        Assert.Equal(128, auto.Count(x => x.f.Src == "sap"));
         var mes = auto.Where(x => x.f.Src == "mes").ToList();
         Assert.Equal(4, mes.Count);
         Assert.All(mes, x => Assert.Equal("fpy", x.f.Key));
