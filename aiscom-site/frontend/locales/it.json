@@ -17,7 +17,8 @@
     "subtitle": "da Zurigo",
     "description": "Sviluppo software professionale, SAP ABAP e stampa 3D di alta qualità - tutto da un'unica fonte.",
     "cta": "Contattami",
-    "secondary": "Scopri di più"
+    "secondary": "Scopri di più",
+    "apps": "Vedi le app per Mac"
   },
   "services": {
     "title": "Servizi",
@@ -152,24 +153,41 @@
     "required": "Campo obbligatorio"
   },
   "products": {
-    "title": "Prodotti in vendita",
-    "subtitle": "Software proprio – disponibile o in arrivo.",
+    "title": "App per Mac da Zurigo",
+    "subtitle": "Software proprio – provalo subito gratis, acquisto unico, nessun abbonamento.",
     "items": [
+      {
+        "name": "TapLoop",
+        "badge": "Gratis",
+        "description": "Quattro giradischi sul Mac: registra un suono, mettilo in loop, fai scratch, frena, backspin. In più eco, riverbero, filtro – e puoi perfino fare scratch con i video.",
+        "href": "/taploop/",
+        "cta": "Scarica gratis",
+        "live": "",
+        "price": "Gratis durante la fase di test",
+        "video": "/apps/taploop.mp4",
+        "image": "/apps/taploop.jpg"
+      },
       {
         "name": "MacYaesu",
         "badge": "Disponibile",
         "description": "Controllo remoto macOS per lo Yaesu FT-991A: controllo CAT, logbook e routing audio. Demo gratuita, versione completa con licenza.",
         "href": "/macyaesu/",
-        "cta": "Pagina prodotto",
-        "live": ""
+        "cta": "Prova gratis",
+        "live": "",
+        "price": "Demo gratuita · versione completa 49 CHF",
+        "video": "/apps/macyaesu.mp4",
+        "image": "/apps/macyaesu.jpg"
       },
       {
         "name": "Kamera-Import",
         "badge": "Disponibile",
         "description": "App macOS che scarica dalla fotocamera solo le foto e i video mancanti, sul Mac o via SFTP su un altro computer. Demo da provare, versione completa con licenza.",
         "href": "/kamera-uploader/",
-        "cta": "Pagina del prodotto",
-        "live": ""
+        "cta": "Prova gratis",
+        "live": "",
+        "price": "Demo gratuita · versione completa 12 CHF",
+        "video": "",
+        "image": "/apps/kamera-import-en.jpg"
       },
       {
         "name": "cAurora",
@@ -177,11 +195,15 @@
         "description": "App Android per la webcam Aurora a Dürnten: immagine live, timelapse, eventi AI e meteo. Chiara di giorno, design aurora di notte. Gratuita.",
         "href": "https://www.aurora-weather-livecam.com/app/",
         "cta": "Alla beta",
-        "live": "https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA/live"
+        "live": "https://www.youtube.com/channel/UCkAIp4Vh1X6cvN2DPrxFBeA/live",
+        "price": "Gratis · Android",
+        "video": "",
+        "image": ""
       }
     ],
     "live_text": "Aurora Livecam in diretta su YouTube, 24/7",
-    "rss_text": "Nuove versioni delle app via feed RSS"
+    "rss_text": "Nuove versioni delle app via feed RSS",
+    "trust": "Notarizzate da Apple · Nessun abbonamento · Aggiornamenti inclusi · Swiss made"
   },
   "retro": {
     "title": "Viaggio nel tempo",

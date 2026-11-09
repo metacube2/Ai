@@ -99,7 +99,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <Reveal>
               <span className="eyebrow mb-6">
                 <span className="pulse-dot h-2 w-2 rounded-full bg-[#5eead4]" />
-                3D-Druck · C# · SAP ABAP · Web
+                Mac-Apps · 3D-Druck · C# · SAP ABAP · Web
               </span>
             </Reveal>
             <Reveal delay={100}>
@@ -118,9 +118,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <Link href={`/${locale}/contact`}>
                   <Button size="lg" className="shadow-[0_0_40px_-8px_rgba(135,206,235,0.8)]">{dictionary.hero.cta}</Button>
                 </Link>
-                <Link href={`/${locale}/services`}>
-                  <Button variant="secondary" size="lg">{dictionary.hero.secondary}</Button>
-                </Link>
+                <a href="#produkte">
+                  <Button variant="secondary" size="lg">{dictionary.hero.apps}</Button>
+                </a>
               </div>
             </Reveal>
           </div>
@@ -142,10 +142,81 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
+      {/* Products Section */}
+      <section id="produkte" className="relative py-24 bg-primary scroll-mt-16 overflow-hidden">
+        <div className="absolute left-1/2 top-0 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-14">
+            <h2 className="section-title">
+              <span className="gradient-text">{dictionary.products.title}</span>
+            </h2>
+            <p className="section-subtitle">{dictionary.products.subtitle}</p>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {dictionary.products.items.map((product, index) => (
+              <Reveal key={product.href} delay={index * 150} className="h-full">
+                <a href={product.href} {...(product.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="glass glow-border group block h-full rounded-3xl p-6 transition-transform duration-300 hover:-translate-y-2">
+                  {product.video ? (
+                    <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#0c1729]">
+                      <video className="h-full w-full object-cover" src={product.video} poster={product.image} autoPlay muted loop playsInline preload="metadata" aria-hidden="true" />
+                    </div>
+                  ) : product.image ? (
+                    <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#0c1729]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img className="h-full w-full object-cover" src={product.image} alt="" loading="lazy" />
+                    </div>
+                  ) : (
+                    productVisuals[product.href]
+                  )}
+                  <div className="mt-6 flex items-center justify-between gap-4">
+                    <h3 className="text-2xl font-semibold text-white">{product.name}</h3>
+                    <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
+                      {product.badge}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-gray-400">{product.description}</p>
+                  {product.price && <p className="mt-4 text-sm font-semibold text-[#5eead4]">{product.price}</p>}
+                  <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-semibold text-primary-dark shadow-[0_0_30px_-8px_rgba(135,206,235,0.9)] transition-transform duration-300 group-hover:-translate-y-0.5">
+                    {product.cta}
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                  </p>
+                </a>
+              </Reveal>
+            ))}
+          </div>
+          <p className="mt-10 text-center text-sm tracking-wide text-gray-400">{dictionary.products.trust}</p>
+          {dictionary.products.items.filter((p) => p.live).map((p) => (
+            <p key={p.live} className="mt-10 text-center">
+              <a href={p.live} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#FF0000] px-6 py-3 font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5">
+                ▶ {dictionary.products.live_text}
+              </a>
+            </p>
+          ))}
+          <p className="mt-4 text-center">
+            <a href="/feed.xml" type="application/rss+xml" className="inline-flex items-center gap-2 rounded-full bg-[#F26522] px-5 py-2 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5">
+              ◉ {dictionary.products.rss_text}
+            </a>
+          </p>
+          <Reveal>
+            <a href={dictionary.retro.href} className="group mt-12 mx-auto block max-w-2xl glass rounded-2xl p-6 text-center transition-transform hover:-translate-y-1">
+              <p className="text-sm uppercase tracking-widest text-accent">⏳ {dictionary.retro.title}</p>
+              <p className="mt-2 text-gray-300">{dictionary.retro.text}</p>
+              <p className="mt-4 inline-flex items-center gap-2 font-semibold text-accent">
+                {dictionary.retro.cta}
+                <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+              </p>
+            </a>
+          </Reveal>
+        </div>
+      </section>
+
       {/* Laufband */}
       <section className="bg-primary border-y border-white/5">
         <Marquee />
       </section>
+
+      <Wave from="#0a1628" to="#050b14" flip />
 
       {/* Services Preview Section */}
       <section className="relative py-24 bg-primary-dark overflow-hidden">
@@ -179,65 +250,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      <Wave from="#050b14" to="#0a1628" />
-
-      {/* Products Section */}
-      <section id="produkte" className="relative py-24 bg-primary scroll-mt-16 overflow-hidden">
-        <div className="absolute left-1/2 top-0 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal className="text-center mb-14">
-            <h2 className="section-title">
-              <span className="gradient-text">{dictionary.products.title}</span>
-            </h2>
-            <p className="section-subtitle">{dictionary.products.subtitle}</p>
-          </Reveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {dictionary.products.items.map((product, index) => (
-              <Reveal key={product.href} delay={index * 150} className="h-full">
-                <a href={product.href} {...(product.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="glass glow-border group block h-full rounded-3xl p-6 transition-transform duration-300 hover:-translate-y-2">
-                  {productVisuals[product.href]}
-                  <div className="mt-6 flex items-center justify-between gap-4">
-                    <h3 className="text-2xl font-semibold text-white">{product.name}</h3>
-                    <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
-                      {product.badge}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-gray-400">{product.description}</p>
-                  <p className="mt-5 inline-flex items-center gap-2 text-accent font-semibold">
-                    {product.cta}
-                    <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
-                  </p>
-                </a>
-              </Reveal>
-            ))}
-          </div>
-          {dictionary.products.items.filter((p) => p.live).map((p) => (
-            <p key={p.live} className="mt-10 text-center">
-              <a href={p.live} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#FF0000] px-6 py-3 font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5">
-                ▶ {dictionary.products.live_text}
-              </a>
-            </p>
-          ))}
-          <p className="mt-4 text-center">
-            <a href="/feed.xml" type="application/rss+xml" className="inline-flex items-center gap-2 rounded-full bg-[#F26522] px-5 py-2 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5">
-              ◉ {dictionary.products.rss_text}
-            </a>
-          </p>
-          <Reveal>
-            <a href={dictionary.retro.href} className="group mt-12 mx-auto block max-w-2xl glass rounded-2xl p-6 text-center transition-transform hover:-translate-y-1">
-              <p className="text-sm uppercase tracking-widest text-accent">⏳ {dictionary.retro.title}</p>
-              <p className="mt-2 text-gray-300">{dictionary.retro.text}</p>
-              <p className="mt-4 inline-flex items-center gap-2 font-semibold text-accent">
-                {dictionary.retro.cta}
-                <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
-              </p>
-            </a>
-          </Reveal>
-        </div>
-      </section>
-
-      <Wave from="#0a1628" to="#050b14" flip />
 
       {/* About Preview Section */}
       <section className="relative py-24 bg-primary-dark overflow-hidden">
