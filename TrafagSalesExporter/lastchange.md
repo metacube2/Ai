@@ -2,6 +2,10 @@
 
 Stand: 2026-11-09
 
+## Shopfloor-Paket Fabio 07.11. eingespielt (Auftrag Ingo), 2026-11-09
+
+- Patch 06 (RS offen = ohne Abschlussdatum) und 07 (SAP/MES-Werte gesperrt) deployed 07:23 (`fd345e7`). Configs DW lieferbereit (DLQ72) und SEH Tagesziel warten auf die SAP-Felder; Backend-Schutz fuer Patch 07 offen. Wochen_Todo 156, `docs/SHOPFLOOR_2026-10-07.md` 18.
+
 ## Uebergabe Stand 2026-11-09 (vor Neustart des PCs, Auftrag Ingo „alles md nachfuehren“)
 
 **Offene SAP-Transporte (alle T76, nicht freigegeben; Freigabe und Import nur Ingo):**

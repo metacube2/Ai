@@ -535,3 +535,16 @@ die Meldung „Transport T76K912797 fehlt“, keine falsche Zahl.
 in P76 auf Auftrag Ingo geleert (eigene Sitzung, `trasp76s`, SM51 zeigt weiter nur diese Instanz). Gateway Client P76: `$metadata` 200
 (382'030), `ShopAufSet` Typ VZ 200, `MARA001Set?$select=Matnr,Zeivr` 200, alte Abfrage `Matnr,Mstae,Matkl` 200. **Offen:** Abgleich der
 Vorschau gegen ZC22 in P76 (Fabio/Anh Nhi oder auf Auftrag), danach `SapVerzugEnabled = true`.
+
+## 18. Paket Fabio vom 2026-11-07 (SAMSTAG.zip): Patch 06/07, zwei Config-Wuensche (Stand 2026-11-09)
+
+*Erledigt 2026-11-09 07:23:* Paket unter `docs/shopfloor_paket_2026-11-07/`. Mit Fabios `apply_patch.js` (zuerst `--check`) in `wwwroot/shopfloor/` eingespielt, 01 bis 05 korrekt uebersprungen:
+
+- **Patch 06:** Terminverschiebungen aus den Rueckstandslisten zaehlen als offen, wenn „Datum Abschluss“ leer ist (wie der Excel-Filter „Offen“), der Status wird nicht mehr ausgewertet. Wirkt erst mit eingeschaltetem Patch 04 (`tv_from_rs`).
+- **Patch 07:** Werte mit SAP/MES-Kennzeichen (`meta`) sind im Tagesraster schreibgeschuetzt (Schloss, Tooltip). Abschaltbar ohne Code mit `"lock_ext": false` in `shopfloor_config.json`.
+
+Commit `fd345e7`, Release-Worktree 1460/1460, deployed 07:23 bitgleich ohne Alarm; auf dem Server `app.js`/`style.css` mit beiden Markern geprueft.
+
+**Bewusst noch nicht eingespielt:** `config_logistik_dw_soll.js` (Logistik „DW SOLL Verpacken“ = `dw.lieferbereit` DLQ72 statt DL790) und `config_seh_tagesmenge_sap.js` (SEH „Offene Tagesmenge“ `planned_source` = sap). Beide Quellfelder stehen in Fabios Liste `Shopfloor_Was_fehlt_2026-11-07.xlsx` auf „definiert, fehlt, Ingo einbauen“; unser SAP-Abruf fuellt `dw.lieferbereit` nicht (kein Treffer im Code). Mit der DW-Config waere der Logistik-Sollwert heute leer. Reihenfolge: erst SAP-Abruf bauen (DLQ72 nach ZC27-Logik, Produktionstag; SEH Tagesziel aus ZC22 Bucket „Tag“, Kontrolle Fabio Mo 09.11.: 2814), dann die beiden Configs.
+
+**Offen aus Patch 07 (Backend, Fabios Hinweis):** POST `api/daily` soll Aenderungen an Feldern mit `meta.src` SAP/MES abweisen oder ignorieren, und der naechste SAP-Lauf soll manuell ueberschriebene SAP-Felder wieder mit SAP-Wert und `meta` setzen (Beispiel SEH prod 02.11., SAP-Kennzeichen fehlt seither). Die Oberflaeche allein schuetzt nicht vor direkten API-Aufrufen.
