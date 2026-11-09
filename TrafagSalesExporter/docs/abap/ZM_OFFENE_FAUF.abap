@@ -595,12 +595,9 @@ form fill_uebauf.
     endif.
 
     if iafpo-objnp ne 'PLAF'.
-      call function 'STATUS_TEXT_EDIT'
-        exporting
-          objnr = aufk-objnr
-          spras = sy-langu
-        importing
-          line  = gt_uebauf-sttxt.
+*     2026-11-09: STATUS_TEXT_EDIT zeigt hoechstens 8 Status (40 Zeichen) und haengt '*' an.
+*     STATUS_LANG baut dieselbe Zeile ohne Grenze (STTXT jetzt TEXT100).
+      perform status_lang using aufk-objnr changing gt_uebauf-sttxt.
       perform vorgangsdaten.
       select single gltrp into gt_uebauf-gltrp1 from zcfauf_gltrp
                                                 where aufnr = gt_uebauf-aufnr.
@@ -913,6 +910,17 @@ form e01_fieldcat_init using e01_lt_fieldcat type slis_t_fieldcat_alv.
   ls_fieldcat-no_zero  = 'X'.
   append ls_fieldcat to e01_lt_fieldcat.
 
+* 2026-11-09: Systemstatus ungekuerzt (TEXT100); Ueberschrift wie bisher, Breite 60
+  clear ls_fieldcat.
+  ls_fieldcat-fieldname    = 'STTXT'.
+  ls_fieldcat-seltext_s    = 'Status'.
+  ls_fieldcat-seltext_m    = 'Systemstatus'.
+  ls_fieldcat-seltext_l    = 'Systemstatus'.
+  ls_fieldcat-reptext_ddic = 'Systemstatus'.
+  ls_fieldcat-ddictxt      = 'L'.
+  ls_fieldcat-outputlen    = 60.
+  append ls_fieldcat to e01_lt_fieldcat.
+
 * 2026-10-07: Bedarfsverursacher-Spalten; seit 2026-10-08 standardmaessig eingeblendet
 * (Wunsch Ingo), ueber Layout ausblendbar
   data: lt_peg type standard table of slis_fieldname,
@@ -1066,3 +1074,69 @@ form umlagerungsbedarf using is_mdrq type mdrq.
     concatenate l_banfn '/' l_bnfpo into gt_uebauf-zzpeg_extra.
   endif.
 endform.                    " UMLAGERUNGSBEDARF
+
+*&---------------------------------------------------------------------*
+*&      Form  STATUS_LANG
+*&---------------------------------------------------------------------*
+* 2026-11-09 (Meldung Produktion via Ingo): Systemstatus wie STATUS_TEXT_EDIT
+* (Kuerzel TXT04, ohne NODIS, Reihenfolge TJ04 LINEP/STATP, je Position nur
+* der erste Status), aber ohne die Grenze von 8 Status und ohne '*'.
+*----------------------------------------------------------------------*
+form status_lang using p_objnr type j_objnr
+                 changing p_txt type c.
+  types: begin of lty_st,
+           linep type tj04-linep,
+           statp type tj04-statp,
+           txt04 type tj02t-txt04,
+         end of lty_st.
+  data: lt_jest  type standard table of jest,
+        ls_jest  type jest,
+        lt_st    type standard table of lty_st,
+        ls_st    type lty_st,
+        l_obtyp  type jsto-obtyp,
+        l_nodis  type tj02-nodis,
+        l_linep  type tj04-linep.
+
+  clear p_txt.
+  select single obtyp from jsto into l_obtyp where objnr = p_objnr.
+  select * from jest into table lt_jest
+    where objnr = p_objnr
+      and inact = space
+      and stat  like 'I%'.
+  loop at lt_jest into ls_jest.
+    clear: ls_st, l_nodis.
+    select single nodis from tj02 into l_nodis where istat = ls_jest-stat.
+    check l_nodis is initial.
+    select single txt04 from tj02t into ls_st-txt04
+      where istat = ls_jest-stat and spras = sy-langu.
+    if sy-subrc <> 0.
+      select single txt04 from tj02t into ls_st-txt04
+        where istat = ls_jest-stat and spras = 'D'.
+    endif.
+    select single linep statp from tj04 into (ls_st-linep, ls_st-statp)
+      where obtyp = l_obtyp and istat = ls_jest-stat.
+    if sy-subrc <> 0 or ls_st-linep is initial.
+      ls_st-linep = '99'.
+    endif.
+    if ls_st-statp is initial.
+      ls_st-statp = '99'.
+    endif.
+    append ls_st to lt_st.
+  endloop.
+  sort lt_st by linep statp txt04.
+  clear l_linep.
+  loop at lt_st into ls_st where linep ne '99'.
+    if l_linep = ls_st-linep.
+      delete lt_st index sy-tabix.
+    else.
+      l_linep = ls_st-linep.
+    endif.
+  endloop.
+  loop at lt_st into ls_st.
+    if p_txt is initial.
+      p_txt = ls_st-txt04.
+    else.
+      concatenate p_txt ls_st-txt04 into p_txt separated by space.
+    endif.
+  endloop.
+endform.                    " STATUS_LANG

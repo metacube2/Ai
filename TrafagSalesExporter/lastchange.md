@@ -2,6 +2,11 @@
 
 Stand: 2026-11-09
 
+## Verkauf Gruppenzahlen, Sankey und ZC22 (Auftrag Ingo), 2026-11-09
+
+- Verkauf Interaktiv deployed 10:45 (`04b4faf`): Sankey ganz beschriftet, „Ohne Kundenland“, Sparte zusaetzlich ueber TRCH-Nummer (TRIN). Befund Gruppenumsatz zu hoch (GFS/Poltraf nicht als IC, vermutete Doppelzaehlung TRCH/Toechter, mindestens rund 6 Mio) als ISS-032; Liste fehlende Sparte/PRODH in Ingos Downloads. `docs/VERKAUF_2026-10-02.md` Abschnitt 2026-11-09.
+- ZC22 Systemstatus ungekuerzt in T76 (`T76K912858`: Struktur `ZMM_UEB_FAUF` STTXT TEXT100 und Form `STATUS_LANG`), nicht freigegeben. `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md`.
+
 ## Shopfloor-Paket Fabio 07.11. eingespielt (Auftrag Ingo), 2026-11-09
 
 - Patch 06 (RS offen = ohne Abschlussdatum) und 07 (SAP/MES-Werte gesperrt) deployed 07:23 (`fd345e7`). Configs DW lieferbereit (DLQ72) und SEH Tagesziel warten auf die SAP-Felder; Backend-Schutz fuer Patch 07 offen. Wochen_Todo 156, `docs/SHOPFLOOR_2026-10-07.md` 18.

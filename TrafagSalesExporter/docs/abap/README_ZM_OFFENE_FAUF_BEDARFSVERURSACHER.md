@@ -1,6 +1,6 @@
 # ZM_OFFENE_FAUF: Bedarfsverursacher als einblendbare Felder
 
-Stand: 2026-11-03 (Umlagerungsbedarf statt Kundenauftrag, Abschnitt am Ende; T76 aktiv, `T76K912825`); davor 2026-10-09 (seit dem 08.10. standardmaessig eingeblendet, am 09.10. nach P76 transportiert). Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
+Stand: 2026-11-09 (Systemstatus ungekuerzt, `T76K912858`, Abschnitt am Ende); 2026-11-03 (Umlagerungsbedarf statt Kundenauftrag, Abschnitt am Ende; T76 aktiv, `T76K912825`); davor 2026-10-09 (seit dem 08.10. standardmaessig eingeblendet, am 09.10. nach P76 transportiert). Wunsch Ingo: die Angaben aus MD04 > Bedarfsverursacher (Dispoelement,
 Nummer, Daten zum Dispoelement) als zusaetzliche Felder im Report `ZM_OFFENE_FAUF`
 („Uebersicht offene Fertigungsauftraege"). *Ueberholt:* am 2026-10-07 standardmaessig ausgeblendet;
 seit 2026-10-08 auf Wunsch Ingo standardmaessig eingeblendet und ueber das Layout ausblendbar
@@ -129,3 +129,14 @@ Frischer Lauf danach: Auftraege 2519235 und 2522216 zeigen **`U1 45152789/10`**:
 ist inzwischen in die Umlagerungsbestellung 45152789 umgesetzt, deshalb Bestellabruf statt Banf-Abruf. Erledigt bis auf die
 Antwort an Anh Nhi, Fabio, Sergio (Ingo). Hinweis: Wer ein eigenes Standardlayout gesichert hat, sieht die neuen Spalten erst,
 wenn er `/ P00 TX` waehlt oder sie selbst einblendet.
+
+## Systemstatus ungekuerzt (2026-11-09)
+
+Meldung aus der Produktion an Ingo: In der Spalte „Systemstatus“ stehen nur 40 Zeichen, am Ende oft `*`.
+Ursache: `STATUS_TEXT_EDIT` schreibt hoechstens 8 Status (40 Zeichen, Feld `J_STEXT`) und setzt bei mehr ein `*`.
+
+- **Struktur `ZMM_UEB_FAUF`:** `STTXT` von `J_STEXT` (CHAR 40) auf `TEXT100` (CHAR 100). Feldname unveraendert, gespeicherte Layouts bleiben gueltig. Nur `ZM_OFFENE_FAUF` verwendet die Struktur (`WBCROSSGT`).
+- **Report:** neue Form `STATUS_LANG` statt `STATUS_TEXT_EDIT`, gleiche Logik wie der SAP-Baustein (aktive I-Status aus `JEST`, ohne `TJ02-NODIS`, Kuerzel `TJ02T-TXT04`, Reihenfolge `TJ04` LINEP/STATP je Objekttyp aus `JSTO`, je Zeilenposition nur der erste), aber ohne Grenze. `STATUS_TEXT_EDIT_LONG` ist ungeeignet: liefert die ausgeschriebenen Texte (`TXT30`). Feldkatalog: Ueberschrift „Systemstatus“, Breite 60.
+- **Transport `T76K912858`** (Aufgabe `T76K912859`, Paket `ZLO1`): `TABD ZMM_UEB_FAUF`, `REPS ZM_OFFENE_FAUF`. In T76 aktiv, nicht freigegeben.
+- **Test T76:** ZC22 Auftrag 1241847, Detailansicht: `FREI FMAT DRUC VOKL ABRV` (Kuerzel, SAP-Reihenfolge). Einen offenen Auftrag mit mehr als 8 sichtbaren Status gibt es in T76 nicht (die mit 10 Status sind erledigt und nicht in ZC22); diesen Fall nach dem Import in P76 ansehen. In Benutzerlayouts ist die Spalte so schmal wie gespeichert; breiter ziehen und Layout sichern.
+- Quelltext `docs/abap/ZM_OFFENE_FAUF.abap`, vorher `docs/abap/ZM_OFFENE_FAUF_vorher_2026-11-09.abap`.
