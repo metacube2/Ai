@@ -1,0 +1,14 @@
+{
+ "id": "07_sap_werte_gesperrt",
+ "datum": "2026-11-07",
+ "beschreibung": "Werte, die von SAP/MES geliefert wurden (meta vorhanden), sind im Tagesraster schreibgeschützt; manuelle Felder und noch nicht gelieferte Tage bleiben erfassbar",
+ "marker": "Patch 07 (2026-11-07)",
+ "app_js": [
+  {
+   "name": "Gelieferte Werte sperren",
+   "old": "          body += `<td class=\"${cls.join(\" \")}\"${t}>${gridInput(f, v, d, over)}</td>`;",
+   "new": "          /* Patch 07 (2026-11-07): von SAP/MES gelieferte Werte sind schreibgeschützt (Abschalten: \"lock_ext\": false in shopfloor_config.json) */\n          if (meta && S.cfg.lock_ext !== false) { body += `<td class=\"${cls.join(\" \")} locked\"${t}><div class=\"out\">${esc(f.type === \"num\" ? fmtNum(v) : (v ?? \"\"))}</div></td>`; continue; }\n          body += `<td class=\"${cls.join(\" \")}\"${t}>${gridInput(f, v, d, over)}</td>`;"
+  }
+ ],
+ "style_css": "\n/* Patch 07 (2026-11-07): gelieferte Werte gesperrt */\ntd.locked .out{cursor:not-allowed}\ntd.locked .out::after{content:\" \\1F512\";font-size:10px;opacity:.55}\n"
+}

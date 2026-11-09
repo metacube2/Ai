@@ -836,7 +836,7 @@ async function syncTvFromRs(m) {
     for (const rm of tvRsMods()) {
       const k = "tv_" + rm.key.slice(3); if (!(m.fields || []).some(f => f.key === k)) continue;
       const recs = await loadRecords(rm.key); let qty = 0, pos = 0;
-      (recs || []).forEach(r => { const d = r.data || {}; if (TV_CLOSED.test(d[rm.status_field || "status"] || "")) return; const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });
+      (recs || []).forEach(r => { const d = r.data || {}; if (d.abschluss) return; /* offen = ohne Datum Abschluss, wie Filter «Offen» im Excel (Patch 06) */ const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });
       changes[k] = qty; info.push({ k, dept: rm.dept || rm.key.slice(3).toUpperCase(), mod: rm.key, qty, pos });
     }
     TV_INFO = { at: new Date(), rows: info };
@@ -1059,6 +1059,8 @@ function renderDailyGrid(m) {
           const over = f.limit && typeof v === "number" && v > f.limit ? " over" : "";
           const t = meta ? ` title="Geliefert von ${esc(meta.src)} am ${esc(fmtDate(meta.ts))} ${esc(meta.ts.slice(11, 16))}"` : "";
           if (tvAuto(m, f.key)) { body += `<td class="${cls.join(" ")} rsv" title="Automatisch aus der Rückstandsliste (beim Öffnen von PPD für heute berechnet)"><div class="out">${esc(fmtNum(v))}</div></td>`; continue; }
+          /* Patch 07 (2026-11-07): von SAP/MES gelieferte Werte sind schreibgeschützt (Abschalten: "lock_ext": false in shopfloor_config.json) */
+          if (meta && S.cfg.lock_ext !== false) { body += `<td class="${cls.join(" ")} locked"${t}><div class="out">${esc(f.type === "num" ? fmtNum(v) : (v ?? ""))}</div></td>`; continue; }
           body += `<td class="${cls.join(" ")}"${t}>${gridInput(f, v, d, over)}</td>`;
         }
       }

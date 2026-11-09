@@ -1,0 +1,34 @@
+{
+ "id": "04_ppd_tv_aus_rs",
+ "datum": "2026-11-01",
+ "beschreibung": "PPD: Terminverschiebungen SEH/TR5/TX/DW automatisch aus den Rückstandslisten (Summe Menge im Rückstand, offene Positionen)",
+ "marker": "function syncTvFromRs(",
+ "app_js": [
+  {
+   "name": "viewDaily: PPD Terminverschiebungen aus RS vor dem Rendern",
+   "old": "  await loadWeek(m);\n  const days = [...Array(7)].map((_, i) => addDaysD(S.week, i));\n  const kw = isoWeek(S.week);",
+   "new": "  await loadWeek(m);\n  await syncTvFromRs(m);\n  const days = [...Array(7)].map((_, i) => addDaysD(S.week, i));\n  const kw = isoWeek(S.week);"
+  },
+  {
+   "name": "viewDaily: Infozeile Terminverschiebungen",
+   "old": "    <div id=\"trendBox\"></div>\n    <div id=\"chartBox\"></div>",
+   "new": "    ${tvAutoOn(m) ? `<div id=\"tvInfo\" class=\"tvinfo\">${tvInfoHtml()}</div>` : \"\"}\n    <div id=\"trendBox\"></div>\n    <div id=\"chartBox\"></div>"
+  },
+  {
+   "name": "renderDailyGrid: Badge RS in der Beschriftung",
+   "old": "${f.src ? `<span class=\"src ${f.src}\">${f.src.toUpperCase()}</span>` : \"\"}</th>`;",
+   "new": "${f.src ? `<span class=\"src ${f.src}\">${f.src.toUpperCase()}</span>` : \"\"}${tvAuto(m, f.key) ? `<span class=\"src rs\" title=\"Automatisch: Summe «Menge im Rückstand» der offenen Positionen der Rückstandsliste\">RS</span>` : \"\"}</th>`;"
+  },
+  {
+   "name": "renderDailyGrid: TV-Felder schreibgeschützt",
+   "old": "          body += `<td class=\"${cls.join(\" \")}\"${t}>${gridInput(f, v, d, over)}</td>`;",
+   "new": "          if (tvAuto(m, f.key)) { body += `<td class=\"${cls.join(\" \")} rsv\" title=\"Automatisch aus der Rückstandsliste (beim Öffnen von PPD für heute berechnet)\"><div class=\"out\">${esc(fmtNum(v))}</div></td>`; continue; }\n          body += `<td class=\"${cls.join(\" \")}\"${t}>${gridInput(f, v, d, over)}</td>`;"
+  },
+  {
+   "name": "Neue Funktionen Terminverschiebungen aus RS (vor Ampel-Block)",
+   "old": "/* ---------------------------------------------------------------- Ampel pro Bereich (2026-10-15)",
+   "new": "/* ---------------------------------------------------------------- PPD Terminverschiebungen aus Rückstandslisten (2026-11-01, Patch 04)\n   tv_seh/tv_tr5/tv_tx/tv_dw = Summe «Menge im Rückstand» (menge_rs) aller offenen Positionen der Liste rs_<abteilung>.\n   Offen = Status nicht erledigt/abgesagt/storniert (auch Tippfehler wie «erledgt»). Berechnet wird beim Öffnen von PPD,\n   nur für den heutigen Tag, und im Tagesdatensatz gespeichert (Verlauf/Kacheln). Vortage bleiben unverändert.\n   Einschalten ohne Code: in shopfloor_config.json beim Modul ppd \"tv_from_rs\": true (ohne Eintrag bleibt alles wie bisher, manuelle Erfassung). */\nconst TV_CLOSED = /^\\s*(erl|abgesagt|storn)/i;\nlet TV_INFO = null;\nfunction tvAutoOn(m) { return !!(m && m.key === \"ppd\" && m.tv_from_rs === true); }\nfunction tvRsMods() { return S.cfg.modules.filter(x => x.kind === \"list\" && /^rs_/.test(x.key)); }\nfunction tvAuto(m, k) { return tvAutoOn(m) && tvRsMods().some(x => \"tv_\" + x.key.slice(3) === k) && (m.fields || []).some(f => f.key === k); }\nasync function syncTvFromRs(m) {\n  if (!tvAutoOn(m)) return;\n  const day = todayIso(); const changes = {}; const info = [];\n  try {\n    for (const rm of tvRsMods()) {\n      const k = \"tv_\" + rm.key.slice(3); if (!(m.fields || []).some(f => f.key === k)) continue;\n      const recs = await loadRecords(rm.key); let qty = 0, pos = 0;\n      (recs || []).forEach(r => { const d = r.data || {}; if (TV_CLOSED.test(d[rm.status_field || \"status\"] || \"\")) return; const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });\n      changes[k] = qty; info.push({ k, dept: rm.dept || rm.key.slice(3).toUpperCase(), mod: rm.key, qty, pos });\n    }\n    TV_INFO = { at: new Date(), rows: info };\n    const cur = ((S.daily.ppd || {})[day] || {}).data || {};\n    const diff = {}; Object.keys(changes).forEach(k => { if (cur[k] !== changes[k]) diff[k] = changes[k]; });\n    if (!Object.keys(diff).length) return;\n    await api(\"POST\", \"api/daily\", { module: m.key, day, changes: diff });\n    S.daily.ppd = S.daily.ppd || {}; const rec = S.daily.ppd[day] || (S.daily.ppd[day] = { data: {} }); rec.data = Object.assign({}, rec.data, diff);\n  } catch (e) { TV_INFO = { err: e.message }; }\n}\nfunction tvInfoHtml() {\n  if (!TV_INFO) return \"\";\n  if (TV_INFO.err) return `Terminverschiebungen aus den Rückstandslisten konnten nicht berechnet werden: ${esc(TV_INFO.err)}`;\n  const t = TV_INFO.rows.map(r => `<a href=\"#/m/${r.mod}\">${esc(r.dept)}</a> ${fmtNum(r.qty)} Stk. (${r.pos} Pos.)`).join(\" · \");\n  return `<b>Terminverschiebungen</b> automatisch aus den Rückstandslisten, offene Positionen, Stand ${TV_INFO.at.toTimeString().slice(0, 5)}: ${t}`;\n}\n/* ---------------------------------------------------------------- Ampel pro Bereich (2026-10-15)"
+  }
+ ],
+ "style_css": "\n/* Patch 04 (2026-11-01): Terminverschiebungen aus Rückstandslisten */\n.src.rs{background:#6b4bb3;color:#fff}\n.tvinfo{margin:0 0 12px;padding:8px 12px;border-left:3px solid #6b4bb3;background:rgba(107,75,179,.08);font-size:13px;border-radius:4px}\n.tvinfo a{font-weight:600}\ntd.rsv .out{opacity:.9}\n"
+}

@@ -1,0 +1,14 @@
+{
+ "id": "06_rs_offen_nach_abschlussdatum",
+ "datum": "2026-11-02",
+ "beschreibung": "Terminverschiebungen aus RS: offen = ohne «Datum Abschluss» (wie Excel-Filter «Offen»), Status wird nicht mehr ausgewertet",
+ "marker": "if (d.abschluss) return;",
+ "app_js": [
+  {
+   "name": "Offen-Kriterium",
+   "old": "(recs || []).forEach(r => { const d = r.data || {}; if (TV_CLOSED.test(d[rm.status_field || \"status\"] || \"\")) return; const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });",
+   "new": "(recs || []).forEach(r => { const d = r.data || {}; if (d.abschluss) return; /* offen = ohne Datum Abschluss, wie Filter «Offen» im Excel (Patch 06) */ const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });"
+  }
+ ],
+ "style_css": ""
+}

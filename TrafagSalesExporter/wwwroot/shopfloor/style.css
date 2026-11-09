@@ -524,3 +524,7 @@ small.up{color:var(--alarm)} small.dn{color:var(--ok)}
 .tvinfo{margin:0 0 12px;padding:8px 12px;border-left:3px solid #6b4bb3;background:rgba(107,75,179,.08);font-size:13px;border-radius:4px}
 .tvinfo a{font-weight:600}
 td.rsv .out{opacity:.9}
+
+/* Patch 07 (2026-11-07): gelieferte Werte gesperrt */
+td.locked .out{cursor:not-allowed}
+td.locked .out::after{content:" \1F512";font-size:10px;opacity:.55}

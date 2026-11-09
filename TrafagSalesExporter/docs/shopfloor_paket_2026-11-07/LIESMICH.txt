@@ -1,0 +1,35 @@
+Shopfloor Paket 07.11.2026 (nur Frontend app.js/style.css und Config; 01-05 sind schon produktiv und werden übersprungen)
+
+2_Patch\patches
+  06_rs_offen_nach_abschlussdatum  Terminverschiebungen aus Rückstandslisten: offen = ohne «Datum Abschluss»
+                                   (genau wie der Filter «Offen» im Excel; der Status wird nicht mehr ausgewertet).
+                                   Wirkt erst, wenn Patch 04 eingeschaltet ist (tv_from_rs).
+  07_sap_werte_gesperrt            Werte, die von SAP/MES geliefert wurden (meta vorhanden), sind im Tagesraster
+                                   schreibgeschützt (Schloss-Symbol, Tooltip «Geliefert von SAP am ...»).
+                                   Manuelle Felder und Tage ohne Lieferung bleiben erfassbar.
+                                   Abschalten ohne Code: "lock_ext": false auf oberster Ebene der shopfloor_config.json.
+                                   Hinweis: Das ist nur die Oberfläche. Bitte zusätzlich im Backend (POST api/daily)
+                                   Änderungen an Feldern mit meta.src = SAP/MES abweisen oder ignorieren, und beim
+                                   nächsten SAP-Lauf manuell überschriebene SAP-Felder wieder mit SAP-Wert + meta setzen.
+                                   Beispiel: SEH prod 02.11. wurde von Hand überschrieben, das SAP-Kennzeichen fehlt seither.
+
+3_Config
+  config_logistik_dw_soll.js       Logistik «DW SOLL Verpacken» = DW lieferbereit (DLQ72) statt DL790
+  config_seh_tagesmenge_sap.js     SEH «Offene Tagesmenge / Tagesziel» als SAP-Feld (ZC22 Bucket «Tag»)
+  tv_aus_rs_schalten.js            Patch 04 ein/aus (unverändert)
+
+1_Schnittstelle
+  Shopfloor_Was_fehlt_2026-11-07.xlsx      Alle SAP/MES-Felder mit Status (geliefert/definiert/offen) und nächstem Schritt,
+                                           Blatt «SEH ZC22 07.11.» mit Kontrollwerten für den SEH-Vorrat
+  Shopfloor_SAP_Schnittstelle_2026-11-02.xlsx  Feld-Mapping/Jobs (Stand 02.11.)
+
+Reihenfolge
+  1. node 2_Patch\apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check, dann ohne --check (wendet 06 und 07 an)
+  2. node 3_Config\config_logistik_dw_soll.js "<Pfad>\shopfloor_config.json" --check, dann ohne --check
+  3. node 3_Config\config_seh_tagesmenge_sap.js "<Pfad>\shopfloor_config.json" --check, dann ohne --check
+  4. Strg+F5
+
+Getestet 07.11.2026
+  - 06 und 07 gegen die produktive app.js (Stand mit 04/05): je 1 Stelle, Syntax ok, auch in beliebiger Reihenfolge.
+  - 07 im Browser mit Echtdaten (Speichern abgefangen): SEH 9 gelieferte Zellen gesperrt (prod 03.-06.11., FPY 02.-06.11.),
+    prod 02.11. bleibt erfassbar (dort fehlt das SAP-Kennzeichen).
