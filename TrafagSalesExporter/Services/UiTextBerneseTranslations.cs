@@ -1018,6 +1018,8 @@ internal static class UiTextBerneseTranslations
             ["Stilisierte Karte, Grenzen nur angedeutet. Blasenfläche nach Umsatz; Bögen vom Land der verkaufenden Gesellschaft zum Kundenland (Top 25, 12 Monate). Mit ▶ laufen die letzten 24 Monate ab."] = "Stilisierti Charte, Gränze nume aadütet. Blasefläche nach Umsatz; Böge vom Land vo dr verchoufende Gsellschaft zum Kundeland (Top 25, 12 Mönet). Mit ▶ loufe di letschte 24 Mönet ab.",
             ["Länder"] = "Länder",
             ["Ohne Kundenland, 12 Monate"] = "Ohni Kundeland, 12 Mönet",
+            ["Ohne Kundenland"] = "Ohni Kundeland",
+            ["Ohne Lieferland"] = "Ohni Lieferland",
             ["Migration"] = "Migration",
             ["Bericht"] = "Bricht",
             ["Altlasten-Score"] = "Autlaschte-Score",
