@@ -168,6 +168,9 @@ struct MainView: View {
             radioViewModel.isUsageLocked = settingsController.isTrialExpired && !settingsController.isActivated
             parrotAudioService.refreshDevices()
             if Self.istDemoStart { attemptAutoConnectIfNeeded() }
+            #if DEBUG
+            starteVorfuehrungsTour()
+            #endif
         }
         .onDisappear {
             teardownKeyboardShortcuts()
@@ -286,6 +289,43 @@ struct MainView: View {
 
     /// Start mit MACYAESU_DEMO=1 (Vorfuehrung, Bildschirmfotos): Demo-Funkgeraet statt echtem Port.
     static let istDemoStart = ProcessInfo.processInfo.environment["MACYAESU_DEMO"] == "1"
+
+    #if DEBUG
+    /// Nur Debug-Build, nur mit MACYAESU_DEMO=1 und MACYAESU_TOUR=1: feste Vorfuehrung fuer Werbeaufnahmen
+    /// (Abstimmen, Baender, Betriebsart, Senden). Zeitmarken (Unix-Sekunden) nach MACYAESU_TOUR_LOG.
+    private func starteVorfuehrungsTour() {
+        let env = ProcessInfo.processInfo.environment
+        guard Self.istDemoStart, env["MACYAESU_TOUR"] == "1" else { return }
+        let vm = radioViewModel
+        let logPfad = env["MACYAESU_TOUR_LOG"]
+        Task { @MainActor in
+            func warte(_ s: Double) async { try? await Task.sleep(nanoseconds: UInt64(s * 1_000_000_000)) }
+            func marke(_ name: String) {
+                guard let logPfad else { return }
+                let zeile = String(format: "%.3f\t%@\n", Date().timeIntervalSince1970, name)
+                if let h = FileHandle(forWritingAtPath: logPfad) { h.seekToEndOfFile(); h.write(Data(zeile.utf8)); h.closeFile() }
+                else { try? zeile.write(toFile: logPfad, atomically: true, encoding: .utf8) }
+            }
+            if let fenster = NSApp.windows.first(where: { $0.isVisible && $0.styleMask.contains(.titled) }),
+               let flaeche = fenster.screen?.visibleFrame {
+                fenster.setFrame(NSRect(x: flaeche.minX, y: flaeche.minY, width: min(1500, flaeche.width), height: flaeche.height), display: true)
+            }
+            await warte(Double(env["MACYAESU_TOUR_START"] ?? "5") ?? 5)
+            vm.selectBand(.m20); vm.setMode(.usb); await warte(1.5)
+            marke("abstimmen")
+            for i in 0..<70 { vm.setFrequency(14_195_000 + i * 500); await warte(0.07) }
+            await warte(1.0)
+            marke("baender")
+            for band in [Band.m40, .m80, .m160, .m15, .m10, .m6, .m2, .cm70] { vm.selectBand(band); await warte(1.1) }
+            marke("modus")
+            vm.setMode(.fm); await warte(1.4); vm.setMode(.c4fm); await warte(1.4)
+            vm.selectBand(.m20); vm.setMode(.usb); await warte(1.4)
+            marke("senden")
+            vm.startTransmit(); await warte(3.0); vm.stopTransmit(); await warte(1.5)
+            marke("ende")
+        }
+    }
+    #endif
 
     private func attemptAutoConnectIfNeeded() {
         // MACYAESU_DEMO=1: beim Start mit dem simulierten FT-991A verbinden (Vorfuehrung, Bildschirmfotos).
