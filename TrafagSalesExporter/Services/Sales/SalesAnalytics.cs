@@ -65,6 +65,24 @@ public static class SalesAnalytics
         return c switch { "UK" => "GB", "EL" => "GR", _ => c };
     }
 
+    /// <summary>
+    /// Sparte einer Verkaufszeile. Ist sie leer, wird sie ueber die eigene Materialnummer aus anderen Zeilen ergaenzt und
+    /// danach ueber die Konzernmaterialnummer (<c>GroupMaterialNumber</c>, z. B. TRIN aus Sage mit der TRCH-Nummer). Seit
+    /// 2026-11-09; vorher blieben solche Zeilen „Nicht zugeordnet“, obwohl die TRCH-Nummer eine Sparte hat.
+    /// </summary>
+    public static string ResolveDivision(string? division, string? material, string? groupMaterial, IReadOnlyDictionary<string, string> divisionByMaterial)
+    {
+        var own = division?.Trim() ?? "";
+        if (own.Length > 0)
+            return own;
+        foreach (var key in new[] { material, groupMaterial })
+        {
+            if (!string.IsNullOrWhiteSpace(key) && divisionByMaterial.TryGetValue(MaterialKeyNormalizer.Normalize(key), out var hit))
+                return hit;
+        }
+        return "";
+    }
+
     private static decimal Sum(IEnumerable<SalesFact> facts, DateOnly from, DateOnly to)
         => facts.Where(f => f.Date >= from && f.Date < to).Sum(f => f.ValueChf);
 

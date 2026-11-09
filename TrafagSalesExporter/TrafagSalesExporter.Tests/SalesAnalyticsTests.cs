@@ -298,4 +298,15 @@ public sealed class SalesAnalyticsTests
         Assert.True(moves.Single(m => m.Quarter == "2026 Q1").LostKnown);
         Assert.Equal(1, moves.Single(m => m.Quarter == "2026 Q1").LostCustomers);
     }
+
+    [Fact]
+    public void ResolveDivision_FillsFromOwnMaterialThenGroupMaterial()
+    {
+        var map = new Dictionary<string, string> { [MaterialKeyNormalizer.Normalize("0000060474")] = "Transmitters", [MaterialKeyNormalizer.Normalize("M7")] = "Pressure Switches" };
+
+        Assert.Equal("Gas Density Monitors", SalesAnalytics.ResolveDivision(" Gas Density Monitors ", "60474", "", map));
+        Assert.Equal("Pressure Switches", SalesAnalytics.ResolveDivision("", "m7", "60474", map));
+        Assert.Equal("Transmitters", SalesAnalytics.ResolveDivision(null, "IN-LOCAL-1", "60474", map));
+        Assert.Equal("", SalesAnalytics.ResolveDivision("", "IN-LOCAL-1", "", map));
+    }
 }

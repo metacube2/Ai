@@ -112,9 +112,7 @@ public sealed class SalesDataService
                 missingRate++;
                 continue;
             }
-            var division = r.ProductDivisionText?.Trim() ?? "";
-            if (division.Length == 0 && !string.IsNullOrWhiteSpace(r.Material))
-                division = divisionByMaterial.GetValueOrDefault(MaterialKeyNormalizer.Normalize(r.Material)) ?? "";
+            var division = SalesAnalytics.ResolveDivision(r.ProductDivisionText, r.Material, r.GroupMaterialNumber, divisionByMaterial);
             var country = SalesAnalytics.NormalizeCountry(r.CustomerCountry);
             facts.Add(new SalesFact(DateOnly.FromDateTime(date), r.Tsc.Trim().ToUpperInvariant(), countryKey,
                 SalesAnalytics.CustomerKey(r.CustomerName, r.Tsc, r.CustomerNumber), (r.CustomerName ?? "").Trim(),
