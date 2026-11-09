@@ -61,6 +61,12 @@ public sealed class ShopfloorOptions
     /// </summary>
     public bool SapVerzugEnabled { get; set; }
 
+    /// <summary>
+    /// Auftragsvorrat, offene KW und SEH-Tagesmenge wie ZC22 schreiben (ShopAufSet Typ VR), 2026-11-09 (Mail Fabio, Punkt a). Erst
+    /// einschalten, wenn der Transport T76K912860 in P76 ist und die Vorschau (GET sap/vorrat) zu ZC22 passt.
+    /// </summary>
+    public bool SapVorratEnabled { get; set; }
+
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
     public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45
 

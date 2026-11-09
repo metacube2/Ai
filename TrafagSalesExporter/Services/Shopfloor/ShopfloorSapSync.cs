@@ -165,6 +165,19 @@ public sealed class ShopfloorSapSync : BackgroundService
                     _logger.LogWarning(ex, "Shopfloor: PPD-Verzug aus SAP fehlgeschlagen.");
                 }
             }
+            // Auftragsvorrat, offene KW, SEH-Tagesmenge wie ZC22 (ShopAufSet Typ VR), 2026-11-09: Abfragetag, alle offenen Auftraege.
+            if (options.SapVorratEnabled)
+            {
+                try
+                {
+                    LastResult["vorrat"] = await VorratCoreAsync(client, baseUrl, DateOnly.FromDateTime(DateTime.Today), true, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    LastResult["vorrat"] = new JsonObject { ["ok"] = false, ["meldung"] = ex.GetBaseException().Message };
+                    _logger.LogWarning(ex, "Shopfloor: Auftragsvorrat aus SAP fehlgeschlagen.");
+                }
+            }
             return LastResult;
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -288,6 +301,36 @@ public sealed class ShopfloorSapSync : BackgroundService
         result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
         result["geschrieben"] = true;
         _logger.LogInformation("Shopfloor: PPD-Verzug aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
+        return result;
+    }
+
+    /// <summary>
+    /// Auftragsvorrat fuer den Abfragetag D (alle offenen Auftraege wie ZC22, Buckets im Cockpit). Ohne <paramref name="write"/>
+    /// nur Vorschau, sonst ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/vorrat?tag=JJJJ-MM-TT.
+    /// </summary>
+    public async Task<JsonObject> VorratAsync(DateOnly day, bool write, CancellationToken ct)
+    {
+        var (client, baseUrl) = await CreateClientAsync(ct);
+        using (client)
+            return await VorratCoreAsync(client, baseUrl, day, write, ct);
+    }
+
+    private async Task<JsonObject> VorratCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
+    {
+        var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(_options.CurrentValue.SapPlant, day), ct);
+        var result = ShopfloorSapVorrat.Compute(day, rows);
+        result["ok"] = true;
+        result["geschrieben"] = false;
+        if (!write)
+            return result;
+        var store = _stores.Store;
+        var dayIso = (string)result["day"]!;
+        var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+        result["uebersprungen_manuell"] = skipped;
+        result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
+        result["geschrieben"] = true;
+        _logger.LogInformation("Shopfloor: Auftragsvorrat aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
         return result;
     }
 
