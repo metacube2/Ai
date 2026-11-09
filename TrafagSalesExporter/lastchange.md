@@ -1,6 +1,31 @@
 # Last Change
 
-Stand: 2026-11-05
+Stand: 2026-11-09
+
+## Uebergabe Stand 2026-11-09 (vor Neustart des PCs, Auftrag Ingo „alles md nachfuehren“)
+
+**Offene SAP-Transporte (alle T76, nicht freigegeben; Freigabe und Import nur Ingo):**
+
+| Transport | Inhalt | bereit? | nach dem Import |
+| --- | --- | --- | --- |
+| `T76K912839` | ZLO03 FIX 26 Basismenge (Materialanteil Wafer) | ja | Einkauf-Lauf, Materialanteil pruefen (HW_ZUKAUFSORT ~1.27 Mio. statt 957 Mio.), Ann-Katrin/Sandro informieren |
+| `T76K912837` | `QmMeldungSet` (Q-Faelle Monthly Review) | ja | `/IWBEP` dann `/IWFND` leeren, `MonthlyReview:QmEnabled` true committen und deployen |
+| `T76K912853` + `T76K912856` | IC-Staffelbasis nach Bestellmenge (VOFM 601, V/06 PR00) | ja, mit Vorbehalt (S6 nur in P76 testbar, MIRO-Buchung in T76 offen) | nur zusammen; `RV62A601` in P76 aktiv pruefen; Fabio: endgueltige Unterlieferung bestaetigen |
+| `T76K912490` | ZZPRDAT (BAdI, Reiter-Anzeige `ZXCO1U11`, Rueckgabe `ZXCO1U12` repariert, Georgs XCO1-Objekte) | noch nicht | vorher P76 lesend: Import `T76K911390`/`T76K911398` (Projekt ZPP00012), Append `ZCO_ORD1`; Georg zu `ZXCO1U06` und `T76K911783`; Fabio informieren; Abnahme Lucas/Marco/Adil (Testnachweis `saptasks/zzprdat/testdoku_2026-11-06/`) |
+
+**T76:** Verbindung riss am 06.11. 15:27 ab, Ingo muss T76 neu anmelden. Offene Testbelege: MIRO 0051128478 (fehlerhaft, Buchung offen), Infosatz 5300015578 ohne SPEZ (Entscheid Ingo/Fabio). Hilfsreport `Z_KOI_ZLO_FIX26_TEST` aufraeumen.
+
+**Mails/Teams offen:** Fabio Begleitmail zum Testnachweis ZZPRDAT und Stand Staffelbasis (Entwurf auf Wunsch); Johannes Zetterblom Teams-Nachricht zum CRM (Text im Chat vom 06.11., `docs/CRM_DYNAMICS365_2026-11-03.md`); Antwort an Fabio zu Kurs/Terminen (KW fuer Schritt 1/2 offen).
+
+**Entscheide offen:** Einkauf-Doppelungen je Reiter (Wochen_Todo 154), FP_THERMOST.-Fix, Texte „Nachts laeuft automatisch ein Delta“, `segmente.png`/`Bahnmarkt_DE_Kundenzuordnung` in der Wurzel geloescht (nicht von Claude; `segmente.png` wird von der Seite Marktsegmente gebraucht — wiederherstellen?), neun Worktrees mit Aenderungen und Gruppe 3 (spartenlogic/.tmp_*, cinebbox, ersetzt, output) beim Aufraeumen.
+
+*Ueberholt: Uebergabe vom 2026-11-05 15:00 weiter unten.*
+
+## IC-Staffelbasis und ZZPRDAT-Nachweis (Auftraege Ingo), 2026-11-06
+
+- ZZPRDAT: `ZXCO1U12` repariert (Reiterwechsel loeschte das Datum, CO02-Sichern haette es geloescht), Durchspieltest 1241850, Testnachweis Word mit 21 Screenshots (Auftrag 1241851), alles in `T76K912490`.
+- IC-Staffelbasis bei Unterlieferung (Mail Fabio 06.11., Blatt 8 `IC_Umsetzung_V1.xlsx`): VOFM 601 nur ZICAA1, Test IV 90381202 (394.20 statt 453.90 EUR), S7 Stufe Bestellung = IV, S6 nicht testbar in T76. `saptasks/ic_preisfindung/NOTES.md` 8.
+- CRM: Fragen an Johannes nur in der Doku, nie gestellt; Antworten teils abgeleitet (kein Navision in den bekannten Verkaufsquellen).
 
 ## ZZPRDAT Abnahmesitzung und Transport gebuendelt (Auftrag Ingo), 2026-11-05/06
 
@@ -13,7 +38,7 @@ Stand: 2026-11-05
 - Von Ingo selbst ausgefuehrt (Auto-Modus lehnte Loeschen ab), Skript von Claude: 20 saubere Worktrees entfernt (15 alte `C:\TMP\…release_*`, `dev_projekte*`, zwei Juni-Kopien, zwei Agenten-Worktrees vom 05.11.), Build-Reste geloescht (`build_verify`, `verify_probe_out*`, `bintest`, `Tests/bintest`, `.tmp_hb_build`, `binmon`, `__pycache__`), rund 20 GB.
 - Stehen gelassen: `C:\TMP\TrafagSalesExporter_release_eafd1c5` (Deploy-Werkzeug), neun Worktrees mit nicht committeten Aenderungen (dev_hri, localization_verify, release_a471ce2, sechs Agenten-Worktrees aus dem Oktober), `output/` (Excel-Auswertungen), Ordner aus Gruppe 3 (spartenlogic/.tmp_*, .tmp_pbix_x_extract, cinebbox-connect-downloader, ersetzt, AlphaplanExportPackage/delta) bis Entscheid Ingo.
 
-## Uebergabe Stand 2026-11-05 15:00 (falls die Sitzung abbricht)
+## Uebergabe Stand 2026-11-05 15:00 (falls die Sitzung abbricht) *(ueberholt durch Uebergabe 2026-11-09 oben)*
 
 **Zuletzt:** Antwort an Fabio Palma (IC-Preisfindung, Mail „AW: IC-Preisfindung automatisieren …“ vom 05.11. 14:04, allen antworten) als **Entwurf in Outlook Web gespeichert 14:59, nicht gesendet**; Inhalt: Preisliste 14 kommt in der IV an, Korrektur Kurs (M -> EURX 0.94, Kurstyp P unnoetig), ERL fuer Z001/Z002, Schritt 2 Job 4 bis 6 PT. Offen: Ingo traegt „KW __“ ein und sendet (oder gibt OK zum Senden).
 
