@@ -548,3 +548,49 @@ Commit `fd345e7`, Release-Worktree 1460/1460, deployed 07:23 bitgleich ohne Alar
 **Bewusst noch nicht eingespielt:** `config_logistik_dw_soll.js` (Logistik „DW SOLL Verpacken“ = `dw.lieferbereit` DLQ72 statt DL790) und `config_seh_tagesmenge_sap.js` (SEH „Offene Tagesmenge“ `planned_source` = sap). Beide Quellfelder stehen in Fabios Liste `Shopfloor_Was_fehlt_2026-11-07.xlsx` auf „definiert, fehlt, Ingo einbauen“; unser SAP-Abruf fuellt `dw.lieferbereit` nicht (kein Treffer im Code). Mit der DW-Config waere der Logistik-Sollwert heute leer. Reihenfolge: erst SAP-Abruf bauen (DLQ72 nach ZC27-Logik, Produktionstag; SEH Tagesziel aus ZC22 Bucket „Tag“, Kontrolle Fabio Mo 09.11.: 2814), dann die beiden Configs.
 
 **Offen aus Patch 07 (Backend, Fabios Hinweis):** POST `api/daily` soll Aenderungen an Feldern mit `meta.src` SAP/MES abweisen oder ignorieren, und der naechste SAP-Lauf soll manuell ueberschriebene SAP-Felder wieder mit SAP-Wert und `meta` setzen (Beispiel SEH prod 02.11., SAP-Kennzeichen fehlt seither). Die Oberflaeche allein schuetzt nicht vor direkten API-Aufrufen.
+
+## 19. Mail Fabio 09.11.: Verzug in P76 abgeglichen, Auftragsvorrat (Typ VR) gebaut (Stand 2026-11-09)
+
+Fabio (Mail 09.11.) fragt nach Terminen fuer a) ZC22-Vorrat, offene KW, Offene Tagesmenge SEH (danach TR5, DW, TX) und b) PPD-Verzug.
+Auftrag Ingo („1. ja 2. ja“): a) bauen, b) ZC22 in P76 lesend laufen lassen.
+
+**b) PPD-Verzug, P76 09.11.:** ZC22 in einer eigenen P76-Sitzung (`.tmp_sap_probe/P76Zc22Lesen.vbs`, nur lesen, danach geschlossen;
+die Listenzeilen gibt SAP GUI Scripting in P76 nicht heraus, deshalb Liste per `%PC` unkonvertiert in den Scratchpad gesichert).
+Disponent D bis SZZ, Eckendtermin bis 08.11., Material 1-99999, mit Planauftraegen:
+
+| Abteilung | ZC22 P76 ohne Layoutfilter | Vorschau `GET sap/verzug?tag=2026-11-09` |
+| --- | --- | --- |
+| DW | 9 / 185 | 9 / 185 |
+| TR5 | 11 / 465 | 11 / 465 |
+| TX | 11 / 310 | 11 / 310 |
+| SEH | 0 | 0 |
+
+Exakt gleich. **Zwei Befunde fuer Fabio, vor dem Einschalten (`SapVerzugEnabled` bleibt aus):**
+1. Das ZC22-Standardlayout in P76 (globales Layout `/ P00 TX`, siehe `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md`) filtert auf
+   **Arbeitsplatz und Systemstatus**; mit Filter zeigt ZC22 TR5 7 / 226 und TX 1 / 50. Die Definition der Produktionsplanung nennt kein
+   Layout; das Cockpit rechnet ohne.
+2. **Material 1-99999** (Definition PPD, A. Tran, fuer alle vier Abteilungen) laesst SEH immer bei 0: alle SEH-Materialien sind
+   alphanumerisch (B…, C…), auch in P76 (*berichtigt: die Aussage im Chat vom 09.11., SEH habe in P76 numerische Materialien, war falsch*).
+   Die Rueckfrage aus Abschnitt 17 ist damit weiter offen.
+
+**a) Auftragsvorrat (Typ VR):** Der Verzug-Modus erlaubt hoechstens einen Tag Vorschau; deshalb im selben Block von `ShopAufSet` ein Typ
+`VR`: dieselbe Abfrage (offene Fertigungsauftraege und Planauftraege wie ZC22), aber Eckendtermin-Grenze `99991231`. T76, **neuer Auftrag
+`T76K912860`** (Aufgabe `T76K912861`, nur `METH ZCL_ZPOWERBI_EINKAUF_DPC_EXT GET_ENTITYSET`), erst nach Freigabe von `T76K912837`
+(QmMeldungSet sperrte die Methode, Entscheid Ingo). Quelltext vorher/neu `saptasks/shopfloor_sap/DPC_EXT_GET_ENTITYSET_2026-11-09_vorrat_*.abap`
+(3 Stellen, 8 Zeilen), aktiviert, rueckgelesen.
+- **Abgleich T76** (Testreport `saptasks/shopfloor_sap/Z_KOI_SHOP_VR_TEST.abap`, voruebergehend im `$TMP`-Report `Z_KOI_ZLO_FIX26_TEST`;
+  ZC22 per `SUBMIT` mit `cl_salv_bs_runtime_info`): SEH (S00 bis SZZ) **1'877 Auftraege / 179'981 Stk., je Auftrag gleich ZC22**, 0
+  Abweichungen; VR liefert fuer Werk 1100 insgesamt 10'938 Zeilen.
+- **Kein Materialfilter:** Fabios Schnittstelle (`1.xlsx`, `Shopfloor_SAP_Schnittstelle_2026-11-02.xlsx`) definiert den Vorrat ohne;
+  seine Kontrolle SEH 159'661 (07.11.) passt nur so (P76 09.11. ohne Filter 157'502, mit Filter 0). Die Zeile „Material 1-99999“ in
+  `Shopfloor_Was_fehlt_2026-11-07.xlsx` gilt als uebernommen aus dem Verzug.
+- **Cockpit (`01fceec`, produktiv 14:12, Schalter `Shopfloor:SapVorratEnabled` aus):** `Services/Shopfloor/ShopfloorSapVorrat.cs`.
+  Buckets ab dem Abfragetag D, kumuliert und inkl. Ueberfaelliger: `vorrat_total`; `vorrat_1m` bis Monatsende; `vorrat_2m` bis Ende
+  Folgemonat; `vorrat_3m` bis Ende uebernaechster Monat; `offen_kw` bis Sonntag der KW; nur SEH `ziel` bis D. Module seh, tr5, tx, dw.
+  Schreiben ueber `ApplyPush` (manuelle Werte bleiben), Aufruf im SAP-Abgleich 04:00/12:45, Vorschau `GET/POST shopfloor/api/sap/vorrat?tag=`,
+  Tests `ShopfloorSapVorratTests` (1465/1465). Vor dem Import liefert die Vorschau 502 „Transport T76K912860 fehlt“.
+- **Nicht gebaut:** TX `plan5` („Eckendtermin naechste 5 AT“, Grenze nicht eindeutig), Layoutfilter (siehe b).
+
+**Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912860` frei und importiert; (2) Gateway-Caches P76 nur falls noetig (keine neue
+Property); (3) Vorschau `GET sap/vorrat` gegen ZC22 P76 (SEH heute 157'502); (4) `SapVorratEnabled = true`, danach Fabios
+`config_seh_tagesmenge_sap.js`.

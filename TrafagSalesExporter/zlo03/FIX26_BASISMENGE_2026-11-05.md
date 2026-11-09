@@ -1,5 +1,7 @@
 # ZLO03 FIX 26: Positionsmenge durch die Basismenge der Stückliste (STKO-BMENG) (2026-11-05)
 
+*Nachtrag 2026-11-09:* `T76K912839` (FIX 26 und 27) von Ingo nach P76 importiert; Einkauf-Delta 11:24–13:29: `ZloTopDownSet` liefert fuer E11221 → E11283 0.000211 ROL (Wert 0.26 CHF), Materialanteil HW_ZUKAUFSORT 1.27 Mio. auf 3.67 Mio. Umsatz (34.7 %) statt 957 Mio.; Dichtewaechter 19.0 % und Hybrid 13.0 % unveraendert.
+
 Stand: 2026-11-05. T76 aktiv, Auftrag **`T76K912839`** (Aufgabe `T76K912840`), nicht freigegeben. Alle Tests in T76 bestanden.
 Freigabe und Import nach P76 macht Ingo. Zurück: `zlo03/CLAUDE.md`. Befund: `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md`.
 

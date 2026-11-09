@@ -2,6 +2,13 @@
 
 Stand: 2026-11-09
 
+## Shopfloor Verzug P76 abgeglichen, Auftragsvorrat gebaut; Einkauf FIX 26 in P76 bestaetigt (Auftrag Ingo), 2026-11-09 nachmittags
+
+- PPD-Verzug: Vorschau P76 = ZC22 exakt (DW 9/185, TR5 11/465, TX 11/310, SEH 0); offen fuer Fabio: Layoutfilter `/ P00 TX` (Arbeitsplatz, Systemstatus) und Material 1-99999 (SEH immer 0). Schalter aus.
+- Auftragsvorrat: SAP Typ VR in T76 (`T76K912860`, SEH 1'877/179'981 gleich ZC22), Cockpit `ShopfloorSapVorrat` deployed 14:12 (`01fceec`), Schalter aus bis Import und Abgleich. `docs/SHOPFLOOR_2026-10-07.md` 19.
+- Einkauf: `T76K912839` (ZLO03 FIX 26/27) von Ingo importiert; Einkauf-Delta 11:24–13:29: E11221 → E11283 0.000211 ROL, **HW_ZUKAUFSORT Materialanteil 1.27 Mio. statt 957 Mio.** (34.7 % von 3.67 Mio.).
+- `T76K912837` (QmMeldungSet) von Ingo freigegeben; Import P76, Caches und `MonthlyReview:QmEnabled` noch offen.
+
 ## Verkauf Gruppenzahlen, Sankey und ZC22 (Auftrag Ingo), 2026-11-09
 
 - Verkauf Interaktiv deployed 10:45 (`04b4faf`): Sankey ganz beschriftet, „Ohne Kundenland“, Sparte zusaetzlich ueber TRCH-Nummer (TRIN). Befund Gruppenumsatz zu hoch (GFS/Poltraf nicht als IC, vermutete Doppelzaehlung TRCH/Toechter, mindestens rund 6 Mio) als ISS-032; Liste fehlende Sparte/PRODH in Ingos Downloads. `docs/VERKAUF_2026-10-02.md` Abschnitt 2026-11-09.

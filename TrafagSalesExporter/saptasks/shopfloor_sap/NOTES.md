@@ -125,3 +125,10 @@ Mail Fabio, von Ingo am 19.10. weitergegeben. Commits `ded2b65`, `c4dca10`, `c3c
   2026-11-02 nachmittags:* `ShopAufSet` Typ VZ, Auftrag `T76K912797`, in T76 je Auftrag gleich ZC22, Cockpit `27badb2`, Schalter aus,
   `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 17); die Terminverschiebungen koennen per Patch 04 aus den Rueckstandslisten kommen (Schalter `tv_from_rs`, aus).
   `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
+
+## 9. Auftragsvorrat Typ VR (2026-11-09)
+
+`ShopAufSet` Filter `Typ eq 'VR'`: wie VZ, aber ohne Eckendtermin-Grenze (`lv_sa_grenze = '99991231'`). Auftrag `T76K912860`
+(Aufgabe `T76K912861`), Methode `ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W`. Vorher/neu: `DPC_EXT_GET_ENTITYSET_2026-11-09_vorrat_*.abap`.
+Test `Z_KOI_SHOP_VR_TEST.abap` (SEH 1'877 / 179'981 gleich ZC22). Fachlich: `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 19.
+Hinweis P76: SAP GUI Scripting gibt die Zeilen der ZC22-Liste nicht als Elemente heraus; Liste ueber `%PC` sichern.
