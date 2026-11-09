@@ -676,7 +676,8 @@
      "type": "num",
      "col": "L",
      "group": "Tagesleistung",
-     "unit": "Stk."
+     "unit": "Stk.",
+     "planned_source": "sap"
     },
     {
      "key": "prod",
