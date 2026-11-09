@@ -5,6 +5,7 @@ Stand: 2026-11-09
 ## Verkauf Gruppenzahlen, Sankey und ZC22 (Auftrag Ingo), 2026-11-09
 
 - Verkauf Interaktiv deployed 10:45 (`04b4faf`): Sankey ganz beschriftet, „Ohne Kundenland“, Sparte zusaetzlich ueber TRCH-Nummer (TRIN). Befund Gruppenumsatz zu hoch (GFS/Poltraf nicht als IC, vermutete Doppelzaehlung TRCH/Toechter, mindestens rund 6 Mio) als ISS-032; Liste fehlende Sparte/PRODH in Ingos Downloads. `docs/VERKAUF_2026-10-02.md` Abschnitt 2026-11-09.
+- ZLO03 FIX 27 in T76 im selben Auftrag `T76K912839` wie FIX 26: Excel-VKNR-Spalten wieder mit der alten Menge je Basismenge, neue Menge je VKNR als Zusatzspalte „je 1 Stk“, Dashboard unveraendert neu (Wunsch Ingo). Test T76 bestanden. `zlo03/FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md`.
 - ZC22 Systemstatus ungekuerzt in T76 (`T76K912858`: Struktur `ZMM_UEB_FAUF` STTXT TEXT100 und Form `STATUS_LANG`), nicht freigegeben. `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md`.
 
 ## Shopfloor-Paket Fabio 07.11. eingespielt (Auftrag Ingo), 2026-11-09
@@ -17,7 +18,7 @@ Stand: 2026-11-09
 
 | Transport | Inhalt | bereit? | nach dem Import |
 | --- | --- | --- | --- |
-| `T76K912839` | ZLO03 FIX 26 Basismenge (Materialanteil Wafer) | ja | Einkauf-Lauf, Materialanteil pruefen (HW_ZUKAUFSORT ~1.27 Mio. statt 957 Mio.), Ann-Katrin/Sandro informieren |
+| `T76K912839` | ZLO03 FIX 26 Basismenge (Materialanteil Wafer), seit 09.11. mit FIX 27 (Excel alt plus neu) | ja | Einkauf-Lauf, Materialanteil pruefen (HW_ZUKAUFSORT ~1.27 Mio. statt 957 Mio.), Ann-Katrin/Sandro informieren |
 | `T76K912837` | `QmMeldungSet` (Q-Faelle Monthly Review) | ja | `/IWBEP` dann `/IWFND` leeren, `MonthlyReview:QmEnabled` true committen und deployen |
 | `T76K912853` + `T76K912856` | IC-Staffelbasis nach Bestellmenge (VOFM 601, V/06 PR00) | ja, mit Vorbehalt (S6 nur in P76 testbar, MIRO-Buchung in T76 offen) | nur zusammen; `RV62A601` in P76 aktiv pruefen; Fabio: endgueltige Unterlieferung bestaetigen |
 | `T76K912490` | ZZPRDAT (BAdI, Reiter-Anzeige `ZXCO1U11`, Rueckgabe `ZXCO1U12` repariert, Georgs XCO1-Objekte) | noch nicht | vorher P76 lesend: Import `T76K911390`/`T76K911398` (Projekt ZPP00012), Append `ZCO_ORD1`; Georg zu `ZXCO1U06` und `T76K911783`; Fabio informieren; Abnahme Lucas/Marco/Adil (Testnachweis `saptasks/zzprdat/testdoku_2026-11-06/`) |

@@ -118,6 +118,7 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 24 | `Z_ZLO03_TURBO2`: `ty_ktab`, Selektionsbild, `process_main`, `fill_ktab`, `ausgabe_spalten_details`, neu `zahl_text`, `details_bom_unit` | Befunde G1, G2, G3, G5 (Stueckkosten mit 10 Stellen, `p_days` ausgeblendet, Textpositionen nie im Bedarf, Kommentar Werk) und Rest aus FIX 23 (Bottom-Up-Details in Stuecklisten-Einheit); T76 aktiv, Auftrag `T76K912785`, laut Ingo am 2026-11-02 nach P76 importiert, siehe `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` |
 | 25 | `Z_ZLO03_TURBO2`: Selektionsbild (`p_app` unsichtbar), START-OF-SELECTION, neu `app_export` | Top-Down-Ergebnis mit `P_APP` ins ABAP-Memory statt Excel, fuer das Dashboard-Set `ZloTopDownSet` (Materialanteil je Produktgruppe); T76 aktiv, im selben Auftrag `T76K912785` wie FIX 24, laut Ingo am 2026-11-02 nach P76 importiert, siehe `FIX25_APP_EXPORT_2026-11-02.md` |
 | 26 | `Z_ZLO03_TURBO2`: `ty_mtab`, neu `load_bmeng`, `process_main`, `app_export`, `create_excel_output` | Positionsmenge durch die Basismenge (`STKO-BMENG`) der Stueckliste des Elternmaterials (Stufe 01 VKNR, ab Stufe 02 `KOM_MSTAE`); Wafer je Chip 1 / 4'750 ROL statt 1 ROL (Dashboard HW_ZUKAUFSORT 957 Mio.); T76 aktiv, Auftrag `T76K912839`, nicht freigegeben; P76 hat dieselben 6 Stuecklisten mit BMENG <> 1 wie T76; siehe `FIX26_BASISMENGE_2026-11-05.md` |
+| 27 | `Z_ZLO03_TURBO2`: `ty_mtab` (`menge_alt`), `process_main`, `create_excel_output` | Excel: VKNR-Spalten wieder mit der Menge je Basismenge wie vor FIX 26, dazu je VKNR eine Zusatzspalte „<VKNR> je 1 Stk“ mit der FIX-26-Menge; Dashboard (`app_export`) unveraendert neu (Wunsch Ingo 2026-11-09); T76 aktiv, **im selben Auftrag `T76K912839`**, siehe `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 
@@ -366,3 +367,5 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
 - `FIX26_BASISMENGE_2026-11-05.md` — **FIX 26**: Menge durch die Basismenge der Elternstueckliste; aktueller Quelltext
   `Z_ZLO03_TURBO2_FIX26_2026-11-05.abap`, Auftrag `T76K912839`; Testreport `Z_KOI_ZLO_FIX26_TEST.abap` ($TMP, T76); dazu
   P76-Liste der Stuecklisten mit BMENG <> 1 und Befund FP_THERMOST (Selbststueckliste, MM gegen KG)
+- `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` — **FIX 27**: alte Menge in den VKNR-Spalten, neue Menge als Zusatzspalten;
+  aktueller Quelltext `Z_ZLO03_TURBO2_FIX27_2026-11-09.abap`, Auftrag `T76K912839`; Test `Z_KOI_ZLO_FIX27_TEST.abap`

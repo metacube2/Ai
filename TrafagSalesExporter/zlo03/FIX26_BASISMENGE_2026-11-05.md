@@ -29,6 +29,8 @@ Bewusst nicht geändert: der Generator (`Z_VC_ZLO03*`, schreibt weiter `STPOX-ME
 Dashboard (rechnet mit `ZloTopDownSet` richtig), G4 Mehrstufigkeit (Mengen ab Stufe 02 gelten weiter je Elternbaugruppe, nicht je
 Gerät), FP_THERMOST (andere Ursache, Abschnitt 6).
 
+*Ergaenzt 2026-11-09 (FIX 27, gleicher Auftrag):* Die Excel zeigt in den VKNR-Spalten wieder die Menge je Basismenge wie vor FIX 26; die FIX-26-Menge steht zusaetzlich je VKNR in einer Spalte „<VKNR> je 1 Stk“ am Zeilenende. Das Dashboard rechnet unveraendert mit der FIX-26-Menge. `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md`.
+
 **Formatänderung in der Excel-Ausgabe:** Mengen je VKNR stehen jetzt ohne Nullen am Ende („1“ statt „1.000“, „0.000211“). Für
 Ann-Katrin und Sandro kurz erwähnen; die Zahlen sind gleich (Test C).
 
