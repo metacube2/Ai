@@ -677,7 +677,14 @@
      "col": "L",
      "group": "Tagesleistung",
      "unit": "Stk.",
-     "planned_source": "sap"
+     "planned_source": "sap",
+     "sap": {
+      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF) / ShopAufSet Typ VR",
+      "vorschlag_feld": "Positionsmenge (AFPO-PSMNG bzw. PLAF-GSMNG)",
+      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV ShopAufSet (Typ VR)",
+      "selektion": "Werk 1100, Disponent S*, mit Planauftraegen, ohne erledigte, ohne Materialfilter; Eckendtermin bis Abfragetag (inkl. Ueberfaellige)",
+      "status": "geliefert (2026-11-09)"
+     }
     },
     {
      "key": "prod",
