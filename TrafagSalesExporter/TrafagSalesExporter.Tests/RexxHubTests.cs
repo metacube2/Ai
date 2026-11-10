@@ -328,11 +328,113 @@ public sealed class RexxHubTests : IDisposable
         await Assert.ThrowsAsync<RexxHubException>(() => Client(stuck).Client.FetchQueryAsync(Connection, 775, options));
         options.PageParameter = string.Empty;
 
-        // Link auf einen fremden Server bekommt den Token nicht.
+        // Link auf einen fremden Server bekommt den Token nicht; die Meldung nennt Schema, Host und Port beider Seiten.
         var foreign = FakeRexx.Json(Envelope([Row(("Personalnummer", "1"))], links: new { next = "https://fremd.example.test/v1/x?page=2" }));
         var ex3 = await Assert.ThrowsAsync<RexxHubException>(() => Client(foreign).Client.FetchQueryAsync(Connection, 775, Options()));
-        Assert.Contains("anderen Server", ex3.Message);
+        Assert.Contains("anderen Server (https://fremd.example.test:443, Basis https://rexx.example.test:443)", ex3.Message);
         Assert.Single(foreign.Requests);
+    }
+
+    [Fact]
+    public async Task Teilabruf_Ohne_Erkannte_Seitenangaben_Bricht_Ab()
+    {
+        // Beispiel aus der Pruefung: „max_pages“ und „count“, kein next-Link. Frueher galt Seite 1 als vollstaendig.
+        var maxPages = FakeRexx.Json("""{"data":[{"Personalnummer":"1"}],"_meta":{"count":812,"items_per_page":500,"page":1,"max_pages":2}}""");
+        var ex1 = await Assert.ThrowsAsync<RexxHubException>(() => Client(maxPages).Client.FetchQueryAsync(Connection, 775, Options()));
+        Assert.Contains("2 Seiten", ex1.Message);
+
+        // „count“ groesser als das Gelieferte, sonst nichts erkannt.
+        var count = FakeRexx.Json("""{"data":[{"Personalnummer":"1"}],"_meta":{"count":393}}""");
+        var ex2 = await Assert.ThrowsAsync<RexxHubException>(() => Client(count).Client.FetchQueryAsync(Connection, 775, Options()));
+        Assert.Contains("Anzahl von 393", ex2.Message);
+
+        // Unbekannter Name mit „page“ nennt weitere Seiten.
+        var unknown = FakeRexx.Json("""{"data":[{"Personalnummer":"1"}],"_meta":{"seite":1,"page_total_x":4}}""");
+        var ex3 = await Assert.ThrowsAsync<RexxHubException>(() => Client(unknown).Client.FetchQueryAsync(Connection, 775, Options()));
+        Assert.Contains("_meta.page_total_x", ex3.Message);
+
+        // Seite genau voll, keine Seitenzahl, kein Link.
+        var full = FakeRexx.Json("""{"data":[{"Personalnummer":"1"},{"Personalnummer":"2"}],"_meta":{"per_page":2}}""");
+        var ex4 = await Assert.ThrowsAsync<RexxHubException>(() => Client(full).Client.FetchQueryAsync(Connection, 775, Options()));
+        Assert.Contains("genau voll", ex4.Message);
+
+        // Unlesbarer next-Link oder „_links.last“ auf eine andere Seite.
+        var badNext = FakeRexx.Json("""{"data":[{"Personalnummer":"1"}],"_links":{"next_url":{"x":"y"}}}""");
+        Assert.Contains("_links.next_url", (await Assert.ThrowsAsync<RexxHubException>(() => Client(badNext).Client.FetchQueryAsync(Connection, 775, Options()))).Message);
+        var last = FakeRexx.Json("""{"data":[{"Personalnummer":"1"}],"_links":{"self":"v1/datawarehouse/775","last":"v1/datawarehouse/775?page=4"}}""");
+        Assert.Contains("_links.last", (await Assert.ThrowsAsync<RexxHubException>(() => Client(last).Client.FetchQueryAsync(Connection, 775, Options()))).Message);
+
+        // Eingestellter Name fuer die letzte Seite: dann blaettert der Abruf ueber den Seitenparameter.
+        var custom = FakeRexx.Json(
+            """{"data":[{"Personalnummer":"1"}],"_meta":{"seite":1,"seiten":2}}""",
+            """{"data":[{"Personalnummer":"2"}],"_meta":{"seite":2,"seiten":2}}""");
+        var options = Options();
+        options.MetaCurrentPageKeys.Add("seite");
+        options.MetaLastPageKeys.Add("seiten");
+        options.PageParameter = "page";
+        var result = await Client(custom).Client.FetchQueryAsync(Connection, 775, options);
+        Assert.Equal(2, result.Table.Rows.Count);
+        Assert.Equal(["seite", "seiten"], result.MetaKeys);
+
+        // Kleinere Anzahl (Zeilen dieser Seite) und eine nicht volle letzte Seite sind in Ordnung.
+        var fine = FakeRexx.Json("""{"data":[{"Personalnummer":"1"}],"_meta":{"count":1,"per_page":500}}""");
+        Assert.Single((await Client(fine).Client.FetchQueryAsync(Connection, 775, Options())).Table.Rows);
+    }
+
+    [Fact]
+    public async Task Letzte_Seite_Laut_Meta_Beendet_Auch_Mit_Next_Link()
+    {
+        // Manche Server zeigen auf der letzten Seite mit „next“ auf sich selbst; frueher brach das jeden Tag ab.
+        var rexx = FakeRexx.Json(
+            """{"data":[{"Personalnummer":"1"}],"_meta":{"current_page":1,"last_page":2},"_links":{"next":"v1/datawarehouse/775?page=2"}}""",
+            """{"data":[{"Personalnummer":"2"}],"_meta":{"current_page":2,"last_page":2},"_links":{"next":"v1/datawarehouse/775?page=2"}}""");
+        var result = await Client(rexx).Client.FetchQueryAsync(Connection, 775, Options());
+        Assert.Equal(2, rexx.Requests.Count);
+        Assert.Equal(2, result.Table.Rows.Count);
+
+        // Ohne bekannte letzte Seite laesst sich „next“ auf sich selbst nicht als Ende werten: Abbruch statt Teilabruf.
+        var self = FakeRexx.Json("""{"data":[{"Personalnummer":"1"}],"_links":{"next":"775"}}""");
+        var ex = await Assert.ThrowsAsync<RexxHubException>(() => Client(self).Client.FetchQueryAsync(Connection, 775, Options()));
+        Assert.Contains("schon gelesene Adresse", ex.Message);
+    }
+
+    [Fact]
+    public async Task Http_Link_Hinter_Tls_Terminator_Wird_Auf_Https_Umgeschrieben()
+    {
+        var rexx = FakeRexx.Json(
+            Envelope([Row(("Personalnummer", "1"))], meta: new { current_page = 1, last_page = 2 },
+                links: new { next = "http://rexx.example.test/rexx_hub/v1/datawarehouse/775?page=2" }),
+            Envelope([Row(("Personalnummer", "2"))], meta: new { current_page = 2, last_page = 2 }));
+
+        await Client(rexx).Client.FetchQueryAsync(Connection, 775, Options());
+
+        Assert.Equal("https://rexx.example.test/rexx_hub/v1/datawarehouse/775?page=2", rexx.Requests[1].RequestUri!.AbsoluteUri);
+        Assert.All(rexx.Requests, r => Assert.Equal("https", r.RequestUri!.Scheme));
+    }
+
+    [Fact]
+    public async Task Http_Als_Basis_Wird_Ohne_Schalter_Abgelehnt()
+    {
+        var entry = new SourceSystemDefinition { Code = "REXXHUB", IsActive = true, CentralServiceUrl = "http://rexx.example.test/rexx_hub/", CentralPassword = Token };
+        Assert.Contains("nicht https", Assert.Throws<RexxHubException>(() => RexxHubClient.ToConnection(entry)).Message);
+        Assert.Equal("http://rexx.example.test/rexx_hub/", RexxHubClient.ToConnection(entry, allowHttp: true).BaseUrl);
+
+        // Auch eine andere Zugangsquelle umgeht die Pruefung nicht: der Abruf selbst schickt den Token nur ueber https.
+        var rexx = FakeRexx.Json(Envelope([Row(("Personalnummer", "1"))]));
+        var ex = await Assert.ThrowsAsync<RexxHubException>(() =>
+            Client(rexx).Client.FetchQueryAsync(new RexxHubConnection("http://rexx.example.test/rexx_hub/", Token), 775, Options()));
+        Assert.Contains("nicht https", ex.Message);
+        Assert.Empty(rexx.Requests);
+    }
+
+    [Fact]
+    public void Datumsplatzhalter_In_QueryParameters()
+    {
+        var options = Options();
+        options.QueryParameters["von"] = "{jahresanfang}";
+        options.QueryParameters["bis"] = "{heute}";
+        var uri = RexxHubClient.BuildFirstUri(new Uri(BaseUrl), 775, options, new DateTime(2026, 11, 10));
+        Assert.Equal("?von=2026-01-01&bis=2026-11-10", uri.Query);
     }
 
     [Fact]
@@ -424,12 +526,75 @@ public sealed class RexxHubTests : IDisposable
 
         Assert.StartsWith("Antwortformat unbekannt", ex.Message);
         Assert.Contains("data, _links, _meta", ex.Message);
-        Assert.Contains("person, saldo", ex.Message);
+        // Seit der Pruefung 2026-11-10: von einem data-Objekt nur Anzahl und Art, nicht die Schluessel (koennten Personalnummern sein).
+        Assert.Contains("Objekt mit 2 Schluesseln", ex.Message);
+        Assert.DoesNotContain("person", ex.Message);
         Assert.DoesNotContain("Muster", ex.Message);
         Assert.DoesNotContain("12:30", ex.Message);
 
         var noData = Assert.Throws<RexxHubFormatException>(() => RexxHubResponseParser.ParsePage("""{"items":[1,2]}"""));
         Assert.Contains("items", noData.Message);
+    }
+
+    [Fact]
+    public void Personalnummern_Als_Schluessel_Erscheinen_Nie_In_Der_Meldung()
+    {
+        // Ein nach Personalnummer geordnetes Woerterbuch (PHP-Array), einmal unter „data“, einmal ohne Umschlag.
+        var inData = Assert.Throws<RexxHubFormatException>(() => RexxHubResponseParser.ParsePage("""
+            {"data":{"00004711":{"x":1},"00004712":{"x":2}},"_meta":{"request_id":"r-4"}}
+            """));
+        Assert.Contains("Objekt mit 2 Schluesseln", inData.Message);
+        Assert.DoesNotContain("4711", inData.Message);
+
+        var top = Assert.Throws<RexxHubFormatException>(() => RexxHubResponseParser.ParsePage("""
+            {"00004711":{"x":1},"Muster, Anna":{"x":2},"_meta":{}}
+            """));
+        Assert.DoesNotContain("4711", top.Message);
+        Assert.DoesNotContain("Muster", top.Message);
+        Assert.Contains("_meta", top.Message);
+        Assert.Contains("+2 nicht angezeigt", top.Message);
+    }
+
+    [Fact]
+    public void Datenzeile_Aus_Lauter_Texten_Wird_Nicht_Zur_Kopfzeile()
+    {
+        // Ohne Kopfzeile, alle Werte als Text: frueher wurde die erste Person zur Kopfzeile.
+        var ex = Assert.Throws<RexxHubFormatException>(() => RexxHubResponseParser.ParsePage("""
+            {"data":[["00001001","Muster, Anna","Aktiv","0:00","0:00"],["00001002","Beispiel, Bruno","Aktiv","1:00","0:00"]]}
+            """));
+        Assert.Contains("ohne erkennbare Kopfzeile", ex.Message);
+        Assert.DoesNotContain("Muster", ex.Message);
+        Assert.DoesNotContain("1001", ex.Message);
+
+        // Spaltenliste vorhanden, aber nicht lesbar: Formatfehler statt Ausweichen auf die erste Zeile.
+        var unreadable = Assert.Throws<RexxHubFormatException>(() => RexxHubResponseParser.ParsePage("""
+            {"columns":[{"id":1}],"data":[["Personalnummer"],["00001001"]]}
+            """));
+        Assert.Contains("nicht lesbar", unreadable.Message);
+
+        // Kopfzeile mit technischen Namen wird erkannt, wenn die ColumnMap sie auf eine Leserspalte abbildet.
+        var options = Options();
+        options.ColumnMap["staff_id"] = "Personalnummer";
+        var mapped = RexxHubResponseParser.ParsePage("""{"data":[["staff_id","other"],["00001001","x"]]}""",
+            RexxHubParseSettings.From(options, null));
+        Assert.Equal(["staff_id", "other"], mapped.Table.Columns);
+        Assert.Single(mapped.Table.Rows);
+    }
+
+    [Fact]
+    public async Task Kopfzeile_Von_Seite_1_Gilt_Auf_Seite_2()
+    {
+        // Seite 2 wiederholt die Kopfzeile nicht und liefert alle Werte als Text; Seite 3 wiederholt sie.
+        var rexx = FakeRexx.Json(
+            """{"data":[["Personalnummer","Personal Status"],["00001001","Aktiv"]],"_meta":{"current_page":1,"last_page":3},"_links":{"next":"v1/datawarehouse/775?page=2"}}""",
+            """{"data":[["00001002","Ausgeschieden"]],"_meta":{"current_page":2,"last_page":3},"_links":{"next":"v1/datawarehouse/775?page=3"}}""",
+            """{"data":[["Personalnummer","Personal Status"],["00001003","Aktiv"]],"_meta":{"current_page":3,"last_page":3}}""");
+
+        var result = await Client(rexx).Client.FetchQueryAsync(Connection, 775, Options());
+
+        Assert.Equal(["Personalnummer", "Personal Status"], result.Table.Columns);
+        Assert.Equal(["00001001", "00001002", "00001003"], result.Table.Rows.Select(r => (string)r["Personalnummer"]!));
+        Assert.Equal(3, result.Pages);
     }
 
     [Fact]
@@ -463,7 +628,10 @@ public sealed class RexxHubTests : IDisposable
 
         var check = RexxHubColumns.Check(RexxHubQueryKind.Gesamt, table);
 
-        Assert.True(check.KannSchreiben);
+        // Seit der Pruefung 2026-11-10 sind auch „Stelle“ und der Name Pflicht, und Pflichtspalten muessen Werte haben.
+        Assert.Equal(["Nachname, Vorname (Link Personal)", "Stelle"], check.FehlendePflichtspalten);
+        Assert.False(check.KannSchreiben);
+        Assert.Contains(check.Sperrgruende, x => x.StartsWith("Personal Status: nur 0 von 1 Zeilen gefuellt", StringComparison.Ordinal));
         Assert.DoesNotContain("Ø tägliche Sollarbeitszeit (Woche)", check.FehlendeLeserspalten);
         Assert.DoesNotContain("Militär / Zivildienst angetreten (Stunden)", check.FehlendeLeserspalten);
         Assert.Contains("Urlaub Rest", check.FehlendeLeserspalten);
@@ -575,6 +743,243 @@ public sealed class RexxHubTests : IDisposable
         Assert.Contains(log.Entries, x => x.Message == "Rexx-Hub #775 geschrieben" && x.Details!.Contains("1 Zeilen") && x.Details.Contains("req-test-1"));
         Assert.Contains(log.Entries, x => x.Message == "Rexx-Hub #777 geschrieben");
         Assert.All(log.Entries, x => Assert.DoesNotContain("Muster", x.Details));
+    }
+
+    // ---- Pruefung vor dem Schreiben (Nacharbeit aus der Pruefung 2026-11-10) ----
+
+    private static RexxHubTable Table(IEnumerable<Dictionary<string, object?>> rows)
+    {
+        var table = new RexxHubTable();
+        foreach (var row in rows)
+        {
+            foreach (var key in row.Keys)
+                table.AddColumn(key);
+            table.Rows.Add(row);
+        }
+        return table;
+    }
+
+    private static Dictionary<string, object?> With(Dictionary<string, object?> row, string key, object? value)
+    {
+        row[key] = value;
+        return row;
+    }
+
+    [Fact]
+    public void Gesamt_Mit_Allen_Pflichtwerten_Wird_Geschrieben()
+    {
+        var check = RexxHubColumns.Check(RexxHubQueryKind.Gesamt, Table(People().Select(ApiRow)));
+        Assert.True(check.KannSchreiben, check.Ablehnungsgrund());
+        Assert.Contains(check.Wertpruefung, x => x.Art.StartsWith("angestellt", StringComparison.Ordinal) && (x.Gefuellt, x.Erkannt) == (4, 3));
+        Assert.Contains(check.Wertpruefung, x => x.Art == "Ausgeschieden" && x.Erkannt == 1);
+    }
+
+    [Theory]
+    [InlineData("Personalnummer", "P-1001", "als Ganzzahl erkannt")]
+    [InlineData("Eintrittsdatum", "num", "als Datum erkannt")]
+    [InlineData("Personal Status", "1", "kein Wert als angestellt erkannt")]
+    [InlineData("Stelle", null, "in keiner Zeile gefuellt")]
+    [InlineData("Austrittsdatum", null, "bei keiner der 1 ausgeschiedenen")]
+    public void Gesamt_Mit_Unbrauchbaren_Pflichtwerten_Wird_Nicht_Geschrieben(string column, string? value, string expected)
+    {
+        var rows = People().Select(ApiRow).ToList();
+        foreach (var row in rows)
+            row[column] = value == "num" ? 20200101m : value;
+
+        var check = RexxHubColumns.Check(RexxHubQueryKind.Gesamt, Table(rows));
+
+        Assert.False(check.KannSchreiben);
+        Assert.Contains(expected, check.Ablehnungsgrund());
+        Assert.DoesNotContain("Muster", check.Ablehnungsgrund());
+        Assert.DoesNotContain("20200101", check.Ablehnungsgrund());
+    }
+
+    [Fact]
+    public void Kopfzeile_Mit_Namen_Aber_Ohne_Werte_Wird_Nicht_Geschrieben()
+    {
+        // „columns“ nennt Personalnummer, die Objekte haben aber andere Schluessel: die Spalte ist nur dem Namen nach da.
+        var page = RexxHubResponseParser.ParsePage("""
+            {"data":{"columns":["Personalnummer","Personal Status"],"rows":[{"staff_id":"00001001","status":"Aktiv"}]}}
+            """);
+        var check = RexxHubColumns.Check(RexxHubQueryKind.Faelle, page.Table);
+        Assert.Contains("Personalnummer: nur 0 von 1 Zeilen gefuellt", check.Ablehnungsgrund());
+        Assert.False(check.KannSchreiben);
+    }
+
+    [Fact]
+    public void Doppelte_Personalnummern_Und_Starker_Rueckgang_Werden_Nicht_Geschrieben()
+    {
+        var rows = People().Select(ApiRow).ToList();
+        var doubled = rows.Concat(People().Select(ApiRow)).ToList();
+        var check = RexxHubColumns.Check(RexxHubQueryKind.Gesamt, Table(doubled));
+        Assert.Equal(4, check.DoppeltePersonalnummern);
+        Assert.Contains("4 Zeilen mit einer Nummer, die schon vorkommt", check.Ablehnungsgrund());
+        // Einstellbar (HrKpi:RexxHub:MaxDuplicatePersonalnummern), falls #775 eine Person legitim zweimal fuehrt.
+        Assert.True(RexxHubColumns.Check(RexxHubQueryKind.Gesamt, Table(doubled), maxDuplicates: 4).KannSchreiben);
+
+        var drop = RexxHubColumns.Check(RexxHubQueryKind.Gesamt, Table(rows), previousRows: 393);
+        Assert.False(drop.KannSchreiben);
+        Assert.Contains("nur 4 Zeilen, die bisherige Datei hat 393", drop.Ablehnungsgrund());
+        Assert.True(RexxHubColumns.Check(RexxHubQueryKind.Gesamt, Table(rows), previousRows: 5).KannSchreiben);
+        Assert.True(RexxHubColumns.Check(RexxHubQueryKind.Gesamt, Table(rows), previousRows: 393, minRowShareOfPrevious: 0).KannSchreiben);
+    }
+
+    [Fact]
+    public void Faelle_Mit_Codes_Statt_Rexx_Texten_Werden_Nicht_Geschrieben()
+    {
+        // Auswahlwerte-Mapping (Produktdokument 3.3): Art und Status kaemen als Code.
+        var codes = Table([With(With(CaseApiRow(1001, new DateTime(2026, 11, 2), "0260"), "Abwesenheit Status", "2"), "Abwesenheit Tage", 1)]);
+        var check = RexxHubColumns.Check(RexxHubQueryKind.Faelle, codes);
+        Assert.False(check.KannSchreiben);
+        Assert.Contains("kein Fall mit ausgewerteter Art und bestaetigtem Status", check.Ablehnungsgrund());
+        Assert.Equal((1, 0), check.Wertpruefung.Where(x => x.Art == "ausgewertete Art").Select(x => (x.Gefuellt, x.Erkannt)).Single());
+
+        var texts = RexxHubColumns.Check(RexxHubQueryKind.Faelle, Table([CaseApiRow(1001, new DateTime(2026, 11, 2), "Krankheit")]));
+        Assert.True(texts.KannSchreiben, texts.Ablehnungsgrund());
+    }
+
+    [Fact]
+    public async Task Unbrauchbare_Werte_In_Nebenspalten_Lassen_Die_Datei_Lesbar()
+    {
+        // Gemessen 2026-11-10: eine Zahl wie 19900505 in einer Datumsspalte liess die ganze Datei leer lesen
+        // („Not a legal OleAut date.“), und „4.5“ als Text las ClosedXML unter de-DE als 45.
+        var people = People();
+        var rows = people.Select(ApiRow).ToList();
+        foreach (var row in rows)
+        {
+            row["Geburtsdatum"] = 19900505m;
+            row["Urlaub Rest"] = "4.5";
+            row["Ferien angetreten (Tage)"] = "";
+            row["Eintrittsdatum"] = "2020-01-01T00:00:00Z";
+        }
+        var json = Envelope(rows);
+        var caseJson = Envelope([CaseApiRow(1001, PastWorkday(), "Krankheit")]);
+        var rexx = new FakeRexx((r, _) => FakeRexx.Ok(r.RequestUri!.AbsolutePath.EndsWith("/775") ? json : caseJson));
+        var log = new RecordingLog();
+        await Service(rexx, log).RunDueAsync(DateTime.Today.AddHours(23), CancellationToken.None);
+
+        var old = CultureInfo.CurrentCulture;
+        HrKpiResult result;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+            var service = new HrKpiService(Microsoft.Extensions.Options.Options.Create(new HrKpiDataSourceOptions()));
+            result = await service.BuildAsync(new HrKpiOptions { DataFolder = Path.Combine(_root, "hrdata") });
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = old;
+        }
+
+        var status = result.FileStatuses.Single(x => x.Label == "Rexx #775 Gesamt");
+        Assert.Equal((4, "OK"), (status.RowCount, status.Message));
+        var first = result.Employees.Single(x => x.Personalnummer == 1001);
+        Assert.Null(first.Geburtsdatum);
+        Assert.Equal(new DateTime(2020, 1, 1), first.Eintrittsdatum);
+        Assert.Equal(4.5m + 2m, first.UrlaubRest); // Rest ohne geplante + ausstehend (2), wie im Leser
+        var written = Assert.Single(log.Entries, x => x.Message == "Rexx-Hub #775 geschrieben");
+        Assert.Contains("Geburtsdatum (0 von 4 Datum)", written.Details);
+        Assert.Contains("4 Datumswerte mit Uhrzeit oder Zeitzone", written.Details);
+        Assert.DoesNotContain("19900505", written.Details);
+    }
+
+    [Fact]
+    public async Task Jeder_Handexport_Wird_Gesichert_Die_Eigene_Datei_Nicht()
+    {
+        var folder = Path.Combine(_root, "hrdata");
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, new HrKpiDataSourceOptions().GesamtFile);
+        var json = Envelope(People().Select(ApiRow));
+        var service = Service(FakeRexx.Json(json), new RecordingLog());
+
+        // 1. Handexport A, 2. eigener Abruf, 3. Handexport B, 4. Abruf: A und B sind beide gesichert, die eigene Datei nicht.
+        WriteHandWorkbook(path, GesamtHeaders, People().Select(HandRow));
+        var handA = File.ReadAllBytes(path);
+        Assert.True(await service.RefreshAsync(RexxHubQueryKind.Gesamt, path, CancellationToken.None));
+        Assert.True(await service.RefreshAsync(RexxHubQueryKind.Gesamt, path, CancellationToken.None));
+        WriteHandWorkbook(path, GesamtHeaders, People().Select(HandRow).Take(4));
+        var handB = File.ReadAllBytes(path);
+        Assert.True(await service.RefreshAsync(RexxHubQueryKind.Gesamt, path, CancellationToken.None));
+
+        var backups = Directory.GetFiles(folder, "Hrcockpitgesamtdashboard.manuell*.xlsx").OrderBy(x => x.Length).ToList();
+        Assert.Equal(2, backups.Count);
+        Assert.Equal(handA, File.ReadAllBytes(backups[0]));
+        Assert.Equal(handB, File.ReadAllBytes(backups[1]));
+        Assert.True(RexxHubWorkbook.Inspect(RexxHubQueryKind.Gesamt, path).FromHub);
+    }
+
+    [Fact]
+    public async Task Voruebergehender_Fehler_Wird_Im_Naechsten_Durchgang_Wiederholt_Andere_Nicht()
+    {
+        var gesamt = Envelope(People().Select(ApiRow));
+        var faelle = Envelope([CaseApiRow(1001, new DateTime(2026, 11, 2), "Krankheit")]);
+        var calls775 = 0;
+        // #775: zweimal 500, dann Erfolg; #777: immer 403.
+        var rexx = new FakeRexx((r, _) => r.RequestUri!.AbsolutePath.EndsWith("/775")
+            ? (++calls775 <= 2 ? FakeRexx.Status(500) : FakeRexx.Ok(gesamt))
+            : FakeRexx.Status(403));
+        var log = new RecordingLog();
+        var service = Service(rexx, log);
+        var day = new DateTime(2026, 11, 10, 5, 30, 0);
+
+        for (var pass = 0; pass < 4; pass++)
+            await service.RunDueAsync(day.AddMinutes(30 * pass), CancellationToken.None);
+
+        Assert.Equal(3, calls775);
+        Assert.True(File.Exists(Path.Combine(_root, "hrdata", new HrKpiDataSourceOptions().GesamtFile)));
+        Assert.Equal(1, rexx.Requests.Count(r => r.RequestUri!.AbsolutePath.EndsWith("/777")));
+        Assert.Contains(log.Entries, x => x.Details!.Contains("Voruebergehend"));
+
+        // Obergrenze je Tag: immer 503 -> hoechstens MaxAttemptsPerDay Versuche.
+        var always = new FakeRexx((_, _) => FakeRexx.Status(503));
+        var capped = new RexxHubRefreshService(new FixedSource(), Client(always).Client, new RecordingLog(), new Env(Path.Combine(_root, "b")),
+            Microsoft.Extensions.Options.Options.Create(new RexxHubOptions { Enabled = true, RetryDelaySeconds = 0, MaxAttemptsPerDay = 3 }),
+            Microsoft.Extensions.Options.Options.Create(new HrKpiDataSourceOptions()));
+        for (var pass = 0; pass < 6; pass++)
+            await capped.RunDueAsync(day.AddMinutes(30 * pass), CancellationToken.None);
+        // Je Versuch eine Anfrage je Abfrage (503 wird im Abruf selbst nicht wiederholt): 3 Versuche x 2 Abfragen.
+        Assert.Equal(6, always.Requests.Count);
+    }
+
+    [Fact]
+    public async Task Testabruf_Zeigt_Blaetterschluessel_Und_Prueft_Wie_Der_Tagesdienst()
+    {
+        var folder = Path.Combine(_root, "hrdata");
+        Directory.CreateDirectory(folder);
+        // Bisherige Datei mit mehr Zeilen: Testabruf sagt „wuerde nicht geschrieben“, wie der Tagesdienst.
+        WriteHandWorkbook(Path.Combine(folder, new HrKpiDataSourceOptions().GesamtFile), GesamtHeaders,
+            Enumerable.Range(0, 10).SelectMany(_ => People().Select(HandRow)));
+        var gesamt = JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["data"] = People().Select(ApiRow),
+            ["_links"] = new { self = "x" },
+            ["_meta"] = new Dictionary<string, object?> { ["request_id"] = "req-p", ["items_per_page"] = 500, ["00004711"] = 1 }
+        });
+        // #777 ohne Kopfzeile, alle Werte Text: kein Wert darf im Bericht stehen.
+        var faelle = """{"data":[["00001001","Muster, Anna","Krankheit","Genommen"]]}""";
+        var rexx = new FakeRexx((r, _) => FakeRexx.Ok(r.RequestUri!.AbsolutePath.EndsWith("/775") ? gesamt : faelle));
+        var probe = new RexxHubProbe(new FixedSource(), Client(rexx).Client,
+            Microsoft.Extensions.Options.Options.Create(Options(enabled: false)),
+            Microsoft.Extensions.Options.Options.Create(new HrKpiDataSourceOptions()), new Env(_root));
+
+        var report = await probe.RunAsync(CancellationToken.None);
+        var json = JsonSerializer.Serialize(report);
+
+        var g = report.Abfragen[0];
+        Assert.False(g.WuerdeGeschrieben);
+        Assert.Equal(40, g.ZeilenBisherigeDatei);
+        Assert.Contains("die bisherige Datei hat 40", g.Fehler);
+        Assert.Equal(["request_id", "items_per_page", "(+1 nicht angezeigt)"], g.MetaSchluessel);
+        Assert.Equal(["self"], g.LinksSchluessel);
+        Assert.Equal((4, 500), (g.ZeilenErsteSeite, g.ZeilenJeSeiteLautMeta!.Value));
+        Assert.Contains(g.Hinweise, x => x.StartsWith("Zeitraum von #775 nicht bestaetigt", StringComparison.Ordinal));
+        var f = report.Abfragen[1];
+        Assert.False(f.Ok);
+        Assert.Contains("ohne erkennbare Kopfzeile", f.Fehler);
+        Assert.DoesNotContain("Muster", json);
+        Assert.DoesNotContain("1001", json);
+        Assert.DoesNotContain("4711", json);
+        Assert.DoesNotContain(Token, json);
     }
 
     // ---- Rundreise: API-Datei liest das Cockpit wie den Handexport ----

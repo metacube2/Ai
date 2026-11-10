@@ -104,7 +104,65 @@ public sealed class RexxHubOptions
     public int PageSize { get; set; } = 500;
 
     /// <summary>Harte Obergrenze fuer das Blaettern, gegen Endlosschleifen.</summary>
-    public int MaxPages { get; set; } = 50;
+    /// <remarks>
+    /// Seit der Pruefung 2026-11-10 500 statt 50: die Zeilen je Seite stellt Rexx ein (Produktdokument 3.3, Wert unbekannt),
+    /// und #777 hatte am 04.11. schon 2'683 Antraege (docs/HR_KPI.md 8.14). Jede Seite ist eine Anfrage vom Kontingent.
+    /// </remarks>
+    public int MaxPages { get; set; } = 500;
+
+    /// <summary>
+    /// Nur fuer Tests gegen einen Server ohne TLS: erlaubt http als Basis-URL. Vorgabe aus, dann gehen Token und HR-Daten
+    /// nur ueber https. Ist der Schalter an und die Adresse http, schreibt der Tagesabruf jedes Mal eine Warnung.
+    /// </summary>
+    public bool AllowHttp { get; set; }
+
+    /// <summary>
+    /// Versuche je Datei und Tag bei voruebergehenden Fehlern (429, 500, 502, 503, 504, Zeitueberschreitung, Netz); dazwischen
+    /// liegt der 30-Minuten-Takt des Dienstes. Andere Fehler (401, 403, 404, 422, Format, Pruefung) warten bis morgen.
+    /// </summary>
+    public int MaxAttemptsPerDay { get; set; } = 4;
+
+    /// <summary>
+    /// Nicht schreiben, wenn die Antwort weniger Zeilen hat als dieser Anteil der bisherigen Datei (0 = aus). Faengt einen
+    /// Teilabruf (Blaettern nicht erkannt) und eingeschraenkte Rechte des API-Benutzers ab.
+    /// </summary>
+    public double MinRowShareOfPrevious { get; set; } = 0.8;
+
+    /// <summary>
+    /// Pflichtspalten, die in jeder Zeile stehen muessen (Personalnummer, Status, Eintrittsdatum, Abwesenheit von/Buchung/Status):
+    /// mindestens dieser Anteil der Zeilen gefuellt. Pflichtspalten als Ganzzahl oder Datum: mindestens dieser Anteil der
+    /// gefuellten Werte im erwarteten Format. Sonst wird nicht geschrieben.
+    /// </summary>
+    public double MinShare { get; set; } = 0.95;
+
+    /// <summary>
+    /// #775: so viele Zeilen mit schon vorkommender Personalnummer werden geduldet (Vorgabe 0). Mehr deutet auf eine doppelt
+    /// gelieferte Seite; der Headcount zaehlte doppelt. Ob #775 eine Person legitim zweimal fuehren kann, ist nicht geprueft.
+    /// </summary>
+    public int MaxDuplicatePersonalnummern { get; set; }
+
+    /// <summary>
+    /// Bestaetigt, dass die Data-Warehouse-Abfrage #775 ueber den Hub den Zeitraum 01.01. bis heute liefert. Der gespeicherte
+    /// Filter der Abfrage stand am 04.11. fest auf 01.01.2026 bis 04.11.2026 (docs/HR_KPI.md 8.13); ob der Hub ihn anwendet,
+    /// ist offen. Solange false, meldet jeder Schreibvorgang von #775 eine Warnung, weil das Cockpit den Stand aus dem
+    /// Dateidatum nimmt und eingefrorene Summen dann als frisch gelten.
+    /// </summary>
+    public bool GesamtZeitraumGeprueft { get; set; }
+
+    /// <summary>Zusaetzliche Namen in „_meta“ fuer die aktuelle Seite; die eingebauten gelten weiter. Vorgabe leer.</summary>
+    public List<string> MetaCurrentPageKeys { get; set; } = [];
+
+    /// <summary>Zusaetzliche Namen in „_meta“ fuer die letzte (maximale) Seite. Vorgabe leer.</summary>
+    public List<string> MetaLastPageKeys { get; set; } = [];
+
+    /// <summary>Zusaetzliche Namen in „_meta“ fuer die Gesamtzahl der Datensaetze. Vorgabe leer.</summary>
+    public List<string> MetaTotalKeys { get; set; } = [];
+
+    /// <summary>Zusaetzliche Namen in „_meta“ fuer Zeilen je Seite. Vorgabe leer.</summary>
+    public List<string> MetaPageSizeKeys { get; set; } = [];
+
+    /// <summary>Zusaetzliche Namen in „_links“ fuer die naechste Seite. Vorgabe leer.</summary>
+    public List<string> NextLinkKeys { get; set; } = [];
 
     /// <summary>Ab dieser Uhrzeit ist der Tagesabruf faellig; nach dem SAP-Abruf ab 05:00.</summary>
     public TimeSpan DailyAt { get; set; } = new(5, 30, 0);
@@ -120,7 +178,11 @@ public sealed class RexxHubOptions
     /// </summary>
     public Dictionary<string, string> ColumnMap { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Zusaetzliche Query-Parameter fuer jede Anfrage (z. B. ein Zeitraumfilter, falls Rexx einen anbietet). Vorgabe leer.</summary>
+    /// <summary>
+    /// Zusaetzliche Query-Parameter fuer jede Anfrage (z. B. ein Zeitraumfilter, falls Rexx einen anbietet). Vorgabe leer.
+    /// In Werten werden „{heute}“ und „{jahresanfang}“ beim Abruf durch das Datum ersetzt (Format 2009-11-04 laut
+    /// Produktdokument 3.3); ob und wie Rexx einen Filter annimmt, ist offen.
+    /// </summary>
     public Dictionary<string, string> QueryParameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 

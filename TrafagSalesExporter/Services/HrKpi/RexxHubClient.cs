@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 
@@ -16,10 +17,18 @@ public sealed record RexxHubConnection(string BaseUrl, string Token)
 }
 
 /// <summary>Fehler beim Abruf, mit verstaendlicher deutscher Meldung, ohne Token und ohne Antwortinhalt.</summary>
-public sealed class RexxHubException(string message, int? statusCode = null, string? requestId = null) : Exception(message)
+public sealed class RexxHubException(string message, int? statusCode = null, string? requestId = null, bool transient = false) : Exception(message)
 {
     public int? StatusCode { get; } = statusCode;
     public string? RequestId { get; } = requestId;
+
+    /// <summary>
+    /// Voruebergehend (429, 500, 502, 503, 504, Zeitueberschreitung, Netz): der Tagesdienst versucht es im naechsten Durchgang
+    /// noch einmal. Alles andere (401, 403, 404, 422, Format, Blaettern) wartet bis morgen.
+    /// </summary>
+    public bool Transient { get; } = transient;
+
+    internal static bool IsTransientStatus(int status) => status is 429 or 500 or 502 or 503 or 504;
 }
 
 /// <summary>Ergebnis einer Abfrage: alle Seiten zusammen, ColumnMap schon angewendet.</summary>
@@ -29,7 +38,16 @@ public sealed record RexxHubQueryResult(
     RexxHubTable Table,
     int Pages,
     string? RequestId,
-    TimeSpan Duration);
+    TimeSpan Duration)
+{
+    /// <summary>Zeilen der ersten Seite und Zeilen je Seite laut „_meta“: damit laesst sich „Zeilenanzahl pro Seite“ in Rexx pruefen.</summary>
+    public int FirstPageRows { get; init; }
+    public int? PageSize { get; init; }
+
+    /// <summary>Schluesselnamen von „_meta“ und „_links“ der ersten Seite, nie Werte: damit laesst sich das Blaettern vor dem Umschalten pruefen.</summary>
+    public IReadOnlyList<string> MetaKeys { get; init; } = [];
+    public IReadOnlyList<string> LinkKeys { get; init; } = [];
+}
 
 /// <summary>Woher der Abruf Basis-URL und Token nimmt; im Betrieb aus der Cockpit-Datenbank, im Test ein Fake.</summary>
 public interface IRexxHubConnectionSource
@@ -44,14 +62,14 @@ public interface IRexxHubConnectionSource
 /// Das URL-Feld zeigt der Dialog nur bei Anschlussart „SAP Gateway“ (<c>Settings.razor</c>). Ein inaktiver Eintrag gilt
 /// als nicht eingerichtet.
 /// </summary>
-public sealed class RexxHubDbConnectionSource(IDbContextFactory<AppDbContext> dbFactory) : IRexxHubConnectionSource
+public sealed class RexxHubDbConnectionSource(IDbContextFactory<AppDbContext> dbFactory, IOptions<RexxHubOptions> options) : IRexxHubConnectionSource
 {
     public async Task<RexxHubConnection> ResolveAsync(CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         var entry = await db.SourceSystemDefinitions.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Code == RexxHubOptions.SourceSystemCode, cancellationToken);
-        return RexxHubClient.ToConnection(entry);
+        return RexxHubClient.ToConnection(entry, options.Value.AllowHttp);
     }
 }
 
@@ -90,7 +108,7 @@ public sealed class RexxHubClient
     }
 
     /// <summary>Zugang aus dem Settings-Eintrag pruefen; Meldungen nennen das Feld in der Oberflaeche.</summary>
-    internal static RexxHubConnection ToConnection(SourceSystemDefinition? entry)
+    internal static RexxHubConnection ToConnection(SourceSystemDefinition? entry, bool allowHttp = false)
     {
         if (entry is null)
             throw new RexxHubException($"Quellsystem {RexxHubOptions.SourceSystemCode} fehlt. Unter Admin > Settings > Quellsysteme anlegen: Code {RexxHubOptions.SourceSystemCode}, Anschlussart SAP Gateway, Basis-URL im URL-Feld, Token im Passwortfeld.");
@@ -100,7 +118,8 @@ public sealed class RexxHubClient
         if (url.Length == 0)
             throw new RexxHubException($"Quellsystem {RexxHubOptions.SourceSystemCode}: Basis-URL fehlt (Feld „Zentrale SAP Service URL“, sichtbar bei Anschlussart SAP Gateway).");
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
-            throw new RexxHubException($"Quellsystem {RexxHubOptions.SourceSystemCode}: Basis-URL ist keine http(s)-Adresse.");
+            throw new RexxHubException($"Quellsystem {RexxHubOptions.SourceSystemCode}: Basis-URL ist keine https-Adresse.");
+        RequireHttps(uri, allowHttp);
         var token = (entry.CentralPassword ?? string.Empty).Trim();
         if (token.Length == 0)
             throw new RexxHubException($"Quellsystem {RexxHubOptions.SourceSystemCode}: Token fehlt (Feld „Zentrales Passwort“).");
@@ -113,6 +132,8 @@ public sealed class RexxHubClient
     {
         var watch = Stopwatch.StartNew();
         var baseUri = new Uri(connection.BaseUrl.Trim().TrimEnd('/') + "/");
+        // Auch hier, nicht nur beim Lesen des Settings-Eintrags: der Token geht nur ueber https (ausser mit AllowHttp).
+        RequireHttps(baseUri, options.AllowHttp);
         var firstUri = BuildFirstUri(baseUri, queryId, options);
 
         await Gate.WaitAsync(cancellationToken);
@@ -127,14 +148,17 @@ public sealed class RexxHubClient
             var visited = new HashSet<string>(StringComparer.Ordinal);
             string? requestId = null;
             int? total = null;
+            int? countHint = null;
             var status = 0;
             var maxPages = Math.Max(1, options.MaxPages);
             var localPage = 1;
+            IReadOnlyList<string>? header = null;
+            RexxHubPage? firstPage = null;
 
             for (var pages = 1; ; pages++)
             {
                 if (pages > maxPages)
-                    throw new RexxHubException($"Abfrage #{queryId}: nach {maxPages} Seiten immer noch weitere Seiten. Abbruch (HrKpi:RexxHub:MaxPages).", status, requestId);
+                    throw new RexxHubException($"Abfrage #{queryId}: nach {maxPages} Seiten immer noch weitere Seiten. Abbruch (HrKpi:RexxHub:MaxPages; Zeilenanzahl pro Seite in Rexx erhoehen).", status, requestId);
                 if (!visited.Add(uri.AbsoluteUri))
                     throw new RexxHubException($"Abfrage #{queryId}: die naechste Seite zeigt auf eine schon gelesene Adresse. Blaettern wirkt nicht; Abbruch.", status, requestId);
 
@@ -143,21 +167,35 @@ public sealed class RexxHubClient
                 RexxHubPage page;
                 try
                 {
-                    page = RexxHubResponseParser.ParsePage(body);
+                    page = RexxHubResponseParser.ParsePage(body, RexxHubParseSettings.From(options, header));
                 }
                 catch (RexxHubFormatException ex)
                 {
                     throw new RexxHubFormatException($"Abfrage #{queryId}: {ex.Message}");
                 }
 
+                firstPage ??= page;
+                header = page.Header ?? header;
                 table.Append(page.Table);
                 requestId = page.RequestId ?? requestId;
                 total = page.Total ?? total;
+                countHint = page.CountHint ?? countHint;
                 var current = page.CurrentPage ?? localPage;
 
+                if (page.UnreadableNextKey is { } badKey)
+                    throw new RexxHubException(
+                        $"Abfrage #{queryId}: „_links.{badKey}“ sieht nach der naechsten Seite aus, ist aber nicht lesbar. Damit nichts halb geschrieben wird, Abbruch " +
+                        "(Name ggf. unter HrKpi:RexxHub:NextLinkKeys eintragen).", status, requestId);
+
                 Uri? next = null;
-                if (page.NextLink is not null)
+                if (page.LastPage is { } lastKnown && current >= lastKnown)
                 {
+                    // Letzte Seite laut „_meta“: fertig, auch wenn ein Link „next“ dasteht (manche Server zeigen dann auf sich selbst).
+                }
+                else if (page.NextLink is not null)
+                {
+                    // Zeigt „next“ ohne bekannte letzte Seite auf die eigene Adresse, bricht die Pruefung „schon gelesen“ oben ab:
+                    // ob die Liste vollstaendig ist, laesst sich dann nicht feststellen (Abhilfe: MetaLastPageKeys einstellen).
                     next = ResolveNext(baseUri, uri, page.NextLink, queryId);
                 }
                 else if (page.LastPage is { } last && current < last)
@@ -171,12 +209,15 @@ public sealed class RexxHubClient
 
                 if (next is null)
                 {
-                    if (total is { } expected && expected != table.Rows.Count)
-                        throw new RexxHubException(
-                            $"Abfrage #{queryId}: Rexx meldet {expected} Datensaetze, geliefert wurden {table.Rows.Count}. Damit nichts halb geschrieben wird, Abbruch.",
-                            status, requestId);
+                    CheckComplete(queryId, page, current, uri, table.Rows.Count, total, countHint, status, requestId);
                     watch.Stop();
-                    return new RexxHubQueryResult(queryId, status, table.WithColumnMap(options.ColumnMap), pages, requestId, watch.Elapsed);
+                    return new RexxHubQueryResult(queryId, status, table.WithColumnMap(options.ColumnMap), pages, requestId, watch.Elapsed)
+                    {
+                        FirstPageRows = firstPage.Table.Rows.Count,
+                        PageSize = firstPage.PageSize,
+                        MetaKeys = firstPage.MetaKeys,
+                        LinkKeys = firstPage.LinkKeys
+                    };
                 }
 
                 uri = next;
@@ -185,7 +226,7 @@ public sealed class RexxHubClient
         }
         catch (RexxHubException ex)
         {
-            throw new RexxHubException(Scrub(ex.Message, connection.Token), ex.StatusCode, ex.RequestId);
+            throw new RexxHubException(Scrub(ex.Message, connection.Token), ex.StatusCode, ex.RequestId, ex.Transient);
         }
         finally
         {
@@ -193,20 +234,61 @@ public sealed class RexxHubClient
         }
     }
 
-    internal static Uri BuildFirstUri(Uri baseUri, int queryId, RexxHubOptions options)
+    /// <summary>
+    /// Vollstaendigkeit am Ende: Gesamtzahl muss passen, „count“ darf nicht groesser sein als das Gelieferte. Ohne letzte Seite
+    /// und ohne Gesamtzahl wird abgebrochen, wenn eine unbekannte Seitenangabe weitere Seiten nennt, „_links.last“ woanders
+    /// hinzeigt oder die Seite genau voll ist (dann kaeme vermutlich noch eine; Pruefung 2026-11-10).
+    /// </summary>
+    private static void CheckComplete(
+        int queryId, RexxHubPage page, int current, Uri uri, int rows, int? total, int? countHint, int status, string? requestId)
     {
+        const string Tail = " Damit nichts halb geschrieben wird, Abbruch (Namen unter HrKpi:RexxHub:Meta…Keys/NextLinkKeys eintragen oder Zeilenanzahl pro Seite in Rexx erhoehen).";
+        if (total is { } expected && expected != rows)
+            throw new RexxHubException($"Abfrage #{queryId}: Rexx meldet {expected} Datensaetze, geliefert wurden {rows}. Damit nichts halb geschrieben wird, Abbruch.", status, requestId);
+        if (countHint is { } count && count > rows)
+            throw new RexxHubException($"Abfrage #{queryId}: „_meta“ nennt eine Anzahl von {count}, geliefert wurden {rows}.{Tail}", status, requestId);
+        if (page.LastPage is not null || total is not null)
+            return;
+        if (page.UnknownPageNumbers.FirstOrDefault(x => x.Value > current) is { Key: not null } unknown)
+            throw new RexxHubException($"Abfrage #{queryId}: „_meta.{unknown.Key}“ = {unknown.Value} nach Seite {current}, aber kein Link auf die naechste Seite.{Tail}", status, requestId);
+        if (page.LastLink is { } lastLink && Uri.TryCreate(uri, lastLink.Trim(), out var lastUri) &&
+            !string.Equals(lastUri.PathAndQuery, uri.PathAndQuery, StringComparison.Ordinal))
+            throw new RexxHubException($"Abfrage #{queryId}: „_links.last“ zeigt auf eine andere Seite, aber es gibt keinen Link auf die naechste.{Tail}", status, requestId);
+        if (page.PageSize is > 0 and var size && page.Table.Rows.Count >= size)
+            throw new RexxHubException($"Abfrage #{queryId}: die letzte gelesene Seite ist mit {size} Zeilen genau voll, aber es gibt weder einen Link auf die naechste noch eine Seitenzahl.{Tail}", status, requestId);
+    }
+
+    /// <summary>Nur https, ausser <c>HrKpi:RexxHub:AllowHttp</c> ist gesetzt (nur fuer Tests).</summary>
+    internal static void RequireHttps(Uri uri, bool allowHttp)
+    {
+        if (uri.Scheme == Uri.UriSchemeHttps || (allowHttp && uri.Scheme == Uri.UriSchemeHttp))
+            return;
+        throw new RexxHubException(
+            $"Basis-URL des Quellsystems {RexxHubOptions.SourceSystemCode} ist {uri.Scheme}://, nicht https://. Token und HR-Daten gehen nur verschluesselt; " +
+            "Adresse unter Admin > Settings korrigieren (http nur mit HrKpi:RexxHub:AllowHttp fuer einen Test).");
+    }
+
+    internal static Uri BuildFirstUri(Uri baseUri, int queryId, RexxHubOptions options, DateTime? today = null)
+    {
+        var day = (today ?? DateTime.Today).Date;
         var template = string.IsNullOrWhiteSpace(options.PathTemplate) ? "v1/datawarehouse/{0}" : options.PathTemplate.Trim();
         var relative = string.Format(CultureInfo.InvariantCulture, template, queryId).TrimStart('/');
         var uri = new Uri(baseUri, relative);
         foreach (var (key, value) in options.QueryParameters ?? [])
         {
             if (!string.IsNullOrWhiteSpace(key))
-                uri = WithQuery(uri, key.Trim(), value ?? string.Empty);
+                uri = WithQuery(uri, key.Trim(), ExpandDate(value ?? string.Empty, day));
         }
         if (!string.IsNullOrWhiteSpace(options.PageSizeParameter) && options.PageSize > 0)
             uri = WithQuery(uri, options.PageSizeParameter.Trim(), options.PageSize.ToString(CultureInfo.InvariantCulture));
         return uri;
     }
+
+    /// <summary>„{heute}“ und „{jahresanfang}“ in einem Parameterwert als Datum im Format des Produktdokuments (2009-11-04).</summary>
+    internal static string ExpandDate(string value, DateTime today)
+        => value
+            .Replace("{heute}", today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase)
+            .Replace("{jahresanfang}", new DateTime(today.Year, 1, 1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Setzt oder ersetzt einen Query-Parameter.</summary>
     internal static Uri WithQuery(Uri uri, string name, string value)
@@ -222,18 +304,22 @@ public sealed class RexxHubClient
     }
 
     /// <summary>
-    /// Folgt <c>_links.next</c> nur auf denselben Server (Schema, Host, Port) wie die Basis-URL, sonst ginge der Token an
-    /// einen fremden Server.
+    /// Folgt <c>_links.next</c> nur auf denselben Host wie die Basis-URL, sonst ginge der Token an einen fremden Server.
+    /// Schema und Port kommen immer von der Basis-URL: steht Rexx hinter einem TLS-Terminator, der intern http-Links erzeugt
+    /// („http://host/…“ bei Basis „https://host/…“), wird auf https umgeschrieben statt abgebrochen; ueber http geht der
+    /// Token so nie.
     /// </summary>
-    private static Uri ResolveNext(Uri baseUri, Uri current, string link, int queryId)
+    internal static Uri ResolveNext(Uri baseUri, Uri current, string link, int queryId)
     {
-        if (!Uri.TryCreate(current, link.Trim(), out var next))
+        if (!Uri.TryCreate(current, link.Trim(), out var next) || next.Scheme is not ("http" or "https"))
             throw new RexxHubException($"Abfrage #{queryId}: Link auf die naechste Seite ist keine gueltige Adresse.");
-        if (!string.Equals(next.Scheme, baseUri.Scheme, StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(next.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase) ||
-            next.Port != baseUri.Port)
-            throw new RexxHubException($"Abfrage #{queryId}: Link auf die naechste Seite zeigt auf einen anderen Server ({next.Host}); aus Sicherheitsgruenden nicht gefolgt.");
-        return next;
+        if (!string.Equals(next.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase))
+            throw new RexxHubException(
+                $"Abfrage #{queryId}: Link auf die naechste Seite zeigt auf einen anderen Server ({next.Scheme}://{next.Host}:{next.Port}, " +
+                $"Basis {baseUri.Scheme}://{baseUri.Host}:{baseUri.Port}); aus Sicherheitsgruenden nicht gefolgt.");
+        if (next.Scheme == baseUri.Scheme && next.Port == baseUri.Port)
+            return next;
+        return new UriBuilder(next) { Scheme = baseUri.Scheme, Port = baseUri.Port }.Uri;
     }
 
     private async Task<(int Status, string Body)> SendAsync(
@@ -252,11 +338,11 @@ public sealed class RexxHubClient
             }
             catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new RexxHubException($"Abfrage #{queryId}: keine Antwort innerhalb von {client.Timeout.TotalSeconds:0} s.");
+                throw new RexxHubException($"Abfrage #{queryId}: keine Antwort innerhalb von {client.Timeout.TotalSeconds:0} s.", transient: true);
             }
             catch (HttpRequestException ex)
             {
-                throw new RexxHubException($"Abfrage #{queryId}: Rexx Hub nicht erreichbar ({ex.Message}).");
+                throw new RexxHubException($"Abfrage #{queryId}: Rexx Hub nicht erreichbar ({ex.Message}).", transient: true);
             }
 
             using (response)
@@ -269,7 +355,7 @@ public sealed class RexxHubClient
                     continue;
                 }
                 if (!response.IsSuccessStatusCode)
-                    throw new RexxHubException(StatusMessage(code, queryId, ErrorRequestId(body)), code, ErrorRequestId(body));
+                    throw new RexxHubException(StatusMessage(code, queryId, ErrorRequestId(body)), code, ErrorRequestId(body), RexxHubException.IsTransientStatus(code));
 
                 var mediaType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
                 if (mediaType.Contains("xml", StringComparison.OrdinalIgnoreCase))

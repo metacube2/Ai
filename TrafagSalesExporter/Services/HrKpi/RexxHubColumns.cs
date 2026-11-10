@@ -24,10 +24,25 @@ public enum RexxHubColumnKind
     Zeitraum
 }
 
+/// <summary>Wie voll eine Pflichtspalte sein muss, damit geschrieben wird.</summary>
+public enum RexxHubFill
+{
+    /// <summary>Keine Vorgabe.</summary>
+    Keine,
+    /// <summary>Mindestens ein Wert (die Spalte ist nicht nur dem Namen nach da).</summary>
+    Mindestens1,
+    /// <summary>Nahezu jede Zeile (Anteil <c>HrKpi:RexxHub:MinShare</c>).</summary>
+    Fast,
+    /// <summary>Mindestens ein Wert unter den Zeilen mit Status „Ausgeschieden“, falls es solche gibt (#775).</summary>
+    BeiAustritt
+}
+
 /// <summary>Eine Spalte, die der Leser im Cockpit liest, mit allen Schreibweisen, die er annimmt.</summary>
 public sealed record RexxHubReaderColumn(string Name, RexxHubColumnKind Kind, bool Pflicht, params string[] Aliases)
 {
     public IEnumerable<string> AllNames => new[] { Name }.Concat(Aliases);
+
+    public RexxHubFill Fuellung { get; init; } = RexxHubFill.Keine;
 }
 
 /// <summary>Formatpruefung einer Spalte: nur Zaehlwerte, nie Inhalte (Personendaten).</summary>
@@ -46,8 +61,33 @@ public sealed class RexxHubColumnCheck
     public List<string> DoppelteSpalten { get; init; } = [];
     public List<RexxHubFormatCheck> Formatpruefung { get; init; } = [];
 
-    /// <summary>Geschrieben wird nur mit mindestens einer Zeile, allen Pflichtspalten und ohne doppelte Spalten.</summary>
-    public bool KannSchreiben => Zeilen > 0 && FehlendePflichtspalten.Count == 0 && DoppelteSpalten.Count == 0;
+    /// <summary>
+    /// Wertpruefung der Auswahlfelder, nur Zaehlwerte: wie viele gefuellte Werte das Cockpit als bekannten Status bzw. als
+    /// ausgewertete Art erkennt. Das Produktdokument (3.3) erlaubt je Endpunkt ein „Auswahlwerte-Mapping“, dann kaemen Codes
+    /// statt der Rexx-Texte und das Cockpit faende niemanden.
+    /// </summary>
+    public List<RexxHubFormatCheck> Wertpruefung { get; init; } = [];
+
+    /// <summary>#775: Zeilen, deren Personalnummer schon in einer frueheren Zeile steht (z. B. eine Seite doppelt geliefert).</summary>
+    public int DoppeltePersonalnummern { get; init; }
+
+    /// <summary>
+    /// Datumswerte mit Uhrzeit oder Zeitzone („…T23:00:00Z“). Sie werden mit dem Datum geschrieben, wie es dasteht, ohne
+    /// Umrechnung nach Europe/Zurich; ob Rexx ein Schweizer Datum als UTC-Zeitstempel schickt, ist offen. Nur Zaehlwert.
+    /// </summary>
+    public int DatumswerteMitZeitanteil { get; init; }
+
+    /// <summary>Zeilen der bisherigen Datei am Zielpfad, falls lesbar.</summary>
+    public int? ZeilenBisher { get; init; }
+
+    /// <summary>Weitere Gruende, nicht zu schreiben (Fuellung, Format der Pflichtspalten, Werte, Zeilenzahl), nur Namen und Zahlen.</summary>
+    public List<string> Sperrgruende { get; init; } = [];
+
+    /// <summary>Hinweise, die das Schreiben nicht verhindern (gehen als Warnung ins Protokoll).</summary>
+    public List<string> Hinweise { get; init; } = [];
+
+    /// <summary>Geschrieben wird nur mit mindestens einer Zeile, allen Pflichtspalten, ohne doppelte Spalten und ohne Sperrgrund.</summary>
+    public bool KannSchreiben => Zeilen > 0 && FehlendePflichtspalten.Count == 0 && DoppelteSpalten.Count == 0 && Sperrgruende.Count == 0;
 
     /// <summary>Spalten, deren Werte nicht alle im erwarteten Format kommen (nur Namen und Zahlen).</summary>
     public IEnumerable<string> Formatabweichungen
@@ -63,6 +103,7 @@ public sealed class RexxHubColumnCheck
             parts.Add("Pflichtspalten fehlen: " + string.Join("; ", FehlendePflichtspalten));
         if (DoppelteSpalten.Count > 0)
             parts.Add("Spalten doppelt: " + string.Join("; ", DoppelteSpalten));
+        parts.AddRange(Sperrgruende);
         return string.Join(". ", parts);
     }
 }
@@ -75,22 +116,28 @@ public sealed class RexxHubColumnCheck
 /// PFLICHT heisst: ohne diese Spalte rechnet das Cockpit Kernzahlen still falsch, statt nur eine Kachel leer zu lassen.
 /// #775: ohne Personalnummer kein Abgleich mit SAP, ohne Personal Status keine aktive Person und kein Austritt
 /// (<c>IsActiveStatus</c>/<c>IsLeftStatus</c>), ohne Eintritts-/Austrittsdatum kein Headcount-Verlauf und keine Fluktuation,
-/// ohne Austrittsart keine fluktuationsrelevanten Austritte. #777: Personalnummer, Abwesenheit von (sonst verwirft der Leser
-/// die Zeile), Abwesenheit Buchung (Art) und Abwesenheit Status (nur „Genommen“/„Genehmigt“ zaehlen).
+/// ohne Austrittsart keine fluktuationsrelevanten Austritte. Seit der Pruefung 2026-11-10 auch: ohne „Stelle“ zaehlt
+/// <c>BuildEmployeeType("")</c> jede Person als „Festangestellt“ (Praktikanten, Lehrlinge und Aushilfen kaemen in Headcount
+/// und Fluktuation), ohne „Nachname, Vorname (Link Personal)“ schliesst <c>IsExcludedTestPerson</c> keine Testperson aus.
+/// #777: Personalnummer, Abwesenheit von (sonst verwirft der Leser die Zeile), Abwesenheit Buchung (Art) und Abwesenheit
+/// Status (nur „Genommen“/„Genehmigt“ zaehlen).
+///
+/// Vorhanden heisst nicht nur dem Namen nach: <see cref="RexxHubReaderColumn.Fuellung"/> verlangt Werte (eine Kopfzeile
+/// aus „columns“ kann Namen nennen, die in den Zeilen nie vorkommen).
 /// </summary>
 public static class RexxHubColumns
 {
     public static readonly IReadOnlyList<RexxHubReaderColumn> Gesamt =
     [
-        new("Personalnummer", RexxHubColumnKind.Ganzzahl, true),
-        new("Nachname, Vorname (Link Personal)", RexxHubColumnKind.Text, false),
-        new("Personal Status", RexxHubColumnKind.Text, true),
+        new("Personalnummer", RexxHubColumnKind.Ganzzahl, true) { Fuellung = RexxHubFill.Fast },
+        new("Nachname, Vorname (Link Personal)", RexxHubColumnKind.Text, true) { Fuellung = RexxHubFill.Mindestens1 },
+        new("Personal Status", RexxHubColumnKind.Text, true) { Fuellung = RexxHubFill.Fast },
         new("Organisation", RexxHubColumnKind.Text, false),
         new("Kostenstelle", RexxHubColumnKind.Text, false),
-        new("Stelle", RexxHubColumnKind.Text, false),
-        new("Eintrittsdatum", RexxHubColumnKind.Datum, true),
-        new("Austrittsdatum", RexxHubColumnKind.Datum, true),
-        new("Austrittsart", RexxHubColumnKind.Text, true),
+        new("Stelle", RexxHubColumnKind.Text, true) { Fuellung = RexxHubFill.Mindestens1 },
+        new("Eintrittsdatum", RexxHubColumnKind.Datum, true) { Fuellung = RexxHubFill.Fast },
+        new("Austrittsdatum", RexxHubColumnKind.Datum, true) { Fuellung = RexxHubFill.BeiAustritt },
+        new("Austrittsart", RexxHubColumnKind.Text, true) { Fuellung = RexxHubFill.BeiAustritt },
         new("Geburtsdatum", RexxHubColumnKind.Datum, false),
         new("Ø tägliche Sollarbeitszeit (Woche)", RexxHubColumnKind.Zahl, false, "O taegliche Sollarbeitszeit (Woche)"),
         new("Arbeitszeitmodell", RexxHubColumnKind.Text, false),
@@ -111,17 +158,21 @@ public static class RexxHubColumns
 
     public static readonly IReadOnlyList<RexxHubReaderColumn> Faelle =
     [
-        new("Personalnummer", RexxHubColumnKind.Ganzzahl, true),
-        new("Abwesenheit von", RexxHubColumnKind.Datum, true),
+        new("Personalnummer", RexxHubColumnKind.Ganzzahl, true) { Fuellung = RexxHubFill.Fast },
+        new("Abwesenheit von", RexxHubColumnKind.Datum, true) { Fuellung = RexxHubFill.Fast },
         new("Abwesenheit bis", RexxHubColumnKind.Datum, false),
-        new("Abwesenheit Buchung", RexxHubColumnKind.Text, true),
-        new("Abwesenheit Status", RexxHubColumnKind.Text, true),
+        new("Abwesenheit Buchung", RexxHubColumnKind.Text, true) { Fuellung = RexxHubFill.Fast },
+        new("Abwesenheit Status", RexxHubColumnKind.Text, true) { Fuellung = RexxHubFill.Fast },
         new("Abwesenheit Tage", RexxHubColumnKind.Zahl, false),
         new("Abwesenheit Tagessoll", RexxHubColumnKind.Stunden, false)
     ];
 
     public static IReadOnlyList<RexxHubReaderColumn> For(RexxHubQueryKind kind)
         => kind == RexxHubQueryKind.Gesamt ? Gesamt : Faelle;
+
+    /// <summary>Liest das Cockpit eine Spalte dieses Namens in #775 oder #777? Fuer die Kopfzeilen-Erkennung des Parsers.</summary>
+    public static bool IsKnown(string header)
+        => !string.IsNullOrWhiteSpace(header) && (Find(RexxHubQueryKind.Gesamt, header) is not null || Find(RexxHubQueryKind.Faelle, header) is not null);
 
     /// <summary>
     /// Gleiche Normalisierung wie <c>HrKpiDashboardBuilder.NormalizeHeader</c> (dort privat und bewusst nicht geaendert):
@@ -152,14 +203,23 @@ public static class RexxHubColumns
         return For(kind).FirstOrDefault(c => c.AllNames.Any(n => NormalizeHeader(n) == key));
     }
 
-    /// <summary>Prueft Spalten und Formate einer Antwort; liest Werte nur zum Zaehlen.</summary>
-    public static RexxHubColumnCheck Check(RexxHubQueryKind kind, RexxHubTable table)
+    /// <summary>
+    /// Prueft Spalten, Formate und Werte einer Antwort; liest Werte nur zum Zaehlen. <paramref name="previousRows"/> ist die
+    /// Zeilenzahl der bisherigen Datei (null = keine oder nicht lesbar). Schwellen aus <c>HrKpi:RexxHub</c>.
+    /// </summary>
+    public static RexxHubColumnCheck Check(
+        RexxHubQueryKind kind, RexxHubTable table, int? previousRows = null, double minShare = 0.95, double minRowShareOfPrevious = 0.8,
+        int maxDuplicates = 0)
     {
         var present = table.Columns.Select(NormalizeHeader).ToHashSet(StringComparer.Ordinal);
         var readerColumns = For(kind);
         bool Has(RexxHubReaderColumn c) => c.AllNames.Any(n => present.Contains(NormalizeHeader(n)));
+        // Die Spalte der Antwort, unter der der Leser die Leserspalte findet (die erste, wie FindHeader im Leser).
+        string? ColumnOf(RexxHubReaderColumn c) => table.Columns.FirstOrDefault(x => Find(kind, x) == c);
+        var share = Math.Clamp(minShare, 0, 1);
 
         var formats = new List<RexxHubFormatCheck>();
+        var withTime = 0;
         foreach (var column in table.Columns)
         {
             var reader = Find(kind, column);
@@ -174,9 +234,102 @@ public static class RexxHubColumns
                 filled++;
                 if (Recognized(reader.Kind, value))
                     recognized++;
+                if (reader.Kind == RexxHubColumnKind.Datum && value is string s && RexxHubWorkbook.HasTimePart(s))
+                    withTime++;
             }
             formats.Add(new RexxHubFormatCheck(column, reader.Kind.ToString(), filled, recognized));
         }
+
+        var blocks = new List<string>();
+        var notes = new List<string>();
+        var values = new List<RexxHubFormatCheck>();
+        var duplicates = 0;
+
+        // Zeilen mit Status „Ausgeschieden“ (#775); fuer die Fuellung von Austrittsdatum und Austrittsart.
+        var statusColumn = kind == RexxHubQueryKind.Gesamt ? ColumnOf(Gesamt[2]) : null;
+        var leftRows = statusColumn is null
+            ? []
+            : table.Rows.Where(r => HrKpiDashboardBuilder.IsLeftStatus(Text(r, statusColumn))).ToList();
+
+        foreach (var reader in readerColumns.Where(c => c.Pflicht && Has(c)))
+        {
+            var column = ColumnOf(reader);
+            if (column is null)
+                continue;
+            var filled = table.Rows.Count(r => r.TryGetValue(column, out var v) && !IsEmpty(v));
+            switch (reader.Fuellung)
+            {
+                case RexxHubFill.Mindestens1 when filled == 0:
+                    blocks.Add($"{reader.Name}: Spalte vorhanden, aber in keiner Zeile gefuellt");
+                    break;
+                case RexxHubFill.Fast when table.Rows.Count > 0 && filled < share * table.Rows.Count:
+                    blocks.Add($"{reader.Name}: nur {filled} von {table.Rows.Count} Zeilen gefuellt (verlangt {share:P0})");
+                    break;
+                case RexxHubFill.BeiAustritt when leftRows.Count > 0 &&
+                                                 !leftRows.Any(r => r.TryGetValue(column, out var v) && !IsEmpty(v)):
+                    blocks.Add($"{reader.Name}: bei keiner der {leftRows.Count} ausgeschiedenen Personen gefuellt");
+                    break;
+            }
+
+            // Pflichtspalten als Ganzzahl oder Datum: liest der Leser sie nicht, ist die Person nicht zuzuordnen bzw. die Datei
+            // liest sich leer (eine Zahl ausserhalb des Excel-Datumsbereichs laesst ReadDate werfen, gemessen 2026-11-10).
+            if (reader.Kind is RexxHubColumnKind.Ganzzahl or RexxHubColumnKind.Datum &&
+                formats.FirstOrDefault(f => f.Spalte == column) is { Gefuellt: > 0 } format &&
+                format.Erkannt < share * format.Gefuellt)
+                blocks.Add($"{reader.Name}: nur {format.Erkannt} von {format.Gefuellt} Werten als {format.Art} erkannt (verlangt {share:P0})");
+        }
+
+        if (kind == RexxHubQueryKind.Gesamt)
+        {
+            if (statusColumn is not null)
+            {
+                var filled = table.Rows.Count(r => !string.IsNullOrWhiteSpace(Text(r, statusColumn)));
+                var active = table.Rows.Count(r => HrKpiDashboardBuilder.IsActiveStatus(Text(r, statusColumn)));
+                values.Add(new RexxHubFormatCheck(statusColumn, "angestellt (" + string.Join("/", HrKpiDashboardBuilder.ActiveStatuses) + ")", filled, active));
+                values.Add(new RexxHubFormatCheck(statusColumn, "Ausgeschieden", filled, leftRows.Count));
+                if (filled > 0 && active == 0)
+                    blocks.Add($"Personal Status: kein Wert als angestellt erkannt (0 von {filled}; erwartet {string.Join(", ", HrKpiDashboardBuilder.ActiveStatuses)}), Headcount waere 0");
+                else if (filled > 0 && leftRows.Count == 0)
+                    notes.Add("Personal Status: keine Person mit „Ausgeschieden“, Austritte und Fluktuation waeren 0");
+            }
+
+            if (ColumnOf(Gesamt[0]) is { } pernrColumn)
+            {
+                var seen = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var row in table.Rows)
+                {
+                    var key = Text(row, pernrColumn).TrimStart('0');
+                    if (key.Length > 0 && !seen.Add(key))
+                        duplicates++;
+                }
+                if (duplicates > Math.Max(0, maxDuplicates))
+                    blocks.Add($"Personalnummer: {duplicates} Zeilen mit einer Nummer, die schon vorkommt (Seite doppelt geliefert? Headcount zaehlte doppelt)");
+            }
+        }
+        else
+        {
+            var typeColumn = ColumnOf(Faelle[3]);
+            var statusCaseColumn = ColumnOf(Faelle[4]);
+            if (typeColumn is not null && statusCaseColumn is not null)
+            {
+                bool KnownType(Dictionary<string, object?> r) => HrKpiDashboardBuilder.RexxCaseTypes.ContainsKey(Text(r, typeColumn));
+                bool KnownStatus(Dictionary<string, object?> r)
+                    => HrKpiDashboardBuilder.RexxCaseStatuses.Any(s => string.Equals(s, Text(r, statusCaseColumn), StringComparison.OrdinalIgnoreCase));
+                var typesFilled = table.Rows.Count(r => !string.IsNullOrWhiteSpace(Text(r, typeColumn)));
+                var statusFilled = table.Rows.Count(r => !string.IsNullOrWhiteSpace(Text(r, statusCaseColumn)));
+                var both = table.Rows.Count(r => KnownType(r) && KnownStatus(r));
+                values.Add(new RexxHubFormatCheck(typeColumn, "ausgewertete Art", typesFilled, table.Rows.Count(KnownType)));
+                values.Add(new RexxHubFormatCheck(statusCaseColumn, "bestaetigt (" + string.Join("/", HrKpiDashboardBuilder.RexxCaseStatuses) + ")", statusFilled, table.Rows.Count(KnownStatus)));
+                if (table.Rows.Count > 0 && both == 0)
+                    blocks.Add($"Abwesenheit Buchung/Status: kein Fall mit ausgewerteter Art und bestaetigtem Status (0 von {table.Rows.Count}), alle Rexx-Faelle fielen weg");
+            }
+        }
+
+        if (previousRows is > 0 && minRowShareOfPrevious > 0 && table.Rows.Count < minRowShareOfPrevious * previousRows.Value)
+            blocks.Add($"nur {table.Rows.Count} Zeilen, die bisherige Datei hat {previousRows} (verlangt mindestens {minRowShareOfPrevious:P0}; Teilabruf oder eingeschraenkte Rechte?)");
+
+        if (withTime > 0)
+            notes.Add($"{withTime} Datumswerte mit Uhrzeit oder Zeitzone, ohne Umrechnung als Datum geschrieben (offen, ob Rexx UTC schickt)");
 
         return new RexxHubColumnCheck
         {
@@ -185,9 +338,20 @@ public static class RexxHubColumns
             FehlendeLeserspalten = readerColumns.Where(c => !Has(c)).Select(c => c.Name).ToList(),
             ZusaetzlicheSpalten = table.Columns.Where(c => Find(kind, c) is null).ToList(),
             DoppelteSpalten = table.Columns.GroupBy(NormalizeHeader).Where(g => g.Count() > 1).Select(g => g.First()).ToList(),
-            Formatpruefung = formats
+            Formatpruefung = formats,
+            Wertpruefung = values,
+            DoppeltePersonalnummern = duplicates,
+            DatumswerteMitZeitanteil = withTime,
+            ZeilenBisher = previousRows,
+            Sperrgruende = blocks,
+            Hinweise = notes
         };
     }
+
+    private static string Text(Dictionary<string, object?> row, string column)
+        => row.TryGetValue(column, out var value) && value is not null
+            ? (value is decimal d ? d.ToString(CultureInfo.InvariantCulture) : Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty).Trim()
+            : string.Empty;
 
     private static bool IsEmpty(object? value)
         => value is null || value is string s && string.IsNullOrWhiteSpace(s);
@@ -195,7 +359,10 @@ public static class RexxHubColumns
     private static readonly Regex HoursPattern = new(@"^-?\d+(:\d{1,2}(:\d{1,2})?)?([.,]\d+)?$", RegexOptions.CultureInvariant);
     private static readonly Regex PeriodPattern = new(@"\d{2}\.\d{2}\.\d{4}", RegexOptions.CultureInvariant);
 
-    /// <summary>Erkennt ein Wert das Format, das der Leser erwartet? Datum: Datumswert der Antwort oder ein lesbarer Text.</summary>
+    /// <summary>
+    /// Erkennt ein Wert das Format, das der Leser erwartet? Gleiche Regeln wie beim Schreiben (<see cref="RexxHubWorkbook"/>):
+    /// Datum als ISO-Text oder Schweizer Datumstext, Zahl als Zahl oder Text mit Dezimalpunkt bzw. -komma.
+    /// </summary>
     internal static bool Recognized(RexxHubColumnKind kind, object? value)
     {
         var text = value switch
@@ -207,10 +374,8 @@ public static class RexxHubColumns
         return kind switch
         {
             RexxHubColumnKind.Ganzzahl => value is decimal d2 ? d2 == decimal.Truncate(d2) : text.All(char.IsDigit) && text.Length > 0,
-            RexxHubColumnKind.Zahl => value is decimal || decimal.TryParse(text.Replace("'", ""), NumberStyles.Number, CultureInfo.InvariantCulture, out _)
-                || decimal.TryParse(text.Replace("'", ""), NumberStyles.Number, CultureInfo.GetCultureInfo("de-DE"), out _),
-            RexxHubColumnKind.Datum => RexxHubWorkbook.TryParseIsoDate(text, out _)
-                || DateTime.TryParse(text, CultureInfo.GetCultureInfo("de-CH"), DateTimeStyles.None, out _),
+            RexxHubColumnKind.Zahl => value is decimal || RexxHubWorkbook.TryParseNumber(text, out _),
+            RexxHubColumnKind.Datum => value is string && RexxHubWorkbook.TryParseDate(text, out _),
             RexxHubColumnKind.Stunden => value is decimal || HoursPattern.IsMatch(text),
             RexxHubColumnKind.Zeitraum => PeriodPattern.IsMatch(text),
             _ => true
