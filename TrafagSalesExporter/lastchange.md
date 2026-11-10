@@ -1,6 +1,22 @@
 # Last Change
 
-Stand: 2026-11-10 abends (P76-Pruefung IC-Staffelbasis nachgeholt; sonst gilt die Uebergabe vom Nachmittag weiter)
+Stand: 2026-11-10 spaet (Uebergabe vor zweitem PC-Neustart; gilt vor allen Abschnitten darunter)
+
+## Uebergabe 2026-11-10 spaet (Ingo startet neu)
+
+**IC-Staffelbasis (Wochen_Todo 153, `saptasks/ic_preisfindung/NOTES.md` 8.9):** In P76 importiert (RC 0), Routine 601 aber **nicht
+eingebunden** (`RV62ANNN` leer). VOFM in P76 gesperrt (nicht aenderbar); Transport von `RV62ANNN` unmoeglich (`TADIR GENFLAG X`),
+Auftrag T76K912870 angelegt und leer geloescht. `RV80HGEN` (kein Selektionsbild, alle VOFM-Gruppen) bindet 601 **und** FBED 908 ein.
+908 = Kopierbedingung Proforma TA→F5/TAW aus TRIM-Auftrag T76K912226 „MDE: Intercompany Umlagerungen“, in T76 seit 05.07. aktiv, in
+P76 nie eingebunden. **Naechster Schritt:** Ingo klaert 908 (TRIM/MILI bzw. Fabios „Paket“ zur Bestellart, Mail/Datei nennen), dann
+`RV80HGEN` in P76 durch Ingo, danach lesend nachpruefen (`D010INC` RV62A601 und RV60B908, `TRDIR` RV62ANNN/RV60BNNN neues `UDAT`).
+Fabio informieren: Staffelbasis wirkt erst danach; seine „restliche Anpassung“ = Schritt 1 ZICAA1 (nicht begonnen).
+
+**Sicherheit:** T76-Passwort KOI ist im Sitzungsprotokoll sichtbar geworden (eigener Wrapper). Ingo: Passwort aendern und mit
+`Set-SapPassword` neu ablegen. LEARNINGS eingetragen.
+
+**Weiter offen aus der Nachmittagsuebergabe:** Deploy/Push der rund 16 Commits (jetzt mehr, nur Doku dazu), HR-Leser absichern,
+Wochen_Todo 40 (Antwort an Paola). Alle SAP-Sitzungen von Claude geschlossen; P76 und T76 unveraendert.
 
 ## Nachtrag 2026-11-10 abends: P76-Pruefung IC-Staffelbasis nach dem Import (bestaetigt)
 

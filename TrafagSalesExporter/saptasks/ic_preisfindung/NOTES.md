@@ -699,3 +699,12 @@ Das ist derselbe Fehler wie bei 601: die Routine kam mit dem Transport, das Samm
 **Stand und Empfehlung:** Weg a faellt weg. Mit Weg b (`RV80HGEN` in P76) wuerden 601 und 908 eingebunden; P76 entspraeche danach
 T76. Vorher klaeren, wer 908 bestellt hat und ob die Proforma-Pruefung (Fakturasperre, Fakturarelevanz, Fakturaplan) in P76 gewollt
 ist (Entscheid Ingo). Weg c bleibt die Alternative, wenn 908 ausdruecklich nicht kommen soll.
+
+**Herkunft 908 (T76, RFC lesend, 2026-11-10 spaet):** Auftrag **T76K912226** „MDE: Intercompany Umlagerungen 22.06.2026 -1-“,
+TRIM_MILI, 02.08.2026, freigegeben. Aufgaben: T76K912227 (TRIM_MILI: Tabelle `ZTRIM_UML_IC` „Umlagerungen IC“, Datenelemente
+`ZTRIM_*`, Meldungen `ZTRIM_MDE068` bis `076`, `TFRM`/`TFRMT` FBED 908; Liste bei 10 Zeilen abgeschnitten), T76K912228 (TRIM_IUCO:
+OData `ZTRIM_MDE_UML_IC_SRV` mit MPC/DPC-Klassen und SICF, also die MDE-App fuer IC-Umlagerungen), T76K912242 (Reparatur
+`RV60B908`). 908 gehoert also zur TRIM-Loesung MDE IC-Umlagerungen und ist sehr wahrscheinlich in P76 gewollt; Importstand von
+T76K912226 in P76 nicht nachgelesen (`RV60B908` ist dort vorhanden). Ingo erinnert sich an ein „Paket von Fabio“, das etwas zu dieser
+Bestellart sagt: lokal nicht gefunden (`IC_Umsetzung_V1.xlsx`, Fabios Shopfloor-Mail vom 01.11., `saptasks/`, `docs/`); Fabios
+Testdokument vom 10.11. liegt nicht lokal, M365-Connector war in der Sitzung nicht verbunden. Offen: Ingo nennt Mail oder Datei.
