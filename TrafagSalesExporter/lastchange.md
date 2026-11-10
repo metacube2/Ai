@@ -2,6 +2,14 @@
 
 Stand: 2026-11-10
 
+## Nachtrag 2026-11-10 13:10: Rexx Hub, Mail AG36071 und Produktbeschreibung gelesen (nur Doku)
+
+- Mailverlauf (Alex 10.11. 09:06 „FYI“): Rexx verlangt fuer die Bestellung eine unterschriebene Auftragsbestaetigung; Nadjas Go wartet seit 19.08. auf die
+  IT-Pruefung durch Alex. **Hub nach diesem Verlauf nicht bestellt.** Wochen_Todo 133 auf Wunsch Ingo unveraendert.
+- Produktbeschreibung (43 Seiten): REST-API, kein Dateiexport; hoechstens 1 Anfrage gleichzeitig, 50'000 pro Monat; kein Endpunkt fuer Abwesenheiten oder
+  Salden, aber `GET /v1/datawarehouse/{id}` fuer Rexx-Abfragen. Vorschlag: #775/#777 darueber abrufen; fuenf Fragen an Rexx.
+  `saptasks/rexx_schnittstelle/NOTES.md` 13.
+
 ## Nachtrag 2026-11-10 11:30: vier kleine Code-Korrekturen aus der Todo-Pruefung (Auftrag Ingo „das erledigen“), nicht deployed
 
 - **Shopfloor** (`c5c9b4a`, `548b10e`): `ShopfloorSapSync.NotFoundHint` nennt bei HTTP 404 den Auftrag, der das abgefragte Set anlegt (CoPaSumSet `T76K912866`,

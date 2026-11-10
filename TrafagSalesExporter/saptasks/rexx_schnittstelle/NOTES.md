@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -263,3 +263,71 @@ aufgeloest, bei Nadja nachfragen.
 
 **Naechste Schritte:** Mail an Nadja senden (Ingo); Stand des Hub-Auftrags mit Nadja klaeren (bestellt oder nicht); Lieferfelder, Format und taegliche
 Ablage mit Rexx (Artjom Yahno) klaeren; danach Entscheid zum eigenen Programm (Abschnitt 7).
+
+## 13. Rexx Hub: Mailverlauf AG36071 und Produktbeschreibung (gelesen 2026-11-10, fuer die Umsetzung)
+
+**Mail.** Alex hat den Verlauf am 10.11. 09:06 nochmals mit „FYI“ an Ingo geschickt (zuerst am 29.10. an Dardan Hasani und
+Ingo). Der Verlauf, gelesen in Outlook Web:
+
+| Datum | Von / an | Inhalt |
+| --- | --- | --- |
+| 06.08.2026 | Riccardo Schwick (Rexx, Managing Partner) an Nadja | Offerte Rexx Hub „gemaess Absprache mit Artjom“. **Fuer die Beauftragung soll Nadja eine unterschriebene Auftragsbestaetigung als Scan zurueckmailen.** |
+| 07.08.2026 | Nadja an Riccardo | Entfallen mit dem Hub sofort die Kosten der bisherigen Schnittstellen? |
+| 10.08.2026 | Riccardo an Nadja, Artjom | Nein, nicht direkt. Der Hub ist aber schon guenstiger als vier zusaetzliche Einzelschnittstellen (je 1'400 EUR, 5'600 EUR pro Jahr). Werden die bisherigen Schnittstellen auf den Hub migriert, entfallen deren Kosten. |
+| 19.08.2026 | Nadja an Alex | 8 Schnittstellen heute 11'200 EUR pro Jahr, 4 weitere noetig; Hub 4'800 EUR pro Jahr fuer beliebig viele, auch die bestehenden. **Vor ihrem Go soll Alex die Beschreibung aus IT-Sicht pruefen.** |
+| 29.10. / 10.11.2026 | Alex an Dardan, Ingo / an Ingo | Weiterleitung ohne eigenen Text bzw. „FYI“ |
+
+Folgerung: Nach diesem Verlauf ist der Hub **nicht bestellt**; Nadjas Go wartet auf die IT-Pruefung, eine Antwort von Alex steht
+nicht im Verlauf. Die Angabe „Nadja hat am 2026-07-29 den Auftrag erteilt“ (`docs/HR_KPI.md` 8.3) deckt die Mail nicht. Die
+Auftragsbestaetigung selbst haengt nicht an der Weiterleitung. *Wochen_Todo 133 bleibt auf Wunsch Ingo unveraendert.*
+
+**Produktbeschreibung** `RexxHUB_Deutsch_27.07.2026.pdf` (Rexx Systems GmbH, Version 27.07.26, 43 Seiten, 5,4 MB). Liegt in
+Ingos Downloads; der Textauszug liegt unversioniert in `.tmp_tools/rexx_hub/RexxHUB_Deutsch_27.07.2026_text.txt`. Was fuer
+unsere Umsetzung zaehlt:
+
+- **Art:** REST-API mit CRUD (GET lesen, POST anlegen, PATCH aendern, DELETE loeschen), Ausgabe JSON oder XML. **Kein
+  Dateiexport und keine Ablage in einem Ordner**: Wir rufen ab, Rexx schiebt nichts. Webhooks sind erst „Ausblick“. Damit
+  entfaellt die Idee „Rexx legt Dateien in `/usr/sap/rexx` ab“ (Abschnitt 7) fuer den Hub; der Abruf kaeme vom Dashboard-Server
+  (oder von SAP per HTTP).
+- **Kosten:** eigenes Modul, keine Preise je Schnittstelle; Aktivierung durch den Rexx-Ansprechpartner im Modul-Editor.
+  Voraussetzung mindestens „ER Only Unified“, bei der Rexx Suite stehen ER- und HR-Endpunkte bereit.
+- **Einrichtung durch Trafag selbst** unter „Tools > Rexx Hub“: API-Benutzer mit Token (auch eigener Schluessel moeglich),
+  Aktiv-Schalter, Verfallsdatum, **erlaubte IP-Adressen**, Ausgabesprache, bevorzugte Waehrung. Je Endpunkt: freigeben,
+  Zeilen je Seite, Sortierung, **Export-Felder** (auswaehlbar, mit eigenem Feldnamen im Ergebnis; zu viele Felder ergeben
+  Fehler 422 „Please reduce the requested fields“), **Export-Filter** (z. B. Eintrittsdatum ab), **Parameter-Mapping**
+  (welche ID als `employeeid` gilt; Rexx empfiehlt die Rexx-Personal-ID, moeglich sind Personalnummer oder externe ID).
+  Rechte in Rexx: #1411, #1412, #1417, #1418 (Recruiting #10400 bis #10403).
+- **Pruefen und Doku:** Swagger-Testseite je Endpunkt, OpenAPI-Datei (JSON) je API-Benutzer exportierbar (ohne Token).
+  Rexx meldet taeglich „disruptive Aenderungen“ (geaenderte Endpunkte, geloeschte Zusatzfelder) als Systemnachricht.
+- **Formate:** Datum `2009-11-04`, Zeitstempel `2009-11-04T19:55:41Z`, Uhrzeit `19:55:41`, Dezimalpunkt (`42.80`).
+  Antwort mit `data`, `_links` (Blaettern), `_meta` (Anzahl, Seite, request id fuer den Support). Fehlercodes 400, 401
+  (Endpunkt nicht freigegeben), 403 (Token ungueltig), 404, 422, 429 (zu viele Anfragen), 500, 504.
+- **Grenzen:** **hoechstens eine Anfrage gleichzeitig ueber alle API-Benutzer** (File-Lock, bis 3 s Wartezeit);
+  **50'000 Anfragen pro Monat** (mehr kostenpflichtig, „Rate Limit Extender“), ungenutzte verfallen, jede Anfrage zaehlt.
+  Logs mit Anfrage und Antwort 90 Tage („Rexx Hub Logs“).
+- **Aenderungen abholen:** `/recent` (neue Datensaetze seit Zeitstempel, nach Erstellungsdatum) und `/updated` (geaenderte,
+  ueber einen Hash je API-Benutzer, Endpunkt und Datensatz; ohne Parameter seit dem letzten Abruf, sonst jetzt minus 1 h;
+  zum Blaettern muss ein Zeitstempel mitgegeben werden).
+- **Endpunkte, die fuer das HR-Cockpit in Frage kommen** (Liste Kapitel 11; welche davon grau, also noch nicht verfuegbar,
+  sind, zeigt der Textauszug nicht, nur das PDF-Bild): `GET /v1/employees` (+ `/recent`, `/updated`, `/{employeeId}`),
+  `/v1/employees/{employeeId}/employments`, `/contracts`, `/occupations`, `/org-units`, `/cost-accounts`, `/probation`,
+  `/limitations`; `/v1/org-units`, `/v1/cost-accounts`, `/v1/positions`; Konfiguration `employment-types`,
+  `personnel-groups`, `person-types`; `/v1/requests` (+ `/recent`, `/updated`, `/{applicationId}`, „Anfragen“; ob das
+  Abwesenheitsantraege sind, steht nicht drin); **`GET /v1/datawarehouse/{dataWarehouseQueryId}`**: liefert das Ergebnis
+  einer Rexx-Data-Warehouse-Abfrage ueber ihre ID.
+- **Es gibt keinen eigenen Endpunkt fuer Abwesenheiten, Zeitkonten, Salden oder Kommen/Gehen.** Abwesenheitsbuchungstypen
+  kommen nur als Beispiel fuer das Auswahlwerte-Mapping vor.
+
+**Folgerung fuer die Umsetzung (Vorschlag, nicht entschieden):** Am naechsten an heute liegt
+`/v1/datawarehouse/{id}` mit den Abfragen #775 (Stamm und Salden je Person) und #777 (Abwesenheiten je Fall), falls diese als
+Data-Warehouse-Abfragen gelten und ueber den Hub freigegeben werden koennen. Dann bleiben Spaltennamen und Cockpit-Logik
+gleich, nur die Datei kommt per API statt per Handexport; zwei Abrufe taeglich sind weit unter 50'000 im Monat. Offen, mit
+Rexx (Artjom Yahno) zu klaeren:
+
+1. Sind #775 und #777 (Personal › Abfrage bzw. Antragsliste) Data-Warehouse-Abfragen im Sinne des Endpunkts, und gilt die
+   50-Spalten-Grenze dort auch? Wenn nicht: wie kommen Abwesenheiten je Fall und Salden (Urlaub Rest, Stunden Saldo) ueber den Hub?
+2. Was liefert `/v1/requests`, und sind direkt gebuchte Abwesenheiten (ohne Antrag) irgendwo abrufbar?
+3. Welche Endpunkte sind heute grau (nicht verfuegbar)?
+4. Feste IP des Abrufers (Dashboard-Server `tragvapp401`) fuer die IP-Freigabe; Firewall vom Server nach Rexx (`trafag.rexx-suite.com`).
+5. Laufen die bestehenden 8 Schnittstellen (darunter die Dateien fuer `Z_HR_PA_REXX`) danach ueber den Hub, und wer migriert sie
+   (Entscheid Ingo 10.11.: Ingo selbst)? Der Stempeluhrtransfer bleibt.
