@@ -49,8 +49,8 @@
                 <span><b>@s.Posts</b> @N(s.Posts, T("Beitrag", "Post"), T("Beiträge", "Posts"))</span>
                 <span><b>@s.Comments</b> @N(s.Comments, T("Kommentar", "Comment"), T("Kommentare", "Comments"))</span>
                 <span><b>@s.Votes</b> @N(s.Votes, T("Stimme", "Vote"), T("Stimmen", "Votes"))</span>
-                <span><b>@s.Contributors</b> @T("Mitwirkende", "Contributors")</span>
-                <span><b>@s.OpenQuestions</b> @T("offene Fragen", "open questions")</span>
+                <span><b>@s.Contributors</b> @N(s.Contributors, T("Mitwirkende", "Contributor"), T("Mitwirkende", "Contributors"))</span>
+                <span><b>@s.OpenQuestions</b> @N(s.OpenQuestions, T("offene Frage", "open question"), T("offene Fragen", "open questions"))</span>
             </div>
         }
     </header>
@@ -256,7 +256,7 @@
                         <span class="frm-community-icon"><MudIcon Icon="@ForumIcons.Resolve(cc.Icon)" /></span>
                         <div class="frm-grow">
                             <h2>@cc.Name</h2>
-                            <span class="frm-community-slug">r/@cc.Slug · @cc.PostCount @N(cc.PostCount, T("Beitrag", "Post"), T("Beiträge", "Posts")) · @cc.MemberCount @T("Mitwirkende", "Contributors")</span>
+                            <span class="frm-community-slug">r/@cc.Slug · @cc.PostCount @N(cc.PostCount, T("Beitrag", "Post"), T("Beiträge", "Posts")) · @cc.MemberCount @N(cc.MemberCount, T("Mitwirkende", "Contributor"), T("Mitwirkende", "Contributors"))</span>
                             <p>@cc.Description</p>
                         </div>
                     </section>
@@ -350,7 +350,7 @@
                     @if (ForumRanking.NextLevelAt(_me?.Reputation ?? 0) is > 0 and var next)
                     {
                         <div class="frm-progress"><div style="width:@(Math.Clamp((_me?.Reputation ?? 0) * 100 / next, 2, 100))%"></div></div>
-                        <div class="ll-muted frm-small">@string.Format(T("Noch {0} Punkte bis zur nächsten Stufe", "{0} points to the next level"), next - (_me?.Reputation ?? 0))</div>
+                        <div class="ll-muted frm-small">@string.Format(N(next - (_me?.Reputation ?? 0), T("Noch {0} Punkt bis zur nächsten Stufe", "{0} point to the next level"), T("Noch {0} Punkte bis zur nächsten Stufe", "{0} points to the next level")), next - (_me?.Reputation ?? 0))</div>
                     }
                     <div class="frm-me-links">
                         <a href="@($"forum/u/{Uri.EscapeDataString(_user.Login)}")"><MudIcon Icon="@Icons.Material.Outlined.Person" Size="Size.Small" /> @T("Meine Beiträge", "My posts")</a>

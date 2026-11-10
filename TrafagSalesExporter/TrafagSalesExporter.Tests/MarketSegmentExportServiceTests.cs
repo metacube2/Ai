@@ -349,6 +349,22 @@ public class MarketSegmentExportServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Instructions_Describe_Data_Gaps_Per_Site_And_No_Longer_Claim_All_German_Rows_Lack_Names()
+    {
+        // Bis 2026-11-10 sagte die Anleitung unter „Datenluecke TRDE“, in den deutschen Verkaufszeilen fehlten
+        // Kundenname und Kundenland ganz. Seit dem Nachzug vom 09.09.2026 stimmt das nicht mehr (Export 29.09.: 145
+        // bzw. 163 von 7'737 Zeilen); massgeblich ist das Blatt Datenluecken.
+        var instructions = Sheet(await CreateService().BuildSheetsAsync(2026, null, "TRAFAG\\ingo"), "Anleitung");
+
+        Assert.DoesNotContain(instructions, row => (string?)row["Feld"] == "Datenluecke TRDE");
+        var gaps = (string?)instructions.Single(row => (string?)row["Feld"] == "Datenluecken je Standort")["Wert"];
+        Assert.Contains("Blatt Datenluecken", gaps);
+        Assert.Contains("09.09.2026", gaps);
+        var country = (string?)instructions.Single(row => (string?)row["Feld"] == "Leeres Kundenland")["Wert"];
+        Assert.DoesNotContain("genau diese Quellluecke", country);
+    }
+
+    [Fact]
     public async Task Detail_CarriesNoCostOrMarginFields()
     {
         using (var db = new AppDbContext(_options))

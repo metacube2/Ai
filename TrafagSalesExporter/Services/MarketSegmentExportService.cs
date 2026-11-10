@@ -193,7 +193,8 @@ public sealed class MarketSegmentExportService : IMarketSegmentExportService
                 ["TSC"] = key.Tsc,
                 ["Kundennummer"] = key.Customer,
                 // Name aus dem Verkaufsbestand, sonst der bei der Zuordnung festgehaltene.
-                // Fuer TRDE ist beides leer, das ist die dokumentierte Datenluecke.
+                // Ist beides leer (z. B. TRDE-Zeilen ohne Treffer in der Belegbruecke), bleibt der Name leer;
+                // das ist die dokumentierte Datenluecke.
                 ["Kundenname"] = lines.Select(line => line.CustomerName?.Trim() ?? string.Empty)
                     .FirstOrDefault(name => name.Length > 0) ?? assignment.CustomerName.Trim(),
                 ["Kundenland"] = lines.Select(line => line.CustomerCountry?.Trim() ?? string.Empty)
@@ -370,8 +371,9 @@ public sealed class MarketSegmentExportService : IMarketSegmentExportService
     /// <summary>
     /// Weist die bekannten Luecken offen aus, damit ein leeres Ergebnis nicht als Umsatz von
     /// null gelesen wird. Gezaehlt wird je Standort, wie viele Verkaufszeilen keinen Kundennamen, kein Kundenland
-    /// oder keine Kundennummer tragen. Fuer TRDE fehlten Name und Land bis September 2026 in allen Zeilen; seit dem
-    /// Nachzug ueber die Belegbruecke ist es ein Rest (Export 29.09.2026: 145 bzw. 163 von 7'737 Zeilen).
+    /// oder keine Kundennummer tragen. Fuer TRDE fehlten Name und Land bis zum 09.09.2026 in allen Zeilen. Der Nachzug
+    /// ueber die Belegbruecke hat den Bestand bis dahin gefuellt (Export 29.09.2026: 145 bzw. 163 von 7'737 Zeilen offen);
+    /// neuere deutsche Rechnungen ohne Brueckentreffer kommen weiter ohne Name und Land an.
     /// </summary>
     private static async Task<List<IReadOnlyDictionary<string, object?>>> BuildDataGapsAsync(
         AppDbContext db, int? year, string? tsc)
@@ -480,8 +482,8 @@ public sealed class MarketSegmentExportService : IMarketSegmentExportService
         Add("Bestaetigt", "Von einem Menschen fachlich bestaetigt. Nur diese Zuordnungen wirken im zentralen Excel.");
         Add("Waehrung", "Umsatz steht als Rohwert je Waehrung. Es wird ausschliesslich innerhalb derselben Waehrung summiert.");
         Add("Blatt Verworfen (Protokoll)", "Protokollspur aus dem Anwendungsprotokoll, kein gepflegter Zustand. Ein Verwerfen loescht die Zuordnung, es wird nicht als Zustand gespeichert.");
-        Add("Datenluecken je Standort", "Einzelne Verkaufszeilen tragen keinen Kundennamen oder kein Kundenland; wie viele je Standort, zaehlt das Blatt Datenluecken fuer genau diesen Export. In den deutschen Verkaufszeilen fehlten beide Angaben bis September 2026 ganz, seither nur noch bei einem Rest. Ein leeres Ergebnis kann deshalb eine Datenluecke sein und ist nicht automatisch ein Umsatz von null.");
-        Add("Leeres Kundenland", "Fehlt der Name in den Verkaufszeilen, zeigen die Blaetter Pruefung und Bestaetigt den bei der Zuordnung festgehaltenen Namen. Fuer das Kundenland gibt es keinen solchen Ersatz: ein leeres Kundenland bei gefuelltem Namen ist genau diese Quellluecke und kein fehlender Einzelfall.");
+        Add("Datenluecken je Standort", "Verkaufszeilen koennen ohne Kundennamen oder Kundenland ankommen; wie viele je Standort, zaehlt das Blatt Datenluecken fuer genau diesen Export. In den deutschen Verkaufszeilen fehlten beide Angaben bis zum 09.09.2026 ganz. Der Nachzug hat den Bestand bis dahin gefuellt; neuere deutsche Rechnungen koennen wieder ohne Kundenname und Kundenland ankommen, solange der Alphaplan-Export sie nicht liefert. Ein leeres oder zu niedriges Ergebnis kann deshalb eine Datenluecke sein und ist nicht automatisch ein Umsatz von null.");
+        Add("Leeres Kundenland", "Fehlt der Name in den Verkaufszeilen, zeigen die Blaetter Pruefung und Bestaetigt den bei der Zuordnung festgehaltenen Namen. Fuer das Kundenland gibt es keinen solchen Ersatz: ein leeres Kundenland bei gefuelltem Namen ist die oben genannte Datenluecke der Quelle und kein Fehler der einzelnen Zuordnung.");
         Add("Pflege", "Bestaetigen und Verwerfen geschieht im Dashboard unter /marktsegmente. Diese Datei ist eine Arbeitskopie zum Lesen und wird nicht zurueckgelesen.");
 
         return rows;

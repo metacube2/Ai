@@ -177,7 +177,7 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     /// </summary>
     private const int NoCap = int.MaxValue;
 
-    // Jahresachse fuer Spend/Matrix: fixe Untergrenze (fachliche Vorgabe), dynamische Obergrenze,
+    // Jahresachse fuer den Spend-Aufriss: fixe Untergrenze (fachliche Vorgabe), dynamische Obergrenze,
     // damit die Sicht beim Jahreswechsel nicht still das aktuelle Jahr verliert.
     private const int MinSpendYear = 2020;
 

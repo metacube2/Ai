@@ -63,42 +63,6 @@ public static class PurchasingSectionSource
     }
 }
 
-public sealed record PurchasingSupplierYearSpendRow(string Supplier, IReadOnlyDictionary<int, decimal> YearValues, decimal Total)
-{
-    /// <summary>
-    /// Drilldown-Ebene je Lieferant (Marco/Armin-Review 2026-07-17): Spend des Lieferanten
-    /// aufgerissen nach Warengruppe. Bevorzugt die aktuelle Materialstamm-Warengruppe
-    /// (MaraMatkl), faellt auf die Beleg-Warengruppe (EKPO.Matkl) zurueck, solange SAP
-    /// MARA-MATKL noch nicht liefert.
-    /// </summary>
-    public IReadOnlyList<PurchasingSpendGroupYearRow> MaterialGroups { get; init; } = [];
-}
-
-public sealed record PurchasingSpendGroupYearRow(string MaterialGroup, IReadOnlyDictionary<int, decimal> YearValues, decimal Total)
-{
-    /// <summary>
-    /// Dritte Aufriss-Ebene der Spend-Matrix (Entscheid Marco, Sitzung 2026-07-30): unter der
-    /// Warengruppe die einzelnen Materialnummern. Marcos Zweck ist das Aufspueren der
-    /// Dummy-Zuordnungen - "wenn im Drilldown die Materialnummer drin ist, dann findest du einen".
-    /// Genau deshalb ist diese Ebene unter der Warengruppe "01 - Dummy" die eigentlich
-    /// interessante. Auf <see cref="PurchasingSpendArticleYearRow"/> gedeckelt, Rest in einer
-    /// "uebrige (n)"-Zeile.
-    /// </summary>
-    public IReadOnlyList<PurchasingSpendArticleYearRow> Articles { get; init; } = [];
-}
-
-/// <summary>
-/// Blattebene der Spend-Matrix: Materialnummer (Fallback Kurztext, dann "ohne Artikel") mit
-/// Jahreswerten. <see cref="IsRemainder"/> markiert die Sammelzeile "uebrige (n)", damit die UI
-/// sie unaufklappbar und optisch ruhiger darstellen kann und damit klar bleibt, dass die Summe
-/// der Kinder weiterhin der Warengruppensumme entspricht.
-/// </summary>
-public sealed record PurchasingSpendArticleYearRow(
-    string Article,
-    IReadOnlyDictionary<int, decimal> YearValues,
-    decimal Total,
-    bool IsRemainder = false);
-
 /// <summary>
 /// Rekursiver Knoten fuer den mehrstufigen Spend-Aufriss (Reiter „Spend-Aufriss" 2026-07-24):
 /// feste Kaskade Lieferant -> Warengruppe -> Artikel. Jede Ebene traegt Jahreswerte + Gesamt;

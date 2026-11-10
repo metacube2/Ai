@@ -63,19 +63,28 @@ public sealed class ShopfloorSapSyncTests
     [InlineData("ShopRmSet", "T76K912740 + T76K912738")]
     [InlineData("ShopProdSet", "T76K912740 + T76K912738")]
     [InlineData("ShopZd05Set", "T76K912718")]
-    [InlineData("ShopAufSet", "T76K912860")]
+    [InlineData("ShopAufSet", "T76K912718")]
     public void NotFound_Hint_Names_The_Transport_Of_The_Requested_Set(string set, string transport)
     {
         // Bis 2026-11-10 nannte der Hinweis bei jedem 404 die Auftraege von ShopRm/ShopProd, auch fuer CoPaSumSet.
         var hint = ShopfloorSapSync.NotFoundHint(set);
 
         Assert.Contains(transport, hint);
-        Assert.Contains("nicht nach P76 transportiert", hint);
+        // Zweite uebliche Ursache nach einem Import: der Gateway-Cache.
+        Assert.Contains("Gateway-Cache", hint);
         if (set == "CoPaSumSet")
             Assert.DoesNotContain("T76K912740", hint);
+        // VZ/VR aendern nur die Datenmethode von ShopAufSet und koennen keinen 404 ausloesen.
+        Assert.DoesNotContain("T76K912797", hint);
+        Assert.DoesNotContain("T76K912860", hint);
     }
 
     [Fact]
     public void NotFound_Hint_For_An_Unknown_Set_Names_No_Transport()
-        => Assert.DoesNotContain("T76K", ShopfloorSapSync.NotFoundHint("C_SALESANALYTICSQRY_1(P_DisplayCurrency='CHF')/Results"));
+    {
+        var hint = ShopfloorSapSync.NotFoundHint("C_SALESANALYTICSQRY_1(P_DisplayCurrency='CHF')/Results");
+
+        Assert.DoesNotContain("T76K", hint);
+        Assert.Contains("Gateway-Cache", hint);
+    }
 }
