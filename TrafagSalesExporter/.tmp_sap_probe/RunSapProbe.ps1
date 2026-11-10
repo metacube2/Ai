@@ -11,7 +11,7 @@
     danach wieder entfernt.
 
 .EXAMPLE
-    .\.tmp_sap_probe\RunSapProbe.ps1 table-read AUFK 5 "AUFNR EQ '000001241804'"
+    .\.tmp_sap_probe\RunSapProbe.ps1 table-read AUFK --where "AUFNR EQ '000001241804'" --fields "AUFNR,AUART"
     .\.tmp_sap_probe\RunSapProbe.ps1 system-info
 #>
 [CmdletBinding()]

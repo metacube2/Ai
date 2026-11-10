@@ -16,6 +16,11 @@ Punkt 1 unter „Unterbrochen“ in der Uebergabe darunter ist damit erledigt.
 VOFM-Gruppen neu erzeugen und dabei auch die bisher ungenerierte Kopierbedingung FBED 908 (Proforma TA→F5, TAW) scharf schalten.
 Nichts geaendert; Entscheid Ingo zwischen Transport von `RV62ANNN` und `RV80HGEN` offen (NOTES 8.9).
 
+*Danach (Ingo „mache a“):* Transport von `RV62ANNN` geht nicht, das Include ist generiert (`TADIR GENFLAG X`); Auftrag T76K912870
+angelegt und leer wieder geloescht. FBED 908 wirkt in T76 seit Juli, in P76 nicht. Offen: Ingo klaert 908, dann `RV80HGEN` in P76.
+Die Empfehlung „VOFM 601 aktivieren“ weiter oben in diesem Nachtrag ist ueberholt. **Sicherheitsvorfall:** T76-Passwort von KOI im
+Sitzungsprotokoll sichtbar geworden (eigener Wrapper), Wechsel empfohlen; LEARNINGS.
+
 ## Nachtrag 2026-11-10 14:35: IC-Staffelbasis in P76 (Abnahme Fabio)
 
 - Fabio hat am 10.11. per Mail alle Tests in T76 als erfolgreich gemeldet (inkl. MIRO 1200 ohne Preisdifferenz) und fuer P76 freigegeben. Ingo hat

@@ -1,7 +1,8 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
 Stand: 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
-noch nicht eingebunden**: VOFM 601 in P76 aktivieren, macht Ingo); davor 2026-11-06
+noch nicht eingebunden**; VOFM in P76 gesperrt, Transport von `RV62ANNN` nicht moeglich (generiert), offen Entscheid Ingo zu
+`RV80HGEN`, das auch die Kopierbedingung FBED 908 einbindet); davor 2026-11-06
 (Abschnitt 8: Staffelbasis Bestellmenge in T76 umgesetzt und getestet, Routine 601, Auftraege
 T76K912853 und T76K912856, *damals* nicht freigegeben; Abschnitt 8.8 vom Nachmittag: Tests S6/S7 und Gegenprobe, Testtabelle
 S1 bis S7, Zeile „Transportfertig“). Abschnitte 0 bis 7 vom 2026-11-05 (Agent sap-t76, damals nur lesend in
@@ -680,3 +681,21 @@ eigener Sitzung (SE16, SE38 nur *Anzeigen*, Zeilen ueber `GuiAbapEditor.GetLineT
 Wege (Entscheid Ingo): (a) `RV62ANNN` aus T76 (dort mit `INCLUDE RV62A601`) als Reparatur in einem eigenen Auftrag transportieren,
 wirkt nur auf die Staffelbasis; (b) `RV80HGEN` in P76, wenn 908 ebenfalls wirken soll (vorher klaeren, wer 908 bestellt hat);
 (c) Systemaenderbarkeit kurz oeffnen und VOFM 601 aktivieren (Basis-Eingriff in der Produktion, nicht empfohlen).
+
+**Weg a versucht, nicht moeglich (2026-11-10 abends, Entscheid Ingo „mache a“):** In T76 (eigene GUI-Sitzung, danach geschlossen;
+RFC ueber die DPAPI-Ablage) Workbench-Auftrag **T76K912870** „IC Staffelbasis: RV62ANNN mit INCLUDE RV62A601 (VOFM 601)“ mit Aufgabe
+T76K912871 angelegt und die Aufgabe als Reparatur eingestuft. Die Objektzeile `R3TR PROG RV62ANNN` liess sich weder in der
+Objektliste (Zellen nicht eingabebereit) noch ueber *Objekte aufnehmen > Frei gewaehlte Objekte* („Positionieren Sie den Cursor auf
+einem aenderbaren Auftrag“) eintragen; `TR_APPEND_TO_COMM_OBJS_KEYS` ist nicht remote aufrufbar (dabei entstand vermutlich ein
+Kurzdump `CALL_FUNCTION_NOT_REMOTE` unter KOI in T76, nicht nachgesehen). Der Grund steht in `TADIR`: `R3TR PROG RV62ANNN` hat
+**`GENFLAG X`** (generiert, `SRCSYSTEM SAP`, Paket `VKON`); `E071` kennt es nur unter `RV80HGEN_TADIR_CORE` und `SAPKCCG751`.
+Generierte Sammelincludes sind nicht fuer den Transport gedacht. Der leere Auftrag T76K912870 samt Aufgabe ist wieder **geloescht**
+(SE09, Meldung „Auftrag T76K912870 wurde mit seinen Aufgaben geloescht“, `E070` leer). In P76 nichts geaendert.
+
+**FBED 908 in T76 (RFC, lesend):** `TFRM` FBED 908 aktiv (`GNDAT 20260705`), `RV60B908` von TRIM_MILI am 05.07.2026, `D010INC`
+`SAPLV60A` → `RV60B908` vorhanden, `TVCPF` F5/TA/TAW `GRBED 908` gleich wie in P76. **In T76 wirkt 908 also seit Juli, in P76 nicht.**
+Das ist derselbe Fehler wie bei 601: die Routine kam mit dem Transport, das Sammelinclude `RV60BNNN` in P76 nicht.
+
+**Stand und Empfehlung:** Weg a faellt weg. Mit Weg b (`RV80HGEN` in P76) wuerden 601 und 908 eingebunden; P76 entspraeche danach
+T76. Vorher klaeren, wer 908 bestellt hat und ob die Proforma-Pruefung (Fakturasperre, Fakturarelevanz, Fakturaplan) in P76 gewollt
+ist (Entscheid Ingo). Weg c bleibt die Alternative, wenn 908 ausdruecklich nicht kommen soll.
