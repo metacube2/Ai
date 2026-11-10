@@ -8,7 +8,7 @@ Stand: 2026-11-10
 - **6 Q-Faelle:** P76 hat fuer QM kein Anwenderstatus-Schema; Status jetzt aus dem Systemstatus-Lebenszyklus, Produktlinie ueber die Materialnummer (deployed 08:16).
 - **3 DLQ72** live, Logistik-Soll DW darauf, Historie ab 01.10. nachgeladen; **5** Backend-Schutz Patch 07 und TX plan5 (Annahme) live; **4** CE11000 Skonto = VV240 (Sep exakt), Set-Bau offen; **2** Verzug weiter aus (Fabio).
 - Deploy 08:16 `e6f6f70`. `docs/SHOPFLOOR_2026-10-07.md` 20, `docs/VERKAUF_2026-10-02.md`, Monthly-Review-Doku.
-- **Nachmittag/Vormittag 08:46 (`436e8ad`):** Verzug-Materialfilter schaltbar (`VerzugMaterialFilter`, `SapVerzugEnabled` aus); **CO-PA** gebaut: SAP `CoPaSumSet` in T76 (**`T76K912866`**, rueckgelesen, Test 200), Cockpit mit Schalter `SapCoPaEnabled` aus. **Ingo: `T76K912866` transportieren.** Vier weitere alte Claude-Testreports in T76 geloescht.
+- **Vormittag 08:46 (`436e8ad`):** Verzug-Materialfilter schaltbar (`VerzugMaterialFilter`, `SapVerzugEnabled` aus); **CO-PA** gebaut: SAP `CoPaSumSet` in T76 (**`T76K912866`**, rueckgelesen, Test 200), Cockpit mit Schalter `SapCoPaEnabled` aus. **Ingo: `T76K912866` transportieren.** Vier weitere alte Claude-Testreports in T76 geloescht.
 - **14** T76: `$TMP`-Report `Z_KOI_ZLO_FIX26_TEST` geloescht (SE38, eigene Sitzung). Weitere lokale Claude-Testobjekte aus Okt/Nov: `Z_KOI_VC_TXT_KOPIE`, `Z_KOI_VC_TXT_TESTID`, `Z_KOI_ZLO03_ALT`, `Z_KOI_ZLO_APP_TEST` (Loeschen auf Ingos Wort); aeltere `Z_KOI_*`/`Z_IKO_*` gehoeren Ingo.
 
 ## Eingeschaltet 15:11 (Auftrag Ingo „aktiviere was geht und schalte frei“), 2026-11-09
