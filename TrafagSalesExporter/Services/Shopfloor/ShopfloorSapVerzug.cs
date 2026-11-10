@@ -56,8 +56,10 @@ public static class ShopfloorSapVerzug
     /// Werte fuer den Abfragetag aus den Zeilen von ShopAufSet Typ VZ. Schreibt nichts. Zeilen ohne Typ VF/VP heissen, dass das
     /// System den Verzugsmodus noch nicht kennt (alter DPC liefert FE/PA fuer die naechsten 60 Tage): dann Fehler statt falscher Zahl.
     /// </summary>
-    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows)
+    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null)
     {
+        // 2026-11-10 (Ingo): Materialfilter 1-99999 je Abteilung schaltbar (Shopfloor:VerzugMaterialFilter), Vorgabe alle vier wie PPD.
+        materialFilter ??= Abteilungen.Select(a => a.Abteilung).ToArray();
         if (rows.Any(r => Text(r, "Typ") is not ("VF" or "VP")))
             throw new InvalidOperationException(
                 "ShopAufSet kennt den Verzugsmodus (Typ VZ) in diesem SAP-System noch nicht; Transport T76K912797 fehlt.");
@@ -65,7 +67,9 @@ public static class ShopfloorSapVerzug
         var auftraege = Abteilungen.ToDictionary(a => a.Abteilung, _ => 0, StringComparer.Ordinal);
         foreach (var r in rows)
         {
-            if (Abteilung(Text(r, "Dispo")) is not { } abt || !MaterialImBereich(Text(r, "Matnr")))
+            if (Abteilung(Text(r, "Dispo")) is not { } abt)
+                continue;
+            if (materialFilter.Contains(abt) && !MaterialImBereich(Text(r, "Matnr")))
                 continue;
             menge[abt] += Int(r, "Menge");
             auftraege[abt]++;

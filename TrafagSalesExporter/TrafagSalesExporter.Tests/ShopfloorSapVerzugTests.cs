@@ -70,4 +70,23 @@ public class ShopfloorSapVerzugTests
             """)));
         Assert.Contains("T76K912797", ex.Message);
     }
+
+    [Fact]
+    public void Materialfilter_Je_Abteilung_Schaltbar()
+    {
+        var rows = Rows("""
+            [
+              {"Typ":"VF","Aufnr":"1","Dispo":"SE1","Matnr":"B54670","Datum":"20261101","Menge":"6"},
+              {"Typ":"VF","Aufnr":"2","Dispo":"DW2","Matnr":"C12345","Datum":"20261101","Menge":"9"},
+              {"Typ":"VF","Aufnr":"3","Dispo":"DW2","Matnr":"40123","Datum":"20261101","Menge":"4"}
+            ]
+            """);
+        var mitFilter = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows);
+        Assert.Equal(0L, (long)mitFilter["werte"]!["ppd"]!["verzug_seh"]!);
+        Assert.Equal(4L, (long)mitFilter["werte"]!["ppd"]!["verzug_dw"]!);
+        var ohneSeh = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows, ["TR5", "TX", "DW"]);
+        Assert.Equal(6L, (long)ohneSeh["werte"]!["ppd"]!["verzug_seh"]!);
+        var ohne = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows, []);
+        Assert.Equal(13L, (long)ohne["werte"]!["ppd"]!["verzug_dw"]!);
+    }
 }

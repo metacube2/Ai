@@ -288,7 +288,9 @@ public sealed class ShopfloorSapSync : BackgroundService
     private async Task<JsonObject> VerzugCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
     {
         var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVerzug.Filter(_options.CurrentValue.SapPlant, day), ct);
-        var result = ShopfloorSapVerzug.Compute(day, rows);
+        var filter = _options.CurrentValue.VerzugMaterialFilterListe();
+        var result = ShopfloorSapVerzug.Compute(day, rows, filter);
+        result["materialfilter"] = string.Join(",", filter);
         result["ok"] = true;
         result["geschrieben"] = false;
         if (!write)

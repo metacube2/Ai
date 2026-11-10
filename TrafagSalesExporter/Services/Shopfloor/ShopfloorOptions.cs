@@ -67,6 +67,17 @@ public sealed class ShopfloorOptions
     /// </summary>
     public bool SapVorratEnabled { get; set; }
 
+    /// <summary>
+    /// Abteilungen, fuer die der Verzug nur Material 1 bis 99999 zaehlt (Definition PPD, A. Tran). Vorgabe alle vier; mit
+    /// leerem Text rechnet der Verzug ohne Materialfilter (SEH hat nur alphanumerische Materialien, mit Filter immer 0). Kommagetrennt,
+    /// weil der Konfigurations-Binder eine leere Liste nicht als Ueberschreibung liest. 2026-11-10.
+    /// </summary>
+    public string VerzugMaterialFilter { get; set; } = "SEH,TR5,TX,DW";
+
+    public string[] VerzugMaterialFilterListe()
+        => VerzugMaterialFilter.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => x.ToUpperInvariant()).ToArray();
+
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
     public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45
 
