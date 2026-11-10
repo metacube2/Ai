@@ -19,6 +19,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | **Rexx-Abwesenheiten je Fall #777 (Antragsliste, `Hr-cockpit-absenzen-je-fall.xlsx`): Faelle mit Datum ergaenzen SAP; Grenze direkt gebuchter Krankheit** | `docs/HR_KPI.md` 8.14 |
 | **Entscheid 10.11.: Rexx Hub wird genommen; welche Felder Rexx liefern muss (Spaltennamen, Ampel fehlend/ungeprueft)** | `saptasks/rexx_schnittstelle/NOTES.md` 12, Kurzfassung `docs/HR_KPI.md` 8.17 |
 | **Rexx Hub technisch: REST-API (kein Dateiexport), Endpunkte, Grenzen (1 Anfrage gleichzeitig, 50'000 pro Monat), Data-Warehouse-Abfrage als naechster Weg; Mailverlauf AG36071 (Hub nicht bestellt)** | `saptasks/rexx_schnittstelle/NOTES.md` 13 |
+| **Rexx-Hub-Abruf gebaut (Schalter aus): Umschaltanleitung, Einstellungen, Sicherungen, Testabruf, offene Annahmen** | `saptasks/rexx_schnittstelle/NOTES.md` 14, Kurzfassung `docs/HR_KPI.md` 8.18 |
 | **Reiter Interaktiv (Zeitraffer, Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Simulator)** | `docs/HR_KPI.md` 9 |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |

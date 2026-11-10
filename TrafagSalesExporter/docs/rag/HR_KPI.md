@@ -1,6 +1,6 @@
 # RAG HR KPI
 
-Stand: 2026-11-10 (Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder; `docs/HR_KPI.md` 8.17); davor 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, nicht deployed, `docs/HR_KPI.md` 8.18; Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder, 8.17); davor 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
 

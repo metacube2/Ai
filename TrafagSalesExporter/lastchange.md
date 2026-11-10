@@ -2,6 +2,14 @@
 
 Stand: 2026-11-10
 
+## Nachtrag 2026-11-10 14:35: Rexx-Hub-Abruf gebaut, Schalter aus, nicht deployed
+
+- Auftrag Ingo „alles vorbereiten, nur noch Schalter umlegen“. `1e99745` (Agent im Worktree), `d99fbe6` (Nacharbeit aus vier Pruefungen), per Fast-Forward
+  uebernommen; der fremde Finance_All-Hunk in `Program.cs` wurde dafuer kurz beiseitegelegt und unveraendert zurueckgespielt. Suite 1547/1547.
+- Tagesdienst holt #775/#777 ueber `v1/datawarehouse/{id}` und schreibt die Handexport-Dateien; Schalter `HrKpi:RexxHub:Enabled` aus, Zugang Quellsystem `REXXHUB`,
+  Testabruf `/BiDashboard/admin/rexxhub/test`. Umschaltanleitung `saptasks/rexx_schnittstelle/NOTES.md` 14, `docs/HR_KPI.md` 8.18.
+- Befund am bestehenden HR-Leser (Kultur bei Text-Zahlen, ganze Datei verworfen bei kaputtem Datum): festgehalten, nicht geaendert.
+
 ## Nachtrag 2026-11-10 13:10: Rexx Hub, Mail AG36071 und Produktbeschreibung gelesen (nur Doku)
 
 - Mailverlauf (Alex 10.11. 09:06 „FYI“): Rexx verlangt fuer die Bestellung eine unterschriebene Auftragsbestaetigung; Nadjas Go wartet seit 19.08. auf die

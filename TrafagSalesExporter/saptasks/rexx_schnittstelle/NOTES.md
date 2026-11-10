@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -331,3 +331,80 @@ Rexx (Artjom Yahno) zu klaeren:
 4. Feste IP des Abrufers (Dashboard-Server `tragvapp401`) fuer die IP-Freigabe; Firewall vom Server nach Rexx (`trafag.rexx-suite.com`).
 5. Laufen die bestehenden 8 Schnittstellen (darunter die Dateien fuer `Z_HR_PA_REXX`) danach ueber den Hub, und wer migriert sie
    (Entscheid Ingo 10.11.: Ingo selbst)? Der Stempeluhrtransfer bleibt.
+
+## 14. Rexx-Hub-Abruf gebaut, Schalter aus (2026-11-10, `1e99745`, `d99fbe6`)
+
+Auftrag Ingo: „Bereite alles vor fuer den Rexx Hub, wenn wir ihn haben, nur noch Schalter umlegen.“ Gebaut von einem Agenten im
+eigenen Worktree, gegengeprueft von vier Pruefern (Robustheit, Schalter, Sicherheit, Einbau), Befunde eingearbeitet. Suite
+1547/1547. **Nicht deployed.** Es gab keinen einzigen Aufruf an Rexx (kein Zugang); alle Testdaten sind erfunden.
+
+**Was es tut.** `RexxHubRefreshService` holt die Rexx-Abfragen #775 und #777 einmal am Tag ab 05:30 ueber
+`GET v1/datawarehouse/{id}` (Bearer-Token) und schreibt daraus genau die Dateien des Handexports in `hrdata`
+(`Hrcockpitgesamtdashboard.xlsx`, `Hr-cockpit-absenzen-je-fall.xlsx`, Blatt `Rexx775`/`Rexx777`). Die Leser im
+`HrKpiDashboardBuilder` sind unveraendert; ein Rundreise-Test belegt, dass die API-Datei dieselben Kennzahlen ergibt wie ein
+Handexport mit denselben Werten.
+
+**Dateien:** `Services/HrKpi/RexxHubClient.cs` (Abruf, Blaettern, Fehlertexte, prozessweit eine Anfrage gleichzeitig),
+`RexxHubResponseParser.cs` (Antwortformen), `RexxHubColumns.cs` (Leser- und Pflichtspalten, Pruefungen), `RexxHubWorkbook.cs`
+(Excel ueber `.tmp.xlsx`), `RexxHubRefreshService.cs` (Tagesdienst, Testabruf `RexxHubProbe`, Registrierung `AddRexxHub`,
+Endpunkt `MapRexxHubTest`); Optionen `RexxHubOptions` in `Models/HrKpiModels.cs`; Tests `RexxHubTests.cs`, `RexxHubEndpointTests.cs`.
+
+**Sicherungen** (alle getestet):
+- `HrKpi:RexxHub:Enabled = false` (Vorgabe): kein Abruf, kein Datenbank- und kein Dateizugriff, auch nicht beim Start.
+- Es wird **nicht geschrieben** und die bisherige Datei bleibt, wenn: eine Pflichtspalte fehlt oder zu weniger als 95 % gefuellt
+  ist (`MinShare`); keine Zeile kommt; die Antwort weniger als 80 % der Zeilen der bisherigen Datei hat (`MinRowShareOfPrevious`);
+  bei #775 kein Status als angestellt erkannt wird oder Personalnummern doppelt sind (`MaxDuplicatePersonalnummern`); Blaettern
+  unvollstaendig ist (Gesamtzahl passt nicht, weitere Seiten ohne Weg, Link auf fremden Server).
+  Pflichtspalten #775: Personalnummer, Personal Status, Eintrittsdatum, Austrittsdatum, Austrittsart, Stelle, Name;
+  #777: Personalnummer, Abwesenheit von, Abwesenheit Buchung, Abwesenheit Status.
+- Eine von Hand gelegte Datei (anderer Blattname) wird vor dem Ueberschreiben gesichert: zuerst `*.manuell.xlsx`, danach mit Zeitstempel.
+- Voruebergehende Fehler (429, 5xx, Zeitueberschreitung, Netz) werden im naechsten 30-Minuten-Durchgang wiederholt, hoechstens
+  `MaxAttemptsPerDay` (4) Mal; bei 429 zusaetzlich zwei Wiederholungen mit Wartezeit (Retry-After beachtet, hoechstens 60 s).
+- Nur https (`AllowHttp` nur fuer Tests). Token nie in Protokoll, Fehlertext oder Testabruf; ins Protokoll kommen nur Zeilenzahl,
+  Spaltennamen, Dauer und request id.
+- Testabruf `/BiDashboard/admin/rexxhub/test` braucht die Richtlinie AdminOnly **und** die Admin-Freischaltung (Admin > Passwoerter),
+  weil `Security:Enabled` produktiv `false` ist und AdminOnly dann niemanden abhaelt. Er schreibt nichts, geht auch bei
+  `Enabled = false` und gibt keine Werte aus, nur Status, Zeilen, Seiten, Spaltennamen, fehlende Pflicht- und Leserspalten,
+  Formatpruefung (erkannt gegen gefuellt), Meta- und Links-Schluessel, request id.
+
+**Einstellungen** (`appsettings.json`, Abschnitt `HrKpi:RexxHub`; sichtbar ist nur `Enabled`): `GesamtQueryId` 775, `CaseQueryId` 777,
+`PathTemplate` `v1/datawarehouse/{0}`, `PageParameter`/`PageSizeParameter` (leer: kein Seitenparameter, es gilt die Zeilenzahl je Seite
+aus Rexx), `PageSize` 500, `MaxPages` 500, `DailyAt` 05:30, `TimeoutSeconds` 120, `RetryDelaySeconds` 5, `MaxAttemptsPerDay` 4,
+`MinRowShareOfPrevious` 0.8, `MinShare` 0.95, `MaxDuplicatePersonalnummern` 0, `GesamtZeitraumGeprueft` false, `ColumnMap`
+(technischer Name -> Ueberschrift), `QueryParameters` (mit Platzhaltern `{jahresanfang}`, `{heute}`), `Meta…Keys`/`NextLinkKeys`
+(ergaenzen die eingebauten Namenslisten), `AllowHttp` false.
+
+**Zugang:** Admin > Settings > Quellsysteme, Code `REXXHUB`, Anschlussart „SAP Gateway“ (nur dann zeigt der Dialog das URL-Feld),
+URL = Basis-URL bis vor `v1/`, „Zentrales Passwort“ = Token, Aktiv. Den Knopf „Testen“ dort nicht druecken (macht einen SAP-Test).
+Achtung: Ein Konfigurationsimport unter Settings ersetzt alle Quellsysteme; der Token liegt wie das SAP-Passwort im Klartext in der
+Cockpit-Datenbank (`docs/AGENT_COORDINATION.md`/Wochen_Todo 135, gleiches Thema).
+
+**Umschalten, Schritt fuer Schritt:**
+1. Rexx (Tools > Rexx Hub): API-Benutzer anlegen und aktiv schalten, `GET /v1/datawarehouse/{id}` freigeben, IP des
+   Dashboard-Servers (`tragvapp401`) als vertrauenswuerdig eintragen, „Zeilenanzahl pro Seite“ hoch setzen. OpenAPI-Datei exportieren:
+   Sie zeigt Basis-URL, Form von `data`, Namen in `_meta`/`_links`.
+2. Dashboard: Quellsystem `REXXHUB` wie oben anlegen.
+3. Admin-Freischaltung, dann Testabruf `/BiDashboard/admin/rexxhub/test`. Gut, wenn beide Abfragen `Ok` und `WuerdeGeschrieben`
+   melden, `FehlendePflichtspalten` leer ist und in der Formatpruefung „Erkannt“ gleich „Gefuellt“. Liefert die API technische
+   Namen: in Rexx unter Export-Felder umbenennen oder `ColumnMap` setzen. Werte der Auswahlfelder muessen Rexx-Texte sein
+   (kein Auswahlwerte-Mapping auf den API-Benutzer).
+4. Zeitraum von #775 klaeren (der gespeicherte Filter stand am 04.11. fest bis 04.11.2026, `docs/HR_KPI.md` 8.13): ueber
+   `QueryParameters` mit `{jahresanfang}`/`{heute}`, falls Rexx das annimmt, sonst in Rexx dynamisch stellen. Erst dann
+   `GesamtZeitraumGeprueft = true` (bis dahin warnt jeder Schreibvorgang). Grund: Das Cockpit nimmt das Dateidatum als Stand;
+   ein taeglich neu geschriebener, aber inhaltlich alter Export sieht sonst frisch aus.
+5. `"HrKpi": { "RexxHub": { "Enabled": true } }` im Repository setzen, committen, mit dem Deploy-Werkzeug deployen (nicht nur auf
+   dem Server aendern). Erster Abruf rund 3 Minuten nach dem Start, wenn es nach 05:30 ist. Ergebnis im Ereignisprotokoll, Kategorie HR
+   („Rexx-Hub #775 geschrieben“ / „nicht geschrieben“ / „fehlgeschlagen“).
+Zurueck: `Enabled = false`, deployen; die zuletzt geschriebenen Dateien bleiben, ein Handexport ersetzt sie wie bisher.
+
+**Offen, Annahmen ueber die API** (stehen nicht im Dokument, im Testabruf zu bestaetigen): #775/#777 gelten als Data-Warehouse-
+Abfragen; Form von `data` (Liste von Objekten, Objekt mit Spalten und Zeilen oder Liste von Listen werden erkannt); Namen in
+`_meta` und `_links`; Seitenparameter; Datum als `2009-11-04` statt UTC-Zeitstempel (Zeitstempel werden gezaehlt, nicht umgerechnet);
+Stunden als `hh:mm`, Zeitraum-Texte wie im Handexport; Netzweg vom Server zu Rexx (Proxy, Firewall). Die Spalte „Arbeitszeitmodell“
+liest der Leser, sie fehlt aber vermutlich in #775 (harmlos, keine Pflicht). Jeder Testabruf kostet mindestens zwei der 50'000 Anfragen
+im Monat, der Tagesdienst mindestens zwei pro Tag.
+
+**Befund am bestehenden Leser (nicht geaendert, betrifft auch den Handexport):** `HrKpiDashboardBuilder.ReadDate` wirft bei einer Zahl
+ausserhalb des Excel-Datumsbereichs, und `ReadRows` verwirft dann die ganze Datei; `ReadDecimalNullable` liest Text-Zahlen nach der
+Serverkultur („4.5“ wird unter de-DE zu 45). Beides vom Agenten gemessen. Der Hub-Abruf schreibt deshalb Daten nur als echtes Datum
+und Zahlen als Zahl.

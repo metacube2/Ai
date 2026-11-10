@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -693,6 +693,20 @@ Salden je Person (Spalten wie #775) und Abwesenheiten je Fall (Spalten wie #777)
 **Stunden Saldo**, **direkt gebuchte Krankheit mit Datum**; Krankheit, Kind-Krank und Unfall je Fall liefert Rexx schon, der
 SAP-Import ueberspringt sie. Vorhanden, aber verspaetet oder ungeprueft: Ferienkonten (PA2006), Ferien ausstehend, Ferien,
 Kompensation und Militaer je Fall. Vollstaendige Liste mit Spaltennamen und Ampel: `saptasks/rexx_schnittstelle/NOTES.md` 12.
+
+### 8.18 Rexx-Hub-Abruf vorbereitet, Schalter aus (2026-11-10)
+
+Auftrag Ingo: alles vorbereiten, damit nach der Hub-Bestellung nur noch ein Schalter umzulegen ist. Gebaut (`1e99745`, `d99fbe6`, Suite
+1547/1547, **nicht deployed**): Ein Tagesdienst holt ab 05:30 die Rexx-Abfragen #775 und #777 ueber `GET v1/datawarehouse/{id}`
+und schreibt dieselben Dateien wie der Handexport (8.13, 8.14); das Cockpit liest sie unveraendert. Schalter `HrKpi:RexxHub:Enabled`
+(aus), Zugang als Quellsystem `REXXHUB` unter Admin > Settings, Testabruf ohne Schreiben und ohne Werte unter
+`/BiDashboard/admin/rexxhub/test` (Admin-Freischaltung noetig). Bei fehlenden oder schlecht gefuellten Pflichtspalten, zu wenigen Zeilen,
+unvollstaendigem Blaettern oder Netzfehlern bleibt die bisherige Datei; ein Handexport wird vor dem Ueberschreiben gesichert. Vor dem
+Umschalten zu klaeren: Antwortform und Spaltennamen (Testabruf), Zeitraum von #775 (fester Filter bis 04.11.2026), Netzweg und IP-Freigabe.
+Umschaltanleitung, Einstellungen und Annahmen: `saptasks/rexx_schnittstelle/NOTES.md` 14.
+
+**Befund am Leser, betrifft auch Handexporte (nicht geaendert):** Eine Zahl ausserhalb des Excel-Datumsbereichs in einer Datumsspalte
+laesst `ReadRows` die ganze Datei verwerfen, und Text-Zahlen werden nach der Serverkultur gelesen („4.5“ unter de-DE als 45).
 
 ## 9. Reiter Interaktiv (2026-11-04)
 
