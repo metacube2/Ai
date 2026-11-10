@@ -1,7 +1,10 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Services.Shopfloor;
 
 namespace TrafagSalesExporter.Services;
@@ -100,6 +103,9 @@ public sealed class MonthlyReviewQmService
                 ? await FetchOverride(options, timeout.Token)
                 : await FetchAsync(options, timeout.Token);
             var rows = MonthlyReviewQm.ParseElements(elements);
+            var groups = await LoadProductGroupsAsync(ct);
+            if (groups.Count > 0)
+                rows = MonthlyReviewQm.FillProductLines(rows, m => groups.GetValueOrDefault(PurchasingComponentDispoLoader.NormalizeKey(m)));
             var cases = MonthlyReviewQm.BuildCases(rows, options, DateOnly.FromDateTime(at));
             return new MonthlyReviewQmSnapshot
             {
@@ -121,6 +127,53 @@ public sealed class MonthlyReviewQmService
             _logger.LogWarning(ex, "Monthly Review: Q-Faelle aus SAP fehlgeschlagen");
             return new MonthlyReviewQmSnapshot { State = MonthlyReviewQmState.Error, FetchedAt = at, Error = message };
         }
+    }
+
+    /// <summary>
+    /// Produktgruppe je verkuerzter Nummer aus dem Einkauf-Cache (2026-11-10): zuerst ZC23 (PurchasingMaterialShareSales,
+    /// Produktgruppe mit dem groessten Umsatz), sonst Disponent der Nummer (PurchasingComponentDispoCache) ueber die
+    /// Disponentenregeln (PurchasingSpendDisponentRule). Fehlt die Datenbank oder eine Tabelle, bleibt die Zuordnung leer.
+    /// </summary>
+    private async Task<Dictionary<string, string>> LoadProductGroupsAsync(CancellationToken ct)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (FetchOverride is not null || _services.GetService(typeof(IDbContextFactory<AppDbContext>)) is not IDbContextFactory<AppDbContext> factory)
+            return result;
+        try
+        {
+            await using var db = await factory.CreateDbContextAsync(ct);
+            var conn = (SqliteConnection)db.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open)
+                await conn.OpenAsync(ct);
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT Vknr, Produktgruppe FROM PurchasingMaterialShareSales WHERE Produktgruppe <> '' GROUP BY Vknr, Produktgruppe ORDER BY Vknr, SUM(Netwr) DESC;";
+                await using var r = await cmd.ExecuteReaderAsync(ct);
+                while (await r.ReadAsync(ct))
+                    result.TryAdd(PurchasingComponentDispoLoader.NormalizeKey(r.GetString(0)), r.GetString(1));
+            }
+            var rules = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT DisponentPattern, ProductGroupText FROM PurchasingSpendDisponentRule WHERE ProductGroupText <> '';";
+                await using var r = await cmd.ExecuteReaderAsync(ct);
+                while (await r.ReadAsync(ct))
+                    rules.TryAdd(r.GetString(0).Trim(), r.GetString(1));
+            }
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT DISTINCT Vknr, VknrDispo FROM PurchasingComponentDispoCache WHERE VknrDispo <> '';";
+                await using var r = await cmd.ExecuteReaderAsync(ct);
+                while (await r.ReadAsync(ct))
+                    if (rules.TryGetValue(r.GetString(1).Trim(), out var g))
+                        result.TryAdd(PurchasingComponentDispoLoader.NormalizeKey(r.GetString(0)), g);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Monthly Review: Produktgruppen fuer Q-Faelle nicht gelesen");
+        }
+        return result;
     }
 
     private async Task<IReadOnlyList<JsonElement>> FetchAsync(MonthlyReviewOptions options, CancellationToken ct)

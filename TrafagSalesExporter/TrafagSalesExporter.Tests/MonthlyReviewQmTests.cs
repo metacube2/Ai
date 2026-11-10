@@ -314,4 +314,39 @@ public sealed class MonthlyReviewQmTests
         var small = await MonthlyReviewQmService.ReadAllAsync((url, _) => Task.FromResult(SampleJson), "https://sap/x", new MonthlyReviewOptions(), CancellationToken.None);
         Assert.Equal(4, small.Count);                    // eine Seite, doppelte Meldung einmal
     }
+
+    [Theory]
+    [InlineData("MOFN OFMA EIGV", "MOFN offen")]
+    [InlineData("MIAR OFMA", "MIAR in Arbeit")]
+    [InlineData("MRST MOFN", "MRST zurückgestellt")]
+    [InlineData("OSNO", "")]
+    [InlineData("", "")]
+    public void LifecycleStatus_AusSystemstatus(string sysstat, string erwartet)
+        => Assert.Equal(erwartet, MonthlyReviewQm.LifecycleStatus(sysstat));
+
+    [Fact]
+    public void Status_OhneAnwenderstatus_NimmtLebenszyklus()
+    {
+        var mitAnwender = new MonthlyReviewQmCase(Row("1", Reference, status: "Rücksendung offen", sys: "MOFN"), "TRIT", 1, null, null);
+        var ohne = new MonthlyReviewQmCase(Row("2", Reference, status: "", sys: "MIAR OFMA"), "TRIT", 1, null, null);
+        Assert.Equal("Rücksendung offen", mitAnwender.Status);
+        Assert.Equal("MIAR in Arbeit", ohne.Status);
+    }
+
+    [Fact]
+    public void FillProductLines_NurLeereUndBekannteMaterialien()
+    {
+        var rows = new List<MonthlyReviewQmRow>
+        {
+            Row("1", Reference) with { Material = "42053" },
+            Row("2", Reference, productLine: "Dichtewaechter") with { Material = "42053" },
+            Row("3", Reference) with { Material = "99999" },
+            Row("4", Reference) with { Material = "" }
+        };
+        var filled = MonthlyReviewQm.FillProductLines(rows, m => m == "42053" ? "FP_TRANSM. TX" : null);
+        Assert.Equal("FP_TRANSM. TX", filled[0].ProductLine);
+        Assert.Equal("Dichtewaechter", filled[1].ProductLine);   // geliefert bleibt
+        Assert.Equal("", filled[2].ProductLine);                 // unbekannt bleibt leer
+        Assert.Equal("", filled[3].ProductLine);
+    }
 }

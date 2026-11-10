@@ -73,7 +73,11 @@ public sealed record MonthlyReviewQmRow(
 public sealed record MonthlyReviewQmCase(MonthlyReviewQmRow Row, string Company, int? AgeDays, int? DaysSinceReturn, int? DaysToMeasure)
 {
     public string Number => Row.Number;
-    public string Status => Row.Status;
+    /// <summary>
+    /// Anwenderstatus, sonst (2026-11-10) der Lebenszyklus aus dem Systemstatus: P76 fuehrt bei Q-Meldungen kein
+    /// Anwenderstatus-Schema (JSTO: 26'209 von 26'210 QM-Objekten ohne STSMA), das Feld kommt dort immer leer.
+    /// </summary>
+    public string Status => Row.Status.Length > 0 ? Row.Status : MonthlyReviewQm.LifecycleStatus(Row.SystemStatus);
     public string Processor => Row.Processor;
 }
 
@@ -206,6 +210,29 @@ public static class MonthlyReviewQm
             return s;
         return null;
     }
+
+    /// <summary>
+    /// Lebenszyklus der Meldung aus dem Systemstatus (Kurztexte wie QM03): MOFN offen, MIAR in Arbeit, MRST zurueckgestellt.
+    /// Leer, wenn keiner davon aktiv ist (die Seite zeigt dann „–“).
+    /// </summary>
+    public static string LifecycleStatus(string systemStatus)
+    {
+        var codes = systemStatus.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (codes.Contains("MRST")) return "MRST zurückgestellt";
+        if (codes.Contains("MIAR")) return "MIAR in Arbeit";
+        if (codes.Contains("MOFN")) return "MOFN offen";
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// Produktlinie ergaenzen, wo das Set sie leer liefert (2026-11-10; das Set fuellt sie bewusst nicht, siehe
+    /// saptasks/qm_meldungen/NOTES.md 6.3): ueber die Materialnummer der Meldung aus der Produktgruppe des Dashboards.
+    /// </summary>
+    public static IReadOnlyList<MonthlyReviewQmRow> FillProductLines(IReadOnlyList<MonthlyReviewQmRow> rows, Func<string, string?> productGroup)
+        => rows.Select(r => r.ProductLine.Length > 0 || r.Material.Length == 0 || productGroup(r.Material) is not { Length: > 0 } g
+                ? r
+                : r with { ProductLine = g })
+            .ToList();
 
     private static string Material(string matnr)
     {
