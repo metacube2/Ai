@@ -660,3 +660,23 @@ weil `RV62ANNN` in keinem Auftrag liegt (Abschnitt 8.4).
 erzeugt `RV62ANNN` neu mit `INCLUDE RV62A601`. Alternativ Report `RV80HGEN` (SE38) laufen lassen. Danach lesend nachpruefen:
 `D010INC` `INCLUDE = RV62A601` mit `MASTER SAPLV61A` vorhanden, `TRDIR` `RV62ANNN` mit neuem `UDAT`. Erst dann gilt die
 Staffelbasis in P76 als produktiv; die erste echte IV mit Unterlieferung (Punkt 2 oben) danach beobachten.
+
+**Einbindung versucht, 2026-11-10 abends (Auftrag Ingo „kannst du das bitte machen“; nichts geaendert):** Vorpruefung lesend in
+eigener Sitzung (SE16, SE38 nur *Anzeigen*, Zeilen ueber `GuiAbapEditor.GetLineText`):
+
+- `TPALOG`: T76K912853 und T76K912856 am 10.11. 14:33/14:34 importiert, alle Schritte `RETCODE 0000`. Bei 853 kein Schritt `G`
+  (Generierung) und keine Nachimportmethode; es gibt also nichts, was `RV62ANNN` nach dem Import neu erzeugt haette.
+- `RV62A601` in P76 ist **zeilengleich** mit `staffelbasis_601.abap` (103 Zeilen).
+- `RV62ANNN` in P76 enthaelt nur die sechs Kommentarzeilen (Rueckfallstand, Kopie im Scratchpad der Sitzung).
+- VOFM in P76: Popup „SAP-System hat den Status ‚nicht aenderbar‘“, mit *Abbrechen* verlassen. **Der Weg ueber VOFM *Aktivieren*
+  geht in P76 nicht**, solange die Systemaenderbarkeit zu ist.
+- `RV80HGEN` (91 Zeilen, kein Selektionsbild) ruft `PERFORM aktivieren_alle(SAPMV80H) USING 'X'` und erzeugt **alle** VOFM-Gruppen
+  neu. In `TFRM` sind seit dem 16.01.2026 genau zwei Routinen neu aktiv: PFRS 601 und **FBED 908** „Pos. auftr.Proforma“
+  (`GNDAT 05.07.2026`). `RV60B908` (TRIM_MILI, 02.08.2026, Kennung `T76K912226`) steht in P76, `RV60BNNN` ist aber ebenso leer und
+  `D010INC` kennt kein Programm mit `RV60B908`. 908 haengt an der Kopiersteuerung `TVCPF` TA → F5, Positionstyp TAW, und prueft
+  Fakturasperre (Position und Kunde), Fakturarelevanz und bereits fakturierten Fakturaplan. **Ein `RV80HGEN`-Lauf wuerde 908 also
+  mit scharf schalten**, und die Proforma F5 aus TA/TAW wuerde danach anders geprueft als heute.
+
+Wege (Entscheid Ingo): (a) `RV62ANNN` aus T76 (dort mit `INCLUDE RV62A601`) als Reparatur in einem eigenen Auftrag transportieren,
+wirkt nur auf die Staffelbasis; (b) `RV80HGEN` in P76, wenn 908 ebenfalls wirken soll (vorher klaeren, wer 908 bestellt hat);
+(c) Systemaenderbarkeit kurz oeffnen und VOFM 601 aktivieren (Basis-Eingriff in der Produktion, nicht empfohlen).

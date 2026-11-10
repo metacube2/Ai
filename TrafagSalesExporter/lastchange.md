@@ -12,6 +12,10 @@ aktivieren (oder `RV80HGEN`), danach lesend nachpruefen. Fabios Frage nach der �
 Z999/Z000/Z001/Z002 mit Konditionsausschluss), der nicht begonnen ist. `saptasks/ic_preisfindung/NOTES.md` 8.9, Wochen_Todo 153.
 Punkt 1 unter „Unterbrochen“ in der Uebergabe darunter ist damit erledigt.
 
+*Spaeter am Abend (Auftrag Ingo, die Einbindung zu machen):* geht nicht ueber VOFM, P76 ist „nicht aenderbar“. `RV80HGEN` wuerde alle
+VOFM-Gruppen neu erzeugen und dabei auch die bisher ungenerierte Kopierbedingung FBED 908 (Proforma TA→F5, TAW) scharf schalten.
+Nichts geaendert; Entscheid Ingo zwischen Transport von `RV62ANNN` und `RV80HGEN` offen (NOTES 8.9).
+
 ## Nachtrag 2026-11-10 14:35: IC-Staffelbasis in P76 (Abnahme Fabio)
 
 - Fabio hat am 10.11. per Mail alle Tests in T76 als erfolgreich gemeldet (inkl. MIRO 1200 ohne Preisdifferenz) und fuer P76 freigegeben. Ingo hat
