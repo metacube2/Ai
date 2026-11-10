@@ -46,9 +46,9 @@
         @if (_stats is { } s)
         {
             <div class="frm-hero-stats">
-                <span><b>@s.Posts</b> @T("Beiträge", "Posts")</span>
-                <span><b>@s.Comments</b> @T("Kommentare", "Comments")</span>
-                <span><b>@s.Votes</b> @T("Stimmen", "Votes")</span>
+                <span><b>@s.Posts</b> @N(s.Posts, T("Beitrag", "Post"), T("Beiträge", "Posts"))</span>
+                <span><b>@s.Comments</b> @N(s.Comments, T("Kommentar", "Comment"), T("Kommentare", "Comments"))</span>
+                <span><b>@s.Votes</b> @N(s.Votes, T("Stimme", "Vote"), T("Stimmen", "Votes"))</span>
                 <span><b>@s.Contributors</b> @T("Mitwirkende", "Contributors")</span>
                 <span><b>@s.OpenQuestions</b> @T("offene Fragen", "open questions")</span>
             </div>
@@ -179,7 +179,7 @@
                                     <div class="frm-tags">@foreach (var tag in p.Tags) { <a class="frm-tag" href="@($"forum?tag={Uri.EscapeDataString(tag)}")">#@tag</a> }</div>
                                 }
                                 <div class="frm-actions">
-                                    <span class="frm-stat"><MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" Size="Size.Small" /> @p.CommentCount @T("Kommentare", "Comments")</span>
+                                    <span class="frm-stat"><MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" Size="Size.Small" /> @p.CommentCount @N(p.CommentCount, T("Kommentar", "Comment"), T("Kommentare", "Comments"))</span>
                                     <span class="frm-stat"><MudIcon Icon="@Icons.Material.Outlined.Visibility" Size="Size.Small" /> @p.ViewCount</span>
                                     <button type="button" class="frm-action @(_detailSaved ? "frm-on" : "")" disabled="@(!_user.IsKnown)" @onclick="ToggleSaveDetail">
                                         <MudIcon Icon="@(_detailSaved ? Icons.Material.Filled.Bookmark : Icons.Material.Outlined.BookmarkBorder)" Size="Size.Small" />
@@ -243,9 +243,9 @@
                             <h2>@prof.Name</h2>
                             <div class="frm-profile-stats">
                                 <span><b>@prof.Reputation</b> @T("Reputation", "Reputation")</span>
-                                <span><b>@prof.Posts</b> @T("Beiträge", "Posts")</span>
-                                <span><b>@prof.Comments</b> @T("Kommentare", "Comments")</span>
-                                <span><b>@prof.Accepted</b> @T("akzeptierte Antworten", "accepted answers")</span>
+                                <span><b>@prof.Posts</b> @N(prof.Posts, T("Beitrag", "Post"), T("Beiträge", "Posts"))</span>
+                                <span><b>@prof.Comments</b> @N(prof.Comments, T("Kommentar", "Comment"), T("Kommentare", "Comments"))</span>
+                                <span><b>@prof.Accepted</b> @N(prof.Accepted, T("akzeptierte Antwort", "accepted answer"), T("akzeptierte Antworten", "accepted answers"))</span>
                             </div>
                         </div>
                     </section>
@@ -256,7 +256,7 @@
                         <span class="frm-community-icon"><MudIcon Icon="@ForumIcons.Resolve(cc.Icon)" /></span>
                         <div class="frm-grow">
                             <h2>@cc.Name</h2>
-                            <span class="frm-community-slug">r/@cc.Slug · @cc.PostCount @T("Beiträge", "Posts") · @cc.MemberCount @T("Mitwirkende", "Contributors")</span>
+                            <span class="frm-community-slug">r/@cc.Slug · @cc.PostCount @N(cc.PostCount, T("Beitrag", "Post"), T("Beiträge", "Posts")) · @cc.MemberCount @T("Mitwirkende", "Contributors")</span>
                             <p>@cc.Description</p>
                         </div>
                     </section>
@@ -935,6 +935,9 @@
     private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
     private string T(string german, string english) => UiText.Text(german, english);
+
+    /// <summary>Einzahl bei genau 1, sonst Mehrzahl (bis 2026-11-10 stand immer die Mehrzahl, z. B. „1 Beiträge“).</summary>
+    private static string N(long count, string one, string many) => count == 1 ? one : many;
 
     public void Dispose()
     {

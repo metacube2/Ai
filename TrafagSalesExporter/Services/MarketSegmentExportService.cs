@@ -369,7 +369,9 @@ public sealed class MarketSegmentExportService : IMarketSegmentExportService
 
     /// <summary>
     /// Weist die bekannten Luecken offen aus, damit ein leeres Ergebnis nicht als Umsatz von
-    /// null gelesen wird. Fuer TRDE fehlen Kundenname und Kundenland in allen Verkaufszeilen.
+    /// null gelesen wird. Gezaehlt wird je Standort, wie viele Verkaufszeilen keinen Kundennamen, kein Kundenland
+    /// oder keine Kundennummer tragen. Fuer TRDE fehlten Name und Land bis September 2026 in allen Zeilen; seit dem
+    /// Nachzug ueber die Belegbruecke ist es ein Rest (Export 29.09.2026: 145 bzw. 163 von 7'737 Zeilen).
     /// </summary>
     private static async Task<List<IReadOnlyDictionary<string, object?>>> BuildDataGapsAsync(
         AppDbContext db, int? year, string? tsc)
@@ -478,7 +480,7 @@ public sealed class MarketSegmentExportService : IMarketSegmentExportService
         Add("Bestaetigt", "Von einem Menschen fachlich bestaetigt. Nur diese Zuordnungen wirken im zentralen Excel.");
         Add("Waehrung", "Umsatz steht als Rohwert je Waehrung. Es wird ausschliesslich innerhalb derselben Waehrung summiert.");
         Add("Blatt Verworfen (Protokoll)", "Protokollspur aus dem Anwendungsprotokoll, kein gepflegter Zustand. Ein Verwerfen loescht die Zuordnung, es wird nicht als Zustand gespeichert.");
-        Add("Datenluecke TRDE", "In den deutschen Verkaufszeilen fehlen Kundenname und Kundenland. Ein leeres deutsches Ergebnis ist eine Datenluecke und kein Umsatz von null. Siehe Blatt Datenluecken.");
+        Add("Datenluecken je Standort", "Einzelne Verkaufszeilen tragen keinen Kundennamen oder kein Kundenland; wie viele je Standort, zaehlt das Blatt Datenluecken fuer genau diesen Export. In den deutschen Verkaufszeilen fehlten beide Angaben bis September 2026 ganz, seither nur noch bei einem Rest. Ein leeres Ergebnis kann deshalb eine Datenluecke sein und ist nicht automatisch ein Umsatz von null.");
         Add("Leeres Kundenland", "Fehlt der Name in den Verkaufszeilen, zeigen die Blaetter Pruefung und Bestaetigt den bei der Zuordnung festgehaltenen Namen. Fuer das Kundenland gibt es keinen solchen Ersatz: ein leeres Kundenland bei gefuelltem Namen ist genau diese Quellluecke und kein fehlender Einzelfall.");
         Add("Pflege", "Bestaetigen und Verwerfen geschieht im Dashboard unter /marktsegmente. Diese Datei ist eine Arbeitskopie zum Lesen und wird nicht zurueckgelesen.");
 

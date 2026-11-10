@@ -57,4 +57,25 @@ public sealed class ShopfloorSapSyncTests
         Assert.Null(ShopfloorSapSync.DueSlot(times, new DateTime(2026, 10, 10, 13, 0, 0), DateTime.MinValue));
         Assert.Null(ShopfloorSapSync.DueSlot(times, new DateTime(2026, 10, 7, 5, 0, 0), DateTime.MinValue));
     }
+
+    [Theory]
+    [InlineData("CoPaSumSet", "T76K912866")]
+    [InlineData("ShopRmSet", "T76K912740 + T76K912738")]
+    [InlineData("ShopProdSet", "T76K912740 + T76K912738")]
+    [InlineData("ShopZd05Set", "T76K912718")]
+    [InlineData("ShopAufSet", "T76K912860")]
+    public void NotFound_Hint_Names_The_Transport_Of_The_Requested_Set(string set, string transport)
+    {
+        // Bis 2026-11-10 nannte der Hinweis bei jedem 404 die Auftraege von ShopRm/ShopProd, auch fuer CoPaSumSet.
+        var hint = ShopfloorSapSync.NotFoundHint(set);
+
+        Assert.Contains(transport, hint);
+        Assert.Contains("nicht nach P76 transportiert", hint);
+        if (set == "CoPaSumSet")
+            Assert.DoesNotContain("T76K912740", hint);
+    }
+
+    [Fact]
+    public void NotFound_Hint_For_An_Unknown_Set_Names_No_Transport()
+        => Assert.DoesNotContain("T76K", ShopfloorSapSync.NotFoundHint("C_SALESANALYTICSQRY_1(P_DisplayCurrency='CHF')/Results"));
 }

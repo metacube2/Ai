@@ -27,7 +27,7 @@
         }
         @if (_collapsed)
         {
-            <span class="ll-muted">· @Count(Comment) @T("Kommentare", "Comments")</span>
+            <span class="ll-muted">· @Count(Comment) @(Count(Comment) == 1 ? T("Kommentar", "Comment") : T("Kommentare", "Comments"))</span>
         }
     </div>
 

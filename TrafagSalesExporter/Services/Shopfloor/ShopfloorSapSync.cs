@@ -468,7 +468,7 @@ public sealed class ShopfloorSapSync : BackgroundService
             using var response = await client.GetAsync(url, ct);
             if (!response.IsSuccessStatusCode)
                 throw new HttpRequestException($"SAP OData {set} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase})" +
-                    (response.StatusCode == System.Net.HttpStatusCode.NotFound ? ", Set vermutlich noch nicht transportiert (ShopRm/ShopProd: T76K912740 + T76K912738)." : "."));
+                    (response.StatusCode == System.Net.HttpStatusCode.NotFound ? NotFoundHint(set) : "."));
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
             var pageRows = document.RootElement.TryGetProperty("d", out var d) && d.TryGetProperty("results", out var r) && r.ValueKind == JsonValueKind.Array
                 ? r.EnumerateArray().Select(e => e.Clone()).ToList()
@@ -478,6 +478,27 @@ public sealed class ShopfloorSapSync : BackgroundService
                 return rows;
         }
         throw new InvalidOperationException($"{set} lieferte zu viele Seiten; Abbruch.");
+    }
+
+    /// <summary>
+    /// Hinweis bei HTTP 404: nennt den Transportauftrag des abgefragten Sets. Bis 2026-11-10 stand hier fuer jedes Set
+    /// der Hinweis auf ShopRm/ShopProd (T76K912740 + T76K912738), auch wenn z. B. CoPaSumSet (T76K912866) fehlte.
+    /// Auftraege laut saptasks/shopfloor_sap/NOTES.md und lastchange.md; ein unbekanntes Set bekommt keinen Auftrag genannt.
+    /// </summary>
+    internal static string NotFoundHint(string set)
+    {
+        var name = set.Split('(', '/')[0];
+        var transport = name switch
+        {
+            ShopfloorSapMengen.RmSet or ShopfloorSapMengen.ProdSet => "ShopRm/ShopProd: T76K912740 + T76K912738",
+            ShopfloorSapCoPa.Set => "CoPaSumSet: T76K912866",
+            Zd05Set => "ShopZd05Set: T76K912718",
+            OrderSet => "ShopAufSet: T76K912718, Typ VZ T76K912797, Typ VR T76K912860",
+            _ => null
+        };
+        return transport is null
+            ? ", Set vermutlich noch nicht nach P76 transportiert."
+            : $", Set vermutlich noch nicht nach P76 transportiert ({transport}).";
     }
 
     /// <summary>Gleiche Verbindung wie Logistik live und Einkauf (Sets im Service ZPOWERBI_EINKAUF_SRV); auch fuer Operations KPI.</summary>
