@@ -1,6 +1,7 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-10 (Abschnitt 8.9: Abnahme Fabio bestanden, Staffelbasis laut Ingo in P76 importiert); davor 2026-11-06
+Stand: 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
+noch nicht eingebunden**: VOFM 601 in P76 aktivieren, macht Ingo); davor 2026-11-06
 (Abschnitt 8: Staffelbasis Bestellmenge in T76 umgesetzt und getestet, Routine 601, Auftraege
 T76K912853 und T76K912856, *damals* nicht freigegeben; Abschnitt 8.8 vom Nachmittag: Tests S6/S7 und Gegenprobe, Testtabelle
 S1 bis S7, Zeile „Transportfertig“). Abschnitte 0 bis 7 vom 2026-11-05 (Agent sap-t76, damals nur lesend in
@@ -623,6 +624,7 @@ nicht nachgesehen (P76 nur mit Freigabe Ingo).
 **Offen:**
 1. Pruefung nach dem Import in P76 (Abschnitt 8.6 Punkt 2): `RV62ANNN` enthaelt `INCLUDE RV62A601`, `TFRM PFRS 601 AKTIV X`, `RV62A601`
    aktiv, `T685A` V/PR00 `KOFRS 0000601`; sonst VOFM 601 aktivieren bzw. RV80HGEN (Ingo). Lesend durch Claude nur mit Freigabe Ingo.
+   *(Geprueft 10.11. abends, unten: alles da ausser `INCLUDE RV62A601` in `RV62ANNN`; offen ist jetzt VOFM 601 in P76 aktivieren.)*
 2. Fall S6 (Unterlieferung in P76) war in T76 nicht vollstaendig testbar: erste echte IV mit Unterlieferung in P76 beobachten.
 3. Schritt 1 der Anfrage vom 04.11. (ZICAA1 um Z999/Z000/Z001/Z002 mit Konditionsausschluss) ist nicht begonnen; danach dieselbe
    Routine 601 bei Z999/Z002 eintragen (Abschnitt 8.6 Punkt 4). T76-Wartung 11.11. 16 bis 18 Uhr beachten.
@@ -634,4 +636,27 @@ test“, Agent sap-t76) wurde wegen eines PC-Neustarts abgebrochen. Ihre letzte 
 war erwartet, weil `RV62ANNN` in keinem Auftrag liegt (Abschnitt 8.4). Abhilfe laut Abschnitt 8.6 Punkt 2: in P76 VOFM *Formeln >
 Staffelbasis* 601 aktivieren (erzeugt `RV62ANNN` neu) bzw. RV80HGEN, macht Ingo. Die uebrigen Punkte (Importstand, `TFRM` 601 aktiv,
 `RV62A601` aktiv und inhaltsgleich, `T685A` V/PR00 `KOFRS 0000601`) sind **nicht gemeldet**. Die Pruefung ist nach dem Neustart zu
-wiederholen, bevor jemand handelt.
+wiederholen, bevor jemand handelt. *(Wiederholt und bestaetigt am selben Abend, siehe unten.)*
+
+**P76-Pruefung nach dem Import, 2026-11-10 abends (bestaetigt, vollstaendig):** Freigabe Ingo „ja mache test“, nach dem Neustart
+„mach weiter“. Claude selbst, angemeldete GUI Ingos (P76/100, `trasp76s`), eigene Sitzung `/app/con[0]/ses[1]` ueber
+`.tmp_sap_probe/P76Lesen.vbs neu:SE16`, nur SE16, danach mit `P76SitzungSchliessen.vbs` geschlossen (danach nur noch `ses[0]`).
+Nichts geaendert; SE16 hat wie ueblich den Selektionsreport `/1BCDWB/DBTRDIR` erzeugt.
+
+| Punkt | Befund P76 | Bewertung |
+| --- | --- | --- |
+| `TFRM` PFRS 601 | `AKTIV X`, `KAPPL V`, Text „IC Bestellmenge“, `GNDAT 06.11.2026 GNZEI 13:20:03` | importiert; Zeitstempel ist der aus T76, nicht in P76 neu generiert |
+| `RV62A601` (`TRDIR`) | vorhanden, `CNAM`/`UNAM` KOI, `CDAT`/`UDAT` 10.11.2026, `SUBC I` | Include importiert (Auftrag T76K912853); inhaltlicher Vergleich mit T76 nicht gemacht |
+| `RV62ANNN` (`TRDIR`) | zuletzt geaendert `TRIM_MILI` 16.01.2026, Version 44 | **nicht neu erzeugt**, enthaelt die Zeile `INCLUDE RV62A601` also nicht |
+| `D010INC` | `INCLUDE = RV62A601`: keine Eintraege; `RV62ANNN` wird von `SAPLV61A` eingebunden | **`RV62A601` von keinem Programm eingebunden** |
+| `T685A` V/PR00 | `KZBZG C`, `KOFRS 0000601` | Customizing importiert (T76K912856) |
+
+**Ergebnis:** Beide Auftraege sind in P76 angekommen, aber **die Staffelroutine 601 wirkt in P76 noch nicht**. PR00 verweist auf
+Routine 601, `SAPLV61A` kennt sie jedoch nicht; der Aufruf `PERFORM (frm_staffelbas) IN PROGRAM saplv61a IF FOUND` laeuft ins Leere,
+und die IV-Faktura rechnet weiter mit der Liefermenge als Staffelbasis (also wie vor der Aenderung, kein Abbruch). Das war erwartet,
+weil `RV62ANNN` in keinem Auftrag liegt (Abschnitt 8.4).
+
+**Abhilfe (macht Ingo, schreibend in P76):** VOFM *Formeln > Staffelbasis*, Zeile 601 markieren, *Bearbeiten > Aktivieren*; das
+erzeugt `RV62ANNN` neu mit `INCLUDE RV62A601`. Alternativ Report `RV80HGEN` (SE38) laufen lassen. Danach lesend nachpruefen:
+`D010INC` `INCLUDE = RV62A601` mit `MASTER SAPLV61A` vorhanden, `TRDIR` `RV62ANNN` mit neuem `UDAT`. Erst dann gilt die
+Staffelbasis in P76 als produktiv; die erste echte IV mit Unterlieferung (Punkt 2 oben) danach beobachten.

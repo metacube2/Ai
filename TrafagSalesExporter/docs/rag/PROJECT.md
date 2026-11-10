@@ -9,7 +9,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
-- **2026-11-06/09:** Vier T76-Transporte warten auf Ingo (Uebersicht `lastchange.md` „Uebergabe Stand 2026-11-09“): FIX 26 Materialanteil, QmMeldungSet, IC-Staffelbasis nach Bestellmenge (VOFM 601), ZZPRDAT inkl. Reiter-Fix und Georgs XCO1-Objekte (vor Import P76 pruefen). ZZPRDAT-Testnachweis fuer den Fachbereich liegt vor.
+- **2026-11-06/09:** Vier T76-Transporte warten auf Ingo (Uebersicht `lastchange.md` „Uebergabe Stand 2026-11-09“): FIX 26 Materialanteil, QmMeldungSet, IC-Staffelbasis nach Bestellmenge (VOFM 601; *10.11.: importiert, aber in P76 noch nicht eingebunden, VOFM 601 dort aktivieren, `saptasks/ic_preisfindung/NOTES.md` 8.9*), ZZPRDAT inkl. Reiter-Fix und Georgs XCO1-Objekte (vor Import P76 pruefen). ZZPRDAT-Testnachweis fuer den Fachbereich liegt vor.
 - **2026-11-05:** Verkauf-Unterreiter **Monthly Review Gesellschaften** (Wunsch Patrick Hertach) produktiv seit 10:33 (`47abb30`),
   Q-Faelle-Abschnitt gebaut, Abruf aus bis `T76K912837` (`QmMeldungSet`, offene Q1) in P76 ist
   (`docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md`). Einkauf-Pruefung im Chrome mit Fehlerliste

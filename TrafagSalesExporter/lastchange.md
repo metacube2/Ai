@@ -1,6 +1,16 @@
 # Last Change
 
-Stand: 2026-11-10 nachmittags (Uebergabe vor PC-Neustart)
+Stand: 2026-11-10 abends (P76-Pruefung IC-Staffelbasis nachgeholt; sonst gilt die Uebergabe vom Nachmittag weiter)
+
+## Nachtrag 2026-11-10 abends: P76-Pruefung IC-Staffelbasis nach dem Import (bestaetigt)
+
+Die am Nachmittag abgebrochene lesende Pruefung ist wiederholt (Claude selbst, eigene SE16-Sitzung, geschlossen, nichts geaendert).
+Beide Auftraege sind in P76: `TFRM` PFRS 601 aktiv, `RV62A601` vorhanden (KOI, 10.11.), `T685A` V/PR00 `KOFRS 0000601`. **`RV62ANNN`
+ist aber nicht neu erzeugt** (letzte Aenderung TRIM_MILI 16.01.2026), `D010INC` kennt kein Programm mit `RV62A601`. Die Routine wirkt
+in P76 also noch nicht; die IV rechnet weiter nach Liefermenge. **Naechster Schritt Ingo:** in P76 VOFM *Formeln > Staffelbasis* 601
+aktivieren (oder `RV80HGEN`), danach lesend nachpruefen. Fabios Frage nach der „restlichen Anpassung“ meint Schritt 1 (ZICAA1 um
+Z999/Z000/Z001/Z002 mit Konditionsausschluss), der nicht begonnen ist. `saptasks/ic_preisfindung/NOTES.md` 8.9, Wochen_Todo 153.
+Punkt 1 unter „Unterbrochen“ in der Uebergabe darunter ist damit erledigt.
 
 ## Nachtrag 2026-11-10 14:35: IC-Staffelbasis in P76 (Abnahme Fabio)
 
