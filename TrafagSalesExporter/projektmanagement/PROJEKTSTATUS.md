@@ -547,7 +547,11 @@ Rexx beauftragt (4'800 EUR pro Jahr, Angebot Artjom Yahno vom 2026-07-28); „wa
 heisst also konkret: Rexx richtet den Hub ein. Dazu offene HR-Wuensche aus der Mailhistorie (Ferien
 am Stueck, Fit-&-Wohl, Uebertrag Restferien, weitere KPIs), siehe `docs/HR_KPI.md` Abschnitt 8.3.
 
-**Nachtrag 2026-09-30:** Den Rexx-Hub wollen wir nicht (Ingo). Der taegliche Export der vier
+**Nachtrag 2026-11-10:** Entscheid Ingo: Wir nehmen den Rexx Hub (guenstiger: 4'800 EUR pro Jahr gegen 11'200 EUR fuer die
+acht bestehenden Schnittstellen); Ingo migriert die bestehenden Schnittstellen selbst, der Stempeluhrtransfer bleibt. Der
+Nachtrag vom 2026-09-30 ist damit ueberholt. Lieferfelder: `saptasks/rexx_schnittstelle/NOTES.md` 12, Wochen_Todo 133.
+
+**Nachtrag 2026-09-30** *(ueberholt am 2026-11-10)***:** Den Rexx-Hub wollen wir nicht (Ingo). Der taegliche Export der vier
 Rexx-Berichte in den HR-Datenordner soll ueber Upgreat laufen, wie die dormakaba-Uebermittlung nach
 Rexx, die Ueli Kunzmann seit 02.09. im 15-Minuten-Takt betreibt. Mail an Ueli am 30.09. versendet;
 offen sind seine Antwort, Pfad und Berechtigung sowie, ob Nadjas Hub-Auftrag bei Rexx zurueckgenommen

@@ -9,7 +9,7 @@ HR	Kader (SAP-Mitarbeiterkreis 10) 8,2 h, übrige 8,0 h je Arbeitstag	Bereit		20
 HR	Abwesenheiten mit Von/Bis, nur genehmigte, Krankenquote je Zeitraum	Bereit; Ferien/Kompensation erst nach Sonjas Rexx-Import in SAP		2026-10-01
 HR	Absenz-Ampel: bis 4,99 % gelb, ab 5 % rot	Bereit		2026-10-01
 HR	SAP-Daten täglich automatisch	Bereit		2026-10-01
-HR	Rexx-Berichte täglich automatisch (Upgreat nicht zuständig, Rexx betreut Trafag selbst)	Wartet	Sitzung Rexx Hub nächste Woche (Ingo, Alex, Artjom Yahno)	2026-11-03
+HR	Rexx-Berichte täglich automatisch über den Rexx Hub (Entscheid Ingo 10.11.: Hub wird genommen, günstiger; Ingo migriert die bestehenden Schnittstellen, der Stempeluhrtransfer bleibt)	Wartet	Bestellung Hub (mit Nadja), Lieferfelder und tägliche Ablage mit Rexx (Artjom Yahno)	2026-11-10
 HR	Krankheitsarten bestätigen	Wartet	Sonja	2026-10-01
 HR	HR-Cockpit: Formeln geprüft, drei Rechenfehler behoben; neuer Reiter Interaktiv (Zeitraffer, Bindungskurve, Fit & Wohl, Ferien am Stück u. a.)	Bereit (produktiv 04.11.); HR-Vorgaben aus Mails umgesetzt; seit 11:46 Rexx-Gesamtabfrage #775, seit 12:21 Abwesenheiten je Fall #777 (Interaktiv aktuell)	HR (Sonja): Kontrollwerte 2025, Befristete im Headcount, Arzt/0220/0280, direkt gebuchte Krankheit nicht in SAP; Ingo: #775 und #777 regelmässig exportieren	2026-11-04
 Einkauf	Seite nach dem Auffrischen sofort da	Bereit		2026-10-01
@@ -19,7 +19,7 @@ Einkauf	Logistik live: Kommissionierung, Produktion, 3D-Lager, Produktivität, K
 Einkauf	Stückliste: Verwendung & Risiko über mehrere Stufen	Bereit		2026-10-01
 Einkauf	Zwei kleine Entscheide (Beschriftung, SAP-Schlüssel)	Offen	Ingo	2026-09-29
 SAP	ZZPRDAT Produktionsdatum: gemeinsamer Test	Läuft	Abnahme 05./06.11.: Logik schreibt korrekt, Reiter-Anzeige behoben; alle Objekte (inkl. Georgs XCO1-Teile) in T76K912490, nicht freigegeben; vor Import P76-Stand (ZPP00012, ZCO_ORD1) und ZXCO1U06 mit Georg klaeren	2026-11-06
-SAP	ZLO03: FIX 12 bis 23 (offene MK, RoHS/REACH/SVHC/PFAS, Download .xlsx, Disponent/Warengruppe, Stuecklisten-Einheit) am 29.10. in P76 importiert; FIX 24 (Stueckkosten ungerundet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit) in T76K912785, getestet	Wartet	Freigabe und Import T76K912785 (Ingo), Armin antworten, Anwender informieren	2026-10-30
+SAP	ZLO03: FIX 12 bis 23 (offene MK, RoHS/REACH/SVHC/PFAS, Download .xlsx, Disponent/Warengruppe, Stuecklisten-Einheit) am 29.10. in P76 importiert; FIX 24 (Stueckkosten ungerundet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit) in T76K912785, in P76 importiert (Importliste P76, 10.11.)	Bereit	Armin antworten, Anwender informieren (Ingo)	2026-11-10
 SAP	ZC12 Nullmengen: Fehlersuche einschalten	Offen	Ingo (Entscheid 01.10.: Editor in T76 so lassen, nichts tun)	2026-10-01
 SAP	ZRL2 Mengenrabatt Trafag AT	Bereit		2026-09-30
 Railway	Umsatz-Gesamtsicht aller Standorte	Bereit		2026-09-29

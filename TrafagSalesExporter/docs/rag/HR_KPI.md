@@ -1,6 +1,6 @@
 # RAG HR KPI
 
-Stand: 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-10 (Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder; `docs/HR_KPI.md` 8.17); davor 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
 
@@ -54,7 +54,7 @@ Stand: 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); dav
   dafuer nach (Aussage „P76 immer aktuell“ ueberholt). Ferienkonten in PA2006, Austrittsart nur
   teilweise in SAP. Idee Ingo: eigenes Programm nur in Z-Tabellen, taeglicher Job; nicht gebaut,
   haengt an der Dateilieferung. Mails (03.11. gelesen): Upgreat schloss Ticket #12699584 am 19.10. mit „Unable to solve“, Rexx betreut
-  Trafag selbst (HR/Nadja); Hub-Angebot AG36071 4'800 EUR/Jahr gegen 4 Einzelschnittstellen 5'600 EUR/Jahr, Entscheid offen; *Nachtrag 03.11. nachmittags: Sitzung Rexx Hub naechste Woche mit Alex und Artjom Yahno, Nadja und Sonja laut Alex nicht noetig*; Sonja: HR
+  Trafag selbst (HR/Nadja); Hub-Angebot AG36071 4'800 EUR/Jahr gegen 4 Einzelschnittstellen 5'600 EUR/Jahr, *„Entscheid offen“ ueberholt am 2026-11-10:* **Ingo: wir nehmen den Rexx Hub**, Ingo migriert die bestehenden Schnittstellen, der Stempeluhrtransfer bleibt; Felder, die Rexx liefern muss, in `saptasks/rexx_schnittstelle/NOTES.md` 12; *Nachtrag 03.11. nachmittags: Sitzung Rexx Hub naechste Woche mit Alex und Artjom Yahno, Nadja und Sonja laut Alex nicht noetig*; Sonja: HR
   konnte noch nichts testen. `docs/HR_KPI.md` 8.9, `saptasks/rexx_schnittstelle/NOTES.md`.
 - **2026-10-20 live geprueft: SAP-Abruf laeuft taeglich.** In `hrdata` auf dem Server sind `HR_KPI_Export.xlsx` und
   `HR_Absenzen_SAP.xlsx` heute um 05:07 geschrieben. Die Rexx-Dateien sind weiter vom 08.07. (Upgreat offen), wer danach
@@ -74,7 +74,7 @@ Stand: 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); dav
   erfasst Absenzen je Fall mit Von/Bis und Status (neuer Bericht noetig); Absenz-Ampel bis 4,99 %
   gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (produktiv seit 01.10.). SAP-Datei `HR_KPI_Export` war damals NICHT automatisiert (Report
   `Z_HR_KPI_CONS` von Hand); *ueberholt: seit 01.10. taeglich ueber `HrKpiSet`*. Details `docs/HR_KPI.md` 8.5 und 8.6.
-- **2026-09-30: kein Rexx-Hub.** Automatischer Export der vier Rexx-Berichte soll ueber Upgreat
+- *Ueberholt am 2026-11-10 (Rexx Hub wird genommen):* **2026-09-30: kein Rexx-Hub.** Automatischer Export der vier Rexx-Berichte soll ueber Upgreat
   (Ueli Kunzmann) laufen, Mail am 30.09. versendet, Antwort offen *(ueberholt am 2026-11-03: daraus Upgreat-Ticket #12699584, am 19.10. geschlossen; am 29.10. Angebot AG36071 Rexx Hub; Inhalt ungelesen)*. dormakaba nach Rexx laeuft schon
   seit 02.09. alle 15 Minuten. Details `docs/HR_KPI.md` 8.3.
 

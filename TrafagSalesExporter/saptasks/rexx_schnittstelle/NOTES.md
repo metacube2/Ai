@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -214,3 +214,48 @@ Die Trafag-Verbindung ist also eine Eigenentwicklung; Auskunft geben nur EXPRIS,
 **Nachtrag 2026-11-03 nachmittags:** In der Abschlussrunde nannte Nadja Artjom Yahno als Rexx-Betreuer (seit rund einem Jahr,
 auch fuer Schnittstellen). Ingo hat die Sitzung zum Rexx Hub fuer naechste Woche geplant, mit Alex und Artjom; Nadja und Sonja
 braucht es laut Alex nicht. Davon haengen der Tagesexport (Abschnitt 7) und die Idee mit eigenem Programm ab.
+
+## 12. Entscheid 2026-11-10: wir nehmen den Rexx Hub; Felder, die Rexx liefern muss
+
+**Entscheid Ingo, 2026-11-10 (im Chat):** Der Rexx Hub wird genommen, weil er guenstiger ist (Angebot AG36071, Abschnitt 11:
+Hub 4'800 EUR pro Jahr mit beliebig vielen Schnittstellen; heute 8 Schnittstellen 11'200 EUR pro Jahr, 4 weitere einzeln
+5'600 EUR pro Jahr). Ingo migriert die bestehenden Schnittstellen selbst auf den Hub; als einzige bleibt der
+Stempeluhrtransfer in Rexx wie bisher. *Damit ueberholt:* der Entscheid vom 2026-09-30 „Hub wollen wir nicht“ (Abschnitt 11
+Folgerung 3, `docs/HR_KPI.md` 8.3). Mail an Nadja im Chat entworfen, **nicht gesendet** (Versand durch Ingo). Was der
+Stempeluhrtransfer weiter kostet, ist nicht bekannt; ob die Sitzung zum Hub (Alex, Artjom) stattgefunden hat, ist hier
+nicht festgehalten.
+
+**Felder, die Rexx liefern muss** (Kurzauskunft 10.11. aus der Doku und aus `Services/HrKpi/HrKpiDashboardBuilder.cs`; nichts
+neu in SAP gemessen, SAP-Seite weiter nur T76). Die Namen sind die Spaltenueberschriften der Rexx-Abfragen #775 und #777.
+Excel dazu: `HR-Cockpit_Felder_Rexx_nach_SAP_2026-11-10_v2.xlsx` in Ingos Downloads (nicht im Repository).
+
+*Lieferung A, Stamm und Salden je Person* (eine Zeile je Person, inklusive Ausgeschiedener; Summen 01.01. bis Liefertag):
+Personalnummer; Nachname, Vorname (Link Personal); Personal Status; Eintrittsdatum; Austrittsdatum; **Austrittsart**;
+Geburtsdatum; Organisation; Kostenstelle; Stelle; Ø tägliche Sollarbeitszeit (Woche); **Stunden Saldo**; Urlaubsanspruch;
+Urlaub Rest; Ferien ausstehend (Tage); Ferien angetreten (Tage); Krankheit angetreten (Stunden); Krankheit (über 60 Tage)
+angetreten (Stunden); Unfall angetreten (Stunden); Kompensation angetreten (Stunden); Militär / Zivildienst angetreten
+(Stunden).
+
+*Lieferung B, Abwesenheiten je Fall* (eine Zeile je Abwesenheit): Personalnummer; **Abwesenheit Buchung** (Art, einschliesslich
+Krankheit, Kind-Krank, Unfall); Abwesenheit Status; Abwesenheit von; Abwesenheit bis; Abwesenheit Tage; Abwesenheit halbe
+Tage; Abwesenheit Tagessoll; Abwesenheit ID Buchung. „halbe Tage“ und „ID Buchung“ liest das Cockpit heute nicht (Namen aus
+`docs/HR_KPI.md` 8.14).
+
+| Ampel | Feld | Stand in SAP | Noetig |
+| --- | --- | --- | --- |
+| rot | Austrittsart | fehlt bei Austritten „aus Rexx“ (Z5 ohne Grund, 43 von 95 seit 2025 in T76); `ZHR_PA_REXX_IMPORT_S` hat kein solches Feld | Rexx: neues Feld in der Stammdatendatei |
+| rot | Krankheit, Kind-Krank, Unfall je Fall | steht in der Absenz-CSV, `Z_HR_PA_IMP_ABSENZDATEN` schliesst sie aus (Abschnitt 5) | SAP-seitig (Import oder Z-Tabelle), keine Rexx-Lieferung |
+| rot | Direkt gebuchte Krankheit mit Datum (ohne Antrag) | rund 100 Tage bei 13 Personen fehlen (`docs/HR_KPI.md` 8.14) | offen, Rexx-Feldname unbekannt; mit Rexx (Artjom) und Sonja klaeren |
+| rot | Stunden Saldo (GLZ) | in keiner Importdatei | Rexx liefert, oder SAP rechnet selbst (PT60/PT_BAL00, ungeprueft) |
+| gelb | Urlaubsanspruch, Urlaub Rest | PA2006 Art 10 und 11 vorhanden | Abgleich mit Rexx fehlt |
+| gelb | Ferien ausstehend | Import nimmt nur „Genehmigt“ mit Ende im Datumsfenster | pruefen |
+| gelb | Ferien, Kompensation, Militaer, bezahlte Absenzen je Fall | Felder da, am 04.11. nur bis Ende Juli | taegliche Ablage in `/usr/sap/rexx`, Import als Job |
+| gelb | Militaer / Zivildienst | am 04.11. 3 Personen in SAP, 7 in Rexx | Artzuordnung klaeren |
+| gruen | Personalnummer, Name, Eintritt, Austritt, Geburtsdatum, Organisation, Kostenstelle, Stelle, Sollzeit | Stammdatenimport `Z_HR_PA_REXX` | regelmaessiger Lauf |
+| gruen | Beschaeftigungsgrad, Mitarbeiterkreis, Geschlecht, Planstelle, BU/NBU | SAP fuehrt sie selbst | nichts |
+
+Befristung und Mitarbeitertyp brauchen kein eigenes Feld: Das Cockpit leitet beides aus „Austrittsart“ und „Stelle“ ab.
+Nicht noetig: Lohn, Bank, Adresse, „Leitung j/n“, Arbeitszeitmodell.
+
+**Naechste Schritte:** Mail an Nadja senden (Ingo); Hub bestellen (mit Nadja klaeren, wer); Lieferfelder, Format und taegliche
+Ablage mit Rexx (Artjom Yahno) klaeren; danach Entscheid zum eigenen Programm (Abschnitt 7).

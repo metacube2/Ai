@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-11-05
+Stand: 2026-11-10
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -44,6 +44,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Statusnachfuehrung: Entscheid Rexx Hub, Lieferfelder Rexx, Transportstaende laut Importliste P76 (Auftrag Ingo im Chat) | 2026-11-10 | **abgeschlossen, Reservierung frei**, nur Doku, kein Code, kein Test, kein Deploy. Entscheid Ingo: Rexx Hub wird genommen (30.09. ueberholt); Feldliste in `saptasks/rexx_schnittstelle/NOTES.md` 12, `docs/HR_KPI.md` 8.17; Wochen_Todo 22/55 geschlossen, 133 in Arbeit, 158 erledigt, 9/114/119/129 Import nachgefuehrt; `Status_kurz`, beide `.xlsx` neu erzeugt, rag/HR_KPI, rag/PROJECT, Router HR, PROJEKTSTATUS, LEARNINGS, lastchange. Offen: Mail an Nadja (Ingo), `T76K912866`, `T76K912853`/`856`, `T76K912490` |
 | Claude | Tag 10.11.: ISS-032 belegt, Q-Faelle Status/Produktlinie, DLQ72, Backend-Schutz, plan5, Verzug-Schalter, CO-PA (T76K912866), T76 aufgeraeumt | 2026-11-10 | **abgeschlossen, Reservierung frei.** Deploys 08:16 `e6f6f70` und 08:46 `436e8ad`; offen: Import `T76K912866` (Ingo), Fabio (Verzug, plan5), Andreas (ISS-032). `docs/SHOPFLOOR_2026-10-07.md` 20 |
 | Claude | Shopfloor Verzug P76-Abgleich und Auftragsvorrat (Mail Fabio 09.11.) | 2026-11-09 | **abgeschlossen, Reservierung frei.** Verzug P76 = ZC22 exakt, Schalter aus (Fragen an Fabio). Vorrat: T76 `T76K912860` (SEH gleich ZC22), Cockpit `01fceec` deployed 14:12, Schalter aus. Einkauf FIX 26 in P76 bestaetigt (1.27 Mio.). `docs/SHOPFLOOR_2026-10-07.md` 19 |
 | Claude | ZLO03 FIX 27 (Excel alte Menge plus Zusatzspalte je 1 Stk) | 2026-11-09 | **abgeschlossen, Reservierung frei.** T76 aktiv im selben Auftrag `T76K912839` wie FIX 26, nicht freigegeben; Test T76 bestanden (E11221/E11283 alt 1, neu 0.000211; Set unveraendert). `zlo03/FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` |

@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -243,7 +243,7 @@ Zeilen (Stichtagsstand); Austritte 128 statt 113, gleicher Beginn 30.11.2023, ne
 Bestand stehende Austrittszeile (24.04.2026, ohne Austrittsart) gehoert zu einer Person, die laut neuem Saldi-Export aktiv
 ist; der neue Export ersetzt den alten deshalb ohne Zusammenfuehren. Absenzfaelle in #744 bis 06.11.2026 (geplantes Ende
 einer laufenden Krankmeldung; gezaehlt wird nur bis heute).
-Ab naechster Woche soll die Rexx-Schnittstelle die Dateien liefern (Sitzung Rexx Hub, 8.9).
+Ab naechster Woche soll die Rexx-Schnittstelle die Dateien liefern (Sitzung Rexx Hub, 8.9). *Stand 2026-11-10: Entscheid fuer den Rexx Hub, Lieferung noch nicht eingerichtet (8.17).*
 
 ### 8.3 Offene Wuensche und Faeden aus der Mailhistorie (gesichtet 2026-09-29)
 
@@ -268,7 +268,7 @@ Die Absenz-Ampel wuenscht Sonja mit gruen bis 3 %, gelb bis 4 %, rot ab 5 %; der
 
 **Offene Faeden:**
 
-- **Seit 2026-09-30: kein Rexx-Hub, Export ueber Upgreat (PM-07).** Ingo: „Hub wollen wir nicht“. Stattdessen
+- *Ueberholt am 2026-11-10 (Entscheid Ingo: der Rexx Hub wird genommen, 8.17):* **Seit 2026-09-30: kein Rexx-Hub, Export ueber Upgreat (PM-07).** Ingo: „Hub wollen wir nicht“. Stattdessen
   hat Ingo am 2026-09-30 Ueli Kunzmann (Upgreat) per Mail gebeten, die vier Rexx-Berichte
   (`Saldiperstichdatum`, `Exportkommengehen`, `Abwesenheitinstunden` ab 01.01. des laufenden Jahres,
   `Personalausgeschieden`, je `.xlsx` mit unveraenderten Namen und Spalten) einmal taeglich in den
@@ -679,6 +679,19 @@ Downloads; nicht gesendet).
 Fragen an HR: (1) Direkt in Rexx gebuchte Krankheit kommt nicht in SAP an, gewollt oder nachbuchen? (2) Befristete im
 Headcount und in der Fluktuation (Rexx: 94 von 393 befristet)? (3) SAP 0210, 0220, 0280 und „Kind/Angehoerige krank“ in die
 Krankenquote? (4) Aktuelle Kontrollwerte 2025? (5) Militaer/Zivildienst in Rexx unter einer anderen Art? Antworten offen.
+
+### 8.17 Entscheid Rexx Hub und Felder, die Rexx liefern muss (2026-11-10)
+
+**Entscheid Ingo, 2026-11-10:** Wir nehmen den Rexx Hub, weil er guenstiger ist (4'800 EUR pro Jahr gegen 11'200 EUR pro Jahr
+fuer die acht bestehenden Schnittstellen und 5'600 EUR pro Jahr fuer vier weitere; Zahlen aus dem Angebot AG36071, 8.9). Ingo
+migriert die bestehenden Schnittstellen selbst; als einzige bleibt der Stempeluhrtransfer in Rexx. *Ueberholt damit:* „kein
+Rexx-Hub“ vom 2026-09-30 (8.3). Mail an Nadja entworfen, Versand durch Ingo.
+
+Welche Felder Rexx liefern muss, damit SAP alles hat (Kurzauskunft 10.11., nichts neu gemessen): zwei Lieferungen, Stamm und
+Salden je Person (Spalten wie #775) und Abwesenheiten je Fall (Spalten wie #777). Heute fehlen in SAP: **Austrittsart**,
+**Stunden Saldo**, **direkt gebuchte Krankheit mit Datum**; Krankheit, Kind-Krank und Unfall je Fall liefert Rexx schon, der
+SAP-Import ueberspringt sie. Vorhanden, aber verspaetet oder ungeprueft: Ferienkonten (PA2006), Ferien ausstehend, Ferien,
+Kompensation und Militaer je Fall. Vollstaendige Liste mit Spaltennamen und Ampel: `saptasks/rexx_schnittstelle/NOTES.md` 12.
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

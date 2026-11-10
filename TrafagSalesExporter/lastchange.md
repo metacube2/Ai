@@ -2,6 +2,17 @@
 
 Stand: 2026-11-10
 
+## Nachtrag 2026-11-10 09:45: Entscheid Rexx Hub, Transportstaende nachgefuehrt (nur Doku)
+
+- **Entscheid Ingo: wir nehmen den Rexx Hub** (guenstiger, Ingo migriert die bestehenden Schnittstellen, Stempeluhrtransfer
+  bleibt). Der Entscheid vom 30.09. („kein Hub“) ist ueberholt. Felder, die Rexx liefern muss: `saptasks/rexx_schnittstelle/NOTES.md` 12,
+  Kurzfassung `docs/HR_KPI.md` 8.17. Mail an Nadja im Chat entworfen, Versand durch Ingo. Excel der Feldliste in Ingos Downloads.
+- **Importliste P76 (Bild Ingo):** `T76K912718`, `728`, `736`, `740`, `738`, `742`, `752`, `777`, `781`, `785`, `793`, `797`, `799`,
+  `825`, `839`, `858`, `837`, `860` sind importiert. Nachgefuehrt, wo die Statusquelle noch „offen“ sagte: Wochen_Todo 158
+  (erledigt, live seit 09.11.), 9, 114, 119, 129 (Import erledigt, offen nur Rueckmeldungen und Tests), `Status_kurz.tsv` ZLO03.
+  **Weiter offen (nicht in der Liste):** `T76K912866` (CO-PA), `T76K912853`/`856` (IC-Staffelbasis), `T76K912490` (ZZPRDAT).
+- Wochen_Todo 22 und 55 als ueberholt geschlossen (weiter in 133), 133 in Arbeit. Kein Code, kein Deploy.
+
 ## Uebergabe Stand 2026-11-10 (Auftrag Ingo „md nachfuehren, committen, pushen, Chat neu starten“)
 
 Gilt vor allen aelteren Uebergaben weiter unten. Produktiv: Deploy 08:46 `436e8ad`; Doku bis `88e9025` gepusht.

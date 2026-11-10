@@ -1,6 +1,6 @@
 # Learnings: gemachte Fehler und die Regel daraus
 
-Stand: 2026-11-05 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
+Stand: 2026-11-10 (letzter Eintrag). Angelegt am 2026-10-01 auf Wunsch von Ingo: Fehler an einer
 Stelle festhalten statt verstreut, damit sie nicht wieder passieren.
 
 **Pflicht:** vor jeder Aenderung, jedem SAP-Schritt und jedem Deploy diese Datei lesen. Wer einen
@@ -234,6 +234,7 @@ Einzelheiten stehen. Die Einzelheiten bleiben in der Fachdatei; hier steht nur d
 
 | Datum | Was passiert ist | Regel | Detail |
 | --- | --- | --- | --- |
+| 2026-11-10 | Kurzauskunft „was ist offen“ nannte `T76K912858` (ZC22) und ZLO03-Importe als offen: Wochen_Todo 158, 9, 114, 129 und `Status_kurz.tsv` standen auf „Bereit fuer Transport“/„Wartet auf Import“, obwohl `lastchange.md` (09.11. 15:11) und die Koordinationsdatei den Import nannten; Ingo korrigierte mit der Importliste | Nach jedem Import die Wochen_Todo-Zeile und `Status_kurz.tsv` im selben Zug umstellen; vor einer Aussage „Transport offen“ die Uebergabetabelle in `lastchange.md` gegenlesen | `lastchange.md` 10.11., Wochen_Todo 158 |
 | 2026-11-09 | Claude in Chrome war mit einem zweiten, verbundenen Mac-Chrome verbunden; Dashboard und Outlook zeigten nur Fehlerseiten, obwohl curl HTTP 200 bekam. Drei Versuche, bevor `list_connected_browsers` geprueft wurde | Bei Fehlerseiten interner Seiten zuerst `list_connected_browsers`; Arbeits-Chrome ist der Windows-„Browser 1“ (Gedaechtnisnotiz) | |
 | 2026-11-09 | Mail an Patrick: „Tabelle fehlt“ gemeldet, weil `innerText` den als Codeblock eingefuegten Tabellenteil nicht zeigte; der Screenshot zeigte sie | Inhalt einer Mail vor einer Aussage im Screenshot pruefen, nicht nur im Textauszug | |
 | 2026-11-09 | Verkauf zu hoch: erster Verdacht Pro-forma F8 (7.8 Mio CHF) war falsch, F8 geht fast nur an Konzerngesellschaften und ist schon ausgeschlossen. Tatsaechlich: TRCH-Zeilen mit Endkunden der Tochter (Faiveley/TRIT, INNIO/TRAT, gleiche Kundennummer, Konzernpreis) und Konzernfirmen ohne „Trafag“ im Namen (GFS Germany, Poltraf) | Einen Verdacht erst nach Abzug der bereits ausgeschlossenen Zeilen beziffern | `docs/VERKAUF_2026-10-02.md` Abschnitt 2026-11-09, ISS-032 |

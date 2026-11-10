@@ -18,7 +18,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Nachmittags: Einkauf-Fixes F2-F9 und Spend-Aufriss aufgeraeumt (Matrix und alter Spend-Block weg, deployed 12:37 `785325f`), ZLO03 FIX 26 in T76 (`T76K912839`), Agenten-Definitionen `.claude/agents/`. Uebergabe: `lastchange.md` oben.
 - **2026-11-03 Abschlussrunde Dashboard/Data Lake:** Einkauf nutzt aktiv, will HK/Standardpreis zum Materialanteil,
   Streamlining und Lieferantenmanagement (Logik in SAP, Dashboard zeigt an); Operations OTD/OTIF/OTP live, Wunsch
-  Stammdatenfehler-Seite; HR wartet auf Rexx-Live-Daten (Sitzung mit Nadja, Alex, Artjom zum Hub); Finance muss die
+  Stammdatenfehler-Seite; HR wartet auf Rexx-Live-Daten (Sitzung mit Nadja, Alex, Artjom zum Hub; *10.11.: Entscheid Ingo, der Rexx Hub wird genommen*); Finance muss die
   Gruppenmargen noch testen. Oscar: Inventar Power BI/Smartsheet, Taskliste offener Wuensche mit Aufwand, Datenqualitaet und
   Datenverantwortliche in Trafag Projekte, abgeloeste Z-Objekte loeschen. Datenherren: Produktion Dragan, Einkauf Marco
   Widmer, Material/Debitoren Fabios Bereich, HR. `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md`.
