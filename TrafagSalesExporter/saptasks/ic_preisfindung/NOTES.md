@@ -1,7 +1,8 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-06 (Abschnitt 8: Staffelbasis Bestellmenge in T76 umgesetzt und getestet, Routine 601, Auftraege
-T76K912853 und T76K912856, nicht freigegeben; Abschnitt 8.8 vom Nachmittag: Tests S6/S7 und Gegenprobe, Testtabelle
+Stand: 2026-11-10 (Abschnitt 8.9: Abnahme Fabio bestanden, Staffelbasis laut Ingo in P76 importiert); davor 2026-11-06
+(Abschnitt 8: Staffelbasis Bestellmenge in T76 umgesetzt und getestet, Routine 601, Auftraege
+T76K912853 und T76K912856, *damals* nicht freigegeben; Abschnitt 8.8 vom Nachmittag: Tests S6/S7 und Gegenprobe, Testtabelle
 S1 bis S7, Zeile „Transportfertig“). Abschnitte 0 bis 7 vom 2026-11-05 (Agent sap-t76, damals nur lesend in
 T76/100; P76 lesend verglichen in Abschnitt 7, Freigabe Ingo „mache punkt 1“). Die Aussagen „keine Testbelege, keine
 Aenderung in T76“ in Abschnitt 4 gelten nur fuer den 05.11.
@@ -417,11 +418,11 @@ bis 690456; IV 90381201 bis 90381203 mit FI-Belegen in 1100; 8 ST 2367 aus 1100/
 
 ### 8.6 Offen und Aufgaben fuer Ingo
 
-1. Freigabe und Import nach P76: T76K912853 (Workbench) und T76K912856 (Customizing) **zusammen**; nur V/06 ohne Routine
+1. *Erledigt 2026-11-10 (Abschnitt 8.9):* Freigabe und Import nach P76: T76K912853 (Workbench) und T76K912856 (Customizing) **zusammen**; nur V/06 ohne Routine
    liefe in P76 ins Leere (`PERFORM ... IF FOUND`), nur die Routine ohne V/06 waere wirkungslos.
 2. Nach dem Import in P76 pruefen: `RV62ANNN` enthaelt `INCLUDE RV62A601`, `TFRM PFRS 601 AKTIV X`, `RV62A601` aktiv;
    sonst in P76 VOFM *Formeln > Staffelbasis* 601 aktivieren bzw. RV80HGEN laufen lassen (macht Ingo).
-3. Vor dem Import mit Fabio den Fall S7 (MIRO 1200 gegen die IV) und die automatische Faktura beim WA in einer
+3. *Erledigt 2026-11-10 (Abnahme Fabio, Abschnitt 8.9):* Vor dem Import mit Fabio den Fall S7 (MIRO 1200 gegen die IV) und die automatische Faktura beim WA in einer
    Abnahme pruefen; Einheiten heute immer ST (Fabio, zu verifizieren). *(Stand S7 und offene Schritte: Abschnitt 8.8.)*
 4. Spaeter (V1): dieselbe Routine bei Z999/Z002 eintragen, erst wenn diese in ZICAA1 stehen. Alternative laut Fabio
    (eigene IC-Kopie von PR00, rund 950 PR00-Saetze 820 umziehen) nicht verfolgt.
@@ -596,3 +597,32 @@ auf diese Buchung wartet, ist sein Entscheid.
 **Testbelege dieses Abschnitts in T76 (KOI, 06.11.):** Anlieferung 0180000073, Materialbeleg 5001255589 (101, 3 ST
 2367 in 1200/0001); `NAST` SPED 80432794 verarbeitet; Rechnung 0051128477 einmal unveraendert gemerkt. Nicht angelegt
 oder geaendert: Stammdaten, Konditionen, Infosatz, Customizing, Quelltext.
+
+### 8.9 Abnahme Fabio und Import nach P76 (2026-11-10)
+
+**Fabio (Mail an Ingo, 10.11.):** „Alle Tests wurden erfolgreich durchgebucht“, mit Screenshot und Testdokument; „hiermit freigegeben
+fuer den Transport im Livesystem“. Seine Testtabelle (T76, alle Zeilen gruen, Bild im Chat 10.11.):
+
+| Testfall T76 | Erwartung | Ergebnis laut Fabio |
+| --- | --- | --- |
+| Stammdaten und Preise 54150/46690 angepasst | | erledigt |
+| Bestellung 100 ST 54150, Lieferung 50 ST | IV 30.30 EUR/ST (Staffel ab 100) | Auftrag 411361, Bestellung 45148506, LS 80432799, IV 90381208, ok |
+| Restlieferung 50 ST zur selben Bestellung | IV 30.30 EUR/ST | LS 80432799, IV 90381209, Preis ok |
+| Bestellung 5 ST 46690, Lieferung 3 ST | IV 72.00 EUR/ST (Stufe ab 5), nicht 81.40 | Auftrag 411362, Bestellung 45148507, LS 80432801, IV 90381210, ok |
+| Komplettlieferung 54150 | unveraendert 30.30 EUR/ST | Auftrag 411363, Bestellung 45148508, LS 80432804, IV 90381211, ok |
+| Normaler Kundenauftrag ZVAA01 mit PR00 | unveraendert | 411364, Z000 priorisiert, ok |
+| Bestellmenge in anderer Einheit | korrekt umgerechnet | Fall unnoetig, Stk., ok |
+| MIRO 1200 (IDoc INVOIC) | keine Preisdifferenz, Beleg gebucht (nach WE) | ok |
+
+Damit ist auch der offene Punkt S7 (MIRO, Abschnitt 8.8) aus Fabios Sicht erledigt.
+
+**Import:** Laut Ingo am 10.11. nach P76 importiert, gemeldet als „*854 und *856“. T76K912854 ist die Aufgabe (Reparatur
+`RV62A601`) unter dem Workbench-Auftrag T76K912853; transportiert wird der Auftrag, also **T76K912853 und T76K912856**. Im System
+nicht nachgesehen (P76 nur mit Freigabe Ingo).
+
+**Offen:**
+1. Pruefung nach dem Import in P76 (Abschnitt 8.6 Punkt 2): `RV62ANNN` enthaelt `INCLUDE RV62A601`, `TFRM PFRS 601 AKTIV X`, `RV62A601`
+   aktiv, `T685A` V/PR00 `KOFRS 0000601`; sonst VOFM 601 aktivieren bzw. RV80HGEN (Ingo). Lesend durch Claude nur mit Freigabe Ingo.
+2. Fall S6 (Unterlieferung in P76) war in T76 nicht vollstaendig testbar: erste echte IV mit Unterlieferung in P76 beobachten.
+3. Schritt 1 der Anfrage vom 04.11. (ZICAA1 um Z999/Z000/Z001/Z002 mit Konditionsausschluss) ist nicht begonnen; danach dieselbe
+   Routine 601 bei Z999/Z002 eintragen (Abschnitt 8.6 Punkt 4). T76-Wartung 11.11. 16 bis 18 Uhr beachten.

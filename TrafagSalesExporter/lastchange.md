@@ -2,6 +2,12 @@
 
 Stand: 2026-11-10
 
+## Nachtrag 2026-11-10 14:35: IC-Staffelbasis in P76 (Abnahme Fabio)
+
+- Fabio hat am 10.11. per Mail alle Tests in T76 als erfolgreich gemeldet (inkl. MIRO 1200 ohne Preisdifferenz) und fuer P76 freigegeben. Ingo hat
+  `T76K912853` (Aufgabe `T76K912854`) und `T76K912856` nach P76 importiert. Damit sind die Zeilen „nicht transportiert“ in den Uebergaben unten ueberholt.
+- Offen: Pruefung in P76 (`RV62A601` aktiv, `TFRM 601`, V/06 PR00), erste echte IV mit Unterlieferung, Schritt 1 ZICAA1. `saptasks/ic_preisfindung/NOTES.md` 8.9.
+
 ## Nachtrag 2026-11-10 14:35: Rexx-Hub-Abruf gebaut, Schalter aus, nicht deployed
 
 - Auftrag Ingo „alles vorbereiten, nur noch Schalter umlegen“. `1e99745` (Agent im Worktree), `d99fbe6` (Nacharbeit aus vier Pruefungen), per Fast-Forward
