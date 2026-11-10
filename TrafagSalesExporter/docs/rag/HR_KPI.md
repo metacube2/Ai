@@ -83,7 +83,8 @@ Stand: 2026-11-10 (Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder; `docs/H
   (Stellenplan, Umfragen, Kununu, Time to hire, Lohnkosten) sind nicht umgesetzt *(teilweise ueberholt am 2026-11-04:
   Ferien am Stueck und Fit-&-Wohl-Ausloeser zeigt der Reiter Interaktiv; Ruecklauf und Uebertrag offen)*. Rexx-Hub fuer den
   automatischen Export ist seit 2026-07-29 von Nadja beauftragt (4'800 EUR p. a.), Stand offen *(ueberholt am 2026-09-30:
-  kein Rexx-Hub, Export ueber Upgreat, siehe oben)*. Mail
+  kein Rexx-Hub, Export ueber Upgreat, siehe oben; das wiederum ueberholt am 2026-11-10: der Rexx Hub wird genommen, ob Nadjas
+  Auftrag noch besteht, ist zu klaeren, `docs/HR_KPI.md` 8.17)*. Mail
   an Sonja liegt als Entwurf, Punkt 2 fehlt. Details: `docs/HR_KPI.md` Abschnitt 8.3.
 
 - **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, Uebersetzungen

@@ -7,6 +7,7 @@ Stand: 2026-11-10
 - **Entscheid Ingo: wir nehmen den Rexx Hub** (guenstiger, Ingo migriert die bestehenden Schnittstellen, Stempeluhrtransfer
   bleibt). Der Entscheid vom 30.09. („kein Hub“) ist ueberholt. Felder, die Rexx liefern muss: `saptasks/rexx_schnittstelle/NOTES.md` 12,
   Kurzfassung `docs/HR_KPI.md` 8.17. Mail an Nadja im Chat entworfen, Versand durch Ingo. Excel der Feldliste in Ingos Downloads.
+  **Offen:** ob der Hub schon bestellt ist (Auftrag Nadja 29.07. laut `docs/HR_KPI.md` 8.3 gegen „vor dem Go“ am 19.08., NOTES 11).
 - **Importliste P76 (Bild Ingo):** `T76K912718`, `728`, `736`, `740`, `738`, `742`, `752`, `777`, `781`, `785`, `793`, `797`, `799`,
   `825`, `839`, `858`, `837`, `860` sind importiert. Nachgefuehrt, wo die Statusquelle noch „offen“ sagte: Wochen_Todo 158
   (erledigt, live seit 09.11.), 9, 114, 119, 129 (Import erledigt, offen nur Rueckmeldungen und Tests), `Status_kurz.tsv` ZLO03.

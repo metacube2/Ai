@@ -283,7 +283,7 @@ Die Absenz-Ampel wuenscht Sonja mit gruen bis 3 %, gelb bis 4 %, rot ab 5 %; der
   nach `D:Transfer_Booking_to_REXXTransfer` verschoben, per SFTP nach Rexx `/import/dormakaba`
   geladen und in `D:Transfer_Booking_to_REXXArchiv` abgelegt (Teams, Alex Donato, 2026-09-02). Die
   Stempeldaten in Rexx sind damit aktuell, das Cockpit nicht.
-- *Ueberholt am 2026-09-30 (Hub nicht gewollt):* **Rexx-Hub fuer den automatischen Export (PM-07):** Rexx (Artjom Yahno) hat am 2026-07-28 den
+- *Am 2026-09-30 als ueberholt markiert (Hub nicht gewollt); seit dem Entscheid vom 2026-11-10 gilt der Hub wieder (8.17), ob dieser Auftrag bei Rexx noch besteht, ist bei Nadja zu klaeren:* **Rexx-Hub fuer den automatischen Export (PM-07):** Rexx (Artjom Yahno) hat am 2026-07-28 den
   Rexx-Hub fuer 4'800 EUR pro Jahr empfohlen (vier Einzelschnittstellen waeren 5'600 EUR). **Nadja hat
   am 2026-07-29 den Auftrag zur Umsetzung erteilt.** Stand bei Rexx nachfragen.
 - **Q1/2026-Abgleich mit SAP:** Nadja bat am 2026-05-05, Q1/2026 mit Live-Daten zu testen, um die Quoten
@@ -685,7 +685,8 @@ Krankenquote? (4) Aktuelle Kontrollwerte 2025? (5) Militaer/Zivildienst in Rexx 
 **Entscheid Ingo, 2026-11-10:** Wir nehmen den Rexx Hub, weil er guenstiger ist (4'800 EUR pro Jahr gegen 11'200 EUR pro Jahr
 fuer die acht bestehenden Schnittstellen und 5'600 EUR pro Jahr fuer vier weitere; Zahlen aus dem Angebot AG36071, 8.9). Ingo
 migriert die bestehenden Schnittstellen selbst; als einzige bleibt der Stempeluhrtransfer in Rexx. *Ueberholt damit:* „kein
-Rexx-Hub“ vom 2026-09-30 (8.3). Mail an Nadja entworfen, Versand durch Ingo.
+Rexx-Hub“ vom 2026-09-30 (8.3). Mail an Nadja entworfen, Versand durch Ingo. **Offen:** ob der Hub schon bestellt ist; 8.3 nennt
+einen Auftrag Nadjas vom 2026-07-29, laut Mail vom 19.08. wartete sie vor dem Go auf die IT-Pruefung durch Alex (8.9).
 
 Welche Felder Rexx liefern muss, damit SAP alles hat (Kurzauskunft 10.11., nichts neu gemessen): zwei Lieferungen, Stamm und
 Salden je Person (Spalten wie #775) und Abwesenheiten je Fall (Spalten wie #777). Heute fehlen in SAP: **Austrittsart**,

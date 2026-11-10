@@ -257,5 +257,9 @@ Tage; Abwesenheit Tagessoll; Abwesenheit ID Buchung. „halbe Tage“ und „ID 
 Befristung und Mitarbeitertyp brauchen kein eigenes Feld: Das Cockpit leitet beides aus „Austrittsart“ und „Stelle“ ab.
 Nicht noetig: Lohn, Bank, Adresse, „Leitung j/n“, Arbeitszeitmodell.
 
-**Naechste Schritte:** Mail an Nadja senden (Ingo); Hub bestellen (mit Nadja klaeren, wer); Lieferfelder, Format und taegliche
+**Offen, widerspruechlich belegt:** ob der Hub schon bestellt ist. `docs/HR_KPI.md` 8.3 nennt einen Auftrag Nadjas an Rexx
+vom 2026-07-29; Abschnitt 11 oben sagt, sie habe am 19.08. Alex um die IT-Pruefung gebeten, bevor sie das Go gibt. Nicht
+aufgeloest, bei Nadja nachfragen.
+
+**Naechste Schritte:** Mail an Nadja senden (Ingo); Stand des Hub-Auftrags mit Nadja klaeren (bestellt oder nicht); Lieferfelder, Format und taegliche
 Ablage mit Rexx (Artjom Yahno) klaeren; danach Entscheid zum eigenen Programm (Abschnitt 7).
