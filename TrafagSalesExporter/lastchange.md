@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-11-10
+Stand: 2026-11-10 nachmittags (Uebergabe vor PC-Neustart)
 
 ## Nachtrag 2026-11-10 14:35: IC-Staffelbasis in P76 (Abnahme Fabio)
 
@@ -71,6 +71,36 @@ Stand: 2026-11-10
   (erledigt, live seit 09.11.), 9, 114, 119, 129 (Import erledigt, offen nur Rueckmeldungen und Tests), `Status_kurz.tsv` ZLO03.
   **Weiter offen (nicht in der Liste):** `T76K912866` (CO-PA), `T76K912853`/`856` (IC-Staffelbasis), `T76K912490` (ZZPRDAT).
 - Wochen_Todo 22 und 55 als ueberholt geschlossen (weiter in 133), 133 in Arbeit. Kein Code, kein Deploy.
+
+## Uebergabe Stand 2026-11-10 nachmittags (Ingo startet den PC neu; gilt vor allen Abschnitten darunter)
+
+Produktiv weiter `436e8ad` (Deploy 08:46). **Alles Folgende ist committet, nicht gepusht und nicht deployed** (Zweig
+`feature/supplier-overrides-trit`, rund 16 Commits vor `origin`).
+
+**Code seit dem letzten Deploy (Deploy wartet auf Ingo, vorher kein Einkauf-Delta pruefen):**
+- `c5c9b4a`, `19ca282`, `548b10e`: Shopfloor-404-Hinweis je Set, Trafag Reddit Einzahl, Railway-Anleitung, Einkauf ungenutzte Matrix-Abfrage entfernt.
+- `1e99745`, `d99fbe6`: Rexx-Hub-Abruf #775/#777, **Schalter `HrKpi:RexxHub:Enabled` aus** (`saptasks/rexx_schnittstelle/NOTES.md` 14).
+- Suite auf `d99fbe6` im Release-Worktree `C:\TMP\TrafagSalesExporter_release_eafd1c5`: 1547/1547.
+
+**Unterbrochen, nach dem Neustart wieder aufnehmen:**
+1. **P76 lesend: IC-Staffelbasis nach Import** (Freigabe Ingo „ja mache test“). Abgebrochen; letzter Zwischenbefund: `RV62A601` wird in P76 von
+   keinem Programm eingebunden, die Routine wirkt dann noch nicht (VOFM 601 in P76 aktivieren, Ingo). Unbestaetigt, Pruefung ganz wiederholen.
+   `saptasks/ic_preisfindung/NOTES.md` 8.9 (Pruefliste dort).
+
+**Fragen an Ingo (offen):**
+- Deploy und Push der Commits oben?
+- HR-Leser absichern (ganze Datei verworfen bei Zahl ausserhalb des Datumsbereichs; Text-Zahlen nach Serverkultur, „4.5“ = 45)? `docs/HR_KPI.md` 8.18.
+- Wochen_Todo 40: Antwort 7c an Paola zum Lagerumfang versendet? (Issue-Log sagt ja, Fachdatei nein.)
+- Mail an Nadja zum Rexx Hub: Entwurf im Chat; Hub laut Mailverlauf **nicht bestellt** (Auftragsbestaetigung unterschreiben, IT-Pruefung Alex).
+  Wochen_Todo 133 auf Wunsch Ingo unveraendert.
+
+**Heute erledigt (Einzelheiten in den Nachtraegen unten):** Rexx-Hub-Entscheid und Lieferfelder; alle Todos gegen Code und Doku geprueft
+(159 Zeilen, 70 korrigiert, Befunde `.tmp_tools/todo_pruefung_2026-11-10/befunde.json`, Excel in Downloads); Qdrant-Reindex robust
+(`-NurPruefen`, `-WennVeraltet`); Transportstaende laut Importliste P76; Rexx-Hub-Mail und Produktbeschreibung gelesen (NOTES 13); IC-Staffelbasis
+Abnahme Fabio und Import (853 mit Aufgabe 854, 856).
+
+**Aufraeumen:** Worktrees `.claude/worktrees/wf_b5a7bdf0-027-1` und `wf_0ca7bf2b-68d-1` sind uebernommen und koennen weg. Im Hauptbaum liegen
+fremde unkommittierte Aenderungen (Finance_All in `Program.cs`, `TimerBackgroundService.cs`, `.csproj`, dazu `CLAUDE.md`) unveraendert.
 
 ## Uebergabe Stand 2026-11-10 (Auftrag Ingo „md nachfuehren, committen, pushen, Chat neu starten“)
 

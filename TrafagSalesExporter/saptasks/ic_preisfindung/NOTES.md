@@ -626,3 +626,12 @@ nicht nachgesehen (P76 nur mit Freigabe Ingo).
 2. Fall S6 (Unterlieferung in P76) war in T76 nicht vollstaendig testbar: erste echte IV mit Unterlieferung in P76 beobachten.
 3. Schritt 1 der Anfrage vom 04.11. (ZICAA1 um Z999/Z000/Z001/Z002 mit Konditionsausschluss) ist nicht begonnen; danach dieselbe
    Routine 601 bei Z999/Z002 eintragen (Abschnitt 8.6 Punkt 4). T76-Wartung 11.11. 16 bis 18 Uhr beachten.
+
+**Zwischenbefund P76, 2026-11-10 nachmittags (unvollstaendig, unbestaetigt):** Die lesende Pruefung in P76 (Freigabe Ingo „ja mache
+test“, Agent sap-t76) wurde wegen eines PC-Neustarts abgebrochen. Ihre letzte Meldung: „`D010INC` bestaetigt: `SAPLV61A` bindet nur
+`RV62ANNN` ein, `RV62A601` wird von keinem Programm eingebunden.“ Trifft das zu, fehlt in P76 die Zeile `INCLUDE RV62A601` in
+`RV62ANNN` (Punkt 4 der Pruefliste), und **die Staffelroutine 601 wirkt in P76 noch nicht**, obwohl die Auftraege importiert sind. Das
+war erwartet, weil `RV62ANNN` in keinem Auftrag liegt (Abschnitt 8.4). Abhilfe laut Abschnitt 8.6 Punkt 2: in P76 VOFM *Formeln >
+Staffelbasis* 601 aktivieren (erzeugt `RV62ANNN` neu) bzw. RV80HGEN, macht Ingo. Die uebrigen Punkte (Importstand, `TFRM` 601 aktiv,
+`RV62A601` aktiv und inhaltsgleich, `T685A` V/PR00 `KOFRS 0000601`) sind **nicht gemeldet**. Die Pruefung ist nach dem Neustart zu
+wiederholen, bevor jemand handelt.
