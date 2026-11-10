@@ -2,6 +2,18 @@
 
 Stand: 2026-11-10
 
+## Nachtrag 2026-11-10 10:55: alle offenen Todos gegen Code und Doku geprueft und nachgefuehrt
+
+- Auftrag Ingo „pruefe alle todos gegen code und doku“, danach „ja korrekturen einarbeiten“. 159 Zeilen nur lesend geprueft (Wochen_Todo 106, Status_kurz 46,
+  aktive Koordinationszeilen 7), jeder Befund „veraltet“/„erledigt“ von zwei weiteren Pruefern gegengelesen: 63 stimmen, 25 nicht pruefbar (haengen an Personen),
+  70 veraltet oder erledigt, 1 Widerspruch.
+- **Eingearbeitet:** 47 Zeilen `Wochen_Todo.tsv` (neuer Stand vorangestellt mit „10.11. (Pruefung gegen Code und Doku)“, Verlauf bleibt; geschlossen: 30 Schalter
+  Schweizer STPRS, seit 02.09. behoben `8ae972f`; 25 Railway 171 Vorschlaege, ueberholt, weiter in 52), 15 Zeilen `Status_kurz.tsv`, fuenf abgeschlossene Eintraege
+  aus „Aktive Bereiche“ der Koordinationsdatei in den Kurzindex. Beide `.xlsx` neu.
+- **Offen bei Ingo:** Wochen_Todo 40 (wurde die Antwort 7c an Paola zum Lagerumfang versendet? Issue-Log sagt ja, Fachdatei nein).
+- **Nicht eingearbeitet:** veraltete Stellen in Fachdateien, die die Pruefer nebenbei nennen (z. B. `docs/rag/PROJECT.md` J2/J3, `docs/rag/PURCHASING.md` Kopf,
+  `zlo03/FIX26`/`FIX27` „nicht freigegeben“, Issue-Log ISS-003.4 „NICHT deployed“). Liste mit Belegen: `.tmp_tools/todo_pruefung_2026-11-10/befunde.json`.
+
 ## Nachtrag 2026-11-10 10:20: Qdrant-Reindex robust (Wochen_Todo 118), 111 und 120 nachgefuehrt
 
 - **118:** `Tools/Qdrant/Reindex-Docs.ps1` startet den Indexer als eigenen Prozess (Protokolle `reindex.out.log`/`reindex.err.log` im
