@@ -2,6 +2,15 @@
 
 Stand: 2026-11-10
 
+## Nachtrag 2026-11-10 10:20: Qdrant-Reindex robust (Wochen_Todo 118), 111 und 120 nachgefuehrt
+
+- **118:** `Tools/Qdrant/Reindex-Docs.ps1` startet den Indexer als eigenen Prozess (Protokolle `reindex.out.log`/`reindex.err.log` im
+  Qdrant-Verzeichnis, nur der Exitcode zaehlt) und vergleicht danach Punktzahl und Abschnittszahl. Neu: `-NurPruefen` (0 aktuell, 3 veraltet),
+  `-WennVeraltet`; `index_docs.py --pruefen`, Standdatei `reindex_stand_<Sammlung>.json`. Test mit `*>`: Pruefung „veraltet“ (4545 gegen 5242),
+  Neuaufbau 5242 Punkte = 5242 Abschnitte (Exitcode 0). Kein App-Code, kein Deploy.
+- **111** war schon seit 04.11. produktiv (`63b0d78`), **120**: Import-Werkzeug seit 22.10. produktiv; beide Zeilen und die alte aktive
+  Koordinationszeile berichtigt. Fehler in `docs/rag/LEARNINGS.md`.
+
 ## Nachtrag 2026-11-10 09:45: Entscheid Rexx Hub, Transportstaende nachgefuehrt (nur Doku)
 
 - **Entscheid Ingo: wir nehmen den Rexx Hub** (guenstiger, Ingo migriert die bestehenden Schnittstellen, Stempeluhrtransfer

@@ -49,7 +49,8 @@ steht in `CLAUDE.md` Abschnitt 3; hier die Kurzform:
    veraltete Aussage wirkt hier staerker als in einer Detaildatei, weil sie die naechste
    Sitzung falsch startet.
 5. `docs/AGENT_COORDINATION.md` abschliessen und die Reservierung freigeben.
-6. Wurde Dokumentation geaendert: `Tools/Qdrant/Reindex-Docs.ps1` ausfuehren. Der
+6. Wurde Dokumentation geaendert: `Tools/Qdrant/Reindex-Docs.ps1 -WennVeraltet` ausfuehren (prueft und baut nur
+   bei Bedarf neu; `-NurPruefen` meldet nur, Exitcode 3 = veraltet; seit 2026-11-10 auch mit umgeleiteter Ausgabe). Der
    Suchindex wird nicht automatisch nachgefuehrt und widerspricht sonst still den
    Dateien, die er abbildet — dieselbe Falle wie Punkt 4, nur eine Ebene tiefer.
 7. Ist ein Fehler passiert oder wiederholt worden: eine Zeile in `docs/rag/LEARNINGS.md`, im

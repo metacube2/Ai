@@ -16,20 +16,32 @@ Das Schema ist bewusst identisch zu dem, was `mcp-server-qdrant` schreibt und li
 
 Weicht eines dieser vier Details ab, liefert `qdrant-find` stillschweigend nichts zurueck,
 obwohl jeder einzelne Schritt erfolgreich aussieht.
+
+Seit 2026-11-10 (Wochen_Todo 118):
+
+* `--stand DATEI` schreibt nach einem vollstaendigen Lauf Zeitpunkt, Datei-, Abschnitts- und
+  Punktzahl in eine kleine JSON-Datei.
+* `--pruefen` baut nichts, sondern vergleicht den Index mit den Dateien: Stimmt die Punktzahl
+  der Sammlung mit der Abschnittszahl ueberein, und ist seit dem letzten Lauf eine Markdown-Datei
+  geaendert worden? Exitcode 0 = aktuell, 3 = veraltet. Anlass: Am 2026-10-21 fehlte eine Woche
+  Doku im Index, am 2026-10-27 blieb er nach einem Abbruch zwei Tage zu zwei Dritteln leer.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
-from fastembed import TextEmbedding
 from qdrant_client import QdrantClient, models
+
+EXIT_VERALTET = 3
 
 # Verzeichnisse, die keine Projektdokumentation enthalten, sondern Build-Ausgaben,
 # Exportpakete oder temporaere Sondierungen.
@@ -180,6 +192,73 @@ def datei_zerlegen(pfad: Path, wurzel: Path) -> list[Abschnitt]:
     return abschnitte
 
 
+def stand_lesen(pfad: Path | None) -> dict | None:
+    if pfad is None or not pfad.is_file():
+        return None
+    try:
+        return json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def stand_schreiben(pfad: Path, zeit: datetime, sammlung: str, dateien: int, abschnitte: int, punkte: int) -> None:
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    pfad.write_text(
+        json.dumps(
+            {
+                "zeit": zeit.isoformat(timespec="seconds"),
+                "sammlung": sammlung,
+                "dateien": dateien,
+                "abschnitte": abschnitte,
+                "punkte": punkte,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def geaendert_seit(dateien: list[Path], zeit: datetime) -> list[Path]:
+    grenze = zeit.timestamp()
+    return [d for d in dateien if d.stat().st_mtime > grenze]
+
+
+def pruefen(
+    client: QdrantClient, sammlung: str, wurzel: Path, dateien: list[Path], abschnitte: int, stand: dict | None
+) -> int:
+    """Vergleicht den Index mit den Dateien, ohne etwas zu schreiben. 0 = aktuell, 3 = veraltet."""
+    gruende: list[str] = []
+    if not client.collection_exists(sammlung):
+        gruende.append(f"Die Sammlung '{sammlung}' gibt es nicht.")
+    else:
+        punkte = client.count(sammlung, exact=True).count
+        if punkte != abschnitte:
+            gruende.append(f"Die Sammlung hat {punkte} Punkte, die Dateien ergeben {abschnitte} Abschnitte.")
+
+    zeit = None
+    if stand and stand.get("sammlung") == sammlung:
+        try:
+            zeit = datetime.fromisoformat(str(stand.get("zeit")))
+        except ValueError:
+            zeit = None
+    if zeit is None:
+        gruende.append("Kein Stand eines vollstaendigen Laufs vorhanden (Datei fehlt oder passt nicht zur Sammlung).")
+    else:
+        neu = geaendert_seit(dateien, zeit)
+        if neu:
+            beispiele = ", ".join(d.relative_to(wurzel).as_posix() for d in neu[:8])
+            mehr = f" und {len(neu) - 8} weitere" if len(neu) > 8 else ""
+            gruende.append(f"{len(neu)} Dateien seit dem letzten Lauf ({zeit:%Y-%m-%d %H:%M}) geaendert: {beispiele}{mehr}.")
+
+    if gruende:
+        print("Index VERALTET:")
+        for grund in gruende:
+            print(f"  - {grund}")
+        return EXIT_VERALTET
+    print(f"Index aktuell: {abschnitte} Abschnitte aus {len(dateien)} Dateien, letzter Lauf {zeit:%Y-%m-%d %H:%M}.")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Markdown-Dokumentation nach Qdrant indexieren.")
     parser.add_argument("--wurzel", default=str(Path(__file__).resolve().parents[2]))
@@ -195,9 +274,23 @@ def main() -> int:
         default=32,
         help="Wie viele Abschnitte je Durchgang eingebettet und geschrieben werden.",
     )
+    parser.add_argument(
+        "--stand",
+        default=os.environ.get("REINDEX_STAND", ""),
+        help="JSON-Datei mit dem Stand des letzten vollstaendigen Laufs (wird geschrieben bzw. bei --pruefen gelesen).",
+    )
+    parser.add_argument(
+        "--pruefen",
+        action="store_true",
+        help="Nichts schreiben, nur melden, ob der Index zu den Dateien passt (Exitcode 0 aktuell, 3 veraltet).",
+    )
     argumente = parser.parse_args()
+    standdatei = Path(argumente.stand) if argumente.stand else None
 
     wurzel = Path(argumente.wurzel).resolve()
+    # Als Stand gilt der Beginn des Laufs: Was waehrend der Minuten des Einbettens geaendert wird,
+    # ist beim naechsten Pruefen neuer als der Index.
+    beginn = datetime.now()
     dateien = markdown_dateien(wurzel)
     if not dateien:
         print(f"Keine Markdown-Dateien unter {wurzel} gefunden.", file=sys.stderr)
@@ -207,13 +300,21 @@ def main() -> int:
     for datei in dateien:
         abschnitte.extend(datei_zerlegen(datei, wurzel))
 
-    print(f"{len(dateien)} Dateien, {len(abschnitte)} Abschnitte.")
+    print(f"{len(dateien)} Dateien, {len(abschnitte)} Abschnitte.", flush=True)
+
+    if argumente.pruefen:
+        return pruefen(
+            QdrantClient(url=argumente.url), argumente.sammlung, wurzel, dateien, len(abschnitte), stand_lesen(standdatei)
+        )
+
+    # Erst hier laden: fastembed braucht Sekunden und wird fuer --pruefen nicht gebraucht.
+    from fastembed import TextEmbedding
 
     modell = TextEmbedding(argumente.modell)
     # Exakt die Namenslogik aus FastEmbedProvider.get_vector_name().
     vektorname = f"fast-{argumente.modell.split('/')[-1].lower()}"
     dimension = modell._get_model_description(argumente.modell).dim
-    print(f"Modell {argumente.modell}, Vektor '{vektorname}', {dimension} Dimensionen.")
+    print(f"Modell {argumente.modell}, Vektor '{vektorname}', {dimension} Dimensionen.", flush=True)
 
     client = QdrantClient(url=argumente.url)
     if client.collection_exists(argumente.sammlung):
@@ -254,7 +355,15 @@ def main() -> int:
 
     anzahl = client.count(argumente.sammlung, exact=True).count
     print(f"Sammlung '{argumente.sammlung}' enthaelt jetzt {anzahl} Punkte.")
-    return 0 if anzahl == geschrieben else 2
+    if anzahl != geschrieben or geschrieben != len(abschnitte):
+        print(
+            f"FEHLER: {len(abschnitte)} Abschnitte erwartet, {geschrieben} geschrieben, {anzahl} in der Sammlung.",
+            file=sys.stderr,
+        )
+        return 2
+    if standdatei is not None:
+        stand_schreiben(standdatei, beginn, argumente.sammlung, len(dateien), len(abschnitte), anzahl)
+    return 0
 
 
 if __name__ == "__main__":

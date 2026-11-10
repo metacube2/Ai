@@ -102,10 +102,34 @@ Der Lauf ersetzt die Sammlung vollstaendig, damit geloeschte oder umbenannte Dat
 als Leichen im Index bleiben. Er dauert einige Minuten, weil alle Abschnitte neu eingebettet
 werden.
 
+**Pruefen statt raten, ob der Index aktuell ist (seit 2026-11-10, Wochen_Todo 118):**
+
+```powershell
+.\Tools\Qdrant\Reindex-Docs.ps1 -NurPruefen     # baut nichts; Exitcode 0 = aktuell, 3 = veraltet
+.\Tools\Qdrant\Reindex-Docs.ps1 -WennVeraltet   # prueft und baut nur bei Bedarf neu
+```
+
+Veraltet heisst: Die Punktzahl der Sammlung weicht von der Abschnittszahl der Dateien ab, oder
+seit dem letzten vollstaendigen Lauf ist eine Markdown-Datei geaendert worden (die Meldung nennt
+die Dateien), oder es gibt noch keinen Stand eines vollstaendigen Laufs. Der Stand steht in
+`<QdrantVerzeichnis>\reindex_stand_<Sammlung>.json` (Beginn des Laufs, Datei-, Abschnitts- und
+Punktzahl) und wird nur nach einem vollstaendigen Lauf geschrieben. Ein Wechsel des Git-Zweigs
+aendert Dateizeiten und kann deshalb „veraltet“ melden, obwohl der Inhalt gleich ist; dann
+einfach neu aufbauen.
+
+**Der Lauf darf umgeleitet werden.** Der Indexer laeuft als eigener Prozess, seine Ausgaben
+gehen nach `<QdrantVerzeichnis>\reindex.out.log` und `reindex.err.log`, es zaehlt nur der
+Exitcode. Bis zum 2026-11-10 brach das Skript unter PowerShell 5.1 ab, sobald der Aufrufer
+`2>&1` oder `*>` anhaengte, weil der fastembed-Hinweis auf stderr dann als Fehler galt
+(`docs/rag/LEARNINGS.md`, 2026-10-21 und 2026-10-29). Nach dem Lauf vergleicht das Skript die
+Punktzahl in Qdrant mit der Abschnittszahl und bricht bei einer Abweichung mit Fehler ab; ein
+halb gefuellter Index wie am 2026-10-27 faellt damit sofort auf.
+
 Aufgenommen werden alle `*.md` des Repositories ausser Build-Ausgaben (`bin`, `obj`,
-`node_modules`, `packages`, `TestResults`), Versionsverwaltung und Editorordnern sowie allen
-Pfaden, die `.tmp_` oder `ExportPackage` enthalten. Das sind Exportpakete und temporaere
-Sondierungen, keine Projektdokumentation.
+`node_modules`, `packages`, `TestResults`), lokalen Python-Umgebungen (`.venv`, `venv`,
+`site-packages`), Versionsverwaltung und Editorordnern sowie allen Pfaden, die `.tmp_` oder
+`ExportPackage` enthalten. Das sind Fremdpakete, Exportpakete und temporaere Sondierungen,
+keine Projektdokumentation.
 
 ## 5. Warum das Schema exakt passen muss
 
