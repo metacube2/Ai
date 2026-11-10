@@ -239,6 +239,24 @@ public static class ShopfloorEndpoints
         }
     }
 
+    private static async Task<IResult> CoPa(HttpContext c, bool write)
+    {
+        var tag = c.Request.Query["tag"].ToString();
+        var day = DateOnly.FromDateTime(DateTime.Today);
+        if (tag.Length > 0 && !DateOnly.TryParseExact(tag, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out day))
+            return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
+        try
+        {
+            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().CoPaAsync(day, write, c.RequestAborted);
+            return J(c, result);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Results.Json(new { ok = false, meldung = ex.GetBaseException().Message }, statusCode: 502);
+        }
+    }
+
     private static async Task<IResult> Vorrat(HttpContext c, bool write)
     {
         var tag = c.Request.Query["tag"].ToString();
@@ -408,6 +426,8 @@ public static class ShopfloorEndpoints
         g.MapGet("/sap/verzug", async Task<IResult> (HttpContext c) => await Verzug(c, false));
         g.MapPost("/sap/verzug", async Task<IResult> (HttpContext c) => await Verzug(c, true));
         g.MapGet("/sap/vorrat", async Task<IResult> (HttpContext c) => await Vorrat(c, false));
+        g.MapGet("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, false));
+        g.MapPost("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, true));
         g.MapPost("/sap/vorrat", async Task<IResult> (HttpContext c) => await Vorrat(c, true));
         g.MapPost("/sap/sync", async Task<IResult> (HttpContext c) =>
         {

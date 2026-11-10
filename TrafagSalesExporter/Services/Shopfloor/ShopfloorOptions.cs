@@ -68,6 +68,12 @@ public sealed class ShopfloorOptions
     public bool SapVorratEnabled { get; set; }
 
     /// <summary>
+    /// Verkauf AE / Umsatz IST aus CO-PA schreiben (CoPaSumSet, CE11000), 2026-11-10 (Mail Fabio, Punkt d). Erst einschalten, wenn
+    /// T76K912866 in P76 ist und die Vorschau (GET sap/copa) Fabios Kontrollwerte trifft.
+    /// </summary>
+    public bool SapCoPaEnabled { get; set; }
+
+    /// <summary>
     /// Abteilungen, fuer die der Verzug nur Material 1 bis 99999 zaehlt (Definition PPD, A. Tran). Vorgabe alle vier; mit
     /// leerem Text rechnet der Verzug ohne Materialfilter (SEH hat nur alphanumerische Materialien, mit Filter immer 0). Kommagetrennt,
     /// weil der Konfigurations-Binder eine leere Liste nicht als Ueberschreibung liest. 2026-11-10.

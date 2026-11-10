@@ -165,6 +165,19 @@ public sealed class ShopfloorSapSync : BackgroundService
                     _logger.LogWarning(ex, "Shopfloor: PPD-Verzug aus SAP fehlgeschlagen.");
                 }
             }
+            // Verkauf AE / Umsatz IST aus CO-PA (CoPaSumSet), 2026-11-10: Stand bis gestern, auf den Abfragetag geschrieben.
+            if (options.SapCoPaEnabled)
+            {
+                try
+                {
+                    LastResult["copa"] = await CoPaCoreAsync(client, baseUrl, DateOnly.FromDateTime(DateTime.Today), true, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    LastResult["copa"] = new JsonObject { ["ok"] = false, ["meldung"] = ex.GetBaseException().Message };
+                    _logger.LogWarning(ex, "Shopfloor: Verkauf CO-PA aus SAP fehlgeschlagen.");
+                }
+            }
             // Auftragsvorrat, offene KW, SEH-Tagesmenge wie ZC22 (ShopAufSet Typ VR), 2026-11-09: Abfragetag, alle offenen Auftraege.
             if (options.SapVorratEnabled)
             {
@@ -333,6 +346,33 @@ public sealed class ShopfloorSapSync : BackgroundService
         result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
         result["geschrieben"] = true;
         _logger.LogInformation("Shopfloor: Auftragsvorrat aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
+        return result;
+    }
+
+    /// <summary>Verkauf AE / Umsatz IST aus CO-PA fuer den Abfragetag (Monat des Vortags). Endpunkte GET/POST sap/copa?tag=.</summary>
+    public async Task<JsonObject> CoPaAsync(DateOnly day, bool write, CancellationToken ct)
+    {
+        var (client, baseUrl) = await CreateClientAsync(ct);
+        using (client)
+            return await CoPaCoreAsync(client, baseUrl, day, write, ct);
+    }
+
+    private async Task<JsonObject> CoPaCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
+    {
+        var rows = await ReadAsync(client, baseUrl, ShopfloorSapCoPa.Set, ShopfloorSapCoPa.Filter(ShopfloorSapCoPa.Bukrs, day), ct);
+        var result = ShopfloorSapCoPa.Compute(day, rows);
+        result["ok"] = true;
+        result["geschrieben"] = false;
+        if (!write)
+            return result;
+        var store = _stores.Store;
+        var dayIso = (string)result["day"]!;
+        var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject, store.Config.IsSapField);
+        result["uebersprungen_manuell"] = skipped;
+        result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
+        result["geschrieben"] = true;
+        _logger.LogInformation("Shopfloor: Verkauf CO-PA aus SAP fuer {Day} geschrieben", dayIso);
         return result;
     }
 
