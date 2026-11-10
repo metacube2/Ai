@@ -140,6 +140,9 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundSer
 builder.Services.AddHostedService<ServerAnalysisBackgroundService>();
 // Holt die SAP-HR-Felder taeglich ueber OData (HrKpiSet) statt aus dem Handexport, docs/HR_KPI.md 8.6.
 builder.Services.AddHostedService<HrKpiSapRefreshService>();
+// Rexx Hub (vorbereitet 2026-11-10): holt #775/#777 taeglich per API statt Handexport, nur mit HrKpi:RexxHub:Enabled;
+// Zugang aus Quellsystem REXXHUB (Admin > Settings), Testabruf ohne Schreiben unter /admin/rexxhub/test. docs/HR_KPI.md 8.17.
+builder.Services.AddRexxHub(builder.Configuration);
 
 // Einkauf-Laeufe laufen an der Anwendung, nicht am Blazor-Circuit des Anwenders. Derselbe
 // Singleton raeumt beim Start liegengebliebene `Running`-Eintraege auf. Begruendung in
@@ -292,6 +295,7 @@ app.MapPost("/access/hr", async (HttpContext httpContext, IOptions<HrKpiAccessOp
 }).DisableAntiforgery();
 
 app.MapShopfloor();
+app.MapRexxHubTest();
 
 app.MapRazorComponents<TrafagSalesExporter.Components.App>()
     .AddInteractiveServerRenderMode();

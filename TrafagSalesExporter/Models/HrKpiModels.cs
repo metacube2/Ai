@@ -64,6 +64,66 @@ public sealed class HrKpiDataSourceOptions
         => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 }
 
+/// <summary>
+/// Rexx-Hub-Abruf der Abfragen #775 und #777 (vorbereitet 2026-11-10, Auftrag Ingo „wenn wir ihn haben, nur noch Schalter
+/// umlegen“; docs/HR_KPI.md 8.17, saptasks/rexx_schnittstelle/NOTES.md 13). Eigene Klasse statt Eigenschaft von
+/// <see cref="HrKpiDataSourceOptions"/>, weil deren <c>Normalize()</c> nur die bekannten Felder uebernimmt.
+///
+/// Zugang (Basis-URL und Token) steht NICHT hier, sondern unter Admin &gt; Settings im Quellsystem mit Code
+/// <see cref="SourceSystemCode"/>: Feld „Zentrale SAP Service URL“ = Basis-URL, Feld „Zentrales Passwort“ = Token.
+/// Was ueber die Rexx-API nicht im Produktdokument steht (Namen der Seiten-Parameter, Form von „data“), ist hier
+/// einstellbar und standardmaessig aus.
+/// </summary>
+public sealed class RexxHubOptions
+{
+    public const string SectionName = "HrKpi:RexxHub";
+    public const string SourceSystemCode = "REXXHUB";
+
+    /// <summary>Hauptschalter. Aus: kein Tagesabruf, keine Anfrage an Rexx. Der Testabruf geht auch bei aus.</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>Rexx-Abfrage „HR-Cockpit Gesamt (Dashboard)“, eine Zeile je Person (docs/HR_KPI.md 8.13).</summary>
+    public int GesamtQueryId { get; set; } = 775;
+
+    /// <summary>Rexx-Abfrage „HR-Cockpit Absenzen je Fall (Dashboard)“, eine Zeile je Abwesenheit (docs/HR_KPI.md 8.14).</summary>
+    public int CaseQueryId { get; set; } = 777;
+
+    /// <summary>Pfad relativ zur Basis-URL; {0} ist die Abfrage-ID. Laut Produktdokument Kapitel 6 und 11.</summary>
+    public string PathTemplate { get; set; } = "v1/datawarehouse/{0}";
+
+    /// <summary>
+    /// Name des Query-Parameters fuer die Seitennummer. Leer = nie selbst blaettern, nur <c>_links.next</c> folgen.
+    /// Der Name steht nicht im Produktdokument; ein falscher Parameter kann 400 ergeben.
+    /// </summary>
+    public string PageParameter { get; set; } = string.Empty;
+
+    /// <summary>Name des Query-Parameters fuer Zeilen je Seite. Leer = nicht senden (dann gilt „Zeilenanzahl pro Seite“ in Rexx).</summary>
+    public string PageSizeParameter { get; set; } = string.Empty;
+
+    /// <summary>Zeilen je Seite, nur gesendet, wenn <see cref="PageSizeParameter"/> gesetzt ist.</summary>
+    public int PageSize { get; set; } = 500;
+
+    /// <summary>Harte Obergrenze fuer das Blaettern, gegen Endlosschleifen.</summary>
+    public int MaxPages { get; set; } = 50;
+
+    /// <summary>Ab dieser Uhrzeit ist der Tagesabruf faellig; nach dem SAP-Abruf ab 05:00.</summary>
+    public TimeSpan DailyAt { get; set; } = new(5, 30, 0);
+
+    public int TimeoutSeconds { get; set; } = 120;
+
+    /// <summary>Wartezeit vor einer Wiederholung nach 429, wenn Rexx kein Retry-After schickt.</summary>
+    public int RetryDelaySeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Technischer Spaltenname der API -&gt; Spaltenueberschrift des Handexports (z. B. „staff_id“ -&gt; „Personalnummer“).
+    /// Leer: die Schluessel der API gelten unveraendert. Rexx erlaubt eigene Feldnamen je Export-Feld (Kapitel 3.4).
+    /// </summary>
+    public Dictionary<string, string> ColumnMap { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Zusaetzliche Query-Parameter fuer jede Anfrage (z. B. ein Zeitraumfilter, falls Rexx einen anbietet). Vorgabe leer.</summary>
+    public Dictionary<string, string> QueryParameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+
 public sealed class HrKpiResult
 {
     public bool AbsenceRatesReliable { get; set; } = true;
