@@ -70,7 +70,11 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.False(result.EkpoLoaded);
         Assert.False(result.EketLoaded);
         Assert.Contains("Keine Live-Stichprobe", result.Message);
-        Assert.Empty(result.SupplierYearSpendRows);
+        // Ohne Cache steht auch im Spend-Aufriss nichts, in keiner der beiden Schalterstellungen
+        // (bis 2026-11-10 an der entfernten Matrix Lieferant/Jahr geprueft).
+        Assert.Empty(result.SpendPerspectiveRows);
+        Assert.Empty(result.PurchasingPartsSpendPerspectiveRows);
+        Assert.Empty(result.SpendCascadeRows);
     }
 
     [Fact]
@@ -389,11 +393,13 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_SupplierYearSpendRows_Contain_MaterialGroup_Drilldown()
+    public async Task LoadAsync_SupplierBreakdown_Contains_MaterialGroup_Drilldown()
     {
         // Marco/Armin-Review 2026-07-17: Lieferant aufklappen zeigt Spend je Warengruppe.
         // MaraMatkl (aktueller Materialstamm) gewinnt gegen die Beleg-Warengruppe (Matkl);
         // ohne beide faellt die Zeile in 'ohne Warengruppe'.
+        // Geprueft am Einstieg Lieferant des Spend-Aufrisses (SpendPerspectiveRows, das zeigt die Seite); bis
+        // 2026-11-10 an der Matrix Lieferant/Jahr, die seit dem 2026-11-05 nicht mehr auf der Seite steht.
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '10', 'M1', 'ALT1', 'NEU1', '1', '100', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '20', 'M2', 'ALT2', '', '1', '200', '2026-01-01');");
@@ -405,30 +411,33 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var state = await _service.LoadAsync(filter);
 
-        var supplierRow = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Lieferant Eins"));
+        var supplierRows = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier").Rows;
+        var supplierRow = Assert.Single(supplierRows, row => row.Label.Contains("Lieferant Eins"));
         Assert.Equal(600m, supplierRow.Total);
-        Assert.Equal(3, supplierRow.MaterialGroups.Count);
+        Assert.Equal(3, supplierRow.Children.Count);
 
         // MaraMatkl gewinnt: Position 10 landet unter NEU1, nicht unter ALT1.
-        var currentGroup = Assert.Single(supplierRow.MaterialGroups, group => group.MaterialGroup == "NEU1");
+        var currentGroup = Assert.Single(supplierRow.Children, group => group.Label == "NEU1");
         Assert.Equal(100m, currentGroup.Total);
         Assert.Equal(100m, currentGroup.YearValues[2025]);
 
-        var documentGroup = Assert.Single(supplierRow.MaterialGroups, group => group.MaterialGroup == "ALT2");
+        var documentGroup = Assert.Single(supplierRow.Children, group => group.Label == "ALT2");
         Assert.Equal(200m, documentGroup.Total);
 
-        var withoutGroup = Assert.Single(supplierRow.MaterialGroups, group => group.MaterialGroup == "ohne Warengruppe");
+        var withoutGroup = Assert.Single(supplierRow.Children, group => group.Label == "ohne Warengruppe");
         Assert.Equal(300m, withoutGroup.Total);
 
         // Drilldown-Summe muss exakt der Lieferantenzeile entsprechen (Pivot-Eigenschaft).
-        Assert.Equal(supplierRow.Total, supplierRow.MaterialGroups.Sum(group => group.Total));
+        Assert.Equal(supplierRow.Total, supplierRow.Children.Sum(group => group.Total));
     }
 
     [Fact]
-    public async Task SupplierYearMatrix_Keeps_Names_Differing_Only_In_Case_And_Matches_The_Spend_Breakdown()
+    public async Task SupplierBreakdown_Keeps_Names_Differing_Only_In_Case_And_Sums_To_The_Total_Spend()
     {
         // F2 Pruefung 2026-11-05: "THUBA AG" und "Thuba AG" (zwei Lieferantennummern) ueberschrieben sich je Jahr in
-        // der Matrix (OrdinalIgnoreCase-Dictionary), der Aufriss zeigte beide. Matrix = Aufriss = Gesamtspend.
+        // der Matrix Lieferant/Jahr (OrdinalIgnoreCase-Dictionary), der Aufriss zeigte beide. Die Matrix steht seit dem
+        // 2026-11-05 nicht mehr auf der Seite und ihre Abfrage ist entfernt; die Regel gilt weiter fuer den Einstieg
+        // Lieferant des Aufrisses: beide Schreibweisen bleiben getrennt, Aufriss = Gesamtspend.
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('C1', '2025-03-01', 'L1', 'THUBA AG', 'F', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('C2', '2025-04-01', 'L2', 'Thuba AG', 'F', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C1', '10', 'M1', 'WG1', '1', '100', '2026-01-01');");
@@ -438,18 +447,20 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.Equal(300m, state.SpendChfSample);
-        Assert.Equal(300m, state.SupplierYearSpendRows.Sum(row => row.Total));
-        Assert.Equal(300m, state.SupplierYearSpendRows.Sum(row => row.YearValues[2025]));
-        var upper = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier == "THUBA AG");
-        var mixed = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier == "Thuba AG");
+        var supplierRows = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier").Rows;
+        Assert.Equal(2, supplierRows.Count);
+        Assert.Equal(300m, supplierRows.Sum(row => row.Total));
+        Assert.Equal(300m, supplierRows.Sum(row => row.YearValues[2025]));
+        var upper = Assert.Single(supplierRows, row => row.Label == "THUBA AG");
+        var mixed = Assert.Single(supplierRows, row => row.Label == "Thuba AG");
         Assert.Equal(100m, upper.Total);
+        Assert.Equal(100m, upper.YearValues[2025]);
         Assert.Equal(200m, mixed.Total);
+        Assert.Equal(200m, mixed.YearValues[2025]);
         // Drilldown bis zum Material auch fuer die zweite Schreibweise vorhanden.
-        Assert.Equal(200m, Assert.Single(mixed.MaterialGroups).Articles.Sum(article => article.Total));
-
-        var supplierPerspective = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier");
-        Assert.Equal(supplierPerspective.Rows.Count, state.SupplierYearSpendRows.Count);
-        Assert.Equal(supplierPerspective.Rows.Sum(row => row.Total), state.SupplierYearSpendRows.Sum(row => row.Total));
+        Assert.Equal(200m, Assert.Single(mixed.Children).Children.Sum(article => article.Total));
+        // Summe des Aufrisses = Bestellwert der Kachel, kein Wert geht zwischen den Schreibweisen verloren.
+        Assert.Equal(state.SpendChfSample, supplierRows.Sum(row => row.Total));
     }
 
     [Fact]
@@ -512,9 +523,13 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var state = await _service.LoadAsync(filter);
 
-        var supplierRow = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Lieferant Eins"));
-        var group = Assert.Single(supplierRow.MaterialGroups);
-        Assert.Equal("WG1", group.MaterialGroup);
+        // Einstieg Lieferant des Spend-Aufrisses (bis 2026-11-10 an der entfernten Matrix Lieferant/Jahr geprueft).
+        var supplierRows = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier").Rows;
+        var supplierRow = Assert.Single(supplierRows, row => row.Label.Contains("Lieferant Eins"));
+        Assert.Equal(222m, supplierRow.Total);
+        Assert.False(supplierRow.YearValues.ContainsKey(2024));
+        var group = Assert.Single(supplierRow.Children);
+        Assert.Equal("WG1", group.Label);
         Assert.Equal(222m, group.Total);
         Assert.False(group.YearValues.ContainsKey(2024));
     }
@@ -583,10 +598,10 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_SpendMatrix_Article_Rows_Show_Material_Text()
+    public async Task LoadAsync_SupplierBreakdown_Material_Rows_Show_Material_Text()
     {
-        // Dieselbe Materialebene in der Kaskadierungsmatrix Lieferant/Jahr (dritte Ebene).
-        // Beide Sichten muessen dasselbe Label zeigen, sonst wirken sie wie verschiedene Daten.
+        // Dieselbe Materialebene (dritte Ebene) in der Liste, die die Seite wirklich liest: Einstieg Lieferant in
+        // SpendPerspectiveRows. Bis 2026-11-10 an der entfernten Kaskadierungsmatrix Lieferant/Jahr geprueft.
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('T2', '2025-03-01', 'L2', 'BEPRO AG Zwei', 'F', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Maktx, Menge, Netwr, LastLoadedAtUtc) VALUES ('T2', '10', 'B64336', 'WG9', 'PCBA NAT TR5 MODUL CURRENT STD COLDB Rei', '1', '200', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('T2', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
@@ -595,10 +610,11 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var state = await _service.LoadAsync(filter);
 
-        var supplierRow = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("BEPRO AG Zwei"));
-        var groupRow = Assert.Single(supplierRow.MaterialGroups);
-        var article = Assert.Single(groupRow.Articles);
-        Assert.Equal("B64336 - PCBA NAT TR5 MODUL CURRENT STD COLDB Rei", article.Article);
+        var supplierRows = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier").Rows;
+        var supplierRow = Assert.Single(supplierRows, row => row.Label.Contains("BEPRO AG Zwei"));
+        var groupRow = Assert.Single(supplierRow.Children);
+        var article = Assert.Single(groupRow.Children);
+        Assert.Equal("B64336 - PCBA NAT TR5 MODUL CURRENT STD COLDB Rei", article.Label);
         Assert.Equal(200m, article.Total);
     }
 
@@ -655,11 +671,12 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_SpendMatrix_Drills_Down_To_Material_Under_MaterialGroup()
+    public async Task LoadAsync_SupplierBreakdown_Drills_Down_To_Material_Under_MaterialGroup()
     {
-        // Entscheid Marco 2026-07-30: in der Matrix „Kaskadierung Lieferant / Jahr" muss die
-        // Warengruppe selbst weiter aufklappbar sein, damit man unter "01 - Dummy" die einzelnen
-        // Materialnummern sieht. Summe der Materialien = Warengruppensumme.
+        // Entscheid Marco 2026-07-30: unter dem Lieferanten muss die Warengruppe selbst weiter
+        // aufklappbar sein, damit man unter "01 - Dummy" die einzelnen Materialnummern sieht.
+        // Summe der Materialien = Warengruppensumme. Geprueft am Einstieg Lieferant des Spend-Aufrisses;
+        // bis 2026-11-10 an der entfernten Matrix „Kaskadierung Lieferant / Jahr".
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D1', '2025-03-01', 'L1', 'Bepro AG', 'F', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '10', 'MAT-123', '01', '1', '100', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '20', 'MAT-2322', '01', '1', '400', '2026-01-01');");
@@ -668,28 +685,29 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
-        var supplier = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Bepro AG"));
-        var dummyGroup = Assert.Single(supplier.MaterialGroups, group => group.MaterialGroup.StartsWith("01"));
+        var supplierRows = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier").Rows;
+        var supplier = Assert.Single(supplierRows, row => row.Label.Contains("Bepro AG"));
+        var dummyGroup = Assert.Single(supplier.Children, group => group.Label.StartsWith("01"));
 
         Assert.Equal(500m, dummyGroup.Total);
-        Assert.Equal(2, dummyGroup.Articles.Count);
-        Assert.Equal(dummyGroup.Total, dummyGroup.Articles.Sum(article => article.Total));
+        Assert.Equal(2, dummyGroup.Children.Count);
+        Assert.Equal(dummyGroup.Total, dummyGroup.Children.Sum(article => article.Total));
         // Absteigend nach Betrag, damit der groesste Brocken beim Aufklappen oben steht.
-        Assert.Equal("MAT-2322", dummyGroup.Articles[0].Article);
-        Assert.Equal(400m, dummyGroup.Articles[0].Total);
-        Assert.Equal(2025, Assert.Single(dummyGroup.Articles[0].YearValues.Keys));
+        Assert.Equal("MAT-2322", dummyGroup.Children[0].Label);
+        Assert.Equal(400m, dummyGroup.Children[0].Total);
+        Assert.Equal(2025, Assert.Single(dummyGroup.Children[0].YearValues.Keys));
 
         // Andere Warengruppe desselben Lieferanten bleibt getrennt.
-        var otherGroup = Assert.Single(supplier.MaterialGroups, group => group.MaterialGroup == "WG2");
-        Assert.Equal("MAT-999", Assert.Single(otherGroup.Articles).Article);
+        var otherGroup = Assert.Single(supplier.Children, group => group.Label == "WG2");
+        Assert.Equal("MAT-999", Assert.Single(otherGroup.Children).Label);
     }
 
     [Fact]
-    public async Task LoadAsync_SpendMatrix_Shows_Every_Material_Without_Truncation()
+    public async Task LoadAsync_SupplierBreakdown_Shows_Every_Material_Without_Truncation()
     {
         // Seit dem 2026-08-27 ohne Deckelung: 27 Materialien ergeben 27 Zeilen und keine
         // Restzeile. Die Jahresspalten muessen dabei genauso aufgehen wie die Gesamtspalte.
-        // Vorher waren es 25 einzeln plus „uebrige (2)".
+        // Vorher waren es in der Matrix 25 einzeln plus „uebrige (2)", im Aufriss 10 plus Restzeile.
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D2', '2025-03-01', 'L9', 'Viel AG', 'F', '2026-01-01');");
         for (var i = 1; i <= 27; i++)
             await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D2', '{i:00}', 'ART-{i:00}', 'WG', '1', '{i * 10}', '2026-01-01');");
@@ -697,13 +715,17 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
-        var supplier = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Viel AG"));
-        var group = Assert.Single(supplier.MaterialGroups);
+        // Einstieg Lieferant des Spend-Aufrisses (bis 2026-11-10 an der entfernten Matrix Lieferant/Jahr geprueft).
+        // Die Sammelzeile heisst dort „uebrige (n)" und hat kein eigenes Kennzeichen.
+        var supplierRows = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier").Rows;
+        var supplier = Assert.Single(supplierRows, row => row.Label.Contains("Viel AG"));
+        var group = Assert.Single(supplier.Children);
 
-        Assert.Equal(27, group.Articles.Count);
-        Assert.DoesNotContain(group.Articles, article => article.IsRemainder);
-        Assert.Equal(group.Total, group.Articles.Sum(article => article.Total));
-        Assert.Equal(group.YearValues[2025], group.Articles.Sum(article => article.YearValues[2025]));
+        Assert.Equal(27, group.Children.Count);
+        Assert.DoesNotContain(group.Children, article => article.Label.StartsWith("uebrige", StringComparison.Ordinal));
+        Assert.Equal(3780m, group.Total);
+        Assert.Equal(group.Total, group.Children.Sum(article => article.Total));
+        Assert.Equal(group.YearValues[2025], group.Children.Sum(article => article.YearValues[2025]));
     }
 
     [Fact]

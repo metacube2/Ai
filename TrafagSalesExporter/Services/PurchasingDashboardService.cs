@@ -580,7 +580,7 @@ GROUP BY Label
 ORDER BY Value DESC
 LIMIT 6;", cancellationToken);
         // Volumen je Warengruppe (PowerBI "Diagramm Vol./WG"). Gleiche COALESCE-Logik und
-        // gleicher spendItemFilter/Zeitraum wie die Lieferant-Spend-Matrix, damit die Summen
+        // gleicher spendItemFilter/Zeitraum wie der Spend-Aufriss (Einstieg Lieferant), damit die Summen
         // konsistent sind. Warengruppe kommt bewusst aus MaraMatkl (Materialstamm), Fallback
         // Beleg-Matkl. Label wird per PurchasingMaterialGroupTextCatalog (T023T-Text von Ingo,
         // 24.07.2026) auf "Code - Text" angereichert; unbekannte Codes bleiben roher Code.
@@ -611,7 +611,6 @@ LIMIT 12;", cancellationToken);
         // Belegwaehrung selbst. Kein SAP-Feld und kein Full Load noetig - Waers/Wkurs sind im
         // EKKO-Cache und werden ohnehin fuer ChfNetValue gebraucht.
         state.CurrencySpendRows = await ExecuteCurrencySpendRowsAsync(conn, joinedEkkoPeriod, spendItemFilter, cancellationToken);
-        state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, spendItemFilter, cancellationToken);
         // Reiter „Spend-Aufriss": mehrstufige Kaskade + Region-Kuchen + ABC/XYZ. Die Kaskade nutzt
         // vorhandene Cache-Daten (Beleg-WG/Matnr); Region/ABC/XYZ fuellen sich erst nach dem
         // naechsten Einkauf-Full-Load. Alle laufen nur beim Datenladen (OnInitialized/Filter),
@@ -1138,254 +1137,6 @@ LIMIT 12;";
         }
 
         return rows;
-    }
-
-    private static async Task<List<PurchasingSupplierYearSpendRow>> ExecuteSupplierYearSpendRowsAsync(
-        SqliteConnection conn,
-        PurchasingDashboardFilter filter,
-        string spendItemFilter,
-        CancellationToken cancellationToken)
-    {
-        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
-            .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
-            .ToList();
-        if (years.Count == 0)
-            return [];
-
-        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var maxSpendYear = MaxSpendYear(filter);
-        // F2 Pruefung 2026-11-05: Ordinal (gross/klein getrennt) wie das GROUP BY in SQLite und wie der Spend-Aufriss
-        // (BuildCascadeLevel). Mit OrdinalIgnoreCase fielen "THUBA AG" und "Thuba AG" (vermutlich zwei Lieferantennummern,
-        // nicht geprueft) in eine Zeile, und je Jahr ueberschrieb der zweite Wert den ersten statt zu addieren:
-        // 2020 bis heute fehlten 17'885 CHF gegenueber dem Aufriss.
-        var rowsBySupplier = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.Ordinal);
-
-        await using var command = conn.CreateCommand();
-        command.CommandText = @"
-SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
-       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
-       SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
-FROM PurchasingEkpoCache p
-LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + spendItemFilter + @"
-  AND k.Bedat >= '" + from + @"'
-  AND k.Bedat <= '" + to + @"'
-  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + maxSpendYear + @"
-GROUP BY Supplier, Year
-ORDER BY Supplier, Year;";
-
-        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
-        {
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var supplier = reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0);
-                var year = Convert.ToInt32(reader.GetValue(1), CultureInfo.InvariantCulture);
-                var value = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
-                if (!rowsBySupplier.TryGetValue(supplier, out var values))
-                {
-                    values = [];
-                    rowsBySupplier[supplier] = values;
-                }
-
-                // Addieren statt ueberschreiben: Wertverlust ist ausgeschlossen, auch wenn zwei SQL-Zeilen je
-                // Lieferant und Jahr ankommen.
-                values[year] = values.TryGetValue(year, out var existing) ? existing + value : value;
-            }
-        }
-
-        var groupsBySupplier = await ExecuteSupplierGroupYearRowsAsync(conn, filter, spendItemFilter, years, cancellationToken);
-
-        return rowsBySupplier
-            .Select(row => new PurchasingSupplierYearSpendRow(
-                row.Key,
-                years.ToDictionary(year => year, year => row.Value.TryGetValue(year, out var value) ? value : 0m),
-                row.Value.Values.Sum())
-            {
-                MaterialGroups = groupsBySupplier.TryGetValue(row.Key, out var groups) ? groups : []
-            })
-            .OrderByDescending(row => row.Total)
-            .ToList();
-    }
-
-    /// <summary>
-    /// Drilldown-Ebene der Spend-Matrix (Marco/Armin 2026-07-17): Spend je Lieferant nach
-    /// Warengruppe und Jahr. Warengruppe = aktuelle Materialstamm-Gruppe (MaraMatkl), Fallback
-    /// Beleg-Warengruppe (EKPO.Matkl), solange SAP MARA-MATKL noch nicht im Service liefert.
-    /// </summary>
-    private static async Task<Dictionary<string, List<PurchasingSpendGroupYearRow>>> ExecuteSupplierGroupYearRowsAsync(
-        SqliteConnection conn,
-        PurchasingDashboardFilter filter,
-        string spendItemFilter,
-        IReadOnlyList<int> years,
-        CancellationToken cancellationToken)
-    {
-        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var maxSpendYear = MaxSpendYear(filter);
-        // Ordinal wie ExecuteSupplierYearSpendRowsAsync (F2 2026-11-05), sonst fehlt der zweiten Schreibweise der Drilldown.
-        var valuesBySupplierGroup = new Dictionary<string, Dictionary<string, Dictionary<int, decimal>>>(StringComparer.Ordinal);
-
-        await using var command = conn.CreateCommand();
-        command.CommandText = @"
-SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
-       COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS MaterialGroup,
-       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
-       SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
-FROM PurchasingEkpoCache p
-LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + spendItemFilter + @"
-  AND k.Bedat >= '" + from + @"'
-  AND k.Bedat <= '" + to + @"'
-  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + maxSpendYear + @"
-GROUP BY Supplier, MaterialGroup, Year
-ORDER BY Supplier, MaterialGroup, Year;";
-
-        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
-        {
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var supplier = reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0);
-                var materialGroup = reader.IsDBNull(1) ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1));
-                var year = Convert.ToInt32(reader.GetValue(2), CultureInfo.InvariantCulture);
-                var value = Convert.ToDecimal(reader.GetValue(3), CultureInfo.InvariantCulture);
-
-                if (!valuesBySupplierGroup.TryGetValue(supplier, out var groups))
-                {
-                    groups = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.Ordinal);
-                    valuesBySupplierGroup[supplier] = groups;
-                }
-
-                if (!groups.TryGetValue(materialGroup, out var values))
-                {
-                    values = [];
-                    groups[materialGroup] = values;
-                }
-
-                // Addieren statt ueberschreiben (F2): zwei Rohcodes koennen auf denselben Katalogtext aufloesen.
-                values[year] = values.TryGetValue(year, out var existing) ? existing + value : value;
-            }
-        }
-
-        var articlesBySupplierGroup = await ExecuteSupplierGroupArticleYearRowsAsync(conn, filter, spendItemFilter, years, cancellationToken);
-
-        return valuesBySupplierGroup.ToDictionary(
-            supplier => supplier.Key,
-            supplier => supplier.Value
-                .Select(group => new PurchasingSpendGroupYearRow(
-                    group.Key,
-                    years.ToDictionary(year => year, year => group.Value.TryGetValue(year, out var value) ? value : 0m),
-                    group.Value.Values.Sum())
-                {
-                    Articles = articlesBySupplierGroup.TryGetValue((supplier.Key, group.Key), out var articles) ? articles : []
-                })
-                .OrderByDescending(group => group.Total)
-                .ToList(),
-            StringComparer.Ordinal);
-    }
-
-    /// <summary>
-    /// Deckelung der Artikel je (Lieferant, Warengruppe) in der Spend-Matrix. Bewusst hoeher als
-    /// die 10 der Aufriss-Kaskade: hier wird gezielt EINE Warengruppe eines Lieferanten geoeffnet,
-    /// nicht der ganze Baum, und fuer die Dummy-Suche will Marco die Liste sehen und nicht nach
-    /// zehn Zeilen abgeschnitten bekommen. Der Rest landet in einer "uebrige (n)"-Zeile, damit
-    /// Warengruppensumme = Summe der Artikelzeilen bleibt (Pivot-Eigenschaft).
-    /// </summary>
-    // Seit dem 2026-08-27 ohne Deckelung (Wunsch Marco/Ingo, siehe NoCap). Der Wert bleibt als
-    // Konstante stehen, damit die „uebrige"-Buendelung unveraendert weiterlebt, falls je wieder
-    // gedeckelt werden soll.
-    private const int SpendMatrixArticleCap = NoCap;
-
-    /// <summary>
-    /// Dritte Ebene der Spend-Matrix: Spend je Lieferant/Warengruppe/Materialnummer und Jahr
-    /// (Entscheid Marco, Sitzung 2026-07-30). Dieselbe Warengruppen- und Artikellogik wie die
-    /// Aufriss-Kaskade (<see cref="ExecuteSpendCascadeRowsAsync"/>), damit beide Sichten
-    /// dieselben Zahlen zeigen: Warengruppe aus dem Materialstamm mit Fallback auf die
-    /// Beleg-Warengruppe, Artikel = Matnr mit Fallback auf den Bestelltext.
-    /// </summary>
-    private static async Task<Dictionary<(string Supplier, string MaterialGroup), List<PurchasingSpendArticleYearRow>>> ExecuteSupplierGroupArticleYearRowsAsync(
-        SqliteConnection conn,
-        PurchasingDashboardFilter filter,
-        string spendItemFilter,
-        IReadOnlyList<int> years,
-        CancellationToken cancellationToken)
-    {
-        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var maxSpendYear = MaxSpendYear(filter);
-        var values = new Dictionary<(string, string, string), Dictionary<int, decimal>>();
-
-        await using var command = conn.CreateCommand();
-        command.CommandText = @"
-SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
-       COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS MaterialGroup,
-       " + MaterialLabelSql() + @" AS Article,
-       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
-       SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
-FROM PurchasingEkpoCache p
-LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + spendItemFilter + @"
-  AND k.Bedat >= '" + from + @"'
-  AND k.Bedat <= '" + to + @"'
-  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + maxSpendYear + @"
-GROUP BY Supplier, MaterialGroup, Article, Year;";
-
-        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
-        {
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var key = (
-                    reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0),
-                    reader.IsDBNull(1) ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)),
-                    reader.IsDBNull(2) ? "ohne Artikel" : reader.GetString(2));
-
-                if (!values.TryGetValue(key, out var yearValues))
-                {
-                    yearValues = [];
-                    values[key] = yearValues;
-                }
-
-                // Addieren statt ueberschreiben (F2 2026-11-05): zwei Warengruppen-Rohcodes mit demselben Katalogtext
-                // ergeben denselben Schluessel.
-                var articleYear = Convert.ToInt32(reader.GetValue(3), CultureInfo.InvariantCulture);
-                var articleValue = Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture);
-                yearValues[articleYear] = yearValues.TryGetValue(articleYear, out var existingValue) ? existingValue + articleValue : articleValue;
-            }
-        }
-
-        return values
-            .GroupBy(entry => (entry.Key.Item1, entry.Key.Item2))
-            .ToDictionary(
-                group => group.Key,
-                group => CapArticles(group.Select(entry => new PurchasingSpendArticleYearRow(
-                        entry.Key.Item3,
-                        years.ToDictionary(year => year, year => entry.Value.TryGetValue(year, out var value) ? value : 0m),
-                        entry.Value.Values.Sum()))
-                    .OrderByDescending(article => article.Total)
-                    .ToList(),
-                    years));
-    }
-
-    /// <summary>
-    /// Kappt die Artikelliste auf <see cref="SpendMatrixArticleCap"/> und fasst den Rest zu einer
-    /// "uebrige (n)"-Zeile zusammen - je Jahr aufsummiert, damit die Jahresspalten weiterhin
-    /// aufgehen und nicht nur die Gesamtspalte.
-    /// </summary>
-    private static List<PurchasingSpendArticleYearRow> CapArticles(
-        List<PurchasingSpendArticleYearRow> articles,
-        IReadOnlyList<int> years)
-    {
-        if (articles.Count <= SpendMatrixArticleCap)
-            return articles;
-
-        var kept = articles.Take(SpendMatrixArticleCap).ToList();
-        var rest = articles.Skip(SpendMatrixArticleCap).ToList();
-        kept.Add(new PurchasingSpendArticleYearRow(
-            $"uebrige ({rest.Count:N0})",
-            years.ToDictionary(year => year, year => rest.Sum(article => article.YearValues.TryGetValue(year, out var value) ? value : 0m)),
-            rest.Sum(article => article.Total),
-            IsRemainder: true));
-        return kept;
     }
 
     /// <summary>
@@ -2176,8 +1927,8 @@ ORDER BY SpendChf DESC;";
     /// <summary>
     /// Mehrstufiger Spend-Aufriss fuer EINE Perspektive (Reiter „Spend-Aufriss", Einstiegsdimension
     /// waehlbar seit 2026-07-30), je Ebene auf Top-N gekappt mit „uebrige (n)"-Restzeile, sodass
-    /// Elternsumme = Summe der Kinder bleibt. Ein SQL-Grouping, Baumaufbau in C#. Warengruppe wie
-    /// in der Spend-Matrix: MaraMatkl, Fallback Beleg-Matkl.
+    /// Elternsumme = Summe der Kinder bleibt. Ein SQL-Grouping, Baumaufbau in C#. Warengruppe:
+    /// MaraMatkl, Fallback Beleg-Matkl.
     /// </summary>
     private static async Task<List<PurchasingSpendCascadeNode>> ExecuteSpendCascadeRowsAsync(
         SqliteConnection conn,
@@ -2255,6 +2006,10 @@ GROUP BY " + string.Join(", ", levelAliases) + @", Year;";
     {
         var cap = caps[depth];
         var isLeaf = depth == caps.Count - 1;
+        // F2 Pruefung 2026-11-05: GroupBy vergleicht Ordinal (gross/klein getrennt) wie das GROUP BY in SQLite.
+        // "THUBA AG" und "Thuba AG" bleiben zwei Zeilen, je Zeile werden die Jahreswerte summiert. Die bis zum
+        // 2026-11-05 daneben stehende Matrix Lieferant/Jahr verlor mit OrdinalIgnoreCase und Zuweisen statt Addieren
+        // 17'885 CHF; hier nicht auf einen Vergleich ohne Gross-/Kleinschreibung umstellen.
         var groups = rows
             .GroupBy(row => row.Keys[depth])
             .Select(group => new
