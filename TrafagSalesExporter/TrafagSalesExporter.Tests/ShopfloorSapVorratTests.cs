@@ -69,4 +69,23 @@ public class ShopfloorSapVorratTests
             """)));
         Assert.Contains("T76K912860", ex.Message);
     }
+
+    [Fact]
+    public void Plan5_NaechsteFuenfArbeitstageOhneUeberfaellige()
+    {
+        Assert.Equal(new DateOnly(2026, 11, 16), ShopfloorSapVorrat.Plan5Ende(new DateOnly(2026, 11, 9)));   // Mo -> Mo
+        Assert.Equal(new DateOnly(2026, 11, 13), ShopfloorSapVorrat.Plan5Ende(new DateOnly(2026, 11, 7)));   // Sa -> Fr
+        var r = ShopfloorSapVorrat.Compute(new DateOnly(2026, 11, 9), Rows("""
+            [
+              {"Typ":"VF","Aufnr":"1","Dispo":"EL1","Matnr":"1","Datum":"20261105","Menge":"100"},
+              {"Typ":"VF","Aufnr":"2","Dispo":"EL1","Matnr":"1","Datum":"20261109","Menge":"10"},
+              {"Typ":"VF","Aufnr":"3","Dispo":"EL1","Matnr":"1","Datum":"20261110","Menge":"20"},
+              {"Typ":"VF","Aufnr":"4","Dispo":"EL1","Matnr":"1","Datum":"20261116","Menge":"30"},
+              {"Typ":"VF","Aufnr":"5","Dispo":"EL1","Matnr":"1","Datum":"20261117","Menge":"40"},
+              {"Typ":"VF","Aufnr":"6","Dispo":"SE1","Matnr":"1","Datum":"20261110","Menge":"5"}
+            ]
+            """));
+        Assert.Equal(50L, (long)r["werte"]!["tx"]!["plan5"]!);   // 10.11. bis 16.11., ohne ueberfaellig und ohne heute
+        Assert.Null(r["werte"]!["seh"]!["plan5"]);
+    }
 }

@@ -215,4 +215,22 @@ public class ShopfloorStoreTests
         Assert.DoesNotContain(schema, m => (string)m!["module"]! == "grafik");   // Seiten ohne Felder
         Assert.StartsWith("{", env.Store.Config.RawJson.TrimStart());
     }
+
+    [Fact]
+    public void Tageswerte_Aus_SAP_Sind_Ueber_Die_Schnittstelle_Gesperrt()
+    {
+        // Patch 07 im Backend (2026-11-10): ein POST api/daily aendert keinen Wert, der aus SAP/MES stammt
+        using var env = new ShopfloorTestEnv();
+        env.Store.ApplyPush(new ShopfloorPush
+        {
+            Items = ShopfloorTestEnv.Arr("""[{"module":"seh","day":"2026-11-02","fields":{"prod":2525}}]""")
+        }, "SAP");
+
+        var res = env.Store.PostDaily(ShopfloorTestEnv.Obj("""{"module":"seh","day":"2026-11-02","changes":{"prod":2000,"ampel":"rot"}}"""), "ik");
+
+        Assert.Equal(["prod"], res["gesperrt"]!.AsArray().Select(x => (string)x!));
+        Assert.Equal(2525, (int)res["data"]!["prod"]!);
+        Assert.Equal("rot", (string)res["data"]!["ampel"]!);
+        Assert.Equal("SAP", (string)res["meta"]!["prod"]!["src"]!);
+    }
 }

@@ -4182,9 +4182,9 @@
     },
     {
      "key": "dw_soll",
-     "label": "DW Prod.menge SOLL (aus DW)",
+     "label": "DW SOLL Verpacken (lieferbereit DLQ72)",
      "type": "calc",
-     "calc": "ref('dw','prod')",
+     "calc": "ref('dw','lieferbereit')",
      "group": "DW",
      "unit": "Stk."
     },

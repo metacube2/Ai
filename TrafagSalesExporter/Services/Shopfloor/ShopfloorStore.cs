@@ -419,8 +419,33 @@ public sealed class ShopfloorStore
         if (!IsValidDay(day))
             throw new ShopfloorException("Datum ungültig");
         var changes = CleanChanges(module, SfJson.Get(body, "changes") as JsonObject);
-        return Db.Write(con => SaveDaily(con, module, day!, changes, user));
+        return Db.Write(con =>
+        {
+            // 2026-11-10, Patch 07 im Backend (Hinweis Fabio): Felder, deren Wert aus SAP oder MES stammt, sind auch ueber die
+            // Schnittstelle nicht von Hand aenderbar (sonst ginge das Kennzeichen verloren, Beispiel SEH prod 02.11.).
+            var gesperrt = new JsonArray();
+            if (Config.LockExternal)
+            {
+                var row = ShopfloorDb.QueryOne(con, "SELECT meta FROM daily WHERE module=? AND day=?", module, day!);
+                var meta = row is null ? new JsonObject() : SfJson.ParseObject(row.Str("meta"));
+                foreach (var key in changes.Select(kv => kv.Key).ToList())
+                    if (IsExternal(meta, key))
+                    {
+                        changes.Remove(key);
+                        gesperrt.Add(key);
+                    }
+            }
+            var result = SaveDaily(con, module, day!, changes, user);
+            if (gesperrt.Count > 0)
+                result["gesperrt"] = gesperrt;
+            return result;
+        });
     }
+
+    /// <summary>Wert stammt aus SAP oder MES (meta.src), siehe Patch 07.</summary>
+    internal static bool IsExternal(JsonObject meta, string key)
+        => (string?)meta[key]?["src"] is { } src &&
+           (string.Equals(src, "SAP", StringComparison.OrdinalIgnoreCase) || string.Equals(src, "MES", StringComparison.OrdinalIgnoreCase));
 
     public void DeleteRecord(long id, string user)
         => Db.Write(con =>

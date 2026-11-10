@@ -218,7 +218,7 @@ public sealed class ShopfloorSapSync : BackgroundService
         var store = _stores.Store;
         var dayIso = (string)result["day"]!;
         var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
-            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject, store.Config.IsSapField);
         result["uebersprungen_manuell"] = skipped;
         result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
         result["geschrieben"] = true;
@@ -265,7 +265,7 @@ public sealed class ShopfloorSapSync : BackgroundService
         var store = _stores.Store;
         var dayIso = (string)result["day"]!;
         var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
-            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject, store.Config.IsSapField);
         result["uebersprungen_manuell"] = skipped;
         result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
         result["geschrieben"] = true;
@@ -296,7 +296,7 @@ public sealed class ShopfloorSapSync : BackgroundService
         var store = _stores.Store;
         var dayIso = (string)result["day"]!;
         var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
-            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject, store.Config.IsSapField);
         result["uebersprungen_manuell"] = skipped;
         result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
         result["geschrieben"] = true;
@@ -326,7 +326,7 @@ public sealed class ShopfloorSapSync : BackgroundService
         var store = _stores.Store;
         var dayIso = (string)result["day"]!;
         var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
-            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject);
+            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject, store.Config.IsSapField);
         result["uebersprungen_manuell"] = skipped;
         result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
         result["geschrieben"] = true;

@@ -33,6 +33,26 @@ public static class ShopfloorSapVorrat
     /// <summary>Module, die zusaetzlich die offene Tagesmenge (Feld ziel) aus SAP bekommen (Entscheid Fabio 07.11.: nur SEH).</summary>
     public static readonly string[] ZielModule = ["seh"];
 
+    /// <summary>
+    /// Module mit Planmenge der naechsten 5 Arbeitstage (Feld plan5, Fabio: „Eckendtermin naechste 5 AT“, nur TX). Annahme 2026-11-10,
+    /// von Fabio zu bestaetigen: ab dem Tag nach D bis zum 5. Arbeitstag (Mo bis Fr, ohne Feiertage), ohne Ueberfaellige.
+    /// </summary>
+    public static readonly string[] Plan5Module = ["tx"];
+
+    /// <summary>Letzter Tag (einschliesslich) der naechsten 5 Arbeitstage nach <paramref name="day"/> (Mo bis Fr).</summary>
+    public static DateOnly Plan5Ende(DateOnly day)
+    {
+        var d = day;
+        var n = 0;
+        while (n < 5)
+        {
+            d = d.AddDays(1);
+            if (d.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday))
+                n++;
+        }
+        return d;
+    }
+
     public static string Filter(string plant, DateOnly day)
         => $"Werks eq '{plant}' and Datum eq '{day:yyyyMMdd}' and Typ eq 'VR'";
 
@@ -56,7 +76,8 @@ public static class ShopfloorSapVorrat
             throw new InvalidOperationException(
                 "ShopAufSet kennt den Vorratsmodus (Typ VR) in diesem SAP-System noch nicht; Transport T76K912860 fehlt.");
         var g = Grenzen(day);
-        var summen = Module.ToDictionary(m => m.Abteilung, _ => new long[6], StringComparer.Ordinal);   // total, 3m, 2m, 1m, kw, tag
+        var plan5Ende = Plan5Ende(day);
+        var summen = Module.ToDictionary(m => m.Abteilung, _ => new long[7], StringComparer.Ordinal);   // total, 3m, 2m, 1m, kw, tag, plan5
         var auftraege = Module.ToDictionary(m => m.Abteilung, _ => 0, StringComparer.Ordinal);
         var ohneDatum = 0;
         foreach (var r in rows)
@@ -77,6 +98,7 @@ public static class ShopfloorSapVorrat
             if (eck <= g.M1) s[3] += menge;
             if (eck <= g.KwEnde) s[4] += menge;
             if (eck <= day) s[5] += menge;
+            if (eck > day && eck <= plan5Ende) s[6] += menge;
         }
         var werte = new JsonObject();
         var detail = new JsonObject();
@@ -93,6 +115,8 @@ public static class ShopfloorSapVorrat
             };
             if (ZielModule.Contains(modul))
                 felder["ziel"] = s[5];
+            if (Plan5Module.Contains(modul))
+                felder["plan5"] = s[6];
             werte[modul] = felder;
             detail[abt] = new JsonObject { ["auftraege"] = auftraege[abt], ["tag"] = s[5] };
         }
@@ -106,7 +130,8 @@ public static class ShopfloorSapVorrat
                 ["1m"] = g.M1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 ["2m"] = g.M2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 ["3m"] = g.M3.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                ["kw"] = g.KwEnde.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                ["kw"] = g.KwEnde.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ["plan5"] = plan5Ende.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
             },
             ["werte"] = werte,
             ["detail"] = detail

@@ -220,10 +220,21 @@ public sealed class ShopfloorConfig
     public Dictionary<string, ShopfloorNotifyRule> NotifyRules { get; } = new(StringComparer.Ordinal);
     public Dictionary<string, List<string>> ForecastPrefix { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Patch 07 (Fabio 2026-11-07): von SAP/MES gelieferte Werte sind schreibgeschuetzt, ausser "lock_ext": false in der
+    /// Konfiguration. Seit 2026-11-10 auch im Backend (POST api/daily), nicht nur in der Oberflaeche.
+    /// </summary>
+    public bool LockExternal { get; }
+
+    /// <summary>Feld ist in der Konfiguration als SAP-Quelle definiert (src = sap).</summary>
+    public bool IsSapField(string module, string key)
+        => Modules.TryGetValue(module, out var m) && m.Fields.Any(f => f.Key == key && string.Equals(f.Src, "sap", StringComparison.OrdinalIgnoreCase));
+
     private ShopfloorConfig(string json)
     {
         var root = JsonNode.Parse(json) as JsonObject ?? throw new InvalidDataException("Shopfloor-Konfiguration ist kein JSON-Objekt.");
         RawJson = NormalizePlannedSource(root) ? root.ToJsonString(RawOptions) : json;
+        LockExternal = !(root["lock_ext"] is JsonValue lv && lv.TryGetValue<bool>(out var lb) && !lb);
 
         foreach (var m in root["modules"] as JsonArray ?? [])
         {

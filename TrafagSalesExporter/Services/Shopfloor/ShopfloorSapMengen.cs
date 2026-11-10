@@ -12,6 +12,7 @@ namespace TrafagSalesExporter.Services.Shopfloor;
 /// <item>J8 TR5: dieselbe Logik mit der ZC27-Variante /PPA EXX72 (elf Arbeitsplaetze, Typencode 8*), gelesen in T76 am 2026-10-16.</item>
 /// <item>J8 SEH: ShopProdSet, WE-Menge der Fertigungsauftraege mit Istendtermin am Tag, Disponent S* (wie COOIS /SEH 001).</item>
 /// <item>DW: ZC27-Logik am Arbeitsplatz DL790 (Mail Fabio 2026-10-17, Punkt 2).</item>
+/// <item>DW lieferbereit: ZC27-Logik am Arbeitsplatz DLQ72 (Mail Fabio 2026-11-09, Punkt c).</item>
 /// <item>J11 FPY SEH: WE-Menge / Gesamtmenge der Auftraege mit Istendtermin in der KW des Tages, bis zu diesem Tag.</item>
 /// </list>
 /// Seit 2026-10-19 (Feedback Logistik ueber Fabio): Eintrag vom Tag D = Produktionstag D (ERSDA bzw. Istendtermin = D),
@@ -36,7 +37,9 @@ public static class ShopfloorSapMengen
         new("logistik", "dw_mle04", ["MLE04"]),
         new("logistik", "tx_mle08", ["MLE08", "MLE09"]),
         new("tr5", "prod", ["EDF72", "EDB72", "EAC72", "EAP72", "EAN72", "EAM72", "EDD72", "EEX72", "EAS72", "EDS72", "EVA72"], "8*"),
-        new("dw", "prod", ["DL790"])
+        new("dw", "prod", ["DL790"]),
+        // 2026-11-10 (Mail Fabio 09.11. Punkt c): lieferbereite Tagesmenge DLQ72, ZC27-Logik wie DL790; Logistik-Soll DW verweist darauf
+        new("dw", "lieferbereit", ["DLQ72"])
     ];
 
     /// <summary>Wie viele Tage vor heute der automatische Abgleich neu schreibt. 3 deckt am Montag Freitag bis Sonntag ab.</summary>
@@ -142,7 +145,8 @@ public static class ShopfloorSapMengen
     /// Push-Items aus den Werten; Felder mit einem manuell erfassten Wert (Wert da, aber ohne SAP-Quelle) bleiben aus.
     /// <paramref name="existing"/> liefert je Modul den Tagessatz (data, meta) oder null.
     /// </summary>
-    public static (JsonArray Items, JsonArray Skipped) BuildItems(JsonObject computed, Func<string, JsonObject?> existing)
+    public static (JsonArray Items, JsonArray Skipped) BuildItems(JsonObject computed, Func<string, JsonObject?> existing,
+        Func<string, string, bool>? sapOwned = null)
     {
         var day = (string)computed["day"]!;
         var items = new JsonArray();
@@ -157,7 +161,9 @@ public static class ShopfloorSapMengen
             {
                 var hasValue = data?[key] is not null;
                 var fromSap = string.Equals((string?)meta?[key]?["src"], "SAP", StringComparison.OrdinalIgnoreCase);
-                if (hasValue && !fromSap)
+                // 2026-11-10 (Patch 07, Fabio): ein manuell ueberschriebenes SAP-Feld (src = sap in der Konfiguration) bekommt den
+                // SAP-Wert und das Kennzeichen zurueck; nur echte Handfelder bleiben unangetastet.
+                if (hasValue && !fromSap && !(sapOwned?.Invoke(module, key) ?? false))
                 {
                     skipped.Add($"{module}.{key}");
                     continue;

@@ -63,6 +63,8 @@ public class ShopfloorSapMengenTests
         Assert.Contains(calls, c => c.Filter == "Werks eq '1100' and (Arbpl eq 'MLE01') and (Ersda eq '20261013')");
         // DW wie Logistik, Arbeitsplatz DL790 (Mail Fabio 2026-10-17)
         Assert.Contains(calls, c => c.Filter == "Werks eq '1100' and (Arbpl eq 'DL790') and (Ersda eq '20261013')");
+        // DW lieferbereit DLQ72 (Mail Fabio 2026-11-09, Punkt c)
+        Assert.Contains(calls, c => c.Filter == "Werks eq '1100' and (Arbpl eq 'DLQ72') and (Ersda eq '20261013')");
         // TR5 wie ZC27-Variante /PPA EXX72: elf Arbeitsplaetze, Typencode 8*
         var tr5 = Assert.Single(calls, c => c.Filter.Contains("'EDF72'"));
         Assert.EndsWith("and Typcd eq '8*'", tr5.Filter);
@@ -141,5 +143,18 @@ public class ShopfloorSapMengenTests
         Assert.Equal("SAP", (string)log["meta"]!["tx_mle08"]!["src"]!);
         var seh = env.Store.GetDaily("seh", "2026-10-14", "2026-10-14")["seh"]!["2026-10-14"]!["data"]!;
         Assert.Equal(99.2, (double)seh["fpy"]!, 3);
+    }
+
+    [Fact]
+    public void Sap_Feld_Von_Hand_Ueberschrieben_Bekommt_SAP_Wert_Zurueck()
+    {
+        // Patch 07 (Fabio 2026-11-07), Backend 2026-11-10: src = sap in der Konfiguration -> SAP gewinnt gegen den Handwert
+        var computed = JsonNode.Parse("""{"day":"2026-11-02","werte":{"seh":{"prod":2525,"vorrat_total":100}}}""")!.AsObject();
+        JsonObject? Existing(string module) => JsonNode.Parse("""{"data":{"prod":2000,"vorrat_total":90},"meta":{}}""")!.AsObject();
+
+        var (items, skipped) = ShopfloorSapMengen.BuildItems(computed, Existing, (m, k) => k == "prod");
+
+        Assert.Equal(["seh.vorrat_total"], skipped.Select(x => (string)x!));
+        Assert.Equal(2525, (int)items.Single()!["fields"]!["prod"]!);
     }
 }
