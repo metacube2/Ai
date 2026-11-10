@@ -47,7 +47,7 @@ Filter der Lieferperformance.
    altem Namen in alten Belegen (der Delta-Lauf schreibt `SupplierName` nur fuer geaenderte Belege neu), ist nicht
    geprueft. Gleiches Muster behoben in `ExecuteArticlePriceTrendRowsAsync` (Preise je Artikel, `OrdinalIgnoreCase` mit
    Ueberschreiben). `QuantityContractSupplierRows` gruppiert ebenfalls ohne Gross-/Kleinschreibung, summiert aber
-   (kein Wertverlust), unveraendert. Test `SupplierYearMatrix_Keeps_Names_Differing_Only_In_Case_And_Matches_The_Spend_Breakdown`.
+   (kein Wertverlust), unveraendert. Test `SupplierYearMatrix_Keeps_Names_Differing_Only_In_Case_And_Matches_The_Spend_Breakdown`. *Nachtrag 2026-11-10 (`19ca282`, `548b10e`): Die Matrix-Abfragen `ExecuteSupplierYearSpendRowsAsync`, `ExecuteSupplierGroupYearRowsAsync` und `ExecuteSupplierGroupArticleYearRowsAsync`, das Feld `SupplierYearSpendRows` und die drei Datentypen sind entfernt, weil die Matrix seit dem 05.11. nicht mehr auf der Seite steht; die Trennung nach Gross-/Kleinschreibung sichert jetzt der Aufriss (`BuildCascadeLevel`), der Test heisst `SupplierBreakdown_Keeps_Names_Differing_Only_In_Case_And_Sums_To_The_Total_Spend`.*
 3. **F3 Preisentwicklung:** „Stueckpreis nach Jahr“ zeigt fuer alle Jahre „CHF 1“ (Rundung, Wert um 1.13); seit dem
    Standardzeitraum „laufendes Jahr“ kein Vorjahresvergleich mehr (auch Preisindikator Lieferanten).
    *Behoben 2026-11-05 (`6ab94a7`):* Ursache `Components/Pages/PurchasingDashboard.razor` `SelectedIdeaChartRows`

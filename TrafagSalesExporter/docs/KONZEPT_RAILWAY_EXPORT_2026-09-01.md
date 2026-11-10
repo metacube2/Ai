@@ -92,7 +92,7 @@ den `AuthenticationStateProvider` liest), gewaehltes Jahr, gewaehlter Standortfi
 Hinweis `Namensfilter wurde bewusst nicht angewendet`, Anzahl Zeilen je Blatt,
 Erklaerung von `Vorschlag` gegen `Bestaetigt`, der Satz `Ein unbestaetigter Vorschlag ist
 keine Reporting-Aussage`, die Datumsregel aus Entscheidung 4 und der Hinweis auf die
-TRDE-Luecke.
+TRDE-Luecke. *(Ueberholt am 2026-11-10: Der Eintrag heisst „Datenluecken je Standort“; seit dem Nachzug vom 09.09.2026 fehlen Name und Land nicht mehr in allen deutschen Zeilen.)*
 
 ### `Pruefung` und `Bestaetigt`
 
@@ -167,7 +167,7 @@ bleiben Text, weil die Quelle Bereiche und gemischte Waehrungen wie `500-600 pcs
 ### `Datenluecken`
 
 Je Standort die Anzahl Verkaufszeilen ohne Kundenname und ohne Kundenland sowie die Anzahl
-Umfragezeilen ohne Verknuepfung. TRDE erscheint hier mit der vollen Zeilenzahl. Das Blatt
+Umfragezeilen ohne Verknuepfung. TRDE erscheint hier mit der vollen Zeilenzahl *(ueberholt am 2026-11-10: seit dem Nachzug vom 09.09.2026 nur noch mit den Zeilen ohne Brueckentreffer, im Export vom 29.09. 145 bzw. 163 von 7'737)*. Das Blatt
 ist der Beleg dafuer, dass ein leeres deutsches Ergebnis eine Datenluecke ist und nicht
 ein Umsatz von null.
 

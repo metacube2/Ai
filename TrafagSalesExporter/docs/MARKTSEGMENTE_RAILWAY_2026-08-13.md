@@ -689,7 +689,7 @@ nach bestaetigt und Vorschlag, mit Kundenblatt. Die App ist dafuer nicht geaende
 nutzen; statt aller 171 Vorschlaege die Top 15 durch Patrik und Andreas bestaetigen lassen (70 %
 des Umsatzes); ITEC verwerfen. **Veraltet im Export:** Die Anleitung sagt noch, in den deutschen
 Verkaufszeilen fehlten Kundenname und Kundenland; laut Blatt Datenluecken sind es nur noch 145 bzw.
-163 von 7'737 Zeilen. Die Periodenregel des Exports (Buchungsdatum zuerst) weicht fuer Spanien von
+163 von 7'737 Zeilen. *Behoben 2026-11-10 (`c5c9b4a`, `548b10e`): Die Anleitung nennt jetzt „Datenluecken je Standort“ und verweist auf das Blatt Datenluecken; sie sagt auch, dass der Nachzug nur den Bestand bis 09.09. gefuellt hat und neuere deutsche Rechnungen wieder ohne Name und Land ankommen koennen.* Die Periodenregel des Exports (Buchungsdatum zuerst) weicht fuer Spanien von
 Finance (Rechnungsdatum) ab.
 
 "Patrick" aus Rohails Nachricht ist sehr wahrscheinlich Patrick Hertach, der den Termin "Railway"

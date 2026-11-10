@@ -70,7 +70,7 @@ Rechenregeln (Hot, Wilson, Reputation, Stufen) stehen im Handbuchkapitel
 ## Offen
 
 - Kosmetik: AD-Name „Nachname, Vorname“ eventuell als „Vorname Nachname“ zeigen; Zaehler „1 Beiträge“
-  ohne Einzahl.
+  ohne Einzahl *(behoben 2026-11-10, `c5c9b4a`/`548b10e`: Einzahl bei genau 1 fuer Beitrag, Kommentar, Stimme, akzeptierte Antwort, offene Frage, Punkt)*.
 - Ankündigung im Intranet/Teams: nur auf Ingos Entscheid.
 - Moderation über die Oberfläche (Communities umbenennen/archivieren) fehlt; bei Bedarf als Admin-Funktion.
 - Keine Mail-Benachrichtigung bei Antworten.

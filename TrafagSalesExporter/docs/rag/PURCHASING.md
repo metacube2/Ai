@@ -86,7 +86,7 @@ Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nac
 
 - **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, `c1fdfa2`).
   Der Jahres-Spend kommt aus einer eigenen, ungekappten Jahresaggregation statt aus der Summe
-  der Top 10; das Diagramm bleibt Top 10 (E1). Die Top-Warengruppe nutzt wie Diagramm und Matrix
+  der Top 10; das Diagramm bleibt Top 10 (E1). Die Top-Warengruppe nutzt wie Diagramm und Matrix *(Matrix seit 05.11. entfernt, ihre Abfrage seit 2026-11-10, `19ca282`)*
   zuerst `MARA.MATKL` (E2). Bei unvollstaendigem Cache entstehen keine SAP-Live-Stichproben-KPIs
   mehr (C1). Fehlende Wechselkurse werden gezaehlt und ausdruecklich gewarnt; der 1:1-Rueckfall
   bleibt bis zu einem Fachentscheid, betroffene Werte gelten nicht als belastbar (C2).
@@ -171,7 +171,7 @@ Wunsch Armin 2026-10-08. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nac
 - Letzter verifizierter Full Load vom 2026-07-24: `SupplierCountry` 100 %,
   `MaraAbc` 78 %, `MaraXyz` 65 % und `MaraMatkl` 80,7 % gefuellt. Der
   Spend-Aufriss zeigt damit echte Region-/ABC-/XYZ-Daten.
-- Die Spend-Matrix bietet Lieferant -> Warengruppe -> Material. Warengruppe
+- *Ueberholt am 2026-11-10: Die Spend-Matrix gibt es seit dem 05.11. nicht mehr auf der Seite, ihre Abfrage ist mit `19ca282` entfernt; Lieferant -> Warengruppe -> Material zeigt der Spend-Aufriss (Einstieg Lieferant).* Die Spend-Matrix bietet Lieferant -> Warengruppe -> Material. Warengruppe
   kommt aus `MARA-MATKL`, mit Fallback auf die Beleg-Warengruppe. T023T-Texte
   werden ueber `PurchasingMaterialGroupTextCatalog` angezeigt; unbekannte
   Codes bleiben sichtbar.

@@ -873,7 +873,7 @@ machen** — zuerst der Reiter `Spend`, erst nach dessen Abnahme der naechste Re
   Lieferant aufklappen (Pfeil-Button) zeigt den Spend des Lieferanten je **Warengruppe** und
   Jahr; die Drilldown-Summen entsprechen exakt der Lieferantenzeile (Pivot-Eigenschaft, per
   Test abgesichert). Zeitraumfilter wirkt unveraendert auf beide Ebenen.
-- Datenbasis: neue Aggregation `ExecuteSupplierGroupYearRowsAsync` in
+- *(Ueberholt am 2026-11-10: Matrix seit 05.11. nicht mehr auf der Seite, Abfrage mit `19ca282` entfernt; den Aufriss Lieferant -> Warengruppe -> Material liefert der Spend-Aufriss.)* Datenbasis: neue Aggregation `ExecuteSupplierGroupYearRowsAsync` in
   `PurchasingDashboardService` (`GROUP BY Supplier, MaterialGroup, Year`), Modell
   `PurchasingSpendGroupYearRow`, UI in `PurchasingSection.razor` (Toggle je Lieferant,
   eingerueckte Drill-Zeilen).

@@ -2,6 +2,21 @@
 
 Stand: 2026-11-10
 
+## Nachtrag 2026-11-10 11:30: vier kleine Code-Korrekturen aus der Todo-Pruefung (Auftrag Ingo „das erledigen“), nicht deployed
+
+- **Shopfloor** (`c5c9b4a`, `548b10e`): `ShopfloorSapSync.NotFoundHint` nennt bei HTTP 404 den Auftrag, der das abgefragte Set anlegt (CoPaSumSet `T76K912866`,
+  ShopRm/ShopProd `T76K912740` + `T76K912738`, ShopZd05Set/ShopAufSet `T76K912718`), und den Gateway-Cache als zweite Ursache. Tests.
+- **Trafag Reddit:** Einzahl bei genau 1 (Beitrag, Kommentar, Stimme, akzeptierte Antwort, offene Frage, Punkt; englisch auch Contributor), neue Schluessel in allen
+  Sprachkatalogen. Gegenpruefung fand eine Kollision: „akzeptierte Antwort“ ist in den Katalogen (ohne Gross/Klein) derselbe Schluessel wie „Akzeptierte Antwort“; die neuen
+  Eintraege wieder entfernt, es gilt der vorhandene.
+- **Railway-Export:** Anleitung „Datenluecken je Standort“ statt „Datenluecke TRDE“ (Nachzug bis 09.09.2026, neuere deutsche Rechnungen koennen wieder ohne Name und Land
+  ankommen), Eintrag „Leeres Kundenland“ angepasst, neuer Test.
+- **Einkauf** (`19ca282`, Agent im Worktree, per Fast-Forward uebernommen; `548b10e`): ungenutzte Abfragen der entfernten Matrix Lieferant/Jahr samt Feld
+  `SupplierYearSpendRows` und drei Datentypen geloescht (drei Abfragen je Snapshot weniger, Laufzeit nicht gemessen). Sieben Tests auf den Spend-Aufriss umgestellt, keiner
+  entfallen; Staerke mit sechs absichtlichen Verfaelschungen geprueft.
+- Suite 1490/1490 im Release-Worktree auf `548b10e`. **Nicht deployed** (Freigabe Ingo und Pruefung Einkauf-Delta stehen aus). Gegenpruefung durch fuenf unabhaengige
+  Pruefer, Befunde eingearbeitet. Nicht behoben: Klingonisch/Albanisch nutzen fuer „Kommentar“ den Schluessel des Formularfelds (anderes Wort als die Mehrzahl).
+
 ## Nachtrag 2026-11-10 10:55: alle offenen Todos gegen Code und Doku geprueft und nachgefuehrt
 
 - Auftrag Ingo „pruefe alle todos gegen code und doku“, danach „ja korrekturen einarbeiten“. 159 Zeilen nur lesend geprueft (Wochen_Todo 106, Status_kurz 46,
@@ -51,7 +66,7 @@ Gilt vor allen aelteren Uebergaben weiter unten. Produktiv: Deploy 08:46 `436e8a
 - **Fabio:** Verzug einschalten? Schalter `Shopfloor:SapVerzugEnabled` (aus) und `Shopfloor:VerzugMaterialFilter` (`SEH,TR5,TX,DW`, leer = ohne Filter) in `appsettings.json`; Ingo entscheidet nach Fabios Antwort, dann Wert aendern und deployen. Ausserdem TX `plan5` (Annahme: naechste 5 Arbeitstage) bestaetigen.
 - **Andreas:** ISS-032 Gruppenumsatz (Regulierer `VBRK-KUNRG` ins Set, IC-Regel auf den Regulierer), siehe `docs/VERKAUF_2026-10-02.md` Nachtrag und Issue-Log.
 
-**Kleinigkeit offen:** Die Vorschau `sap/copa` meldet bei 404 den generischen Hinweis mit den alten Auftraegen `T76K912740/738` (aus `ReadAsync`); fuer CoPa waere `T76K912866` richtig. Erledigt sich mit dem Import.
+**Kleinigkeit offen:** Die Vorschau `sap/copa` meldet bei 404 den generischen Hinweis mit den alten Auftraegen `T76K912740/738` (aus `ReadAsync`); fuer CoPa waere `T76K912866` richtig. Erledigt sich mit dem Import. *Erledigt 2026-11-10 (`c5c9b4a`, `548b10e`): der Hinweis nennt den Auftrag des abgefragten Sets und den Gateway-Cache.*
 
 **Erledigt heute:** ISS-032 belegt, Q-Faelle Status/Produktlinie, DLQ72, Backend-Schutz Patch 07, plan5, Verzug-Schalter, CO-PA gebaut, fuenf Claude-Testreports in T76 geloescht (`Z_KOI_ZLO_FIX26_TEST`, `Z_KOI_VC_TXT_KOPIE`, `Z_KOI_VC_TXT_TESTID`, `Z_KOI_ZLO03_ALT`, `Z_KOI_ZLO_APP_TEST`). Koordinationseintrag abgeschlossen, keine Reservierung offen.
 
