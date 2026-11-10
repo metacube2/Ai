@@ -622,3 +622,15 @@ Montag; die Montagsauftraege sind inzwischen gemeldet). Einschalten (`SapVorratE
   nicht in Fabios Wert. Bau offen: ein Set mit Monatssummen je Satzart und `WWPSP` (0003 DW, 0005 Transmitter) in T76, da `CE11000` fuer
   `RFC_READ_TABLE` zu gross ist.
 - **b) Verzug:** unveraendert aus (Fabios Antwort zu Material 1-99999 und Layoutfilter offen).
+
+*Nachtrag 2026-11-10 08:46 (`436e8ad`, deployed, 1483/1483):*
+- **b) Verzug-Schalter (Wunsch Ingo bis Fabios Entscheid):** `Shopfloor:VerzugMaterialFilter` (Text, kommagetrennt, Vorgabe
+  `SEH,TR5,TX,DW` wie PPD; leer = ohne Materialfilter; Text, weil der Konfigurations-Binder eine leere Liste nicht als Ueberschreibung
+  liest) und `Shopfloor:SapVerzugEnabled` (aus) stehen in `appsettings.json`; die Vorschau zeigt den aktiven Filter. Ein- und Umschalten
+  = Wert aendern und deployen.
+- **d) CO-PA gebaut:** SAP `CoPaSumSet` in T76 (`T76K912866`, `saptasks/copa_verkauf/NOTES.md`), Cockpit `ShopfloorSapCoPa`
+  (ae_aktuell/ae_tx 0005/ae_dw 0003 aus Satzart A, umsatz_ist/u_tx/u_dw aus F; Monat des Vortags wie Verkauf J4), Schalter
+  `Shopfloor:SapCoPaEnabled` aus, Vorschau `GET/POST sap/copa?tag=`. P76 liefert bis zum Import 502 „404, Set nicht transportiert“.
+  **Ingo:** `T76K912866` freigeben und importieren, danach P76-Caches, Vorschau fuer `tag=2026-10-01` gegen Fabios September, Schalter ein.
+- T76 aufgeraeumt: `Z_KOI_ZLO_FIX26_TEST`, `Z_KOI_VC_TXT_KOPIE`, `Z_KOI_VC_TXT_TESTID`, `Z_KOI_ZLO03_ALT`, `Z_KOI_ZLO_APP_TEST` geloescht.
+- Q-Faelle im Browser bestaetigt: MOFN offen 191, MRST zurueckgestellt 131, MIAR in Arbeit 23; Produktlinie bei 312 von 345.
