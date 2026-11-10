@@ -602,3 +602,23 @@ zwischen den Abfragen erledigt wurde. TR5 62'958, TX 50'325 (gleiche Logik). SEH
 Montag; die Montagsauftraege sind inzwischen gemeldet). Einschalten (`SapVorratEnabled`, SEH-Config) wartet auf Ingos OK.
 
 *Nachtrag 2026-11-09 15:15, eingeschaltet (Auftrag Ingo „aktiviere was geht und schalte frei“):* `Shopfloor:SapVorratEnabled = true` (`88e19f6`), Fabios `config_seh_tagesmenge_sap.js` eingespielt (`--check`, dann ohne; `seh.ziel` `planned_source: sap`, dazu Quellenbeschreibung `sap` am Feld, `4585392`; Test SAP-Felder 127 -> 128), deployed 15:11 (`4585392`, 1465/1465, bitgleich). Heute geschrieben per `POST sap/vorrat?tag=2026-11-09` (Header `X-User: claude`): SEH 157'571 / 3M 70'130 / 2M 47'615 / 1M 31'072 / KW 8'840 / Tag 144; TR5 63'921; TX 50'342; DW 117'271; keine manuellen Werte uebersprungen. Ab morgen schreibt der Abgleich 04:00 und 12:45. Verzug (`SapVerzugEnabled`) bleibt aus bis Fabios Antwort. `T76K912858` (ZC22 Systemstatus) ebenfalls in P76 (ohne Schalter).
+
+## 20. Tag 10.11.: DLQ72, Backend-Schutz, plan5, CE11000-Skonto (Auftrag Ingo „2-6 umsetzen durch dich“, Stand 2026-11-10)
+
+*Erledigt 2026-11-10 08:16 (`e6f6f70`, 1475/1475, deployed, bitgleich):*
+- **c) DW lieferbereit DLQ72:** `ShopfloorSapMengen.RmGroups` um `("dw", "lieferbereit", ["DLQ72"])`, ZC27-Logik wie DL790. P76 Gateway
+  `ShopRmSet` DLQ72 200. Fabios `config_logistik_dw_soll.js` eingespielt (`logistik.dw_soll = ref('dw','lieferbereit')`, Label „DW SOLL
+  Verpacken (lieferbereit DLQ72)“). Historie 01.10. bis 10.11. per `POST sap/mengen?tag=` nachgeladen (34 Tage, alle 33 DW-Tage mit Wert;
+  Beispiele 09.11. prod 823 / lieferbereit 1'014, 05.11. 745 / 659).
+- **Patch 07 im Backend:** `POST api/daily` (`ShopfloorStore.PostDaily`) laesst Felder mit `meta.src` SAP/MES unveraendert und meldet sie
+  unter `gesperrt` (abschaltbar mit `"lock_ext": false`, `ShopfloorConfig.LockExternal`). Der SAP-Abgleich (`BuildItems`, alle vier Wege)
+  stellt ein von Hand ueberschriebenes Feld mit `src = sap` in der Konfiguration wieder her (SAP-Wert und Kennzeichen); echte Handfelder
+  bleiben. *Ueberholt fuer SAP-Felder: „manuell erfasste Werte werden nicht ueberschrieben“ (Abschnitte 15, 17, 19).*
+- **TX plan5:** im Vorrat (`ShopfloorSapVorrat.Plan5Module`), **Annahme**: Eckendtermin vom Tag nach D bis zum 5. Arbeitstag (Mo-Fr, ohne
+  Feiertage), ohne Ueberfaellige; heute 5'937. Von Fabio zu bestaetigen.
+- **d) CE11000, Skonto-Frage geloest (P76 lesend, SE16 mit Spaltenauswahl, 71'544 Zeilen Periode 009.2026):** Buchungskreis 1100,
+  `PALEDGER 01`: `VV100 + VV110 - VV200 - VV210 - VV220 - VV250 - VV230 - VV240` ergibt **F 7'878'114.69 und A 6'531'197.94, genau Fabios
+  Kontrollwerte**; ohne `VV240` 303.20 bzw. 196.47 zu hoch, `VV245` ist 0. Buchungskreis 1200 hat eigene Zeilen (F 334'938, A 368'478),
+  nicht in Fabios Wert. Bau offen: ein Set mit Monatssummen je Satzart und `WWPSP` (0003 DW, 0005 Transmitter) in T76, da `CE11000` fuer
+  `RFC_READ_TABLE` zu gross ist.
+- **b) Verzug:** unveraendert aus (Fabios Antwort zu Material 1-99999 und Layoutfilter offen).

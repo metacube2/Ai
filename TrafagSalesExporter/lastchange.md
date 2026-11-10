@@ -1,6 +1,13 @@
 # Last Change
 
-Stand: 2026-11-09
+Stand: 2026-11-10
+
+## Tag 10.11. (Auftrag Ingo „12, 13, 1 erledigt; 14, 2-6 durch dich, 9 Prod offen fuer Zaehlung“)
+
+- **9 / ISS-032 belegt:** TRCH-Export nimmt den Auftraggeber (`VBRK-KUNAG`); bei 14.37 Mio ist der Regulierer eine Trafag-Gesellschaft (12.82 doppelt, 1.56 JP/PL); Gruppe rund 100 statt 116 Mio, betrifft auch Finance „Ist ohne IC“. Loesung (Regulierer ins Set, IC-Regel) wartet auf Ingo/Andreas.
+- **6 Q-Faelle:** P76 hat fuer QM kein Anwenderstatus-Schema; Status jetzt aus dem Systemstatus-Lebenszyklus, Produktlinie ueber die Materialnummer (deployed 08:16).
+- **3 DLQ72** live, Logistik-Soll DW darauf, Historie ab 01.10. nachgeladen; **5** Backend-Schutz Patch 07 und TX plan5 (Annahme) live; **4** CE11000 Skonto = VV240 (Sep exakt), Set-Bau offen; **2** Verzug weiter aus (Fabio).
+- Deploy 08:16 `e6f6f70`. `docs/SHOPFLOOR_2026-10-07.md` 20, `docs/VERKAUF_2026-10-02.md`, Monthly-Review-Doku.
 
 ## Eingeschaltet 15:11 (Auftrag Ingo „aktiviere was geht und schalte frei“), 2026-11-09
 
