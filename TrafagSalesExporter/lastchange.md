@@ -2,6 +2,26 @@
 
 Stand: 2026-11-10
 
+## Uebergabe Stand 2026-11-10 (Auftrag Ingo „md nachfuehren, committen, pushen, Chat neu starten“)
+
+Gilt vor allen aelteren Uebergaben weiter unten. Produktiv: Deploy 08:46 `436e8ad`; Doku bis `88e9025` gepusht.
+
+**SAP-Transporte (Freigabe und Import nur Ingo):**
+
+| Transport | Inhalt | Stand | naechster Schritt |
+| --- | --- | --- | --- |
+| `T76K912866` | `CoPaSumSet` (CE11000 Monatssummen, Struktur `ZSTR_COPA_SUM`, MPC DEFINE, DPC GET_ENTITYSET) | T76 aktiv, rueckgelesen, Gateway 200; **nicht freigegeben** | Ingo: freigeben, importieren. Danach Claude: P76 `/IWBEP` (alle) dann `/IWFND` (`ZPOWERBI_EINKAUF_MDL`) in eigener Sitzung leeren, `GET shopfloor/api/sap/copa?tag=2026-10-01` gegen Sep (AE 6'531'197.94, Umsatz 7'878'114.69), mit Ingos OK `Shopfloor:SapCoPaEnabled = true`, Deploy, `POST sap/copa` fuer heute. `saptasks/copa_verkauf/NOTES.md` |
+| `T76K912853` + `T76K912856` | IC-Staffelbasis (VOFM 601, V/06 PR00) | T76 aktiv, nicht transportiert | Fabio testet in T76; nur zusammen und erst nach seinem OK |
+| `T76K912490` | ZZPRDAT | offen | P76-Vorpruefung, Georg, Fabio, Abnahme |
+
+**Wartet auf andere:**
+- **Fabio:** Verzug einschalten? Schalter `Shopfloor:SapVerzugEnabled` (aus) und `Shopfloor:VerzugMaterialFilter` (`SEH,TR5,TX,DW`, leer = ohne Filter) in `appsettings.json`; Ingo entscheidet nach Fabios Antwort, dann Wert aendern und deployen. Ausserdem TX `plan5` (Annahme: naechste 5 Arbeitstage) bestaetigen.
+- **Andreas:** ISS-032 Gruppenumsatz (Regulierer `VBRK-KUNRG` ins Set, IC-Regel auf den Regulierer), siehe `docs/VERKAUF_2026-10-02.md` Nachtrag und Issue-Log.
+
+**Kleinigkeit offen:** Die Vorschau `sap/copa` meldet bei 404 den generischen Hinweis mit den alten Auftraegen `T76K912740/738` (aus `ReadAsync`); fuer CoPa waere `T76K912866` richtig. Erledigt sich mit dem Import.
+
+**Erledigt heute:** ISS-032 belegt, Q-Faelle Status/Produktlinie, DLQ72, Backend-Schutz Patch 07, plan5, Verzug-Schalter, CO-PA gebaut, fuenf Claude-Testreports in T76 geloescht (`Z_KOI_ZLO_FIX26_TEST`, `Z_KOI_VC_TXT_KOPIE`, `Z_KOI_VC_TXT_TESTID`, `Z_KOI_ZLO03_ALT`, `Z_KOI_ZLO_APP_TEST`). Koordinationseintrag abgeschlossen, keine Reservierung offen.
+
 ## Tag 10.11. (Auftrag Ingo „12, 13, 1 erledigt; 14, 2-6 durch dich, 9 Prod offen fuer Zaehlung“)
 
 - **9 / ISS-032 belegt:** TRCH-Export nimmt den Auftraggeber (`VBRK-KUNAG`); bei 14.37 Mio ist der Regulierer eine Trafag-Gesellschaft (12.82 doppelt, 1.56 JP/PL); Gruppe rund 100 statt 116 Mio, betrifft auch Finance „Ist ohne IC“. Loesung (Regulierer ins Set, IC-Regel) wartet auf Ingo/Andreas.
@@ -9,7 +29,7 @@ Stand: 2026-11-10
 - **3 DLQ72** live, Logistik-Soll DW darauf, Historie ab 01.10. nachgeladen; **5** Backend-Schutz Patch 07 und TX plan5 (Annahme) live; **4** CE11000 Skonto = VV240 (Sep exakt), Set-Bau offen; **2** Verzug weiter aus (Fabio).
 - Deploy 08:16 `e6f6f70`. `docs/SHOPFLOOR_2026-10-07.md` 20, `docs/VERKAUF_2026-10-02.md`, Monthly-Review-Doku.
 - **Vormittag 08:46 (`436e8ad`):** Verzug-Materialfilter schaltbar (`VerzugMaterialFilter`, `SapVerzugEnabled` aus); **CO-PA** gebaut: SAP `CoPaSumSet` in T76 (**`T76K912866`**, rueckgelesen, Test 200), Cockpit mit Schalter `SapCoPaEnabled` aus. **Ingo: `T76K912866` transportieren.** Vier weitere alte Claude-Testreports in T76 geloescht.
-- **14** T76: `$TMP`-Report `Z_KOI_ZLO_FIX26_TEST` geloescht (SE38, eigene Sitzung). Weitere lokale Claude-Testobjekte aus Okt/Nov: `Z_KOI_VC_TXT_KOPIE`, `Z_KOI_VC_TXT_TESTID`, `Z_KOI_ZLO03_ALT`, `Z_KOI_ZLO_APP_TEST` (Loeschen auf Ingos Wort); aeltere `Z_KOI_*`/`Z_IKO_*` gehoeren Ingo.
+- **14** T76: `$TMP`-Report `Z_KOI_ZLO_FIX26_TEST` geloescht (SE38, eigene Sitzung). Weitere lokale Claude-Testobjekte aus Okt/Nov: `Z_KOI_VC_TXT_KOPIE`, `Z_KOI_VC_TXT_TESTID`, `Z_KOI_ZLO03_ALT`, `Z_KOI_ZLO_APP_TEST` (auf Ingos Wort am 10.11. ebenfalls geloescht); aeltere `Z_KOI_*`/`Z_IKO_*` gehoeren Ingo.
 
 ## Eingeschaltet 15:11 (Auftrag Ingo „aktiviere was geht und schalte frei“), 2026-11-09
 
