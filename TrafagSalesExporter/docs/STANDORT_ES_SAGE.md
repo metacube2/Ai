@@ -1,6 +1,6 @@
 # Standort Spanien: Sage-Export und Upload
 
-Stand: 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
+Stand: 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
 und `SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md`.
 
 **Die Export-SQL gehoert uns**, nicht Spanien. Fehlt ein Feld, liest zuerst unsere Query
@@ -45,6 +45,14 @@ Waehrung ist EUR, weil Sage `EnEuros_ = -1` liefert und `CodigoDivisa` leer ist.
 Weitere Kandidatentabellen aus der Discovery, aktuell nicht gelesen: `dbo.EstadisVenta`
 (Statistik, im Auszug ohne 2025-Zeilen), `dbo.MovimientosFacturas`,
 `dbo.Vis_RTDV_EfectosFactura`.
+
+**Lieferant (Supplier), Stand 2026-11-11, nicht umgesetzt:** Die Query liest keinen Lieferanten, deshalb ist TRES in allen
+Supplier-Feldern leer (Andreas hat es am 11.11. im `Sales_All` bemerkt). Im Schemaauszug `SageSpainExportPackage/v2/candidate_objects.csv`
+belegt ist der Weg ueber den Wareneingang: `dbo.LineasAlbaranProveedor` (`CodigoEmpresa`, `CodigoArticulo`, Belegschluessel
+`EjercicioAlbaran`/`SerieAlbaran`/`NumeroAlbaran`) mit `dbo.CabeceraAlbaranProveedor` (`CodigoProveedor`, `RazonSocial`,
+`SiglaNacion`/`Nacion`, `FechaAlbaran`). Vorschlag: je Verkaufszeile `OUTER APPLY TOP 1` auf den letzten Wareneingang desselben
+Artikels, wie beim Buchungsdatum. Vorher entscheidet Andreas, ob das als Supplier gilt (ISS-003.3); danach alle Stellen der Query,
+die ES-Spaltenzuordnung und ein einmaliger Bereichsexport durch Santi.
 
 ### Buchungsdatum
 

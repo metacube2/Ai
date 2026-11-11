@@ -1,6 +1,6 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
+Stand: 2026-11-11 abends (Abschnitt 8.9: Rueckmeldung Fabio zu 601/908 eingeordnet, Entscheid RV80HGEN weiter bei Ingo); davor 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
 offen; Plan und Ausfuehrung in `PLAN_V1_CUSTOMIZING_2026-11-11.md`); davor 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
 noch nicht eingebunden**; VOFM in P76 gesperrt, Transport von `RV62ANNN` nicht moeglich (generiert), offen Entscheid Ingo zu
 `RV80HGEN`, das auch die Kopierbedingung FBED 908 einbindet); davor 2026-11-06
@@ -709,6 +709,12 @@ OData `ZTRIM_MDE_UML_IC_SRV` mit MPC/DPC-Klassen und SICF, also die MDE-App fuer
 T76K912226 in P76 nicht nachgelesen (`RV60B908` ist dort vorhanden). Ingo erinnert sich an ein „Paket von Fabio“, das etwas zu dieser
 Bestellart sagt: lokal nicht gefunden (`IC_Umsetzung_V1.xlsx`, Fabios Shopfloor-Mail vom 01.11., `saptasks/`, `docs/`); Fabios
 Testdokument vom 10.11. liegt nicht lokal, M365-Connector war in der Sitzung nicht verbunden. Offen: Ingo nennt Mail oder Datei.
+
+**Rueckmeldung Fabio 11.11. (Chat, an Ingo):** Fabio fasst denselben Stand zusammen und stellt die Frage „Ist 908 fertig und darf in
+Produktion laufen? Wenn ja RV80HGEN, sonst nur 601 ueber VOFM“. Zwei Praezisierungen dazu aus dieser Datei: „nur 601 ueber VOFM“ ist in
+P76 Weg c (Systemaenderbarkeit oeffnen, nicht empfohlen); dass 908 in P76 nicht eingehaengt ist, ist belegt (`RV60BNNN` leer, `D010INC`
+ohne `RV60B908`), Fabio war sich dort unsicher. Entscheid weiter bei Ingo; Empfehlung unveraendert Weg b nach kurzer Bestaetigung durch
+TRIM oder Fabio, dass die Proforma-Pruefung von 908 in P76 gewollt ist.
 
 ## 9. V1-Customizing ZICAA1 in T76/100 (2026-11-11)
 

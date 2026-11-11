@@ -1,7 +1,26 @@
 # Last Change
 
-Stand: 2026-11-11 nachmittags (RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## Uebergabe 2026-11-11 abends (Chat geschlossen): Spanien-Lieferant, Fabio 601/908, offene Punkte
+
+**Spanien Supplier (Anfrage Andreas 11.11.):** Im `Sales_All` fehlt bei ES der Supplier. Ursache: unsere Sage-Query liest nur
+Verkaufsbelege. Loesbar mit eigener SQL ueber den letzten Wareneingang je Artikel (`LineasAlbaranProveedor` +
+`CabeceraAlbaranProveedor`, alle Spalten im Schemaauszug belegt). Wartet auf Entscheid Andreas, ob das als Supplier gilt; danach
+Plan fuer Query (alle Stellen), ES-Mapping und Uebergabe an Santi (Einspielen, einmal Bereichsexport). Nachgefuehrt: ISS-003.3,
+Wochen_Todo 13, `docs/FINANCE_SUPPLIER.md`, `docs/STANDORT_ES_SAGE.md` Abschnitt 2. Nichts umgesetzt.
+
+**Fabio zu 601/908:** Seine Zusammenfassung deckt sich mit `saptasks/ic_preisfindung/NOTES.md` 8.9, dort eingeordnet (VOFM in P76 =
+Weg c; 908 in P76 belegt nicht eingehaengt). Entscheid RV80HGEN weiter bei Ingo.
+
+**RFC-Rechte FPA** (frueher am Nachmittag, Commit f1ec3b2): erledigt, Rollen bei Lucas.
+
+**Offen fuer die naechste Sitzung:** Plan zur Bereinigung des eigenen SAP-Werkzeugs (14 ungeschuetzte Skripte in `.tmp_sap_probe`,
+drei ueberholte Beispiele in der SAP-Arbeitsweise) vorlegen, nichts vor Freigabe aendern; IC V1 Tests durch Fabio, Freigabe
+T76K912884 erst danach; Lieferperformance-Daten auffrischen (Angebot, Stand 02.09.). Nebenbei: `Wochen_Todo.tsv` Zeile 70 hatte
+nur 11 Felder (Altlast), aufgefuellt; LEARNINGS-Zeile zu `perl -a`.
+
 
 ## Nachtrag 2026-11-11 nachmittags: RFC-Rechte von FPA in T76 (Frage Fabio)
 

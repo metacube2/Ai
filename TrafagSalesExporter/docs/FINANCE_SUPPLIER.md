@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt, wartet auf Entscheid Andreas, ISS-003.3); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -84,7 +84,7 @@ oder gar nicht.
   beziehungsweise es existiert kein Mapping. Bei CH/AT ist das dauerhaft so: die Quelle
   ist die Verkaufsfaktura (`FinanzdataSchweizOeSet`, VBRK/VBRP), und eine
   Verkaufsrechnung kennt keinen Vorlieferanten. Bei ES fehlt das Supplier-Mapping im
-  Import ganz, bei DE haengt es an den Exportspalten von Alphaplan.
+  Import ganz, bei DE haengt es an den Exportspalten von Alphaplan. *(Nachtrag 2026-11-11: Fuer ES liefert der Sage-Wareneingang `CabeceraAlbaranProveedor`/`LineasAlbaranProveedor` den Lieferanten je Artikel; die Herleitung wartet auf den Entscheid von Andreas, ISS-003.3.)*
 - **Teilweise gefuellt, B1-Laender:** IT am besten, dann IN, FR, US — dort kommt der Wert
   aus `OITM.CardCode`, dem Standardlieferanten im Artikelstamm, der oft ungepflegt ist.
   Nur in dieser Gruppe ist „pflegen" ueberhaupt eine sinnvolle Bitte, und zwar je Artikel
@@ -154,7 +154,7 @@ Stand jenes Tages und wird als Historie stehen gelassen; gueltig ist die Messung
 | Schweiz | TRCH | 47'142 | 0 | 0,0 % | Herstellerregel beibehalten, nur SAP-markierte Fremdbezugs-Ausnahmen mit Andreas klaeren |
 | Oesterreich | TRAT | 1'790 | 0 | 0,0 % | gemeinsam mit CH entscheiden, keine Feldpflege |
 | Deutschland | TRDE | 7'332 | 0 | 0,0 % | Quellfeld und Mapping festlegen, neu laden |
-| Spanien | TRES | 5'697 | 0 | 0,0 % | Quellfeld bestaetigen, Mapping ergaenzen |
+| Spanien | TRES | 5'697 | 0 | 0,0 % | *(11.11.2026)* Lieferant des letzten Wareneingangs je Artikel aus Sage herleiten (Spalten belegt), Entscheid Andreas offen, ISS-003.3 |
 | Frankreich | TRFR | 2'598 | 135 | 5,2 % | ungefuellte Zeilen nach Quelle segmentieren |
 | Indien | TRIN | 7'116 | 828 | 11,6 % | **keine Massenpflege**, Sales Type deckt 94,0 % ab |
 | Italien | TRIT | 19'955 | 14'208 | 71,2 % | verbleibende Zeilen nach Ursache segmentieren |
