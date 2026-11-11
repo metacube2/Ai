@@ -1,7 +1,14 @@
 # Last Change
 
-Stand: 2026-11-11 09:45 (IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-11 nachmittags (RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## Nachtrag 2026-11-11 nachmittags: RFC-Rechte von FPA in T76 (Frage Fabio)
+
+Fabio fragte, ob FPA in T76 dieselbe RFC-Rolle wie Ingo bekommen kann. Gelesen per RFC: FPA hat `Z_RFC_ALLES_RW` bereits seit 2010.
+Damit gehen `system-info` und `table-read`; `table-fields`, `function-info`/`-search` und `abap-read` brauchen SDIFRUNTIME, RFC1
+und SIFP, die nur Ingos breite Rolle `Z_SAP_ALL_OHNE_HR_FI_UM` gibt. Zustaendig fuer Rollen ist Lucas (Hinweis Fabio). LIESMICH im
+Paket ergaenzt, Zip neu gebaut (28 Dateien). Nichts in SAP geaendert. Einzelheiten SAP-Arbeitsweise Abschnitt 7.
 
 ## Nachtrag 2026-11-11 mittags: SAP-Werkzeugpaket fuer Fabio
 

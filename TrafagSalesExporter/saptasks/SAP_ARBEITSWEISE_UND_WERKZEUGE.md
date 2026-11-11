@@ -1099,6 +1099,12 @@ Muster, Quelltext. Bewusst nicht im Paket: 14 Skripte, die eine Sitzung ohne Sch
 oder beliebiger Sitzungsindex inkl. ses[0], z. B. `SapGuiOkCode.vbs`, `SapGuiAktivieren.vbs`, `SapGuiQuelltextLesen.vbs`);
 das gilt auch fuer unseren eigenen Bestand.
 
+**RFC-Rechte von FPA in T76 (gelesen 2026-11-11, AGR_USERS/AGR_1251/TFDIR):** FPA hat `Z_RFC_ALLES_RW` (seit 2010), dieselbe
+RFC-Rolle wie KOI. Damit gehen `system-info` (SRFC) und `table-read` (SDTX; S_TABU_DIS 03 fuer &NC&, AA-OZ, QA-ZZ, ohne P*).
+Nicht abgedeckt: `table-fields` (SDIFRUNTIME), `function-info`/`function-search` (RFC1), `abap-read`/`abap-write` (SIFP). KOI
+kann alles nur dank `Z_SAP_ALL_OHNE_HR_FI_UM` (S_RFC/S_TABU/S_DEVELOP `*`), fuer FPA zu breit. Eine schmale Z-Rolle fuer die
+drei Gruppen gibt es nicht. Zustaendig fuer Rollen ist **Lucas** (Hinweis Fabio 2026-11-11); Ingo ordnet nur zu.
+
 1. `docs/AGENT_COORDINATION.md` lesen und eintragen.
 2. Diese Datei und die fachliche Arbeitsdatei lesen.
 3. `cscript //nologo .tmp_sap_probe\SapGuiInspect.vbs` — welche Sitzungen sind offen?
