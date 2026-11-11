@@ -1,6 +1,16 @@
 # Last Change
 
-Stand: 2026-11-10 spaet (Uebergabe vor zweitem PC-Neustart; gilt vor allen Abschnitten darunter)
+Stand: 2026-11-11 08:14 (Wochen_Todo 122 und 141 zusammengelegt). Die Uebergabe vom 2026-11-10 spaet gilt weiter vor allen
+aelteren Abschnitten darunter.
+
+## Nachtrag 2026-11-11 08:14: Wochen_Todo 122 und 141 (Lieferantenmanagement Einkauf) zusammengelegt
+
+Auftrag Ingo nach der Kurzauskunft zum Stand Lieferantenmanagement. Beide Zeilen fuehrten dasselbe Thema (122 seit der Sitzung
+22.10., 141 seit der Abschlussrunde 03.11.). Weitergefuehrt wird **122** mit neuem Titel (Lieferantenmanagement, Projekt Armin,
+Entwurf V6, Entscheid Oscar „Logik in SAP, Dashboard zeigt an“), Wer jetzt „Armin / Ingo“, Status unveraendert „Wartet auf
+Input“. 141 steht auf „Erledigt“ mit Verweis auf 122. Inhaltlich hat sich nichts bewegt: V6 ist nicht gebaut; offen sind
+Word-Dokument, SAP-Tabellen/Transaktionen, Fiori-Parametrisierung mit NTT, Entscheide E1 bis E3 und die Frage an Armin/Oscar,
+ob „nur Darstellung“ auch fuer den Eingabeteil gilt. Geaendert: `Wochen_Todo.tsv`/`.xlsx`, `Status_kurz.xlsx`. Kein Code, kein Deploy.
 
 ## Uebergabe 2026-11-10 spaet (Ingo startet neu)
 

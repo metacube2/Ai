@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-11-10
+Stand: 2026-11-11
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -39,6 +39,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | Wochen_Todo 122 und 141 (Lieferantenmanagement Einkauf) zusammengelegt, Auftrag Ingo | 2026-11-11 08:14 | **Abgeschlossen, nur Status/Doku, kein Code, kein Deploy, Reservierung frei.** 122 weitergefuehrt (Titel, Wer Armin / Ingo), 141 erledigt mit Verweis; Wochen_Todo.tsv/.xlsx, Status_kurz.xlsx, lastchange |
 | Claude | IC-Staffelbasis in P76 einbinden (Ingo „kannst du das bitte machen“, dann „mache a“) | 2026-11-10 | **abgeschlossen ohne Ergebnis, Reservierung frei**, P76 und T76 unveraendert (leerer Auftrag T76K912870/871 angelegt und wieder geloescht), beide Sitzungen geschlossen, kein Code, kein Deploy. VOFM in P76 gesperrt (nicht aenderbar); `RV62ANNN` nicht transportierbar (`TADIR GENFLAG X`); `RV80HGEN` bindet auch FBED 908 ein (T76 seit Juli aktiv, P76 nie). Offen Ingo: 908 klaeren, dann `RV80HGEN`. T76-Passwort KOI im Protokoll sichtbar geworden (Wechsel empfohlen). NOTES 8.9, Wochen_Todo 153 (+ `.xlsx`), lastchange, rag/PROJECT, LEARNINGS, `RunSapProbe.ps1`-Beispiel |
 | Claude | P76 lesend: IC-Staffelbasis nach Import, Wiederholung nach Neustart (Freigabe Ingo „ja mache test“, „mach weiter“) | 2026-11-10 | **abgeschlossen, Reservierung frei**, nur gelesen (eigene SE16-Sitzung, geschlossen), kein Code, kein Test, kein Deploy. Bestaetigt: beide Auftraege in P76, aber `RV62ANNN` nicht neu erzeugt, `RV62A601` nicht eingebunden; Routine 601 wirkt noch nicht. Ingo: VOFM 601 in P76 aktivieren. NOTES 8.9, Wochen_Todo 153 (+ beide `.xlsx`), lastchange, rag/PROJECT |
 | Claude | P76 lesend: IC-Staffelbasis nach Import (Freigabe Ingo) | 2026-11-10 | **abgebrochen wegen PC-Neustart, Reservierung frei**, nichts geaendert. Zwischenbefund (unbestaetigt): `RV62A601` in P76 nicht eingebunden. Wiederholen nach dem Neustart; `saptasks/ic_preisfindung/NOTES.md` 8.9, Uebergabe in `lastchange.md` |
