@@ -1,0 +1,7 @@
+SPRAS,KSCHL,VTEXT
+E,Z002,Quantity Discount
+E,Z999,Net price
+F,Z002,Remise quantité
+F,Z999,Prix net
+D,Z999,Nettopreis
+D,Z002,Mengenrabatt

@@ -1,6 +1,7 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
+Stand: 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
+offen; Plan und Ausfuehrung in `PLAN_V1_CUSTOMIZING_2026-11-11.md`); davor 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
 noch nicht eingebunden**; VOFM in P76 gesperrt, Transport von `RV62ANNN` nicht moeglich (generiert), offen Entscheid Ingo zu
 `RV80HGEN`, das auch die Kopierbedingung FBED 908 einbindet); davor 2026-11-06
 (Abschnitt 8: Staffelbasis Bestellmenge in T76 umgesetzt und getestet, Routine 601, Auftraege
@@ -426,7 +427,7 @@ bis 690456; IV 90381201 bis 90381203 mit FI-Belegen in 1100; 8 ST 2367 aus 1100/
    sonst in P76 VOFM *Formeln > Staffelbasis* 601 aktivieren bzw. RV80HGEN laufen lassen (macht Ingo).
 3. *Erledigt 2026-11-10 (Abnahme Fabio, Abschnitt 8.9):* Vor dem Import mit Fabio den Fall S7 (MIRO 1200 gegen die IV) und die automatische Faktura beim WA in einer
    Abnahme pruefen; Einheiten heute immer ST (Fabio, zu verifizieren). *(Stand S7 und offene Schritte: Abschnitt 8.8.)*
-4. Spaeter (V1): dieselbe Routine bei Z999/Z002 eintragen, erst wenn diese in ZICAA1 stehen. Alternative laut Fabio
+4. *Erledigt in T76 2026-11-11 09:36 (Abschnitt 9, Auftrag T76K912884):* Spaeter (V1): dieselbe Routine bei Z999/Z002 eintragen, erst wenn diese in ZICAA1 stehen. Alternative laut Fabio
    (eigene IC-Kopie von PR00, rund 950 PR00-Saetze 820 umziehen) nicht verfolgt.
 5. SAPLV61A ist in T76 neu generiert; offene SD-Sitzungen anderer Benutzer laden die neue Fassung beim naechsten Aufruf.
 6. T76K912854 ist eine Reparatur (`E070-TRFUNCTION R`). Beim Freigeben fragt SAP nach dem Zuruecksetzen des
@@ -627,7 +628,7 @@ nicht nachgesehen (P76 nur mit Freigabe Ingo).
    aktiv, `T685A` V/PR00 `KOFRS 0000601`; sonst VOFM 601 aktivieren bzw. RV80HGEN (Ingo). Lesend durch Claude nur mit Freigabe Ingo.
    *(Geprueft 10.11. abends, unten: alles da ausser `INCLUDE RV62A601` in `RV62ANNN`; offen ist jetzt VOFM 601 in P76 aktivieren.)*
 2. Fall S6 (Unterlieferung in P76) war in T76 nicht vollstaendig testbar: erste echte IV mit Unterlieferung in P76 beobachten.
-3. Schritt 1 der Anfrage vom 04.11. (ZICAA1 um Z999/Z000/Z001/Z002 mit Konditionsausschluss) ist nicht begonnen; danach dieselbe
+3. *(Ueberholt 2026-11-11: in T76 umgesetzt, Abschnitt 9.)* Schritt 1 der Anfrage vom 04.11. (ZICAA1 um Z999/Z000/Z001/Z002 mit Konditionsausschluss) ist nicht begonnen; danach dieselbe
    Routine 601 bei Z999/Z002 eintragen (Abschnitt 8.6 Punkt 4). T76-Wartung 11.11. 16 bis 18 Uhr beachten.
 
 **Zwischenbefund P76, 2026-11-10 nachmittags (unvollstaendig, unbestaetigt):** Die lesende Pruefung in P76 (Freigabe Ingo „ja mache
@@ -708,3 +709,38 @@ OData `ZTRIM_MDE_UML_IC_SRV` mit MPC/DPC-Klassen und SICF, also die MDE-App fuer
 T76K912226 in P76 nicht nachgelesen (`RV60B908` ist dort vorhanden). Ingo erinnert sich an ein „Paket von Fabio“, das etwas zu dieser
 Bestellart sagt: lokal nicht gefunden (`IC_Umsetzung_V1.xlsx`, Fabios Shopfloor-Mail vom 01.11., `saptasks/`, `docs/`); Fabios
 Testdokument vom 10.11. liegt nicht lokal, M365-Connector war in der Sitzung nicht verbunden. Offen: Ingo nennt Mail oder Datei.
+
+## 9. V1-Customizing ZICAA1 in T76/100 (2026-11-11)
+
+Anlass: Fabio meldete am 11.11. (Excel `IC_Umsetzung_V1 1 (2).xlsx`, Blatt 1 Massnahmen 2 bis 4 „offen“), dass das Customizing V1
+auch in T76 Mandant 100 fehlt. Vorgehen nach Fabios Tipp in zwei Phasen: zuerst Plan lesend (Agent sap-t76, nur RFC), Freigabe
+Ingo („Ja, Plan ausfuehren“; Bezugsstufe „Kaskade wie ZVAA01“), dann Ausfuehrung genau nach Plan. Plan, Belege, Ausfuehrung mit
+Rueckleseproben und Rueckbau: `PLAN_V1_CUSTOMIZING_2026-11-11.md`; Vorher-/Nachher-Staende als CSV in `v1_vorher_2026-11-11/` und
+`v1_nachher_2026-11-11/`. Hintergrund Fabios: IC-Preisboard v0.4 vom 07.11. (PDF von Ingo, nicht im Repo).
+
+**Umgesetzt in T76/100, Customizing-Auftrag T76K912884 (Aufgabe T76K912885), offen, nicht freigegeben** (09:20 bis 09:36; von der
+Hauptsitzung per RFC gegengelesen 09:40):
+
+| Objekt | Aenderung |
+| --- | --- |
+| OV31/OV32 | Ausschlussgruppe `ZPR0` „Sonderpreis PR00“ mit Konditionsart PR00 |
+| V/08 ZICAA1 | 010 Z999 ERL, 012 Z000 ERL, 113 Z001 Z01 (Druck X), 115 Z002 Z02 (Druck X), alle KOBED 2, ohne Bezugsstufe (Kaskade wie ZVAA01) |
+| OV37 ZICAA1 | 005 D ZPR0 → Z999, 006 D ZPR0 → Z001, 010 D Z999 → Z001 (Kopf `AUSVF` braucht keinen Schalter) |
+| V/06 | Z999 und Z002 Staffelroutine 601 „IC Bestellmenge“ (wie PR00) |
+| VTFL IV/NLCC | keine Aenderung, schon `KNPRS B` (neue Preisfindung) |
+| VKOA | nur gelesen: KTGRD 03 ERL 30003, Z01 30100, Z02 30200 (gleich wie fuer Dritte) |
+
+E071K: 20 Einzelschluessel, kein Sammelschluessel. V/08 schrieb zusaetzlich vier T683T-Schluessel (Stufentexte) ohne Textzeile mit;
+Entscheid Ingo, ob sie vor der Freigabe entfernt werden (Plan 6.4).
+
+Wirkung: V1 gilt in T76/100 seit 09:36 fuer jede Faktura mit KALVG I (IV, IVA, IVS, IG …), auch fuer Kunde 501230 und IV aus dem
+Streckengeschaeft. Ein Preistest ist noch nicht gelaufen.
+
+**Offen:**
+1. Fabio: Stammdaten in T76 fuer T1 bis T10 vorbereiten (Bestand 1100/0001, PR00 820 fuer 46690 abgrenzen oder anderes Material,
+   Z001 820 −44 % wie P76, PR00 820 fuer 45366 und 33148, Infosatz 33148), Bezugsstufe Z001/Z002 (Kaskade) bestaetigen, dann testen.
+2. FI: Zielkonten fuer Z01/Z02 bei IC; heute 30100/30200 wie fuer Dritte.
+3. Ingo: T683T-Schluessel lassen oder entfernen; V1 auch fuer 501230?; Mandant 090 nachziehen?; sechs PR00-Materialpreise (A304)
+   schalten ueber ZPR0 die Preislisten fuer jeden IC-Kunden aus (Plan 5.4). Freigabe T76K912884 erst nach Tests und Zustimmung Fabio.
+4. Vor dem Import in P76: TVCPF IV/NLCC `KNPRS B` in P76 lesen; T683S/T684/T684S/T685/T685A/T685T gegen `v1_nachher` vergleichen.
+   Routine 601 wirkt in P76 erst, wenn `RV62ANNN` dort `INCLUDE RV62A601` enthaelt (Abschnitt 8.9, Entscheid 908/RV80HGEN offen).

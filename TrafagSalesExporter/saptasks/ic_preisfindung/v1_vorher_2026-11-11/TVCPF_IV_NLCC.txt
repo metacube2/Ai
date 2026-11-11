@@ -1,0 +1,8 @@
+FKARN | LFARV | PSTYV | GRBED | GRURP | KNPRS | PFKUR | FKMGK | PLMIN
+------+-------+-------+-------+-------+-------+-------+-------+------
+IV | NLCC |  | 014 | 001 | B |  | B | +
+IV | NLCC | NLC | 018 | 003 | B |  | B | +
+IV | NLCC | NLCG | 018 | 000 | B |  | B | +
+IV | NLCC | NLCU | 018 | 000 | B |  | B | +
+IV | NLCC | NLCZ | 018 | 000 | B |  | B | +
+Exitcode: 0

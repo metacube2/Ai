@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -14,7 +14,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Q-Faelle-Abschnitt gebaut, Abruf aus bis `T76K912837` (`QmMeldungSet`, offene Q1) in P76 ist
   (`docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md`). Einkauf-Pruefung im Chrome mit Fehlerliste
   (`docs/EINKAUF_PRUEFUNG_2026-11-05.md`); Materialanteil falsch wegen ignorierter Stuecklisten-Basismenge, FIX 26 offen.
-  Neu offen: IC-Preisfindung ZICAA1 fuer Fabio (Wochen_Todo 153; T76/P76 lesend: Preisliste 14 kommt in der IV an, Kurs schon 0.94 ueber EURX, `saptasks/ic_preisfindung/NOTES.md`), SPC-Adapter Adrian Jenni (151, Adrian geht Ende Jahr).
+  Neu offen: IC-Preisfindung ZICAA1 fuer Fabio (*Stand 11.11.: V1-Customizing in T76/100 umgesetzt, T76K912884 offen, Tests durch Fabio ausstehend, NOTES 9*; Wochen_Todo 153; T76/P76 lesend: Preisliste 14 kommt in der IV an, Kurs schon 0.94 ueber EURX, `saptasks/ic_preisfindung/NOTES.md`), SPC-Adapter Adrian Jenni (151, Adrian geht Ende Jahr).
   Nachmittags: Einkauf-Fixes F2-F9 und Spend-Aufriss aufgeraeumt (Matrix und alter Spend-Block weg, deployed 12:37 `785325f`), ZLO03 FIX 26 in T76 (`T76K912839`), Agenten-Definitionen `.claude/agents/`. Uebergabe: `lastchange.md` oben.
 - **2026-11-03 Abschlussrunde Dashboard/Data Lake:** Einkauf nutzt aktiv, will HK/Standardpreis zum Materialanteil,
   Streamlining und Lieferantenmanagement (Logik in SAP, Dashboard zeigt an); Operations OTD/OTIF/OTP live, Wunsch

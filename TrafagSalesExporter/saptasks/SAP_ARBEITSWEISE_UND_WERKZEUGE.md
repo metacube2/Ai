@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-09-03, Nachträge bis 2026-11-06 am Ende (zuletzt SE09: Auftraege verschmelzen, Objekte von Hand aufnehmen, `SapGuiT76Hilfe.vbs`), Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
+Stand: 2026-09-03, Abschnitt 7 ergaenzt 2026-11-11 („Erst Plan, dann genau den Plan ausfuehren“), Nachträge bis 2026-11-06 am Ende (zuletzt SE09: Auftraege verschmelzen, Objekte von Hand aufnehmen, `SapGuiT76Hilfe.vbs`), Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**
@@ -1082,6 +1082,13 @@ Passworteingabe und fuehren dann eine feste Folge von SapProbe-Aufrufen aus. Sei
 `diag_password.ps1` sind Altbestand aus frueheren Untersuchungen.
 
 ## 7. Empfohlener Ablauf fuer eine neue Aufgabe
+
+**Erst Plan, dann genau den Plan ausfuehren (Tipp Fabio, eingefuehrt 2026-11-11).** Bei Customizing- und
+Schreibauftraegen zuerst lesend einen Plan erstellen: Ist-Stand mit Belegen, je Schritt Transaktion, Schluessel und alle
+Feldwerte, Rueckleseprobe mit erwartetem Wert, Rueckbau, offene Entscheide gesammelt am Ende. Ingo gibt den Plan frei,
+dann fuehrt ein Agent genau diese Schritte aus und haelt bei jeder Abweichung an. Spart Token und Rueckfragen, weil
+waehrend der Ausfuehrung nichts mehr gesucht oder entschieden wird. Muster: `saptasks/ic_preisfindung/PLAN_V1_CUSTOMIZING_2026-11-11.md`.
+Vor einem GUI-Schritt pruefen, dass SAP Logon laeuft und Ingo angemeldet ist (`Get-Process saplogon`; LEARNINGS 2026-11-11).
 
 1. `docs/AGENT_COORDINATION.md` lesen und eintragen.
 2. Diese Datei und die fachliche Arbeitsdatei lesen.

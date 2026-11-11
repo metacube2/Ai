@@ -1,0 +1,9 @@
+SPRAS,KVEWE,KAPPL,KAUGR,VTEXT
+D,A,V,Z001,Bruttopreisfindung
+D,A,V,Z999,Nettopreisfindung
+D,A,V,ZR01,Rabattgruppe I
+D,A,V,ZR02,Rabattgruppe II
+D,A,V,ZVW1,Verrechnungswert I
+D,A,V,ZVW2,Verrechnungswert II
+E,A,V,A001,Discount exclusion
+F,A,V,A001,Rabattausschluß

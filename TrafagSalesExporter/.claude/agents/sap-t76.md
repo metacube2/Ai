@@ -34,6 +34,13 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 - T76 ist eine Datenkopie (Stand etwa Fruehjahr 2026) mit Luecken; Ergebnisse aus T76 sind fuer P76 nur Hinweise.
 - Rechenwege mit einem konkreten Beispiel vorher/nachher nachrechnen und das Beispiel im Bericht zeigen.
 
+## Erst Plan, dann genau den Plan (seit 2026-11-11)
+
+- Schreibauftraege laufen in zwei Phasen: Phase 1 nur lesend einen Plan mit allen Feldwerten, Rueckleseproben und Rueckbau
+  schreiben (`saptasks/<thema>/PLAN_*.md`); Phase 2 nach Freigabe Ingos genau diese Schritte ausfuehren, nichts dazu,
+  bei jeder Abweichung anhalten. Muster und Begruendung: `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` Abschnitt 7.
+- Vor GUI-Arbeit `Get-Process saplogon` pruefen; fehlt SAP GUI, meldet `SapGuiT76Hilfe.vbs` nur „Ungueltige Syntax“ (Zeile 24).
+
 ## Arbeitsweise im Repo
 
 - `docs/AGENT_COORDINATION.md` nicht selbst aendern und nicht committen, ausser der Auftrag sagt es; die Hauptsitzung macht Koordination, Commit und Abschluss.

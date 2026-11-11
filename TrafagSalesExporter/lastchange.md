@@ -1,7 +1,18 @@
 # Last Change
 
-Stand: 2026-11-11 08:14 (Wochen_Todo 122 und 141 zusammengelegt). Die Uebergabe vom 2026-11-10 spaet gilt weiter vor allen
-aelteren Abschnitten darunter.
+Stand: 2026-11-11 09:45 (IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## Nachtrag 2026-11-11 09:45: IC V1 Customizing ZICAA1 in T76/100 umgesetzt (Fabio), Vorgehen „erst Plan, dann Plan ausfuehren“
+
+Fabio meldete, dass das V1-Customizing auch in T76 fehlt. Neues Vorgehen nach Fabios Tipp: Phase 1 Plan nur lesend (Agent sap-t76),
+Freigabe Ingo, Phase 2 genau nach Plan. Ergebnis: Customizing-Auftrag **T76K912884** (offen, nicht freigegeben) mit Ausschlussgruppe
+ZPR0 (PR00), ZICAA1 010 Z999, 012 Z000, 113 Z001, 115 Z002 (Kaskade wie ZVAA01, Entscheid Ingo), Ausschluss 005/006/010, Routine 601
+bei Z999/Z002; VTFL schon B, VKOA nur gelesen. Gegengelesen per RFC. Erster Anlauf brach ab, weil nach dem Neustart kein SAP Logon lief.
+Offen: Fabio Stammdaten und Tests T1-T10 in T76, FI Konten Z01/Z02, Ingo T683T-Schluessel/501230/A304, Freigabe erst nach Test.
+`saptasks/ic_preisfindung/NOTES.md` 9 und `PLAN_V1_CUSTOMIZING_2026-11-11.md`. Fabios Regel jetzt in SAP-Arbeitsweise Abschnitt 7 und
+`.claude/agents/sap-t76.md`. Fabios PDF `IC-Preisboard 1100_1200.pdf` und Excel liegen ungetrackt in der Repo-Wurzel, nicht committet.
+Kein Code, kein Deploy.
 
 ## Nachtrag 2026-11-11 08:14: Wochen_Todo 122 und 141 (Lieferantenmanagement Einkauf) zusammengelegt
 

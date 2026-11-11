@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-11-06 (ZZPRDAT: `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md` nachgetragen, Ordner `transport_2026-11-06/`); davor 2026-11-05 (Monthly Review Phase 1 gebaut, Beschreibung nachgefuehrt); davor 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle), 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Stand: 2026-11-11 (`saptasks/ic_preisfindung/` nachgetragen, fehlte); davor 2026-11-06 (ZZPRDAT: `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md` nachgetragen, Ordner `transport_2026-11-06/`); davor 2026-11-05 (Monthly Review Phase 1 gebaut, Beschreibung nachgefuehrt); davor 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle), 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
 Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
@@ -172,6 +172,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/EINKAUF_PRUEFUNG_2026-11-05.md` | Funktionspruefung aller Einkauf-Ansichten im Produktivdashboard (05.11.), Fehlerliste F1-F10 |
 | `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` | Befund Materialanteil Wafer: `STKO-BMENG` in `Z_ZLO03_TURBO2` ignoriert, Vorschlag FIX 26 (T76 nur gelesen) |
 | `saptasks/qm_meldungen/` | `QmMeldungSet` (offene Q1-Meldungen) fuer den Monthly Review: NOTES, Quelltexte vorher/nachher, RFC-Nachbau (T76, `T76K912837`) |
+| `saptasks/ic_preisfindung/` | IC-Preisfindung 1100 → 1200 fuer Fabio: NOTES (Preisliste/Kurs IV, Staffelbasis VOFM 601, V1 Abschnitt 9), `staffelbasis_601.abap`, `PLAN_V1_CUSTOMIZING_2026-11-11.md` (Plan und Ausfuehrung V1, `T76K912884`), Tabellenstaende `v1_vorher_2026-11-11/`, `v1_nachher_2026-11-11/` |
 | `docs/einkauf_lieferantenbewertung/` | Entwurf Lieferantendashboard V6 vom Einkauf (Demo-HTML, fiktive Daten, 02.11.), beschrieben in `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5 |
 | `docs/shopfloor_paket_2026-11-01/` | Fabios Paket vom 2026-11-01: Patch 04 (PPD Terminverschiebungen aus den Rueckstandslisten, Schalter `tv_from_rs`), Patch 05 und Config Verkauf (Fiori statt ZC23, Transmitter = TR5 + TX), Schnittstellen-Excel mit J4 |
 | `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |
