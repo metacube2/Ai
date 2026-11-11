@@ -737,6 +737,9 @@ Wirkung: V1 gilt in T76/100 seit 09:36 fuer jede Faktura mit KALVG I (IV, IVA, I
 Streckengeschaeft. Ein Preistest ist noch nicht gelaufen.
 
 **Offen:**
+*Mail an Fabio 2026-11-11 (Entwurf Claude in Outlook Web, von Ingo gesendet, gemeldet 10:06): Umsetzung, Bitte um Bestaetigung
+der Kaskade Z001/Z002, fehlende Stammdaten, Hinweis 501230, offene Punkte vor P76 (Punkte 1 bis 4 unten). Antwort ausstehend.*
+
 1. Fabio: Stammdaten in T76 fuer T1 bis T10 vorbereiten (Bestand 1100/0001, PR00 820 fuer 46690 abgrenzen oder anderes Material,
    Z001 820 −44 % wie P76, PR00 820 fuer 45366 und 33148, Infosatz 33148), Bezugsstufe Z001/Z002 (Kaskade) bestaetigen, dann testen.
 2. FI: Zielkonten fuer Z01/Z02 bei IC; heute 30100/30200 wie fuer Dritte.
