@@ -3,6 +3,14 @@
 Stand: 2026-11-11 09:45 (IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
 
+## Nachtrag 2026-11-11 mittags: SAP-Werkzeugpaket fuer Fabio
+
+Auftrag Ingo („bei mir nichts veraendern“): `C:\Users\koi\Downloads\SAP-Werkzeug_Fabio_2026-11-11.zip` (116 KB, 28 Dateien),
+gebaut aus Kopien im Scratchpad nach freigegebenem Plan. `.tmp_sap_probe/` unveraendert (Pruefsummen vorher/nachher gleich).
+Einzelheiten und was bewusst fehlt: `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` Abschnitt 7. Offene Befunde fuer Ingo: unser
+eigener Skriptbestand hat dieselben ungeschuetzten Skripte; die Quelldatei SAP-Arbeitsweise enthaelt ueberholte Beispiele
+(`table-read AUFK 5 ...` mit Positionsargument, BKPF-Filter mit `<>`, „bei echten Syntaxfehlern aktiviert SAP nicht“).
+
 ## Nachtrag 2026-11-11 09:45: IC V1 Customizing ZICAA1 in T76/100 umgesetzt (Fabio), Vorgehen „erst Plan, dann Plan ausfuehren“
 
 Fabio meldete, dass das V1-Customizing auch in T76 fehlt. Neues Vorgehen nach Fabios Tipp: Phase 1 Plan nur lesend (Agent sap-t76),

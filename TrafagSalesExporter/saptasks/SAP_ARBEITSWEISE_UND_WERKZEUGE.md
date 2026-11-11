@@ -1090,6 +1090,15 @@ dann fuehrt ein Agent genau diese Schritte aus und haelt bei jeder Abweichung an
 waehrend der Ausfuehrung nichts mehr gesucht oder entschieden wird. Muster: `saptasks/ic_preisfindung/PLAN_V1_CUSTOMIZING_2026-11-11.md`.
 Vor einem GUI-Schritt pruefen, dass SAP Logon laeuft und Ingo angemeldet ist (`Get-Process saplogon`; LEARNINGS 2026-11-11).
 
+**Paket fuer Fabio (2026-11-11):** `Downloads\SAP-Werkzeug_Fabio_2026-11-11.zip`, aus Kopien gebaut, `.tmp_sap_probe/`
+unveraendert (Pruefsummen vorher/nachher gleich). Inhalt: SapProbe.exe, `RunSapProbe.ps1` mit Pflicht-Benutzer
+(`Set-SapUser`, immer `--user`, ohne Benutzer Abbruch, weil SapProbe sonst als KOI anmeldet und KOI sperren koennte),
+`SapCredential.ps1`, `Pruefe-Voraussetzungen.ps1`, nur `SapGuiT76Hilfe.vbs`/`SapGuiP76Hilfe.vbs`/P76-Lesehilfen und rein
+lesende GUI-Skripte; gekuerztes Wissen (`SAP_BEDIENUNG.md`, `SAP_LEARNINGS.md`), `CLAUDE.md` mit den Regeln, IC-V1-Plan als
+Muster, Quelltext. Bewusst nicht im Paket: 14 Skripte, die eine Sitzung ohne Schutz steuern (Verbindung 0 ohne Systempruefung
+oder beliebiger Sitzungsindex inkl. ses[0], z. B. `SapGuiOkCode.vbs`, `SapGuiAktivieren.vbs`, `SapGuiQuelltextLesen.vbs`);
+das gilt auch fuer unseren eigenen Bestand.
+
 1. `docs/AGENT_COORDINATION.md` lesen und eintragen.
 2. Diese Datei und die fachliche Arbeitsdatei lesen.
 3. `cscript //nologo .tmp_sap_probe\SapGuiInspect.vbs` — welche Sitzungen sind offen?
