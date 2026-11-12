@@ -376,3 +376,27 @@ HR-Rechenlogik (`HrKpiDashboardBuilder`), `ManagementCockpitService` ausserhalb 
 Netzwerk, Weltlage, Handbestellwesen, die meisten Razor-Komponenten (Lebenszyklus nur
 stichprobenweise). Ausgenommen laut Auftrag: Textdateien der Übersetzungen, `whisper/`, `.tmp_*`,
 `Tools/`, `zlo03/`, ABAP.
+
+---
+
+## F. Vorschlag fuer die Behebung (nicht umgesetzt, Reihenfolge nach Risiko)
+
+Stand 2026-11-12: Ingo hat noch nichts entschieden. Die Ansaetze unten sind Vorschlaege der Hauptsitzung, kein gepruefter
+Entwurf; vor jeder Umsetzung gilt „erst Plan, dann ausfuehren“, Tests in `TrafagSalesExporter.Tests`, Deploy nur mit dem
+Werkzeug. Zeilenangaben gelten fuer den Stand `a6a96b2`.
+
+| Rang | Befund | Ansatz | Vorher klaeren |
+| --- | --- | --- | --- |
+| 1 | 1 Source Viewer (`Components/Pages/SourceViewer.razor:91`) | Nur noch Dateien einer festen Liste von Endungen und Ordnern zeigen (Quelltext `.cs`/`.razor`), `appsettings*.json`, `web.config`, `*.db`, Schluessel- und Protokolldateien ausschliessen; Zugriff an die Admin-Freischaltung haengen. Test: `appsettings.json` wird abgelehnt | Wird die Seite ueberhaupt gebraucht (Nutzung unter Admin > Nutzung), sonst entfernen |
+| 2 | 2 Freischalt-Cookie (`Services/AccessUnlockCookie.cs:39`, Hash in `AccessPasswordSettingsWriter.cs:12`) | Cookie-Wert mit einem Servergeheimnis bilden, das nicht im Repository liegt (ASP.NET Data Protection oder ein beim ersten Start erzeugter Schluessel in der DB), Ablaufzeit in den Wert aufnehmen; Passwort-Hashes mit Salz und langsamem Verfahren (PBKDF2) speichern und beim naechsten Login umstellen; danach alle Bereichspasswoerter neu setzen und die Hashes aus `appsettings.json` im Repository entfernen (Rueckfall dann leer) | Alle Sitzungen werden einmal abgemeldet; Reihenfolge mit Ingo (Passwoerter neu setzen) |
+| 3 | 3 Schreibende Seiten ohne Freischaltung (`Components/Routes.razor:40`) | Je Seite entscheiden: `/einkauf/verbindungen`, `/finance-journal-import`, `/admin/menu-structure`, `/admin/nutzung` hinter Admin; `/marktsegmente` hinter Finance; `/manual-imports` und `/finance-cockpit/controlling` nach Entscheid Ingo. Schutz in der Seite selbst pruefen (wie `AdminPasswords.razor`), nicht nur in der Routenliste | Wer nutzt `/manual-imports` (Keyuser der Standorte) und `/marktsegmente` heute ohne Passwort |
+| 4 | 7 Pfadvergleich der Finance-Sperre (`Components/Routes.razor:42`) | Pfad vor dem Vergleich dekodieren und normalisieren (`Uri.UnescapeDataString`), besser: Schutz an der Seite statt an einer Pfadliste (faellt mit Rang 3 zusammen) | Zuerst im Browser nachstellen (`/setting%73`), der Befund ist nur abgeleitet |
+| 5 | 4 Standortbestand nicht atomar (`Services/CentralSalesRecordService.cs:37`) | Loeschen und Schreiben eines Standorts in EINER Transaktion; null Zeilen aus Manual-Excel und HANA nicht uebernehmen, sondern den alten Bestand behalten und als Fehler melden (wie beim SAP-Gateway, `SapGatewayDataSourceAdapter.cs:60`) | Laufzeit und Sperrdauer bei grossen Standorten (CH), WAL-Groesse |
+| 6 | 5 und 9 Spanien, Commit `c9208b5` (nicht deployed) | 5: im Seed nur aktive Zuordnungen zaehlen (`DatabaseSeedService.cs:890`). 9: Spanien-Dateien nach Aenderungsdatum statt nach Bereichsstart lesen (`ManualImportCandidate` kennt `LastModified`), dann kann die Erbregel entfallen oder als Sicherung bleiben | Vor dem Deploy von `c9208b5` entscheiden, ob 5 und 9 zuerst behoben werden; 5 ist produktiv latent (Liste leer), 9 wirkt erst mit der Nachlieferung (Gang 2) |
+| 7 | 6 Konfigurationsimport (`Models/ConfigTransferPackage.cs:62`) | Vorgabe auf `BudgetRate` wie `ExportSettings.cs:52`; fehlendes Feld beim Import nicht als Tageskurs deuten. Test mit einem Paket ohne das Feld | keine |
+| 8 | 8 `async void` (`Components/Pages/ExportDashboard.razor:480`) und 10 Timer (`Services/TimerBackgroundService.cs:77`) | try/catch mit Protokolleintrag um die Datenbankzugriffe; fuer den Hintergrunddienst `BackgroundServiceExceptionBehavior.Ignore` pruefen | keine |
+| 9 | 11 bis 13 (leerer Vergleichswert in Finance-Regeln, geloeschte Einteilungen im Einkauf-Delta, „Datei oeffnen“ auf dem Server) | einzeln, nach den Punkten oben | 11 fachlich mit Ingo (soll eine Regel ohne Vergleichswert ungueltig sein) |
+
+Zusammenhang mit anderen offenen Punkten: Rang 2 haengt mit dem Admin-Passwort im Klartext zusammen
+(`docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md` Abschnitt 4 „Sofort“, P29). Abschnitt D (Finance_All) betrifft nur die
+unkommittierte Automatik und wird erst wichtig, wenn Ingo ueber sie entscheidet (Wochen_Todo 117).

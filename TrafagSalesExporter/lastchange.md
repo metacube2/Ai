@@ -1,7 +1,51 @@
 # Last Change
 
-Stand: 2026-11-12 13:45 (ZLO03 FIX 28 in T76, `T76K912902` wartet auf Import; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-12 13:50 (Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` wartet auf Import; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## Uebergabe 2026-11-12 13:50 (Chat der Sitzung trafagsalesexporter-32 geschlossen)
+
+Diese Sitzung lief von 09:00 bis 13:50. Alles Offene steht hier in der Reihenfolge, in der es angegangen werden sollte; die
+Einzelheiten stehen im Block „Stand 2026-11-12 12:00“ weiter unten und in den genannten Dateien. ZLO03 FIX 28 gehoert einer
+anderen Sitzung (Abschnitt direkt darunter).
+
+**Nicht gepusht:** `eb12111` (Code-Review-Bericht), `f021410` und alles danach. Der Bericht beschreibt, wie sich die Sperren
+umgehen lassen; pushen erst, wenn Ingo bestaetigt, dass das GitHub-Repository privat ist (`gh` ist auf dem Rechner nicht
+installiert, nicht pruefbar). `origin` steht auf `a6a96b2`.
+
+**Offen, wartet jeweils auf Ingo:**
+
+1. **Admin-Passwort im Klartext** in `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` Zeile 13 (versioniert, gepusht). Gilt es
+   noch? Dann auf Admin > Passwoerter aendern, danach die Zeile entfernen (Wochen_Todo 102). Dringender durch Code-Review
+   Befund 1 und 2 (Hashes in `appsettings.json`, Cookie daraus berechenbar).
+2. **Code-Review:** 13 Befunde, 4 hoch, nichts geaendert. Bericht mit Behebungsvorschlag in Abschnitt F:
+   `docs/CODE_REVIEW_2026-11-12.md`, Wochen_Todo 159. Naechster Schritt: Ingo waehlt aus, dann Plan je Befund, dann umsetzen.
+3. **Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Code `c9208b5` nicht deployed. Vor dem Deploy: Code-Review Befunde 5 und 9
+   beurteilen. Mail Gang 1 an Santi liegt als Entwurf in `C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`,
+   nicht gesendet; vorher die Frage ergaenzen, welches Skript sein taeglicher Task aufruft (35 oder 7 Tage, F30). Vor Gang 2
+   Lesepruefung der Dashboard-Einstellungen und der SharePoint-Kopfzeilen mit Ingos Anmeldung. Plan
+   `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. **Achtung Release-Worktree:**
+   `C:\TMP\TrafagSalesExporter_release_eafd1c5` steht auf `c9208b5`; vor jedem Deploy auf den gewuenschten Commit ziehen.
+4. **CO-PA `T76K912866`:** laut Ingo in P76 importiert. Offen: Gateway-Caches in P76 (`/IWBEP/CACHE_CLEANUP` alle Modelle, dann
+   `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL`), Vorschau `shopfloor/api/sap/copa?tag=2026-10-01` gegen September
+   (6'531'197.94 / 7'878'114.69), dann `Shopfloor:SapCoPaEnabled = true` und Deploy, Historie ab 01.01.2026 nachladen.
+   `saptasks/copa_verkauf/NOTES.md` 3, Wochen_Todo 130. Wer die Caches leert, ist nicht entschieden.
+5. **ZC12 (Wochen_Todo 3):** Plan und Einspieldatei liegen vor, wartet auf Ingos Ja zur Ausfuehrung in T76
+   (`saptasks/zc12/PLAN_ZC12_NULLWERT_PERFORMANCE_2026-11-12.md` Abschnitt 6).
+6. **IC V1 (Wochen_Todo 153):** Freigabe `T76K912884` und Import warten auf Fabios Z999-Preise in P76; Antwort an Fabio zu
+   601/908 (RV80HGEN nach Bestaetigung von 908) nicht belegt gesendet. `saptasks/ic_preisfindung/NOTES.md` 9.1.
+7. **Lieferantenbewertung (Wochen_Todo 122):** naechster Schritt Plan Paket 1; offen P76 lesen, SLFDT oder EINDT, Zeitraum
+   A/B/C, Preis 0 % in Fiori. `docs/EINKAUF_SITZUNG_2026-10-22.md` 6 bis 6.3.
+8. **Doku-Pruefung:** abgeschlossen (`9e27a70`); 39 Entscheide und 22 Strukturvorschlaege in
+   `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md` Abschnitt 4 und 5 (Wochen_Todo 161). Das Handbuch unter `wwwroot` ist nur gemeldet.
+9. **WLAN `trafag-802.1x-tel`:** Sache der IT; Nachricht an Alex und Handytest offen, `docs/router/plattform.md`.
+10. **Mails, nicht belegt gesendet:** Andreas (Rueckfrage Wareneingang), Fabio (601/908), Marco Widmer (Auslegeordnung),
+    Philip Steiger (Inventar Smartsheet), Alex (WLAN).
+
+**Aufraeumen (nichts davon ist noetig fuer den Betrieb):** Worktree `C:\TMP\TrafagSalesExporter_review_9e27a70` (Stand
+`a6a96b2`, nur fuer das Review) kann mit `git worktree remove` weg. Der lokale Webserver fuer den Entwurf V6
+(`127.0.0.1:8765`) ist beendet; die Datei liegt unter `docs/einkauf_lieferantenbewertung/`. Fremde unkommittierte Aenderungen
+im Arbeitsbaum (Finance_All, `CLAUDE.md` 3a, geloeschte Wurzeldateien, Office-Dateien) sind unveraendert, Ingo entscheidet.
 
 ## Nachtrag 2026-11-12 13:45: ZLO03 FIX 28 (Meldung Armin „ZLO03_Fehler in der Stücklistenmenge“)
 
@@ -10,7 +54,7 @@ D13006 stand in Armins Top-Down-Datei in jedem Geraet mit 2 statt 1. Ursache: St
 summiert seit FIX 2 (10.03.2026, `T76K911787`) jede Zeile. **FIX 28** zaehlt diese Zeilen nicht mehr (Bedarf, Einheitenwahl,
 Elternmaterial-Spalte); T76 aktiv **13:33** in neuem Auftrag **`T76K912902`**, vorher/nachher getestet (5501: 15 Komponenten
 2 → 1; 63759: H20201 0.05 statt 1'815 CHF je Geraet, echte Mehrfachverwendungen bleiben summiert; Bottom-Up D13006: 58 Geraete
-2 → 1). **Ingo:** `T76K912902` freigeben und importieren, danach Einkauf-Lauf neu und Armin antworten (Wochen_Todo 160).
+2 → 1). **Ingo:** `T76K912902` freigeben und importieren, danach Einkauf-Lauf neu und Armin antworten (Wochen_Todo 161).
 Einzelheiten `zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md`.
 
 ## Stand 2026-11-12 12:00 (eine Sitzung, 09:00 bis 12:00; neu gefasst bei der Doku-Pruefung)
