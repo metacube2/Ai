@@ -47,8 +47,8 @@ hatten einen Kopfstand, der aelter war als Nachtraege im Text (je Ast nachgeprue
 | `c77d26a` | `zlo03/CLAUDE.md` Fix-Tabelle auf P76-Stand, Agentendefinition Einkauf (Basismenge seit FIX 26, Belegkurs statt Kurstabelle); Freigabe Ingo |
 | `13ba643` | Finance: RAG FINANCE (Budgetkurs als Standard, ISS-007.4, ISS-032, ISS-003.3), FORMELN, MANUAL_IMPORT, Detaildateien |
 | `4ac3746` | Agentendefinition Finance: Spanien-Ausnahme der Jahresabgrenzung |
-| `daf8df0` | Plattform/HR: RAG ADMIN mit aktuellem Kurzstand, Deploy-Doku auf `CLAUDE.md` 5, Rexx Hub Produktivstand, Weltlage hinter Finance-Login, Routerluecken |
-| Abschluss-Commit | Gemeinsame Dateien: LEARNINGS, PROJECT, init, `router.md`, `baum.md`, Issue-Log, Projektlisten, dieser Bericht |
+| `daf8df0` | Plattform/HR: Agentendefinition HR (Rexx-Hub-Stand, vom Nachpruefer geaendert), RAG ADMIN mit aktuellem Kurzstand, Deploy-Doku auf `CLAUDE.md` 5, Rexx Hub Produktivstand, Weltlage hinter Finance-Login, Routerluecken |
+| `9e27a70` | Gemeinsame Dateien: LEARNINGS, PROJECT, init, `router.md`, `baum.md`, Issue-Log, Projektlisten, dieser Bericht |
 
 Wo der zweite Agent dem ersten nicht gefolgt ist (Auswahl): Importtag 29.10. fuer `T76K912742`/`752` ist nirgends belegt
 (eingetragen „laut Ingo, Importliste P76 vom 10.11.“); `<>` in `table-read` nur mit Warnvermerk, nicht auf `NE`
