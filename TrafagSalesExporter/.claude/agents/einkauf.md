@@ -12,13 +12,13 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 3. Juengster Befund: `docs/EINKAUF_PRUEFUNG_2026-11-05.md` (Fehlerliste F1-F10) und das Handbuchkapitel Einkauf unter `wwwroot/handbuch/kapitel/`.
 4. Bei SAP-Fragen gelten zusaetzlich die Regeln des Agenten `sap-t76` (`.claude/agents/sap-t76.md`): kein Passwort, nur T76 schreiben.
 
-## Fachliches Kernwissen (Stand 2026-11-05, vor Verwendung in der RAG-Datei gegenpruefen)
+## Fachliches Kernwissen (Stand 2026-11-12, vor Verwendung in der RAG-Datei gegenpruefen)
 
 - Einkaufsteile = Disponenten **001 bis 006** (006 seit 02.11.); Schalter „Nur Einkaufsteile“ ist Vorgabe an. Produktgruppe kommt aus dem eigenen Disponenten (MARC-DISPO) wie `ZM_OFFENE_KDAUF`, genau eine Gruppe, keine 1/n-Verteilung; „Disponent Verwendung (ZLO03)“ verteilt dagegen 1/n.
 - Standardzeitraum `/einkauf` = Januar des laufenden Jahres bis heute; Knopf „2020 bis heute“ fuer Mehrjahressicht.
-- Materialanteil je Produktgruppe = ZC23 bestaetigte Menge (Termin bestaetigt, Absagegrund leer) × ZLO03 Top-Down Stuecklistenmenge je 1 VerkNr × Stueckkosten (`ZloTopDownSet`, `Zc23Set`). Bekannter Fehler: Basismenge der Stueckliste wird ignoriert (Wafer), Mehrstufigkeit G4 offen.
+- Materialanteil je Produktgruppe = ZC23 bestaetigte Menge (Termin bestaetigt, Absagegrund leer) × ZLO03 Top-Down Stuecklistenmenge je 1 VerkNr × Stueckkosten (`ZloTopDownSet`, `Zc23Set`). Die Basismenge der Stueckliste wird seit ZLO03 FIX 26 beruecksichtigt (`T76K912839`, in P76 seit 09.11.; HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio.). Offen: FP_THERMOST. (Selbststuecklisten H20201/H17500, bei H20201 zusaetzlich MM als KG gezaehlt), Verdacht FP_FROSTI, Mehrstufigkeit G4.
 - Summen muessen ueber alle Aufriss-Einstiege gleich sein (Schalter aus = Kachel Bestellwert); Abweichungen sind Fehler, nicht Rundung.
-- Waehrung: Spend in CHF ueber die Kurstabelle; fehlende Kurse werden gezaehlt und gewarnt (1:1-Rueckfall nicht belastbar).
+- Waehrung: Spend in CHF ueber den Belegkurs der Bestellung (`EKKO.WAERS`/`WKURS` im Cache, `PurchasingDashboardService.ChfValueSql`: CHF oder leer unveraendert, positiver Kurs multipliziert, negativer dividiert), nicht ueber eine Kurstabelle; die WKURS-Richtung ist fachlich noch nicht an einem echten Fremdwaehrungsbeleg abgenommen. Fehlende Kurse werden gezaehlt und gewarnt (1:1-Rueckfall nicht belastbar).
 - Snapshot-Cache 60 Minuten, Delta- und Full-Lauf invalidieren; Produktiv-DB nur auf ausdruecklichen Auftrag lesen.
 
 ## Regeln

@@ -110,15 +110,15 @@ Alle im Quelltext mit `*** FIX n:` markiert.
 | 16 | `ausgabe_spalten_details` | `sy-subrc` nach jedem READ einzeln sichern |
 | 17 | Selektionsbild | Werk als Parameter statt Konstante |
 | 18 | neu `run_diagnose` | Diagnosemodus `p_diag` |
-| 19 | `Z_ZLO03_TURBO2`: neu `load_compliance_cache`, `get_compliance`, `create_excel_output` | Spalten REACH, SVHC, PFAS-Gehalt aus `Z_PACK_REGULATION` (2026-10-20), Nachtrag Spalte RoHS aus Merkmal `ROHS` (2026-10-22); T76 aktiv, Auftrag `T76K912742`, siehe `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
-| 20 | `Z_ZLO03_TURBO2`: `download_dialog` | Download als `.txt` und Oeffnen mit Excel statt `.xls`: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie `ExtensionHardening = 2`), Befund 2026-10-22; T76 aktiv, Auftrag `T76K912742`, siehe `FIX20_DOWNLOAD_TXT_2026-10-22.md` |
-| 21 | `Z_ZLO03_TURBO2`: `download_dialog`, neu `build_xlsx` | echte `.xlsx` statt Tab-Text (Wunsch Ingo 2026-10-22); T76 aktiv, neuer Auftrag `T76K912752` (`T76K912742` war schon freigegeben), zellgleich mit dem Text-Inhalt; Quelltext `Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap` |
-| 22 | `Z_ZLO03_TURBO2`: Typen, `load_stammdaten_cache`, `fill_ktab`, `create_excel_output`, `build_xlsx` | Top-Down mit Spalten Disponent (`MARC-DISPO`) und Warengruppe (`MARA-MATKL`), als Text (Wunsch Armin 2026-10-29); T76 aktiv, neuer Auftrag `T76K912777` (`T76K912752` war schon freigegeben), siehe `FIX22_DISPO_MATKL_2026-10-29.md` |
-| 23 | `Z_ZLO03_TURBO2`: neu `load_bom_units`, `bom_unit_menge`, `apply_bom_unit` | Top-Down: Mengen und Stueckkosten in der Einheit der Stueckliste ueber MARM statt `UNIT_CONVERSION_SIMPLE` 1:1, Bottom-Up: Komponentenspalte ebenso (H05039: Basis KAR = 600 ST, Preis je KAR, Bedarf in ST; Meldung Armin 2026-10-29); T76 aktiv, Auftrag `T76K912781`, siehe `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` |
+| 19 | `Z_ZLO03_TURBO2`: neu `load_compliance_cache`, `get_compliance`, `create_excel_output` | Spalten REACH, SVHC, PFAS-Gehalt aus `Z_PACK_REGULATION` (2026-10-20), Nachtrag Spalte RoHS aus Merkmal `ROHS` (2026-10-22); T76 aktiv, Auftrag `T76K912742`, laut Ingo in P76 importiert (Importliste P76 vom 10.11.), siehe `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
+| 20 | `Z_ZLO03_TURBO2`: `download_dialog` | Download als `.txt` und Oeffnen mit Excel statt `.xls`: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie `ExtensionHardening = 2`), Befund 2026-10-22; T76 aktiv, Auftrag `T76K912742`, laut Ingo in P76 importiert (Importliste P76 vom 10.11.), siehe `FIX20_DOWNLOAD_TXT_2026-10-22.md` |
+| 21 | `Z_ZLO03_TURBO2`: `download_dialog`, neu `build_xlsx` | echte `.xlsx` statt Tab-Text (Wunsch Ingo 2026-10-22); T76 aktiv, neuer Auftrag `T76K912752` (`T76K912742` war schon freigegeben), laut Ingo in P76 importiert (Importliste P76 vom 10.11.), zellgleich mit dem Text-Inhalt; Quelltext `Z_ZLO03_TURBO2_FIX21_XLSX_2026-10-22.abap` |
+| 22 | `Z_ZLO03_TURBO2`: Typen, `load_stammdaten_cache`, `fill_ktab`, `create_excel_output`, `build_xlsx` | Top-Down mit Spalten Disponent (`MARC-DISPO`) und Warengruppe (`MARA-MATKL`), als Text (Wunsch Armin 2026-10-29); T76 aktiv, neuer Auftrag `T76K912777` (`T76K912752` war schon freigegeben), laut Ingo seit 2026-10-29 in P76, siehe `FIX22_DISPO_MATKL_2026-10-29.md` |
+| 23 | `Z_ZLO03_TURBO2`: neu `load_bom_units`, `bom_unit_menge`, `apply_bom_unit` | Top-Down: Mengen und Stueckkosten in der Einheit der Stueckliste ueber MARM statt `UNIT_CONVERSION_SIMPLE` 1:1, Bottom-Up: Komponentenspalte ebenso (H05039: Basis KAR = 600 ST, Preis je KAR, Bedarf in ST; Meldung Armin 2026-10-29); T76 aktiv, Auftrag `T76K912781`, laut Ingo seit 2026-10-29 in P76, siehe `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` |
 | 24 | `Z_ZLO03_TURBO2`: `ty_ktab`, Selektionsbild, `process_main`, `fill_ktab`, `ausgabe_spalten_details`, neu `zahl_text`, `details_bom_unit` | Befunde G1, G2, G3, G5 (Stueckkosten mit 10 Stellen, `p_days` ausgeblendet, Textpositionen nie im Bedarf, Kommentar Werk) und Rest aus FIX 23 (Bottom-Up-Details in Stuecklisten-Einheit); T76 aktiv, Auftrag `T76K912785`, laut Ingo am 2026-11-02 nach P76 importiert, siehe `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` |
 | 25 | `Z_ZLO03_TURBO2`: Selektionsbild (`p_app` unsichtbar), START-OF-SELECTION, neu `app_export` | Top-Down-Ergebnis mit `P_APP` ins ABAP-Memory statt Excel, fuer das Dashboard-Set `ZloTopDownSet` (Materialanteil je Produktgruppe); T76 aktiv, im selben Auftrag `T76K912785` wie FIX 24, laut Ingo am 2026-11-02 nach P76 importiert, siehe `FIX25_APP_EXPORT_2026-11-02.md` |
-| 26 | `Z_ZLO03_TURBO2`: `ty_mtab`, neu `load_bmeng`, `process_main`, `app_export`, `create_excel_output` | Positionsmenge durch die Basismenge (`STKO-BMENG`) der Stueckliste des Elternmaterials (Stufe 01 VKNR, ab Stufe 02 `KOM_MSTAE`); Wafer je Chip 1 / 4'750 ROL statt 1 ROL (Dashboard HW_ZUKAUFSORT 957 Mio.); T76 aktiv, Auftrag `T76K912839`, nicht freigegeben; P76 hat dieselben 6 Stuecklisten mit BMENG <> 1 wie T76; siehe `FIX26_BASISMENGE_2026-11-05.md` |
-| 27 | `Z_ZLO03_TURBO2`: `ty_mtab` (`menge_alt`), `process_main`, `create_excel_output` | Excel: VKNR-Spalten wieder mit der Menge je Basismenge wie vor FIX 26, dazu je VKNR eine Zusatzspalte „<VKNR> je 1 Stk“ mit der FIX-26-Menge; Dashboard (`app_export`) unveraendert neu (Wunsch Ingo 2026-11-09); T76 aktiv, **im selben Auftrag `T76K912839`**, siehe `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` |
+| 26 | `Z_ZLO03_TURBO2`: `ty_mtab`, neu `load_bmeng`, `process_main`, `app_export`, `create_excel_output` | Positionsmenge durch die Basismenge (`STKO-BMENG`) der Stueckliste des Elternmaterials (Stufe 01 VKNR, ab Stufe 02 `KOM_MSTAE`); Wafer je Chip 1 / 4'750 ROL statt 1 ROL (Dashboard HW_ZUKAUFSORT 957 Mio.); T76 aktiv, Auftrag `T76K912839`, nicht freigegeben *(ueberholt: in P76 seit 2026-11-09, im Einkauf-Lauf bestaetigt, HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio.)*; P76 hat dieselben 6 Stuecklisten mit BMENG <> 1 wie T76; siehe `FIX26_BASISMENGE_2026-11-05.md` |
+| 27 | `Z_ZLO03_TURBO2`: `ty_mtab` (`menge_alt`), `process_main`, `create_excel_output` | Excel: VKNR-Spalten wieder mit der Menge je Basismenge wie vor FIX 26, dazu je VKNR eine Zusatzspalte „<VKNR> je 1 Stk“ mit der FIX-26-Menge; Dashboard (`app_export`) unveraendert neu (Wunsch Ingo 2026-11-09); T76 aktiv, **im selben Auftrag `T76K912839`**, in P76 seit 2026-11-09 (die Excel-Spalten „je 1 Stk“ sind in P76 noch nicht geprueft), siehe `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` |
 
 Ältere Fixes 1, 2, 4, 5 stammen aus einer früheren Runde und sind unverändert.
 
@@ -229,7 +229,7 @@ Code bzw. Parameter), Punkt 3 ist dort schaerfer (siehe dort).
    L- und eine T-Position derselben Komponente im selben Kopfmaterial ergeben die doppelte Menge je Geraet. Moeglicher
    Zusammenhang mit Ann-Katrins Befund B63485 (Bottom-Up 3100 Stk, Top-Down 0). Mit Daten noch nicht geprueft.
 4. **Verdacht Mehrstufigkeit:** in 41019 steht D85020 auf Stufe 02 und 03 (je 1 ST), COLLECT ergibt 2 je Geraet. Ohne
-   Elternfeld in `ZPOWERBI_VC_TXT` (Punkt A) nicht entscheidbar, ob doppelt oder richtig; ausserdem gilt eine Menge ab Stufe 2
+   Elternfeld in `ZPOWERBI_VC_TXT` (Punkt A) nicht entscheidbar, ob doppelt oder richtig *(ueberholt am 2026-11-05, fuer T76 belegt: `KOM_MSTAE` enthaelt das Elternmaterial, Punkt A und FIX 26 Abschnitt 7; P76 dafuer nicht geprueft. G4 bleibt offen, weil Mengen ab Stufe 02 weiter je Elternbaugruppe gelten, FIX 26 Abschnitt 2)*; ausserdem gilt eine Menge ab Stufe 2
    je uebergeordneter Baugruppe, nicht je Geraet (bei Mengen > 1 zu wenig Bedarf). Passt zu Punkt E (CS15 42 vs. ZLO03 21).
    Naechster Schritt: 41019 lesend gegen CS12 (mehrstufig) in T76 vergleichen, erst dann aendern.
 **Datenpruefung 2026-10-29 (T76, Stand FIX 23, Laeufe von Ingo gespeichert):**
@@ -239,7 +239,7 @@ Code bzw. Parameter), Punkt 3 ist dort schaerfer (siehe dort).
 | 1 Rundung | belegt: 58944, K50057 (0.02 je 10): Stueckkosten 0.00, Endbestand 9'833 ST, Wert Endbestand 0.00 statt rund 19.67 CHF. Auswertung VC_TXT (rund 1 Mio. Zeilen, unvollstaendig gelesen): 506 Komponenten mit PEINH > 1, davon 16 auf 0.00 gerundet (z. B. K15232 in 301, K50057 in 139 Kopfmaterialien), 142 mit >= 5 % Abweichung | gleicher Code; Kopfmaterialien haben fast immer PEINH 1, praktisch kaum betroffen |
 | 2 `p_days` | im Code belegt (Wert nie gelesen) | gleich |
 | 3 Textpositionen | belegt: 46123/B63485 ohne `p_txtpo` 1 ST, mit `p_txtpo` 2 ST | belegt: Bottom-Up B63485 zeigt 46123 = 2 ST, alle anderen 1 ST, ohne `p_txtpo` |
-| 4 Mehrstufigkeit | teilweise: 40738/K15030 auf Stufe 01 und 02 ist richtig (direkt und ueber U47123 laut STPO), Summe 2 stimmt. Ob Mengen ab Stufe 02 die Menge der Baugruppe enthalten, ist ohne Elternfeld nicht pruefbar | gleich |
+| 4 Mehrstufigkeit | teilweise: 40738/K15030 auf Stufe 01 und 02 ist richtig (direkt und ueber U47123 laut STPO), Summe 2 stimmt. Ob Mengen ab Stufe 02 die Menge der Baugruppe enthalten, ist ohne Elternfeld nicht pruefbar *(ueberholt am 2026-11-05, fuer T76 belegt: `KOM_MSTAE` enthaelt das Elternmaterial, siehe Punkt A)* | gleich |
 
 Hinweis zur Pruefung: viele Kopfmaterialien in VC_TXT haben in T76 eine Loeschvormerkung (z. B. 27620, 41454), ZLO03 meldet dann „Keine Daten gefunden“.
 
@@ -350,21 +350,21 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
 - `FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` — **FIX 19 in `Z_ZLO03_TURBO2`** (REACH/SVHC/PFAS, seit 2026-10-22 auch RoHS), liegt seit 2026-10-20
   im selben Auftrag `T76K912742` wie FIX 12
 - `FIX20_DOWNLOAD_TXT_2026-10-22.md` — **FIX 20 in `Z_ZLO03_TURBO2`** (Download `.txt` statt `.xls`, Excel-Sperre);
-  aktueller Quelltext `Z_ZLO03_TURBO2_FIX20_2026-10-22.abap` (FIX 12, 19 inkl. RoHS, 20)
+  Quelltext `Z_ZLO03_TURBO2_FIX20_2026-10-22.abap` (FIX 12, 19 inkl. RoHS, 20)
 - `MK_B63485_FIX12_2026-10-16.md` — Beleg aus P76 und **FIX 12 in `Z_ZLO03_TURBO2`**
   (T76 aktiv, Transport `T76K912742`); die übrigen Fixes sind weiter nur lokal
   *(ueberholt am 2026-10-29: FIX 12, 19, 20 in `T76K912742`, freigegeben 22.10.; FIX 21 in `T76K912752`, freigegeben;
   FIX 22 in `T76K912777`, offen)* *(ueberholt am 2026-10-30: `T76K912777` und `T76K912781` freigegeben und laut Ingo am
   29.10. nach P76 importiert; FIX 24 in `T76K912785`, offen)*
-- `FIX22_DISPO_MATKL_2026-10-29.md` — **FIX 22**: Top-Down mit Disponent und Warengruppe, aktueller Quelltext
-- `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` — **FIX 23**: Top-Down in Stuecklisten-Einheit (MARM), Quelltext `Z_ZLO03_TURBO2_FIX23_EINHEIT_2026-10-29.abap`, Auftrag `T76K912781`
+- `FIX22_DISPO_MATKL_2026-10-29.md` — **FIX 22**: Top-Down mit Disponent und Warengruppe, Quelltext
   `Z_ZLO03_TURBO2_FIX22_DISPO_MATKL_2026-10-29.abap`, Auftrag `T76K912777`
+- `FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` — **FIX 23**: Top-Down in Stuecklisten-Einheit (MARM), Quelltext `Z_ZLO03_TURBO2_FIX23_EINHEIT_2026-10-29.abap`, Auftrag `T76K912781`
 - `FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` — **FIX 24**: Stueckkosten ungerundet, `p_days` ausgeblendet, Textpositionen
-  nie im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit; aktueller Quelltext `Z_ZLO03_TURBO2_FIX24_2026-10-29.abap`,
+  nie im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit; Quelltext `Z_ZLO03_TURBO2_FIX24_2026-10-29.abap`,
   Auftrag `T76K912785`
 - `FIX25_APP_EXPORT_2026-11-02.md` — **FIX 25**: Ergebnis per `P_APP` ins Memory fuer `ZloTopDownSet`, Quelltext `Z_ZLO03_TURBO2_FIX25_2026-11-02.abap`, Auftrag `T76K912785`
 - `BEFUND_EINHEIT_WAFER_2026-11-05.md` — Befund Wafer je Chip (STKO-BMENG ignoriert), Grundlage fuer FIX 26
-- `FIX26_BASISMENGE_2026-11-05.md` — **FIX 26**: Menge durch die Basismenge der Elternstueckliste; aktueller Quelltext
+- `FIX26_BASISMENGE_2026-11-05.md` — **FIX 26**: Menge durch die Basismenge der Elternstueckliste; Quelltext
   `Z_ZLO03_TURBO2_FIX26_2026-11-05.abap`, Auftrag `T76K912839`; Testreport `Z_KOI_ZLO_FIX26_TEST.abap` ($TMP, T76); dazu
   P76-Liste der Stuecklisten mit BMENG <> 1 und Befund FP_THERMOST (Selbststueckliste, MM gegen KG)
 - `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` — **FIX 27**: alte Menge in den VKNR-Spalten, neue Menge als Zusatzspalten;
