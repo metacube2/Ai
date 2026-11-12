@@ -46,3 +46,17 @@ Arbeitsmappe mit externer Verknuepfung auf SharePoint, 22 `.pbix`. SharePoint un
   Fabric-/Power-BI-Admin, Alex); Pro-Lizenzen im M365-Admin-Center.
 - **Smartsheet:** Export aus dem Smartsheet Admin Center (Benutzer, Lizenzen, Sheets mit Besitzer).
 - **Eingesparte Stunden:** erfragen je Ablauf (Haeufigkeit mal Dauer), eintragen in den Stundenspalten der INV-Aufgaben.
+
+## Einzelne Datei von Hand pruefen (Stand 2026-11-12)
+
+Fuer eine einzelne Arbeitsmappe braucht es das Skript nicht. In Excel zeigen vier Stellen, ob sie ein „Bericht“ ist:
+
+| Wo in Excel | Was man sieht |
+| --- | --- |
+| Daten > Abfragen und Verbindungen | Power-Query-Abfragen und Datenverbindungen; Doppelklick zeigt die Quelle (SAP, SQL, SharePoint, andere Excel) |
+| Daten > Links bearbeiten (nur aktiv, wenn vorhanden) | Verknuepfungen zu anderen Arbeitsmappen |
+| Entwicklertools > Makros, bzw. Endung `.xlsm` | ob Makros enthalten sind |
+| Datei > Informationen | Autor, zuletzt geaendert von, Datum: wer die Datei betreut |
+
+Fehlt alles, ist die Datei meist eine reine Eingabe- oder Kopierliste; dort steckt oft die meiste Handarbeit. Die Stunden
+verraet keine Datei, sie werden bei den Verantwortlichen erfragt (Haeufigkeit mal Dauer).

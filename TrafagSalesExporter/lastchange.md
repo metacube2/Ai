@@ -5,6 +5,20 @@ Stand: 2026-11-12 (Zwischenstand: IC Tests Fabio, ZC12 Auftrag, Spanien-Supplier
 
 ## Zwischenstand 2026-11-12 (falls der Chat abbricht)
 
+**Nachtrag 12.11. spaet, weitere Punkte dieser Sitzung:**
+- **Spanien Supplier umsetzen** (Ingo „du kannst umsetzen“, Andreas einverstanden): Phase 1 Plan laeuft, Agent finance-verkauf,
+  Zwischenstand `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. Offener Entscheid absehbar: letzter Wareneingang vor dem
+  Verkauf oder letzter ueberhaupt. Noch kein Code, kein Deploy. Antwort an Andreas zu „Wareneingang ohne Lieferant?“ im Chat
+  formuliert (gemeint: Artikel ohne Wareneingang, z. B. Fracht/Dienstleistung, Einkauf vor Datenbeginn).
+- **Lieferantenbewertung:** SAP-Recherche lesend in T76 (Zwischenstand `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md`),
+  vertieft um `/ITS/CA_MAT_ABC_CU1` (Programmlogik, Zeitraum, Klassengrenzen). Oscar hat den Eingabeteil (Paket 2) freigegeben.
+- **Oscars Auftraege vom 03.11.:** Statusuebersicht im Chat (Wochen_Todo 137 bis 147); offen bei Ingo vor allem 138 Inventar,
+  139 PM14 (Aufwand, Sichtbarkeit, inkonsistente Daten), 140, 142, 147; Datenverantwortung produktiv, Eintraege noch vorlaeufig.
+- **Inventar Smartsheet:** Mail an Philip Steiger formuliert (Wochen_Todo 138), Anleitung „Excel von Hand pruefen“ in
+  `Tools/Inventar/README.md`.
+- **Lieferantendashboard V6** fuer Ingo lokal ueber `http://127.0.0.1:8765` (Kopie im Scratchpad) in Chrome geoeffnet, nur Anzeige.
+- **ZC12** wartet weiter auf Ingos Ja fuer Phase 2 in T76 (Einspieldatei `bb1c771`).
+
 **IC V1 (Fabio):** Tests in T76/100 bestanden (IV 90381224-90381226), T76K912884 von Fabio fachlich freigegeben. Import nach P76
 wartet auf Fabios Z999-Preise in P76 und die Abgrenzung der PR00-Spiegelsaetze 820. Antwortvorschlag 601/908 an Fabio liegt im Chat
 (RV80HGEN nach Bestaetigung 908 durch TRIM/Fabio); Import haengt nicht an 908. Offen Ingo: T683T, 501230, Mandant 090, P76-Lesepruefung.
