@@ -50,7 +50,7 @@ Datenverantwortung produktiv, Eintraege noch vorlaeufig.
 **Doku-Pruefung (Auftrag Ingo 11:45):** alle Markdown-Dateien auf Veraltetes, Widersprueche, Redundanz; Ergebnis in
 `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`.
 
-**Doku-Pruefung abgeschlossen (13:40, `9e27a70`):** 217 Befunde, 156 eindeutige eingearbeitet, 39 Entscheide und 22
+**Doku-Pruefung abgeschlossen (13:11, `9e27a70`):** 217 Befunde, 156 eindeutige eingearbeitet, 39 Entscheide und 22
 Strukturvorschlaege in `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`.
 
 **Code-Review abgeschlossen (nichts geaendert):** 13 Befunde, 4 hoch und im Code bestaetigt (Source Viewer liest die
