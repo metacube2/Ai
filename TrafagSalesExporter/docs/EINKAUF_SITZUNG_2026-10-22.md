@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-12 (Abschnitt 6: Gespraech Ingo mit Marco Widmer, iteratives Vorgehen vereinbart). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-12 nachmittags (Abschnitt 6 und 6.1: Gespraech mit Marco Widmer, iteratives Vorgehen; Strukturvorschlag, Zertifikatsordner, ABC-Transaktion, SAP-Recherche). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -164,3 +164,40 @@ Kein Wortprotokoll, nur Ergebnisse.
    Wareneingang); Q2-Meldungen, sobald `QmMeldungSet` Q2 liefert.
 3. Link an Marco, Rueckmeldung einarbeiten. Der Eingabeteil (Zertifikate, Massnahmen, Audits, Dokumente) bleibt bis zum
    Entscheid, wo er liegt, aussen vor.
+
+### 6.1 Weitere Stand 2026-11-12 (Ingo im Chat)
+
+**Auslegeordnung fuer Marco:** Antwortentwurf mit Statusliste (vorhanden: Projektskizze Armin 30.10., Demo V6, Entscheid
+03.11., Einkaufsvolumen je Lieferant im Dashboard; fehlt: Word-Dokument, SAP-Tabellen/Transaktionen, Fiori-Parametrisierung,
+Entscheide E1 bis E3, Ort fuer den Eingabeteil) im Chat an Ingo; ob gesendet, ist nicht bekannt. Danach das Gespraech oben.
+
+**Moegliche Struktur (vom Einkauf, von Ingo weitergegeben):**
+
+* Lieferanten
+  * Lieferantenperformance
+  * Lieferantenbewertung
+  * Zertifikate/Dokumentenablage (evtl. separat, wenn nicht im Rahmen der Lieferantenbewertung abgefragt)
+  * Lieferantenentwicklung
+    * Business Review
+    * Auditplanung
+    * (Zertifikate/Dokumentenablage)
+
+Im Dashboard gibt es unter Einkauf bereits die Seiten `/einkauf/lieferanten` (`PurchasingDashboard.razor`) und
+`/einkauf/lieferperformance` (`SupplyChainAnalysis.razor`); die Struktur liesse sich darauf aufbauen. Plan erst nach der
+SAP-Recherche.
+
+**Ablage ISO-Zertifikate:** `O:\MSE\MSE\Lieferanten_Dossier\! ISO Zertifizierungsdokumente der Zulieferer\aktuelle Zertifikate`
+(`O:` = `\\trafagch.local\daten`). `TRAFAGCH\koi` hat darauf **keinen Lesezugriff** („Zugriff verweigert“, 12.11.). Ein Link
+im Dashboard geht trotzdem (jeder oeffnet nur, wofuer er Rechte hat); soll das Dashboard Zertifikate und Ablaufdaten selbst
+anzeigen, braucht sein Dienstkonto Leserechte (Freigabe Alex).
+
+**ABC in SAP:** Laut Ingo gibt es fuer die ABC-Bewertung die Transaktion `/ITS/CA_MAT_ABC_CU1` „ABC-/XYZ-Analyse -
+Schwellenwerte“ (Screenshot). Ob sie nur Materialien oder auch Lieferanten klassifiziert und welche Tabelle die Schwellen
+haelt, klaert die Recherche (das Dashboard liest heute nur eine Material-ABC, `MaraAbc`).
+
+**Termine und Zuarbeit:** Am 01.12. weiss man mehr zu Fiori. Das Word-Dokument fragt Ingo nochmals bei Armin nach.
+
+**SAP-Recherche (Auftrag Ingo „SAP-Tabellen/Transaktionen der Werte rausfinden“):** laeuft nur lesend in T76 (Agent
+sap-t76): `/ITS/CA_MAT_ABC_CU1`, klassische Lieferantenbeurteilung ME61 ff., Felder fuer Liefertreue, Q2-Meldungen, ECC oder
+S/4, Hinweise auf die Fiori-Bewertung. Ergebnis kommt nach `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md`.
+P76 nicht gelesen (keine Freigabe).
