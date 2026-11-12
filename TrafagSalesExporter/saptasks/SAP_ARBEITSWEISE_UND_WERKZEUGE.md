@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-09-03, Abschnitt 7 ergaenzt 2026-11-11 („Erst Plan, dann genau den Plan ausfuehren“), Nachträge bis 2026-11-06 am Ende (zuletzt SE09: Auftraege verschmelzen, Objekte von Hand aufnehmen, `SapGuiT76Hilfe.vbs`), Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
+Stand: 2026-11-12 (Doku-Pruefung: ueberholte Stellen im Grundtext markiert, vor allem Passworteingabe, Sitzungsindex 0, Reihenfolge der Gateway-Caches, Quelltext lesen; neuer Unterabschnitt „Gateway-Caches“ in Abschnitt 3, nur aus vorhandenen Quellen zusammengetragen. Der Grundtext stammt vom 2026-09-03 und ist nicht durchgehend nachgezogen; wo er einem juengeren datierten Nachtrag, `docs/rag/LEARNINGS.md` oder `.claude/agents/sap-t76.md` widerspricht, steht das an der Stelle als Vermerk); davor 2026-09-03, Abschnitt 7 ergaenzt 2026-11-11 („Erst Plan, dann genau den Plan ausfuehren“), Nachträge bis 2026-11-06 am Ende (zuletzt SE09: Auftraege verschmelzen, Objekte von Hand aufnehmen, `SapGuiT76Hilfe.vbs`), Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**
@@ -57,6 +57,15 @@ Skripte suchen die T76-Verbindung jetzt selbst (`SapGuiSe11Aendern`, `SapGuiStru
 `SapGuiAuftragNeu`, `SapGuiSetReportSourceAuftrag`); der Sitzungsindex zaehlt dann innerhalb der T76-Verbindung. Die
 uebrigen Skripte vor Gebrauch genauso umstellen. **Nie in eine Sitzung schreiben, in der Ingo gerade arbeitet**: erst die
 Sitzungen auflisten (Transaktion je Sitzung), dann mit `CreateSession` eine eigene oeffnen.
+
+*(Ergaenzt 2026-11-12, Doku-Pruefung, nur aus vorhandenen Quellen:* Geltende Regel aus `.claude/agents/sap-t76.md`: „immer in
+einer **eigenen** Sitzung arbeiten, Ingos Sitzungen (`ses[0]`) nie benutzen, eigene Sitzung am Ende schliessen.“
+`docs/rag/LEARNINGS.md` 2026-10-22: „Sitzung nur ueber `.Id` plus `SystemName`/`Client` waehlen, nie ueber den Index in
+`Children`“. Dafuer gibt es seit dem 2026-11-06 `SapGuiT76Hilfe.vbs` (Abschnitt 6, Tabelle „Entwicklungsobjekte aendern und
+aktivieren“): `neu` oeffnet eine eigene Sitzung und merkt sich deren Id, jeder weitere Befehl bricht ab, wenn die Sitzung nicht
+diese Id hat. Dazu LEARNINGS 2026-11-11: „bei `neu` vorher/nachher `info` lesen, nur weiter, wenn genau eine neue Sitzung
+dazukam (`neu` nimmt sonst still die letzte)“. Aeltere Stellen dieser Datei, die mit Sitzungsindex 0 oder `app.Children(0)`
+arbeiten, sind an Ort und Stelle als nicht mehr gueltig markiert.*)*
 
 ### Wenn `Sessions=0` gemeldet wird: erst den Server pruefen, nicht den Arbeitsplatz
 
@@ -159,7 +168,7 @@ nicht darin, was sie koennen.
 |---|---|---|---|
 | **ABAP-Report, den Ingo ausfuehrt** | Lesen und Rechnen ueber beliebige Tabellen, sauber formatierte Beweisausgabe | einmal Code schreiben, dann ein Klick | **Erste Wahl fuer jede Auswertung.** |
 | **SAP-GUI-Scripting** (`.tmp_sap_probe/*.vbs`) | Navigieren, Felder fuellen, Knoepfe druecken, Objekte anlegen und aktivieren | kein Passwort, aber viele Rundreisen und einige harte Grenzen | Fuer **Schreiboperationen** in SE19/SE24/SE37. |
-| **SapProbe ueber RFC** (`.tmp_sap_probe/bin/.../SapProbe.exe`) | Tabellen lesen, Funktionsbausteine, ABAP lesen und syntaxpruefen | **jedes Mal eine Passworteingabe durch Ingo** | Nur wenn kein Report moeglich ist. |
+| **SapProbe ueber RFC** (`.tmp_sap_probe/bin/.../SapProbe.exe`) | Tabellen lesen, Funktionsbausteine, ABAP lesen und syntaxpruefen | ~~**jedes Mal eine Passworteingabe durch Ingo**~~ *(Ueberholt, markiert 2026-11-12: fuer T76 laeuft `RunSapProbe.ps1` ohne Eingabe ueber die DPAPI-Ablage, Abschnitt 0 „braucht nur die Passwortablage“ und Abschnitt 9. Geltende Regel aus `.claude/agents/sap-t76.md`: „Nie ein Passwort eingeben, erfragen oder in eine Datei schreiben. Ingo musste fuer die Agentenarbeit noch nie eins eingeben.“ Keine Ablage vorhanden: anhalten und melden, nicht fragen.)* | Nur wenn kein Report moeglich ist. |
 
 Dazu kommt ein vierter, der in der Praxis der schnellste ueberhaupt ist:
 
@@ -187,7 +196,12 @@ Diese Punkte sind gemessen, nicht vermutet. Sie kosten sonst jedes Mal mehrere V
   Steuerelements (`SAPGUI.AbapEditor.1`). `GetUnprotectedTextPart`,
   `NumberOfUnprotectedTextParts` und `SelectedText` gibt es auf diesem Control nicht.
   Schreiben geht, Lesen nicht. Wer den Quelltext sehen muss, laesst sich einen Screenshot
-  geben.
+  geben. *(Der letzte Satz ist ueberholt, markiert 2026-11-12: Den Quelltext liefert `abap-read` ueber RFC, auch fuer
+  Klassen (Abschnitt „ABAP aus Klassen IST lesbar“, 2026-09-11). Ueber die GUI gibt es die Zwischenablage (Punkt darueber,
+  seit 2026-09-30) und `SapGuiQuelltextLesen.vbs` (Abschnitt 6); beide nur in einer eigenen Sitzung, weil sie einen
+  beliebigen Sitzungsindex annehmen (Abschnitt 7, Absatz „Paket fuer Fabio“ nennt `SapGuiQuelltextLesen.vbs` unter den
+  ungeschuetzten Skripten; `SapGuiReportInClipboard.vbs` nimmt zudem fest die erste Verbindung, `app.Children(0)`, Zeile 9
+  des Skripts).)*
 * **`SelectAll` plus `ReplaceSelection` ersetzt den *gesamten* Puffer**, einschliesslich
   der Rahmenzeilen. Der einzufuegende Text muss deshalb `METHOD ... ENDMETHOD`
   beziehungsweise `FUNCTION ... ENDFUNCTION` **enthalten**. Fehlen sie, meldet SAP vier
@@ -220,6 +234,9 @@ Am 2026-09-10 gemessen. Der Dialog heisst „Fehler beim Aktivieren", enthaelt a
 HTML-Bereich und drei Knoepfe `Aktivieren`, `Bearbeiten`, `Abbrechen`. Er erscheint
 **auch dann, wenn es nur Warnungen sind**. Der HTML-Inhalt ist ueber die
 Scripting-Schnittstelle nicht lesbar.
+
+*(Der folgende Absatz ist ueberholt seit 2026-11-02 und steht nur noch als Historie da; es gilt der Absatz danach: im Dialog
+`Abbrechen` druecken, nicht `Aktivieren`.)*
 
 Erkennen, was wirklich vorliegt: `Aktivieren` druecken und danach den Programmstatus
 messen. Steht `wnd[0]/usr/txtSTATUS_TEXT` auf `aktiv`, waren es Warnungen. Bei echten
@@ -600,6 +617,8 @@ ist.
 `T76/100` ist eine rund sechs Monate alte Kopie. Im Geschaeftsjahr `2026` gibt es
 dort **nur die Perioden 01 bis 04**: `22'688`, `29'428`, `33'877` und `14'006`
 Belegkoepfe ohne `CO`, danach nichts mehr ausser rund 100 Belegen im Juni.
+*(Stand der Aussage 2026-09-11; „rund sechs Monate“ ist eine relative Angabe von damals. Die Kopie reicht bis etwa April
+2026, `saptasks/rexx_schnittstelle/NOTES.md` Kopf. Vermerk 2026-11-12.)*
 
 Am 2026-09-11 wurde die erste Laufzeitmessung gegen Juni gefahren und ergab 2,2
 Sekunden. Das sah nach einem grossen Erfolg aus und war ein leerer Monat.
@@ -611,6 +630,35 @@ powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
   table-read BKPF --fields MONAT --where "GJAHR = '2026' AND BLART <> 'CO'" `
   --rowcount 99999 --format csv --quiet
 ```
+
+*(Vorsicht, Vermerk 2026-11-12: Am 2026-11-06 meldete `table-read` mit `<>` im Filter faelschlich `TABLE_WITHOUT_DATA`
+(`KOFRS <> '0000000'`, obwohl sechs Saetze existieren; mit `>` kamen sie; `saptasks/ic_preisfindung/NOTES.md` 8.7).
+`docs/rag/LEARNINGS.md` 2026-11-06: „in `--where` kein `<>`, sondern `>`/`NE` testen und Leerergebnisse gegenpruefen“. Die
+Periodenzahlen oben stammen vom 2026-09-11 und wurden mit genau diesem Befehl gewonnen; ob `NE` hier dasselbe liefert, ist
+nicht gemessen. Ein leeres Ergebnis dieses Befehls deshalb nie als „keine Daten“ lesen.)*
+
+#### Gateway-Caches: zuerst `/IWBEP`, dann `/IWFND`
+
+*(Unterabschnitt angelegt am 2026-11-12 bei der Doku-Pruefung. Er traegt nur zusammen, was schon belegt ist; keine neue
+Messung, keine neue Regel.)*
+
+Geltende Regel, woertlich aus `.claude/agents/sap-t76.md`: „Gateway-Aenderungen: MPC nur ueber `MPC_EXT->DEFINE`, danach in
+T76 zuerst `/IWBEP`, dann `/IWFND` Cache leeren, dann `$metadata` und das Set pruefen.“ Fuer P76 steht dort: „nie schreiben,
+nie Caches leeren, nie Transporte freigeben oder importieren — das macht Ingo.“
+
+Die beiden Faelle dahinter, woertlich aus `docs/rag/LEARNINGS.md`:
+
+* 2026-10-07: „neue Sets nach MPC-Aenderung trotz `/IWFND/CACHE_CLEANUP` mit 404; erst `/IWBEP/CACHE_CLEANUP`
+  (Backend-Modellcache) gab sie frei“. Regel damals: „Nach Modellaenderung beide Caches leeren; in T76 darf das Backend
+  „alle Modelle" bereinigen“.
+* 2026-11-02: „P76 nach Import `T76K912793`: Caches in der Reihenfolge `/IWFND` dann `/IWBEP` geleert, danach `MARA001Set` mit `Zeivr` weiter 404; erst ein
+  zweites `/IWFND/CACHE_CLEANUP` gab es frei“. Regel seither: „Nach einer Modellaenderung zuerst `/IWBEP/CACHE_CLEANUP`, dann
+  `/IWFND/CACHE_CLEANUP`, danach im Gateway Client das neue Feld pruefen, nicht nur `$metadata` 200“.
+
+Bedienung laut Nachtrag 2026-10-07 am Ende dieser Datei: `/IWFND/CACHE_CLEANUP` mit dem Modell `ZPOWERBI_EINKAUF_MDL`;
+`/IWBEP/CACHE_CLEANUP` hat nur die Option „Cache f. alle Modelle" (`chkALLMODEL`, F8). Jener Nachtrag nennt noch die
+aeltere Reihenfolge (`/IWFND`, dann `/IWBEP`), Abschnitt 7 Schritt 7 nannte nur `/IWFND`; beides ist seit dem 2026-11-02
+ueberholt und dort so markiert.
 
 #### Gateway-Fehler stehen in `/IWFND/ERROR_LOG`
 
@@ -758,6 +806,13 @@ inzwischen auf `/IWFND/GW_CLIENT` stand. In einem Ablauf, der mehrfach die
 Transaktion wechselt, ist der Code als Adresse untauglich. Dann lieber direkt
 ueber den Index in das Befehlsfeld schreiben:
 
+*(Nicht mehr gueltig, markiert 2026-11-12: Das Muster unten nimmt fest die erste Verbindung (`app.Children(0)`) und einen
+freien Sitzungsindex; Index 0 ist Ingos Sitzung, und die erste Verbindung kann P76 sein (Abschnitt 0, 2026-10-15).
+`docs/rag/LEARNINGS.md` 2026-10-22: „Sitzung nur ueber `.Id` plus `SystemName`/`Client` waehlen, nie ueber den Index in
+`Children`“; 2026-11-09: „besser Skripte mit fester Id (`app.FindById("/app/con[0]/ses[n]")`)“. `.claude/agents/sap-t76.md`:
+„Ingos Sitzungen (`ses[0]`) nie benutzen“. Der Block bleibt nur als Historie stehen; siehe `SapGuiT76Hilfe.vbs` in Abschnitt 6
+und den Vermerk in Abschnitt 0.)*
+
 ```vbs
 Set s = app.Children(0).Children(CLng(sesIdx))
 s.FindById("wnd[0]/tbar[0]/okcd").Text = "/nSE24"
@@ -805,6 +860,9 @@ zufaellig plausibel wirkte und falsch war.
 ... table-read BKPF --fields BUKRS,BELNR --where "GJAHR = '2026' AND BLART <> 'CO'" `
     --rowcount 99999 --format csv --quiet | Select-String -Pattern '^1[12]00,' | Measure-Object
 ```
+
+*(Vorsicht, Vermerk 2026-11-12: `<>` im Filter hat am 2026-11-06 faelschlich `TABLE_WITHOUT_DATA` geliefert; siehe den Vermerk
+im Abschnitt „Gegen welche Daten man in T76 ueberhaupt misst“ und `docs/rag/LEARNINGS.md` 2026-11-06.)*
 
 Eine Zahl knapp unter dem `--rowcount` (im Beispiel `99'978` bei `99'999`) heisst
 umgekehrt: **das Limit hat gegriffen**, der wahre Bestand ist groesser.
@@ -916,6 +974,9 @@ veraendert. **Immer pruefen, was im Feld `KO008-TRKORR` steht**, und mit
 * **Fenster fuer Passworteingaben** muessen mit `Start-Process powershell.exe -File ...`
   geoeffnet werden. Wird die Ausgabe des Werkzeugs in eine Pipeline geleitet, verschluckt
   sie den Passwort-Prompt und das Fenster wirkt leer.
+  *(Ueberholt am 2026-11-05, markiert 2026-11-12: Es werden keine Fenster fuer Passworteingaben mehr geoeffnet.
+  `docs/rag/LEARNINGS.md` 2026-11-05: „Ingo gibt nie ein SAP-Passwort ein“ und „P76 nur ueber die angemeldete GUI lesen
+  (`P76Lesen.vbs`, SE16 in eigener Sitzung), T76-RFC nur mit der DPAPI-Ablage; nie ein Passwort erfragen“.)*
 
 ## 6. Skriptbestand unter `.tmp_sap_probe/`
 
@@ -998,9 +1059,9 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiZc27Lauf.vbs <Sitzung> <ARBPL[,BIS]> <TT.MM.JJJJ> [Typencode]` | NUR LESEN: ZC27 starten und Gutmenge je Arbeitsplatz aus dem ALV summieren (Abgleich `ShopRmSet`) |
 | `SapGuiGridAusgeben.vbs <volle Sitzungs-Id>` | NUR LESEN: erstes ALV-Grid vollstaendig ausgeben |
 | `P76Pruefung_Shopfloor_2026-10-16.ps1` (Start: `P76Pruefung_Shopfloor_Start.cmd`) | NUR LESEN P76 mit SapProbe gegen `trasp76s`: E070/E071, REPOSRC, DD02L, abap-read, Gateway-Fehlerprotokoll; Passwort einmal verdeckt, bricht nach dem ersten Fehler ab. Vorlage fuer weitere P76-Pruefungen *(ueberholt am 2026-11-05: keine Vorlage mehr, Ingo gibt kein SAP-Passwort ein; P76 lesen nur ueber die angemeldete GUI mit `P76Lesen.vbs`, Beispiel STKO/MAST in `zlo03/FIX26_BASISMENGE_2026-11-05.md` 5)* |
-| `P76Pruefung_ZLO03_B63485.ps1` (Start: `P76Pruefung_ZLO03_Start.cmd`) | NUR LESEN P76: `ZMD04_CALC`, `ZPOWERBI_VC_TXT`, `MARA`, `REPOSRC` fuer den ZLO03-Fall B63485 (2026-10-16). Start ueber `explorer.exe <cmd>`; `Start-Process cmd` aus der Sitzung oeffnet kein sichtbares Fenster |
-| `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt den Status nicht aus. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
-| `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar |
+| `P76Pruefung_ZLO03_B63485.ps1` (Start: `P76Pruefung_ZLO03_Start.cmd`) | NUR LESEN P76: `ZMD04_CALC`, `ZPOWERBI_VC_TXT`, `MARA`, `REPOSRC` fuer den ZLO03-Fall B63485 (2026-10-16). Start ueber `explorer.exe <cmd>`; `Start-Process cmd` aus der Sitzung oeffnet kein sichtbares Fenster *(ueberholt am 2026-11-05 wie die Zeile darueber, markiert 2026-11-12: das Skript fragt das P76-Passwort ab (`Read-Host`, Zeile 12) und wird nicht mehr benutzt. `.claude/agents/sap-t76.md`: „Die alten Vorlagen `P76Pruefung_*.ps1` (SapProbe mit P76-Passwortabfrage) sind ueberholt und werden nicht benutzt (LEARNINGS 2026-11-05).“ P76 lesen nur ueber die angemeldete GUI mit `P76Lesen.vbs`)* |
+| `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt ~~den Status nicht aus~~ nur den Statuscode aus, ohne Begruendung, `content-length` und Laufzeit *(berichtigt 2026-11-12 gegen das Skript, Zeile 58 `STATUSCODE=`)*. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
+| `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. ~~Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar~~ *(berichtigt 2026-11-12 gegen das Skript: es gibt Meldung, Meldungstyp und Statuscode aus und schreibt den Text, den es aus den Editorbereichen liest, in die Datei, sonst die Warnung „kein Antworttext aus den Editorbereichen gelesen“; `content-length` und eine Zeitmessung kommen im Skript nicht vor, dafuer `SapGuiGatewayStatus.vbs` nehmen)* |
 | `SapGuiP76Hilfe.vbs neu\|info\|ok\|dump\|press\|check\|set\|vkey\|grid\|tips ...` | **P76**, nur in einer eigenen Sitzung (bricht bei `ses[0]` ab): neue Sitzung oeffnen, OK-Code, Felder, Ankreuzfeld per `.Selected`, Grid und Knopf-Tooltips lesen; meldet je Schritt System und Anwendungsserver. Angelegt 2026-11-02 fuer das Leeren der Gateway-Caches in P76 |
 | `SapGuiT76Hilfe.vbs neu\|info\|ok\|dump\|press\|set\|vkey\|select\|check\|menus\|tree\|grid\|zu ...` | **T76/100**, Gegenstueck zu `SapGuiP76Hilfe.vbs`: `neu` oeffnet eine eigene Sitzung und merkt sich deren Id (`t76_eigene_sitzung.txt`), jeder weitere Befehl bricht ab, wenn die Sitzung nicht diese Id hat; Verbindung ueber `SystemName`/`Client`, nie ueber `Children(0)`. `zu` schliesst sie mit `/i`. Angelegt 2026-11-06 (ZZPRDAT, Transport buendeln in SE09) |
 | `SapGuiAlvListLayoutP76.vbs <Ses> list\|show "<Spalte>"\|hide "<Spalte>"` | **P76**, eigene Sitzung, offener Dialog „Layout aendern“ einer klassischen ALV-Liste (SAPLSKBH 0810): Spalten nach Namen ein- und ausblenden (Achtung: `APP_WL_SING` blendet ein, `APP_FL_SING` aus). Sichern macht das Skript nicht. Angelegt 2026-11-03 fuer ZC22 |
@@ -1094,7 +1155,8 @@ Vor einem GUI-Schritt pruefen, dass SAP Logon laeuft und Ingo angemeldet ist (`G
 unveraendert (Pruefsummen vorher/nachher gleich). Inhalt: SapProbe.exe, `RunSapProbe.ps1` mit Pflicht-Benutzer
 (`Set-SapUser`, immer `--user`, ohne Benutzer Abbruch, weil SapProbe sonst als KOI anmeldet und KOI sperren koennte),
 `SapCredential.ps1`, `Pruefe-Voraussetzungen.ps1`, nur `SapGuiT76Hilfe.vbs`/`SapGuiP76Hilfe.vbs`/P76-Lesehilfen und rein
-lesende GUI-Skripte; gekuerztes Wissen (`SAP_BEDIENUNG.md`, `SAP_LEARNINGS.md`), `CLAUDE.md` mit den Regeln, IC-V1-Plan als
+lesende GUI-Skripte; gekuerztes Wissen (`SAP_BEDIENUNG.md`, `SAP_LEARNINGS.md`; *Vermerk 2026-11-12: beide Dateien und
+`Pruefe-Voraussetzungen.ps1` liegen nur im Paket, nicht im Repo, kein Treffer in `git ls-files` und in `.tmp_sap_probe/`*), `CLAUDE.md` mit den Regeln, IC-V1-Plan als
 Muster, Quelltext. Bewusst nicht im Paket: 14 Skripte, die eine Sitzung ohne Schutz steuern (Verbindung 0 ohne Systempruefung
 oder beliebiger Sitzungsindex inkl. ses[0], z. B. `SapGuiOkCode.vbs`, `SapGuiAktivieren.vbs`, `SapGuiQuelltextLesen.vbs`);
 das gilt auch fuer unseren eigenen Bestand.
@@ -1117,7 +1179,9 @@ drei Gruppen gibt es nicht. Zustaendig fuer Rollen ist **Lucas** (Hinweis Fabio 
    (`abap-read <KLASSE>==CM0xx`), nicht der Bildschirmmeldung glauben. Die
    Includenummer findet man ueber
    `table-read TRDIR --where "NAME LIKE '<KLASSE>%' AND UDAT = '<heute>'"`.
-7. Bei OData-Aenderungen: `/IWFND/CACHE_CLEANUP` fuer die Modell-ID, dann im
+7. Bei OData-Aenderungen: ~~`/IWFND/CACHE_CLEANUP` fuer die Modell-ID~~ *(ueberholt, berichtigt 2026-11-12 nach
+   `docs/rag/LEARNINGS.md` 2026-11-02 und `.claude/agents/sap-t76.md`: in T76 zuerst `/IWBEP/CACHE_CLEANUP`, dann
+   `/IWFND/CACHE_CLEANUP`; Unterabschnitt „Gateway-Caches“ in Abschnitt 3)*, dann im
    Gateway Client **drei** Dinge pruefen — `$metadata`, das neue EntitySet und
    **ein bestehendes EntitySet**. Der dritte Punkt ist der wichtigste, sobald
    eine generische Methode redefiniert wurde: ueber sie laufen alle Sets des
@@ -1274,6 +1338,15 @@ Screenshot zu bitten. Fuer ALV-Grids gilt das nicht; dort ist `GetCellValue` der
 Der vollstaendige Ablauf vom 2026-09-11, ohne einen einzigen Klick. Aus der
 Bash-Shell, deshalb die Pfadkonvertierung abschalten.
 
+*(Nicht mehr gueltig als Kopiervorlage, markiert 2026-11-12: Die Befehlsfolge unten arbeitet durchgehend mit Sitzungsindex 0,
+also Ingos Sitzung, und mit `SapGuiOkCode.vbs`, das Abschnitt 7 (Absatz „Paket fuer Fabio“) unter den Skripten nennt, „die
+eine Sitzung ohne Schutz steuern“. Geltende Regel aus `.claude/agents/sap-t76.md`: „immer in einer **eigenen** Sitzung
+arbeiten, Ingos Sitzungen (`ses[0]`) nie benutzen, eigene Sitzung am Ende schliessen.“ `docs/rag/LEARNINGS.md` 2026-10-22:
+„Sitzung nur ueber `.Id` plus `SystemName`/`Client` waehlen, nie ueber den Index in `Children`“; 2026-11-09: „Nur den Index
+verwenden, den `SapGuiNeueSitzungT76.vbs` meldet, und vor jedem Schritt pruefen, dass er auf die eigene `ses[n]`-Id zeigt;
+besser Skripte mit fester Id“. Die Folge bleibt als Beleg fuer die Schrittreihenfolge vom 2026-09-11 stehen und ist nicht
+auf den heutigen Weg umgeschrieben; siehe `SapGuiT76Hilfe.vbs` in Abschnitt 6 und den Vermerk in Abschnitt 0.)*
+
 ```bash
 export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
 
@@ -1306,6 +1379,10 @@ Schritt 4 laeuft je Klasse einzeln: der Arbeitsvorrat aus dem Einstiegsbild
 enthaelt nur die Objekte **dieser** Klasse.
 
 ### Quelltext aus dem System holen, wenn der Editor ihn nicht hergibt
+
+*(Ueberholt als erster Weg, markiert 2026-11-12: Den Ist-Stand liefert `abap-read` ueber RFC mit der DPAPI-Ablage, auch fuer
+Klassen-Includes (Abschnitt „ABAP aus Klassen IST lesbar“, 2026-09-11; Abschnitt 9). „Der Weg ohne Passwort“ unten stammt
+aus der Zeit, als RFC eine Passworteingabe kostete. Der Wegwerfreport bleibt als Notweg stehen.)*
 
 Der ABAP-Editor ist ueber die Scripting-Schnittstelle nicht auslesbar, auch nicht ueber die
 Eigenschaft `Text`. Wer aber `SapGuiSetReportSource.vbs` oder
@@ -1525,16 +1602,28 @@ Danach laeuft SapProbe ohne Rueckfrage:
 
 ```powershell
 .\.tmp_sap_probe\RunSapProbe.ps1 system-info
-.\.tmp_sap_probe\RunSapProbe.ps1 table-read AUFK 5 "AUFNR EQ '000001241804'"
+.\.tmp_sap_probe\RunSapProbe.ps1 table-read AUFK --where "AUFNR EQ '000001241804'" --fields "AUFNR,AUART"
 ```
 
+*(Beispiel berichtigt am 2026-11-12 nach dem Kopf von `RunSapProbe.ps1`. Vorher stand hier
+`table-read AUFK 5 "AUFNR EQ '000001241804'"`; die Zeilenzahl als Positionsargument bricht ab („Unexpected positional
+argument“, `docs/rag/LEARNINGS.md` 2026-11-10).)*
+
 Ist nichts abgelegt, fragt `RunSapProbe.ps1` einmal fuer diesen Lauf und speichert nichts.
+*(Fuer Agenten gilt das nicht, markiert 2026-11-12. `.claude/agents/sap-t76.md`: „`.tmp_sap_probe/RunSapProbe.ps1 <befehl>`
+nimmt die DPAPI-Ablage aus `SapCredential.ps1` (vorher `Test-SapPassword`). Keine Ablage vorhanden: anhalten und das im
+Bericht sagen, nicht fragen.“ Die Abfrage also nie ausloesen; `docs/rag/LEARNINGS.md` 2026-11-05: „nie ein Passwort
+erfragen“.)*
 
 **Absichtliche Grenze: nur T76.** Fuer das Produktivsystem P76 wird kein Passwort
 gespeichert; `Get-SapPassword -System 'P76'` bricht mit einer Meldung ab. Diese Grenze ist
 hart im Code verankert und nicht ueber einen Parameter aufhebbar. Ein gespeichertes
 Produktivpasswort auf einem Arbeitsplatz ist ein anderes Risiko als eine Eingabe pro Lauf,
 und diese Entscheidung soll nicht beilaeufig fallen.
+*(Ueberholt am 2026-11-05, was „eine Eingabe pro Lauf“ angeht, markiert 2026-11-12: Fuer P76 wird weiterhin kein Passwort
+gespeichert, es wird aber auch keines eingegeben. `.claude/agents/sap-t76.md`: „Fuer P76 wird kein Passwort gespeichert, und
+das bleibt so.“ `docs/rag/LEARNINGS.md` 2026-11-05: „P76 nur ueber die angemeldete GUI lesen (`P76Lesen.vbs`, SE16 in eigener
+Sitzung), T76-RFC nur mit der DPAPI-Ablage; nie ein Passwort erfragen.“)*
 
 ## 10. Was bewusst *nicht* nach ABAP verlagert wurde
 
@@ -1656,15 +1745,15 @@ Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.
 * Lokale Objekte (`$TMP`) aktiviert `SapGuiInaktiveLokalAktivieren.vbs`, nicht `SapGuiInaktiveMarkieren.vbs` (der sucht auf dem Reiter „Transportierbare Objekte").
 * Selektionstexte: SE38, Radio `RS38M-FUNC_TEXT`, F6, Reiter `tabpSSSS`, Tabelle `tblSAPLSETXPSELPAR`, Spalten `RS38M-STEXTI[0,r]` (Name) und `RS38M-STEXTT[1,r]` (Text); sichern fragt nach dem Auftrag, danach aktivieren.
 * `RunSapProbe.ps1` aus Bash: `powershell -NoProfile -ExecutionPolicy Bypass -File ...`, sonst blockt die Ausfuehrungsrichtlinie; aus dem PowerShell-Werkzeug bricht `table-read` mit NativeCommandError ab.
-* **OData-Modell erweitert, Set liefert 404:** nach `/IWFND/CACHE_CLEANUP` (Modell `ZPOWERBI_EINKAUF_MDL`) zusaetzlich `/IWBEP/CACHE_CLEANUP` ausfuehren; der Bildschirm hat nur die Option „Cache f. alle Modelle" (`chkALLMODEL`, F8). Gemessen 2026-10-07 bei ShopZd05Set/ShopAufSet.
+* **OData-Modell erweitert, Set liefert 404:** nach `/IWFND/CACHE_CLEANUP` (Modell `ZPOWERBI_EINKAUF_MDL`) zusaetzlich `/IWBEP/CACHE_CLEANUP` ausfuehren; der Bildschirm hat nur die Option „Cache f. alle Modelle" (`chkALLMODEL`, F8). Gemessen 2026-10-07 bei ShopZd05Set/ShopAufSet. *(Reihenfolge berichtigt am 2026-11-02, markiert 2026-11-12: zuerst `/IWBEP/CACHE_CLEANUP`, dann `/IWFND/CACHE_CLEANUP`, `docs/rag/LEARNINGS.md` 2026-11-02; Unterabschnitt „Gateway-Caches“ in Abschnitt 3.)*
 * **Aus Bash immer `export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'`**, sonst wird `/nSE24` zu einem Pfad.
 
 ### Nachtrag 2026-10-12 (ZM_OFFENE_KDAUF)
 
 * **Report kopieren** (mit Textelementen, Oberflaeche, Dynpros): `SapGuiReportKopieren.vbs <Sitzung> start <Quelle> <Ziel>`, dann `... bestaetigen los`, dann sofort `SapGuiLokalesObjekt.vbs`. Das Zielfeld im Kopierdialog heisst `txtPROGRAM_GLOBAL`.
-* **Funktionsgruppe und -baustein anlegen**: `SapGuiFbAnlegen.vbs <Sitzung> gruppe|baustein ...`, danach `SapGuiLokalesObjekt.vbs`; Parameter mit `SapGuiFbParameter.vbs <Sitzung> import|export <Name> <Typ>` (Wertuebergabe wird gesetzt), RFC-faehig mit `SapGuiFbRemote.vbs` (fest Sitzung 1).
+* **Funktionsgruppe und -baustein anlegen**: `SapGuiFbAnlegen.vbs <Sitzung> gruppe|baustein ...`, danach `SapGuiLokalesObjekt.vbs`; Parameter mit `SapGuiFbParameter.vbs <Sitzung> import|export <Name> <Typ>` (Wertuebergabe wird gesetzt), RFC-faehig mit `SapGuiFbRemote.vbs` (fest Sitzung 1). *(Vorsicht, markiert 2026-11-12: ein fester Sitzungsindex kann Ingos Sitzung sein, `docs/rag/LEARNINGS.md` 2026-10-16 „Index 1 war Ingos Sitzung“ und 2026-11-09; siehe Vermerk in Abschnitt 0.)*
 * **Aktivieren** mit Liste der inaktiven Objekte: `SapGuiAktivierenListe.vbs <Sitzung>`, dann `SapGuiInaktiveLokalAktivieren.vbs <Sitzung> <Name...>`; ein Name darf mehrere Zeilen haben (REPS, CUA, Texte), das Skript verlangt seit 2026-10-12 nur noch mindestens eine.
-* **Vor `SapGuiSetFunctionSourceFromFile.vbs` Sitzung 1 mit `/nSE37` vorbereiten**, sonst oeffnet das Skript eine zweite Sitzung, und der Baustein bleibt dort gesperrt.
+* **Vor `SapGuiSetFunctionSourceFromFile.vbs` Sitzung 1 mit `/nSE37` vorbereiten**, sonst oeffnet das Skript eine zweite Sitzung, und der Baustein bleibt dort gesperrt. *(Vorsicht, markiert 2026-11-12: „Sitzung 1“ ist ein fester Index und kann Ingos Sitzung sein, `docs/rag/LEARNINGS.md` 2026-10-16 und 2026-11-09; nur in der eigenen Sitzung arbeiten, siehe Vermerk in Abschnitt 0.)*
 * **Ganze Liste lesen**: `SapGuiListeAlleSeiten.vbs <Sitzung> [MaxSeiten]` blaettert mit Bild ab; `Get-SapList.ps1` sieht nur den sichtbaren Ausschnitt.
 * **Dialoggrenze 600 s** (`rdisp/scheduler/prio_high/max_runtime`): grosse Laeufe als Job. Jobstatus per `TBTCO` immer mit JOBNAME, JOBCOUNT und STRTDATE abfragen.
 * **Kurzdumps lesen**: `/nST22`, `wnd[0]/usr/btnTODAY` druecken (`SapGuiDruecken.vbs`), Liste mit `SapGuiGridLesen.vbs ST22 <GridId>`, Zeile oeffnen mit `SapGuiGridZeileOeffnen.vbs`, Langtext mit `SapGuiListeAlleSeiten.vbs`.

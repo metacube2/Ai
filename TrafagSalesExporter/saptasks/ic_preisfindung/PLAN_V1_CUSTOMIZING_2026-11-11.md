@@ -1,6 +1,6 @@
 # Plan Customizing „IC Variante V1“ in T76/100 (Phase 1 Plan, Phase 2 ausgefuehrt am 2026-11-11)
 
-Stand: 2026-11-11 vormittags, Agent sap-t76. Phase 1 von 2: Diese Datei ist der Ausfuehrungsplan fuer Phase 2.
+Stand: 2026-11-12 (Doku-Pruefung: Vermerk in Abschnitt 6.5 auf Fabios Tests, `NOTES.md` 9.1); davor 2026-11-11 vormittags, Agent sap-t76. Phase 1 von 2: Diese Datei ist der Ausfuehrungsplan fuer Phase 2.
 
 *Nachtrag 2026-11-11 09:40: Phase 2 ist ausgefuehrt (zweiter Anlauf 09:20 bis 09:36, erster Anlauf 08:58 mangels
 GUI-Sitzung nach Schritt 0 angehalten). Customizing-Auftrag **T76K912884** (Aufgabe T76K912885), offen, nicht freigegeben.
@@ -663,6 +663,13 @@ T685A, T685A_voll_Z999_Z002_teil1..3, T685_Z999_Z002_PR00, T685T_Z999_Z002, TVCP
 E071_T76K912885, E071K_T76K912885 (alle CSV mit Kopfzeile).
 
 ### 6.5 Offen nach Phase 2
+
+*(Vermerk 2026-11-12, Doku-Pruefung: Die Liste ist der Stand vom 2026-11-11. Seither hat Fabio in T76/100 getestet und
+T76K912884 fachlich freigegeben (`NOTES.md` 9.1, Angaben Fabio, im System nicht nachgelesen): gemeldet sind T1 bis T8,
+Kontierung, MIRO und zwei 601-Teillieferungen; die Stammdaten aus Punkt 2 hat Fabio in T76 selbst vorbereitet; R1 und R7 hat
+er nicht gemeldet. Punkt 5 („nicht gelaufen“, „ohne Preistest nicht belegt“) und Punkt 2 sind damit in diesem Umfang
+ueberholt. Der Import nach P76 wartet laut Ingo (12.11.) auf Fabios Z999-Preise in P76. Die gueltige Liste „Offen vor
+Freigabe und Import“ steht in `NOTES.md` 9.1.)*
 
 1. **Ingo:** Auftrag T76K912884 erst freigeben, wenn die Tests bestanden sind und Fabio zugestimmt hat. Vor dem Import in P76
    gegenpruefen (5.4 Punkt 9): `T683S` ZICAA1 Stufen 010/012/113/115 frei, `T683T` dieser Stufen leer, `T684` ZPR0 frei,

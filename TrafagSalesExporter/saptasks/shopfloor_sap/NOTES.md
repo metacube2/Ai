@@ -1,6 +1,6 @@
 # Shopfloor: Mengen aus SAP (ShopRmSet, ShopProdSet)
 
-Stand: 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
+Stand: 2026-11-12 (Doku-Pruefung: Kopf um Abschnitt 9 ergaenzt, Importstand `T76K912860` nachgetragen): juengster Inhalt ist Abschnitt 9 vom 2026-11-09, Auftragsvorrat Typ VR (`T76K912860`; laut Wochen_Todo 110 in P76 und seit 09.11. 15:11 live). Davor 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
 *Ueberholt:* „Cockpit-Abruf mit ausgeschaltetem Schreiben“ (bis 09:50).
 Auftrag: Mail Fabio 16.10. (Datenabfragen J5 Logistik, J8 Tagesmengen SEH/TR5, J11 FPY SEH), von Ingo weitergeleitet.
 
@@ -132,3 +132,7 @@ Mail Fabio, von Ingo am 19.10. weitergegeben. Commits `ded2b65`, `c4dca10`, `c3c
 (Aufgabe `T76K912861`), Methode `ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W`. Vorher/neu: `DPC_EXT_GET_ENTITYSET_2026-11-09_vorrat_*.abap`.
 Test `Z_KOI_SHOP_VR_TEST.abap` (SEH 1'877 / 179'981 gleich ZC22). Fachlich: `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 19.
 Hinweis P76: SAP GUI Scripting gibt die Zeilen der ZC22-Liste nicht als Elemente heraus; Liste ueber `%PC` sichern.
+
+*Nachtrag 2026-11-12 (Doku-Pruefung), Importstand:* `T76K912860` ist laut Wochen_Todo 110 in P76, TX vorrat und offen_kw
+kommen seit 09.11. 15:11 live aus `ShopAufSet` Typ VR; ebenso `docs/rag/PROJECT.md` Kopf („T76K912839 und T76K912860 in
+P76“, Stand 2026-11-09 abends). Selbst im System geprueft ist das hier nicht.

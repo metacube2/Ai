@@ -1,6 +1,6 @@
 # ZZPRDAT: Weg vom Testaufbau zum Transport
 
-Stand: 2026-11-06 09:00. **Transport gebuendelt:** `T76K912851` (Anzeige `ZXCO1U11`) ist in `T76K912490` verschmolzen, Georgs sechs weitere XCO1-Objekte liegen in dessen Aufgabe `T76K912852`; Objektliste und Belege im Nachtrag 2026-11-06 zu Abschnitt 1. Nichts freigegeben, P76 nicht beruehrt. Frueherer Stand: 2026-10-26 (Technik unverändert seit 2026-09-07, am 26.10. live bestätigt, siehe Abschnitt 6a „Live-Pruefung vom 2026-10-26“). **Abnahmetest verschoben:** Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
+Stand: 2026-11-12 (Doku-Pruefung: Verweis in Abschnitt 6 auf die juengere Liste am Ende von 6a); davor 2026-11-06 09:00. **Transport gebuendelt:** `T76K912851` (Anzeige `ZXCO1U11`) ist in `T76K912490` verschmolzen, Georgs sechs weitere XCO1-Objekte liegen in dessen Aufgabe `T76K912852`; Objektliste und Belege im Nachtrag 2026-11-06 zu Abschnitt 1. Nichts freigegeben, P76 nicht beruehrt. Frueherer Stand: 2026-10-26 (Technik unverändert seit 2026-09-07, am 26.10. live bestätigt, siehe Abschnitt 6a „Live-Pruefung vom 2026-10-26“). **Abnahmetest verschoben:** Abnahmetest mit Lucas, Marco, Adil und Ingo: war auf 12.10.2026 16:00 gelegt, am 12.10. um zwei Wochen verschoben (voraussichtlich Woche ab 26.10.2026, genauer Termin offen). Stand in T76 am 12.10. live geprüft: seit 07.09. unverändert, T76K912490/T76K912491 offen, BAdI Z_ZZPRDAT_UPDATE aktiv, Z_ZZPRDAT_SET als V2.
 
 Stand der Technik: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
 gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
@@ -226,6 +226,12 @@ endgueltige. Diese Methode gab es in der geloeschten `$TMP`-Fassung nicht. Der T
 damit eindeutig dem neuen Stand in `ZPP1` zuzurechnen.
 
 ## 6. Was vor der Freigabe des Auftrags noch offen ist
+
+*(Vermerk 2026-11-12, Doku-Pruefung: Die Liste unten ist der Stand vom September. Die juengere Liste vom 2026-11-06 steht am
+Ende von Abschnitt 6a unter „Vor jeder Freigabe von `T76K912490` offen“ (P76 lesend pruefen, `ZXCO1U06` mit Georg klaeren).
+Dazwischen lag die Abnahmesitzung vom 05./06.11. (Abschnitt 6a). Laut `projektmanagement/Status_kurz.tsv` vom 2026-11-06 ist
+die Abnahme durch Lucas, Marco und Adil noch einzuholen und Fabio zu informieren. Ob die Punkte 1 und 3 unten noch gelten,
+ist hier nicht geprueft.)*
 
 1. **Anschreiben absenden.** Der Outlook-Entwurf hat Betreff und Anhang, aber weder
    Empfaenger noch Text; die Adressen fehlen in `docs/ANSPRECHPARTNER.md`, und der Text

@@ -1,7 +1,7 @@
 # Journal-EntitySet fuer CH/AT: Messung und Bauplan
 
-Stand: 2026-09-11, Transportstand nachgefuehrt am 2026-10-29. System `T76/100` (travt762), das ist eine rund sechs Monate alte
-Kopie der Produktion.
+Stand: 2026-11-12 (Doku-Pruefung: Alter der T76-Kopie datiert); davor 2026-09-11, Transportstand nachgefuehrt am 2026-10-29. System `T76/100` (travt762), das ist eine rund sechs Monate alte
+Kopie der Produktion *(Stand der Aussage 2026-09-11; die Kopie reicht bis etwa April 2026, `saptasks/rexx_schnittstelle/NOTES.md` Kopf)*.
 
 *Ueberholt am 2026-10-29: Transport `T76K912530` ist am 2026-10-01 von Ingo zusammen mit `HrKpiSet` nach P76 importiert. P76 Gateway Client: `FinanzJournalSet` mit `Bukrs`/`Gjahr`-Filter HTTP 200 in 0,9 s, ohne Filter HTTP 500 nach 154 s (Vollscan). Offen ist der produktive Journal-Ladelauf CH/AT, siehe Issue-Log `ISS-006` und `docs/HR_KPI.md` 8.6.*
 
@@ -366,7 +366,8 @@ der Leser ihn nicht mit.
 
 ## 6e1. Wichtig zum Lesen dieser Messungen: was in T76 ueberhaupt drinsteht
 
-`T76/100` ist eine rund sechs Monate alte Kopie. Im Geschaeftsjahr `2026` gibt es
+`T76/100` ist eine rund sechs Monate alte Kopie *(Stand der Aussage 2026-09-11; die Kopie reicht bis etwa April 2026,
+`saptasks/rexx_schnittstelle/NOTES.md` Kopf; Vermerk 2026-11-12)*. Im Geschaeftsjahr `2026` gibt es
 dort **nur die Perioden 01 bis 04**, und `04` ist angeschnitten:
 
 | Periode | Belegkoepfe ohne `CO` |

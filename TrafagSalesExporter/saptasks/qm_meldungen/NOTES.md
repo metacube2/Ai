@@ -1,7 +1,8 @@
 # QM-Meldungen: offene Q1-Meldungen (Kundenreklamation) als OData-Set `QmMeldungSet`
 
-Stand: 2026-11-05, **in T76 fertig und geprueft**, Auftrag `T76K912837` (Aufgabe `T76K912838`), nicht freigegeben.
-Freigabe und Import nach P76 macht Ingo. P76 wurde fuer diese Arbeit weder gelesen noch geschrieben.
+Stand: 2026-11-12 (Doku-Pruefung: Kopf an den Nachtrag vom 2026-11-09 am Ende dieser Datei angeglichen): laut diesem Nachtrag
+(2026-11-09 15:13) ist `T76K912837` **in P76 importiert und `QmMeldungSet` produktiv eingeschaltet**; davor 2026-11-05, **in T76 fertig und geprueft**, Auftrag `T76K912837` (Aufgabe `T76K912838`), nicht freigegeben *(„nicht freigegeben“ ist seit dem 2026-11-09 ueberholt)*.
+Freigabe und Import nach P76 macht Ingo. P76 wurde fuer diese Arbeit weder gelesen noch geschrieben *(gilt fuer den Bau am 2026-11-05; am 2026-11-09 wurden laut Nachtrag die Caches in P76 auf Auftrag Ingo geleert und das Set im Gateway Client geprueft)*.
 
 Zweck: Verkauf, Unterreiter „Monthly Review Gesellschaften“, Abschnitt 4 „Qualitaet · offene Q-Faelle“ (Wunsch Patrick
 Hertach, mehr Tiefe als der Power-BI-Bericht „RMA Statistic“). Datenvertrag und Maske:

@@ -1,6 +1,6 @@
 # Unterrouter SAP
 
-Zurueck: `router.md`. Stand: 2026-11-12 (ZC12 Plan Wert 0/Laufzeit, SAP-Quellen Lieferantenbewertung, IC V1 von Fabio getestet); davor 2026-11-11 (IC-Preisfindung nachgetragen, V1 ZICAA1 in T76); davor 2026-11-03 (ZC22 Banf-Abruf statt Kundenauftrag; ZREICHW schnelle Fassung uebernommen); davor 2026-11-02 (CO-PA/KEA0 fuer den Shopfloor), 2026-10-22 (ZLO03 FIX 20).
+Zurueck: `router.md`. Stand: 2026-11-12 (ZC12 Plan Wert 0/Laufzeit, SAP-Quellen Lieferantenbewertung, IC V1 von Fabio getestet; Doku-Pruefung: RFC ohne Passworteingabe, Importstaende ZREICHW/ZLO03, ZZPRDAT-Stand, fehlende Notizen verlinkt, P76-Server, Alter der T76-Kopie); davor 2026-11-11 (IC-Preisfindung nachgetragen, V1 ZICAA1 in T76); davor 2026-11-03 (ZC22 Banf-Abruf statt Kundenauftrag; ZREICHW schnelle Fassung uebernommen); davor 2026-11-02 (CO-PA/KEA0 fuer den Shopfloor), 2026-10-22 (ZLO03 FIX 20).
 
 ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation, OData/Gateway.
 
@@ -18,7 +18,10 @@ anfaengt. Die Kurzfassung, damit klar ist, was drinsteht:
   (`Set-SapScriptingWarnings.ps1 -Aus`).
 * **Drei Zugangswege** mit unterschiedlichen Kosten: ABAP-Report (erste Wahl
   fuer alles Lesende), GUI-Scripting (fuer Schreiboperationen), SapProbe ueber
-  RFC (braucht das Passwort). Dazu als vierter der Screenshot von Ingo.
+  RFC (~~braucht das Passwort~~ *ueberholt, berichtigt 2026-11-12: T76 laeuft ohne
+  Passworteingabe ueber die DPAPI-Ablage, `.tmp_sap_probe/RunSapProbe.ps1`; fuer P76 gibt
+  es keine Ablage, und es wird nie ein Passwort erfragt, `.claude/agents/sap-t76.md`*).
+  Dazu als vierter der Screenshot von Ingo.
 * **Der ABAP-Editor ist ueber die Oberflaeche nicht auslesbar, ueber RFC schon.**
   Schreiben ueber die GUI, gegenlesen ueber `abap-read`.
 * **OData laesst sich ohne Anmeldung pruefen**, ueber `/IWFND/GW_CLIENT` in der
@@ -60,17 +63,17 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **Operations (Shopfloor): `ShopRmSet` (ZC27 `ZPP_RM_MENGEN`) und `ShopProdSet` (Istendtermin), Logistik/Tagesmengen/FPY SEH; Transport `T76K912740` + `T76K912738` (in P76 seit 16.10.)** | `saptasks/shopfloor_sap/NOTES.md`, Code `docs/abap/ZSHOP_RM_ADD.abap` |
 | **Einkauf: `EinkKontraktSet` (Mengenkontrakte wie ME3L, EKAB) und `EinkMatLzSet` (LZ-/Sortiments-Code), Strukturen in `T76K912724`, Klassen in `T76K912718`, beide seit 2026-10-09 in P76** | `docs/abap/ZEINK_KONTRAKT_ADD.abap`, `docs/rag/PURCHASING.md` |
 | **Zeichnungsaenderung (Simon Klaey, MS-Liste): Benennung, Index `ZEIVR`, Status ueber `MARA001Set`/`MAKTSet`, naechtliche Liste im SharePoint statt Direktzugriff auf `P76.MARA`; Entscheid 02.11.; `Zeivr` in `MPC_EXT DEFINE`, Auftrag `T76K912793` (T76 und P76 2026-11-02), Zusatz `docs/abap/ZMARA_ZEIVR_ADD.abap`** | `saptasks/zeichnungsaenderung/NOTES.md` |
-| **ZREICHW Reichweitenanalyse (`Z_KOI_REICHW_TURBO`): Ankreuzfeld „Nur Spoolauftrag“ statt Sofortdruck, Auftrag `T76K912799` (T76 aktiv 2026-11-02, P76 offen); Befunde zur Optimierung (Laufzeit, Anfangsbestand, Umlagerungen, Rahmenvertraege, XYZ); schnelle Fassung am 2026-11-03 ins Original uebernommen (gleicher Auftrag, Werk 1100 155 s auf 2,3 s, zellgleich, Kopien geloescht, Abschnitt 6); am 2026-11-03 in P76 importiert und gelesen (Werk 1100 in rund 5 s), laut Ingo erledigt** | `saptasks/zreichw/NOTES.md` |
+| **ZREICHW Reichweitenanalyse (`Z_KOI_REICHW_TURBO`): Ankreuzfeld „Nur Spoolauftrag“ statt Sofortdruck, Auftrag `T76K912799` (T76 aktiv 2026-11-02, ~~P76 offen~~ *ueberholt: laut Ingo am 2026-11-03 in P76 importiert, siehe Ende dieser Zelle und Wochen_Todo 132*); Befunde zur Optimierung (Laufzeit, Anfangsbestand, Umlagerungen, Rahmenvertraege, XYZ); schnelle Fassung am 2026-11-03 ins Original uebernommen (gleicher Auftrag, Werk 1100 155 s auf 2,3 s, zellgleich, Kopien geloescht, Abschnitt 6); am 2026-11-03 in P76 importiert und gelesen (Werk 1100 in rund 5 s), laut Ingo erledigt** | `saptasks/zreichw/NOTES.md` |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
 | **CO-PA (KEA0): Ergebnisbereich 1000, Tabelle `CE11000`, Produktsparte `WWPSP`, Wertfelder des Nettoerloeses; Verkauf Shopfloor J4 ueber Fiori `C_SALESANALYTICSQRY_1_CDS`** (KEA0 gelesen 2026-11-02; `CE11000`/`WWPSP` schon seit Juni im Produktsparten-Mapping) | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16 |
-| **Einkauf Materialanteil je Produktgruppe (Phase 2): `ZloTopDownSet` (ZLO03 FIX 25, `P_APP`), Struktur `ZSTR_ZLO_TOPDOWN`, Auftrag `T76K912785` (T76 aktiv 2026-11-02)** | `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` |
+| **Einkauf Materialanteil je Produktgruppe (Phase 2): `ZloTopDownSet` (ZLO03 FIX 25, `P_APP`), Struktur `ZSTR_ZLO_TOPDOWN`, Auftrag `T76K912785` (T76 aktiv 2026-11-02; laut Ingo am 2026-11-02 nach P76 importiert, Kopf der FIX-25-Datei)** | `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |
 | Uebergabe Produktsparten-Zuordnung | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` |
 | **PPWR und Stoffcompliance, aktueller Stand und Mandant 100** | `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` |
 | PPWR, fachlicher Katalog und Anlageprotokoll (Erfolgsmeldung strittig, siehe Zeile darueber) | `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` |
 | Wie SAP Ruestzeit von Bearbeitungszeit unterscheidet | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` |
-| **ZZPRDAT: Transportauftrag `T76K912490`, Objektliste, Nachtest und was vor der Freigabe offen ist; Abnahmetest vom 12.10. um zwei Wochen verschoben** | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` |
+| **ZZPRDAT: Transportauftrag `T76K912490`, Objektliste, Nachtest und was vor der Freigabe offen ist; ~~Abnahmetest vom 12.10. um zwei Wochen verschoben~~ *ueberholt (Stand Mitte Oktober):* Abnahmesitzung am 05./06.11., seit 2026-11-06 sind die Reiter-Anzeige (`ZXCO1U11`) und Georgs XCO1-Objekte im selben Auftrag gebuendelt, nicht freigegeben (Kopf des Transportplans, `projektmanagement/Status_kurz.tsv` vom 2026-11-06)** | `saptasks/ZZPRDAT_TRANSPORTPLAN.md`, Anzeige im Reiter: `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md` |
 | **ZZPRDAT: Loesungsdokument fuer den Fachbereich**, seit 2026-09-07 mit Kapitel „So testen Sie es selbst" (drei Testfaelle, Fehlerbilder) | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
 | ZZPRDAT: Anschreiben zur Abnahme (Vorlage fuer den Outlook-Entwurf) | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` |
 | ZZPRDAT-Arbeitsstand und vollstaendiger Analyseverlauf | `saptasks/zzprdat-kontext.md` |
@@ -80,17 +83,22 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | GIB in T76: Namensraeume, DCP-Transaktionen und -Rollen; Testuser `UBIG` (T76/200, nur `/GIB/DCP_SUPERVISOR`) | `saptasks/gib_dcp/NOTES.md` |
 | SAP PS (Projektsystem): Einfuehrung, Demo-Projekt `DEMO-PS` in T76, Zeit auf Projekt (KB21N/CATS), Transaktionen, Befunde (PS fuer Trafag nicht eingerichtet), Fazit fuer den Chef | `docs/SAP_PS_EINFUEHRUNG_DEMO_2026-10-20.md` |
 | SAP PS und Projektmanagement-Werkzeug: Sitzung 29.10. (zwei Ebenen PPP/PS, Schnittstelle Projektstrukturplan, offene Fragen, NTT-Data-Offerte durch Lucas, Testprojekte 133.2 und 103.46, Philips Vorlage Produktentwicklung) | `docs/SITZUNG_SAP_PS_PROJEKTMANAGEMENT_2026-10-29.md` |
-| ZLO03: offene MK Top-Down 0 / Bottom-Up 3100 (B63485), Textpositionen, **FIX 12 in `Z_ZLO03_TURBO2`** (T76, `T76K912742`) | `zlo03/MK_B63485_FIX12_2026-10-16.md` |
-| ZLO03 FIX 19: Spalten RoHS, REACH, SVHC, PFAS-Gehalt aus Klasse `Z_PACK_REGULATION` (Florian), Befund je Merkmal T76/P76, RoHS-Merkmal `ROHS` seit 21.10. (Nachtrag 22.10.); im selben Auftrag `T76K912742` wie FIX 12 | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
+| ZLO03: offene MK Top-Down 0 / Bottom-Up 3100 (B63485), Textpositionen, **FIX 12 in `Z_ZLO03_TURBO2`** (T76, `T76K912742`; laut Ingo in P76 importiert, Importliste P76 vom 10.11., Wochen_Todo 9) | `zlo03/MK_B63485_FIX12_2026-10-16.md` |
+| ZLO03 FIX 19: Spalten RoHS, REACH, SVHC, PFAS-Gehalt aus Klasse `Z_PACK_REGULATION` (Florian), Befund je Merkmal T76/P76, RoHS-Merkmal `ROHS` seit 21.10. (Nachtrag 22.10.); im selben Auftrag `T76K912742` wie FIX 12 (Importstand siehe Zeile darueber) | `zlo03/FIX19_STOFFCOMPLIANCE_SPALTEN_2026-10-20.md` |
 | ZLO03 „defekte Excel“: Excel blockiert Tab-Text unter `.xls` (Gruppenrichtlinie `ExtensionHardening = 2`); FIX 20 Download als `.txt` und Oeffnen mit Excel, Sofortloesung Umbenennen | `zlo03/FIX20_DOWNLOAD_TXT_2026-10-22.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |
+| **ZLO03 Arbeitskontext und Fix-Tabelle (bis FIX 27), Pflichtlektuere vor ZLO03-Arbeit** (nachgetragen 2026-11-12) | `zlo03/CLAUDE.md` |
+| ZLO03 FIX 22 (Disponent und Warengruppe im Top-Down), FIX 23 (Stuecklisten-Einheit ueber MARM), FIX 24 (Stueckkosten ungerundet, Textpositionen), FIX 26 (Basismenge `STKO-BMENG`), FIX 27 (alte und neue Menge im Excel), Befund Wafer je Chip; Importstaende je Datei und in Wochen_Todo 124, 128, 129, 152 (nachgetragen 2026-11-12) | `zlo03/FIX22_DISPO_MATKL_2026-10-29.md`, `zlo03/FIX23_EINHEIT_STUECKLISTE_2026-10-29.md`, `zlo03/FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md`, `zlo03/FIX26_BASISMENGE_2026-11-05.md`, `zlo03/FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md`, `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` |
+| **`QmMeldungSet` (offene Q1-Meldungen fuer den Monthly Review), Auftrag `T76K912837`, laut Nachtrag vom 2026-11-09 15:13 in P76 importiert** (nachgetragen 2026-11-12) | `saptasks/qm_meldungen/NOTES.md` |
+| **`CoPaSumSet` (Verkauf AE / Umsatz IST aus CO-PA `CE11000` fuer das Shopfloor-Cockpit), Auftrag `T76K912866`, T76 aktiv, nicht freigegeben (Stand der Notiz 2026-11-10)** (nachgetragen 2026-11-12) | `saptasks/copa_verkauf/NOTES.md` |
+| Rexx-Schnittstelle nach SAP: Befund (T76 gelesen), Idee Tagesjob, Entscheid Rexx Hub; fuehrender Ast ist HR (nachgetragen 2026-11-12) | `saptasks/rexx_schnittstelle/NOTES.md`, Einordnung in `docs/router/hr.md` |
 
 ## Systeme
 
 | System | Rolle |
 | --- | --- |
-| `travt762` | Test, SID `T76`, Client 100 — Default fuer SapProbe |
-| `travp762` | **Produktion**, SID `P76` — nur bewusst ansteuern |
+| `travt762` | Test, SID `T76`, Client 100 — Default fuer SapProbe (ohne Passworteingabe ueber die DPAPI-Ablage, `RunSapProbe.ps1`) |
+| `trasp76s`, `travp762` | **Produktion**, SID `P76` — ~~nur bewusst ansteuern~~ *berichtigt 2026-11-12 (bisher stand hier nur `travp762`):* die P76-GUI haengt an `trasp76s` (`SapGuiVerbindungen.vbs`, SAP-Arbeitsweise Abschnitt 6); SapProbe gegen `travp762` bekam am 2026-10-16 „DEALLOCATED“ (`docs/rag/LEARNINGS.md` 2026-10-16). Geltende Regel aus `.claude/agents/sap-t76.md`: P76 nie schreiben, nie Caches leeren, nie Transporte freigeben oder importieren; lesen nur, wenn der Auftrag es ausdruecklich erlaubt, in eigener Sitzung an Ingos angemeldeter GUI (`P76Lesen.vbs` / `SapGuiP76Hilfe.vbs`); fuer P76 wird kein Passwort gespeichert |
 
 ## Fallen in diesem Ast
 
@@ -124,7 +132,9 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
   `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`.
 - **`JEST`/`I0002` ist kein Freigabenachweis.** Bei abgeschlossenen Auftraegen ist der
   Status inaktiv gesetzt. Verlaesslich ist `AFKO-FTRMI`.
-- **`T76` ist eine rund sechs Monate alte Kopie.** Im Jahr 2026 stehen dort nur die
+- **`T76` ist ~~eine rund sechs Monate alte Kopie~~ eine Kopie der Produktion mit Daten
+  bis etwa April 2026.** *(Die relative Angabe stammt vom 2026-09-11 und ist am 2026-11-12
+  durch den Datenstand ersetzt; `saptasks/rexx_schnittstelle/NOTES.md` Kopf.)* Im Jahr 2026 stehen dort nur die
   Perioden 01 bis 04. Wer gegen einen spaeteren Monat misst, misst einen leeren
   Zeitraum und haelt das Ergebnis fuer einen Erfolg.
 - Werkzeuge und ihre Grenzen: `docs/router/plattform.md`, Abschnitt Live-Werkzeuge.

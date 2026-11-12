@@ -1,6 +1,12 @@
 # Kontext: Produktionsdatum ZZPRDAT (PP / Fertigungsauftrag)
 
-Arbeitsstand für die Fortsetzung im CLI. Stand: 26.10.2026 (Technik unverändert seit 07.09.2026, am 26.10. live bestätigt).
+Arbeitsstand für die Fortsetzung im CLI. Stand: 2026-11-12 (Doku-Pruefung: Verweis auf die Abnahmesitzung vom 05./06.11. ergänzt); davor 26.10.2026 (Technik unverändert seit 07.09.2026, am 26.10. live bestätigt).
+
+*(Vermerk 2026-11-12: Diese Datei endet inhaltlich am 26.10.2026. Was danach kam, steht in `saptasks/ZZPRDAT_TRANSPORTPLAN.md`
+(Kopf, Abschnitt 1 Nachtrag 2026-11-06 und Abschnitt 6a „Abnahmesitzung 2026-11-05/06“) und in
+`saptasks/zzprdat/anzeige_2026-11-05/NOTES.md`: Abnahmesitzung am 05./06.11., Reiter-Anzeige `ZXCO1U11` behoben, `T76K912851`
+in `T76K912490` verschmolzen, Georgs XCO1-Objekte aufgenommen, nichts freigegeben. Der Satz im Nachtrag 26.10. unten, es gebe
+„keinen weiteren Transport mit ZZPRDAT-Objekten“, beschreibt den Stand vom 26.10.)*
 
 ## Nachtrag 26.10.2026: Live-Prüfung vor dem Abnahmetest
 
