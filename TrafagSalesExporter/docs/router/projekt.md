@@ -30,6 +30,7 @@ braucht diesen Schritt nicht, siehe `CLAUDE.md` Abschnitt 3a.
 | **Managementbericht fuer den Vorgesetzten: Rolle, Scope-Abgrenzung, Entscheidungsbedarf** | `docs/Uebersicht_Aufgaben_Ingo_2026-09-02.docx`, erzeugt von `.tmp_tools/BuildChefUebersicht0902` *(seit 2026-09-08 nur in Git, geloescht in `4b7af80`; im Arbeitsbaum liegt unversioniert `docs/Uebersicht_Aufgaben_Ingo_2026-09-08_1.docx`)* |
 | Aktueller Aenderungsstand | `lastchange.md` |
 | **Doku-Pruefung aller Markdown-Dateien** (12.11.2026: Vorgehen, 217 Befunde, offene Entscheide Ingo, Strukturvorschlaege; davor 29.09.2026) | `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`, `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` |
+| **Code-Review 12.11.2026**: Befunde nach Schwere, offene Entscheide, was nicht geprueft wurde | `docs/CODE_REVIEW_2026-11-12.md` |
 | **Zusammenfassung 14./15.10.2026**: alles Erledigte mit Stand, Fragen an Fabio (Logistik J5, Verkauf J2/J3), offene Punkte Ingo | `docs/ARBEITSSTAND_2026-10-14_15.md` |
 | Ansprechpartner und Standortempfaenger | `docs/ANSPRECHPARTNER.md` |
 | **Themenlandkarte**: alle Themen auf einer Seite, Datenquellen, Abhaengigkeiten, Ansprechpartner, offene Blocker (SVG, Stand 2026-10-15; neu erzeugen mit `projektmanagement/themenlandkarte.py`) | `docs/THEMENLANDKARTE_2026-10-15.svg` |

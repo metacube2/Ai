@@ -50,6 +50,17 @@ Datenverantwortung produktiv, Eintraege noch vorlaeufig.
 **Doku-Pruefung (Auftrag Ingo 11:45):** alle Markdown-Dateien auf Veraltetes, Widersprueche, Redundanz; Ergebnis in
 `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`.
 
+**Doku-Pruefung abgeschlossen (13:40, `9e27a70`):** 217 Befunde, 156 eindeutige eingearbeitet, 39 Entscheide und 22
+Strukturvorschlaege in `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`.
+
+**Code-Review abgeschlossen (nichts geaendert):** 13 Befunde, 4 hoch und im Code bestaetigt (Source Viewer liest die
+Konfiguration, Freischalt-Cookie aus dem gespeicherten Hash berechenbar, schreibende Seiten ohne Freischaltung, Standortbestand
+wird nicht atomar ersetzt); zwei mittlere betreffen den nicht deployten Spanien-Commit `c9208b5`. `docs/CODE_REVIEW_2026-11-12.md`,
+Wochen_Todo 159. Entscheide Ingo offen.
+
+**CO-PA `T76K912866`:** laut Ingo in P76 importiert (12.11.); offen: Gateway-Caches P76 (`/IWBEP`, dann `/IWFND`), Vorschau
+gegen September, `Shopfloor:SapCoPaEnabled` einschalten und deployen (`saptasks/copa_verkauf/NOTES.md` 3).
+
 **Nicht committet (fremd):** Finance_All-Automatik (`Program.cs`, `TimerBackgroundService.cs`, `.csproj`), `CLAUDE.md`, geloeschte
 Dateien in der Repo-Wurzel, Office-Dateien; Ingo entscheidet.
 

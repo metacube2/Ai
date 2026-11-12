@@ -307,6 +307,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` | HR- und Einkaufscockpit Konsistenzreview vom 29.09. (Codex) mit lokalem Reparaturstand |
 | `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben; Nachpruefungen vom 29.10. und 12.11. in der Datei (am 12.11. waren die Befunde 13 und 15 erneut eingetreten) |
 | `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md` | Doku-Pruefung aller Markdown-Dateien vom 2026-11-12: Vorgehen, Zahl der Befunde, offene Entscheide |
+| `docs/CODE_REVIEW_2026-11-12.md` | Code-Review des Anwendungscodes vom 2026-11-12: 13 Befunde nach Schwere (4 hoch, bestaetigt), Finance_All getrennt, nicht Angesehenes; nichts geaendert |
 
 ## Archiv — kein Sollstand
 
