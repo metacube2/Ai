@@ -1,6 +1,6 @@
 # ZREICHW Reichweitenanalyse (`Z_KOI_REICHW_TURBO`)
 
-Stand: 2026-11-12 (Doku-Pruefung: P76-Import und Abschluss vom 03.11. im Kopf und an den Offen-Stellen vermerkt: `T76K912799` ist am 2026-11-03 nach P76 importiert und dort gelesen, das Thema ist laut Ingo abgeschlossen, siehe Ende von Abschnitt 6); davor 2026-11-03 (schnelle Fassung ins Original uebernommen, Abschnitt 6; davor 2026-11-02 abends Uebergabe in Abschnitt 5)
+Stand: 2026-11-12 15:04 (Altlasten geloescht, Abschnitt 7); davor 2026-11-12 (Doku-Pruefung: P76-Import und Abschluss vom 03.11. im Kopf und an den Offen-Stellen vermerkt: `T76K912799` ist am 2026-11-03 nach P76 importiert und dort gelesen, das Thema ist laut Ingo abgeschlossen, siehe Ende von Abschnitt 6); davor 2026-11-03 (schnelle Fassung ins Original uebernommen, Abschnitt 6; davor 2026-11-02 abends Uebergabe in Abschnitt 5)
 
 ## 1. Ausgangslage
 
@@ -205,3 +205,26 @@ Ingo sendet). Hinweis: `P76SitzungSchliessen.vbs` schliesst nur SE16/VA43/ME33K-
 `SapGuiP76Hilfe.vbs ok <ses> /i` schliessen.
 
 **Abschluss 2026-11-03:** Ingo meldet „ist erledigt, scheint zu passen“. Das Thema ist abgeschlossen; die Befunde 5 bis 10 (Abschnitt 3) bleiben als eigene Frage bei der Fachabteilung.
+
+## 7. Altlasten geloescht (Auftrag Ingo 2026-11-12, Weg A)
+
+Anlass: In SE10 lag noch der nie freigegebene Auftrag `T76K911471` „ZReichw ohne Spool“ (03.12.2025, Aufgabe `T76K911472`),
+der `Z_KOI_REICHW`, dessen Include `Z_KOI_MAINFUNCW` und `Z_REICHW` gesperrt hielt (deshalb stand `Z_REICHW` bei jedem Aktivieren
+in der Liste der inaktiven Objekte). Keines der drei Programme hing an einer Transaktion; ZREICHW startet `Z_KOI_REICHW_TURBO`.
+Das Include liess sich einzeln nicht loeschen, weil `Z_KOI_REICHW` es einbindet (`D010INC`).
+
+1. Quelltexte vorher per RFC gesichert: `alt/Z_KOI_REICHW_geloescht_2026-11-12.abap` (2'241 Zeilen),
+   `alt/Z_KOI_MAINFUNCW_geloescht_2026-11-12.abap` (1'349 Zeilen). `Z_REICHW` hat Ingo selbst geloescht (nicht gesichert).
+2. T76, eigene Sitzung: SE38 `Z_KOI_REICHW` loeschen mit „Includes“, im Folgedialog `Z_KOI_MAINFUNCW` angehakt; beide weg
+   (`TRDIR` leer). SAP schrieb die Loeschungen in die sperrende Aufgabe `T76K911472`.
+3. Auftrag loeschen scheiterte: „kann wegen gesperrter Objekte nicht geloescht werden“. Entscheid Ingo: Weg A (entsperren und
+   loeschen statt freigeben). SE03 „Objekte entsperren (Expertentool)“ (`RSWBO099`) fuer `T76K911472`, nur „Objektliste
+   entsperren“, die Rueckfrage zu moeglichen Inkonsistenzen mit „Entsperren“ bestaetigt.
+4. SE01: „Auftrag T76K911471 wurde mit seinen Aufgaben geloescht“; `E070`/`E071` ohne Eintrag. Sitzung geschlossen.
+
+**Folge fuer P76:** keine. Die Loeschungen gingen mit dem Auftrag weg und werden nicht transportiert. Ob die drei Programme in P76
+existieren, ist nicht geprueft (keine P76-Freigabe fuer diese Frage); falls ja, stehen sie dort weiter, ohne Transaktion.
+
+**Merksatz:** Ein transportierbares Programm in T76 zu loeschen schreibt die Loeschung in den Auftrag, der es sperrt. Soll dieser
+Auftrag danach weg, zuerst in SE03 entsperren (`RSWBO099`), dann in SE01 loeschen.
+
