@@ -5,6 +5,9 @@ Stand: 2026-11-12 (Zwischenstand: IC Tests Fabio, ZC12 Auftrag, Spanien-Supplier
 
 ## Zwischenstand 2026-11-12 (falls der Chat abbricht)
 
+**Deploy 12.11. 11:33 `e956183`:** Kleinigkeiten vom 10.11. und Rexx Hub vorbereitet (Schalter aus) produktiv, 1547/1547, bitgleich.
+Spanien-Supplier noch nicht dabei (Agent arbeitet, eigener Deploy spaeter). `docs/rag/DEPLOYMENT.md`.
+
 **Nachtrag 12.11. spaet, weitere Punkte dieser Sitzung:**
 - **Spanien Supplier umsetzen** (Ingo „du kannst umsetzen“, Andreas einverstanden): Phase 1 Plan laeuft, Agent finance-verkauf,
   Zwischenstand `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. Offener Entscheid absehbar: letzter Wareneingang vor dem
