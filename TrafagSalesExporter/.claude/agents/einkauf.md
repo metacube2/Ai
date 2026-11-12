@@ -27,6 +27,7 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 - Ingo testet nur produktiv: lokale DB und lokaler Server sind kein Beleg. Produktiv pruefen ueber Chrome unter `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/...` (ohne `/BiDashboard/` scheitert die Erweiterung); nur lesen und Ansichtsfilter, keine Laeufe, Einstellungen, Uploads. Vor jedem Tippen den Fokus pruefen.
 - Anzeigefehler als Muster in der ganzen App suchen, nicht nur an der gemeldeten Stelle.
 - Code: Tests in `TrafagSalesExporter.Tests` mitliefern, ganze Suite gruen. Nur eigene Dateien stagen (`git add <pfad>`), nie `-A`; fremde unkommittierte Aenderungen (z. B. Finance_All, `Program.cs`) nicht anfassen. `docs/AGENT_COORDINATION.md`, Wochen_Todo, lastchange macht die Hauptsitzung. Nicht deployen.
+- **Anmeldeseiten nie bedienen** (Microsoft, SharePoint, SAP, Dashboard-Sperren): kein Konto anklicken, auch nicht in einer Kontoauswahl, keine Passwort-, Hello- oder MFA-Dialoge ausloesen. Sofort abbrechen und melden (Fall 2026-11-12, `docs/rag/LEARNINGS.md`).
 - Wird etwas abgelehnt: nicht variieren, anhalten und melden.
 
 ## Bericht

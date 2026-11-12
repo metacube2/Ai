@@ -1,6 +1,6 @@
 # Unterrouter SAP
 
-Zurueck: `router.md`. Stand: 2026-11-11 (IC-Preisfindung nachgetragen, V1 ZICAA1 in T76); davor 2026-11-03 (ZC22 Banf-Abruf statt Kundenauftrag; ZREICHW schnelle Fassung uebernommen); davor 2026-11-02 (CO-PA/KEA0 fuer den Shopfloor), 2026-10-22 (ZLO03 FIX 20).
+Zurueck: `router.md`. Stand: 2026-11-12 (ZC12 Plan Wert 0/Laufzeit, SAP-Quellen Lieferantenbewertung, IC V1 von Fabio getestet); davor 2026-11-11 (IC-Preisfindung nachgetragen, V1 ZICAA1 in T76); davor 2026-11-03 (ZC22 Banf-Abruf statt Kundenauftrag; ZREICHW schnelle Fassung uebernommen); davor 2026-11-02 (CO-PA/KEA0 fuer den Shopfloor), 2026-10-22 (ZLO03 FIX 20).
 
 ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation, OData/Gateway.
 
@@ -53,7 +53,9 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **`ZM_OFFENE_FAUF`: Bedarfsverursacher (MD_PEGGING_NODIALOG) standardmaessig sichtbar, mit Werk (`ZZPEG_WERKS`), Layout `/ P00 TX`, Transport `T76K912714`** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` |
 | **Operations (Shopfloor): `ShopZd05Set` (ZD05) und `ShopAufSet` (Plan-/Fertigungsauftraege), Transport `T76K912718`, seit 2026-10-09 in P76** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 8, Code `docs/abap/ZSHOP_ADD.abap` |
 | **ZC22 (`ZM_OFFENE_FAUF`): Banf-Abruf/Bestellabruf (U2/U1) statt Kundenauftrag als Bedarfsverursacher bei Umlagerung (Wunsch Anh Nhi 03.11.), `T76K912825` in P76 seit 03.11., Layout `/ P00 TX` in P76 angepasst, geprueft (46690: U1 45152789/10)** | `docs/abap/README_ZM_OFFENE_FAUF_BEDARFSVERURSACHER.md` (Abschnitt 2026-11-03) |
-| **IC-Preisfindung 1100 → 1200 (Fabio): Preisliste/Kurs in der IV-Faktura, Staffelbasis Bestellmenge (VOFM 601, in P76 noch nicht eingebunden), V1-Customizing ZICAA1 (Z999/Z000/Z001/Z002, Ausschluss ZPR0) in T76 `T76K912884`, Plan mit Rueckleseproben** | `saptasks/ic_preisfindung/NOTES.md`, `saptasks/ic_preisfindung/PLAN_V1_CUSTOMIZING_2026-11-11.md` |
+| **IC-Preisfindung 1100 → 1200 (Fabio): Preisliste/Kurs in der IV-Faktura, Staffelbasis Bestellmenge (VOFM 601, in P76 noch nicht eingebunden), V1-Customizing ZICAA1 (Z999/Z000/Z001/Z002, Ausschluss ZPR0) in T76 `T76K912884` (von Fabio am 12.11. getestet und fachlich freigegeben, Import P76 wartet auf Z999-Preise), Plan mit Rueckleseproben** | `saptasks/ic_preisfindung/NOTES.md`, `saptasks/ic_preisfindung/PLAN_V1_CUSTOMIZING_2026-11-11.md` |
+| **ZC12 (`ZM_ABGLEICH_KTSCH`, PM-02): Wert 0 bei gesetztem Haken, Popup-Werte linksbuendig, Laufzeit; Plan mit Entscheiden, Einspieldatei, T76-Abzug; wartet auf Ingos Ja zur Ausfuehrung in T76 (Stand 12.11.)** | `saptasks/zc12/PLAN_ZC12_NULLWERT_PERFORMANCE_2026-11-12.md` |
+| **Lieferantenbewertung: SAP-Quellen (`/ITS/`-ABC ist Material-ABC, ME6x/ELBK, Liefertreue EKET/EKBE, Q2, Fiori-Customizing; T76 ist S/4HANA 2023)**, nur gelesen | `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md` |
 | **Shopfloor PPD-Verzug wie ZC22: `ShopAufSet` mit Filter `Typ eq 'VZ'` (nur DPC), Auftrag `T76K912797` (T76 aktiv 2026-11-02, P76 importiert 2026-11-02, Schalter noch aus)** | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 17, `docs/abap/ZSHOP_VERZUG_ADD.abap` |
 | **Operations (Shopfloor): `ShopRmSet` (ZC27 `ZPP_RM_MENGEN`) und `ShopProdSet` (Istendtermin), Logistik/Tagesmengen/FPY SEH; Transport `T76K912740` + `T76K912738` (in P76 seit 16.10.)** | `saptasks/shopfloor_sap/NOTES.md`, Code `docs/abap/ZSHOP_RM_ADD.abap` |
 | **Einkauf: `EinkKontraktSet` (Mengenkontrakte wie ME3L, EKAB) und `EinkMatLzSet` (LZ-/Sortiments-Code), Strukturen in `T76K912724`, Klassen in `T76K912718`, beide seit 2026-10-09 in P76** | `docs/abap/ZEINK_KONTRAKT_ADD.abap`, `docs/rag/PURCHASING.md` |

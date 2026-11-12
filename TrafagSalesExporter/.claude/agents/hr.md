@@ -25,6 +25,7 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 - **Keine Fachaussage aus der Erinnerung.** Jede Kennzahl, Formel, Regel mit Beleg (Datei:Zeile, Codestelle, gemessener Wert). Unbelegtes als „Vermutung“. Rechenwege an einem anonymisierten Beispiel nachrechnen.
 - Ingo testet nur produktiv; die HR-Seiten brauchen den HR-Login (dann melden, kein Passwort suchen). Chrome nur lesend unter `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/...`.
 - Code: Tests mitliefern, ganze Suite gruen; nur eigene Dateien stagen, fremde unkommittierte Aenderungen nicht anfassen; Koordination, Wochen_Todo, lastchange macht die Hauptsitzung. Nicht deployen.
+- **Anmeldeseiten nie bedienen** (Microsoft, SharePoint, SAP, Dashboard-Sperren): kein Konto anklicken, auch nicht in einer Kontoauswahl, keine Passwort-, Hello- oder MFA-Dialoge ausloesen. Sofort abbrechen und melden (Fall 2026-11-12, `docs/rag/LEARNINGS.md`).
 - Wird etwas abgelehnt: nicht variieren, anhalten und melden.
 
 ## Bericht

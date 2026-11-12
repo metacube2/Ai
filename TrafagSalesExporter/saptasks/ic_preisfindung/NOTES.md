@@ -740,11 +740,11 @@ E071K: 20 Einzelschluessel, kein Sammelschluessel. V/08 schrieb zusaetzlich vier
 Entscheid Ingo, ob sie vor der Freigabe entfernt werden (Plan 6.4).
 
 Wirkung: V1 gilt in T76/100 seit 09:36 fuer jede Faktura mit KALVG I (IV, IVA, IVS, IG …), auch fuer Kunde 501230 und IV aus dem
-Streckengeschaeft. Ein Preistest ist noch nicht gelaufen.
+Streckengeschaeft. Ein Preistest ist noch nicht gelaufen. *(Ueberholt 2026-11-12: Fabio hat getestet, Abschnitt 9.1.)*
 
 **Offen:**
 *Mail an Fabio 2026-11-11 (Entwurf Claude in Outlook Web, von Ingo gesendet, gemeldet 10:06): Umsetzung, Bitte um Bestaetigung
-der Kaskade Z001/Z002, fehlende Stammdaten, Hinweis 501230, offene Punkte vor P76 (Punkte 1 bis 4 unten). Antwort ausstehend.*
+der Kaskade Z001/Z002, fehlende Stammdaten, Hinweis 501230, offene Punkte vor P76 (Punkte 1 bis 4 unten). Antwort ausstehend.* *(Ueberholt 2026-11-12: Antwort Fabio mit Testergebnissen und fachlicher Freigabe, Abschnitt 9.1.)*
 
 1. Fabio: Stammdaten in T76 fuer T1 bis T10 vorbereiten (Bestand 1100/0001, PR00 820 fuer 46690 abgrenzen oder anderes Material,
    Z001 820 −44 % wie P76, PR00 820 fuer 45366 und 33148, Infosatz 33148), Bezugsstufe Z001/Z002 (Kaskade) bestaetigen, dann testen.

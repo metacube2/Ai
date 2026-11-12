@@ -17,7 +17,7 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 - **T76 per RFC:** `.tmp_sap_probe/RunSapProbe.ps1 <befehl>` nimmt die DPAPI-Ablage aus `SapCredential.ps1` (vorher `Test-SapPassword`). Keine Ablage vorhanden: anhalten und das im Bericht sagen, nicht fragen.
 - **GUI-Scripting** (`.tmp_sap_probe/*.vbs`) an einer bereits angemeldeten Sitzung, ohne Passwort; immer in einer **eigenen** Sitzung arbeiten, Ingos Sitzungen (`ses[0]`) nie benutzen, eigene Sitzung am Ende schliessen.
 - **P76 lesen** nur, wenn der Auftrag es ausdruecklich und genau umrissen erlaubt, ueber die dokumentierten Lesewege (`P76Lesen.vbs` / `SapGuiP76Hilfe.vbs` in eigener Sitzung an Ingos angemeldeter GUI). Fuer P76 wird kein Passwort gespeichert, und das bleibt so. Die alten Vorlagen `P76Pruefung_*.ps1` (SapProbe mit P76-Passwortabfrage) sind ueberholt und werden nicht benutzt (LEARNINGS 2026-11-05).
-- Erscheint ein Anmeldebild: nichts eintippen, schliessen, den dokumentierten Weg nehmen.
+- Erscheint ein Anmeldebild: nichts eintippen, schliessen, den dokumentierten Weg nehmen. Das gilt fuer jede Anmeldeseite (auch Microsoft/SharePoint im Browser): kein Konto anklicken, auch nicht in einer Kontoauswahl; abbrechen und melden (Fall 2026-11-12, `docs/rag/LEARNINGS.md`).
 
 ## Grenzen
 

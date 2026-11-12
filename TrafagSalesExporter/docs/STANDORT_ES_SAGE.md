@@ -1,6 +1,6 @@
 # Standort Spanien: Sage-Export und Upload
 
-Stand: 2026-11-12 nachmittags (Abschnitt 2: **Lieferant umgesetzt in Skripten und App, Commit `c9208b5`, nicht deployed, noch nicht bei Santi**; Abschnitt 5: Lesereihenfolge und Erbregel berichtigt); davor 2026-11-12 spaeter (Andreas entschieden, Lieferant des letzten Wareneingangs gilt als Supplier); davor 2026-11-12 (Entscheidfrage an Andreas formuliert); davor 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
+Stand: 2026-11-12 11:40 (Abschnitt 2: **Lieferant umgesetzt in Skripten und App, Commit `c9208b5`, nicht deployed, noch nicht bei Santi**; Abschnitt 5: Lesereihenfolge und Erbregel berichtigt); davor 2026-11-12 09:20 (Andreas entschieden, Lieferant des letzten Wareneingangs gilt als Supplier); davor 2026-11-12 (Entscheidfrage an Andreas formuliert); davor 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
 und `SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md`.
 
 **Die Export-SQL gehoert uns**, nicht Spanien. Fehlt ein Feld, liest zuerst unsere Query
@@ -29,6 +29,7 @@ lassen sich nur am System selbst klaeren, nicht ueber die Sage-Hilfe.
 | Belegkopf (Albaran/Lieferschein) | `dbo.CabeceraAlbaranCliente` |
 | Belegpositionen | `dbo.LineasAlbaranCliente` |
 | Buchungsdaten | `dbo.FacturasTB` (per `OUTER APPLY`, siehe unten) |
+| Lieferant (seit `c9208b5`, 2026-11-12, noch nicht bei Santi) | `dbo.LineasAlbaranProveedor` mit `dbo.CabeceraAlbaranProveedor` (per `OUTER APPLY`, siehe unten) |
 
 Join Kopf zu Position: `CodigoEmpresa`, `EjercicioAlbaran`, `SerieAlbaran`, `NumeroAlbaran`.
 
@@ -46,7 +47,7 @@ Weitere Kandidatentabellen aus der Discovery, aktuell nicht gelesen: `dbo.Estadi
 (Statistik, im Auszug ohne 2025-Zeilen), `dbo.MovimientosFacturas`,
 `dbo.Vis_RTDV_EfectosFactura`.
 
-**Lieferant (Supplier), Stand 2026-11-11, nicht umgesetzt:** Die Query liest keinen Lieferanten, deshalb ist TRES in allen
+**Lieferant (Supplier), Stand 2026-11-11, nicht umgesetzt** *(ueberholt 2026-11-12: umgesetzt in `c9208b5`, siehe „Umsetzung 2026-11-12“ weiter unten; produktiv wirksam erst nach Deploy und Gang 2 bei Santi)***:** Die Query liest keinen Lieferanten, deshalb ist TRES in allen
 Supplier-Feldern leer (Andreas hat es am 11.11. im `Sales_All` bemerkt). Im Schemaauszug `SageSpainExportPackage/v2/candidate_objects.csv`
 belegt ist der Weg ueber den Wareneingang: `dbo.LineasAlbaranProveedor` (`CodigoEmpresa`, `CodigoArticulo`, Belegschluessel
 `EjercicioAlbaran`/`SerieAlbaran`/`NumeroAlbaran`) mit `dbo.CabeceraAlbaranProveedor` (`CodigoProveedor`, `RazonSocial`,
@@ -60,7 +61,7 @@ Artikel ohne Wareneingang bleiben leer; Ware von Trafag AG erscheint als Trafag)
 rund eine Woche bis im `Sales_All`, je nachdem wann Santi einspielt. Die Ersatzregel MARC 1100 (`docs/FINANCE_SUPPLIER.md`
 Abschnitt 1) ordnet ES fuer die Marge schon heute ein; leer ist nur die Supplier-Spalte.*
 
-*Nachtrag 2026-11-12 spaeter: **Andreas ist einverstanden.** Seine Rueckfrage, wie es einen Wareneingang ohne Lieferant geben
+*Nachtrag 2026-11-12 09:20: **Andreas ist einverstanden.** Seine Rueckfrage, wie es einen Wareneingang ohne Lieferant geben
 koenne, war ein Missverstaendnis: jeder Wareneingang hat einen Lieferanten (`CabeceraAlbaranProveedor.CodigoProveedor`), leer bleiben
 nur Artikel ohne jeden Wareneingang in Sage. Vermutete Faelle (nicht gemessen): Positionen ohne Lagerartikel (Fracht, Dienstleistung),
 letzter Einkauf vor dem Datenbeginn in Sage, Zugang ohne Lieferanten-Lieferschein. Zusage an Andreas: Umsetzung 1-2 Arbeitstage,
@@ -100,6 +101,7 @@ ist.
 | `Run-SpainExportAndUpload.ps1` | Export plus Upload, benoetigt das Exportskript |
 | `Start-SpainRangeExportAndUpload.ps1` | einfacher Starter |
 | `Analyze-SpainPostingDateKey.ps1` | read-only Diagnose fuer den Buchungsdatum-Schluessel |
+| `Analyze-SpainSupplierLookup.ps1` | read-only Pruefung fuer den Lieferanten aus dem Wareneingang (Teile A bis L), seit 2026-11-12 (`c9208b5`); geht in Gang 1 an Santi |
 
 `scripts/Export-SageSpainSalesCsv.ps1` ist eine byte-identische Spiegelung im Repo.
 **Die Query steht mehrfach** — Aenderungen immer an allen Stellen nachziehen, sonst

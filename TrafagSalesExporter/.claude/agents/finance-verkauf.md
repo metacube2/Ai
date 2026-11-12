@@ -30,6 +30,7 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 - Ingo testet nur produktiv; lokale DB und lokaler Server sind kein Beleg. Produktiv-DB nur auf ausdruecklichen Auftrag lesen. Chrome-Pruefung unter `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/...`, nur lesen; Finance-Routen brauchen den Unlock (dann melden, nicht Passwort suchen).
 - Anzeigefehler als Muster in der ganzen App suchen.
 - Code: Tests mitliefern, ganze Suite gruen. Nur eigene Dateien stagen, nie `-A`; fremde unkommittierte Aenderungen (Finance_All, `Program.cs`-Zeile, `TimerBackgroundService.cs`, `.csproj`) nicht anfassen. Koordination, Issue-Log, Wochen_Todo und lastchange macht die Hauptsitzung. Nicht deployen.
+- **Anmeldeseiten nie bedienen** (Microsoft, SharePoint, SAP, Dashboard-Sperren): kein Konto anklicken, auch nicht in einer Kontoauswahl, keine Passwort-, Hello- oder MFA-Dialoge ausloesen. Sofort abbrechen und melden (Fall 2026-11-12, `docs/rag/LEARNINGS.md`).
 - Wird etwas abgelehnt: nicht variieren, anhalten und melden.
 
 ## Bericht

@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-12 nachmittags (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -384,7 +384,8 @@ inkl. aller sechs Fremdsprachen in `Services/UiTextGeneratedTranslations.cs`.
   zeigen unsere Schema-Auszuege nicht; Lieferantennummern stehen nur auf der Einkaufsseite
   (`LineasAlbaranProveedor` u. a. mit `CodigoProveedor` und `CodigoArticulo`). Naechster Schritt:
   Spaltenauszug `%Proveedor%`/`%Articulo%`; eine Herleitung aus der Einkaufshistorie waere ein
-  Fachentscheid.
+  Fachentscheid. *(Ueberholt 2026-11-12: Andreas hat entschieden, der Lieferant des letzten Wareneingangs gilt als Supplier;
+  umgesetzt in `c9208b5`, nicht deployed, `docs/STANDORT_ES_SAGE.md` Abschnitt 2.)*
 - US: Quellfeld und Mapping bestimmen.
 - FR: ungefuellte Zeilen nach Quelle und Artikelstamm segmentieren.
 - Verbleibende TRIT-Zeilen nach Ursache segmentieren. Der grosse Teil ist mit Abschnitt 8 geklaert; offen bleiben `11` Zeilen ohne Treffer in der Uebergangsliste.

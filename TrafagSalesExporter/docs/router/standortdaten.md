@@ -1,6 +1,6 @@
 # Unterrouter Standortdaten
 
-Zurueck: `router.md`. Stand: 2026-11-03.
+Zurueck: `router.md`. Stand: 2026-11-12 (Spanien: Lieferant aus dem Wareneingang, Seed-Aussage berichtigt); davor 2026-11-03.
 
 Exporte und Importe je Land, Feldluecken, Quellsysteme, Ansprechpartner.
 
@@ -24,6 +24,7 @@ dann fragen — das ist zweimal in einer Woche schiefgegangen. Details und die z
 | Land | Datei |
 | --- | --- |
 | **Spanien** — Sage, Export, rclone, Referenzwert | `docs/STANDORT_ES_SAGE.md` |
+| Spanien, Lieferant aus dem letzten Wareneingang (ISS-003.3): Plan, Entscheide, Ablauf mit Santi; umgesetzt `c9208b5`, Stand 12.11. nicht deployed | `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md` |
 | Spanien, Buchungsdatum `PostingDate` im Detail | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` |
 | **Deutschland** — Alphaplan, CSV-Paar, ZIP-Import | `docs/STANDORT_DE_ALPHAPLAN.md` |
 | **Indien** — Sales Type statt Preferred Vendor, Eigenfertigung | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` |
@@ -45,8 +46,11 @@ dann fragen — das ist zweimal in einer Woche schiefgegangen. Details und die z
 - **UK-Reimport nur ohne Jahresfilter starten.** Mit Jahresvorgabe vernichtet der Import
   das jeweils andere Jahr, weil vorher alle Zeilen des Standorts geloescht werden. Siehe
   `docs/rag/MANUAL_IMPORT.md`.
-- **Spanien hat keine verdrahtete Spaltenzuordnung im Seed**, anders als UK und DE. Neue
-  Spalten muessen in den Einstellungen zugeordnet werden.
+- ~~**Spanien hat keine verdrahtete Spaltenzuordnung im Seed**, anders als UK und DE. Neue
+  Spalten muessen in den Einstellungen zugeordnet werden.~~ *Berichtigt 2026-11-12:* Bei leerer Mappingliste erkennt der
+  Kopfzeilen-Leser die Spalten selbst; pflegt Spanien eine Liste, ergaenzt der Seed die Datums- und (seit `c9208b5`) die
+  Lieferantenfelder. **Spanien-Dateien werden nach dem Startdatum im Dateinamen gelesen, die zuletzt gelesene Zeile ersetzt
+  die fruehere ganz**; vor jeder Nachlieferung `docs/STANDORT_ES_SAGE.md` Abschnitt 5 lesen.
 - **Der Standortimport ersetzt den Bestand.** Ein einzelnes Delta darf nie isoliert als
   Vollbestand importiert werden.
 - **Die Export-Query steht je Standort mehrfach** (ES zweimal plus Spiegelung, DE zweimal).

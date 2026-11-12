@@ -714,7 +714,7 @@ Upload wie bisher per rclone nach `trafag-bi:Import/Finance/Spanien`.
 | E5 | Trafag AG in Sage anders geschrieben als `TRAFAG AG`: Muster `TrAgEntityPattern` erweitern (Code) oder als „Intern ohne Gesellschaft“ lassen | erst nach Teil F; bei Abweichung erweitern, mit Test |
 | E6 | Santi in einem Gang (Analyze, Skripte, Backfill) oder erst Analyze, dann Rest | **zwei Gaenge** (Abschnitt 6): ein Fehler in neuen Tagesdateien laesst sich nicht per neuem Backfill korrigieren, nur durch Entfernen der Tagesdateien. Kostet einen Tag mehr gegenueber der Zusage „1-2 Arbeitstage“ an Andreas |
 | E9 | Bestehende Luecke (registriert vor 2026-05-28, fakturiert ab 2026-06-01; Teil K) nachholen? | eigener Punkt nach Teil K, nicht im Lieferanten-Backfill; aendert den Umsatz und braucht dann die Zustimmung von Andreas |
-| E7 | Deploy-Zeitpunkt; welche nicht deployten Commits des Zweigs mitgehen (u. a. `c5c9b4a`, `19ca282`, Rexx Hub `1e99745`/`d99fbe6` laut Koordinationsdatei „nicht deployed“) | Ingo entscheidet |
+| E7 | Deploy-Zeitpunkt; welche nicht deployten Commits des Zweigs mitgehen (u. a. `c5c9b4a`, `19ca282`, Rexx Hub `1e99745`/`d99fbe6` laut Koordinationsdatei „nicht deployed“) *(Ueberholt 2026-11-12 11:33: diese Commits sind mit `e956183` deployed; offen ist nur noch `c9208b5`.)* | Ingo entscheidet |
 | E8 | Seed vorsorglich erweitern (4.1) | **ja**, wirkungslos bei leerer Liste |
 
 Fachpunkt fuer Andreas (nur zur Kenntnis): Ware von Trafag AG, deren spanische Artikelnummer nicht im CH-Werkstamm

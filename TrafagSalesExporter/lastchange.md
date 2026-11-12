@@ -1,57 +1,57 @@
 # Last Change
 
-Stand: 2026-11-12 (Zwischenstand: IC Tests Fabio, ZC12 Auftrag, Spanien-Supplier Rueckfrage Andreas); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-12 12:00 (Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
 
-## Zwischenstand 2026-11-12 (falls der Chat abbricht)
+## Stand 2026-11-12 12:00 (eine Sitzung, 09:00 bis 12:00; neu gefasst bei der Doku-Pruefung)
 
-**Deploy 12.11. 11:33 `e956183`:** Kleinigkeiten vom 10.11. und Rexx Hub vorbereitet (Schalter aus) produktiv, 1547/1547, bitgleich.
-Spanien-Supplier noch nicht dabei (Agent arbeitet, eigener Deploy spaeter). `docs/rag/DEPLOYMENT.md`.
+Dieser Block ersetzt die Zwischenstaende, die im Lauf des Vormittags uebereinander gewachsen waren und sich widersprachen
+(„Plan laeuft“ neben „umgesetzt“). Alle Uhrzeiten aus `git log`.
 
-**Spanien-Supplier umgesetzt (`c9208b5`, nicht deployed):** Skripte, Pruefskript, Erbregel, Seed, Suite 1556/1556. Offen: Deploy,
-Mail Gang 1 an Santi (`C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`), Lesepruefung mit Ingo, Gang 2.
-ISS-003.3, Wochen_Todo 13, `docs/STANDORT_ES_SAGE.md` 2 und 5.
+**Deploy 11:33, `e956183`:** Kleinigkeiten vom 10.11. (`c5c9b4a`, `19ca282`, `548b10e`) und Rexx Hub vorbereitet (Schalter
+`HrKpi:RexxHub:Enabled` aus, `1e99745`, `d99fbe6`) sind produktiv; 1547/1547, bitgleich. `docs/rag/DEPLOYMENT.md` Kurzstand.
 
-**Nachtrag 12.11. spaet, weitere Punkte dieser Sitzung:**
-- **Spanien Supplier umsetzen** (Ingo „du kannst umsetzen“, Andreas einverstanden): Phase 1 Plan laeuft, Agent finance-verkauf,
-  Zwischenstand `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. Offener Entscheid absehbar: letzter Wareneingang vor dem
-  Verkauf oder letzter ueberhaupt. Noch kein Code, kein Deploy. Antwort an Andreas zu „Wareneingang ohne Lieferant?“ im Chat
-  formuliert (gemeint: Artikel ohne Wareneingang, z. B. Fracht/Dienstleistung, Einkauf vor Datenbeginn).
-- **Lieferantenbewertung:** SAP-Recherche lesend in T76 (Zwischenstand `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md`),
-  vertieft um `/ITS/CA_MAT_ABC_CU1` (Programmlogik, Zeitraum, Klassengrenzen). Oscar hat den Eingabeteil (Paket 2) freigegeben.
-- **Oscars Auftraege vom 03.11.:** Statusuebersicht im Chat (Wochen_Todo 137 bis 147); offen bei Ingo vor allem 138 Inventar,
-  139 PM14 (Aufwand, Sichtbarkeit, inkonsistente Daten), 140, 142, 147; Datenverantwortung produktiv, Eintraege noch vorlaeufig.
-- **Inventar Smartsheet:** Mail an Philip Steiger formuliert (Wochen_Todo 138), Anleitung „Excel von Hand pruefen“ in
-  `Tools/Inventar/README.md`.
-- **Lieferantendashboard V6** fuer Ingo lokal ueber `http://127.0.0.1:8765` (Kopie im Scratchpad) in Chrome geoeffnet, nur Anzeige.
-- **ZC12** wartet weiter auf Ingos Ja fuer Phase 2 in T76 (Einspieldatei `bb1c771`).
-- **Abends:** Spanien-Plan fertig, Entscheide E1-E9 von Ingo (E7 Deploy offen), Phase 2 laeuft bis vor den Deploy (Agent). SAP-Quellen
-  Lieferantenbewertung fertig (EINKAUF_SITZUNG 6.3): /ITS/-ABC nur Material-ABC, T76 ist S/4HANA 2023, Fiori-Bewertung customized (Preis 0 %).
+**Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Andreas fragte nach dem Zeitpunkt; die Entscheidfrage war ihm bis dahin nie gestellt.
+09:20 sein OK: der Lieferant des letzten Wareneingangs gilt als Supplier (seine Rueckfrage „Wareneingang ohne Lieferant?“ meinte
+Artikel ohne Wareneingang). Plan `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`, Entscheide Ingo in Abschnitt 13 (letzter
+Wareneingang am oder vor dem Lieferdatum, nur Lagerartikel, Erbregel, zwei Gaenge mit Santi). **Umgesetzt 11:39 in `c9208b5`**
+(Sage-Skripte an allen Stellen, Pruefskript `Analyze-SpainSupplierLookup.ps1`, Erbregel im Spanien-Dedupe, Seed, Suite 1556/1556),
+**nicht deployed**. Offen: Deploy-Freigabe Ingo; Mail Gang 1 an Santi (Entwurf
+`C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`, nicht gesendet); vor Gang 2 Lesepruefung der
+Dashboard-Einstellungen und der SharePoint-Kopfzeilen mit Ingos Anmeldung. `docs/STANDORT_ES_SAGE.md` 2 und 5.
 
-**IC V1 (Fabio):** Tests in T76/100 bestanden (IV 90381224-90381226), T76K912884 von Fabio fachlich freigegeben. Import nach P76
-wartet auf Fabios Z999-Preise in P76 und die Abgrenzung der PR00-Spiegelsaetze 820. Antwortvorschlag 601/908 an Fabio liegt im Chat
-(RV80HGEN nach Bestaetigung 908 durch TRIM/Fabio); Import haengt nicht an 908. Offen Ingo: T683T, 501230, Mandant 090, P76-Lesepruefung.
-`saptasks/ic_preisfindung/NOTES.md` 9.1, Wochen_Todo 153.
+**IC V1 (Fabio, Wochen_Todo 153):** Tests in T76/100 bestanden (IV 90381224 bis 90381226), T76K912884 von Fabio fachlich
+freigegeben. Import nach P76 wartet auf Fabios Z999-Preise in P76 und die Abgrenzung der PR00-Spiegelsaetze 820; er haengt
+nicht an 601/908. Antwortvorschlag 601/908 an Fabio im Chat (RV80HGEN nach Bestaetigung von 908 durch TRIM/Fabio), nicht belegt
+gesendet. Offen Ingo: T683T, 501230, Mandant 090, P76-Lesepruefung. `saptasks/ic_preisfindung/NOTES.md` 9.1.
 
-**ZC12 (PM-02):** Auftrag Ingo: Wert 0 bei gesetztem Haken zulassen (Arbeitsstunden; heute Abbruch, alter Wert bleibt), Popup-Wert
-linksbuendig, Performance im Report. Kein neuer Index auf SAP-Standardtabellen (nur Notfall). Phase 1 Plan lesend in T76 laeuft
-(Agent sap-t76; Ergebnis `saptasks/zc12/PLAN_ZC12_NULLWERT_PERFORMANCE_2026-11-12.md`, Quelltextabzug
-`saptasks/zc12/ZM_ABGLEICH_KTSCH_T76_2026-11-12.abap`). Nichts in SAP geaendert. Wochen_Todo 3. *Nachtrag spaeter: Plan liegt vor (mit Entwurf), wartet auf Entscheide Ingo E1-E5, E7, E8.*
+**ZC12 (PM-02, Wochen_Todo 3):** Auftrag Ingo: Wert 0 bei gesetztem Haken zulassen (Arbeitsstunden; heute Abbruch, alter Wert
+bleibt), Popup-Wert linksbuendig, Laufzeit im Report; kein neuer Index auf SAP-Standardtabellen. Plan
+`saptasks/zc12/PLAN_ZC12_NULLWERT_PERFORMANCE_2026-11-12.md` mit Ingos Entscheiden (Abschnitt 11, 12), Einspieldatei
+`saptasks/zc12/ZM_ABGLEICH_KTSCH_einspiel_2026-11-12.abap` (`bb1c771`). **Wartet auf Ingos Ja zur Ausfuehrung in T76**; in SAP
+ist nichts geaendert.
 
-**Spanien Supplier (Andreas):** Andreas fragt nach dem Zeitpunkt; die Entscheidfrage war ihm noch nicht gestellt. Antwortvorschlag
-mit Frage, Einschraenkungen und Schaetzung (1-2 Tage nach OK, rund eine Woche inkl. Santi) im Chat. ISS-003.3, Wochen_Todo 13,
-`docs/STANDORT_ES_SAGE.md` 2. *Nachtrag spaeter am 12.11.: Andreas ist einverstanden (letzter Wareneingang = Supplier); seine Rueckfrage
-'Wareneingang ohne Lieferant?' war ein Missverstaendnis (gemeint: Artikel ohne Wareneingang). Naechster Schritt: Plan zur Freigabe.*
-
-**Lieferantenbewertung (Marco Widmer):** Gespraech 12.11., iteratives Vorgehen vereinbart, Ingo baut erste Fassung und schickt den
-Link; `docs/EINKAUF_SITZUNG_2026-10-22.md` 6, Wochen_Todo 122. Nachmittags (6.1): Strukturvorschlag, Zertifikatsordner
-(koi ohne Zugriff), ABC-Transaktion `/ITS/CA_MAT_ABC_CU1`, Fiori-Info 01.12., SAP-Quellen lesend in T76 in Arbeit. Spaet (6.2):
-Armin: V6 Grundlage, kein Word-Dokument, Paket 1 (SAP-Performance, Q2, A/B/C 70/20/10 je Lieferant) und Paket 2 (Pflege im Dashboard).
+**Lieferantenbewertung (Wochen_Todo 122):** Gespraech mit Marco Widmer (iterativ, Ingo baut die erste Fassung); Rueckmeldung
+Armin (V6 ist Grundlage, kein Word-Dokument, Paket 1 SAP-Performance mit Q2 und A/B/C je Lieferant, Paket 2 Pflege im
+Dashboard); Oscar hat Eingaben im Dashboard freigegeben; SAP-Quellen in T76 lesend geklaert
+(`saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md`: `/ITS/`-ABC ist reine Material-ABC, T76 ist S/4HANA 2023,
+Fiori-Bewertung von NTT customized mit Preis 0 %). Offen: P76 lesen (Freigabe), SLFDT oder EINDT, Zeitraum A/B/C, danach Plan
+Paket 1. `docs/EINKAUF_SITZUNG_2026-10-22.md` 6 bis 6.3. Zertifikatsordner auf `O:` fuer `koi` nicht lesbar.
 
 **WLAN `trafag-802.1x-tel` (Standort Bubikon):** niemand kommt mehr hinein, seit Entec am 11.11. 12:24 dort Client Isolation
 wegen MAC-Flaps in VLAN 16 eingeschaltet hat (Verdacht, nicht gemessen). Flap-Geraet `4c:eb:d6:5a:b3:cc` = Espressif (IoT).
-Laptop-WLAN `trafag-802.1x`, Zertifikate und Sperrlisten in Ordnung. Alles in `docs/router/plattform.md` Abschnitt
-„Standort Bubikon: WLAN …“; Nachricht an Alex vorgeschlagen, nicht gesendet.
+Laptop-WLAN `trafag-802.1x`, Zertifikate und Sperrlisten in Ordnung. `docs/router/plattform.md` Abschnitt „Standort Bubikon:
+WLAN …“; Nachricht an Alex vorgeschlagen, nicht belegt gesendet; Ingos Handytest steht aus.
+
+**Oscars Auftraege vom 03.11. (Wochen_Todo 137 bis 147):** Statusuebersicht im Chat; offen bei Ingo vor allem 138 Inventar
+(Mail an Philip Steiger formuliert; Anleitung „Excel von Hand pruefen“ in `Tools/Inventar/README.md`), 139 PM14, 140, 142, 147.
+Datenverantwortung produktiv, Eintraege noch vorlaeufig.
+
+**Doku-Pruefung (Auftrag Ingo 11:45):** alle Markdown-Dateien auf Veraltetes, Widersprueche, Redundanz; Ergebnis in
+`docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`.
+
+**Nicht committet (fremd):** Finance_All-Automatik (`Program.cs`, `TimerBackgroundService.cs`, `.csproj`), `CLAUDE.md`, geloeschte
+Dateien in der Repo-Wurzel, Office-Dateien; Ingo entscheidet.
 
 ## Uebergabe 2026-11-11 abends (Chat geschlossen): Spanien-Lieferant, Fabio 601/908, offene Punkte
 
@@ -176,7 +176,7 @@ Sitzungsprotokoll sichtbar geworden (eigener Wrapper), Wechsel empfohlen; LEARNI
 - **Einkauf** (`19ca282`, Agent im Worktree, per Fast-Forward uebernommen; `548b10e`): ungenutzte Abfragen der entfernten Matrix Lieferant/Jahr samt Feld
   `SupplierYearSpendRows` und drei Datentypen geloescht (drei Abfragen je Snapshot weniger, Laufzeit nicht gemessen). Sieben Tests auf den Spend-Aufriss umgestellt, keiner
   entfallen; Staerke mit sechs absichtlichen Verfaelschungen geprueft.
-- Suite 1490/1490 im Release-Worktree auf `548b10e`. **Nicht deployed** (Freigabe Ingo und Pruefung Einkauf-Delta stehen aus). Gegenpruefung durch fuenf unabhaengige
+- Suite 1490/1490 im Release-Worktree auf `548b10e`. **Nicht deployed** (Freigabe Ingo und Pruefung Einkauf-Delta stehen aus). *(Ueberholt: deployed am 2026-11-12 11:33 mit `e956183`.)* Gegenpruefung durch fuenf unabhaengige
   Pruefer, Befunde eingearbeitet. Nicht behoben: Klingonisch/Albanisch nutzen fuer „Kommentar“ den Schluessel des Formularfelds (anderes Wort als die Mehrzahl).
 
 ## Nachtrag 2026-11-10 10:55: alle offenen Todos gegen Code und Doku geprueft und nachgefuehrt

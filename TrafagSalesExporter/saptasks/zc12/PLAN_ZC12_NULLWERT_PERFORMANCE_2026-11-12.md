@@ -591,7 +591,7 @@ Erstes Kandidatenpaar `00435` verworfen: beide Materialien haben `MSTAE/MSTAV 99
 | E7 | Altauftrag `T76K911958` wird nicht angefasst |
 | E8 | Freigabe und Import nach P76 macht Ingo nach dem Test in T76 |
 
-Folge: Der Entwurf vom 12.11. setzt E1 und E3 noch nicht um. Vor Phase 2 entsteht eine neue Einspieldatei (Abschnitt 6, „Was die
+*(Ueberholt 2026-11-12 09:55: die Einspieldatei `ZM_ABGLEICH_KTSCH_einspiel_2026-11-12.abap` liegt vor, Abschnitt 12.)* Folge: Der Entwurf vom 12.11. setzt E1 und E3 noch nicht um. Vor Phase 2 entsteht eine neue Einspieldatei (Abschnitt 6, „Was die
 Entwurfsdatei genau enthaelt“) samt Nachtrag; Phase 2 startet erst nach ausdruecklicher Freigabe Ingos fuer die Schreibschritte.
 
 *Nachtrag 2026-11-12: Die Einspieldatei ist erstellt (Abschnitt 12); der Satz oben „Vor Phase 2 entsteht eine neue

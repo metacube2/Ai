@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-12 abends (Abschnitt 6.3: SAP-Quellen geklaert, T76 lesend); davor 2026-11-12 spaet (Abschnitt 6.2: **Rueckmeldung Armin: V6 ist die Grundlage, kein Word-Dokument, zwei Pakete, Pflege im Dashboard**); davor 2026-11-12 nachmittags (Abschnitt 6 und 6.1: Gespraech mit Marco Widmer, iteratives Vorgehen; Strukturvorschlag, Zertifikatsordner, ABC-Transaktion, SAP-Recherche). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -64,8 +64,8 @@ wie viel).** Umgesetzt im Modul, `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` A
 | --- | --- | --- | --- |
 | 1 | Feedbackliste Erich/Sandro/Marco erhalten und abarbeiten, Rueckfragen direkt an die Quelle | Ingo | 121 |
 | 2 | Einkaufs-Dashboard bis 28.10. stabilisieren, keine neuen Funktionen | Ingo | 121 |
-| 3 | Word-Dokument und Dashboard-Entwurf Lieferantenbewertung schicken | Einkauf (Armin/Marco) | 122; *Dashboard-Entwurf V6 am 02.11. erhalten (Abschnitt 5), Word-Dokument noch nicht* |
-| 4 | Datenquellen (SAP-Tabellen/Transaktionen) fuer die Lieferantenbewertung nennen | Einkauf | 122; *im Entwurf nur fachlich beschrieben (Abschnitt 5.3), Tabellen/Transaktionen fehlen weiter* |
+| 3 | Word-Dokument und Dashboard-Entwurf Lieferantenbewertung schicken | Einkauf (Armin/Marco) | 122; *Dashboard-Entwurf V6 am 02.11. erhalten (Abschnitt 5), Word-Dokument noch nicht*; **erledigt 12.11.: Armin braucht kein Word-Dokument, V6 ist die Grundlage (6.2)** |
+| 4 | Datenquellen (SAP-Tabellen/Transaktionen) fuer die Lieferantenbewertung nennen | Einkauf | 122; *im Entwurf nur fachlich beschrieben (Abschnitt 5.3), Tabellen/Transaktionen fehlen weiter*; **erledigt 12.11.: liegt bei Ingo als SAP-Spezialist (6.2), in T76 lesend geklaert (6.3)** |
 | 5 | Fiori-Parametrisierung der neuen Lieferantenbewertung (Voraussetzung) | Einkauf mit NTT | 122 |
 | 6 | ~~Entscheid Handbestellwesen~~ entschieden 22.10.: weiterbetreiben, Nutzung festhalten | erledigt | 120 |
 
@@ -165,7 +165,7 @@ Kein Wortprotokoll, nur Ergebnisse.
 3. Link an Marco, Rueckmeldung einarbeiten. Der Eingabeteil (Zertifikate, Massnahmen, Audits, Dokumente) bleibt bis zum
    Entscheid, wo er liegt, aussen vor.
 
-### 6.1 Weitere Stand 2026-11-12 (Ingo im Chat)
+### 6.1 Weiterer Stand 2026-11-12 (Ingo im Chat)
 
 **Auslegeordnung fuer Marco:** Antwortentwurf mit Statusliste (vorhanden: Projektskizze Armin 30.10., Demo V6, Entscheid
 03.11., Einkaufsvolumen je Lieferant im Dashboard; fehlt: Word-Dokument, SAP-Tabellen/Transaktionen, Fiori-Parametrisierung,

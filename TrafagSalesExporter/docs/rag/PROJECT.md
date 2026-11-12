@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-11-12 12:00 (Deploy 11:33 `e956183`; Spanien Supplier umgesetzt, nicht deployed; ZC12-Plan; Lieferantenbewertung Paket 1/2; WLAN-Stoerung; Doku-Pruefung); davor 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -9,6 +9,19 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
+- **2026-11-12 (Stand 12:00, Einzelheiten `lastchange.md` oben):**
+  - **Deploy 11:33 `e956183`**: Kleinigkeiten vom 10.11. und Rexx Hub vorbereitet (Schalter `HrKpi:RexxHub:Enabled` aus).
+  - **Spanien Supplier (ISS-003.3)**: Andreas hat entschieden, der Lieferant des letzten Wareneingangs gilt als Supplier.
+    Umgesetzt in `c9208b5` (Sage-Skripte, Pruefskript, Erbregel im Import, Seed; 1556/1556), **nicht deployed**, Santi noch
+    nicht beliefert (zwei Gaenge). Plan `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`.
+  - **IC V1**: von Fabio in T76 getestet und fachlich freigegeben (`T76K912884`); Import P76 wartet auf seine Z999-Preise.
+  - **ZC12 (PM-02)**: Plan und Einspieldatei fuer Wert 0, linksbuendige Popup-Werte und Laufzeit liegen vor
+    (`saptasks/zc12/`), wartet auf Ingos Ja zur Ausfuehrung in T76.
+  - **Lieferantenbewertung (Wochen_Todo 122)**: V6 ist Grundlage, Paket 1 (SAP-Performance, Q2, A/B/C je Lieferant) und
+    Paket 2 (Pflege im Dashboard, Oscar einverstanden); SAP-Quellen geklaert; T76 ist S/4HANA 2023.
+    `docs/EINKAUF_SITZUNG_2026-10-22.md` 6 bis 6.3.
+  - **WLAN `trafag-802.1x-tel`** in Bubikon gestoert, Sache der IT; Befunde `docs/router/plattform.md`.
+  - **Doku-Pruefung** aller Markdown-Dateien: `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`.
 - **2026-11-06/09:** Vier T76-Transporte warten auf Ingo (Uebersicht `lastchange.md` „Uebergabe Stand 2026-11-09“): FIX 26 Materialanteil, QmMeldungSet, IC-Staffelbasis nach Bestellmenge (VOFM 601; *10.11.: importiert, aber in P76 noch nicht eingebunden; VOFM in P76 gesperrt, `RV62ANNN` nicht transportierbar, `RV80HGEN` bindet auch FBED 908 ein, Entscheid Ingo offen, `saptasks/ic_preisfindung/NOTES.md` 8.9*), ZZPRDAT inkl. Reiter-Fix und Georgs XCO1-Objekte (vor Import P76 pruefen). ZZPRDAT-Testnachweis fuer den Fachbereich liegt vor.
 - **2026-11-05:** Verkauf-Unterreiter **Monthly Review Gesellschaften** (Wunsch Patrick Hertach) produktiv seit 10:33 (`47abb30`),
   Q-Faelle-Abschnitt gebaut, Abruf aus bis `T76K912837` (`QmMeldungSet`, offene Q1) in P76 ist

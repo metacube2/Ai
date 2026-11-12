@@ -177,7 +177,7 @@ strukturelle Gruende:
 | CH/AT (`ZSCHWEIZ`, SAP OData) | immer leer | Im Seed-Mapping (`DatabaseSeedService.EnsureSapODataDachMapping`) gibt es fuer `SupplierNumber/Name/Country` gar kein Mapping — `FinanzdataSchweizOeSet` (VBRK/VBRP) exponiert kein Lieferantenfeld. |
 | UK (Manual Excel) | **ueberholt, siehe Korrektur unter der Tabelle** | Stand 2026-07-17: `EnsureUkManualExcelMapping` enthielt keine Supplier-Spalten. Inzwischen gemappt, UK ist bei 100 %. |
 | DE (Alphaplan) | leer je nach Exportspalten | Mapping erwartet `Lieferanten Nummer`/`Name Lieferant`/`Land Lieferant`; nur gefuellt, wenn Alphaplan diese Spalten liefert. |
-| ES (Sage CSV) | leer | Kein Supplier-Mapping im Spanien-Import vorhanden. |
+| ES (Sage CSV) | leer | Kein Supplier-Mapping im Spanien-Import vorhanden. *(Ueberholt 2026-11-12: der Sage-Export liefert seit `c9208b5` den Lieferanten des letzten Wareneingangs; nicht deployed, wirkt nach der Nachlieferung durch Santi, `docs/STANDORT_ES_SAGE.md` 2.)* |
 | FR/IT/US/IN (SAP B1/HANA) | teilweise gefuellt | Supplier = `OITM.CardCode`, der **Standardlieferant im Artikelstamm** (`HanaQueryService`), nicht der Beleglieferant — leer, wenn im Artikel kein Default-Lieferant gepflegt ist. |
 
 > **Korrektur zur UK-Zeile, nachgetragen 2026-09-02.** Die Diagnose von 2026-07-17 war fuer
