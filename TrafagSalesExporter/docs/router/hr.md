@@ -1,6 +1,6 @@
 # Unterrouter HR
 
-Zurueck: `router.md`. Stand: 2026-11-10 (Entscheid Rexx Hub, Lieferfelder Rexx, Hub-Produktbeschreibung gelesen); davor 2026-11-04 (Rexx-Abwesenheiten je Fall #777; Rexx-Gesamtabfrage #775 ersetzt die vier Rexx-Dateien; Formelpruefung mit drei Korrekturen, Reiter Interaktiv); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Idee Z-Tabelle/Tagesjob), 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv), 2026-09-30.
+Zurueck: `router.md`. Stand: 2026-11-12 (Doku-Pruefung: Rexx-Hub-Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus; Falle `Abwesenheitinstunden.xlsx` als ueberholt markiert); davor 2026-11-10 (Entscheid Rexx Hub, Lieferfelder Rexx, Hub-Produktbeschreibung gelesen); davor 2026-11-04 (Rexx-Abwesenheiten je Fall #777; Rexx-Gesamtabfrage #775 ersetzt die vier Rexx-Dateien; Formelpruefung mit drei Korrekturen, Reiter Interaktiv); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Idee Z-Tabelle/Tagesjob), 2026-10-29 (Kader seit 2026-10-22, Review 29.09. produktiv), 2026-09-30.
 
 HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
@@ -19,7 +19,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | **Rexx-Abwesenheiten je Fall #777 (Antragsliste, `Hr-cockpit-absenzen-je-fall.xlsx`): Faelle mit Datum ergaenzen SAP; Grenze direkt gebuchter Krankheit** | `docs/HR_KPI.md` 8.14 |
 | **Entscheid 10.11.: Rexx Hub wird genommen; welche Felder Rexx liefern muss (Spaltennamen, Ampel fehlend/ungeprueft)** | `saptasks/rexx_schnittstelle/NOTES.md` 12, Kurzfassung `docs/HR_KPI.md` 8.17 |
 | **Rexx Hub technisch: REST-API (kein Dateiexport), Endpunkte, Grenzen (1 Anfrage gleichzeitig, 50'000 pro Monat), Data-Warehouse-Abfrage als naechster Weg; Mailverlauf AG36071 (Hub nicht bestellt)** | `saptasks/rexx_schnittstelle/NOTES.md` 13 |
-| **Rexx-Hub-Abruf gebaut (Schalter aus): Umschaltanleitung, Einstellungen, Sicherungen, Testabruf, offene Annahmen** | `saptasks/rexx_schnittstelle/NOTES.md` 14, Kurzfassung `docs/HR_KPI.md` 8.18 |
+| **Rexx-Hub-Abruf gebaut und seit dem Deploy vom 2026-11-12 11:33 auf dem Server (`e956183`), Schalter `HrKpi:RexxHub:Enabled` weiter aus (bis 2026-11-12 stand hier nur „gebaut (Schalter aus)“): Umschaltanleitung, Einstellungen, Sicherungen, Testabruf, offene Annahmen** | `saptasks/rexx_schnittstelle/NOTES.md` 14, Kurzfassung `docs/HR_KPI.md` 8.18 |
 | **Reiter Interaktiv (Zeitraffer, Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Simulator)** | `docs/HR_KPI.md` 9 |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |
@@ -35,7 +35,8 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
   (`docs/HR_KPI.md` 8.13).
 - **Arbeitstage sind nicht Montag bis Freitag.** `ZurichWorkdayCalendar` zieht die neun
   gesetzlichen Feiertage des Kantons Zuerich ab.
-- **`Abwesenheitinstunden.xlsx` hat keine verlaesslichen Datumsfelder je Fall.** Die
+- *Ueberholt am 2026-10-01 bzw. 2026-11-04 (gilt nur noch ohne SAP-Datei oder fuer Zeitraeume vor dem Vorjahr; mit #775 im
+  Ordner wird die Datei nicht mehr gelesen, `docs/HR_KPI.md` 4 und 8.13):* **`Abwesenheitinstunden.xlsx` hat keine verlaesslichen Datumsfelder je Fall.** Die
   `(Zeitraum)`-Spalten nennen nur den juengsten Fall, die Stunden sind kumuliert. Bei einem
   Zeitraumfilter laesst sich der Zaehler nicht auf den Nenner eingrenzen; die Anzeige zeigt
   dann bewusst keine Prozentzahl und eine gelbe Ampel statt einer scheinbar genauen Quote.

@@ -1,6 +1,11 @@
 # BiDashboard (TrafagSalesExporter) — Requirements / Gesamtfunktionalität
 
-Stand: 2026-07-10 · Status: **reverse-engineered** aus Code und bestehender Doku (nicht
+Stand: 2026-11-12 (Doku-Pruefung: REQ-ACC-1, REQ-ACC-4, REQ-PUR-9 und REQ-PUR-10 markiert, Hinweis auf fehlende Module);
+davor 2026-07-10, einzelne Stellen am 2026-10-28 und 2026-10-29 markiert. **Das Dokument deckt die seit Juli 2026 gebauten
+Module nicht ab** (Reiter Verkauf, Logistik, Netzwerk, Weltlage, Operations, Trafag Projekte, Trafag Reddit, Benutzerhandbuch,
+Handbestellwesen, Datenverantwortung); dafuer `docs/rag/ARCHITECTURE.md`, Abschnitt Gesamtlandkarte, und die Unterrouter.
+
+Status: **reverse-engineered** aus Code und bestehender Doku (nicht
 vorwärts geschrieben). Zweck: eine zentrale Anforderungssicht auf die *gesamte* Anwendung, aus
 der sich künftige Änderungen ableiten lassen. Detailverhalten und Historie stehen in den
 verlinkten Themen-Docs; dieses Dokument ist die Klammer darüber.
@@ -31,6 +36,8 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
 
 - **REQ-ACC-1** Die Startseite (`/`) ist neutral, ohne Login erreichbar, mit Trafag-naher Optik
   (Schrift, Manometer, optionales Strichmännchen; Schalter im Admin).
+  *(Ueberholt am 2026-10-14: Die Startseite zeigt die animierte Standortgrafik, der Manometer ist standardmaessig aus und
+  im Admin schaltbar; `docs/rag/ADMIN.md`.)*
 - **REQ-ACC-2** Der Admin-Bereich ist ein eigener Hauptmenüpunkt mit eigenem App-internem Login
   (`AdminAccess`), unabhängig vom Finance-Cockpit-Passwort; er darf nicht durch den
   Finance-Login blockiert werden.
@@ -38,6 +45,8 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
 - **REQ-ACC-4** Das HR-KPI-Cockpit hat einen eigenen HR-Login; zusätzlich zum primären Benutzer
   `hr` sind weitere Admin-User über `HrKpiAccess.AdminUsers` zugelassen (aktuell `hradmin`).
   Passwörter liegen nur als Hash in `appsettings.json`.
+  *(Ueberholt am 2026-10-15: Die Hashes aller Bereichs-Logins liegen seit `e1afd49` in der Cockpit-DB, Tabelle
+  `AccessPasswords`, und haben Vorrang; `appsettings.json` ist nur noch Rueckfall; `docs/rag/DEPLOYMENT.md`.)*
 - **REQ-ACC-5** Unbekannte URLs leiten über einen Blazor-`NotFound`-Handler auf die Startseite um.
 
 ## 3. Systemarchitektur (Ist)
@@ -220,10 +229,14 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
 - **REQ-PUR-9** Excel-ähnliche Kaskadierungsmatrix Lieferant × Jahr (Standard 2020 bis dynamisch
   aktuelles Jahr, Top 40 nach Gesamt-Spend); Preisentwicklung je Artikel als mengengewichteter
   Ø-Stückpreis mit YoY-Trend.
+  *(Ueberholt am 2026-11-05 fuer die Matrix: Matrix Lieferant / Jahr und Block „Bestellwert nach Lieferant und Jahr“ sind
+  entfernt, `/einkauf/spend` zeigt den Spend-Aufriss, `785325f`, `docs/rag/DEPLOYMENT.md`. Die Preisentwicklung je Artikel ist
+  dabei nicht geprueft.)*
 - **REQ-PUR-10 (offen)** Marco-Anforderungen (Aufrisse Zeit/Produktgruppe/Materialgruppe/Kreditor/
   Region/Materialnummer, Lager/Kosten, Lieferantenperformance) siehe
   `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` und Vorbereitung in
-  `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`. Genutzte Zusatzquellen (MARC/MBEW/
+  `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` *(Hinweis 2026-11-12: zweimal dieselbe Datei; die frueheren Einzeldateien sind
+  dort zusammengefuehrt)*. Genutzte Zusatzquellen (MARC/MBEW/
   EKBE/LFA1-Adresse/QM) sind großteils im OData-Service verfügbar; echte Luecken: T023T/T024D-Texte,
   RESB. Property-Rollout auf travp762: `Bstyp`/`Bsart`/`Elikz` noch nachzuziehen (`Ktmng` vorhanden).
 

@@ -1,12 +1,23 @@
 # Deployment: Server, Publish, Deploy-Konsole und Fallen
 
-Stand: 2026-10-22 (Sicherungsregel in 5 und 5a seit 2026-10-13 als ueberholt markiert; Inhalt sonst vom
-2026-08-17). Zusammengefuehrt aus `DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`,
+Stand: 2026-11-12 (Doku-Pruefung: Abschnitte 2, 3 und 5 als Ablauf ueberholt markiert, Verweis auf `CLAUDE.md` Abschnitt 5;
+Groesse der Datenbank und Firewall-Abweichung vermerkt); davor 2026-10-22 (Sicherungsregel in 5 und 5a seit 2026-10-13 als
+ueberholt markiert; Inhalt sonst vom 2026-08-17). Zusammengefuehrt aus `DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`,
 `DEPLOY_KONSOLE_2026-08-07.md`, `DEPLOY_GESAMTSTAND_2026-08-11.md` und
 `LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md`.
 
 **Der aktuell verifizierte Produktivstand steht in `docs/rag/DEPLOYMENT.md`.** Diese Datei
 beschreibt Verfahren, Werkzeug und die bekannten Fallen — nicht den Tagesstand.
+
+**Ueberholt als Ablauf (markiert 2026-11-12):** Deployt wird immer mit dem Werkzeug `.tmp_tools/DeployHeadless` (Wunsch Ingo
+vom 2026-11-02, `CLAUDE.md` Abschnitt 5); Wochensicherung und Monitor-Fenster gelten seit dem 2026-10-13 (Entscheid Ingo). Der geltende Ablauf steht in `CLAUDE.md` Abschnitt 5 und in
+`docs/rag/DEPLOYMENT.md` oben („Deploy-Ablauf seit 2026-10-13“): Befehl
+`dotnet run --project .tmp_tools/DeployHeadless -c Release > .tmp_deploy_<JJJJ-MM-TT>_<thema>.log 2>&1` als Bash aus dem
+Projektordner, allein abgesetzt; vorher Release-Worktree auf den Commit ziehen und dort die Tests gruen laufen lassen, pruefen,
+dass kein Einkauf-Delta laeuft, Monitor-Fenster oeffnen; nie selbst `dotnet publish` aufrufen. Die Abschnitte 2, 3 und 5 unten
+(Deploy-Konsole mit Oberflaeche von Hand, manuelles `dotnet publish`, Prueflauf) beschreiben den frueheren Weg und bleiben als
+Erklaerung der Pruefschritte stehen, die das Werkzeug ausfuehrt (`DeployHeadless` ruft den `DeployRunner` aus
+`Tools/DeployConsole` auf).
 
 ## 1. Server und Pfade
 
@@ -30,6 +41,10 @@ ueber den Trigger-Mechanismus der laufenden Anwendung, siehe `docs/router/plattf
 
 ## 2. Veroeffentlichen
 
+*Ueberholt (Wunsch Ingo vom 2026-11-02, markiert 2026-11-12): Weder die Deploy-Konsole von Hand noch das manuelle `dotnet publish` unten werden
+noch verwendet; deployt wird nur mit `.tmp_tools/DeployHeadless`, siehe Kopf dieser Datei und `CLAUDE.md` Abschnitt 5. Die
+Warnung vor dem Publish-Profil weiter unten gilt unveraendert.*
+
 **Der empfohlene Weg ist die Deploy-Konsole** (Abschnitt 3). Manuell:
 
 ```powershell
@@ -37,10 +52,15 @@ dotnet publish .\TrafagSalesExporter.csproj -c Release -o <Ziel> --nologo
 ```
 
 **Niemals `/p:PublishProfile=FolderProfile` gegen das Produktivziel.** Das Profil setzt
-`DeleteExistingFiles=true`, und im Zielverzeichnis liegen `trafag_exporter.db` (rund 339 MB)
+`DeleteExistingFiles=true`, und im Zielverzeichnis liegen `trafag_exporter.db` (rund 339 MB;
+*Stand 2026-08, am 2026-10-14 war die Sicherung rund 615 MB gross, `docs/rag/DEPLOYMENT.md`*)
 sowie alle `.bak`-Sicherungen.
 
 ## 3. Deploy-Konsole
+
+*Ueberholt als Bedienweg (markiert 2026-11-12): Die Konsole mit Oberflaeche wird nicht mehr von Hand gestartet. Ihre
+Pruefschritte laufen im Werkzeug `.tmp_tools/DeployHeadless` (ruft `DeployRunner` auf); der Abschnitt bleibt als Beschreibung
+dieser Schritte stehen. Die Tests laufen heute vorher im Release-Worktree (`CLAUDE.md` Abschnitt 5).*
 
 ```powershell
 dotnet build Tools\DeployConsole\DeployConsole.csproj
@@ -121,15 +141,20 @@ direkt auf dem Share bearbeitet, verliert die Aenderung ohne Meldung. Sie stehen
 
 ## 5. Ablauf eines Produktivdeploys
 
-1. Release-Tests lokal laufen lassen, Anzahl notieren.
+*Ueberholt als Ablauf (markiert 2026-11-12): Es gilt `CLAUDE.md` Abschnitt 5 (Werkzeug `DeployHeadless`, vorher
+Release-Worktree auf den Commit und Tests gruen, Einkauf-Delta pruefen, Monitor-Fenster; nachher die Zeile „Commit“ im Protokoll
+pruefen). Die Schritte 1, 3 und 4 unten sind dadurch ersetzt; die Schritte 5 bis 8 beschreiben weiter, was nach dem Lauf zu
+pruefen und nachzufuehren ist.*
+
+1. Release-Tests lokal laufen lassen, Anzahl notieren. *(ueberholt: Tests im Release-Worktree auf dem Commit, siehe oben)*
 2. *Ueberholt seit 2026-10-13 (Entscheid Ingo):* die Sicherung macht der Runner `DeployHeadless`
    selbst einmal pro Woche (`--backup` erzwingt, `--no-backup` unterdrueckt), siehe
    `docs/rag/DEPLOYMENT.md` Abschnitt „Deploy-Ablauf seit 2026-10-13“. Alte Regel: Konsistente
    Vorher-Sicherung der Produktivdatenbank ueber die SQLite-`BackupDatabase`-API
    anlegen (`trafag_exporter.db.before-<thema>-<zeitstempel>.bak`) — **aber nur, wenn nicht
    schon eine passende Sicherung existiert, siehe Abschnitt 5a.**
-3. Deploy-Konsole im Prueflauf starten, Bestandsaufnahme pruefen.
-4. Prueflauf abwaehlen, Zielpfad bestaetigen, Publish.
+3. Deploy-Konsole im Prueflauf starten, Bestandsaufnahme pruefen. *(ueberholt: Werkzeug `DeployHeadless`, siehe oben)*
+4. Prueflauf abwaehlen, Zielpfad bestaetigen, Publish. *(ueberholt: Werkzeug `DeployHeadless`, siehe oben)*
 5. Nachweis pruefen: keine verschwundenen Dateien, Schutzdateien unveraendert, DLL bitgleich.
 6. Wirknachweis mit Vorher-/Nachher-Tokens.
 7. Routen abrufen, Status `200` erwarten.
@@ -230,7 +255,7 @@ Der **Webserver** muss die Ziele erreichen, nicht der Entwickler-PC:
 | --- | --- |
 | BI1/HANA intern | `10.194.65.22:30015` |
 | India HANA | `20.197.20.60:30015` |
-| SAP OData / ZSCHWEIZ | `10.194.64.29:8000` |
+| SAP OData / ZSCHWEIZ | `10.194.64.29:8000` *(Abweichung, vermerkt 2026-11-12 wie in `docs/REQUIREMENTS.md` REQ-X-5: die produktive Konfiguration nennt `travp762.sap.trafag.com:8000`, per DNS `10.194.64.30`; fuehrend ist `docs/DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md`; nicht live geprueft)* |
 | SharePoint / Microsoft 365 | ausgehend HTTPS 443 |
 
 ## 7. Historisch: lokaler Uebergangsserver

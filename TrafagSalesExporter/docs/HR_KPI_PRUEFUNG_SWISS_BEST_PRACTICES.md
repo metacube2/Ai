@@ -1,6 +1,6 @@
 # HR-KPI-Pruefung gegen Schweizer Praxis und HR-Best-Practices
 
-Stand: 2026-05-13, Umsetzungsstand am 2026-09-29 und 2026-10-29 nachgefuehrt
+Stand: 2026-11-12 (Doku-Pruefung: Nachtrag zu den Regeln seit 2026-11-04 im Hinweisblock); davor 2026-05-13, Umsetzungsstand am 2026-09-29 und 2026-10-29 nachgefuehrt
 
 > **Wichtig:** Die Bloecke „Aktueller Reiter" und „Status" beschreiben den App-Stand vom Mai.
 > Seit dem 2026-09-28 (`5ae7f31`, Deploy 11:25) gelten andere Regeln; massgeblich ist
@@ -11,6 +11,11 @@ Stand: 2026-05-13, Umsetzungsstand am 2026-09-29 und 2026-10-29 nachgefuehrt
 > je Fall aus SAP `PA2001` (periodengenau, `hrdata/HR_Absenzen_SAP.xlsx`); seit 2026-10-22 gilt fuer Kader
 > (SAP-Mitarbeiterkreis 10) 8,2 h statt 8,0 h je Tag. Die Angaben „8,0 h" und „Zeitraum nicht bestimmbar"
 > unten gelten entsprechend eingeschraenkt; siehe `docs/HR_KPI.md` 8.6 bis 8.8.
+>
+> *Nachtrag 2026-11-12:* Seit 2026-11-04 gelten Kurz/Lang je Krankheit ab dem 61. Tag, die Absenzquote einschliesslich
+> Unfall (0290), der Krankenquote-Nenner je Person erst ab Eintritt und die Rexx-Gesamtabfrage #775 statt der vier
+> Einzeldateien; siehe `docs/HR_KPI.md` 8.10 bis 8.14. Die Pruefpunkte 4, 5 und 6 und der Abschnitt „Aktueller
+> Umsetzungsstand im Reiter“ unten beschreiben den Stand davor.
 
 Zweck dieses Dokuments:
 

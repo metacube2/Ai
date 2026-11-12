@@ -1,6 +1,6 @@
 # Trafag Reddit (Forum mit Abstimmung)
 
-Stand: 2026-10-09
+Stand: 2026-11-12 (Doku-Pruefung: Einzahl der Zaehler behoben am 2026-11-10, produktiv seit 2026-11-12 11:33, `e956183`); Grundstand 2026-10-09
 
 Auftrag Ingo 2026-10-09: neuer Reiter „Trafag Reddit“ für alles, was in SharePoint keinen Platz
 gefunden hat, mit Abstimmung wie bei Reddit, grafisch ansprechend, „das Beste aus Reddit und
@@ -55,6 +55,8 @@ Rechenregeln (Hot, Wilson, Reputation, Stufen) stehen im Handbuchkapitel
 ## Stand
 
 - 2026-10-09: gebaut (`4d4693d`, `9efa491`, Doku `33bd2b5`), **produktiv seit 09:20**.
+- 2026-11-10: Einzahl der Zaehler behoben (`c5c9b4a`, `548b10e`, siehe „Offen“), produktiv seit dem Deploy vom 2026-11-12 11:33
+  (`e956183`, `docs/rag/DEPLOYMENT.md`). *(Zeile eingefuegt bei der Doku-Pruefung am 2026-11-12.)*
 
 ## Deploy
 

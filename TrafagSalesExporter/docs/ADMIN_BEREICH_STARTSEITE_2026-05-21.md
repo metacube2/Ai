@@ -1,5 +1,7 @@
 # Admin Bereich und Startseite, Stand 2026-05-21
 
+*Ueberholt in Teilen (markiert 2026-11-12): Admin Bereich ist seit 2026-08-11 eine Menuegruppe (`docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md`), seit 2026-10-14 mit der Seite Nutzung und seit 2026-10-15 mit der Seite Passwoerter. Passwoerter werden seit 2026-10-15 unter Admin Bereich > Passwoerter gesetzt, die Hashes liegen in der Cockpit-DB. Die Startseite zeigt seit 2026-10-14 die Standortgrafik, der Manometer ist standardmaessig aus (Schalter im Admin, in der DB). Der lokale Uebergangsserver ist historisch (`docs/DEPLOYMENT.md` 7). Aktueller Kurzstand: `docs/rag/ADMIN.md`. Weiter gueltig: eigener Admin-Login, Strichmaennchen-Schalter in `appsettings.json`.*
+
 ## Admin Bereich
 
 Der Menüpunkt `Admin Bereich` ist ein eigener Hauptmenüpunkt und liegt nicht unter `Finance`.

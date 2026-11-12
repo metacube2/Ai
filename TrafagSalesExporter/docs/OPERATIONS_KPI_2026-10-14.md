@@ -3,6 +3,9 @@
 Auftrag: Mail Fabio Palma vom 2026-10-14 mit Spezifikation und Referenzpaket (`docs/operations_kpi/`). Menue nach Wunsch Ingo:
 **Operations** mit den Unterreitern **KPI** (darunter **OTD / OTIF / OTP**) und **Shopfloor** (der bisherige Reiter).
 
+Stand: 2026-11-12 (Doku-Pruefung: Zugriffssatz in Abschnitt 1 als ueberholt markiert); davor Nachtrag 2026-11-02; Grundstand
+2026-10-14.
+
 **Nachtrag 2026-11-02:** Rubrik **Kunden** gebaut (Abschnitt 5, `aa12a39`), **produktiv seit 13:57 (`187f8a0`), Abnahme bestanden**
 (Oktober um 14:02 neu abgerufen, alle Pruefwerte Fabios exakt gleich). Monatsabruf `202610` am 02.11. um
 00:26 ok (Summen gleich Fabios Referenz), die Berechtigung von `POWERBI` reicht also weiterhin (3b).
@@ -26,6 +29,8 @@ weil das Referenzpaket Kundennamen und Betraege enthaelt).
 | Menue | `DatabaseSeedService`: Gruppe `operations` mit `operations-kpi` (Uebersicht, OTD / OTIF / OTP) und `operations-shopfloor`; bestehende Installationen werden umgestellt, solange `operations` noch der alte Link ist |
 
 Zugriff wie der Shopfloor: Login `operations` oder freigegebenes Windows-Konto (`Shopfloor:AllowedUsers`), alles unter `/shopfloor`.
+*(Ueberholt am 2026-10-16: Operations ist fuer alle Windows-Benutzer ohne Login offen, `Shopfloor:OpenForAll = true`; ein Login
+gilt nur, wenn der Admin-Schalter „Operations: Login nötig“ gesetzt ist, `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 3.)*
 
 **Endpunkte** (unter `/shopfloor/api`): `GET kpi/liefertreue` (Kennzahlen des juengsten oder `?cut=` Stands, letzter Abruf, Staende,
 Ausschluesse), `GET kpi/liefertreue/export.xlsx?cut=`, `POST kpi/liefertreue/sync` (Body `{cut}`, startet im Hintergrund),

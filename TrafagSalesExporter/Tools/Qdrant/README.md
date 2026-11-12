@@ -1,6 +1,6 @@
 # Lokale Vektorsuche ueber die Projektdokumentation
 
-Stand: 2026-09-03
+Stand: 2026-11-12 (Doku-Pruefung: Kopf nachgefuehrt; Abschnitt 4 beschreibt seit dem 2026-11-10 den Reindex als eigenen Prozess mit Pruefung); Grundstand 2026-09-03
 
 Dieser Ordner enthaelt die Werkzeuge, mit denen die Markdown-Dokumentation des Repositories
 in eine lokale Vektordatenbank geschrieben und von Claude-Sitzungen semantisch durchsucht

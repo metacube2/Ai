@@ -27,6 +27,10 @@ dann fragen — das ist zweimal in einer Woche schiefgegangen. Details und die z
 | Spanien, Lieferant aus dem letzten Wareneingang (ISS-003.3): Plan, Entscheide, Ablauf mit Santi; umgesetzt `c9208b5`, Stand 12.11. nicht deployed | `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md` |
 | Spanien, Buchungsdatum `PostingDate` im Detail | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` |
 | **Deutschland** — Alphaplan, CSV-Paar, ZIP-Import | `docs/STANDORT_DE_ALPHAPLAN.md` |
+| Deutschland, Werkzeug: Bahnmarkt-Pruefmappe `Bahnmarkt_DE_Kundenzuordnung_<Datum>.xlsx` aus vier Quellen bauen (nur lesend) | `Tools/BahnmarktDeWorkbook/README.md` |
+| Deutschland, Werkzeug: Bahn-Pruefmappe um `Netto (SW)` und `RohertragEndSumme` aus der Rechnungsliste ergaenzen | `Tools/BahnWorkbookDb4/README.md` |
+| Deutschland, Werkzeug: fachliche Kundennummer, Name, Land und Branche an den DE-Verkaufszeilen produktiv nachziehen | `Tools/DeCustomerBackfill/README.md` |
+| Deutschland, Werkzeug: DE-Kundenzuordnung (Nachweis, Korrektur, Export; Belegbruecke) | `Tools/DeCustomerMapping/README.md` |
 | **Indien** — Sales Type statt Preferred Vendor, Eigenfertigung | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` |
 | **Italien** — Pruefpfad Net Sales | `docs/FINANCE_IT_VORGEHEN_2026-05-18.md` |
 | **UK** — Quellkorrektur | `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md` |

@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -336,7 +336,7 @@ Rexx (Artjom Yahno) zu klaeren:
 
 Auftrag Ingo: „Bereite alles vor fuer den Rexx Hub, wenn wir ihn haben, nur noch Schalter umlegen.“ Gebaut von einem Agenten im
 eigenen Worktree, gegengeprueft von vier Pruefern (Robustheit, Schalter, Sicherheit, Einbau), Befunde eingearbeitet. Suite
-1547/1547. **Nicht deployed.** Es gab keinen einzigen Aufruf an Rexx (kein Zugang); alle Testdaten sind erfunden.
+1547/1547. ~~**Nicht deployed.**~~ *(Ueberholt am 2026-11-12: seit dem Deploy um 11:33 auf dem Server, `e956183`, Schalter `HrKpi:RexxHub:Enabled` weiter aus, es wird nichts abgerufen; `docs/rag/DEPLOYMENT.md`.)* Es gab keinen einzigen Aufruf an Rexx (kein Zugang); alle Testdaten sind erfunden.
 
 **Was es tut.** `RexxHubRefreshService` holt die Rexx-Abfragen #775 und #777 einmal am Tag ab 05:30 ueber
 `GET v1/datawarehouse/{id}` (Bearer-Token) und schreibt daraus genau die Dateien des Handexports in `hrdata`

@@ -1,6 +1,6 @@
 # HR- und Einkaufscockpit: Konsistenz- und Logikreview
 
-Stand: 2026-09-29. Urspruenglicher Auftrag: **nur Analyse und Bericht**.
+Stand: 2026-11-12 (Doku-Pruefung: Marker in C3 zu den Rexx-Dateien ergaenzt); davor 2026-09-29. Urspruenglicher Auftrag: **nur Analyse und Bericht**.
 Nachfolgeauftrag am selben Tag: technische Fehler ohne neuen Fachentscheid reparieren,
 offene Fachfragen mit vorhandenen MD-Anforderungen abgleichen. **Lokal umgesetzt, nicht deployed.** **Nachtrag Claude: committet (`eafd1c5`, Uebersetzungen `c1fdfa2`) und produktiv seit 2026-09-29 10:07, 747/747 Tests.**
 
@@ -227,6 +227,7 @@ Das kann eine Codereparatur allein nicht loesen: Exporte aktualisieren und gemei
 Stichtag sowie Absenzperiode bestaetigen. Keine Personalinhalte fuer diese Pruefung kopiert.
 *Ueberholt am 2026-10-29 fuer den SAP-Teil: `HR_KPI_Export.xlsx` und die Absenzen je Fall (`HR_Absenzen_SAP.xlsx`)
 kommen seit 2026-10-01 taeglich aus SAP, siehe `docs/HR_KPI.md` 8.6/8.7. Die Rexx-Dateien sind weiter vom 08.07.*
+*(Das galt bis 2026-11-04; seither sind die Rexx-Dateien ersetzt, `docs/HR_KPI.md` 8.2 und 8.13.)*
 
 ### C4 — Fachliche bzw. organisatorische Entscheidungen
 

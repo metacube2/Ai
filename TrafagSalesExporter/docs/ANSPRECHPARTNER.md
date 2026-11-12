@@ -1,6 +1,6 @@
 # Ansprechpartner
 
-Stand: 2026-07-31
+Stand: 2026-11-12 (Doku-Pruefung: Alex Donato, Entec, Widerspruch zu den Mailtexten in Abschnitt 6 markiert); davor Nachtraege 2026-10-29 und 2026-11-03; Grundstand 2026-07-31
 
 Zweck: **eine** Stelle, an der steht, wer für was zuständig ist und wie man ihn erreicht. Vorher
 lagen diese Angaben in drei Dokumenten verstreut (Rollen in einer Ticket-Beteiligtenliste,
@@ -64,7 +64,7 @@ BLP-Vorfall gestört.
 | Florian Wächter | Change Request / Anforderung | formale Anforderungsseite SAP | *offen* |
 | Andreas | Finance | Budget- und Margenlogik, Nachweise, Gruppenreporting, Review der Länderformeln | *offen*, **Nachname nicht dokumentiert** *(ueberholt am 2026-10-29: Andreas Stoller, z. B. `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`; Adresse weiter offen)* |
 | Sonja | HR | HR-Fachabnahme, Phase-2-Priorisierung HR-Dashboard | *offen*, **Nachname nicht dokumentiert** *(ueberholt am 2026-10-29: Sonja Richter, `docs/HR_KPI.md` Abschnitt 8; Adresse weiter offen)* |
-| Alex | Infrastruktur | Netzwerk, Server, Security | *offen*, **Nachname nicht dokumentiert** |
+| Alex | Infrastruktur | Netzwerk, Server, Security | *offen*, **Nachname nicht dokumentiert** *(ueberholt am 2026-11-12: Alex Donato, Trafag IT, z. B. `docs/HR_KPI.md` 8.3, `Tools/Inventar/README.md`, `docs/router/plattform.md` Abschnitt Standort Bubikon; Adresse weiter offen)* |
 | Ramon | Infrastruktur | Netzwerk, Server, Security | *offen*, **Nachname nicht dokumentiert** |
 | Ingo Kohler | SAP Specialist *(Korrektur Ingo 2026-10-05, vorher hier „IT Analytics Lead“)* | Analytics, BI, Reporting-/Z-Funktionsbezug, .NET/ASP-Web | `ingo.kohler@trafag.com` |
 
@@ -85,6 +85,7 @@ Di Menco, Adil, Florian, Fabio), `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25` 
 | VARONE | B1-Partner Trafag Italia (Moving-Average-Umstellung) | *offen* |
 | TASC (`tasc.co.in`) | Dienstleister Indien, siehe Abschnitt 1 | Anurag Gupta, Chandra Pratap Singh |
 | Georg Wagner (meey.ch) | externer Berater Altlösung Etiketten, steht für Prüfung bereit | *offen* |
+| Entec *(Nachtrag 2026-11-12)* | Netz und WLAN am Standort Bubikon, neben Trafag IT und Upgreat | Gianni Albizzati (System Engineer); `docs/router/plattform.md`, Abschnitt Standort Bubikon (Fall 2026-11-12); Adresse offen |
 
 ## 4. Eskalationspfad und Abgrenzung
 
@@ -140,10 +141,12 @@ Alle drei sind in diesem Repo schon einmal echte Stolpersteine gewesen:
 
 1. **Adressen der internen Ansprechpartner** — Lucas, Adil, Fabio, Andreas, Sonja, Alex, Ramon.
    Das ist die praktisch wichtigste Lücke.
-2. **Nachnamen** von Andreas, Sonja, Alex, Ramon. *(Andreas Stoller und Sonja Richter seit 2026-10-29 eingetragen; Alex und Ramon offen.)*
+2. **Nachnamen** von Andreas, Sonja, Alex, Ramon. *(Andreas Stoller und Sonja Richter seit 2026-10-29 eingetragen; Alex und Ramon offen.)* *(Nachtrag 2026-11-12: Alex Donato eingetragen; Ramon weiter offen.)*
 3. **Empfänger TRFR und TRUS** — beide haben eine echte, offene Bitte im Standort-Mailtext.
-   Die versandfertigen Mails liegen bereits vor (`docs/FINANCE_FELDLUECKEN.md`),
-   es fehlt ausschliesslich die Adresse.
+   ~~Die versandfertigen Mails liegen bereits vor (`docs/FINANCE_FELDLUECKEN.md`),
+   es fehlt ausschliesslich die Adresse.~~
+   *(Ueberholt, markiert 2026-11-12: Die Mailtexte wurden am 2026-08-17 aus `docs/FINANCE_FELDLUECKEN.md` ersatzlos entfernt,
+   siehe Abschnitt 1.)* Es fehlt weiter die Adresse.
 4. **Owner von BLP** (Abschnitt 4).
 5. **Absender der italienischen Eskalation vom 2026-07-28** (Abschnitt 1).
 6. **Kontakte bei Upgreat, NTT, ANG, VARONE** für den Eskalationsweg.

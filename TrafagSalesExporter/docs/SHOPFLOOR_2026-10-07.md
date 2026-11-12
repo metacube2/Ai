@@ -1,8 +1,17 @@
-# Operations (Shopfloor), Stand 2026-10-07
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-10
+
+*Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
+stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-10.*
 
 Das PPA-Shopfloor (Ersatz fuer das Excel "PPA-Shop-Floor-File-2026") laeuft jetzt im Cockpit als oberster Reiter
 "Operations (Shopfloor)" (Route `/operations`). Das Python-Backend wurde in C# nachgebaut, die Oberflaeche
 (HTML/JS/CSS) ist unveraendert uebernommen. Auf dem Server wird kein Python benoetigt.
+
+Stand 2026-11-10 (Zeile eingefuegt bei der Doku-Pruefung am 2026-11-12): Paket Fabio vom 07.11. eingespielt (Patch 06 und 07,
+Abschnitt 18); Auftragsvorrat aus SAP wie ZC22 seit 09.11. 15:11 eingeschaltet (`Shopfloor:SapVorratEnabled`, Abschnitt 19);
+DW lieferbereit aus DLQ72, Patch 07 auch im Backend, TX `plan5`, Verzug-Materialfilter schaltbar und CO-PA (`ShopfloorSapCoPa`)
+gebaut, die Schalter `SapVerzugEnabled` und `SapCoPaEnabled` stehen auf aus (Abschnitt 20). Stand 2026-11-02: PPD-Verzug aus
+ZC22 gebaut, Schalter aus (Abschnitt 17).
 
 Stand 2026-10-08: **produktiv seit 06:39** (`59d0531`), angesehen. Zugriff nur fuer `koi` (Ingo), bis die Leitung Produktion/Operations
 freigibt (Abschnitt 3). SAP-Abgleich gebaut, aber ausgeschaltet bis der Transport `T76K912718` in P76 ist (Abschnitt 8).

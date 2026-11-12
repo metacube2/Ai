@@ -1,11 +1,16 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-12 (Doku-Pruefung: Produktivstand `e956183` mit vorbereitetem Rexx-Hub-Abruf, Schalter aus, 8.18; Nachtrag Hub nicht bestellt, 8.17; ueberholte Rexx-Grenze in 8.7 und beschaedigte Pfade in 8.3, 8.5, 8.6 markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
+Aktueller Produktivstand der App: `e956183`, deployed am 2026-11-12 um 11:33 (`docs/rag/DEPLOYMENT.md`). Fuer das HR-Cockpit
+kam damit nur der vorbereitete Rexx-Hub-Abruf dazu (Schalter `HrKpi:RexxHub:Enabled` aus, 8.18); die Leser im
+`HrKpiDashboardBuilder` sind laut `saptasks/rexx_schnittstelle/NOTES.md` 14 unveraendert.
+
+*Ueberholt am 2026-11-12 als „aktueller Produktivstand“ (siehe Absatz davor); der folgende Absatz stand bis dahin an erster Stelle:*
 Aktueller Produktivstand des HR-Cockpits: Commit `f86b0ed`, deployed am 2026-11-04 um 12:41 (Unfallkachel aus Faellen, 8.15);
 nach `4bdbc18` um 12:21 (Rexx-Abwesenheiten je Fall #777, 8.14);
 davor `6dd1a56` um 11:46 mit #775, 8.13; `69a63b6` um 10:21, `cfe2631` um 09:57 und `b65f059` um 09:20, Abschnitte 8.10 bis 8.12 und 9);
@@ -281,7 +286,9 @@ Die Absenz-Ampel wuenscht Sonja mit gruen bis 3 %, gelb bis 4 %, rot ab 5 %; der
   `tragvapp404` einen geplanten Task eingerichtet: Start 00:14:50, danach alle 15 Minuten; neueste
   `.booking` aus `D:KabaB-COMM JavaDefaultBooking` wird als `bclan01_yyyy.MM.dd_HH.mm.ss.booking`
   nach `D:Transfer_Booking_to_REXXTransfer` verschoben, per SFTP nach Rexx `/import/dormakaba`
-  geladen und in `D:Transfer_Booking_to_REXXArchiv` abgelegt (Teams, Alex Donato, 2026-09-02). Die
+  geladen und in `D:Transfer_Booking_to_REXXArchiv` abgelegt (Teams, Alex Donato, 2026-09-02). *(Hinweis
+  2026-11-12: In den drei `D:`-Pfaden fehlen die Rueckstriche, so schon im ersten Commit `6877c1e`; die Originalschreibweise
+  steht in der Teams-Nachricht.)* Die
   Stempeldaten in Rexx sind damit aktuell, das Cockpit nicht.
 - *Am 2026-09-30 als ueberholt markiert (Hub nicht gewollt); seit dem Entscheid vom 2026-11-10 gilt der Hub wieder (8.17), ob dieser Auftrag bei Rexx noch besteht, ist bei Nadja zu klaeren:* **Rexx-Hub fuer den automatischen Export (PM-07):** Rexx (Artjom Yahno) hat am 2026-07-28 den
   Rexx-Hub fuer 4'800 EUR pro Jahr empfohlen (vier Einzelschnittstellen waeren 5'600 EUR). **Nadja hat
@@ -322,7 +329,7 @@ Kopfzeilen und Werteverteilungen, keine Namen; Sonde `.tmp_tools/HrHeaders0930`)
 
 | Thema | Ergebnis HR | Stand Cockpit | Offen |
 | --- | --- | --- | --- |
-| Arbeitstag | **Kadermitarbeitende 8,1 h, normale Mitarbeitende 8,0 h** *(ueberholt am 2026-10-22: Kader 8,2 h, Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, siehe 8.8)* | seit 30.09. einheitlich 8,0 h (8.4) | Kaderkennzeichen fehlt in allen Dateien. Kandidaten: SAP `Mitarbeiterkreis` (Monatszeilen 10=55, 15=754, 19=18, 20=308, 30=4; welcher Wert Kader ist, weiss nur HR) oder Rexx `Leitung j/n`. Rexx `Ø taegliche Sollarbeitszeit (Woche)` hilft nicht (Werte wie 5,71 = 40 h / 7 Tage). *Erledigt am 2026-10-01 in `c51445c`, produktiv seit 2026-10-01 09:12:* Ingo bestimmt Rexx **`Leitung j/n` = ja** als Kaderkennzeichen (gemessen in den Dateien vom 26.05. in `C:	emp`: `Abwesenheitinstunden.xlsx` und `Saldiperstichdatum.xlsx` je 44 ja / 218 nein, `Personalausgeschieden.xlsx` 108 nein, `Exportkommengehen.xlsx` ohne die Spalte). `HoursPerWorkdayFor` gibt dann 8,1 h, sonst 8,0 h; gilt fuer Krankheitstage, 61-Tage-Grenze und FTE aus der Sollzeit. Tests `Kader_Mit_Leitung_Ja_Hat_8_1_Stunden` und `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden`, 800/800. Hinweis: in Rexx kann eine Person der Geschaeftsfuehrung `Leitung = nein` haben; ob jeder Kader so gepflegt ist, liegt bei HR. *(Ueberholt am 2026-10-22: Kader = SAP-Mitarbeiterkreis 10 mit 8,2 h, `Leitung j/n` zaehlt nicht mehr, `ede56b6`, siehe 8.8)* |
+| Arbeitstag | **Kadermitarbeitende 8,1 h, normale Mitarbeitende 8,0 h** *(ueberholt am 2026-10-22: Kader 8,2 h, Kader = SAP-Mitarbeiterkreis 10 „ML mit Kadervertrag“, siehe 8.8)* | seit 30.09. einheitlich 8,0 h (8.4) | Kaderkennzeichen fehlt in allen Dateien. Kandidaten: SAP `Mitarbeiterkreis` (Monatszeilen 10=55, 15=754, 19=18, 20=308, 30=4; welcher Wert Kader ist, weiss nur HR) oder Rexx `Leitung j/n`. Rexx `Ø taegliche Sollarbeitszeit (Woche)` hilft nicht (Werte wie 5,71 = 40 h / 7 Tage). *Erledigt am 2026-10-01 in `c51445c`, produktiv seit 2026-10-01 09:12:* Ingo bestimmt Rexx **`Leitung j/n` = ja** als Kaderkennzeichen (gemessen in den Dateien vom 26.05. in `C:\temp`: `Abwesenheitinstunden.xlsx` und `Saldiperstichdatum.xlsx` je 44 ja / 218 nein, `Personalausgeschieden.xlsx` 108 nein, `Exportkommengehen.xlsx` ohne die Spalte). `HoursPerWorkdayFor` gibt dann 8,1 h, sonst 8,0 h; gilt fuer Krankheitstage, 61-Tage-Grenze und FTE aus der Sollzeit. Tests `Kader_Mit_Leitung_Ja_Hat_8_1_Stunden` und `BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden`, 800/800. Hinweis: in Rexx kann eine Person der Geschaeftsfuehrung `Leitung = nein` haben; ob jeder Kader so gepflegt ist, liegt bei HR. *(Ueberholt am 2026-10-22: Kader = SAP-Mitarbeiterkreis 10 mit 8,2 h, `Leitung j/n` zaehlt nicht mehr, `ede56b6`, siehe 8.8)* |
 | Abwesenheiten | In Rexx wird jeder Fall mit **Von/Bis** erfasst und hat einen **Status** (genehmigt / nicht genehmigt) | `Abwesenheitinstunden.xlsx` ist eine Zeile je Person mit Summen; auch die Spalten „genehmigt" sind Summen | Neuer Rexx-Bericht **eine Zeile je Fall** (Person, Art, Von, Bis, Stunden, Status) als fuenfte Datei. Macht die Krankenquote periodengenau und erlaubt „nur genehmigt". Beispieldatei von Sonja noetig. *Gemessen am 2026-10-01* an `Abwesenheitinstunden.xlsx` (#744, Stand 26.05., 262 Personen): `Krankheit angetreten (Zeitraum)` ist bei 187 Personen gefuellt, immer mit **genau einem** Zeitraum (letzter Fall); 74 davon ohne Stunden im Exportzeitraum (Fall 2024/2025), 46 passen zu Stunden / 8, bei 63 sind die Stunden groesser als der Zeitraum (mehrere Faelle). #744 hat keine Ferienspalte. Zusaetzliche Spalten im Personenbericht machen die Quote also nicht periodengenau |
 | Absenz-Ampel | **bis 4,99 % gelb, ab 5 % rot** | Krankenquote gruen < 3 %, gelb 3 bis < 5 %, rot ab 5 % (`HrKpi:Absence*ThresholdPercent`): passt *Erledigt am 2026-09-30 in `81140fa`, produktiv seit 2026-10-01 09:12:* Die Uebersichtskachel „Krankheitstage" warnte erst **ueber** fest verdrahteten 5 % (`absenceRate > 0.05m`); jetzt ab der konfigurierten Rot-Grenze (`ReachesAbsenceRed`, `>=`), Test `Absenzampel_Ist_Ab_Fuenf_Prozent_Rot`, 791/791. Gruen unter 3 % hat HR nicht erwaehnt, gilt als unveraendert |
 
@@ -332,7 +339,8 @@ Kopfzeilen und Werteverteilungen, keine Namen; Sonde `.tmp_tools/HrHeaders0930`)
 Befund beschreibt den Stand vom 2026-09-30, produktiv ist der Abruf seit 2026-10-01 (Tabelle und Messungen unten).*
 
 Die Datei kommt aus dem ABAP-Report `Z_HR_KPI_CONS` bzw. `Z_HR_KPI_CONSOLIDATE`, von Hand
-gestartet (`powerbi/datenbeschaffung.txt`, `powerbi/infos.txt`: „CSV via Handstart"). Alle 1'139
+gestartet (`powerbi/datenbeschaffung.txt`, `powerbi/infos.txt`: „CSV via Handstart"; *Hinweis 2026-11-12: einen Ordner
+`powerbi` gibt es im Repository nicht, auch nicht in der Git-Historie; Ablageort bei Ingo erfragen*). Alle 1'139
 Zeilen der Datei in `C:\temp` tragen `Angelegt von = KOI`, der Stand auf dem Server ist vom 26.05.
 Es gibt also weder einen SAP-Hintergrundjob noch eine automatische Ablage. Ziel laut Ingo:
 **mindestens einmal taeglich.** Moegliche Wege:
@@ -401,7 +409,7 @@ Frage Ingo: lassen sich Abwesenheiten ueber SAP genauer bestimmen, sodass Rexx e
 | Pruefliste P76 nach dem Import | `$metadata` muss von 343'930 auf rund 345'782 Zeichen wachsen (T76-Zuwachs), sonst ist der Modellcache alt: `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` in P76. Dann `HrAbsenzSet` 200 mit Daten, Gegenproben `HrKpiSet`, `MAKTSet`, gefiltertes `FinanzJournalSet` |
 | **Produktiv 2026-10-01** | Ingo hat `T76K912644` nach P76 importiert. P76: `$metadata` 345'782 (genau der T76-Wert, Cache aktuell), `HrAbsenzSet` 2026 zwei Seiten (545'549 + 284'236, Seite 3 leer), 2025 200, Gegenproben 200. Deploy **10:50** (Stand `b54a503`, 795/795 Release). Erster Abruf **10:52**: 4'948 Faelle 2025/2026, 265 Personen, kein offenes Ende (AppEventLog 15374) |
 | Plausibilisiert | Krankheit 2025 (0240, 0260, 0270) 1'958,6 Tage, bei rund 250 FTE etwa 3,1 %; 2026 bis heute (0230, 0240, 0260, 0270) 1'313 Tage, etwa 2,8 %. Ferien 2025 1'736 Faelle / 4'771 Tage, Kompensation 2025 1'339 Tage, Militaer 2025 140 Tage. In den Daten kommen 0210 und 0220 gar nicht vor; 0250 Vaterschaftsurlaub und 0900 unbezahlter Urlaub zaehlen nicht als Krankheit. Ferien 2026 reichen bis 31.12. (geplant); die Kennzahl zaehlt nur bis heute |
-| Grenze | Die Personenbasis kommt weiter aus den Rexx-Dateien vom 08.07.; wer danach eingetreten ist, fehlt im Nenner und mit seinen SAP-Faellen. Erst die taeglichen Rexx-Exporte (Upgreat, Wochen_Todo 55) schliessen das |
+| Grenze | Die Personenbasis kommt weiter aus den Rexx-Dateien vom 08.07.; wer danach eingetreten ist, fehlt im Nenner und mit seinen SAP-Faellen. Erst die taeglichen Rexx-Exporte (Upgreat, Wochen_Todo 55) schliessen das *(ueberholt am 2026-11-04: Rexx-Dateien ersetzt, seither Gesamtabfrage #775, Abschnitt 8.13; der Weg ueber Upgreat ist seit dem 19.10. erledigt (Ticket geschlossen), Wochen_Todo 55 am 10.11. geschlossen; dauerhafte Loesung ist der Rexx Hub, 8.17)* |
 | Offen | HR bestaetigt die Krankheitsarten (praktisch nur noch, ob 0230/0240 wie 0260 zaehlen sollen); Sichtpruefung im Cockpit **HR bestaetigen lassen:** welche Arten Krankheit sind (0210 Arzt? 0220 „Krank kleiner 3 Tage“?), ob Ferien in SAP vollstaendig gebucht werden |
 
 
@@ -687,6 +695,8 @@ fuer die acht bestehenden Schnittstellen und 5'600 EUR pro Jahr fuer vier weiter
 migriert die bestehenden Schnittstellen selbst; als einzige bleibt der Stempeluhrtransfer in Rexx. *Ueberholt damit:* „kein
 Rexx-Hub“ vom 2026-09-30 (8.3). Mail an Nadja entworfen, Versand durch Ingo. **Offen:** ob der Hub schon bestellt ist; 8.3 nennt
 einen Auftrag Nadjas vom 2026-07-29, laut Mail vom 19.08. wartete sie vor dem Go auf die IT-Pruefung durch Alex (8.9).
+*(Nachtrag 2026-11-10 mittags: Laut Mailverlauf AG36071 ist der Hub nicht bestellt; Nadjas Go wartet auf die IT-Pruefung durch
+Alex, eine Antwort von Alex steht nicht im Verlauf; `saptasks/rexx_schnittstelle/NOTES.md` 13.)*
 
 Welche Felder Rexx liefern muss, damit SAP alles hat (Kurzauskunft 10.11., nichts neu gemessen): zwei Lieferungen, Stamm und
 Salden je Person (Spalten wie #775) und Abwesenheiten je Fall (Spalten wie #777). Heute fehlen in SAP: **Austrittsart**,
@@ -697,7 +707,7 @@ Kompensation und Militaer je Fall. Vollstaendige Liste mit Spaltennamen und Ampe
 ### 8.18 Rexx-Hub-Abruf vorbereitet, Schalter aus (2026-11-10)
 
 Auftrag Ingo: alles vorbereiten, damit nach der Hub-Bestellung nur noch ein Schalter umzulegen ist. Gebaut (`1e99745`, `d99fbe6`, Suite
-1547/1547, **nicht deployed**): Ein Tagesdienst holt ab 05:30 die Rexx-Abfragen #775 und #777 ueber `GET v1/datawarehouse/{id}`
+1547/1547, ~~**nicht deployed**~~ *(ueberholt am 2026-11-12: seit dem Deploy um 11:33 auf dem Server, `e956183`, Schalter weiter aus, es wird nichts abgerufen; `docs/rag/DEPLOYMENT.md`)*): Ein Tagesdienst holt ab 05:30 die Rexx-Abfragen #775 und #777 ueber `GET v1/datawarehouse/{id}`
 und schreibt dieselben Dateien wie der Handexport (8.13, 8.14); das Cockpit liest sie unveraendert. Schalter `HrKpi:RexxHub:Enabled`
 (aus), Zugang als Quellsystem `REXXHUB` unter Admin > Settings, Testabruf ohne Schreiben und ohne Werte unter
 `/BiDashboard/admin/rexxhub/test` (Admin-Freischaltung noetig). Bei fehlenden oder schlecht gefuellten Pflichtspalten, zu wenigen Zeilen,

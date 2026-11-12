@@ -11,12 +11,13 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 2. `docs/rag/HR_KPI.md` ganz und `docs/router/hr.md`; daraus `docs/HR_KPI.md` mit dem zum Thema passenden Abschnitt (8.x ist die datierte Historie; der juengste Abschnitt gilt, aeltere koennen ueberholt sein).
 3. Bei der Rexx-Schnittstelle `saptasks/rexx_schnittstelle/NOTES.md`; bei SAP-Fragen die Regeln von `.claude/agents/sap-t76.md` (kein Passwort, nur T76 schreiben).
 
-## Fachliches Kernwissen (Stand 2026-11-04, in `docs/rag/HR_KPI.md` gegenpruefen)
+## Fachliches Kernwissen (Stand 2026-11-12, Doku-Pruefung: Rexx Hub ergaenzt; davor 2026-11-04; in `docs/rag/HR_KPI.md` gegenpruefen)
 
 - Quellen: SAP (`HrKpiSet`, `HrAbsenzSet`, PA2001) und Rexx-Exporte im Datenordner `hrdata` (`HrKpi:DataFolder`). Rexx-Gesamtabfrage #775 (`Hrcockpitgesamtdashboard.xlsx`, Schluessel Personalnummer) und Abwesenheiten je Fall #777 (`Hr-cockpit-absenzen-je-fall.xlsx`).
 - Je Person gilt fuer 01.01. bis Exporttag der hoehere Wert aus SAP und Rexx (Krankheit, Unfall, Ferien, Kompensation, Militaer), weil SAP nur ueber Sonjas Import nachkommt; Rexx-Faelle ergaenzen fehlende SAP-Faelle mit Datum.
 - HR-Vorgaben aus den Mails (`docs/HR_KPI.md` 8.12): Kurz/Lang je Krankheit ab dem 61. Tag, Absenzquote = Krankheit und Unfall (0290), Kachel „Quote ohne Langzeit“, Vorjahresvergleich gleicher Zeitraum.
 - Bekannte Grenze: direkt in Rexx gebuchte Krankheit ohne SAP-Gegenstueck; loest erst die Rexx-Schnittstelle.
+- Rexx Hub: Entscheid Ingo 10.11., der Hub wird genommen (`docs/HR_KPI.md` 8.17). Der Tagesabruf von #775/#777 ueber den Hub (`Services/HrKpi/RexxHub*.cs`) ist gebaut und seit dem Deploy vom 12.11. 11:33 auf dem Server, aber ausgeschaltet (Schalter `HrKpi:RexxHub:Enabled`, Zugang Quellsystem `REXXHUB`, 8.18; Umschaltanleitung `saptasks/rexx_schnittstelle/NOTES.md` 14). Der Hub ist laut NOTES 13 noch nicht bestellt; bis dahin gilt der Handexport, und vor dem Umschalten sind die in 8.18 genannten Punkte offen.
 - Offene Fragen an HR stehen in `docs/HR_KPI.md` 8.16; nicht selbst entscheiden.
 
 ## Regeln

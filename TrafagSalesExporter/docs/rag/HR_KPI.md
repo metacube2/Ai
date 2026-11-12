@@ -1,8 +1,16 @@
 # RAG HR KPI
 
-Stand: 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, nicht deployed, `docs/HR_KPI.md` 8.18; Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder, 8.17); davor 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-12 (Doku-Pruefung: der vorbereitete Rexx-Hub-Abruf ist seit dem Deploy vom 2026-11-12 11:33 auf dem Server, `e956183`, Schalter `HrKpi:RexxHub:Enabled` weiter aus; Kurzstand-Punkt Rexx Hub ergaenzt, ueberholte Rexx-Aussagen markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, ~~nicht deployed~~ *(ueberholt am 2026-11-12: deployed 11:33, siehe vorn)*, `docs/HR_KPI.md` 8.18; Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder, 8.17); davor 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
+
+- **2026-11-10/12: Rexx Hub.** Entscheid Ingo am 10.11.: Der Rexx Hub wird genommen (`docs/HR_KPI.md` 8.17). Der Tagesabruf
+  der Rexx-Abfragen #775 und #777 ueber den Hub ist gebaut (`1e99745`, `d99fbe6`) und seit dem Deploy vom 2026-11-12 11:33
+  (`e956183`, `docs/rag/DEPLOYMENT.md`) auf dem Server, aber **ausgeschaltet** (Schalter `HrKpi:RexxHub:Enabled` aus); ueber den
+  Hub wird also noch nichts abgerufen. Laut Mailverlauf AG36071 ist der Hub noch nicht bestellt
+  (`saptasks/rexx_schnittstelle/NOTES.md` 13); bis dahin gilt weiter der Handexport von #775 und #777. Vor dem Umschalten zu
+  klaeren: `docs/HR_KPI.md` 8.18, Umschaltanleitung in `saptasks/rexx_schnittstelle/NOTES.md` 14. *(Eingefuegt bei der
+  Doku-Pruefung am 2026-11-12; vorher stand der Stand nur in der Kopfzeile.)*
 
 - **2026-11-04 13:00: Stand nach Ampel und fuenf Fragen an HR** (`docs/HR_KPI.md` 8.16), Mailentwurf in Ingos Downloads,
   nicht gesendet. Antworten von HR offen.
@@ -34,7 +42,8 @@ Stand: 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, 
 
 - **2026-11-04 09:30: Rexx-Dateien in `hrdata` aktuell** (Ingos Exporte vom 04.11., alte vom 08.07. in
   `hrdata\archiv_rexx_2026-07-08`; Austritte 30.11.2023 bis 09.10.2026). Ab naechster Woche soll die Rexx-Schnittstelle
-  liefern. *Danach (8.11, Auftrag Ingo „das Aktuellere nehmen“):* „Vertrag endend“/„Langzeitkrank“ zaehlen als angestellt,
+  liefern. *(Ueberholt, Stand 2026-11-10: Das ist nicht eingetreten; am 10.11. fiel erst der Entscheid fuer den Rexx Hub, die
+  Lieferung ist noch nicht eingerichtet, `docs/HR_KPI.md` 8.17.)* *Danach (8.11, Auftrag Ingo „das Aktuellere nehmen“):* „Vertrag endend“/„Langzeitkrank“ zaehlen als angestellt,
   Sollzeit-Spalte „Ø tägliche …“ erkannt, juengste Rexx-Krankmeldungen ergaenzen SAP (am 04.11. 34 Faelle), Ferien/
   Kompensation/Militaer zeigen den SAP-Stand (27.07.) mit Warnung. SAP-Ferien kommen nur mit Sonjas Handimport.
   **Produktiv seit 09:57 (`cfe2631`).** *Sichtpruefung um 11:50 erledigt (siehe #775 oben).*
@@ -58,7 +67,8 @@ Stand: 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, 
   konnte noch nichts testen. `docs/HR_KPI.md` 8.9, `saptasks/rexx_schnittstelle/NOTES.md`.
 - **2026-10-20 live geprueft: SAP-Abruf laeuft taeglich.** In `hrdata` auf dem Server sind `HR_KPI_Export.xlsx` und
   `HR_Absenzen_SAP.xlsx` heute um 05:07 geschrieben. Die Rexx-Dateien sind weiter vom 08.07. (Upgreat offen), wer danach
-  eingetreten ist, fehlt in der Personenbasis.
+  eingetreten ist, fehlt in der Personenbasis. *(Ueberholt: Upgreat hat das Ticket am 19.10. geschlossen; die Rexx-Dateien
+  sind am 2026-11-04 ersetzt worden, seither liest das Cockpit #775 und #777, siehe oben.)*
 
 - **2026-09-30: Arbeitstag 8,0 h statt 8,4 h** (Entscheid Ingo, deckt sich mit Sonjas Tagessoll
   8 h bei 100 %). `e3545c4`, eine Konstante `HoursPerWorkday` fuer Krankheitstage, 61-Tage-Grenze
@@ -84,7 +94,8 @@ Stand: 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, 
   Ferien am Stueck und Fit-&-Wohl-Ausloeser zeigt der Reiter Interaktiv; Ruecklauf und Uebertrag offen)*. Rexx-Hub fuer den
   automatischen Export ist seit 2026-07-29 von Nadja beauftragt (4'800 EUR p. a.), Stand offen *(ueberholt am 2026-09-30:
   kein Rexx-Hub, Export ueber Upgreat, siehe oben; das wiederum ueberholt am 2026-11-10: der Rexx Hub wird genommen, ob Nadjas
-  Auftrag noch besteht, ist zu klaeren, `docs/HR_KPI.md` 8.17)*. Mail
+  Auftrag noch besteht, ist zu klaeren, `docs/HR_KPI.md` 8.17; Nachtrag 2026-11-10 mittags: laut Mailverlauf AG36071 ist der
+  Hub nicht bestellt, Nadjas Go wartet auf die IT-Pruefung durch Alex, `saptasks/rexx_schnittstelle/NOTES.md` 13)*. Mail
   an Sonja liegt als Entwurf, Punkt 2 fehlt. Details: `docs/HR_KPI.md` Abschnitt 8.3.
 
 - **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, Uebersetzungen

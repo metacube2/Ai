@@ -1,8 +1,14 @@
 # Benutzerhandbuch (betriebswirtschaftlich)
 
-Stand: 2026-10-29 (davor 2026-10-16). Die Kapitel Einleitung, Finance (Kursprofil), Einkauf, HR, Projekte und
+Stand: 2026-11-12 (Doku-Pruefung: Kopf nachgefuehrt, Kapitel sind im Reiter, Word-Fassung veraltet); davor 2026-10-29
+(davor 2026-10-16). Die Kapitel Einleitung, Finance (Kursprofil), Einkauf, HR, Projekte und
 Operations sind am 2026-10-29 auf den Stand der App berichtigt; die Word-Fassung ist noch nicht neu erzeugt und die
-Markdown-Kapitel erscheinen im Reiter erst nach dem naechsten Deploy.
+Markdown-Kapitel erscheinen im Reiter erst nach dem naechsten Deploy. *(Ueberholt, markiert 2026-11-12: „erscheinen im
+Reiter erst nach dem naechsten Deploy“. Seit dem 2026-10-29 gab es viele Deploys, zuletzt am 2026-11-12 11:33
+(`docs/rag/DEPLOYMENT.md`); die Kapitel sind damit im Reiter. Drei Kapitel sind danach nochmals geaendert worden: Operations
+am 02.11. (`187f8a0`), HR am 04.11. (`ed5155d`), Einkauf am 05.11. (`785325f`).)* **Weiter gueltig und wichtiger geworden: Die
+Word-Fassung `wwwroot/handbuch/Trafag_Cockpit_Handbuch.docx` ist seit dem 2026-10-16 (`1823bac`) nicht neu erzeugt** und weicht
+in den Kapiteln Einleitung, Finance, Einkauf, HR, Projekte und Operations vom Reiter ab.
 
 Anwenderhandbuch aller Cockpit-Module aus betriebswirtschaftlicher Sicht: je Seite „Wozu",
 „Was man sieht", „Wie gerechnet wird", „Einsatz im Arbeitsalltag" (nach Rolle) und

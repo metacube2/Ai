@@ -1,12 +1,25 @@
 # RAG Deployment
 
-Stand: 2026-11-12 (letzter Deploy 2026-11-12 11:33, `e956183`, Nachzug Kleinigkeiten und Rexx Hub vorbereitet (Schalter aus); davor 2026-11-10 08:46, `436e8ad`, Verzug-Schalter und CO-PA (beide aus); davor 08:16 `e6f6f70`; davor 2026-11-09 15:11 `4585392`; davor 14:12 `01fceec` Shopfloor Auftragsvorrat; davor 10:45 `04b4faf` Verkauf Sankey und Sparte; davor 07:23 `fd345e7` Shopfloor-Paket 07.11.; davor 2026-11-05 12:37 `785325f` Spend-Aufriss aufgeraeumt; davor 11:48 `a17d623` Einkauf-Fixes; davor 10:33 `47abb30` Monthly Review; davor 2026-11-04 12:41 `f86b0ed`, 12:36 `dac3098`, 12:21 `4bdbc18`, 11:46 `6dd1a56`, 10:21 `69a63b6`, 09:57 `cfe2631`, 09:20 `b65f059`); davor 2026-11-02 (Deploy 13:57, `187f8a0`); 2026-10-22 Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo
+Stand: 2026-11-12 (Doku-Pruefung: Deploy-Ablauf um Befehl, Vorschritte und Nachpruefung nach `CLAUDE.md` Abschnitt 5 ergaenzt, „Publish immer aus PowerShell“ als ueberholt markiert, Verweis XLSX-Falle und Firewall-Abweichung vermerkt; kein neuer Deploy); davor 2026-11-12 (letzter Deploy 2026-11-12 11:33, `e956183`, Nachzug Kleinigkeiten und Rexx Hub vorbereitet (Schalter aus); davor 2026-11-10 08:46, `436e8ad`, Verzug-Schalter und CO-PA (beide aus); davor 08:16 `e6f6f70`; davor 2026-11-09 15:11 `4585392`; davor 14:12 `01fceec` Shopfloor Auftragsvorrat; davor 10:45 `04b4faf` Verkauf Sankey und Sparte; davor 07:23 `fd345e7` Shopfloor-Paket 07.11.; davor 2026-11-05 12:37 `785325f` Spend-Aufriss aufgeraeumt; davor 11:48 `a17d623` Einkauf-Fixes; davor 10:33 `47abb30` Monthly Review; davor 2026-11-04 12:41 `f86b0ed`, 12:36 `dac3098`, 12:21 `4bdbc18`, 11:46 `6dd1a56`, 10:21 `69a63b6`, 09:57 `cfe2631`, 09:20 `b65f059`); davor 2026-11-02 (Deploy 13:57, `187f8a0`); 2026-10-22 Kurzstand auf Deploys seit dem 2026-10-13 gekuerzt, Entscheid Ingo
 
 Der Abschnitt „Kurzstand“ fuehrt nur Deploys seit dem Deploy-Ablauf vom 2026-10-13 und die Fallen. Aeltere
 Eintraege (2026-08-03 bis 2026-10-09) stehen verbatim in `docs/archiv/DEPLOYMENT_KURZSTAND_ARCHIV_bis_2026-10-12.md`;
 wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die aelter als zwei Wochen sind, dorthin.
 
 ## Deploy-Ablauf seit 2026-10-13 (Entscheid Ingo)
+
+*Eingefuegt bei der Doku-Pruefung am 2026-11-12, woertlich nach `CLAUDE.md` Abschnitt 5 (dort gilt der Wortlaut; die Zusaetze in
+Klammern stammen aus `docs/rag/LEARNINGS.md`). Vorher standen Befehl, Vorschritte und Nachpruefung hier nicht als Ablauf:*
+
+- **Befehl (Wunsch Ingo 2026-11-02, immer so):** Deployt wird immer mit dem Werkzeug, als Bash aus dem Projektordner, genau so
+  und allein abgesetzt: `dotnet run --project .tmp_tools/DeployHeadless -c Release > .tmp_deploy_<JJJJ-MM-TT>_<thema>.log 2>&1`.
+  Kein `;`, `&&`, `|`, kein vorangestelltes `cd`, kein zweiter Befehl daneben. Nie selbst `dotnet publish` aufrufen.
+- **Vorher:** (1) Release-Worktree auf den Commit ziehen (`git checkout --detach <commit>`) und dort die Tests gruen laufen
+  lassen (Worktree `C:\TMP\TrafagSalesExporter_release_eafd1c5`, Fall 2026-10-27 in LEARNINGS). (2) Pruefen, dass kein
+  Einkauf-Delta laeuft (Seite `/einkauf/ideen/datenservice`; eine grosse `trafag_exporter.db-wal` ist ein Warnzeichen, Faelle
+  2026-10-09 und 2026-10-14 in LEARNINGS). Laesst sich das nicht pruefen, Ingo fragen. (3) Monitor-Fenster oeffnen (siehe unten).
+- **Nachher:** Zeile mit „Commit“ im Protokoll gegen den gewuenschten Commit pruefen. Der Alarm „-wal/-shm verschwunden“ ist
+  harmlos, wenn beide Dateien wieder da sind.
 
 - **Protokollablage (seit 2026-11-05):** Die in diesem Dokument genannten `.tmp_deploy_<datum>_<thema>.log` bis 2026-11-05 liegen in `.tmp_logs/deploy/`, uebrige alte Logs in `.tmp_logs/` (nicht versioniert, `*.log` in `.gitignore`). Neue Protokolle entstehen weiter in der Wurzel (Befehlsform `CLAUDE.md` Abschnitt 5) und werden beim Aufraeumen dorthin verschoben.
 - **DB-Sicherung einmal pro Woche** (Entscheid Ingo 2026-10-13 nachmittags, nachdem eine Sicherung zu lange
@@ -40,7 +53,10 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
   nichts**. Weil `app_offline.htm` zu dem Zeitpunkt bereits gesetzt war, stand die
   Anwendung still, ohne dass etwas ausgeliefert wurde. Erkennungsmerkmal in der
   Ausgabe: die letzte Zeile nennt `C:\trch-webapp-...` statt `\\trch-webapp-...`.
-  **Publish immer aus PowerShell**, dort bleibt der UNC-Pfad erhalten. Danach
+  **Publish immer aus PowerShell**, dort bleibt der UNC-Pfad erhalten. *(Ueberholt seit 2026-11-02 als
+  Handlungsanweisung: `dotnet publish` wird gar nicht mehr selbst aufgerufen, weder aus PowerShell noch aus Bash; deployt
+  wird nur mit dem Werkzeug `.tmp_tools/DeployHeadless` als Bash-Aufruf, siehe „Deploy-Ablauf“ oben und `CLAUDE.md`
+  Abschnitt 5. Die Falle bleibt als Befund vom 2026-08-07 stehen.)* Danach
   zwingend die SHA256 der Server-DLL gegen `bin/Release/net8.0/BiDashboard.dll`
   pruefen — genau dieser Vergleich hat den Fehlschlag sichtbar gemacht.
 
@@ -287,7 +303,8 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
   `Pause:Enabled = true`, danach auf `false`. Betrifft alles, was zur Laufzeit dorthin
   geschrieben wird: `Pause:Enabled` und `LandingPage:ShowWalkingLabFigure`. Wer eine
   Einstellung dauerhaft will, muss sie im Repository setzen. Dieselbe Klasse wie die
-  XLSX weiter unten. Vor jedem Deploy lohnt ein Vergleich der beiden Dateien; am
+  XLSX weiter unten *(berichtigt 2026-11-12: der XLSX-Befund vom 2026-08-07 steht in dieser Datei weiter oben,
+  im Abschnitt „Werkzeug und drei Fallen im Publish selbst“)*. Vor jedem Deploy lohnt ein Vergleich der beiden Dateien; am
   2026-08-10 war der Pausen-Schalter der einzige Unterschied.
   *Nachtrag 2026-10-15:* Die Passwort-Hashes der Bereichs-Logins (Admin, Finance, HR,
   Operations, Logistik) waren dieselbe Falle: „Passwort ändern“ schrieb in
@@ -312,7 +329,9 @@ wer hier einen neuen Deploy eintraegt, verschiebt beim Aufraeumen Eintraege, die
 - Bekannte Ziele:
   - HANA Internal / BI1: `10.194.65.22:30015`
   - India HANA: `20.197.20.60:30015`
-  - SAP OData / ZSCHWEIZ: `10.194.64.29:8000`
+  - SAP OData / ZSCHWEIZ: `10.194.64.29:8000` *(Abweichung, vermerkt 2026-10-29 in `docs/REQUIREMENTS.md` REQ-X-5 und hier
+    am 2026-11-12: Die produktive Konfiguration nennt `travp762.sap.trafag.com:8000`, per DNS `10.194.64.30`, nicht `.29`;
+    fuehrend ist `docs/DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md`. Welche Adresse heute gilt, ist nicht live geprueft.)*
   - SharePoint / Graph: `trafagag.sharepoint.com:443`
 - Offen: vollstaendige Standortliste aus produktiver App-Konfiguration exportieren/pruefen.
 

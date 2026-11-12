@@ -1,6 +1,6 @@
 # Unterrouter Plattform
 
-Zurueck: `router.md`. Stand: 2026-11-12 (Abschnitt „Standort Bubikon: WLAN `trafag-802.1x-tel` und MES-Netzausfaelle“, offen); davor 2026-10-27 (Architektur mit Gesamtlandkarte); davor 2026-10-14.
+Zurueck: `router.md`. Stand: 2026-11-12 (Doku-Pruefung: Deploy-Verweise auf `CLAUDE.md` Abschnitt 5, Operations ohne Login, SapProbe-Start, Tempo, Groesse der Datenbank, fehlende Tabelleneintraege; am selben Tag Abschnitt „Standort Bubikon: WLAN `trafag-802.1x-tel` und MES-Netzausfaelle“, offen); davor 2026-10-27 (Architektur mit Gesamtlandkarte); davor 2026-10-14.
 
 Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen,
 Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
@@ -10,33 +10,40 @@ Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
 | Bedarf | Datei |
 | --- | --- |
 | **Datenverantwortung (Dataowner)**: Seite `/datenverantwortung`, Datentopf, Verantwortlich, Stellvertretung, Key User, Status; Bearbeiten mit Admin-Login; Startbelegung aus der Abschlussrunde 03.11. | `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md` Abschnitt 6, `Services/DataOwnerRules.cs` |
-| **Aktuell verifizierter Produktivstand** | `docs/rag/DEPLOYMENT.md` |
-| **Verfahren, Deploy-Konsole, die vier Fallen** | `docs/DEPLOYMENT.md` |
-| **Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, `/einkauf` 100 s, Management-Cockpit 41 s (Wechselkurse je Zeile per SQL)** | `docs/PLATTFORM_TEMPO_2026-09-28.md` |
+| **Deploy-Ablauf (gueltig): nur mit dem Werkzeug `DeployHeadless`, Vorschritte, Monitor-Fenster, Wochensicherung; aktuell verifizierter Produktivstand** | `CLAUDE.md` Abschnitt 5, `docs/rag/DEPLOYMENT.md` (oben „Deploy-Ablauf seit 2026-10-13“, darunter der Kurzstand) |
+| Server und Pfade, Aufbau der Deploy-Konsole, die vier Fallen im Publish, Sicherungsmessungen (Hintergrund; der Ablauf dort ist ueberholt und seit 2026-11-12 so markiert; bis dahin hiess diese Zeile „Verfahren, Deploy-Konsole, die vier Fallen“) | `docs/DEPLOYMENT.md` |
+| **Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, `/einkauf` 100 s, Management-Cockpit 41 s (Wechselkurse je Zeile per SQL)** *(Das ist die Ausgangsmessung vom 2026-09-28; laut Abschnitt 0 der Datei seit demselben Tag 13:32 produktiv verbessert: Server-Einkaufsberechnung 104,7 s auf 24,4 s, Cockpit lokal 41 s auf 3,3 s.)* | `docs/PLATTFORM_TEMPO_2026-09-28.md` |
 | **NuGet-Sicherheitsbefund und Updatepfad** | `docs/NUGET_SICHERHEIT_2026-09-01.md` |
 | Architektur, Kurzstand; seit 2026-10-27 mit Gesamtlandkarte aller gebauten Loesungen (Quelle, Anbindung, Daten, Modul, Nutzung) | `docs/rag/ARCHITECTURE.md`, interaktiv `docs/LOESUNGSLANDKARTE_2026-10-27.html` |
 | Admin-Bereich, Kurzstand | `docs/rag/ADMIN.md` |
 | Admin-Bereich und Startseite | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` |
 | Zusammenfuehrung der Admin-Menues | `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` |
 | Gesamtfunktionalitaet, reverse-engineered | `docs/REQUIREMENTS.md` |
+| Datenquellen und Firewall-Ziele des Servers `tragvapp401` (Stand 2026-09-10, aus der produktiven Konfiguration gelesen, ohne Zugangsdaten) | `docs/DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md` |
 | Diagramme und technische Einordnung | `docs/PROGRAMM_DIAGRAMME.md` |
 | Projektstand, Kurzstand | `docs/rag/PROJECT.md` |
 | Pausenspiel (Nebenfeature, Reiter ausgeblendet) | `docs/PAUSENSPIEL.md` |
 | **Weltlage** (seit 2026-10-06 unter Finance Cockpit, hinter Finance-Passwort): Radar je Abteilung, Länder, Rohstoffe und Währungen, Ereignisse; externe Quellen ohne Anmeldung (GDELT, FRED, Eurostat, IMF, EZB), Firewall-Zustand je Quelle, Rechenregeln | `docs/WELTLAGE_2026-10-05.md` |
-| **Reiter Benutzerhandbuch**: betriebswirtschaftliches Handbuch aller Module (Wozu, Lesart, Rechnung, Einsatz je Rolle), Word im Trafag-CI, Quelle `wwwroot/handbuch/kapitel`, Generator, Neuerzeugung | `docs/handbuch/README.md` |
+| **Reiter Benutzerhandbuch**: betriebswirtschaftliches Handbuch aller Module (Wozu, Lesart, Rechnung, Einsatz je Rolle), Word im Trafag-CI, Quelle `wwwroot/handbuch/kapitel`, Generator, Neuerzeugung | `docs/handbuch/README.md`, Schreibvorgabe fuer Kapitel `docs/handbuch/VORGABE.md` |
 | **Reiter Netzwerk**: Netzkarte, Verfuegbarkeit, Netz oder Daten, Sicherheit, Active Directory, AD-Infrastruktur, Gruppenrichtlinien, DNS, Verlauf, Migration, Bericht, Arbeitsplaetze; Schutzregeln fuer Pruefungen und AD | `docs/NETZWERK_2026-10-02.md` |
-| **Reiter Operations (Shopfloor)**: PPA-Shopfloor im Cockpit (Route `/operations`, seit 2026-10-14 Unterreiter Operations > Shopfloor), C#-Port des Python-Backends, Zugriff nur fuer freigegebene Windows-Konten (`Shopfloor:AllowedUsers`/`OpenForAll`), Datenbank `shopfloor\shopfloor.db`, Push-Schnittstelle mit Token, Feld-Mapping SAP/MES | `docs/SHOPFLOOR_2026-10-07.md` |
+| **Reiter Operations (Shopfloor)**: PPA-Shopfloor im Cockpit (Route `/operations`, seit 2026-10-14 Unterreiter Operations > Shopfloor), C#-Port des Python-Backends, ~~Zugriff nur fuer freigegebene Windows-Konten (`Shopfloor:AllowedUsers`/`OpenForAll`)~~ *(ueberholt am 2026-10-16: fuer alle Windows-Benutzer ohne Login offen, `Shopfloor:OpenForAll = true`; der Admin-Schalter „Operations: Login nötig“ haette Vorrang, dann gilt wieder Login `operations` oder ein Konto in `Shopfloor:AllowedUsers`; Abschnitt 3 der Datei)*, Datenbank `shopfloor\shopfloor.db`, Push-Schnittstelle mit Token, Feld-Mapping SAP/MES | `docs/SHOPFLOOR_2026-10-07.md` |
 | **Nutzung des Dashboards**: Befund geringe Nutzung (2026-10-14), Ursachen, Massnahmen, anonyme Nutzungsmessung (Admin > Nutzung) | `docs/NUTZUNG_2026-10-14.md` |
 | **Operations > KPI**: Liefertreue OTD / OTIF / OTP der Trafag AG (Spezifikation Fabio 2026-10-14), Abruf aus den CDS-Services, Ausschlusstabelle, Abnahmewerte; Rubrik Kunden (2026-11-02, Abschnitt 5) | `docs/OPERATIONS_KPI_2026-10-14.md` |
 | **Reiter Trafag Projekte**: Projektmanagement wie Jira/Trello/Planner (Route `/projekte`); seit 2026-10-29 auch Smartsheet-Ansicht (Raster & Gantt mit Abhaengigkeiten), Risiken mit Franken, Projektstrukturplan fuer SAP, Decision Log, Vorlagen Produktentwicklung/IT-Projekt, Uebernahme der Vorhaben; ersetzt seit 2026-10-09 die Poor Man's Project Management Suite; seit 2026-10-13 private Projekte (nur Team, auch keine Admins), Rolle Leser und Abgleich der Wochen_Todo per TSV-Upload; Board, Backlog und Sprints, Liste, Zeitachse, Kalender, Diagramme, Meine Aufgaben; alle sehen, Mitglieder bearbeiten | `docs/TRAFAG_PROJEKTE_2026-10-09.md` |
 | **Reiter Trafag Reddit**: internes Forum (Route `/forum`) fuer alles ohne Platz in SharePoint, Communities, Abstimmen, Fragen mit akzeptierter Antwort, Tags, Reputation, Windows-Name als Autor, fuer alle sichtbar | `docs/TRAFAG_REDDIT_2026-10-09.md` |
 | ccusage installieren und nutzen | `docs/CCUSAGE_INSTALL_ANLEITUNG.md` |
+| Berndeutsch (Sprache `gsw`) in der Oberflaeche: Schreibweise und Glossar | `docs/UI_BERNDEUTSCH_GLOSSAR.md` |
+| Doku-Suche Qdrant (MCP-Werkzeug `qdrant-find`): Aufbau, taeglicher Gebrauch, Reindex | `Tools/Qdrant/README.md` |
+| Inventar-Scan Bericht-Excel und Power-BI-Dateien (PM-14) | `Tools/Inventar/README.md` |
+| Whisper-Transkription (lokales Werkzeug im Ordner `whisper/`, nicht Teil der App) | `whisper/README.md`, `whisper/HANDOFF.md` |
 
 ## Live-Werkzeuge
 
 ### SAP ERP: SapProbe
 
-Ort `.tmp_sap_probe/`, Start ueber `.tmp_sap_probe/RunSapProbeInteractive.ps1 <befehl>`.
+Ort `.tmp_sap_probe/`, Start ueber `.tmp_sap_probe/RunSapProbe.ps1 <befehl>` (ohne Passwortabfrage, wenn eine Ablage
+existiert; die Ablage gibt es nur fuer T76). *Bis 2026-11-12 stand hier `.tmp_sap_probe/RunSapProbeInteractive.ps1 <befehl>`; das ist laut
+`saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` die aeltere Fassung mit Fenster und Passworteingabe.*
 Default `travt762.sap.trafag.com`, SID `T76`, Client 100 — Produktion `travp762` nur
 bewusst per `--ashost`. Passwort interaktiv oder ueber `SAP_NCO_PASSWORD`, **nie** in Doku
 oder Git.
@@ -53,6 +60,11 @@ oder Git.
 Grenzen: DDIC-Strukturen bleiben manuell in SE11, globale Klassen in SE24/ADT,
 Gateway-Modell und EntitySets in SEGW. SapProbe verifiziert SAP-Fakten, ersetzt diese
 Oberflaechen aber nicht.
+
+*(Ueberholt, markiert 2026-11-12: Diese Grenzen gelten nur fuer SapProbe selbst. Ueber die ferngesteuerte SAP-GUI-Sitzung
+(GUI-Scripting, Skripte in `.tmp_sap_probe/`) laeuft die SAP-Arbeit laut `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`
+Abschnitt 0 „ohne einen einzigen Klick“, auch Anlegen und Aktivieren. Fuehrend fuer alle SAP-Werkzeuge und ihre Grenzen ist
+diese Datei, Einstieg `docs/router/sap.md`; Passwort- und Schreibregeln stehen dort.)*
 
 ### Outlook: was ueber COM geht und was nicht
 
@@ -117,7 +129,7 @@ sind nicht moeglich** — sie gelten als Kommentar und der Guardrail lehnt ab.
 
 Die produktive SQLite liegt auf der Freigabe `BiDashboard$` des Servers
 `trch-webapp-bidashboard.trafagch.local`, Datei `trafag_exporter.db`, und ist rund
-360 MB gross. Jeder Blockzugriff laeuft ueber SMB, und SQLite liest bei einem
+360 MB gross *(Stand 2026-09-08; am 2026-10-14 war die Sicherung rund 615 MB gross, `docs/rag/DEPLOYMENT.md`)*. Jeder Blockzugriff laeuft ueber SMB, und SQLite liest bei einem
 `GROUP BY` ueber eine grosse Tabelle sehr viele einzelne Bloecke. Das schlaegt brutal
 durch.
 
@@ -402,7 +414,10 @@ Signalstaerke) und abhaengen; dann kann die Isolation wieder raus.
 
 ## Fallen in diesem Ast
 
-Die vier Deploy-Fallen stehen ausfuehrlich in `docs/DEPLOYMENT.md` Abschnitt 4. Kurz:
+Die vier Deploy-Fallen stehen ausfuehrlich in `docs/DEPLOYMENT.md` Abschnitt 4, die Profil-Falle (dritter Punkt unten) in
+Abschnitt 2. *(Berichtigt 2026-11-12: bis dahin hiess es hier nur „Abschnitt 4“, und die Falle 4.3 fehlte in der Liste.)*
+Alle fuenf Punkte erklaeren nur, was beim Publish im Werkzeug schiefgehen kann; der Deploy-Ablauf selbst steht in `CLAUDE.md`
+Abschnitt 5 (nur mit `.tmp_tools/DeployHeadless`, nie selbst `dotnet publish`). Kurz:
 
 - Ein erfolgreicher Publish kann die Haupt-DLL wegen **PreserveNewest** still
   ueberspringen. Weicht der SHA256 ab, ist das kein Nicht-Determinismus, sondern ein nicht
@@ -412,6 +427,8 @@ Die vier Deploy-Fallen stehen ausfuehrlich in `docs/DEPLOYMENT.md` Abschnitt 4. 
 - `/p:PublishProfile=FolderProfile` setzt `DeleteExistingFiles=true` und wuerde die
   Produktivdatenbank im Zielordner treffen.
 - Die XLSX im Publish-Ordner sind Build-Ausgabe und werden bei jedem Deploy ueberschrieben.
+- Eine liegengebliebene `app_offline.htm.disabled` blockiert das Umbenennen (4.3, Fall 2026-08-07); das Werkzeug protokolliert
+  und entfernt sie selbst (`Tools/DeployConsole/DeployRunner.cs`, sein einziger Loeschvorgang).
 
 ## Querverweise in Nachbaraeste
 

@@ -1,6 +1,6 @@
 # Inventar: Bericht-Excel und Power-BI-Dateien finden
 
-Stand: 2026-11-03. Fuer PM-14 (Wunsch Oscar in der Abschlussrunde: wo sind welche Power BI und Smartsheets, wie viele Excel
+Stand: 2026-11-12 (Doku-Pruefung: Kopf nachgefuehrt; der Abschnitt „Einzelne Datei von Hand pruefen“ ist vom 2026-11-12); davor 2026-11-03. Fuer PM-14 (Wunsch Oscar in der Abschlussrunde: wo sind welche Power BI und Smartsheets, wie viele Excel
 sind abgeloest, wie viele Stunden eingespart). Protokoll `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md`,
 Liste `projektmanagement/PM-14_Inventar_Abloesung.tsv`, Wochen_Todo 138.
 
