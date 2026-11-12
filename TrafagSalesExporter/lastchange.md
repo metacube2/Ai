@@ -18,6 +18,8 @@ Stand: 2026-11-12 (Zwischenstand: IC Tests Fabio, ZC12 Auftrag, Spanien-Supplier
   `Tools/Inventar/README.md`.
 - **Lieferantendashboard V6** fuer Ingo lokal ueber `http://127.0.0.1:8765` (Kopie im Scratchpad) in Chrome geoeffnet, nur Anzeige.
 - **ZC12** wartet weiter auf Ingos Ja fuer Phase 2 in T76 (Einspieldatei `bb1c771`).
+- **Abends:** Spanien-Plan fertig, Entscheide E1-E9 von Ingo (E7 Deploy offen), Phase 2 laeuft bis vor den Deploy (Agent). SAP-Quellen
+  Lieferantenbewertung fertig (EINKAUF_SITZUNG 6.3): /ITS/-ABC nur Material-ABC, T76 ist S/4HANA 2023, Fiori-Bewertung customized (Preis 0 %).
 
 **IC V1 (Fabio):** Tests in T76/100 bestanden (IV 90381224-90381226), T76K912884 von Fabio fachlich freigegeben. Import nach P76
 wartet auf Fabios Z999-Preise in P76 und die Abgrenzung der PR00-Spiegelsaetze 820. Antwortvorschlag 601/908 an Fabio liegt im Chat

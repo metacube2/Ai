@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-12 spaet (Abschnitt 6.2: **Rueckmeldung Armin: V6 ist die Grundlage, kein Word-Dokument, zwei Pakete, Pflege im Dashboard**); davor 2026-11-12 nachmittags (Abschnitt 6 und 6.1: Gespraech mit Marco Widmer, iteratives Vorgehen; Strukturvorschlag, Zertifikatsordner, ABC-Transaktion, SAP-Recherche). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-12 abends (Abschnitt 6.3: SAP-Quellen geklaert, T76 lesend); davor 2026-11-12 spaet (Abschnitt 6.2: **Rueckmeldung Armin: V6 ist die Grundlage, kein Word-Dokument, zwei Pakete, Pflege im Dashboard**); davor 2026-11-12 nachmittags (Abschnitt 6 und 6.1: Gespraech mit Marco Widmer, iteratives Vorgehen; Strukturvorschlag, Zertifikatsordner, ABC-Transaktion, SAP-Recherche). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -233,3 +233,28 @@ Ziel laut Armin: schlank und pragmatisch im bestehenden BI-Dashboard, ohne zusae
   im Dashboard sind freigegeben.* Der IT-Vorschlag fuer Datenhaltung (Dashboard-DB,
   Dokumente als Dateiablage oder Link, Schreibrecht nur fuer Berechtigte) ist von Ingo zu liefern.
 * Offen bleibt E2 (Rhythmus der Themenfelder); Armins Antwort nennt ihn nicht.
+
+### 6.3 SAP-Quellen fuer die Lieferantenbewertung (T76 lesend, 2026-11-12)
+
+Volltext mit Belegen: `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md` (Agent sap-t76, nur RFC-Lesen in
+T76, P76 nicht gelesen). Kurzfassung:
+
+* **`/ITS/CA_MAT_ABC_CU1`** ist nur die Pflege der Schwellen (Tabelle `/ITS/CA_MAX_C`, Werk 1100: A/B 80 %, B/C 95 %,
+  X/Y 0,60, Y/Z 1,20). Gerechnet wird im Report `/ITS/CA_MAT_ABC_XYZ` (itelligence, Produkt AN.01515): **reine Material-ABC
+  nach Verbrauchswert** (MVER-Verbrauch mal MBEW-Preis, 12 Monate bis Stichtag), Ergebnis nach `MARC-MAABC` (XYZ nach
+  `ZCA_MAT_ABC_XYZ`). Kein Lieferant im Quelltext; **fuer A/B/C je Lieferant nicht direkt nutzbar**. Uebernehmbar ist die
+  Grenzfallregel (wer die Grenze ueberschreitet, bleibt in der Klasse), gleich wie in V6. Armins Grenzen (70/90) weichen
+  von den Material-Schwellen (80/95) ab; beides sind verschiedene Klassen.
+* **Klassische Lieferantenbeurteilung:** ME61 bis ME6H, Tabellen ELBK/ELBP und T147* vorhanden (Preis, Qualitaet, Lieferung,
+  Service gleich gewichtet). In T76 Noten nur vom 05.01.2026 fuer 1'328 Lieferanten.
+* **Liefertreue:** `EKET-SLFDT`/`EINDT` und `EKBE` mit `VGABE = '1'`. `Slfdt` steckt schon im `eketSet`, das Dashboard holt es
+  nur nicht. LIS-Statistiken S012 (Intervalle -5/-2/+2/+5 Tage) und S013 vorhanden. Je nach Basis SLFDT oder EINDT kippt eine
+  Position von gruen auf rot (fuenf echte Positionen gerechnet). Das heutige `EKBESet` liest EKBE ungefiltert ohne
+  VGABE/SHKZG und ist dafuer nicht brauchbar.
+* **Q2:** 9'893 Q2-Meldungen in T76, `LIFNUM` immer gefuellt, 99 offen (62 davon aus 2005 bis 2013).
+* **Fiori:** T76 ist **S/4HANA 2023**. Customizing der Fiori-Lieferantenbewertung gepflegt (NTT, 27.10.2026): Pruefllos,
+  Menge, Zeit, Qualitaetsmeldung je 25 %, **Preis 0 %**; Punkttabellen `MMPUR_ANA_SESCR`/`SESAGR` in T76 noch leer.
+
+**Offen fuer Ingo:** P76 lesen (Fiori-Punkte, Jobs fuer ABC und ME6x, offene Q2) braucht Freigabe; fachlich: Preis 0 % in
+Fiori bewusst?, SLFDT oder EINDT als Basis der Liefertreue, welcher Wareneingang zaehlt, EVO-Definition und Zeitraum fuer
+A/B/C (E1). Q2-Set und gefilterter Wareneingang im Gateway waeren Schreibauftraege in T76 und brauchen einen Plan.
