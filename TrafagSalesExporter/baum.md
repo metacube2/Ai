@@ -272,6 +272,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `zlo03/FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` | ZLO03 FIX 24: Stueckkosten ungerundet, `p_days` ausgeblendet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit, fuenf Testlaeufe T76 |
 | `zlo03/FIX26_BASISMENGE_2026-11-05.md` | ZLO03 FIX 26: Positionsmenge durch die Basismenge der Stueckliste (`STKO-BMENG`), Wafer je Chip; Auftrag `T76K912839`, laut Nachtrag am 2026-11-09 von Ingo nach P76 importiert (HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio.) |
 | `zlo03/FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` | ZLO03 FIX 27: Excel zeigt die alte Menge je Basismenge und zusaetzlich die Menge je 1 Stueck; im selben Auftrag `T76K912839`, in P76 seit 2026-11-09, die Excel-Spalten dort noch nicht geprueft |
+| `zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md` | ZLO03 FIX 28: Selbst-Stuecklisten nicht doppelt zaehlen (Meldung Armin 12.11., D13006 = 2; Ursache FIX 2 vom 10.03.2026); T76 aktiv, Auftrag `T76K912902`, nicht in P76 |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_2026-10-20.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19, Stand 20.10. (abgeloest) |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19 inkl. Spalte RoHS (abgeloest durch FIX 20) |
 | `zlo03/Z_ZLO03_TURBO2_FIX20_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12, FIX 19 inkl. RoHS und FIX 20 (T76 aktiv seit 22.10.) |

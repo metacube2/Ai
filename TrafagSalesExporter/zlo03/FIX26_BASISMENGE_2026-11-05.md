@@ -132,5 +132,8 @@ umfasste nur STKO/MAST); ist das Feld dort leer oder anders belegt, teilt FIX 26
    *Erledigt am 2026-11-09: Einkauf-Delta 11:24–13:29, HW_ZUKAUFSORT 1.27 Mio. auf 3.67 Mio. Umsatz (Nachtrag oben).*
 3. Ann-Katrin und Sandro: Mengenformat in der Excel-Spalte („1“ statt „1.000“), Chips zeigen Wafer jetzt als Bruchteil einer Rolle.
 4. FP_THERMOST (Abschnitt 6): eigener Fix nach Entscheid; Selbststücklisten H20201/H17500 fachlich klären.
+   *Erledigt 2026-11-12 13:33 (T76): FIX 28, Auftrag `T76K912902`, beide Ursachen behoben (Selbstzeilen nicht im Bedarf und
+   nicht in der Einheitenwahl); P76-Import offen. Fachliche Klaerung der Selbst-Stuecklisten bleibt offen, siehe
+   `FIX28_SELBSTSTUECKLISTE_2026-11-12.md`.*
 5. `$TMP`-Testreport `Z_KOI_ZLO_FIX26_TEST` in T76 bei Gelegenheit löschen. *Erledigt am 2026-11-10 (`d252ee0`, Wochen_Todo 152);
    ob die Testjobs vom 05.11. und 09.11. aufgeräumt sind, ist nicht belegt.*
