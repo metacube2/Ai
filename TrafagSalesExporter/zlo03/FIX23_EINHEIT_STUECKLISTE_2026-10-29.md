@@ -1,6 +1,6 @@
 # ZLO03 FIX 23: Mengen und Stückkosten in der Einheit der Stückliste (2026-10-29)
 
-Stand: 2026-10-29. T76 aktiv, Auftrag `T76K912781`, nicht freigegeben.
+Stand: 2026-11-12 (Doku-Prüfung: P76-Import nachgeführt); davor 2026-10-29. T76 aktiv, Auftrag `T76K912781`, nicht freigegeben *(überholt: laut Ingo am 2026-10-29 nach P76 importiert, Wochen_Todo 128)*.
 
 ## 1. Meldung
 
@@ -49,6 +49,8 @@ Quelltext `Z_ZLO03_TURBO2_FIX23_EINHEIT_2026-10-29.abap` (Vorstand FIX 22, in T7
 
 ## 5. Offen
 
-1. Freigabe und Import `T76K912781` nach P76 (Ingo), nach `T76K912742`, `T76K912752` und `T76K912777`.
-2. Rückmeldung an Armin; in P76 ergibt H05039 dann 7.40 / 600 = 0.012333 CHF je ST.
+1. ~~Freigabe und Import `T76K912781` nach P76 (Ingo), nach `T76K912742`, `T76K912752` und `T76K912777`.~~ *Erledigt: laut
+   Ingo am 2026-10-29 importiert (Wochen_Todo 128, Eintrag vom 30.10.).*
+2. Rückmeldung an Armin; in P76 ergibt H05039 dann 7.40 / 600 = 0.012333 CHF je ST. *(Weiter offen laut Wochen_Todo 128 und
+   `Status_kurz.tsv`, Stand 10.11.)*
 3. ~~Bottom-Up ist unverändert.~~ *Erledigt 2026-10-29: Komponentenspalte im Bottom-Up ebenfalls in Stücklisten-Einheit.*

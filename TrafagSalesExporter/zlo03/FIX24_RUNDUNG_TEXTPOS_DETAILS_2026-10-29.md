@@ -1,6 +1,6 @@
 # ZLO03 FIX 24: Stückkosten ungerundet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stücklisten-Einheit (2026-10-29)
 
-Stand: 2026-10-30. T76 aktiv, Auftrag `T76K912785`, nicht freigegeben. Alle fünf Testläufe (A bis E) bestanden.
+Stand: 2026-11-12 (Doku-Prüfung: P76-Import nachgeführt); davor 2026-10-30. T76 aktiv, Auftrag `T76K912785`, nicht freigegeben *(überholt: laut Ingo am 2026-11-02 nach P76 importiert, am 10.11. mit der Importliste P76 bestätigt, Wochen_Todo 129)*. Alle fünf Testläufe (A bis E) bestanden.
 
 ## 1. Anlass
 
@@ -46,7 +46,8 @@ PEINH schon beim Laden auf 1 setzt.
 
 ## 5. Offen
 
-1. Freigabe und Import `T76K912785` nach P76 (Ingo).
+1. ~~Freigabe und Import `T76K912785` nach P76 (Ingo).~~ *Erledigt: laut Ingo am 2026-11-02 importiert (Wochen_Todo 129).
+   Die Punkte 2 und 3 sind laut Wochen_Todo 129 (Stand 10.11.) weiter offen.*
 2. Ann-Katrin und Sandro informieren: Werte bei Komponenten mit Preiseinheit > 1 ändern sich (genauer), Bedarf zählt keine
    Textpositionen mehr, Feld „Verbräuche zurück in Tagen“ ist weg.
 3. G4 Mehrstufigkeit: 41019 gegen CS12 (mehrstufig) prüfen.

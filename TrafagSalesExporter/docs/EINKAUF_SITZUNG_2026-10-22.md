@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -143,7 +143,7 @@ Quelle: Teams-Transkript (automatisch, teils unverstaendlich; erhalten sind nur 
 Anlass: Marco bat um eine Auslegeordnung, was zum Lieferantenbewertungs- und Entwicklungstool vorliegt und was es braucht.
 Kein Wortprotokoll, nur Ergebnisse.
 
-- **Ingo braucht weiterhin:** das Word-Dokument von Armin (am 22.10. angekuendigt, bis heute nicht gekommen) und die
+- **Ingo braucht weiterhin:** das Word-Dokument von Armin (am 22.10. angekuendigt, bis heute nicht gekommen; *ueberholt durch 6.2: es braucht kein Word-Dokument*) und die
   Fiori-Lieferantenbewertung mit den gemessenen Kriterien (Liefertreue, Preis, Service, Qualitaet).
 - **Marco hat noch keinen Fiori-Zugriff** (Kacheln nicht zugeordnet) und weiss nicht, welche Transaktionen bisher fuer die
   Lieferantenbewertung genutzt wurden. Er schlaegt vor, das beim Berater zu erfragen (im Transkript unverstaendlich, vermutlich
@@ -195,12 +195,12 @@ anzeigen, braucht sein Dienstkonto Leserechte (Freigabe Alex).
 Schwellenwerte“ (Screenshot). Ob sie nur Materialien oder auch Lieferanten klassifiziert und welche Tabelle die Schwellen
 haelt, klaert die Recherche (das Dashboard liest heute nur eine Material-ABC, `MaraAbc`).
 
-**Termine und Zuarbeit:** Am 01.12. weiss man mehr zu Fiori. Das Word-Dokument fragt Ingo nochmals bei Armin nach.
+**Termine und Zuarbeit:** Am 01.12. weiss man mehr zu Fiori. Das Word-Dokument fragt Ingo nochmals bei Armin nach. *(Ueberholt durch 6.2: es braucht kein Word-Dokument.)*
 
 **SAP-Recherche (Auftrag Ingo „SAP-Tabellen/Transaktionen der Werte rausfinden“):** laeuft nur lesend in T76 (Agent
 sap-t76): `/ITS/CA_MAT_ABC_CU1`, klassische Lieferantenbeurteilung ME61 ff., Felder fuer Liefertreue, Q2-Meldungen, ECC oder
 S/4, Hinweise auf die Fiori-Bewertung. Ergebnis kommt nach `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md`.
-P76 nicht gelesen (keine Freigabe).
+P76 nicht gelesen (keine Freigabe). *(Die Recherche ist abgeschlossen, das Ergebnis steht in 6.3.)*
 
 ### 6.2 Rueckmeldung Armin (Mail an Ingo, 2026-11-12)
 
@@ -209,7 +209,7 @@ Armin beantwortet die offenen Punkte (er nennt es selbst „meine KI-Antwort“)
 | Punkt | Antwort Armin | Folge |
 | --- | --- | --- |
 | Word-Dokument | Die Business-Review-Vorlage ist durch Masken und Raster in V6 abgebildet, **ein Word-Dokument braucht es nicht** | Punkt 3 der Aufgaben (Abschnitt 4) erledigt; fehlen Fachinfos, fragt Ingo nach |
-| SAP-Tabellen/Transaktionen | Kennzahlen stehen in V6; die Quellen (Tabellen, CDS-Views, APIs) sollen **mit den SAP-Spezialisten** bestimmt werden, Einkauf und Qualitaet helfen bei der fachlichen Definition | liegt bei Ingo; Recherche in T76 laeuft (6.1) |
+| SAP-Tabellen/Transaktionen | Kennzahlen stehen in V6; die Quellen (Tabellen, CDS-Views, APIs) sollen **mit den SAP-Spezialisten** bestimmt werden, Einkauf und Qualitaet helfen bei der fachlichen Definition | liegt bei Ingo; Recherche in T76 laeuft (6.1) *(abgeschlossen, Ergebnis in 6.3)* |
 | SAP-Score | vier Kriterien bleiben (Qualitaet, Liefer-/Mengentreue, Preis, Servicegrad); **Fiori-Parametrisierung und Gewichtung in Arbeit mit Lucas und NTT** | weiter abhaengig, Info am 01.12. |
 | Q2-Meldungen | Erweiterung von `QmMeldungSet` sinnvoll; je Lieferant und Material mit Beanstandungstext, Meldungsnummer, Datum und Status, **anzeig- und filterbar** | Teil von Paket 1 |
 | A/B/C | **je Lieferant** nach Einkaufsvolumen, A ca. 70 %, B weitere 20 %, C restliche 10 %; aus dem bestehenden Cache; nicht mit der Material-ABC verwechseln | Teil von Paket 1; der Zeitraum (zwoelf Monate oder gewaehlter Zeitraum, E1) ist damit **nicht** beantwortet |
@@ -252,7 +252,7 @@ T76, P76 nicht gelesen). Kurzfassung:
   Position von gruen auf rot (fuenf echte Positionen gerechnet). Das heutige `EKBESet` liest EKBE ungefiltert ohne
   VGABE/SHKZG und ist dafuer nicht brauchbar.
 * **Q2:** 9'893 Q2-Meldungen in T76, `LIFNUM` immer gefuellt, 99 offen (62 davon aus 2005 bis 2013).
-* **Fiori:** T76 ist **S/4HANA 2023**. Customizing der Fiori-Lieferantenbewertung gepflegt (NTT, 27.10.2026): Pruefllos,
+* **Fiori:** T76 ist **S/4HANA 2023**. Customizing der Fiori-Lieferantenbewertung gepflegt (NTT, 27.10.2026): Prueflos,
   Menge, Zeit, Qualitaetsmeldung je 25 %, **Preis 0 %**; Punkttabellen `MMPUR_ANA_SESCR`/`SESAGR` in T76 noch leer.
 
 **Offen fuer Ingo:** P76 lesen (Fiori-Punkte, Jobs fuer ABC und ME6x, offene Q2) braucht Freigabe; fachlich: Preis 0 % in

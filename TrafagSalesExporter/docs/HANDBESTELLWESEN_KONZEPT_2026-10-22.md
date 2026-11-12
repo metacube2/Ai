@@ -1,10 +1,15 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
-Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** (Abschnitt 6). **Entscheid 22.10. (nach der Einkaufssitzung,
+Stand: 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen; der juengste Inhalt ist vom 2026-10-27).
+Status: **produktiv.** Das Modul ist seit dem 22.10. 13:38 deployed, die Altdaten sind am 22.10. 14:27 importiert (6.4), die
+PHP-Anwendung ist abgeschaltet und der Reiter seit dem 27.10. sichtbar (6.8). Offen: Zugriff und Grundtests der Anwender,
+Bereinigung, Rechnungsbetrag und Mail beim Wareneingang, Bestaetigung der Regeln durch den fachlichen Owner (6.8, 7).
+
+Davor 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
+Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** *(ueberholt, siehe Stand oben)* (Abschnitt 6). **Entscheid 22.10. (nach der Einkaufssitzung,
 mitgeteilt von Ingo): Das Handbestellwesen lebt weiter, aber die Nutzung wird festgehalten** (wer, wann, wie viel),
 Abschnitt 6.1. Altdaten-Import wartet auf den
-MySQL-Dump (Tobias).
+MySQL-Dump (Tobias) *(ueberholt: Dump am 22.10. erhalten, 6.2, und importiert, 6.4)*.
 
 ## 1. Auftrag und Entscheide
 
@@ -127,7 +132,7 @@ herum. Die Bestellnummer erscheint nicht mehr als Browser-Alert, sondern als Hin
 
 | Nr | Punkt | Wer |
 | --- | --- | --- |
-| 1 | MySQL-Dump (Struktur und Daten). Im uebergebenen Ordner liegt keiner, nur das Skript `backup/dbBackup.sh`; es legt Sicherungen auf dem Server unter `…/admin/backup/<JJJJMMTT>/` ab. Dort nachsehen oder auf dem Server `mysqldump` ausfuehren (Passwort von Hand eingeben, nicht im Befehl) | Ingo |
+| 1 | ~~MySQL-Dump (Struktur und Daten).~~ **Erhalten am 22.10. (6.2), importiert am 22.10. 14:27 (6.4).** Urspruenglich: Im uebergebenen Ordner liegt keiner, nur das Skript `backup/dbBackup.sh`; es legt Sicherungen auf dem Server unter `…/admin/backup/<JJJJMMTT>/` ab. Dort nachsehen oder auf dem Server `mysqldump` ausfuehren (Passwort von Hand eingeben, nicht im Befehl) | erledigt |
 | 2 | Fachlicher Owner und Freigabe vor Inbetriebnahme oder Ankuendigung (Einkauf? Finanz?) | Ingo |
 | 3 | Wer bestellt, wer gibt frei, wer bucht Wareneingang; AD-Gruppen oder Kontenliste | Ingo / Owner |
 | 4 | Werden Rechnungsbetrag und Mail beim Wareneingang noch gebraucht? | Owner |
@@ -163,6 +168,8 @@ Regeln, wie umgesetzt (zur Bestaetigung durch den fachlichen Owner):
   jeden bestellen).
 - **Limit:** Liegt der Wert ueber der Berechtigung des Bestellers, muss eine Person derselben Kostenstelle mit genuegend
   Berechtigung gewaehlt werden (wie `checkberechtigung.php`), jetzt auf dem Server geprueft. Status „Freigabe offen“.
+  *(Ueberholt am 2026-10-27, vermerkt am 2026-11-12: Freigabe wie PHP durch jede aktive Person mit genuegend Limit; die strenge
+  Regel „nur dieselbe Kostenstelle“ gilt nur mit `Handbestellwesen:FreigabeNurGleicheKostenstelle` = `true`, Abschnitt 6.8.)*
 - **Freigeben** darf nur die gewaehlte Person oder ein Admin. **Neu:** Wareneingang erst nach der Freigabe.
 - **Wareneingang** buchen Besteller, Mitarbeiter mit Haken „Wareneingang“ oder Admin; die Bestellung geht ins Archiv.
 - **Loeschen** nur ohne Wareneingang, durch Besteller oder Admin; geloescht wird nicht physisch, sondern mit Status.

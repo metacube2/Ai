@@ -1,6 +1,6 @@
 # ZC23: neue Spalte Materialanteil
 
-Stand: 2026-11-02 (Nachtrag Rechenweg Phase 2 am Ende); 2026-10-29 Transportstand nachgeführt, Nachträge vom 19.10. und 28.10. am Ende. *Überholt am 2026-10-29:* „Transport bereit, Freigabe und Import P76 offen“: `T76K912736` ist am 16.10. von Ingo nach P76 importiert, siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7 und Wochen_Todo Zeile 104.
+Stand: 2026-11-12 (Doku-Pruefung: Phase 2 als gebaut vermerkt, der Stand dazu steht im Bauplan); davor 2026-11-02 (Nachtrag Rechenweg Phase 2 am Ende); 2026-10-29 Transportstand nachgeführt, Nachträge vom 19.10. und 28.10. am Ende. *Überholt am 2026-10-29:* „Transport bereit, Freigabe und Import P76 offen“: `T76K912736` ist am 16.10. von Ingo nach P76 importiert, siehe `saptasks/shopfloor_sap/NOTES.md` Abschnitt 7 und Wochen_Todo Zeile 104.
 Stand 2026-10-15, 14:00: **In T76 fertig, Transport `T76K912736` bereit (Freigabe und Import P76: Ingo).** Schnelle Fassung mit Schalter
 (Entscheid Ingo: a + b) in `ZM_OFFENE_KDAUF` aktiv, siehe „Beschleunigung und Schalter“.
 *Überholt:* Stand 13:30: **In T76 eingebaut und geprüft (Freigabe Ingo):** Transport `T76K912736` mit Struktur, Tabelle und
@@ -232,6 +232,11 @@ verwendender Nummern, Summe exakt. Feinheit ueber das Aufklappen (Warengruppe od
 Produktivkopie 2026-10-28 (2026 bis heute, Netwr roh): FP_DW-HYBRID 4,50 Mio., groesste Warengruppe 10.08.00 mit 0,82 Mio.;
 Summe 33,77 Mio. = Gesamteinkauf; „ohne Verwendung“ 3,32 Mio. (inkl. Textbestellungen). Laufzeit des Verwendungsteils 4 s.
 
+*(Ueberholt, Vermerk vom 2026-11-12: Phase 2 ist seit dem 2026-11-02 gebaut und produktiv (11:18, `f36e1e7`), aber anders
+als im folgenden Absatz skizziert: bestaetigte ZC23-Menge mal ZLO03-Top-Down-Menge mal Stueckkosten ueber das neue Set
+`ZloTopDownSet`; `materialanteil_rechnen` in ZC23 wurde dafuer nicht erweitert. Stand und Rechnung:
+`BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md`.)*
+
 **Phase 2, offen:** Basis „Materialanteil aus der Standardkalkulation“ wie ZC23 (Umsatz oder offene Auftraege x Material
 je Stueck). Das Dashboard hat dafuer keine Mengen aus der Kalkulation; noetig ist eine Erweiterung von
 `materialanteil_rechnen` in ZC23 (je Zukaufteil die Warengruppe mitschreiben, Summe je Produktgruppe x Warengruppe) und ein
@@ -262,7 +267,7 @@ nicht verglichen werden, ohne die Basis anzuschreiben. Abweichungen zum Dashboar
 Bestelldatum. Fuer eine Automatik braucht es ZC23 je VerkNr und Zeitraum plus den ZLO03-Top-Down-Bedarf je Komponente
 mit Materialgruppe und Standardpreis. Fuer die Werte wichtig: ZLO03 rechnet seit FIX 23 (in P76 seit 29.10.) in der
 Stuecklisten-Einheit; die ungerundeten Stueckkosten und Textpositionen ausserhalb des Bedarfs kommen erst mit FIX 24
-(`T76K912785`, Import offen). Ein Handergebnis aus P76 vor diesem Import kann bei Teilen mit Preiseinheit ueber 1 abweichen.
+(`T76K912785`, Import offen; *ueberholt: laut Ingo am 2026-11-02 nach P76 importiert*). Ein Handergebnis aus P76 vor diesem Import kann bei Teilen mit Preiseinheit ueber 1 abweichen.
 
 **Entscheide Ingo 2026-11-02 fuer Phase 2:**
 - Einkaufsdisponenten **001 bis 006**: 006 ist ein neuer, wichtiger Disponent.
@@ -274,3 +279,7 @@ Materialgruppe -> Einkaufsteil** (Summe Standardpreis x Bedarfsmenge). Der Schal
 Einstiege steht seit `9a26acc` ebenfalls auf 001 bis 006. **Bauplan:** `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md` (Entscheid Ingo: erst Bauplan). Noch offen vor dem Bau: woher das Dashboard Verkaufsmenge je VerkNr und Stuecklistenbedarf je
 Komponente bekommt (heute nicht im Cache: ZC23 je VerkNr mit Termin bestaetigt und Absagegrund, ZLO03-Bedarfsmenge). Vor dem Bau mit dem Anfragenden klaeren: ob Disponent 006 dazugehoert, und ob „Termin bestaetigt“
 (auch bereits gelieferte Positionen) die gewuenschte Basis ist.
+
+*(Ueberholt, Vermerk vom 2026-11-12: „Noch offen vor dem Bau“ gilt nicht mehr, Phase 2 ist seit dem 2026-11-02 gebaut
+(Bauplan, Kopf). Disponent 006 und die Basis „Termin bestaetigt“ hat Ingo am 02.11. entschieden (Entscheide oben); der
+Abgleich einer Produktgruppe mit Armin steht noch aus, Wochen_Todo 123.)*

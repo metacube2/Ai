@@ -1,7 +1,11 @@
 # ZLO03: Ergebnisse haengen von der Tageszeit ab (Meldung Ann-Katrin Michel)
 
-Stand: 2026-10-13. Status: **ungeloest, Ursache nicht belegt.** Bisher nur Auswertung der
+Stand: 2026-11-12 (Doku-Pruefung: P76-Import von FIX 12 nachgefuehrt); davor 2026-10-13. Status: **ungeloest, Ursache nicht belegt.** Bisher nur Auswertung der
 Meldung und der Jobliste; noch keine Quelltextpruefung in P76.
+
+*(Vermerk vom 2026-11-12: Die Ursache ist weiter nicht belegt. `T76K912742` (FIX 12, Kandidat Satzreihenfolge/Textposition)
+ist laut Ingo am 29.10. nach P76 importiert, die Importliste P76 vom 10.11. bestaetigt den Import. Naechster Schritt laut
+Wochen_Todo 94: Ann-Katrin fragen, ob die Abweichung seit dem Import noch auftritt.)*
 
 ## 1. Meldung
 

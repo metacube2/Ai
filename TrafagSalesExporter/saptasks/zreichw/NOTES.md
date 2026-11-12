@@ -1,6 +1,6 @@
 # ZREICHW Reichweitenanalyse (`Z_KOI_REICHW_TURBO`)
 
-Stand: 2026-11-03 (schnelle Fassung ins Original uebernommen, Abschnitt 6; davor 2026-11-02 abends Uebergabe in Abschnitt 5)
+Stand: 2026-11-12 (Doku-Pruefung: P76-Import und Abschluss vom 03.11. im Kopf und an den Offen-Stellen vermerkt: `T76K912799` ist am 2026-11-03 nach P76 importiert und dort gelesen, das Thema ist laut Ingo abgeschlossen, siehe Ende von Abschnitt 6); davor 2026-11-03 (schnelle Fassung ins Original uebernommen, Abschnitt 6; davor 2026-11-02 abends Uebergabe in Abschnitt 5)
 
 ## 1. Ausgangslage
 
@@ -37,7 +37,7 @@ Befund (T76 per RFC, P76 lesend in eigener GUI-Sitzung):
   „Reichweitenanalyse“, Geraet `0003`, Format `X_65_255`; keine Zeile in `TSP02`. Alle 29 Spalten stehen im Spool
   (Breite 237 Zeichen, mit Kurzueberschriften wie beim Druck aus dem Grid).
 
-**Offen:** Ingo gibt `T76K912799` frei und importiert nach P76. Antwort an die anfragende Person: Haken „Nur
+**Offen:** *(erledigt am 2026-11-03, siehe Nachtrag und Abschluss am Ende von Abschnitt 6)* Ingo gibt `T76K912799` frei und importiert nach P76. Antwort an die anfragende Person: Haken „Nur
 Spoolauftrag“ setzen, die Liste steht danach in SP01 bzw. „Eigene Spoolauftraege“ (SP02).
 
 ## 3. Befunde zur Optimierung (gelesen am 02.11., noch nicht umgesetzt)
@@ -121,6 +121,8 @@ Objekte geloescht werden.
 ## 5. Weitermachen (Uebergabe 02.11. abends, Ingo schliesst die Sitzung)
 
 *Schritte 1 und 2 am 2026-11-03 erledigt (Abschnitt 6). Offen bleiben 3 (Freigabe/Import P76), 4 (Teams-Antwort) und 5 (Fachabteilung).*
+*(Ueberholt, Vermerk vom 2026-11-12: Auch Schritt 3 ist seit dem 2026-11-03 erledigt, und Ingo hat das Thema am selben Tag als
+erledigt gemeldet; Schritt 5 bleibt bei der Fachabteilung. Siehe Nachtrag und Abschluss am Ende von Abschnitt 6.)*
 
 **Stand der Systeme**
 
@@ -191,7 +193,7 @@ Ausgefuehrt in T76 in einer eigenen Sitzung (Verbindung 1, Sitzung 1; Ingos Sitz
    `Z_KOI_REICHW` und `Z_KOI_REICHW_TURBO`. Die Quelltexte bleiben in diesem Ordner. Loeschskript:
    `werkzeuge/se38loeschen.vbs` (erlaubt nur diese zwei Namen, nie Sitzung 0).
 
-**Offen:** Ingo gibt `T76K912799` frei und importiert nach P76; danach P76 lesend pruefen (Selektionsbild mit Haken,
+**Offen:** *(erledigt am 2026-11-03, siehe Nachtrag und Abschluss direkt darunter)* Ingo gibt `T76K912799` frei und importiert nach P76; danach P76 lesend pruefen (Selektionsbild mit Haken,
 Laufzeit) und die Teams-Antwort aus Abschnitt 5 senden. Die Befunde 5 bis 10 (Abschnitt 3) bleiben bei der
 Fachabteilung. Fuer einen spaeteren Vergleich gegen den alten Stand liegt `Z_KOI_REICHW_TURBO_neu.abap` hier.
 

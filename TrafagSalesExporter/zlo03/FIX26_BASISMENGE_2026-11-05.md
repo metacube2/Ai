@@ -2,8 +2,8 @@
 
 *Nachtrag 2026-11-09:* `T76K912839` (FIX 26 und 27) von Ingo nach P76 importiert; Einkauf-Delta 11:24–13:29: `ZloTopDownSet` liefert fuer E11221 → E11283 0.000211 ROL (Wert 0.26 CHF), Materialanteil HW_ZUKAUFSORT 1.27 Mio. auf 3.67 Mio. Umsatz (34.7 %) statt 957 Mio.; Dichtewaechter 19.0 % und Hybrid 13.0 % unveraendert.
 
-Stand: 2026-11-05. T76 aktiv, Auftrag **`T76K912839`** (Aufgabe `T76K912840`), nicht freigegeben. Alle Tests in T76 bestanden.
-Freigabe und Import nach P76 macht Ingo. Zurück: `zlo03/CLAUDE.md`. Befund: `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md`.
+Stand: 2026-11-12 (Doku-Prüfung: Stand-Zeile und Abschnitt 8 an den Nachtrag vom 09.11. angeglichen); davor 2026-11-05. T76 aktiv, Auftrag **`T76K912839`** (Aufgabe `T76K912840`), nicht freigegeben *(überholt: seit dem 2026-11-09 in P76, siehe Nachtrag oben)*. Alle Tests in T76 bestanden.
+Freigabe und Import nach P76 macht Ingo *(erledigt am 2026-11-09)*. Zurück: `zlo03/CLAUDE.md`. Befund: `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md`.
 
 ## 1. Ursache (Kurzfassung des Befunds)
 
@@ -126,9 +126,11 @@ umfasste nur STKO/MAST); ist das Feld dort leer oder anders belegt, teilt FIX 26
 
 ## 8. Offen (Ingo)
 
-1. `T76K912839` freigeben und nach P76 importieren.
+1. ~~`T76K912839` freigeben und nach P76 importieren.~~ *Erledigt am 2026-11-09 (Nachtrag oben).*
 2. Nach dem Import in P76: Einkauf-Lauf neu starten (Tabelle `PurchasingMaterialShareBom` wird ersetzt) und HW_ZUKAUFSORT prüfen.
    Erwartet: Wafer je Chip ≈ CHF 0.26 bis 0.86, HW_ZUKAUFSORT rund CHF 1.27 Mio. statt 957 Mio. (Befund 3.5).
+   *Erledigt am 2026-11-09: Einkauf-Delta 11:24–13:29, HW_ZUKAUFSORT 1.27 Mio. auf 3.67 Mio. Umsatz (Nachtrag oben).*
 3. Ann-Katrin und Sandro: Mengenformat in der Excel-Spalte („1“ statt „1.000“), Chips zeigen Wafer jetzt als Bruchteil einer Rolle.
 4. FP_THERMOST (Abschnitt 6): eigener Fix nach Entscheid; Selbststücklisten H20201/H17500 fachlich klären.
-5. `$TMP`-Testreport `Z_KOI_ZLO_FIX26_TEST` in T76 bei Gelegenheit löschen.
+5. `$TMP`-Testreport `Z_KOI_ZLO_FIX26_TEST` in T76 bei Gelegenheit löschen. *Erledigt am 2026-11-10 (`d252ee0`, Wochen_Todo 152);
+   ob die Testjobs vom 05.11. und 09.11. aufgeräumt sind, ist nicht belegt.*

@@ -1,6 +1,6 @@
 # ZLO03 FIX 22: Disponent und Warengruppe im Top-Down (2026-10-29)
 
-Stand: 2026-10-29. T76 aktiv, Auftrag `T76K912777`, nicht freigegeben.
+Stand: 2026-11-12 (Doku-Pruefung: P76-Import nachgefuehrt); davor 2026-10-29. T76 aktiv, Auftrag `T76K912777`, nicht freigegeben *(ueberholt: laut Ingo am 2026-10-29 nach P76 importiert, Wochen_Todo 124)*.
 
 ## 1. Wunsch
 
@@ -34,5 +34,6 @@ Falle beim Lauf: Mit Material `8475*` meldet ZLO03 „Keine Daten gefunden“; `
 
 ## 4. Offen
 
-1. Freigabe und Import `T76K912777` nach P76 (Ingo), **nach** `T76K912742` und `T76K912752`.
-2. Rueckmeldung an Armin, sobald der Import durch ist.
+1. ~~Freigabe und Import `T76K912777` nach P76 (Ingo), **nach** `T76K912742` und `T76K912752`.~~ *Erledigt: laut Ingo am
+   2026-10-29 importiert (Wochen_Todo 124, Eintrag vom 30.10.).*
+2. Rueckmeldung an Armin, sobald der Import durch ist. *(Weiter offen laut Wochen_Todo 124 und `Status_kurz.tsv`, Stand 10.11.)*

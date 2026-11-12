@@ -1,6 +1,9 @@
 # ZLO03 FIX 27: Excel zeigt die alte Menge je Basismenge und zusaetzlich die Menge je 1 Stueck (2026-11-09)
 
-Stand: 2026-11-09. T76 aktiv, im **selben Auftrag `T76K912839`** wie FIX 26 (Aufgabe `T76K912840`), nicht freigegeben.
+Stand: 2026-11-12 (Doku-Pruefung: P76-Import nachgefuehrt); davor 2026-11-09. T76 aktiv, im **selben Auftrag `T76K912839`** wie FIX 26 (Aufgabe `T76K912840`), nicht freigegeben.
+*(Ueberholt, Vermerk vom 2026-11-12: Der Auftrag ist am 2026-11-09 mit FIX 26 nach P76 importiert worden
+(`FIX26_BASISMENGE_2026-11-05.md`, Nachtrag). Die Excel-Spalten „je 1 Stk“ sind in P76 noch nicht geprueft, und Ann-Katrin und
+Sandro sind noch nicht informiert (Wochen_Todo 152). Der Testreport `Z_KOI_ZLO_FIX26_TEST` ist seit dem 10.11. in T76 geloescht.)*
 Zurueck: `zlo03/CLAUDE.md`. Grundlage: `FIX26_BASISMENGE_2026-11-05.md`.
 
 ## 1. Auftrag

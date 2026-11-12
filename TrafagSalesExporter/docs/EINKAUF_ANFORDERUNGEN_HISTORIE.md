@@ -1,6 +1,6 @@
 # Einkaufs-Dashboard: Anforderungen, Korrekturen und offene Punkte
 
-Stand: 2026-10-29 (Ueberholt-Vermerke in 3, 4 und 5 nachgetragen); Inhalt vom 2026-08-17, Lagerwert-Abschnitt in 3 nachgetragen am 2026-09-28. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
+Stand: 2026-11-12 (Doku-Pruefung: Vermerke zu Reiter Spend, Spend-Matrix, M7 und Delta-Laufzeit); davor 2026-10-29 (Ueberholt-Vermerke in 3, 4 und 5 nachgetragen); Inhalt vom 2026-08-17, Lagerwert-Abschnitt in 3 nachgetragen am 2026-09-28. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
 (Formel-Review 2026-07-06, Umsetzungsplan und Vorbereitung 2026-07-09, Review Marco
 2026-07-10, Einkaufssitzungen 2026-07-23 und 2026-07-30).
 
@@ -21,6 +21,11 @@ Der Reiter **Spend** ist am 2026-07-30 fachlich abgenommen. Marco hat live am
 | Top-Warengruppe | 3.7 Mio. | „das koennte sehr stimmen" |
 
 Marcos Leitplanke „eine Sicht nach der anderen" ist damit fuer Spend erfuellt.
+
+*Vermerk vom 2026-11-12: Den Reiter Spend gibt es in dieser Form nicht mehr. Seit dem 2026-10-28 stand sein Inhalt unter dem
+Spend-Aufriss, und der Reiter war ausgeblendet (`45b2158`, `c501053`). Seit dem Deploy vom 2026-11-05 12:37 (`785325f`) sind
+auch dieser Block und die Matrix Lieferant / Jahr entfernt, weil sie doppelt zu den Einstiegen des Aufrisses waren; die Route
+`/einkauf/spend` zeigt den Spend-Aufriss (`docs/rag/PURCHASING.md`, Kopf).*
 
 ## 2. Die SAP-Semantikfallen (dauerhaft gueltig)
 
@@ -50,7 +55,7 @@ Periode ohne Obergrenze auf heute.
 | K4 | Kontrakte/Restverpflichtung ist keine Kopie des offenen Bestellwerts mehr |
 | K5 | KPI-Label vereinheitlicht: „Bestellungen im Zeitraum" statt „Offene Bestellungen" |
 | K6 | Jahresachse nicht mehr hart auf 2026 begrenzt |
-| M7 | Endlieferungskennzeichen `ELIKZ` wirkt in der Offen-Logik |
+| M7 | Endlieferungskennzeichen `ELIKZ` wirkt in der Offen-Logik *(Berichtigung, vermerkt am 2026-11-12, ISS-031: Der Filter griff bis zum 2026-10-05 nie, weil `Elikz` im Cache `True`/`False` statt `X` ist; behoben und produktiv seit 2026-10-06 10:16, offener Bestellwert danach rund 12.8 statt 28.7 Mio CHF.)* |
 | M8 | Offene Menge mit demselben Positionsfilter wie der offene Wert |
 | M9 | Preisentwicklungs-Chart nicht mehr Minimum ueber alle Artikel |
 
@@ -66,7 +71,7 @@ Periode ohne Obergrenze auf heute.
 | Punkt | Bemerkung |
 | --- | --- |
 | Reiter `Spend-Aufriss` mit Perspektiven | 5 Perspektiven, Drilldown statt fester Hierarchie |
-| Dritte Ebene direkt in der Spend-Matrix | Entscheid Marco gegen den Verweis auf einen eigenen Reiter |
+| Dritte Ebene direkt in der Spend-Matrix | Entscheid Marco gegen den Verweis auf einen eigenen Reiter. *Ueberholt seit dem Deploy vom 2026-11-05 12:37 (`785325f`), vermerkt am 2026-11-12: Die Matrix ist entfernt, die dritte Ebene zeigt der Spend-Aufriss (Einstieg Lieferant)* |
 | Spend nach Waehrung | eigener Balkenblock, CHF-bewertet plus Originalsumme |
 | Waehlbare Einstiegsdimension | beantwortet die offene Frage vom 2026-07-24 |
 | Delta klassifiziert den ganzen Cache | **Nachpflege wirkt jetzt ohne Full Load** |
@@ -97,7 +102,7 @@ Der Full Load vom 2026-07-24 lieferte: `SupplierCountry` 100 % gefuellt, `MaraAb
 | # | Punkt | Aufwand | Warum |
 | --- | --- | --- | --- |
 | 1 | **Laeuft das naechtliche Delta?** `MAX(Bedat)` gegen den Tag des letzten Full Loads pruefen | Minuten | Greift das Delta nicht, stehen alle Zahlen auf dem alten Stand — das schlaegt jeden anderen Punkt. *Ueberholt: der Einkauf-Lauf ist seit 2026-09-28 wieder nachgewiesen; offen bleibt nur die Server-Einstellung (ISS-017), siehe `docs/EINKAUF_LAGERWERT_2026-08-18.md` 13.6/13.7* |
-| 2 | Delta-Meldung im Log ansehen: Laufzeit und Zahl nachklassifizierter Cachezeilen | Minuten | die einzige ungemessene Groesse am Delta-Fix |
+| 2 | Delta-Meldung im Log ansehen: Laufzeit und Zahl nachklassifizierter Cachezeilen | Minuten | die einzige ungemessene Groesse am Delta-Fix. *Teilweise ueberholt, vermerkt am 2026-11-12: Die Laufzeit ist belegt (21.10. 12:29 bis 13:12, Wochen_Todo 98; 09.11. 11:24 bis 13:29, `zlo03/FIX26_BASISMENGE_2026-11-05.md`); fuer die Zahl der nachklassifizierten Zeilen hat die Doku-Pruefung keinen Beleg gefunden* |
 | 3 | ZLO03 mit mehreren Nummern gegen P76 laufen lassen | Minuten | Beweis, dass der Bypass greift. Die ABAP-Ursache ist **nicht** verifiziert |
 | 4 | ZLO03-Plausibilisierung Bottom-Up abschliessen | mittel | Vergleich SAP gegen Web ist begonnen, nicht beendet. Solange Marco zweifelt, nutzt er das Werkzeug nicht |
 | 5 | Wareneingangsdatum: echter Bedarf oder Randbemerkung? | gross | Braucht `EKBE`/`MSEG` als neue SAP-Quelle. **Nicht ohne explizite Priorisierung anfangen** |

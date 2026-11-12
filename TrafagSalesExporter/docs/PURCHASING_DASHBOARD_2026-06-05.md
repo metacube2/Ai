@@ -198,7 +198,7 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
 - EKKO, EKPO und EKET werden per SAP/OData in lokale Cache-Tabellen geladen.
 - Das Cockpit liest zuerst den Cache und nutzt nur noch als Fallback eine begrenzte Live-Probe, falls noch kein Cache vorhanden ist. **Ueberholt seit 2026-09-29 (`c1fdfa2`, C1): keine Live-Stichprobe mehr als CHF- oder Kontraktkennzahl, nur ein Hinweis auf den regulaeren Ladelauf.**
 - Seit 2026-06-18 ist der Zeitraumfilter standardmaessig auf 2020 bis aktuelles Jahr ausgerichtet. **Ueberholt seit 2026-10-13 (`4b9ebb1`): Standard ist jetzt Januar des laufenden Jahres bis heute; der Knopf „2020 bis heute“ zeigt die Mehrjahressicht.**
-- Seit 2026-06-18 gibt es eine Excel-aehnliche Kaskadierungstabelle Lieferant x Jahr mit Jahresspalten, Gesamtsumme und Top-down-Sortierung.
+- Seit 2026-06-18 gibt es eine Excel-aehnliche Kaskadierungstabelle Lieferant x Jahr mit Jahresspalten, Gesamtsumme und Top-down-Sortierung. **Ueberholt seit dem Deploy vom 2026-11-05 12:37 (`785325f`), vermerkt am 2026-11-12: Die Matrix steht nicht mehr auf der Seite, ihre Abfragen sind seit 2026-11-10 entfernt (`19ca282`); Lieferant -> Warengruppe -> Material zeigt der Spend-Aufriss (Einstieg Lieferant).**
 - Spend im aktuellen Jahr wird pro Lieferant separat analysiert.
 - Bereits beschafft/gebucht und offene Bestellungen/Zulauf werden getrennt visualisiert.
 - Geloeschte Positionen (`LOEKZ`) und Materialstatus (`MARA-MSTAE`) sind als Filterdimensionen vorgesehen; `MSTAE` wirkt, sobald das Feld im Cache gefuellt ist.
@@ -1286,7 +1286,9 @@ bei jedem Seitenwechsel erneut aus. Produktiv gemessen vor der Aenderung: `/eink
 `9.2 s`, `/einkauf/aufriss` rund `9.8-11.1 s` auch bei wiederholten Aufrufen.
 
 `PurchasingDashboardSnapshotCache` haelt den vollstaendigen Snapshot jetzt filterabhaengig
-fuer 15 Minuten, begrenzt den Bestand auf 32 Filter und buendelt parallele Erstaufrufe per
+fuer 15 Minuten *(ueberholt seit 2026-09-28, vermerkt am 2026-11-12: der Snapshot gilt 60 Minuten, ein abgelaufener Stand
+wird sofort geliefert und im Hintergrund neu gerechnet, beim Start wird vorgewaermt; `docs/PLATTFORM_TEMPO_2026-09-28.md`,
+`Services/PurchasingDashboardSnapshotCache.cs` `Lifetime`)*, begrenzt den Bestand auf 32 Filter und buendelt parallele Erstaufrufe per
 Single-Flight. Eine erfolgreiche Full- oder Delta-Aktualisierung invalidiert alle Snapshots.
 Die aufrufseitige Abbruchanforderung beendet nur das Warten des einzelnen Aufrufers, nicht
 die gemeinsam laufende Berechnung. Eine Generation verhindert ausserdem, dass ein waehrend

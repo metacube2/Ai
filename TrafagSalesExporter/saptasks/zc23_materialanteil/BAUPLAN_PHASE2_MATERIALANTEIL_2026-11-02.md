@@ -1,12 +1,12 @@
 # Bauplan Phase 2: Materialanteil je Produktgruppe nach Materialgruppe
 
-Stand: 2026-11-02, Bauplan, Entscheide Ingo zu F1/F2 und eigene Tabelle am Ende von Abschnitt 4. **Nachtrag 2026-11-02 11:15: gebaut.**
+Stand: 2026-11-12 (Doku-Pruefung: erster Einkauf-Lauf gelaufen, F3 erledigt, Tabellennamen und Zeitfenster wie im Code); davor 2026-11-02, Bauplan, Entscheide Ingo zu F1/F2 und eigene Tabelle am Ende von Abschnitt 4. **Nachtrag 2026-11-02 11:15: gebaut.**
 SAP-Schritte 1 bis 3 in T76 aktiv im Auftrag `T76K912785` (ZLO03 FIX 25, `ZSTR_ZLO_TOPDOWN`, MPC/DPC, Caches geleert), geprueft mit
 41019 (`zlo03/FIX25_APP_EXPORT_2026-11-02.md`); Dashboard-Schritte 4 bis 6 in `d6c0287` (Lader im Einkauf-Lauf mit Probe vor dem
 Lesen, eigene Tabelle `PurchasingMaterialShare.razor`, roter Knopf, Texte, Tests 1325/1325), deployed 2026-11-02 11:18 (`f36e1e7`). F3 hat sich erledigt: FIX 25 liegt im
 selben Auftrag wie FIX 24. `T76K912785` laut Ingo am 2026-11-02 nach P76 importiert; Caches in P76 auf `trasp76s` geleert (SM51 zeigte nur diese Instanz),
 P76-Gateway-Client: `ZloTopDownSet` 200. Offen:
-erster Einkauf-Lauf, Abgleich einer Produktgruppe mit Armin, Laufzeit in P76 messen. Auftrag Ingo „erst Bauplan“. Grundlage: Rechenweg von Armin (Nachtrag 2026-11-02 in
+~~erster Einkauf-Lauf~~ *(gelaufen; am 2026-11-09 nach FIX 26 bestaetigt, HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio., Wochen_Todo 123)*, Abgleich einer Produktgruppe mit Armin, Laufzeit in P76 messen. Auftrag Ingo „erst Bauplan“. Grundlage: Rechenweg von Armin (Nachtrag 2026-11-02 in
 `NOTES.md`), Entscheide Ingo vom 2026-11-02, Quelltexte im Repo (gelesen, nicht in SAP gemessen). Zurueck: `NOTES.md`.
 
 ## 1. Was gerechnet wird
@@ -32,7 +32,7 @@ rot markiertem Knopf, drei Stufen wie in Armins Text.
 | ZC23 `ZM_OFFENE_KDAUF`: „Termin bestaetigt“ = `S_MBDAT` auf `VBEP-EDATU`, Absagegrund `P_ABGRU` (leerer Bereich filtert nichts) | P76 | Schritt 1 |
 | ZC23 waehlt **ohne Liefer- oder Fakturastatus** (`lfrel = 'X'`, `bmeng <> 0`); ein vergangener Zeitraum enthaelt also auch gelieferte und fakturierte Positionen (aus dem Code gelesen, nicht mit Daten belegt) | P76 | Basis „Termin bestaetigt“ passt |
 | `Zc23Set` in `ZPOWERBI_EINKAUF_SRV` (SUBMIT mit `P_APP`, Transport `T76K912738`, P76 seit 16.10.): Pflichtfilter Werk, Datvon/Datbis (hoechstens 366 Tage), nur EQ-Filter; liefert je **Einteilung** u. a. `Matnr`, `Bmeng`, `Netwr1`, `Standardpreis`, `Dispo`, `DispoDes` (Produktgruppe), `Abgru` | P76 | Schritt 1, Absagegrund im Dashboard filtern, je VerkNr summieren |
-| ZLO03 `Z_ZLO03_TURBO2` (FIX 24): Top-Down liefert je Komponente `idnrk`, `dispo`, `matkl`, `stueckkosten`, Menge je 1 VerkNr ueber alle Stufen (`COLLECT`) | T76 FIX 24, P76 bis FIX 23 | Schritt 2, aber nur als Excel: Kern `FORM process_main` fuellt globale Tabellen und laedt direkt herunter, kein OData, kein Memory-Export |
+| ZLO03 `Z_ZLO03_TURBO2` (FIX 24): Top-Down liefert je Komponente `idnrk`, `dispo`, `matkl`, `stueckkosten`, Menge je 1 VerkNr ueber alle Stufen (`COLLECT`) | T76 FIX 24, P76 bis FIX 23 *(Stand 2026-11-10 laut `projektmanagement/Status_kurz.tsv`: P76 bis FIX 27)* | Schritt 2, aber nur als Excel: Kern `FORM process_main` fuellt globale Tabellen und laedt direkt herunter, kein OData, kein Memory-Export |
 | `ZSTR_LZCODE_USAGESet` (alter Webservice `ZM_LZCODE20_OPT`): Top-Down Vknr, Kompnr, Menge, Stueckkosten | Stand P76 ungeprueft | **nicht** geeignet: ohne Disponent und Warengruppe der Komponente, alte Logik ohne FIX 23/24 (Einheit, Rundung) |
 | Dashboard: Einstieg „Produktgruppe nach Verwendung : Warengruppe“ (Phase 1) | produktiv | Vorlage fuer Darstellung und Stufen; Basis dort Einkaufsvolumen |
 | Dashboard-Caches | — | kein ZC23-Cache; `PurchasingComponentDispoCache` ohne Mengen; `MaterialUsageCache` nur fuer Nummern aus der Stuecklistenanalyse |
@@ -62,6 +62,9 @@ Abgleich mit Armin klaeren (Frage F1).
    je VerkNr und Monat `Bmeng` summieren -> neue Tabelle `PurchasingZc23Cache`. Danach fuer die VerkNr mit Menge `ZloTopDownSet` in
    Bloecken -> `PurchasingBomDemandCache` (VerkNr, Komponente, Menge je 1 VerkNr, Disponent, Warengruppe, Stueckkosten).
    Schreibt nur bei vollstaendigem Lauf (wie die bestehenden Caches).
+   *(Abweichend umgesetzt, Vermerk vom 2026-11-12: Die Tabellen heissen `PurchasingMaterialShareSales` und
+   `PurchasingMaterialShareBom`; geladen wird nicht nur das laufende Jahr, sondern das Monatsfenster Januar des Vorjahres
+   bis Dezember des laufenden Jahres, `Services/PurchasingMaterialShareLoader.cs`.)*
 5. **Neuer, eigener Aufriss „Materialanteil je Produktgruppe“** als aufklappbare Tabelle in einer **eigenen Komponente** (Entscheid
    Ingo 2026-11-02: der bestehende Spend-Aufriss bleibt unveraendert, falls etwas nicht passt). Ein rot markierter Knopf im Kopf des
    Spend-Aufrisses oeffnet ihn; `PurchasingSpendExplorer.razor` bekommt nur diesen Knopf, keine neue Perspektive in seiner Logik. Stufen Produktgruppe -> Materialgruppe -> Einkaufsteil, Zeitraum des Aufrisses auf „Termin
@@ -85,7 +88,7 @@ Abgleich mit Armin klaeren (Frage F1).
 | F3 | Erst nach dem P76-Import von FIX 24 bauen (ungerundete Stueckkosten, Textpositionen)? Empfehlung: ja | Ingo |
 
 **Entscheide Ingo 2026-11-02:** F1 ja, Menge = bestaetigte ZC23-Menge x Stueckliste, die Abweichung zu Armins Excel (Verbrauch) ist
-gewollt. F2 ja, die Summe ueber alle Stuecklistenstufen reicht. Darstellung als eigene, aufklappbare Tabelle (Schritt 5). F3 offen.
+gewollt. F2 ja, die Summe ueber alle Stuecklistenstufen reicht. Darstellung als eigene, aufklappbare Tabelle (Schritt 5). F3 offen. *(Ueberholt: F3 hat sich erledigt, FIX 25 liegt im selben Auftrag wie FIX 24, siehe Kopf.)*
 
 ## 5. Aufwand (Schaetzung)
 

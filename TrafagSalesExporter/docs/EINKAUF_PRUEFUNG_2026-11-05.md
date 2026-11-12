@@ -1,6 +1,6 @@
 # Einkauf: Funktionspruefung im Produktivdashboard (2026-11-05)
 
-Stand: 2026-11-05 (Nachtrag am selben Tag: F2, F3, F4, F6, F8, F9 und Teile von Punkt 10 im Code behoben, Commit `6ab94a7` als `01ab4b9` uebernommen und **deployed 2026-11-05 11:48 (`a17d623`)**, im Browser bestaetigt (F3 Stueckpreis CHF 1.13 mit Hinweis ohne Vorjahr, F8 „SAP-Daten geladen“) *(ueberholt: „nicht deployed“)*; F5 geprueft, Befund unten; F1 und F7 offen). Auftrag Ingo: „kannst du mal die funktionen pruefen wie gestern hr ... das auch fuer einkauf“.
+Stand: 2026-11-12 (Doku-Pruefung: F1 ist fuer den Wafer-Fall behoben, FIX 26 und 27 (`T76K912839`) sind seit dem 2026-11-09 in P76, das Einkauf-Delta vom 09.11. zeigt HW_ZUKAUFSORT mit 1.27 Mio. statt 957 Mio.; offen bleiben FP_THERMOST., der Verdacht FP_FROSTI und F7); davor 2026-11-05 (Nachtrag am selben Tag: F2, F3, F4, F6, F8, F9 und Teile von Punkt 10 im Code behoben, Commit `6ab94a7` als `01ab4b9` uebernommen und **deployed 2026-11-05 11:48 (`a17d623`)**, im Browser bestaetigt (F3 Stueckpreis CHF 1.13 mit Hinweis ohne Vorjahr, F8 „SAP-Daten geladen“) *(ueberholt: „nicht deployed“)*; F5 geprueft, Befund unten; F1 und F7 offen). Auftrag Ingo: „kannst du mal die funktionen pruefen wie gestern hr ... das auch fuer einkauf“.
 Geprueft am 2026-11-05 um 10:28 im Chrome auf `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/einkauf...`,
 nur gelesen und Ansichtsfilter bedient (keine Laeufe, keine Einstellungen). Datenstand: Delta 2026-11-04 14:58 erfolgreich,
 Standardzeitraum 2026-01 bis 2026-11. Keine Konsolenfehler. **Nichts davon ist behoben**, ausser wo vermerkt.
@@ -15,7 +15,7 @@ Standardzeitraum 2026-01 bis 2026-11. Keine Konsolenfehler. **Nichts davon ist b
 | `/einkauf/lieferanten` | Auffaelligkeit | Preisindikator CHF 1.13 ohne Vorjahresvergleich, Text „braucht EKPO“ ueberholt; *behoben `6ab94a7`* |
 | `/einkauf/aufriss`, 11 Einstiege | ok | Schalter an 30'510'805, aus 32'997'456 (= Kachel); 2020 bis heute 211'069'693; Einstiege untereinander stimmig |
 | Aufriss, Matrix Lieferant / Jahr | **Fehler** | 2020 bis heute 211'051'808 statt 211'069'693 (-17'885), siehe F2; *behoben `01ab4b9`, deployed 05.11. 11:48* |
-| Aufriss, Materialanteil je Produktgruppe | **Fehler** | HW_ZUKAUFSORT 957'060'506 bei Umsatz 3'643'696 (26'266 %), Total 1'226 %; FP_THERMOST. 615 %, siehe F1 |
+| Aufriss, Materialanteil je Produktgruppe | **Fehler** | HW_ZUKAUFSORT 957'060'506 bei Umsatz 3'643'696 (26'266 %), Total 1'226 %; FP_THERMOST. 615 %, siehe F1; *Vermerk vom 2026-11-12: Wafer seit dem 09.11. behoben (FIX 26 in P76, HW_ZUKAUFSORT 1.27 Mio.), FP_THERMOST. offen* |
 | `/einkauf/lieferperformance` | Auffaelligkeit | Kachel 494 „Faelle“ = Materialien, Balken P1+P2 = 555; „offener Bestellwert“ 7'315'040 ist nur der ZLO03-Umfang; ZLO03/ZMD04-Stand 02.09.2026 (*Korrektur: nicht ZLO03-Umfang, sondern ohne OK-Faelle; behoben `6ab94a7`, siehe F6*) |
 | `/einkauf/ideen/*` | ok bis Auffaelligkeit | Liefertermin-Risiko summiert auf 9'014'591; Spend-Konzentration Top 10 = 54,7 %; Preisentwicklung siehe F3; Datenqualitaet mischt Bestand (240'780) und Zeitraum (7'427) |
 | `/einkauf/3d` | Fehler (Beschriftung) | „-10 %“ = -1'507'099 auf Basis der 6 gezeigten Balken (15'070'990), nicht auf 32'997'456; *behoben `6ab94a7`* |
@@ -27,7 +27,7 @@ Filter der Lieferperformance.
 
 ## Fehlerliste (priorisiert)
 
-1. **F1 Materialanteil, Wafer (Ursache belegt; FIX 26 in T76 umgesetzt, Auftrag `T76K912839`, Import P76 und Einkauf-Lauf offen):** Stuecklisten-Basismenge `STKO-BMENG` (3'738 bis 4'750 ST je Wafer) wird in
+1. **F1 Materialanteil, Wafer (Ursache belegt; FIX 26 in T76 umgesetzt, Auftrag `T76K912839`, Import P76 und Einkauf-Lauf offen; *ueberholt, Vermerk vom 2026-11-12: seit dem 2026-11-09 in P76 und im Einkauf-Lauf bestaetigt, HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio., `zlo03/FIX26_BASISMENGE_2026-11-05.md` Nachtrag*):** Stuecklisten-Basismenge `STKO-BMENG` (3'738 bis 4'750 ST je Wafer) wird in
    `Z_ZLO03_TURBO2` ignoriert, ZLO03 rechnet 1 Rolle Wafer je Chip. Befund und Vorschlag FIX 26:
    `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` (T76 lesend). Richtig waeren rund CHF 214'000 bis 220'000 statt 956 Mio.
    **Weiterer Ausreisser FP_THERMOST. (615 %):** H20201 Kapillarrohr 4'329 KGM, H17500 Bimetall 2'040 MTR fuer 24'155 Umsatz;

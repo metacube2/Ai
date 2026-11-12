@@ -1,8 +1,11 @@
 # ZLO03 FIX 19: Spalten RoHS, REACH, SVHC, PFAS-Gehalt (Wunsch Florian Waechter)
 
-Stand: 2026-10-22. Status: **in T76 aktiv, im Auftrag `T76K912742` zusammen mit FIX 12** (Entscheid Ingo,
+Stand: 2026-11-12 (Doku-Pruefung: P76-Import nachgefuehrt); davor 2026-10-22. Status: **in T76 aktiv, im Auftrag `T76K912742` zusammen mit FIX 12** (Entscheid Ingo,
 Variante B). **Nachtrag 2026-10-22: Spalte RoHS** aus dem Merkmal `ROHS`, das Adil am 21.10. angelegt hat (Abschnitt 6).
 Gelaufen ist es bisher nur mit leeren Spalten, weil in T76 kein Material Werte hat. Test mit gepflegten Werten offen.
+
+*(Vermerk vom 2026-11-12: `T76K912742` ist laut Ingo in P76 importiert, bestaetigt mit der Importliste P76 vom 10.11.; als
+Importtag nennt Wochen_Todo 94 den 29.10. Offen bleibt der Test mit Werten in P76, Wochen_Todo 114.)*
 
 *Ueberholt am 2026-10-22:* Hier stand, RoHS fehle, weil es kein Merkmal gebe (Vorschlag `ROHSCOM`). Adil hat das
 Merkmal unter dem Namen `ROHS` angelegt; ZLO03 gibt es seit dem 22.10. aus.

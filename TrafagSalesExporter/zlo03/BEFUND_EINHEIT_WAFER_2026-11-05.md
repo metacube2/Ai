@@ -1,7 +1,7 @@
 # ZLO03 / Materialanteil: Wafer um Faktor 3'738 bis 4'750 zu hoch (Befund 2026-11-05)
 
-Stand: 2026-11-05. Nur lesende Diagnose in T76/100 (SapProbe `table-read`, `abap-read`), P76 nicht angefasst, nichts in SAP
-geändert, kein Report ausgeführt. Noch nichts umgesetzt; FIX 26 unten ist ein Vorschlag mit Codeskizze.
+Stand: 2026-11-12 (Doku-Prüfung: Umsetzung und P76-Import von FIX 26 nachgeführt); davor 2026-11-05. Nur lesende Diagnose in T76/100 (SapProbe `table-read`, `abap-read`), P76 nicht angefasst, nichts in SAP
+geändert, kein Report ausgeführt. Noch nichts umgesetzt *(überholt, siehe Nachtrag und Vermerk darunter)*; FIX 26 unten ist ein Vorschlag mit Codeskizze.
 Zurück: `zlo03/CLAUDE.md`.
 
 *Nachtrag 2026-11-05 nachmittags:* FIX 26 ist in T76 umgesetzt (Auftrag `T76K912839`, nicht freigegeben), alle Tests A bis F
@@ -9,6 +9,10 @@ bestanden; P76 hat dieselben sechs Stücklisten mit `BMENG <> 1`. Abweichungen v
 gelesenen Zeilen gesammelt (auch numerische `KOM_MSTAE` über MATN1), die Einheitenprüfung läuft über `MARA` im selben SELECT,
 gelöschte Stücklistenköpfe zählen nicht. Einzelheiten und der FP_THERMOST-Befund: `zlo03/FIX26_BASISMENGE_2026-11-05.md`.
 Nebenbefund 4 unten ist damit in `zlo03/CLAUDE.md` Punkt A nachgeführt.
+
+*Vermerk vom 2026-11-12:* „Nicht freigegeben“ im Nachtrag oben ist überholt. `T76K912839` ist seit dem 2026-11-09 in P76; das
+Einkauf-Delta vom 09.11. zeigt HW_ZUKAUFSORT mit 1.27 Mio. Materialanteil auf 3.67 Mio. Umsatz statt 957 Mio.
+(`zlo03/FIX26_BASISMENGE_2026-11-05.md`, Nachtrag 2026-11-09). Abschnitt 3.5 hatte rund 1.27 Mio. erwartet.
 
 ## 1. Meldung
 

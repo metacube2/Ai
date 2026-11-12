@@ -1,7 +1,10 @@
 # ZLO03 FIX 20: Download als .txt, weil Excel Text-.xls blockiert
 
-Stand: 2026-10-22. Status: **in T76 aktiv, Auftrag `T76K912742` am 22.10. von Ingo freigegeben** (zusammen mit FIX 12
+Stand: 2026-11-12 (Doku-Pruefung: P76-Import nachgefuehrt); davor 2026-10-22. Status: **in T76 aktiv, Auftrag `T76K912742` am 22.10. von Ingo freigegeben** (zusammen mit FIX 12
 und FIX 19). Import nach P76 macht Ingo; ob er schon erfolgt ist, ist hier nicht geprueft.
+*(Ueberholt, Vermerk vom 2026-11-12: `T76K912742` und `T76K912752` (FIX 20 und 21) sind laut Ingo in P76 importiert, bestaetigt
+mit der Importliste P76 vom 10.11.; als Importtag nennt Wochen_Todo 94 den 29.10. Offen laut Wochen_Todo 119: die Benutzer
+ueber den `.xlsx`-Download informieren.)*
 **Nachfolger FIX 21 (echtes `.xlsx`, Wunsch Ingo) ist in T76 aktiv, neuer Auftrag `T76K912752`**, Abschnitt 6.
 
 ## 1. Meldung
@@ -63,7 +66,7 @@ Kein echtes `.xlsx`: das braeuchte eine Bibliothek (abap2xlsx oder XCO) und waer
    `zlo03/CLAUDE.md`). Ist es dort ein anderes Programm, kommt FIX 20 bei den Benutzern nicht an. Pruefung nur lesend und
    nur auf Auftrag Ingo.
 2. **Andere Z-Reports** mit `GUI_DOWNLOAD` `'ASC'` unter `.xls` haben dasselbe Problem; Liste noch nicht erstellt.
-3. Import `T76K912742` nach P76 (Ingo). Freigegeben am 22.10.
+3. Import `T76K912742` nach P76 (Ingo). Freigegeben am 22.10. *Erledigt, siehe Vermerk im Kopf.*
 
 ## 6. FIX 21: echte Excel-Datei (.xlsx), T76 aktiv
 
@@ -99,3 +102,4 @@ Einspielen nach Auftrag Ingo (â€žmach ein neuen Auftrag und spiel Excel-Fix einâ
 | Lasttest `84*` | 722 x 3'114 (2,2 Mio. Zellen), Aufbau und Download 14 s, 5,9 MB, in Excel ohne Fehler geoeffnet |
 
 Offen: Freigabe und Import `T76K912752` nach P76 (Ingo); der Auftrag muss **nach** `T76K912742` importiert werden.
+*(Erledigt, siehe Vermerk im Kopf.)*

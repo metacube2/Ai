@@ -1,6 +1,6 @@
 # Logistik live: Kommissionierung und Produktion aus SAP
 
-Stand: 2026-10-01, nachgefuehrt 2026-10-06 (Pruefbefund-Korrekturen produktiv 10:16, Abschnitt am Ende bzw. Nachtrag Review), ergänzt 2026-10-05 um die 3D-Lagerplatzansicht (Abschnitt unten). Auftrag Ingo: „bei Logistik wäre es mega cool, wenn man realtime sieht, wie die
+Stand: 2026-11-12 (Doku-Pruefung: Kopf nennt jetzt auch die Nachtraege vom 2026-10-12, Einwand Marco zur Serverlast, noch nicht gemessen und nicht entschieden, und vom 2026-10-15, Logistik-Passwort ueber Admin Bereich > Passwörter); davor 2026-10-01, nachgefuehrt 2026-10-06 (Pruefbefund-Korrekturen produktiv 10:16, Abschnitt am Ende bzw. Nachtrag Review), ergänzt 2026-10-05 um die 3D-Lagerplatzansicht (Abschnitt unten). Auftrag Ingo: „bei Logistik wäre es mega cool, wenn man realtime sieht, wie die
 Kommissionierung oder die Produktion läuft … grafisch dargestellt, nutze auch das SAP-Tool“.
 Seite `/logistik/live` (Menü Logistik > Logistik live).
 

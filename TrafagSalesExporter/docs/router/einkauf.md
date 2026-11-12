@@ -1,6 +1,6 @@
 # Unterrouter Einkauf
 
-Zurueck: `router.md`. Stand: 2026-11-12 (Lieferantenbewertung: Paket 1/2, Oscar OK, SAP-Quellen); davor 2026-11-02 (Entwurf Lieferantenbewertung V6, Rechenweg Materialanteil Phase 2); davor 2026-10-29.
+Zurueck: `router.md`. Stand: 2026-11-12 (Lieferantenbewertung: Paket 1/2, Oscar OK, SAP-Quellen; Doku-Pruefung: Materialanteil gebaut, FIX 26 in P76, Nachpflege ohne Full Load); davor 2026-11-02 (Entwurf Lieferantenbewertung V6, Rechenweg Materialanteil Phase 2); davor 2026-10-29.
 
 Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
@@ -17,10 +17,10 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
 | Thema | Datei |
 | --- | --- |
-| **Funktionspruefung Einkauf 05.11.** (alle Ansichten im Chrome, Fehlerliste F1-F10: Materialanteil Wafer 957 Mio., Matrix Lieferant/Jahr, Preisentwicklung, Nachtlauf) und Befund Wafer (Stuecklisten-Basismenge ignoriert, Vorschlag ZLO03 FIX 26) | `docs/EINKAUF_PRUEFUNG_2026-11-05.md`, `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` |
+| **Funktionspruefung Einkauf 05.11.** (alle Ansichten im Chrome, Fehlerliste F1-F10: Materialanteil Wafer 957 Mio., Matrix Lieferant/Jahr, Preisentwicklung, Nachtlauf) und Befund Wafer (Stuecklisten-Basismenge ignoriert, Vorschlag ZLO03 FIX 26; *Vermerk vom 2026-11-12:* **behoben mit FIX 26, Auftrag `T76K912839` zusammen mit FIX 27 (Excel-Zusatzspalten), in P76 seit 09.11., im Einkauf-Lauf bestaetigt**) | `docs/EINKAUF_PRUEFUNG_2026-11-05.md`, `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md`, `zlo03/FIX26_BASISMENGE_2026-11-05.md`, `zlo03/FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` |
 | **Lieferantenbewertung und -entwicklung, Stand 12.11.**: V6 ist die Grundlage (kein Word-Dokument), Paket 1 (SAP-Performance, Q2, A/B/C je Lieferant) und Paket 2 (Pflege im Dashboard, von Oscar freigegeben), Strukturvorschlag, SAP-Quellen | `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 6 bis 6.3, `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md` |
 | **Lieferantenbewertung Entwurf V6 (02.11.)**: vier Reiter, drei offene Entscheide, Datenanforderungen; Demo-HTML | `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5, `docs/einkauf_lieferantenbewertung/` |
-| **Materialanteil je Produktgruppe nach Warengruppe (Aufriss Phase 2)**: Rechenweg Armin ZC23 -> ZLO03 -> Excel (02.11.), Entscheide Ingo, **Bauplan** | `saptasks/zc23_materialanteil/NOTES.md` Nachtrag 2026-11-02, `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md` |
+| **Materialanteil je Produktgruppe nach Warengruppe (Aufriss Phase 2)**: Rechenweg Armin ZC23 -> ZLO03 -> Excel (02.11.), Entscheide Ingo, **Bauplan**; **gebaut und produktiv seit 2026-11-02 11:18 (`f36e1e7`)**, Stand im Kopf des Bauplans; SAP-Set `ZloTopDownSet` (ZLO03 FIX 25) | `saptasks/zc23_materialanteil/NOTES.md` Nachtrag 2026-11-02, `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md`, `zlo03/FIX25_APP_EXPORT_2026-11-02.md` |
 | **Sitzung Einkauf 2026-10-22**: Zwischenstand Dashboard bis 28.10. (stabilisieren, nichts Neues), Feedbackliste Erich/Sandro/Marco, neuer Wunsch Lieferantenbewertung/-entwicklung (Zertifikate ISO 9001, Massnahmen, Audits), Grundsatzfrage Handbestellwesen abschalten | `docs/EINKAUF_SITZUNG_2026-10-22.md` |
 | **Handbestellwesen**: Abloesung der alten PHP-Anwendung durch ein Modul im Dashboard, Ist-Befund, Zielbild, Oberflaeche wie im PHP, Phasen. **Stand 2026-10-27: produktiv**, zwei Masken auf derselben Datenbank (`/handbestellwesen` klassisch, `/bestellwesen` neu), Reiter sichtbar, PHP abgeschaltet, Freigabe wie PHP (umschaltbar); offen Zugriff, Grundtests, Stammdatenpflege (Abschnitt 6.8) | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` |
 | **Offener Mengenkontraktwert wie ME3L (inkl. abgelaufen), Abgrenzung zu „Abrufbestellungen zu Kontrakten“, LZ-/Sortiments-Einstiege im Spend-Aufriss** (lokal 2026-10-08, nicht deployed; *ueberholt: produktiv seit 2026-10-08 15:03, `4ba0c07`*) | `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-10-08, Kurzfassung `docs/rag/PURCHASING.md` |
@@ -50,8 +50,14 @@ Die vier SAP-Semantikfallen stehen ausfuehrlich in
 - Eine Zeitraum-Obergrenze auf heute schneidet **allen zukuenftigen Zulauf** ab und legt
   die Risiko-Buckets still.
 
-Dazu: **Nachpflege in SAP wirkt erst nach einem Full Load** — seit dem Delta-Fix
-klassifiziert das Delta den ganzen Cache, aber die Laufzeit ist ungemessen.
+Dazu: **Nachpflege von Material-Stammdaten in SAP (Warengruppe, ABC/XYZ, Disponent, Materialtext, Materialstatus)
+wirkt seit dem Delta-Fix ohne Full Load**, weil das Delta diese Felder fuer alle Materialien im Cache neu setzt
+(`PurchasingDataRefreshService.ApplyMaterialMasterToWholeCacheAsync`). Lieferantenname und -land schreibt das Delta nur
+fuer die Belege neu, die es nachlaedt; bei den uebrigen aendern sie sich erst mit einem Full Load. Belegte Laeufe des
+Einkauf-Deltas: 21.10. 12:29 bis 13:12 (Wochen_Todo 98), 09.11. 11:24 bis 13:29
+(`zlo03/FIX26_BASISMENGE_2026-11-05.md`); warum der Lauf am 09.11. laenger dauerte, ist nicht belegt.
+*(Berichtigt am 2026-11-12. Vorher stand hier: „Nachpflege in SAP wirkt erst nach einem Full Load — seit dem Delta-Fix
+klassifiziert das Delta den ganzen Cache, aber die Laufzeit ist ungemessen.“)*
 
 ## Querverweise in Nachbaraeste
 
