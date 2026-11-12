@@ -1,6 +1,6 @@
 # Finance Journal Import (Hauptbuch-Buchungszeilen)
 
-Stand: 2026-10-29 (CH/AT-Transport und Deploy der Ausgleichsfelder nachgefuehrt; fachlich 2026-09-09). Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
+Stand: 2026-11-12 (Doku-Pruefung: Systemname S/4HANA statt ECC); davor 2026-10-29 (CH/AT-Transport und Deploy der Ausgleichsfelder nachgefuehrt; fachlich 2026-09-09). Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
 `FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`.
 
 Zweck: Hauptbuchdaten je Tochtergesellschaft in die **separate** Tabelle
@@ -11,7 +11,7 @@ unberuehrt.
 Zwei Quellsysteme schreiben in dieselbe Tabelle, die Spalte `SourceSystem` unterscheidet:
 
 - **SAP B1 ueber HANA** — FR (`fr01_p`), IT (`it01_p`), US (`us01_p`), Indien (`TRAFAG_LIVE`)
-- **SAP ECC ueber OData** — CH/AT (`ZSCHWEIZ`). Das benoetigte Hauptbuch-EntitySet ist
+- **SAP S/4HANA ueber OData** *(berichtigt 2026-11-12, vorher „SAP ECC“, auch in den zwei Tabellenkoepfen weiter unten; T76 ist S/4HANA 2023, `S4CORE` 108, Datenbank HDB, belegt fuer T76 in `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md` Abschnitt 2)* — CH/AT (`ZSCHWEIZ`). Das benoetigte Hauptbuch-EntitySet ist
   in P76 noch nicht vorhanden; `FinanzdataSchweizOeSet` wurde live als Verkaufsdatenquelle
   identifiziert. Der Journal-EntitySet-Name ist am Standort konfigurierbar.
   *Ueberholt am 2026-10-29: `FinanzJournalSet` ist seit dem 2026-10-01 in P76 (Transport
@@ -44,7 +44,7 @@ beziehungsweise `Budat` (CH/AT).
 
 ## Feld-Mapping
 
-| Bedeutung | Spalte | B1 (FR/IT/US/IN) | CH/AT (SAP ECC) |
+| Bedeutung | Spalte | B1 (FR/IT/US/IN) | CH/AT (SAP S/4HANA) |
 | --- | --- | --- | --- |
 | Gesellschaft | `Tsc`, `Land`, `CompanySchema`, `CompanyCode` | Standortstamm, `CompanyCode` leer | `CompanyCode` = `Bukrs`, trennt CH von AT |
 | Quellsystem | `SourceSystem` | `BI1`, Indien historisch `SAGE` | `ZSCHWEIZ` |
@@ -258,7 +258,7 @@ dann haben wir die felder auch drin beim import klick". Aufgenommen sind fuenf F
 Buchungszeile, die die Quelle **abbilden**; eine fachliche Auswahl findet bewusst nicht
 statt.
 
-| Feld im Modell | B1-Quelle | SAP ECC (CH/AT) | Bedeutung |
+| Feld im Modell | B1-Quelle | SAP S/4HANA (CH/AT) | Bedeutung |
 | --- | --- | --- | --- |
 | `ClearingDate` | `JDT1.MthDate` | `BSEG-AUGDT` | Ausgleichsdatum der Buchungszeile |
 | `ReconciliationDate` | `MAX(OITR.ReconDate)` ueber ITR1 | — | Datum des juengsten Ausgleichsvorgangs |
@@ -344,7 +344,7 @@ die tatsaechliche Belegung aus. Der Schemanachzug ist additiv, alte Produktivsta
 bleiben lesbar. CH/AT liest `BSEG-AUGDT`/`AUGBL` optional: die Felder stehen **nicht** in
 `RequiredFields`, damit ein EntitySet ohne sie den CH/AT-Import nicht abbricht, sondern
 den Ausgleich leer laesst. `ReconciliationDate`, `ClearingCount` und `IsClearingCancelled`
-bleiben fuer CH/AT bauartbedingt leer, weil ECC keine Ausgleichshistorie wie `OITR` fuehrt;
+bleiben fuer CH/AT bauartbedingt leer, weil ECC keine Ausgleichshistorie wie `OITR` fuehrt *(Systemname ueberholt, Vermerk vom 2026-11-12: das System ist S/4HANA 2023; ob die Aussage zur Ausgleichshistorie dort gilt, ist nicht geprueft)*;
 das ist im Lesehinweis von `Finance_All` ausdruecklich vermerkt, damit es nicht als
 fehlende Ladung missverstanden wird.
 

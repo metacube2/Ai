@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-11-12 12:00 (Deploy 11:33 `e956183`; Spanien Supplier umgesetzt, nicht deployed; ZC12-Plan; Lieferantenbewertung Paket 1/2; WLAN-Stoerung; Doku-Pruefung); davor 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-11-12 12:00 (Deploy 11:33 `e956183`; Spanien Supplier umgesetzt, nicht deployed; ZC12-Plan; Lieferantenbewertung Paket 1/2; WLAN-Stoerung; Doku-Pruefung: aeltere Kurzstand-Punkte 2026-11-06/09, 2026-11-05 und 2026-09-29 sowie die zwei Verweise auf den Juli-Abgleich als ueberholt markiert); davor 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -22,11 +22,11 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
     `docs/EINKAUF_SITZUNG_2026-10-22.md` 6 bis 6.3.
   - **WLAN `trafag-802.1x-tel`** in Bubikon gestoert, Sache der IT; Befunde `docs/router/plattform.md`.
   - **Doku-Pruefung** aller Markdown-Dateien: `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`.
-- **2026-11-06/09:** Vier T76-Transporte warten auf Ingo (Uebersicht `lastchange.md` „Uebergabe Stand 2026-11-09“): FIX 26 Materialanteil, QmMeldungSet, IC-Staffelbasis nach Bestellmenge (VOFM 601; *10.11.: importiert, aber in P76 noch nicht eingebunden; VOFM in P76 gesperrt, `RV62ANNN` nicht transportierbar, `RV80HGEN` bindet auch FBED 908 ein, Entscheid Ingo offen, `saptasks/ic_preisfindung/NOTES.md` 8.9*), ZZPRDAT inkl. Reiter-Fix und Georgs XCO1-Objekte (vor Import P76 pruefen). ZZPRDAT-Testnachweis fuer den Fachbereich liegt vor.
+- **2026-11-06/09:** Vier T76-Transporte warten auf Ingo (Uebersicht `lastchange.md` „Uebergabe Stand 2026-11-09“): FIX 26 Materialanteil, QmMeldungSet, IC-Staffelbasis nach Bestellmenge (VOFM 601; *10.11.: importiert, aber in P76 noch nicht eingebunden; VOFM in P76 gesperrt, `RV62ANNN` nicht transportierbar, `RV80HGEN` bindet auch FBED 908 ein, Entscheid Ingo offen, `saptasks/ic_preisfindung/NOTES.md` 8.9*), ZZPRDAT inkl. Reiter-Fix und Georgs XCO1-Objekte (vor Import P76 pruefen). ZZPRDAT-Testnachweis fuer den Fachbereich liegt vor. *(Ueberholt, Vermerk vom 2026-11-12: Von den vier Transporten sind zwei seit dem 2026-11-09 in P76: FIX 26/27 `T76K912839` (Kopf dieser Datei) und `QmMeldungSet` `T76K912837` (`saptasks/qm_meldungen/NOTES.md` Nachtrag 2026-11-09 15:13, Q-Faelle seit 15:11 eingeschaltet). Die IC-Staffelbasis ist importiert, aber nicht eingebunden, wie oben in diesem Punkt steht. Offen bleiben ZZPRDAT `T76K912490` und, seit 10./11.11. dazugekommen, CO-PA `T76K912866` und IC V1 `T76K912884`.)*
 - **2026-11-05:** Verkauf-Unterreiter **Monthly Review Gesellschaften** (Wunsch Patrick Hertach) produktiv seit 10:33 (`47abb30`),
-  Q-Faelle-Abschnitt gebaut, Abruf aus bis `T76K912837` (`QmMeldungSet`, offene Q1) in P76 ist
+  Q-Faelle-Abschnitt gebaut, Abruf aus bis `T76K912837` (`QmMeldungSet`, offene Q1) in P76 ist *(ueberholt: seit 2026-11-09 15:11 in P76 und eingeschaltet, `saptasks/qm_meldungen/NOTES.md` Nachtrag)*
   (`docs/monthly_review/MONTHLY_REVIEW_2026-11-04.md`). Einkauf-Pruefung im Chrome mit Fehlerliste
-  (`docs/EINKAUF_PRUEFUNG_2026-11-05.md`); Materialanteil falsch wegen ignorierter Stuecklisten-Basismenge, FIX 26 offen.
+  (`docs/EINKAUF_PRUEFUNG_2026-11-05.md`); Materialanteil falsch wegen ignorierter Stuecklisten-Basismenge, FIX 26 offen. *(ueberholt: `T76K912839` am 2026-11-09 von Ingo nach P76 importiert, HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio., `zlo03/FIX26_BASISMENGE_2026-11-05.md` Nachtrag)*
   Neu offen: IC-Preisfindung ZICAA1 fuer Fabio (*Stand 12.11.: V1 in T76/100 von Fabio getestet und fachlich freigegeben (T76K912884), Import P76 wartet auf Fabios Z999-Preise in P76, NOTES 9.1*; Wochen_Todo 153; T76/P76 lesend: Preisliste 14 kommt in der IV an, Kurs schon 0.94 ueber EURX, `saptasks/ic_preisfindung/NOTES.md`), SPC-Adapter Adrian Jenni (151, Adrian geht Ende Jahr).
   Nachmittags: Einkauf-Fixes F2-F9 und Spend-Aufriss aufgeraeumt (Matrix und alter Spend-Block weg, deployed 12:37 `785325f`), ZLO03 FIX 26 in T76 (`T76K912839`), Agenten-Definitionen `.claude/agents/`. Uebergabe: `lastchange.md` oben.
 - **2026-11-03 Abschlussrunde Dashboard/Data Lake:** Einkauf nutzt aktiv, will HK/Standardpreis zum Materialanteil,
@@ -68,7 +68,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Neu aufgenommen: PM-10 Abloesung Smartsheet, PM-11 Data-Lake-Leistung, PM-12 Power-BI-
   Anwendervertreter. Am selben Tag hat Codex das Finance-Dashboard geprueft; alle Befunde sind
   gegen den Code bestaetigt (`docs/FINANCE_REVIEW_2026-09-29.md`, `ISS-018`), repariert ist
-  noch nichts. **Dringend:** Der Spanien-Import steht seit Mitte Juli, produktiv kommen keine
+  noch nichts. *(Erledigt am 2026-09-29, `ISS-020`, und nicht mehr dringend; Vermerk vom 2026-11-12:)* **Dringend:** Der Spanien-Import steht seit Mitte Juli, produktiv kommen keine
   neuen TRES-Zeilen an (`ISS-020`). Ursache bestaetigt (SharePoint-Liste las nur 200 Eintraege),
   Korrektur `60cc569` seit 09:25 produktiv, Nachimport beim naechsten Lauf pruefen. Railway-Gesamtsicht
   und DB4 fuer Heiko und Patrick als `ISS-019`: Umsatz-Gesamtsicht am Nachmittag geliefert und
@@ -111,12 +111,15 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Schreibweg auf `ZZPRDAT` mit (Entscheid Ingo/Georg offen). Weiter nicht freigegeben;
   Transportplan Abschnitt 1, Nachtrag 2026-11-06.
 
-- LIVE-PRUEFUNG 2026-07-31: UK-2025 ist produktiv vorhanden (1'867 Zeilen);
+- *(Historischer Messstand vom 31.07., kein heutiger Zustand; der heutige Stand der Lieferantenfelder steht
+  unter `ISS-003` im Issue-Log. Vermerk vom 2026-11-12.)*
+  LIVE-PRUEFUNG 2026-07-31: UK-2025 ist produktiv vorhanden (1'867 Zeilen);
   `GroupStandardCosts` ist mit 63'506 TR-AG-Werten gefuellt; Supplier bleibt bei
   CH/AT/DE/ES komplett leer. Einkauf-Delta-Fix ist deployed, aber zum
   Pruefzeitpunkt gab es noch keinen produktiven Delta-Lauf nach dem Deploy.
   Details und genaue Vorrangregel:
-  `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
+  `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. *(Ueberholt: Die Datei liefert nur noch die Messdetails vom
+  Juli; die Vorrangregel steht in `router.md` Regel 1.)*
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
 - *Ueberholt seit 2026-10-09:* die einfache Projektverwaltung ist durch **Trafag Projekte** ersetzt
@@ -127,7 +130,9 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Aktueller Funktions- und Lokalisierungsstand:
   `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md`.
 - Aktuelle fachliche Detailstaende und offene Punkte stehen ausschliesslich in
-  den Themen-Kurzdateien und im kanonischen Live-Abgleich; alte Deploy-Nachweise
+  den Themen-Kurzdateien und im kanonischen Live-Abgleich *(ueberholt, Vermerk vom 2026-11-12: Der
+  Juli-Abgleich ist nur noch historische Messreferenz, siehe Kopf dieser Datei. Der heutige Stand steht in den
+  Themen-Kurzdateien und in den Statusquellen, `router.md` Zeile „Wo stehen wir gerade?“)*; alte Deploy-Nachweise
   stehen in `lastchange.md` beziehungsweise `docs/archiv/` (seit 2026-10-22).
 - Management-/Roadmap-Doku neu: `docs/INGO_TODOS_180_TAGE_2026-06-18.docx`, Quelle `docs/INGO_TODOS_180_TAGE_2026-06-18.md`. Sie beschreibt Ingos 180-Tage-Fokus: Sales Management Cockpit/Data-Lake als Prioritaet 1, HR Dashboard und Einkaufs Dashboard als Prioritaet 2/3, Q3/Q4-Meilensteine, Abhaengigkeiten, Risiken und naechste Schritte.
 - Abgrenzung fuer 180 Tage: S/4HANA Compatibility Check/RPC-/RFC-Themen bleiben bei Lucas; Infrastruktur/Security/Server/Netzwerk bleiben bei Alex/Ramon/Upgreat. Ingo bleibt bei Analytics, BI, Reporting-/Z-Funktionsbezug und .NET/ASP-Webseiten.

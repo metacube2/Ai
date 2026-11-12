@@ -48,6 +48,18 @@ Die Befunde unten bleiben als Stand vom 29.09. stehen.
 | 14 Archiv | erledigt am 22.10.: Archiv `docs/archiv/`, `docs/raw_md_archive/` nur noch in Git mit Abrufbefehl | `docs/archiv/README.md`, `baum.md` Abschnitt Archiv, `286ec97` |
 | 15 Ladeweg | erledigt: `docs/rag/init.md` folgt `router.md`; Umfang von `lastchange.md` am 22.10. gekürzt und in `init.md` mit Datum versehen | `docs/rag/init.md` |
 
+## Nachprüfung am 12.11.2026
+
+Geprüft bei der Doku-Prüfung aller Markdown-Dateien vom 12.11.2026 (`docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`).
+Die Tabelle vom 29.10. bleibt als damaliger Stand stehen; für vier Befunde gilt sie heute so nicht mehr.
+
+| Befund | Stand 12.11. | Beleg |
+| --- | --- | --- |
+| 2 ES/UK | ganz erledigt: die am 29.10. als „noch nicht berichtigt“ geführte Zeile 434 trägt den Überholt-Vermerk vom 29.10. | `docs/FINANCE_STANDARDKOSTEN.md` Zeile 434 |
+| 10 Juli-Livedatei | war in `docs/rag/PROJECT.md` nur im Kopf behoben; zwei Stellen weiter unten nannten den Juli-Abgleich noch als geltende Quelle. Am 12.11. als überholt markiert | `docs/rag/PROJECT.md` Punkt „LIVE-PRUEFUNG 2026-07-31“ und Satz „im kanonischen Live-Abgleich“ |
+| 13 baum.md | war erneut offen: zehn versionierte Markdown-Dateien fehlten in `baum.md`, drei standen nur mit dem Namen unter einer Ordnerzeile. Am 12.11. nachgetragen | Abgleich `git ls-files '*.md'` gegen `baum.md` am 12.11. |
+| 15 Ladeweg und Umfang | Ladeweg weiter in Ordnung. Die Umfangszusagen sind erneut überschritten und am 12.11. nicht behoben: der Kurzindex der Koordinationsdatei führt 85 Zeilen, die älter als sieben Tage sind (älteste vom 15.10.), und `lastchange.md` hat 1’427 Zeilen | `docs/AGENT_COORDINATION.md` Kurzindex, `lastchange.md` |
+
 ## Ergebnis und Prüfumfang
 
 **Die Dokumentation ist nicht durchgängig konsistent.** Besonders relevant sind falsche aktuelle Aussagen über Standardkosten, widersprüchliche Kursbeschreibungen und offene Punkte, die an anderer Stelle bereits entschieden sind. Die Nachführung vom 29.09. hat wichtige Stellen berichtigt, aber nicht alle widersprechenden Absätze.

@@ -115,7 +115,7 @@ Auftrag T76K912870 angelegt und leer geloescht. `RV80HGEN` (kein Selektionsbild,
 908 = Kopierbedingung Proforma TA→F5/TAW aus TRIM-Auftrag T76K912226 „MDE: Intercompany Umlagerungen“, in T76 seit 05.07. aktiv, in
 P76 nie eingebunden. **Naechster Schritt:** Ingo klaert 908 (TRIM/MILI bzw. Fabios „Paket“ zur Bestellart, Mail/Datei nennen), dann
 `RV80HGEN` in P76 durch Ingo, danach lesend nachpruefen (`D010INC` RV62A601 und RV60B908, `TRDIR` RV62ANNN/RV60BNNN neues `UDAT`).
-Fabio informieren: Staffelbasis wirkt erst danach; seine „restliche Anpassung“ = Schritt 1 ZICAA1 (nicht begonnen).
+Fabio informieren: Staffelbasis wirkt erst danach; seine „restliche Anpassung“ = Schritt 1 ZICAA1 (nicht begonnen). *(Ueberholt 2026-11-11: V1 ZICAA1 in T76/100 umgesetzt, `T76K912884`, Nachtrag 2026-11-11 09:45 oben; am 12.11. von Fabio getestet und fachlich freigegeben.)*
 
 **Sicherheit:** T76-Passwort KOI ist im Sitzungsprotokoll sichtbar geworden (eigener Wrapper). Ingo: Passwort aendern und mit
 `Set-SapPassword` neu ablegen. LEARNINGS eingetragen.
@@ -251,7 +251,7 @@ Gilt vor allen aelteren Uebergaben weiter unten. Produktiv: Deploy 08:46 `436e8a
 | Transport | Inhalt | Stand | naechster Schritt |
 | --- | --- | --- | --- |
 | `T76K912866` | `CoPaSumSet` (CE11000 Monatssummen, Struktur `ZSTR_COPA_SUM`, MPC DEFINE, DPC GET_ENTITYSET) | T76 aktiv, rueckgelesen, Gateway 200; **nicht freigegeben** | Ingo: freigeben, importieren. Danach Claude: P76 `/IWBEP` (alle) dann `/IWFND` (`ZPOWERBI_EINKAUF_MDL`) in eigener Sitzung leeren, `GET shopfloor/api/sap/copa?tag=2026-10-01` gegen Sep (AE 6'531'197.94, Umsatz 7'878'114.69), mit Ingos OK `Shopfloor:SapCoPaEnabled = true`, Deploy, `POST sap/copa` fuer heute. `saptasks/copa_verkauf/NOTES.md` |
-| `T76K912853` + `T76K912856` | IC-Staffelbasis (VOFM 601, V/06 PR00) | T76 aktiv, nicht transportiert | Fabio testet in T76; nur zusammen und erst nach seinem OK |
+| `T76K912853` + `T76K912856` | IC-Staffelbasis (VOFM 601, V/06 PR00) | T76 aktiv, nicht transportiert *(ueberholt 2026-11-10 abends: beide Auftraege in P76 importiert, Routine 601 dort nicht eingebunden, siehe „Nachtrag 2026-11-10 abends“ oben)* | Fabio testet in T76; nur zusammen und erst nach seinem OK |
 | `T76K912490` | ZZPRDAT | offen | P76-Vorpruefung, Georg, Fabio, Abnahme |
 
 **Wartet auf andere:**
@@ -289,8 +289,8 @@ Gilt vor der Uebergabe vom 09.11. morgens weiter unten.
 | --- | --- | --- | --- |
 | `T76K912839` | ZLO03 FIX 26 Basismenge + FIX 27 (Excel alt plus „je 1 Stk“) | **in P76**, Einkauf-Lauf 13:29: HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio. | erledigt; Ann-Katrin/Sandro ueber die neuen Spalten informieren |
 | `T76K912860` | Shopfloor `ShopAufSet` Typ VR (Auftragsvorrat) | **in P76**, Vorschau = ZC22 exakt (SEH 1'914 / 157'556, DW 1'976 / 117'271, alle Buckets) | Ingo-OK: `Shopfloor:SapVorratEnabled = true`, `config_seh_tagesmenge_sap.js` (--check), Deploy, `POST sap/vorrat` fuer heute |
-| `T76K912837` | `QmMeldungSet` (Q-Faelle Monthly Review) | freigegeben 09.11.; Import P76 unbestaetigt | `/IWBEP` dann `/IWFND` leeren, `MonthlyReview:QmEnabled` true, Deploy |
-| `T76K912858` | ZC22 Systemstatus ungekuerzt (`ZMM_UEB_FAUF-STTXT` TEXT100, Form `STATUS_LANG`) | bereit in T76 | freigeben, importieren; wirkt sofort; Kollege Produktion: Spalte im Layout breiter ziehen |
+| `T76K912837` | `QmMeldungSet` (Q-Faelle Monthly Review) | freigegeben 09.11.; Import P76 unbestaetigt *(ueberholt: in P76 importiert und am 09.11. 15:11 eingeschaltet, siehe „Eingeschaltet 15:11“ oben)* | `/IWBEP` dann `/IWFND` leeren, `MonthlyReview:QmEnabled` true, Deploy |
+| `T76K912858` | ZC22 Systemstatus ungekuerzt (`ZMM_UEB_FAUF-STTXT` TEXT100, Form `STATUS_LANG`) | bereit in T76 *(ueberholt: in P76 und live seit 09.11. 15:11, Wochen_Todo 158)* | freigeben, importieren; wirkt sofort; Kollege Produktion: Spalte im Layout breiter ziehen |
 | `T76K912853` + `T76K912856` | IC-Staffelbasis (VOFM 601, V/06 PR00) | in T76 aktiv, **nicht transportiert**; Fabio testet zuerst in T76 | nur zusammen und erst nach Fabios OK |
 | `T76K912490` | ZZPRDAT | noch nicht | P76-Vorpruefung, Georg (`ZXCO1U06`, `T76K911783`), Fabio, Abnahme |
 

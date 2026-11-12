@@ -1,11 +1,16 @@
 # RAG-Einstieg: Ladereihenfolge und Abschlussregel
 
-Stand: 2026-10-29 (Abschlussregel um LEARNINGS und Kurzauskunft ergaenzt wie `CLAUDE.md` 3 und 3a); davor 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026-10-01 Verweis auf `LEARNINGS.md`)
+Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, Schritt 1a Koordinationsdatei in die Ladereihenfolge aufgenommen); davor 2026-11-10 (Abschlussregel Punkt 6: Reindex mit `-WennVeraltet`, `1161767`); davor 2026-10-29 (Abschlussregel um LEARNINGS und Kurzauskunft ergaenzt wie `CLAUDE.md` 3 und 3a); davor 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026-10-01 Verweis auf `LEARNINGS.md`)
 
 ## Ladereihenfolge fuer eine neue Sitzung
 
 1. `router.md` (Repo-Wurzel) — Themenaeste und Vorrangregeln, immer zuerst, und gleich danach
    **`docs/rag/LEARNINGS.md`** — die gemachten Fehler mit der Regel daraus (seit 2026-10-01)
+
+   1a. Vor jeder Aenderung, jedem Test, Build und Deploy: `docs/AGENT_COORDINATION.md` lesen und den
+   eigenen Bereich eintragen (`CLAUDE.md` Abschnitt 2, `router.md` Regel 6); eine reine Kurzauskunft
+   braucht das nicht (`CLAUDE.md` 3a). *(Eingefuegt 2026-11-12: Der Schritt stand bisher nur unten als
+   Abschlusspunkt 5.)*
 2. Der passende Unterrouter unter `docs/router/`, von dort die Detaildatei oder die
    RAG-Kurzdatei aus `docs/rag/` (etwa `FINANCE.md`, `PURCHASING.md`, `PROJECT.md`,
    `MANUAL_IMPORT.md`, `DEPLOYMENT.md`). Das ist derselbe Ladeweg wie in `router.md`

@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-11-11 (`saptasks/ic_preisfindung/` nachgetragen, fehlte); davor 2026-11-06 (ZZPRDAT: `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md` nachgetragen, Ordner `transport_2026-11-06/`); davor 2026-11-05 (Monthly Review Phase 1 gebaut, Beschreibung nachgefuehrt); davor 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle), 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
+Stand: 2026-11-12 (Doku-Pruefung: zehn fehlende Markdown-Dateien und der Ordner `docs/shopfloor_paket_2026-11-07/` nachgetragen, naemlich `.claude/agents/`, Spanien-Plan, `saptasks/copa_verkauf/`, `saptasks/zc12/`, Lieferantenbewertung SAP-Quellen und ZLO03 FIX 26/27; `Wochen_Todo.tsv` und Issue-Log als eigene Zeilen; drei Pfade unter `saptasks/qm_meldungen/` und `saptasks/ic_preisfindung/` ausgeschrieben; Zeile fuer `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`); davor 2026-11-11 (`saptasks/ic_preisfindung/` nachgetragen, fehlte); davor 2026-11-06 (ZZPRDAT: `saptasks/zzprdat/anzeige_2026-11-05/NOTES.md` nachgetragen, Ordner `transport_2026-11-06/`); davor 2026-11-05 (Monthly Review Phase 1 gebaut, Beschreibung nachgefuehrt); davor 2026-11-03 (PM-14-Listen, saptasks/rexx_schnittstelle), 2026-10-27 (Loesungslandkarte nachgetragen), 2026-10-22 (Aufraeumen: 17 fehlende Dateien nachgetragen, Ast „Projekt und Koordination“ nach
 Themen aufgeteilt, Archivabschnitt auf `docs/archiv/` umgestellt; Nachtrag: `whisper/` jetzt versioniert)
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
@@ -27,6 +27,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/rag/init.md` | Ladereihenfolge fuer eine neue Sitzung und Kurzform der Abschlussregel (versioniert) |
 | `lastchange.md` | Aenderungsstand seit Oktober 2026, juengster Abschnitt oben; aelteres in `docs/archiv/` |
 | `docs/rag/LEARNINGS.md` | **Gemachte Fehler mit Regel, eine Zeile je Fehler. Pflichtlektuere, verlinkt aus `router.md` (Einstieg und Regel 9) und `CLAUDE.md` 3** |
+| `.claude/agents/sap-t76.md`, `.claude/agents/einkauf.md`, `.claude/agents/finance-verkauf.md`, `.claude/agents/hr.md` | feste Agenten-Definitionen (seit 2026-11-05): Pflichtlektuere, Kernwissen und Grundregeln je Themenast, verlinkt aus `router.md` Absatz Agenten; bei Regelaenderung in den RAG-Dateien im selben Commit nachfuehren |
 
 ## Unterrouter
 
@@ -96,6 +97,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/FINANCE_FELDLUECKEN.md` | **zusammengefuehrt**: was fehlt, wer es besitzt |
 | `docs/STANDORT_ES_SAGE.md` | **zusammengefuehrt**: Spanien |
 | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` | Spanien, Buchungsdatum im Detail |
+| `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md` | Spanien: Plan und Umsetzung Supplier aus dem letzten Sage-Wareneingang (ISS-003.3, Entscheid Andreas 12.11.), Lesereihenfolge und Erbregel, Gang 1 und 2 mit Santi; umgesetzt in `c9208b5`, am 12.11. noch nicht deployed |
 | `docs/STANDORT_DE_ALPHAPLAN.md` | **zusammengefuehrt**: Deutschland |
 | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` | Indien, Sales Type |
 | `docs/FINANCE_IT_VORGEHEN_2026-05-18.md` | Italien |
@@ -123,6 +125,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/LOGISTIK_LIVE_2026-10-01.md` | Logistik live: Entscheide, Messungen, SAP-Sets, Cockpit, 3D-Lagerplatzansicht, offene Schritte |
 | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` | Sprachen, Projektsuite (Projektsuite seit 2026-10-09 ueberholt) |
 | `docs/EINKAUF_SITZUNG_2026-10-22.md` | Ergebnisse Einkaufssitzung 22.10.: Dashboard-Zwischenstand, Feedbackliste, Lieferantenbewertung, Handbestellwesen |
+| `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md` | Lieferantenbewertung (Wochen_Todo 122): SAP-Quellen je Baustein, aus T76 nur gelesen (klassische Lieferantenbeurteilung, Liefertreue, Q2, Fiori), Systemstand T76 (S/4HANA 2023), offene Punkte |
 | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` | Handbestellwesen: Abloesung PHP-Anwendung durch Dashboard-Modul, Befund, Zielbild, GUI wie PHP, Phasen, offene Punkte |
 | `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Import, Registrierung, Seiten `/handbestellwesen` klassisch und `/bestellwesen` neu) |
 | `wwwroot/css/handbestellwesen.css` | Optik Handbestellwesen wie die PHP-Anwendung |
@@ -168,13 +171,14 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/shopfloor_paket_2026-10-14/` | Fabios Paket vom 2026-10-14: Schnittstelle Shopfloor-SAP (Excel, Feldliste, Push-Beispiele mit abweichendem Format) und Frontend-Patches mit `apply_patch.js` |
 | `docs/shopfloor_paket_2026-10-16/` | Fabios Deploy-Paket vom 2026-10-16: Schnittstellen-Excel (Jobs J1 bis J11, Deploy-Checkliste), Patch 03 Wuensche D. Tobler, Config-Patch 04 mit `apply_config.js` |
 | `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md` | Bauplan Materialanteil je Produktgruppe nach Materialgruppe (Spend-Aufriss Phase 2): Rechnung, vorhandene Bausteine (`Zc23Set`, ZLO03), SAP- und Dashboard-Schritte, offene Fragen |
-| `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `zlo03/Z_ZLO03_TURBO2_FIX25_2026-11-02.abap`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` | ZLO03 FIX 25 und `ZloTopDownSet` fuer den Materialanteil je Produktgruppe (T76 aktiv, `T76K912785`) |
+| `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `zlo03/Z_ZLO03_TURBO2_FIX25_2026-11-02.abap`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` | ZLO03 FIX 25 und `ZloTopDownSet` fuer den Materialanteil je Produktgruppe (T76 aktiv, `T76K912785`, laut Ingo am 2026-11-02 nach P76 importiert) |
 | `docs/EINKAUF_PRUEFUNG_2026-11-05.md` | Funktionspruefung aller Einkauf-Ansichten im Produktivdashboard (05.11.), Fehlerliste F1-F10 |
 | `zlo03/BEFUND_EINHEIT_WAFER_2026-11-05.md` | Befund Materialanteil Wafer: `STKO-BMENG` in `Z_ZLO03_TURBO2` ignoriert, Vorschlag FIX 26 (T76 nur gelesen) |
-| `saptasks/qm_meldungen/` | `QmMeldungSet` (offene Q1-Meldungen) fuer den Monthly Review: NOTES, Quelltexte vorher/nachher, RFC-Nachbau (T76, `T76K912837`) |
-| `saptasks/ic_preisfindung/` | IC-Preisfindung 1100 → 1200 fuer Fabio: NOTES (Preisliste/Kurs IV, Staffelbasis VOFM 601, V1 Abschnitt 9), `staffelbasis_601.abap`, `PLAN_V1_CUSTOMIZING_2026-11-11.md` (Plan und Ausfuehrung V1, `T76K912884`), Tabellenstaende `v1_vorher_2026-11-11/`, `v1_nachher_2026-11-11/` |
+| `saptasks/qm_meldungen/NOTES.md` (Ordner `saptasks/qm_meldungen/`) | `QmMeldungSet` (offene Q1-Meldungen) fuer den Monthly Review: NOTES, Quelltexte vorher/nachher, RFC-Nachbau (T76, `T76K912837`, seit 2026-11-09 in P76) |
+| `saptasks/ic_preisfindung/NOTES.md`, `saptasks/ic_preisfindung/PLAN_V1_CUSTOMIZING_2026-11-11.md` (Ordner `saptasks/ic_preisfindung/`) | IC-Preisfindung 1100 → 1200 fuer Fabio: NOTES (Preisliste/Kurs IV, Staffelbasis VOFM 601, V1 Abschnitt 9), `staffelbasis_601.abap`, Plan und Ausfuehrung V1 (`T76K912884`), Tabellenstaende `v1_vorher_2026-11-11/`, `v1_nachher_2026-11-11/` |
 | `docs/einkauf_lieferantenbewertung/` | Entwurf Lieferantendashboard V6 vom Einkauf (Demo-HTML, fiktive Daten, 02.11.), beschrieben in `docs/EINKAUF_SITZUNG_2026-10-22.md` Abschnitt 5 |
 | `docs/shopfloor_paket_2026-11-01/` | Fabios Paket vom 2026-11-01: Patch 04 (PPD Terminverschiebungen aus den Rueckstandslisten, Schalter `tv_from_rs`), Patch 05 und Config Verkauf (Fiori statt ZC23, Transmitter = TR5 + TX), Schnittstellen-Excel mit J4 |
+| `docs/shopfloor_paket_2026-11-07/` | Fabios Paket vom 2026-11-07: Schnittstellen-Excel und „Was fehlt“, Patch 06 (RS offen nach Abschlussdatum) und 07 (SAP-Werte gesperrt), Config Logistik DW Soll und SEH Tagesmenge; Patch 06 und 07 eingespielt am 09.11., Stand der zwei Config-Wuensche in `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 18 |
 | `docs/Shopfloor_SAP_Feldmapping_2026-10-14.xlsx` | Feld-Mapping der 134 Shopfloor-Schnittstellenfelder (SAP/MES, Vorschlag, Selektion, Status) und Disponenten je Abteilung; Quelle fuer `shopfloor_config.json` |
 | `.tmp_sap_probe/ddic_lzcode/README.md` | Notiz im SapProbe-Arbeitsordner |
 
@@ -236,6 +240,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `saptasks/rexx_schnittstelle/quelltexte_T76_2026-11-03/` | Quelltexte der EXPRIS-Programme und vier Methoden von `ZCL_HR_PA_INTERFACE_REXX_READ`, aus T76 gelesen |
 | `saptasks/gib_dcp/NOTES.md` | GIB Dispo-Cockpit in T76: Bestand Rollen/Transaktionen, Testuser UBIG |
 | `saptasks/shopfloor_sap/NOTES.md` | Shopfloor-Mengen aus SAP; im Ordner `methoden_bauen.py`, MPC/DPC vorher/neu, Feldlisten `ZSTR_SHOP_RM`/`ZSTR_SHOP_PROD` |
+| `saptasks/copa_verkauf/NOTES.md` | `CoPaSumSet`: Verkauf AE und Umsatz IST aus CO-PA (`CE11000`) fuer das Shopfloor-Cockpit, T76 aktiv, Auftrag `T76K912866`, nicht freigegeben (Stand 2026-11-10); im Ordner MPC/DPC vorher/neu, `ZCOPA_SUM_ADD.abap`, Feldliste `ZSTR_COPA_SUM`, `methoden_bauen.py` |
+| `saptasks/zc12/PLAN_ZC12_NULLWERT_PERFORMANCE_2026-11-12.md` | ZC12 (`ZM_ABGLEICH_KTSCH`, PM-02): Plan Wert 0 bei gesetztem Haken, Popup-Ausrichtung, Laufzeit; wartet auf Ingos Ja zur Ausfuehrung in T76 (Stand 2026-11-12); im Ordner T76-Abzug, Entwurf und Einspieldatei vom 12.11., `ZM_ABGLEICH_KTSCH_vorher.abap`/`_nachher.abap` und `Z_KOI_SRC_DUMP.abap` |
 | `saptasks/fiori_erste_app/NOTES.md` | Erste Fiori-App: Harness, Voraussetzungen, Upload-Wege, Link; Quelle `webapp/` |
 | `saptasks/zc23_materialanteil/NOTES.md` | ZC23 Materialanteil: Analyse und Vorschlag; im Ordner Quelltext von ZM03 `ZLO_CALC_CZ_PREISE.abap` (gelesen aus T76) |
 | `saptasks/zc23_materialanteil/ZC23_Materialanteil_Beschleunigung_2026-10-19.docx` | Word-Doku: wie der Materialanteil von 47,7 s auf 13,5 s beschleunigt wurde; Generator `word_beschleunigung.js` |
@@ -264,6 +270,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `zlo03/FIX22_DISPO_MATKL_2026-10-29.md` | ZLO03 FIX 22: Top-Down mit Disponent (MARC-DISPO) und Warengruppe (MARA-MATKL), Wunsch Armin, Test T76 |
 | `zlo03/FIX23_EINHEIT_STUECKLISTE_2026-10-29.md` | ZLO03 FIX 23: Top-Down Mengen und Stueckkosten in der Stuecklisten-Einheit ueber MARM (Fall H05039 KAR/ST, Meldung Armin), Test T76 |
 | `zlo03/FIX24_RUNDUNG_TEXTPOS_DETAILS_2026-10-29.md` | ZLO03 FIX 24: Stueckkosten ungerundet, `p_days` ausgeblendet, Textpositionen nicht im Bedarf, Bottom-Up-Details in Stuecklisten-Einheit, fuenf Testlaeufe T76 |
+| `zlo03/FIX26_BASISMENGE_2026-11-05.md` | ZLO03 FIX 26: Positionsmenge durch die Basismenge der Stueckliste (`STKO-BMENG`), Wafer je Chip; Auftrag `T76K912839`, laut Nachtrag am 2026-11-09 von Ingo nach P76 importiert (HW_ZUKAUFSORT 1.27 Mio. statt 957 Mio.) |
+| `zlo03/FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` | ZLO03 FIX 27: Excel zeigt die alte Menge je Basismenge und zusaetzlich die Menge je 1 Stueck; im selben Auftrag `T76K912839`, in P76 seit 2026-11-09, die Excel-Spalten dort noch nicht geprueft |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_2026-10-20.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19, Stand 20.10. (abgeloest) |
 | `zlo03/Z_ZLO03_TURBO2_FIX19_ROHS_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12 und FIX 19 inkl. Spalte RoHS (abgeloest durch FIX 20) |
 | `zlo03/Z_ZLO03_TURBO2_FIX20_2026-10-22.abap` | Quelltext `Z_ZLO03_TURBO2` mit FIX 12, FIX 19 inkl. RoHS und FIX 20 (T76 aktiv seit 22.10.) |
@@ -282,6 +290,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/AGENT_COORDINATION_HISTORIE.md` | abgeschlossene Koordinationseintraege: Volltext bis 2026-09-29, danach verschobene Kurzindex-Zeilen; Nachschlagewerk |
 | `docs/rag/PROJECT.md` | Projektstand, Kurzstand |
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
+| `projektmanagement/Wochen_Todo.tsv`, `projektmanagement/Wochen_Todo.xlsx`, `projektmanagement/wochen_todo_xlsx.py` | Aufgabenliste mit Status je Aufgabe (Quelle), erzeugte Excel mit HERMES-Uebersicht, Erzeuger-Skript (auch fuer `Status_kurz.xlsx`); Pflichtnachfuehrung nach `CLAUDE.md` 3 Punkt 3 |
+| `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` | Statusquelle fuer Finance- und Datenpunkte (`ISS-…`), `router.md` Regel 2 |
 | `projektmanagement/Status_kurz.tsv`, `projektmanagement/Status_kurz.xlsx` | Status kurz fuer den Chef (Quelle und erzeugte A4-Seite), seit 2026-10-01 |
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |
 | `projektmanagement/PM-14_Datenqualitaet_Tasks.tsv` | PM-14: 30 Befunde zur Datenqualitaet, wer bereinigt was (Bereich, System, Zustaendigkeit, Status, Fundstelle) |
@@ -295,7 +305,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/THEMENLANDKARTE_2026-10-15.svg` | Themenlandkarte: Datenquellen, neun Themenbereiche mit Abhaengigkeiten und offenen Blockern, Ansprechpartner, gemeinsame Grundlagen; Generator `projektmanagement/themenlandkarte.py` |
 | `docs/LOESUNGSLANDKARTE_2026-10-27.html` | Loesungslandkarte (interaktiv, im Browser oeffnen): alle gebauten Loesungen von der Quelle bis zur Nutzung, SAP-Eigenentwicklungen und Werkzeuge, Zusammenhaenge per Klick; Textfassung in `docs/rag/ARCHITECTURE.md` Abschnitt Gesamtlandkarte |
 | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` | HR- und Einkaufscockpit Konsistenzreview vom 29.09. (Codex) mit lokalem Reparaturstand |
-| `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
+| `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben; Nachpruefungen vom 29.10. und 12.11. in der Datei (am 12.11. waren die Befunde 13 und 15 erneut eingetreten) |
+| `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md` | Doku-Pruefung aller Markdown-Dateien vom 2026-11-12: Vorgehen, Zahl der Befunde, offene Entscheide |
 
 ## Archiv — kein Sollstand
 
