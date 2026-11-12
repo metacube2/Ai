@@ -828,3 +828,9 @@ Faellt E5 auf „erweitern“, kommt `Services/GroupMarginSupplierClassifier.cs`
 | Schritt 1 | **lesend erlaubt**: Produktiv-Einstellungen (Spaltenzuordnung TRES, Supplier-/Kostenmodi) und SharePoint `Import/Finance/Spanien` Dateiliste mit Kopfzeilen |
 
 Phase 2 laeuft genau nach Abschnitt 7, Schritte 1 bis 8 und 10 (Mailentwurf `.eml` fuer Santi, Gang 1); Schritt 9 (Deploy) erst nach E7.
+
+**Reihenfolgeaenderung (Freigabe Ingo, 2026-11-12, Weg b):** Schritt 1 war im ersten Anlauf nicht moeglich. Die
+Dashboard-Seiten `/standorte` und `/settings` verlangen die Finance-Freischaltung, SharePoint verlangte eine Anmeldung
+mit Windows Hello; beides wurde abgebrochen, nicht umgangen. Die Schritte 3 bis 8 und 10 laufen deshalb vorher.
+Schritt 1 (Mappingliste TRES, Supplier-/Kostenmodi, Dateiliste und Kopfzeilen in `Import/Finance/Spanien`) wird nachgeholt,
+wenn Ingo angemeldet ist, und zwar **vor Gang 2 an Santi**. Gang 1 (nur Pruefskript) haengt nicht daran.
