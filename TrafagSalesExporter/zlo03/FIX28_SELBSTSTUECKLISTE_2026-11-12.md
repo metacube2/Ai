@@ -127,7 +127,7 @@ Selbst-Stuecklisten.
 
 ## 8. Antwort an Armin (Entwurf 2026-11-12 14:20, im Chat an Ingo uebergeben, Ingo sendet selbst)
 
-Stand bei Chat-Ende 14:25: **nicht versendet** (kein Beleg). Vor einer Statusaenderung in Outlook „Gesendete Elemente“ pruefen.
+~~Stand bei Chat-Ende 14:25: **nicht versendet**~~ *Erledigt 2026-11-12 14:25: laut Ingo gesendet.*
 
 > **Betreff:** AW: ZLO03_Fehler in der Stücklistenmenge
 >
@@ -153,7 +153,7 @@ Stand bei Chat-Ende 14:25: **nicht versendet** (kein Beleg). Vor einer Statusaen
 
 ## 9. Offen bei Chat-Ende (2026-11-12 14:25)
 
-1. Ingo sendet die Antwort an Armin (Abschnitt 8); Ann-Katrin und Sandro kurz informieren (Excel-Spalte Elternmaterial,
+1. ~~Ingo sendet die Antwort an Armin (Abschnitt 8)~~ *(erledigt 14:25, laut Ingo)*; Ann-Katrin und Sandro kurz informieren (Excel-Spalte Elternmaterial,
    H20201 in MM).
 2. Einkauf-Lauf neu starten, damit `PurchasingMaterialShareBom` die FIX-28-Mengen holt (FP_THERMOST. sinkt deutlich).
    Bis dahin zeigt das Dashboard den alten, zu hohen Materialanteil.

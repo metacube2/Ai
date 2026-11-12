@@ -9,7 +9,7 @@ ZLO03 FIX 28 ist **in P76 wirksam**: `T76K912902` importiert 13:54, `ZloTopDownS
 63759 H20201 115 MM / 0.06 CHF statt 1'815 CHF. Das lokale Werkzeugproblem (MSB3822 beim Bau von `ProbeSapEntity`, Ursache
 ein fremder unversionierter WinForms-Ordner im Projektordner) ist behoben 14:20, der Ordner liegt jetzt unter
 `C:\Users\koi\source\repos\`. Offen in dieser Reihenfolge (`zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md` 9, Wochen_Todo 160):
-(1) Ingo sendet die Antwort an Armin, Entwurf im Wortlaut in der FIX-28-Datei Abschnitt 8, nicht versendet;
+(1) ~~Ingo sendet die Antwort an Armin~~ *(gesendet, laut Ingo 14:25)*;
 (2) Einkauf-Lauf neu, sonst bleibt der Materialanteil im Dashboard zu hoch; (3) Selbst-Stuecklisten fachlich klaeren.
 
 ## Uebergabe 2026-11-12 13:50 (Chat der Sitzung trafagsalesexporter-32 geschlossen)
