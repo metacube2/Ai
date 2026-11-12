@@ -664,13 +664,20 @@ Upload wie bisher per rclone nach `trafag-bi:Import/Finance/Spanien`.
 
 1. **Produktiv nur lesen (Browser, Arbeits-Chrome, `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/...`):**
    Spaltenzuordnung des Standorts TRES/TRSE (leer erwartet), `SupplierFallbackMode`, `InternalSupplierCostSourceMode`,
-   `GroupMarginCostCurrencyMode` in den Export-Einstellungen. Ergebnis in den Plan schreiben. Ist die Liste nicht leer,
-   gilt 4.1 nicht nur vorsorglich, sondern zwingend.
+   `GroupMarginCostCurrencyMode` in den Export-Einstellungen. Braucht die Seite die Freischaltung, das melden und nicht
+   umgehen. Ergebnis in den Plan schreiben. Ist die Liste nicht leer, gilt 4.1 nicht nur vorsorglich, sondern zwingend.
+   Dazu, nur mit Ingos OK (SharePoint-Geschaeftsdaten): Dateiliste von `Import/Finance/Spanien` und die **Kopfzeile jeder
+   Dateigeneration**, vor allem der Basisdatei 2025. Alle lokal vorliegenden Generationen fuehren `SourceLineId`
+   (gelesen: `SageSpainExportPackage/Spain_Sales_range_20260528_to_20260603.csv`,
+   `.../Spain_Sales_range_20260101_to_20260531.csv`, `.../export.csv`; die Spalte steht seit dem ersten Commit
+   `8477894` in der Query). Fehlt sie in einer produktiven Datei, wuerden deren Zeilen ueber Rechnung/Position/Material
+   geschluesselt, die Backfill-Zeilen ueber `source:...`; beide blieben stehen und der Umsatz waere doppelt. Dann
+   anhalten und Ingo melden (Ausweg: diese eine Datei nach R1 in einen Unterordner, weil R1 ihre Obermenge ist).
 2. Koordination und LEARNINGS (Hauptsitzung).
 3. Skripte nach Abschnitt 3 aendern: Paketdatei `Export-SageSpainSalesCsv.ps1`, danach nach `scripts/` kopieren und md5
    vergleichen; All-in-One; `Run-SpainExportAndUpload.ps1`; README; neues Analyze-Skript. Danach pruefen: kein Byte
    ausserhalb ASCII (`grep -nP '[^\x00-\x7F]'`), Zeilenenden unveraendert LF (`file`).
-4. SQL-Syntax pruefen wie am 2026-08-17: alle erzeugten Varianten (2 Skripte x 3 Datumsfilter, dazu die Analyze-Teile)
+4. SQL-Syntax pruefen wie am 2026-08-17: alle erzeugten Varianten (2 Skripte x 2 Datumsfilter, dazu die Analyze-Teile)
    mit `Microsoft.SqlServer.TransactSql.ScriptDom` parsen, Gegenprobe mit kaputtem SQL. Werkzeug im Scratchpad, nicht
    im Repo.
 5. C# nach Abschnitt 4 aendern, Tests nach Abschnitt 9 schreiben.
@@ -682,10 +689,12 @@ Upload wie bisher per rclone nach `trafag-bi:Import/Finance/Spanien`.
    Commit-Zeile im Protokoll). Ingo vorher sagen, welche weiteren nicht deployten Commits des Zweigs mitgehen (E7).
    Die Reihenfolge Deploy/Backfill ist unkritisch, weil jeder Import alle Dateien neu liest; erst nach Deploy und
    Backfill ist das Ergebnis vollstaendig.
-10. Paket an Santi (Ingo versendet; Mailentwurf als `.eml`, nie selbst senden).
+10. Gang 1 an Santi: nur `Analyze-SpainSupplierLookup.ps1` (Ingo versendet; Mailentwurf als `.eml`, nie selbst
+    senden). Das Pruefskript kann schon vor Schritt 5 bis 9 hinaus, es haengt nicht am Deploy.
 11. Auswertung von Santis Analyze-Ausgabe: Schluessel eindeutig (Teil C `DuplicateHeaderKeys = 0`,
-    `LinesWithoutHeader`), Gate (Teil G), Trafag-Schreibweise (Teil F), Laufzeit (Teil J). Weicht etwas ab: anhalten,
-    Ingo melden, nicht variieren.
+    `LinesWithoutHeader`), `SourceLineId` eindeutig (Teil L), Gate (Teil G), Trafag-Schreibweise (Teil F), Laufzeit
+    (Teil J), Luecken (Teil K, fuer E9). Weicht etwas ab: anhalten, Ingo melden, nicht variieren. Danach Gang 2
+    (Zip, R1, R2).
 12. Nach dem naechsten Spanien-Import: Messung gegen das neue `Sales_All` (Andreas' Datei) mit einem read-only Werkzeug
     unter `.tmp_tools/`: TRES-Zeilen gesamt (darf gegen vorher nicht steigen), Summe `SalesPriceValue` 2025 und 2026,
     Fuellgrad Lieferant als `TRIM(Feld) <> ''` (nie `> 0`), getrennt nach Jahr; ohne Lieferant nach Grund aus Santis
@@ -703,7 +712,8 @@ Upload wie bisher per rclone nach `trafag-bi:Import/Finance/Spanien`.
 | E3 | Gate nur `TipoArticulo = 'M'` oder alle Codes ausser `-` | **nur `M`** (99.0 % des Nettowerts im Auszug); nach Teil G erweiterbar |
 | E4 | Ruecksendungen ausschliessen (`lp.Unidades > 0`) | **ja** |
 | E5 | Trafag AG in Sage anders geschrieben als `TRAFAG AG`: Muster `TrAgEntityPattern` erweitern (Code) oder als „Intern ohne Gesellschaft“ lassen | erst nach Teil F; bei Abweichung erweitern, mit Test |
-| E6 | Santi in einem Gang (Analyze, Skripte, Backfill) oder erst Analyze, dann Rest | **ein Gang**: `TOP 1` verhindert Vervielfachung auch bei falschem Schluessel; ein falscher Lieferant wird mit Analyze sichtbar und per neuem Backfill korrigiert |
+| E6 | Santi in einem Gang (Analyze, Skripte, Backfill) oder erst Analyze, dann Rest | **zwei Gaenge** (Abschnitt 6): ein Fehler in neuen Tagesdateien laesst sich nicht per neuem Backfill korrigieren, nur durch Entfernen der Tagesdateien. Kostet einen Tag mehr gegenueber der Zusage „1-2 Arbeitstage“ an Andreas |
+| E9 | Bestehende Luecke (registriert vor 2026-05-28, fakturiert ab 2026-06-01; Teil K) nachholen? | eigener Punkt nach Teil K, nicht im Lieferanten-Backfill; aendert den Umsatz und braucht dann die Zustimmung von Andreas |
 | E7 | Deploy-Zeitpunkt; welche nicht deployten Commits des Zweigs mitgehen (u. a. `c5c9b4a`, `19ca282`, Rexx Hub `1e99745`/`d99fbe6` laut Koordinationsdatei „nicht deployed“) | Ingo entscheidet |
 | E8 | Seed vorsorglich erweitern (4.1) | **ja**, wirkungslos bei leerer Liste |
 
@@ -737,6 +747,9 @@ Neu:
 3. `ManualExcelDataSourceAdapterTests.FetchAsync_Spain_Later_Supplier_Wins`: beide Dateien mit verschiedenem
    Lieferanten, die spaetere gewinnt.
 4. `ManualExcelDataSourceAdapterTests.FetchAsync_Uk_Does_Not_Inherit_Supplier`: Erbregel wirkt nicht ausserhalb Spaniens.
+4a. `ManualExcelDataSourceAdapterTests.FetchAsync_Spain_Mixed_Keys_Are_Not_Merged`: Kennzeichnungstest fuer das
+   Risiko aus Schritt 1: eine Datei ohne `SourceLineId`, eine mit; erwartet zwei Zeilen (heutiges Verhalten, nicht
+   geaendert). Der Test macht sichtbar, warum die Kopfzeilen vor dem Backfill geprueft werden.
 5. `GroupMarginSupplierClassifierTests.Resolve_Spain_Explicit_External_Supplier_Beats_Marc_Fallback`: TSC `TRES`,
    Material im MARC-Set, Lieferant „ACME INSTRUMENTACION SL“ -> `Extern`; `ResolveDeliveringEntity` -> `null`.
 6. `GroupMarginSupplierClassifierTests.Resolve_Spain_Trafag_Supplier_Is_Internal_TrAg`: TSC `TRES`, Name in der
@@ -758,7 +771,7 @@ und 4 in Abschnitt 7.
 | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` | geaendert |
 | `scripts/Export-SageSpainSalesCsv.ps1` | Kopie, byte-identisch |
 | `SageSpainExportPackage/SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1` | geaendert |
-| `SageSpainExportPackage/SageSpainFinalExportPackage/Run-SpainExportAndUpload.ps1` | geaendert (ValidateSet, `--verbose`) |
+| `SageSpainExportPackage/SageSpainFinalExportPackage/Run-SpainExportAndUpload.ps1` | geaendert (nur `--verbose` entfernt) |
 | `SageSpainExportPackage/SageSpainFinalExportPackage/README.txt` | geaendert |
 | `SageSpainExportPackage/SageSpainFinalExportPackage/Analyze-SpainSupplierLookup.ps1` | neu |
 | `SageSpainExportPackage/SageSpainFinalExportPackage/SageSpainFinalExportPackage.zip` | neu gebaut |
@@ -786,6 +799,8 @@ Faellt E5 auf „erweitern“, kommt `Services/GroupMarginSupplierClassifier.cs`
 | Santis Server faehrt weiter alte Skripte | neue Zeilen ohne Lieferant | Erbregel schuetzt Altzeilen; neue Zeilen fehlen bis zum Tausch, sichtbar im Fuellgrad |
 | MARC-Zeilen wechseln auf lokale Kosten | Marge ES aendert sich sichtbar | ist die gewollte Korrektur; Messung Schritt 12 vor der Meldung |
 | Nicht-ASCII oder CRLF in den Skripten | Parserfehler auf Santis Server | Pruefung Schritt 3 |
+| Produktive Datei ohne `SourceLineId` | Backfill-Zeilen doppelt neben Altzeilen, Umsatz doppelt | Kopfzeilenpruefung Schritt 1, Test 4a, Zeilenzahl-Kontrolle Schritt 12 |
+| Backfill mit breiterem Filter als heute | Umsatzaenderung als Nebenwirkung | R1/R2 genau nach den heutigen Schnitten (3.3), Teil K |
 
 ## 12. Kandidaten fuer LEARNINGS
 
