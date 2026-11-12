@@ -1,7 +1,23 @@
 # Last Change
 
-Stand: 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-12 (Zwischenstand: IC Tests Fabio, ZC12 Auftrag, Spanien-Supplier Rueckfrage Andreas); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## Zwischenstand 2026-11-12 (falls der Chat abbricht)
+
+**IC V1 (Fabio):** Tests in T76/100 bestanden (IV 90381224-90381226), T76K912884 von Fabio fachlich freigegeben. Import nach P76
+wartet auf Fabios Z999-Preise in P76 und die Abgrenzung der PR00-Spiegelsaetze 820. Antwortvorschlag 601/908 an Fabio liegt im Chat
+(RV80HGEN nach Bestaetigung 908 durch TRIM/Fabio); Import haengt nicht an 908. Offen Ingo: T683T, 501230, Mandant 090, P76-Lesepruefung.
+`saptasks/ic_preisfindung/NOTES.md` 9.1, Wochen_Todo 153.
+
+**ZC12 (PM-02):** Auftrag Ingo: Wert 0 bei gesetztem Haken zulassen (Arbeitsstunden; heute Abbruch, alter Wert bleibt), Popup-Wert
+linksbuendig, Performance im Report. Kein neuer Index auf SAP-Standardtabellen (nur Notfall). Phase 1 Plan lesend in T76 laeuft
+(Agent sap-t76; Ergebnis `saptasks/zc12/PLAN_ZC12_NULLWERT_PERFORMANCE_2026-11-12.md`, Quelltextabzug
+`saptasks/zc12/ZM_ABGLEICH_KTSCH_T76_2026-11-12.abap`). Nichts in SAP geaendert. Wochen_Todo 3.
+
+**Spanien Supplier (Andreas):** Andreas fragt nach dem Zeitpunkt; die Entscheidfrage war ihm noch nicht gestellt. Antwortvorschlag
+mit Frage, Einschraenkungen und Schaetzung (1-2 Tage nach OK, rund eine Woche inkl. Santi) im Chat. ISS-003.3, Wochen_Todo 13,
+`docs/STANDORT_ES_SAGE.md` 2.
 
 ## Uebergabe 2026-11-11 abends (Chat geschlossen): Spanien-Lieferant, Fabio 601/908, offene Punkte
 

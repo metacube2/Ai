@@ -1,6 +1,6 @@
 # Standort Spanien: Sage-Export und Upload
 
-Stand: 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
+Stand: 2026-11-12 (Abschnitt 2: Lieferant ueber den Wareneingang, Entscheidfrage an Andreas erst jetzt formuliert); davor 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
 und `SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md`.
 
 **Die Export-SQL gehoert uns**, nicht Spanien. Fehlt ein Feld, liest zuerst unsere Query
@@ -53,6 +53,12 @@ belegt ist der Weg ueber den Wareneingang: `dbo.LineasAlbaranProveedor` (`Codigo
 `SiglaNacion`/`Nacion`, `FechaAlbaran`). Vorschlag: je Verkaufszeile `OUTER APPLY TOP 1` auf den letzten Wareneingang desselben
 Artikels, wie beim Buchungsdatum. Vorher entscheidet Andreas, ob das als Supplier gilt (ISS-003.3); danach alle Stellen der Query,
 die ES-Spaltenzuordnung und ein einmaliger Bereichsexport durch Santi.
+
+*Nachtrag 2026-11-12: Andreas fragt nach dem Zeitpunkt. Die Entscheidfrage war ihm bis dahin nicht gestellt (Ingo hatte nur
+zugesagt, es anzuschauen). Antwortvorschlag: Frage plus Einschraenkungen (bei mehreren Lieferanten der zuletzt gelieferte;
+Artikel ohne Wareneingang bleiben leer; Ware von Trafag AG erscheint als Trafag) und Schaetzung 1-2 Arbeitstage nach dem OK,
+rund eine Woche bis im `Sales_All`, je nachdem wann Santi einspielt. Die Ersatzregel MARC 1100 (`docs/FINANCE_SUPPLIER.md`
+Abschnitt 1) ordnet ES fuer die Marge schon heute ein; leer ist nur die Supplier-Spalte.*
 
 ### Buchungsdatum
 

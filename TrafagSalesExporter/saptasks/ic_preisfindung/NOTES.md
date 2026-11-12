@@ -1,6 +1,6 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-11 abends (Abschnitt 8.9: Rueckmeldung Fabio zu 601/908 eingeordnet, Entscheid RV80HGEN weiter bei Ingo); davor 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
+Stand: 2026-11-12 (Abschnitt 9.1: **Tests Fabio in T76 bestanden, T76K912884 fachlich freigegeben**; Import P76 wartet auf Fabios Z999-Preise in P76; Antwortvorschlag 601/908); davor 2026-11-11 abends (Abschnitt 8.9: Rueckmeldung Fabio zu 601/908 eingeordnet, Entscheid RV80HGEN weiter bei Ingo); davor 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
 offen; Plan und Ausfuehrung in `PLAN_V1_CUSTOMIZING_2026-11-11.md`); davor 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
 noch nicht eingebunden**; VOFM in P76 gesperrt, Transport von `RV62ANNN` nicht moeglich (generiert), offen Entscheid Ingo zu
 `RV80HGEN`, das auch die Kopierbedingung FBED 908 einbindet); davor 2026-11-06
@@ -753,3 +753,37 @@ der Kaskade Z001/Z002, fehlende Stammdaten, Hinweis 501230, offene Punkte vor P7
    schalten ueber ZPR0 die Preislisten fuer jeden IC-Kunden aus (Plan 5.4). Freigabe T76K912884 erst nach Tests und Zustimmung Fabio.
 4. Vor dem Import in P76: TVCPF IV/NLCC `KNPRS B` in P76 lesen; T683S/T684/T684S/T685/T685A/T685T gegen `v1_nachher` vergleichen.
    Routine 601 wirkt in P76 erst, wenn `RV62ANNN` dort `INCLUDE RV62A601` enthaelt (Abschnitt 8.9, Entscheid 908/RV80HGEN offen).
+
+### 9.1 Tests Fabio und fachliche Freigabe (Mail Fabio, gemeldet 2026-11-12)
+
+*Damit ist Punkt 1 der Liste „Offen“ in Abschnitt 9 erledigt (Tests); die Stammdaten hat Fabio in T76 selbst vorbereitet.*
+
+Fabio hat in T76/100 getestet, alle Faelle rechnen wie erwartet (Angaben Fabio, im System nicht nachgelesen):
+
+| Fall | Beleg | Ergebnis |
+| --- | --- | --- |
+| T1-T3 (46690, 1/5/10 ST) | IV 90381224 (Bestellung 45148510, Lieferung 80432812, 8 Positionen, Kunde 820, ZICAA1) | Z999 aktiv mit Staffel, 89.60 / 72.00 / 70.80 EUR je ST, Z000-Kette inaktiv |
+| T4 (2585, 1 ST) | dito | Z000 509.73 EUR, Z001 -44 % → 285.45 EUR |
+| T5 (2585, 5 ST) | dito | Z000, Z001 -44 %, Z002 -25 % gestaffelt auf den Wert nach Z001 (Kaskade) → 214.09 EUR je ST (1'070.43 EUR) |
+| T6-T8 (45366 / 33148) | dito | PR00 aktiv, 27.00 / 427.97 / 323.70 EUR je ST, Z-Kette inaktiv |
+| Kontierung | FI-Beleg 90381224 | Erloes 30003, Z001 30100, Z002 30200, wie heute bei ZVAA01 |
+| MIRO 1200 | – | reagiert korrekt; Preisdifferenzen nur wegen nicht aktueller Infosaetze in T76 |
+| 601 Teillieferung (Bestellung 45148511) | IV 90381225 | 46690: 10 bestellt, 3 geliefert, Z999 Staffelbasis 10, 70.80 EUR je ST (212.40 EUR) |
+| 601 Teillieferung | IV 90381226 | 2585: 5 bestellt, 2 geliefert, Z002 Staffelbasis 5, -25 % (428.17 EUR) |
+
+**Fabio gibt T76K912884 fachlich frei** und bittet um Freigabe und Einplanung des Transports nach P76. Die Regressionstests R1
+(501230) und R7 (Streckengeschaeft) aus dem Plan hat er nicht gemeldet.
+
+**Reihenfolge laut Ingo (12.11.):** Fabio muss die Z999-Preise in P76 erst hinterlegen; Konditionssaetze sind Stammdaten und reisen
+nicht mit dem Transport. Erst danach importieren. In denselben Go-live gehoert die Abgrenzung der PR00-Spiegelsaetze 820 (sonst
+gewinnt PR00, Plan 5.4 Punkt 3).
+
+**601/908 (Fabios Frage „nur VOFM oder RV80HGEN inkl. 908?“):** Antwortvorschlag an Ingo, Stand 12.11. nicht gesendet: 908 ist in
+P76 belegt nicht eingehaengt (`RV60BNNN` leer, `D010INC` ohne `RV60B908`; Abschnitt 8.9), VOFM in P76 nur mit geoeffneter
+Systemaenderbarkeit, deshalb Vorschlag `RV80HGEN`, sobald TRIM oder Fabio bestaetigt, dass 908 (MDE IC-Umlagerungen, T76K912226)
+produktiv laufen darf. Der Import von T76K912884 haengt **nicht** daran: ohne eingebundene 601 rechnet die Staffel bei Z999/Z002
+mit der Liefermenge, ohne Abbruch.
+
+**Offen vor Freigabe und Import (Ingo):** T683T-Schluessel lassen oder entfernen; V1 auch fuer 501230 (wirkt automatisch);
+Mandant 090 nachziehen; A304-Materialpreise (Plan 5.4 Punkt 10); vor dem Import P76 lesend: `TVCPF` IV/NLCC `KNPRS B`, `T683S`
+ZICAA1 Stufen 010/012/113/115 frei, `T684` ZPR0 frei, `T684S` ZICAA1 leer, `T685A` Z999/Z002 gegen `v1_nachher`.
