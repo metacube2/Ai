@@ -69,7 +69,7 @@ FIX 28; die Vergleichsdateien unter `/usr/sap/trans/zlo03_fix28_*` sind wieder g
 | Set 63759 | Summe 1'952.220930; H20201 116 KG zu 15.65 = **1'815.40**; H17500 1.02 M = 29.07 | Summe **95.993180**; H20201 **115 MM** zu 0.00042 = **0.0483**; H17500 **0.02 M** = 0.57 | ✓ (Befund FP_THERMOST, FIX 26 Abschnitt 6) |
 | Set E11221 (FIX 26) | E11283 0.000211 ROL, Wert 0.249743 | unveraendert | ✓ |
 | Excel Top-Down 5501 | 62 Zeilen | 62 Zeilen, **45 Zellen anders**: 15 Komponenten je VKNR-Spalte, „je 1 Stk“ 2 → 1 und Elternmaterial ohne das Material selbst; sonst nichts | ✓ |
-| Excel Top-Down 63759 | 77 Zeilen | 77 Zeilen, 93 Zellen anders: 28 Komponenten, darunter echte Mehrfachverwendungen, die **bleiben** (E01518 3 → 2, K15019 3 → 2, R15046 3 → 2; E00203 1.07 → 0.07); bei jeder geaenderten Zeile stand vorher das Material selbst in der Elternspalte | ✓ |
+| Excel Top-Down 63759 | 77 Zeilen | 77 Zeilen, 93 Zellen anders: 28 Komponenten, jeweils nur die Selbstzeile weg (E01518, K15019, R15046 3 → 2, weil die echte Position Menge 2 hat; E00203 1.07 → 0.07); bei jeder geaenderten Zeile stand vorher das Material selbst in der Elternspalte | ✓ |
 | Excel Bottom-Up D13006 | 1'955 Zeilen | 1'955 Zeilen, in 58 Geraeten 2 → 1 (Spalte D13006 und „je 1 Stk“), sonst nichts | ✓ |
 
 **Neben dem Ziel, aber gewollt:** H20201 steht in 63759 jetzt in der Stuecklisten-Einheit MM (FIX 23). Bestand, Zu- und
@@ -77,8 +77,11 @@ Abgaenge, Verbrauch und Losgroesse stehen damit ebenfalls in MM (Lagerbestand 63
 Stueckkosten Lager je MM (0.00042). Die Werte in CHF aendern sich dadurch nicht. Das ist dieselbe Regel wie bei H05039
 (ST statt KAR), fuer Leser aber ungewohnt.
 
-40738 (K15030 auf Stufe 01 und 02, echte Doppelverwendung aus G4) liefert in T76 keine Zeilen (Loeschvormerkung) und war
-deshalb nicht pruefbar; die echten Mehrfachverwendungen aus 63759 decken den Fall ab.
+**Echte Mehrfachverwendungen bleiben summiert, mit Daten belegt:** 40738 (K15030, G4) liefert in T76 keine Zeilen
+(Loeschvormerkung) und war nicht pruefbar. Stattdessen `ZPOWERBI_VC_TXT` fuer 63759 gelesen: H05140 (Stufe 01 19 MM und
+unter D70268 2 MM), K16515 (unter U47127 und unter R14221) und K51001 (ebenso) haben je zwei L-Zeilen unter verschiedenen,
+nicht eigenen Eltern. Keine der drei steht in der Vorher/Nachher-Differenz, sie werden also weiter summiert. E01518, K15019
+und R15046 (3 → 2) haben dagegen eine echte Position mit Menge 2 und eine Selbstzeile.
 
 ## 6. Offen
 
