@@ -17,7 +17,8 @@ linksbuendig, Performance im Report. Kein neuer Index auf SAP-Standardtabellen (
 
 **Spanien Supplier (Andreas):** Andreas fragt nach dem Zeitpunkt; die Entscheidfrage war ihm noch nicht gestellt. Antwortvorschlag
 mit Frage, Einschraenkungen und Schaetzung (1-2 Tage nach OK, rund eine Woche inkl. Santi) im Chat. ISS-003.3, Wochen_Todo 13,
-`docs/STANDORT_ES_SAGE.md` 2.
+`docs/STANDORT_ES_SAGE.md` 2. *Nachtrag spaeter am 12.11.: Andreas ist einverstanden (letzter Wareneingang = Supplier); seine Rueckfrage
+'Wareneingang ohne Lieferant?' war ein Missverstaendnis (gemeint: Artikel ohne Wareneingang). Naechster Schritt: Plan zur Freigabe.*
 
 ## Uebergabe 2026-11-11 abends (Chat geschlossen): Spanien-Lieferant, Fabio 601/908, offene Punkte
 

@@ -1,6 +1,6 @@
 # Standort Spanien: Sage-Export und Upload
 
-Stand: 2026-11-12 (Abschnitt 2: Lieferant ueber den Wareneingang, Entscheidfrage an Andreas erst jetzt formuliert); davor 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
+Stand: 2026-11-12 spaeter (Abschnitt 2: **Andreas entschieden, Lieferant des letzten Wareneingangs gilt als Supplier**, Umsetzung offen); davor 2026-11-12 (Entscheidfrage an Andreas formuliert); davor 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
 und `SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md`.
 
 **Die Export-SQL gehoert uns**, nicht Spanien. Fehlt ein Feld, liest zuerst unsere Query
@@ -59,6 +59,12 @@ zugesagt, es anzuschauen). Antwortvorschlag: Frage plus Einschraenkungen (bei me
 Artikel ohne Wareneingang bleiben leer; Ware von Trafag AG erscheint als Trafag) und Schaetzung 1-2 Arbeitstage nach dem OK,
 rund eine Woche bis im `Sales_All`, je nachdem wann Santi einspielt. Die Ersatzregel MARC 1100 (`docs/FINANCE_SUPPLIER.md`
 Abschnitt 1) ordnet ES fuer die Marge schon heute ein; leer ist nur die Supplier-Spalte.*
+
+*Nachtrag 2026-11-12 spaeter: **Andreas ist einverstanden.** Seine Rueckfrage, wie es einen Wareneingang ohne Lieferant geben
+koenne, war ein Missverstaendnis: jeder Wareneingang hat einen Lieferanten (`CabeceraAlbaranProveedor.CodigoProveedor`), leer bleiben
+nur Artikel ohne jeden Wareneingang in Sage. Vermutete Faelle (nicht gemessen): Positionen ohne Lagerartikel (Fracht, Dienstleistung),
+letzter Einkauf vor dem Datenbeginn in Sage, Zugang ohne Lieferanten-Lieferschein. Zusage an Andreas: Umsetzung 1-2 Arbeitstage,
+Anteil leerer Zeilen nach dem ersten Lauf mit Zahlen melden. Naechster Schritt: Plan, Freigabe Ingo, Umsetzung, Paket an Santi.*
 
 ### Buchungsdatum
 
