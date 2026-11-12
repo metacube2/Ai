@@ -1,6 +1,6 @@
 # Unterrouter Plattform
 
-Zurueck: `router.md`. Stand: 2026-10-27 (Architektur mit Gesamtlandkarte); davor 2026-10-14.
+Zurueck: `router.md`. Stand: 2026-11-12 (Abschnitt „Standort Bubikon: WLAN `trafag-802.1x-tel` und MES-Netzausfaelle“, offen); davor 2026-10-27 (Architektur mit Gesamtlandkarte); davor 2026-10-14.
 
 Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen,
 Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
@@ -338,6 +338,67 @@ Was daraus folgt:
   Treibereinstellungen brauchen Adminrechte, also die IT (siehe oben).
 * Pruefweg: `WLAN-AutoConfig/Operational` mit `8001`/`8003` und die Abstaende
   vergleichen, dazu `NetworkProfile/Operational` mit `10000`/`10001` fuer den Profilnamen.
+
+## Standort Bubikon: WLAN `trafag-802.1x-tel` und MES-Netzausfaelle (Stand 2026-11-12, offen)
+
+Ingo meldete am 12.11. vormittags: Das WLAN mit „…tel“ am Schluss laesst **keine Personen** mehr verbinden, nicht nur ihn.
+Gemeint ist das Telefon-WLAN **`trafag-802.1x-tel`**; zur selben Familie gehoert **`trch8608tel`**. Zustaendig fuer
+Netz und WLAN sind Alex Donato (Trafag IT), UPGREAT (Support) und Entec (Gianni Albizzati, System Engineer). Ingo ist
+SAP-Spezialist und hat keine Adminrechte; Claude kann nur lesen.
+
+### Vorgeschichte aus dem Mailverlauf „Ausfall Netzwerk MES“ (weitergeleitet von Ramon Castillo an Marco Di Menco)
+
+| Zeit | Ereignis |
+| --- | --- |
+| 10.11. | erster Total-Ausfall des Netzes in der MES-Fertigung (laut Michael Scalet „wie gestern“) |
+| 11.11. 10:32 | erneuter Total-Ausfall, „alle AP sind betroffen“ (Michael Scalet, Teamleiter Transmitter Fertigung, an TSW-Support und UPGREAT) |
+| 11.11. 11:14 | Alex bittet Entec, die Infrastruktur anzusehen; Monitoring zeigte alles i. O. |
+| 11.11. 12:24 | **Entec-Befund:** seit 06.11. 15:56 viele MAC-Flaps im **VLAN 16** (WLAN), Beispiel `%SW_MATM-4-MACFLAP_NOTIF: Host 4ceb.d65a.b3cc in vlan 16 is flapping between port Gi2/0/35 and port Gi2/0/30` (Switch 172.16.4.250). Vermutung Entec: ein Geraet im WLAN verursacht Probleme. **Massnahme Entec: Client Isolation auf `trafag-802.1x-tel` und `trch8608tel` eingeschaltet**; danach keine Flaps mehr gesehen |
+| 12.11. vormittags | Ingo: niemand kommt mehr ins `trafag-802.1x-tel` |
+
+### Befunde Claude (12.11., nur gelesen)
+
+* **Das springende Geraet ist ein Espressif-Chip (ESP32/ESP8266).** OUI `4C:EB:D6` ist laut maclookup.app auf Espressif Inc.
+  registriert (Drittquelle, gegen das IEEE-Register nicht gegengeprueft). Also ein IoT-Kleingeraet (Sensor, Datenlogger,
+  smarte Steckdose, Testaufbau, Gadget), kein Laptop und kein Handy.
+* **Hypothese (nicht gemessen):** Die Client Isolation vom 11.11. 12:24 sperrt je nach WLAN-System auch Gateway oder DHCP,
+  wenn diese nicht freigegeben sind; die Telefone verbinden sich dann mit dem Funk, bekommen aber keine Adresse oder kein Netz.
+  Zeitlich passt das. Unterscheidung am Handy: „Verbunden, kein Internet“ / „Keine IP-Adresse“ = Isolation/DHCP;
+  „Authentifizierung fehlgeschlagen“ / Zertifikatsfrage = Anmeldeserver. Ingos Handytest steht aus.
+* **`trafag-802.1x` (Laptops) laeuft.** Ingos Laptop NB61258: 12.11. 07:50 verbunden, 802.1X erfolgreich als
+  `host/NB61258.TRAFAGCH.local` (EAP-Typ 13, also EAP-TLS mit Maschinenzertifikat, WPA2-Enterprise); um 10:28 im WLAN,
+  `DomainAuthenticated`, Internet, IP 172.16.10.154, Gateway 172.16.8.240, DNS 172.16.4.200/10.120.1.10/10.120.1.11.
+* **Zertifikate und Sperrlisten in Ordnung:** Maschinenzertifikat gueltig bis 01.07.2027, Aussteller „TrafagCH
+  Zertifizierungsstelle“ auf `tragvapp401`; Basissperrliste gueltig bis 16.11.2026 06:06, Deltasperrliste bis 13.11.2026 06:06
+  (`certutil -verify -urlfetch`). Abgelaufene Sperrlisten (klassische Ursache „ploetzlich kommt niemand mehr rein“) sind
+  damit ausgeschlossen. Nebenbefund: der CDP der alten CA `trafag3` (LDAP und `http://trafag3.trafagch.local/...`) ist nicht
+  mehr erreichbar; die Kettenpruefung geht trotzdem durch.
+* **Anmeldeserver (NPS/RADIUS):** einziges Mitglied der AD-Gruppe „RAS- und IAS-Server“ ist **`TRAGVDC400`**. Dessen
+  Ablehnungsgruende (Ereignisprotokoll/NPS-Log) kann nur die IT lesen.
+* **DHCP-Server laut AD** (`CN=NetServices`): `tragvdc400`, `tragvdc401`, `trczvdc400`. Leases (IP des ESP-Geraets, ob die
+  Handys Adressen bekommen) nicht lesbar: kein DHCP-Modul und keine Rechte auf Ingos Laptop.
+* **Weitere CAs im AD:** „trafagch.local Root CA 01“ auf `RB05SRV005`, „trafagch.local TrueSSO CA 01“ auf `RB05SRV020`.
+* Die Dashboard-Seite **Netzwerk / Arbeitsplaetze** zeigt nur Browser-Abbrueche je /24 (7 Tage: 172.16.9.0/24 0,21 je
+  Sitzung, 10.120.16.0/24 0,05, 172.16.10.0/24 0,00; Spitze um 13 Uhr). Sie kennt weder SSIDs noch Anmeldefehler und hilft fuer
+  diesen Fall kaum. Das AD kennt keine WLAN-Einstellungen.
+
+### Vorgeschlagen, nicht gesendet (Stand 12.11.)
+
+Nachricht Ingo an Alex: Seit 11.11. mittags kommt niemand mehr ins `trafag-802.1x-tel`; zeitlich passend zur Client
+Isolation; bitte mit Gianni pruefen, ob Gateway und DHCP trotz Isolation erreichbar sind, oder Isolation testweise aus.
+Fuer die eigentliche Ursache das Geraet `4c:eb:d6:5a:b3:cc` (Espressif/IoT) im WLAN-Controller suchen (AP,
+Signalstaerke) und abhaengen; dann kann die Isolation wieder raus.
+
+### Pruefwege fuer die naechste Sitzung
+
+* Handytest Ingo im `trafag-802.1x-tel`, Meldung notieren (siehe Unterscheidung oben).
+* Laptop: `Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-WLAN-AutoConfig/Operational'; StartTime=(Get-Date).AddDays(-2)}`
+  (8001/8002/8003, 11004-11010, 12011-12013); `Get-NetConnectionProfile`; `netsh wlan show profiles`
+  (`show networks` braucht die Standortdienste).
+* Sperrlisten: Maschinenzertifikat exportieren und `certutil -verify -urlfetch <datei>`.
+* AD lesend ueber `[adsisearcher]` (RSAT fehlt): Gruppe „RAS- und IAS-Server“, `CN=Enrollment Services`, `CN=NetServices`.
+* Was nur die IT kann: WLAN-Controller (Client Isolation, Gateway-Freigabe, Client-Suche nach MAC), NPS-Log auf
+  `TRAGVDC400`, DHCP-Leases.
 
 ## Fallen in diesem Ast
 

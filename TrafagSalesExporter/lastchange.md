@@ -23,6 +23,11 @@ mit Frage, Einschraenkungen und Schaetzung (1-2 Tage nach OK, rund eine Woche in
 **Lieferantenbewertung (Marco Widmer):** Gespraech 12.11., iteratives Vorgehen vereinbart, Ingo baut erste Fassung und schickt den
 Link; `docs/EINKAUF_SITZUNG_2026-10-22.md` 6, Wochen_Todo 122.
 
+**WLAN `trafag-802.1x-tel` (Standort Bubikon):** niemand kommt mehr hinein, seit Entec am 11.11. 12:24 dort Client Isolation
+wegen MAC-Flaps in VLAN 16 eingeschaltet hat (Verdacht, nicht gemessen). Flap-Geraet `4c:eb:d6:5a:b3:cc` = Espressif (IoT).
+Laptop-WLAN `trafag-802.1x`, Zertifikate und Sperrlisten in Ordnung. Alles in `docs/router/plattform.md` Abschnitt
+„Standort Bubikon: WLAN …“; Nachricht an Alex vorgeschlagen, nicht gesendet.
+
 ## Uebergabe 2026-11-11 abends (Chat geschlossen): Spanien-Lieferant, Fabio 601/908, offene Punkte
 
 **Spanien Supplier (Anfrage Andreas 11.11.):** Im `Sales_All` fehlt bei ES der Supplier. Ursache: unsere Sage-Query liest nur
