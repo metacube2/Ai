@@ -1,8 +1,12 @@
 # Plan: Spanien Supplier aus dem letzten Wareneingang (ISS-003.3)
 
-Stand: 2026-11-12, Phase 1 (nur gelesen, nichts geaendert). Grundlage: Entscheid Andreas Stoller vom 2026-11-12,
+Stand: 2026-11-12 (Doku-Pruefung: Kopf nachgezogen, Phase 2 ist umgesetzt, siehe Nachtrag); davor 2026-11-12, Phase 1 (nur gelesen, nichts geaendert). Grundlage: Entscheid Andreas Stoller vom 2026-11-12,
 Freigabe Ingo zur Umsetzung. Phase 2 setzt genau diesen Plan um, nachdem Ingo die offenen Entscheide in Abschnitt 8
 beantwortet hat. Commit-Stand beim Lesen: `6b6efc1` (Zweig `feature/supplier-overrides-trit`).
+
+*Nachtrag 2026-11-12 11:40: Phase 2 ist nach diesem Plan umgesetzt (Commit `c9208b5`, nicht deployed, noch nicht bei
+Santi eingespielt); die Entscheide von Ingo stehen in Abschnitt 13. Zeilenangaben im Plan beziehen sich auf den Stand
+`6b6efc1` vor der Umsetzung.*
 
 Fachregel (Andreas, 2026-11-12): Pro spanischer Verkaufsposition gilt der Lieferant des **letzten Wareneingangs
 desselben Artikels** in Sage als Supplier (`docs/STANDORT_ES_SAGE.md` Zeile 63-67).

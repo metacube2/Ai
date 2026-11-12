@@ -1,6 +1,6 @@
 # Konzept: Railway-Excel-Export per Mausklick
 
-Stand: 2026-09-01
+Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgezogen, der Text traegt Ueberholt-Vermerke vom 2026-09-09 und vom 2026-11-10); davor 2026-09-01
 Zieltermin: 2026-09-08 (PM-08, Statuspraesentation von Rohail Munir)
 Grundlage: `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md`
 

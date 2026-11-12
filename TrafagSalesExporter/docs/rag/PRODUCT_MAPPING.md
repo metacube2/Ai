@@ -1,6 +1,6 @@
 # RAG Product Mapping
 
-Stand: 2026-06-16
+Stand: 2026-11-12 (Doku-Pruefung: ueberholte Juni-Staende im Kurzstand und in den datierten Abschnitten gekennzeichnet); davor 2026-10-29 (Ueberholt-Vermerk im Abschnitt „SAP-Zielbild“), 2026-07-21 (Abschnitt ZLO03/ZAT_VC); fachlich 2026-06-16
 
 ## Kurzstand
 
@@ -12,7 +12,7 @@ Stand: 2026-06-16
 - Dashboard-Code ist auf den neuen fachlich vollstaendigen SAP-OData-Referenzservice vorbereitet und uebernimmt die Felder direkt aus `ProductDivisionRefSet`.
 - Live-Check nach SAP-Fix 2026-06-15: `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige (`Wwpsp=0008`), `2` UNASS und `0` leere `Wwpsp`. Der vorherige Totalausfall durch falsche SAP-Methode ist nicht mehr aktuell.
 - Feldcheck P: `Matnr`, `Wwpsp`, `WwpspText`, `IsAssigned` sind voll gefuellt. Leere `Wwpfa` sitzt praktisch bei `0008`/Uebrige; nur zwei echte `UNASS`-Zeilen bleiben offen (`16618`, `24432`, beide `8950 DRUCKTRANSMITTER ECOTRANS`).
-- Finance-Sales-EntitySet nach SAP-Fix: `FinanzdataSchweizOeSet` liefert `30'642` Zeilen fuer 2025; 2026 liefert aktuell `0`. Refresh wurde nach Pruefung noch nicht gestartet.
+- Finance-Sales-EntitySet nach SAP-Fix: `FinanzdataSchweizOeSet` liefert `30'642` Zeilen fuer 2025; 2026 liefert aktuell `0`. Refresh wurde nach Pruefung noch nicht gestartet. *(Ueberholt, nachgefuehrt 2026-11-12: 2026 wird geliefert. Die Live-Abfrage vom 2026-08-12 lieferte fuer `Gjahr 2026` 18'290 Zeilen, und der Batchjob `ZSCHWEIZ` laeuft seit dem 2026-08-12 taeglich, `ISS-001.1`.)*
 - `ProductDivisionMapSet`/PAPH1-Fallback bleibt als inaktive Rueckfallkonfiguration im Seed, wird aber nicht mehr gejoint.
 - Nicht gefundene Materialnummern laufen unter `Nicht im TR-AG-Stamm`; gefundene, aber nicht ableitbare Referenzen laufen unter `Nicht zugeordnet`.
 - `Übrige` ist eigene gueltige Kategorie fuer `ProductDivisionCode = 0008`, nicht Fehler und nicht mit `Nicht zugeordnet` zusammenwerfen.
@@ -72,7 +72,7 @@ Stand: 2026-06-16
   - Join: `Z.Matnr = P.Matnr`.
   - Alter Join `Z.Prodh = M.Paph1`: inaktiv.
   - Mappings: `P.Paph1`, `P.Paph1Text`, `P.Wwpfa`, `P.WwpfaText`, `P.Wwpsp`, `P.WwpspText`, `P.IsAssigned`.
-- Lokale App wurde neu gestartet; `http://localhost:55416/` antwortet mit HTTP 200.
+- Lokale App wurde neu gestartet; `http://localhost:55416/` antwortet mit HTTP 200. *(lokaler Stand vom 2026-05-29, historisch; kein Produktivbeleg)*
 - Validierung: `79/79` Tests gruen mit separatem Artefaktpfad.
 
 ## Zentrale Spartenzuordnung
@@ -136,11 +136,11 @@ Stand: 2026-06-16
   - `PRODUCTDIVISIONR_GET_ENTITYSET`
 - Naechster Schritt: Gateway-Methodencode aus SAP sichern oder `PRODUCTDIVISIONR_GET_ENTITYSET` sauber neu formulieren.
 - Browser-Favicon wurde ergaenzt: `wwwroot/favicon.svg`.
-- Letzter dokumentierter Deploy: 2026-05-29 13:47, Tests `80/80` gruen.
+- Letzter dokumentierter Deploy: 2026-05-29 13:47, Tests `80/80` gruen. *(Stand 2026-06-02, historisch; der aktuelle Deploystand steht in `docs/rag/DEPLOYMENT.md`)*
 
 ## Offene Punkte Fuer Sitzung
 
-- Normalisierung der Materialnummern.
+- Normalisierung der Materialnummern. *(Hinweis 2026-11-12: Die Liste hat den Stand Juni 2026. Fuer den Import-Join `Z.Matnr = P.Matnr` ist die Normalisierung laut Abschnitt „Aktueller Code-Stand“ dieser Datei umgesetzt; ob der Sitzungspunkt damit ganz erledigt ist, ist nicht belegt.)*
 - Struktur der Mapping-Tabelle von Kendra.
 - Matching-Regeln: exakt, Prefix, Range, Prioritaet.
 - Historisierung der Zuordnung fuer reproduzierbare Reports.

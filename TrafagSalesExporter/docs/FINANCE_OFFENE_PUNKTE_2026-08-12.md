@@ -1,6 +1,6 @@
 # Finance Dashboard: offene Punkte
 
-Stand: 2026-08-12
+Stand: 2026-11-12 (Doku-Pruefung: Nachtrag zum Umfang des Issue-Logs); davor 2026-10-29 (Ueberholt-Vermerk); fachlich 2026-08-12
 
 **Einzige gueltige Quelle fuer den Status je Punkt ist
 `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`.** Diese Datei erklaert die Struktur und die
@@ -8,6 +8,8 @@ fachliche Begruendung; die Tabelle dort traegt die Spalten des Issue-Logs und la
 direkt nach Excel kopieren. Wenn beide auseinanderlaufen, gilt das TSV.
 
 *Ueberholt am 2026-10-29: Der Issue-Log fuehrt inzwischen `ISS-001` bis `ISS-031`. Seit diesem Stand erledigt sind unter anderem `ISS-001` (Datenzufluss AT/CH/FR), `ISS-004.1` und `ISS-004.2` (Spanien Januar bis Mai und Buchungsdatum, Fachentscheid Andreas vom 2026-08-26: Rechnungsdatum), `ISS-011` (UK 2025) und `ISS-012` (Legendenzeile). Den aktuellen Status nur aus dem TSV lesen.*
+
+*Nachtrag 2026-11-12: Inzwischen reicht der Issue-Log bis `ISS-032` (Gruppenumsatz ohne IC zu hoch, eroeffnet am 09.11.2026, offen).*
 
 Alle Zahlen sind am 2026-08-12 read-only gegen die produktive Datenbank gemessen, nicht aus
 aelteren Notizen uebernommen.

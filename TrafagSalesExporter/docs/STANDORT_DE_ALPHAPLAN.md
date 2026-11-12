@@ -1,6 +1,6 @@
 # Standort Deutschland: Alphaplan-Export und Import
 
-Stand: 2026-10-29 (Abschnitt 6 zu den Kundenfeldern nachgefuehrt; Abschnitt 8 und Abschnitte 5 und 6 vom 2026-09-09).
+Stand: 2026-11-12 (Doku-Pruefung: Abschnitt 6, `candidate_objects.csv` und Filterliste des Schemaauszugs berichtigt); davor 2026-10-29 (Abschnitt 6 zu den Kundenfeldern nachgefuehrt; Abschnitt 8 und Abschnitte 5 und 6 vom 2026-09-09).
 Zusammengefuehrt aus `ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`
 und `ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`.
 
@@ -103,11 +103,13 @@ haengt die Spartenabdeckung genau daran.
 ## 6. Offene Punkte
 
 - **Blocker: fehlendes Alphaplan-Schema.** Es gibt keine Tabellen- und Spaltenliste fuer
-  `ApDaten`. `candidate_objects.csv` im Repo-Root ist nur eine Kopfzeile,
-  `obj/candidate_objects.csv` ist Sage Spanien. Die DB liegt auf `localhost\SQL2012` des
+  `ApDaten`. `candidate_objects.csv` im Repo-Root ~~ist nur eine Kopfzeile~~ ist eine Kopie des
+  Sage-Auszugs (berichtigt 2026-11-12: 81 Zeilen, bytegleich mit `obj/candidate_objects.csv`; ein Alphaplan-Auszug
+  existiert nicht), `obj/candidate_objects.csv` ist Sage Spanien. Die DB liegt auf `localhost\SQL2012` des
   DE-Servers hinter einem DPAPI-gebundenen Credential. **Keine Tabellennamen erfinden** —
   benoetigt wird ein read-only `INFORMATION_SCHEMA.COLUMNS`-Auszug, gefiltert auf
-  `%Adress%`, `%Artikel%`, `%Liefer%`, `%Kunde%`.
+  `%Adress%`, `%Artikel%`, `%Liefer%`, `%Kunde%` *(ergaenzt 2026-11-12: dazu `%Kredit%`, das der Issue-Log
+  `ISS-003.3` fuer die Lieferantenseite nennt; ein Auszug mit allen fuenf Filtern deckt Kundenfelder und Lieferant)*.
 - Danach die Query selbst erweitern: Kundenname und -land (`RechnungsAdressenID` wird
   selektiert, aber nie aufgeloest) und die Lieferantenquelle. Der frueher hier genannte
   Punkt „saubere Bezeichnung aus dem Artikelstamm statt des RTF-Felds“ ist **ueberholt**:

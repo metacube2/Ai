@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
+Stand: 2026-11-12 (Doku-Pruefung: Kursprofil Budgetkurs, Spanien-Ausnahme der Jahresabgrenzung, Journal-Faelligkeitsdatum, Italien-Doppelzeilen, Indien-Quelle, offene Fachpunkte `ISS-007.4`, `ISS-032` und Spanien-Lieferant `ISS-003.3` ergaenzt); davor 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -73,7 +73,10 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   (469'661 Zeilen ab 2025), durch Modell/Schema/Reader/Finance_All implementiert und
   **am 2026-09-08 um 14:02 produktiv deployed** (Commit `646a998`, 675/675 Tests gruen).
   Gefuellt ist das Feld erst nach einem erneuten Ladelauf je Gesellschaft; der
-  SAP-Gateway-Leser fuer CH/AT ist nicht mit angepasst. `ProfitCode` und `OcrCode2-5` sind in allen
+  SAP-Gateway-Leser fuer CH/AT ist nicht mit angepasst. *(Ueberholt, nachgefuehrt 2026-11-12: Die vier
+  B1-Gesellschaften sind nach dem Deploy neu geladen; fuer CH/AT liest der Leser des neuen `FinanzJournalSet` das
+  Nettofaelligkeitsdatum `Faedt`. Offen ist der Journal-Ladelauf CH/AT, `ISS-006`;
+  `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md` Abschnitt 2.)* `ProfitCode` und `OcrCode2-5` sind in allen
   vier Quellen leer, Dimension 2-5 inaktiv. Konzernkonto wartet auf Andreas' Mapping.
   Neues Exportblatt `Feldstatus` weist die tatsaechliche Belegung aus. Detail:
   `docs/FINANCE_JOURNAL.md`.
@@ -189,6 +192,9 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Jahresendkurs je Finance-Jahr umgeschaltet werden. Das CHF-Profil gilt einheitlich fuer
   Cockpit, Finance-Pivot, Pruefbuch, Nachweis-Excel und `Sales_All`. Produktiv nachgemessen:
   beide Spalten stehen auf dem bisherigen Verhalten, `LatestPositive` und `CurrentDailyRate`.
+  *(Ueberholt 2026-10-07 fuer das CHF-Profil: Standard ist seither `BudgetRate`, also der Budgetkurs je
+  Finance-Jahr; Tageskurs und Jahresendkurs sind die Alternativen. Entscheid Ingo vom 2026-10-07,
+  `docs/rag/FINANCE_FORMELN.md` Abschnitt 3, `ISS-018.1`.)*
   Release-Tests `644/644` gruen. Die Hilfetexte in den Einstellungen nennen seit diesem Deploy
   auch die Abhaengigkeiten, also Vorrangkette, Wirkzeitpunkt und Grenzen. Detail:
   `docs/FINANCE_STANDARDKOSTEN.md`, Abschnitt 7c.
@@ -200,6 +206,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - Hauswaehrung des Landessystems ist fuehrend.
 - Wertbasis ist Nettofakturawert pro Position.
 - Jahresabgrenzung ueber `PostingDate`, Fallback `InvoiceDate`, danach `ExtractionDate`.
+  Ausnahme Spanien: Rechnungsdatum zuerst (Regel `UseInvoiceDate` mit `ScopeKey = ES`, Fachentscheid
+  Andreas vom 2026-08-26, `ISS-004.2`; ergaenzt 2026-11-12).
 - Gutschriften/Storno laufen als negative Beleg-/Positionszeilen.
 - Budget-CHF ist Kontroll-/Reporting-Kandidat, nicht Standardabgleich.
 - Gruppenmarge ist bis zur Fachfreigabe nur Pruefsicht, nicht fuehrender Finance-Abschlusswert.
@@ -220,8 +228,9 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `ISS-029` Deutschland endet am 23.09., `ISS-030` Indien 17 Mehrfachpositionen (gleiche Ursache wie ISS-021, behoben). `ISS-026`/`ISS-027` behoben (15:58).
   `ISS-029`: Alphaplan liefert seit 24.09. fast leere Deltas, Frage an DE. `ISS-001` geschlossen.
 - **Italien-Ist: Doppelzeilen und provisorischer Kundenausschluss hoben sich auf (`ISS-021`, erledigt, nachgewiesen 2026-09-30: Italien 2025 7'697'203.62 EUR, 0,36 % ueber Rhino).** Die
-  gemeinsame B1-Abfrage verknuepft jede Rechnungsadresse des Artikel-Lieferanten
-  (`HanaQueryService.cs` Zeile 560/622); Trafag AG hat im IT-Mandanten CH und DE. TRIT 2025 +3,79 Mio.
+  gemeinsame B1-Abfrage ~~verknuepft~~ verknuepfte bis zur Korrektur `4a1baa0` (2026-09-29) jede Rechnungsadresse des
+  Artikel-Lieferanten ~~(`HanaQueryService.cs` Zeile 560/622)~~ *(berichtigt 2026-11-12: der Fehler ist behoben, die
+  Zeilenangabe galt fuer den Stand davor)*; Trafag AG hat im IT-Mandanten CH und DE. TRIT 2025 +3,79 Mio.
   EUR, 2026 +3,01 Mio. EUR; ohne Doppelzeilen 2025 5,86 Mio. EUR. Der Rhino-Soll 7'669'840 passte bisher
   nur mit 1,81 Mio. Doppelzeilen. Alle Tabs der Management Analyse stimmen sonst je Land mit
   `Sales_All` ueberein. `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md`.
@@ -269,6 +278,23 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `Monat`) mit `$top=20000`; ein Jahreslauf dauert damit rund zwei Minuten
   statt der gemessenen 80. Spezifikation: `docs/FINANCE_JOURNAL.md`,
   Bau und Messungen: `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`.
+- **Ergaenzt am 2026-11-12 aus dem Issue-Log (Doku-Pruefung), drei Punkte, die hier fehlten:**
+  - `ISS-007.4` (offen, gemessen 2026-10-07): TR IT verkauft Ware von TR IN in 414 von 420 Zeilen mit Italiens
+    Einkaufspreis statt mit den Konzernkosten TR IN, weil die Trafag-Sachnummer in 0 von 420 Zeilen steht; nur 5 Zeilen
+    finden Konzernkosten TR IN. Naechster Schritt laut Issue-Log: im B1-Artikelstamm TR IT ein Feld mit der
+    Trafag-Sachnummer suchen. Detail: `docs/rag/FINANCE_FORMELN.md` Abschnitt „Eine Stufe“.
+  - `ISS-032` (offen, belegt 2026-11-10): Der Gruppenumsatz ohne IC ist ueber 12 Monate zu hoch, 116.19 Mio. CHF statt
+    rund 100 Mio. CHF. Davon sind 12.82 Mio. CHF doppelt gezaehlt (Rechnung der TRCH an den Endkunden einer Tochter,
+    Regulierer ist die Tochter, die den Endkunden nochmals verrechnet), 1.56 Mio. CHF sind Konzernumsatz ohne
+    Dashboard-Daten (Trafag Japan, Poltraf) und 1.74 Mio. CHF GFS Germany. Das gilt gleich fuer Finance „Ist ohne IC“,
+    weil dieselben Regeln gelten. Vorgeschlagene Loesung: `VBRK-KUNRG` (Regulierer) ins `FinanzdataSchweizOeSet` und
+    die IC-Regel zusaetzlich auf den Regulierer; der Entscheid von Ingo und Andreas ist offen. Detail:
+    `docs/VERKAUF_2026-10-02.md`, Abschnitt „Sankey, Sparte und Bereinigung Gruppenzahlen“ mit Nachtrag 2026-11-10.
+  - `ISS-003.3`, Spanien-Lieferant (umgesetzt, nicht deployed): Als Supplier gilt der Lieferant des letzten
+    Wareneingangs desselben Artikels am oder vor dem Lieferdatum (Andreas am 2026-11-12 mit dem letzten Wareneingang einverstanden; „am oder vor dem
+    Lieferdatum“ ist Entscheid E1 von Ingo). Umgesetzt in
+    `c9208b5`, nicht deployed und noch nicht bei Santi eingespielt. Der deutsche Teil von `ISS-003.3` bleibt offen
+    (Schemaauszug). Detail: `docs/STANDORT_ES_SAGE.md` Abschnitt 2.
 
 ## Management-Analyse-Reiter
 
@@ -333,7 +359,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 | ES | Sage CSV, `ImporteNeto`, REC/Credit negativ; Referenz 2025 korrigiert auf `3'082'320.18 EUR` |
 | IT | Hauswaehrung, `Trafag Italia` ausgeschlossen, Duplikatlogik fuer leeres Supplier country |
 | UK | Sage/Manual Excel, GBP, `[Sales Price/Value] * [Quantity]`, Credit Notes negativ |
-| IN | SAGE/HANA `TRIN`, Schema `TRAFAG_LIVE`, INR als Hauswaehrung |
+| IN | ~~SAGE/HANA `TRIN`~~ SAP B1 auf HANA, TSC `TRIN` (berichtigt 2026-11-12: `SAGE` ist nur das historische Etikett des Quellsystems, `docs/QUELLSYSTEME_SAP_B1.md`), Schema `TRAFAG_LIVE`, INR als Hauswaehrung |
 
 ## Rohquellen Nur Bei Bedarf
 

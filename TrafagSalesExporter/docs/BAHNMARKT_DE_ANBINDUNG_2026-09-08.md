@@ -1,6 +1,6 @@
 # Bahnmarkt Deutschland: Auswertung, Branchenfund und der korrekte Kundenschluessel
 
-Stand: 2026-09-09, 14:00. Anlass war Rohail Munirs Anfrage nach der Datenaufbereitung fuer
+Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgezogen, Kurzfassung und Abschnitt 9 reichen bis zum produktiven Nachzug vom 2026-09-09 14:37); davor 2026-09-09, 14:00. Anlass war Rohail Munirs Anfrage nach der Datenaufbereitung fuer
 den Bahnmarkt, mit dem Zusatz, dass Patrik die Zuordnung nicht gemacht hat und trotzdem
 etwas vorzeigbar sein muss.
 

@@ -1,6 +1,6 @@
 # Marktsegmente und Marktumfrage in der Anwendung
 
-Stand: 2026-10-29 (Ueberholt-Vermerk in Abschnitt 17; juengster Inhalt Abschnitt 20 vom 2026-09-29)
+Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgezogen, Abschnitt 20 traegt einen Vermerk „Behoben 2026-11-10“); davor 2026-10-29 (Ueberholt-Vermerk in Abschnitt 17; juengster Inhalt Abschnitt 20 vom 2026-09-29)
 
 Anlass: Patrik aus dem Vertrieb hat die Railway-Marktumfrage vom Mai 2026 geschickt mit dem
 Wunsch, den Bahnumsatz im Sales-Dashboard auswerten zu koennen. Ingo hat entschieden, dass

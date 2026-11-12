@@ -1,6 +1,6 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-09-29
+Stand: 2026-11-12 (Doku-Pruefung: Abschnitt 7c Kursprofil als ueberholt markiert, Indien-Quelle in Abschnitt 2, toter Querverweis); davor 2026-10-29 (Vermerke in Abschnitt 7 und 12); fachlich 2026-09-29
 
 Abschnitt 6 ist am 2026-09-04 umgeschrieben worden: die Bewertungsmethode bestehender
 B1-Artikel galt danach in Italien als technisch nicht umstellbar, die fruehere Aussage „als
@@ -105,7 +105,7 @@ Fremdstandortzeilen ohne Supplier-Felder und ohne Sales Type:
 | CH/AT | `VBRP-WAVWR / FKIMG`, Fallback `MBEW-STPRS` | rund 96 % laut SAP-Messung |
 | DE | Alphaplan: `NettoPreisGesamt - RohertragGesamt`, geteilt durch die Menge | 68.5 % |
 | IT, US, FR | SAP B1 `INV1.StockPrice` / `RIN1.StockPrice` (Belegposition) | IT 95.7 %, US 92.3 %, FR 51.4 % |
-| IN | Sage auf HANA `TRAFAG_LIVE` im B1-Schema, `StockPrice` der Belegposition | 99.4 % |
+| IN | ~~Sage auf HANA~~ SAP B1 auf HANA `TRAFAG_LIVE` im B1-Schema (berichtigt 2026-11-12: Indien ist fachlich SAP B1, `SAGE` ist nur das historische Etikett des Quellsystems, `docs/QUELLSYSTEME_SAP_B1.md`), `StockPrice` der Belegposition | 99.4 % |
 | ES | **Sage 200**, unsere Export-SQL liest `LineasAlbaranCliente.PrecioCoste` als `StandardCost` (`SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` Zeile 167) | 80.9 % |
 | UK | **Sage**, manueller Excel-Export, Spalten `Standard cost` und `Standard Cost Currency` (Mapping `Services/DatabaseSeedService.cs` Zeile 892) | 93.5 % |
 
@@ -556,6 +556,12 @@ voneinander und haben bewusst den bisherigen Stand als Default.
 | **IT/IN: eigene Konzernkosten aus B1-Belegen** | Juengster positiver `B1 StockPrice` je Material | Arithmetischer Durchschnitt aller positiven `B1 StockPrice` je Material im Import | Gilt nur fuer Trafag Italien und Indien. Der Wert wird beim **naechsten Standortimport** neu in `GroupStandardCosts` aufgebaut; das Umschalten allein veraendert keine bereits gespeicherten Kosten. Ein historischer Stichtagsmodus wird bewusst nicht angeboten, weil der Cache keine Beleghistorie speichert. |
 | **CHF-Finance-Umrechnung: Kursprofil** | Aktueller Tageskurs | Jahresendkurs (31.12.) des jeweiligen Finance-Jahrs | Steuert die CHF-Finance-Werte von Finance-Pruefbuch, Nachweis-Excel und `Sales_All` sowie Gruppenmarge und Pivot, **solange der Schalter „Group-Waehrung (CHF)" aus ist** (korrigiert 2026-09-29: mit Schalter gilt fix der 31.12., die Kostenwaehrung wird immer zum heutigen Kurs umgerechnet; siehe `docs/rag/FINANCE_FORMELN.md` 3b und `ISS-018.1`). Tageskurs kann diese Werte bei einer Neuberechnung aendern; der Jahresendkurs macht die jeweilige Jahressicht reproduzierbar. |
 
+*(Ueberholt 2026-10-07, nachgefuehrt 2026-11-12, betrifft die Zeile zum CHF-Kursprofil und den Technischen Status darunter:
+Standard ist seit dem Entscheid Ingo vom 2026-10-07 `BudgetRate`, also der Budgetkurs je Finance-Jahr; Tageskurs und
+Jahresendkurs sind die Alternativen. Der Schalter „Group-Waehrung (CHF)“ folgt seither dem Profil und rechnet nicht
+mehr fix zum 31.12., `ISS-018.1` erledigt, produktiv 2026-10-07 10:06. Geltend: `docs/rag/FINANCE_FORMELN.md`
+Abschnitt 3.)*
+
 Beide Werte werden in `ExportSettings` persistent gespeichert, beim Konfigurationsimport/-export
 mitgenommen und bei unbekannten Altwerten auf den jeweiligen Standard normalisiert. Damit kann
 Finance die Varianten nachvollziehbar vergleichen, ohne Daten zu loeschen oder Quellwerte zu
@@ -953,4 +959,5 @@ Andreas' einfacherer Variante als Schalter.
 - Vereinfachte Arbeitsmappe mit Flussdiagramm, Grundregel zuerst:
   `docs/Standortkosten_Logik_2026-08-26.xlsx`
 - Ausfuehrliche technische Arbeitsmappe je Standort:
-  `docs/Standardkosten_Standorte_2026-08-26.xlsx`
+  `docs/Standardkosten_Standorte_2026-08-26.xlsx` *(toter Verweis, vermerkt 2026-11-12: die Datei liegt nicht im Repo
+  und war nie im Git; vorhanden ist nur die vereinfachte Mappe `docs/Standortkosten_Logik_2026-08-26.xlsx`)*

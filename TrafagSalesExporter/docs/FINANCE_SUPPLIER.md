@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -103,7 +103,9 @@ Standorte falsch waere: bei vier Laendern gibt es schlicht nichts zu pflegen.
 Export- und Mappingseite pruefen, dann den Standort fragen. Solange die Spalten ungemappt
 waren, kamen alle UK-Zeilen ohne Lieferant und ohne Kostenbasis in die zentrale Tabelle,
 und die UK-Gruppenmarge war damit ueberhaupt nicht berechenbar. Genau dieselbe Pruefung
-steht fuer Deutschland noch aus, siehe die offene Frage zu Deutschland in Abschnitt 3.
+~~steht fuer Deutschland noch aus, siehe die offene Frage zu Deutschland in Abschnitt 3~~ ist fuer Deutschland am
+2026-09-29 gemacht (berichtigt 2026-11-12, siehe Abschnitt 3, `ISS-003.3`): Die Export-Query liest keine
+Lieferantenspalte; offen ist der Schemaauszug, ohne den Tabelle und Spalte nicht bekannt sind.
 
 ## 3. Laenderstatus
 
@@ -378,7 +380,9 @@ inkl. aller sechs Fremdsprachen in `Services/UiTextGeneratedTranslations.cs`.
 - DE-Supplier-Spalten: eigene Export-Query am 2026-09-29 geprueft, sie liest keine Lieferantenspalte
   (siehe Abschnitt 3). Naechster Schritt ist ein read-only Spaltenauszug aus
   `INFORMATION_SCHEMA.COLUMNS` (`%Liefer%`, `%Artikel%`, `%Kredit%`) durch die IT vor Ort, danach Query
-  ueber `ArtikelID` und Import erweitern. Keine Bitte um Datenpflege.
+  ueber `ArtikelID` und Import erweitern. Keine Bitte um Datenpflege. *(Ergaenzt 2026-11-12: Fuer die Kundenfelder
+  nennen `docs/FINANCE_FELDLUECKEN.md` Abschnitt 6 und `docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 6 zusaetzlich
+  `%Adress%` und `%Kunde%`; ein Auszug mit allen fuenf Filtern deckt Kundenfelder und Lieferant.)*
 - ES: Die aktive Export-SQL liest nur `CabeceraAlbaranCliente`/`LineasAlbaranCliente`; die dort
   vorhandenen `CodigoFabricanteLc`/`CodigoFamiliaFabricanteLc` sind leer. Einen Artikel-Lieferanten
   zeigen unsere Schema-Auszuege nicht; Lieferantennummern stehen nur auf der Einkaufsseite

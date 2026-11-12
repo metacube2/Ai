@@ -1,6 +1,6 @@
 # RAG Manual Import
 
-Stand: 2026-11-12 (Spanien: Lesereihenfolge nach Startdatum, Erbregel Lieferant, Seed `EnsureSpainOptionalMappings`, Commit `c9208b5`, nicht deployed); davor 2026-09-09
+Stand: 2026-11-12 (Doku-Pruefung: ES-Buchungsdatum als erledigt, `ISS-020`, Skripthoheit-Tabelle Spanien, DE-Kundenfelder nachgezogen, `candidate_objects.csv`); davor 2026-11-12 (Spanien: Lesereihenfolge nach Startdatum, Erbregel Lieferant, Seed `EnsureSpainOptionalMappings`, Commit `c9208b5`, nicht deployed); davor 2026-09-09
 
 ## Kurzstand
 
@@ -10,7 +10,9 @@ Stand: 2026-11-12 (Spanien: Lesereihenfolge nach Startdatum, Erbregel Lieferant,
 - BUGFIX 2026-07-13 (UK-Selbstfuetterung): Der Standortexport laedt eigene Ausgaben (`Sales_ProcessedMergeInput_<TSC>_*.csv` und `Sales_<TSC>_<yyyy-MM-dd>.xlsx`) in denselben SharePoint-Landesordner hoch, aus dem der Manual-Import liest. Seit ca. 30.06. (Audit-CSV produktiv) waehlte der UK-Import dadurch taeglich seine EIGENE Audit-CSV vom Vortag als "neueste TRUK-Datei" und ersetzte den UK-Bestand mit deren 2 Zeilen (Beweis: AppEventLog `Neueste SharePoint-Datei ausgewaehlt | UK_B1/Sales_ProcessedMergeInput_TRUK_*.csv`). Fix: `SharePointUploadService.IsOwnExportOutputFile` schliesst eigene Ausgaben aus der Kandidatenauswahl aus (SharePoint- und Lokalordner-Pfad).
 - NEU 2026-07-13 (UK Basis+Delta im Tageslauf): Ohne explizites Importjahr las der Ordner-Import bisher NUR die neueste Datei — beim taeglichen Timer-Export wurde der UK-Bestand also durch das juengste Delta (`ddMMyy_TRUK.xlsx`, oft nur wenige Zeilen) ersetzt. Jetzt gilt auch ohne Jahresangabe das Basis+Delta-Modell: neueste Jahres-/Basisdatei plus alle neueren datierten Deltas werden zusammen gelesen und generisch dedupliziert (`SourceLineId`, sonst Invoice/Position/Material; spaetere Datei gewinnt). Gibt es keine Basisdatei, werden alle datierten Deltas gemeinsam gelesen.
 - ES/Spanien liest im Ordner alle `Spain_Sales*.csv`, also Basisdatei plus taegliche `Spain_Sales_range_YYYYMMDD_to_YYYYMMDD.csv`.
-- ES BUCHUNGSDATUM, STAND 2026-09-02 — ERLEDIGT BIS AUF SANTIS DATEITAUSCH. Der frueher hier
+- ES BUCHUNGSDATUM, STAND 2026-09-02 — ~~ERLEDIGT BIS AUF SANTIS DATEITAUSCH~~ ERLEDIGT (`ISS-004.2`; berichtigt
+  2026-11-12: am 2026-09-02 ist entschieden worden, dass die 7-Tage-Version bleibt und kein Dateitausch bei Santi
+  noetig ist, siehe den durchgestrichenen Unterpunkt unten). Der frueher hier
   gefuehrte Befund „`PostingDate` ist auf ALLEN 5'504 TRES-Zeilen leer" (2026-08-03) ist
   UEBERHOLT und wurde entfernt, weil er die naechste Sitzung falsch gestartet hat. Aktueller
   Stand, selbst gemessen gegen `Sales_All_2026-09-01.xlsx`: `PostingDate` `1'523/7'071`
@@ -33,7 +35,9 @@ Stand: 2026-11-12 (Spanien: Lesereihenfolge nach Startdatum, Erbregel Lieferant,
     Spanien-Zeilen in der Produktion an, der Bestand schrumpft (`ISS-020`). Ursache: die
     SharePoint-Ordnerliste las nur die erste Graph-Seite (200 Eintraege). Korrektur `60cc569`
     seit 2026-09-29 09:25 produktiv; der Nachimport ab 16.07. zeigt sich beim naechsten Lauf. Die absolute Zahl `1'523` steht seit dem 2026-08-26 unveraendert,
-    es kommen also derzeit keine neuen Buchungsdaten nach. Details:
+    es kommen also derzeit keine neuen Buchungsdaten nach. *(Ueberholt, hier nachgefuehrt am 2026-11-12: `ISS-020` ist
+    seit dem 2026-09-29 erledigt, Spanien liefert wieder; `Sales_All_2026-09-29.xlsx` enthaelt 8'109 TRES-Zeilen mit
+    Rechnungsdatum bis 28.09.2026, Issue-Log `ISS-020`.)* Details:
     `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitte 8 bis 12.
 - Spanien-Deltas werden vor dem Speichern dedupliziert: zuerst `SourceLineId`, sonst Invoice/Position/Material.
 - DE/Alphaplan liest `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen. Seit 2026-07-03 werden zusaetzlich `Alphaplan*.zip` im SharePoint-Ordner automatisch entpackt und wie CSV-Paare ausgewertet.
@@ -50,7 +54,7 @@ nicht den Standort anschreiben — sonst geht die Bitte an die falsche Stelle.
 | Standort | Skript (in diesem Repo) | liest | Konsequenz |
 | --- | --- | --- | --- |
 | DE | `AlphaplanExportPackage/scripte/alphaplanExport.ps1` Z. 143-202, identisch in `alphaplandeltaexport.ps1` | nur `dbo.Belege` + `dbo.BelegePositionen` | Supplier, Kundenname/-land, saubere Bezeichnung fehlen, weil die Query sie nicht liest; `RechnungsAdressenID` wird selektiert, aber nie aufgeloest |
-| ES | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` Z. 184-188 und Z. 229-237, identisch in `Run-SpainRangeExportAndUpload-AllInOne.ps1` Z. 233-237 und Z. 278-286, gespiegelt in `scripts/Export-SageSpainSalesCsv.ps1` | `dbo.CabeceraAlbaranCliente` + `dbo.LineasAlbaranCliente`, seit 2026-08-17 zusaetzlich `dbo.FacturasTB` per `OUTER APPLY` | Buchungsdatum ist seit 2026-08-17 als `PostingDate` selektiert und kommt an: `1'523/7'071` (21,5 %, gemessen 2026-09-02). Voll gefuellt ist nur der einmalige Nachtrag Januar bis Mai 2026; der laufende Tageslauf holt erst nach, wenn Santi die 35-Tage-Version einspielt |
+| ES | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` ~~Z. 184-188 und Z. 229-237~~, identisch in `Run-SpainRangeExportAndUpload-AllInOne.ps1` ~~Z. 233-237 und Z. 278-286~~ (berichtigt 2026-11-12: die Zeilennummern stimmen nicht mehr, die jeweils zweite Angabe galt bis `c9208b5`, die erste schon davor nicht mehr; Suchanker in allen drei Skripten ist der Block `FROM dbo.CabeceraAlbaranCliente` mit den beiden folgenden `OUTER APPLY`), gespiegelt in `scripts/Export-SageSpainSalesCsv.ps1` | `dbo.CabeceraAlbaranCliente` + `dbo.LineasAlbaranCliente`, seit 2026-08-17 zusaetzlich `dbo.FacturasTB` per `OUTER APPLY`, seit `c9208b5` (2026-11-12, nicht deployed, noch nicht bei Santi) zusaetzlich `dbo.LineasAlbaranProveedor` mit `dbo.CabeceraAlbaranProveedor` per `OUTER APPLY` | Buchungsdatum ist seit 2026-08-17 als `PostingDate` selektiert und kommt an: `1'523/7'071` (21,5 %, gemessen 2026-09-02). Voll gefuellt ist nur der einmalige Nachtrag Januar bis Mai 2026; ~~der laufende Tageslauf holt erst nach, wenn Santi die 35-Tage-Version einspielt~~ (ueberholt: am 2026-09-02 ist entschieden worden, dass die 7-Tage-Version bleibt; `PostingDate` ist nur Informationsspalte, Finance ES rechnet mit dem Rechnungsdatum, `ISS-004.2`) |
 
 Die Skripte laufen auf den Standortservern (DE `localhost\SQL2012`/`ApDaten`), die Query
 darin stammt aber von uns. Zwei Regeln daraus:
@@ -143,6 +147,10 @@ gelesen sind 1'643 Zeilen plausibel (Margen 12–55 %), als Zeilensumme nur 1'25
 - Dedupe: primaer `SourceLineId = Alphaplan:<BelegePositionenID>`, sonst Invoice/Position/Material; Delta-Zeilen gewinnen.
 - `SalesPriceValue = NettoPreisGesamt`; `DocumentTotal... = NettoPreisEndSumme`; `CreditNote`/GS/Gutschriften werden negativ gerechnet.
 - `CustomerNumber = RechnungsAdressenID`; Kundenname und Kundenland sind im aktuellen CSV-Paar nicht enthalten.
+  *(Nachgefuehrt 2026-11-12, Stand der Daten seit 2026-09-09 14:37: Der Bestand ist einmalig nachgezogen, 7'592 von
+  7'622 DE-Zeilen tragen fachliche Kundennummer, Name, Land und Branche, `ISS-016`. Der Nachzug ist eine
+  Momentaufnahme: die Query loest `RechnungsAdressenID` weiter nicht auf, neue Rechnungen kommen also wieder nur mit
+  dieser ID an, bis der Join in `alphaplanExport.ps1` steht; `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9.)*
 - `Material = ArtikelNummer`; diese lokale Alphaplan-Nummer ist nicht garantiert identisch mit TR-AG-/SAP-`MATNR`.
 - Die Artikelbezeichnung ist ein RTF-Feld. Schrift- und Farbtabelle werden seit dem 2026-09-09
   beim Import klammerbalanciert entfernt; davor begannen 3'089 von 7'615 DE-Zeilen mit
@@ -155,7 +163,9 @@ gelesen sind 1'643 Zeilen plausibel (Margen 12–55 %), als Zeilensumme nur 1'25
   Zeilen 143-202 und `alphaplandeltaexport.ps1` (identische Query) lesen nur `dbo.Belege` und
   `dbo.BelegePositionen`; `RechnungsAdressenID` wird selektiert, aber nie auf einen Namen
   aufgeloest. Blocker ist das fehlende Alphaplan-Schema fuer `ApDaten` (`candidate_objects.csv`
-  im Repo-Root ist leer, `obj/candidate_objects.csv` ist Sage Spanien) — deshalb KEINE
+  im Repo-Root ~~ist leer~~ ist eine Kopie des Sage-Auszugs, berichtigt 2026-11-12: 81 Zeilen, bytegleich mit
+  `obj/candidate_objects.csv` und `SageSpainExportPackage/v2/candidate_objects.csv`; ein Alphaplan-Auszug existiert
+  nicht; `obj/candidate_objects.csv` ist Sage Spanien) — deshalb KEINE
   Tabellen-/Spaltennamen raten, sondern Schema-Auszug anfordern. Details und Mailstand:
   `docs/FINANCE_FELDLUECKEN.md` Abschnitt 6.
 - Das alte Alphaplan-Excel-Mapping bleibt technisch vorhanden, ist aber nicht mehr der bevorzugte DE-Pfad. Produktiver DE-Pfad seit 2026-07-03: `Import/Finance/Deutschland/AlphaplanRaw`.

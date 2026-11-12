@@ -1,6 +1,6 @@
 # Quellsysteme: SAP B1 ueber HANA und SAP OData
 
-Stand: 2026-10-29 (Italien-Kundenausschluss nachgefuehrt; Grundstand 2026-08-17). Verdichtet aus `FINANCE_SAP_B1_KONNEKTOREN_ANDREAS_2026-07-01.md`.
+Stand: 2026-11-12 (Doku-Pruefung: Tabelle „Quellen je Land“, Zeile Italien berichtigt); davor 2026-10-29 (Italien-Kundenausschluss nachgefuehrt; Grundstand 2026-08-17). Verdichtet aus `FINANCE_SAP_B1_KONNEKTOREN_ANDREAS_2026-07-01.md`.
 
 Technische Grundlage der Verkaufsstrecke fuer die HANA-Laender. Fuer das Hauptbuch siehe
 `docs/FINANCE_JOURNAL.md`, fuer die Manual-Excel-Laender `docs/rag/MANUAL_IMPORT.md`.
@@ -21,7 +21,7 @@ Technische Grundlage der Verkaufsstrecke fuer die HANA-Laender. Fuer das Hauptbu
 | Land | TSC | SourceSystem | Schema | Host | Bemerkung |
 | --- | --- | --- | --- | --- | --- |
 | Frankreich | `TRFR` | `BI1` | `fr01_p` | BI1-HANA | Standard-B1-Logik |
-| Italien | `TRIT` | `BI1` | `it01_p` | BI1-HANA | plus harter Konten-/Kundenausschluss |
+| Italien | `TRIT` | `BI1` | `it01_p` | BI1-HANA | plus harter ~~Konten-/Kundenausschluss~~ Kontenfilter `47005%` ohne `4700504%` (berichtigt 2026-11-12: der Kundenausschluss ist seit 2026-09-29 15:23 entfernt, `f77840a`, `ISS-021`; siehe Vermerk bei der Italien-Abfrage weiter unten) |
 | USA | `TRUS` | `BI1` | `us01_p` | BI1-HANA | Standard-B1-Logik |
 | Indien | `TRIN` | `SAGE` | `TRAFAG_LIVE` | `20.197.20.60:30015` | fachlich B1, historisch als `SAGE` angeschrieben; User-Override `TRAFAGCONTROLS` |
 | CH/AT | `ZSCHWEIZ` | `SAP_GATEWAY` | — | `ZPOWERBI_EINKAUF_SRV` | anderer Konnektor, nicht B1 |

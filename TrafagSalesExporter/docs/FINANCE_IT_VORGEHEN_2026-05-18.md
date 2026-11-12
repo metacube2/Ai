@@ -1,6 +1,6 @@
 # Italien Net Sales 2025 - Vorgehen
 
-Stand: 2026-05-18
+Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgezogen, der Abschnitt „Ziel“ traegt einen Ueberholt-Vermerk vom 2026-10-29); davor 2026-05-18
 
 ## Ziel
 

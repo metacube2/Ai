@@ -1,6 +1,6 @@
 # Feldluecken je Standort: was fehlt, wer es besitzt, was nicht gefragt werden darf
 
-Stand: 2026-10-29 (DE-Kundenfelder nachgefuehrt; Grundstand 2026-08-17). Zusammengefuehrt aus drei Vorgaengerdateien (Datenluecken 2026-07-28,
+Stand: 2026-11-12 (Doku-Pruefung: Markerliste in Abschnitt 5 als unvollstaendig markiert, Filterliste des Schemaauszugs in Abschnitt 6 vereinheitlicht); davor 2026-10-29 (DE-Kundenfelder nachgefuehrt; Grundstand 2026-08-17). Zusammengefuehrt aus drei Vorgaengerdateien (Datenluecken 2026-07-28,
 Feldluecken Standorte 2026-07-30, Standort-Mails 2026-07-31), die alle als ueberholt
 markiert waren.
 
@@ -118,6 +118,10 @@ Die Erkennung ist kein `*`-Wildcard, sondern ein Wortgrenzen-Regex ueber
 \b(TRAFAG|TR-AG|TRCH|TRIT|TRIN|GFS|GESELLSCHAFT FUER SENSORIK|GESELLSCHAFT FUR SENSORIK)\b
 ```
 
+*(Ueberholt, berichtigt 2026-11-12: Diese Liste ist unvollstaendig. Im Code stehen zusaetzlich `TR AG`, `TR IT` und
+`TR IN`. Massgeblich ist `InternalMarkers` in `Services/GroupMarginSupplierClassifier.cs`; die Kurzfassung steht in
+`docs/rag/FINANCE_FORMELN.md` Abschnitt 5 und Abschnitt „Eine Stufe“.)*
+
 Vollklassifikation auf Produktivdaten:
 
 | TSC | mit Lieferant | intern erkannt | extern | ohne Lieferant |
@@ -154,7 +158,9 @@ Was fehlt, ist eine Tabellen- und Spaltenliste fuer `ApDaten`. Die DB liegt auf
 ausgelieferten Skript waere derselbe Fehler wie bei UK-2025, nur mit laengerer Zuendschnur.
 
 Gebraucht wird nur ein `INFORMATION_SCHEMA.COLUMNS`-Auszug, read-only, gefiltert auf
-`%Adress%`, `%Artikel%`, `%Liefer%`, `%Kunde%`. Danach erweitern wir die Query selbst.
+`%Adress%`, `%Artikel%`, `%Liefer%`, `%Kunde%` *(ergaenzt 2026-11-12: dazu `%Kredit%`, das der Issue-Log `ISS-003.3`
+und `docs/FINANCE_SUPPLIER.md` Abschnitt 7 fuer die Lieferantenseite nennen; ein Auszug mit allen fuenf Filtern deckt
+Kundenfelder und Lieferant)*. Danach erweitern wir die Query selbst.
 Offen bleibt zusaetzlich, ob Alphaplan ueberhaupt einen Lieferanten auf der
 **Verkaufszeile** fuehrt oder nur einen Hauptlieferanten im Artikelstamm.
 

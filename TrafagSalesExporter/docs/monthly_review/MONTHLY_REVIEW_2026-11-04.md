@@ -1,7 +1,8 @@
 # Verkauf: Monthly Review Gesellschaften (Auftrag 2026-11-04)
 
-Stand: 2026-11-05. **Phase 1 und Abschnitt 4 (Q-Faelle live aus SAP) gebaut und produktiv seit 2026-11-05 10:33 (`47abb30`, im Browser geprueft)** *(ueberholt: „committet, nicht deployed“)* (Abschnitt
+Stand: 2026-11-12 (Doku-Pruefung: Kopf und ueberholte Stellen zum Q-Abruf nachgezogen; Q-Faelle live aus P76 seit 2026-11-09 15:11, Nachtrag 2026-11-10 zu Status und Produktlinie); davor 2026-11-05. **Phase 1 und Abschnitt 4 (Q-Faelle live aus SAP) gebaut und produktiv seit 2026-11-05 10:33 (`47abb30`, im Browser geprueft)** *(ueberholt: „committet, nicht deployed“)* (Abschnitt
 „Umsetzung 2026-11-05“ unten). Der SAP-Abruf der Q-Faelle ist ausgeschaltet, bis der Transport mit `QmMeldungSet` in P76 ist.
+*(Ueberholt 2026-11-09: `T76K912837` ist in P76 importiert, `MonthlyReview:QmEnabled` steht in `appsettings.json` auf `true` (`88e19f6`), deployed 15:11; siehe die Nachtraege im Abschnitt „Abschnitt 4: Q-Faelle live aus SAP“.)*
 *Ueberholt (Stand 2026-11-04 13:10): „Nicht gebaut, pausiert. Nur Auftrag, Entscheide, Spezifikation und Befunde; kein Code, kein Deploy.“*
 
 ## Auftrag und Entscheide
@@ -57,7 +58,7 @@ Frage: „Sind die T&P-Files der Tochtergesellschaften auch im Data Lake?“ Ant
 
 *Ueberholt am 2026-11-05: „Phase 1 bauen, wenn Ingo es wieder aufnimmt. Wochen_Todo Zeile 150.“* Phase 1 ist gebaut
 (unten). Offen: Sichtpruefung und Deploy durch die Hauptsitzung, Schalter `MonthlyReview:QmEnabled` nach dem P76-Import von
-`QmMeldungSet`, dann die Folgearbeit unten.
+`QmMeldungSet`, dann die Folgearbeit unten. *(Ueberholt: deployed am 2026-11-05 10:33, Schalter seit 2026-11-09 ein.)*
 
 ## Umsetzung 2026-11-05: Phase 1 und Abschnitt 4 (Q-Faelle aus SAP)
 
@@ -107,12 +108,12 @@ nicht vorhanden).
 *Nachtrag 2026-11-09 15:13, produktiv:* `T76K912837` in P76 importiert (Importqueue: Warnung, RC 4), Caches in P76 auf Auftrag Ingo geleert (eigene Sitzung, `/IWBEP/CACHE_CLEANUP` alle Modelle, dann `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL`; Gateway Client `QmMeldungSet?$top=5` 200, 6'510 Byte; `ShopAufSet` 200). `MonthlyReview:QmEnabled = true` (`88e19f6`), deployed 15:11 (`4585392`). Im Browser: **345 offene Q1-Meldungen**, Ø 988 / Median 389 Tage offen, 264 laenger als 90 Tage, aeltester Fall 107662 (4'963 Tage). **Auffaellig, offen:** alle Meldungen ohne Status („–“) und ohne Produktlinie; Feldzuordnung im Set bzw. Daten in P76 pruefen (Statuswerte MMAB/LOeVM/NOCO/DLFL aus T76 erscheinen nicht).
 
 - Quelle `GET /sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/QmMeldungSet`, **in T76 gebaut am 2026-11-05, Auftrag `T76K912837`
-  (nicht freigegeben, Import P76 durch Ingo)**; Feld-Mapping, Definition „offen“ und Belege in `saptasks/qm_meldungen/NOTES.md`
+  (nicht freigegeben, Import P76 durch Ingo)** *(ueberholt 2026-11-09: in P76 importiert)*; Feld-Mapping, Definition „offen“ und Belege in `saptasks/qm_meldungen/NOTES.md`
   (Abschnitt „SAP-Seite“ unten). Verbindung wie
   Shopfloor/Logistik live/Einkauf (`ShopfloorSapSync.ResolveConnectionAsync`). Client `Services/Sales/MonthlyReviewQmService.cs`,
   Rechnung `Services/Sales/MonthlyReviewQm.cs`, Seite `MrvQuality.razor` und `MrvCaseList.razor`.
 - Konfiguration Abschnitt `MonthlyReview` (`appsettings.json`, Registrierung `builder.Services.AddMonthlyReview(...)`):
-  `QmEnabled` (**Vorgabe false**), `QmEntitySet` (`QmMeldungSet`), `QmFilter` (optionaler `$filter`, leer), `QmCacheMinutes` (15),
+  `QmEnabled` (**Vorgabe false** im Code; *ergaenzt 2026-11-12: in der versionierten `appsettings.json` seit 2026-11-09 `true`, `88e19f6`*), `QmEntitySet` (`QmMeldungSet`), `QmFilter` (optionaler `$filter`, leer), `QmCacheMinutes` (15),
   `QmErrorCacheSeconds` (60), `QmTimeoutSeconds` (60), `QmNotificationTypes` (`Q1`; leer = alle), `QmExcludeSystemStatus`
   (`MMAB`, `LÖVM`, `NOCO`, `DLFL`; *korrigiert 2026-11-05: vorher `MEAB`/`DLFL`, das Set liefert aber deutsche Kurztexte*), `QmCompanyCustomers` (zusaetzliche Zuordnungen, gehen den Vorgaben vor).
   Einschalten heisst `QmEnabled: true` in der versionierten `appsettings.json` committen und deployen; eine Aenderung nur auf
@@ -152,7 +153,9 @@ Kunde“ gegen die Kunden in QM pruefen.
 
 **Annahmen, nach dem ersten Abruf zu pruefen:** das Set liefert nur offene Meldungen (Schutz: Systemstatus `MMAB`/`LÖVM`
 faellt weg), `Qmart` heisst fuer Kundenreklamationen `Q1` (in T76 belegt), `Status` ist der Anwenderstatus-Text (Ruecksendung
-offen wird am Text „Ruecksendung“/„Rücksendung“ erkannt).
+offen wird am Text „Ruecksendung“/„Rücksendung“ erkannt). *(Nachtrag 2026-11-10, hier vermerkt 2026-11-12: P76 fuehrt
+fuer Q-Meldungen keinen Anwenderstatus, `Status` bleibt im Set leer; das Dashboard leitet den Lebenszyklus aus dem
+Systemstatus ab, siehe Nachtrag im Abschnitt „Abschnitt 4: Q-Faelle live aus SAP“.)*
 
 ### SAP-Seite (T76, 2026-11-05)
 
@@ -173,7 +176,8 @@ Befund des SAP-Agenten, Einzelheiten und Belege in `saptasks/qm_meldungen/NOTES.
   entscheidet Patrick; filterbar ueber `Sysstat`/`Angelegt` ohne Transport. (3) `Produktlinie` bewusst leer (Power-BI-Linien
   entsprechen keinem SAP-Feld); Vorschlag: Zuordnung im Dashboard ueber `Matnr`. (4) Namen oder Kuerzel bei Bearbeiter
   (Entscheid Ingo). (5) Freigabe und Import `T76K912837` nach P76, dann `/IWBEP`, `/IWFND` leeren, `QmEnabled: true` committen
-  und deployen.
+  und deployen. *(Nachgefuehrt 2026-11-12: (5) ist seit dem 2026-11-09 erledigt; (1) ist am 2026-11-10 in P76 gelesen,
+  dort gibt es keinen Anwenderstatus, siehe die Nachtraege im Abschnitt „Abschnitt 4: Q-Faelle live aus SAP“.)*
 
 ### Tests
 
@@ -185,9 +189,9 @@ Keine Sichtpruefung im Browser (Agent kann die App lokal nicht starten, LEARNING
 
 ### Folgearbeit (bewusst offen)
 
-1. Sichtpruefung produktiv nach dem Deploy (Gruppe, eine Gesellschaft, Hinweisfeld Q-Faelle ausgeschaltet).
+1. Sichtpruefung produktiv nach dem Deploy (Gruppe, eine Gesellschaft, Hinweisfeld Q-Faelle ausgeschaltet). *(Nachtrag: am 2026-11-05 nach dem Deploy im Chrome geprueft, belegt sind Gruppe und Q-Hinweis; eine einzelne Gesellschaft ist dort nicht genannt.)*
 2. Nach dem P76-Import von `QmMeldungSet`: Caches `/IWBEP` dann `/IWFND` (LEARNINGS 2026-11-02), `QmEnabled` auf `true`
-   committen und deployen, Zuordnung und Zahlen gegen RMA Statistic bzw. QM pruefen, belegte Kundennummern nachtragen.
+   committen und deployen, Zuordnung und Zahlen gegen RMA Statistic bzw. QM pruefen, belegte Kundennummern nachtragen. *(Teilweise erledigt am 2026-11-09: Import, Caches, Schalter und Deploy. Der Abgleich gegen RMA Statistic bzw. QM und die Kundennummern sind nicht als erledigt belegt.)*
 3. Phase 2: Gruppenmarge je Gesellschaft (Abschnitt 2, Scorecard-Spalte) aus `GroupMarginCalculator`.
 4. Diskussionspunkte (Abschnitt 6) nur mit Regeln aus Daten; Gap-Register und Ansicht „Analyse Power BI“ des Entwurfs.
 5. Phase 3: TSC-Gesellschaften, Budget, Auftragseingang, Pipeline.

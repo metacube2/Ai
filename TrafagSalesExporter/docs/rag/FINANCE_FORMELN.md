@@ -1,6 +1,6 @@
 # RAG Finance-Formeln (Zeilenverarbeitung/Mechanik)
 
-Stand: 2026-10-29 (A1 im Kopf als erledigt markiert); davor 2026-10-07 (Budgetkurs-Entscheid in Abschnitt 3, Abschnitt „Eine Stufe“); davor 2026-09-29 (Punkt 4, Kostenwaehrungsschalter, Supplier-Konflikt und Periodenregel nach
+Stand: 2026-11-12 (Doku-Pruefung: Laendertabelle Abschnitt 2 fuer ES, IT, UK und IN berichtigt, Datum des Spanien-Entscheids, Statuswerte und Markerliste gegen den Code ergaenzt, doppelte Pfade); davor 2026-10-29 (A1 im Kopf als erledigt markiert); davor 2026-10-07 (Budgetkurs-Entscheid in Abschnitt 3, Abschnitt „Eine Stufe“); davor 2026-09-29 (Punkt 4, Kostenwaehrungsschalter, Supplier-Konflikt und Periodenregel nach
 der Konsistenzpruefung vom 29.09. korrigiert; uebriger Stand 2026-08-07)
 
 **Rechenfehler aus der Pruefung vom 2026-09-29** (`docs/FINANCE_REVIEW_2026-09-29.md`, `ISS-018`):
@@ -62,15 +62,17 @@ Details: `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md`.
 | --- | --- | --- | --- | --- |
 | CH/AT | SAP OData `ZSCHWEIZ`/`FinanzdataSchweizOeSet` | `Sum(Z.NetwrHc)` | ueber `Z.Fkart` | Sparten direkt per Join `Z.Matnr=P.Matnr`; Faktor-100-Bug bei Fremdwaehrung (s. Abschnitt 3) |
 | DE (TRDE) | Alphaplan CSV-Paar `invoice_headers`/`invoice_lines`, Full+Delta | `invoice_lines.NettoPreisGesamt` | `DocumentType = Alphaplan CreditNote` | `ArtikelNummer` ist keine SAP-MATNR -> Sparte unsicher |
-| ES (TRES) | Sage SQL/CSV | `ImporteNeto` | negativ bei `TipoNuevaFra=2` ODER `SerieFactura='REC'` | Soll 2025 korrigiert (alter Wert war Excel-Fehler) |
+| ES (TRES) | Sage SQL/CSV | `ImporteNeto` | negativ bei `TipoNuevaFra=2` ODER `SerieFactura='REC'` ODER `StatusAbono<>0` (dritte Bedingung der Export-SQL, in der Doku ergaenzt 2026-11-12) | Soll 2025 korrigiert (alter Wert war Excel-Fehler) |
 | FR (TRFR) | B1/HANA `fr01_p` | `INV1.LineTotal`; Credit: `RIN1.LineTotal * -1` | kompletter Zeilensatz `*-1` | Referenzfall, kaum Abweichung |
-| IT (TRIT) | B1/HANA `it01_p` | wie FR, PLUS Kontenfilter `AcctCode LIKE '47005%' AND NOT LIKE '4700504%'` (hartcodiert) + Kundenausschluss „Trafag Italia" | wie FR | groesste Baustelle, Restdifferenz offen; Dublettenregel bei leerem Supplier Country |
-| UK (TRUK) | Manual Excel aus Sage (Ordnername „UK_B1" ist irrefuehrend, KEIN SAP B1) | `[Sales Price/Value] * [Quantity]` | negativ bei CREDIT/ABONO/GUTSCHRIFT/CRN/CN | Restdifferenz `-5'261.91 GBP` ungeklaert |
-| IN (TRIN) | Sage/HANA `TRAFAG_LIVE` | wie B1-Schema | — | INR fuehrend |
+| IT (TRIT) | B1/HANA `it01_p` | wie FR, PLUS Kontenfilter `AcctCode LIKE '47005%' AND NOT LIKE '4700504%'` (hartcodiert) + Kundenausschluss „Trafag Italia" | wie FR | ~~groesste Baustelle, Restdifferenz offen~~ berichtigt 2026-11-12: seit 2026-09-30 nachgewiesen (`ISS-021` erledigt: Italien 2025 `7'697'203.62 EUR`, 0,36 % ueber Rhino; Doppelzeilen der B1-Abfrage behoben, provisorischer Sechs-Kunden-Ausschluss entfernt); Dublettenregel bei leerem Supplier Country |
+| UK (TRUK) | Manual Excel aus Sage (Ordnername „UK_B1" ist irrefuehrend, KEIN SAP B1) | `[Sales Price/Value] * [Quantity]` | negativ bei CREDIT/ABONO/GUTSCHRIFT/CRN/CN | ~~Restdifferenz `-5'261.91 GBP` ungeklaert~~ berichtigt 2026-11-12: abgenommen am 2026-08-11 (`ISS-011`) mit `3'529'861.80 GBP` = 99,7 % des Solls `3'538'972`; Restdifferenz rund `-9'110 GBP` (0,3 %), nicht aufgeschluesselt (`docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`) |
+| IN (TRIN) | ~~Sage/HANA~~ B1/HANA `TRAFAG_LIVE` (berichtigt 2026-11-12: fachlich SAP B1, `SAGE` ist nur das Etikett des Quellsystems, `docs/QUELLSYSTEME_SAP_B1.md`) | wie B1-Schema | — | INR fuehrend |
 | US (TRUS) | B1/HANA `us01_p` | wie FR | wie FR | kaum Abweichung |
 
 Jahresabgrenzung: `Year(PostingDate ?? InvoiceDate ?? ExtractionDate)`, **ausser Spanien**:
-dort gilt seit dem Entscheid vom 2026-09-02 das Rechnungsdatum zuerst (`ISS-004.2`). Die
+dort gilt seit dem Entscheid vom ~~2026-09-02~~ 2026-08-26 das Rechnungsdatum zuerst (`ISS-004.2`). *(Berichtigt
+2026-11-12: Fachentscheid Andreas vom 2026-08-26, Regel `UseInvoiceDate`, produktiv seit 2026-08-26 15:26; am
+2026-09-02 wurde nur entschieden, dass die 7-Tage-Version des Exportskripts bleibt.)* Die
 Marktsegment-Sicht wendet diese Spanien-Regel nicht an und ist deshalb nicht voll mit Finance
 abstimmbar (`docs/FINANCE_REVIEW_2026-09-29.md` Befund B5).
 Formeln im Detail: `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`,
@@ -184,8 +186,7 @@ StandardCost         = StprsHc             (aktueller Materialstandardpreis)
 StandardCostCurrency = Hwaer
 ```
 `WAVWR` = historisch eingefroren, `STPRS` = aktueller Stand (fachlich schwaecherer,
-aber akzeptabler Fallback). Details: `docs/FINANCE_STANDARDKOSTEN.md`,
-`docs/FINANCE_STANDARDKOSTEN.md`.
+aber akzeptabler Fallback). Details: `docs/FINANCE_STANDARDKOSTEN.md`.
 
 **Deckungsbeitrag (DB):** `StandardCostVariable`/`StandardCostFixed` +
 `ContributionMarginCalculator` sind technisch vorbereitet, aber LEER — Fix/Variabel-Split
@@ -197,7 +198,10 @@ wird von keiner Quelle geliefert.
   fehlender Kurs laesst die Zeile offen.
 
 **Statuswerte:** `OK` (Marge berechnet) / `Standardpreis fehlt` / `Lieferant unklar` /
-`Kostenwaehrung abweichend` (nur Mask).
+`Kostenwaehrung abweichend` (nur Mask). *Ergaenzt 2026-11-12 nach `Services/GroupMarginStatuses.cs`, das allein
+massgeblich ist:* dazu `Konzernkosten fehlen` (Sales Type `LRD`, Konzern-Standardkosten fuer das Material nicht
+auffindbar) / `Umsatz fehlt` (Zeile hat Wert 0) / `Kurs fehlt` (kein CHF-Kurs fuer Jahr und Waehrung, nur im
+Audit-Ledger moeglich).
 
 > **UEBERHOLT seit 2026-08-12:** Der folgende Absatz beschreibt den Stand vom Juli. CH/AT
 > werden seit dem 11./12.08.2026 ueber den CH-Werkstamm-Fallback und lokale Standardkosten
@@ -216,13 +220,14 @@ Andreas: CH/AT regelbasiert als eigene interne Lieferkategorie werten? Details:
 
 Code-verifiziert 2026-07-27 (`Services/GroupMarginSupplierClassifier.cs`,
 `Services/FinanceRuleEngine.cs`, `Services/ManagementCockpitService.cs`,
-`Services/DatabaseSeedService.cs`):
+`Services/DatabaseSeedService.cs`); am 2026-11-12 ist nur die Markerliste des
+`GroupMarginSupplierClassifier` erneut gegen den Code im Zweig geprueft worden:
 
 | Mechanismus | Wofuer | Marker | Matching |
 | --- | --- | --- | --- |
 | `FinanceIntercompanyRule` (DB, admin-pflegbar via Einstellungen) | KUNDEN-Diagnose IC/2nd-party in `Management Analyse > Laender` (Ist vs. Ist-ohne-IC) | `TRAFAG`, `MAGNETIC SENSE`, `MAGNETS SENSE`, `GESELLSCHAFT FUER/FUR SENSORIK` + 2 IT-Kundennummern (`DatabaseSeedService.EnsureFinanceIntercompanyRuleDefaults`) | simples `Contains`, case-insensitive, Umlaute normalisiert (`NormalizeRuleText`) |
 | `FinanceRuleEngine` (hartcodierte Seed-Regeln) | KUNDEN komplett aus dem Land-Ist AUSSCHLIESSEN (nicht nur Diagnose) | z.B. DE: `"Magnetic Sense"` (Weiterberechnung), IT: `"Trafag Italia"` | simples `Contains` |
-| `GroupMarginSupplierClassifier` (Gruppenmarge-Feature) | LIEFERANTEN intern/extern fuer die Margenberechnung | `TRAFAG`, `TR-AG`, `TRCH`, `TRIT`, `TRIN`, `GFS`, `GESELLSCHAFT FUER/FUR SENSORIK` — **KEIN** „Magnetic Sense" | **Wortgrenzen-Regex** (bewusst kein Contains) |
+| `GroupMarginSupplierClassifier` (Gruppenmarge-Feature) | LIEFERANTEN intern/extern fuer die Margenberechnung | `TRAFAG`, `TR-AG`, `TR AG`, `TRCH`, `TRIT`, `TR IT`, `TRIN`, `TR IN`, `GFS`, `GESELLSCHAFT FUER/FUR SENSORIK` (ergaenzt 2026-11-12 um `TR AG`, `TR IT`, `TR IN` nach `InternalMarkers` im Code) — **KEIN** „Magnetic Sense" | **Wortgrenzen-Regex** (bewusst kein Contains) |
 
 Wichtig: Nur die ersten zwei (Kunden-Klassifizierung) filtern auch auf „Magnetic Sense".
 Die Gruppenmarge-Lieferantenklassifizierung filtert NUR auf Trafag/GFS-Begriffe, bewusst
@@ -241,7 +246,7 @@ Fachgrundlage Kunden-Marker: `docs/FINANCE_ENTSCHEIDE.md` Abschnitt „Intercomp
 - `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` — Budget-CHF offene Fragen
 - `docs/FINANCE_ENTSCHEIDE.md` — Entscheide, Kunden-IC-Marker
 - `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` — Gruppenmarge-Fachlogik
-- `docs/FINANCE_STANDARDKOSTEN.md` / `docs/FINANCE_STANDARDKOSTEN.md` — Standardkosten CH/AT
+- `docs/FINANCE_STANDARDKOSTEN.md` — Standardkosten CH/AT
 - `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` — WAVWR/STPRS-Spezifikation, NETWR_HC-Bug
 - `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` — Formeln je Land im Detail
 - `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` — Gesamt-Datenfluss im Detail

@@ -1,6 +1,6 @@
 # Konzernkosten: Schnitt nach der ersten internen Stufe. Entscheid Andreas vom 2026-09-09
 
-Stand: 2026-09-09. Primaerquelle ist ein Transkript des Gespraechs zwischen Andreas
+Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgezogen, der Text traegt eine Einschraenkung vom 2026-10-29 nach `ISS-007.4`); davor 2026-09-09. Primaerquelle ist ein Transkript des Gespraechs zwischen Andreas
 Stoller, Ingo Kohler und Philipp Steiger. Zitate im Folgenden sind Transkriptwortlaut,
 also gesprochene Sprache und keine geschriebene Freigabe.
 
