@@ -16,7 +16,7 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 ## Fachliches Kernwissen (aus `docs/rag/FINANCE.md` „Wichtige Regeln“, vor Verwendung dort gegenpruefen)
 
 - Hauswaehrung des Landessystems ist fuehrend; Wertbasis ist der Nettofakturawert je Position.
-- Jahresabgrenzung ueber `PostingDate`, Rueckfall `InvoiceDate`, danach `ExtractionDate`. Gutschriften/Storno sind negative Zeilen.
+- Jahresabgrenzung ueber `PostingDate`, Rueckfall `InvoiceDate`, danach `ExtractionDate`; Ausnahme Spanien: Rechnungsdatum zuerst (Regel `UseInvoiceDate`, Fachentscheid Andreas 2026-08-26, `ISS-004.2`). Gutschriften/Storno sind negative Zeilen.
 - Budget-CHF ist Kontroll-/Reporting-Kandidat, kein Standardabgleich. Gruppenmarge ist bis zur Fachfreigabe nur Pruefsicht.
 - `DocumentRate` ist ein gespeichertes Quellfeld; die App-Kurstabelle gilt nur fuer Anzeige-Waehrung, `ConvertCurrency` oder Budget-CHF.
 - Supplier-/Standardkosten-Rueckfall und Kostenquelle bei internem Lieferanten sind Schalter (Details `docs/FINANCE_STANDARDKOSTEN.md` 7a/7b).
