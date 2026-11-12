@@ -20,6 +20,9 @@ mit Frage, Einschraenkungen und Schaetzung (1-2 Tage nach OK, rund eine Woche in
 `docs/STANDORT_ES_SAGE.md` 2. *Nachtrag spaeter am 12.11.: Andreas ist einverstanden (letzter Wareneingang = Supplier); seine Rueckfrage
 'Wareneingang ohne Lieferant?' war ein Missverstaendnis (gemeint: Artikel ohne Wareneingang). Naechster Schritt: Plan zur Freigabe.*
 
+**Lieferantenbewertung (Marco Widmer):** Gespraech 12.11., iteratives Vorgehen vereinbart, Ingo baut erste Fassung und schickt den
+Link; `docs/EINKAUF_SITZUNG_2026-10-22.md` 6, Wochen_Todo 122.
+
 ## Uebergabe 2026-11-11 abends (Chat geschlossen): Spanien-Lieferant, Fabio 601/908, offene Punkte
 
 **Spanien Supplier (Anfrage Andreas 11.11.):** Im `Sales_All` fehlt bei ES der Supplier. Ursache: unsere Sage-Query liest nur

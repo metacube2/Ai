@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-12 (Abschnitt 6: Gespraech Ingo mit Marco Widmer, iteratives Vorgehen vereinbart). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -136,3 +136,31 @@ aufzubauen. Vor der produktiven Umsetzung seien drei Punkte zu entscheiden:
   **Material**-Klasse aus SAP (`MaraAbc`) und darf nicht verwechselt werden.
 - Voraussetzungen unveraendert: Fiori-Parametrisierung (Aufgabe 5), Q2 als Quelle (Meldungsart und Status) noch nicht
   angebunden, Word-Dokument steht aus. Danach kleiner Pilot (Abschnitt 2).
+
+## 6. Nachtrag 2026-11-12: Gespraech Ingo mit Marco Widmer (Einkauf) zur Lieferantenbewertung
+
+Quelle: Teams-Transkript (automatisch, teils unverstaendlich; erhalten sind nur die ersten Sekunden und die Minuten 20 bis 23).
+Anlass: Marco bat um eine Auslegeordnung, was zum Lieferantenbewertungs- und Entwicklungstool vorliegt und was es braucht.
+Kein Wortprotokoll, nur Ergebnisse.
+
+- **Ingo braucht weiterhin:** das Word-Dokument von Armin (am 22.10. angekuendigt, bis heute nicht gekommen) und die
+  Fiori-Lieferantenbewertung mit den gemessenen Kriterien (Liefertreue, Preis, Service, Qualitaet).
+- **Marco hat noch keinen Fiori-Zugriff** (Kacheln nicht zugeordnet) und weiss nicht, welche Transaktionen bisher fuer die
+  Lieferantenbewertung genutzt wurden. Er schlaegt vor, das beim Berater zu erfragen (im Transkript unverstaendlich, vermutlich
+  NTT); die koennten es besser sagen als er. Einen Teil der bisherigen Bewertung verbindet er mit Erich (Wortlaut unklar).
+- **Marcos Vorstellung zur Liefertreue:** statistisches Lieferdatum gegen Wareneingangsdatum mit Toleranzfenster, als Beispiel
+  5 Tage zu frueh bis 1 Tag zu spaet = gruen, darueber schlechter; also ein Punktesystem. Beispielwerte, nicht festgelegt.
+- **Ingo:** Die Lieferantenbewertung ist SAP-Standard; Tabellen und Transaktionen kann er selbst herausfinden, ohne auf den
+  Termin mit dem Berater zu warten.
+- **Vereinbart: iteratives Vorgehen.** Ingo baut eine erste Fassung und schickt Marco den Link; Marco schaut sie an, dann die
+  naechste Runde. Marco raeumt ein, sich gedanklich noch zu wenig damit befasst zu haben.
+
+**Naechste Schritte (Vorschlag Claude, nicht vereinbart):**
+1. SAP lesend klaeren, ob und wie die klassische Lieferantenbeurteilung genutzt wurde (Transaktionen ME61 bis ME6x, Tabellen
+   der Beurteilung; Namen vor dem Lesen im System pruefen, nicht aus Erinnerung) und welche Fiori-Apps zur Lieferantenbewertung
+   in P76 vorhanden sind.
+2. Erste Iteration ohne die offenen Entscheide: Reiter Lieferantenperformance mit Einkaufsvolumen, A/B/C-Klasse je Lieferant
+   (70/90 %, Zeitraum nach E1 noch offen) und Liefertreue nach Marcos Toleranzfenster (statistisches Lieferdatum gegen
+   Wareneingang); Q2-Meldungen, sobald `QmMeldungSet` Q2 liefert.
+3. Link an Marco, Rueckmeldung einarbeiten. Der Eingabeteil (Zertifikate, Massnahmen, Audits, Dokumente) bleibt bis zum
+   Entscheid, wo er liegt, aussen vor.
