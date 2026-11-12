@@ -112,8 +112,9 @@ ohne D13006) oder der naechste Einkauf-Lauf (`PurchasingMaterialShareBom` 5501/D
 
 **Wirkung in P76, belegt 2026-11-12 14:15** (Auftrag Ingo „schau doch mit dem tool“): ein GET je Geraet auf
 `ZloTopDownSet` in P76 mit dem technischen Benutzer der App (Zugangsdaten aus der lokalen `trafag_exporter.db`, wie
-`.tmp_tools/ProbeSapEntity`; Passwort nie ausgegeben). `ProbeSapEntity` liess sich nicht bauen (MSB3822, Ursache: der
-unversionierte Ordner `cinebbox-connect-downloader/` im Projektordner wird vom Hauptprojekt mitkompiliert), deshalb dieselbe
+`.tmp_tools/ProbeSapEntity`; Passwort nie ausgegeben). `ProbeSapEntity` liess sich nicht bauen (MSB3822, Ursache: ein
+unversionierter fremder WinForms-Projektordner im Projektordner wurde vom Hauptprojekt mitkompiliert; *behoben 14:20, Ordner
+ausserhalb des Repositorys verschoben, `ProbeSapEntity` baut wieder und liefert fuer 5501 HTTP 200, 54 Zeilen*), deshalb dieselbe
 Abfrage als `.tmp_tools/ZloP76Probe/zlo_p76_probe.py` (nicht versioniert).
 
 | Geraet | Ergebnis P76 |
