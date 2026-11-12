@@ -1,6 +1,6 @@
 # Standort Spanien: Sage-Export und Upload
 
-Stand: 2026-11-12 spaeter (Abschnitt 2: **Andreas entschieden, Lieferant des letzten Wareneingangs gilt als Supplier**, Umsetzung offen); davor 2026-11-12 (Entscheidfrage an Andreas formuliert); davor 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
+Stand: 2026-11-12 nachmittags (Abschnitt 2: **Lieferant umgesetzt in Skripten und App, Commit `c9208b5`, nicht deployed, noch nicht bei Santi**; Abschnitt 5: Lesereihenfolge und Erbregel berichtigt); davor 2026-11-12 spaeter (Andreas entschieden, Lieferant des letzten Wareneingangs gilt als Supplier); davor 2026-11-12 (Entscheidfrage an Andreas formuliert); davor 2026-11-11 (Abschnitt 2: Lieferant ueber den Wareneingang, offen); davor 2026-10-29 (Abschnitt 7 mit Nachtraegen bis 2026-09-29; uebrige Abschnitte 2026-08-17). Zusammengefuehrt aus `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Wurzel)
 und `SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md`.
 
 **Die Export-SQL gehoert uns**, nicht Spanien. Fehlt ein Feld, liest zuerst unsere Query
@@ -65,6 +65,18 @@ koenne, war ein Missverstaendnis: jeder Wareneingang hat einen Lieferanten (`Cab
 nur Artikel ohne jeden Wareneingang in Sage. Vermutete Faelle (nicht gemessen): Positionen ohne Lagerartikel (Fracht, Dienstleistung),
 letzter Einkauf vor dem Datenbeginn in Sage, Zugang ohne Lieferanten-Lieferschein. Zusage an Andreas: Umsetzung 1-2 Arbeitstage,
 Anteil leerer Zeilen nach dem ersten Lauf mit Zahlen melden. Naechster Schritt: Plan, Freigabe Ingo, Umsetzung, Paket an Santi.*
+
+**Umsetzung 2026-11-12 (Commit `c9208b5`, nicht deployed, Plan `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`):**
+Die Query liest per `OUTER APPLY (SELECT TOP 1 ...)` aus `LineasAlbaranProveedor`/`CabeceraAlbaranProveedor` den Lieferanten
+des **letzten Wareneingangs desselben Artikels am oder vor dem Lieferdatum** (Entscheid E1), nur `TipoArticulo = 'M'` mit
+echtem Artikelcode (E3), nur positive Mengen (E4). Neue Spalten am Ende: `ArticleType`, `SupplierNumber`, `SupplierName`,
+`SupplierCountry`, `SupplierCountryName`, `SupplierReceiptDate`, `SupplierReceiptDocument`. Die Summary zeigt den Fuellgrad je
+Artikeltyp und Rechnungsjahr und die haeufigsten Lieferanten. Neu ist das read-only Pruefskript
+`Analyze-SpainSupplierLookup.ps1` (Teile A bis L: Schluessel, Gate, Trafag-Schreibweise, Laufzeit, Luecken, `SourceLineId`).
+Ablauf mit Santi in zwei Gaengen (E6): **Gang 1** nur das Pruefskript (Mailentwurf
+`C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`, nicht gesendet); **Gang 2** Skripte ersetzen und
+Nachlieferung in zwei Laeufen (R1 Rechnungsdatum 2025-01-01 bis 2026-06-01, R2 Registrierdatum ab 2026-05-28). Vor Gang 2:
+Lesepruefung der Dashboard-Einstellungen und der SharePoint-Kopfzeilen (braucht Ingos Anmeldung, Plan 13).
 
 ### Buchungsdatum
 
@@ -139,11 +151,16 @@ Spanien ist ein `MANUAL_EXCEL`-Standort und haengt an SharePoint:
 - Die App liest im Ordner **alle** Dateien nach dem Muster `Spain_Sales*.csv`, nicht nur
   die neueste.
 - Dedupliziert wird primaer ueber `SourceLineId`, sonst ueber Invoice, Position und
-  Material. Die neuere Delta-Zeile gewinnt. Deshalb sind ueberlappende Zeitfenster
-  unproblematisch.
-- **Die Spaltenzuordnung ist bei Spanien NICHT im Seed verdrahtet**, anders als bei UK und
+  Material. ~~Die neuere Delta-Zeile gewinnt.~~ *Berichtigt 2026-11-12:* Gelesen wird nach dem **Startdatum** des Bereichs
+  im Dateinamen (`SharePointUploadService`), und die zuletzt gelesene Zeile ersetzt die fruehere ganz. Fuer ueberlappende
+  Tagesfenster ist das unproblematisch; ein spaeterer Bereichsexport mit fruehem Startdatum wird aber von den Tagesdateien
+  danach ueberschrieben. Deshalb gilt seit `c9208b5` (nicht deployed) die **Erbregel**: ein komplett leerer Lieferant wird
+  aus der frueheren Zeile derselben Position uebernommen, alle anderen Felder gewinnt weiter die spaetere Zeile.
+- ~~**Die Spaltenzuordnung ist bei Spanien NICHT im Seed verdrahtet**, anders als bei UK und
   Deutschland. Neue Spalten wie `PostingDate` muessen in den Einstellungen beim Standort
-  zugeordnet werden.
+  zugeordnet werden.~~ *Ueberholt:* Bei leerer Mappingliste (produktiv gemessen 2026-08-25) erkennt der Kopfzeilen-Leser
+  die Spalten selbst; pflegt Spanien eine Liste, ergaenzt der Seed (`EnsureSpainOptionalMappings`, seit `c9208b5`)
+  `PostingDate`, `LineRegistrationDate` und die drei Lieferantenfelder.
 
 Details: `docs/rag/MANUAL_IMPORT.md`.
 

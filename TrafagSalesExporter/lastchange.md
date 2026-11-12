@@ -8,6 +8,10 @@ Stand: 2026-11-12 (Zwischenstand: IC Tests Fabio, ZC12 Auftrag, Spanien-Supplier
 **Deploy 12.11. 11:33 `e956183`:** Kleinigkeiten vom 10.11. und Rexx Hub vorbereitet (Schalter aus) produktiv, 1547/1547, bitgleich.
 Spanien-Supplier noch nicht dabei (Agent arbeitet, eigener Deploy spaeter). `docs/rag/DEPLOYMENT.md`.
 
+**Spanien-Supplier umgesetzt (`c9208b5`, nicht deployed):** Skripte, Pruefskript, Erbregel, Seed, Suite 1556/1556. Offen: Deploy,
+Mail Gang 1 an Santi (`C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`), Lesepruefung mit Ingo, Gang 2.
+ISS-003.3, Wochen_Todo 13, `docs/STANDORT_ES_SAGE.md` 2 und 5.
+
 **Nachtrag 12.11. spaet, weitere Punkte dieser Sitzung:**
 - **Spanien Supplier umsetzen** (Ingo „du kannst umsetzen“, Andreas einverstanden): Phase 1 Plan laeuft, Agent finance-verkauf,
   Zwischenstand `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. Offener Entscheid absehbar: letzter Wareneingang vor dem

@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-12 (Spanien: Andreas einverstanden, Lieferant des letzten Wareneingangs gilt als Supplier, Umsetzung offen, ISS-003.3); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-12 nachmittags (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -154,7 +154,7 @@ Stand jenes Tages und wird als Historie stehen gelassen; gueltig ist die Messung
 | Schweiz | TRCH | 47'142 | 0 | 0,0 % | Herstellerregel beibehalten, nur SAP-markierte Fremdbezugs-Ausnahmen mit Andreas klaeren |
 | Oesterreich | TRAT | 1'790 | 0 | 0,0 % | gemeinsam mit CH entscheiden, keine Feldpflege |
 | Deutschland | TRDE | 7'332 | 0 | 0,0 % | Quellfeld und Mapping festlegen, neu laden |
-| Spanien | TRES | 5'697 | 0 | 0,0 % | *(11.11.2026)* Lieferant des letzten Wareneingangs je Artikel aus Sage herleiten (Spalten belegt); *12.11.: Andreas einverstanden, Umsetzung offen*, ISS-003.3 |
+| Spanien | TRES | 5'697 | 0 | 0,0 % | *(11.11.2026)* Lieferant des letzten Wareneingangs je Artikel aus Sage herleiten (Spalten belegt); *12.11.: Andreas einverstanden; umgesetzt `c9208b5`, nicht deployed, wirkt nach Gang 2 bei Santi*, ISS-003.3 |
 | Frankreich | TRFR | 2'598 | 135 | 5,2 % | ungefuellte Zeilen nach Quelle segmentieren |
 | Indien | TRIN | 7'116 | 828 | 11,6 % | **keine Massenpflege**, Sales Type deckt 94,0 % ab |
 | Italien | TRIT | 19'955 | 14'208 | 71,2 % | verbleibende Zeilen nach Ursache segmentieren |

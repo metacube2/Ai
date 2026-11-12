@@ -1,6 +1,6 @@
 # RAG Manual Import
 
-Stand: 2026-09-09
+Stand: 2026-11-12 (Spanien: Lesereihenfolge nach Startdatum, Erbregel Lieferant, Seed `EnsureSpainOptionalMappings`, Commit `c9208b5`, nicht deployed); davor 2026-09-09
 
 ## Kurzstand
 
@@ -24,7 +24,7 @@ Stand: 2026-09-09
     2026-08-26 15:26 (Commit `91830c2`), wirkungsneutral gemessen. Die Rohspalte
     `posting date` im `Sales_All` bleibt bewusst das Buchungsdatum aus der Quelle.
   - Die Spaltenzuordnung ist inzwischen DOCH im Seed verdrahtet: `DatabaseSeedService`
-    `EnsureSpainDateMappings` ergaenzt `PostingDate` und `LineRegistrationDate`, aber nur
+    `EnsureSpainDateMappings` (seit `c9208b5`: `EnsureSpainOptionalMappings`, dazu die drei Lieferantenfelder) ergaenzt `PostingDate` und `LineRegistrationDate`, aber nur
     wenn Spanien bereits eine eigene Mappingliste pflegt — eine leere Liste bleibt beim
     generischen Kopfzeilen-Fallback.
   - ~~OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
@@ -126,7 +126,9 @@ gelesen sind 1'643 Zeilen plausibel (Margen 12–55 %), als Zeilensumme nur 1'25
   - Basis/Vollfile: z. B. `Spain_Sales_2025.csv`.
   - Delta/Range: `Spain_Sales_range_20260528_to_20260603.csv`.
 - Die App liest bei Spanien-Ordnern alle `Spain_Sales*.csv`, nicht nur die neueste Datei.
-- Reihenfolge: Basisdateien zuerst, danach Range-Dateien nach Datum.
+- Reihenfolge: Basisdateien zuerst, danach Range-Dateien nach dem **Startdatum** im Dateinamen; die zuletzt gelesene Zeile
+  ersetzt die fruehere ganz. Seit `c9208b5` (nicht deployed) Erbregel: ein komplett leerer Lieferant wird aus der frueheren
+  Zeile derselben Position uebernommen (ISS-003.3).
 - Deduplizierung:
   - primaer `SourceLineId`.
   - Fallback `TSC + InvoiceNumber + PositionOnInvoice + Material`.
