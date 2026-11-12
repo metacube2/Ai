@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-12 nachmittags (Abschnitt 6 und 6.1: Gespraech mit Marco Widmer, iteratives Vorgehen; Strukturvorschlag, Zertifikatsordner, ABC-Transaktion, SAP-Recherche). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-12 spaet (Abschnitt 6.2: **Rueckmeldung Armin: V6 ist die Grundlage, kein Word-Dokument, zwei Pakete, Pflege im Dashboard**); davor 2026-11-12 nachmittags (Abschnitt 6 und 6.1: Gespraech mit Marco Widmer, iteratives Vorgehen; Strukturvorschlag, Zertifikatsordner, ABC-Transaktion, SAP-Recherche). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -201,3 +201,34 @@ haelt, klaert die Recherche (das Dashboard liest heute nur eine Material-ABC, `M
 sap-t76): `/ITS/CA_MAT_ABC_CU1`, klassische Lieferantenbeurteilung ME61 ff., Felder fuer Liefertreue, Q2-Meldungen, ECC oder
 S/4, Hinweise auf die Fiori-Bewertung. Ergebnis kommt nach `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md`.
 P76 nicht gelesen (keine Freigabe).
+
+### 6.2 Rueckmeldung Armin (Mail an Ingo, 2026-11-12)
+
+Armin beantwortet die offenen Punkte (er nennt es selbst „meine KI-Antwort“). **Die Demo V6 ist die fachliche Grundlage.**
+
+| Punkt | Antwort Armin | Folge |
+| --- | --- | --- |
+| Word-Dokument | Die Business-Review-Vorlage ist durch Masken und Raster in V6 abgebildet, **ein Word-Dokument braucht es nicht** | Punkt 3 der Aufgaben (Abschnitt 4) erledigt; fehlen Fachinfos, fragt Ingo nach |
+| SAP-Tabellen/Transaktionen | Kennzahlen stehen in V6; die Quellen (Tabellen, CDS-Views, APIs) sollen **mit den SAP-Spezialisten** bestimmt werden, Einkauf und Qualitaet helfen bei der fachlichen Definition | liegt bei Ingo; Recherche in T76 laeuft (6.1) |
+| SAP-Score | vier Kriterien bleiben (Qualitaet, Liefer-/Mengentreue, Preis, Servicegrad); **Fiori-Parametrisierung und Gewichtung in Arbeit mit Lucas und NTT** | weiter abhaengig, Info am 01.12. |
+| Q2-Meldungen | Erweiterung von `QmMeldungSet` sinnvoll; je Lieferant und Material mit Beanstandungstext, Meldungsnummer, Datum und Status, **anzeig- und filterbar** | Teil von Paket 1 |
+| A/B/C | **je Lieferant** nach Einkaufsvolumen, A ca. 70 %, B weitere 20 %, C restliche 10 %; aus dem bestehenden Cache; nicht mit der Material-ABC verwechseln | Teil von Paket 1; der Zeitraum (zwoelf Monate oder gewaehlter Zeitraum, E1) ist damit **nicht** beantwortet |
+| Zertifikate, Massnahmen, Themenfelder, Reviews, Audits, Dokumente | in V6 vorgesehen; **IT soll einen Vorschlag fuer zentrale Datenhaltung und Bearbeitung machen**; Ziel: Einkauf und Qualitaet pflegen direkt im Dashboard | Paket 2; beantwortet E3 aus Sicht Einkauf |
+
+**Zwei Pakete (Vorschlag Armin):**
+
+* **Paket 1:** SAP-basierte Lieferantenperformance mit Q2-Meldungen und A/B/C-Klasse je Lieferant.
+* **Paket 2:** Lieferantenbewertung und -entwicklung mit Zertifikaten, Audits, Business Reviews, Massnahmen und
+  Dokumentenablage, gepflegt im Dashboard.
+
+Ziel laut Armin: schlank und pragmatisch im bestehenden BI-Dashboard, ohne zusaetzliche Systeme und ohne doppelte Datenpflege.
+
+**Einordnung (Claude):**
+
+* Paket 1 kann sofort nach der SAP-Recherche geplant werden; es haengt nur an Q2 (Gateway-Erweiterung in T76 mit
+  Transport) und am Zeitraum fuer A/B/C (E1, Rueckfrage an Armin).
+* Paket 2 widerspricht dem Wortlaut des Entscheids vom 03.11. („keine Logik im Dashboard“) nur scheinbar: jener betraf
+  Bewertung und Qualitaetsdaten aus SAP. Dass Eingaben in die Dashboard-DB gehen, ist eine Erweiterung und sollte von Oscar
+  bestaetigt werden, bevor gebaut wird (Freigabe Fachabteilung). Der IT-Vorschlag fuer Datenhaltung (Dashboard-DB,
+  Dokumente als Dateiablage oder Link, Schreibrecht nur fuer Berechtigte) ist von Ingo zu liefern.
+* Offen bleibt E2 (Rhythmus der Themenfelder); Armins Antwort nennt ihn nicht.

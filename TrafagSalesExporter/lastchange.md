@@ -22,7 +22,8 @@ mit Frage, Einschraenkungen und Schaetzung (1-2 Tage nach OK, rund eine Woche in
 
 **Lieferantenbewertung (Marco Widmer):** Gespraech 12.11., iteratives Vorgehen vereinbart, Ingo baut erste Fassung und schickt den
 Link; `docs/EINKAUF_SITZUNG_2026-10-22.md` 6, Wochen_Todo 122. Nachmittags (6.1): Strukturvorschlag, Zertifikatsordner
-(koi ohne Zugriff), ABC-Transaktion `/ITS/CA_MAT_ABC_CU1`, Fiori-Info 01.12., SAP-Quellen lesend in T76 in Arbeit.
+(koi ohne Zugriff), ABC-Transaktion `/ITS/CA_MAT_ABC_CU1`, Fiori-Info 01.12., SAP-Quellen lesend in T76 in Arbeit. Spaet (6.2):
+Armin: V6 Grundlage, kein Word-Dokument, Paket 1 (SAP-Performance, Q2, A/B/C 70/20/10 je Lieferant) und Paket 2 (Pflege im Dashboard).
 
 **WLAN `trafag-802.1x-tel` (Standort Bubikon):** niemand kommt mehr hinein, seit Entec am 11.11. 12:24 dort Client Isolation
 wegen MAC-Flaps in VLAN 16 eingeschaltet hat (Verdacht, nicht gemessen). Flap-Geraet `4c:eb:d6:5a:b3:cc` = Espressif (IoT).
