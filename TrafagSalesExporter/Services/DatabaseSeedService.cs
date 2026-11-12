@@ -833,7 +833,7 @@ public class DatabaseSeedService : IDatabaseSeedService
                 db.SaveChanges();
 
             if (CanSeedSiteDependentTable(db, "ManualExcelColumnMappings"))
-                EnsureSpainDateMappings(db, existing.Id);
+                EnsureSpainOptionalMappings(db, existing.Id);
 
             return;
         }
@@ -851,7 +851,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         db.SaveChanges();
 
         if (CanSeedSiteDependentTable(db, "ManualExcelColumnMappings"))
-            EnsureSpainDateMappings(db, created.Id);
+            EnsureSpainOptionalMappings(db, created.Id);
     }
 
     private static bool ShouldRepairSpainManualImportPath(string? path)
@@ -871,7 +871,11 @@ public class DatabaseSeedService : IDatabaseSeedService
     // Kopfzeilen-Fallback abschaltet (ManualExcelImportService.ReadCsvSalesRecords), bleiben die
     // Felder sonst unabhaengig vom CSV-Inhalt leer. Nur fehlende Zeilen ergaenzen, die uebrigen
     // von Hand gepflegten Zuordnungen unangetastet lassen.
-    private static void EnsureSpainDateMappings(AppDbContext db, int siteId)
+    // ISS-003.3: seit 2026-11 liefert der Sage-Export zusaetzlich den Lieferanten des letzten
+    // Wareneingangs als SupplierNumber, SupplierName und SupplierCountry. Fuer diese drei gilt
+    // dieselbe Regel; bei leerer Liste (produktiv gemessen 2026-08-25) bleibt alles beim
+    // generischen Kopfzeilen-Leser, der die Spalten selbst erkennt.
+    private static void EnsureSpainOptionalMappings(AppDbContext db, int siteId)
     {
         var existingMappings = db.ManualExcelColumnMappings
             .Where(x => x.SiteId == siteId)
@@ -892,7 +896,10 @@ public class DatabaseSeedService : IDatabaseSeedService
         foreach (var targetField in new[]
                  {
                      nameof(SalesRecord.PostingDate),
-                     nameof(SalesRecord.LineRegistrationDate)
+                     nameof(SalesRecord.LineRegistrationDate),
+                     nameof(SalesRecord.SupplierNumber),
+                     nameof(SalesRecord.SupplierName),
+                     nameof(SalesRecord.SupplierCountry)
                  })
         {
             if (existingMappings.Any(x => x.TargetField == targetField))
@@ -903,7 +910,7 @@ public class DatabaseSeedService : IDatabaseSeedService
             {
                 SiteId = siteId,
                 TargetField = targetField,
-                // Der Sage-Export benennt beide Spalten genau so.
+                // Der Sage-Export benennt alle diese Spalten genau so.
                 SourceHeader = targetField,
                 IsRequired = false,
                 IsActive = true,

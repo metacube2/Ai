@@ -344,6 +344,50 @@ public class ManualExcelImportServiceTests
         }
     }
 
+    /// <summary>
+    /// ISS-003.3: Der Sage-Export haengt die Lieferantenspalten am Ende an. Ohne eigene
+    /// Mappingliste liest der generische Kopfzeilen-Leser die drei Kernfelder selbst; die
+    /// Pruefspalten (SupplierCountryName usw.) duerfen kein Kernfeld ueberschreiben.
+    /// </summary>
+    [Fact]
+    public async Task ReadSalesRecordsAsync_Reads_Sage_Spain_Supplier_Columns()
+    {
+        var site = new Site
+        {
+            TSC = "TRES",
+            Land = "Spanien"
+        };
+        var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.csv");
+        var csv = string.Join(Environment.NewLine,
+            "\"TSC\";\"Land\";\"SourceLineId\";\"InvoiceNumber\";\"PositionOnInvoice\";\"Material\";\"Quantity\";\"StandardCost\";\"StandardCostCurrency\";\"SalesPriceValue\";\"SalesCurrency\";\"InvoiceDate\";\"DocumentType\";\"ArticleType\";\"SupplierNumber\";\"SupplierName\";\"SupplierCountry\";\"SupplierCountryName\";\"SupplierReceiptDate\";\"SupplierReceiptDocument\"",
+            "\"TRES\";\"Spanien\";\"line-a\";\"20241332\";\"20\";\"52871\";\"1.000000\";\"160.760000\";\"EUR\";\"265.000000\";\"EUR\";\"2025-01-02 00:00:00\";\"Invoice\";\"M\";\"400123\";\"TRAFAG AG\";\"CH\";\"SUIZA\";\"2024-12-20 00:00:00\";\"2024/A/77\"",
+            "\"TRES\";\"Spanien\";\"line-b\";\"20241332\";\"30\";\"P999\";\"1.000000\";\"0.000000\";\"EUR\";\"15.000000\";\"EUR\";\"2025-01-02 00:00:00\";\"Invoice\";\"C\";\"\";\"\";\"\";\"\";\"\";\"\"");
+        await File.WriteAllTextAsync(filePath, csv);
+
+        try
+        {
+            var service = new ManualExcelImportService();
+
+            var rows = await service.ReadSalesRecordsAsync(filePath, site);
+
+            Assert.Equal(2, rows.Count);
+            var stockLine = Assert.Single(rows, r => r.SourceLineId == "line-a");
+            Assert.Equal("400123", stockLine.SupplierNumber);
+            Assert.Equal("TRAFAG AG", stockLine.SupplierName);
+            Assert.Equal("CH", stockLine.SupplierCountry);
+            Assert.Equal(265.000000m, stockLine.SalesPriceValue);
+
+            var freightLine = Assert.Single(rows, r => r.SourceLineId == "line-b");
+            Assert.Equal(string.Empty, freightLine.SupplierNumber);
+            Assert.Equal(string.Empty, freightLine.SupplierName);
+            Assert.Equal(string.Empty, freightLine.SupplierCountry);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
     [Fact]
     public async Task ReadSalesRecordsAsync_Evaluates_Mapped_Multiply_Expression()
     {

@@ -310,8 +310,9 @@ public class DatabaseInitializationServiceTests : IDisposable
             .OrderBy(x => x.SortOrder)
             .ToList();
 
-        // PostingDate und LineRegistrationDate kommen dazu, die beiden vorhandenen bleiben.
-        Assert.Equal(4, mappings.Count);
+        // PostingDate, LineRegistrationDate und die drei Lieferantenfelder (ISS-003.3) kommen
+        // dazu, die beiden vorhandenen bleiben.
+        Assert.Equal(7, mappings.Count);
 
         var invoiceNumber = Assert.Single(mappings, x => x.TargetField == nameof(SalesRecord.InvoiceNumber));
         Assert.Equal("InvoiceNumber", invoiceNumber.SourceHeader);
@@ -333,10 +334,25 @@ public class DatabaseInitializationServiceTests : IDisposable
         Assert.True(lineRegistrationDate.IsActive);
         Assert.Equal(3, lineRegistrationDate.SortOrder);
 
-        // Erneuter Lauf darf keine zweite Datumszeile anlegen.
+        var expectedSupplierFields = new[]
+        {
+            (nameof(SalesRecord.SupplierNumber), 4),
+            (nameof(SalesRecord.SupplierName), 5),
+            (nameof(SalesRecord.SupplierCountry), 6)
+        };
+        foreach (var (targetField, sortOrder) in expectedSupplierFields)
+        {
+            var supplierMapping = Assert.Single(mappings, x => x.TargetField == targetField);
+            Assert.Equal(targetField, supplierMapping.SourceHeader);
+            Assert.False(supplierMapping.IsRequired);
+            Assert.True(supplierMapping.IsActive);
+            Assert.Equal(sortOrder, supplierMapping.SortOrder);
+        }
+
+        // Erneuter Lauf darf keine zweite Zeile anlegen.
         await service.InitializeAsync();
         await using var secondRunDb = await _dbFactory.CreateDbContextAsync();
-        Assert.Equal(4, secondRunDb.ManualExcelColumnMappings.Count(x => x.SiteId == spainId));
+        Assert.Equal(7, secondRunDb.ManualExcelColumnMappings.Count(x => x.SiteId == spainId));
     }
 
     [Fact]

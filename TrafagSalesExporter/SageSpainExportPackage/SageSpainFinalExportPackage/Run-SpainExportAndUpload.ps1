@@ -83,7 +83,6 @@ Write-Host "Uploading $($filesToUpload.Count) file(s) to SharePoint target: $tar
 & $RcloneExe copy $latestRun.FullName $target `
     --include "*.csv" `
     --include "*_summary.txt" `
-    --verbose `
     --log-file $rcloneLog `
     --log-level INFO
 if ($LASTEXITCODE -ne 0) {

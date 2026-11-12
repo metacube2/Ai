@@ -455,4 +455,57 @@ public class GroupMarginCalculatorTests
             Assert.True(GroupMarginStatuses.IsOpen(status), status);
         }
     }
+
+    /// <summary>
+    /// ISS-003.3, Rechenbeispiel aus dem Plan: Spanien, Artikel 52871 im CH-Werkstamm mit
+    /// TR-AG-Kosten. Mit Fremdlieferant aus dem Wareneingang gilt der lokale Preis aus der
+    /// Verkaufszeile: 1 x 160.76 EUR, Marge 265.00 - 160.76 = 104.24 EUR.
+    /// </summary>
+    [Fact]
+    public void Evaluate_Spain_External_Supplier_Uses_Local_Cost()
+    {
+        var line = Line(
+            supplierName: "ACME INSTRUMENTACION SL", supplierNumber: "400123", supplierCountry: "ES",
+            tsc: "TRES", material: "52871", quantity: 1m, standardCost: 160.76m, netSalesValue: 265m)
+            with { StandardCostCurrency = "EUR" };
+
+        var result = GroupMarginCalculator.Evaluate(
+            line,
+            GroupCosts("52871", 120m),
+            chPlantMaterialKeys: new HashSet<string>(StringComparer.Ordinal) { "52871" },
+            supplierFallbackMode: SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.External, result.SupplierType);
+        Assert.False(result.IsGroupCost);
+        Assert.Equal(160.76m, result.CostBasis);
+        Assert.Equal("EUR", result.CostCurrency);
+        Assert.Equal("Kosten aus Verkaufszeile", result.CostSource);
+        Assert.Equal(GroupMarginStatuses.Ok, result.Status);
+        Assert.Equal(104.24m, line.NetSalesValue - result.CostBasis);
+    }
+
+    /// <summary>
+    /// ISS-003.3: dieselbe Zeile mit Trafag AG als Lieferant rechnet auf den Konzernkosten
+    /// TR AG (CHF); die Umrechnung in EUR macht der Waehrungsschalter danach.
+    /// </summary>
+    [Fact]
+    public void Evaluate_Spain_TrafagAg_Supplier_Uses_Group_Cost()
+    {
+        var line = Line(
+            supplierName: "TRAFAG AG", supplierNumber: "400999", supplierCountry: "CH",
+            tsc: "TRES", material: "52871", quantity: 1m, standardCost: 160.76m, netSalesValue: 265m)
+            with { StandardCostCurrency = "EUR" };
+
+        var result = GroupMarginCalculator.Evaluate(
+            line,
+            GroupCosts("52871", 120m),
+            chPlantMaterialKeys: new HashSet<string>(StringComparer.Ordinal) { "52871" },
+            supplierFallbackMode: SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result.SupplierType);
+        Assert.True(result.IsGroupCost);
+        Assert.Equal(120m, result.CostBasis);
+        Assert.Equal("CHF", result.CostCurrency);
+        Assert.Equal(GroupMarginCalculator.GroupCostSourceLabel, result.CostSource);
+    }
 }

@@ -382,13 +382,39 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
         {
             var key = BuildSpainSalesRecordKey(record);
             if (string.IsNullOrWhiteSpace(key))
+            {
                 unkeyed.Add(record);
-            else
-                keyed[key] = record;
+                continue;
+            }
+
+            // ISS-003.3: Spanien-Dateien werden nach dem Startdatum ihres Bereichs gelesen
+            // (SharePointUploadService.SelectManualImportFileNames). Aeltere Range-Dateien ohne
+            // Lieferantenspalten koennen deshalb nach einem Bereichsexport mit Lieferant kommen.
+            // Die spaetere Zeile gewinnt weiter in allen Feldern; nur ein komplett leerer
+            // Lieferant wird aus der frueheren Zeile derselben Position uebernommen.
+            if (keyed.TryGetValue(key, out var previous))
+                InheritSupplierIfMissing(record, previous);
+
+            keyed[key] = record;
         }
 
         return keyed.Values.Concat(unkeyed).ToList();
     }
+
+    private static void InheritSupplierIfMissing(SalesRecord target, SalesRecord source)
+    {
+        if (HasSupplier(target) || !HasSupplier(source))
+            return;
+
+        target.SupplierNumber = source.SupplierNumber;
+        target.SupplierName = source.SupplierName;
+        target.SupplierCountry = source.SupplierCountry;
+    }
+
+    private static bool HasSupplier(SalesRecord record)
+        => !string.IsNullOrWhiteSpace(record.SupplierNumber) ||
+           !string.IsNullOrWhiteSpace(record.SupplierName) ||
+           !string.IsNullOrWhiteSpace(record.SupplierCountry);
 
     private static List<SalesRecord> DeduplicateManualSalesRecords(IEnumerable<SalesRecord> records)
     {

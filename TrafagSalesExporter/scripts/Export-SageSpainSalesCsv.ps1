@@ -80,6 +80,8 @@ function Export-QueryToCsv {
             }
         }
 
+        $stats = New-SupplierStatistics -Reader $reader
+
         while ($reader.Read()) {
             $values = for ($i = 0; $i -lt $reader.FieldCount; $i++) {
                 Convert-ToCsvValue $reader.GetValue($i)
@@ -87,9 +89,13 @@ function Export-QueryToCsv {
             $writer.WriteLine(($values -join ";"))
             $rowCount++
 
+            $rowSales = [decimal]0
             if ($salesIndex -ge 0 -and -not $reader.IsDBNull($salesIndex)) {
-                $salesSum += [decimal]$reader.GetValue($salesIndex)
+                $rowSales = [decimal]$reader.GetValue($salesIndex)
+                $salesSum += $rowSales
             }
+
+            Add-SupplierStatisticsRow -Statistics $stats -Reader $reader -RowSales $rowSales
         }
     }
     finally {
@@ -100,7 +106,129 @@ function Export-QueryToCsv {
     return [pscustomobject]@{
         Rows = $rowCount
         SalesPriceValueSum = $salesSum
+        SupplierStatistics = $stats
     }
+}
+
+# Supplier fill rate for the summary file (ISS-003.3). Counts rows with a supplier, per
+# ArticleType and per invoice year, and the most frequent suppliers.
+function New-SupplierStatistics {
+    param($Reader)
+
+    $stats = @{
+        SupplierNumberIndex = -1
+        SupplierNameIndex = -1
+        ArticleTypeIndex = -1
+        InvoiceDateIndex = -1
+        SupplierRows = 0
+        ByArticleType = @{}
+        ByInvoiceYear = @{}
+        SupplierCounts = @{}
+    }
+
+    for ($i = 0; $i -lt $Reader.FieldCount; $i++) {
+        switch ($Reader.GetName($i)) {
+            "SupplierNumber" { $stats.SupplierNumberIndex = $i }
+            "SupplierName" { $stats.SupplierNameIndex = $i }
+            "ArticleType" { $stats.ArticleTypeIndex = $i }
+            "InvoiceDate" { $stats.InvoiceDateIndex = $i }
+        }
+    }
+
+    return $stats
+}
+
+function Get-ReaderText {
+    param($Reader, [int]$Index)
+
+    if ($Index -lt 0 -or $Reader.IsDBNull($Index)) {
+        return ""
+    }
+
+    return ([string]$Reader.GetValue($Index)).Trim()
+}
+
+function Add-SupplierStatisticsRow {
+    param($Statistics, $Reader, [decimal]$RowSales)
+
+    $supplierNumber = Get-ReaderText -Reader $Reader -Index $Statistics.SupplierNumberIndex
+    $hasSupplier = $supplierNumber.Length -gt 0
+    if ($hasSupplier) {
+        $Statistics.SupplierRows = $Statistics.SupplierRows + 1
+        $supplierKey = $supplierNumber + " " + (Get-ReaderText -Reader $Reader -Index $Statistics.SupplierNameIndex)
+        if ($Statistics.SupplierCounts.ContainsKey($supplierKey)) {
+            $Statistics.SupplierCounts[$supplierKey] = $Statistics.SupplierCounts[$supplierKey] + 1
+        }
+        else {
+            $Statistics.SupplierCounts[$supplierKey] = 1
+        }
+    }
+
+    $articleType = Get-ReaderText -Reader $Reader -Index $Statistics.ArticleTypeIndex
+    if ($articleType.Length -eq 0) {
+        $articleType = "(none)"
+    }
+    if (-not $Statistics.ByArticleType.ContainsKey($articleType)) {
+        $Statistics.ByArticleType[$articleType] = @{ Rows = 0; WithSupplier = 0; Sales = [decimal]0 }
+    }
+    $articleEntry = $Statistics.ByArticleType[$articleType]
+    $articleEntry.Rows = $articleEntry.Rows + 1
+    $articleEntry.Sales = $articleEntry.Sales + $RowSales
+    if ($hasSupplier) {
+        $articleEntry.WithSupplier = $articleEntry.WithSupplier + 1
+    }
+
+    $invoiceYear = "(no invoice date)"
+    if ($Statistics.InvoiceDateIndex -ge 0 -and -not $Reader.IsDBNull($Statistics.InvoiceDateIndex)) {
+        $invoiceValue = $Reader.GetValue($Statistics.InvoiceDateIndex)
+        if ($invoiceValue -is [datetime]) {
+            $invoiceYear = $invoiceValue.Year.ToString()
+        }
+    }
+    if (-not $Statistics.ByInvoiceYear.ContainsKey($invoiceYear)) {
+        $Statistics.ByInvoiceYear[$invoiceYear] = @{ Rows = 0; WithSupplier = 0; Sales = [decimal]0 }
+    }
+    $yearEntry = $Statistics.ByInvoiceYear[$invoiceYear]
+    $yearEntry.Rows = $yearEntry.Rows + 1
+    $yearEntry.Sales = $yearEntry.Sales + $RowSales
+    if ($hasSupplier) {
+        $yearEntry.WithSupplier = $yearEntry.WithSupplier + 1
+    }
+}
+
+function Format-SupplierSummary {
+    param($Statistics, [int]$Rows)
+
+    $percent = 0
+    if ($Rows -gt 0) {
+        $percent = [math]::Round(100.0 * $Statistics.SupplierRows / $Rows, 1)
+    }
+
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add("Supplier (ISS-003.3):")
+    $lines.Add("Rows with supplier: $($Statistics.SupplierRows) of $Rows ($percent %)")
+    $lines.Add("By ArticleType (rows / with supplier / SalesPriceValue):")
+    foreach ($key in ($Statistics.ByArticleType.Keys | Sort-Object)) {
+        $entry = $Statistics.ByArticleType[$key]
+        $lines.Add("  $key : $($entry.Rows) / $($entry.WithSupplier) / $($entry.Sales)")
+    }
+    $lines.Add("By invoice year (rows / with supplier / SalesPriceValue):")
+    foreach ($key in ($Statistics.ByInvoiceYear.Keys | Sort-Object)) {
+        $entry = $Statistics.ByInvoiceYear[$key]
+        $lines.Add("  $key : $($entry.Rows) / $($entry.WithSupplier) / $($entry.Sales)")
+    }
+    $lines.Add("Top suppliers (rows):")
+    $top = $Statistics.SupplierCounts.GetEnumerator() |
+        Sort-Object -Property @{ Expression = "Value"; Descending = $true }, @{ Expression = "Key"; Descending = $false } |
+        Select-Object -First 15
+    foreach ($item in $top) {
+        $lines.Add("  $($item.Key) : $($item.Value)")
+    }
+    $lines.Add("Rule: last goods receipt of the same article on or before the delivery date")
+    $lines.Add("(dbo.LineasAlbaranProveedor / dbo.CabeceraAlbaranProveedor), only TipoArticulo 'M',")
+    $lines.Add("only receipt lines with positive units.")
+
+    return ($lines -join [Environment]::NewLine)
 }
 
 if ($ExportMode -eq "Full") {
@@ -200,7 +328,14 @@ SELECT
     CASE
         WHEN c.TipoNuevaFra = 2 OR c.SerieFactura = 'REC' OR c.StatusAbono <> 0 THEN 'Credit Note'
         ELSE 'Invoice'
-    END AS DocumentType
+    END AS DocumentType,
+    l.TipoArticulo AS ArticleType,
+    wp.CodigoProveedor AS SupplierNumber,
+    COALESCE(NULLIF(LTRIM(RTRIM(wp.RazonSocial)), ''), wp.Nombre) AS SupplierName,
+    wp.SiglaNacion AS SupplierCountry,
+    wp.Nacion AS SupplierCountryName,
+    wp.FechaAlbaran AS SupplierReceiptDate,
+    wp.ReceiptDocument AS SupplierReceiptDocument
 FROM dbo.CabeceraAlbaranCliente c
 JOIN dbo.LineasAlbaranCliente l
   ON l.CodigoEmpresa = c.CodigoEmpresa
@@ -235,6 +370,40 @@ OUTER APPLY (
       AND t.Factura       = c.NumeroFactura
     ORDER BY t.FechaAsiento, t.Asiento
 ) f
+-- Lieferant (Supplier), ISS-003.3, Entscheid Andreas Stoller 2026-11-12: es gilt der Lieferant
+-- des letzten Wareneingangs desselben Artikels am oder vor dem Lieferdatum der Verkaufsposition.
+-- OUTER APPLY mit TOP 1 wie beim Buchungsdatum: hoechstens eine Zeile je Verkaufsposition, keine
+-- Vervielfachung des Umsatzes; OUTER, damit Positionen ohne Wareneingang erhalten bleiben.
+-- Nur Lagerware (TipoArticulo = 'M') mit echtem Artikelcode; Fracht, Konzepte, Texte und '-'
+-- bleiben leer. Nur Zugaenge mit positiver Menge, Ruecksendungen an den Lieferanten zaehlen nicht.
+-- Join Kopf/Position ueber CodigoEmpresa/EjercicioAlbaran/SerieAlbaran/NumeroAlbaran: begruendete
+-- Annahme aus dem Schemaauszug, geprueft mit Analyze-SpainSupplierLookup.ps1.
+-- Hintergrund: docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md im BiDashboard-Repository.
+OUTER APPLY (
+    SELECT TOP 1
+        cp.CodigoProveedor,
+        cp.RazonSocial,
+        cp.Nombre,
+        cp.SiglaNacion,
+        cp.Nacion,
+        cp.FechaAlbaran,
+        CONCAT(cp.EjercicioAlbaran, '/', cp.SerieAlbaran, '/', cp.NumeroAlbaran) AS ReceiptDocument
+    FROM dbo.LineasAlbaranProveedor lp
+    JOIN dbo.CabeceraAlbaranProveedor cp
+      ON cp.CodigoEmpresa    = lp.CodigoEmpresa
+     AND cp.EjercicioAlbaran = lp.EjercicioAlbaran
+     AND cp.SerieAlbaran     = lp.SerieAlbaran
+     AND cp.NumeroAlbaran    = lp.NumeroAlbaran
+    WHERE l.TipoArticulo = 'M'
+      AND NULLIF(LTRIM(RTRIM(l.CodigoArticulo)), '') IS NOT NULL
+      AND l.CodigoArticulo <> '-'
+      AND lp.CodigoEmpresa  = l.CodigoEmpresa
+      AND lp.CodigoArticulo = l.CodigoArticulo
+      AND lp.Unidades > 0
+      AND cp.FechaAlbaran < DATEADD(day, 1, CAST(COALESCE(c.FechaAlbaran, c.FechaFactura) AS date))
+    ORDER BY cp.FechaAlbaran DESC, cp.EjercicioAlbaran DESC, cp.SerieAlbaran DESC,
+             cp.NumeroAlbaran DESC, lp.Orden DESC
+) wp
 WHERE $datePredicate
 ORDER BY
     c.FechaFactura,
@@ -244,6 +413,7 @@ ORDER BY
 "@
 
 $result = Export-QueryToCsv -Sql $sql -Path $csvPath
+$supplierSummary = Format-SupplierSummary -Statistics $result.SupplierStatistics -Rows $result.Rows
 
 @"
 Sage Spain Sales CSV export
@@ -267,10 +437,12 @@ SalesPriceValue sum:
 $($result.SalesPriceValueSum)
 
 Source:
-dbo.CabeceraAlbaranCliente joined with dbo.LineasAlbaranCliente
+dbo.CabeceraAlbaranCliente joined with dbo.LineasAlbaranCliente, supplier from dbo.LineasAlbaranProveedor/dbo.CabeceraAlbaranProveedor (OUTER APPLY TOP 1)
 
 Filter:
 $datePredicate
+
+$supplierSummary
 
 Notes:
 - Currency is set to EUR because Sage exports EnEuros_=-1 and CodigoDivisa is empty in the analysed rows.
