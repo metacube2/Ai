@@ -811,3 +811,20 @@ Faellt E5 auf „erweitern“, kommt `Services/GroupMarginSupplierClassifier.cs`
   gepflegt werden, obwohl seit dem 2026-08-25 produktiv gemessen keine Liste existiert (Fall „Doku nicht vollstaendig
   nachgefuehrt“, `CLAUDE.md` 3 Punkt 2).
 - Der Schemaauszug `candidate_objects.csv` hat nur Spaltennamen; Typaussagen daraus sind nicht moeglich.
+
+## 13. Entscheide Ingo (2026-11-12, im Chat)
+
+| Nr. | Entscheid |
+| --- | --- |
+| E1 | **V1**: letzter Wareneingang am oder vor dem Lieferdatum |
+| E2 | **(b)** Erbregel im Spanien-Dedupe (Code, Tests, Deploy) |
+| E3 | **nur `TipoArticulo = 'M'`** |
+| E4 | **ja**, Ruecksendungen ausschliessen |
+| E5 | nach Teil F der Pruefabfrage |
+| E6 | **zwei Gaenge** mit Santi (zuerst nur Analyze) |
+| E7 | **offen**: Deploy-Zeitpunkt und mitgehende Commits; vor dem Deploy Liste an Ingo, Deploy erst nach ausdruecklicher Freigabe |
+| E8 | **ja**, Seed vorsorglich erweitern |
+| E9 | nach Teil K, getrennt, nur mit Zustimmung Andreas |
+| Schritt 1 | **lesend erlaubt**: Produktiv-Einstellungen (Spaltenzuordnung TRES, Supplier-/Kostenmodi) und SharePoint `Import/Finance/Spanien` Dateiliste mit Kopfzeilen |
+
+Phase 2 laeuft genau nach Abschnitt 7, Schritte 1 bis 8 und 10 (Mailentwurf `.eml` fuer Santi, Gang 1); Schritt 9 (Deploy) erst nach E7.
