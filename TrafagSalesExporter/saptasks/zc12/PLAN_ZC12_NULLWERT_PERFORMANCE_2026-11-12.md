@@ -475,12 +475,18 @@ verarbeitet“; die Meldung bekommt einen dritten Wert „gleicher Vorgang ueber
 Voraussetzungen: Ingo hat E1 bis E8 entschieden; SAP Logon laeuft (`Get-Process saplogon`) und Ingo ist in T76/100
 angemeldet; `docs/AGENT_COORDINATION.md` ist von der Hauptsitzung auf „schreibend“ gesetzt.
 
-**Was die Entwurfsdatei genau enthaelt.** `ZM_ABGLEICH_KTSCH_entwurf_2026-11-12.abap` setzt diese Entscheide um und wird in
-Schritt 5 **unveraendert** eingespielt: E1 = nein (kein CA02-Dedup), E2 = Variante A (leer gilt als 0), E3 = 3c (Ausrichtung
-bleibt), E4 = nein (`fmt_quan` unveraendert), E5 = spaeter (kein P5/P6). Entscheidet Ingo anders, wird **vor** Phase 2 eine
-neue, fertige Einspieldatei samt Nachtrag zu diesem Plan erstellt; waehrend Phase 2 wird kein Code geschrieben.
-**Der Entwurf ist nicht syntaxgeprueft** (in Phase 1 nicht moeglich, `abap-check --source-file` ist unbrauchbar, Arbeitsweise
-Abschnitt 3); die erste verbindliche Pruefung ist das Aktivieren in Schritt 6.
+*Nachtrag 2026-11-12 (nach Ingos Entscheiden, Abschnitt 11):* Eingespielt wird in Schritt 5 **unveraendert** die Datei
+`ZM_ABGLEICH_KTSCH_einspiel_2026-11-12.abap`. Sie setzt um: E1 = ja (P7 in `sichern_zeiten` und `sichern_texte`), E2 = A,
+E3 = 3a (`ZSKTSCH_TIME_PO-VAL01..04`, Rueckwandlung mit `RS_CONV_EX_2_IN`), E4 = nein, E5 = nicht eingebaut. Inhalt und
+Selbstpruefung: Abschnitt 12. Die Entwurfsdatei ist damit nur noch Zwischenstand. Der folgende Absatz beschreibt den Stand vor
+den Entscheiden:
+
+~~**Was die Entwurfsdatei genau enthaelt.** `ZM_ABGLEICH_KTSCH_entwurf_2026-11-12.abap` setzt diese Entscheide um und wird in
+Schritt 5 unveraendert eingespielt: E1 = nein, E2 = A, E3 = 3c, E4 = nein, E5 = spaeter.~~ (ueberholt)
+
+Waehrend Phase 2 wird kein Code geschrieben. **Die Einspieldatei ist nicht syntaxgeprueft** (in Phase 1 nicht moeglich,
+`abap-check --source-file` ist unbrauchbar, Arbeitsweise Abschnitt 3); die erste verbindliche Pruefung ist das Aktivieren in
+Schritt 6.
 
 | Schritt | Was | Werkzeug | Erwartet / Rueckleseprobe |
 | --- | --- | --- | --- |
@@ -488,11 +494,11 @@ Abschnitt 3); die erste verbindliche Pruefung ist das Aktivieren in Schritt 6.
 | 1 | Eigene T76-Sitzung oeffnen (vorher/nachher `info`, nur weiter, wenn genau eine neue Sitzung dazukam); ZC12 mit `P_KTSCH 13457`, `P_WERKS 1100`, `P_PLNTY N`; eine Zeile markieren, „Zeiten abgleichen“, Popup-Feldinhalt `VGW01` samt Leerzeichen auslesen, **Abbrechen** (nichts sichern). Danach im ALV-Grid die Export-Funktion bestimmen (Kontextmenue/Toolbar-Ids per `dump`, Tooltips lesen) und festhalten, welche Funktion eine lokale Datei schreibt | nur `SapGuiT76Hilfe.vbs` (`neu`, `info`, `dump`, `press`, `grid`) | Beleg fuer 3.1 (Lage der `4` im Feld); Export-Weg fuer Schritt 2 bekannt. Nichts geaendert. Ohne Export-Weg: Spalten ueber `SapGuiT76Hilfe.vbs grid` zeilenweise lesen |
 | 2 | Basismessung **alter** Stand, je zweimal: ZC12 mit `07201`/1100/N und mit `23360`/1100/N bis zur fertigen ALV-Liste; Zeit im Skript stoppen; Zeilenzahl und Spalten `MATNR, PLNNR, PLNAL, VORNR, VGW01..04, TEXT_DIFF, VORG_TXT` ueber den Weg aus Schritt 1 sichern. `STOP001` **nicht** verwenden (144'547 Zeilen, Gefahr des Dialogabbruchs nach 600 s, LEARNINGS 2026-10-12) | `SapGuiT76Hilfe.vbs` | Zwei Laeufe alt gegen alt als **sortierte Liste** gleich (LEARNINGS 2026-10-12); sonst erst klaeren |
 | 3 | Neuen Workbench-Auftrag anlegen, Text: `ZC12: Wert 0 bei Vorgabewerten, Laufzeit (PM-02)` (49 Zeichen); nicht `T76K911958` nehmen | `SapGuiAuftragNeu.vbs` | neue Nummer `T76K9xxxxx`, `E070` Status D, Besitzer KOI |
-| 4 | Nur bei E3 = 3a: `ZSKTSCH_TIME_PO` um `VAL01..VAL04` erweitern (Datenelement vorher in DD04L festlegen), in den neuen Auftrag, aktivieren | SE11 per Skript | DD03L zeigt 8 Felder; Auftrag aus Schritt 3 |
-| 5 | Quelltext setzen: Entwurfsdatei unveraendert (bzw. die vor Phase 2 freigegebene Einspieldatei) in `ZM_ABGLEICH_KTSCH`, Transportabfrage mit dem Auftrag aus Schritt 3 | `SapGuiSetReportSourceAuftrag.vbs <Sitzung> ZM_ABGLEICH_KTSCH <Datei> <Auftrag>` | Dialog „Inaktive Objekte“ zeigt nur `ZM_ABGLEICH_KTSCH` als eigenes Objekt |
+| 4 | `ZSKTSCH_TIME_PO` in SE11 aendern: hinter `CHG04` vier Felder anhaengen, **Position 5 `VAL01`, 6 `VAL02`, 7 `VAL03`, 8 `VAL04`, je Datenelement `CHAR15`** (SAP-Standard, Paket `SZS`; CHAR 15, Ausgabelaenge 15, keine Konvertierungsroutine, keine Kleinbuchstaben, keine Festwerte; DD04L/DD01L/TADIR gelesen 12.11.). Bestehende Felder `CHG01..04` (`XFELD`) nicht anfassen. Sichern in den Auftrag aus Schritt 3 (Vorschlag im Dialog pruefen, LEARNINGS 2026-09-10), aktivieren. **Vor Schritt 5**, sonst bricht das Popup mit `ERROR_IN_FIELDS` ab | SE11 per Skript (Vorlage `SapGuiSe11Aendern.vbs`, `SapGuiStrukturFelder.vbs`; Seitengrenze beachten, LEARNINGS 2026-09-30) | `table-read DD03L --where "TABNAME = 'ZSKTSCH_TIME_PO' AND AS4LOCAL = 'A'"`: genau 8 Felder, Positionen 0001 bis 0008, `CHG01..04 XFELD`, `VAL01..04 CHAR15 CHAR 000015`; keine Zeile mit `AS4LOCAL N`; `E071` des Auftrags enthaelt `R3TR TABL ZSKTSCH_TIME_PO` |
+| 5 | Quelltext setzen: `ZM_ABGLEICH_KTSCH_einspiel_2026-11-12.abap` unveraendert in `ZM_ABGLEICH_KTSCH`, Transportabfrage mit dem Auftrag aus Schritt 3 | `SapGuiSetReportSourceAuftrag.vbs <Sitzung> ZM_ABGLEICH_KTSCH <Datei> <Auftrag>` | Dialog „Inaktive Objekte“ zeigt nur `ZM_ABGLEICH_KTSCH` als eigenes Objekt |
 | 6 | Aktivieren; erscheint „Fehler beim Aktivieren“: **Abbrechen**, Syntaxpruefung lesen, nicht blind aktivieren (LEARNINGS 2026-11-02) | SE38 `tbar[1]/btn[27]` | Status aktiv ohne Dialog |
-| 7 | Zuruecklesen und vergleichen: aktiver Quelltext gegen die eingespielte Datei, und gegen T76-Stand: nur die Bloecke aus Abschnitt 2.3 und 4.2 (und ggf. 3.2, 5) duerfen abweichen; `E071` des neuen Auftrags | `abap-read`, `diff` | `diff` gegen Einspieldatei Exitcode 0; `E071` enthaelt nur `REPS ZM_ABGLEICH_KTSCH` (und bei 3a `TABL ZSKTSCH_TIME_PO`) |
-| 8 | Tests T1 bis T6 (Abschnitt 7) | GUI-Skript, `table-read PLPO` | wie in Abschnitt 7 |
+| 7 | Zuruecklesen und vergleichen: aktiver Quelltext gegen die Einspieldatei, und gegen T76-Stand: nur die Bloecke aus Abschnitt 12.2 duerfen abweichen; `E071` des neuen Auftrags | `abap-read`, `diff` | `diff` gegen Einspieldatei Exitcode 0; `E071` enthaelt nur `LIMU REPS ZM_ABGLEICH_KTSCH` und `R3TR TABL ZSKTSCH_TIME_PO` |
+| 8 | Tests T1 bis T9 (Abschnitt 7) in dieser Reihenfolge: T7, T8, T1, T2, T3a, T3, T4, T9, T9r, T5, T6 | GUI-Skript, `table-read PLPO` | wie in Abschnitt 7 |
 | 9 | ST22 fuer KOI heute lesen | GUI | kein Dump |
 | 10 | Eigene Sitzung mit `/i` schliessen; Auftrag **nicht** freigeben | `SapGuiT76Hilfe.vbs zu` | — |
 
@@ -509,6 +515,16 @@ Abschnitt 3); die erste verbindliche Pruefung ist das Aktivieren in Schritt 6.
 | **T4** Rueckbau der Testdaten | dieselbe Zeile; Haken 1, Wert `4`, Einheit `MIN`; Haken 2 bis 4 entfernt (bei E2 = B nur, wenn `VGW01` nicht schon 4.000 ist) | OK 1 | `VGW01 4.000 MIN`, uebrige Werte wie vor T1 |
 | **T5** Regression Lesepfad | ZC12 `07201` und `23360` neu, je zweimal, gleicher Export wie Schritt 2 | Zeilenzahl gleich; die exportierten Zeilen **sortiert als Liste** gleich (Reihenfolge darf abweichen, 4.2). Nicht als Menge vergleichen: bei `23360` gibt es in `50038715` den Vorgang 0370 zweimal (PLNKN 7 und 30) mit gleichen Exportspalten, eine Menge wuerde sie zusammenlegen | sortierter Vergleich alt gegen neu |
 | **T6** Laufzeit | Zeiten aus T5 gegen Schritt 2 | neue Zeit kleiner; Erwartung je nach Anteil von H1 bis H4 (Schaetzung 4.1) | Zeiten im Bericht; optional SAT durch Ingo fuer die Aufteilung DB/ABAP |
+| **T7** Popup linksbuendig (3a) | ZC12 `13457`/1100/N; Zeile Material `30346` markieren; „Zeiten abgleichen“; Inhalt der vier Wertfelder samt Leerzeichen auslesen; **Abbrechen** | Felder heissen „Wert“, Inhalt beginnt in Spalte 1 ohne fuehrende Leerzeichen: `VAL01` `4`, `VAL04` `4`; `VAL02`/`VAL03` `0.2`/`0.3` oder `0.200`/`0.300` (ob `WRITE ... UNIT MIN` die Nullen hinter 2 bzw. 3 kappt, ist nicht belegt; beides ist richtig) | nichts geaendert, PLPO wie vorher |
+| **T8** ungueltige Eingabe | dieselbe Zeile; Haken 1, Wert `abc`, Einheit `MIN`; Haken 2 bis 4 entfernt; OK | Statusmeldung „Ungültiger Wert bei Rüsten Masch : ABC“ (Grossbuchstaben, weil `CHAR15` keine Kleinbuchstaben hat); kein CA02, kein Fehlerprotokoll | PLPO `50000611/24` unveraendert (`VGW01 4.000`) |
+| **T9** Sammelplan, ein CA02 | ZC12 `50503`/1100/N; nur die **zwei** Zeilen der Materialien `D50538` und `D50540` markieren (beide Plangruppe `50044282/01`, Vorgang 5050, PLNKN 2); Popup: Haken 1, Wert `2`, Einheit `MIN`; Haken 2 bis 4 entfernt; Sichern | Zaehler OK 1, Fehler/Skip 0, „gleicher Vorgang übersprungen: 1“ | `table-read PLPO --where "PLNTY = 'N' AND PLNNR = '50044282' AND PLNKN = '00000002'"`: `VGW01 2.000 MIN`, `VGW02 1.800`, `VGW03 1.800`, `VGW04 1.000`; die drei anderen Vorgaenge mit KTSCH `50503` (`50044013/3`, `50044015/3`, `50047957/2`) unveraendert |
+| **T9r** Rueckbau T9 | nur Zeile `D50538` markieren; Haken 1, Wert `1`, Einheit `MIN`; Haken 2 bis 4 entfernt | OK 1, uebersprungen 0 | `50044282/2` wieder `VGW01 1.000 MIN` |
+
+Testdaten-Beleg T9 (heute gelesen): KTSCH `50503` hat 4 Vorgaenge (PLPO), alle Vorgang 5050, Arbeitsplatz-ID `10001024` =
+`CZPCE10`, Werk 1100, `VGWTS ZAP1`, `VGM01..04` leer, `AENNR` leer. `50044282/2`: `1.000/1.800/1.800/1.000 MIN`, PLAS
+`50044282/01/2` aktiv; MAPL Werk 1100 aktiv: `D50538` und `D50540` an `50044282/01`, die uebrigen Vorgaenge je ein Material
+(`D50508`, `D50568`, `D50539`). `D50538`/`D50540`: `MSTAE`/`MSTAV` leer, `MARC-MMSTA` leer. Plankopf `50044282/01`
+`STATU 4`, `VERWE 1`, ohne Aenderungsnummer. Vorlagentext `WORKST/SUBM 50503` vorhanden. Gerechnet: 5 ALV-Zeilen fuer 4 Ziele.
 
 Testdaten-Beleg (heute gelesen): KTSCH `13457` hat genau 2 Vorgaenge (`50000611/24` und `50011535/20`, beide Vorgang 0075,
 Arbeitsplatz-ID `10000695` = `ETS09`, `VGWTS ZAP1`, Pflegeregeln `VGM01..04` leer, `AENNR` leer), je ein Material in Werk 1100 (`30346` bzw. `30337`, MAPL aktiv), `MSTAE`/`MSTAV`
@@ -535,15 +551,21 @@ Erstes Kandidatenpaar `00435` verworfen: beide Materialien haben `MSTAE/MSTAV 99
 
 ## 9. Rueckbau
 
-* **Daten:** T4 stellt den Testvorgang wieder auf 4.000 MIN.
+* **Daten:** T4 stellt `50000611/24` wieder auf `VGW01 4.000 MIN`, T9r stellt `50044282/2` wieder auf `VGW01 1.000 MIN`.
+  Rueckleseprobe je mit `table-read PLPO` wie in Abschnitt 7.
 * **Quelltext:** Inhalt von `ZM_ABGLEICH_KTSCH_T76_2026-11-12.abap` mit `SapGuiSetReportSourceAuftrag.vbs` in denselben
   Auftrag zurueckspielen und aktivieren, danach `abap-read` und `diff` gegen diese Datei (Exitcode 0). Alternativ in SE38
   die Version vom 27.05.2026 (`T76K912063`) aus der Versionsverwaltung zurueckholen.
-* **Struktur (nur bei 3a):** `VAL01..04` wieder entfernen und aktivieren.
+* **Struktur (E3 = 3a):** **erst** den Quelltext zurueckspielen und aktivieren (der neue Report braucht `VAL01..04`, sonst
+  `ERROR_IN_FIELDS` im Popup), **dann** in SE11 die Felder `VAL01..04` (Positionen 5 bis 8) loeschen, sichern im selben
+  Auftrag, aktivieren. Rueckleseprobe: `DD03L` zeigt wieder genau `CHG01..04` (Positionen 1 bis 4, `XFELD`), kein Eintrag mit
+  `AS4LOCAL N`. Die Struktur wird nur von `ZM_ABGLEICH_KTSCH` benutzt (Abschnitt 12.1), andere Objekte sind nicht betroffen.
 * **Auftrag:** bleibt offen; Objekte koennen von Ingo in SE09 entfernt oder der Auftrag geloescht werden. P76 ist nie
   betroffen, solange nichts freigegeben wird.
 
 ## 10. Offene Entscheide fuer Ingo
+
+*Nachtrag 2026-11-12: alle entschieden, siehe Abschnitt 11. Die Tabelle zeigt den Stand der Fragen vor dem Entscheid.*
 
 | Nr. | Frage | Vorschlag |
 | --- | --- | --- |
@@ -555,3 +577,112 @@ Erstes Kandidatenpaar `00435` verworfen: beide Materialien haben `MSTAE/MSTAV 99
 | E6 | Sekundaerindex auf `PLPO-KTSCH` | **entschieden 12.11.: nein**, nur Notfall (Abschnitt 8) |
 | E7 | Was geschieht mit dem offenen Altauftrag `T76K911958` (KOI, 11.05.2026, „zv“, nur Dynpro 0900)? | Ingo sieht ihn sich an; Phase 2 fasst ihn nicht an |
 | E8 | Transport nach P76: wann und durch wen? | Freigabe und Import macht Ingo nach dem Test in T76 |
+
+## 11. Entscheide Ingo (2026-11-12, im Chat)
+
+| Nr. | Entscheid |
+| --- | --- |
+| E1 | **ja**: CA02 je Vorgang einmal (P7, Abschnitt 5), Zaehler in der Schlussmeldung zaehlen Vorgaenge, dazu „gleicher Vorgang uebersprungen: n“ |
+| E2 | **A**: leeres Wertfeld mit Haken gilt als 0 |
+| E3 | **3a**: vier neue Textfelder `VAL01..04` in der eigenen Struktur `ZSKTSCH_TIME_PO`, Vorbelegung linksbuendig, Rueckwandlung mit `RS_CONV_EX_2_IN` |
+| E4 | **nein**: `fmt_quan` bleibt mit Punkt (nur ganze Zahlen im Gebrauch) |
+| E5 | offen, Vorschlag gilt: P5/P6 erst nach der Messung |
+| E6 | nein (kein Index) |
+| E7 | Altauftrag `T76K911958` wird nicht angefasst |
+| E8 | Freigabe und Import nach P76 macht Ingo nach dem Test in T76 |
+
+Folge: Der Entwurf vom 12.11. setzt E1 und E3 noch nicht um. Vor Phase 2 entsteht eine neue Einspieldatei (Abschnitt 6, „Was die
+Entwurfsdatei genau enthaelt“) samt Nachtrag; Phase 2 startet erst nach ausdruecklicher Freigabe Ingos fuer die Schreibschritte.
+
+*Nachtrag 2026-11-12: Die Einspieldatei ist erstellt (Abschnitt 12); der Satz oben „Vor Phase 2 entsteht eine neue
+Einspieldatei“ ist damit erledigt. Phase 2 wartet weiter auf Ingos Freigabe der Schreibschritte.*
+
+---
+
+## 12. Einspieldatei `ZM_ABGLEICH_KTSCH_einspiel_2026-11-12.abap` (nach den Entscheiden, 2026-11-12)
+
+Weiterhin nur lesend erarbeitet, nichts in SAP geschrieben. Die Datei hat 2'171 Zeilen (CRLF, UTF-8) und ist **nicht
+syntaxgeprueft**; die erste verbindliche Pruefung ist Schritt 6.
+
+### 12.1 Belege fuer 3a (Struktur und Datenelement)
+
+| Pruefung | Ergebnis | Beleg |
+| --- | --- | --- |
+| Felder heute | `CHG01` 0001, `CHG02` 0002, `CHG03` 0003, `CHG04` 0004, alle `XFELD`, `CHAR 1`; nur aktive Version (keine `AS4LOCAL N`-Zeilen) | `DD03L TABNAME = 'ZSKTSCH_TIME_PO'` ohne Versionsfilter |
+| Struktur | `DD02L TABCLASS INTTAB`, `EXCLASS 1`, zuletzt KOI 26.05.2026; Kurztext (DD02T) „we“ | DD02L, DD02T |
+| Objektkatalog | `R3TR TABL ZSKTSCH_TIME_PO`, Paket `ZPP`, Autor KOI, 26.05.2026 | TADIR |
+| Auftraege | nur `T76K912063` und Aufgabe `T76K912064`, beide freigegeben (`E070 R`, Abschnitt 1.2); kein offener Auftrag | E071 `OBJ_NAME LIKE 'ZSKTSCH_TIME_PO%'` |
+| Verwendung | keine Treffer in `WBCROSSGT`, `CROSS`, `D010TAB`; kein DDIC-Objekt verweist darauf (`DD03L ROLLNAME`/`PRECFIELD`: keine Treffer). Der Report benutzt den Namen nur als Text im Aufruf von `POPUP_GET_VALUES`; deshalb findet ihn kein Verwendungsnachweis. Eine Volltextsuche ueber alle Quelltexte (z. B. `RS_ABAP_SOURCE_SCAN`) ist **nicht** gelaufen | WBCROSSGT, CROSS, D010TAB, DD03L |
+| Datenelement fuer `VAL01..04` | **`CHAR15`**: Domaene `CHAR15`, `CHAR` 15, Ausgabelaenge 15, keine Konvertierungsroutine, `LOWERCASE` leer, keine Festwerte, keine Werttabelle; Text „Char 15“; SAP-Standard, Paket `SZS` | DD04L, DD01L, DD04T, TADIR |
+| Laenge reicht | `VGWRT` hat Ausgabelaenge 11; groesster Wert `999999.999` sind 10 Zeichen ohne Tausendertrenner. `RS_CONV_EX_2_IN` weist laengere Eingaben ab (`l_olength > l_convert-olength`, Fehler `INPUT_TOO_LONG`, LSSELU20) | DD04L, LSSELU20 |
+| Alternativen gelesen | `CHAR16`, `CHAR17`, `CHAR18`, `CHAR20` (je ohne Kleinbuchstaben), `TEXT15`/`TEXT20` (mit Kleinbuchstaben) | DD04L |
+
+**Schnittstelle `RS_CONV_EX_2_IN`** (FUPARAREF und Quelltext `LSSELU20`, Funktionsgruppe `SSEL`): `INPUT_EXTERNAL` per Wert
+`TYPE C`, `TABLE_FIELD LIKE TABFIELD` (Felder `TABNAME`, `FIELDNAME`, `LFIELDNAME`), optional `CURRENCY`, `NO_TCURX`;
+Export `OUTPUT_INTERNAL` ohne Typ (per Wert). Der Baustein prueft nur, dass der Typ des Zielfelds zum DDIC-Feld passt
+(`l_type ne l_convert-type`, Laengenpruefung auskommentiert): `vgwNN_neu` ist `P`, `PLPO-VGWnn` ist `P`. Alle Fehler gehen
+ueber `MESSAGE E... RAISING` (Form `CONVERT_ERROR`, LSSELFXX ab Zeile 2106), sind also mit `EXCEPTIONS others = 1`
+abfangbar und erzeugen keinen Abbruch.
+
+### 12.2 Selbstpruefung: jede Abweichung vom T76-Abzug ist einer Massnahme zugeordnet
+
+`diff --strip-trailing-cr ZM_ABGLEICH_KTSCH_T76_2026-11-12.abap ZM_ABGLEICH_KTSCH_einspiel_2026-11-12.abap`: Exitcode 1,
+52 entfernte und 282 neue Zeilen in 52 Abschnitten. Zuordnung (T76-Zeilen → Einspiel-Zeilen):
+
+| T76 | Einspiel | Inhalt | Massnahme |
+| --- | --- | --- | --- |
+| nach 15 | 16 bis 20 | Kopfhistorie 12.11. | Doku |
+| nach 114 | 120 bis 129 | Typ `ty_done` | P7 (E1) |
+| nach 121 | 137 bis 143 | `gv_leer01..04` | 2.3 (E2) |
+| 137 bis 141 | 159 bis 166 | `gt_plas/gt_mapl/gt_mara/gt_makt/gt_crhd` sortiert | P1 |
+| 347 | 372 bis 389 | lokale Daten `select_data`, Treiber-Tabellen | P2, P3, P4 |
+| nach 374, 378 bis 380, nach 400 | 417 bis 423, 427 bis 430, 451 bis 455 | MAPL-Treiber `lt_plkey` mit `plnty = p_plnty`, MARA-Treiber `lt_matnr` aufbauen | P4 |
+| 405/406, nach 424, 428, 430 | 460/461, 480 bis 484, 488, 490 bis 501 | MARA ueber `lt_matnr`, CRHD ueber `lt_arbid`, Vorlagentext einmal | P4, P3 |
+| 436, 450, 457 | 507 bis 511, 525, 532 | `with table key`, Text-Merker zuruecksetzen | P1, P2 |
+| 481 bis 491 | 556 | Vorlagentext aus der Variablen | P3 |
+| 498 bis 500 | 563 bis 570 | `read_vorgang_text` einmal je PLPO-Satz | P2 |
+| 878, nach 880, nach 882 | 948, 951, 954 bis 960 | `sichern_texte`: `lv_msg` 200, `lv_cdup`, `lt_done` | P7 (E1) |
+| nach 962 | 1041 bis 1058 | `sichern_texte`: Pruefung „gleicher Vorgang“ | P7 |
+| nach 1027, nach 1029 | 1124, 1127 bis 1131 | `sichern_texte`: Ziel nach Erfolg merken | P7 |
+| 1037, nach 1039, 1043 | 1139/1140, 1143, 1147 | `sichern_texte`: Schlussmeldung und Trace mit „gleicher Vorgang übersprungen“ | P7 |
+| nach 1094 | 1199 bis 1207 | `popup_get_zeiten`: `lv_v1..4` (C 15), `lv_fehler` | 3a (E3) |
+| 1145 | 1258/1259 | `gv_leer01..04` mit zuruecksetzen | 2.3 (E2) |
+| nach 1199, 1202, 1207, 1212, 1217 | 1314 bis 1319, 1322, 1327, 1332, 1337 | Vorbelegung `WRITE ... UNIT ... LEFT-JUSTIFIED NO-GROUPING`, Popup-Felder `ZSKTSCH_TIME_PO-VAL01..04` statt `PLPO-VGW01..04` | 3a |
+| nach 1244, 1249, 1256, 1263, 1270, nach 1273 | 1365 bis 1368, 1373/1374, 1381/1382, 1389/1390, 1397/1398, 1402 bis 1405 | Rueckwandlung ueber `wert_aus_popup`, Abbruch bei `lv_fehler` | 3a, 2.3 |
+| nach 1298 | 1431 bis 1478 | neue Form `wert_aus_popup` (`RS_CONV_EX_2_IN`, leer → 0 mit Kennzeichen, Fehler → Meldung) | 3a, E2 |
+| 1317, nach 1319, nach 1327 | 1497, 1500, 1509 bis 1515 | `sichern_zeiten`: `lv_msg` 200, `lv_cdup`, `lt_done` | P7 |
+| 1353 bis 1359, nach 1362 | 1541 bis 1550, 1554 bis 1566 | Pruefung nur noch Einheit; Variante B als Kommentar | 2.3 (E2 = A) |
+| nach 1421 | 1626 bis 1643 | `sichern_zeiten`: Pruefung „gleicher Vorgang“ | P7 |
+| nach 1497, nach 1499 | 1720, 1723 bis 1727 | `sichern_zeiten`: Ziel nach Erfolg merken | P7 |
+| 1507, nach 1510, 1514 | 1735/1736, 1740, 1744 | `sichern_zeiten`: Schlussmeldung und Trace | P7 |
+
+Unveraendert (gegengeprueft im diff): Infozeile „IST häufig“ (`lv_w1..4`, T76-Zeilen 1102 bis 1128), `fmt_quan` (E4 = nein),
+`read_vorgang_text`, `count_freq`, `build_fcat`, `create_alv`, alle BDC-Sequenzen, `bdc_transaction`, Dynpro-0900-Module,
+`run_debug`, Trace-Formen.
+
+### 12.3 Typpruefung von Hand (ersetzt keine Syntaxpruefung)
+
+* `move-corresponding <r> to ls_done`: `ty_row` hat `plnty` (`plpo-plnty`), `plnnr` (`plpo-plnnr`), `plnal` (`mapl-plnal`),
+  `plnkn` (`plpo-plnkn`), `zaehl` (`plpo-zaehl`) mit denselben Typen wie `ty_done` (T76-Zeilen 30 bis 34).
+* `lt_done` ist `hashed ... unique key`; `insert` eines vorhandenen Schluessels setzt nur `sy-subrc 4`, kein Abbruch. Die
+  Pruefung „gleicher Vorgang“ steht vor dem Aufbau der BDC-Daten, es bleiben also keine halben BDC-Saetze in `bdcdata` liegen.
+* `perform wert_aus_popup ... changing vgw02_neu`: Formalparameter `type plpo-vgw01`, Aktualparameter `plpo-vgw02`; beide
+  Datenelement `VGWRT` (P 5, 3 Dezimalen), also kompatibel.
+* `write <p> to <c15> unit <meins> left-justified no-grouping`: Quelle `P`, Ziel `C 15`. *Annahme:* Bei leerer oder
+  unbekannter Einheit (z. B. `VGE04` leer bei 1'876 Vorgaengen von `07201`) ignoriert `WRITE` den Zusatz `UNIT`; durch T7
+  nicht abgedeckt (dort sind alle Einheiten `MIN`), beim ersten Popup mit leerer `VGE04` beobachten.
+* `message lv_msg type 'S'` mit `C 200`: laengste Meldung rund 110 Zeichen.
+* `RS_CONV_EX_2_IN` mit `input_external = iv_value` (generisch `C`, aus `SVAL-VALUE` C 132): fuehrende Leerzeichen werden fuer
+  Packed-Felder uebersprungen (LSSELU20 `strlen( input_external+sy-fdpos )`).
+
+### 12.4 Neue Risiken durch E1 und E3
+
+* **Eingabepruefung wandert aus dem Popup in den Report.** Bei `PLPO-VGWnn` hat das Popup eine falsche Zahl sofort im Popup
+  gemeldet; mit `VAL01..04` schliesst sich das Popup, und der Report meldet den Fehler in der Statuszeile (T8). Der Nutzer muss
+  „Zeiten abgleichen“ neu starten. Geprueft werden wie bisher alle vier Wertfelder, auch ohne Haken.
+* **Gross/klein:** `CHAR15` hat keine Kleinbuchstaben; harmlos fuer Zahlen.
+* **F1/F4 zum Wertfeld** zeigen jetzt „Char 15“ statt der Hilfe zum Vorgabewert.
+* **Zaehler (E1):** „OK“ und „Fehler/Skip“ zaehlen jetzt CA02-Laeufe je Vorgang, dazu kommt „gleicher Vorgang übersprungen“.
+  Schlaegt ein Lauf fehl, versucht die naechste markierte Zeile desselben Vorgangs es erneut; derselbe Fehler kann dann
+  mehrfach im Protokoll stehen.
+* **Reihenfolge Rueckbau:** erst Report, dann Struktur (Abschnitt 9).
