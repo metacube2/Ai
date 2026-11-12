@@ -229,6 +229,7 @@ Ziel laut Armin: schlank und pragmatisch im bestehenden BI-Dashboard, ohne zusae
   Transport) und am Zeitraum fuer A/B/C (E1, Rueckfrage an Armin).
 * Paket 2 widerspricht dem Wortlaut des Entscheids vom 03.11. („keine Logik im Dashboard“) nur scheinbar: jener betraf
   Bewertung und Qualitaetsdaten aus SAP. Dass Eingaben in die Dashboard-DB gehen, ist eine Erweiterung und sollte von Oscar
-  bestaetigt werden, bevor gebaut wird (Freigabe Fachabteilung). Der IT-Vorschlag fuer Datenhaltung (Dashboard-DB,
+  bestaetigt werden, bevor gebaut wird (Freigabe Fachabteilung). *Erledigt 12.11.: Oscar hat laut Ingo sein OK gegeben, Eingaben
+  im Dashboard sind freigegeben.* Der IT-Vorschlag fuer Datenhaltung (Dashboard-DB,
   Dokumente als Dateiablage oder Link, Schreibrecht nur fuer Berechtigte) ist von Ingo zu liefern.
 * Offen bleibt E2 (Rhythmus der Themenfelder); Armins Antwort nennt ihn nicht.
