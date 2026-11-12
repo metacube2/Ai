@@ -105,7 +105,21 @@ SU01-Sitzung unberuehrt):
 | `VRSD` | in P76 keine Versionen (Versionsverwaltung nur in T76), deshalb keine Aussage ueber den Inhalt |
 | `ZPOWERBI_VC_TXT` 5501 / D13006 | 2 Zeilen wie in T76: Stufe 02 (ID 00055245) und Stufe 03 (ID 00055273), je 1.000 ST; die Stufe-03-Zeile ist die Selbstzeile, die FIX 28 auslaesst |
 
-**Nicht geprueft: die Wirkung in P76.** Der Antworttext des Gateways ist ueber die GUI nicht lesbar
+*Ueberholt am 2026-11-12 14:15, Wirkung belegt (siehe Tabelle unten):* ~~**Nicht geprueft: die Wirkung in P76.**~~ Der Antworttext des Gateways ist ueber die GUI nicht lesbar
 (`SapGuiGatewayStatusP76.vbs`), der Browser bekam fuer `travp762` nur eine Fehlerseite (keine Anmeldung versucht), und ZLO03
 im Vordergrund endet im Windows-Speicherdialog. Offen: ZLO03 Top-Down 5501 in P76 durch Ingo (D13006 = 1, Elternmaterial
 ohne D13006) oder der naechste Einkauf-Lauf (`PurchasingMaterialShareBom` 5501/D13006 = 1).
+
+**Wirkung in P76, belegt 2026-11-12 14:15** (Auftrag Ingo „schau doch mit dem tool“): ein GET je Geraet auf
+`ZloTopDownSet` in P76 mit dem technischen Benutzer der App (Zugangsdaten aus der lokalen `trafag_exporter.db`, wie
+`.tmp_tools/ProbeSapEntity`; Passwort nie ausgegeben). `ProbeSapEntity` liess sich nicht bauen (MSB3822, Ursache: der
+unversionierte Ordner `cinebbox-connect-downloader/` im Projektordner wird vom Hauptprojekt mitkompiliert), deshalb dieselbe
+Abfrage als `.tmp_tools/ZloP76Probe/zlo_p76_probe.py` (nicht versioniert).
+
+| Geraet | Ergebnis P76 |
+| --- | --- |
+| 5501 | 54 Zeilen, Summe Wert 66.29; D13006, D15009, K60313, D15184, E01574, E01502, E00613, E01752, E01600, K70758, D15011 je **1 PCE** |
+| 63759 | 65 Zeilen, Summe Wert 73.87; H20201 **115 MMT**, 0.000522 je MM = **0.06 CHF**; H17500 **0.02 MTR** = 0.57; echte Mehrfachverwendungen bleiben summiert: K51001 2, K16515 2, H05140 21 MMT, E01518 2 |
+
+Offen bleiben der Einkauf-Lauf (Materialanteil im Dashboard), die Antwort an Armin und die fachliche Klaerung der
+Selbst-Stuecklisten.

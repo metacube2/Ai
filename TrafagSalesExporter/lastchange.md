@@ -56,7 +56,7 @@ Elternmaterial-Spalte); T76 aktiv **13:33** in neuem Auftrag **`T76K912902`**, v
 2 → 1; 63759: H20201 0.05 statt 1'815 CHF je Geraet, echte Mehrfachverwendungen bleiben summiert; Bottom-Up D13006: 58 Geraete
 2 → 1). **Ingo:** `T76K912902` freigeben und importieren, danach Einkauf-Lauf neu und Armin antworten (Wochen_Todo 160; *berichtigt 14:05, hier stand 161*).
 *Nachtrag 14:05:* Ingo hat `T76K912902` freigegeben und importiert; in P76 lesend belegt (`E070` 13:54:11, `REPOSRC`
-`Z_ZLO03_TURBO2` 13:54:11). Die Wirkung in P76 ist noch nicht gesehen (FIX-28-Datei Abschnitt 7).
+`Z_ZLO03_TURBO2` 13:54:11). ~~Die Wirkung in P76 ist noch nicht gesehen~~ *14:15: Wirkung in P76 belegt (`ZloTopDownSet` 5501 D13006 = 1, 63759 H20201 0.06 CHF; FIX-28-Datei Abschnitt 7).* Offen: Einkauf-Lauf, Antwort Armin.
 Einzelheiten `zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md`.
 
 ## Stand 2026-11-12 12:00 (eine Sitzung, 09:00 bis 12:00; neu gefasst bei der Doku-Pruefung)
