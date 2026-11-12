@@ -1,7 +1,16 @@
 # Last Change
 
-Stand: 2026-11-12 13:50 (Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-12 14:25 (Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## Uebergabe 2026-11-12 14:25: ZLO03 FIX 28 (Chat geschlossen)
+
+ZLO03 FIX 28 ist **in P76 wirksam**: `T76K912902` importiert 13:54, `ZloTopDownSet` liefert um 14:15 fuer 5501 D13006 = 1 und fuer
+63759 H20201 115 MM / 0.06 CHF statt 1'815 CHF. Das lokale Werkzeugproblem (MSB3822 beim Bau von `ProbeSapEntity`, Ursache
+ein fremder unversionierter WinForms-Ordner im Projektordner) ist behoben 14:20, der Ordner liegt jetzt unter
+`C:\Users\koi\source\repos\`. Offen in dieser Reihenfolge (`zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md` 9, Wochen_Todo 160):
+(1) Ingo sendet die Antwort an Armin, Entwurf im Wortlaut in der FIX-28-Datei Abschnitt 8, nicht versendet;
+(2) Einkauf-Lauf neu, sonst bleibt der Materialanteil im Dashboard zu hoch; (3) Selbst-Stuecklisten fachlich klaeren.
 
 ## Uebergabe 2026-11-12 13:50 (Chat der Sitzung trafagsalesexporter-32 geschlossen)
 

@@ -1,6 +1,6 @@
 # ZLO03 FIX 28: Zeilen aus Selbst-Stuecklisten nicht doppelt zaehlen (2026-11-12)
 
-Stand: 2026-11-12 14:05 (P76-Import belegt, Abschnitt 7); davor 13:45. T76 aktiv, neuer Auftrag **`T76K912902`** (Aufgabe `T76K912903`), ~~nicht freigegeben, nicht in P76~~ *(ueberholt am 2026-11-12 14:05: in P76 importiert, belegt am 2026-11-12 14:05 (P76 `E070`: `T76K912902` freigegeben 12.11. 13:54; `REPOSRC` `Z_ZLO03_TURBO2` geaendert 12.11.2026 13:54:11))*.
+Stand: 2026-11-12 14:25 (Chat-Ende: Wirkung in P76 belegt, Mailentwurf Armin, Offenes in Abschnitt 9); davor 14:05 (P76-Import belegt, Abschnitt 7), 13:45. T76 aktiv, neuer Auftrag **`T76K912902`** (Aufgabe `T76K912903`), ~~nicht freigegeben, nicht in P76~~ *(ueberholt am 2026-11-12 14:05: in P76 importiert, belegt am 2026-11-12 14:05 (P76 `E070`: `T76K912902` freigegeben 12.11. 13:54; `REPOSRC` `Z_ZLO03_TURBO2` geaendert 12.11.2026 13:54:11))*.
 Zurueck: `zlo03/CLAUDE.md`. Grundlage: `FIX26_BASISMENGE_2026-11-05.md` Abschnitt 6 (Befund FP_THERMOST, dort als eigener
 Fix offen) und Befund G4 in `zlo03/CLAUDE.md`.
 
@@ -124,3 +124,38 @@ Abfrage als `.tmp_tools/ZloP76Probe/zlo_p76_probe.py` (nicht versioniert).
 
 Offen bleiben der Einkauf-Lauf (Materialanteil im Dashboard), die Antwort an Armin und die fachliche Klaerung der
 Selbst-Stuecklisten.
+
+## 8. Antwort an Armin (Entwurf 2026-11-12 14:20, im Chat an Ingo uebergeben, Ingo sendet selbst)
+
+Stand bei Chat-Ende 14:25: **nicht versendet** (kein Beleg). Vor einer Statusaenderung in Outlook „Gesendete Elemente“ pruefen.
+
+> **Betreff:** AW: ZLO03_Fehler in der Stücklistenmenge
+>
+> Hallo Armin
+>
+> Danke für den Hinweis, du hattest recht. Der Fehler ist behoben und seit heute 13:54 in Produktion.
+>
+> **Ursache:** Einige Teile haben eine Stückliste, die nur sich selbst enthält, zum Beispiel D13006 Schalterabdeckung. ZLO03
+> hat dadurch eine zusätzliche Zeile gesehen und die Menge doppelt gezählt. Bei D13006 kam so 2 statt 1 heraus. Betroffen
+> waren alle Teile mit einer solchen Stückliste, nicht nur D13006. Der Fehler bestand seit einer Änderung an ZLO03 im März.
+>
+> **Was jetzt anders ist:** Diese Zeilen zählen nicht mehr mit; bei 5501 stehen D13006, D15009, K60313, E01752 und die
+> übrigen betroffenen Teile wieder auf 1. Teile, die tatsächlich an zwei Stellen im Gerät verbaut sind, werden weiterhin
+> zusammengezählt. In der Spalte „Elternmaterial“ erscheint das Teil nicht mehr als sein eigenes Elternmaterial. Beim
+> Thermostat-Kapillarrohr H20201 fällt ein grosser Ausreisser weg: statt rund 1'815 CHF je Gerät sind es jetzt rund
+> 0.06 CHF; das Teil steht dafür neu in MM statt in KG, auch bei Bestand und Verbrauch, die Werte in CHF bleiben gleich.
+>
+> Wenn du ZLO03 jetzt neu laufen lässt, solltest du die richtigen Mengen sehen. Im Dashboard korrigiert sich der
+> Materialanteil je Produktgruppe mit dem nächsten Einkauf-Lauf.
+>
+> Gruss
+> Ingo
+
+## 9. Offen bei Chat-Ende (2026-11-12 14:25)
+
+1. Ingo sendet die Antwort an Armin (Abschnitt 8); Ann-Katrin und Sandro kurz informieren (Excel-Spalte Elternmaterial,
+   H20201 in MM).
+2. Einkauf-Lauf neu starten, damit `PurchasingMaterialShareBom` die FIX-28-Mengen holt (FP_THERMOST. sinkt deutlich).
+   Bis dahin zeigt das Dashboard den alten, zu hohen Materialanteil.
+3. Fachlich klaeren, ob die Selbst-Stuecklisten (Verwendung 3, „Rekursiv erlaubt“) gewollt sind; FIX 28 haengt nicht davon ab.
+
