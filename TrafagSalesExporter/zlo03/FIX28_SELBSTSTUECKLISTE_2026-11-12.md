@@ -1,6 +1,6 @@
 # ZLO03 FIX 28: Zeilen aus Selbst-Stuecklisten nicht doppelt zaehlen (2026-11-12)
 
-Stand: 2026-11-12. T76 aktiv, neuer Auftrag **`T76K912902`** (Aufgabe `T76K912903`), nicht freigegeben, nicht in P76.
+Stand: 2026-11-12 14:05 (P76-Import belegt, Abschnitt 7); davor 13:45. T76 aktiv, neuer Auftrag **`T76K912902`** (Aufgabe `T76K912903`), ~~nicht freigegeben, nicht in P76~~ *(ueberholt am 2026-11-12 14:05: in P76 importiert, belegt am 2026-11-12 14:05 (P76 `E070`: `T76K912902` freigegeben 12.11. 13:54; `REPOSRC` `Z_ZLO03_TURBO2` geaendert 12.11.2026 13:54:11))*.
 Zurueck: `zlo03/CLAUDE.md`. Grundlage: `FIX26_BASISMENGE_2026-11-05.md` Abschnitt 6 (Befund FP_THERMOST, dort als eigener
 Fix offen) und Befund G4 in `zlo03/CLAUDE.md`.
 
@@ -85,10 +85,27 @@ und R15046 (3 → 2) haben dagegen eine echte Position mit Menge 2 und eine Selb
 
 ## 6. Offen
 
-1. **Ingo:** `T76K912902` freigeben und nach P76 importieren.
+1. ~~**Ingo:** `T76K912902` freigeben und nach P76 importieren.~~ *Erledigt 2026-11-12 13:54 (Abschnitt 7).*
 2. Danach in P76: ZLO03 Top-Down auf eines von Armins Geraeten (z. B. 5501) laufen lassen, D13006 muss 1 zeigen.
 3. Danach den Einkauf-Lauf neu starten: der Materialanteil je Produktgruppe (`ZloTopDownSet`) sinkt, wo Selbst-Stuecklisten
    vorkommen; FP_THERMOST. besonders (H20201 1'815 CHF je Geraet fallen weg).
 4. Antwort an Armin (und Hinweis an Ann-Katrin, Sandro), sobald P76 importiert ist; Entwurf auf Wunsch als `.eml`.
 5. Fachlich klaeren (nicht Teil von FIX 28): ob die Selbst-Stuecklisten (Verwendung 3, „Rekursiv erlaubt“) gewollt sind.
    FIX 28 haengt davon nicht ab.
+
+## 7. Nachtrag 2026-11-12 14:05: Import in P76 (lesend geprueft)
+
+Ingo meldete den Transport. Gelesen ueber die angemeldete P76-GUI in einer eigenen Sitzung (SE16, danach geschlossen; Ingos
+SU01-Sitzung unberuehrt):
+
+| Pruefung | Ergebnis |
+| --- | --- |
+| `E070` | `T76K912902`, Status R, Ziel P76, KOI, 12.11.2026 13:54:11, „ZLO03 FIX 28 Selbststueckliste nicht doppelt zaehlen“ |
+| `REPOSRC` | `Z_ZLO03_TURBO2` Status A, geaendert von KOI am 12.11.2026 13:54:11 |
+| `VRSD` | in P76 keine Versionen (Versionsverwaltung nur in T76), deshalb keine Aussage ueber den Inhalt |
+| `ZPOWERBI_VC_TXT` 5501 / D13006 | 2 Zeilen wie in T76: Stufe 02 (ID 00055245) und Stufe 03 (ID 00055273), je 1.000 ST; die Stufe-03-Zeile ist die Selbstzeile, die FIX 28 auslaesst |
+
+**Nicht geprueft: die Wirkung in P76.** Der Antworttext des Gateways ist ueber die GUI nicht lesbar
+(`SapGuiGatewayStatusP76.vbs`), der Browser bekam fuer `travp762` nur eine Fehlerseite (keine Anmeldung versucht), und ZLO03
+im Vordergrund endet im Windows-Speicherdialog. Offen: ZLO03 Top-Down 5501 in P76 durch Ingo (D13006 = 1, Elternmaterial
+ohne D13006) oder der naechste Einkauf-Lauf (`PurchasingMaterialShareBom` 5501/D13006 = 1).

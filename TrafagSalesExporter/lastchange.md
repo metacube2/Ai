@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-11-12 13:50 (Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` wartet auf Import; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-12 13:50 (Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
 
 ## Uebergabe 2026-11-12 13:50 (Chat der Sitzung trafagsalesexporter-32 geschlossen)
@@ -54,7 +54,9 @@ D13006 stand in Armins Top-Down-Datei in jedem Geraet mit 2 statt 1. Ursache: St
 summiert seit FIX 2 (10.03.2026, `T76K911787`) jede Zeile. **FIX 28** zaehlt diese Zeilen nicht mehr (Bedarf, Einheitenwahl,
 Elternmaterial-Spalte); T76 aktiv **13:33** in neuem Auftrag **`T76K912902`**, vorher/nachher getestet (5501: 15 Komponenten
 2 → 1; 63759: H20201 0.05 statt 1'815 CHF je Geraet, echte Mehrfachverwendungen bleiben summiert; Bottom-Up D13006: 58 Geraete
-2 → 1). **Ingo:** `T76K912902` freigeben und importieren, danach Einkauf-Lauf neu und Armin antworten (Wochen_Todo 161).
+2 → 1). **Ingo:** `T76K912902` freigeben und importieren, danach Einkauf-Lauf neu und Armin antworten (Wochen_Todo 160; *berichtigt 14:05, hier stand 161*).
+*Nachtrag 14:05:* Ingo hat `T76K912902` freigegeben und importiert; in P76 lesend belegt (`E070` 13:54:11, `REPOSRC`
+`Z_ZLO03_TURBO2` 13:54:11). Die Wirkung in P76 ist noch nicht gesehen (FIX-28-Datei Abschnitt 7).
 Einzelheiten `zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md`.
 
 ## Stand 2026-11-12 12:00 (eine Sitzung, 09:00 bis 12:00; neu gefasst bei der Doku-Pruefung)
