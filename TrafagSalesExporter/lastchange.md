@@ -13,7 +13,7 @@ wartet auf Fabios Z999-Preise in P76 und die Abgrenzung der PR00-Spiegelsaetze 8
 **ZC12 (PM-02):** Auftrag Ingo: Wert 0 bei gesetztem Haken zulassen (Arbeitsstunden; heute Abbruch, alter Wert bleibt), Popup-Wert
 linksbuendig, Performance im Report. Kein neuer Index auf SAP-Standardtabellen (nur Notfall). Phase 1 Plan lesend in T76 laeuft
 (Agent sap-t76; Ergebnis `saptasks/zc12/PLAN_ZC12_NULLWERT_PERFORMANCE_2026-11-12.md`, Quelltextabzug
-`saptasks/zc12/ZM_ABGLEICH_KTSCH_T76_2026-11-12.abap`). Nichts in SAP geaendert. Wochen_Todo 3.
+`saptasks/zc12/ZM_ABGLEICH_KTSCH_T76_2026-11-12.abap`). Nichts in SAP geaendert. Wochen_Todo 3. *Nachtrag spaeter: Plan liegt vor (mit Entwurf), wartet auf Entscheide Ingo E1-E5, E7, E8.*
 
 **Spanien Supplier (Andreas):** Andreas fragt nach dem Zeitpunkt; die Entscheidfrage war ihm noch nicht gestellt. Antwortvorschlag
 mit Frage, Einschraenkungen und Schaetzung (1-2 Tage nach OK, rund eine Woche inkl. Santi) im Chat. ISS-003.3, Wochen_Todo 13,
