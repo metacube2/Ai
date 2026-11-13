@@ -59,9 +59,9 @@ public class ShopfloorLayoutFilterTests
     {
         var rows = Rows("""
             [
-              {"Typ":"VF","Aufnr":"1","Dispo":"EK1","Matnr":"63526","Datum":"20260910","Menge":"239","Sttxt":"FREI DRUC RÜCK VOKL","Arbpl":"EDF72"},
-              {"Typ":"VF","Aufnr":"2","Dispo":"EK1","Matnr":"63527","Datum":"20261105","Menge":"180","Sttxt":"FREI DRUC TRÜC VOKL","Arbpl":"MLE02"},
-              {"Typ":"VF","Aufnr":"3","Dispo":"EK1","Matnr":"63528","Datum":"20261111","Menge":"304","Sttxt":"FREI DRUC VOKL","Arbpl":"EDF72"},
+              {"Typ":"VF","Aufnr":"1","Dispo":"EK1","Matnr":"63526","Datum":"20260910","Menge":"239","Sttxt":"FREI DRUC RÜCK VOKL","Arbpl":"EDF72","Avo":"X"},
+              {"Typ":"VF","Aufnr":"2","Dispo":"EK1","Matnr":"63527","Datum":"20261105","Menge":"180","Sttxt":"FREI DRUC TRÜC VOKL","Arbpl":"MLE02","Avo":"X"},
+              {"Typ":"VF","Aufnr":"3","Dispo":"EK1","Matnr":"63528","Datum":"20261111","Menge":"304","Sttxt":"FREI DRUC VOKL","Arbpl":"EDF72","Avo":"X"},
               {"Typ":"VP","Aufnr":"4","Dispo":"EK1","Matnr":"63529","Datum":"20261111","Menge":"5","Sttxt":"","Arbpl":""}
             ]
             """);
@@ -82,6 +82,10 @@ public class ShopfloorLayoutFilterTests
         Assert.Contains("Sttxt", ex.Message);
         Assert.Throws<InvalidOperationException>(() => ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 13), rows, [], null,
             new ShopfloorLayoutFilter([], ["M*"])));
+        // Arbpl ohne Echo Avo = X (Transport da, aber ohne Vorgangsdaten gelesen): ebenfalls Fehler
+        var ohneEcho = Rows("""[ {"Typ":"VF","Aufnr":"1","Dispo":"EL1","Matnr":"64708","Datum":"20261110","Menge":"30","Sttxt":"FREI","Arbpl":"","Avo":""} ]""");
+        Assert.Throws<InvalidOperationException>(() => ShopfloorSapVorrat.Compute(new DateOnly(2026, 11, 13), ohneEcho, layout: StatusUndArbpl));
+        Assert.Equal(30L, (long)ShopfloorSapVorrat.Compute(new DateOnly(2026, 11, 13), ohneEcho, layout: Status)["werte"]!["tx"]!["vorrat_total"]!);
         // Filter aus: rechnet wie bisher
         Assert.Equal(30L, (long)ShopfloorSapVorrat.Compute(new DateOnly(2026, 11, 13), rows)["werte"]!["tx"]!["vorrat_total"]!);
     }
