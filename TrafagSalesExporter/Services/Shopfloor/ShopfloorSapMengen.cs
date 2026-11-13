@@ -176,6 +176,35 @@ public static class ShopfloorSapMengen
         return (items, skipped);
     }
 
+    /// <summary>
+    /// Stichtagswerte (Mail Fabio 2026-11-13): Vorrat, offene KW, SEH-Tagesziel, TX plan5 und PPD-Verzug gelten fuer den Tag so, wie
+    /// sie der erste erfolgreiche SAP-Lauf (normal 04:00) geliefert hat. Entfernt aus <paramref name="computed"/> jedes Feld, das fuer
+    /// den Tag schon einen SAP-Wert hat, und gibt diese Felder zurueck. Spaetere Laeufe (12:45, Neustart nach einem Deploy, Knopf)
+    /// aendern sie damit nicht mehr. Ein Wert ohne SAP-Kennzeichen bleibt drin, damit BuildItems ihn wie bisher behandelt.
+    /// </summary>
+    public static JsonArray Freeze(JsonObject computed, Func<string, JsonObject?> existing)
+    {
+        var frozen = new JsonArray();
+        foreach (var (module, node) in (JsonObject)computed["werte"]!)
+        {
+            if (node is not JsonObject fields)
+                continue;
+            var row = existing(module);
+            var data = row?["data"] as JsonObject;
+            var meta = row?["meta"] as JsonObject;
+            foreach (var key in fields.Select(kv => kv.Key).ToList())
+            {
+                var fromSap = string.Equals((string?)meta?[key]?["src"], "SAP", StringComparison.OrdinalIgnoreCase);
+                if (data?[key] is not null && fromSap)
+                {
+                    fields.Remove(key);
+                    frozen.Add($"{module}.{key}");
+                }
+            }
+        }
+        return frozen;
+    }
+
     private static string Or(string property, IEnumerable<DateOnly> days)
         => "(" + string.Join(" or ", days.Select(d => $"{property} eq '{d:yyyyMMdd}'")) + ")";
 

@@ -291,14 +291,15 @@ public sealed class ShopfloorSapSync : BackgroundService
     /// PPD-Verzug fuer den Abfragetag D (offene Auftraege mit Eckendtermin vor D, wie ZC22). Ohne <paramref name="write"/> nur Vorschau,
     /// sonst ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/verzug?tag=JJJJ-MM-TT.
     /// </summary>
-    public async Task<JsonObject> VerzugAsync(DateOnly day, bool write, CancellationToken ct)
+    public async Task<JsonObject> VerzugAsync(DateOnly day, bool write, CancellationToken ct, bool ersetzen = false)
     {
         var (client, baseUrl) = await CreateClientAsync(ct);
         using (client)
-            return await VerzugCoreAsync(client, baseUrl, day, write, ct);
+            return await VerzugCoreAsync(client, baseUrl, day, write, ct, ersetzen);
     }
 
-    private async Task<JsonObject> VerzugCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
+    private async Task<JsonObject> VerzugCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct,
+        bool ersetzen = false)
     {
         var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVerzug.Filter(_options.CurrentValue.SapPlant, day), ct);
         var filter = _options.CurrentValue.VerzugMaterialFilterListe();
@@ -308,29 +309,25 @@ public sealed class ShopfloorSapSync : BackgroundService
         result["geschrieben"] = false;
         if (!write)
             return result;
-        var store = _stores.Store;
-        var dayIso = (string)result["day"]!;
-        var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
-            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject, store.Config.IsSapField);
-        result["uebersprungen_manuell"] = skipped;
-        result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
-        result["geschrieben"] = true;
-        _logger.LogInformation("Shopfloor: PPD-Verzug aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
+        WriteStichtag(result, ersetzen);
+        _logger.LogInformation("Shopfloor: PPD-Verzug aus SAP fuer {Day} geschrieben", (string)result["day"]!);
         return result;
     }
 
     /// <summary>
     /// Auftragsvorrat fuer den Abfragetag D (alle offenen Auftraege wie ZC22, Buckets im Cockpit). Ohne <paramref name="write"/>
     /// nur Vorschau, sonst ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/vorrat?tag=JJJJ-MM-TT.
+    /// Seit 2026-11-13 Stichtagswerte: schon vorhandene SAP-Werte des Tages bleiben, ausser mit <paramref name="ersetzen"/>.
     /// </summary>
-    public async Task<JsonObject> VorratAsync(DateOnly day, bool write, CancellationToken ct)
+    public async Task<JsonObject> VorratAsync(DateOnly day, bool write, CancellationToken ct, bool ersetzen = false)
     {
         var (client, baseUrl) = await CreateClientAsync(ct);
         using (client)
-            return await VorratCoreAsync(client, baseUrl, day, write, ct);
+            return await VorratCoreAsync(client, baseUrl, day, write, ct, ersetzen);
     }
 
-    private async Task<JsonObject> VorratCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
+    private async Task<JsonObject> VorratCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct,
+        bool ersetzen = false)
     {
         var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(_options.CurrentValue.SapPlant, day), ct);
         var result = ShopfloorSapVorrat.Compute(day, rows);
@@ -338,16 +335,17 @@ public sealed class ShopfloorSapSync : BackgroundService
         result["geschrieben"] = false;
         if (!write)
             return result;
-        var store = _stores.Store;
-        var dayIso = (string)result["day"]!;
-        var (items, skipped) = ShopfloorSapMengen.BuildItems(result,
-            module => store.GetDaily(module, dayIso, dayIso)[module]?[dayIso] as JsonObject, store.Config.IsSapField);
-        result["uebersprungen_manuell"] = skipped;
-        result["ergebnis"] = items.Count == 0 ? new JsonArray() : store.ApplyPush(new ShopfloorPush { Items = items }, "SAP");
-        result["geschrieben"] = true;
-        _logger.LogInformation("Shopfloor: Auftragsvorrat aus SAP fuer {Day} geschrieben, {Skipped} manuelle Werte behalten", dayIso, skipped.Count);
+        WriteStichtag(result, ersetzen);
+        _logger.LogInformation("Shopfloor: Auftragsvorrat aus SAP fuer {Day} geschrieben", (string)result["day"]!);
         return result;
     }
+
+    /// <summary>
+    /// Schreibt Stichtagswerte (Vorrat, Verzug) des Tages. Mail Fabio 2026-11-13: es gilt der erste erfolgreiche SAP-Lauf des Tages
+    /// (Entscheid Ingo: faellt 04:00 aus, der naechste); spaetere Laeufe lassen vorhandene SAP-Werte stehen (<c>eingefroren</c>).
+    /// <paramref name="ersetzen"/> (nur Endpunkt, <c>?ersetzen=1</c>) schreibt trotzdem.
+    /// </summary>
+    private void WriteStichtag(JsonObject result, bool ersetzen) => ShopfloorStichtag.Write(_stores.Store, result, ersetzen);
 
     /// <summary>Verkauf AE / Umsatz IST aus CO-PA fuer den Abfragetag (Monat des Vortags). Endpunkte GET/POST sap/copa?tag=.</summary>
     public async Task<JsonObject> CoPaAsync(DateOnly day, bool write, CancellationToken ct)
