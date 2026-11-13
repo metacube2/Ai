@@ -783,8 +783,26 @@ lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege)
 - **Entscheide Ingo 13.11. nachmittags:** ZC27-Materialfilter wie `/NIN` bauen (Set-Filter optional, Cockpit-Schalter); ZC22-Statusfilter
   fuer alle Abteilungen nachbilden (vor dem Einschalten DW im selben Moment gegen ZC22 pruefen); M*-Teil bauen, Schalter aus, Fabio
   fragt die Teamleiter, ob sie mit Vorgangsdaten fahren. Bedingung: Der Import aendert keine Zahl, eingeschaltet wird im Cockpit.
-- **T76 (laeuft):** ein Transport fuer `CoPaSumSet` Hzdat (`saptasks/copa_verkauf/ZCOPA_SUM_HZDAT_2026-11-13.abap`), Materialfilter
-  `ShopRmSet`, Statuszeile und Arbeitsplatz fuer `ShopAufSet`; Plan `saptasks/shopfloor_sap/PLAN_LAYOUTFILTER_2026-11-13.md`.
+- **T76 fertig, Auftrag `T76K912906` (Aufgabe `T76K912907`, offen, nicht freigegeben, fuenf Objekte):**
+  - `CoPaSumSet` + Filter `Hzdat` (`ZSTR_COPA_SUM-HZDAT`, Vorgabe `saptasks/copa_verkauf/ZCOPA_SUM_HZDAT_2026-11-13.abap`): ohne
+    Filter Summen gleich vorher; mit `Hzdat le` per RFC gegen CE11000 gleich (15 Gruppen, drei Stichtage, 0 Abweichungen).
+  - `ShopRmSet` + Filter `Matex` (Musterliste, Material wie ZC27 = erste AFPO-Position): DLQ72 14.04.2026 ohne 494/28, mit
+    `E*,D*,F*,C*` 394/21 = ZC27 mit `/NIN`; MLE04 und MLE01 unveraendert.
+  - `ShopAufSet` VR/VZ + `Sttxt` (immer, ZC22-Logik `status_lang`, Sprache fest D, weil das Gateway zwischen en und de wechselt),
+    `Arbpl`/`Vornr` nur mit `Avo eq 'X'` (`Z_MD04_NEXT_OPERATION`, Echo `Avo = X`). Ohne `Avo` Grunddaten unveraendert (VR 10'955 Zeilen,
+    MD5 vorher = nachher). Gegen ZC22 mit Vorgangsdaten fuer alle 2'197 Fertigungsauftraege 0 Abweichungen bei Status, Arbeitsplatz,
+    Vorgang. Laufzeit T76: ohne `Avo` 0,2 bis 0,3 s, mit `Avo` rund 8 ms je Fertigungsauftrag (alle Seiten 25 s gegen 7 s).
+  - Plan `saptasks/shopfloor_sap/PLAN_LAYOUTFILTER_2026-11-13.md`, Ergebnis `saptasks/shopfloor_sap/NOTES.md` 10, Zusatz
+    `docs/abap/ZSHOP_LAYOUTFILTER_ADD.abap`.
+- **Cockpit (deployed 14:33, `9100537`, Schalter aus):** `ShopfloorLayoutFilter`; `Shopfloor:Zc22StatusAusschluss`,
+  `Zc22ArbplAusschluss` (fordert `Avo` an, prueft das Echo), `RmMaterialAusschluss`; Vorschau-Parameter `zc22status`, `zc22arbpl`,
+  `matex` (nur GET). Fehlen die SAP-Felder, Fehler statt Zahl.
+- **Reihenfolge bis produktiv:** (1) Ingo gibt `T76K912906` frei und importiert nach P76; (2) P76-Caches `/IWBEP` (alle), dann
+  `/IWFND` (`ZPOWERBI_EINKAUF_MDL`); (3) Vorschau mit Probeparametern gegen ZC22/ZC27 in P76 (auch DW im selben Moment) und eine
+  Laufzeitmessung `Typ eq 'VR' and Avo eq 'X'`; CO-PA-Vorschau mit `SapCoPaHzdat` gegen Fabios Kontrollwerte November (Sparte 0005
+  oder 0005+0006 klaeren); (4) Schalter `Zc22StatusAusschluss = "FREI DRUC RÜCK VOKL*"`, `RmMaterialAusschluss = "E*,D*,F*,C*"`,
+  `SapCoPaHzdat`/`SapCoPaEnabled` setzen und deployen; `Zc22ArbplAusschluss` erst nach Fabios Antwort; (5) Logistik-Historie mit
+  `POST sap/mengen?tag=` nachladen.
 - Nebenwirkungen des Lesens: SE16 hat fuer KOI bei AFVC „Felder fuer Selektion: AUFPL“ gespeichert; ueber die Freigabe hinaus nur
   Anzeige (Liste im Befund, Abschnitt 6).
 

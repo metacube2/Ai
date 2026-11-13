@@ -1,5 +1,7 @@
 # Plan „Layoutfilter ZC22/ZC27 im SAP“: `ShopRmSet` Materialausschluss und `ShopAufSet` Status/Arbeitsplatz (T76)
 
+*Nachtrag 2026-11-13 abends: **Phase 2 ausgefuehrt** (Entscheide E1 bis E5 nach Empfehlung, gesetzt von der Hauptsitzung auf Grundlage der Entscheide Ingos), alle Erwartungswerte getroffen, Ergebnis `NOTES.md` Abschnitt 10; `T76K912906` offen, nicht freigegeben. Der Satz „Phase 1 von 2“ unten ist damit ueberholt.*
+
 Stand: 2026-11-13 13:55, Agent sap-t76, **Phase 1 von 2 (Plan)**. Auftrag Ingo 13.11. (Teil 2 des Auftrags „CoPaSumSet Hzdat“):
 Plan fuer zwei weitere Aenderungen im **selben** Transport `T76K912906`. Phase 2 erst nach Freigabe durch Ingo, dann genau
 diese Schritte, bei jeder Abweichung anhalten (`saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` Abschnitt 7).

@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-11-13 12:40 (Shopfloor Paket Fabio 13.11. Phase A deployed `d754a76`, Phase B laeuft; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`, vier Mailentwuerfe; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-13 abends (Shopfloor Paket Fabio 13.11.: Phase A deployed `d754a76`, Phase B Cockpit deployed `9100537`, T76 `T76K912906` fertig und offen; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`, vier Mailentwuerfe; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
 
 ## 2026-11-13 12:40: Shopfloor, Paket Fabio 13.11. (Excel der Teamleiter abloesen), Phase A deployed
@@ -13,8 +13,11 @@ CO-PA-HZDAT-Filter vorbereitet (`SapCoPaHzdat` aus), Patch 08 und Module CZ/MTF/
 Handbuch Kapitel 10. Werte 13.11. bleiben eingefroren, neue Regeln ab dem naechsten Arbeitstag 04:00.
 **P76-Befund (nur gelesen):** Fabios Werte = ZC22 mit Standardlayout `/ P00 TX` (Status `FREI DRUC RÜCK VOKL*` und naechster
 Arbeitsplatz M* ausgeblendet) und ZC27 mit Standardlayout `/NIN` (Material E*, D*, F*, C* ausgeblendet); Fabios Regel „letzter Vorgang
-des ganzen Auftrags“ waere falsch. Entscheide Ingo: beide Filter nachbilden (M*-Teil Schalter aus). **Offen:** T76-Transport (CO-PA
-Hzdat, Filter `ShopRmSet`/`ShopAufSet`), Import Ingo, Caches P76, Cockpit-Schalter. Fragen an Fabio: DW-Verzug 441 gegen seinen Abzug 555, Arbeitstag-Annahme
+des ganzen Auftrags“ waere falsch. Entscheide Ingo: beide Filter nachbilden (M*-Teil Schalter aus). **T76 fertig in `T76K912906`**
+(offen): CoPaSumSet Hzdat, ShopRmSet Matex, ShopAufSet Sttxt/Arbpl/Vornr/Avo; gegen CE11000, ZC27 und ZC22 je ohne Abweichung.
+**Cockpit deployed 14:33 `9100537`** (Filter, Schalter aus). **Offen:** Freigabe/Import `T76K912906` und P76-Caches (Ingo), dann
+Vorschau gegen ZC22/ZC27/CO-PA-Kontrollwerte, Schalter setzen und deployen, Logistik-Historie nachladen; Fabio: Vorgangsdaten (M*),
+DW 441/555, Arbeitstag 01./02.01., Sparte 0006. Fragen an Fabio: DW-Verzug 441 gegen seinen Abzug 555, Arbeitstag-Annahme
 (01./02.01.), Transmitter 0005 oder 0005+0006. `docs/SHOPFLOOR_2026-10-07.md` 22, Wochen_Todo 156.
 
 ## 2026-11-13 10:50: Finance, Mail Andreas (Lieferantenzuordnung, Group HK), deployed

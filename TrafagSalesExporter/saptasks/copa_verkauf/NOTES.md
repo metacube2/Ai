@@ -52,7 +52,8 @@ Methoden zeilengleich mit `MPC_EXT_DEFINE_neu.abap` / `DPC_EXT_GET_ENTITYSET_neu
 MD5 ohne CR `d7d42ae7…` wie in P76 laut `saptasks/shopfloor_sap/P76_BEFUND_2026-11-13.md` 3.1).
 
 **Objekte, Auftrag `T76K912906`** (Workbench, Ziel P76, Text „Shopfloor: CoPaSumSet Hzdat, ShopRm/ShopAuf Filter“), Aufgabe
-`T76K912907`, beide `D`. `E071` der Aufgabe genau: `LIMU TABD ZSTR_COPA_SUM`, `LIMU METH ZCL_ZPOWERBI_EINKAUF_MPC_EXT DEFINE`,
+`T76K912907`, beide `D`. `E071` der Aufgabe nach Teil 1 genau (*seit Phase 2 Layoutfilter dazu `LIMU TABD ZSTR_SHOP_RM` und
+`LIMU TABD ZSTR_SHOP_AUF`, fuenf Eintraege, `saptasks/shopfloor_sap/NOTES.md` Abschnitt 10*): `LIMU TABD ZSTR_COPA_SUM`, `LIMU METH ZCL_ZPOWERBI_EINKAUF_MPC_EXT DEFINE`,
 `LIMU METH ZCL_ZPOWERBI_EINKAUF_DPC_EXT /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET`. Der Auftrag ist bewusst offen: der Plan
 `saptasks/shopfloor_sap/PLAN_LAYOUTFILTER_2026-11-13.md` legt zwei weitere Aenderungen in denselben Auftrag.
 
