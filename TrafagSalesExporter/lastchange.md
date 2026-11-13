@@ -79,12 +79,12 @@ installiert, nicht pruefbar). `origin` steht auf `a6a96b2`.
    Befund 1 und 2 (Hashes in `appsettings.json`, Cookie daraus berechenbar).
 2. **Code-Review:** 13 Befunde, 4 hoch, nichts geaendert. Bericht mit Behebungsvorschlag in Abschnitt F:
    `docs/CODE_REVIEW_2026-11-12.md`, Wochen_Todo 159. Naechster Schritt: Ingo waehlt aus, dann Plan je Befund, dann umsetzen.
-3. **Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Code `c9208b5` nicht deployed. *(Nachtrag 13.11.: Produktiv ist seit 10:31 `df48301` (Shopfloor, Einkauf Marco, Finance Sales_All) ohne `c9208b5`. Spanien nie allein aus `c9208b5` deployen, sonst faellt der Shopfloor-Fix zurueck; Deploy aus dem Arbeitszweig ab `15105ed`, dort Suite vorher neu laufen lassen.)* Vor dem Deploy: Code-Review Befunde 5 und 9
+3. **Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Code `c9208b5` nicht deployed. *(Nachtrag 13.11.: Produktiv ist seit 10:31 `df48301` (Shopfloor, Einkauf Marco, Finance Sales_All) ohne `c9208b5`. Spanien nie allein aus `c9208b5` deployen, sonst faellt der Shopfloor-Fix zurueck; Deploy aus dem Arbeitszweig ab `15105ed`, dort Suite vorher neu laufen lassen.)* *Stand 13.11. abends: produktiv ist `9100537` (zusaetzlich Shopfloor Paket Fabio 13.11.: `appsettings.json`, `shopfloor_config.json`, `app.js`); Spanien nur aus dem Arbeitszweig ab `a207923` oder juenger deployen, nie aus `c9208b5` allein oder ab `15105ed`.* Vor dem Deploy: Code-Review Befunde 5 und 9
    beurteilen. Mail Gang 1 an Santi liegt als Entwurf in `C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`,
    nicht gesendet; vorher die Frage ergaenzen, welches Skript sein taeglicher Task aufruft (35 oder 7 Tage, F30). Vor Gang 2
    Lesepruefung der Dashboard-Einstellungen und der SharePoint-Kopfzeilen mit Ingos Anmeldung. Plan
    `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. **Achtung Release-Worktree:**
-   `C:\TMP\TrafagSalesExporter_release_eafd1c5` steht auf `c9208b5` *(seit 13.11. 10:30 auf `df48301`)*; vor jedem Deploy auf den gewuenschten Commit ziehen.
+   `C:\TMP\TrafagSalesExporter_release_eafd1c5` steht auf `c9208b5` *(seit 13.11. 10:30 auf `df48301`, seit 14:30 auf `9100537`)*; vor jedem Deploy auf den gewuenschten Commit ziehen.
 4. **CO-PA `T76K912866`:** laut Ingo in P76 importiert. Offen: Gateway-Caches in P76 (`/IWBEP/CACHE_CLEANUP` alle Modelle, dann
    `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL`), Vorschau `shopfloor/api/sap/copa?tag=2026-10-01` gegen September
    (6'531'197.94 / 7'878'114.69), dann `Shopfloor:SapCoPaEnabled = true` und Deploy, Historie ab 01.01.2026 nachladen.

@@ -803,6 +803,13 @@ lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege)
   oder 0005+0006 klaeren); (4) Schalter `Zc22StatusAusschluss = "FREI DRUC RÜCK VOKL*"`, `RmMaterialAusschluss = "E*,D*,F*,C*"`,
   `SapCoPaHzdat`/`SapCoPaEnabled` setzen und deployen; `Zc22ArbplAusschluss` erst nach Fabios Antwort; (5) Logistik-Historie mit
   `POST sap/mengen?tag=` nachladen.
+- **Abnahme Logistik vor dem Einschalten:** `GET sap/mengen?tag=` fuer 02. bis 12.11. ohne und mit `matex=E*,D*,F*,C*`: Fabios 18
+  Kontrollwerte (Feedback Punkt 6) muessen mit Filter stimmen, und MLE08+09, MLM01 und `tr5.prod` duerfen sich nicht bewegen (der
+  Materialausschluss gilt fuer jede ShopRmSet-Gruppe). DW: der Vorrat lag in der Vorschau 12:25 rund 1'400 ueber Fabios ZC22 (DL6 und
+  DW1 mit numerischem Material zaehlen jetzt mit); vor dem Einschalten im selben Moment gegen ZC22 D* mit Layout pruefen.
+- **Montag 04:00 stimmt noch nicht ueberall mit dem Excel:** richtig sind dann die rollenden Fenster, TR5/DW-Material und der DW-Verzug;
+  TX, Verzug TR5/TX/SEH, die Logistik und CO-PA erst nach Import und Einschalten. Der am 02.11. gespeicherte Verkaufswert (November statt
+  Oktober) bleibt, die neue Monatsregel gilt ab jetzt (Neuschreiben nur auf Wunsch Ingo/Fabio).
 - Nebenwirkungen des Lesens: SE16 hat fuer KOI bei AFVC „Felder fuer Selektion: AUFPL“ gespeichert; ueber die Freigabe hinaus nur
   Anzeige (Liste im Befund, Abschnitt 6).
 
