@@ -70,10 +70,12 @@ public sealed record ShopfloorLayoutFilter(IReadOnlyList<string> StatusAusschlus
             throw new InvalidOperationException(
                 "ShopAufSet liefert die Statuszeile (Sttxt) in diesem SAP-System noch nicht; Transport mit den ZC22-Layoutfeldern fehlt. " +
                 "Shopfloor:Zc22StatusAusschluss leeren oder Transport importieren.");
-        if (ArbplAusschluss.Count > 0 && fa.Any(r => !r.TryGetProperty("Arbpl", out _)))
+        // Nach dem Transport ist Arbpl immer da (ohne Avo leer); belegt ist der Arbeitsplatz erst durch das Echo Avo = 'X'
+        // (Plan saptasks/shopfloor_sap/PLAN_LAYOUTFILTER_2026-11-13.md, Hinweis F2).
+        if (ArbplAusschluss.Count > 0 && fa.Any(r => Text(r, "Avo") != "X"))
             throw new InvalidOperationException(
-                "ShopAufSet liefert den Arbeitsplatz (Arbpl) in diesem SAP-System noch nicht; Transport mit den ZC22-Layoutfeldern fehlt. " +
-                "Shopfloor:Zc22ArbplAusschluss leeren oder Transport importieren.");
+                "ShopAufSet liefert den naechsten Arbeitsplatz (Avo = 'X') in diesem SAP-System noch nicht; Transport mit den ZC22-Layoutfeldern " +
+                "fehlt. Shopfloor:Zc22ArbplAusschluss leeren oder Transport importieren.");
     }
 
     public JsonObject Beschreibung() => new()
