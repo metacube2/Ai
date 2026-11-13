@@ -101,6 +101,26 @@ public sealed class ShopfloorOptions
     /// </summary>
     public bool SapCoPaHzdat { get; set; }
 
+    /// <summary>
+    /// Filter der SAP-Standardlayouts nachbilden (P76-Befund 13.11., saptasks/shopfloor_sap/P76_BEFUND_2026-11-13.md; Entscheide Ingo
+    /// 13.11.). Kommagetrennte CP-Muster, leer = aus. Erst einschalten, wenn der T76-Transport mit Sttxt/Arbpl/Avo (ShopAufSet) bzw.
+    /// Matex (ShopRmSet) in P76 ist und die Caches geleert sind, sonst Fehler 400 bzw. Fehlermeldung statt Zahl.
+    /// <list type="bullet">
+    /// <item><c>Zc22StatusAusschluss</c>: ZC22-Layout „/ P00 TX“, Systemstatus E CP (Ziel „FREI DRUC RÜCK VOKL*“), Vorrat und Verzug.</item>
+    /// <item><c>Zc22ArbplAusschluss</c>: dasselbe Layout, naechster Arbeitsplatz I NP (Ziel „M*“); fordert Avo an (teuer). Bleibt aus,
+    /// bis Fabio klaert, ob die Teamleiter ZC22 mit Vorgangsdaten fahren.</item>
+    /// <item><c>RmMaterialAusschluss</c>: ZC27-Layout „/NIN“, Material E CP (Ziel „E*,D*,F*,C*“), Logistik, DL790, DLQ72, TR5-Tagesmenge.</item>
+    /// </list>
+    /// </summary>
+    public string Zc22StatusAusschluss { get; set; } = "";
+
+    public string Zc22ArbplAusschluss { get; set; } = "";
+
+    public string RmMaterialAusschluss { get; set; } = "";
+
+    public ShopfloorLayoutFilter Zc22Layout()
+        => new(ShopfloorLayoutFilter.Muster(Zc22StatusAusschluss), ShopfloorLayoutFilter.Muster(Zc22ArbplAusschluss));
+
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
     public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45
 

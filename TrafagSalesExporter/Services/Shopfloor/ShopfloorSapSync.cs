@@ -213,17 +213,20 @@ public sealed class ShopfloorSapSync : BackgroundService
     /// Mengen fuer den Produktionstag D (J5 Logistik, J8 SEH/TR5, J11 FPY SEH, DW). Ohne <paramref name="write"/> nur Vorschau, sonst
     /// ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/mengen?tag=JJJJ-MM-TT.
     /// </summary>
-    public async Task<JsonObject> MengenAsync(DateOnly day, bool write, CancellationToken ct)
+    /// <param name="materialAusschlussProbe">Nur Vorschau: Materialausschluss statt Shopfloor:RmMaterialAusschluss ausprobieren.</param>
+    public async Task<JsonObject> MengenAsync(DateOnly day, bool write, CancellationToken ct, string? materialAusschlussProbe = null)
     {
         var (client, baseUrl) = await CreateClientAsync(ct);
         using (client)
-            return await MengenCoreAsync(client, baseUrl, day, write, ct);
+            return await MengenCoreAsync(client, baseUrl, day, write, ct, write ? null : materialAusschlussProbe);
     }
 
-    private async Task<JsonObject> MengenCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
+    private async Task<JsonObject> MengenCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct,
+        string? materialAusschlussProbe = null)
     {
         var plant = _options.CurrentValue.SapPlant;
-        var result = await ShopfloorSapMengen.ComputeAsync(day, plant, (set, filter) => ReadAsync(client, baseUrl, set, filter, ct));
+        var result = await ShopfloorSapMengen.ComputeAsync(day, plant, (set, filter) => ReadAsync(client, baseUrl, set, filter, ct),
+            materialAusschlussProbe ?? _options.CurrentValue.RmMaterialAusschluss);
         result["ok"] = true;
         result["geschrieben"] = false;
         if (!write)
@@ -291,19 +294,21 @@ public sealed class ShopfloorSapSync : BackgroundService
     /// PPD-Verzug fuer den Abfragetag D (offene Auftraege mit Eckendtermin vor D, wie ZC22). Ohne <paramref name="write"/> nur Vorschau,
     /// sonst ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/verzug?tag=JJJJ-MM-TT.
     /// </summary>
-    public async Task<JsonObject> VerzugAsync(DateOnly day, bool write, CancellationToken ct, bool ersetzen = false)
+    public async Task<JsonObject> VerzugAsync(DateOnly day, bool write, CancellationToken ct, bool ersetzen = false,
+        ShopfloorLayoutFilter? layoutProbe = null)
     {
         var (client, baseUrl) = await CreateClientAsync(ct);
         using (client)
-            return await VerzugCoreAsync(client, baseUrl, day, write, ct, ersetzen);
+            return await VerzugCoreAsync(client, baseUrl, day, write, ct, ersetzen, write ? null : layoutProbe);
     }
 
     private async Task<JsonObject> VerzugCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct,
-        bool ersetzen = false)
+        bool ersetzen = false, ShopfloorLayoutFilter? layoutProbe = null)
     {
-        var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVerzug.Filter(_options.CurrentValue.SapPlant, day), ct);
         var options = _options.CurrentValue;
-        var result = ShopfloorSapVerzug.Compute(day, rows, options.MaterialFilterListe(), options.VerzugAbDatum());
+        var layout = layoutProbe ?? options.Zc22Layout();
+        var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVerzug.Filter(options.SapPlant, day, layout.Vorgangsdaten), ct);
+        var result = ShopfloorSapVerzug.Compute(day, rows, options.MaterialFilterListe(), options.VerzugAbDatum(), layout);
         result["ok"] = true;
         result["geschrieben"] = false;
         if (!write)
@@ -318,18 +323,21 @@ public sealed class ShopfloorSapSync : BackgroundService
     /// nur Vorschau, sonst ueber ApplyPush als SAP geschrieben (manuelle Werte bleiben). Endpunkte GET/POST sap/vorrat?tag=JJJJ-MM-TT.
     /// Seit 2026-11-13 Stichtagswerte: schon vorhandene SAP-Werte des Tages bleiben, ausser mit <paramref name="ersetzen"/>.
     /// </summary>
-    public async Task<JsonObject> VorratAsync(DateOnly day, bool write, CancellationToken ct, bool ersetzen = false)
+    public async Task<JsonObject> VorratAsync(DateOnly day, bool write, CancellationToken ct, bool ersetzen = false,
+        ShopfloorLayoutFilter? layoutProbe = null)
     {
         var (client, baseUrl) = await CreateClientAsync(ct);
         using (client)
-            return await VorratCoreAsync(client, baseUrl, day, write, ct, ersetzen);
+            return await VorratCoreAsync(client, baseUrl, day, write, ct, ersetzen, write ? null : layoutProbe);
     }
 
     private async Task<JsonObject> VorratCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct,
-        bool ersetzen = false)
+        bool ersetzen = false, ShopfloorLayoutFilter? layoutProbe = null)
     {
-        var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(_options.CurrentValue.SapPlant, day), ct);
-        var result = ShopfloorSapVorrat.Compute(day, rows, _options.CurrentValue.MaterialFilterListe());
+        var options = _options.CurrentValue;
+        var layout = layoutProbe ?? options.Zc22Layout();
+        var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(options.SapPlant, day, layout.Vorgangsdaten), ct);
+        var result = ShopfloorSapVorrat.Compute(day, rows, options.MaterialFilterListe(), layout);
         result["ok"] = true;
         result["geschrieben"] = false;
         if (!write)

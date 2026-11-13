@@ -65,8 +65,9 @@ public static class ShopfloorSapVorrat
             .. ZielModule.Contains(modul) ? new[] { "ziel" } : [],
             .. Plan5Module.Contains(modul) ? new[] { "plan5" } : []];
 
-    public static string Filter(string plant, DateOnly day)
-        => $"Werks eq '{plant}' and Datum eq '{day:yyyyMMdd}' and Typ eq 'VR'";
+    /// <summary>Filter fuer ShopAufSet Typ VR; <paramref name="vorgangsdaten"/> fordert den naechsten Arbeitsplatz an (Avo, teuer).</summary>
+    public static string Filter(string plant, DateOnly day, bool vorgangsdaten = false)
+        => $"Werks eq '{plant}' and Datum eq '{day:yyyyMMdd}' and Typ eq 'VR'" + (vorgangsdaten ? " and Avo eq 'X'" : string.Empty);
 
     /// <summary>
     /// Obergrenzen (einschliesslich) der kumulierten Buckets fuer den Abfragetag, rollend ab D (seit 2026-11-13): Kalendermonate
@@ -84,14 +85,19 @@ public static class ShopfloorSapVorrat
     /// <summary>
     /// Werte fuer den Abfragetag aus den Zeilen von ShopAufSet Typ VR. Schreibt nichts. Zeilen ohne Typ VF/VP heissen, dass das
     /// System den Vorratsmodus noch nicht kennt (alter DPC liefert dann den Forecast mit FE/PA): Fehler statt falscher Zahl.
-    /// <paramref name="materialFilter"/>: Abteilungen, die nur Material 1-99999 zaehlen (Vorgabe keine).
+    /// <paramref name="materialFilter"/>: Abteilungen, die nur Material 1-99999 zaehlen (Vorgabe keine). <paramref name="layout"/>:
+    /// Filter des ZC22-Standardlayouts (Vorgabe aus), ausgeblendete Auftraege fallen aus allen Feldern weg.
     /// </summary>
-    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null)
+    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null,
+        ShopfloorLayoutFilter? layout = null)
     {
         materialFilter ??= [];
+        layout ??= ShopfloorLayoutFilter.Aus;
         if (rows.Any(r => Text(r, "Typ") is not ("VF" or "VP")))
             throw new InvalidOperationException(
                 "ShopAufSet kennt den Vorratsmodus (Typ VR) in diesem SAP-System noch nicht; Transport T76K912860 fehlt.");
+        layout.PruefeFelder(rows);
+        var ausgeblendet = Module.ToDictionary(m => m.Abteilung, _ => (Auftraege: 0, Menge: 0L), StringComparer.Ordinal);
         var grenzen = Module.ToDictionary(m => m.Abteilung, m => Grenzen(day, WochenModule.Contains(m.Modul)), StringComparer.Ordinal);
         var plan5Ende = Plan5Ende(day);
         var summen = Module.ToDictionary(m => m.Abteilung, _ => new long[7], StringComparer.Ordinal);   // total, 3m, 2m, 1m, kw, tag, plan5
@@ -103,6 +109,12 @@ public static class ShopfloorSapVorrat
                 continue;
             if (materialFilter.Contains(abt) && !ShopfloorSapVerzug.MaterialImBereich(Text(r, "Matnr")))
                 continue;
+            if (layout.Aktiv && layout.Ausgeblendet(r))
+            {
+                var a = ausgeblendet[abt];
+                ausgeblendet[abt] = (a.Auftraege + 1, a.Menge + Int(r, "Menge"));
+                continue;
+            }
             var g = grenzen[abt];
             var s = summen[abt];
             var menge = Int(r, "Menge");
@@ -144,6 +156,11 @@ public static class ShopfloorSapVorrat
                 ["auftraege"] = auftraege[abt],
                 ["tag"] = s[5],
                 ["materialfilter"] = materialFilter.Contains(abt),
+                ["layout_ausgeblendet"] = new JsonObject
+                {
+                    ["auftraege"] = ausgeblendet[abt].Auftraege,
+                    ["menge"] = ausgeblendet[abt].Menge
+                },
                 ["grenzen"] = new JsonObject
                 {
                     ["1m"] = Iso(g.M1),
@@ -159,6 +176,7 @@ public static class ShopfloorSapVorrat
             ["zeilen"] = rows.Count,
             ["ohne_eckendtermin"] = ohneDatum,
             ["plan5_bis"] = Iso(plan5Ende),
+            ["layoutfilter"] = layout.Beschreibung(),
             ["werte"] = werte,
             ["detail"] = detail
         };
