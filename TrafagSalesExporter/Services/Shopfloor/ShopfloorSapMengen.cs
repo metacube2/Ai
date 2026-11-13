@@ -58,9 +58,12 @@ public static class ShopfloorSapMengen
     }
 
     /// <summary>Rechnet alle Werte fuer den Produktionstag D. Schreibt nichts. <paramref name="read"/> liest ein Set mit Filter.</summary>
+    /// <paramref name="materialAusschluss"/>: Musterliste wie das ZC27-Standardlayout /NIN (z. B. „E*,D*,F*,C*“), geht als Filter Matex
+    /// an ShopRmSet (P76-Befund 13.11., Schalter Shopfloor:RmMaterialAusschluss); leer = ohne, wie bisher.
     public static async Task<JsonObject> ComputeAsync(DateOnly day, string plant,
-        Func<string, string, Task<List<JsonElement>>> read)
+        Func<string, string, Task<List<JsonElement>>> read, string? materialAusschluss = null)
     {
+        var matex = string.Join(",", ShopfloorLayoutFilter.Muster(materialAusschluss));
         List<DateOnly> days = [day];
         var values = new JsonObject();
         var detail = new JsonArray();
@@ -70,7 +73,8 @@ public static class ShopfloorSapMengen
         foreach (var g in RmGroups)
         {
             var filter = $"Werks eq '{plant}' and ({string.Join(" or ", g.Arbpl.Select(a => $"Arbpl eq '{a}'"))}) and {ersda}"
-                         + (g.Typcd is null ? string.Empty : $" and Typcd eq '{g.Typcd}'");
+                         + (g.Typcd is null ? string.Empty : $" and Typcd eq '{g.Typcd}'")
+                         + (matex.Length == 0 ? string.Empty : $" and Matex eq '{matex}'");
             var rows = await read(RmSet, filter);
             zeilen[g.Module] = zeilen.GetValueOrDefault(g.Module) + rows.Count;
             var menge = rows.Sum(r => Int(r, "Lmnga"));
@@ -83,6 +87,7 @@ public static class ShopfloorSapMengen
                 ["feld"] = $"{g.Module}.{g.Field}",
                 ["arbeitsplaetze"] = string.Join("+", g.Arbpl),
                 ["typencode"] = g.Typcd,
+                ["material_ausschluss"] = matex.Length == 0 ? null : matex,
                 ["menge"] = menge,
                 ["rueckmeldungen"] = rows.Sum(r => Int(r, "Anzahl")),
                 ["je_arbeitsplatz"] = je

@@ -194,7 +194,8 @@ public static class ShopfloorEndpoints
             return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
         try
         {
-            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().MengenAsync(day, write, c.RequestAborted);
+            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().MengenAsync(day, write, c.RequestAborted,
+                c.Request.Query.ContainsKey("matex") ? c.Request.Query["matex"].ToString() : null);
             return J(c, result);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -231,7 +232,7 @@ public static class ShopfloorEndpoints
         try
         {
             var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VerzugAsync(day, write, c.RequestAborted,
-                Ersetzen(c));
+                Ersetzen(c), LayoutProbe(c));
             return J(c, result);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -268,7 +269,7 @@ public static class ShopfloorEndpoints
         try
         {
             var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VorratAsync(day, write, c.RequestAborted,
-                Ersetzen(c));
+                Ersetzen(c), LayoutProbe(c));
             return J(c, result);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -276,6 +277,16 @@ public static class ShopfloorEndpoints
             return Results.Json(new { ok = false, meldung = ex.GetBaseException().Message }, statusCode: 502);
         }
     }
+
+    /// <summary>
+    /// Nur Vorschau (GET, P76-Befund 13.11.): ZC22-Layoutfilter ausprobieren, ohne die Schalter umzulegen, z. B.
+    /// <c>sap/vorrat?tag=2026-11-16&amp;zc22status=FREI DRUC RÜCK VOKL*&amp;zc22arbpl=M*</c>. Ohne beide Parameter gilt die Konfiguration.
+    /// </summary>
+    private static ShopfloorLayoutFilter? LayoutProbe(HttpContext c)
+        => c.Request.Query.ContainsKey("zc22status") || c.Request.Query.ContainsKey("zc22arbpl")
+            ? new ShopfloorLayoutFilter(ShopfloorLayoutFilter.Muster(c.Request.Query["zc22status"].ToString()),
+                ShopfloorLayoutFilter.Muster(c.Request.Query["zc22arbpl"].ToString()))
+            : null;
 
     /// <summary>Stichtagswerte bewusst neu schreiben (Mail Fabio 2026-11-13): <c>?ersetzen=1</c>; sonst bleibt der erste SAP-Wert des Tages.</summary>
     private static bool Ersetzen(HttpContext c) => c.Request.Query["ersetzen"].ToString() is "1" or "true" or "ja";

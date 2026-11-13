@@ -38,8 +38,9 @@ public static class ShopfloorSapVerzug
         ("DW", "verzug_dw", ["D"], [])
     ];
 
-    public static string Filter(string plant, DateOnly day)
-        => $"Werks eq '{plant}' and Datum eq '{day:yyyyMMdd}' and Typ eq 'VZ'";
+    /// <summary>Filter fuer ShopAufSet Typ VZ; <paramref name="vorgangsdaten"/> fordert den naechsten Arbeitsplatz an (Avo, teuer).</summary>
+    public static string Filter(string plant, DateOnly day, bool vorgangsdaten = false)
+        => $"Werks eq '{plant}' and Datum eq '{day:yyyyMMdd}' and Typ eq 'VZ'" + (vorgangsdaten ? " and Avo eq 'X'" : string.Empty);
 
     /// <summary>Abteilung zum Disponenten, sonst null.</summary>
     public static string? Abteilung(string dispo)
@@ -65,8 +66,9 @@ public static class ShopfloorSapVerzug
     /// System den Verzugsmodus noch nicht kennt (alter DPC liefert FE/PA fuer die naechsten 60 Tage): dann Fehler statt falscher Zahl.
     /// </summary>
     public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null,
-        DateOnly? ab = null)
+        DateOnly? ab = null, ShopfloorLayoutFilter? layout = null)
     {
+        layout ??= ShopfloorLayoutFilter.Aus;
         // 2026-11-10 (Ingo): Materialfilter 1-99999 je Abteilung schaltbar; seit 2026-11-13 Shopfloor:MaterialFilter (TR5, DW) fuer
         // Vorrat und Verzug gemeinsam, Untergrenze Shopfloor:VerzugAb.
         materialFilter ??= StandardMaterialFilter;
@@ -76,6 +78,8 @@ public static class ShopfloorSapVerzug
         var menge = Abteilungen.ToDictionary(a => a.Abteilung, _ => 0L, StringComparer.Ordinal);
         var auftraege = Abteilungen.ToDictionary(a => a.Abteilung, _ => 0, StringComparer.Ordinal);
         var vorUntergrenze = 0;
+        layout.PruefeFelder(rows);
+        var ausgeblendet = Abteilungen.ToDictionary(a => a.Abteilung, _ => (Auftraege: 0, Menge: 0L), StringComparer.Ordinal);
         foreach (var r in rows)
         {
             if (Abteilung(Text(r, "Dispo")) is not { } abt)
@@ -89,6 +93,12 @@ public static class ShopfloorSapVerzug
                 vorUntergrenze++;
                 continue;
             }
+            if (layout.Aktiv && layout.Ausgeblendet(r))
+            {
+                var a = ausgeblendet[abt];
+                ausgeblendet[abt] = (a.Auftraege + 1, a.Menge + Int(r, "Menge"));
+                continue;
+            }
             menge[abt] += Int(r, "Menge");
             auftraege[abt]++;
         }
@@ -97,7 +107,16 @@ public static class ShopfloorSapVerzug
         foreach (var a in Abteilungen)
         {
             ppd[a.Feld] = menge[a.Abteilung];
-            detail[a.Abteilung] = new JsonObject { ["auftraege"] = auftraege[a.Abteilung], ["menge"] = menge[a.Abteilung] };
+            detail[a.Abteilung] = new JsonObject
+            {
+                ["auftraege"] = auftraege[a.Abteilung],
+                ["menge"] = menge[a.Abteilung],
+                ["layout_ausgeblendet"] = new JsonObject
+                {
+                    ["auftraege"] = ausgeblendet[a.Abteilung].Auftraege,
+                    ["menge"] = ausgeblendet[a.Abteilung].Menge
+                }
+            };
         }
         return new JsonObject
         {
@@ -106,6 +125,7 @@ public static class ShopfloorSapVerzug
             ["ab"] = ab?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             ["vor_untergrenze"] = vorUntergrenze,
             ["materialfilter"] = new JsonArray(materialFilter.Select(x => (JsonNode?)x).ToArray()),
+            ["layoutfilter"] = layout.Beschreibung(),
             ["werte"] = new JsonObject { [Module] = ppd },
             ["detail"] = detail
         };
