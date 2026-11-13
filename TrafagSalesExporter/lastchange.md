@@ -1,7 +1,16 @@
 # Last Change
 
-Stand: 2026-11-13 08:15 (Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-13 09:30 (Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## 2026-11-13 09:30: Einkauf, Wuensche Marco Widmer (Mail 12.11.), deployed
+
+Plan im Chat, Entscheide Ingo (Produktgruppe auf Verwendung, Zusatzaufrisse bauen, Register nur ausblenden). **Deployed 09:11
+`052c5a3`** (Zweig ab `0e94279`, Spanien `c9208b5` weiter draussen; gemergt `989d401`), im Chrome geprueft. Offene Bestellungen
+und Kontrakte ausgeblendet; Spend-Aufriss: keine Kacheln, Kuchen je Einstieg, Anzahl Artikel nach XYZ statt Volumenbalken, Matrix
+AX ... -/-, neue Einstiege Region/Disponent > Warengruppe und Produktgruppe nach Verwendung : Lieferant (ersetzt die Sichten nach
+eigenem Disponenten, die nur HW_ZUKAUFSORT zeigten), LZ/Sortiment entfernt; Materialanteil mit Herstellkosten HK (Abdeckung 100 %).
+SAP wurde nicht gebraucht. Offen: Marco informieren, Lesart HK bestaetigen. `docs/rag/PURCHASING.md`, Wochen_Todo 162.
 
 ## 2026-11-13 08:15: Shopfloor, Mail Fabio 13.11. (Stichtagswerte, Verzug ein), deployed
 
@@ -39,12 +48,12 @@ installiert, nicht pruefbar). `origin` steht auf `a6a96b2`.
    Befund 1 und 2 (Hashes in `appsettings.json`, Cookie daraus berechenbar).
 2. **Code-Review:** 13 Befunde, 4 hoch, nichts geaendert. Bericht mit Behebungsvorschlag in Abschnitt F:
    `docs/CODE_REVIEW_2026-11-12.md`, Wochen_Todo 159. Naechster Schritt: Ingo waehlt aus, dann Plan je Befund, dann umsetzen.
-3. **Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Code `c9208b5` nicht deployed. *(Nachtrag 13.11.: Produktiv ist seit 07:56 `0e94279` (Shopfloor) ohne `c9208b5`. Spanien nie allein aus `c9208b5` deployen, sonst faellt der Shopfloor-Fix zurueck; Deploy aus dem Arbeitszweig ab `e7b70f6`, dort Suite vorher neu laufen lassen.)* Vor dem Deploy: Code-Review Befunde 5 und 9
+3. **Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Code `c9208b5` nicht deployed. *(Nachtrag 13.11.: Produktiv ist seit 09:11 `052c5a3` (Shopfloor `0e94279` plus Einkauf Marco) ohne `c9208b5`. Spanien nie allein aus `c9208b5` deployen, sonst faellt der Shopfloor-Fix zurueck; Deploy aus dem Arbeitszweig ab `989d401`, dort Suite vorher neu laufen lassen.)* Vor dem Deploy: Code-Review Befunde 5 und 9
    beurteilen. Mail Gang 1 an Santi liegt als Entwurf in `C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`,
    nicht gesendet; vorher die Frage ergaenzen, welches Skript sein taeglicher Task aufruft (35 oder 7 Tage, F30). Vor Gang 2
    Lesepruefung der Dashboard-Einstellungen und der SharePoint-Kopfzeilen mit Ingos Anmeldung. Plan
    `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. **Achtung Release-Worktree:**
-   `C:\TMP\TrafagSalesExporter_release_eafd1c5` steht auf `c9208b5` *(seit 13.11. auf `0e94279`)*; vor jedem Deploy auf den gewuenschten Commit ziehen.
+   `C:\TMP\TrafagSalesExporter_release_eafd1c5` steht auf `c9208b5` *(seit 13.11. 09:00 auf `052c5a3`)*; vor jedem Deploy auf den gewuenschten Commit ziehen.
 4. **CO-PA `T76K912866`:** laut Ingo in P76 importiert. Offen: Gateway-Caches in P76 (`/IWBEP/CACHE_CLEANUP` alle Modelle, dann
    `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL`), Vorschau `shopfloor/api/sap/copa?tag=2026-10-01` gegen September
    (6'531'197.94 / 7'878'114.69), dann `Shopfloor:SapCoPaEnabled = true` und Deploy, Historie ab 01.01.2026 nachladen.

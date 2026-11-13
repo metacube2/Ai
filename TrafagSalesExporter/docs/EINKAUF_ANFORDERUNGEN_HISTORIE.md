@@ -1,6 +1,6 @@
 # Einkaufs-Dashboard: Anforderungen, Korrekturen und offene Punkte
 
-Stand: 2026-11-12 (Doku-Pruefung: Vermerke zu Reiter Spend, Spend-Matrix, M7 und Delta-Laufzeit); davor 2026-10-29 (Ueberholt-Vermerke in 3, 4 und 5 nachgetragen); Inhalt vom 2026-08-17, Lagerwert-Abschnitt in 3 nachgetragen am 2026-09-28. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
+Stand: 2026-11-13 (Wuensche Marco Widmer 12.11. umgesetzt, Abschnitt 3); davor 2026-11-12 (Doku-Pruefung: Vermerke zu Reiter Spend, Spend-Matrix, M7 und Delta-Laufzeit); davor 2026-10-29 (Ueberholt-Vermerke in 3, 4 und 5 nachgetragen); Inhalt vom 2026-08-17, Lagerwert-Abschnitt in 3 nachgetragen am 2026-09-28. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
 (Formel-Review 2026-07-06, Umsetzungsplan und Vorbereitung 2026-07-09, Review Marco
 2026-07-10, Einkaufssitzungen 2026-07-23 und 2026-07-30).
 
@@ -44,6 +44,15 @@ Konsequenz im Code: Der Zeitraumfilter wirkt nur auf Vergangenheits-KPIs ueber `
 Periode ohne Obergrenze auf heute.
 
 ## 3. Umgesetzt
+
+### Wuensche Marco Widmer / Armin, Mail 2026-11-12 (umgesetzt und produktiv 2026-11-13, `052c5a3`)
+
+Register Offene Bestellungen und Kontrakte ausgeblendet; Spend-Aufriss ohne Kacheln und Volumenbalken, Anzahl Artikel nach XYZ,
+Massnahmenmatrix in Marcos Reihenfolge, Kuchen je Einstieg, Produktgruppe nach Verwendung : Lieferant statt der Einstiege nach
+eigenem Disponenten, neue Aufrisse Region/Disponent > Warengruppe > Lieferant, Lebenszyklus-/Sortiments-Code entfernt,
+Herstellkosten-Spalte im Materialanteil. Einzelheiten `docs/rag/PURCHASING.md` Abschnitt „Mail Marco Widmer 12.11.“.
+*Damit ueberholt:* die Einstiege „Produktgruppe : Lieferant“ (Entscheid 2026-10-26) und „Produktgruppe : Warengruppe“ (Wunsch
+2026-10-23, Budgeterstellung) sowie die LZ-/Sortiments-Einstiege vom 2026-10-08.
 
 ### Formel- und Logikkorrekturen (2026-07-06, alle umgesetzt)
 
