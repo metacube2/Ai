@@ -807,6 +807,7 @@ lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege)
   Kontrollwerte (Feedback Punkt 6) muessen mit Filter stimmen, und MLE08+09, MLM01 und `tr5.prod` duerfen sich nicht bewegen (der
   Materialausschluss gilt fuer jede ShopRmSet-Gruppe). DW: der Vorrat lag in der Vorschau 12:25 rund 1'400 ueber Fabios ZC22 (DL6 und
   DW1 mit numerischem Material zaehlen jetzt mit); vor dem Einschalten im selben Moment gegen ZC22 D* mit Layout pruefen.
+- **Oberflaeche nach Patch 08 (15:13):** im Chrome nicht ansehbar (Arbeits-Chrome meldete zweimal `ERR_NAME_NOT_RESOLVED` fuer den Servernamen, curl vom selben Rechner ging). Ersatzweise per HTTP geprueft: `index.html` laedt `app.js?v=a337e9cd`, die ausgelieferte `app.js` traegt den Marker „Patch 08 (2026-11-13)“ und parst fehlerfrei (Node `new Function`), `api/config` hat 23 Module (ohne `cz`, `mtf`, `sensoren`, `czch` bleibt) und 23 Agenda-Eintraege, alle mit vorhandenem Modul, Tagesumsatz mit neuer Formel. Die Seiten PPA-Grafik und Forecast im Browser sind damit **nicht** gesehen (Sichtpruefung Ingo oder Fabio).
 - **Montag 04:00 stimmt noch nicht ueberall mit dem Excel:** richtig sind dann die rollenden Fenster, TR5/DW-Material und der DW-Verzug;
   TX, Verzug TR5/TX/SEH, die Logistik und CO-PA erst nach Import und Einschalten. Der am 02.11. gespeicherte Verkaufswert (November statt
   Oktober) bleibt, die neue Monatsregel gilt ab jetzt (Neuschreiben nur auf Wunsch Ingo/Fabio).
