@@ -517,9 +517,13 @@ danach geloescht; `112'027` Verkaufszeilen):
 | TRUS | 1'804 | 6 | 0,3 % | 0,1 % | 0 |
 
 Weiterhin gilt: keine Zeile hat nur eines oder zwei der Lieferantenfelder. **Produktive Einstellungen** (aus `ExportSettings`
-gelesen): `SupplierFallbackMode = ChPlantMaster`, `InternalSupplierCostSourceMode = DeliveringEntityCosts`. Der Beschluss B1 vom
-27.08. („kein Lieferant = Standardkosten der verkaufenden Gesellschaft“, `ISS-003.5`) ist damit als Auswahl vorhanden, aber
-**nicht eingestellt**; ohne Lieferant entscheidet weiter der CH-Werkstamm (so auch `ISS-007.3`). Frage an Andreas, offen.
+gelesen): `SupplierFallbackMode = ChPlantMaster`, `InternalSupplierCostSourceMode = DeliveringEntityCosts`. Ohne Lieferant
+entscheidet also weiter der CH-Werkstamm. **Das ist bewusst so:** Entscheidungsrichtung Ingo vom 27.08.
+(`docs/FINANCE_STANDARDKOSTEN.md` 7a), der Werkstamm-Fallback bleibt Standard, Andreas' einfachere Variante B1 („kein Lieferant
+= Standardkosten der verkaufenden Gesellschaft“) ist als Schalter waehlbar. Welche Variante gelten soll, steht weiter als
+offener Punkt bei Andreas (`docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md`, `ISS-007.3`).
+*(Berichtigt am 2026-11-13 nach Gegenpruefung: die erste Fassung dieses Absatzes nannte den Beschluss „nicht eingestellt“, als
+waere das ein Versaeumnis.)*
 
 **Italien, Zeile ohne Lieferant (neu, `ISS-003.6`):** `499` Zeilen mit `1'068'053` EUR ohne Lieferant, davon 2025 `186` Zeilen
 mit `500'912` EUR (genau die Zeile in Andreas' Bild) und 2026 `313` Zeilen mit `567'141` EUR. *Damit ueberholt: „es bleiben nur
@@ -532,7 +536,11 @@ Picostat Railway, 8254 Transmitter), `49` sonstige, `7` Hausnummern; dazu `7` Ze
 Dienstleistungsrechnungen an Trafag AG). Liste als Excel im Mailentwurf an Paola.
 
 **Italien, Trafag Italia als Lieferant:** `1'189` Zeilen, `225'095` EUR, `127` Artikel, **ausschliesslich Hausnummern
-`M_IT01_*`** (Lohnarbeit, Zertifikate, lokal konfektionierte Artikel). Gewollt nach Beschluss B2 vom 27.08. Der Kontenfilter
+`M_IT01_*`**. Trafag Italia als interner Lieferant ist nach Beschluss B2 vom 27.08. zulaessig, und vieles ist erkennbar lokal
+(`LAVORAZIONE`, `CERTIFICATI`, `RT - P - BASE`). **Offen und nicht belegt:** die zwei groessten Artikel `M_IT01_006802` und
+`M_IT01_006340` („8472.79.52.7004.0200.SCHENKER…“, zusammen rund `112'700` EUR, die Haelfte des Werts) sind dem Namen nach
+Trafag-Transmitter unter italienischer Hausnummer. Kommen sie von Trafag AG, rechnet die Zeile mit Italiens Einkaufspreis
+statt mit den Konzernkosten. Frage steht im Entwurf an Paola. Der Kontenfilter
 (`47005%` ohne `4700504%`) waehlt nur die Erloeskonten und ist seit dem 30.09. gegen das Hauptbuch abgestimmt (`ISS-021`); mit
 dem Lieferanten hat er nichts zu tun.
 

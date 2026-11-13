@@ -19,7 +19,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   **Italien hat wieder 499 Zeilen (1,07 Mio. EUR) ohne Lieferant**, 162 Artikel, 86 % davon bei den sechs bis 29.09.
   ausgeschlossenen Kunden (`ISS-003.6`). UK: TR09 mit zwei Namen ist eine einzelne Zeile, ohne Wirkung (`ISS-003.7`).
   TR DE: seit 09/2026 751 Zeilen nur mit `ALPHAPLAN-ID` (`ISS-016` wieder offen). Produktiv eingestellt ist
-  `SupplierFallbackMode = ChPlantMaster`, der Beschluss „kein Lieferant = lokale Standardkosten“ vom 27.08. also nicht.
+  `SupplierFallbackMode = ChPlantMaster` (bewusst Standard seit 27.08.; Andreas' Variante „kein Lieferant = lokale Standardkosten“
+  ist als Schalter waehlbar, sein Entscheid dazu steht aus).
   **Sales_All zeigt seit dem Deploy 13.11. 10:31 (`df48301`) die wirksame Zuordnung:** Blatt Sales Spalten 55 bis 57
   (`Supplier Type`, `Delivering Entity`, `Cost Source`), Finance Details 43 und 44. Der erste Export damit ist noch zu pruefen.
   Vier Mailentwuerfe in Ingos Downloads. Detail: `docs/FINANCE_SUPPLIER.md` Abschnitt 9.

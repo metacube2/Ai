@@ -9,7 +9,7 @@ Auftrag Ingo „mach alles was du ohne mich machen kannst, du kannst messen“. 
 Spanien `c9208b5` weiter draussen; gemergt `15105ed`): Sales_All zeigt die wirksame Lieferantenzuordnung (Blatt Sales Spalten
 55 bis 57, Finance Details 43/44). Produktiv-DB nur lesend nachgemessen: Italien wieder 499 Zeilen / 1,07 Mio. EUR ohne
 Lieferant (162 Artikel, `ISS-003.6`), UK TR09 ist eine Einzelzeile (`ISS-003.7`), TR DE seit 09/2026 751 Zeilen nur mit
-`ALPHAPLAN-ID` (`ISS-016`), Fallback-Schalter steht auf CH-Werkstamm (Beschluss B1 nicht eingestellt). Vier Mailentwuerfe in
+`ALPHAPLAN-ID` (`ISS-016`), Fallback-Schalter steht bewusst auf CH-Werkstamm (Andreas' Variante B1 waehlbar, sein Entscheid offen). Vier Mailentwuerfe in
 `C:\Users\koi\Downloads` (Andreas, Rohail, Cornell, Paola), **nicht gesendet**.
 **Offen:** (1) Export 12:00 pruefen (Spalten, Verteilung, Zeilenzahl und Summe gegen den Vortag), erst danach die Mail an
 Andreas senden; (2) Entscheide Ingo: DE-Uebergangsregel ueber die eindeutige ID, Spanien-Deploy, Fallback-Schalter,
