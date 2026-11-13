@@ -50,9 +50,10 @@ public class ShopfloorForecastTests
         var auto = config.ModuleList.SelectMany(m => m.Fields.Select(f => (m, f))).Where(x => x.f.Src != "manuell").ToList();
         // Paket 2026-10-16: Verzug MTS entfernt, FPY SEH aus SAP (J11); Paket 2026-11-01: ae_tr5/u_tr5 entfernt (Transmitter = TR5 + TX)
         // 2026-11-09: seh.ziel (Offene Tagesmenge) mit planned_source sap (Fabios config_seh_tagesmenge_sap.js) -> 128
-        Assert.Equal(128, auto.Count(x => x.f.Src == "sap"));
+        // 2026-11-13: Module cz, mtf, sensoren entfernt (Paket Fabio 13.11., config_module_entfernen.js, 25 SAP-Felder) -> 103
+        Assert.Equal(103, auto.Count(x => x.f.Src == "sap"));
         var mes = auto.Where(x => x.f.Src == "mes").ToList();
-        Assert.Equal(4, mes.Count);
+        Assert.Equal(3, mes.Count);   // 2026-11-13: FPY TR5, TX, DW (CZ entfernt); mit den 103 SAP-Feldern Fabios 106 Felder
         Assert.All(mes, x => Assert.Equal("fpy", x.f.Key));
         Assert.All(auto, x => Assert.NotNull(x.f.Sap));
     }

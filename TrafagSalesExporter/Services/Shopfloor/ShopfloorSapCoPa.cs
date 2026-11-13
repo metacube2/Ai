@@ -12,9 +12,13 @@ namespace TrafagSalesExporter.Services.Shopfloor;
 /// wie der KE30-Bericht Z0001-000006 (P76 09.2026 Bukrs 1100: F 7'878'114.69, A 6'531'197.94 = Fabios Kontrollwerte).</item>
 /// <item>ae_aktuell / umsatz_ist: Summe aller Sparten; ae_tx / u_tx: Sparte 0005 Transmitter (TR5 + TX); ae_dw / u_dw: Sparte 0003 DW.
 /// ae_rest / u_rest rechnet die Konfiguration.</item>
-/// <item>Konvention wie Verkauf J4 (<see cref="ShopfloorSapVerkauf"/>): Eintrag vom Tag D = Stand bis D-1, Monat des Vortags.</item>
+/// <item>Konvention wie Verkauf J4 (<see cref="ShopfloorSapVerkauf"/>): Eintrag vom Tag D = Stand bis D-1. Periode = Monat des
+/// letzten Arbeitstags vor D (seit 2026-11-13, Paket Fabio 13.11. Punkt 9; vorher Monat des Vortags).</item>
+/// <item>Stichtag nach HZDAT (Angelegt am) bis D-1, nicht BUDAT (Paket Fabio 13.11. Punkt 8, Kontrollwerte je Tag
+/// docs/shopfloor_paket_2026-11-13/). Braucht die Eigenschaft Hzdat am Set; Schalter <c>Shopfloor:SapCoPaHzdat</c>. Ohne Schalter
+/// summiert das Set die ganze Periode (Stand der Abfrage).</item>
 /// </list>
-/// Doku: docs/SHOPFLOOR_2026-10-07.md Abschnitt 20.
+/// Doku: docs/SHOPFLOOR_2026-10-07.md Abschnitte 20, 22.
 /// </summary>
 public static class ShopfloorSapCoPa
 {
@@ -23,10 +27,11 @@ public static class ShopfloorSapCoPa
     public const string SparteTransmitter = "0005";
     public const string SparteDw = "0003";
 
-    public static string Filter(string bukrs, DateOnly day)
+    public static string Filter(string bukrs, DateOnly day, bool hzdat = false)
     {
-        var monat = day.AddDays(-1);
-        return $"Bukrs eq '{bukrs}' and Gjahr eq '{monat:yyyy}' and Perde eq '{monat.Month:000}'";
+        var monat = ShopfloorSapVerkauf.LetzterArbeitstag(day);
+        var filter = $"Bukrs eq '{bukrs}' and Gjahr eq '{monat:yyyy}' and Perde eq '{monat.Month:000}'";
+        return hzdat ? filter + $" and Hzdat le '{day.AddDays(-1):yyyyMMdd}'" : filter;
     }
 
     /// <summary>Werte fuer den Abfragetag aus den Zeilen von CoPaSumSet. Schreibt nichts.</summary>
@@ -35,7 +40,7 @@ public static class ShopfloorSapCoPa
         decimal Sum(string vrgar, string? sparte)
             => rows.Where(r => Text(r, "Vrgar") == vrgar && (sparte is null || Sparte(Text(r, "Wwpsp")) == sparte))
                    .Sum(r => Dec(r, "Netto"));
-        var monat = day.AddDays(-1);
+        var monat = ShopfloorSapVerkauf.LetzterArbeitstag(day);
         var verkauf = new JsonObject
         {
             ["ae_aktuell"] = Round(Sum("A", null)),

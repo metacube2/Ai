@@ -14,9 +14,15 @@ public class ShopfloorSapCoPaTests
     [Theory]
     [InlineData(2026, 10, 1, "Bukrs eq '1100' and Gjahr eq '2026' and Perde eq '009'")]   // Monatserster: Vormonat
     [InlineData(2026, 11, 10, "Bukrs eq '1100' and Gjahr eq '2026' and Perde eq '011'")]
+    [InlineData(2026, 11, 2, "Bukrs eq '1100' and Gjahr eq '2026' and Perde eq '010'")]   // Montag: letzter Arbeitstag Fr 30.10.
     [InlineData(2027, 1, 1, "Bukrs eq '1100' and Gjahr eq '2026' and Perde eq '012'")]
-    public void Filter_MonatDesVortags(int y, int m, int d, string erwartet)
+    public void Filter_MonatDesLetztenArbeitstags(int y, int m, int d, string erwartet)
         => Assert.Equal(erwartet, ShopfloorSapCoPa.Filter("1100", new DateOnly(y, m, d)));
+
+    [Fact]
+    public void Filter_MitHzdat_StandBisVortag()
+        => Assert.Equal("Bukrs eq '1100' and Gjahr eq '2026' and Perde eq '010' and Hzdat le '20261101'",
+            ShopfloorSapCoPa.Filter("1100", new DateOnly(2026, 11, 2), hzdat: true));
 
     [Fact]
     public void Compute_September_Wie_Fabios_Kontrolle()

@@ -20,8 +20,8 @@ public class ShopfloorSapVerzugTests
     [InlineData("DS1", "DW")]
     [InlineData("DB1", "DW")]
     [InlineData("D10", "DW")]
-    [InlineData("DW1", null)]   // Ruestpapiere, bewusst keiner Abteilung (Paket 16.10.)
-    [InlineData("DL6", null)]
+    [InlineData("DW1", "DW")]   // seit Paket Fabio 13.11.: D* ohne Ausnahmen (DW1 faellt ueber Material 1-99999 weg)
+    [InlineData("DL6", "DW")]
     [InlineData("001", null)]
     public void Abteilung_Wie_Fabios_Disponenten(string dispo, string? erwartet)
         => Assert.Equal(erwartet, ShopfloorSapVerzug.Abteilung(dispo));
@@ -54,10 +54,10 @@ public class ShopfloorSapVerzugTests
 
         Assert.Equal("2026-11-02", (string)r["day"]!);
         var ppd = r["werte"]!["ppd"]!;
-        Assert.Equal(0L, (long)ppd["verzug_seh"]!);
+        Assert.Equal(60L, (long)ppd["verzug_seh"]!);   // SEH ohne Materialfilter (Paket Fabio 13.11.)
         Assert.Equal(15L, (long)ppd["verzug_tr5"]!);
-        Assert.Equal(0L, (long)ppd["verzug_tx"]!);
-        Assert.Equal(7L, (long)ppd["verzug_dw"]!);
+        Assert.Equal(3L, (long)ppd["verzug_tx"]!);    // TX ohne Materialfilter
+        Assert.Equal(107L, (long)ppd["verzug_dw"]!);   // DS1 und DW1 mit numerischem Material zaehlen (D* ohne Ausnahmen)
         Assert.Equal(2, (int)r["detail"]!["TR5"]!["auftraege"]!);
     }
 
@@ -81,12 +81,32 @@ public class ShopfloorSapVerzugTests
               {"Typ":"VF","Aufnr":"3","Dispo":"DW2","Matnr":"40123","Datum":"20261101","Menge":"4"}
             ]
             """);
-        var mitFilter = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows);
-        Assert.Equal(0L, (long)mitFilter["werte"]!["ppd"]!["verzug_seh"]!);
-        Assert.Equal(4L, (long)mitFilter["werte"]!["ppd"]!["verzug_dw"]!);
-        var ohneSeh = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows, ["TR5", "TX", "DW"]);
-        Assert.Equal(6L, (long)ohneSeh["werte"]!["ppd"]!["verzug_seh"]!);
+        // Vorgabe seit Paket Fabio 13.11.: Materialfilter nur TR5 und DW
+        var standard = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows);
+        Assert.Equal(6L, (long)standard["werte"]!["ppd"]!["verzug_seh"]!);
+        Assert.Equal(4L, (long)standard["werte"]!["ppd"]!["verzug_dw"]!);
+        var alle = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows, ["SEH", "TR5", "TX", "DW"]);
+        Assert.Equal(0L, (long)alle["werte"]!["ppd"]!["verzug_seh"]!);
         var ohne = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 2), rows, []);
         Assert.Equal(13L, (long)ohne["werte"]!["ppd"]!["verzug_dw"]!);
+    }
+
+    [Fact]
+    public void Untergrenze_Laesst_Aeltere_Auftraege_Weg()
+    {
+        // Paket Fabio 13.11. Punkt 6: Eckendtermin 01.01.2026 bis Vortag
+        var rows = Rows("""
+            [
+              {"Typ":"VF","Aufnr":"1","Dispo":"EL1","Matnr":"64708","Datum":"20251231","Menge":"50"},
+              {"Typ":"VF","Aufnr":"2","Dispo":"EL1","Matnr":"64708","Datum":"20260101","Menge":"30"},
+              {"Typ":"VF","Aufnr":"3","Dispo":"EL1","Matnr":"64708","Datum":"20261112","Menge":"7"}
+            ]
+            """);
+        var mit = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 13), rows, [], new DateOnly(2026, 1, 1));
+        Assert.Equal(37L, (long)mit["werte"]!["ppd"]!["verzug_tx"]!);
+        Assert.Equal(1, (int)mit["vor_untergrenze"]!);
+        Assert.Equal("2026-01-01", (string)mit["ab"]!);
+        var ohne = ShopfloorSapVerzug.Compute(new DateOnly(2026, 11, 13), rows, []);
+        Assert.Equal(87L, (long)ohne["werte"]!["ppd"]!["verzug_tx"]!);
     }
 }

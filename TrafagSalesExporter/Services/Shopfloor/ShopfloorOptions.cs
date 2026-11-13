@@ -74,16 +74,32 @@ public sealed class ShopfloorOptions
     public bool SapCoPaEnabled { get; set; }
 
     /// <summary>
-    /// Abteilungen, fuer die der Verzug nur Material 1 bis 99999 zaehlt (Definition PPD, A. Tran). Vorgabe alle vier; mit
-    /// leerem Text rechnet der Verzug ohne Materialfilter (SEH hat nur alphanumerische Materialien, mit Filter immer 0). Kommagetrennt,
-    /// weil der Konfigurations-Binder eine leere Liste nicht als Ueberschreibung liest. 2026-11-10. Seit 2026-11-13 leer (Mail Fabio
-    /// 13.11.: Definition PPD nach Klaerung mit Sergio/Anh Nhi ohne Materialfilter, Entscheid Ingo).
+    /// Abteilungen, fuer die Auftragsvorrat und Verzug nur Material 1 bis 99999 zaehlen. Kommagetrennt, weil der Konfigurations-Binder
+    /// eine leere Liste nicht als Ueberschreibung liest; leer = ohne Materialfilter. Verlauf: 2026-11-10 nur Verzug
+    /// (`VerzugMaterialFilter`, alle vier), 2026-11-13 morgens leer (Mail Fabio), seit 2026-11-13 mittags fuer Vorrat und Verzug
+    /// gemeinsam „TR5,DW“ (Paket Fabio 13.11. Punkte 2, 3 und 6: TR5 wie /PPA EKX ALLE, DW D* numerisch; SEH und TX ohne).
     /// </summary>
-    public string VerzugMaterialFilter { get; set; } = "";
+    public string MaterialFilter { get; set; } = string.Join(",", ShopfloorSapVerzug.StandardMaterialFilter);
 
-    public string[] VerzugMaterialFilterListe()
-        => VerzugMaterialFilter.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    public string[] MaterialFilterListe()
+        => MaterialFilter.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(x => x.ToUpperInvariant()).ToArray();
+
+    /// <summary>
+    /// Untergrenze des Eckendtermins beim PPD-Verzug (JJJJ-MM-TT, leer = ohne). Seit 2026-11-13 der 01.01.2026 (Paket Fabio 13.11.
+    /// Punkt 6, wie das Excel der Teamleiter; Entscheid Ingo). Ab Januar 2027 mit Fabio neu klaeren.
+    /// </summary>
+    public string VerzugAb { get; set; } = "2026-01-01";
+
+    public DateOnly? VerzugAbDatum()
+        => DateOnly.TryParseExact(VerzugAb.Trim(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var d) ? d : null;
+
+    /// <summary>
+    /// CO-PA (CoPaSumSet) mit Stichtag nach HZDAT abfragen: Filter <c>Hzdat le 'JJJJMMTT'</c> = Vortag (Paket Fabio 13.11. Punkt 8:
+    /// „Stand bis Vortag nach HZDAT, nicht BUDAT“). Erst einschalten, wenn das Set in P76 die Eigenschaft Hzdat kennt (sonst 400).
+    /// </summary>
+    public bool SapCoPaHzdat { get; set; }
 
     /// <summary>Uhrzeiten des Abgleichs (HH:mm, Werktage).</summary>
     public List<string> SapSyncTimes { get; set; } = ["04:00", "12:45"];   // 04:00 seit 2026-10-16 (Wunsch Fabio, Entscheid Ingo), vorher 05:45

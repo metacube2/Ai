@@ -118,12 +118,18 @@ public class ShopfloorStichtagTests
     }
 
     [Fact]
-    public void Verzug_Rechnet_Ohne_Materialfilter_Und_Ist_Eingeschaltet()
+    public void Vorrat_Und_Verzug_Mit_Materialfilter_TR5_DW_Und_Untergrenze_2026()
     {
-        Assert.Empty(new ShopfloorOptions().VerzugMaterialFilterListe());
+        // Paket Fabio 13.11.: TR5 und DW nur Material 1-99999 (Vorrat und Verzug), Verzug ab 01.01.2026 (Entscheid Ingo)
+        var options = new ShopfloorOptions();
+        Assert.Equal(["TR5", "DW"], options.MaterialFilterListe());
+        Assert.Equal(new DateOnly(2026, 1, 1), options.VerzugAbDatum());
+        Assert.False(options.SapCoPaHzdat);
         var appsettings = JsonNode.Parse(File.ReadAllText(Path.Combine(ShopfloorTestEnv.ProjectRoot, "appsettings.json")))!["Shopfloor"]!;
         Assert.True((bool)appsettings["SapVerzugEnabled"]!);
-        Assert.Equal("", (string)appsettings["VerzugMaterialFilter"]!);
+        Assert.Equal("TR5,DW", (string)appsettings["MaterialFilter"]!);
+        Assert.Equal("2026-01-01", (string)appsettings["VerzugAb"]!);
+        Assert.Null(appsettings["VerzugMaterialFilter"]);
     }
 
     [Fact]
