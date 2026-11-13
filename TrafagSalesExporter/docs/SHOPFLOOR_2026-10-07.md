@@ -757,7 +757,7 @@ Die Werte vom 13.11. bleiben eingefroren (Stand 06:16); die neuen Regeln schreib
 lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege).
 
 **Befunde aus dem Nachrechnen des Pakets:**
-- **Verzug-Luecke = vermutlich ZC22-Layoutfilter.** TR5 Dashboard 559 (alle Materialien) gegen Fabios Abzug 320, Luecke 239, genau wie
+- **Verzug-Luecke = ZC22-Layoutfilter** (*Vermutung bestaetigt durch den P76-Befund, siehe unten*). TR5 Dashboard 559 (alle Materialien) gegen Fabios Abzug 320, Luecke 239, genau wie
   am 09.11. die Luecke durch den Filter des Standardlayouts `/ P00 TX` auf Arbeitsplatz und Systemstatus (465 gegen 226, Abschnitt 19).
   In Fabios Abzug ist der aelteste TX-Auftrag vom 10.11., das Dashboard zaehlt 16 ueberfaellige TX-Auftraege. Der Entscheid vom
   13.11. morgens „ohne Layoutfilter“ waere dann der Grund der Abweichung. Pruefung in P76 laeuft (Phase B).
@@ -766,10 +766,27 @@ lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege)
   seinem Text ueberein.
 - **Transmitter-Sparte:** Mail 0005, Feldliste „0005 (+0006)“; entscheidet die CO-PA-Vorschau gegen die Kontrollwerte.
 
-**Phase B (SAP), laeuft:** P76 nur lesend (ZC22 mit und ohne Layoutfilter, Filterwerte, `/PPA`-Varianten, `ShopAufSet` VZ/VR je
-Auftrag gegen Fabios Abzug; ZC27 `ZPP_RM_MENGEN` Quelltext und Fabios Beleg MLE02 05.11. 644 gegen 1'059), Befund
-`saptasks/shopfloor_sap/P76_BEFUND_2026-11-13.md`. Danach in T76 ein Transport: `ShopRmSet` letzter Vorgang (Punkt 7), `CoPaSumSet`
-mit `Hzdat` (Punkt 8), falls belegt der Layoutfilter fuer `ShopAufSet`.
+**Phase B (SAP): P76-Befund 13.11. 12:27 bis 12:57 (nur gelesen, `saptasks/shopfloor_sap/P76_BEFUND_2026-11-13.md`):**
+- **ZC22:** Varianten koennen kein Layout mitgeben; es gilt das globale Standardlayout `/ P00 TX` mit zwei Filtern: Systemstatus
+  `E CP 'FREI DRUC RÜCK VOKL*'` (alle Vorgaenge rueckgemeldet, Wareneingang fehlt) und Arbeitsplatz des naechsten Vorgangs
+  (`Z_MD04_NEXT_OPERATION`) `I NP 'M*'`, Letzteres nur mit „Mit Vorgangsdaten“ (alle 18 `/PPA`-Varianten haben es). Set VZ/VR = ZC22
+  ohne Filter je Auftrag. **Der Statusteil allein ergibt Fabios Verzug exakt** (TR5 304 mit Untergrenze 2026, TX 144, SEH 33), und bei SEH
+  liegen Fabios „stimmt“-Werte (Vorrat total 156'679 gegen 156'723, KW 1'863 gegen 1'907) um genau die 44 Stk. der zwei ausgeblendeten
+  RÜCK-Auftraege daneben. TX KW-Luecke 889 = 611 Filter + 438 und −160 Zeitversatz. Der M*-Teil ist nicht sicher belegt (Fabios
+  Abzug 09:05 enthielt solche Auftraege noch). `/PPA SEH ALLE` nimmt Disponent 012 dazu, `/PPA ELX` hat die Untergrenze 01.10.2026
+  (nicht nachgebildet). DW nicht gemessen.
+- **ZC27:** Quelltext P76 = T76, unser `ShopRmSet` rechnet dieselbe Vorgangsregel (hoechster Vorgang an den gewaehlten Arbeitsplaetzen).
+  Fabios Excel-Werte entstehen durch das ZC27-Standardlayout `/NIN`: Material `E CP` `E*`, `D*`, `F*`, `C*`. Nachweis MLE02 05.11.:
+  ZC27 mit `/NIN` 644, ohne Filter 1'059 = Set; ebenso MLE01 03.11. (712/760), MLE04 03.11. (353/744), DLQ72 05.11. (547/659). **Fabios
+  Vorschlag „letzter Vorgang des ganzen Auftrags“ waere falsch** (letzter Vorgang ist 9990 an MLEAUTO, Werte fielen auf null; erklaert
+  auch seine Beobachtung mit dem Intervall MLE01 bis MLM01).
+- **Entscheide Ingo 13.11. nachmittags:** ZC27-Materialfilter wie `/NIN` bauen (Set-Filter optional, Cockpit-Schalter); ZC22-Statusfilter
+  fuer alle Abteilungen nachbilden (vor dem Einschalten DW im selben Moment gegen ZC22 pruefen); M*-Teil bauen, Schalter aus, Fabio
+  fragt die Teamleiter, ob sie mit Vorgangsdaten fahren. Bedingung: Der Import aendert keine Zahl, eingeschaltet wird im Cockpit.
+- **T76 (laeuft):** ein Transport fuer `CoPaSumSet` Hzdat (`saptasks/copa_verkauf/ZCOPA_SUM_HZDAT_2026-11-13.abap`), Materialfilter
+  `ShopRmSet`, Statuszeile und Arbeitsplatz fuer `ShopAufSet`; Plan `saptasks/shopfloor_sap/PLAN_LAYOUTFILTER_2026-11-13.md`.
+- Nebenwirkungen des Lesens: SE16 hat fuer KOI bei AFVC „Felder fuer Selektion: AUFPL“ gespeichert; ueber die Freigabe hinaus nur
+  Anzeige (Liste im Befund, Abschnitt 6).
 
 **Nicht gebaut (Phase C):** die 40 Listenfelder (Rueckstandslisten, TVAV, Angebote, Punkt 10; Fabios Tabellenvorschlaege ausser
 `MARA-ZZTYP` ungeprueft), FPY TR5/TX aus dem MES (Punkt 11, DB-User Marco). Fabios Fragen an die Teamleiter (`Mails_2026-11-13.md`,

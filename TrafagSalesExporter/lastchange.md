@@ -11,8 +11,10 @@ ab 01.01.2026, Paket ins Repo (`docs/shopfloor_paket_2026-11-13/`). **Deployed 1
 Verzug, DW `D*` ohne Ausnahmen, plan5 kumuliert, `Shopfloor:VerzugAb = 2026-01-01`, Verkauf/CO-PA Monat des letzten Arbeitstags,
 CO-PA-HZDAT-Filter vorbereitet (`SapCoPaHzdat` aus), Patch 08 und Module CZ/MTF/Sensoren entfernt, Tagesumsatz am Monatswechsel,
 Handbuch Kapitel 10. Werte 13.11. bleiben eingefroren, neue Regeln ab dem naechsten Arbeitstag 04:00.
-**Offen:** Phase B laeuft (P76 lesend: ZC22-Layoutfilter als Ursache der Verzug- und TX-Luecke, ZC27-Regel; danach T76 `ShopRmSet`
-letzter Vorgang, `CoPaSumSet` Hzdat, ein Transport fuer Ingo). Fragen an Fabio: DW-Verzug 441 gegen seinen Abzug 555, Arbeitstag-Annahme
+**P76-Befund (nur gelesen):** Fabios Werte = ZC22 mit Standardlayout `/ P00 TX` (Status `FREI DRUC RÜCK VOKL*` und naechster
+Arbeitsplatz M* ausgeblendet) und ZC27 mit Standardlayout `/NIN` (Material E*, D*, F*, C* ausgeblendet); Fabios Regel „letzter Vorgang
+des ganzen Auftrags“ waere falsch. Entscheide Ingo: beide Filter nachbilden (M*-Teil Schalter aus). **Offen:** T76-Transport (CO-PA
+Hzdat, Filter `ShopRmSet`/`ShopAufSet`), Import Ingo, Caches P76, Cockpit-Schalter. Fragen an Fabio: DW-Verzug 441 gegen seinen Abzug 555, Arbeitstag-Annahme
 (01./02.01.), Transmitter 0005 oder 0005+0006. `docs/SHOPFLOOR_2026-10-07.md` 22, Wochen_Todo 156.
 
 ## 2026-11-13 10:50: Finance, Mail Andreas (Lieferantenzuordnung, Group HK), deployed

@@ -23,6 +23,11 @@ die Aenderung deshalb ohne Abfrage dorthin geschrieben. Freigabe: zuerst `T76K91
 
 ## 2. Logik
 
+*Nachtrag 2026-11-13:* P76-Befund `P76_BEFUND_2026-11-13.md`: die Vorgangsregel unten ist richtig und gleich ZC27; die Excel-Werte der
+Teamleiter entstehen durch das ZC27-Standardlayout `/NIN` (Material E*, D*, F*, C* ausgeblendet) bzw. bei ZC22 durch `/ P00 TX`
+(Status `FREI DRUC RÜCK VOKL*`, naechster Arbeitsplatz M*). Plan der optionalen Filter: `PLAN_LAYOUTFILTER_2026-11-13.md`.
+
+
 - **ShopRmSet = ZC27** (`ZPP_RM_MENGEN`, Quelltext in T76 am 16.10. gelesen): ARBID aus CRHD (Werk, Arbeitsplaetze der Auswahl);
   AFRU mit ERSDA, Werk, ARBID, `STOKZ = ' '`, `STZHL = 0`; Typencode `MARA-ZZTYP` nur wenn gefiltert; es zaehlt nur die
   Rueckmeldung zum hoechsten AFVC-Vorgang des Auftrags **an den gewaehlten Arbeitsplaetzen**. Ein Aufruf = ein ZC27-Lauf.
