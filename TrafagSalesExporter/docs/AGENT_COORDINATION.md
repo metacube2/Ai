@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, zwei Zeichenfehler im Kurzindex berichtigt; das Aufraeumen des Kurzindex steht aus, 85 Zeilen sind aelter als sieben Tage); davor 2026-11-11
+Stand: 2026-11-13 (Shopfloor Mail Fabio 13.11. abgeschlossen; davor 2026-11-12: Doku-Pruefung: Kopfstand nachgefuehrt, zwei Zeichenfehler im Kurzindex berichtigt; das Aufraeumen des Kurzindex steht aus, 85 Zeilen sind aelter als sieben Tage); davor 2026-11-11
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -43,6 +43,7 @@ Volltext gibt, steht im Kopf der Historiendatei.
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude (Sitzung 13.11. Shopfloor) | Mail Fabio 13.11.: Stichtagswerte nur aus dem ersten SAP-Lauf, Morgenwerte nachladen, Verzug ein, Cache-Busting | 2026-11-13 08:15 | **abgeschlossen, deployed 07:56 (`0e94279`, eigener Zweig ab `e956183` ohne Spanien, gemergt `e7b70f6`), Reservierung frei.** 1555/1555, bitgleich, Alarm nur -wal/-shm. Neustart-Lauf liess Vorrat stehen, Verzug erstmals geschrieben; 66 Morgenwerte 10.-12.11. zurueck. Offen: CO-PA (Caches P76, Ingo), Fabio prueft DW-Verzug/SEH 12.11., Antwort an Fabio. `docs/SHOPFLOOR_2026-10-07.md` 21, Wochen_Todo 36/130/156, Status_kurz, rag/DEPLOYMENT/PROJECT/ARCHITECTURE, LEARNINGS, Router SAP, lastchange |
 | Claude (Sitzung 12.11. ZLO03) | ZREICHW-Altlasten in T76 | 2026-11-12 15:04 | **abgeschlossen**, Reservierung frei: `Z_KOI_REICHW` und Include `Z_KOI_MAINFUNCW` geloescht (Quelltexte in `saptasks/zreichw/alt/`), `Z_REICHW` von Ingo geloescht, Auftrag `T76K911471` nach Entsperren (SE03) geloescht; P76 unveraendert. `saptasks/zreichw/NOTES.md` 7 |
 | Claude (Sitzung 12.11. ZLO03) | ZLO03 FIX 28 Selbst-Stuecklisten (Meldung Armin 12.11., D13006 = 2) | 2026-11-12 14:25 | **abgeschlossen, in P76 wirksam** (Import 13:54, `ZloTopDownSet` 5501 D13006 = 1 um 14:15; Werkzeugproblem MSB3822 behoben 14:20), Reservierung frei, Chat geschlossen. Stand 13:45: Ursache FIX 2 vom 10.03.2026 plus Selbst-Stuecklisten; `Z_ZLO03_TURBO2` FIX 28 aktiv in `T76K912902` (nicht freigegeben), Tests 5501/63759/41019/Bottom-Up D13006 vorher/nachher gruen, ST22 0, Testreport geloescht; kein Deploy der Web-App noetig. Offen bei Ingo: Freigabe/Import, danach Einkauf-Lauf, Antwort Armin. `zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md`, Wochen_Todo 160 |
 | Claude | Doku-Pruefung aller Markdown-Dateien (Auftrag Ingo 12.11.): mechanisches Skript, fuenf Pruefer je Ast, je Ast ein zweiter Agent zur Nachpruefung und Einarbeitung | 2026-11-12 | **abgeschlossen, Reservierung frei, nur Doku und Statuslisten, kein Code, kein SAP, kein Deploy.** 217 Befunde (156 eindeutig, 39 Entscheide Ingo, 22 Struktur); Commits `c55df28`, `f7f0cf7`, `043eae7`, `c77d26a`, `13ba643`, `4ac3746`, `daf8df0`, `9e27a70`; Bericht mit offenen Entscheiden `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md`. Handbuch (`wwwroot/`) nur gemeldet |

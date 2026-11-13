@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-11-12 13:50 (Uebergabe: Doku-Pruefung und Code-Review abgeschlossen, Entscheide offen; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt, nicht deployed; ZC12-Plan; Lieferantenbewertung Paket 1/2; WLAN-Stoerung; Doku-Pruefung: aeltere Kurzstand-Punkte 2026-11-06/09, 2026-11-05 und 2026-09-29 sowie die zwei Verweise auf den Juli-Abgleich als ueberholt markiert); davor 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-11-13 08:15 (Shopfloor Stichtagswerte und Verzug deployed `0e94279`; davor 2026-11-12 13:50: Uebergabe: Doku-Pruefung und Code-Review abgeschlossen, Entscheide offen; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt, nicht deployed; ZC12-Plan; Lieferantenbewertung Paket 1/2; WLAN-Stoerung; Doku-Pruefung: aeltere Kurzstand-Punkte 2026-11-06/09, 2026-11-05 und 2026-09-29 sowie die zwei Verweise auf den Juli-Abgleich als ueberholt markiert); davor 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -9,6 +9,11 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
+- **2026-11-13 (Shopfloor, Mail Fabio 13.11.):** Deploy 07:56 `0e94279` (eigener Zweig, Spanien `c9208b5` weiter **nicht**
+  deployed). Vorrat, offene KW, SEH-Tagesziel, TX `plan5` und PPD-Verzug sind Stichtagswerte aus dem ersten SAP-Lauf des Tages;
+  Morgenwerte 10.-12.11. aus dem Verlauf zurueckgeholt; **PPD-Verzug eingeschaltet, ohne Materialfilter**; Cache-Busting.
+  Offen: CO-PA (Caches P76, Freigabe Ingo), Fabio prueft DW-Verzug 9'575 und SEH 12.11. 212 %; am 13.11. lief 04:00 nicht
+  (ISS-017 Dauerbetrieb). `docs/SHOPFLOOR_2026-10-07.md` 21.
 - **2026-11-12 (Stand 12:00, Einzelheiten `lastchange.md` oben):**
   - **Deploy 11:33 `e956183`**: Kleinigkeiten vom 10.11. und Rexx Hub vorbereitet (Schalter `HrKpi:RexxHub:Enabled` aus).
   - **Spanien Supplier (ISS-003.3)**: Andreas hat entschieden, der Lieferant des letzten Wareneingangs gilt als Supplier.
@@ -55,7 +60,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   kann jetzt Bilder. **Einkauf:** Stuecklisten-Netz „Gehirn“ (WebGL-Prototyp) zuoberst im Spend-Aufriss. Offen: J2/J3 Verkauf (KEA0),
   J6 Auftragsvorrat, Lieferzeit-Ziele, ganze Stueckliste aus SAP. *Nachtrag 2026-11-02:* KEA0 gelesen (Ergebnisbereich 1000, `CE11000`,
   `WWPSP`), J2/J3 weiter offen; J4 Verkauf (erwarteter Umsatz, Gutschriften) aus Fiori gebaut; PPD-Verzug aus ZC22 gebaut (`ShopAufSet` Typ VZ, `T76K912797` am
-  02.11. in P76 importiert, deployed, Schalter `SapVerzugEnabled` noch aus bis zum Abgleich mit ZC22). **Operations KPI:** Rubrik
+  02.11. in P76 importiert, deployed, Schalter `SapVerzugEnabled` noch aus bis zum Abgleich mit ZC22; *ueberholt: seit 13.11. ein, ohne Materialfilter*). **Operations KPI:** Rubrik
   Kunden (OTD/OTIF/OTP je Auftraggeber) produktiv 02.11. 13:57, Abnahme Fabio bestanden (`docs/OPERATIONS_KPI_2026-10-14.md` 5).
   Einzelheiten `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16.
 - **2026-10-14/15:** **Operations** ist eine Menuegruppe mit **KPI** (Liefertreue OTD / OTIF / OTP nach Spezifikation Fabio

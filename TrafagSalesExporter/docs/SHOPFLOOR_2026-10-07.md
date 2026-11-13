@@ -1,11 +1,16 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-10
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-13
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
-stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-10.*
+stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-13.*
 
 Das PPA-Shopfloor (Ersatz fuer das Excel "PPA-Shop-Floor-File-2026") laeuft jetzt im Cockpit als oberster Reiter
 "Operations (Shopfloor)" (Route `/operations`). Das Python-Backend wurde in C# nachgebaut, die Oberflaeche
 (HTML/JS/CSS) ist unveraendert uebernommen. Auf dem Server wird kein Python benoetigt.
+
+Stand 2026-11-13 (Mail Fabio 13.11., Abschnitt 21): Vorrat, offene KW, SEH-Tagesziel, TX `plan5` und PPD-Verzug sind
+**Stichtagswerte**, es gilt der erste erfolgreiche SAP-Lauf des Tages; Morgenwerte 10. bis 12.11. aus dem Verlauf zurueckgeholt;
+**PPD-Verzug eingeschaltet, ohne Materialfilter**; Cache-Busting in `index.html`. Deployed 07:56 (`0e94279`). *Ueberholt damit in der
+Zeile darunter: „`SapVerzugEnabled` steht auf aus“ (CO-PA weiter aus).*
 
 Stand 2026-11-10 (Zeile eingefuegt bei der Doku-Pruefung am 2026-11-12): Paket Fabio vom 07.11. eingespielt (Patch 06 und 07,
 Abschnitt 18); Auftragsvorrat aus SAP wie ZC22 seit 09.11. 15:11 eingeschaltet (`Shopfloor:SapVorratEnabled`, Abschnitt 19);
@@ -527,7 +532,7 @@ Forecast-Aufruf weiterhin 200, Stichtag 01.01.2026 400 (Schutz).
 
 **Offen, Rueckfrage an Fabio:** SEH ergibt mit „Material 1-99999“ immer 0. Alle offenen SEH-Auftraege in T76 haben alphanumerische
 Materialnummern (B62622, C11095, B55118 ...), der Bereich 1 bis 99999 trifft nur numerische Fertigprodukte. Soll fuer SEH der
-Materialfilter wegfallen? Bis zur Antwort rechnet das Cockpit wie das Excel.
+Materialfilter wegfallen? Bis zur Antwort rechnet das Cockpit wie das Excel. *(Beantwortet 2026-11-13: Fabio nennt nach Klaerung mit Sergio/Anh Nhi keinen Materialfilter mehr, Verzug laeuft ohne, Abschnitt 21.)*
 
 **Cockpit (`27badb2`):** `Services/Shopfloor/ShopfloorSapVerzug.cs` (Abteilung je Disponent, Material 1-99999, Summe positiv,
 Fehler statt Zahl, wenn das System den Modus nicht kennt), Aufruf im SAP-Abgleich 04:00/12:45 ueber `ShopfloorSapSync`, geschrieben
@@ -580,7 +585,7 @@ Exakt gleich. **Zwei Befunde fuer Fabio, vor dem Einschalten (`SapVerzugEnabled`
    Layout; das Cockpit rechnet ohne.
 2. **Material 1-99999** (Definition PPD, A. Tran, fuer alle vier Abteilungen) laesst SEH immer bei 0: alle SEH-Materialien sind
    alphanumerisch (B…, C…), auch in P76 (*berichtigt: die Aussage im Chat vom 09.11., SEH habe in P76 numerische Materialien, war falsch*).
-   Die Rueckfrage aus Abschnitt 17 ist damit weiter offen.
+   Die Rueckfrage aus Abschnitt 17 ist damit weiter offen. *(Beantwortet 2026-11-13, Abschnitt 21: ohne Material- und ohne Layoutfilter.)*
 
 **a) Auftragsvorrat (Typ VR):** Der Verzug-Modus erlaubt hoechstens einen Tag Vorschau; deshalb im selben Block von `ShopAufSet` ein Typ
 `VR`: dieselbe Abfrage (offene Fertigungsauftraege und Planauftraege wie ZC22), aber Eckendtermin-Grenze `99991231`. T76, **neuer Auftrag
@@ -610,7 +615,7 @@ DW 1'976, 117'271 / 85'101 / 58'570 / 38'008 / 15'189 — je Bucket gleich.** Er
 zwischen den Abfragen erledigt wurde. TR5 62'958, TX 50'325 (gleiche Logik). SEH-Tageswert 144 statt Fabios 2'814 (Stand Samstag fuer
 Montag; die Montagsauftraege sind inzwischen gemeldet). Einschalten (`SapVorratEnabled`, SEH-Config) wartet auf Ingos OK.
 
-*Nachtrag 2026-11-09 15:15, eingeschaltet (Auftrag Ingo „aktiviere was geht und schalte frei“):* `Shopfloor:SapVorratEnabled = true` (`88e19f6`), Fabios `config_seh_tagesmenge_sap.js` eingespielt (`--check`, dann ohne; `seh.ziel` `planned_source: sap`, dazu Quellenbeschreibung `sap` am Feld, `4585392`; Test SAP-Felder 127 -> 128), deployed 15:11 (`4585392`, 1465/1465, bitgleich). Heute geschrieben per `POST sap/vorrat?tag=2026-11-09` (Header `X-User: claude`): SEH 157'571 / 3M 70'130 / 2M 47'615 / 1M 31'072 / KW 8'840 / Tag 144; TR5 63'921; TX 50'342; DW 117'271; keine manuellen Werte uebersprungen. Ab morgen schreibt der Abgleich 04:00 und 12:45. Verzug (`SapVerzugEnabled`) bleibt aus bis Fabios Antwort. `T76K912858` (ZC22 Systemstatus) ebenfalls in P76 (ohne Schalter).
+*Nachtrag 2026-11-09 15:15, eingeschaltet (Auftrag Ingo „aktiviere was geht und schalte frei“):* `Shopfloor:SapVorratEnabled = true` (`88e19f6`), Fabios `config_seh_tagesmenge_sap.js` eingespielt (`--check`, dann ohne; `seh.ziel` `planned_source: sap`, dazu Quellenbeschreibung `sap` am Feld, `4585392`; Test SAP-Felder 127 -> 128), deployed 15:11 (`4585392`, 1465/1465, bitgleich). Heute geschrieben per `POST sap/vorrat?tag=2026-11-09` (Header `X-User: claude`): SEH 157'571 / 3M 70'130 / 2M 47'615 / 1M 31'072 / KW 8'840 / Tag 144; TR5 63'921; TX 50'342; DW 117'271; keine manuellen Werte uebersprungen. Ab morgen schreibt der Abgleich 04:00 und 12:45. Verzug (`SapVerzugEnabled`) bleibt aus bis Fabios Antwort. *(Ueberholt 2026-11-13, Abschnitt 21: „schreibt 04:00 und 12:45“ ueberschrieb die Stichtagswerte tagsueber; seither gilt der erste Lauf des Tages. Verzug seit 13.11. ein.)* `T76K912858` (ZC22 Systemstatus) ebenfalls in P76 (ohne Schalter).
 
 ## 20. Tag 10.11.: DLQ72, Backend-Schutz, plan5, CE11000-Skonto (Auftrag Ingo „2-6 umsetzen durch dich“, Stand 2026-11-10)
 
@@ -630,16 +635,65 @@ Montag; die Montagsauftraege sind inzwischen gemeldet). Einschalten (`SapVorratE
   Kontrollwerte**; ohne `VV240` 303.20 bzw. 196.47 zu hoch, `VV245` ist 0. Buchungskreis 1200 hat eigene Zeilen (F 334'938, A 368'478),
   nicht in Fabios Wert. Bau offen: ein Set mit Monatssummen je Satzart und `WWPSP` (0003 DW, 0005 Transmitter) in T76, da `CE11000` fuer
   `RFC_READ_TABLE` zu gross ist.
-- **b) Verzug:** unveraendert aus (Fabios Antwort zu Material 1-99999 und Layoutfilter offen).
+- **b) Verzug:** unveraendert aus (Fabios Antwort zu Material 1-99999 und Layoutfilter offen). *(Ueberholt 2026-11-13: eingeschaltet ohne Filter, Abschnitt 21.)*
 
 *Nachtrag 2026-11-10 08:46 (`436e8ad`, deployed, 1483/1483):*
 - **b) Verzug-Schalter (Wunsch Ingo bis Fabios Entscheid):** `Shopfloor:VerzugMaterialFilter` (Text, kommagetrennt, Vorgabe
   `SEH,TR5,TX,DW` wie PPD; leer = ohne Materialfilter; Text, weil der Konfigurations-Binder eine leere Liste nicht als Ueberschreibung
   liest) und `Shopfloor:SapVerzugEnabled` (aus) stehen in `appsettings.json`; die Vorschau zeigt den aktiven Filter. Ein- und Umschalten
-  = Wert aendern und deployen.
+  = Wert aendern und deployen. *(Stand seit 2026-11-13: Filter leer, Schalter ein, Abschnitt 21.)*
 - **d) CO-PA gebaut:** SAP `CoPaSumSet` in T76 (`T76K912866`, `saptasks/copa_verkauf/NOTES.md`), Cockpit `ShopfloorSapCoPa`
   (ae_aktuell/ae_tx 0005/ae_dw 0003 aus Satzart A, umsatz_ist/u_tx/u_dw aus F; Monat des Vortags wie Verkauf J4), Schalter
   `Shopfloor:SapCoPaEnabled` aus, Vorschau `GET/POST sap/copa?tag=`. P76 liefert bis zum Import 502 „404, Set nicht transportiert“.
   **Ingo:** `T76K912866` freigeben und importieren, danach P76-Caches, Vorschau fuer `tag=2026-10-01` gegen Fabios September, Schalter ein.
 - T76 aufgeraeumt: `Z_KOI_ZLO_FIX26_TEST`, `Z_KOI_VC_TXT_KOPIE`, `Z_KOI_VC_TXT_TESTID`, `Z_KOI_ZLO03_ALT`, `Z_KOI_ZLO_APP_TEST` geloescht.
 - Q-Faelle im Browser bestaetigt: MOFN offen 191, MRST zurueckgestellt 131, MIAR in Arbeit 23; Produktlinie bei 312 von 345.
+
+## 21. Mail Fabio 13.11.: Stichtagswerte, Morgenwerte nachgeladen, Verzug ein, Cache-Busting (Stand 2026-11-13)
+
+Fabio (Mail 13.11.): Vorrat, offene KW, Tagesmenge, Planmenge TX und DLQ72 sind drin und plausibel. Zwei Punkte: (1) Vorrat
+total/3/2/1 Mte, offene KW, Offene Tagesmenge SEH und Planmenge 5 AT TX nur aus dem Lauf 04:00, danach nicht mehr ueberschreiben;
+die Laeufe 12:45 usw. ueberschrieben sie, «Offene Tagesmenge» zeigte am Nachmittag den Rest statt des Tagesziels, die Tagesleistung
+SEH stand bei 214 bis 2'335 %. Produzierte Mengen, Logistik und Verkauf duerfen tagsueber weiterlaufen. Morgenwerte 09. bis 12.11.
+nachladen, falls moeglich. (2) PPD-Verzug geklaert (Sergio/Anh Nhi): ZC22, Eckendtermin bis Vortag ohne Untergrenze, Disponenten
+S*/EK*/EL*/D* (D* wie beim Vorrat DW), mit Planauftraegen, ohne erledigte, Summe offene Menge, positiv. Plan im Chat, Entscheide Ingo
+(13.11. 07:50): faellt 04:00 aus, gilt der erste erfolgreiche Lauf des Tages; Verzug ohne Materialfilter und ebenfalls Stichtagswert;
+eigener Zweig ohne den Spanien-Commit `c9208b5`; umsetzen bis Deploy.
+
+**Befund vorher (Verlauf `history` produktiv gelesen):** nicht nur 12:45 schrieb neu. Nach jedem Neustart holt `ShopfloorSapSync` den
+letzten Slot sofort nach (`_lastRunSlot` startet leer), deshalb gab es zusaetzliche Laeufe nach Deploys oder Neustarts: 10.11. 08:17,
+08:46, 11:28; 11.11. 16:28; 12.11. 11:34; 13.11. 07:57. Beispiel SEH-Tagesziel 11.11.: 04:01 2'655, 12:46 1'718, 16:28 408.
+**Am 13.11. lief 04:00 nicht**, der erste Lauf war 06:16 (die App lief um 04:00 offenbar nicht; Ursache nicht untersucht, offen).
+
+**Umsetzung (`0e94279`, Zweig `shopfloor-stichtag-1311` ab `e956183`, in den Arbeitszweig gemergt `e7b70f6`):**
+- `ShopfloorSapMengen.Freeze` und `ShopfloorStichtag.Write`: Vorrat (`vorrat_total`, `vorrat_3m`, `vorrat_2m`, `vorrat_1m`,
+  `offen_kw`, SEH `ziel`, TX `plan5`) und Verzug (`ppd.verzug_*`) werden nur geschrieben, solange das Feld fuer den Tag noch keinen
+  SAP-Wert hat. Spaetere Laeufe melden die Felder unter `eingefroren`. Massgebend ist der gespeicherte Stand, nicht die Uhrzeit;
+  damit greift die Regel auch nach Neustarts und beim Knopf. `POST sap/vorrat?ersetzen=1` bzw. `sap/verzug?ersetzen=1` schreibt
+  bewusst neu. Mengen (prod, FPY, Logistik), Verkauf und CO-PA laufen unveraendert tagsueber nach.
+- `GET/POST shopfloor/api/sap/morgenwerte?von=&bis=` (`ShopfloorStichtag.RestoreMorning`, `ShopfloorStore.FirstSapValues`): je Tag,
+  Modul und Feld der erste SAP-Wert aus `history`; schreibt nur Felder zurueck, deren aktueller Wert aus SAP stammt. Neu rechnen
+  geht nicht, weil ShopAufSet nur die heute offenen Auftraege kennt.
+- `Shopfloor:SapVerzugEnabled = true`, `VerzugMaterialFilter = ""` (auch Vorgabe in `ShopfloorOptions`). Disponenten unveraendert
+  (`ShopfloorSapVerzug.Abteilung`, die auch der Vorrat nutzt), kein Layoutfilter.
+- Cache-Busting: `wwwroot/shopfloor/index.html` laedt `style.css?v=…` und `app.js?v=…`; `v` = erste 8 Zeichen SHA256 von `app.js` +
+  `style.css` ohne CR. Der Test `IndexHtml_Laedt_AppJs_Und_StyleCss_Mit_Aktueller_Version` faellt, sobald eine der Dateien sich
+  aendert, bis `index.html` den neuen Wert traegt (er steht in der Fehlermeldung). Fabios `apply_patch.js` fasst `index.html` nicht an.
+- Tests `ShopfloorStichtagTests` (8), Shopfloor 137/137, Release-Worktree 1555/1555. Deploy 07:56 (`0e94279`, bitgleich, Alarm nur
+  `-wal`/`-shm` der Haupt-DB, wieder da). Protokoll `.tmp_deploy_2026-11-13_shopfloor_stichtag.log`.
+
+**Nach dem Deploy produktiv geprueft:**
+- Neustart-Lauf 07:57: alle 22 Vorratsfelder `eingefroren` (Stand 06:16 bleibt), Verzug erstmals geschrieben: SEH 89 (4 Auftraege),
+  TR5 559 (16), TX 567 (16), **DW 9'575 (84)**. DW lag am 09.11. mit Materialfilter bei 185; der Sprung kommt vom weggefallenen Filter
+  (DW hat viele alphanumerische Materialien). Gegen ZC22 P76 ohne Filter noch nicht abgeglichen, Kontrolle durch Fabio.
+- Morgenwerte per `POST sap/morgenwerte?von=2026-11-09&bis=2026-11-13` (Header `X-User: claude`): 66 Felder zurueckgesetzt, danach 0
+  offen. 09.11. bleibt mit dem Wert von 15:12 (erster Wert ueberhaupt, Einschalttag; kein Morgenwert vorhanden). 10.11. aus 04:02,
+  ausser TX `plan5` (gab es erst ab 08:17, Wert 5'937). 11.11. aus 04:01, 12.11. aus 04:02. 13.11. war schon der Wert von 06:16.
+- Tagesleistung SEH danach: 10.11. ziel 2'217 / prod 2'258 = 102 %; 11.11. 2'655 / 2'547 = 96 %; **12.11. 1'687 / 3'572 = 212 %**
+  (auch mit dem echten Morgenwert; prod lag ueber dem Tagesziel, Frage an Fabio).
+- `index.html` auf dem Server mit `?v=32b837e9`, `app.js?v=32b837e9` 200.
+- SAP-Badge `config_seh_tagesmenge_sap.js`: war seit 09.11. eingespielt (`seh.ziel` mit Quelle `sap`, `api/config` liefert `src: sap`),
+  nichts zu tun.
+
+**Offen:** CO-PA (Verkauf AE/Umsatz IST, `CE11000`): `T76K912866` laut Ingo in P76; fehlen Gateway-Caches P76 (Freigabe Ingo), Vorschau
+gegen Fabios September, `SapCoPaEnabled`. Warum 04:00 am 13.11. nicht lief. Fabio: DW-Verzug 9'575 und SEH 12.11. 212 % pruefen.

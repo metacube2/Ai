@@ -1,7 +1,17 @@
 # Last Change
 
-Stand: 2026-11-12 14:25 (Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-13 08:15 (Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## 2026-11-13 08:15: Shopfloor, Mail Fabio 13.11. (Stichtagswerte, Verzug ein), deployed
+
+Plan im Chat, Entscheide Ingo 07:50. **Deployed 07:56 `0e94279`** (eigener Zweig ab `e956183`, Spanien `c9208b5` weiter nicht
+deployed; gemergt `e7b70f6`). Vorrat total/3/2/1 Mte, offene KW, SEH-Tagesziel, TX `plan5` und PPD-Verzug gelten aus dem ersten
+erfolgreichen SAP-Lauf des Tages, spaetere Laeufe und Neustarts lassen sie stehen. Morgenwerte 10.-12.11. per
+`POST sap/morgenwerte` aus dem Verlauf zurueck (66 Felder; 09.11. hat keinen Morgenwert). PPD-Verzug ohne Materialfilter
+eingeschaltet (13.11.: SEH 89, TR5 559, TX 567, DW 9'575). Cache-Busting `index.html` (`?v=` SHA256). SAP-Badge war schon da.
+Offen: CO-PA (Caches P76, Freigabe Ingo), Fabio prueft DW-Verzug und SEH 12.11. (212 %), 04:00 lief am 13.11. nicht (ISS-017).
+Antwort an Fabio noch nicht gesendet. `docs/SHOPFLOOR_2026-10-07.md` 21, Wochen_Todo 36/130/156.
 
 ## Uebergabe 2026-11-12 14:25: ZLO03 FIX 28 (Chat geschlossen)
 
