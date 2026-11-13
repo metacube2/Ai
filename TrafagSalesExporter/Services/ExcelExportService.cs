@@ -463,7 +463,8 @@ public class ExcelExportService : IExcelExportService
                     contribution.ContributionMarginPercent,
                     row.Record.SalesType ?? string.Empty,
                     row.Record.GroupMaterialNumber ?? string.Empty,
-                    row.Record);
+                    row.Record,
+                    GroupMarginCalculator.DeliveringEntityLabel(margin.DeliveringEntity));
             })
             .OrderBy(row => GroupMarginStatuses.Sort(row.Status))
             .ThenBy(row => row.Year)
@@ -1067,7 +1068,9 @@ public class ExcelExportService : IExcelExportService
         string SalesType,
         string GroupMaterialNumber,
         // Ursprungszeile, damit Finance Details (Sales_All) die Kostenbasis je Zeile zuordnen kann (2026-10-06).
-        SalesRecord? Source = null);
+        SalesRecord? Source = null,
+        // Erkannte liefernde Konzerngesellschaft als Anzeigetext ("TR AG", "TR IT", "TR IN" oder leer), 2026-11-13.
+        string DeliveringEntity = "");
 
     internal static void WriteWorkbook(
         string fullPath,
@@ -1166,6 +1169,32 @@ public class ExcelExportService : IExcelExportService
             "Trafag Sachnummer"
         };
 
+        // 2026-11-13 (Mail Andreas Stoller): die Lieferantenfelder sind bei vielen Gesellschaften leer (CH/AT/DE/ES ganz),
+        // die Gruppenmarge ordnet trotzdem zu (CH/AT-Regel, Sales Type, CH-Werkstamm-Fallback). Damit die WIRKSAME
+        // Zuordnung im Blatt Sales pivotierbar ist, drei Spalten additiv am ENDE, nur im zentralen Sales_All (dort wird
+        // die Gruppenmarge gerechnet); die Standortdateien bleiben unveraendert. Zeilen, die die Finance-Regeln
+        // ausschliessen, haben keine Gruppenmargen-Zeile und bleiben leer.
+        List<GroupMarginProofRow>? groupMarginRows = null;
+        Dictionary<SalesRecord, GroupMarginProofRow>? marginBySource = null;
+        if (includeFinanceHelpSheet)
+        {
+            groupMarginRows = BuildGroupMarginProofRows(
+                BuildFinanceProofRows(records, financeRules),
+                groupMarginCostCurrencyMode,
+                resolveCrossRate,
+                groupStandardCosts,
+                chPlantMaterialKeys,
+                supplierFallbackMode,
+                internalSupplierCostSourceMode,
+                foreignProcurementMaterialKeys,
+                marcForeignProcurementMode);
+            marginBySource = new Dictionary<SalesRecord, GroupMarginProofRow>(ReferenceEqualityComparer.Instance);
+            foreach (var marginRow in groupMarginRows)
+                if (marginRow.Source is not null)
+                    marginBySource.TryAdd(marginRow.Source, marginRow);
+            headers = [.. headers, .. SupplierAssignmentHeaders, "Cost Source"];
+        }
+
         for (var i = 0; i < headers.Length; i++)
         {
             ws.Cell(1, i + 1).Value = headers[i];
@@ -1240,6 +1269,12 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 52).Value = record.LineRegistrationDate?.ToString("dd.MM.yyyy") ?? string.Empty;
             ws.Cell(row, 53).Value = record.SalesType ?? string.Empty;
             ws.Cell(row, 54).Value = record.GroupMaterialNumber ?? string.Empty;
+            if (marginBySource is not null && marginBySource.TryGetValue(record, out var salesMargin))
+            {
+                ws.Cell(row, 55).Value = salesMargin.SupplierType;
+                ws.Cell(row, 56).Value = salesMargin.DeliveringEntity;
+                ws.Cell(row, 57).Value = salesMargin.CostSource;
+            }
             row++;
         }
 
@@ -1250,20 +1285,8 @@ public class ExcelExportService : IExcelExportService
             // Gruppenmarge auch im zentralen Sales_All (nicht nur im Nachweis), damit Andreas
             // Umsatz, Kostenbasis und Marge in derselben Datei gegenpruefen kann. Seit 2026-10-06
             // vor Finance Details gerechnet, weil dort die Kosten in CHF je Zeile stehen.
-            var groupMarginRows = BuildGroupMarginProofRows(
-                BuildFinanceProofRows(records, financeRules),
-                groupMarginCostCurrencyMode,
-                resolveCrossRate,
-                groupStandardCosts,
-                chPlantMaterialKeys,
-                supplierFallbackMode,
-                internalSupplierCostSourceMode,
-                foreignProcurementMaterialKeys,
-                marcForeignProcurementMode);
-            var marginBySource = new Dictionary<SalesRecord, GroupMarginProofRow>(ReferenceEqualityComparer.Instance);
-            foreach (var marginRow in groupMarginRows)
-                if (marginRow.Source is not null)
-                    marginBySource.TryAdd(marginRow.Source, marginRow);
+            // Seit 2026-11-13 schon vor dem Blatt Sales gerechnet (siehe oben), hier nur noch verwendet.
+            groupMarginRows ??= [];
             AddFinanceDetailsSheet(workbook, records, financeRules, referenceByMaterial, resolveChfRate, marginBySource);
             AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
             AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
@@ -1273,6 +1296,14 @@ public class ExcelExportService : IExcelExportService
         MarkStandardCostColumns(workbook);
         workbook.SaveAs(fullPath);
     }
+
+    /// <summary>
+    /// Wirksame Lieferantenzuordnung der Gruppenmarge in Sales_All (Mail Andreas Stoller 2026-11-13): "Supplier Type"
+    /// = Intern / Extern / Lokal / Unklar aus GroupMarginSupplierClassifier, "Delivering Entity" = erkannte liefernde
+    /// Konzerngesellschaft (TR AG, TR IT, TR IN) oder leer. Blatt Sales (Spalten 55 und 56, dazu 57 Cost Source) und
+    /// Blatt Finance Details (Spalten 43 und 44).
+    /// </summary>
+    internal static readonly string[] SupplierAssignmentHeaders = ["Supplier Type", "Delivering Entity"];
 
     /// <summary>Spalten mit Standardkosten-Bezug in Sales_All (Wunsch Ingo 2026-10-07).</summary>
     internal static readonly IReadOnlySet<string> StandardCostHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -1474,7 +1505,10 @@ public class ExcelExportService : IExcelExportService
             "Margin CHF",
             "Cost Source",
             "Margin Status",
-            "Cost Timing"
+            "Cost Timing",
+            // 2026-11-13 (Mail Andreas Stoller), additiv am ENDE: wirksame Lieferantenzuordnung der Gruppenmarge.
+            SupplierAssignmentHeaders[0],
+            SupplierAssignmentHeaders[1]
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1570,6 +1604,8 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(rowIndex, 40).Value = margin.CostSource;
                 ws.Cell(rowIndex, 41).Value = margin.Status;
                 ws.Cell(rowIndex, 42).Value = CostTiming(margin.CostSource, countryKey);
+                ws.Cell(rowIndex, 43).Value = margin.SupplierType;
+                ws.Cell(rowIndex, 44).Value = margin.DeliveringEntity;
             }
 
             rowIndex++;
@@ -1692,7 +1728,8 @@ public class ExcelExportService : IExcelExportService
             ("Known Cost Basis", "Berechnet: Menge x Unit Cost. Vorzeichen folgt dem Umsatz (Gutschrift: Umsatz -100, Kosten 60 -> Basis -60), sonst wuerde die Marge doppelt belastet. Bei Lieferant Trafag AG mit Materialtreffer wird stattdessen die echte Konzernkostenbasis (MBEW-STPRS TR AG, CHF) verwendet - erkennbar an Cost Source."),
             ("Margin Value", "Formel im Blatt: Sales Value - Known Cost Basis, NUR wenn Status = OK. Sonst leer - offene Kostenbasis darf nicht als Marge gelesen werden. Dies ist eine BRUTTOMARGE auf Basis der vollen Standardkosten."),
             ("Margin %", "Formel im Blatt: Margin Value / Sales Value, nur bei Status OK."),
-            ("Supplier Type", "Intern = Trafag/GFS im Lieferantentext erkannt; Extern = anderer Lieferant; Unklar = alle drei Lieferantenfelder leer (Quelle liefert keinen Lieferanten, z. B. CH/AT, UK, ES)."),
+            ("Supplier Type", "WIRKSAME Lieferantenzuordnung der Gruppenmarge, auch wenn die Lieferantenfelder der Quelle leer sind. Reihenfolge: (1) CH/AT verkaufen immer als Trafag AG = Intern; (2) Sales Type (nur Indien: FFM/CM = eigene Fertigung, LRD = Bezug von Trafag AG) = Intern; (3) gepflegter Lieferant: Trafag/GFS im Namen = Intern, sonst Extern; (4) kein Lieferant: je nach Einstellung 'Supplier-Fallback' entweder Treffer im CH-Werkstamm (MARC Werk 1100) = Intern, sicherer Nichttreffer = Lokal, oder immer Lokal; ohne Materialnummer = Unklar. Seit 2026-11-13 auch in den Blaettern Sales (Spalte 55) und Finance Details (Spalte 43)."),
+            ("Delivering Entity", "Erkannte liefernde Konzerngesellschaft: TR AG, TR IT oder TR IN; leer bei Extern, Lokal und Unklar. Bestimmt, aus welcher Konzernkostentabelle die Kostenbasis kommt. Intern mit LEERER Delivering Entity heisst: Konzernlieferant erkannt (z. B. GFS, Trafag GmbH), fuer den es keine Konzernkostentabelle gibt; die Zeile rechnet dann mit dem lokalen Standardpreis (offener Fachentscheid ISS-018.7). Blatt Sales Spalte 56, Finance Details Spalte 44."),
             ("Cost Source", "Woher die Kostenbasis kommt: 'Kosten aus Verkaufszeile' (explizit extern), 'Standardkosten der lokalen Gesellschaft' (kein Treffer im geprueften CH-Werkstamm), 'Interner Standardpreis' (intern), 'Konzernkosten TR AG (MBEW-STPRS)' (echte Gruppenkosten), 'Lieferant unklar'. Zusatz bei abweichender Kostenwaehrung: umgerechnet mit dem Tageskurs (Beschluss Andreas 27.08.2026) oder maskiert."),
             ("Status", "OK = Marge belastbar. 'Standardpreis fehlt' = Kostenbasis 0. 'Lieferant unklar' = Lieferantenfelder leer. '" + GroupMarginCostCurrencyConverter.OpenStatus + "' = Kosten- und Verkaufswaehrung verschieden bei Schalter Mask. '" + GroupMarginStatuses.GroupCostMissing + "' = Standort verkauft Konzernware (Sales Type LRD), Konzernkosten zum Material aber nicht auffindbar; der lokale Standardpreis ist dort der IC-Einkaufspreis und wird bewusst nicht verwendet. 'Umsatz fehlt' = Wert 0. Grundregel: fehlende Daten werden markiert, NIE geschaetzt."),
             ("Variable Unit Cost", "NEU/vorbereitet: variabler Anteil des Standardpreises pro Stueck (Quelle: fix/variabel-Split, z. B. SAP Planpreis variabel). Leer = Quelle liefert den Split noch nicht."),

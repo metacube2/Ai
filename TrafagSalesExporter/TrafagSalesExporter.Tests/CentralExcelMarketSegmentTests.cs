@@ -67,7 +67,11 @@ public class CentralExcelMarketSegmentTests
             // 2026-08-27 additiv dahinter: die beiden Rohfelder aus dem Artikelstamm (ISS-013).
             Assert.Equal("Sales Type", sales.Cell(1, MarketSegmentSourceColumn + 2).GetString());
             Assert.Equal("Trafag Sachnummer", sales.Cell(1, MarketSegmentSourceColumn + 3).GetString());
-            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 4).GetString());
+            // 2026-11-13 additiv dahinter: wirksame Lieferantenzuordnung der Gruppenmarge (Mail Andreas Stoller).
+            Assert.Equal("Supplier Type", sales.Cell(1, MarketSegmentSourceColumn + 4).GetString());
+            Assert.Equal("Delivering Entity", sales.Cell(1, MarketSegmentSourceColumn + 5).GetString());
+            Assert.Equal("Cost Source", sales.Cell(1, MarketSegmentSourceColumn + 6).GetString());
+            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 7).GetString());
         }
         finally
         {

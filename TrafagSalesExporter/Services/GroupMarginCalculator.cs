@@ -73,6 +73,17 @@ public static class GroupMarginCalculator
 
         var basis = ResolveCostBasis(line, context);
 
+        // Liefernde Konzerngesellschaft, wie sie die Klassifikation erkennt (Mail Andreas 2026-11-13: die Lieferantenfelder
+        // sind bei vielen Gesellschaften leer, die Zuordnung der Gruppenmarge war in Sales_All nicht sichtbar). Gleicher
+        // Aufruf mit denselben Argumenten wie in GroupMarginCostRules.GroupStandardCost, damit Anzeige und Kostenpfad
+        // nicht auseinanderlaufen. Bewusst VOR dem Schalter "Kostenquelle bei internem Lieferanten": der aendert nur die
+        // Kostenquelle, nicht die erkannte Gesellschaft.
+        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            line.SupplierName, line.Tsc, context.MaterialKey, context.GroupStandardCosts, line.SalesType,
+            context.ChPlantMaterialKeys, context.SupplierFallbackMode,
+            line.SupplierNumber, line.SupplierCountry,
+            context.ForeignProcurementMaterialKeys, context.MarcForeignProcurementMode);
+
         return new GroupMarginEvaluation(
             SupplierType: supplierType,
             MaterialKey: materialKey,
@@ -81,8 +92,19 @@ public static class GroupMarginCalculator
             IsGroupCost: basis.IsGroupCost,
             IsGroupCostMissing: basis.IsGroupCostMissing,
             CostSource: ResolveCostSource(supplierType, basis),
-            Status: ResolveStatus(supplierType, basis, line.NetSalesValue, hasExchangeRate));
+            Status: ResolveStatus(supplierType, basis, line.NetSalesValue, hasExchangeRate),
+            DeliveringEntity: deliveringEntity ?? string.Empty);
     }
+
+    /// <summary>Anzeigetext der liefernden Gesellschaft fuer Excel: "TR AG", "TR IT", "TR IN" oder leer.</summary>
+    public static string DeliveringEntityLabel(string? deliveringEntity)
+        => deliveringEntity switch
+        {
+            GroupStandardCostEntities.TrAg => "TR AG",
+            GroupStandardCostEntities.TrIt => "TR IT",
+            GroupStandardCostEntities.TrIn => "TR IN",
+            _ => string.Empty
+        };
 
     /// <summary>Erste zutreffende Regel gewinnt. Die letzte Regel der Kette trifft immer zu.</summary>
     private static GroupMarginCostBasis ResolveCostBasis(GroupMarginLine line, GroupMarginCostContext context)
@@ -238,7 +260,9 @@ public sealed record GroupMarginEvaluation(
     bool IsGroupCost,
     bool IsGroupCostMissing,
     string CostSource,
-    string Status);
+    string Status,
+    // Erkannte liefernde Konzerngesellschaft (GroupStandardCostEntities) oder leer; additiv seit 2026-11-13.
+    string DeliveringEntity = "");
 
 /// <summary>
 /// Eine benannte Regel zur Kostenbasis. Benannt, damit die Kette lesbar bleibt und jede Regel
