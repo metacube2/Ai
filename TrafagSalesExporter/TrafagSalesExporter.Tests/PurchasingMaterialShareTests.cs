@@ -164,4 +164,19 @@ public class PurchasingMaterialShareTests : IDisposable
         Assert.Equal(PurchasingMaterialShareQuery.NoProductGroup, Assert.Single(rows).Label);
         Assert.Equal(["202511", "202512", "202601"], PurchasingMaterialShareQuery.Months("202511", "202601"));
     }
+
+    [Fact]
+    public void Herstellkosten_Sind_Menge_Mal_Standardpreis_Der_Verkuerzten_Nummer()
+    {
+        // Mail Marco Widmer 2026-11-12: Spalte HK (MBEW-STPRS Werk 1100) zwischen Umsatz bestaetigt und Materialanteil.
+        // 8475 hat einen Standardpreis (fuehrende Nullen egal), 9999 nicht: HK 10 x 12.50, Abdeckung 1000 von 1500 Umsatz.
+        var rows = PurchasingMaterialShareQuery.Build(
+            [("8475", "Dichte", 10m, 1000m), ("9999", "Dichte", 4m, 500m)],
+            new Dictionary<string, List<PurchasingMaterialShareQuery.BomRow>>(),
+            new Dictionary<string, decimal> { ["8475"] = 12.5m });
+        var group = Assert.Single(rows);
+        Assert.Equal(1500m, group.Revenue);
+        Assert.Equal(125m, group.ManufacturingCost);
+        Assert.Equal(0.6667m, group.ManufacturingCostCoverage);
+    }
 }

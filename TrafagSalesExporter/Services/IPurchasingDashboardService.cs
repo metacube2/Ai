@@ -152,6 +152,8 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingLiveChartPoint> AbcSpendRows { get; set; } = [];
     // Volumen (CHF) je XYZ-Klasse (ZCA_MAT_ABC_XYZ -> MaraXyz). Fuellt sich erst nach dem Full-Load.
     public List<PurchasingLiveChartPoint> XyzSpendRows { get; set; } = [];
+    /// <summary>Anzahl Materialien je XYZ-Klasse im Zeitraum (Mail Marco Widmer 2026-11-12), Wert = Anzahl, nicht CHF.</summary>
+    public List<PurchasingLiveChartPoint> XyzMaterialCountRows { get; set; } = [];
     // Konkrete Handlungsableitung aus der Kombination ABC (Wertbedeutung) und XYZ
     // (Bedarfsregelmaessigkeit), statt zwei isolierter Balkendiagramme ohne Aussage.
     public List<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];

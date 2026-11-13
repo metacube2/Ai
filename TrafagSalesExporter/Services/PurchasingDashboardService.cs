@@ -645,6 +645,18 @@ WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 12;", cancellationToken);
+        // Mail Marco Widmer 2026-11-12: statt Volumen die Anzahl Artikel je XYZ-Klasse (Materialien mit Bestellposition im
+        // Zeitraum; Textbestellungen ohne Materialnummer zaehlen nicht). Reihenfolge X, Y, Z, dann ohne XYZ.
+        state.XyzMaterialCountRows = await ExecuteChartRowsAsync(conn, @"
+SELECT COALESCE(NULLIF(upper(trim(p.MaraXyz)), ''), 'ohne XYZ') AS Label,
+       COUNT(DISTINCT " + NormalizeMaterialKeySql("p.Matnr") + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+  AND COALESCE(trim(p.Matnr), '') <> ''
+GROUP BY Label
+ORDER BY CASE WHEN Label = 'ohne XYZ' THEN 1 ELSE 0 END, Label
+LIMIT 12;", cancellationToken);
         // Volumen je Lebenszyklus-Code und Sortiments-Code (MARA-ZZLZCOD / ZZLZCODSORT). Ohne
         // LZ-Cache (aeltere Datenbank) bleibt es bei einer einzigen Zeile "ohne Code".
         var lzCacheAvailable = await TableExistsAsync(conn, "PurchasingMaterialLzCache", cancellationToken);
@@ -1277,19 +1289,20 @@ LIMIT 12;";
         CancellationToken cancellationToken)
     {
         var perspectives = await ExecuteSpendPerspectivesAsync(conn, filter, itemFilter, cancellationToken);
+        // Mail Marco Widmer 2026-11-12, Entscheid Ingo 2026-11-13: die beiden Einstiege nach eigenem Disponenten
+        // ("Produktgruppe : Lieferant", "Produktgruppe : Warengruppe", Entscheid 2026-10-26) sind nicht mehr im Aufriss, weil
+        // alle Einkaufsteile (Disponent 001-006) dort unter HW_ZUKAUFSORT fallen. Stattdessen beide Sichten nach Verwendung.
+        // ExecuteProductGroupPerspectiveAsync bleibt fuer die Zuordnungs-Kennzahlen (ProductGroupAllocation) erhalten.
         var productGroupResult = await ExecuteProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken);
-        // Produktgruppe ist eine eigene, summenerhaltend allokierte Perspektive und kann deshalb
-        // nicht durch das einfache SQL-Grouping der vier direkten Einkaufsdimensionen laufen.
-        perspectives.Insert(Math.Min(3, perspectives.Count), productGroupResult.Perspective);
-        // Wunsch Einkauf 2026-10-23 (Budgeterstellung): zweiter Produktgruppen-Einstieg Produktgruppe -> Warengruppe -> Material,
-        // aus derselben Zuordnung, also mit identischer Summe je Produktgruppe.
-        perspectives.Insert(Math.Min(4, perspectives.Count), productGroupResult.MaterialGroupPerspective);
-        // Wunsch aus der Sitzung 2026-10-28: Produktgruppe nach Verwendung : Warengruppe direkt dahinter.
-        perspectives.Insert(
-            Math.Min(5, perspectives.Count),
+        var materialGroupIndex = perspectives.FindIndex(perspective => perspective.Key == "materialgroup");
+        var insertAt = materialGroupIndex >= 0 ? materialGroupIndex + 1 : perspectives.Count;
+        perspectives.Insert(insertAt,
+            await ExecuteUsageProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken, bySupplier: true));
+        perspectives.Insert(insertAt + 1,
             await ExecuteUsageProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken));
-        // Wunsch Ingo 2026-10-26: zweite Disponenten-Sicht nach Verwendung (ZLO03) direkt hinter "Disponent".
-        var disponentIndex = perspectives.FindIndex(perspective => perspective.Key == "disponent");
+        // Wunsch Ingo 2026-10-26: Disponenten-Sicht nach Verwendung (ZLO03) hinter den Disponenten-Sichten.
+        var disponentIndex = perspectives.FindLastIndex(perspective =>
+            perspective.Key is "disponent" or DisponentMaterialGroupPerspectiveKey);
         perspectives.Insert(
             disponentIndex >= 0 ? disponentIndex + 1 : perspectives.Count,
             await ExecuteDisponentUsagePerspectiveAsync(conn, filter, itemFilter, cancellationToken));
@@ -1297,6 +1310,8 @@ LIMIT 12;";
     }
 
     internal const string DisponentUsagePerspectiveKey = "disponent-usage";
+    internal const string RegionMaterialGroupPerspectiveKey = "region-materialgroup";
+    internal const string DisponentMaterialGroupPerspectiveKey = "disponent-materialgroup";
     internal const string NoUsageLabel = "ohne Verwendung";
 
     /// <summary>
@@ -1377,6 +1392,7 @@ GROUP BY 1, 2, 3, 4;";
     }
 
     internal const string UsageProductGroupPerspectiveKey = "usage-productgroup";
+    internal const string UsageProductGroupSupplierPerspectiveKey = "usage-productgroup-supplier";
 
     /// <summary>
     /// Produktgruppe nach Verwendung (Wunsch aus der Sitzung 2026-10-28, Auftrag Ingo): Welcher Teil des Einkaufsvolumens
@@ -1390,12 +1406,18 @@ GROUP BY 1, 2, 3, 4;";
         SqliteConnection conn,
         PurchasingDashboardFilter filter,
         string spendItemFilter,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool bySupplier = false)
     {
-        var levelsDe = (IReadOnlyList<string>)["Produktgruppe (Verwendung)", "Warengruppe", "Material"];
-        var levelsEn = (IReadOnlyList<string>)["Product group (usage)", "Material group", "Material"];
-        var result = new PurchasingSpendPerspectiveResult(
-            UsageProductGroupPerspectiveKey, "Produktgruppe nach Verwendung : Warengruppe", "Product group by usage : material group", levelsDe, levelsEn, []);
+        // Mail Marco Widmer 2026-11-12 (Entscheid Ingo 2026-11-13): zweite Ebene wahlweise Lieferant. Ersetzt den Einstieg
+        // "Produktgruppe : Lieferant" nach eigenem Disponenten, der fuer Einkaufsteile (001-006) nur HW_ZUKAUFSORT zeigte.
+        var levelsDe = (IReadOnlyList<string>)["Produktgruppe (Verwendung)", bySupplier ? "Lieferant" : "Warengruppe", "Material"];
+        var levelsEn = (IReadOnlyList<string>)["Product group (usage)", bySupplier ? "Supplier" : "Material group", "Material"];
+        var result = bySupplier
+            ? new PurchasingSpendPerspectiveResult(
+                UsageProductGroupSupplierPerspectiveKey, "Produktgruppe nach Verwendung : Lieferant", "Product group by usage : supplier", levelsDe, levelsEn, [])
+            : new PurchasingSpendPerspectiveResult(
+                UsageProductGroupPerspectiveKey, "Produktgruppe nach Verwendung : Warengruppe", "Product group by usage : material group", levelsDe, levelsEn, []);
         var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
@@ -1456,7 +1478,7 @@ UsageTotals AS (
     SELECT MaterialKey, SUM(VknrCount) AS Total FROM UsageGroups GROUP BY MaterialKey
 )
 SELECT COALESCE(ug.ProductGroup, '{NoUsageLabel}') AS ProductGroup,
-       {MaterialGroupDimension.Sql} AS MaterialGroup,
+       {(bySupplier ? SupplierDimension.Sql : MaterialGroupDimension.Sql)} AS MaterialGroup,
        {ArticleDimension.Sql} AS Article,
        CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
        SUM({ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} * COALESCE(1.0 * ug.VknrCount / ut.Total, 1)) AS Value
@@ -1472,7 +1494,7 @@ GROUP BY 1, 2, 3, 4;";
             while (await reader.ReadAsync(cancellationToken))
             {
                 rows.Add(new CascadeRow(
-                    [reader.GetString(0), PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)), reader.GetString(2)],
+                    [reader.GetString(0), bySupplier ? reader.GetString(1) : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)), reader.GetString(2)],
                     reader.GetInt32(3),
                     Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
             }
@@ -1515,13 +1537,24 @@ GROUP BY 1, 2, 3, 4;";
         CancellationToken cancellationToken)
     {
         var results = new List<PurchasingSpendPerspectiveResult>();
-        var lzAvailable = await TableExistsAsync(conn, "PurchasingMaterialLzCache", cancellationToken);
         var dispoAvailable = await ColumnExistsAsync(conn, "PurchasingEkpoCache", "MarcDispo", cancellationToken);
-        // Disponent steht nach Warengruppe; die zwei Produktgruppen-Sichten werden danach davor eingeschoben.
-        var perspectives = SpendPerspectives.Take(3)
-            .Append(BuildDisponentPerspective(dispoAvailable))
-            .Concat(SpendPerspectives.Skip(3))
-            .Concat(BuildLzPerspectives(lzAvailable));
+        // Reihenfolge nach der Mail von Marco Widmer 2026-11-12: Lieferant, Beschaffungsregion (+ Region > Warengruppe >
+        // Lieferant), Warengruppe, [Produktgruppen-Sichten, in BuildSpendBreakdownAsync eingeschoben], Disponent
+        // (+ Disponent > Warengruppe > Lieferant), [Disponent Verwendung], Waehrung. Lebenszyklus- und Sortiments-Code
+        // entfernt (werden nicht mehr gepflegt); BuildLzPerspectives bleibt fuer den Fall, dass sie zurueckkommen.
+        var disponent = BuildDisponentDimension(dispoAvailable);
+        var perspectives = new List<SpendPerspective>
+        {
+            SpendPerspectives[0],
+            SpendPerspectives[1],
+            new(RegionMaterialGroupPerspectiveKey, "Beschaffungsregion : Warengruppe", "Procurement region : material group",
+                [RegionDimension, MaterialGroupDimension, SupplierDimension, ArticleDimension], [NoCap, NoCap, NoCap, NoCap]),
+            SpendPerspectives[2],
+            BuildDisponentPerspective(dispoAvailable),
+            new(DisponentMaterialGroupPerspectiveKey, "Disponent : Warengruppe", "MRP controller : material group",
+                [disponent, MaterialGroupDimension, SupplierDimension, ArticleDimension], [NoCap, NoCap, NoCap, NoCap]),
+            SpendPerspectives[3]
+        };
         foreach (var perspective in perspectives)
         {
             var rows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, perspective, cancellationToken);
@@ -1878,7 +1911,18 @@ ORDER BY SpendChf DESC;";
                 recommendation.Severity));
         }
 
-        return rows;
+        return rows.OrderBy(row => AbcXyzOrder(row.Abc, row.Xyz)).ToList();
+    }
+
+    /// <summary>
+    /// Reihenfolge der Massnahmenmatrix nach der Mail von Marco Widmer 2026-11-12: AX, AY, AZ, A/- unvollstaendig, BX ... B/-,
+    /// CX ... C/-, zuletzt die Zeilen ohne ABC und ganz am Ende -/-. Unbekannte Klassen stehen hinter C.
+    /// </summary>
+    internal static int AbcXyzOrder(string abc, string xyz)
+    {
+        var abcRank = abc switch { "A" => 0, "B" => 1, "C" => 2, "-" => 4, _ => 3 };
+        var xyzRank = xyz switch { "X" => 0, "Y" => 1, "Z" => 2, "-" => 4, _ => 3 };
+        return abcRank * 10 + xyzRank;
     }
 
     private static (string ActionDe, string ActionEn, string Severity) ResolveAbcXyzRecommendation(string abc, string xyz)
