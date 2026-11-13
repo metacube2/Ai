@@ -675,7 +675,8 @@ letzten Slot sofort nach (`_lastRunSlot` startet leer), deshalb gab es zusaetzli
   Modul und Feld der erste SAP-Wert aus `history`; schreibt nur Felder zurueck, deren aktueller Wert aus SAP stammt. Neu rechnen
   geht nicht, weil ShopAufSet nur die heute offenen Auftraege kennt.
 - `Shopfloor:SapVerzugEnabled = true`, `VerzugMaterialFilter = ""` (auch Vorgabe in `ShopfloorOptions`). Disponenten unveraendert
-  (`ShopfloorSapVerzug.Abteilung`, die auch der Vorrat nutzt), kein Layoutfilter.
+  (`ShopfloorSapVerzug.Abteilung`, die auch der Vorrat nutzt), kein Layoutfilter. Der Test
+  `Verzug_Rechnet_Ohne_Materialfilter_Und_Ist_Eingeschaltet` liest beide Werte aus `appsettings.json`; wer sie umstellt, passt den Test an.
 - Cache-Busting: `wwwroot/shopfloor/index.html` laedt `style.css?v=…` und `app.js?v=…`; `v` = erste 8 Zeichen SHA256 von `app.js` +
   `style.css` ohne CR. Der Test `IndexHtml_Laedt_AppJs_Und_StyleCss_Mit_Aktueller_Version` faellt, sobald eine der Dateien sich
   aendert, bis `index.html` den neuen Wert traegt (er steht in der Fehlermeldung). Fabios `apply_patch.js` fasst `index.html` nicht an.
@@ -684,16 +685,24 @@ letzten Slot sofort nach (`_lastRunSlot` startet leer), deshalb gab es zusaetzli
 
 **Nach dem Deploy produktiv geprueft:**
 - Neustart-Lauf 07:57: alle 22 Vorratsfelder `eingefroren` (Stand 06:16 bleibt), Verzug erstmals geschrieben: SEH 89 (4 Auftraege),
-  TR5 559 (16), TX 567 (16), **DW 9'575 (84)**. DW lag am 09.11. mit Materialfilter bei 185; der Sprung kommt vom weggefallenen Filter
-  (DW hat viele alphanumerische Materialien). Gegen ZC22 P76 ohne Filter noch nicht abgeglichen, Kontrolle durch Fabio.
+  TR5 559 (16), TX 567 (16), **DW 9'575 (84)**. DW lag am 09.11. mit Materialfilter bei 185; der Sprung kommt vermutlich vom
+  weggefallenen Filter (Annahme, nicht geprueft). Gegen ZC22 P76 ohne Filter noch nicht abgeglichen, Kontrolle durch Fabio. Gespeichert
+  mit SAP-Kennzeichen (07:57) und damit fuer heute eingefroren; stimmt er nicht, nach der Korrektur `POST sap/verzug?ersetzen=1`.
 - Morgenwerte per `POST sap/morgenwerte?von=2026-11-09&bis=2026-11-13` (Header `X-User: claude`): 66 Felder zurueckgesetzt, danach 0
   offen. 09.11. bleibt mit dem Wert von 15:12 (erster Wert ueberhaupt, Einschalttag; kein Morgenwert vorhanden). 10.11. aus 04:02,
   ausser TX `plan5` (gab es erst ab 08:17, Wert 5'937). 11.11. aus 04:01, 12.11. aus 04:02. 13.11. war schon der Wert von 06:16.
+  Die zurueckgesetzten Zellen tragen im Tooltip den Zeitpunkt des Zuruecksetzens (13.11. 07:58), nicht 04:0x; die Herkunft steht im
+  Verlauf (`history`).
+- **09.11. bleibt falsch:** ziel 144 (Rest um 15:12) / prod 3'363 = 2'335 %, Fabios Hoechstwert. Entscheid Ingo offen: so lassen,
+  `ziel` leeren oder Fabios Kontrollwert 2'814 (Abschnitt 19, Stand Samstag fuer Montag) eintragen.
 - Tagesleistung SEH danach: 10.11. ziel 2'217 / prod 2'258 = 102 %; 11.11. 2'655 / 2'547 = 96 %; **12.11. 1'687 / 3'572 = 212 %**
   (auch mit dem echten Morgenwert; prod lag ueber dem Tagesziel, Frage an Fabio).
 - `index.html` auf dem Server mit `?v=32b837e9`, `app.js?v=32b837e9` 200.
-- SAP-Badge `config_seh_tagesmenge_sap.js`: war seit 09.11. eingespielt (`seh.ziel` mit Quelle `sap`, `api/config` liefert `src: sap`),
-  nichts zu tun.
+- SAP-Badge `config_seh_tagesmenge_sap.js`: war seit 09.11. eingespielt (`seh.ziel` mit Quelle `sap`: `api/config` liefert `src: sap`,
+  `api/integration/schema` `planned_source: sap`, `meta.ziel` mit `src: SAP`). Im Browser nicht angesehen (Chrome-Erweiterung nicht
+  verbunden); Fabio fragen, wo ihm das Badge fehlt.
 
 **Offen:** CO-PA (Verkauf AE/Umsatz IST, `CE11000`): `T76K912866` laut Ingo in P76; fehlen Gateway-Caches P76 (Freigabe Ingo), Vorschau
-gegen Fabios September, `SapCoPaEnabled`. Warum 04:00 am 13.11. nicht lief. Fabio: DW-Verzug 9'575 und SEH 12.11. 212 % pruefen.
+gegen Fabios September, `SapCoPaEnabled`. Warum 04:00 am 13.11. nicht lief (vermutlich App-Pool ohne Dauerbetrieb, ISS-017, nicht
+untersucht). Entscheid Ingo zum 09.11. (siehe oben). Fabio: DW-Verzug 9'575 und SEH 12.11. 212 % pruefen, plan5-Annahme bestaetigen.
+Antwort an Fabio noch nicht gesendet.

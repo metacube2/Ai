@@ -10,7 +10,7 @@ deployed; gemergt `e7b70f6`). Vorrat total/3/2/1 Mte, offene KW, SEH-Tagesziel, 
 erfolgreichen SAP-Lauf des Tages, spaetere Laeufe und Neustarts lassen sie stehen. Morgenwerte 10.-12.11. per
 `POST sap/morgenwerte` aus dem Verlauf zurueck (66 Felder; 09.11. hat keinen Morgenwert). PPD-Verzug ohne Materialfilter
 eingeschaltet (13.11.: SEH 89, TR5 559, TX 567, DW 9'575). Cache-Busting `index.html` (`?v=` SHA256). SAP-Badge war schon da.
-Offen: CO-PA (Caches P76, Freigabe Ingo), Fabio prueft DW-Verzug und SEH 12.11. (212 %), 04:00 lief am 13.11. nicht (ISS-017).
+Offen: CO-PA (Caches P76, Freigabe Ingo), Fabio prueft DW-Verzug und SEH 12.11. (212 %), 04:00 lief am 13.11. nicht (vermutlich ISS-017, nicht untersucht); Entscheid Ingo zum 09.11. (SEH 2'335 %, Abschnitt 21).
 Antwort an Fabio noch nicht gesendet. `docs/SHOPFLOOR_2026-10-07.md` 21, Wochen_Todo 36/130/156.
 
 ## Uebergabe 2026-11-12 14:25: ZLO03 FIX 28 (Chat geschlossen)
@@ -39,12 +39,12 @@ installiert, nicht pruefbar). `origin` steht auf `a6a96b2`.
    Befund 1 und 2 (Hashes in `appsettings.json`, Cookie daraus berechenbar).
 2. **Code-Review:** 13 Befunde, 4 hoch, nichts geaendert. Bericht mit Behebungsvorschlag in Abschnitt F:
    `docs/CODE_REVIEW_2026-11-12.md`, Wochen_Todo 159. Naechster Schritt: Ingo waehlt aus, dann Plan je Befund, dann umsetzen.
-3. **Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Code `c9208b5` nicht deployed. Vor dem Deploy: Code-Review Befunde 5 und 9
+3. **Spanien Supplier (ISS-003.3, Wochen_Todo 13):** Code `c9208b5` nicht deployed. *(Nachtrag 13.11.: Produktiv ist seit 07:56 `0e94279` (Shopfloor) ohne `c9208b5`. Spanien nie allein aus `c9208b5` deployen, sonst faellt der Shopfloor-Fix zurueck; Deploy aus dem Arbeitszweig ab `e7b70f6`, dort Suite vorher neu laufen lassen.)* Vor dem Deploy: Code-Review Befunde 5 und 9
    beurteilen. Mail Gang 1 an Santi liegt als Entwurf in `C:\Users\koi\Downloads\Spain_Supplier_Check_Gang1_Santi_2026-11-12.eml`,
    nicht gesendet; vorher die Frage ergaenzen, welches Skript sein taeglicher Task aufruft (35 oder 7 Tage, F30). Vor Gang 2
    Lesepruefung der Dashboard-Einstellungen und der SharePoint-Kopfzeilen mit Ingos Anmeldung. Plan
    `docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md`. **Achtung Release-Worktree:**
-   `C:\TMP\TrafagSalesExporter_release_eafd1c5` steht auf `c9208b5`; vor jedem Deploy auf den gewuenschten Commit ziehen.
+   `C:\TMP\TrafagSalesExporter_release_eafd1c5` steht auf `c9208b5` *(seit 13.11. auf `0e94279`)*; vor jedem Deploy auf den gewuenschten Commit ziehen.
 4. **CO-PA `T76K912866`:** laut Ingo in P76 importiert. Offen: Gateway-Caches in P76 (`/IWBEP/CACHE_CLEANUP` alle Modelle, dann
    `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL`), Vorschau `shopfloor/api/sap/copa?tag=2026-10-01` gegen September
    (6'531'197.94 / 7'878'114.69), dann `Shopfloor:SapCoPaEnabled = true` und Deploy, Historie ab 01.01.2026 nachladen.

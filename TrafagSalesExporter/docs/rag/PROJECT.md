@@ -13,7 +13,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   deployed). Vorrat, offene KW, SEH-Tagesziel, TX `plan5` und PPD-Verzug sind Stichtagswerte aus dem ersten SAP-Lauf des Tages;
   Morgenwerte 10.-12.11. aus dem Verlauf zurueckgeholt; **PPD-Verzug eingeschaltet, ohne Materialfilter**; Cache-Busting.
   Offen: CO-PA (Caches P76, Freigabe Ingo), Fabio prueft DW-Verzug 9'575 und SEH 12.11. 212 %; am 13.11. lief 04:00 nicht
-  (ISS-017 Dauerbetrieb). `docs/SHOPFLOOR_2026-10-07.md` 21.
+  (vermutlich ISS-017 Dauerbetrieb, nicht untersucht); 09.11. SEH bleibt 2'335 % bis Entscheid Ingo. `docs/SHOPFLOOR_2026-10-07.md` 21.
 - **2026-11-12 (Stand 12:00, Einzelheiten `lastchange.md` oben):**
   - **Deploy 11:33 `e956183`**: Kleinigkeiten vom 10.11. und Rexx Hub vorbereitet (Schalter `HrKpi:RexxHub:Enabled` aus).
   - **Spanien Supplier (ISS-003.3)**: Andreas hat entschieden, der Lieferant des letzten Wareneingangs gilt als Supplier.
