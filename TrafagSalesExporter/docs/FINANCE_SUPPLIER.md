@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -132,7 +132,7 @@ Werkzeug `.tmp_tools/CheckSupplierClaims0902`, read-only, `105'282` Verkaufszeil
 
 **Zwei Aenderungen gegenueber der historischen Tabelle unten.** Italien ist von 71,2 % auf
 99,9 % gesprungen, weil Paola Castagna `OITM.CardCode` doch gepflegt hat (Abschnitt 8);
-es bleiben nur noch `17` leere Zeilen. Dadurch steigt die Gesamtquote von 18,7 % auf
+es bleiben nur noch `17` leere Zeilen *(ueberholt am 2026-11-13: 499 Zeilen ohne Lieferant, Abschnitt 9)*. Dadurch steigt die Gesamtquote von 18,7 % auf
 26,8 %. Der Auftrag „verbleibende TRIT-Zeilen nach Ursache segmentieren" ist damit
 erledigt bis auf diese 17 Zeilen.
 
@@ -140,7 +140,7 @@ Ebenfalls live gemessen und fuer die Klassifikation wichtig: **Sales Type fuehrt
 ausschliesslich Indien** (`7'012` von `7'476` Zeilen: `FFM` 6'213, `LRD` 776, `CM` 23).
 Alle acht anderen Standorte stehen auf `0`, Italien bei allen `24'095` Zeilen.
 
-**Nicht in `Sales_All` enthalten:** eine Spalte `Cost Source` und der Margen-Status. Wer
+**Nicht in `Sales_All` enthalten** *(ueberholt am 2026-11-13, Abschnitt 9: beides steht im Blatt Finance Details, die Zuordnung seit dem 13.11. auch im Blatt Sales)*: eine Spalte `Cost Source` und der Margen-Status. Wer
 die Kostenlogik pruefen will, braucht das Nachweis-Excel, Blatt `Gruppenmarge Details`.
 In `Sales_All` sind seit dem 2026-08-27 nur `Sales Type` und `Trafag Sachnummer`
 (Spalten 53 und 54) enthalten, damit lassen sich die Stufen 1 bis 3 nachvollziehen.
@@ -493,6 +493,81 @@ und Bonusbelege ohne Artikelnummer (Weihnachtspraemie, Broschuerenaenderung, `PR
 RAGGIUNGIMENTO FATTURATO`, eine Periodenabrechnung, ein Entwicklungsanteil fuer BU MAG) — dort
 gibt es nichts zu pflegen. Die anderen `5` sind echte Artikel, die in Paolas Liste fehlten:
 `54290`, `GC11887`, `GC11902`, `GC11903`, `GC11905`. Die gehoeren bei Gelegenheit nachgemeldet.
+
+## 9. Mail Andreas 13.11.: Nachmessung, Befunde, wirksame Zuordnung in Sales_All (Stand 2026-11-13)
+
+Andreas Stoller hat am 13.11. die Lieferantenzuordnung in `Sales_All` pivotiert (AT, CH, DE, ES ohne Lieferant; FR, IN, US
+groesstenteils leer; IT mit Trafag Italia als Lieferant und einer grossen Zeile ohne Lieferant; UK Nummer TR09 mit zwei Namen;
+TR DE Kunden seit Herbst als ID) und nach dem Stand der Group HK gefragt. Auftrag Ingo: alles pruefen und beheben, was ohne
+ihn geht; Messung auf der Produktivdatenbank freigegeben.
+
+**Messung, nur lesend, Stand der Daten 12.11.2026 16:31, Rechnungsdatum ab 2025** (ein Durchgang in eine lokale Arbeitskopie,
+danach geloescht; `112'027` Verkaufszeilen):
+
+| TSC | Zeilen | mit Lieferant | Quote Zeilen | Quote Umsatz | Sales Type gefuellt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| TRAT | 2'089 | 0 | 0,0 % | 0,0 % | 0 |
+| TRCH | 55'678 | 0 | 0,0 % | 0,0 % | 0 |
+| TRDE | 8'373 | 0 | 0,0 % | 0,0 % | 0 |
+| TRES | 8'643 | 0 | 0,0 % | 0,0 % | 0 |
+| TRFR | 2'926 | 133 | 4,5 % | 5,8 % | 0 |
+| TRIN | 8'380 | 952 | 11,4 % | 21,5 % | 7'892 |
+| TRIT | 20'730 | 20'231 | 97,6 % | 92,9 % | 0 |
+| TRUK | 3'404 | 3'404 | 100,0 % | 100,0 % | 0 |
+| TRUS | 1'804 | 6 | 0,3 % | 0,1 % | 0 |
+
+Weiterhin gilt: keine Zeile hat nur eines oder zwei der Lieferantenfelder. **Produktive Einstellungen** (aus `ExportSettings`
+gelesen): `SupplierFallbackMode = ChPlantMaster`, `InternalSupplierCostSourceMode = DeliveringEntityCosts`. Der Beschluss B1 vom
+27.08. („kein Lieferant = Standardkosten der verkaufenden Gesellschaft“, `ISS-003.5`) ist damit als Auswahl vorhanden, aber
+**nicht eingestellt**; ohne Lieferant entscheidet weiter der CH-Werkstamm (so auch `ISS-007.3`). Frage an Andreas, offen.
+
+**Italien, Zeile ohne Lieferant (neu, `ISS-003.6`):** `499` Zeilen mit `1'068'053` EUR ohne Lieferant, davon 2025 `186` Zeilen
+mit `500'912` EUR (genau die Zeile in Andreas' Bild) und 2026 `313` Zeilen mit `567'141` EUR. *Damit ueberholt: „es bleiben nur
+noch 17 leere Zeilen“ (Abschnitt 3, Stand 02.09.) und „12 Zeilen“ (Abschnitt 8, Stand 26.08.).* Ursache: `405` der Zeilen
+(`923'501` EUR, 86 %) gehoeren zu den sechs Kunden, die der Export bis zum 29.09. ausschloss (`f77840a`, `ISS-021`:
+Faiveley Transport Italia, Metal Work Service, Fincantieri Nextech, System Ceramics, Elemaster, Wabtec MZT); ihre Artikel
+standen deshalb nicht auf Paolas Liste vom August. Der Rest sind neue Artikel (erste Rechnung gehaeuft ab 08/2026). Es sind
+`162` Artikel, keiner hat in irgendeiner Zeile einen Lieferanten: `106` numerische Trafag-Sachnummern (`921'598` EUR, z. B. 9R5
+Picostat Railway, 8254 Transmitter), `49` sonstige, `7` Hausnummern; dazu `7` Zeilen ohne Artikelnummer (`80'442` EUR,
+Dienstleistungsrechnungen an Trafag AG). Liste als Excel im Mailentwurf an Paola.
+
+**Italien, Trafag Italia als Lieferant:** `1'189` Zeilen, `225'095` EUR, `127` Artikel, **ausschliesslich Hausnummern
+`M_IT01_*`** (Lohnarbeit, Zertifikate, lokal konfektionierte Artikel). Gewollt nach Beschluss B2 vom 27.08. Der Kontenfilter
+(`47005%` ohne `4700504%`) waehlt nur die Erloeskonten und ist seit dem 30.09. gegen das Hauptbuch abgestimmt (`ISS-021`); mit
+dem Lieferanten hat er nichts zu tun.
+
+**UK, Nummer TR09 mit zwei Namen (neu, `ISS-003.7`):** `TR09` ist Trafag Controls India (`113` Zeilen). Genau **eine** Zeile
+traegt `TR09` mit Name `Trafag AG`: Rechnung `0000043677` vom 19.06.2026, Material `44073`, Menge 10, `1'535.50` GBP. Dasselbe
+Material laeuft sonst unter `TR01 Trafag AG`. Die Klassifikation liest den Namen (`ResolveDeliveringEntity`), die Zeile rechnet
+also mit TR-AG-Kosten; vermutlich ist die Nummer falsch erfasst. Daneben: Trafag AG hat in UK zwei Nummern (`TR08` 3'019
+Zeilen, `TR01` 82 Zeilen), `MO01` zwei Namen (Motion 29 Limited, OEM Automatic Limited). Frage an Cornell als Entwurf.
+
+**TR DE, Kunden als ID (`ISS-016`):** seit 09/2026 `751` Zeilen mit `734'524` EUR und `144` internen IDs als
+`ALPHAPLAN-ID:<ID>` ohne Namen (09/2026 329 von 339 Zeilen, 10/2026 391 von 391, 11/2026 31 von 31). Gegen die eingebettete
+Belegbruecke gehalten: `108` IDs (`618` Zeilen, 88,8 % des Umsatzes) zeigen dort eindeutig auf genau einen Kunden, `35` IDs
+(`131` Zeilen) fehlen (neuer Kunde oder neue Adresse), `1` ID ist mehrdeutig. Eine Uebergangsregel „ID eindeutig = Kunde“ wuerde
+also den groessten Teil loesen, **hebt aber die Sperre vom 09.09. auf** (`GermanCustomerInvoiceMapping`: zwei interne IDs haben
+ihre fachliche Nummer schon einmal gewechselt). Entscheid Ingo offen. Ohne Sperre zu heben: aktuelle Rechnungsliste von Rohail
+(verlaengert die Bruecke) und Schemaauszug fuer den dauerhaften Join; beides im Mailentwurf an Rohail, Abfrage
+`AlphaplanExportPackage/scripte/schema_auszug_kunde_lieferant_2026-11-13.sql`.
+
+**Umgesetzt und deployed 13.11. 10:31 (`df48301`, gemergt `15105ed`): wirksame Zuordnung in Sales_All.** Blatt `Sales` bekommt
+am Ende `Supplier Type` (Spalte 55), `Delivering Entity` (56) und `Cost Source` (57); Blatt `Finance Details` `Supplier Type`
+(43) und `Delivering Entity` (44). `Delivering Entity` = `TR AG` / `TR IT` / `TR IN` aus demselben Aufruf wie der Kostenpfad
+(`GroupMarginEvaluation.DeliveringEntity`), leer bei Extern, Lokal, Unklar. Nur im zentralen Sales_All, die Standortdateien
+bleiben. Zeilen, die die Finance-Regeln ausschliessen, bleiben leer. Hilfeblatt: `Supplier Type` auf die heutige
+Regelreihenfolge berichtigt. Tests `CentralExcelSupplierAssignmentTests`, Suite 1559/1559. *Damit ueberholt: „Nicht in
+`Sales_All` enthalten: eine Spalte `Cost Source` und der Margen-Status“ (Abschnitt 3); `Cost Source` und `Margin Status` stehen
+seit dem 06.10. im Blatt Finance Details, die Zuordnung seit dem 13.11. auch im Blatt Sales.*
+**Noch zu pruefen:** der erste echte Export mit den Spalten (Lauf 12:00 am 13.11.): Kopfposition, Verteilung je TSC,
+Zeilenzahl und Umsatzsumme gegen `Sales_All_2026-11-12.xlsx`.
+
+**Mailentwuerfe (`.eml` in Ingos Downloads, nicht gesendet):** Antwort an Andreas mit allen Punkten und dem Stand Group HK
+(deckt auch Wochen_Todo 84), Rohail (Rechnungsliste, Schemaauszug), Cornell (UK-Nummern), Paola (162 Artikel, nur das Thema
+Preferred Vendor).
+
+**Nicht gemacht, braucht Ingo:** DE-Uebergangsregel, Spanien-Deploy (`c9208b5`, jetzt nur aus dem Arbeitszweig ab `15105ed`),
+Umstellen des Fallback-Schalters, Lesezugriff B1 TR IT fuer `ISS-007.4`.
 
 ## Werkzeuge
 

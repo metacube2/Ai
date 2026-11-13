@@ -1,6 +1,6 @@
 # Standort Deutschland: Alphaplan-Export und Import
 
-Stand: 2026-11-12 (Doku-Pruefung: Abschnitt 6, `candidate_objects.csv` und Filterliste des Schemaauszugs berichtigt); davor 2026-10-29 (Abschnitt 6 zu den Kundenfeldern nachgefuehrt; Abschnitt 8 und Abschnitte 5 und 6 vom 2026-09-09).
+Stand: 2026-11-13 (Abschnitt 6: Schemaabfrage Kunde und Lieferant, Messung DE-Kunden als ID); davor 2026-11-12 (Doku-Pruefung: Abschnitt 6, `candidate_objects.csv` und Filterliste des Schemaauszugs berichtigt); davor 2026-10-29 (Abschnitt 6 zu den Kundenfeldern nachgefuehrt; Abschnitt 8 und Abschnitte 5 und 6 vom 2026-09-09).
 Zusammengefuehrt aus `ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`
 und `ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`.
 
@@ -119,6 +119,10 @@ haengt die Spartenabdeckung genau daran.
   14:37 fuer 7'592 von 7'622 DE-Zeilen einmalig nachgezogen (Rohails `Rechnungen_20260909.xlsx`,
   `ISS-016`, `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9). Die Query selbst loest
   `RechnungsAdressenID` weiter nicht auf; der dauerhafte Join in `alphaplanExport.ps1` ist offen.*
+- *Nachgefuehrt am 2026-11-13 (Mail Andreas, `docs/FINANCE_SUPPLIER.md` Abschnitt 9):* seit 09/2026 stehen 751 DE-Zeilen
+  (734'524 EUR) nur mit `ALPHAPLAN-ID` da. Schemaabfrage fuer Kundenfelder **und** Lieferant in einem Zug:
+  `AlphaplanExportPackage/scripte/schema_auszug_kunde_lieferant_2026-11-13.sql` (nur `INFORMATION_SCHEMA`, fuenf Filter).
+  Mailentwurf an Rohail liegt in Ingos Downloads (dazu die Bitte um eine aktuelle Rechnungsliste ab 01.09.), nicht gesendet.
 - Fachfrage an Deutschland: Ist `ArtikelNummer` gleich der TR-AG-/SAP-`MATNR`?
 - Offen, ob Alphaplan ueberhaupt einen Lieferanten auf der **Verkaufszeile** fuehrt oder
   nur einen Hauptlieferanten im Artikelstamm.
