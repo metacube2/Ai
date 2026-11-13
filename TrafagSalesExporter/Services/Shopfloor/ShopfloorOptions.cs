@@ -76,9 +76,10 @@ public sealed class ShopfloorOptions
     /// <summary>
     /// Abteilungen, fuer die der Verzug nur Material 1 bis 99999 zaehlt (Definition PPD, A. Tran). Vorgabe alle vier; mit
     /// leerem Text rechnet der Verzug ohne Materialfilter (SEH hat nur alphanumerische Materialien, mit Filter immer 0). Kommagetrennt,
-    /// weil der Konfigurations-Binder eine leere Liste nicht als Ueberschreibung liest. 2026-11-10.
+    /// weil der Konfigurations-Binder eine leere Liste nicht als Ueberschreibung liest. 2026-11-10. Seit 2026-11-13 leer (Mail Fabio
+    /// 13.11.: Definition PPD nach Klaerung mit Sergio/Anh Nhi ohne Materialfilter, Entscheid Ingo).
     /// </summary>
-    public string VerzugMaterialFilter { get; set; } = "SEH,TR5,TX,DW";
+    public string VerzugMaterialFilter { get; set; } = "";
 
     public string[] VerzugMaterialFilterListe()
         => VerzugMaterialFilter.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

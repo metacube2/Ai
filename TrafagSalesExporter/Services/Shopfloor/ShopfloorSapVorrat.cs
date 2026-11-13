@@ -53,6 +53,12 @@ public static class ShopfloorSapVorrat
         return d;
     }
 
+    /// <summary>Felder, die der Vorrat fuer ein Modul schreibt (Stichtagswerte, Mail Fabio 2026-11-13).</summary>
+    public static string[] Felder(string modul)
+        => ["vorrat_total", "vorrat_3m", "vorrat_2m", "vorrat_1m", "offen_kw",
+            .. ZielModule.Contains(modul) ? new[] { "ziel" } : [],
+            .. Plan5Module.Contains(modul) ? new[] { "plan5" } : []];
+
     public static string Filter(string plant, DateOnly day)
         => $"Werks eq '{plant}' and Datum eq '{day:yyyyMMdd}' and Typ eq 'VR'";
 

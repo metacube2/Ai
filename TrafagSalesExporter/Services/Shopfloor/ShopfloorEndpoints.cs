@@ -230,7 +230,8 @@ public static class ShopfloorEndpoints
             return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
         try
         {
-            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VerzugAsync(day, write, c.RequestAborted);
+            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VerzugAsync(day, write, c.RequestAborted,
+                Ersetzen(c));
             return J(c, result);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -266,12 +267,34 @@ public static class ShopfloorEndpoints
             return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
         try
         {
-            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VorratAsync(day, write, c.RequestAborted);
+            var result = await c.RequestServices.GetRequiredService<ShopfloorSapSync>().VorratAsync(day, write, c.RequestAborted,
+                Ersetzen(c));
             return J(c, result);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return Results.Json(new { ok = false, meldung = ex.GetBaseException().Message }, statusCode: 502);
+        }
+    }
+
+    /// <summary>Stichtagswerte bewusst neu schreiben (Mail Fabio 2026-11-13): <c>?ersetzen=1</c>; sonst bleibt der erste SAP-Wert des Tages.</summary>
+    private static bool Ersetzen(HttpContext c) => c.Request.Query["ersetzen"].ToString() is "1" or "true" or "ja";
+
+    /// <summary>Morgenwerte der Stichtagsfelder aus dem Verlauf, GET Vorschau, POST zuruecksetzen (Mail Fabio 2026-11-13).</summary>
+    private static IResult Morgenwerte(HttpContext c, bool write)
+    {
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var st = System.Globalization.DateTimeStyles.None;
+        if (!DateOnly.TryParseExact(c.Request.Query["von"].ToString(), "yyyy-MM-dd", ci, st, out var von)
+            || !DateOnly.TryParseExact(c.Request.Query["bis"].ToString(), "yyyy-MM-dd", ci, st, out var bis))
+            return Results.Json(new { error = "von und bis als JJJJ-MM-TT" }, statusCode: 400);
+        try
+        {
+            return J(c, ShopfloorStichtag.RestoreMorning(Store(c), von, bis, write));
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.Json(new { error = ex.Message }, statusCode: 400);
         }
     }
 
@@ -429,6 +452,8 @@ public static class ShopfloorEndpoints
         g.MapGet("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, false));
         g.MapPost("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, true));
         g.MapPost("/sap/vorrat", async Task<IResult> (HttpContext c) => await Vorrat(c, true));
+        g.MapGet("/sap/morgenwerte", (HttpContext c) => Morgenwerte(c, false));
+        g.MapPost("/sap/morgenwerte", (HttpContext c) => Morgenwerte(c, true));
         g.MapPost("/sap/sync", async Task<IResult> (HttpContext c) =>
         {
             try

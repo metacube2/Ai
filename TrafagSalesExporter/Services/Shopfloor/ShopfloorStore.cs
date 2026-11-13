@@ -254,6 +254,26 @@ public sealed class ShopfloorStore
         return o;
     }
 
+    /// <summary>
+    /// Erster SAP-Wert je Feld fuer einen Tagessatz aus dem Verlauf (aelteste Eintraege zuerst), als
+    /// <c>{ feld: { wert, ts } }</c>. Grundlage fuer das Nachladen der Morgenwerte (Mail Fabio 2026-11-13).
+    /// </summary>
+    public JsonObject FirstSapValues(string module, string day, IReadOnlyCollection<string> keys)
+    {
+        using var con = Db.Open();
+        var result = new JsonObject();
+        foreach (var r in ShopfloorDb.Query(con, "SELECT ts, source, changes FROM history WHERE module=? AND ref=? ORDER BY id", module, day))
+        {
+            if (!string.Equals(r.Str("source"), "SAP", StringComparison.OrdinalIgnoreCase)
+                || JsonNode.Parse(r.Str("changes") ?? "{}") is not JsonObject ch)
+                continue;
+            foreach (var k in keys)
+                if (!result.ContainsKey(k) && ch[k] is JsonArray { Count: 2 } pair && pair[1] is { } neu)
+                    result[k] = new JsonObject { ["wert"] = neu.DeepClone(), ["ts"] = r.Str("ts") };
+        }
+        return result;
+    }
+
     public JsonArray GetHistory(string? module, string? refKey)
     {
         using var con = Db.Open();
