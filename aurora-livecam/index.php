@@ -4124,6 +4124,15 @@ body.theme-neo footer {
                data-zh="实时欣赏苏黎世地区的迷人景色！">
                 <?php echo htmlspecialchars($heroRegionText); ?>
             </p>
+            <!-- Superzeitlupe (2026-11-13): Hinweis auf /superzeitlupe/, Clips gibt aurora-superzeitlupe von Hand frei -->
+            <a href="/superzeitlupe/" style="text-shadow:none;display:flex;align-items:center;gap:14px;max-width:560px;margin:18px auto 0;padding:12px 16px;border-radius:18px;text-decoration:none;color:#eef4ff;background:linear-gradient(135deg,#050b24,#16325e);box-shadow:0 8px 24px rgba(5,11,36,.35);border:1px solid rgba(35,245,177,.55);">
+                <img src="/superzeitlupe/teaser.jpg?v=20261113" alt="" width="52" height="52" style="border-radius:13px;flex:none;object-fit:cover;">
+                <span style="flex:1;text-align:left;line-height:1.35;">
+                    <strong data-en="Discover super slow motion" data-de="Entdecke die Superzeitlupe" data-it="Scopri il super rallentatore" data-fr="Découvrez le super ralenti" data-es="Descubre la supercámara lenta" data-zh="探索超级慢动作">Entdecke die Superzeitlupe</strong><br>
+                    <span style="font-size:.9em;opacity:.8;" data-en="Red kites right in front of the camera – up to 16 times slower" data-de="Rotmilane direkt vor der Kamera – bis 16-mal langsamer" data-it="Nibbi reali davanti alla camera – fino a 16 volte più lenti" data-fr="Des milans royaux juste devant la caméra – jusqu’à 16 fois plus lentement" data-es="Milanos reales justo ante la cámara, hasta 16 veces más lento" data-zh="红鸢从镜头前掠过——最多放慢 16 倍">Rotmilane direkt vor der Kamera – bis 16-mal langsamer</span>
+                </span>
+                <span style="flex:none;padding:8px 14px;border-radius:12px;font-weight:700;color:#04130e;background:linear-gradient(90deg,#23f5b1,#1fd3e6);" data-en="Watch" data-de="Ansehen" data-it="Guarda" data-fr="Voir" data-es="Ver" data-zh="观看">Ansehen</span>
+            </a>
             <!-- Android-App Beta (2026-09-30) -->
             <a href="/app/" style="text-shadow:none;display:flex;align-items:center;gap:14px;max-width:560px;margin:18px auto 0;padding:12px 16px;border-radius:18px;text-decoration:none;color:#eef4ff;background:linear-gradient(135deg,#050b24,#16325e);box-shadow:0 8px 24px rgba(5,11,36,.35);">
                 <img src="/app/icon.svg" alt="cAurora App" width="52" height="52" style="border-radius:13px;flex:none;">
