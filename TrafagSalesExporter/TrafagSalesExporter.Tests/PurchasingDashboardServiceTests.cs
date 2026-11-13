@@ -743,8 +743,16 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.Equal(
-            ["supplier", "region", "materialgroup", "productgroup", "productgroup-materialgroup", "usage-productgroup", "disponent", "disponent-usage", "currency", "lzcode", "lzsort"],
+            // Reihenfolge und Auswahl nach der Mail von Marco Widmer 2026-11-12 (Entscheide Ingo 2026-11-13).
+            ["supplier", "region", "region-materialgroup", "materialgroup", "usage-productgroup-supplier", "usage-productgroup", "disponent", "disponent-materialgroup", "disponent-usage", "currency"],
             state.SpendPerspectiveRows.Select(perspective => perspective.Key));
+        var regionMaterialGroup = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "region-materialgroup");
+        Assert.Equal(["Beschaffungsregion", "Warengruppe", "Lieferant", "Material"], regionMaterialGroup.LevelLabelsDe);
+        Assert.Equal("WG1", Assert.Single(Assert.Single(regionMaterialGroup.Rows, node => node.Label == "DE").Children).Label);
+        Assert.Equal(["Disponent", "Warengruppe", "Lieferant", "Material"],
+            Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "disponent-materialgroup").LevelLabelsDe);
+        Assert.Equal(["Produktgruppe (Verwendung)", "Lieferant", "Material"],
+            Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "usage-productgroup-supplier").LevelLabelsDe);
 
         // Region-Perspektive steigt beim Lieferantenland ein und geht vier Ebenen tief.
         var region = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "region");
@@ -820,6 +828,10 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal(50m, ay.SpendChf);
         Assert.Contains("Sicherheitsbestand", ay.ActionDe);
 
+        // Mail Marco Widmer 2026-11-12: Anzahl Artikel je XYZ und Matrix-Reihenfolge AX, AY, AZ, A/-, BX ... B/-, CX ... -/-.
+        Assert.Equal([("X", 1m), ("Y", 1m), ("ohne XYZ", 1m)], state.XyzMaterialCountRows.Select(row => (row.Label, row.Value)));
+        Assert.Equal(["AX", "AY", "B/- (unvollstaendig)"], state.AbcXyzActionRows.Select(row => row.Classification));
+
         var incomplete = Assert.Single(state.AbcXyzActionRows, row => row.Abc == "B" && row.Xyz == "-");
         Assert.Equal(70m, incomplete.SpendChf);
         Assert.Contains("Stammdaten", incomplete.ActionDe);
@@ -849,8 +861,8 @@ public class PurchasingDashboardServiceTests : IDisposable
             Assert.Equal(200m, perspective.Rows.Sum(row => row.Total));
         var disponent = Assert.Single(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "disponent");
         Assert.Equal(["001", "005"], disponent.Rows.Select(row => row.Label).Order());
-        var productGroup = Assert.Single(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(120m, Assert.Single(productGroup.Rows, row => row.Label == "HW_ZUKAUFSORT").Total);
+        // Produktgruppe nach eigenem Disponenten ist seit 2026-11-13 kein Einstieg mehr (alles HW_ZUKAUFSORT, Mail Marco).
+        Assert.DoesNotContain(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "productgroup");
         Assert.Equal(200m, state.PurchasingPartsProductGroupAllocation.AssignedSpendChf + state.PurchasingPartsProductGroupAllocation.UnassignedSpendChf);
     }
 
@@ -922,7 +934,7 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_ProductGroupPerspective_Uses_Own_Dispo_Of_Material_Like_ZM_OFFENE_KDAUF()
+    public async Task LoadAsync_ProductGroupAllocation_Uses_Own_Dispo_Of_Material_Like_ZM_OFFENE_KDAUF()
     {
         // Entscheid Ingo 2026-10-26: Produktgruppe wie im Report ZM_OFFENE_KDAUF aus dem eigenen Disponenten des
         // Materials (MARC-DISPO), genau eine Gruppe je Material. Die Verwendung (MaterialUsageCache) zaehlt nicht mehr.
@@ -947,28 +959,9 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
-        var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(320m, perspective.Rows.Sum(row => row.Total));
-        Assert.Equal(120m, Assert.Single(perspective.Rows, row => row.Label == "Sensorik").Total);   // ganz, keine Aufteilung
-        Assert.Equal(80m, Assert.Single(perspective.Rows, row => row.Label == "Zubehoer").Total);
-        Assert.Equal(40m, Assert.Single(perspective.Rows, row => row.Label == "FP_TRANSM. TX").Total); // kleinste Gruppennummer
-        Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("T3", StringComparison.Ordinal));
-        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
-        Assert.Equal(30m, Assert.Single(perspective.Rows, row => row.Label == "Disponent ZZZ").Total);
-        Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Legacy", StringComparison.Ordinal));
-        Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Excel", StringComparison.Ordinal));
-        // Jedes Material genau einmal im Baum.
-        Assert.Equal(5, perspective.Rows.SelectMany(group => group.Children).SelectMany(supplier => supplier.Children).Count());
-
-        // Zweiter Einstieg Produktgruppe -> Warengruppe -> Material, gleiche Summen je Gruppe.
-        var mg = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup-materialgroup");
-        Assert.Equal(["Produktgruppe", "Warengruppe", "Material"], mg.LevelLabelsDe);
-        Assert.Equal(
-            perspective.Rows.OrderBy(r => r.Label).Select(r => (r.Label, r.Total)),
-            mg.Rows.OrderBy(r => r.Label).Select(r => (r.Label, r.Total)));
-        Assert.Equal("Produktgruppe : Lieferant", perspective.LabelDe);
-        Assert.Equal("Produktgruppe : Warengruppe", mg.LabelDe);
-
+        // Seit 2026-11-13 (Mail Marco Widmer) keine Einstiege mehr; die Zuordnung nach eigenem Disponenten liefert weiter die
+        // Kennzahlen der Zuordnung.
+        Assert.DoesNotContain(state.SpendPerspectiveRows, row => row.Key is "productgroup" or "productgroup-materialgroup");
         Assert.Equal(240m, state.ProductGroupAllocation.AssignedSpendChf);
         Assert.Equal(80m, state.ProductGroupAllocation.UnassignedSpendChf);
         Assert.Equal(40m, state.ProductGroupAllocation.MultiGroupSpendChf);       // mehrdeutige SAP-Regel EL*
@@ -980,7 +973,7 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_ProductGroupPerspective_DS1_Lands_In_One_Group_And_Exact_Beats_Pattern()
+    public async Task LoadAsync_ProductGroupAllocation_DS1_Lands_In_One_Group_And_Exact_Beats_Pattern()
     {
         // Fall Einkauf 2026-10-23: D5 und DS standen mit gleicher Summe doppelt da, weil DS1/DS2 in ZDISPO_GRP beiden
         // Gruppen zugeordnet sind. Jetzt genau eine Gruppe (kleinste Nummer D5). Exakte Regel DS -> D1 schlaegt das Muster D*.
@@ -995,18 +988,13 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
-        var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(150m, perspective.Rows.Sum(row => row.Total));
-        Assert.Equal(100m, Assert.Single(perspective.Rows, row => row.Label == "FP_DICHTESEN1/2").Total);
-        Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "FP_DICHTESEN").Total);
-        Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("DS -", StringComparison.Ordinal));
-        Assert.DoesNotContain(perspective.Rows, row => row.Label.StartsWith("ZZ", StringComparison.Ordinal));
+        Assert.Equal(150m, state.ProductGroupAllocation.AssignedSpendChf + state.ProductGroupAllocation.UnassignedSpendChf);
         Assert.Equal(100m, state.ProductGroupAllocation.MultiGroupSpendChf);
         Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);
     }
 
     [Fact]
-    public async Task LoadAsync_ProductGroupPerspectives_Show_All_Positions_Without_Remainder_Row()
+    public async Task LoadAsync_MaterialGroup_Breakdowns_Show_All_Positions_Without_Remainder_Row()
     {
         // Einkauf 2026-10-23: unter einer Produktgruppe stand nach 15 Warengruppen „uebrige (23)“.
         // 25 Materialien in 25 Warengruppen muessen in beiden Produktgruppen-Sichten einzeln erscheinen.
@@ -1018,13 +1006,13 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
-        var byMaterialGroup = Assert.Single(Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup-materialgroup").Rows);
-        Assert.Equal(25, byMaterialGroup.Children.Count);
-        Assert.DoesNotContain(byMaterialGroup.Children, child => child.Label.StartsWith("uebrige", StringComparison.Ordinal));
-        var bySupplier = Assert.Single(Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup").Rows);
-        var supplier = Assert.Single(bySupplier.Children);
-        Assert.Equal(25, supplier.Children.Count);
-        Assert.DoesNotContain(supplier.Children, child => child.Label.StartsWith("uebrige", StringComparison.Ordinal));
+        // Seit 2026-11-13: die neuen Aufrisse Region/Disponent > Warengruppe zeigen alle 25 Warengruppen einzeln.
+        foreach (var key in new[] { "region-materialgroup", "disponent-materialgroup" })
+        {
+            var top = Assert.Single(Assert.Single(state.SpendPerspectiveRows, row => row.Key == key).Rows);
+            Assert.Equal(25, top.Children.Count);
+            Assert.DoesNotContain(top.Children, child => child.Label.StartsWith("uebrige", StringComparison.Ordinal));
+        }
     }
 
     private void CreatePurchasingCacheTables()
@@ -1208,19 +1196,8 @@ CREATE TABLE PurchasingSpendDisponentRule (
         var supplierTotal = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "supplier").Rows.Sum(row => row.Total);
         Assert.Equal(1000m, supplierTotal);
 
-        var lz = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "lzcode");
-        Assert.Equal(["Lebenszyklus-Code", "Lieferant", "Material"], lz.LevelLabelsDe);
-        Assert.Equal(supplierTotal, lz.Rows.Sum(row => row.Total));
-        Assert.Equal(["ohne Code", "A1"], lz.Rows.Select(row => row.Label));
-        Assert.Equal(700m, lz.Rows[0].Total);
-        Assert.Equal(300m, lz.Rows[1].Total);
-        // Drill-down bis zum Material.
-        Assert.Contains(lz.Rows[1].Children.Single().Children, child => child.Label.Contains("M1"));
-
-        var sort = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "lzsort");
-        Assert.Equal(supplierTotal, sort.Rows.Sum(row => row.Total));
-        Assert.Equal(["ohne Code", "S1"], sort.Rows.Select(row => row.Label));
-        Assert.Equal(100m, sort.Rows[1].Total);
+        // Seit 2026-11-13 kein Einstieg mehr (Mail Marco Widmer: Codes werden nicht gepflegt); die Werte rechnen weiter.
+        Assert.DoesNotContain(state.SpendPerspectiveRows, row => row.Key is "lzcode" or "lzsort");
 
         Assert.Equal(["ohne Code", "A1"], state.LzCodeSpendRows.Select(row => row.Label));
         Assert.Equal(supplierTotal, state.LzCodeSpendRows.Sum(row => row.Value));
@@ -1234,11 +1211,9 @@ CREATE TABLE PurchasingSpendDisponentRule (
 
         var state = await _service.LoadAsync(Year2025);
 
-        var lz = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "lzcode");
-        var node = Assert.Single(lz.Rows);
+        var node = Assert.Single(state.LzCodeSpendRows);
         Assert.Equal("ohne Code", node.Label);
-        Assert.Equal(1000m, node.Total);
-        Assert.Equal("ohne Code", Assert.Single(state.LzCodeSpendRows).Label);
+        Assert.Equal(1000m, node.Value);
     }
 
     private void ExecuteSync(string sql)

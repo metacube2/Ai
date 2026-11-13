@@ -54,6 +54,7 @@
                     <tr>
                         <th>@T("Bezeichnung", "Description")</th>
                         <th>@T("Umsatz bestätigt", "Confirmed revenue")</th>
+                        <th title="@T("Herstellkosten: bestätigte Menge mal Standardpreis MBEW-STPRS (Werk 1100) des verkauften Materials", "Manufacturing cost: confirmed quantity times standard price MBEW-STPRS (plant 1100) of the sold material")">@T("Herstellkosten HK", "Manufacturing cost")</th>
                         <th>@T("Materialanteil", "Material share")</th>
                         <th>@T("Anteil", "Share")</th>
                         <th>@T("Bedarfsmenge", "Demand quantity")</th>
@@ -70,6 +71,7 @@
                                 <strong>@group.Label</strong>
                             </td>
                             <td>@Chf(group.Revenue)</td>
+                            <td title="@HkTitle(group)">@Chf(group.ManufacturingCost)@(HkIncomplete(group) ? " *" : "")</td>
                             <td><strong>@Chf(group.Value)</strong></td>
                             <td>@Share(group.Value, group.Revenue, ShareOfRevenue)</td>
                             <td></td>
@@ -83,6 +85,7 @@
                                 <tr class="purchasing-cascade-l2">
                                     <td>@Toggle(materialGroup) @materialGroup.Label</td>
                                     <td></td>
+                                    <td></td>
                                     <td>@Chf(materialGroup.Value)</td>
                                     <td>@Share(materialGroup.Value, group.Value, ShareOfProductGroup)</td>
                                     <td></td>
@@ -95,6 +98,7 @@
                                     {
                                         <tr class="purchasing-cascade-l3">
                                             <td>@part.Label</td>
+                                            <td></td>
                                             <td></td>
                                             <td>@Chf(part.Value)</td>
                                             <td>@Share(part.Value, materialGroup.Value, ShareOfMaterialGroup)</td>
@@ -110,6 +114,7 @@
                     <tr class="purchasing-cascade-l1">
                         <td><strong>@T("Total", "Total")</strong></td>
                         <td><strong>@Chf(_rows.Sum(r => r.Revenue))</strong></td>
+                        <td><strong>@Chf(_rows.Sum(r => r.ManufacturingCost))</strong></td>
                         <td><strong>@Chf(_rows.Sum(r => r.Value))</strong></td>
                         <td>@Share(_rows.Sum(r => r.Value), _rows.Sum(r => r.Revenue), ShareOfRevenue)</td>
                         <td></td>
@@ -119,6 +124,13 @@
                 </tbody>
             </table>
         </div>
+        @if (_rows.Any(HkIncomplete))
+        {
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block mt-1">
+                @T("* Standardpreis nicht für alle verkauften Nummern vorhanden, die HK sind dort zu tief (Abdeckung im Tooltip).",
+                   "* Standard price not available for all sold numbers, manufacturing cost is too low there (coverage in the tooltip).")
+            </MudText>
+        }
     }
 </MudPaper>
 
@@ -204,6 +216,15 @@
 
     private static string Chf(decimal value)
         => value == 0m ? "-" : "CHF " + value.ToString("N0", CultureInfo.CurrentCulture);
+
+    // Sichtbares Kennzeichen, wenn weniger als 99 % des Umsatzes einen Standardpreis haben (sonst wirkt die HK zu tief).
+    private static bool HkIncomplete(PurchasingMaterialShareNode group)
+        => group.Revenue > 0m && group.ManufacturingCostCoverage < 0.99m;
+
+    // HK-Abdeckung (Mail Marco Widmer 2026-11-12): welcher Teil des Umsatzes einen Standardpreis hat.
+    private string HkTitle(PurchasingMaterialShareNode group)
+        => string.Format(CultureInfo.CurrentCulture, T("Standardpreis vorhanden für {0} des Umsatzes", "Standard price available for {0} of revenue"),
+            (group.ManufacturingCostCoverage * 100m).ToString("0.#", CultureInfo.CurrentCulture) + " %");
 
     // F9 Pruefung 2026-11-05: Die Spalte „Anteil“ hat je Stufe eine andere Basis; jede Zelle nennt sie jetzt.
     // Kleine Anteile stehen als „< 0.1 %“ statt „0 %“. Die Rechnung selbst ist unveraendert.

@@ -309,6 +309,29 @@ public class DatabaseSeedService : IDatabaseSeedService
 
         HideUnclearPurchasingViewsOnce(db);
         HideOldSpendTabOnce(db);
+        HideOpenOrdersAndContractsOnce(db);
+    }
+
+    /// <summary>Unsichtbarer Merker: die Ausblendung von Offene Bestellungen und Kontrakte vom 2026-11-13 ist erledigt.</summary>
+    internal const string PurchasingOpenOrdersContractsHideMarkerKey = "migration-2026-11-13-einkauf-bestellungen-kontrakte-ausblenden";
+
+    /// <summary>Mail Marco Widmer 2026-11-12 (mit Armin abgesprochen, Entscheid Ingo 2026-11-13 „nur ausblenden“): Offene
+    /// Bestellungen und Kontrakte bieten gegen die SAP-Transaktionen keinen Mehrwert. Einmalig ausgeblendet, die Routen bleiben
+    /// erreichbar; ein Admin kann sie unter Menuestruktur wieder einblenden, ohne dass der Start sie erneut versteckt.</summary>
+    private static void HideOpenOrdersAndContractsOnce(AppDbContext db)
+    {
+        if (db.NavigationMenuItems.Any(x => x.Key == PurchasingOpenOrdersContractsHideMarkerKey))
+            return;
+        foreach (var key in new[] { "purchasing-open-orders", "purchasing-contracts" })
+        {
+            var item = db.NavigationMenuItems.FirstOrDefault(x => x.Key == key);
+            if (item is not null)
+                item.IsVisible = false;
+        }
+        var marker = Link(PurchasingOpenOrdersContractsHideMarkerKey, "finance-admin", "Merker Einkauf-Ausblendung 2026-11-13", "Marker purchasing hide 2026-11-13", "Settings", string.Empty, 999);
+        marker.IsVisible = false;
+        db.NavigationMenuItems.Add(marker);
+        db.SaveChanges();
     }
 
     /// <summary>Unsichtbarer Merker: die Ausblendung des alten Reiters Spend vom 2026-10-28 ist erledigt.</summary>

@@ -218,6 +218,10 @@
     </details>
 </MudPaper>
 
+@* Mail Marco Widmer 2026-11-12: im Spend-Aufriss doppeln die Kacheln (Bestellwert, Lagerwert, aktive Lieferanten) das
+   Einkaufs-Dashboard und sind dort ausgeblendet. *@
+@if (CurrentPurchasingPage != "aufriss")
+{
 <MudGrid Class="mb-4" Spacing="2">
     @foreach (var card in KpiCards)
     {
@@ -248,6 +252,7 @@
         </MudItem>
     }
 </MudGrid>
+}
 
 @switch (CurrentPurchasingPage)
 {
@@ -454,10 +459,7 @@
                                  PartsPerspectives="@_liveState.PurchasingPartsSpendPerspectiveRows"
                                  PartsProductGroupAllocation="@_liveState.PurchasingPartsProductGroupAllocation"
                                  RegionGroups="@_liveState.RegionByMaterialGroupRows"
-                                 AbcRows="@_liveState.AbcSpendRows"
-                                 XyzRows="@_liveState.XyzSpendRows"
-                                 LzCodeRows="@_liveState.LzCodeSpendRows"
-                                 LzSortRows="@_liveState.LzSortSpendRows"
+                                 XyzCountRows="@_liveState.XyzMaterialCountRows"
                                  AbcXyzActionRows="@_liveState.AbcXyzActionRows" />
         @* Block „Bestellwert nach Lieferant und Jahr“ (alter Reiter Spend: Kacheln, Spend pro Lieferant, Volumen nach
            Warengruppe/Region/Waehrung, Detailtabelle, Datenstatus) am 2026-11-05 entfernt, Wunsch Ingo: alles doppelt zu den

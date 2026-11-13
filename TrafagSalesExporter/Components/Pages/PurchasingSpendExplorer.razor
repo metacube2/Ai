@@ -30,8 +30,8 @@
         @if (_onlyPurchasingParts)
         {
             <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block">
-                @T("Alle Einstiege zeigen nur Positionen, deren Material einen Einkaufsdisponenten 001 bis 006 hat. Ausschalten zeigt den ganzen Einkauf. Die Diagramme darunter zeigen immer den ganzen Einkauf.",
-                   "All entry points show only items whose material has a purchasing MRP controller 001 to 006. Switch off to see all purchasing. The charts below always show all purchasing.")
+                @T("Alle Einstiege und ihr Kuchen zeigen nur Positionen, deren Material einen Einkaufsdisponenten 001 bis 006 hat. Ausschalten zeigt den ganzen Einkauf. XYZ-Anzahl und Massnahmenmatrix darunter zeigen immer den ganzen Einkauf.",
+                   "All entry points and their pie show only items whose material has a purchasing MRP controller 001 to 006. Switch off to see all purchasing. The XYZ count and action matrix below always show all purchasing.")
             </MudText>
         }
     }
@@ -68,17 +68,7 @@
         </MudText>
     }
 
-    @if (ActivePerspectiveKey == "lzcode" || ActivePerspectiveKey == "lzsort")
-    {
-        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
-            <strong>@T("Lebenszyklus-Code", "Lifecycle code")</strong> (MARA-ZZLZCOD) /
-            <strong>@T("Sortiments-Code", "Assortment code")</strong> (MARA-ZZLZCODSORT):
-            @T("Der Code wird je Material aus dem Materialstamm gelesen (SAP-Set EinkMatLzSet). Materialien ohne Code und Positionen ohne Materialnummer stehen unter ohne Code. Die Gesamtsumme bleibt gleich wie bei den anderen Einstiegen.",
-               "The code is read per material from the material master (SAP set EinkMatLzSet). Materials without a code and items without a material number appear under ohne Code. The total stays the same as for the other entry points.")
-        </MudAlert>
-    }
-
-    @if (ActivePerspectiveKey == "disponent")
+    @if (ActivePerspectiveKey is "disponent" or "disponent-materialgroup")
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
             @T("Disponent des Einkaufsmaterials selbst (MARC-DISPO, Werk 1100), wie die Spalte DISPOKENNZ (Dispokürzel) im SAP-Report ZM_OFFENE_KDAUF (ZC23). Positionen ohne Material oder ohne Disponent stehen unter ohne Disponent. Die Gesamtsumme bleibt gleich wie bei den anderen Einstiegen.",
@@ -94,7 +84,7 @@
         </MudAlert>
     }
 
-    @if (ActivePerspectiveKey == "usage-productgroup")
+    @if (ActivePerspectiveKey is "usage-productgroup" or "usage-productgroup-supplier")
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
             @T("Einkaufsvolumen nach der Produktgruppe, in deren Produkten das Material verbaut ist: Einkaufsmaterial -> verkürzte Nummern aus der Stücklistenauflösung (ZLO03) -> deren Disponent -> SAP ZDISPO_GRP/ZDISPO_SPART. Verteilt wird nach der Anzahl verwendender Nummern, die Gesamtsumme bleibt exakt. Material ohne bekannte Verwendung und Textbestellungen stehen unter ohne Verwendung. Grundlage ist der Bestellwert im gewählten Zeitraum, nicht der Materialanteil der Standardkalkulation aus ZC23.",
@@ -133,6 +123,31 @@
     }
     else
     {
+        @* Kuchen je Einstieg (Mail Marco Widmer 2026-11-12): Volumen der ersten Ebene, die grossten 10 mit Namen. *@
+        var pie = ActivePie;
+        if (pie.Slices.Count > 1)
+        {
+            <div class="purchasing-pie-grid mt-2">
+                <div class="purchasing-pie-card">
+                    <div class="purchasing-pie" style="@BuildPieStyle(pie)"></div>
+                    <div class="purchasing-pie-legend">
+                        <div class="purchasing-pie-title">@T("Volumen", "Volume"): @pie.MaterialGroup</div>
+                        <div class="purchasing-pie-total">@FormatChf(pie.Total)</div>
+                        @{ var pieIndex = 0; }
+                        @foreach (var slice in pie.Slices)
+                        {
+                            var color = Palette[pieIndex % Palette.Length];
+                            pieIndex++;
+                            <div class="purchasing-pie-row">
+                                <span class="purchasing-pie-swatch" style="@($"background:{color}")"></span>
+                                <span class="purchasing-pie-label">@slice.Label</span>
+                                <span class="purchasing-pie-share">@FormatShare(slice.Value, pie.Total)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
         <div class="purchasing-matrix-scroll mt-2">
             <table class="purchasing-matrix">
                 <thead>
@@ -238,147 +253,41 @@
     }
 </MudPaper>
 
-<MudGrid Spacing="2">
-    <MudItem xs="12" md="6">
-        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
-            <div class="purchasing-section-panel-head">
-                <MudText Typo="Typo.subtitle1">@T("Volumen nach ABC", "Volume by ABC")</MudText>
-                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
-            </div>
-            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
-                @T("ABC-Kennzeichen aus dem Materialstamm (MARC-MAABC). Fuellt sich mit dem naechsten Einkauf-Full-Load.",
-                   "ABC indicator from the material master (MARC-MAABC). Fills with the next purchasing full load.")
-            </MudText>
-            @if (BarsEmptyOrUnknown(AbcRows, "ohne ABC"))
+@* Mail Marco Widmer 2026-11-12: die Balken „Volumen nach ABC / XYZ / Lebenszyklus-Code / Sortiments-Code“ sind entfernt
+   (ABC ist selbst schon eine Volumeneinteilung, LZ- und Sortiments-Code werden nicht mehr gepflegt). Stattdessen die
+   Anzahl Artikel je XYZ-Klasse. *@
+<MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
+    <div class="purchasing-section-panel-head">
+        <MudText Typo="Typo.subtitle1">@T("Anzahl Artikel nach XYZ", "Number of materials by XYZ")</MudText>
+        <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
+    </div>
+    <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
+        @T("Materialien mit Bestellposition im Zeitraum je XYZ-Klasse (SAP-Zusatztabelle ZCA_MAT_ABC_XYZ). Textbestellungen ohne Materialnummer zählen nicht.",
+           "Materials with a purchase order item in the period per XYZ class (SAP add-on table ZCA_MAT_ABC_XYZ). Text orders without a material number are not counted.")
+    </MudText>
+    @if (BarsEmptyOrUnknown(XyzCountRows, "ohne XYZ"))
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true">
+            @T("XYZ-Klassifizierung im Cache noch leer. Fuellt sich mit dem naechsten Einkauf-Full-Load.",
+               "XYZ classification still empty in the cache. Fills with the next purchasing full load.")
+        </MudAlert>
+    }
+    else
+    {
+        <div class="purchasing-explorer-bars">
+            @foreach (var bar in BuildCountBars(XyzCountRows))
             {
-                <MudAlert Severity="Severity.Warning" Dense="true">
-                    @T("ABC-Kennzeichen im Cache noch leer. Fuellt sich mit dem naechsten Einkauf-Full-Load.",
-                       "ABC indicator still empty in the cache. Fills with the next purchasing full load.")
-                </MudAlert>
-            }
-            else
-            {
-                <div class="purchasing-explorer-bars">
-                    @foreach (var bar in BuildBars(AbcRows))
-                    {
-                        <div class="purchasing-bar-row">
-                            <div class="purchasing-bar-label">@bar.Label</div>
-                            <div class="purchasing-bar-track">
-                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
-                            </div>
-                            <div class="purchasing-bar-value">@bar.ValueText</div>
-                        </div>
-                    }
+                <div class="purchasing-bar-row">
+                    <div class="purchasing-bar-label">@bar.Label</div>
+                    <div class="purchasing-bar-track">
+                        <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
+                    </div>
+                    <div class="purchasing-bar-value">@bar.ValueText</div>
                 </div>
             }
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" md="6">
-        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
-            <div class="purchasing-section-panel-head">
-                <MudText Typo="Typo.subtitle1">@T("Volumen nach XYZ", "Volume by XYZ")</MudText>
-                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
-            </div>
-            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
-                @T("XYZ-Klassifizierung aus der SAP-Zusatztabelle ZCA_MAT_ABC_XYZ. Fuellt sich mit dem naechsten Einkauf-Full-Load.",
-                   "XYZ classification from the SAP add-on table ZCA_MAT_ABC_XYZ. Fills with the next purchasing full load.")
-            </MudText>
-            @if (BarsEmptyOrUnknown(XyzRows, "ohne XYZ"))
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true">
-                    @T("XYZ-Klassifizierung im Cache noch leer. Fuellt sich mit dem naechsten Einkauf-Full-Load.",
-                       "XYZ classification still empty in the cache. Fills with the next purchasing full load.")
-                </MudAlert>
-            }
-            else
-            {
-                <div class="purchasing-explorer-bars">
-                    @foreach (var bar in BuildBars(XyzRows))
-                    {
-                        <div class="purchasing-bar-row">
-                            <div class="purchasing-bar-label">@bar.Label</div>
-                            <div class="purchasing-bar-track">
-                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
-                            </div>
-                            <div class="purchasing-bar-value">@bar.ValueText</div>
-                        </div>
-                    }
-                </div>
-            }
-        </MudPaper>
-    </MudItem>
-</MudGrid>
-
-<MudGrid Spacing="2" Class="mt-1">
-    <MudItem xs="12" md="6">
-        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
-            <div class="purchasing-section-panel-head">
-                <MudText Typo="Typo.subtitle1">@T("Volumen nach Lebenszyklus-Code", "Volume by lifecycle code")</MudText>
-                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
-            </div>
-            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
-                @T("Lebenszyklus-Code aus dem Materialstamm (MARA-ZZLZCOD). Materialien ohne Code stehen unter ohne Code.",
-                   "Lifecycle code from the material master (MARA-ZZLZCOD). Materials without a code appear under ohne Code.")
-            </MudText>
-            @if (BarsEmptyOrUnknown(LzCodeRows, "ohne Code"))
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true">
-                    @T("LZ-Codes im Cache noch leer. Sie fuellen sich mit dem naechsten Einkauf-Lauf, sobald das SAP-Set EinkMatLzSet verfuegbar ist.",
-                       "LZ codes still empty in the cache. They fill with the next purchasing run as soon as the SAP set EinkMatLzSet is available.")
-                </MudAlert>
-            }
-            else
-            {
-                <div class="purchasing-explorer-bars">
-                    @foreach (var bar in BuildBars(LzCodeRows))
-                    {
-                        <div class="purchasing-bar-row">
-                            <div class="purchasing-bar-label">@bar.Label</div>
-                            <div class="purchasing-bar-track">
-                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
-                            </div>
-                            <div class="purchasing-bar-value">@bar.ValueText</div>
-                        </div>
-                    }
-                </div>
-            }
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" md="6">
-        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
-            <div class="purchasing-section-panel-head">
-                <MudText Typo="Typo.subtitle1">@T("Volumen nach Sortiments-Code", "Volume by assortment code")</MudText>
-                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
-            </div>
-            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
-                @T("Sortiments-Code aus dem Materialstamm (MARA-ZZLZCODSORT). Materialien ohne Code stehen unter ohne Code.",
-                   "Assortment code from the material master (MARA-ZZLZCODSORT). Materials without a code appear under ohne Code.")
-            </MudText>
-            @if (BarsEmptyOrUnknown(LzSortRows, "ohne Code"))
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true">
-                    @T("LZ-Codes im Cache noch leer. Sie fuellen sich mit dem naechsten Einkauf-Lauf, sobald das SAP-Set EinkMatLzSet verfuegbar ist.",
-                       "LZ codes still empty in the cache. They fill with the next purchasing run as soon as the SAP set EinkMatLzSet is available.")
-                </MudAlert>
-            }
-            else
-            {
-                <div class="purchasing-explorer-bars">
-                    @foreach (var bar in BuildBars(LzSortRows))
-                    {
-                        <div class="purchasing-bar-row">
-                            <div class="purchasing-bar-label">@bar.Label</div>
-                            <div class="purchasing-bar-track">
-                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
-                            </div>
-                            <div class="purchasing-bar-value">@bar.ValueText</div>
-                        </div>
-                    }
-                </div>
-            }
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+        </div>
+    }
+</MudPaper>
 
 <MudPaper Class="pa-3 purchasing-section-shell mt-3" Outlined="true">
     <div class="purchasing-section-head">
@@ -452,13 +361,16 @@
     private PurchasingProductGroupAllocationSummary ShownAllocation
         => _onlyPurchasingParts && PartsPerspectives.Count > 0 ? PartsProductGroupAllocation : ProductGroupAllocation;
     [Parameter] public IReadOnlyList<PurchasingRegionPieGroup> RegionGroups { get; set; } = [];
-    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> AbcRows { get; set; } = [];
-    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> XyzRows { get; set; } = [];
-    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> LzCodeRows { get; set; } = [];
-    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> LzSortRows { get; set; } = [];
+    // Anzahl Materialien je XYZ-Klasse (Mail Marco Widmer 2026-11-12); Wert = Anzahl, nicht CHF.
+    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> XyzCountRows { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];
 
-    private static readonly string[] Palette = ["#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a", "#00838f", "#ad1457", "#5d4037", "#455a64", "#9e9d24"];
+    // Elf Farben: die grossten 10 eines Einstiegs plus „übrige“ im Kuchen (Mail Marco Widmer 2026-11-12).
+    // Als Konstanten, weil der Uebersetzungstest zwei benachbarte Zeichenketten fuer ein Textpaar Deutsch/Englisch haelt.
+    private const string ExtraRed = "#c62828";
+    private const string RestGrey = "#9e9e9e";
+    private static readonly string[] Palette = ["#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a", "#00838f", "#ad1457", "#5d4037", "#455a64", "#9e9d24", ExtraRed, RestGrey];
+    private const int PieTopCount = 10;
     private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
     private string? _activePerspectiveKey;
 
@@ -621,6 +533,36 @@
                 max <= 0m ? 0d : Math.Clamp((double)(row.Value / max * 100m), 3d, 100d),
                 Palette[index % Palette.Length]))
             .ToList();
+    }
+
+    private List<BarRow> BuildCountBars(IReadOnlyList<PurchasingLiveChartPoint> rows)
+    {
+        var max = rows.Count == 0 ? 0m : rows.Max(row => row.Value);
+        return rows
+            .Select((row, index) => new BarRow(
+                row.Label,
+                row.Value.ToString("N0", CultureInfo.CurrentCulture),
+                max <= 0m ? 0d : Math.Clamp((double)(row.Value / max * 100m), 3d, 100d),
+                Palette[index % Palette.Length]))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Kuchen der ersten Ebene des gewaehlten Einstiegs (Mail Marco Widmer 2026-11-12): die grossten 10 mit Namen, der Rest
+    /// als „übrige (n)“. Negative Summen (Gutschriften) zaehlen nicht, damit die Anteile aufgehen.
+    /// </summary>
+    private PurchasingRegionPieGroup ActivePie
+    {
+        get
+        {
+            var positive = ActiveRows.Where(row => row.Total > 0m).OrderByDescending(row => row.Total).ToList();
+            var slices = positive.Take(PieTopCount).Select(row => new PurchasingLiveChartPoint(row.Label, row.Total)).ToList();
+            var rest = positive.Skip(PieTopCount).ToList();
+            if (rest.Count > 0)
+                slices.Add(new PurchasingLiveChartPoint($"{T("übrige", "others")} ({rest.Count})", rest.Sum(row => row.Total)));
+            var title = ActivePerspective is { } perspective ? T(perspective.LabelDe, perspective.LabelEn) : T("Aufriss", "Breakdown");
+            return new PurchasingRegionPieGroup(title, slices.Sum(slice => slice.Value), slices);
+        }
     }
 
     // Leer-Zustand: keine Zeilen ODER alles in der Sammelklasse (z.B. nur „ohne ABC"), typisch

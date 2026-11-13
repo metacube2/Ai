@@ -12,7 +12,12 @@ public sealed record PurchasingMaterialShareNode(
     decimal Quantity,
     string Unit,
     decimal UnitCost,
-    IReadOnlyList<PurchasingMaterialShareNode> Children);
+    IReadOnlyList<PurchasingMaterialShareNode> Children,
+    // Herstellkosten HK (Mail Marco Widmer 2026-11-12): bestaetigte Menge der verkuerzten Nummer mal Standardpreis MBEW-STPRS
+    // Werk 1100 (GroupStandardCosts, Bewertungskreis 1100). Nur auf Produktgruppen-Ebene, wie der Umsatz.
+    decimal ManufacturingCost = 0m,
+    // Anteil des Umsatzes, dessen verkuerzte Nummer einen Standardpreis hat; unter 1 heisst: HK unvollstaendig.
+    decimal ManufacturingCostCoverage = 0m);
 
 /// <summary>Stand der geladenen Daten (Zeitpunkt, Monatsbereich, Meldung des letzten Laufs).</summary>
 public sealed record PurchasingMaterialShareState(string LoadedAtUtc, string MonthFrom, string MonthTo, string Message);
@@ -71,7 +76,25 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
             }
         }
 
-        return Build(sales, bom);
+        return Build(sales, bom, await LoadUnitCostsAsync(conn, cancellationToken));
+    }
+
+    /// <summary>Standardpreis je Material (Werk 1100) aus den Konzern-Standardkosten; leer, wenn die Tabelle fehlt.</summary>
+    private static async Task<IReadOnlyDictionary<string, decimal>> LoadUnitCostsAsync(SqliteConnection conn, CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<string, decimal>(StringComparer.Ordinal);
+        await using (var check = conn.CreateCommand())
+        {
+            check.CommandText = "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'GroupStandardCosts';";
+            if (await check.ExecuteScalarAsync(cancellationToken) is null)
+                return result;
+        }
+        await using var command = conn.CreateCommand();
+        command.CommandText = "SELECT MaterialKey, MAX(UnitCost) FROM GroupStandardCosts WHERE ValuationArea = '1100' AND UnitCost > 0 GROUP BY MaterialKey;";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result[PurchasingComponentDispoLoader.NormalizeKey(reader.GetString(0))] = Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture);
+        return result;
     }
 
     public sealed record BomRow(string Idnrk, decimal Menge, string Meins, decimal Stk, decimal Wert, string Matkl, string Maktx);
@@ -79,7 +102,8 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
     /// <summary>Reine Rechnung, ohne Datenbank (Tests).</summary>
     public static IReadOnlyList<PurchasingMaterialShareNode> Build(
         IEnumerable<(string Vknr, string Group, decimal Bmeng, decimal Netwr)> sales,
-        IReadOnlyDictionary<string, List<BomRow>> bom)
+        IReadOnlyDictionary<string, List<BomRow>> bom,
+        IReadOnlyDictionary<string, decimal>? unitCosts = null)
     {
         var groups = new Dictionary<string, GroupAcc>(StringComparer.Ordinal);
         foreach (var (vknr, groupName, bmeng, netwr) in sales)
@@ -88,6 +112,11 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
             if (!groups.TryGetValue(name, out var group))
                 groups[name] = group = new GroupAcc();
             group.Revenue += netwr;
+            if (unitCosts is not null && unitCosts.TryGetValue(PurchasingComponentDispoLoader.NormalizeKey(vknr), out var stprs))
+            {
+                group.ManufacturingCost += bmeng * stprs;
+                group.CoveredRevenue += netwr;
+            }
             if (!bom.TryGetValue(vknr, out var rows))
                 continue;
             foreach (var row in rows)
@@ -119,7 +148,9 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
                     })
                     .OrderByDescending(n => n.Value).ThenBy(n => n.Key, StringComparer.Ordinal)
                     .ToList();
-                return new PurchasingMaterialShareNode(g.Key, g.Key, materialGroups.Sum(n => n.Value), Math.Round(g.Value.Revenue, 2), 0m, string.Empty, 0m, materialGroups);
+                return new PurchasingMaterialShareNode(g.Key, g.Key, materialGroups.Sum(n => n.Value), Math.Round(g.Value.Revenue, 2), 0m, string.Empty, 0m, materialGroups,
+                    Math.Round(g.Value.ManufacturingCost, 2),
+                    g.Value.Revenue > 0m ? Math.Round(g.Value.CoveredRevenue / g.Value.Revenue, 4) : 0m);
             })
             .OrderByDescending(n => n.Value).ThenBy(n => n.Key, StringComparer.Ordinal)
             .ToList();
@@ -154,6 +185,8 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
     private sealed class GroupAcc
     {
         public decimal Revenue;
+        public decimal ManufacturingCost;
+        public decimal CoveredRevenue;
         public Dictionary<string, Dictionary<string, PartAcc>> MaterialGroups { get; } = new(StringComparer.Ordinal);
     }
 
