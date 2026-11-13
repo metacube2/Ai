@@ -1,4 +1,4 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-13
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-13 (Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-13.*
@@ -452,7 +452,7 @@ das Excel enthaelt Kontrollwerte in CHF). Commit `82f4f52`, produktiv 2026-11-02
   Kennzahlen im `$select` (die Query verdichtet auf eine Zeile), Filter `SalesOrganization eq '1100' and BillingDocDateYearMonth eq 'JJJJMM'`.
   Gateway-Wurzel und Mandant wie Operations KPI (`KpiGatewayRoot`, `KpiSapClient`), Benutzer der Einkauf-Verbindung.
 - `umsatz_plan` = `SlsVolumeNetAmtInDspCrcy` + `OpnOutbDelivsForInvcNetAmtInDC` + `OpenSalesOrdersNetAmountInDC`,
-  `gutschriften` = `CustCrdtMemoNetAmtInDspCrcy`. Monat = Monat des Vortags (am 1. der Vormonat), geschrieben auf den Abfragetag
+  `gutschriften` = `CustCrdtMemoNetAmtInDspCrcy`. Monat = Monat des Vortags (am 1. der Vormonat; *(Ueberholt 2026-11-13 mittags, Abschnitt 22: Monat des letzten Arbeitstags)*), geschrieben auf den Abfragetag
   (Konvention Verkauf: Eintrag D = Stand bis D-1). Manuell erfasste Werte bleiben (`ShopfloorSapMengen.BuildItems`).
 - Vorschau `GET shopfloor/api/sap/verkauf?tag=JJJJ-MM-TT`, schreiben `POST` (mit `X-User`). Schalter `Shopfloor:SapVerkaufEnabled`
   stand mit `82f4f52` auf false, bis die Vorschau fuer den 01.11. Fabios Kontrollwerte traf: 10/2026 **8'827'624** bzw. **110'412** CHF.
@@ -499,7 +499,7 @@ damit erledigt.
 
 Auftrag Ingo („shopfloormail vorher“, vor der KPI-Kundensicht). Fabios Definition (Mail 02.11., Feldliste `ppd.verzug_*` im Excel
 `1.xlsx`, Blatt Feld-Mapping): ZC22 (`ZM_OFFENE_FAUF`), Werk 1100, mit Planauftraegen und Vorgangsdaten, ohne erledigte, Summe offene
-Menge, Abfragetag; Disponenten SEH `S*`, TR5 `EK*`, TX `EL*`, DW `D*` ohne DW1/DL6 (inkl. DS1/DS2/DSN); Material 1 bis 99999.
+Menge, Abfragetag; Disponenten SEH `S*`, TR5 `EK*`, TX `EL*`, DW `D*` ohne DW1/DL6 (inkl. DS1/DS2/DSN); Material 1 bis 99999. *(Ueberholt 2026-11-13 mittags, Abschnitt 22: DW `D*` ohne Ausnahmen, Material 1-99999 nur TR5 und DW, Eckendtermin ab 01.01.2026.)*
 **Mail und Excel weichen an zwei Stellen ab, die Mail gilt (neuer, ausdruecklich):** Eckendtermin *ohne* Untergrenze bis Vortag (das Excel
 nennt noch 01.01.2026, wie Anh Nhi; damit fiele ab Januar 2027 der Verzug aus 2026 weg) und **positive** Werte wie bisher im Dashboard
 (das Excel sagt „als negative Zahl gefuehrt“).
@@ -600,7 +600,7 @@ Exakt gleich. **Zwei Befunde fuer Fabio, vor dem Einschalten (`SapVerzugEnabled`
   `Shopfloor_Was_fehlt_2026-11-07.xlsx` gilt als uebernommen aus dem Verzug.
 - **Cockpit (`01fceec`, produktiv 14:12, Schalter `Shopfloor:SapVorratEnabled` aus):** `Services/Shopfloor/ShopfloorSapVorrat.cs`.
   Buckets ab dem Abfragetag D, kumuliert und inkl. Ueberfaelliger: `vorrat_total`; `vorrat_1m` bis Monatsende; `vorrat_2m` bis Ende
-  Folgemonat; `vorrat_3m` bis Ende uebernaechster Monat; `offen_kw` bis Sonntag der KW; nur SEH `ziel` bis D. Module seh, tr5, tx, dw.
+  Folgemonat; `vorrat_3m` bis Ende uebernaechster Monat; `offen_kw` bis Sonntag der KW; nur SEH `ziel` bis D. Module seh, tr5, tx, dw. *(Ueberholt 2026-11-13 mittags, Abschnitt 22: rollend D + 1/2/3 Monate bzw. DW D + 4/8/12 Wochen; TR5 und DW Material 1-99999.)*
   Schreiben ueber `ApplyPush` (manuelle Werte bleiben), Aufruf im SAP-Abgleich 04:00/12:45, Vorschau `GET/POST shopfloor/api/sap/vorrat?tag=`,
   Tests `ShopfloorSapVorratTests` (1465/1465). Vor dem Import liefert die Vorschau 502 „Transport T76K912860 fehlt“.
 - **Nicht gebaut:** TX `plan5` („Eckendtermin naechste 5 AT“, Grenze nicht eindeutig), Layoutfilter (siehe b).
@@ -629,7 +629,7 @@ Montag; die Montagsauftraege sind inzwischen gemeldet). Einschalten (`SapVorratE
   stellt ein von Hand ueberschriebenes Feld mit `src = sap` in der Konfiguration wieder her (SAP-Wert und Kennzeichen); echte Handfelder
   bleiben. *Ueberholt fuer SAP-Felder: „manuell erfasste Werte werden nicht ueberschrieben“ (Abschnitte 15, 17, 19).*
 - **TX plan5:** im Vorrat (`ShopfloorSapVorrat.Plan5Module`), **Annahme**: Eckendtermin vom Tag nach D bis zum 5. Arbeitstag (Mo-Fr, ohne
-  Feiertage), ohne Ueberfaellige; heute 5'937. Von Fabio zu bestaetigen.
+  Feiertage), ohne Ueberfaellige; heute 5'937. Von Fabio zu bestaetigen. *(Ueberholt 2026-11-13 mittags, Abschnitt 22: Fabio: kumuliert mit Ueberfaelligen und heutigen Auftraegen.)*
 - **d) CE11000, Skonto-Frage geloest (P76 lesend, SE16 mit Spaltenauswahl, 71'544 Zeilen Periode 009.2026):** Buchungskreis 1100,
   `PALEDGER 01`: `VV100 + VV110 - VV200 - VV210 - VV220 - VV250 - VV230 - VV240` ergibt **F 7'878'114.69 und A 6'531'197.94, genau Fabios
   Kontrollwerte**; ohne `VV240` 303.20 bzw. 196.47 zu hoch, `VV245` ist 0. Buchungskreis 1200 hat eigene Zeilen (F 334'938, A 368'478),
@@ -676,7 +676,7 @@ letzten Slot sofort nach (`_lastRunSlot` startet leer), deshalb gab es zusaetzli
   geht nicht, weil ShopAufSet nur die heute offenen Auftraege kennt.
 - `Shopfloor:SapVerzugEnabled = true`, `VerzugMaterialFilter = ""` (auch Vorgabe in `ShopfloorOptions`). Disponenten unveraendert
   (`ShopfloorSapVerzug.Abteilung`, die auch der Vorrat nutzt), kein Layoutfilter. Der Test
-  `Verzug_Rechnet_Ohne_Materialfilter_Und_Ist_Eingeschaltet` liest beide Werte aus `appsettings.json`; wer sie umstellt, passt den Test an.
+  `Verzug_Rechnet_Ohne_Materialfilter_Und_Ist_Eingeschaltet` liest beide Werte aus `appsettings.json`; wer sie umstellt, passt den Test an. *(Ueberholt 2026-11-13 mittags, Abschnitt 22: `MaterialFilter = "TR5,DW"` fuer Vorrat und Verzug, `VerzugAb = 2026-01-01`; Test heisst jetzt `Vorrat_Und_Verzug_Mit_Materialfilter_TR5_DW_Und_Untergrenze_2026`.)*
 - Cache-Busting: `wwwroot/shopfloor/index.html` laedt `style.css?v=…` und `app.js?v=…`; `v` = erste 8 Zeichen SHA256 von `app.js` +
   `style.css` ohne CR. Der Test `IndexHtml_Laedt_AppJs_Und_StyleCss_Mit_Aktueller_Version` faellt, sobald eine der Dateien sich
   aendert, bis `index.html` den neuen Wert traegt (er steht in der Fehlermeldung). Fabios `apply_patch.js` fasst `index.html` nicht an.
@@ -706,3 +706,71 @@ letzten Slot sofort nach (`_lastRunSlot` startet leer), deshalb gab es zusaetzli
 gegen Fabios September, `SapCoPaEnabled`. Warum 04:00 am 13.11. nicht lief (vermutlich App-Pool ohne Dauerbetrieb, ISS-017, nicht
 untersucht). Entscheid Ingo zum 09.11. (siehe oben). Fabio: DW-Verzug 9'575 und SEH 12.11. 212 % pruefen, plan5-Annahme bestaetigen.
 Antwort an Fabio noch nicht gesendet.
+
+## 22. Paket Fabio 13.11. (`pakete.zip`): Excel der Teamleiter abloesen, Phase A deployed (Stand 2026-11-13)
+
+Fabio (per Teams, seine Mails gehen nicht mehr hinaus): Das Shopfloor-Excel soll abgeloest werden; dafuer muessen die SAP-Felder
+dieselben Werte zeigen wie das Excel der Teamleiter. Er hat alle 106 SAP/MES-Felder gegen P76 und das Excel abgeglichen: 10 stimmen,
+28 geliefert aber falsch, 48 fehlen mit fertiger Definition, 20 fehlen mit offener Quelle (klaert er mit den Teamleitern). Paket
+unter `docs/shopfloor_paket_2026-11-13/` (Freigabe Ingo): `Feedback_Ingo_2026-11-13.md` (Befund je Punkt mit Kontrollwerten),
+`Shopfloor_SAP_Felder_Status_2026-11-13.xlsx` (alle Felder), ZC22-Abzug 13.11. 09:05 (Eckendtermin bis 20.11.), CE11000-Kontrollwerte
+November je Stichtag, Patch 08 und zwei Config-Skripte. Plan im Chat, Entscheide Ingo 13.11. ~11:55: Phase A (Cockpit) **und** B (SAP)
+umsetzen, P76 nur lesend fuer ZC22-Layout und ZC27-Quelltext, Verzug ab 01.01.2026, Paket ins Repo.
+
+**Phase A, deployed 12:22 (`d754a76`, eigener Zweig `shopfloor-paket-1311` ab `df48301` ohne Spanien, gemergt `7a8b97d`):**
+- **Vorrat rollend (Punkt 1):** `ShopfloorSapVorrat.Grenzen(day, wochen)`: SEH, TR5, TX Eckendtermin bis D + 1 / 2 / 3 Kalendermonate
+  (`AddMonths`, 31.01. + 1 = 28.02.), DW (`WochenModule`) bis D + 28 / 56 / 84 Tage, kumuliert mit Ueberfaelligen. Die Spezifikation
+  vom 07.11. (Monatsende) war laut Fabio falsch. Die Feldnamen `vorrat_1m` usw. bleiben, auch fuer DW.
+- **Materialfilter (Punkte 2, 3, 6):** neu `Shopfloor:MaterialFilter = "TR5,DW"` fuer Vorrat **und** Verzug (ersetzt
+  `VerzugMaterialFilter`); nur Materialnummern 1 bis 99999. SEH und TX ohne Filter. Bei TR5 faellt damit auch EKB weg (nur
+  alphanumerische Materialien).
+- **DW (Punkt 3):** `ShopfloorSapVerzug.Abteilungen` DW = `D*` ohne Ausnahmen. Der Entscheid „D* ohne DW1/DL6, inklusive DS1/DS2/DSN“
+  ist ersetzt; DS1 und DW1 fallen ueber den Materialfilter weg.
+- **plan5 (Punkt 5):** kumuliert bis zum 5. Arbeitstag nach D, mit ueberfaelligen und heutigen Auftraegen (die Annahme vom 10.11.
+  ohne Ueberfaellige ist ueberholt).
+- **Verzug (Punkt 6):** `Shopfloor:VerzugAb = "2026-01-01"` (Eckendtermin ab 01.01.2026 bis Vortag); Vorschau zeigt `ab`,
+  `vor_untergrenze`, `materialfilter`. **Ab Januar 2027 mit Fabio neu klaeren**, sonst faellt der Verzug aus 2026 weg.
+- **Monat des letzten Arbeitstags (Punkt 9):** `ShopfloorSapVerkauf.LetzterArbeitstag` (Mo bis Fr ohne 01.01. und 02.01., **Annahme**,
+  mit Fabio zu bestaetigen) fuer J4 (Fiori) und CO-PA. Vorschau `sap/verkauf?tag=2026-11-02` zeigt jetzt Oktober (`202610`).
+- **CO-PA HZDAT vorbereitet (Punkt 8):** `ShopfloorSapCoPa.Filter(..., hzdat)` haengt `and Hzdat le 'JJJJMMTT'` (Vortag) an, Schalter
+  `Shopfloor:SapCoPaHzdat` aus, bis `CoPaSumSet` die Eigenschaft kennt (Phase B). `SapCoPaEnabled` bleibt aus.
+- **Patch 08 und Configs:** Fabios `apply_patch.js` (08: PPA-Grafik und Forecast ohne CZ), `config_module_entfernen.js` (Module `cz`,
+  `mtf`, `sensoren` samt Agenda F1, F2, IN1; erfasste Werte bleiben in der DB) und `config_verkauf_tagesumsatz.js` (Tagesumsatz am
+  Monatswechsel = Umsatz IST, wenn der Wert unter die Haelfte faellt), je zuerst `--check`. Danach 103 SAP- und 3 MES-Felder, zusammen
+  Fabios 106. `index.html` `?v=a337e9cd`. Das Backend belieferte die drei Module nie; der Forecast-Dienst ordnet CZ-Auftraege weiter zu,
+  die Oberflaeche zeigt sie nicht mehr. Handbuch Kapitel 10 nachgefuehrt.
+- Tests: Shopfloor 147/147, Release-Worktree 1569/1569; Deploy bitgleich, ohne Alarm. Protokoll
+  `.tmp_deploy_2026-11-13_shopfloor_paket_fabio.log`.
+
+**Vorschau nach dem Deploy (nur GET, 12:25) gegen Fabios Werte (P76 13.11. ~09:00):**
+
+| Feld | Fabio ZC22 | Vorschau neu | Bemerkung |
+| --- | ---: | ---: | --- |
+| SEH 1 / 2 / 3 Mte | 38'557 / 51'955 / 80'507 | 38'087 / 51'671 / 80'020 | passt (drei Stunden spaeter) |
+| TR5 total / 1 Mte / KW | 61'857 / 15'477 / 864 | 62'326 / 15'506 / 902 | passt |
+| DW total / 1 Mte (4 Wo) / KW | 49'092 / 16'730 / 726 | 50'491 / 16'528 / 626 | nahe; total 1'400 hoeher, offen |
+| TX total / KW / plan5 | 48'898 / 846 / 7'083 | 49'407 / 1'297 / 7'360 | **weiter rund 450 bis 500 zu hoch** |
+| Verzug SEH / TR5 / TX / DW | 33 / 304 / 144 / 441 | 57 / 543 / 567 / 555 | DW = Fabios Abzug (555); Rest offen |
+
+Die Werte vom 13.11. bleiben eingefroren (Stand 06:16); die neuen Regeln schreiben ab dem ersten Lauf des naechsten Arbeitstags.
+`POST sap/vorrat?ersetzen=1` heute bewusst nicht, weil es auch das SEH-Tagesziel mit dem Nachmittagsrest ueberschriebe. 09. bis 13.11.
+lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege).
+
+**Befunde aus dem Nachrechnen des Pakets:**
+- **Verzug-Luecke = vermutlich ZC22-Layoutfilter.** TR5 Dashboard 559 (alle Materialien) gegen Fabios Abzug 320, Luecke 239, genau wie
+  am 09.11. die Luecke durch den Filter des Standardlayouts `/ P00 TX` auf Arbeitsplatz und Systemstatus (465 gegen 226, Abschnitt 19).
+  In Fabios Abzug ist der aelteste TX-Auftrag vom 10.11., das Dashboard zaehlt 16 ueberfaellige TX-Auftraege. Der Entscheid vom
+  13.11. morgens „ohne Layoutfilter“ waere dann der Grund der Abweichung. Pruefung in P76 laeuft (Phase B).
+- **DW-Verzug:** Fabios eigener Abzug ergibt fuer D*, Material 1-99999, bis Vortag 555 (DEF 243, D30 180, DS2 120, D31 7, D20 5), die
+  Vorschau ebenfalls 555; die 441 in seinem Text passen nicht zu seinem Abzug (Frage an Fabio). TR5 305, TX 144, SEH 33 stimmen mit
+  seinem Text ueberein.
+- **Transmitter-Sparte:** Mail 0005, Feldliste „0005 (+0006)“; entscheidet die CO-PA-Vorschau gegen die Kontrollwerte.
+
+**Phase B (SAP), laeuft:** P76 nur lesend (ZC22 mit und ohne Layoutfilter, Filterwerte, `/PPA`-Varianten, `ShopAufSet` VZ/VR je
+Auftrag gegen Fabios Abzug; ZC27 `ZPP_RM_MENGEN` Quelltext und Fabios Beleg MLE02 05.11. 644 gegen 1'059), Befund
+`saptasks/shopfloor_sap/P76_BEFUND_2026-11-13.md`. Danach in T76 ein Transport: `ShopRmSet` letzter Vorgang (Punkt 7), `CoPaSumSet`
+mit `Hzdat` (Punkt 8), falls belegt der Layoutfilter fuer `ShopAufSet`.
+
+**Nicht gebaut (Phase C):** die 40 Listenfelder (Rueckstandslisten, TVAV, Angebote, Punkt 10; Fabios Tabellenvorschlaege ausser
+`MARA-ZZTYP` ungeprueft), FPY TR5/TX aus dem MES (Punkt 11, DB-User Marco). Fabios Fragen an die Teamleiter (`Mails_2026-11-13.md`,
+Mail 2) laufen bei ihm.

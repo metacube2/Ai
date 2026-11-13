@@ -1,0 +1,29 @@
+{
+    "id":  "08_cz_mtf_sb_entfernt",
+    "datum":  "2026-11-13",
+    "beschreibung":  "CZ, MTF und Sensorbestände werden nicht mehr geführt: PPA-Grafik und Forecast ohne CZ (Voraussetzung, bevor die Module aus der Config entfernt werden)",
+    "marker":  "Patch 08 (2026-11-13)",
+    "app_js":  [
+                   {
+                       "name":  "PPA-Grafik: Abteilungsliste ohne CZ",
+                       "old":  ", [\"cz\", \"CZ\", \"var(--c5)\"]];",
+                       "new":  "]; /* Patch 08 (2026-11-13): CZ, MTF und Sensorbestände werden nicht mehr geführt */"
+                   },
+                   {
+                       "name":  "PPA-Grafik: Diagramm Auftragsvorrat CZ",
+                       "old":  "      \u003cdiv class=\"chart\"\u003e\u003ch3\u003eAuftragsvorrat CZ\u003c/h3\u003e${legend(vor.filter(s =\u003e s.name === \"CZ\"))}${multiLineSvg(vor.filter(s =\u003e s.name === \"CZ\"), lbl, 300, 560)}\u003c/div\u003e",
+                       "new":  ""
+                   },
+                   {
+                       "name":  "Forecast: Abteilung CZ",
+                       "old":  "  { dept: \"CZ\", mod: \"cz\", shifts: [\"ma1\", \"ma2\", \"ma3\"] }];",
+                       "new":  "  ];"
+                   },
+                   {
+                       "name":  "Forecast: CZ-Aufträge nicht als «nicht zugeordnet» zeigen",
+                       "old":  "const unassigned = d.orders.filter(o =\u003e !FC_DEPTS.some(x =\u003e x.dept === o.dept));",
+                       "new":  "const unassigned = d.orders.filter(o =\u003e o.dept !== \"CZ\" \u0026\u0026 !FC_DEPTS.some(x =\u003e x.dept === o.dept));"
+                   }
+               ],
+    "style_css":  ""
+}

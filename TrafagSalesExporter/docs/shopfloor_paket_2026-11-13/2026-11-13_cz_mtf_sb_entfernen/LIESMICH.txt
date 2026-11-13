@@ -1,0 +1,36 @@
+Shopfloor Paket 13.11.2026: Blätter CZ, MTF und Sensorbestände entfernen
+(Entscheid F. Palma 13.11.2026: diese drei Blätter werden im Board nicht mehr geführt)
+
+2_Patch\patches
+  08_cz_mtf_sb_entfernt            app.js: PPA-Grafik und Forecast ohne CZ.
+                                   - Abteilungsliste der PPA-Grafik ohne «cz», Diagramm «Auftragsvorrat CZ» entfällt
+                                   - Forecast: Abteilung CZ entfällt; CZ-Aufträge erscheinen nicht unter «Nicht zugeordnete Aufträge»
+                                   Muss VOR dem Config-Skript drauf, weil beide Seiten sonst auf das fehlende Modul «cz» zugreifen.
+
+3_Config
+  config_module_entfernen.js       Entfernt die Module cz, mtf, sensoren und ihre drei Agenda-Einträge
+                                   (F1. CZ, F2. Abteilung MTF, IN1. Sensorbestände) aus shopfloor_config.json.
+                                   Bereits erfasste Tageswerte in der Datenbank bleiben erhalten, sie werden nur nicht mehr angezeigt.
+
+Reihenfolge
+  1. node 2_Patch\apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check, dann ohne --check (wendet 08 an)
+  2. node 3_Config\config_module_entfernen.js "<Pfad>\shopfloor_config.json" --check, dann ohne --check
+  3. Dienst/App-Pool neu starten, falls die Config nur beim Start gelesen wird; Strg+F5
+
+Bitte zusätzlich im Backend
+  - Schnittstelle (Push/Jobs): Module cz, mtf, sensoren nicht mehr beliefern bzw. Felder aus dem Mapping nehmen.
+  - Falls GET api/daily?module=...,cz bei unbekanntem Modul einen Fehler liefert: nach Patch 08 ruft die Oberfläche cz nicht mehr ab.
+
+Nicht geändert (bewusst)
+  - Modul «czch» (7.4 CZ <-> CH Anfragen / Materialbestellungen) bleibt.
+  - Zuständigkeiten: die drei Felder «MTF · TL / Schicht 1 / Schicht 2» bleiben; auf Wunsch separat entfernen.
+  - Auswahllisten (Abteilung, Verursacher) enthalten weiterhin CZ und MTF als Werte für Pendenzen usw.
+  - forecast_prefix.CZ bleibt in der Config (wird von der Oberfläche nach Patch 08 nicht mehr verwendet).
+
+Getestet 13.11.2026
+  - Patch 08 gegen die produktive app.js (Stand 12.11.2026, mit Patches 01-07): 4 Stellen, jede genau 1x gefunden,
+    Syntax der gepatchten Datei ok (Browser-Engine).
+  - Config-Logik gegen die Live-Konfiguration (GET api/config): 26 -> 23 Module, 26 -> 23 Agenda-Einträge,
+    alle verbleibenden Agenda-Einträge verweisen auf vorhandene Module, zweiter Lauf ohne Änderung.
+  - Nicht getestet: Lauf der beiden Skripte mit Node (auf dem Rechner von Fabio ist kein Node installiert) und
+    die Seiten PPA-Grafik/Forecast im Browser nach dem Entfernen.
