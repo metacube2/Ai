@@ -1296,10 +1296,9 @@ LIMIT 12;";
         var productGroupResult = await ExecuteProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken);
         var materialGroupIndex = perspectives.FindIndex(perspective => perspective.Key == "materialgroup");
         var insertAt = materialGroupIndex >= 0 ? materialGroupIndex + 1 : perspectives.Count;
-        perspectives.Insert(insertAt,
-            await ExecuteUsageProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken, bySupplier: true));
-        perspectives.Insert(insertAt + 1,
-            await ExecuteUsageProductGroupPerspectiveAsync(conn, filter, itemFilter, cancellationToken));
+        var usage = await ExecuteUsageProductGroupPerspectivesAsync(conn, filter, itemFilter, cancellationToken);
+        perspectives.Insert(insertAt, usage.BySupplier);
+        perspectives.Insert(insertAt + 1, usage.ByMaterialGroup);
         // Wunsch Ingo 2026-10-26: Disponenten-Sicht nach Verwendung (ZLO03) hinter den Disponenten-Sichten.
         var disponentIndex = perspectives.FindLastIndex(perspective =>
             perspective.Key is "disponent" or DisponentMaterialGroupPerspectiveKey);
@@ -1402,27 +1401,26 @@ GROUP BY 1, 2, 3, 4;";
     /// einem Sensor geht zu 50/51 an den Dichtewaechter. Die Gesamtsumme bleibt exakt; ohne bekannte Verwendung (auch
     /// Textbestellungen) steht der Wert unter "ohne Verwendung". Die Produktgruppe nach eigenem Disponenten bleibt unveraendert.
     /// </summary>
-    private static async Task<PurchasingSpendPerspectiveResult> ExecuteUsageProductGroupPerspectiveAsync(
+    private static async Task<(PurchasingSpendPerspectiveResult BySupplier, PurchasingSpendPerspectiveResult ByMaterialGroup)> ExecuteUsageProductGroupPerspectivesAsync(
         SqliteConnection conn,
         PurchasingDashboardFilter filter,
         string spendItemFilter,
-        CancellationToken cancellationToken,
-        bool bySupplier = false)
+        CancellationToken cancellationToken)
     {
-        // Mail Marco Widmer 2026-11-12 (Entscheid Ingo 2026-11-13): zweite Ebene wahlweise Lieferant. Ersetzt den Einstieg
+        // Mail Marco Widmer 2026-11-12 (Entscheid Ingo 2026-11-13): zweiter Einstieg mit Lieferant als zweiter Ebene. Ersetzt
         // "Produktgruppe : Lieferant" nach eigenem Disponenten, der fuer Einkaufsteile (001-006) nur HW_ZUKAUFSORT zeigte.
-        var levelsDe = (IReadOnlyList<string>)["Produktgruppe (Verwendung)", bySupplier ? "Lieferant" : "Warengruppe", "Material"];
-        var levelsEn = (IReadOnlyList<string>)["Product group (usage)", bySupplier ? "Supplier" : "Material group", "Material"];
-        var result = bySupplier
-            ? new PurchasingSpendPerspectiveResult(
-                UsageProductGroupSupplierPerspectiveKey, "Produktgruppe nach Verwendung : Lieferant", "Product group by usage : supplier", levelsDe, levelsEn, [])
-            : new PurchasingSpendPerspectiveResult(
-                UsageProductGroupPerspectiveKey, "Produktgruppe nach Verwendung : Warengruppe", "Product group by usage : material group", levelsDe, levelsEn, []);
+        // Beide Einstiege aus EINER Abfrage (die Verwendungszuordnung kostet auf der Produktivkopie rund 4 s je Lauf).
+        var bySupplier = new PurchasingSpendPerspectiveResult(
+            UsageProductGroupSupplierPerspectiveKey, "Produktgruppe nach Verwendung : Lieferant", "Product group by usage : supplier",
+            ["Produktgruppe (Verwendung)", "Lieferant", "Material"], ["Product group (usage)", "Supplier", "Material"], []);
+        var byMaterialGroup = new PurchasingSpendPerspectiveResult(
+            UsageProductGroupPerspectiveKey, "Produktgruppe nach Verwendung : Warengruppe", "Product group by usage : material group",
+            ["Produktgruppe (Verwendung)", "Warengruppe", "Material"], ["Product group (usage)", "Material group", "Material"], []);
         var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
         if (years.Count == 0)
-            return result;
+            return (bySupplier, byMaterialGroup);
 
         // Erst je Kompnr und Disponent zaehlen, dann normalisieren: die 1,6 Mio. Zeilen des Bottom-up-Caches sind schon
         // sauber und je (Kompnr, Vknr) eindeutig (Primaerschluessel). So 4 s statt 28 s auf der Produktivkopie vom 2026-10-28.
@@ -1451,6 +1449,7 @@ GROUP BY 1, 2, 3, 4;";
         var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var rows = new List<CascadeRow>();
+        var supplierRows = new List<CascadeRow>();
         await using (var command = conn.CreateCommand())
         {
             command.CommandText = $@"
@@ -1478,10 +1477,11 @@ UsageTotals AS (
     SELECT MaterialKey, SUM(VknrCount) AS Total FROM UsageGroups GROUP BY MaterialKey
 )
 SELECT COALESCE(ug.ProductGroup, '{NoUsageLabel}') AS ProductGroup,
-       {(bySupplier ? SupplierDimension.Sql : MaterialGroupDimension.Sql)} AS MaterialGroup,
+       {MaterialGroupDimension.Sql} AS MaterialGroup,
        {ArticleDimension.Sql} AS Article,
        CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
-       SUM({ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} * COALESCE(1.0 * ug.VknrCount / ut.Total, 1)) AS Value
+       SUM({ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} * COALESCE(1.0 * ug.VknrCount / ut.Total, 1)) AS Value,
+       {SupplierDimension.Sql} AS Supplier
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 LEFT JOIN UsageGroups ug ON ug.MaterialKey = {purchasingMaterialKey}
@@ -1489,18 +1489,21 @@ LEFT JOIN UsageTotals ut ON ut.MaterialKey = {purchasingMaterialKey}
 WHERE {spendItemFilter}
   AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
   AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN {MinSpendYear} AND {MaxSpendYear(filter)}
-GROUP BY 1, 2, 3, 4;";
+GROUP BY 1, 2, 3, 4, 6;";
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
+                var value = Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture);
                 rows.Add(new CascadeRow(
-                    [reader.GetString(0), bySupplier ? reader.GetString(1) : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)), reader.GetString(2)],
+                    [reader.GetString(0), PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)), reader.GetString(2)],
                     reader.GetInt32(3),
-                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
+                    value));
+                supplierRows.Add(new CascadeRow([reader.GetString(0), reader.GetString(5), reader.GetString(2)], reader.GetInt32(3), value));
             }
         }
 
-        return result with { Rows = BuildCascadeLevel(rows, 0, years, [NoCap, NoCap, NoCap]) };
+        return (bySupplier with { Rows = BuildCascadeLevel(supplierRows, 0, years, [NoCap, NoCap, NoCap]) },
+            byMaterialGroup with { Rows = BuildCascadeLevel(rows, 0, years, [NoCap, NoCap, NoCap]) });
     }
 
     private static IReadOnlyList<SpendPerspective> BuildLzPerspectives(bool tableAvailable)

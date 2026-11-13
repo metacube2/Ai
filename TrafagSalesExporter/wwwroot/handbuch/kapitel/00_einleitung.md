@@ -22,7 +22,7 @@ Am Ende jedes Kapitels steht ein Kennzahlen-Glossar.
 |---|---|---|
 | **Controller** | Finance Cockpit (Soll/Ist Vergleich, Controlling mit Umsatzbrücke und Hochrechnung), Management Schnellübersicht, Gruppenmarge, Datenqualität, Abweichungen | Monatsabschluss, Hochrechnung, Abweichungsanalyse, Vorbereitung Verwaltungsrat |
 | **Geschäftsleitung** | Management Schnellübersicht und Entscheidungen, Controlling, Weltlage Radar, Verkauf Konzentration und Prognose | Monatsgespräch, Strategie, Risikobeurteilung |
-| **Einkäufer** | Einkauf Dashboard, Spend-Aufriss (mit dem Inhalt des früheren Reiters Spend), Offene Bestellungen, Kontrakte, Lieferanten, Lieferperformance, Preisentwicklung | Lieferantenverhandlung, Jahresgespräch, Terminverfolgung, Bündelung |
+| **Einkäufer** | Einkauf Dashboard, Spend-Aufriss (mit dem Inhalt des früheren Reiters Spend), Lieferanten (Offene Bestellungen und Kontrakte seit 13.11.2026 ausgeblendet), Lieferperformance, Preisentwicklung | Lieferantenverhandlung, Jahresgespräch, Terminverfolgung, Bündelung |
 | **Disponent** | Materialdisposition und Fehlteile, Dispositionsprüfung, Verwendung und Risiko (Bestellbedarf und Deckung sowie Materialabhängigkeit sind seit dem 22.10.2026 ausgeblendet) | Fehlteile klären, Abkündigungen, Bestellvorschläge prüfen |
 | **Verkauf und Vertriebsleitung** | Verkauf Kunden, Rückgang, Neue und verlorene Kunden, Cross-Selling, Preisstreuung, Weltkarte, Verkauf Interaktiv | Kundenbesuch, Account-Planung, Preisgespräch, Budget |
 | **Logistik** | Logistik live (Übersicht, 3D-Lager, Produktivität, Kapazität), Stücklistenanalyse | Tagessteuerung, Schichtplanung, Kapazitätsabgleich mit der Produktion |

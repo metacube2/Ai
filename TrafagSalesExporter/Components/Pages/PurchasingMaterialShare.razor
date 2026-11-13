@@ -71,7 +71,7 @@
                                 <strong>@group.Label</strong>
                             </td>
                             <td>@Chf(group.Revenue)</td>
-                            <td title="@HkTitle(group)">@Chf(group.ManufacturingCost)</td>
+                            <td title="@HkTitle(group)">@Chf(group.ManufacturingCost)@(HkIncomplete(group) ? " *" : "")</td>
                             <td><strong>@Chf(group.Value)</strong></td>
                             <td>@Share(group.Value, group.Revenue, ShareOfRevenue)</td>
                             <td></td>
@@ -124,6 +124,13 @@
                 </tbody>
             </table>
         </div>
+        @if (_rows.Any(HkIncomplete))
+        {
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block mt-1">
+                @T("* Standardpreis nicht für alle verkauften Nummern vorhanden, die HK sind dort zu tief (Abdeckung im Tooltip).",
+                   "* Standard price not available for all sold numbers, manufacturing cost is too low there (coverage in the tooltip).")
+            </MudText>
+        }
     }
 </MudPaper>
 
@@ -209,6 +216,10 @@
 
     private static string Chf(decimal value)
         => value == 0m ? "-" : "CHF " + value.ToString("N0", CultureInfo.CurrentCulture);
+
+    // Sichtbares Kennzeichen, wenn weniger als 99 % des Umsatzes einen Standardpreis haben (sonst wirkt die HK zu tief).
+    private static bool HkIncomplete(PurchasingMaterialShareNode group)
+        => group.Revenue > 0m && group.ManufacturingCostCoverage < 0.99m;
 
     // HK-Abdeckung (Mail Marco Widmer 2026-11-12): welcher Teil des Umsatzes einen Standardpreis hat.
     private string HkTitle(PurchasingMaterialShareNode group)
