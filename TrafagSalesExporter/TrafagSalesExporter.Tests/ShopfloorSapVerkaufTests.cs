@@ -7,10 +7,16 @@ namespace TrafagSalesExporter.Tests;
 public class ShopfloorSapVerkaufTests
 {
     [Theory]
-    [InlineData(2026, 11, 1, "202610")]   // Monatserster: Vormonat
-    [InlineData(2026, 11, 2, "202611")]
+    [InlineData(2026, 11, 1, "202610")]   // Sonntag, Monatserster: Vormonat
+    [InlineData(2026, 11, 2, "202610")]   // Montag 02.11.: letzter Arbeitstag Fr 30.10. (Paket Fabio 13.11. Punkt 9)
+    [InlineData(2026, 11, 3, "202611")]   // Dienstag: letzter Arbeitstag Mo 02.11.
+    [InlineData(2026, 12, 1, "202611")]   // Dienstag 01.12.: letzter Arbeitstag Mo 30.11.
+    [InlineData(2026, 12, 2, "202612")]
     [InlineData(2027, 1, 1, "202612")]    // Jahreswechsel
-    public void Monat_Ist_Der_Monat_Des_Vortags(int y, int m, int d, string erwartet)
+    [InlineData(2027, 1, 4, "202612")]    // Montag 04.01.2027: Fr 01.01. ist Neujahr, letzter Arbeitstag Do 31.12.
+    [InlineData(2027, 1, 5, "202701")]
+    [InlineData(2026, 1, 5, "202512")]    // Montag 05.01.2026: Fr 02.01. Berchtoldstag, Do 01.01. Neujahr, also Mi 31.12.
+    public void Monat_Ist_Der_Monat_Des_Letzten_Arbeitstags(int y, int m, int d, string erwartet)
         => Assert.Equal(erwartet, ShopfloorSapVerkauf.ReportMonth(new DateOnly(y, m, d)));
 
     [Fact]

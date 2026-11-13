@@ -13,7 +13,8 @@ namespace TrafagSalesExporter.Services.Shopfloor;
 /// + offene Auftraege (OpenSalesOrdersNetAmountInDC).</item>
 /// <item>gutschriften = CustCrdtMemoNetAmtInDspCrcy.</item>
 /// </list>
-/// Konvention des Verkaufs: Eintrag vom Tag D = Stand bis D-1, Monat = Monat des Vortags (am Monatsersten der Vormonat).
+/// Konvention des Verkaufs: Eintrag vom Tag D = Stand bis D-1, Monat = Monat des letzten Arbeitstags vor D (seit 2026-11-13, vorher
+/// Monat des Vortags).
 /// Kontrolle Fabio 01.11.2026: 10/2026 8'827'624 bzw. 110'412 CHF. Manuell erfasste Werte werden nicht ueberschrieben.
 /// Doku: docs/SHOPFLOOR_2026-10-07.md Abschnitt 16.
 /// </summary>
@@ -28,9 +29,25 @@ public static class ShopfloorSapVerkauf
     public const string OffeneAuftraege = "OpenSalesOrdersNetAmountInDC";
     public const string Gutschriften = "CustCrdtMemoNetAmtInDspCrcy";
 
-    /// <summary>Monat (JJJJMM) des Vortags: am Monatsersten der Vormonat.</summary>
+    /// <summary>
+    /// Monat (JJJJMM) des letzten Arbeitstags vor <paramref name="day"/> (Paket Fabio 13.11. Punkt 9, gilt fuer J2, J3 und J4): am
+    /// ersten Arbeitstag des Monats zeigt das Cockpit wie das Excel noch den Endstand des Vormonats (Montag 02.11.2026: Oktober).
+    /// Bis 2026-11-13 galt der Monat des Vortags; am 02.11. zeigte das Dashboard deshalb schon November.
+    /// </summary>
     public static string ReportMonth(DateOnly day)
-        => day.AddDays(-1).ToString("yyyyMM", CultureInfo.InvariantCulture);
+        => LetzterArbeitstag(day).ToString("yyyyMM", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Letzter Arbeitstag vor <paramref name="day"/>: Mo bis Fr, ohne Neujahr (01.01.) und Berchtoldstag (02.01.). Annahme 2026-11-13,
+    /// mit Fabio zu bestaetigen; weitere Feiertage fallen nie auf einen Monatsanfang, der den Monat wechseln wuerde, oder sind offen.
+    /// </summary>
+    public static DateOnly LetzterArbeitstag(DateOnly day)
+    {
+        var d = day.AddDays(-1);
+        while (d.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday || (d.Month == 1 && d.Day <= 2))
+            d = d.AddDays(-1);
+        return d;
+    }
 
     /// <summary>
     /// Abfrage nur mit den Kennzahlen im $select: die analytische Query verdichtet dann auf eine Zeile fuer den ganzen Monat.

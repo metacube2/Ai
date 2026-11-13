@@ -1174,7 +1174,7 @@ function multiLineSvg(series, days, h = 220, W = 1000) {
 
 /* ---------------------------------------------------------------- 7.1 PPA-Grafik */
 async function viewGrafik() {
-  const depts = [["seh", "SEH", "var(--c1)"], ["tr5", "TR5", "var(--c2)"], ["tx", "TX", "var(--c3)"], ["dw", "DW", "var(--c4)"], ["cz", "CZ", "var(--c5)"]];
+  const depts = [["seh", "SEH", "var(--c1)"], ["tr5", "TR5", "var(--c2)"], ["tx", "TX", "var(--c3)"], ["dw", "DW", "var(--c4)"]]; /* Patch 08 (2026-11-13): CZ, MTF und Sensorbestände werden nicht mehr geführt */
   const from = iso(addDaysD(new Date(), -7 * 26)), to = todayIso();
   const r = await loadRange(depts.map(d => d[0]), from, to);
   // Wochenwerte: letzter erfasster Auftragsvorrat und Summe produziert
@@ -1198,7 +1198,7 @@ async function viewGrafik() {
     <div class="chart"><h3>Auftragsvorrat total pro Abteilung (Stand Ende Woche)</h3>${legend(vor.filter(s => s.name !== "CZ"))}${multiLineSvg(vor.filter(s => s.name !== "CZ"), lbl)}</div>
     <div class="charts2">
       <div class="chart"><h3>Produzierte Wochenmenge (abgeschlossene Wochen)</h3>${legend(prod)}${multiLineSvg(prod.map(s => ({ ...s, values: s.values.slice(0, -1) })), lbl.slice(0, -1), 300, 560)}</div>
-      <div class="chart"><h3>Auftragsvorrat CZ</h3>${legend(vor.filter(s => s.name === "CZ"))}${multiLineSvg(vor.filter(s => s.name === "CZ"), lbl, 300, 560)}</div>
+
     </div>`;
 }
 
@@ -1616,7 +1616,7 @@ const FC_DEPTS = [
   { dept: "SEH", mod: "seh", shifts: ["ma1", "ma2"] }, { dept: "TR5", mod: "tr5", shifts: ["ma1", "ma2"] },
   { dept: "TX", mod: "tx", shifts: ["ma1", "ma2", "ma3"] }, { dept: "DW", mod: "dw", shifts: ["ma1", "ma2", "ma3"] },
   { dept: "DS", mod: "dw", shifts: [] },   // 2026-10-15: Dichtesensoren separat (Disponenten DS1, DS2, DSN); Leistung Stk/FTE manuell erfassen
-  { dept: "CZ", mod: "cz", shifts: ["ma1", "ma2", "ma3"] }];
+  ];
 const SHIFT_LBL = { ma1: "Schicht 1 Früh", ma2: "Schicht 2 Spät", ma3: "Schicht 3 Nacht" };
 const FC = { sel: "TX", data: null, hist: null, monday: null, showOrders: false };
 const f1 = v => (v == null || !isFinite(v)) ? "–" : new Intl.NumberFormat("de-CH", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
@@ -1702,7 +1702,7 @@ const auslCls = a => a == null ? "" : a > 1.05 ? "bad" : a < 0.85 ? "res" : "ok"
 function renderForecast() {
   const d = FC.data; const mon = parseIso(d.monday); const kw = isoWeek(mon);
   const all = FC_DEPTS.map(fcCompute);
-  const unassigned = d.orders.filter(o => !FC_DEPTS.some(x => x.dept === o.dept));
+  const unassigned = d.orders.filter(o => o.dept !== "CZ" && !FC_DEPTS.some(x => x.dept === o.dept));
   const days = [0, 1, 2, 3, 4].map(i => iso(addDaysD(mon, i)));
   // abteilungsübergreifende Hinweise
   const tips = [];

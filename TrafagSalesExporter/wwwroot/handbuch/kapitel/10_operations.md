@@ -209,9 +209,11 @@ Die Seiten der vier Produktionsabteilungen sind das Herz des Meetings. SEH ferti
 
 ### Wie gerechnet wird
 
-Ø Geräte pro Tag 1. Monat ist der Auftragsvorrat 1 Monat geteilt durch 20 Arbeitstage. Die Abweichung ist produzierte Menge minus Tagesziel, die erreichte Tagesleistung ist produzierte Menge durch Tagesziel in Prozent. Verzug und Terminverschiebungen werden aus der PPD-Seite übernommen. Die Abteilung eines Auftrags ergibt sich aus dem Disponenten im Werk 1100: SEH Disponenten mit S, TR5 mit EK, TX mit EL, DW mit D, CZ 017 bis 028.
+Ø Geräte pro Tag 1. Monat ist der Auftragsvorrat 1 Monat geteilt durch 20 Arbeitstage. Die Abweichung ist produzierte Menge minus Tagesziel, die erreichte Tagesleistung ist produzierte Menge durch Tagesziel in Prozent. Verzug und Terminverschiebungen werden aus der PPD-Seite übernommen. Die Abteilung eines Auftrags ergibt sich aus dem Disponenten im Werk 1100: SEH Disponenten mit S, TR5 mit EK, TX mit EL, DW mit D.
 
-Automatisch aus SAP seit dem 16.10.2026 (Abgleich 04:00 und 12:45 Uhr): die **produzierte Tagesmenge SEH** ist die WE-Menge der Fertigungsaufträge der Disponenten S* mit Istendtermin am Tag des Eintrags (seit 19.10.2026; vorher am Vortag), wie im COOIS-Layout /SEH 001. Die **produzierte Tagesmenge TR5** rechnet wie der Report ZC27 mit der Variante /PPA EXX72: Gutmenge der Rückmeldungen an elf Arbeitsplätzen mit Typencode 8*, nur der letzte Vorgang. **FPY SEH** ist WE-Menge geteilt durch Gesamtmenge der Aufträge mit Istendtermin in der Kalenderwoche des Produktionstags bis zu diesem Tag (seit 19.10.2026; vorher Kalenderwoche des Vortags). Seit dem 19.10.2026 kommt auch die **produzierte Tagesmenge DW** aus SAP: Gutmenge der Rückmeldungen am Arbeitsplatz DL790 nach Erfassungsdatum, wie im Report ZC27; die Gegenkontrolle mit ZC27 durch die Supply Chain ist noch offen. FPY für TR5, TX, DW und CZ kommt aus dem MES.
+Automatisch aus SAP seit dem 16.10.2026 (Abgleich 04:00 und 12:45 Uhr): die **produzierte Tagesmenge SEH** ist die WE-Menge der Fertigungsaufträge der Disponenten S* mit Istendtermin am Tag des Eintrags (seit 19.10.2026; vorher am Vortag), wie im COOIS-Layout /SEH 001. Die **produzierte Tagesmenge TR5** rechnet wie der Report ZC27 mit der Variante /PPA EXX72: Gutmenge der Rückmeldungen an elf Arbeitsplätzen mit Typencode 8*, nur der letzte Vorgang. **FPY SEH** ist WE-Menge geteilt durch Gesamtmenge der Aufträge mit Istendtermin in der Kalenderwoche des Produktionstags bis zu diesem Tag (seit 19.10.2026; vorher Kalenderwoche des Vortags). Seit dem 19.10.2026 kommt auch die **produzierte Tagesmenge DW** aus SAP: Gutmenge der Rückmeldungen am Arbeitsplatz DL790 nach Erfassungsdatum, wie im Report ZC27; die Gegenkontrolle mit ZC27 durch die Supply Chain ist noch offen. FPY für TR5, TX und DW kommt aus dem MES (noch nicht angebunden).
+
+Den **Auftragsvorrat** liefert SAP seit dem 09.11.2026 wie der Report ZC22 (offene Fertigungs- und Planaufträge, ohne erledigte). Seit dem 13.11.2026 rechnen die Fenster rollend ab dem Abfragetag wie im Excel der Teamleiter: SEH, TR5 und TX mit Eckendtermin bis heute plus 1, 2 und 3 Kalendermonate, DW bis heute plus 4, 8 und 12 Wochen, jeweils kumuliert mit den überfälligen Aufträgen. TR5 und DW zählen nur Materialnummern von 1 bis 99999 (bei DW fallen damit DS1 und DW1 weg), SEH und TX alle. Die Planmenge TX der nächsten 5 Arbeitstage enthält alles bis zum fünften Arbeitstag, auch überfällige und heutige Aufträge. Vorrat, offene Menge der KW, Tagesziel SEH und Planmenge TX sind Stichtagswerte: Es gilt der erste SAP-Lauf des Tages (04:00 Uhr), spätere Läufe überschreiben sie nicht.
 
 ### Einsatz im Arbeitsalltag
 
@@ -329,7 +331,7 @@ Die **PPA-Grafik** zeigt die Auslastung über die letzten 26 Wochen: Wächst der
 
 ### Was man sieht
 
-Die PPA-Grafik zeigt Auftragsvorrat und produzierte Wochenmenge je Abteilung, berechnet aus den Tageswerten. Im Forecast stehen je Abteilung (SEH, TR5, TX, DW, DS für die Dichtesensoren und CZ) und Tag die geplante Menge, die Besetzung, die Kapazität, die Auslastung als Ampel und Empfehlungen wie „2. Schicht öffnen“ oder Hinweise auf Reserven, die man ausleihen kann; dazu eine Heatmap und ein Diagramm Menge gegen Kapazität. Aufträge ohne Abteilung stehen unter „Nicht zugeordnet“.
+Die PPA-Grafik zeigt Auftragsvorrat und produzierte Wochenmenge je Abteilung, berechnet aus den Tageswerten. Im Forecast stehen je Abteilung (SEH, TR5, TX, DW und DS für die Dichtesensoren; CZ seit dem 13.11.2026 nicht mehr) und Tag die geplante Menge, die Besetzung, die Kapazität, die Auslastung als Ampel und Empfehlungen wie „2. Schicht öffnen“ oder Hinweise auf Reserven, die man ausleihen kann; dazu eine Heatmap und ein Diagramm Menge gegen Kapazität. Aufträge ohne Abteilung stehen unter „Nicht zugeordnet“.
 
 ### Wie gerechnet wird
 
@@ -449,9 +451,9 @@ Oben drei Kacheln: das **Go-for-it-Ziel** des Monats mit dem Umsatz Ist in Proze
 
 ### Wie gerechnet wird
 
-Auftragseingang und Umsatz sind Monatswerte kumuliert bis zum Vortag; am Monatsersten gilt der ganze Vormonat. Der Tagesumsatz ist die Differenz zum vorherigen Eintrag. Book to Bill ist Auftragseingang geteilt durch Umsatz. Das Go-for-it-Ziel wird einmal pro Monat im Feld „Ziel festlegen“ erfasst. Vorgesehen ist die Lieferung aus SAP CO-PA wie im Bericht KE30 (Nettoerlös, Buchungskreis 1100); Stand 02.11.2026 werden Auftragseingang und Umsatz Ist noch von Hand erfasst.
+Auftragseingang und Umsatz sind Monatswerte kumuliert bis zum Vortag. Massgebend ist seit dem 13.11.2026 der Monat des letzten Arbeitstags: Am ersten Arbeitstag eines Monats (zum Beispiel Montag, 02.11.2026) gilt noch der Endstand des Vormonats. Der Tagesumsatz ist die Differenz zum vorherigen Eintrag; fällt der Umsatz Ist unter die Hälfte des vorherigen Werts, hat ein neuer Monat begonnen, und der Tagesumsatz ist der Umsatz Ist selbst. Book to Bill ist Auftragseingang geteilt durch Umsatz. Das Go-for-it-Ziel wird einmal pro Monat im Feld „Ziel festlegen“ erfasst. Vorgesehen ist die Lieferung aus SAP CO-PA wie im Bericht KE30 (Nettoerlös, Buchungskreis 1100, Stand bis Vortag nach Erfassungsdatum); sie ist gebaut und wartet auf die Abnahme. Stand 13.11.2026 werden Auftragseingang und Umsatz Ist noch von Hand erfasst.
 
-Der erwartete Umsatz des Monats ersetzt seit dem 02.11.2026 den geplanten Umsatz aus ZC23. Er kommt aus der Fiori-App „Umsatz prüfen“: Umsatz plus offene Lieferungen plus offene Aufträge des Monats, Verkaufsorganisation 1100, in CHF. Die Gutschriften kommen aus derselben Quelle. Beide gelten wie die übrigen Verkaufswerte für den Monat des Vortags; ein von Hand erfasster Wert wird nicht überschrieben. Transmitter heisst seit diesem Datum TR5 und TX zusammen (Produktsparte 0005); die getrennten TR5-Felder sind entfallen.
+Der erwartete Umsatz des Monats ersetzt seit dem 02.11.2026 den geplanten Umsatz aus ZC23. Er kommt aus der Fiori-App „Umsatz prüfen“: Umsatz plus offene Lieferungen plus offene Aufträge des Monats, Verkaufsorganisation 1100, in CHF. Die Gutschriften kommen aus derselben Quelle. Beide gelten wie die übrigen Verkaufswerte für den Monat des letzten Arbeitstags; ein von Hand erfasster Wert wird nicht überschrieben. Transmitter heisst seit diesem Datum TR5 und TX zusammen (Produktsparte 0005); die getrennten TR5-Felder sind entfallen.
 
 ### Einsatz im Arbeitsalltag
 
@@ -467,7 +469,9 @@ Ohne Eintrag am Vortag ist der Tagesumsatz die Summe mehrerer Tage. Die Bereichs
 
 ### Wozu
 
-**CZ** (Trafag CZ) und **MTF** werden am Freitag besprochen. Die **Sensorbestände** zeigen den Vorrat an Sensoren aus SEH, der für TR5 und TX bereitliegt.
+**Seit dem 13.11.2026 nicht mehr im Board** (Entscheid Supply Chain): Die Seiten CZ, Abteilung MTF und Sensorbestände sind aus der Tagesordnung und aus der Navigation entfernt; bereits erfasste Werte bleiben in der Datenbank, werden aber nicht mehr angezeigt. Die Anfragen CZ ↔ CH bleiben. Der Rest dieses Abschnitts beschreibt den früheren Stand.
+
+**CZ** (Trafag CZ) und **MTF** wurden am Freitag besprochen. Die **Sensorbestände** zeigten den Vorrat an Sensoren aus SEH, der für TR5 und TX bereitliegt.
 
 ### Was man sieht
 

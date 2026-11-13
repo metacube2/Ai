@@ -10,14 +10,16 @@ namespace TrafagSalesExporter.Services.Shopfloor;
 /// <list type="bullet">
 /// <item>Quelle: ShopAufSet mit Filter Typ eq 'VR' (Auftrag T76K912860): dieselben offenen Fertigungs- und Planauftraege wie der
 /// Verzug (Typ VZ, <see cref="ShopfloorSapVerzug"/>), aber ohne Eckendtermin-Grenze. Menge = Positionsmenge wie die ZC22-Spalte.</item>
-/// <item>Abteilung ueber den Disponenten wie beim Verzug. <b>Kein Materialfilter</b>: Fabios Schnittstelle (1.xlsx, Schnittstelle
-/// 02.11.) definiert den Vorrat ohne; seine Kontrollzahl SEH 159'661 (07.11.) passt nur so, mit „Material 1-99999“ liefert ZC22
-/// fuer SEH 0 (P76, 09.11.).</item>
-/// <item>Buckets ab dem Abfragetag D, kumuliert und einschliesslich Ueberfaelliger: total; 1 Mte bis Monatsende von D; 2 Mte bis
-/// Ende Folgemonat; 3 Mte bis Ende uebernaechster Monat; offen_kw bis Sonntag der laufenden KW; SEH ziel bis D.</item>
+/// <item>Abteilung ueber den Disponenten wie beim Verzug. Materialfilter 1-99999 nur fuer die Abteilungen aus
+/// <c>Shopfloor:MaterialFilter</c> (seit 2026-11-13 TR5 und DW, Paket Fabio 13.11. Punkte 2 und 3, wie die ZC22-Varianten der
+/// Teamleiter, z. B. /PPA EKX ALLE); SEH und TX ohne (SEH hat nur alphanumerische Materialien).</item>
+/// <item>Buckets ab dem Abfragetag D, kumuliert und einschliesslich Ueberfaelliger. Seit 2026-11-13 rollend (Paket Fabio 13.11.
+/// Punkt 1, die Spezifikation vom 07.11. mit Monatsende war falsch): SEH, TR5, TX Eckendtermin bis D + 1 / 2 / 3 Kalendermonate,
+/// DW bis D + 4 / 8 / 12 Wochen. offen_kw bis Sonntag der laufenden KW; SEH ziel bis D; TX plan5 bis zum 5. Arbeitstag nach D,
+/// ebenfalls kumuliert mit Ueberfaelligen und heutigen Auftraegen (Punkt 5).</item>
 /// <item>Werte auf den Abfragetag geschrieben; manuell erfasste Werte bleiben (ShopfloorSapMengen.BuildItems).</item>
 /// </list>
-/// Abgleich T76 2026-11-09: SEH 1'877 Auftraege / 179'981 Stk., je Auftrag gleich ZC22. Doku: docs/SHOPFLOOR_2026-10-07.md 19.
+/// Abgleich T76 2026-11-09: SEH 1'877 Auftraege / 179'981 Stk., je Auftrag gleich ZC22. Doku: docs/SHOPFLOOR_2026-10-07.md 19, 22.
 /// </summary>
 public static class ShopfloorSapVorrat
 {
@@ -34,10 +36,14 @@ public static class ShopfloorSapVorrat
     public static readonly string[] ZielModule = ["seh"];
 
     /// <summary>
-    /// Module mit Planmenge der naechsten 5 Arbeitstage (Feld plan5, Fabio: „Eckendtermin naechste 5 AT“, nur TX). Annahme 2026-11-10,
-    /// von Fabio zu bestaetigen: ab dem Tag nach D bis zum 5. Arbeitstag (Mo bis Fr, ohne Feiertage), ohne Ueberfaellige.
+    /// Module mit Planmenge der naechsten 5 Arbeitstage (Feld plan5, nur TX). Seit 2026-11-13 (Paket Fabio 13.11. Punkt 5) kumuliert:
+    /// alles mit Eckendtermin bis zum 5. Arbeitstag nach D (Mo bis Fr), einschliesslich ueberfaelliger und heutiger Auftraege.
+    /// Kontrolle Fabio 13.11.: ZC22 EL* bis 20.11. 7'083, Excel 7'048. Die Annahme vom 10.11. (ohne Ueberfaellige) ist ueberholt.
     /// </summary>
     public static readonly string[] Plan5Module = ["tx"];
+
+    /// <summary>Module, deren Fenster in Wochen (4 / 8 / 12) statt in Kalendermonaten rechnen (Paket Fabio 13.11. Punkt 1: DW).</summary>
+    public static readonly string[] WochenModule = ["dw"];
 
     /// <summary>Letzter Tag (einschliesslich) der naechsten 5 Arbeitstage nach <paramref name="day"/> (Mo bis Fr).</summary>
     public static DateOnly Plan5Ende(DateOnly day)
@@ -62,26 +68,31 @@ public static class ShopfloorSapVorrat
     public static string Filter(string plant, DateOnly day)
         => $"Werks eq '{plant}' and Datum eq '{day:yyyyMMdd}' and Typ eq 'VR'";
 
-    /// <summary>Obergrenzen (einschliesslich) der kumulierten Buckets fuer den Abfragetag.</summary>
-    public static (DateOnly M1, DateOnly M2, DateOnly M3, DateOnly KwEnde) Grenzen(DateOnly day)
+    /// <summary>
+    /// Obergrenzen (einschliesslich) der kumulierten Buckets fuer den Abfragetag, rollend ab D (seit 2026-11-13): Kalendermonate
+    /// (D + 1 / 2 / 3 Monate, am Monatsende auf den letzten Tag des Zielmonats gekuerzt) oder bei <paramref name="wochen"/>
+    /// D + 28 / 56 / 84 Tage. offen_kw bis Sonntag der laufenden KW.
+    /// </summary>
+    public static (DateOnly M1, DateOnly M2, DateOnly M3, DateOnly KwEnde) Grenzen(DateOnly day, bool wochen = false)
     {
-        var monatsEnde = new DateOnly(day.Year, day.Month, 1).AddMonths(1).AddDays(-1);
-        var m2 = new DateOnly(day.Year, day.Month, 1).AddMonths(2).AddDays(-1);
-        var m3 = new DateOnly(day.Year, day.Month, 1).AddMonths(3).AddDays(-1);
         var bisSonntag = ((int)DayOfWeek.Sunday - (int)day.DayOfWeek + 7) % 7;
-        return (monatsEnde, m2, m3, day.AddDays(bisSonntag));
+        return wochen
+            ? (day.AddDays(28), day.AddDays(56), day.AddDays(84), day.AddDays(bisSonntag))
+            : (day.AddMonths(1), day.AddMonths(2), day.AddMonths(3), day.AddDays(bisSonntag));
     }
 
     /// <summary>
     /// Werte fuer den Abfragetag aus den Zeilen von ShopAufSet Typ VR. Schreibt nichts. Zeilen ohne Typ VF/VP heissen, dass das
     /// System den Vorratsmodus noch nicht kennt (alter DPC liefert dann den Forecast mit FE/PA): Fehler statt falscher Zahl.
+    /// <paramref name="materialFilter"/>: Abteilungen, die nur Material 1-99999 zaehlen (Vorgabe keine).
     /// </summary>
-    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows)
+    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null)
     {
+        materialFilter ??= [];
         if (rows.Any(r => Text(r, "Typ") is not ("VF" or "VP")))
             throw new InvalidOperationException(
                 "ShopAufSet kennt den Vorratsmodus (Typ VR) in diesem SAP-System noch nicht; Transport T76K912860 fehlt.");
-        var g = Grenzen(day);
+        var grenzen = Module.ToDictionary(m => m.Abteilung, m => Grenzen(day, WochenModule.Contains(m.Modul)), StringComparer.Ordinal);
         var plan5Ende = Plan5Ende(day);
         var summen = Module.ToDictionary(m => m.Abteilung, _ => new long[7], StringComparer.Ordinal);   // total, 3m, 2m, 1m, kw, tag, plan5
         var auftraege = Module.ToDictionary(m => m.Abteilung, _ => 0, StringComparer.Ordinal);
@@ -90,6 +101,9 @@ public static class ShopfloorSapVorrat
         {
             if (ShopfloorSapVerzug.Abteilung(Text(r, "Dispo")) is not { } abt)
                 continue;
+            if (materialFilter.Contains(abt) && !ShopfloorSapVerzug.MaterialImBereich(Text(r, "Matnr")))
+                continue;
+            var g = grenzen[abt];
             var s = summen[abt];
             var menge = Int(r, "Menge");
             auftraege[abt]++;
@@ -104,7 +118,7 @@ public static class ShopfloorSapVorrat
             if (eck <= g.M1) s[3] += menge;
             if (eck <= g.KwEnde) s[4] += menge;
             if (eck <= day) s[5] += menge;
-            if (eck > day && eck <= plan5Ende) s[6] += menge;
+            if (eck <= plan5Ende) s[6] += menge;
         }
         var werte = new JsonObject();
         var detail = new JsonObject();
@@ -124,25 +138,33 @@ public static class ShopfloorSapVorrat
             if (Plan5Module.Contains(modul))
                 felder["plan5"] = s[6];
             werte[modul] = felder;
-            detail[abt] = new JsonObject { ["auftraege"] = auftraege[abt], ["tag"] = s[5] };
+            var g = grenzen[abt];
+            detail[abt] = new JsonObject
+            {
+                ["auftraege"] = auftraege[abt],
+                ["tag"] = s[5],
+                ["materialfilter"] = materialFilter.Contains(abt),
+                ["grenzen"] = new JsonObject
+                {
+                    ["1m"] = Iso(g.M1),
+                    ["2m"] = Iso(g.M2),
+                    ["3m"] = Iso(g.M3),
+                    ["kw"] = Iso(g.KwEnde)
+                }
+            };
         }
         return new JsonObject
         {
-            ["day"] = day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["day"] = Iso(day),
             ["zeilen"] = rows.Count,
             ["ohne_eckendtermin"] = ohneDatum,
-            ["grenzen"] = new JsonObject
-            {
-                ["1m"] = g.M1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                ["2m"] = g.M2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                ["3m"] = g.M3.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                ["kw"] = g.KwEnde.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                ["plan5"] = plan5Ende.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
-            },
+            ["plan5_bis"] = Iso(plan5Ende),
             ["werte"] = werte,
             ["detail"] = detail
         };
     }
+
+    private static string Iso(DateOnly d) => d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     private static string Text(JsonElement x, string name)
         => x.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()?.Trim() ?? string.Empty : string.Empty;

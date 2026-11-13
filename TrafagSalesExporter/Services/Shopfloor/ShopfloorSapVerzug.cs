@@ -9,17 +9,25 @@ namespace TrafagSalesExporter.Services.Shopfloor;
 /// <list type="bullet">
 /// <item>Quelle: ShopAufSet mit Filter Typ eq 'VZ' (docs/abap/ZSHOP_VERZUG_ADD.abap, Auftrag T76K912797): offene Fertigungs- und
 /// Planauftraege mit Eckendtermin vor dem Abfragetag, ohne Untergrenze, ohne erledigte, Menge = Positionsmenge wie die ZC22-Spalte.</item>
-/// <item>Abteilung ueber den Disponenten: SEH S*, TR5 EK*, TX EL*, DW D* ohne DW1 und DL6 (DS1/DS2/DSN gehoeren zu DW).</item>
-/// <item>Material 1 bis 99999 (nur numerische Materialnummern), wie Fabios ZC22-Selektion.</item>
+/// <item>Abteilung ueber den Disponenten: SEH S*, TR5 EK*, TX EL*, DW D*. Seit 2026-11-13 (Paket Fabio 13.11. Punkt 3) DW ohne
+/// Ausnahmen; der fruehere Entscheid „D* ohne DW1/DL6, inklusive DS1/DS2/DSN“ ist ersetzt durch „D*, Material 1-99999“ (damit fallen
+/// DS1 und DW1 mit ihren alphanumerischen Materialien weg).</item>
+/// <item>Material 1 bis 99999 (nur numerische Materialnummern) fuer die Abteilungen aus <c>Shopfloor:MaterialFilter</c>, gleich wie
+/// beim Vorrat (seit 2026-11-13 TR5 und DW, <see cref="StandardMaterialFilter"/>).</item>
+/// <item>Eckendtermin ab <c>Shopfloor:VerzugAb</c> (seit 2026-11-13 der 01.01.2026, Paket Fabio 13.11. Punkt 6, Entscheid Ingo) bis
+/// Vortag; vorher ohne Untergrenze. Ab Januar 2027 neu klaeren, sonst faellt der Verzug aus 2026 weg.</item>
 /// <item>Werte positiv, auf den Abfragetag geschrieben; manuell erfasste Werte bleiben (ShopfloorSapMengen.BuildItems).</item>
 /// </list>
 /// Abgleich T76 2026-11-02 gegen ZC22: DW 1'570 Auftraege / 49'526, TR5 786 / 41'127, TX 1'349 / 73'895, je Auftrag gleich.
-/// Doku: docs/SHOPFLOOR_2026-10-07.md Abschnitt 17.
+/// Doku: docs/SHOPFLOOR_2026-10-07.md Abschnitte 17, 22.
 /// </summary>
 public static class ShopfloorSapVerzug
 {
     public const string Module = "ppd";
     public const int MaterialMax = 99999;
+
+    /// <summary>Abteilungen mit Material 1-99999 fuer Vorrat und Verzug (Paket Fabio 13.11.: TR5 wie /PPA EKX ALLE, DW D* numerisch).</summary>
+    public static readonly string[] StandardMaterialFilter = ["TR5", "DW"];
 
     /// <summary>Abteilung, Feld im Modul ppd, Disponenten-Praefixe und ausgenommene Disponenten.</summary>
     public static readonly (string Abteilung, string Feld, string[] Praefixe, string[] Ohne)[] Abteilungen =
@@ -27,7 +35,7 @@ public static class ShopfloorSapVerzug
         ("SEH", "verzug_seh", ["S"], []),
         ("TR5", "verzug_tr5", ["EK"], []),
         ("TX", "verzug_tx", ["EL"], []),
-        ("DW", "verzug_dw", ["D"], ["DW1", "DL6"])
+        ("DW", "verzug_dw", ["D"], [])
     ];
 
     public static string Filter(string plant, DateOnly day)
@@ -56,21 +64,31 @@ public static class ShopfloorSapVerzug
     /// Werte fuer den Abfragetag aus den Zeilen von ShopAufSet Typ VZ. Schreibt nichts. Zeilen ohne Typ VF/VP heissen, dass das
     /// System den Verzugsmodus noch nicht kennt (alter DPC liefert FE/PA fuer die naechsten 60 Tage): dann Fehler statt falscher Zahl.
     /// </summary>
-    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null)
+    public static JsonObject Compute(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null,
+        DateOnly? ab = null)
     {
-        // 2026-11-10 (Ingo): Materialfilter 1-99999 je Abteilung schaltbar (Shopfloor:VerzugMaterialFilter), Vorgabe alle vier wie PPD.
-        materialFilter ??= Abteilungen.Select(a => a.Abteilung).ToArray();
+        // 2026-11-10 (Ingo): Materialfilter 1-99999 je Abteilung schaltbar; seit 2026-11-13 Shopfloor:MaterialFilter (TR5, DW) fuer
+        // Vorrat und Verzug gemeinsam, Untergrenze Shopfloor:VerzugAb.
+        materialFilter ??= StandardMaterialFilter;
         if (rows.Any(r => Text(r, "Typ") is not ("VF" or "VP")))
             throw new InvalidOperationException(
                 "ShopAufSet kennt den Verzugsmodus (Typ VZ) in diesem SAP-System noch nicht; Transport T76K912797 fehlt.");
         var menge = Abteilungen.ToDictionary(a => a.Abteilung, _ => 0L, StringComparer.Ordinal);
         var auftraege = Abteilungen.ToDictionary(a => a.Abteilung, _ => 0, StringComparer.Ordinal);
+        var vorUntergrenze = 0;
         foreach (var r in rows)
         {
             if (Abteilung(Text(r, "Dispo")) is not { } abt)
                 continue;
             if (materialFilter.Contains(abt) && !MaterialImBereich(Text(r, "Matnr")))
                 continue;
+            if (ab is { } untergrenze
+                && DateOnly.TryParseExact(Text(r, "Datum"), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var eck)
+                && eck < untergrenze)
+            {
+                vorUntergrenze++;
+                continue;
+            }
             menge[abt] += Int(r, "Menge");
             auftraege[abt]++;
         }
@@ -85,6 +103,9 @@ public static class ShopfloorSapVerzug
         {
             ["day"] = day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             ["zeilen"] = rows.Count,
+            ["ab"] = ab?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["vor_untergrenze"] = vorUntergrenze,
+            ["materialfilter"] = new JsonArray(materialFilter.Select(x => (JsonNode?)x).ToArray()),
             ["werte"] = new JsonObject { [Module] = ppd },
             ["detail"] = detail
         };

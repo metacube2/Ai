@@ -302,9 +302,8 @@ public sealed class ShopfloorSapSync : BackgroundService
         bool ersetzen = false)
     {
         var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVerzug.Filter(_options.CurrentValue.SapPlant, day), ct);
-        var filter = _options.CurrentValue.VerzugMaterialFilterListe();
-        var result = ShopfloorSapVerzug.Compute(day, rows, filter);
-        result["materialfilter"] = string.Join(",", filter);
+        var options = _options.CurrentValue;
+        var result = ShopfloorSapVerzug.Compute(day, rows, options.MaterialFilterListe(), options.VerzugAbDatum());
         result["ok"] = true;
         result["geschrieben"] = false;
         if (!write)
@@ -330,7 +329,7 @@ public sealed class ShopfloorSapSync : BackgroundService
         bool ersetzen = false)
     {
         var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(_options.CurrentValue.SapPlant, day), ct);
-        var result = ShopfloorSapVorrat.Compute(day, rows);
+        var result = ShopfloorSapVorrat.Compute(day, rows, _options.CurrentValue.MaterialFilterListe());
         result["ok"] = true;
         result["geschrieben"] = false;
         if (!write)
@@ -357,7 +356,7 @@ public sealed class ShopfloorSapSync : BackgroundService
 
     private async Task<JsonObject> CoPaCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct)
     {
-        var rows = await ReadAsync(client, baseUrl, ShopfloorSapCoPa.Set, ShopfloorSapCoPa.Filter(ShopfloorSapCoPa.Bukrs, day), ct);
+        var rows = await ReadAsync(client, baseUrl, ShopfloorSapCoPa.Set, ShopfloorSapCoPa.Filter(ShopfloorSapCoPa.Bukrs, day, _options.CurrentValue.SapCoPaHzdat), ct);
         var result = ShopfloorSapCoPa.Compute(day, rows);
         result["ok"] = true;
         result["geschrieben"] = false;
