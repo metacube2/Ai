@@ -11,8 +11,9 @@ Spanien `c9208b5` weiter draussen; gemergt `15105ed`): Sales_All zeigt die wirks
 Lieferant (162 Artikel, `ISS-003.6`), UK TR09 ist eine Einzelzeile (`ISS-003.7`), TR DE seit 09/2026 751 Zeilen nur mit
 `ALPHAPLAN-ID` (`ISS-016`), Fallback-Schalter steht bewusst auf CH-Werkstamm (Andreas' Variante B1 waehlbar, sein Entscheid offen). Vier Mailentwuerfe in
 `C:\Users\koi\Downloads` (Andreas, Rohail, Cornell, Paola), **nicht gesendet**.
-**Offen:** (1) Export 12:00 pruefen (Spalten, Verteilung, Zeilenzahl und Summe gegen den Vortag), erst danach die Mail an
-Andreas senden; (2) Entscheide Ingo: DE-Uebergangsregel ueber die eindeutige ID, Spanien-Deploy, Fallback-Schalter,
+**Export 12:10 geprueft (12:12):** Spalten an 55 bis 57 bzw. 43/44, Rest unveraendert, keine Gesellschaft mit weniger Zeilen,
+leer nur bei Finance-Ausschluss; Italien ohne Lieferant 503 von 510 Zeilen auf Trafag AG (Mailentwurf an Andreas damit ergaenzt).
+**Offen:** (1) Ingo sendet die Mail an Andreas; (2) Entscheide Ingo: DE-Uebergangsregel ueber die eindeutige ID, Spanien-Deploy, Fallback-Schalter,
 Lesezugriff B1 TR IT (`ISS-007.4`); (3) Termin Montag mit Andreas. Outlook liess sich im Browser-Tab nicht oeffnen, Andreas'
 Anhang ist nicht gelesen. `docs/FINANCE_SUPPLIER.md` 9, Wochen_Todo 163.
 

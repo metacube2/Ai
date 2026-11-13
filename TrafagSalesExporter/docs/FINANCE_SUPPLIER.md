@@ -567,8 +567,16 @@ bleiben. Zeilen, die die Finance-Regeln ausschliessen, bleiben leer. Hilfeblatt:
 Regelreihenfolge berichtigt. Tests `CentralExcelSupplierAssignmentTests`, Suite 1559/1559. *Damit ueberholt: „Nicht in
 `Sales_All` enthalten: eine Spalte `Cost Source` und der Margen-Status“ (Abschnitt 3); `Cost Source` und `Margin Status` stehen
 seit dem 06.10. im Blatt Finance Details, die Zuordnung seit dem 13.11. auch im Blatt Sales.*
-**Noch zu pruefen:** der erste echte Export mit den Spalten (Lauf 12:00 am 13.11.): Kopfposition, Verteilung je TSC,
-Zeilenzahl und Umsatzsumme gegen `Sales_All_2026-11-12.xlsx`.
+**Nachweis am ersten echten Export (`Sales_All_2026-11-13.xlsx`, geschrieben 12:10, 59.8 MB, geprueft 12:12 gegen
+`Sales_All_2026-11-12.xlsx`):** Blatt Sales 57 statt 54 Spalten, 1 bis 54 unveraendert, 55 bis 57 `Supplier Type`, `Delivering
+Entity`, `Cost Source`; Finance Details (Kopf Zeile 4) 44 statt 42, 1 bis 42 unveraendert, 43/44 die beiden Zuordnungsspalten.
+Keine Gesellschaft mit weniger Zeilen (gesamt 113'321 gegen 112'798, Zuwachs nur neue Rechnungen). TRCH und TRAT durchgehend
+Intern / TR AG; leer bleibt die Zuordnung **nur** bei Zeilen, die die Finance-Regeln ausschliessen (TRCH 3'319, TRES 1'383,
+TRIT 874, TRDE 639, TRUK 351, TRFR 85, TRUS 19, TRAT 4). Wohin die Zeilen **ohne Lieferantenfeld** (Finance Include) heute
+laufen: TRIT 503 Intern / TR AG (1.01 Mio. EUR), 1 Lokal, 6 Unklar (80'442 EUR); TRDE 7'598 Lokal, 137 TR AG; TRES 5'125 TR AG,
+2'896 Lokal; TRFR 1'293 TR AG, 1'416 Lokal, 12 Unklar; TRUS 1'545 TR AG, 159 Lokal, 76 Unklar; TRIN 6'963 TR IN, 367 TR AG, 75
+Lokal, 36 Unklar. Zwei TRUK-Zeilen zeigen `Intern` ohne Entity (Fall `ISS-018.7`, im Hilfeblatt beschrieben). Pruefskript im
+Scratchpad der Sitzung (`pruef_export.py`), nur Summen.
 
 **Mailentwuerfe (`.eml` in Ingos Downloads, nicht gesendet):** Antwort an Andreas mit allen Punkten und dem Stand Group HK
 (deckt auch Wochen_Todo 84), Rohail (Rechnungsliste, Schemaauszug), Cornell (UK-Nummern), Paola (162 Artikel, nur das Thema
