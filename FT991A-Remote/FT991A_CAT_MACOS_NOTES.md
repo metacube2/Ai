@@ -1,6 +1,6 @@
 # MacYaesu Development Notes
 
-Projektordner: `/Users/metacube/Desktop/git/Ai/FT991A-Remote`
+Projektordner: `/Users/metacube/Projects/Git/Ai/FT991A-Remote`
 
 Aktueller sichtbarer App-Name: `MacYaesu`  
 Aktuelle Projektdatei: `MacYesu.xcodeproj`  
