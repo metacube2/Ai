@@ -94,6 +94,14 @@ MAC = APPS = [
         "kurz": "Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.",
     },
     {
+        "name": "NetBottleneck",
+        "kennung": "netbottleneck",
+        "dmg": GIT / "nadeloehr-mac/mac/build/verteilen/NetBottleneck.dmg",
+        "app": GIT / "nadeloehr-mac/mac/build/verteilen/dd/Build/Products/Release/NetBottleneck.app",
+        "datei": "NetBottleneck.dmg",
+        "kurz": "Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.",
+    },
+    {
         "name": "Makrowerk",
         "kennung": "makrowerk",
         "dmg": GIT / "makrowerk/build/verteilen/Makrowerk.dmg",
@@ -258,6 +266,7 @@ BUILD_TOOLS = Path.home() / "Library/Android/sdk/build-tools/36.1.0"
 # Stand je App (Wunsch Benutzer 2026-10-27): „Zum Testen bereit“, „In Entwicklung“, „Fertig“. Gilt fuer alle Plattformen
 # der App; nicht aufgefuehrte Apps sind „In Entwicklung“. Fertig = im Store freigegeben.
 STAND = {
+    "netbottleneck": "test",
     "taploop": "test",
     "kamera-import": "test",
     "bandchronik": "test",
@@ -683,8 +692,9 @@ if __name__ == "__main__":
     ios = []
     for a in IOS:
         if not a["app"].exists():
-            print(f"FEHLT (iOS): {a['app']}", file=sys.stderr)
-            sys.exit(1)
+            # iPhone-Karten haben keinen Download; fehlt der Simulatorbau, Karte weglassen statt die ganze Seite anzuhalten
+            print(f"WARNUNG fehlt (iOS, Karte weggelassen): {a['app']}", file=sys.stderr)
+            continue
         ios.append(daten_ios(a))
     android = []
     for a in ANDROID:
