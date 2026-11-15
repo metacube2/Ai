@@ -1,5 +1,103 @@
 [
  {
+  "guid": "netbottleneck-mac-1.0-2",
+  "titel": "NetBottleneck 1.0 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D, während der Messung live mit Spuren für Messung, anderen Verkehr und TCP/UDP/ICMP. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.",
+  "datum": "2026-11-15T16:27:00.097417+01:00"
+ },
+ {
+  "guid": "netbottleneck-mac-1.0-1",
+  "titel": "NetBottleneck 1.0 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.",
+  "datum": "2026-11-15T14:34:17.051118+01:00"
+ },
+ {
+  "guid": "taploop-mac-1.0-44",
+  "titel": "TapLoop 1.0 (Build 44) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller, neu mit Video-Teller in der Mitte: aussen Filmstreifen, innen der Titel, getrennt scratchbar, Kamera oder Videodatei, 97 Bildeffekte. Klick nimmt auf und spielt im Loop, Plattenkiste, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-11-05T23:10:18.170344+01:00"
+ },
+ {
+  "guid": "bergbahnchronik-ios-0.1-1",
+  "titel": "Bergbahnchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:38:48.806000+01:00"
+ },
+ {
+  "guid": "synthchronik-ios-0.1-1",
+  "titel": "Synthchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:37:37.982000+01:00"
+ },
+ {
+  "guid": "lautsprecherchronik-ios-0.1-1",
+  "titel": "Lautsprecherchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:36:23.628000+01:00"
+ },
+ {
+  "guid": "baederchronik-ios-0.1-1",
+  "titel": "Bäderchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 0 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:35:08.611000+01:00"
+ },
+ {
+  "guid": "bandchronik-mac-0.1-1",
+  "titel": "Bandchronik 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, 13 Sprachen.",
+  "datum": "2026-11-01T17:31:40.736128+01:00"
+ },
+ {
+  "guid": "bergbahnchronik-mac-1.0-2",
+  "titel": "Bergbahnchronik 1.0 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. 13 Sprachen.",
+  "datum": "2026-11-01T17:29:23.894798+01:00"
+ },
+ {
+  "guid": "synthchronik-mac-1.0-2",
+  "titel": "Synthchronik 1.0 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. 13 Sprachen.",
+  "datum": "2026-11-01T17:28:30.010337+01:00"
+ },
+ {
+  "guid": "lautsprecherchronik-mac-0.1-1",
+  "titel": "Lautsprecherchronik 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. 13 Sprachen.",
+  "datum": "2026-11-01T17:27:47.456012+01:00"
+ },
+ {
+  "guid": "baederchronik-mac-0.1-1",
+  "titel": "Bäderchronik 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. 13 Sprachen.",
+  "datum": "2026-11-01T17:26:57.233646+01:00"
+ },
+ {
+  "guid": "bandchronik-ios-0.1-1",
+  "titel": "Bandchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T15:50:31.711000+01:00"
+ },
+ {
+  "guid": "taploop-ios-1.0-41",
+  "titel": "TapLoop 1.0 (Build 41) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 5 von 5 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-27T21:12:14.726000+01:00"
+ },
+ {
   "guid": "screencam-mac-0.1-1",
   "titel": "ScreenCam 0.1 (Build 1) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",

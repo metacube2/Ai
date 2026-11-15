@@ -99,7 +99,7 @@ MAC = APPS = [
         "dmg": GIT / "nadeloehr-mac/mac/build/verteilen/NetBottleneck.dmg",
         "app": GIT / "nadeloehr-mac/mac/build/verteilen/dd/Build/Products/Release/NetBottleneck.app",
         "datei": "NetBottleneck.dmg",
-        "kurz": "Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.",
+        "kurz": "Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D, während der Messung live mit Spuren für Messung, anderen Verkehr und TCP/UDP/ICMP. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.",
     },
     {
         "name": "Makrowerk",
