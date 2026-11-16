@@ -464,7 +464,8 @@ public class ExcelExportService : IExcelExportService
                     row.Record.SalesType ?? string.Empty,
                     row.Record.GroupMaterialNumber ?? string.Empty,
                     row.Record,
-                    GroupMarginCalculator.DeliveringEntityLabel(margin.DeliveringEntity));
+                    GroupMarginCalculator.DeliveringEntityLabel(margin.DeliveringEntity),
+                    row.FinanceDate.Month);
             })
             .OrderBy(row => GroupMarginStatuses.Sort(row.Status))
             .ThenBy(row => row.Year)
@@ -814,6 +815,103 @@ public class ExcelExportService : IExcelExportService
         FormatProofSheet(ws, Math.Max(1, rowIndex - 1), headers.Length);
     }
 
+    /// <summary>Name des Blatts mit der wirksamen Lieferantenzuordnung in Sales_All (seit 2026-11-16).</summary>
+    internal const string SupplierAssignmentSheetName = "Lieferantenzuordnung";
+
+    /// <summary>Kopfzeile des Blatts Lieferantenzuordnung (Zeile 4); danach je Monat eine Spalte „JJJJ-MM“.</summary>
+    internal static readonly string[] SupplierAssignmentSheetHeaders =
+        ["TSC", "Currency", "Supplier Type", "Delivering Entity", "Cost Source", "Rows", "Share of TSC rows", "Net Sales Actual"];
+
+    /// <summary>
+    /// Fertige Sicht fuer Andreas Stoller (2026-11-16): Er pivotiert Sales_All nach den rohen Lieferantenfeldern (Supplier
+    /// number/name), die bei CH, AT, DE und ES leer sind, und sah deshalb „keine Zuordnung“. Dieses Blatt zeigt die WIRKSAME
+    /// Zuordnung der Gruppenmarge je Gesellschaft: Supplier Type, Delivering Entity und Cost Source, mit Zeilenzahl, Anteil und
+    /// Net Sales Actual gesamt und je Monat (Finance | Date). Basis sind dieselben Gruppenmargen-Zeilen wie in den Spalten
+    /// Supplier Type / Delivering Entity / Cost Source des Blatts Sales, also nur Zeilen mit Finance | Include = TRUE.
+    /// Werte fest geschrieben (keine Formeln), damit das Blatt ohne Neuberechnung lesbar ist.
+    /// </summary>
+    private static void AddSupplierAssignmentSheet(XLWorkbook workbook, IReadOnlyCollection<GroupMarginProofRow> rows)
+    {
+        var ws = workbook.Worksheets.Add(SupplierAssignmentSheetName);
+        ws.Cell(1, 1).Value = "Lieferantenzuordnung der Gruppenmarge (wirksam)";
+        ws.Cell(1, 1).Style.Font.Bold = true;
+        ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(2, 1).Value =
+            "Nur Zeilen mit Finance | Include = TRUE. Supplier Type, Delivering Entity und Cost Source wie im Blatt Sales (letzte drei " +
+            "Spalten). Die rohen Felder Supplier number / name zeigen nur, was die Quelle liefert; CH und AT sind dort leer und gelten per " +
+            "Regel als Trafag AG. Net Sales Actual in der Waehrung der Gesellschaft, Monat nach Finance | Date.";
+
+        const int headerRow = 4;
+        var fixedHeaders = SupplierAssignmentSheetHeaders;
+        var dated = rows.Where(row => row.Month is >= 1 and <= 12).ToList();
+        var periods = new List<(int Year, int Month)>();
+        if (dated.Count > 0)
+        {
+            var first = dated.Min(row => row.Year * 12 + row.Month - 1);
+            var last = dated.Max(row => row.Year * 12 + row.Month - 1);
+            for (var index = first; index <= last; index++)
+                periods.Add((index / 12, index % 12 + 1));
+        }
+
+        for (var i = 0; i < fixedHeaders.Length; i++)
+            ws.Cell(headerRow, i + 1).Value = fixedHeaders[i];
+        for (var i = 0; i < periods.Count; i++)
+            ws.Cell(headerRow, fixedHeaders.Length + 1 + i).Value = $"{periods[i].Year:0000}-{periods[i].Month:00}";
+        var lastColumn = fixedHeaders.Length + periods.Count;
+        ws.Range(headerRow, 1, headerRow, lastColumn).Style.Font.Bold = true;
+
+        var rowsPerTsc = rows.GroupBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+        var groups = rows
+            .GroupBy(row => new { row.Tsc, row.Currency, row.SupplierType, row.DeliveringEntity, row.CostSource })
+            .OrderBy(group => group.Key.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => SupplierTypeOrder(group.Key.SupplierType))
+            .ThenBy(group => group.Key.DeliveringEntity, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.CostSource, StringComparer.OrdinalIgnoreCase);
+
+        var rowIndex = headerRow + 1;
+        foreach (var group in groups)
+        {
+            var count = group.Count();
+            ws.Cell(rowIndex, 1).Value = group.Key.Tsc;
+            ws.Cell(rowIndex, 2).Value = group.Key.Currency;
+            ws.Cell(rowIndex, 3).Value = group.Key.SupplierType;
+            ws.Cell(rowIndex, 4).Value = group.Key.DeliveringEntity;
+            ws.Cell(rowIndex, 5).Value = group.Key.CostSource;
+            ws.Cell(rowIndex, 6).Value = count;
+            ws.Cell(rowIndex, 7).Value = rowsPerTsc.TryGetValue(group.Key.Tsc, out var total) && total > 0
+                ? (decimal)count / total
+                : 0m;
+            ws.Cell(rowIndex, 8).Value = group.Sum(row => row.SalesValue);
+            var byPeriod = group.Where(row => row.Month is >= 1 and <= 12)
+                .GroupBy(row => (row.Year, row.Month))
+                .ToDictionary(period => period.Key, period => period.Sum(row => row.SalesValue));
+            for (var i = 0; i < periods.Count; i++)
+                if (byPeriod.TryGetValue(periods[i], out var value))
+                    ws.Cell(rowIndex, fixedHeaders.Length + 1 + i).Value = value;
+            rowIndex++;
+        }
+
+        var lastRow = Math.Max(headerRow, rowIndex - 1);
+        ws.Column(6).Style.NumberFormat.Format = "#,##0";
+        ws.Column(7).Style.NumberFormat.Format = "0.0%";
+        ws.Columns(8, lastColumn).Style.NumberFormat.Format = "#,##0";
+        ws.Range(headerRow, 1, lastRow, lastColumn).SetAutoFilter();
+        ws.SheetView.Freeze(headerRow, 5);
+        ws.Columns(1, 5).AdjustToContents(headerRow, lastRow);
+        ws.Columns(6, lastColumn).Width = 14;
+    }
+
+    private static int SupplierTypeOrder(string supplierType) => supplierType switch
+    {
+        "Intern" => 0,
+        "Extern" => 1,
+        "Lokal" => 2,
+        "Unklar" => 3,
+        _ => 4
+    };
+
     private static void AddProofGroupMarginSummarySheet(XLWorkbook workbook, IReadOnlyCollection<GroupMarginProofRow> rows)
     {
         var ws = workbook.Worksheets.Add("Gruppenmarge Summary");
@@ -1070,7 +1168,9 @@ public class ExcelExportService : IExcelExportService
         // Ursprungszeile, damit Finance Details (Sales_All) die Kostenbasis je Zeile zuordnen kann (2026-10-06).
         SalesRecord? Source = null,
         // Erkannte liefernde Konzerngesellschaft als Anzeigetext ("TR AG", "TR IT", "TR IN" oder leer), 2026-11-13.
-        string DeliveringEntity = "");
+        string DeliveringEntity = "",
+        // Monat des Finance-Datums (1 bis 12) fuer das Blatt Lieferantenzuordnung, 2026-11-16; 0 = unbekannt.
+        int Month = 0);
 
     internal static void WriteWorkbook(
         string fullPath,
@@ -1290,6 +1390,8 @@ public class ExcelExportService : IExcelExportService
             AddFinanceDetailsSheet(workbook, records, financeRules, referenceByMaterial, resolveChfRate, marginBySource);
             AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
             AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
+            // 2026-11-16: fertige Sicht der wirksamen Lieferantenzuordnung je Gesellschaft und Monat (Wunsch Ingo fuer Andreas).
+            AddSupplierAssignmentSheet(workbook, groupMarginRows);
             AddFinanceHelpSheet(workbook);
         }
 
@@ -1699,6 +1801,7 @@ public class ExcelExportService : IExcelExportService
             ("Finance Details", "Spalten AH-AP (seit 2026-10-06)", "Standard Cost und Waehrung je Stueck, umgerechnet mit demselben Kurs wie Net Sales CHF (Kursprofil in den Settings) ('Standard Cost CHF (per unit)'); 'Cost Basis CHF' und 'Margin CHF' aus der Gruppenmarge (Kaskade, eine Stufe: Kosten der liefernden Gesellschaft); 'Cost Source' zeigt die Stufe, 'Cost Timing' ob historisch (Beleg/Warenausgang) oder aktueller Stammdatenstand (Konzernkosten)."),
             ("Gruppenmarge Details", "Spalte P 'Unit Cost' bis T 'Margin %', neu W-Z fuer den Deckungsbeitrag", "Hier steht die eigentliche Rechnung: Stueckpreis, daraus abgeleitete Kostenbasis (Menge x Preis, vorzeichenbewusst), Marge/% und der vorbereitete Deckungsbeitrag."),
             ("Gruppenmarge Summary", "Spalte E 'Known Cost Basis' ff.", "Aggregiert die Kostenbasis/Marge aus Gruppenmarge Details je Jahr/Land/TSC/Waehrung."),
+            ("Lieferantenzuordnung", "ganzes Blatt (seit 2026-11-16)", "Wirksame Zuordnung der Gruppenmarge je Gesellschaft: Supplier Type (Intern / Extern / Lokal / Unklar), Delivering Entity (TR AG / TR IT / TR IN) und Cost Source, mit Zeilenzahl, Anteil und Net Sales Actual gesamt und je Monat. Zeigt, welche Kosten greifen, auch wo die Felder Supplier number / name leer sind (CH, AT, DE, ES). Nur Zeilen mit Finance | Include = TRUE."),
             ("Finance Filter Hilfe", "dieses Blatt", "Erklaert Bedeutung und Berechnung jeder Spalte in Textform (Abschnitte unten).")
         };
 

@@ -138,6 +138,90 @@ public class CentralExcelSupplierAssignmentTests
     }
 
     [Fact]
+    public void SalesAll_Has_A_Ready_Made_Supplier_Assignment_Sheet_Per_Company_And_Month()
+    {
+        // 2026-11-16: Andreas pivotiert nach den rohen Lieferantenfeldern, die bei CH leer sind. Das Blatt zeigt die wirksame
+        // Zuordnung je Gesellschaft mit Zeilenzahl, Anteil und Net Sales Actual gesamt und je Monat.
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-supplier-sheet-{Guid.NewGuid():N}");
+        var service = new ExcelExportService();
+        SalesRecord At(SalesRecord record, int year, int month)
+        {
+            record.PostingDate = new DateTime(year, month, 15);
+            record.InvoiceDate = record.PostingDate;
+            return record;
+        }
+        var records = new List<SalesRecord>
+        {
+            At(Record("TRCH", "Schweiz", "CH-1", salesValue: 1000m), 2025, 11),
+            At(Record("TRCH", "Schweiz", "CH-2", salesValue: 500m), 2026, 1),
+            At(Record("TRCH", "Schweiz", "CH-3", salesValue: 250m), 2026, 1),
+            At(Record("TRIT", "Italien", "IT-1", supplierName: "Trafag Italia S.r.l.", salesValue: 300m), 2026, 2),
+            At(Record("TRIT", "Italien", "IT-2", supplierName: "STS ITALIA S.R.L.", salesValue: 700m), 2026, 2),
+            // Von den Finance-Regeln ausgeschlossen: erscheint nicht.
+            At(Record("TRCH", "Schweiz", "CH-0", salesValue: 0m), 2026, 1)
+        };
+
+        try
+        {
+            var path = service.CreateConsolidatedExcelFile(outputDirectory, new DateTime(2026, 11, 16), records);
+
+            using var workbook = new XLWorkbook(path);
+            var ws = workbook.Worksheet(ExcelExportService.SupplierAssignmentSheetName);
+            for (var i = 0; i < ExcelExportService.SupplierAssignmentSheetHeaders.Length; i++)
+                Assert.Equal(ExcelExportService.SupplierAssignmentSheetHeaders[i], ws.Cell(4, i + 1).GetString());
+            // Monatsspalten lueckenlos vom ersten bis zum letzten Monat der Daten
+            Assert.Equal("2025-11", ws.Cell(4, 9).GetString());
+            Assert.Equal("2025-12", ws.Cell(4, 10).GetString());
+            Assert.Equal("2026-01", ws.Cell(4, 11).GetString());
+            Assert.Equal("2026-02", ws.Cell(4, 12).GetString());
+            Assert.True(ws.Cell(4, 13).IsEmpty());
+
+            var rows = ws.RowsUsed().Where(r => r.RowNumber() > 4).ToList();
+            var ch = Assert.Single(rows, r => r.Cell(1).GetString() == "TRCH");
+            Assert.Equal(("Intern", "TR AG"), (ch.Cell(3).GetString(), ch.Cell(4).GetString()));
+            Assert.NotEqual(string.Empty, ch.Cell(5).GetString());
+            Assert.Equal(3, ch.Cell(6).GetValue<int>());                 // CH-0 zaehlt nicht
+            Assert.Equal(1m, ch.Cell(7).GetValue<decimal>());            // 100 % der TRCH-Zeilen
+            Assert.Equal(1750m, ch.Cell(8).GetValue<decimal>());
+            Assert.Equal(1000m, ch.Cell(9).GetValue<decimal>());         // 2025-11
+            Assert.True(ch.Cell(10).IsEmpty());                          // 2025-12 ohne Umsatz
+            Assert.Equal(750m, ch.Cell(11).GetValue<decimal>());         // 2026-01
+            Assert.True(ch.Cell(12).IsEmpty());
+
+            var it = rows.Where(r => r.Cell(1).GetString() == "TRIT").ToList();
+            Assert.Equal(2, it.Count);
+            Assert.Equal(("Intern", "TR IT"), (it[0].Cell(3).GetString(), it[0].Cell(4).GetString()));   // Intern vor Extern
+            Assert.Equal(("Extern", string.Empty), (it[1].Cell(3).GetString(), it[1].Cell(4).GetString()));
+            Assert.Equal(0.5m, it[0].Cell(7).GetValue<decimal>());
+            Assert.Equal(300m, it[0].Cell(12).GetValue<decimal>());
+            Assert.Equal(700m, it[1].Cell(12).GetValue<decimal>());
+            // Summe des Blatts = Summe der Finance-Zeilen
+            Assert.Equal(2750m, rows.Sum(r => r.Cell(8).GetValue<decimal>()));
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory)) Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SiteFile_Has_No_Supplier_Assignment_Sheet()
+    {
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-supplier-sheet-site-{Guid.NewGuid():N}");
+        var service = new ExcelExportService();
+        try
+        {
+            var path = service.CreateExcelFile(outputDirectory, "TRCH", new DateTime(2026, 11, 16), [Record("TRCH", "Schweiz", "CH-1")]);
+            using var workbook = new XLWorkbook(path);
+            Assert.DoesNotContain(ExcelExportService.SupplierAssignmentSheetName, workbook.Worksheets.Select(sheet => sheet.Name));
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory)) Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void DeliveringEntity_Follows_The_Same_Rule_As_The_Cost_Path()
     {
         // Anzeige und Kostenpfad duerfen nicht auseinanderlaufen: gleiche Funktion, gleiche Argumente.
