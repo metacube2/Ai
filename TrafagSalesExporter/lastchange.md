@@ -1,7 +1,14 @@
 # Last Change
 
-Stand: 2026-11-13 abends (Shopfloor Paket Fabio 13.11.: Phase A deployed `d754a76`, Phase B Cockpit deployed `9100537`, T76 `T76K912906` fertig und offen; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`, vier Mailentwuerfe; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-16 08:50 (Export-Seite Download deployed `e10ab3a`); davor 2026-11-13 abends (Shopfloor Paket Fabio 13.11.: Phase A deployed `d754a76`, Phase B Cockpit deployed `9100537`, T76 `T76K912906` fertig und offen; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`, vier Mailentwuerfe; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
+
+## 2026-11-16 08:50: Export-Seite, „Excel oeffnen“ laedt herunter, deployed
+
+Meldung Ingo: Beim Oeffnen von Sales_All auf der Export-Seite kam „Access is denied“. Der Knopf startete die Datei per
+`Process.Start` auf dem Webserver. **Deployed 08:45 `e10ab3a`** (Zweig ab `9100537`, gemergt `bbd4ab0`, 1593/1593, bitgleich): Download
+in den Browser ueber die Blazor-Verbindung, gilt fuer Standortdateien und Sales_All. Datei vom 13.11. vorher in Ingos Downloads kopiert.
+Test `ExportFileDownloadTests` verbietet `Process.Start(` in Seiten. **Offen:** Ingo prueft den Knopf im Browser.
 
 ## 2026-11-13 12:40: Shopfloor, Paket Fabio 13.11. (Excel der Teamleiter abloesen), Phase A deployed
 
