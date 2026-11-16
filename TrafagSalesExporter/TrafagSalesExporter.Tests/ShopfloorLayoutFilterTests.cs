@@ -119,14 +119,21 @@ public class ShopfloorLayoutFilterTests
     }
 
     [Fact]
-    public void Schalter_Stehen_Aus_Bis_Der_Transport_In_P76_Ist()
+    public void Schalter_Seit_Dem_Import_In_P76_Status_Und_Material_Ein_Arbeitsplatz_Aus()
     {
+        // Die Codevorgabe bleibt aus: ein System ohne den Transport rechnet weiter ohne Filter. Eingeschaltet wird in appsettings.json.
         var options = new ShopfloorOptions();
         Assert.False(options.Zc22Layout().Aktiv);
         Assert.Equal("", options.RmMaterialAusschluss);
+        Assert.False(options.SapCoPaHzdat);
+        // 2026-11-16: T76K912906 ist in P76, die Vorschau ist gegen ZC22, ZC27 und Fabios 18 Kontrollwerte abgenommen. Statusfilter wie
+        // ZC22-Layout / P00 TX und Materialfilter wie ZC27-Layout /NIN sind ein. Der Arbeitsplatzfilter M* bleibt aus, bis Fabio
+        // antwortet. CO-PA: Hzdat ein fuer die Vorschau, geschrieben wird erst nach dem Abgleich mit den Kontrollwerten.
         var appsettings = JsonNode.Parse(File.ReadAllText(Path.Combine(ShopfloorTestEnv.ProjectRoot, "appsettings.json")))!["Shopfloor"]!;
-        Assert.Equal("", (string)appsettings["Zc22StatusAusschluss"]!);
+        Assert.Equal("FREI DRUC R\u00DCCK VOKL*", (string)appsettings["Zc22StatusAusschluss"]!);
         Assert.Equal("", (string)appsettings["Zc22ArbplAusschluss"]!);
-        Assert.Equal("", (string)appsettings["RmMaterialAusschluss"]!);
+        Assert.Equal("E*,D*,F*,C*", (string)appsettings["RmMaterialAusschluss"]!);
+        Assert.True((bool)appsettings["SapCoPaHzdat"]!);
+        Assert.False((bool)appsettings["SapCoPaEnabled"]!);
     }
 }
