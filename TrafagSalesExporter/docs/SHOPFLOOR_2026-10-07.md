@@ -1,11 +1,19 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-13 (Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-16 (Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
-stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-13.*
+stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-16.*
 
 Das PPA-Shopfloor (Ersatz fuer das Excel "PPA-Shop-Floor-File-2026") laeuft jetzt im Cockpit als oberster Reiter
 "Operations (Shopfloor)" (Route `/operations`). Das Python-Backend wurde in C# nachgebaut, die Oberflaeche
 (HTML/JS/CSS) ist unveraendert uebernommen. Auf dem Server wird kein Python benoetigt.
+
+Stand 2026-11-16 (Abschnitt 23): `T76K912906` ist in P76. **Statusfilter wie ZC22-Layout (`Zc22StatusAusschluss`) und
+Materialfilter wie ZC27-Layout (`RmMaterialAusschluss`) sind eingeschaltet**, deployed 17:06 (`7cc1a62`); Abnahme in P76 ohne
+Abweichung, Logistik 02. bis 12.11. nachgeladen (Fabios 18 Kontrollwerte stehen gespeichert). Aus bleiben der Arbeitsplatzfilter
+`M*` (DW liegt deshalb 540 Stk. ueber der Liste der Teamleiter) und `SapCoPaEnabled`. Erster Stichtag mit Statusfilter ist der
+17.11. Davor Stand 2026-11-13 mittags (Abschnitt 22): Paket Fabio 13.11. Phase A deployed (`d754a76`), Layoutfilter gebaut und mit
+Schalter aus deployed (`9100537`). *Ueberholt damit in den Zeilen darunter: „ohne Materialfilter“ (seit 13.11. 12:22 Material 1 bis
+99999 fuer TR5 und DW) und „CO-PA weiter aus“ gilt nur noch fuer das Schreiben, die Vorschau rechnet mit HZDAT.*
 
 Stand 2026-11-13 (Mail Fabio 13.11., Abschnitt 21): Vorrat, offene KW, SEH-Tagesziel, TX `plan5` und PPD-Verzug sind
 **Stichtagswerte**, es gilt der erste erfolgreiche SAP-Lauf des Tages; Morgenwerte 10. bis 12.11. aus dem Verlauf zurueckgeholt;
@@ -709,6 +717,11 @@ Antwort an Fabio noch nicht gesendet.
 
 ## 22. Paket Fabio 13.11. (`pakete.zip`): Excel der Teamleiter abloesen, Phase A deployed (Stand 2026-11-13)
 
+*Nachtrag 2026-11-16: Import nach P76 und Einschalten stehen in Abschnitt 23. Ueberholt sind in diesem Abschnitt „Schalter aus“
+fuer Status- und Materialfilter, „offen, nicht freigegeben“ fuer `T76K912906`, die Liste „Reihenfolge bis produktiv“ (erledigt bis
+auf `SapCoPaEnabled` und `Zc22ArbplAusschluss`; die Caches in P76 wurden nicht geleert) und die Vermutung, der hoehere DW-Vorrat
+komme von DL6/DW1.*
+
 Fabio (per Teams, seine Mails gehen nicht mehr hinaus): Das Shopfloor-Excel soll abgeloest werden; dafuer muessen die SAP-Felder
 dieselben Werte zeigen wie das Excel der Teamleiter. Er hat alle 106 SAP/MES-Felder gegen P76 und das Excel abgeglichen: 10 stimmen,
 28 geliefert aber falsch, 48 fehlen mit fertiger Definition, 20 fehlen mit offener Quelle (klaert er mit den Teamleitern). Paket
@@ -808,7 +821,8 @@ lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege)
   Materialausschluss gilt fuer jede ShopRmSet-Gruppe). DW: der Vorrat lag in der Vorschau 12:25 rund 1'400 ueber Fabios ZC22 (DL6 und
   DW1 mit numerischem Material zaehlen jetzt mit); vor dem Einschalten im selben Moment gegen ZC22 D* mit Layout pruefen.
 - **Oberflaeche nach Patch 08 (15:13):** im Chrome nicht ansehbar (Arbeits-Chrome meldete zweimal `ERR_NAME_NOT_RESOLVED` fuer den Servernamen, curl vom selben Rechner ging). Ersatzweise per HTTP geprueft: `index.html` laedt `app.js?v=a337e9cd`, die ausgelieferte `app.js` traegt den Marker „Patch 08 (2026-11-13)“ und parst fehlerfrei (Node `new Function`), `api/config` hat 23 Module (ohne `cz`, `mtf`, `sensoren`, `czch` bleibt) und 23 Agenda-Eintraege, alle mit vorhandenem Modul, Tagesumsatz mit neuer Formel. Die Seiten PPA-Grafik und Forecast im Browser sind damit **nicht** gesehen (Sichtpruefung Ingo oder Fabio).
-- **Montag 04:00 stimmt noch nicht ueberall mit dem Excel:** richtig sind dann die rollenden Fenster, TR5/DW-Material und der DW-Verzug;
+- **Montag 04:00 stimmt noch nicht ueberall mit dem Excel** *(Nachtrag 16.11.: so eingetroffen; Filter seit 17:06 ein, erster
+  Stichtag mit Statusfilter ist der 17.11., Abschnitt 23)*: richtig sind dann die rollenden Fenster, TR5/DW-Material und der DW-Verzug;
   TX, Verzug TR5/TX/SEH, die Logistik und CO-PA erst nach Import und Einschalten. Der am 02.11. gespeicherte Verkaufswert (November statt
   Oktober) bleibt, die neue Monatsregel gilt ab jetzt (Neuschreiben nur auf Wunsch Ingo/Fabio).
 - Nebenwirkungen des Lesens: SE16 hat fuer KOI bei AFVC „Felder fuer Selektion: AUFPL“ gespeichert; ueber die Freigabe hinaus nur
@@ -817,3 +831,93 @@ lassen sich nicht neu rechnen (ShopAufSet kennt nur die heute offenen Auftraege)
 **Nicht gebaut (Phase C):** die 40 Listenfelder (Rueckstandslisten, TVAV, Angebote, Punkt 10; Fabios Tabellenvorschlaege ausser
 `MARA-ZZTYP` ungeprueft), FPY TR5/TX aus dem MES (Punkt 11, DB-User Marco). Fabios Fragen an die Teamleiter (`Mails_2026-11-13.md`,
 Mail 2) laufen bei ihm.
+
+## 23. Layoutfilter eingeschaltet: Statusfilter ZC22 und Materialfilter ZC27 produktiv, Logistik 02. bis 12.11. nachgeladen (Stand 2026-11-16)
+
+Anlass: Fabio per Teams am 16.11. („arbeitet Claudia weiter am Shopfloor? Ich glaube es ist nichts geaendert seit Freitag“). Ingo hat
+`T76K912906` freigegeben und nach P76 importiert (Meldung 16.11. ~16:10, „du kannst dein Teil machen“, P76 fuer das Lesewerkzeug
+offen). Die P76-Caches hat Ingo **nicht** geleert.
+
+**Vor dem Einschalten (alles nur gelesen):**
+- **Erster Aufruf nach dem Import:** `GET sap/verzug` mit `zc22status=…` antwortete 16:12:49 mit 502 („ShopAufSet liefert die
+  Statuszeile (Sttxt) … noch nicht“); ab 16:13:33 lieferten alle Aufrufe die neuen Felder (46 eigene, 40 des Agenten). Ursache nicht
+  untersucht. **Vermutung:** der erste Aufruf traf im Gateway noch den alten Stand. Fuer den Betrieb heisst das: fehlen die Felder,
+  schreibt das Cockpit nichts und meldet den Fehler in `sap/status` (Fehler statt Zahl, Abschnitt 22).
+- **Logistik (ZC27, Materialfilter):** `GET sap/mengen?tag=` fuer 02. bis 12.11. ohne und mit `matex=E*,D*,F*,C*`: mit Filter stimmen
+  **18 von 18** Kontrollwerten Fabios (Feedback Punkt 6). Der Filter bewegt nur `logistik.tr5_mle01`, `logistik.tr5_mle02`,
+  `logistik.dw_mle04`, `dw.prod` und `dw.lieferbereit`; `tx_mle08`, `tx_mlm01`, `tr5.prod`, `seh.prod`, `seh.fpy` bewegen sich nicht.
+- **ZC22 (Statusfilter), Abnahme in P76 16:24 bis 16:40** (Agent `sap-t76`, eigene GUI-Sitzung, fuenf ZC22-Laeufe nur gelesen, Sitzung
+  geschlossen; `saptasks/shopfloor_sap/P76_ABNAHME_2026-11-16.md`): Vorschau mit `zc22status=FREI DRUC RÜCK VOKL*` gegen ZC22 im
+  selben Moment, **90 Wertepaare ohne Abweichung**. Verzug mit Filter SEH 20 (ausgeblendet 1 Auftrag / 24 Stk.), TR5 287 (4 / 239),
+  TX 342 (8 / 148), DW 240 (0 / 0); Vorrat ausgeblendet SEH 4 / 214, TR5 4 / 239, TX 13 / 285, DW 0 / 0. Belegt ist die Gleichheit
+  von Anzahl und Stueck je Abteilung und Feld, nicht je Auftrag (die Vorschau liefert Summen).
+- **DW:** gegen ZC22 `D*` **ohne** Layout exakt gleich (1'582 Auftraege; total 49'196, 4 Wochen 15'828, laufende KW 2'598). Gegen
+  ZC22 **mit** Layout `/ P00 TX` liegt das Cockpit 36 Auftraege / 540 Stk. hoeher (laufende KW 522): alles Arbeitsplatz `M*` an MLE04.
+  Der Statusfilter aendert bei DW nichts. Die Vermutung vom 13.11. (DL6/DW1 mit numerischem Material) trifft nicht zu.
+- **Arbeitsplatzfilter `M*` (nur gemessen, bleibt aus):** er wuerde zusaetzlich ausblenden im Vorrat TR5 19 / 588, TX 2 / 105,
+  DW 36 / 540, im Verzug TR5 1 / 2, TX 1 / 5, DW 5 / 10 (Auftraege / Stk.), SEH nichts.
+
+**Eingeschaltet, deployed 17:06 (`7cc1a62`, Zweig `shopfloor-einschalten-1611` ab `2da2682`, gemergt `69ed8a0`).** Geaendert sind nur
+`appsettings.json` und der Test der Schalterstellung (`ShopfloorLayoutFilterTests`):
+
+| Schalter | Wert | Stand |
+| --- | --- | --- |
+| `Shopfloor:Zc22StatusAusschluss` | `FREI DRUC RÜCK VOKL*` | **ein** (Verzug und Vorrat, alle Abteilungen) |
+| `Shopfloor:RmMaterialAusschluss` | `E*,D*,F*,C*` | **ein** (jede `ShopRmSet`-Gruppe) |
+| `Shopfloor:SapCoPaHzdat` | `true` | ein, wirkt vorerst nur in der Vorschau `sap/copa` |
+| `Shopfloor:SapCoPaEnabled` | `false` | bleibt aus |
+| `Shopfloor:Zc22ArbplAusschluss` | leer | bleibt aus, wartet auf Fabio |
+
+Tests: Shopfloor 164/164, Release-Worktree 1595/1595. Deploy bitgleich, ohne Alarm, 6 Dateien geaendert. Die Wochensicherung war
+faellig und lief wegen 249 MB im `-wal` seitenweise (818 s, dazu 68 s Uebertragung), deshalb Start 16:51 und DLL erst 17:06:28.
+Protokoll `.tmp_deploy_2026-11-16_shopfloor_filter_ein.log`.
+
+**Nach dem Deploy:**
+- **Startlauf 17:07** (`sap/status` ok): Verzug und Vorrat mit `layoutfilter.status_ausschluss = FREI DRUC RÜCK VOKL*`; ausgeblendet
+  genau wie in der Abnahme (Verzug SEH 1 / 24, TR5 4 / 239, TX 8 / 148, DW 0 / 0; Vorrat SEH 4 / 214, TR5 4 / 239, TX 13 / 285,
+  DW 0 / 0), DW-Vorrat 49'196 / 15'828 / 2'598 wie ZC22 in der Abnahme. Damit ist auch der **konfigurierte Schalter** gegen die
+  Zahlen der Abnahme gehalten (die Abnahme lief mit dem Probeparameter). Verzug 17:07: SEH 20, TR5 263, TX 342, DW 240 (bei TR5 ein
+  Auftrag mit 24 Stk. weniger als in der Abnahme, 8 statt 9 Auftraege; sonst gleich). Die Mengen
+  13. bis 16.11. hat der Startlauf mit Materialfilter geschrieben.
+- **Stichtagswerte 16.11. bleiben eingefroren** (erster erfolgreicher Lauf 06:21, noch ohne Statusfilter: Verzug SEH 85, TR5 533,
+  TX 733, DW 531). Kein `ersetzen`: es speicherte Abendwerte als Morgenwerte und ueberschriebe das SEH-Tagesziel. **Der erste
+  Stichtag mit Statusfilter ist der 17.11.**
+- **Logistik-Historie 22:07 nachgeladen** (`POST sap/mengen?tag=` fuer 02., 03., 04., 05., 06., 09., 10., 11., 12.11.; je `ok`,
+  `geschrieben`, kein manueller Wert uebersprungen). Gespeichert = Vorschau mit Filter; **Fabios 18 Kontrollwerte stehen
+  gespeichert**. Bewegt haben sich 19 Werte: `dw.lieferbereit` (8 Tage), `logistik.tr5_mle02` (4), `logistik.dw_mle04` (3),
+  `dw.prod` (2), `logistik.tr5_mle01` (1) und `logistik.tx_mle08` am 03.11. von 832 auf 831 (nicht vom Filter; die Vorschau ohne
+  Filter zeigte schon 831). Sonst nichts, auch kein Vorrat-, Verzug- oder Verkauf-Feld. Den 13.11. hatte schon der Startlauf neu
+  geschrieben (`dw.lieferbereit` 1'165 auf 1'024, `dw.prod` 1'028 auf 882, `logistik.dw_mle04` 932 auf 923). Der Stand vor dem
+  Einschalten liegt als Sicherung im Scratchpad der Sitzung (`sf1611/mengen/daily_*.json`), nicht im Repo.
+- **Vor dem 02.11. nicht nachgeladen:** Logistik- und DW-Mengen im Oktober stehen weiter ohne Materialfilter (Entscheid offen).
+- **CO-PA-Vorschau mit HZDAT** (`GET sap/copa?tag=`, 22:07, schreibt nichts) gegen Fabios Kontrollwerte
+  (`docs/shopfloor_paket_2026-11-13/2026-11-12_verkauf/Kontrollwerte_Verkauf_CE11000_2026-11.csv`), je sechs Werte (Auftragseingang
+  und Umsatz, je gesamt, Transmitter, DW):
+
+  | Stand bis HZDAT | Ergebnis |
+  | --- | --- |
+  | 09.11., 10.11., 11.11. | alle 18 Werte auf den Rappen gleich |
+  | 12.11. | Umsatz dreimal gleich, Auftragseingang DW gleich; **Auftragseingang gesamt 3'376'806.32 gegen 3'372'899.64 (+3'906.68), Transmitter 1'151'205.88 gegen 1'147'421.02 (+3'784.86)** |
+
+  Transmitter rechnet das Cockpit als Sparte 0005 allein (`ShopfloorSapCoPa.SparteTransmitter`). Das trifft Fabios Werte; die Frage
+  „0005 oder 0005 + 0006“ aus Abschnitt 22 ist fuer diese Stichtage beantwortet. Die Differenz am 12.11. ist nicht untersucht;
+  **Vermutung:** Auftragseingang mit HZDAT 12.11., der nach Fabios Abzug gebucht wurde. `SapCoPaEnabled` bleibt aus bis zum Entscheid.
+- **Oberflaeche (Arbeits-Chrome, 22:09 bis 22:20):** Cockpit laedt; Logistik und DW zeigen an den nachgeladenen Tagen
+  „SAP-Schnittstelle 22:07“. Abgelesen: Logistik 05.11. TR5 MLE02 644 und DLQ72 547; Logistik 09.11. MLE02 290, MLE04 1'154, DLQ72 854;
+  DW 10.11. DL790 813 und DLQ72 795, alles wie Fabios Kontrollwerte. Ein Tag laesst sich direkt oeffnen:
+  `shopfloor/index.html#/m/<modul>?day=JJJJ-MM-TT`.
+- **Zeitlicher Ablauf:** Die Pruefung nach dem Deploy begann erst 22:06 (die Meldung vom Deploy-Ende kam in der Sitzung erst dann an,
+  der Laptop war ab 19:25 im Standby; das VPN trennte 22:04:46 und stand 22:06:34 wieder). Von 17:07 bis 22:07 standen deshalb der
+  02. bis 12.11. noch ohne Materialfilter in der Datenbank.
+
+**Offen:**
+1. **17.11. morgens:** ersten Stichtagslauf mit Statusfilter pruefen (`sap/status` ok, `layoutfilter` gesetzt, Werte geschrieben),
+   auch wegen des 502 beim ersten Aufruf nach dem Import.
+2. **Arbeitsplatzfilter `M*`** (`Zc22ArbplAusschluss`): Frage an Fabio, ob die Teamleiter ZC22 „Mit Vorgangsdaten“ fahren. Solange er
+   aus ist, liegt der Vorrat DW 540 Stk. (TR5 588, TX 105) ueber der Liste der Teamleiter.
+3. **CO-PA schreiben** (`SapCoPaEnabled`): Entscheid Ingo/Fabio; vorher die Differenz im Auftragseingang vom 12.11. klaeren.
+4. **Logistik-Historie vor dem 02.11.** nachladen oder stehen lassen.
+5. Die ZC22-Variante `/PPA DW/S ALLE` begrenzt den Eckendtermin auf 01.11.2025 bis 31.12.2026; am 16.11. lagen 908 Auftraege /
+   29'509 Stk. danach (Abnahme Abschnitt 6.3, Frage an Fabio, mit welcher Selektion die Teamleiter fahren). `VerzugAb` ab Januar 2027
+   neu klaeren (Abschnitt 22).
+6. Phase C unveraendert (Abschnitt 22).

@@ -1,6 +1,6 @@
 # Shopfloor: Mengen aus SAP (ShopRmSet, ShopProdSet)
 
-Stand: 2026-11-13 15:05: juengster Inhalt ist Abschnitt 10, Layoutfilter ZC22/ZC27 (`Matex` an `ShopRmSet`; `Sttxt`, `Arbpl`, `Vornr`, `Avo` an `ShopAufSet`) in T76 aktiv und gegen ZC22/ZC27 geprueft, Auftrag `T76K912906` **nicht freigegeben**, nicht in P76. Davor 2026-11-12 (Doku-Pruefung: Kopf um Abschnitt 9 ergaenzt, Importstand `T76K912860` nachgetragen): Abschnitt 9 vom 2026-11-09, Auftragsvorrat Typ VR (`T76K912860`; laut Wochen_Todo 110 in P76 und seit 09.11. 15:11 live). Davor 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
+Stand: 2026-11-16 abends: `T76K912906` ist von Ingo freigegeben und nach P76 importiert (Meldung 16.11. ~16:10, Caches P76 nicht geleert); Abnahme in P76 `P76_ABNAHME_2026-11-16.md`; im Cockpit sind Status- und Materialfilter seit 16.11. 17:06 eingeschaltet (`docs/SHOPFLOOR_2026-10-07.md` 23). Ueberholt damit unten „**nicht freigegeben**, nicht in P76“ und Abschnitt 10.7 Punkt 1. Davor Stand 2026-11-13 15:05: juengster Inhalt ist Abschnitt 10, Layoutfilter ZC22/ZC27 (`Matex` an `ShopRmSet`; `Sttxt`, `Arbpl`, `Vornr`, `Avo` an `ShopAufSet`) in T76 aktiv und gegen ZC22/ZC27 geprueft, Auftrag `T76K912906` **nicht freigegeben**, nicht in P76. Davor 2026-11-12 (Doku-Pruefung: Kopf um Abschnitt 9 ergaenzt, Importstand `T76K912860` nachgetragen): Abschnitt 9 vom 2026-11-09, Auftragsvorrat Typ VR (`T76K912860`; laut Wochen_Todo 110 in P76 und seit 09.11. 15:11 live). Davor 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
 *Ueberholt:* „Cockpit-Abruf mit ausgeschaltetem Schreiben“ (bis 09:50).
 Auftrag: Mail Fabio 16.10. (Datenabfragen J5 Logistik, J8 Tagesmengen SEH/TR5, J11 FPY SEH), von Ingo weitergeleitet.
 
@@ -279,6 +279,8 @@ Statuszeile); mit `Avo` 15'872 bis 19'100 ms (7,2 bis 8,7 ms je VF). Eine Seiten
 Vergleich vorher/nachher ohne `Avo` steht deshalb nur im Report.
 
 ### 10.7 Offen, was Ingo tun muss
+
+*Nachtrag 2026-11-16: Punkt 1 ist erledigt (Import durch Ingo, ohne Cache-Bereinigung; die Sets lieferten die neuen Felder nach einem ersten 502 von selbst). Laufzeit von ZC22 in P76 mit Vorgangsdaten 88 bis 110 s je Dialoglauf; die Laufzeit des Sets mit `Avo` in P76 ist weiter nicht gemessen, der Arbeitsplatzteil bleibt aus (Punkt 2, F1 bei Fabio).*
 
 1. **`T76K912906` freigeben** (Ingo). Er enthaelt jetzt Teil 1 (`Hzdat`) und Teil 2 (Layoutfilter); beide Methoden gehen als ganze Methoden
    mit. In P76 nach dem Import: `/IWBEP/CACHE_CLEANUP` (alle Modelle), dann `/IWFND/CACHE_CLEANUP` (`ZPOWERBI_EINKAUF_MDL`), danach im
