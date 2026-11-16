@@ -882,13 +882,15 @@ Protokoll `.tmp_deploy_2026-11-16_shopfloor_filter_ein.log`.
 - **Stichtagswerte 16.11. bleiben eingefroren** (erster erfolgreicher Lauf 06:21, noch ohne Statusfilter: Verzug SEH 85, TR5 533,
   TX 733, DW 531). Kein `ersetzen`: es speicherte Abendwerte als Morgenwerte und ueberschriebe das SEH-Tagesziel. **Der erste
   Stichtag mit Statusfilter ist der 17.11.**
-- **Logistik-Historie 22:07 nachgeladen** (`POST sap/mengen?tag=` fuer 02., 03., 04., 05., 06., 09., 10., 11., 12.11.; je `ok`,
-  `geschrieben`, kein manueller Wert uebersprungen). Gespeichert = Vorschau mit Filter; **Fabios 18 Kontrollwerte stehen
-  gespeichert**. Bewegt haben sich 19 Werte: `dw.lieferbereit` (8 Tage), `logistik.tr5_mle02` (4), `logistik.dw_mle04` (3),
-  `dw.prod` (2), `logistik.tr5_mle01` (1) und `logistik.tx_mle08` am 03.11. von 832 auf 831 (nicht vom Filter; die Vorschau ohne
+- **Logistik-Historie nachgeladen** (`POST sap/mengen?tag=` um 22:07 fuer 02., 03., 04., 05., 06., 09., 10., 11., 12.11. und um
+  22:26 fuer Samstag, 07.11.; je `ok`, `geschrieben`, kein manueller Wert uebersprungen). Gespeichert = Vorschau mit Filter; **Fabios 18 Kontrollwerte stehen
+  gespeichert**. Bewegt haben sich 20 Werte: `dw.lieferbereit` (8 Tage), `logistik.tr5_mle02` (4), `logistik.dw_mle04` (3),
+  `dw.prod` (3, darunter Samstag 07.11. von 22 auf 0), `logistik.tr5_mle01` (1) und `logistik.tx_mle08` am 03.11. von 832 auf 831 (nicht vom Filter; die Vorschau ohne
   Filter zeigte schon 831). Sonst nichts, auch kein Vorrat-, Verzug- oder Verkauf-Feld. Den 13.11. hatte schon der Startlauf neu
   geschrieben (`dw.lieferbereit` 1'165 auf 1'024, `dw.prod` 1'028 auf 882, `logistik.dw_mle04` 932 auf 923). Der Stand vor dem
   Einschalten liegt als Sicherung im Scratchpad der Sitzung (`sf1611/mengen/daily_*.json`), nicht im Repo.
+  **Der Samstag 07.11. fehlte zuerst:** nachgeladen waren nur die Arbeitstage; er fiel erst in der Gegenpruefung auf. Am Sonntag
+  08.11. gibt es keine Rueckmeldungen und keinen gespeicherten Wert.
 - **Vor dem 02.11. nicht nachgeladen:** Logistik- und DW-Mengen im Oktober stehen weiter ohne Materialfilter (Entscheid offen).
 - **CO-PA-Vorschau mit HZDAT** (`GET sap/copa?tag=`, 22:07, schreibt nichts) gegen Fabios Kontrollwerte
   (`docs/shopfloor_paket_2026-11-13/2026-11-12_verkauf/Kontrollwerte_Verkauf_CE11000_2026-11.csv`), je sechs Werte (Auftragseingang
@@ -899,16 +901,19 @@ Protokoll `.tmp_deploy_2026-11-16_shopfloor_filter_ein.log`.
   | 09.11., 10.11., 11.11. | alle 18 Werte auf den Rappen gleich |
   | 12.11. | Umsatz dreimal gleich, Auftragseingang DW gleich; **Auftragseingang gesamt 3'376'806.32 gegen 3'372'899.64 (+3'906.68), Transmitter 1'151'205.88 gegen 1'147'421.02 (+3'784.86)** |
 
-  Transmitter rechnet das Cockpit als Sparte 0005 allein (`ShopfloorSapCoPa.SparteTransmitter`). Das trifft Fabios Werte; die Frage
-  „0005 oder 0005 + 0006“ aus Abschnitt 22 ist fuer diese Stichtage beantwortet. Die Differenz am 12.11. ist nicht untersucht;
-  **Vermutung:** Auftragseingang mit HZDAT 12.11., der nach Fabios Abzug gebucht wurde. `SapCoPaEnabled` bleibt aus bis zum Entscheid.
+  Transmitter rechnet das Cockpit als Sparte 0005 allein (`ShopfloorSapCoPa.SparteTransmitter`). Das trifft Fabios Werte an diesen
+  Stichtagen. Ob die Sparte 0006 im November ueberhaupt Werte traegt, ist nicht geprueft (die Vorschau liefert nur Summen); die Frage
+  „0005 oder 0005 + 0006“ aus Abschnitt 22 ist nur so weit beantwortet. Die Differenz am 12.11. ist nicht untersucht; **Vermutung:**
+  Fabios Datei liegt im Paketordner `2026-11-12_verkauf`, ist also am 12.11. gezogen, und die Zeile „Stand bis 12.11.“ enthaelt den
+  Auftragseingang jenes Tages nur bis zum Abzug. `SapCoPaEnabled` bleibt aus bis zum Entscheid.
 - **Oberflaeche (Arbeits-Chrome, 22:09 bis 22:20):** Cockpit laedt; Logistik und DW zeigen an den nachgeladenen Tagen
   „SAP-Schnittstelle 22:07“. Abgelesen: Logistik 05.11. TR5 MLE02 644 und DLQ72 547; Logistik 09.11. MLE02 290, MLE04 1'154, DLQ72 854;
   DW 10.11. DL790 813 und DLQ72 795, alles wie Fabios Kontrollwerte. Ein Tag laesst sich direkt oeffnen:
   `shopfloor/index.html#/m/<modul>?day=JJJJ-MM-TT`.
-- **Zeitlicher Ablauf:** Die Pruefung nach dem Deploy begann erst 22:06 (die Meldung vom Deploy-Ende kam in der Sitzung erst dann an,
-  der Laptop war ab 19:25 im Standby; das VPN trennte 22:04:46 und stand 22:06:34 wieder). Von 17:07 bis 22:07 standen deshalb der
-  02. bis 12.11. noch ohne Materialfilter in der Datenbank.
+- **Zeitlicher Ablauf:** Der Deploy endete 17:06, die Pruefung danach begann erst 22:06. Die Meldung vom Deploy-Ende kam in der
+  Sitzung erst 22:05 an; **warum, ist nicht untersucht** (das Ereignisprotokoll zeigt den Standby des Laptops erst ab 19:25, die
+  Zeit davor ist nicht erklaert; das VPN trennte 22:04:46 und stand 22:06:34 wieder). Von 17:07 bis 22:07 (Samstag 07.11. bis
+  22:26) standen deshalb die Tage 02. bis 12.11. noch ohne Materialfilter in der Datenbank.
 
 **Offen:**
 1. **17.11. morgens:** ersten Stichtagslauf mit Statusfilter pruefen (`sap/status` ok, `layoutfilter` gesetzt, Werte geschrieben),
@@ -916,7 +921,9 @@ Protokoll `.tmp_deploy_2026-11-16_shopfloor_filter_ein.log`.
 2. **Arbeitsplatzfilter `M*`** (`Zc22ArbplAusschluss`): Frage an Fabio, ob die Teamleiter ZC22 „Mit Vorgangsdaten“ fahren. Solange er
    aus ist, liegt der Vorrat DW 540 Stk. (TR5 588, TX 105) ueber der Liste der Teamleiter.
 3. **CO-PA schreiben** (`SapCoPaEnabled`): Entscheid Ingo/Fabio; vorher die Differenz im Auftragseingang vom 12.11. klaeren.
-4. **Logistik-Historie vor dem 02.11.** nachladen oder stehen lassen.
+4. **Logistik-Historie vor dem 02.11.** nachladen oder stehen lassen. Bis dahin mischen die 8-Wochen-Grafik und der Verlauf auf den
+   Seiten Logistik und DW den gefilterten November mit dem ungefilterten Oktober. Beim Nachladen die Samstage mitnehmen (Tage aus
+   `/daily` lesen).
 5. Die ZC22-Variante `/PPA DW/S ALLE` begrenzt den Eckendtermin auf 01.11.2025 bis 31.12.2026; am 16.11. lagen 908 Auftraege /
    29'509 Stk. danach (Abnahme Abschnitt 6.3, Frage an Fabio, mit welcher Selektion die Teamleiter fahren). `VerzugAb` ab Januar 2027
    neu klaeren (Abschnitt 22).

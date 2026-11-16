@@ -10,11 +10,11 @@ geleert). **Abnahme in P76, nur gelesen:** Vorschau = ZC22 im selben Moment fuer
 `saptasks/shopfloor_sap/P76_ABNAHME_2026-11-16.md`), Logistik mit Materialfilter 18 von 18 Kontrollwerten Fabios. **Deployed 17:06
 `7cc1a62`** (Zweig ab `2da2682`, gemergt `69ed8a0`, 1595/1595, bitgleich, ohne Alarm; Wochensicherung 15 Minuten): `Zc22StatusAusschluss
 = FREI DRUC RÜCK VOKL*`, `RmMaterialAusschluss = E*,D*,F*,C*`, `SapCoPaHzdat = true`. Startlauf 17:07 mit Filter sauber; 22:07 Logistik
-02. bis 12.11. nachgeladen (18 Kontrollwerte gespeichert, 19 Werte bewegt, sonst nichts); im Chrome abgelesen. CO-PA-Vorschau mit HZDAT
+02. bis 12.11. nachgeladen (18 Kontrollwerte gespeichert, 20 Werte bewegt, sonst nichts; Samstag 07.11. erst 22:26 nach der Gegenpruefung); im Chrome abgelesen. CO-PA-Vorschau mit HZDAT
 trifft Fabios Werte an drei von vier Stichtagen exakt (12.11.: Auftragseingang +3'906.68). **Offen:** 17.11. morgens ersten
 Stichtagslauf mit Filter pruefen (die Werte vom 16.11. bleiben eingefroren, ohne Statusfilter); Arbeitsplatzfilter `M*` aus (DW 540 Stk.
 ueber der Liste der Teamleiter, Frage an Fabio); `SapCoPaEnabled` aus; Historie vor dem 02.11. nicht nachgeladen. Die Pruefung nach dem
-Deploy lief erst ab 22:06 (Laptop im Standby). `docs/SHOPFLOOR_2026-10-07.md` 23.
+Deploy lief erst ab 22:06, fuenf Stunden nach dem Deploy-Ende (Ursache nicht untersucht). `docs/SHOPFLOOR_2026-10-07.md` 23.
 
 ## 2026-11-16 09:40: Finance, Sales_All mit Blatt „Lieferantenzuordnung“, deployed
 
