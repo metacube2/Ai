@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-11-16 09:40 (Sales_All Blatt Lieferantenzuordnung deployed `2da2682`; davor 08:50 Export-Seite Download deployed `e10ab3a`); davor 2026-11-13 abends (Shopfloor Paket Fabio 13.11.: Phase A deployed `d754a76`, Phase B Cockpit deployed `9100537`, T76 `T76K912906` fertig und offen; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`, vier Mailentwuerfe; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
+Stand: 2026-11-16 16:10 (Nachweis Blatt Lieferantenzuordnung am Export 12:11 erbracht, Excel und Mailentwurf fuer Andreas); davor 09:40 (Sales_All Blatt Lieferantenzuordnung deployed `2da2682`; davor 08:50 Export-Seite Download deployed `e10ab3a`); davor 2026-11-13 abends (Shopfloor Paket Fabio 13.11.: Phase A deployed `d754a76`, Phase B Cockpit deployed `9100537`, T76 `T76K912906` fertig und offen; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`, vier Mailentwuerfe; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Mail Fabio 13.11.: Stichtagswerte, Morgenwerte, Verzug ein, deployed `0e94279`; davor 2026-11-12 14:25: Uebergabe ZLO03 FIX 28, in P76 wirksam, Werkzeugproblem behoben; davor 13:50: Uebergabe, Chat geschlossen: Doku-Pruefung und Code-Review abgeschlossen, offene Punkte in Reihenfolge; davor 13:45: ZLO03 FIX 28 in T76, `T76K912902` *(seit 13:54 in P76, Nachtrag 14:05)*; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt `c9208b5`, nicht deployed; ZC12 und IC warten; Lieferantenbewertung; WLAN; Doku-Pruefung); davor 2026-11-11 abends (Uebergabe, Chat geschlossen; davor nachmittags RFC-Rechte FPA; davor IC V1 ZICAA1 in T76 umgesetzt; davor 08:14 Wochen_Todo 122/141 zusammengelegt). Die Uebergabe vom
 2026-11-10 spaet gilt weiter vor allen aelteren Abschnitten darunter.
 
 ## 2026-11-16 09:40: Finance, Sales_All mit Blatt „Lieferantenzuordnung“, deployed
@@ -8,8 +8,9 @@ Stand: 2026-11-16 09:40 (Sales_All Blatt Lieferantenzuordnung deployed `2da2682`
 Andreas pivotiert nach den rohen Lieferantenfeldern, die Schweiz ist dort leer (wirksam 100 % Intern / TR AG). **Deployed 09:33
 `2da2682`** (Zweig ab `e10ab3a`, gemergt `70507fc`, 1595/1595, bitgleich): neues Blatt `Lieferantenzuordnung` im zentralen Sales_All
 (je Gesellschaft Supplier Type, Delivering Entity, Cost Source mit Zeilenzahl, Anteil und Net Sales Actual gesamt und je Monat).
-„Group HK“ = Konzern-Herstellkosten; nichts Neues, Regeln seit 27.08./09.09. entschieden. **Offen:** Nachweis am Export 12:00
-(Pruefung im Hintergrund), danach Andreas zeigen; Mail an Andreas noch nicht gesendet (Stand Ingo). `docs/FINANCE_SUPPLIER.md` 9.
+„Group HK“ = Konzern-Herstellkosten; nichts Neues, Regeln seit 27.08./09.09. entschieden. *Nachtrag 16:10: Nachweis am Export 12:11 erbracht (Blatt gegen Blatt Sales ohne Abweichung). Excel
+`Group_HK_Regeln_Beispiele_2026-11-16.xlsx` und der aktualisierte Mailentwurf an Andreas (448 von 453 statt 414 von 420) liegen in
+Ingos Downloads, nicht gesendet.* **Offen:** Abstimmung mit Andreas, Entscheid „ohne Lieferant“ (Werkstamm oder lokal). `docs/FINANCE_SUPPLIER.md` 9.
 
 ## 2026-11-16 08:50: Export-Seite, „Excel oeffnen“ laedt herunter, deployed
 

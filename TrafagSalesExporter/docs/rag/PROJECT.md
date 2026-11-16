@@ -12,7 +12,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 - **2026-11-16 (Finance und Export-Seite):** Deploy 08:45 `e10ab3a`: „Excel oeffnen“ auf der Export-Seite laedt die Datei in den
   Browser, statt sie auf dem Webserver zu starten. Deploy 09:33 `2da2682`: Sales_All bekommt das Blatt `Lieferantenzuordnung`
   (wirksame Zuordnung der Gruppenmarge je Gesellschaft und Monat), weil Andreas nach den rohen Lieferantenfeldern pivotiert und
-  CH dort leer ist. Nachweis am ersten Export offen. **Produktiv `2da2682`; Spanien `c9208b5` weiter nicht deployed, Deploy nur
+  CH dort leer ist. Nachweis am Export 12:11 erbracht (geprueft 16:10, ohne Abweichung). **Produktiv `2da2682`; Spanien `c9208b5` weiter nicht deployed, Deploy nur
   aus dem Arbeitszweig ab `70507fc`.** `docs/FINANCE_SUPPLIER.md` 9.
 - **2026-11-13 (Shopfloor, Paket Fabio 13.11., Excel abloesen):** Phase A deployed 12:22 `d754a76` (Vorrat rollend, TR5/DW
   Material 1-99999, DW D*, plan5 kumuliert, Verzug ab 01.01.2026, Monat des letzten Arbeitstags, CZ/MTF/Sensoren entfernt). P76-Befund:

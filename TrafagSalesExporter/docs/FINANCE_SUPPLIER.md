@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -589,9 +589,35 @@ Standardpreis“ (AT 1'877 / 215); welche Materialien die 1'215 sind, ist nicht 
 `Supplier Type`, `Delivering Entity`, `Cost Source`, `Rows`, `Share of TSC rows`, `Net Sales Actual`, danach je Monat (`JJJJ-MM`,
 Finance | Date, lueckenlos vom ersten bis zum letzten Monat) das Net Sales Actual; feste Werte, keine Formeln; Basis dieselben
 Gruppenmargen-Zeilen wie die Spalten im Blatt Sales (nur Finance | Include = TRUE). `GroupMarginProofRow` hat dafuer additiv
-`Month`. Tests `CentralExcelSupplierAssignmentTests` (zwei neu), Suite 1595/1595. **Nachweis am ersten echten Export steht aus**
-(Lauf 12:00 am 16.11., Abgleich Blatt gegen Blatt Sales je Gesellschaft). „Group HK“ in Andreas' Mail = Konzern-Herstellkosten,
+`Month`. Tests `CentralExcelSupplierAssignmentTests` (zwei neu), Suite 1595/1595. *(Der Nachweis am ersten echten Export stand bis 16.11. 16:10 aus; er ist erbracht, siehe uebernaechster Absatz.)* „Group HK“ in Andreas' Mail = Konzern-Herstellkosten,
 also die Kostenbasis der Gruppenmarge; die Regeln dazu sind seit 27.08. und 09.09. entschieden, er fragt nach dem Stand.
+
+**Nachweis am ersten echten Export (`Sales_All_2026-11-16.xlsx`, geschrieben 12:11, 59.9 MB, geprueft 16:10):** Blatt
+`Lieferantenzuordnung` vorhanden (nach `Gruppenmarge Details`), Kopf in Zeile 4 wie beschrieben, Monate 2025-01 bis 2026-11 (23
+Spalten), 44 Zeilen. Abgleich gegen das Blatt Sales derselben Datei (Finance | Include = TRUE): je Gesellschaft Zeilen und Net Sales
+Actual gleich (9 von 9), je Gesellschaft x Supplier Type x Delivering Entity x Cost Source 44 von 44 gleich (Zeilen, Anteil, Wert),
+737 Monatswerte gleich. TRCH 52'554 Zeilen, 100 % Intern / TR AG. Die Hintergrundpruefung von 09:35 hatte den Export verpasst und
+„kein neuer Export“ gemeldet, obwohl die Datei seit 12:11 auf dem Server lag (Ursache nicht untersucht, vermutlich Netzunterbruch);
+deshalb erst 16:10 nachgeholt. Pruefskript im Scratchpad der Sitzung (`pruef_blatt.py`), nur Summen.
+
+**Fuer die Abstimmung mit Andreas am 16.11. (Auftraege Ingo „mach ein Excel“, „auf neusten Stand bringen“):** Excel
+`Group_HK_Regeln_Beispiele_2026-11-16.xlsx` in Ingos Downloads (Uebersicht, zwei entschiedene Regeln und zwei offene Themen je mit
+Beispiel als Ablauf; Beispielwerte frei gewaehlt, Tabellen „Groessenordnung“ gemessen) und der Mailentwurf an Andreas auf den Stand
+16.11. gebracht (Excel angehaengt, **nicht gesendet**). Dafuer an `Sales_All_2026-11-16.xlsx` (Export 08:40, nur Finance Include)
+nachgemessen:
+
+- **Lieferant Trafag Controls India (`ISS-007.4`):** TRIT 453 Zeilen, davon 448 ohne Konzernkosten TR IN („Interner Standardpreis“,
+  537'501 EUR) und 5 mit; ersetzt 414 von 420 vom 07.10. TRUK 112 Zeilen, davon 87 ohne (76'722 GBP) und 25 mit; bei TRUK ist die
+  Ursache nicht untersucht und es gibt kein eigenes Issue.
+- **Zeilen ohne Lieferantenfeld** (Nummer und Name leer; ohne CH/AT und ohne 7'270 TRIN-Zeilen mit Sales Type FFM/CM/LRD): 20'982.
+  Davon 8'685 ueber den Werkstamm auf Intern / TR AG (8'569 mit Konzernkosten TR AG, 116 „Interner Standardpreis“), 12'167 Lokal,
+  130 Unklar. Je Gesellschaft Intern / TR AG: TRDE 137 von 7'735, TRES 5'145 von 8'063, TRFR 1'293 von 2'721, TRIN 62 von 173,
+  TRIT 503 von 510, TRUS 1'545 von 1'780. Mit `SupplierFallbackMode = LocalStandardCosts` (Beschluss Andreas 27.08.) bekaemen die
+  8'569 Zeilen eine andere Kostenbasis; das ist aus der Rechenregel abgeleitet, **nicht** mit dem Schalter gemessen. Die Angabe
+  10'817 von 22'950 Kandidatenzeilen (27.08.) ist ein aelterer Datenstand.
+- **Berichtigung:** Der Faktor drei bis acht aus `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 10 gilt fuer Trafag-Sachnummern in
+  Italiens Kostentabelle, nicht fuer Ware aus Indien. Wie weit Italiens Einkaufspreis ueber den Kosten von TR IN liegt, ist nicht
+  gemessen.
 
 **Mailentwuerfe (`.eml` in Ingos Downloads, nicht gesendet):** Antwort an Andreas mit allen Punkten und dem Stand Group HK
 (deckt auch Wochen_Todo 84), Rohail (Rechnungsliste, Schemaauszug), Cornell (UK-Nummern), Paola (162 Artikel, nur das Thema
