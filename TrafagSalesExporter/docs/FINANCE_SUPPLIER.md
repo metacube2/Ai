@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -577,6 +577,21 @@ laufen: TRIT 503 Intern / TR AG (1.01 Mio. EUR), 1 Lokal, 6 Unklar (80'442 EUR);
 2'896 Lokal; TRFR 1'293 TR AG, 1'416 Lokal, 12 Unklar; TRUS 1'545 TR AG, 159 Lokal, 76 Unklar; TRIN 6'963 TR IN, 367 TR AG, 75
 Lokal, 36 Unklar. Zwei TRUK-Zeilen zeigen `Intern` ohne Entity (Fall `ISS-018.7`, im Hilfeblatt beschrieben). Pruefskript im
 Scratchpad der Sitzung (`pruef_export.py`), nur Summen.
+
+**Nachtrag 2026-11-16: Blatt „Lieferantenzuordnung“ in Sales_All (`2da2682`, deployed 09:33).** Andreas pivotiert weiter nach den
+rohen Feldern `Supplier number` / `Supplier name` (Spalten Q bis S); bei der Schweiz kommt dort nur eine leere Zeile, obwohl die
+wirksame Zuordnung 100 % Intern / TR AG ist. Gemessen an `Sales_All_2026-11-16.xlsx` (Export 08:40, nur Finance Include): TRCH und
+TRAT je 100 % Intern / TR AG; TRDE 98,2 % Lokal, 1,8 % TR AG; TRES 63,8 % TR AG, 36,2 % Lokal; TRFR 46,3 % TR AG, 1,8 % TR IT, 49,8 %
+Lokal; TRIN 83,9 % TR IN, 13,6 % TR AG; TRIT 49,9 % TR AG, 45,4 % Extern, je rund 2 % TR IN und TR IT; TRUK 91,2 % TR AG; TRUS
+86,6 % TR AG, 8,9 % Lokal, 4,3 % Unklar. Cost Source bei CH: 51'269 Zeilen „Konzernkosten TR AG (MBEW-STPRS)“, 1'215 „Interner
+Standardpreis“ (AT 1'877 / 215); welche Materialien die 1'215 sind, ist nicht aufgeschluesselt. Neu deshalb ein fertiges Blatt
+`Lieferantenzuordnung` (nur zentrales Sales_All, nach `Gruppenmarge Details`): Kopf in Zeile 4, je Zeile `TSC`, `Currency`,
+`Supplier Type`, `Delivering Entity`, `Cost Source`, `Rows`, `Share of TSC rows`, `Net Sales Actual`, danach je Monat (`JJJJ-MM`,
+Finance | Date, lueckenlos vom ersten bis zum letzten Monat) das Net Sales Actual; feste Werte, keine Formeln; Basis dieselben
+Gruppenmargen-Zeilen wie die Spalten im Blatt Sales (nur Finance | Include = TRUE). `GroupMarginProofRow` hat dafuer additiv
+`Month`. Tests `CentralExcelSupplierAssignmentTests` (zwei neu), Suite 1595/1595. **Nachweis am ersten echten Export steht aus**
+(Lauf 12:00 am 16.11., Abgleich Blatt gegen Blatt Sales je Gesellschaft). „Group HK“ in Andreas' Mail = Konzern-Herstellkosten,
+also die Kostenbasis der Gruppenmarge; die Regeln dazu sind seit 27.08. und 09.09. entschieden, er fragt nach dem Stand.
 
 **Mailentwuerfe (`.eml` in Ingos Downloads, nicht gesendet):** Antwort an Andreas mit allen Punkten und dem Stand Group HK
 (deckt auch Wochen_Todo 84), Rohail (Rechnungsliste, Schemaauszug), Cornell (UK-Nummern), Paola (162 Artikel, nur das Thema

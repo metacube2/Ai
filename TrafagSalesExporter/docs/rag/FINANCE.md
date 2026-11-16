@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-11-13 (Lieferantenzuordnung nachgemessen, Sales_All mit Supplier Type / Delivering Entity, `df48301`); davor 2026-11-12 (Doku-Pruefung: Kursprofil Budgetkurs, Spanien-Ausnahme der Jahresabgrenzung, Journal-Faelligkeitsdatum, Italien-Doppelzeilen, Indien-Quelle, offene Fachpunkte `ISS-007.4`, `ISS-032` und Spanien-Lieferant `ISS-003.3` ergaenzt); davor 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
+Stand: 2026-11-16 (Sales_All mit Blatt `Lieferantenzuordnung`, `2da2682`); davor 2026-11-13 (Lieferantenzuordnung nachgemessen, Sales_All mit Supplier Type / Delivering Entity, `df48301`); davor 2026-11-12 (Doku-Pruefung: Kursprofil Budgetkurs, Spanien-Ausnahme der Jahresabgrenzung, Journal-Faelligkeitsdatum, Italien-Doppelzeilen, Indien-Quelle, offene Fachpunkte `ISS-007.4`, `ISS-032` und Spanien-Lieferant `ISS-003.3` ergaenzt); davor 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -22,7 +22,10 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `SupplierFallbackMode = ChPlantMaster` (bewusst Standard seit 27.08.; Andreas' Variante „kein Lieferant = lokale Standardkosten“
   ist als Schalter waehlbar, sein Entscheid dazu steht aus).
   **Sales_All zeigt seit dem Deploy 13.11. 10:31 (`df48301`) die wirksame Zuordnung:** Blatt Sales Spalten 55 bis 57
-  (`Supplier Type`, `Delivering Entity`, `Cost Source`), Finance Details 43 und 44. Der erste Export damit ist noch zu pruefen.
+  (`Supplier Type`, `Delivering Entity`, `Cost Source`), Finance Details 43 und 44. *(Ueberholt: der erste Export ist am 13.11.
+  12:12 geprueft, alles richtig.)* **Seit 16.11. (`2da2682`) dazu das Blatt `Lieferantenzuordnung`:** wirksame Zuordnung je
+  Gesellschaft (Supplier Type, Delivering Entity, Cost Source) mit Zeilenzahl, Anteil und Net Sales Actual gesamt und je Monat,
+  weil Andreas nach den rohen Lieferantenfeldern pivotiert und CH dort leer ist (CH wirksam 100 % Intern / TR AG).
   Vier Mailentwuerfe in Ingos Downloads. Detail: `docs/FINANCE_SUPPLIER.md` Abschnitt 9.
 - **TEMPO MANAGEMENT-COCKPIT 2026-09-28:** Das Oeffnen dauerte lokal 41 s, auf dem Server Minuten.
   Ursache laut Profil: `CurrencyExchangeRateService.ResolveRate` fragte je Aufruf die DB ab, fuer
