@@ -1,4 +1,18 @@
 window.trafagDownload = {
+    // 2026-11-16: Datei vom Server als Download im Browser des Benutzers (Export-Seite, Sales_All rund 60 MB).
+    // Der Inhalt kommt als Stream ueber die Blazor-Verbindung (DotNetStreamReference), nicht als Base64.
+    saveStream: async function (filename, streamRef, contentType) {
+        const arrayBuffer = await streamRef.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: contentType || "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename || "";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+    },
     saveTextFile: function (filename, content, contentType) {
         const blob = new Blob([content], { type: contentType || "application/json;charset=utf-8" });
         const url = URL.createObjectURL(blob);

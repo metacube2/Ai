@@ -1,7 +1,7 @@
 @page "/export-dashboard"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
-@using System.Diagnostics
 @using TrafagSalesExporter.Services
+@inject IJSRuntime JS
 @inject IDashboardPageService DashboardPageActions
 @inject ExportOrchestrationService Orchestrator
 @inject TimerBackgroundService TimerService
@@ -502,12 +502,15 @@
         Orchestrator.OnExportStatusChanged -= HandleStatusChanged;
     }
 
-    private void OpenExportFile(DashboardRow row)
-    {
-        OpenFile(row.FilePath);
-    }
+    private Task OpenExportFile(DashboardRow row) => OpenFile(row.FilePath);
 
-    private void OpenFile(string filePath)
+    /// <summary>
+    /// Schickt die Exportdatei als Download an den Browser des Benutzers. Bis 2026-11-16 startete der Knopf die Datei per
+    /// Process.Start; das oeffnet sie auf dem Rechner, auf dem die App laeuft (frueher der Entwickler-PC, heute der Webserver),
+    /// und scheiterte im IIS mit „Access is denied“ (Meldung Ingo 16.11.). Der Download laeuft ueber die bestehende Verbindung der
+    /// Seite und liegt damit hinter derselben Finance-Freischaltung wie die Export-Seite.
+    /// </summary>
+    private async Task OpenFile(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
         {
@@ -517,11 +520,12 @@
 
         try
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = filePath,
-                UseShellExecute = true
-            });
+            // Lesen erlauben, waehrend ein Export dieselbe Datei schreibt oder ersetzt.
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var streamRef = new DotNetStreamReference(stream, leaveOpen: false);
+            // Sales_All hat rund 60 MB; ueber VPN dauert das laenger als die Vorgabe von einer Minute.
+            await JS.InvokeVoidAsync("trafagDownload.saveStream", TimeSpan.FromMinutes(10),
+                Path.GetFileName(filePath), streamRef, ExportFileDownload.ContentType(filePath));
         }
         catch (Exception ex)
         {
