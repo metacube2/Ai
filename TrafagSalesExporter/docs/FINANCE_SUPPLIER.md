@@ -597,7 +597,7 @@ also die Kostenbasis der Gruppenmarge; die Regeln dazu sind seit 27.08. und 09.0
 (deckt auch Wochen_Todo 84), Rohail (Rechnungsliste, Schemaauszug), Cornell (UK-Nummern), Paola (162 Artikel, nur das Thema
 Preferred Vendor).
 
-**Nicht gemacht, braucht Ingo:** DE-Uebergangsregel, Spanien-Deploy (`c9208b5`, jetzt nur aus dem Arbeitszweig ab `15105ed`; *seit 13.11. abends ab `a207923`, produktiv `9100537`*),
+**Nicht gemacht, braucht Ingo:** DE-Uebergangsregel, Spanien-Deploy (`c9208b5`, jetzt nur aus dem Arbeitszweig ab `15105ed`; *seit 13.11. abends ab `a207923`, produktiv `9100537`; ueberholt am 16.11.: produktiv `2da2682`, Spanien nur ab `70507fc` oder juenger*),
 Umstellen des Fallback-Schalters, Lesezugriff B1 TR IT fuer `ISS-007.4`.
 
 ## Werkzeuge
