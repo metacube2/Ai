@@ -482,3 +482,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Das WPF-Projekt heisst AgentMonitor.App; die Regel *.app (macOS-Pakete) erfasst es unter Windows ohne Gross-/Kleinschreibung.
+!src/AgentMonitor.App/

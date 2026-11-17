@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\AgentMonitor.Core\AgentMonitor.Core.csproj" />
+    <!-- Kestrel fuer den lokalen Hook-Empfang auf 127.0.0.1 (ohne Adminrechte, ohne URL-ACL). -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <!-- WPF und WinForms (nur fuer das Tray-Symbol) haben gleichnamige Typen; deshalb explizite usings. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>AgentMonitor</AssemblyName>
+    <RootNamespace>AgentMonitor.App</RootNamespace>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+</Project>
