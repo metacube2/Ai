@@ -4,9 +4,29 @@ Erstellt aus PowerPoint-Folien oder aus Bildern und Clips mit Sprechertext ein f
 Stimme je Szene, Untertitel, sanfter Bildzoom, Hintergrundmusik, die beim Sprechen leiser wird.
 Bedienbar über eine Oberfläche **und vollständig durch eine KI über MCP**. Gebaut am 17.11.2026 auf Wunsch von Ingo.
 
-Stand: 17.11.2026. 24 Tests grün, davon ein Ende-zu-Ende-Test mit echtem ffmpeg. Zusätzlich geprüft:
-PowerPoint-Import mit echter Präsentation, Windows-Stimme „Karsten“, Klick auf „Video erstellen“ in der
-Oberfläche, und eine Claude-Sitzung, die nur über MCP ein Projekt anlegt, Text ändert, das Video erstellt und wartet.
+Stand: 17.11.2026 abends. 24 Tests grün, davon ein Ende-zu-Ende-Test mit echtem ffmpeg. Zusätzlich geprüft:
+PowerPoint-Import mit echter Präsentation, Windows-Stimme „Karsten“ (Sprache −24 dB im Mittel, Spuren Video/Ton/
+Untertitel), Klick auf „Video erstellen“ in der Oberfläche per UI-Automation, und eine Claude-Sitzung, die nur
+über MCP ein Projekt anlegt, Text ändert, das Video erstellt und wartet (Fehler kommen im Klartext an).
+
+| Ort | Inhalt |
+| --- | --- |
+| `C:\Users\koi\source\repos\VideoDoku` | eigenes Repo, hier wird entwickelt |
+| GitHub `metacube2/Ai`, Branch `werkzeuge/agentmonitor-videodoku`, Ordner `VideoDoku/` | Kopie mit Verlauf (git subtree), **öffentlich**, noch nicht in `main` |
+| `%LOCALAPPDATA%\VideoDoku\{app,mcp,ffmpeg}` | installierte Oberfläche, MCP-Server, ffmpeg |
+
+Nachziehen in den Branch: im Arbeitsverzeichnis `..\Ai-werkzeuge`
+`git subtree pull --prefix=VideoDoku C:/Users/koi/source/repos/VideoDoku main`, dann `git push`.
+
+### Offen (Stand 17.11. abends)
+
+| Punkt | Stand |
+| --- | --- |
+| Sprachdienst `tts.ingok.ch` mit Stimme horst | baut die Mac-Sitzung *lagoon* als Nächstes; bis dahin antwortet die Adresse mit 401 von Media-AI |
+| Schlüssel „video-doku“ | Ingo holt die Schlüsseldatei in der Sitzung *lagoon* und trägt ihn im Werkzeug ein |
+| Erster Lauf mit horst | erst danach möglich; Client gegen die abgestimmte Schnittstelle nur mit Testdoppel geprüft |
+| Öffentlich im Repo `Ai` | Adresse des Sprachdienstes und dass horst Ingos eigene Stimme ist (keine Schlüssel). Auf Wunsch Branch löschen und neutralisiert neu pushen |
+| Merge nach `main` | Entscheid Ingo |
 
 ## Stimmen
 
@@ -107,3 +127,9 @@ Der Fortschritt eines Auftrags erscheint auch im Agenten-Monitor (Sitzung „Vid
 - PowerPoint `Slide.Export` scheitert an Pfaden mit `/` („kann ^0 auf ^1 nicht speichern“): Pfade werden normalisiert.
 - Ein globaler `TextBlock`-Stil in `App.xaml` färbt auch den Text in der ComboBox hell; deshalb Vordergrund am Fenster setzen.
 - `.gitignore`-Regel `*.app` erfasst `src/VideoDoku.App` unter Windows; Ausnahme ist eingetragen.
+- `SystemParameters.WorkArea` gilt nur für den Hauptbildschirm. Auf dem kleineren Laptop-Bildschirm war deshalb
+  „Video erstellen“ abgeschnitten; das Fenster passt sich jetzt beim Öffnen dem Bildschirm an, auf dem es aufgeht.
+- MCP-SDK (`ModelContextProtocol` 2.4.0): Nur `McpException` kommt mit Text bei der KI an, alles andere als
+  „An error occurred“. Jedes Werkzeug leitet Fehler deshalb über `Safe`/`SafeAsync` weiter.
+- Vom MCP-Server geänderte Texte landen sonst nur im Speicher: Skripte, die das Werkzeug selbst angelegt hat,
+  werden mitgespeichert, damit Video und Skript übereinstimmen.
