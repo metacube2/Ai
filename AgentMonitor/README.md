@@ -2,10 +2,27 @@
 
 Kleines Windows-Fenster, das live zeigt, was jede Claude-Code-Sitzung auf diesem Rechner gerade tut:
 Hauptagent und Unteragenten, jede Aktion mit Balken und Prozent, Aufgaben-Fortschritt, Planverbrauch
-(5 Stunden und Woche) und Tokens des Tages. Gebaut am 17.11.2026 auf Wunsch von Ingo; eine Mac-Fassung in
-Swift mit derselben Logik baut die Mac-Sitzung *lagoon* (`~/Projects/Git/agentmonitor-mac`).
+(5 Stunden und Woche) und Tokens des Tages. Gebaut am 17.11.2026 auf Wunsch von Ingo.
 
-Stand: 17.11.2026, Commit siehe `git log`. 47 Tests grün.
+Stand: 17.11.2026 abends. 47 Tests grün. Installiert und im Autostart auf Ingos Windows-Laptop.
+
+| Ort | Inhalt |
+| --- | --- |
+| `C:\Users\koi\source\repos\AgentMonitor` | eigenes Repo, hier wird entwickelt |
+| GitHub `metacube2/Ai`, Branch `werkzeuge/agentmonitor-videodoku`, Ordner `AgentMonitor/` | Kopie mit Verlauf (git subtree), **öffentlich**, noch nicht in `main` |
+| Mac: `/Applications/Agenten-Monitor.app`, Repo `agentmonitor-mac` (privat, GitHub und Gitea) | Swift-Fassung mit derselben Logik, gebaut von der Mac-Sitzung *lagoon*, 68 Tests, Commit `3948df0` |
+
+Nachziehen in den Branch: im Arbeitsverzeichnis `..\Ai-werkzeuge`
+`git subtree pull --prefix=AgentMonitor C:/Users/koi/source/repos/AgentMonitor main`, dann `git push`.
+
+### Offen (Stand 17.11. abends)
+
+| Punkt | Stand |
+| --- | --- |
+| Planverbrauch mit echten Werten | noch keine Statuszeilen-Meldung angekommen; laufende Claude-Sitzungen übernehmen die Statuszeile erst nach einem Neustart. Mit Beispiel-JSON geprüft. |
+| Klänge | eingetragen, von Ingo noch nicht gehört |
+| Mac: Hooks und Statuszeile | Ingo führt `werkzeuge/hooks-einrichten.sh` in der Sitzung *lagoon* selbst aus |
+| Merge nach `main` | Entscheid Ingo |
 
 ## Was er zeigt
 
@@ -82,3 +99,12 @@ Dateien unter `%APPDATA%\AgentMonitor`: `settings.json`, `dauern.json` (nur Akti
 - `.gitignore` von `dotnet new gitignore` enthält `*.app` (macOS) und erfasst unter Windows den Ordner
   `src/AgentMonitor.App`. Ausnahme `!src/AgentMonitor.App/` ist eingetragen. Nach Commits mit `git ls-files` prüfen.
 - HTTP-Hooks dürfen nie Inhalt zurückgeben (bei `UserPromptSubmit` würde er zu Kontext).
+- Rahmenloses WPF-Fenster (`WindowStyle=None`): Ohne `WindowChrome` lässt es sich nur über die Ecke ziehen, und
+  Minimieren/Maximieren fehlen. Beides hat Ingo vermisst; Maximieren füllt von Hand den Arbeitsbereich des
+  aktuellen Bildschirms. Per UI-Automation nachgemessen (Bildschirm links 1920×1032, Wiederherstellen exakt).
+- Die Statuszeile von Claude Code (`statusLine`) wird bei jeder Antwort aufgerufen: Programm muss schnell starten
+  (ReadyToRun, rund 0,2 s) und darf nie leer ausgeben, sonst blendet Claude die Zeile aus.
+- Probewerte nie stehen lassen: Nach einem Test mit erfundenen Planwerten Monitor neu starten, sonst zeigt er
+  sie als echten Verbrauch an.
+- Diese Hooks und die Statuszeile gelten global für alle Claude-Sitzungen auf dem Laptop, auch fürs Dashboard
+  (Hinweis in `TrafagSalesExporter/docs/AGENT_COORDINATION.md`).
