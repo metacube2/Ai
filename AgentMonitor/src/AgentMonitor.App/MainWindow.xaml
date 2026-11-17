@@ -27,14 +27,20 @@
         <SolidColorBrush x:Key="Failed" Color="#F87171"/>
         <SolidColorBrush x:Key="Idle" Color="#6B7080"/>
 
+        <!-- Balkenfuellungen dunkler als die Phasenfarben, damit die weisse Prozentzahl lesbar ist (Wunsch Ingo 17.11.) -->
+        <SolidColorBrush x:Key="BarBlue" Color="#1D4ED8"/>
+        <SolidColorBrush x:Key="BarGreen" Color="#047857"/>
+        <SolidColorBrush x:Key="BarOrange" Color="#B45309"/>
+        <SolidColorBrush x:Key="BarRed" Color="#B91C1C"/>
+
         <!-- Aufgabenbalken: normales Gruen (Opus, Sonnet, Haiku) und dunkleres Gruen fuer Fable -->
         <LinearGradientBrush x:Key="NormalGreen" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#2BB989" Offset="0"/>
-            <GradientStop Color="#34D399" Offset="1"/>
+            <GradientStop Color="#065F46" Offset="0"/>
+            <GradientStop Color="#047857" Offset="1"/>
         </LinearGradientBrush>
         <LinearGradientBrush x:Key="FableGreen" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#166534" Offset="0"/>
-            <GradientStop Color="#15803D" Offset="1"/>
+            <GradientStop Color="#0B2E1A" Offset="0"/>
+            <GradientStop Color="#14532D" Offset="1"/>
         </LinearGradientBrush>
 
         <!-- Planverbrauch: Farbe setzt der Code (gruen < 70 %, orange ab 70 %, rot ab 90 %) -->
@@ -140,7 +146,7 @@
             <Setter Property="Maximum" Value="100"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Background" Value="{StaticResource Line}"/>
-            <Setter Property="Foreground" Value="{StaticResource Done}"/>
+            <Setter Property="Foreground" Value="{StaticResource BarGreen}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
@@ -189,13 +195,13 @@
             </Setter>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding StatusKey}" Value="Running">
-                    <Setter Property="Foreground" Value="{StaticResource Working}"/>
+                    <Setter Property="Foreground" Value="{StaticResource BarBlue}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsIndeterminate}" Value="True">
                     <Setter Property="IsIndeterminate" Value="True"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding StatusKey}" Value="Failed">
-                    <Setter Property="Foreground" Value="{StaticResource Failed}"/>
+                    <Setter Property="Foreground" Value="{StaticResource BarRed}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -327,7 +333,7 @@
                                                                     <ColumnDefinition Width="*"/>
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
-                                                                <ProgressBar local:BarAnimation.Value="{Binding Progress, Mode=OneWay}" VerticalAlignment="Center">
+                                                                <ProgressBar local:BarAnimation.Value="{Binding Progress, Mode=OneWay}" VerticalAlignment="Center" ToolTip="{Binding ProgressTip}">
                                                                     <ProgressBar.Style>
                                                                         <!-- Bei Fable dunkleres Gruen (Wunsch Ingo) -->
                                                                         <Style TargetType="ProgressBar" BasedOn="{StaticResource PercentBar}">

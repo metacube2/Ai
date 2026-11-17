@@ -100,6 +100,8 @@ public sealed class DurationEstimator
         "Bash" or "PowerShell" => 10,
         "WebFetch" or "WebSearch" => 10,
         "Agent" or "Task" => 120,
+        // Ganze Runde eines Agenten (Auftrag bis fertig), solange noch nichts gelernt ist.
+        "Runde" => 120,
         "Workflow" => 300,
         "AskUserQuestion" => 60,
         _ when tool.StartsWith("mcp__", StringComparison.Ordinal) => 5,

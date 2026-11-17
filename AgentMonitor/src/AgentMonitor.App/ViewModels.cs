@@ -139,6 +139,9 @@ public sealed class AgentVm : Observable
     public string ProgressText { get => _progressText; private set => Set(ref _progressText, value); }
     public int HiddenActions { get => _hiddenActions; private set => Set(ref _hiddenActions, value); }
 
+    private string _progressTip = "";
+    public string ProgressTip { get => _progressTip; private set => Set(ref _progressTip, value); }
+
     private bool _isFable;
     /// <summary>Fable-Sitzung: Aufgabenbalken dunkler gruen.</summary>
     public bool IsFable { get => _isFable; private set => Set(ref _isFable, value); }
@@ -156,9 +159,30 @@ public sealed class AgentVm : Observable
         Detail = a.Detail;
         LastMessage = a.LastMessage is { } m && a.Phase is AgentPhase.Idle or AgentPhase.Done ? $"Ergebnis: {m}" : null;
 
-        HasProgress = a.TasksTotal > 0;
-        Progress = a.TasksTotal > 0 ? 100.0 * a.TasksDone / a.TasksTotal : 0;
-        ProgressText = a.TasksTotal > 0 ? $"{a.TasksDone}/{a.TasksTotal} Aufgaben" : "";   // Prozent steht im Balken
+        // Echte Aufgaben gehen vor. Ohne Aufgabenliste zeigt jeder arbeitende Agent eine geschaetzte Rundendauer
+        // (gelernt wie bei den Aktionen), damit auch der Hauptagent einen Prozentbalken hat (Wunsch Ingo 17.11.).
+        if (a.TasksTotal > 0)
+        {
+            HasProgress = true;
+            Progress = 100.0 * a.TasksDone / a.TasksTotal;
+            ProgressText = $"{a.TasksDone}/{a.TasksTotal} Aufgaben";
+            ProgressTip = "Echter Fortschritt aus der Aufgabenliste des Agenten.";
+        }
+        else if (a.TurnStart is { } turnStart && a.TurnEstimateSeconds is { } est)
+        {
+            HasProgress = true;
+            Progress = DurationEstimator.Percent(now - turnStart, est);
+            ProgressText = "Runde (geschätzt)";
+            ProgressTip = $"Geschätzt aus der Dauer früherer Runden (üblich etwa {Format.Duration(TimeSpan.FromSeconds(est))}); " +
+                          "höchstens 95 %, bis der Agent wirklich fertig ist.";
+        }
+        else
+        {
+            HasProgress = false;
+            Progress = 0;
+            ProgressText = "";
+            ProgressTip = "";
+        }
 
         var max = IsMain ? MainVisible : SubVisible;
         var start = Math.Max(0, a.Actions.Count - max);
