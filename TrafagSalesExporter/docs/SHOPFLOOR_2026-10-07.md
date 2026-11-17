@@ -5,7 +5,8 @@ stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
 
 Stand 2026-11-17 (Abschnitt 24): **CO-PA schreibt** (`SapCoPaEnabled`, Verkauf AE/Umsatz IST nach HZDAT, 02. bis 16.11. nachgeladen,
 gleich Fabios Kontrollwerten ausser AE vom 12.11.) und **der Arbeitsplatzfilter `M*` ist ein** (ganzes ZC22-Layout `/ P00 TX`),
-deployed 12:25 (`3298c93`). Erster Stichtag mit dem ganzen Layout ist der 18.11. *Ueberholt damit in der Zeile darunter: „Aus bleiben
+deployed 12:25 (`3298c93`), seit 12:43 im gemeinsamen Stand `2e62163`. Erster Stichtag mit dem ganzen Layout ist der 18.11.
+Phase C wartet auf Fabios Antworten (Liste am Ende von Abschnitt 24). *Ueberholt damit in der Zeile darunter: „Aus bleiben
 der Arbeitsplatzfilter `M*` … und `SapCoPaEnabled`“.*
 
 Das PPA-Shopfloor (Ersatz fuer das Excel "PPA-Shop-Floor-File-2026") laeuft jetzt im Cockpit als oberster Reiter
@@ -996,3 +997,20 @@ zurueck; die Sitzung 6d hat `3298c93` gemergt und 12:43 `2e62163` deployed (im A
 `docs/rag/DEPLOYMENT.md`). Geprueft 12:50 im Arbeits-Chrome: Lauf 12:43 mit `arbeitsplatz_ausschluss: M*` (Verzug und Vorrat),
 `copa` geschrieben; Verkauf 12., 13., 16. und 17.11. unveraendert (AE 17.11. 4'072'454.89, Stand 12:26). Nachzuladen ist nichts; die
 Stichtagswerte vom 17.11. waren schon seit 04:01 eingefroren. Das Handbuch-Kapitel ist auch in `2e62163` noch nicht enthalten.
+
+*Nachtrag 2026-11-17 nachmittags, Phase C: was Fabio liefern muss* (Frage Ingo; Grundlage `docs/shopfloor_paket_2026-11-13/2026-11-13_abgleich/Mails_2026-11-13.md` Mail 2 und Feedback „Nicht geprueft“; ob Fabio die Mail
+gesendet hat und ob Antworten da sind, ist nicht dokumentiert; seine Frist an die Empfaenger war Freitag, 20.11.2026). Gebaut wird
+erst, wenn die Quellen geklaert sind:
+1. **40 Listenfelder (Rueckstandslisten, TVAV, Angebote):** Fabios Tabellen-/Feldvorschlaege sind ausser `MARA-ZZTYP` nicht in SAP
+   geprueft. Noetig: von Anh Nhi (PPD) Bedeutung und SAP-Ort von „VkNr“, Feld und Regel fuer Wunschtermin bzw. Aufnahme in die
+   Rueckstandsliste, ob „Datum WE geplant“ der Eckendtermin des FA ist; vom Einkauf Bedeutung und Schluessel von „WE aktuell gem. SAP“
+   und ob die Bestellnummer Handfeld bleibt.
+2. **FPY TR5 und TX aus dem MES:** eigener, nur lesender DB-User von Marco Di Menco; Fabio fragt nach dem Termin, die Abfrage folgt danach.
+3. **20 Felder mit offener Quelle:** Michael (TX) Transaktion/Arbeitsplatz der Tagesmenge TX und ob Schicht 1/2 Handfelder bleiben
+   (Tagesplanungstool); Sanel (DW) Report und Auswahl fuer FPY DW; Sacha (Logistik) ob „Offene K-Auf“ noch gebraucht wird.
+4. **Umstellung bei den Teamleitern (keine Schnittstelle):** Mitarbeiter je Schicht, frei, krank, Lieferzeiten, Tagesziel TR5 bleiben
+   Handfelder und muessen im Dashboard statt im Excel gepflegt werden.
+
+Ausserhalb von Phase C offen bei Fabio: AE-Differenz Stand 12.11. (+3'906.68), Selektion `/PPA DW/S ALLE` (Eckendtermin bis
+31.12.2026), Feiertagsannahme Monatswechsel (nur 01./02.01.), plan5 bestaetigen. Bei uns offen: 18.11. ersten Stichtag mit ganzem
+Layout pruefen, Logistik-Historie vor 02.11. (Entscheid Ingo).
