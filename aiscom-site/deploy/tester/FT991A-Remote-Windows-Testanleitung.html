@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FT991A Remote für Windows – Testanleitung</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+:root { --bg:#0a1628; --surface:#13213b; --text:#f5f7fb; --muted:#a8b3c7; --accent:#87ceeb; --line:rgba(135,206,235,.18); --warn:#ffd27a; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:"Segoe UI","Avenir Next","Helvetica Neue",Arial,sans-serif; color:var(--text); background:var(--bg); line-height:1.6; }
+main { max-width:860px; margin:0 auto; padding:32px 16px 60px; }
+a { color:var(--accent); }
+h1 { font-size:clamp(26px,4vw,36px); line-height:1.2; margin:4px 0 6px; }
+h2 { font-size:20px; margin:34px 0 10px; color:var(--accent); }
+h3 { font-size:16px; margin:18px 0 6px; }
+.unter { color:var(--muted); margin:0 0 20px; }
+section { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin:14px 0; }
+table { border-collapse:collapse; width:100%; }
+td, th { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--muted); font-weight:600; }
+code { font-family:ui-monospace,Consolas,monospace; background:rgba(255,255,255,.06); padding:1px 5px; border-radius:5px; word-break:break-word; }
+.warn { border-color:rgba(255,210,122,.5); }
+.warn b { color:var(--warn); }
+ul.check { list-style:none; padding-left:0; }
+ul.check li { padding:5px 0 5px 30px; position:relative; border-bottom:1px solid var(--line); }
+ul.check li:last-child { border-bottom:0; }
+ul.check li::before { content:"☐"; position:absolute; left:4px; top:4px; color:var(--accent); font-size:18px; }
+small { color:var(--muted); }
+.tabelle { overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./#windows">← Zur Tester-Seite</a></p>
+  <h1>FT991A Remote für Windows – Test mit dem FT-991A</h1>
+  <p class="unter">Version 1.0.0 · neue Windows-App (Tauri/Rust), Nachfolger der Übergangsfassung „MacYaesu für Windows“ (Kotlin)</p>
+
+  <section class="warn">
+    <p><b>Sicherheit beim Senden:</b> Alle Tests mit PTT, Leistung, ATU und Papagei nur mit <b>Dummy Load</b> (oder einer
+    abgestimmten Antenne) und kleiner Leistung (5–10 W). Shift halten tastet den Sender, solange kein Textfeld aktiv ist.
+    Vor dem ersten Senden die Leistung (PWR) am Gerät oder in der App auf 5–10 W stellen.</p>
+  </section>
+
+  <h2>1. Einstellungen am Funkgerät</h2>
+  <section>
+    <p>Taste <b>MENU</b>, Menüpunkt mit dem Drehknopf wählen, ändern, mit <b>MENU</b> speichern.</p>
+    <div class="tabelle"><table>
+      <tr><th>Menü</th><th>Name</th><th>Wert</th></tr>
+      <tr><td>031</td><td>CAT RATE</td><td><b>38400 bps</b> (gleich wie in der App, Vorgabe dort ebenfalls 38400)</td></tr>
+      <tr><td>032</td><td>CAT TOT</td><td><b>100 msec</b></td></tr>
+      <tr><td>033</td><td>CAT RTS</td><td><b>DISABLE</b> (aus). Bei ENABLE antwortet das Gerät nur, wenn die App RTS setzt; die App macht das am Enhanced-Port selbst (zweiter Versuch mit RTS an), beides geht also. Das CAT-Profil in den Einstellungen nennt „CAT RTS: ON“ – auch das funktioniert.</td></tr>
+    </table></div>
+    <p><small>Wenn die Nummern auf deiner Firmware abweichen, nach dem Namen suchen. Für Papagei und digitale Betriebsarten muss das Gerät den Ton über USB nehmen: die Modulationsquelle des jeweiligen Modes auf USB (rückseitige Buchse/USB, Menüname laut Handbuch). Bitte notieren, welche Einstellung du verwendest.</small></p>
+  </section>
+
+  <h2>2. USB-Treiber (Silicon Labs CP210x)</h2>
+  <section>
+    <ol>
+      <li>Treiber „CP210x Universal Windows Driver“ von silabs.com laden und installieren (oft installiert ihn Windows Update selbst).</li>
+      <li>FT-991A per USB verbinden und einschalten.</li>
+      <li>Im <b>Geräte-Manager › Anschlüsse (COM &amp; LPT)</b> erscheinen zwei Ports: <code>Silicon Labs Dual CP2105 USB to UART Bridge: Enhanced COM Port (COMx)</code> und <code>… Standard COM Port (COMy)</code>.</li>
+      <li>Für CAT gilt der <b>Enhanced COM Port</b>. Die App erkennt ihn und markiert ihn in der Portliste mit <b>●</b>.</li>
+    </ol>
+  </section>
+
+  <h2>3. Audio (USB Audio CODEC)</h2>
+  <section>
+    <p>Der FT-991A erscheint in Windows als Audiogerät <b>„USB Audio CODEC“</b>: „Mikrofon (USB Audio CODEC)“ (Empfangston vom Gerät) und „Lautsprecher (USB Audio CODEC)“ (Ton zum Gerät).</p>
+    <ul>
+      <li><b>Papagei</b> (Sprachspeicher): Die App schlägt beide CODEC-Geräte selbst vor („FT-991A erkannt“). Die Wahl lässt sich im Papagei-Panel oder unter <b>Einstellungen › Audio</b> ändern und bleibt gespeichert; „Vorschlag verwenden“ vergisst sie wieder.</li>
+      <li><b>WSJT-X / fldigi:</b> dasselbe Gerät direkt wählen. VB-Audio Virtual Cable braucht es nur, wenn Ton zwischen Programmen weitergereicht werden soll.</li>
+      <li><b>Nur ein Programm kann den COM-Port öffnen.</b> Läuft FT991A Remote (auch versteckt im Infobereich), meldet WSJT-X/Flrig „Port belegt“ – und umgekehrt.</li>
+    </ul>
+  </section>
+
+  <h2>4. Installieren und verbinden</h2>
+  <section>
+    <ol>
+      <li><code>FT991A Remote_1.0.0_x64-setup.exe</code> doppelklicken. SmartScreen: „Weitere Informationen“ › „Trotzdem ausführen“ (der Installer ist nicht signiert). Die Prüfsumme steht in der Datei <code>.sha256</code> daneben (<code>Get-FileHash … -Algorithm SHA256</code> in PowerShell).</li>
+      <li>Der Installer fragt nach Administratorrechten (Installation für alle Benutzer) und lädt bei Bedarf WebView2 nach (Windows 11 hat es schon).</li>
+      <li><b>FT991A Remote</b> aus dem Startmenü starten.</li>
+      <li>Oben links den Port mit ● (Enhanced) wählen, Baudrate <b>38400</b>, „Verbinden“ (oder Strg+K).</li>
+      <li>Erwartet: grüner Punkt „Verbunden“ und „CAT alive“, Frequenz und Betriebsart wie am Gerät.</li>
+    </ol>
+    <p><small>Ohne Funkgerät: In der Portliste steht zuletzt das Demo-Funkgerät; damit lässt sich die Bedienung vorab ausprobieren.</small></p>
+    <h3>Deinstallieren und Aktualisieren</h3>
+    <ul>
+      <li><b>Vorher die App beenden</b> (Symbol im Infobereich › Beenden). Ein Fenster schliessen reicht nicht: die App läuft dann im Infobereich weiter. Der Installer erkennt eine laufende App und fragt nach.</li>
+      <li>Deinstallation über Einstellungen › Apps. Sie entfernt Programm und Startmenü-Eintrag. <b>Einstellungen, Logs, Speicherliste und Papagei-Aufnahmen bleiben</b> in <code>%APPDATA%\FT991A-Remote</code>, das QSO-Log in <code>Dokumente\FT991A-Logs</code>. Das Kästchen „App-Daten löschen“ entfernt nur <code>%APPDATA%\ch.aiscom.ft991a-remote</code> (Ablage der Version 0.1) und die WebView-Daten <code>%LOCALAPPDATA%\ch.aiscom.ft991a-remote</code>, nicht diese Ordner.</li>
+      <li>Eine neuere Version einfach darüber installieren; alle Daten bleiben.</li>
+    </ul>
+  </section>
+
+  <h2>5. Checkliste</h2>
+  <section>
+    <h3>Verbindung</h3>
+    <ul class="check">
+      <li>Verbinden, Trennen, erneut Verbinden (Knopf und Strg+K); „Ping CAT“ antwortet, „Auto-Ping“ ein/aus</li>
+      <li>Statuspunkt grün, „CAT alive“; Port, Baud und Funkgerät sind während der Verbindung gesperrt</li>
+      <li>„USB-Ports durchsuchen, bis das Gerät antwortet“: ohne Portwahl verbinden → findet den Enhanced-Port</li>
+      <li>Falsche Baudrate (z. B. 9600 in der App, 38400 am Gerät) → kein „CAT alive“, verständliche Meldung; zurück auf 38400</li>
+      <li><b>USB-Kabel während der Verbindung ziehen</b> → Status „Verbinde neu …“; wieder einstecken → verbindet von selbst (Auto-Reconnect, Intervall unter Einstellungen › Verbindung)</li>
+      <li>Kabel ziehen <b>während PTT</b> (Dummy Load!) → nach dem Einstecken kein Senden, zuerst TX0</li>
+    </ul>
+    <h3>Bedienung (Modern-Ansicht)</h3>
+    <ul class="check">
+      <li>Frequenz am Gerät drehen → App folgt; Frequenz in der App ändern (Eingabefeld, Schritt ±, Fein ±, Mausrad über der Anzeige, Pfeiltasten ← →) → Gerät folgt, kein Zurückspringen</li>
+      <li>Bandtasten 160 m bis 70 cm; Schrittweiten 1 Hz bis 1 MHz</li>
+      <li>VFO A/B wählen, tauschen (Strg+Shift+S), A=B (Strg+Shift+E)</li>
+      <li>Betriebsarten LSB, USB, CW, FM, AM, DATA-U und die übrigen</li>
+      <li>Regler AF, RF, SQL, MIC, PWR: Wirkung am Gerät</li>
+      <li>NB, NR, DNF, Contour (mit Frequenz), IPO, Split: Ein/Aus am Gerät sichtbar</li>
+      <li>CTCSS/DCS: Tonmodus und Code am Gerät</li>
+      <li>S-Meter folgt dem Gerät; beim Senden PO in Watt (z. B. 10 W, nicht 1010 W) und SWR plausibel</li>
+      <li>PTT per Knopf und per Shift halten (Dummy Load!): Gerät sendet, roter Rahmen, nach Loslassen RX. Shift im Textfeld sendet nicht</li>
+      <li>ATU-Abstimmung (Pfeil hoch oder Strg+Shift+T) auf Dummy Load oder Antenne</li>
+      <li>Fenster wechseln (Alt+Tab) während Shift-PTT → Senden endet sofort</li>
+    </ul>
+    <h3>Frontpanel, Log, Konsole, Abdocken</h3>
+    <ul class="check">
+      <li>Ansicht Modern ↔ Frontpanel: Drehknöpfe AF/RF/SQL/MIC (Mausrad, Ziehen, Pfeiltasten), MAIN DIAL, Mode-Tasten, TX</li>
+      <li>QSO-Log (Strg+Alt+L): QSO erfassen („Von Radio“ übernimmt Frequenz, Mode, Leistung), suchen, löschen, „Neue Datei“; CSV liegt in <code>Dokumente\FT991A-Logs</code> und öffnet sich in Excel mit Umlauten</li>
+      <li>CAT-Konsole (Strg+Alt+D): Befehle TX/RX sichtbar, Filter, Rohbefehl <code>FA;</code> mit Antwort</li>
+      <li>Panels abdocken (⇱) → eigenes Fenster; Fenster schliessen dockt wieder an; Strg+Alt+L bei abgedocktem Log holt das Fenster nach vorn</li>
+    </ul>
+    <h3>Speicher, Scan, Relais</h3>
+    <ul class="check">
+      <li>Slot wählen, Name, „Aktuell speichern“; Doppelklick lädt den Kanal</li>
+      <li><b>Simplex-Speicher:</b> vor dem Speichern <b>A=B</b> drücken. Sonst merkt die App einen abweichenden VFO-B als Split und sendet beim Laden dort</li>
+      <li>VFO-Scan ↓/↑, Speicher-Scan ↓/↑, Stopp; Handbedienung (Frequenz, Band, Mode) stoppt den Scan</li>
+      <li>Relais: „2 m FM Standard“ (−0,6 MHz, CTCSS 114,8 Hz) und <b>„70 cm FM Standard“ mit −7,6 MHz</b> (IARU Region 1, CTCSS 114,8 Hz); Vorschau „TX …“ stimmt mit der Sendefrequenz am Gerät überein; „Simplex“ hebt die Ablage auf</li>
+      <li><b>Speicherliste exportieren</b> (Knopf „Export …“ oder Menü „…“) → JSON-Datei; einen Kanal löschen; <b>importieren</b> → Liste wieder vollständig (Import ersetzt die ganze Liste)</li>
+      <li>Wer vorher „MacYaesu für Windows“ (Kotlin) benutzt hat: Speicherliste, Papagei-Aufnahmen und Einstellungen (Port, Baud, Sprache …) sind schon da – beide Programme nutzen denselben Ordner <code>%APPDATA%\FT991A-Remote</code></li>
+    </ul>
+    <h3>Papagei (Sprachspeicher) – nur mit Dummy Load</h3>
+    <ul class="check">
+      <li>Papagei-Panel (Strg+Alt+P): Eingang/TX-Ausgang zeigen den „USB Audio CODEC“ als Vorschlag</li>
+      <li>Kurze Aufnahme vom Empfänger (Pegel und Zeit laufen, höchstens 60 s), Vorschau, Umbenennen, Löschen</li>
+      <li>„Über Funk senden“ in FM oder USB: PTT an, Ton geht ans Gerät (am Gerät: PO-Anzeige bewegt sich, Monitor hören), danach PTT aus</li>
+      <li>Senden stoppen per Knopf, PTT-Knopf, Shift los, Fensterwechsel und Trennen → jedes Mal sofort RX</li>
+      <li>Abgedocktes Papagei-Fenster: Titel „Papagei“ bzw. nach Sprachwechsel „Parrot“</li>
+    </ul>
+    <h3>Infobereich, Einstellungen, Support</h3>
+    <ul class="check">
+      <li><b>Fenster schliessen (×)</b>: beim ersten Mal erscheint der Hinweis „läuft weiter“; „Im Infobereich weiterlaufen“ → Fenster weg, Symbol unten rechts (ggf. unter „^“), Verbindung bleibt</li>
+      <li>Fenster schliessen während PTT (Dummy Load!) → Senden endet sofort</li>
+      <li>Symbol im Infobereich: Linksklick öffnet; Rechtsklick-Menü zeigt Status, „Öffnen“, „Verbinden/Trennen“, „Beenden“; Trennen und Verbinden von dort</li>
+      <li>„Beenden“ im Infobereich (oder Menü „…“ › Beenden, Strg+Q): App endet, Gerät auf RX, COM-Port frei (WSJT-X kann ihn danach öffnen)</li>
+      <li>Einstellungen (Strg+, oder Menü „…“): Seiten Verbindung, Oberfläche, Audio, Tastatur, Support</li>
+      <li>„Beim Start automatisch verbinden“ an → App beenden und neu starten → verbindet von selbst</li>
+      <li>Sprache auf Englisch und zurück (auch „Wie das System“); Infobereich-Menü folgt</li>
+      <li>Tastatur: „Shift = PTT“ aus → Shift sendet nicht mehr; wieder an</li>
+      <li><b>Einstellungen bleiben:</b> Port, Baud, Funkgerät, Sprache, Ansicht, offene Panels, Schrittweite, Audiowahl ändern → App beenden und neu starten → alles wie vorher</li>
+      <li><b>Support-Bundle exportieren</b> (Menü „…“ oder Einstellungen › Support) → ZIP mit <code>Support-Summary.txt</code>, <code>settings.json</code> und den Logs</li>
+    </ul>
+  </section>
+
+  <h2>6. Wenn etwas nicht geht</h2>
+  <section>
+    <p>Menü „…“ › <b>Support-Bundle exportieren</b> und die ZIP-Datei schicken. Sie enthält Einstellungen, App-Log und CAT-Trace (keine QSOs, keine Speicherliste, keine Aufnahmen).</p>
+    <div class="tabelle"><table>
+      <tr><th>Fehlerbild</th><th>Ursache / Abhilfe</th></tr>
+      <tr><td>Status „Kein Zugriff“ / „Port belegt“</td><td>Ein anderes Programm (WSJT-X, Flrig, Yaesu-Software, MacYaesu für Windows – auch versteckt im Infobereich) oder eine zweite, im Infobereich versteckte FT991A Remote hält den Port. Das andere Programm schliessen bzw. über das Symbol öffnen.</td></tr>
+      <tr><td>Verbunden, aber kein „CAT alive“</td><td>Standard- statt Enhanced-Port gewählt, Baudrate in App und Menü 031 verschieden, CAT TOT zu kurz.</td></tr>
+      <tr><td>Keine Ports in der Liste</td><td>CP210x-Treiber fehlt (Geräte-Manager zeigt ein gelbes Dreieck), Gerät aus, USB-Kabel nur zum Laden.</td></tr>
+      <tr><td>Papagei sendet ohne Ton</td><td>Am Gerät die Modulationsquelle für den gewählten Mode auf USB stellen; im Papagei den „Lautsprecher (USB Audio CODEC)“ als TX-Ausgang wählen; Exklusivmodus anderer Programme (WSJT-X) beenden.</td></tr>
+      <tr><td>Hinweis „Einstellungen unlesbar, Standardwerte“</td><td>Die alte Datei liegt als <code>settings.json.defekt</code> daneben; bitte mit dem Support-Bundle schicken.</td></tr>
+      <tr><td>Kein Symbol im Infobereich</td><td>Unter „^“ (ausgeblendete Symbole) nachsehen; ohne Symbol beendet das Schliessen die App.</td></tr>
+    </table></div>
+  </section>
+
+  <h2>7. Pfade</h2>
+  <section>
+    <p>Der Ordner <code>%APPDATA%\FT991A-Remote</code> ist derselbe wie bei „MacYaesu für Windows“ (Kotlin). Beide Programme lesen und schreiben dort <code>settings.json</code>, <code>memories.json</code>, <code>Parrot\</code> und die Logs mit denselben Namen; FT991A Remote löscht beim Start Logdateien, die älter als 14 Tage sind (auch die des Kotlin-Ports). Nicht beide gleichzeitig laufen lassen.</p>
+    <div class="tabelle"><table>
+      <tr><th>Was</th><th>Wo</th></tr>
+      <tr><td>Programm</td><td><code>C:\Program Files\FT991A Remote\ft991a-remote.exe</code></td></tr>
+      <tr><td>Einstellungen</td><td><code>%APPDATA%\FT991A-Remote\settings.json</code> (gleiche Schlüssel wie der Kotlin-Port)</td></tr>
+      <tr><td>App-Log und CAT-Trace</td><td><code>%APPDATA%\FT991A-Remote\Logs\ft991a_JJJJ-MM-TT.log</code>, <code>ft991a_cat_trace_JJJJ-MM-TT.log</code> (UTC, je Datei höchstens 5 MB, 14 Tage aufbewahrt)</td></tr>
+      <tr><td>Speicherliste</td><td><code>%APPDATA%\FT991A-Remote\memories.json</code></td></tr>
+      <tr><td>Papagei-Aufnahmen</td><td><code>%APPDATA%\FT991A-Remote\Parrot\</code></td></tr>
+      <tr><td>QSO-Log</td><td><code>Dokumente\FT991A-Logs\QSO_Log_….csv</code></td></tr>
+      <tr><td>WebView-Daten</td><td><code>%LOCALAPPDATA%\ch.aiscom.ft991a-remote\</code></td></tr>
+    </table></div>
+    <p><small>Version 0.1 legte Speicherliste und Papagei unter <code>%APPDATA%\ch.aiscom.ft991a-remote</code> ab; 1.0 kopiert sie beim ersten Start einmal nach <code>%APPDATA%\FT991A-Remote</code>.</small></p>
+  </section>
+</main>
+</body>
+</html>

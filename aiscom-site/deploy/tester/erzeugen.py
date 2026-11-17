@@ -251,10 +251,17 @@ ANDROID = [
              "Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet."},
 ]
 
-# Windows: MSI-Installer der Desktop-Ports (seit 2026-11-17); Version aus dem Dateinamen <Name>-<Version>-x64.msi,
+# Windows: Installer der Desktop-Ports (seit 2026-11-17, MSI oder NSIS-.exe); Version aus dem Dateinamen
+# <Name>-<Version>-x64.msi bzw. <Name>_<Version>_x64-setup.exe,
 # Testanleitung als eigene Seite neben dem Installer
 DESKTOP = Path("/Volumes/ExtOsX/Entwicklung/desktop")
 WINDOWS = [
+    {"name": "FT991A Remote für Windows", "kennung": "ft991a-remote-win", "bild": "macyaesu",
+     "msi": DESKTOP / "ft991a-remote-win/build/windows/FT991A Remote_1.0.0_x64-setup.exe",
+     "datei": "FT991A-Remote-Windows-Setup.exe", "anleitung": "FT991A-Remote-Windows-Testanleitung.html",
+     "kurz": "Die neue Windows-App (Tauri): FT-991A per USB-CAT fernsteuern, Modern- und Frontpanel-Ansicht, QSO-Log, "
+             "CAT-Konsole, Speicher mit Scan, Relais-Schnellkonfiguration, Papagei über USB-Audio, Infobereich, "
+             "Deutsch und Englisch. Klein (3 MB), am echten Gerät noch ungetestet."},
     {"name": "MacYaesu für Windows", "kennung": "macyaesu-windows", "bild": "macyaesu",
      "msi": DESKTOP / "macyaesu-desktop/build/msi/MacYaesu-1.1.2-x64.msi",
      "datei": "MacYaesu-Windows.msi", "anleitung": "MacYaesu-Windows-Testanleitung.html",
@@ -278,6 +285,7 @@ BUILD_TOOLS = Path.home() / "Library/Android/sdk/build-tools/36.1.0"
 # Stand je App (Wunsch Benutzer 2026-10-27): „Zum Testen bereit“, „In Entwicklung“, „Fertig“. Gilt fuer alle Plattformen
 # der App; nicht aufgefuehrte Apps sind „In Entwicklung“. Fertig = im Store freigegeben.
 STAND = {
+    "ft991a-remote-win": "test",
     "macyaesu-windows": "test",
     "netbottleneck": "test",
     "taploop": "test",
@@ -462,7 +470,7 @@ def karte_android(d):
 def daten_windows(a):
     import re
     msi = a["msi"]
-    version = (re.search(r"-(\d+(?:\.\d+)+)-x64\.msi$", msi.name) or [None, "?"])[1]
+    version = (re.search(r"[-_](\d+(?:\.\d+)+)[-_]x64(?:-setup)?\.(?:msi|exe)$", msi.name) or [None, "?"])[1]
     return {**a, "version": version, "datum": datetime.fromtimestamp(msi.stat().st_mtime).strftime("%d.%m.%Y"),
             "groesse": groesse(msi), "sha": sha256(msi)}
 

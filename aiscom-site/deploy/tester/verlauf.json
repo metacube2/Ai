@@ -1,5 +1,12 @@
 [
  {
+  "guid": "ft991a-remote-win-1.0.0",
+  "titel": "FT991A Remote für Windows 1.0.0",
+  "link": "https://www.aiscom.ch/tester/#windows",
+  "text": "Die neue Windows-App (Tauri): FT-991A per USB-CAT fernsteuern, Modern- und Frontpanel-Ansicht, QSO-Log, CAT-Konsole, Speicher mit Scan, Relais-Schnellkonfiguration, Papagei über USB-Audio, Infobereich, Deutsch und Englisch. Klein (3 MB), am echten Gerät noch ungetestet.",
+  "datum": "2026-11-17T23:24:13.736664+01:00"
+ },
+ {
   "guid": "macyaesu-windows-1.1.2",
   "titel": "MacYaesu für Windows 1.1.2",
   "link": "https://www.aiscom.ch/tester/#windows",
