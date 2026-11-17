@@ -18,6 +18,7 @@ public partial class App : System.Windows.Application
 
     private Mutex? _mutex;
     private HookServer? _server;
+    private MonitorState? _state;
     private MainWindow? _window;
     private Forms.NotifyIcon? _tray;
     private MonitorSettings _settings = new();
@@ -42,7 +43,8 @@ public partial class App : System.Windows.Application
             _settings.AutostartInitialized = true;
             _settings.Save();
         }
-        var state = new MonitorState();
+        var state = new MonitorState { Estimator = MonitorSettings.LoadEstimator() };
+        _state = state;
         _server = new HookServer(state, _settings);
         await _server.StartAsync();
 
@@ -157,6 +159,7 @@ public partial class App : System.Windows.Application
             _tray.Dispose();
         }
         if (_server is not null) await _server.DisposeAsync();
+        if (_state is not null) MonitorSettings.SaveEstimator(_state.Estimator);
         _mutex?.ReleaseMutex();
         Shutdown();
     }

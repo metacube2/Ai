@@ -73,4 +73,34 @@ public sealed class MonitorSettings
             // Einstellungen sind Komfort; ein Schreibfehler darf den Monitor nicht stoppen.
         }
     }
+
+    /// <summary>Gelernte Dauern je Aktionsart (nur Werkzeug und Befehlsanfang, keine Inhalte).</summary>
+    private static string EstimatorPath => Path.Combine(Folder, "dauern.json");
+
+    public static AgentMonitor.Core.DurationEstimator LoadEstimator()
+    {
+        var e = new AgentMonitor.Core.DurationEstimator();
+        try
+        {
+            if (File.Exists(EstimatorPath)) e.LoadJson(File.ReadAllText(EstimatorPath));
+        }
+        catch (Exception)
+        {
+            // Unlesbar: neu lernen.
+        }
+        return e;
+    }
+
+    public static void SaveEstimator(AgentMonitor.Core.DurationEstimator e)
+    {
+        try
+        {
+            Directory.CreateDirectory(Folder);
+            File.WriteAllText(EstimatorPath, e.ToJson());
+            e.MarkSaved();
+        }
+        catch (Exception)
+        {
+        }
+    }
 }

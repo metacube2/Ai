@@ -182,10 +182,27 @@ public sealed class ActionVm : Observable
 
     public string? Detail { get; }
 
+    private double _barValue;
+    private string _percentText = "";
+    private bool _isIndeterminate;
+
+    /// <summary>Balkenstand 0..100: laufend die Schaetzung, fertig 100.</summary>
+    public double BarValue { get => _barValue; private set => Set(ref _barValue, value); }
+    /// <summary>„≈ 40 %“ waehrend einer geschaetzten Aktion, sonst leer.</summary>
+    public string PercentText { get => _percentText; private set => Set(ref _percentText, value); }
+    /// <summary>Laufend, aber noch keine Erfahrungswerte: wandernder Lichtstreifen statt Prozent.</summary>
+    public bool IsIndeterminate { get => _isIndeterminate; private set => Set(ref _isIndeterminate, value); }
+
     public ActionVm(ActionView a) { Id = a.Id; Tool = a.Tool; Detail = a.Detail; Update(a, DateTimeOffset.Now); }
 
     public void Update(ActionView a, DateTimeOffset now)
     {
+        var running = a.Status == ActionStatus.Running;
+        var estimate = running && a.EstimateSeconds is > 0 ? a.EstimateSeconds : null;
+        IsIndeterminate = running && estimate is null;
+        BarValue = !running ? 100 : estimate is { } est ? DurationEstimator.Percent(now - a.Start, est) : 0;
+        PercentText = estimate is not null ? $"≈ {BarValue:0} %" : "";
+
         Summary = a.Summary;
         Duration = Format.Duration((a.End ?? now) - a.Start);
         StatusKey = a.Status.ToString();

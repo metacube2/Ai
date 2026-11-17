@@ -95,13 +95,13 @@
             </Setter>
         </Style>
 
-        <!-- Balken je Aktion: laufend ein wandernder Lichtstreifen (es gibt keinen echten Prozentwert je Aktion,
-             deshalb keine Zahl), fertig voll gruen, Fehler rot. -->
+        <!-- Balken je Aktion. Claude Code meldet je Werkzeug keinen Fortschritt; laufend fuellt sich der Balken
+             deshalb nach einer Schaetzung aus frueheren gleichartigen Aktionen („≈ 40 %“, hoechstens 95 % bis
+             zum echten Ende). Ohne Erfahrungswert: wandernder Lichtstreifen. Fertig voll gruen, Fehler rot. -->
         <Style x:Key="ActionBar" TargetType="ProgressBar">
-            <Setter Property="Height" Value="4"/>
+            <Setter Property="Height" Value="14"/>
             <Setter Property="Minimum" Value="0"/>
             <Setter Property="Maximum" Value="100"/>
-            <Setter Property="Value" Value="100"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Background" Value="{StaticResource Line}"/>
             <Setter Property="Foreground" Value="{StaticResource Done}"/>
@@ -109,9 +109,15 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid ClipToBounds="True">
-                            <Border x:Name="PART_Track" CornerRadius="2" Background="{TemplateBinding Background}"/>
-                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="2" Background="{TemplateBinding Foreground}"/>
-                            <Rectangle x:Name="Runner" RadiusX="2" RadiusY="2" Visibility="Collapsed">
+                            <Border x:Name="PART_Track" CornerRadius="7" Background="{TemplateBinding Background}"/>
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="7" Background="{TemplateBinding Foreground}"/>
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource Text}" Text="{TemplateBinding Tag}">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="3" Opacity="0.9" Color="Black"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <Rectangle x:Name="Runner" RadiusX="7" RadiusY="7" Visibility="Collapsed">
                                 <Rectangle.Fill>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                         <LinearGradientBrush.RelativeTransform>
@@ -147,8 +153,10 @@
             </Setter>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding StatusKey}" Value="Running">
-                    <Setter Property="IsIndeterminate" Value="True"/>
                     <Setter Property="Foreground" Value="{StaticResource Working}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsIndeterminate}" Value="True">
+                    <Setter Property="IsIndeterminate" Value="True"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding StatusKey}" Value="Failed">
                     <Setter Property="Foreground" Value="{StaticResource Failed}"/>
@@ -312,7 +320,8 @@
                                                                                     </Style>
                                                                                 </TextBlock.Style>
                                                                             </TextBlock>
-                                                                            <ProgressBar Style="{StaticResource ActionBar}" Margin="18,2,0,0"/>
+                                                                            <ProgressBar Style="{StaticResource ActionBar}" Margin="18,3,0,0"
+                                                                                         local:BarAnimation.Value="{Binding BarValue, Mode=OneWay}" Tag="{Binding PercentText}"/>
                                                                         </StackPanel>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>

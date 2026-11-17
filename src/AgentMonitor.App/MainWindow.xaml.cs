@@ -55,6 +55,8 @@ public partial class MainWindow : Window
         {
             _state.Prune(now);
             _lastPrune = now;
+            // Gelernte Dauern sichern (auch wenn der Monitor spaeter hart beendet wird).
+            if (_state.Estimator.IsDirty) MonitorSettings.SaveEstimator(_state.Estimator);
         }
 
         // Auch ohne neues Ereignis abgleichen, damit Laufzeiten weiterzaehlen.

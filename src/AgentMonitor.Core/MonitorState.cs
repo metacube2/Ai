@@ -18,9 +18,10 @@ public enum AgentPhase
 
 public enum ActionStatus { Running, Done, Failed }
 
+/// <param name="EstimateSeconds">Geschaetzte Dauer aus frueheren gleichartigen Aktionen, oder null.</param>
 public sealed record ActionView(
     string Id, string Tool, string Summary, ActionStatus Status,
-    DateTimeOffset Start, DateTimeOffset? End, string? Detail = null);
+    DateTimeOffset Start, DateTimeOffset? End, string? Detail = null, double? EstimateSeconds = null);
 
 /// <param name="Detail">Hinweis in Warnfarbe, z. B. „wartet auf Freigabe“ oder ein Fehler.</param>
 /// <param name="LastMessage">Erste Zeile der letzten Antwort des Agenten (nach Stop/SubagentStop).</param>
@@ -54,6 +55,9 @@ public sealed class MonitorState
     public TimeSpan IdleRetention { get; init; } = TimeSpan.FromHours(3);
     /// <summary>Fertige Unteragenten bleiben so lange sichtbar.</summary>
     public TimeSpan DoneAgentRetention { get; init; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>Lernt Dauern und schaetzt den Fortschritt laufender Aktionen.</summary>
+    public DurationEstimator Estimator { get; init; } = new();
 
     private readonly object _lock = new();
     private readonly Dictionary<string, Session> _sessions = new();
@@ -93,11 +97,11 @@ public sealed class MonitorState
                     break;
 
                 case "PostToolUse":
-                    FinishAction(agent, e, ActionStatus.Done, now);
+                    FinishAction(agent, e, ActionStatus.Done, now, Estimator);
                     break;
 
                 case "PostToolUseFailure":
-                    FinishAction(agent, e, e.IsInterrupt ? ActionStatus.Done : ActionStatus.Failed, now);
+                    FinishAction(agent, e, e.IsInterrupt ? ActionStatus.Done : ActionStatus.Failed, now, Estimator);
                     break;
 
                 case "SubagentStart":
@@ -256,8 +260,11 @@ public sealed class MonitorState
     private void StartAction(Session s, Agent agent, HookEvent e, DateTimeOffset now)
     {
         var id = e.ToolUseId ?? $"{e.ToolName}-{now.ToUnixTimeMilliseconds()}";
+        var key = DurationEstimator.Key(e.ToolName, e.ToolInput);
         agent.Actions.Add(new ActionItem
         {
+            EstimateKey = key,
+            EstimateSeconds = Estimator.Estimate(key),
             Id = id,
             Tool = ToolSummary.DisplayName(e.ToolName),
             Summary = ToolSummary.Describe(e.ToolName, e.ToolInput),
@@ -287,13 +294,15 @@ public sealed class MonitorState
         }
     }
 
-    private static void FinishAction(Agent agent, HookEvent e, ActionStatus status, DateTimeOffset now)
+    private static void FinishAction(Agent agent, HookEvent e, ActionStatus status, DateTimeOffset now, DurationEstimator estimator)
     {
         var item = e.ToolUseId is { } id
             ? agent.Actions.FindLast(a => a.Id == id)
             : agent.Actions.FindLast(a => a.Status == ActionStatus.Running && a.Tool == ToolSummary.DisplayName(e.ToolName));
         if (item is not null && item.Status == ActionStatus.Running)
         {
+            // Lernen aus der Zeit, die der Balken tatsaechlich abbildet (Anfordern bis Ende).
+            if (status == ActionStatus.Done) estimator.Record(item.EstimateKey, (now - item.Start).TotalSeconds);
             item.Status = status;
             item.End = e.DurationMs is { } ms && ms >= 0 ? item.Start.AddMilliseconds(ms) : now;
             if (item.End > now) item.End = now;
@@ -317,7 +326,7 @@ public sealed class MonitorState
 
     private static AgentView ToView(Agent a) => new(
         a.Id, a.Label, a.IsMain, a.Phase, a.PhaseSince, a.TasksDone, a.TasksTotal, a.Detail,
-        a.Actions.Select(x => new ActionView(x.Id, x.Tool, x.Summary, x.Status, x.Start, x.End, x.Detail)).ToList(),
+        a.Actions.Select(x => new ActionView(x.Id, x.Tool, x.Summary, x.Status, x.Start, x.End, x.Detail, x.EstimateSeconds)).ToList(),
         a.LastMessage);
 
     internal static string ProjectName(string? cwd)
@@ -378,5 +387,7 @@ public sealed class MonitorState
         public ActionStatus Status { get; set; }
         public DateTimeOffset Start { get; init; }
         public DateTimeOffset? End { get; set; }
+        public string EstimateKey { get; init; } = "";
+        public double? EstimateSeconds { get; init; }
     }
 }
