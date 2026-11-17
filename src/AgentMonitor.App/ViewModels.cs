@@ -201,7 +201,7 @@ public sealed class ActionVm : Observable
         var estimate = running && a.EstimateSeconds is > 0 ? a.EstimateSeconds : null;
         IsIndeterminate = running && estimate is null;
         BarValue = !running ? 100 : estimate is { } est ? DurationEstimator.Percent(now - a.Start, est) : 0;
-        PercentText = estimate is not null ? $"≈ {BarValue:0} %" : "";
+        PercentText = estimate is not null ? $"{BarValue:0} %" : "";
 
         Summary = a.Summary;
         Duration = Format.Duration((a.End ?? now) - a.Start);

@@ -264,7 +264,7 @@ public sealed class MonitorState
         agent.Actions.Add(new ActionItem
         {
             EstimateKey = key,
-            EstimateSeconds = Estimator.Estimate(key),
+            EstimateSeconds = Estimator.EstimateWithFallback(key),
             Id = id,
             Tool = ToolSummary.DisplayName(e.ToolName),
             Summary = ToolSummary.Describe(e.ToolName, e.ToolInput),

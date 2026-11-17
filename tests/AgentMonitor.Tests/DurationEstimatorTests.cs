@@ -63,13 +63,27 @@ public class DurationEstimatorTests
     }
 
     [Fact]
+    public void Rueckfall_genau_dann_Werkzeug_dann_Startwert()
+    {
+        var e = new DurationEstimator();
+        Assert.Equal(10, e.EstimateWithFallback("Bash:neuer befehl"));   // Startwert
+        Assert.Equal(1, e.EstimateWithFallback("Read"));
+
+        e.Record("Bash:git status", 2);
+        e.Record("Bash:git push", 6);
+        Assert.Equal(4, e.EstimateWithFallback("Bash:neuer befehl"));    // Median aller Bash-Messungen
+        Assert.Equal(6, e.EstimateWithFallback("Bash:git push"));        // genaue Art geht vor
+        Assert.Equal(10, e.EstimateWithFallback("PowerShell:x"));        // anderes Werkzeug: Startwert
+    }
+
+    [Fact]
     public void Zustand_lernt_aus_fertigen_Aktionen_und_gibt_die_Schaetzung_weiter()
     {
         var m = new MonitorState();
         HookEvent Ev(string json) => HookEvent.Parse(json)!;
 
         m.Apply(Ev("""{"hook_event_name":"PreToolUse","session_id":"s","tool_name":"Bash","tool_use_id":"1","tool_input":{"command":"dotnet test"}}"""), T0);
-        Assert.Null(m.Snapshot()[0].Agents[0].Actions[0].EstimateSeconds); // erstes Mal: unbekannt
+        Assert.Equal(10, m.Snapshot()[0].Agents[0].Actions[0].EstimateSeconds); // erstes Mal: Startwert fuer Bash
         m.Apply(Ev("""{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_use_id":"1","duration_ms":100}"""), T0.AddSeconds(8));
 
         // Fehlschlaege lernen nicht mit.

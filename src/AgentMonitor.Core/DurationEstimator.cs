@@ -66,6 +66,46 @@ public sealed class DurationEstimator
         }
     }
 
+    /// <summary>
+    /// Schaetzung mit Rueckfall, damit jeder Balken eine Prozentzahl hat:
+    /// 1. genau diese Befehlsart, 2. alle Messungen desselben Werkzeugs, 3. fester Startwert je Werkzeug.
+    /// </summary>
+    public double EstimateWithFallback(string key)
+    {
+        if (Estimate(key) is { } exact) return exact;
+
+        var tool = key.Split(':', 2)[0];
+        lock (_lock)
+        {
+            var all = _samples
+                .Where(kv => kv.Key.Equals(tool, StringComparison.OrdinalIgnoreCase) ||
+                             kv.Key.StartsWith(tool + ":", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(kv => kv.Value)
+                .OrderBy(x => x)
+                .ToArray();
+            if (all.Length > 0)
+            {
+                var mid = all.Length / 2;
+                return all.Length % 2 == 1 ? all[mid] : (all[mid - 1] + all[mid]) / 2;
+            }
+        }
+        return DefaultSeconds(tool);
+    }
+
+    /// <summary>Startwerte, solange noch nichts gelernt ist. Grob, aber besser als gar keine Zahl.</summary>
+    public static double DefaultSeconds(string tool) => tool switch
+    {
+        "Read" or "Glob" or "TaskCreate" or "TaskUpdate" or "TaskList" or "TaskGet" or "TodoWrite" => 1,
+        "Write" or "Edit" or "NotebookEdit" or "Grep" => 2,
+        "Bash" or "PowerShell" => 10,
+        "WebFetch" or "WebSearch" => 10,
+        "Agent" or "Task" => 120,
+        "Workflow" => 300,
+        "AskUserQuestion" => 60,
+        _ when tool.StartsWith("mcp__", StringComparison.Ordinal) => 5,
+        _ => 5,
+    };
+
     public void Record(string key, double seconds)
     {
         if (double.IsNaN(seconds) || seconds < 0 || seconds > 6 * 3600) return;

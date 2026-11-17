@@ -321,7 +321,8 @@
                                                                                 </TextBlock.Style>
                                                                             </TextBlock>
                                                                             <ProgressBar Style="{StaticResource ActionBar}" Margin="18,3,0,0"
-                                                                                         local:BarAnimation.Value="{Binding BarValue, Mode=OneWay}" Tag="{Binding PercentText}"/>
+                                                                                         local:BarAnimation.Value="{Binding BarValue, Mode=OneWay}" Tag="{Binding PercentText}"
+                                                                                         ToolTip="Geschätzt aus der Dauer früherer gleichartiger Aktionen; höchstens 95 %, bis die Aktion wirklich fertig ist."/>
                                                                         </StackPanel>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
