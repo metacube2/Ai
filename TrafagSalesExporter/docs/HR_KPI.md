@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-12 (Doku-Pruefung: Produktivstand `e956183` mit vorbereitetem Rexx-Hub-Abruf, Schalter aus, 8.18; Nachtrag Hub nicht bestellt, 8.17; ueberholte Rexx-Grenze in 8.7 und beschaedigte Pfade in 8.3, 8.5, 8.6 markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-17 (8.17 Nachtrag: Rexx Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Zugang bei Rexx angefragt); davor 2026-11-12 (Doku-Pruefung: Produktivstand `e956183` mit vorbereitetem Rexx-Hub-Abruf, Schalter aus, 8.18; Nachtrag Hub nicht bestellt, 8.17; ueberholte Rexx-Grenze in 8.7 und beschaedigte Pfade in 8.3, 8.5, 8.6 markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -697,6 +697,9 @@ Rexx-Hub“ vom 2026-09-30 (8.3). Mail an Nadja entworfen, Versand durch Ingo. *
 einen Auftrag Nadjas vom 2026-07-29, laut Mail vom 19.08. wartete sie vor dem Go auf die IT-Pruefung durch Alex (8.9).
 *(Nachtrag 2026-11-10 mittags: Laut Mailverlauf AG36071 ist der Hub nicht bestellt; Nadjas Go wartet auf die IT-Pruefung durch
 Alex, eine Antwort von Alex steht nicht im Verlauf; `saptasks/rexx_schnittstelle/NOTES.md` 13.)*
+*(Nachtrag 2026-11-17: **Bestellt.** Nadja hat die Offerte AG37140 (neues Angebot mit Rabatt) am 2026-11-11 unterschrieben an Rexx zurueckgeschickt, an Riccardo Schwick; Mailverlauf von Ingo im Chat eingefuegt. Die Frage
+„ob der Hub schon bestellt ist“ ist damit beantwortet. Am 17.11. bat Ingo Artjom Yahno um Zugang (Freigabelink), Admin-Zugriff,
+Schnittstellenbeschreibung und Testumgebung; Antwort offen.)*
 
 Welche Felder Rexx liefern muss, damit SAP alles hat (Kurzauskunft 10.11., nichts neu gemessen): zwei Lieferungen, Stamm und
 Salden je Person (Spalten wie #775) und Abwesenheiten je Fall (Spalten wie #777). Heute fehlen in SAP: **Austrittsart**,

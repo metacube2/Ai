@@ -1,14 +1,16 @@
 # RAG HR KPI
 
-Stand: 2026-11-12 (Doku-Pruefung: der vorbereitete Rexx-Hub-Abruf ist seit dem Deploy vom 2026-11-12 11:33 auf dem Server, `e956183`, Schalter `HrKpi:RexxHub:Enabled` weiter aus; Kurzstand-Punkt Rexx Hub ergaenzt, ueberholte Rexx-Aussagen markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, ~~nicht deployed~~ *(ueberholt am 2026-11-12: deployed 11:33, siehe vorn)*, `docs/HR_KPI.md` 8.18; Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder, 8.17); davor 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
+Stand: 2026-11-17 (Rexx Hub bestellt: Offerte AG37140 am 11.11. unterschrieben, Zugang bei Rexx angefragt); davor 2026-11-12 (Doku-Pruefung: der vorbereitete Rexx-Hub-Abruf ist seit dem Deploy vom 2026-11-12 11:33 auf dem Server, `e956183`, Schalter `HrKpi:RexxHub:Enabled` weiter aus; Kurzstand-Punkt Rexx Hub ergaenzt, ueberholte Rexx-Aussagen markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter `HrKpi:RexxHub:Enabled` aus, ~~nicht deployed~~ *(ueberholt am 2026-11-12: deployed 11:33, siehe vorn)*, `docs/HR_KPI.md` 8.18; Entscheid Ingo: Rexx Hub wird genommen, Lieferfelder, 8.17); davor 2026-11-04 12:41 (Unfallkachel aus SAP- und Rexx-Faellen, `f86b0ed`); davor 12:21 (Rexx-Abwesenheiten je Fall #777 produktiv, `4bdbc18`); davor 11:46 (Rexx-Gesamtabfrage #775, `6dd1a56`); davor 09:30 (Formelpruefung, drei Korrekturen, Reiter Interaktiv, produktiv; Rexx-Dateien vom 04.11.); davor 2026-11-03 (Rexx-Schnittstelle nach SAP), 2026-10-29 (Abschnittsnummer Kader 8.8), 2026-10-22 (Kader Mitarbeiterkreis 10), 2026-10-20
 
 ## Kurzstand
 
 - **2026-11-10/12: Rexx Hub.** Entscheid Ingo am 10.11.: Der Rexx Hub wird genommen (`docs/HR_KPI.md` 8.17). Der Tagesabruf
   der Rexx-Abfragen #775 und #777 ueber den Hub ist gebaut (`1e99745`, `d99fbe6`) und seit dem Deploy vom 2026-11-12 11:33
   (`e956183`, `docs/rag/DEPLOYMENT.md`) auf dem Server, aber **ausgeschaltet** (Schalter `HrKpi:RexxHub:Enabled` aus); ueber den
-  Hub wird also noch nichts abgerufen. Laut Mailverlauf AG36071 ist der Hub noch nicht bestellt
-  (`saptasks/rexx_schnittstelle/NOTES.md` 13); bis dahin gilt weiter der Handexport von #775 und #777. Vor dem Umschalten zu
+  Hub wird also noch nichts abgerufen. *(Ueberholt am 2026-11-17: „laut Mailverlauf AG36071 noch nicht bestellt“, NOTES 13.)*
+  **Bestellt:** Nadja hat die Offerte AG37140 (neues Angebot mit Rabatt) am 2026-11-11 unterschrieben an Rexx zurueckgeschickt. Am 17.11. bat Ingo Artjom Yahno (Rexx) um Zugang (Freigabelink), Admin-Zugriff,
+  Schnittstellenbeschreibung und Testumgebung; Antwort offen (`saptasks/rexx_schnittstelle/NOTES.md` 12, Wochen_Todo 167).
+  Bis zum Umschalten gilt weiter der Handexport von #775 und #777. Vor dem Umschalten zu
   klaeren: `docs/HR_KPI.md` 8.18, Umschaltanleitung in `saptasks/rexx_schnittstelle/NOTES.md` 14. *(Eingefuegt bei der
   Doku-Pruefung am 2026-11-12; vorher stand der Stand nur in der Kopfzeile.)*
 
@@ -95,7 +97,8 @@ Stand: 2026-11-12 (Doku-Pruefung: der vorbereitete Rexx-Hub-Abruf ist seit dem D
   automatischen Export ist seit 2026-07-29 von Nadja beauftragt (4'800 EUR p. a.), Stand offen *(ueberholt am 2026-09-30:
   kein Rexx-Hub, Export ueber Upgreat, siehe oben; das wiederum ueberholt am 2026-11-10: der Rexx Hub wird genommen, ob Nadjas
   Auftrag noch besteht, ist zu klaeren, `docs/HR_KPI.md` 8.17; Nachtrag 2026-11-10 mittags: laut Mailverlauf AG36071 ist der
-  Hub nicht bestellt, Nadjas Go wartet auf die IT-Pruefung durch Alex, `saptasks/rexx_schnittstelle/NOTES.md` 13)*. Mail
+  Hub nicht bestellt, Nadjas Go wartet auf die IT-Pruefung durch Alex, `saptasks/rexx_schnittstelle/NOTES.md` 13; ueberholt
+  am 2026-11-17: bestellt, Nadja hat die Offerte AG37140 am 11.11. unterschrieben)*. Mail
   an Sonja liegt als Entwurf, Punkt 2 fehlt. Details: `docs/HR_KPI.md` Abschnitt 8.3.
 
 - **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, Uebersetzungen

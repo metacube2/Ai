@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-17 (Abschnitt 12 Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -257,13 +257,16 @@ Tage; Abwesenheit Tagessoll; Abwesenheit ID Buchung. „halbe Tage“ und „ID 
 Befristung und Mitarbeitertyp brauchen kein eigenes Feld: Das Cockpit leitet beides aus „Austrittsart“ und „Stelle“ ab.
 Nicht noetig: Lohn, Bank, Adresse, „Leitung j/n“, Arbeitszeitmodell.
 
-**Nachtrag 2026-11-17 (Entscheid Ingo nach der Sitzung mit Oscar):** Zusaetzlich gebraucht wird **der oder die Vorgesetzte je Person** (Personalnummer oder Name). Zweck: die Klick-Auswertung des Phishing-Trainings um Vorgesetzte und Hierarchie ergaenzen (Wochen_Todo 164). Quelle ist der Rexx Hub und nicht das AD, weil HR Aenderungen im AD selten nachtraegt. Ob Rexx das Feld fuehrt und wie es heisst, ist offen; mit Rexx (Artjom Yahno) zusammen mit dem Freigabelink fuer den Hub klaeren (Wochen_Todo 167).
+**Nachtrag 2026-11-17 (Entscheid Ingo nach der Sitzung mit Oscar):** Zusaetzlich gebraucht wird **der oder die Vorgesetzte je Person** (Personalnummer oder Name). Zweck: die Klick-Auswertung des Phishing-Trainings um Vorgesetzte und Hierarchie ergaenzen (Wochen_Todo 164). Quelle ist der Rexx Hub und nicht das AD, weil HR Aenderungen im AD selten nachtraegt. Ob Rexx das Feld fuehrt und wie es heisst, ist offen; mit Rexx (Artjom Yahno) zusammen mit dem Freigabelink fuer den Hub klaeren (Wochen_Todo 167). Die Mail vom 17.11. an Artjom (Zugang, Admin-Zugriff,
+technischer Zugang zur Schnittstelle, Testumgebung) fragt das Feld noch nicht; es kommt mit der Feldliste. In den Excel-Listen
+vom 10.11. (`HR-Cockpit_Felder_Rexx_nach_SAP_2026-11-10*.xlsx`) steht es nicht.
 
-**Offen, widerspruechlich belegt:** ob der Hub schon bestellt ist. `docs/HR_KPI.md` 8.3 nennt einen Auftrag Nadjas an Rexx
+*(Aufgeloest am 2026-11-17: Der Hub ist bestellt. Nadja hat die Offerte AG37140 (neues Angebot mit Rabatt) am 2026-11-11 unterschrieben an Rexx zurueckgeschickt.)* Bis dahin galt: **Offen, widerspruechlich belegt:** ob
+der Hub schon bestellt ist. `docs/HR_KPI.md` 8.3 nennt einen Auftrag Nadjas an Rexx
 vom 2026-07-29; Abschnitt 11 oben sagt, sie habe am 19.08. Alex um die IT-Pruefung gebeten, bevor sie das Go gibt. Nicht
 aufgeloest, bei Nadja nachfragen.
 
-**Naechste Schritte:** Mail an Nadja senden (Ingo); Stand des Hub-Auftrags mit Nadja klaeren (bestellt oder nicht); Lieferfelder, Format und taegliche
+**Naechste Schritte:** Mail an Nadja senden (Ingo); Stand des Hub-Auftrags mit Nadja klaeren (bestellt oder nicht; *erledigt 17.11.: bestellt*); Lieferfelder, Format und taegliche
 Ablage mit Rexx (Artjom Yahno) klaeren; danach Entscheid zum eigenen Programm (Abschnitt 7).
 
 ## 13. Rexx Hub: Mailverlauf AG36071 und Produktbeschreibung (gelesen 2026-11-10, fuer die Umsetzung)

@@ -17,6 +17,11 @@ selten nachtraegt; das Feld steht jetzt als Nachtrag in der Feldliste fuer den H
 wartet auf die Hub-Daten. **165** Die Benutzerdaten des Handbestellwesens kommen aus dem AD; Entra ist nur lesend und selbst aus dem AD
 gespeist. **167** Vorgesetztenfeld zusammen mit dem Freigabelink bei Rexx anfragen.
 
+*Nachtrag spaeter, Rexx Hub:* **Bestellt**, Nadja hat die Offerte AG37140 am 11.11. unterschrieben (Mailverlauf von Ingo). Ingo hat
+Artjom um Zugang, Admin-Zugriff, Schnittstellenbeschreibung und Testumgebung gebeten (ohne Vorgesetztenfeld, das kommt mit der
+Feldliste). Ueberholte Aussage „Hub nicht bestellt“ in `docs/rag/HR_KPI.md`, `docs/HR_KPI.md` 8.17 und Rexx-NOTES 12 markiert;
+Wochen_Todo 133, 164, 167.
+
 ## 2026-11-16 22:20: Shopfloor, Status- und Materialfilter eingeschaltet, deployed
 
 Fabio fragte per Teams, ob am Shopfloor weitergearbeitet wird. Ingo hat `T76K912906` nach P76 importiert (Meldung ~16:10, Caches nicht
