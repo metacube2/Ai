@@ -1,0 +1,30 @@
+Betreff: Shopfloor: Ergänzung zum Paket vom 13.11. – Rückstandslisten, TX-Mengen und FPY
+
+Hallo Ingo
+
+Ich habe den aktuellen Stand im Online-Board geprüft und inzwischen weitere Rückmeldungen von Anh Nhi und Michael erhalten. Im Anhang findest du das Ergänzungspaket mit den Definitionen, Kontrollwerten und noch offenen Punkten.
+
+Die Verkaufswerte AE und Umsatz IST werden inzwischen in allen sechs Feldern aus SAP geliefert. Danke dafür. Die fachliche Kontrolle der Berechnung und des Monatswechsels steht noch aus.
+
+Bitte als Nächstes diese Punkte aufnehmen:
+
+1. Rückstandslisten aktualisieren und aus SAP ergänzen
+In SEH, TR5, TX und DW zeigen die geprüften Einträge noch den Excel-Import vom 05.10.2026. Die SAP-Felder tragen weiterhin den Hinweis «Wird später automatisch aus SAP befüllt». Bitte die Listenanbindung aus dem letzten Paket fertigstellen und den aktuellen Bestand mit den Teamleitern abgleichen.
+Anh Nhi hat die Termine geklärt: «Wunschtermin» ist der letzte bestätigte Liefertermin, dafür wird der VF-Termin verwendet. «Datum WE geplant» ist der WE-Termin als Eckendtermin des Produktionsauftrags. Bitte die genaue SAP-Zuordnung prüfen; als verständlichere Bezeichnung schlage ich «Bestätigter Liefertermin (VF)» vor.
+Beim Import gibt es zudem Bereinigungsbedarf: RS-SEH-26-004 enthält «ERLEDIGT» im Abschlussdatum und wird trotzdem offen gezählt. RS-DW-26-689 enthält einen alten Hinweistext statt eines Rückstands. Bitte solche Fälle mit der Dispo abklären und korrekt behandeln.
+
+2. TX-Tages- und Schichtmengen
+Michael liefert die Datei ProdMengePerDisponent.xlsm. Auswahl: Station EL106, Monat und Jahr, danach GetData. Kontrollwert 12.11.2026: 1'305 Stück, Vorgang 0600. Die Datei enthält dafür EL1 bis EL8 sowie TL1; bitte TL1 beim Nachbau nicht versehentlich ausschliessen.
+Die Schichtzeiten und die hälftige Aufteilung der Stunde 14–15 stehen in der Anlage. Bitte die Datenquelle hinter GetData prüfen und möglichst direkt anbinden. Die Nachtschicht-Zuordnung zum Datum und die Rundung halber Stückzahlen müssen wir noch festlegen.
+
+3. FPY TX: neue Anlagenabgrenzung berücksichtigen
+Michaels Anleitung verwendet Reportico / YIELDGESAMT / «TRANSMITTER YIELD GESAMT PRO TAG UND SPARTE». Auswahl EAP1_1 bis EAP3_3, jedoch EAP1_9 und EAP2_6 ausschliessen. Damit muss die bisherige Definition «alle Prüfanlagen» überprüft werden. Er liest den Wert «Avg Asictx» ab. Bitte die Aggregation des Reports prüfen und gegen unseren bisherigen Ansatz Pass/Anzahl abgleichen, bevor die Berechnung umgesetzt wird.
+FPY TR5 bleibt gemäss Freigabe vom 16.11. definiert. TR5 und TX sind im Board am 16./17.11. noch leer.
+
+4. Online-Dokumentation nachführen
+Die Seite «Schnittstelle SAP / MES» nennt noch den Stand 14.10., VkNr als ungeklärt und alte Quellen für AE/Umsatz. Bitte mit den aktuellen Definitionen synchronisieren: VkNr = Materialnummer, Typencode = MARA-ZZTYP, Bestellnummer im Einkaufstool manuell. Die neuen Termin- und FPY-Definitionen ebenfalls ergänzen.
+
+Die drei Module CZ, MTF und Sensorbestände sind in der Navigation bereits entfernt. Die Korrekturen an Vorrat, Verzug, Logistik und Planmenge aus dem Paket vom 13.11. müssen wir noch anhand von SAP-Kontrollwerten abnehmen. Bitte gib mir kurz je Punkt den Umsetzungsstand und was du noch brauchst.
+
+Freundliche Grüsse
+Fabio

@@ -1,9 +1,9 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-17 (Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-17 (Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
 
-Stand 2026-11-17 (Abschnitt 24): **CO-PA schreibt** (`SapCoPaEnabled`, Verkauf AE/Umsatz IST nach HZDAT, 02. bis 16.11. nachgeladen,
+Stand 2026-11-17 nachmittags (Abschnitt 25): Schnittstellen-Seite auf dem echten Stand je Feld, Bestellnummer Einkauf Handeingabe, TX-Mengen aus dem MES (Prozedur in `TMS_MES`), Rueckstandslisten ausgewertet (alle 596 Eintraege noch Excel-Import, 123 offene mit Abschlussdatum), deployed 14:36 (`32bf356`). Davor Stand 2026-11-17 (Abschnitt 24): **CO-PA schreibt** (`SapCoPaEnabled`, Verkauf AE/Umsatz IST nach HZDAT, 02. bis 16.11. nachgeladen,
 gleich Fabios Kontrollwerten ausser AE vom 12.11.) und **der Arbeitsplatzfilter `M*` ist ein** (ganzes ZC22-Layout `/ P00 TX`),
 deployed 12:25 (`3298c93`), seit 12:43 im gemeinsamen Stand `2e62163`. Erster Stichtag mit dem ganzen Layout ist der 18.11.
 Phase C wartet auf Fabios Antworten (Liste am Ende von Abschnitt 24). *Ueberholt damit in der Zeile darunter: „Aus bleiben
@@ -998,7 +998,7 @@ zurueck; die Sitzung 6d hat `3298c93` gemergt und 12:43 `2e62163` deployed (im A
 `copa` geschrieben; Verkauf 12., 13., 16. und 17.11. unveraendert (AE 17.11. 4'072'454.89, Stand 12:26). Nachzuladen ist nichts; die
 Stichtagswerte vom 17.11. waren schon seit 04:01 eingefroren. Das Handbuch-Kapitel ist auch in `2e62163` noch nicht enthalten.
 
-*Nachtrag 2026-11-17 nachmittags, Phase C: was Fabio liefern muss* (Frage Ingo; Grundlage `docs/shopfloor_paket_2026-11-13/2026-11-13_abgleich/Mails_2026-11-13.md` Mail 2 und Feedback „Nicht geprueft“; ob Fabio die Mail
+*Nachtrag 2026-11-17 nachmittags, Phase C: was Fabio liefern muss* *(teilweise ueberholt durch Abschnitt 25: Anh Nhi, Michael und der Einkauf haben geantwortet; offen bleiben MES-DB-User, Sanel, Offene K-Auf, Handfelder)* (Frage Ingo; Grundlage `docs/shopfloor_paket_2026-11-13/2026-11-13_abgleich/Mails_2026-11-13.md` Mail 2 und Feedback „Nicht geprueft“; ob Fabio die Mail
 gesendet hat und ob Antworten da sind, ist nicht dokumentiert; seine Frist an die Empfaenger war Freitag, 20.11.2026). Gebaut wird
 erst, wenn die Quellen geklaert sind:
 1. **40 Listenfelder (Rueckstandslisten, TVAV, Angebote):** Fabios Tabellen-/Feldvorschlaege sind ausser `MARA-ZZTYP` nicht in SAP
@@ -1014,3 +1014,54 @@ erst, wenn die Quellen geklaert sind:
 Ausserhalb von Phase C offen bei Fabio: AE-Differenz Stand 12.11. (+3'906.68), Selektion `/PPA DW/S ALLE` (Eckendtermin bis
 31.12.2026), Feiertagsannahme Monatswechsel (nur 01./02.01.), plan5 bestaetigen. Bei uns offen: 18.11. ersten Stichtag mit ganzem
 Layout pruefen, Logistik-Historie vor 02.11. (Entscheid Ingo).
+
+## 25. Ergaenzung Fabio 17.11.: Schnittstellen-Seite nachgefuehrt, TX-Mengen aus dem MES, Rueckstandslisten geprueft (Stand 2026-11-17)
+
+Anlass: Mail Fabio 17.11. mit Paket `Shopfloor_Ergaenzung_2026-11-17.zip` (abgelegt unter `docs/shopfloor_paket_2026-11-17/`, Original
+noch nicht von ihm versendet laut Kopf seines Dokuments, Ingo hat es trotzdem bekommen): Antworten von Anh Nhi (Termine) und Michael
+Scalet (TX-Mengen, Schichten, FPY TX), Live-Pruefung des Boards, vier Bitten (Rueckstandslisten, TX-Mengen, FPY TX, Online-Doku).
+Auftrag Ingo „mach mal alles“: die vier Punkte, soweit ohne Fabios Entscheide moeglich. *Damit ueberholt im Nachtrag „Phase C“ am
+Ende von Abschnitt 24: Anh Nhi hat Wunschtermin und „Datum WE geplant“ fachlich beantwortet, Michael die Quelle der TX-Mengen und
+die Schichtregeln, der Einkauf (ueber Fabio 13./16.11.) „WE aktuell gem. SAP“ und die Bestellnummer. Offen bleiben dort der
+MES-DB-User (Marco Di Menco), Sanel (FPY DW), Sacha bzw. die Logistik (Offene K-Auf) und die Handfelder.*
+
+**Umgesetzt und deployed 14:36 (`32bf356`, Zweig `shopfloor-ergaenzung-1711` ab Produktivstand `2e62163`, ohne Spanien):**
+- **Seite „Schnittstelle SAP / MES“** (`shopfloor_config.json`, Bloecke `sap`; Kopftext in `app.js` `viewSchema`): Jedes der 105
+  Felder traegt den echten Stand. 44 „geliefert seit …, fachliche Abnahme offen“ (Vorrat, offene KW, SEH-Tagesziel, plan5, Verzug,
+  Produktion TR5/SEH/DW, DW lieferbereit, Logistik, FPY SEH, Verkauf Fiori und CO-PA), 56 „definiert, nicht gebaut“ (Listenfelder,
+  FPY TR5, TX-Tagesmenge, WE aktuell), 3 „in Ueberpruefung“ (FPY TX, Schicht 1/2 TX), 2 „offen“ (FPY DW, Offene K-Auf). Quelle, Feld und
+  Selektion der gelieferten Felder nach dem Code und `sap/status` (Arbeitsplaetze, Layout- und Materialfilter, Fenster). Ungepruefte
+  SAP-Felder bleiben kursiv (`vorschlag_*`), auch fuer VF- und WE-Termin. Der Kopftext zaehlt die vier Stufen statt „definiert“,
+  nennt den Abruf ueber das Gateway (Stichtag 04:00) statt „Push vorgesehen“ und „Stand 17.11.2026“ statt „Feldmapping 14.10.“.
+  *Die Seite zeigt damit nicht mehr den Stand von Abschnitt 12 (Feldmapping-Excel 14.10.).* Vorher standen 95 von 105 Feldern auf „offen“,
+  darunter die meisten der 44 gelieferten (LEARNINGS 17.11.).
+- **Bestellnummer im Kommunikationstool Einkauf** ist Handeingabe (kein `src`, Fabio 13.11.).
+- **TX Tagesmenge, Schicht 1 und 2** haben die Quelle MES statt SAP. Michaels `ProdMengePerDisponent.xlsm` (nur gelesen, Makros nicht
+  ausgefuehrt, Modul unter `docs/shopfloor_paket_2026-11-17/auswertung_ingo/ProdMengePerDisponent_Modul1.bas`): Die Schaltflaeche
+  „GetData“ ruft das Makro `ProdMenge`, das per ADODB/SQLOLEDB mit Windows-Anmeldung (kein Passwort in der Datei) auf
+  `trch-app-mes.sqldb.trafagch.local`, Datenbank `TMS_MES`, die Prozedur `dbo.getProdQtyPerDayOfMonthPerDisponent` mit `@Month`,
+  `@Year`, `@ShopfloorID` (Station, z. B. EL106) aufruft. Sie liefert Tag, VORNR, Dispo und 24 Stundenspalten; Tagessumme und Anteile
+  rechnet Excel. Vorgang 0600 und die Disponenten (EL1 bis EL8, ELP, TL1 in den gespeicherten Daten) legt die Prozedur fest, nicht das
+  Makro; ihr Text ist nicht bekannt. Nachbau braucht den MES-DB-User und das Recht auf die Prozedur (oder ihren Quelltext).
+- **Rueckstandslisten:** Beschriftung „Wunschtermin“ heisst jetzt „Bestaetigter Liefertermin (VF)“ (Vorschlag Fabio, Schluessel
+  `wunschtermin` unveraendert; betrifft nur Anzeige und CSV-Kopf).
+- Handbuch Kapitel 10 (Schnittstelle) nachgefuehrt; dabei die noch nicht deployten Staende von Kapitel 10 (CO-PA, `b9017bb`) und
+  Kapitel 01 (Export-Download) mitgenommen. Test `Konfiguration_Liefert_Nur_FPY_Aus_Dem_MES_Und_Alles_Andere_Aus_SAP`: 99 SAP + 6 MES,
+  jeder Status beginnt mit einer der vier Stufen. Shopfloor/Handbuch 168/168, Release-Worktree 1610/1610.
+- **Deploy 14:36** mit dem Werkzeug, bitgleich, Commit-Zeile `32bf356`; Alarm nur „geschuetzte Datei trafag_exporter.db veraendert“
+  (Checkpoint). Das Einkauf-Delta lief (WAL 250 MB, 14:29) und wurde auf Ingos Anweisung („stope einkaufsdelta mach weiter“) vom
+  Neustart abgebrochen; Nachholen faellig. Nach dem Deploy: `sap/status` 14:37 ok, Verzug und Vorrat mit Status- und `M*`-Filter,
+  22 Vorratswerte eingefroren (Stichtag 04:01 bleibt), CO-PA geschrieben; Seite im Arbeits-Chrome gesehen (105 Felder, 44/56/3/2).
+
+**Rueckstandslisten produktiv gelesen (nur GET `api/records`, nichts geaendert):** Alle 596 Eintraege (SEH 4, TR5 204, TX 296, DW 92)
+stammen unveraendert aus dem Excel-Import vom 05.10.2026; seither hat niemand einen Eintrag im Cockpit bearbeitet. Offen gezaehlt
+werden 176 (SEH 1, TR5 36, TX 86, DW 53). **123 der offenen haben ein Abschlussdatum**, ihr Status (meist „FehlMat“, „in Arbeit“) wurde
+aber nie auf erledigt gesetzt. Die Listenansicht zaehlt nach dem Status (`isClosed`: beginnt mit „erl“ oder `closed_status`), die PPD-Terminverschiebungen aus den Rueckstandslisten (Patch 06, Abschnitt 18) dagegen nach leerem Abschlussdatum; fuer diese 123 Eintraege widersprechen sich die beiden Zaehlweisen. Weitere
+Befunde: Text statt Datum (z. B. RS-SEH-26-004 „ERLEDIGT“ im Abschluss), mehrere Daten in einer Zelle, RS-DW-26-689 ist ein
+Hinweistext von 2022, Status „storniert“, „Abgesagt“, „aktuell gesperrt, muss aussortiert werden“ zaehlen als offen. Liste fuer die
+Dispo (139 Zeilen mit Befund, Spalte fuer den Entscheid): `docs/shopfloor_paket_2026-11-17/auswertung_ingo/Rueckstandslisten_Auffaellige_Eintraege_2026-11-17.xlsx`
+(auch in Ingos Downloads). Nichts geloescht oder geaendert; Bereinigung erst nach Entscheid der Dispo.
+
+**Nicht gebaut, und warum:** Listenanbindung SAP (VF- und WE-Termin werden in T76 geprueft, unten), TX-Mengen und FPY TR5/TX (MES-DB-User),
+Schichten (Entscheide Fabio: Schichtmodell je Tag, Datum der Nachtschicht, Rundung), FPY-TX-Abgrenzung (Aggregation von „Avg Asictx“
+gegen Pass/Anzahl erst mit Zugriff auf die Reportdefinition).

@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -258,3 +258,18 @@ T76, P76 nicht gelesen). Kurzfassung:
 **Offen fuer Ingo:** P76 lesen (Fiori-Punkte, Jobs fuer ABC und ME6x, offene Q2) braucht Freigabe; fachlich: Preis 0 % in
 Fiori bewusst?, SLFDT oder EINDT als Basis der Liefertreue, welcher Wareneingang zaehlt, EVO-Definition und Zeitraum fuer
 A/B/C (E1). Q2-Set und gefilterter Wareneingang im Gateway waeren Schreibauftraege in T76 und brauchen einen Plan.
+
+### 6.4 Stand 2026-11-17: Mail an Armin mit den offenen Entscheiden
+
+Armin fragte Ingo am 17.11., ob schon etwas gemacht wurde. Ingo hat ihm am 17.11. eine Mail geschickt (Text im Chat von Claude
+entworfen, laut Ingo so gesendet): Gebaut ist noch nichts, die Vorarbeit ist erledigt (SAP-Quellen nach 6.3: Liefertreue,
+Q2-Meldungen je Lieferant und klassische Lieferantenbeurteilung vorhanden; die SAP-ABC gilt nur fuer Materialien, die A/B/C-Klasse
+je Lieferant rechnet das Dashboard selbst aus dem Einkaufsvolumen). Naechster Schritt ist der Plan fuer Paket 1, danach eine erste
+Fassung fuer Marco. Gefragt hat Ingo nach drei Entscheiden:
+
+1. **E1:** A/B/C-Klasse ueber die letzten zwoelf Monate oder ueber den im Dashboard gewaehlten Zeitraum?
+2. **E2:** Rhythmus der sieben Themenfelder: einmal im Business Review oder auch unter dem Jahr?
+3. **Preis 0 %** in der Fiori-Bewertung (6.3): so gewollt?
+
+Zum SAP-Score (Fiori) wurde auf Lucas/NTT und den 01.12. verwiesen. Antwort Armins steht aus. Gebaut wird weiterhin nichts, bevor
+der Plan Paket 1 steht.
