@@ -590,11 +590,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent S*; alle offenen Aufträge; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -606,11 +606,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent S*; Eckendtermin bis heute + 3 Kalendermonate, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -622,11 +622,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent S*; Eckendtermin bis heute + 2 Kalendermonate, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -638,11 +638,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent S*; Eckendtermin bis heute + 1 Kalendermonat, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -663,11 +663,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent S*; Eckendtermin bis Ende der laufenden KW, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -679,11 +679,11 @@
      "unit": "Stk.",
      "planned_source": "sap",
      "sap": {
-      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF) / ShopAufSet Typ VR",
-      "vorschlag_feld": "Positionsmenge (AFPO-PSMNG bzw. PLAF-GSMNG)",
-      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV ShopAufSet (Typ VR)",
-      "selektion": "Werk 1100, Disponent S*, mit Planauftraegen, ohne erledigte, ohne Materialfilter; Eckendtermin bis Abfragetag (inkl. Ueberfaellige)",
-      "status": "geliefert (2026-11-09)"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge mit Eckendtermin bis heute (inkl. Überfällige)",
+      "selektion": "Werk 1100, Disponent S*, mit Planaufträgen, ohne erledigte, ohne Materialfilter; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert des Morgens (04:00)."
      }
     },
     {
@@ -695,12 +695,10 @@
      "group": "Tagesleistung",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
-      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
-      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
-      "selektion": "Disponenten SEH",
-      "status": "offen",
-      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopProdSet (Fertigungsaufträge)",
+      "feld": "WE-Menge der Aufträge mit Istendtermin am Tag",
+      "selektion": "Werk 1100, Disponent S* (wie COOIS /SEH 001)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen"
      }
     },
     {
@@ -806,11 +804,11 @@
      "group": "Lieferzeiten & Qualität",
      "unit": "%",
      "sap": {
-      "vorschlag_tabelle": "–",
-      "vorschlag_odata": "C_MFGORDERITEMSCRAPAMTQRY_CDS (P_DisplayCurrency='CHF', P_ExchangeRateType='M'): WE-Menge / Gesamtmenge je Auftrag",
-      "selektion": "ProductionPlant 1100, MRPController S*, Istendtermin in der KW des Vortags (Montag: Vorwoche)",
-      "status": "definiert",
-      "bemerkung": "Job J11 (Paket Fabio 2026-10-16); TR5, TX, DW: FPY weiter aus dem MES"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopProdSet (Fertigungsaufträge)",
+      "feld": "WE-Menge / Gesamtmenge",
+      "selektion": "Werk 1100, Disponent S*, Istendtermin in der KW des Tages bis zu diesem Tag",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "TR5, TX und DW: FPY aus dem MES."
      },
      "digits": 1
     },
@@ -898,11 +896,11 @@
      "list": true,
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "? (Trafag-spezifisch)",
-      "vorschlag_feld": "zu klären – Verkaufsnummer?",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "AFPO / PLAF / VBAP",
+      "vorschlag_feld": "MATNR (Materialnummer)",
+      "status": "definiert (Fabio 13.11.: VkNr = Materialnummer), nicht gebaut",
+      "bemerkung": "SAP-Feld je Auftragsart noch zu prüfen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -913,11 +911,11 @@
      "group": "Auftrag",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARA / Klassifizierung",
-      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "MARA",
+      "feld": "ZZTYP",
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Über das Material des Auftrags.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -931,23 +929,24 @@
       "vorschlag_tabelle": "AFKO",
       "vorschlag_feld": "GLTRP",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
      "key": "wunschtermin",
-     "label": "Wunschtermin",
+     "label": "Bestätigter Liefertermin (VF)",
      "type": "date",
      "col": "J",
      "group": "Termine",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBEP / VBAK",
-      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
+      "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -983,8 +982,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "VBELN",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -998,8 +998,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "POSNR",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1014,8 +1015,9 @@
       "vorschlag_tabelle": "VBAK → KNA1",
       "vorschlag_feld": "KUNNR → NAME1",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1030,8 +1032,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "KWMENG",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1045,8 +1048,9 @@
       "vorschlag_tabelle": "PLAF",
       "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1060,8 +1064,9 @@
       "vorschlag_tabelle": "AFPO",
       "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1157,11 +1162,10 @@
      "group": "Fehlmaterial",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / PLAF",
-      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Fertigungsauftrag / Planauftrag",
+      "vorschlag_feld": "Eckendtermin des Produktionsauftrags (WE-Termin) – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1214,11 +1218,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EK*, Material 1–99999; alle offenen Aufträge; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1230,11 +1234,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EK*, Material 1–99999; Eckendtermin bis heute + 3 Kalendermonate, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1246,11 +1250,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EK*, Material 1–99999; Eckendtermin bis heute + 2 Kalendermonate, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1262,11 +1266,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EK*, Material 1–99999; Eckendtermin bis heute + 1 Kalendermonat, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1287,11 +1291,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EK*, Material 1–99999; Eckendtermin bis Ende der laufenden KW, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1311,12 +1315,11 @@
      "group": "Tagesleistung",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
-      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
-      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
-      "selektion": "Disponenten TR5",
-      "status": "offen",
-      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang der Arbeitsplätze",
+      "selektion": "Arbeitsplätze EDF72, EDB72, EAC72, EAP72, EAN72, EAM72, EDD72, EEX72, EAS72, EDS72, EVA72; Typencode 8*; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D."
      }
     },
     {
@@ -1430,9 +1433,11 @@
      "group": "Lieferzeiten & Qualität",
      "unit": "%",
      "sap": {
-      "vorschlag_tabelle": "– (MES-Datenbank)",
-      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
-      "status": "offen"
+      "vorschlag_tabelle": "MES (Reportico, Projekt YIELDGESAMT)",
+      "vorschlag_feld": "Pass / Anzahl je Tag, Sparte ASIC_TR5",
+      "selektion": "Messplätze MP2, MP3, MP7, MP8, MP10 bis MP15",
+      "status": "definiert (Freigabe 16.11.), nicht gebaut",
+      "bemerkung": "Wartet auf einen lesenden MES-Datenbankbenutzer (Marco Di Menco)."
      }
     },
     {
@@ -1518,11 +1523,11 @@
      "list": true,
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "? (Trafag-spezifisch)",
-      "vorschlag_feld": "zu klären – Verkaufsnummer?",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "AFPO / PLAF / VBAP",
+      "vorschlag_feld": "MATNR (Materialnummer)",
+      "status": "definiert (Fabio 13.11.: VkNr = Materialnummer), nicht gebaut",
+      "bemerkung": "SAP-Feld je Auftragsart noch zu prüfen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1533,11 +1538,11 @@
      "group": "Auftrag",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARA / Klassifizierung",
-      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "MARA",
+      "feld": "ZZTYP",
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Über das Material des Auftrags.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1551,23 +1556,24 @@
       "vorschlag_tabelle": "AFKO",
       "vorschlag_feld": "GLTRP",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
      "key": "wunschtermin",
-     "label": "Wunschtermin",
+     "label": "Bestätigter Liefertermin (VF)",
      "type": "date",
      "col": "J",
      "group": "Termine",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBEP / VBAK",
-      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
+      "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1603,8 +1609,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "VBELN",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1618,8 +1625,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "POSNR",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1634,8 +1642,9 @@
       "vorschlag_tabelle": "VBAK → KNA1",
       "vorschlag_feld": "KUNNR → NAME1",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1650,8 +1659,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "KWMENG",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1665,8 +1675,9 @@
       "vorschlag_tabelle": "PLAF",
       "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1680,8 +1691,9 @@
       "vorschlag_tabelle": "AFPO",
       "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1777,11 +1789,10 @@
      "group": "Fehlmaterial",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / PLAF",
-      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Fertigungsauftrag / Planauftrag",
+      "vorschlag_feld": "Eckendtermin des Produktionsauftrags (WE-Termin) – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -1834,11 +1845,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EL*; alle offenen Aufträge; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1850,11 +1861,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EL*; Eckendtermin bis heute + 3 Kalendermonate, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1866,11 +1877,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EL*; Eckendtermin bis heute + 2 Kalendermonate, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1882,11 +1893,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EL*; Eckendtermin bis heute + 1 Kalendermonat, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1907,11 +1918,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EL*; Eckendtermin bis Ende der laufenden KW, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -1923,11 +1934,11 @@
      "group": "Tagesleistung",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "PLAF / AFKO",
-      "vorschlag_feld": "PLAF-GSMNG, PLAF-PEDTR bzw. AFKO-GAMNG, AFKO-GLTRP",
-      "vorschlag_odata": "API_PLANNED_ORDERS / API_PRODUCTION_ORDER_2_SRV",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent EL*; kumuliert bis zum 5. Arbeitstag nach dem Tag, mit Überfälligen und heutigen Aufträgen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 10.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Regel kumuliert seit 13.11."
      }
     },
     {
@@ -1943,16 +1954,15 @@
      "label": "Produzierte Tagesmenge",
      "type": "num",
      "col": "N",
-     "src": "sap",
+     "src": "mes",
      "group": "Tagesleistung",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
-      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
-      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
-      "selektion": "Disponenten TX",
-      "status": "offen",
-      "bemerkung": "Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+      "vorschlag_tabelle": "MES TMS_MES, Prozedur dbo.getProdQtyPerDayOfMonthPerDisponent",
+      "vorschlag_feld": "Stückzahl je Stunde (00–24) und Tag, Vorgang 0600",
+      "selektion": "Station EL106, Monat, Jahr; Disponenten EL1 bis EL8 und TL1 (TL1 zählt mit). Kontrollwert 12.11.2026: 1'305 Stk.",
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Quelle aus Michaels Datei ProdMengePerDisponent.xlsm (17.11.). Kein SAP; braucht den MES-Datenbankbenutzer und das Recht auf die Prozedur."
      }
     },
     {
@@ -2008,16 +2018,15 @@
      "label": "Produziert Schicht 1",
      "type": "num",
      "col": "T",
-     "src": "sap",
+     "src": "mes",
      "group": "Schichten",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
-      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
-      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
-      "selektion": "Disponenten TX + Schicht 1 über Rückmeldezeit (AFRU-ISDZ/IEDZ)",
-      "status": "offen",
-      "bemerkung": "Schichtzuordnung über Uhrzeit – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+      "vorschlag_tabelle": "MES TMS_MES, wie Tagesmenge TX (Stundenwerte)",
+      "vorschlag_feld": "Frühschicht = Stunden ab 05 bzw. 06 bis 14 + halbe Stunde 14–15",
+      "selektion": "2 Schichten: 05:00–14:30 / 14:30–24:00; 3 Schichten: 06:00–14:30 / 14:30–23:00 / 23:00–06:00",
+      "status": "in Überprüfung, nicht gebaut",
+      "bemerkung": "Offen (Fabio): Schichtmodell je Tag, Datum der Nachtschicht, Rundung halber Stück. Kontrolle 12.11. (2 Schichten): Früh 549,5, Spät 755,5."
      }
     },
     {
@@ -2033,16 +2042,15 @@
      "label": "Produziert Schicht 2",
      "type": "num",
      "col": "V",
-     "src": "sap",
+     "src": "mes",
      "group": "Schichten",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
-      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
-      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
-      "selektion": "Disponenten TX + Schicht 2 über Rückmeldezeit (AFRU-ISDZ/IEDZ)",
-      "status": "offen",
-      "bemerkung": "Schichtzuordnung über Uhrzeit – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+      "vorschlag_tabelle": "MES TMS_MES, wie Tagesmenge TX (Stundenwerte)",
+      "vorschlag_feld": "Spätschicht = halbe Stunde 14–15 + Stunden 15 bis 24 bzw. 23",
+      "selektion": "2 Schichten: 05:00–14:30 / 14:30–24:00; 3 Schichten: 06:00–14:30 / 14:30–23:00 / 23:00–06:00",
+      "status": "in Überprüfung, nicht gebaut",
+      "bemerkung": "Offen (Fabio): Schichtmodell je Tag, Datum der Nachtschicht, Rundung halber Stück. Kontrolle 12.11. (2 Schichten): Früh 549,5, Spät 755,5."
      }
     },
     {
@@ -2150,9 +2158,11 @@
      "group": "Lieferzeiten & Qualität",
      "unit": "%",
      "sap": {
-      "vorschlag_tabelle": "– (MES-Datenbank)",
-      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
-      "status": "offen"
+      "vorschlag_tabelle": "MES (Reportico, Projekt YIELDGESAMT)",
+      "vorschlag_feld": "Pass / Anzahl je Tag, Sparte ASIC_TX (Abgleich mit «Avg Asictx» offen)",
+      "selektion": "Neu 17.11. (Michael Scalet): Anlagen EAP1_1 bis EAP3_3 ohne EAP1_9 und EAP2_6; bisher alle Prüfanlagen",
+      "status": "in Überprüfung, nicht gebaut",
+      "bemerkung": "Wartet auf einen lesenden MES-Datenbankbenutzer (Marco Di Menco). Vor dem Bau Aggregation des Reports gegen Pass/Anzahl abgleichen."
      }
     },
     {
@@ -2238,11 +2248,11 @@
      "list": true,
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "? (Trafag-spezifisch)",
-      "vorschlag_feld": "zu klären – Verkaufsnummer?",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "AFPO / PLAF / VBAP",
+      "vorschlag_feld": "MATNR (Materialnummer)",
+      "status": "definiert (Fabio 13.11.: VkNr = Materialnummer), nicht gebaut",
+      "bemerkung": "SAP-Feld je Auftragsart noch zu prüfen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2253,11 +2263,11 @@
      "group": "Auftrag",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARA / Klassifizierung",
-      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "MARA",
+      "feld": "ZZTYP",
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Über das Material des Auftrags.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2271,23 +2281,24 @@
       "vorschlag_tabelle": "AFKO",
       "vorschlag_feld": "GLTRP",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
      "key": "wunschtermin",
-     "label": "Wunschtermin",
+     "label": "Bestätigter Liefertermin (VF)",
      "type": "date",
      "col": "J",
      "group": "Termine",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBEP / VBAK",
-      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
+      "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2323,8 +2334,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "VBELN",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2338,8 +2350,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "POSNR",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2354,8 +2367,9 @@
       "vorschlag_tabelle": "VBAK → KNA1",
       "vorschlag_feld": "KUNNR → NAME1",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2370,8 +2384,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "KWMENG",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2385,8 +2400,9 @@
       "vorschlag_tabelle": "PLAF",
       "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2400,8 +2416,9 @@
       "vorschlag_tabelle": "AFPO",
       "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2497,11 +2514,10 @@
      "group": "Fehlmaterial",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / PLAF",
-      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Fertigungsauftrag / Planauftrag",
+      "vorschlag_feld": "Eckendtermin des Produktionsauftrags (WE-Termin) – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2554,11 +2570,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent D*, Material 1–99999; alle offenen Aufträge; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -2570,11 +2586,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent D*, Material 1–99999; Eckendtermin bis heute + 84 Tage, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -2586,11 +2602,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent D*, Material 1–99999; Eckendtermin bis heute + 56 Tage, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -2602,11 +2618,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent D*, Material 1–99999; Eckendtermin bis heute + 28 Tage, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -2627,11 +2643,11 @@
      "group": "Auftragsvorrat (SAP)",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "VBAP / VBEP (+VBUP Status)",
-      "vorschlag_feld": "offene Menge (VBEP-BMENG/WMENG abzgl. geliefert), Termin VBEP-EDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV (A_SalesOrderScheduleLine)",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VR (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge, Eckendtermin",
+      "selektion": "Werk 1100, Disponent D*, Material 1–99999; Eckendtermin bis Ende der laufenden KW, kumuliert mit Überfälligen; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 09.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Stichtagswert aus dem ersten SAP-Lauf des Tages (04:00). Rollende Fenster und Materialfilter seit 13.11., ganzes ZC22-Layout ab Stichtag 18.11."
      }
     },
     {
@@ -2651,12 +2667,11 @@
      "group": "Tagesleistung",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "AFRU (Rückmeldungen) bzw. MSEG BWART 101",
-      "vorschlag_feld": "Gutmenge AFRU-LMNGA pro Buchungsdatum BUDAT, Bezug AFKO-DISPO",
-      "vorschlag_odata": "API_PROD_ORDER_CONFIRMATION_2_SRV / API_MATERIAL_DOCUMENT_SRV",
-      "selektion": "Arbeitsplatz DL790 (AFRU-ARBID → CRHD-ARBPL)",
-      "status": "offen",
-      "bemerkung": "DL790 vermutlich Arbeitsplatz – prüfen; Neu SAP statt MES – in der App-Konfiguration planned_source auf sap ändern"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang des Arbeitsplatzes",
+      "selektion": "Arbeitsplatz DL790; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D."
      }
     },
     {
@@ -2668,11 +2683,11 @@
      "group": "Tagesleistung",
      "unit": "Stk.",
      "sap": {
-      "vorschlag_tabelle": "MARD / LIPS",
-      "vorschlag_feld": "Bestand Lagerort DLQ72 (MARD-LABST) – zu klären",
-      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang des Arbeitsplatzes",
+      "selektion": "Arbeitsplatz DLQ72; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D."
      }
     },
     {
@@ -2842,9 +2857,9 @@
      "group": "Lieferzeiten & Qualität",
      "unit": "%",
      "sap": {
-      "vorschlag_tabelle": "– (MES-Datenbank)",
-      "vorschlag_odata": "Kommt nicht aus SAP – MES-DB (DB-User via Marco Di Menco)",
-      "status": "offen"
+      "vorschlag_tabelle": "MES",
+      "status": "offen",
+      "bemerkung": "Report und Auswahl nennt S. Nadarevic (DW)."
      }
     },
     {
@@ -2930,11 +2945,11 @@
      "list": true,
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "? (Trafag-spezifisch)",
-      "vorschlag_feld": "zu klären – Verkaufsnummer?",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "AFPO / PLAF / VBAP",
+      "vorschlag_feld": "MATNR (Materialnummer)",
+      "status": "definiert (Fabio 13.11.: VkNr = Materialnummer), nicht gebaut",
+      "bemerkung": "SAP-Feld je Auftragsart noch zu prüfen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2945,11 +2960,11 @@
      "group": "Auftrag",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARA / Klassifizierung",
-      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "MARA",
+      "feld": "ZZTYP",
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Über das Material des Auftrags.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -2963,23 +2978,24 @@
       "vorschlag_tabelle": "AFKO",
       "vorschlag_feld": "GLTRP",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
      "key": "wunschtermin",
-     "label": "Wunschtermin",
+     "label": "Bestätigter Liefertermin (VF)",
      "type": "date",
      "col": "J",
      "group": "Termine",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBEP / VBAK",
-      "vorschlag_feld": "VBEP-EDATU (1. Einteilung) bzw. VBAK-VDATU",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
+      "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3015,8 +3031,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "VBELN",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3030,8 +3047,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "POSNR",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3046,8 +3064,9 @@
       "vorschlag_tabelle": "VBAK → KNA1",
       "vorschlag_feld": "KUNNR → NAME1",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3062,8 +3081,9 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "KWMENG",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3077,8 +3097,9 @@
       "vorschlag_tabelle": "PLAF",
       "vorschlag_feld": "PLNUM (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3092,8 +3113,9 @@
       "vorschlag_tabelle": "AFPO",
       "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen.",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3189,11 +3211,10 @@
      "group": "Fehlmaterial",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "AFKO / PLAF",
-      "vorschlag_feld": "GLTRP bzw. PEDTR – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "vorschlag_tabelle": "Fertigungsauftrag / Planauftrag",
+      "vorschlag_feld": "Eckendtermin des Produktionsauftrags (WE-Termin) – SAP-Feld wird geprüft",
+      "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
+      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
     {
@@ -3244,12 +3265,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
-      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
-      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
-      "selektion": "Werk 1100, Disponent S*, Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
-      "status": "definiert",
-      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VZ (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge der offenen Fertigungs- und Planaufträge",
+      "selektion": "Werk 1100, Disponent S*; Eckendtermin 01.01.2026 bis Vortag; mit Planaufträgen, ohne erledigte; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 13.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Untergrenze 01.01.2026 ab Januar 2027 neu festlegen."
      }
     },
     {
@@ -3261,12 +3281,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
-      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
-      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
-      "selektion": "Werk 1100, Disponent EK*, Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
-      "status": "definiert",
-      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VZ (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge der offenen Fertigungs- und Planaufträge",
+      "selektion": "Werk 1100, Disponent EK*, Material 1–99999; Eckendtermin 01.01.2026 bis Vortag; mit Planaufträgen, ohne erledigte; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 13.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Untergrenze 01.01.2026 ab Januar 2027 neu festlegen."
      }
     },
     {
@@ -3278,12 +3297,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
-      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
-      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
-      "selektion": "Werk 1100, Disponent EL*, Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
-      "status": "definiert",
-      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VZ (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge der offenen Fertigungs- und Planaufträge",
+      "selektion": "Werk 1100, Disponent EL*; Eckendtermin 01.01.2026 bis Vortag; mit Planaufträgen, ohne erledigte; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 13.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Untergrenze 01.01.2026 ab Januar 2027 neu festlegen."
      }
     },
     {
@@ -3295,12 +3313,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "ZC22 (ZM_OFFENE_FAUF), Fertigungs- und Planaufträge",
-      "vorschlag_feld": "Summe Positionsmenge (PSMNG bzw. PLAF-GSMNG) der offenen Aufträge",
-      "vorschlag_odata": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Filter Typ eq 'VZ' (Transport T76K912797)",
-      "selektion": "Werk 1100, Disponent D* ohne DW1/DL6 (inkl. DS1/DS2/DSN), Material 1-99999, Eckendtermin ohne Untergrenze bis Vortag, mit Planaufträgen, ohne erledigte; Abfragetag",
-      "status": "definiert",
-      "bemerkung": "Definition PPD (A. Tran) laut Mail Fabio 2026-11-02; positiv wie bisher im Dashboard"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopAufSet, Typ VZ (wie ZC22 ZM_OFFENE_FAUF)",
+      "feld": "Positionsmenge der offenen Fertigungs- und Planaufträge",
+      "selektion": "Werk 1100, Disponent D*, Material 1–99999; Eckendtermin 01.01.2026 bis Vortag; mit Planaufträgen, ohne erledigte; Layout / P00 TX nachgebildet: ohne Systemstatus FREI DRUC RÜCK VOKL* (seit 16.11.) und ohne nächsten Arbeitsplatz M* (seit 17.11.)",
+      "status": "geliefert seit 13.11.2026, fachliche Abnahme offen",
+      "bemerkung": "Untergrenze 01.01.2026 ab Januar 2027 neu festlegen."
      }
     },
     {
@@ -3505,10 +3522,10 @@
      "list": true,
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "? (Trafag-spezifisch)",
-      "vorschlag_feld": "zu klären – Verkaufsnummer?",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "vorschlag_tabelle": "AFPO / PLAF / VBAP",
+      "vorschlag_feld": "MATNR (Materialnummer)",
+      "status": "definiert (Fabio 13.11.: VkNr = Materialnummer), nicht gebaut",
+      "bemerkung": "SAP-Feld je Auftragsart noch zu prüfen."
      }
     },
     {
@@ -3519,10 +3536,10 @@
      "group": "Eingabe durch Verkauf",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARA / Klassifizierung",
-      "vorschlag_feld": "MATNR bzw. Merkmal Typencode – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "tabelle": "MARA",
+      "feld": "ZZTYP",
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Über das Material des Auftrags."
      }
     },
     {
@@ -3537,7 +3554,8 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "VBELN",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
      }
     },
     {
@@ -3551,7 +3569,8 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "POSNR",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
      }
     },
     {
@@ -3566,7 +3585,8 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "KWMENG",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
      }
     },
     {
@@ -3580,7 +3600,8 @@
       "vorschlag_tabelle": "AFPO",
       "vorschlag_feld": "AUFNR (Bezug KDAUF/KDPOS)",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
      }
     },
     {
@@ -3594,7 +3615,8 @@
       "vorschlag_tabelle": "VBEP",
       "vorschlag_feld": "EDATU mit BMENG > 0",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
      }
     },
     {
@@ -3815,7 +3837,8 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "VBELN",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
      }
     },
     {
@@ -3829,7 +3852,8 @@
       "vorschlag_tabelle": "VBAP",
       "vorschlag_feld": "POSNR",
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
-      "status": "offen"
+      "status": "definiert, nicht gebaut",
+      "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
      }
     },
     {
@@ -4119,10 +4143,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARD",
-      "vorschlag_feld": "LABST für Lagerort MLE01",
-      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang des Arbeitsplatzes",
+      "selektion": "Arbeitsplatz MLE01; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D; 02. bis 12.11. mit Materialfilter nachgeladen."
      }
     },
     {
@@ -4134,10 +4159,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARD",
-      "vorschlag_feld": "LABST für Lagerort MLE02",
-      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang des Arbeitsplatzes",
+      "selektion": "Arbeitsplatz MLE02; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D; 02. bis 12.11. mit Materialfilter nachgeladen."
      }
     },
     {
@@ -4174,10 +4200,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARD",
-      "vorschlag_feld": "LABST für Lagerort MLE04",
-      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang des Arbeitsplatzes",
+      "selektion": "Arbeitsplatz MLE04; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D; 02. bis 12.11. mit Materialfilter nachgeladen."
      }
     },
     {
@@ -4206,10 +4233,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARD",
-      "vorschlag_feld": "LABST für Lagerort MLE08 / MLE09",
-      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang des Arbeitsplatzes",
+      "selektion": "Arbeitsplatz MLE08 + MLE09; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D; 02. bis 12.11. mit Materialfilter nachgeladen."
      }
     },
     {
@@ -4221,10 +4249,11 @@
      "unit": "Stk.",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "MARD",
-      "vorschlag_feld": "LABST für Lagerort MLM01",
-      "vorschlag_odata": "API_MATERIAL_STOCK_SRV",
-      "status": "offen"
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopRmSet (Rückmeldungen wie ZC27)",
+      "feld": "Gutmenge am höchsten Vorgang des Arbeitsplatzes",
+      "selektion": "Arbeitsplatz MLM01; Material ohne E*, D*, F*, C* (wie ZC27-Layout /NIN, seit 16.11.)",
+      "status": "geliefert seit 19.10.2026, fachliche Abnahme offen",
+      "bemerkung": "Eintrag vom Tag D = Produktionstag D; 02. bis 12.11. mit Materialfilter nachgeladen."
      }
     },
     {
@@ -4288,7 +4317,8 @@
       "vorschlag_tabelle": "VBAK / VBUK",
       "vorschlag_feld": "offene Kundenaufträge (Anzahl) – zu klären",
       "vorschlag_odata": "API_SALES_ORDER_SRV",
-      "status": "offen"
+      "status": "offen",
+      "bemerkung": "Klären, ob das Feld noch gebraucht wird (Logistik)."
      }
     },
     {
@@ -4563,10 +4593,11 @@
      "src": "sap",
      "list": true,
      "sap": {
-      "vorschlag_tabelle": "EKET",
-      "vorschlag_feld": "EINDT",
-      "vorschlag_odata": "API_PURCHASEORDER_PROCESS_SRV",
-      "status": "offen"
+      "vorschlag_tabelle": "EKET / EKES",
+      "vorschlag_feld": "geplanter Wareneingang der Bestellposition (EKET-EINDT, bestätigt EKES) – nicht geprüft",
+      "selektion": "über Bestellnummer und Material der Zeile",
+      "status": "definiert (Fabio 13./16.11.), nicht gebaut",
+      "bemerkung": "Gemeint ist der geplante, nicht der gebuchte Wareneingang."
      }
     },
     {
@@ -4592,14 +4623,7 @@
      "label": "Bestellnummer",
      "type": "text",
      "col": "K",
-     "group": "Eingaben durch PPD / Produktion",
-     "src": "sap",
-     "sap": {
-      "vorschlag_tabelle": "EKKO",
-      "vorschlag_feld": "EBELN",
-      "vorschlag_odata": "API_PURCHASEORDER_PROCESS_SRV",
-      "status": "offen"
-     }
+     "group": "Eingaben durch PPD / Produktion"
     },
     {
      "key": "bemerkungen",
@@ -4686,10 +4710,11 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
-      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
-      "vorschlag_odata": "API_SALES_ORDER_SRV",
-      "status": "offen"
+      "tabelle": "CO-PA CE11000 über ZPOWERBI_EINKAUF_SRV/CoPaSumSet",
+      "feld": "Netto = VV100 + VV110 − VV200 − VV210 − VV220 − VV250 − VV230 − VV240",
+      "selektion": "Buchungskreis 1100, Satzart A (Auftragseingang), alle Sparten; Periode = Monat des letzten Arbeitstags vor dem Tag; angelegt (HZDAT) bis Vortag",
+      "status": "geliefert seit 17.11.2026, fachliche Abnahme offen",
+      "bemerkung": "02. bis 16.11. nachgeladen und gleich den Kontrollwerten (Ausnahme AE Stand 12.11.: +3'906.68, offen). Monatswechsel: Feiertage nur 01./02.01. angenommen, Bestätigung offen."
      }
     },
     {
@@ -4701,10 +4726,11 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBRK / VBRP",
-      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
-      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
-      "status": "offen"
+      "tabelle": "CO-PA CE11000 über ZPOWERBI_EINKAUF_SRV/CoPaSumSet",
+      "feld": "Netto = VV100 + VV110 − VV200 − VV210 − VV220 − VV250 − VV230 − VV240",
+      "selektion": "Buchungskreis 1100, Satzart F (Faktura), alle Sparten; Periode = Monat des letzten Arbeitstags vor dem Tag; angelegt (HZDAT) bis Vortag",
+      "status": "geliefert seit 17.11.2026, fachliche Abnahme offen",
+      "bemerkung": "02. bis 16.11. nachgeladen und gleich den Kontrollwerten (Ausnahme AE Stand 12.11.: +3'906.68, offen). Monatswechsel: Feiertage nur 01./02.01. angenommen, Bestätigung offen."
      }
     },
     {
@@ -4724,12 +4750,10 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "Fiori «Umsatz prüfen» (ersetzt ZC23)",
-      "vorschlag_feld": "SlsVolumeNetAmtInDspCrcy + OpnOutbDelivsForInvcNetAmtInDC + OpenSalesOrdersNetAmountInDC",
-      "vorschlag_odata": "C_SALESANALYTICSQRY_1_CDS (P_DisplayCurrency='CHF', P_ExchangeRateType='M')",
-      "selektion": "SalesOrganization 1100, BillingDocDateYearMonth = Monat des Vortags (am 1. = Vormonat)",
-      "status": "definiert",
-      "bemerkung": "Job J4 (Paket Fabio 2026-11-01); Kontrolle 10/2026 8'827'624 CHF"
+      "tabelle": "Fiori «Umsatz prüfen» (C_SALESANALYTICSQRY_1_CDS)",
+      "feld": "Umsatz + offene Lieferungen + offene Aufträge",
+      "selektion": "Verkaufsorganisation 1100, CHF, Kurstyp M; Monat des letzten Arbeitstags vor dem Tag",
+      "status": "geliefert seit 02.11.2026, fachliche Abnahme offen"
      }
     },
     {
@@ -4775,11 +4799,11 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
-      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
-      "vorschlag_odata": "API_SALES_ORDER_SRV",
-      "selektion": "Disponent(en) TX + TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "CO-PA CE11000 über ZPOWERBI_EINKAUF_SRV/CoPaSumSet",
+      "feld": "Netto = VV100 + VV110 − VV200 − VV210 − VV220 − VV250 − VV230 − VV240",
+      "selektion": "Buchungskreis 1100, Satzart A (Auftragseingang), Produktsparte WWPSP 0005 (Transmitter); Periode = Monat des letzten Arbeitstags vor dem Tag; angelegt (HZDAT) bis Vortag",
+      "status": "geliefert seit 17.11.2026, fachliche Abnahme offen",
+      "bemerkung": "02. bis 16.11. nachgeladen und gleich den Kontrollwerten (Ausnahme AE Stand 12.11.: +3'906.68, offen). Monatswechsel: Feiertage nur 01./02.01. angenommen, Bestätigung offen."
      }
     },
     {
@@ -4791,11 +4815,11 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBAK / VBAP (oder S001/BW)",
-      "vorschlag_feld": "NETWR Auftragseingang, Erfassungsdatum ERDAT im Monat",
-      "vorschlag_odata": "API_SALES_ORDER_SRV",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "CO-PA CE11000 über ZPOWERBI_EINKAUF_SRV/CoPaSumSet",
+      "feld": "Netto = VV100 + VV110 − VV200 − VV210 − VV220 − VV250 − VV230 − VV240",
+      "selektion": "Buchungskreis 1100, Satzart A (Auftragseingang), Produktsparte WWPSP 0003 (DW); Periode = Monat des letzten Arbeitstags vor dem Tag; angelegt (HZDAT) bis Vortag",
+      "status": "geliefert seit 17.11.2026, fachliche Abnahme offen",
+      "bemerkung": "02. bis 16.11. nachgeladen und gleich den Kontrollwerten (Ausnahme AE Stand 12.11.: +3'906.68, offen). Monatswechsel: Feiertage nur 01./02.01. angenommen, Bestätigung offen."
      }
     },
     {
@@ -4815,11 +4839,11 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBRK / VBRP",
-      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
-      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
-      "selektion": "Disponent(en) TX + TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "CO-PA CE11000 über ZPOWERBI_EINKAUF_SRV/CoPaSumSet",
+      "feld": "Netto = VV100 + VV110 − VV200 − VV210 − VV220 − VV250 − VV230 − VV240",
+      "selektion": "Buchungskreis 1100, Satzart F (Faktura), Produktsparte WWPSP 0005 (Transmitter); Periode = Monat des letzten Arbeitstags vor dem Tag; angelegt (HZDAT) bis Vortag",
+      "status": "geliefert seit 17.11.2026, fachliche Abnahme offen",
+      "bemerkung": "02. bis 16.11. nachgeladen und gleich den Kontrollwerten (Ausnahme AE Stand 12.11.: +3'906.68, offen). Monatswechsel: Feiertage nur 01./02.01. angenommen, Bestätigung offen."
      }
     },
     {
@@ -4831,11 +4855,11 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "VBRK / VBRP",
-      "vorschlag_feld": "NETWR, Fakturadatum FKDAT im Monat",
-      "vorschlag_odata": "API_BILLING_DOCUMENT_SRV",
-      "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)",
-      "status": "offen"
+      "tabelle": "CO-PA CE11000 über ZPOWERBI_EINKAUF_SRV/CoPaSumSet",
+      "feld": "Netto = VV100 + VV110 − VV200 − VV210 − VV220 − VV250 − VV230 − VV240",
+      "selektion": "Buchungskreis 1100, Satzart F (Faktura), Produktsparte WWPSP 0003 (DW); Periode = Monat des letzten Arbeitstags vor dem Tag; angelegt (HZDAT) bis Vortag",
+      "status": "geliefert seit 17.11.2026, fachliche Abnahme offen",
+      "bemerkung": "02. bis 16.11. nachgeladen und gleich den Kontrollwerten (Ausnahme AE Stand 12.11.: +3'906.68, offen). Monatswechsel: Feiertage nur 01./02.01. angenommen, Bestätigung offen."
      }
     },
     {
@@ -4855,12 +4879,10 @@
      "unit": "CHF",
      "src": "sap",
      "sap": {
-      "vorschlag_tabelle": "Fiori «Umsatz prüfen»",
-      "vorschlag_feld": "CustCrdtMemoNetAmtInDspCrcy",
-      "vorschlag_odata": "C_SALESANALYTICSQRY_1_CDS (P_DisplayCurrency='CHF', P_ExchangeRateType='M')",
-      "selektion": "SalesOrganization 1100, BillingDocDateYearMonth = Monat des Vortags (am 1. = Vormonat)",
-      "status": "definiert",
-      "bemerkung": "Job J4 (Paket Fabio 2026-11-01); Kontrolle 10/2026 110'412 CHF"
+      "tabelle": "Fiori «Umsatz prüfen» (C_SALESANALYTICSQRY_1_CDS)",
+      "feld": "Kundengutschriften netto",
+      "selektion": "Verkaufsorganisation 1100, CHF, Kurstyp M; Monat des letzten Arbeitstags vor dem Tag",
+      "status": "geliefert seit 02.11.2026, fachliche Abnahme offen"
      }
     },
     {

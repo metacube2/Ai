@@ -1207,15 +1207,16 @@ async function viewSchema() {
   const sc = await api("GET", "api/integration/schema");
   const rows = sc.flatMap(m => m.fields.filter(f => f.planned_source !== "manuell").map(f => ({ m, f })));
   const nSap = rows.filter(r => r.f.planned_source === "sap").length, nMes = rows.length - nSap;
-  const nDef = rows.filter(r => /definiert/i.test((r.f.sap || {}).status || "")).length;
+  const stat = re => rows.filter(r => re.test((r.f.sap || {}).status || "")).length;
+  const nGel = stat(/^geliefert/i), nDef = stat(/^definiert/i), nPruef = stat(/^in Überprüfung/i), nOffen = rows.length - nGel - nDef - nPruef;
   const prefix = Object.entries(S.cfg.forecast_prefix || {}).map(([k, v]) => `${esc(k)} = ${esc(v.filter(p => p !== k).join(", "))}`).join(" · ");
   // Spalte SAP: Ingos Angabe (Feldmapping-Excel J/K), sonst der ungepruefte Vorschlag (G/H) kursiv
   const sapCell = s => s.tabelle || s.feld
     ? `${esc(s.tabelle || "")}${s.feld ? " · " + esc(s.feld) : ""}`
     : (s.vorschlag_tabelle || s.vorschlag_feld ? `<i class="muted" title="Vorschlag, nicht geprüft">${esc(s.vorschlag_tabelle || "")}${s.vorschlag_feld ? " · " + esc(s.vorschlag_feld) : ""}</i>` : "");
   $("#view").innerHTML = `<div class="head"><div class="grow"><h1>Schnittstelle SAP / MES</h1>
-    <p class="lede">Diese ${rows.length} Felder sind für die automatische Befüllung vorgesehen: ${nSap} aus SAP und ${nMes} aus dem MES (nur die FPY-Werte). Bis die Anbindung steht, werden sie von Hand erfasst. Geliefert wird über <code>POST api/integration/push</code>, die Übergabe aus SAP ist täglich um 04:00 Uhr vorgesehen. Festgelegt sind ${nDef} von ${rows.length} Feldern.</p>
-    <p class="muted" style="font-size:13px">Abteilungen werden über den Disponenten im Werk 1100 abgegrenzt: ${prefix}. Kursiv steht ein Vorschlag nach SAP-Standard, der noch nicht geprüft ist. Stand: Feldmapping vom 14.10.2026.</p></div></div>
+    <p class="lede">Diese ${rows.length} Felder sind für die automatische Befüllung vorgesehen: ${nSap} aus SAP und ${nMes} aus dem MES (FPY und die TX-Mengen). Geliefert werden heute ${nGel} Felder aus SAP: Das Cockpit holt sie selbst über das SAP-Gateway, die Stichtagswerte im ersten Lauf des Tages um 04:00 Uhr. Die fachliche Abnahme dieser Werte ist noch offen. ${nDef} Felder haben eine Definition, sind aber noch nicht gebaut, ${nPruef} werden überprüft und ${nOffen} haben noch keine Quelle. Bis ein Feld geliefert wird, wird es von Hand erfasst. Externe Systeme können zusätzlich über <code>POST api/integration/push</code> liefern.</p>
+    <p class="muted" style="font-size:13px">Abteilungen werden über den Disponenten im Werk 1100 abgegrenzt: ${prefix}. Kursiv steht ein Vorschlag, der in SAP bzw. im MES noch nicht geprüft ist. Stand: 17.11.2026 (Paket Fabio 13.11., Ergänzung 17.11.).</p></div></div>
     <div class="tbl-wrap"><table class="schema"><thead><tr><th>Quelle</th><th>Modul</th><th>Feld</th><th>Technischer Name</th><th>Einheit</th><th>SAP-Tabelle · Feld</th><th>Selektion</th><th>Status</th><th>Bemerkung</th></tr></thead>
     <tbody>${rows.map(({ m, f }) => { const s = f.sap || {}; return `<tr><td><span class="src ${f.planned_source}">${f.planned_source.toUpperCase()}</span></td><td>${esc(m.title)}</td><td>${esc(f.label)}</td><td><code>${esc(m.module)}.${esc(f.key)}</code></td><td>${esc(f.unit || "")}</td><td>${sapCell(s)}</td><td>${esc(s.selektion || "")}</td><td>${esc(s.status || "")}</td><td>${esc(s.bemerkung || "")}</td></tr>`; }).join("")}</tbody></table></div>`;
 }

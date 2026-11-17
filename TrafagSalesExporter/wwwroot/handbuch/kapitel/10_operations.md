@@ -499,7 +499,7 @@ Diese Seiten halten das Board am Laufen. **Personen und Mail** legt fest, wer be
 
 ### Was man sieht
 
-Personen und Mail: Namen und Mailadressen; Einträge wie „Unterhalt/PT“ oder „Samuel, Kujtim“ werden in einzelne Empfänger aufgelöst. Schnittstelle: alle Felder mit geplanter Quelle (SAP oder MES), Modul, Feld, Einheit, vorgeschlagener SAP-Quelle, Selektion, Status und Bemerkung. Jede Seite hat „Export (CSV)“ und zu jedem Eintrag eine Änderungsgeschichte.
+Personen und Mail: Namen und Mailadressen; Einträge wie „Unterhalt/PT“ oder „Samuel, Kujtim“ werden in einzelne Empfänger aufgelöst. Schnittstelle: alle Felder mit geplanter Quelle (SAP oder MES), Modul, Feld, Einheit, Quelle in SAP oder im MES, Selektion, Status und Bemerkung. Der Status sagt, ob ein Feld schon geliefert wird (mit Datum, die fachliche Abnahme steht separat), ob eine Definition steht, ob es überprüft wird oder ob die Quelle noch offen ist; eine kursive Quelle ist ein ungeprüfter Vorschlag. Seit dem 17.11.2026 steht die Seite auf dem Stand der Pakete von Fabio Palma vom 13. und 17.11. In den Rückstandslisten heisst der frühere „Wunschtermin“ seither „Bestätigter Liefertermin (VF)“, und die Bestellnummer im Kommunikationstool Einkauf ist eine Handeingabe. Jede Seite hat „Export (CSV)“ und zu jedem Eintrag eine Änderungsgeschichte.
 
 ### Wie gerechnet wird
 

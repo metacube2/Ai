@@ -51,10 +51,15 @@ public class ShopfloorForecastTests
         // Paket 2026-10-16: Verzug MTS entfernt, FPY SEH aus SAP (J11); Paket 2026-11-01: ae_tr5/u_tr5 entfernt (Transmitter = TR5 + TX)
         // 2026-11-09: seh.ziel (Offene Tagesmenge) mit planned_source sap (Fabios config_seh_tagesmenge_sap.js) -> 128
         // 2026-11-13: Module cz, mtf, sensoren entfernt (Paket Fabio 13.11., config_module_entfernen.js, 25 SAP-Felder) -> 103
-        Assert.Equal(103, auto.Count(x => x.f.Src == "sap"));
+        // 2026-11-17 (Ergaenzung Fabio): einkauf.bestellnr Handeingabe; tx.prod, prod_s1, prod_s2 aus dem MES (Michaels
+        // ProdMengePerDisponent.xlsm ruft TMS_MES.dbo.getProdQtyPerDayOfMonthPerDisponent auf) -> 99 SAP + 6 MES = 105
+        Assert.Equal(99, auto.Count(x => x.f.Src == "sap"));
         var mes = auto.Where(x => x.f.Src == "mes").ToList();
-        Assert.Equal(3, mes.Count);   // 2026-11-13: FPY TR5, TX, DW (CZ entfernt); mit den 103 SAP-Feldern Fabios 106 Felder
-        Assert.All(mes, x => Assert.Equal("fpy", x.f.Key));
+        Assert.Equal(6, mes.Count);   // FPY TR5, TX, DW sowie TX Tagesmenge und Schicht 1/2
+        Assert.All(mes, x => Assert.True(x.f.Key == "fpy" || x.m.Key == "tx", $"{x.m.Key}.{x.f.Key}"));
+        Assert.DoesNotContain(auto, x => x.m.Key == "einkauf" && x.f.Key == "bestellnr");
+        // Schnittstellen-Seite (app.js viewSchema): jeder Status beginnt mit einer der vier Stufen, die dort gezaehlt werden
+        Assert.All(auto, x => Assert.Matches("^(geliefert seit|definiert|in Überprüfung|offen)", (string?)x.f.Sap?["status"] ?? ""));
         Assert.All(auto, x => Assert.NotNull(x.f.Sap));
     }
 
