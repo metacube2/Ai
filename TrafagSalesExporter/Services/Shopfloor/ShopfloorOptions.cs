@@ -69,7 +69,8 @@ public sealed class ShopfloorOptions
 
     /// <summary>
     /// Verkauf AE / Umsatz IST aus CO-PA schreiben (CoPaSumSet, CE11000), 2026-11-10 (Mail Fabio, Punkt d). Erst einschalten, wenn
-    /// T76K912866 in P76 ist und die Vorschau (GET sap/copa) Fabios Kontrollwerte trifft.
+    /// T76K912866 in P76 ist und die Vorschau (GET sap/copa) Fabios Kontrollwerte trifft. Seit 2026-11-17 in appsettings.json ein
+    /// (Entscheid Ingo; Vorschau 09. bis 11.11. auf den Rappen gleich, 12.11. Auftragseingang +3'906.68 nicht geklaert).
     /// </summary>
     public bool SapCoPaEnabled { get; set; }
 
@@ -107,8 +108,8 @@ public sealed class ShopfloorOptions
     /// Matex (ShopRmSet) in P76 ist und die Caches geleert sind, sonst Fehler 400 bzw. Fehlermeldung statt Zahl.
     /// <list type="bullet">
     /// <item><c>Zc22StatusAusschluss</c>: ZC22-Layout „/ P00 TX“, Systemstatus E CP (Ziel „FREI DRUC RÜCK VOKL*“), Vorrat und Verzug.</item>
-    /// <item><c>Zc22ArbplAusschluss</c>: dasselbe Layout, naechster Arbeitsplatz I NP (Ziel „M*“); fordert Avo an (teuer). Bleibt aus,
-    /// bis Fabio klaert, ob die Teamleiter ZC22 mit Vorgangsdaten fahren.</item>
+    /// <item><c>Zc22ArbplAusschluss</c>: dasselbe Layout, naechster Arbeitsplatz I NP (Ziel „M*“); fordert Avo an (teuer, P76 am
+    /// 17.11. rund 24 s fuer den Vorrat). Seit 2026-11-17 in appsettings.json ein (Entscheid Ingo).</item>
     /// <item><c>RmMaterialAusschluss</c>: ZC27-Layout „/NIN“, Material E CP (Ziel „E*,D*,F*,C*“), Logistik, DL790, DLQ72, TR5-Tagesmenge.</item>
     /// </list>
     /// </summary>
