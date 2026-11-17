@@ -1,7 +1,7 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, `Schreiben` an, noch nicht
-ausgefuehrt: ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
+Stand: 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
+`Schreiben` an, noch nicht ausgefuehrt: ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
 AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
 der juengste Inhalt war damals vom 2026-10-27).
 Status: **produktiv.** Das Modul ist seit dem 22.10. 13:38 deployed, die Altdaten sind am 22.10. 14:27 importiert (6.4), die
@@ -476,6 +476,13 @@ sperrt (nicht gefragt).
 **Deploy 2026-11-17 12:36** (`44a3ed1`, aus dem Zweig): bitgleich, zehn Routen 200, Alarm nur die Schreibzeit von
 `trafag_exporter.db-wal` (Groesse gleich, DB unveraendert); vorher gewartet, bis der Laenderexport von 12:00 durch war
 (Sales_All 12:10). Keine Wochensicherung faellig. Die Sicherung des Moduls vom 17.11. 05:06 liegt vor.
+
+*Nachtrag 12:50:* Dieser Deploy nahm den Shopfloor-Deploy der anderen Sitzung von 12:25 (`3298c93`, CO-PA schreiben und
+Arbeitsplatzfilter M*) zurueck, weil mein Zweig ihn nicht enthielt (beide ab `6a7de50`). Bemerkt 12:40 beim Nachfuehren der Doku;
+gemeinsamer Stand `2e62163` (= `44a3ed1` + `3298c93`, Suite 1610/1610 samt Schaltertest der Shopfloor-Sitzung) deployed 12:43,
+bitgleich, DB unveraendert, gemergt `fd49894`. Die Shopfloor-Sitzung ist informiert und prueft ihre Werte; die CO-PA-Werte liegen
+in `shopfloor.db` und werden von einem Lauf ohne CO-PA nicht ueberschrieben (Auskunft der Shopfloor-Sitzung); deren Pruefung 12:50: nichts nachzuladen. LEARNINGS 2026-11-17.
+**Produktiv ist damit `2e62163` (Handbestellwesen `44a3ed1` und Shopfloor `3298c93`); Spanien `c9208b5` nur aus dem Arbeitszweig ab `fd49894` oder juenger.**
 
 **Vorschau vor dem Ausfuehren (12:40, nichts geaendert):** 1'539 AD-Konten, 109 aktive (also hatte niemand den alten Knopf
 gedrueckt). 15 wuerden inaktiv, genau die 15 aus dem Protokoll von 11:30 (alle Altbestand, im AD gesperrt; fuenf davon mit zusammen

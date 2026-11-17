@@ -623,7 +623,7 @@ nachgemessen:
 (deckt auch Wochen_Todo 84), Rohail (Rechnungsliste, Schemaauszug), Cornell (UK-Nummern), Paola (162 Artikel, nur das Thema
 Preferred Vendor).
 
-**Nicht gemacht, braucht Ingo:** DE-Uebergangsregel, Spanien-Deploy (`c9208b5`, jetzt nur aus dem Arbeitszweig ab `15105ed`; *seit 13.11. abends ab `a207923`, produktiv `9100537`; ueberholt am 16.11.: produktiv `2da2682`, Spanien nur ab `70507fc` oder juenger; seit 16.11. 17:06 produktiv `7cc1a62` (Shopfloor-Filter), Spanien nur ab `69ed8a0` oder juenger; seit 17.11. 11:28 produktiv `6a7de50` (Handbestellwesen AD-Abgleich), Spanien nur ab `0197661` oder juenger*),
+**Nicht gemacht, braucht Ingo:** DE-Uebergangsregel, Spanien-Deploy (`c9208b5`, jetzt nur aus dem Arbeitszweig ab `15105ed`; *seit 13.11. abends ab `a207923`, produktiv `9100537`; ueberholt am 16.11.: produktiv `2da2682`, Spanien nur ab `70507fc` oder juenger; seit 16.11. 17:06 produktiv `7cc1a62` (Shopfloor-Filter), Spanien nur ab `69ed8a0` oder juenger; seit 17.11. 11:28 produktiv `6a7de50` (Handbestellwesen AD-Abgleich), Spanien nur ab `0197661` oder juenger; seit 17.11. 12:43 produktiv `2e62163` (Handbestellwesen und Shopfloor CO-PA/M*), Spanien nur ab `fd49894` oder juenger*),
 Umstellen des Fallback-Schalters, Lesezugriff B1 TR IT fuer `ISS-007.4`.
 
 ## Werkzeuge
