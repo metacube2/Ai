@@ -990,3 +990,9 @@ keiner aktiv). Der Protokollabsatz des Runners traegt noch den Titel des Deploys
 2. Differenz AE 12.11. (+3'906.68) mit Fabio klaeren (Vermutung weiter: seine Datei am 12.11. waehrend des Tages gezogen).
 3. Logistik-Historie vor dem 02.11., Selektion `/PPA DW/S ALLE`, `VerzugAb` ab 2027, Phase C: unveraendert wie Abschnitt 23.
 4. Handbuch Kapitel 10 (Verkauf) ist im Repo nachgefuehrt, live erst mit dem naechsten Deploy.
+
+*Nachtrag 2026-11-17 12:50, Ruecksetzer:* Der Handbestellwesen-Deploy 12:36 (`44a3ed1`, Zweig ohne `3298c93`) nahm beide Schalter
+zurueck; die Sitzung 6d hat `3298c93` gemergt und 12:43 `2e62163` deployed (im Arbeitszweig `fd49894`, Einzelheiten in
+`docs/rag/DEPLOYMENT.md`). Geprueft 12:50 im Arbeits-Chrome: Lauf 12:43 mit `arbeitsplatz_ausschluss: M*` (Verzug und Vorrat),
+`copa` geschrieben; Verkauf 12., 13., 16. und 17.11. unveraendert (AE 17.11. 4'072'454.89, Stand 12:26). Nachzuladen ist nichts; die
+Stichtagswerte vom 17.11. waren schon seit 04:01 eingefroren. Das Handbuch-Kapitel ist auch in `2e62163` noch nicht enthalten.
