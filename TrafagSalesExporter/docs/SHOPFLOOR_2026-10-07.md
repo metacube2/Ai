@@ -1085,3 +1085,5 @@ P76 nicht gelesen, ZC22 nicht gestartet, weil die Form `KAPA_BEDARFE` in `ZCKAPA
   Kundenauftrag; fuer 409313/10 drei Kandidaten: `MBDAT` 22.04./06.05., `EDATU` 24.04./08.05., Eckende + WEBAZ 28.04.); ob „Datum WE
   geplant“ den FA der Zeile oder das Fehlteil meint; welcher Auftrag gilt bei mehreren FA/Planauftraegen je Position; P76-Bestaetigung
   (Freigabe Ingo).
+
+*Nachtrag 17.11. ~15:45:* Antwort an Fabio 17.11. gesendet (laut Ingo; Text im Chat von Claude entworfen), mit der Dispo-Liste im Anhang: Stand je Punkt; gefragt AE 12.11., Feiertage, Regel offen nach Status oder Abschlussdatum, Entscheid der Dispo je Zeile, Bildschirmfoto Anh Nhi zum VF-Termin und Bedeutung „Datum WE geplant“, Schichtmodell/Nachtschicht/Rundung TX, Termin MES-DB-User; angeboten Vergleich mit ZC22 am 18.11.
