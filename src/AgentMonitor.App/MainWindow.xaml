@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:AgentMonitor.App"
         Title="Agenten-Monitor" Width="620" Height="820" MinWidth="340" MinHeight="220"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        ResizeMode="CanResizeWithGrip" ShowInTaskbar="False" ShowActivated="False"
+        ResizeMode="CanResizeWithGrip" ShowInTaskbar="True" ShowActivated="False"
         FontFamily="Segoe UI" FontSize="12.5" TextOptions.TextFormattingMode="Ideal"
         PreviewMouseWheel="Window_PreviewMouseWheel" PreviewKeyDown="Window_PreviewKeyDown">
 
@@ -256,7 +256,12 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button x:Name="PinButton" Style="{StaticResource HeaderButton}" Click="PinButton_Click" Content="&#x1F4CC;"/>
-                    <Button Style="{StaticResource HeaderButton}" Click="HideButton_Click" ToolTip="Ausblenden (Tray)" Content="&#x2715;"/>
+                    <Button Style="{StaticResource HeaderButton}" Click="MinimizeButton_Click" ToolTip="Minimieren"
+                            FontFamily="Segoe MDL2 Assets" FontSize="10" Content="&#xE921;"/>
+                    <Button x:Name="MaximizeButton" Style="{StaticResource HeaderButton}" Click="MaximizeButton_Click" ToolTip="Maximieren"
+                            FontFamily="Segoe MDL2 Assets" FontSize="10" Content="&#xE922;"/>
+                    <Button Style="{StaticResource HeaderButton}" Click="HideButton_Click" ToolTip="Ausblenden (Tray)"
+                            FontFamily="Segoe MDL2 Assets" FontSize="10" Content="&#xE8BB;"/>
                 </StackPanel>
             </Grid>
 
@@ -403,7 +408,10 @@
             <!-- Planverbrauch (aus der Statuszeile) und Tokens heute (aus den Protokollen), ganz unten -->
             <Border Grid.Row="2" Background="{StaticResource Card}" CornerRadius="8" Margin="8,4,8,0" Padding="10,8">
                 <StackPanel>
-                    <TextBlock Text="Planverbrauch" Foreground="{StaticResource Text}" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="Planverbrauch" Foreground="{StaticResource Text}" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="PlanAge" Foreground="{StaticResource Muted}" FontSize="11" Margin="10,1,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
                     <TextBlock x:Name="PlanHint" Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap"
                                Text="Noch keine Planwerte. Sie kommen mit der nächsten Antwort einer Claude-Sitzung über die Statuszeile."/>
                     <Grid x:Name="PlanRows">

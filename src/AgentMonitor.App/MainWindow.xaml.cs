@@ -81,7 +81,8 @@ public partial class MainWindow : Window
         if (!busy && _wasBusy) _suppressedUntilIdle = false;
         _wasBusy = busy;
 
-        if (_settings.Mode == DisplayMode.Popup && !busy && IsVisible && !IsMouseOver &&
+        // Minimiert bleibt das Fenster in der Taskleiste, statt sich auszublenden.
+        if (_settings.Mode == DisplayMode.Popup && !busy && IsVisible && !IsMouseOver && WindowState != WindowState.Minimized &&
             now - _lastBusy > TimeSpan.FromSeconds(Math.Max(2, _settings.AutoHideSeconds)))
         {
             Hide();
@@ -93,11 +94,23 @@ public partial class MainWindow : Window
     private readonly TokenCounter _tokens = new(TokenCounter.DefaultRoot);
     private DateTimeOffset _lastTokenRefresh = DateTimeOffset.MinValue;
     private bool _tokenRefreshRunning;
+    private DateTimeOffset _savedPlanAt;
 
     private void UpdatePlan(DateTimeOffset now)
     {
         var plan = _state.Plan;
         var any = plan is { FiveHour: not null } or { SevenDay: not null };
+
+        // Letzten Stand sichern, damit er nach einem Neustart sofort wieder da ist.
+        if (plan is not null && plan.UpdatedAt != _savedPlanAt)
+        {
+            _savedPlanAt = plan.UpdatedAt;
+            MonitorSettings.SavePlan(plan);
+        }
+        // Aelter als 2 Minuten: Stand dazuschreiben, damit klar ist, dass es nicht live ist.
+        PlanAge.Text = plan is not null && now - plan.UpdatedAt > TimeSpan.FromMinutes(2)
+            ? $"Stand von {ResetText(plan.UpdatedAt, now).Replace("um ", "")}"
+            : "";
         PlanHint.Visibility = any ? Visibility.Collapsed : Visibility.Visible;
         PlanRows.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
         if (any)
@@ -160,7 +173,7 @@ public partial class MainWindow : Window
 
     private void OnBecameBusy()
     {
-        // Ohne den Fokus zu stehlen: ShowActivated=False im XAML.
+        // Ohne den Fokus zu stehlen: ShowActivated=False im XAML. Ein von Hand minimiertes Fenster bleibt minimiert.
         if (_settings.Mode == DisplayMode.Popup && !_suppressedUntilIdle && !IsVisible) Show();
     }
 
@@ -180,6 +193,7 @@ public partial class MainWindow : Window
         _suppressedUntilIdle = false;
         _lastBusy = DateTimeOffset.Now; // nicht sofort wieder ausblenden
         Show();
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
     }
 
@@ -254,8 +268,51 @@ public partial class MainWindow : Window
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (e.ClickCount == 2)
+        {
+            ToggleMaximize();
+            return;
+        }
+        if (_maximized) return; // Maximiert nicht verschieben, wie bei normalen Fenstern
         if (e.ButtonState == MouseButtonState.Pressed) DragMove();
         RememberPlacement();
+    }
+
+    // ------------------------------------------------------------------ Minimieren / Maximieren
+    // Das Fenster ist rahmenlos; Maximieren fuellt deshalb von Hand den Arbeitsbereich des Bildschirms,
+    // auf dem es gerade steht (ohne die Taskleiste zu verdecken).
+
+    private bool _maximized;
+    private Rect _restoreBounds;
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void MaximizeButton_Click(object sender, RoutedEventArgs e) => ToggleMaximize();
+
+    private void ToggleMaximize()
+    {
+        if (_maximized)
+        {
+            _maximized = false;
+            Left = _restoreBounds.Left;
+            Top = _restoreBounds.Top;
+            Width = _restoreBounds.Width;
+            Height = _restoreBounds.Height;
+        }
+        else
+        {
+            _restoreBounds = new Rect(Left, Top, Width, Height);
+            var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            var screen = System.Windows.Forms.Screen.FromHandle(handle).WorkingArea;
+            var dpi = VisualTreeHelper.GetDpi(this);
+            Left = screen.Left / dpi.DpiScaleX;
+            Top = screen.Top / dpi.DpiScaleY;
+            Width = screen.Width / dpi.DpiScaleX;
+            Height = screen.Height / dpi.DpiScaleY;
+            _maximized = true;
+        }
+        MaximizeButton.Content = _maximized ? "" : "";
+        MaximizeButton.ToolTip = _maximized ? "Wiederherstellen" : "Maximieren";
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -280,6 +337,8 @@ public partial class MainWindow : Window
 
     private void RememberPlacement()
     {
+        // Maximiert oder minimiert nicht merken, sonst startet der Monitor naechstes Mal bildschirmfuellend.
+        if (_maximized || WindowState != WindowState.Normal) return;
         _settings.Left = Left;
         _settings.Top = Top;
         _settings.Width = ActualWidth > 0 ? ActualWidth : Width;

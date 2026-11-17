@@ -90,6 +90,25 @@ public sealed class MonitorState
     /// <summary>Zuletzt gemeldeter Planverbrauch (aus der Statuszeile), oder null.</summary>
     public PlanUsage? Plan { get { lock (_lock) return _plan; } }
 
+    /// <summary>
+    /// Laedt einen gespeicherten Planverbrauch (z. B. nach einem Neustart des Monitors), solange noch
+    /// keine frische Meldung da ist. Fenster, deren Erneuerung schon vorbei ist, werden verworfen.
+    /// </summary>
+    public void RestorePlan(PlanUsage saved, DateTimeOffset now)
+    {
+        static UsageWindow? Valid(UsageWindow? w, DateTimeOffset now) =>
+            w is { ResetsAt: { } r } && r > now ? w : null;
+        lock (_lock)
+        {
+            if (_plan is not null) return;
+            var five = Valid(saved.FiveHour, now);
+            var week = Valid(saved.SevenDay, now);
+            if (five is null && week is null) return;
+            _plan = new PlanUsage(five, week, saved.UpdatedAt);
+            Interlocked.Increment(ref _version);
+        }
+    }
+
     /// <summary>Holt die seit dem letzten Aufruf angefallenen Klang-Anlaesse ab.</summary>
     public IReadOnlyList<MonitorSignal> DrainSignals()
     {

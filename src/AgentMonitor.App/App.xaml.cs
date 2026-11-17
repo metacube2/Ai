@@ -45,6 +45,7 @@ public partial class App : System.Windows.Application
         }
         SoundEvents.Register();
         var state = new MonitorState { Estimator = MonitorSettings.LoadEstimator() };
+        if (MonitorSettings.LoadPlan() is { } savedPlan) state.RestorePlan(savedPlan, DateTimeOffset.Now);
         _state = state;
         _server = new HookServer(state, _settings);
         await _server.StartAsync();

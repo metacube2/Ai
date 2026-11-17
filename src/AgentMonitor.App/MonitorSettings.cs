@@ -76,6 +76,34 @@ public sealed class MonitorSettings
         }
     }
 
+    /// <summary>Letzter bekannter Planverbrauch, damit er nach einem Neustart sofort sichtbar ist.</summary>
+    private static string PlanPath => Path.Combine(Folder, "planverbrauch.json");
+
+    public static AgentMonitor.Core.PlanUsage? LoadPlan()
+    {
+        try
+        {
+            if (File.Exists(PlanPath))
+                return JsonSerializer.Deserialize<AgentMonitor.Core.PlanUsage>(File.ReadAllText(PlanPath));
+        }
+        catch (Exception)
+        {
+        }
+        return null;
+    }
+
+    public static void SavePlan(AgentMonitor.Core.PlanUsage plan)
+    {
+        try
+        {
+            Directory.CreateDirectory(Folder);
+            File.WriteAllText(PlanPath, JsonSerializer.Serialize(plan, Json));
+        }
+        catch (Exception)
+        {
+        }
+    }
+
     /// <summary>Gelernte Dauern je Aktionsart (nur Werkzeug und Befehlsanfang, keine Inhalte).</summary>
     private static string EstimatorPath => Path.Combine(Folder, "dauern.json");
 

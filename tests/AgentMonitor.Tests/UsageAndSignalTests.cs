@@ -75,6 +75,29 @@ public class UsageAndSignalTests
     }
 
     [Fact]
+    public void Gespeicherter_Planverbrauch_wird_geladen_bis_frische_Werte_kommen()
+    {
+        var saved = new PlanUsage(new UsageWindow(40, T0.AddHours(1)), new UsageWindow(20, T0.AddDays(2)), T0.AddMinutes(-30));
+
+        var m = new MonitorState();
+        m.RestorePlan(saved, T0);
+        Assert.Equal(40, m.Plan!.FiveHour!.UsedPercent);
+        Assert.Equal(T0.AddMinutes(-30), m.Plan.UpdatedAt);
+
+        // Abgelaufene Fenster fallen weg.
+        var m2 = new MonitorState();
+        m2.RestorePlan(saved, T0.AddHours(2));
+        Assert.Null(m2.Plan!.FiveHour);
+        Assert.Equal(20, m2.Plan.SevenDay!.UsedPercent);
+
+        // Frische Werte gehen vor, Laden danach aendert nichts.
+        var m3 = new MonitorState();
+        m3.ApplyStatus(new StatusInfo { SessionId = "x", FiveHour = new UsageWindow(55, T0.AddHours(1)) }, T0);
+        m3.RestorePlan(saved, T0);
+        Assert.Equal(55, m3.Plan!.FiveHour!.UsedPercent);
+    }
+
+    [Fact]
     public void Signale_fuer_Klaenge()
     {
         var m = new MonitorState();
