@@ -7,6 +7,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject HbImportService Import
 @inject IHbAdSuche AdSuche
+@inject HbAdAbgleichService AdAbgleich
 @inject Microsoft.Extensions.Hosting.IHostEnvironment Env
 
 @* Handbestellwesen 2026-10-22 (Auftrag Ingo): Abloesung der PHP-Anwendung. Oberflaeche bewusst wie im PHP
@@ -32,6 +33,7 @@
             <a class="hb-klein hb-k-nutzung" href="handbestellwesen/nutzung">Nutzung</a>
             <a class="hb-klein hb-k-nutzung" href="handbestellwesen/import">Altdaten-Import</a>
             <a class="hb-klein hb-k-nutzung" href="handbestellwesen/bereinigung">Bereinigung</a>
+            <a class="hb-klein hb-k-nutzung" href="handbestellwesen/adabgleich">AD-Abgleich</a>
         }
         @if (_benutzer is not null)
         {
@@ -330,6 +332,80 @@
                     }
                     break;
 
+                case "adabgleich":
+                    <h1>AD-Abgleich</h1>
+                    @if (!_benutzer.IstAdmin)
+                    {
+                        <p>Den AD-Abgleich sieht nur ein Admin.</p>
+                    }
+                    else
+                    {
+                        var ao = Options.CurrentValue.AdAbgleich;
+                        <p>Jede Nacht ab @ao.Uhrzeit vergleicht das Dashboard das Mitarbeiterverzeichnis mit dem AD. Wer im AD gesperrt oder
+                            nicht (mehr) vorhanden ist, wird inaktiv. Bei Einträgen aus dem AD werden Name und Mail nachgeführt. Limit,
+                            Kostenstelle, Admin und Wareneingang bleiben unverändert, niemand wird automatisch wieder aktiv, gelöscht wird nichts.</p>
+                        <p>Nachtlauf: <b>@(ao.Enabled ? "an" : "aus")</b>, @(ao.Schreiben ? "ändert Daten" : "nur Vorschau, ändert nichts")
+                            (<code>Handbestellwesen:AdAbgleich</code>). Er ändert nichts, wenn mehr als @ao.MaxDeaktivierungen Personen deaktiviert
+                            würden oder das AD weniger als @ao.MinAdKonten Konten liefert.</p>
+                        <div class="hb-filter">
+                            <button class="hb-knopf-grau" disabled="@_adLaeuft" @onclick="AdVorschauAsync">Vorschau</button>
+                        </div>
+                        @if (_adPlan is { } ap)
+                        {
+                            @if (ap.Fehler is not null)
+                            {
+                                <div class="hb-meldung hb-meldung-rot">@ap.Fehler</div>
+                            }
+                            else
+                            {
+                                <h3>@ap.AdKonten AD-Konten, @ap.AktiveMitarbeiter aktive Mitarbeitende: @ap.Deaktivierungen zu deaktivieren, @ap.Namensaenderungen Namen/Mail nachzuführen</h3>
+                                @if (ap.Posten.Count > 0)
+                                {
+                                    <table class="hb-tab">
+                                        <tr><th>Kurzzeichen</th><th>Name</th><th>Herkunft</th><th>Befund</th><th>Änderung</th><th>Offen als Besteller</th><th>Freigabe offen bei</th><th>Details</th></tr>
+                                        @foreach (var p in ap.Posten)
+                                        {
+                                            <tr><td>@p.Kurzzeichen</td><td>@p.Name</td><td>@(p.AusAd ? "AD" : "Altbestand")</td><td>@p.BefundText</td>
+                                                <td>@(p.Deaktivieren ? "wird inaktiv" : p.Befund == HbAdBefund.NameGeaendert ? "Name/Mail nachführen" : "keine")</td>
+                                                <td class="hb-zahl">@p.OffenAlsBesteller</td><td class="hb-zahl">@p.FreigabeOffenBei</td><td>@p.Details</td></tr>
+                                        }
+                                    </table>
+                                }
+                                @if (ap.Deaktivierungen + ap.Namensaenderungen > 0)
+                                {
+                                    <div class="hb-filter">
+                                        @if (!_adBestaetigen)
+                                        {
+                                            <button class="hb-knopf-grau" disabled="@_adLaeuft" @onclick="() => _adBestaetigen = true">Jetzt ausführen</button>
+                                        }
+                                        else
+                                        {
+                                            <span>@ap.Deaktivierungen Personen deaktivieren und @ap.Namensaenderungen nachführen?</span>
+                                            <button class="hb-knopf-grau" disabled="@_adLaeuft" @onclick="AdAusfuehrenAsync">Ja, ausführen</button>
+                                            <button class="hb-knopf-grau" @onclick="() => _adBestaetigen = false">Abbrechen</button>
+                                        }
+                                    </div>
+                                }
+                            }
+                        }
+                        <h3>Letzte Läufe</h3>
+                        @if (_adLaeufe.Count == 0)
+                        {
+                            <p>Noch kein Lauf.</p>
+                        }
+                        else
+                        {
+                            <table class="hb-tab">
+                                <tr><th>Zeit</th><th>Wer</th><th>Ergebnis</th><th>Details</th></tr>
+                                @foreach (var l in _adLaeufe)
+                                {
+                                    <tr><td>@l.Zeit.ToString("dd.MM.yyyy HH:mm")</td><td>@l.Benutzer</td><td>@l.Aktion</td><td>@l.Details</td></tr>
+                                }
+                            </table>
+                        }
+                    }
+                    break;
+
                 case "nutzung":
                     <h1>Nutzung</h1>
                     @if (!_benutzer.IstAdmin)
@@ -491,6 +567,50 @@
         finally { _bereinigLaeuft = false; }
     }
 
+    // AD-Abgleich (2026-11-17, Konzept 6.11): Vorschau, Ausfuehren nach Rueckfrage, letzte Laeufe
+    private HbAdAbgleichPlan? _adPlan;
+    private List<HbProtokoll> _adLaeufe = [];
+    private bool _adLaeuft;
+    private bool _adBestaetigen;
+
+    private async Task AdLaeufeLadenAsync()
+    {
+        try { _adLaeufe = await AdAbgleich.LetzteLaeufeAsync(_benutzer!); }
+        catch (HbException ex) { _fehler = ex.Message; }
+    }
+
+    private async Task AdVorschauAsync()
+    {
+        _fehler = null;
+        _info = null;
+        _adBestaetigen = false;
+        _adLaeuft = true;
+        try { _adPlan = await AdAbgleich.VorschauAsync(_benutzer!); }
+        catch (HbException ex) { _fehler = ex.Message; }
+        finally { _adLaeuft = false; }
+    }
+
+    private async Task AdAusfuehrenAsync()
+    {
+        _fehler = null;
+        _info = null;
+        _adLaeuft = true;
+        try
+        {
+            var e = await AdAbgleich.AusfuehrenAsync(_benutzer!);
+            if (e.Geschrieben) _info = e.Meldung; else _fehler = e.Meldung;
+            _adPlan = null;
+            await AdLaeufeLadenAsync();
+            await LadenAsync();
+        }
+        catch (HbException ex) { _fehler = ex.Message; }
+        finally
+        {
+            _adLaeuft = false;
+            _adBestaetigen = false;
+        }
+    }
+
     // Altdaten-Import
     private HbImportBericht? _importBericht;
     private bool _importLaeuft;
@@ -574,6 +694,8 @@
         await LadenAsync();
         if (_bereich == "nutzung" && _benutzer.IstAdmin)
             await NutzungLadenAsync();
+        if (_bereich == "adabgleich" && _benutzer.IstAdmin)
+            await AdLaeufeLadenAsync();
     }
 
     private async Task NutzungLadenAsync()

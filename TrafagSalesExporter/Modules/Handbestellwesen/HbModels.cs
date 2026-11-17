@@ -22,6 +22,9 @@ public sealed class HbOptions
     /// <summary>Freigabe ueber dem Limit (Entscheid Ingo 2026-10-27): aus = wie PHP, jede aktive Person mit genuegend
     /// Limit darf freigeben; an = nur Personen derselben Kostenstelle (setzt gepflegte Kostenstellen voraus).</summary>
     public bool FreigabeNurGleicheKostenstelle { get; set; }
+
+    /// <summary>Naechtlicher Abgleich des Mitarbeiterverzeichnisses mit dem AD (Auftrag Ingo 2026-11-17), Konzept 6.11.</summary>
+    public HbAdAbgleichOptions AdAbgleich { get; set; } = new();
 }
 
 public enum HbStatus

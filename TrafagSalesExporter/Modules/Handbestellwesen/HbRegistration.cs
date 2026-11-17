@@ -19,7 +19,11 @@ public static class HbRegistration
         services.AddSingleton<HbService>();
         services.AddSingleton<HbImportService>();
         services.AddSingleton<IHbAdSuche, HbAdSuche>();
+        services.AddSingleton<IHbAdVerzeichnis, HbAdVerzeichnis>();
+        services.AddSingleton<HbAdAbgleichService>();
         services.AddHostedService<HbStartUndSicherung>();
+        // 2026-11-17: naechtlicher AD-Abgleich der Mitarbeitenden (Konzept 6.11).
+        services.AddHostedService<HbAdAbgleichJob>();
         return services;
     }
 
