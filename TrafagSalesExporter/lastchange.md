@@ -12,6 +12,11 @@ Quelle (AD, Microsoft Entra bzw. Teams oder Rexx). **165** Handbestellwesen, Ben
 Hinweise in 120 (laut Ingo vom Einkauf, Sandro, abgenommen), 133 und 142. `Wochen_Todo.xlsx` und `Status_kurz.xlsx` neu erzeugt. Nur
 Doku, kein Code, kein SAP, kein Deploy.
 
+*Nachtrag nachmittags, Entscheide Ingo:* **164** Die Vorgesetzten kommen aus dem Rexx Hub, nicht aus dem AD, weil HR Aenderungen im AD
+selten nachtraegt; das Feld steht jetzt als Nachtrag in der Feldliste fuer den Hub (`saptasks/rexx_schnittstelle/NOTES.md` 12), Status
+wartet auf die Hub-Daten. **165** Die Benutzerdaten des Handbestellwesens kommen aus dem AD; Entra ist nur lesend und selbst aus dem AD
+gespeist. **167** Vorgesetztenfeld zusammen mit dem Freigabelink bei Rexx anfragen.
+
 ## 2026-11-16 22:20: Shopfloor, Status- und Materialfilter eingeschaltet, deployed
 
 Fabio fragte per Teams, ob am Shopfloor weitergearbeitet wird. Ingo hat `T76K912906` nach P76 importiert (Meldung ~16:10, Caches nicht
