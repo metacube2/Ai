@@ -251,6 +251,18 @@ ANDROID = [
              "Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet."},
 ]
 
+# Windows: MSI-Installer der Desktop-Ports (seit 2026-11-17); Version aus dem Dateinamen <Name>-<Version>-x64.msi,
+# Testanleitung als eigene Seite neben dem Installer
+DESKTOP = Path("/Volumes/ExtOsX/Entwicklung/desktop")
+WINDOWS = [
+    {"name": "MacYaesu für Windows", "kennung": "macyaesu-windows", "bild": "macyaesu",
+     "msi": DESKTOP / "macyaesu-desktop/build/msi/MacYaesu-1.1.1-x64.msi",
+     "datei": "MacYaesu-Windows.msi", "anleitung": "MacYaesu-Windows-Testanleitung.html",
+     "kurz": "FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, "
+             "Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. "
+             "Übergangsfassung, bis die neue Windows-App fertig ist."},
+]
+
 # E-Books: EPUB aus dem Buchprojekt (Wortzahl und Pruefung stehen in dessen README); Umschlag als Bild unter bilder/
 BUECHER = [
     {"name": "Die Schweiz denkt mit", "kennung": "ki-buch",
@@ -266,6 +278,7 @@ BUILD_TOOLS = Path.home() / "Library/Android/sdk/build-tools/36.1.0"
 # Stand je App (Wunsch Benutzer 2026-10-27): „Zum Testen bereit“, „In Entwicklung“, „Fertig“. Gilt fuer alle Plattformen
 # der App; nicht aufgefuehrte Apps sind „In Entwicklung“. Fertig = im Store freigegeben.
 STAND = {
+    "macyaesu-windows": "test",
     "netbottleneck": "test",
     "taploop": "test",
     "kamera-import": "test",
@@ -446,6 +459,36 @@ def karte_android(d):
 </article>"""
 
 
+def daten_windows(a):
+    import re
+    msi = a["msi"]
+    version = (re.search(r"-(\d+(?:\.\d+)+)-x64\.msi$", msi.name) or [None, "?"])[1]
+    return {**a, "version": version, "datum": datetime.fromtimestamp(msi.stat().st_mtime).strftime("%d.%m.%Y"),
+            "groesse": groesse(msi), "sha": sha256(msi)}
+
+
+def karte_windows(d):
+    return f"""
+<article class="karte" id="windows-{d['kennung']}">
+  <div class="kopf">
+    <img src="bilder/{d['bild']}.png" alt="" width="96" height="96">
+    <div>
+      <h2>{d['name']}</h2>
+      <p class="kurz">{d['kurz']}</p>
+    </div>
+  </div>
+  <a class="laden" href="{d['datei']}" download>
+    <span class="pfeil">⬇</span>
+    <span><b>{d['datei']}</b><small>Version {d['version']} · {d['groesse']} · {d['datum']}</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Windows 10/11, x64 (läuft auch auf ARM)</dd>
+    <dt>Anleitung</dt><dd><a href="{d['anleitung']}">Testanleitung mit Funkgerät</a></dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">{d['sha']}</code></dd>
+  </dl>
+</article>"""
+
+
 def daten_buch(a):
     e = a["epub"]
     return {**a, "datum": datetime.fromtimestamp(e.stat().st_mtime).strftime("%d.%m.%Y"), "groesse": groesse(e), "sha": sha256(e)}
@@ -494,7 +537,7 @@ def karte(d):
 </article>"""
 
 
-def feed_eintraege(apps, ios, android, buecher=()):
+def feed_eintraege(apps, ios, android, buecher=(), windows=()):
     """Jede Fassung auf der Seite ist ein Feed-Eintrag; Datum = Datei (DMG/APK) bzw. Ende des Klicktestlaufs"""
     neu = []
     for d in apps:
@@ -512,6 +555,10 @@ def feed_eintraege(apps, ios, android, buecher=()):
         datum = datetime.fromtimestamp(d["apk"].stat().st_mtime).astimezone()
         neu.append({"guid": f"{d['kennung']}-android-{d['version']}-{d['build']}", "titel": f"{d['name']} {d['version']} (Build {d['build']}) für Android",
                     "link": "https://www.aiscom.ch/tester/#android", "text": d["kurz"], "datum": datum.isoformat()})
+    for d in windows:
+        datum = datetime.fromtimestamp(d["msi"].stat().st_mtime).astimezone()
+        neu.append({"guid": f"{d['kennung']}-{d['version']}", "titel": f"{d['name']} {d['version']}",
+                    "link": "https://www.aiscom.ch/tester/#windows", "text": d["kurz"], "datum": datum.isoformat()})
     for d in buecher:
         datum = datetime.fromtimestamp(d["epub"].stat().st_mtime).astimezone()
         neu.append({"guid": f"{d['kennung']}-epub-{d['sha'][:12]}", "titel": f"E-Book „{d['name']}“",
@@ -525,7 +572,7 @@ def neuigkeiten(verlauf):
     <a class="rss" href="feed.xml" type="application/rss+xml">RSS-Feed abonnieren</a></section>'''
 
 
-def seite(apps, ios, android, verlauf, buecher=()):
+def seite(apps, ios, android, verlauf, buecher=(), windows=()):
     alle_notarisiert = all(d["notarisiert"] for d in apps)
     schritt3 = (
         "<li><b>Starten</b> wie jede andere App – die Apps sind von Apple beglaubigt.</li>"
@@ -537,6 +584,7 @@ def seite(apps, ios, android, verlauf, buecher=()):
     karten = gruppiert(apps, karte)
     karten_ios = gruppiert(ios, karte_ios)
     karten_android = gruppiert(android, karte_android)
+    karten_windows = gruppiert(windows, karte_windows)
     karten_buch = "".join(karte_buch(d) for d in buecher)
     return f"""<!DOCTYPE html>
 <html lang="de">
@@ -604,7 +652,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
 <main>
   <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
   <h1>Apps zum Testen</h1>
-  <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad und Android, alle als Vollversion.</p>
+  <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad, Android und Windows, alle als Vollversion.</p>
 
   {neuigkeiten(verlauf)}
 
@@ -612,6 +660,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
     <a href="#mac" role="tab" data-p="mac">macOS<small>{len(apps)}</small></a>
     <a href="#ios" role="tab" data-p="ios">iPhone / iPad<small>{len(ios)}</small></a>
     <a href="#android" role="tab" data-p="android">Android<small>{len(android)}</small></a>
+    <a href="#windows" role="tab" data-p="windows">Windows<small>{len(windows)}</small></a>
     <a href="#buch" role="tab" data-p="buch">Buch<small>{len(buecher)}</small></a>
   </nav>
 
@@ -652,6 +701,19 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
   <div style="margin-top:32px">{karten_android}</div>
   </div>
 
+  <div class="platt" id="p-windows" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li><b>MSI laden und doppelklicken.</b> Der Installer bringt alles mit, Java muss nicht installiert sein.</li>
+      <li>Windows warnt mit <b>„Der Computer wurde durch Windows geschützt“</b> (die Testfassung ist nicht signiert): <b>„Weitere Informationen“</b>, dann <b>„Trotzdem ausführen“</b>.</li>
+      <li>Starten über das Startmenü oder die Verknüpfung auf dem Desktop.</li>
+      <li><b>Neue Fassung:</b> neue MSI einfach installieren, sie ersetzt die alte. Einstellungen und Logs bleiben erhalten.</li>
+    </ol>
+  </section>
+  <div style="margin-top:32px">{karten_windows}</div>
+  </div>
+
   <div class="platt" id="p-buch" role="tabpanel">
   <section class="schritte">
     <h3>Lesen</h3>
@@ -670,7 +732,7 @@ footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}
 <script>
 function zeigen() {{
   const p = (location.hash || '#mac').slice(1).split('-')[0];
-  const gueltig = ['mac', 'ios', 'android', 'buch'].includes(p) ? p : 'mac';
+  const gueltig = ['mac', 'ios', 'android', 'windows', 'buch'].includes(p) ? p : 'mac';
   document.querySelectorAll('.platt').forEach(e => e.hidden = e.id !== 'p-' + gueltig);
   document.querySelectorAll('.reiter a').forEach(a => a.setAttribute('aria-selected', a.dataset.p === gueltig));
 }}
@@ -708,10 +770,16 @@ if __name__ == "__main__":
             print(f"FEHLT (Buch): {a['epub']}", file=sys.stderr)
             sys.exit(1)
         buecher.append(daten_buch(a))
-    verlauf = rss.verlauf_ergaenzen(HIER / "verlauf.json", feed_eintraege(fertig, ios, android, buecher))
+    windows = []
+    for a in WINDOWS:
+        if not a["msi"].exists() or not (HIER / a["anleitung"]).exists():
+            print(f"FEHLT (Windows): {a['msi']} oder {a['anleitung']}", file=sys.stderr)
+            sys.exit(1)
+        windows.append(daten_windows(a))
+    verlauf = rss.verlauf_ergaenzen(HIER / "verlauf.json", feed_eintraege(fertig, ios, android, buecher, windows))
     (HIER / "feed.xml").write_text(rss.feed("AISCOM – Testversionen", "https://www.aiscom.ch/tester/", "https://www.aiscom.ch/tester/feed.xml",
-                                            "Neue Testfassungen für Mac, iPhone/iPad und Android.", verlauf), encoding="utf-8")
-    (HIER / "index.html").write_text(seite(fertig, ios, android, verlauf, buecher), encoding="utf-8")
+                                            "Neue Testfassungen für Mac, iPhone/iPad, Android und Windows.", verlauf), encoding="utf-8")
+    (HIER / "index.html").write_text(seite(fertig, ios, android, verlauf, buecher, windows), encoding="utf-8")
     for d in fertig:
         print(f"Mac {d['name']}: {d['version']} ({d['build']}) {d['groesse']} "
               f"{'Developer ID' if d['developer_id'] else 'ad hoc'}{', notarisiert' if d['notarisiert'] else ''} sha256 {d['sha'][:16]}… → {d['datei']}")
@@ -719,6 +787,8 @@ if __name__ == "__main__":
         print(f"iOS {d['name']}: {d['version']} ({d['build']}) Test {d['test']}")
     for d in android:
         print(f"Android {d['name']}: {d['version']} ({d['build']}) Android {d['android']} {'signiert ' + d['zert'] if d['signiert'] else 'UNSIGNIERT'} sha256 {d['sha'][:16]}… → {d['datei']}")
+    for d in windows:
+        print(f"Windows {d['name']}: {d['version']} {d['groesse']} sha256 {d['sha'][:16]}… → {d['datei']}")
     for d in buecher:
         print(f"Buch {d['name']}: {d['groesse']} sha256 {d['sha'][:16]}… → {d['datei']}")
     print("index.html geschrieben")

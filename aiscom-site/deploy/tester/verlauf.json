@@ -1,5 +1,12 @@
 [
  {
+  "guid": "macyaesu-windows-1.1.1",
+  "titel": "MacYaesu für Windows 1.1.1",
+  "link": "https://www.aiscom.ch/tester/#windows",
+  "text": "FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. Übergangsfassung, bis die neue Windows-App fertig ist.",
+  "datum": "2026-11-17T13:12:49.549000+01:00"
+ },
+ {
   "guid": "netbottleneck-mac-1.0-2",
   "titel": "NetBottleneck 1.0 (Build 2) für macOS",
   "link": "https://www.aiscom.ch/tester/#mac",

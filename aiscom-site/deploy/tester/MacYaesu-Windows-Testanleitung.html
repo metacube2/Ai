@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacYaesu für Windows – Testanleitung</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+:root { --bg:#0a1628; --surface:#13213b; --text:#f5f7fb; --muted:#a8b3c7; --accent:#87ceeb; --line:rgba(135,206,235,.18); --warn:#ffd27a; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:"Segoe UI","Avenir Next","Helvetica Neue",Arial,sans-serif; color:var(--text); background:var(--bg); line-height:1.6; }
+main { max-width:860px; margin:0 auto; padding:32px 16px 60px; }
+a { color:var(--accent); }
+h1 { font-size:clamp(26px,4vw,36px); line-height:1.2; margin:4px 0 6px; }
+h2 { font-size:20px; margin:34px 0 10px; color:var(--accent); }
+.unter { color:var(--muted); margin:0 0 20px; }
+section { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin:14px 0; }
+table { border-collapse:collapse; width:100%; }
+td, th { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--muted); font-weight:600; }
+code { font-family:ui-monospace,Consolas,monospace; background:rgba(255,255,255,.06); padding:1px 5px; border-radius:5px; }
+.warn { border-color:rgba(255,210,122,.5); }
+.warn b { color:var(--warn); }
+ul.check { list-style:none; padding-left:0; }
+ul.check li { padding:5px 0 5px 30px; position:relative; border-bottom:1px solid var(--line); }
+ul.check li:last-child { border-bottom:0; }
+ul.check li::before { content:"☐"; position:absolute; left:4px; top:4px; color:var(--accent); font-size:18px; }
+small { color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./#windows">← Zur Tester-Seite</a></p>
+  <h1>MacYaesu für Windows – Test mit dem FT-991A</h1>
+  <p class="unter">Version 1.1.1 · Übergangsfassung (Kotlin) bis zur neuen Windows-App</p>
+
+  <section class="warn">
+    <b>Sicherheit beim Senden:</b> Alle Tests mit PTT, Leistung und ATU nur mit <b>Dummy Load</b> oder abgestimmter Antenne
+    und kleiner Leistung (5–10 W). Shift halten tastet den Sender, solange kein Textfeld aktiv ist.
+  </section>
+
+  <h2>1. Einstellungen am Funkgerät</h2>
+  <section>
+    <p>Taste <b>MENU</b>, Menüpunkt mit dem Drehknopf wählen, ändern, mit MENU speichern.</p>
+    <table>
+      <tr><th>Menü</th><th>Name</th><th>Wert</th></tr>
+      <tr><td>031</td><td>CAT RATE</td><td><b>38400 bps</b> (gleich wie in der App)</td></tr>
+      <tr><td>032</td><td>CAT TOT</td><td><b>100 msec</b></td></tr>
+      <tr><td>033</td><td>CAT RTS</td><td><b>OFF</b></td></tr>
+    </table>
+    <p><small>Die Menünummern gelten für die aktuelle FT-991A-Firmware. Wenn sie abweichen, nach dem Namen suchen.</small></p>
+  </section>
+
+  <h2>2. USB-Treiber (Silicon Labs CP210x)</h2>
+  <section>
+    <ol>
+      <li>Treiber „CP210x Universal Windows Driver“ von <a href="https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers">silabs.com</a> laden und installieren (oft installiert ihn Windows Update selbst).</li>
+      <li>FT-991A per USB verbinden und einschalten.</li>
+      <li>Im <b>Geräte-Manager › Anschlüsse (COM &amp; LPT)</b> erscheinen zwei Ports: <code>Silicon Labs Dual CP2105 USB to UART Bridge: Enhanced COM Port (COMx)</code> und <code>… Standard COM Port (COMy)</code>.</li>
+      <li>Für CAT gilt der <b>Enhanced COM Port</b>. Die App erkennt ihn selbst und zeigt ihn als „FT-991A CAT Enhanced“ zuoberst in der Liste.</li>
+    </ol>
+  </section>
+
+  <h2>3. Audio für WSJT-X / fldigi</h2>
+  <section>
+    <p>Der FT-991A erscheint in Windows als Audiogerät <b>„USB Audio CODEC“</b> (Lautsprecher und Mikrofon). In WSJT-X und fldigi
+    dieses Gerät direkt als Ein- und Ausgang wählen. Das reicht für den Normalfall.</p>
+    <p><b>VB-Audio Virtual Cable</b> (<a href="https://vb-audio.com/Cable/">vb-audio.com/Cable</a>) braucht es nur, wenn Ton zwischen
+    Programmen weitergereicht werden soll (z. B. Empfangston gleichzeitig in zwei Programme). Diese Fassung schaltet die Audio-Geräte
+    nicht selbst um; das kommt mit der neuen Windows-App.</p>
+    <p>CAT gleichzeitig mit WSJT-X: Nur <b>ein</b> Programm kann den COM-Port öffnen. Entweder MacYaesu <b>oder</b> WSJT-X steuert das
+    Funkgerät (in WSJT-X dann „Rig: None“ bzw. VOX/PTT über den Standard-COM-Port).</p>
+  </section>
+
+  <h2>4. Installieren und verbinden</h2>
+  <section>
+    <ol>
+      <li><code>MacYaesu-Windows.msi</code> doppelklicken. SmartScreen: „Weitere Informationen“ › „Trotzdem ausführen“.</li>
+      <li>MacYaesu aus dem Startmenü starten.</li>
+      <li>Oben links den Port <b>„FT-991A CAT Enhanced“</b> wählen, Baudrate <b>38400</b>, „Verbinden“.</li>
+      <li>Erwartet: grüner Punkt „Verbunden“ und „CAT alive“, Frequenz und Betriebsart wie am Gerät.</li>
+    </ol>
+    <p><small>Ohne Funkgerät: In der Portliste steht zuletzt „Demo-Funkgerät (ohne FT-991A)“, damit lässt sich die Bedienung vorab ausprobieren.</small></p>
+  </section>
+
+  <h2>5. Checkliste</h2>
+  <section>
+    <ul class="check">
+      <li>Verbinden, Trennen, erneut Verbinden (auch per Strg+K); „Ping CAT“ antwortet</li>
+      <li>Frequenz am Gerät drehen → App folgt; Frequenz in der App ändern (Abstimmknopf, Mausrad, Pfeiltasten links/rechts) → Gerät folgt</li>
+      <li>Bandtasten 160 m bis 70 cm</li>
+      <li>VFO A/B umschalten und tauschen (Strg+Shift+S), A=B (Strg+Shift+E)</li>
+      <li>Betriebsarten LSB, USB, CW, FM, AM, DATA-U</li>
+      <li>Regler AF, RF, SQL, MIC, PWR: Wirkung am Gerät</li>
+      <li>S-Meter bewegt sich passend zum Gerät</li>
+      <li>PTT per Knopf und per Shift-Taste (Dummy Load!): Gerät sendet, Anzeige TX, nach Loslassen RX</li>
+      <li><b>Leistungsanzeige beim Senden</b> zeigt die eingestellte Leistung (z. B. 10 W, <b>nicht</b> 1010 W) · SWR-Anzeige plausibel</li>
+      <li>NB, NR, DNF, Contour, IPO, Split: Ein/Aus am Gerät sichtbar</li>
+      <li>ATU-Abstimmung (Pfeil hoch oder Strg+Shift+T) auf Dummy Load oder Antenne</li>
+      <li>Speicher: aktuellen Kanal speichern, laden, Scan Up/Down, Stop</li>
+      <li>CTCSS/DCS und Relais-Schnellkonfiguration auf 2 m oder 70 cm</li>
+      <li>QSO-Log: neues QSO erfassen, speichern; CSV liegt in <code>Dokumente\FT991A-Logs</code></li>
+      <li>Ansicht Modern ↔ Frontpanel; Panels Log, Debug, Papagei ein- und ausblenden, abdocken</li>
+      <li>Papagei: kurze Aufnahme vom Empfänger und Wiedergabe</li>
+      <li>Fenster schliessen → App läuft im Infobereich (Symbol unten rechts) weiter, von dort wieder öffnen und beenden</li>
+      <li>Sprache in den Einstellungen auf Englisch und zurück</li>
+      <li>USB-Kabel während der Verbindung ziehen und wieder einstecken → App verbindet von selbst wieder (Einstellungen › Verbindung › „Auto-Reconnect aktivieren“)</li>
+      <li>App neu starten → gewählter Port und Einstellungen bleiben</li>
+    </ul>
+  </section>
+
+  <h2>6. Wenn etwas nicht geht</h2>
+  <section>
+    <p>Menü <b>Datei › Support-Bundle exportieren</b> und die Datei schicken. Sie enthält Einstellungen, App-Log und CAT-Trace.
+    Die Logs liegen auch unter <code>%APPDATA%\FT991A-Remote\Logs</code>.</p>
+    <p>Häufige Ursachen: anderer COM-Port gewählt (Standard statt Enhanced), Baudrate in App und Menü 031 verschieden,
+    ein anderes Programm (WSJT-X, Flrig, Yaesu-Software) hält den Port offen.</p>
+  </section>
+</main>
+</body>
+</html>
