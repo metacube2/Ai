@@ -20,7 +20,8 @@ public class ParsingAndSummaryTests
         Assert.Null(e.AgentId); // leerer String gilt als Hauptagent
         Assert.Equal("Explore", e.AgentType);
         Assert.Equal(42, e.DurationMs);
-        Assert.Equal("a.cs", ToolSummary.Describe(e.ToolName, e.ToolInput));
+        Assert.Equal("liest a.cs", ToolSummary.Describe(e.ToolName, e.ToolInput));
+        Assert.Equal("C:/x", ToolSummary.Detail(e.ToolName, e.ToolInput));
     }
 
     [Theory]
@@ -42,31 +43,32 @@ public class ParsingAndSummaryTests
     [Fact]
     public void Mehrzeilige_Befehle_werden_einzeilig()
     {
-        Assert.Equal("a b", ToolSummary.Describe("PowerShell", J("""{"command":"a\r\n\n   b"}""")));
+        Assert.Equal("führt aus: a b", ToolSummary.Describe("PowerShell", J("""{"command":"a\r\n\n   b"}""")));
     }
 
     [Fact]
     public void WebFetch_zeigt_nur_den_Host()
     {
-        Assert.Equal("example.org", ToolSummary.Describe("WebFetch", J("""{"url":"https://example.org/geheim?token=1"}""")));
+        Assert.Equal("lädt Webseite example.org", ToolSummary.Describe("WebFetch", J("""{"url":"https://example.org/geheim?token=1"}""")));
     }
 
     [Fact]
     public void Agent_zeigt_Typ_und_Beschreibung()
     {
-        Assert.Equal("Explore: Suche", ToolSummary.Describe("Agent", J("""{"subagent_type":"Explore","description":"Suche","prompt":"langer Text"}""")));
+        Assert.Equal("startet Unteragent Explore – Suche", ToolSummary.Describe("Agent", J("""{"subagent_type":"Explore","description":"Suche","prompt":"langer Text"}""")));
     }
 
     [Fact]
     public void MCP_Namen_werden_lesbar()
     {
         Assert.Equal("navigate", ToolSummary.DisplayName("mcp__claude-in-chrome__navigate"));
-        Assert.Equal("claude-in-chrome", ToolSummary.Describe("mcp__claude-in-chrome__navigate", J("{}")));
+        Assert.Equal("Browser: navigate example.org", ToolSummary.Describe("mcp__claude-in-chrome__navigate", J("""{"url":"https://example.org/x"}""")));
     }
 
     [Fact]
     public void Ohne_Eingabe_leere_Beschreibung()
     {
-        Assert.Equal("", ToolSummary.Describe("Read", null));
+        Assert.Equal("liest", ToolSummary.Describe("Read", null));
+        Assert.Null(ToolSummary.Detail("Read", null));
     }
 }

@@ -25,6 +25,7 @@ public sealed record HookEvent
     public string? TaskId { get; init; }
     public string? TaskSubject { get; init; }
     public string? Source { get; init; }
+    public string? LastAssistantMessage { get; init; }
 
     /// <summary>Liest ein Hook-Ereignis. Gibt null zurueck, wenn Pflichtfelder fehlen.</summary>
     public static HookEvent? Parse(JsonElement root)
@@ -55,6 +56,7 @@ public sealed record HookEvent
             TaskId = Str(root, "task_id") ?? Str(root, "taskId"),
             TaskSubject = Str(root, "task_subject") ?? Str(root, "subject") ?? Str(root, "title"),
             Source = Str(root, "source"),
+            LastAssistantMessage = Str(root, "last_assistant_message"),
         };
     }
 

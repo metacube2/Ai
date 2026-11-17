@@ -16,7 +16,7 @@ public class MonitorStateTests
         return HookEvent.Parse(full) ?? throw new InvalidOperationException(full);
     }
 
-    private static AgentView Main(MonitorState m) => m.Snapshot().Single().Agents.Single(a => a.IsMain);
+    private static AgentView MainOf(MonitorState m) => m.Snapshot().Single().Agents.Single(a => a.IsMain);
 
     [Fact]
     public void Prompt_macht_Hauptagent_denkend_und_Projektname_aus_cwd()
@@ -27,7 +27,7 @@ public class MonitorStateTests
         var s = m.Snapshot().Single();
         Assert.Equal("Projekt", s.Project);
         Assert.Equal("Monitor bauen", s.Title);
-        Assert.Equal(AgentPhase.Thinking, Main(m).Phase);
+        Assert.Equal(AgentPhase.Thinking, MainOf(m).Phase);
         Assert.True(s.IsBusy);
     }
 
@@ -38,14 +38,14 @@ public class MonitorStateTests
         m.Apply(Ev("UserPromptSubmit"), T0);
         m.Apply(Ev("PreToolUse", """{"tool_name":"Bash","tool_use_id":"t1","tool_input":{"command":"dotnet test","description":"Tests laufen lassen"}}"""), T0.AddSeconds(1));
 
-        var running = Main(m);
+        var running = MainOf(m);
         Assert.Equal(AgentPhase.Working, running.Phase);
         var a = Assert.Single(running.Actions);
         Assert.Equal(ActionStatus.Running, a.Status);
         Assert.Equal("Tests laufen lassen", a.Summary);
 
         m.Apply(Ev("PostToolUse", """{"tool_name":"Bash","tool_use_id":"t1","duration_ms":2500}"""), T0.AddSeconds(5));
-        var after = Main(m);
+        var after = MainOf(m);
         Assert.Equal(AgentPhase.Thinking, after.Phase);
         Assert.Equal(ActionStatus.Done, after.Actions[0].Status);
         Assert.Equal(T0.AddSeconds(3.5), after.Actions[0].End);
@@ -60,7 +60,7 @@ public class MonitorStateTests
         m.Apply(Ev("PostToolUseFailure", """{"tool_name":"Bash","tool_use_id":"a","error":"exit 1"}"""), T0.AddSeconds(1));
         m.Apply(Ev("PostToolUseFailure", """{"tool_name":"Bash","tool_use_id":"b","is_interrupt":true}"""), T0.AddSeconds(1));
 
-        var acts = Main(m).Actions;
+        var acts = MainOf(m).Actions;
         Assert.Equal(ActionStatus.Failed, acts.Single(x => x.Id == "a").Status);
         Assert.Equal(ActionStatus.Done, acts.Single(x => x.Id == "b").Status);
     }
@@ -72,9 +72,9 @@ public class MonitorStateTests
         m.Apply(Ev("PreToolUse", """{"tool_name":"Read","tool_use_id":"a"}"""), T0);
         m.Apply(Ev("PreToolUse", """{"tool_name":"Grep","tool_use_id":"b"}"""), T0);
         m.Apply(Ev("PostToolUse", """{"tool_name":"Read","tool_use_id":"a"}"""), T0.AddSeconds(1));
-        Assert.Equal(AgentPhase.Working, Main(m).Phase);
+        Assert.Equal(AgentPhase.Working, MainOf(m).Phase);
         m.Apply(Ev("PostToolUse", """{"tool_name":"Grep","tool_use_id":"b"}"""), T0.AddSeconds(2));
-        Assert.Equal(AgentPhase.Thinking, Main(m).Phase);
+        Assert.Equal(AgentPhase.Thinking, MainOf(m).Phase);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class MonitorStateTests
         var sub = agents.Single(a => !a.IsMain);
         Assert.Equal("Explore: Hooks suchen", sub.Label);
         Assert.Equal(AgentPhase.Working, sub.Phase);
-        Assert.Equal("hook", Assert.Single(sub.Actions).Summary);
+        Assert.Equal("sucht „hook“", Assert.Single(sub.Actions).Summary);
 
         // Das Werkzeug des Unteragenten gehoert nicht dem Hauptagenten.
         Assert.Single(agents.Single(a => a.IsMain).Actions); // nur der Agent-Aufruf
@@ -107,7 +107,7 @@ public class MonitorStateTests
         var m = new MonitorState();
         m.Apply(Ev("UserPromptSubmit"), T0);
         m.Apply(Ev("Stop"), T0.AddSeconds(3));
-        Assert.Equal(AgentPhase.Idle, Main(m).Phase);
+        Assert.Equal(AgentPhase.Idle, MainOf(m).Phase);
         Assert.False(m.Snapshot().Single().IsBusy);
     }
 
@@ -117,12 +117,12 @@ public class MonitorStateTests
         var m = new MonitorState();
         m.Apply(Ev("PreToolUse", """{"tool_name":"Bash","tool_use_id":"a"}"""), T0);
         m.Apply(Ev("Notification", """{"notification_type":"permission_prompt","message":"Claude needs your permission"}"""), T0.AddSeconds(1));
-        var main = Main(m);
+        var main = MainOf(m);
         Assert.Equal(AgentPhase.Waiting, main.Phase);
         Assert.Equal("wartet auf Freigabe", main.Detail);
 
         m.Apply(Ev("PostToolUse", """{"tool_name":"Bash","tool_use_id":"a"}"""), T0.AddSeconds(4));
-        Assert.Equal(AgentPhase.Thinking, Main(m).Phase);
+        Assert.Equal(AgentPhase.Thinking, MainOf(m).Phase);
     }
 
     [Fact]
@@ -130,18 +130,18 @@ public class MonitorStateTests
     {
         var m = new MonitorState();
         m.Apply(Ev("PreToolUse", """{"tool_name":"TodoWrite","tool_use_id":"t","tool_input":{"todos":[{"content":"a","status":"completed"},{"content":"b","status":"in_progress"},{"content":"c","status":"pending"}]}}"""), T0);
-        Assert.Equal((1, 3), (Main(m).TasksDone, Main(m).TasksTotal));
+        Assert.Equal((1, 3), (MainOf(m).TasksDone, MainOf(m).TasksTotal));
 
         var m2 = new MonitorState();
         m2.Apply(Ev("TaskCreated", """{"task_id":"1"}"""), T0);
         m2.Apply(Ev("TaskCreated", """{"task_id":"2"}"""), T0);
         m2.Apply(Ev("TaskCompleted", """{"task_id":"1"}"""), T0);
-        Assert.Equal((1, 2), (Main(m2).TasksDone, Main(m2).TasksTotal));
+        Assert.Equal((1, 2), (MainOf(m2).TasksDone, MainOf(m2).TasksTotal));
 
         // Erledigte Aufgabe, deren Anlage der Monitor verpasst hat, zieht die Gesamtzahl mit.
         m2.Apply(Ev("TaskCompleted", """{"task_id":"2"}"""), T0);
         m2.Apply(Ev("TaskCompleted", """{"task_id":"0"}"""), T0);
-        Assert.Equal((3, 3), (Main(m2).TasksDone, Main(m2).TasksTotal));
+        Assert.Equal((3, 3), (MainOf(m2).TasksDone, MainOf(m2).TasksTotal));
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public class MonitorStateTests
         m.Apply(Ev("TaskCreated"), T0);
         m.Apply(Ev("TaskCompleted"), T0);
         m.Apply(Ev("UserPromptSubmit"), T0.AddMinutes(1));
-        Assert.Equal((0, 0), (Main(m).TasksDone, Main(m).TasksTotal));
+        Assert.Equal((0, 0), (MainOf(m).TasksDone, MainOf(m).TasksTotal));
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class MonitorStateTests
         var m = new MonitorState();
         m.Apply(Ev("PreToolUse", """{"tool_name":"Bash","tool_use_id":"a"}"""), T0);
         m.Apply(Ev("StopFailure", """{"error":"rate_limit"}"""), T0.AddSeconds(1));
-        var main = Main(m);
+        var main = MainOf(m);
         Assert.Equal(AgentPhase.Failed, main.Phase);
         Assert.Equal("rate_limit", main.Detail);
         Assert.Equal(ActionStatus.Failed, main.Actions[0].Status);
@@ -172,7 +172,7 @@ public class MonitorStateTests
         var m = new MonitorState { MaxActionsPerAgent = 5 };
         for (var i = 0; i < 12; i++)
             m.Apply(Ev("PreToolUse", $$"""{"tool_name":"Read","tool_use_id":"r{{i}}"}"""), T0.AddSeconds(i));
-        var acts = Main(m).Actions;
+        var acts = MainOf(m).Actions;
         Assert.Equal(5, acts.Count);
         Assert.Equal("r11", acts[^1].Id);
     }

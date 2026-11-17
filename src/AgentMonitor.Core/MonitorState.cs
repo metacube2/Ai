@@ -20,11 +20,14 @@ public enum ActionStatus { Running, Done, Failed }
 
 public sealed record ActionView(
     string Id, string Tool, string Summary, ActionStatus Status,
-    DateTimeOffset Start, DateTimeOffset? End);
+    DateTimeOffset Start, DateTimeOffset? End, string? Detail = null);
 
+/// <param name="Detail">Hinweis in Warnfarbe, z. B. „wartet auf Freigabe“ oder ein Fehler.</param>
+/// <param name="LastMessage">Erste Zeile der letzten Antwort des Agenten (nach Stop/SubagentStop).</param>
 public sealed record AgentView(
     string Id, string Label, bool IsMain, AgentPhase Phase, DateTimeOffset PhaseSince,
-    int TasksDone, int TasksTotal, string? Detail, IReadOnlyList<ActionView> Actions);
+    int TasksDone, int TasksTotal, string? Detail, IReadOnlyList<ActionView> Actions,
+    string? LastMessage = null);
 
 public sealed record SessionView(
     string Id, string Project, string? Title, bool Ended, DateTimeOffset LastEvent,
@@ -79,6 +82,7 @@ public sealed class MonitorState
                 case "UserPromptSubmit":
                     s.Main.SetPhase(AgentPhase.Thinking, now);
                     s.Main.Detail = null;
+                    s.Main.LastMessage = null;
                     // Neue Runde: Aufgabenzaehler der vorigen Runde zuruecksetzen, wenn alles erledigt war.
                     if (s.Main.TasksTotal > 0 && s.Main.TasksDone >= s.Main.TasksTotal)
                         s.Main.TasksDone = s.Main.TasksTotal = 0;
@@ -106,6 +110,7 @@ public sealed class MonitorState
                         CloseRunning(agent, ActionStatus.Done, now);
                         agent.SetPhase(AgentPhase.Done, now);
                         agent.Ended = now;
+                        agent.LastMessage = ToolSummary.FirstLine(e.LastAssistantMessage) ?? agent.LastMessage;
                     }
                     break;
 
@@ -115,6 +120,7 @@ public sealed class MonitorState
                         CloseRunning(agent, ActionStatus.Done, now);
                         agent.SetPhase(AgentPhase.Idle, now);
                         agent.Detail = null;
+                        agent.LastMessage = ToolSummary.FirstLine(e.LastAssistantMessage) ?? agent.LastMessage;
                     }
                     break;
 
@@ -255,6 +261,7 @@ public sealed class MonitorState
             Id = id,
             Tool = ToolSummary.DisplayName(e.ToolName),
             Summary = ToolSummary.Describe(e.ToolName, e.ToolInput),
+            Detail = ToolSummary.Detail(e.ToolName, e.ToolInput),
             Status = ActionStatus.Running,
             Start = now,
         });
@@ -310,7 +317,8 @@ public sealed class MonitorState
 
     private static AgentView ToView(Agent a) => new(
         a.Id, a.Label, a.IsMain, a.Phase, a.PhaseSince, a.TasksDone, a.TasksTotal, a.Detail,
-        a.Actions.Select(x => new ActionView(x.Id, x.Tool, x.Summary, x.Status, x.Start, x.End)).ToList());
+        a.Actions.Select(x => new ActionView(x.Id, x.Tool, x.Summary, x.Status, x.Start, x.End, x.Detail)).ToList(),
+        a.LastMessage);
 
     internal static string ProjectName(string? cwd)
     {
@@ -346,6 +354,7 @@ public sealed class MonitorState
         public DateTimeOffset Started { get; } = now;
         public DateTimeOffset? Ended { get; set; }
         public string? Detail { get; set; }
+        public string? LastMessage { get; set; }
         public int TasksDone { get; set; }
         public int TasksTotal { get; set; }
         public List<ActionItem> Actions { get; } = new();
@@ -365,6 +374,7 @@ public sealed class MonitorState
         public required string Id { get; init; }
         public required string Tool { get; init; }
         public required string Summary { get; init; }
+        public string? Detail { get; init; }
         public ActionStatus Status { get; set; }
         public DateTimeOffset Start { get; init; }
         public DateTimeOffset? End { get; set; }
