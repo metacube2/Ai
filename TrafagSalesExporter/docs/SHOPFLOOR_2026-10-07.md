@@ -1,7 +1,12 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-16 (Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-17 (Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
-stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-16.*
+stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
+
+Stand 2026-11-17 (Abschnitt 24): **CO-PA schreibt** (`SapCoPaEnabled`, Verkauf AE/Umsatz IST nach HZDAT, 02. bis 16.11. nachgeladen,
+gleich Fabios Kontrollwerten ausser AE vom 12.11.) und **der Arbeitsplatzfilter `M*` ist ein** (ganzes ZC22-Layout `/ P00 TX`),
+deployed 12:25 (`3298c93`). Erster Stichtag mit dem ganzen Layout ist der 18.11. *Ueberholt damit in der Zeile darunter: „Aus bleiben
+der Arbeitsplatzfilter `M*` … und `SapCoPaEnabled`“.*
 
 Das PPA-Shopfloor (Ersatz fuer das Excel "PPA-Shop-Floor-File-2026") laeuft jetzt im Cockpit als oberster Reiter
 "Operations (Shopfloor)" (Route `/operations`). Das Python-Backend wurde in C# nachgebaut, die Oberflaeche
@@ -865,8 +870,8 @@ offen). Die P76-Caches hat Ingo **nicht** geleert.
 | `Shopfloor:Zc22StatusAusschluss` | `FREI DRUC RÜCK VOKL*` | **ein** (Verzug und Vorrat, alle Abteilungen) |
 | `Shopfloor:RmMaterialAusschluss` | `E*,D*,F*,C*` | **ein** (jede `ShopRmSet`-Gruppe) |
 | `Shopfloor:SapCoPaHzdat` | `true` | ein, wirkt vorerst nur in der Vorschau `sap/copa` |
-| `Shopfloor:SapCoPaEnabled` | `false` | bleibt aus |
-| `Shopfloor:Zc22ArbplAusschluss` | leer | bleibt aus, wartet auf Fabio |
+| `Shopfloor:SapCoPaEnabled` | `false` | bleibt aus *(ueberholt 17.11. 12:25: `true`, Abschnitt 24)* |
+| `Shopfloor:Zc22ArbplAusschluss` | leer | bleibt aus, wartet auf Fabio *(ueberholt 17.11. 12:25: `M*`, Entscheid Ingo, Abschnitt 24)* |
 
 Tests: Shopfloor 164/164, Release-Worktree 1595/1595. Deploy bitgleich, ohne Alarm, 6 Dateien geaendert. Die Wochensicherung war
 faellig und lief wegen 249 MB im `-wal` seitenweise (818 s, dazu 68 s Uebertragung), deshalb Start 16:51 und DLL erst 17:06:28.
@@ -915,7 +920,8 @@ Protokoll `.tmp_deploy_2026-11-16_shopfloor_filter_ein.log`.
   Zeit davor ist nicht erklaert; das VPN trennte 22:04:46 und stand 22:06:34 wieder). Von 17:07 bis 22:07 (Samstag 07.11. bis
   22:26) standen deshalb die Tage 02. bis 12.11. noch ohne Materialfilter in der Datenbank.
 
-**Offen:**
+**Offen:** *(Stand 17.11. 12:30, Abschnitt 24: Punkt 1 erledigt, Lauf 04:00 hat stattgefunden; Punkte 2 und 3 durch Entscheid Ingo
+erledigt, `M*` und CO-PA ein; offen bleibt aus 3 die Differenz vom 12.11.)*
 1. **17.11. morgens:** ersten Stichtagslauf mit Statusfilter pruefen (`sap/status` ok, `layoutfilter` gesetzt, Werte geschrieben),
    auch wegen des 502 beim ersten Aufruf nach dem Import.
 2. **Arbeitsplatzfilter `M*`** (`Zc22ArbplAusschluss`): Frage an Fabio, ob die Teamleiter ZC22 „Mit Vorgangsdaten“ fahren. Solange er
@@ -928,3 +934,59 @@ Protokoll `.tmp_deploy_2026-11-16_shopfloor_filter_ein.log`.
    29'509 Stk. danach (Abnahme Abschnitt 6.3, Frage an Fabio, mit welcher Selektion die Teamleiter fahren). `VerzugAb` ab Januar 2027
    neu klaeren (Abschnitt 22).
 6. Phase C unveraendert (Abschnitt 22).
+
+## 24. CO-PA schreiben und Arbeitsplatzfilter `M*` eingeschaltet, CO-PA 02. bis 16.11. nachgeladen (Stand 2026-11-17)
+
+Anlass: Fabio per Teams, die Zahlen vom Freitag seien noch nicht drin. Entscheid Ingo 17.11. mittags: „8. ein, 3, 4 so dass es
+passt schalten“ (Punkt 8 = Verkauf AE/Umsatz IST aus CO-PA, Punkte 3/4 = Vorrat DW und TX wie die Liste der Teamleiter, also das
+ganze ZC22-Layout `/ P00 TX` mit Arbeitsplatzteil `M*`). Damit sind „wartet auf Fabio“ (Abschnitt 23, Offen 2) und „vorher die
+Differenz vom 12.11. klaeren“ (Offen 3) durch den Entscheid ersetzt; die Differenz selbst bleibt offen (unten).
+
+**Erster Stichtagslauf 17.11. (Abschnitt 23, Offen 1):** Der Lauf 04:00 hat stattgefunden (Werte mit SAP-Kennzeichen 04:01:35, z. B.
+Verzug SEH 80, TR5 563, TX 545, DW 336; TX-Vorrat 52'214), also anders als am 13. und 16.11. puenktlich. Dass der Statusfilter um
+04:01 griff, ist aus den gespeicherten Werten nicht einzeln belegt; der Schalter stand seit 17:06 des Vortags und griff im Lauf 17:07.
+
+**Vorschau produktiv vor dem Umschalten (nur GET, 17.11. ~12:00, Status `FREI DRUC RÜCK VOKL*` gesetzt):**
+
+| Feld | ohne `M*` | mit `M*` | Differenz |
+| --- | ---: | ---: | ---: |
+| Vorrat total TR5 / TX / DW | 60'437 / 54'428 / 48'984 | 60'191 / 53'971 / 48'530 | −246 / −457 / −454 |
+| offene KW TR5 / TX / DW | 1'758 / 4'022 / 2'224 | 1'647 / 3'565 / 1'780 | −111 / −457 / −444 |
+| TX plan5 | 5'477 | 5'020 | −457 |
+| Verzug SEH / TR5 / TX / DW | 60 / 388 / 381 / 333 | 60 / 307 / 376 / 312 | 0 / −81 / −5 / −21 |
+| SEH (alle Felder) | gleich | gleich | 0 |
+
+Laufzeit mit `Avo`: Vorrat 24.4 s, Verzug 1.9 s (ohne `Avo` 2.1 s / 0.4 s); Zeitlimit des Clients 5 Minuten. TX liegt mit `M*` heute
+457 Stk. tiefer, das trifft Fabios Befund „TX rund 450 bis 500 zu hoch“ (Abschnitt 22, Punkt 4). Am 16.11. waren es bei TX nur 105
+Stk. (der Wert haengt davon ab, welche Auftraege gerade an einem `M*`-Arbeitsplatz stehen). Grundlage, dass Status oder `M*` genau
+die ZC22-Ausblendung ergibt: P76-Abnahme 16.11. Abschnitt 8 (alle Abteilungen, 0 / 0 Abweichung). Die Vorschau mit `zc22arbpl=M*`
+ist nicht im selben Moment gegen ZC22 gehalten worden (kein P76-Lauf heute).
+
+**CO-PA-Vorschau 17.11.** (`GET sap/copa`, Stand bis 16.11.): AE 4'072'454.89, TX 1'375'254.74, DW 1'711'890.38, Umsatz IST
+3'514'314.84, TX 1'136'200.25, DW 1'761'925.58.
+
+**Umgesetzt (`3298c93`, Zweig `shopfloor-copa-arbpl-1711` ab `6a7de50` ohne Spanien, gemergt `684ae25`):** `appsettings.json`
+`Shopfloor:SapCoPaEnabled = true`, `Shopfloor:Zc22ArbplAusschluss = "M*"`; Test `Schalter_Status_Arbeitsplatz_Material_Und_CoPa_Ein`
+(vorher `Schalter_Seit_Dem_Import_In_P76_Status_Und_Material_Ein_Arbeitsplatz_Aus`); Kommentare in `ShopfloorOptions`. Shopfloor
+164/164, Release-Worktree 1607/1607. **Deploy 12:25** (bitgleich, ohne Alarm, 6 Dateien geaendert, keine Wochensicherung faellig),
+Protokoll `.tmp_deploy_2026-11-17_shopfloor_copa_arbpl.log`. Einkauf-Delta vorher geprueft (letzter Lauf 16.11. 14:34 erfolgreich,
+keiner aktiv). Der Protokollabsatz des Runners traegt noch den Titel des Deploys vom 12.11.; massgebend ist die Commit-Zeile `3298c93`.
+
+**Nach dem Deploy:**
+- Startlauf 12:26 (`sap/status` ok): `copa` geschrieben (Werte wie Vorschau, nichts manuell uebersprungen); Verzug und Vorrat mit
+  `layoutfilter` Status **und** `arbeitsplatz_ausschluss: M*`, alle 22 Vorrats- und 4 Verzugsfelder `eingefroren`. **Die
+  Stichtagswerte vom 17.11. bleiben deshalb ohne `M*` (Stand 04:01); der erste Stichtag mit dem ganzen Layout ist der 18.11.** Kein
+  `?ersetzen=1`, weil es auch das SEH-Tagesziel mit dem Rest des Mittags ueberschriebe.
+- **CO-PA nachgeladen (Ja Ingo 17.11.):** `POST sap/copa?tag=` 12:28 fuer die gespeicherten Tage 02., 03., 04., 05., 06., 09., 10.,
+  11., 12., 13. und 16.11.; je `ok`, `geschrieben`, nichts uebersprungen. Gegen Fabios Kontrollwerte (Eintrag Tag D = Stand bis D−1):
+  03. bis 12.11. (Stand bis 02. bis 11.11., der 09.11. = Stand bis 07.11.) **alle sechs Werte auf den Rappen gleich**; 13.11. (Stand bis
+  12.11.) Umsatz dreimal und AE DW gleich, **AE gesamt +3'906.68 und AE Transmitter +3'784.86** (bekannt aus Abschnitt 23, Ursache
+  weiter nicht untersucht). Der 02.11. traegt nach der Monatsregel den Oktober (AE 7'363'938.76, Umsatz IST 8'585'235.01).
+- Oberflaeche (Arbeits-Chrome, `#/m/verkauf?day=2026-11-13`): KW 46 zeigt AE und Umsatz je Tag mit „SAP-Schnittstelle“, Kacheln
+  Umsatz IST November 3'239'687 (49.8 % vom Ziel), AE 3'376'806, Book to Bill 1.04.
+
+**Offen:**
+1. 18.11. morgens: Stichtagslauf mit dem ganzen Layout pruefen (`layoutfilter.arbeitsplatz_ausschluss`, Laufzeit, Werte geschrieben).
+2. Differenz AE 12.11. (+3'906.68) mit Fabio klaeren (Vermutung weiter: seine Datei am 12.11. waehrend des Tages gezogen).
+3. Logistik-Historie vor dem 02.11., Selektion `/PPA DW/S ALLE`, `VerzugAb` ab 2027, Phase C: unveraendert wie Abschnitt 23.
+4. Handbuch Kapitel 10 (Verkauf) ist im Repo nachgefuehrt, live erst mit dem naechsten Deploy.

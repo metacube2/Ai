@@ -39,6 +39,10 @@ Modell) geleert; Gateway Client: `CoPaSumSet` mit Filter 200 (7'416 Byte, Period
 2. Vorschau `GET shopfloor/api/sap/copa?tag=2026-10-01` (= September): erwartet ae_aktuell 6'531'197.94, umsatz_ist 7'878'114.69.
 3. `Shopfloor:SapCoPaEnabled = true`, Deploy; Historie nur leere Tage (Paket 16.10.).
 
+*Erledigt 2026-11-17 12:25:* `SapCoPaEnabled = true` mit `SapCoPaHzdat` deployed (`3298c93`, Entscheid Ingo). Die Vorschau gegen
+Fabios November-Kontrollwerte ersetzte die September-Pruefung aus Punkt 2. Caches in P76 wurden nicht geleert; das Set lieferte
+trotzdem. Historie 02. bis 16.11. nachgeladen (leere Tage), vor dem 02.11. nicht. `docs/SHOPFLOOR_2026-10-07.md` 24.
+
 ## 4. Stichtagsfilter `Hzdat` (2026-11-13, T76)
 
 Auftrag Ingo 13.11. („bitte umsetzen“), Paket Fabio 13.11. Punkt 8: „Stichtag bis Vortag nach HZDAT (Angelegt am), nicht

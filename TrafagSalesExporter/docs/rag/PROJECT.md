@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-11-17 (Deploy 11:28 `6a7de50` Handbestellwesen naechtlicher AD-Abgleich, Schreiben aus); davor 2026-11-16 abends (Deploy 17:06 `7cc1a62` Shopfloor Status- und Materialfilter ein; davor Deploys 08:45 `e10ab3a` Export-Download und 09:33 `2da2682` Sales_All Blatt Lieferantenzuordnung); davor 2026-11-13 abends (Shopfloor Paket Fabio 13.11.: Phase A `d754a76`, Layoutfilter `9100537` deployed, T76 `T76K912906` offen; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Stichtagswerte und Verzug deployed `0e94279`; davor 2026-11-12 13:50: Uebergabe: Doku-Pruefung und Code-Review abgeschlossen, Entscheide offen; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt, nicht deployed; ZC12-Plan; Lieferantenbewertung Paket 1/2; WLAN-Stoerung; Doku-Pruefung: aeltere Kurzstand-Punkte 2026-11-06/09, 2026-11-05 und 2026-09-29 sowie die zwei Verweise auf den Juli-Abgleich als ueberholt markiert); davor 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-11-17 12:40 (Deploy 12:25 `3298c93` Shopfloor CO-PA schreiben und Arbeitsplatzfilter M* ein, CO-PA 02. bis 16.11. nachgeladen); davor 11:28 (Deploy `6a7de50` Handbestellwesen naechtlicher AD-Abgleich, Schreiben aus); davor 2026-11-16 abends (Deploy 17:06 `7cc1a62` Shopfloor Status- und Materialfilter ein; davor Deploys 08:45 `e10ab3a` Export-Download und 09:33 `2da2682` Sales_All Blatt Lieferantenzuordnung); davor 2026-11-13 abends (Shopfloor Paket Fabio 13.11.: Phase A `d754a76`, Layoutfilter `9100537` deployed, T76 `T76K912906` offen; davor 10:50 Finance Lieferantenzuordnung in Sales_All deployed `df48301`; davor 09:30 Einkauf Wuensche Marco deployed `052c5a3`; davor 08:15 Shopfloor Stichtagswerte und Verzug deployed `0e94279`; davor 2026-11-12 13:50: Uebergabe: Doku-Pruefung und Code-Review abgeschlossen, Entscheide offen; davor 12:00: Deploy 11:33 `e956183`; Spanien Supplier umgesetzt, nicht deployed; ZC12-Plan; Lieferantenbewertung Paket 1/2; WLAN-Stoerung; Doku-Pruefung: aeltere Kurzstand-Punkte 2026-11-06/09, 2026-11-05 und 2026-09-29 sowie die zwei Verweise auf den Juli-Abgleich als ueberholt markiert); davor 2026-11-11 (IC V1 ZICAA1 in T76 umgesetzt, T76K912884; Vorgehen „erst Plan, dann Plan ausfuehren“); davor 2026-11-09 abends (Uebergabe in `lastchange.md` oben: T76K912839 und T76K912860 in P76, Vorrat bereit zum Einschalten, Verkauf ISS-032); 2026-11-06 (ZZPRDAT: Transport T76K912490 gebuendelt); 2026-11-05 (Monthly Review, QmMeldungSet, Einkauf-Pruefung); 2026-11-02 abends (Nachtrag Shopfloor J4/KEA0, PPD-Verzug, KPI Kunden, P76-Caches); 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-10-16 (Kurzstand 2026-10-16 Shopfloor-Mengen aus SAP, Operations offen, Menue, Handbuch, Stuecklisten-Gehirn; 2026-10-14/15 Operations, Startseite, Nutzung, Zusammenarbeit Fabio; HERMES-Sicht, PM-10 bis PM-12, Finance-Review vom 2026-09-29; uebriger Kurzstand vom 2026-09-07)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
@@ -9,16 +9,24 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
+- **2026-11-17 mittags (Shopfloor, CO-PA und `M*` ein):** Entscheid Ingo („8. ein, 3, 4 so dass es passt schalten“). Deploy 12:25
+  `3298c93` (Zweig ab `6a7de50`, gemergt `684ae25`): `SapCoPaEnabled = true`, `Zc22ArbplAusschluss = M*` (ganzes ZC22-Layout
+  `/ P00 TX`; Vorschau produktiv: TX-Vorrat −457, DW −454, TR5 −246 Stk., Laufzeit 24 s). CO-PA 02. bis 16.11. nachgeladen, gleich
+  Fabios Kontrollwerten ausser AE Stand 12.11. (+3'906.68, offen). Stichtag 17.11. bleibt ohne `M*`, erster mit ganzem Layout 18.11.
+  Lauf 04:00 am 17.11. hat stattgefunden. **Produktiv `3298c93`; Spanien `c9208b5` weiter nicht deployed, Deploy nur aus dem
+  Arbeitszweig ab `684ae25`.** `docs/SHOPFLOOR_2026-10-07.md` 24.
 - **2026-11-17 (Handbestellwesen, AD-Abgleich):** Naechtlicher Abgleich der Mitarbeitenden mit dem AD gebaut und deployed 11:28
   `6a7de50` (gemergt `0197661`): gesperrt oder nicht im AD = inaktiv, Name/Mail der AD-Eintraege nachgefuehrt, Rollen bleiben,
   nichts geloescht. Nachtlauf zuerst nur Vorschau (`Schreiben` aus). Erste Vorschau: 15 von 109 aktiven wuerden inaktiv (alle
   Altbestand, im AD gesperrt). Acht Fragen an Ingo in `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` 6.11. **Produktiv `6a7de50`;
-  Spanien `c9208b5` weiter nicht deployed, Deploy nur aus dem Arbeitszweig ab `0197661`.**
+  Spanien `c9208b5` weiter nicht deployed, Deploy nur aus dem Arbeitszweig ab `0197661`.** *(Ueberholt 17.11. 12:25: produktiv
+  `3298c93`, Spanien nur ab `684ae25`, Zeile darueber.)*
 - **2026-11-16 abends (Shopfloor, Filter eingeschaltet):** `T76K912906` ist seit 16.11. in P76 (Import Ingo). Abnahme in P76 nur
   lesend: Vorschau = ZC22 fuer Verzug und Vorrat (90 Wertepaare), Logistik 18 von 18 Kontrollwerten Fabios. Deploy 17:06 `7cc1a62`
   (gemergt `69ed8a0`): Statusfilter `FREI DRUC RÜCK VOKL*` und Materialfilter `E*,D*,F*,C*` ein; Logistik 02. bis 12.11. nachgeladen.
   Aus bleiben der Arbeitsplatzfilter `M*` (DW deshalb 540 Stk. ueber der Liste der Teamleiter, wartet auf Fabio) und
-  `SapCoPaEnabled` (Vorschau trifft Fabios Werte an drei von vier Stichtagen exakt). Erster Stichtag mit Statusfilter: 17.11.,
+  `SapCoPaEnabled` (Vorschau trifft Fabios Werte an drei von vier Stichtagen exakt) *(ueberholt 17.11. 12:25: beide ein, Zeile
+  oben)*. Erster Stichtag mit Statusfilter: 17.11.,
   den Lauf morgens pruefen. **Produktiv `7cc1a62`; Spanien `c9208b5` weiter nicht deployed, Deploy nur aus dem Arbeitszweig ab
   `69ed8a0`.** *(Ueberholt 17.11. 11:28: produktiv `6a7de50`, Spanien nur ab `0197661`, Zeile darueber.)* `docs/SHOPFLOOR_2026-10-07.md` 23.
 - **2026-11-16 (Finance und Export-Seite):** Deploy 08:45 `e10ab3a`: „Excel oeffnen“ auf der Export-Seite laedt die Datei in den

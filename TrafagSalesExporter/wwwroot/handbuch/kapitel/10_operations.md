@@ -22,7 +22,7 @@ Diese Seite zeigt auf einen Blick, wie Operations zusammenhängt: woher die Zahl
 | Rückstandslisten | Kundenpositionen mit Ursache und neuem Termin | von Hand (SAP geplant) | Disposition | Welche Kunden warten, und warum? |
 | Logistik | verpackte Menge gegen Tagesmenge | SAP (ZC27) | automatisch, Personal von Hand | Stauen sich fertige Geräte vor dem Versand? |
 | Einkauf ZD05 | Fehlteile mit Code und Termin, Bewertungskennzahl | SAP | Einkauf | Ist die Versorgung im Griff? |
-| Verkauf | Auftragseingang, Umsatz, Go-for-it, Book to Bill | erwarteter Umsatz und Gutschriften aus SAP (Fiori), Auftragseingang und Umsatz von Hand (SAP geplant) | Verkauf | Kommt genug Arbeit herein? |
+| Verkauf | Auftragseingang, Umsatz, Go-for-it, Book to Bill | erwarteter Umsatz und Gutschriften aus SAP (Fiori), Auftragseingang und Umsatz aus SAP CO-PA (seit 17.11.2026) | Verkauf | Kommt genug Arbeit herein? |
 | Forecast und PPA-Grafik | Menge gegen Kapazität je Tag, Vorrat über 26 Wochen | SAP und Board | PPD | Reicht das Personal nächste Woche? |
 | Listen | Pendenzen, TVAV, Angebote, CZ ↔ CH, Einkauf ↔ Produktion | von Hand | alle | Wer macht was bis wann? |
 | KPI Liefertreue | OTD, OTIF, OTP je Monat, Abweichungsliste | SAP | automatisch | Wie zuverlässig liefern wir? |
@@ -451,13 +451,13 @@ Oben drei Kacheln: das **Go-for-it-Ziel** des Monats mit dem Umsatz Ist in Proze
 
 ### Wie gerechnet wird
 
-Auftragseingang und Umsatz sind Monatswerte kumuliert bis zum Vortag. Massgebend ist seit dem 13.11.2026 der Monat des letzten Arbeitstags: Am ersten Arbeitstag eines Monats (zum Beispiel Montag, 02.11.2026) gilt noch der Endstand des Vormonats. Der Tagesumsatz ist die Differenz zum vorherigen Eintrag; fällt der Umsatz Ist unter die Hälfte des vorherigen Werts, hat ein neuer Monat begonnen, und der Tagesumsatz ist der Umsatz Ist selbst. Book to Bill ist Auftragseingang geteilt durch Umsatz. Das Go-for-it-Ziel wird einmal pro Monat im Feld „Ziel festlegen“ erfasst. Vorgesehen ist die Lieferung aus SAP CO-PA wie im Bericht KE30 (Nettoerlös, Buchungskreis 1100, Stand bis Vortag nach Erfassungsdatum); sie ist gebaut und wartet auf die Abnahme. Stand 13.11.2026 werden Auftragseingang und Umsatz Ist noch von Hand erfasst.
+Auftragseingang und Umsatz sind Monatswerte kumuliert bis zum Vortag. Massgebend ist seit dem 13.11.2026 der Monat des letzten Arbeitstags: Am ersten Arbeitstag eines Monats (zum Beispiel Montag, 02.11.2026) gilt noch der Endstand des Vormonats. Der Tagesumsatz ist die Differenz zum vorherigen Eintrag; fällt der Umsatz Ist unter die Hälfte des vorherigen Werts, hat ein neuer Monat begonnen, und der Tagesumsatz ist der Umsatz Ist selbst. Book to Bill ist Auftragseingang geteilt durch Umsatz. Das Go-for-it-Ziel wird einmal pro Monat im Feld „Ziel festlegen“ erfasst. Auftragseingang und Umsatz Ist kommen seit dem 17.11.2026 aus SAP CO-PA wie im Bericht KE30 (Nettoerlös, Buchungskreis 1100, Stand bis Vortag nach Erfassungsdatum), jeweils gesamt, Transmitter und DW; die Tage ab dem 02.11.2026 sind nachgeladen. Ein von Hand erfasster Wert wird nicht überschrieben.
 
 Der erwartete Umsatz des Monats ersetzt seit dem 02.11.2026 den geplanten Umsatz aus ZC23. Er kommt aus der Fiori-App „Umsatz prüfen“: Umsatz plus offene Lieferungen plus offene Aufträge des Monats, Verkaufsorganisation 1100, in CHF. Die Gutschriften kommen aus derselben Quelle. Beide gelten wie die übrigen Verkaufswerte für den Monat des letzten Arbeitstags; ein von Hand erfasster Wert wird nicht überschrieben. Transmitter heisst seit diesem Datum TR5 und TX zusammen (Produktsparte 0005); die getrennten TR5-Felder sind entfallen.
 
 ### Einsatz im Arbeitsalltag
 
-**Verkauf:** täglich Auftragseingang und Umsatz eintragen, Anfang Monat das Go-for-it-Ziel. **Leitung Operations:** am Book to Bill die Richtung erkennen.
+**Verkauf:** Auftragseingang und Umsatz kommen aus SAP; von Hand nur noch Anfang Monat das Go-for-it-Ziel. **Leitung Operations:** am Book to Bill die Richtung erkennen.
 
 **Interpretation:** Ein Book to Bill über 1 heisst, es kommen mehr Aufträge herein, als ausgeliefert werden; der Vorrat und die Lieferzeiten wachsen. Unter 1 baut sich der Vorrat ab, mittelfristig droht Unterauslastung. Liegt der Umsatz Ist deutlich unter dem geplanten Umsatz aus ZC23, sind geplante Lieferungen nicht hinausgegangen; dann lohnt der Blick in die Rückstände.
 
