@@ -101,6 +101,14 @@ internal sealed class HbStartUndSicherung(
         // 2026-10-27: Herkunft AD oder Altbestand.
         if (!(await SpaltenAsync("Mitarbeiter")).Contains("AusAd"))
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN AusAd INTEGER NOT NULL DEFAULT 0;", ct);
+        // 2026-11-17: Vermerk des AD-Abgleichs (wieder aktiv nur, wenn der Abgleich deaktiviert hat), seit wann und warum inaktiv.
+        var mitarbeiterSpalten = await SpaltenAsync("Mitarbeiter");
+        if (!mitarbeiterSpalten.Contains("AdDeaktiviert"))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN AdDeaktiviert INTEGER NOT NULL DEFAULT 0;", ct);
+        if (!mitarbeiterSpalten.Contains("InaktivSeit"))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN InaktivSeit TEXT NULL;", ct);
+        if (!mitarbeiterSpalten.Contains("InaktivGrund"))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN InaktivGrund TEXT NULL;", ct);
     }
 
     private void Sichere(string pfad)

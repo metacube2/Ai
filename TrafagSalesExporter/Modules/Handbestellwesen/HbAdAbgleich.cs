@@ -8,16 +8,17 @@ namespace TrafagSalesExporter.Modules.Handbestellwesen;
 
 // Handbestellwesen 2026-11-17 (Auftrag Ingo nach der Sitzung mit Oscar): naechtlicher Abgleich des Mitarbeiterverzeichnisses
 // mit dem AD. Wer im AD gesperrt oder nicht (mehr) vorhanden ist, wird inaktiv; bei AD-Eintraegen werden Name und Mail
-// nachgefuehrt. Rollen (Limit, Kostenstelle, Admin, Wareneingang) bleiben unberuehrt, niemand wird automatisch wieder aktiv,
-// geloescht wird nichts (offene Frage, Konzept 6.11). Konzept docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md Abschnitt 6.11.
+// nachgefuehrt. Rollen (Limit, Kostenstelle, Admin, Wareneingang) bleiben unberuehrt, geloescht wird nichts. Nach den Antworten
+// Ingos vom selben Tag: abgelaufen = wie gesperrt, vom Abgleich Deaktivierte werden wieder aktiv, Altbestand mit aktivem AD-Konto
+// wird AD-Eintrag. Das AD wird nur gelesen (DirectorySearcher), nie geschrieben. Konzept docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md 6.11/6.12.
 
 public sealed class HbAdAbgleichOptions
 {
     /// <summary>Nachtlauf an: liest das AD und schreibt das Ergebnis ins Protokoll.</summary>
     public bool Enabled { get; set; } = true;
 
-    /// <summary>Aus = der Nachtlauf aendert nichts und schreibt nur die Vorschau ins Protokoll (Start so, bis Ingo die erste
-    /// Liste aus der Produktion gesehen hat). Der Knopf „Jetzt ausfuehren“ eines Admins wirkt unabhaengig davon.</summary>
+    /// <summary>Aus = der Nachtlauf aendert nichts und schreibt nur die Vorschau ins Protokoll (so vom 17.11. 11:28 bis zum
+    /// Scharfschalten am selben Tag). Der Knopf „Jetzt ausfuehren“ eines Admins wirkt unabhaengig davon.</summary>
     public bool Schreiben { get; set; }
 
     /// <summary>Fruehester Start am Tag (Ortszeit, "HH:mm"). Ein verpasster Lauf wird am selben Tag nachgeholt.</summary>
@@ -115,10 +116,25 @@ public enum HbAdBefund
     NichtImAd,
     /// <summary>AD-Eintrag, dessen Konto im AD nicht mehr vorkommt (beim Erfassen war es aktiv im AD).</summary>
     ImAdGeloescht,
+    /// <summary>Konto im AD abgelaufen (Ablaufdatum vorbei). Wie gesperrt behandelt (Entscheid Ingo 2026-11-17).</summary>
+    Abgelaufen,
     /// <summary>AD-Eintrag mit geaendertem Vornamen, Nachnamen oder Mail im AD.</summary>
     NameGeaendert,
-    /// <summary>Konto im AD abgelaufen, aber nicht gesperrt. Nur Hinweis, keine Aenderung (offene Frage).</summary>
-    Abgelaufen
+    /// <summary>Altbestand-Eintrag, dessen Konto im AD aktiv ist: wird AD-Eintrag (Entscheid Ingo 2026-11-17).</summary>
+    AltbestandImAd,
+    /// <summary>Vom Abgleich deaktiviert, Konto im AD wieder aktiv: wird wieder aktiv (Entscheid Ingo 2026-11-17).</summary>
+    WiederAktiv
+}
+
+public enum HbAdAktion
+{
+    Keine,
+    Deaktivieren,
+    Reaktivieren,
+    /// <summary>Name und Mail eines AD-Eintrags nachfuehren.</summary>
+    Nachfuehren,
+    /// <summary>Altbestand wird AD-Eintrag: Name und Mail aus dem AD, Kurzzeichen und Konto bleiben.</summary>
+    Uebernehmen
 }
 
 public sealed record HbAdAbgleichPosten(
@@ -127,7 +143,7 @@ public sealed record HbAdAbgleichPosten(
     string Name,
     bool AusAd,
     HbAdBefund Befund,
-    bool Deaktivieren,
+    HbAdAktion Aktion,
     string Details,
     int OffenAlsBesteller,
     int FreigabeOffenBei,
@@ -135,22 +151,41 @@ public sealed record HbAdAbgleichPosten(
     string? NeuNachname = null,
     string? NeuMail = null)
 {
+    public bool Deaktivieren => Aktion == HbAdAktion.Deaktivieren;
+
     public string BefundText => Befund switch
     {
         HbAdBefund.Gesperrt => "im AD gesperrt",
         HbAdBefund.NichtImAd => "nicht im AD",
         HbAdBefund.ImAdGeloescht => "im AD gelöscht",
-        HbAdBefund.NameGeaendert => "Name/Mail geändert",
         HbAdBefund.Abgelaufen => "im AD abgelaufen",
+        HbAdBefund.NameGeaendert => "Name/Mail geändert",
+        HbAdBefund.AltbestandImAd => "Altbestand, im AD aktiv",
+        HbAdBefund.WiederAktiv => "im AD wieder aktiv",
         _ => Befund.ToString()
+    };
+
+    public string AktionText => Aktion switch
+    {
+        HbAdAktion.Deaktivieren => "wird inaktiv",
+        HbAdAktion.Reaktivieren => "wird wieder aktiv",
+        HbAdAktion.Nachfuehren => "Name/Mail nachführen",
+        HbAdAktion.Uebernehmen => "wird AD-Eintrag",
+        _ => "keine"
     };
 }
 
 public sealed record HbAdAbgleichPlan(DateTime Zeit, int AdKonten, int AktiveMitarbeiter, IReadOnlyList<HbAdAbgleichPosten> Posten, string? Fehler)
 {
-    public int Deaktivierungen => Posten.Count(p => p.Deaktivieren);
-    public int Namensaenderungen => Posten.Count(p => p.Befund == HbAdBefund.NameGeaendert);
-    public int Hinweise => Posten.Count(p => p.Befund == HbAdBefund.Abgelaufen);
+    public int Deaktivierungen => Posten.Count(p => p.Aktion == HbAdAktion.Deaktivieren);
+    public int Reaktivierungen => Posten.Count(p => p.Aktion == HbAdAktion.Reaktivieren);
+    public int Namensaenderungen => Posten.Count(p => p.Aktion == HbAdAktion.Nachfuehren);
+    public int Uebernahmen => Posten.Count(p => p.Aktion == HbAdAktion.Uebernehmen);
+    public int Aenderungen => Posten.Count(p => p.Aktion != HbAdAktion.Keine);
+
+    public string Zusammenfassung =>
+        $"{Deaktivierungen} zu deaktivieren, {Reaktivierungen} wieder zu aktivieren, {Uebernahmen} aus dem Altbestand zu übernehmen, " +
+        $"{Namensaenderungen} Namen/Mail nachzuführen";
 }
 
 public sealed record HbAdAbgleichErgebnis(HbAdAbgleichPlan Plan, bool Geschrieben, string Meldung);
@@ -178,7 +213,7 @@ public sealed class HbAdAbgleichService(
     }
 
     /// <summary>Abgleich von Hand durch einen Admin, nach Sicht der Vorschau. Die Grenze <see cref="HbAdAbgleichOptions.MaxDeaktivierungen"/>
-    /// gilt hier nicht, die Pruefung der AD-Antwort schon.</summary>
+    /// gilt hier nicht, die Pruefung der AD-Antwort schon. Wirkt unabhaengig von <see cref="HbAdAbgleichOptions.Schreiben"/>.</summary>
     public async Task<HbAdAbgleichErgebnis> AusfuehrenAsync(HbBenutzer benutzer, CancellationToken ct = default)
     {
         NurAdmin(benutzer);
@@ -233,54 +268,73 @@ public sealed class HbAdAbgleichService(
     }
 
     /// <summary>
-    /// Regeln (Auftrag Ingo 2026-11-17), nur fuer aktive Eintraege mit Konto: Konto nicht im AD oder im AD gesperrt = deaktivieren.
-    /// AD-Eintrag mit anderem Namen oder anderer Mail im AD = nachfuehren (Konto und Kurzzeichen bleiben, Bestellungen verweisen
-    /// darauf). Altbestand, der im AD aktiv vorkommt, bleibt unveraendert. Abgelaufene Konten nur als Hinweis.
+    /// Regeln (Auftrag Ingo 2026-11-17, Antworten auf die Fragen am selben Tag), nur fuer Eintraege mit Konto:
+    /// aktiv und Konto nicht im AD, gesperrt oder abgelaufen = deaktivieren (mit Vermerk); aktiv und AD-Eintrag mit anderem Namen
+    /// oder anderer Mail = nachfuehren; aktiv und Altbestand mit aktivem AD-Konto = wird AD-Eintrag (Name und Mail aus dem AD);
+    /// inaktiv mit Vermerk des Abgleichs und Konto im AD wieder aktiv = wieder aktiv. Kurzzeichen und Konto aendert der Abgleich
+    /// nie, Bestellungen verweisen auf das Kurzzeichen. Das AD wird nur gelesen.
     /// </summary>
     public static List<HbAdAbgleichPosten> Plane(IEnumerable<HbMitarbeiter> mitarbeiter, IReadOnlyDictionary<string, HbAdKonto> ad,
         IReadOnlyDictionary<string, (int Besteller, int Freigeber)> offene, DateTime jetztUtc)
     {
         var posten = new List<HbAdAbgleichPosten>();
-        foreach (var m in mitarbeiter.Where(x => x.Aktiv).OrderBy(x => x.Kurzzeichen, StringComparer.OrdinalIgnoreCase))
+        foreach (var m in mitarbeiter.OrderBy(x => x.Kurzzeichen, StringComparer.OrdinalIgnoreCase))
         {
             var konto = HbService.KurzKonto(m.Konto);
             if (konto.Length == 0)
                 continue;
             offene.TryGetValue(m.Kurzzeichen, out var o);
-            HbAdAbgleichPosten Posten(HbAdBefund befund, bool deaktivieren, string details) =>
-                new(m.Id, m.Kurzzeichen, m.Name, m.AusAd, befund, deaktivieren, details, o.Besteller, o.Freigeber);
+            ad.TryGetValue(konto, out var k);
+            var abgelaufen = k?.AblaufUtc is { } ablauf && ablauf <= jetztUtc;
+            var adAktiv = k is not null && !k.Gesperrt && !abgelaufen;
 
-            if (!ad.TryGetValue(konto, out var k))
+            HbAdAbgleichPosten Posten(HbAdBefund befund, HbAdAktion aktion, string details, bool mitNamen = false)
+            {
+                var p = new HbAdAbgleichPosten(m.Id, m.Kurzzeichen, m.Name, m.AusAd, befund, aktion, details, o.Besteller, o.Freigeber);
+                return mitNamen && k is not null
+                    ? p with { NeuVorname = k.Vorname, NeuNachname = Nachname(k), NeuMail = k.Mail }
+                    : p;
+            }
+
+            if (!m.Aktiv)
+            {
+                if (m.AdDeaktiviert && adAktiv)
+                    posten.Add(Posten(HbAdBefund.WiederAktiv, HbAdAktion.Reaktivieren, $"Konto {konto} ist im AD wieder aktiv.", mitNamen: true));
+                continue;
+            }
+            if (k is null)
             {
                 posten.Add(m.AusAd
-                    ? Posten(HbAdBefund.ImAdGeloescht, true, $"Konto {konto} war im AD und ist dort nicht mehr vorhanden.")
-                    : Posten(HbAdBefund.NichtImAd, true, $"Konto {konto} ist im AD nicht vorhanden."));
+                    ? Posten(HbAdBefund.ImAdGeloescht, HbAdAktion.Deaktivieren, $"Konto {konto} war im AD und ist dort nicht mehr vorhanden.")
+                    : Posten(HbAdBefund.NichtImAd, HbAdAktion.Deaktivieren, $"Konto {konto} ist im AD nicht vorhanden."));
                 continue;
             }
             if (k.Gesperrt)
             {
-                posten.Add(Posten(HbAdBefund.Gesperrt, true, $"Konto {konto} ist im AD gesperrt."));
+                posten.Add(Posten(HbAdBefund.Gesperrt, HbAdAktion.Deaktivieren, $"Konto {konto} ist im AD gesperrt."));
                 continue;
             }
-            if (k.AblaufUtc is { } ablauf && ablauf <= jetztUtc)
-                posten.Add(Posten(HbAdBefund.Abgelaufen, false,
-                    $"Konto {konto} ist im AD seit {ablauf:dd.MM.yyyy} abgelaufen, aber nicht gesperrt. Keine Änderung."));
-            if (m.AusAd)
+            if (abgelaufen)
             {
-                var nachname = k.Nachname.Length > 0 ? k.Nachname : k.Anzeige;
-                if (!string.Equals(m.Vorname, k.Vorname, StringComparison.Ordinal) || !string.Equals(m.Nachname, nachname, StringComparison.Ordinal) ||
-                    !string.Equals(m.Mail, k.Mail, StringComparison.OrdinalIgnoreCase))
-                    posten.Add(Posten(HbAdBefund.NameGeaendert, false,
-                        $"{m.Vorname} {m.Nachname}, {m.Mail} -> {k.Vorname} {nachname}, {k.Mail}".Replace("  ", " ")) with
-                    {
-                        NeuVorname = k.Vorname,
-                        NeuNachname = nachname,
-                        NeuMail = k.Mail
-                    });
+                posten.Add(Posten(HbAdBefund.Abgelaufen, HbAdAktion.Deaktivieren, $"Konto {konto} ist im AD seit {k.AblaufUtc:dd.MM.yyyy} abgelaufen."));
+                continue;
             }
+            var neu = $"{k.Vorname} {Nachname(k)}, {k.Mail}".Replace("  ", " ");
+            if (!m.AusAd)
+            {
+                posten.Add(Posten(HbAdBefund.AltbestandImAd, HbAdAktion.Uebernehmen,
+                    $"Altbestand wird AD-Eintrag: {m.Vorname} {m.Nachname}, {m.Mail} -> {neu}".Replace("  ", " "), mitNamen: true));
+                continue;
+            }
+            if (!string.Equals(m.Vorname, k.Vorname, StringComparison.Ordinal) || !string.Equals(m.Nachname, Nachname(k), StringComparison.Ordinal) ||
+                !string.Equals(m.Mail, k.Mail, StringComparison.OrdinalIgnoreCase))
+                posten.Add(Posten(HbAdBefund.NameGeaendert, HbAdAktion.Nachfuehren,
+                    $"{m.Vorname} {m.Nachname}, {m.Mail} -> {neu}".Replace("  ", " "), mitNamen: true));
         }
         return posten;
     }
+
+    private static string Nachname(HbAdKonto k) => k.Nachname.Length > 0 ? k.Nachname : k.Anzeige;
 
     /// <summary>Offene Bestellungen je Kurzzeichen: als Besteller (offen oder Freigabe offen) und als gewaehlte Freigabeperson
     /// (Freigabe offen). Damit sieht der Admin, was an einer Person haengt, bevor sie inaktiv wird.</summary>
@@ -319,8 +373,7 @@ public sealed class HbAdAbgleichService(
             return new HbAdAbgleichErgebnis(plan, false, abbruch);
         }
 
-        var zusammenfassung = $"{plan.AdKonten} AD-Konten und {plan.AktiveMitarbeiter} aktive Mitarbeitende geprüft: " +
-                              $"{plan.Deaktivierungen} zu deaktivieren, {plan.Namensaenderungen} Namen/Mail nachzuführen.";
+        var zusammenfassung = $"{plan.AdKonten} AD-Konten und {plan.AktiveMitarbeiter} aktive Mitarbeitende geprüft: {plan.Zusammenfassung}.";
         if (grenze is { } g && plan.Deaktivierungen > g)
         {
             var gestoppt = $"{zusammenfassung} Gestoppt: mehr als {g} Deaktivierungen, nichts geändert. Ein Admin kann nach Sicht der " +
@@ -340,40 +393,68 @@ public sealed class HbAdAbgleichService(
 
         var ids = plan.Posten.Select(p => p.MitarbeiterId).ToHashSet();
         var eintraege = await db.Mitarbeiter.Where(x => ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, ct);
-        int deaktiviert = 0, nachgefuehrt = 0;
+        int deaktiviert = 0, reaktiviert = 0, uebernommen = 0, nachgefuehrt = 0;
         foreach (var p in plan.Posten)
         {
-            if (!eintraege.TryGetValue(p.MitarbeiterId, out var m) || !m.Aktiv)
+            if (!eintraege.TryGetValue(p.MitarbeiterId, out var m))
                 continue;
-            if (p.Deaktivieren)
+            switch (p.Aktion)
             {
-                m.Aktiv = false;
-                deaktiviert++;
-                var haengt = p.OffenAlsBesteller + p.FreigabeOffenBei > 0
-                    ? $" Offen: {p.OffenAlsBesteller} als Besteller, {p.FreigabeOffenBei} Freigaben."
-                    : "";
-                Protokoll(db, wer, "Mitarbeiter deaktiviert", m.Kurzzeichen, $"AD-Abgleich ({p.BefundText}): {p.Details}{haengt}");
-            }
-            else if (p.Befund == HbAdBefund.NameGeaendert && p.NeuNachname is not null)
-            {
-                m.Vorname = p.NeuVorname ?? "";
-                m.Nachname = p.NeuNachname;
-                m.Mail = p.NeuMail ?? "";
-                nachgefuehrt++;
-                Protokoll(db, wer, "Mitarbeiter aus AD aktualisiert", m.Kurzzeichen, $"AD-Abgleich: {p.Details}");
+                case HbAdAktion.Deaktivieren when m.Aktiv:
+                    m.Aktiv = false;
+                    m.AdDeaktiviert = true;
+                    m.InaktivSeit = Jetzt;
+                    m.InaktivGrund = $"AD-Abgleich: {p.BefundText}";
+                    deaktiviert++;
+                    var haengt = p.OffenAlsBesteller + p.FreigabeOffenBei > 0
+                        ? $" Offen: {p.OffenAlsBesteller} als Besteller, {p.FreigabeOffenBei} Freigaben."
+                        : "";
+                    Protokoll(db, wer, "Mitarbeiter deaktiviert", m.Kurzzeichen, $"AD-Abgleich ({p.BefundText}): {p.Details}{haengt}");
+                    break;
+                case HbAdAktion.Reaktivieren when !m.Aktiv && m.AdDeaktiviert:
+                    m.Aktiv = true;
+                    m.AdDeaktiviert = false;
+                    m.InaktivSeit = null;
+                    m.InaktivGrund = null;
+                    UebernimmNamen(m, p);
+                    reaktiviert++;
+                    Protokoll(db, wer, "Mitarbeiter reaktiviert", m.Kurzzeichen, $"AD-Abgleich: {p.Details}");
+                    break;
+                case HbAdAktion.Uebernehmen when m.Aktiv && !m.AusAd:
+                    UebernimmNamen(m, p);
+                    uebernommen++;
+                    Protokoll(db, wer, "Mitarbeiter aus AD übernommen", m.Kurzzeichen, $"AD-Abgleich: {p.Details}");
+                    break;
+                case HbAdAktion.Nachfuehren when m.Aktiv && m.AusAd:
+                    UebernimmNamen(m, p);
+                    nachgefuehrt++;
+                    Protokoll(db, wer, "Mitarbeiter aus AD aktualisiert", m.Kurzzeichen, $"AD-Abgleich: {p.Details}");
+                    break;
             }
         }
         var meldung = $"{plan.AdKonten} AD-Konten und {plan.AktiveMitarbeiter} aktive Mitarbeitende geprüft: {deaktiviert} deaktiviert, " +
-                      $"{nachgefuehrt} Namen/Mail nachgeführt.";
+                      $"{reaktiviert} wieder aktiv, {uebernommen} aus dem Altbestand übernommen, {nachgefuehrt} Namen/Mail nachgeführt.";
         Protokoll(db, wer, AktionLauf, "", meldung);
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Handbestellwesen: {Meldung}", meldung);
         return new HbAdAbgleichErgebnis(plan, true, meldung);
     }
 
+    /// <summary>Name und Mail aus dem AD; der Eintrag gilt danach als AD-Eintrag. Kurzzeichen und Konto bleiben.</summary>
+    private static void UebernimmNamen(HbMitarbeiter m, HbAdAbgleichPosten p)
+    {
+        if (p.NeuNachname is null)
+            return;
+        m.Vorname = p.NeuVorname ?? "";
+        m.Nachname = p.NeuNachname;
+        m.Mail = p.NeuMail ?? "";
+        m.AusAd = true;
+    }
+
     private static string Mit(string text, HbAdAbgleichPlan plan)
     {
-        var liste = string.Join(", ", plan.Posten.Where(p => p.Deaktivieren).Select(p => $"{p.Kurzzeichen} ({p.BefundText})"));
+        var liste = string.Join(", ", plan.Posten.Where(p => p.Aktion is HbAdAktion.Deaktivieren or HbAdAktion.Reaktivieren)
+            .Select(p => $"{p.Kurzzeichen} ({p.BefundText})"));
         var gesamt = liste.Length > 0 ? $"{text} Betroffen: {liste}." : text;
         return gesamt.Length > 4000 ? gesamt[..4000] + " …" : gesamt;
     }

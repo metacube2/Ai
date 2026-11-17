@@ -341,9 +341,12 @@
                     else
                     {
                         var ao = Options.CurrentValue.AdAbgleich;
-                        <p>Jede Nacht ab @ao.Uhrzeit vergleicht das Dashboard das Mitarbeiterverzeichnis mit dem AD. Wer im AD gesperrt oder
-                            nicht (mehr) vorhanden ist, wird inaktiv. Bei Einträgen aus dem AD werden Name und Mail nachgeführt. Limit,
-                            Kostenstelle, Admin und Wareneingang bleiben unverändert, niemand wird automatisch wieder aktiv, gelöscht wird nichts.</p>
+                        <p>Jede Nacht ab @ao.Uhrzeit vergleicht das Dashboard das Mitarbeiterverzeichnis mit dem AD (das AD wird nur gelesen).
+                            Wer im AD gesperrt, abgelaufen oder nicht (mehr) vorhanden ist, wird inaktiv. Wer so inaktiv wurde und im AD wieder aktiv
+                            ist, wird wieder aktiv; von Hand Deaktivierte bleiben inaktiv. Einträge aus dem Altbestand mit aktivem AD-Konto werden
+                            AD-Einträge, Name und Mail kommen dann aus dem AD. Kurzzeichen, Limit, Kostenstelle, Admin und Wareneingang bleiben
+                            unverändert, gelöscht wird nichts. Offene Bestellungen Deaktivierter weist ein Admin in der neuen Ansicht im Reiter
+                            «Deaktivierte» neu zu.</p>
                         <p>Nachtlauf: <b>@(ao.Enabled ? "an" : "aus")</b>, @(ao.Schreiben ? "ändert Daten" : "nur Vorschau, ändert nichts")
                             (<code>Handbestellwesen:AdAbgleich</code>). Er ändert nichts, wenn mehr als @ao.MaxDeaktivierungen Personen deaktiviert
                             würden oder das AD weniger als @ao.MinAdKonten Konten liefert.</p>
@@ -358,7 +361,7 @@
                             }
                             else
                             {
-                                <h3>@ap.AdKonten AD-Konten, @ap.AktiveMitarbeiter aktive Mitarbeitende: @ap.Deaktivierungen zu deaktivieren, @ap.Namensaenderungen Namen/Mail nachzuführen</h3>
+                                <h3>@ap.AdKonten AD-Konten, @ap.AktiveMitarbeiter aktive Mitarbeitende: @ap.Zusammenfassung</h3>
                                 @if (ap.Posten.Count > 0)
                                 {
                                     <table class="hb-tab">
@@ -366,12 +369,12 @@
                                         @foreach (var p in ap.Posten)
                                         {
                                             <tr><td>@p.Kurzzeichen</td><td>@p.Name</td><td>@(p.AusAd ? "AD" : "Altbestand")</td><td>@p.BefundText</td>
-                                                <td>@(p.Deaktivieren ? "wird inaktiv" : p.Befund == HbAdBefund.NameGeaendert ? "Name/Mail nachführen" : "keine")</td>
+                                                <td>@p.AktionText</td>
                                                 <td class="hb-zahl">@p.OffenAlsBesteller</td><td class="hb-zahl">@p.FreigabeOffenBei</td><td>@p.Details</td></tr>
                                         }
                                     </table>
                                 }
-                                @if (ap.Deaktivierungen + ap.Namensaenderungen > 0)
+                                @if (ap.Aenderungen > 0)
                                 {
                                     <div class="hb-filter">
                                         @if (!_adBestaetigen)
@@ -380,7 +383,7 @@
                                         }
                                         else
                                         {
-                                            <span>@ap.Deaktivierungen Personen deaktivieren und @ap.Namensaenderungen nachführen?</span>
+                                            <span>Ausführen: @ap.Zusammenfassung?</span>
                                             <button class="hb-knopf-grau" disabled="@_adLaeuft" @onclick="AdAusfuehrenAsync">Ja, ausführen</button>
                                             <button class="hb-knopf-grau" @onclick="() => _adBestaetigen = false">Abbrechen</button>
                                         }
