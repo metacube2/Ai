@@ -116,6 +116,67 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         return $"{nummer[..3]} {nummer[3..^4]} {nummer[^4..]}";
     }
 
+    // ---------- Offene Bestellungen deaktivierter Personen (Entscheid Ingo 2026-11-17: Hinweis an Admin, Neuzuweisung durch Admin) ----------
+
+    /// <summary>Offene Bestellungen, deren Besteller oder (bei offener Freigabe) gewaehlte Freigabeperson inaktiv ist.</summary>
+    public async Task<List<HbOffenBeiInaktiv>> OffeneBeiDeaktiviertenAsync()
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var inaktive = (await db.Mitarbeiter.AsNoTracking().Where(x => !x.Aktiv).Select(x => x.Kurzzeichen).ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (inaktive.Count == 0) return [];
+        var offene = await db.Bestellungen.AsNoTracking()
+            .Where(x => x.Status == HbStatus.Offen || x.Status == HbStatus.FreigabeOffen)
+            .ToListAsync();
+        return offene
+            .Select(b => new HbOffenBeiInaktiv(b, inaktive.Contains(b.BestellerKurzzeichen),
+                b.Status == HbStatus.FreigabeOffen && b.FreigeberKurzzeichen is { Length: > 0 } f && inaktive.Contains(f)))
+            .Where(x => x.BestellerInaktiv || x.FreigeberInaktiv)
+            .OrderBy(x => x.Bestellung.AngelegtAm)
+            .ToList();
+    }
+
+    /// <summary>Admin weist eine offene Bestellung einer anderen aktiven Person zu: Besteller und/oder (bei offener Freigabe) die
+    /// Freigabeperson. Die Freigabeperson braucht genuegend Limit und darf nicht der Besteller sein.</summary>
+    public async Task NeuZuweisenAsync(HbBenutzer benutzer, int bestellungId, string? neuerBesteller, string? neuerFreigeber)
+    {
+        if (!benutzer.IstAdmin) throw new HbException("Neu zuweisen darf nur ein Admin.");
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var b = await db.Bestellungen.FirstOrDefaultAsync(x => x.Id == bestellungId) ?? throw new HbException("Bestellung nicht gefunden.");
+        if (b.Status is not (HbStatus.Offen or HbStatus.FreigabeOffen))
+            throw new HbException("Nur offene Bestellungen lassen sich neu zuweisen.");
+        var aktive = await db.Mitarbeiter.AsNoTracking().Where(x => x.Aktiv).ToListAsync();
+        HbMitarbeiter Aktiv(string kurz) => aktive.FirstOrDefault(x => string.Equals(x.Kurzzeichen, kurz.Trim(), StringComparison.OrdinalIgnoreCase))
+            ?? throw new HbException($"„{kurz}“ ist keine aktive Person im Mitarbeiterverzeichnis.");
+        var details = new List<string>();
+        if (!string.IsNullOrWhiteSpace(neuerBesteller))
+        {
+            var m = Aktiv(neuerBesteller);
+            if (!string.Equals(m.Kurzzeichen, b.BestellerKurzzeichen, StringComparison.Ordinal))
+            {
+                details.Add($"Besteller {b.BestellerKurzzeichen} -> {m.Kurzzeichen}");
+                b.BestellerKurzzeichen = m.Kurzzeichen;
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(neuerFreigeber))
+        {
+            if (b.Status != HbStatus.FreigabeOffen)
+                throw new HbException("Die Freigabe ist schon erteilt; neu zuweisen lässt sich nur eine offene Freigabe.");
+            var f = Aktiv(neuerFreigeber);
+            if (f.Limit < b.Bestellwert)
+                throw new HbException($"{f.Kurzzeichen} darf bis CHF {f.Limit.ToString("N2", CultureInfo.GetCultureInfo("de-CH"))} freigeben, die Bestellung liegt bei CHF {b.Bestellwert.ToString("N2", CultureInfo.GetCultureInfo("de-CH"))}.");
+            if (options.CurrentValue.FreigabeNurGleicheKostenstelle && f.Kostenstelle != b.Kostenstelle)
+                throw new HbException($"{f.Kurzzeichen} gehört nicht zur Kostenstelle {b.Kostenstelle}.");
+            details.Add($"Freigabe {b.FreigeberKurzzeichen} -> {f.Kurzzeichen}");
+            b.FreigeberKurzzeichen = f.Kurzzeichen;
+        }
+        if (b.Status == HbStatus.FreigabeOffen && string.Equals(b.FreigeberKurzzeichen, b.BestellerKurzzeichen, StringComparison.OrdinalIgnoreCase))
+            throw new HbException("Besteller und Freigabe dürfen nicht dieselbe Person sein.");
+        if (details.Count == 0) throw new HbException("Bitte eine andere Person wählen.");
+        Protokolliere(db, benutzer, "Bestellung neu zugewiesen", b.Bestellnummer, string.Join(", ", details));
+        await db.SaveChangesAsync();
+    }
+
     // ---------- Schreiben ----------
 
     public async Task<HbBestellung> AnlegenAsync(HbBenutzer benutzer, HbBestellEingabe e)
@@ -412,6 +473,15 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         {
             var alt = await db.Mitarbeiter.AsNoTracking().FirstOrDefaultAsync(x => x.Id == m.Id) ?? throw new HbException("Mitarbeiter nicht gefunden.");
             m.AusAd = alt.AusAd;
+            // 2026-11-17: Vermerk, seit wann und warum inaktiv, kommt vom gespeicherten Eintrag. Wer von Hand aktiv oder inaktiv setzt,
+            // entscheidet selbst: der Vermerk des AD-Abgleichs faellt weg, der Abgleich macht diese Person nicht von sich aus wieder aktiv.
+            m.AdDeaktiviert = alt.AdDeaktiviert;
+            m.InaktivSeit = alt.InaktivSeit;
+            m.InaktivGrund = alt.InaktivGrund;
+            if (alt.Aktiv && !m.Aktiv)
+                (m.AdDeaktiviert, m.InaktivSeit, m.InaktivGrund) = (false, Jetzt, $"von Hand deaktiviert ({benutzer.Konto})");
+            else if (!alt.Aktiv && m.Aktiv)
+                (m.AdDeaktiviert, m.InaktivSeit, m.InaktivGrund) = (false, null, null);
             if (alt.AusAd)
             {
                 m.Konto = alt.Konto; m.Kurzzeichen = alt.Kurzzeichen; m.Vorname = alt.Vorname; m.Nachname = alt.Nachname; m.Mail = alt.Mail;
@@ -487,6 +557,7 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         if (n > 0)
         {
             m.Aktiv = false;
+            (m.AdDeaktiviert, m.InaktivSeit, m.InaktivGrund) = (false, Jetzt, $"von Hand deaktiviert statt gelöscht ({benutzer.Konto}, {n} Bestellungen)");
             Protokolliere(db, benutzer, "Mitarbeiter deaktiviert", m.Kurzzeichen, $"statt gelöscht, {n} Bestellungen");
             await db.SaveChangesAsync();
             return false;
@@ -517,7 +588,7 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         var m = await db.Mitarbeiter.FirstOrDefaultAsync(x => x.Id == id) ?? throw new HbException("Mitarbeiter nicht gefunden.");
         if (!m.AusAd) throw new HbException($"{m.Kurzzeichen} stammt aus dem Altbestand, nicht aus dem AD.");
         var ad = await AdPersonAsync(m.Konto) ?? throw new HbException($"Konto {m.Konto} ist im AD nicht (mehr) aktiv.");
-        UebernimmAd(m, ad);
+        UebernimmAdNamen(m, ad);
         Protokolliere(db, benutzer, "Mitarbeiter aus AD aktualisiert", m.Kurzzeichen, $"{m.Vorname} {m.Nachname}, {m.Mail}");
         await db.SaveChangesAsync();
     }
@@ -528,6 +599,15 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         if (k.Length == 0 || adSuche is null) return null;
         var treffer = await adSuche.SucheAsync(k);
         return treffer.FirstOrDefault(x => string.Equals(KurzKonto(x.Konto), k, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Nur Name und Mail aus dem AD; Kurzzeichen und Konto bleiben (2026-11-17: aus dem Altbestand uebernommene Eintraege
+    /// haben Kurzzeichen wie „RFI“ zum Konto „rfi“, und die Bestellungen verweisen auf das Kurzzeichen).</summary>
+    private static void UebernimmAdNamen(HbMitarbeiter m, HbAdPerson p)
+    {
+        m.Vorname = p.Vorname;
+        m.Nachname = p.Nachname.Length > 0 ? p.Nachname : p.Anzeige;
+        m.Mail = p.Mail;
     }
 
     private static void UebernimmAd(HbMitarbeiter m, HbAdPerson p)

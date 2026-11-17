@@ -6,8 +6,10 @@ using TrafagSalesExporter.Modules.Handbestellwesen;
 
 namespace TrafagSalesExporter.Tests;
 
-// Handbestellwesen 2026-11-17 (Auftrag Ingo): naechtlicher AD-Abgleich. Gesperrte und nicht im AD vorhandene Konten werden
-// inaktiv, Namen der AD-Eintraege werden nachgefuehrt, Rollen bleiben, niemand wird wieder aktiv, nichts wird geloescht.
+// Handbestellwesen 2026-11-17 (Auftrag Ingo): naechtlicher AD-Abgleich. Nach den Antworten Ingos vom selben Tag: gesperrt,
+// abgelaufen oder nicht im AD = inaktiv mit Vermerk; vom Abgleich Deaktivierte werden wieder aktiv, wenn das Konto im AD wieder
+// aktiv ist; Altbestand mit aktivem AD-Konto wird AD-Eintrag; Kurzzeichen, Konto und Rollen bleiben; nichts wird geloescht;
+// offene Bestellungen Deaktivierter weist ein Admin neu zu.
 public sealed class HandbestellwesenAdAbgleichTests : IDisposable
 {
     private readonly string _pfad = Path.Combine(Path.GetTempPath(), $"hb_ad_{Guid.NewGuid():N}.db");
@@ -25,7 +27,7 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
         {
             db.Database.EnsureCreated();
             db.Mitarbeiter.AddRange(
-                new HbMitarbeiter { Kurzzeichen = "abc", Vorname = "A", Nachname = "Altbestand", Konto = "abc", Limit = 500m, Kostenstelle = "875" },
+                new HbMitarbeiter { Kurzzeichen = "abc", Vorname = "A", Nachname = "Altbestand", Mail = "alt@trafag.com", Konto = "abc", Limit = 500m, Kostenstelle = "875" },
                 new HbMitarbeiter { Kurzzeichen = "alt", Vorname = "Al", Nachname = "Ausgetreten", Konto = "alt", Limit = 800m },
                 new HbMitarbeiter { Kurzzeichen = "ges", Vorname = "G", Nachname = "Gesperrt", Konto = "ges", AusAd = true, Limit = 900m },
                 new HbMitarbeiter { Kurzzeichen = "weg", Vorname = "W", Nachname = "Geloescht", Konto = "weg", AusAd = true, Limit = 5000m },
@@ -34,17 +36,23 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
                 new HbMitarbeiter { Kurzzeichen = "inakt", Nachname = "Inaktiv", Konto = "inakt", AusAd = true, Aktiv = false },
                 new HbMitarbeiter { Kurzzeichen = "ohne", Nachname = "Ohne Konto", Konto = "" },
                 new HbMitarbeiter { Kurzzeichen = "abl", Vorname = "B", Nachname = "Abgelaufen", Konto = "abl", AusAd = true },
-                new HbMitarbeiter { Kurzzeichen = "gro", Vorname = "C", Nachname = "Gross", Konto = "TRAFAG\\GRO" });
+                new HbMitarbeiter { Kurzzeichen = "gro", Vorname = "C", Nachname = "Gross", Konto = "TRAFAG\\GRO" },
+                new HbMitarbeiter { Kurzzeichen = "RFI", Vorname = "R", Nachname = "Fi", Konto = "rfi", Limit = 300m },
+                new HbMitarbeiter { Kurzzeichen = "rueck", Nachname = "Zurueck", Konto = "rueck", AusAd = true, Aktiv = false, AdDeaktiviert = true,
+                    InaktivSeit = new DateTime(2026, 11, 10), InaktivGrund = "AD-Abgleich: im AD gesperrt", Limit = 400m },
+                new HbMitarbeiter { Kurzzeichen = "manu", Nachname = "Vonhand", Konto = "manu", AusAd = true, Aktiv = false,
+                    InaktivGrund = "von Hand deaktiviert (koi)" });
             db.Bestellungen.AddRange(
                 Bestellung("E268750001", "weg", null, HbStatus.Offen),
                 Bestellung("E268750002", "abc", "weg", HbStatus.FreigabeOffen),
-                Bestellung("E268750003", "weg", null, HbStatus.Eingegangen));
+                Bestellung("E268750003", "weg", null, HbStatus.Eingegangen),
+                Bestellung("E268750004", "RFI", null, HbStatus.Offen));
             db.SaveChanges();
         }
         _ad.Setze(
-            Konto("abc"), Konto("ges", gesperrt: true), Konto("neu", "Anna", "Neu", "anna.neu@trafag.com"), Konto("inakt"),
-            Konto("abl", "B", "Abgelaufen", ablauf: new DateTime(2026, 10, 31, 0, 0, 0, DateTimeKind.Utc)), Konto("gro", "C", "Gross"),
-            Konto("fuell1"), Konto("fuell2"));
+            Konto("abc", "Anton", "Altmann", "anton.altmann@trafag.com"), Konto("ges", gesperrt: true), Konto("neu", "Anna", "Neu", "anna.neu@trafag.com"),
+            Konto("inakt"), Konto("abl", "B", "Abgelaufen", ablauf: new DateTime(2026, 10, 31, 0, 0, 0, DateTimeKind.Utc)), Konto("gro", "C", "Gross"),
+            Konto("rfi", "Ronny", "Fischer", "ronny.fischer@trafag.com"), Konto("rueck", "Rita", "Zurueck"), Konto("manu"), Konto("fuell1"), Konto("fuell2"));
         _optionen = new HbOptions { DatabasePath = _pfad, AdminUsers = ["admin"], AdAbgleich = new HbAdAbgleichOptions { MinAdKonten = 3, MaxDeaktivierungen = 10 } };
         _abgleich = new HbAdAbgleichService(_factory, _ad, new OptionsStub(_optionen), _uhr, NullLogger<HbAdAbgleichService>.Instance);
     }
@@ -57,25 +65,27 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
     }
 
     [Fact]
-    public async Task Vorschau_Deaktiviert_Gesperrte_Und_Fehlende_Und_Fuehrt_Namen_Nach()
+    public async Task Vorschau_Wendet_Alle_Regeln_An()
     {
         var plan = await _abgleich.VorschauAsync(Admin);
 
         Assert.Null(plan.Fehler);
-        Assert.Equal(8, plan.AdKonten);
+        Assert.Equal(11, plan.AdKonten);
         var p = plan.Posten.ToDictionary(x => x.Kurzzeichen);
-        Assert.Equal((HbAdBefund.NichtImAd, true), (p["alt"].Befund, p["alt"].Deaktivieren));
-        Assert.Equal((HbAdBefund.Gesperrt, true), (p["ges"].Befund, p["ges"].Deaktivieren));
-        Assert.Equal((HbAdBefund.ImAdGeloescht, true), (p["weg"].Befund, p["weg"].Deaktivieren));
-        Assert.Equal((HbAdBefund.NameGeaendert, false), (p["neu"].Befund, p["neu"].Deaktivieren));
-        Assert.Equal((HbAdBefund.Abgelaufen, false), (p["abl"].Befund, p["abl"].Deaktivieren));
-        // Altbestand im AD, inaktive Eintraege, Eintraege ohne Konto und Konto mit Domaene und Grossschreibung: nichts.
-        Assert.DoesNotContain("abc", p.Keys);
+        Assert.Equal((HbAdBefund.NichtImAd, HbAdAktion.Deaktivieren), (p["alt"].Befund, p["alt"].Aktion));
+        Assert.Equal((HbAdBefund.Gesperrt, HbAdAktion.Deaktivieren), (p["ges"].Befund, p["ges"].Aktion));
+        Assert.Equal((HbAdBefund.ImAdGeloescht, HbAdAktion.Deaktivieren), (p["weg"].Befund, p["weg"].Aktion));
+        Assert.Equal((HbAdBefund.Abgelaufen, HbAdAktion.Deaktivieren), (p["abl"].Befund, p["abl"].Aktion));
+        Assert.Equal((HbAdBefund.NameGeaendert, HbAdAktion.Nachfuehren), (p["neu"].Befund, p["neu"].Aktion));
+        Assert.Equal((HbAdBefund.AltbestandImAd, HbAdAktion.Uebernehmen), (p["abc"].Befund, p["abc"].Aktion));
+        Assert.Equal((HbAdBefund.AltbestandImAd, HbAdAktion.Uebernehmen), (p["gro"].Befund, p["gro"].Aktion));
+        Assert.Equal((HbAdBefund.AltbestandImAd, HbAdAktion.Uebernehmen), (p["RFI"].Befund, p["RFI"].Aktion));
+        Assert.Equal((HbAdBefund.WiederAktiv, HbAdAktion.Reaktivieren), (p["rueck"].Befund, p["rueck"].Aktion));
+        // Von Hand Deaktivierte, inaktive ohne Vermerk und Eintraege ohne Konto: nichts.
+        Assert.DoesNotContain("manu", p.Keys);
         Assert.DoesNotContain("inakt", p.Keys);
         Assert.DoesNotContain("ohne", p.Keys);
-        Assert.DoesNotContain("gro", p.Keys);
-        Assert.Equal(3, plan.Deaktivierungen);
-        Assert.Equal(1, plan.Namensaenderungen);
+        Assert.Equal((4, 1, 3, 1), (plan.Deaktivierungen, plan.Reaktivierungen, plan.Uebernahmen, plan.Namensaenderungen));
         // Was an der Person haengt: offene Bestellung als Besteller, offene Freigabe; Eingegangene zaehlen nicht.
         Assert.Equal((1, 1), (p["weg"].OffenAlsBesteller, p["weg"].FreigabeOffenBei));
     }
@@ -86,7 +96,7 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
         await _abgleich.VorschauAsync(Admin);
 
         await using var db = _factory.CreateDbContext();
-        Assert.Equal(8, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
+        Assert.Equal(9, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
         Assert.Equal("Alt", (await db.Mitarbeiter.SingleAsync(x => x.Kurzzeichen == "neu")).Nachname);
         Assert.Empty(await db.Protokoll.ToListAsync());
     }
@@ -98,16 +108,17 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
 
         Assert.False(e.Geschrieben);
         await using var db = _factory.CreateDbContext();
-        Assert.Equal(8, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
+        Assert.Equal(9, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
         var p = Assert.Single(await db.Protokoll.ToListAsync());
         Assert.Equal((HbAdAbgleichService.AktionVorschau, HbAdAbgleichService.SystemKonto), (p.Aktion, p.Benutzer));
         Assert.Contains("alt (nicht im AD)", p.Details);
         Assert.Contains("weg (im AD gelöscht)", p.Details);
+        Assert.Contains("rueck (im AD wieder aktiv)", p.Details);
         Assert.True(await _abgleich.HeuteErledigtAsync());
     }
 
     [Fact]
-    public async Task Nachtlauf_Mit_Schreiben_Deaktiviert_Fuehrt_Namen_Nach_Und_Laesst_Rollen()
+    public async Task Nachtlauf_Mit_Schreiben_Setzt_Vermerk_Uebernimmt_Altbestand_Und_Laesst_Kurzzeichen_Und_Rollen()
     {
         _optionen.AdAbgleich.Schreiben = true;
 
@@ -116,39 +127,132 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
         Assert.True(e.Geschrieben);
         await using var db = _factory.CreateDbContext();
         var m = await db.Mitarbeiter.ToDictionaryAsync(x => x.Kurzzeichen);
-        Assert.False(m["alt"].Aktiv);
-        Assert.False(m["ges"].Aktiv);
-        Assert.False(m["weg"].Aktiv);
-        Assert.True(m["abc"].Aktiv);
-        Assert.True(m["abl"].Aktiv);
-        Assert.True(m["ohne"].Aktiv);
-        Assert.False(m["inakt"].Aktiv);
-        // Nichts geloescht, Limit bleibt (auch bei Deaktivierten).
-        Assert.Equal(9, m.Count);
+        Assert.Equal(12, m.Count);
+        foreach (var k in new[] { "alt", "ges", "weg", "abl" })
+        {
+            Assert.False(m[k].Aktiv);
+            Assert.True(m[k].AdDeaktiviert);
+            Assert.Equal(new DateTime(2026, 11, 17, 3, 0, 0), m[k].InaktivSeit);
+        }
+        Assert.Equal("AD-Abgleich: im AD gesperrt", m["ges"].InaktivGrund);
+        Assert.Equal("AD-Abgleich: im AD abgelaufen", m["abl"].InaktivGrund);
         Assert.Equal(5000m, m["weg"].Limit);
-        // Name und Mail aus dem AD, Konto, Kurzzeichen und Rollen unveraendert.
+        // Wieder aktiv, Vermerk weg, Name aus dem AD.
+        Assert.Equal((true, false, null, null, "Zurueck"), (m["rueck"].Aktiv, m["rueck"].AdDeaktiviert, m["rueck"].InaktivSeit, m["rueck"].InaktivGrund, m["rueck"].Nachname));
+        Assert.False(m["manu"].Aktiv);
+        Assert.False(m["inakt"].Aktiv);
+        Assert.True(m["ohne"].Aktiv);
+        // Altbestand wird AD-Eintrag: Name und Mail aus dem AD, Kurzzeichen und Konto bleiben (RFI mit Konto rfi).
+        Assert.Equal((true, "Anton", "Altmann", "anton.altmann@trafag.com", "abc", 500m), (m["abc"].AusAd, m["abc"].Vorname, m["abc"].Nachname, m["abc"].Mail, m["abc"].Konto, m["abc"].Limit));
+        Assert.Equal((true, "RFI", "rfi", "Fischer"), (m["RFI"].AusAd, m["RFI"].Kurzzeichen, m["RFI"].Konto, m["RFI"].Nachname));
+        Assert.Equal((true, "TRAFAG\\GRO"), (m["gro"].AusAd, m["gro"].Konto));
+        Assert.Equal("RFI", (await db.Bestellungen.SingleAsync(x => x.Bestellnummer == "E268750004")).BestellerKurzzeichen);
+        // AD-Eintrag: Name und Mail nachgefuehrt, Rollen unveraendert.
         var neu = m["neu"];
         Assert.Equal(("Anna", "Neu", "anna.neu@trafag.com"), (neu.Vorname, neu.Nachname, neu.Mail));
         Assert.Equal(("neu", "neu", 700m, "875", true, true, true), (neu.Kurzzeichen, neu.Konto, neu.Limit, neu.Kostenstelle, neu.IstAdmin, neu.IstWareneingang, neu.Aktiv));
         var protokoll = await db.Protokoll.ToListAsync();
-        Assert.Equal(3, protokoll.Count(x => x.Aktion == "Mitarbeiter deaktiviert" && x.Benutzer == HbAdAbgleichService.SystemKonto));
+        Assert.Equal(4, protokoll.Count(x => x.Aktion == "Mitarbeiter deaktiviert" && x.Benutzer == HbAdAbgleichService.SystemKonto));
         Assert.Contains(protokoll, x => x.Aktion == "Mitarbeiter deaktiviert" && x.Bezug == "weg" && x.Details.Contains("1 als Besteller, 1 Freigaben"));
+        Assert.Single(protokoll, x => x.Aktion == "Mitarbeiter reaktiviert" && x.Bezug == "rueck");
+        Assert.Equal(3, protokoll.Count(x => x.Aktion == "Mitarbeiter aus AD übernommen"));
         Assert.Single(protokoll, x => x.Aktion == "Mitarbeiter aus AD aktualisiert" && x.Bezug == "neu");
         Assert.Single(protokoll, x => x.Aktion == HbAdAbgleichService.AktionLauf);
     }
 
     [Fact]
-    public async Task Wieder_Aktiv_Im_AD_Macht_Niemanden_Automatisch_Aktiv()
+    public async Task Wieder_Aktiv_Im_AD_Macht_Nur_Vom_Abgleich_Deaktivierte_Wieder_Aktiv()
     {
         _optionen.AdAbgleich.Schreiben = true;
         await _abgleich.NachtlaufAsync();
-        _ad.Setze(Konto("abc"), Konto("alt"), Konto("ges"), Konto("weg"), Konto("neu", "Anna", "Neu", "anna.neu@trafag.com"), Konto("inakt"), Konto("abl"), Konto("gro"));
+        _ad.Setze(Konto("abc"), Konto("alt"), Konto("ges"), Konto("weg"), Konto("neu", "Anna", "Neu", "anna.neu@trafag.com"), Konto("inakt"),
+            Konto("abl"), Konto("gro"), Konto("rfi"), Konto("rueck"), Konto("manu"));
 
         var plan = await _abgleich.VorschauAsync(Admin);
 
-        Assert.DoesNotContain(plan.Posten, x => x.Kurzzeichen is "alt" or "ges" or "weg" or "inakt");
+        var wieder = plan.Posten.Where(x => x.Aktion == HbAdAktion.Reaktivieren).Select(x => x.Kurzzeichen).OrderBy(x => x).ToList();
+        Assert.Equal(["abl", "alt", "ges", "weg"], wieder);
+        await _abgleich.AusfuehrenAsync(Admin);
         await using var db = _factory.CreateDbContext();
-        Assert.False((await db.Mitarbeiter.SingleAsync(x => x.Kurzzeichen == "ges")).Aktiv);
+        var m = await db.Mitarbeiter.ToDictionaryAsync(x => x.Kurzzeichen);
+        Assert.True(m["ges"].Aktiv);
+        Assert.True(m["alt"].AusAd);
+        Assert.False(m["manu"].Aktiv);
+        Assert.False(m["inakt"].Aktiv);
+    }
+
+    [Fact]
+    public async Task Von_Hand_Gesetzter_Status_Loescht_Den_Vermerk()
+    {
+        _optionen.AdAbgleich.Schreiben = true;
+        await _abgleich.NachtlaufAsync();
+        var hb = new HbService(_factory, new OptionsStub(_optionen), _uhr);
+        HbMitarbeiter Lade(string k) { using var db = _factory.CreateDbContext(); return db.Mitarbeiter.AsNoTracking().Single(x => x.Kurzzeichen == k); }
+
+        var ges = Lade("ges");
+        ges.Aktiv = true;
+        await hb.SpeichereMitarbeiterAsync(Admin, ges);
+        var abc = Lade("abc");
+        abc.Aktiv = false;
+        await hb.SpeichereMitarbeiterAsync(Admin, abc);
+
+        Assert.Equal((true, false, null), (Lade("ges").Aktiv, Lade("ges").AdDeaktiviert, Lade("ges").InaktivGrund));
+        Assert.Equal((false, false, "von Hand deaktiviert (admin)"), (Lade("abc").Aktiv, Lade("abc").AdDeaktiviert, Lade("abc").InaktivGrund));
+        // abc ist im AD aktiv, wurde aber von Hand deaktiviert: der Abgleich laesst es inaktiv.
+        var plan = await _abgleich.VorschauAsync(Admin);
+        Assert.DoesNotContain(plan.Posten, x => x.Kurzzeichen == "abc");
+    }
+
+    [Fact]
+    public async Task Aus_AD_Aktualisieren_Laesst_Das_Kurzzeichen()
+    {
+        _optionen.AdAbgleich.Schreiben = true;
+        await _abgleich.NachtlaufAsync();
+        var hb = new HbService(_factory, new OptionsStub(_optionen), _uhr, new SucheFake(new HbAdPerson("rfi", "Ronny", "Fischer-Neu", "rf@trafag.com", "Ronny Fischer")));
+        await using var db = _factory.CreateDbContext();
+        var rfi = await db.Mitarbeiter.AsNoTracking().SingleAsync(x => x.Kurzzeichen == "RFI");
+
+        await hb.AktualisiereAusAdAsync(Admin, rfi.Id);
+
+        await using var db2 = _factory.CreateDbContext();
+        var neu = await db2.Mitarbeiter.SingleAsync(x => x.Id == rfi.Id);
+        Assert.Equal(("RFI", "rfi", "Fischer-Neu"), (neu.Kurzzeichen, neu.Konto, neu.Nachname));
+    }
+
+    [Fact]
+    public async Task Offene_Bestellungen_Deaktivierter_Weist_Ein_Admin_Neu_Zu()
+    {
+        _optionen.AdAbgleich.Schreiben = true;
+        await _abgleich.NachtlaufAsync();
+        var hb = new HbService(_factory, new OptionsStub(_optionen), _uhr);
+
+        var offen = await hb.OffeneBeiDeaktiviertenAsync();
+
+        Assert.Equal(2, offen.Count);
+        var b1 = Assert.Single(offen, x => x.Bestellung.Bestellnummer == "E268750001");
+        var b2 = Assert.Single(offen, x => x.Bestellung.Bestellnummer == "E268750002");
+        Assert.Equal((true, false), (b1.BestellerInaktiv, b1.FreigeberInaktiv));
+        Assert.Equal((false, true), (b2.BestellerInaktiv, b2.FreigeberInaktiv));
+
+        await Assert.ThrowsAsync<HbException>(() => hb.NeuZuweisenAsync(new HbBenutzer("abc", null, false), b1.Bestellung.Id, "neu", null));
+        await Assert.ThrowsAsync<HbException>(() => hb.NeuZuweisenAsync(Admin, b1.Bestellung.Id, "ges", null));      // inaktiv
+        await Assert.ThrowsAsync<HbException>(() => hb.NeuZuweisenAsync(Admin, b2.Bestellung.Id, null, "ohne"));     // Limit 0
+        await Assert.ThrowsAsync<HbException>(() => hb.NeuZuweisenAsync(Admin, b2.Bestellung.Id, null, "abc"));      // = Besteller
+        await Assert.ThrowsAsync<HbException>(() => hb.NeuZuweisenAsync(Admin, b1.Bestellung.Id, null, "neu"));      // keine offene Freigabe
+        await using (var db = _factory.CreateDbContext())
+        {
+            var eingegangen = await db.Bestellungen.SingleAsync(x => x.Bestellnummer == "E268750003");
+            await Assert.ThrowsAsync<HbException>(() => hb.NeuZuweisenAsync(Admin, eingegangen.Id, "neu", null));
+        }
+
+        await hb.NeuZuweisenAsync(Admin, b1.Bestellung.Id, "neu", null);
+        await hb.NeuZuweisenAsync(Admin, b2.Bestellung.Id, null, "neu");
+
+        Assert.Empty(await hb.OffeneBeiDeaktiviertenAsync());
+        await using var db2 = _factory.CreateDbContext();
+        Assert.Equal("neu", (await db2.Bestellungen.SingleAsync(x => x.Id == b1.Bestellung.Id)).BestellerKurzzeichen);
+        Assert.Equal("neu", (await db2.Bestellungen.SingleAsync(x => x.Id == b2.Bestellung.Id)).FreigeberKurzzeichen);
+        Assert.Equal(2, await db2.Protokoll.CountAsync(x => x.Aktion == "Bestellung neu zugewiesen"));
     }
 
     [Fact]
@@ -162,7 +266,7 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
         Assert.False(e.Geschrieben);
         Assert.Contains("AD nicht lesbar", e.Meldung);
         await using var db = _factory.CreateDbContext();
-        Assert.Equal(8, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
+        Assert.Equal(9, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
         Assert.Single(await db.Protokoll.ToListAsync(), x => x.Aktion == HbAdAbgleichService.AktionAbbruch);
         Assert.False(await _abgleich.HeuteErledigtAsync());
     }
@@ -178,7 +282,7 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
         Assert.False(e.Geschrieben);
         Assert.Contains("unvollständig", e.Meldung);
         await using var db = _factory.CreateDbContext();
-        Assert.Equal(8, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
+        Assert.Equal(9, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
     }
 
     [Fact]
@@ -192,7 +296,7 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
         Assert.False(nacht.Geschrieben);
         await using (var db = _factory.CreateDbContext())
         {
-            Assert.Equal(8, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
+            Assert.Equal(9, await db.Mitarbeiter.CountAsync(x => x.Aktiv));
             Assert.Single(await db.Protokoll.ToListAsync(), x => x.Aktion == HbAdAbgleichService.AktionGestoppt);
         }
         Assert.True(await _abgleich.HeuteErledigtAsync());
@@ -201,7 +305,8 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
 
         Assert.True(vonHand.Geschrieben);
         await using var db2 = _factory.CreateDbContext();
-        Assert.Equal(5, await db2.Mitarbeiter.CountAsync(x => x.Aktiv));
+        // 9 aktive, 4 deaktiviert, 1 wieder aktiv.
+        Assert.Equal(6, await db2.Mitarbeiter.CountAsync(x => x.Aktiv));
         Assert.Contains(await db2.Protokoll.ToListAsync(), x => x.Aktion == "Mitarbeiter deaktiviert" && x.Benutzer == "admin");
     }
 
@@ -275,6 +380,12 @@ public sealed class HandbestellwesenAdAbgleichTests : IDisposable
 
         public Task<HbAdStand> LadeAlleAsync(CancellationToken ct = default)
             => Task.FromResult(Fehler is null ? new HbAdStand(_konten, null) : new HbAdStand(null, Fehler));
+    }
+
+    private sealed class SucheFake(params HbAdPerson[] personen) : IHbAdSuche
+    {
+        public Task<IReadOnlyList<HbAdPerson>> SucheAsync(string? begriff) =>
+            Task.FromResult<IReadOnlyList<HbAdPerson>>(personen.Where(p => p.Konto.StartsWith(begriff ?? "", StringComparison.OrdinalIgnoreCase)).ToList());
     }
 
     private sealed class Factory(string verbindung) : IDbContextFactory<HbDbContext>

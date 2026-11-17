@@ -50,6 +50,14 @@
     <MudAlert Severity="Severity.Warning" Class="mb-3">Für dein Windows-Konto „@_ich.Konto“ gibt es keinen Mitarbeitereintrag. Bestellen ist erst möglich, wenn ein Admin dich im Mitarbeiterverzeichnis erfasst.</MudAlert>
 }
 
+@if (_ich.IstAdmin && _beiInaktiven.Count > 0)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-3">
+        @_beiInaktiven.Count offene @(_beiInaktiven.Count == 1 ? "Bestellung hängt" : "Bestellungen hängen") an deaktivierten Personen.
+        <MudLink OnClick="() => _tab = 5" Class="ml-2">Im Reiter «Deaktivierte» neu zuweisen</MudLink>
+    </MudAlert>
+}
+
 <MudGrid Spacing="2" Class="mb-3">
     @Kachel("Meine offenen", $"{_meineOffen.Count:N0}", $"CHF {Chf(_meineOffen.Sum(x => x.Bestellwert))}", Icons.Material.Filled.ShoppingCart, Color.Primary, () => ZeigeOffene("meine"))
     @Kachel("Wartet auf meine Freigabe", $"{_meineFreigaben.Count:N0}", _meineFreigaben.Count == 0 ? "nichts zu tun" : "bitte prüfen", Icons.Material.Filled.HowToReg, _meineFreigaben.Count > 0 ? Color.Warning : Color.Success, () => ZeigeOffene("freigaben"))
@@ -404,6 +412,75 @@
                 </MudGrid>
             }
         </MudTabPanel>
+
+        @* ---------------- Deaktivierte (Entscheid Ingo 2026-11-17): offene Bestellungen neu zuweisen ---------------- *@
+        <MudTabPanel Text="Deaktivierte" Icon="@Icons.Material.Filled.PersonOff" BadgeData="@(_beiInaktiven.Count > 0 ? _beiInaktiven.Count : null)" BadgeColor="Color.Warning">
+            <MudText Typo="Typo.h6" Class="mb-2">Offene Bestellungen bei deaktivierten Personen</MudText>
+            @if (_beiInaktiven.Count == 0)
+            {
+                <MudAlert Severity="Severity.Success" Dense="true" Class="mb-4">Keine offene Bestellung hängt an einer deaktivierten Person.</MudAlert>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Neue Person wählen und «Zuweisen». Als Freigabe kommen nur aktive Personen mit genügend Limit in Frage, nicht der Besteller. Jede Zuweisung steht im Protokoll.</MudText>
+                <MudTable Items="_beiInaktiven" Dense="true" Hover="true" Class="mb-6">
+                    <HeaderContent><MudTh>Nummer</MudTh><MudTh>Angelegt</MudTh><MudTh>Text</MudTh><MudTh Style="text-align:right">CHF</MudTh><MudTh>Besteller</MudTh><MudTh>Freigabe bei</MudTh><MudTh>Neu zuweisen</MudTh></HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@HbService.FormatNummer(context.Bestellung.Bestellnummer)</MudTd>
+                        <MudTd>@context.Bestellung.AngelegtAm.ToString("dd.MM.yyyy")</MudTd>
+                        <MudTd>@context.Bestellung.Text</MudTd>
+                        <MudTd Style="text-align:right">@(context.Bestellung.WertText ?? Chf(context.Bestellung.Bestellwert))</MudTd>
+                        <MudTd>
+                            @context.Bestellung.BestellerKurzzeichen
+                            @if (context.BestellerInaktiv) { <MudChip T="string" Size="Size.Small" Color="Color.Warning">inaktiv</MudChip> }
+                        </MudTd>
+                        <MudTd>
+                            @(context.Bestellung.Status == HbStatus.FreigabeOffen ? context.Bestellung.FreigeberKurzzeichen : "-")
+                            @if (context.FreigeberInaktiv) { <MudChip T="string" Size="Size.Small" Color="Color.Warning">inaktiv</MudChip> }
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                @if (context.BestellerInaktiv)
+                                {
+                                    <MudSelect T="string" Value="@NeuWahl(_neuBesteller, context.Bestellung.Id)" ValueChanged="@((string v) => { _neuBesteller[context.Bestellung.Id] = v; })"
+                                               Label="Besteller" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:180px">
+                                        @foreach (var m in _mitarbeiter.Where(x => x.Aktiv).OrderBy(x => x.Kurzzeichen, StringComparer.OrdinalIgnoreCase))
+                                        {
+                                            <MudSelectItem Value="@m.Kurzzeichen">@m.Kurzzeichen · @m.Name</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                }
+                                @if (context.FreigeberInaktiv)
+                                {
+                                    <MudSelect T="string" Value="@NeuWahl(_neuFreigeber, context.Bestellung.Id)" ValueChanged="@((string v) => { _neuFreigeber[context.Bestellung.Id] = v; })"
+                                               Label="Freigabe" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:180px">
+                                        @foreach (var m in MoeglicheFreigeber(context.Bestellung))
+                                        {
+                                            <MudSelectItem Value="@m.Kurzzeichen">@m.Kurzzeichen · @m.Name (CHF @Chf(m.Limit))</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                }
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="() => ZuweisenAsync(context.Bestellung.Id)">Zuweisen</MudButton>
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+            <MudText Typo="Typo.h6" Class="mb-2">Deaktivierte Personen (@_deaktivierte.Count)</MudText>
+            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Wer vom AD-Abgleich deaktiviert wurde, wird wieder aktiv, sobald das Konto im AD wieder aktiv ist. Von Hand Deaktivierte aktiviert ein Admin unter Stammdaten.</MudText>
+            <MudTable Items="_deaktivierte" Dense="true" Hover="true" RowsPerPage="25">
+                <HeaderContent><MudTh>Kurzzeichen</MudTh><MudTh>Name</MudTh><MudTh>Herkunft</MudTh><MudTh>Inaktiv seit</MudTh><MudTh>Grund</MudTh><MudTh Style="text-align:right">Offene Bestellungen</MudTh></HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Kurzzeichen</MudTd>
+                    <MudTd>@context.Name</MudTd>
+                    <MudTd>@(context.AusAd ? "AD" : "Altbestand")</MudTd>
+                    <MudTd>@(context.InaktivSeit?.ToString("dd.MM.yyyy HH:mm") ?? "-")</MudTd>
+                    <MudTd>@(context.InaktivGrund ?? "vor dem 17.11.2026 deaktiviert, Grund nicht festgehalten")</MudTd>
+                    <MudTd Style="text-align:right">@OffeneVon(context.Kurzzeichen)</MudTd>
+                </RowTemplate>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
     }
 </MudTabs>
 
@@ -466,7 +543,7 @@
             await Hb.ProtokolliereAufrufAsync(_ich);
             _aufrufErfasst = true;
         }
-        _tab = (Tab ?? string.Empty).ToLowerInvariant() switch { "offen" => 1, "archiv" => 2, "stammdaten" => _ich.IstAdmin ? 3 : 0, "nutzung" => _ich.IstAdmin ? 4 : 0, _ => 0 };
+        _tab = (Tab ?? string.Empty).ToLowerInvariant() switch { "offen" => 1, "archiv" => 2, "stammdaten" => _ich.IstAdmin ? 3 : 0, "nutzung" => _ich.IstAdmin ? 4 : 0, "deaktivierte" => _ich.IstAdmin ? 5 : 0, _ => 0 };
         await LadenAsync();
         _kostenstelle ??= _ich.Mitarbeiter?.Kostenstelle is { Length: > 0 } eigene ? eigene : null;
         if (_tab == 4) await NutzungLadenAsync();
@@ -484,6 +561,45 @@
         _meineFreigaben = _offen.Where(x => x.Status == HbStatus.FreigabeOffen && (Gleich(x.FreigeberKurzzeichen, ich) || _ich.IstAdmin)).ToList();
         var monat = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         _diesenMonat = _offen.Count(x => x.AngelegtAm >= monat) + (await Hb.BestellungenAsync(true)).Count(x => x.AngelegtAm >= monat);
+        if (_ich.IstAdmin)
+        {
+            _beiInaktiven = await Hb.OffeneBeiDeaktiviertenAsync();
+            _deaktivierte = _mitarbeiter.Where(x => !x.Aktiv)
+                .OrderByDescending(x => x.InaktivSeit ?? DateTime.MinValue).ThenBy(x => x.Kurzzeichen, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+    }
+
+    // Deaktivierte (Entscheid Ingo 2026-11-17): Hinweis an Admins, offene Bestellungen neu zuweisen
+    private List<HbOffenBeiInaktiv> _beiInaktiven = [];
+    private List<HbMitarbeiter> _deaktivierte = [];
+    private readonly Dictionary<int, string?> _neuBesteller = [];
+    private readonly Dictionary<int, string?> _neuFreigeber = [];
+
+    private static string? NeuWahl(Dictionary<int, string?> wahl, int id) => wahl.TryGetValue(id, out var v) ? v : null;
+
+    private IEnumerable<HbMitarbeiter> MoeglicheFreigeber(HbBestellung b) => _mitarbeiter
+        .Where(x => x.Aktiv && x.Limit >= b.Bestellwert && !Gleich(x.Kurzzeichen, b.BestellerKurzzeichen) &&
+                    (!Options.CurrentValue.FreigabeNurGleicheKostenstelle || x.Kostenstelle == b.Kostenstelle))
+        .OrderBy(x => x.Kostenstelle == b.Kostenstelle ? 0 : 1).ThenBy(x => x.Kurzzeichen, StringComparer.OrdinalIgnoreCase);
+
+    private int OffeneVon(string kurzzeichen) => _beiInaktiven.Count(x =>
+        (x.BestellerInaktiv && Gleich(x.Bestellung.BestellerKurzzeichen, kurzzeichen)) ||
+        (x.FreigeberInaktiv && Gleich(x.Bestellung.FreigeberKurzzeichen, kurzzeichen)));
+
+    private async Task ZuweisenAsync(int id)
+    {
+        try
+        {
+            await Hb.NeuZuweisenAsync(_ich!, id, NeuWahl(_neuBesteller, id), NeuWahl(_neuFreigeber, id));
+            _neuBesteller.Remove(id);
+            _neuFreigeber.Remove(id);
+            Snackbar.Add("Neu zugewiesen.", Severity.Success);
+            await LadenAsync();
+        }
+        catch (HbException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
     }
 
     // ---------- Neue Bestellung ----------

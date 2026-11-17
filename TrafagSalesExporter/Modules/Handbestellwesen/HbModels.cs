@@ -113,6 +113,16 @@ public sealed class HbMitarbeiter
     /// sind hier nicht editierbar. false = Altbestand aus der PHP-Datenbank, voll pflegbar. Neue Eintraege nur noch aus dem AD.</summary>
     public bool AusAd { get; set; }
 
+    /// <summary>Vom AD-Abgleich deaktiviert (2026-11-17). Nur solche Eintraege macht der Abgleich wieder aktiv, wenn das Konto im AD
+    /// wieder aktiv ist (Entscheid Ingo); von Hand Deaktivierte bleiben inaktiv. Jede Aenderung von Hand loescht den Vermerk.</summary>
+    public bool AdDeaktiviert { get; set; }
+
+    /// <summary>Seit wann inaktiv (gesetzt ab 2026-11-17; leer bei aelteren Deaktivierungen).</summary>
+    public DateTime? InaktivSeit { get; set; }
+
+    /// <summary>Warum inaktiv, z. B. „AD-Abgleich: im AD gesperrt“ oder „von Hand deaktiviert (koi)“.</summary>
+    public string? InaktivGrund { get; set; }
+
     public string Name => $"{Vorname} {Nachname}".Trim();
 }
 
@@ -140,6 +150,9 @@ public sealed class HbProtokoll
     public string Bezug { get; set; } = string.Empty;
     public string Details { get; set; } = string.Empty;
 }
+
+/// <summary>Offene Bestellung, an der eine deaktivierte Person haengt (Besteller oder offene Freigabe), 2026-11-17.</summary>
+public sealed record HbOffenBeiInaktiv(HbBestellung Bestellung, bool BestellerInaktiv, bool FreigeberInaktiv);
 
 /// <summary>Angemeldeter Benutzer mit seinen Rechten im Handbestellwesen.</summary>
 public sealed record HbBenutzer(string Konto, HbMitarbeiter? Mitarbeiter, bool IstAdmin)
