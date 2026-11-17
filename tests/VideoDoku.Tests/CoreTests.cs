@@ -69,6 +69,46 @@ public class ScriptParserTests
         Assert.Contains(ScriptParser.Parse("titel: x", Base).Errors, e => e.Contains("keine Szene"));
 
     [Fact]
+    public void Skript_schreiben_und_wieder_lesen_ergibt_dasselbe()
+    {
+        var original = ScriptParser.Parse("""
+            titel: Rundlauf
+            musik: musik/a.mp3
+
+            [bild: bilder/01.jpg]
+            Erster Absatz.
+
+            Zweiter Absatz.
+            [pause: 2]
+
+            [clip: clips/b.mp4]
+            Text zum Clip.
+
+            [bild: bilder/02.png]
+            [dauer: 6]
+            """, Base).Project;
+
+        var text = ScriptWriter.Write(original, Base);
+        var again = ScriptParser.Parse(text, Base);
+
+        Assert.Empty(again.Errors);
+        Assert.Equal(original.Title, again.Project.Title);
+        Assert.Equal(original.MusicPath, again.Project.MusicPath);
+        Assert.Equal(original.Scenes.Count, again.Project.Scenes.Count);
+        for (var i = 0; i < original.Scenes.Count; i++)
+        {
+            var a = original.Scenes[i];
+            var b = again.Project.Scenes[i];
+            Assert.Equal(a.VisualPath, b.VisualPath);
+            Assert.Equal(a.Kind, b.Kind);
+            Assert.Equal(a.Text, b.Text);
+            Assert.Equal(a.PauseAfter, b.PauseAfter);
+            Assert.Equal(a.SilentSeconds, b.SilentSeconds);
+        }
+        Assert.Contains("[bild: bilder/01.jpg]", text);
+    }
+
+    [Fact]
     public void Absolute_Pfade_bleiben()
     {
         var r = ScriptParser.Parse("[bild: \"D:\\Fotos\\a.jpg\"]", Base);

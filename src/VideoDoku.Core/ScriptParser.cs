@@ -137,7 +137,7 @@ public static partial class ScriptParser
     }
 
     /// <summary>Zeilen zu einem Fliesstext; Leerzeilen trennen Absaetze (fuer die Stimme: Satzpause).</summary>
-    internal static string Normalize(string text)
+    public static string Normalize(string text)
     {
         var paragraphs = text.ReplaceLineEndings("\n")
             .Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
