@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -413,3 +413,30 @@ im Monat, der Tagesdienst mindestens zwei pro Tag.
 ausserhalb des Excel-Datumsbereichs, und `ReadRows` verwirft dann die ganze Datei; `ReadDecimalNullable` liest Text-Zahlen nach der
 Serverkultur („4.5“ wird unter de-DE zu 45). Beides vom Agenten gemessen. Der Hub-Abruf schreibt deshalb Daten nur als echtes Datum
 und Zahlen als Zahl.
+
+## 15. Rexx Hub: Admin-Zugang erhalten, Anleitung gelesen, Rueckfragen an Artjom (2026-11-17)
+
+**Mail Artjom Yahno (rexx systems) 17.11. 13:46** auf Ingos Anfrage von 11:02: Ingo hat den **HR-Admin-Zugang** mit Zugriff auf
+den Rexx Hub. **Es gibt keine Testumgebung**, gearbeitet wird direkt im produktiven System. Zugangsdaten (Adresse, Benutzer, Token)
+stehen nicht in der Mail. Anhang `DokumentationrexxHub_v17` (im Anhang als `.cdt`, von Ingo als `.docx` gespeichert, 55 Seiten,
+Stand 13.08.2026; Kopie unversioniert in der Repo-Wurzel, Herstellerdokument nicht ins Repository).
+
+**Was die Anleitung beantwortet (nur gelesen, kein Aufruf an Rexx):**
+- API-Benutzer und Token legt ein Admin selbst an: „Tools > Rexx Hub“, Widget „API“ (neuer Benutzer erhaelt einen Token und steht auf
+  „Aktiv = Nein“). Je Benutzer: Verfallsdatum, vertrauenswuerdige IP-Adressen, Ausgabesprache. Endpunkte werden je Benutzer freigegeben
+  (gruen = frei, gelb = Benutzer inaktiv, rot = nicht frei); Swagger-Testseite je Endpunkt (Aufrufe erscheinen in den Hub-Logs).
+- Berechtigungen: #1411 Endpunkte anzeigen, #1412 bearbeiten, #1417 Konfigurationslogs, #1418 Rexx Hub Log.
+- Adresse nach Muster `https://KUNDE.rexx-systems.com/rexx_hub/v1/...`, Anmeldung `Authorization: Bearer <token>`.
+- `GET /v1/datawarehouse/{dataWarehouseQueryId}` steht in der Endpunktliste (HR und ER), also der Weg, den `RexxHubClient` (Abschnitt 14)
+  benutzt. Ob er bei uns grau (noch nicht verfuegbar) ist, zeigt erst das Widget „API Endpunkte“.
+- Limit: eine Anfrage gleichzeitig ueber alle API-Benutzer, 50'000 Anfragen je Monat (Webhooks zaehlen mit); Hub-Logs 90 Tage.
+- Antworten mit `data`, `_links` (Blaettern) und `_meta` (Anzahl, Seiten, request id), JSON oder XML; Fehlercodes 400/401/403/404/422/429/500/504.
+
+**Mail Ingo an Artjom 17.11. (gesendet, laut Ingo; Text im Chat von Claude entworfen):** Bitte um Bestaetigung (1) der Basisadresse
+`https://<Rexx-Adresse>/rexx_hub/v1`, (2) der Berechtigungen #1411/#1412/#1417/#1418 fuer Ingos Benutzer, (3) ob
+`/v1/datawarehouse/{id}` freigeschaltet ist und die DWH-Abfragen #775 und #777 abrufbar sind oder freigegeben werden muessen. Angekuendigt:
+nur lesender Zugriff, einmal am Tag frueh, eigener API-Benutzer mit IP-Beschraenkung auf unseren Server. Antwort offen.
+
+**Naechste Schritte, wenn die Antwort da ist:** API-Benutzer anlegen (Verfallsdatum, IP des Servers), `datawarehouse` fuer #775/#777
+freigeben, Token und Adresse in die Server-Einstellungen `HrKpi:RexxHub` (nicht ins Repository), Testabruf `/BiDashboard/admin/rexxhub/test`,
+dann `Enabled = true` (Abschnitt 14).
