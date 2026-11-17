@@ -1,7 +1,8 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-17 (Abschnitt 6.11: naechtlicher AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau
-aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
+Stand: 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, `Schreiben` an, noch nicht
+ausgefuehrt: ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
+AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
 der juengste Inhalt war damals vom 2026-10-27).
 Status: **produktiv.** Das Modul ist seit dem 22.10. 13:38 deployed, die Altdaten sind am 22.10. 14:27 importiert (6.4), die
 PHP-Anwendung ist abgeschaltet und der Reiter seit dem 27.10. sichtbar (6.8). Offen: Zugriff und Grundtests der Anwender *(laut Ingo am 17.11. vom Einkauf, Sandro, abgenommen)*,
@@ -363,7 +364,7 @@ fuer neue Eintraege ueberholt.
 - **Altbestand** (109 Eintraege aus der PHP-Datenbank): voll pflegbar wie bisher, auch loeschen/deaktivieren (6.9).
 - Commit `3ff16f5`, Suite 1294/1294, deployed 2026-10-27 13:45. Folge: Faellt die AD-Suche auf dem Server aus, kann niemand Neues erfasst werden.
 
-### 6.11 Naechtlicher AD-Abgleich (2026-11-17, deployed, Nachtlauf nur Vorschau)
+### 6.11 Naechtlicher AD-Abgleich (2026-11-17, deployed, Nachtlauf nur Vorschau; *Regeln teils ueberholt durch 6.12*)
 
 Auftrag Ingo 2026-11-17 nach der Sitzung mit Oscar: „Es soll einen naechtlichen Abgleich geben. Gesperrte User oder User, die
 nicht im AD sind, sollen automatisch auf inaktiv gesetzt werden, geloeschte User im AD auch auf geloescht im Tool. Sync jede
@@ -419,7 +420,7 @@ offen (`koi`, `gun` und alle mit Haken „Admin“). Bestaetigt sind in der Prod
 gesperrt“ und der Nachtjob; Namensnachfuehrung und „im AD geloescht“ sind nur durch Tests belegt, die Seite wurde als Text
 gelesen, nicht als Bild angesehen.
 
-**Fragen an Ingo** (Stand 2026-11-17; bis zur Antwort gilt die vorsichtige Variante):
+**Fragen an Ingo** (Stand 2026-11-17; bis zur Antwort gilt die vorsichtige Variante). *Beantwortet am selben Tag, siehe 6.12.*
 
 1. „Geloescht im Tool“: physisch loeschen wie der Knopf Loeschen (nur ohne Bestellungen, sonst deaktivieren) oder deaktivieren mit
    Vermerk (gebaut)? Das AD unterscheidet „geloescht“ nicht von „nie vorhanden“; gebaut ist die Unterscheidung ueber die Herkunft.
@@ -434,6 +435,57 @@ gelesen, nicht als Bild angesehen.
 8. Austritte: Sperrt die IT das AD-Konto am Austrittstag? Sonst bleibt die Person so lange aktiv; spaeter allenfalls Austritt aus
    dem Rexx Hub.
 
+### 6.12 Antworten Ingo und Teil 2 des AD-Abgleichs (2026-11-17 nachmittags, deployed, noch nicht ausgefuehrt)
+
+**Antworten Ingo** auf die Frageliste im Chat (dort anders nummeriert als 6.11, hier nach Inhalt):
+
+| Frage | Antwort Ingo |
+| --- | --- |
+| Geloescht im AD | deaktivieren wie gebaut |
+| Offene Bestellungen Deaktivierter | Hinweis an Admin, Neuzuweisung durch Admin |
+| Scharfschalten | „ja mach scharf“ |
+| Im AD wieder aktiv | automatisch wieder aktiv |
+| Altbestand mit aktivem AD-Konto | wird AD-Eintrag, Name und Mail aus dem AD; „niemals etwas im AD schreiben, nur lesen“ |
+| Abgelaufene Konten | wie gesperrt |
+| Meldung | neuer Reiter „Deaktivierte“, sichtbar fuer Admins (statt Mail) |
+| Neue AD-Konten | „Liste wer reinkommen soll ins Tool, viele brauchen es ja nicht“: gelesen als weiter nur von Hand, nichts gebaut |
+
+Weiter offen: die Grenze von 10 Deaktivierungen je Nacht (nicht beantwortet, bleibt) und ob die IT das AD-Konto am Austrittstag
+sperrt (nicht gefragt).
+
+**Gebaut** (Zweig `hb-adabgleich-1711` ab `6a7de50`, Commit `44a3ed1`, gemergt `ffe19e2`):
+
+- **Vermerk am Mitarbeitereintrag** (neue Spalten `AdDeaktiviert`, `InaktivSeit`, `InaktivGrund`, beim Start per `ALTER TABLE`):
+  der Abgleich setzt ihn beim Deaktivieren; wer von Hand aktiv oder inaktiv gesetzt wird, verliert ihn (der Server nimmt ihn aus dem
+  gespeicherten Eintrag, nicht aus dem Formular). **Wieder aktiv** macht der Abgleich nur Eintraege mit Vermerk, und nur wenn das
+  Konto im AD aktiv und nicht abgelaufen ist; von Hand Deaktivierte bleiben inaktiv.
+- **Abgelaufen** = wie gesperrt: deaktivieren.
+- **Altbestand mit aktivem AD-Konto** wird AD-Eintrag: Vorname, Nachname und Mail aus dem AD, `AusAd` an; Kurzzeichen und Konto
+  bleiben (Bestellungen verweisen auf das Kurzzeichen, z. B. Kurzzeichen in Grossbuchstaben zu einem Konto in Kleinbuchstaben).
+  Dazu aendert auch „Aus AD aktualisieren“ das Kurzzeichen nicht mehr (vorher setzte es Kurzzeichen = Konto).
+- **Reiter „Deaktivierte“** in der neuen Ansicht (`/bestellwesen/deaktivierte`, nur Admins): offene Bestellungen, deren Besteller
+  oder offene Freigabe an einer inaktiven Person haengt, mit Neuzuweisung (Besteller: jede aktive Person; Freigabe: aktive Person
+  mit genuegend Limit, nicht der Besteller, bei `FreigabeNurGleicheKostenstelle` nur dieselbe Kostenstelle; jede Zuweisung im
+  Protokoll), darunter alle inaktiven Personen mit „inaktiv seit“ und Grund. **Hinweis** oben auf der Seite fuer Admins, sobald eine
+  offene Bestellung an einer inaktiven Person haengt.
+- **`Schreiben` an.** Grenze 10 bleibt; „Jetzt ausfuehren“ eines Admins wirkt weiter ohne Grenze.
+- **Nur lesen im AD:** im Modul gibt es keinen schreibenden Verzeichnisaufruf (geprueft per Suche nach `CommitChanges`,
+  Eigenschaftszuweisungen und `Invoke`; nur `DirectorySearcher`).
+- Tests: 15 im Abgleich (vorher 12), Handbestellwesen 36/36, Suite 1610/1610 mit Ergebnisdatei, Release-Worktree 1610/1610.
+
+**Deploy 2026-11-17 12:36** (`44a3ed1`, aus dem Zweig): bitgleich, zehn Routen 200, Alarm nur die Schreibzeit von
+`trafag_exporter.db-wal` (Groesse gleich, DB unveraendert); vorher gewartet, bis der Laenderexport von 12:00 durch war
+(Sales_All 12:10). Keine Wochensicherung faellig. Die Sicherung des Moduls vom 17.11. 05:06 liegt vor.
+
+**Vorschau vor dem Ausfuehren (12:40, nichts geaendert):** 1'539 AD-Konten, 109 aktive (also hatte niemand den alten Knopf
+gedrueckt). 15 wuerden inaktiv, genau die 15 aus dem Protokoll von 11:30 (alle Altbestand, im AD gesperrt; fuenf davon mit zusammen
+12 offenen Bestellungen als Besteller). 94 Altbestand-Eintraege wuerden AD-Eintraege; keiner verliert dabei eine gefuellte Mail.
+Bei 10 aendert sich der Name: neun Schreibweisen (Umlaute, Akzente, Leerzeichen) oder ein neuer Nachname bei gleichem Vornamen,
+**einer ist eine andere Person**: Vor- und Nachname im AD stimmen nicht mit dem Altbestand ueberein, das Konto wurde offenbar neu
+vergeben. Ihn automatisch zu uebernehmen, schriebe die alten Bestellungen dieser Kurzzeichen der neuen Person zu. **Darum nicht
+ausgefuehrt; Entscheid Ingo offen.** Der Nachtlauf aendert vorerst nichts: der 17.11. ist mit dem gestoppten Lauf von 11:30
+erledigt, und am 18.11. stoppt er wieder an der Grenze (15 > 10).
+
 ## 7. Naechste Schritte
 
 1. ~~Dump pruefen und importieren~~ erledigt 22.10. (6.4). Offen: klaeren, ob nach dem Dump noch in PHP bestellt wurde.
@@ -441,4 +493,5 @@ gelesen, nicht als Bild angesehen.
 3. Fachlichen Owner die Regeln aus Abschnitt 6 bestaetigen lassen.
 4. Zugriff fuer Mitarbeitende ohne Dashboard-Zugang (`Security:AccessGroups`), AD-Gruppe mit IT klaeren.
 5. AD-Abgleich (6.11): Liste der Vorschau pruefen, Fragen 1 bis 8 beantworten, die 15 von Hand ausfuehren, dann `Schreiben` an
-   (braucht einen Deploy).
+   (braucht einen Deploy). *Stand 6.12: Fragen beantwortet, `Schreiben` an; offen ist der Entscheid zum Konto, das im AD einer
+   anderen Person gehoert, danach einmal „Jetzt ausfuehren“.*
