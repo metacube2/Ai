@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\VideoDoku.Core\VideoDoku.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Windows 10 SDK-Version fuer Windows.Media.SpeechSynthesis (Windows-Stimmen wie „Karsten“). -->
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>VideoDoku</AssemblyName>
+    <RootNamespace>VideoDoku.App</RootNamespace>
+    <Version>1.0.0</Version>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VideoDoku.Windows\VideoDoku.Windows.csproj" />
+  </ItemGroup>
+
+</Project>
