@@ -32,7 +32,7 @@ small { color:var(--muted); }
 <main>
   <p><a href="./#windows">← Zur Tester-Seite</a></p>
   <h1>MacYaesu für Windows – Test mit dem FT-991A</h1>
-  <p class="unter">Version 1.1.1 · Übergangsfassung (Kotlin) bis zur neuen Windows-App</p>
+  <p class="unter">Version 1.1.2 · Übergangsfassung (Kotlin) bis zur neuen Windows-App</p>
 
   <section class="warn">
     <b>Sicherheit beim Senden:</b> Alle Tests mit PTT, Leistung und ATU nur mit <b>Dummy Load</b> oder abgestimmter Antenne
@@ -46,9 +46,9 @@ small { color:var(--muted); }
       <tr><th>Menü</th><th>Name</th><th>Wert</th></tr>
       <tr><td>031</td><td>CAT RATE</td><td><b>38400 bps</b> (gleich wie in der App)</td></tr>
       <tr><td>032</td><td>CAT TOT</td><td><b>100 msec</b></td></tr>
-      <tr><td>033</td><td>CAT RTS</td><td><b>OFF</b></td></tr>
+      <tr><td>033</td><td>CAT RTS</td><td><b>DISABLE</b> (aus). Bei ENABLE antwortet das Gerät nur, wenn die App RTS setzt; MacYaesu macht das am Enhanced-Port selbst, beides geht also.</td></tr>
     </table>
-    <p><small>Die Menünummern gelten für die aktuelle FT-991A-Firmware. Wenn sie abweichen, nach dem Namen suchen.</small></p>
+    <p><small>Wenn die Nummern auf deiner Firmware abweichen, nach dem Namen suchen.</small></p>
   </section>
 
   <h2>2. USB-Treiber (Silicon Labs CP210x)</h2>

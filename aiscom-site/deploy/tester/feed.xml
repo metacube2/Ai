@@ -6,7 +6,14 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad, Android und Windows.</description>
   <language>de-ch</language>
-  <lastBuildDate>Tue, 17 Nov 2026 12:18:07 +0000</lastBuildDate>
+  <lastBuildDate>Tue, 17 Nov 2026 12:30:52 +0000</lastBuildDate>
+  <item>
+    <title>MacYaesu für Windows 1.1.2</title>
+    <link>https://www.aiscom.ch/tester/#windows</link>
+    <guid isPermaLink="false">macyaesu-windows-1.1.2</guid>
+    <pubDate>Tue, 17 Nov 2026 13:25:01 +0100</pubDate>
+    <description>FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. Übergangsfassung, bis die neue Windows-App fertig ist.</description>
+  </item>
   <item>
     <title>MacYaesu für Windows 1.1.1</title>
     <link>https://www.aiscom.ch/tester/#windows</link>
@@ -279,13 +286,6 @@
     <guid isPermaLink="false">taploop-mac-0.1-1</guid>
     <pubDate>Sun, 25 Oct 2026 09:20:59 +0100</pubDate>
     <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>Kamera-Import 1.0 (Build 1) für Android</title>
-    <link>https://www.aiscom.ch/tester/#android</link>
-    <guid isPermaLink="false">kamera-import-android-1.0-1</guid>
-    <pubDate>Sat, 24 Oct 2026 22:46:23 +0200</pubDate>
-    <description>Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet.</description>
   </item>
 </channel>
 </rss>

@@ -256,7 +256,7 @@ ANDROID = [
 DESKTOP = Path("/Volumes/ExtOsX/Entwicklung/desktop")
 WINDOWS = [
     {"name": "MacYaesu für Windows", "kennung": "macyaesu-windows", "bild": "macyaesu",
-     "msi": DESKTOP / "macyaesu-desktop/build/msi/MacYaesu-1.1.1-x64.msi",
+     "msi": DESKTOP / "macyaesu-desktop/build/msi/MacYaesu-1.1.2-x64.msi",
      "datei": "MacYaesu-Windows.msi", "anleitung": "MacYaesu-Windows-Testanleitung.html",
      "kurz": "FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, "
              "Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. "
