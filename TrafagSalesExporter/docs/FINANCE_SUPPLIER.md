@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -625,6 +625,36 @@ Preferred Vendor).
 
 **Nicht gemacht, braucht Ingo:** DE-Uebergangsregel, Spanien-Deploy (`c9208b5`, jetzt nur aus dem Arbeitszweig ab `15105ed`; *seit 13.11. abends ab `a207923`, produktiv `9100537`; ueberholt am 16.11.: produktiv `2da2682`, Spanien nur ab `70507fc` oder juenger; seit 16.11. 17:06 produktiv `7cc1a62` (Shopfloor-Filter), Spanien nur ab `69ed8a0` oder juenger; seit 17.11. 11:28 produktiv `6a7de50` (Handbestellwesen AD-Abgleich), Spanien nur ab `0197661` oder juenger; seit 17.11. 12:43 produktiv `2e62163` (Handbestellwesen und Shopfloor CO-PA/M*), Spanien nur ab `fd49894` oder juenger*),
 Umstellen des Fallback-Schalters, Lesezugriff B1 TR IT fuer `ISS-007.4`.
+
+## 10. Stand 17.11.: Muster fuer Andreas, Antwortvorschlag, Wirkung Entscheid 1 (Stand 2026-11-17 abends)
+
+Kurzauskuenfte und Hilfsmittel aus der Sitzung vom 17.11., nichts am Code geaendert, kein Deploy.
+
+- **Muster-Arbeitsmappe** (Wunsch Ingo, Fragebogen 17.11.: erst Muster, Zusammenzuege als Formeln, Zuordnung je Gesellschaft,
+  Lieferant roh, Herstellkosten je Jahr und Monat, HK = Konzern-HK `Cost Basis CHF`):
+  `Downloads\Sales_All_Lieferantenzuordnung_HK_Muster_2026-11-16_mit_Ablauf.xlsx` (Stand Sales_All 16.11., Finance Include, 2025/2026;
+  Blaetter Uebersicht, Ablauf, Lieferantenzuordnung, Lieferant roh, Herstellkosten, Herstellkosten Monat, Daten; 8'239 Formeln ohne
+  Fehler, gegen Python und das Blatt Lieferantenzuordnung des Exports geprueft). Ein taeglicher Export davon ist nicht gebaut
+  (spaeter moeglich, Entscheid Ingo offen). Skripte in `.tmp_tools/finance_schlank_2026-11-17/` (nicht versioniert).
+- **Erklaerung der Regel:** Artefakt „Group-HK Lieferregel“ (privat in Ingos claude.ai, Beispiele und Zeile je Land) und zwei
+  Videos in den Downloads (`Group-HK_Lieferregel_2026-11-17.mp4`, `Group-HK_Lieferregel_mit_Excelzeile_2026-11-17.mp4`, Windows-Stimme
+  de-CH, mit echten Zeilen, deshalb nur intern). Inhalt ohne Zahlen fuer Ingos eigenes Erklaervideo an Sitzung 9a geliefert.
+- **Cost Source** stammt aus keinem Quellsystem; der Export setzt das Feld (`GroupMarginCalculator`), Werte siehe Feldhilfe in
+  Sales_All. *Widerspruch gefunden:* Die Feldhilfe sagt fuer UK „keine Kostenquelle, Kostenbasis fehlt durchgaengig“
+  (`ExcelExportService.cs` Kostenquellen-Tabelle), die Daten haben bei 3'074 von 3'115 UK-Zeilen Kosten. Text vermutlich veraltet,
+  nicht korrigiert (Code und Deploy, Entscheid Ingo).
+- **Wirkung Entscheid 1 (Werkstamm oder immer lokal), aus Sales_All 16.11. nachgerechnet, nicht mit dem Schalter gemessen:**
+  8'703 Zeilen ueber den Werkstamm, 14,7 Mio. CHF Umsatz; HK heute 6,10 Mio., mit „immer lokal“ (lokaler Standardpreis x Kurs x Menge)
+  8,59 Mio. CHF, Gruppenmarge also rund **2,5 Mio. CHF tiefer** (US 1,21 Mio., ES 0,54, FR 0,54, IT 0,20, DE/IN nahe 0); 181 Zeilen
+  ohne lokalen Preis nicht eingerechnet. Die Mehrheit der Werkstamm-Zeilen hat Konzern-HK zwischen 50 und 150 % der lokalen Kosten;
+  der lokale Preis enthaelt bei Ware von TR AG in der Regel den IC-Aufschlag (Lesart, nicht belegt).
+- **Nebenbefund Pruefzeugnisse:** Die Zertifikat-Artikel `H703xx` haben bei TR AG einen Standardpreis von 0.01 CHF; ueber den
+  Werkstamm bekommen sie fast keine HK (rund 280 Zeilen mit Konzern-HK unter 10 % der lokalen Kosten, kleiner Umsatz). Nicht entschieden.
+- **Antwort an Andreas:** Der Entwurf vom 13./16.11. (`.eml` in den Downloads) mischt Datenstaende und verweist auf ein Blatt, das es im
+  Muster nicht gibt; im Chat vom 17.11. steht ein kuerzerer Vorschlag, geordnet nach Zustaendigkeit (nichts zu tun: CH/AT, IN, IT
+  Trafag Italia, UK TR09; Quelle muss liefern: DE Rohail, ES Deploy + Santi, FR/US/IT B1-Stammdaten; Andreas entscheidet: Zeilen ohne
+  Lieferant und Ware aus Indien ueber IT/UK). Idee, nicht gebaut und nicht gemessen: Lieferant fuer FR/US/IT aus dem letzten
+  Wareneingang in B1 lesen (wie Spanien). Vorher muessen die Entwuerfe an Rohail, Paola und Cornell raus. Gesendet hat Claude nichts.
 
 ## Werkzeuge
 
