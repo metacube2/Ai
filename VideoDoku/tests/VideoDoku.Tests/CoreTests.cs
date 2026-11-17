@@ -172,6 +172,7 @@ public class FfmpegCommandTests
         var a = string.Join(' ', FfmpegCommands.Scene(Img(), @"C:\v.mp3", false, 4.2, @"C:\o.mp4", O));
         Assert.Contains("-loop 1", a);
         Assert.Contains("adelay=400|400", a);
+        Assert.Contains("loudnorm=I=-16", a);
         Assert.Contains("fade=t=out:st=3.8", a);
         Assert.Contains("-t 4.2", a);
         Assert.Contains("libx264", a);
@@ -275,6 +276,15 @@ public class TtsClientTests
         var ex = await Assert.ThrowsAsync<HttpRequestException>(() => c.SpeakAsync("x", "horst", "de", CancellationToken.None));
         Assert.Contains(expected, ex.Message);
     }
+
+    [Theory]
+    [InlineData("abc_DEF-123", "abc_DEF-123")]
+    [InlineData("video-doku=abc_DEF-123", "abc_DEF-123")]
+    [InlineData("  video-doku=abc_DEF-123\r\n", "abc_DEF-123")]
+    [InlineData("﻿abc_DEF​-123 ", "abc_DEF-123")]
+    [InlineData("\"abc_DEF-123\"", "abc_DEF-123")]
+    public void Schluessel_wird_bereinigt(string raw, string expected) =>
+        Assert.Equal(expected, IngokTtsClient.NormalizeKey(raw));
 
     [Fact]
     public async Task Stimmenliste_in_zwei_Formen()

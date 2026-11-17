@@ -68,6 +68,7 @@ public partial class MainWindow : Window
         var options = new List<VoiceOption>();
         var key = AppSettings.LoadKey();
         _service = null;
+        _serviceError = null;
         if (key is not null)
         {
             _service = new IngokTtsClient(new HttpClient { BaseAddress = new Uri(_settings.ServiceUrl), Timeout = TimeSpan.FromMinutes(5) }, key);
@@ -77,11 +78,13 @@ public partial class MainWindow : Window
             }
             catch (Exception ex)
             {
-                SetStatus($"Sprachdienst nicht erreichbar: {ex.Message} Windows-Stimmen stehen trotzdem zur Wahl.", error: true);
+                _serviceError = ex.Message;
+                SetStatus($"Sprachdienst: {ex.Message} Windows-Stimmen stehen trotzdem zur Wahl.", error: true);
             }
         }
         options.AddRange(await _windowsVoice.VoicesAsync(CancellationToken.None));
 
+        UpdateKeyState();
         VoiceBox.ItemsSource = options;
         VoiceBox.SelectedItem = options.FirstOrDefault(o => o.Id == _settings.LastVoice)
                                 ?? options.FirstOrDefault(o => o.Provider == _service?.Name)
@@ -109,8 +112,7 @@ public partial class MainWindow : Window
         {
             AppSettings.SaveKey(KeyBox.Password);
             KeyBox.Clear();
-            UpdateKeyState();
-            await LoadVoicesAsync();
+            await LoadVoicesAsync(); // prueft den Schluessel beim Dienst und zeigt das Ergebnis
         }
         catch (Exception ex)
         {
@@ -118,10 +120,27 @@ public partial class MainWindow : Window
         }
     }
 
-    private void UpdateKeyState() =>
-        KeyState.Text = AppSettings.LoadKey() is null
-            ? "kein Schlüssel gespeichert (nur Windows-Stimmen)"
-            : "Schlüssel gespeichert (verschlüsselt)";
+    private string? _serviceError;
+
+    /// <summary>Zeigt nach dem Laden der Stimmen deutlich, ob der Schluessel beim Dienst gilt.</summary>
+    private void UpdateKeyState()
+    {
+        if (AppSettings.LoadKey() is null)
+        {
+            KeyState.Text = "kein Schlüssel gespeichert (nur Windows-Stimmen)";
+            KeyState.Foreground = (Brush)FindResource("Muted");
+        }
+        else if (_serviceError is null)
+        {
+            KeyState.Text = "✓ Schlüssel gültig, Sprachdienst erreichbar";
+            KeyState.Foreground = (Brush)FindResource("Done");
+        }
+        else
+        {
+            KeyState.Text = "✗ " + (_serviceError.Contains("401") ? "Schlüssel ungültig, bitte neu einfügen" : "Sprachdienst nicht erreichbar");
+            KeyState.Foreground = (Brush)FindResource("Failed");
+        }
+    }
 
     // ------------------------------------------------------------------ Quelle
 

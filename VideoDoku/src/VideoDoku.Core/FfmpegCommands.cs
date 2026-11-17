@@ -66,10 +66,10 @@ public static class FfmpegCommands
         var useClipAudio = scene.Kind == VisualKind.Video && clipHasAudio;
 
         if (hasVoice && useClipAudio)
-            audio = $"[0:a]{fmt},volume={F(o.ClipVolumeUnderVoice)},apad[ca];[1:a]{fmt},adelay={ms}|{ms},apad[va];" +
+            audio = $"[0:a]{fmt},volume={F(o.ClipVolumeUnderVoice)},apad[ca];[1:a]{fmt},{Loudness},adelay={ms}|{ms},apad[va];" +
                     $"[ca][va]amix=inputs=2:duration=longest:normalize=0,atrim=0:{d}[a]";
         else if (hasVoice)
-            audio = $"[1:a]{fmt},adelay={ms}|{ms},apad,atrim=0:{d}[a]";
+            audio = $"[1:a]{fmt},{Loudness},adelay={ms}|{ms},apad,atrim=0:{d}[a]";
         else if (useClipAudio)
             audio = $"[0:a]{fmt},apad,atrim=0:{d},afade=t=in:st=0:d={F(o.Fade)},afade=t=out:st={fadeOut}:d={F(o.Fade)}[a]";
         else
@@ -131,6 +131,10 @@ public static class FfmpegCommands
         "-pix_fmt", "yuv420p", "-profile:v", "high",
         "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
     ];
+
+    /// <summary>Sprache auf rund −16 LUFS angleichen (ueblich fuer Videos zum Anschauen am Rechner). Ohne das war
+    /// die Stimme vom Sprachdienst am 17.11. deutlich leiser (−28 dB im Mittel) als die Windows-Stimme.</summary>
+    private const string Loudness = "loudnorm=I=-16:TP=-1.5:LRA=11";
 
     private static double Round(double s) => Math.Round(s, 3);
 
