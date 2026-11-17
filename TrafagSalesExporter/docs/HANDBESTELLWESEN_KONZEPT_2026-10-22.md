@@ -1,8 +1,10 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen; der juengste Inhalt ist vom 2026-10-27).
+Stand: 2026-11-17 (Abschnitt 6.11: naechtlicher AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau
+aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
+der juengste Inhalt war damals vom 2026-10-27).
 Status: **produktiv.** Das Modul ist seit dem 22.10. 13:38 deployed, die Altdaten sind am 22.10. 14:27 importiert (6.4), die
-PHP-Anwendung ist abgeschaltet und der Reiter seit dem 27.10. sichtbar (6.8). Offen: Zugriff und Grundtests der Anwender,
+PHP-Anwendung ist abgeschaltet und der Reiter seit dem 27.10. sichtbar (6.8). Offen: Zugriff und Grundtests der Anwender *(laut Ingo am 17.11. vom Einkauf, Sandro, abgenommen)*,
 Bereinigung, Rechnungsbetrag und Mail beim Wareneingang, Bestaetigung der Regeln durch den fachlichen Owner (6.8, 7).
 
 Davor 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
@@ -340,7 +342,7 @@ werden koennen (wie im PHP), Namen aus dem AD, neue Leute legt die IT im AD an. 
 - **Aus dem AD uebernehmen** (Mitarbeiter neu): Suche ueber Name oder Kuerzel unter den aktiven AD-Konten
   (`HbAdSuche`, gleicher Filter wie die Personensuche in Trafag Projekte), „Uebernehmen“ fuellt Vorname, Nachname, Mail
   und Windows-Konto; Kurzzeichen = Konto (so bei allen 109 Eintraegen, Stand 27.10.). Kostenstelle und Limit traegt der
-  Admin ein. Ist das Konto schon erfasst, kommt ein Hinweis. Kein automatischer Abgleich mit dem AD: Wer neu im AD ist,
+  Admin ein. Ist das Konto schon erfasst, kommt ein Hinweis. Kein automatischer Abgleich mit dem AD *(ueberholt 2026-11-17: naechtlicher Abgleich, 6.11)*: Wer neu im AD ist,
   wird beim Erfassen gesucht und uebernommen.
 - Commit `a8e9eec`, Suite 1293/1293. Offen: ob IT-Konten Mitarbeitende pflegen duerfen, ohne Admin zu sein (heute nur
   Admins `koi`, `gun` und Mitarbeitende mit Haken „Admin“).
@@ -361,9 +363,74 @@ fuer neue Eintraege ueberholt.
 - **Altbestand** (109 Eintraege aus der PHP-Datenbank): voll pflegbar wie bisher, auch loeschen/deaktivieren (6.9).
 - Commit `3ff16f5`, Suite 1294/1294, deployed 2026-10-27 13:45. Folge: Faellt die AD-Suche auf dem Server aus, kann niemand Neues erfasst werden.
 
+### 6.11 Naechtlicher AD-Abgleich (2026-11-17, deployed, Nachtlauf nur Vorschau)
+
+Auftrag Ingo 2026-11-17 nach der Sitzung mit Oscar: „Es soll einen naechtlichen Abgleich geben. Gesperrte User oder User, die
+nicht im AD sind, sollen automatisch auf inaktiv gesetzt werden, geloeschte User im AD auch auf geloescht im Tool. Sync jede
+Nacht, Rollen lassen wir.“ Am selben Tag: Die Benutzerdaten kommen aus dem AD; Entra ist nur lesend und wird selbst aus dem AD
+gespeist (Wochen_Todo 165).
+
+**Gebaut** (Zweig `hb-adabgleich-1711` ab `7cc1a62`, Commit `6a7de50`, gemergt `0197661`; `Modules/Handbestellwesen/HbAdAbgleich.cs`):
+
+- **AD lesen:** alle Personenkonten, auch gesperrte, seitenweise ohne Trefferbegrenzung (`HbAdVerzeichnis`). Bewusst nicht ueber
+  die Personensuche, die bei Fehlern leer liefert, hoechstens 15 Treffer zeigt und nur aktive Konten kennt. Ein Fehler oder
+  weniger als `MinAdKonten` (50) Konten heisst „AD nicht lesbar bzw. unvollstaendig“: Abbruch ohne Aenderung, nie „niemand im AD“.
+- **Regeln**, nur fuer aktive Eintraege mit Konto (Konto ohne Domaene, Gross und Klein egal):
+
+  | Befund | Wirkung |
+  | --- | --- |
+  | Konto im AD gesperrt (deaktiviert; nicht die voruebergehende Sperre nach falschen Passwoertern) | inaktiv |
+  | Altbestand, Konto nicht im AD | inaktiv („nicht im AD“) |
+  | AD-Eintrag, Konto nicht mehr im AD | inaktiv („im AD geloescht“), **nicht geloescht** (Frage 1) |
+  | AD-Eintrag, Vorname, Nachname oder Mail im AD geaendert | nachgefuehrt; Konto und Kurzzeichen bleiben, Bestellungen verweisen darauf |
+  | Konto im AD abgelaufen, aber nicht gesperrt | nur Hinweis (Frage 4) |
+  | Altbestand, Konto im AD aktiv | unveraendert (Frage 3) |
+
+  Limit, Kostenstelle, Admin und Wareneingang bleiben („Rollen lassen wir“). Niemand wird automatisch wieder aktiv (Frage 2).
+  Jede Aenderung steht im Protokoll (Benutzer `ad-abgleich` oder das Admin-Konto), bei Deaktivierten mit den offenen Bestellungen
+  als Besteller und den offenen Freigaben.
+- **Nachtlauf** (`HbAdAbgleichJob`): ab `Uhrzeit` (02:30) einmal am Tag. Ein verpasster Lauf wird am selben Tag nachgeholt (Pruefung
+  alle 15 Minuten), nach einem AD-Fehler fruehestens zwei Stunden spaeter. Er aendert nichts, wenn mehr als `MaxDeaktivierungen`
+  (10) Personen deaktiviert wuerden („gestoppt“, gilt als erledigt fuer den Tag).
+- **Schalter** `Handbestellwesen:AdAbgleich`: `Enabled` true, **`Schreiben` false** (der Nachtlauf schreibt nur die Vorschau ins
+  Protokoll und aendert nichts), `Uhrzeit`, `MaxDeaktivierungen`, `MinAdKonten`. `Schreiben` an braucht einen Deploy.
+- **Oberflaeche:** klassische Ansicht, Admin-Bereich „AD-Abgleich“ (`/handbestellwesen/adabgleich`; Link auch in der neuen Ansicht,
+  Reiter Nutzung): Vorschau mit Befund, Aenderung und offenen Bestellungen je Person, „Jetzt ausfuehren“ mit Rueckfrage (ohne die
+  Grenze, nach Sicht der Vorschau), die letzten zehn Laeufe.
+- **Tests:** 12 neue (`HandbestellwesenAdAbgleichTests`), Handbestellwesen 33/33 (zehnmal hintereinander gruen). Ganze Suite im
+  Worktree: erster Lauf 1606/1607, der Name des roten Tests ist nicht festgehalten (LEARNINGS 2026-11-17), vier Wiederholungen
+  1607/1607; Release-Worktree 1607/1607.
+
+**Deploy 2026-11-17 11:28** (`6a7de50`, aus dem Zweig, nicht aus dem Arbeitszweig mit Spanien): bitgleich, zehn Routen 200, Alarm
+nur Checkpoint (`trafag_exporter.db` gleich gross, neue Zeit; `-wal`/`-shm` 11:28 wieder da). Keine Wochensicherung (juengste vom
+16.11.). Vorher kein Einkauf-Lauf (WAL 634 KB).
+
+**Erste Vorschau aus der Produktion (2026-11-17 kurz nach dem Deploy, im Chrome, nichts geaendert):** Das AD ist vom Server aus
+lesbar, **1'539 Personenkonten**. **109 aktive Mitarbeitende, 15 wuerden inaktiv**, alle aus dem Altbestand und alle mit Befund
+„im AD gesperrt“; kein Eintrag „nicht im AD“ und keine Namensaenderung. Fuenf der 15 haben zusammen 12 offene Bestellungen als
+Besteller, keine offene Freigabe. 15 liegt ueber der Grenze 10: auch mit `Schreiben` an wuerde der erste Nachtlauf stoppen. Die
+Liste mit Namen steht nur im Dashboard, nicht hier.
+
+**Fragen an Ingo** (Stand 2026-11-17; bis zur Antwort gilt die vorsichtige Variante):
+
+1. „Geloescht im Tool“: physisch loeschen wie der Knopf Loeschen (nur ohne Bestellungen, sonst deaktivieren) oder deaktivieren mit
+   Vermerk (gebaut)? Das AD unterscheidet „geloescht“ nicht von „nie vorhanden“; gebaut ist die Unterscheidung ueber die Herkunft.
+2. Wird ein Konto im AD wieder aktiv: automatisch wieder aktiv im Tool oder von Hand (gebaut)? Von Hand Deaktivierte duerften dabei
+   nicht mitkommen.
+3. Altbestand (109 aus PHP), dessen Konto im AD aktiv ist: in AD-Eintraege umwandeln (Name und Mail aus dem AD, gesperrt) oder
+   lassen (gebaut)?
+4. Abgelaufene Konten (Ablaufdatum im AD vorbei, nicht gesperrt): wie gesperrte behandeln?
+5. Offene Bestellungen Deaktivierter (12 bei fuenf Personen): was soll passieren? Heute nur in Vorschau und Protokoll sichtbar.
+6. Grenze 10 je Nacht und Meldung: passend? Soll jemand das Ergebnis per Mail bekommen (heute Protokoll und Bereich AD-Abgleich)?
+7. Ablauf zum Scharfschalten: die 15 einmal von Hand ausfuehren, dann `Schreiben` an (naechster Deploy)?
+8. Austritte: Sperrt die IT das AD-Konto am Austrittstag? Sonst bleibt die Person so lange aktiv; spaeter allenfalls Austritt aus
+   dem Rexx Hub.
+
 ## 7. Naechste Schritte
 
 1. ~~Dump pruefen und importieren~~ erledigt 22.10. (6.4). Offen: klaeren, ob nach dem Dump noch in PHP bestellt wurde.
 2. ~~Oberflaeche ansehen / Deploy~~ deployed, Reiter seit 27.10. sichtbar; Grundtests durch die Anwender stehen aus.
 3. Fachlichen Owner die Regeln aus Abschnitt 6 bestaetigen lassen.
 4. Zugriff fuer Mitarbeitende ohne Dashboard-Zugang (`Security:AccessGroups`), AD-Gruppe mit IT klaeren.
+5. AD-Abgleich (6.11): Liste der Vorschau pruefen, Fragen 1 bis 8 beantworten, die 15 von Hand ausfuehren, dann `Schreiben` an
+   (braucht einen Deploy).

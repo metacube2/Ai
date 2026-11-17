@@ -127,7 +127,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/EINKAUF_SITZUNG_2026-10-22.md` | Ergebnisse Einkaufssitzung 22.10.: Dashboard-Zwischenstand, Feedbackliste, Lieferantenbewertung, Handbestellwesen |
 | `saptasks/einkauf_lieferantenbewertung/SAP_QUELLEN_2026-11-12.md` | Lieferantenbewertung (Wochen_Todo 122): SAP-Quellen je Baustein, aus T76 nur gelesen (klassische Lieferantenbeurteilung, Liefertreue, Q2, Fiori), Systemstand T76 (S/4HANA 2023), offene Punkte |
 | `docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` | Handbestellwesen: Abloesung PHP-Anwendung durch Dashboard-Modul, Befund, Zielbild, GUI wie PHP, Phasen, offene Punkte |
-| `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Import, Registrierung, Seiten `/handbestellwesen` klassisch und `/bestellwesen` neu) |
+| `Modules/Handbestellwesen/` | Modul Handbestellwesen (Modelle, DbContext, Service, Import, naechtlicher AD-Abgleich, Registrierung, Seiten `/handbestellwesen` klassisch und `/bestellwesen` neu) |
 | `wwwroot/css/handbestellwesen.css` | Optik Handbestellwesen wie die PHP-Anwendung |
 | `wwwroot/js/bombrain.js` | Stuecklisten-Netz „Gehirn“ (three.js), Einkauf > Spend-Aufriss; Daten `Services/Logistics/BomBrainGraph.cs`, Komponente `Components/Pages/PurchasingBomBrain.razor` |
 | `wwwroot/handbuch/kapitel/02_einkauf.md` | Benutzerhandbuch Kapitel Einkauf |
