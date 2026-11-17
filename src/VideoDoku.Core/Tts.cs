@@ -41,11 +41,24 @@ public sealed class IngokTtsClient : ITtsProvider
     public string Name => "Sprachdienst tts.ingok.ch";
     public string Extension => ".mp3";
 
+    /// <summary>
+    /// Bereinigt einen eingefuegten Schluessel: Leerraum und unsichtbare Zeichen weg, und ein mitkopierter Name
+    /// wie „video-doku=“ (so steht er in der Schluesseldatei auf dem Mac) wird entfernt. Die Schluessel selbst sind
+    /// base64url und enthalten kein „=“. Am 17.11. scheiterte der erste Eintrag mit 401 („schluessel_ungueltig“).
+    /// </summary>
+    public static string NormalizeKey(string raw)
+    {
+        var k = new string(raw.Where(c => !char.IsWhiteSpace(c) && c != '﻿' && c != '​' && c != '‌' && c != '‍').ToArray());
+        var eq = k.IndexOf('=');
+        if (eq > 0 && k[..eq].All(c => char.IsLetterOrDigit(c) || c is '-' or '_')) k = k[(eq + 1)..];
+        return k.Trim('"', '\'');
+    }
+
     public IngokTtsClient(HttpClient http, string apiKey, TimeSpan? pollInterval = null, TimeSpan? jobTimeout = null)
     {
         _http = http;
         _http.BaseAddress ??= new Uri(DefaultBaseUrl);
-        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", NormalizeKey(apiKey));
         _pollInterval = pollInterval ?? TimeSpan.FromSeconds(2);
         _jobTimeout = jobTimeout ?? TimeSpan.FromMinutes(15);
     }

@@ -4,7 +4,7 @@ Erstellt aus PowerPoint-Folien oder aus Bildern und Clips mit Sprechertext ein f
 Stimme je Szene, Untertitel, sanfter Bildzoom, Hintergrundmusik, die beim Sprechen leiser wird.
 Bedienbar über eine Oberfläche **und vollständig durch eine KI über MCP**. Gebaut am 17.11.2026 auf Wunsch von Ingo.
 
-Stand: 17.11.2026 abends. 24 Tests grün, davon ein Ende-zu-Ende-Test mit echtem ffmpeg. Zusätzlich geprüft:
+Stand: 17.11.2026 abends. 29 Tests grün, davon ein Ende-zu-Ende-Test mit echtem ffmpeg. Zusätzlich geprüft:
 PowerPoint-Import mit echter Präsentation, Windows-Stimme „Karsten“ (Sprache −24 dB im Mittel, Spuren Video/Ton/
 Untertitel), Klick auf „Video erstellen“ in der Oberfläche per UI-Automation, und eine Claude-Sitzung, die nur
 über MCP ein Projekt anlegt, Text ändert, das Video erstellt und wartet (Fehler kommen im Klartext an).
@@ -22,9 +22,10 @@ Nachziehen in den Branch: im Arbeitsverzeichnis `..\Ai-werkzeuge`
 
 | Punkt | Stand |
 | --- | --- |
-| Sprachdienst `tts.ingok.ch` mit Stimme horst | baut die Mac-Sitzung *lagoon* als Nächstes; bis dahin antwortet die Adresse mit 401 von Media-AI |
-| Schlüssel „video-doku“ | Ingo holt die Schlüsseldatei in der Sitzung *lagoon* und trägt ihn im Werkzeug ein |
-| Erster Lauf mit horst | erst danach möglich; Client gegen die abgestimmte Schnittstelle nur mit Testdoppel geprüft |
+| Sprachdienst `tts.ingok.ch` mit Stimme horst | **live seit 17.11. 16:54** (von aussen geprueft: voices, speak 200 und 202, 403, 429), MP3 q5 rund 54 kbit/s |
+| Schluessel „video-doku“ | auf dem Laptop eingetragen (DPAPI); eingefuegte Zeile wie `video-doku=…` wird bereinigt, das Werkzeug zeigt gueltig/ungueltig |
+| Erster Lauf mit horst | 17.11. 17:05: Finance-Video „Gruppenmarge“ (8 Folien, 2:25, Inhalt von der Finance-Sitzung 6d), `%USERPROFILE%VideosVideoDokuinance_gruppenmarge_2026-11-17` |
+| schluessel neu ausstellen | beide schluessel standen als bildschirmfoto im chat; lagoon soll sie ersetzen (entscheid ingo) |
 | Öffentlich im Repo `Ai` | Adresse des Sprachdienstes und dass horst Ingos eigene Stimme ist (keine Schlüssel). Auf Wunsch Branch löschen und neutralisiert neu pushen |
 | Merge nach `main` | Entscheid Ingo |
 
@@ -131,5 +132,8 @@ Der Fortschritt eines Auftrags erscheint auch im Agenten-Monitor (Sitzung „Vid
   „Video erstellen“ abgeschnitten; das Fenster passt sich jetzt beim Öffnen dem Bildschirm an, auf dem es aufgeht.
 - MCP-SDK (`ModelContextProtocol` 2.4.0): Nur `McpException` kommt mit Text bei der KI an, alles andere als
   „An error occurred“. Jedes Werkzeug leitet Fehler deshalb über `Safe`/`SafeAsync` weiter.
+- Stimme vom Sprachdienst war deutlich leiser (−28 dB im Mittel) als die Windows-Stimme: Sprache wird je Szene mit `loudnorm` auf rund −16 LUFS angeglichen (danach −19 dB im Mittel, Spitze −1,5 dB).
+- Eingefuegte Schluessel: einmal mit der ganzen Zeile `video-doku=…` gespeichert (401). `IngokTtsClient.NormalizeKey` entfernt Namen, Leerraum und unsichtbare Zeichen; die Oberflaeche prueft den Schluessel beim Speichern.
+- PowerShell 5.1 liest Skripte ohne BOM als ANSI: Umlaute in Folien und Notizen waren kaputt („Ã–sterreich“). Skripte mit Umlauten mit BOM speichern und das Ergebnis ansehen, bevor vertont wird.
 - Vom MCP-Server geänderte Texte landen sonst nur im Speicher: Skripte, die das Werkzeug selbst angelegt hat,
   werden mitgespeichert, damit Video und Skript übereinstimmen.

@@ -67,7 +67,7 @@ public sealed class AppSettings
             if (File.Exists(KeyPath)) File.Delete(KeyPath);
             return;
         }
-        var cipher = ProtectedData.Protect(Encoding.UTF8.GetBytes(key.Trim()), null, DataProtectionScope.CurrentUser);
+        var cipher = ProtectedData.Protect(Encoding.UTF8.GetBytes(VideoDoku.Core.IngokTtsClient.NormalizeKey(key)), null, DataProtectionScope.CurrentUser);
         File.WriteAllBytes(KeyPath, cipher);
     }
 }
