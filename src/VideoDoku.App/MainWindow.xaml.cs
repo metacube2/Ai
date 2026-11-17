@@ -33,10 +33,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        // Nie groesser als der Bildschirm (Taskleiste frei lassen).
-        var area = SystemParameters.WorkArea;
-        Width = Math.Min(Width, area.Width);
-        Height = Math.Min(Height, area.Height);
+        // Nie groesser als der Bildschirm, auf dem das Fenster aufgeht (Taskleiste frei lassen).
+        // SystemParameters.WorkArea gilt nur fuer den Hauptbildschirm; auf dem kleineren Laptop-Bildschirm
+        // war der Bereich „Video erstellen“ deshalb abgeschnitten (17.11.).
+        SourceInitialized += (_, _) => FitToMonitor();
         SceneList.ItemsSource = _scenes;
         Zoom.ScaleX = Zoom.ScaleY = Math.Clamp(_settings.Scale, 0.8, 2.5);
         SubtitlesBox.IsChecked = _settings.Subtitles;
@@ -367,6 +367,35 @@ public partial class MainWindow : Window
         Zoom.ScaleX = Zoom.ScaleY = s;
         e.Handled = true;
     }
+
+    private void FitToMonitor()
+    {
+        var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        var mon = MonitorFromWindow(hwnd, 2 /* MONITOR_DEFAULTTONEAREST */);
+        var info = new MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
+        if (!GetMonitorInfo(mon, ref info)) return;
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var left = info.rcWork.Left / dpi.DpiScaleX;
+        var top = info.rcWork.Top / dpi.DpiScaleY;
+        var w = (info.rcWork.Right - info.rcWork.Left) / dpi.DpiScaleX;
+        var h = (info.rcWork.Bottom - info.rcWork.Top) / dpi.DpiScaleY;
+        Width = Math.Min(Width, w);
+        Height = Math.Min(Height, h);
+        Left = left + (w - Width) / 2;
+        Top = top + (h - Height) / 2;
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct RECT { public int Left, Top, Right, Bottom; }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct MONITORINFO { public int cbSize; public RECT rcMonitor; public RECT rcWork; public uint dwFlags; }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
 
     /// <summary>PowerPoint per COM sicher auf einem eigenen STA-Thread ansprechen.</summary>
     private static Task<T> RunStaAsync<T>(Func<T> work)
