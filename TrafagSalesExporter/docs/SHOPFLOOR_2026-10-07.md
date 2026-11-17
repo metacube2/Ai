@@ -1152,9 +1152,42 @@ dem 05.10. wurde im Excel weitergearbeitet: 68 neue Eintraege, bei TX 46 Statusa
 ### 26.4 Arbeitskalender
 
 Fabios Blatt „Kalender“ enthaelt nur die Tage des Jahres (KW, Wochentag, Datum, „x“ fuer Leerfelder), **keine** Feiertage oder
-Betriebsschliessungen. Als Quelle bleibt der SAP-Fabrikkalender von Werk 1100 (Lesung laeuft, Ergebnis unten). Heute rechnen
+Betriebsschliessungen. Als Quelle bleibt der SAP-Fabrikkalender von Werk 1100 (Ergebnis unten, 17.11. in P76 gelesen). Heute rechnen
 `ShopfloorSapVerkauf.LetzterArbeitstag` (Mo-Fr ohne 01./02.01.) und `ShopfloorSapVorrat.Plan5Ende` (Mo-Fr ohne Feiertage);
 `KpiLiefertreue` (Mo-Fr, so abgenommen) bleibt unveraendert.
+
+**Fabrikkalender, P76 gelesen 17.11. 16:47-16:57** (SAP-Agent, eigene Zusatzsitzung an Ingos GUI, nur SE16/MD04 anzeigen,
+Freigabe Ingo 17.11.): `T001W-FABKL` Werk 1100 = `CH`; `TFACD` CH: Mo-Fr Arbeitstage, Feiertagskalender `CH` (1996-2040);
+`TFACS` 2026: 248 Arbeitstage, 2027: 254. Mo-Fr ohne Arbeitstag 2026: 01.01., 02.01., 03.04., 06.04., 01.05., 14.05., 25.05.,
+24.12., 25.12., **28.-30.12. (Sonderregel `TFAIN`, kein Feiertag, vermutlich Betriebsschliessung)**, 31.12.; 2027: 01.01., 26.03.,
+29.03., 06.05., 17.05., 24.12., 31.12. Kein Wochenendtag ist Arbeitstag. **T76 weicht im Dezember 2026 ab** (Testregeln 10./11.12.
+und 16.12., 245 Arbeitstage); massgebend ist P76. Vorschlag: Kalender `CH` aus P76 als fuehrende Quelle (Fabios Blatt hat keine
+Feiertage); Bestaetigung Fabio/Ingo steht aus.
+
+### 26.6 VF-/WE-Termin: Fabios Beispiel 58613 / 419371/10 in P76 gelesen
+
+Gleiche Lesung wie 26.4 (Bericht im Scratchpad, ohne Kundennamen). Alle sieben Bildschirmwerte Fabios bestaetigt:
+
+| Fabios Wert | P76-Feld | Wert |
+| --- | --- | --- |
+| MD04-Bedarfstermin / -menge | `VBBE-MBDAT` / `OMENG` der unbestaetigten Einteilung 1 (MD04 `MDPS-DAT00`) | 27.11.2026 / 50 |
+| Einteilung 1: best. Menge / Bereitstellung / Lieferung | `VBEP-BMENG` / `MBDAT` / `EDATU` | 0 / 27.11. / 01.12.2026 |
+| Einteilung 2: best. Menge / Bereitstellung / Lieferung | `VBEP-BMENG` / `MBDAT` / `EDATU` | 50 / 04.12. / 08.12.2026 |
+| Planauftrag 2526829: Endtermin / Eckstart / WEBAZ / Menge | `PLAF-PEDTR` / `PSTTR` / `WEBAZ` / `GSMNG` | 25.11. / 18.11. / 2 / 45 |
+| Planauftrag 2534647: Endtermin / Eckstart / WEBAZ / Menge | `PLAF-PEDTR` / `PSTTR` / `WEBAZ` / `GSMNG` | 30.11. / 23.11. / 2 / 5 |
+| MD04-Listendatum der Planauftraege | `MDEZ-DAT00` = `PEDTR` + `WEBAZ` (Verfuegbarkeit) | 27.11. / 02.12.2026 |
+
+Planauftraege haengen nur ueber `PLAF-KDAUF`/`KDPOS` am Kundenauftrag; keinen offenen Fertigungsauftrag (MD04; `AFPO` nicht gelesen).
+Nach der ZC22-Regel aus dem T76-Quelltext nachgerechnet (Liste nicht abgelesen): Wunschtermin 27.11., Termin bestaetigt 04.12., beides
+Bereitstellungsdaten (`MBDAT`); der bestaetigte Liefertermin ist `VBEP-EDATU` 08.12. **Excel-Eckendtermin 27.11. = MD04-Verfuegbarkeit
+des ersten Planauftrags (`PEDTR` 25.11. + 2), nicht `PEDTR`.** Belegt ist `PEDTR` + 2 Tage; dass `WEBAZ` in Arbeitstagen des
+Kalenders CH zaehlt, zeigt das Beispiel nicht (kein Wochenende dazwischen). GIB nicht gelesen.
+
+**Mapping-Vorschlag an Fabio** (nicht gleichsetzen, je Termin eine eigene Spalte): Wunschtermin = `VBBE-MBDAT` der ersten offenen
+Einteilung (wie ZC22 und Excel); bestaetigte Bereitstellung = `VBEP-MBDAT` der Einteilung mit `BMENG` > 0, bestaetigter Liefertermin
+= deren `VBEP-EDATU`; je Plan- bzw. Fertigungsauftrag eine Zeile mit Menge, Endtermin (`PLAF-PEDTR` bzw. `AFKO-GLTRP`) und
+Verfuegbarkeit (Endtermin + `WEBAZ`, = MD04 und Excel-Eckendtermin). „VF-Termin“ (Anh Nhi: letzter bestaetigter Liefertermin) waere
+danach `VBEP-EDATU`; das widerspricht dem Excel-Wert und muss Fabio mit Anh Nhi entscheiden.
 
 ### 26.5 Plan Paket B (nach dem ZC22-Abgleich 18.11.) und Paket C
 
