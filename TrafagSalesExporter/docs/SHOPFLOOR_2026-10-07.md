@@ -1,7 +1,9 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-17 (Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
+
+Stand 2026-11-17 abends (Abschnitt 26): Fabios Entscheide vom 17.11. aufgenommen (Offen nach Abschlussstatus fuer Liste und PPD, Excel bis Go-live 01.01.2027 fuehrend, Schichtmodell, Arbeitskalender, FPY TX nach Michaels Auswahl); AE TX 12.11. stimmt mit SAP; aktuelles Excel hat 68 Eintraege mehr als das Board und 160 Eintraege mit Abschlussdatum ohne abgeschlossenen Status; Bau erst nach dem ZC22-Abgleich 18.11. *Damit ist der Stand 25 unten in den Punkten Dispo-Entscheide und Feiertage ueberholt.*
 
 Stand 2026-11-17 nachmittags (Abschnitt 25): Schnittstellen-Seite auf dem echten Stand je Feld, Bestellnummer Einkauf Handeingabe, TX-Mengen aus dem MES (Prozedur in `TMS_MES`), Rueckstandslisten ausgewertet (alle 596 Eintraege noch Excel-Import, 123 offene mit Abschlussdatum), deployed 14:36 (`32bf356`). Davor Stand 2026-11-17 (Abschnitt 24): **CO-PA schreibt** (`SapCoPaEnabled`, Verkauf AE/Umsatz IST nach HZDAT, 02. bis 16.11. nachgeladen,
 gleich Fabios Kontrollwerten ausser AE vom 12.11.) und **der Arbeitsplatzfilter `M*` ist ein** (ganzes ZC22-Layout `/ P00 TX`),
@@ -1087,3 +1089,78 @@ P76 nicht gelesen, ZC22 nicht gestartet, weil die Form `KAPA_BEDARFE` in `ZCKAPA
   (Freigabe Ingo).
 
 *Nachtrag 17.11. ~15:15:* Antwort an Fabio 17.11. gesendet (laut Ingo; Text im Chat von Claude entworfen), mit der Dispo-Liste im Anhang: Stand je Punkt; gefragt AE 12.11., Feiertage, Regel offen nach Status oder Abschlussdatum, Entscheid der Dispo je Zeile, Bildschirmfoto Anh Nhi zum VF-Termin und Bedeutung „Datum WE geplant“, Schichtmodell/Nachtschicht/Rundung TX, Termin MES-DB-User; angeboten Vergleich mit ZC22 am 18.11.
+## 26. Entscheide Fabio 17.11. (`Shopfloor_Entscheide_2026-11-17.zip`): Messungen und Plan (Stand 2026-11-17 abends)
+
+Anlass: Mail Fabio 17.11. ~16:30 mit Paket `Shopfloor_Entscheide_2026-11-17.zip` (Antwort auf Ingos Mail 17.11. 15:17). Abgelegt
+unter `docs/shopfloor_paket_2026-11-17/2026-11-17_entscheide/` (Entscheide als md, Mailtext, zwei Summen-CSV). **Nicht im Repo**,
+weil mit Kunden- oder Auftragsdaten: `PPA-Shop-Floor-File-2026_Version 1.04 (2).xlsx`, `CE11000_AE_1211_Pruefung_1711.txt`,
+`AE_Differenz_Belege_12-11.csv`, die SAP-Bilder zu 58613 und `KE30_17-11_November.png`; sie liegen im Original-Zip in Ingos Downloads.
+Auftrag Ingo „alles machen was im Text und Paket steht“; Plan am 17.11. ~16:45 freigegeben: **Paket A** sofort (Doku, Messungen,
+P76 nur lesend), **Paket B** (Bau, Deploy) erst nach dem ZC22-Abgleich vom 18.11. frueh, **Paket C** wartet auf den MES-User.
+*Damit ueberholt in Abschnitt 25:* die Fragen an Fabio zu AE 12.11., Feiertagen, Regel offen, Nachtschicht und Rundung (beantwortet),
+die Bitte um Dispo-Entscheide zu den 139 Eintraegen (Fabio: jetzt nicht, Abgleich Ende Jahr und vor Go-live) und die Annahme
+„nur 01./02.01. sind Feiertage“ (nicht freigegeben).
+
+### 26.1 Entscheide Fabio (verbindlich laut Paket)
+
+| Thema | Entscheid |
+| --- | --- |
+| Offen / abgeschlossen | Einheitlich ueber den **Abschlussstatus**, fuer Rueckstandsliste **und** PPD: erledigte und stornierte Eintraege zaehlen nicht offen. Widersprueche zwischen Status und Abschlussdatum bleiben gekennzeichnet, bis sie bereinigt sind; nicht automatisch aufloesen. |
+| Rueckstandslisten | Fabios aktuelle Excel-Datei (`PPA-Shop-Floor-File-2026`, Version 1.04) bleibt bis zum Go-live **01.01.2027** fuehrend und darf periodisch eingelesen werden; Haeufigkeit offen. Dispo-Abgleich Ende Jahr und vor Go-live, zuerst gegen das aktuelle Excel. Die Kopfwerte im Excel sind gefilterte Zwischensummen (SUBTOTAL). |
+| TX-Schichtmodell | Monatlich waehlbar, wochen- oder tageweise von Hand anpassbar (Vorschlag Paket: Tag vor Woche vor Monat, fruehere Einstellungen bleiben). Nachtschicht 23:00-06:00 zaehlt zum Starttag und ist erst am Folgetag 06:00 vollstaendig. Halbe Stueck aus der Aufteilung 14-15 Uhr **nicht runden** (12.11.: 549,5 + 755,5 = 1'305). |
+| Arbeitskalender | Echter Trafag-Arbeitskalender mit Feiertagen und Betriebsschliessungen; die Annahme nur 01./02.01. ist nicht freigegeben. |
+| FPY TX | Michaels Reportauswahl EAP1_1 bis EAP3_3 ohne EAP1_9 und EAP2_6, Referenzwert „Avg Asictx“; Nachbau der Reportberechnung ist unsere Aufgabe, kein weiterer Entscheid Fabio. MES-Zugang (Marco Di Menco): kein Termin. |
+| VF-/WE-Termin | Fabios SAP-Beispiel Material 58613, Auftrag 419371/10: Excel-Wunschtermin = MD04-Bedarfstermin 27.11., bestaetigte 50 Stk. mit Bereitstellung 04.12. und Lieferung 08.12.; zwei Planauftraege mit Auftragsendtermin 25.11./30.11. gegen MD04-Listendatum 27.11./02.12. Die Termine nicht gleichsetzen, bei mehreren Plan-/Fertigungsauftraegen alle mit Menge und Termin behalten. Wir melden das Mapping zurueck; Beschriftung „Bestaetigter Liefertermin (VF)“ nicht abschliessend. **Entscheid Ingo 17.11.: Beschriftung zurueck auf „Wunschtermin“** (mit Paket B). |
+| ZC22-Abgleich | 18.11. frueh mit vollstaendigem Layout `/ P00 TX`; wir liefern die Cockpit-Werte mit Stichtag und Selektion. |
+
+### 26.2 AE TX Stichtag 12.11.: Board = SAP
+
+Produktiv gelesen (`/shopfloor/api/daily?module=verkauf`, 17.11. 16:40): Board-Tag 13.11. (Konvention: Eintrag vom Tag D = Stand
+HZDAT bis D-1) zeigt `ae_aktuell` 3'376'806.32, `ae_tx` **1'151'205.88**, `ae_dw` 1'381'146.94, geschrieben am 17.11. 12:28 (CO-PA
+nachgeladen). Das sind genau Fabios SAP-Werte aus CE11000; die alte Kontroll-CSV (1'147'421.02) war ein frueherer Stand. Nichts zu
+korrigieren. Board-Tag 12.11. (= HZDAT bis 11.11.) stimmt ebenfalls mit der alten CSV (3'077'914.12 / 954'314.90 / 1'308'719.11).
+
+### 26.3 Rueckstandslisten: aktuelles Excel gegen das Board (nur gemessen)
+
+Board produktiv gelesen (`/shopfloor/api/records?module=rs_*`, 17.11. ~16:55), Excel = Fabios Version 1.04, nur Zeilen mit Eintrag
+(Datum des Eintrags, VkNr oder Menge; das Excel hat vorbelegte leere Nummern bis -999 bzw. -1989). Status „erledigt“ in allen
+Schreibweisen, „storniert“, „Abgesagt“ zaehlen als abgeschlossen. Skript `scratchpad/rs_vergleich.py` (nicht im Repo).
+
+| Liste | Eintraege Excel | Board | neu nur im Excel | nur im Board | Status geaendert | Abschlussdatum geaendert |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| SEH | 4 | 4 | 0 | 0 | 0 | 0 |
+| TR5 | 225 | 204 | 21 | 0 | 0 | 2 |
+| TX | 327 | 296 | 31 | 0 | 46 | 47 |
+| DW | 108 | 92 | 16 | 0 | 2 | 6 |
+
+Offen (Positionen / Stk. Menge im Rueckstand), Regel nach Abschlussdatum (heute in PPD, Patch 06) gegen Regel nach Status (Entscheid Fabio):
+
+| Liste | Excel nach Datum | Excel nach Status | Board nach Datum | Board nach Status |
+| --- | ---: | ---: | ---: | ---: |
+| SEH | 0 / 0 | 1 / 300 | 0 / 0 | 1 / 300 |
+| TR5 | 21 / 3'906 | 55 / 5'052 | 2 / 300 | 34 / 1'146 |
+| TX | 22 / 1'143 | 85 / 2'268 | 47 / 2'956 | 86 / 3'713 |
+| DW | 9 / 112 | 71 / 1'048 | 8 / 84 | 53 / 823 |
+| **Total** | **52 / 5'161** | **212 / 8'668** | 57 / 3'340 | 174 / 5'982 |
+
+Befunde: (1) Die Kopfwerte „Offen“ im Excel (TR5 3'906, TX 1'143, DW 112) sind genau die Summe nach Abschlussdatum. (2) **160
+Excel-Eintraege haben ein Abschlussdatum, aber keinen abgeschlossenen Status** (FehlMat 81, in Arbeit 52, Eingeplant 20, leer 5,
+In Prod 1, „aktuell gesperrt“ 1). Mit der Statusregel zaehlen sie offen: PPD stiege nach heutigem Excel von 5'161 auf 8'668 Stk. Das
+ist vor dem Umschalten mit Fabio zu klaeren (Status nachfuehren oder Widerspruch kennzeichnen und trotzdem offen zaehlen). (3) Seit
+dem 05.10. wurde im Excel weitergearbeitet: 68 neue Eintraege, bei TX 46 Statusaenderungen. Das Board ist entsprechend veraltet.
+
+### 26.4 Arbeitskalender
+
+Fabios Blatt „Kalender“ enthaelt nur die Tage des Jahres (KW, Wochentag, Datum, „x“ fuer Leerfelder), **keine** Feiertage oder
+Betriebsschliessungen. Als Quelle bleibt der SAP-Fabrikkalender von Werk 1100 (Lesung laeuft, Ergebnis unten). Heute rechnen
+`ShopfloorSapVerkauf.LetzterArbeitstag` (Mo-Fr ohne 01./02.01.) und `ShopfloorSapVorrat.Plan5Ende` (Mo-Fr ohne Feiertage);
+`KpiLiefertreue` (Mo-Fr, so abgenommen) bleibt unveraendert.
+
+### 26.5 Plan Paket B (nach dem ZC22-Abgleich 18.11.) und Paket C
+
+Paket B, eigener Worktree ab dem Produktivstand `32bf356`: Offen-Regel nach Abschlussstatus fuer Liste und PPD (`app.js`
+`syncTvFromRs`), „storniert“/„Abgesagt“ in die abgeschlossenen Status, Widersprueche kennzeichnen; Import der Rueckstandslisten aus
+Fabios Excel als Knopf mit Vorschau der Aenderungen und Sicherung vorher, nichts loeschen; Arbeitskalender nach Entscheid der Quelle in
+`LetzterArbeitstag` und `Plan5Ende`; Beschriftung zurueck auf „Wunschtermin“; Bemerkungen „Offen (Fabio)“ der TX-Schichtfelder in
+`shopfloor_config.json` auf die Entscheide nachfuehren. Vor dem Deploy das abgebrochene Einkauf-Delta nachholen. Paket C (wartet auf
+MES-User): TX-Mengen mit Schichtmodell, FPY TR5/TX, Nachbau „Avg Asictx“.

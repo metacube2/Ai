@@ -1,0 +1,35 @@
+Betreff: Shopfloor – Entscheide, aktuelles Excel und SAP-Terminbeispiele
+
+Hallo Ingo
+
+Danke für den detaillierten Stand und die Nachlieferung der Verkaufswerte. Im Anhang sind meine Entscheide sowie ein konkretes SAP-Beispiel für die Rückstandstermine.
+
+Rückstandslisten / Umstellung
+Die aktuelle Shopfloor-Excel-Datei bleibt bis zur geplanten Umstellung am 01.01.2027 die führende Grundlage. Bis dahin können wir sie periodisch einlesen. Bitte den aktuellen Stand als Basis verwenden. Die auffälligen Einträge gleichen wir Ende Jahr und nochmals vor Go-live mit der Dispo ab; zunächst bitte gegen das aktuelle Excel prüfen.
+Für Rückstandsliste und PPD gilt dieselbe Offen-/Abgeschlossen-Regel über einen eindeutigen Abschlussstatus. Erledigte und stornierte Positionen zählen nicht mehr offen. Widersprüche zum Abschlussdatum bleiben bis zur Bereinigung gekennzeichnet.
+
+TX-Mengen
+Das Schichtmodell soll monatlich gewählt werden können, mit manuellen Anpassungen für einzelne Wochen oder Tage. Die Nachtschicht 23:00–06:00 zählt zum Starttag. Halbe Stückzahlen aus der hälftigen Aufteilung der Stunde 14–15 Uhr nicht runden. Bitte beim Abruf berücksichtigen, dass die Nachtschicht erst am Folgetag um 06:00 vollständig ist.
+
+Arbeitskalender
+Bitte den tatsächlichen Trafag-Arbeitskalender inklusive gültiger Feiertage und Betriebsschliessungen verwenden. Nur den 1. und 2. Januar anzunehmen ist nicht ausreichend abgesichert.
+
+Termine VF / WE
+Anh Nhıs fachliche Rückmeldung liegt vor. Wir haben dazu Material 58613, Kundenauftrag 419371/10 in SAP angesehen. MD04 zeigt den Bedarfstermin 27.11.; im Verkaufsbeleg stehen für die bestätigten 50 Stück Bereitstellungsdatum 04.12. und Lieferdatum 08.12. Im Excel stehen Eckend- und Wunschtermin auf 27.11.
+Auch bei den zwei Planaufträgen unterscheiden sich Auftragsendtermin und MD04-Listen-Datum: 25.11. gegenüber 27.11. für 45 Stück sowie 30.11. gegenüber 02.12. für 5 Stück, jeweils mit WE-Bearbeitungszeit 2. Die Bilder liegen bei.
+Bitte anhand dieses Beispiels das genaue Mapping und die Behandlung mehrerer Plan-/Fertigungsaufträge zurückmelden. Die Beschriftung «Bestätigter Liefertermin (VF)» bitte bis dahin nicht als abschliessend geklärt behandeln. Die gezeigten Termine dürfen nicht gleichgesetzt werden.
+
+FPY / MES
+Für TX gilt Michaels Report mit EAP1_1 bis EAP3_3 ohne EAP1_9 und EAP2_6 und dem Wert «Avg Asictx». Bitte dessen Berechnung reproduzieren und technisch gegen Pass/Anzahl prüfen. Dazu ist kein weiterer Entscheid meinerseits offen. Für den fehlenden MES-Zugang von Marco Di Menco habe ich noch keinen bestätigten Bereitstellungstermin. Der Zugang inklusive Recht auf die Mengen-Prozedur bleibt Voraussetzung für TX-Mengen und beide FPY-Werte.
+
+Verkauf
+Die Differenz ist inzwischen in P76 nachgerechnet: CE11000, Buchungskreis 1100, Vorgangsart A, Periode 011.2026, HZDAT bis 12.11. ergibt CHF 3’376’806.32. Unsere alte Kontrolltabelle enthält CHF 3’372’899.64. Die Differenz von CHF 3’906.68 entspricht exakt diesen vier CO-PA-Belegen vom 12.11.: 3552602 = 121.82, 3552603 = 727.56, 3552604 = 425.30 und 3552607 = 2’632.00 CHF. Die dazwischen bzw. danach liegenden Belegpaare 3552605/06 und 3552608/09 saldieren sich jeweils auf null. Alle früheren gespeicherten Tagesstände stimmen auf den Rappen.
+Das spricht für einen früheren Stand unserer Kontrollbasis; den ursprünglichen Extraktionszeitpunkt beweist es nicht. Eine Korrektur deiner AE-Gesamtsumme ist aus diesem Abgleich nicht erforderlich. Bitte zusätzlich AE TX für denselben Stichtag kontrollieren: SAP ergibt CHF 1’151’205.88 gegenüber CHF 1’147’421.02 in der alten Kontroll-CSV, also +CHF 3’784.86. AE DW ist unverändert CHF 1’381’146.94.
+KE30 wurde ebenfalls geöffnet: Der aktuelle Novemberbericht vom 17.11., 16:16:29 zeigt AE netto CHF 4’326’690.09 und IST CHF 3’842’667.34. Die Erlösformel stimmt. Dieser aktuelle Monatsstand ist vom historischen HZDAT-Stichtag zu unterscheiden. Einzelposten und Tagesvergleich liegen dem Paket bei.
+
+Den ZC22-Abgleich mit vollständigem Layout /P00 TX nehmen wir für den 18.11. früh auf. Bitte dann deine Cockpit-Werte mit Stichtag und Selektion bereitstellen.
+
+Danke auch für die aktualisierte Online-Dokumentation. Diese ist damit gemäss deiner Rückmeldung erledigt.
+
+Gruss
+Fabio
