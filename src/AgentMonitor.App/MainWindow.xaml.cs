@@ -143,15 +143,16 @@ public partial class MainWindow : Window
     {
         if (w is null)
         {
+            // Claude Code meldet das Fenster nicht (z. B. Ultra-Abo ohne 5-Stunden-Limit seit 30.10.2026): kein leerer Balken.
             bar.Value = 0;
-            bar.Opacity = 0.4;
-            reset.Text = "keine Angabe";
+            bar.Visibility = Visibility.Hidden;
+            reset.Text = "wird für dein Abo nicht gemeldet";
             return;
         }
-        bar.Opacity = 1;
+        bar.Visibility = Visibility.Visible;
         bar.Value = w.UsedPercent;
         // Gruen unter 70 %, orange ab 70 %, rot ab 90 % (Wunsch Ingo).
-        bar.Foreground = (Brush)FindResource(w.UsedPercent >= 90 ? "Failed" : w.UsedPercent >= 70 ? "Waiting" : "Done");
+        bar.Foreground = (Brush)FindResource(w.UsedPercent >= 90 ? "BarRed" : w.UsedPercent >= 70 ? "BarOrange" : "BarGreen");
         reset.Text = w.ResetsAt is { } r ? "erneuert " + ResetText(r, now) : "";
     }
 

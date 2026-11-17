@@ -4,7 +4,7 @@ Kleines Windows-Fenster, das live zeigt, was jede Claude-Code-Sitzung auf diesem
 Hauptagent und Unteragenten, jede Aktion mit Balken und Prozent, Aufgaben-Fortschritt, Planverbrauch
 (5 Stunden und Woche) und Tokens des Tages. Gebaut am 17.11.2026 auf Wunsch von Ingo.
 
-Stand: 17.11.2026 abends. 47 Tests grün. Installiert und im Autostart auf Ingos Windows-Laptop.
+Stand: 17.11.2026 abends. 49 Tests grün. Installiert und im Autostart auf Ingos Windows-Laptop.
 
 | Ort | Inhalt |
 | --- | --- |
@@ -19,7 +19,7 @@ Nachziehen in den Branch: im Arbeitsverzeichnis `..\Ai-werkzeuge`
 
 | Punkt | Stand |
 | --- | --- |
-| Planverbrauch mit echten Werten | noch keine Statuszeilen-Meldung angekommen; laufende Claude-Sitzungen übernehmen die Statuszeile erst nach einem Neustart. Mit Beispiel-JSON geprüft. |
+| Planverbrauch mit echten Werten | seit 17.11. 16:40 da (Woche 22–23 %). Das 5-Stunden-Fenster meldet Claude Code fuer Ingos Abo nicht (laut Berichten Dritter fiel es am 30.10.2026 fuer Ultra weg); der Monitor zeigt dann „wird für dein Abo nicht gemeldet“ |
 | Klänge | eingetragen, von Ingo noch nicht gehört |
 | Mac: Hooks und Statuszeile | Ingo führt `werkzeuge/hooks-einrichten.sh` in der Sitzung *lagoon* selbst aus |
 | Merge nach `main` | Entscheid Ingo |
@@ -31,6 +31,7 @@ Nachziehen in den Branch: im Arbeitsverzeichnis `..\Ai-werkzeuge`
 | Sitzung | Projekt (letzter Ordner von `cwd`), Titel, Modell (z. B. „Fable 5.2“) | Hooks, Statuszeile |
 | Agent | Phase: denkt / arbeitet / wartet auf dich / fertig / Fehler / bereit, Laufzeit, Ergebnis (erste Zeile der letzten Antwort) | Hooks |
 | Aufgabenbalken | echter Fortschritt „3/7 Aufgaben“, Zahl im Balken; bei Fable dunkleres Grün | `TaskCreated`/`TaskCompleted`, `TodoWrite` |
+| Rundenbalken | ohne Aufgabenliste: geschaetzte Dauer der laufenden Runde (Auftrag bis fertig, gelernt je „Runde:main“ bzw. Unteragent-Typ, Startwert 120 s); verpasster Beginn zaehlt ab dem ersten Werkzeug und lernt nicht | `UserPromptSubmit`/`SubagentStart` bis `Stop`/`SubagentStop` |
 | Aktion | deutsche Beschreibung („liest X“, „sucht „Y“ in Z“), Befehl als Detailzeile, Dauer, Balken mit Prozent | `PreToolUse`/`PostToolUse` |
 | Planverbrauch | Balken 5 Stunden und Woche, Erneuerungszeit; grün < 70 %, orange ab 70 %, rot ab 90 %; letzter Stand bleibt nach Neustart („Stand von …“) | Statuszeile (`rate_limits`) |
 | Tokens heute | Summe Eingabe, Ausgabe, Cache schreiben, Cache lesen | Protokolle `~/.claude/projects/**/*.jsonl` |
@@ -102,6 +103,8 @@ Dateien unter `%APPDATA%\AgentMonitor`: `settings.json`, `dauern.json` (nur Akti
 - Rahmenloses WPF-Fenster (`WindowStyle=None`): Ohne `WindowChrome` lässt es sich nur über die Ecke ziehen, und
   Minimieren/Maximieren fehlen. Beides hat Ingo vermisst; Maximieren füllt von Hand den Arbeitsbereich des
   aktuellen Bildschirms. Per UI-Automation nachgemessen (Bildschirm links 1920×1032, Wiederherstellen exakt).
+- `statusLine.command` laeuft unter Windows in der Git-Bash: Backslashes im Pfad werden verschluckt („command not found“), die Statuszeile lief deshalb bis 17.11. 16:40 nie. Immer Schraegstriche: `C:/Users/…/AgentMonitorStatus.exe`.
+- Prozentzahl im Balken: weiss nur auf dunklen Fuellungen (`BarBlue` #1D4ED8, `BarGreen` #047857, `BarOrange` #B45309, `BarRed` #B91C1C), auf den hellen Phasenfarben war sie unlesbar.
 - Die Statuszeile von Claude Code (`statusLine`) wird bei jeder Antwort aufgerufen: Programm muss schnell starten
   (ReadyToRun, rund 0,2 s) und darf nie leer ausgeben, sonst blendet Claude die Zeile aus.
 - Probewerte nie stehen lassen: Nach einem Test mit erfundenen Planwerten Monitor neu starten, sonst zeigt er

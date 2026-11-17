@@ -28,7 +28,7 @@ public sealed record ActionView(
 public sealed record AgentView(
     string Id, string Label, bool IsMain, AgentPhase Phase, DateTimeOffset PhaseSince,
     int TasksDone, int TasksTotal, string? Detail, IReadOnlyList<ActionView> Actions,
-    string? LastMessage = null);
+    string? LastMessage = null, DateTimeOffset? TurnStart = null, double? TurnEstimateSeconds = null);
 
 /// <param name="Model">Kurzname des Modells aus der Statuszeile, z. B. „Fable 5.2“.</param>
 /// <param name="ModelFamily">fable, opus, sonnet oder haiku (fuer Farben).</param>
@@ -170,6 +170,7 @@ public sealed class MonitorState
                     // Neue Runde: Aufgabenzaehler der vorigen Runde zuruecksetzen, wenn alles erledigt war.
                     if (s.Main.TasksTotal > 0 && s.Main.TasksDone >= s.Main.TasksTotal)
                         s.Main.TasksDone = s.Main.TasksTotal = 0;
+                    s.Main.TurnStarted ??= now; // eine Rueckfrage mitten in der Runde startet keine neue
                     break;
 
                 case "PreToolUse":
@@ -186,11 +187,13 @@ public sealed class MonitorState
 
                 case "SubagentStart":
                     agent.SetPhase(AgentPhase.Thinking, now);
+                    agent.TurnStarted ??= now;
                     break;
 
                 case "SubagentStop":
                     if (!agent.IsMain)
                     {
+                        EndTurn(agent, now, learn: true);
                         CloseRunning(agent, ActionStatus.Done, now);
                         agent.SetPhase(AgentPhase.Done, now);
                         agent.Ended = now;
@@ -201,6 +204,7 @@ public sealed class MonitorState
                 case "Stop":
                     if (agent.IsMain)
                     {
+                        EndTurn(agent, now, learn: true);
                         CloseRunning(agent, ActionStatus.Done, now);
                         agent.SetPhase(AgentPhase.Idle, now);
                         agent.Detail = null;
@@ -211,6 +215,7 @@ public sealed class MonitorState
 
                 case "StopFailure":
                     _signals.Enqueue(MonitorSignal.Failed);
+                    EndTurn(s.Main, now, learn: false);
                     CloseRunning(s.Main, ActionStatus.Failed, now);
                     s.Main.SetPhase(AgentPhase.Failed, now);
                     s.Main.Detail = ToolSummary.Shorten(e.Error ?? "Fehler");
@@ -249,8 +254,13 @@ public sealed class MonitorState
                     break;
 
                 case "SessionEnd":
+                    EndTurn(s.Main, now, learn: false);
                     CloseRunning(s.Main, ActionStatus.Done, now);
-                    foreach (var a in s.Subagents.Values) CloseRunning(a, ActionStatus.Done, now);
+                    foreach (var a in s.Subagents.Values)
+                    {
+                        EndTurn(a, now, learn: false);
+                        CloseRunning(a, ActionStatus.Done, now);
+                    }
                     s.Main.SetPhase(AgentPhase.Idle, now);
                     s.Ended = true;
                     break;
@@ -332,7 +342,7 @@ public sealed class MonitorState
                 s.PendingAgentCalls.Remove(pending);
                 if (!string.IsNullOrWhiteSpace(pending.Description)) label = $"{label}: {pending.Description}";
             }
-            a = new Agent(agentId, label, isMain: false, now);
+            a = new Agent(agentId, label, isMain: false, now) { AgentType = agentType };
             s.Subagents[agentId] = a;
         }
         else if (agentType is not null && a.Label == "Unteragent")
@@ -362,6 +372,13 @@ public sealed class MonitorState
 
         agent.SetPhase(AgentPhase.Working, now);
         agent.Detail = null;
+
+        // Runde verpasst (z. B. Monitor mitten in der Arbeit neu gestartet): ab jetzt zaehlen, aber nicht daraus lernen.
+        if (agent.TurnStarted is null)
+        {
+            agent.TurnStarted = now;
+            agent.TurnPartial = true;
+        }
 
         if (e.ToolName == "TodoWrite" && ToolSummary.TodoProgress(e.ToolInput) is { } p)
         {
@@ -400,6 +417,15 @@ public sealed class MonitorState
         }
     }
 
+    /// <summary>Beendet die laufende Runde eines Agenten; bei normalem Ende lernt die Schaetzung ihre Dauer.</summary>
+    private void EndTurn(Agent agent, DateTimeOffset now, bool learn)
+    {
+        if (agent.TurnStarted is not { } start) return;
+        if (learn && !agent.TurnPartial) Estimator.Record(agent.TurnKey, (now - start).TotalSeconds);
+        agent.TurnStarted = null;
+        agent.TurnPartial = false;
+    }
+
     private static void CloseRunning(Agent agent, ActionStatus status, DateTimeOffset now)
     {
         foreach (var a in agent.Actions.Where(a => a.Status == ActionStatus.Running))
@@ -409,10 +435,10 @@ public sealed class MonitorState
         }
     }
 
-    private static AgentView ToView(Agent a) => new(
+    private AgentView ToView(Agent a) => new(
         a.Id, a.Label, a.IsMain, a.Phase, a.PhaseSince, a.TasksDone, a.TasksTotal, a.Detail,
         a.Actions.Select(x => new ActionView(x.Id, x.Tool, x.Summary, x.Status, x.Start, x.End, x.Detail, x.EstimateSeconds)).ToList(),
-        a.LastMessage);
+        a.LastMessage, a.TurnStarted, a.TurnStarted is null ? null : Estimator.EstimateWithFallback(a.TurnKey));
 
     internal static string ProjectName(string? cwd)
     {
@@ -449,6 +475,13 @@ public sealed class MonitorState
         public DateTimeOffset PhaseSince { get; private set; } = now;
         public DateTimeOffset Started { get; } = now;
         public DateTimeOffset? Ended { get; set; }
+        public string? AgentType { get; init; }
+        /// <summary>Beginn der laufenden Runde (Auftrag bzw. Start des Unteragenten), sonst null.</summary>
+        public DateTimeOffset? TurnStarted { get; set; }
+        /// <summary>Beginn der Runde wurde verpasst; ihre Dauer taugt nicht zum Lernen.</summary>
+        public bool TurnPartial { get; set; }
+        /// <summary>Art der Runde fuer die Dauer-Schaetzung: „Runde:main“ oder „Runde:        public DateTimeOffset? Ended { get; set; }lt;Typ        public DateTimeOffset? Ended { get; set; }gt;“.</summary>
+        public string TurnKey => IsMain ? "Runde:main" : $"Runde:{AgentType ?? "Unteragent"}";
         public string? Detail { get; set; }
         public string? LastMessage { get; set; }
         public int TasksDone { get; set; }

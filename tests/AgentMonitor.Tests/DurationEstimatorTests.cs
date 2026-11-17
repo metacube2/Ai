@@ -63,6 +63,47 @@ public class DurationEstimatorTests
     }
 
     [Fact]
+    public void Runde_des_Hauptagenten_wird_geschaetzt_und_gelernt()
+    {
+        var m = new MonitorState();
+        HookEvent Ev(string json) => HookEvent.Parse(json)!;
+        AgentView Main() => m.Snapshot()[0].Agents.Single(a => a.IsMain);
+
+        m.Apply(Ev("""{"hook_event_name":"UserPromptSubmit","session_id":"s"}"""), T0);
+        Assert.Equal(T0, Main().TurnStart);
+        Assert.Equal(120, Main().TurnEstimateSeconds); // Startwert, noch nichts gelernt
+
+        // Rueckfrage mitten in der Runde startet keine neue Runde.
+        m.Apply(Ev("""{"hook_event_name":"UserPromptSubmit","session_id":"s"}"""), T0.AddSeconds(10));
+        Assert.Equal(T0, Main().TurnStart);
+
+        m.Apply(Ev("""{"hook_event_name":"Stop","session_id":"s"}"""), T0.AddSeconds(30));
+        Assert.Null(Main().TurnStart);
+        Assert.Null(Main().TurnEstimateSeconds);
+
+        m.Apply(Ev("""{"hook_event_name":"UserPromptSubmit","session_id":"s"}"""), T0.AddMinutes(5));
+        Assert.Equal(30, Main().TurnEstimateSeconds); // gelernt aus der ersten Runde
+
+        // Unteragent: eigene Runde je Typ.
+        m.Apply(Ev("""{"hook_event_name":"SubagentStart","session_id":"s","agent_id":"x","agent_type":"Explore"}"""), T0.AddMinutes(5));
+        var sub = m.Snapshot()[0].Agents.Single(a => !a.IsMain);
+        Assert.Equal(T0.AddMinutes(5), sub.TurnStart);
+        m.Apply(Ev("""{"hook_event_name":"SubagentStop","session_id":"s","agent_id":"x","agent_type":"Explore"}"""), T0.AddMinutes(6));
+        Assert.Equal(60, m.Estimator.Estimate("Runde:Explore"));
+    }
+
+    [Fact]
+    public void Verpasster_Rundenbeginn_zaehlt_ab_erstem_Werkzeug_lernt_aber_nicht()
+    {
+        var m = new MonitorState();
+        HookEvent Ev(string json) => HookEvent.Parse(json)!;
+        m.Apply(Ev("""{"hook_event_name":"PreToolUse","session_id":"s","tool_name":"Read","tool_use_id":"r"}"""), T0);
+        Assert.Equal(T0, m.Snapshot()[0].Agents[0].TurnStart);
+        m.Apply(Ev("""{"hook_event_name":"Stop","session_id":"s"}"""), T0.AddSeconds(5));
+        Assert.Null(m.Estimator.Estimate("Runde:main"));
+    }
+
+    [Fact]
     public void Rueckfall_genau_dann_Werkzeug_dann_Startwert()
     {
         var e = new DurationEstimator();
