@@ -10,8 +10,8 @@ Schnittstellen-Seite mit echtem Status je Feld (44 geliefert, 56 definiert, 3 in
 Handeingabe, TX-Mengen aus dem MES (Michaels xlsm ruft `TMS_MES.dbo.getProdQtyPerDayOfMonthPerDisponent`), Rueckstandslisten-Feld
 „Bestaetigter Liefertermin (VF)“. Das laufende Einkauf-Delta wurde auf Ingos Anweisung vom Neustart abgebrochen, **Nachholen faellig**.
 Rueckstandslisten nur gelesen: alle 596 Eintraege noch Excel-Import, 123 offene mit Abschlussdatum; Liste fuer die Dispo in
-`docs/shopfloor_paket_2026-11-17/auswertung_ingo/` und in Ingos Downloads. VF- und WE-Termin werden in T76 lesend geprueft
-(Agent sap-t76, Ergebnis `saptasks/shopfloor_sap/RUECKSTAND_TERMINE_T76_2026-11-17.md`). Offen bei Fabio: Antwort auf die neue Mail (Entwurf
+`docs/shopfloor_paket_2026-11-17/auswertung_ingo/` und in Ingos Downloads. VF- und WE-Termin in T76 lesend geprueft
+(Ergebnis 15:10 in `saptasks/shopfloor_sap/RUECKSTAND_TERMINE_T76_2026-11-17.md`: VF-Termin = Verfuegbarkeitstermin laut MD04, die neue Beschriftung „Bestaetigter Liefertermin (VF)“ passt vermutlich nicht, Rueckfrage an Anh Nhi). Offen bei Fabio: Antwort auf die neue Mail (Entwurf
 im Chat), Schichtregeln TX, Dispo-Entscheide, MES-DB-User, FPY-TX-Abgrenzung. **Naechster Schritt:** 18.11. morgens `sap/status`
 pruefen (erster Stichtag mit ganzem Layout). `docs/SHOPFLOOR_2026-10-07.md` 25, Wochen_Todo 156.
 

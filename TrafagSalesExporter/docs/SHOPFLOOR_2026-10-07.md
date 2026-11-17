@@ -1062,6 +1062,26 @@ Hinweistext von 2022, Status „storniert“, „Abgesagt“, „aktuell gesperr
 Dispo (139 Zeilen mit Befund, Spalte fuer den Entscheid): `docs/shopfloor_paket_2026-11-17/auswertung_ingo/Rueckstandslisten_Auffaellige_Eintraege_2026-11-17.xlsx`
 (auch in Ingos Downloads). Nichts geloescht oder geaendert; Bereinigung erst nach Entscheid der Dispo.
 
-**Nicht gebaut, und warum:** Listenanbindung SAP (VF- und WE-Termin werden in T76 geprueft, unten), TX-Mengen und FPY TR5/TX (MES-DB-User),
+**Nicht gebaut, und warum:** Listenanbindung SAP (VF- und WE-Termin: T76-Befund unten, Rueckfrage an Anh Nhi noetig), TX-Mengen und FPY TR5/TX (MES-DB-User),
 Schichten (Entscheide Fabio: Schichtmodell je Tag, Datum der Nachtschicht, Rundung), FPY-TX-Abgrenzung (Aggregation von „Avg Asictx“
 gegen Pass/Anzahl erst mit Zugriff auf die Reportdefinition).
+
+**T76 nur gelesen (Agent sap-t76, 17.11. 14:52, `saptasks/shopfloor_sap/RUECKSTAND_TERMINE_T76_2026-11-17.md`; nichts in SAP geaendert,
+P76 nicht gelesen, ZC22 nicht gestartet, weil die Form `KAPA_BEDARFE` in `ZCKAPA` schreiben kann):**
+- **„VF-Termin“ und „WE-Termin“ gibt es in ZC22 nicht.** Die Kurztexte stehen nur im Zusatzpaket GIB: `/GIB/DC_DATE_AV`
+  „Verfuegbarkeits-Termin laut MD04/MD05“ (VF-Termin) und `/GIB/DC_DATE_GR` „Wareneingangs-Termin laut MD04/MD05“ (WE-Termin). VF heisst
+  also **Verfuegbarkeit**, nicht Liefertermin. *Die am 17.11. deployte Beschriftung „Bestaetigter Liefertermin (VF)“ (Vorschlag Fabio)
+  passt damit vermutlich nicht; Entscheid Ingo/Fabio, bis dahin unveraendert.* Ob die Dispo GIB benutzt und wie GIB fuellt, ist offen.
+- ZC22 „Wunschtermin“/„Termin bestaetigt“ kommen meist aus `VBBE-MBDAT` (739 von 741 offenen FA mit Kundenauftrag), sonst `VBEP-EDATU`;
+  es zaehlt der letzte Satz ohne `ORDER BY`, `BMENG` wird nicht geprueft. Der Config-Vorschlag „VBEP-EDATU 1. Einteilung“ trifft meist die
+  unbestaetigte Wunscheinteilung.
+- ZC22 „Eckendtermin“ = `AFKO-GLTRP` bzw. `PLAF-PEDTR`. MD04 fuehrt den Zugang auf Eckendtermin + WE-Bearbeitungszeit (FA 1241683:
+  24.04. + WEBAZ 2 = 28.04.). Vermutung: GIB-WE-Termin = Eckendtermin, GIB-VF-Termin = Eckendtermin + WEBAZ.
+- Verknuepfung nur ueber `KDAUF/KDPOS` (nie Einteilung); 1'338 von 2'079 offenen FA haben keinen Kundenauftrag. Material = `AFPO-MATNR`
+  bzw. `PLAF-MATNR`; VkNr ist eine Materialnummer (`ZSTR_ZLO_TOPDOWN-VKNR` mit Datenelement MATNR).
+- Kein vorhandenes OData-Set liefert `VBBE-MBDAT`, Planauftraege mit Kundenauftrag oder Termine mit WEBAZ; dafuer waere ein Set-Ausbau
+  in T76 noetig (Plan zuerst).
+- **Offen:** Anh Nhi (ueber Fabio) mit Bildschirmfoto einer Rueckstandszeile fragen, welches Feld sie meint (GIB `/GIB/DCO`, MD04 oder
+  Kundenauftrag; fuer 409313/10 drei Kandidaten: `MBDAT` 22.04./06.05., `EDATU` 24.04./08.05., Eckende + WEBAZ 28.04.); ob „Datum WE
+  geplant“ den FA der Zeile oder das Fehlteil meint; welcher Auftrag gilt bei mehreren FA/Planauftraegen je Position; P76-Bestaetigung
+  (Freigabe Ingo).
