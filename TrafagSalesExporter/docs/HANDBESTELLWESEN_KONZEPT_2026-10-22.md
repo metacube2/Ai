@@ -411,6 +411,14 @@ lesbar, **1'539 Personenkonten**. **109 aktive Mitarbeitende, 15 wuerden inaktiv
 Besteller, keine offene Freigabe. 15 liegt ueber der Grenze 10: auch mit `Schreiben` an wuerde der erste Nachtlauf stoppen. Die
 Liste mit Namen steht nur im Dashboard, nicht hier.
 
+*Nachtrag 11:33:* Der Nachtjob laeuft auf dem Server. Um 11:30 holte er den Lauf des Tages nach und stoppte wie vorgesehen (15 ueber
+der Grenze 10; Protokoll `AD-Abgleich gestoppt`, Benutzer `ad-abgleich`, nichts geaendert). Damit ist der 17.11. erledigt, der
+naechste Lauf ist am 18.11. ab 02:30. Weil die Grenze vor dem Schalter `Schreiben` geprueft wird, heisst ein solcher Lauf
+„gestoppt“ und nicht „Vorschau“. **Achtung:** „Jetzt ausfuehren“ schreibt unabhaengig von `Schreiben` und steht jedem Admin
+offen (`koi`, `gun` und alle mit Haken „Admin“). Bestaetigt sind in der Produktion bisher nur der Fall „Altbestand, im AD
+gesperrt“ und der Nachtjob; Namensnachfuehrung und „im AD geloescht“ sind nur durch Tests belegt, die Seite wurde als Text
+gelesen, nicht als Bild angesehen.
+
 **Fragen an Ingo** (Stand 2026-11-17; bis zur Antwort gilt die vorsichtige Variante):
 
 1. „Geloescht im Tool“: physisch loeschen wie der Knopf Loeschen (nur ohne Bestellungen, sonst deaktivieren) oder deaktivieren mit
