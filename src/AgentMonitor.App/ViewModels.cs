@@ -103,7 +103,8 @@ public sealed class SessionVm : Observable
             : $"Sitzung {s.Id[..Math.Min(8, s.Id.Length)]} · letztes Ereignis vor {Format.Duration(now - s.LastEvent)}";
         IsBusy = s.IsBusy;
         Ended = s.Ended;
-        CollectionSync.Sync(Agents, s.Agents, a => a.Id, vm => vm.Id, a => new AgentVm(a), (vm, a) => vm.Update(a, now));
+        CollectionSync.Sync(Agents, s.Agents, a => a.Id, vm => vm.Id, a => new AgentVm(a),
+            (vm, a) => vm.Update(a, now, s.Model, s.ModelFamily));
     }
 }
 
@@ -138,11 +139,17 @@ public sealed class AgentVm : Observable
     public string ProgressText { get => _progressText; private set => Set(ref _progressText, value); }
     public int HiddenActions { get => _hiddenActions; private set => Set(ref _hiddenActions, value); }
 
+    private bool _isFable;
+    /// <summary>Fable-Sitzung: Aufgabenbalken dunkler gruen.</summary>
+    public bool IsFable { get => _isFable; private set => Set(ref _isFable, value); }
+
     public AgentVm(AgentView a) { Id = a.Id; IsMain = a.IsMain; Update(a, DateTimeOffset.Now); }
 
-    public void Update(AgentView a, DateTimeOffset now)
+    public void Update(AgentView a, DateTimeOffset now, string? model = null, string? family = null)
     {
-        Label = a.IsMain ? "Hauptagent" : a.Label;
+        // Das Modell meldet die Statuszeile nur fuer die Hauptsitzung; Unteragenten koennen ein anderes haben.
+        Label = a.IsMain ? (model is null ? "Hauptagent" : $"Hauptagent · {model}") : a.Label;
+        IsFable = a.IsMain && family == "fable";
         PhaseText = Format.PhaseText(a.Phase);
         PhaseKey = Format.PhaseKey(a.Phase);
         Elapsed = a.Phase is AgentPhase.Idle ? "" : Format.Duration(now - a.PhaseSince);

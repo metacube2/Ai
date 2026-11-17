@@ -43,6 +43,7 @@ public partial class App : System.Windows.Application
             _settings.AutostartInitialized = true;
             _settings.Save();
         }
+        SoundEvents.Register();
         var state = new MonitorState { Estimator = MonitorSettings.LoadEstimator() };
         _state = state;
         _server = new HookServer(state, _settings);
@@ -78,6 +79,15 @@ public partial class App : System.Windows.Application
                 i.Checked = Math.Abs((double)i.Tag! - _settings.Scale) < 0.05;
         };
 
+        var sounds = new Forms.ToolStripMenuItem("Klänge") { CheckOnClick = true, Checked = _settings.Sounds };
+        sounds.CheckedChanged += (_, _) => { _settings.Sounds = sounds.Checked; _settings.Save(); };
+        var soundPick = new Forms.ToolStripMenuItem("Klänge auswählen …", null, (_, _) =>
+        {
+            // Systemsteuerung › Sound › Reiter „Sounds“; dort steht das Programm „Agenten-Monitor“.
+            try { Process.Start(new ProcessStartInfo("control.exe", "mmsys.cpl,,2") { UseShellExecute = true }); }
+            catch (Exception) { }
+        });
+
         popup.Click += (_, _) => _window?.SetMode(DisplayMode.Popup);
         pinned.Click += (_, _) => _window?.SetMode(DisplayMode.Pinned);
         topmost.CheckedChanged += (_, _) => _window?.SetTopmost(topmost.Checked);
@@ -90,7 +100,8 @@ public partial class App : System.Windows.Application
 
         menu.Items.AddRange(new Forms.ToolStripItem[]
         {
-            show, new Forms.ToolStripSeparator(), popup, pinned, size, topmost, autostart, new Forms.ToolStripSeparator(), exit,
+            show, new Forms.ToolStripSeparator(), popup, pinned, size, topmost, new Forms.ToolStripSeparator(),
+            sounds, soundPick, new Forms.ToolStripSeparator(), autostart, new Forms.ToolStripSeparator(), exit,
         });
 
         // Menue selbst gut lesbar.

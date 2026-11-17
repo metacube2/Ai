@@ -70,6 +70,12 @@ public partial class MainWindow : Window
         ActivityDot.Fill = (Brush)FindResource(busy ? "Working" : "Idle");
         Footer.Text = FooterText(now);
 
+        UpdatePlan(now);
+        if (_settings.Sounds)
+            foreach (var signal in _state.DrainSignals()) SoundEvents.Play(signal);
+        else
+            _state.DrainSignals();
+
         if (busy) _lastBusy = now;
         if (busy && !_wasBusy) OnBecameBusy();
         if (!busy && _wasBusy) _suppressedUntilIdle = false;
@@ -81,6 +87,76 @@ public partial class MainWindow : Window
             Hide();
         }
     }
+
+    // ------------------------------------------------------------------ Planverbrauch und Tokens
+
+    private readonly TokenCounter _tokens = new(TokenCounter.DefaultRoot);
+    private DateTimeOffset _lastTokenRefresh = DateTimeOffset.MinValue;
+    private bool _tokenRefreshRunning;
+
+    private void UpdatePlan(DateTimeOffset now)
+    {
+        var plan = _state.Plan;
+        var any = plan is { FiveHour: not null } or { SevenDay: not null };
+        PlanHint.Visibility = any ? Visibility.Collapsed : Visibility.Visible;
+        PlanRows.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
+        if (any)
+        {
+            SetUsage(FiveHourBar, FiveHourReset, plan!.FiveHour, now);
+            SetUsage(WeekBar, WeekReset, plan.SevenDay, now);
+        }
+
+        // Tokens alle 10 s im Hintergrund nachzaehlen (Dateien lesen soll die Oberflaeche nicht bremsen).
+        if (!_tokenRefreshRunning && now - _lastTokenRefresh > TimeSpan.FromSeconds(10))
+        {
+            _tokenRefreshRunning = true;
+            _lastTokenRefresh = now;
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try { _tokens.Refresh(DateTimeOffset.Now); } catch (Exception) { }
+            }).ContinueWith(_ => Dispatcher.BeginInvoke(() =>
+            {
+                _tokenRefreshRunning = false;
+                var t = _tokens.Today;
+                TokensToday.Text = t.Total == 0
+                    ? "Tokens heute: noch keine"
+                    : $"Tokens heute: {Tokens(t.Total)}  (Eingabe {Tokens(t.Input)} · Ausgabe {Tokens(t.Output)} · " +
+                      $"Cache schreiben {Tokens(t.CacheWrite)} · Cache lesen {Tokens(t.CacheRead)})";
+            }));
+        }
+    }
+
+    private void SetUsage(System.Windows.Controls.ProgressBar bar, System.Windows.Controls.TextBlock reset, UsageWindow? w, DateTimeOffset now)
+    {
+        if (w is null)
+        {
+            bar.Value = 0;
+            bar.Opacity = 0.4;
+            reset.Text = "keine Angabe";
+            return;
+        }
+        bar.Opacity = 1;
+        bar.Value = w.UsedPercent;
+        // Gruen unter 70 %, orange ab 70 %, rot ab 90 % (Wunsch Ingo).
+        bar.Foreground = (Brush)FindResource(w.UsedPercent >= 90 ? "Failed" : w.UsedPercent >= 70 ? "Waiting" : "Done");
+        reset.Text = w.ResetsAt is { } r ? "erneuert " + ResetText(r, now) : "";
+    }
+
+    internal static string ResetText(DateTimeOffset reset, DateTimeOffset now)
+    {
+        var local = reset.ToLocalTime();
+        if (local.Date == now.LocalDateTime.Date) return $"um {local:HH:mm}";
+        var day = local.ToString("ddd", new System.Globalization.CultureInfo("de-CH")).TrimEnd('.');
+        return $"{day} {local:dd.MM. HH:mm}";
+    }
+
+    internal static string Tokens(long n) => n switch
+    {
+        >= 1_000_000_000 => $"{n / 1e9:0.0} Mrd.",
+        >= 1_000_000 => $"{n / 1e6:0.0} Mio.",
+        >= 1_000 => $"{n / 1e3:0} Tsd.",
+        _ => n.ToString(),
+    };
 
     private void OnBecameBusy()
     {

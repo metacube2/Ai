@@ -20,6 +20,8 @@ public sealed class MonitorSettings
     public DisplayMode Mode { get; set; } = DisplayMode.Popup;
     public int AutoHideSeconds { get; set; } = 8;
     public bool Topmost { get; set; } = true;
+    /// <summary>Klaenge bei Agent fertig / wartet / Fehler (Auswahl der Klaenge in der Windows-Systemsteuerung).</summary>
+    public bool Sounds { get; set; } = true;
     public int Port { get; set; } = DefaultPort;
     public double? Left { get; set; }
     public double? Top { get; set; }

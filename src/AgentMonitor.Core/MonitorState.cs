@@ -30,13 +30,31 @@ public sealed record AgentView(
     int TasksDone, int TasksTotal, string? Detail, IReadOnlyList<ActionView> Actions,
     string? LastMessage = null);
 
+/// <param name="Model">Kurzname des Modells aus der Statuszeile, z. B. „Fable 5.2“.</param>
+/// <param name="ModelFamily">fable, opus, sonnet oder haiku (fuer Farben).</param>
 public sealed record SessionView(
     string Id, string Project, string? Title, bool Ended, DateTimeOffset LastEvent,
-    IReadOnlyList<AgentView> Agents)
+    IReadOnlyList<AgentView> Agents, string? Model = null, string? ModelFamily = null)
 {
     /// <summary>Gilt eine Sitzung als aktiv (Monitor soll sichtbar sein)?</summary>
     public bool IsBusy => !Ended && Agents.Any(a => a.Phase is AgentPhase.Thinking or AgentPhase.Working or AgentPhase.Waiting);
 }
+
+/// <summary>Anlaesse fuer einen Klang.</summary>
+public enum MonitorSignal
+{
+    /// <summary>Hauptagent hat seine Runde beendet (Stop).</summary>
+    AgentDone,
+    /// <summary>Wartet auf eine Freigabe (permission_prompt).</summary>
+    NeedsYou,
+    /// <summary>Abbruch mit Fehler (StopFailure).</summary>
+    Failed,
+    /// <summary>Eine Aufgabe der Aufgabenliste ist erledigt (TaskCompleted).</summary>
+    TaskDone,
+}
+
+/// <summary>Planverbrauch, wie die Statuszeile ihn zuletzt gemeldet hat.</summary>
+public sealed record PlanUsage(UsageWindow? FiveHour, UsageWindow? SevenDay, DateTimeOffset UpdatedAt);
 
 /// <summary>
 /// Zustand aller beobachteten Claude-Code-Sitzungen. Wird mit Hook-Ereignissen gefuettert und
@@ -63,8 +81,51 @@ public sealed class MonitorState
     private readonly Dictionary<string, Session> _sessions = new();
     private long _version;
 
+    private readonly System.Collections.Concurrent.ConcurrentQueue<MonitorSignal> _signals = new();
+    private PlanUsage? _plan;
+
     /// <summary>Steigt bei jeder Aenderung; die Oberflaeche erkennt so, ob neu gezeichnet werden muss.</summary>
     public long Version => Interlocked.Read(ref _version);
+
+    /// <summary>Zuletzt gemeldeter Planverbrauch (aus der Statuszeile), oder null.</summary>
+    public PlanUsage? Plan { get { lock (_lock) return _plan; } }
+
+    /// <summary>Holt die seit dem letzten Aufruf angefallenen Klang-Anlaesse ab.</summary>
+    public IReadOnlyList<MonitorSignal> DrainSignals()
+    {
+        var list = new List<MonitorSignal>();
+        while (_signals.TryDequeue(out var s)) list.Add(s);
+        return list;
+    }
+
+    /// <summary>
+    /// Nimmt eine Meldung der Statuszeile auf: Modell der Sitzung und Planfenster.
+    /// Ein Fenster, das in der Meldung fehlt, bleibt auf dem letzten bekannten Stand,
+    /// bis seine Erneuerungszeit vorbei ist.
+    /// </summary>
+    public void ApplyStatus(StatusInfo st, DateTimeOffset now)
+    {
+        lock (_lock)
+        {
+            if (!_sessions.TryGetValue(st.SessionId, out var s))
+            {
+                s = new Session(st.SessionId, ProjectName(st.Cwd), now);
+                _sessions[st.SessionId] = s;
+            }
+            s.Model = StatusInfo.ShortModel(st.ModelId, st.ModelName) ?? s.Model;
+            s.ModelFamily = StatusInfo.Family(st.ModelId, st.ModelName) ?? s.ModelFamily;
+
+            static UsageWindow? Keep(UsageWindow? neu, UsageWindow? alt, DateTimeOffset now) =>
+                neu ?? (alt is { ResetsAt: { } r } && r > now ? alt : null);
+
+            if (st.FiveHour is not null || st.SevenDay is not null || _plan is not null)
+            {
+                _plan = new PlanUsage(Keep(st.FiveHour, _plan?.FiveHour, now), Keep(st.SevenDay, _plan?.SevenDay, now),
+                    st.FiveHour is not null || st.SevenDay is not null ? now : _plan!.UpdatedAt);
+            }
+            Interlocked.Increment(ref _version);
+        }
+    }
 
     public void Apply(HookEvent e, DateTimeOffset now)
     {
@@ -125,10 +186,12 @@ public sealed class MonitorState
                         agent.SetPhase(AgentPhase.Idle, now);
                         agent.Detail = null;
                         agent.LastMessage = ToolSummary.FirstLine(e.LastAssistantMessage) ?? agent.LastMessage;
+                        _signals.Enqueue(MonitorSignal.AgentDone);
                     }
                     break;
 
                 case "StopFailure":
+                    _signals.Enqueue(MonitorSignal.Failed);
                     CloseRunning(s.Main, ActionStatus.Failed, now);
                     s.Main.SetPhase(AgentPhase.Failed, now);
                     s.Main.Detail = ToolSummary.Shorten(e.Error ?? "Fehler");
@@ -139,6 +202,7 @@ public sealed class MonitorState
                     {
                         agent.SetPhase(AgentPhase.Waiting, now);
                         agent.Detail = "wartet auf Freigabe";
+                        _signals.Enqueue(MonitorSignal.NeedsYou);
                     }
                     else if (e.NotificationType == "idle_prompt")
                     {
@@ -154,6 +218,7 @@ public sealed class MonitorState
                     // Wurde die Aufgabe vor dem Start des Monitors angelegt, kennt er sie nicht: Gesamtzahl mitziehen.
                     agent.TasksDone++;
                     if (agent.TasksDone > agent.TasksTotal) agent.TasksTotal = agent.TasksDone;
+                    _signals.Enqueue(MonitorSignal.TaskDone);
                     break;
 
                 case "PreCompact":
@@ -213,7 +278,8 @@ public sealed class MonitorState
                 .ThenByDescending(s => s.LastEvent)
                 .Select(s => new SessionView(
                     s.Id, s.Project, s.Title, s.Ended, s.LastEvent,
-                    new[] { s.Main }.Concat(s.Subagents.Values.OrderBy(a => a.Started)).Select(ToView).ToList()))
+                    new[] { s.Main }.Concat(s.Subagents.Values.OrderBy(a => a.Started)).Select(ToView).ToList(),
+                    s.Model, s.ModelFamily))
                 .ToList();
         }
     }
@@ -342,6 +408,8 @@ public sealed class MonitorState
         public string Id { get; } = id;
         public string Project { get; set; } = project;
         public string? Title { get; set; }
+        public string? Model { get; set; }
+        public string? ModelFamily { get; set; }
         public bool Ended { get; set; }
         public DateTimeOffset LastEvent { get; set; } = now;
         public Agent Main { get; } = new(MainAgentId, "Hauptagent", isMain: true, now);

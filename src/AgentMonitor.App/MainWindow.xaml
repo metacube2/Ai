@@ -8,6 +8,11 @@
         FontFamily="Segoe UI" FontSize="12.5" TextOptions.TextFormattingMode="Ideal"
         PreviewMouseWheel="Window_PreviewMouseWheel" PreviewKeyDown="Window_PreviewKeyDown">
 
+    <!-- Rahmenloses Fenster: unsichtbare Ziehraender an allen Seiten und Ecken (Wunsch Ingo: verkleinern) -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
     <Window.Resources>
         <SolidColorBrush x:Key="Bg" Color="#1B1C21"/>
         <SolidColorBrush x:Key="Card" Color="#25272E"/>
@@ -21,6 +26,42 @@
         <SolidColorBrush x:Key="Done" Color="#34D399"/>
         <SolidColorBrush x:Key="Failed" Color="#F87171"/>
         <SolidColorBrush x:Key="Idle" Color="#6B7080"/>
+
+        <!-- Aufgabenbalken: normales Gruen (Opus, Sonnet, Haiku) und dunkleres Gruen fuer Fable -->
+        <LinearGradientBrush x:Key="NormalGreen" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#2BB989" Offset="0"/>
+            <GradientStop Color="#34D399" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="FableGreen" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#166534" Offset="0"/>
+            <GradientStop Color="#15803D" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Planverbrauch: Farbe setzt der Code (gruen < 70 %, orange ab 70 %, rot ab 90 %) -->
+        <Style x:Key="UsageBar" TargetType="ProgressBar">
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Minimum" Value="0"/>
+            <Setter Property="Maximum" Value="100"/>
+            <Setter Property="Background" Value="{StaticResource Line}"/>
+            <Setter Property="Foreground" Value="{StaticResource Done}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid>
+                            <Border x:Name="PART_Track" CornerRadius="8" Background="{TemplateBinding Background}"/>
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="8" Background="{TemplateBinding Foreground}"/>
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource Text}"
+                                       Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, StringFormat={}{0:0} %}">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="3" Opacity="0.9" Color="Black"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Farbe je Phase, gebunden an PhaseKey -->
         <Style x:Key="PhaseBrush" TargetType="Border">
@@ -41,19 +82,14 @@
             <Setter Property="Minimum" Value="0"/>
             <Setter Property="Maximum" Value="100"/>
             <Setter Property="Background" Value="{StaticResource Line}"/>
-            <Setter Property="Foreground" Value="{StaticResource Done}"/>
+            <Setter Property="Foreground" Value="{StaticResource NormalGreen}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid>
                             <Border x:Name="PART_Track" CornerRadius="7.5" Background="{TemplateBinding Background}"/>
-                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="7.5" ClipToBounds="True">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2BB989" Offset="0"/>
-                                        <GradientStop Color="#34D399" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="7.5" ClipToBounds="True"
+                                    Background="{TemplateBinding Foreground}">
                                 <Rectangle x:Name="Shimmer" RadiusX="7.5" RadiusY="7.5">
                                     <Rectangle.Fill>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
@@ -208,6 +244,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Kopfzeile, zum Verschieben -->
@@ -285,8 +322,18 @@
                                                                     <ColumnDefinition Width="*"/>
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
-                                                                <ProgressBar Style="{StaticResource PercentBar}" local:BarAnimation.Value="{Binding Progress, Mode=OneWay}"
-                                                                             VerticalAlignment="Center"/>
+                                                                <ProgressBar local:BarAnimation.Value="{Binding Progress, Mode=OneWay}" VerticalAlignment="Center">
+                                                                    <ProgressBar.Style>
+                                                                        <!-- Bei Fable dunkleres Gruen (Wunsch Ingo) -->
+                                                                        <Style TargetType="ProgressBar" BasedOn="{StaticResource PercentBar}">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsFable}" Value="True">
+                                                                                    <Setter Property="Foreground" Value="{StaticResource FableGreen}"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </ProgressBar.Style>
+                                                                </ProgressBar>
                                                                 <TextBlock Grid.Column="1" Text="{Binding ProgressText}" Foreground="{StaticResource Muted}" FontSize="11" Margin="8,0,0,0"/>
                                                             </Grid>
 
@@ -353,8 +400,36 @@
                 </Grid>
             </ScrollViewer>
 
+            <!-- Planverbrauch (aus der Statuszeile) und Tokens heute (aus den Protokollen), ganz unten -->
+            <Border Grid.Row="2" Background="{StaticResource Card}" CornerRadius="8" Margin="8,4,8,0" Padding="10,8">
+                <StackPanel>
+                    <TextBlock Text="Planverbrauch" Foreground="{StaticResource Text}" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <TextBlock x:Name="PlanHint" Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap"
+                               Text="Noch keine Planwerte. Sie kommen mit der nächsten Antwort einer Claude-Sitzung über die Statuszeile."/>
+                    <Grid x:Name="PlanRows">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="5 Stunden" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ProgressBar x:Name="FiveHourBar" Grid.Column="1" Style="{StaticResource UsageBar}" Margin="0,3"/>
+                        <TextBlock x:Name="FiveHourReset" Grid.Column="2" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        <TextBlock Grid.Row="1" Text="Woche" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ProgressBar x:Name="WeekBar" Grid.Row="1" Grid.Column="1" Style="{StaticResource UsageBar}" Margin="0,3"/>
+                        <TextBlock x:Name="WeekReset" Grid.Row="1" Grid.Column="2" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    </Grid>
+                    <TextBlock x:Name="TokensToday" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap"
+                               ToolTip="Summe aus den Gesprächsprotokollen unter ~/.claude/projects (nur heute). Das Protokollformat ist nicht offiziell dokumentiert; die Zahl ist eine Auskunft, kein Abrechnungswert. Massgeblich für das Limit sind die Prozentbalken."/>
+                </StackPanel>
+            </Border>
+
             <!-- Fusszeile -->
-            <TextBlock x:Name="Footer" Grid.Row="2" Foreground="{StaticResource Muted}" FontSize="11" Margin="12,4,24,8" TextTrimming="CharacterEllipsis"/>
+            <TextBlock x:Name="Footer" Grid.Row="3" Foreground="{StaticResource Muted}" FontSize="11" Margin="12,4,24,8" TextTrimming="CharacterEllipsis"/>
         </Grid>
     </Border>
 </Window>

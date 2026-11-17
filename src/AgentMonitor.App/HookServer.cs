@@ -47,6 +47,7 @@ public sealed class HookServer : IAsyncDisposable
 
             var app = builder.Build();
             app.MapPost("/hook", HandleAsync);
+            app.MapPost("/status", HandleStatusAsync);
             app.MapGet("/health", () => Results.Text("ok"));
             await app.StartAsync();
             _app = app;
@@ -79,6 +80,28 @@ public sealed class HookServer : IAsyncDisposable
         }
         return Results.StatusCode(StatusCodes.Status200OK);
     }
+
+    /// <summary>Meldungen des Statuszeilen-Programms: Modell und Planverbrauch.</summary>
+    private async Task<IResult> HandleStatusAsync(HttpRequest request)
+    {
+        try
+        {
+            using var reader = new StreamReader(request.Body, Encoding.UTF8);
+            var body = await reader.ReadToEndAsync();
+            if (_settings.DebugLog) WriteDebug(body);
+            if (StatusInfo.Parse(body) is { } st)
+            {
+                _state.ApplyStatus(st, DateTimeOffset.Now);
+                LastStatus = DateTimeOffset.Now;
+            }
+        }
+        catch (Exception)
+        {
+        }
+        return Results.StatusCode(StatusCodes.Status200OK);
+    }
+
+    public DateTimeOffset? LastStatus { get; private set; }
 
     private static void WriteDebug(string body)
     {
