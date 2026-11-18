@@ -10,7 +10,7 @@ Stand: 17.11.2026 abends. 49 Tests grün. Installiert und im Autostart auf Ingos
 | --- | --- |
 | `C:\Users\koi\source\repos\AgentMonitor` | eigenes Repo, hier wird entwickelt |
 | GitHub `metacube2/Ai`, Branch `werkzeuge/agentmonitor-videodoku`, Ordner `AgentMonitor/` | Kopie mit Verlauf (git subtree), **öffentlich**, noch nicht in `main` |
-| Mac: `/Applications/Agenten-Monitor.app`, Repo `agentmonitor-mac` (privat, GitHub und Gitea) | Swift-Fassung mit derselben Logik, gebaut von der Mac-Sitzung *lagoon*, 68 Tests, Commit `3948df0` |
+| Mac: `/Applications/Agenten-Monitor.app`, Repo `agentmonitor-mac` (privat, GitHub und Gitea) | Swift-Fassung mit derselben Logik, gebaut von der Mac-Sitzung *lagoon*; am 18.11. auf den Windows-Stand `598b536` gebracht: 89 Tests, Commit `f46de38`, Build 6 installiert. Bewusste Abweichungen stehen in der Mac-README (u. a. Bash und PowerShell teilen einen Lernschlüssel, Klänge aus `/System/Library/Sounds`, Statuszeile alle 10 s) |
 
 Nachziehen in den Branch: im Arbeitsverzeichnis `..\Ai-werkzeuge`
 `git subtree pull --prefix=AgentMonitor C:/Users/koi/source/repos/AgentMonitor main`, dann `git push`.
