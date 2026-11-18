@@ -263,12 +263,26 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     }
 
     /// <summary>
+    /// Adresse der Einzelanfrage. <c>ZloTopDownSet</c> bekommt die feste Anmeldesprache Deutsch (2026-11-18, Meldung Armin):
+    /// Z_ZLO03_TURBO2 liest den Materialkurztext in der Anmeldesprache und verwirft Komponenten ohne Text. Ohne Vorgabe lief
+    /// die Anfrage englisch, und jedes Einkaufsteil ohne englischen Kurztext fehlte im Materialanteil (z. B. die bestueckte
+    /// Leiterplatte B44212, Materialgruppe 10.08.00). <c>Zc23Set</c> bleibt bewusst unveraendert.
+    /// </summary>
+    internal static string BuildSingleRequestUrl(string baseUrl, string entitySet, string select, string filter)
+    {
+        var url = $"{baseUrl}{entitySet}?$format=json&$select={Uri.EscapeDataString(select)}&$filter={Uri.EscapeDataString(filter)}";
+        return string.Equals(entitySet, PurchasingMaterialShareLoader.BomSet, StringComparison.Ordinal)
+            ? url + "&sap-language=" + PurchasingMaterialShareLoader.BomLanguage
+            : url;
+    }
+
+    /// <summary>
     /// Eine einzige Anfrage ohne $top/$skip: Zc23Set und ZloTopDownSet starten je Anfrage einen Report (SUBMIT) und
     /// wuerden beim Blaettern jede Seite neu rechnen.
     /// </summary>
     private static async Task<List<Dictionary<string, object?>>> ReadSingleRequestAsync(HttpClient client, string baseUrl, string entitySet, string select, string filter, CancellationToken cancellationToken)
     {
-        var url = $"{baseUrl}{entitySet}?$format=json&$select={Uri.EscapeDataString(select)}&$filter={Uri.EscapeDataString(filter)}";
+        var url = BuildSingleRequestUrl(baseUrl, entitySet, select, filter);
         using var response = await client.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {

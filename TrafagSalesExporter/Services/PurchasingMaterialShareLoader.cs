@@ -28,6 +28,8 @@ internal static class PurchasingMaterialShareLoader
     internal const string SalesSet = "Zc23Set";
     internal const string SalesSelect = "Matnr,Edatu,Bmeng,Netwr1,Dispo,DispoDes,Abgru";
     internal const string BomSet = "ZloTopDownSet";
+    /// <summary>Anmeldesprache der ZLO03-Anfrage: in Deutsch hat jedes Material einen Kurztext, siehe BuildSingleRequestUrl.</summary>
+    internal const string BomLanguage = "DE";
     internal const string BomSelect = "Vknr,Idnrk,Menge,Meins,Stk,Wert,Dispo,Matkl,Maktx";
     internal const string Plant = "1100";
     internal const int ChunkSize = 100;

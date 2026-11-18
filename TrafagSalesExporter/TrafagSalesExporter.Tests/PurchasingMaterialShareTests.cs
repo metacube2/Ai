@@ -42,6 +42,22 @@ public class PurchasingMaterialShareTests : IDisposable
         };
 
     [Fact]
+    public void Stuecklisten_Anfrage_Laeuft_In_Deutscher_Anmeldesprache()
+    {
+        // 2026-11-18: ZLO03 verwirft Komponenten ohne Kurztext in der Anmeldesprache; englisch fehlten rund zwei Drittel.
+        var bom = PurchasingDataRefreshService.BuildSingleRequestUrl(
+            "http://sap/svc/", PurchasingMaterialShareLoader.BomSet, PurchasingMaterialShareLoader.BomSelect,
+            PurchasingMaterialShareLoader.BomFilter(["34887"]));
+        Assert.StartsWith("http://sap/svc/ZloTopDownSet?$format=json&$select=", bom);
+        Assert.EndsWith("&sap-language=DE", bom);
+        Assert.Contains("Vknr%20eq%20%2734887%27", bom);
+
+        var sales = PurchasingDataRefreshService.BuildSingleRequestUrl(
+            "http://sap/svc/", PurchasingMaterialShareLoader.SalesSet, PurchasingMaterialShareLoader.SalesSelect, "x eq 1");
+        Assert.DoesNotContain("sap-language", sales);
+    }
+
+    [Fact]
     public void Absagegrund_Faellt_Weg_Und_Einteilungen_Werden_Je_Monat_Summiert()
     {
         var result = PurchasingMaterialShareLoader.AggregateSales(
