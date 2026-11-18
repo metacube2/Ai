@@ -1,6 +1,6 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
+Stand: 2026-11-18 10:45 (Abschnitt 6.14: Rueckmeldungen Sandro/Vinc in der klassischen Startansicht nachgezogen, Sortierung, Befund Limits; Commit `3c18493`, Deploy offen); davor 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
 `Schreiben` an, noch nicht ausgefuehrt: ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
 AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
 der juengste Inhalt war damals vom 2026-10-27).
@@ -514,6 +514,39 @@ freigeben nur mit genuegend Limit; Kreditoren, Kostenstellen **und** Sachkonten 
 - Tests: Handbestellwesen 41/41 (fuenf neu), Suite 1617/1617, Release-Worktree 1617/1617.
 - **Offen:** Sandros Punkt 2 („Limit 1'000 CHF ueber dem Betrag nicht moeglich“) ist unklar, Rueckfrage; PCBWin kann jetzt jeder
   Besteller selbst anlegen; Oberflaeche nach dem Deploy nicht im Browser geprueft (Windows-Chrome war nicht verbunden).
+  *Nachtrag 18.11. 10:45 (6.14): Die Neuerungen dieses Abschnitts galten nur fuer die neue Ansicht `/bestellwesen`. Die Startseite
+  `/handbestellwesen`, auf die Ingos Mails verlinken, ist die klassische Ansicht; dort fehlten sie. Nachgezogen in 6.14.*
+
+### 6.14 Rueckmeldungen Sandro und Vinc in der klassischen Ansicht (2026-11-18 vormittags, Commit `3c18493`, Deploy offen)
+
+Mails im Faden „PCBWin: Quote for B44230b“: Vinc 07:28 (PCBWin fehlt; ueber CHF 1'000 muessen Kostenstellen- und Projektleiter in
+der Freigabe stehen), Alex 07:45 (Mitarbeitende sollen Kreditoren selbst erfassen), Sandro 08:22 (nach „Z“ beginnt die
+Kreditorliste wieder bei „A“; kein Weg, einen Kreditor zu erfassen), Vinc 10:02 (Info: Express-Prototypen-Leiterplatten und
+Bestueckung bei Bepro liegen meist ueber CHF 1'000, erste Prototypen fast immer als Handbestellung).
+
+**Befund (produktiv im Browser, nur gelesen, 10:20):** Die Startseite `/handbestellwesen` ist die klassische Ansicht. 6.13 war nur
+in der neuen Ansicht `/bestellwesen` gebaut; deshalb sah Sandro um 08:22, sieben Minuten nach dem Deploy, keinen Weg zum Erfassen.
+Die Kreditorliste (4'092 Eintraege) kam aus SQLite `ORDER BY Name`, das nach Bytes vergleicht: 86 Kreditoren in Kleinschrift
+(„air-compact“, „awtec AG“, „z-form“) und „Österreichisches Rotes Kreuz“ standen hinter „Zürichsee-Fähre“, zudem „AZ …“ vor
+„Aafag“. PCBWin war nicht erfasst (nur „ZBINDEN PCB AG“).
+
+**Umsetzung (`3c18493`):**
+- `HbService.KreditorenAsync`/`MitarbeiterAsync` sortieren im Speicher mit `de-CH`, Gross/Klein egal, Umlaut beim Grundbuchstaben
+  (`HbService.Alphabetisch`). Wirkt in beiden Ansichten.
+- Klassische Ansicht: Kreditor, Kostenstelle und Sachkonto **neu erfassen** fuer jede aktive Person mit Mitarbeitereintrag (gleiche
+  Regel wie 6.13, Pruefung im Service unveraendert), Hinweis „Ändern und Löschen macht der Admin“; im Bestellformular unter der
+  Kreditorliste der Link „Kreditor fehlt? Hier neu erfassen“.
+- Klassische Ansicht: Freigabeliste aus `FreigabeOptionenAsync` wie in der neuen Ansicht: ueber CHF 1'000 Kostenstellenleiter und
+  Projektleiter mit Rolle zuoberst, wer zu wenig Limit hat steht grau („Limit CHF … reicht nicht“) und ist nicht waehlbar.
+- Test `Kreditoren_Alphabetisch_Klein_Und_Umlaut_Nicht_Hinter_Z`; Handbestellwesen 42/42, Suite 1634/1634.
+
+**Befund Stammdaten (produktiv, nur gelesen):** Von 55 Kostenstellen haben alle einen Leiter, aber **22 Leiter-Kurzzeichen haben
+keinen Mitarbeitereintrag** im Handbestellwesen, und bei 245 und 835 steht ein ausgeschriebener Name statt eines Kurzzeichens; diese
+Leiter erscheinen nie in der Liste. **Nur 2 von 109 Mitarbeitenden haben ein Limit ueber CHF 1'000**, die vorhandenen Leiter stehen
+fast alle auf genau 1'000. Weil nach Entscheid Ingo (6.13) das Limit zaehlt, sind die Leiter ueber CHF 1'000 sichtbar, aber nicht
+waehlbar. Vincs Wunsch ist damit erst erfuellt, wenn die Limits der Kostenstellen- und Projektleiter gepflegt und die
+Projektleiter-Haken gesetzt sind (Admin, Angaben vom Einkauf/Armin). Projektleiter-Haken waren um 10:20 nicht ausgewertet (die
+klassische Mitarbeiterliste zeigt die Spalte nicht).
 
 ## 7. Naechste Schritte
 
