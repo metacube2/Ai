@@ -23,6 +23,10 @@ public sealed class HbOptions
     /// Limit darf freigeben; an = nur Personen derselben Kostenstelle (setzt gepflegte Kostenstellen voraus).</summary>
     public bool FreigabeNurGleicheKostenstelle { get; set; }
 
+    /// <summary>Ab diesem Bestellwert (CHF, groesser als) stehen Kostenstellenleiter der Bestell-Kostenstelle und alle Projektleiter
+    /// immer in der Freigabeliste (Wunsch Einkauf 18.11.2026, Entscheid Ingo 18.11.: freigeben duerfen sie nur mit genuegend Limit).</summary>
+    public decimal FreigabeRollenAbBetrag { get; set; } = 1000m;
+
     /// <summary>Naechtlicher Abgleich des Mitarbeiterverzeichnisses mit dem AD (Auftrag Ingo 2026-11-17), Konzept 6.11.</summary>
     public HbAdAbgleichOptions AdAbgleich { get; set; } = new();
 }
@@ -108,6 +112,8 @@ public sealed class HbMitarbeiter
     public string Kostenstelle { get; set; } = string.Empty;
     public bool IstWareneingang { get; set; }
     public bool IstAdmin { get; set; }
+    /// <summary>Projektleiter (Entscheid Ingo 2026-11-18): erscheint ueber <see cref="HbOptions.FreigabeRollenAbBetrag"/> in jeder Freigabeliste.</summary>
+    public bool IstProjektleiter { get; set; }
     public bool Aktiv { get; set; } = true;
     /// <summary>Aus dem AD uebernommen (Entscheid Ingo 2026-10-27): Konto, Kurzzeichen, Name und Mail kommen aus dem AD und
     /// sind hier nicht editierbar. false = Altbestand aus der PHP-Datenbank, voll pflegbar. Neue Eintraege nur noch aus dem AD.</summary>
@@ -183,3 +189,7 @@ public sealed record HbNutzung(
 
 /// <summary>Fachlicher Fehler mit Meldung fuer die Oberflaeche.</summary>
 public sealed class HbException(string message) : Exception(message);
+
+/// <summary>Eintrag der Freigabeliste: Person, Rolle (Kostenstellenleiter/Projektleiter, sonst leer) und ob sie den Betrag
+/// freigeben darf (Limit, ggf. Kostenstelle). Nicht berechtigte Rollentraeger werden angezeigt, sind aber nicht waehlbar.</summary>
+public sealed record HbFreigeberOption(HbMitarbeiter Mitarbeiter, string? Rolle, bool Berechtigt);

@@ -102,6 +102,35 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
             .ToList();
     }
 
+    /// <summary>Freigabeliste fuer die Anzeige (Wunsch Einkauf 18.11.2026, Entscheide Ingo 18.11.): ueber
+    /// <see cref="HbOptions.FreigabeRollenAbBetrag"/> stehen zuerst der Kostenstellenleiter der Bestell-Kostenstelle und alle
+    /// Projektleiter, auch wenn ihr Limit nicht reicht (dann als nicht berechtigt markiert); danach alle uebrigen Berechtigten
+    /// wie in <see cref="FreigeberAsync"/>. Waehlbar und gespeichert wird nur, wer berechtigt ist.</summary>
+    public async Task<List<HbFreigeberOption>> FreigabeOptionenAsync(string kostenstelle, decimal bestellwert, string? ohneKurzzeichen = null)
+    {
+        var berechtigte = await FreigeberAsync(kostenstelle, bestellwert, ohneKurzzeichen);
+        if (bestellwert <= options.CurrentValue.FreigabeRollenAbBetrag)
+            return berechtigte.Select(m => new HbFreigeberOption(m, null, true)).ToList();
+
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var leiter = (await db.Kostenstellen.AsNoTracking().FirstOrDefaultAsync(x => x.Nr == kostenstelle))?.Leiter?.Trim() ?? string.Empty;
+        var ok = berechtigte.Select(x => x.Kurzzeichen).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var rollen = (await MitarbeiterAsync())
+            .Where(x => x.Aktiv && !string.Equals(x.Kurzzeichen, ohneKurzzeichen, StringComparison.OrdinalIgnoreCase) &&
+                        (x.IstProjektleiter || (leiter.Length > 0 && string.Equals(x.Kurzzeichen, leiter, StringComparison.OrdinalIgnoreCase))))
+            .Select(x =>
+            {
+                var istLeiter = leiter.Length > 0 && string.Equals(x.Kurzzeichen, leiter, StringComparison.OrdinalIgnoreCase);
+                var rolle = istLeiter && x.IstProjektleiter ? "Kostenstellenleiter, Projektleiter" : istLeiter ? "Kostenstellenleiter" : "Projektleiter";
+                return (Option: new HbFreigeberOption(x, rolle, ok.Contains(x.Kurzzeichen)), IstLeiter: istLeiter);
+            })
+            .OrderBy(x => x.IstLeiter ? 0 : 1).ThenBy(x => x.Option.Mitarbeiter.Nachname, StringComparer.OrdinalIgnoreCase)
+            .Select(x => x.Option)
+            .ToList();
+        var inRollen = rollen.Select(x => x.Mitarbeiter.Kurzzeichen).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return [.. rollen, .. berechtigte.Where(m => !inRollen.Contains(m.Kurzzeichen)).Select(m => new HbFreigeberOption(m, null, true))];
+    }
+
     // ---------- Bestellnummer ----------
 
     /// <summary>E + JJ + Kostenstelle + 4-stellige Nummer, wie bisher.</summary>
@@ -431,19 +460,39 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
         return (nD, nA);
     }
 
-    // ---------- Stammdaten (nur Admin) ----------
+    // ---------- Stammdaten: neu anlegen alle Besteller, aendern und loeschen nur Admin (Wunsch Einkauf/Alex 18.11.2026,
+    // Entscheid Ingo 18.11.: Kreditoren, Kostenstellen und Sachkonten; im alten PHP durfte jeder erfassen) ----------
 
     public async Task SpeichereKreditorAsync(HbBenutzer benutzer, HbKreditor k, bool neu)
     {
-        NurAdmin(benutzer);
+        if (neu) NurErfasser(benutzer); else NurAdmin(benutzer);
         k.Nr = k.Nr.Trim();
-        if (k.Nr.Length == 0 || string.IsNullOrWhiteSpace(k.Name)) throw new HbException("Kreditor-Nr. und Name sind Pflicht.");
+        k.Name = (k.Name ?? string.Empty).Trim();
+        if (k.Nr.Length == 0 || k.Name.Length == 0) throw new HbException("Kreditor-Nr. und Name sind Pflicht.");
+        if (neu)
+        {
+            var schluessel = NamensSchluessel(k.Name);
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var gleich = (await db.Kreditoren.AsNoTracking().ToListAsync()).FirstOrDefault(x => NamensSchluessel(x.Name) == schluessel);
+            if (gleich is not null)
+                throw new HbException($"Einen Kreditor „{gleich.Name}“ gibt es schon (Nr. {gleich.Nr}{(string.IsNullOrWhiteSpace(gleich.Ort) ? "" : ", " + gleich.Ort)}). Bitte diesen wählen.");
+        }
         await SpeichereAsync(benutzer, db => db.Kreditoren, k, neu, x => x.Nr == k.Nr, "Kreditor", k.Nr);
+    }
+
+    /// <summary>Vergleichsschluessel fuer Kreditorennamen: nur Buchstaben und Ziffern, klein, ohne Rechtsform am Ende.</summary>
+    internal static string NamensSchluessel(string? name)
+    {
+        var s = new string((name ?? string.Empty).ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
+        foreach (var form in new[] { "gmbh", "ag", "sa", "sarl", "srl", "spa", "ltd", "inc", "kg", "bv" })
+            if (s.Length > form.Length + 2 && s.EndsWith(form, StringComparison.Ordinal))
+                return s[..^form.Length];
+        return s;
     }
 
     public async Task SpeichereKostenstelleAsync(HbBenutzer benutzer, HbKostenstelle k, bool neu)
     {
-        NurAdmin(benutzer);
+        if (neu) NurErfasser(benutzer); else NurAdmin(benutzer);
         k.Nr = k.Nr.Trim();
         if (k.Nr.Length == 0 || !k.Nr.All(char.IsAsciiDigit)) throw new HbException("Die Kostenstelle muss eine Nummer sein.");
         await SpeichereAsync(benutzer, db => db.Kostenstellen, k, neu, x => x.Nr == k.Nr, "Kostenstelle", k.Nr);
@@ -451,7 +500,7 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
 
     public async Task SpeichereSachkontoAsync(HbBenutzer benutzer, HbSachkonto s, bool neu)
     {
-        NurAdmin(benutzer);
+        if (neu) NurErfasser(benutzer); else NurAdmin(benutzer);
         s.Nr = s.Nr.Trim();
         if (s.Nr.Length == 0) throw new HbException("Die Sachkonto-Nr. ist Pflicht.");
         await SpeichereAsync(benutzer, db => db.Sachkonten, s, neu, x => x.Nr == s.Nr, "Sachkonto", s.Nr);
@@ -496,7 +545,7 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
             throw new HbException($"Das Windows-Konto „{m.Konto}“ ist schon einem anderen Kurzzeichen zugeordnet.");
         if (m.Id == 0) db.Mitarbeiter.Add(m); else db.Mitarbeiter.Update(m);
         Protokolliere(db, benutzer, m.Id == 0 ? "Mitarbeiter angelegt" : "Mitarbeiter geändert", m.Kurzzeichen,
-            $"Limit CHF {m.Limit.ToString("0.00", CultureInfo.InvariantCulture)}, KoSt {m.Kostenstelle}, Konto {m.Konto}, aktiv {m.Aktiv}");
+            $"Limit CHF {m.Limit.ToString("0.00", CultureInfo.InvariantCulture)}, KoSt {m.Kostenstelle}, Konto {m.Konto}, aktiv {m.Aktiv}, Projektleiter {m.IstProjektleiter}");
         await db.SaveChangesAsync();
     }
 
@@ -635,7 +684,14 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
 
     private static void NurAdmin(HbBenutzer benutzer)
     {
-        if (!benutzer.IstAdmin) throw new HbException("Stammdaten pflegen darf nur ein Admin.");
+        if (!benutzer.IstAdmin) throw new HbException("Stammdaten ändern oder löschen darf nur ein Admin.");
+    }
+
+    /// <summary>Neu anlegen darf jede aktive Person mit Mitarbeitereintrag und jeder Admin.</summary>
+    private static void NurErfasser(HbBenutzer benutzer)
+    {
+        if (!benutzer.IstAdmin && benutzer.Mitarbeiter is not { Aktiv: true })
+            throw new HbException("Neu erfassen dürfen nur aktive Mitarbeitende mit Eintrag im Handbestellwesen.");
     }
 
     private void Protokolliere(HbDbContext db, HbBenutzer benutzer, string aktion, string bezug, string details)

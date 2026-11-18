@@ -109,6 +109,8 @@ internal sealed class HbStartUndSicherung(
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN InaktivSeit TEXT NULL;", ct);
         if (!mitarbeiterSpalten.Contains("InaktivGrund"))
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN InaktivGrund TEXT NULL;", ct);
+        if (!mitarbeiterSpalten.Contains("IstProjektleiter"))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Mitarbeiter ADD COLUMN IstProjektleiter INTEGER NOT NULL DEFAULT 0;", ct);
     }
 
     private void Sichere(string pfad)

@@ -250,7 +250,8 @@ public sealed class HandbestellwesenServiceTests : IDisposable
         Assert.Null(fremd.Mitarbeiter);
         Assert.False(fremd.IstAdmin);
         await Assert.ThrowsAsync<HbException>(() => _hb.AnlegenAsync(fremd, Eingabe("875", 10m)));
-        await Assert.ThrowsAsync<HbException>(async () => await _hb.SpeichereSachkontoAsync(await Wer("abc"), new HbSachkonto { Nr = "1", Bezeichnung = "x" }, neu: true));
+        // 2026-11-18: neu anlegen duerfen alle aktiven Mitarbeitenden, aber nicht wer keinen Eintrag hat.
+        await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereSachkontoAsync(fremd, new HbSachkonto { Nr = "1", Bezeichnung = "x" }, neu: true));
     }
 
     [Fact]
@@ -341,6 +342,102 @@ public sealed class HandbestellwesenServiceTests : IDisposable
         Assert.Null(item.ParentKey);
         Assert.Equal("handbestellwesen", item.Href);
         Assert.False(item.IsVisible); // erst nach dem Datenimport einblenden
+    }
+
+    // ---------- 2026-11-18: Stammdaten neu erfassen fuer alle, Freigabeliste mit Kostenstellen- und Projektleiter ----------
+
+    [Fact]
+    public async Task Besteller_Darf_Kreditor_Kostenstelle_Sachkonto_Neu_Anlegen_Aber_Nicht_Aendern_Oder_Loeschen()
+    {
+        var abc = await Wer("abc");
+        Assert.False(abc.IstAdmin);
+        await _hb.SpeichereKreditorAsync(abc, new HbKreditor { Nr = "70001", Name = "PCBWin GmbH", Ort = "Zug" }, neu: true);
+        await _hb.SpeichereKostenstelleAsync(abc, new HbKostenstelle { Nr = "888", Bezeichnung = "Neu" }, neu: true);
+        await _hb.SpeichereSachkontoAsync(abc, new HbSachkonto { Nr = "68001", Bezeichnung = "Neu" }, neu: true);
+        Assert.Contains(await _hb.KreditorenAsync(), k => k.Nr == "70001");
+        Assert.Contains(await _hb.KostenstellenAsync(), k => k.Nr == "888");
+        Assert.Contains(await _hb.SachkontenAsync(), s => s.Nr == "68001");
+
+        var aendern = await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereKreditorAsync(abc, new HbKreditor { Nr = "70001", Name = "Anders" }, neu: false));
+        Assert.Contains("nur ein Admin", aendern.Message);
+        await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereKostenstelleAsync(abc, new HbKostenstelle { Nr = "888", Bezeichnung = "x" }, neu: false));
+        await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereSachkontoAsync(abc, new HbSachkonto { Nr = "68001", Bezeichnung = "x" }, neu: false));
+        await Assert.ThrowsAsync<HbException>(() => _hb.LoescheKreditorAsync(abc, "70001"));
+    }
+
+    [Fact]
+    public async Task Neuer_Kreditor_Mit_Gleichem_Namen_Wird_Abgelehnt()
+    {
+        var abc = await Wer("abc");
+        // „Muster AG“ gibt es schon (Nr. 65017); Schreibweise und Rechtsform zaehlen nicht.
+        var ex = await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereKreditorAsync(abc, new HbKreditor { Nr = "70002", Name = "muster  ag" }, neu: true));
+        Assert.Contains("65017", ex.Message);
+        await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereKreditorAsync(abc, new HbKreditor { Nr = "70003", Name = "Muster" }, neu: true));
+        // Gleiche Nummer bleibt ebenfalls gesperrt.
+        await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereKreditorAsync(abc, new HbKreditor { Nr = "65017", Name = "Ganz anders" }, neu: true));
+        Assert.Equal("muster", HbService.NamensSchluessel("Muster AG"));
+        Assert.Equal("pcbwin", HbService.NamensSchluessel("PCBWin GmbH"));
+        Assert.Equal("ag", HbService.NamensSchluessel("AG"));
+    }
+
+    [Fact]
+    public async Task Inaktive_Person_Darf_Nicht_Erfassen()
+    {
+        using (var db = _factory.CreateDbContext())
+        {
+            db.Mitarbeiter.Single(x => x.Kurzzeichen == "kln").Aktiv = false;
+            db.SaveChanges();
+        }
+        var kln = await Wer("kln");
+        await Assert.ThrowsAsync<HbException>(() => _hb.SpeichereKreditorAsync(kln, new HbKreditor { Nr = "70004", Name = "Irgendwer" }, neu: true));
+    }
+
+    [Fact]
+    public async Task Ueber_1000_Stehen_Kostenstellenleiter_Und_Projektleiter_In_Der_Liste_Freigeben_Nur_Mit_Limit()
+    {
+        using (var db = _factory.CreateDbContext())
+        {
+            db.Kostenstellen.Single(x => x.Nr == "875").Leiter = "kln";
+            db.Mitarbeiter.AddRange(
+                new HbMitarbeiter { Kurzzeichen = "pl1", Nachname = "Projekt", Konto = "pl1", Limit = 5000m, Kostenstelle = "87", IstProjektleiter = true },
+                new HbMitarbeiter { Kurzzeichen = "pl2", Nachname = "Projektklein", Konto = "pl2", Limit = 200m, IstProjektleiter = true },
+                new HbMitarbeiter { Kurzzeichen = "pl3", Nachname = "Inaktiv", Konto = "pl3", Limit = 9000m, IstProjektleiter = true, Aktiv = false });
+            db.SaveChanges();
+        }
+
+        // 1'200 CHF, Kostenstelle 875: zuerst der Leiter kln (Limit 800, nicht berechtigt), dann die aktiven Projektleiter, dann chf.
+        var liste = await _hb.FreigabeOptionenAsync("875", 1200m, "abc");
+        Assert.Equal(["kln", "pl1", "pl2", "chf"], liste.Select(x => x.Mitarbeiter.Kurzzeichen).ToArray());
+        Assert.Equal("Kostenstellenleiter", liste[0].Rolle);
+        Assert.False(liste[0].Berechtigt);
+        Assert.Equal("Projektleiter", liste[1].Rolle);
+        Assert.True(liste[1].Berechtigt);
+        Assert.False(liste[2].Berechtigt);
+        Assert.Null(liste[3].Rolle);
+        Assert.True(liste[3].Berechtigt);
+
+        // Gespeichert wird nur, wer das Limit hat (Entscheid Ingo 18.11.): Leiter kln mit 800 nein, Projektleiter pl1 ja.
+        var abc = await Wer("abc");
+        await Assert.ThrowsAsync<HbException>(() => _hb.AnlegenAsync(abc, Eingabe("875", 1200m, "kln")));
+        await Assert.ThrowsAsync<HbException>(() => _hb.AnlegenAsync(abc, Eingabe("875", 1200m, "pl2")));
+        var ok = await _hb.AnlegenAsync(abc, Eingabe("875", 1200m, "pl1"));
+        Assert.Equal("pl1", ok.FreigeberKurzzeichen);
+
+        // Bis 1'000 CHF unveraendert: nur Berechtigte, ohne Rollen.
+        var klein = await _hb.FreigabeOptionenAsync("875", 900m, "abc");
+        Assert.All(klein, x => Assert.True(x.Berechtigt));
+        Assert.All(klein, x => Assert.Null(x.Rolle));
+        Assert.DoesNotContain(klein, x => x.Mitarbeiter.Kurzzeichen == "pl2");
+    }
+
+    [Fact]
+    public async Task Projektleiter_Haken_Bleibt_Beim_Speichern_Erhalten()
+    {
+        var admin = await Wer("admin");
+        var ma = (await _hb.MitarbeiterAsync()).Single(x => x.Kurzzeichen == "kln");
+        ma.IstProjektleiter = true;
+        await _hb.SpeichereMitarbeiterAsync(admin, ma);
+        Assert.True((await _hb.MitarbeiterAsync()).Single(x => x.Kurzzeichen == "kln").IstProjektleiter);
     }
 
     private sealed class Factory(string verbindung) : IDbContextFactory<HbDbContext>

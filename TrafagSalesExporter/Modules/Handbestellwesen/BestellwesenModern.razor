@@ -138,15 +138,23 @@
                         else
                         {
                             <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">Der Betrag liegt über deiner Berechtigung (CHF @Chf(BestellerLimit)). Eine berechtigte Person muss freigeben.</MudAlert>
-                            @if (_freigeber.Count == 0)
+                            @if (!_freigeber.Any(o => o.Berechtigt))
                             {
                                 <MudAlert Severity="Severity.Error" Dense="true">@(Options.CurrentValue.FreigabeNurGleicheKostenstelle ? $"Für Kostenstelle {_kostenstelle} ist niemand mit genügend Berechtigung erfasst." : "Niemand mit genügend Berechtigung erfasst.") Bitte beim Admin melden.</MudAlert>
                             }
                             else
                             {
                                 <MudSelect T="string" @bind-Value="_freigeberWahl" Label="Freigabe durch" Variant="Variant.Outlined">
-                                    @foreach (var f in _freigeber) { <MudSelectItem Value="@f.Kurzzeichen">@f.Kurzzeichen · @f.Name (bis CHF @Chf(f.Limit)@(string.IsNullOrWhiteSpace(f.Kostenstelle) ? "" : $", KoSt {f.Kostenstelle}"))</MudSelectItem> }
+                                    @foreach (var o in _freigeber)
+                                    {
+                                        var f = o.Mitarbeiter;
+                                        <MudSelectItem Value="@f.Kurzzeichen" Disabled="@(!o.Berechtigt)">@FreigeberZeile(o)</MudSelectItem>
+                                    }
                                 </MudSelect>
+                                @if (_freigeber.Any(o => !o.Berechtigt))
+                                {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-1">Grau: Kostenstellen- oder Projektleiter mit zu tiefem Limit für diesen Betrag.</MudText>
+                                }
                             }
                         }
                         @if (_doublette is { } d)
@@ -204,11 +212,17 @@
         }
     </MudTabPanel>
 
-    @if (_ich.IstAdmin)
+    @if (DarfErfassen)
     {
-        @* ---------------- Stammdaten ---------------- *@
+        @* ---------------- Stammdaten (2026-11-18: neu anlegen alle Besteller, aendern/loeschen und Mitarbeitende nur Admin) ---------------- *@
         <MudTabPanel Text="Stammdaten" Icon="@Icons.Material.Filled.Settings">
+            @if (!_ich.IstAdmin)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">Fehlt ein Kreditor, eine Kostenstelle oder ein Sachkonto, hier mit «Neu» erfassen. Ändern und Löschen macht der Admin.</MudAlert>
+            }
             <MudTabs Elevation="0" Rounded="true" PanelClass="pt-3">
+                @if (_ich.IstAdmin)
+                {
                 <MudTabPanel Text="@($"Mitarbeiter ({_mitarbeiter.Count})")">
                     <MudTable Items="_mitarbeiter" Dense="true" Hover="true" Filter="@(m => Treffer(_stammSuche, m.Kurzzeichen, m.Vorname, m.Nachname, m.Konto, m.Kostenstelle))" RowsPerPage="25">
                         <ToolBarContent>
@@ -227,6 +241,7 @@
                                 @if (!context.Aktiv) { <MudChip T="string" Size="Size.Small">inaktiv</MudChip> }
                                 @if (context.IstWareneingang) { <MudChip T="string" Size="Size.Small" Color="Color.Info">Wareneingang</MudChip> }
                                 @if (context.IstAdmin) { <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Admin</MudChip> }
+                                @if (context.IstProjektleiter) { <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">Projektleiter</MudChip> }
                                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@(context.AusAd ? "AD" : "Altbestand")</MudChip>
                             </MudTd>
                             <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteMitarbeiter(context)" /></MudTd>
@@ -234,6 +249,7 @@
                         <PagerContent><MudTablePager /></PagerContent>
                     </MudTable>
                 </MudTabPanel>
+                }
                 <MudTabPanel Text="@($"Kreditoren ({_kreditoren.Count})")">
                     <MudTable Items="_kreditoren" Dense="true" Hover="true" Filter="@(k => Treffer(_stammSuche, k.Nr, k.Name, k.Ort))" RowsPerPage="25">
                         <ToolBarContent>
@@ -244,7 +260,7 @@
                         <HeaderContent><MudTh>Nr.</MudTh><MudTh>Name</MudTh><MudTh>Strasse</MudTh><MudTh>PLZ Ort</MudTh><MudTh>Land</MudTh><MudTh></MudTh></HeaderContent>
                         <RowTemplate>
                             <MudTd>@context.Nr</MudTd><MudTd>@context.Name</MudTd><MudTd>@context.Strasse</MudTd><MudTd>@context.Plz @context.Ort</MudTd><MudTd>@context.Land</MudTd>
-                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteKreditor(context)" /></MudTd>
+                            <MudTd>@if (_ich.IstAdmin) { <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteKreditor(context)" /> }</MudTd>
                         </RowTemplate>
                         <PagerContent><MudTablePager /></PagerContent>
                     </MudTable>
@@ -256,7 +272,7 @@
                         <RowTemplate>
                             <MudTd>@context.Nr</MudTd><MudTd>@context.Bezeichnung</MudTd><MudTd>@context.Leiter</MudTd>
                             <MudTd>@FreigeberText(context.Nr)</MudTd>
-                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteKostenstelle(context)" /></MudTd>
+                            <MudTd>@if (_ich.IstAdmin) { <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteKostenstelle(context)" /> }</MudTd>
                         </RowTemplate>
                     </MudTable>
                 </MudTabPanel>
@@ -266,7 +282,7 @@
                         <HeaderContent><MudTh>Sachkonto</MudTh><MudTh>Bezeichnung</MudTh><MudTh></MudTh></HeaderContent>
                         <RowTemplate>
                             <MudTd>@context.Nr</MudTd><MudTd>@context.Bezeichnung</MudTd>
-                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteSachkonto(context)" /></MudTd>
+                            <MudTd>@if (_ich.IstAdmin) { <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => BearbeiteSachkonto(context)" /> }</MudTd>
                         </RowTemplate>
                     </MudTable>
                 </MudTabPanel>
@@ -322,6 +338,7 @@
                                 <MudItem xs="12">
                                     <MudSwitch T="bool" @bind-Value="m.IstWareneingang" Label="Wareneingang" Color="Color.Info" />
                                     <MudSwitch T="bool" @bind-Value="m.IstAdmin" Label="Admin" Color="Color.Secondary" />
+                                    <MudSwitch T="bool" @bind-Value="m.IstProjektleiter" Label="Projektleiter (Freigabeliste ab CHF 1'000)" Color="Color.Tertiary" />
                                     <MudSwitch T="bool" @bind-Value="m.Aktiv" Label="aktiv" Color="Color.Success" />
                                 </MudItem>
                             </MudGrid>
@@ -359,7 +376,7 @@
                         {
                             <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Sync" OnClick="() => AusAdAktualisierenAsync(adm.Id)">Aus AD aktualisieren</MudButton>
                         }
-                        @if (!_editNeu)
+                        @if (!_editNeu && _ich.IstAdmin)
                         {
                             <MudSpacer />
                             <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="StammLoeschenAsync">Löschen</MudButton>
@@ -509,7 +526,7 @@
     private HbSachkonto? _sachkonto;
     private string? _besteller;
     private bool? _berechtigt;
-    private List<HbMitarbeiter> _freigeber = [];
+    private List<HbFreigeberOption> _freigeber = [];
     private string? _freigeberWahl;
     private HbBestellung? _doublette;
     private HbBestellung? _ergebnis;
@@ -543,7 +560,7 @@
             await Hb.ProtokolliereAufrufAsync(_ich);
             _aufrufErfasst = true;
         }
-        _tab = (Tab ?? string.Empty).ToLowerInvariant() switch { "offen" => 1, "archiv" => 2, "stammdaten" => _ich.IstAdmin ? 3 : 0, "nutzung" => _ich.IstAdmin ? 4 : 0, "deaktivierte" => _ich.IstAdmin ? 5 : 0, _ => 0 };
+        _tab = (Tab ?? string.Empty).ToLowerInvariant() switch { "offen" => 1, "archiv" => 2, "stammdaten" => DarfErfassen ? 3 : 0, "nutzung" => _ich.IstAdmin ? 4 : 0, "deaktivierte" => _ich.IstAdmin ? 5 : 0, _ => 0 };
         await LadenAsync();
         _kostenstelle ??= _ich.Mitarbeiter?.Kostenstelle is { Length: > 0 } eigene ? eigene : null;
         if (_tab == 4) await NutzungLadenAsync();
@@ -626,6 +643,9 @@
 
     private bool KannSpeichern => !Fehlend.Any();
 
+    /// <summary>Stammdaten neu erfassen: jeder Admin und jede aktive Person mit Mitarbeitereintrag (2026-11-18).</summary>
+    private bool DarfErfassen => _ich is { } i && (i.IstAdmin || i.Mitarbeiter is { Aktiv: true });
+
     private Task<IEnumerable<HbKreditor>> SucheKreditor(string? text, CancellationToken token)
     {
         IEnumerable<HbKreditor> treffer = string.IsNullOrWhiteSpace(text)
@@ -638,6 +658,15 @@
     private Task<IEnumerable<HbSachkonto>> SucheSachkonto(string? text, CancellationToken token)
         => Task.FromResult(string.IsNullOrWhiteSpace(text) ? _sachkonten.AsEnumerable() : _sachkonten.Where(s => Treffer(text, s.Nr, s.Bezeichnung)));
 
+    private static string FreigeberZeile(HbFreigeberOption o)
+    {
+        var f = o.Mitarbeiter;
+        var rolle = o.Rolle is null ? "" : $"{o.Rolle} · ";
+        var kst = string.IsNullOrWhiteSpace(f.Kostenstelle) ? "" : $", KoSt {f.Kostenstelle}";
+        var limit = o.Berechtigt ? $"bis CHF {Chf(f.Limit)}" : $"Limit CHF {Chf(f.Limit)} zu tief";
+        return $"{rolle}{f.Kurzzeichen} · {f.Name} ({limit}{kst})";
+    }
+
     private async Task PruefeAsync()
     {
         var b = Besteller;
@@ -648,10 +677,11 @@
             return;
         }
         _berechtigt = _wert <= b.Limit;
-        _freigeber = _berechtigt == false ? await Hb.FreigeberAsync(_kostenstelle, _wert.Value, b.Kurzzeichen) : [];
+        _freigeber = _berechtigt == false ? await Hb.FreigabeOptionenAsync(_kostenstelle, _wert.Value, b.Kurzzeichen) : [];
         // Workflow 2026-10-22: gibt es genau eine berechtigte Person, ist sie vorgeschlagen.
-        if (_freigeber.Count == 1) _freigeberWahl = _freigeber[0].Kurzzeichen;
-        else if (_freigeber.All(f => f.Kurzzeichen != _freigeberWahl)) _freigeberWahl = null;
+        var waehlbar = _freigeber.Where(o => o.Berechtigt).Select(o => o.Mitarbeiter.Kurzzeichen).ToList();
+        if (waehlbar.Count == 1) _freigeberWahl = waehlbar[0];
+        else if (!waehlbar.Contains(_freigeberWahl ?? string.Empty)) _freigeberWahl = null;
         if (_berechtigt == true) _freigeberWahl = null;
     }
 
@@ -770,7 +800,10 @@
         try
         {
             await aktion(_ich!, b.Id);
-            Snackbar.Add($"{titel}: {HbService.FormatNummer(b.Bestellnummer)}", Severity.Success);
+            // Wunsch Sandro 17.11.2026: beim Wareneingang ausdruecklich sagen, dass die Bestellung jetzt im Archiv ist.
+            Snackbar.Add(titel == "Wareneingang gebucht"
+                ? $"Bestellung {HbService.FormatNummer(b.Bestellnummer)} ist gebucht und archiviert."
+                : $"{titel}: {HbService.FormatNummer(b.Bestellnummer)}", Severity.Success);
             await LadenAsync();
             if (_archiv is not null) await ArchivLadenAsync();
         }
@@ -875,7 +908,7 @@
         _edit = new HbMitarbeiter
         {
             Id = m.Id, Kurzzeichen = m.Kurzzeichen, Vorname = m.Vorname, Nachname = m.Nachname, Mail = m.Mail, Konto = m.Konto,
-            Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, Aktiv = m.Aktiv, AusAd = m.AusAd
+            Limit = m.Limit, Kostenstelle = m.Kostenstelle, IstWareneingang = m.IstWareneingang, IstAdmin = m.IstAdmin, IstProjektleiter = m.IstProjektleiter, Aktiv = m.Aktiv, AusAd = m.AusAd
         };
         _editNeu = m.Id == 0;
         _editTitel = _editNeu ? "Mitarbeiter erfassen" : $"Mitarbeiter {m.Kurzzeichen} bearbeiten";
