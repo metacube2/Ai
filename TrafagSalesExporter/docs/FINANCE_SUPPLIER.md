@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-18 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang gebaut, `6e4d44f`, nicht deployed; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -655,6 +655,40 @@ Kurzauskuenfte und Hilfsmittel aus der Sitzung vom 17.11., nichts am Code geaend
   Trafag Italia, UK TR09; Quelle muss liefern: DE Rohail, ES Deploy + Santi, FR/US/IT B1-Stammdaten; Andreas entscheidet: Zeilen ohne
   Lieferant und Ware aus Indien ueber IT/UK). Idee, nicht gebaut und nicht gemessen: Lieferant fuer FR/US/IT aus dem letzten
   Wareneingang in B1 lesen (wie Spanien). Vorher muessen die Entwuerfe an Rohail, Paola und Cornell raus. Gesendet hat Claude nichts.
+
+## 11. B1: Lieferant aus dem letzten Wareneingang (Stand 2026-11-18, gebaut, nicht deployed)
+
+Auftrag Ingo 18.11. („die fehlenden Felder, die Andreas anmahnt, erweitern, wo sie noch fehlen“). Machbar ist das nur fuer die
+B1-Gesellschaften (FR, US, IT, IN): DE braucht Rohail (Alphaplan), ES ist mit `c9208b5` gebaut und wartet auf Deploy und Santi, CH/AT
+brauchen per Regel keinen Lieferanten.
+
+**Messung (nur lesend, HanaQ gegen B1, Rechnungen ab 2025, alle Zeilen):**
+
+| TSC | Zeilen ohne Standardlieferant | davon letzter WE Trafag | WE extern | kein WE | Stamm gepflegt: WE = Stamm |
+| --- | ---: | ---: | ---: | ---: | --- |
+| TRFR | 2'751 | 1'406 (2,54 Mio. EUR) | 953 (65k) | 392 | 80 von 130 |
+| TRUS | 1'742 | 1'076 (7,27 Mio. USD) | 56 | 610 | 6 von 6 |
+| TRIT | 4'049 | 479 (0,98 Mio. EUR) | 73 | 3'497 | 17'555 von 20'369 |
+
+**Gegen die heutige Zuordnung (Sales_All 16.11., Finance Include, nur Zeilen ohne Lieferant):** Der letzte Wareneingang bestaetigt die
+Werkstamm-Regel fast ganz: FR 1'188 von 1'295 Werkstamm-Zeilen (2,34 Mio. CHF) haben als letzten Wareneingang Trafag AG, US 1'039 von
+1'548 (5,93 Mio. CHF; 498 ohne WE), IT 444 von 514 (0,90 Mio. CHF). Umklassiert wuerden wenige: FR 15 Werkstamm-Zeilen nach Extern
+(32k CHF) und 70 nach TR IT/TR IN, IT 67 nach Extern (66k CHF). Lokal nach Extern (FR 928, US 56) aendert die Kosten nicht. **Folgerung
+fuer Entscheid 1 (Werkstamm oder immer lokal): Die Wareneingaenge sprechen fuer den Werkstamm.**
+
+**Gebaut (Worktree `C:\TMP\TrafagSalesExporter_b1we1811`, Zweig `b1-we-lieferant-1811` ab Produktivstand `f2c0267`, Commit `6e4d44f`):**
+`HanaQueryService`: ist `OITM.CardCode` leer, gilt der Lieferant des letzten nicht stornierten Wareneingangs (`OPDN`/`PDN1`, Menge > 0)
+desselben Artikels am oder vor dem Belegdatum (wie Spanien, Regel V1); Nummer, Name und Land haengen am selben Ausdruck; hoechstens eine
+Zeile je Position (`ROW_NUMBER`). Rangfolge: Artikelstamm vor Paolas Uebergangsliste (`SupplierMaterialOverrideStore`, ersetzt jetzt auch
+einen Wert aus dem Wareneingang) vor Wareneingang. Scheitert die Abfrage, laeuft sie ohne Wareneingang wie bisher. Live gegen B1 geprueft
+(FR, US, IT, Rechnungen und Gutschriften ab 2025): Zeilenzahl und Summe vorher und nachher gleich, keine Position doppelt, Laufzeit
+hoechstens 2,1 s; mit Lieferant FR 130 -> 2'489 von 2'881, US 6 -> 1'138 von 1'748, IT 20'369 -> 20'921 von 20'931. TRIN nicht lokal
+pruefbar (nur ueber den Server erreichbar). Tests 1624/1624.
+
+**Offen, Entscheid Ingo:** Deploy und Neuladen von 2025/2026 fuer FR, US, IT, IN (aendert die Zahlen, die Andreas gerade prueft);
+ob in Sales_All sichtbar werden soll, dass ein Lieferant aus dem Wareneingang stammt (heute nur intern, Spanien hat das auch nicht).
+Mit dem Deploy werden die Saetze „Standardlieferant im B1-Artikelstamm pflegen“ fuer FR/US im Antwortentwurf an Andreas und im
+Regelset-Dokument ueberholt; Paolas Liste mit 162 Artikeln bleibt sinnvoll (ausdrueckliche Zuordnung geht vor).
 
 ## Werkzeuge
 
