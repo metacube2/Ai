@@ -17,7 +17,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - **AMPEL LIEFERANT UND HERSTELLKOSTEN 2026-11-18 10:48** (Sales_All 18.11., erster Export nach dem Deploy `8d15d48`): Lieferant
   gefuellt FR 2'437 von 2'846, US 1'129 von 1'790, IT 20'214 von 20'220, IN 1'380 von 8'453; DE und ES 0 (Rohail, Santi).
   Herstellkosten: CH/AT/US gruen, DE rot (99,7 % lokal), ES/FR/IT/UK/IN gelb; UK 1'586 interne Zeilen ohne Konzernkosten.
-  Entscheide 1 und 2 bei Andreas (Termin 18.11. 13:00). Detail: `docs/FINANCE_SUPPLIER.md` 12, `docs/FINANCE_STANDARDKOSTEN.md` 13.
+  Entscheide 1 und 2 bei Andreas (Termin 18.11. 13:00); Entscheid 1 betrifft nach dem Deploy noch ES 5'163, US 495, DE 139 Zeilen
+  und rund 0,85 Mio. CHF Gruppenmarge (vorher 2,5 Mio.). UK-Ursache: keine Schweizer Sachnummer, 295 UK-eigene Artikel. Detail: `docs/FINANCE_SUPPLIER.md` 12/12a, `docs/FINANCE_STANDARDKOSTEN.md` 13/13a.
 - **LIEFERANTENZUORDNUNG, MAIL ANDREAS 2026-11-13:** Nachmessung ab 2025 (Stand 12.11.): Lieferantenfelder CH/AT/DE/ES 0 %,
   FR 4,5 %, IN 11,4 % (Sales Type auf 7'892 von 8'380 Zeilen), IT 97,6 % der Zeilen und 92,9 % des Umsatzes, UK 100 %, US 0,3 %.
   **Italien hat wieder 499 Zeilen (1,07 Mio. EUR) ohne Lieferant**, 162 Artikel, 86 % davon bei den sechs bis 29.09.

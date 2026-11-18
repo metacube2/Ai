@@ -1,6 +1,6 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-11-18 10:48 (Abschnitt 13 neu aus Sales_All 18.11., erster Export nach dem Deploy; Wirkung auf die HK gering, FR Marge -1 Pkt.); davor 10:00 (Abschnitt 13: Herstellkosten je Land mit Ampel; neuer Befund UK 1'586 interne Zeilen ohne Konzernkosten); davor 2026-11-12 (Doku-Pruefung: Abschnitt 7c Kursprofil als ueberholt markiert, Indien-Quelle in Abschnitt 2, toter Querverweis); davor 2026-10-29 (Vermerke in Abschnitt 7 und 12); fachlich 2026-09-29
+Stand: 2026-11-18 11:41 (Abschnitt 13a: Ursache UK und IN gemessen; Spalte „offen“ in 13 berichtigt); davor 10:48 (Abschnitt 13 neu aus Sales_All 18.11., erster Export nach dem Deploy; Wirkung auf die HK gering, FR Marge -1 Pkt.); davor 10:00 (Abschnitt 13: Herstellkosten je Land mit Ampel; neuer Befund UK 1'586 interne Zeilen ohne Konzernkosten); davor 2026-11-12 (Doku-Pruefung: Abschnitt 7c Kursprofil als ueberholt markiert, Indien-Quelle in Abschnitt 2, toter Querverweis); davor 2026-10-29 (Vermerke in Abschnitt 7 und 12); fachlich 2026-09-29
 
 Abschnitt 6 ist am 2026-09-04 umgeschrieben worden: die Bewertungsmethode bestehender
 B1-Artikel galt danach in Italien als technisch nicht umstellbar, die fruehere Aussage „als
@@ -961,11 +961,11 @@ vergleicht mit Sales_All 17.11.
 | TRCH | 160,1 Mio. | 39,2 % | 100 % Konzernkosten TR AG | 1'238 Zeilen „Standardpreis fehlt“, Gutschriften/Erlösminderungen (-0,4 %) | gruen | nur neue Rechnungen | - |
 | TRAT | 6,7 Mio. | 48,2 % | 94 % TR AG, 6 % interner Standardpreis (217 Zeilen) | keine | gruen | - | - |
 | TRDE | 6,8 Mio. | 34,5 % | 99,7 % lokale Standardkosten | 2'144 Zeilen (1,9 %) | rot | keine | Lieferant fehlt (Rohail); DE-eigene Nummern (`N10.0`) findet der Werkstamm nicht |
-| TRES | 7,1 Mio. | 47,5 % | 65 % TR AG (Werkstamm), 35 % lokal | 781 Zeilen (0,9 %) | gelb | nur neue Rechnungen | Lieferant aus Sage-Wareneingang deployed, wartet auf Santis Exportlauf |
-| TRFR | 2,7 Mio. | 69,4 % (70,4) | 83 % TR AG, 6 % lokal, 5 % interner Standardpreis, 4 % extern (Wareneingang), 2 % TR IT | 1'338 Zeilen (2,6 %), viele Kleinbetraege | gelb | lokal 7,4 -> 6,2 %, TR AG 86,7 -> 83,5 %, extern 1,5 -> 3,7 %; Marge -1,0 Pkt. | Entscheid 1 fuer die 409 Zeilen ohne Lieferant |
+| TRES | 7,1 Mio. | 47,5 % | 65 % TR AG (Werkstamm), 35 % lokal | 781 Zeilen (0,9 %) | gelb | nur neue Rechnungen | Entscheid 1 fuer 5'163 Zeilen (Werkstamm); Lieferant aus Sage-Wareneingang deployed, wartet auf Santis Exportlauf |
+| TRFR | 2,7 Mio. | 69,4 % (70,4) | 83 % TR AG, 6 % lokal, 5 % interner Standardpreis, 4 % extern (Wareneingang), 2 % TR IT | 1'338 Zeilen (2,6 %), viele Kleinbetraege | gelb | lokal 7,4 -> 6,2 %, TR AG 86,7 -> 83,5 %, extern 1,5 -> 3,7 %; Marge -1,0 Pkt. | 391 Zeilen ohne Lieferant rechnen lokal (nicht im Werkstamm, 0,17 Mio. CHF Umsatz) *(berichtigt 13a; kein Fall fuer Entscheid 1)* |
 | TRIT | 14,5 Mio. | 40,1 % | 60 % TR AG, 34 % Kosten aus Verkaufszeile (extern), 4 % interner Standardpreis, 1 % TR IT | 252 Zeilen (0,1 %) + 6 unklar | gelb | extern 33,4 -> 33,8 % (67 Zeilen aus Wareneingang) | Entscheid 2 (Ware aus Indien, 448 Zeilen), 191 Trafag-Italia-Zeilen ohne Kosten, SCHENKER (Paola) |
-| TRUK | 7,8 Mio. | 68,0 % | 74 % TR AG, **23 % interner Standardpreis (1'586 Zeilen)**, 3 % extern | 41 Zeilen (0,4 %) | gelb | keine | 1'586 interne Zeilen ohne Konzernkosten (Ursache offen, vermutlich UK-eigene Nummern), 87 Indien-Zeilen (Entscheid 2) |
-| TRUS | 7,2 Mio. | 57,6 % | 94 % TR AG, 4 % lokal | 19 Zeilen + 77 unklar (0,5 %) | gruen | lokal 159 -> 89 Zeilen (5,0 -> 4,2 %) | Entscheid 1 fuer die 661 Zeilen ohne Lieferant |
+| TRUK | 7,8 Mio. | 68,0 % | 74 % TR AG, **23 % interner Standardpreis (1'586 Zeilen)**, 3 % extern | 41 Zeilen (0,4 %) | gelb | keine | 1'586 interne Zeilen ohne Konzernkosten (Ursache gemessen, 13a: keine Schweizer Sachnummer), 87 Indien-Zeilen (Entscheid 2) |
+| TRUS | 7,2 Mio. | 57,6 % | 94 % TR AG, 4 % lokal | 19 Zeilen + 77 unklar (0,5 %) | gruen | lokal 159 -> 89 Zeilen (5,0 -> 4,2 %) | Entscheid 1 fuer 495 Zeilen ohne Lieferant (Werkstamm); 89 lokal, 77 unklar *(berichtigt 13a)* |
 | TRIN | 16,8 Mio. | 54,7 % | 70 % TR IN (eigene Fertigung), 28 % TR AG (LRD) | 143 LRD ohne Konzernkosten (0,7 %), 36 unklar | gelb | lokal 76 -> 43 Zeilen | 143 LRD-Zeilen ohne TR-AG-Kosten |
 
 Ampel: gruen = HK aus Konzernkosten, nichts offen; gelb = einzelne offene Punkte oder Entscheid; rot = HK fast nur lokal.
@@ -973,7 +973,37 @@ Ampel: gruen = HK aus Konzernkosten, nichts offen; gelb = einzelne offene Punkte
 Wareneingang, meist extern (Kosten aus der Verkaufszeile) und kleine Betraege; 66 Zeilen verlassen dabei TR AG, die Marge sinkt um
 einen Punkt. In US, IT und IN sind es Zehntelprozente.
 **Befund UK (unveraendert):** 1'586 Zeilen (23 % des Umsatzes) mit Lieferant intern, aber ohne Konzernkosten; die Gruppenmarge
-rechnet dort mit dem UK-Standardpreis (meist dem IC-Einkaufspreis). Ursache noch nicht untersucht.
+rechnet dort mit dem UK-Standardpreis (meist dem IC-Einkaufspreis). *Ursache gemessen, siehe 13a.*
+
+### 13a. Ursache der Zeilen ohne Konzernkosten in UK und IN (gemessen 2026-11-18 11:41, nur gelesen)
+
+Quelle `Sales_All_2026-11-18.xlsx`, Blaetter Sales und Finance Details, Finance Include, 2025/2026; dazu `GroupMarginCalculator`
+(`ResolveGroupCostKey`: gesucht wird ueber die Trafag-Sachnummer, sonst ueber die Materialnummer).
+
+**UK, 1'586 Zeilen „Interner Standardpreis“ (22,9 % des UK-Umsatzes, 1,80 Mio. CHF):**
+- Lieferant: 1'486 Zeilen Trafag AG, 87 Trafag India (Entscheid 2), 11 Trafag Italia, 2 GFS. 1'546 Zeilen Status OK, 40 „Standardpreis fehlt“.
+- **Ursache:** UK liefert keine Trafag-Sachnummer (0 von 3'115 UK-Zeilen), und die 295 Artikelnummern sind UK-eigen (`NAT40.0A`,
+  `131654`, `DVB32`). Der Schluessel findet deshalb weder MBEW noch die B1-Konzernkosten. Gleiches Muster wie DE `N10.0`.
+- Konzentration: Top 10 Artikel 45 % des Betrags, Top 20 56 %, Top 50 74 %, Top 100 87 %.
+- Text: 58 % des Betrags tragen einen Trafag-Typencode im Namen (Transmitter `8xxx.xx.xxxx` 30 %, Druckschalter `9xx.xxxx.xxx` 21 %,
+  Thermostate `4xx.xxxx.xxx` 7 %), 28 % PTM/ATM-Bezeichnungen, 14 % Zertifikate, Zubehoer und Uebriges. Die Schweizer Zeilen in
+  Sales_All fuehren den Typencode nicht im Materialtext; ob SAP ihn am Material fuehrt (automatischer Abgleich), ist nicht geprueft.
+- Loesungswege: (a) Zuordnungsliste UK-Nummer -> Schweizer Materialnummer von Cornell, zuerst Top 50, eingelesen wie die
+  italienische Uebergangsliste; (b) Abgleich ueber den Typencode, falls SAP ihn fuehrt (hoechstens 58 %). Entscheid Andreas/Ingo offen.
+- Warum erst am 18.11. bemerkt: UK galt als erledigt, weil der Lieferant in 100 % der Zeilen gefuellt ist; die Kostenquelle je
+  Zeile wurde erst mit der Ampel in Abschnitt 13 ausgewertet.
+
+**Ware aus Indien in IT, UK, US (Entscheid 2):** IT 448 von 453 Zeilen (0,51 Mio. CHF Umsatz) laufen unter italienischen
+Nummern, die Indien nicht kennt. UK 87 von 112 (0,08 Mio. CHF) und US 4 von 19: bei 72 Zeilen liegt es am Schluessel, die Kosten
+von TR IN stehen nur unter der Trafag-Sachnummer, verkauft wird unter der indischen Artikelnummer (`TS000095` gegen `35560`);
+19 Zeilen haben in Indien unbekannte Nummern. Detail `docs/FINANCE_SUPPLIER.md` 12a.
+
+**IN, 143 Zeilen „Konzernkosten fehlen“ (0,65 % des Umsatzes, 0,11 Mio. CHF):**
+- Sales Type LRD, liefernde Gesellschaft TR AG; 730 von 873 LRD-Zeilen finden die TR-AG-Kosten, 726 haben eine Trafag-Sachnummer.
+- **Ursache:** fuenf Artikel ohne Trafag-Sachnummer (`U_TASC_OMN`): `DM000083` 112 Zeilen und 86 % des Betrags, `DM000084` 28 Zeilen
+  und 13 %, `FA000028`, `FA000029` (Anlagegueter), `DM000354` (neu, eine Zeile). Vier davon stehen seit dem 05.08. in
+  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` 6b; `H90101` von damals kommt 2025/2026 nicht mehr vor.
+- Bewusst kein Rueckfall auf den lokalen Wert (IC-Preis), Entscheid vom 05.08. Offen ist die Pflege der Sachnummer in B1 Indien.
 
 ## Querverweise
 

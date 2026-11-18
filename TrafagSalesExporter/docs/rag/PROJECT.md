@@ -18,7 +18,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 - **2026-11-17 abends (Shopfloor Entscheide Fabio, Finance):** Fabios Entscheide 17.11. in `docs/SHOPFLOOR_2026-10-07.md` 26: Offen
   nach Abschlussstatus (Liste und PPD), Excel bis Go-live 01.01.2027 fuehrend, Kalender CH aus P76 vorgeschlagen, Termin-Mapping
   58613 in P76 belegt; Excel hat 160 Eintraege mit Abschlussdatum und offenem Status (vor dem Umstellen klaeren). Kein Deploy; Paket B
-  nach dem ZC22-Abgleich 18.11. Finance: Muster-Arbeitsmappe fuer Andreas, „immer lokal“ waere rund 2,5 Mio. CHF weniger
+  nach dem ZC22-Abgleich 18.11. Finance: Muster-Arbeitsmappe fuer Andreas, „immer lokal“ waere rund 2,5 Mio. CHF weniger *(Stand 16.11.; nach dem Deploy 18.11. noch rund 0,85 Mio., FINANCE_SUPPLIER 12a)*
   Gruppenmarge (`docs/FINANCE_SUPPLIER.md` 10).
 - **2026-11-17 12:50 (Handbestellwesen, AD-Abgleich Teil 2):** Antworten Ingo umgesetzt (wieder aktiv nur mit Vermerk des
   Abgleichs, abgelaufen wie gesperrt, Altbestand mit aktivem AD-Konto wird AD-Eintrag, Reiter „Deaktivierte“ mit Neuzuweisung,

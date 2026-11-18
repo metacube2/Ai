@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-18 10:48 (Abschnitt 12 neu aus Sales_All 18.11., erster Export nach dem Deploy: FR und US gruen; Nachweis in Abschnitt 11); davor 10:00 (Abschnitt 12: Ampel je Land zu Andreas' Feststellungen und weitere Feststellungen); davor 09:35 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang deployed 09:31 `8d15d48`, mit Spanien `c9208b5`; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-18 11:41 (Abschnitt 12a: Nachpruefung aller Aussagen vom 18.11., vier Berichtigungen, Entscheid 1 betrifft noch rund 0,85 Mio. CHF; Ursache UK/IN gemessen); davor 10:48 (Abschnitt 12 neu aus Sales_All 18.11., erster Export nach dem Deploy: FR und US gruen; Nachweis in Abschnitt 11); davor 10:00 (Abschnitt 12: Ampel je Land zu Andreas' Feststellungen und weitere Feststellungen); davor 09:35 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang deployed 09:31 `8d15d48`, mit Spanien `c9208b5`; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -707,17 +707,52 @@ Gruen = erledigt, Gelb = gebaut/deployed, wartet auf Datenlauf, Orange = wartet 
 | AT, CH | kein Lieferant | gruen | Regel 1: immer TR AG, die Verkaufsfaktura kennt keinen Vorlieferanten; Supplier Type 100 % Intern | - |
 | DE | kein Lieferant | orange | 0 von 7'800; Alphaplan-Export ohne Lieferantenspalte; Werkstamm findet DE-eigene Nummern nicht (`N10.0`) | Rohail (Entwurf 18.11., Abwesenheitsnotiz) |
 | ES | kein Lieferant | gelb | 0 von 8'105; Lieferant aus letztem Sage-Wareneingang seit 09:31 produktiv (`c9208b5`), braucht den neuen Sage-Export | Santi: neuer Exportlauf |
-| FR | grosser Teil ohne | gruen (war gelb) | **120 -> 2'437 von 2'846** (86 %); Supplier Type Lokal 1'418 -> 391 Zeilen, Extern 48 -> 1'001, Intern 1'368 -> 1'442 | Rest: Entscheid 1 |
-| US | Grossteil ohne | gruen (war gelb) | **6 -> 1'129 von 1'790** (63 %); Lokal 159 -> 89, Extern 4 -> 60, Intern 1'550 -> 1'564 | Rest: Entscheid 1 |
+| FR | grosser Teil ohne | gruen (war gelb) | **120 -> 2'437 von 2'846** (86 %); Supplier Type Lokal 1'418 -> 391 Zeilen, Extern 48 -> 1'001, Intern 1'368 -> 1'442 | Rest 409 Zeilen: 391 lokal (nicht im Werkstamm), 12 unklar, 6 Werkstamm *(berichtigt 12a; vorher „Rest: Entscheid 1“)* |
+| US | Grossteil ohne | gruen (war gelb) | **6 -> 1'129 von 1'790** (63 %); Lokal 159 -> 89, Extern 4 -> 60, Intern 1'550 -> 1'564 | Rest 661 Zeilen: 495 Werkstamm (Entscheid 1), 89 lokal, 77 unklar *(berichtigt 12a)* |
 | IN | Grossteil ohne | gruen | Sales Type entscheidet; Lieferant zusaetzlich aus Wareneingang 960 -> 1'380 von 8'453, Lokal 76 -> 43 | - |
 | IT | Trafag Italia als Lieferant, Accountfilter | gruen | zulaessig (Beschluss 27.08.); Kontenfilter 47005 ohne 4700504 seit 30.09. gegen Hauptbuch abgestimmt; 19'696 -> 20'214 von 20'220 mit Lieferant | - |
-| IT | 2 SCHENKER-Artikel, 191 Zeilen ohne Kosten, 162 neue Artikel | orange | Wareneingang fuellt jetzt die leeren; 67 Zeilen von Intern auf Extern; Paolas Antwort steht aus | Paola (Entwurf 18.11.) |
+| IT | zwei Transmitter-Artikel unter Hausnummer (`M_IT01_006802`, `M_IT01_006340`, im Namen „…SCHENKER“, Abschnitt 9), 192 Trafag-Italia-Zeilen ohne Standardpreis (13.11.: 191), 162 Artikel ohne Standardlieferant | orange | Wareneingang fuellt jetzt die leeren; 67 Zeilen von Intern auf Extern; Paolas Antwort steht aus | Paola (Entwurf 18.11.) |
 | UK | TR09 mit zwei Namen | orange | unveraendert (3'115 von 3'115 mit Lieferant); eine Zeile falsch erfasst, rechnet richtig | Cornell (Entwurf 18.11.) |
-| alle | Entscheid 1: ohne Lieferant Werkstamm oder lokal | rot | Rest ohne Lieferant: FR 409, US 661 Zeilen (laufen ueber den Werkstamm); Wareneingaenge bestaetigen den Werkstamm (FR 1'188/1'295, US 1'039/1'548, IT 444/514) | Andreas (Termin 18.11. 13:00) |
-| IT, UK | Entscheid 2: Ware aus Indien | rot | IT 448/453, UK 87/112 Zeilen mit lokalem Preis statt Kosten TR IN | Andreas |
+| alle | Entscheid 1: ohne Lieferant Werkstamm oder lokal | rot | Betrifft nach dem Deploy noch ES 5'163, US 495, DE 139, FR 6 Zeilen (ohne Lieferant, Werkstamm = TR AG); „immer lokal“ = rund 0,85 Mio. CHF weniger Gruppenmarge (vor dem Deploy 2,5 Mio.). Wareneingaenge bestaetigen den Werkstamm (Export: FR 1'199/1'290, US 1'042/1'053, IT 445/514). *(Berichtigt 12a; vorher „FR 409, US 661 Zeilen laufen ueber den Werkstamm“, das war falsch.)* | Andreas (Termin 18.11. 13:00) |
+| IT, UK | Entscheid 2: Ware aus Indien | rot | IT 448/453, UK 87/112, US 4/19 Zeilen mit lokalem Preis statt Kosten TR IN. Ursache gemessen (12a): IT fuehrt eigene Nummern; UK/US 72 Zeilen Programmluecke (Kosten TR IN nur unter der Trafag-Sachnummer abgelegt) | Andreas (IT), Claude nach Go Ingo (UK/US), Paola (Zuordnung IT) |
 
 Zeilen und Umsatz in FR, US, DE und UK sind gegenueber dem 17.11. rappengenau gleich; der Deploy hat also nur Felder gefuellt, keine
 Zeile verloren oder verdoppelt.
+
+### 12a. Nachpruefung vom 18.11. 11:41 (Auftrag Ingo: alles von Finance pruefen)
+
+Alle Aussagen des Vormittags unabhaengig gegen `Sales_All_2026-11-17.xlsx` und `Sales_All_2026-11-18.xlsx` nachgerechnet (Blatt
+Finance Details, Zeilen ueber Gesellschaft, Belegart, Belegnummer, Position und Material verbunden, kein Schluessel doppelt).
+Richtig waren: die Ampelzahlen je Land (Abschnitt 12 und `docs/FINANCE_STANDARDKOSTEN.md` 13), Zeilen mit Lieferant je Land,
+gleicher Umsatz und gleiche Zeilenzahl, Entscheid 2 (IT 448/453, UK 87/112), UK TR09 (eine Zeile). **Falsch oder ungenau waren:**
+
+| Aussage vom Vormittag | Richtig |
+| --- | --- |
+| „Rest FR 409, US 661 Zeilen ohne Lieferant laufen ueber den Werkstamm auf TR AG“ | FR: 391 lokal, 12 unklar, nur 6 Werkstamm. US: 495 Werkstamm, 89 lokal, 77 unklar |
+| „Immer lokal“ = rund 2,5 Mio. CHF weniger Gruppenmarge | Galt am 16.11. (8'703 Zeilen). Nach dem Deploy noch 5'803 Zeilen: ES 5'163 (4,59 Mio. CHF Umsatz), US 495 (0,83 Mio.), DE 139, FR 6; Wirkung rund **0,85 Mio. CHF** (ES 0,55, US 0,30, DE unter 0,01), dazu 121 Zeilen ohne lokalen Preis (ES 41, US 67, DE 13). Gleiche Rechnung wie in Abschnitt 10 (lokaler Standardpreis x Kurs x Menge) |
+| Wareneingang bestaetigt den Werkstamm bei „FR 863, US 522 Zeilen“ (nur im Word „Offene Punkte“) | Die Zahlen stammten aus einer Beispielsuche mit Betragsfilter. Richtig, alle Zeilen: FR 1'199 von 1'290, US 1'042 von 1'053, IT 445 von 514, IN 86 von 86 |
+| „44 US-Zeilen wechseln von lokal auf Konzernkosten“ (nur im Word) | 70 bisher lokale US-Zeilen bekamen einen Lieferanten: 56 extern, 14 intern, davon 7 mit Konzernkosten TR IN. FR: 1'027 Zeilen, 938 extern, 89 intern |
+| „SCHENKER ist der Spediteur, echter Lieferant zu klaeren“ (nur im Word) | Falsch gelesen. „SCHENKER“ steht im Artikelnamen der zwei italienischen Hausnummern aus Abschnitt 9; die Frage an Paola ist, ob diese Transmitter von Trafag AG kommen. Als Lieferant kommt SCHENKER in Sales_All nicht vor |
+| UK: „30 % mit Schweizer Typencode im Text, 70 % ohne“ (nur im Word) | Das Suchmuster erkannte nur Transmitter. 58 % des Betrags tragen einen Trafag-Typencode (Transmitter 30 %, Druckschalter 21 %, Thermostate 7 %), 28 % PTM/ATM-Bezeichnungen, 14 % Zertifikate und Uebriges |
+
+**Ursache Entscheid 2, Ware aus Indien (neu gemessen, nur gelesen):** `B1GroupStandardCostBuilder` legt die Kosten von TR IN je
+Artikel unter der Trafag-Sachnummer ab (`GroupMaterialNumber`), nur ohne Sachnummer unter der indischen Artikelnummer.
+- **UK 70 und US 2 Zeilen:** verkaufen unter der indischen Artikelnummer (z. B. `TS000095`); der Artikel hat in Indien die
+  Sachnummer `35560` und einen Preis, die Kosten liegen also unter `35560` und werden unter `TS000095` nicht gefunden.
+  **Programmluecke, nicht fehlende Daten.** Wo UK die Sachnummer selbst fuehrt (23 Zeilen), stimmen die Kosten. Moegliche Loesung:
+  Kosten zusaetzlich unter der indischen Artikelnummer ablegen (nicht gebaut, Entscheid Ingo).
+- **UK 17 und US 2 Zeilen:** Nummern, die Indien nicht kennt.
+- **IT 448 Zeilen:** italienische Nummern (`I716`, `I53513`), in Indien unbekannt; braucht eine Zuordnung (Paola). 5 Zeilen mit
+  indischer Nummer (`IR…`) finden die Kosten.
+
+**Nebenwirkung des Deploys in FR (neu gemessen):** Von 1'290 Zeilen, die der Werkstamm TR AG zuordnete, bleiben 1'199 bei TR AG;
+66 wechseln weg (45 interner Standardpreis, 15 extern, 3 TR IN, 3 TR IT). Das erklaert die Marge FR 70,4 -> 69,4 %.
+
+**Ursache UK und IN gemessen** (Detail in `docs/FINANCE_STANDARDKOSTEN.md` 13a): UK liefert keine Schweizer Sachnummer (0 von
+3'115 Zeilen), 295 UK-eigene Artikelnummern; IN fehlt bei 5 Artikeln die Trafag-Sachnummer.
+
+**Mailentwurf an Andreas (Vorab-Info, Outlook):** nannte die Messwerte vor dem Export (FR 2'489 von 2'881, US 1'138 von 1'748,
+„wirksam mit dem naechsten Exportlauf“, 2,5 Mio.). Stand der Berichtigung siehe `lastchange.md`.
 
 **Weitere Feststellungen 17./18.11. (nur hier festgehalten):**
 - `TSC` ist die verkaufende Gesellschaft (Sales_All Finance Details Spalte G), fuer CH und AT kommt sie aus derselben Quelle (SAP, Netzwerkanzeige `ZSCHWEIZ`).
