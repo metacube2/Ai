@@ -963,7 +963,7 @@ vergleicht mit Sales_All 17.11.
 | TRDE | 6,8 Mio. | 34,5 % | 99,7 % lokale Standardkosten | 2'144 Zeilen (1,9 %) | rot | keine | Lieferant fehlt (Rohail); DE-eigene Nummern (`N10.0`) findet der Werkstamm nicht |
 | TRES | 7,1 Mio. | 47,5 % | 65 % TR AG (Werkstamm), 35 % lokal | 781 Zeilen (0,9 %) | gelb | nur neue Rechnungen | Entscheid 1 fuer 5'163 Zeilen (Werkstamm); Lieferant aus Sage-Wareneingang deployed, wartet auf Santis Exportlauf |
 | TRFR | 2,7 Mio. | 69,4 % (70,4) | 83 % TR AG, 6 % lokal, 5 % interner Standardpreis, 4 % extern (Wareneingang), 2 % TR IT | 1'338 Zeilen (2,6 %), viele Kleinbetraege | gelb | lokal 7,4 -> 6,2 %, TR AG 86,7 -> 83,5 %, extern 1,5 -> 3,7 %; Marge -1,0 Pkt. | 391 Zeilen ohne Lieferant rechnen lokal (nicht im Werkstamm, 0,17 Mio. CHF Umsatz) *(berichtigt 13a; kein Fall fuer Entscheid 1)* |
-| TRIT | 14,5 Mio. | 40,1 % | 60 % TR AG, 34 % Kosten aus Verkaufszeile (extern), 4 % interner Standardpreis, 1 % TR IT | 252 Zeilen (0,1 %) + 6 unklar | gelb | extern 33,4 -> 33,8 % (67 Zeilen aus Wareneingang) | Entscheid 2 (Ware aus Indien, 448 Zeilen), 191 Trafag-Italia-Zeilen ohne Kosten, SCHENKER (Paola) |
+| TRIT | 14,5 Mio. | 40,1 % | 60 % TR AG, 34 % Kosten aus Verkaufszeile (extern), 4 % interner Standardpreis, 1 % TR IT | 252 Zeilen (0,1 %) + 6 unklar | gelb | extern 33,4 -> 33,8 % (67 Zeilen aus Wareneingang) | Ware aus Indien 448 Zeilen (Kostenschluessel, 13a), 192 Trafag-Italia-Zeilen ohne Standardpreis, zwei Transmitter-Artikel unter Hausnummer (Paola) |
 | TRUK | 7,8 Mio. | 68,0 % | 74 % TR AG, **23 % interner Standardpreis (1'586 Zeilen)**, 3 % extern | 41 Zeilen (0,4 %) | gelb | keine | 1'586 interne Zeilen ohne Konzernkosten (Ursache gemessen, 13a: keine Schweizer Sachnummer), 87 Indien-Zeilen (Entscheid 2) |
 | TRUS | 7,2 Mio. | 57,6 % | 94 % TR AG, 4 % lokal | 19 Zeilen + 77 unklar (0,5 %) | gruen | lokal 159 -> 89 Zeilen (5,0 -> 4,2 %) | Entscheid 1 fuer 495 Zeilen ohne Lieferant (Werkstamm); 89 lokal, 77 unklar *(berichtigt 13a)* |
 | TRIN | 16,8 Mio. | 54,7 % | 70 % TR IN (eigene Fertigung), 28 % TR AG (LRD) | 143 LRD ohne Konzernkosten (0,7 %), 36 unklar | gelb | lokal 76 -> 43 Zeilen | 143 LRD-Zeilen ohne TR-AG-Kosten |
@@ -993,8 +993,8 @@ Quelle `Sales_All_2026-11-18.xlsx`, Blaetter Sales und Finance Details, Finance 
 - Warum erst am 18.11. bemerkt: UK galt als erledigt, weil der Lieferant in 100 % der Zeilen gefuellt ist; die Kostenquelle je
   Zeile wurde erst mit der Ampel in Abschnitt 13 ausgewertet.
 
-**Ware aus Indien in IT, UK, US (Entscheid 2):** IT 448 von 453 Zeilen (0,51 Mio. CHF Umsatz) laufen unter italienischen
-Nummern, die Indien nicht kennt. UK 87 von 112 (0,08 Mio. CHF) und US 4 von 19: bei 72 Zeilen liegt es am Schluessel, die Kosten
+**Ware aus Indien in IT, UK, US (bisher „Entscheid 2“):** IT 448 von 453 Zeilen (0,51 Mio. CHF Umsatz) laufen unter „I“ plus
+Trafag-Sachnummer oder indischer Artikelnummer (401 Zeilen, Indien hat den Preis) oder unter Hausnummern (47 Zeilen). UK 87 von 112 (0,08 Mio. CHF) und US 4 von 19: bei 72 Zeilen liegt es am Schluessel, die Kosten
 von TR IN stehen nur unter der Trafag-Sachnummer, verkauft wird unter der indischen Artikelnummer (`TS000095` gegen `35560`);
 19 Zeilen haben in Indien unbekannte Nummern. Detail `docs/FINANCE_SUPPLIER.md` 12a.
 

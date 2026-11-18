@@ -12,8 +12,8 @@ Stand: 2026-11-18 11:46 (Finance nachgeprueft: sechs Berichtigungen, Entscheid 1
   US 0,30), 863/522 (richtig FR 1'199 von 1'290, US 1'042 von 1'053, IT 445 von 514), 44 US-Zeilen (richtig 7 von 70), SCHENKER
   (Artikelname, kein Spediteur), Typencode UK (58 statt 30 %). `docs/FINANCE_SUPPLIER.md` 12a, LEARNINGS.
 - **Ursachen gemessen (nur gelesen):** UK 1'586 Zeilen: keine Schweizer Sachnummer, 295 UK-eigene Artikel, Top 50 = 74 %.
-  IN 143 Zeilen: 5 Artikel ohne Trafag-Sachnummer. Ware aus Indien: IT 448 Zeilen eigene Nummern; UK/US 72 Zeilen **Programmluecke**
-  (Kosten TR IN nur unter der Trafag-Sachnummer). `docs/FINANCE_STANDARDKOSTEN.md` 13a.
+  IN 143 Zeilen: 5 Artikel ohne Trafag-Sachnummer. Ware aus Indien (bisher „Entscheid 2“): bei 473 von 539 Zeilen passt nur der
+  Kostenschluessel nicht (IT 401 Zeilen „I“ + Nummer, UK/US 72 Zeilen indische Artikelnummer), im Programm loesbar, nicht gebaut. `docs/FINANCE_STANDARDKOSTEN.md` 13a.
 - **Offen:** Entscheide Andreas 13:00; Programmkorrektur Indien-Ware UK/US (Go Ingo); Zuordnungsliste UK (Cornell), IT (Paola);
   Regelset-Word in den Downloads nennt bei Entscheid 1 noch den Stand vom 16.11. (8'703 Zeilen, 2,5 Mio.); Mailentwurf an Andreas
   nennt die Messwerte vor dem Export.
