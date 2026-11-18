@@ -1,6 +1,6 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-18 10:45 (Abschnitt 6.14: Rueckmeldungen Sandro/Vinc in der klassischen Startansicht nachgezogen, Sortierung, Befund Limits; Commit `3c18493`, Deploy offen); davor 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
+Stand: 2026-11-18 10:32 (Abschnitt 6.14: Rueckmeldungen Sandro/Vinc in der klassischen Startansicht nachgezogen, Sortierung, Befund Limits; Commit `3c18493`, Deploy offen); davor 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
 `Schreiben` an, noch nicht ausgefuehrt: ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
 AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
 der juengste Inhalt war damals vom 2026-10-27).
@@ -514,7 +514,7 @@ freigeben nur mit genuegend Limit; Kreditoren, Kostenstellen **und** Sachkonten 
 - Tests: Handbestellwesen 41/41 (fuenf neu), Suite 1617/1617, Release-Worktree 1617/1617.
 - **Offen:** Sandros Punkt 2 („Limit 1'000 CHF ueber dem Betrag nicht moeglich“) ist unklar, Rueckfrage; PCBWin kann jetzt jeder
   Besteller selbst anlegen; Oberflaeche nach dem Deploy nicht im Browser geprueft (Windows-Chrome war nicht verbunden).
-  *Nachtrag 18.11. 10:45 (6.14): Die Neuerungen dieses Abschnitts galten nur fuer die neue Ansicht `/bestellwesen`. Die Startseite
+  *Nachtrag 18.11. 10:32 (6.14): Die Neuerungen dieses Abschnitts galten nur fuer die neue Ansicht `/bestellwesen`. Die Startseite
   `/handbestellwesen`, auf die Ingos Mails verlinken, ist die klassische Ansicht; dort fehlten sie. Nachgezogen in 6.14.*
 
 ### 6.14 Rueckmeldungen Sandro und Vinc in der klassischen Ansicht (2026-11-18 vormittags, Commit `3c18493`, Deploy offen)
