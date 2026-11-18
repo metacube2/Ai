@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-18 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang gebaut, `6e4d44f`, nicht deployed; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-18 09:35 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang deployed 09:31 `8d15d48`, mit Spanien `c9208b5`; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -656,7 +656,7 @@ Kurzauskuenfte und Hilfsmittel aus der Sitzung vom 17.11., nichts am Code geaend
   Lieferant und Ware aus Indien ueber IT/UK). Idee, nicht gebaut und nicht gemessen: Lieferant fuer FR/US/IT aus dem letzten
   Wareneingang in B1 lesen (wie Spanien). Vorher muessen die Entwuerfe an Rohail, Paola und Cornell raus. Gesendet hat Claude nichts.
 
-## 11. B1: Lieferant aus dem letzten Wareneingang (Stand 2026-11-18, gebaut, nicht deployed)
+## 11. B1: Lieferant aus dem letzten Wareneingang (Stand 2026-11-18, deployed 09:31 `8d15d48`)
 
 Auftrag Ingo 18.11. („die fehlenden Felder, die Andreas anmahnt, erweitern, wo sie noch fehlen“). Machbar ist das nur fuer die
 B1-Gesellschaften (FR, US, IT, IN): DE braucht Rohail (Alphaplan), ES ist mit `c9208b5` gebaut und wartet auf Deploy und Santi, CH/AT
@@ -685,7 +685,7 @@ einen Wert aus dem Wareneingang) vor Wareneingang. Scheitert die Abfrage, laeuft
 hoechstens 2,1 s; mit Lieferant FR 130 -> 2'489 von 2'881, US 6 -> 1'138 von 1'748, IT 20'369 -> 20'921 von 20'931. TRIN nicht lokal
 pruefbar (nur ueber den Server erreichbar). Tests 1624/1624.
 
-**Offen, Entscheid Ingo:** Deploy und Neuladen von 2025/2026 fuer FR, US, IT, IN (aendert die Zahlen, die Andreas gerade prueft);
+*Nachtrag 18.11. 09:31:* **deployed** zusammen mit Spanien `c9208b5` (Merge `8d15d48`, Auftrag Ingo „mach mal den Deploy“). Neu geladen wird ohne eigenen Lauf: der Export liest jedes Mal ab `ExportSettings.DateFilter` 2025-01-01, die Zahlen aendern sich mit dem naechsten Exportlauf je Land. *Damit ueberholt:* „Deploy und Neuladen offen“. **Weiter offen:**
 ob in Sales_All sichtbar werden soll, dass ein Lieferant aus dem Wareneingang stammt (heute nur intern, Spanien hat das auch nicht).
 Mit dem Deploy werden die Saetze „Standardlieferant im B1-Artikelstamm pflegen“ fuer FR/US im Antwortentwurf an Andreas und im
 Regelset-Dokument ueberholt; Paolas Liste mit 162 Artikeln bleibt sinnvoll (ausdrueckliche Zuordnung geht vor).
