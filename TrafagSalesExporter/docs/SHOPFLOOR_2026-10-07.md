@@ -1197,3 +1197,21 @@ Fabios Excel als Knopf mit Vorschau der Aenderungen und Sicherung vorher, nichts
 `LetzterArbeitstag` und `Plan5Ende`; Beschriftung zurueck auf „Wunschtermin“; Bemerkungen „Offen (Fabio)“ der TX-Schichtfelder in
 `shopfloor_config.json` auf die Entscheide nachfuehren. Vor dem Deploy das abgebrochene Einkauf-Delta nachholen. Paket C (wartet auf
 MES-User): TX-Mengen mit Schichtmodell, FPY TR5/TX, Nachbau „Avg Asictx“.
+
+### 26.7 Stichtag 18.11. (erster mit ganzem Layout): Cockpit-Werte fuer Fabios ZC22-Abgleich
+
+Lauf 18.11. 04:01 ok (`sap/status`), Werte im Board vom SAP-Lauf 04:01/04:02 (produktiv gelesen 07:35). Selektion: ShopAufSet Typ VR
+(ZC22-Logik), Layoutfilter Status `FREI DRUC RÜCK VOKL*` ausgeschlossen und Arbeitsplatz `M*` ausgeschlossen (wie `/ P00 TX`),
+Material 1-99999 fuer TR5 und DW, DW ueber `D*`; Fenster ab 18.11. kumuliert inkl. Ueberfaellige: SEH/TR5/TX bis 18.12. / 18.01. /
+18.02., DW bis 16.12. / 13.01. / 10.02. (4/8/12 Wochen), offene KW bis 22.11., SEH-Tagesziel bis 18.11., TX plan5 bis 25.11.
+(5 Arbeitstage Mo-Fr); Verzug Eckendtermin 01.01.2026 bis 17.11.2026.
+
+| Abteilung | Vorrat total | 3 Monate | 2 Monate | 1 Monat | offene KW | weiteres | Verzug (Stk.) |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| SEH | 160'672 | 85'868 | 56'409 | 41'804 | 6'451 | Tagesziel 2'082 | 155 |
+| TR5 | 59'992 | 32'916 | 24'264 | 17'177 | 1'400 | | 339 |
+| TX | 52'869 | 35'769 | 26'530 | 20'201 | 2'306 | plan5 5'488 | 65 |
+| DW | 48'224 | 33'537 (12 W.) | 23'778 (8 W.) | 15'794 (4 W.) | 1'535 | | 264 |
+
+Eine Vorschau um 07:40 (nur gelesen) lag schon leicht anders (z. B. TX Verzug 35, SEH Vorrat 159'118), weil SAP weiterlaeuft;
+fuer den Abgleich ZC22 und Cockpit im selben Moment ziehen oder ZC22 gegen den Stand 04:00 halten.

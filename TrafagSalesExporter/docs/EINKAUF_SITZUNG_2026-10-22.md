@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-18 (Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -273,3 +273,31 @@ Fassung fuer Marco. Gefragt hat Ingo nach drei Entscheiden:
 
 Zum SAP-Score (Fiori) wurde auf Lucas/NTT und den 01.12. verwiesen. Antwort Armins steht aus. Gebaut wird weiterhin nichts, bevor
 der Plan Paket 1 steht.
+
+### 6.5 Antwort Armin auf E1, E2 und Preis (Mail, Stand 2026-11-18)
+
+*Damit beantwortet: die drei Fragen aus 6.4.*
+
+| Frage | Antwort Armin | Folge |
+| --- | --- | --- |
+| **E1** Zeitraum A/B/C | **Zeitraum aus dem Dashboard.** Basis sind die Bestellungen der Artikel, deren Disponent 001 bis 006 ist (Einkaufsdisponenten, wie beim Lagerwert seit 02.11.), kumuliert zum Lieferantenumsatz | Paket 1: A/B/C je Lieferant rechnet mit dem gewaehlten Zeitraum, nicht fest zwoelf Monate; Grenzen 70/20/10 % aus 6.2 |
+| **E2** Rhythmus der sieben Themenfelder | **Jederzeit moeglich**; die Uebersicht zeigt jeweils die zuletzt erstellte Bewertung | Paket 2: Bewertungen mit Datum speichern, Verlauf behalten, Uebersicht = juengste |
+| Preis 0 % in der Fiori-Bewertung | SAP-Score und Preis werden **Anfang Dezember** noch diskutiert | nicht Teil von Paket 1; weiter mit Lucas/NTT (Info 01.12.) |
+
+Offen bleibt die fachliche Frage aus 6.3, ob die Liefertreue auf `EKET-SLFDT` (urspruenglich bestaetigter Termin) oder `EINDT`
+(aktueller Liefertermin) rechnet. Naechster Schritt: Plan Paket 1 (laeuft, nur lesend), danach Freigabe Ingo.
+
+### 6.6 Plan Paket 1 (Stand 2026-11-18, nur lesend erarbeitet, nichts gebaut)
+
+Volltext: `saptasks/einkauf_lieferantenbewertung/PLAN_PAKET1_2026-11-18.md` (Agent einkauf, nur Code und Doku gelesen; drei
+Fundstellen von der Hauptsitzung nachgeprueft: Disponentenfilter 001-006, Aufriss nach Name, `QmMeldungSet` fest Q1). Kurz:
+
+* **A/B/C je Lieferant** geht vollstaendig aus dem vorhandenen Einkauf-Cache (Bestellwert `EKPO-NETWR` in CHF, Bestelldatum im
+  Dashboard-Zeitraum, nur Bestellungen ohne `UB`, ohne geloeschte Positionen, Disponent 001-006), ohne SAP-Aenderung. Summe A+B+C
+  plus „ohne Klasse“ muss dem Spend-Aufriss (Lieferant, „Nur Einkaufsteile“) entsprechen. Aufwand geschaetzt 6-8 h plus Deploy.
+* **Q2** braucht ein neues Gateway-Set in T76 (Vorschlag eigenes `QmLiefMeldungSet`, damit die Monthly Review unberuehrt bleibt),
+  Schreibauftrag erst nach eigenem SAP-Plan und Freigabe Ingo; der Dashboard-Teil kann vorher gebaut werden (404-tolerant).
+* **Liefertreue** ist mit den vorhandenen Sets nicht machbar (Datum des Wareneingangs fehlt); Vorschlag: bis 01.12. (Fiori-Score
+  „Zeit“) warten, nur den `Slfdt`-Abruf vorbereiten.
+* Offene Entscheide D1-D14 (Plan Abschnitt 8), u. a. Lieferant nach Nummer statt Name, Klasse fest oder im Filterkontext,
+  Kurztext oder Langtext bei Q2, Ort `/einkauf/lieferanten`, Sichtbarkeit der ersten Fassung, P76 lesen fuer die Abnahme.
