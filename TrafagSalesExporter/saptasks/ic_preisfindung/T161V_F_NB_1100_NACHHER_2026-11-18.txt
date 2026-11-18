@@ -1,0 +1,93 @@
+T161V in T76, Mandant 100: Stand NACHHER (nach der Testaenderung ATPCONFMRP fuer Fabio)
+======================================================================================
+Geaendert: 2026-11-18 12:06:00 (Get-Date am Arbeitsplatz direkt nach "Daten wurden gesichert"; der Klick lag zwischen
+           12:05:47 und 12:06:00). Stuetze: E070-AS4TIME der Aufgabe T76K912927 = 12:05:58 Serverzeit T76.
+Gelesen:   2026-11-18 12:06:17 (Get-Date), RFC, .tmp_sap_probe/RunSapProbe.ps1 table-read T161V, dieselben Befehle und
+           dieselben 33 Felder wie in T161V_F_NB_1100_VORHER_2026-11-18.txt.
+Pflegeweg: SM30, Sicht VV_161V_VF ("Umlagerungsdaten"), eigene GUI-Sitzung /app/con[0]/ses[2], nur das Ankreuzfeld
+           "ATP Best. MRP" der Zeile NB / 1100 entfernt.
+Auftrag:   T76K912926 (Customizing, W, Status D = aenderbar, Ziel leer = lokal, KOI, Mandant 100), Aufgabe T76K912927.
+           Text "T161V ATPCONFMRP NB/1100 Test Fabio 18.11. NICHT FREIGEBEN". Nicht freigegeben.
+
+1. Zielzeile (Filter BSTYP = 'F' AND BSART = 'NB' AND RESWK = '1100'): genau 1 Zeile
+----------------------------------------------------------------------------------
+MANDT                 = 100
+BSTYP                 = F
+BSART                 = NB
+RESWK                 = 1100
+LFART                 = NL
+PRREG                 = IC
+LFRET                 = (leer)
+LBLFA                 = (leer)
+LFRFL                 = (leer)
+MEVST                 = X
+MERFP                 = (leer)
+LFART1                = NL
+LFART2                = NLCC
+LFCON                 = (leer)
+REVFE                 = B
+CRM_BILL              = (leer)
+AUTO_DELV             = (leer)
+REQPRF                = (leer)
+FLS_LFART             = (leer)
+ATPCONFMRP            = (leer)   <-- vorher X; einziger Unterschied
+STR_BOM_DELV          = (leer)
+ACTIVATE_ADV_PAL_IND  = (leer)
+ARTYP                 = (leer)
+IMMEDIATE_ORDER       = (leer)
+SOREG                 = (leer)
+RELEASE_CHECK         = (leer)
+RFM_VAS_PLANT_CHECK   = (leer)
+GR_RELEASE_CHECK      = (leer)
+BSGRU                 = (leer)
+ARUN_EVENT_WF         = (leer)
+ARUN_EVENT_SIT        = (leer)
+UNCONFIRMED_ITEMS     = (leer)
+ARUNRULENAME          = (leer)
+
+CSV-Form der Zielzeile (zeichengleich aus der Ausgabe):
+MANDT,BSTYP,BSART,RESWK,LFART,PRREG,LFRET,LBLFA,LFRFL,MEVST,MERFP,LFART1,LFART2,LFCON,REVFE,CRM_BILL,AUTO_DELV,REQPRF,FLS_LFART,ATPCONFMRP,STR_BOM_DELV,ACTIVATE_ADV_PAL_IND,ARTYP,IMMEDIATE_ORDER,SOREG,RELEASE_CHECK,RFM_VAS_PLANT_CHECK,GR_RELEASE_CHECK,BSGRU,ARUN_EVENT_WF,ARUN_EVENT_SIT,UNCONFIRMED_ITEMS,ARUNRULENAME
+100,F,NB,1100,NL,IC,,,,X,,NL,NLCC,,B,,,,,,,,,,,,,,,,,,
+
+2. Ganze Tabelle T161V, Mandant 100 (Filter BSTYP LIKE '%', --rowcount 5000, --format csv): 11 Zeilen
+---------------------------------------------------------------------------------------------------
+MANDT,BSTYP,BSART,RESWK,LFART,PRREG,LFRET,LBLFA,LFRFL,MEVST,MERFP,LFART1,LFART2,LFCON,REVFE,CRM_BILL,AUTO_DELV,REQPRF,FLS_LFART,ATPCONFMRP,STR_BOM_DELV,ACTIVATE_ADV_PAL_IND,ARTYP,IMMEDIATE_ORDER,SOREG,RELEASE_CHECK,RFM_VAS_PLANT_CHECK,GR_RELEASE_CHECK,BSGRU,ARUN_EVENT_WF,ARUN_EVENT_SIT,UNCONFIRMED_ITEMS,ARUNRULENAME
+100,F,ENB,0001,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB,0001,,,RL,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB2,0001,,,RL,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB2C,0001,,,,,LR,,,,,,,,,,LLR,,,,,,,,,,,,,,
+100,F,NBAI,0001,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NBC7,,,,,,,,,,,,,,,,NCR7,,,,,,,,,,,,,,
+100,F,NBIC,0001,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NBR8,,,,,,,,,,,,,,,,NLR8,,,,,,,,,,,,,,
+100,F,UB2,0001,,,,,LR,,,,,,,,,,LLR,,,,,,,,,,,,,,
+100,F,UB,1100,NL,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB,1100,NL,IC,,,,X,,NL,NLCC,,B,,,,,,,,,,,,,,,,,,
+
+3. Vergleich gegen VORHER (Compare-Object ueber die beiden vollstaendigen Ausgaben)
+----------------------------------------------------------------------------------
+Zeilenzahl: vorher 11 Datenzeilen, nachher 11 Datenzeilen.
+Unterschied: genau eine Zeile.
+  vorher : 100,F,NB,1100,NL,IC,,,,X,,NL,NLCC,,B,,,,,X,,,,,,,,,,,,,
+  nachher: 100,F,NB,1100,NL,IC,,,,X,,NL,NLCC,,B,,,,,,,,,,,,,,,,,,
+Innerhalb der Zeile ist nur die 20. Stelle (ATPCONFMRP) anders: X -> leer. Die zehn uebrigen Zeilen sind zeichengleich.
+In der ganzen Tabelle steht jetzt in keiner Zeile mehr ATPCONFMRP = X.
+
+4. Unveraendert mitgelesen (12:06)
+----------------------------------
+T441V (Pruefgruppe 02, Pruefregel IC), alle Felder, zeichengleich mit VORHER:
+100,02,IC,X,,,X,X,,A,,X,,X,X,,,,000,,,,,,,,,,,,
+
+5. Auftrag (E070, E070C, E07T, E071, E071K; 12:06)
+--------------------------------------------------
+E070:  T76K912926 W D TARSYSTEM leer KOI 18.11.2026 12:05:09
+       T76K912927 Q D TARSYSTEM leer KOI 18.11.2026 12:05:58 (STRKORR T76K912926)
+E070C: beide Mandant 100
+E07T:  beide "T161V ATPCONFMRP NB/1100 Test Fabio 18.11. NICHT FREIGEBEN"
+E071:  T76K912927 R3TR VDAT VV_161V_VF, OBJFUNC K (einzige Objektzeile)
+E071K: T76K912927 R3TR TABU T161V, MASTERTYPE VDAT, MASTERNAME VV_161V_VF, TABKEY "100FNB  1100" (einziger Schluessel)
+
+6. Rueckbau (nur auf Zuruf Ingos)
+---------------------------------
+SM30, Sicht VV_161V_VF, Zeile NB / 1100, Haken "ATP Best. MRP" wieder setzen, sichern, im Auftragsdialog T76K912926
+ausdruecklich setzen. Danach muessen Zielzeile und ganze Tabelle zeichengleich mit T161V_F_NB_1100_VORHER_2026-11-18.txt sein.

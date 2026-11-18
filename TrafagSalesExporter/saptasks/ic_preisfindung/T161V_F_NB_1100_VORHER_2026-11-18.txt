@@ -1,0 +1,80 @@
+T161V in T76, Mandant 100: Stand VORHER (vor der Testaenderung ATPCONFMRP fuer Fabio)
+=====================================================================================
+Gelesen: 2026-11-18 11:57:01 (ganze Tabelle) und 12:01:50 (Zielzeile mit vollem Schluessel), Uhrzeiten mit Get-Date abgelesen.
+Weg:     RFC, .tmp_sap_probe/RunSapProbe.ps1 table-read T161V (RFC_READ_TABLE, Anmeldemandant 100), nur gelesen.
+Felder:  alle 33 Felder der Tabelle laut DD03L (AS4LOCAL A), in der Reihenfolge der Feldposition.
+Schluessel laut DD03L (KEYFLAG X): MANDT, BSTYP, BSART, RESWK.
+
+1. Zielzeile (Filter BSTYP = 'F' AND BSART = 'NB' AND RESWK = '1100'): genau 1 Zeile
+----------------------------------------------------------------------------------
+MANDT                 = 100
+BSTYP                 = F
+BSART                 = NB
+RESWK                 = 1100
+LFART                 = NL
+PRREG                 = IC
+LFRET                 = (leer)
+LBLFA                 = (leer)
+LFRFL                 = (leer)
+MEVST                 = X
+MERFP                 = (leer)
+LFART1                = NL
+LFART2                = NLCC
+LFCON                 = (leer)
+REVFE                 = B
+CRM_BILL              = (leer)
+AUTO_DELV             = (leer)
+REQPRF                = (leer)
+FLS_LFART             = (leer)
+ATPCONFMRP            = X        <-- das Feld des Tests ("ATP Best. MRP", DD04T: "ATP-Bestaetigungen relevant fuer MRP")
+STR_BOM_DELV          = (leer)
+ACTIVATE_ADV_PAL_IND  = (leer)
+ARTYP                 = (leer)
+IMMEDIATE_ORDER       = (leer)
+SOREG                 = (leer)
+RELEASE_CHECK         = (leer)
+RFM_VAS_PLANT_CHECK   = (leer)
+GR_RELEASE_CHECK      = (leer)
+BSGRU                 = (leer)
+ARUN_EVENT_WF         = (leer)
+ARUN_EVENT_SIT        = (leer)
+UNCONFIRMED_ITEMS     = (leer)
+ARUNRULENAME          = (leer)
+
+CSV-Form der Zielzeile (zeichengleich aus der Ausgabe):
+MANDT,BSTYP,BSART,RESWK,LFART,PRREG,LFRET,LBLFA,LFRFL,MEVST,MERFP,LFART1,LFART2,LFCON,REVFE,CRM_BILL,AUTO_DELV,REQPRF,FLS_LFART,ATPCONFMRP,STR_BOM_DELV,ACTIVATE_ADV_PAL_IND,ARTYP,IMMEDIATE_ORDER,SOREG,RELEASE_CHECK,RFM_VAS_PLANT_CHECK,GR_RELEASE_CHECK,BSGRU,ARUN_EVENT_WF,ARUN_EVENT_SIT,UNCONFIRMED_ITEMS,ARUNRULENAME
+100,F,NB,1100,NL,IC,,,,X,,NL,NLCC,,B,,,,,X,,,,,,,,,,,,,
+
+2. Ganze Tabelle T161V, Mandant 100 (Filter BSTYP LIKE '%', --rowcount 5000, --format csv): 11 Zeilen
+---------------------------------------------------------------------------------------------------
+MANDT,BSTYP,BSART,RESWK,LFART,PRREG,LFRET,LBLFA,LFRFL,MEVST,MERFP,LFART1,LFART2,LFCON,REVFE,CRM_BILL,AUTO_DELV,REQPRF,FLS_LFART,ATPCONFMRP,STR_BOM_DELV,ACTIVATE_ADV_PAL_IND,ARTYP,IMMEDIATE_ORDER,SOREG,RELEASE_CHECK,RFM_VAS_PLANT_CHECK,GR_RELEASE_CHECK,BSGRU,ARUN_EVENT_WF,ARUN_EVENT_SIT,UNCONFIRMED_ITEMS,ARUNRULENAME
+100,F,ENB,0001,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB,0001,,,RL,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB2,0001,,,RL,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB2C,0001,,,,,LR,,,,,,,,,,LLR,,,,,,,,,,,,,,
+100,F,NBAI,0001,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NBC7,,,,,,,,,,,,,,,,NCR7,,,,,,,,,,,,,,
+100,F,NBIC,0001,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NBR8,,,,,,,,,,,,,,,,NLR8,,,,,,,,,,,,,,
+100,F,UB2,0001,,,,,LR,,,,,,,,,,LLR,,,,,,,,,,,,,,
+100,F,UB,1100,NL,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+100,F,NB,1100,NL,IC,,,,X,,NL,NLCC,,B,,,,,X,,,,,,,,,,,,,
+
+Zeilen mit Lieferwerk 1100: F/UB/1100 und F/NB/1100. Zeilen mit Belegart NB: F/NB/0001 und F/NB/1100.
+ATPCONFMRP = X steht in der ganzen Tabelle nur in der Zeile F/NB/1100.
+
+3. Nicht Teil der Aenderung, als Beleg "unveraendert" mitgelesen (11:59)
+------------------------------------------------------------------------
+T441V (Pruefgruppe 02, Pruefregel IC), alle Felder:
+MANDT,MTVFP,PRREG,EISBP,UMLMP,QMBSP,BESTP,FERTP,BANFP,PLAFP,SKBDP,RESBP,ARREP,VBBDP,VBBLP,OWBZP,SBSTP,LAVIP,WZTWE,TBBEP,OLGPR,OLBPR,NFVBC,RPAST,VWBEST,PRIBED,QUANTITY_DIST,ENABLE_SUPPLY_PROTECTION,QUANTITY_USED_FOR_STO,PAC_BUCKET_LOGIC,NO_BATCH_CHECK
+100,02,IC,X,,,X,X,,A,,X,,X,X,,,,000,,,,,,,,,,,,
+T441W (Text Pruefregel IC): D "Intercompany", E "SD order", F "SD-Auftrag".
+
+4. Transportlage des Schluessels vor der Aenderung (E071K OBJNAME T161V, E070, E070C; 11:58)
+-------------------------------------------------------------------------------------------
+Schluessel 100FNB  1100: nur T76K912180 / Aufgabe T76K912181 (MEEY_HAST, 30.09.2026, TRSTATUS R, Ziel P76, Mandant 100,
+  "IC AT: Kundenabhaengiges Customizing T76 100"), Sicht VV_161V_VF. Freigegeben, also keine Sperre.
+Schluessel 090FNB  1100: T76K912166/167 (MEEY_HAST, 25.09.2026, R) und T76K912888/889 (MEEY_HAST, 11.11.2026, R, Ziel P76,
+  "Trafag AT IC: Ablauf Verfuegbakreispruefung Bestellung"), beide Mandant 090.
+Einziger offener Auftrag mit einem T161V-Schluessel: Aufgabe T76K911043 (LAA, 22.09.2025, D, "ATP-Editing"), Schluessel
+  100BNB  1100 (BSTYP B, Sicht VV_161V_VB): anderer Schluessel; eine Zeile mit BSTYP B gibt es in Mandant 100 heute nicht.

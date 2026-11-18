@@ -1,6 +1,6 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-12 (Abschnitt 9.1: **Tests Fabio in T76 bestanden, T76K912884 fachlich freigegeben**; Import P76 wartet auf Fabios Z999-Preise in P76; Antwortvorschlag 601/908); davor 2026-11-11 abends (Abschnitt 8.9: Rueckmeldung Fabio zu 601/908 eingeordnet, Entscheid RV80HGEN weiter bei Ingo); davor 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
+Stand: 2026-11-18 12:14 (Abschnitt 10: Test Fabio, T161V ATPCONFMRP NB/1100 in T76/100 entfernt, Rueckbau steht aus; Nebenbefund T76K912884 laut E070 seit 12.11. freigegeben); davor 2026-11-12 (Abschnitt 9.1: **Tests Fabio in T76 bestanden, T76K912884 fachlich freigegeben**; Import P76 wartet auf Fabios Z999-Preise in P76; Antwortvorschlag 601/908); davor 2026-11-11 abends (Abschnitt 8.9: Rueckmeldung Fabio zu 601/908 eingeordnet, Entscheid RV80HGEN weiter bei Ingo); davor 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
 offen; Plan und Ausfuehrung in `PLAN_V1_CUSTOMIZING_2026-11-11.md`); davor 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
 noch nicht eingebunden**; VOFM in P76 gesperrt, Transport von `RV62ANNN` nicht moeglich (generiert), offen Entscheid Ingo zu
 `RV80HGEN`, das auch die Kopierbedingung FBED 908 einbindet); davor 2026-11-06
@@ -724,7 +724,7 @@ Ingo („Ja, Plan ausfuehren“; Bezugsstufe „Kaskade wie ZVAA01“), dann Aus
 Rueckleseproben und Rueckbau: `PLAN_V1_CUSTOMIZING_2026-11-11.md`; Vorher-/Nachher-Staende als CSV in `v1_vorher_2026-11-11/` und
 `v1_nachher_2026-11-11/`. Hintergrund Fabios: IC-Preisboard v0.4 vom 07.11. (PDF von Ingo, nicht im Repo).
 
-**Umgesetzt in T76/100, Customizing-Auftrag T76K912884 (Aufgabe T76K912885), offen, nicht freigegeben** (09:20 bis 09:36; von der
+**Umgesetzt in T76/100, Customizing-Auftrag T76K912884 (Aufgabe T76K912885), offen, nicht freigegeben** *(ueberholt: laut E070, gelesen 18.11. vom Agenten sap-t76, seit 12.11.2026 13:34 freigegeben, Status R; Import nach P76 hier nicht geprueft)* (09:20 bis 09:36; von der
 Hauptsitzung per RFC gegengelesen 09:40):
 
 | Objekt | Aenderung |
@@ -787,3 +787,29 @@ mit der Liefermenge, ohne Abbruch.
 **Offen vor Freigabe und Import (Ingo):** T683T-Schluessel lassen oder entfernen; V1 auch fuer 501230 (wirkt automatisch);
 Mandant 090 nachziehen; A304-Materialpreise (Plan 5.4 Punkt 10); vor dem Import P76 lesend: `TVCPF` IV/NLCC `KNPRS B`, `T683S`
 ZICAA1 Stufen 010/012/113/115 frei, `T684` ZPR0 frei, `T684S` ZICAA1 leer, `T685A` Z999/Z002 gegen `v1_nachher`.
+
+## 10. Test Fabio: T161V „ATP Best. MRP“ fuer NB / Lieferwerk 1100 in T76/100 (2026-11-18)
+
+Auftrag Ingo 18.11. („kannst du das machen und alten Stand speichern“), Wortlaut Fabio: genau ein Kennzeichen in T76/100 aendern,
+damit sich seine Wirkung beurteilen laesst; Pruefregel IC, Pruefgruppe 02 und Gesamtwiederbeschaffungszeit 70 Tage bleiben.
+Ausgefuehrt vom Agenten sap-t76 in zwei Phasen; Plan, Belege und Rueckbau: `PLAN_T161V_ATPCONFMRP_2026-11-18.md`.
+
+| | |
+| --- | --- |
+| Tabelle / Schluessel | `T161V`, MANDT 100, BSTYP F, BSART NB, RESWK 1100 (Schluessel laut DD03L) |
+| Feld | `ATPCONFMRP` („ATP-Bestaetigungen relevant fuer MRP“, Bildtext „ATP Best. MRP“) |
+| vorher / nachher | **X / leer**, alle anderen 32 Felder gleich (PRREG IC, LFART NL, MEVST X, LFART1/2 NL/NLCC, REVFE B) |
+| Geaendert | **18.11.2026 12:06:00** ueber SM30, Sicht `VV_161V_VF` („Umlagerungsdaten“), eigene GUI-Sitzung, kein direktes Update |
+| Auftrag | **T76K912926** (Customizing, lokal ohne Zielsystem, Aufgabe T76K912927, „NICHT FREIGEBEN“), nicht freigegeben |
+| Rueckleseprobe | ganze Tabelle (11 Zeilen) vorher/nachher, nur die Zielzeile anders, nur dieses Feld; von der Hauptsitzung gegengelesen |
+| Sicherung | `T161V_F_NB_1100_VORHER_2026-11-18.txt`, `T161V_F_NB_1100_NACHHER_2026-11-18.txt` |
+
+- **Wirkung:** gilt in T76/100 fuer alle NB-Bestellungen mit Lieferwerk 1100, auch fuer andere Tester.
+- **Lokaler Auftrag:** Im Dialog war P76 als Ziel vorbelegt; geleert, weil Test-Customizing nie in einen Auftrag mit Ziel P76
+  gehoert (LEARNINGS 20.10.) und derselbe Schluessel fuer P76 in Mandant 090 gepflegt wird (T76K912888/889 vom 11.11.).
+- **Nicht gelesen:** Mandant 090 und P76; ob die Zeile dort gleich aussieht, ist offen. Werte 70 Tage und Pruefgruppe 02 an keinem
+  Material nachgelesen (kein Testmaterial genannt); T441V 02/IC vorher und nachher gleich.
+- **Offen:** Fabio informieren, dass der Haken seit 12:06 weg ist (Ingo). Fabio prueft dann an einer neuen Testbestellung den
+  BS-Abruf in MD04/1100 und den von Werk 1200 bestaetigten Termin. **Rueckbau auf X auf Zuruf Ingo** (Plan Abschnitt 5): SM30
+  `VV_161V_VF`, Zeile NB/1100 ueber alle Schluessel bestimmen, Haken setzen, T76K912926 waehlen, Tabelle gegen die VORHER-Datei
+  zuruecklesen. Der lokale Auftrag wird nie freigegeben.
