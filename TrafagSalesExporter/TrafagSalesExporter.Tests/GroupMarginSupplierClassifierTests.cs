@@ -460,6 +460,48 @@ public class GroupMarginSupplierClassifierTests
         Assert.Null(withOverride);
     }
 
+    /// <summary>
+    /// ISS-003.3: Spanien liefert seit 2026-11 den Lieferanten des letzten Wareneingangs. Ein
+    /// gefuellter Lieferant hat Vorrang vor dem MARC-1100-Fallback, auch wenn das Material im
+    /// CH-Werkstamm steht.
+    /// </summary>
+    [Fact]
+    public void Resolve_Spain_Explicit_External_Supplier_Beats_Marc_Fallback()
+    {
+        var chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "52871" };
+
+        var withoutSupplier = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRES", "52871", null, null, chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+        var withSupplier = GroupMarginSupplierClassifier.Resolve(
+            "400123", "ACME INSTRUMENTACION SL", "ES", "TRES", "52871", null, null, chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+        var entity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            "ACME INSTRUMENTACION SL", "TRES", "52871", null, null, chPlantMaterials, SupplierFallbackModes.ChPlantMaster,
+            "400123", "ES");
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, withoutSupplier);
+        Assert.Equal(GroupMarginSupplierClassifier.External, withSupplier);
+        Assert.Null(entity);
+    }
+
+    /// <summary>
+    /// ISS-003.3: Ware von Trafag AG im spanischen Wareneingang. Die Schreibweise in Sage ist
+    /// noch nicht gemessen (Pruefabfrage Teil F); bis dahin gilt „TRAFAG AG“ als Annahme.
+    /// </summary>
+    [Fact]
+    public void Resolve_Spain_Trafag_Supplier_Is_Internal_TrAg()
+    {
+        var chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "OTHER" };
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            "400999", "TRAFAG AG", "CH", "TRES", "46600", null, null, chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+        var entity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            "TRAFAG AG", "TRES", "46600", null, null, chPlantMaterials, SupplierFallbackModes.ChPlantMaster,
+            "400999", "CH");
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+        Assert.Equal(GroupStandardCostEntities.TrAg, entity);
+    }
+
     [Fact]
     public void MatchesInternalSupplierMarker_DetectsTrafagAndGfsMarkers()
     {

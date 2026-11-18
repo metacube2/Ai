@@ -262,6 +262,154 @@ public class ManualExcelDataSourceAdapterTests
         }
     }
 
+    /// <summary>
+    /// ISS-003.3: Spanien-Dateien werden nach dem Startdatum gelesen. Ein Bereichsexport ab
+    /// 2025 mit Lieferant kommt deshalb vor einer spaeter beginnenden alten Datei ohne
+    /// Lieferantenspalten. Die alte Datei gewinnt weiter beim Umsatz, der Lieferant bleibt.
+    /// </summary>
+    [Fact]
+    public async Task FetchAsync_Spain_Keeps_Backfill_Supplier_When_Older_Range_File_Has_None()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsvVariant(Path.Combine(folder, "Spain_Sales_range_20250101_to_20261111.csv"),
+                includeSourceLineId: true, includeSupplier: true,
+                ("line-a", "1001", 10, 100m, "400123", "ACME INSTRUMENTACION SL", "ES"),
+                ("line-c", "1003", 10, 70m, "", "", ""));
+            WriteSpainCsv(Path.Combine(folder, "Spain_Sales_range_20261105_to_20261111.csv"),
+                ("line-a", "1001", 10, 125m),
+                ("line-b", "1002", 20, 50m));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "Spain_Sales_range_20250101_to_20261111.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder));
+
+            Assert.Equal(3, result.Records.Count);
+            var lineA = Assert.Single(result.Records, r => r.SourceLineId == "line-a");
+            Assert.Equal(125m, lineA.SalesPriceValue);
+            Assert.Equal("400123", lineA.SupplierNumber);
+            Assert.Equal("ACME INSTRUMENTACION SL", lineA.SupplierName);
+            Assert.Equal("ES", lineA.SupplierCountry);
+
+            var lineB = Assert.Single(result.Records, r => r.SourceLineId == "line-b");
+            Assert.Equal(string.Empty, lineB.SupplierNumber);
+            Assert.Equal(string.Empty, lineB.SupplierName);
+
+            var lineC = Assert.Single(result.Records, r => r.SourceLineId == "line-c");
+            Assert.Equal(70m, lineC.SalesPriceValue);
+            Assert.Equal(string.Empty, lineC.SupplierNumber);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FetchAsync_Spain_Later_Supplier_Wins()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsvVariant(Path.Combine(folder, "Spain_Sales_range_20250101_to_20261111.csv"),
+                includeSourceLineId: true, includeSupplier: true,
+                ("line-a", "1001", 10, 100m, "400123", "ACME INSTRUMENTACION SL", "ES"));
+            WriteSpainCsvVariant(Path.Combine(folder, "Spain_Sales_range_20261105_to_20261111.csv"),
+                includeSourceLineId: true, includeSupplier: true,
+                ("line-a", "1001", 10, 125m, "400999", "TRAFAG AG", "CH"));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "Spain_Sales_range_20250101_to_20261111.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder));
+
+            var lineA = Assert.Single(result.Records);
+            Assert.Equal(125m, lineA.SalesPriceValue);
+            Assert.Equal("400999", lineA.SupplierNumber);
+            Assert.Equal("TRAFAG AG", lineA.SupplierName);
+            Assert.Equal("CH", lineA.SupplierCountry);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FetchAsync_Uk_Does_Not_Inherit_Supplier()
+    {
+        // Die Erbregel gilt nur fuer Spanien; bei UK gewinnt die Delta-Zeile weiter ganz.
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsvVariant(Path.Combine(folder, "010726_TRUK.csv"),
+                includeSourceLineId: true, includeSupplier: true,
+                ("uk-line-a", "43001", 10, 100m, "V0078", "Trafag AG", "CH"));
+            WriteSpainCsv(Path.Combine(folder, "020726_TRUK.csv"),
+                ("uk-line-a", "43001", 10, 150m));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "010726_TRUK.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder, "TRUK", "England"));
+
+            var line = Assert.Single(result.Records);
+            Assert.Equal(150m, line.SalesPriceValue);
+            Assert.Equal(string.Empty, line.SupplierNumber);
+            Assert.Equal(string.Empty, line.SupplierName);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// Kennzeichnungstest fuer das Risiko aus Plan Abschnitt 7 Schritt 1: Eine Datei ohne
+    /// SourceLineId wird ueber Rechnung/Position/Material geschluesselt, eine mit SourceLineId
+    /// ueber die Zeilen-ID. Beide Zeilen bleiben stehen. Deshalb werden die Kopfzeilen der
+    /// produktiven Dateien vor dem Bereichsexport geprueft. Verhalten bewusst unveraendert.
+    /// </summary>
+    [Fact]
+    public async Task FetchAsync_Spain_Mixed_Keys_Are_Not_Merged()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsvVariant(Path.Combine(folder, "Spain_Sales_2025.csv"),
+                includeSourceLineId: false, includeSupplier: false,
+                ("line-a", "1001", 10, 100m, "", "", ""));
+            WriteSpainCsvVariant(Path.Combine(folder, "Spain_Sales_range_20250101_to_20261111.csv"),
+                includeSourceLineId: true, includeSupplier: true,
+                ("line-a", "1001", 10, 100m, "400123", "ACME INSTRUMENTACION SL", "ES"));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "Spain_Sales_2025.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder));
+
+            Assert.Equal(2, result.Records.Count);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     private static DataSourceFetchContext CreateContext(string manualImportPath, string tsc = "TRES", string land = "Spanien") => new()
     {
         Site = new Site
@@ -302,6 +450,45 @@ public class ManualExcelDataSourceAdapterTests
             }.Concat(rows.Select(row =>
                 $"\"TRES\";\"Spanien\";\"{row.SourceLineId}\";\"{row.InvoiceNumber}\";\"{row.Position}\";\"52871\";\"ECL1.0AP\";\"TRANS\";\"1.000000\";\"302208\";\"INTRONIK AUTOMATIZACION E INST. SL\";\"ESPANA\";\"160.760000\";\"EUR\";\"PC240330\";\"{row.SalesPriceValue.ToString(System.Globalization.CultureInfo.InvariantCulture)}\";\"EUR\";\"EUR\";\"EUR\";\"EXW\";\"1\";\"2025-01-02 00:00:00\";\"Invoice\"")));
         File.WriteAllText(filePath, csv);
+    }
+
+    /// <summary>
+    /// Sage-Spanien-Datei im neuen Format (ISS-003.3): Lieferantenspalten am Ende, wahlweise ohne
+    /// SourceLineId fuer den Fall einer alten Dateigeneration.
+    /// </summary>
+    private static void WriteSpainCsvVariant(
+        string filePath,
+        bool includeSourceLineId,
+        bool includeSupplier,
+        params (string SourceLineId, string InvoiceNumber, int Position, decimal SalesPriceValue, string SupplierNumber, string SupplierName, string SupplierCountry)[] rows)
+    {
+        var header = new List<string> { "TSC", "Land" };
+        if (includeSourceLineId)
+            header.Add("SourceLineId");
+        header.AddRange(new[] { "InvoiceNumber", "PositionOnInvoice", "Material", "Quantity", "StandardCost", "StandardCostCurrency", "SalesPriceValue", "SalesCurrency", "InvoiceDate", "DocumentType" });
+        if (includeSupplier)
+            header.AddRange(new[] { "ArticleType", "SupplierNumber", "SupplierName", "SupplierCountry", "SupplierCountryName", "SupplierReceiptDate", "SupplierReceiptDocument" });
+
+        var lines = new List<string> { string.Join(";", header.Select(h => $"\"{h}\"")) };
+        foreach (var row in rows)
+        {
+            var values = new List<string> { "TRES", "Spanien" };
+            if (includeSourceLineId)
+                values.Add(row.SourceLineId);
+            values.AddRange(new[]
+            {
+                row.InvoiceNumber,
+                row.Position.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "52871", "1.000000", "160.760000", "EUR",
+                row.SalesPriceValue.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "EUR", "2025-01-02 00:00:00", "Invoice"
+            });
+            if (includeSupplier)
+                values.AddRange(new[] { "M", row.SupplierNumber, row.SupplierName, row.SupplierCountry, "PAIS", "2024-12-20 00:00:00", "2024/A/77" });
+            lines.Add(string.Join(";", values.Select(v => $"\"{v}\"")));
+        }
+
+        File.WriteAllText(filePath, string.Join(Environment.NewLine, lines));
     }
 
     private static void WriteAlphaplanPair(

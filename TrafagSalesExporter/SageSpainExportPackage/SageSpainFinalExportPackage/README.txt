@@ -44,6 +44,8 @@ Default source:
 - Sales value: LineasAlbaranCliente.ImporteNeto
 - Posting date: dbo.FacturasTB.FechaAsiento, joined per invoice, exported as PostingDate
 - Posting document: dbo.FacturasTB.Asiento, exported as PostingDocument
+- Supplier: last goods receipt of the same article from dbo.LineasAlbaranProveedor joined
+  with dbo.CabeceraAlbaranProveedor, exported as SupplierNumber, SupplierName, SupplierCountry
 
 
 Posting date (new columns PostingDate and PostingDocument)
@@ -70,6 +72,47 @@ Spanish database. Please check on first run:
    count means the lookup returned more than one row and must be corrected.
 
 Background: docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md in the BiDashboard repository.
+
+
+Supplier (new columns, ISS-003.3)
+=================================
+
+Added 2026-11 after the decision of Trafag Finance (Andreas Stoller, 2026-11-12): the
+supplier of a Spanish sales line is the supplier of the last goods receipt of the same
+article in Sage, on or before the delivery date of the sales line.
+
+New columns at the end of the CSV (older files without them stay readable):
+
+- ArticleType: LineasAlbaranCliente.TipoArticulo
+- SupplierNumber: CabeceraAlbaranProveedor.CodigoProveedor
+- SupplierName: CabeceraAlbaranProveedor.RazonSocial, fallback Nombre
+- SupplierCountry: CabeceraAlbaranProveedor.SiglaNacion (ISO code)
+- SupplierCountryName: CabeceraAlbaranProveedor.Nacion
+- SupplierReceiptDate: CabeceraAlbaranProveedor.FechaAlbaran of that receipt
+- SupplierReceiptDocument: EjercicioAlbaran/SerieAlbaran/NumeroAlbaran of that receipt
+
+Rules:
+
+- Only stock articles (TipoArticulo 'M') with a real article code. Freight, conditions,
+  text lines and the placeholder '-' stay without supplier.
+- Only receipt lines with positive units; returns to the supplier do not count.
+- If an article had several suppliers, the most recent receipt before the sale wins.
+- The lookup uses OUTER APPLY with TOP 1, so the number of exported rows does not change.
+  Please check: the row count must be the same as without the supplier columns.
+
+The summary file now also shows how many rows have a supplier, per ArticleType and per
+invoice year, and the most frequent suppliers.
+
+Read-only check of the lookup before or after installing:
+
+.\Analyze-SpainSupplierLookup.ps1 -OutputDirectory C:\Trafag\SageSpain\check
+
+One-time re-export after installing (two runs, both upload automatically):
+
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1 -DateFilter InvoiceDate -FromDate "2025-01-01" -ToDate "2026-06-01"
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1 -DateFilter LineRegistrationDate -FromDate "2026-05-28" -ToDate "<today yyyy-MM-dd>"
+
+Background: docs/PLAN_ES_SUPPLIER_WARENEINGANG_2026-11-12.md in the BiDashboard repository.
 
 
 If the SQL instance or database name differs:
