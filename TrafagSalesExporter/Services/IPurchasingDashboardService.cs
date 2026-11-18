@@ -145,6 +145,8 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingSpendPerspectiveResult> PurchasingPartsSpendPerspectiveRows { get; set; } = [];
     public PurchasingProductGroupAllocationSummary PurchasingPartsProductGroupAllocation { get; set; } =
         PurchasingProductGroupAllocationSummary.Empty;
+    // Lieferantenbewertung Paket 1 (2026-11-18): Klasse A/B/C je Lieferantennummer auf der Menge „Nur Einkaufsteile“.
+    public List<SupplierEvoClassRow> SupplierEvoClassRows { get; set; } = [];
     // Region-Anteil je (Top-)Warengruppe fuer die Kuchendiagramme. Fuellt sich erst mit dem
     // naechsten Einkauf-Full-Load (SupplierCountry).
     public List<PurchasingRegionPieGroup> RegionByMaterialGroupRows { get; set; } = [];

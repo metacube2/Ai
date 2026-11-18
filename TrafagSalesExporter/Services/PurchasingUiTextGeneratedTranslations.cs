@@ -20,6 +20,14 @@ internal static class PurchasingUiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Lieferanten-Klasse A/B/C nach Einkaufsvolumen"] = "Clase de proveedor A/B/C según volumen de compra",
+                ["Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote."] = "Valor de pedido de las piezas compradas (planificador 001 a 006) en el periodo seleccionado por número de proveedor, en CHF al tipo del documento. A hasta 70 %, B hasta 90 %, C el resto del volumen; quien supera un límite se queda en la clase. No es una nota de rendimiento.",
+                ["Keine Daten im gewählten Zeitraum."] = "No hay datos en el periodo seleccionado.",
+                ["Nr."] = "N.º",
+                ["Einkaufsvolumen CHF"] = "Volumen de compra CHF",
+                ["Kumuliert"] = "Acumulado",
+                ["Disponent"] = "Planificador",
+                ["ohne Klasse"] = "sin clase",
                 // Materialanteil je Produktgruppe (2026-11-02)
                 ["Materialanteil je Produktgruppe"] = "Proporción de material por grupo de productos",
                 ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Proporción de material de pedidos de cliente confirmados (ZC23, fecha confirmada en el periodo, sin motivo de rechazo) por demanda de lista de materiales (ZLO03 descendente, todos los niveles) por coste unitario, solo piezas de compra de los planificadores 001 a 006. No es el volumen de compras de los demás puntos de entrada.",
@@ -180,6 +188,14 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Lieferanten-Klasse A/B/C nach Einkaufsvolumen"] = "Classe fornitore A/B/C per volume d'acquisto",
+                ["Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote."] = "Valore d'ordine delle parti acquistate (pianificatore 001-006) nel periodo selezionato per numero fornitore, in CHF al cambio del documento. A fino al 70 %, B fino al 90 %, C il resto del volume; chi supera un limite resta nella classe. Non è una valutazione delle prestazioni.",
+                ["Keine Daten im gewählten Zeitraum."] = "Nessun dato nel periodo selezionato.",
+                ["Nr."] = "N.",
+                ["Einkaufsvolumen CHF"] = "Volume d'acquisto CHF",
+                ["Kumuliert"] = "Cumulato",
+                ["Disponent"] = "Pianificatore",
+                ["ohne Klasse"] = "senza classe",
                 // Materialanteil je Produktgruppe (2026-11-02)
                 ["Materialanteil je Produktgruppe"] = "Quota materiale per gruppo prodotti",
                 ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Quota materiale da ordini cliente confermati (ZC23, data confermata nel periodo, senza motivo di rifiuto) per fabbisogno da distinta base (ZLO03 top-down, tutti i livelli) per costo unitario, solo parti d'acquisto dei pianificatori da 001 a 006. Non è il volume d'acquisto degli altri punti di ingresso.",
@@ -340,6 +356,14 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Lieferanten-Klasse A/B/C nach Einkaufsvolumen"] = "खरीद मात्रा के अनुसार आपूर्तिकर्ता वर्ग A/B/C",
+                ["Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote."] = "चयनित अवधि में खरीदे गए पुर्जों (योजनाकार 001 से 006) का ऑर्डर मूल्य, आपूर्तिकर्ता संख्या के अनुसार, दस्तावेज़ दर पर CHF में। A 70 % तक, B 90 % तक, C शेष मात्रा; सीमा पार करने वाला उसी वर्ग में रहता है। यह प्रदर्शन रेटिंग नहीं है।",
+                ["Keine Daten im gewählten Zeitraum."] = "चयनित अवधि में कोई डेटा नहीं।",
+                ["Nr."] = "सं.",
+                ["Einkaufsvolumen CHF"] = "खरीद मात्रा CHF",
+                ["Kumuliert"] = "संचयी",
+                ["Disponent"] = "योजनाकार",
+                ["ohne Klasse"] = "बिना वर्ग",
                 // Materialanteil je Produktgruppe (2026-11-02)
                 ["Materialanteil je Produktgruppe"] = "उत्पाद समूह के अनुसार सामग्री हिस्सा",
                 ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "पुष्ट ग्राहक ऑर्डर (ZC23, अवधि में पुष्ट तिथि, अस्वीकृति कारण के बिना) से सामग्री हिस्सा गुणा बीओएम मांग (ZLO03 टॉप-डाउन, सभी स्तर) गुणा इकाई लागत, केवल योजनाकार 001 से 006 के खरीद पुर्जे। यह अन्य प्रवेश बिंदुओं की खरीद मात्रा नहीं है।",
@@ -500,6 +524,14 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Lieferanten-Klasse A/B/C nach Einkaufsvolumen"] = "Klasa e furnitorit A/B/C sipas vëllimit të blerjeve",
+                ["Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote."] = "Vlera e porosive të pjesëve të blera (planifikuesi 001 deri 006) në periudhën e zgjedhur sipas numrit të furnitorit, në CHF me kursin e dokumentit. A deri 70 %, B deri 90 %, C pjesa tjetër e vëllimit; kush e kalon një kufi mbetet në klasë. Nuk është notë performance.",
+                ["Keine Daten im gewählten Zeitraum."] = "Nuk ka të dhëna në periudhën e zgjedhur.",
+                ["Nr."] = "Nr.",
+                ["Einkaufsvolumen CHF"] = "Vëllimi i blerjeve CHF",
+                ["Kumuliert"] = "Kumulativ",
+                ["Disponent"] = "Planifikuesi",
+                ["ohne Klasse"] = "pa klasë",
                 // Materialanteil je Produktgruppe (2026-11-02)
                 ["Materialanteil je Produktgruppe"] = "Pjesa e materialit sipas grupit të produkteve",
                 ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Pjesa e materialit nga porositë e konfirmuara të klientëve (ZC23, data e konfirmuar në periudhë, pa arsye refuzimi) herë nevojën sipas listës së materialeve (ZLO03 nga lart poshtë, të gjitha nivelet) herë koston për njësi, vetëm pjesë blerjeje të planifikuesve 001 deri 006. Ky nuk është vëllimi i blerjeve i hyrjeve të tjera.",
@@ -660,6 +692,14 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Lieferanten-Klasse A/B/C nach Einkaufsvolumen"] = "Satın alma hacmine göre tedarikçi sınıfı A/B/C",
+                ["Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote."] = "Seçilen dönemde satın alınan parçaların (planlamacı 001-006) tedarikçi numarasına göre sipariş değeri, belge kurundan CHF olarak. A %70'e kadar, B %90'a kadar, C hacmin geri kalanı; sınırı aşan sınıfta kalır. Bu bir performans notu değildir.",
+                ["Keine Daten im gewählten Zeitraum."] = "Seçilen dönemde veri yok.",
+                ["Nr."] = "No.",
+                ["Einkaufsvolumen CHF"] = "Satın alma hacmi CHF",
+                ["Kumuliert"] = "Kümülatif",
+                ["Disponent"] = "Planlamacı",
+                ["ohne Klasse"] = "sınıfsız",
                 // Materialanteil je Produktgruppe (2026-11-02)
                 ["Materialanteil je Produktgruppe"] = "Ürün grubuna göre malzeme payı",
                 ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Onaylı müşteri siparişlerinden (ZC23, dönem içinde onaylı tarih, ret nedeni olmadan) malzeme payı çarpı ürün ağacı ihtiyacı (ZLO03 yukarıdan aşağı, tüm seviyeler) çarpı birim maliyet; yalnızca 001 ile 006 planlayıcılarının satınalma parçaları. Bu, diğer girişlerdeki satınalma hacmi değildir.",
@@ -820,6 +860,14 @@ internal static class PurchasingUiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Lieferanten-Klasse A/B/C nach Einkaufsvolumen"] = "Suqwi' Segh A/B/C je'meH Hutlh",
+                ["Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote."] = "Doch je'lu'bogh (Disponent 001 - 006) poH wIvlu'bogh Daq, Suqwi' mI' wa', CHF. A 70 % ghoS, B 90 % ghoS, C latlh; veH ghoSbogh Segh ratlh. pIch mI' 'oHbe'.",
+                ["Keine Daten im gewählten Zeitraum."] = "poH wIvlu'bogh Daq De' tu'lu'be'.",
+                ["Nr."] = "mI'",
+                ["Einkaufsvolumen CHF"] = "je'meH Hutlh CHF",
+                ["Kumuliert"] = "boSlu'",
+                ["Disponent"] = "nab ghoSwI'",
+                ["ohne Klasse"] = "Segh Hutlh",
                 // Materialanteil je Produktgruppe (2026-11-02)
                 ["Materialanteil je Produktgruppe"] = "Hap 'ay' ghom HablI'",
                 ["Materialanteil aus bestätigten Kundenaufträgen (ZC23, Termin bestätigt im Zeitraum, ohne Absagegrund) mal Stücklistenbedarf (ZLO03 Top-Down, alle Stufen) mal Stückkosten, nur Einkaufsteile der Disponenten 001 bis 006. Das ist nicht das Einkaufsvolumen der anderen Einstiege."] = "Hap 'ay': ZC23 je' Qapla' (jaj Qapla', Qo' meq Hutlh) DIch, ZLO03 Hap tetlh poQ (Hoch patlh) DIch, wa' Dap 'ar; nab pIn 001 vo' 006 je'meH Hap neH. ghItlhvam je'meH ghom latlh 'oHbe'.",

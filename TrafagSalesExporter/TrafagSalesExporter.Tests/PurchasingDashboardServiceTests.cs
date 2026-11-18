@@ -867,6 +867,65 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_SupplierEvoClass_Sums_Like_PurchasingParts_Supplier_Breakdown_By_Supplier_Number()
+    {
+        // Lieferantenbewertung Paket 1 (2026-11-18): A/B/C je Lieferantennummer auf der Menge „Nur Einkaufsteile“.
+        // L1 und 00L1 sind dieselbe Nummer (zwei Namen, der juengste gilt); L2 gleicher Name wie L3, aber eigene Nummer.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('A1', '2025-03-01', 'L1', 'Alt Name', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('A2', '2025-06-01', '00L1', 'Neu Name', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('A3', '2025-04-01', 'L2', 'Gleich', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('A4', '2025-04-01', 'L3', 'Gleich', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, Bsart, LastLoadedAtUtc) VALUES ('A5', '2025-04-01', 'L4', 'Umlagerung', 'F', 'UB', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('A6', '2024-12-31', 'L5', 'Ausserhalb', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('A1', '10', 'M1', '001', '1', '500', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('A2', '10', 'M1', '006', '1', '200', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('A3', '10', 'M2', '002', '1', '200', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('A4', '10', 'M3', '003', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('A4', '20', 'M4', '007', '1', '999', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, Loekz, LastLoadedAtUtc) VALUES ('A4', '30', 'M5', '001', '1', '999', 'L', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('A5', '10', 'M6', '001', '1', '999', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MarcDispo, Menge, Netwr, LastLoadedAtUtc) VALUES ('A6', '10', 'M7', '001', '1', '999', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('A1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        var rows = state.SupplierEvoClassRows;
+        Assert.Equal(1000m, rows.Sum(r => r.Evo));
+        Assert.Equal(Assert.Single(state.PurchasingPartsSpendPerspectiveRows, row => row.Key == "supplier").Rows.Sum(row => row.Total), rows.Sum(r => r.Evo));
+        Assert.Equal(["L1", "L2", "L3"], rows.Select(r => r.SupplierKey).ToArray());
+        Assert.Equal("Neu Name", rows[0].Name);
+        Assert.Equal(700m, rows[0].Evo);
+        Assert.Equal(2, rows[0].Positions);
+        Assert.Equal("001", rows[0].TopPlanner);
+        // Kumuliert vorher: L1 0 % -> A, L2 70 % -> B, L3 90 % -> C.
+        Assert.Equal(["A", "B", "C"], rows.Select(r => r.Class).ToArray());
+    }
+
+    [Fact]
+    public void SupplierEvoClassifier_Uses_Share_Before_Supplier_And_Keeps_Zero_And_Negative_Without_Class()
+    {
+        var r = SupplierEvoClassifier.Classify(new[]
+        {
+            ("S4", "Vier", 6m, 1, ""), ("S1", "Eins", 50m, 1, ""), ("S5", "Fuenf", 4m, 1, ""), ("S2", "Zwei", 25m, 1, ""), ("S3", "Drei", 15m, 1, ""),
+            ("S6", "Null", 0m, 1, ""), ("S7", "Minus", -3m, 1, "")
+        });
+        Assert.Equal(["S1", "S2", "S3", "S4", "S5", "S7", "S6"], r.Select(x => x.SupplierKey).ToArray());
+        Assert.Equal(["A", "A", "B", "C", "C", "-", "-"], r.Select(x => x.Class).ToArray());
+        Assert.Equal(1m, r[4].CumulativeShare);
+        Assert.Equal(97m, r.Sum(x => x.Evo));
+
+        var gleich = SupplierEvoClassifier.Classify(new[] { ("B", "b", 10m, 1, ""), ("A", "a", 10m, 1, "") });
+        Assert.Equal(["A", "B"], gleich.Select(x => x.SupplierKey).ToArray());
+        Assert.Empty(SupplierEvoClassifier.Classify(Array.Empty<(string, string, decimal, int, string)>()));
+        Assert.All(SupplierEvoClassifier.Classify(new[] { ("A", "a", 0m, 1, "") }), x => Assert.Equal("-", x.Class));
+        Assert.Equal(["A", "A", "A", "B", "C"], SupplierEvoClassifier.Classify(new[]
+        {
+            ("S1", "", 50m, 1, ""), ("S2", "", 25m, 1, ""), ("S3", "", 15m, 1, ""), ("S4", "", 6m, 1, ""), ("S5", "", 4m, 1, "")
+        }, 0.80m, 0.95m).Select(x => x.Class).ToArray());
+        Assert.Equal("12345", SupplierEvoClassifier.NormalizeSupplier(" 0000012345 "));
+    }
+
+    [Fact]
     public async Task LoadAsync_Disponent_Perspectives_Group_By_Own_Dispo_And_By_Usage_Dispo()
     {
         // Wunsch Ingo 2026-10-26: gruppieren nach DISPOKENNZ wie ZC23 (eigener MARC-DISPO, 001, 002 ...) und

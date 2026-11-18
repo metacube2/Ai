@@ -10,6 +10,13 @@ internal static class UiTextBerneseTranslations
     internal static readonly IReadOnlyDictionary<string, string> All =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+        ["Lieferanten-Klasse A/B/C nach Einkaufsvolumen"] = "Lieferante-Klass A/B/C nach Ichoufsvolume",
+        ["Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote."] = "Bstellwärt vo de Ichoufsteil (Disponent 001 bis 006) im gwählte Zytruum je Lieferantenummere, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C dr Räscht vom Volume; wär e Gränze überschrytet, blybt i dr Klass. Das isch kei Leischtigsnote.",
+        ["Keine Daten im gewählten Zeitraum."] = "Kei Date im gwählte Zytruum.",
+        ["Nr."] = "Nr.",
+        ["Einkaufsvolumen CHF"] = "Ichoufsvolume CHF",
+        ["Kumuliert"] = "Kumuliert",
+        ["ohne Klasse"] = "ohni Klass",
             // Einkauf Pruefung 2026-11-05
             ["kein Vorjahr im Zeitraum"] = "kes Vorjahr im Zytruum",
             ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} uf Bispiuwärt (Simulation), kei Trafag-Zahl",
