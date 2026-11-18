@@ -1,0 +1,471 @@
+[
+ {
+  "guid": "ft991a-remote-win-1.0.0",
+  "titel": "FT991A Remote für Windows 1.0.0",
+  "link": "https://www.aiscom.ch/tester/#windows",
+  "text": "Die neue Windows-App (Tauri): FT-991A per USB-CAT fernsteuern, Modern- und Frontpanel-Ansicht, QSO-Log, CAT-Konsole, Speicher mit Scan, Relais-Schnellkonfiguration, Papagei über USB-Audio, Infobereich, Deutsch und Englisch. Klein (3 MB), am echten Gerät noch ungetestet.",
+  "datum": "2026-11-17T23:24:13.736664+01:00"
+ },
+ {
+  "guid": "macyaesu-windows-1.1.2",
+  "titel": "MacYaesu für Windows 1.1.2",
+  "link": "https://www.aiscom.ch/tester/#windows",
+  "text": "FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. Übergangsfassung, bis die neue Windows-App fertig ist.",
+  "datum": "2026-11-17T13:25:01.447000+01:00"
+ },
+ {
+  "guid": "macyaesu-windows-1.1.1",
+  "titel": "MacYaesu für Windows 1.1.1",
+  "link": "https://www.aiscom.ch/tester/#windows",
+  "text": "FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. Übergangsfassung, bis die neue Windows-App fertig ist.",
+  "datum": "2026-11-17T13:12:49.549000+01:00"
+ },
+ {
+  "guid": "netbottleneck-mac-1.0-2",
+  "titel": "NetBottleneck 1.0 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D, während der Messung live mit Spuren für Messung, anderen Verkehr und TCP/UDP/ICMP. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.",
+  "datum": "2026-11-15T16:27:00.097417+01:00"
+ },
+ {
+  "guid": "netbottleneck-mac-1.0-1",
+  "titel": "NetBottleneck 1.0 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.",
+  "datum": "2026-11-15T14:34:17.051118+01:00"
+ },
+ {
+  "guid": "taploop-mac-1.0-44",
+  "titel": "TapLoop 1.0 (Build 44) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller, neu mit Video-Teller in der Mitte: aussen Filmstreifen, innen der Titel, getrennt scratchbar, Kamera oder Videodatei, 97 Bildeffekte. Klick nimmt auf und spielt im Loop, Plattenkiste, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-11-05T23:10:18.170344+01:00"
+ },
+ {
+  "guid": "bergbahnchronik-ios-0.1-1",
+  "titel": "Bergbahnchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:38:48.806000+01:00"
+ },
+ {
+  "guid": "synthchronik-ios-0.1-1",
+  "titel": "Synthchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:37:37.982000+01:00"
+ },
+ {
+  "guid": "lautsprecherchronik-ios-0.1-1",
+  "titel": "Lautsprecherchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:36:23.628000+01:00"
+ },
+ {
+  "guid": "baederchronik-ios-0.1-1",
+  "titel": "Bäderchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 0 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T17:35:08.611000+01:00"
+ },
+ {
+  "guid": "bandchronik-mac-0.1-1",
+  "titel": "Bandchronik 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, 13 Sprachen.",
+  "datum": "2026-11-01T17:31:40.736128+01:00"
+ },
+ {
+  "guid": "bergbahnchronik-mac-1.0-2",
+  "titel": "Bergbahnchronik 1.0 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. 13 Sprachen.",
+  "datum": "2026-11-01T17:29:23.894798+01:00"
+ },
+ {
+  "guid": "synthchronik-mac-1.0-2",
+  "titel": "Synthchronik 1.0 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. 13 Sprachen.",
+  "datum": "2026-11-01T17:28:30.010337+01:00"
+ },
+ {
+  "guid": "lautsprecherchronik-mac-0.1-1",
+  "titel": "Lautsprecherchronik 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. 13 Sprachen.",
+  "datum": "2026-11-01T17:27:47.456012+01:00"
+ },
+ {
+  "guid": "baederchronik-mac-0.1-1",
+  "titel": "Bäderchronik 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. 13 Sprachen.",
+  "datum": "2026-11-01T17:26:57.233646+01:00"
+ },
+ {
+  "guid": "bandchronik-ios-0.1-1",
+  "titel": "Bandchronik 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-11-01T15:50:31.711000+01:00"
+ },
+ {
+  "guid": "taploop-ios-1.0-41",
+  "titel": "TapLoop 1.0 (Build 41) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 5 von 5 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-27T21:12:14.726000+01:00"
+ },
+ {
+  "guid": "screencam-mac-0.1-1",
+  "titel": "ScreenCam 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Bildschirm aufnehmen mit Systemton und Mikrofon, Bildschirmfotos mit Editor (Pfeil, Rahmen, Text, Verpixeln, Zuschneiden) und Texterkennung.",
+  "datum": "2026-10-27T20:37:13.255088+01:00"
+ },
+ {
+  "guid": "taploop-mac-1.0-41",
+  "titel": "TapLoop 1.0 (Build 41) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-27T20:26:01.309865+01:00"
+ },
+ {
+  "guid": "makrowerk-ios-0.1-1",
+  "titel": "Makrowerk 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Fokusserie auf dem iPhone aufnehmen (Linse Schritt für Schritt, Fokus-Peaking) und stapeln; quer und aufgeklappt wie am Mac. 5 von 5 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-27T10:38:11.163000+01:00"
+ },
+ {
+  "guid": "makrowerk-mac-0.1-1",
+  "titel": "Makrowerk 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Fokus-Stacking für Supermakro: Serie laden (auch RAW), ausrichten, stapeln, vorher/nachher vergleichen, Tiefenkarte, Lückenbericht, Bewegungsschutz, Retusche-Pinsel. Deutsch, Englisch.",
+  "datum": "2026-10-27T10:35:46.510795+01:00"
+ },
+ {
+  "guid": "taploop-ios-1.0-39",
+  "titel": "TapLoop 1.0 (Build 39) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 5 von 5 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-27T08:09:19.993000+01:00"
+ },
+ {
+  "guid": "taploop-mac-1.0-38",
+  "titel": "TapLoop 1.0 (Build 38) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-26T13:53:49.415057+01:00"
+ },
+ {
+  "guid": "taploop-ios-1.0-36",
+  "titel": "TapLoop 1.0 (Build 36) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 3 von 3 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-26T11:47:55.507000+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-34",
+  "titel": "TapLoop 0.1 (Build 34) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-26T11:15:10.590871+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-29",
+  "titel": "TapLoop 0.1 (Build 29) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-26T09:09:07.183606+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-28",
+  "titel": "TapLoop 0.1 (Build 28) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-26T08:47:36.414897+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-15",
+  "titel": "TapLoop 0.1 (Build 15) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T13:07:10.370339+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-14",
+  "titel": "TapLoop 0.1 (Build 14) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T12:36:08.353904+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-13",
+  "titel": "TapLoop 0.1 (Build 13) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T12:24:57.876895+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-12",
+  "titel": "TapLoop 0.1 (Build 12) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T12:12:09.940948+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-11",
+  "titel": "TapLoop 0.1 (Build 11) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T12:01:09.185714+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-10",
+  "titel": "TapLoop 0.1 (Build 10) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T11:47:26.999209+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-9",
+  "titel": "TapLoop 0.1 (Build 9) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T11:25:49.253466+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-8",
+  "titel": "TapLoop 0.1 (Build 8) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T11:14:14.827607+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-7",
+  "titel": "TapLoop 0.1 (Build 7) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T10:33:34.130834+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-6",
+  "titel": "TapLoop 0.1 (Build 6) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T10:18:52.754429+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-5",
+  "titel": "TapLoop 0.1 (Build 5) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T10:05:00.287035+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-3",
+  "titel": "TapLoop 0.1 (Build 3) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T09:42:20.607842+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-2",
+  "titel": "TapLoop 0.1 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T09:30:15.471339+01:00"
+ },
+ {
+  "guid": "taploop-mac-0.1-1",
+  "titel": "TapLoop 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.",
+  "datum": "2026-10-25T09:20:59.047585+01:00"
+ },
+ {
+  "guid": "kamera-import-android-1.0-1",
+  "titel": "Kamera-Import 1.0 (Build 1) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet.",
+  "datum": "2026-10-24T22:46:23.152752+02:00"
+ },
+ {
+  "guid": "antennen-studio-android-1.0-1",
+  "titel": "Antennen-Studio 1.0 (Build 1) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Antennen mit NEC-2 simulieren: 3D-Modell, Richtdiagramme, SWR, Smith-Diagramm, Optimierer, Live-Regler. Rechenkern nec2c (GPLv3) wie auf Mac und iPhone, Ergebnisse zahlengleich.",
+  "datum": "2026-10-24T21:52:51.546367+02:00"
+ },
+ {
+  "guid": "stretcher-android-0.2-1",
+  "titel": "Stretcher 0.2 (Build 1) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Klänge extrem dehnen (Paulstretch, Phase-Vocoder, Sinusmodell) und die Verfahren vergleichen, auf Android. Rechnet gleich wie die Mac-Fassung; je Lauf bis 30 s, auf kleinen Geräten 15 s.",
+  "datum": "2026-10-24T19:52:21.347889+02:00"
+ },
+ {
+  "guid": "mietpruefer-mac-0.1-1",
+  "titel": "Mietprüfer 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Mietzinssenkung, Mieterhöhung und Nebenkosten nach Schweizer Mietrecht nachrechnen, Brief als PDF. Deutsch, Französisch, Italienisch, Englisch.",
+  "datum": "2026-10-24T17:16:25.594655+02:00"
+ },
+ {
+  "guid": "mietpruefer-ios-0.1-1",
+  "titel": "Mietprüfer 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Schweizer Mietrecht auf dem iPhone: Senkung, Erhöhung, Nebenkosten prüfen und Brief erstellen. 12 von 12 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T17:14:57.532000+02:00"
+ },
+ {
+  "guid": "fotogedaechtnis-mac-0.1-1",
+  "titel": "Fotogedächtnis 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.",
+  "datum": "2026-10-24T16:23:41.643275+02:00"
+ },
+ {
+  "guid": "obhut-mac-0.1-2",
+  "titel": "Obhut 0.1 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.",
+  "datum": "2026-10-24T16:11:19.314179+02:00"
+ },
+ {
+  "guid": "macyaesu-mac-1.1-3",
+  "titel": "MacYaesu 1.1 (Build 3) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.",
+  "datum": "2026-10-24T16:10:31.449156+02:00"
+ },
+ {
+  "guid": "kamera-import-mac-1.0-9",
+  "titel": "Kamera-Import 1.0 (Build 9) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.",
+  "datum": "2026-10-24T16:09:51.378526+02:00"
+ },
+ {
+  "guid": "aurora-studio-mac-1.0-4",
+  "titel": "Aurora Studio 1.0 (Build 4) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.",
+  "datum": "2026-10-24T16:08:58.744220+02:00"
+ },
+ {
+  "guid": "antennen-studio-mac-1.0-8",
+  "titel": "Antennen-Studio 1.0 (Build 8) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).",
+  "datum": "2026-10-24T16:07:46.356026+02:00"
+ },
+ {
+  "guid": "obhut-android-0.1-1",
+  "titel": "Obhut 0.1 (Build 1) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Betreuung alternder Eltern in der Familie koordinieren, auf Android. Gleiches Datenformat wie Mac und iPhone.",
+  "datum": "2026-10-24T16:06:19.481831+02:00"
+ },
+ {
+  "guid": "stretcher-mac-0.2-5",
+  "titel": "Stretcher 0.2 (Build 5) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
+  "datum": "2026-10-24T16:05:59.356385+02:00"
+ },
+ {
+  "guid": "fotogedaechtnis-ios-0.1-1",
+  "titel": "Fotogedächtnis 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Fotoarchiv mit lokaler KI-Suche auf dem iPhone, mit Apple Intelligence, wo verfügbar. 10 von 10 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T15:56:13.725000+02:00"
+ },
+ {
+  "guid": "caurora-ios-0.4.5-1",
+  "titel": "cAurora 0.4.5 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse und Wetter auf dem iPhone. Sechs Sprachen. 23 von 24 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T15:38:48.214000+02:00"
+ },
+ {
+  "guid": "stretcher-mac-0.2-3",
+  "titel": "Stretcher 0.2 (Build 3) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.",
+  "datum": "2026-10-24T15:02:08.848687+02:00"
+ },
+ {
+  "guid": "ki-buch-epub-020fcd5138c9",
+  "titel": "E-Book „Die Schweiz denkt mit“",
+  "link": "https://www.aiscom.ch/tester/#buch",
+  "text": "Zukunftsgeschichten über künstliche Intelligenz in der Schweiz, 2027–2045: eine Reporterin reist durchs Land, jedes Kapitel ein anderes Jahr. Gut 100 Seiten mit Bildern, am Ende jedes Kapitels „Stand heute“.",
+  "datum": "2026-10-24T15:00:50.502573+02:00"
+ },
+ {
+  "guid": "obhut-ios-0.1-1",
+  "titel": "Obhut 0.1 (Build 1) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone. 11 von 11 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T14:32:39.963000+02:00"
+ },
+ {
+  "guid": "stretcher-ios-0.2-2",
+  "titel": "Stretcher 0.2 (Build 2) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge. 10 von 10 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T14:26:54.838000+02:00"
+ },
+ {
+  "guid": "antennen-studio-ios-1.0-7",
+  "titel": "Antennen-Studio 1.0 (Build 7) für iPhone/iPad",
+  "link": "https://www.aiscom.ch/tester/#ios",
+  "text": "NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut). 17 von 17 Klicktests bestanden. Installation über TestFlight.",
+  "datum": "2026-10-24T14:20:17.599000+02:00"
+ },
+ {
+  "guid": "obhut-mac-0.1-1",
+  "titel": "Obhut 0.1 (Build 1) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.",
+  "datum": "2026-10-24T13:40:05.897663+02:00"
+ },
+ {
+  "guid": "antennen-studio-mac-1.0-7",
+  "titel": "Antennen-Studio 1.0 (Build 7) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).",
+  "datum": "2026-10-24T12:52:38.311171+02:00"
+ },
+ {
+  "guid": "aurora-studio-mac-1.0-3",
+  "titel": "Aurora Studio 1.0 (Build 3) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.",
+  "datum": "2026-10-24T11:39:29.503296+02:00"
+ },
+ {
+  "guid": "kamera-import-mac-1.0-7",
+  "titel": "Kamera-Import 1.0 (Build 7) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.",
+  "datum": "2026-10-24T09:59:51+02:00"
+ },
+ {
+  "guid": "macyaesu-mac-1.1-2",
+  "titel": "MacYaesu 1.1 (Build 2) für macOS",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.",
+  "datum": "2026-10-24T09:58:03.254911+02:00"
+ },
+ {
+  "guid": "caurora-android-0.4.5-10",
+  "titel": "cAurora 0.4.5 (Build 10) für Android",
+  "link": "https://www.aiscom.ch/tester/#android",
+  "text": "Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen.",
+  "datum": "2026-10-09T23:41:05.213132+02:00"
+ }
+]

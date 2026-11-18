@@ -1,0 +1,80 @@
+html,
+body,
+.mud-typography,
+.mud-button-root,
+.mud-input,
+.mud-table,
+.mud-nav-link,
+.mud-chip,
+.mud-list-item,
+.mud-menu-item {
+    font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+}
+
+.app-title {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.app-logo {
+    height: 34px;
+    width: auto;
+    object-fit: contain;
+}
+
+.language-menu {
+    color: #fff;
+}
+
+.language-button {
+    min-width: 84px;
+    height: 34px;
+    border-color: rgba(255, 255, 255, 0.65) !important;
+    color: #fff !important;
+    text-transform: none;
+    font-weight: 700;
+}
+
+.language-button .mud-button-icon-start,
+.language-button .mud-button-icon-end {
+    color: #fff;
+}
+
+.finance-3d-surface {
+    width: 100%;
+    height: calc(100vh - 260px);
+    min-height: 680px;
+    overflow: hidden;
+    background: #f7f9fb;
+}
+
+.finance-3d-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+}
+
+.finance-3d-range-row {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    min-height: 38px;
+}
+
+.finance-3d-range {
+    flex: 1 1 auto;
+    min-width: 120px;
+}
+
+.finance-3d-factor {
+    min-width: 48px;
+    text-align: right;
+}
+
+@media (max-width: 700px) {
+    .finance-3d-surface {
+        height: calc(100vh - 300px);
+        min-height: 480px;
+    }
+}

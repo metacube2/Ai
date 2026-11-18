@@ -1,0 +1,51 @@
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@using Microsoft.AspNetCore.Components.Routing
+
+@if (Item.ItemType == NavigationMenuItemTypes.Group)
+{
+    <MudNavGroup Title="@Title" Icon="@Icon" Expanded="@Item.IsExpanded">
+        @foreach (var child in Children)
+        {
+            <NavMenuNode Item="child"
+                         Items="Items"
+                         HiddenKeys="HiddenKeys"
+                         OnAction="OnAction" />
+        }
+    </MudNavGroup>
+}
+else if (Item.ItemType == NavigationMenuItemTypes.Action)
+{
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small"
+               StartIcon="@Icon" OnClick="() => OnAction.InvokeAsync(Item.Key)" Class="ml-3">
+        @Title
+    </MudButton>
+}
+else
+{
+    <MudNavLink Href="@Item.Href" Match="@Match" Icon="@Icon">
+        @Title
+    </MudNavLink>
+}
+
+@code {
+    [Parameter, EditorRequired] public NavigationMenuItem Item { get; set; } = default!;
+    [Parameter, EditorRequired] public IReadOnlyList<NavigationMenuItem> Items { get; set; } = [];
+    [Parameter] public HashSet<string> HiddenKeys { get; set; } = [];
+    [Parameter] public EventCallback<string> OnAction { get; set; }
+
+    private string Title => UiText.Text(Item.TitleDe, Item.TitleEn);
+    private string Icon => NavigationIconResolver.Resolve(Item.Icon);
+    private NavLinkMatch Match => string.Equals(Item.Match, "All", StringComparison.OrdinalIgnoreCase)
+        ? NavLinkMatch.All
+        : NavLinkMatch.Prefix;
+
+    [Inject] private IUiTextService UiText { get; set; } = default!;
+
+    private IEnumerable<NavigationMenuItem> Children => Items
+        .Where(x => x.IsVisible)
+        .Where(x => !HiddenKeys.Contains(x.Key))
+        .Where(x => string.Equals(x.ParentKey, Item.Key, StringComparison.OrdinalIgnoreCase))
+        .OrderBy(x => x.SortOrder)
+        .ThenBy(x => x.TitleDe);
+}

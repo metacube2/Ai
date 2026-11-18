@@ -1,0 +1,19 @@
+[Unit]
+Description=AISCOM Next.js (www.aiscom.ch, IT-Dienstleistungen und 3D-Druck)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/html/aiscom/frontend
+Environment=NODE_ENV=production
+# next start statt standalone/server.js: nur so zeigt der DB-Pfad
+# (cwd/../database/aiscom.db) auf die bestehende Datenbank.
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=5
+MemoryMax=600M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+services:
+  bildervon:
+    build: .
+    image: bildervon:local
+    container_name: bildervon
+    restart: unless-stopped
+    ports:
+      - "8095:8000"
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/gesund')"]
+      interval: 60s
+      timeout: 5s
+      retries: 3

@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testversionen | AISCOM</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.ico">
+<link rel="alternate" type="application/rss+xml" title="AISCOM Testversionen" href="feed.xml">
+<style>
+:root { --bg:#0a1628; --surface:#13213b; --surface-2:#1a2b4d; --text:#f5f7fb; --muted:#a8b3c7; --accent:#87ceeb; --line:rgba(135,206,235,.18); }
+* { box-sizing:border-box; }
+body { margin:0; min-height:100vh; font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif; color:var(--text); line-height:1.6;
+  background:radial-gradient(circle at top right, rgba(135,206,235,.12), transparent 32%), linear-gradient(180deg,#091120,var(--bg)); }
+a { color:var(--accent); }
+main { max-width:1080px; margin:0 auto; padding:40px 24px 60px; }
+header { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
+header .logo { font:700 13px ui-monospace,Menlo,monospace; letter-spacing:4px; color:var(--accent); display:flex; align-items:center; gap:9px; }
+header .logo i { width:11px; height:11px; border-radius:50%; background:var(--accent); display:inline-block; box-shadow:0 0 12px var(--accent); }
+h1 { font-size:clamp(28px,4vw,40px); line-height:1.15; margin:6px 0 10px; }
+.unter { color:var(--muted); font-size:17px; max-width:760px; margin:0 0 28px; }
+.karten { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr)); gap:24px; }
+.karte { background:linear-gradient(180deg,var(--surface),#0f1b33); border:1px solid var(--line); border-radius:18px; padding:26px; box-shadow:0 20px 50px rgba(0,0,0,.35); }
+.kopf { display:flex; gap:18px; align-items:flex-start; }
+.kopf img { border-radius:22px; flex:none; filter:drop-shadow(0 8px 18px rgba(0,0,0,.45)); }
+h2 { margin:0 0 6px; font-size:26px; }
+.kurz { margin:0; color:var(--text); }
+.laden { display:flex; align-items:center; gap:16px; margin:22px 0 18px; padding:16px 20px; border-radius:14px; text-decoration:none; color:#06121f;
+  background:linear-gradient(135deg,#9ad9f3,#5fb6dc); box-shadow:0 10px 26px rgba(95,182,220,.35); transition:transform .15s, box-shadow .15s; }
+.laden:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(95,182,220,.45); }
+.laden .pfeil { font-size:28px; line-height:1; }
+.laden b { display:block; font-size:18px; }
+.laden small { display:block; font-size:13px; opacity:.85; }
+.meta { display:grid; grid-template-columns:90px 1fr; gap:4px 12px; margin:0; font-size:14px; }
+.meta dt { color:var(--muted); } .meta dd { margin:0; overflow-wrap:anywhere; }
+.sha { font:12px ui-monospace,Menlo,monospace; background:rgba(0,0,0,.3); padding:3px 6px; border-radius:6px; cursor:pointer; }
+h3 { font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }
+.schritte { background:var(--surface-2); border:1px solid var(--line); border-radius:18px; padding:24px 28px; margin:0; }
+.schritte ol { margin:0; padding-left:22px; } .schritte li { margin-bottom:10px; }
+.reiter { display:flex; gap:8px; margin:0 0 26px; flex-wrap:wrap; }
+.reiter a { padding:10px 20px; border-radius:999px; border:1px solid var(--line); color:var(--text); text-decoration:none; font-weight:600; background:var(--surface); }
+.reiter a[aria-selected="true"] { background:linear-gradient(135deg,#9ad9f3,#5fb6dc); color:#06121f; border-color:transparent; }
+.reiter small { opacity:.7; font-weight:500; margin-left:6px; }
+.platt[hidden] { display:none; }
+.neu { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px 24px; margin:0 0 26px; }
+.neu ul { margin:6px 0 10px; padding-left:0; list-style:none; } .neu li { margin:3px 0; }
+.neu time { color:var(--muted); font:13px ui-monospace,Menlo,monospace; margin-right:10px; }
+.rss { display:inline-block; padding:6px 14px; border-radius:999px; background:#f26522; color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
+.hinweis { margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }
+footer { margin-top:36px; color:var(--muted); font-size:13px; }
+.gruppe { margin:0 0 40px; }
+.gruppentitel { display:flex; align-items:center; gap:10px; font-size:18px; letter-spacing:.5px; text-transform:none; color:var(--text); margin:0 0 4px; }
+.gruppentitel small { font-size:13px; color:var(--muted); font-weight:500; }
+.gruppentitel .punkt { width:12px; height:12px; border-radius:50%; display:inline-block; }
+.gruppe-test .punkt { background:#4ade80; box-shadow:0 0 10px #4ade80; }
+.gruppe-entwicklung .punkt { background:#f43f5e; box-shadow:0 0 10px #f43f5e; }
+.gruppe-fertig .punkt { background:#4ade80; box-shadow:0 0 10px #4ade80; }
+.gruppentext { color:var(--muted); margin:0 0 16px; font-size:14px; }
+.leer { color:var(--muted); font-style:italic; margin:0; padding:14px 18px; border:1px dashed var(--line); border-radius:14px; }
+@media (max-width:520px) { .karten { grid-template-columns:1fr; } .kopf { flex-direction:column; } }
+</style>
+</head>
+<body>
+<main>
+  <header><div class="logo"><i></i>AISCOM · TESTVERSIONEN</div></header>
+  <h1>Apps zum Testen</h1>
+  <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad, Android und Windows, alle als Vollversion.</p>
+
+  <section class="neu"><h3>Neueste Fassungen</h3><ul><li><time>17.11.2026</time> FT991A Remote für Windows 1.0.0</li><li><time>17.11.2026</time> MacYaesu für Windows 1.1.2</li><li><time>17.11.2026</time> MacYaesu für Windows 1.1.1</li><li><time>15.11.2026</time> NetBottleneck 1.0 (Build 2) für macOS</li><li><time>15.11.2026</time> NetBottleneck 1.0 (Build 1) für macOS</li><li><time>05.11.2026</time> TapLoop 1.0 (Build 44) für macOS</li></ul>
+    <a class="rss" href="feed.xml" type="application/rss+xml">RSS-Feed abonnieren</a></section>
+
+  <nav class="reiter" role="tablist">
+    <a href="#mac" role="tab" data-p="mac">macOS<small>17</small></a>
+    <a href="#ios" role="tab" data-p="ios">iPhone / iPad<small>13</small></a>
+    <a href="#android" role="tab" data-p="android">Android<small>5</small></a>
+    <a href="#windows" role="tab" data-p="windows">Windows<small>2</small></a>
+    <a href="#buch" role="tab" data-p="buch">Buch<small>1</small></a>
+  </nav>
+
+  <div class="platt" id="p-mac" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li><b>DMG öffnen</b> (Doppelklick auf die geladene Datei). Es erscheint ein Fenster mit der App und einer Verknüpfung <b>„Programme“</b>.</li>
+      <li><b>App auf „Programme“ ziehen.</b> Danach das DMG-Fenster schliessen und das Laufwerk auswerfen; die App startest du aus dem Programme-Ordner oder über Spotlight.</li>
+      <li><b>Starten</b> wie jede andere App – die Apps sind von Apple beglaubigt.</li>
+      <li><b>Neue Fassung:</b> einfach wieder hineinziehen und „Ersetzen“ wählen. Einstellungen und Daten bleiben erhalten.</li>
+    </ol>
+  </section>
+  <div style="margin-top:32px"><div class="gruppe gruppe-test"><h3 class="gruppentitel"><span class="punkt"></span>Zum Testen bereit<small>8</small></h3><p class="gruppentext">Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!</p><section class="karten">
+<article class="karte" id="kamera-import">
+  <div class="kopf">
+    <img src="bilder/kamera-import.png" alt="" width="96" height="96">
+    <div>
+      <h2>Kamera-Import</h2>
+      <p class="kurz">Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.</p>
+    </div>
+  </div>
+  <a class="laden" href="KameraImport.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>KameraImport.dmg</b><small>Version 1.0 (Build 9) · 3 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">08a49a8a9366909e7c125b4246833eff19e3d8bef3a848960c3558028e817b6e</code></dd>
+  </dl>
+</article>
+<article class="karte" id="taploop">
+  <div class="kopf">
+    <img src="bilder/taploop.png" alt="" width="96" height="96">
+    <div>
+      <h2>TapLoop</h2>
+      <p class="kurz">Vier Schleifenspieler als Plattenteller, neu mit Video-Teller in der Mitte: aussen Filmstreifen, innen der Titel, getrennt scratchbar, Kamera oder Videodatei, 97 Bildeffekte. Klick nimmt auf und spielt im Loop, Plattenkiste, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</p>
+    </div>
+  </div>
+  <a class="laden" href="TapLoop.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>TapLoop.dmg</b><small>Version 1.0 (Build 44) · 25 MB · 05.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">2ad15d21597314eeaf73e1a5b875acd016734bb00e4b5ed42cd5dd3074754a2b</code></dd>
+  </dl>
+</article>
+<article class="karte" id="netbottleneck">
+  <div class="kopf">
+    <img src="bilder/netbottleneck.png" alt="" width="96" height="96">
+    <div>
+      <h2>NetBottleneck</h2>
+      <p class="kurz">Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D, während der Messung live mit Spuren für Messung, anderen Verkehr und TCP/UDP/ICMP. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.</p>
+    </div>
+  </div>
+  <a class="laden" href="NetBottleneck.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>NetBottleneck.dmg</b><small>Version 1.0 (Build 2) · 18 MB · 15.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">2676899024bc3f1fca0fa0f96b3e9a5ad6f2e1a80e2e7a6afd419b17748916c8</code></dd>
+  </dl>
+</article>
+<article class="karte" id="bandchronik">
+  <div class="kopf">
+    <img src="bilder/bandchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Bandchronik</h2>
+      <p class="kurz">350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, 13 Sprachen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Bandchronik.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Bandchronik.dmg</b><small>Version 0.1 (Build 1) · 252 MB · 01.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 15 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">f84ffb30f532fed7e055690f79ce23bdc59aa107d449380c9613910b17f645ad</code></dd>
+  </dl>
+</article>
+<article class="karte" id="baederchronik">
+  <div class="kopf">
+    <img src="bilder/baederchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Bäderchronik</h2>
+      <p class="kurz">Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. 13 Sprachen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Baederchronik.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Baederchronik.dmg</b><small>Version 0.1 (Build 1) · 33 MB · 01.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 15 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">f6b9c4751f69f9d7b0fbfddc355c75204738a06b2d153c7ae752e342d7347901</code></dd>
+  </dl>
+</article>
+<article class="karte" id="lautsprecherchronik">
+  <div class="kopf">
+    <img src="bilder/lautsprecherchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Lautsprecherchronik</h2>
+      <p class="kurz">58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. 13 Sprachen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Lautsprecherchronik.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Lautsprecherchronik.dmg</b><small>Version 0.1 (Build 1) · 33 MB · 01.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 15 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">0dee7407d6e2184dbe5d271ab75901bcdaa8287603844ee5afe6119da97f56a6</code></dd>
+  </dl>
+</article>
+<article class="karte" id="synthchronik">
+  <div class="kopf">
+    <img src="bilder/synthchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Synthchronik</h2>
+      <p class="kurz">Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. 13 Sprachen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Synthchronik.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Synthchronik.dmg</b><small>Version 1.0 (Build 2) · 13 MB · 01.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 15 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">5a79168695ec965a0dcf3b73fc7e3c4f92a5856b1ff9862464698737503e3c94</code></dd>
+  </dl>
+</article>
+<article class="karte" id="bergbahnchronik">
+  <div class="kopf">
+    <img src="bilder/bergbahnchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Bergbahnchronik</h2>
+      <p class="kurz">Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. 13 Sprachen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Bergbahnchronik.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Bergbahnchronik.dmg</b><small>Version 1.0 (Build 2) · 22 MB · 01.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 15 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">9bbc3b2791ea80dc0464bbab99af4435ef7da2927ac0bf3d77de136ec90ec735</code></dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>9</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
+<article class="karte" id="aurora-studio">
+  <div class="kopf">
+    <img src="bilder/aurora-studio.png" alt="" width="96" height="96">
+    <div>
+      <h2>Aurora Studio</h2>
+      <p class="kurz">Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.</p>
+    </div>
+  </div>
+  <a class="laden" href="AuroraStudio.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>AuroraStudio.dmg</b><small>Version 1.0 (Build 4) · 23 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">5b47d052f53e99156348547a5759ca850af324ade9ae5794039c6fb1e2ba4265</code></dd>
+  </dl>
+</article>
+<article class="karte" id="antennen-studio">
+  <div class="kopf">
+    <img src="bilder/antennen-studio.png" alt="" width="96" height="96">
+    <div>
+      <h2>Antennen-Studio</h2>
+      <p class="kurz">NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).</p>
+    </div>
+  </div>
+  <a class="laden" href="AntennenStudio.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>AntennenStudio.dmg</b><small>Version 1.0 (Build 8) · 99 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">607a2f91208db7f7e69c56eff7097447c54f498fd7832dd0be23135e1588eef1</code></dd>
+  </dl>
+</article>
+<article class="karte" id="macyaesu">
+  <div class="kopf">
+    <img src="bilder/macyaesu.png" alt="" width="96" height="96">
+    <div>
+      <h2>MacYaesu</h2>
+      <p class="kurz">Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.</p>
+    </div>
+  </div>
+  <a class="laden" href="MacYaesu.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>MacYaesu.dmg</b><small>Version 1.1 (Build 3) · 3 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 15 oder neuer, Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">a3dc42862015b115851c5642de4609076f2d897f93915f692daf47c8c246322e</code></dd>
+  </dl>
+</article>
+<article class="karte" id="stretcher">
+  <div class="kopf">
+    <img src="bilder/stretcher.png" alt="" width="96" height="96">
+    <div>
+      <h2>Stretcher</h2>
+      <p class="kurz">Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Stretcher.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Stretcher.dmg</b><small>Version 0.2 (Build 5) · 3 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">391378c54a9804e52f17a2538c2c9db4d6e8987843213c753c4e761d8b322b59</code></dd>
+  </dl>
+</article>
+<article class="karte" id="obhut">
+  <div class="kopf">
+    <img src="bilder/obhut.png" alt="" width="96" height="96">
+    <div>
+      <h2>Obhut</h2>
+      <p class="kurz">Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.</p>
+    </div>
+  </div>
+  <a class="laden" href="Obhut.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Obhut.dmg</b><small>Version 0.1 (Build 2) · 3 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">ea0ab9c1d67b2502a78622436e6b9b83dcfe5781b0cb222a017dc9b77e8fd09b</code></dd>
+  </dl>
+</article>
+<article class="karte" id="fotogedaechtnis">
+  <div class="kopf">
+    <img src="bilder/fotogedaechtnis.png" alt="" width="96" height="96">
+    <div>
+      <h2>Fotogedächtnis</h2>
+      <p class="kurz">Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.</p>
+    </div>
+  </div>
+  <a class="laden" href="Fotogedaechtnis.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Fotogedaechtnis.dmg</b><small>Version 0.1 (Build 1) · 3 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">56f1c0b38383dc1b0be50cb53ba3184a9eb27ea0e8c00ebb0d4a450bbdc02592</code></dd>
+  </dl>
+</article>
+<article class="karte" id="makrowerk">
+  <div class="kopf">
+    <img src="bilder/makrowerk.png" alt="" width="96" height="96">
+    <div>
+      <h2>Makrowerk</h2>
+      <p class="kurz">Fokus-Stacking für Supermakro: Serie laden (auch RAW), ausrichten, stapeln, vorher/nachher vergleichen, Tiefenkarte, Lückenbericht, Bewegungsschutz, Retusche-Pinsel. Deutsch, Englisch.</p>
+    </div>
+  </div>
+  <a class="laden" href="Makrowerk.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Makrowerk.dmg</b><small>Version 0.1 (Build 1) · 2 MB · 27.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">ef239f4e651851d8686758e6f89ff8f3224139bd1f122eb5a36a3df5b20f24bf</code></dd>
+  </dl>
+</article>
+<article class="karte" id="screencam">
+  <div class="kopf">
+    <img src="bilder/screencam.png" alt="" width="96" height="96">
+    <div>
+      <h2>ScreenCam</h2>
+      <p class="kurz">Bildschirm aufnehmen mit Systemton und Mikrofon, Bildschirmfotos mit Editor (Pfeil, Rahmen, Text, Verpixeln, Zuschneiden) und Texterkennung.</p>
+    </div>
+  </div>
+  <a class="laden" href="ScreenCam.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>ScreenCam.dmg</b><small>Version 0.1 (Build 1) · 2 MB · 27.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 15 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">5682bdd6c920b3997626ad13226a15218dc27ca099197405209dbff2fb3f073e</code></dd>
+  </dl>
+</article>
+<article class="karte" id="mietpruefer">
+  <div class="kopf">
+    <img src="bilder/mietpruefer.png" alt="" width="96" height="96">
+    <div>
+      <h2>Mietprüfer</h2>
+      <p class="kurz">Mietzinssenkung, Mieterhöhung und Nebenkosten nach Schweizer Mietrecht nachrechnen, Brief als PDF. Deutsch, Französisch, Italienisch, Englisch.</p>
+    </div>
+  </div>
+  <a class="laden" href="Mietpruefer.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Mietpruefer.dmg</b><small>Version 0.1 (Build 1) · 3 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">afc07ba224c9ee53917ad26df2984323e98fff881bdccc0ed46bd5f730afdadf</code></dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
+  </div>
+
+  <div class="platt" id="p-ios" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li>Apple erlaubt iPhone-Apps ausserhalb des App Store nur über <b>TestFlight</b>. Du bekommst eine <b>Einladung per E-Mail</b>.</li>
+      <li>Die App <b>TestFlight</b> aus dem App Store laden, in der E-Mail auf „Testen starten“ tippen, dann „Installieren“.</li>
+      <li><b>Neue Fassung:</b> TestFlight meldet sie und aktualisiert auf Tipp.</li>
+    </ol>
+  </section>
+  <div style="margin-top:32px"><div class="gruppe gruppe-test"><h3 class="gruppentitel"><span class="punkt"></span>Zum Testen bereit<small>6</small></h3><p class="gruppentext">Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!</p><section class="karten">
+<article class="karte" id="ios-taploop">
+  <div class="kopf">
+    <img src="bilder/taploop.png" alt="" width="96" height="96">
+    <div>
+      <h2>TapLoop</h2>
+      <p class="kurz">Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>1.0 (Build 41)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>5 von 5 Klicktests bestanden (iPhone 17 Pro, iOS 26.5, 27.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-bandchronik">
+  <div class="kopf">
+    <img src="bilder/bandchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Bandchronik</h2>
+      <p class="kurz">350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, Auf iPhone, iPad und iPhone Duo.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 18.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>1 von 1 Klicktests bestanden (iPhone 17, iOS 27.0, 01.11.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-baederchronik">
+  <div class="kopf">
+    <img src="bilder/baederchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Bäderchronik</h2>
+      <p class="kurz">Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. Auf iPhone, iPad und iPhone Duo.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 18.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>1 von 1 Klicktests bestanden (iPhone 17, iOS 27.0, 01.11.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-lautsprecherchronik">
+  <div class="kopf">
+    <img src="bilder/lautsprecherchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Lautsprecherchronik</h2>
+      <p class="kurz">58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. Auf iPhone, iPad und iPhone Duo.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 18.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>1 von 1 Klicktests bestanden (iPhone 17, iOS 27.0, 01.11.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-synthchronik">
+  <div class="kopf">
+    <img src="bilder/synthchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Synthchronik</h2>
+      <p class="kurz">Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. Auf iPhone, iPad und iPhone Duo.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 18.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>1 von 1 Klicktests bestanden (iPhone 17, iOS 27.0, 01.11.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-bergbahnchronik">
+  <div class="kopf">
+    <img src="bilder/bergbahnchronik.png" alt="" width="96" height="96">
+    <div>
+      <h2>Bergbahnchronik</h2>
+      <p class="kurz">Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. Auf iPhone, iPad und iPhone Duo.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 18.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>1 von 1 Klicktests bestanden (iPhone 17, iOS 27.0, 01.11.2026)</dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>7</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
+<article class="karte" id="ios-antennen-studio">
+  <div class="kopf">
+    <img src="bilder/antennen-studio.png" alt="" width="96" height="96">
+    <div>
+      <h2>Antennen-Studio</h2>
+      <p class="kurz">NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut).</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>1.0 (Build 7)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>17 von 17 Klicktests bestanden (iPhone 17, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-stretcher">
+  <div class="kopf">
+    <img src="bilder/stretcher.png" alt="" width="96" height="96">
+    <div>
+      <h2>Stretcher</h2>
+      <p class="kurz">Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.2 (Build 2)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>10 von 10 Klicktests bestanden (iPhone 17, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-caurora">
+  <div class="kopf">
+    <img src="bilder/caurora.png" alt="" width="96" height="96">
+    <div>
+      <h2>cAurora</h2>
+      <p class="kurz">Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse und Wetter auf dem iPhone. Sechs Sprachen.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.4.5 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>23 von 23 Klicktests bestanden (iPhone 17 Pro, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-obhut">
+  <div class="kopf">
+    <img src="bilder/obhut.png" alt="" width="96" height="96">
+    <div>
+      <h2>Obhut</h2>
+      <p class="kurz">Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>11 von 11 Klicktests bestanden (iPhone 17, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-fotogedaechtnis">
+  <div class="kopf">
+    <img src="bilder/fotogedaechtnis.png" alt="" width="96" height="96">
+    <div>
+      <h2>Fotogedächtnis</h2>
+      <p class="kurz">Fotoarchiv mit lokaler KI-Suche auf dem iPhone, mit Apple Intelligence, wo verfügbar.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>10 von 10 Klicktests bestanden (iPhone Air, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-makrowerk">
+  <div class="kopf">
+    <img src="bilder/makrowerk.png" alt="" width="96" height="96">
+    <div>
+      <h2>Makrowerk</h2>
+      <p class="kurz">Fokusserie auf dem iPhone aufnehmen (Linse Schritt für Schritt, Fokus-Peaking) und stapeln; quer und aufgeklappt wie am Mac.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>5 von 5 Klicktests bestanden (iPhone 17 Pro, iOS 26.5, 27.10.2026)</dd>
+  </dl>
+</article>
+<article class="karte" id="ios-mietpruefer">
+  <div class="kopf">
+    <img src="bilder/mietpruefer.png" alt="" width="96" height="96">
+    <div>
+      <h2>Mietprüfer</h2>
+      <p class="kurz">Schweizer Mietrecht auf dem iPhone: Senkung, Erhöhung, Nebenkosten prüfen und Brief erstellen.</p>
+    </div>
+  </div>
+  <div class="hinweis">Installation über <b>TestFlight</b>: Einladung folgt per E-Mail.</div>
+  <dl class="meta">
+    <dt>Version</dt><dd>0.1 (Build 1)</dd>
+    <dt>System</dt><dd>iOS 17.0 oder neuer, iPhone und iPad</dd>
+    <dt>Geprüft</dt><dd>12 von 12 Klicktests bestanden (iPhone 17 Pro Max, iOS 26.5, 24.10.2026)</dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
+  </div>
+
+  <div class="platt" id="p-android" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li><b>APK auf dem Android-Gerät laden</b> (Link direkt auf dem Handy öffnen).</li>
+      <li>Die geladene Datei antippen. Beim ersten Mal fragt Android, ob der Browser Apps installieren darf: <b>„Zulassen“</b>, dann <b>„Installieren“</b>.</li>
+      <li><b>Neue Fassung:</b> neue APK gleich installieren, sie ersetzt die alte; Daten bleiben erhalten.</li>
+    </ol>
+  </section>
+  <div style="margin-top:32px"><div class="gruppe gruppe-test"><h3 class="gruppentitel"><span class="punkt"></span>Zum Testen bereit<small>1</small></h3><p class="gruppentext">Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!</p><section class="karten">
+<article class="karte" id="android-kamera-import">
+  <div class="kopf">
+    <img src="bilder/kamera-import.png" alt="" width="96" height="96">
+    <div>
+      <h2>Kamera-Import</h2>
+      <p class="kurz">Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet.</p>
+    </div>
+  </div>
+  <a class="laden" href="Kamera-Import.apk" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Kamera-Import.apk</b><small>Version 1.0 (Build 1) · 12 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android 8 oder neuer</dd>
+    <dt>Signatur</dt><dd>signiert, Zertifikat a4c16632b418c3d2…</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">6abfd118c83b1f9943f0b6b4602d0f0041256041bcc0630a276ae386c42536f2</code></dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>4</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
+<article class="karte" id="android-obhut">
+  <div class="kopf">
+    <img src="bilder/obhut.png" alt="" width="96" height="96">
+    <div>
+      <h2>Obhut</h2>
+      <p class="kurz">Betreuung alternder Eltern in der Familie koordinieren, auf Android. Gleiches Datenformat wie Mac und iPhone.</p>
+    </div>
+  </div>
+  <a class="laden" href="Obhut.apk" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Obhut.apk</b><small>Version 0.1 (Build 1) · 9 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android 8 oder neuer</dd>
+    <dt>Signatur</dt><dd>signiert, Zertifikat a4c16632b418c3d2…</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">9549c7e5356e24ebd2b7471f47d2d395cec2a2d380c06f684559e9afe8440470</code></dd>
+  </dl>
+</article>
+<article class="karte" id="android-caurora">
+  <div class="kopf">
+    <img src="bilder/caurora.png" alt="" width="96" height="96">
+    <div>
+      <h2>cAurora</h2>
+      <p class="kurz">Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen.</p>
+    </div>
+  </div>
+  <a class="laden" href="cAurora.apk" download>
+    <span class="pfeil">⬇</span>
+    <span><b>cAurora.apk</b><small>Version 0.4.5 (Build 10) · 8 MB · 09.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android 8 oder neuer</dd>
+    <dt>Signatur</dt><dd>signiert, Zertifikat 59868e10ec67de56…</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">b93ee07dded6ceb0cec2ec0ac9e91f7de43fdfdcb87279d91646ab3a7a95f006</code></dd>
+  </dl>
+</article>
+<article class="karte" id="android-stretcher">
+  <div class="kopf">
+    <img src="bilder/stretcher.png" alt="" width="96" height="96">
+    <div>
+      <h2>Stretcher</h2>
+      <p class="kurz">Klänge extrem dehnen (Paulstretch, Phase-Vocoder, Sinusmodell) und die Verfahren vergleichen, auf Android. Rechnet gleich wie die Mac-Fassung; je Lauf bis 30 s, auf kleinen Geräten 15 s.</p>
+    </div>
+  </div>
+  <a class="laden" href="Stretcher.apk" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Stretcher.apk</b><small>Version 0.2 (Build 1) · 9 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android 8 oder neuer</dd>
+    <dt>Signatur</dt><dd>signiert, Zertifikat a4c16632b418c3d2…</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">b916cd947a3b91eda6a0f17c8fffed3e46517bc192ca62ad7a4cb8e68ee990a7</code></dd>
+  </dl>
+</article>
+<article class="karte" id="android-antennen-studio">
+  <div class="kopf">
+    <img src="bilder/antennen-studio.png" alt="" width="96" height="96">
+    <div>
+      <h2>Antennen-Studio</h2>
+      <p class="kurz">Antennen mit NEC-2 simulieren: 3D-Modell, Richtdiagramme, SWR, Smith-Diagramm, Optimierer, Live-Regler. Rechenkern nec2c (GPLv3) wie auf Mac und iPhone, Ergebnisse zahlengleich.</p>
+    </div>
+  </div>
+  <a class="laden" href="Antennen-Studio.apk" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Antennen-Studio.apk</b><small>Version 1.0 (Build 1) · 9 MB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Android 8 oder neuer</dd>
+    <dt>Signatur</dt><dd>signiert, Zertifikat a4c16632b418c3d2…</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">2a164e0b11595e77aa7cd65b0ba882cfc8ea7084f1b8677a9e4dfbf3d78b3a28</code></dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
+  </div>
+
+  <div class="platt" id="p-windows" role="tabpanel">
+  <section class="schritte">
+    <h3>Installation</h3>
+    <ol>
+      <li><b>MSI laden und doppelklicken.</b> Der Installer bringt alles mit, Java muss nicht installiert sein.</li>
+      <li>Windows warnt mit <b>„Der Computer wurde durch Windows geschützt“</b> (die Testfassung ist nicht signiert): <b>„Weitere Informationen“</b>, dann <b>„Trotzdem ausführen“</b>.</li>
+      <li>Starten über das Startmenü oder die Verknüpfung auf dem Desktop.</li>
+      <li><b>Neue Fassung:</b> neue MSI einfach installieren, sie ersetzt die alte. Einstellungen und Logs bleiben erhalten.</li>
+    </ol>
+  </section>
+  <div style="margin-top:32px"><div class="gruppe gruppe-test"><h3 class="gruppentitel"><span class="punkt"></span>Zum Testen bereit<small>2</small></h3><p class="gruppentext">Diese Fassungen sind fertig gebaut und warten auf Rückmeldungen. Bitte ausprobieren!</p><section class="karten">
+<article class="karte" id="windows-ft991a-remote-win">
+  <div class="kopf">
+    <img src="bilder/macyaesu.png" alt="" width="96" height="96">
+    <div>
+      <h2>FT991A Remote für Windows</h2>
+      <p class="kurz">Die neue Windows-App (Tauri): FT-991A per USB-CAT fernsteuern, Modern- und Frontpanel-Ansicht, QSO-Log, CAT-Konsole, Speicher mit Scan, Relais-Schnellkonfiguration, Papagei über USB-Audio, Infobereich, Deutsch und Englisch. Klein (3 MB), am echten Gerät noch ungetestet.</p>
+    </div>
+  </div>
+  <a class="laden" href="FT991A-Remote-Windows-Setup.exe" download>
+    <span class="pfeil">⬇</span>
+    <span><b>FT991A-Remote-Windows-Setup.exe</b><small>Version 1.0.0 · 3 MB · 17.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Windows 10/11, x64 (läuft auch auf ARM)</dd>
+    <dt>Anleitung</dt><dd><a href="FT991A-Remote-Windows-Testanleitung.html">Testanleitung mit Funkgerät</a></dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">6771b1da01b48e0c452663ed8895afa4736e2e230bfed7ef73109e66af314545</code></dd>
+  </dl>
+</article>
+<article class="karte" id="windows-macyaesu-windows">
+  <div class="kopf">
+    <img src="bilder/macyaesu.png" alt="" width="96" height="96">
+    <div>
+      <h2>MacYaesu für Windows</h2>
+      <p class="kurz">FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. Übergangsfassung, bis die neue Windows-App fertig ist.</p>
+    </div>
+  </div>
+  <a class="laden" href="MacYaesu-Windows.msi" download>
+    <span class="pfeil">⬇</span>
+    <span><b>MacYaesu-Windows.msi</b><small>Version 1.1.2 · 142 MB · 17.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>Windows 10/11, x64 (läuft auch auf ARM)</dd>
+    <dt>Anleitung</dt><dd><a href="MacYaesu-Windows-Testanleitung.html">Testanleitung mit Funkgerät</a></dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">15aa5bd11bd851775aec6f4a8dcdadc20fc0cd0ef2398a415832108cf5fa30a5</code></dd>
+  </dl>
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>0</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
+  </div>
+
+  <div class="platt" id="p-buch" role="tabpanel">
+  <section class="schritte">
+    <h3>Lesen</h3>
+    <ol>
+      <li><b>EPUB laden</b> (auf dem Gerät, auf dem gelesen wird).</li>
+      <li><b>iPhone, iPad, Mac:</b> Datei antippen bzw. doppelklicken, sie öffnet sich in <b>Apple Books</b>.</li>
+      <li><b>Android, Windows:</b> eine EPUB-App, z. B. Google Play Books („Datei hochladen“) oder Thorium Reader. <b>E-Reader:</b> Tolino liest EPUB direkt, Kindle über „Send to Kindle“.</li>
+    </ol>
+  </section>
+  <section class="karten" style="margin-top:32px">
+<article class="karte" id="buch-ki-buch">
+  <div class="kopf">
+    <img src="bilder/ki-buch.png" alt="" width="96" height="96" style="object-fit:contain">
+    <div>
+      <h2>Die Schweiz denkt mit</h2>
+      <p class="kurz">Zukunftsgeschichten über künstliche Intelligenz in der Schweiz, 2027–2045: eine Reporterin reist durchs Land, jedes Kapitel ein anderes Jahr. Gut 100 Seiten mit Bildern, am Ende jedes Kapitels „Stand heute“.</p>
+    </div>
+  </div>
+  <a class="laden" href="Die-Schweiz-denkt-mit.epub" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Die-Schweiz-denkt-mit.epub</b><small>E-Book (EPUB 3) · 324 kB · 24.10.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">020fcd5138c9407cda77a3d7fcf4bf5a5432b33ba931d64e910833e46b8f6681</code></dd>
+  </dl>
+</article>
+  </section>
+  </div>
+
+  <footer>Stand 17.11.2026 23:26. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+</main>
+<script>
+function zeigen() {
+  const p = (location.hash || '#mac').slice(1).split('-')[0];
+  const gueltig = ['mac', 'ios', 'android', 'windows', 'buch'].includes(p) ? p : 'mac';
+  document.querySelectorAll('.platt').forEach(e => e.hidden = e.id !== 'p-' + gueltig);
+  document.querySelectorAll('.reiter a').forEach(a => a.setAttribute('aria-selected', a.dataset.p === gueltig));
+}
+window.addEventListener('hashchange', zeigen); zeigen();
+document.querySelectorAll('.sha').forEach(e => e.addEventListener('click', () => { navigator.clipboard?.writeText(e.textContent); e.title = 'kopiert'; }));
+</script>
+</body>
+</html>

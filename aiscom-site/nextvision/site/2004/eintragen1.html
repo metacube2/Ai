@@ -1,0 +1,33 @@
+<head>
+<title> System </title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"><style type="text/css">
+<!--
+body {
+		background-color: #ECE9D8;
+											width: 1px;
+	border: medium dotted #00CC33;
+}
+-->
+</style><script>
+/* Nachbau 2026: Die MySQL-Datenbank von 2004 ist weg (schon damals: "Host ... is not allowed").
+   Benutzer und Nachrichten liegen jetzt im Browser (localStorage) - nur auf diesem Gerät sichtbar. */
+var NV = {
+  lesen: function (k) { try { return JSON.parse(localStorage.getItem('nv2004_' + k) || '[]'); } catch (e) { return []; } },
+  speichern: function (k, v) { try { localStorage.setItem('nv2004_' + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  esc: function (t) { return String(t).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+};
+</script></head>
+<body>
+Schreib hier deine Nachricht rein <br><form action="#" onsubmit="return nvNachricht(this)"><a align=center>name</a><br><input type='text' name='namee'><br>nachricht<br><textarea name='text' rows='5' cols='22'></textarea><br><input type='submit' value='senden'><br></form>
+<a href="main2.html">zur&uuml;ck</a>
+<script>
+function nvNachricht(f) {
+  var n = NV.lesen('nachrichten');
+  n.push({name: f.namee.value || 'anonym', text: f.text.value, zeit: new Date().toLocaleString('de-CH')});
+  NV.speichern('nachrichten', n);
+  location.href = 'main2.html';
+  return false;
+}
+</script>
+</body>
+</html>

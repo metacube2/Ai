@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1050" viewBox="0 0 1500 1050" role="img" aria-labelledby="title desc">
+  <title id="title">Finance Kurs-Workflow</title>
+  <desc id="desc">Visualisierung des Kursflusses vom Land ueber CentralSalesRecords bis zur zentralen Dashboard-Analyse.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#2457a6" />
+    </marker>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#2f7d4f" />
+    </marker>
+    <marker id="arrow-orange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#b35c00" />
+    </marker>
+    <style>
+      .page { fill: #f7f8fb; }
+      .title { font: 700 32px Arial, sans-serif; fill: #172033; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #4a5568; }
+      .box-title { font: 700 17px Arial, sans-serif; fill: #172033; }
+      .box-text { font: 400 14px Arial, sans-serif; fill: #253044; }
+      .small { font: 400 12px Arial, sans-serif; fill: #4a5568; }
+      .label { font: 700 13px Arial, sans-serif; fill: #172033; }
+      .box { fill: #ffffff; stroke: #c7d2e3; stroke-width: 2; rx: 8; }
+      .source { fill: #eef5ff; stroke: #8fb2e6; }
+      .store { fill: #f1f7f3; stroke: #8abf9d; }
+      .finance { fill: #eef8f0; stroke: #6fa87d; }
+      .analysis { fill: #fff5e6; stroke: #e0a349; }
+      .warning { fill: #fff1f0; stroke: #d96863; }
+      .table { fill: #f6f0ff; stroke: #ad94d6; }
+      .muted { fill: #f3f5f8; stroke: #b8c2cf; }
+      .line-blue { fill: none; stroke: #2457a6; stroke-width: 3; marker-end: url(#arrow-blue); }
+      .line-green { fill: none; stroke: #2f7d4f; stroke-width: 3; marker-end: url(#arrow-green); }
+      .line-orange { fill: none; stroke: #b35c00; stroke-width: 3; marker-end: url(#arrow-orange); }
+      .line-dashed { stroke-dasharray: 8 7; }
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1500" height="1050" />
+
+  <text class="title" x="60" y="58">Finance Kurs-Workflow</text>
+  <text class="subtitle" x="60" y="86">Vom einzelnen Land ueber CentralSalesRecords bis zur Analyse eines zentralen Dashboard-Wertes</text>
+
+  <g transform="translate(60 112)">
+    <rect class="source" x="0" y="0" width="260" height="165" rx="8" />
+    <text class="box-title" x="18" y="30">1. Land / Quellsystem</text>
+    <text class="box-text" x="18" y="62">
+      <tspan x="18" dy="0">SAP OData: CH / AT</tspan>
+      <tspan x="18" dy="24">SAP B1/HANA: FR / IT / US</tspan>
+      <tspan x="18" dy="24">HANA/Sage: IN</tspan>
+      <tspan x="18" dy="24">Sage/Excel/Alphaplan: UK / ES / DE</tspan>
+    </text>
+    <text class="small" x="18" y="145">Quelle liefert Wert, Waehrung und ggf. ERP-Belegkurs.</text>
+  </g>
+
+  <g transform="translate(370 112)">
+    <rect class="source" x="0" y="0" width="285" height="165" rx="8" />
+    <text class="box-title" x="18" y="30">2. Importwert</text>
+    <text class="box-text" x="18" y="62">
+      <tspan x="18" dy="0">SalesPriceValue</tspan>
+      <tspan x="18" dy="24">SalesCurrency / CompanyCurrency</tspan>
+      <tspan x="18" dy="24">DocumentCurrency</tspan>
+      <tspan x="18" dy="24">DocumentTotal FC / LC</tspan>
+      <tspan x="18" dy="24">DocumentRate als Quellinfo</tspan>
+    </text>
+  </g>
+
+  <g transform="translate(705 112)">
+    <rect class="muted" x="0" y="0" width="285" height="165" rx="8" />
+    <text class="box-title" x="18" y="30">3. Transformationen</text>
+    <text class="box-text" x="18" y="62">
+      <tspan x="18" dy="0">Normalfall: keine Kursumrechnung</tspan>
+      <tspan x="18" dy="26">Feldregeln koennen Werte kopieren,</tspan>
+      <tspan x="18" dy="22">normalisieren oder konstant setzen.</tspan>
+      <tspan x="18" dy="30">Ausnahme: ConvertCurrency</tspan>
+      <tspan x="18" dy="22">schreibt dauerhaft ein Zielfeld.</tspan>
+    </text>
+  </g>
+
+  <g transform="translate(1040 112)">
+    <rect class="store" x="0" y="0" width="285" height="165" rx="8" />
+    <text class="box-title" x="18" y="30">4. CentralSalesRecords</text>
+    <text class="box-text" x="18" y="62">
+      <tspan x="18" dy="0">Zentraler operativer Datenbestand</tspan>
+      <tspan x="18" dy="26">pro Standort komplett ersetzt</tspan>
+      <tspan x="18" dy="26">enthaelt Werte nach Import und</tspan>
+      <tspan x="18" dy="22">optionalen Transformationen</tspan>
+    </text>
+    <text class="small" x="18" y="143">SharePoint-Excel ist Ablage, nicht Live-Quelle.</text>
+  </g>
+
+  <path class="line-blue" d="M 320 195 L 360 195" />
+  <path class="line-blue" d="M 655 195 L 695 195" />
+  <path class="line-blue" d="M 990 195 L 1030 195" />
+
+  <g transform="translate(105 345)">
+    <rect class="finance" x="0" y="0" width="385" height="175" rx="8" />
+    <text class="box-title" x="18" y="30">5A. Finance Summary / zentrales Excel</text>
+    <text class="box-text" x="18" y="63">
+      <tspan x="18" dy="0">FinanceRuleEngine bildet Net Sales Actual.</tspan>
+      <tspan x="18" dy="26">Fuehrend ist die Hauswaehrung je Land:</tspan>
+      <tspan x="18" dy="24">CH CHF, AT/DE/ES/FR/IT EUR,</tspan>
+      <tspan x="18" dy="24">IN INR, UK GBP, US USD.</tspan>
+    </text>
+    <text class="small" x="18" y="153">Waehrungsfilter = Filter, keine Umrechnung.</text>
+  </g>
+
+  <g transform="translate(560 345)">
+    <rect class="warning" x="0" y="0" width="335" height="175" rx="8" />
+    <text class="box-title" x="18" y="30">Nicht still umrechnen</text>
+    <text class="box-text" x="18" y="63">
+      <tspan x="18" dy="0">DocumentRate bleibt Quellfeld.</tspan>
+      <tspan x="18" dy="26">CurrencyExchangeRates werden hier</tspan>
+      <tspan x="18" dy="24">nicht automatisch angewendet.</tspan>
+      <tspan x="18" dy="30">Mixed bedeutet: mehrere Waehrungen</tspan>
+      <tspan x="18" dy="22">im aktuellen Filter.</tspan>
+    </text>
+  </g>
+
+  <path class="line-green" d="M 1180 285 C 1180 325, 360 300, 315 340" />
+  <path class="line-green" d="M 490 432 L 550 432" />
+
+  <g transform="translate(105 625)">
+    <rect class="analysis" x="0" y="0" width="390" height="205" rx="8" />
+    <text class="box-title" x="18" y="30">5B. Zentrale Analyse mit Zielwaehrung</text>
+    <text class="box-text" x="18" y="63">
+      <tspan x="18" dy="0">Anzeige-Waehrung: NATIVE, CHF, EUR, USD</tspan>
+      <tspan x="18" dy="28">Summenfeld:</tspan>
+      <tspan x="38" dy="24">SalesPriceValue -> SalesCurrency</tspan>
+      <tspan x="38" dy="24">StandardCost -> StandardCostCurrency</tspan>
+      <tspan x="38" dy="24">Quantity -> keine Waehrung</tspan>
+    </text>
+    <text class="small" x="18" y="183">Diese Umrechnung ist nur Anzeige/Laufzeit.</text>
+  </g>
+
+  <g transform="translate(560 625)">
+    <rect class="table" x="0" y="0" width="340" height="205" rx="8" />
+    <text class="box-title" x="18" y="30">CurrencyExchangeRates</text>
+    <text class="box-text" x="18" y="63">
+      <tspan x="18" dy="0">FromCurrency / ToCurrency / Rate</tspan>
+      <tspan x="18" dy="26">ValidFrom / ValidTo / IsActive</tspan>
+      <tspan x="18" dy="32">ResolveRate-Reihenfolge:</tspan>
+      <tspan x="38" dy="24">1. direkt</tspan>
+      <tspan x="38" dy="24">2. invers</tspan>
+      <tspan x="38" dy="24">3. EUR-Kreuzkurs</tspan>
+    </text>
+  </g>
+
+  <g transform="translate(965 625)">
+    <rect class="analysis" x="0" y="0" width="390" height="205" rx="8" />
+    <text class="box-title" x="18" y="30">6. Zentraler Dashboard-Wert</text>
+    <text class="box-text" x="18" y="63">
+      <tspan x="18" dy="0">Anzeige-Wert je Zeile = Wert * Kurs</tspan>
+      <tspan x="18" dy="30">Summe = alle Anzeige-Werte im Filter</tspan>
+      <tspan x="18" dy="30">Kurs fehlt:</tspan>
+      <tspan x="38" dy="24">Zeile zaehlt mit 0</tspan>
+      <tspan x="38" dy="24">MissingExchangeRateCount steigt</tspan>
+    </text>
+    <text class="small" x="18" y="183">CentralSalesRecords bleiben unveraendert.</text>
+  </g>
+
+  <path class="line-orange" d="M 1180 285 C 1180 560, 280 555, 280 615" />
+  <path class="line-orange" d="M 500 727 L 550 727" />
+  <path class="line-orange" d="M 900 727 L 955 727" />
+
+  <g transform="translate(705 890)">
+    <rect class="muted" x="0" y="0" width="300" height="110" rx="8" />
+    <text class="box-title" x="18" y="30">ConvertCurrency</text>
+    <text class="box-text" x="18" y="62">
+      <tspan x="18" dy="0">aktive Transformation beim Export</tspan>
+      <tspan x="18" dy="24">schreibt dauerhaft ein Zielfeld</tspan>
+    </text>
+  </g>
+
+  <g transform="translate(1045 890)">
+    <rect class="muted" x="0" y="0" width="300" height="110" rx="8" />
+    <text class="box-title" x="18" y="30">Budget-CHF-Kandidat</text>
+    <text class="box-text" x="18" y="62">
+      <tspan x="18" dy="0">Notes = Budget 2025 / 2026</tspan>
+      <tspan x="18" dy="24">Kontrollsicht, nicht Standard-Ist</tspan>
+    </text>
+  </g>
+
+  <path class="line-orange line-dashed" d="M 835 885 C 835 850, 770 850, 740 835" />
+  <path class="line-orange line-dashed" d="M 1195 885 C 1195 850, 815 850, 790 835" />
+
+  <g transform="translate(60 930)">
+    <text class="label" x="0" y="0">Legende</text>
+    <rect x="0" y="18" width="24" height="10" fill="#2457a6" />
+    <text class="small" x="34" y="29">Datenfluss Import / Speicherung</text>
+    <rect x="245" y="18" width="24" height="10" fill="#2f7d4f" />
+    <text class="small" x="279" y="29">Finance-Hauswaehrung ohne stille App-Kursumrechnung</text>
+    <rect x="620" y="18" width="24" height="10" fill="#b35c00" />
+    <text class="small" x="654" y="29">Anzeige-/Analyseumrechnung ueber App-Kurstabelle</text>
+  </g>
+</svg>

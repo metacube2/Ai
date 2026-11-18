@@ -260,8 +260,9 @@ class SerialManager: ObservableObject {
         var options = termios()
         tcgetattr(fileDescriptor, &options)
         
-        cfsetispeed(&options, speed_t(B115200))
-        cfsetospeed(&options, speed_t(B115200))
+        let selectedSpeed = baudRateToSpeed(baudRate)
+        cfsetispeed(&options, selectedSpeed)
+        cfsetospeed(&options, selectedSpeed)
         
         // 8N1, no flow control
         options.c_cflag &= ~UInt(PARENB | CSTOPB | CSIZE | CRTSCTS)
@@ -283,16 +284,17 @@ class SerialManager: ObservableObject {
         lastError = nil
         lastSentValues = [-1, -1, -1, -1]
         
-        print("VU1 Hub connected: \(selectedPortPath)")
-        
-        // Initialize: Rescan bus
-        sendCommand(cmd: VU1.CMD_RESCAN_BUS, dataType: VU1.DATA_NONE, data: [])
-        usleep(500_000) // Wait 500ms for rescan
-        
-        // Set all dials to 0
-        for i in 0..<4 {
-            setDialValue(dialIndex: UInt8(i), value: 0)
-            usleep(20_000)
+        print("Serial device connected: \(selectedPortPath) @ \(baudRate) baud")
+
+        if selectedProtocol == .vuServer {
+            // Native VU1 hubs need an initial bus rescan before dial writes.
+            sendCommand(cmd: VU1.CMD_RESCAN_BUS, dataType: VU1.DATA_NONE, data: [])
+            usleep(500_000)
+
+            for i in 0..<4 {
+                setDialValue(dialIndex: UInt8(i), value: 0)
+                usleep(20_000)
+            }
         }
         
         startUpdateTimer()
@@ -372,6 +374,41 @@ class SerialManager: ObservableObject {
             data: [dialIndex, clampedValue]
         )
     }
+
+    private func baudRateToSpeed(_ baudRate: Int) -> speed_t {
+        switch baudRate {
+        case 9600: return speed_t(B9600)
+        case 19200: return speed_t(B19200)
+        case 38400: return speed_t(B38400)
+        case 57600: return speed_t(B57600)
+        case 115200: return speed_t(B115200)
+        case 230400:
+            #if os(macOS)
+            return speed_t(B230400)
+            #else
+            return speed_t(B115200)
+            #endif
+        default:
+            return speed_t(B115200)
+        }
+    }
+
+    private func normalizedDialPercent(for config: DialConfig, rawValue: Double) -> Int {
+        var value = Int(max(0, min(100, rawValue)))
+        if config.inverted {
+            value = 100 - value
+        }
+        return value
+    }
+
+    private func scaledDialValue(for index: Int, maxOutput: Int) -> Int {
+        let config = dialConfigs[index]
+        let percent = Double(max(0, min(100, dialValues[index]))) / 100.0
+        let minValue = config.minValue
+        let maxValue = max(minValue, min(maxOutput, config.maxValue))
+        let scaled = minValue + Int(round(Double(maxValue - minValue) * percent))
+        return max(minValue, min(maxValue, scaled))
+    }
     
     // MARK: - Value Updates
     
@@ -403,10 +440,7 @@ class SerialManager: ObservableObject {
             // Smoothing
             smoothedValues[index] = smoothedValues[index] * config.smoothing + rawValue * (1 - config.smoothing)
             
-            var value = Int(smoothedValues[index])
-            if config.inverted { value = 100 - value }
-            
-            dialValues[index] = max(0, min(100, value))
+            dialValues[index] = normalizedDialPercent(for: config, rawValue: smoothedValues[index])
         }
     }
     
@@ -415,15 +449,59 @@ class SerialManager: ObservableObject {
         
         writeQueue.async { [weak self] in
             guard let self = self else { return }
-            
-            for (index, value) in self.dialValues.enumerated() {
-                // Only send if changed
-                if value != self.lastSentValues[index] {
-                    self.setDialValue(dialIndex: UInt8(index), value: value)
-                    self.lastSentValues[index] = value
-                    usleep(5_000)  // 5ms between commands
+
+            switch self.selectedProtocol {
+            case .vuServer:
+                for index in self.dialValues.indices {
+                    let value = self.scaledDialValue(for: index, maxOutput: 100)
+                    if value != self.lastSentValues[index] {
+                        self.setDialValue(dialIndex: UInt8(index), value: value)
+                        self.lastSentValues[index] = value
+                        usleep(5_000)
+                    }
+                }
+            case .rawBytes:
+                var payload: [UInt8] = [0xAA]
+                payload.append(contentsOf: self.dialValues.indices.map { UInt8(self.scaledDialValue(for: $0, maxOutput: 255)) })
+                payload.append(0x55)
+                self.writeRawBytes(payload)
+                self.lastSentValues = self.dialValues.indices.map { self.scaledDialValue(for: $0, maxOutput: 100) }
+            case .textCommand:
+                let command = self.dialValues.indices
+                    .map { "CH\($0 + 1):\(self.scaledDialValue(for: $0, maxOutput: 255))" }
+                    .joined(separator: ";") + "\n"
+                self.writeString(command)
+                self.lastSentValues = self.dialValues.indices.map { self.scaledDialValue(for: $0, maxOutput: 100) }
+            case .json:
+                let scaled = self.dialValues.indices.map { self.scaledDialValue(for: $0, maxOutput: 255) }
+                if let data = try? JSONSerialization.data(withJSONObject: ["dials": scaled]),
+                   let json = String(data: data, encoding: .utf8) {
+                    self.writeString(json + "\n")
+                    self.lastSentValues = self.dialValues.indices.map { self.scaledDialValue(for: $0, maxOutput: 100) }
                 }
             }
+        }
+    }
+
+    private func writeRawBytes(_ bytes: [UInt8]) {
+        guard fileDescriptor != -1 else { return }
+        let written = bytes.withUnsafeBytes { buffer -> Int in
+            guard let base = buffer.baseAddress else { return -1 }
+            return write(fileDescriptor, base, bytes.count)
+        }
+        if written > 0 {
+            bytesSent += UInt64(written)
+        }
+    }
+
+    private func writeString(_ string: String) {
+        guard let data = string.data(using: .utf8) else { return }
+        let written = data.withUnsafeBytes { buffer -> Int in
+            guard let base = buffer.baseAddress else { return -1 }
+            return write(fileDescriptor, base, data.count)
+        }
+        if written > 0 {
+            bytesSent += UInt64(written)
         }
     }
     

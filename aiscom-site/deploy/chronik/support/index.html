@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronik-Apps: Support | AISCOM</title>
+  <meta name="description" content="Support und häufige Fragen zu den Chronik-Apps (Band-, Bäder-, Lautsprecher-, Synth- und Bergbahnchronik).">
+  <meta name="robots" content="index,follow">
+  
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #13213b;
+      --surface-2: #1a2b4d;
+      --text: #f5f7fb;
+      --muted: #a8b3c7;
+      --accent: #87ceeb;
+      --line: rgba(135, 206, 235, 0.18);
+      --ok: #7ad3a1;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top right, rgba(135, 206, 235, 0.1), transparent 30%),
+        linear-gradient(180deg, #091120, var(--bg));
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px;
+    }
+    header > a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    header nav a { margin-left: 18px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
+    header nav a:first-child { margin-left: 0; }
+    header nav a:hover { color: var(--accent); }
+
+    main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+    section { margin-top: 56px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 16px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    p { color: var(--muted); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--accent);
+      color: #08121f;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    }
+    .card p { margin: 0; }
+    .card a { color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--text); }
+    td { color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+
+    form { display: grid; gap: 10px; max-width: 420px; }
+    label { font-size: 0.9rem; color: var(--text); }
+    input[type=email] {
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0d1a30;
+      color: var(--text);
+      font: inherit;
+    }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .status.ok { color: var(--ok); }
+
+    details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+    summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    details p { margin: 8px 0 0; }
+
+    footer {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    main a { color: var(--accent); }
+    code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+<header><a href="/chronik/support/">Chronik-Apps</a><nav><a href="/chronik/support/">Support</a><a href="/chronik/datenschutz/">Datenschutz</a></nav></header>
+<main>
+  <p class="eyebrow">Chronik-Apps für Mac, iPhone und iPad</p>
+  <h1>Support</h1>
+  <p class="lead">Zeitleisten zum Durchklicken: Bandchronik, Bäderchronik, Lautsprecherchronik, Synthchronik und Bergbahnchronik. Jede App zeigt Einträge mit ihren Meilensteinen, von der Gründung oder Eröffnung bis heute.</p>
+  <section>
+    <h2>Häufige Fragen</h2>
+    <details><summary>Woher stammen die Inhalte?</summary><p>Jeder Meilenstein nennt seine Quelle (Wikipedia, Fachseiten, Betreiber, Presse). Die Texte sind eigenständig formuliert und wurden in einer zweiten Runde gegen die Quellen geprüft. Fehler sind trotzdem möglich: Hinweise sind willkommen.</p></details>
+    <details><summary>Woher stammen die Fotos?</summary><p>Von Wikimedia Commons, nur unter freien Lizenzen (gemeinfrei, CC0, CC BY, CC BY-SA). Fotograf und Lizenz stehen unter jedem Bild und gesammelt unter „Bildnachweise“. Wo es kein freies Foto gibt, zeigt die App eine eigene Grafik.</p></details>
+    <details><summary>Kommen weitere Inhalte dazu?</summary><p>Ja. Neue Einträge und Sammlungen kommen mit Updates dazu, ohne Aufpreis.</p></details>
+    <details><summary>Die Übersetzung funktioniert nicht.</summary><p>Die Übersetzung braucht Apples Sprachpakete. Auf dem Mac unter Systemeinstellungen › Allgemein › Sprache &amp; Region › Übersetzungssprachen, auf dem iPhone unter Einstellungen › Apps › Übersetzen laden. Albanisch bietet Apple noch nicht an; dort bleibt der deutsche Originaltext.</p></details>
+    <details><summary>Ich habe einen Fehler gefunden.</summary><p>Bitte mit App, Eintrag und Jahr an die Adresse unten schreiben, am besten mit einer Quelle.</p></details>
+  </section>
+  <section>
+    <h2>Kontakt</h2>
+    <p><a href="mailto:metacube@gmail.com?subject=Chronik-Apps%20Support">metacube@gmail.com</a>. Ingo Kohler, AISCOM, Schweiz.</p>
+    <p class="meta">Stand 1. November 2026</p>
+  </section>
+</main>
+</body>
+</html>

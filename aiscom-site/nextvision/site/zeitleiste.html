@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zeitleiste</title>
+<style>
+  :root { --grund: #d4d0c8; --hell: #fff; --dunkel: #808080; --text: #000; --aktiv: #000080; }
+  html, body { margin: 0; height: 100%; background: var(--grund); color: var(--text);
+    font: 11px Verdana, Tahoma, sans-serif; overflow: hidden; }
+  .leiste { display: flex; align-items: center; gap: 6px; height: 100%; padding: 0 8px;
+    border-top: 2px solid var(--hell); box-shadow: inset 0 -1px var(--dunkel); overflow-x: auto; white-space: nowrap; }
+  .titel { font-weight: bold; margin-right: 4px; }
+  a.knopf { display: inline-block; padding: 4px 8px; color: var(--text); text-decoration: none; background: var(--grund);
+    border: 2px solid; border-color: var(--hell) var(--dunkel) var(--dunkel) var(--hell); }
+  a.knopf:active, a.knopf.an { border-color: var(--dunkel) var(--hell) var(--hell) var(--dunkel); background: #c0bcb4; }
+  a.knopf.an { color: var(--aktiv); font-weight: bold; }
+  a.knopf small { display: block; font-size: 9px; color: #444; font-weight: normal; }
+  .rechts { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  label { cursor: pointer; }
+  .heute { color: #000080; }
+</style>
+</head>
+<body>
+<div class="leiste">
+  <span class="titel">⏳ Zeitreise</span>
+  <a class="knopf" target="haupt" href="2002/index.html" data-pfad="/2002/">2002/03<small>GeoCities</small></a>
+  <a class="knopf" target="haupt" href="2002/gaestebuch.html" data-pfad="/2002/gaestebuch">Gästebuch<small>2002/03</small></a>
+  <a class="knopf" target="haupt" href="2004/index.html" data-pfad="/2004/index">2004<small>Flash-Intro</small></a>
+  <a class="knopf" target="haupt" href="2004/main2.html" data-pfad="/2004/main2">2004/05<small>Mitglieder</small></a>
+  <a class="knopf" target="haupt" href="quellen.html" data-pfad="/quellen">Quellen<small>was ist echt?</small></a>
+  <span class="rechts">
+    <label><input type="checkbox" id="zeigen" onchange="parent.markieren()"> Nachbauten zeigen</label>
+    <a class="knopf heute" target="_top" href="https://www.aiscom.ch/">2026<small>aiscom.ch</small></a>
+  </span>
+</div>
+<script>
+function aktiv(pfad) {
+  var k = document.querySelectorAll("a[data-pfad]"), best = null;
+  for (var i = 0; i < k.length; i++) {
+    k[i].classList.remove("an");
+    if (pfad.indexOf(k[i].getAttribute("data-pfad")) >= 0 &&
+        (!best || k[i].getAttribute("data-pfad").length > best.getAttribute("data-pfad").length)) best = k[i];
+  }
+  if (best) best.classList.add("an");
+}
+try { aktiv(parent.frames.haupt.location.pathname); } catch (e) {}
+</script>
+</body>
+</html>

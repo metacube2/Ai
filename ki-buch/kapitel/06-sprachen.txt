@@ -1,0 +1,82 @@
+# Vier Sprachen, ein Saal
+@ Bern, Bundeshaus · Juni 2027
+
+[bild]
+
+In der Kabine sieben, hoch über dem Nationalratssaal, hinter einer Glasscheibe, durch die man auf zweihundert Pulte und eine Kuppel mit Wappen hinunterschaute, sass Flurina Cadonau mit Kopfhörern und wartete darauf, dass ein Nationalrat aus dem Oberengadin das erste Wort auf Rumantsch sagte, das in diesem Saal seit Menschengedenken in Echtzeit in drei andere Sprachen übersetzt werden sollte.
+
+Sie war neunundzwanzig und seit drei Jahren Übersetzerin beim Bund. Rumantsch Grischun war ihre Muttersprache, oder genauer: Vallader war ihre Muttersprache, das Unterengadiner Idiom, das sie mit ihrer Grossmutter gesprochen hatte, und Rumantsch Grischun war die Schriftsprache, die man in den Achtzigerjahren erfunden hatte, damit die fünf Idiome der Rätoromanen eine gemeinsame Form hatten. Viele Romanen mochten Rumantsch Grischun nicht. Flurina mochte es, weil es ihr eine Stelle beim Bund verschafft hatte.
+
+Die Stelle war ziemlich einsam. Rumantsch war eine der vier Landessprachen der Schweiz, aber nur Teilamtssprache des Bundes. Gesetze wurden auf Deutsch, Französisch und Italienisch verfasst. Ins Rumantsch übersetzt wurde nur, was die Romanen direkt betraf, und manches Wichtige. Im Parlament sprach praktisch niemand Rumantsch, weil niemand es verstanden hätte, ausser den paar Bündnern im Saal. Die Simultandolmetscher übersetzten zwischen Deutsch, Französisch und Italienisch. Für Rumantsch gab es keine Kabine.
+
+Bis heute.
+
+## Der Versuch
+
+Der Versuch war das Ergebnis einer Motion, die drei Jahre zuvor eine Nationalrätin aus dem Surselva eingereicht hatte, halb aus Überzeugung und halb als Provokation. Sie verlangte, dass das Parlament prüfen solle, ob Rumantsch mit Hilfe von Sprachmodellen gleichberechtigt im Ratsbetrieb verwendet werden könne. Der Bundesrat hatte die Motion zur Ablehnung empfohlen, mit der Begründung, die Technik sei nicht ausgereift. Das Parlament hatte sie überraschend angenommen, mit den Stimmen aller Bündner, der meisten Tessiner und einer Mehrheit der Romands, die sich daran erinnerten, wie es sich anfühlt, eine Minderheit zu sein.
+
+Was danach kam, war Arbeit. Das Modell, das für den Versuch verwendet wurde, stammte aus dem offenen Sprachmodell der Schweizer Hochschulen, das zwei Jahre zuvor veröffentlicht worden war und das schon damals Rumantsch einigermassen beherrschte. Einigermassen hiess: Es verstand das Wesentliche und schrieb Sätze, die eine Rätoromanin mit leichtem Kopfschütteln akzeptierte. Für eine Parlamentsdebatte reichte das nicht. Dort ging es um Gesetzesartikel, Fristen, Zahlen und Ironie.
+
+Also hatte die Lia Rumantscha, die Dachorganisation der Rätoromanen, zusammen mit dem Übersetzungsdienst des Bundes und einer Gruppe an der Universität Zürich ein Jahr lang Material gesammelt. Alle amtlichen Texte auf Rumantsch seit 1938. Alle Sendungen von Radiotelevisiun Svizra Rumantscha, mit Abschriften. Gemeindeprotokolle aus der Surselva und dem Engadin. Schulbücher. Kirchenlieder. Und, das war Flurinas Idee gewesen, Aufnahmen von alten Menschen, die in ihrem Idiom Geschichten erzählten. Ihre Grossmutter war eine von ihnen gewesen, zwei Monate vor ihrem Tod.
+
+Das Modell war damit nachtrainiert worden, und dann hatten Flurina und vier andere Romaninnen und Romanen ein halbes Jahr lang jeden Satz korrigiert, den es falsch übersetzte. Es waren am Anfang viele gewesen. Am Ende weniger als einer von hundert.
+
+---
+
+Der Nationalrat aus dem Oberengadin hiess Gian-Andrea Tscharner, und er war, was niemand im Saal ahnte, nervöser als Flurina. Er hatte seine Rede dreimal umgeschrieben. Es ging um die Revision des Raumplanungsgesetzes, genauer um die Frage, ob Bergbauernbetriebe Ställe in Wohnraum umbauen dürfen, eine Frage, die in Zürich niemand interessierte und im Engadin über die Zukunft ganzer Dörfer entschied.
+
+Er trat ans Rednerpult, sah zu den Kabinen hinauf, als suche er jemanden, und sagte:
+
+«Signura presidenta, stimadas collegas, stimads collegas. Jau discurr oz rumantsch, betg per far folclora, mabain perquai che quai è mia lingua e perquai ch'ella è ina da las quatter linguas da quest pajais.»
+
+In den Kopfhörern der Nationalrätinnen und Nationalräte, die den deutschen Kanal gewählt hatten, sagte eine Stimme mit leichter Verzögerung: «Frau Präsidentin, geschätzte Kolleginnen und Kollegen. Ich spreche heute Rätoromanisch, nicht um Folklore zu machen, sondern weil es meine Sprache ist und weil sie eine der vier Sprachen dieses Landes ist.»
+
+Auf Französisch, auf Italienisch, gleichzeitig. Und auf den Bildschirmen an jedem Pult lief der Text mit, in allen vier Sprachen.
+
+Flurina sah durch die Scheibe hinunter. Es war vollkommen still im Saal. Nicht die übliche Stille, in der hundert Menschen auf ihre Laptops schauen und nebenbei zuhören. Eine Stille, in der alle zuhörten.
+
+## Die Fehler
+
+Die Rede dauerte sieben Minuten. Flurina hörte sie zweimal gleichzeitig, einmal im Original, einmal in der deutschen Übersetzung, und sie hatte einen Finger auf einer Taste, mit der sie die Übersetzung anhalten und selbst übernehmen konnte, falls die Maschine etwas Schlimmes tat.
+
+Sie drückte die Taste zweimal.
+
+Das erste Mal, als Tscharner ein Engadiner Sprichwort zitierte: «Chi chi nu risca, nu guadogna.» Wer nichts wagt, gewinnt nichts. Das Modell übersetzte es wörtlich und richtig, aber Tscharner hatte das Sprichwort ironisch gemeint, es ging um Bauern, die zu viel gewagt und alles verloren hatten, und die Ironie lag in einem kleinen Zögern vor dem Satz, das die Maschine nicht hörte. Flurina übernahm und sagte auf Deutsch: «Wer nichts wagt, gewinnt nichts, sagt man bei uns. Gewisse Bauern haben das zu wörtlich genommen.»
+
+Das zweite Mal, als Tscharner eine Zahl nannte. Er sagte «quarantatschintg», fünfundvierzig, und das Modell übersetzte «vierzig», weil es in einem Protokoll aus den Siebzigerjahren gelernt hatte, wie eine ähnliche Zahl in einem anderen Idiom klang. Flurina korrigierte. Auf den Bildschirmen erschien die Korrektur mit einem kleinen Zeichen, das anzeigte: Ein Mensch hat hier eingegriffen.
+
+Das Zeichen war ihre Idee gewesen. Sie hatte darauf bestanden, gegen den Widerstand der Informatiker, die meinten, es untergrabe das Vertrauen in das System.
+
+«Das Gegenteil», hatte sie gesagt. «Es zeigt, dass jemand aufpasst.»
+
+---
+
+Als Tscharner fertig war, geschah etwas, das im Nationalrat nicht üblich ist. Ein Nationalrat aus dem Kanton Jura stand auf und klatschte. Dann eine Nationalrätin aus Genf. Dann die Tessiner. Dann fast alle. Tscharner stand am Pult und wusste nicht, wohin mit den Händen.
+
+Die Ratspräsidentin wartete, bis es wieder ruhig war, und sagte dann trocken, auf Französisch: «Ich danke dem Redner. Ich weise darauf hin, dass Applaus im Saal nicht vorgesehen ist.» Und dann, mit einem kleinen Lächeln, auf Rumantsch, das sie offensichtlich auswendig gelernt hatte: «Grazia fitg.»
+
+## Was die Sprache tat
+
+Der Versuch wurde nach einem Jahr ausgewertet und für dauerhaft erklärt. Es gab Kritik. Puristen bemängelten, die Maschine spreche ein «steriles Rumantsch». Eine Zeitung rechnete aus, dass der Versuch pro rätoromanisch gesprochenem Wort im Parlament mehr gekostet habe als jede andere Massnahme der Sprachförderung. Ein Romane schrieb in einem Leserbrief, er brauche keine Maschine, um seine Sprache zu sprechen, sondern Menschen, mit denen er sie sprechen könne.
+
+Er hatte recht. Und doch war es genau das, was danach geschah, nicht im Parlament, sondern ausserhalb.
+
+Das Modell, das für den Nationalrat trainiert worden war, wurde offen gelegt, wie alle Modelle des Bundes. Innerhalb von Monaten gab es Apps, die Kindern in Romanischbünden Gutenachtgeschichten in ihrem Idiom vorlasen, in Sursilvan, Sutsilvan, Surmiran, Puter oder Vallader, je nachdem, was die Eltern einstellten. Es gab Tastaturen, die Rumantsch-Wörter vorschlugen. Es gab Übersetzungshilfen für Behörden in Gemeinden, in denen die Verwaltung kaum noch jemanden fand, der die Sprache schreiben konnte. Und es gab einen Sprachlernbegleiter, mit dem Zugezogene, Ferienhausbesitzer und Kinder aus deutschsprachigen Familien im Engadin üben konnten, ohne sich vor einem Menschen zu blamieren.
+
+Die Zahl der Menschen, die bei der Volkszählung Rumantsch als eine ihrer Hauptsprachen angaben, war seit 1950 gesunken, Jahrzehnt für Jahrzehnt. Bei der Erhebung 2040 stieg sie zum ersten Mal wieder. Nicht viel, um ein paar tausend. Aber sie stieg.
+
+---
+
+Flurina Cadonau arbeitet heute nicht mehr in der Kabine sieben. Die Maschinen übersetzen inzwischen so gut, dass im Saal nur noch eine Person nötig ist, die über alle Sprachen wacht, und das ist eine jüngere Kollegin aus der Surselva. Flurina leitet in Chur ein Institut, das Sprachmodelle für kleine Sprachen in ganz Europa entwickelt: Sorbisch, Friesisch, Ladinisch, Samisch, Bretonisch. Das Institut finanziert sich zur Hälfte aus Beiträgen der Europäischen Union, zur Hälfte aus einem Fonds der Kantone.
+
+«Wir haben damals gemerkt», sagte sie zu Lea, auf Rumantsch, das Lea seit ihrer Kindheit verstand, aber kaum sprach, «dass die Maschine eine Sprache nicht rettet. Das können nur die Leute. Aber die Maschine kann dafür sorgen, dass eine kleine Sprache nicht mehr bestraft wird, weil sie klein ist. Dass man in ihr ein Formular ausfüllen, eine Rede halten, ein Kind ins Bett bringen kann, ohne dass es mühsamer ist als auf Deutsch. Das war vorher nie so.»
+
+Sie schwieg kurz und schaute aus dem Fenster auf die Dächer der Churer Altstadt.
+
+«Die Aufnahmen meiner Grossmutter», sagte sie dann, «sind immer noch im Trainingsmaterial. Manchmal, wenn ich eine Geschichte in Vallader vorlesen lasse, höre ich sie in einem Wort. In der Art, wie ein R rollt. Das ist kitschig, ich weiss.»
+
+Es war nicht kitschig, dachte Lea. Es war genau die Geschichte, die sie gesucht hatte.
+
+> !Stand heute
+> Rätoromanisch ist seit 1938 Landessprache und seit 1996 Teilamtssprache des Bundes. Rund 0,5 Prozent der Bevölkerung geben es als Hauptsprache an, Tendenz seit Jahrzehnten sinkend. Rumantsch Grischun wurde 1982 als gemeinsame Schriftsprache geschaffen.
+> Das 2025 veröffentlichte offene Sprachmodell Apertus der ETH Zürich, der EPFL und des CSCS wurde ausdrücklich mit einem grossen Anteil nicht-englischer Daten trainiert und soll auch Rätoromanisch und Schweizerdeutsch abdecken. In den Räten des Bundesparlaments wird simultan zwischen Deutsch, Französisch und Italienisch gedolmetscht.

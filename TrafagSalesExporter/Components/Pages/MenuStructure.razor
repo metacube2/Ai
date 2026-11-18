@@ -1,0 +1,295 @@
+@page "/admin/menu-structure"
+@using Microsoft.AspNetCore.Authorization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Security
+@using TrafagSalesExporter.Services
+@attribute [Authorize(Policy = SecurityPolicies.AdminOnly)]
+@inject INavigationMenuService NavigationMenuService
+@inject IUiTextService UiText
+@inject ISnackbar Snackbar
+
+<PageTitle>@T("Menuestruktur", "Menu structure")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Menuestruktur", "Menu structure")</MudText>
+
+<MudStack Row="true" Spacing="2" Class="mb-3">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="_loading">
+        @T("Speichern", "Save")
+    </MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Restore" OnClick="ResetAsync" Disabled="_loading">
+        @T("Standard wiederherstellen", "Restore default")
+    </MudButton>
+</MudStack>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    @T("Bestehende Menuepunkte koennen in andere Gruppen gehaengt, sortiert, aus- oder eingeblendet und umbenannt werden. Die Zielseite bleibt unveraendert.",
+       "Existing menu entries can be moved into other groups, sorted, hidden/shown and renamed. The target page stays unchanged.")
+</MudAlert>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudText Typo="Typo.h6" Class="mb-2">@T("Drag & Drop", "Drag & drop")</MudText>
+    <div class="menu-drop-root"
+         @ondragover:preventDefault
+         @ondrop="DropOnRoot">
+        @T("Hier ablegen fuer Hauptmenue", "Drop here for root menu")
+    </div>
+    <MudPaper Class="pa-2 mb-4" Outlined="true">
+        @foreach (var item in OrderedItems)
+        {
+            <div class="menu-drag-row"
+                 draggable="true"
+                 @ondragstart="() => StartDrag(item)"
+                 @ondragover:preventDefault
+                 @ondrop="() => DropOn(item)">
+                <MudIcon Icon="@NavigationIconResolver.Resolve(item.Icon)" Size="Size.Small" />
+                <span class="menu-drag-title">@Indent(item)@item.TitleDe</span>
+                <span class="menu-drag-meta">@item.ItemType</span>
+            </div>
+        }
+    </MudPaper>
+
+    <MudText Typo="Typo.h6" Class="mb-2">@T("Details", "Details")</MudText>
+    <MudTable Items="@OrderedItems" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>@T("Reihenfolge", "Order")</MudTh>
+            <MudTh>@T("Titel", "Title")</MudTh>
+            <MudTh>@T("Typ", "Type")</MudTh>
+            <MudTh>@T("Untermenue von", "Parent")</MudTh>
+            <MudTh>@T("Sichtbar", "Visible")</MudTh>
+            <MudTh>@T("Aktion", "Action")</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" OnClick="@(() => Move(context, -1))" />
+                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" OnClick="@(() => Move(context, 1))" />
+            </MudTd>
+            <MudTd>
+                <MudTextField @bind-Value="context.TitleDe" Label="DE" Dense="true" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="context.TitleEn" Label="EN" Dense="true" Margin="Margin.Dense" />
+                @if (!string.IsNullOrWhiteSpace(context.Href))
+                {
+                    <MudText Typo="Typo.caption">@context.Href</MudText>
+                }
+            </MudTd>
+            <MudTd>@context.ItemType</MudTd>
+            <MudTd>
+                <MudSelect T="string" Value="@NormalizeParent(context.ParentKey)" ValueChanged="value => ChangeParent(context, value)" Dense="true">
+                    <MudSelectItem Value="@RootParentValue">@T("Hauptmenue", "Root menu")</MudSelectItem>
+                    @foreach (var group in ParentOptions(context))
+                    {
+                        <MudSelectItem Value="@group.Key">@GroupLabel(group)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudSwitch @bind-Value="context.IsVisible" Color="Color.Primary" />
+            </MudTd>
+            <MudTd>
+                <MudText Typo="Typo.caption">@context.Key</MudText>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private const string RootParentValue = "__root__";
+    private List<NavigationMenuItem> _items = [];
+    private NavigationMenuItem? _draggedItem;
+    private bool _loading = true;
+
+    private IEnumerable<NavigationMenuItem> OrderedItems => _items
+        .OrderBy(x => x.ParentKey ?? string.Empty)
+        .ThenBy(x => x.SortOrder)
+        .ThenBy(x => x.TitleDe);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _items = await NavigationMenuService.GetItemsAsync();
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        NormalizeSortOrders();
+        await NavigationMenuService.SaveItemsAsync(_items);
+        Snackbar.Add(T("Menuestruktur gespeichert.", "Menu structure saved."), Severity.Success);
+    }
+
+    private async Task ResetAsync()
+    {
+        await NavigationMenuService.ResetToDefaultsAsync();
+        await LoadAsync();
+        Snackbar.Add(T("Standard-Menuestruktur wiederhergestellt.", "Default menu structure restored."), Severity.Info);
+    }
+
+    private IEnumerable<NavigationMenuItem> ParentOptions(NavigationMenuItem item)
+        => _items
+            .Where(x => x.ItemType == NavigationMenuItemTypes.Group)
+            .Where(x => x.Key != item.Key)
+            .Where(x => !WouldCreateCycle(item.Key, x.Key))
+            .OrderBy(x => x.TitleDe);
+
+    private void ChangeParent(NavigationMenuItem item, string parentKey)
+    {
+        item.ParentKey = parentKey == RootParentValue ? null : parentKey;
+        item.SortOrder = NextSortOrder(item.ParentKey);
+    }
+
+    private void Move(NavigationMenuItem item, int direction)
+    {
+        var siblings = _items
+            .Where(x => string.Equals(x.ParentKey, item.ParentKey, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.TitleDe)
+            .ToList();
+        var index = siblings.FindIndex(x => x.Key == item.Key);
+        var targetIndex = index + direction;
+        if (index < 0 || targetIndex < 0 || targetIndex >= siblings.Count)
+            return;
+
+        (siblings[index].SortOrder, siblings[targetIndex].SortOrder) = (siblings[targetIndex].SortOrder, siblings[index].SortOrder);
+    }
+
+    private void StartDrag(NavigationMenuItem item)
+    {
+        _draggedItem = item;
+    }
+
+    private void DropOnRoot()
+    {
+        if (_draggedItem is null)
+            return;
+
+        _draggedItem.ParentKey = null;
+        _draggedItem.SortOrder = NextSortOrder(null);
+        _draggedItem = null;
+    }
+
+    private void DropOn(NavigationMenuItem target)
+    {
+        if (_draggedItem is null || _draggedItem.Key == target.Key)
+            return;
+
+        if (target.ItemType == NavigationMenuItemTypes.Group && !WouldCreateCycle(_draggedItem.Key, target.Key))
+        {
+            _draggedItem.ParentKey = target.Key;
+            _draggedItem.SortOrder = NextSortOrder(target.Key);
+        }
+        else
+        {
+            _draggedItem.ParentKey = target.ParentKey;
+            _draggedItem.SortOrder = target.SortOrder - 1;
+            NormalizeSortOrders();
+        }
+
+        _draggedItem = null;
+    }
+
+    private bool WouldCreateCycle(string itemKey, string candidateParentKey)
+    {
+        var current = _items.FirstOrDefault(x => x.Key == candidateParentKey);
+        while (current is not null)
+        {
+            if (current.Key == itemKey)
+                return true;
+
+            current = string.IsNullOrWhiteSpace(current.ParentKey)
+                ? null
+                : _items.FirstOrDefault(x => x.Key == current.ParentKey);
+        }
+
+        return false;
+    }
+
+    private int NextSortOrder(string? parentKey)
+        => _items
+            .Where(x => string.Equals(x.ParentKey, parentKey, StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.SortOrder)
+            .DefaultIfEmpty(0)
+            .Max() + 10;
+
+    private void NormalizeSortOrders()
+    {
+        foreach (var group in _items.GroupBy(x => x.ParentKey ?? string.Empty))
+        {
+            var sortOrder = 10;
+            foreach (var item in group.OrderBy(x => x.SortOrder).ThenBy(x => x.TitleDe))
+            {
+                item.SortOrder = sortOrder;
+                sortOrder += 10;
+            }
+        }
+    }
+
+    private static string NormalizeParent(string? parentKey)
+        => string.IsNullOrWhiteSpace(parentKey) ? RootParentValue : parentKey;
+
+    private string GroupLabel(NavigationMenuItem item)
+        => UiText.Text(item.TitleDe, item.TitleEn);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private string Indent(NavigationMenuItem item)
+    {
+        var depth = 0;
+        var current = item;
+        while (!string.IsNullOrWhiteSpace(current.ParentKey))
+        {
+            depth++;
+            var next = _items.FirstOrDefault(x => x.Key == current.ParentKey);
+            if (next is null || next.Key == current.Key)
+                break;
+            current = next;
+        }
+
+        return new string(' ', depth * 4);
+    }
+}
+
+<style>
+    .menu-drop-root {
+        border: 1px dashed var(--mud-palette-lines-default);
+        border-radius: 4px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        color: var(--mud-palette-text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .menu-drag-row {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 4px 8px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+        cursor: grab;
+    }
+
+    .menu-drag-row:last-child {
+        border-bottom: 0;
+    }
+
+    .menu-drag-title {
+        white-space: pre;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .menu-drag-meta {
+        color: var(--mud-palette-text-secondary);
+        font-size: 0.75rem;
+    }
+</style>

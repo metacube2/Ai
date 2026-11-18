@@ -1,0 +1,80 @@
+# Siebenundfünfzig Kilometer
+@ Erstfeld und Bodio · Dezember 2035
+
+[bild]
+
+Im Gotthard-Basistunnel ist es immer achtundzwanzig Grad warm. Der Fels über den Röhren ist an der höchsten Stelle zweitausenddreihundert Meter dick, und die Erde wird nach innen wärmer, etwa drei Grad alle hundert Meter. Ohne Kühlung wären es in der Mitte des Tunnels über vierzig Grad. Wer hier arbeitet, schwitzt, auch im Dezember, wenn draussen in Erstfeld der Schnee liegt.
+
+Davide Pedrini arbeitete seit neunzehn Jahren im Tunnel. Er war Elektromechaniker, achtundvierzig, aus Biasca, und er kannte die siebenundfünfzig Kilometer so gut wie die Gassen seines Dorfes. Er wusste, an welchen Stellen das Wasser aus dem Fels in die Entwässerung rauschte, er wusste, wo die Luft nach Staub roch und wo nach Metall, und er wusste, dass man nachts in der Weströhre bei Kilometer 31 manchmal ein Geräusch hörte, das klang wie ein fernes Seufzen, und das niemand erklären konnte.
+
+Was er nicht wusste, in jener Nacht im Dezember 2035, war, dass eine Weiche bei der Multifunktionsstelle Faido in ungefähr achtzehn Tagen brechen würde.
+
+Das wusste nur der Zuhörer.
+
+## Der Zuhörer
+
+Der Gotthard-Basistunnel war bei seiner Eröffnung 2016 der längste Eisenbahntunnel der Welt und eines der am dichtesten überwachten Bauwerke, die es gab. Tausende Sensoren massen Temperaturen, Luftfeuchtigkeit, Wasserdruck, Spannungen in den Fahrleitungen, den Zustand der Signale, die Bewegungen des Gesteins. Jeder Zug, der durchfuhr, wurde von Messstellen erfasst, die seine Achsen zählten, seine Räder prüften und seine Wärme massen.
+
+Das Problem war nie, zu wenig zu messen. Das Problem war, zu viel zu messen. Die Daten eines einzigen Tages füllten Speicher, die niemand mehr ansah. Fehler wurden gefunden, wenn sie Alarm auslösten, also wenn etwas schon kaputt war. Oder bei den nächtlichen Inspektionen, wenn Leute wie Davide mit Taschenlampen und Messgeräten durch die Röhren gingen, in einem Zeitfenster von vier Stunden, in denen keine Züge fuhren.
+
+Der Zuhörer war 2033 in Betrieb gegangen, als Teil eines Programms der Bahnen, das mit einem nüchternen Satz begonnen hatte: Wir wollen nichts mehr reparieren, was schon kaputt ist. Er war eine Gruppe von Modellen, die alle Daten des Tunnels gleichzeitig betrachteten und gelernt hatten, wie der Tunnel klingt, wenn er gesund ist. Nicht nur akustisch, auch wenn er auch das tat: Mikrofone an jeder Weiche, jeder Lüftungsanlage und jedem Pumpwerk hörten, wie die Maschinen arbeiteten. Sondern im weiteren Sinn. Wie sich die Stromaufnahme eines Weichenantriebs verändert, wenn ein Lager verschleisst. Wie sich die Schwingungen einer Schiene verändern, wenn sich darunter ein Haarriss bildet. Wie sich die Temperatur eines Transformators verhält, wenn seine Isolierung altert.
+
+Er hörte nicht auf Grenzwerte. Er hörte auf Abweichungen. Auf das Leise, das anders war als gestern.
+
+---
+
+Bei der Weiche 34 in der Multifunktionsstelle Faido, einer der beiden unterirdischen Stationen, an denen Züge von einer Röhre in die andere wechseln können, hatte der Zuhörer seit elf Tagen etwas gehört. Jedes Mal, wenn ein Güterzug mit mehr als zweitausend Tonnen über die Weiche fuhr, schwang die Herzstückspitze, das Kernstück der Weiche, wo die Schienen sich kreuzen, eine Spur länger nach als vorher. Nicht viel. Ein paar Millisekunden. Ein Unterschied, den kein Grenzwert erfasste und kein Mensch gehört hätte.
+
+Der Zuhörer verglich das Muster mit allem, was er über Weichen wusste, aus den Daten des Gotthards, des Lötschbergs, des Ceneri und, seit einem Abkommen von 2034, auch aus denen der deutschen, österreichischen und italienischen Bahnen. Er fand vierzehn Fälle, in denen ein ähnliches Muster aufgetreten war. In elf davon war die Herzstückspitze innerhalb von drei bis vier Wochen gebrochen. In drei war nichts passiert.
+
+Am Abend des 9. Dezember erschien in der Instandhaltungszentrale in Erstfeld eine Meldung mit mittlerer Priorität.
+
+*Weiche 34, MFS Faido, Weströhre: Verdacht auf beginnenden Ermüdungsriss im Herzstück, Bereich Spitze. Geschätzte Restlebensdauer 12 bis 25 Tage bei aktueller Belastung. Unsicherheit mittel. Empfehlung: Ultraschallprüfung bei nächster Nachtsperre. Bei Bestätigung: Tausch Herzstück vor Weihnachtsverkehr.*
+
+## Die Nacht im Tunnel
+
+Davide bekam den Auftrag für die Nacht vom 11. auf den 12. Dezember. Er fuhr mit einem Kollegen, einem jungen Gleisbauer aus dem Kanton Uri namens Kilian Arnold, in einem Dienstfahrzeug durch die Röhre bis nach Faido, zweiundzwanzig Kilometer in den Berg hinein. Die Multifunktionsstelle war eine Halle aus Beton, hell beleuchtet, mit Querstollen, Fluchttüren und einer Luft, die nach Öl und heissem Stein roch.
+
+Kilian setzte das Ultraschallgerät auf das Herzstück der Weiche 34. Davide sah ihm über die Schulter. Auf dem Bildschirm erschien ein Querschnitt durch den Stahl, gelbe und blaue Bänder, und dann, an der Spitze, unten, ein kleiner roter Fleck.
+
+«Da», sagte Kilian.
+
+Davide beugte sich vor. Ein Riss. Vier Millimeter tief, vielleicht fünf. In einem Herzstück aus Manganstahl, über das jede Nacht vierzig Güterzüge fuhren.
+
+Er hatte in neunzehn Jahren zwei gebrochene Herzstücke gesehen, beide bei Kontrollfahrten rechtzeitig bemerkt. Und er war im August 2023 hier gewesen, in der Nacht, nachdem bei Faido ein Güterzug wegen eines gebrochenen Rades entgleist war und auf Kilometern Gleise, Schwellen und eine Weiche zerstört hatte. Niemand war verletzt worden. Die Weströhre war danach über ein Jahr nur eingeschränkt befahrbar gewesen, und Davide hatte die Bilder jener Nacht nie ganz aus dem Kopf bekommen.
+
+«Wie hat er das gehört?», fragte Kilian. Er meinte den Zuhörer.
+
+Davide zuckte die Schultern. «Er hört, was wir nicht hören.» Dann legte er seine Hand auf die Schiene, die noch warm war von den Zügen der letzten Stunden. «Und er hört es, bevor es laut wird.»
+
+## Weihnachten
+
+Das Herzstück wurde in der Nacht vom 17. auf den 18. Dezember getauscht. Es war eine Arbeit, die normalerweise drei Monate Vorlauf brauchte, weil ein Herzstück eine Sonderanfertigung war, die in einem Werk im Kanton Bern gegossen wurde. Aber der Zuhörer hatte mit seiner Meldung gleich auch nachgeschaut, ob ein passendes Ersatzteil irgendwo lag. Es lag eines, im Lager in Biasca, bestellt 2031 für genau diesen Fall und seitdem nie gebraucht.
+
+In der Woche vor Weihnachten 2035 fuhren durch den Gotthard-Basistunnel über tausend Personenzüge und siebenhundert Güterzüge. Darunter die Nachtzüge von Zürich nach Rom und von Hamburg nach Mailand, voll mit Familien auf dem Weg in die Ferien. Keiner von ihnen merkte, dass die Weiche, über die sie bei Faido fuhren, neu war.
+
+Als Ingenieure das alte Herzstück im Januar im Labor untersuchten, fanden sie den Riss bei acht Millimetern. Er wuchs, das zeigte die Bruchfläche, in den letzten Tagen vor dem Ausbau etwa einen halben Millimeter pro Tag. Bei zwölf Millimetern, schätzten sie, wäre die Spitze gebrochen.
+
+---
+
+Als Lea im März 2045 nach Erstfeld kam, war Davide Pedrini Leiter der Nachtinspektion. Er nahm sie mit in den Tunnel, was eigentlich nicht erlaubt war, aber er hatte eine Bewilligung organisiert. Sie fuhren in dem gleichen Dienstfahrzeug, das inzwischen elektrisch war, durch die Weströhre bis nach Faido.
+
+«Die Leute denken», sagte Davide, während die Tunnelwand mit ihren Kabelkanälen und Nummernschildern an ihnen vorbeizog, «dass wir jetzt weniger zu tun haben, weil die Maschine alles hört. Das Gegenteil ist wahr. Wir haben mehr zu tun. Aber wir tun das Richtige. Früher bin ich jede Nacht zehn Kilometer gelaufen und habe geschaut, ob irgendwo etwas ist. Meistens war nichts. Jetzt sagt mir der Zuhörer: Schau bei Kilometer 18 nach, da stimmt etwas nicht. Und meistens stimmt etwas nicht.»
+
+«Und wenn er sich irrt?»
+
+«Dann irrt er sich», sagte Davide. «Ungefähr jedes vierte Mal. Dann gehe ich hin, schaue, finde nichts und schreibe das auf. Das lernt er auch.» Er schwieg einen Moment. «Was er nie lernt, ist das Seufzen bei Kilometer 31.»
+
+«Was ist das?»
+
+Davide lächelte. «Das ist der Berg», sagte er. «Der redet mit uns, seit wir ihn durchbohrt haben. Der Zuhörer hat es auch gehört. Er hat es als Rauschen der Lüftung klassifiziert, ohne Befund. Ich glaube, das ist das Einzige, worin er sich ganz sicher irrt.»
+
+## Die Bahn, die nicht ausfällt
+
+Was am Gotthard begann, wurde in den folgenden Jahren auf das ganze Schweizer Bahnnetz ausgeweitet: auf jede Weiche, jede Brücke, jeden Tunnel, jede Fahrleitung. Es war keine spektakuläre Technik. Es gab keine Pressekonferenzen. Aber in den Statistiken zeigte sich etwas, das Bahnfachleute auf der ganzen Welt erstaunte: Die Zahl der Störungen auf dem Schweizer Netz, die durch Defekte an der Infrastruktur verursacht wurden, sank zwischen 2033 und 2043 um mehr als die Hälfte. Und die Kosten für den Unterhalt sanken mit, weil man nicht mehr Dinge auf Verdacht austauschte, sondern dann, wenn sie es wirklich brauchten.
+
+Die Schweizer Bahnen gehörten schon vorher zu den pünktlichsten der Welt. Sie wurden pünktlicher. Und die Menschen, die nachts in die Tunnel gingen, wurden nicht weniger. Sie wurden andere: Sie lasen Daten, bevor sie hinausgingen, und sie wussten, wonach sie suchten.
+
+> !Stand heute
+> Der Gotthard-Basistunnel ist mit 57 Kilometern der längste Eisenbahntunnel der Welt und seit 2016 in Betrieb; er hat zwei Multifunktionsstellen bei Sedrun und Faido. Im August 2023 entgleiste darin ein Güterzug, die Weströhre blieb danach über ein Jahr eingeschränkt befahrbar.
+> Bahnen in Europa setzen zunehmend auf vorausschauende Instandhaltung: Sensoren an Weichen, Schienen und Fahrzeugen melden Verschleiss, bevor ein Defekt eintritt. Maschinelles Lernen hilft, aus den Messdaten frühzeitig auffällige Muster zu erkennen.
