@@ -121,6 +121,32 @@ public class SupplierMaterialOverrideStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task ApplyAsync_Ersetzt_Lieferant_Aus_Wareneingang_Aber_Nie_Den_Artikelstamm()
+    {
+        // 2026-11-18: B1 fuellt einen leeren Standardlieferanten aus dem letzten Wareneingang. Paolas ausdrueckliche
+        // Zuordnung geht diesem abgeleiteten Wert vor; ein gepflegter Artikelstamm bleibt weiter unangetastet.
+        using var db = CreateDb();
+        await SupplierMaterialOverrideStore.SeedAsync(db, SupplierMaterialOverrideStore.Parse(Csv, DateTime.UtcNow));
+
+        var ausWe = Row("53424");
+        ausWe.SupplierNumber = "S_IT01_0000042";
+        ausWe.SupplierName = "ITEC S.R.L.";
+        ausWe.SupplierCountry = "IT";
+        ausWe.SupplierFromGoodsReceipt = true;
+        var ausStamm = Row("53424");
+        ausStamm.SupplierNumber = "S_IT01_0000999";
+        ausStamm.SupplierName = "ECHTER LIEFERANT AUS B1";
+        ausStamm.SupplierCountry = "IT";
+
+        var result = await SupplierMaterialOverrideStore.ApplyAsync(db, "TRIT", new[] { ausWe, ausStamm });
+
+        Assert.Equal(1, result.RowsFilled);
+        Assert.Equal("Trafag AG", ausWe.SupplierName);
+        Assert.False(ausWe.SupplierFromGoodsReceipt);
+        Assert.Equal("ECHTER LIEFERANT AUS B1", ausStamm.SupplierName);
+    }
+
+    [Fact]
     public async Task ApplyAsync_Wirkt_Nicht_Auf_Einen_Anderen_Standort()
     {
         using var db = CreateDb();

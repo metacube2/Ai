@@ -8,6 +8,7 @@ public class HanaQueryService : IHanaQueryService
 {
     private const string TscParameterName = "tsc";
     private const string DateFilterParameterName = "dateFilter";
+    private const string GoodsReceiptDateFilterParameterName = "dateFilterWe";
     private readonly IAppEventLogService _appEventLogService;
     private readonly IMappedSalesRecordComposer _composer;
 
@@ -46,21 +47,33 @@ public class HanaQueryService : IHanaQueryService
             // ISS-021: Standard-Rechnungsadresse des Lieferanten, damit jede Position genau einmal kommt.
             var billToDefaultColumn = await ResolveColumnNameAsync(connection, schema, "OCRD", "BillToDef", cancellationToken);
 
-            var invoiceQuery = GetInvoiceQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn);
-            var creditNoteQuery = GetCreditNoteQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn);
             var parsedDateFilter = ParseDateFilter(dateFilter);
-
-            await _appEventLogService.WriteAsync("HANA", "Invoice-Query gestartet", land: land,
-                details: BuildQueryLogDetails(invoiceQuery, schema, tsc, parsedDateFilter));
-            var invoiceRecords = await ReadRecordsAsync(connection, invoiceQuery, tsc, parsedDateFilter, land, "Invoice", cancellationToken);
-            result.AddRange(invoiceRecords);
-            await _appEventLogService.WriteAsync("HANA", "Invoice-Query beendet", land: land, details: $"Zeilen={invoiceRecords.Count}");
-
-            await _appEventLogService.WriteAsync("HANA", "Credit-Query gestartet", land: land,
-                details: BuildQueryLogDetails(creditNoteQuery, schema, tsc, parsedDateFilter));
-            var creditRecords = await ReadRecordsAsync(connection, creditNoteQuery, tsc, parsedDateFilter, land, "Credit", cancellationToken);
-            result.AddRange(creditRecords);
-            await _appEventLogService.WriteAsync("HANA", "Credit-Query beendet", land: land, details: $"Zeilen={creditRecords.Count}");
+            // 2026-11-18: Lieferant aus dem letzten Wareneingang. Scheitert eine Abfrage damit (z. B. fehlendes Leserecht auf OPDN/PDN1),
+            // laeuft sie ohne diesen Teil wie bisher, damit der Laenderimport nicht abbricht (Lehre aus dem Fall Mstae 2026-07-17).
+            foreach (var (kind, label) in new[] { ("invoice", "Invoice"), ("credit", "Credit") })
+            {
+                var query = kind == "invoice"
+                    ? GetInvoiceQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn)
+                    : GetCreditNoteQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn);
+                await _appEventLogService.WriteAsync("HANA", $"{label}-Query gestartet", land: land,
+                    details: BuildQueryLogDetails(query, schema, tsc, parsedDateFilter));
+                List<SalesRecord> records;
+                try
+                {
+                    records = await ReadRecordsAsync(connection, query, tsc, parsedDateFilter, land, label, cancellationToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    await _appEventLogService.WriteAsync("HANA", $"{label}-Query mit Wareneingang fehlgeschlagen, wiederholt ohne", "Warning", land: land,
+                        details: ex.Message);
+                    var fallback = kind == "invoice"
+                        ? GetInvoiceQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn, supplierFromGoodsReceipt: false)
+                        : GetCreditNoteQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn, supplierFromGoodsReceipt: false);
+                    records = await ReadRecordsAsync(connection, fallback, tsc, parsedDateFilter, land, label, cancellationToken);
+                }
+                result.AddRange(records);
+                await _appEventLogService.WriteAsync("HANA", $"{label}-Query beendet", land: land, details: $"Zeilen={records.Count}");
+            }
         }
         catch (Exception ex)
         {
@@ -325,6 +338,9 @@ public class HanaQueryService : IHanaQueryService
         using var command = new HanaCommand(query, connection);
         command.Parameters.Add(new HanaParameter(TscParameterName, HanaDbType.NVarChar) { Value = tsc });
         command.Parameters.Add(new HanaParameter(DateFilterParameterName, HanaDbType.Date) { Value = dateFilter.Date });
+        // Lieferant aus dem Wareneingang (2026-11-18): die Teilabfrage hat einen eigenen Datumsplatzhalter mit demselben Wert.
+        if (query.Contains(":" + GoodsReceiptDateFilterParameterName, StringComparison.Ordinal))
+            command.Parameters.Add(new HanaParameter(GoodsReceiptDateFilterParameterName, HanaDbType.Date) { Value = dateFilter.Date });
         using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var counter = 0;
 
@@ -346,6 +362,7 @@ public class HanaQueryService : IHanaQueryService
                 SupplierNumber = reader["supplier_number"]?.ToString() ?? string.Empty,
                 SupplierName = reader["supplier_name"]?.ToString() ?? string.Empty,
                 SupplierCountry = reader["supplier_country"]?.ToString() ?? string.Empty,
+                SupplierFromGoodsReceipt = string.Equals(reader["supplier_source"]?.ToString(), "WE", StringComparison.Ordinal),
                 SalesType = NormalizeItemMasterValue(reader["sales_type"]?.ToString()),
                 GroupMaterialNumber = NormalizeItemMasterValue(reader["group_material_number"]?.ToString()),
                 CustomerNumber = reader["customer_number"]?.ToString() ?? string.Empty,
@@ -513,31 +530,65 @@ public class HanaQueryService : IHanaQueryService
     /// nimmt die Abfrage eine feste Adresse je Lieferant (kleinstes Land), damit das Land nicht leer wird
     /// und keine Position mehr als einmal erscheint. Beide Joins liefern hoechstens eine Zeile.
     /// </summary>
-    private static string SupplierAddressJoins(string schemaPrefix, string? billToDefaultColumnName)
+    private static string SupplierAddressJoins(string schemaPrefix, string? billToDefaultColumnName, string supplierCode)
     {
         var fallbackJoin = $@"LEFT JOIN (
     SELECT ""CardCode"", MIN(""Country"") AS ""Country""
     FROM {schemaPrefix}""CRD1""
     WHERE ""AdresType"" = 'B'
     GROUP BY ""CardCode""
-) sup_adr_any ON itm.""CardCode"" = sup_adr_any.""CardCode""";
+) sup_adr_any ON {supplierCode} = sup_adr_any.""CardCode""";
 
         if (billToDefaultColumnName is null)
             return fallbackJoin;
 
-        return $@"LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
+        return $@"LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON {supplierCode} = sup_adr.""CardCode""
     AND sup_adr.""AdresType"" = 'B' AND sup_adr.""Address"" = sup.""{billToDefaultColumnName}""
 {fallbackJoin}";
     }
+
+    /// <summary>
+    /// Lieferant der Position (Auftrag Ingo 2026-11-18, Feststellung Andreas 13.11.: in FR, US, IN und bei neuen IT-Artikeln fehlt der
+    /// Lieferant meist). Gepflegter Standardlieferant im Artikelstamm (<c>OITM.CardCode</c>) geht vor; ist er leer, gilt der Lieferant des
+    /// letzten Wareneingangs (<c>OPDN</c>/<c>PDN1</c>, nicht storniert, Menge &gt; 0) desselben Artikels am oder vor dem Belegdatum, wie in
+    /// Spanien (ISS-003.3, Regel V1). Gemessen 18.11. (ab 2025): FR 2'359 von 2'751 Zeilen ohne Stammlieferant bekommen einen, US 1'132 von
+    /// 1'742, IT 552 von 4'049; wo der Stamm gepflegt ist, stimmt der letzte Wareneingang in IT bei 17'555 von 19'431 Zeilen ueberein.
+    /// </summary>
+    internal const string SupplierCodeWithGoodsReceipt = @"COALESCE(NULLIF(itm.""CardCode"", ''), we.""vc"")";
+    internal const string SupplierCodeItemMasterOnly = @"itm.""CardCode""";
+    internal const string SupplierSourceWithGoodsReceipt =
+        @"CASE WHEN COALESCE(itm.""CardCode"", '') = '' AND we.""vc"" IS NOT NULL THEN 'WE' ELSE '' END AS supplier_source";
+    internal const string SupplierSourceItemMasterOnly = @"'' AS supplier_source";
+
+    /// <summary>Hoechstens eine Zeile je Belegposition (ROW_NUMBER), damit sich keine Position vervielfacht; nur fuer Positionen ohne
+    /// Standardlieferant gerechnet. Eigener Datumsparameter: HANA bindet die Parameter nach der Reihenfolge; ein zweites :dateFilter
+    /// blieb ungebunden ("Parameter/Column (3) not bound", gemessen 18.11.). ReadRecordsAsync bindet beide mit demselben Datum.</summary>
+    private static string GoodsReceiptSupplierJoin(string schemaPrefix, string headerTable, string lineTable)
+        => $@"LEFT JOIN (
+    SELECT x.""de"", x.""ln"", x.""vc"" FROM (
+        SELECT p2.""DocEntry"" AS ""de"", p2.""LineNum"" AS ""ln"", o2.""CardCode"" AS ""vc"",
+               ROW_NUMBER() OVER (PARTITION BY p2.""DocEntry"", p2.""LineNum"" ORDER BY o2.""DocDate"" DESC, o2.""DocEntry"" DESC) AS ""rn""
+        FROM {schemaPrefix}""{headerTable}"" h2
+        INNER JOIN {schemaPrefix}""{lineTable}"" p2 ON h2.""DocEntry"" = p2.""DocEntry""
+        LEFT JOIN {schemaPrefix}""OITM"" itm2 ON p2.""ItemCode"" = itm2.""ItemCode""
+        INNER JOIN {schemaPrefix}""PDN1"" g2 ON g2.""ItemCode"" = p2.""ItemCode"" AND g2.""Quantity"" > 0
+        INNER JOIN {schemaPrefix}""OPDN"" o2 ON o2.""DocEntry"" = g2.""DocEntry"" AND o2.""CANCELED"" = 'N' AND o2.""DocDate"" <= h2.""DocDate""
+        WHERE h2.""CANCELED"" = 'N' AND h2.""DocDate"" >= :{GoodsReceiptDateFilterParameterName} AND COALESCE(itm2.""CardCode"", '') = ''
+    ) x WHERE x.""rn"" = 1
+) we ON we.""de"" = p.""DocEntry"" AND we.""ln"" = p.""LineNum""";
 
     private static string SupplierCountrySelect(string? billToDefaultColumnName)
         => billToDefaultColumnName is null
             ? @"COALESCE(sup_adr_any.""Country"", '') AS supplier_country"
             : @"COALESCE(sup_adr.""Country"", sup_adr_any.""Country"", '') AS supplier_country";
 
-    internal static string GetInvoiceQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName, string? billToDefaultColumnName)
+    internal static string GetInvoiceQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName, string? billToDefaultColumnName,
+        bool supplierFromGoodsReceipt = true)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
+        var supplierCode = supplierFromGoodsReceipt ? SupplierCodeWithGoodsReceipt : SupplierCodeItemMasterOnly;
+        var goodsReceiptJoin = supplierFromGoodsReceipt ? GoodsReceiptSupplierJoin(schemaPrefix, "OINV", "INV1") : string.Empty;
+        var supplierSource = supplierFromGoodsReceipt ? SupplierSourceWithGoodsReceipt : SupplierSourceItemMasterOnly;
         var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
         var salesTypeColumn = OptionalItemColumn(salesTypeColumnName, "sales_type");
         var groupMaterialColumn = OptionalItemColumn(groupMaterialColumnName, "group_material_number");
@@ -554,8 +605,9 @@ SELECT
     p.""Dscription"" AS material_name,
     COALESCE(grp.""ItmsGrpNam"", '') AS product_group,
     p.""Quantity"" AS quantity,
-    COALESCE(itm.""CardCode"", '') AS supplier_number,
+    COALESCE({supplierCode}, '') AS supplier_number,
     COALESCE(sup.""CardName"", '') AS supplier_name,
+    {supplierSource},
     {SupplierCountrySelect(billToDefaultColumnName)},
     {salesTypeColumn},
     {groupMaterialColumn},
@@ -593,17 +645,22 @@ LEFT JOIN {schemaPrefix}""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""
 LEFT JOIN {schemaPrefix}""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCode""
     AND cust_adr.""AdresType"" = 'B' AND cust_adr.""Address"" = h.""PayToCode""
 LEFT JOIN {schemaPrefix}""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
-LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
+{goodsReceiptJoin}
+LEFT JOIN {schemaPrefix}""OCRD"" sup ON {supplierCode} = sup.""CardCode""
     AND sup.""CardType"" = 'S'
-{SupplierAddressJoins(schemaPrefix, billToDefaultColumnName)}
+{SupplierAddressJoins(schemaPrefix, billToDefaultColumnName, supplierCode)}
 LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
 WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}{revenueAccountFilter}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
     }
 
-    internal static string GetCreditNoteQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName, string? billToDefaultColumnName)
+    internal static string GetCreditNoteQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName, string? billToDefaultColumnName,
+        bool supplierFromGoodsReceipt = true)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
+        var supplierCode = supplierFromGoodsReceipt ? SupplierCodeWithGoodsReceipt : SupplierCodeItemMasterOnly;
+        var goodsReceiptJoin = supplierFromGoodsReceipt ? GoodsReceiptSupplierJoin(schemaPrefix, "ORIN", "RIN1") : string.Empty;
+        var supplierSource = supplierFromGoodsReceipt ? SupplierSourceWithGoodsReceipt : SupplierSourceItemMasterOnly;
         var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
         var salesTypeColumn = OptionalItemColumn(salesTypeColumnName, "sales_type");
         var groupMaterialColumn = OptionalItemColumn(groupMaterialColumnName, "group_material_number");
@@ -620,8 +677,9 @@ SELECT
     p.""Dscription"" AS material_name,
     COALESCE(grp.""ItmsGrpNam"", '') AS product_group,
     p.""Quantity"" * -1 AS quantity,
-    COALESCE(itm.""CardCode"", '') AS supplier_number,
+    COALESCE({supplierCode}, '') AS supplier_number,
     COALESCE(sup.""CardName"", '') AS supplier_name,
+    {supplierSource},
     {SupplierCountrySelect(billToDefaultColumnName)},
     {salesTypeColumn},
     {groupMaterialColumn},
@@ -654,9 +712,10 @@ LEFT JOIN {schemaPrefix}""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""
 LEFT JOIN {schemaPrefix}""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCode""
     AND cust_adr.""AdresType"" = 'B' AND cust_adr.""Address"" = h.""PayToCode""
 LEFT JOIN {schemaPrefix}""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
-LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
+{goodsReceiptJoin}
+LEFT JOIN {schemaPrefix}""OCRD"" sup ON {supplierCode} = sup.""CardCode""
     AND sup.""CardType"" = 'S'
-{SupplierAddressJoins(schemaPrefix, billToDefaultColumnName)}
+{SupplierAddressJoins(schemaPrefix, billToDefaultColumnName, supplierCode)}
 LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
 WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}{revenueAccountFilter}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
