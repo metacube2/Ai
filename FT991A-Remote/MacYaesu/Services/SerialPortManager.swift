@@ -154,9 +154,21 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
 
     // MARK: - Initialization
 
+    /// Kennzeichnet `writeQueue` (kein `sync` von dort aus, z. B. aus `deinit`)
+    private static let schreibKennung = DispatchSpecificKey<Bool>()
+
     init() {
+        writeQueue.setSpecific(key: Self.schreibKennung, value: true)
         refreshPorts()
     }
+
+    #if KERNTEST
+    /// Nur Kerntests (Tools/tests.sh): offenen Dateideskriptor (pty) als verbundenen Port übernehmen
+    func testPortUebernehmen(_ fd: Int32) {
+        fileDescriptor = fd
+        connectionState = .connected
+    }
+    #endif
 
     deinit {
         disconnect()
@@ -488,12 +500,13 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
 
         // Rückstau verwerfen; ein vorne wartendes TX0 (Sender aus vor dem Trennen) sofort schreiben, ohne den
         // 110-ms-Abstand. Ohne das schloss der Port mit wartendem TX0, und das Gerät blieb auf Senden.
+        // Immer durch writeQueue: hat ein Pumpschritt TX0 schon entnommen, wartet das Schliessen auf sein Schreiben.
         ausgangSperre.lock()
         let tx0 = ausgang.trennen()
         ausgangSperre.unlock()
-        if let tx0, fileDescriptor != -1 {
+        if fileDescriptor != -1, DispatchQueue.getSpecific(key: Self.schreibKennung) == nil {
             writeQueue.sync {
-                if self.schreibe(tx0) > 0 {
+                if let tx0, self.schreibe(tx0) > 0 {
                     Logger.shared.catTrace("TX raw=TX0 (sofort vor dem Trennen)")
                 }
             }

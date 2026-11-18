@@ -635,9 +635,10 @@ struct CATAbfrageBuch {
 // MARK: - Ausgangsschlange (PTT überholt den Rückstau)
 
 /// Wartende Befehle vor der seriellen Leitung (110 ms Abstand je Befehl). Sender ein/aus (`TX0`/`TX1`/`TX2`,
-/// Setzbefehl ohne Antwort) steht nie hinter einem Rückstau: er geht an den Anfang, hinter bereits wartende
-/// Senderbefehle (deren Reihenfolge bleibt). `TX0` verwirft zusätzlich wartende `TX1`/`TX2`, damit der Sender nie
-/// verspätet oder doch noch eingeschaltet wird. Die Antwort-Zuordnung (FIFO) bleibt gültig, weil Setzbefehle nicht
+/// Setzbefehl ohne Antwort) steht nie hinter einem Rückstau: er verwirft alle noch wartenden Senderbefehle
+/// (`TX0`, `TX1`, `TX2`) und geht an den Anfang. So gilt immer der zuletzt gewünschte Zustand: `TX0` schaltet nie
+/// verspätet oder doch noch ein, und `TX0` gefolgt von `TX1` im Rückstau (Shift kurz los und wieder gedrückt) endet
+/// mit Sender ein (Tauri-Fassung seit 38d14e6). Die Antwort-Zuordnung (FIFO) bleibt gültig, weil Setzbefehle nicht
 /// beantwortet werden. Übernommen aus der Windows-Fassung (`Ausgangsschlange::senden`, 2026-11-17).
 struct CATAusgangsschlange {
     private(set) var befehle: [Data] = []
@@ -653,15 +654,12 @@ struct CATAusgangsschlange {
     }
 
     mutating func einreihen(_ data: Data) {
-        guard let tx = Self.senderBefehl(data) else {
+        guard Self.senderBefehl(data) != nil else {
             befehle.append(data)
             return
         }
-        if tx == "TX0" {
-            befehle.removeAll { ["TX1", "TX2"].contains(Self.senderBefehl($0) ?? "") }
-        }
-        let vorne = befehle.prefix { Self.senderBefehl($0) != nil }.count
-        befehle.insert(data, at: vorne)
+        befehle.removeAll { Self.senderBefehl($0) != nil }
+        befehle.insert(data, at: 0)
     }
 
     mutating func naechster() -> Data? {

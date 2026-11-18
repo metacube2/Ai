@@ -116,8 +116,8 @@ den öffentlichen Schlüssel (`LizenzPruefung` in `SettingsController.swift`). A
 ## Korrekturen aus der Windows-Fassung (1.1 (5), 2026-11-18)
 
 Drei Fehler, die beim Tauri-Port (`/Volumes/ExtOsX/Entwicklung/desktop/ft991a-remote-win`) gefunden wurden, waren
-auch hier vorhanden und sind nachgezogen. Verteilt als Tester-Fassung 1.1 (5); Website und Sparkle-Kanal `macyaesu`
-noch auf 1.1 (4).
+auch hier vorhanden und sind nachgezogen. Gebaut als Tester-DMG 1.1 (5) (`dist/MacYaesu-Tester.dmg`, notarisiert);
+noch nicht verteilt: Website, Tester-Seite und Sparkle-Kanäle stehen auf dem bisherigen Stand.
 
 **Kein Rücksprung nach dem Setzen.** Eine Abfrage (z. B. `FA;` aus dem Abfragezyklus), die vor einem Setzbefehl
 desselben Schlüssels gesendet wurde, überschrieb mit ihrer späteren Antwort den gesetzten Wert: 14,2 MHz gesetzt, die
@@ -135,25 +135,33 @@ Hauptthread (vorher eigene Warteschlange `cat.command`), damit Buch und Leitung 
 
 **PTT überholt den Rückstau.** Bisher schrieb jede `send`-Anfrage über eine serielle GCD-Warteschlange mit 110 ms
 Abstand; ein `TX1`/`TX0` wartete hinter allem, was davor eingereiht war. Jetzt hält `SerialPortManager` eine
-`CATAusgangsschlange`: `TX0`/`TX1`/`TX2` gehen an den Anfang (hinter bereits wartende Senderbefehle, deren
-Reihenfolge bleibt; die Windows-Fassung stellt jeden ganz nach vorne, dort könnte ein schnelles TX0→TX1 vertauscht
-werden), `TX0` verwirft wartende `TX1`/`TX2`. Die Antwort-Zuordnung bleibt gültig, weil Setzbefehle nicht beantwortet
-werden. **Trennen beim Senden:** Bisher schloss Trennen den Port ohne `TX0`, das Gerät blieb auf Senden. Jetzt reiht
+`CATAusgangsschlange`: jeder Senderbefehl (`TX0`/`TX1`/`TX2`) verwirft alle noch wartenden Senderbefehle und geht an
+den Anfang, es gilt also immer der zuletzt gewünschte Zustand. `TX0` gefolgt von `TX1` im Rückstau (Shift kurz los und
+wieder gedrückt) endet mit Sender ein; die erste Regel der Windows-Fassung (nur `TX0` verwirft `TX1`/`TX2`, jeder
+ganz nach vorne) hätte daraus `TX1`, `TX0` gemacht (dort korrigiert in 38d14e6). Die Antwort-Zuordnung bleibt
+gültig, weil Setzbefehle nicht beantwortet werden. **Trennen beim Senden:** Bisher schloss Trennen den Port ohne `TX0`, das Gerät blieb auf Senden. Jetzt reiht
 `RadioViewModel.disconnect` bei laufendem Senden `TX0` ein, und der Port schreibt es vor dem Schliessen sofort (ohne
-Abstand), der übrige Rückstau wird verworfen. Gilt auch für das Trennen nach Ablauf der Testzeit. Der Demo-Modus
+Abstand), der übrige Rückstau wird verworfen. Das Schliessen geht immer durch die Schreib-Warteschlange; hat ein
+Pumpschritt `TX0` schon entnommen, wartet es auf dessen Schreiben (höchstens ein Abstand). Gilt auch für das Trennen nach Ablauf der Testzeit. Der Demo-Modus
 umgeht die Schlange (antwortet sofort), dort ist der Vorrang nicht sichtbar.
 
 **70 cm FM Standard: −7,6 MHz** (IARU Region 1, Schweiz/Deutschland/Österreich; 438,650 → 431,050) statt +7,6 MHz.
 Die Vorgaben der Relaiskarte stehen in `RepeaterPreset` (`Models/RadioState.swift`).
 
 **Kerntests** (neu, es gab vorher keine): `Tools/tests.sh` übersetzt `CATCommand`, `RadioState`, `CATProtocol` und
-`SerialPortManager` mit einem Logger-Ersatz per `swiftc` und führt `Tests/Kern/main.swift` aus (kein Xcode-Testziel,
-kein Zugriff auf Ports, Einstellungen oder Netz). 19 Tests: 13 zum Rücksprung (sinngemäss die 11 der Windows-Fassung,
-dazu Rohbefehl/unverlangte Antwort, PTT-Status, Schlüssel), 4 zur Ausgangsschlange und zum Trennen, 1 zu 70 cm, 1 zum
-Abfragebuch direkt. Stichprobe „wird rot“: ohne Verwerfen 11, ohne Rücksetzen 1, ohne Frist 1, Frist 1 s 1, ohne
-Handshake-FA 2, ohne SV/AB 2, ohne TX-Vorrang 3, TX0 verwirft nicht 1, TX ganz nach vorne 1, Trennen ohne sofortiges
-TX0 1 bzw. ohne TX0 im Protokoll 1, 70 cm mit Plus 1. Nicht abgedeckt: das Schreiben auf einen echten Port und die
-Fadenwechsel (Lese-Warteschlange → Hauptthread); offen ist der Test am echten FT-991A.
+`SerialPortManager` mit einem Logger-Ersatz per `swiftc -D KERNTEST` und führt `Tests/Kern/*.swift` aus (kein
+Xcode-Testziel, kein Zugriff auf Einstellungen oder Netz). 22 Tests: 13 zum Rücksprung (sinngemäss die 11 der
+Windows-Fassung, dazu Rohbefehl/unverlangte Antwort und PTT-Status), 1 zum Abfragebuch direkt, 4 zur
+Ausgangsschlange und zum Trennen (darunter `tx_aus_dann_ein_im_rueckstau_endet_mit_sender_ein`), 3 über ein pty
+durch den echten Schreibweg des `SerialPortManager` (Naht `testPortUebernehmen`, nur mit `KERNTEST`: TX1 überholt
+sechs wartende Abfragen; TX0 und sofort Trennen, 100 Läufe ohne und 50 mit Rückstau), 1 zu 70 cm. Mit dem Stand vor
+1.1 (5) gegengeprüft: Rücksprung-Tests rot (`FA007101000` statt `FA014201000`, AF 110 statt 50), pty-Tests rot (TX1
+an Stelle 7, TX0 in 100 von 100 bzw. 50 von 50 Läufen verloren). Stichprobe „wird rot“ am neuen Stand: ohne Verwerfen
+11, ohne Rücksetzen 1, ohne Frist 1, Frist 1 s 1, ohne Handshake-FA 2, ohne SV/AB 2, ohne TX-Vorrang 5, TX verwirft
+keine wartenden 2, alte Tauri-Regel 1, Schlange ohne Trennen-TX0 3, Port ohne Schlange (alte GCD-Kette) 2, Trennen
+ohne TX0 im Protokoll 1, 70 cm mit Plus 1. Grün bleibt nur „Trennen ohne sync, wenn kein TX0 wartet“: das Rennen
+(Pumpschritt hat TX0 schon entnommen) trat in 150 Läufen nicht auf. Nicht abgedeckt: der Fadenwechsel
+(Lese-Warteschlange → Hauptthread) und das echte FT-991A.
 
 ## Vertriebsseite
 

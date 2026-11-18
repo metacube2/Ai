@@ -292,14 +292,16 @@ test("tx_ueberholt_rueckstau_und_tx0_verwirft_wartendes_tx1") {
     gleich(texte(s)[1], "SM0", "Rückstau bleibt in Reihenfolge")
 }
 
-test("tx_befehle_behalten_ihre_reihenfolge_untereinander") {
+test("tx_aus_dann_ein_im_rueckstau_endet_mit_sender_ein") {
     var s = CATAusgangsschlange()
     s.einreihen(daten("SM0"))
-    s.einreihen(daten("TX0"))
-    s.einreihen(daten("TX2"))                  // erneut gedrückt, bevor TX0 draussen ist
-    gleich(texte(s), ["TX0", "TX2", "SM0"])
-    _ = s.naechster()
+    s.einreihen(daten("TX0"))                  // Shift los ...
+    s.einreihen(daten("TX1"))                  // ... und 110 ms später wieder gedrückt
+    gleich(texte(s), ["TX1", "SM0"], "nur der letzte Senderbefehl, vorne")
+    s.einreihen(daten("TX2"))
     gleich(texte(s), ["TX2", "SM0"])
+    s.einreihen(daten("TX0"))
+    gleich(texte(s), ["TX0", "SM0"])
 }
 
 test("trennen_schreibt_wartendes_tx0_und_verwirft_den_rest") {
@@ -322,6 +324,10 @@ test("trennen_beim_senden_schickt_tx0") {
     gleich(serial.gesendet, ["TX1", "TX0"])
     gleich(cat.radioState.isTransmitting, false)
 }
+
+test("port_tx1_ueberholt_sechs_wartende_abfragen") { portTestTxUeberholt() }
+test("port_trennen_schreibt_tx0_ohne_rueckstau_100_laeufe") { portTestTrennenNachTx0(laeufe: 100, rueckstau: 0) }
+test("port_trennen_schreibt_tx0_mit_rueckstau_50_laeufe") { portTestTrennenNachTx0(laeufe: 50, rueckstau: 5) }
 
 // MARK: - 70 cm Relais
 
