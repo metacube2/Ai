@@ -333,6 +333,8 @@ class RadioViewModel: ObservableObject {
     func disconnect() {
         stopAutoPing()
         stopScan()
+        // Sendet das Gerät, zuerst TX0 (geht beim Schliessen sofort raus), sonst bliebe es auf Senden.
+        catProtocol.senderAusVorDemTrennen()
         serialManager.disconnect()
     }
 
@@ -452,7 +454,7 @@ class RadioViewModel: ObservableObject {
             catProtocol.setSplit(false)
             split = false
         } else {
-            let target = vfoAFrequency + (shift.signedMultiplier * offsetHz)
+            let target = RepeaterPreset(shift: shift, offsetHz: offsetHz).sendefrequenz(zu: vfoAFrequency)
             catProtocol.setFrequency(target, vfo: .b)
             catProtocol.setSplit(true)
             vfoBFrequency = target

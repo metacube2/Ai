@@ -1365,8 +1365,8 @@ struct RepeaterQuickSetupCard: View {
 
                 HStack(spacing: 8) {
                     Button("2m FM Standard") {
-                        selectedShift = .minus
-                        selectedOffsetHz = 600_000
+                        selectedShift = RepeaterPreset.fm2m.shift
+                        selectedOffsetHz = RepeaterPreset.fm2m.offsetHz
                         quickToneMode = .ctcssEncode
                         quickCTCSSIndex = 16
                         applyRepeaterPreset()
@@ -1374,8 +1374,8 @@ struct RepeaterQuickSetupCard: View {
                     .disabled(!radioViewModel.isConnected)
 
                     Button("70cm FM Standard") {
-                        selectedShift = .plus
-                        selectedOffsetHz = 7_600_000
+                        selectedShift = RepeaterPreset.fm70cm.shift
+                        selectedOffsetHz = RepeaterPreset.fm70cm.offsetHz
                         quickToneMode = .ctcssEncode
                         quickCTCSSIndex = 16
                         applyRepeaterPreset()

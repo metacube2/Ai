@@ -493,6 +493,21 @@ enum ScanDirection: String, Codable {
 
 // MARK: - Repeater Shift
 
+/// Schnellwahl der Relaiskarte („2m FM Standard“, „70cm FM Standard“). 70 cm: −7,6 MHz (IARU Region 1, Schweiz,
+/// Deutschland, Österreich: Relaisausgabe 438,650 → Eingabe 431,050). Bis 1.1 (4) stand hier +7,6 MHz.
+struct RepeaterPreset: Equatable {
+    let shift: RepeaterShiftDirection
+    let offsetHz: Int
+
+    static let fm2m = RepeaterPreset(shift: .minus, offsetHz: 600_000)
+    static let fm70cm = RepeaterPreset(shift: .minus, offsetHz: 7_600_000)
+
+    /// Sendefrequenz (VFO-B) zur Empfangsfrequenz
+    func sendefrequenz(zu empfang: Int) -> Int {
+        empfang + shift.signedMultiplier * offsetHz
+    }
+}
+
 enum RepeaterShiftDirection: String, Codable, CaseIterable {
     case off = "Off"
     case minus = "-"

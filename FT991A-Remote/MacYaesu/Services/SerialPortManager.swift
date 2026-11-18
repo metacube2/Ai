@@ -131,6 +131,9 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
     private let readQueue = DispatchQueue(label: "ft991a.serial.read", qos: .userInteractive)
 
     private var readBuffer = Data()
+    /// Wartende Befehle (PTT überholt den Rückstau, siehe `CATAusgangsschlange`); geschrieben wird nur auf `writeQueue`
+    private var ausgang = CATAusgangsschlange()
+    private let ausgangSperre = NSLock()
     private var isReading = false
     private var readSource: DispatchSourceRead?
 
@@ -483,6 +486,19 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
         stopHandshakeTimer()
         awaitingInitialCATResponse = false
 
+        // Rückstau verwerfen; ein vorne wartendes TX0 (Sender aus vor dem Trennen) sofort schreiben, ohne den
+        // 110-ms-Abstand. Ohne das schloss der Port mit wartendem TX0, und das Gerät blieb auf Senden.
+        ausgangSperre.lock()
+        let tx0 = ausgang.trennen()
+        ausgangSperre.unlock()
+        if let tx0, fileDescriptor != -1 {
+            writeQueue.sync {
+                if self.schreibe(tx0) > 0 {
+                    Logger.shared.catTrace("TX raw=TX0 (sofort vor dem Trennen)")
+                }
+            }
+        }
+
         if fileDescriptor != -1 {
             close(fileDescriptor)
             fileDescriptor = -1
@@ -660,51 +676,76 @@ class SerialPortManager: ObservableObject, SerialPortServiceType {
         }
         guard fileDescriptor != -1 else { return }
 
+        ausgangSperre.lock()
+        ausgang.einreihen(data)
+        ausgangSperre.unlock()
+        // Ein Pumpschritt je Einreihen; er nimmt den Befehl, der nach dem Abstand vorne steht (TX0/TX1 überholen).
         writeQueue.async { [weak self] in
-            guard let self = self, self.fileDescriptor != -1 else { return }
+            self?.pumpeEinen()
+        }
+    }
 
-            let written = data.withUnsafeBytes { buffer -> Int in
-                guard let rawBase = buffer.baseAddress else { return -1 }
-                let base = rawBase.assumingMemoryBound(to: UInt8.self)
-                var totalWritten = 0
+    /// Auf `writeQueue`: Abstand abwarten, dann den vordersten wartenden Befehl schreiben.
+    private func pumpeEinen() {
+        ausgangSperre.lock()
+        let leer = ausgang.istLeer
+        ausgangSperre.unlock()
+        guard !leer, fileDescriptor != -1 else { return }
 
-                let elapsed = Date().timeIntervalSince(self.lastWriteTime)
-                if elapsed < self.minimumCommandSpacing {
-                    usleep(useconds_t((self.minimumCommandSpacing - elapsed) * 1_000_000))
+        let elapsed = Date().timeIntervalSince(lastWriteTime)
+        if elapsed < minimumCommandSpacing {
+            usleep(useconds_t((minimumCommandSpacing - elapsed) * 1_000_000))
+        }
+
+        ausgangSperre.lock()
+        let naechster = ausgang.naechster()
+        ausgangSperre.unlock()
+        guard let data = naechster else { return }
+        schreibe(data)
+    }
+
+    /// Schreibt sofort auf den Port, ohne Abstand (nur auf `writeQueue` aufrufen). Rückgabe: geschriebene Bytes, -1 bei Fehler.
+    @discardableResult
+    private func schreibe(_ data: Data) -> Int {
+        guard fileDescriptor != -1 else { return 0 }
+
+        let written = data.withUnsafeBytes { buffer -> Int in
+            guard let rawBase = buffer.baseAddress else { return -1 }
+            let base = rawBase.assumingMemoryBound(to: UInt8.self)
+            var totalWritten = 0
+
+            while totalWritten < data.count {
+                let chunk = write(self.fileDescriptor, base.advanced(by: totalWritten), data.count - totalWritten)
+                if chunk > 0 {
+                    totalWritten += chunk
+                    continue
                 }
-
-                while totalWritten < data.count {
-                    let chunk = write(self.fileDescriptor, base.advanced(by: totalWritten), data.count - totalWritten)
-                    if chunk > 0 {
-                        totalWritten += chunk
-                        continue
-                    }
-                    if chunk < 0 && errno == EAGAIN {
-                        usleep(2_000)
-                        continue
-                    }
-                    return -1
+                if chunk < 0 && errno == EAGAIN {
+                    usleep(2_000)
+                    continue
                 }
-
-                self.lastWriteTime = Date()
-                return totalWritten
+                return -1
             }
 
-            if written > 0 {
-                DispatchQueue.main.async {
-                    self.bytesSent += UInt64(written)
-                }
+            self.lastWriteTime = Date()
+            return totalWritten
+        }
 
-                if let command = String(data: data, encoding: .ascii) {
-                    Logger.shared.log("TX: \(command.trimmingCharacters(in: .whitespaces))", level: .debug)
-                    Logger.shared.catTrace("TX raw=\(command.trimmingCharacters(in: .whitespacesAndNewlines))")
-                }
-            } else if written < 0 {
-                DispatchQueue.main.async {
-                    self.handleWriteError()
-                }
+        if written > 0 {
+            DispatchQueue.main.async {
+                self.bytesSent += UInt64(written)
+            }
+
+            if let command = String(data: data, encoding: .ascii) {
+                Logger.shared.log("TX: \(command.trimmingCharacters(in: .whitespaces))", level: .debug)
+                Logger.shared.catTrace("TX raw=\(command.trimmingCharacters(in: .whitespacesAndNewlines))")
+            }
+        } else if written < 0 {
+            DispatchQueue.main.async {
+                self.handleWriteError()
             }
         }
+        return written
     }
 
     func send(_ command: CATCommand) {

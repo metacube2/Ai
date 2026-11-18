@@ -47,6 +47,7 @@ protocol CATProtocolServiceType: AnyObject {
     func startTransmit(dataMode: Bool)
     func stopTransmit()
     func toggleTransmit(dataMode: Bool)
+    func senderAusVorDemTrennen()
     func selectBand(_ band: Band)
     func sendRaw(_ command: String)
     func clearCommandHistory()
@@ -73,11 +74,17 @@ class CATProtocol: ObservableObject, CATProtocolServiceType {
     private var slowPollingTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
-    private let commandQueue = DispatchQueue(label: "cat.command", qos: .userInitiated)
     private var commandSemaphore = DispatchSemaphore(value: 1)
     private var resumePollingWorkItem: DispatchWorkItem?
     private var meterPollPhase = 0
     private var statusPollPhase = 0
+
+    /// Ausstehende Abfragen je Schlüssel (kein Rücksprung nach dem Setzen, siehe `CATAbfrageBuch`). Gesendet wird
+    /// auf dem Hauptthread, Antworten kommen über die Lese-Warteschlange; die Sperre schützt Buch und Senden.
+    private var abfrageBuch = CATAbfrageBuch()
+    private let abfrageSperre = NSLock()
+    /// Uhr für die Frist des Abfragebuchs (monoton; Tests setzen eine eigene)
+    var uhr: () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
 
     // Polling intervals
     private let fastPollInterval: TimeInterval = 0.9
@@ -93,22 +100,49 @@ class CATProtocol: ObservableObject, CATProtocolServiceType {
         }
 
         serialManager.onConnectionChanged = { [weak self] connected in
-            if connected {
-                self?.startPolling()
-                self?.requestInitialState()
-            } else {
-                self?.stopPolling()
-            }
+            self?.verbindungGeaendert(connected)
         }
     }
 
     var radioStatePublisher: Published<RadioState>.Publisher { $radioState }
     var commandHistoryPublisher: Published<[CommandLogEntry]>.Publisher { $commandHistory }
 
+    /// Handshake gelungen (true) bzw. Verbindung beendet (false). Leert das Abfragebuch; beim Verbinden wird die
+    /// `FA;`-Abfrage des Handshakes vermerkt (sie geht an `send` vorbei), damit ihre noch unterwegs befindliche
+    /// Antwort einen gleich danach gesetzten Wert nicht überschreibt.
+    func verbindungGeaendert(_ connected: Bool) {
+        abfrageSperre.lock()
+        abfrageBuch.leeren()
+        if connected {
+            abfrageBuch.vermerken(CAT.readVFOA.command, jetzt: uhr())
+        }
+        abfrageSperre.unlock()
+        if connected {
+            startPolling()
+            requestInitialState()
+        } else {
+            stopPolling()
+        }
+    }
+
+    /// Anzahl ausstehender Abfragen (Tests, Diagnose)
+    var ausstehendeAbfragen: Int {
+        abfrageSperre.lock()
+        defer { abfrageSperre.unlock() }
+        return abfrageBuch.anzahl
+    }
+
     // MARK: - Command Sending
 
     func send(_ command: CATCommand) {
+        // Vermerken und Einreihen unter einer Sperre: die Reihenfolge im Buch muss der auf der Leitung entsprechen.
+        abfrageSperre.lock()
+        let jetzt = uhr()
+        for teil in command.command.split(separator: ";") {
+            abfrageBuch.vermerken(String(teil), jetzt: jetzt)
+        }
         serialManager.send(command)
+        abfrageSperre.unlock()
         lastCommandTime = Date()
 
         // Log command
@@ -174,11 +208,23 @@ class CATProtocol: ObservableObject, CATProtocolServiceType {
         }
 
         // Update radio state
-        updateState(from: response)
+        updateState(from: response, gueltig: !response.isOverflowMessage)
     }
 
-    private func updateState(from response: CATResponse) {
+    private func updateState(from response: CATResponse, gueltig: Bool) {
         DispatchQueue.main.async {
+            // Zuordnung erst hier auf dem Hauptthread: ein Setzbefehl, der zwischen Empfang und diesem Block auf dem
+            // Hauptthread ging, markiert die Abfrage noch rechtzeitig als veraltet.
+            if gueltig {
+                self.abfrageSperre.lock()
+                let veraltet = self.abfrageBuch.antwortVeraltet(response.rawData, jetzt: self.uhr())
+                self.abfrageSperre.unlock()
+                if veraltet {
+                    Logger.shared.log("Ignoring answer to a query sent before the last set: \(response.rawData)", level: .debug)
+                    Logger.shared.catTrace("RX class=stale value=\(response.rawData)")
+                    return
+                }
+            }
             switch response.command {
             case "FA":
                 if let freq = response.frequency {
@@ -412,8 +458,9 @@ class CATProtocol: ObservableObject, CATProtocolServiceType {
 
         for (index, command) in startupCommands.enumerated() {
             let delay = DispatchTime.now() + .milliseconds(index * 220)
-            commandQueue.asyncAfter(deadline: delay) { [weak self] in
-                self?.send(command)
+            DispatchQueue.main.asyncAfter(deadline: delay) { [weak self] in
+                guard let self, self.serialManager.isConnected else { return }
+                self.send(command)
             }
         }
     }
@@ -550,7 +597,7 @@ class CATProtocol: ObservableObject, CATProtocolServiceType {
     func startATUTune() {
         pausePollingTemporarily()
         send(CAT.atuOn(for: radioModel))
-        commandQueue.asyncAfter(deadline: .now() + .milliseconds(180)) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(180)) { [weak self] in
             guard let self else { return }
             self.send(CAT.startATUTune(for: self.radioModel))
         }
@@ -565,6 +612,14 @@ class CATProtocol: ObservableObject, CATProtocolServiceType {
 
     func stopTransmit() {
         prioritizeUserCommand(CAT.txOff)
+        radioState.isTransmitting = false
+    }
+
+    /// Vor dem Trennen: sendet das Gerät, geht `TX0` an den Anfang der Ausgangsschlange (der Port schreibt es
+    /// beim Schliessen sofort, siehe `SerialPortManager.disconnect`). Sonst bliebe das Gerät auf Senden.
+    func senderAusVorDemTrennen() {
+        guard radioState.isTransmitting else { return }
+        send(CAT.txOff)
         radioState.isTransmitting = false
     }
 

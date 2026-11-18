@@ -113,6 +113,48 @@ unberührt; Rauchtest per `strings`). `--ohne-notar` baut und signiert nur. Nie 
 den öffentlichen Schlüssel (`LizenzPruefung` in `SettingsController.swift`). Ausstellen mit
 `swift ~/Projects/Git/aiscom-lizenz/lizenz.swift ausstellen macyaesu <e-mail>`. Alte Schlüssel gelten nicht mehr.
 
+## Korrekturen aus der Windows-Fassung (1.1 (5), 2026-11-18)
+
+Drei Fehler, die beim Tauri-Port (`/Volumes/ExtOsX/Entwicklung/desktop/ft991a-remote-win`) gefunden wurden, waren
+auch hier vorhanden und sind nachgezogen. Verteilt als Tester-Fassung 1.1 (5); Website und Sparkle-Kanal `macyaesu`
+noch auf 1.1 (4).
+
+**Kein Rücksprung nach dem Setzen.** Eine Abfrage (z. B. `FA;` aus dem Abfragezyklus), die vor einem Setzbefehl
+desselben Schlüssels gesendet wurde, überschrieb mit ihrer späteren Antwort den gesetzten Wert: 14,2 MHz gesetzt, die
+alte Antwort `FA007100000` kam danach, der nächste Mausrad-Schritt ging von 7,1 MHz aus (mit dem alten Stand im Test
+nachgestellt: `FA007101000` statt `FA014201000`). Die 0,8-s-Pause hielt nur neue Abfragen zurück. Jetzt vermerkt
+`CATAbfrageBuch` (`Models/CATCommand.swift`) jede gesendete Abfrage je Schlüssel (nach dem Befehlstext, auch
+Rohbefehle der Konsole; zwei Zeichen, bei `CO`/`CN` vier). Ein Setzbefehl markiert alle noch ausstehenden Abfragen
+seines Schlüssels als veraltet (`SV` trifft FA und FB, `AB` trifft FB). CAT antwortet der Reihe nach, also gehört jede
+Antwort zur ältesten ausstehenden Abfrage; ist sie veraltet, landet die Antwort nur in der Konsole (Trace
+`RX class=stale`). Die erste Abfrage nach dem Setzen gilt wieder, so kommt ein vom Gerät abgelehnter Wert zurück.
+Unbeantwortete Abfragen verfallen nach 10 s ab dem Senden. Verbinden/Trennen leert das Buch, beim Verbinden wird das
+`FA;` des Handshakes vermerkt (es geht an `CATProtocol.send` vorbei). Die Zuordnung geschieht auf dem Hauptthread im
+selben Block, der den Zustand schreibt; die Startreihe und das ATU-Abstimmen senden deshalb ebenfalls vom
+Hauptthread (vorher eigene Warteschlange `cat.command`), damit Buch und Leitung dieselbe Reihenfolge haben.
+
+**PTT überholt den Rückstau.** Bisher schrieb jede `send`-Anfrage über eine serielle GCD-Warteschlange mit 110 ms
+Abstand; ein `TX1`/`TX0` wartete hinter allem, was davor eingereiht war. Jetzt hält `SerialPortManager` eine
+`CATAusgangsschlange`: `TX0`/`TX1`/`TX2` gehen an den Anfang (hinter bereits wartende Senderbefehle, deren
+Reihenfolge bleibt; die Windows-Fassung stellt jeden ganz nach vorne, dort könnte ein schnelles TX0→TX1 vertauscht
+werden), `TX0` verwirft wartende `TX1`/`TX2`. Die Antwort-Zuordnung bleibt gültig, weil Setzbefehle nicht beantwortet
+werden. **Trennen beim Senden:** Bisher schloss Trennen den Port ohne `TX0`, das Gerät blieb auf Senden. Jetzt reiht
+`RadioViewModel.disconnect` bei laufendem Senden `TX0` ein, und der Port schreibt es vor dem Schliessen sofort (ohne
+Abstand), der übrige Rückstau wird verworfen. Gilt auch für das Trennen nach Ablauf der Testzeit. Der Demo-Modus
+umgeht die Schlange (antwortet sofort), dort ist der Vorrang nicht sichtbar.
+
+**70 cm FM Standard: −7,6 MHz** (IARU Region 1, Schweiz/Deutschland/Österreich; 438,650 → 431,050) statt +7,6 MHz.
+Die Vorgaben der Relaiskarte stehen in `RepeaterPreset` (`Models/RadioState.swift`).
+
+**Kerntests** (neu, es gab vorher keine): `Tools/tests.sh` übersetzt `CATCommand`, `RadioState`, `CATProtocol` und
+`SerialPortManager` mit einem Logger-Ersatz per `swiftc` und führt `Tests/Kern/main.swift` aus (kein Xcode-Testziel,
+kein Zugriff auf Ports, Einstellungen oder Netz). 19 Tests: 13 zum Rücksprung (sinngemäss die 11 der Windows-Fassung,
+dazu Rohbefehl/unverlangte Antwort, PTT-Status, Schlüssel), 4 zur Ausgangsschlange und zum Trennen, 1 zu 70 cm, 1 zum
+Abfragebuch direkt. Stichprobe „wird rot“: ohne Verwerfen 11, ohne Rücksetzen 1, ohne Frist 1, Frist 1 s 1, ohne
+Handshake-FA 2, ohne SV/AB 2, ohne TX-Vorrang 3, TX0 verwirft nicht 1, TX ganz nach vorne 1, Trennen ohne sofortiges
+TX0 1 bzw. ohne TX0 im Protokoll 1, 70 cm mit Plus 1. Nicht abgedeckt: das Schreiben auf einen echten Port und die
+Fadenwechsel (Lese-Warteschlange → Hauptthread); offen ist der Test am echten FT-991A.
+
 ## Vertriebsseite
 
 Eine eigenständige Landingpage für Marketing/Vertrieb liegt unter:

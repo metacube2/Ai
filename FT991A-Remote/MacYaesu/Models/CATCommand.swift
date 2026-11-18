@@ -538,3 +538,145 @@ struct CATResponse {
         rawData.contains("Cmd overflow")
     }
 }
+
+// MARK: - Abfragebuch (kein Rücksprung nach dem Setzen)
+
+/// Vermerkt ausstehende Abfragen je Schlüssel, damit eine Antwort auf eine Abfrage, die vor einem Setzbefehl
+/// desselben Schlüssels eingereiht wurde, den gesetzten Wert nicht überschreibt (14,2 MHz gesetzt, die alte Antwort
+/// `FA007100000` kam danach, der nächste Mausrad-Schritt ergab 7.111.000). Übernommen aus der Windows-Fassung
+/// (`kern/steuerung.rs`, 2026-11-17).
+///
+/// CAT antwortet der Reihe nach: jede Antwort gehört zur ältesten ausstehenden Abfrage ihres Schlüssels. Ein
+/// Setzbefehl markiert alle noch ausstehenden Abfragen seines Schlüssels als veraltet (`SV` trifft FA und FB, `AB`
+/// trifft FB); ihre Antworten landen nur in der Konsole. Die erste Abfrage nach dem Setzen gilt wieder, so kommt ein
+/// vom Gerät abgelehnter Wert zurück. Unbeantwortete Abfragen (`?;`, Überlauf, Timeout) verfallen nach `frist`,
+/// gemessen ab dem Einreihen.
+struct CATAbfrageBuch {
+    /// Deutlich über dem Rückstau der Ausgangsschlange (110 ms je Befehl). Eine zu lange Frist kostet nur, dass nach
+    /// einer verlorenen Antwort eine frische Antwort desselben Schlüssels einmal verworfen wird.
+    static let frist: TimeInterval = 10
+
+    /// Lesebefehle aller Modelle (Text ohne `;`). Alles andere mit Parameter ist ein Setzbefehl. Nach dem Text, nicht
+    /// nach `expectsResponse`: Rohbefehle der Konsole tragen dort immer `true`.
+    static let lesebefehle: Set<String> = [
+        "FA", "FB", "MD0", "AG0", "RG0", "SQ0", "MG", "PC", "NB0", "NL0", "NR0", "RL0", "BC0", "CO00",
+        "CO01", "AC", "FT", "ST", "PA0", "SM0", "RM1", "RM6", "TX", "ID", "IF", "CT0", "CN00", "CN01",
+    ]
+
+    /// Zwei Zeichen, bei Contour und Toncode vier (`CO00`/`CO01`, `CN00`/`CN01`): dort stehen zwei Werte unter
+    /// einem Befehl.
+    static func schluessel(_ text: String) -> String {
+        let t = normiert(text)
+        return String(t.prefix(t.hasPrefix("CO") || t.hasPrefix("CN") ? 4 : 2))
+    }
+
+    /// Schlüssel, deren Wert ein Setzbefehl verändert (`SV` tauscht A/B, `AB` kopiert A nach B)
+    static func betroffeneSchluessel(_ text: String) -> [String] {
+        switch normiert(text) {
+        case "SV": return ["FA", "FB"]
+        case "AB": return ["FB"]
+        default: return [schluessel(text)]
+        }
+    }
+
+    static func normiert(_ text: String) -> String {
+        var t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        while t.hasSuffix(";") { t.removeLast() }
+        return t.uppercased()
+    }
+
+    private struct Ausstehend {
+        let gesendet: TimeInterval
+        var veraltet: Bool
+    }
+
+    private var ausstehend: [String: [Ausstehend]] = [:]
+
+    /// Anzahl noch ausstehender Abfragen (für Tests und Diagnose)
+    var anzahl: Int { ausstehend.values.reduce(0) { $0 + $1.count } }
+
+    /// Einen gesendeten Befehl vermerken: Abfrage → ausstehend, Setzbefehl → ausstehende Abfragen veraltet.
+    mutating func vermerken(_ befehl: String, jetzt: TimeInterval) {
+        let text = Self.normiert(befehl)
+        guard text.count >= 2 else { return }
+        if Self.lesebefehle.contains(text) {
+            ausstehend[Self.schluessel(text), default: []].append(Ausstehend(gesendet: jetzt, veraltet: false))
+        } else {
+            for k in Self.betroffeneSchluessel(text) {
+                guard var liste = ausstehend[k] else { continue }
+                for i in liste.indices { liste[i].veraltet = true }
+                ausstehend[k] = liste
+            }
+        }
+    }
+
+    /// Antwort der ältesten ausstehenden Abfrage zuordnen; `true` = die Abfrage ging vor dem letzten Setzbefehl, der
+    /// Wert ist alt und darf den Zustand nicht ändern.
+    mutating func antwortVeraltet(_ antwort: String, jetzt: TimeInterval) -> Bool {
+        let k = Self.schluessel(antwort)
+        guard var liste = ausstehend[k] else { return false }
+        while let erste = liste.first, jetzt - erste.gesendet > Self.frist {
+            liste.removeFirst()
+        }
+        guard !liste.isEmpty else {
+            ausstehend[k] = nil
+            return false
+        }
+        let erste = liste.removeFirst()
+        ausstehend[k] = liste.isEmpty ? nil : liste
+        return erste.veraltet
+    }
+
+    mutating func leeren() {
+        ausstehend.removeAll()
+    }
+}
+
+// MARK: - Ausgangsschlange (PTT überholt den Rückstau)
+
+/// Wartende Befehle vor der seriellen Leitung (110 ms Abstand je Befehl). Sender ein/aus (`TX0`/`TX1`/`TX2`,
+/// Setzbefehl ohne Antwort) steht nie hinter einem Rückstau: er geht an den Anfang, hinter bereits wartende
+/// Senderbefehle (deren Reihenfolge bleibt). `TX0` verwirft zusätzlich wartende `TX1`/`TX2`, damit der Sender nie
+/// verspätet oder doch noch eingeschaltet wird. Die Antwort-Zuordnung (FIFO) bleibt gültig, weil Setzbefehle nicht
+/// beantwortet werden. Übernommen aus der Windows-Fassung (`Ausgangsschlange::senden`, 2026-11-17).
+struct CATAusgangsschlange {
+    private(set) var befehle: [Data] = []
+
+    var anzahl: Int { befehle.count }
+    var istLeer: Bool { befehle.isEmpty }
+
+    /// `TX0`, `TX1` oder `TX2`, sonst nil
+    static func senderBefehl(_ data: Data) -> String? {
+        guard let text = String(data: data, encoding: .ascii) else { return nil }
+        let t = CATAbfrageBuch.normiert(text)
+        return ["TX0", "TX1", "TX2"].contains(t) ? t : nil
+    }
+
+    mutating func einreihen(_ data: Data) {
+        guard let tx = Self.senderBefehl(data) else {
+            befehle.append(data)
+            return
+        }
+        if tx == "TX0" {
+            befehle.removeAll { ["TX1", "TX2"].contains(Self.senderBefehl($0) ?? "") }
+        }
+        let vorne = befehle.prefix { Self.senderBefehl($0) != nil }.count
+        befehle.insert(data, at: vorne)
+    }
+
+    mutating func naechster() -> Data? {
+        befehle.isEmpty ? nil : befehle.removeFirst()
+    }
+
+    /// Vor dem Schliessen des Ports: wartet vorne ein `TX0`, kommt es zurück (sofort schreiben, ohne Abstand);
+    /// alles Übrige wird verworfen.
+    mutating func trennen() -> Data? {
+        let tx0 = befehle.first.flatMap { Self.senderBefehl($0) == "TX0" ? $0 : nil }
+        befehle.removeAll()
+        return tx0
+    }
+
+    mutating func leeren() {
+        befehle.removeAll()
+    }
+}
