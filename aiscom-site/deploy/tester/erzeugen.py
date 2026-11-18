@@ -165,6 +165,88 @@ MAC = APPS = [
         "datei": "Bergbahnchronik.dmg",
         "kurz": "Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. 13 Sprachen.",
     },
+    # Alpha (Wunsch Benutzer 2026-11-18): fruehe Fassungen, auf der Karte und im Feed als Alpha markiert
+    {
+        "name": "Agenten-Monitor",
+        "kennung": "agentmonitor",
+        "alpha": True,
+        "dmg": GIT / "agentmonitor-mac/build/verteilen/Agenten-Monitor.dmg",
+        "app": GIT / "agentmonitor-mac/build/verteilen/dd/Build/Products/Release/Agenten-Monitor.app",
+        "datei": "Agenten-Monitor.dmg",
+        "kurz": "Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.",
+    },
+    {
+        "name": "Funkblick",
+        "kennung": "funkblick",
+        "alpha": True,
+        "dmg": GIT / "funkblick-mac/mac/build/verteilen/Funkblick.dmg",
+        "app": GIT / "funkblick-mac/mac/build/verteilen/dd/Build/Products/Release/Funkblick.app",
+        "datei": "Funkblick.dmg",
+        "kurz": "Macht WLAN und Bluetooth auf dem Funkweg sichtbar: Scope mit Spektrum und Wasserfall, dazu die Daten des Bluetooth-Audiowegs und des WLANs.",
+    },
+    {
+        "name": "Für Dich",
+        "kennung": "fuerdich",
+        "alpha": True,
+        "dmg": GIT / "fuerdich-mac/build/verteilen/FuerDich.dmg",
+        "app": GIT / "fuerdich-mac/build/verteilen/dd/Build/Products/Release/FuerDich.app",
+        "datei": "FuerDich.dmg",
+        "kurz": "Fluxus-Installation: ein Feed, der die Form des schnellen Wischens übernimmt und den Inhalt entfernt. Das Wischen selbst wird zum Stück.",
+    },
+    {
+        "name": "Painbrush",
+        "kennung": "painbrush",
+        "alpha": True,
+        "dmg": GIT / "painbrush-mac/build/verteilen/Painbrush.dmg",
+        "app": GIT / "painbrush-mac/build/verteilen/dd/Build/Products/Release/Painbrush.app",
+        "datei": "Painbrush.dmg",
+        "kurz": "Malprogramm im Stil der klassischen Werkzeugkasten-Programme der frühen Neunziger. Pinsel und Farbrolle blubbern, die Spraydose zischt.",
+    },
+    {
+        "name": "MainBeam",
+        "kennung": "mainbeam",
+        "alpha": True,
+        "dmg": GIT / "mainbeam-mac/build/verteilen/MainBeam.dmg",
+        "app": GIT / "mainbeam-mac/build/verteilen/dd/Build/Products/Release/MainBeam.app",
+        "datei": "MainBeam.dmg",
+        "kurz": "Hält einen AirPlay-Bildschirm (z. B. einen Beamer) automatisch verbunden, damit er nach Aufwachen und Neustart Hauptbildschirm bleibt.",
+    },
+    {
+        "name": "Tabwache",
+        "kennung": "tabwache",
+        "alpha": True,
+        "dmg": GIT / "tabwache-mac/build/verteilen/Tabwache.dmg",
+        "app": GIT / "tabwache-mac/build/verteilen/dd/Build/Products/Release/Tabwache.app",
+        "datei": "Tabwache.dmg",
+        "kurz": "Findet Firefox-Tabs, die dauerhaft Rechenleistung fressen, meldet sie und beendet auf Wunsch nur diesen einen Tab.",
+    },
+    {
+        "name": "Spiegelwerk",
+        "kennung": "spiegelwerk",
+        "alpha": True,
+        "dmg": GIT / "spiegelwerk-mac/build/verteilen/Spiegelwerk.dmg",
+        "app": GIT / "spiegelwerk-mac/build/verteilen/dd/Build/Products/Release/Spiegelwerk.app",
+        "datei": "Spiegelwerk.dmg",
+        "kurz": "Kopierprogramm mit Aufträgen, Stopp und späterem Weitermachen, nur Neues kopieren; eigener Auftragstyp für den Proxmox Backup Server.",
+    },
+    {
+        "name": "Vitalbrücke",
+        "kennung": "vitalbruecke",
+        "alpha": True,
+        "dmg": GIT / "vitalbruecke/build/verteilen/Vitalbruecke.dmg",
+        "app": GIT / "vitalbruecke/build/verteilen/dd/Build/Products/Release/Vitalbruecke.app",
+        "datei": "Vitalbruecke.dmg",
+        "kurz": "Führt Daten der Huawei Watch D2 (Export) und aus Apple Health zusammen: Dubletten erkennen, Quelle je Datentyp wählen, konsolidiert exportieren.",
+    },
+    {
+        "name": "Zeitregler",
+        "kennung": "zeitregler",
+        "alpha": True,
+        "dmg": GIT / "zeitregler-mac/build/verteilen/Zeitregler.dmg",
+        "app": GIT / "zeitregler-mac/build/verteilen/dd/Build/Products/Release/Zeitregler.app",
+        "datei": "Zeitregler.dmg",
+        "kurz": "Texteditor mit Zeit-Schieberegler: Jede Änderung bleibt als Version erhalten und lässt sich in Echtzeit zurückspulen und wiederherstellen.",
+    },
 ]
 
 
@@ -346,7 +428,7 @@ def system(a, info) -> str:
     """Mindestsystem und Architekturen aus dem App-Paket, nichts von Hand (Vorgabe in APPS nur bei eingebetteten Kernen)"""
     if a.get("system"):
         return a["system"]
-    binaer = a["app"] / "Contents/MacOS" / a["app"].stem
+    binaer = a["app"] / "Contents/MacOS" / info.get("CFBundleExecutable", a["app"].stem)
     archs = set(subprocess.run(["lipo", "-archs", str(binaer)], capture_output=True, text=True).stdout.split())
     cpu = "Intel und Apple Silicon" if archs >= {"x86_64", "arm64"} else ("Apple Silicon" if archs == {"arm64"} else "Intel")
     mindest = info.get("LSMinimumSystemVersion", "?").split(".")[0]
@@ -529,7 +611,7 @@ def karte(d):
   <div class="kopf">
     <img src="bilder/{d['kennung']}.png" alt="" width="96" height="96">
     <div>
-      <h2>{d['name']}</h2>
+      <h2>{d['name']}{' <span class=alpha>Alpha</span>' if d.get('alpha') else ''}</h2>
       <p class="kurz">{d['kurz']}</p>
     </div>
   </div>
@@ -550,7 +632,7 @@ def feed_eintraege(apps, ios, android, buecher=(), windows=()):
     neu = []
     for d in apps:
         datum = datetime.fromtimestamp(d["dmg"].stat().st_mtime).astimezone()
-        neu.append({"guid": f"{d['kennung']}-mac-{d['version']}-{d['build']}", "titel": f"{d['name']} {d['version']} (Build {d['build']}) für macOS",
+        neu.append({"guid": f"{d['kennung']}-mac-{d['version']}-{d['build']}", "titel": f"{d['name']} {d['version']} (Build {d['build']}) für macOS{' – Alpha' if d.get('alpha') else ''}",
                     "link": f"https://www.aiscom.ch/tester/#mac", "text": d["kurz"], "datum": datum.isoformat()})
     for d in ios:
         if not d["test"]:
@@ -641,6 +723,7 @@ h3 {{ font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--
 .neu {{ background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px 24px; margin:0 0 26px; }}
 .neu ul {{ margin:6px 0 10px; padding-left:0; list-style:none; }} .neu li {{ margin:3px 0; }}
 .neu time {{ color:var(--muted); font:13px ui-monospace,Menlo,monospace; margin-right:10px; }}
+.alpha {{ display:inline-block; vertical-align:middle; margin-left:8px; padding:2px 9px; border-radius:999px; background:#c2410c; color:#fff; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }}
 .rss {{ display:inline-block; padding:6px 14px; border-radius:999px; background:#f26522; color:#fff; text-decoration:none; font-weight:600; font-size:14px; }}
 .hinweis {{ margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }}
 footer {{ margin-top:36px; color:var(--muted); font-size:13px; }}

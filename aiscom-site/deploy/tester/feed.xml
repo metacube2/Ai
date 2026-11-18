@@ -6,7 +6,70 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad, Android und Windows.</description>
   <language>de-ch</language>
-  <lastBuildDate>Wed, 18 Nov 2026 08:51:41 +0000</lastBuildDate>
+  <lastBuildDate>Wed, 18 Nov 2026 20:56:37 +0000</lastBuildDate>
+  <item>
+    <title>Vitalbrücke 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">vitalbruecke-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:55:03 +0100</pubDate>
+    <description>Führt Daten der Huawei Watch D2 (Export) und aus Apple Health zusammen: Dubletten erkennen, Quelle je Datentyp wählen, konsolidiert exportieren.</description>
+  </item>
+  <item>
+    <title>Spiegelwerk 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">spiegelwerk-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:54:01 +0100</pubDate>
+    <description>Kopierprogramm mit Aufträgen, Stopp und späterem Weitermachen, nur Neues kopieren; eigener Auftragstyp für den Proxmox Backup Server.</description>
+  </item>
+  <item>
+    <title>Funkblick 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">funkblick-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:53:08 +0100</pubDate>
+    <description>Macht WLAN und Bluetooth auf dem Funkweg sichtbar: Scope mit Spektrum und Wasserfall, dazu die Daten des Bluetooth-Audiowegs und des WLANs.</description>
+  </item>
+  <item>
+    <title>Agenten-Monitor 0.1 (Build 7) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">agentmonitor-mac-0.1-7</guid>
+    <pubDate>Wed, 18 Nov 2026 21:52:31 +0100</pubDate>
+    <description>Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.</description>
+  </item>
+  <item>
+    <title>Zeitregler 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">zeitregler-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:50:59 +0100</pubDate>
+    <description>Texteditor mit Zeit-Schieberegler: Jede Änderung bleibt als Version erhalten und lässt sich in Echtzeit zurückspulen und wiederherstellen.</description>
+  </item>
+  <item>
+    <title>Painbrush 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">painbrush-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:49:40 +0100</pubDate>
+    <description>Malprogramm im Stil der klassischen Werkzeugkasten-Programme der frühen Neunziger. Pinsel und Farbrolle blubbern, die Spraydose zischt.</description>
+  </item>
+  <item>
+    <title>Für Dich 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">fuerdich-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:48:42 +0100</pubDate>
+    <description>Fluxus-Installation: ein Feed, der die Form des schnellen Wischens übernimmt und den Inhalt entfernt. Das Wischen selbst wird zum Stück.</description>
+  </item>
+  <item>
+    <title>MainBeam 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">mainbeam-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:47:57 +0100</pubDate>
+    <description>Hält einen AirPlay-Bildschirm (z. B. einen Beamer) automatisch verbunden, damit er nach Aufwachen und Neustart Hauptbildschirm bleibt.</description>
+  </item>
+  <item>
+    <title>Tabwache 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">tabwache-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:47:19 +0100</pubDate>
+    <description>Findet Firefox-Tabs, die dauerhaft Rechenleistung fressen, meldet sie und beendet auf Wunsch nur diesen einen Tab.</description>
+  </item>
   <item>
     <title>FT991A Remote für Windows 1.0.1</title>
     <link>https://www.aiscom.ch/tester/#windows</link>
@@ -222,69 +285,6 @@
     <link>https://www.aiscom.ch/tester/#mac</link>
     <guid isPermaLink="false">taploop-mac-0.1-14</guid>
     <pubDate>Sun, 25 Oct 2026 12:36:08 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 13) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-13</guid>
-    <pubDate>Sun, 25 Oct 2026 12:24:57 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 12) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-12</guid>
-    <pubDate>Sun, 25 Oct 2026 12:12:09 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 11) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-11</guid>
-    <pubDate>Sun, 25 Oct 2026 12:01:09 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 10) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-10</guid>
-    <pubDate>Sun, 25 Oct 2026 11:47:26 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 9) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-9</guid>
-    <pubDate>Sun, 25 Oct 2026 11:25:49 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 8) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-8</guid>
-    <pubDate>Sun, 25 Oct 2026 11:14:14 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 7) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-7</guid>
-    <pubDate>Sun, 25 Oct 2026 10:33:34 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 6) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-6</guid>
-    <pubDate>Sun, 25 Oct 2026 10:18:52 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 5) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-5</guid>
-    <pubDate>Sun, 25 Oct 2026 10:05:00 +0100</pubDate>
     <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
   </item>
 </channel>

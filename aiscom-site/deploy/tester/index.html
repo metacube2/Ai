@@ -45,6 +45,7 @@ h3 { font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--a
 .neu { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px 24px; margin:0 0 26px; }
 .neu ul { margin:6px 0 10px; padding-left:0; list-style:none; } .neu li { margin:3px 0; }
 .neu time { color:var(--muted); font:13px ui-monospace,Menlo,monospace; margin-right:10px; }
+.alpha { display:inline-block; vertical-align:middle; margin-left:8px; padding:2px 9px; border-radius:999px; background:#c2410c; color:#fff; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
 .rss { display:inline-block; padding:6px 14px; border-radius:999px; background:#f26522; color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
 .hinweis { margin:22px 0 18px; padding:14px 18px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); }
 footer { margin-top:36px; color:var(--muted); font-size:13px; }
@@ -66,11 +67,11 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   <h1>Apps zum Testen</h1>
   <p class="unter">Aktuelle Fassungen für Mac, iPhone/iPad, Android und Windows, alle als Vollversion.</p>
 
-  <section class="neu"><h3>Neueste Fassungen</h3><ul><li><time>18.11.2026</time> FT991A Remote für Windows 1.0.1</li><li><time>18.11.2026</time> MacYaesu 1.1 (Build 5) für macOS</li><li><time>17.11.2026</time> FT991A Remote für Windows 1.0.0</li><li><time>17.11.2026</time> MacYaesu für Windows 1.1.2</li><li><time>17.11.2026</time> MacYaesu für Windows 1.1.1</li><li><time>15.11.2026</time> NetBottleneck 1.0 (Build 2) für macOS</li></ul>
+  <section class="neu"><h3>Neueste Fassungen</h3><ul><li><time>18.11.2026</time> Vitalbrücke 0.1 (Build 1) für macOS – Alpha</li><li><time>18.11.2026</time> Spiegelwerk 0.1 (Build 1) für macOS – Alpha</li><li><time>18.11.2026</time> Funkblick 0.1 (Build 1) für macOS – Alpha</li><li><time>18.11.2026</time> Agenten-Monitor 0.1 (Build 7) für macOS – Alpha</li><li><time>18.11.2026</time> Zeitregler 0.1 (Build 1) für macOS – Alpha</li><li><time>18.11.2026</time> Painbrush 0.1 (Build 1) für macOS – Alpha</li></ul>
     <a class="rss" href="feed.xml" type="application/rss+xml">RSS-Feed abonnieren</a></section>
 
   <nav class="reiter" role="tablist">
-    <a href="#mac" role="tab" data-p="mac">macOS<small>17</small></a>
+    <a href="#mac" role="tab" data-p="mac">macOS<small>26</small></a>
     <a href="#ios" role="tab" data-p="ios">iPhone / iPad<small>13</small></a>
     <a href="#android" role="tab" data-p="android">Android<small>5</small></a>
     <a href="#windows" role="tab" data-p="windows">Windows<small>2</small></a>
@@ -231,7 +232,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">9bbc3b2791ea80dc0464bbab99af4435ef7da2927ac0bf3d77de136ec90ec735</code></dd>
   </dl>
-</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>9</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
+</article></section></div><div class="gruppe gruppe-entwicklung"><h3 class="gruppentitel"><span class="punkt"></span>In Entwicklung<small>18</small></h3><p class="gruppentext">Laufen schon, ändern sich aber noch. Rückmeldungen sind willkommen, Fehler sind erwartet.</p><section class="karten">
 <article class="karte" id="aurora-studio">
   <div class="kopf">
     <img src="bilder/aurora-studio.png" alt="" width="96" height="96">
@@ -392,6 +393,168 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
     <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
     <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
     <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">afc07ba224c9ee53917ad26df2984323e98fff881bdccc0ed46bd5f730afdadf</code></dd>
+  </dl>
+</article>
+<article class="karte" id="agentmonitor">
+  <div class="kopf">
+    <img src="bilder/agentmonitor.png" alt="" width="96" height="96">
+    <div>
+      <h2>Agenten-Monitor <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.</p>
+    </div>
+  </div>
+  <a class="laden" href="Agenten-Monitor.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Agenten-Monitor.dmg</b><small>Version 0.1 (Build 7) · 873 kB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">2048d8daa6baf49574f8a953ccacb87326ef88d469d257acfa7d896f2c8dd708</code></dd>
+  </dl>
+</article>
+<article class="karte" id="funkblick">
+  <div class="kopf">
+    <img src="bilder/funkblick.png" alt="" width="96" height="96">
+    <div>
+      <h2>Funkblick <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Macht WLAN und Bluetooth auf dem Funkweg sichtbar: Scope mit Spektrum und Wasserfall, dazu die Daten des Bluetooth-Audiowegs und des WLANs.</p>
+    </div>
+  </div>
+  <a class="laden" href="Funkblick.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Funkblick.dmg</b><small>Version 0.1 (Build 1) · 547 kB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">ef36ab63272297067c505e7fbf182ce79c4d7f1149fd5c7c86810dfa1afd10f5</code></dd>
+  </dl>
+</article>
+<article class="karte" id="fuerdich">
+  <div class="kopf">
+    <img src="bilder/fuerdich.png" alt="" width="96" height="96">
+    <div>
+      <h2>Für Dich <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Fluxus-Installation: ein Feed, der die Form des schnellen Wischens übernimmt und den Inhalt entfernt. Das Wischen selbst wird zum Stück.</p>
+    </div>
+  </div>
+  <a class="laden" href="FuerDich.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>FuerDich.dmg</b><small>Version 0.1 (Build 1) · 1 MB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">e62231ecba376c19855b85f416b9a713aa4ac6ebba4ab45c16a36df3158b819c</code></dd>
+  </dl>
+</article>
+<article class="karte" id="painbrush">
+  <div class="kopf">
+    <img src="bilder/painbrush.png" alt="" width="96" height="96">
+    <div>
+      <h2>Painbrush <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Malprogramm im Stil der klassischen Werkzeugkasten-Programme der frühen Neunziger. Pinsel und Farbrolle blubbern, die Spraydose zischt.</p>
+    </div>
+  </div>
+  <a class="laden" href="Painbrush.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Painbrush.dmg</b><small>Version 0.1 (Build 1) · 2 MB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">c9ef05afe239b1a9e1b64d40c644cdcd0e0aee9f7291f0ac1cfbf7474865dd20</code></dd>
+  </dl>
+</article>
+<article class="karte" id="mainbeam">
+  <div class="kopf">
+    <img src="bilder/mainbeam.png" alt="" width="96" height="96">
+    <div>
+      <h2>MainBeam <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Hält einen AirPlay-Bildschirm (z. B. einen Beamer) automatisch verbunden, damit er nach Aufwachen und Neustart Hauptbildschirm bleibt.</p>
+    </div>
+  </div>
+  <a class="laden" href="MainBeam.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>MainBeam.dmg</b><small>Version 0.1 (Build 1) · 876 kB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">fc12be8c46de00c49d3823df18574fe275990cfde3ad8c4b8b234e08fa6df7f9</code></dd>
+  </dl>
+</article>
+<article class="karte" id="tabwache">
+  <div class="kopf">
+    <img src="bilder/tabwache.png" alt="" width="96" height="96">
+    <div>
+      <h2>Tabwache <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Findet Firefox-Tabs, die dauerhaft Rechenleistung fressen, meldet sie und beendet auf Wunsch nur diesen einen Tab.</p>
+    </div>
+  </div>
+  <a class="laden" href="Tabwache.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Tabwache.dmg</b><small>Version 0.1 (Build 1) · 992 kB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">1302fa235f0e115c7a91f17f2d32fd58535e6e0a5aeeb8970d9e561fa6d6c362</code></dd>
+  </dl>
+</article>
+<article class="karte" id="spiegelwerk">
+  <div class="kopf">
+    <img src="bilder/spiegelwerk.png" alt="" width="96" height="96">
+    <div>
+      <h2>Spiegelwerk <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Kopierprogramm mit Aufträgen, Stopp und späterem Weitermachen, nur Neues kopieren; eigener Auftragstyp für den Proxmox Backup Server.</p>
+    </div>
+  </div>
+  <a class="laden" href="Spiegelwerk.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Spiegelwerk.dmg</b><small>Version 0.1 (Build 1) · 1 MB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">d7700a007c41be61cfa1067eb61f0ee6f6b65c5a718ad4ae754368901c417a06</code></dd>
+  </dl>
+</article>
+<article class="karte" id="vitalbruecke">
+  <div class="kopf">
+    <img src="bilder/vitalbruecke.png" alt="" width="96" height="96">
+    <div>
+      <h2>Vitalbrücke <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Führt Daten der Huawei Watch D2 (Export) und aus Apple Health zusammen: Dubletten erkennen, Quelle je Datentyp wählen, konsolidiert exportieren.</p>
+    </div>
+  </div>
+  <a class="laden" href="Vitalbruecke.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Vitalbruecke.dmg</b><small>Version 0.1 (Build 1) · 3 MB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">1ae07d735e0e53aa74161549f91bddb9293adca99ac27a4d535556aa1e9257ca</code></dd>
+  </dl>
+</article>
+<article class="karte" id="zeitregler">
+  <div class="kopf">
+    <img src="bilder/zeitregler.png" alt="" width="96" height="96">
+    <div>
+      <h2>Zeitregler <span class=alpha>Alpha</span></h2>
+      <p class="kurz">Texteditor mit Zeit-Schieberegler: Jede Änderung bleibt als Version erhalten und lässt sich in Echtzeit zurückspulen und wiederherstellen.</p>
+    </div>
+  </div>
+  <a class="laden" href="Zeitregler.dmg" download>
+    <span class="pfeil">⬇</span>
+    <span><b>Zeitregler.dmg</b><small>Version 0.1 (Build 1) · 2 MB · 18.11.2026</small></span>
+  </a>
+  <dl class="meta">
+    <dt>System</dt><dd>macOS 14 oder neuer, Intel und Apple Silicon</dd>
+    <dt>Signatur</dt><dd>Developer ID, von Apple beglaubigt</dd>
+    <dt>SHA-256</dt><dd><code class="sha" title="Zum Kopieren klicken">a050653b5e6b7fea400c41735225715d4eb051c8d953ffcdb8c2b98faca21630</code></dd>
   </dl>
 </article></section></div><div class="gruppe gruppe-fertig"><h3 class="gruppentitel"><span class="punkt"></span>Fertig<small>0</small></h3><p class="gruppentext">Im App Store freigegeben.</p><p class="leer">Noch keine App in dieser Gruppe.</p></div></div>
   </div>
@@ -783,7 +946,7 @@ footer { margin-top:36px; color:var(--muted); font-size:13px; }
   </section>
   </div>
 
-  <footer>Stand 18.11.2026 09:51. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
+  <footer>Stand 18.11.2026 21:56. SHA-256 zum Vergleich: im Terminal <code>shasum -a 256 ~/Downloads/&lt;Datei&gt;.dmg</code>.</footer>
 </main>
 <script>
 function zeigen() {

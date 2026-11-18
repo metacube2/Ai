@@ -1,5 +1,68 @@
 [
  {
+  "guid": "vitalbruecke-mac-0.1-1",
+  "titel": "Vitalbrücke 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Führt Daten der Huawei Watch D2 (Export) und aus Apple Health zusammen: Dubletten erkennen, Quelle je Datentyp wählen, konsolidiert exportieren.",
+  "datum": "2026-11-18T21:55:03.992794+01:00"
+ },
+ {
+  "guid": "spiegelwerk-mac-0.1-1",
+  "titel": "Spiegelwerk 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Kopierprogramm mit Aufträgen, Stopp und späterem Weitermachen, nur Neues kopieren; eigener Auftragstyp für den Proxmox Backup Server.",
+  "datum": "2026-11-18T21:54:01.949895+01:00"
+ },
+ {
+  "guid": "funkblick-mac-0.1-1",
+  "titel": "Funkblick 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Macht WLAN und Bluetooth auf dem Funkweg sichtbar: Scope mit Spektrum und Wasserfall, dazu die Daten des Bluetooth-Audiowegs und des WLANs.",
+  "datum": "2026-11-18T21:53:08.481152+01:00"
+ },
+ {
+  "guid": "agentmonitor-mac-0.1-7",
+  "titel": "Agenten-Monitor 0.1 (Build 7) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.",
+  "datum": "2026-11-18T21:52:31.673721+01:00"
+ },
+ {
+  "guid": "zeitregler-mac-0.1-1",
+  "titel": "Zeitregler 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Texteditor mit Zeit-Schieberegler: Jede Änderung bleibt als Version erhalten und lässt sich in Echtzeit zurückspulen und wiederherstellen.",
+  "datum": "2026-11-18T21:50:59.058307+01:00"
+ },
+ {
+  "guid": "painbrush-mac-0.1-1",
+  "titel": "Painbrush 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Malprogramm im Stil der klassischen Werkzeugkasten-Programme der frühen Neunziger. Pinsel und Farbrolle blubbern, die Spraydose zischt.",
+  "datum": "2026-11-18T21:49:40.876457+01:00"
+ },
+ {
+  "guid": "fuerdich-mac-0.1-1",
+  "titel": "Für Dich 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Fluxus-Installation: ein Feed, der die Form des schnellen Wischens übernimmt und den Inhalt entfernt. Das Wischen selbst wird zum Stück.",
+  "datum": "2026-11-18T21:48:42.827608+01:00"
+ },
+ {
+  "guid": "mainbeam-mac-0.1-1",
+  "titel": "MainBeam 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Hält einen AirPlay-Bildschirm (z. B. einen Beamer) automatisch verbunden, damit er nach Aufwachen und Neustart Hauptbildschirm bleibt.",
+  "datum": "2026-11-18T21:47:57.769684+01:00"
+ },
+ {
+  "guid": "tabwache-mac-0.1-1",
+  "titel": "Tabwache 0.1 (Build 1) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Findet Firefox-Tabs, die dauerhaft Rechenleistung fressen, meldet sie und beendet auf Wunsch nur diesen einen Tab.",
+  "datum": "2026-11-18T21:47:19.935378+01:00"
+ },
+ {
   "guid": "ft991a-remote-win-1.0.1",
   "titel": "FT991A Remote für Windows 1.0.1",
   "link": "https://www.aiscom.ch/tester/#windows",
