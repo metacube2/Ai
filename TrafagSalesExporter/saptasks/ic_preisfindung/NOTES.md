@@ -1,6 +1,6 @@
 # IC-Preisfindung Trafag AG (1100) an Trafag AT (1200): Preisliste und Kurstyp in der IV-Faktura
 
-Stand: 2026-11-18 12:14 (Abschnitt 10: Test Fabio, T161V ATPCONFMRP NB/1100 in T76/100 entfernt, Rueckbau steht aus; Nebenbefund T76K912884 laut E070 seit 12.11. freigegeben); davor 2026-11-12 (Abschnitt 9.1: **Tests Fabio in T76 bestanden, T76K912884 fachlich freigegeben**; Import P76 wartet auf Fabios Z999-Preise in P76; Antwortvorschlag 601/908); davor 2026-11-11 abends (Abschnitt 8.9: Rueckmeldung Fabio zu 601/908 eingeordnet, Entscheid RV80HGEN weiter bei Ingo); davor 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
+Stand: 2026-11-18 18:24 (Abschnitt 11: Test Fabio, Pruefumfang 02/AE „Mit Bestellungen“ X -> A in T76/100, Rueckbau steht aus; Abschnitt 12: Analyse ZBA1 / Bedingung 902); davor 2026-11-18 12:14 (Abschnitt 10: Test Fabio, T161V ATPCONFMRP NB/1100 in T76/100 entfernt, Rueckbau steht aus; Nebenbefund T76K912884 laut E070 seit 12.11. freigegeben); davor 2026-11-12 (Abschnitt 9.1: **Tests Fabio in T76 bestanden, T76K912884 fachlich freigegeben**; Import P76 wartet auf Fabios Z999-Preise in P76; Antwortvorschlag 601/908); davor 2026-11-11 abends (Abschnitt 8.9: Rueckmeldung Fabio zu 601/908 eingeordnet, Entscheid RV80HGEN weiter bei Ingo); davor 2026-11-11 09:40 (Abschnitt 9: **V1-Customizing ZICAA1 in T76/100 umgesetzt**, Auftrag T76K912884, nicht freigegeben, Tests
 offen; Plan und Ausfuehrung in `PLAN_V1_CUSTOMIZING_2026-11-11.md`); davor 2026-11-10 abends (Abschnitt 8.9: Abnahme Fabio bestanden, beide Auftraege in P76 importiert, **Routine 601 in P76 aber
 noch nicht eingebunden**; VOFM in P76 gesperrt, Transport von `RV62ANNN` nicht moeglich (generiert), offen Entscheid Ingo zu
 `RV80HGEN`, das auch die Kopierbedingung FBED 908 einbindet); davor 2026-11-06
@@ -813,3 +813,58 @@ Ausgefuehrt vom Agenten sap-t76 in zwei Phasen; Plan, Belege und Rueckbau: `PLAN
   BS-Abruf in MD04/1100 und den von Werk 1200 bestaetigten Termin. **Rueckbau auf X auf Zuruf Ingo** (Plan Abschnitt 5): SM30
   `VV_161V_VF`, Zeile NB/1100 ueber alle Schluessel bestimmen, Haken setzen, T76K912926 waehlen, Tabelle gegen die VORHER-Datei
   zuruecklesen. Der lokale Auftrag wird nie freigegeben.
+
+## 11. Test Fabio: Pruefumfang 02 / AE „Mit Bestellungen“ X -> A in T76/100 (2026-11-18 abends)
+
+Auftrag Ingo 18.11. („dann wieder was von Fabio“), Wortlaut Fabio: im ATP-Pruefumfang Pruefgruppe 02 / Pruefregel AE das Feld
+„Mit Bestellungen“ fuer einen Vergleichstest von X auf A stellen; eine Produktivaenderung ist separat zu entscheiden.
+Ausgefuehrt vom Agenten sap-t76 in zwei Phasen, von der Hauptsitzung per RFC gegengelesen (18:16). Plan, Haltebedingungen,
+Protokoll und Rueckbau: `PLAN_T441V_MIT_BESTELLUNGEN_2026-11-18.md`.
+
+| | |
+| --- | --- |
+| Tabelle / Schluessel | `T441V`, MANDT 100, MTVFP 02, PRREG AE |
+| Feld | `BESTP` (Datenelement und Domaene `BESTP_APPL`, Bildtext „Mit Bestellungen“) |
+| Festwerte (DD07T, D) | leer „Ausschliessen“; X „Einbeziehen (fuer UB Auftragsmenge verwenden)“; A „Einbeziehen (fuer UB bestaetigte Menge verwenden)“ |
+| vorher / nachher | **X / A**, alle anderen Felder der Zeile und alle 74 anderen Zeilen gleich (Vergleich nach Schluessel) |
+| Geaendert | **18.11.2026 18:11:06** ueber SM30, Sicht `V_441VC` (die Sicht hinter OVZ9), eigene GUI-Sitzung |
+| Auftrag | **T76K912928** (Customizing, lokal ohne Zielsystem, Aufgabe T76K912929, „NICHT FREIGEBEN“), nicht freigegeben; E071K nur `T441V` / `10002AE` |
+| Sicherung | `T441V_02_AE_VORHER_2026-11-18.txt`, `T441V_02_AE_NACHHER_2026-11-18.txt` |
+
+- **Trifft der Testfall die Zeile? Ja.** Material 52704 hat in Werk 1200 und 1100 die Pruefgruppe 02 (MARC). Position 411403/10:
+  Werk 1200, Bedarfsart KEV, Sonderbestand E, 60 ST; Pruefregel A (Aufrufer Kundenauftrag) plus E (Einzelbestand) = AE. Das
+  Glied „Aufrufer = A“ ist aus dem Vorschlagswert des Bausteins hergeleitet, die Aufrufstelle in SAPMV45A nicht gelesen.
+- **Bestellung 45148518/10:** NB, Lieferwerk 1100, kontiert auf 411403/10. EKET 0001: Menge 60, bestaetigt 0; 0002: Menge 0,
+  bestaetigt 60.
+- **Zwei Schalter gleichzeitig veraendert:** Der Test aus Abschnitt 10 ist weiter aktiv (T161V F/NB/1100 `ATPCONFMRP` leer seit
+  12:06). Fabios Vergleich X gegen A laeuft also nicht gegen den Ausgangsstand.
+- **Wirkung:** gilt in T76/100 fuer alle Kundenauftragspositionen mit Kundeneinzelbestand und Pruefgruppe 02, auch fuer andere
+  Tester. Schwesterzeilen unveraendert (02/A X, 02/B leer, 02/IC X).
+- **Nicht geprueft:** kein CO09- oder ATP-Lauf; der Auftrag 411403 zeigt weiter die Bestaetigung der alten Pruefung
+  (04.12.2026). Ob „fuer UB“ bei einer NB-Bestellung mit Lieferwerk greift, zeigt erst Fabios Test. Mandant 090 und P76 nicht
+  gelesen.
+- **Offen:** Fabio Bescheid geben (Ingo); **Rueckbau auf X auf Zuruf Ingo** (Plan Abschnitt 5, im Dialog T76K912928 ausdruecklich
+  setzen; die Auftragsabfrage schlaegt den Testauftrag vom Mittag vor). T76K912928 nie freigeben.
+
+## 12. Frage Fabio: Nachrichtenschema V10000, Bedingung 902 fuer ZBA1 „AB final“ (2026-11-18, nur gelesen)
+
+Vollstaendig mit Quelltext, Zeitablauf und Antwortentwurf: `ANALYSE_ZBA1_BEDINGUNG_2026-11-18.md` (Agent sap-t76, nur RFC;
+Kernbelege von der Hauptsitzung gegengelesen: NAST, T683S, T100, CDHDR).
+
+- **Stand:** ZBA1 ist bei 411403 seit **16:53:30** vorhanden und verarbeitet (NAST, Medium 5, Zeitpunkt 4), angelegt in der
+  Sekunde des V_V2-Laufs von FPA (CDHDR 0021051663). Fabios Frage beschreibt den Stand davor.
+- **„502“** ist die Meldung VE 502 „Nachricht ignoriert (Bedingung & nicht erfuellt)“, keine zweite Bedingung. Im Schema steht
+  bei ZBA1 die Bedingung 902 (T683S V10000 Stufe 011), bei BA00 die Bedingung 2.
+- **Bedingung 902 (`RV61B902`)** prueft den Planauftrag nicht. Sie lehnt ab bei: Kopf oder Positionen unvollstaendig
+  (`UVALS`, `UVALL` ungleich C), Liefersperre, Kreditstatus B/C, Status `COSTA`, `PREVENT_ISSUE_OUTPUT`.
+- **Was fehlte (hergeleitet):** die bestaetigte Menge. `VBAP-KBMENG` ist im Unvollstaendigkeitsschema Z3 der Positionsart TAN
+  ein Pflichtfeld; solange sie null ist, ist die Position unvollstaendig und 902 lehnt ab. Der fruehere Wert steht in keinem
+  Aenderungsbeleg; gestuetzt durch den Vergleichsauftrag 411361 und die Testauftraege 411399 bis 411403.
+- **Ausloeser:** Die Nachrichtenfindung laeuft nur im Sichern des Kundenauftrags (`MV45AF0B_BELEG_SICHERN` ->
+  `trans_finalize` -> `MESSAGING`), also bei VA02 oder wenn V_V2 den Auftrag sichert. Das Fixieren des Planauftrags ruft sie
+  nicht. Der taegliche Job `ZSD_NEUTERMIN_AT` (06:00, Variante „AT TEST“) deckt nur Werk 1200 mit den Materialien 39101 und
+  63502 ab, ohne Bestellungen.
+- **Nebenbefunde:** FPA hat um 14:42 den ZBA1-Konditionssatz der Verkaufsorganisation 1200 von Zeitpunkt 2 auf 4 gestellt.
+  `ZSD_MISSING_ZBA1` ist seit T76K912722 (08.10.) geloescht.
+- **Nicht geprueft:** Findungsanalyse in der GUI, Mandant 090, P76, warum der V_V2-Lauf um 15:46 den Auftrag noch nicht
+  bestaetigt hat.

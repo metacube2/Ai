@@ -1,0 +1,169 @@
+T441V in T76, Mandant 100: Stand NACHHER (nach der Testaenderung "Mit Bestellungen" 02/AE fuer Fabio)
+=================================================================================================
+Geaendert: 2026-11-18 18:11:06 (Get-Date am Arbeitsplatz direkt nach "Daten wurden gesichert"; der Klick lag zwischen
+           18:11:04 und 18:11:06). Stuetze: E070-AS4TIME der Aufgabe T76K912929 = 18:11:04 Serverzeit T76.
+Gelesen:   2026-11-18 18:11:27 bis 18:11:29 (Get-Date), RFC, .tmp_sap_probe/RunSapProbe.ps1 table-read T441V, dieselben Befehle
+           und dieselben 31 Felder wie in T441V_02_AE_VORHER_2026-11-18.txt.
+Pflegeweg: SM30, Sicht V_441VC ("Umfang der Verfuegbarkeitspruefung", dieselbe Sicht wie OVZ9), eigene GUI-Sitzung
+           /app/con[0]/ses[1], Detailbild 02 / AE, nur die Auswahlliste "Mit Bestellungen" (cmbV_441V-BESTP) von Schluessel X
+           ("X Einbeziehen (fuer UB Auftragsmenge verwenden)") auf A ("A Einbeziehen (fuer UB bestaetigte Menge verwenden)").
+Auftrag:   T76K912928 (Customizing, W, Status D = aenderbar, Ziel leer = lokal, KOI, Mandant 100), Aufgabe T76K912929.
+           Text "T441V 02/AE Mit Bestellungen X->A Test Fabio NICHT FREIGEBEN" (60 Zeichen). Nicht freigegeben.
+           Der Testauftrag vom Mittag T76K912926/927 war im Dialog vorbelegt und wurde nicht verwendet.
+
+1. Zielzeile (Filter MTVFP = '02' AND PRREG = 'AE'): genau 1 Zeile
+------------------------------------------------------------------
+MANDT                     = 100
+MTVFP                     = 02
+PRREG                     = AE
+EISBP                     = (leer)
+UMLMP                     = (leer)
+QMBSP                     = (leer)
+BESTP                     = A        <-- vorher X; einziger Unterschied
+FERTP                     = X
+BANFP                     = (leer)
+PLAFP                     = A
+SKBDP                     = (leer)
+RESBP                     = (leer)
+ARREP                     = (leer)
+VBBDP                     = X
+VBBLP                     = X
+OWBZP                     = X
+SBSTP                     = (leer)
+LAVIP                     = (leer)
+WZTWE                     = 000
+TBBEP                     = (leer)
+OLGPR                     = (leer)
+OLBPR                     = (leer)
+NFVBC                     = (leer)
+RPAST                     = (leer)
+VWBEST                    = (leer)
+PRIBED                    = (leer)
+QUANTITY_DIST             = (leer)
+ENABLE_SUPPLY_PROTECTION  = (leer)
+QUANTITY_USED_FOR_STO     = (leer)
+PAC_BUCKET_LOGIC          = (leer)
+NO_BATCH_CHECK            = (leer)
+
+CSV-Form der Zielzeile (zeichengleich aus der Ausgabe):
+MANDT,MTVFP,PRREG,EISBP,UMLMP,QMBSP,BESTP,FERTP,BANFP,PLAFP,SKBDP,RESBP,ARREP,VBBDP,VBBLP,OWBZP,SBSTP,LAVIP,WZTWE,TBBEP,OLGPR,OLBPR,NFVBC,RPAST,VWBEST,PRIBED,QUANTITY_DIST,ENABLE_SUPPLY_PROTECTION,QUANTITY_USED_FOR_STO,PAC_BUCKET_LOGIC,NO_BATCH_CHECK
+100,02,AE,,,,A,X,,A,,,,X,X,X,,,000,,,,,,,,,,,,
+
+2. Ganze Tabelle T441V, Mandant 100 (Filter MTVFP LIKE '%', --rowcount 5000, --format csv): 75 Zeilen
+-----------------------------------------------------------------------------------------------------
+MANDT,MTVFP,PRREG,EISBP,UMLMP,QMBSP,BESTP,FERTP,BANFP,PLAFP,SKBDP,RESBP,ARREP,VBBDP,VBBLP,OWBZP,SBSTP,LAVIP,WZTWE,TBBEP,OLGPR,OLBPR,NFVBC,RPAST,VWBEST,PRIBED,QUANTITY_DIST,ENABLE_SUPPLY_PROTECTION,QUANTITY_USED_FOR_STO,PAC_BUCKET_LOGIC,NO_BATCH_CHECK
+100,01,01,X,,,X,X,X,X,X,X,X,X,X,,,X,000,X,,,,,,,,,,,
+100,01,03,,,,X,,,,,X,,X,X,,,,000,,,,,,,,,,,,
+100,01,A,,,,X,,,,,X,,X,X,,,,000,,,,,,,,,,,,
+100,01,AE,,,,,X,,X,,,,X,X,,,,000,,,,,,,,,,,,
+100,01,AQ,,,,,X,,X,,,,X,X,,,,000,,,,,,,,,,,,
+100,01,AV,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,01,AW,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,01,B,,,,X,,,,,X,,X,X,,,,000,,,,,,,,,,,,
+100,01,BB,,,,X,,,,,X,,X,X,,,,000,,,,,,,,,,,,
+100,01,BE,,,,,,,,,,,X,X,X,,,000,,,,,,,,,,,,
+100,01,BQ,,,,,,,,,,,X,X,X,,,000,,,,,,,,,,,,
+100,01,BV,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,01,BW,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,01,PM,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,01,PP,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,01,PS,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,01,RP,X,X,X,X,,X,,X,X,,X,X,X,,X,000,,,,,,,,,,,,
+100,01,RS,X,X,X,X,,,,X,X,,X,X,X,,X,000,,,,,,,,,,,,
+100,01,SM,X,X,X,X,X,X,X,X,X,,X,X,X,,X,000,,,,,,,,,,,,
+100,02,01,X,,,X,X,X,X,X,X,X,X,X,,,X,000,X,,,,,,,,,,,
+100,02,03,X,,,X,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,A,X,,,X,X,,A,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,AQ,X,,,,X,,X,,,,X,X,,,,000,,,,,,,,,,,,
+100,02,AR,,,,,,,,,,,X,X,X,,X,000,A,,,,,,,,,,,
+100,02,AV,X,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,AW,X,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,B,X,,,,,,,,,,,X,X,,,000,,,,,,,,,,,,
+100,02,BB,,,,X,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,BE,X,,,,,,,,,,X,X,X,,,000,,,,,,,,,,,,
+100,02,BQ,X,,,,X,,X,,,,X,X,,,,000,,,,,,,,,,,,
+100,02,BV,X,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,BW,X,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,DE,X,,,X,,,B,X,X,,X,X,X,,X,000,A,,,,,,,,,,,
+100,02,PS,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,02,RP,X,X,X,X,,X,,X,X,,X,X,X,,X,000,,,,,,,,,,,,
+100,02,RS,X,X,X,X,,,,X,X,,X,X,X,,X,000,,,,,,,,,,,,
+100,02,WS,X,,,X,F,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,01,X,,,X,X,X,X,X,X,X,X,X,X,X,X,000,X,,,,,,,,,,,
+100,CH,03,,,,X,,X,X,,X,,X,X,X,X,,000,,,,,,,,,,,,
+100,CH,A,,,,X,X,X,X,X,X,,X,X,X,,X,000,X,,,,,,,,,,,
+100,CH,AE,,,,,X,,X,,,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,AQ,,,,,X,,X,,,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,AV,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,AW,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,B,,,,X,X,X,X,X,X,,X,X,X,,X,000,X,,,,,,,,,,,
+100,CH,BB,,,,X,X,X,X,X,X,,X,X,X,,X,000,X,,,,,,,,,,,
+100,CH,BE,,,,,,,,,,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,BQ,,,,,,,,,,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,BV,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,BW,,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,PM,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,PP,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,PS,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,CH,SM,X,X,X,X,X,X,X,X,X,,X,X,X,,,000,,,,,,,,,,,,
+100,DR,D1,,,,,,,,,X,X,X,X,,,X,000,X,,,,,,,,,,,
+100,DR,D2,,,,,,,,X,X,X,X,X,,,X,000,X,,,,,,X,,,,,
+100,DR,D3,,,X,,X,X,X,,,,,,,,,000,,,,,,,,,,,,
+100,DR,D4,,,,X,,,,,,,,,,,,000,,,,,,,,,,,,
+100,DR,D5,X,,,,,,,,,,,,,,,000,,,,,,X,,,,,,
+100,Z2,01,X,,,X,X,X,X,X,X,X,X,X,,,X,000,X,,,,,,,,,,,
+100,Z2,03,X,,,X,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,Z2,A,X,,,X,F,,,,X,,X,X,,,,000,,,,,,,,,,,,
+100,Z2,AQ,X,,,,X,,X,,,,X,X,,,,000,,,,,,,,,,,,
+100,Z2,AR,,,,,,,,,,,X,X,X,,X,000,A,,,,,,,,,,,
+100,Z2,AV,X,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,Z2,AW,X,,,,,,,,X,,X,X,X,,,000,,,,,,,,,,,,
+100,Z2,B,X,,,,,,,,,,,X,X,,,000,,,,,,,,,,,,
+100,02,PP,X,,X,X,F,,,X,X,A,X,X,,,X,000,,X,,,,,,,,,,
+100,02,ZP,X,,X,,,,,X,X,A,,,X,,X,000,,,,,,,,,,,,
+100,Y2,ZP,X,,X,,,,,X,X,A,,,X,,X,000,,,,,,,,,,C,,
+100,Y2,AE,,,,,,,,,,,,,,,,000,,,X,,,,,,,,,
+100,Y2,PP,X,,X,,,,,X,X,A,,,X,,X,000,,,,,,,,,,C,,
+100,Z2,AE,,,,X,X,,A,,,,X,X,X,,,000,,,,,,,,,,,,
+100,02,IC,X,,,X,X,,A,,X,,X,X,,,,000,,,,,,,,,,,,
+100,02,AE,,,,A,X,,A,,,,X,X,X,,,000,,,,,,,,,,,,
+
+Hinweis zur Reihenfolge: RFC_READ_TABLE liefert die Zeilen ohne feste Sortierung; die geaenderte Zeile 02/AE steht nach dem
+Sichern am Ende der Ausgabe statt an vierter Stelle der Pruefgruppe 02. Verglichen wird deshalb nach Schluessel, nicht nach Position.
+
+3. Vergleich gegen VORHER (18:11)
+---------------------------------
+Zeilenzahl: vorher 75 Datenzeilen, nachher 75 Datenzeilen; dieselben 75 Schluessel (MANDT, MTVFP, PRREG), keiner fehlt, keiner neu.
+Compare-Object ueber die beiden vollstaendigen Ausgaben: genau zwei Eintraege (eine Zeile weg, eine Zeile dazu).
+  vorher : 100,02,AE,,,,X,X,,A,,,,X,X,X,,,000,,,,,,,,,,,,
+  nachher: 100,02,AE,,,,A,X,,A,,,,X,X,X,,,000,,,,,,,,,,,,
+Vergleich je Schluessel Feld fuer Feld: genau eine geaenderte Zeile (100|02|AE), darin genau ein Feld:
+  Feld 7 BESTP: 'X' -> 'A'. Die 74 uebrigen Zeilen sind zeichengleich.
+BESTP = A steht jetzt in genau einer Zeile der Tabelle (02/AE).
+Schwesterzeilen im Feld BESTP unveraendert: 02/A = X, 02/B = leer, 02/IC = X.
+Die sieben Felder, die das Detailbild nicht zeigt (QUANTITY_USED_FOR_STO, PAC_BUCKET_LOGIC, NO_BATCH_CHECK, VWBEST, PRIBED,
+QUANTITY_DIST, ENABLE_SUPPLY_PROTECTION), sind in der
+Zielzeile vorher und nachher leer (nur per RFC verglichen).
+
+4. Unveraendert mitgelesen (18:11:28)
+-------------------------------------
+T161V, Mandant 100, alle 33 Felder, 11 Zeilen: zeichengleich mit dem Stand vor der Aenderung (18:06:14) und mit Abschnitt 2 von
+T161V_F_NB_1100_NACHHER_2026-11-18.txt. Zeile F/NB/1100: 100,F,NB,1100,NL,IC,,,,X,,NL,NLCC,,B,,,,,,,,,,,,,,,,,, (ATPCONFMRP leer).
+
+5. Auftrag (E070, E070C, E07T, E071, E071K; 18:11)
+--------------------------------------------------
+E070:  T76K912928 W D TARSYSTEM leer KOI 18.11.2026 18:10:20
+       T76K912929 Q D TARSYSTEM leer KOI 18.11.2026 18:11:04 (STRKORR T76K912928)
+E070C: beide Mandant 100
+E07T:  beide "T441V 02/AE Mit Bestellungen X->A Test Fabio NICHT FREIGEBEN"
+E071:  T76K912929 R3TR VDAT V_441VC, OBJFUNC K (einzige Objektzeile)
+E071K: T76K912929 R3TR TABU T441V, MASTERTYPE VDAT, MASTERNAME V_441VC, TABKEY "10002AE" (einziger Schluessel)
+Schluessel 10002AE steht damit in T76K912929 (offen, eigener lokaler Auftrag) und in T76K903213 (2008, freigegeben).
+Testauftrag vom Mittag unveraendert: T76K912926 W D Ziel leer 12:05:09, T76K912927 Q D 12:05:58; E071 nur VDAT VV_161V_VF,
+E071K nur T161V "100FNB  1100".
+
+6. Rueckbau (nur auf Zuruf Ingos)
+---------------------------------
+SM30, Sicht V_441VC, Pflegen, Zeile 02 / AE, Detailbild, "Mit Bestellungen" wieder auf X, sichern; kommt der Auftragsdialog,
+T76K912928 ausdruecklich setzen (nie T76K912926, nie einen Auftrag mit Ziel P76). Danach muessen Zielzeile und ganze Tabelle
+nach Schluessel verglichen zeichengleich mit T441V_02_AE_VORHER_2026-11-18.txt sein.
