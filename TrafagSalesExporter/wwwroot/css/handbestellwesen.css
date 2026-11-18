@@ -92,6 +92,8 @@
 
 .hb-gruen { color: green; margin-top: 4px; }
 .hb-rot { color: red; margin-top: 4px; }
+.hb-hinweis { color: #1f5f99; margin: 0 0 8px; }
+.hb-link-neu { display: block; margin: 2px 0 6px; font-size: 0.9em; }
 .hb-meldung { margin: 10px 0; padding: 8px 12px; border: 1px solid; }
 .hb-meldung-rot { color: #b00000; border-color: #b00000; background: #fff0f0; }
 .hb-meldung-gruen { color: #006b2d; border-color: #01A95C; background: #effaf3; }

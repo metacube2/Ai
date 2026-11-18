@@ -344,6 +344,28 @@ public sealed class HandbestellwesenServiceTests : IDisposable
         Assert.False(item.IsVisible); // erst nach dem Datenimport einblenden
     }
 
+    // ---------- 2026-11-18 (Rueckmeldung Sandro): Kreditorliste alphabetisch, nicht nach Bytes ----------
+
+    [Fact]
+    public async Task Kreditoren_Alphabetisch_Klein_Und_Umlaut_Nicht_Hinter_Z()
+    {
+        using (var db = _factory.CreateDbContext())
+        {
+            db.Kreditoren.AddRange(
+                new HbKreditor { Nr = "1", Name = "Zürichsee-Fähre AG", Ort = "Horgen" },
+                new HbKreditor { Nr = "2", Name = "air-compact GmbH", Ort = "Mägenwil" },
+                new HbKreditor { Nr = "3", Name = "Österreichisches Rotes Kreuz", Ort = "Wien" },
+                new HbKreditor { Nr = "4", Name = "AZ Fachverlage AG", Ort = "Aarau" },
+                new HbKreditor { Nr = "5", Name = "z-form GmbH", Ort = "Hinwil" });
+            db.SaveChanges();
+        }
+
+        var namen = (await _hb.KreditorenAsync()).Select(k => k.Name).ToList();
+
+        // SQLite haette „AZ“, „Muster“, „Zürichsee“ und danach „air-compact“, „z-form“, „Österreich…“ geliefert.
+        Assert.Equal(["air-compact GmbH", "AZ Fachverlage AG", "Muster AG", "Österreichisches Rotes Kreuz", "z-form GmbH", "Zürichsee-Fähre AG"], namen);
+    }
+
     // ---------- 2026-11-18: Stammdaten neu erfassen fuer alle, Freigabeliste mit Kostenstellen- und Projektleiter ----------
 
     [Fact]

@@ -103,7 +103,11 @@
 
                 case "kreditoren":
                     <h1>Kreditorenverzeichnis</h1>
-                    @if (_benutzer.IstAdmin)
+                    @if (DarfErfassen && !_benutzer.IstAdmin)
+                    {
+                        <p class="hb-hinweis">Fehlt ein Eintrag, hier neu erfassen. Ändern und Löschen macht der Admin.</p>
+                    }
+                    @if (DarfErfassen)
                     {
                         <div class="hb-form">
                             <h3>@(_kredNeu ? "Kreditor hinzufügen" : $"Kreditor {_kred.Nr} bearbeiten")</h3>
@@ -198,7 +202,11 @@
 
                 case "kostenstellen":
                     <h1>Kostenstellen</h1>
-                    @if (_benutzer.IstAdmin)
+                    @if (DarfErfassen && !_benutzer.IstAdmin)
+                    {
+                        <p class="hb-hinweis">Fehlt ein Eintrag, hier neu erfassen. Ändern und Löschen macht der Admin.</p>
+                    }
+                    @if (DarfErfassen)
                     {
                         <div class="hb-form">
                             <h3>@(_kostNeu ? "Kostenstelle hinzufügen" : $"Kostenstelle {_kost.Nr} bearbeiten")</h3>
@@ -226,7 +234,11 @@
 
                 case "sachkonten":
                     <h1>Sachkonten</h1>
-                    @if (_benutzer.IstAdmin)
+                    @if (DarfErfassen && !_benutzer.IstAdmin)
+                    {
+                        <p class="hb-hinweis">Fehlt ein Eintrag, hier neu erfassen. Ändern und Löschen macht der Admin.</p>
+                    }
+                    @if (DarfErfassen)
                     {
                         <div class="hb-form">
                             <h3>@(_sachNeu ? "Sachkonto hinzufügen" : $"Sachkonto {_sach.Nr} bearbeiten")</h3>
@@ -464,6 +476,11 @@
                             <option value="">Kreditor</option>
                             @foreach (var k in _kreditoren) { <option value="@k.Nr">@k.Name ---- @k.Ort</option> }
                         </select>
+                        @if (DarfErfassen)
+                        {
+                            @* Rueckmeldung Sandro/Vinc 18.11.: Kreditor fehlt (PCBWin), Erfassen war nicht zu finden *@
+                            <a class="hb-link-neu" href="handbestellwesen/kreditoren">Kreditor fehlt? Hier neu erfassen</a>
+                        }
                         @if (_kreditoren.FirstOrDefault(x => x.Nr == _e.KreditorNr) is { } kr)
                         {
                             <table class="hb-kreditor">
@@ -499,9 +516,12 @@
                         {
                             <select class="hb-feld" @bind="_e.FreigeberKurzzeichen">
                                 <option value="">Berechtigte Person</option>
-                                @foreach (var f in _freigeber) { <option value="@f.Kurzzeichen">@f.Kurzzeichen - @f.Name</option> }
+                                @foreach (var o in _freigeber)
+                                {
+                                    <option value="@o.Mitarbeiter.Kurzzeichen" disabled="@(!o.Berechtigt)">@FreigeberZeile(o)</option>
+                                }
                             </select>
-                            @if (_freigeber.Count == 0) { <div class="hb-rot">@(Options.CurrentValue.FreigabeNurGleicheKostenstelle ? "Für diese Kostenstelle ist niemand mit genügend Berechtigung erfasst." : "Niemand mit genügend Berechtigung erfasst.")</div> }
+                            @if (!_freigeber.Any(x => x.Berechtigt)) { <div class="hb-rot">@(Options.CurrentValue.FreigabeNurGleicheKostenstelle ? "Für diese Kostenstelle ist niemand mit genügend Berechtigung erfasst." : "Niemand mit genügend Berechtigung erfasst.")</div> }
                         }
 
                         <select class="hb-feld" @bind="_e.Sachkonto">
@@ -534,7 +554,7 @@
     private HbBestellEingabe _e = new();
     private string _wert = string.Empty;
     private bool? _berechtigt;
-    private List<HbMitarbeiter> _freigeber = [];
+    private List<HbFreigeberOption> _freigeber = [];
     private string? _neueNummer;
     private bool _speichert;
 
@@ -804,7 +824,7 @@
         }
         _berechtigt = _e.Bestellwert <= besteller.Limit;
         _freigeber = _berechtigt == false && !string.IsNullOrEmpty(_e.Kostenstelle)
-            ? await Hb.FreigeberAsync(_e.Kostenstelle, _e.Bestellwert.Value, besteller.Kurzzeichen)
+            ? await Hb.FreigabeOptionenAsync(_e.Kostenstelle, _e.Bestellwert.Value, besteller.Kurzzeichen)
             : [];
         if (_berechtigt == true) _e.FreigeberKurzzeichen = null;
     }
@@ -833,6 +853,16 @@
             _speichert = false;
         }
     }
+
+    /// <summary>Neu erfassen: Admin und jede aktive Person mit Mitarbeitereintrag, wie in der neuen Ansicht (18.11.2026).</summary>
+    private bool DarfErfassen => _benutzer is { } b && (b.IstAdmin || b.Mitarbeiter is { Aktiv: true });
+
+    /// <summary>Ueber 1'000 CHF stehen Kostenstellen- und Projektleiter mit Rolle oben (Wunsch Vinc 17./18.11.); wessen
+    /// Limit nicht reicht, steht grau und ist nicht waehlbar.</summary>
+    private static string FreigeberZeile(HbFreigeberOption o)
+        => $"{o.Mitarbeiter.Kurzzeichen} - {o.Mitarbeiter.Name}"
+           + (o.Rolle is null ? "" : $" ({o.Rolle})")
+           + (o.Berechtigt ? "" : $" – Limit CHF {o.Mitarbeiter.Limit:N0} reicht nicht");
 
     private Task KreditorSpeichernAsync() => StammAsync(async () => { await Hb.SpeichereKreditorAsync(_benutzer!, _kred, _kredNeu); _kred = new(); _kredNeu = true; });
     private Task KostenstelleSpeichernAsync() => StammAsync(async () => { await Hb.SpeichereKostenstelleAsync(_benutzer!, _kost, _kostNeu); _kost = new(); _kostNeu = true; });

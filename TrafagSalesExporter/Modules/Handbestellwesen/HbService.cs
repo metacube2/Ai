@@ -67,13 +67,20 @@ public sealed class HbService(IDbContextFactory<HbDbContext> dbFactory, IOptions
     public async Task<List<HbKreditor>> KreditorenAsync()
     {
         await using var db = await dbFactory.CreateDbContextAsync();
-        return await db.Kreditoren.AsNoTracking().OrderBy(x => x.Name).ToListAsync();
+        // Sortiert wird hier und nicht in SQLite: dessen ORDER BY vergleicht Bytes, dann stehen die 86 Kreditoren in
+        // Kleinschrift („air-compact“, „z-form“) und „Österreichisches …“ hinter „Zürichsee-Fähre“ (Rückmeldung Sandro 18.11.).
+        var liste = await db.Kreditoren.AsNoTracking().ToListAsync();
+        return liste.OrderBy(x => x.Name.Trim(), Alphabetisch).ThenBy(x => x.Ort, Alphabetisch).ThenBy(x => x.Nr, StringComparer.Ordinal).ToList();
     }
+
+    /// <summary>Alphabetische Reihenfolge wie im Telefonbuch: Gross/Klein egal, Umlaute beim Grundbuchstaben.</summary>
+    internal static readonly StringComparer Alphabetisch = StringComparer.Create(CultureInfo.GetCultureInfo("de-CH"), CompareOptions.IgnoreCase);
 
     public async Task<List<HbMitarbeiter>> MitarbeiterAsync()
     {
         await using var db = await dbFactory.CreateDbContextAsync();
-        return await db.Mitarbeiter.AsNoTracking().OrderBy(x => x.Kurzzeichen).ToListAsync();
+        var liste = await db.Mitarbeiter.AsNoTracking().ToListAsync();
+        return liste.OrderBy(x => x.Kurzzeichen, Alphabetisch).ToList();
     }
 
     public async Task<List<HbKostenstelle>> KostenstellenAsync()
