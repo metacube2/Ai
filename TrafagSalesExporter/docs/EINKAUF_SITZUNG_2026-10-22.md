@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-18 (Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -301,3 +301,16 @@ Fundstellen von der Hauptsitzung nachgeprueft: Disponentenfilter 001-006, Aufris
   „Zeit“) warten, nur den `Slfdt`-Abruf vorbereiten.
 * Offene Entscheide D1-D14 (Plan Abschnitt 8), u. a. Lieferant nach Nummer statt Name, Klasse fest oder im Filterkontext,
   Kurztext oder Langtext bei Q2, Ort `/einkauf/lieferanten`, Sichtbarkeit der ersten Fassung, P76 lesen fuer die Abnahme.
+
+### 6.7 Paket 1 Schritt 2: Lieferanten-Klasse A/B/C produktiv (2026-11-18, deployed 08:15 `f2c0267`)
+
+Auftrag Ingo 18.11. („dann die Sachen mit Armin umsetzen“), mit den Vorschlaegen des Plans (D1 Grenzfall wie V6, D2 Klasse fest auf
+allen Einkaufsteilen, D3 nach Lieferantennummer, D4 Volumen <= 0 ohne Klasse, D12 bestehende Seite). Seite `/einkauf/lieferanten`,
+neuer Block „Lieferanten-Klasse A/B/C nach Einkaufsvolumen“ (`Components/Pages/PurchasingSupplierClass.razor`): Chips je Klasse
+(Anzahl, Anteil, CHF), Tabelle mit Klasse, Nr., Lieferant (Name des juengsten Belegs), Einkaufsvolumen CHF, Anteil, kumuliert,
+Positionen, groesster Disponent, Suche. Rechnung `SupplierEvoClassifier` und `PurchasingDashboardService.BuildSupplierEvoClassRowsAsync`
+auf genau der Menge des Spend-Aufrisses mit „Nur Einkaufsteile“ (Test: Summe gleich). Zeitraum = Seitenfilter. Tests: Suite 1617/1617.
+
+Offen: Abnahme produktiv (Summe A+B+C gegen den Aufriss „Lieferant“ mit Schalter an, gleicher Zeitraum; im Browser nicht geprueft,
+Windows-Chrome nicht verbunden); Link an Einkauf und Armin (D13, Ingo); D1 „A umfasst mindestens 70 %“ von Armin bestaetigen lassen;
+Q2 (Schritt 5 ff., eigener SAP-Plan) und Liefertreue (nach 01.12.) noch nicht begonnen. Handbuch Kapitel Einkauf noch nicht nachgefuehrt.

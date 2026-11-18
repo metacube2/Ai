@@ -1,6 +1,6 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
+Stand: 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
 `Schreiben` an, noch nicht ausgefuehrt: ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
 AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
 der juengste Inhalt war damals vom 2026-10-27).
@@ -492,6 +492,28 @@ Bei 10 aendert sich der Name: neun Schreibweisen (Umlaute, Akzente, Leerzeichen)
 vergeben. Ihn automatisch zu uebernehmen, schriebe die alten Bestellungen dieser Kurzzeichen der neuen Person zu. **Darum nicht
 ausgefuehrt; Entscheid Ingo offen.** Der Nachtlauf aendert vorerst nichts: der 17.11. ist mit dem gestoppten Lauf von 11:30
 erledigt, und am 18.11. stoppt er wieder an der Grenze (15 > 10).
+
+### 6.13 Stammdaten fuer alle Besteller, Freigabe ueber CHF 1'000 mit Rollen (2026-11-18, deployed 08:15 `f2c0267`)
+
+Anlass: Mails Einkauf 17./18.11. (Sandro nach dem Test: Bestellung, Limit, Wareneingang; Vinc: PCBWin fehlt als Kreditor, ueber
+1'000 CHF muessen Kostenstellenleiter und Projektleiter in der Freigabe stehen; Alex: Mitarbeitende sollen Kreditoren,
+Kostenstellen und Sachkonten selbst erfassen wie im alten Tool). Entscheide Ingo 18.11.: Projektleiter als Haken am Mitarbeiter;
+freigeben nur mit genuegend Limit; Kreditoren, Kostenstellen **und** Sachkonten neu anlegen fuer alle.
+*Damit ueberholt:* „Stammdaten nur Admin“ (Abschnitt 2.2/6) gilt nur noch fuer Aendern, Loeschen und Mitarbeitende.
+
+- **Neu anlegen:** jede aktive Person mit Mitarbeitereintrag und jeder Admin (`HbService.NurErfasser`); aendern und loeschen nur
+  Admin (`NurAdmin`, Meldung „Stammdaten ändern oder löschen darf nur ein Admin“). Reiter „Stammdaten“ fuer alle Erfasser sichtbar,
+  ohne Unterreiter Mitarbeiter, ohne Bearbeiten-Stift und Loeschen; Hinweis oben. Neuer Kreditor mit gleichem Namen (nur Buchstaben
+  und Ziffern, ohne Rechtsform am Ende wie AG/GmbH) wird abgelehnt und nennt den vorhandenen.
+- **Freigabe ueber CHF 1'000** (`HbOptions.FreigabeRollenAbBetrag`, Vorgabe 1000): Die Liste zeigt zuerst den Leiter der
+  Bestell-Kostenstelle (`HbKostenstelle.Leiter`), dann alle Projektleiter (neue Spalte `Mitarbeiter.IstProjektleiter`, beim Start per
+  `ALTER TABLE`, Schalter im Mitarbeiter-Formular), dann alle uebrigen Berechtigten. Wer zu wenig Limit hat, steht grau und ist nicht
+  waehlbar („Limit CHF … zu tief“); die Pruefung beim Speichern ist unveraendert (`FreigeberAsync`). Bis CHF 1'000 wie bisher.
+  **Ohne gepflegte Leiter und Projektleiter-Haken aendert sich nichts**: Ingo/Admin muss Leiter je Kostenstelle und die Haken setzen.
+- **Wareneingang:** Meldung jetzt „Bestellung E26 … ist gebucht und archiviert.“ (Wunsch Sandro).
+- Tests: Handbestellwesen 41/41 (fuenf neu), Suite 1617/1617, Release-Worktree 1617/1617.
+- **Offen:** Sandros Punkt 2 („Limit 1'000 CHF ueber dem Betrag nicht moeglich“) ist unklar, Rueckfrage; PCBWin kann jetzt jeder
+  Besteller selbst anlegen; Oberflaeche nach dem Deploy nicht im Browser geprueft (Windows-Chrome war nicht verbunden).
 
 ## 7. Naechste Schritte
 
