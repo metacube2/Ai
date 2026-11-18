@@ -257,7 +257,7 @@ ANDROID = [
 DESKTOP = Path("/Volumes/ExtOsX/Entwicklung/desktop")
 WINDOWS = [
     {"name": "FT991A Remote für Windows", "kennung": "ft991a-remote-win", "bild": "macyaesu",
-     "msi": DESKTOP / "ft991a-remote-win/build/windows/FT991A Remote_1.0.0_x64-setup.exe",
+     "msi": DESKTOP / "ft991a-remote-win/build/windows/FT991A Remote_1.0.1_x64-setup.exe",
      "datei": "FT991A-Remote-Windows-Setup.exe", "anleitung": "FT991A-Remote-Windows-Testanleitung.html",
      "kurz": "Die neue Windows-App (Tauri): FT-991A per USB-CAT fernsteuern, Modern- und Frontpanel-Ansicht, QSO-Log, "
              "CAT-Konsole, Speicher mit Scan, Relais-Schnellkonfiguration, Papagei über USB-Audio, Infobereich, "
