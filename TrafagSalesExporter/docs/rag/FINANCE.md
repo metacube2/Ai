@@ -1,12 +1,19 @@
 # RAG Finance
 
-Stand: 2026-11-18 10:48 (Ampel Lieferant/Herstellkosten aus Sales_All 18.11.); davor 2026-11-16 (Sales_All mit Blatt `Lieferantenzuordnung`, `2da2682`); davor 2026-11-13 (Lieferantenzuordnung nachgemessen, Sales_All mit Supplier Type / Delivering Entity, `df48301`); davor 2026-11-12 (Doku-Pruefung: Kursprofil Budgetkurs, Spanien-Ausnahme der Jahresabgrenzung, Journal-Faelligkeitsdatum, Italien-Doppelzeilen, Indien-Quelle, offene Fachpunkte `ISS-007.4`, `ISS-032` und Spanien-Lieferant `ISS-003.3` ergaenzt); davor 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
+Stand: 2026-11-18 18:05 (Plan Mapping/Issue Topic nach der Besprechung mit Andreas, nichts gebaut); davor 2026-11-18 10:48 (Ampel Lieferant/Herstellkosten aus Sales_All 18.11.); davor 2026-11-16 (Sales_All mit Blatt `Lieferantenzuordnung`, `2da2682`); davor 2026-11-13 (Lieferantenzuordnung nachgemessen, Sales_All mit Supplier Type / Delivering Entity, `df48301`); davor 2026-11-12 (Doku-Pruefung: Kursprofil Budgetkurs, Spanien-Ausnahme der Jahresabgrenzung, Journal-Faelligkeitsdatum, Italien-Doppelzeilen, Indien-Quelle, offene Fachpunkte `ISS-007.4`, `ISS-032` und Spanien-Lieferant `ISS-003.3` ergaenzt); davor 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 Das ist eine **historische Messreferenz vom Juli 2026**, kein Vorrang fuer heute: sie
 kennt zum Beispiel nur Schweizer Konzernkosten. Vorrang hat nach `router.md` Regel 1 immer der
 juengste direkt gepruefte Beleg zum jeweiligen Thema.
+
+**Plan 2026-11-18 (Besprechung Ingo/Andreas 14:37, nichts gebaut):** `docs/FINANCE_PLAN_MAPPING_ISSUE_TOPIC_2026-11-18.md`. Kernpunkte: Die besprochene Kostenkette
+(letzter Lieferant, ein Schritt, ohne Lieferant Werkstamm Trafag AG, sonst lokale Kosten) ist der produktive Stand; neu waeren
+die Spalte „Issue Topic“ in Sales_All (warum die Kette nicht bis zu den Konzernkosten kam) und eine Mapping-Tabelle lokale
+Artikelnummer auf Gruppennummer, die nur `GroupMaterialNumber` fuellt. Zugesagt an Andreas: zwei Excel (Sales_All mit Issue
+Topic, Mapping als Tabelle). Elf Entscheide offen (E1 bis E11), darunter E2: ist „Entscheid 1“ damit fuer den Werkstamm
+entschieden (schriftliche Bestaetigung fehlt).
 
 Formeln/Mechanik: `docs/rag/FINANCE_FORMELN.md`. Historische Messungen und
 ersetzte Zwischenstaende stehen in den Detaildokumenten und in

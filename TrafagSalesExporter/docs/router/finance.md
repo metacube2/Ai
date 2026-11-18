@@ -1,6 +1,6 @@
 # Unterrouter Finance
 
-Zurueck: `router.md`. Stand: 2026-11-12 (Doku-Pruefung: Q-Schalter des Monthly Review seit 2026-11-09 ein); davor 2026-11-05 (Monthly Review Phase 1 gebaut); davor 2026-10-06 (Standardkosten und Marge in CHF in Finance Details), 2026-09-29.
+Zurueck: `router.md`. Stand: 2026-11-18 (Plan Mapping/Issue Topic nachgetragen); davor 2026-11-12 (Doku-Pruefung: Q-Schalter des Monthly Review seit 2026-11-09 ein); davor 2026-11-05 (Monthly Review Phase 1 gebaut); davor 2026-10-06 (Standardkosten und Marge in CHF in Finance Details), 2026-09-29.
 
 Finance Cockpit, Soll/Ist, Formeln, Marge, Standardkosten, Supplier, Journal,
 Marktsegmente.
@@ -30,6 +30,7 @@ Marktsegmente.
 | **TR IT Bewertungsmethode Moving Average**: Antwort Paola vom 2026-09-04 (Primaerquelle), seit 2026-09-29 korrigiert auf „nur mit Bestand null umstellbar" | `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` |
 | **TR IT Referenzkost je Artikel** aus Bestandswert geteilt durch Bestandsmenge: Andreas' Vorschlag vom 2026-09-09, was davon schon produktiv ist, vorbereitetes Messpaket, Abgrenzung gegen die Konzern-Herstellkosten, Antwortvorschlaege | `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` |
 | **Supplier-Klassifikation, Laenderstatus, CH-Werkstamm-Fallback** | `docs/FINANCE_SUPPLIER.md` |
+| **Plan Artikel-Mapping, Kostenkette und Attribut „Issue Topic“ in Sales_All** (Besprechung Ingo/Andreas 18.11., Abgleich mit dem Code, Entscheide E1 bis E11, Arbeitspakete; nichts gebaut) | `docs/FINANCE_PLAN_MAPPING_ISSUE_TOPIC_2026-11-18.md` |
 | **Beides als Diagramm fuer Andreas**: Andreas' Grundregel, warum daraus vier Belegstufen werden, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, alle fuenf Schalter, Statuskette | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` |
 | Hauptbuch-Import, live gepruefte B1-Feldbelegung, DueDate-Umsetzung und Zahlungs-/Ausgleichsdatum; CH/AT-EntitySet-Abgleich | `docs/FINANCE_JOURNAL.md` |
 | **Journal fuer die Konsolidierung: Zielbild Andreas, Faelligkeitsdatum vorbereitet, Konzernkonto-Mapping offen, Aufbau von `Finance_All` mit Feldstatus** | `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md` |

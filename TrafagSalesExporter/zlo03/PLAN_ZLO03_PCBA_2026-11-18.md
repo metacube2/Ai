@@ -1,6 +1,6 @@
 # ZLO03 mit PCBA-Stuecklisten (Verwendung 9): Plan fuer eine Kopie mit neuer Transaktion
 
-Stand: 2026-11-18, Phase 1 (nur lesend in T76/100, eigene GUI-Sitzung `/app/con[0]/ses[1]`, kein RFC, kein Passwort).
+Stand: 2026-11-18 abends (Nebenbefunde 4 und 5 in Abschnitt 2.7 nachgetragen); davor 2026-11-18, Phase 1 (nur lesend in T76/100, eigene GUI-Sitzung `/app/con[0]/ses[1]`, kein RFC, kein Passwort).
 Nichts in SAP geschrieben, keine Datei im Repository geaendert. Das Original `ZLO03` / `Z_ZLO03_TURBO2` bleibt unveraendert.
 
 Anlass: Wunsch aus dem Projektmanagement (Mail 18.11.): In ZLO03 soll auch die Stuecklistenverwendung 9 „PCBA
@@ -228,6 +228,13 @@ Loeschvormerkung, Status leer) [B]; bei Auswahl nur 56861 muss C31747 deshalb **
    zusaetzlich `BESKZ <> 'F'`. Das Kennzeichen ist damit praktisch nur ueber `BAUGRUPPE` aus der Tabelle gesetzt.
 2. Transaktionstext von ZLO03 ist ein einzelnes Zeichen „§“ (U+00A7) [B] SE93.
 3. In P76 ist offen, welches Programm `ZPOWERBI_VC_TXT` fuellt (T76-Generator schreibt `ZAT_VC_TXT`).
+4. *(Nachtrag 18.11. abends)* Kurztext in der Anmeldesprache: `load_stammdaten_cache` liest MAKT ueber `sy-langu`, `process_main`
+   loescht Komponenten ohne Text. Wer die ZLO03 (oder die Kopie) nicht deutsch startet, verliert Teile ohne Text in seiner Sprache;
+   so fehlten im Dashboard-Materialanteil die bestueckten Leiterplatten. Die Kopie erbt das Verhalten.
+   `BEFUND_SPRACHE_MATERIALANTEIL_2026-11-18.md`.
+5. *(Nachtrag 18.11. abends)* Materialanteil im Dashboard: Die bestueckte Leiterplatte ist dort ein Einkaufsteil mit eigenem Preis
+   (Warengruppe 10.08.00). Loest die Kopie sie zusaetzlich in Bauteile auf, darf eine spaetere Auswertung nicht Leiterplatte und
+   Bauteile zaehlen. Das Dashboard liest weiter das Original (`ZloTopDownSet`).
 
 ---
 

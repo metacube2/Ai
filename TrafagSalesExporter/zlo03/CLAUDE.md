@@ -376,6 +376,9 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
 - `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` — **FIX 27**: alte Menge in den VKNR-Spalten, neue Menge als Zusatzspalten;
   Quelltext `Z_ZLO03_TURBO2_FIX27_2026-11-09.abap`, Auftrag `T76K912839`; Test `Z_KOI_ZLO_FIX27_TEST.abap`
   *(ueberholt am 2026-11-12: aktueller Quelltext ist FIX 28)*
+- `BEFUND_SPRACHE_MATERIALANTEIL_2026-11-18.md` — Befund 18.11.: `load_stammdaten_cache` liest MAKT ueber `sy-langu`, der alte
+  FIX 4 loescht Komponenten ohne Text; die Dashboard-Anfrage lief englisch, Einkaufsteile ohne englischen Kurztext fehlten im
+  Materialanteil. Im Dashboard behoben (`sap-language=DE`); in `Z_ZLO03_TURBO2` **nichts geaendert**, Vorschlag im Befund
 - `FIX28_SELBSTSTUECKLISTE_2026-11-12.md` — **FIX 28**: Selbst-Stuecklisten nicht doppelt zaehlen (Meldung Armin, D13006);
   aktueller Quelltext `Z_ZLO03_TURBO2_FIX28_2026-11-12.abap`, Auftrag `T76K912902`; Test `Z_KOI_ZLO_FIX28_TEST.abap`
   (in T76 nach dem Test geloescht)
