@@ -623,6 +623,8 @@ LIMIT 12;", cancellationToken);
         {
             (state.PurchasingPartsSpendPerspectiveRows, state.PurchasingPartsProductGroupAllocation) =
                 await BuildSpendBreakdownAsync(conn, filter, $"{spendItemFilter} AND {PurchasingPartsFilterSql("p")}", cancellationToken);
+            // Lieferantenbewertung Paket 1 (2026-11-18): Klasse A/B/C je Lieferantennummer auf genau derselben Menge.
+            state.SupplierEvoClassRows = await BuildSupplierEvoClassRowsAsync(conn, filter, $"{spendItemFilter} AND {PurchasingPartsFilterSql("p")}", cancellationToken);
         }
         // Lieferanten-Perspektive bleibt der Standardeinstieg und damit die Quelle fuer die
         // bisherige, nicht umschaltbare Kaskadenanzeige.
@@ -1097,6 +1099,54 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
             label = transformLabel(label);
         var value = Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture);
         return $"{label}: CHF {value:N0}";
+    }
+
+    /// <summary>
+    /// Lieferanten-Klasse A/B/C (Lieferantenbewertung Paket 1, Entscheid Armin 17./18.11.2026): Bestellwert der Einkaufsteile
+    /// (Disponent 001 bis 006) im gewaehlten Zeitraum je Lieferantennummer, gleicher Filter, Zeitraum und Jahresklammer wie der
+    /// Spend-Aufriss mit „Nur Einkaufsteile“, damit A + B + C + ohne Klasse dessen Summe ergibt. Gruppiert wird nach der
+    /// normalisierten Nummer (nicht nach dem Namen wie im Aufriss); der Name kommt vom juengsten Beleg.
+    /// </summary>
+    internal static async Task<List<SupplierEvoClassRow>> BuildSupplierEvoClassRowsAsync(
+        SqliteConnection conn, PurchasingDashboardFilter filter, string itemFilter, CancellationToken cancellationToken)
+    {
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT COALESCE(k.Lifnr, '') AS Lifnr,
+       COALESCE(k.SupplierName, '') AS Name,
+       MAX(COALESCE(k.Bedat, '') || '|' || COALESCE(k.Ebeln, '')) AS Latest,
+       upper(trim(COALESCE(p.MarcDispo, ''))) AS Dispo,
+       COUNT(1) AS Positions,
+       SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + itemFilter + @"
+  AND k.Bedat >= '" + from + @"'
+  AND k.Bedat <= '" + to + @"'
+  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + MaxSpendYear(filter) + @"
+GROUP BY Lifnr, Name, Dispo;";
+        var raw = new List<(string Key, string Name, string Latest, string Dispo, int Positions, decimal Value)>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                raw.Add((SupplierEvoClassifier.NormalizeSupplier(reader.GetString(0)), reader.GetString(1), reader.GetString(2),
+                    reader.GetString(3), Convert.ToInt32(reader.GetValue(4), CultureInfo.InvariantCulture),
+                    reader.IsDBNull(5) ? 0m : Convert.ToDecimal(reader.GetValue(5), CultureInfo.InvariantCulture)));
+            }
+        }
+
+        var grouped = raw.GroupBy(r => r.Key, StringComparer.Ordinal).Select(g =>
+        {
+            var name = g.OrderByDescending(r => r.Latest, StringComparer.Ordinal).Select(r => r.Name).FirstOrDefault(n => n.Length > 0);
+            var topPlanner = g.GroupBy(r => r.Dispo).OrderByDescending(d => d.Sum(r => r.Value)).ThenBy(d => d.Key, StringComparer.Ordinal)
+                .Select(d => d.Key).FirstOrDefault() ?? string.Empty;
+            var label = g.Key.Length == 0 ? "ohne Lieferant" : name ?? g.Key;
+            return (g.Key, label, g.Sum(r => r.Value), g.Sum(r => r.Positions), topPlanner);
+        });
+        return SupplierEvoClassifier.Classify(grouped).ToList();
     }
 
     private static async Task<List<PurchasingLiveChartPoint>> ExecuteChartRowsAsync(SqliteConnection conn, string sql, CancellationToken cancellationToken)

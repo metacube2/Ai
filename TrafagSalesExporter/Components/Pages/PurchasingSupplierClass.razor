@@ -1,0 +1,88 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+@* Lieferantenbewertung Paket 1 (2026-11-18, Plan saptasks/einkauf_lieferantenbewertung/PLAN_PAKET1_2026-11-18.md):
+   Klasse A/B/C je Lieferant nach Einkaufsvolumen, Entscheide Armin 12.11. und 17./18.11. Keine Leistungsnote. *@
+
+<MudPaper Class="pa-3 purchasing-section-shell mt-3" Outlined="true">
+    <MudText Typo="Typo.h6">@T("Lieferanten-Klasse A/B/C nach Einkaufsvolumen", "Supplier class A/B/C by purchasing volume")</MudText>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">
+        @T("Bestellwert der Einkaufsteile (Disponent 001 bis 006) im gewählten Zeitraum je Lieferantennummer, in CHF zum Belegkurs. A bis 70 %, B bis 90 %, C der Rest des Volumens; wer eine Grenze überschreitet, bleibt in der Klasse. Das ist keine Leistungsnote.", "Order value of purchased parts (MRP controller 001 to 006) in the selected period per supplier number, in CHF at the document rate. A up to 70 %, B up to 90 %, C the rest of the volume; a supplier crossing a limit stays in the class. This is not a performance rating.")
+    </MudText>
+    @if (Rows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true">@T("Keine Daten im gewählten Zeitraum.", "No data in the selected period.")</MudAlert>
+    }
+    else
+    {
+        <MudStack Row="true" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap">
+            @foreach (var cls in new[] { "A", "B", "C", SupplierEvoClassifier.NoClass })
+            {
+                var inClass = Rows.Where(r => r.Class == cls).ToList();
+                if (inClass.Count == 0) continue;
+                <MudChip T="string" Color="@ChipColor(cls)" Variant="Variant.Outlined" Size="Size.Small">@ChipText(cls, inClass)</MudChip>
+            }
+        </MudStack>
+        <MudTable Items="Rows" Dense="true" Hover="true" RowsPerPage="25" Filter="@(r => Hit(r))">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTextField @bind-Value="_search" Immediate="true" Placeholder="@T("Suchen", "Search")" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>@T("Klasse", "Class")</MudTh>
+                <MudTh>@T("Nr.", "No.")</MudTh>
+                <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                <MudTh Style="text-align:right">@T("Einkaufsvolumen CHF", "Purchasing volume CHF")</MudTh>
+                <MudTh Style="text-align:right">@T("Anteil", "Share")</MudTh>
+                <MudTh Style="text-align:right">@T("Kumuliert", "Cumulative")</MudTh>
+                <MudTh Style="text-align:right">@T("Positionen", "Items")</MudTh>
+                <MudTh>@T("Disponent", "MRP controller")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd><MudChip T="string" Size="Size.Small" Color="@ChipColor(context.Class)">@context.Class</MudChip></MudTd>
+                <MudTd>@context.SupplierKey</MudTd>
+                <MudTd>@context.Name</MudTd>
+                <MudTd Style="text-align:right">@context.Evo.ToString("#,0", Ch)</MudTd>
+                <MudTd Style="text-align:right">@Pct(context.Share)</MudTd>
+                <MudTd Style="text-align:right">@Pct(context.CumulativeShare)</MudTd>
+                <MudTd Style="text-align:right">@context.Positions.ToString("#,0", Ch)</MudTd>
+                <MudTd>@context.TopPlanner</MudTd>
+            </RowTemplate>
+            <PagerContent><MudTablePager /></PagerContent>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public IReadOnlyList<SupplierEvoClassRow> Rows { get; set; } = [];
+
+    private static readonly CultureInfo Ch = CultureInfo.GetCultureInfo("de-CH");
+    private string? _search;
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private bool Hit(SupplierEvoClassRow r)
+        => string.IsNullOrWhiteSpace(_search)
+           || r.SupplierKey.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase)
+           || r.Name.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase)
+           || string.Equals(r.Class, _search.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private static string Pct(decimal share) => (share * 100m).ToString("0.0", Ch) + " %";
+
+    private string ChipText(string cls, List<SupplierEvoClassRow> rows)
+    {
+        var total = Rows.Where(r => r.Evo > 0).Sum(r => r.Evo);
+        var share = total == 0 ? 0 : rows.Where(r => r.Evo > 0).Sum(r => r.Evo) / total;
+        var label = cls == SupplierEvoClassifier.NoClass ? T("ohne Klasse", "no class") : cls;
+        return $"{label}: {rows.Count.ToString("#,0", Ch)} · {Pct(share)} · CHF {rows.Sum(r => r.Evo).ToString("#,0", Ch)}";
+    }
+
+    private static Color ChipColor(string cls) => cls switch
+    {
+        "A" => Color.Primary,
+        "B" => Color.Info,
+        "C" => Color.Default,
+        _ => Color.Warning
+    };
+}
