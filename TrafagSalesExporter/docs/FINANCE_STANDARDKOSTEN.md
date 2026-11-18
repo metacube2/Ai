@@ -1,6 +1,6 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-11-12 (Doku-Pruefung: Abschnitt 7c Kursprofil als ueberholt markiert, Indien-Quelle in Abschnitt 2, toter Querverweis); davor 2026-10-29 (Vermerke in Abschnitt 7 und 12); fachlich 2026-09-29
+Stand: 2026-11-18 10:00 (Abschnitt 13: Herstellkosten je Land mit Ampel; neuer Befund UK 1'586 interne Zeilen ohne Konzernkosten); davor 2026-11-12 (Doku-Pruefung: Abschnitt 7c Kursprofil als ueberholt markiert, Indien-Quelle in Abschnitt 2, toter Querverweis); davor 2026-10-29 (Vermerke in Abschnitt 7 und 12); fachlich 2026-09-29
 
 Abschnitt 6 ist am 2026-09-04 umgeschrieben worden: die Bewertungsmethode bestehender
 B1-Artikel galt danach in Italien als technisch nicht umstellbar, die fruehere Aussage „als
@@ -948,6 +948,27 @@ erste Iteration.
 **Offen bleibt der Fall ohne Lieferantenfeld**, weil dort weder extern noch intern bekannt
 ist. Dafuer gilt weiter die Entscheidungsrichtung aus 7a: MARC Werk 1100 als Standard, mit
 Andreas' einfacherer Variante als Schalter.
+
+## 13. Herstellkosten je Land, Ampel (Stand 2026-11-18 10:00)
+
+Sales_All 16.11., Blatt Finance Details, Finance Include, Rechnungen 2025/2026 (vor dem Deploy vom 18.11., der FR/US/IT-Lieferanten
+ergaenzt; die Kostenquelle aendert sich dadurch nur wenig, FINANCE_SUPPLIER 11). Anteile nach Umsatz CHF.
+
+| TSC | Umsatz CHF | Gruppenmarge | Kostenquelle (Umsatzanteil) | ohne Kosten (Status) | Ampel | offen |
+| --- | ---: | ---: | --- | --- | --- | --- |
+| TRCH | 159,6 Mio. | 39,1 % | 100 % Konzernkosten TR AG | 1'217 Zeilen „Standardpreis fehlt“, alle Gutschriften/Erlösminderungen (-0,70 Mio.) | gruen | - |
+| TRAT | 6,7 Mio. | 48,2 % | 94 % TR AG, 6 % interner Standardpreis (216 Zeilen ohne TR-AG-Preis) | keine | gruen | - |
+| TRDE | 6,8 Mio. | 34,5 % | 99,7 % lokale Standardkosten | 2'144 Zeilen (1,9 % Umsatz) | rot | Lieferant fehlt (Rohail); DE-eigene Nummern (`N10.0`) findet der Werkstamm nicht |
+| TRES | 7,0 Mio. | 47,6 % | 65 % TR AG (Werkstamm), 35 % lokal | 774 Zeilen (0,9 %) | gelb | Lieferant aus Sage-Wareneingang deployed, Santi-Lauf |
+| TRFR | 2,7 Mio. | 70,5 % | 87 % TR AG, 7 % lokal, 3 % interner Standardpreis | 1'334 Zeilen (2,2 %), viele Kleinbetraege | gelb | Entscheid 1; Wareneingang bestaetigt TR AG |
+| TRIT | 14,5 Mio. | 40,1 % | 60 % TR AG, 33 % Kosten aus Verkaufszeile (extern), 5 % interner Standardpreis | 252 Zeilen (0,1 %) + 6 unklar | gelb | Entscheid 2 (Ware aus Indien, 448 Zeilen), 191 Trafag-Italia-Zeilen ohne Kosten, SCHENKER (Paola) |
+| TRUK | 7,8 Mio. | 68,0 % | 74 % TR AG, **23 % interner Standardpreis (1'586 Zeilen)** | 41 Zeilen (0,4 %) | gelb | 1'586 interne Zeilen finden keine Konzernkosten (Ursache offen, vermutlich UK-eigene Nummern), 87 Indien-Zeilen (Entscheid 2) |
+| TRUS | 7,2 Mio. | 57,6 % | 95 % TR AG, 5 % lokal | 19 Zeilen + 77 unklar (0,5 %) | gruen | Entscheid 1 |
+| TRIN | 16,8 Mio. | 54,7 % | 71 % TR IN (eigene Fertigung), 28 % TR AG (LRD) | 143 LRD ohne Konzernkosten (0,7 %), 36 unklar | gelb | 143 LRD-Zeilen ohne TR-AG-Kosten |
+
+Ampel: gruen = HK aus Konzernkosten, nichts offen; gelb = einzelne offene Punkte oder Entscheid; rot = HK fast nur lokal.
+**Neuer Befund:** UK hat 1'586 Zeilen (23 % des Umsatzes) mit Lieferant intern, aber ohne Konzernkosten; die Gruppenmarge rechnet
+dort mit dem UK-Standardpreis (meist dem IC-Einkaufspreis). Ursache noch nicht untersucht.
 
 ## Querverweise
 

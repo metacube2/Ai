@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-18 09:35 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang deployed 09:31 `8d15d48`, mit Spanien `c9208b5`; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-18 10:00 (Abschnitt 12: Ampel je Land zu Andreas' Feststellungen und weitere Feststellungen); davor 09:35 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang deployed 09:31 `8d15d48`, mit Spanien `c9208b5`; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -689,6 +689,31 @@ pruefbar (nur ueber den Server erreichbar). Tests 1624/1624.
 ob in Sales_All sichtbar werden soll, dass ein Lieferant aus dem Wareneingang stammt (heute nur intern, Spanien hat das auch nicht).
 Mit dem Deploy werden die Saetze „Standardlieferant im B1-Artikelstamm pflegen“ fuer FR/US im Antwortentwurf an Andreas und im
 Regelset-Dokument ueberholt; Paolas Liste mit 162 Artikeln bleibt sinnvoll (ausdrueckliche Zuordnung geht vor).
+
+## 12. Stand der Feststellungen Andreas je Land, Ampel (Stand 2026-11-18 10:00)
+
+Feststellungen aus Andreas' Mail vom 13.11.; Zahlen Sales_All 16.11., Finance Include, 2025/2026, und die Messung vom 18.11.
+(Abschnitt 11). Gruen = erledigt, Gelb = gebaut/deployed, wartet auf Datenlauf, Orange = wartet auf andere, Rot = Entscheid offen.
+
+| Land | Feststellung | Ampel | Stand 18.11. | offen bei |
+| --- | --- | --- | --- | --- |
+| AT, CH | kein Lieferant | gruen | Regel 1: immer TR AG, die Verkaufsfaktura kennt keinen Vorlieferanten | - |
+| DE | kein Lieferant | orange | Alphaplan-Export ohne Lieferantenspalte; Werkstamm findet DE-eigene Nummern nicht (Beispiel `N10.0` = Transmitter 8202) | Rohail (Entwurf 18.11., Abwesenheitsnotiz) |
+| ES | kein Lieferant | gelb | Lieferant aus letztem Sage-Wareneingang seit 18.11. 09:31 produktiv (`c9208b5`) | Santi: neuer Exportlauf |
+| FR | grosser Teil ohne | gelb | B1 letzter Wareneingang seit 18.11. 09:31: 130 -> 2'489 von 2'881 Zeilen ab 2025 | naechster Exportlauf |
+| US | Grossteil ohne | gelb | dito: 6 -> 1'138 von 1'748 | naechster Exportlauf |
+| IN | Grossteil ohne | gruen | Sales Type entscheidet (7'943 von 8'435); Rest zusaetzlich ueber Wareneingang | - |
+| IT | Trafag Italia als Lieferant, Accountfilter | gruen | zulaessig (Beschluss 27.08.); Kontenfilter 47005 ohne 4700504 seit 30.09. gegen Hauptbuch abgestimmt | - |
+| IT | 2 SCHENKER-Artikel, 191 Zeilen ohne Kosten, 162 neue Artikel | orange | Rueckfrage an Paola (Entwurf 18.11.); bis dahin Wareneingang | Paola |
+| UK | TR09 mit zwei Namen | orange | eine Zeile falsch erfasst, rechnet richtig (Name zaehlt); MO01 ebenfalls zwei Namen, beide extern | Cornell (Entwurf 18.11.) |
+| alle | Entscheid 1: ohne Lieferant Werkstamm oder lokal | rot | Wareneingaenge bestaetigen den Werkstamm (FR 1'188/1'295, US 1'039/1'548, IT 444/514); „immer lokal“ = Gruppenmarge rund 2,5 Mio. CHF tiefer | Andreas (Termin 18.11. 13:00) |
+| IT, UK | Entscheid 2: Ware aus Indien | rot | IT 448/453, UK 87/112 Zeilen mit lokalem Preis statt Kosten TR IN | Andreas |
+
+**Weitere Feststellungen 17./18.11. (nur hier festgehalten):**
+- `TSC` ist die verkaufende Gesellschaft (Sales_All Finance Details Spalte G), fuer CH und AT kommt sie aus derselben Quelle (SAP, Netzwerkanzeige `ZSCHWEIZ`).
+- `Cost Source` stammt aus keinem Quellsystem, der Export setzt es (`GroupMarginCalculator`); die Feldhilfe fuer UK („keine Kostenquelle“) ist veraltet (Abschnitt 10).
+- Der Werkstamm-Abgleich verfehlt Schweizer Produkte, die eine Gesellschaft unter eigener Nummer fuehrt (DE `N10.0`); fuer UK siehe `docs/FINANCE_STANDARDKOSTEN.md` 13 (1'586 interne Zeilen ohne Konzernkosten).
+- Regelset mit Excel-Beispielen und Antworten: `Downloads\Regelset_Lieferantenzuordnung_Group_HK_2026-11-18.docx` (fuer Andreas), Ingos Arbeitskopie `Regelset_Lieferantenzuordnung_mit_Beispielen.docx` im Repo-Ordner (nicht versioniert).
 
 ## Werkzeuge
 
