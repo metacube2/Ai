@@ -29,9 +29,9 @@ public class HanaSupplierAddressQueryTests
     {
         var query = Build(kind, billToDefault);
 
-        Assert.DoesNotMatch(new Regex(@"sup_adr ON itm\.""CardCode"" = sup_adr\.""CardCode""\s+AND sup_adr\.""AdresType"" = 'B'\s*\r?\n"), query);
+        Assert.DoesNotMatch(new Regex(@"sup_adr ON [^\n]*= sup_adr\.""CardCode""\s+AND sup_adr\.""AdresType"" = 'B'\s*\r?\n"), query);
         Assert.Contains(@"GROUP BY ""CardCode""", query);
-        Assert.Contains(@"sup_adr_any ON itm.""CardCode"" = sup_adr_any.""CardCode""", query);
+        Assert.Contains(@"sup_adr_any ON " + HanaQueryService.SupplierCodeWithGoodsReceipt + @" = sup_adr_any.""CardCode""", query);
 
         if (billToDefault is null)
         {
@@ -73,4 +73,38 @@ public class HanaSupplierAddressQueryTests
     [MemberData(nameof(Queries))]
     public void CustomerAddress_StaysLimitedToThePayToAddress(string kind, string? billToDefault)
         => Assert.Contains(@"cust_adr.""Address"" = h.""PayToCode""", Build(kind, billToDefault));
+
+    /// <summary>
+    /// 2026-11-18 (Feststellung Andreas 13.11.): Ohne Standardlieferant im Artikelstamm gilt der Lieferant des letzten Wareneingangs am
+    /// oder vor dem Belegdatum. Nummer, Name und Land haengen alle am selben Ausdruck; je Position hoechstens ein Wareneingang.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Queries))]
+    public void Supplier_FallsBackToLastGoodsReceipt_WithOneRowPerPosition(string kind, string? billToDefault)
+    {
+        var query = Build(kind, billToDefault);
+        var code = HanaQueryService.SupplierCodeWithGoodsReceipt;
+        Assert.Contains($"COALESCE({code}, '') AS supplier_number", query);
+        Assert.Contains($@"""OCRD"" sup ON {code} = sup.""CardCode""", query);
+        Assert.Contains(@"""PDN1"" g2 ON g2.""ItemCode"" = p2.""ItemCode"" AND g2.""Quantity"" > 0", query);
+        Assert.Contains(@"o2.""CANCELED"" = 'N' AND o2.""DocDate"" <= h2.""DocDate""", query);
+        Assert.Contains(@"COALESCE(itm2.""CardCode"", '') = ''", query);
+        Assert.Contains(@"x WHERE x.""rn"" = 1", query);
+        Assert.Contains(@"we ON we.""de"" = p.""DocEntry"" AND we.""ln"" = p.""LineNum""", query);
+        Assert.Contains(kind == "invoice" ? @"IT01_P.""OINV"" h2" : @"IT01_P.""ORIN"" h2", query);
+        Assert.DoesNotContain(@"COALESCE(itm.""CardCode"", '') AS supplier_number", query);
+    }
+
+    [Theory]
+    [InlineData("invoice")]
+    [InlineData("credit")]
+    public void Supplier_WithoutGoodsReceipt_IsTheOldItemMasterQuery(string kind)
+    {
+        var query = kind == "invoice"
+            ? HanaQueryService.GetInvoiceQuery("IT01_P", null, null, "BillToDef", supplierFromGoodsReceipt: false)
+            : HanaQueryService.GetCreditNoteQuery("IT01_P", null, null, "BillToDef", supplierFromGoodsReceipt: false);
+        Assert.Contains(@"COALESCE(itm.""CardCode"", '') AS supplier_number", query);
+        Assert.DoesNotContain("PDN1", query);
+        Assert.DoesNotContain(" we ", query);
+    }
 }

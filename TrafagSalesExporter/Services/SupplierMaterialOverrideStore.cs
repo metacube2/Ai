@@ -159,7 +159,7 @@ public static class SupplierMaterialOverrideStore
 
     /// <summary>
     /// Fuellt die Lieferantenfelder der uebergebenen Zeilen aus dem Datenbankbestand. Aendert nur
-    /// Zeilen, in denen alle drei Felder leer sind.
+    /// Zeilen, in denen alle drei Felder leer sind, oder deren Lieferant nur aus dem letzten B1-Wareneingang stammt (2026-11-18).
     /// </summary>
     public static async Task<ApplyResult> ApplyAsync(
         AppDbContext db,
@@ -171,7 +171,8 @@ public static class SupplierMaterialOverrideStore
         if (site.Length == 0 || records.Count == 0)
             return new ApplyResult(0, 0, 0);
 
-        var candidates = records.Where(IsSupplierEmpty).ToList();
+        // 2026-11-18: Ein Lieferant aus dem letzten B1-Wareneingang ist abgeleitet; Paolas ausdrueckliche Zuordnung geht ihm vor.
+        var candidates = records.Where(r => IsSupplierEmpty(r) || r.SupplierFromGoodsReceipt).ToList();
         if (candidates.Count == 0)
             return new ApplyResult(0, 0, 0);
 
@@ -196,6 +197,7 @@ public static class SupplierMaterialOverrideStore
             record.SupplierNumber = match.SupplierNumber;
             record.SupplierName = match.SupplierName;
             record.SupplierCountry = match.SupplierCountry;
+            record.SupplierFromGoodsReceipt = false;
             filled++;
             usedMaterials.Add(key);
         }

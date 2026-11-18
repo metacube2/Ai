@@ -23,6 +23,9 @@ public class SalesRecord
     public string SupplierNumber { get; set; } = string.Empty;
     public string SupplierName { get; set; } = string.Empty;
     public string SupplierCountry { get; set; } = string.Empty;
+    /// <summary>B1 (2026-11-18): Lieferant stammt aus dem letzten Wareneingang, nicht aus dem Artikelstamm. Nur zur Laufzeit,
+    /// damit die Uebergangsliste (SupplierMaterialOverrideStore) einen solchen abgeleiteten Wert noch ersetzen darf.</summary>
+    public bool SupplierFromGoodsReceipt { get; set; }
     // Verrechnungspreisliche Rolle des Standorts fuer diesen Artikel, Rohwert aus der Quelle
     // (Indiens SAP B1: OITM."U_Tasc_ST" - FFM/LRD/CM). Bewusst der Rohwert und nicht die
     // Auslegung, damit im Audit-CSV nachvollziehbar bleibt, woher eine Klassifikation kommt.
