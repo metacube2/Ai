@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-11-18 10:00 (Abschnitt 12: Ampel je Land zu Andreas' Feststellungen und weitere Feststellungen); davor 09:35 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang deployed 09:31 `8d15d48`, mit Spanien `c9208b5`; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-11-18 10:48 (Abschnitt 12 neu aus Sales_All 18.11., erster Export nach dem Deploy: FR und US gruen; Nachweis in Abschnitt 11); davor 10:00 (Abschnitt 12: Ampel je Land zu Andreas' Feststellungen und weitere Feststellungen); davor 09:35 (Abschnitt 11: B1-Lieferant aus dem letzten Wareneingang deployed 09:31 `8d15d48`, mit Spanien `c9208b5`; Messung bestaetigt die Werkstamm-Regel); davor 2026-11-17 abends (Abschnitt 10 neu: Muster, Antwortvorschlag Andreas, Wirkung Entscheid 1 rund 2,5 Mio. CHF, Pruefzeugnisse, Feldhilfe UK veraltet); davor 2026-11-16 (Abschnitt 9 Nachtrag: Blatt „Lieferantenzuordnung“ in Sales_All, `2da2682`, Nachweis am Export 12:11, Nachmessung fuer Andreas); davor 2026-11-13 (Abschnitt 9 neu: Mail Andreas 13.11., Nachmessung je Gesellschaft, Italien 499 Zeilen ohne Lieferant, UK TR09, DE-Kunden als ID, Sales_All mit Supplier Type / Delivering Entity, deployed `df48301`); davor 2026-11-12 (Doku-Pruefung: Widerspruch Abschnitt 2 gegen Abschnitt 3 zur DE-Pruefung aufgeloest, Filterliste des Schemaauszugs in Abschnitt 7); davor 2026-11-12 11:40 (Spanien: Lieferant des letzten Wareneingangs umgesetzt, `c9208b5`, nicht deployed, Santi Gang 1 offen, ISS-003.3); davor 2026-11-12 (Andreas einverstanden); davor 2026-11-11 (Spanien: Weg ueber den Wareneingang belegt); davor 2026-10-29 (Abschnitte 3 und 7 mit Nachtraegen vom 2026-09-02 und 2026-09-29; Grundstand 2026-08-31). Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -690,24 +690,34 @@ ob in Sales_All sichtbar werden soll, dass ein Lieferant aus dem Wareneingang st
 Mit dem Deploy werden die Saetze „Standardlieferant im B1-Artikelstamm pflegen“ fuer FR/US im Antwortentwurf an Andreas und im
 Regelset-Dokument ueberholt; Paolas Liste mit 162 Artikeln bleibt sinnvoll (ausdrueckliche Zuordnung geht vor).
 
-## 12. Stand der Feststellungen Andreas je Land, Ampel (Stand 2026-11-18 10:00)
+*Nachweis 18.11. 10:48 am echten Export:* Ingo startete den Lauf 10:06 ueber die Webseite, `Sales_All_2026-11-18.xlsx` 10:15.
+Gegen den 17.11.: Zeilen mit Lieferant FR 120 -> 2'437 von 2'846, US 6 -> 1'129 von 1'790, IT 19'696 -> 20'214 von 20'220, IN
+960 -> 1'380 von 8'453; Zeilen und Umsatz in FR, US, DE und UK rappengenau gleich. Die Messung oben (FR 2'489, US 1'138 auf B1) liegt
+leicht hoeher, weil der Export Finance-Ausschluesse und Gutschriften anders zaehlt. Ampel je Land in Abschnitt 12.
 
-Feststellungen aus Andreas' Mail vom 13.11.; Zahlen Sales_All 16.11., Finance Include, 2025/2026, und die Messung vom 18.11.
-(Abschnitt 11). Gruen = erledigt, Gelb = gebaut/deployed, wartet auf Datenlauf, Orange = wartet auf andere, Rot = Entscheid offen.
+## 12. Stand der Feststellungen Andreas je Land, Ampel (Stand 2026-11-18 10:48)
 
-| Land | Feststellung | Ampel | Stand 18.11. | offen bei |
+Feststellungen aus Andreas' Mail vom 13.11. **Zahlen neu aus `Sales_All_2026-11-18.xlsx`** (Exportlauf 10:06-10:15, erster Lauf
+nach dem Deploy 09:31 `8d15d48`), Blatt Finance Details, Rechnungen 2025/2026; Vergleich mit `Sales_All_2026-11-17.xlsx`. Die Fassung
+von 10:00 stand auf Sales_All 16.11. und der Messung vom 18.11. (Abschnitt 11) und ist damit ueberholt.
+Gruen = erledigt, Gelb = gebaut/deployed, wartet auf Datenlauf, Orange = wartet auf andere, Rot = Entscheid offen.
+
+| Land | Feststellung | Ampel | Stand 18.11. 10:48 (Zeilen mit Lieferant 17.11. -> 18.11.) | offen bei |
 | --- | --- | --- | --- | --- |
-| AT, CH | kein Lieferant | gruen | Regel 1: immer TR AG, die Verkaufsfaktura kennt keinen Vorlieferanten | - |
-| DE | kein Lieferant | orange | Alphaplan-Export ohne Lieferantenspalte; Werkstamm findet DE-eigene Nummern nicht (Beispiel `N10.0` = Transmitter 8202) | Rohail (Entwurf 18.11., Abwesenheitsnotiz) |
-| ES | kein Lieferant | gelb | Lieferant aus letztem Sage-Wareneingang seit 18.11. 09:31 produktiv (`c9208b5`) | Santi: neuer Exportlauf |
-| FR | grosser Teil ohne | gelb | B1 letzter Wareneingang seit 18.11. 09:31: 130 -> 2'489 von 2'881 Zeilen ab 2025 | naechster Exportlauf |
-| US | Grossteil ohne | gelb | dito: 6 -> 1'138 von 1'748 | naechster Exportlauf |
-| IN | Grossteil ohne | gruen | Sales Type entscheidet (7'943 von 8'435); Rest zusaetzlich ueber Wareneingang | - |
-| IT | Trafag Italia als Lieferant, Accountfilter | gruen | zulaessig (Beschluss 27.08.); Kontenfilter 47005 ohne 4700504 seit 30.09. gegen Hauptbuch abgestimmt | - |
-| IT | 2 SCHENKER-Artikel, 191 Zeilen ohne Kosten, 162 neue Artikel | orange | Rueckfrage an Paola (Entwurf 18.11.); bis dahin Wareneingang | Paola |
-| UK | TR09 mit zwei Namen | orange | eine Zeile falsch erfasst, rechnet richtig (Name zaehlt); MO01 ebenfalls zwei Namen, beide extern | Cornell (Entwurf 18.11.) |
-| alle | Entscheid 1: ohne Lieferant Werkstamm oder lokal | rot | Wareneingaenge bestaetigen den Werkstamm (FR 1'188/1'295, US 1'039/1'548, IT 444/514); „immer lokal“ = Gruppenmarge rund 2,5 Mio. CHF tiefer | Andreas (Termin 18.11. 13:00) |
+| AT, CH | kein Lieferant | gruen | Regel 1: immer TR AG, die Verkaufsfaktura kennt keinen Vorlieferanten; Supplier Type 100 % Intern | - |
+| DE | kein Lieferant | orange | 0 von 7'800; Alphaplan-Export ohne Lieferantenspalte; Werkstamm findet DE-eigene Nummern nicht (`N10.0`) | Rohail (Entwurf 18.11., Abwesenheitsnotiz) |
+| ES | kein Lieferant | gelb | 0 von 8'105; Lieferant aus letztem Sage-Wareneingang seit 09:31 produktiv (`c9208b5`), braucht den neuen Sage-Export | Santi: neuer Exportlauf |
+| FR | grosser Teil ohne | gruen (war gelb) | **120 -> 2'437 von 2'846** (86 %); Supplier Type Lokal 1'418 -> 391 Zeilen, Extern 48 -> 1'001, Intern 1'368 -> 1'442 | Rest: Entscheid 1 |
+| US | Grossteil ohne | gruen (war gelb) | **6 -> 1'129 von 1'790** (63 %); Lokal 159 -> 89, Extern 4 -> 60, Intern 1'550 -> 1'564 | Rest: Entscheid 1 |
+| IN | Grossteil ohne | gruen | Sales Type entscheidet; Lieferant zusaetzlich aus Wareneingang 960 -> 1'380 von 8'453, Lokal 76 -> 43 | - |
+| IT | Trafag Italia als Lieferant, Accountfilter | gruen | zulaessig (Beschluss 27.08.); Kontenfilter 47005 ohne 4700504 seit 30.09. gegen Hauptbuch abgestimmt; 19'696 -> 20'214 von 20'220 mit Lieferant | - |
+| IT | 2 SCHENKER-Artikel, 191 Zeilen ohne Kosten, 162 neue Artikel | orange | Wareneingang fuellt jetzt die leeren; 67 Zeilen von Intern auf Extern; Paolas Antwort steht aus | Paola (Entwurf 18.11.) |
+| UK | TR09 mit zwei Namen | orange | unveraendert (3'115 von 3'115 mit Lieferant); eine Zeile falsch erfasst, rechnet richtig | Cornell (Entwurf 18.11.) |
+| alle | Entscheid 1: ohne Lieferant Werkstamm oder lokal | rot | Rest ohne Lieferant: FR 409, US 661 Zeilen (laufen ueber den Werkstamm); Wareneingaenge bestaetigen den Werkstamm (FR 1'188/1'295, US 1'039/1'548, IT 444/514) | Andreas (Termin 18.11. 13:00) |
 | IT, UK | Entscheid 2: Ware aus Indien | rot | IT 448/453, UK 87/112 Zeilen mit lokalem Preis statt Kosten TR IN | Andreas |
+
+Zeilen und Umsatz in FR, US, DE und UK sind gegenueber dem 17.11. rappengenau gleich; der Deploy hat also nur Felder gefuellt, keine
+Zeile verloren oder verdoppelt.
 
 **Weitere Feststellungen 17./18.11. (nur hier festgehalten):**
 - `TSC` ist die verkaufende Gesellschaft (Sales_All Finance Details Spalte G), fuer CH und AT kommt sie aus derselben Quelle (SAP, Netzwerkanzeige `ZSCHWEIZ`).

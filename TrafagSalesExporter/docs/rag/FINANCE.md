@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-11-16 (Sales_All mit Blatt `Lieferantenzuordnung`, `2da2682`); davor 2026-11-13 (Lieferantenzuordnung nachgemessen, Sales_All mit Supplier Type / Delivering Entity, `df48301`); davor 2026-11-12 (Doku-Pruefung: Kursprofil Budgetkurs, Spanien-Ausnahme der Jahresabgrenzung, Journal-Faelligkeitsdatum, Italien-Doppelzeilen, Indien-Quelle, offene Fachpunkte `ISS-007.4`, `ISS-032` und Spanien-Lieferant `ISS-003.3` ergaenzt); davor 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
+Stand: 2026-11-18 10:48 (Ampel Lieferant/Herstellkosten aus Sales_All 18.11.); davor 2026-11-16 (Sales_All mit Blatt `Lieferantenzuordnung`, `2da2682`); davor 2026-11-13 (Lieferantenzuordnung nachgemessen, Sales_All mit Supplier Type / Delivering Entity, `df48301`); davor 2026-11-12 (Doku-Pruefung: Kursprofil Budgetkurs, Spanien-Ausnahme der Jahresabgrenzung, Journal-Faelligkeitsdatum, Italien-Doppelzeilen, Indien-Quelle, offene Fachpunkte `ISS-007.4`, `ISS-032` und Spanien-Lieferant `ISS-003.3` ergaenzt); davor 2026-10-29 nur Deploystand der Journal-Ausgleichsfelder und A1 (`ISS-018.1`) als erledigt markiert; 2026-10-22 nur Archivverweise `docs/archiv/`; fachlich 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -14,6 +14,10 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Kurzstand
 
+- **AMPEL LIEFERANT UND HERSTELLKOSTEN 2026-11-18 10:48** (Sales_All 18.11., erster Export nach dem Deploy `8d15d48`): Lieferant
+  gefuellt FR 2'437 von 2'846, US 1'129 von 1'790, IT 20'214 von 20'220, IN 1'380 von 8'453; DE und ES 0 (Rohail, Santi).
+  Herstellkosten: CH/AT/US gruen, DE rot (99,7 % lokal), ES/FR/IT/UK/IN gelb; UK 1'586 interne Zeilen ohne Konzernkosten.
+  Entscheide 1 und 2 bei Andreas (Termin 18.11. 13:00). Detail: `docs/FINANCE_SUPPLIER.md` 12, `docs/FINANCE_STANDARDKOSTEN.md` 13.
 - **LIEFERANTENZUORDNUNG, MAIL ANDREAS 2026-11-13:** Nachmessung ab 2025 (Stand 12.11.): Lieferantenfelder CH/AT/DE/ES 0 %,
   FR 4,5 %, IN 11,4 % (Sales Type auf 7'892 von 8'380 Zeilen), IT 97,6 % der Zeilen und 92,9 % des Umsatzes, UK 100 %, US 0,3 %.
   **Italien hat wieder 499 Zeilen (1,07 Mio. EUR) ohne Lieferant**, 162 Artikel, 86 % davon bei den sechs bis 29.09.
