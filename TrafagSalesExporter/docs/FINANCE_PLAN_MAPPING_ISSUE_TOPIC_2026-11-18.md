@@ -1,6 +1,6 @@
 # Finance: Plan Artikel-Mapping, Kostenkette und Attribut „Issue Topic“ in Sales_All
 
-Stand: 2026-11-19 13:16 (AP1 bis AP4 gebaut im Zweig `finance-mapping-1911`, `75b320d`/`12efb44`, nicht deployed; Abschnitt 0); davor 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
+Stand: 2026-11-19 13:29 (Nachtrag: use 0 rechnet mit Kosten 0, Materialtext aus MAKTSet, Commit `1576766`); davor 2026-11-19 13:16 (AP1 bis AP4 gebaut im Zweig `finance-mapping-1911`, `75b320d`/`12efb44`, nicht deployed; Abschnitt 0); davor 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
 ein plan“). Grundlage: Besprechung Ingo mit Andreas Stoller am 18.11.2026 ab 14:37 (automatische Abschrift der Aufnahme,
 Whisper large-v3, ohne Sprecherkennung) und das Word `Downloads\Offene_Punkte_2026-11-18.docx`, das in der Besprechung
 geteilt wurde.
@@ -56,7 +56,13 @@ rufen sie ueber `Evaluate`):
 
 - Die Spalte Issue Topic aendert keine Kosten, keine Kostenquelle und keinen Status (Tests je Matrixfall pruefen Kosten,
   Cost Source und Status mit). Topic 4 und 5 entsprechen dem heutigen Verhalten.
-- **„use 0“ heisst heute „Kosten 0, Marge offen“, nicht „Marge mit Kosten 0 gerechnet“:** Status „Standardpreis fehlt“ steht in
+- **Entscheid Ingo 2026-11-19, gebaut in `1576766`: „use 0“ heisst mit Kosten 0 rechnen.** „Standardpreis fehlt“ (Topics 3, 4, 6, 7)
+  ist nicht mehr offen und gilt als bekannte Kostenbasis 0 (`GroupMarginStatuses.Open`, `CostBasisUnknown`, neu `ShowsMargin`):
+  Marge = Umsatz, Cost Basis CHF und Margin CHF in Finance Details gefuellt, keine offene Kostenzeile, Summary nicht mehr leer;
+  Excel-Formel Margin Value/% in Gruppenmarge Details, Cockpit-Detail und Pruefbuch gleich. Statustext zeichengleich, Farbe
+  bleibt gelb. Indien LRD (8) bleibt offen. Interner Lieferant ohne Kostenquelle und ohne lokale Kosten ist jetzt 7 statt 10.
+  Unveraendert: „saubere Kostenbasis %“ im Cockpit zaehlt nur OK; die Datenqualitaets-Zeile „StandardCost = 0“ zaehlt weiter.
+  Der folgende Absatz ist Historie. *(ueberholt am 2026-11-19)* „use 0“ hiess bis dahin „Kosten 0, Marge offen“, nicht „Marge mit Kosten 0 gerechnet“: Status „Standardpreis fehlt“ steht in
   `GroupMarginStatuses.CostBasisUnknown`; `IsCostBasisKnown` ist dafuer falsch. Folge: in Finance Details bleiben Cost Basis
   CHF und Margin CHF leer, die Zeile zaehlt als Open Cost Row, und im Blatt Gruppenmarge Summary setzt die Formel
   `IF(G>0,"",E-F)` Margin Value und Margin % der ganzen Gruppe (Jahr/Land/TSC/Waehrung) auf leer. Soll wirklich mit 0
@@ -91,8 +97,12 @@ Property `Maktx` fuehrt (Platzhalter `SapGatewayPlantMaterialReader.MaterialText
 zeigt, dann mit `sap-language=DE`). Heute fuehrt `MARCSet` sie nicht, der Text bleibt leer und der Textabgleich liefert nichts.
 **Befund gegen die Annahme „MAKT nur fuer Einkaufsmaterial“:** laut `saptasks/zeichnungsaenderung/NOTES.md` (02.11.) liefert
 `MAKTSet` im Dienst `ZPOWERBI_EINKAUF_SRV` den ganzen MAKT-Bestand (rund 68'000 Materialien, alle Sprachen, `$select=Matnr`
-44,7 MB in T76). Ein Weg ohne SAP-Aenderung waere damit: `MAKTSet` im Vorschlagslauf lesen und Deutsch waehlen. Nicht gebaut,
-Entscheid Ingo.
+44,7 MB in T76). Ein Weg ohne SAP-Aenderung waere damit: `MAKTSet` im Vorschlagslauf lesen und Deutsch waehlen. *(Entscheid Ingo 2026-11-19, gebaut
+in `1576766`:)* Der Vorschlagslauf liest `MAKTSet` ueber die Gateway-Site (TRCH bevorzugt, Service-URL und Zugang wie der Export)
+mit `$select=Matnr,Spras,Maktx`, `$filter=Spras eq 'D'` (Rueckfall ohne Filter, falls leer oder abgelehnt) und
+`sap-language=DE`, parst die Antwort als Strom und schreibt nur deutsche Texte der Werk-1100-Materialien nach
+`GroupMaterialMasters.MaterialText`. Faellt MAKTSet aus, zeigt die Seite die Meldung und der Lauf rechnet mit dem gespeicherten
+Stand. Der taegliche Werkstamm-Abzug behaelt vorhandene Texte. Live nicht geprueft (kein Skript-Login), erst nach dem Deploy.
 
 ## 1. Was besprochen und was zugesagt wurde
 

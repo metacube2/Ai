@@ -997,7 +997,7 @@ Quelle `Sales_All_2026-11-18.xlsx`, Blaetter Sales und Finance Details, Finance 
 Trafag-Sachnummer oder indischer Artikelnummer (401 Zeilen, Indien hat den Preis) oder unter Hausnummern (47 Zeilen). UK 87 von 112 (0,08 Mio. CHF) und US 4 von 19: bei 72 Zeilen liegt es am Schluessel, die Kosten
 von TR IN stehen nur unter der Trafag-Sachnummer, verkauft wird unter der indischen Artikelnummer (`TS000095` gegen `35560`);
 19 Zeilen haben in Indien unbekannte Nummern. Detail `docs/FINANCE_SUPPLIER.md` 12a.
-*Nachtrag 2026-11-19:* Die Schluesselregel ist gebaut (TR-IN-Kosten auch unter der indischen Nummer, TRIT „I“ abschneiden), dazu die Spalte Issue Topic nach der Matrix von Ingo; „use 0“ (6/7) laesst die Marge wie bisher offen (Status „Standardpreis fehlt“). Zweig `finance-mapping-1911`, nicht deployed; Plan-Datei Abschnitt 0.
+*Nachtrag 2026-11-19:* Die Schluesselregel ist gebaut (TR-IN-Kosten auch unter der indischen Nummer, TRIT „I“ abschneiden), dazu die Spalte Issue Topic nach der Matrix von Ingo; „use 0“ rechnet seit dem Entscheid Ingo vom 19.11. mit Kosten 0 (Status „Standardpreis fehlt“ nicht mehr offen, Marge = Umsatz). Zweig `finance-mapping-1911`, nicht deployed; Plan-Datei Abschnitt 0.
 
 **IN, 143 Zeilen „Konzernkosten fehlen“ (0,65 % des Umsatzes, 0,11 Mio. CHF):**
 - Sales Type LRD, liefernde Gesellschaft TR AG; 730 von 873 LRD-Zeilen finden die TR-AG-Kosten, 726 haben eine Trafag-Sachnummer.
