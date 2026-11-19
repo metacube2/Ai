@@ -550,7 +550,7 @@ Geaenderte** (Sicherungen, Testabruf, Protokoll).
 
 **Umschalten, ab jetzt (ersetzt Abschnitt 14 Schritte 1 bis 5):**
 1. Rexx (erledigt bis auf IP und Verfallsdatum): API-Benutzer #2 „BI-Dashboard HR-Cockpit“, aktiv, `GET /v1/employees` frei, 31 Felder.
-   Noch setzen: erlaubte IP = IP von `tragvapp401`, Verfallsdatum, „Zeilenanzahl pro Seite“ 500 (heute 50, 8 Anfragen je Abruf).
+   Noch setzen: erlaubte IP = IP von `tragvapp401`, Verfallsdatum, „Zeilenanzahl pro Seite“ *(erledigt 19.11. 12:20: 100, mehr bietet Rexx nicht)*.
 2. Dashboard: Admin > Settings > Quellsysteme, Code `REXXHUB`, Anschlussart „SAP Gateway“, URL `https://trafag.rexx-systems.com/rexx_hub/`,
    „Zentrales Passwort“ = Token von API-Benutzer #2 (in Rexx kopieren, **nicht ins Repository**), Aktiv. Das macht Ingo.
 3. Testabruf `/BiDashboard/admin/rexxhub/test` (Admin-Freischaltung): Gesamt `Ok` und `WuerdeGeschrieben`, `FehlendePflichtspalten` leer,
@@ -560,3 +560,15 @@ Geaenderte** (Sicherungen, Testabruf, Protokoll).
    Vorjahr oder laufender Monat), in Rexx beim Endpunkt einen Export-Filter setzen oder Artjom fragen.
 5. `"Enabled": true` in `appsettings.json`, committen, mit dem Deploy-Werkzeug deployen. Danach kommt die Gesamtdatei taeglich ab 05:30;
    #777 bleibt Handexport, bis Artjom einen Weg nennt.
+
+**Nachtrag 2026-11-19 12:20 (Auftrag Ingo „alles fertigmachen“):**
+- **Zeilen je Seite bei API-Benutzer #2 `/v1/employees` auf 100 gesetzt** (Rexx bietet nur 5/10/25/50/75/100; 500 aus Abschnitt 17
+  Schritt 1 geht nicht). 396 Personen = 4 Anfragen je Abruf. Ursache der frueheren Speicherprobleme: der Klick traf den Auswahlknopf
+  (`ui-multiselect`) statt des Speicherknopfs `button.save` im Bearbeitungsformular; mit `button.save` speichert Rexx sofort.
+- **User #1 (Support): `employees` und `time-management/entries` lassen sich nicht zuruecknehmen**, auch mit `button.save` bleibt „Ja“
+  (Liste nach Neuladen weiter gruen). Vermutlich darf nur der Rexx-Support diesen Benutzer aendern. Artjom bitten, beide wieder zu sperren.
+- **IP-Sperre nicht gesetzt:** Der Server `tragvapp401` hat intern `10.120.1.17`; Rexx sieht aber die oeffentliche Adresse, ueber die
+  Trafag ins Internet geht, und die ist nirgends dokumentiert. Eine falsche Adresse sperrt den Abruf. Vorgehen: nach dem ersten Testabruf
+  mit Token die Quelladresse in „Rexx Hub Logs“ ablesen und erst dann bei Benutzer #2 unter „Erlaubte IP-Adressen“ eintragen.
+- **Verfallsdatum nicht gesetzt:** Laeuft der Token ab, steht der Abruf still. Entscheid Ingo (Vorschlag: ein Jahr, Erinnerung in Wochen_Todo).
+- Der Token wird nicht von Claude ins Dashboard eingetragen (Regel: keine Tokens in Felder eingeben); Schritt 2 in Abschnitt 17 macht Ingo.
