@@ -482,3 +482,20 @@ beiden Herstellerdokumenten). Alle HR, Stand heute; nur `datawarehouse` ist frei
   `GET/PATCH/DELETE /v1/time-management/entries/{entryId}`, `POST /v1/time-management/entries`. **Einziger Kandidat fuer Zeit- bzw.
   Abwesenheitsdaten**; ob darin Abwesenheiten (Krankheit, Ferien) oder nur Kommen/Gehen stehen, ist offen (Testaufruf nach Freigabe
   des Endpunkts oder Frage an Artjom). Kein Endpunkt fuer Zeitsalden (Urlaub Rest, Stunden Saldo).
+
+**Nachtrag 2026-11-19 11:10: zwei Endpunkte freigegeben, Feldkatalog geprueft** (Ja Ingo im Chat).
+- **Freigegeben beim API User #1:** `GET /v1/employees` (10:56) und `GET /v1/time-management/entries` (10:54). Ohne Testaufruf.
+- **`time-management/entries` taugt nicht fuer Abwesenheiten:** Laut OpenAPI der Swagger-Seite kennt der Parameter `types[]` nur
+  `comego` („Arbeitszeit“, Kommen/Gehen); Felder `entryId, employeeId, date, time, bookingType, Type, comment, comment_portal,
+  employeeName, createdAt`; Filter `employeeId, employeeName, dateFrom, dateTo, timeAccount, timeFrom, timeTo`. **Zuruecksetzen auf
+  „nein“ hat zweimal nicht gegriffen** (Auswahl „nein“, Haken, danach wieder „Ja“, 10:57 und 10:58); steht weiter frei, von Hand
+  zuruecksetzen.
+- **`/v1/employees` hat denselben Feldkatalog wie die Personal-Abfrage (694 Felder), alle 25 Spalten von #775 sind waehlbar**
+  (`RexxHubColumns.cs` Gesamtliste: Personalnummer bis „Unfall angetreten (Zeitraum)“, einschliesslich Austrittsart, Stunden Saldo,
+  Urlaubsanspruch, Urlaub Rest, Ferien ausstehend/angetreten, Krankheit, Krankheit ueber 60 Tage, Unfall, Kompensation, Militaer).
+  Dazu **Vorgesetzte** (Wochen_Todo 164): u. a. „Personalnummer (Vorgesetzte)“, „ID Personal (Vorgesetzte)“, „Primaere Vorgesetzte 1“
+  bis 5. Heute 9 Export-Felder voreingestellt (ID Personal, Vorname, Nachname, Stelle, Organisation, Leitung j/n, Arbeitsverhaeltnis,
+  Eintrittsdatum, Personal Status), technische Namen `unknown`, `unknown_1` … (in Rexx umbenennbar). Feldwahl nur angesehen, abgebrochen.
+- **Folge:** #775 laesst sich als Export-Felder von `/v1/employees` nachbauen. Offen: Zeitraum der Summen „angetreten“ (Export-Filter
+  pruefen), Grenze 422 bei zu vielen Feldern, Abruf im Code von `datawarehouse/{id}` auf `employees` umstellen. **#777 (Abwesenheiten je
+  Fall) hat weiter keinen Endpunkt**, Frage an Artjom.
