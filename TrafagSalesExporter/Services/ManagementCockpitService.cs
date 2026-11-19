@@ -365,6 +365,9 @@ public class ManagementCockpitService : IManagementCockpitService
             .ToListAsync();
         var groupStandardCosts = await LoadGroupStandardCostsAsync(db);
         var chPlantMaterialKeys = await LoadChPlantMaterialKeysAsync(db);
+        // Mapping-Tabelle (Entscheid Ingo 19.11.2026): dieselbe wirksame Sicht wie Sales_All, damit Cockpit und Export
+        // mit derselben Gruppennummer rechnen.
+        var materialMappings = await MaterialMappingStore.LoadLookupAsync(db);
         var foreignProcurementMaterialKeys = await ForeignProcurementEvidenceStore.LoadMaterialKeysAsync(db);
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
         var records = await LoadCentralRecordsAsync();
@@ -617,7 +620,7 @@ public class ManagementCockpitService : IManagementCockpitService
         var internalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(settings.InternalSupplierCostSourceMode);
         var marcForeignProcurementMode = MarcForeignProcurementModes.Normalize(settings.MarcForeignProcurementMode);
         var groupMarginChfRateMode = GroupMarginChfRateModes.Normalize(settings.GroupMarginChfRateMode);
-        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode, foreignProcurementMaterialKeys, marcForeignProcurementMode);
+        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode, foreignProcurementMaterialKeys, marcForeignProcurementMode, materialMappings);
         var groupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies);
         // Beschluss B5: die Konzernmarge gibt es nur in CHF. Fehlt fuer eine Verkaufswaehrung der
         // Kurs, bleiben diese Zeilen aus der Konzernsumme heraus - das muss sichtbar sein, sonst
@@ -626,7 +629,7 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             notices.Insert(0, $"Konzernmarge in CHF: fuer {groupMarginSummary.MissingGroupCurrencyRateRows:N0} von {groupMarginSummary.RowCount:N0} Zeilen fehlt ein Kurs in die Konzernwaehrung. Diese Zeilen sind in der CHF-Summe NICHT enthalten; die Landeszeilen darunter zeigen sie weiterhin in Lokalwaehrung.");
         }
-        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode, foreignProcurementMaterialKeys, marcForeignProcurementMode);
+        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode, foreignProcurementMaterialKeys, marcForeignProcurementMode, materialMappings);
         // scopedRows, nicht allRows: die Pivotkacheln stehen im selben Filterpanel wie
         // "Net Sales Actual". Mit allRows zeigte ein gesetzter Landfilter dort ein Land und
         // daneben weiterhin alle - die beiden Zahlen waren nicht gegeneinander abstimmbar.
@@ -1505,7 +1508,8 @@ public class ManagementCockpitService : IManagementCockpitService
         string supplierFallbackMode,
         string internalSupplierCostSourceMode,
         IReadOnlySet<string> foreignProcurementMaterialKeys,
-        string marcForeignProcurementMode)
+        string marcForeignProcurementMode,
+        MaterialMappingLookup? materialMappings = null)
     {
         // Kurs je Verkaufswaehrung nach CHF nur einmal aufloesen (Beschluss B5): dieselbe
         // Waehrung kommt in tausenden Zeilen vor, und ResolveCrossRate geht jedes Mal an die DB.
@@ -1538,7 +1542,8 @@ public class ManagementCockpitService : IManagementCockpitService
                     supplierFallbackMode: supplierFallbackMode,
                     internalSupplierCostSourceMode: internalSupplierCostSourceMode,
                     foreignProcurementMaterialKeys: foreignProcurementMaterialKeys,
-                    marcForeignProcurementMode: marcForeignProcurementMode);
+                    marcForeignProcurementMode: marcForeignProcurementMode,
+                    materialMappings: materialMappings);
                 var supplierType = evaluation.SupplierType;
                 var status = evaluation.Status;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
@@ -1777,7 +1782,8 @@ public class ManagementCockpitService : IManagementCockpitService
         string supplierFallbackMode,
         string internalSupplierCostSourceMode,
         IReadOnlySet<string> foreignProcurementMaterialKeys,
-        string marcForeignProcurementMode)
+        string marcForeignProcurementMode,
+        MaterialMappingLookup? materialMappings = null)
         => rows
             .Where(row => row.Include)
             .Select(row =>
@@ -1793,7 +1799,8 @@ public class ManagementCockpitService : IManagementCockpitService
                     supplierFallbackMode: supplierFallbackMode,
                     internalSupplierCostSourceMode: internalSupplierCostSourceMode,
                     foreignProcurementMaterialKeys: foreignProcurementMaterialKeys,
-                    marcForeignProcurementMode: marcForeignProcurementMode);
+                    marcForeignProcurementMode: marcForeignProcurementMode,
+                    materialMappings: materialMappings);
                 var supplierType = basis.SupplierType;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
                     basis.CostBasis, originalCurrency, basis.CostCurrency,

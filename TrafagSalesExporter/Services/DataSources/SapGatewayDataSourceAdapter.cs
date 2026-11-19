@@ -90,7 +90,8 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
         try
         {
             context.UpdateStatus?.Invoke("SAP CH-Werkstamm laden...");
-            var materialKeys = await _plantMaterialReader.GetMaterialKeysAsync(
+            // Seit 2026-11-19 mit deutschem Materialtext, sobald MARCSet die Property fuehrt (sonst leer).
+            var materialKeys = await _plantMaterialReader.GetMaterialsAsync(
                 sapServiceUrl, username, password, chPlant, site.Land);
             if (materialKeys.Count < SapGatewayPlantMaterialReader.MinimumExpectedChPlantMaterials)
                 throw new InvalidOperationException(
@@ -111,17 +112,24 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
         }
     }
 
-    private async Task PersistGroupMaterialMasterAsync(IReadOnlySet<string> materialKeys, string plant)
+    private async Task PersistGroupMaterialMasterAsync(IReadOnlyDictionary<string, string> materials, string plant)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        // Texte aus dem Mapping-Vorschlagslauf (MAKTSet, 2026-11-19) behalten, solange MARCSet selbst keinen Text liefert.
+        var previousTexts = await db.GroupMaterialMasters.AsNoTracking()
+            .Where(row => row.Plant == plant && row.MaterialText != "")
+            .ToDictionaryAsync(row => row.MaterialKey, row => row.MaterialText, StringComparer.Ordinal);
         await using var transaction = await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM GroupMaterialMasters WHERE Plant = {plant}");
         var now = DateTime.UtcNow;
-        db.GroupMaterialMasters.AddRange(materialKeys.Select(materialKey => new GroupMaterialMaster
+        db.GroupMaterialMasters.AddRange(materials.Select(material => new GroupMaterialMaster
         {
-            MaterialKey = materialKey,
+            MaterialKey = material.Key,
             Plant = plant,
-            RefreshedAtUtc = now
+            RefreshedAtUtc = now,
+            MaterialText = !string.IsNullOrWhiteSpace(material.Value)
+                ? material.Value
+                : previousTexts.GetValueOrDefault(material.Key, string.Empty)
         }));
         await db.SaveChangesAsync();
         await transaction.CommitAsync();

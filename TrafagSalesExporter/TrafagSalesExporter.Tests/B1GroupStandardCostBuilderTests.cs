@@ -39,9 +39,47 @@ public class B1GroupStandardCostBuilderTests
             Row("IC15415", 999m, "EUR", new DateTime(2026, 8, 10), groupMaterialNumber: "008896.10.10")
         };
 
-        var cost = Assert.Single(B1GroupStandardCostBuilder.Build("TRIN", records, RefreshedAtUtc));
+        // Seit AP1 (19.11.2026) zusaetzlich unter der indischen Nummer; die falsche Waehrung bleibt in beiden draussen.
+        var result = B1GroupStandardCostBuilder.Build("TRIN", records, RefreshedAtUtc);
 
-        AssertCost(cost, "8896.10.10", "TRIN", 40m, "INR");
+        Assert.Collection(result,
+            cost => AssertCost(cost, "8896.10.10", "TRIN", 40m, "INR"),
+            cost => AssertCost(cost, "IC15415", "TRIN", 40m, "INR"));
+    }
+
+    [Fact]
+    public void Build_TRIN_StoresCostsAlsoUnderIndianNumber_PrimaryKeyWins()
+    {
+        // AP1, Entscheid Ingo 19.11.2026: UK/US verkaufen unter der indischen Nummer (TS000095), Indien fuehrt den Preis unter
+        // der Sachnummer (35560). Kollidiert eine indische Nummer mit einer Sachnummer, gewinnt die Sachnummer.
+        var records = new[]
+        {
+            Row("TS000095", 120m, "INR", new DateTime(2026, 7, 10), documentEntry: 1, groupMaterialNumber: "35560"),
+            Row("77777", 50m, "INR", new DateTime(2026, 7, 11), documentEntry: 2, groupMaterialNumber: "88888"),
+            Row("DM1", 9m, "INR", new DateTime(2026, 7, 12), documentEntry: 3, groupMaterialNumber: "77777"),
+            Row("PS5", 30m, "INR", new DateTime(2026, 7, 13), documentEntry: 4)
+        };
+
+        var result = B1GroupStandardCostBuilder.Build("TRIN", records, RefreshedAtUtc)
+            .ToDictionary(cost => cost.MaterialKey, cost => cost.UnitCost);
+
+        Assert.Equal(120m, result["35560"]);
+        Assert.Equal(120m, result["TS000095"]);
+        Assert.Equal(9m, result["77777"]);       // Sachnummer von DM1, nicht die indische Nummer 77777 (50)
+        Assert.Equal(50m, result["88888"]);
+        Assert.Equal(9m, result["DM1"]);
+        Assert.Equal(30m, result["PS5"]);
+        Assert.Equal(6, result.Count);
+    }
+
+    [Fact]
+    public void Build_TRIT_HasNoSecondaryKey()
+    {
+        var records = new[] { Row("IT-LOCAL", 10m, "EUR", new DateTime(2026, 7, 10), groupMaterialNumber: "53513") };
+
+        var cost = Assert.Single(B1GroupStandardCostBuilder.Build("TRIT", records, RefreshedAtUtc));
+
+        AssertCost(cost, "53513", "TRIT", 10m, "EUR");
     }
 
     [Fact]

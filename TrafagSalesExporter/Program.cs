@@ -200,6 +200,7 @@ builder.Services.AddScoped<ILogsPageService, LogsPageService>();
 builder.Services.AddScoped<ITransformationsPageService, TransformationsPageService>();
 builder.Services.AddScoped<IFinanceRulesPageService, FinanceRulesPageService>();
 builder.Services.AddScoped<IMarketSegmentPageService, MarketSegmentPageService>();
+builder.Services.AddScoped<IMaterialMappingSuggestionService, MaterialMappingSuggestionService>();
 builder.Services.AddScoped<MarketSegmentPatternService>();
 builder.Services.AddScoped<IMarketSegmentExportService, MarketSegmentExportService>();
 builder.Services.AddScoped<IMarketSurveyPageService, MarketSurveyPageService>();

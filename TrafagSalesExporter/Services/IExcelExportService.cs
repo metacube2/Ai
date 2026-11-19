@@ -6,6 +6,12 @@ public interface IExcelExportService
 {
     string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records);
     string CreateConsolidatedExcelFile(string outputDirectory, DateTime fileDate, List<SalesRecord> records);
+
+    /// <summary>
+    /// Mapping_JJJJ-MM-TT.xlsx neben Sales_All (Auftrag Ingo 19.11.2026). Liefert den Pfad oder null, wenn keine Datei
+    /// entsteht (z. B. ohne Datenbank). Standard null, damit Test-Doppel nichts implementieren muessen.
+    /// </summary>
+    string? CreateMaterialMappingExcelFile(string outputDirectory, DateTime fileDate, List<SalesRecord> records) => null;
     string CreateDashboardProofExcelFile(string outputDirectory, DateTime fileDate, List<SalesRecord> records, bool useAuditCsvAsCentralSource, string? fileScope = null);
     string CreateGenericExcelFile(string outputDirectory, string filePrefix, DateTime fileDate, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows);
 

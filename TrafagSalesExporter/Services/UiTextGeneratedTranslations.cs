@@ -8,6 +8,23 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Mapping Artikelnummern 2026-11-19
+                ["Mapping Artikelnummern"] = "Mapeo de números de artículo",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Asigna los números de artículo locales de una sociedad al número de material de Trafag AG. Las filas de regla actúan de inmediato, las propuestas de texto solo tras su confirmación. Una fila vale solo para su sociedad y solo donde la fuente no aporta número de grupo. La ejecución de propuestas solo se inicia con el botón, nunca en la exportación diaria.",
+                ["Vorschlagslauf starten"] = "Iniciar ejecución de propuestas",
+                ["Excel exportieren"] = "Exportar Excel",
+                ["Excel importieren"] = "Importar Excel",
+                ["Import abgelehnt, nichts gespeichert:"] = "Importación rechazada, no se guardó nada:",
+                ["Lokale Nummer"] = "Número local",
+                ["Lokaler Text"] = "Texto local",
+                ["Gruppennummer"] = "Número de grupo",
+                ["Text Trafag AG"] = "Texto Trafag AG",
+                ["Verfahren"] = "Método",
+                ["Geprueft"] = "Revisado",
+                ["Ablehnen"] = "Rechazar",
+                ["Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren."] = "No hay filas. Inicie la ejecución de propuestas o importe un Excel.",
+                ["{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}."] = "{0} propuestas de {1} artículos: {2} nuevas, {3} actualizadas, {4} protegidas. Textos Trafag AG: {5} de {6}.",
+                ["Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen."] = "Importación: {0} nuevas, {1} actualizadas, {2} filas vacías omitidas.",
                 // Einkauf Pruefung 2026-11-05
                 ["kein Vorjahr im Zeitraum"] = "sin año anterior en el período",
                 ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} sobre valores de ejemplo (simulación), no es una cifra de Trafag",
@@ -2914,6 +2931,23 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Mapping Artikelnummern 2026-11-19
+                ["Mapping Artikelnummern"] = "Mappatura codici articolo",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Assegna i codici articolo locali di una società al codice materiale di Trafag AG. Le righe di regola valgono subito, le proposte di testo solo dopo la conferma. Una riga vale solo per la sua società e solo dove la fonte non fornisce un codice di gruppo. L'elaborazione delle proposte parte solo dal pulsante, mai nell'esportazione giornaliera.",
+                ["Vorschlagslauf starten"] = "Avvia elaborazione proposte",
+                ["Excel exportieren"] = "Esporta Excel",
+                ["Excel importieren"] = "Importa Excel",
+                ["Import abgelehnt, nichts gespeichert:"] = "Importazione rifiutata, nulla salvato:",
+                ["Lokale Nummer"] = "Codice locale",
+                ["Lokaler Text"] = "Testo locale",
+                ["Gruppennummer"] = "Codice di gruppo",
+                ["Text Trafag AG"] = "Testo Trafag AG",
+                ["Verfahren"] = "Metodo",
+                ["Geprueft"] = "Verificato",
+                ["Ablehnen"] = "Rifiuta",
+                ["Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren."] = "Nessuna riga. Avvia l'elaborazione proposte o importa un Excel.",
+                ["{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}."] = "{0} proposte da {1} articoli: {2} nuove, {3} aggiornate, {4} protette. Testi Trafag AG: {5} di {6}.",
+                ["Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen."] = "Importazione: {0} nuove, {1} aggiornate, {2} righe vuote saltate.",
                 // Einkauf Pruefung 2026-11-05
                 ["kein Vorjahr im Zeitraum"] = "nessun anno precedente nel periodo",
                 ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} su valori di esempio (simulazione), non è un dato Trafag",
@@ -5820,6 +5854,23 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Mapping Artikelnummern 2026-11-19
+                ["Mapping Artikelnummern"] = "आइटम नंबर मैपिंग",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "किसी कंपनी के स्थानीय आइटम नंबरों को Trafag AG के मटेरियल नंबर से जोड़ता है। नियम वाली पंक्तियाँ तुरंत लागू होती हैं, टेक्स्ट सुझाव केवल पुष्टि के बाद। एक पंक्ति केवल अपनी कंपनी पर और केवल वहीं लागू होती है जहाँ स्रोत समूह नंबर नहीं देता। सुझाव रन केवल बटन से चलता है, दैनिक निर्यात में कभी नहीं।",
+                ["Vorschlagslauf starten"] = "सुझाव रन शुरू करें",
+                ["Excel exportieren"] = "Excel निर्यात करें",
+                ["Excel importieren"] = "Excel आयात करें",
+                ["Import abgelehnt, nichts gespeichert:"] = "आयात अस्वीकृत, कुछ भी सहेजा नहीं गया:",
+                ["Lokale Nummer"] = "स्थानीय नंबर",
+                ["Lokaler Text"] = "स्थानीय टेक्स्ट",
+                ["Gruppennummer"] = "समूह नंबर",
+                ["Text Trafag AG"] = "Trafag AG टेक्स्ट",
+                ["Verfahren"] = "विधि",
+                ["Geprueft"] = "जाँचा गया",
+                ["Ablehnen"] = "अस्वीकार करें",
+                ["Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren."] = "कोई पंक्ति नहीं। सुझाव रन शुरू करें या Excel आयात करें।",
+                ["{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}."] = "{1} आइटम से {0} सुझाव: {2} नए, {3} अपडेट, {4} सुरक्षित। Trafag AG टेक्स्ट: {6} में से {5}।",
+                ["Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen."] = "आयात: {0} नए, {1} अपडेट, {2} खाली पंक्तियाँ छोड़ी गईं।",
                 // Einkauf Pruefung 2026-11-05
                 ["kein Vorjahr im Zeitraum"] = "अवधि में पिछला वर्ष नहीं",
                 ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} उदाहरण मानों पर (सिमुलेशन), Trafag का आंकड़ा नहीं",
@@ -8726,6 +8777,23 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Mapping Artikelnummern 2026-11-19
+                ["Mapping Artikelnummern"] = "Përputhja e numrave të artikujve",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Lidh numrat lokalë të artikujve të një shoqërie me numrin e materialit të Trafag AG. Rreshtat me rregull veprojnë menjëherë, propozimet e tekstit vetëm pas konfirmimit. Një rresht vlen vetëm për shoqërinë e vet dhe vetëm aty ku burimi nuk jep numër grupi. Ekzekutimi i propozimeve niset vetëm me butonin, kurrë në eksportin ditor.",
+                ["Vorschlagslauf starten"] = "Nis ekzekutimin e propozimeve",
+                ["Excel exportieren"] = "Eksporto Excel",
+                ["Excel importieren"] = "Importo Excel",
+                ["Import abgelehnt, nichts gespeichert:"] = "Importi u refuzua, asgjë nuk u ruajt:",
+                ["Lokale Nummer"] = "Numri lokal",
+                ["Lokaler Text"] = "Teksti lokal",
+                ["Gruppennummer"] = "Numri i grupit",
+                ["Text Trafag AG"] = "Teksti Trafag AG",
+                ["Verfahren"] = "Metoda",
+                ["Geprueft"] = "Kontrolluar",
+                ["Ablehnen"] = "Refuzo",
+                ["Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren."] = "Asnjë rresht. Nisni ekzekutimin e propozimeve ose importoni një Excel.",
+                ["{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}."] = "{0} propozime nga {1} artikuj: {2} të reja, {3} të përditësuara, {4} të mbrojtura. Tekste Trafag AG: {5} nga {6}.",
+                ["Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen."] = "Importi: {0} të reja, {1} të përditësuara, {2} rreshta bosh u kapërcyen.",
                 // Einkauf Pruefung 2026-11-05
                 ["kein Vorjahr im Zeitraum"] = "pa vit të mëparshëm në periudhë",
                 ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} mbi vlera shembull (simulim), jo shifër e Trafag",
@@ -11632,6 +11700,23 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Mapping Artikelnummern 2026-11-19
+                ["Mapping Artikelnummern"] = "Ürün numarası eşleme",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Bir şirketin yerel ürün numaralarını Trafag AG malzeme numarasıyla eşler. Kural satırları hemen geçerli olur, metin önerileri ancak onaydan sonra. Bir satır yalnızca kendi şirketi için ve yalnızca kaynağın grup numarası vermediği yerde geçerlidir. Öneri çalıştırması yalnızca düğmeyle başlar, günlük dışa aktarmada asla.",
+                ["Vorschlagslauf starten"] = "Öneri çalıştırmasını başlat",
+                ["Excel exportieren"] = "Excel dışa aktar",
+                ["Excel importieren"] = "Excel içe aktar",
+                ["Import abgelehnt, nichts gespeichert:"] = "İçe aktarma reddedildi, hiçbir şey kaydedilmedi:",
+                ["Lokale Nummer"] = "Yerel numara",
+                ["Lokaler Text"] = "Yerel metin",
+                ["Gruppennummer"] = "Grup numarası",
+                ["Text Trafag AG"] = "Trafag AG metni",
+                ["Verfahren"] = "Yöntem",
+                ["Geprueft"] = "Kontrol edildi",
+                ["Ablehnen"] = "Reddet",
+                ["Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren."] = "Satır yok. Öneri çalıştırmasını başlatın veya bir Excel içe aktarın.",
+                ["{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}."] = "{1} üründen {0} öneri: {2} yeni, {3} güncellendi, {4} korundu. Trafag AG metinleri: {6} içinden {5}.",
+                ["Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen."] = "İçe aktarma: {0} yeni, {1} güncellendi, {2} boş satır atlandı.",
                 // Einkauf Pruefung 2026-11-05
                 ["kein Vorjahr im Zeitraum"] = "dönemde önceki yıl yok",
                 ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} örnek değerler üzerinde (simülasyon), Trafag rakamı değil",
@@ -14538,6 +14623,23 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                // Mapping Artikelnummern 2026-11-19
+                ["Mapping Artikelnummern"] = "Doch mI' rar",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Trafag AG mI' rar mI' Daq. chut tlhegh DaH Qap, ghItlh chup wIqIj pagh. wa' tlhegh ghom neH. chup Qap leQ neH, jaj Hoch pagh.",
+                ["Vorschlagslauf starten"] = "chup yItaghmoH",
+                ["Excel exportieren"] = "Excel yIngevmoH",
+                ["Excel importieren"] = "Excel yIqel",
+                ["Import abgelehnt, nichts gespeichert:"] = "qel lajQo', pagh pollu':",
+                ["Lokale Nummer"] = "Daq mI'",
+                ["Lokaler Text"] = "Daq ghItlh",
+                ["Gruppennummer"] = "ghom mI'",
+                ["Text Trafag AG"] = "Trafag AG ghItlh",
+                ["Verfahren"] = "mIw",
+                ["Geprueft"] = "nuDlu'",
+                ["Ablehnen"] = "yIlajQo'",
+                ["Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren."] = "tlhegh pagh. chup yItaghmoH pagh Excel yIqel.",
+                ["{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}."] = "{0} chup {1} Doch: {2} chu', {3} choH, {4} Qan. Trafag AG ghItlh: {5} {6}.",
+                ["Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen."] = "qel: {0} chu', {1} choH, {2} tlhegh chIm Sup.",
                 // Einkauf Pruefung 2026-11-05
                 ["kein Vorjahr im Zeitraum"] = "DIS vorgh poHDaq tu'lu'be'",
                 ["{0} {1} auf Beispielwerte (Simulation), keine Trafag-Zahl"] = "{0} {1} mu'mey mI' (ghIQ), Trafag mI' ghaHbe'",

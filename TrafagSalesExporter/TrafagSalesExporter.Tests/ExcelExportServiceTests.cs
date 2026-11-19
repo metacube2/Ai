@@ -261,7 +261,7 @@ public class ExcelExportServiceTests
 
             var groupMarginDetails = workbook.Worksheet("Gruppenmarge Details");
             Assert.Equal("OK", groupMarginDetails.Cell(2, 2).GetString());
-            Assert.Equal("IF(B2=\"OK\",Q2-R2,\"\")", groupMarginDetails.Cell(2, 19).FormulaA1);
+            Assert.Equal("IF(OR(B2=\"OK\",B2=\"Standardpreis fehlt\"),Q2-R2,\"\")", groupMarginDetails.Cell(2, 19).FormulaA1);   // seit 19.11. auch use 0
 
             var groupMarginSummary = workbook.Worksheet("Gruppenmarge Summary");
             Assert.Contains("COUNTIFS('Gruppenmarge Details'!$A:$A,A2", groupMarginSummary.Cell(2, 7).FormulaA1);
@@ -319,7 +319,7 @@ public class ExcelExportServiceTests
             Assert.Equal("OK", details.Cell(2, 2).GetString());
             // Kostenbasis = Menge x Standardkosten (2 x 10), Marge per Excel-Formel Q-R.
             Assert.Equal(20m, details.Cell(2, 18).GetValue<decimal>());
-            Assert.Equal("IF(B2=\"OK\",Q2-R2,\"\")", details.Cell(2, 19).FormulaA1);
+            Assert.Equal("IF(OR(B2=\"OK\",B2=\"Standardpreis fehlt\"),Q2-R2,\"\")", details.Cell(2, 19).FormulaA1);   // seit 19.11. auch use 0
         }
         finally
         {

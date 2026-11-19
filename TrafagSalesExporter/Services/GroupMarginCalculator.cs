@@ -46,11 +46,23 @@ public static class GroupMarginCalculator
         string? supplierFallbackMode = null,
         string? internalSupplierCostSourceMode = null,
         IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
-        string? marcForeignProcurementMode = null)
+        string? marcForeignProcurementMode = null,
+        MaterialMappingLookup? materialMappings = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
         var plantMaterials = chPlantMaterialKeys ?? new HashSet<string>(StringComparer.Ordinal);
         var foreignProcurementMaterials = foreignProcurementMaterialKeys ?? new HashSet<string>(StringComparer.Ordinal);
+        // AP4 (Entscheid Ingo 19.11.2026): die Mapping-Tabelle fuellt die Gruppennummer NUR, wo die Quelle sie leer laesst,
+        // und nur fuer den eingetragenen TSC. Die Zeile selbst (SalesRecord.GroupMaterialNumber) bleibt unveraendert.
+        MaterialMappingHit? mappingHit = null;
+        if (string.IsNullOrWhiteSpace(line.GroupMaterialNumber) &&
+            materialMappings is not null &&
+            materialMappings.TryResolve(line.Tsc, line.Material, out var hit))
+        {
+            mappingHit = hit;
+            line = line with { GroupMaterialNumber = hit.GroupMaterialNumber };
+        }
+
         var materialKey = ResolveGroupCostKey(line);
 
         var supplierType = GroupMarginSupplierClassifier.Resolve(
@@ -84,6 +96,19 @@ public static class GroupMarginCalculator
             line.SupplierNumber, line.SupplierCountry,
             context.ForeignProcurementMaterialKeys, context.MarcForeignProcurementMode);
 
+        // Issue Topic an genau dieser Stelle, mit derselben Gesellschaft und demselben Schluessel (inklusive I-Praefix-Regel)
+        // wie der Kostenpfad. Aendert keine Kosten, keinen Status und keine Kostenquelle.
+        var lookup = deliveringEntity is null
+            ? default
+            : GroupMarginCostRules.FindGroupCost(line, context, deliveringEntity);
+        var issueTopic = ResolveIssueTopic(line, supplierType, deliveringEntity, basis, context, lookup);
+
+        var mappingLabel = mappingHit is not null
+            ? $"{mappingHit.GroupMaterialNumber.Trim()} ({mappingHit.Method})"
+            : lookup.UsedItalianIndiaPrefixRule
+                ? $"{lookup.EffectiveKey} ({IssueTopics.ItalianIndiaPrefixRuleLabel})"
+                : string.Empty;
+
         return new GroupMarginEvaluation(
             SupplierType: supplierType,
             MaterialKey: materialKey,
@@ -93,7 +118,64 @@ public static class GroupMarginCalculator
             IsGroupCostMissing: basis.IsGroupCostMissing,
             CostSource: ResolveCostSource(supplierType, basis),
             Status: ResolveStatus(supplierType, basis, line.NetSalesValue, hasExchangeRate),
-            DeliveringEntity: deliveringEntity ?? string.Empty);
+            DeliveringEntity: deliveringEntity ?? string.Empty,
+            IssueTopic: issueTopic,
+            Mapping: mappingLabel);
+    }
+
+    /// <summary>
+    /// Issue Topic nach der Matrix von Ingo (19.11.2026, Spalten no Supplier / no Mat Number Match / no Cost), Lesart und
+    /// vorlaeufige Zusatzcodes in docs/FINANCE_PLAN_MAPPING_ISSUE_TOPIC_2026-11-18.md Abschnitt 4. Reihenfolge der Pruefung:
+    /// 8 (Indien LRD, Kosten bleiben offen), Konzernkosten gefunden (5 bzw. leer), 9 (Lieferant unklar), danach die drei
+    /// Merkmale der Matrix woertlich: gefunden ohne Kosten 3/4, nicht gefunden 1/2, nicht gefunden und lokal 0 dann 6/7.
+    /// „Kein Lieferant“ heisst: keine CH/AT-Regel, keine Sales-Type-Rolle und alle drei Lieferantenfelder leer.
+    /// </summary>
+    public static string ResolveIssueTopic(
+        GroupMarginLine line,
+        string supplierType,
+        string? deliveringEntity,
+        GroupMarginCostBasis basis,
+        GroupMarginCostContext context,
+        GroupCostLookup lookup)
+    {
+        if (basis.IsGroupCostMissing)
+            return IssueTopics.IndiaLrdWithoutGroupCost;
+
+        var noSupplier = GroupMarginSupplierClassifier.HasNoSupplierEvidence(
+            line.SupplierNumber, line.SupplierName, line.SupplierCountry, line.Tsc, line.SalesType);
+
+        if (basis.IsGroupCost)
+            return noSupplier ? IssueTopics.NoSupplierTrAgCost : IssueTopics.None;
+        if (supplierType == GroupMarginSupplierClassifier.Unclear)
+            return IssueTopics.SupplierUnclear;
+
+        // Lokaler Rueckfall: Kostenbasis 0 heisst, auch die lokalen Kosten fehlen oder sind null.
+        var localCostMissing = basis.CostBasis == 0m;
+
+        // Extern: keine Konzernkostensuche, die lokalen Kosten sind die Zielkosten. Nur fehlende lokale Kosten sind ein Issue
+        // (vorlaeufig 7, von der Matrix nicht ausdruecklich abgedeckt, offene Frage im Plan Abschnitt 4).
+        if (supplierType == GroupMarginSupplierClassifier.External)
+            return localCostMissing ? IssueTopics.SupplierUseZero : IssueTopics.None;
+        if (supplierType == GroupMarginSupplierClassifier.Local)
+            return localCostMissing ? IssueTopics.NoSupplierUseZero : IssueTopics.NoSupplierNotFound;
+
+        // Intern, aber die Konzernkosten wurden nicht verwendet.
+        if (deliveringEntity is null)
+            return localCostMissing ? IssueTopics.SupplierUseZero : IssueTopics.InternalWithoutCostSource;
+
+        var found = lookup.Found ||
+                    (deliveringEntity == GroupStandardCostEntities.TrAg &&
+                     context.ChPlantMaterialKeys is not null &&
+                     context.ChPlantMaterialKeys.Contains(context.MaterialKey));
+
+        // Korrektur Ingo 19.11.2026: die Matrix gilt woertlich. Ein gefundener Artikel hat „no Mat Number Match“ = 0 und
+        // bleibt 3 bzw. 4, auch wenn die lokalen Kosten 0 sind (Kosten dann 0, Margin Status „Standardpreis fehlt“ wie heute).
+        // 6 und 7 gibt es nur bei nicht gefundenem Artikel UND fehlenden lokalen Kosten.
+        if (found)
+            return noSupplier ? IssueTopics.NoSupplierFoundNoCost : IssueTopics.SupplierFoundNoCost;
+        if (localCostMissing)
+            return noSupplier ? IssueTopics.NoSupplierUseZero : IssueTopics.SupplierUseZero;
+        return noSupplier ? IssueTopics.NoSupplierNotFound : IssueTopics.SupplierNotFound;
     }
 
     /// <summary>Anzeigetext der liefernden Gesellschaft fuer Excel: "TR AG", "TR IT", "TR IN" oder leer.</summary>
@@ -262,7 +344,69 @@ public sealed record GroupMarginEvaluation(
     string CostSource,
     string Status,
     // Erkannte liefernde Konzerngesellschaft (GroupStandardCostEntities) oder leer; additiv seit 2026-11-13.
-    string DeliveringEntity = "");
+    string DeliveringEntity = "",
+    // Issue Topic (IssueTopics), leer = kein Issue; additiv seit 2026-11-19.
+    string IssueTopic = "",
+    // Wirksame Zuordnung der Artikelnummer aus Mapping-Tabelle oder Schluesselregel, leer = keine; additiv seit 2026-11-19.
+    string Mapping = "");
+
+/// <summary>
+/// Ergebnis der Suche nach Konzernkosten bei EINER liefernden Gesellschaft. <see cref="Found"/> heisst: der Schluessel
+/// steht in der Kostentabelle dieser Gesellschaft, unabhaengig vom Wert (<see cref="Cost"/> kann 0 sein).
+/// </summary>
+public readonly record struct GroupCostLookup(
+    bool Found,
+    GroupStandardCost? Cost,
+    string EffectiveKey,
+    bool UsedItalianIndiaPrefixRule);
+
+/// <summary>
+/// Codes der Spalte „Issue Topic“. 1 bis 7 nach der Matrix von Ingo (19.11.2026); 8 bis 10 sind VORLAEUFIGE Kennzeichen fuer
+/// Faelle, die die Matrix nicht abdeckt (offen bei Andreas/Ingo, Plan Abschnitt 4). Die Codes sind Zeichenketten, damit
+/// eine spaetere Umbenennung keine Zahlenformate in Excel beruehrt.
+/// </summary>
+public static class IssueTopics
+{
+    public const string None = "";
+    /// <summary>1 = no Supplier, no Mat Number Match: lokale Standardkosten.</summary>
+    public const string NoSupplierNotFound = "1";
+    /// <summary>2 = Lieferant vorhanden, Artikel bei der liefernden Gesellschaft nicht gefunden: lokale Standardkosten.</summary>
+    public const string SupplierNotFound = "2";
+    /// <summary>3 = Lieferant vorhanden, Artikel gefunden, Kosten fehlen dort: lokale Standardkosten.</summary>
+    public const string SupplierFoundNoCost = "3";
+    /// <summary>4 = kein Lieferant, Artikel bei Trafag AG gefunden, Kosten fehlen dort: lokale Standardkosten.</summary>
+    public const string NoSupplierFoundNoCost = "4";
+    /// <summary>5 = kein Lieferant, Artikel bei Trafag AG gefunden, Kosten vorhanden: Standardkosten TR AG.</summary>
+    public const string NoSupplierTrAgCost = "5";
+    /// <summary>6 = kein Lieferant, auch lokale Kosten fehlen oder sind null: use 0.</summary>
+    public const string NoSupplierUseZero = "6";
+    /// <summary>7 = Lieferant vorhanden, auch lokale Kosten fehlen oder sind null: use 0.</summary>
+    public const string SupplierUseZero = "7";
+    /// <summary>8 (vorlaeufig) = Indien Sales Type LRD ohne Konzernkosten, Kosten bleiben offen (Entscheid 05.08.).</summary>
+    public const string IndiaLrdWithoutGroupCost = "8";
+    /// <summary>9 (vorlaeufig) = Lieferant unklar (keine Lieferantenangabe und keine Pruefgrundlage, z. B. ohne Materialnummer).</summary>
+    public const string SupplierUnclear = "9";
+    /// <summary>10 (vorlaeufig) = interner Lieferant ohne bekannte Kostenquelle (z. B. GFS, Trafag GmbH): lokale Standardkosten.</summary>
+    public const string InternalWithoutCostSource = "10";
+
+    public const string ItalianIndiaPrefixRuleLabel = "Regel I-Praefix TRIT";
+
+    /// <summary>Kurztext je Code fuer Feldhilfe und Mapping-Excel (Englisch wie die Matrix).</summary>
+    public static readonly IReadOnlyList<(string Code, string NoSupplier, string NoMatch, string NoCost, string Solution)> Matrix =
+    [
+        ("", "0", "0", "0", "no issue: supplier present, article found, cost present"),
+        (NoSupplierNotFound, "1", "1", "0", "local standard cost"),
+        (SupplierNotFound, "0", "1", "0", "local standard cost"),
+        (SupplierFoundNoCost, "0", "0", "1", "local standard cost"),
+        (NoSupplierFoundNoCost, "1", "0", "1", "local standard cost"),
+        (NoSupplierTrAgCost, "1", "0", "0", "TR AG standard cost"),
+        (NoSupplierUseZero, "1", "1", "1", "use 0 (local cost missing too)"),
+        (SupplierUseZero, "0", "1", "1", "use 0 (local cost missing too)"),
+        (IndiaLrdWithoutGroupCost, "-", "-", "-", "provisional: India LRD without group cost, cost stays open (decision 05.08.)"),
+        (SupplierUnclear, "-", "-", "-", "provisional: supplier unclear, no material number to check"),
+        (InternalWithoutCostSource, "-", "-", "-", "provisional: internal supplier without known group cost source, local standard cost")
+    ];
+}
 
 /// <summary>
 /// Eine benannte Regel zur Kostenbasis. Benannt, damit die Kette lesbar bleibt und jede Regel
@@ -337,13 +481,12 @@ public static class GroupMarginCostRules
             if (deliveringEntity is not null && ShouldUseSwissStprs(context))
                 deliveringEntity = GroupStandardCostEntities.TrAg;
 
-            if (deliveringEntity is null ||
-                !GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) ||
-                !context.GroupStandardCosts.TryGetValue((context.MaterialKey, area), out var groupCost) ||
-                groupCost.UnitCost <= 0m)
-            {
+            if (deliveringEntity is null)
                 return null;
-            }
+
+            var lookup = FindGroupCost(line, context, deliveringEntity);
+            if (lookup.Cost is not { } groupCost || groupCost.UnitCost <= 0m)
+                return null;
 
             var magnitude = Magnitude(line.Quantity, groupCost.UnitCost);
             return new GroupMarginCostBasis(
@@ -352,6 +495,35 @@ public static class GroupMarginCostRules
                 IsGroupCost: true,
                 GroupCostSource: GroupStandardCostAreas.SourceLabelByEntity.GetValueOrDefault(deliveringEntity));
         });
+
+    /// <summary>
+    /// Sucht die Konzernkosten der Zeile bei der liefernden Gesellschaft. Zuerst unter dem Kostenschluessel der Zeile.
+    /// AP1 (Entscheid Ingo 19.11.2026): verkauft TRIT Ware aus Indien (liefernde Gesellschaft TR IN) und trifft der volle
+    /// Schluessel nicht, wird genau EIN vorangestelltes „I“ abgeschnitten und erneut gesucht. Italien fuehrt die Ware unter
+    /// „I“ + Trafag-Sachnummer (I53513 = 53513) oder „I“ + indische Nummer (ITS000713 = TS000713); gemessen 18.11.: 401 von
+    /// 448 Zeilen (docs/FINANCE_SUPPLIER.md 12a). Der volle Schluessel geht vor, weil echte indische Nummern selbst mit
+    /// „I“ beginnen koennen (5 Zeilen IR… trafen schon vorher). Nur TRIT und nur Lieferant Indien.
+    /// </summary>
+    public static GroupCostLookup FindGroupCost(GroupMarginLine line, GroupMarginCostContext context, string deliveringEntity)
+    {
+        if (!GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area))
+            return new GroupCostLookup(false, null, context.MaterialKey, false);
+
+        if (context.GroupStandardCosts.TryGetValue((context.MaterialKey, area), out var cost))
+            return new GroupCostLookup(true, cost, context.MaterialKey, false);
+
+        if (deliveringEntity == GroupStandardCostEntities.TrIn &&
+            string.Equals(line.Tsc?.Trim(), "TRIT", StringComparison.OrdinalIgnoreCase) &&
+            context.MaterialKey.Length > 1 &&
+            (context.MaterialKey[0] == 'I' || context.MaterialKey[0] == 'i'))
+        {
+            var stripped = MaterialKeyNormalizer.Normalize(context.MaterialKey[1..]);
+            if (stripped.Length > 0 && context.GroupStandardCosts.TryGetValue((stripped, area), out var strippedCost))
+                return new GroupCostLookup(true, strippedCost, stripped, true);
+        }
+
+        return new GroupCostLookup(false, null, context.MaterialKey, false);
+    }
 
     private static bool ShouldUseSwissStprs(GroupMarginCostContext context)
     {

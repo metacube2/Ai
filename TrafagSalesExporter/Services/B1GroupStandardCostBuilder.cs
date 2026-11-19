@@ -21,27 +21,56 @@ public static class B1GroupStandardCostBuilder
             return [];
 
         var mode = B1GroupStandardCostModes.Normalize(costMode);
-        return records
-            .Select(record => new Candidate(
-                MaterialKey: MaterialKeyNormalizer.Normalize(
-                    string.IsNullOrWhiteSpace(record.GroupMaterialNumber)
-                        ? record.Material
-                        : record.GroupMaterialNumber),
-                UnitCost: Math.Abs(record.StandardCost),
-                Currency: FirstNonEmpty(record.StandardCostCurrency, record.CompanyCurrency),
-                EffectiveDate: record.PostingDate ?? record.InvoiceDate ?? record.ExtractionDate,
-                ExtractionDate: record.ExtractionDate,
-                DocumentEntry: record.DocumentEntry,
-                PositionOnInvoice: record.PositionOnInvoice,
-                SourceLineId: record.SourceLineId ?? string.Empty))
-            .Where(candidate => candidate.MaterialKey.Length > 0 &&
-                                candidate.UnitCost > 0m &&
-                                candidate.Currency.Equals(expectedCurrency, StringComparison.OrdinalIgnoreCase))
+        var candidates = records
+            .Select(record => ToCandidate(record, MaterialKeyNormalizer.Normalize(
+                string.IsNullOrWhiteSpace(record.GroupMaterialNumber)
+                    ? record.Material
+                    : record.GroupMaterialNumber)))
+            .Where(candidate => IsUsable(candidate, expectedCurrency))
+            .ToList();
+
+        var primary = candidates
             .GroupBy(candidate => candidate.MaterialKey, StringComparer.Ordinal)
             .Select(group => BuildCost(group, mode, area, expectedCurrency, refreshedAtUtc))
+            .ToList();
+
+        // AP1, Entscheid Ingo 19.11.2026 (Plan docs/FINANCE_PLAN_MAPPING_ISSUE_TOPIC_2026-11-18.md Abschnitt 5): Die Kosten
+        // von TR IN zusaetzlich unter der INDISCHEN Artikelnummer ablegen. UK und US verkaufen Ware aus Indien unter dieser
+        // Nummer (z. B. TS000095), Indien fuehrt den Preis aber unter der Trafag-Sachnummer (U_TASC_OMN, z. B. 35560);
+        // gemessen 18.11.: UK 70 und US 2 Zeilen fanden deshalb keine Kosten (docs/FINANCE_SUPPLIER.md 12a).
+        // Der Primaerschluessel (Sachnummer) gewinnt immer: ein Zweitschluessel entsteht nur, wo kein Primaerkandidat
+        // denselben Schluessel liefert. Nur TRIN, weil nur Indien eigene Nummern neben der Sachnummer fuehrt.
+        if (!string.Equals(area, GroupStandardCostAreas.ByEntity[GroupStandardCostEntities.TrIn], StringComparison.Ordinal))
+            return primary.OrderBy(cost => cost.MaterialKey, StringComparer.Ordinal).ToList();
+
+        var primaryKeys = new HashSet<string>(primary.Select(cost => cost.MaterialKey), StringComparer.Ordinal);
+        var secondary = records
+            .Where(record => !string.IsNullOrWhiteSpace(record.GroupMaterialNumber))
+            .Select(record => ToCandidate(record, MaterialKeyNormalizer.Normalize(record.Material)))
+            .Where(candidate => IsUsable(candidate, expectedCurrency) && !primaryKeys.Contains(candidate.MaterialKey))
+            .GroupBy(candidate => candidate.MaterialKey, StringComparer.Ordinal)
+            .Select(group => BuildCost(group, mode, area, expectedCurrency, refreshedAtUtc));
+
+        return primary.Concat(secondary)
             .OrderBy(cost => cost.MaterialKey, StringComparer.Ordinal)
             .ToList();
     }
+
+    private static Candidate ToCandidate(SalesRecord record, string materialKey)
+        => new(
+            MaterialKey: materialKey,
+            UnitCost: Math.Abs(record.StandardCost),
+            Currency: FirstNonEmpty(record.StandardCostCurrency, record.CompanyCurrency),
+            EffectiveDate: record.PostingDate ?? record.InvoiceDate ?? record.ExtractionDate,
+            ExtractionDate: record.ExtractionDate,
+            DocumentEntry: record.DocumentEntry,
+            PositionOnInvoice: record.PositionOnInvoice,
+            SourceLineId: record.SourceLineId ?? string.Empty);
+
+    private static bool IsUsable(Candidate candidate, string expectedCurrency)
+        => candidate.MaterialKey.Length > 0 &&
+           candidate.UnitCost > 0m &&
+           candidate.Currency.Equals(expectedCurrency, StringComparison.OrdinalIgnoreCase);
 
     private static GroupStandardCost BuildCost(
         IGrouping<string, Candidate> candidates,

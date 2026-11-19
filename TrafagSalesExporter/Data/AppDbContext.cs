@@ -27,6 +27,8 @@ public class AppDbContext : DbContext
     public DbSet<FinancialJournalEntry> FinancialJournalEntries => Set<FinancialJournalEntry>();
     public DbSet<GroupStandardCost> GroupStandardCosts => Set<GroupStandardCost>();
     public DbSet<GroupMaterialMaster> GroupMaterialMasters => Set<GroupMaterialMaster>();
+    // Mapping-Tabelle Artikelnummern (Entscheid Ingo 19.11.2026), Seite /finance/mapping.
+    public DbSet<MaterialMapping> MaterialMappings => Set<MaterialMapping>();
     public DbSet<SupplierMaterialOverride> SupplierMaterialOverrides => Set<SupplierMaterialOverride>();
     // Datenverantwortung je Datentopf (2026-11-03), Seite /datenverantwortung.
     public DbSet<DataOwner> DataOwners => Set<DataOwner>();

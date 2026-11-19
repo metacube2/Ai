@@ -13,6 +13,18 @@ public interface ISapGatewayPlantMaterialReader
         string plant,
         string land,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Wie <see cref="GetMaterialKeysAsync"/>, zusaetzlich mit deutschem Materialtext je Material, sofern das EntitySet die
+    /// Property <see cref="SapGatewayPlantMaterialReader.MaterialTextProperty"/> fuehrt; sonst ist der Text leer.
+    /// </summary>
+    Task<IReadOnlyDictionary<string, string>> GetMaterialsAsync(
+        string serviceUrl,
+        string username,
+        string password,
+        string plant,
+        string land,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -38,7 +50,25 @@ public sealed class SapGatewayPlantMaterialReader : ISapGatewayPlantMaterialRead
         _appEventLogService = appEventLogService;
     }
 
+    /// <summary>
+    /// PLATZHALTER (2026-11-19, Plan Mapping/Issue Topic): Name der Property fuer den deutschen Materialtext (MAKT-MAKTX mit
+    /// SPRAS = 'D' fest im DPC, nie sy-langu) am <see cref="EntitySet"/>. Das Gateway fuehrt sie heute nicht; die Erweiterung
+    /// in T76 beauftragt Ingo separat. Der Reader fragt sie nur ab, wenn $metadata sie zeigt; eine unbekannte Property im
+    /// $select ergaebe sonst 400 und der Werkstamm-Abzug fiele taeglich aus. Nach dem Import ist nichts mehr zu konfigurieren.
+    /// </summary>
+    public const string MaterialTextProperty = "Maktx";
+
     public async Task<IReadOnlySet<string>> GetMaterialKeysAsync(
+        string serviceUrl,
+        string username,
+        string password,
+        string plant,
+        string land,
+        CancellationToken cancellationToken = default)
+        => (await GetMaterialsAsync(serviceUrl, username, password, plant, land, cancellationToken))
+            .Keys.ToHashSet(StringComparer.Ordinal);
+
+    public async Task<IReadOnlyDictionary<string, string>> GetMaterialsAsync(
         string serviceUrl,
         string username,
         string password,
@@ -48,15 +78,29 @@ public sealed class SapGatewayPlantMaterialReader : ISapGatewayPlantMaterialRead
     {
         var normalizedPlant = plant?.Trim() ?? string.Empty;
         if (normalizedPlant.Length == 0)
-            return new HashSet<string>(StringComparer.Ordinal);
+            return new Dictionary<string, string>(StringComparer.Ordinal);
 
         var entitySets = await _sapGatewayService.GetEntitySetsAsync(
             serviceUrl, username, password, cancellationToken);
         if (!entitySets.Any(name => string.Equals(name, EntitySet, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException($"Der SAP-Service enthaelt das EntitySet '{EntitySet}' nicht.");
 
+        var withText = false;
+        try
+        {
+            var fields = await _sapGatewayService.GetEntityFieldNamesAsync(
+                serviceUrl, EntitySet, username, password, cancellationToken);
+            withText = fields.Any(name => string.Equals(name, MaterialTextProperty, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Der Text ist eine Anreicherung; ohne $metadata bleibt der bisherige Abzug unveraendert.
+            await _appEventLogService.WriteAsync("SAP", "CH-Werkstamm: Feldliste nicht lesbar, Abzug ohne Materialtext",
+                "Warning", land: land, details: ex.Message);
+        }
+
         var baseUrl = serviceUrl.TrimEnd('/') + "/";
-        var url = $"{baseUrl}{EntitySet}?$format=json&$select={Uri.EscapeDataString("Matnr,Werks")}";
+        var url = BuildUrl(baseUrl, withText);
         await _appEventLogService.WriteAsync("SAP", "CH-Werkstamm-Read gestartet", land: land,
             details: $"{baseUrl}{EntitySet} | Werk={normalizedPlant}");
 
@@ -74,16 +118,30 @@ public sealed class SapGatewayPlantMaterialReader : ISapGatewayPlantMaterialRead
                 $"URL={url} Antwort={TrimForLog(error)}");
         }
 
-        var result = ParseMaterialKeys(await response.Content.ReadAsStringAsync(cancellationToken), normalizedPlant);
+        var result = ParseMaterials(await response.Content.ReadAsStringAsync(cancellationToken), normalizedPlant);
         await _appEventLogService.WriteAsync("SAP", "CH-Werkstamm-Read beendet", land: land,
-            details: $"{baseUrl}{EntitySet} | Werk={normalizedPlant} | Materialien={result.Count}");
+            details: $"{baseUrl}{EntitySet} | Werk={normalizedPlant} | Materialien={result.Count} | " +
+                     $"Materialtext={(withText ? result.Values.Count(text => text.Length > 0).ToString() : "nicht geliefert")}");
         return result;
     }
 
+    /// <summary>
+    /// URL des Abzugs. Mit Text: Property im $select und feste Anmeldesprache Deutsch (sap-language=DE, LEARNINGS 18.11.:
+    /// ohne feste Sprache lief eine Gateway-Anfrage englisch und verwarf Saetze ohne englischen Text).
+    /// </summary>
+    internal static string BuildUrl(string baseUrl, bool withText)
+        => withText
+            ? $"{baseUrl}{EntitySet}?$format=json&$select={Uri.EscapeDataString("Matnr,Werks," + MaterialTextProperty)}&sap-language=DE"
+            : $"{baseUrl}{EntitySet}?$format=json&$select={Uri.EscapeDataString("Matnr,Werks")}";
+
     public static HashSet<string> ParseMaterialKeys(string json, string plant)
+        => ParseMaterials(json, plant).Keys.ToHashSet(StringComparer.Ordinal);
+
+    /// <summary>Materialschluessel des Werks mit Text (leer, wenn die Property fehlt). Erster nicht leerer Text gewinnt.</summary>
+    public static Dictionary<string, string> ParseMaterials(string json, string plant)
     {
         using var document = JsonDocument.Parse(json);
-        var result = new HashSet<string>(StringComparer.Ordinal);
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
         if (!document.RootElement.TryGetProperty("d", out var d) ||
             !d.TryGetProperty("results", out var rows) ||
             rows.ValueKind != JsonValueKind.Array)
@@ -97,8 +155,15 @@ public sealed class SapGatewayPlantMaterialReader : ISapGatewayPlantMaterialRead
                 continue;
 
             var key = MaterialKeyNormalizer.Normalize(matnr.GetString());
-            if (key.Length > 0)
-                result.Add(key);
+            if (key.Length == 0)
+                continue;
+
+            var text = row.TryGetProperty(MaterialTextProperty, out var textElement) &&
+                       textElement.ValueKind == JsonValueKind.String
+                ? textElement.GetString()?.Trim() ?? string.Empty
+                : string.Empty;
+            if (!result.TryGetValue(key, out var existing) || (existing.Length == 0 && text.Length > 0))
+                result[key] = text;
         }
 
         return result;

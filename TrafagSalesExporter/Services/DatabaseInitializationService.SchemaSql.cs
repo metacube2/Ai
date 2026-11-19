@@ -7,7 +7,33 @@ CREATE TABLE GroupMaterialMasters (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     MaterialKey TEXT NOT NULL,
     Plant TEXT NOT NULL,
-    RefreshedAtUtc TEXT NOT NULL
+    RefreshedAtUtc TEXT NOT NULL,
+    MaterialText TEXT NOT NULL DEFAULT ''
+);";
+
+    /// <summary>Mapping-Tabelle lokale Artikelnummer auf Gruppennummer (Plan Mapping/Issue Topic, Entscheid Ingo 19.11.2026).</summary>
+    internal static string GetMaterialMappingsCreateSql() => @"
+CREATE TABLE MaterialMappings (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Tsc TEXT NOT NULL,
+    LocalMaterial TEXT NOT NULL DEFAULT '',
+    LocalMaterialKey TEXT NOT NULL,
+    LocalText TEXT NOT NULL DEFAULT '',
+    GroupMaterialNumber TEXT NOT NULL DEFAULT '',
+    GroupText TEXT NOT NULL DEFAULT '',
+    DeliveringEntity TEXT NOT NULL DEFAULT '',
+    DeliveringMaterialNumber TEXT NOT NULL DEFAULT '',
+    Method TEXT NOT NULL DEFAULT '',
+    MethodDetail TEXT NOT NULL DEFAULT '',
+    Confidence INTEGER NOT NULL DEFAULT 0,
+    Status TEXT NOT NULL DEFAULT '',
+    ReviewedBy TEXT NOT NULL DEFAULT '',
+    ReviewedAtUtc TEXT NULL,
+    ""Rows"" INTEGER NOT NULL DEFAULT 0,
+    NetSales TEXT NOT NULL DEFAULT '0',
+    Currency TEXT NOT NULL DEFAULT '',
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL
 );";
 
     internal static string GetCustomerMarketSegmentsCreateSql() => @"

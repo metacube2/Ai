@@ -90,6 +90,19 @@ public static class GroupMarginSupplierClassifier
         string? supplierNumber, string? supplierName, string? supplierCountry)
         => InternalMarkerPattern.IsMatch(string.Join(' ', supplierNumber, supplierName, supplierCountry));
 
+    /// <summary>
+    /// „No Supplier“ im Sinne der Issue-Topic-Matrix (19.11.2026): keine CH/AT-Regel (TRCH/TRAT verkaufen als Trafag AG),
+    /// keine Sales-Type-Rolle (Indien FFM/CM/LRD) und alle drei Lieferantenfelder leer. Ein Lieferant aus dem Wareneingang
+    /// oder der italienischen Uebergangsliste steht schon in den Feldern und zaehlt damit als vorhanden.
+    /// </summary>
+    public static bool HasNoSupplierEvidence(
+        string? supplierNumber, string? supplierName, string? supplierCountry, string? tsc, string? salesType)
+        => !IsIntercompanySellingTsc(tsc) &&
+           ResolveSalesTypeRole(salesType) is null &&
+           string.IsNullOrWhiteSpace(supplierNumber) &&
+           string.IsNullOrWhiteSpace(supplierName) &&
+           string.IsNullOrWhiteSpace(supplierCountry);
+
     public static string Resolve(
         string? supplierNumber,
         string? supplierName,

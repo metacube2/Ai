@@ -71,7 +71,10 @@ public class CentralExcelMarketSegmentTests
             Assert.Equal("Supplier Type", sales.Cell(1, MarketSegmentSourceColumn + 4).GetString());
             Assert.Equal("Delivering Entity", sales.Cell(1, MarketSegmentSourceColumn + 5).GetString());
             Assert.Equal("Cost Source", sales.Cell(1, MarketSegmentSourceColumn + 6).GetString());
-            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 7).GetString());
+            // 2026-11-19 additiv dahinter: Issue Topic und Mapping (Plan Mapping/Issue Topic, Matrix Ingo).
+            Assert.Equal("Issue Topic", sales.Cell(1, MarketSegmentSourceColumn + 7).GetString());
+            Assert.Equal("Mapping", sales.Cell(1, MarketSegmentSourceColumn + 8).GetString());
+            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 9).GetString());
         }
         finally
         {

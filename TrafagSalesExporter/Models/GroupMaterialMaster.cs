@@ -11,4 +11,10 @@ public class GroupMaterialMaster
     public string MaterialKey { get; set; } = string.Empty;
     public string Plant { get; set; } = string.Empty;
     public DateTime RefreshedAtUtc { get; set; }
+
+    /// <summary>
+    /// Materialtext Trafag AG, Sprache fest Deutsch (MAKT SPRAS = D), seit 2026-11-19 fuer den Mapping-Vorschlagslauf.
+    /// Leer, solange der Gateway-Abzug das Feld nicht liefert (siehe SapGatewayPlantMaterialReader.MaterialTextProperty).
+    /// </summary>
+    public string MaterialText { get; set; } = string.Empty;
 }

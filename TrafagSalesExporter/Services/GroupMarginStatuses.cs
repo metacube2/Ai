@@ -21,7 +21,11 @@ public static class GroupMarginStatuses
     /// <summary>Lieferantennummer, -name und -land sind alle drei leer - Typ nicht erkennbar.</summary>
     public const string SupplierUnclear = "Lieferant unklar";
 
-    /// <summary>Kostenbasis der Zeile ist 0 - das Quellsystem hat keinen Standardpreis geliefert.</summary>
+    /// <summary>
+    /// Kostenbasis der Zeile ist 0 - das Quellsystem hat keinen Standardpreis geliefert. Seit dem Entscheid Ingo
+    /// 2026-11-19 („use 0“, Issue Topic 3, 4, 6, 7) gilt die Kostenbasis damit als BEKANNT = 0: die Marge wird gerechnet
+    /// (Marge = Umsatz), die Zeile zaehlt nicht als offen. Der Text bleibt zeichengleich als Kennzeichen.
+    /// </summary>
     public const string StandardCostMissing = "Standardpreis fehlt";
 
     /// <summary>
@@ -51,14 +55,14 @@ public static class GroupMarginStatuses
     /// </summary>
     public static readonly IReadOnlyList<string> Open = new[]
     {
-        StandardCostMissing,
+        // StandardCostMissing seit 2026-11-19 nicht mehr offen (Entscheid Ingo „use 0“), siehe dort.
         SupplierUnclear,
         GroupMarginCostCurrencyConverter.OpenStatus,
         GroupCostMissing
     };
 
     /// <summary>Anzeigereihenfolge: erst die offenen Stati, dann <see cref="SalesMissing"/>, zuletzt OK.</summary>
-    private static readonly string[] SortOrder = Open.Append(SalesMissing).ToArray();
+    private static readonly string[] SortOrder = Open.Append(StandardCostMissing).Append(SalesMissing).ToArray();
 
     /// <summary>
     /// Reihenfolge im Audit-Ledger. Dort kann zusaetzlich der Umrechnungskurs fehlen, was jede
@@ -83,7 +87,7 @@ public static class GroupMarginStatuses
     /// </summary>
     private static readonly string[] CostBasisUnknown =
     {
-        StandardCostMissing,
+        // StandardCostMissing seit 2026-11-19 bekannt = 0 (Entscheid Ingo „use 0“).
         SupplierUnclear,
         GroupCostMissing
     };
@@ -91,6 +95,14 @@ public static class GroupMarginStatuses
     /// <summary>Liegt fuer diese Zeile ueberhaupt eine Kostenbasis vor? Siehe <see cref="CostBasisUnknown"/>.</summary>
     public static bool IsCostBasisKnown(string? status)
         => status is null || !CostBasisUnknown.Contains(status, StringComparer.Ordinal);
+
+    /// <summary>
+    /// Wird die Marge in Verkaufswaehrung ausgewiesen? Bei OK und seit 2026-11-19 bei <see cref="StandardCostMissing"/>
+    /// (Kosten 0, Marge = Umsatz). Nicht bei abweichender Kostenwaehrung (gemischte Waehrungen) und nicht bei offenen Stati.
+    /// </summary>
+    public static bool ShowsMargin(string? status)
+        => string.Equals(status, Ok, StringComparison.Ordinal) ||
+           string.Equals(status, StandardCostMissing, StringComparison.Ordinal);
 
     /// <summary>Sortierschluessel der Gruppenmargen-Detailliste. OK und Unbekanntes sortiert nach hinten.</summary>
     public static int Sort(string? status) => IndexOrLast(SortOrder, status);
