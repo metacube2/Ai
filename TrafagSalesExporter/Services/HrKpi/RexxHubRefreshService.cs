@@ -91,7 +91,9 @@ public sealed class RexxHubRefreshService : BackgroundService
             return;
 
         await RunOneAsync(now, RexxHubQueryKind.Gesamt, Path.Combine(DataFolder, _files.GesamtFile), _gesamtState, cancellationToken);
-        await RunOneAsync(now, RexxHubQueryKind.Faelle, Path.Combine(DataFolder, _files.RexxCaseFile), _caseState, cancellationToken);
+        // Seit 2026-11-19: #777 hat im Hub keinen Endpunkt (NOTES 16), dann bleibt die Fall-Datei Handexport.
+        if (_options.CaseEnabled)
+            await RunOneAsync(now, RexxHubQueryKind.Faelle, Path.Combine(DataFolder, _files.RexxCaseFile), _caseState, cancellationToken);
     }
 
     private async Task RunOneAsync(DateTime now, RexxHubQueryKind kind, string path, DueState state, CancellationToken cancellationToken)
@@ -137,7 +139,8 @@ public sealed class RexxHubRefreshService : BackgroundService
         {
             var connection = await _source.ResolveAsync(cancellationToken);
             token = connection.Token;
-            var result = await _client.FetchQueryAsync(connection, queryId, _options, cancellationToken);
+            var result = await _client.FetchQueryAsync(connection, queryId, _options.ForKind(kind == RexxHubQueryKind.Gesamt), cancellationToken);
+            RexxHubColumns.Normalize(kind, result.Table);
             var existing = RexxHubWorkbook.Inspect(kind, path);
             var check = RexxHubColumns.Check(kind, result.Table, existing.Rows, _options.MinShare, _options.MinRowShareOfPrevious, _options.MaxDuplicatePersonalnummern);
             var requestId = string.IsNullOrWhiteSpace(result.RequestId) ? "keine" : result.RequestId;
@@ -200,9 +203,10 @@ public sealed class RexxHubRefreshService : BackgroundService
 
     /// <summary>Hinweis zum Zeitraumfilter von #775, bis HrKpi:RexxHub:GesamtZeitraumGeprueft gesetzt ist.</summary>
     internal const string GesamtPeriodNote =
-        "Zeitraum von #775 nicht bestaetigt: der gespeicherte Filter stand am 04.11. fest auf 01.01. bis 04.11.2026 (docs/HR_KPI.md 8.13). " +
-        "Gilt er auch ueber den Hub, frieren die Summen „angetreten“ ein, das Cockpit zeigt aber das Dateidatum als Stand. In Rexx einen " +
-        "Zeitraum bis heute einstellen oder ueber QueryParameters ({jahresanfang}, {heute}) uebergeben, dann HrKpi:RexxHub:GesamtZeitraumGeprueft = true";
+        "Zeitraum der Summen „angetreten“ nicht bestaetigt (Gesamtdatei ueber den Hub, seit 2026-11-19 GET v1/employees, NOTES 16). " +
+        "Weicht er vom Handexport #775 (01.01. bis heute) ab, rechnet das Cockpit mit dem hoeheren Wert aus SAP und Rexx falsche Krankheits-, " +
+        "Unfall- und Ferientage. Erst mit einem frischen Handexport #775 vergleichen (Spaltensummen, Personalnummern), dann " +
+        "HrKpi:RexxHub:GesamtZeitraumGeprueft = true";
 
     /// <summary>Sicherung eines Handexports: zuerst <c>*.manuell.xlsx</c>, danach <c>*.manuell.yyyyMMdd-HHmmss.xlsx</c>.</summary>
     internal static string BackupPath(string path, DateTime now)
@@ -290,9 +294,20 @@ public sealed class RexxHubProbe(
                      (RexxHubQueryKind.Faelle, settings.CaseQueryId, fileNames.RexxCaseFile)
                  })
         {
+            if (kind == RexxHubQueryKind.Faelle && !settings.CaseEnabled)
+            {
+                queries.Add(new RexxHubProbeQuery
+                {
+                    Abfrage = $"#{queryId}", QueryId = queryId, Datei = file, Ok = true,
+                    Hinweise = ["uebersprungen: HrKpi:RexxHub:CaseEnabled = false (kein Hub-Endpunkt fuer Abwesenheiten je Fall, Datei bleibt Handexport)"]
+                });
+                continue;
+            }
+
             try
             {
-                var result = await client.FetchQueryAsync(connection, queryId, settings, cancellationToken);
+                var result = await client.FetchQueryAsync(connection, queryId, settings.ForKind(kind == RexxHubQueryKind.Gesamt), cancellationToken);
+                RexxHubColumns.Normalize(kind, result.Table);
                 var existing = RexxHubWorkbook.Inspect(kind, Path.Combine(folder, file));
                 var check = RexxHubColumns.Check(kind, result.Table, existing.Rows, settings.MinShare, settings.MinRowShareOfPrevious, settings.MaxDuplicatePersonalnummern);
                 queries.Add(new RexxHubProbeQuery

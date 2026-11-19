@@ -92,6 +92,32 @@ public sealed class RexxHubOptions
     public string PathTemplate { get; set; } = "v1/datawarehouse/{0}";
 
     /// <summary>
+    /// Pfad nur fuer die Gesamtdatei (#775); leer = <see cref="PathTemplate"/>. Seit 2026-11-19 „v1/employees“: Rexx-Data-Warehouse-
+    /// Abfragen sind Kennzahlen je Monat, `datawarehouse/775` gibt 404; #775 ist als Export-Felder von GET /v1/employees beim
+    /// API-Benutzer „BI-Dashboard HR-Cockpit“ nachgebaut (saptasks/rexx_schnittstelle/NOTES.md 16).
+    /// </summary>
+    public string GesamtPathTemplate { get; set; } = string.Empty;
+
+    /// <summary>Pfad nur fuer die Fall-Datei (#777); leer = <see cref="PathTemplate"/>.</summary>
+    public string CasePathTemplate { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fall-Datei (#777) ueber den Hub holen. Seit 2026-11-19 in appsettings aus: der Hub hat keinen Endpunkt fuer Abwesenheiten
+    /// je Fall (NOTES 16), #777 bleibt Handexport. Aus: kein Abruf, kein Protokolleintrag, der Testabruf meldet „uebersprungen“.
+    /// </summary>
+    public bool CaseEnabled { get; set; } = true;
+
+    /// <summary>Kopie mit dem Pfad der Abfrageart als <see cref="PathTemplate"/>, damit Client und Testabruf nur eine Stelle kennen.</summary>
+    public RexxHubOptions ForKind(bool gesamt)
+    {
+        var copy = (RexxHubOptions)MemberwiseClone();
+        var path = gesamt ? GesamtPathTemplate : CasePathTemplate;
+        if (!string.IsNullOrWhiteSpace(path))
+            copy.PathTemplate = path.Trim();
+        return copy;
+    }
+
+    /// <summary>
     /// Name des Query-Parameters fuer die Seitennummer. Leer = nie selbst blaettern, nur <c>_links.next</c> folgen.
     /// Der Name steht nicht im Produktdokument; ein falscher Parameter kann 400 ergeben.
     /// </summary>
