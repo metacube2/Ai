@@ -8,7 +8,10 @@ namespace TrafagSalesExporter.Services;
 /// <summary>Verfahren einer Mapping-Zeile (Plan Abschnitt 5, Stufen 2 bis 4).</summary>
 public static class MaterialMappingMethods
 {
-    /// <summary>Stufe 2, feste Regel: wirkt sofort (Entscheid Ingo 19.11.2026, E5).</summary>
+    /// <summary>
+    /// Stufe 2, feste Regel. Seit Entscheid Ingo 19.11.2026 14:20 wirkt sie NICHT mehr sofort, sondern wie ein Texttreffer erst
+    /// bestaetigt (Fehltreffer TRDE 60077 -> 47269, Nummer hinter „ersetzt“). Die I-Praefix-Regel TRIT ist keine Mapping-Zeile.
+    /// </summary>
     public const string Rule = "Regel";
     /// <summary>Stufe 3, Textaehnlichkeit: wirkt nur im Status bestaetigt.</summary>
     public const string Text = "Text";
@@ -124,16 +127,37 @@ public sealed record MaterialMappingWeight(int Rows, decimal NetSales, string Cu
 public static class MaterialMappingStore
 {
     /// <summary>
-    /// E5: Regeltreffer wirken sofort, Text- und Handzeilen nur im Status bestaetigt, abgelehnte nie. Ohne Gruppennummer
-    /// wirkt keine Zeile.
+    /// Seit Entscheid Ingo 19.11.2026 14:20 wirkt jede Zeile nur im Status bestaetigt (auch Regelzeilen); abgelehnte, offene
+    /// und Vorschlaege nie. Ohne Gruppennummer und fuer TRCH/TRAT wirkt keine Zeile.
     /// </summary>
     public static bool IsEffective(MaterialMapping mapping)
         => !IsExcludedTsc(mapping.Tsc) &&
            !string.IsNullOrWhiteSpace(mapping.GroupMaterialNumber) &&
            !string.Equals(mapping.Status, MaterialMappingStatuses.Rejected, StringComparison.Ordinal) &&
            !string.Equals(mapping.Status, MaterialMappingStatuses.Open, StringComparison.Ordinal) &&
-           (string.Equals(mapping.Status, MaterialMappingStatuses.Confirmed, StringComparison.Ordinal) ||
-            string.Equals(mapping.Method, MaterialMappingMethods.Rule, StringComparison.Ordinal));
+           string.Equals(mapping.Status, MaterialMappingStatuses.Confirmed, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Entscheid Ingo 19.11.2026 14:20: Regelzeilen im Status bestaetigt, die nie von Hand geprueft wurden (kein Pruefzeitpunkt),
+    /// gehen zurueck auf Vorschlag. Von Hand bestaetigte (Seite oder Import mit Pruefer) bleiben.
+    /// </summary>
+    public static async Task<int> ResetUnreviewedRuleRowsAsync(AppDbContext db, DateTime nowUtc, CancellationToken cancellationToken = default)
+    {
+        var rows = (await db.MaterialMappings.ToListAsync(cancellationToken))
+            .Where(mapping => mapping.Method == MaterialMappingMethods.Rule &&
+                              mapping.Status == MaterialMappingStatuses.Confirmed &&
+                              mapping.ReviewedAtUtc is null &&
+                              string.IsNullOrWhiteSpace(mapping.ReviewedBy))
+            .ToList();
+        foreach (var row in rows)
+        {
+            row.Status = MaterialMappingStatuses.Proposed;
+            row.UpdatedAtUtc = nowUtc;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return rows.Count;
+    }
 
     /// <summary>
     /// Entscheid Ingo 2026-11-19: CH und AT sind kein Mapping-Fall (Quelle ist das SAP-System der Trafag AG; AT-Material im
@@ -561,7 +585,7 @@ public static class MaterialMappingExcel
         help.Cell(1, 1).Style.Font.Bold = true;
         var lines = new[]
         {
-            "Wirksam (Spalte Effective = ja): Regelzeilen sofort, Text- und Handzeilen nur im Status bestaetigt, abgelehnte nie (Entscheid Ingo 19.11.2026).",
+            "Wirksam (Spalte Effective = ja): nur Zeilen im Status bestaetigt, auch Regelzeilen (Entscheid Ingo 19.11.2026 14:20); Vorschlag, offen und abgelehnt nie.",
             "Eine Zeile wirkt nur fuer ihren TSC und nur dort, wo die Quelle keine Gruppen-Artikelnummer liefert; sie ueberschreibt nie.",
             "Import: alle Zeilen oder keine. Abgelehnt werden doppelte Schluessel (TSC + lokale Nummer), unbekannte TSC, fehlende Nummern, unbekannter Status.",
             "Status: offen (Artikel braucht ein Mapping, noch kein Vorschlag; wirkt nie), Vorschlag, bestaetigt oder abgelehnt. Confidence 0 bis 100: 100 bei Regel, sonst Wert der Textaehnlichkeit.",

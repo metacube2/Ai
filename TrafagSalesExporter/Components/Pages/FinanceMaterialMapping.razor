@@ -19,8 +19,8 @@
 <MudText Typo="Typo.h4" Class="mb-2">@T("Mapping Artikelnummern", "Material number mapping")</MudText>
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-3">
-    @T("Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export.",
-       "Maps local material numbers of a company to the Trafag AG material number. Rule rows take effect immediately, text suggestions only after confirmation. A row applies only to its own company and only where the source has no group number. The suggestion run starts only from the button, never in the daily export.")
+    @T("Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export.",
+       "Maps local material numbers of a company to the Trafag AG material number. Rule and text suggestions take effect only after confirmation. A row applies only to its own company and only where the source has no group number. The suggestion run starts only from the button, never in the daily export.")
 </MudAlert>
 
 <MudStack Row Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
@@ -164,6 +164,9 @@
                 "{0} suggestions from {1} articles: {2} new, {3} updated, {4} protected. Trafag AG texts: {5} of {6}."),
                 result.Suggestions, result.Candidates, result.Inserted, result.Updated, result.Protected, result.TrAgTexts, result.TrAgMaterials),
                 Severity.Success);
+            Snackbar.Add(string.Format(T("{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung).",
+                "{0} rule hits DE slash, sales {1:N0} EUR (effective only after confirmation)."), result.DeSlashRuleHits, result.DeSlashRuleNetSales),
+                Severity.Info);
             _textWarning = result.TextRefreshWarning;
             await LoadAsync();
         }

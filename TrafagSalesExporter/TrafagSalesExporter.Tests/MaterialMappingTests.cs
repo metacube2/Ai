@@ -347,7 +347,7 @@ public class MaterialMappingTests : IDisposable
 
         Assert.Equal(("8896.10.10", MaterialMappingMethods.Rule, 100, MaterialMappingStatuses.Proposed),
             (result.GroupMaterialNumber, result.Method, result.Confidence, result.Status));
-        Assert.True(MaterialMappingStore.IsEffective(result));   // Regel wirkt sofort
+        Assert.False(MaterialMappingStore.IsEffective(result));   // seit 19.11. 14:20 wirkt auch die Regel erst bestaetigt
     }
 
     [Fact]

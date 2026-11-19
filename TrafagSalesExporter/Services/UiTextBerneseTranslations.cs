@@ -3193,7 +3193,7 @@ internal static class UiTextBerneseTranslations
             ["Übrige"] = "Übrigi",
             ["Hintergrund heller oder dunkler"] = "Hintergrund heller oder dünkler",
             ["Mapping Artikelnummern"] = "Mapping Artikelnummere",
-            ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Ordnet di lokale Artikelnummere vo nere Gsellschaft der Sachnummer vo dr Trafag AG zue. Regelzile wirke sofort, Textvorschleg ersch nach dr Bestätigung. E Zile gilt nume für iri Gsellschaft und nume dert, wo d Quelle ke Gruppenummere liferet. Dr Vorschlagslouf louft nume über e Chnopf, nie im tägleche Export.",
+            ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Ordnet di lokale Artikelnummere vo nere Gsellschaft der Sachnummer vo dr Trafag AG zue. Regel- und Textvorschleg wirke ersch nach dr Bestätigung. E Zile gilt nume für iri Gsellschaft und nume dert, wo d Quelle ke Gruppenummere liferet. Dr Vorschlagslouf louft nume über e Chnopf, nie im tägleche Export.",
             ["Vorschlagslauf starten"] = "Vorschlagslouf starte",
             ["Excel exportieren"] = "Excel exportiere",
             ["Excel importieren"] = "Excel importiere",
@@ -3208,5 +3208,6 @@ internal static class UiTextBerneseTranslations
             ["Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren."] = "Ke Zile. Vorschlagslouf starte oder es Excel importiere.",
             ["{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}."] = "{0} Vorschleg us {1} Artikle: {2} neu, {3} aktualisiert, {4} gschützt. Texte Trafag AG: {5} vo {6}.",
             ["Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen."] = "Import: {0} neu, {1} aktualisiert, {2} lääri Zile übersprunge.",
+            ["{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung)."] = "{0} Regeltreffer DE-Schrägstrich, Umsatz {1:N0} EUR (wirke ersch nach dr Bestätigung).",
         };
 }

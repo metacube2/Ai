@@ -38,6 +38,14 @@ public static class MaterialMappingSuggester
     public const int MinimumTextConfidence = 40;
 
     public const string RuleNumberInText = "Trafag-Nummer im Text";
+    public const string RuleDeSlash = "DE Typencode/Sachnummer";
+
+    // Nummern nach diesen Woertern sind keine Sachnummer DIESES Artikels (alte Ausfuehrung, Nachfolger, Kundennummer).
+    // Fehltreffer 19.11.2026: TRDE 8256.29.2315/60077 nahm 47269 hinter „ersetzt“.
+    private static readonly Regex ExcludingPrefix = new(
+        @"(?:\bersetzt(?:\s+durch)?|\bersatz\s+f(?:ue|ü)r|\balt|\bfr(?:ue|ü)her|\breplace[sd]?(?:\s+by)?|\bsuperseded(?:\s+by)?|\bold|" +
+        @"\bkunden[\w-]*|\bkd\.?\s*-?\s*nr|\bart\.?\s*-?\s*nr|\bartikel-?\s*nr|\bcustomer[\w\s-]*no)\.?\s*[:.\-]?\s*$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
     public const string TextSimilarity = "Textaehnlichkeit (Trigramme)";
 
     // Kandidat fuer eine Sachnummer: mindestens 4 Ziffern, optional mit Punkten/Bindestrichen gegliedert (53513,
@@ -61,14 +69,20 @@ public static class MaterialMappingSuggester
             if (localKey.Length == 0 || trAgMaterials.ContainsKey(localKey))
                 continue;
 
-            var numberHits = NumberToken.Matches(candidate.LocalText ?? string.Empty)
-                .Select(match => MaterialKeyNormalizer.Normalize(match.Value))
-                .Where(key => key.Length > 0 && key != localKey && trAgMaterials.ContainsKey(key))
+            var numberHits = NumbersInText(candidate.LocalText ?? string.Empty)
+                .Where(key => key != localKey && trAgMaterials.ContainsKey(key))
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
 
             MaterialMapping? suggestion = null;
-            if (numberHits.Count == 1)
+            var slashKey = DeSlashKey(candidate.Tsc, candidate.LocalMaterial);
+            if (slashKey is not null && trAgMaterials.ContainsKey(slashKey))
+            {
+                // Entscheid Ingo 19.11.2026 14:20: TRDE fuehrt Nummern als Typencode/Sachnummer (8258.85.2317/55441).
+                suggestion = Create(candidate, localKey, slashKey, trAgMaterials[slashKey],
+                    MaterialMappingMethods.Rule, RuleDeSlash, 100, nowUtc);
+            }
+            else if (numberHits.Count == 1)
             {
                 suggestion = Create(candidate, localKey, numberHits[0], trAgMaterials[numberHits[0]],
                     MaterialMappingMethods.Rule, RuleNumberInText, 100, nowUtc);
@@ -91,6 +105,37 @@ public static class MaterialMappingSuggester
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Sachnummer-Kandidaten im Text, ohne Nummern hinter „ersetzt“, „alt“, „replaces“, Kunden-Artikelnummern usw.
+    /// Massgeblich ist der Text zwischen der vorigen Nummer (bzw. dem Textanfang) und dieser Nummer.
+    /// </summary>
+    public static IEnumerable<string> NumbersInText(string text)
+    {
+        var previousEnd = 0;
+        foreach (Match match in NumberToken.Matches(text))
+        {
+            var before = text[previousEnd..match.Index];
+            previousEnd = match.Index + match.Length;
+            if (ExcludingPrefix.IsMatch(before))
+                continue;
+            var key = MaterialKeyNormalizer.Normalize(match.Value);
+            if (key.Length > 0)
+                yield return key;
+        }
+    }
+
+    /// <summary>TRDE: Nummer nach dem letzten Schraegstrich der lokalen Nummer, normalisiert; sonst null.</summary>
+    public static string? DeSlashKey(string? tsc, string? localMaterial)
+    {
+        if (!string.Equals(tsc?.Trim(), "TRDE", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(localMaterial))
+            return null;
+        var slash = localMaterial.LastIndexOf('/');
+        if (slash <= 0 || slash == localMaterial.Length - 1)
+            return null;
+        var key = MaterialKeyNormalizer.Normalize(localMaterial[(slash + 1)..]);
+        return key.Length == 0 ? null : key;
     }
 
     private static MaterialMapping Create(
@@ -222,7 +267,10 @@ public sealed record MaterialMappingSuggestionRunResult(
     // Ergebnis des MAKTSet-Abrufs: null = Texte frisch geladen, sonst die Meldung fuer die Seite (Lauf ging mit dem
     // gespeicherten Stand weiter).
     string? TextRefreshWarning = null,
-    int TextsLoaded = 0);
+    int TextsLoaded = 0,
+    // Zaehlung Regel DE Typencode/Sachnummer (Entscheid Ingo 19.11.2026 14:20): Treffer und deren Umsatz (Hauswaehrung EUR).
+    int DeSlashRuleHits = 0,
+    decimal DeSlashRuleNetSales = 0m);
 
 /// <summary>
 /// Vorschlagslauf per Knopf: rechnet die zentralen Verkaufszeilen mit denselben Einstellungen wie Sales_All durch, sammelt
@@ -277,7 +325,10 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
             : financeRules.OrderBy(rule => rule.SortOrder).ThenBy(rule => rule.Id).ToList();
         var candidates = BuildCandidates(records, costs, plantKeys, settings, foreign, mappings, rules);
         var now = DateTime.UtcNow;
+        // Entscheid Ingo 19.11.2026 14:20: Regelzeilen wirken nur bestaetigt; nie geprueft bestaetigte zurueck auf Vorschlag.
+        await MaterialMappingStore.ResetUnreviewedRuleRowsAsync(db, now, cancellationToken);
         var suggestions = MaterialMappingSuggester.Suggest(candidates, plant, now);
+        var deSlash = suggestions.Where(item => item.MethodDetail == MaterialMappingSuggester.RuleDeSlash).ToList();
         var (inserted, updated, protectedRows) = await MaterialMappingStore.UpsertSuggestionsAsync(db, suggestions, now, cancellationToken);
         // Auftrag Ingo 19.11.2026: alle Artikel mit Mapping-Bedarf sichtbar, auch ohne Vorschlag (Status offen).
         await MaterialMappingStore.SyncOpenRowsAsync(db, candidates, now, cancellationToken);
@@ -285,7 +336,7 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         await MaterialMappingStore.RemoveExcludedTscRowsAsync(db, cancellationToken);
         return new MaterialMappingSuggestionRunResult(
             candidates.Count, suggestions.Count, inserted, updated, protectedRows, plant.Count, plant.Values.Count(text => text.Length > 0),
-            textWarning, textsLoaded);
+            textWarning, textsLoaded, deSlash.Count, deSlash.Sum(item => item.NetSales));
     }
 
     /// <summary>
