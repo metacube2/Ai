@@ -508,3 +508,25 @@ beiden Herstellerdokumenten). Alle HR, Stand heute; nur `datawarehouse` ist frei
 - **Export-Felder bei #2 noch nicht gespeichert:** Im Dialog „Felder auswaehlen“ waren die 22 fehlenden Spalten von #775 plus
   „Personalnummer (Vorgesetzte)“ zu den 9 Vorgaben hinzugefuegt; „Speichern“ blieb mit rotem Ladebalken haengen, nach Neuladen
   weiter 9 Felder (11:12). Gleiches Haengen wie beim Zuruecksetzen von `time-management` bei #1. Nicht weiter probiert.
+
+**Nachtrag 2026-11-19 11:30: #775 im Hub nachgebaut, Testaufruf erfolgreich.**
+- API User #2 „BI-Dashboard HR-Cockpit“: **31 Export-Felder** bei `GET /v1/employees` gespeichert (das Speichern von 11:12 kam
+  verspaetet doch an; Rexx speichert teils erst nach ueber einer Minute). Technische Namen gesetzt (11:26), Schema: Kleinbuchstaben,
+  Umlaute ausgeschrieben, Unterstrich: `personalnummer`, `nachname_vorname_link_personal`, `personal_status`, `stelle`, `organisation`,
+  `kostenstelle`, `eintrittsdatum`, `austrittsdatum`, `austrittsart`, `geburtsdatum`, `o_taegliche_sollarbeitszeit_woche`,
+  `arbeitszeitmodell`, `stunden_saldo`, `urlaubsanspruch`, `urlaub_rest`, `ferien_ausstehend_tage`, `ferien_angetreten_tage`,
+  `krankheit_angetreten_stunden`, `krankheit_ueber_60_tage_angetreten_stunden`, `unfall_angetreten_stunden`,
+  `kompensation_angetreten_stunden`, `militaer_zivildienst_angetreten_stunden`, `krankheit_angetreten_zeitraum`,
+  `krankheit_ueber_60_tage_angetreten_zeitraum`, `unfall_angetreten_zeitraum`, `personalnummer_vorgesetzte`; dazu die Vorgaben
+  `employee_id`, `vorname`, `nachname`, `leitung_j_n`, `arbeitsverhaeltnis`.
+- **Aktiv = Ja seit 11:29** (noetig fuer den Test), ohne IP-Sperre und Verfallsdatum; vor dem Server-Einsatz IP von `tragvapp401` setzen.
+- **Testaufruf 11:30** (`/v1/employees?page=1`, Swagger, nur Zaehlung ausgewertet, keine Werte gelesen): 200, `_meta` = `total_items 396,
+  items_per_page 50, current_page, total_pages 8, timestamp, request_id`, `_links` = `self, first, last, prev, next` (Objekte mit `href`).
+  Seite 1: 50 Zeilen; Austrittsdatum bei 21 von 50 gefuellt (Ausgeschiedene sind enthalten). Typen: `kostenstelle`, `stelle`,
+  `organisation` sind **Listen** (array), `ferien_*`, `urlaub*`, `o_taegliche_sollarbeitszeit_woche` Zahlen, `stunden_saldo` und die
+  Stunden-Summen Text, Datumsfelder Text. Vorgesetzte bei 48 von 50 gefuellt.
+- **Offen fuer den Code:** Abruf von `datawarehouse/{id}` auf `employees` mit `page` umstellen, `ColumnMap` technisch -> Ueberschrift,
+  Listenfelder zusammenfuegen, Zeilen je Seite in Rexx auf 500 (heute 50, 8 Anfragen je Abruf). Zu klaeren: Zeitraum der Summen
+  „angetreten“ (laufendes Jahr?) und ob 396 Personen alle Faelle von #775 abdecken (Handexport-Zeilenzahl vergleichen).
+- **User #1:** `time-management/entries` und `employees` stehen weiter auf frei; „nein“ wurde dreimal gewaehlt und gespeichert, blieb aber
+  nie stehen. Ingo setzt es von Hand zurueck oder fragt Artjom.
