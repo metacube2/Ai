@@ -1242,14 +1242,15 @@ public sealed class RexxHubTests : IDisposable
     }
 
     [Fact]
-    public void Appsettings_Stellt_Employees_Ein_Und_Laesst_Den_Schalter_Aus()
+    public void Appsettings_Stellt_Employees_Ein_Und_Schaltet_Den_Abruf_Ein()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
         var configuration = new ConfigurationBuilder().AddJsonFile(path, optional: false).Build();
         var options = new RexxHubOptions();
         configuration.GetSection(RexxHubOptions.SectionName).Bind(options);
 
-        Assert.False(options.Enabled);
+        Assert.True(options.Enabled); // seit 2026-11-19 13:35 ein (Zeitraum gegen Handexport 04.11. geprueft, NOTES 17)
+        Assert.True(options.GesamtZeitraumGeprueft);
         Assert.False(options.CaseEnabled);
         Assert.Equal("v1/employees", options.GesamtPathTemplate);
         Assert.Equal("page", options.PageParameter);
@@ -1258,5 +1259,43 @@ public sealed class RexxHubTests : IDisposable
         Assert.All(RexxHubColumns.Gesamt.Where(c => c.Pflicht), c => Assert.Contains(c.Name, mapped));
         // Arbeitszeitmodell fehlt im Handexport #775; der Leser setzte sonst „Vollzeit“ als FTE 1 vor die Sollzeit.
         Assert.DoesNotContain("Arbeitszeitmodell", mapped);
+    }
+
+    [Fact]
+    public void Normalize_Behaelt_Bei_Doppelter_Personalnummer_Den_Juengsten_Eintritt()
+    {
+        var table = new RexxHubTable();
+        foreach (var c in new[] { "Personalnummer", "Eintrittsdatum", "Personal Status" })
+            table.AddColumn(c);
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = "1001", ["Eintrittsdatum"] = "2015-03-01", ["Personal Status"] = "Ausgeschieden" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = "1002", ["Eintrittsdatum"] = "2020-01-01", ["Personal Status"] = "Aktiv" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = "00001001", ["Eintrittsdatum"] = "2024-06-01", ["Personal Status"] = "Aktiv" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = null, ["Eintrittsdatum"] = "2024-06-01", ["Personal Status"] = "Aktiv" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = null, ["Eintrittsdatum"] = "2024-06-01", ["Personal Status"] = "Aktiv" });
+
+        Assert.Equal(1, RexxHubColumns.Normalize(RexxHubQueryKind.Gesamt, table));
+
+        Assert.Equal(4, table.Rows.Count);
+        var kept = Assert.Single(table.Rows, r => (string?)r["Personalnummer"] is "1001" or "00001001");
+        Assert.Equal("Aktiv", kept["Personal Status"]);
+        var check = RexxHubColumns.Check(RexxHubQueryKind.Gesamt, table, null, 0, 0, 0);
+        Assert.Equal(0, check.DoppeltePersonalnummern);
+    }
+
+    [Fact]
+    public void Sums_Rechnet_Stunden_Als_Dezimal_Und_Zahlen()
+    {
+        var table = new RexxHubTable();
+        table.AddColumn("Krankheit angetreten (Stunden)");
+        table.AddColumn("Ferien angetreten (Tage)");
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Stunden)"] = "8:30", ["Ferien angetreten (Tage)"] = 2.5m });
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Stunden)"] = "-1:15", ["Ferien angetreten (Tage)"] = "3" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Stunden)"] = null, ["Ferien angetreten (Tage)"] = null });
+
+        var sums = RexxHubColumns.Sums(RexxHubQueryKind.Gesamt, table);
+
+        Assert.Equal(7.25m, sums["Krankheit angetreten (Stunden)"]);
+        Assert.Equal(5.5m, sums["Ferien angetreten (Tage)"]);
+        Assert.False(sums.ContainsKey("Urlaub Rest"));
     }
 }
