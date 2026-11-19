@@ -8,9 +8,10 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung)."] = "{0} coincidencias de regla DE barra, ventas {1:N0} EUR (solo surten efecto tras confirmación).",
                 // Mapping Artikelnummern 2026-11-19
                 ["Mapping Artikelnummern"] = "Mapeo de números de artículo",
-                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Asigna los números de artículo locales de una sociedad al número de material de Trafag AG. Las filas de regla actúan de inmediato, las propuestas de texto solo tras su confirmación. Una fila vale solo para su sociedad y solo donde la fuente no aporta número de grupo. La ejecución de propuestas solo se inicia con el botón, nunca en la exportación diaria.",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Asigna los números de artículo locales de una sociedad al número de material de Trafag AG. Las propuestas de regla y de texto solo actúan tras su confirmación. Una fila vale solo para su sociedad y solo donde la fuente no aporta número de grupo. La ejecución de propuestas solo se inicia con el botón, nunca en la exportación diaria.",
                 ["Vorschlagslauf starten"] = "Iniciar ejecución de propuestas",
                 ["Excel exportieren"] = "Exportar Excel",
                 ["Excel importieren"] = "Importar Excel",
@@ -2931,9 +2932,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung)."] = "{0} corrispondenze regola DE barra, vendite {1:N0} EUR (valide solo dopo la conferma).",
                 // Mapping Artikelnummern 2026-11-19
                 ["Mapping Artikelnummern"] = "Mappatura codici articolo",
-                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Assegna i codici articolo locali di una società al codice materiale di Trafag AG. Le righe di regola valgono subito, le proposte di testo solo dopo la conferma. Una riga vale solo per la sua società e solo dove la fonte non fornisce un codice di gruppo. L'elaborazione delle proposte parte solo dal pulsante, mai nell'esportazione giornaliera.",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Assegna i codici articolo locali di una società al codice materiale di Trafag AG. Le proposte di regola e di testo valgono solo dopo la conferma. Una riga vale solo per la sua società e solo dove la fonte non fornisce un codice di gruppo. L'elaborazione delle proposte parte solo dal pulsante, mai nell'esportazione giornaliera.",
                 ["Vorschlagslauf starten"] = "Avvia elaborazione proposte",
                 ["Excel exportieren"] = "Esporta Excel",
                 ["Excel importieren"] = "Importa Excel",
@@ -5854,9 +5856,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung)."] = "{0} नियम मिलान DE स्लैश, बिक्री {1:N0} EUR (पुष्टि के बाद ही लागू)।",
                 // Mapping Artikelnummern 2026-11-19
                 ["Mapping Artikelnummern"] = "आइटम नंबर मैपिंग",
-                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "किसी कंपनी के स्थानीय आइटम नंबरों को Trafag AG के मटेरियल नंबर से जोड़ता है। नियम वाली पंक्तियाँ तुरंत लागू होती हैं, टेक्स्ट सुझाव केवल पुष्टि के बाद। एक पंक्ति केवल अपनी कंपनी पर और केवल वहीं लागू होती है जहाँ स्रोत समूह नंबर नहीं देता। सुझाव रन केवल बटन से चलता है, दैनिक निर्यात में कभी नहीं।",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "किसी कंपनी के स्थानीय आइटम नंबरों को Trafag AG के मटेरियल नंबर से जोड़ता है। नियम और टेक्स्ट सुझाव केवल पुष्टि के बाद लागू होते हैं। एक पंक्ति केवल अपनी कंपनी पर और केवल वहीं लागू होती है जहाँ स्रोत समूह नंबर नहीं देता। सुझाव रन केवल बटन से चलता है, दैनिक निर्यात में कभी नहीं।",
                 ["Vorschlagslauf starten"] = "सुझाव रन शुरू करें",
                 ["Excel exportieren"] = "Excel निर्यात करें",
                 ["Excel importieren"] = "Excel आयात करें",
@@ -8777,9 +8780,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung)."] = "{0} përputhje rregulli DE vijë, shitje {1:N0} EUR (vlejnë vetëm pas konfirmimit).",
                 // Mapping Artikelnummern 2026-11-19
                 ["Mapping Artikelnummern"] = "Përputhja e numrave të artikujve",
-                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Lidh numrat lokalë të artikujve të një shoqërie me numrin e materialit të Trafag AG. Rreshtat me rregull veprojnë menjëherë, propozimet e tekstit vetëm pas konfirmimit. Një rresht vlen vetëm për shoqërinë e vet dhe vetëm aty ku burimi nuk jep numër grupi. Ekzekutimi i propozimeve niset vetëm me butonin, kurrë në eksportin ditor.",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Lidh numrat lokalë të artikujve të një shoqërie me numrin e materialit të Trafag AG. Propozimet me rregull dhe me tekst veprojnë vetëm pas konfirmimit. Një rresht vlen vetëm për shoqërinë e vet dhe vetëm aty ku burimi nuk jep numër grupi. Ekzekutimi i propozimeve niset vetëm me butonin, kurrë në eksportin ditor.",
                 ["Vorschlagslauf starten"] = "Nis ekzekutimin e propozimeve",
                 ["Excel exportieren"] = "Eksporto Excel",
                 ["Excel importieren"] = "Importo Excel",
@@ -11700,9 +11704,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung)."] = "{0} DE eğik çizgi kural eşleşmesi, satış {1:N0} EUR (yalnızca onaydan sonra geçerli).",
                 // Mapping Artikelnummern 2026-11-19
                 ["Mapping Artikelnummern"] = "Ürün numarası eşleme",
-                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Bir şirketin yerel ürün numaralarını Trafag AG malzeme numarasıyla eşler. Kural satırları hemen geçerli olur, metin önerileri ancak onaydan sonra. Bir satır yalnızca kendi şirketi için ve yalnızca kaynağın grup numarası vermediği yerde geçerlidir. Öneri çalıştırması yalnızca düğmeyle başlar, günlük dışa aktarmada asla.",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Bir şirketin yerel ürün numaralarını Trafag AG malzeme numarasıyla eşler. Kural ve metin önerileri ancak onaydan sonra geçerli olur. Bir satır yalnızca kendi şirketi için ve yalnızca kaynağın grup numarası vermediği yerde geçerlidir. Öneri çalıştırması yalnızca düğmeyle başlar, günlük dışa aktarmada asla.",
                 ["Vorschlagslauf starten"] = "Öneri çalıştırmasını başlat",
                 ["Excel exportieren"] = "Excel dışa aktar",
                 ["Excel importieren"] = "Excel içe aktar",
@@ -14623,9 +14628,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["{0} Regeltreffer DE-Schraegstrich, Umsatz {1:N0} EUR (wirken erst nach Bestaetigung)."] = "{0} chut DE, Huch {1:N0} EUR (wIqIj pagh).",
                 // Mapping Artikelnummern 2026-11-19
                 ["Mapping Artikelnummern"] = "Doch mI' rar",
-                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Trafag AG mI' rar mI' Daq. chut tlhegh DaH Qap, ghItlh chup wIqIj pagh. wa' tlhegh ghom neH. chup Qap leQ neH, jaj Hoch pagh.",
+                ["Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regel- und Textvorschlaege wirken erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export."] = "Trafag AG mI' rar mI' Daq. chut chup ghItlh chup je wIqIj pagh. wa' tlhegh ghom neH. chup Qap leQ neH, jaj Hoch pagh.",
                 ["Vorschlagslauf starten"] = "chup yItaghmoH",
                 ["Excel exportieren"] = "Excel yIngevmoH",
                 ["Excel importieren"] = "Excel yIqel",

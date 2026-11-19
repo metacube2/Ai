@@ -271,10 +271,10 @@ public class GroupMarginIssueTopicTests
     [InlineData(MaterialMappingMethods.Text, MaterialMappingStatuses.Proposed, false)]
     [InlineData(MaterialMappingMethods.Text, MaterialMappingStatuses.Rejected, false)]
     [InlineData(MaterialMappingMethods.Manual, MaterialMappingStatuses.Proposed, false)]
-    [InlineData(MaterialMappingMethods.Rule, MaterialMappingStatuses.Proposed, true)]
+    [InlineData(MaterialMappingMethods.Rule, MaterialMappingStatuses.Proposed, false)]   // seit 19.11. 14:20 nur bestaetigt
     [InlineData(MaterialMappingMethods.Rule, MaterialMappingStatuses.Rejected, false)]
     [InlineData(MaterialMappingMethods.Manual, MaterialMappingStatuses.Confirmed, true)]
-    public void Texttreffer_wirken_nur_bestaetigt_Regeltreffer_sofort(string method, string status, bool effective)
+    public void Text_und_Regeltreffer_wirken_nur_bestaetigt(string method, string status, bool effective)
     {
         var mappings = new MaterialMappingLookup([Mapping("TRUK", "UK-777", "53513", method, status)]);
         var result = Evaluate(Line(tsc: "TRUK", material: "UK-777", supplierName: "Trafag AG"),
