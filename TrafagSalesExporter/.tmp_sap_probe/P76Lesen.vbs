@@ -18,17 +18,54 @@ first = WScript.Arguments(0)
 If Left(first, 4) = "neu:" Then
   tx = UCase(Mid(first, 5))
   If InStr(allowed, "|" & tx & "|") = 0 Then WScript.Echo "NICHT_ERLAUBT" : WScript.Quit 4
+  ' 2026-11-11: neue Sitzung ueber den Id-Vergleich vorher/nachher bestimmen. Die Collection ist nicht nach
+  ' Erzeugung geordnet; Children(Count-1) traf die VT11-Sitzung des Benutzers.
+  Dim vorherIds, neuId, kand
   before = c.Children.Count
-  Set s = c.Children(CLng(before - 1))
-  s.FindById("wnd[0]/tbar[0]/okcd").Text = "/o" & tx
-  s.FindById("wnd[0]").SendVKey 0
+  vorherIds = "|"
+  For k = 0 To before - 1
+    vorherIds = vorherIds & c.Children(CLng(k)).Id & "|"
+  Next
+  ' 2026-11-11: CreateSession statt "/o<TX>" ins OK-Feld einer Benutzersitzung. Die Benutzersitzung wird nur als
+  ' Ausgangspunkt benutzt, nichts wird dort eingegeben. Ist sie gerade beschaeftigt, kurz warten.
+  ' Ausgangspunkt moeglichst nicht ses[0]
+  Set s = c.Children(CLng(0))
+  For k = 0 To before - 1
+    If Right(c.Children(CLng(k)).Id, 7) <> "/ses[0]" Then Set s = c.Children(CLng(k)) : Exit For
+  Next
+  For k = 1 To 40
+    If Not s.Busy Then Exit For
+    WScript.Sleep 250
+  Next
+  If s.Busy Then WScript.Echo "KEINE_NEUE_SITZUNG (Ausgangssitzung beschaeftigt)" : WScript.Quit 3
+  s.CreateSession
   For k = 1 To 30
     WScript.Sleep 300
     If c.Children.Count > before Then Exit For
   Next
-  If c.Children.Count <= before Then WScript.Echo "KEINE_NEUE_SITZUNG" : WScript.Quit 3
-  Set s = c.Children(CLng(c.Children.Count - 1))
-  WScript.Sleep 800
+  If c.Children.Count <> before + 1 Then WScript.Echo "KEINE_NEUE_SITZUNG vorher=" & before & " nachher=" & c.Children.Count : WScript.Quit 3
+  neuId = ""
+  For k = 0 To c.Children.Count - 1
+    kand = c.Children(CLng(k)).Id
+    If InStr(vorherIds, "|" & kand & "|") = 0 Then neuId = kand
+  Next
+  If neuId = "" Then WScript.Echo "KEINE_NEUE_SITZUNG (keine neue Id gefunden)" : WScript.Quit 3
+  Set s = app.FindById(neuId)
+  For k = 1 To 40
+    WScript.Sleep 250
+    If Not s.Busy Then Exit For
+  Next
+  WScript.Sleep 500
+  ' nur in der neuen, eigenen Sitzung tippen; sie muss P76/100 sein und darf kein Popup zeigen
+  If s.Info.SystemName <> "P76" Or s.Info.Client <> "100" Then WScript.Echo "NEUE_SITZUNG_NICHT_P76 " & s.Id : WScript.Quit 6
+  If s.Children.Count > 1 Then WScript.Echo "NEUE_SITZUNG_POPUP " & s.Id : WScript.Quit 6
+  s.FindById("wnd[0]/tbar[0]/okcd").Text = "/n" & tx
+  s.FindById("wnd[0]").SendVKey 0
+  For k = 1 To 20
+    If UCase(s.Info.Transaction) = tx Then Exit For
+    WScript.Sleep 300
+  Next
+  If UCase(s.Info.Transaction) <> tx Then WScript.Echo "NEUE_SITZUNG_FALSCHE_TX " & s.Id & " " & s.Info.Transaction : WScript.Quit 6
 Else
   Set s = app.FindById(Mid(first, 5))
   If InStr(allowed, "|" & UCase(s.Info.Transaction) & "|") = 0 And Left(UCase(s.Info.Program), 4) <> "RSUS" And UCase(s.Info.Transaction) <> "SE16" Then WScript.Echo "SITZUNG_NICHT_ANZEIGE " & s.Info.Transaction : WScript.Quit 5

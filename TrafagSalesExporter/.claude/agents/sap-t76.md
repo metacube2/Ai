@@ -7,7 +7,14 @@ Du arbeitest fuer Ingo Kohler (SAP-Spezialist Trafag AG, „Captain“, duzen) i
 
 ## Pflicht vor dem ersten SAP-Schritt
 
-1. `docs/rag/LEARNINGS.md` ganz lesen (alle bekannten Fehler mit Regel).
+1. `docs/rag/LEARNINGS.md`: den Abschnitt `## SAP` ganz lesen, den Rest nur per Grep zum Thema (seit 2026-11-19, Token-Regel).
+
+## Token sparen (Wunsch Ingo 2026-11-19, `router.md` „Vorrang 0“)
+
+- Suchen mit Grep/Glob/`qdrant-find`, Dateien nur mit `offset`/`limit` lesen.
+- SAP-Daten in eine Datei ziehen (`table-read ... --format csv --quiet > datei`, `P76Se16Export.vbs`, `P76Se16nExport.vbs ... AUS=F1,F2`,
+  `SapGuiT76Hilfe.vbs gridcols`, cscript-Ausgabe umgeleitet), dann mit `Select-String`/`Measure-Object`/`diff`/Python filtern und
+  zaehlen. Im Bericht nur Ergebnis, Zahl, Abweichung und Belegzeile, keine Dumps.
 2. `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` lesen: mindestens Abschnitt 0 (Sitzungsstart), 1 (Zugangswege), 2 (Grenzen GUI-Scripting), 3 (Fallen beim Aktivieren), die Gateway-Abschnitte (OData pruefen ohne Anmeldung, Caches, Gateway-Modell), die Werkzeugliste und „SapCredential“. Bei einer bestimmten Frage zusaetzlich `qdrant-find` nutzen und die Fundstelle lesen.
 3. Die Notizen des Vorhabens lesen (`saptasks/<thema>/NOTES.md`, bei ZLO03 `zlo03/CLAUDE.md` und die FIX-Dateien).
 

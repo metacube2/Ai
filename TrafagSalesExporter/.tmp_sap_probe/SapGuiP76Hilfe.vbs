@@ -1,4 +1,6 @@
-' P76-Hilfe fuer das Leeren der Gateway-Caches (Auftrag Ingo 2026-11-02). Nur eigene Sitzungen, nie ses[0].
+' P76-Hilfe (Produktion!): an der eigenen angemeldeten P76-Verbindung eine zusaetzliche Sitzung oeffnen und darin
+' NUR LESEN (z. B. SE16). Nie ses[0] (deine eigene Arbeitssitzung). In P76 nichts sichern, nichts aendern; das Skript
+' kann das technisch nicht verhindern, die Regel gilt trotzdem. Eigene Sitzung am Ende schliessen (P76SitzungSchliessen.vbs).
 ' Aufrufe:  p76.vbs neu                      -> eigene neue P76-Sitzung oeffnen, Index melden
 '           p76.vbs info                     -> alle P76-Sitzungen mit Server und Transaktion
 '           p76.vbs ok <ses> <okcode>        -> OK-Code in eigener Sitzung
@@ -36,12 +38,36 @@ Sub Dump(o, tiefe)
   End If
 End Sub
 
+' 2026-11-11: eigene Sitzung ueber den Id-Vergleich vorher/nachher bestimmen und ihre Id merken
+' (p76_eigene_sitzung.txt neben dem Skript). Jeder Befehl laeuft nur noch in dieser Sitzung.
+' Vorher: "neue Index" = Count-1, die Collection ist aber nicht nach Erzeugung geordnet.
+Dim fso, idFile, eigeneId
+Set fso = CreateObject("Scripting.FileSystemObject")
+idFile = fso.BuildPath(fso.GetParentFolderName(WScript.ScriptFullName), "p76_eigene_sitzung.txt")
+
 If cmd = "neu" Then
-  Dim n0
+  Dim n0, vorherIds, neu, neuIdx, f
   n0 = con.Children.Count
+  vorherIds = "|"
+  For i = 0 To n0 - 1
+    vorherIds = vorherIds & con.Children(CLng(i)).Id & "|"
+  Next
   con.Children(0).CreateSession
-  WScript.Sleep 3000
-  WScript.Echo "P76 Sitzungen vorher=" & n0 & " nachher=" & con.Children.Count & " neue Index=" & (con.Children.Count - 1)
+  For i = 1 To 20
+    WScript.Sleep 500
+    If con.Children.Count > n0 Then Exit For
+  Next
+  If con.Children.Count <> n0 + 1 Then WScript.Echo "ABBRUCH: keine neue Sitzung entstanden (vorher=" & n0 & " nachher=" & con.Children.Count & "), nichts gemerkt": WScript.Quit 1
+  Set neu = Nothing
+  neuIdx = -1
+  For i = 0 To con.Children.Count - 1
+    If InStr(vorherIds, "|" & con.Children(CLng(i)).Id & "|") = 0 Then Set neu = con.Children(CLng(i)): neuIdx = i
+  Next
+  If neu Is Nothing Then WScript.Echo "ABBRUCH: neue Sitzung nicht eindeutig gefunden, nichts gemerkt": WScript.Quit 1
+  Set f = fso.CreateTextFile(idFile, True)
+  f.WriteLine neu.Id
+  f.Close
+  WScript.Echo "P76 Sitzungen vorher=" & n0 & " nachher=" & con.Children.Count & " neue Index=" & neuIdx & " ID=" & neu.Id
   WScript.Quit 0
 End If
 If cmd = "info" Then
@@ -51,9 +77,13 @@ If cmd = "info" Then
   WScript.Quit 0
 End If
 
+If Not fso.FileExists(idFile) Then WScript.Echo "ABBRUCH: keine eigene Sitzung gemerkt (erst 'neu')": WScript.Quit 1
+eigeneId = Trim(fso.OpenTextFile(idFile).ReadLine)
 idx = CInt(WScript.Arguments(1))
-If idx = 0 Then WScript.Echo "ABBRUCH: ses[0] ist Ingos Sitzung": WScript.Quit 1
+If idx = 0 Then WScript.Echo "ABBRUCH: ses[0] ist deine eigene Arbeitssitzung, erst 'neu'": WScript.Quit 1
+If idx >= con.Children.Count Then WScript.Echo "ABBRUCH: Index zu gross": WScript.Quit 1
 Set ses = con.Children(CInt(idx))
+If ses.Id <> eigeneId Then WScript.Echo "ABBRUCH: Sitzung " & ses.Id & " ist nicht die eigene (" & eigeneId & ")": WScript.Quit 1
 If ses.Info.SystemName <> "P76" Then WScript.Echo "ABBRUCH: nicht P76": WScript.Quit 1
 
 Select Case cmd

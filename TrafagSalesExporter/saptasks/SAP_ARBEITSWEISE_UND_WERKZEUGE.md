@@ -1,6 +1,6 @@
 # SAP: Arbeitsweise und Werkzeuge
 
-Stand: 2026-11-12 (Doku-Pruefung: ueberholte Stellen im Grundtext markiert, vor allem Passworteingabe, Sitzungsindex 0, Reihenfolge der Gateway-Caches, Quelltext lesen; neuer Unterabschnitt „Gateway-Caches“ in Abschnitt 3, nur aus vorhandenen Quellen zusammengetragen. Der Grundtext stammt vom 2026-09-03 und ist nicht durchgehend nachgezogen; wo er einem juengeren datierten Nachtrag, `docs/rag/LEARNINGS.md` oder `.claude/agents/sap-t76.md` widerspricht, steht das an der Stelle als Vermerk); davor 2026-09-03, Abschnitt 7 ergaenzt 2026-11-11 („Erst Plan, dann genau den Plan ausfuehren“), Nachträge bis 2026-11-06 am Ende (zuletzt SE09: Auftraege verschmelzen, Objekte von Hand aufnehmen, `SapGuiT76Hilfe.vbs`), Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
+Stand: 2026-11-19 (Fabios Paket `sap-werkzeug.zip` verglichen: vier korrigierte GUI-Skripte und drei P76-Exporthilfen uebernommen, Abschnitt 6 und 7; Token-Regel in Abschnitt 6 „Auswerten“); davor 2026-11-12 (Doku-Pruefung: ueberholte Stellen im Grundtext markiert, vor allem Passworteingabe, Sitzungsindex 0, Reihenfolge der Gateway-Caches, Quelltext lesen; neuer Unterabschnitt „Gateway-Caches“ in Abschnitt 3, nur aus vorhandenen Quellen zusammengetragen. Der Grundtext stammt vom 2026-09-03 und ist nicht durchgehend nachgezogen; wo er einem juengeren datierten Nachtrag, `docs/rag/LEARNINGS.md` oder `.claude/agents/sap-t76.md` widerspricht, steht das an der Stelle als Vermerk); davor 2026-09-03, Abschnitt 7 ergaenzt 2026-11-11 („Erst Plan, dann genau den Plan ausfuehren“), Nachträge bis 2026-11-06 am Ende (zuletzt SE09: Auftraege verschmelzen, Objekte von Hand aufnehmen, `SapGuiT76Hilfe.vbs`), Abschnitt 3 berichtigt 2026-11-02 (Aktivieren trotz Syntaxfehler), dazu eingeschobene Nachträge bis 2026-10-16 in den Abschnitten 0, 3 und 6
 
 Diese Datei beantwortet eine einzige Frage: **Wie kommt eine neue Sitzung schnell zu
 belastbaren SAP-Ergebnissen, ohne dieselben Sackgassen noch einmal zu durchlaufen?**
@@ -1012,8 +1012,16 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 
 ### Auswerten
 
+**Token-Regel (Wunsch Ingo 2026-11-19, gilt vor allem anderen hier, siehe `router.md` „Vorrang 0“):** Listen, Tabellen und
+Protokolle nie in den Chat lesen, um darin zu suchen. Erst in eine Datei ziehen (`table-read ... --format csv --quiet > datei`,
+`P76Se16Export.vbs`/`P76Se16nExport.vbs`, `%PC`, cscript-Ausgabe umgeleitet), dann mit `Select-String`, `Measure-Object`,
+`grep -c`, `diff` oder einem kurzen Python-Skript filtern und zaehlen. In den Chat kommt nur das Ergebnis.
+
 | Skript | Zweck |
 |---|---|
+| `P76Se16Export.vbs <Sitzungs-Id> <TABELLE> <Datei> [FELD=wert\|FELD=von..bis\|FELD@datei.txt\|MAX=n]` | **NUR LESEN P76**, eigene SE16-Sitzung (Id aus `P76Lesen.vbs neu:SE16`): Liste per `%PC` als Tab-Datei auf den PC; Ausgabe `TREFFER=<n> DATEI=...`; jedes unerwartete Fenster = Abbruch. Aus Fabios Paket uebernommen 2026-11-19 (dort seit 11.11., in P76 benutzt) |
+| `P76Se16nExport.vbs <Sitzungs-Id> <TABELLE> <Datei> [Selektionen] [AUS=F1,F2] [MAX=n]` | **NUR LESEN P76**, wie oben ueber SE16N, wenn SE16 nur Schluesselfelder anbietet (EINA, KONP, VBRK); `AUS=` gibt nur die genannten Felder aus, dazu `<Datei>.felder` mit den Kurztexten; prueft, dass „Eintraege pflegen“ leer ist. Uebernommen 2026-11-19 |
+| `P76SitzungAufraeumen.vbs <Sitzungs-Id>` | nach einem abgebrochenen Export: offene Dialoge der **eigenen** P76-Lesesitzung nur mit „Abbrechen“/F3 schliessen, damit `P76SitzungSchliessen.vbs` greift. Uebernommen 2026-11-19 |
 | `Get-SapList.ps1 -Transaktion <TX>` | setzt eine klassische ABAP-Liste aus den `GuiLabel`-Koordinaten zu lesbaren Zeilen zusammen. **Der wichtigste Zeitsparer** |
 | `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den ABAP-Editor zu lesen. **Funktioniert nicht**, bewusst als Beleg behalten |
 | `SapGuiProbeEditor.vbs` | zeigt, welche Lesemethoden das Editor-Control nicht kennt. Ebenfalls ein Beleg |
@@ -1062,8 +1070,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `P76Pruefung_ZLO03_B63485.ps1` (Start: `P76Pruefung_ZLO03_Start.cmd`) | NUR LESEN P76: `ZMD04_CALC`, `ZPOWERBI_VC_TXT`, `MARA`, `REPOSRC` fuer den ZLO03-Fall B63485 (2026-10-16). Start ueber `explorer.exe <cmd>`; `Start-Process cmd` aus der Sitzung oeffnet kein sichtbares Fenster *(ueberholt am 2026-11-05 wie die Zeile darueber, markiert 2026-11-12: das Skript fragt das P76-Passwort ab (`Read-Host`, Zeile 12) und wird nicht mehr benutzt. `.claude/agents/sap-t76.md`: „Die alten Vorlagen `P76Pruefung_*.ps1` (SapProbe mit P76-Passwortabfrage) sind ueberholt und werden nicht benutzt (LEARNINGS 2026-11-05).“ P76 lesen nur ueber die angemeldete GUI mit `P76Lesen.vbs`)* |
 | `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt ~~den Status nicht aus~~ nur den Statuscode aus, ohne Begruendung, `content-length` und Laufzeit *(berichtigt 2026-11-12 gegen das Skript, Zeile 58 `STATUSCODE=`)*. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
 | `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. ~~Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar~~ *(berichtigt 2026-11-12 gegen das Skript: es gibt Meldung, Meldungstyp und Statuscode aus und schreibt den Text, den es aus den Editorbereichen liest, in die Datei, sonst die Warnung „kein Antworttext aus den Editorbereichen gelesen“; `content-length` und eine Zeitmessung kommen im Skript nicht vor, dafuer `SapGuiGatewayStatus.vbs` nehmen)* |
-| `SapGuiP76Hilfe.vbs neu\|info\|ok\|dump\|press\|check\|set\|vkey\|grid\|tips ...` | **P76**, nur in einer eigenen Sitzung (bricht bei `ses[0]` ab): neue Sitzung oeffnen, OK-Code, Felder, Ankreuzfeld per `.Selected`, Grid und Knopf-Tooltips lesen; meldet je Schritt System und Anwendungsserver. Angelegt 2026-11-02 fuer das Leeren der Gateway-Caches in P76 |
-| `SapGuiT76Hilfe.vbs neu\|info\|ok\|dump\|press\|set\|vkey\|select\|check\|menus\|tree\|grid\|zu ...` | **T76/100**, Gegenstueck zu `SapGuiP76Hilfe.vbs`: `neu` oeffnet eine eigene Sitzung und merkt sich deren Id (`t76_eigene_sitzung.txt`), jeder weitere Befehl bricht ab, wenn die Sitzung nicht diese Id hat; Verbindung ueber `SystemName`/`Client`, nie ueber `Children(0)`. `zu` schliesst sie mit `/i`. Angelegt 2026-11-06 (ZZPRDAT, Transport buendeln in SE09) |
+| `SapGuiP76Hilfe.vbs neu\|info\|ok\|dump\|press\|check\|set\|vkey\|select\|grid\|gridrow\|tips ...` | **P76**, nur in einer eigenen Sitzung (bricht bei `ses[0]` ab): neue Sitzung oeffnen, OK-Code, Felder, Ankreuzfeld per `.Selected`, Grid und Knopf-Tooltips lesen; meldet je Schritt System und Anwendungsserver. Angelegt 2026-11-02 fuer das Leeren der Gateway-Caches in P76. *Seit 2026-11-19 Fassung aus Fabios Paket: `neu` findet die neue Sitzung ueber den Id-Vergleich vorher/nachher und merkt sie in `p76_eigene_sitzung.txt`; jeder andere Befehl bricht ab, wenn vorher kein `neu` lief oder die Sitzung nicht die gemerkte ist. Die alte Aufrufweise mit einem frei gewaehlten Index (z. B. `zreichw/NOTES.md` 03.11.) geht damit nicht mehr.* |
+| `SapGuiT76Hilfe.vbs neu\|info\|ok\|dump\|press\|set\|vkey\|select\|check\|menus\|tree\|grid\|gridcols\|tabrow\|focus\|zu ...` | **T76/100**, Gegenstueck zu `SapGuiP76Hilfe.vbs`: `neu` oeffnet eine eigene Sitzung und merkt sich deren Id (`t76_eigene_sitzung.txt`), jeder weitere Befehl bricht ab, wenn die Sitzung nicht diese Id hat; Verbindung ueber `SystemName`/`Client`, nie ueber `Children(0)`. `zu` schliesst sie mit `/i` und loescht die gemerkte Id. Angelegt 2026-11-06 (ZZPRDAT, Transport buendeln in SE09). *Seit 2026-11-19 Fassung aus Fabios Paket: `neu` nimmt nicht mehr `Children(Count-1)` (die Collection ist nicht nach Erzeugung geordnet, traf am 11.11. eine fremde Sitzung), sondern die Id, die vorher nicht da war; neu `gridcols <ses> <grid> F1,F2` (nur gewaehlte Spalten, blaettert, statt `grid` mit 400-Zeichen-Grenze), `tabrow` (Zeile eines Table Controls markieren), `focus` (Cursor setzen, etwa vor F2).* |
 | `SapGuiAlvListLayoutP76.vbs <Ses> list\|show "<Spalte>"\|hide "<Spalte>"` | **P76**, eigene Sitzung, offener Dialog „Layout aendern“ einer klassischen ALV-Liste (SAPLSKBH 0810): Spalten nach Namen ein- und ausblenden (Achtung: `APP_WL_SING` blendet ein, `APP_FL_SING` aus). Sichern macht das Skript nicht. Angelegt 2026-11-03 fuer ZC22 |
 | `SapGuiGatewayStatusP76.vbs <Sitzung> <RequestUri>` | wie `SapGuiGatewayStatus.vbs`, aber fuer die P76-Verbindung (nur GET) |
 | `SapGuiOkCode.vbs <Sitzung> <Befehl>` | Befehl ins Befehlsfeld, adressiert ueber den **Sitzungsindex**. Ersatz fuer `SapGuiCommand.vbs`, wenn die aktuelle Transaktion unbekannt ist |
@@ -1160,6 +1168,24 @@ lesende GUI-Skripte; gekuerztes Wissen (`SAP_BEDIENUNG.md`, `SAP_LEARNINGS.md`; 
 Muster, Quelltext. Bewusst nicht im Paket: 14 Skripte, die eine Sitzung ohne Schutz steuern (Verbindung 0 ohne Systempruefung
 oder beliebiger Sitzungsindex inkl. ses[0], z. B. `SapGuiOkCode.vbs`, `SapGuiAktivieren.vbs`, `SapGuiQuelltextLesen.vbs`);
 das gilt auch fuer unseren eigenen Bestand.
+
+**Fabios Stand des Pakets (`Downloads\sap-werkzeug.zip`, 19.11. 10:05, Git-Repo mit drei Commits bis 12.11. und
+ungesicherten Aenderungen bis 19.11.), verglichen am 2026-11-19 per `diff`:**
+
+- *Uebernommen* nach `.tmp_sap_probe/` (bytegleich, an Ingos Arbeitsplatz noch nicht wieder gelaufen): `P76Lesen.vbs`
+  (neue Sitzung mit `CreateSession` aus einer Nicht-ses[0]-Sitzung, Id-Vergleich, prueft P76/100 und Transaktion),
+  `P76SitzungSchliessen.vbs` (auch SE16N), `SapGuiP76Hilfe.vbs`, `SapGuiT76Hilfe.vbs` (Zeilen in Abschnitt 6), dazu die
+  lesenden Exporthilfen `P76Se16Export.vbs`, `P76Se16nExport.vbs`, `P76SitzungAufraeumen.vbs` (Abschnitt 6 „Auswerten“).
+  Unsere Fassungen hatten bis dahin noch den Fehler `Children(Count-1)`.
+- *Bewusst nicht uebernommen:* `RunSapProbe.ps1`/`SapCredential.ps1` (im Paket mit Pflicht-Benutzer, gewollt anders);
+  die Schreibskripte `Kondition_Anlegen.vbs`, `Kondition_Abgrenzen*.vbs`, `Infosatz_*.vbs`, `P76NachSchreibenZuSe16.vbs`
+  (laut Fabios Learnings auch in P76 benutzt, das widerspricht unserer Regel „Schreiben nur in T76“); die rund 25
+  `IC-*.ps1`/`Test-IC-*.ps1` des IC-Wochenlaufs (Pfade `C:\Users\FPA\...`, Fachstand bei Fabio, Doku dort
+  `wissen\IC_WOCHENLAUF.md`; fachlich gehoert das zu `saptasks/ic_preisfindung/`).
+- *Paket nicht neuer:* Fabios `LIESMICH.md` hat den Abschnitt zu den RFC-Rechten von FPA nicht mehr; der Absatz unten bleibt.
+- *Wissen:* Fabios `wissen\SAP_LEARNINGS.md` hat gegenueber dem 11.11. 66 neue Zeilen (11.11. bis 19.11.); die
+  fuer uns wichtigen stehen in `docs/rag/LEARNINGS.md` 2026-11-19. Eine Token-Regel enthaelt das Paket nicht;
+  Textvorschlag fuer Fabios `CLAUDE.md` ging am 19.11. im Chat an Ingo.
 
 **RFC-Rechte von FPA in T76 (gelesen 2026-11-11, AGR_USERS/AGR_1251/TFDIR):** FPA hat `Z_RFC_ALLES_RW` (seit 2010), dieselbe
 RFC-Rolle wie KOI. Damit gehen `system-info` (SRFC) und `table-read` (SDTX; S_TABU_DIS 03 fuer &NC&, AA-OZ, QA-ZZ, ohne P*).

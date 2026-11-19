@@ -1,4 +1,4 @@
-' T76-Hilfe (angelegt 2026-11-06, ZZPRDAT Transport buendeln). Muster: SapGuiP76Hilfe.vbs.
+' T76-Hilfe fuer GUI-Scripting in einer eigenen zusaetzlichen Sitzung (Testsystem T76, Mandant 100).
 ' Arbeitet NUR in der selbst erzeugten Sitzung: "neu" merkt sich deren Id in t76_eigene_sitzung.txt
 ' (neben dem Skript), jeder andere Befehl bricht ab, wenn die Sitzung eine andere Id hat.
 ' Verbindung wird ueber SystemName T76 / Mandant 100 gesucht, nie ueber Children(0).
@@ -60,19 +60,31 @@ Sub Dump(o, tiefe)
 End Sub
 
 If cmd = "neu" Then
-  Dim n0, neu
+  Dim n0, neu, vorherIds, neuIdx
   n0 = con.Children.Count
+  ' 2026-11-11: neue Sitzung ueber den Id-Vergleich vorher/nachher bestimmen, nicht ueber Children(Count-1):
+  ' die Collection ist nicht nach Erzeugung geordnet (in P76 traf das eine fremde Sitzung).
+  vorherIds = "|"
+  For i = 0 To n0 - 1
+    vorherIds = vorherIds & con.Children(CLng(i)).Id & "|"
+  Next
   con.Children(0).CreateSession
   For i = 1 To 20
     WScript.Sleep 500
     If con.Children.Count > n0 Then Exit For
   Next
-  Set neu = con.Children(CLng(con.Children.Count - 1))
+  If con.Children.Count <> n0 + 1 Then WScript.Echo "ABBRUCH: keine neue Sitzung entstanden (vorher=" & n0 & " nachher=" & con.Children.Count & "), nichts gemerkt": WScript.Quit 1
+  Set neu = Nothing
+  neuIdx = -1
+  For i = 0 To con.Children.Count - 1
+    If InStr(vorherIds, "|" & con.Children(CLng(i)).Id & "|") = 0 Then Set neu = con.Children(CLng(i)): neuIdx = i
+  Next
+  If neu Is Nothing Then WScript.Echo "ABBRUCH: neue Sitzung nicht eindeutig gefunden, nichts gemerkt": WScript.Quit 1
   Dim f
   Set f = fso.CreateTextFile(idFile, True)
   f.WriteLine neu.Id
   f.Close
-  WScript.Echo "T76 Sitzungen vorher=" & n0 & " nachher=" & con.Children.Count & " neue Index=" & (con.Children.Count - 1) & " ID=" & neu.Id
+  WScript.Echo "T76 Sitzungen vorher=" & n0 & " nachher=" & con.Children.Count & " neue Index=" & neuIdx & " ID=" & neu.Id
   WScript.Quit 0
 End If
 If cmd = "info" Then
@@ -85,7 +97,7 @@ End If
 If Not fso.FileExists(idFile) Then WScript.Echo "ABBRUCH: keine eigene Sitzung gemerkt (erst 'neu')": WScript.Quit 1
 eigeneId = Trim(fso.OpenTextFile(idFile).ReadLine)
 idx = CLng(WScript.Arguments(1))
-If idx = 0 Then WScript.Echo "ABBRUCH: ses[0] ist Ingos Sitzung": WScript.Quit 1
+If idx = 0 Then WScript.Echo "ABBRUCH: ses[0] ist deine eigene Arbeitssitzung, erst 'neu'": WScript.Quit 1
 If idx >= con.Children.Count Then WScript.Echo "ABBRUCH: Index zu gross": WScript.Quit 1
 Set ses = con.Children(CLng(idx))
 If ses.Id <> eigeneId Then WScript.Echo "ABBRUCH: Sitzung " & ses.Id & " ist nicht die eigene (" & eigeneId & ")": WScript.Quit 1
@@ -162,10 +174,33 @@ Select Case cmd
       Next
       WScript.Echo Left(line, 400)
     Next
+  Case "gridcols"
+    ' gridcols <ses> <gridId> <SPALTE1,SPALTE2,...>  nur diese Spalten, alle Zeilen (blaettert per FirstVisibleRow,
+    ' sonst liefert ein ALV-Grid nur geladene Zeilen leer; "grid" kuerzt auf 400 Zeichen). Ergaenzt 2026-11-12.
+    Dim g2, r2, sp, k2
+    Set g2 = ses.findById(WScript.Arguments(2))
+    sp = Split(WScript.Arguments(3), ",")
+    WScript.Echo "ZEILEN=" & g2.RowCount
+    For r2 = 0 To g2.RowCount - 1
+      If r2 Mod 20 = 0 Then g2.FirstVisibleRow = r2: WScript.Sleep 300
+      line = r2 & ":"
+      For k2 = 0 To UBound(sp)
+        line = line & " " & sp(k2) & "=" & Trim(g2.GetCellValue(CLng(r2), sp(k2)))
+      Next
+      WScript.Echo line
+    Next
   Case "gridsel"
     ' gridsel <ses> <gridId> <zeilen>  (nullbasiert, kommagetrennt; ergaenzt 2026-11-06 IC Staffelbasis)
     ses.findById(WScript.Arguments(2)).SelectedRows = WScript.Arguments(3)
     WScript.Echo "MARKIERT=" & ses.findById(WScript.Arguments(2)).SelectedRows
+  Case "tabrow"
+    ' tabrow <ses> <tableControlId> <zeile>  (sichtbare Zeile nullbasiert markieren; ergaenzt 2026-11-12 ME21N)
+    ses.findById(WScript.Arguments(2)).GetAbsoluteRow(CLng(WScript.Arguments(3))).Selected = True
+    WScript.Echo "ZEILE MARKIERT=" & WScript.Arguments(3)
+  Case "focus"
+    ' focus <ses> <id>  (Cursor setzen, z. B. auf Listzeile vor F2; ergaenzt 2026-11-12)
+    ses.findById(WScript.Arguments(2)).SetFocus
+    WScript.Echo "FOKUS=" & WScript.Arguments(2)
   Case "treesel"
     ses.findById(WScript.Arguments(2)).SelectNode WScript.Arguments(3)
     WScript.Sleep 800
@@ -176,7 +211,8 @@ Select Case cmd
     ses.findById("wnd[0]/tbar[0]/okcd").Text = "/i"
     ses.findById("wnd[0]").sendVKey 0
     WScript.Sleep 1000
-    WScript.Echo "Sitzungen jetzt=" & con.Children.Count
+    If fso.FileExists(idFile) Then fso.DeleteFile idFile
+    WScript.Echo "Sitzungen jetzt=" & con.Children.Count & " (gemerkte Id geloescht)"
     WScript.Quit 0
 End Select
 Status ses

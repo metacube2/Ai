@@ -1,12 +1,44 @@
 # Router — globaler Einstieg
 
-Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, `projektmanagement/Wochen_Todo.tsv` in der Zeile „Wo stehen wir gerade?“ ergaenzt); davor 2026-11-05 (Absatz Agenten, feste Definitionen `.claude/agents/`, `f8752f4`); davor 2026-10-22 (Regel 6: Historie und Archiv `docs/archiv/`)
+Stand: 2026-11-19 (neuer Abschnitt „Vorrang 0: Token sparen“ oben, Wunsch Ingo); davor 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, `projektmanagement/Wochen_Todo.tsv` in der Zeile „Wo stehen wir gerade?“ ergaenzt); davor 2026-11-05 (Absatz Agenten, feste Definitionen `.claude/agents/`, `f8752f4`); davor 2026-10-22 (Regel 6: Historie und Archiv `docs/archiv/`)
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
 
+## Vorrang 0: Token sparen, das Werkzeug rechnet, Claude liest nur das Ergebnis
+
+Wunsch Ingo vom 2026-11-19 (wieder auf dem kleinen Plan): **so wenig Token wie moeglich.** Diese Regeln gehen jeder
+anderen Arbeitsgewohnheit vor, auch in Agenten.
+
+1. **Suchen mit Werkzeugen, nicht mit Lesen.** Grep/Glob, `git log -S`, `qdrant-find`; Dateien nur mit `offset`/`limit`
+   lesen. Nie ganze Ordner, Logs, Exporte oder grosse Doku-Dateien in den Kontext holen, um darin zu suchen.
+2. **Grosse Ausgaben in eine Datei, dann filtern oder zaehlen.** `table-read ... --format csv --quiet > datei`,
+   SE16/SE16N-Export, cscript-Ausgabe, Excel/CSV, Protokolle: danach `Select-String`, `Measure-Object`, `grep -c`,
+   `diff`, ein kurzes Python (uv) oder `SapListeZeilen.py`. In den Chat kommt nur Treffer, Zahl oder Abweichung.
+3. **Vergleichen mit `diff`/`cmp`/Pruefsumme**, nicht beide Fassungen lesen (so am 19.11. Fabios Paket geprueft).
+4. **Wiederkehrende Pruefungen als Skript ablegen**, statt sie jedes Mal neu von Claude auswerten zu lassen. Vorbild:
+   Fabios IC-Wochenlauf (seit 12.11.) ersetzt die woechentlichen claude.ai-Laeufe durch Skripte mit festen Regeln,
+   ohne KI im Lauf.
+5. **Erst Plan, dann genau den Plan ausfuehren** (Fabio 11.11.); nach einer Ablehnung nicht mit Varianten weiterprobieren.
+6. **Agenten nur fuer echte Parallelarbeit**, mit knappem Auftrag; sie liefern das Ergebnis, keine Datei-Auszuege.
+7. **Knapp antworten**, Statusfragen im Chat, keine Wiederholung schon gelesener Inhalte.
+
+Die Fehler, aus denen das entstanden ist (Einzelheiten in `docs/rag/LEARNINGS.md` und
+`saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` Abschnitt 6 „Auswerten“):
+
+| Datum | Fehler | Werkzeug statt erneuter KI-Abfrage |
+| --- | --- | --- |
+| 2026-11-17 | cscript-Ausgabe mit `Select-Object -First` gekappt, Exitcode 255 statt Ergebnis (Wiederholung) | Ausgabe in Datei umleiten, dann gezielt lesen |
+| 2026-11-11 | `SapGuiT76Hilfe.vbs grid` kuerzt auf 400 Zeichen, liest nur geladene Zeilen; BSEG-Grid >5 Min. | `gridcols <ses> <grid> F1,F2` (nur gewaehlte Spalten) |
+| 2026-11-05 | SE16 zeigt bei breiten Tabellen nur die Bildschirmspalten, Lesen Zeile fuer Zeile | `P76Se16nExport.vbs ... AUS=F1,F2` bzw. `P76Se16Export.vbs`: Tab-Datei auf dem PC, dann filtern |
+| 2026-11-09 | ALV-Liste per Scripting nur Kopfzeile | `%PC` in Datei, dann auswerten |
+| 2026-09-11 | `table-read` druckt nur 100 Zeilen, eine Periode sah nach genau 100 Belegen aus | `--rowcount 99999 --format csv --quiet` und `Measure-Object`/`Select-String` |
+| 2026-11-05 | Feldnamen geraten, `TABLE_WITHOUT_DATA` mehrfach wiederholt | Feldnamen einmal per `DD03L` ziehen statt probieren |
+
 **Zuerst `docs/rag/LEARNINGS.md` lesen**: alle bisher gemachten Fehler mit der Regel daraus, an
 einer Stelle statt verstreut (Wunsch Ingo, 2026-10-01). Neue Fehler dort eintragen, siehe Regel 9.
+*Seit 2026-11-19: die Datei hat ueber 350 Zeilen; nach dem Thema greppen (`grep -i sap docs/rag/LEARNINGS.md`) statt sie
+ganz zu lesen, ausser vor einem Deploy oder SAP-Schreibschritt.*
 
 ## Auto-Modus: so bleibt er an (Wunsch Ingo 2026-10-14, nicht vergessen)
 
