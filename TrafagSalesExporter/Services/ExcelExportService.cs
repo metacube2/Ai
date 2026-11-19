@@ -247,12 +247,52 @@ public class ExcelExportService : IExcelExportService
         if (_dbFactory is null)
             return null;
 
-        using var db = _dbFactory.CreateDbContext();
-        var mappings = db.MaterialMappings.AsNoTracking().ToList();
+        List<MaterialMapping> mappings;
+        using (var db = _dbFactory.CreateDbContext())
+            mappings = db.MaterialMappings.AsNoTracking().ToList();
+
+        // Auftrag Ingo 19.11.2026: ALLE Artikel mit Mapping-Bedarf (Issue Topic 1, 2, 6, 7), auch ohne Vorschlag, als Zeile im
+        // Status offen. Gerechnet mit denselben Einstellungen wie Sales_All; die Zeilen werden nur in die Datei geschrieben,
+        // nicht gespeichert (gespeichert werden sie im Vorschlagslauf).
+        var financeRules = LoadFinanceRules();
+        var included = FinanceIncludedRecords(records, financeRules);
+        var settings = new ExportSettings
+        {
+            SupplierFallbackMode = LoadSupplierFallbackMode(),
+            InternalSupplierCostSourceMode = LoadInternalSupplierCostSourceMode(),
+            MarcForeignProcurementMode = LoadMarcForeignProcurementMode()
+        };
+        var candidates = MaterialMappingSuggestionService.BuildCandidates(
+            records, LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), settings,
+            LoadForeignProcurementMaterialKeys(), LoadMaterialMappings(), financeRules);
+        var rows = MaterialMappingStore.WithOpenRows(mappings, candidates, DateTime.UtcNow);
+
         Directory.CreateDirectory(outputDirectory);
         var fullPath = Path.Combine(outputDirectory, $"Mapping_{fileDate:yyyy-MM-dd}.xlsx");
-        File.WriteAllBytes(fullPath, MaterialMappingExcel.CreateWorkbookBytes(mappings, MaterialMappingStore.ComputeWeights(records)));
+        File.WriteAllBytes(fullPath, MaterialMappingExcel.CreateWorkbookBytes(
+            rows, MaterialMappingStore.ComputeWeights(included.Select(line => line.Record), included.Select(line => line.NetSales))));
         return fullPath;
+    }
+
+    /// <summary>
+    /// Zeilen, die in Sales_All zur Finance-Summe fuehren (Finance | Include = TRUE), mit Finance Net Sales Actual. Dieselbe
+    /// Regel wie die Gruppenmargen-Zeilen, damit Mapping-Excel und Issue Topic in Sales_All dieselbe Menge zeigen.
+    /// </summary>
+    internal static List<(SalesRecord Record, decimal NetSales)> FinanceIncludedRecords(
+        IEnumerable<SalesRecord> records, IReadOnlyList<FinanceRule> financeRules)
+    {
+        var engine = new FinanceRuleEngine(financeRules);
+        var result = new List<(SalesRecord, decimal)>();
+        foreach (var record in records)
+        {
+            var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+            var include = engine.ShouldInclude(record, countryKey);
+            var net = engine.ResolveNetSalesActual(record, countryKey, include);
+            if (include && net != 0m)
+                result.Add((record, net));
+        }
+
+        return result;
     }
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()

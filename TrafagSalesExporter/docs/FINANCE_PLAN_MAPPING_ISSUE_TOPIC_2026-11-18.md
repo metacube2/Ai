@@ -1,6 +1,6 @@
 # Finance: Plan Artikel-Mapping, Kostenkette und Attribut „Issue Topic“ in Sales_All
 
-Stand: 2026-11-19 13:50 (Finance Issue Topic, Mapping, Indien-Regel, use 0 deployed `b2a0152`); davor 2026-11-19 13:29 (Nachtrag: use 0 rechnet mit Kosten 0, Materialtext aus MAKTSet, Commit `1576766`); davor 2026-11-19 13:16 (AP1 bis AP4 gebaut im Zweig `finance-mapping-1911`, `75b320d`/`12efb44`, nicht deployed; Abschnitt 0); davor 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
+Stand: 2026-11-19 14:15 (Status offen und TRCH/TRAT ausgenommen deployed 19.11. 14:10 als `47e3e98`); davor 2026-11-19 13:50 (Finance Issue Topic, Mapping, Indien-Regel, use 0 deployed `b2a0152`); davor 2026-11-19 14:01 (TRCH/TRAT aus dem Mapping ausgenommen, Entscheid Ingo, `5fece84`, nicht deployed, *ueberholt: deployed 19.11. 14:10 als `47e3e98`*); davor 2026-11-19 13:57 (Status offen: alle Artikel mit Mapping-Bedarf in Mapping-Excel und Tabelle, `06dd7f0`, nicht deployed; Befund TRAT); davor 2026-11-19 13:29 (Nachtrag: use 0 rechnet mit Kosten 0, Materialtext aus MAKTSet, Commit `1576766`); davor 2026-11-19 13:16 (AP1 bis AP4 gebaut im Zweig `finance-mapping-1911`, `75b320d`/`12efb44`, nicht deployed; Abschnitt 0); davor 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
 ein plan“). Grundlage: Besprechung Ingo mit Andreas Stoller am 18.11.2026 ab 14:37 (automatische Abschrift der Aufnahme,
 Whisper large-v3, ohne Sprecherkennung) und das Word `Downloads\Offene_Punkte_2026-11-18.docx`, das in der Besprechung
 geteilt wurde.
@@ -91,6 +91,21 @@ Wirkt nur, wo die Quelle keine Gruppennummer liefert, nur fuer den eigenen TSC, 
 Cockpit gleich. Bei jedem zentralen Export entsteht `Mapping_JJJJ-MM-TT.xlsx` neben Sales_All (auch SharePoint). Nicht
 angewendet wird das Mapping in der Spartenanalyse (`ResolveDivision` liest `SalesRecord.GroupMaterialNumber`, das unveraendert
 bleibt); bewusst, Produktgruppen kommen nach den Standardkosten (E11).
+
+**Status offen (2026-11-19 13:57, `06dd7f0`, nicht deployed; produktiv laut Hauptsitzung bis `b2a0152`):** Auftrag Ingo: die
+Mapping-Excel enthaelt ALLE Artikel mit Mapping-Bedarf (Issue Topic 1, 2, 6, 7), auch ohne Treffer. Neuer Status „offen“
+(Gruppennummer und Verfahren leer, Sicherheit 0, wirkt nie), mit Gewicht Zeilen und Finance Net Sales Actual. **Entscheid
+Speicherung:** beides, getrennt nach Ausloeser. Der Vorschlagslauf (Knopf) speichert offene Zeilen in `MaterialMappings`, damit
+sie auf der Seite sichtbar und filterbar sind und Andreas sie per Import ergaenzen kann; er fuehrt das Gewicht nach und entfernt
+offene Zeilen ohne Bedarf. Der taegliche Export ergaenzt in `Mapping_*.xlsx` fehlende offene Zeilen aus demselben Datenstand,
+schreibt aber nicht in die Datenbank (ein Export soll keine Stammdaten veraendern, und die Datei ist so auch vor dem ersten
+Knopfdruck vollstaendig). Vorschlaege ersetzen offene Zeilen; bestaetigte, abgelehnte und Handzeilen bleiben. Import: offen
+ohne Nummer bleibt offen, offen mit nachgetragener Nummer wird Vorschlag (Methode Hand), Status bestaetigt wirkt sofort.
+Kandidaten und Gewicht kommen seit diesem Stand nur aus Zeilen mit Finance | Include = TRUE, wie das Issue Topic in Sales_All.
+
+**Befund TRAT (2026-11-19, nur gelesen, nicht umgebaut):** Vorschlaege fuer TRAT (z. B. 901130 -> 37705) entstehen, weil die Kandidatenauswahl jedes Issue Topic 1, 2, 6, 7 nimmt. TRAT ist per CH/AT-Regel Intern mit liefernder Gesellschaft TR AG; gesucht wird im Kostenbereich 1100 und im CH-Werkstamm (MARC Werk 1100). Die AT-Zeilen bekommen ihren lokalen Preis aber aus Bewertungskreis 1200 (`StandardCostEnricher.ValuationAreaByCountry`: AT = 1200), und `SapGatewayPlantMaterialReader` behaelt nur Werk 1100. Ein Material, das nur im AT-Werk gefuehrt wird, ist damit „bei Trafag AG nicht gefunden“ (Topic 2) und rechnet mit dem AT-Standardpreis. Es ist also ein echtes Topic nach heutiger Regel, aber kein Fall fuer ein Text-Mapping: AT verkaufte Materialnummern desselben SAP-Systems, ein Textvorschlag auf eine andere CH-Nummer waere fachlich falsch. *Vermutung, nicht gemessen:* 901130 ist ein Material nur in Werk 1200. Vorschlag zur Entscheidung: TRCH und TRAT aus der Kandidatenauswahl nehmen (die Spalte Issue Topic bleibt) oder fuer TRAT den AT-Werkstamm als „gefunden“ werten. Die bestehenden TRAT-Vorschlaege sollten abgelehnt werden, bis das entschieden ist. *(entschieden, siehe naechster Absatz)*
+
+**Entscheid Ingo 2026-11-19, gebaut in `5fece84` (nicht deployed):** TRCH und TRAT sind aus dem Mapping ausgenommen: keine Vorschlaege, keine offenen Zeilen, keine Regeltreffer (auch nicht „Trafag-Nummer im Text“), weder im Vorschlagslauf noch in `Mapping_*.xlsx`. Zeilen fuer TRCH/TRAT wirken nie (Sperre in `MaterialMappingStore.IsEffective` und im Lookup, auch nach einem Import). Der Vorschlagslauf raeumt alte CH/AT-Zeilen weg, ausser bestaetigten und Handzeilen (die bleiben stehen und wirken nie). Die Spalte Issue Topic bleibt fuer CH/AT unveraendert. Damit sind die Vorschlaege oben zu TRAT erledigt.
 
 **Materialtext Trafag AG:** `GroupMaterialMasters.MaterialText` (neue Spalte) wird aus `MARCSet` gefuellt, sobald das Set die
 Property `Maktx` fuehrt (Platzhalter `SapGatewayPlantMaterialReader.MaterialTextProperty`; abgefragt nur, wenn `$metadata` sie
