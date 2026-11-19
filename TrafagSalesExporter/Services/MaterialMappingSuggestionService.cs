@@ -53,6 +53,7 @@ public static class MaterialMappingSuggester
         var index = new TextIndex(trAgMaterials);
         var result = new List<MaterialMapping>();
         foreach (var candidate in candidates
+                     .Where(item => !MaterialMappingStore.IsExcludedTsc(item.Tsc))
                      .OrderBy(item => item.Tsc, StringComparer.Ordinal)
                      .ThenBy(item => MaterialKeyNormalizer.Normalize(item.LocalMaterial), StringComparer.Ordinal))
         {
@@ -280,6 +281,8 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         var (inserted, updated, protectedRows) = await MaterialMappingStore.UpsertSuggestionsAsync(db, suggestions, now, cancellationToken);
         // Auftrag Ingo 19.11.2026: alle Artikel mit Mapping-Bedarf sichtbar, auch ohne Vorschlag (Status offen).
         await MaterialMappingStore.SyncOpenRowsAsync(db, candidates, now, cancellationToken);
+        // Entscheid Ingo 19.11.2026: TRCH/TRAT sind kein Mapping-Fall; alte Zeilen wegraeumen (bestaetigte/Hand bleiben, wirken nie).
+        await MaterialMappingStore.RemoveExcludedTscRowsAsync(db, cancellationToken);
         return new MaterialMappingSuggestionRunResult(
             candidates.Count, suggestions.Count, inserted, updated, protectedRows, plant.Count, plant.Values.Count(text => text.Length > 0),
             textWarning, textsLoaded);
@@ -367,7 +370,8 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         var hits = new List<(SalesRecord Record, string Entity, decimal NetSales)>();
         foreach (var (record, netSales) in lines)
         {
-            if (string.IsNullOrWhiteSpace(record.Tsc) || MaterialKeyNormalizer.Normalize(record.Material).Length == 0)
+            if (string.IsNullOrWhiteSpace(record.Tsc) || MaterialKeyNormalizer.Normalize(record.Material).Length == 0 ||
+                MaterialMappingStore.IsExcludedTsc(record.Tsc))
                 continue;
 
             var evaluation = GroupMarginCalculator.Evaluate(

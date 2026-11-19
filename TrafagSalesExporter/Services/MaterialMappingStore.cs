@@ -65,6 +65,7 @@ public sealed class MaterialMappingLookup
     public MaterialMappingLookup(IEnumerable<MaterialMapping> mappings)
     {
         _hits = new Dictionary<(string, string), MaterialMappingHit>();
+        // IsEffective sperrt TRCH/TRAT; damit oeffnet auch ein Import keinen Weg zurueck.
         foreach (var mapping in mappings.Where(MaterialMappingStore.IsEffective))
         {
             var key = (NormalizeTsc(mapping.Tsc), MaterialKeyNormalizer.Normalize(mapping.LocalMaterialKey));
@@ -80,7 +81,8 @@ public sealed class MaterialMappingLookup
     public bool TryResolve(string? tsc, string? localMaterial, out MaterialMappingHit hit)
     {
         var key = MaterialKeyNormalizer.Normalize(localMaterial);
-        if (key.Length > 0 && _hits.TryGetValue((NormalizeTsc(tsc), key), out var found))
+        if (key.Length > 0 &&
+            !MaterialMappingStore.IsExcludedTsc(tsc) && _hits.TryGetValue((NormalizeTsc(tsc), key), out var found))
         {
             hit = found;
             return true;
@@ -126,11 +128,36 @@ public static class MaterialMappingStore
     /// wirkt keine Zeile.
     /// </summary>
     public static bool IsEffective(MaterialMapping mapping)
-        => !string.IsNullOrWhiteSpace(mapping.GroupMaterialNumber) &&
+        => !IsExcludedTsc(mapping.Tsc) &&
+           !string.IsNullOrWhiteSpace(mapping.GroupMaterialNumber) &&
            !string.Equals(mapping.Status, MaterialMappingStatuses.Rejected, StringComparison.Ordinal) &&
            !string.Equals(mapping.Status, MaterialMappingStatuses.Open, StringComparison.Ordinal) &&
            (string.Equals(mapping.Status, MaterialMappingStatuses.Confirmed, StringComparison.Ordinal) ||
             string.Equals(mapping.Method, MaterialMappingMethods.Rule, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Entscheid Ingo 2026-11-19: CH und AT sind kein Mapping-Fall (Quelle ist das SAP-System der Trafag AG; AT-Material im
+    /// Werk 1200 ist bei Trafag AG „nicht gefunden“, ein Textvorschlag auf eine andere CH-Nummer waere falsch). Fuer diese TSC
+    /// gibt es keine Vorschlaege, keine offenen Zeilen, keine Regeltreffer, und keine Zeile wirkt. Issue Topic bleibt.
+    /// </summary>
+    public static readonly IReadOnlySet<string> ExcludedTscs = new HashSet<string>(["TRCH", "TRAT"], StringComparer.OrdinalIgnoreCase);
+
+    public static bool IsExcludedTsc(string? tsc) => !string.IsNullOrWhiteSpace(tsc) && ExcludedTscs.Contains(tsc.Trim());
+
+    /// <summary>
+    /// Raeumt Zeilen fuer TRCH/TRAT weg, ausser bestaetigten und Handzeilen (die bleiben stehen, wirken aber nie).
+    /// </summary>
+    public static async Task<int> RemoveExcludedTscRowsAsync(AppDbContext db, CancellationToken cancellationToken = default)
+    {
+        var rows = (await db.MaterialMappings.ToListAsync(cancellationToken))
+            .Where(mapping => IsExcludedTsc(mapping.Tsc) &&
+                              mapping.Status != MaterialMappingStatuses.Confirmed &&
+                              mapping.Method != MaterialMappingMethods.Manual)
+            .ToList();
+        db.MaterialMappings.RemoveRange(rows);
+        await db.SaveChangesAsync(cancellationToken);
+        return rows.Count;
+    }
 
     public static MaterialMappingLookup LoadLookup(AppDbContext db)
         => new(db.MaterialMappings.AsNoTracking().ToList());
@@ -312,7 +339,7 @@ public static class MaterialMappingStore
         var existing = await db.MaterialMappings.ToListAsync(cancellationToken);
         var byKey = existing.ToDictionary(mapping => (MaterialMappingLookup.NormalizeTsc(mapping.Tsc), mapping.LocalMaterialKey));
         int inserted = 0, updated = 0, protectedRows = 0;
-        foreach (var suggestion in suggestions)
+        foreach (var suggestion in suggestions.Where(item => !IsExcludedTsc(item.Tsc)))
         {
             var key = (MaterialMappingLookup.NormalizeTsc(suggestion.Tsc), MaterialKeyNormalizer.Normalize(suggestion.LocalMaterialKey));
             if (byKey.TryGetValue(key, out var mapping))
@@ -356,7 +383,7 @@ public static class MaterialMappingStore
         foreach (var candidate in candidates)
         {
             var key = (MaterialMappingLookup.NormalizeTsc(candidate.Tsc), MaterialKeyNormalizer.Normalize(candidate.LocalMaterial));
-            if (key.Item2.Length == 0)
+            if (key.Item2.Length == 0 || IsExcludedTsc(candidate.Tsc))
                 continue;
             needed.Add(key);
             if (byKey.TryGetValue(key, out var mapping))
@@ -421,7 +448,7 @@ public static class MaterialMappingStore
         foreach (var candidate in candidates)
         {
             var key = (MaterialMappingLookup.NormalizeTsc(candidate.Tsc), MaterialKeyNormalizer.Normalize(candidate.LocalMaterial));
-            if (key.Item2.Length > 0 && keys.Add(key))
+            if (key.Item2.Length > 0 && !IsExcludedTsc(candidate.Tsc) && keys.Add(key))
                 result.Add(CreateOpenRow(candidate, nowUtc));
         }
 
