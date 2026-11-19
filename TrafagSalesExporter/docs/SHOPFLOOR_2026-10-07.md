@@ -1,4 +1,4 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-19 10:15 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
@@ -1216,7 +1216,7 @@ Material 1-99999 fuer TR5 und DW, DW ueber `D*`; Fenster ab 18.11. kumuliert ink
 Eine Vorschau um 07:40 (nur gelesen) lag schon leicht anders (z. B. TX Verzug 35, SEH Vorrat 159'118), weil SAP weiterlaeuft;
 fuer den Abgleich ZC22 und Cockpit im selben Moment ziehen oder ZC22 gegen den Stand 04:00 halten.
 
-## 27. Paket Fabio 19.11. (`Shopfloor_Paket_Ingo_2026-11-19.zip`): Messungen und Plan (Stand 2026-11-19 08:45, Nachtrag 27.5 10:15)
+## 27. Paket Fabio 19.11. (`Shopfloor_Paket_Ingo_2026-11-19.zip`): Messungen und Plan (Stand 2026-11-19 08:45, Nachtrag 27.5 10:12)
 
 Anlass: Mail Fabio 19.11. 08:17 (an Ingo) mit Paket: Entscheide 17.11., Abgleich Board/Excel 16./17.11., SAP-Beispiel 58613, neuer
 Wunsch „Naechster Vorgang“ im Forecast der Dichtesensoren (Sergio) mit Frontend-Patch 09. Fabio will **je Punkt eine Rueckmeldung**
@@ -1293,10 +1293,10 @@ Auftrag Ingo: Tagesziel-Fix, Paket B Rueckstandslisten, Auftragsliste je Stichta
 **Nach dem Deploy zu pruefen / offen:** Excel-Import erst als Vorschau mit Fabios Datei, dann uebernehmen; 20.11. 04:01 Auftragsliste als CSV und Forecast DS mit Naechster Vorgang
 gegen MD04; Tagesziele TR5/TX/DW kommen erst mit dem Import; Bereinigung der 155 Widersprueche (Fabio); Importhaeufigkeit offen; Quelle der Tagesziele (Excel-Import) ist Annahme, nicht bestaetigt.
 
-*Nachtrag 19.11. 10:15 zur Liste oben: Importhaeufigkeit, Quelle der Tagesziele und Bereinigung der 155 Widersprueche sind seit
+*Nachtrag 19.11. 10:12 zur Liste oben: Importhaeufigkeit, Quelle der Tagesziele und Bereinigung der 155 Widersprueche sind seit
 Fabios Antwort entschieden (27.5); „vermutlich KE30 … (nicht belegt)“ ist durch Fabio in P76 belegt.*
 
-### 27.5 Rueckmeldung an Fabio und Fabios Antwort (Stand 2026-11-19 10:15)
+### 27.5 Rueckmeldung an Fabio und Fabios Antwort (Stand 2026-11-19 10:12)
 
 Einzelheiten: `docs/shopfloor_paket_2026-11-19/Antwort_Fabio_2026-11-19.md`. Nur Doku, nichts gebaut.
 

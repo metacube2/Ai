@@ -301,7 +301,7 @@ Aufträge, seit 2012 bzw. 2024 unverändert). Format bei leerem Arbeitsplatz „
 - Spaltentitel `text-ez1` (Textpool der Klasse) nicht gelesen; Fabio nennt „Nächster Vorgang“.
 - Laufzeit der Variante A in P76 und Zahl der FE-Zeilen im Forecast-Fenster in P76.
 
-## 8. Nachtrag 19.11. 10:15: P76 durch Fabio gelesen
+## 8. Nachtrag 19.11. 10:12: P76 durch Fabio gelesen
 
 Fabio hat in P76 per SE16N gelesen: `SXC_ATTR` `ZZ_MD_ADD_COL_EZPS` ACTIVE = X (Definition `MD_ADD_COL_EZPS`, angelegt 2012);
 `MODACT` M61X0001 im Projekt `ZPP00006`, `MODATTR` `ZPP00006` STATUS = A; `MODACT` M61X0002 ohne Treffer. Damit gilt der Befund aus

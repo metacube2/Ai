@@ -1,6 +1,6 @@
 # Rückmeldung an Fabio und Fabios Antwort (19.11.2026)
 
-Stand: 2026-11-19 10:15 (Uhrzeit mit `date` gelesen). Nur Doku, im Repository und in SAP nichts geändert.
+Stand: 2026-11-19 10:12 (Uhrzeit mit `date` gelesen). Nur Doku, im Repository und in SAP nichts geändert.
 Zurück: `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 27.5.
 
 ## 1. Rückmeldung Ingo an Fabio (Entwurf, nicht von Claude gesendet)

@@ -1,6 +1,6 @@
 # ZLO03 / Materialanteil: Einkaufsteile ohne englischen Kurztext fehlten (Befund 2026-11-18)
 
-Stand: 2026-11-19 10:15 (Abschnitt 8: Antwortentwurf an Armin); davor 2026-11-19 08:45 (**Prüfung produktiv bestanden**, Abschnitt 6a: 10.08.00 bei FP_DICHTESENS 273'028 CHF); davor 2026-11-18 18:05
+Stand: 2026-11-19 10:12 (Abschnitt 8: Antwortentwurf an Armin); davor 2026-11-19 08:45 (**Prüfung produktiv bestanden**, Abschnitt 6a: 10.08.00 bei FP_DICHTESENS 273'028 CHF); davor 2026-11-18 18:05
 (Korrektur 1 im Dashboard deployed 17:57, `1417a3a`; Einkauf-Lauf 18:01 gestartet). Auftrag Ingo 18.11. („schau mal ob Zusammenhang besteht, alte neue zlo03“, danach
 „mach 1“). T76/100 nur gelesen (SapProbe `table-read`), P76 nicht gelesen, in SAP nichts geändert.
 Zurück: `zlo03/CLAUDE.md`, `docs/rag/PURCHASING.md`.
