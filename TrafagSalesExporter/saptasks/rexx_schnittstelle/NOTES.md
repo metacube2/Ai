@@ -440,3 +440,28 @@ nur lesender Zugriff, einmal am Tag frueh, eigener API-Benutzer mit IP-Beschraen
 **Naechste Schritte, wenn die Antwort da ist:** API-Benutzer anlegen (Verfallsdatum, IP des Servers), `datawarehouse` fuer #775/#777
 freigeben, Token und Adresse in die Server-Einstellungen `HrKpi:RexxHub` (nicht ins Repository), Testabruf `/BiDashboard/admin/rexxhub/test`,
 dann `Enabled = true` (Abschnitt 14).
+## 16. Rexx Hub live angesehen: Data Warehouse liefert nur Kennzahlen, #775 gibt 404 (2026-11-19 10:50)
+
+Auftrag Ingo 19.11. („wir muessen die warehouse abfragen bauen … einrichten in chrome“). In Rexx (`https://trafag.rexx-systems.com`,
+produktiv) nur angesehen; geaendert wurde nichts. Zwei Testaufrufe ueber die Swagger-Testseite des Hubs (Freigabe Ingo im Chat, je ein
+Aufruf von 50'000 im Monat, erscheinen in den Hub-Logs).
+
+- **Hub ist eingerichtet, nicht leer:** „API User, #1“, angelegt vom Rexx-Support am 18.11.2026 10:05/10:08, Aktiv = Ja, Token
+  vorhanden. Freigegeben ist nur `GET /v1/datawarehouse/{dataWarehouseQueryId}` (gruen), alle anderen Endpunkte rot. Parameter-Mapping
+  `dataWarehouseQueryId` = „Fest definiert“. **Keine erlaubten IP-Adressen, kein Verfallsdatum** (vor produktiver Nutzung setzen).
+- **Basisadresse bestaetigt:** `https://trafag.rexx-systems.com/rexx_hub/v1/` (nicht `rexx-suite.com`, Abschnitt 13 Punkt 4 ueberholt).
+- **Data-Warehouse-Abfragen in Rexx sind Kennzahlentabellen** (Start > Admin Services > Data Warehouse): Zeilen = Kennzahl, Spalten =
+  Monate, z. B. #65 „HR Standardabfrage“ (Personal total, weiblich, maennlich, Frauenquote, Frauenquote Leitung, Ø Alter, FTE,
+  Headcount, Fluktuation %), weitere #359 bis #373 (u. a. #364 Ein-/Austritte, #365 Krankheit, #370 Arbeitsverhaeltnis). Keine Listen
+  je Person.
+- **Test `datawarehouse/775`: 404 `NOT_FOUND`**, `parameter_name: dataWarehouseQueryId` (request id `req_68b5444993d6af3c8469f829e25d9a11`).
+  #775 (Personal > Abfrage) und damit vermutlich auch #777 (Antragsliste) sind keine Data-Warehouse-Abfragen.
+- **Test `datawarehouse/65`: 200**, Form `{"data":[{"kennzahl":"Personal total","grenzwert":null,"januar_2026":254, … "august_2026":270}, …],
+  "_links":…, "_meta":…}`; Monatsspalten als technische Namen `monat_jahr`.
+
+**Folge:** Die Annahme aus Abschnitt 13/14 („#775/#777 gelten als Data-Warehouse-Abfragen“) ist widerlegt. Der gebaute
+`RexxHubRefreshService` kann so keine Personenliste und keine Abwesenheiten je Fall holen; Schalter bleibt aus. Ein Nachbau von #775/#777
+als DWH-Abfrage ist nicht moeglich, weil das Data Warehouse nur Kennzahlen je Monat fuehrt. Moegliche Wege (Entscheid Ingo, Rueckfrage Artjom):
+1. Stamm je Person ueber `/v1/employees` (+ `/employments`, `/org-units`, `/cost-accounts`) freigeben, Export-Felder waehlen.
+2. Abwesenheiten je Fall und Salden: kein eigener Endpunkt bekannt; bei Artjom fragen (ggf. `/v1/requests`, oder Personal-Abfragen ueber den Hub).
+3. DWH-Kennzahlen (#365 Krankheit, #364 Ein-/Austritte) nur als Gegenprobe zum Cockpit, nicht als Quelle.
