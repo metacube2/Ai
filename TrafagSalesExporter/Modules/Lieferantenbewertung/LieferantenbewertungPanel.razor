@@ -112,7 +112,7 @@
                                     <td><b>@LbKatalog.Themenfelder[i].Name</b></td>
                                     <td style="font-size:12px">@LbKatalog.Themenfelder[i].Unterkriterien</td>
                                     <td>
-                                        <MudSelect T="int?" @bind-Value="zeile.Note" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                        <MudSelect T="int?" @bind-Value="zeile.Note" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Placeholder="@T("nicht beurteilt", "not assessed")">
                                             <MudSelectItem T="int?" Value="@((int?)null)">@T("nicht beurteilt", "not assessed")</MudSelectItem>
                                             @foreach (var s in LbKatalog.Skala)
                                             {
