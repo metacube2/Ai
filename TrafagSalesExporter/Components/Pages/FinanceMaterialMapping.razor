@@ -144,9 +144,12 @@
     {
         _loading = true;
         await using var db = await DbFactory.CreateDbContextAsync();
-        _rows = await db.MaterialMappings.AsNoTracking()
-            .OrderBy(row => row.Tsc).ThenByDescending(row => row.NetSales).ThenBy(row => row.LocalMaterialKey)
-            .ToListAsync();
+        // SQLite kann decimal (NetSales) nicht in ORDER BY uebersetzen; deshalb erst laden, dann im Speicher sortieren.
+        var loaded = await db.MaterialMappings.AsNoTracking().ToListAsync();
+        _rows = loaded
+            .OrderBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase).ThenByDescending(row => row.NetSales)
+            .ThenBy(row => row.LocalMaterialKey, StringComparer.OrdinalIgnoreCase)
+            .ToList();
         _tscs = _rows.Select(row => row.Tsc).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(tsc => tsc).ToList();
         _loading = false;
     }
