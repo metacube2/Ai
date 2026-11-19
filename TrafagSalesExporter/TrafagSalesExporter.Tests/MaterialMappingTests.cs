@@ -153,6 +153,118 @@ public class MaterialMappingTests : IDisposable
         Assert.Equal(["1", "1", "2", "2"], stored.Select(m => m.GroupMaterialNumber).ToArray());
     }
 
+    // ----- Status offen (Auftrag Ingo 19.11.2026) -----
+
+    private static MaterialMappingCandidate Need(string tsc, string material, decimal netSales = 100m, int rows = 2)
+        => new(tsc, material, "Text " + material, "TR AG", rows, netSales, "EUR");
+
+    [Fact]
+    public async Task Offene_Zeilen_werden_angelegt_aktualisiert_und_ohne_Bedarf_entfernt_andere_bleiben()
+    {
+        await using var db = Db();
+        db.MaterialMappings.AddRange(
+            new MaterialMapping { Tsc = "TRUK", LocalMaterialKey = "A", GroupMaterialNumber = "1", Method = "Text", Status = MaterialMappingStatuses.Proposed, CreatedAtUtc = Now, UpdatedAtUtc = Now },
+            new MaterialMapping { Tsc = "TRUK", LocalMaterialKey = "B", Status = MaterialMappingStatuses.Open, Rows = 1, CreatedAtUtc = Now, UpdatedAtUtc = Now },
+            new MaterialMapping { Tsc = "TRUK", LocalMaterialKey = "OLD", Status = MaterialMappingStatuses.Open, CreatedAtUtc = Now, UpdatedAtUtc = Now });
+        await db.SaveChangesAsync();
+
+        var (inserted, updated, removed) = await MaterialMappingStore.SyncOpenRowsAsync(
+            db, [Need("TRUK", "A"), Need("TRUK", "B", 500m, 7), Need("TRUK", "C", 50m)], Now);
+
+        Assert.Equal((1, 1, 1), (inserted, updated, removed));
+        var stored = await db.MaterialMappings.AsNoTracking().ToListAsync();
+        var byKey = stored.ToDictionary(m => m.LocalMaterialKey);
+        Assert.Equal(["A", "B", "C"], byKey.Keys.OrderBy(k => k).ToArray());
+        Assert.Equal(MaterialMappingStatuses.Proposed, byKey["A"].Status);          // Vorschlag unveraendert
+        Assert.Equal("1", byKey["A"].GroupMaterialNumber);
+        Assert.Equal((7, 500m), (byKey["B"].Rows, byKey["B"].NetSales));
+        Assert.Equal((MaterialMappingStatuses.Open, "", "", 0), (byKey["C"].Status, byKey["C"].GroupMaterialNumber, byKey["C"].Method, byKey["C"].Confidence));
+        Assert.False(MaterialMappingStore.IsEffective(byKey["C"]));
+    }
+
+    [Fact]
+    public void Offene_Zeile_wirkt_nie_auch_nicht_mit_Nummer_und_Regel()
+    {
+        Assert.False(MaterialMappingStore.IsEffective(new MaterialMapping
+        {
+            Tsc = "TRUK", LocalMaterialKey = "A", GroupMaterialNumber = "53513", Method = MaterialMappingMethods.Rule, Status = MaterialMappingStatuses.Open
+        }));
+    }
+
+    [Fact]
+    public async Task Vorschlag_ersetzt_offene_Zeile()
+    {
+        await using var db = Db();
+        db.MaterialMappings.Add(new MaterialMapping { Tsc = "TRUK", LocalMaterialKey = "A", Status = MaterialMappingStatuses.Open, CreatedAtUtc = Now, UpdatedAtUtc = Now });
+        await db.SaveChangesAsync();
+
+        var (_, updated, protectedRows) = await MaterialMappingStore.UpsertSuggestionsAsync(db,
+            [new MaterialMapping { Tsc = "TRUK", LocalMaterialKey = "A", LocalMaterial = "A", GroupMaterialNumber = "2", Method = "Text", Confidence = 70 }], Now);
+
+        Assert.Equal((1, 0), (updated, protectedRows));
+        Assert.Equal(MaterialMappingStatuses.Proposed, (await db.MaterialMappings.AsNoTracking().SingleAsync()).Status);
+    }
+
+    [Fact]
+    public async Task Import_offen_ohne_Nummer_bleibt_offen_mit_Nummer_wird_Vorschlag()
+    {
+        await using var db = Db();
+        var rows = new[]
+        {
+            Row(2, "TRUK", "A", "", status: "offen", method: ""),
+            Row(3, "TRUK", "B", "53513", status: "offen", method: ""),
+            Row(4, "TRUK", "C", "44073", status: "bestaetigt", method: "")
+        };
+
+        var result = await MaterialMappingStore.ImportAsync(db, rows, KnownTscs, "koi", Now);
+
+        Assert.True(result.Success, string.Join(" | ", result.Errors));
+        var byKey = (await db.MaterialMappings.AsNoTracking().ToListAsync()).ToDictionary(m => m.LocalMaterialKey);
+        Assert.Equal((MaterialMappingStatuses.Open, "", 0), (byKey["A"].Status, byKey["A"].Method, byKey["A"].Confidence));
+        Assert.Equal((MaterialMappingStatuses.Proposed, MaterialMappingMethods.Manual), (byKey["B"].Status, byKey["B"].Method));
+        Assert.False(MaterialMappingStore.IsEffective(byKey["B"]));
+        Assert.True(MaterialMappingStore.IsEffective(byKey["C"]));
+    }
+
+    [Fact]
+    public void Excel_ergaenzt_offene_Zeilen_ohne_doppelte_Schluessel()
+    {
+        var table = new List<MaterialMapping>
+        {
+            new() { Tsc = "TRUK", LocalMaterial = "A", LocalMaterialKey = "A", GroupMaterialNumber = "1", Method = "Text", Status = MaterialMappingStatuses.Proposed }
+        };
+
+        var rows = MaterialMappingStore.WithOpenRows(table, [Need("TRUK", "A"), Need("truk", "0B", 900m)], Now);
+
+        Assert.Equal(2, rows.Count);
+        Assert.Equal(1, table.Count);   // Tabelle selbst unveraendert
+        var open = rows.Single(r => r.Status == MaterialMappingStatuses.Open);
+        Assert.Equal(("TRUK", "B", 900m), (open.Tsc, open.LocalMaterialKey, open.NetSales));
+
+        var bytes = MaterialMappingExcel.CreateWorkbookBytes(rows);
+        using var workbook = new XLWorkbook(new MemoryStream(bytes));
+        var ws = workbook.Worksheet(MaterialMappingExcel.SheetName);
+        Assert.Equal("offen", ws.Cell(2, 11).GetString());              // nach Umsatz sortiert: B (900) vor A (0)
+        Assert.Equal(string.Empty, ws.Cell(2, 4).GetString());
+        Assert.Equal(0, ws.Cell(2, 10).GetValue<int>());
+        Assert.Equal("nein", ws.Cell(2, 14).GetString());
+    }
+
+    [Fact]
+    public void Kandidaten_mit_Finance_Regeln_nur_aus_Zeilen_mit_Finance_Include()
+    {
+        var included = new SalesRecord { Tsc = "TRUK", Land = "UK", Material = "UK-1", Name = "T", SupplierName = "Trafag AG", StandardCost = 5m, Quantity = 1m,
+            SalesPriceValue = 10m, CompanyCurrency = "GBP", PostingDate = new DateTime(2026, 6, 1), InvoiceDate = new DateTime(2026, 6, 1), ExtractionDate = new DateTime(2026, 6, 2) };
+        var excluded = new SalesRecord { Tsc = "TRUK", Land = "UK", Material = "UK-2", Name = "T", SupplierName = "Trafag AG", StandardCost = 5m, Quantity = 1m,
+            SalesPriceValue = 0m, CompanyCurrency = "GBP", PostingDate = new DateTime(2026, 6, 1), InvoiceDate = new DateTime(2026, 6, 1), ExtractionDate = new DateTime(2026, 6, 2) };
+
+        var candidates = MaterialMappingSuggestionService.BuildCandidates(
+            [included, excluded], new Dictionary<(string, string), GroupStandardCost>(), new HashSet<string>(["X"]),
+            new ExportSettings(), new HashSet<string>(), MaterialMappingLookup.Empty, FinanceRuleEngine.CreateDefaultRules());
+
+        Assert.Equal("UK-1", Assert.Single(candidates).LocalMaterial);   // Umsatz 0 ist in Sales_All Finance | Include = FALSE
+    }
+
     // ----- Excel -----
 
     [Fact]

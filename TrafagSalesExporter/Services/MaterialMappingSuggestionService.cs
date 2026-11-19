@@ -270,10 +270,16 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         var foreign = ForeignProcurementEvidenceStore.LoadMaterialKeys(db);
         var mappings = await MaterialMappingStore.LoadLookupAsync(db, cancellationToken);
 
-        var candidates = BuildCandidates(records, costs, plantKeys, settings, foreign, mappings);
+        var financeRules = await db.FinanceRules.AsNoTracking().Where(rule => rule.IsActive).ToListAsync(cancellationToken);
+        var rules = financeRules.Count == 0
+            ? FinanceRuleEngine.CreateDefaultRules()
+            : financeRules.OrderBy(rule => rule.SortOrder).ThenBy(rule => rule.Id).ToList();
+        var candidates = BuildCandidates(records, costs, plantKeys, settings, foreign, mappings, rules);
         var now = DateTime.UtcNow;
         var suggestions = MaterialMappingSuggester.Suggest(candidates, plant, now);
         var (inserted, updated, protectedRows) = await MaterialMappingStore.UpsertSuggestionsAsync(db, suggestions, now, cancellationToken);
+        // Auftrag Ingo 19.11.2026: alle Artikel mit Mapping-Bedarf sichtbar, auch ohne Vorschlag (Status offen).
+        await MaterialMappingStore.SyncOpenRowsAsync(db, candidates, now, cancellationToken);
         return new MaterialMappingSuggestionRunResult(
             candidates.Count, suggestions.Count, inserted, updated, protectedRows, plant.Count, plant.Values.Count(text => text.Length > 0),
             textWarning, textsLoaded);
@@ -350,10 +356,16 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         IReadOnlySet<string> plantKeys,
         ExportSettings settings,
         IReadOnlySet<string> foreignProcurementMaterialKeys,
-        MaterialMappingLookup mappings)
+        MaterialMappingLookup mappings,
+        IReadOnlyList<FinanceRule>? financeRules = null)
     {
-        var hits = new List<(SalesRecord Record, string Entity)>();
-        foreach (var record in records)
+        // Mit Finance-Regeln: nur Zeilen, die auch in Sales_All ein Issue Topic tragen (Finance | Include = TRUE),
+        // Gewicht = Finance Net Sales Actual. Ohne Regeln (Tests): alle Zeilen mit Sales Price/Value.
+        var lines = financeRules is null
+            ? records.Select(record => (Record: record, NetSales: record.SalesPriceValue))
+            : ExcelExportService.FinanceIncludedRecords(records, financeRules);
+        var hits = new List<(SalesRecord Record, string Entity, decimal NetSales)>();
+        foreach (var (record, netSales) in lines)
         {
             if (string.IsNullOrWhiteSpace(record.Tsc) || MaterialKeyNormalizer.Normalize(record.Material).Length == 0)
                 continue;
@@ -371,7 +383,7 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
                     Quantity = record.Quantity,
                     StandardCost = record.StandardCost,
                     StandardCostCurrency = record.StandardCostCurrency,
-                    NetSalesValue = record.SalesPriceValue
+                    NetSalesValue = netSales
                 },
                 costs,
                 chPlantMaterialKeys: plantKeys,
@@ -381,7 +393,7 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
                 marcForeignProcurementMode: settings.MarcForeignProcurementMode,
                 materialMappings: mappings);
             if (NotFoundTopics.Contains(evaluation.IssueTopic))
-                hits.Add((record, GroupMarginCalculator.DeliveringEntityLabel(evaluation.DeliveringEntity)));
+                hits.Add((record, GroupMarginCalculator.DeliveringEntityLabel(evaluation.DeliveringEntity), netSales));
         }
 
         return hits
@@ -392,7 +404,7 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
                 group.Select(hit => hit.Record.Name?.Trim() ?? string.Empty).FirstOrDefault(name => name.Length > 0) ?? string.Empty,
                 group.Select(hit => hit.Entity).FirstOrDefault(entity => entity.Length > 0) ?? string.Empty,
                 group.Count(),
-                group.Sum(hit => hit.Record.SalesPriceValue),
+                group.Sum(hit => hit.NetSales),
                 group.Select(hit => hit.Record.CompanyCurrency?.Trim() ?? string.Empty).FirstOrDefault(currency => currency.Length > 0) ?? string.Empty))
             .ToList();
     }

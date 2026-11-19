@@ -31,13 +31,20 @@ public static class MaterialMappingStatuses
     public const string Confirmed = "bestaetigt";
     public const string Rejected = "abgelehnt";
 
-    public static readonly IReadOnlyList<string> All = [Proposed, Confirmed, Rejected];
+    /// <summary>
+    /// Artikel braucht ein Mapping (Issue Topic 1, 2, 6, 7), es gibt aber noch keinen Vorschlag (Auftrag Ingo 19.11.2026).
+    /// Gruppennummer leer, Verfahren leer, Sicherheit 0. Wirkt nie.
+    /// </summary>
+    public const string Open = "offen";
+
+    public static readonly IReadOnlyList<string> All = [Open, Proposed, Confirmed, Rejected];
 
     /// <summary>Liest auch Schreibweisen mit Umlaut und englische Werte; unbekannt ergibt null.</summary>
     public static string? Normalize(string? value)
         => value?.Trim().ToLowerInvariant() switch
         {
             null or "" or "vorschlag" or "proposed" or "proposal" => Proposed,
+            "offen" or "open" => Open,
             "bestaetigt" or "bestätigt" or "confirmed" => Confirmed,
             "abgelehnt" or "rejected" => Rejected,
             _ => null
@@ -121,6 +128,7 @@ public static class MaterialMappingStore
     public static bool IsEffective(MaterialMapping mapping)
         => !string.IsNullOrWhiteSpace(mapping.GroupMaterialNumber) &&
            !string.Equals(mapping.Status, MaterialMappingStatuses.Rejected, StringComparison.Ordinal) &&
+           !string.Equals(mapping.Status, MaterialMappingStatuses.Open, StringComparison.Ordinal) &&
            (string.Equals(mapping.Status, MaterialMappingStatuses.Confirmed, StringComparison.Ordinal) ||
             string.Equals(mapping.Method, MaterialMappingMethods.Rule, StringComparison.Ordinal));
 
@@ -131,18 +139,21 @@ public static class MaterialMappingStore
         => new(await db.MaterialMappings.AsNoTracking().ToListAsync(cancellationToken));
 
     /// <summary>Gewichte je (TSC, normalisierte Nummer) aus den Verkaufszeilen.</summary>
-    public static Dictionary<(string Tsc, string Key), MaterialMappingWeight> ComputeWeights(IEnumerable<SalesRecord> records)
-        => records
-            .Where(record => !string.IsNullOrWhiteSpace(record.Tsc) && MaterialKeyNormalizer.Normalize(record.Material).Length > 0)
-            .GroupBy(record => (MaterialMappingLookup.NormalizeTsc(record.Tsc), MaterialKeyNormalizer.Normalize(record.Material)))
+    public static Dictionary<(string Tsc, string Key), MaterialMappingWeight> ComputeWeights(
+        IEnumerable<SalesRecord> records, IEnumerable<decimal>? netSales = null)
+        => (netSales is null
+                ? records.Select(record => (Record: record, Net: record.SalesPriceValue))
+                : records.Zip(netSales, (record, net) => (Record: record, Net: net)))
+            .Where(line => !string.IsNullOrWhiteSpace(line.Record.Tsc) && MaterialKeyNormalizer.Normalize(line.Record.Material).Length > 0)
+            .GroupBy(line => (MaterialMappingLookup.NormalizeTsc(line.Record.Tsc), MaterialKeyNormalizer.Normalize(line.Record.Material)))
             .ToDictionary(
                 group => group.Key,
                 group => new MaterialMappingWeight(
                     group.Count(),
-                    group.Sum(record => record.SalesPriceValue),
-                    group.Select(record => record.CompanyCurrency?.Trim() ?? string.Empty)
+                    group.Sum(line => line.Net),
+                    group.Select(line => line.Record.CompanyCurrency?.Trim() ?? string.Empty)
                         .FirstOrDefault(currency => currency.Length > 0) ?? string.Empty,
-                    group.Select(record => record.Name?.Trim() ?? string.Empty)
+                    group.Select(line => line.Record.Name?.Trim() ?? string.Empty)
                         .FirstOrDefault(name => name.Length > 0) ?? string.Empty));
 
     /// <summary>
@@ -187,17 +198,24 @@ public static class MaterialMappingStore
             var status = MaterialMappingStatuses.Normalize(row.Status);
             if (status is null)
             {
-                errors.Add($"Zeile {row.RowNumber}: Status '{row.Status.Trim()}' ist unbekannt (erlaubt: Vorschlag, bestaetigt, abgelehnt).");
+                errors.Add($"Zeile {row.RowNumber}: Status '{row.Status.Trim()}' ist unbekannt (erlaubt: offen, Vorschlag, bestaetigt, abgelehnt).");
                 continue;
             }
-            if (status != MaterialMappingStatuses.Rejected && string.IsNullOrWhiteSpace(row.GroupMaterialNumber))
+            // Eine offene Zeile mit nachgetragener Gruppennummer wird ein Vorschlag (wirkt erst bestaetigt);
+            // wer sie gleich wirken lassen will, setzt den Status auf bestaetigt.
+            if (status == MaterialMappingStatuses.Open && !string.IsNullOrWhiteSpace(row.GroupMaterialNumber))
+                status = MaterialMappingStatuses.Proposed;
+            if (status != MaterialMappingStatuses.Rejected && status != MaterialMappingStatuses.Open &&
+                string.IsNullOrWhiteSpace(row.GroupMaterialNumber))
             {
                 errors.Add($"Zeile {row.RowNumber}: Gruppen-Artikelnummer fehlt.");
                 continue;
             }
 
-            var method = MaterialMappingMethods.Normalize(row.Method);
-            var confidence = method == MaterialMappingMethods.Text ? 0 : 100;
+            var method = status == MaterialMappingStatuses.Open && string.IsNullOrWhiteSpace(row.Method)
+                ? string.Empty
+                : MaterialMappingMethods.Normalize(row.Method);
+            var confidence = method == MaterialMappingMethods.Text || status == MaterialMappingStatuses.Open ? 0 : 100;
             if (!string.IsNullOrWhiteSpace(row.Confidence))
             {
                 if (!int.TryParse(row.Confidence.Trim(), System.Globalization.NumberStyles.Integer,
@@ -248,7 +266,7 @@ public static class MaterialMappingStore
             mapping.MethodDetail = item.Row.MethodDetail.Trim();
             mapping.Confidence = item.Confidence;
             mapping.Status = item.Status;
-            if (item.Status != MaterialMappingStatuses.Proposed)
+            if (item.Status is not (MaterialMappingStatuses.Proposed or MaterialMappingStatuses.Open))
             {
                 var reviewer = item.Row.ReviewedBy.Trim();
                 if (reviewer.Length > 0)
@@ -299,7 +317,8 @@ public static class MaterialMappingStore
             var key = (MaterialMappingLookup.NormalizeTsc(suggestion.Tsc), MaterialKeyNormalizer.Normalize(suggestion.LocalMaterialKey));
             if (byKey.TryGetValue(key, out var mapping))
             {
-                if (mapping.Status != MaterialMappingStatuses.Proposed || mapping.Method == MaterialMappingMethods.Manual)
+                if (mapping.Status is not (MaterialMappingStatuses.Proposed or MaterialMappingStatuses.Open) ||
+                    mapping.Method == MaterialMappingMethods.Manual)
                 {
                     protectedRows++;
                     continue;
@@ -320,6 +339,93 @@ public static class MaterialMappingStore
 
         await db.SaveChangesAsync(cancellationToken);
         return (inserted, updated, protectedRows);
+    }
+
+    /// <summary>
+    /// Offene Zeilen (Auftrag Ingo 19.11.2026): jede (TSC, Nummer) mit Mapping-Bedarf ohne eigene Tabellenzeile bekommt eine
+    /// Zeile im Status offen; bestehende offene Zeilen bekommen das aktuelle Gewicht; offene Zeilen ohne Bedarf mehr werden
+    /// geloescht (sie waren nie geprueft). Andere Zeilen bleiben unangetastet.
+    /// </summary>
+    public static async Task<(int Inserted, int Updated, int Removed)> SyncOpenRowsAsync(
+        AppDbContext db, IReadOnlyList<MaterialMappingCandidate> candidates, DateTime nowUtc, CancellationToken cancellationToken = default)
+    {
+        var existing = await db.MaterialMappings.ToListAsync(cancellationToken);
+        var byKey = existing.ToDictionary(mapping => (MaterialMappingLookup.NormalizeTsc(mapping.Tsc), mapping.LocalMaterialKey));
+        var needed = new HashSet<(string, string)>();
+        int inserted = 0, updated = 0, removed = 0;
+        foreach (var candidate in candidates)
+        {
+            var key = (MaterialMappingLookup.NormalizeTsc(candidate.Tsc), MaterialKeyNormalizer.Normalize(candidate.LocalMaterial));
+            if (key.Item2.Length == 0)
+                continue;
+            needed.Add(key);
+            if (byKey.TryGetValue(key, out var mapping))
+            {
+                if (mapping.Status != MaterialMappingStatuses.Open)
+                    continue;
+                mapping.Rows = candidate.Rows;
+                mapping.NetSales = candidate.NetSales;
+                mapping.Currency = candidate.Currency;
+                mapping.LocalText = candidate.LocalText;
+                mapping.DeliveringEntity = candidate.DeliveringEntity;
+                mapping.UpdatedAtUtc = nowUtc;
+                updated++;
+                continue;
+            }
+
+            var created = CreateOpenRow(candidate, nowUtc);
+            db.MaterialMappings.Add(created);
+            byKey[key] = created;
+            inserted++;
+        }
+
+        foreach (var stale in existing.Where(mapping => mapping.Status == MaterialMappingStatuses.Open &&
+                                                        !needed.Contains((MaterialMappingLookup.NormalizeTsc(mapping.Tsc), mapping.LocalMaterialKey))))
+        {
+            db.MaterialMappings.Remove(stale);
+            removed++;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return (inserted, updated, removed);
+    }
+
+    /// <summary>Offene Zeile fuer einen Artikel ohne Vorschlag: Gruppennummer und Verfahren leer, Sicherheit 0.</summary>
+    public static MaterialMapping CreateOpenRow(MaterialMappingCandidate candidate, DateTime nowUtc)
+        => new()
+        {
+            Tsc = MaterialMappingLookup.NormalizeTsc(candidate.Tsc),
+            LocalMaterial = candidate.LocalMaterial.Trim(),
+            LocalMaterialKey = MaterialKeyNormalizer.Normalize(candidate.LocalMaterial),
+            LocalText = candidate.LocalText,
+            DeliveringEntity = candidate.DeliveringEntity,
+            Method = string.Empty,
+            Confidence = 0,
+            Status = MaterialMappingStatuses.Open,
+            Rows = candidate.Rows,
+            NetSales = candidate.NetSales,
+            Currency = candidate.Currency,
+            CreatedAtUtc = nowUtc,
+            UpdatedAtUtc = nowUtc
+        };
+
+    /// <summary>
+    /// Zeilen fuer die Mapping-Excel: alle Tabellenzeilen plus eine offene Zeile fuer jeden Kandidaten ohne Tabellenzeile.
+    /// Die ergaenzten Zeilen werden NICHT gespeichert (der Export schreibt nicht in die Datenbank).
+    /// </summary>
+    public static List<MaterialMapping> WithOpenRows(
+        IReadOnlyList<MaterialMapping> mappings, IEnumerable<MaterialMappingCandidate> candidates, DateTime nowUtc)
+    {
+        var keys = mappings.Select(mapping => (MaterialMappingLookup.NormalizeTsc(mapping.Tsc), mapping.LocalMaterialKey)).ToHashSet();
+        var result = mappings.ToList();
+        foreach (var candidate in candidates)
+        {
+            var key = (MaterialMappingLookup.NormalizeTsc(candidate.Tsc), MaterialKeyNormalizer.Normalize(candidate.LocalMaterial));
+            if (key.Item2.Length > 0 && keys.Add(key))
+                result.Add(CreateOpenRow(candidate, nowUtc));
+        }
+
+        return result;
     }
 
     private static void Copy(MaterialMapping source, MaterialMapping target)
@@ -431,7 +537,8 @@ public static class MaterialMappingExcel
             "Wirksam (Spalte Effective = ja): Regelzeilen sofort, Text- und Handzeilen nur im Status bestaetigt, abgelehnte nie (Entscheid Ingo 19.11.2026).",
             "Eine Zeile wirkt nur fuer ihren TSC und nur dort, wo die Quelle keine Gruppen-Artikelnummer liefert; sie ueberschreibt nie.",
             "Import: alle Zeilen oder keine. Abgelehnt werden doppelte Schluessel (TSC + lokale Nummer), unbekannte TSC, fehlende Nummern, unbekannter Status.",
-            "Status: Vorschlag, bestaetigt oder abgelehnt. Confidence 0 bis 100: 100 bei Regel, sonst Wert der Textaehnlichkeit.",
+            "Status: offen (Artikel braucht ein Mapping, noch kein Vorschlag; wirkt nie), Vorschlag, bestaetigt oder abgelehnt. Confidence 0 bis 100: 100 bei Regel, sonst Wert der Textaehnlichkeit.",
+            "Offene Zeilen: Gruppen-Artikelnummer eintragen und Status auf bestaetigt setzen, dann wirkt sie nach dem Import. Bleibt der Status offen, wird die Zeile mit Nummer ein Vorschlag.",
             "Rows und Net Sales: Gewicht aus dem Datenstand des Exports (Sales Price/Value in Hauswaehrung), damit zuerst das Grosse geprueft wird."
         };
         for (var i = 0; i < lines.Length; i++)
