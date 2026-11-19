@@ -624,3 +624,18 @@ nur per GUI; in P76 zusaetzlich AL11 sowie TEVEN/PA2001 (nur Anzahl, Datum, Kuer
 `/v1/time-management/entries`, Absenzen ohne Endpunkt (Frage Artjom), Lohnarten SAP->Rexx unklar (`/v1/payments` nur lesen). Offen:
 wer die `root`-Ablage betreibt (Basis/IT), welche 8 Schnittstellen Rexx verrechnet (Artjom), Job vom Berater-Konto loesen, Sonja wegen
 Absenz-Import seit Juli ansprechen, Zweck der Ordner Lohnabrechnung/Lohnausweis.
+
+**Nachtrag 2026-11-19 15:00: Schreibweg fuer Lohnarten SAP->Rexx im Hub geprueft (nur angesehen, nichts freigegeben oder gespeichert).**
+- Schreibende Endpunkte (POST/PATCH/DELETE) gibt es fuer calendar, communication, cost-accounts, employees, houses, job-families,
+  org-locations, org-units, persons, positions, projects, skill-groups, skills, talent-pools, time-management/entries und upload.
+  **Fuer payments gibt es nur GET; einen Endpunkt fuer Lohnarten oder Abrechnungsergebnisse gibt es nicht.**
+- `PATCH /v1/employees/{employeeId}` schreibt feste Datenfelder (Name, Vertrag, Adresse, Kontakt, external_id) und waehlbare
+  „Import Felder“ (Katalog 49 Felder, heute 0 gewaehlt). Darunter **Lohn, Lohnart, Monatslohn 100 %, Basis Stundenlohn, Basis Praemie,
+  ZGP-Lohnstufe**, ausserdem z. B. Abrechnungskreis, Mitarbeiterkreis, Planstelle, Pensionskasse, „Export SAP“. Das sind Einzelwerte je
+  Person (jeder Aufruf ueberschreibt), keine Monatsliste je Lohnart mit Datum und Betrag wie im heutigen Export
+  (`Personalnummer;Lohnart ID;Abrechnungsdatum;Betrag;Currency`).
+- `POST /v1/upload` legt nur eine Datei ab; ob Rexx eine hochgeladene Lohndatei weiterverarbeitet, steht nirgends.
+- Folge: Ein aktueller Lohnwert je Person liesse sich per PATCH schreiben; die Monatshistorie je Lohnart (Ordner `Benefits_Gehaltsdaten`)
+  nicht. Frage an Artjom: welches Rexx-Modul liest die Lohnarten-Datei, und gibt es dafuer einen Hub-Weg.
+- Hinweis: Beim PATCH-Endpunkt von Benutzer #2 steht „Zuletzt bearbeitet 19.11.26 14:10, Ingo Kohler“ (Parameter-Mapping employeeId =
+  ID Personal); von Claude nicht geaendert, Freigegeben = Nein.
