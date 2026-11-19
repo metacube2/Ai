@@ -140,7 +140,7 @@ public sealed class RexxHubRefreshService : BackgroundService
             var connection = await _source.ResolveAsync(cancellationToken);
             token = connection.Token;
             var result = await _client.FetchQueryAsync(connection, queryId, _options.ForKind(kind == RexxHubQueryKind.Gesamt), cancellationToken);
-            RexxHubColumns.Normalize(kind, result.Table);
+            var dropped = RexxHubColumns.Normalize(kind, result.Table);
             var existing = RexxHubWorkbook.Inspect(kind, path);
             var check = RexxHubColumns.Check(kind, result.Table, existing.Rows, _options.MinShare, _options.MinRowShareOfPrevious, _options.MaxDuplicatePersonalnummern);
             var requestId = string.IsNullOrWhiteSpace(result.RequestId) ? "keine" : result.RequestId;
@@ -159,6 +159,8 @@ public sealed class RexxHubRefreshService : BackgroundService
             RexxHubWorkbook.Write(kind, result.Table, path);
 
             var notes = Notes(kind, check, connection, _options);
+            if (dropped > 0)
+                notes.Add($"{dropped} Zeile(n) mit schon vorkommender Personalnummer (zweites Arbeitsverhaeltnis) entfernt, juengster Eintritt bleibt");
             if (backup is not null)
                 notes.Add($"Handexport gesichert als {Path.GetFileName(backup)}");
             await _log.WriteAsync("HR", $"Rexx-Hub {label} geschrieben", notes.Any(n => !n.StartsWith("Handexport", StringComparison.Ordinal)) ? "Warning" : "Info",
@@ -261,6 +263,9 @@ public sealed class RexxHubProbeQuery
     public int DoppeltePersonalnummern { get; init; }
     public int DatumswerteMitZeitanteil { get; init; }
     public List<string> Hinweise { get; init; } = [];
+    /// <summary>Spaltensummen (Zahl, Stunden als Dezimalstunden), zum Vergleich mit einem Handexport; keine Werte je Person.</summary>
+    public Dictionary<string, decimal> Summen { get; init; } = [];
+    public int EntfernteDoppelzeilen { get; init; }
 }
 
 /// <summary>
@@ -307,7 +312,7 @@ public sealed class RexxHubProbe(
             try
             {
                 var result = await client.FetchQueryAsync(connection, queryId, settings.ForKind(kind == RexxHubQueryKind.Gesamt), cancellationToken);
-                RexxHubColumns.Normalize(kind, result.Table);
+                var dropped = RexxHubColumns.Normalize(kind, result.Table);
                 var existing = RexxHubWorkbook.Inspect(kind, Path.Combine(folder, file));
                 var check = RexxHubColumns.Check(kind, result.Table, existing.Rows, settings.MinShare, settings.MinRowShareOfPrevious, settings.MaxDuplicatePersonalnummern);
                 queries.Add(new RexxHubProbeQuery
@@ -322,6 +327,8 @@ public sealed class RexxHubProbe(
                     ZusaetzlicheSpalten = check.ZusaetzlicheSpalten, DoppelteSpalten = check.DoppelteSpalten,
                     Formatpruefung = check.Formatpruefung, Wertpruefung = check.Wertpruefung,
                     DoppeltePersonalnummern = check.DoppeltePersonalnummern, DatumswerteMitZeitanteil = check.DatumswerteMitZeitanteil,
+                    Summen = RexxHubColumns.Sums(kind, result.Table),
+                    EntfernteDoppelzeilen = dropped,
                     Hinweise = RexxHubRefreshService.Notes(kind, check, connection, settings)
                 });
             }
