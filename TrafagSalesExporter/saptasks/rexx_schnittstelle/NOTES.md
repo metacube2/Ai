@@ -499,3 +499,12 @@ beiden Herstellerdokumenten). Alle HR, Stand heute; nur `datawarehouse` ist frei
 - **Folge:** #775 laesst sich als Export-Felder von `/v1/employees` nachbauen. Offen: Zeitraum der Summen „angetreten“ (Export-Filter
   pruefen), Grenze 422 bei zu vielen Feldern, Abruf im Code von `datawarehouse/{id}` auf `employees` umstellen. **#777 (Abwesenheiten je
   Fall) hat weiter keinen Endpunkt**, Frage an Artjom.
+
+**Nachtrag 2026-11-19 11:20: eigener API-Benutzer angelegt (Auftrag Ingo: Bestehendes nicht ueberschreiben, lieber neu anlegen).**
+- **Neu: „BI-Dashboard HR-Cockpit, #2“**, Aktiv = Nein, ohne Verfallsdatum und IP-Sperre, Token von Rexx erzeugt (nicht gelesen,
+  nicht notiert). Freigegeben nur `GET /v1/employees` (gelb, weil Benutzer inaktiv). API User #1 (Support) bleibt wie vorgefunden,
+  ausser den beiden heutigen Freigaben (`employees`, `time-management/entries`).
+- **Ziel (Ingo 19.11.):** alle Felder, die heute per Datei eingelesen werden, ueber den Hub, wie in Abschnitt 12 und 14 beschrieben.
+- **Export-Felder bei #2 noch nicht gespeichert:** Im Dialog „Felder auswaehlen“ waren die 22 fehlenden Spalten von #775 plus
+  „Personalnummer (Vorgesetzte)“ zu den 9 Vorgaben hinzugefuegt; „Speichern“ blieb mit rotem Ladebalken haengen, nach Neuladen
+  weiter 9 Felder (11:12). Gleiches Haengen wie beim Zuruecksetzen von `time-management` bei #1. Nicht weiter probiert.
