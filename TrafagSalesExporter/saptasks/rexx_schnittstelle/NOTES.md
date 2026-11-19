@@ -572,3 +572,26 @@ Geaenderte** (Sicherungen, Testabruf, Protokoll).
   mit Token die Quelladresse in „Rexx Hub Logs“ ablesen und erst dann bei Benutzer #2 unter „Erlaubte IP-Adressen“ eintragen.
 - **Verfallsdatum nicht gesetzt:** Laeuft der Token ab, steht der Abruf still. Entscheid Ingo (Vorschlag: ein Jahr, Erinnerung in Wochen_Todo).
 - Der Token wird nicht von Claude ins Dashboard eingetragen (Regel: keine Tokens in Felder eingeben); Schritt 2 in Abschnitt 17 macht Ingo.
+
+## 18. Eingeschaltet (2026-11-19 13:25, `a848f93`)
+
+Auftrag Ingo „mach weiter, alles fertigmachen“. Ablauf:
+- **Quellsystem `REXXHUB`** im Dashboard angelegt (Claude: Code, Name, Anschlussart „SAP Gateway“, URL `https://trafag.rexx-systems.com/rexx_hub/`,
+  Aktiv; **Token von Ingo eingefuegt**, Username leer; „Quellsysteme speichern“ 13:10).
+- **Testabruf 13:11:** 200, 396 Zeilen, 4 Seiten zu 100, alle Pflichtspalten, alle Formate erkannt; **verworfen wegen 1 doppelter
+  Personalnummer** (v1/employees liefert eine Person mit zwei Arbeitsverhaeltnissen zweimal; Handexport 04.11.: 393 Zeilen, 0 doppelt).
+- **IP-Sperre:** Quelladresse des Servers laut „Rexx Hub Logs“ `212.243.171.23` (intern 10.120.1.17), bei Benutzer #2 unter „Erlaubte
+  IP-Adressen“ eingetragen; Testabruf danach weiter 200. Swagger aus dem Browser (andere Adresse) geht fuer #2 damit nicht mehr.
+- **Nachbesserung `b907402`** (auf Produktivstand `e8a8743` gemergt `85b2449`, deployed 13:23): bei doppelter Personalnummer bleibt die Zeile
+  mit dem juengsten Eintritt (Protokollhinweis); Testabruf zeigt `Summen` und `EntfernteDoppelzeilen`. Testabruf danach: 395 Zeilen,
+  1 entfernt, `WuerdeGeschrieben = true`.
+- **Zeitraum geprueft** (Summen Hub 19.11. gegen Handexport 04.11., Zeitraum dort 01.01. bis 04.11.): Krankheit 14'374,8 h gegen 13'540,5 h
+  (+6 %), Ferien angetreten 4'998 gegen 4'854,5 Tage (+3 %), Unfall 1'711,8 gegen 1'659,8 h, Kompensation 9'467,6 gegen 9'089,2 h,
+  Militaer 528 gegen 496 h, Urlaubsanspruch 6'747,5 gegen 6'743,5, Urlaub Rest 861 gegen 1'027. Passt zu „01.01. bis heute“ plus 15 Tage.
+- **`a848f93`:** `HrKpi:RexxHub:Enabled = true`, `GesamtZeitraumGeprueft = true`, deployed 13:25. Tagesabruf ab 05:30; nach jedem Start
+  rund 3 Minuten spaeter, wenn faellig. Die bisherige Handexport-Datei wird beim ersten Schreiben als `Hrcockpitgesamtdashboard.manuell.xlsx`
+  gesichert. **#777 bleibt Handexport** (`CaseEnabled = false`), Ingo klaert mit Artjom.
+- Offen: Verfallsdatum fuer Benutzer #2 (Entscheid Ingo), User #1 Freigaben `employees`/`time-management` durch Artjom sperren lassen.
+- **Erster Abruf 13:28:59** (Ereignisprotokoll HR „Rexx-Hub #775 geschrieben“): 395 Zeilen, 31 Spalten, 4 Seiten, 9,3 s, bisher 393 Zeilen,
+  1 Doppelzeile entfernt. Handexport gesichert als `hrdata\Hrcockpitgesamtdashboard.manuell.xlsx`. Nachgezaehlt: 395 Zeilen, 0 doppelt,
+  Summen gleich dem Testabruf. Die Sichtpruefung im HR-Cockpit (HR-Login) macht Ingo.

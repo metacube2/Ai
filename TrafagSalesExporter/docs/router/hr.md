@@ -20,7 +20,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | **Entscheid 10.11.: Rexx Hub wird genommen; welche Felder Rexx liefern muss (Spaltennamen, Ampel fehlend/ungeprueft)** | `saptasks/rexx_schnittstelle/NOTES.md` 12, Kurzfassung `docs/HR_KPI.md` 8.17 |
 | **Rexx Hub technisch: REST-API (kein Dateiexport), Endpunkte, Grenzen (1 Anfrage gleichzeitig, 50'000 pro Monat), Data-Warehouse-Abfrage als naechster Weg; Mailverlauf AG36071 (Hub nicht bestellt)** | `saptasks/rexx_schnittstelle/NOTES.md` 13 |
 | **Rexx-Hub-Abruf gebaut und seit dem Deploy vom 2026-11-12 11:33 auf dem Server (`e956183`), Schalter `HrKpi:RexxHub:Enabled` weiter aus (bis 2026-11-12 stand hier nur „gebaut (Schalter aus)“): Umschaltanleitung, Einstellungen, Sicherungen, Testabruf, offene Annahmen** | `saptasks/rexx_schnittstelle/NOTES.md` 14, Kurzfassung `docs/HR_KPI.md` 8.18 |
-| **Rexx Hub 19.11.: DWH nur Kennzahlen, #775 ueber GET v1/employees (API-Benutzer #2), Abruf deployed, Schalter aus, #777 ohne Endpunkt; neue Umschaltanleitung** | `saptasks/rexx_schnittstelle/NOTES.md` 16, 17, Kurzfassung `docs/HR_KPI.md` 8.19 |
+| **Rexx Hub 19.11.: DWH nur Kennzahlen, #775 ueber GET v1/employees (API-Benutzer #2), Abruf deployed, seit 13:25 eingeschaltet, #777 ohne Endpunkt; neue Umschaltanleitung** | `saptasks/rexx_schnittstelle/NOTES.md` 16, 17, 18, Kurzfassung `docs/HR_KPI.md` 8.19 |
 | **Reiter Interaktiv (Zeitraffer, Galaxie, Bindungskurve, Krankheitskalender, Fit & Wohl, Ferien am Stueck, Simulator)** | `docs/HR_KPI.md` 9 |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |
