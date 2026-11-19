@@ -1242,14 +1242,15 @@ public sealed class RexxHubTests : IDisposable
     }
 
     [Fact]
-    public void Appsettings_Stellt_Employees_Ein_Und_Laesst_Den_Schalter_Aus()
+    public void Appsettings_Stellt_Employees_Ein_Und_Schaltet_Den_Abruf_Ein()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
         var configuration = new ConfigurationBuilder().AddJsonFile(path, optional: false).Build();
         var options = new RexxHubOptions();
         configuration.GetSection(RexxHubOptions.SectionName).Bind(options);
 
-        Assert.False(options.Enabled);
+        Assert.True(options.Enabled); // seit 2026-11-19 13:35 ein (Zeitraum gegen Handexport 04.11. geprueft, NOTES 17)
+        Assert.True(options.GesamtZeitraumGeprueft);
         Assert.False(options.CaseEnabled);
         Assert.Equal("v1/employees", options.GesamtPathTemplate);
         Assert.Equal("page", options.PageParameter);
