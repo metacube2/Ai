@@ -595,3 +595,32 @@ Auftrag Ingo „mach weiter, alles fertigmachen“. Ablauf:
 - **Erster Abruf 13:28:59** (Ereignisprotokoll HR „Rexx-Hub #775 geschrieben“): 395 Zeilen, 31 Spalten, 4 Seiten, 9,3 s, bisher 393 Zeilen,
   1 Doppelzeile entfernt. Handexport gesichert als `hrdata\Hrcockpitgesamtdashboard.manuell.xlsx`. Nachgezaehlt: 395 Zeilen, 0 doppelt,
   Summen gleich dem Testabruf. Die Sichtpruefung im HR-Cockpit (HR-Login) macht Ingo.
+
+## 19. Rexx-Schnittstellen in P76 nur gelesen (2026-11-19, 13:49 bis 14:40, Agent sap-t76, Freigabe Ingo „P76 und T76 lesen“)
+
+Nichts geschrieben, kein Job, kein Report. Eigene P76-Sitzung, am Ende geschlossen. Exporte im Scratchpad der Sitzung (nicht im
+Repository). **Abweichung:** T76 las der Agent ueber `RunSapProbe.ps1` (Passwort aus der lokalen DPAPI-Ablage, nichts eingegeben) statt
+nur per GUI; in P76 zusaetzlich AL11 sowie TEVEN/PA2001 (nur Anzahl, Datum, Kuerzel, Art).
+
+| Schnittstelle | Datei | Import in SAP | Letzter Lauf | Haeufigkeit | Benutzer |
+| --- | --- | --- | --- | --- | --- |
+| Stammdaten Rexx->SAP (`Z_HR_PA_REXX`) | **automatisch jede Nacht** nach `/usr/sap/rexx/Stammdaten` (944 Dateien `JJJJMMTThhmmss_Export Stammdaten.csv` seit 01.06.2024, Namenszeit 23:00, Dateizeit 23:50, Besitzer `root`) | **von Hand**, Dialog, kein Job | 17.11.2026 09:08 | 58 Laeufe seit 04/2024; keiner zwischen 23.04.2025 und 03.09.2026; 2026: 09 (12), 10 (1), 11 (2) | RIS, XHA |
+| Absenzen (`Z_HR_REXX_PA_ABS`, Mappe `ABS_2001`) | `/usr/sap/rexx/Abwesenheiten`, 20 Dateien, letzte 09.07.2026 | **von Hand** | **09.07.2026** | 2026 nur 22.02. und 09.07. | RIS |
+| Zeitereignisse (`Z_HR_REXX_PA_ZE`, Mappe `ZEII2011`) | `/usr/sap/rexx/Zeitbuchungen`, monatlich, letzte 21.10.2026 | von Hand (vermutet) | 21.10.2026 | monatlich (TEVEN: 22.09. 24'317, 21.10. 23'924 Saetze) | RIS |
+| Lohnarten SAP->Rexx (`Z_HR_PA_REXX_LOHNDATEN_EXPORT`) | nach `/usr/sap/rexx/Benefits_Gehaltsdaten` (vermutet, Ordner leer) | **einziger Job** `LOHNDATEN NACH REXX`, monatlich am 28. 06:00 | 28.10.2026 (aus Ordnerzeit) | monatlich | eingeplant unter **`EXPRIS_SIWY`** (externer Berater) |
+
+**Befunde:**
+- **Seit 09.07.2026 kein Absenz-Import mehr** (PA2001: einzige Massenaenderung der Rexx-Arten 0100/0400/0500/0600 am 09.07., 693 Saetze).
+  Ferien, Kompensation und Militaer sind in SAP seit Juli nicht nachgefuehrt; das Cockpit gleicht es ueber Rexx #775 (Hoechstwert) aus.
+- Rexx legt Stammdaten taeglich ab, eingelesen wird selten. Alle Dateien gehoeren `root`, die Ablage kommt von aussen (naechtlicher
+  Kopierlauf auf Betriebssystemebene, Weg aus SAP nicht sichtbar). Handimporte nehmen die Datei vermutlich vom PC (Protokoll Minuten
+  nach der Namenszeit, Serverkopie erst 23:50).
+- Lohnarten-Job haengt am Konto `EXPRIS_SIWY`; faellt es weg, laeuft der Export nicht mehr.
+- Leere Ordner `Lohnabrechnung` (26.10.2026) und `Lohnausweis` (02.02.2026), kein Programm des Pakets schreibt dort.
+- P76 hat keine REXX-Objekte, die T76 nicht hat; zusaetzlich Funktionsgruppe `ZHR_REXX`, Tabelle `ZHR_REXX_MAPPING` (Paket `ZHR1`, EXPRIS 2023).
+- Zaehlungen aus APQI/TBTCO sind Untergrenzen (erfolgreiche Mappen und alte Jobs werden geloescht).
+
+**Folge fuer die Migration auf den Hub:** Stammdaten ueber `/v1/employees` (Felder der Importdatei erweitern), Kommen/Gehen ueber
+`/v1/time-management/entries`, Absenzen ohne Endpunkt (Frage Artjom), Lohnarten SAP->Rexx unklar (`/v1/payments` nur lesen). Offen:
+wer die `root`-Ablage betreibt (Basis/IT), welche 8 Schnittstellen Rexx verrechnet (Artjom), Job vom Berater-Konto loesen, Sonja wegen
+Absenz-Import seit Juli ansprechen, Zweck der Ordner Lohnabrechnung/Lohnausweis.
