@@ -1,6 +1,6 @@
 # Finance: Plan Artikel-Mapping, Kostenkette und Attribut „Issue Topic“ in Sales_All
 
-Stand: 2026-11-19 13:29 (Nachtrag: use 0 rechnet mit Kosten 0, Materialtext aus MAKTSet, Commit `1576766`); davor 2026-11-19 13:16 (AP1 bis AP4 gebaut im Zweig `finance-mapping-1911`, `75b320d`/`12efb44`, nicht deployed; Abschnitt 0); davor 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
+Stand: 2026-11-19 13:50 (Finance Issue Topic, Mapping, Indien-Regel, use 0 deployed `b2a0152`); davor 2026-11-19 13:29 (Nachtrag: use 0 rechnet mit Kosten 0, Materialtext aus MAKTSet, Commit `1576766`); davor 2026-11-19 13:16 (AP1 bis AP4 gebaut im Zweig `finance-mapping-1911`, `75b320d`/`12efb44`, nicht deployed; Abschnitt 0); davor 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
 ein plan“). Grundlage: Besprechung Ingo mit Andreas Stoller am 18.11.2026 ab 14:37 (automatische Abschrift der Aufnahme,
 Whisper large-v3, ohne Sprecherkennung) und das Word `Downloads\Offene_Punkte_2026-11-18.docx`, das in der Besprechung
 geteilt wurde.
@@ -12,7 +12,7 @@ oder unverstaendlich sind, stehen als offene Frage in Abschnitt 8 und sind **nic
 Zahlen in diesem Plan stammen aus `docs/FINANCE_SUPPLIER.md` 12/12a und `docs/FINANCE_STANDARDKOSTEN.md` 13/13a (Sales_All
 18.11., nur Aggregate). Fuer diesen Plan wurde nichts neu gemessen.
 
-## 0. Umsetzung 2026-11-19 (Zweig `finance-mapping-1911`, Commits `75b320d`/`12efb44`, NICHT deployed)
+## 0. Umsetzung 2026-11-19 (Zweig `finance-mapping-1911`, Commits `75b320d`/`12efb44`, NICHT deployed; *ueberholt: deployed 19.11. 13:41 als `b2a0152` (Merge `6e394a5` auf `a848f93`, gemergt `3268fa1`), Mapping-Seite und Vorschlagslauf produktiv geprueft (245 Vorschlaege, MAKTSet-Texte da)*)
 
 Auftrag und Entscheide Ingo 2026-11-19: E1 = Lesart A (ohne Lieferant nur Trafag AG, heutiger Stand `ChPlantMaster`), E5 =
 Texttreffer wirken nur bestaetigt, Regeltreffer sofort, E6 = Variante B (Tabelle `MaterialMappings` in der Dashboard-DB,
