@@ -358,6 +358,31 @@ public static class RexxHubColumns
 
     private static readonly Regex HoursPattern = new(@"^-?\d+(:\d{1,2}(:\d{1,2})?)?([.,]\d+)?$", RegexOptions.CultureInvariant);
     private static readonly Regex PeriodPattern = new(@"\d{2}\.\d{2}\.\d{4}", RegexOptions.CultureInvariant);
+    private static readonly Regex IsoDateInText = new(@"\b(\d{4})-(\d{2})-(\d{2})\b", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Gleicht Werte an den Handexport an, bevor geprueft und geschrieben wird. Seit 2026-11-19 (GET v1/employees, NOTES 16):
+    /// die Spalten „… angetreten (Zeitraum)“ kommen mit ISO-Daten („2026-01-05“ oder „2026-01-05 - 2026-01-09“), der Leser
+    /// <c>HrKpiDashboardBuilder.ParseRexxPeriod</c> erkennt nur „05.01.2026“. ISO-Daten in diesen Texten werden umgeschrieben,
+    /// alles andere bleibt. Datumsspalten bleiben ISO, die liest der Schreiber ohnehin als Datum.
+    /// </summary>
+    public static void Normalize(RexxHubQueryKind kind, RexxHubTable table)
+    {
+        var periodColumns = For(kind).Where(c => c.Kind == RexxHubColumnKind.Zeitraum)
+            .SelectMany(c => new[] { c.Name }.Concat(c.Aliases))
+            .Where(table.Columns.Contains)
+            .ToList();
+        if (periodColumns.Count == 0)
+            return;
+        foreach (var row in table.Rows)
+        {
+            foreach (var column in periodColumns)
+            {
+                if (row.TryGetValue(column, out var value) && value is string text && IsoDateInText.IsMatch(text))
+                    row[column] = IsoDateInText.Replace(text, m => $"{m.Groups[3].Value}.{m.Groups[2].Value}.{m.Groups[1].Value}");
+            }
+        }
+    }
 
     /// <summary>
     /// Erkennt ein Wert das Format, das der Leser erwartet? Gleiche Regeln wie beim Schreiben (<see cref="RexxHubWorkbook"/>):
