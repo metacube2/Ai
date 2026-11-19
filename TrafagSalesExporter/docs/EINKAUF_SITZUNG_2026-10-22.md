@@ -352,6 +352,17 @@ E2 jederzeit, Uebersicht = zuletzt erstellt): „mache Lieferantenbewertung … 
   `7b2ff9f` als Platzhalter nachgezogen. Erster Seitenaufruf nach dem Neustart wartete ca. 50 s auf die Vorberechnung der
   Einkauf-Standardansicht (Serverlog „vorberechnet in 50.7 s“), danach normal.
 
-Offen: Schreibrecht fuer Einkauf/Qualitaet (Kurzzeichen von Armin, Marco u. a. in `EditUsers`, Ingo nennt sie); Link an Armin und
-Marco (Ingo); Q2 (eigener SAP-Plan), Liefertreue nach 01.12., SAP-Score/Preis nach der Diskussion Anfang Dezember; Handbuch
-Kapitel Einkauf.
+**Nachtrag 11:55 (`d2f2edb`, gemergt `1132862`, noch nicht deployed):** Netzwerkpfade (`\\server\...`, `O:\...`) waren als
+`file://`-Link gebaut; den blockiert der Browser von einer https-Seite aus, der Klick haette nichts getan (nicht produktiv erprobt,
+weil nichts gespeichert wurde). Jetzt nur http(s) als Link, Pfade als markierbarer Text zum Kopieren in den Explorer. Geht mit dem
+naechsten Deploy mit.
+
+**Abnahme:** Punkt 2 aus Armins Mail (jederzeit erfassen, Uebersicht = juengste) ist gebaut und im Dienst getestet, aber produktiv
+noch nicht durchgespielt (Speichern ueber die Maske, Uebersicht, Verlauf, Loeschen); das braucht ein Ja von Ingo, weil es in die
+produktive DB schreibt.
+
+Offen: Schreibrecht fuer Einkauf/Qualitaet (Kurzzeichen in `EditUsers`, Ingo nennt sie); Link an Armin und Marco (Ingo); Abnahme
+Punkt 2 (oben); aus 6.7 weiter offen: Summe A+B+C gegen den Aufriss „Lieferant“ mit Schalter „Nur Einkaufsteile“ im gleichen
+Zeitraum und D1 („A umfasst mindestens 70 %“) von Armin bestaetigen; Q2 (eigener SAP-Plan), Liefertreue nach 01.12.,
+SAP-Score/Preis nach der Diskussion Anfang Dezember; Texte des Eingabeteils nur deutsch/englisch (die Sprachen es/it/hi/sq/tr/tlh
+zeigen Englisch); Handbuch Kapitel Einkauf.
