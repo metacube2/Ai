@@ -384,7 +384,7 @@ URL = Basis-URL bis vor `v1/`, „Zentrales Passwort“ = Token, Aktiv. Den Knop
 Achtung: Ein Konfigurationsimport unter Settings ersetzt alle Quellsysteme; der Token liegt wie das SAP-Passwort im Klartext in der
 Cockpit-Datenbank (`docs/AGENT_COORDINATION.md`/Wochen_Todo 135, gleiches Thema).
 
-**Umschalten, Schritt fuer Schritt:**
+**Umschalten, Schritt fuer Schritt:** *(Ueberholt am 2026-11-19: es gilt Abschnitt 17; Pfad ist `v1/employees` statt `datawarehouse/{id}`, #777 nicht ueber den Hub.)*
 1. Rexx (Tools > Rexx Hub): API-Benutzer anlegen und aktiv schalten, `GET /v1/datawarehouse/{id}` freigeben, IP des
    Dashboard-Servers (`tragvapp401`) als vertrauenswuerdig eintragen, „Zeilenanzahl pro Seite“ hoch setzen. OpenAPI-Datei exportieren:
    Sie zeigt Basis-URL, Form von `data`, Namen in `_meta`/`_links`.
