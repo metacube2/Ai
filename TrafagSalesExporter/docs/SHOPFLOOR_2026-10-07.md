@@ -1,4 +1,4 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-19 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
@@ -1267,3 +1267,28 @@ DW 264 -> 667); Ursache nicht geprueft. (3) Die Verkaufszeile vom 17.11. wurde a
 | FPY TX/TR5 | MES-DB-User fehlt | noch nicht umgesetzt (Paket C) |
 | Verkauf 17.11. | Board AE 4'072'454.89 gegen Excel 4'081'847.40 (-9'392.51), Umsatz 3'514'314.84 gegen 3'524'723.04 (-10'408.20). Board-Tag 17.11. = HZDAT bis 16.11., gelesen 17.11. 04:01; vermutlich wie am 12.11. Belege mit HZDAT bis 16.11., die erst nach 04:01 gebucht wurden (nicht belegt, braucht CE11000 aus P76) | abweichend, Ursache vermutet |
 | Naechster Vorgang (neu) | Patch 09 gegen eine Kopie der produktiven `app.js` geprueft: Stelle genau 1x, Syntax ok, ohne Feld unveraendert. Backend: `OrderRows` (`ShopfloorSapSync.cs`) und `OrderFields` (`ShopfloorForecast.cs`) reichen kein Zusatzfeld durch; `ShopAufSet` liefert den Wert nicht. SAP-Seite (`ZXM61U01`) in T76 in Abklaerung | noch nicht umgesetzt |
+
+### 27.4 Gebaut und deployed 2026-11-19 09:03 (`591c96c`, Zweig `shopfloor-paket-1911`, Funktionscommit `d8217cb`)
+
+Auftrag Ingo: Tagesziel-Fix, Paket B Rueckstandslisten, Auftragsliste je Stichtag, Naechster Vorgang; P76 nur lesen. Release-Worktree
+**1'652 von 1'652** Tests gruen, Deploy mit dem Werkzeug, `app.js` produktiv bitgleich, Patch 09 drin, keine Sicherung (Wochensicherung
+16.11.), kein Einkauf-Delta (Lauf 18.11. 19:29 fertig). Alarme nur `-wal`/`-shm` (alle wieder da).
+
+- **Tagesziel:** `abw` braucht `prod` **und** `ziel` (SEH, TR5, TX, DW); ohne Ziel bleibt die Abweichung leer statt der ganzen Tagesmenge.
+- **Offen-Regel nach Status** in Liste und PPD (`IsClosed`, `syncTvFromRs`): erledigt, storniert, abgesagt = geschlossen; Abschlussdatum bei offenem
+  Status = offen mit Warnzeichen (155 Widersprueche nach Fabios Excel), nichts wird automatisch aufgeloest. Terminverschiebungen kommen aus den Listen.
+- **Excel-Import** (`ShopfloorExcelImport`, `POST api/import/excel?apply=0|1`, Knopf „Excel einlesen“): Vorschau, Sicherung der Datenbank vorher,
+  nichts loeschen, leere Zelle leert nichts. Mit Fabios Datei gegen den Seed (nur Test): TR5 +21/2 geaendert, TX +31/48 (43 Status), DW +16/8, SEH 0; Tagesziele
+  TR5 31, TX 31, DW 35 Tage. **In Produktion noch nicht ausgefuehrt** (Datei in Ingos Downloads, erst Vorschau).
+- **Kalender CH** 2026/2027 nach P76 (248/254 Arbeitstage) in `Plan5Ende` und `LetzterArbeitstag`; Beschriftung wieder „Wunschtermin“.
+- **Auftragsliste je Stichtag** (`vorrat_auftraege`, 60 Tage, erster Lauf des Tages): `GET api/sap/vorrat/auftraege(.csv?tag=)`; **heute leer**, weil der
+  04:01-Lauf vor dem Deploy lief; erster Stand am 20.11. 04:01.
+- **Naechster Vorgang, Variante 0 ohne SAP-Aenderung:** Der Abgleich liest Typ VR mit `Avo eq 'X'`; `naechster_vorgang` = „VORNR / ARBPL“ nur fuer Fertigungsauftraege;
+  Patch 09 in `app.js`. **Befund T76** (`saptasks/shopfloor_sap/NAECHSTER_VORGANG_ZXM61U01_2026-11-19.md`): `ZXM61U01` ist der Exit des Planungslaufs;
+  die MD04 fuellt die Spalte ueber BAdI `ZZ_MD_ADD_COL_EZPS` -> `Z_MD04_NEXT_OPERATION` (erster nicht fertig rueckgemeldete Vorgang, Steuerschluessel PP00 ausgenommen).
+- **P76 nur gelesen** (`saptasks/shopfloor_sap/P76_URSACHEN_2026-11-19.md`, ueber die Dashboard-Vorschauen, keine P76-Sitzung): Verkauf 17.11. = Board stimmt mit SAP (HZDAT bis 16.11.,
+  Board-Zeile aus dem Startlauf 17.11. 12:26); Excel +9'392 AE / +10'408 Umsatz, vermutlich KE30 im Lauf des 17.11. gezogen (nicht belegt); SEH-Produktion 16.11. bleibt 2'699
+  (WE-Menge, 56 Auftraege), die 3'024 sind nicht erklaert; Verzugssprung 18./19.11. echt (SEH/DW Auftraege ueber die Stichtagsgrenze, TR5 5 Auftraege/275 Stk. jetzt im Layoutfilter).
+
+**Nach dem Deploy zu pruefen / offen:** Excel-Import erst als Vorschau mit Fabios Datei, dann uebernehmen; 20.11. 04:01 Auftragsliste als CSV und Forecast DS mit Naechster Vorgang
+gegen MD04; Tagesziele TR5/TX/DW kommen erst mit dem Import; Bereinigung der 155 Widersprueche (Fabio); Importhaeufigkeit offen; Quelle der Tagesziele (Excel-Import) ist Annahme, nicht bestaetigt.
