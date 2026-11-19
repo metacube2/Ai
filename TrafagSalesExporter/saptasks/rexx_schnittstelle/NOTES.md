@@ -465,3 +465,20 @@ als DWH-Abfrage ist nicht moeglich, weil das Data Warehouse nur Kennzahlen je Mo
 1. Stamm je Person ueber `/v1/employees` (+ `/employments`, `/org-units`, `/cost-accounts`) freigeben, Export-Felder waehlen.
 2. Abwesenheiten je Fall und Salden: kein eigener Endpunkt bekannt; bei Artjom fragen (ggf. `/v1/requests`, oder Personal-Abfragen ueber den Hub).
 3. DWH-Kennzahlen (#365 Krankheit, #364 Ein-/Austritte) nur als Gegenprobe zum Cockpit, nicht als Quelle.
+
+**Nachtrag 2026-11-19 11:05: vollstaendige Endpunktliste aus dem Hub** (API User #1, Seite „Rexx Hub API“, nur gelesen; massgeblich vor
+beiden Herstellerdokumenten). Alle HR, Stand heute; nur `datawarehouse` ist freigegeben.
+- Lesen je Person: `GET /v1/employees` (+ `/recent`, `/updated`, `/{employeeId}`), je Person `/occupations`, `/org-units`,
+  `/cost-accounts`, `/projects`, `/employments`, `/contracts`, `/probation`, `/limitations`, `/skills`, `/relationships`,
+  `/events/{eventType?}` (laut Anleitung v17 Veranstaltungen wie E-Learning, **keine Abwesenheiten**), `/historic/{fieldId}`
+  (Verlauf einzelner historischer Felder, Liste in Anleitung v17 5.5, ohne Abwesenheit).
+- Stammdaten: `/v1/org-units`, `/v1/org-locations`, `/v1/positions`, `/v1/cost-accounts`, `/v1/persons`, `/v1/projects`,
+  `/v1/job-families`, `/v1/payments`, `/v1/configuration/*` (u. a. `employment-types`, `personnel-groups`, `person-types`,
+  `position-types`, `org-unit-types`), `/v1/logbook/masterdata`.
+- Sonstiges: `/v1/requests` (+ `/recent`, `/updated`, `/{applicationId}`; Parameter heisst `applicationId`, eher Bewerbungs- oder
+  Anfrage-Vorgaenge als Abwesenheitsantraege, ungeprueft), `/v1/calendar/{userId}`, `/v1/staff-appraisals`, `/v1/skills*`,
+  `/v1/talent-pools*`, `/v1/houses*`, `/v1/communication/*`, `/v1/upload`, `GET /v1/test` (Verbindungstest).
+- **Neu, in keinem der beiden Dokumente:** `GET /v1/time-management/entries` („Retrieve all time entries for employees“),
+  `GET/PATCH/DELETE /v1/time-management/entries/{entryId}`, `POST /v1/time-management/entries`. **Einziger Kandidat fuer Zeit- bzw.
+  Abwesenheitsdaten**; ob darin Abwesenheiten (Krankheit, Ferien) oder nur Kommen/Gehen stehen, ist offen (Testaufruf nach Freigabe
+  des Endpunkts oder Frage an Artjom). Kein Endpunkt fuer Zeitsalden (Urlaub Rest, Stunden Saldo).
