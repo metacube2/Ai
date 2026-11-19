@@ -32,10 +32,10 @@
 - **Gebaut** (Zweig `lieferantenbewertung-1911`, eigener Worktree, gemergt `843546f`): Reiter `/einkauf/lieferantenbewertung` im Menue
   Einkauf; Klasse A/B/C dorthin verschoben; Paket 2 in `Modules/Lieferantenbewertung/` mit eigener DB `lbdaten\lieferantenbewertung.db`:
   sieben Themenfelder mit Verlauf, Zertifikate mit Ampel, Massnahmen, Reviews/Audits, Dokument-Links. Schreibrecht
-  `Lieferantenbewertung:EditUsers` (heute `koi`) und Admins. Tests 1'664/1'664.
+  `Lieferantenbewertung:EditUsers` (damals nur `koi`, seit 12:58 auch `gun`/`wid`) und Admins. Tests 1'664/1'664.
 - **Deploy** 11:31 und 11:38 nach Koordination (kein anderer Deploy) und WAL-Pruefung (kein Einkauf-Delta); im Chrome geprueft, nichts
   gespeichert. Nachzug: Platzhalter „nicht beurteilt“ in der Bewertungsmaske.
-- **Offen:** Kurzzeichen fuer `EditUsers` (Einkauf/Qualitaet, Ingo), Link an Armin/Marco, Q2, Liefertreue, SAP-Score/Preis, Handbuch.
+- **Offen (Stand 11:41, ueberholt durch 13:02: Kurzzeichen erledigt):** Kurzzeichen fuer `EditUsers` (Einkauf/Qualitaet, Ingo), Link an Armin/Marco, Q2, Liefertreue, SAP-Score/Preis, Handbuch.
   Doku `docs/EINKAUF_SITZUNG_2026-10-22.md` 6.8, rag PURCHASING/PROJECT/DEPLOYMENT, Router Einkauf, Wochen_Todo 122 + xlsx.
 ## 2026-11-19 14:15: Finance Mapping Nachtrag deployed (`47e3e98`)
 
