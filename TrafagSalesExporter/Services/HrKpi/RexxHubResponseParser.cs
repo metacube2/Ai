@@ -371,8 +371,29 @@ public static class RexxHubResponseParser
                 : value.GetRawText(),
         JsonValueKind.True => true,
         JsonValueKind.False => false,
+        JsonValueKind.Array => JoinList(value),
         _ => value.GetRawText()
     };
+
+    /// <summary>
+    /// Liste -&gt; ein Text, Eintraege mit „, “ getrennt, leere ausgelassen; leere Liste -&gt; null. Seit 2026-11-19: GET v1/employees
+    /// liefert Stelle, Organisation und Kostenstelle als Liste von Texten (bis zu vier Eintraege), der Handexport als eine Zelle.
+    /// Verschachtelte Objekte oder Listen bleiben als JSON-Text, damit nichts still verloren geht.
+    /// </summary>
+    private static string? JoinList(JsonElement array)
+    {
+        var parts = array.EnumerateArray()
+            .Select(x => x.ValueKind switch
+            {
+                JsonValueKind.String => x.GetString()?.Trim(),
+                JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False => x.GetRawText(),
+                JsonValueKind.Null or JsonValueKind.Undefined => null,
+                _ => x.GetRawText()
+            })
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+        return parts.Count == 0 ? null : string.Join(", ", parts);
+    }
 
     /// <summary>„_meta“ selbst und verschachtelte Seitenangaben darin („pagination“ u. ae.).</summary>
     private static List<JsonElement> MetaScopes(JsonElement? meta)
