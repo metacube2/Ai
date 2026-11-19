@@ -528,3 +528,6 @@ td.rsv .out{opacity:.9}
 /* Patch 07 (2026-11-07): gelieferte Werte gesperrt */
 td.locked .out{cursor:not-allowed}
 td.locked .out::after{content:" \1F512";font-size:10px;opacity:.55}
+
+/* 2026-11-19: Widerspruch Abschlussdatum / Status in den Rückstandslisten */
+.wid { color: var(--alarm); font-weight: 600; cursor: help; }

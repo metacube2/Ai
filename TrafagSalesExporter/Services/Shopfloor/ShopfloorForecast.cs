@@ -49,7 +49,7 @@ public static class ShopfloorForecast
         return best ?? "?";
     }
 
-    private static readonly string[] OrderFields = ["auftrag", "material", "text", "menge", "disponent", "arbeitsplatz", "art", "kunde"];
+    private static readonly string[] OrderFields = ["auftrag", "material", "text", "menge", "disponent", "arbeitsplatz", "art", "kunde", "naechster_vorgang"];
 
     /// <summary>Ersetzt alle Auftraege im Datumsbereich der Datei.</summary>
     public static JsonObject ImportOrders(SqliteConnection con, IEnumerable<JsonNode?> rows, string user, string source = "Upload",

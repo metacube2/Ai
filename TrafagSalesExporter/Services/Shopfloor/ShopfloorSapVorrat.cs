@@ -45,7 +45,10 @@ public static class ShopfloorSapVorrat
     /// <summary>Module, deren Fenster in Wochen (4 / 8 / 12) statt in Kalendermonaten rechnen (Paket Fabio 13.11. Punkt 1: DW).</summary>
     public static readonly string[] WochenModule = ["dw"];
 
-    /// <summary>Letzter Tag (einschliesslich) der naechsten 5 Arbeitstage nach <paramref name="day"/> (Mo bis Fr).</summary>
+    /// <summary>
+    /// Letzter Tag (einschliesslich) der naechsten 5 Arbeitstage nach <paramref name="day"/>, seit 2026-11-19 nach dem Fabrikkalender
+    /// CH (<see cref="ShopfloorKalender"/>); bis dahin Mo bis Fr ohne Feiertage.
+    /// </summary>
     public static DateOnly Plan5Ende(DateOnly day)
     {
         var d = day;
@@ -53,7 +56,7 @@ public static class ShopfloorSapVorrat
         while (n < 5)
         {
             d = d.AddDays(1);
-            if (d.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday))
+            if (ShopfloorKalender.IstArbeitstag(d))
                 n++;
         }
         return d;
@@ -180,6 +183,106 @@ public static class ShopfloorSapVorrat
             ["werte"] = werte,
             ["detail"] = detail
         };
+    }
+
+    /// <summary>
+    /// Auftragsliste des Vorrats je Abteilung (Paket Fabio 19.11.2026: TX +765 auftragsgenau gegen ZC22 /P00 TX abgleichen). Je Zeile
+    /// von ShopAufSet Typ VR mit Abteilung: dieselben Regeln wie <see cref="Compute"/>, dazu ob die Zeile zaehlt oder warum nicht
+    /// (Materialfilter, Layoutfilter) und in welche Fenster sie faellt. Nur Felder, die das Set liefert.
+    /// </summary>
+    public static List<JsonObject> Auftraege(DateOnly day, IReadOnlyList<JsonElement> rows, IReadOnlyCollection<string>? materialFilter = null,
+        ShopfloorLayoutFilter? layout = null)
+    {
+        materialFilter ??= [];
+        layout ??= ShopfloorLayoutFilter.Aus;
+        var plan5Ende = Plan5Ende(day);
+        var liste = new List<JsonObject>();
+        foreach (var r in rows)
+        {
+            if (ShopfloorSapVerzug.Abteilung(Text(r, "Dispo")) is not { } abt)
+                continue;
+            var modul = Module.First(m => m.Abteilung == abt).Modul;
+            var g = Grenzen(day, WochenModule.Contains(modul));
+            var ausMaterial = materialFilter.Contains(abt) && !ShopfloorSapVerzug.MaterialImBereich(Text(r, "Matnr"));
+            var ausLayout = !ausMaterial && layout.Aktiv && layout.Ausgeblendet(r);
+            var zaehlt = !ausMaterial && !ausLayout;
+            var hatDatum = DateOnly.TryParseExact(Text(r, "Datum"), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var eck);
+            bool Bis(DateOnly grenze) => zaehlt && hatDatum && eck <= grenze;
+            liste.Add(new JsonObject
+            {
+                ["abteilung"] = abt,
+                ["typ"] = Text(r, "Typ") == "VF" ? "Fertigungsauftrag" : "Planauftrag",
+                ["auftrag"] = Text(r, "Aufnr").TrimStart('0'),
+                ["material"] = Material(Text(r, "Matnr")),
+                ["disponent"] = Text(r, "Dispo"),
+                ["eckendtermin"] = hatDatum ? Iso(eck) : string.Empty,
+                ["menge"] = Int(r, "Menge"),
+                ["status"] = Text(r, "Sttxt"),
+                ["vorgang"] = Text(r, "Vornr"),
+                ["arbeitsplatz"] = Text(r, "Arbpl"),
+                ["zaehlt"] = zaehlt,
+                ["ausgeschlossen"] = ausMaterial ? "Materialfilter 1-99999" : ausLayout ? "Layoutfilter ZC22" : string.Empty,
+                ["bis_1m"] = Bis(g.M1),
+                ["bis_2m"] = Bis(g.M2),
+                ["bis_3m"] = Bis(g.M3),
+                ["bis_kw"] = Bis(g.KwEnde),
+                ["bis_plan5"] = Bis(plan5Ende)
+            });
+        }
+        return liste;
+    }
+
+    /// <summary>
+    /// Naechster Vorgang je Fertigungsauftrag wie MD04 „Naechster Vorgang“ (Wunsch Sergio, Paket Fabio 19.11.2026): ShopAufSet Typ VR
+    /// mit <c>Avo eq 'X'</c> fuellt <c>Vornr</c>/<c>Arbpl</c> nach derselben Regel (FB Z_MD04_NEXT_OPERATION, Befund T76
+    /// saptasks/shopfloor_sap/NAECHSTER_VORGANG_ZXM61U01_2026-11-19.md). Format „VORNR / ARBPL“, ohne Arbeitsplatz nur die Vorgangsnummer.
+    /// Planauftraege haben keinen Vorgang und fehlen.
+    /// </summary>
+    public static Dictionary<string, string> NaechsterVorgang(IEnumerable<JsonElement> rows)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var r in rows)
+        {
+            if (Text(r, "Typ") != "VF" || Text(r, "Avo") != "X")
+                continue;
+            var vornr = Text(r, "Vornr");
+            var aufnr = Text(r, "Aufnr").TrimStart('0');
+            if (vornr.Length == 0 || aufnr.Length == 0)
+                continue;
+            var arbpl = Text(r, "Arbpl");
+            result.TryAdd(aufnr, arbpl.Length > 0 ? $"{vornr} / {arbpl}" : vornr);
+        }
+        return result;
+    }
+
+    /// <summary>CSV der Auftragsliste (Semikolon, UTF-8 mit BOM, fuer Excel).</summary>
+    public static byte[] AuftraegeCsv(string tag, JsonArray liste)
+    {
+        string[] spalten = ["abteilung", "typ", "auftrag", "material", "disponent", "eckendtermin", "menge", "status", "vorgang", "arbeitsplatz",
+            "zaehlt", "ausgeschlossen", "bis_1m", "bis_2m", "bis_3m", "bis_kw", "bis_plan5"];
+        var sb = new System.Text.StringBuilder();
+        sb.Append("stichtag;").AppendJoin(';', spalten).Append("\r\n");
+        foreach (var z in liste.OfType<JsonObject>())
+        {
+            sb.Append(tag);
+            foreach (var s in spalten)
+            {
+                var v = z[s];
+                var t = v is null ? string.Empty
+                    : v.GetValueKind() == JsonValueKind.True ? "x"
+                    : v.GetValueKind() == JsonValueKind.False ? string.Empty
+                    : v.ToString();
+                sb.Append(';').Append(t.Contains(';') || t.Contains('"') ? "\"" + t.Replace("\"", "\"\"") + "\"" : t);
+            }
+            sb.Append("\r\n");
+        }
+        return [.. System.Text.Encoding.UTF8.GetPreamble(), .. System.Text.Encoding.UTF8.GetBytes(sb.ToString())];
+    }
+
+    private static string Material(string matnr)
+    {
+        var m = matnr.Trim();
+        return m.All(char.IsDigit) ? m.TrimStart('0') : m;
     }
 
     private static string Iso(DateOnly d) => d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);

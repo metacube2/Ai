@@ -710,7 +710,8 @@
      "unit": "Stk.",
      "signed": true,
      "need": [
-      "prod"
+      "prod",
+      "ziel"
      ]
     },
     {
@@ -936,7 +937,7 @@
     },
     {
      "key": "wunschtermin",
-     "label": "Bestätigter Liefertermin (VF)",
+     "label": "Wunschtermin",
      "type": "date",
      "col": "J",
      "group": "Termine",
@@ -945,7 +946,7 @@
       "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
       "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
       "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
-      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "bemerkung": "Beschriftung seit 19.11.2026 wieder «Wunschtermin» (vom 17.11. bis 19.11. «Bestätigter Liefertermin (VF)»). In SAP ist der VF-Termin der Verfügbarkeitstermin laut MD04, nicht der bestätigte Liefertermin; das Excel trägt hier den MD04-Bedarfstermin (Beispiel 58613 / 419371/10). Mapping-Vorschlag an Fabio, Entscheid offen.",
       "selektion": "Disponent(en) SEH – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
@@ -1331,7 +1332,8 @@
      "unit": "Stk.",
      "signed": true,
      "need": [
-      "prod"
+      "prod",
+      "ziel"
      ]
     },
     {
@@ -1563,7 +1565,7 @@
     },
     {
      "key": "wunschtermin",
-     "label": "Bestätigter Liefertermin (VF)",
+     "label": "Wunschtermin",
      "type": "date",
      "col": "J",
      "group": "Termine",
@@ -1572,7 +1574,7 @@
       "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
       "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
       "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
-      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "bemerkung": "Beschriftung seit 19.11.2026 wieder «Wunschtermin» (vom 17.11. bis 19.11. «Bestätigter Liefertermin (VF)»). In SAP ist der VF-Termin der Verfügbarkeitstermin laut MD04, nicht der bestätigte Liefertermin; das Excel trägt hier den MD04-Bedarfstermin (Beispiel 58613 / 419371/10). Mapping-Vorschlag an Fabio, Entscheid offen.",
       "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
@@ -1974,7 +1976,8 @@
      "unit": "Stk.",
      "signed": true,
      "need": [
-      "prod"
+      "prod",
+      "ziel"
      ]
     },
     {
@@ -2288,7 +2291,7 @@
     },
     {
      "key": "wunschtermin",
-     "label": "Bestätigter Liefertermin (VF)",
+     "label": "Wunschtermin",
      "type": "date",
      "col": "J",
      "group": "Termine",
@@ -2297,7 +2300,7 @@
       "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
       "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
       "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
-      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "bemerkung": "Beschriftung seit 19.11.2026 wieder «Wunschtermin» (vom 17.11. bis 19.11. «Bestätigter Liefertermin (VF)»). In SAP ist der VF-Termin der Verfügbarkeitstermin laut MD04, nicht der bestätigte Liefertermin; das Excel trägt hier den MD04-Bedarfstermin (Beispiel 58613 / 419371/10). Mapping-Vorschlag an Fabio, Entscheid offen.",
       "selektion": "Disponent(en) TX – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
@@ -2699,7 +2702,8 @@
      "unit": "Stk.",
      "signed": true,
      "need": [
-      "prod"
+      "prod",
+      "ziel"
      ]
     },
     {
@@ -2985,7 +2989,7 @@
     },
     {
      "key": "wunschtermin",
-     "label": "Bestätigter Liefertermin (VF)",
+     "label": "Wunschtermin",
      "type": "date",
      "col": "J",
      "group": "Termine",
@@ -2994,7 +2998,7 @@
       "vorschlag_tabelle": "Kundenauftrag (VF-Termin)",
       "vorschlag_feld": "letzter bestätigter Liefertermin – SAP-Feld wird geprüft",
       "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
-      "bemerkung": "Bisher «Wunschtermin». Mehrere Einteilungen und Teilbestätigungen noch zu klären.",
+      "bemerkung": "Beschriftung seit 19.11.2026 wieder «Wunschtermin» (vom 17.11. bis 19.11. «Bestätigter Liefertermin (VF)»). In SAP ist der VF-Termin der Verfügbarkeitstermin laut MD04, nicht der bestätigte Liefertermin; das Excel trägt hier den MD04-Bedarfstermin (Beispiel 58613 / 419371/10). Mapping-Vorschlag an Fabio, Entscheid offen.",
       "selektion": "Disponent(en) DW – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
      }
     },
@@ -3465,7 +3469,8 @@
     "tv_tr5",
     "tv_tx",
     "tv_dw"
-   ]
+   ],
+   "tv_from_rs": true
   },
   {
    "key": "grafik",
@@ -5286,7 +5291,9 @@
  "closed_status": [
   "erledigt",
   "verfallen",
-  "bestellt"
+  "bestellt",
+  "storniert",
+  "abgesagt"
  ],
  "forecast_prefix": {
   "SEH": [

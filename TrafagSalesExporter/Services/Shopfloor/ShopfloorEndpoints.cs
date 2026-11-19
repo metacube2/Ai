@@ -460,6 +460,16 @@ public static class ShopfloorEndpoints
         g.MapGet("/sap/verzug", async Task<IResult> (HttpContext c) => await Verzug(c, false));
         g.MapPost("/sap/verzug", async Task<IResult> (HttpContext c) => await Verzug(c, true));
         g.MapGet("/sap/vorrat", async Task<IResult> (HttpContext c) => await Vorrat(c, false));
+        // Auftragsliste des Vorrats je Stichtag (Paket Fabio 19.11.2026), fuer den auftragsgenauen Abgleich mit ZC22
+        g.MapGet("/sap/vorrat/auftraege", (HttpContext c) => J(c, Store(c).VorratAuftraegeTage_()));
+        g.MapGet("/sap/vorrat/auftraege.csv", (HttpContext c) =>
+        {
+            var tag = c.Request.Query["tag"].ToString();
+            var liste = Store(c).GetVorratAuftraege(tag);
+            return liste is null
+                ? J(c, new JsonObject { ["error"] = $"Keine Auftragsliste fuer {tag} gespeichert" }, StatusCodes.Status404NotFound)
+                : Results.File(ShopfloorSapVorrat.AuftraegeCsv(tag, liste), "text/csv; charset=utf-8", $"shopfloor_vorrat_auftraege_{tag}.csv");
+        });
         g.MapGet("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, false));
         g.MapPost("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, true));
         g.MapPost("/sap/vorrat", async Task<IResult> (HttpContext c) => await Vorrat(c, true));
@@ -507,6 +517,22 @@ public static class ShopfloorEndpoints
         {
             Store(c).DeleteRecord(id, Editor(c));
             return J(c, new JsonObject { ["ok"] = true });
+        });
+        // Excel der Teamleiter einlesen (Paket Fabio 19.11.2026): ?apply=1 uebernimmt, sonst Vorschau. Rumpf = .xlsx-Datei.
+        g.MapPost("/import/excel", async Task<IResult> (HttpContext c) =>
+        {
+            const long maxBytes = 60L * 1024 * 1024;
+            if (c.Request.ContentLength is > maxBytes)
+                throw new ShopfloorException("Datei zu gross (hoechstens 60 MB).");
+            using var ms = new MemoryStream();
+            await c.Request.Body.CopyToAsync(ms);
+            if (ms.Length == 0)
+                throw new ShopfloorException("Keine Datei erhalten.");
+            ms.Position = 0;
+            var apply = c.Request.Query["apply"].ToString() is "1" or "true";
+            var provider = c.RequestServices.GetRequiredService<ShopfloorStoreProvider>();
+            var name = c.Request.Query["datei"].ToString();
+            return J(c, ShopfloorExcelImport.Ausfuehren(provider.Store, ms, Editor(c), apply, provider.BackupDirectory, name));
         });
         g.MapPost("/zd05/{action}", async Task<IResult> (HttpContext c, string action) => J(c, Store(c).PostZd05(action, await Body(c), Editor(c))));
         g.MapPost("/forecast/{action}", async Task<IResult> (HttpContext c, string action) => J(c, Store(c).PostForecast(action, await Body(c), Editor(c))));

@@ -663,4 +663,48 @@ public sealed class ShopfloorStore
     }
 
     private static string Today() => DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    // ------------------------------------------------------------ Auftragsliste des Vorrats je Stichtag (Paket Fabio 19.11.2026)
+    /// <summary>Aufbewahrung der Auftragslisten in Tagen.</summary>
+    public const int VorratAuftraegeTage = 60;
+
+    /// <summary>
+    /// Speichert die Auftragsliste des Vorrats fuer den Stichtag. Wie die Stichtagswerte gilt der erste Lauf des Tages; spaetere
+    /// Laeufe lassen sie stehen, ausser mit <paramref name="ersetzen"/>. Aeltere als <see cref="VorratAuftraegeTage"/> Tage fallen weg.
+    /// </summary>
+    public JsonObject SaveVorratAuftraege(string day, IReadOnlyList<JsonObject> liste, bool ersetzen)
+        => Db.Write(con =>
+        {
+            var vorhanden = ShopfloorDb.QueryOne(con, "SELECT created_at FROM vorrat_auftraege WHERE day=?", day);
+            if (vorhanden is not null && !ersetzen)
+                return new JsonObject { ["gespeichert"] = false, ["grund"] = "erster Lauf des Tages bleibt", ["von"] = vorhanden.Str("created_at") };
+            var arr = new JsonArray();
+            foreach (var z in liste)
+                arr.Add(z.DeepClone());
+            ShopfloorDb.Exec(con, "INSERT OR REPLACE INTO vorrat_auftraege(day,data,created_at,source) VALUES(?,?,?,?)",
+                day, SfJson.Dump(arr), ShopfloorDb.Now(), "SAP");
+            var grenze = DateTime.Today.AddDays(-VorratAuftraegeTage).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            ShopfloorDb.Exec(con, "DELETE FROM vorrat_auftraege WHERE day < ?", grenze);
+            return new JsonObject { ["gespeichert"] = true, ["auftraege"] = liste.Count };
+        });
+
+    /// <summary>Stichtage mit gespeicherter Auftragsliste, neuester zuerst.</summary>
+    public JsonArray VorratAuftraegeTage_()
+    {
+        using var con = Db.Open();
+        var arr = new JsonArray();
+        foreach (var r in ShopfloorDb.Query(con, "SELECT day, created_at FROM vorrat_auftraege ORDER BY day DESC"))
+            arr.Add(new JsonObject { ["day"] = r.Str("day"), ["created_at"] = r.Str("created_at") });
+        return arr;
+    }
+
+    /// <summary>Auftragsliste eines Stichtags oder null.</summary>
+    public JsonArray? GetVorratAuftraege(string? day)
+    {
+        if (!IsValidDay(day))
+            throw new ShopfloorException("Tag ungueltig (JJJJ-MM-TT)");
+        using var con = Db.Open();
+        var r = ShopfloorDb.QueryOne(con, "SELECT data FROM vorrat_auftraege WHERE day=?", day);
+        return r is null ? null : JsonNode.Parse(r.Str("data") ?? "[]") as JsonArray;
+    }
 }
