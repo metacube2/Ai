@@ -1,6 +1,6 @@
 # Finance: Plan Artikel-Mapping, Kostenkette und Attribut „Issue Topic“ in Sales_All
 
-Stand: 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
+Stand: 2026-11-19 13:16 (AP1 bis AP4 gebaut im Zweig `finance-mapping-1911`, `75b320d`/`12efb44`, nicht deployed; Abschnitt 0); davor 2026-11-18 17:55 (Plan, nichts gebaut, nichts deployed). Auftrag Ingo 18.11. („mappingtabelle und so, mach zuerst
 ein plan“). Grundlage: Besprechung Ingo mit Andreas Stoller am 18.11.2026 ab 14:37 (automatische Abschrift der Aufnahme,
 Whisper large-v3, ohne Sprecherkennung) und das Word `Downloads\Offene_Punkte_2026-11-18.docx`, das in der Besprechung
 geteilt wurde.
@@ -11,6 +11,88 @@ oder unverstaendlich sind, stehen als offene Frage in Abschnitt 8 und sind **nic
 
 Zahlen in diesem Plan stammen aus `docs/FINANCE_SUPPLIER.md` 12/12a und `docs/FINANCE_STANDARDKOSTEN.md` 13/13a (Sales_All
 18.11., nur Aggregate). Fuer diesen Plan wurde nichts neu gemessen.
+
+## 0. Umsetzung 2026-11-19 (Zweig `finance-mapping-1911`, Commits `75b320d`/`12efb44`, NICHT deployed)
+
+Auftrag und Entscheide Ingo 2026-11-19: E1 = Lesart A (ohne Lieferant nur Trafag AG, heutiger Stand `ChPlantMaster`), E5 =
+Texttreffer wirken nur bestaetigt, Regeltreffer sofort, E6 = Variante B (Tabelle `MaterialMappings` in der Dashboard-DB,
+Seite `/finance-cockpit/mapping`), E7 = Go fuer AP1. Gebaut sind AP1 bis AP4; Merge und Deploy erst nach dem Einkauf-Deploy.
+Tests 1700/1700 im Worktree `C:\TMP\TrafagSalesExporter_fin1911`.
+
+**Issue-Topic-Matrix (verbindlich, Ingo 2026-11-19), Spalten no Supplier / no Mat Number Match / no Cost:**
+
+| Code | Matrix | Loesung | Gerechnet wird |
+| --- | --- | --- | --- |
+| leer | 0/0/0 | kein Issue | Konzernkosten der liefernden Gesellschaft, bei externem Lieferanten die lokalen Kosten |
+| 1 | 1/1/0 | local standard cost | lokale Standardkosten |
+| 2 | 0/1/0 | local standard cost | lokale Standardkosten |
+| 3 | 0/0/1 | local standard cost | lokale Standardkosten |
+| 4 | 1/0/1 | local standard cost | lokale Standardkosten |
+| 5 | 1/0/0 | TR AG standard cost | Standardkosten Trafag AG (MBEW) |
+| 6 | 1/1/1 | use 0 | Kosten 0 |
+| 7 | 0/1/1 | use 0 | Kosten 0 |
+
+Lesart, wie gebaut (`GroupMarginCalculator.ResolveIssueTopic`, einzige Stelle; Excel, Nachweis, Cockpit und Vorschlagslauf
+rufen sie ueber `Evaluate`):
+
+- **no Supplier** = keine CH/AT-Regel (TRCH/TRAT verkaufen als Trafag AG), keine Sales-Type-Rolle (Indien FFM/CM/LRD) und
+  alle drei Lieferantenfelder leer. Ein Lieferant aus dem Wareneingang oder der italienischen Liste steht in den Feldern und
+  zaehlt als vorhanden.
+- **no Mat Number Match** = der Kostenschluessel (nach Mapping und I-Praefix-Regel) steht nicht in der Kostentabelle der
+  liefernden Gesellschaft; bei Trafag AG zaehlt zusaetzlich der CH-Werkstamm (MARC 1100) als gefunden.
+- **no Cost** = bei gefundenem Artikel: Konzernkosten fehlen oder sind 0. Bei nicht gefundenem Artikel (6/7): die lokalen
+  Kosten fehlen oder sind 0.
+- **Korrektur Ingo 2026-11-19 (gilt, die Zwischenregel „3/4 werden 6/7“ ist ungueltig):** die Matrix gilt woertlich. Ein gefundener
+  Artikel bleibt 3 bzw. 4, auch wenn die lokalen Kosten 0 sind; die Kosten werden ueber den bestehenden lokalen Rueckfall 0,
+  Margin Status „Standardpreis fehlt“ wie bisher. 6/7 gibt es nur bei nicht gefundenem Artikel und fehlenden lokalen Kosten.
+- **Vorlaeufige Codes (von der Matrix nicht abgedeckt, offene Frage an Andreas/Ingo):** 7 auch bei EXTERNEM Lieferanten ohne
+  lokale Kosten (extern mit Kosten = leer); 8 = Indien LRD ohne Konzernkosten, Kosten bleiben offen (Entscheid 05.08.,
+  Verhalten unveraendert); 9 = Lieferant unklar (keine Lieferantenangabe, keine Materialnummer); 10 = interner Lieferant ohne
+  bekannte Kostenquelle (GFS, Trafag GmbH): lokale Kosten.
+- **Grenze der Unterscheidung:** Fuer TR IT und TR IN speichert `B1GroupStandardCostBuilder` nur positive Kosten. Ein dort
+  gefundener Artikel ohne Kosten ist deshalb nicht von einem nicht gefundenen zu unterscheiden und erscheint als 2 (bzw. 7).
+
+**Abgleich mit dem heutigen Verhalten (Auftrag: melden, nicht umbauen):**
+
+- Die Spalte Issue Topic aendert keine Kosten, keine Kostenquelle und keinen Status (Tests je Matrixfall pruefen Kosten,
+  Cost Source und Status mit). Topic 4 und 5 entsprechen dem heutigen Verhalten.
+- **„use 0“ heisst heute „Kosten 0, Marge offen“, nicht „Marge mit Kosten 0 gerechnet“:** Status „Standardpreis fehlt“ steht in
+  `GroupMarginStatuses.CostBasisUnknown`; `IsCostBasisKnown` ist dafuer falsch. Folge: in Finance Details bleiben Cost Basis
+  CHF und Margin CHF leer, die Zeile zaehlt als Open Cost Row, und im Blatt Gruppenmarge Summary setzt die Formel
+  `IF(G>0,"",E-F)` Margin Value und Margin % der ganzen Gruppe (Jahr/Land/TSC/Waehrung) auf leer. Soll wirklich mit 0
+  gerechnet werden, ist das eine Aenderung der Margenregel (Entscheid Andreas/Ingo), nicht Teil dieses Zweigs.
+- **Kosten aendern sich bewusst durch AP1** (erwartet IT rund 401, UK 70, US 2 Zeilen von lokalem Preis auf Kosten TR IN) und
+  durch AP4, sobald Mapping-Zeilen wirksam sind.
+
+**AP1, Indien-Schluesselregel:** `B1GroupStandardCostBuilder` legt TR-IN-Kosten zusaetzlich unter der indischen Artikelnummer
+ab (Sachnummer gewinnt bei Kollision). `GroupMarginCostRules.FindGroupCost`: TRIT mit liefernder Gesellschaft TR IN schneidet
+genau ein vorangestelltes „I“ ab, wenn der volle Schluessel nicht trifft (volle Nummer zuerst, weil echte indische Nummern mit
+I beginnen koennen). Sichtbar in der Spalte Mapping („… (Regel I-Praefix TRIT)“).
+
+**AP2, Spalten:** Sales Spalten 58 „Issue Topic“, 59 „Mapping“; Finance Details 45/46; Blatt Lieferantenzuordnung: Issue Topic
+als weitere Gruppierung in der LETZTEN Spalte hinter den Monaten (bestehende Spalten bleiben); Feldhilfe im Blatt Finance
+Filter Hilfe. Herkunft des Lieferanten (Stamm/Wareneingang/Liste) ist **nicht** gebaut: `SupplierFromGoodsReceipt` wird nicht
+in `CentralSalesRecords` gespeichert und kommt in Sales_All nicht an.
+
+**AP3, Vorschlagslauf (Knopf auf der Seite, nie im Export):** Kandidaten = Artikel mit Topic 1, 2, 6, 7 je TSC, mit Gewicht.
+Regel „Trafag-Nummer im Text“: genau eine Nummer im lokalen Text, die im CH-Werkstamm steht, Sicherheit 100, Methode Regel
+(wirkt nach E5 sofort). Text: Trigramm-Dice zwischen lokalem Text und deutschem Materialtext Trafag AG, ab Sicherheit 40, nur
+Vorschlag. Kein Sprachmodell, kein Netz, wiederholgenau. Bestaetigte, abgelehnte und Handzeilen bleiben beim Lauf unangetastet.
+
+**AP4, Mapping-Tabelle:** `MaterialMappings` (eindeutig je TSC und normalisierter Nummer), Import alles oder nichts (doppelte
+Schluessel, fremder TSC, fehlende Nummer, unbekannter Status, Sicherheit ausserhalb 0 bis 100), leere Zeilen uebersprungen.
+Wirkt nur, wo die Quelle keine Gruppennummer liefert, nur fuer den eigenen TSC, ueberschreibt nie; in Sales_All, Nachweis und
+Cockpit gleich. Bei jedem zentralen Export entsteht `Mapping_JJJJ-MM-TT.xlsx` neben Sales_All (auch SharePoint). Nicht
+angewendet wird das Mapping in der Spartenanalyse (`ResolveDivision` liest `SalesRecord.GroupMaterialNumber`, das unveraendert
+bleibt); bewusst, Produktgruppen kommen nach den Standardkosten (E11).
+
+**Materialtext Trafag AG:** `GroupMaterialMasters.MaterialText` (neue Spalte) wird aus `MARCSet` gefuellt, sobald das Set die
+Property `Maktx` fuehrt (Platzhalter `SapGatewayPlantMaterialReader.MaterialTextProperty`; abgefragt nur, wenn `$metadata` sie
+zeigt, dann mit `sap-language=DE`). Heute fuehrt `MARCSet` sie nicht, der Text bleibt leer und der Textabgleich liefert nichts.
+**Befund gegen die Annahme „MAKT nur fuer Einkaufsmaterial“:** laut `saptasks/zeichnungsaenderung/NOTES.md` (02.11.) liefert
+`MAKTSet` im Dienst `ZPOWERBI_EINKAUF_SRV` den ganzen MAKT-Bestand (rund 68'000 Materialien, alle Sprachen, `$select=Matnr`
+44,7 MB in T76). Ein Weg ohne SAP-Aenderung waere damit: `MAKTSet` im Vorschlagslauf lesen und Deutsch waehlen. Nicht gebaut,
+Entscheid Ingo.
 
 ## 1. Was besprochen und was zugesagt wurde
 
@@ -105,7 +187,7 @@ tun ist („wo es abgezweigt ist“). Die Nummern wurden nicht abschliessend fes
 Beispiel Lieferant da, Artikel kann im Lieferanten nicht gemappt werden“, spaeter ist das der zweite Fall. Als Stichworte
 fielen „no supplier“, „wrong number“, „no cost“ („no cost geht eigentlich gar nicht, irgendeine Kost [wird] immer gezogen“).
 
-**Vorschlag (Nummern und Texte sind Vorschlag, zu bestaetigen in E3):**
+**Vorschlag (Nummern und Texte sind Vorschlag, zu bestaetigen in E3):** *(ueberholt am 2026-11-19: Ingo hat die Matrix 1 bis 7 festgelegt, gebaut nach Abschnitt 0; diese Tabelle ist nur noch Historie)*
 
 | Vorschlag Code | Bedingung | Verwendete Kosten | Heute in Sales_All | Was zu tun ist |
 | --- | --- | --- | --- | --- |
@@ -220,6 +302,8 @@ Rohail; das ist eine Annahme.
 | Produktgruppen-Zuordnung | bewusst nach den Standardkosten; offen ist der Fall „bei Trafag AG nicht gefunden“ (lokale Produktgruppen, Industrial Components nur in Italien, im Gespraech rund 1,5 Mio. Umsatz) | E11, kein Paket in diesem Plan |
 
 ## 8. Entscheide, bevor gebaut wird
+
+*Stand 2026-11-19: E1 (A), E3 (Matrix Ingo), E5 (nur bestaetigt), E6 (B) und E7 (Go) sind entschieden, siehe Abschnitt 0. E4 bleibt offen (vorlaeufig Code 8, Verhalten unveraendert).*
 
 | Nr | Frage | Wer | Empfehlung |
 | --- | --- | --- | --- |
