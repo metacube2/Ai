@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
+using TrafagSalesExporter.Services.DataSources;
 
 namespace TrafagSalesExporter.Services;
 
@@ -216,7 +217,11 @@ public interface IMaterialMappingSuggestionService
 }
 
 public sealed record MaterialMappingSuggestionRunResult(
-    int Candidates, int Suggestions, int Inserted, int Updated, int Protected, int TrAgMaterials, int TrAgTexts);
+    int Candidates, int Suggestions, int Inserted, int Updated, int Protected, int TrAgMaterials, int TrAgTexts,
+    // Ergebnis des MAKTSet-Abrufs: null = Texte frisch geladen, sonst die Meldung fuer die Seite (Lauf ging mit dem
+    // gespeicherten Stand weiter).
+    string? TextRefreshWarning = null,
+    int TextsLoaded = 0);
 
 /// <summary>
 /// Vorschlagslauf per Knopf: rechnet die zentralen Verkaufszeilen mit denselben Einstellungen wie Sales_All durch, sammelt
@@ -232,17 +237,24 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
 
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ICentralSalesDataProvider _centralSalesDataProvider;
+    private readonly ISapGatewayMaterialTextReader _textReader;
 
+    // Der Text-Leser ist optional, damit keine weitere Registrierung in Program.cs noetig ist (Datei von der
+    // Einkauf-Sitzung reserviert); ohne Registrierung gilt der Gateway-Leser.
     public MaterialMappingSuggestionService(
-        IDbContextFactory<AppDbContext> dbFactory, ICentralSalesDataProvider centralSalesDataProvider)
+        IDbContextFactory<AppDbContext> dbFactory,
+        ICentralSalesDataProvider centralSalesDataProvider,
+        ISapGatewayMaterialTextReader? textReader = null)
     {
         _dbFactory = dbFactory;
         _centralSalesDataProvider = centralSalesDataProvider;
+        _textReader = textReader ?? new SapGatewayMaterialTextReader();
     }
 
     public async Task<MaterialMappingSuggestionRunResult> RunAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var (textsLoaded, textWarning) = await RefreshTrAgTextsAsync(db, cancellationToken);
         var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken) ?? new ExportSettings();
         var records = settings.UseAuditCsvAsCentralSource
             ? await _centralSalesDataProvider.GetRecordsAsync()
@@ -263,7 +275,72 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         var suggestions = MaterialMappingSuggester.Suggest(candidates, plant, now);
         var (inserted, updated, protectedRows) = await MaterialMappingStore.UpsertSuggestionsAsync(db, suggestions, now, cancellationToken);
         return new MaterialMappingSuggestionRunResult(
-            candidates.Count, suggestions.Count, inserted, updated, protectedRows, plant.Count, plant.Values.Count(text => text.Length > 0));
+            candidates.Count, suggestions.Count, inserted, updated, protectedRows, plant.Count, plant.Values.Count(text => text.Length > 0),
+            textWarning, textsLoaded);
+    }
+
+    /// <summary>
+    /// Entscheid Ingo 2026-11-19: deutsche Materialtexte Trafag AG aus MAKTSet ueber den Gateway-Weg der CH-Site (aktive
+    /// Site mit SAP-Gateway-Anschluss, TRCH bevorzugt) holen und in GroupMaterialMasters.MaterialText fuer Werk 1100
+    /// schreiben. Faellt der Abruf aus, bleibt der gespeicherte Stand und die Seite zeigt die Meldung.
+    /// </summary>
+    private async Task<(int Loaded, string? Warning)> RefreshTrAgTextsAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var masters = await db.GroupMaterialMasters.Where(row => row.Plant == "1100").ToListAsync(cancellationToken);
+            if (masters.Count == 0)
+                return (0, "Materialtexte nicht geladen: der CH-Werkstamm (Werk 1100) ist leer. Zuerst den CH/AT-Export laufen lassen.");
+
+            var sites = await db.Sites.AsNoTracking().Where(site => site.IsActive).ToListAsync(cancellationToken);
+            var definitions = await db.SourceSystemDefinitions.AsNoTracking().ToListAsync(cancellationToken);
+            var gateway = sites
+                .Select(site => (Site: site, Definition: definitions.FirstOrDefault(definition =>
+                    string.Equals(definition.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase))))
+                .Where(item => item.Definition is not null &&
+                               string.Equals(item.Definition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase) &&
+                               !string.IsNullOrWhiteSpace(DataSourceCredentials.ResolveSapServiceUrl(item.Site, item.Definition)))
+                .OrderBy(item => string.Equals(item.Site.TSC, "TRCH", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(item => item.Site.Id)
+                .FirstOrDefault();
+            if (gateway.Site is null)
+                return (0, "Materialtexte nicht geladen: keine aktive Site mit SAP-Gateway-Anschluss (CH/AT) gefunden.");
+
+            var serviceUrl = DataSourceCredentials.ResolveSapServiceUrl(gateway.Site, gateway.Definition!);
+            var credentials = DataSourceCredentials.Resolve(gateway.Site, gateway.Definition!);
+            if (string.IsNullOrWhiteSpace(credentials.Username) || string.IsNullOrWhiteSpace(credentials.Password))
+                return (0, $"Materialtexte nicht geladen: fuer {gateway.Site.TSC} fehlen die SAP-Zugangsdaten.");
+
+            var keys = masters.Select(row => row.MaterialKey).ToHashSet(StringComparer.Ordinal);
+            var texts = await _textReader.GetGermanTextsAsync(serviceUrl, credentials.Username, credentials.Password, keys, cancellationToken);
+            if (texts.Count == 0)
+                return (0, "Materialtexte nicht geladen: MAKTSet lieferte keinen deutschen Text zum CH-Werkstamm. Gespeicherter Stand bleibt.");
+
+            var applied = ApplyTexts(masters, texts);
+            await db.SaveChangesAsync(cancellationToken);
+            return (applied, null);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return (0, $"Materialtexte nicht geladen (MAKTSet): {ex.Message}. Der Lauf rechnet mit dem gespeicherten Stand.");
+        }
+    }
+
+    /// <summary>Setzt die Texte; Materialien ohne neuen Text behalten ihren bisherigen. Liefert die Zahl der Materialien mit Text.</summary>
+    public static int ApplyTexts(IEnumerable<GroupMaterialMaster> masters, IReadOnlyDictionary<string, string> texts)
+    {
+        var count = 0;
+        foreach (var master in masters)
+        {
+            if (texts.TryGetValue(master.MaterialKey, out var text) && text.Length > 0)
+            {
+                if (!string.Equals(master.MaterialText, text, StringComparison.Ordinal))
+                    master.MaterialText = text;
+                count++;
+            }
+        }
+
+        return count;
     }
 
     /// <summary>Artikel mit „nicht gefunden“ je (TSC, Nummer), mit Gewicht. Getrennt, damit testbar ohne Datenbank.</summary>

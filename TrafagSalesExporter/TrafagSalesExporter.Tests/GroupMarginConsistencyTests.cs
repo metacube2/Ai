@@ -178,13 +178,47 @@ public class GroupMarginConsistencyTests : IDisposable
         }
     }
 
-    private ProofRow BuildProofWorkbookRow()
+    [Fact]
+    public async Task Use0_rechnet_in_Sales_All_Nachweis_und_Cockpit_mit_Kosten_0()
+    {
+        // Entscheid Ingo 2026-11-19: Indien FFM ohne Kostentreffer und ohne lokalen Standardpreis (Issue Topic 7).
+        var salesAll = BuildExcelRow("FFM", standardCost: 0m);
+        var proof = BuildProofWorkbookRow("FFM", standardCost: 0m);
+        await using (var db = new AppDbContext(_options))
+        {
+            db.CentralSalesRecords.RemoveRange(db.CentralSalesRecords);
+            await db.SaveChangesAsync();
+            var central = BuildCentralRecord("FFM");
+            central.StandardCost = 0m;
+            db.CentralSalesRecords.Add(central);
+            await db.SaveChangesAsync();
+        }
+        var result = await _cockpit.AnalyzeFinanceSummaryAsync(Year, null, null);
+        var cockpit = Assert.Single(result.GroupMarginDetailRows);
+
+        foreach (var row in new[] { salesAll, proof })
+        {
+            Assert.Equal(GroupMarginStatuses.StandardCostMissing, row.Status);
+            Assert.Equal(0m, row.CostBasis);
+        }
+        Assert.Equal(GroupMarginStatuses.StandardCostMissing, cockpit.Status);
+        Assert.Equal(100m, cockpit.MarginValue);
+        Assert.Equal(0, result.GroupMarginSummary.MissingCostRows);
+        Assert.Equal(0, Assert.Single(result.GroupMarginCountryRows).MissingCostRows);
+        var ledger = Assert.Single(result.FinanceAuditLedgerRows);
+        Assert.Equal(100m, ledger.MarginOriginal);
+        Assert.Equal(1m, ledger.MarginChf);   // 100 INR x 0.01
+    }
+
+    private ProofRow BuildProofWorkbookRow(string salesType = "", decimal standardCost = 60m)
     {
         var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-groupmargin-proof-{Guid.NewGuid():N}");
         try
         {
+            var record = BuildSalesRecord(salesType);
+            record.StandardCost = standardCost;
             var path = new ExcelExportService(new TestDbContextFactory(_options)).CreateDashboardProofExcelFile(
-                outputDirectory, ExtractionDate, [BuildSalesRecord("")], useAuditCsvAsCentralSource: false);
+                outputDirectory, ExtractionDate, [record], useAuditCsvAsCentralSource: false);
             using var workbook = new XLWorkbook(path);
             var details = workbook.Worksheet("Gruppenmarge Details");
             return new ProofRow(details.Cell(2, 2).GetString(), details.Cell(2, 13).GetString(),
@@ -197,7 +231,7 @@ public class GroupMarginConsistencyTests : IDisposable
         }
     }
 
-    private ProofRow BuildExcelRow(string salesType, bool useDatabaseSettings = false)
+    private ProofRow BuildExcelRow(string salesType, bool useDatabaseSettings = false, decimal standardCost = 60m)
     {
         var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-groupmargin-{Guid.NewGuid():N}");
         try
@@ -205,8 +239,9 @@ public class GroupMarginConsistencyTests : IDisposable
             var service = useDatabaseSettings
                 ? new ExcelExportService(new TestDbContextFactory(_options))
                 : new ExcelExportService();
-            var path = service.CreateConsolidatedExcelFile(
-                outputDirectory, ExtractionDate, [BuildSalesRecord(salesType)]);
+            var record = BuildSalesRecord(salesType);
+            record.StandardCost = standardCost;
+            var path = service.CreateConsolidatedExcelFile(outputDirectory, ExtractionDate, [record]);
 
             using var workbook = new XLWorkbook(path);
             var details = workbook.Worksheet("Gruppenmarge Details");

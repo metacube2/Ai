@@ -3063,12 +3063,12 @@
     // in Verkaufswaehrung. Bei „Kostenwaehrung abweichend" liegt die Kostenbasis zwar vor, aber in
     // einer anderen Waehrung - eine Differenz daraus waere gemischt. Deshalb hier nur bei OK.
     private static string FormatGroupMarginDetailValue(ManagementGroupMarginDetailRow row)
-        => string.Equals(row.Status, GroupMarginStatuses.Ok, StringComparison.Ordinal)
+        => GroupMarginStatuses.ShowsMargin(row.Status)
             ? FormatValue(row.MarginValue, row.Currency)
             : "-";
 
     private static string FormatGroupMarginDetailPercent(ManagementGroupMarginDetailRow row)
-        => string.Equals(row.Status, GroupMarginStatuses.Ok, StringComparison.Ordinal)
+        => GroupMarginStatuses.ShowsMargin(row.Status)
             ? FormatPercent(row.MarginPercent)
             : "-";
 
@@ -3238,6 +3238,8 @@
     {
         GroupMarginStatuses.Ok => Color.Success,
         GroupMarginStatuses.SalesMissing => Color.Default,
+        // Seit 2026-11-19 nicht mehr offen (use 0), bleibt aber als Kennzeichen gelb.
+        GroupMarginStatuses.StandardCostMissing => Color.Warning,
         _ when GroupMarginStatuses.IsOpen(status) => Color.Warning,
         _ => Color.Info
     };

@@ -161,7 +161,7 @@ public static class GroupMarginCalculator
 
         // Intern, aber die Konzernkosten wurden nicht verwendet.
         if (deliveringEntity is null)
-            return IssueTopics.InternalWithoutCostSource;
+            return localCostMissing ? IssueTopics.SupplierUseZero : IssueTopics.InternalWithoutCostSource;
 
         var found = lookup.Found ||
                     (deliveringEntity == GroupStandardCostEntities.TrAg &&

@@ -527,11 +527,10 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AnalyzeFinanceSummaryAsync_AuditLedger_LeavesMarginOpen_WhenCostBasisIsMissing()
+    public async Task AnalyzeFinanceSummaryAsync_AuditLedger_UsesZeroCost_WhenStandardCostIsMissing()
     {
-        // Ohne Standardpreis ist die Kostenbasis 0. "Umsatz minus 0" ergaebe genau den vollen
-        // Umsatz als Marge und 100 % — die Fehlinterpretation, die der Status verhindern soll.
-        // Das Pruefbuch hat sie bis 2026-08-06 ausgewiesen, direkt neben dem Status.
+        // Bis 2026-11-18 blieb die Marge hier offen. Entscheid Ingo 2026-11-19 („use 0“): fehlen auch die lokalen Kosten,
+        // wird mit Kosten 0 gerechnet, Marge = Umsatz; der Status bleibt als Kennzeichen.
         await SeedCentralRowsAsync(
             CreateRow("SAP", "Schweiz", "TRCH", "INV-NOCOST", "CHF", 100m, new DateTime(2025, 3, 1),
                 quantity: 1m, standardCost: 0m, standardCostCurrency: "CHF"));
@@ -540,11 +539,9 @@ public class ManagementCockpitServiceTests : IDisposable
 
         var ledger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "INV-NOCOST");
         Assert.Equal(GroupMarginStatuses.StandardCostMissing, ledger.Status);
-        Assert.Null(ledger.MarginOriginal);
-        Assert.Null(ledger.MarginPercent);
-        Assert.Null(ledger.MarginChf);
-        // Der Umsatz selbst bleibt sichtbar — offen ist die Marge, nicht die Zeile.
+        Assert.Equal(100m, ledger.MarginOriginal);
         Assert.Equal(100m, ledger.OriginalAmount);
+        Assert.Equal(0, result.GroupMarginSummary.MissingCostRows);
     }
 
     [Fact]

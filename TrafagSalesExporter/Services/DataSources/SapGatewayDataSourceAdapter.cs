@@ -115,6 +115,10 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
     private async Task PersistGroupMaterialMasterAsync(IReadOnlyDictionary<string, string> materials, string plant)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        // Texte aus dem Mapping-Vorschlagslauf (MAKTSet, 2026-11-19) behalten, solange MARCSet selbst keinen Text liefert.
+        var previousTexts = await db.GroupMaterialMasters.AsNoTracking()
+            .Where(row => row.Plant == plant && row.MaterialText != "")
+            .ToDictionaryAsync(row => row.MaterialKey, row => row.MaterialText, StringComparer.Ordinal);
         await using var transaction = await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM GroupMaterialMasters WHERE Plant = {plant}");
         var now = DateTime.UtcNow;
@@ -123,7 +127,9 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
             MaterialKey = material.Key,
             Plant = plant,
             RefreshedAtUtc = now,
-            MaterialText = material.Value ?? string.Empty
+            MaterialText = !string.IsNullOrWhiteSpace(material.Value)
+                ? material.Value
+                : previousTexts.GetValueOrDefault(material.Key, string.Empty)
         }));
         await db.SaveChangesAsync();
         await transaction.CommitAsync();

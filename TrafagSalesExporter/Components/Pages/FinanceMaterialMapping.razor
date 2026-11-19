@@ -53,6 +53,11 @@
     }
 </MudStack>
 
+@if (!string.IsNullOrWhiteSpace(_textWarning))
+{
+    <MudAlert Severity="Severity.Warning" Dense Class="mb-3">@_textWarning</MudAlert>
+}
+
 @if (_importErrors.Count > 0)
 {
     <MudAlert Severity="Severity.Error" Dense Class="mb-3">
@@ -117,6 +122,7 @@
     private List<MaterialMapping> _rows = [];
     private List<string> _tscs = [];
     private List<string> _importErrors = [];
+    private string? _textWarning;
     private string _tscFilter = AllValue;
     private string _statusFilter = AllValue;
     private string _search = string.Empty;
@@ -155,6 +161,7 @@
                 "{0} suggestions from {1} articles: {2} new, {3} updated, {4} protected. Trafag AG texts: {5} of {6}."),
                 result.Suggestions, result.Candidates, result.Inserted, result.Updated, result.Protected, result.TrAgTexts, result.TrAgMaterials),
                 Severity.Success);
+            _textWarning = result.TextRefreshWarning;
             await LoadAsync();
         }
         catch (Exception ex)
