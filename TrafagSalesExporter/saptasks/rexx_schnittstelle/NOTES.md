@@ -530,3 +530,33 @@ beiden Herstellerdokumenten). Alle HR, Stand heute; nur `datawarehouse` ist frei
   „angetreten“ (laufendes Jahr?) und ob 396 Personen alle Faelle von #775 abdecken (Handexport-Zeilenzahl vergleichen).
 - **User #1:** `time-management/entries` und `employees` stehen weiter auf frei; „nein“ wurde dreimal gewaehlt und gespeichert, blieb aber
   nie stehen. Ingo setzt es von Hand zurueck oder fragt Artjom.
+
+## 17. Code auf GET v1/employees umgestellt, deployed, Schalter aus (2026-11-19 11:48, `b7f52a9`)
+
+Auftrag Ingo 19.11. („mach alles was du machen kannst, 777 schaue ich mit Artjom an“). Zweig `rexxhub-employees-1911` ab Produktivstand
+`7b2ff9f`, gemergt `656bb63`, deployed 11:48 (`docs/rag/DEPLOYMENT.md`). Suite 1'669/1'669. **Abschnitt 14 gilt weiter bis auf das hier
+Geaenderte** (Sicherungen, Testabruf, Protokoll).
+
+**Geaendert:**
+- `RexxHubOptions`: `GesamtPathTemplate`, `CasePathTemplate` (leer = `PathTemplate`), `CaseEnabled`, `ForKind()`.
+- Tagesdienst und Testabruf holen die Gesamtdatei ueber `GesamtPathTemplate`; mit `CaseEnabled = false` wird #777 nicht abgerufen, der
+  Testabruf meldet „uebersprungen“.
+- Parser: JSON-Listen (Stelle, Organisation, Kostenstelle) werden zu einem Text mit „, “; leere Liste = leer.
+- `RexxHubColumns.Normalize`: ISO-Daten in den Spalten „… angetreten (Zeitraum)“ werden zu `dd.MM.yyyy` (der Leser kennt nur das).
+- `appsettings.json` (Abschnitt `HrKpi:RexxHub`): `GesamtPathTemplate = v1/employees`, `CaseEnabled = false`, `PageParameter = page`,
+  `QueryParameters.page = 1` (der Endpunkt verlangt `page`), `ColumnMap` der 31 technischen Namen auf die Ueberschriften von #775.
+  `arbeitszeitmodell` wird bewusst auf „Arbeitszeitmodell (Hub, nicht gelesen)“ abgebildet: #775 fuehrt die Spalte nicht, und der Leser
+  saehe sonst „Vollzeit“ als FTE 1 vor der Sollzeit; Kennzahlen bleiben damit wie beim Handexport. **`Enabled` bleibt false.**
+
+**Umschalten, ab jetzt (ersetzt Abschnitt 14 Schritte 1 bis 5):**
+1. Rexx (erledigt bis auf IP und Verfallsdatum): API-Benutzer #2 „BI-Dashboard HR-Cockpit“, aktiv, `GET /v1/employees` frei, 31 Felder.
+   Noch setzen: erlaubte IP = IP von `tragvapp401`, Verfallsdatum, „Zeilenanzahl pro Seite“ 500 (heute 50, 8 Anfragen je Abruf).
+2. Dashboard: Admin > Settings > Quellsysteme, Code `REXXHUB`, Anschlussart „SAP Gateway“, URL `https://trafag.rexx-systems.com/rexx_hub/`,
+   „Zentrales Passwort“ = Token von API-Benutzer #2 (in Rexx kopieren, **nicht ins Repository**), Aktiv. Das macht Ingo.
+3. Testabruf `/BiDashboard/admin/rexxhub/test` (Admin-Freischaltung): Gesamt `Ok` und `WuerdeGeschrieben`, `FehlendePflichtspalten` leer,
+   Formatpruefung „Erkannt“ = „Gefuellt“; Faelle „uebersprungen“.
+4. **Zeitraum pruefen, bevor `GesamtZeitraumGeprueft = true`:** frischen Handexport #775 (01.01. bis heute) neben den Testabruf legen und
+   Spaltensummen der Summen „angetreten“ und die Personalnummern vergleichen (Werkzeug, nicht von Hand). Weicht der Hub ab (z. B. nur
+   Vorjahr oder laufender Monat), in Rexx beim Endpunkt einen Export-Filter setzen oder Artjom fragen.
+5. `"Enabled": true` in `appsettings.json`, committen, mit dem Deploy-Werkzeug deployen. Danach kommt die Gesamtdatei taeglich ab 05:30;
+   #777 bleibt Handexport, bis Artjom einen Weg nennt.

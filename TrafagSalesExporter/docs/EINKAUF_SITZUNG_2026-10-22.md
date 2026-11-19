@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-19 11:45 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -352,7 +352,7 @@ E2 jederzeit, Uebersicht = zuletzt erstellt): „mache Lieferantenbewertung … 
   `7b2ff9f` als Platzhalter nachgezogen. Erster Seitenaufruf nach dem Neustart wartete ca. 50 s auf die Vorberechnung der
   Einkauf-Standardansicht (Serverlog „vorberechnet in 50.7 s“), danach normal.
 
-**Nachtrag 11:55 (`d2f2edb`, gemergt `1132862`, noch nicht deployed):** Netzwerkpfade (`\\server\...`, `O:\...`) waren als
+**Nachtrag 11:46 (`d2f2edb`, gemergt `1132862`, noch nicht deployed):** Netzwerkpfade (`\\server\...`, `O:\...`) waren als
 `file://`-Link gebaut; den blockiert der Browser von einer https-Seite aus, der Klick haette nichts getan (nicht produktiv erprobt,
 weil nichts gespeichert wurde). Jetzt nur http(s) als Link, Pfade als markierbarer Text zum Kopieren in den Explorer. Geht mit dem
 naechsten Deploy mit.
