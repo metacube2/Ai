@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -339,7 +339,7 @@ E2 jederzeit, Uebersicht = zuletzt erstellt): „mache Lieferantenbewertung … 
   `trafag_exporter.db`, vom Deploy geschuetzt als `*.db`), Sicherung alle sechs Stunden geprueft, eine je Tag in `lbdaten\backup\`,
   60 Tage. Schluessel ist die Lieferantennummer ohne fuehrende Nullen, der Name wird mitgespeichert.
 * **Rechte:** Lesen alle mit Zugang zum Einkauf; Schreiben nur Windows-Kurzzeichen in `Lieferantenbewertung:EditUsers`
-  (`appsettings.json`, heute nur `koi`) und entsperrte Admins; die Pruefung steht im Dienst, nicht nur in der Oberflaeche.
+  (`appsettings.json`; seit 19.11. 12:58 `koi`, `gun`, `wid`, vorher nur `koi`) und entsperrte Admins; die Pruefung steht im Dienst, nicht nur in der Oberflaeche.
   Notschalter `Lieferantenbewertung:Enabled`.
 * **Nicht enthalten:** SAP-Score und Preis (Diskussion Anfang Dezember), Q2-Meldungen je Lieferant (braucht ein neues Gateway-Set
   in T76, eigener SAP-Plan), Liefertreue (nach 01.12.), Datei-Upload, Unterkriterien-Einzelnoten (V6 hat sie als Ergaenzung; heute
@@ -355,14 +355,21 @@ E2 jederzeit, Uebersicht = zuletzt erstellt): „mache Lieferantenbewertung … 
 **Nachtrag 11:46 (`d2f2edb`, gemergt `1132862`, noch nicht deployed):** Netzwerkpfade (`\\server\...`, `O:\...`) waren als
 `file://`-Link gebaut; den blockiert der Browser von einer https-Seite aus, der Klick haette nichts getan (nicht produktiv erprobt,
 weil nichts gespeichert wurde). Jetzt nur http(s) als Link, Pfade als markierbarer Text zum Kopieren in den Explorer. Geht mit dem
-naechsten Deploy mit.
+naechsten Deploy mit. *(Erledigt: deployed 12:58 mit `e8a8743`, siehe unten.)*
 
-**Abnahme:** Punkt 2 aus Armins Mail (jederzeit erfassen, Uebersicht = juengste) ist gebaut und im Dienst getestet, aber produktiv
-noch nicht durchgespielt (Speichern ueber die Maske, Uebersicht, Verlauf, Loeschen); das braucht ein Ja von Ingo, weil es in die
-produktive DB schreibt.
+**Schreibrecht und Deploy 12:58 (`e8a8743`, gemergt `31a2c66`):** Auftrag Ingo 19.11. („ja ich armin marco“): `EditUsers` =
+`koi`, `gun` (Armin Guentensperger, Kurzzeichen aus dem Handbestellwesen-Konzept), `wid` (Marco Widmer, im AD nur der Kontoname
+nachgeschlagen, Abteilung Procurement). Zusammen mit `d2f2edb` (Netzwerkpfade als Text) und dem Rexx-Stand `b7f52a9` (produktiv seit
+11:48, in den Zweig gemergt, damit er nicht zurueckgedreht wird). Release-Worktree 1'675/1'675, `-wal` 515 KB (kein Einkauf-Delta),
+kein anderer Deploy offen; Protokoll `.tmp_deploy_2026-11-19_lieferantenbewertung3.log`: „Commit e8a8743“, bitgleich, zehn Routen 200,
+ohne Alarm.
 
-Offen: Schreibrecht fuer Einkauf/Qualitaet (Kurzzeichen in `EditUsers`, Ingo nennt sie); Link an Armin und Marco (Ingo); Abnahme
-Punkt 2 (oben); aus 6.7 weiter offen: Summe A+B+C gegen den Aufriss „Lieferant“ mit Schalter „Nur Einkaufsteile“ im gleichen
+**Abnahme 13:01 (Auftrag Ingo „2, ja“):** produktiv im Chrome eine Testbewertung fuer Lecotronic AG (71310) gespeichert (Technology 4,
+Feststellung „TEST Abnahme …“): Meldung „Bewertung gespeichert“, Verlauf zeigt 19.11.2026 / koi / Tech 4 / erfasst 13:01; Uebersicht
+zeigt Klasse B, 71310, „19.11.2026 (1)“, Tech 4, 0 offene Massnahmen; danach ueber „Wirklich loeschen“ entfernt, Verlauf wieder „Noch
+keine Bewertung“. Die produktive DB enthaelt keinen Testeintrag. Punkt 2 aus Armins Mail ist damit abgenommen.
+
+Offen: Link an Armin und Marco (Ingo); aus 6.7 weiter offen: Summe A+B+C gegen den Aufriss „Lieferant“ mit Schalter „Nur Einkaufsteile“ im gleichen
 Zeitraum und D1 („A umfasst mindestens 70 %“) von Armin bestaetigen; Q2 (eigener SAP-Plan), Liefertreue nach 01.12.,
 SAP-Score/Preis nach der Diskussion Anfang Dezember; Texte des Eingabeteils nur deutsch/englisch (die Sprachen es/it/hi/sq/tr/tlh
 zeigen Englisch); Handbuch Kapitel Einkauf.
