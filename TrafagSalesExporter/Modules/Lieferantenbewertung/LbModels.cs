@@ -171,6 +171,11 @@ public static class LbKatalog
     public static LbBewertung? Juengste(IEnumerable<LbBewertung> bewertungen)
         => bewertungen.OrderByDescending(b => b.Datum).ThenByDescending(b => b.ErfasstAm).ThenByDescending(b => b.Id).FirstOrDefault();
 
+    /// <summary>Nur http(s) wird als Link angeboten; Netzwerk- und Laufwerkpfade blockiert der Browser von https aus.</summary>
+    public static bool IstWebLink(string? link)
+        => Uri.TryCreate((link ?? "").Trim(), UriKind.Absolute, out var uri)
+           && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
+
     public static string NormalisiereNr(string? nr)
     {
         var t = (nr ?? "").Trim();
