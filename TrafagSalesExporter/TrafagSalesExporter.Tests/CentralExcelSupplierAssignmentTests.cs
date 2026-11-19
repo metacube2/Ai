@@ -174,7 +174,7 @@ public class CentralExcelSupplierAssignmentTests
             Assert.Equal("2025-12", ws.Cell(4, 10).GetString());
             Assert.Equal("2026-01", ws.Cell(4, 11).GetString());
             Assert.Equal("2026-02", ws.Cell(4, 12).GetString());
-            Assert.True(ws.Cell(4, 13).IsEmpty());
+            Assert.Equal(ExcelExportService.SupplierAssignmentIssueTopicHeader, ws.Cell(4, 13).GetString());   // seit 19.11. hinter den Monaten, kein weiterer Monat
 
             var rows = ws.RowsUsed().Where(r => r.RowNumber() > 4).ToList();
             var ch = Assert.Single(rows, r => r.Cell(1).GetString() == "TRCH");

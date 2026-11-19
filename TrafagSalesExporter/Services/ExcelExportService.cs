@@ -225,7 +225,34 @@ public class ExcelExportService : IExcelExportService
         WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(),
             (currency, year) => ResolveChfRate(currency, year, chfRateMode), LoadGroupMarginCostCurrencyMode(), ResolveCrossRate,
             LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode(), LoadCustomerMarketSegments(),
-            LoadForeignProcurementMaterialKeys(), LoadMarcForeignProcurementMode());
+            LoadForeignProcurementMaterialKeys(), LoadMarcForeignProcurementMode(), LoadMaterialMappings());
+    }
+
+    /// <summary>Wirksame Zeilen der Mapping-Tabelle (Entscheid Ingo 19.11.2026); ohne DB leer.</summary>
+    private MaterialMappingLookup LoadMaterialMappings()
+    {
+        if (_dbFactory is null)
+            return MaterialMappingLookup.Empty;
+
+        using var db = _dbFactory.CreateDbContext();
+        return MaterialMappingStore.LoadLookup(db);
+    }
+
+    /// <summary>
+    /// Mapping_JJJJ-MM-TT.xlsx neben Sales_All (Auftrag Ingo 19.11.2026): alle Zeilen der Mapping-Tabelle mit Status, Pruefer
+    /// und Gewicht (Zeilen, Umsatz) aus demselben Datenstand. Ohne DB keine Datei.
+    /// </summary>
+    public string? CreateMaterialMappingExcelFile(string outputDirectory, DateTime fileDate, List<SalesRecord> records)
+    {
+        if (_dbFactory is null)
+            return null;
+
+        using var db = _dbFactory.CreateDbContext();
+        var mappings = db.MaterialMappings.AsNoTracking().ToList();
+        Directory.CreateDirectory(outputDirectory);
+        var fullPath = Path.Combine(outputDirectory, $"Mapping_{fileDate:yyyy-MM-dd}.xlsx");
+        File.WriteAllBytes(fullPath, MaterialMappingExcel.CreateWorkbookBytes(mappings, MaterialMappingStore.ComputeWeights(records)));
+        return fullPath;
     }
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
@@ -406,7 +433,8 @@ public class ExcelExportService : IExcelExportService
         string? supplierFallbackMode = null,
         string? internalSupplierCostSourceMode = null,
         IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
-        string? marcForeignProcurementMode = null)
+        string? marcForeignProcurementMode = null,
+        MaterialMappingLookup? materialMappings = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
         return financeRows
@@ -421,7 +449,8 @@ public class ExcelExportService : IExcelExportService
                     supplierFallbackMode: supplierFallbackMode,
                     internalSupplierCostSourceMode: internalSupplierCostSourceMode,
                     foreignProcurementMaterialKeys: foreignProcurementMaterialKeys,
-                    marcForeignProcurementMode: marcForeignProcurementMode);
+                    marcForeignProcurementMode: marcForeignProcurementMode,
+                    materialMappings: materialMappings);
                 var supplierType = margin.SupplierType;
                 var status = margin.Status;
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
@@ -465,7 +494,9 @@ public class ExcelExportService : IExcelExportService
                     row.Record.GroupMaterialNumber ?? string.Empty,
                     row.Record,
                     GroupMarginCalculator.DeliveringEntityLabel(margin.DeliveringEntity),
-                    row.FinanceDate.Month);
+                    row.FinanceDate.Month,
+                    margin.IssueTopic,
+                    margin.Mapping);
             })
             .OrderBy(row => GroupMarginStatuses.Sort(row.Status))
             .ThenBy(row => row.Year)
@@ -823,6 +854,12 @@ public class ExcelExportService : IExcelExportService
         ["TSC", "Currency", "Supplier Type", "Delivering Entity", "Cost Source", "Rows", "Share of TSC rows", "Net Sales Actual"];
 
     /// <summary>
+    /// 2026-11-19: weitere Gruppierung „Issue Topic“ im Blatt Lieferantenzuordnung. Steht als LETZTE Spalte hinter den
+    /// Monatsspalten, damit alle bestehenden Spalten (A bis H und die Monate ab I) ihre Position behalten.
+    /// </summary>
+    internal const string SupplierAssignmentIssueTopicHeader = "Issue Topic";
+
+    /// <summary>
     /// Fertige Sicht fuer Andreas Stoller (2026-11-16): Er pivotiert Sales_All nach den rohen Lieferantenfeldern (Supplier
     /// number/name), die bei CH, AT, DE und ES leer sind, und sah deshalb „keine Zuordnung“. Dieses Blatt zeigt die WIRKSAME
     /// Zuordnung der Gruppenmarge je Gesellschaft: Supplier Type, Delivering Entity und Cost Source, mit Zeilenzahl, Anteil und
@@ -857,18 +894,23 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(headerRow, i + 1).Value = fixedHeaders[i];
         for (var i = 0; i < periods.Count; i++)
             ws.Cell(headerRow, fixedHeaders.Length + 1 + i).Value = $"{periods[i].Year:0000}-{periods[i].Month:00}";
-        var lastColumn = fixedHeaders.Length + periods.Count;
+        var issueTopicColumn = fixedHeaders.Length + periods.Count + 1;
+        ws.Cell(headerRow, issueTopicColumn).Value = SupplierAssignmentIssueTopicHeader;
+        var lastColumn = issueTopicColumn;
         ws.Range(headerRow, 1, headerRow, lastColumn).Style.Font.Bold = true;
 
         var rowsPerTsc = rows.GroupBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
         var groups = rows
-            .GroupBy(row => new { row.Tsc, row.Currency, row.SupplierType, row.DeliveringEntity, row.CostSource })
+            // Issue Topic seit 2026-11-19 als weitere Gruppierung; die Spalte steht hinter den Monaten, damit alle
+            // bestehenden Spalten ihre Position behalten.
+            .GroupBy(row => new { row.Tsc, row.Currency, row.SupplierType, row.DeliveringEntity, row.CostSource, row.IssueTopic })
             .OrderBy(group => group.Key.Tsc, StringComparer.OrdinalIgnoreCase)
             .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
             .ThenBy(group => SupplierTypeOrder(group.Key.SupplierType))
             .ThenBy(group => group.Key.DeliveringEntity, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(group => group.Key.CostSource, StringComparer.OrdinalIgnoreCase);
+            .ThenBy(group => group.Key.CostSource, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => IssueTopicOrder(group.Key.IssueTopic));
 
         var rowIndex = headerRow + 1;
         foreach (var group in groups)
@@ -884,6 +926,7 @@ public class ExcelExportService : IExcelExportService
                 ? (decimal)count / total
                 : 0m;
             ws.Cell(rowIndex, 8).Value = group.Sum(row => row.SalesValue);
+            ws.Cell(rowIndex, issueTopicColumn).Value = group.Key.IssueTopic;
             var byPeriod = group.Where(row => row.Month is >= 1 and <= 12)
                 .GroupBy(row => (row.Year, row.Month))
                 .ToDictionary(period => period.Key, period => period.Sum(row => row.SalesValue));
@@ -896,12 +939,15 @@ public class ExcelExportService : IExcelExportService
         var lastRow = Math.Max(headerRow, rowIndex - 1);
         ws.Column(6).Style.NumberFormat.Format = "#,##0";
         ws.Column(7).Style.NumberFormat.Format = "0.0%";
-        ws.Columns(8, lastColumn).Style.NumberFormat.Format = "#,##0";
+        ws.Columns(8, issueTopicColumn - 1).Style.NumberFormat.Format = "#,##0";
         ws.Range(headerRow, 1, lastRow, lastColumn).SetAutoFilter();
         ws.SheetView.Freeze(headerRow, 5);
         ws.Columns(1, 5).AdjustToContents(headerRow, lastRow);
         ws.Columns(6, lastColumn).Width = 14;
     }
+
+    private static int IssueTopicOrder(string issueTopic)
+        => int.TryParse(issueTopic, out var code) ? code : 0;
 
     private static int SupplierTypeOrder(string supplierType) => supplierType switch
     {
@@ -1170,7 +1216,10 @@ public class ExcelExportService : IExcelExportService
         // Erkannte liefernde Konzerngesellschaft als Anzeigetext ("TR AG", "TR IT", "TR IN" oder leer), 2026-11-13.
         string DeliveringEntity = "",
         // Monat des Finance-Datums (1 bis 12) fuer das Blatt Lieferantenzuordnung, 2026-11-16; 0 = unbekannt.
-        int Month = 0);
+        int Month = 0,
+        // Issue Topic (GroupMarginCalculator.ResolveIssueTopic) und wirksames Mapping, 2026-11-19.
+        string IssueTopic = "",
+        string Mapping = "");
 
     internal static void WriteWorkbook(
         string fullPath,
@@ -1186,7 +1235,8 @@ public class ExcelExportService : IExcelExportService
         string? internalSupplierCostSourceMode = null,
         IReadOnlyDictionary<(string Tsc, string CustomerNumber), CustomerMarketSegment>? customerMarketSegments = null,
         IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
-        string? marcForeignProcurementMode = null)
+        string? marcForeignProcurementMode = null,
+        MaterialMappingLookup? materialMappings = null)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
@@ -1287,12 +1337,13 @@ public class ExcelExportService : IExcelExportService
                 supplierFallbackMode,
                 internalSupplierCostSourceMode,
                 foreignProcurementMaterialKeys,
-                marcForeignProcurementMode);
+                marcForeignProcurementMode,
+                materialMappings);
             marginBySource = new Dictionary<SalesRecord, GroupMarginProofRow>(ReferenceEqualityComparer.Instance);
             foreach (var marginRow in groupMarginRows)
                 if (marginRow.Source is not null)
                     marginBySource.TryAdd(marginRow.Source, marginRow);
-            headers = [.. headers, .. SupplierAssignmentHeaders, "Cost Source"];
+            headers = [.. headers, .. SupplierAssignmentHeaders, "Cost Source", .. IssueTopicHeaders];
         }
 
         for (var i = 0; i < headers.Length; i++)
@@ -1374,6 +1425,8 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(row, 55).Value = salesMargin.SupplierType;
                 ws.Cell(row, 56).Value = salesMargin.DeliveringEntity;
                 ws.Cell(row, 57).Value = salesMargin.CostSource;
+                ws.Cell(row, 58).Value = salesMargin.IssueTopic;
+                ws.Cell(row, 59).Value = salesMargin.Mapping;
             }
             row++;
         }
@@ -1406,6 +1459,13 @@ public class ExcelExportService : IExcelExportService
     /// Blatt Finance Details (Spalten 43 und 44).
     /// </summary>
     internal static readonly string[] SupplierAssignmentHeaders = ["Supplier Type", "Delivering Entity"];
+
+    /// <summary>
+    /// 2026-11-19 (Plan Mapping/Issue Topic, Matrix Ingo), additiv am ENDE der Blaetter Sales (58, 59) und Finance Details
+    /// (45, 46): Issue Topic = Code 1 bis 7 nach der Matrix, 8 bis 10 vorlaeufig, leer = kein Issue; Mapping = wirksame
+    /// Gruppennummer aus der Mapping-Tabelle bzw. der I-Praefix-Regel mit Verfahren, leer = keine.
+    /// </summary>
+    internal static readonly string[] IssueTopicHeaders = ["Issue Topic", "Mapping"];
 
     /// <summary>Spalten mit Standardkosten-Bezug in Sales_All (Wunsch Ingo 2026-10-07).</summary>
     internal static readonly IReadOnlySet<string> StandardCostHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -1610,7 +1670,10 @@ public class ExcelExportService : IExcelExportService
             "Cost Timing",
             // 2026-11-13 (Mail Andreas Stoller), additiv am ENDE: wirksame Lieferantenzuordnung der Gruppenmarge.
             SupplierAssignmentHeaders[0],
-            SupplierAssignmentHeaders[1]
+            SupplierAssignmentHeaders[1],
+            // 2026-11-19, additiv am ENDE: Issue Topic und Mapping wie im Blatt Sales.
+            IssueTopicHeaders[0],
+            IssueTopicHeaders[1]
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1708,6 +1771,8 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(rowIndex, 42).Value = CostTiming(margin.CostSource, countryKey);
                 ws.Cell(rowIndex, 43).Value = margin.SupplierType;
                 ws.Cell(rowIndex, 44).Value = margin.DeliveringEntity;
+                ws.Cell(rowIndex, 45).Value = margin.IssueTopic;
+                ws.Cell(rowIndex, 46).Value = margin.Mapping;
             }
 
             rowIndex++;
@@ -1802,6 +1867,7 @@ public class ExcelExportService : IExcelExportService
             ("Gruppenmarge Details", "Spalte P 'Unit Cost' bis T 'Margin %', neu W-Z fuer den Deckungsbeitrag", "Hier steht die eigentliche Rechnung: Stueckpreis, daraus abgeleitete Kostenbasis (Menge x Preis, vorzeichenbewusst), Marge/% und der vorbereitete Deckungsbeitrag."),
             ("Gruppenmarge Summary", "Spalte E 'Known Cost Basis' ff.", "Aggregiert die Kostenbasis/Marge aus Gruppenmarge Details je Jahr/Land/TSC/Waehrung."),
             ("Lieferantenzuordnung", "ganzes Blatt (seit 2026-11-16)", "Wirksame Zuordnung der Gruppenmarge je Gesellschaft: Supplier Type (Intern / Extern / Lokal / Unklar), Delivering Entity (TR AG / TR IT / TR IN) und Cost Source, mit Zeilenzahl, Anteil und Net Sales Actual gesamt und je Monat. Zeigt, welche Kosten greifen, auch wo die Felder Supplier number / name leer sind (CH, AT, DE, ES). Nur Zeilen mit Finance | Include = TRUE."),
+            ("Sales / Finance Details", "letzte zwei Spalten (seit 2026-11-19)", "Issue Topic (Code nach der Matrix, siehe Felddokumentation) und Mapping (wirksame Gruppen-Artikelnummer aus Mapping-Tabelle oder I-Praefix-Regel). Im Blatt Lieferantenzuordnung ist Issue Topic eine weitere Gruppierung (letzte Spalte, hinter den Monaten)."),
             ("Finance Filter Hilfe", "dieses Blatt", "Erklaert Bedeutung und Berechnung jeder Spalte in Textform (Abschnitte unten).")
         };
 
@@ -1834,6 +1900,8 @@ public class ExcelExportService : IExcelExportService
             ("Supplier Type", "WIRKSAME Lieferantenzuordnung der Gruppenmarge, auch wenn die Lieferantenfelder der Quelle leer sind. Reihenfolge: (1) CH/AT verkaufen immer als Trafag AG = Intern; (2) Sales Type (nur Indien: FFM/CM = eigene Fertigung, LRD = Bezug von Trafag AG) = Intern; (3) gepflegter Lieferant: Trafag/GFS im Namen = Intern, sonst Extern; (4) kein Lieferant: je nach Einstellung 'Supplier-Fallback' entweder Treffer im CH-Werkstamm (MARC Werk 1100) = Intern, sicherer Nichttreffer = Lokal, oder immer Lokal; ohne Materialnummer = Unklar. Seit 2026-11-13 auch in den Blaettern Sales (Spalte 55) und Finance Details (Spalte 43)."),
             ("Delivering Entity", "Erkannte liefernde Konzerngesellschaft: TR AG, TR IT oder TR IN; leer bei Extern, Lokal und Unklar. Bestimmt, aus welcher Konzernkostentabelle die Kostenbasis kommt. Intern mit LEERER Delivering Entity heisst: Konzernlieferant erkannt (z. B. GFS, Trafag GmbH), fuer den es keine Konzernkostentabelle gibt; die Zeile rechnet dann mit dem lokalen Standardpreis (offener Fachentscheid ISS-018.7). Blatt Sales Spalte 56, Finance Details Spalte 44."),
             ("Cost Source", "Woher die Kostenbasis kommt: 'Kosten aus Verkaufszeile' (explizit extern), 'Standardkosten der lokalen Gesellschaft' (kein Treffer im geprueften CH-Werkstamm), 'Interner Standardpreis' (intern), 'Konzernkosten TR AG (MBEW-STPRS)' (echte Gruppenkosten), 'Lieferant unklar'. Zusatz bei abweichender Kostenwaehrung: umgerechnet mit dem Tageskurs (Beschluss Andreas 27.08.2026) oder maskiert."),
+            ("Issue Topic", "Seit 2026-11-19 (Matrix Ingo 19.11.2026): warum die Kostenkette nicht bis zu den Konzernkosten kam. Spalten der Matrix: no Supplier (keine CH/AT-Regel, kein Sales Type, alle Lieferantenfelder leer) / no Mat Number Match (Artikel bei der liefernden Gesellschaft, ohne Lieferant im CH-Werkstamm Trafag AG, auch ueber Mapping nicht gefunden) / no Cost. leer = kein Issue; 1 = 1/1/0 lokale Standardkosten; 2 = 0/1/0 lokale Standardkosten; 3 = 0/0/1 lokale Standardkosten; 4 = 1/0/1 lokale Standardkosten; 5 = 1/0/0 Standardkosten TR AG; 6 = 1/1/1 und 7 = 0/1/1: Artikel nicht gefunden und auch lokale Kosten fehlen, Kosten 0 (Status Standardpreis fehlt). Ein gefundener Artikel bleibt 3 bzw. 4, auch wenn die lokalen Kosten 0 sind. Vorlaeufig, von der Matrix nicht abgedeckt: 7 auch bei externem Lieferanten ohne lokale Kosten; 8 = Indien LRD ohne Konzernkosten (Kosten bleiben offen, Entscheid 05.08.); 9 = Lieferant unklar; 10 = interner Lieferant ohne bekannte Kostenquelle (z. B. GFS). Die Spalte aendert keine Kosten; Cost Source und Status bleiben massgebend. Bei TR IT und TR IN sind nur positive Kosten gespeichert, dort ist 3 nicht von 2 unterscheidbar (immer 2)."),
+            ("Mapping", "Seit 2026-11-19: Gruppen-Artikelnummer, mit der die Zeile gerechnet wurde, wenn sie nicht aus der Quelle kommt: aus der Mapping-Tabelle (Verfahren und Status in Klammern; Regelzeilen wirken sofort, Text- und Handzeilen nur bestaetigt) oder aus der Regel I-Praefix TRIT (Italien verkauft Ware aus Indien unter I + Nummer). Leer = Nummer der Quelle. Die Tabelle steht als Mapping_JJJJ-MM-TT.xlsx im selben Ordner."),
             ("Status", "OK = Marge belastbar. 'Standardpreis fehlt' = Kostenbasis 0. 'Lieferant unklar' = Lieferantenfelder leer. '" + GroupMarginCostCurrencyConverter.OpenStatus + "' = Kosten- und Verkaufswaehrung verschieden bei Schalter Mask. '" + GroupMarginStatuses.GroupCostMissing + "' = Standort verkauft Konzernware (Sales Type LRD), Konzernkosten zum Material aber nicht auffindbar; der lokale Standardpreis ist dort der IC-Einkaufspreis und wird bewusst nicht verwendet. 'Umsatz fehlt' = Wert 0. Grundregel: fehlende Daten werden markiert, NIE geschaetzt."),
             ("Variable Unit Cost", "NEU/vorbereitet: variabler Anteil des Standardpreises pro Stueck (Quelle: fix/variabel-Split, z. B. SAP Planpreis variabel). Leer = Quelle liefert den Split noch nicht."),
             ("Variable Cost Basis", "Berechnet: Menge x Variable Unit Cost, gleiche Vorzeichen- und Waehrungsregel wie Known Cost Basis. Leer ohne Split."),

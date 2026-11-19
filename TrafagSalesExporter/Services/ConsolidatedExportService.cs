@@ -93,6 +93,20 @@ public class ConsolidatedExportService : IConsolidatedExportService
             await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, consolidatedPath);
         }
 
+        // Auftrag Ingo 19.11.2026: bei jedem Export die Mapping-Tabelle als Mapping_*.xlsx im selben Ordner (und am selben
+        // SharePoint-Ziel) wie Sales_All. Ein Fehler hier darf Sales_All und die Nachweise nicht verhindern.
+        try
+        {
+            updateStatus?.Invoke("Mapping Excel erzeugen...");
+            var mappingPath = _excelService.CreateMaterialMappingExcelFile(outputDir, fileDate, sortedRecords);
+            if (hasSharePointUpload && !string.IsNullOrWhiteSpace(mappingPath))
+                await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, mappingPath);
+        }
+        catch (Exception ex)
+        {
+            await _appEventLogService.WriteAsync("Export", "Mapping-Excel nicht erzeugt", "Warning", details: ex.Message);
+        }
+
         updateStatus?.Invoke("Zentrale Audit-CSV erzeugen...");
         var auditCsvPath = await _auditCsvService.WriteConsolidatedAuditCsvAsync(
             settings,

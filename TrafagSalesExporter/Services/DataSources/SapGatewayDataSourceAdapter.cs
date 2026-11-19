@@ -90,7 +90,8 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
         try
         {
             context.UpdateStatus?.Invoke("SAP CH-Werkstamm laden...");
-            var materialKeys = await _plantMaterialReader.GetMaterialKeysAsync(
+            // Seit 2026-11-19 mit deutschem Materialtext, sobald MARCSet die Property fuehrt (sonst leer).
+            var materialKeys = await _plantMaterialReader.GetMaterialsAsync(
                 sapServiceUrl, username, password, chPlant, site.Land);
             if (materialKeys.Count < SapGatewayPlantMaterialReader.MinimumExpectedChPlantMaterials)
                 throw new InvalidOperationException(
@@ -111,17 +112,18 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
         }
     }
 
-    private async Task PersistGroupMaterialMasterAsync(IReadOnlySet<string> materialKeys, string plant)
+    private async Task PersistGroupMaterialMasterAsync(IReadOnlyDictionary<string, string> materials, string plant)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         await using var transaction = await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM GroupMaterialMasters WHERE Plant = {plant}");
         var now = DateTime.UtcNow;
-        db.GroupMaterialMasters.AddRange(materialKeys.Select(materialKey => new GroupMaterialMaster
+        db.GroupMaterialMasters.AddRange(materials.Select(material => new GroupMaterialMaster
         {
-            MaterialKey = materialKey,
+            MaterialKey = material.Key,
             Plant = plant,
-            RefreshedAtUtc = now
+            RefreshedAtUtc = now,
+            MaterialText = material.Value ?? string.Empty
         }));
         await db.SaveChangesAsync();
         await transaction.CommitAsync();

@@ -70,6 +70,9 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
+        // 2026-11-19: Materialtext Trafag AG (deutsch) fuer den Mapping-Vorschlagslauf; leer, bis das Gateway ihn liefert.
+        AddColumnIfMissing(db, "GroupMaterialMasters", "MaterialText", "TEXT NOT NULL DEFAULT ''");
+        EnsureMaterialMappingsTable(db);
         EnsureSupplierMaterialOverridesTable(db);
         EnsureDataOwnersTable(db);
         EnsureCustomerMarketSegmentsTable(db);
@@ -939,6 +942,26 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
             Add("$b", entry.UpdatedBy);
             insert.ExecuteNonQuery();
         }
+    }
+
+    /// <summary>Mapping-Tabelle Artikelnummern (Entscheid Ingo 19.11.2026, E6). Additiv, ein Schluessel je TSC und Nummer.</summary>
+    private static void EnsureMaterialMappingsTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetMaterialMappingsCreateSql()
+                .Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_MaterialMappings_Tsc_Key ON MaterialMappings (Tsc, LocalMaterialKey);";
+        indexCommand.ExecuteNonQuery();
     }
 
     private static void EnsureGroupMaterialMastersTable(AppDbContext db)

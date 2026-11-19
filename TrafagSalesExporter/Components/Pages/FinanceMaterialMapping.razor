@@ -1,0 +1,253 @@
+@page "/finance-cockpit/mapping"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IMaterialMappingSuggestionService SuggestionService
+@inject AuthenticationStateProvider AuthState
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+@inject IJSRuntime JsRuntime
+
+@* Mapping lokale Artikelnummer auf Gruppen-Artikelnummer, Entscheide Ingo 19.11.2026 (E5, E6).
+   Plan docs/FINANCE_PLAN_MAPPING_ISSUE_TOPIC_2026-11-18.md Abschnitt 5. *@
+
+<PageTitle>@T("Mapping Artikelnummern", "Material number mapping")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">@T("Mapping Artikelnummern", "Material number mapping")</MudText>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-3">
+    @T("Ordnet lokale Artikelnummern einer Gesellschaft der Sachnummer von Trafag AG zu. Regelzeilen wirken sofort, Textvorschlaege erst nach Bestaetigung. Eine Zeile gilt nur fuer ihre Gesellschaft und nur dort, wo die Quelle keine Gruppennummer liefert. Der Vorschlagslauf laeuft nur ueber den Knopf, nie im taeglichen Export.",
+       "Maps local material numbers of a company to the Trafag AG material number. Rule rows take effect immediately, text suggestions only after confirmation. A row applies only to its own company and only where the source has no group number. The suggestion run starts only from the button, never in the daily export.")
+</MudAlert>
+
+<MudStack Row Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+    <MudSelect T="string" @bind-Value="_tscFilter" Label="TSC" Style="min-width:120px" Dense>
+        <MudSelectItem T="string" Value="@AllValue">@T("alle", "all")</MudSelectItem>
+        @foreach (var tsc in _tscs)
+        {
+            <MudSelectItem T="string" Value="@tsc">@tsc</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="string" @bind-Value="_statusFilter" Label="Status" Style="min-width:150px" Dense>
+        <MudSelectItem T="string" Value="@AllValue">@T("alle", "all")</MudSelectItem>
+        @foreach (var status in MaterialMappingStatuses.All)
+        {
+            <MudSelectItem T="string" Value="@status">@status</MudSelectItem>
+        }
+    </MudSelect>
+    <MudTextField T="string" @bind-Value="_search" Label="@T("Suche", "Search")" Immediate DebounceInterval="300" Style="min-width:220px" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.AutoFixHigh"
+               OnClick="RunSuggestionsAsync" Disabled="_busy">@T("Vorschlagslauf starten", "Start suggestion run")</MudButton>
+    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download"
+               OnClick="DownloadAsync" Disabled="_busy">@T("Excel exportieren", "Export Excel")</MudButton>
+    <label class="mud-button-root mud-button mud-button-outlined mud-button-size-small" style="cursor:pointer">
+        @T("Excel importieren", "Import Excel")
+        <InputFile OnChange="ImportAsync" accept=".xlsx" style="display:none" disabled="@_busy" />
+    </label>
+    @if (_busy)
+    {
+        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+    }
+</MudStack>
+
+@if (_importErrors.Count > 0)
+{
+    <MudAlert Severity="Severity.Error" Dense Class="mb-3">
+        @T("Import abgelehnt, nichts gespeichert:", "Import rejected, nothing saved:")
+        <ul>
+            @foreach (var error in _importErrors.Take(30))
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </MudAlert>
+}
+
+<MudTable Items="Filtered" Dense Hover Striped Loading="_loading" RowsPerPage="50">
+    <HeaderContent>
+        <MudTh>TSC</MudTh>
+        <MudTh>@T("Lokale Nummer", "Local number")</MudTh>
+        <MudTh>@T("Lokaler Text", "Local text")</MudTh>
+        <MudTh>@T("Gruppennummer", "Group number")</MudTh>
+        <MudTh>@T("Text Trafag AG", "Trafag AG text")</MudTh>
+        <MudTh>@T("Verfahren", "Method")</MudTh>
+        <MudTh Style="text-align:right">@T("Sicherheit", "Confidence")</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>@T("Geprueft", "Reviewed")</MudTh>
+        <MudTh Style="text-align:right">@T("Zeilen", "Rows")</MudTh>
+        <MudTh Style="text-align:right">@T("Umsatz", "Sales")</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Tsc</MudTd>
+        <MudTd>@context.LocalMaterial</MudTd>
+        <MudTd>@context.LocalText</MudTd>
+        <MudTd>@context.GroupMaterialNumber</MudTd>
+        <MudTd>@context.GroupText</MudTd>
+        <MudTd title="@context.MethodDetail">@context.Method</MudTd>
+        <MudTd Style="text-align:right">@context.Confidence</MudTd>
+        <MudTd>@context.Status</MudTd>
+        <MudTd>@ReviewText(context)</MudTd>
+        <MudTd Style="text-align:right">@context.Rows.ToString("N0")</MudTd>
+        <MudTd Style="text-align:right">@context.NetSales.ToString("N0") @context.Currency</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Success"
+                           Disabled="@(_busy || context.Status == MaterialMappingStatuses.Confirmed)"
+                           OnClick="() => SetStatusAsync(context, MaterialMappingStatuses.Confirmed)"
+                           title="@T("Bestaetigen", "Confirm")" />
+            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Color="Color.Error"
+                           Disabled="@(_busy || context.Status == MaterialMappingStatuses.Rejected)"
+                           OnClick="() => SetStatusAsync(context, MaterialMappingStatuses.Rejected)"
+                           title="@T("Ablehnen", "Reject")" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>@T("Keine Zeilen. Vorschlagslauf starten oder eine Excel importieren.", "No rows. Start the suggestion run or import an Excel file.")</MudText>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private const string AllValue = "*";
+    private List<MaterialMapping> _rows = [];
+    private List<string> _tscs = [];
+    private List<string> _importErrors = [];
+    private string _tscFilter = AllValue;
+    private string _statusFilter = AllValue;
+    private string _search = string.Empty;
+    private bool _loading = true;
+    private bool _busy;
+
+    private IEnumerable<MaterialMapping> Filtered => _rows
+        .Where(row => _tscFilter == AllValue || string.Equals(row.Tsc, _tscFilter, StringComparison.OrdinalIgnoreCase))
+        .Where(row => _statusFilter == AllValue || row.Status == _statusFilter)
+        .Where(row => string.IsNullOrWhiteSpace(_search) ||
+                      row.LocalMaterial.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+                      row.LocalText.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+                      row.GroupMaterialNumber.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+                      row.GroupText.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        _rows = await db.MaterialMappings.AsNoTracking()
+            .OrderBy(row => row.Tsc).ThenByDescending(row => row.NetSales).ThenBy(row => row.LocalMaterialKey)
+            .ToListAsync();
+        _tscs = _rows.Select(row => row.Tsc).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(tsc => tsc).ToList();
+        _loading = false;
+    }
+
+    private async Task RunSuggestionsAsync()
+    {
+        _busy = true;
+        try
+        {
+            var result = await SuggestionService.RunAsync();
+            Snackbar.Add(string.Format(T("{0} Vorschlaege aus {1} Artikeln: {2} neu, {3} aktualisiert, {4} geschuetzt. Texte Trafag AG: {5} von {6}.",
+                "{0} suggestions from {1} articles: {2} new, {3} updated, {4} protected. Trafag AG texts: {5} of {6}."),
+                result.Suggestions, result.Candidates, result.Inserted, result.Updated, result.Protected, result.TrAgTexts, result.TrAgMaterials),
+                Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        _busy = true;
+        try
+        {
+            var bytes = MaterialMappingExcel.CreateWorkbookBytes(_rows);
+            await JsRuntime.InvokeVoidAsync("trafagDownload.saveBytes", $"Mapping_{DateTime.Now:yyyy-MM-dd_HHmm}.xlsx", Convert.ToBase64String(bytes),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ImportAsync(InputFileChangeEventArgs args)
+    {
+        _busy = true;
+        _importErrors = [];
+        try
+        {
+            using var buffer = new MemoryStream();
+            await using (var upload = args.File.OpenReadStream(20 * 1024 * 1024))
+                await upload.CopyToAsync(buffer);
+            buffer.Position = 0;
+            var rows = MaterialMappingExcel.Parse(buffer);
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var knownTscs = (await db.Sites.AsNoTracking().Select(site => site.TSC).ToListAsync())
+                .Where(tsc => !string.IsNullOrWhiteSpace(tsc))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var result = await MaterialMappingStore.ImportAsync(db, rows, knownTscs, await UserNameAsync(), DateTime.UtcNow);
+            if (!result.Success)
+            {
+                _importErrors = result.Errors.ToList();
+                return;
+            }
+
+            Snackbar.Add(string.Format(T("Import: {0} neu, {1} aktualisiert, {2} leere Zeilen uebersprungen.",
+                "Import: {0} new, {1} updated, {2} empty rows skipped."), result.Inserted, result.Updated, result.SkippedEmpty), Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _importErrors = [ex.Message];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SetStatusAsync(MaterialMapping row, string status)
+    {
+        _busy = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            await MaterialMappingStore.SetStatusAsync(db, row.Id, status, await UserNameAsync(), DateTime.UtcNow);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string ReviewText(MaterialMapping row)
+        => row.ReviewedAtUtc is { } at ? $"{row.ReviewedBy} {at.ToLocalTime():dd.MM.yyyy}" : string.Empty;
+
+    private async Task<string> UserNameAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var name = state.User.Identity?.Name ?? string.Empty;
+        var slash = name.LastIndexOf('\\');
+        return slash >= 0 ? name[(slash + 1)..] : name;
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
