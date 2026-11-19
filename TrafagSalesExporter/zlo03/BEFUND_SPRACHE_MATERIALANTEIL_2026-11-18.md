@@ -1,7 +1,7 @@
 # ZLO03 / Materialanteil: Einkaufsteile ohne englischen Kurztext fehlten (Befund 2026-11-18)
 
-Stand: 2026-11-18 18:05 (Korrektur 1 im Dashboard deployed 17:57, `1417a3a`; Einkauf-Lauf 18:01 gestartet, **Prüfung
-produktiv steht aus**, Abschnitt 6). Auftrag Ingo 18.11. („schau mal ob Zusammenhang besteht, alte neue zlo03“, danach
+Stand: 2026-11-19 08:45 (**Prüfung produktiv bestanden**, Abschnitt 6a: 10.08.00 bei FP_DICHTESENS 273'028 CHF); davor 2026-11-18 18:05
+(Korrektur 1 im Dashboard deployed 17:57, `1417a3a`; Einkauf-Lauf 18:01 gestartet). Auftrag Ingo 18.11. („schau mal ob Zusammenhang besteht, alte neue zlo03“, danach
 „mach 1“). T76/100 nur gelesen (SapProbe `table-read`), P76 nicht gelesen, in SAP nichts geändert.
 Zurück: `zlo03/CLAUDE.md`, `docs/rag/PURCHASING.md`.
 
@@ -104,6 +104,26 @@ dauerte der Lauf gut zwei Stunden). Zu prüfen:
    Excel sind nicht bekannt, Gleichheit ist nicht zu erwarten).
 
 Bleibt die Zeilenzahl gleich, übernimmt das Gateway den Parameter nicht; dann ist Korrektur 2 nötig.
+
+## 6a. Ergebnis produktiv (19.11. 08:45, im Dashboard gelesen)
+
+Einkauf-Lauf 18.11. 18:01 bis 19:29 erfolgreich: **262'856 Stücklistenzeilen** (vorher 112'112), 31'003 ZC23-Summen, 8'876 Nummern,
+kein Lesefehler. Damit übernimmt das Gateway `sap-language=DE`. Materialanteil FP_DICHTESENS: Umsatz 2'145'646, Materialanteil
+**693'626 CHF (32.3 %)** statt 186'913 (8.5 %); 10.08.00 ist mit 39.4 % die grösste Warengruppe. Vergleich mit Armins Excel (Zeitraum
+und Auswahl seines Excel unbekannt):
+
+| Warengruppe | Dashboard 19.11. | Excel Armin („DW-Sensoren“) |
+| --- | ---: | ---: |
+| 10.08.00 Leiterplatten bestueckt | 273'028 | 257'717 |
+| 10.01.00 Elektronische Bauteile | 124'328 | 117'320 |
+| 20.01.01 Anschlussteil | 108'126 | 104'219 |
+| 20.02.01 Gehaeuseteil | 75'718 | 75'057 |
+| 01.01.00 Rohmaterial | 26'651 | 27'393 |
+| 10.06.00 Steckverbinder | 17'695 | 16'745 |
+| 10.05.00 Kabel konfektioniert | 5'615 | 5'314 |
+
+Total aller Produktgruppen: Materialanteil 29,7 Mio. CHF bei 82,3 Mio. Umsatz (36.1 %), vorher 10,4 Mio. Korrektur 2 in der ZLO03
+bleibt ein Vorschlag (Absicherung), nicht dringend.
 
 ## 7. Nicht geprüft
 

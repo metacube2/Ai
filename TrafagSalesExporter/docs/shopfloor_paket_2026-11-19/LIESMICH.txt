@@ -1,0 +1,18 @@
+Shopfloor – Paket an Ingo vom 19.11.2026
+
+Fasst die beiden nicht versendeten Pakete zusammen und ergänzt einen neuen Wunsch:
+  - 2026-11-17_entscheide (Entscheide, SAP-Terminbeispiel 58613, Verkaufsbelege)
+  - 2026-11-18_board_excel (Board-/Excel-Abgleich 16./17.11.)
+  - neu: Nächster Vorgang im Forecast für die Dichtesensoren (Wunsch Sergio Rodrigues) mit Patch 09
+Das Paket vom 17.11. «Ergänzung» (Rückstandslisten, TX-Mengen, FPY TX) ist bereits versendet; Ingo hat darauf geantwortet.
+
+Inhalt
+  Mail_Ingo_2026-11-19.txt            Mailtext zum Kopieren
+  Entscheide_und_SAP_Belege.md        Entscheide Fabio 17.11., SAP-Beispiel 58613, Ingos Umsetzungsstand, Verkauf
+  Abgleich_Board_Excel_16-17-11.md    Zahlenvergleich Board/Excel mit Zellbezügen und Prüfaufträgen
+  DS_Naechster_Vorgang.md             Spezifikation Nächster Vorgang (MD04 MDEZ-USEX1, Exit ZXM61U01)
+  Patch_09_naechster_vorgang\         Frontend-Patch (apply_patch.js, patches\09_..., LIESMICH)
+  Quellen\                            Excel-Referenz, Board-Screenshots, SAP-Bilder 58613, KE30, CO-PA-Belege,
+                                      Rückstandslisten-Auffälligkeiten, MD04-Bilder von Sergio
+
+Die Board-Werte im Abgleich stammen vom 16./17.11., vor der Übernahme des letzten Pakets.

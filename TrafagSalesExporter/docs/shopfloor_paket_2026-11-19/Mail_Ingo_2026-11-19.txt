@@ -1,0 +1,50 @@
+Betreff: Shopfloor – Entscheide, Board-/Excel-Abgleich 16./17.11. und Nächster Vorgang DS
+
+Hallo Ingo
+
+Danke für deinen detaillierten Stand und die Nachlieferung der Verkaufswerte. Im Anhang ist ein Paket mit meinen Entscheiden, dem Abgleich Board/Excel vom 16. und 17.11., SAP-Terminbeispielen und einem neuen Wunsch für den Forecast.
+
+Die Board-Werte im Abgleich stammen vom 16./17.11., bevor das letzte Paket hochgeladen war. Bitte nach der Übernahme den tatsächlichen Versionsstand nennen und die Differenzen nochmals prüfen.
+
+1. Auftragsvorrat und offene Wochenmenge
+Vorrat total am 17.11., Board / Excel:
+SEH 157’889 / 158’229
+TR5 60’986 / 61’088
+TX 52’214 / 51’449
+DW 49’101 / 48’851
+Bei TX beträgt die Differenz im Gesamtvorrat und in allen drei Monatsfenstern +765 Stück. Offene Wochenmenge TX 4’675 statt 3’573, DW 2’511 statt 2’047. Bitte mit identischer SAP-Selektion, Datenstichtag und Abrufzeit vergleichen und die abweichenden Aufträge ausweisen. Für den ZC22-Abgleich bitte das vollständige Layout /P00 TX berücksichtigen und mir deine Cockpit-Werte mit Stichtag und Selektion schicken.
+
+2. Tagesziele und Produktion
+Im Excel stehen bei TR5 und DW je 800 Stück Tagesziel, bei TX 1’300. Im Board fehlen die Ziele; dadurch zeigt TR5 am 17.11. eine Abweichung von 814 statt 14 Stück. Bitte die Ziele übernehmen bzw. ihre Pflege sicherstellen und fehlende Ziele nicht als null verrechnen.
+TR5-Produktion stimmt an beiden Tagen, DW DL790 und DLQ72 am 16.11. ebenfalls. SEH zeigt am 16.11. 2’699 statt 3’024 Stück im Excel. Wo das Excel am 17.11. noch leer ist, leiten wir keinen Fehler ab.
+
+3. PPD und Terminverschiebungen
+Beim Verzug bestehen weiterhin Differenzen, und die Terminverschiebungen sind im Board leer, obwohl das Excel Werte hat. Bitte Ursachen und fehlende Anbindungen getrennt ausweisen. Für Rückstandsliste und PPD gilt dieselbe Offen-/Abgeschlossen-Regel über einen eindeutigen Abschlussstatus: Erledigte und stornierte Positionen zählen nicht mehr offen; Widersprüche zum Abschlussdatum bleiben bis zur Bereinigung gekennzeichnet.
+
+4. Rückstandslisten / Umstellung
+Die aktuelle Shopfloor-Excel-Datei bleibt bis zur Umstellung am 01.01.2027 die führende Grundlage und kann bis dahin periodisch eingelesen werden. Bitte den aktuellen Stand als Basis verwenden. Die auffälligen Einträge gleichen wir Ende Jahr und nochmals vor Go-live mit der Dispo ab; zunächst bitte gegen das aktuelle Excel prüfen.
+
+5. Termine VF / WE
+Beispiel Material 58613, Kundenauftrag 419371/10: MD04 zeigt den Bedarfstermin 27.11.; im Verkaufsbeleg stehen für die bestätigten 50 Stück Bereitstellung 04.12. und Lieferung 08.12. Im Excel stehen Eckend- und Wunschtermin auf 27.11. Bei den zwei Planaufträgen unterscheiden sich Auftragsendtermin und MD04-Datum (25.11. / 27.11. für 45 Stück, 30.11. / 02.12. für 5 Stück, je WE-Bearbeitungszeit 2). Bitte anhand dieses Beispiels das genaue Mapping und die Behandlung mehrerer Plan-/Fertigungsaufträge zurückmelden. Die Bezeichnung «Bestätigter Liefertermin (VF)» ist bis dahin nicht abschliessend.
+
+6. TX-Mengen
+Schichtmodell monatlich wählbar, mit manuellen Anpassungen für einzelne Wochen oder Tage. Die Nachtschicht 23:00–06:00 zählt zum Starttag. Halbe Stückzahlen aus der hälftigen Aufteilung der Stunde 14–15 Uhr nicht runden. Beim Abruf beachten, dass die Nachtschicht erst am Folgetag um 06:00 vollständig ist.
+Arbeitskalender: bitte den tatsächlichen Trafag-Kalender mit Feiertagen und Betriebsschliessungen verwenden; nur den 1. und 2. Januar anzunehmen reicht nicht.
+
+7. FPY / MES
+Für TX gilt Michaels Report mit EAP1_1 bis EAP3_3 ohne EAP1_9 und EAP2_6 und dem Wert «Avg Asictx». Bitte dessen Berechnung reproduzieren und gegen Pass/Anzahl prüfen; dazu ist von mir kein Entscheid mehr offen. FPY TR5 bleibt wie am 16.11. freigegeben. Für den MES-Zugang von Marco Di Menco habe ich noch keinen Termin; der Zugang inklusive Recht auf die Mengen-Prozedur bleibt Voraussetzung für TX-Mengen und beide FPY-Werte.
+
+8. Verkauf
+Am 17.11. zeigt das Board AE CHF 4’072’455 gegenüber CHF 4’081’847.40 im Excel und Umsatz IST CHF 3’514’315 gegenüber CHF 3’524’723.04; auch Transmitter, Umsatz DW und Tagesumsatz weichen ab, AE DW stimmt bis auf die Rundung. Bitte mit gleicher HZDAT-Abgrenzung und den jeweiligen Belegständen prüfen.
+Die Differenz vom 12.11. ist geklärt: CE11000, 1100, Vorgangsart A, Periode 011.2026, HZDAT bis 12.11. ergibt CHF 3’376’806.32; unsere alte Kontrolltabelle hatte CHF 3’372’899.64. Die Differenz von CHF 3’906.68 sind genau die CO-PA-Belege 3552602, 3552603, 3552604 und 3552607 vom 12.11. Eine Korrektur deiner AE-Gesamtsumme ist deshalb nicht nötig. Bitte AE TX für denselben Stichtag kontrollieren: SAP CHF 1’151’205.88, alte Kontroll-CSV CHF 1’147’421.02. AE DW ist unverändert CHF 1’381’146.94.
+KE30 vom 17.11., 16:16 zeigt für November AE netto CHF 4’326’690.09 und IST CHF 3’842’667.34; die Erlösformel stimmt. Beim erwarteten Monatsumsatz bleibt Fiori die Quelle; dort verlangen wir keine Gleichheit mit dem ZC23-Wert im Excel.
+
+9. Neu: Nächster Vorgang im Forecast (Dichtesensoren)
+Sergio möchte bei den Dichtesensoren im Forecast den nächsten Vorgang sehen, wie in der MD04 (Spalte «Nächster Vorgang», z. B. «0800 / DSQ72»). In der MD04 kommt der Wert aus dem User Exit EXIT_SAPMM61R_001 (Erweiterung M61X0002, Include ZXM61U01) in das Feld MDEZ-USEX1. Bitte im Forecast-Import je Fertigungsauftrag ein Feld naechster_vorgang mit genau diesem Wert mitliefern, am besten mit derselben Logik. Den Frontend-Patch 09 dafür lege ich bei; er zeigt die Spalte erst, wenn das Feld geliefert wird. Details in DS_Naechster_Vorgang.md.
+
+Die Online-Dokumentation ist laut deiner Rückmeldung nachgeführt, danke.
+
+Bitte gib mir je Punkt kurz zurück: nach Paketübernahme erledigt, noch abweichend mit Ursache, oder noch nicht umgesetzt.
+
+Gruss
+Fabio

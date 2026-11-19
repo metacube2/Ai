@@ -1215,3 +1215,55 @@ Material 1-99999 fuer TR5 und DW, DW ueber `D*`; Fenster ab 18.11. kumuliert ink
 
 Eine Vorschau um 07:40 (nur gelesen) lag schon leicht anders (z. B. TX Verzug 35, SEH Vorrat 159'118), weil SAP weiterlaeuft;
 fuer den Abgleich ZC22 und Cockpit im selben Moment ziehen oder ZC22 gegen den Stand 04:00 halten.
+
+## 27. Paket Fabio 19.11. (`Shopfloor_Paket_Ingo_2026-11-19.zip`): Messungen und Plan (Stand 2026-11-19 08:45)
+
+Anlass: Mail Fabio 19.11. 08:17 (an Ingo) mit Paket: Entscheide 17.11., Abgleich Board/Excel 16./17.11., SAP-Beispiel 58613, neuer
+Wunsch „Naechster Vorgang“ im Forecast der Dichtesensoren (Sergio) mit Frontend-Patch 09. Fabio will **je Punkt eine Rueckmeldung**
+(erledigt nach Paketuebernahme, noch abweichend mit Ursache, noch nicht umgesetzt). Abgelegt unter `docs/shopfloor_paket_2026-11-19/`
+(md, Mailtext, Patch 09, Kontrollsummen, Board-Bilder). **Nicht im Repo** (Kunden- oder Belegdaten, Original in Ingos Downloads):
+`PPA-Shop-Floor-File-2026_Version 1.04 (2).xlsx`, `CE11000_AE_1211_Pruefung_1711.txt`, `AE_Differenz_Belege_12-11.csv`,
+`Rueckstandslisten_Auffaellige_Eintraege_2026-11-17.xlsx`, SAP-Bilder 58613, KE30, MD04-Bilder Sergio. Auftrag Ingo „kannst du das paket
+abarbeiten“: Schritt 1 nur lesen und messen, Bau erst nach Go. Das Paket fasst die Teile vom 17.11. (Abschnitt 26) und den
+Board/Excel-Abgleich vom 18.11. zusammen; die Entscheide sind dieselben wie in 26.1.
+
+### 27.1 Versionsstand
+
+Produktiv seit 18.11. 17:57 `1417a3a`. **Shopfloor-Stand unveraendert seit dem Deploy 17.11. 14:36 (`32bf356`)**; danach kein
+Shopfloor-Code mehr. Die produktive `wwwroot/shopfloor/app.js` ist bitgleich mit dem Repo (SHA256 `32d9567c…`) und enthaelt Patch 08.
+Fabios Board-Werte vom 16./17.11. sind damit kein Vorstand eines noch fehlenden Pakets: Seit dem 17.11. ist nichts Neues fuer den
+Shopfloor eingespielt. Paket B (Abschnitt 26.5) ist nicht gebaut.
+
+### 27.2 Board-Werte produktiv gelesen (19.11. 08:35, nur GET `api/daily`, `api/sap/status`)
+
+Fabios Board-Zahlen vom 17.11. stimmen genau mit dem gespeicherten Board ueberein (z. B. TX Vorrat 52'214, offene KW 4'675, Verkauf
+AE 4'072'454.89). Die Vorratswerte des Tags D sind der SAP-Stichtag D 04:01; die Excel-Werte tragen die Teamleiter tagsueber ein.
+
+| Abteilung | Vorrat 17.11. / 18.11. / 19.11. | offene KW 17. / 18. / 19.11. | Verzug PPD 17. / 18. / 19.11. |
+| --- | --- | --- | --- |
+| SEH | 157'889 / 160'672 / 159'666 | 8'257 / 6'451 / 4'656 | 80 / 155 / 662 |
+| TR5 | 60'986 / 59'992 / 60'381 | 2'468 / 1'400 / 666 | 563 / 339 / 20 |
+| TX | 52'214 / 52'869 / 51'306 | 4'675 / 2'306 / 1'205 | 545 / 65 / 91 |
+| DW | 49'101 / 48'224 / 47'949 | 2'511 / 1'535 / 1'230 | 336 / 264 / 667 |
+
+Auffaellig: (1) Die PPD-Zeile vom 17.11. wurde um 16:36 vom Benutzer `fpa` gespeichert (nicht vom SAP-Lauf); die Verzugswerte des
+17.11. sind damit Handwerte oder von Hand bestaetigt. (2) Der Verzug springt am 18./19.11. stark (SEH 155 -> 662, TR5 339 -> 20,
+DW 264 -> 667); Ursache nicht geprueft. (3) Die Verkaufszeile vom 17.11. wurde am 18.11. 08:13 von `fpa` gespeichert.
+
+### 27.3 Befunde je Punkt (Ursache, soweit ohne P76 belegbar)
+
+| Punkt Fabio | Befund | Stand |
+| --- | --- | --- |
+| Vorrat TX +765 in allen Fenstern | gleiche Differenz in total, 3, 2 und 1 Monat: die Mehrmenge liegt in Auftraegen mit Eckendtermin bis 1 Monat (inkl. ueberfaellig). Board = Stichtag 04:01, Excel = Ablesung der Teamleiter; ein Auftragsvergleich ist nicht moeglich, weil das Board nur Summen speichert, keine Auftragsliste | abweichend, Ursache offen |
+| Offene KW TX/DW | gleiche Lage wie Vorrat | abweichend, Ursache offen |
+| Tagesziele TR5/TX/DW | `ziel` ist bei TR5, TX und DW ein **Handfeld** ohne Quelle (nur Excel-Import 05.10.); die Abweichung `abw` verlangt nur `prod` (`need: ["prod"]`), ein fehlendes Ziel zaehlt als 0 (TR5 17.11.: 814 statt 14) | noch nicht umgesetzt; Fix klein |
+| SEH Produktion 16.11. 2'699 statt 3'024 | Board = WE-Menge der Fertigungsauftraege mit Istendtermin 16.11. (`ShopProdSet`, 56 Auftraege, Stichtag 16.11. 17:07); Excel-Quelle nicht bekannt | abweichend, Ursache offen (P76) |
+| PPD-Verzug | Board SAP-Lauf (ShopAufSet Typ VZ); 17.11. von Hand gespeichert (siehe oben) | abweichend, Ursache offen |
+| Terminverschiebungen leer | `tv_*` stehen in keiner PPD-Zeile; sie kaemen aus den Rueckstandslisten (Patch 06), die seit dem Import vom 05.10. nicht nachgefuehrt sind | noch nicht umgesetzt (Paket B: Offen-Regel und Excel-Import) |
+| Rueckstandslisten | Excel bleibt bis 01.01.2027 fuehrend, periodischer Import erlaubt (26.1, 26.3) | noch nicht umgesetzt (Paket B) |
+| Termine VF/WE 58613 | in P76 am 17.11. gelesen, Mapping-Vorschlag in 26.6 | Rueckmeldung an Fabio faellig |
+| TX-Mengen, Schichtmodell | braucht MES-DB-User (Marco), Regeln in 26.1 | noch nicht umgesetzt (Paket C) |
+| Arbeitskalender | Kalender CH aus P76 gelesen (26.4), noch nicht eingebaut | noch nicht umgesetzt (Paket B) |
+| FPY TX/TR5 | MES-DB-User fehlt | noch nicht umgesetzt (Paket C) |
+| Verkauf 17.11. | Board AE 4'072'454.89 gegen Excel 4'081'847.40 (-9'392.51), Umsatz 3'514'314.84 gegen 3'524'723.04 (-10'408.20). Board-Tag 17.11. = HZDAT bis 16.11., gelesen 17.11. 04:01; vermutlich wie am 12.11. Belege mit HZDAT bis 16.11., die erst nach 04:01 gebucht wurden (nicht belegt, braucht CE11000 aus P76) | abweichend, Ursache vermutet |
+| Naechster Vorgang (neu) | Patch 09 gegen eine Kopie der produktiven `app.js` geprueft: Stelle genau 1x, Syntax ok, ohne Feld unveraendert. Backend: `OrderRows` (`ShopfloorSapSync.cs`) und `OrderFields` (`ShopfloorForecast.cs`) reichen kein Zusatzfeld durch; `ShopAufSet` liefert den Wert nicht. SAP-Seite (`ZXM61U01`) in T76 in Abklaerung | noch nicht umgesetzt |

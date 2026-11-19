@@ -1,0 +1,17 @@
+Shopfloor Patch 09 (19.11.2026): Forecast, Spalte «Nächster Vorgang»
+
+patches\09_forecast_naechster_vorgang.json
+  app.js, Funktion fcOrderTable: neue Spalte «Nächster Vorgang» in der Auftragsliste des Forecasts.
+  Die Spalte erscheint nur, wenn mindestens ein Auftrag das Feld naechster_vorgang hat.
+  Ohne dieses Feld im Backend bleibt die Ansicht genau wie heute.
+
+Aufruf
+  node apply_patch.js "<Pfad>\BiDashboard\shopfloor" --check, dann ohne --check; Strg+F5
+  (Patches 01-08 sind schon drin und werden übersprungen, wenn der Ordner patches nur 09 enthält.)
+
+Getestet 19.11.2026
+  - Gegen die produktive app.js vom 19.11.2026 (mit Patch 08): Stelle genau 1x gefunden, Syntax ok (Browser-Engine).
+  - Darstellung: ohne Feld 7 Spalten wie bisher; mit Feld 8 Spalten, Wert sichtbar, Planauftrag ohne Wert mit leerer Zelle.
+  - Nicht getestet: Lauf mit Node und Anzeige im echten Board.
+
+Backend: siehe ..\DS_Naechster_Vorgang.md
