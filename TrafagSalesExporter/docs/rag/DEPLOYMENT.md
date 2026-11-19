@@ -104,7 +104,7 @@ Klammern stammen aus `docs/rag/LEARNINGS.md`). Vorher standen Befehl, Vorschritt
   `.tmp_deploy_2026-11-19_lieferantenbewertung.log` („Commit 7ae22c2“) und `…lieferantenbewertung2.log` („Commit 7b2ff9f“): bitgleich,
   zehn Routen 200; Alarme nur `-wal`/`-shm` (alle DBs) und „geschuetzte Datei veraendert“ (Checkpoint), Hauptdatenbank mit `-wal`/`-shm`
   wieder da. Im Chrome geprueft (EINKAUF_SITZUNG 6.8). Der erste Seitenaufruf nach dem Neustart wartet ca. 50 s auf die Vorberechnung der
-  Einkauf-Standardansicht (Serverlog „vorberechnet in 50.7 s“). *Nachtrag 11:55: `d2f2edb` (Netzwerkpfade als Text statt `file://`) gemergt `1132862`, noch nicht deployed; geht mit dem naechsten Deploy mit.*
+  Einkauf-Standardansicht (Serverlog „vorberechnet in 50.7 s“). *Nachtrag 11:46: `d2f2edb` (Netzwerkpfade als Text statt `file://`) gemergt `1132862`, noch nicht deployed; geht mit dem naechsten Deploy mit.*
 - **Deploy 2026-11-19 09:03, Shopfloor Paket Fabio 19.11. (`591c96c`, Funktionscommit `d8217cb`).** Auftrag Ingo („kannst du das paket abarbeiten“, Bau freigegeben). Zweig `shopfloor-paket-1911` ab `1417a3a`, gemergt `591c96c`.
   Release-Worktree **1'652/1'652**. 09:02 kein Einkauf-Delta (Lauf 18.11. 19:29 fertig), Monitor offen, keine Sicherung. Protokoll `.tmp_deploy_2026-11-19_shopfloor-paket.log`: „Commit 591c96c“, zehn Routen 200, `app.js` bitgleich, Patch 09 drin.
   Alarme nur `-wal`/`-shm` (trafag_exporter, handbestellwesen, shopfloor), alle wieder da, und „geschuetzte Datei trafag_exporter.db veraendert“ (Checkpoint). *Der Protokollabsatz nennt wieder den alten Titel vom 12.11. und „1547/1547“; gezaehlt sind 1'652.* Inhalt und Pruefpunkte: `docs/SHOPFLOOR_2026-10-07.md` 27.4.
