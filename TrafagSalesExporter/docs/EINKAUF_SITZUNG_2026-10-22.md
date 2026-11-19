@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-19 11:45 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -314,3 +314,44 @@ auf genau der Menge des Spend-Aufrisses mit „Nur Einkaufsteile“ (Test: Summe
 Offen: Abnahme produktiv (Summe A+B+C gegen den Aufriss „Lieferant“ mit Schalter an, gleicher Zeitraum; im Browser nicht geprueft,
 Windows-Chrome nicht verbunden); Link an Einkauf und Armin (D13, Ingo); D1 „A umfasst mindestens 70 %“ von Armin bestaetigen lassen;
 Q2 (Schritt 5 ff., eigener SAP-Plan) und Liefertreue (nach 01.12.) noch nicht begonnen. Handbuch Kapitel Einkauf noch nicht nachgefuehrt.
+
+*Nachtrag 19.11.: Der Block steht seit dem 19.11. nicht mehr auf `/einkauf/lieferanten`, sondern auf dem eigenen Reiter
+`/einkauf/lieferantenbewertung` (Abschnitt 6.8).*
+
+### 6.8 Eigener Reiter „Lieferantenbewertung“ und Paket 2 produktiv (2026-11-19, deployed 11:31 `7ae22c2`, Nachzug 11:38 `7b2ff9f`)
+
+Auftrag Ingo 19.11. nach Armins Mail („bitte neues Registerblatt unter dem Einkauf einfuegen“; E1 Zeitraum aus dem Dashboard,
+E2 jederzeit, Uebersicht = zuletzt erstellt): „mache Lieferantenbewertung … setze alles um, ausser SAP-Score“.
+
+* **Reiter:** Menue Einkauf > „Lieferantenbewertung“ (`/einkauf/lieferantenbewertung`, Menueschluessel `purchasing-supplier-evaluation`,
+  Reihenfolge 52 nach „Lieferanten“). Oben die Klasse A/B/C (Paket 1, unveraendert, aus „Lieferanten“ hierher verschoben), darunter
+  der Eingabeteil. Zeitraum und Filter wie auf allen Einkaufsseiten.
+* **Paket 2 nach V6** (`Modules/Lieferantenbewertung/`), Unterreiter: **Uebersicht** (eine Zeile je Lieferant mit Eintraegen:
+  Klasse, Datum der juengsten Bewertung und Anzahl, Note je Themenfeld, schlechteste Zertifikatsampel, offene Massnahmen,
+  naechster geplanter Termin), **Bewertung** (sieben Themenfelder mit Unterkriterien aus V6, Skala 1/2/4/5 oder „nicht beurteilt“,
+  Feststellung je Feld; jede Speicherung ist eine neue datierte Bewertung, aeltere bleiben im Verlauf; juengste = hoechstes
+  Bewertungsdatum, bei Gleichstand zuletzt erfasst; kein Gesamtwert), **Zertifikate** (Typ/Norm, Nummer, vorhanden, gueltig bis,
+  Link, Bemerkung; Ampel abgelaufen / hoechstens 90 Tage / gueltig / fehlt), **Massnahmen** (Text, Verantwortung, Termin, Status
+  Offen/In Arbeit/Erledigt, ueberfaellig rot), **Reviews und Audits** (Business Review, Lieferanten-/Prozessaudit, Follow-up; Status
+  Geplant/Durchgefuehrt/Abgeschlossen; Ergebnis vierstufig; Zaehler Audits im laufenden Jahr), **Dokumente** (Typ, Datum,
+  Beschreibung, Link; das Dashboard speichert keine Dateien, nur Links auf die zentrale Ablage).
+* **Daten:** eigene SQLite-DB `lbdaten\lieferantenbewertung.db` auf dem Server (wie Handbestellwesen getrennt von
+  `trafag_exporter.db`, vom Deploy geschuetzt als `*.db`), Sicherung alle sechs Stunden geprueft, eine je Tag in `lbdaten\backup\`,
+  60 Tage. Schluessel ist die Lieferantennummer ohne fuehrende Nullen, der Name wird mitgespeichert.
+* **Rechte:** Lesen alle mit Zugang zum Einkauf; Schreiben nur Windows-Kurzzeichen in `Lieferantenbewertung:EditUsers`
+  (`appsettings.json`, heute nur `koi`) und entsperrte Admins; die Pruefung steht im Dienst, nicht nur in der Oberflaeche.
+  Notschalter `Lieferantenbewertung:Enabled`.
+* **Nicht enthalten:** SAP-Score und Preis (Diskussion Anfang Dezember), Q2-Meldungen je Lieferant (braucht ein neues Gateway-Set
+  in T76, eigener SAP-Plan), Liefertreue (nach 01.12.), Datei-Upload, Unterkriterien-Einzelnoten (V6 hat sie als Ergaenzung; heute
+  eine Note je Themenfeld plus Feststellung).
+* **Tests:** `LieferantenbewertungTests` (12: Ampel, Verlauf/juengste, Skala, Rechte, Anlegen/Aendern/Loeschen, Reiter und Menue),
+  Suite 1664/1664 im Arbeits- und im Release-Worktree.
+* **Produktiv geprueft (Chrome, 19.11. ~11:35):** Menue-Link da, Klasse A/B/C (258 Lieferanten im Zeitraum 2026-01 bis 2026-11) und
+  Eingabeteil sichtbar, „Bearbeiten erlaubt“ fuer `koi`, Lieferantensuche (Lecotronic AG, Klasse B), Bewertungsmaske mit den sieben
+  Feldern. Nichts gespeichert (keine Testdaten in der produktiven DB). Leere Einschaetzung zeigte kein „nicht beurteilt“; mit
+  `7b2ff9f` als Platzhalter nachgezogen. Erster Seitenaufruf nach dem Neustart wartete ca. 50 s auf die Vorberechnung der
+  Einkauf-Standardansicht (Serverlog „vorberechnet in 50.7 s“), danach normal.
+
+Offen: Schreibrecht fuer Einkauf/Qualitaet (Kurzzeichen von Armin, Marco u. a. in `EditUsers`, Ingo nennt sie); Link an Armin und
+Marco (Ingo); Q2 (eigener SAP-Plan), Liefertreue nach 01.12., SAP-Score/Preis nach der Diskussion Anfang Dezember; Handbuch
+Kapitel Einkauf.
