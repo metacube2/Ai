@@ -3,6 +3,7 @@
 @page "/einkauf/offene-bestellungen"
 @page "/einkauf/kontrakte"
 @page "/einkauf/lieferanten"
+@page "/einkauf/lieferantenbewertung"
 @page "/einkauf/aufriss"
 @page "/einkauf/ideen"
 @page "/einkauf/ideen/datenservice"
@@ -437,7 +438,12 @@
                            ChartRows="@SupplierChartRows"
                            StatusRows="@SupplierStatusRows"
                            DetailRows="@SupplierDetailRows" />
+        break;
+    case "lieferantenbewertung":
+        @* Eigener Reiter seit 2026-11-19 (Wunsch Armin „neues Registerblatt unter dem Einkauf“): Klasse A/B/C (Paket 1,
+           vorher auf /einkauf/lieferanten) und Eingabeteil Paket 2 (Modules/Lieferantenbewertung). *@
         <PurchasingSupplierClass Rows="@_liveState.SupplierEvoClassRows" />
+        <TrafagSalesExporter.Modules.Lieferantenbewertung.LieferantenbewertungPanel Lieferanten="@_liveState.SupplierEvoClassRows" />
         break;
     case "spend": // alte Route seit 2026-11-05 = Spend-Aufriss (Reiter Spend seit 28.10. ausgeblendet)
     case "aufriss":

@@ -1,0 +1,586 @@
+@using System.Globalization
+@using TrafagSalesExporter.Services
+@inject LbService Lb
+@inject IUiTextService UiText
+@inject IAdminAccessService AdminAccess
+@inject AuthenticationStateProvider AuthState
+@inject ISnackbar Snackbar
+
+@* Lieferantenbewertung Paket 2 (2026-11-19, Auftrag Ingo „setze alles um, ausser SAP-Score“, Grundlage V6 von Armin):
+   sieben Themenfelder mit Verlauf (Uebersicht = juengste Bewertung, Armin 18.11. E2), Zertifikate mit Ampel, Massnahmen,
+   Business Reviews/Audits, Dokument-Links. Eigene DB lbdaten/lieferantenbewertung.db, Schreibrecht Lieferantenbewertung:EditUsers.
+   Kein SAP-Score (Diskussion Anfang Dezember), keine Q2-Meldungen (braucht eigenes Gateway-Set), keine Liefertreue (nach 01.12.). *@
+
+@if (!Lb.Aktiv)
+{
+    return;
+}
+
+<MudPaper Class="pa-3 purchasing-section-shell mt-3" Outlined="true">
+    <MudText Typo="Typo.h6">@T("Lieferantenbewertung und -entwicklung", "Supplier evaluation and development")</MudText>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">
+        @T("Bewertung der sieben Themenfelder aus dem Supplier Rating Template (1 ungenügend, 2 Mindestanforderung, 4 gut, 5 sehr gut), jederzeit neu erfassbar; die Übersicht zeigt die jüngste Bewertung, ältere bleiben im Verlauf. Dazu Zertifikate, Massnahmen, Business Reviews, Audits und Dokument-Links. Kein Gesamtwert, keine Vermischung mit dem SAP-Score.",
+           "Rating of the seven topics from the supplier rating template (1 insufficient, 2 minimum requirement, 4 good, 5 very good), can be entered at any time; the overview shows the latest rating, older ones stay in the history. Plus certificates, measures, business reviews, audits and document links. No overall score, not mixed with the SAP score.")
+    </MudText>
+
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-2">
+        <MudAutocomplete T="LbLieferant" Label="@T("Lieferant (Nummer oder Name)", "Supplier (number or name)")" @bind-Value="_lieferant"
+                         SearchFunc="SucheLieferant" ToStringFunc="@(l => l is null ? null : $"{l.Name} ({l.Nr})")" MaxItems="40"
+                         ResetValueOnEmptyText="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                         AdornmentIcon="@Icons.Material.Filled.Search" Style="min-width:340px" />
+        @if (_lieferant is not null && !string.IsNullOrEmpty(_lieferant.Klasse))
+        {
+            <MudChip T="string" Size="Size.Small" Color="@KlassenFarbe(_lieferant.Klasse)">@T("Klasse", "Class") @_lieferant.Klasse</MudChip>
+        }
+        <MudSpacer />
+        @if (_darf)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Edit">@T("Bearbeiten erlaubt", "Editing allowed")</MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Visibility">@T("Nur lesen", "Read only")</MudChip>
+        }
+    </MudStack>
+
+    @if (_fehler is not null)
+    {
+        <MudAlert Severity="Severity.Error" Dense="true" Class="mb-2">@_fehler</MudAlert>
+    }
+
+    <MudTabs Elevation="0" Rounded="true" PanelClass="pt-3" @bind-ActivePanelIndex="_tab">
+        <MudTabPanel Text="@T("Übersicht", "Overview")">
+            @if (_uebersicht.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">@T("Noch keine Bewertungen oder Einträge erfasst.", "No ratings or entries recorded yet.")</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="_uebersicht" Dense="true" Hover="true" RowsPerPage="25" OnRowClick="@((TableRowClickEventArgs<LbUebersichtZeile> e) => Waehle(e.Item))" T="LbUebersichtZeile">
+                    <HeaderContent>
+                        <MudTh>@T("Klasse", "Class")</MudTh>
+                        <MudTh>@T("Nr.", "No.")</MudTh>
+                        <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                        <MudTh>@T("Bewertet am", "Rated on")</MudTh>
+                        @foreach (var f in LbKatalog.Themenfelder)
+                        {
+                            <MudTh Style="text-align:center"><span title="@f.Name">@Kurz(f.Name)</span></MudTh>
+                        }
+                        <MudTh>@T("Zertifikate", "Certificates")</MudTh>
+                        <MudTh Style="text-align:right">@T("Offene Massnahmen", "Open measures")</MudTh>
+                        <MudTh>@T("Nächster Termin", "Next date")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@Klasse(context.LieferantNr)</MudTd>
+                        <MudTd>@context.LieferantNr</MudTd>
+                        <MudTd>@context.LieferantName</MudTd>
+                        <MudTd>@(context.JuengsteBewertung is { } jb ? $"{Datum(jb.Datum)} ({context.AnzahlBewertungen})" : "–")</MudTd>
+                        @foreach (var f in LbKatalog.Themenfelder)
+                        {
+                            var note = context.JuengsteBewertung?.Zeilen.FirstOrDefault(z => z.Themenfeld == f.Name)?.Note;
+                            <MudTd Style="text-align:center"><span style="@NotenStil(note)">@(note?.ToString(CultureInfo.InvariantCulture) ?? "–")</span></MudTd>
+                        }
+                        <MudTd>@AmpelChip(context.Zertifikate)</MudTd>
+                        <MudTd Style="text-align:right">@context.OffeneMassnahmen</MudTd>
+                        <MudTd>@(context.NaechsterTermin is { } nt ? $"{Datum(nt.Datum)} {nt.Art}" : "–")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@T("Zeile anklicken wählt den Lieferanten für die anderen Reiter.", "Click a row to select the supplier for the other tabs.")</MudText>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Bewertung", "Rating")">
+            @if (_lieferant is null)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">@T("Oben einen Lieferanten wählen.", "Select a supplier above.")</MudAlert>
+            }
+            else
+            {
+                @if (_darf)
+                {
+                    <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-2">
+                        <MudDatePicker Label="@T("Bewertungsdatum", "Rating date")" @bind-Date="_bewDatum" DateFormat="dd.MM.yyyy" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:200px" />
+                        <MudTextField @bind-Value="_bewVerantwortlich" Label="@T("Verantwortlich", "Responsible")" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:260px" />
+                    </MudStack>
+                    <MudSimpleTable Dense="true" Hover="true" Class="mb-2">
+                        <thead><tr><th>@T("Themenfeld", "Topic")</th><th>@T("Unterkriterien", "Sub-criteria")</th><th style="width:190px">@T("Einschätzung", "Assessment")</th><th>@T("Feststellung", "Finding")</th></tr></thead>
+                        <tbody>
+                            @for (var i = 0; i < LbKatalog.Themenfelder.Count; i++)
+                            {
+                                var zeile = _bewZeilen[i];
+                                <tr>
+                                    <td><b>@LbKatalog.Themenfelder[i].Name</b></td>
+                                    <td style="font-size:12px">@LbKatalog.Themenfelder[i].Unterkriterien</td>
+                                    <td>
+                                        <MudSelect T="int?" @bind-Value="zeile.Note" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Placeholder="@T("nicht beurteilt", "not assessed")">
+                                            <MudSelectItem T="int?" Value="@((int?)null)">@T("nicht beurteilt", "not assessed")</MudSelectItem>
+                                            @foreach (var s in LbKatalog.Skala)
+                                            {
+                                                <MudSelectItem T="int?" Value="@((int?)s.Wert)">@s.Text</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </td>
+                                    <td><MudTextField @bind-Value="zeile.Feststellung" Lines="2" AutoGrow="true" Variant="Variant.Outlined" Margin="Margin.Dense" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SpeichereBewertung" Disabled="_speichert">
+                        @T("Bewertung speichern", "Save rating")
+                    </MudButton>
+                }
+
+                <MudText Typo="Typo.subtitle1" Class="mt-4 mb-1">@T("Verlauf", "History") – @_lieferant.Name</MudText>
+                @if (VerlaufAuswahl.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@T("Noch keine Bewertung.", "No rating yet.")</MudText>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true">
+                        <thead>
+                            <tr>
+                                <th>@T("Datum", "Date")</th><th>@T("Verantwortlich", "Responsible")</th>
+                                @foreach (var f in LbKatalog.Themenfelder)
+                                {
+                                    <th style="text-align:center"><span title="@f.Name">@Kurz(f.Name)</span></th>
+                                }
+                                <th>@T("Erfasst", "Recorded")</th><th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var b in VerlaufAuswahl)
+                            {
+                                <tr>
+                                    <td>@Datum(b.Datum)</td>
+                                    <td>@b.Verantwortlich</td>
+                                    @foreach (var f in LbKatalog.Themenfelder)
+                                    {
+                                        var z = b.Zeilen.FirstOrDefault(x => x.Themenfeld == f.Name);
+                                        <td style="text-align:center" title="@z?.Feststellung"><span style="@NotenStil(z?.Note)">@(z?.Note?.ToString(CultureInfo.InvariantCulture) ?? "–")</span></td>
+                                    }
+                                    <td style="font-size:12px">@b.ErfasstVon, @b.ErfasstAm.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture)</td>
+                                    <td>@LoeschKnopf("bew", b.Id, () => Loesche<LbBewertung>(b.Id))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@T("Feststellung: Maus über die Note halten.", "Finding: hover over the score.")</MudText>
+                }
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Zertifikate", "Certificates")">
+            @if (_darf && _lieferant is not null)
+            {
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-2">
+                    <MudSelect T="string" @bind-Value="_zert.Typ" Label="@T("Typ / Norm", "Type / standard")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px">
+                        @foreach (var t in LbKatalog.ZertifikatTypen) { <MudSelectItem T="string" Value="@t">@t</MudSelectItem> }
+                    </MudSelect>
+                    <MudTextField @bind-Value="_zert.Nummer" Label="@T("Nummer", "Number")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:160px" />
+                    <MudCheckBox T="bool" @bind-Value="_zert.Vorhanden" Label="@T("vorhanden", "available")" Dense="true" />
+                    <MudDatePicker Label="@T("Gültig bis", "Valid until")" Date="@ZuDatum(_zert.GueltigBis)" DateChanged="@(d => _zert.GueltigBis = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <MudTextField @bind-Value="_zert.Link" Label="@T("Link zur Ablage", "Link to storage")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:240px" />
+                    <MudTextField @bind-Value="_zert.Bemerkung" Label="@T("Bemerkung", "Remark")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:200px" />
+                    @SpeicherKnoepfe(_zert, () => Speichere(_zert, () => _zert = NeuesZertifikat()), () => _zert = NeuesZertifikat())
+                </MudStack>
+            }
+            @Hinweis()
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead><tr><th>@T("Lieferant", "Supplier")</th><th>@T("Typ / Norm", "Type / standard")</th><th>@T("Nummer", "Number")</th><th>@T("Gültig bis", "Valid until")</th><th>@T("Status", "Status")</th><th>@T("Bemerkung", "Remark")</th><th>@T("Link", "Link")</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var z in Gefiltert(_daten.Zertifikate).OrderBy(x => x.LieferantName).ThenBy(x => x.Typ))
+                    {
+                        <tr>
+                            <td>@z.LieferantName (@z.LieferantNr)</td><td>@z.Typ</td><td>@z.Nummer</td><td>@Datum(z.GueltigBis)</td>
+                            <td>@AmpelChip(LbKatalog.Ampel(z, Lb.Heute))</td><td>@z.Bemerkung</td><td>@LinkZelle(z.Link)</td>
+                            <td>@BearbeitenKnoepfe("zert", z.Id, () => _zert = Kopie(z), () => Loesche<LbZertifikat>(z.Id))</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Massnahmen", "Measures")">
+            @if (_darf && _lieferant is not null)
+            {
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-2">
+                    <MudTextField @bind-Value="_mass.Massnahme" Label="@T("Massnahme", "Measure")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:320px" />
+                    <MudTextField @bind-Value="_mass.Verantwortung" Label="@T("Verantwortung", "Responsibility")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:200px" />
+                    <MudDatePicker Label="@T("Termin", "Due date")" Date="@ZuDatum(_mass.Termin)" DateChanged="@(d => _mass.Termin = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <MudSelect T="string" @bind-Value="_mass.Status" Label="@T("Status", "Status")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:150px">
+                        @foreach (var s in LbKatalog.MassnahmeStatus) { <MudSelectItem T="string" Value="@s">@s</MudSelectItem> }
+                    </MudSelect>
+                    @SpeicherKnoepfe(_mass, () => Speichere(_mass, () => _mass = NeueMassnahme()), () => _mass = NeueMassnahme())
+                </MudStack>
+            }
+            @Hinweis()
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead><tr><th>@T("Lieferant", "Supplier")</th><th>@T("Massnahme", "Measure")</th><th>@T("Verantwortung", "Responsibility")</th><th>@T("Termin", "Due date")</th><th>@T("Status", "Status")</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var m in Gefiltert(_daten.Massnahmen).OrderBy(x => x.Status == "Erledigt").ThenBy(x => x.Termin ?? DateOnly.MaxValue))
+                    {
+                        var ueberfaellig = m.Status != "Erledigt" && m.Termin is { } t && t < Lb.Heute;
+                        <tr>
+                            <td>@m.LieferantName (@m.LieferantNr)</td><td>@m.Massnahme</td><td>@m.Verantwortung</td>
+                            <td style="@(ueberfaellig ? "color:var(--mud-palette-error);font-weight:600" : "")">@Datum(m.Termin)</td><td>@m.Status</td>
+                            <td>@BearbeitenKnoepfe("mass", m.Id, () => _mass = Kopie(m), () => Loesche<LbMassnahme>(m.Id))</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Reviews und Audits", "Reviews and audits")">
+            @if (_darf && _lieferant is not null)
+            {
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-2">
+                    <MudSelect T="string" @bind-Value="_term.Art" Label="@T("Art", "Type")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:180px">
+                        @foreach (var a in LbKatalog.TerminArten) { <MudSelectItem T="string" Value="@a">@a</MudSelectItem> }
+                    </MudSelect>
+                    <MudDatePicker Label="@T("Datum", "Date")" Date="@ZuDatum(_term.Datum)" DateChanged="@(d => _term.Datum = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <MudSelect T="string" @bind-Value="_term.Status" Label="@T("Status", "Status")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px">
+                        @foreach (var s in LbKatalog.TerminStatus) { <MudSelectItem T="string" Value="@s">@s</MudSelectItem> }
+                    </MudSelect>
+                    <MudSelect T="string" @bind-Value="_term.Ergebnis" Label="@T("Ergebnis", "Result")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:240px" Clearable="true">
+                        @foreach (var e in LbKatalog.AuditErgebnisse) { <MudSelectItem T="string" Value="@e">@e</MudSelectItem> }
+                    </MudSelect>
+                    <MudTextField @bind-Value="_term.Bemerkung" Label="@T("Bemerkung / Themen", "Remark / topics")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:260px" />
+                    @SpeicherKnoepfe(_term, () => Speichere(_term, () => _term = NeuerTermin()), () => _term = NeuerTermin())
+                </MudStack>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
+                    @T("Business Review in der Regel alle zwei Jahre, Follow-up nach etwa sechs Monaten. Audits angelehnt an VDA 6.3 als Diskussionsraster, keine offizielle Bewertung; Ziel 5 bis 10 Audits je Jahr.",
+                       "Business review usually every two years, follow-up after about six months. Audits based on VDA 6.3 as a discussion grid, not an official rating; target 5 to 10 audits per year.")
+                </MudText>
+            }
+            @Hinweis()
+            <MudText Typo="Typo.body2" Class="mb-1">@T("Audits im laufenden Jahr", "Audits this year"): @AuditsImJahr</MudText>
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead><tr><th>@T("Lieferant", "Supplier")</th><th>@T("Art", "Type")</th><th>@T("Datum", "Date")</th><th>@T("Status", "Status")</th><th>@T("Ergebnis", "Result")</th><th>@T("Bemerkung / Themen", "Remark / topics")</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var t in Gefiltert(_daten.Termine).OrderByDescending(x => x.Datum ?? DateOnly.MinValue))
+                    {
+                        <tr>
+                            <td>@t.LieferantName (@t.LieferantNr)</td><td>@t.Art</td><td>@Datum(t.Datum)</td><td>@t.Status</td><td>@t.Ergebnis</td><td>@t.Bemerkung</td>
+                            <td>@BearbeitenKnoepfe("term", t.Id, () => _term = Kopie(t), () => Loesche<LbTermin>(t.Id))</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Dokumente", "Documents")">
+            @if (_darf && _lieferant is not null)
+            {
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-2">
+                    <MudSelect T="string" @bind-Value="_dok.Typ" Label="@T("Typ", "Type")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:230px">
+                        @foreach (var t in LbKatalog.DokumentTypen) { <MudSelectItem T="string" Value="@t">@t</MudSelectItem> }
+                    </MudSelect>
+                    <MudDatePicker Label="@T("Datum", "Date")" Date="@ZuDatum(_dok.Datum)" DateChanged="@(d => _dok.Datum = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <MudTextField @bind-Value="_dok.Beschreibung" Label="@T("Beschreibung", "Description")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:240px" />
+                    <MudTextField @bind-Value="_dok.Link" Label="@T("Link (Pfad oder URL)", "Link (path or URL)")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:300px" />
+                    @SpeicherKnoepfe(_dok, () => Speichere(_dok, () => _dok = NeuesDokument()), () => _dok = NeuesDokument())
+                </MudStack>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
+                    @T("Das Dashboard speichert keine Dateien, nur den Link auf die zentrale Ablage; jeder öffnet nur, wofür er Rechte hat.",
+                       "The dashboard stores no files, only the link to the central storage; everyone opens only what they have rights for.")
+                </MudText>
+            }
+            @Hinweis()
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead><tr><th>@T("Lieferant", "Supplier")</th><th>@T("Typ", "Type")</th><th>@T("Datum", "Date")</th><th>@T("Beschreibung", "Description")</th><th>@T("Link", "Link")</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var o in Gefiltert(_daten.Dokumente).OrderByDescending(x => x.Datum ?? DateOnly.MinValue))
+                    {
+                        <tr>
+                            <td>@o.LieferantName (@o.LieferantNr)</td><td>@o.Typ</td><td>@Datum(o.Datum)</td><td>@o.Beschreibung</td><td>@LinkZelle(o.Link)</td>
+                            <td>@BearbeitenKnoepfe("dok", o.Id, () => _dok = Kopie(o), () => Loesche<LbDokument>(o.Id))</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudTabPanel>
+    </MudTabs>
+</MudPaper>
+
+@code {
+    /// <summary>Lieferanten mit Klasse aus dem gewaehlten Zeitraum (Klasse A/B/C darueber).</summary>
+    [Parameter] public IReadOnlyList<SupplierEvoClassRow> Lieferanten { get; set; } = [];
+
+    public sealed record LbLieferant(string Nr, string Name, string Klasse);
+
+    private sealed class ZeilenEingabe
+    {
+        public int? Note { get; set; }
+        public string Feststellung { get; set; } = "";
+    }
+
+    private LbDaten _daten = new([], [], [], [], []);
+    private List<LbUebersichtZeile> _uebersicht = [];
+    private LbBenutzer _benutzer = new("", false);
+    private bool _darf;
+    private bool _speichert;
+    private string? _fehler;
+    private int _tab;
+    private LbLieferant? _lieferant;
+    private string? _loeschFrage;
+    private Dictionary<string, string> _klassen = new(StringComparer.OrdinalIgnoreCase);
+
+    private DateTime? _bewDatum = DateTime.Today;
+    private string _bewVerantwortlich = "";
+    private List<ZeilenEingabe> _bewZeilen = LbKatalog.Themenfelder.Select(_ => new ZeilenEingabe()).ToList();
+
+    private LbZertifikat _zert = new();
+    private LbMassnahme _mass = new();
+    private LbTermin _term = new();
+    private LbDokument _dok = new();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Lb.Aktiv)
+            return;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var login = TrafagSalesExporter.Services.Forum.ForumUserDirectory.ShortName(state.User.Identity?.Name);
+        _benutzer = new LbBenutzer(login, AdminAccess.IsUnlocked);
+        _darf = Lb.DarfBearbeiten(_benutzer);
+        _bewVerantwortlich = login;
+        _zert = NeuesZertifikat(); _mass = NeueMassnahme(); _term = NeuerTermin(); _dok = NeuesDokument();
+        await LadeAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        _klassen = Lieferanten
+            .GroupBy(r => LbKatalog.NormalisiereNr(r.SupplierKey), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Class, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private async Task LadeAsync()
+    {
+        try
+        {
+            _daten = await Lb.LadeAsync();
+            _uebersicht = LbService.Uebersicht(_daten, Lb.Heute);
+            _fehler = null;
+        }
+        catch (Exception ex)
+        {
+            _fehler = T("Lieferantenbewertung konnte nicht geladen werden: ", "Supplier evaluation could not be loaded: ") + ex.Message;
+        }
+    }
+
+    private List<LbLieferant> AlleLieferanten()
+    {
+        var liste = new Dictionary<string, LbLieferant>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in Lieferanten)
+        {
+            var nr = LbKatalog.NormalisiereNr(r.SupplierKey);
+            liste.TryAdd(nr, new LbLieferant(nr, r.Name, r.Class));
+        }
+        foreach (var u in _uebersicht)
+            liste.TryAdd(u.LieferantNr, new LbLieferant(u.LieferantNr, u.LieferantName, ""));
+        return liste.Values.ToList();
+    }
+
+    private Task<IEnumerable<LbLieferant>> SucheLieferant(string? text, CancellationToken token)
+    {
+        var alle = AlleLieferanten();
+        IEnumerable<LbLieferant> treffer = string.IsNullOrWhiteSpace(text)
+            ? alle.OrderBy(l => l.Klasse == "" ? "Z" : l.Klasse).ThenBy(l => l.Name)
+            : alle.Where(l => l.Nr.Contains(text.Trim(), StringComparison.OrdinalIgnoreCase) || l.Name.Contains(text.Trim(), StringComparison.OrdinalIgnoreCase))
+                  .OrderBy(l => l.Name);
+        return Task.FromResult(treffer.Take(40));
+    }
+
+    private void Waehle(LbUebersichtZeile? z)
+    {
+        if (z is null) return;
+        _lieferant = new LbLieferant(z.LieferantNr, z.LieferantName, _klassen.GetValueOrDefault(z.LieferantNr, ""));
+        _tab = 1;
+    }
+
+    private IReadOnlyList<LbBewertung> VerlaufAuswahl => _lieferant is null
+        ? []
+        : _daten.Bewertungen.Where(b => b.LieferantNr == _lieferant.Nr)
+            .OrderByDescending(b => b.Datum).ThenByDescending(b => b.ErfasstAm).ToList();
+
+    private IEnumerable<TE> Gefiltert<TE>(IEnumerable<TE> liste) where TE : ILbEintrag
+        => _lieferant is null ? liste : liste.Where(x => x.LieferantNr == _lieferant.Nr);
+
+    private int AuditsImJahr => _daten.Termine.Count(t => t.Art != "Business Review" && t.Datum?.Year == Lb.Heute.Year);
+
+    private async Task SpeichereBewertung()
+    {
+        if (_lieferant is null) return;
+        _speichert = true;
+        try
+        {
+            var zeilen = LbKatalog.Themenfelder.Select((f, i) => new LbBewertungZeile
+            {
+                Themenfeld = f.Name,
+                Note = _bewZeilen[i].Note,
+                Feststellung = _bewZeilen[i].Feststellung,
+            });
+            await Lb.NeueBewertungAsync(_benutzer, _lieferant.Nr, _lieferant.Name,
+                DateOnly.FromDateTime(_bewDatum ?? DateTime.Today), _bewVerantwortlich, zeilen);
+            _bewZeilen = LbKatalog.Themenfelder.Select(_ => new ZeilenEingabe()).ToList();
+            Snackbar.Add(T("Bewertung gespeichert.", "Rating saved."), Severity.Success);
+            await LadeAsync();
+        }
+        catch (Exception ex) when (ex is ArgumentException or UnauthorizedAccessException)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+        finally
+        {
+            _speichert = false;
+        }
+    }
+
+    private async Task Speichere<TE>(TE eintrag, Action zuruecksetzen) where TE : class, ILbEintrag
+    {
+        if (_lieferant is null) return;
+        if (eintrag.Id == 0 || string.IsNullOrWhiteSpace(eintrag.LieferantNr))
+        {
+            eintrag.LieferantNr = _lieferant.Nr;
+            eintrag.LieferantName = _lieferant.Name;
+        }
+        try
+        {
+            await Lb.SpeichereAsync(_benutzer, eintrag);
+            zuruecksetzen();
+            Snackbar.Add(T("Gespeichert.", "Saved."), Severity.Success);
+            await LadeAsync();
+        }
+        catch (Exception ex) when (ex is ArgumentException or UnauthorizedAccessException)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+    }
+
+    private async Task Loesche<TE>(int id) where TE : class
+    {
+        try
+        {
+            await Lb.LoescheAsync<TE>(_benutzer, id);
+            _loeschFrage = null;
+            await LadeAsync();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+    }
+
+    private LbZertifikat NeuesZertifikat() => new() { Typ = "ISO 9001", Vorhanden = true };
+    private LbMassnahme NeueMassnahme() => new() { Status = LbKatalog.MassnahmeOffen, Verantwortung = _benutzer.Login };
+    private LbTermin NeuerTermin() => new() { Art = "Business Review", Status = "Geplant" };
+    private LbDokument NeuesDokument() => new() { Typ = "Zertifikat", Datum = DateOnly.FromDateTime(DateTime.Today) };
+
+    private static LbZertifikat Kopie(LbZertifikat z) => new() { Id = z.Id, LieferantNr = z.LieferantNr, LieferantName = z.LieferantName, Typ = z.Typ, Nummer = z.Nummer, Vorhanden = z.Vorhanden, GueltigBis = z.GueltigBis, Link = z.Link, Bemerkung = z.Bemerkung };
+    private static LbMassnahme Kopie(LbMassnahme m) => new() { Id = m.Id, LieferantNr = m.LieferantNr, LieferantName = m.LieferantName, Massnahme = m.Massnahme, Verantwortung = m.Verantwortung, Termin = m.Termin, Status = m.Status };
+    private static LbTermin Kopie(LbTermin t) => new() { Id = t.Id, LieferantNr = t.LieferantNr, LieferantName = t.LieferantName, Art = t.Art, Datum = t.Datum, Status = t.Status, Ergebnis = t.Ergebnis, Bemerkung = t.Bemerkung };
+    private static LbDokument Kopie(LbDokument o) => new() { Id = o.Id, LieferantNr = o.LieferantNr, LieferantName = o.LieferantName, Typ = o.Typ, Datum = o.Datum, Beschreibung = o.Beschreibung, Link = o.Link };
+
+    private static DateTime? ZuDatum(DateOnly? d) => d?.ToDateTime(TimeOnly.MinValue);
+    private static DateOnly? VonDatum(DateTime? d) => d is { } x ? DateOnly.FromDateTime(x) : null;
+    private static string Datum(DateOnly? d) => d?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "–";
+    private static string Kurz(string name) => name switch
+    {
+        "Resilience & Reliability" => "R&R",
+        "Procurement Costs" => "Cost",
+        "Environment & Compliance" => "E&C",
+        "Responsiveness" => "Resp",
+        "Sustainability" => "Sust",
+        "Technology" => "Tech",
+        "Quality" => "Qual",
+        _ => name,
+    };
+
+    private string Klasse(string nr) => _klassen.GetValueOrDefault(nr, "–");
+
+    private static Color KlassenFarbe(string k) => k switch { "A" => Color.Success, "B" => Color.Warning, "C" => Color.Info, _ => Color.Default };
+
+    private static string NotenStil(int? note) => note switch
+    {
+        1 => "color:var(--mud-palette-error);font-weight:700",
+        2 => "color:var(--mud-palette-warning);font-weight:700",
+        4 or 5 => "color:var(--mud-palette-success);font-weight:700",
+        _ => "color:var(--mud-palette-text-secondary)",
+    };
+
+    private RenderFragment AmpelChip(LbZertifikatAmpel? a) => __builder =>
+    {
+        if (a is null)
+        {
+            <span>–</span>
+            return;
+        }
+        var (farbe, text) = a.Value switch
+        {
+            LbZertifikatAmpel.Gueltig => (Color.Success, T("gültig", "valid")),
+            LbZertifikatAmpel.LaeuftAb => (Color.Warning, T("läuft ab (≤ 90 Tage)", "expires (≤ 90 days)")),
+            LbZertifikatAmpel.Abgelaufen => (Color.Error, T("abgelaufen", "expired")),
+            _ => (Color.Error, T("fehlt", "missing")),
+        };
+        <MudChip T="string" Size="Size.Small" Color="@farbe" Variant="Variant.Outlined">@text</MudChip>
+    };
+
+    private RenderFragment LinkZelle(string link) => __builder =>
+    {
+        if (string.IsNullOrWhiteSpace(link))
+        {
+            <span>–</span>
+            return;
+        }
+        var href = link.StartsWith(@"\\", StringComparison.Ordinal) ? "file:" + link.Replace('\\', '/') : link;
+        <a href="@href" target="_blank" rel="noopener" title="@link">@T("öffnen", "open")</a>
+    };
+
+    private RenderFragment Hinweis() => __builder =>
+    {
+        if (_lieferant is not null)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1">@T("Gefiltert auf", "Filtered to") @_lieferant.Name. @T("Lieferant oben leeren zeigt alle.", "Clear the supplier above to show all.")</MudText>
+        }
+        else if (_darf)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1">@T("Zum Erfassen oben einen Lieferanten wählen.", "Select a supplier above to add entries.")</MudText>
+        }
+    };
+
+    private RenderFragment SpeicherKnoepfe(ILbEintrag e, Func<Task> speichern, Action abbrechen) => __builder =>
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" OnClick="speichern">
+            @(e.Id == 0 ? T("Hinzufügen", "Add") : T("Änderung speichern", "Save change"))
+        </MudButton>
+        @if (e.Id != 0)
+        {
+            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="abbrechen">@T("Abbrechen", "Cancel")</MudButton>
+        }
+    };
+
+    private RenderFragment BearbeitenKnoepfe(string art, int id, Action bearbeiten, Func<Task> loeschen) => __builder =>
+    {
+        if (!_darf) return;
+        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Title="@T("Bearbeiten", "Edit")" OnClick="() => { bearbeiten(); }" />
+        @LoeschKnopf(art, id, loeschen)
+    };
+
+    private RenderFragment LoeschKnopf(string art, int id, Func<Task> loeschen) => __builder =>
+    {
+        if (!_darf) return;
+        var schluessel = $"{art}:{id}";
+        if (_loeschFrage == schluessel)
+        {
+            <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" OnClick="loeschen">@T("Wirklich löschen", "Really delete")</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _loeschFrage = null">@T("Nein", "No")</MudButton>
+        }
+        else
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" Title="@T("Löschen", "Delete")" OnClick="() => _loeschFrage = schluessel" />
+        }
+    };
+}
