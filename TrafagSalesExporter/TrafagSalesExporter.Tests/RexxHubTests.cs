@@ -972,7 +972,7 @@ public sealed class RexxHubTests : IDisposable
         Assert.Equal(["request_id", "items_per_page", "(+1 nicht angezeigt)"], g.MetaSchluessel);
         Assert.Equal(["self"], g.LinksSchluessel);
         Assert.Equal((4, 500), (g.ZeilenErsteSeite, g.ZeilenJeSeiteLautMeta!.Value));
-        Assert.Contains(g.Hinweise, x => x.StartsWith("Zeitraum von #775 nicht bestaetigt", StringComparison.Ordinal));
+        Assert.Contains(g.Hinweise, x => x.StartsWith("Zeitraum der Summen „angetreten“ nicht bestaetigt", StringComparison.Ordinal));
         var f = report.Abfragen[1];
         Assert.False(f.Ok);
         Assert.Contains("ohne erkennbare Kopfzeile", f.Fehler);
@@ -1129,5 +1129,173 @@ public sealed class RexxHubTests : IDisposable
         Assert.Contains(fromApi.AbsenceCases, x => x.Personalnummer == "00001004" && x.Abwesenheitsart == "0100");
         Assert.Equal(-2.25m, fromApi.Employees.First().StundenSaldo);
         Assert.Equal(Snapshot(fromHand), Snapshot(fromApi));
+    }
+
+    // ---- Seit 2026-11-19: Gesamtdatei ueber GET v1/employees (NOTES 16), #777 nicht ueber den Hub ----
+
+    /// <summary>Optionen wie in appsettings.json seit 2026-11-19, nur ohne Schalter.</summary>
+    private static RexxHubOptions EmployeesOptions()
+    {
+        var options = Options();
+        options.GesamtPathTemplate = "v1/employees";
+        options.CaseEnabled = false;
+        options.PageParameter = "page";
+        options.QueryParameters["page"] = "1";
+        options.ColumnMap["personalnummer"] = "Personalnummer";
+        options.ColumnMap["stelle"] = "Stelle";
+        options.ColumnMap["krankheit_angetreten_zeitraum"] = "Krankheit angetreten (Zeitraum)";
+        return options;
+    }
+
+    [Fact]
+    public async Task Employees_Blaettert_Ueber_Links_Mit_Href_Und_Fuegt_Listen_Zusammen()
+    {
+        // Form wie live am 2026-11-19 gesehen: _links mit Objekten {href}, auf der letzten Seite "next": null; Werte erfunden.
+        var meta1 = new Dictionary<string, object?> { ["total_items"] = 3, ["items_per_page"] = 2, ["current_page"] = 1, ["total_pages"] = 2, ["request_id"] = "req-e-1" };
+        var meta2 = new Dictionary<string, object?> { ["total_items"] = 3, ["items_per_page"] = 2, ["current_page"] = 2, ["total_pages"] = 2, ["request_id"] = "req-e-2" };
+        var links1 = new Dictionary<string, object?>
+        {
+            ["self"] = null, ["first"] = new { href = BaseUrl + "v1/employees?page=1" }, ["last"] = new { href = BaseUrl + "v1/employees?page=2" },
+            ["prev"] = null, ["next"] = new { href = BaseUrl + "v1/employees?page=2" }
+        };
+        var links2 = new Dictionary<string, object?>
+        {
+            ["self"] = null, ["first"] = new { href = BaseUrl + "v1/employees?page=1" }, ["last"] = new { href = BaseUrl + "v1/employees?page=2" },
+            ["prev"] = new { href = BaseUrl + "v1/employees?page=1" }, ["next"] = null
+        };
+        var page1 = Envelope(
+        [
+            Row(("personalnummer", 1001), ("stelle", new[] { "Entwickler", "Projektleiter" })),
+            Row(("personalnummer", 1002), ("stelle", Array.Empty<string>()))
+        ], meta1, links1);
+        var page2 = Envelope([Row(("personalnummer", 1003), ("stelle", new[] { "Lernender" }))], meta2, links2);
+        var rexx = FakeRexx.Json(page1, page2);
+        var (client, _) = Client(rexx);
+
+        var result = await client.FetchQueryAsync(Connection, 775, EmployeesOptions().ForKind(gesamt: true));
+
+        Assert.Equal(
+            ["https://rexx.example.test/rexx_hub/v1/employees?page=1", "https://rexx.example.test/rexx_hub/v1/employees?page=2"],
+            rexx.Requests.Select(x => x.RequestUri!.AbsoluteUri).ToArray());
+        Assert.Equal(2, result.Pages);
+        Assert.Equal(3, result.Table.Rows.Count);
+        Assert.Contains("Personalnummer", result.Table.Columns);
+        Assert.Equal("Entwickler, Projektleiter", result.Table.Rows[0]["Stelle"]);
+        Assert.Null(result.Table.Rows[1]["Stelle"]);
+        Assert.Equal("Lernender", result.Table.Rows[2]["Stelle"]);
+    }
+
+    [Fact]
+    public void ForKind_Nimmt_Den_Pfad_Der_Abfrageart_Und_Laesst_Das_Original_Stehen()
+    {
+        var options = EmployeesOptions();
+
+        Assert.Equal("/rexx_hub/v1/employees", RexxHubClient.BuildFirstUri(new Uri(BaseUrl), 775, options.ForKind(gesamt: true)).AbsolutePath);
+        Assert.Equal("/rexx_hub/v1/datawarehouse/777", RexxHubClient.BuildFirstUri(new Uri(BaseUrl), 777, options.ForKind(gesamt: false)).AbsolutePath);
+        Assert.Equal("v1/datawarehouse/{0}", options.PathTemplate);
+        // QueryParameters page=1 und PageParameter page: die naechste Seite ersetzt page, statt es anzuhaengen.
+        Assert.Equal("?page=2", RexxHubClient.WithQuery(new Uri(BaseUrl + "v1/employees?page=1"), "page", "2").Query);
+    }
+
+    [Fact]
+    public void Normalize_Schreibt_ISO_Daten_In_Zeitraum_Spalten_Ins_Schweizer_Format()
+    {
+        var table = new RexxHubTable();
+        table.Append(new RexxHubTable());
+        table.AddColumn("Krankheit angetreten (Zeitraum)");
+        table.AddColumn("Eintrittsdatum");
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Zeitraum)"] = "2026-01-05 - 2026-01-09", ["Eintrittsdatum"] = "2020-03-01" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Zeitraum)"] = "2026-02-03", ["Eintrittsdatum"] = "2021-04-01" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Zeitraum)"] = null, ["Eintrittsdatum"] = null });
+
+        RexxHubColumns.Normalize(RexxHubQueryKind.Gesamt, table);
+
+        Assert.Equal("05.01.2026 - 09.01.2026", table.Rows[0]["Krankheit angetreten (Zeitraum)"]);
+        Assert.Equal("03.02.2026", table.Rows[1]["Krankheit angetreten (Zeitraum)"]);
+        Assert.Null(table.Rows[2]["Krankheit angetreten (Zeitraum)"]);
+        Assert.Equal("2020-03-01", table.Rows[0]["Eintrittsdatum"]);
+        Assert.Equal((DateTime.Parse("2026-01-05", CultureInfo.InvariantCulture), DateTime.Parse("2026-01-09", CultureInfo.InvariantCulture)),
+            HrKpiDashboardBuilder.ParseRexxPeriod((string)table.Rows[0]["Krankheit angetreten (Zeitraum)"]!));
+    }
+
+    [Fact]
+    public async Task Ohne_CaseEnabled_Holt_Der_Tagesdienst_Nur_Die_Gesamtdatei()
+    {
+        var folder = Path.Combine(_root, "hrdata");
+        Directory.CreateDirectory(folder);
+        var gesamt = Envelope([GesamtApiRow(1001, "Aktiv")]);
+        var rexx = new FakeRexx((_, _) => FakeRexx.Ok(gesamt));
+        var log = new RecordingLog();
+        var options = EmployeesOptions();
+        options.ColumnMap.Clear();
+        var service = new RexxHubRefreshService(new FixedSource(), Client(rexx).Client, log, new Env(_root),
+            Microsoft.Extensions.Options.Options.Create(options),
+            Microsoft.Extensions.Options.Options.Create(new HrKpiDataSourceOptions()));
+
+        await service.RunDueAsync(new DateTime(2026, 11, 20, 6, 0, 0), CancellationToken.None);
+
+        var request = Assert.Single(rexx.Requests);
+        Assert.Equal("/rexx_hub/v1/employees", request.RequestUri!.AbsolutePath);
+        Assert.True(File.Exists(Path.Combine(folder, new HrKpiDataSourceOptions().GesamtFile)));
+        Assert.False(File.Exists(Path.Combine(folder, new HrKpiDataSourceOptions().RexxCaseFile)));
+        Assert.DoesNotContain(log.Entries, x => x.Message.Contains("#777"));
+    }
+
+    [Fact]
+    public void Appsettings_Stellt_Employees_Ein_Und_Schaltet_Den_Abruf_Ein()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        var configuration = new ConfigurationBuilder().AddJsonFile(path, optional: false).Build();
+        var options = new RexxHubOptions();
+        configuration.GetSection(RexxHubOptions.SectionName).Bind(options);
+
+        Assert.True(options.Enabled); // seit 2026-11-19 13:35 ein (Zeitraum gegen Handexport 04.11. geprueft, NOTES 17)
+        Assert.True(options.GesamtZeitraumGeprueft);
+        Assert.False(options.CaseEnabled);
+        Assert.Equal("v1/employees", options.GesamtPathTemplate);
+        Assert.Equal("page", options.PageParameter);
+        // Jede Pflichtspalte von #775 muss ueber die ColumnMap erreichbar sein, sonst schreibt der Abruf nie.
+        var mapped = options.ColumnMap.Values.ToHashSet(StringComparer.Ordinal);
+        Assert.All(RexxHubColumns.Gesamt.Where(c => c.Pflicht), c => Assert.Contains(c.Name, mapped));
+        // Arbeitszeitmodell fehlt im Handexport #775; der Leser setzte sonst „Vollzeit“ als FTE 1 vor die Sollzeit.
+        Assert.DoesNotContain("Arbeitszeitmodell", mapped);
+    }
+
+    [Fact]
+    public void Normalize_Behaelt_Bei_Doppelter_Personalnummer_Den_Juengsten_Eintritt()
+    {
+        var table = new RexxHubTable();
+        foreach (var c in new[] { "Personalnummer", "Eintrittsdatum", "Personal Status" })
+            table.AddColumn(c);
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = "1001", ["Eintrittsdatum"] = "2015-03-01", ["Personal Status"] = "Ausgeschieden" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = "1002", ["Eintrittsdatum"] = "2020-01-01", ["Personal Status"] = "Aktiv" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = "00001001", ["Eintrittsdatum"] = "2024-06-01", ["Personal Status"] = "Aktiv" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = null, ["Eintrittsdatum"] = "2024-06-01", ["Personal Status"] = "Aktiv" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Personalnummer"] = null, ["Eintrittsdatum"] = "2024-06-01", ["Personal Status"] = "Aktiv" });
+
+        Assert.Equal(1, RexxHubColumns.Normalize(RexxHubQueryKind.Gesamt, table));
+
+        Assert.Equal(4, table.Rows.Count);
+        var kept = Assert.Single(table.Rows, r => (string?)r["Personalnummer"] is "1001" or "00001001");
+        Assert.Equal("Aktiv", kept["Personal Status"]);
+        var check = RexxHubColumns.Check(RexxHubQueryKind.Gesamt, table, null, 0, 0, 0);
+        Assert.Equal(0, check.DoppeltePersonalnummern);
+    }
+
+    [Fact]
+    public void Sums_Rechnet_Stunden_Als_Dezimal_Und_Zahlen()
+    {
+        var table = new RexxHubTable();
+        table.AddColumn("Krankheit angetreten (Stunden)");
+        table.AddColumn("Ferien angetreten (Tage)");
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Stunden)"] = "8:30", ["Ferien angetreten (Tage)"] = 2.5m });
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Stunden)"] = "-1:15", ["Ferien angetreten (Tage)"] = "3" });
+        table.Rows.Add(new Dictionary<string, object?> { ["Krankheit angetreten (Stunden)"] = null, ["Ferien angetreten (Tage)"] = null });
+
+        var sums = RexxHubColumns.Sums(RexxHubQueryKind.Gesamt, table);
+
+        Assert.Equal(7.25m, sums["Krankheit angetreten (Stunden)"]);
+        Assert.Equal(5.5m, sums["Ferien angetreten (Tage)"]);
+        Assert.False(sums.ContainsKey("Urlaub Rest"));
     }
 }

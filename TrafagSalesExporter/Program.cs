@@ -49,6 +49,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddShopfloor(builder.Configuration);
 // Handbestellwesen 2026-10-22: Plugin-Modul, Schalter Handbestellwesen:Enabled, docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md.
 TrafagSalesExporter.Modules.Handbestellwesen.HbRegistration.AddHandbestellwesen(builder.Services, builder.Configuration);
+// Lieferantenbewertung 2026-11-19: Eingabeteil Paket 2, eigene DB lbdaten/, Schalter Lieferantenbewertung:Enabled.
+TrafagSalesExporter.Modules.Lieferantenbewertung.LbRegistration.AddLieferantenbewertung(builder.Services, builder.Configuration);
 
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient(nameof(ExchangeRateImportService));

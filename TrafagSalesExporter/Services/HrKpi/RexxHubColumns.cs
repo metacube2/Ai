@@ -358,6 +358,99 @@ public static class RexxHubColumns
 
     private static readonly Regex HoursPattern = new(@"^-?\d+(:\d{1,2}(:\d{1,2})?)?([.,]\d+)?$", RegexOptions.CultureInvariant);
     private static readonly Regex PeriodPattern = new(@"\d{2}\.\d{2}\.\d{4}", RegexOptions.CultureInvariant);
+    private static readonly Regex IsoDateInText = new(@"\b(\d{4})-(\d{2})-(\d{2})\b", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Gleicht Werte an den Handexport an, bevor geprueft und geschrieben wird. Seit 2026-11-19 (GET v1/employees, NOTES 16):
+    /// die Spalten „… angetreten (Zeitraum)“ kommen mit ISO-Daten („2026-01-05“ oder „2026-01-05 - 2026-01-09“), der Leser
+    /// <c>HrKpiDashboardBuilder.ParseRexxPeriod</c> erkennt nur „05.01.2026“. ISO-Daten in diesen Texten werden umgeschrieben,
+    /// alles andere bleibt. Datumsspalten bleiben ISO, die liest der Schreiber ohnehin als Datum.
+    /// </summary>
+    /// <returns>Anzahl der Zeilen, die als zweite Zeile derselben Personalnummer entfernt wurden (nur Gesamtdatei).</returns>
+    public static int Normalize(RexxHubQueryKind kind, RexxHubTable table)
+    {
+        var periodColumns = For(kind).Where(c => c.Kind == RexxHubColumnKind.Zeitraum)
+            .SelectMany(c => new[] { c.Name }.Concat(c.Aliases))
+            .Where(table.Columns.Contains)
+            .ToList();
+        foreach (var row in table.Rows)
+        {
+            foreach (var column in periodColumns)
+            {
+                if (row.TryGetValue(column, out var value) && value is string text && IsoDateInText.IsMatch(text))
+                    row[column] = IsoDateInText.Replace(text, m => $"{m.Groups[3].Value}.{m.Groups[2].Value}.{m.Groups[1].Value}");
+            }
+        }
+        return kind == RexxHubQueryKind.Gesamt ? KeepLatestEmployment(table) : 0;
+    }
+
+    /// <summary>
+    /// Seit 2026-11-19: GET v1/employees liefert eine Person mit zwei Arbeitsverhaeltnissen (Wiedereintritt) zweimal, der Handexport
+    /// #775 nur einmal (am 19.11. 1 von 396 Zeilen, im Handexport vom 04.11. keine). Bleibt die Zeile mit dem juengsten
+    /// Eintrittsdatum, bei Gleichstand die erste; sonst zaehlte der Headcount doppelt und die Pruefung verwarf den ganzen Abruf.
+    /// </summary>
+    private static int KeepLatestEmployment(RexxHubTable table)
+    {
+        const string pernrColumn = "Personalnummer";
+        const string entryColumn = "Eintrittsdatum";
+        if (!table.Columns.Contains(pernrColumn))
+            return 0;
+        DateTime Entry(Dictionary<string, object?> row)
+            => row.TryGetValue(entryColumn, out var v) && v is string s && RexxHubWorkbook.TryParseDate(s.Trim(), out var d) ? d : DateTime.MinValue;
+        var drop = new HashSet<Dictionary<string, object?>>(ReferenceEqualityComparer.Instance);
+        foreach (var group in table.Rows.Where(r => !IsEmpty(r.GetValueOrDefault(pernrColumn)))
+                     .GroupBy(r => Text(r, pernrColumn).TrimStart('0'))
+                     .Where(g => g.Count() > 1))
+        {
+            var keep = group.Select((row, index) => (row, index)).OrderByDescending(x => Entry(x.row)).ThenBy(x => x.index).First().row;
+            foreach (var row in group.Where(r => !ReferenceEquals(r, keep)))
+                drop.Add(row);
+        }
+        table.Rows.RemoveAll(drop.Contains);
+        return drop.Count;
+    }
+
+    /// <summary>
+    /// Spaltensummen der Zahl- und Stundenspalten (Stunden „hh:mm“ als Dezimalstunden), fuer den Testabruf: so laesst sich der
+    /// Zeitraum der Summen „angetreten“ gegen einen Handexport pruefen, ohne Werte einzelner Personen zu zeigen.
+    /// </summary>
+    public static Dictionary<string, decimal> Sums(RexxHubQueryKind kind, RexxHubTable table)
+    {
+        var sums = new Dictionary<string, decimal>(StringComparer.Ordinal);
+        foreach (var column in For(kind).Where(c => c.Kind is RexxHubColumnKind.Zahl or RexxHubColumnKind.Stunden))
+        {
+            var name = new[] { column.Name }.Concat(column.Aliases).FirstOrDefault(table.Columns.Contains);
+            if (name is null)
+                continue;
+            decimal sum = 0;
+            foreach (var row in table.Rows)
+            {
+                if (row.GetValueOrDefault(name) is not { } value)
+                    continue;
+                if (value is decimal d)
+                    sum += d;
+                else if (column.Kind == RexxHubColumnKind.Stunden && TryHours(Convert.ToString(value, CultureInfo.InvariantCulture) ?? "", out var h))
+                    sum += h;
+                else if (RexxHubWorkbook.TryParseNumber(Convert.ToString(value, CultureInfo.InvariantCulture) ?? "", out var n))
+                    sum += n;
+            }
+            sums[column.Name] = Math.Round(sum, 2);
+        }
+        return sums;
+    }
+
+    internal static bool TryHours(string text, out decimal hours)
+    {
+        hours = 0;
+        var t = text.Trim();
+        var negative = t.StartsWith('-');
+        var parts = t.TrimStart('-').Split(':');
+        if (parts.Length < 2 || !int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var h) ||
+            !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var m))
+            return false;
+        hours = (h + m / 60m) * (negative ? -1 : 1);
+        return true;
+    }
 
     /// <summary>
     /// Erkennt ein Wert das Format, das der Leser erwartet? Gleiche Regeln wie beim Schreiben (<see cref="RexxHubWorkbook"/>):
