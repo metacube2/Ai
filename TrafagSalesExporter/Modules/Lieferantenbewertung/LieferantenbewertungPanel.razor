@@ -535,8 +535,16 @@
             <span>–</span>
             return;
         }
-        var href = link.StartsWith(@"\\", StringComparison.Ordinal) ? "file:" + link.Replace('\\', '/') : link;
-        <a href="@href" target="_blank" rel="noopener" title="@link">@T("öffnen", "open")</a>
+        // Nur http(s) als Link. Netzwerkpfade (\\server\..., O:\...) blockiert der Browser von einer https-Seite aus
+        // („file://“ wird nicht geoeffnet); sie stehen als markierbarer Text da, zum Kopieren in den Explorer.
+        if (LbKatalog.IstWebLink(link))
+        {
+            <a href="@link.Trim()" target="_blank" rel="noopener" title="@link">@T("öffnen", "open")</a>
+        }
+        else
+        {
+            <span style="user-select:all;font-family:monospace;font-size:12px" title="@T("Pfad kopieren und im Explorer öffnen", "Copy the path and open it in Explorer")">@link</span>
+        }
     };
 
     private RenderFragment Hinweis() => __builder =>

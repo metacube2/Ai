@@ -54,6 +54,16 @@ public sealed class LieferantenbewertungTests : IDisposable
     public void Lieferantennummer_Ohne_Fuehrende_Nullen(string roh, string erwartet)
         => Assert.Equal(erwartet, LbKatalog.NormalisiereNr(roh));
 
+    [Theory]
+    [InlineData("https://trafag.sharepoint.com/sites/einkauf/iso.pdf", true)]
+    [InlineData("http://intranet/x", true)]
+    [InlineData(@"\\trafagch.local\daten\MSE\iso.pdf", false)]
+    [InlineData(@"O:\MSE\iso.pdf", false)]
+    [InlineData("file://server/x.pdf", false)]
+    [InlineData("", false)]
+    public void Nur_Web_Adressen_Werden_Als_Link_Angeboten(string link, bool erwartet)
+        => Assert.Equal(erwartet, LbKatalog.IstWebLink(link));
+
     [Fact]
     public void Sieben_Themenfelder_Und_Skala_Ohne_Drei()
     {
