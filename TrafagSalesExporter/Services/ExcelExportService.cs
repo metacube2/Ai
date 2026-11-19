@@ -183,7 +183,7 @@ public class ExcelExportService : IExcelExportService
         WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(),
             (currency, year) => ResolveChfRate(currency, year, chfRateMode), LoadGroupMarginCostCurrencyMode(), ResolveCrossRate,
             LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode(),
-            LoadForeignProcurementMaterialKeys(), LoadMarcForeignProcurementMode());
+            LoadForeignProcurementMaterialKeys(), LoadMarcForeignProcurementMode(), LoadMaterialMappings());
         return fullPath;
     }
 
@@ -312,14 +312,16 @@ public class ExcelExportService : IExcelExportService
         string? supplierFallbackMode = null,
         string? internalSupplierCostSourceMode = null,
         IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
-        string? marcForeignProcurementMode = null)
+        string? marcForeignProcurementMode = null,
+        MaterialMappingLookup? materialMappings = null)
     {
         using var workbook = new XLWorkbook();
         var financeRows = BuildFinanceProofRows(records, financeRules);
         var divisionRows = BuildDivisionProofRows(financeRows);
+        // Mapping-Tabelle seit 2026-11-19 auch im Nachweis, damit er mit Sales_All und Cockpit gleich rechnet.
         var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate,
             groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode,
-            foreignProcurementMaterialKeys, marcForeignProcurementMode);
+            foreignProcurementMaterialKeys, marcForeignProcurementMode, materialMappings);
         var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         AddProofDataLineageSheet(workbook, records, financeRows, fileDate, useAuditCsvAsCentralSource);
