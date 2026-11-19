@@ -103,13 +103,28 @@ public sealed class ShopfloorSapSync : BackgroundService
             var orders = await ReadAsync(client, baseUrl, OrderSet,
                 $"Werks eq '{options.SapPlant}' and Datum eq '{from:yyyyMMdd}'", ct);
             var until = from.AddDays(Math.Clamp(options.ForecastDays, 1, 60));
+            // Vorrat (Typ VR) mit naechstem Vorgang (Avo eq 'X') einmal lesen: liefert dem Forecast den „Naechsten Vorgang“ wie MD04
+            // (Paket Fabio 19.11.2026) und wird unten fuer den Vorrat wiederverwendet. Ein Fehler hier stoppt den Forecast nicht.
+            List<JsonElement>? vorratRows = null;
+            if (options.SapVorratEnabled)
+            {
+                try
+                {
+                    vorratRows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(options.SapPlant, from, true), ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    _logger.LogWarning(ex, "Shopfloor: Vorrat mit naechstem Vorgang konnte nicht gelesen werden.");
+                }
+            }
+            var naechster = vorratRows is null ? null : ShopfloorSapVorrat.NaechsterVorgang(vorratRows);
 
             var push = new ShopfloorPush
             {
                 Items =
                 [
                     new JsonObject { ["module"] = "zd05", ["day"] = from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), ["rows"] = Zd05Rows(zd05) },
-                    new JsonObject { ["module"] = "planauftraege", ["rows"] = OrderRows(orders, until) }
+                    new JsonObject { ["module"] = "planauftraege", ["rows"] = OrderRows(orders, until, naechster) }
                 ]
             };
             var results = _stores.Store.ApplyPush(push, "SAP");
@@ -183,7 +198,7 @@ public sealed class ShopfloorSapSync : BackgroundService
             {
                 try
                 {
-                    LastResult["vorrat"] = await VorratCoreAsync(client, baseUrl, DateOnly.FromDateTime(DateTime.Today), true, ct);
+                    LastResult["vorrat"] = await VorratCoreAsync(client, baseUrl, from, true, ct, vorab: vorratRows);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
                 {
@@ -332,17 +347,20 @@ public sealed class ShopfloorSapSync : BackgroundService
     }
 
     private async Task<JsonObject> VorratCoreAsync(HttpClient client, string baseUrl, DateOnly day, bool write, CancellationToken ct,
-        bool ersetzen = false, ShopfloorLayoutFilter? layoutProbe = null)
+        bool ersetzen = false, ShopfloorLayoutFilter? layoutProbe = null, IReadOnlyList<JsonElement>? vorab = null)
     {
         var options = _options.CurrentValue;
         var layout = layoutProbe ?? options.Zc22Layout();
-        var rows = await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(options.SapPlant, day, layout.Vorgangsdaten), ct);
+        // vorab: im Abgleich schon mit Avo eq 'X' gelesen; die Zusatzfelder aendern die Summen nicht
+        var rows = vorab ?? await ReadAsync(client, baseUrl, OrderSet, ShopfloorSapVorrat.Filter(options.SapPlant, day, layout.Vorgangsdaten), ct);
         var result = ShopfloorSapVorrat.Compute(day, rows, options.MaterialFilterListe(), layout);
         result["ok"] = true;
         result["geschrieben"] = false;
         if (!write)
             return result;
         WriteStichtag(result, ersetzen);
+        result["auftragsliste"] = _stores.Store.SaveVorratAuftraege(day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ShopfloorSapVorrat.Auftraege(day, rows, options.MaterialFilterListe(), layout), ersetzen);
         _logger.LogInformation("Shopfloor: Auftragsvorrat aus SAP fuer {Day} geschrieben", (string)result["day"]!);
         return result;
     }
@@ -417,7 +435,7 @@ public sealed class ShopfloorSapSync : BackgroundService
     }
 
     /// <summary>ShopAufSet -> Planauftraege fuer den Forecast (Abteilung ueber den Disponenten, forecast.py).</summary>
-    internal static JsonArray OrderRows(IEnumerable<JsonElement> rows, DateOnly until)
+    internal static JsonArray OrderRows(IEnumerable<JsonElement> rows, DateOnly until, IReadOnlyDictionary<string, string>? naechsterVorgang = null)
     {
         var result = new JsonArray();
         foreach (var x in rows)
@@ -425,15 +443,20 @@ public sealed class ShopfloorSapSync : BackgroundService
             var day = IsoDate(Text(x, "Datum"));
             if (day.Length == 0 || string.CompareOrdinal(day, until.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)) > 0)
                 continue;
-            result.Add(new JsonObject
+            var auftrag = Text(x, "Aufnr").TrimStart('0');
+            var o = new JsonObject
             {
                 ["day"] = day,
-                ["auftrag"] = Text(x, "Aufnr").TrimStart('0'),
+                ["auftrag"] = auftrag,
                 ["material"] = Material(Text(x, "Matnr")),
                 ["menge"] = Int(x, "Menge"),
                 ["disponent"] = Text(x, "Dispo"),
                 ["arbeitsplatz"] = string.Empty
-            });
+            };
+            // nur Fertigungsauftraege (Typ FE); Planauftraege bleiben ohne Wert wie in der MD04
+            if (naechsterVorgang is not null && Text(x, "Typ") != "PA" && naechsterVorgang.TryGetValue(auftrag, out var nv))
+                o["naechster_vorgang"] = nv;
+            result.Add(o);
         }
         return result;
     }

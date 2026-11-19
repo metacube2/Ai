@@ -182,7 +182,7 @@ public static class SfJson
 }
 
 /// <param name="Sap">Feld-Mapping aus Shopfloor_SAP_Feldmapping.xlsx (Vorschlag, Ingos Angaben, Selektion, Status), sonst null.</param>
-public sealed record ShopfloorFieldDef(string Key, string Label, string Type, string Src, string? Unit, JsonObject? Sap = null);
+public sealed record ShopfloorFieldDef(string Key, string Label, string Type, string Src, string? Unit, JsonObject? Sap = null, string? Col = null);
 
 public sealed class ShopfloorModuleDef
 {
@@ -194,6 +194,9 @@ public sealed class ShopfloorModuleDef
     public string? StatusField { get; init; }
     public string? DueField { get; init; }
     public string? DateField { get; init; }
+    /// <summary>Blatt und Kopfzeile im Shopfloor-Excel der Teamleiter (fuer den Excel-Import, Paket Fabio 19.11.2026).</summary>
+    public string? Sheet { get; init; }
+    public int HeaderRow { get; init; }
     public List<string> Closed { get; init; } = [];
     public List<ShopfloorFieldDef> Fields { get; init; } = [];
 }
@@ -249,6 +252,8 @@ public sealed class ShopfloorConfig
                 StatusField = SfJson.GetString(mo, "status_field"),
                 DueField = SfJson.GetString(mo, "due_field"),
                 DateField = SfJson.GetString(mo, "date_field"),
+                Sheet = SfJson.GetString(mo, "sheet"),
+                HeaderRow = (int)(SfJson.AsDouble(mo["header_row"]) ?? 0),
                 Closed = Strings(mo["closed"]),
                 Fields = (mo["fields"] as JsonArray ?? []).OfType<JsonObject>().Select(f => new ShopfloorFieldDef(
                     SfJson.GetString(f, "key") ?? string.Empty,
@@ -256,7 +261,8 @@ public sealed class ShopfloorConfig
                     SfJson.GetString(f, "type") ?? string.Empty,
                     SfJson.GetString(f, "src") ?? "manuell",
                     SfJson.GetString(f, "unit"),
-                    f["sap"] as JsonObject)).ToList()
+                    f["sap"] as JsonObject,
+                    SfJson.GetString(f, "col"))).ToList()
             };
             ModuleList.Add(def);
             Modules[def.Key] = def;
@@ -314,6 +320,8 @@ public sealed class ShopfloorConfig
     {
         var s = (status ?? string.Empty).Trim().ToLowerInvariant();
         var list = mod is { Closed.Count: > 0 } ? mod.Closed : ClosedStatus;
-        return s.StartsWith("erl", StringComparison.Ordinal) || list.Contains(s);
+        // storniert / abgesagt zaehlen geschlossen (Entscheid Fabio 17.11.2026, auch Schreibweisen wie „Storno“)
+        return s.StartsWith("erl", StringComparison.Ordinal) || s.StartsWith("storn", StringComparison.Ordinal)
+               || s.StartsWith("abgesagt", StringComparison.Ordinal) || list.Contains(s);
     }
 }

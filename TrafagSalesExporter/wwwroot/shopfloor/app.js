@@ -123,7 +123,10 @@ function parseDateInput(s) {
   let y = m[3] ? Number(m[3]) : new Date().getFullYear(); if (y < 100) y += 2000;
   return `${y}-${String(m[2]).padStart(2, "0")}-${String(m[1]).padStart(2, "0")}`;
 }
-const isClosed = (st, m) => { const s = String(st || "").trim().toLowerCase(); return s.startsWith("erl") || ((m && m.closed) || S.cfg.closed_status).includes(s); };
+const isClosed = (st, m) => { const s = String(st || "").trim().toLowerCase(); return /^(erl|storn|abgesagt)/.test(s) || ((m && m.closed) || S.cfg.closed_status).includes(s); };
+/* 2026-11-19 (Entscheid Fabio 17.11.): offen/abgeschlossen nur nach dem Status. Abschlussdatum gesetzt, Status aber offen, ist ein
+   Widerspruch: bleibt offen und wird gekennzeichnet, bis die Dispo ihn bereinigt (nichts automatisch aufloesen). */
+const isWiderspruch = (m, r) => !!(m.status_field && r.data && r.data.abschluss && !isClosed(r.data[m.status_field], m));
 function statusClass(st, m) {
   const s = String(st || "").toLowerCase();
   if (!s) return "";
@@ -510,7 +513,9 @@ async function viewList(m, openNr) {
   $("#view").innerHTML = `
     <div class="head"><div class="grow"><h1>${esc(m.title)}</h1><p class="lede" id="listCount"></p></div>
       <button class="btn" data-export="${m.key}">Export (CSV)</button>
+      ${/^rs_/.test(m.key) ? `<label class="btn" style="cursor:pointer" title="Shopfloor-Excel der Teamleiter einlesen: Rückstandslisten und Tagesziele, mit Vorschau">Excel einlesen<input type="file" id="xlImp" accept=".xlsx" hidden></label>` : ""}
       <button class="btn primary" id="newBtn">+ Neuer Eintrag</button></div>
+    <div id="xlBox" hidden></div>
     <div class="listbar" id="listBar" hidden></div>
     <div class="toolbar">
       <input class="field-in search" id="q" type="search" placeholder="Suchen (Nr., Material, Kunde, Text …)" value="${esc(ls.q)}">
@@ -540,6 +545,7 @@ async function viewList(m, openNr) {
   const fd = $("[data-fdue]"); if (fd) fd.onchange = () => { ls.due = fd.value; renderListBody(m); };
   $("#fReset").onclick = () => { S.list[m.key] = null; history.replaceState(null, "", "#/m/" + m.key); viewList(m); };
   $("#newBtn").onclick = () => openRecord(m, null);
+  const xl = $("#xlImp"); if (xl) xl.onchange = () => { const f = xl.files[0]; xl.value = ""; if (f) xlImport(m, f, false); };
   $("#moreBtn").onclick = () => { ls.limit += 300; renderListBody(m); };
   renderListBody(m);
   if (openNr) { const r = S.cache[m.key].find(x => x.nr === decodeURIComponent(openNr)); if (r) openRecord(m, r); }
@@ -588,13 +594,15 @@ function renderListBody(m) {
     if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
     return String(x).localeCompare(String(y), "de", { numeric: true }) * dir;
   });
-  $("#listCount").innerHTML = `${total} Einträge${openCount != null ? ` · ${openCount} offen` : ""}${odCount ? ` · <span style="color:var(--alarm);font-weight:600">${odCount} überfällig</span>` : ""}${rows.length !== total ? ` · ${rows.length} angezeigt` : ""}`;
+  const widCount = sf ? (S.cache[m.key] || []).filter(r => isWiderspruch(m, r)).length : 0;
+  $("#listCount").innerHTML = `${total} Einträge${openCount != null ? ` · ${openCount} offen` : ""}${widCount ? ` · <span title="Abschlussdatum gesetzt, Status nicht abgeschlossen">⚠ ${widCount} Widerspruch</span>` : ""}${odCount ? ` · <span style="color:var(--alarm);font-weight:600">${odCount} überfällig</span>` : ""}${rows.length !== total ? ` · ${rows.length} angezeigt` : ""}`;
   $("#lh").innerHTML = `<tr><th data-s="_nr" class="${key === "_nr" ? "sorted" + (dir > 0 ? " asc" : "") : ""}">Nr.</th>${cols.map(f => `<th data-s="${f.key}" class="${key === f.key ? "sorted" + (dir > 0 ? " asc" : "") : ""}">${esc(f.label)}</th>`).join("")}</tr>`;
   $("#lh").querySelectorAll("th").forEach(th => th.onclick = () => { if (ls.sort === th.dataset.s) ls.dir *= -1; else { ls.sort = th.dataset.s; ls.dir = 1; } renderListBody(m); });
   const shown = rows.slice(0, ls.limit);
   $("#lb").innerHTML = shown.length ? shown.map(r => {
     const v = computeRecord(m, r.data); const od = isOverdue(m, r, today);
-    return `<tr data-id="${r.id}" class="${od ? "od" : ""}"><td class="nr">${esc(r.nr)}</td>${cols.map(f => cellHtml(f, v[f.key], f.key === m.due_field && isOverdue(m, r, today), today, m)).join("")}</tr>`;
+    const wid = isWiderspruch(m, r);
+    return `<tr data-id="${r.id}" class="${od ? "od" : ""}"><td class="nr">${esc(r.nr)}${wid ? ` <span class="wid" title="Abschlussdatum gesetzt, Status nicht abgeschlossen: zählt offen, bitte Status oder Datum bereinigen">⚠</span>` : ""}</td>${cols.map(f => cellHtml(f, v[f.key], f.key === m.due_field && isOverdue(m, r, today), today, m)).join("")}</tr>`;
   }).join("") : `<tr><td colspan="${cols.length + 1}" class="empty">${ls.q || ls.dept ? "Keine Treffer. Suche oder Filter anpassen." : "Noch keine offenen Einträge. Mit „+ Neuer Eintrag“ erfassen."}</td></tr>`;
   $("#lb").querySelectorAll("tr[data-id]").forEach(tr => tr.onclick = () => openRecord(m, S.cache[m.key].find(x => x.id === Number(tr.dataset.id))));
   $("#moreBtn").hidden = rows.length <= ls.limit;
@@ -824,6 +832,29 @@ async function viewDaily(m) {
    Offen = Status nicht erledigt/abgesagt/storniert (auch Tippfehler wie «erledgt»). Berechnet wird beim Öffnen von PPD,
    nur für den heutigen Tag, und im Tagesdatensatz gespeichert (Verlauf/Kacheln). Vortage bleiben unverändert.
    Einschalten ohne Code: in shopfloor_config.json beim Modul ppd "tv_from_rs": true (ohne Eintrag bleibt alles wie bisher, manuelle Erfassung). */
+/* ---------------------------------------------------------------- Excel der Teamleiter einlesen (Paket Fabio 19.11.2026)
+   Rückstandslisten und Tagesziele aus dem Shopfloor-Excel. Erst Vorschau, dann Übernahme; vorher sichert der Server die
+   Datenbank. Nichts wird gelöscht, eine leere Excel-Zelle leert kein Feld im Board. */
+async function xlPost(file, apply) {
+  const r = await fetch(`api/import/excel?apply=${apply ? 1 : 0}&datei=${encodeURIComponent(file.name)}`, {
+    method: "POST", headers: { "Content-Type": "application/octet-stream", "X-User": encodeURIComponent(S.user || "-") }, body: file });
+  if (!r.ok) { let msg = r.statusText; try { msg = (await r.json()).error || msg; } catch (e) { } throw new Error(msg); }
+  return r.json();
+}
+async function xlImport(m, file, apply) {
+  const box = $("#xlBox"); if (!box) return;
+  box.hidden = false; box.className = "tvinfo"; box.innerHTML = apply ? "Übernahme läuft …" : `Lese ${esc(file.name)} …`;
+  let v; try { v = await xlPost(file, apply); } catch (e) { box.innerHTML = `Excel konnte nicht gelesen werden: ${esc(e.message)}`; return; }
+  const li = (v.listen || []).map(l => `<tr><td>${esc(l.title)}</td><td class="n">${l.excel}</td><td class="n">${l.neu}</td><td class="n">${l.geaendert}${l.status_geaendert ? ` (Status ${l.status_geaendert})` : ""}</td><td class="n">${l.unveraendert}</td><td class="n">${l.nur_im_board}</td></tr>`).join("");
+  const zi = (v.ziele || []).map(z => `<tr><td>${esc(z.title)}, Tagesziel</td><td class="n">${z.tage}</td><td class="n">${z.neu}</td><td class="n">${z.geaendert}</td><td class="n">${z.unveraendert}</td><td></td></tr>`).join("");
+  box.innerHTML = `<b>${apply ? "Übernommen" : "Vorschau"}: ${esc(v.datei || file.name)}</b>
+    <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th></th><th class="r">im Excel</th><th class="r">neu</th><th class="r">geändert</th><th class="r">unverändert</th><th class="r">nur im Board (bleibt)</th></tr></thead><tbody>${li}${zi}</tbody></table></div>
+    <p class="muted" style="font-size:13px">${v.widersprueche ? `Nach der Übernahme ${v.widersprueche} Einträge mit Abschlussdatum, aber offenem Status (zählen offen, sind mit ⚠ markiert). ` : ""}Nichts wird gelöscht; leere Excel-Zellen ändern nichts.${v.sicherung ? ` Sicherung vorher: <code>${esc(v.sicherung)}</code>.` : ""}</p>
+    ${apply ? "" : `<button class="btn primary" id="xlGo">Übernehmen</button> <button class="btn" id="xlNo">Abbrechen</button>`}`;
+  if (apply) { S.cache = {}; toast("Excel übernommen"); await viewList(m); const b2 = $("#xlBox"); if (b2) { b2.hidden = false; b2.className = "tvinfo"; b2.innerHTML = box.innerHTML; } return; }
+  $("#xlGo").onclick = () => xlImport(m, file, true);
+  $("#xlNo").onclick = () => { box.hidden = true; box.innerHTML = ""; };
+}
 const TV_CLOSED = /^\s*(erl|abgesagt|storn)/i;
 let TV_INFO = null;
 function tvAutoOn(m) { return !!(m && m.key === "ppd" && m.tv_from_rs === true); }
@@ -835,9 +866,10 @@ async function syncTvFromRs(m) {
   try {
     for (const rm of tvRsMods()) {
       const k = "tv_" + rm.key.slice(3); if (!(m.fields || []).some(f => f.key === k)) continue;
-      const recs = await loadRecords(rm.key); let qty = 0, pos = 0;
-      (recs || []).forEach(r => { const d = r.data || {}; if (d.abschluss) return; /* offen = ohne Datum Abschluss, wie Filter «Offen» im Excel (Patch 06) */ const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });
-      changes[k] = qty; info.push({ k, dept: rm.dept || rm.key.slice(3).toUpperCase(), mod: rm.key, qty, pos });
+      const recs = await loadRecords(rm.key); let qty = 0, pos = 0, wid = 0;
+      /* offen = Status nicht abgeschlossen (Entscheid Fabio 17.11.2026; bis 19.11. nach leerem Abschlussdatum wie Patch 06) */
+      (recs || []).forEach(r => { const d = r.data || {}; if (isClosed(d[rm.status_field || "status"], rm)) return; if (isWiderspruch(rm, r)) wid++; const q = Number(d.menge_rs); if (q) { qty += q; pos++; } });
+      changes[k] = qty; info.push({ k, dept: rm.dept || rm.key.slice(3).toUpperCase(), mod: rm.key, qty, pos, wid });
     }
     TV_INFO = { at: new Date(), rows: info };
     const cur = ((S.daily.ppd || {})[day] || {}).data || {};
@@ -850,8 +882,8 @@ async function syncTvFromRs(m) {
 function tvInfoHtml() {
   if (!TV_INFO) return "";
   if (TV_INFO.err) return `Terminverschiebungen aus den Rückstandslisten konnten nicht berechnet werden: ${esc(TV_INFO.err)}`;
-  const t = TV_INFO.rows.map(r => `<a href="#/m/${r.mod}">${esc(r.dept)}</a> ${fmtNum(r.qty)} Stk. (${r.pos} Pos.)`).join(" · ");
-  return `<b>Terminverschiebungen</b> automatisch aus den Rückstandslisten, offene Positionen, Stand ${TV_INFO.at.toTimeString().slice(0, 5)}: ${t}`;
+  const t = TV_INFO.rows.map(r => `<a href="#/m/${r.mod}">${esc(r.dept)}</a> ${fmtNum(r.qty)} Stk. (${r.pos} Pos.${r.wid ? `, davon <span title="Abschlussdatum gesetzt, Status offen">${r.wid} mit Widerspruch</span>` : ""})`).join(" · ");
+  return `<b>Terminverschiebungen</b> automatisch aus den Rückstandslisten, offene Positionen nach Status, Stand ${TV_INFO.at.toTimeString().slice(0, 5)}: ${t}`;
 }
 /* ---------------------------------------------------------------- Ampel pro Bereich (2026-10-15)
    Teamleiter oder Stellvertretung setzen Grün / Orange / Rot plus Prozentwert und kurze Begründung.
@@ -1216,9 +1248,15 @@ async function viewSchema() {
     : (s.vorschlag_tabelle || s.vorschlag_feld ? `<i class="muted" title="Vorschlag, nicht geprüft">${esc(s.vorschlag_tabelle || "")}${s.vorschlag_feld ? " · " + esc(s.vorschlag_feld) : ""}</i>` : "");
   $("#view").innerHTML = `<div class="head"><div class="grow"><h1>Schnittstelle SAP / MES</h1>
     <p class="lede">Diese ${rows.length} Felder sind für die automatische Befüllung vorgesehen: ${nSap} aus SAP und ${nMes} aus dem MES (FPY und die TX-Mengen). Geliefert werden heute ${nGel} Felder aus SAP: Das Cockpit holt sie selbst über das SAP-Gateway, die Stichtagswerte im ersten Lauf des Tages um 04:00 Uhr. Die fachliche Abnahme dieser Werte ist noch offen. ${nDef} Felder haben eine Definition, sind aber noch nicht gebaut, ${nPruef} werden überprüft und ${nOffen} haben noch keine Quelle. Bis ein Feld geliefert wird, wird es von Hand erfasst. Externe Systeme können zusätzlich über <code>POST api/integration/push</code> liefern.</p>
-    <p class="muted" style="font-size:13px">Abteilungen werden über den Disponenten im Werk 1100 abgegrenzt: ${prefix}. Kursiv steht ein Vorschlag, der in SAP bzw. im MES noch nicht geprüft ist. Stand: 17.11.2026 (Paket Fabio 13.11., Ergänzung 17.11.).</p></div></div>
+    <p class="muted" style="font-size:13px">Abteilungen werden über den Disponenten im Werk 1100 abgegrenzt: ${prefix}. Kursiv steht ein Vorschlag, der in SAP bzw. im MES noch nicht geprüft ist. Stand: 19.11.2026 (Paket Fabio 13.11., Ergänzung 17.11., Paket 19.11.).</p>
+    <p class="muted" style="font-size:13px" id="vrListe">Auftragsliste des Vorrats je Stichtag (ShopAufSet Typ VR, Lauf 04:00, für den Abgleich mit ZC22): wird geladen …</p></div></div>
     <div class="tbl-wrap"><table class="schema"><thead><tr><th>Quelle</th><th>Modul</th><th>Feld</th><th>Technischer Name</th><th>Einheit</th><th>SAP-Tabelle · Feld</th><th>Selektion</th><th>Status</th><th>Bemerkung</th></tr></thead>
-    <tbody>${rows.map(({ m, f }) => { const s = f.sap || {}; return `<tr><td><span class="src ${f.planned_source}">${f.planned_source.toUpperCase()}</span></td><td>${esc(m.title)}</td><td>${esc(f.label)}</td><td><code>${esc(m.module)}.${esc(f.key)}</code></td><td>${esc(f.unit || "")}</td><td>${sapCell(s)}</td><td>${esc(s.selektion || "")}</td><td>${esc(s.status || "")}</td><td>${esc(s.bemerkung || "")}</td></tr>`; }).join("")}</tbody></table></div>`;
+    <tbody>${rows.map(({ m, f }) => { const s = f.sap || {}; return `<tr><td><span class="src ${f.planned_source}">${f.planned_source.toUpperCase()}</span></td><td>${esc(m.title)}</td><td>${esc(f.label)}</td><td><code>${esc(m.module)}.${esc(f.key)}</code></td><td>${esc(f.unit || "")}</td><td>${sapCell(s)}</td><td>${esc(s.selektion || "")}</td><td>${esc(s.status || "")}</td><td>${esc(s.bemerkung || "")}</td></tr>`; }).join("")}</tbody></table></div>`;
+  try {
+    const tage = await api("GET", "api/sap/vorrat/auftraege");
+    const el = $("#vrListe");
+    if (el) el.innerHTML = tage.length ? `Auftragsliste des Vorrats je Stichtag (ShopAufSet Typ VR, erster Lauf des Tages, alle Abteilungen, mit Fenster und Ausschlussgrund) als CSV: ${tage.slice(0, 10).map(t => `<a href="api/sap/vorrat/auftraege.csv?tag=${t.day}">${fmtDate(t.day)}</a>`).join(" · ")}${tage.length > 10 ? " …" : ""}` : "Auftragsliste des Vorrats je Stichtag: noch keine gespeichert (erster Lauf nach dem Deploy).";
+  } catch (e) { const el = $("#vrListe"); if (el) el.textContent = ""; }
 }
 
 document.addEventListener("click", e => {
@@ -1793,8 +1831,10 @@ function fcRenderDetail(c) {
 }
 function fcOrderTable(list) {
   const shown = list.slice(0, 300);
-  return `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Tag</th><th>Auftrag</th><th>Material</th><th>Kurztext</th><th class="r">Menge</th><th>Disponent</th><th>Arbeitsplatz</th></tr></thead><tbody>
-    ${shown.map(o => `<tr><td>${WD[parseIso(o.day).getDay()]} ${fmtDate(o.day).slice(0, 6)}</td><td class="tab">${esc(o.auftrag || "")}</td><td><b>${esc(o.material || "")}</b></td><td>${esc(o.text || "")}</td><td class="n">${fmtNum(Number(o.menge))}</td><td>${esc(o.disponent || "")}</td><td>${esc(o.arbeitsplatz || "")}</td></tr>`).join("")}
+  /* Patch 09 (2026-11-19): Spalte «Nächster Vorgang» (wie MD04, MDEZ-USEX1), sobald das Backend o.naechster_vorgang liefert */
+  const nv = list.some(o => o.naechster_vorgang);
+  return `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Tag</th><th>Auftrag</th><th>Material</th><th>Kurztext</th><th class="r">Menge</th><th>Disponent</th><th>Arbeitsplatz</th>${nv ? "<th>Nächster Vorgang</th>" : ""}</tr></thead><tbody>
+    ${shown.map(o => `<tr><td>${WD[parseIso(o.day).getDay()]} ${fmtDate(o.day).slice(0, 6)}</td><td class="tab">${esc(o.auftrag || "")}</td><td><b>${esc(o.material || "")}</b></td><td>${esc(o.text || "")}</td><td class="n">${fmtNum(Number(o.menge))}</td><td>${esc(o.disponent || "")}</td><td>${esc(o.arbeitsplatz || "")}</td>${nv ? `<td>${esc(o.naechster_vorgang || "")}</td>` : ""}</tr>`).join("")}
     </tbody></table></div>${list.length > shown.length ? `<p class="muted">… und ${list.length - shown.length} weitere</p>` : ""}`;
 }
 async function fcSavePlan(dept, day, k, v) {

@@ -223,7 +223,7 @@ Den **Auftragsvorrat** liefert SAP seit dem 09.11.2026 wie der Report ZC22 (offe
 
 ### Grenzen und Fallstricke
 
-Von Hand erfasste Werte gelten für den Vortag; die SAP-Mengen stehen auf dem Produktionstag (siehe oben). Ein Tagesziel, das niemand erfasst, macht Abweichung und Leistung leer. Felder, die später aus SAP kommen (zum Beispiel Auftragsvorrat), sind schon mit „SAP“ markiert, werden aber bis zur Freischaltung von Hand gepflegt; die Seite „Schnittstelle SAP / MES“ zeigt den Stand je Feld.
+Von Hand erfasste Werte gelten für den Vortag; die SAP-Mengen stehen auf dem Produktionstag (siehe oben). Ein Tagesziel, das niemand erfasst, macht Abweichung und Leistung leer (seit dem 19.11.2026 auch bei TR5, TX und DW: vorher zählte ein fehlendes Ziel als 0, und die Abweichung zeigte die ganze Tagesmenge). Die Tagesziele TR5, TX und DW kommen mit dem Einlesen des Shopfloor-Excels (Knopf „Excel einlesen“ in den Rückstandslisten) oder werden von Hand erfasst. Felder, die später aus SAP kommen (zum Beispiel Auftragsvorrat), sind schon mit „SAP“ markiert, werden aber bis zur Freischaltung von Hand gepflegt; die Seite „Schnittstelle SAP / MES“ zeigt den Stand je Feld.
 
 ## Shopfloor: Status Bereich (Ampel)
 
@@ -281,11 +281,13 @@ Je Position: Verkaufsnummer, Typencode, Kundenauftrag und Position, Kunde, Beste
 
 ### Wie gerechnet wird
 
-Jede Position bekommt eine Nummer (RS-Abteilung-Jahr-Nummer). Gezählt werden offene Positionen; überfällig ist eine Position, deren gültiger Termin vor heute liegt. Die Ursachenlisten (zum Beispiel Fehlmaterial, Ausschuss, Personalausfall, Engpass Ofenauslastung, Planungsfehler) und Verursacher (Einkauf, GFS, Trafag CZ, Logistik, Dispo, Qualität, Produktion und weitere) sind fest vorgegeben, damit sie sich auswerten lassen.
+Jede Position bekommt eine Nummer (RS-Abteilung-Jahr-Nummer). Offen oder abgeschlossen entscheidet seit dem 19.11.2026 allein der **Status** (Entscheid Fabio Palma vom 17.11.2026): erledigt, storniert und abgesagt zählen abgeschlossen. Eine Position mit Abschlussdatum, deren Status noch offen ist (zum Beispiel „FehlMat“), ist ein Widerspruch: Sie zählt offen und trägt ein ⚠ hinter der Nummer, bis die Disposition Status oder Datum bereinigt; die Kopfzeile zählt diese Widersprüche. Überfällig ist eine offene Position, deren gültiger Termin vor heute liegt. Die Ursachenlisten (zum Beispiel Fehlmaterial, Ausschuss, Personalausfall, Engpass Ofenauslastung, Planungsfehler) und Verursacher (Einkauf, GFS, Trafag CZ, Logistik, Dispo, Qualität, Produktion und weitere) sind fest vorgegeben, damit sie sich auswerten lassen.
 
 ### Einsatz im Arbeitsalltag
 
 **Disposition:** neue Rückstände erfassen, Ursache und Verursacher zuordnen und den neuen Termin nachführen. **Abteilungsleiter:** im Meeting die überfälligen Positionen durchgehen. **Leitung Operations:** im CSV-Export auswerten, welche Ursachen am häufigsten sind, und daraus Verbesserungsprojekte ableiten.
+
+**Excel einlesen (seit 19.11.2026):** Bis zum Go-live am 01.01.2027 bleibt das Shopfloor-Excel der Teamleiter führend. Der Knopf „Excel einlesen“ liest daraus alle vier Rückstandslisten und die Tagesziele TR5, TX und DW. Zuerst erscheint eine Vorschau je Liste (neu, geändert, unverändert, nur im Board); erst „Übernehmen“ schreibt, nachdem der Server die Datenbank gesichert hat. Es wird nichts gelöscht, und eine leere Excel-Zelle leert kein Feld im Board; steht im Excel ein Wert, gilt er.
 
 **Interpretation:** Eine dritte Terminverschiebung zeigt ein strukturelles Problem, das ein Kunde kaum noch akzeptiert. Häufen sich Fehlmaterial-Ursachen, liegt der Hebel im Einkauf; häufen sich Ausschuss oder Q-Freigabe, in der Qualität.
 
@@ -311,7 +313,7 @@ PPD ist die Drehscheibe zwischen Verkauf, Einkauf und Produktion. Die Seite zeig
 
 Total in Verzug ist die Summe SEH, TR5, TX und DW. Die Mengen in Verzug erscheinen auch auf den Abteilungsseiten. Seit dem 16.10.2026 zählt MTS nicht mehr zum Verzug.
 
-Die Terminverschiebungen SEH, TR5, TX und DW können seit dem 02.11.2026 automatisch aus den Rückstandslisten kommen: Summe der Menge im Rückstand aller offenen Positionen der jeweiligen Liste, berechnet beim Öffnen der Seite für den heutigen Tag. Die Felder sind dann schreibgeschützt und tragen die Marke „RS“, eine Zeile oben zeigt Menge und Anzahl Positionen je Abteilung. Die Automatik ist ausgeschaltet, bis die Disposition die Rückstandslisten im Dashboard pflegt; bis dahin werden die Terminverschiebungen von Hand erfasst. MTS bleibt immer manuell.
+Die Terminverschiebungen SEH, TR5, TX und DW kommen seit dem 19.11.2026 automatisch aus den Rückstandslisten (vorbereitet seit dem 02.11.2026): Summe der Menge im Rückstand aller offenen Positionen der jeweiligen Liste, offen nach dem **Status** wie in der Liste, berechnet beim Öffnen der Seite für den heutigen Tag. Die Felder sind dann schreibgeschützt und tragen die Marke „RS“, eine Zeile oben zeigt Menge, Anzahl Positionen und die Positionen mit Widerspruch je Abteilung. Vortage bleiben unverändert. MTS bleibt immer manuell. *Bis zum 19.11.2026 zählte eine Position ohne Abschlussdatum als offen; das ergab andere Zahlen als die Liste.*
 
 ### Einsatz im Arbeitsalltag
 
@@ -321,7 +323,7 @@ Die Terminverschiebungen SEH, TR5, TX und DW können seit dem 02.11.2026 automat
 
 ### Grenzen und Fallstricke
 
-Die Verzugsmengen sind für eine SAP-Lieferung vorgesehen, werden aber bis dahin von Hand erfasst. Die Terminverschiebungen werden von Hand gezählt, solange die Automatik aus den Rückstandslisten ausgeschaltet ist; danach stimmen sie nur, wenn die Rückstandslisten gepflegt sind.
+Die Verzugsmengen kommen aus SAP (seit dem 13.11.2026). Die Terminverschiebungen stimmen nur, wenn die Rückstandslisten gepflegt bzw. aus dem Excel eingelesen sind; die Liste stand vom 05.10. bis zum ersten Einlesen nach dem 19.11.2026 auf dem Stand des Excels vom 05.10.
 
 ## Shopfloor: PPA-Grafik und Forecast
 
@@ -335,7 +337,7 @@ Die PPA-Grafik zeigt Auftragsvorrat und produzierte Wochenmenge je Abteilung, be
 
 ### Wie gerechnet wird
 
-Die geplanten Mengen kommen aus den offenen Plan- und Fertigungsaufträgen in SAP für die nächsten 28 Tage, werktags um 04:00 und 12:45 Uhr. Die Abteilung ergibt sich aus dem Disponenten. Seit dem 16.10.2026 zählen zu DW nur die fertigen Dichtewächter (Disponenten D10 bis D40, DB1, DB2, DEF, DW2); die Dichtesensoren (DS1, DS2, DSN) sind eine eigene Zeile DS, und Rüstpapiere (DW1) sowie Nachschub (DL6) sind keiner Abteilung zugeordnet. Die Leistung pro Person und Tag ist der Median der letzten 40 Tage mit erfasster Produktion und Besetzung, sofern sie nicht von Hand eingestellt ist. Kapazität ist Besetzung mal Leistung, Auslastung ist geplante Menge geteilt durch Kapazität; 85 bis 105 % gilt als passend, darüber als überlastet, darunter als Reserve. Menge und Besetzung lassen sich pro Tag von Hand überschreiben.
+Die geplanten Mengen kommen aus den offenen Plan- und Fertigungsaufträgen in SAP für die nächsten 28 Tage, werktags um 04:00 und 12:45 Uhr. Die Abteilung ergibt sich aus dem Disponenten. Seit dem 16.10.2026 zählen zu DW nur die fertigen Dichtewächter (Disponenten D10 bis D40, DB1, DB2, DEF, DW2); die Dichtesensoren (DS1, DS2, DSN) sind eine eigene Zeile DS, und Rüstpapiere (DW1) sowie Nachschub (DL6) sind keiner Abteilung zugeordnet. Die Leistung pro Person und Tag ist der Median der letzten 40 Tage mit erfasster Produktion und Besetzung, sofern sie nicht von Hand eingestellt ist. Kapazität ist Besetzung mal Leistung, Auslastung ist geplante Menge geteilt durch Kapazität; 85 bis 105 % gilt als passend, darüber als überlastet, darunter als Reserve. Menge und Besetzung lassen sich pro Tag von Hand überschreiben. Die Auftragsliste zeigt seit dem 19.11.2026 bei Fertigungsaufträgen die Spalte **Nächster Vorgang** wie die MD04 („0800 / DSQ72“: Vorgang und Arbeitsplatz), Stand des letzten SAP-Abgleichs; Planaufträge haben keinen Wert.
 
 ### Einsatz im Arbeitsalltag
 

@@ -38,13 +38,13 @@ public static class ShopfloorSapVerkauf
         => LetzterArbeitstag(day).ToString("yyyyMM", CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// Letzter Arbeitstag vor <paramref name="day"/>: Mo bis Fr, ohne Neujahr (01.01.) und Berchtoldstag (02.01.). Annahme 2026-11-13,
-    /// mit Fabio zu bestaetigen; weitere Feiertage fallen nie auf einen Monatsanfang, der den Monat wechseln wuerde, oder sind offen.
+    /// Letzter Arbeitstag vor <paramref name="day"/> nach dem Fabrikkalender CH (<see cref="ShopfloorKalender"/>, seit 2026-11-19;
+    /// bis dahin Mo bis Fr ohne 01./02.01., Annahme vom 13.11., von Fabio nicht freigegeben).
     /// </summary>
     public static DateOnly LetzterArbeitstag(DateOnly day)
     {
         var d = day.AddDays(-1);
-        while (d.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday || (d.Month == 1 && d.Day <= 2))
+        while (!ShopfloorKalender.IstArbeitstag(d))
             d = d.AddDays(-1);
         return d;
     }
