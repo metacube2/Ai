@@ -300,3 +300,11 @@ Aufträge, seit 2012 bzw. 2024 unverändert). Format bei leerem Arbeitsplatz „
   ausgeschlossen).
 - Spaltentitel `text-ez1` (Textpool der Klasse) nicht gelesen; Fabio nennt „Nächster Vorgang“.
 - Laufzeit der Variante A in P76 und Zahl der FE-Zeilen im Forecast-Fenster in P76.
+
+## 8. Nachtrag 19.11. 10:15: P76 durch Fabio gelesen
+
+Fabio hat in P76 per SE16N gelesen: `SXC_ATTR` `ZZ_MD_ADD_COL_EZPS` ACTIVE = X (Definition `MD_ADD_COL_EZPS`, angelegt 2012);
+`MODACT` M61X0001 im Projekt `ZPP00006`, `MODATTR` `ZPP00006` STATUS = A; `MODACT` M61X0002 ohne Treffer. Damit gilt der Befund aus
+Abschnitt 0 auch fuer P76. Vorbehalt: Fabios eigene SAP-Learnings (19.11.) sagen, `MODACT` mit MEMBER-Filter habe auch bei einem
+wirkenden Exit 0 Treffer geliefert; die Aussage „M61X0002 in keinem Projekt“ ist deshalb schwach belegt. Fuer die MD04-Spalte
+spielt das keine Rolle. Der Quelltext von `Z_MD04_NEXT_OPERATION` in P76 ist nicht gelesen. Abnahme gegen die MD04: 20.11.

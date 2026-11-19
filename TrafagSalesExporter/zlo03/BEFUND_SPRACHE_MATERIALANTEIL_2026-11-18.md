@@ -1,6 +1,6 @@
 # ZLO03 / Materialanteil: Einkaufsteile ohne englischen Kurztext fehlten (Befund 2026-11-18)
 
-Stand: 2026-11-19 08:45 (**Prüfung produktiv bestanden**, Abschnitt 6a: 10.08.00 bei FP_DICHTESENS 273'028 CHF); davor 2026-11-18 18:05
+Stand: 2026-11-19 10:15 (Abschnitt 8: Antwortentwurf an Armin); davor 2026-11-19 08:45 (**Prüfung produktiv bestanden**, Abschnitt 6a: 10.08.00 bei FP_DICHTESENS 273'028 CHF); davor 2026-11-18 18:05
 (Korrektur 1 im Dashboard deployed 17:57, `1417a3a`; Einkauf-Lauf 18:01 gestartet). Auftrag Ingo 18.11. („schau mal ob Zusammenhang besteht, alte neue zlo03“, danach
 „mach 1“). T76/100 nur gelesen (SapProbe `table-read`), P76 nicht gelesen, in SAP nichts geändert.
 Zurück: `zlo03/CLAUDE.md`, `docs/rag/PURCHASING.md`.
@@ -131,3 +131,9 @@ bleibt ein Vorschlag (Absicherung), nicht dringend.
 - Mit welcher Anmeldesprache der technische Benutzer des Dashboards in P76 arbeitet, ist aus den Texten und Einheiten
   gefolgert, nicht in SU01 gelesen.
 - Grundlage von Armins Excel (Zeitraum, Auswahl der Nummern).
+
+## 8. Antwort an Armin (19.11., Entwurf)
+
+Antwort an Armin als Entwurf abgelegt: `Downloads\Mail_Armin_Materialanteil_Leiterplatten_2026-11-19.eml` (Betreff „AW: Dashboard -
+Materialanteil, Leiterplatten (10.08.00) fehlten, behoben“): Ursache, Korrektur, Tragweite (10,4 auf 29,7 Mio. CHF), Vergleichstabelle aus
+Abschnitt 6a, Frage nach Zeitraum und Auswahl seines Excel. Nicht gesendet; Ingo sendet selbst. In Outlook ist noch kein Entwurf angelegt.
