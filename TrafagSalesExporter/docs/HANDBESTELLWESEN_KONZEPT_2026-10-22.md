@@ -1,12 +1,14 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-18 10:32 (Abschnitt 6.14: Rueckmeldungen Sandro/Vinc in der klassischen Startansicht nachgezogen, Sortierung, Befund Limits; Commit `3c18493`, deployed 10:45 als `e316353`); davor 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
-`Schreiben` an, noch nicht ausgefuehrt: ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
+Stand: 2026-11-20 09:45 (Abschnitt 6.15: AD-Abgleich am 20.11. 09:08 ausgefuehrt, Nachpruefung produktiv; seit dem 22.10. praktisch keine Bestellung mehr im Tool, Stammdaten fuer Freigabe ueber CHF 1'000 weiter nicht gepflegt); davor 2026-11-18 10:32 (Abschnitt 6.14: Rueckmeldungen Sandro/Vinc in der klassischen Startansicht nachgezogen, Sortierung, Befund Limits; Commit `3c18493`, deployed 10:45 als `e316353`); davor 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
+`Schreiben` an, *ueberholt: am 20.11. 09:08 ausgefuehrt, siehe 6.15*; ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
 AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
 der juengste Inhalt war damals vom 2026-10-27).
 Status: **produktiv.** Das Modul ist seit dem 22.10. 13:38 deployed, die Altdaten sind am 22.10. 14:27 importiert (6.4), die
 PHP-Anwendung ist abgeschaltet und der Reiter seit dem 27.10. sichtbar (6.8). Offen: Zugriff und Grundtests der Anwender *(laut Ingo am 17.11. vom Einkauf, Sandro, abgenommen)*,
 Bereinigung, Rechnungsbetrag und Mail beim Wareneingang, Bestaetigung der Regeln durch den fachlichen Owner (6.8, 7).
+**Stand 20.11. (6.15):** AD-Abgleich ausgefuehrt; seit dem 22.10. wird praktisch nicht mehr im Tool bestellt (November: eine Bestellung),
+offene Bestellungen unveraendert 1'289; Freigabe ueber CHF 1'000 mangels gepflegter Limits und Leiter weiter nicht nutzbar.
 
 Davor 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
 Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** *(ueberholt, siehe Stand oben)* (Abschnitt 6). **Entscheid 22.10. (nach der Einkaufssitzung,
@@ -435,7 +437,7 @@ gelesen, nicht als Bild angesehen.
 8. Austritte: Sperrt die IT das AD-Konto am Austrittstag? Sonst bleibt die Person so lange aktiv; spaeter allenfalls Austritt aus
    dem Rexx Hub.
 
-### 6.12 Antworten Ingo und Teil 2 des AD-Abgleichs (2026-11-17 nachmittags, deployed, noch nicht ausgefuehrt)
+### 6.12 Antworten Ingo und Teil 2 des AD-Abgleichs (2026-11-17 nachmittags, deployed; *am 20.11. 09:08 ausgefuehrt, siehe 6.15*)
 
 **Antworten Ingo** auf die Frageliste im Chat (dort anders nummeriert als 6.11, hier nach Inhalt):
 
@@ -489,8 +491,8 @@ gedrueckt). 15 wuerden inaktiv, genau die 15 aus dem Protokoll von 11:30 (alle A
 12 offenen Bestellungen als Besteller). 94 Altbestand-Eintraege wuerden AD-Eintraege; keiner verliert dabei eine gefuellte Mail.
 Bei 10 aendert sich der Name: neun Schreibweisen (Umlaute, Akzente, Leerzeichen) oder ein neuer Nachname bei gleichem Vornamen,
 **einer ist eine andere Person**: Vor- und Nachname im AD stimmen nicht mit dem Altbestand ueberein, das Konto wurde offenbar neu
-vergeben. Ihn automatisch zu uebernehmen, schriebe die alten Bestellungen dieser Kurzzeichen der neuen Person zu. **Darum nicht
-ausgefuehrt; Entscheid Ingo offen.** Der Nachtlauf aendert vorerst nichts: der 17.11. ist mit dem gestoppten Lauf von 11:30
+vergeben. Ihn automatisch zu uebernehmen, schriebe die alten Bestellungen dieser Kurzzeichen der neuen Person zu. **Darum am
+17.11. nicht ausgefuehrt; Entscheid Ingo offen** *(ueberholt: Ingo hat am 20.11. 09:08 ausgefuehrt, 6.15)*. Der Nachtlauf aendert vorerst nichts: der 17.11. ist mit dem gestoppten Lauf von 11:30
 erledigt, und am 18.11. stoppt er wieder an der Grenze (15 > 10).
 
 ### 6.13 Stammdaten fuer alle Besteller, Freigabe ueber CHF 1'000 mit Rollen (2026-11-18, deployed 08:15 `f2c0267`)
@@ -548,6 +550,51 @@ waehlbar. Vincs Wunsch ist damit erst erfuellt, wenn die Limits der Kostenstelle
 Projektleiter-Haken gesetzt sind (Admin, Angaben vom Einkauf/Armin). Projektleiter-Haken waren um 10:20 nicht ausgewertet (die
 klassische Mitarbeiterliste zeigt die Spalte nicht).
 
+### 6.15 AD-Abgleich ausgefuehrt, Nachpruefung produktiv (2026-11-20, nur gelesen, kein Code, kein Deploy)
+
+Ingo hat am **20.11. 09:08** unter `/handbestellwesen/adabgleich` „Jetzt ausfuehren“ gedrueckt (Vorschau war vorher einmal angesehen;
+der Knopf erscheint erst unter der Tabelle, nur bei mindestens einer Aenderung). Danach Nachpruefung im Windows-Chrome (alle Seiten
+nur gelesen, nichts geaendert).
+
+**Ergebnis des Laufs** (Protokoll, Benutzer `koi`): 1'541 AD-Konten, 109 aktive Mitarbeitende: **15 deaktiviert, 0 wieder aktiv, 94 aus
+dem Altbestand uebernommen, 0 Namen/Mail nachgefuehrt.** Die 15 sind dieselben wie am 17.11. (ber, dao, fas, fda, gro, ico, kas, koa, laf,
+nod, ps, RFI, thu, WOI, zar; alle Altbestand, im AD gesperrt) und stehen im Reiter „Deaktivierte“ mit „inaktiv seit 20.11.2026 09:08“.
+Die Nachtlaeufe 18., 19. und 20.11. (06:23) sind wie vorgesehen an der Grenze 10 gestoppt, ohne etwas zu aendern; seither steht nichts mehr an.
+
+**Noch offen aus dem Lauf**
+
+- **12 offene Bestellungen** haengen an Inaktiven (ber 7, WOI 2, fas, gro, RFI je 1), Freigabe bei allen leer; Neuzuweisung durch einen Admin
+  im Reiter „Deaktivierte“. Die aeltesten sind von 2023/2024.
+- **Konto, das im AD einer anderen Person gehoert** (6.12): Der Lauf hat es vermutlich mit uebernommen, weil der Abgleich bei abweichendem
+  Namen nicht anhaelt. Kandidat nach der Mitarbeiterliste: `ran` heisst jetzt „Kendra borba“. **Nicht belegt**, im Dashboard gibt es keine
+  Protokollseite fuer Aenderungen am Mitarbeitereintrag; Lesen der Tabelle `Protokoll` in `hbdaten\handbestellwesen.db` waere der Weg.
+  Der Lauf meldet „0 Namen nachgefuehrt“, die Vorschau vom 17.11. hatte 10 vorhergesagt; ob sie unter den 94 mitgezaehlt sind, ist ungeklaert.
+- Die Leiter der Kostenstellen **250 (koa) und 700 (gro) sind jetzt inaktiv**; beide Kostenstellen haben keinen aktiven Leiter mehr.
+
+**Messung der Stammdaten (produktiv, 20.11. vormittags)**
+
+| Befund | Wert |
+| --- | --- |
+| Mitarbeitende mit Limit ueber CHF 1'000 | 2 von 109 (gun 7'000, pas 9'000), wie am 18.11. |
+| Kostenstellenleiter ohne Mitarbeitereintrag | 22 Kurzzeichen (heo, han, grj, kos, fam, haa, nip, noa, tur, krae, meu, luf, stm, lom, paa, voe, rju, tst, ple, glr, ham, waf) und bei 245 und 835 ein ausgeschriebener Name |
+| Leiter mit Eintrag, aber Limit 0 | hea (345), rad (772, 870, 875), hdi (830) |
+| Leiter mit Eintrag und Limit ueber 1'000 | nur gun (350, 900, 920) |
+| Mitarbeitende mit Kostenstelle | **12** von 109, davon 3 inaktiv (gro, kas, koa), also 9 aktive. *(In einer Chat-Antwort am 20.11. stand versehentlich 17; falsch, nachgezaehlt.)* |
+| Haken Wareneingang, Admin | bei **niemandem** gesetzt; Admin sind nur `koi` und `gun` ueber `Handbestellwesen:AdminUsers` |
+| Dashboard-Konto `koi` | hat keinen Mitarbeitereintrag, kann also nicht selbst bestellen |
+| Projektleiter-Haken | in keiner Liste sichtbar, nicht ausgewertet |
+
+**Nutzung (Kachel Nutzung, 01.01. bis 20.11.2026): 799 Bestellungen, CHF 635'361.98, 54 Personen.** Monatlich 52 bis 104 Bestellungen bis
+Oktober (Oktober 57, CHF 41'282); **im November eine einzige Bestellung ueber CHF 9.99** (vermutlich ein Test). Die letzte echte Bestellung
+der aktivsten Besteller ist vom 22.10. (Tag des Imports); bei den 15 aktivsten Bestellern stehen **0 Aufrufe** (die Aufruf-Protokollierung gibt es
+seit 22.10.). Offene Bestellungen: **1'289, CHF 1'206'006.02, wie am 22.10.**; seit dem Import ist kein Wareneingang gebucht und keine
+Bereinigung ausgefuehrt worden.
+
+**Einordnung:** Seit der Abschaltung der PHP-Anwendung (27.10.) und dem Start des neuen Moduls wird praktisch nicht mehr im Tool bestellt.
+Ob die Handbestellungen jetzt anderswo laufen (Mail, Excel, direkt beim Lieferanten) oder ob Besteller keinen Zugang haben bzw. die
+Adresse nicht kennen, laesst sich aus dem Dashboard nicht ablesen; das muss der Einkauf sagen. Dazu passt, dass die Rueckmeldungen von
+Sandro und Vinc vom 17./18.11. von einem Test und einer einzelnen Bestellung stammen. Offen gelassene Entscheide siehe Abschnitt 7.
+
 ## 7. Naechste Schritte
 
 1. ~~Dump pruefen und importieren~~ erledigt 22.10. (6.4). Offen: klaeren, ob nach dem Dump noch in PHP bestellt wurde.
@@ -556,4 +603,8 @@ klassische Mitarbeiterliste zeigt die Spalte nicht).
 4. Zugriff fuer Mitarbeitende ohne Dashboard-Zugang (`Security:AccessGroups`), AD-Gruppe mit IT klaeren.
 5. AD-Abgleich (6.11): Liste der Vorschau pruefen, Fragen 1 bis 8 beantworten, die 15 von Hand ausfuehren, dann `Schreiben` an
    (braucht einen Deploy). *Stand 6.12: Fragen beantwortet, `Schreiben` an; offen ist der Entscheid zum Konto, das im AD einer
-   anderen Person gehoert, danach einmal „Jetzt ausfuehren“.*
+   anderen Person gehoert, danach einmal „Jetzt ausfuehren“.* **Erledigt 20.11. 09:08 (6.15).** Offen danach: 12 offene Bestellungen
+   Deaktivierter neu zuweisen, Konto der anderen Person pruefen (Kandidat `ran`).
+6. Nachfrage beim Einkauf, warum seit dem 22.10. praktisch nicht mehr im Tool bestellt wird (6.15), Zugang und Bekanntgabe der Adresse.
+7. Limits der Kostenstellenleiter, Projektleiter-Haken, fehlende Mitarbeitende (22 Leiter) und Haken Wareneingang pflegen (Admin, Angaben
+   Einkauf/Armin); sonst bleibt die Freigabe ueber CHF 1'000 fuer die meisten Leiter grau.
