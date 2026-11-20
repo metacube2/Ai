@@ -176,6 +176,15 @@ MAC = APPS = [
         "kurz": "Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.",
     },
     {
+        "name": "EGLO AwoX Bridge",
+        "kennung": "eglo-awox-bridge",
+        "alpha": True,
+        "dmg": GIT / "awox-bruecke/mac/build/verteilen/EgloAwoxBridge.dmg",
+        "app": GIT / "awox-bruecke/mac/build/verteilen/EGLO AwoX Bridge.app",
+        "datei": "EgloAwoxBridge.dmg",
+        "kurz": "Steuert AwoX- und EGLO-connect-Bluetooth-Lampen über den Mac und meldet sie per MQTT an Home Assistant. Mit Bluetooth-Live-Ansicht (Spektrum, Wasserfall, Scope).",
+    },
+    {
         "name": "Funkblick",
         "kennung": "funkblick",
         "alpha": True,

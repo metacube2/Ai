@@ -1,5 +1,19 @@
 [
  {
+  "guid": "eglo-awox-bridge-mac-0.2-2",
+  "titel": "EGLO AwoX Bridge 0.2 (Build 2) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Steuert AwoX- und EGLO-connect-Bluetooth-Lampen über den Mac und meldet sie per MQTT an Home Assistant. Mit Bluetooth-Live-Ansicht (Spektrum, Wasserfall, Scope).",
+  "datum": "2026-11-20T23:10:59.051625+01:00"
+ },
+ {
+  "guid": "agentmonitor-mac-0.1-9",
+  "titel": "Agenten-Monitor 0.1 (Build 9) für macOS – Alpha",
+  "link": "https://www.aiscom.ch/tester/#mac",
+  "text": "Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.",
+  "datum": "2026-11-20T23:09:56.296372+01:00"
+ },
+ {
   "guid": "vitalbruecke-mac-0.1-1",
   "titel": "Vitalbrücke 0.1 (Build 1) für macOS – Alpha",
   "link": "https://www.aiscom.ch/tester/#mac",

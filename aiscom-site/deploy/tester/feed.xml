@@ -6,7 +6,21 @@
   <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Neue Testfassungen für Mac, iPhone/iPad, Android und Windows.</description>
   <language>de-ch</language>
-  <lastBuildDate>Wed, 18 Nov 2026 20:56:37 +0000</lastBuildDate>
+  <lastBuildDate>Fri, 20 Nov 2026 22:12:24 +0000</lastBuildDate>
+  <item>
+    <title>EGLO AwoX Bridge 0.2 (Build 2) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">eglo-awox-bridge-mac-0.2-2</guid>
+    <pubDate>Fri, 20 Nov 2026 23:10:59 +0100</pubDate>
+    <description>Steuert AwoX- und EGLO-connect-Bluetooth-Lampen über den Mac und meldet sie per MQTT an Home Assistant. Mit Bluetooth-Live-Ansicht (Spektrum, Wasserfall, Scope).</description>
+  </item>
+  <item>
+    <title>Agenten-Monitor 0.1 (Build 9) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">agentmonitor-mac-0.1-9</guid>
+    <pubDate>Fri, 20 Nov 2026 23:09:56 +0100</pubDate>
+    <description>Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.</description>
+  </item>
   <item>
     <title>Vitalbrücke 0.1 (Build 1) für macOS – Alpha</title>
     <link>https://www.aiscom.ch/tester/#mac</link>
@@ -271,20 +285,6 @@
     <link>https://www.aiscom.ch/tester/#mac</link>
     <guid isPermaLink="false">taploop-mac-0.1-28</guid>
     <pubDate>Mon, 26 Oct 2026 08:47:36 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 15) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-15</guid>
-    <pubDate>Sun, 25 Oct 2026 13:07:10 +0100</pubDate>
-    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
-  </item>
-  <item>
-    <title>TapLoop 0.1 (Build 14) für macOS</title>
-    <link>https://www.aiscom.ch/tester/#mac</link>
-    <guid isPermaLink="false">taploop-mac-0.1-14</guid>
-    <pubDate>Sun, 25 Oct 2026 12:36:08 +0100</pubDate>
     <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
   </item>
 </channel>
