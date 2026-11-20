@@ -1657,7 +1657,7 @@ const FC_DEPTS = [
   { dept: "DS", mod: "dw", shifts: [] },   // 2026-10-15: Dichtesensoren separat (Disponenten DS1, DS2, DSN); Leistung Stk/FTE manuell erfassen
   ];
 const SHIFT_LBL = { ma1: "Schicht 1 Früh", ma2: "Schicht 2 Spät", ma3: "Schicht 3 Nacht" };
-const FC = { sel: "TX", data: null, hist: null, monday: null, showOrders: false };
+const FC = { sel: "TX", data: null, hist: null, monday: null, showOrders: true, ordF: {}, ordL: {} };
 const f1 = v => (v == null || !isFinite(v)) ? "–" : new Intl.NumberFormat("de-CH", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
 const median = a => { const b = a.filter(x => isFinite(x)).sort((x, y) => x - y); if (!b.length) return null; const m = Math.floor(b.length / 2); return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
 const half = v => Math.round(v * 2) / 2;
@@ -1784,7 +1784,7 @@ function renderForecast() {
   ${tips.length ? `<div class="side-card tips"><h3>Hinweise für die Planung</h3><ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul></div>` : `<div class="side-card tips"><h3>Hinweise für die Planung</h3><p>Alle Abteilungen sind ausgeglichen geplant.</p></div>`}
   <div class="tabs">${all.map(c => `<button data-ft="${c.def.dept}" aria-pressed="${c.def.dept === sel.def.dept}">${c.def.dept}</button>`).join("")}</div>
   <div id="fcDetail"></div>
-  ${unassigned.length ? `<h2>Nicht zugeordnete Aufträge (${unassigned.length})</h2><p class="muted" style="font-size:13px">Zuordnung über den Disponenten: ${Object.entries(d.prefix || S.cfg.forecast_prefix || {}).map(([k, v]) => `${k} = ${v.join(", ")}…`).join(" · ")}. Anpassbar in <code>shopfloor_config.json</code> (<code>forecast_prefix</code>).</p>${fcOrderTable(unassigned)}` : ""}`;
+  ${unassigned.length ? `<details class="hist" id="fcUna" style="margin-top:22px"><summary>Nicht zugeordnete Aufträge (${unassigned.length})</summary><p class="muted" style="font-size:13px">Zuordnung über den Disponenten: ${Object.entries(d.prefix || S.cfg.forecast_prefix || {}).map(([k, v]) => `${k} = ${v.join(", ")}…`).join(" · ")}. Anpassbar in <code>shopfloor_config.json</code> (<code>forecast_prefix</code>).</p>${fcOrderTable(unassigned, "una")}</details>` : ""}`;
   document.querySelectorAll("[data-fw]").forEach(b => b.onclick = () => { const n = Number(b.dataset.fw); const m = n === 0 ? iso(addDaysD(monday(new Date()), 7)) : iso(addDaysD(parseIso(FC.monday), n)); history.replaceState(null, "", "#/m/forecast?monday=" + m); viewForecast(); });
   document.querySelectorAll("[data-ft],[data-fd]").forEach(b => b.onclick = () => { FC.sel = b.dataset.ft || b.dataset.fd; renderForecast(); });
   $("#fcFile").onchange = e => e.target.files[0] && fcImportFile(e.target.files[0]);
@@ -1824,19 +1824,57 @@ function fcRenderDetail(c) {
   </tbody></table></div>
   <div class="chart" style="margin-top:18px"><h3>${def.dept}: Menge vs. Kapazität</h3><div class="legend"><span><i style="background:var(--brand)"></i>Geplante Menge</span><span><i style="background:var(--ink)"></i>Kapazität</span></div>
     ${barLineSvg(rows.map(r => ({ day: r.day, bar: r.menge, line: r.kap })), 150)}</div>
-  ${c.orders.length ? `<details class="hist" ${FC.showOrders ? "open" : ""} id="fcOrd"><summary>Aufträge ${def.dept} (${c.orders.length})</summary>${fcOrderTable(c.orders)}</details>` : ""}`;
+  ${c.orders.length ? `<details class="hist" open id="fcOrd"><summary>Aufträge ${def.dept} (${c.orders.length})</summary>${fcOrderTable(c.orders, "d_" + def.dept)}</details>` : ""}`;
   $("#fcDetail").querySelectorAll("[data-fk]").forEach(el => el.onchange = () => fcSavePlan(def.dept, el.dataset.fday, el.dataset.fk, el.value));
   $("#fcLeistung").onchange = async e => { await api("POST", "api/forecast/settings", { dept: def.dept, changes: { leistung: parseNum(e.target.value) } }); await fcReload(); toast("Leistung gespeichert"); };
   const od = $("#fcOrd"); if (od) od.ontoggle = () => FC.showOrders = od.open;
 }
-function fcOrderTable(list) {
-  const shown = list.slice(0, 300);
+/* Patch 10 (2026-11-20): Forecast-Auftragslisten mit Suche und Filtern (Tag, Disponent, Arbeitsplatz, Nächster Vorgang); Filter bleiben beim Neuladen erhalten */
+const FC_OF0 = () => ({ q: "", day: "", disp: "", ap: "", nv: "" });
+function fcOrderTable(list, key = "x") {
+  const f = FC.ordF[key] = FC.ordF[key] || FC_OF0();
   /* Patch 09 (2026-11-19): Spalte «Nächster Vorgang» (wie MD04, MDEZ-USEX1), sobald das Backend o.naechster_vorgang liefert */
   const nv = list.some(o => o.naechster_vorgang);
-  return `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Tag</th><th>Auftrag</th><th>Material</th><th>Kurztext</th><th class="r">Menge</th><th>Disponent</th><th>Arbeitsplatz</th>${nv ? "<th>Nächster Vorgang</th>" : ""}</tr></thead><tbody>
-    ${shown.map(o => `<tr><td>${WD[parseIso(o.day).getDay()]} ${fmtDate(o.day).slice(0, 6)}</td><td class="tab">${esc(o.auftrag || "")}</td><td><b>${esc(o.material || "")}</b></td><td>${esc(o.text || "")}</td><td class="n">${fmtNum(Number(o.menge))}</td><td>${esc(o.disponent || "")}</td><td>${esc(o.arbeitsplatz || "")}</td>${nv ? `<td>${esc(o.naechster_vorgang || "")}</td>` : ""}</tr>`).join("")}
-    </tbody></table></div>${list.length > shown.length ? `<p class="muted">… und ${list.length - shown.length} weitere</p>` : ""}`;
+  FC.ordL[key] = { list, nv };
+  const uniq = k => [...new Set(list.map(o => o[k] == null ? "" : String(o[k])).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de-CH", { numeric: true }));
+  const days = [...new Set(list.map(o => o.day).filter(Boolean))].sort();
+  const sel = (fk, lbl, vals, fmt = v => v) => vals.length > 1 ? `<label class="fsel"><span>${lbl}</span><select class="field-in" data-fof="${fk}" data-fok="${key}"><option value="">alle</option>${vals.map(v => `<option value="${esc(v)}" ${f[fk] === v ? "selected" : ""}>${esc(fmt(v))}</option>`).join("")}</select></label>` : "";
+  const r = fcOrderRows(key);
+  return `<div class="toolbar" style="margin:10px 0 0">
+    <input class="field-in search" type="search" data-foq="${key}" placeholder="Suchen (Auftrag, Material, Kurztext …)" value="${esc(f.q)}" autocomplete="off">
+    ${sel("day", "Tag", days, d => `${WD[parseIso(d).getDay()]} ${fmtDate(d).slice(0, 6)}`)}
+    ${sel("disp", "Disponent", uniq("disponent"))}
+    ${sel("ap", "Arbeitsplatz", uniq("arbeitsplatz"))}
+    ${nv ? sel("nv", "Nächster Vorgang", uniq("naechster_vorgang")) : ""}
+    <button class="btn small" data-forst="${key}" ${r.active ? "" : "hidden"}>Filter zurücksetzen</button>
+    <span class="muted" data-focnt="${key}" style="font-size:13px">${r.cnt}</span></div>
+  <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Tag</th><th>Auftrag</th><th>Material</th><th>Kurztext</th><th class="r">Menge</th><th>Disponent</th><th>Arbeitsplatz</th>${nv ? "<th>Nächster Vorgang</th>" : ""}</tr></thead><tbody data-fob="${key}">${r.html}</tbody></table></div>`;
 }
+function fcOrderRows(key) {
+  const { list, nv } = FC.ordL[key] || { list: [], nv: false }, f = FC.ordF[key] || FC_OF0();
+  const words = String(f.q || "").toLowerCase().split(/\s+/).filter(Boolean);
+  const hit = list.filter(o => (!f.day || o.day === f.day) && (!f.disp || String(o.disponent || "") === f.disp) && (!f.ap || String(o.arbeitsplatz || "") === f.ap) && (!f.nv || String(o.naechster_vorgang || "") === f.nv)
+    && (!words.length || (h => words.every(w => h.includes(w)))([o.auftrag, o.material, o.text, o.disponent, o.arbeitsplatz, o.naechster_vorgang].map(x => x == null ? "" : String(x)).join(" ").toLowerCase())));
+  const shown = hit.slice(0, 300), sum = hit.reduce((t, o) => t + (Number(o.menge) || 0), 0);
+  const active = !!(words.length || f.day || f.disp || f.ap || f.nv);
+  const html = shown.length ? shown.map(o => `<tr><td>${WD[parseIso(o.day).getDay()]} ${fmtDate(o.day).slice(0, 6)}</td><td class="tab">${esc(o.auftrag || "")}</td><td><b>${esc(o.material || "")}</b></td><td>${esc(o.text || "")}</td><td class="n">${fmtNum(Number(o.menge))}</td><td>${esc(o.disponent || "")}</td><td>${esc(o.arbeitsplatz || "")}</td>${nv ? `<td>${esc(o.naechster_vorgang || "")}</td>` : ""}</tr>`).join("")
+    : `<tr><td colspan="${nv ? 8 : 7}" class="muted">Keine Aufträge für diese Suche bzw. diesen Filter</td></tr>`;
+  const cnt = `${active ? `${fmtNum(hit.length)} von ` : ""}${fmtNum(list.length)} Aufträgen · ${fmtNum(Math.round(sum))} Stk.${hit.length > shown.length ? ` · erste ${shown.length} angezeigt` : ""}`;
+  return { html, cnt, active };
+}
+function fcOrderRefresh(key) {
+  const b = document.querySelector(`[data-fob="${key}"]`); if (!b) return;
+  const r = fcOrderRows(key); b.innerHTML = r.html;
+  const c = document.querySelector(`[data-focnt="${key}"]`); if (c) c.textContent = r.cnt;
+  const x = document.querySelector(`[data-forst="${key}"]`); if (x) x.hidden = !r.active;
+}
+(() => {
+  let t;
+  document.addEventListener("input", e => { const k = e.target && e.target.dataset ? e.target.dataset.foq : null; if (k == null || !FC.ordF[k]) return; clearTimeout(t); const v = e.target.value; t = setTimeout(() => { FC.ordF[k].q = v; fcOrderRefresh(k); }, 150); });
+  document.addEventListener("change", e => { const d = e.target && e.target.dataset; if (!d || d.fof == null || !FC.ordF[d.fok]) return; FC.ordF[d.fok][d.fof] = e.target.value; fcOrderRefresh(d.fok); });
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-forst]"); if (!b) return; const k = b.dataset.forst; FC.ordF[k] = FC_OF0();
+    document.querySelectorAll(`[data-foq="${k}"],[data-fok="${k}"]`).forEach(el => el.value = ""); fcOrderRefresh(k); });
+})();
 async function fcSavePlan(dept, day, k, v) {
   try { await api("POST", "api/forecast/plan", { dept, day, changes: { [k]: v === "" ? null : parseNum(v) } }); await fcReload(); setSync("gespeichert " + new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })); }
   catch (e) { toast("Nicht gespeichert: " + e.message, true); }
