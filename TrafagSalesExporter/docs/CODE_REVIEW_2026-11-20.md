@@ -1,6 +1,6 @@
 # Code-Review 2 mit Clean-Code- und Testprüfung (20.11.2026)
 
-Stand: 2026-11-20 14:30 (Review abgeschlossen, am Code nichts geändert; Entscheide Ingo offen).
+Stand: 2026-11-20 14:45 (Review abgeschlossen, am Code nichts geändert; Entscheide Ingo offen).
 
 Auftrag Ingo 20.11.: „führe ein Codereview durch über den gesamten Quellcode, dann Analyse und Doings“, danach „schreib
 das alles in ein Dokument“ und „hast du auch Clean Code, TDD geprüft?“. Geprüfter Stand: `ad4f437` (produktiv ist
@@ -12,12 +12,15 @@ es nicht: Abschnitt 2 sagt je Befund vom 12.11., was heute gilt, Abschnitt 3 ent
 1. **Der Zugriffsschutz ist das grösste Risiko, nicht die Rechenlogik.** Laut Repo ist die Windows-Berechtigung
    abgeschaltet (`appsettings.json:11`), es schützen nur die Bereichspasswörter, und mehrere Admin- und Schreibseiten haben
    gar keine Sperre.
-2. **Vom Review am 12.11. ist ein Befund erledigt, zwölf sind offen**, darunter alle vier hohen. Wochen_Todo 159 wartet
-   seit acht Tagen auf Entscheid.
-3. **Neu dazugekommen sind 8 hohe und rund 30 mittlere Befunde**, vor allem aus Bereichen, die am 12.11. nicht im Umfang
-   waren: Shopfloor, HR-Rechenlogik, Handbestellwesen, ABAP und Exportskripte.
+2. **Vom Review am 12.11. ist ein Befund erledigt, zehn sind am Code bestätigt offen**, darunter alle vier hohen; zwei
+   (Nr. 9 und 11) sind nicht erneut geprüft, ihre Dateien sind unverändert. Wochen_Todo 159 wartet seit acht Tagen auf
+   Entscheid.
+3. **Wirklich neu sind 5 hohe Befunde** (P3 Secrets-Export, S1 Shopfloor-XSS, A1 HR-Sets ohne Berechtigungsprüfung, A2
+   `FinanzJournalSet` ohne Pflichtfilter, A3 P76-Werkzeug) **und rund 30 mittlere**, vor allem aus Bereichen, die am 12.11.
+   nicht im Umfang waren: Shopfloor, HR-Rechenlogik, Handbestellwesen, ABAP und Exportskripte. Drei weitere hohe Zeilen
+   (P1, P2, E1) erweitern Befunde, die seit dem 12.11. bekannt sind.
 4. **Clean Code: gelb.** Der Code ist fachlich sorgfältig kommentiert und meist sauber parametrisiert, aber 15 Dateien
-   haben über 1000 Zeilen, rund 43 Methoden über 100 Zeilen, und zentrale Regeln stehen mehrfach.
+   haben über 1000 Zeilen, rund 42 Methoden über 100 Zeilen, und zentrale Regeln stehen mehrfach.
 5. **Tests: grün für Rechenlogik, rot für Zugriff, Oberfläche und JavaScript.** Die Suite ist gross und grün (1785 von
    1785), die Dienste sind zu rund 70 % abgedeckt, HR und Finance zu 80 bis 91 %, und 77 % der Code-Commits bringen Tests
    mit. Razor-Komponenten haben 0,6 %, JavaScript, ABAP und Skripte keine Tests. Test-first lässt sich aus der Historie
@@ -50,6 +53,8 @@ es nicht: Abschnitt 2 sagt je Befund vom 12.11., was heute gilt, Abschnitt 3 ent
 - **Nichts produktiv geprüft:** kein Browser, kein SAP, keine Produktiv-DB. `Security:Enabled = false` ist für die
   versionierte Datei belegt und laut `docs/rag/LEARNINGS.md` (10.11.) auch produktiv so; ob der IIS anonyme Zugriffe
   zulässt, zeigt das Repo nicht. Davon hängt ab, ob „jeder Domänenbenutzer“ oder „jeder im Netz“ gilt.
+- **Zeilennummern:** Sie gelten für `ad4f437`. Ausnahme `Program.cs`: dort stammen sie aus dem Arbeitsbaum, der ab Zeile 99
+  eine fremde, nicht committete Zeile mehr hat; in `ad4f437` liegt jede Angabe ab dort um eins tiefer.
 - **ABAP:** alle Aussagen gelten „laut lokaler Datei“. Ob die Datei dem aktiven Stand in T76 oder P76 entspricht, ist
   nicht geprüft.
 - **Abweichung vom Auftrag:** Der ABAP-Reviewer hat trotz „nichts ausführen“ einen PowerShell-Einzeiler im Speicher
@@ -86,13 +91,18 @@ Zu Befund 3: `finance-cockpit/controlling` ist laut Kommentar in `Services/Datab
 Schwere wie am 12.11.: **Hoch** = falsche Zahlen, Datenverlust oder Zugriff auf geschützte Daten möglich. **Mittel** =
 tritt unter einer benennbaren Bedingung ein. **Niedrig** = latent oder kleiner Schaden.
 
+**Abgrenzung zum 12.11.:** P1, P2 und E1 sind keine neuen Befunde, sondern Erweiterungen der Befunde 3 und 2 von damals;
+die Zeile nennt jeweils, was bekannt war und was dazukommt. Als Fehlerklasse ebenfalls schon am 12.11. genannt (dort
+Abschnitt C): leere Kostenwährung (hier F2, zweiter Teil), kulturabhängiges Parsen (F4, H5), leere Quellantwort leert den
+Bestand (E9 für den Einkauf).
+
 ### 3.1 Plattform und Sicherheit
 
 | Nr. | Schwere | Befund | Stelle | Beleg |
 | --- | --- | --- | --- | --- |
-| P1 | Hoch | Bei `Security:Enabled = false` liefern `FallbackPolicy` und `AdminOnly` immer „erlaubt“. Die acht `[Authorize(AdminOnly)]`-Attribute sind wirkungslos. Ohne jede Sperre sind damit `/einkauf/verbindungen`, `/manual-imports`, `/finance-journal-import`, `/admin/menu-structure`, `/admin/nutzung`, alle 13 Routen unter `/netzwerk`, `/marktsegmente`. Nur hinter dem Finance-Passwort statt hinter Admin liegen `/settings`, `/standorte`, `/transformations`, `/finance-rules`, `/source-viewer`. | `Security/SecurityPolicyFactory.cs:9-14, 31-36`, `Components/Routes.razor:40-62` | V |
-| P2 | Hoch | Zum Cookie (12.11. Nr. 2) kommt dazu: „Sperren“ löscht das Cookie nicht (im Kern gibt es kein `Cookies.Delete`), es läuft serverseitig nie ab, die Endpunkte `/access/*` haben keine Drosselung, und die Hashes für HR, Finance, Admin und Operations liegen versioniert in `appsettings.json`. Ob sie produktiv noch gelten, ist offen (seit 15.10. kann ein DB-Eintrag sie ersetzen). | `Services/HrKpiAccessService.cs:78-82`, `Services/FinanceCockpitAccessService.cs:51-56`, `Program.cs:249-299` | V (Lock, Cookie), A (Endpunkte) |
-| P3 | Hoch | `/settings` bietet „Mit Secrets exportieren“ als Klartext-JSON und lädt Secrets in Passwortfelder; wer das Finance-Passwort kennt, bekommt die SAP- und SharePoint-Zugangsdaten. | `Components/Pages/Settings.razor:543, 668-671`, `Services/ConfigTransferService.cs:55-63` | A, fehlende Admin-Prüfung V |
+| P1 | Hoch, Erweiterung von 12.11. Nr. 3 | Bekannt seit 12.11.: `AdminOnly` lässt bei `Security:Enabled = false` jeden durch; offen sind `/einkauf/verbindungen`, `/manual-imports`, `/finance-journal-import`, `/admin/menu-structure`, `/admin/nutzung`, `/marktsegmente`. **Neu:** alle 13 Routen unter `/netzwerk` (AD-Rechnerliste, Betriebssystemstände) sind ebenfalls ohne Sperre, und `/settings`, `/standorte`, `/transformations`, `/finance-rules` liegen nur hinter dem Finance-Passwort statt hinter Admin. Im Einzelnen: Bei `Security:Enabled = false` liefern `FallbackPolicy` und `AdminOnly` immer „erlaubt“. Die acht `[Authorize(AdminOnly)]`-Attribute sind wirkungslos. Ohne jede Sperre sind damit `/einkauf/verbindungen`, `/manual-imports`, `/finance-journal-import`, `/admin/menu-structure`, `/admin/nutzung`, alle 13 Routen unter `/netzwerk`, `/marktsegmente`. Nur hinter dem Finance-Passwort statt hinter Admin liegen `/settings`, `/standorte`, `/transformations`, `/finance-rules`, `/source-viewer`. | `Security/SecurityPolicyFactory.cs:9-14, 31-36`, `Components/Routes.razor:40-62` | V |
+| P2 | Hoch, Erweiterung von 12.11. Nr. 2 | Bekannt seit 12.11.: Cookie aus dem Hash berechenbar, für alle gleich, ohne serverseitigen Ablauf, Hashes im Repo. **Neu** kommt dazu: „Sperren“ löscht das Cookie nicht (im Kern gibt es kein `Cookies.Delete`), es läuft serverseitig nie ab, die Endpunkte `/access/*` haben keine Drosselung, und die Hashes für HR, Finance, Admin und Operations liegen versioniert in `appsettings.json`. Ob sie produktiv noch gelten, ist offen (seit 15.10. kann ein DB-Eintrag sie ersetzen). | `Services/HrKpiAccessService.cs:78-82`, `Services/FinanceCockpitAccessService.cs:51-56`, `Program.cs:249-299` | V (Lock, Cookie), A (Endpunkte) |
+| P3 | Hoch, neu | `/settings` bietet „Mit Secrets exportieren“ als Klartext-JSON und lädt Secrets in Passwortfelder; wer das Finance-Passwort kennt, bekommt die SAP- und SharePoint-Zugangsdaten. | `Components/Pages/Settings.razor:543, 668-671`, `Services/ConfigTransferService.cs:55-63, 92-93` | V |
 | P4 | Mittel | Zugangsdaten liegen im Klartext in SQLite; jede Kopie oder Sicherung der Datenbank enthält sie. | `Models/SourceSystemDefinition.cs:24`, `Models/Site.cs:29`, `Models/SharePointConfig.cs:11` | A |
 | P5 | Mittel | „Standard wiederherstellen“ im Menü löscht alle Menüzeilen samt den darin gespeicherten Migrationsmerkern und lässt den Seed neu laufen. | `Services/NavigationMenuService.cs:44-73`, `Services/DatabaseSeedService.cs:167-180, 321-376` | A |
 | P6 | Mittel | Kein `UseExceptionHandler`, keine Sicherheits-Header, keine `ErrorBoundary`; `web.config` schaltet Detailfehler und das stdout-Protokoll ein. Der HR-Endpunkt protokolliert den eingegebenen Benutzernamen. | `Program.cs:238-247`, `web.config:8, 11, 15`, `Program.cs:282-295` | V (web.config, fehlende Middleware) |
@@ -109,7 +119,7 @@ Skripten wurden nicht gefunden.
 
 | Nr. | Schwere | Befund | Stelle | Beleg |
 | --- | --- | --- | --- | --- |
-| E1 | Hoch | `/einkauf/verbindungen` hat keine Admin-Prüfung. Der Verbindungstest nimmt die Adresse aus dem Formular und schickt bei leerem Override den zentralen SAP-Benutzer samt Passwort als Basic-Auth dorthin. „Speichern“ lenkt alle weiteren Einkauf-Läufe und Logistik live auf diese Adresse. | `Components/Pages/PurchasingDataSources.razor:1`, `Services/PurchasingDataSourcePageService.cs:99-116` | V |
+| E1 | Hoch, Erweiterung von 12.11. Nr. 3 | Bekannt seit 12.11.: `/einkauf/verbindungen` hat keine Admin-Prüfung, jeder kann Verbindung und `PasswordOverride` ändern und Läufe starten. **Neu:** Der Verbindungstest nimmt die Adresse aus dem Formular und schickt bei leerem Override den zentralen SAP-Benutzer samt Passwort als Basic-Auth dorthin. „Speichern“ lenkt alle weiteren Einkauf-Läufe und Logistik live auf diese Adresse. | `Components/Pages/PurchasingDataSources.razor:1`, `Services/PurchasingDataSourcePageService.cs:99-116` | V |
 | E2 | Mittel | Der planmässige Nachtlauf ruft `RunDeltaAsync` direkt auf, nur der Nachhol-Lauf geht über die Laufsperre `TryStart`. Der Dienst selbst hat keine Sperre, ein zweiter Lauf (Knopf oder Nachhol-Lauf) ist möglich; der Full Load löscht dann den Cache, während das Delta schreibt. | `Services/TimerBackgroundService.cs:188, 235` (Stand HEAD), `Services/PurchasingRefreshRunner.cs:92-102` | V |
 | E3 | Mittel | Ein Fehlerzustand des Dashboards wird wie ein gültiger Stand 60 Minuten im Snapshot-Cache gehalten. | `Services/PurchasingDashboardService.cs:288-291`, `Services/PurchasingDashboardSnapshotCache.cs:72-73, 155` | V (catch), A (Cache) |
 | E4 | Mittel | Das Delta lädt nur Belege mit `EKKO.Aedat >= Stichtag` und noch offene Belege nach und löscht nie. Nachträgliche Änderungen an voll gelieferten Bestellungen kommen erst mit dem nächsten Full Load. Was SAP in `Aedat` schreibt, ist in T76 zu prüfen. | `Services/PurchasingDataRefreshService.cs:382-396, 420-422` | A |
@@ -161,7 +171,7 @@ Offene Frage an HR: Die Restferien-Ampel wertet ab dem zweiten Quartal jeden Res
 
 | Nr. | Schwere | Befund | Stelle | Beleg |
 | --- | --- | --- | --- | --- |
-| S1 | Hoch | Gespeichertes XSS: `POST /shopfloor/api/zd05/week` übernimmt `kw` ohne Formatprüfung, die Anzeige setzt den Wert ohne `esc()` in SVG-Markup. Ein Shopfloor-Benutzer kann Skript bei allen ausführen, die die ZD05-Ansicht öffnen. | `Services/Shopfloor/ShopfloorZd05.cs:312-331`, `wwwroot/shopfloor/app.js:1472` | V |
+| S1 | Hoch, neu | Gespeichertes XSS: `POST /shopfloor/api/zd05/week` übernimmt `kw` ohne Formatprüfung, die Anzeige setzt den Wert ohne `esc()` in SVG-Markup. Ein Shopfloor-Benutzer kann Skript bei allen ausführen, die die ZD05-Ansicht öffnen. | `Services/Shopfloor/ShopfloorZd05.cs:312-331`, `wwwroot/shopfloor/app.js:1472` | V |
 | S2 | Mittel | Der Query-Parameter `matex` geht ohne Verdopplung des Hochkommas in den OData-Filter. | `Services/Shopfloor/ShopfloorEndpoints.cs:198`, `Services/Shopfloor/ShopfloorSapMengen.cs:77` | V |
 | S3 | Mittel, bedingt hoch | `OpenForAll` (Entscheid 16.10.) lässt im Code auch nicht angemeldete Aufrufer durch, und die Sperre ist der einzige Schutz der statischen Dateien unter `/shopfloor`. Dort liegt versioniert `kpi/seed_liefertreue_2026-09.json` (454 KB, laut Reviewer mit Kundennamen; von der Hauptsitzung nicht geöffnet). Ob anonyme Anfragen die App erreichen, hängt vom IIS ab. | `Services/Shopfloor/ShopfloorOptions.cs:168-171`, `Program.cs:243-245`, `appsettings.json:133` | V |
 | S4 | Mittel | Keine Rollentrennung im Shopfloor; die manuellen SAP-POSTs prüfen die Einschalter nicht, `DeleteExclusion` löscht ohne Benutzer und Verlauf. | `Services/Shopfloor/ShopfloorEndpoints.cs:377-394, 455-578` | A |
@@ -180,9 +190,9 @@ DPC steht für `saptasks/shopfloor_sap/DPC_EXT_GET_ENTITYSET_neu_2026-11-13_layo
 
 | Nr. | Schwere | Befund | Stelle | Beleg |
 | --- | --- | --- | --- | --- |
-| A1 | Hoch | In der Gateway-Methode steht kein `AUTHORITY-CHECK`. `HrKpiSet` und `HrAbsenzSet` lesen PA0001, PA0002, PA0007 und PA2001 per direktem SELECT, ohne Filter auf Buchungskreis oder Personalbereich. Wer den Service aufrufen darf, bekommt die Abwesenheiten aller Mitarbeitenden. Wer das ausser dem technischen Benutzer ist, zeigt das Repo nicht. | DPC:107-125, 240, 2246 | V |
-| A2 | Hoch | `FinanzJournalSet` hat keinen Pflichtfilter und keine Buchungskreis-Prüfung. Der 500er ohne Filter ist seit dem 01.10. bekannt (LEARNINGS), der Schutz fehlt weiter. Die Muster dafür gibt es bei `Zc23Set` und `CoPaSumSet`. | DPC:2687-2694 | V |
-| A3 | Hoch | Die P76-Lesewerkzeuge sind nur per Kommentar „nur lesen“. `SapGuiP76Hilfe.vbs` nimmt jeden OK-Code, Knopf, jedes Feld und jede Funktionstaste an. | `.tmp_sap_probe/SapGuiP76Hilfe.vbs:89-106`, `.tmp_sap_probe/P76Lesen.vbs:76-86` | V |
+| A1 | Hoch, neu | In der Gateway-Methode steht kein `AUTHORITY-CHECK`. `HrKpiSet` und `HrAbsenzSet` lesen PA0001, PA0002, PA0007 und PA2001 per direktem SELECT, ohne Filter auf Buchungskreis oder Personalbereich. Wer den Service aufrufen darf, bekommt die Abwesenheiten aller Mitarbeitenden. Wer das ausser dem technischen Benutzer ist, zeigt das Repo nicht. | DPC:107-125, 240, 2246 | V |
+| A2 | Hoch, neu als Befund | `FinanzJournalSet` hat keinen Pflichtfilter und keine Buchungskreis-Prüfung. Der 500er ohne Filter ist seit dem 01.10. bekannt (LEARNINGS), der Schutz fehlt weiter. Die Muster dafür gibt es bei `Zc23Set` und `CoPaSumSet`. | DPC:2687-2694 | V |
+| A3 | Hoch, neu | Die P76-Lesewerkzeuge sind nur per Kommentar „nur lesen“. `SapGuiP76Hilfe.vbs` nimmt jeden OK-Code, Knopf, jedes Feld und jede Funktionstaste an. | `.tmp_sap_probe/SapGuiP76Hilfe.vbs:89-106`, `.tmp_sap_probe/P76Lesen.vbs:76-86` | V |
 | A4 | Mittel | Fünf schreibfähige VBS nehmen die erste SAP-Verbindung ohne Vergleich auf T76; `SapProbe` schützt Schreiben nur mit `--confirm-write`. | `.tmp_sap_probe/SapGuiOkCode.vbs:26-33`, `.tmp_sap_probe/Program.cs:634-695` | A |
 | A5 | Mittel | `ZPOWERBI_KDAUF` wird ohne WHERE gelöscht und abhängig von der Selektion neu gefüllt; ein Lauf mit einem Kunden und angekreuztem Feld lässt nur diesen Kunden übrig. | `saptasks/zm_offene_kdauf/ZM_OFFENE_KDAUF_produktiv.abap:1194` | V |
 | A6 | Mittel | Blättern erst nach dem Volllesen, Reportlauf je Seite, SELECT in Schleifen; das Finanzjournal wird bei 30 Seiten 30-mal ganz gelesen. | DPC:188-199, 2870-2876, 495-569 | A |
@@ -208,7 +218,7 @@ ein solcher Ausreisser ist entfernt.
 | --- | --- |
 | Produktivdateien C# und Razor im Kern (ohne Übersetzungen) | 466 Dateien, rund 113'000 Zeilen, Mittel 243 Zeilen |
 | Dateien über 300 / 500 / 1000 / 2000 Zeilen | 108 / 54 / 15 / 6 |
-| Methoden in C# (Heuristik) | rund 2'040, davon über 50 Zeilen 214, über 100 Zeilen 43, über 200 Zeilen 9 |
+| Methoden in C# (Heuristik) | rund 2'040, davon über 50 Zeilen 213, über 100 Zeilen 42, über 200 Zeilen 9 |
 | Längste Methoden | `ManagementCockpitService.AnalyzeFinanceSummary` 368 Zeilen, `ConfigTransferService.ImportJsonAsync` 356, `PurchasingDashboardService.TryLoadCacheStateAsync` 353, `DatabaseSeedService.EnsureSapODataDachMapping` 349, `HrKpiDashboardBuilder.Build` 328 |
 | Pauschale `catch` ohne Typ oder mit `Exception` | 163 Stellen |
 | Statische Sammlungen | 171 (Stichprobe: fast nur unveränderliche Nachschlagetabellen) |
