@@ -4,8 +4,9 @@ Kleines Windows-Fenster, das live zeigt, was jede Claude-Code-Sitzung auf diesem
 Hauptagent und Unteragenten, jede Aktion mit Balken und Prozent, Aufgaben-Fortschritt, Planverbrauch
 (5 Stunden und Woche) und Tokens des Tages. Gebaut am 17.11.2026 auf Wunsch von Ingo.
 
-Stand: 17.11.2026 abends. 49 Tests grün. Installiert und im Autostart auf Ingos Windows-Laptop.
-Nachtrag 20.11.2026: Paket für andere Benutzer (ZIP mit Laufzeit, Einrichtungsskript, Anleitung auch für Claude), erstes Paket für Fabio, siehe „Paket für andere Benutzer“.
+Stand: 20.11.2026 mittags. 62 Tests grün. Installiert und im Autostart auf Ingos Windows-Laptop.
+Am 20.11. kamen dazu: das Paket für andere Benutzer (siehe „Paket für andere Benutzer“) und die Aufräum-Funktionen
+(siehe „Aufräumen und Übersicht“). Die Aufräum-Funktionen sind auf dem Mac noch nicht nachgezogen.
 
 | Ort | Inhalt |
 | --- | --- |
@@ -56,6 +57,28 @@ Das Zeilenformat der Protokolle ist von Anthropic nicht dokumentiert, nur beobac
 `message.usage`). Gezählt wird je `message.id` einmal (Streaming schreibt Antworten mehrfach), nur mit
 Zeitstempel von heute, inkrementell. Massgeblich für das Limit sind die Prozentbalken aus der Statuszeile.
 
+## Aufräumen und Übersicht (seit 20.11.2026)
+
+Wunsch Ingo vom 20.11.: Ein Knopf räumt die alten Status weg, dazu kamen sieben weitere Punkte. Die Regeln stehen in
+`MonitorState` und `ActionList` (Core) und sind mit Tests abgedeckt (`AufraeumenTests`).
+
+| Funktion | Verhalten |
+| --- | --- |
+| Knopf 🧹 „Aufräumen“ (Kopfzeile, Tray „Erledigtes aufräumen“) | Er entfernt fertige Aktionen (✓ und ✗), fertige Unteragenten und beendete Sitzungen. Untätige Sitzungen blendet er aus. Laufende Aktionen, Aufgaben- und Rundenbalken arbeitender Agenten, gelernte Dauern und Tageszahlen bleiben. In der Kopfzeile steht 3 s lang „aufgeräumt: N Aktionen“. |
+| Ausgeblendete Sitzung | Sie kommt erst zurück, wenn sie wieder arbeitet (Auftrag, Werkzeug, Unteragent, Freigabe). Die Statuszeile (alle 15 s) und das späte `idle_prompt` holen sie bewusst nicht zurück. Titel und Modell bleiben erhalten. |
+| Fertige Aktionen von selbst ausblenden | Nach 2 Minuten (Tray „Fertige Aktionen“: 1, 2, 5, 15 Minuten oder nie). Wird beim Aufräumen-Takt alle 15 s angewendet. |
+| Fertige Aktionen zusammenfassen | Standard: Laufende und die letzten zwei fertigen einzeln, der Rest als eine Zeile „✓ 5 weitere erledigt · ✗ 1 mit Fehler · in 42 s“. Die Zeit ist Wanduhrzeit vom ersten Beginn bis zum letzten Ende, parallele Aktionen zählen nicht doppelt. Ersetzt „+ N ältere Aktionen“. |
+| Nur laufende zeigen | Tray „Fertige Aktionen › nur laufende zeigen“: alle fertigen in der einen Zeile. „einzeln zeigen“ ist das alte Verhalten. |
+| Klick auf eine Aktion | Klappt den ganzen Text auf (Befehl, Pfad, Suchmuster, Auftrag eines Unteragenten; bis 4000 Zeichen, markierbar, mit Rollbalken). Rechtsklick „Ganzen Befehl kopieren“. Der Text liegt nur im Speicher. |
+| Rechtsklick auf eine Sitzung | „Sitzung ausblenden (bis sie wieder arbeitet)“. Das geht auch bei einer Sitzung, die hängt und scheinbar noch arbeitet. |
+| Warnung „läuft ungewöhnlich lange“ | Laufende Aktion mit mindestens dreifacher gelernter Dauer und mindestens 60 s: Balken orange, Hinweiszeile mit üblicher Dauer. Nur wenn genau diese Aktionsart schon gelernt ist (nicht beim Startwert) und nie, solange der Agent auf eine Freigabe wartet. |
+| Wartet auf dich | Die Sitzung steht zuoberst, die Karte hat einen pulsierenden orangen Rahmen, der Punkt in der Kopfzeile wird orange, die Kopfzeile zeigt „1 wartet“. Eine neue Rückfrage holt ein ausgeblendetes Fenster immer hervor, auch wenn es weggeklickt war. |
+| Tageszusammenfassung | Zeile „Heute: 12 Runden · 3 Unteragenten · 340 Aktionen (3 mit Fehler) · 5 Rückfragen · Arbeitszeit 2 h 10 min“ unter den Tokens und oben im Tray-Menü. Gezählt, solange der Monitor läuft, gesichert in `tageszahlen.json` (nur Zähler), beginnt um Mitternacht neu. Arbeitszeit ist die Summe der Runden des Hauptagenten; parallele Sitzungen zählen doppelt. Der Tooltip des Tray-Symbols zeigt „2 aktiv · 1 wartet · 3 Sitzungen“. |
+
+Am 20.11. im installierten Monitor angesehen: Knopf (per UI-Automation ausgelöst, 5 → 2 Sitzungen, „aufgeräumt: 3 Aktionen“),
+Aufklappen per Klick und die Zusammenfassungszeile. **Noch nicht am Bildschirm gesehen:** der orange Rahmen beim Warten (im
+Auto-Modus kam keine Rückfrage), die Warnung „ungewöhnlich lange“, das Tray-Menü und der Rechtsklick auf eine Sitzung.
+
 ## Bedienung
 
 - Fenster: Nadel = immer offen bzw. aufpoppen; Minimieren, Maximieren (auch Doppelklick auf die Kopfzeile),
@@ -63,7 +86,9 @@ Zeitstempel von heute, inkrementell. Massgeblich für das Limit sind die Prozent
 - Aufpoppen: erscheint ohne Fokus zu stehlen, sobald ein Agent denkt oder arbeitet, blendet sich 8 s nach dem
   Ende aus (nicht, solange die Maus darüber ist oder es minimiert ist).
 - Vergrössern: Strg+Mausrad, Strg+Plus/Minus, Strg+0 (140 %), Tray-Menü „Grösse“ (100–250 %).
-- Tray-Menü: Anzeigen, Modus, Grösse, Im Vordergrund, Klänge, Klänge auswählen …, Beim Anmelden starten, Beenden.
+- Tray-Menü: Heute (Zusammenfassung), Anzeigen, Erledigtes aufräumen, Modus, Grösse, Im Vordergrund, Fertige Aktionen,
+  Klänge, Klänge auswählen …, Beim Anmelden starten, Beenden.
+- Kopfzeile: 🧹 Aufräumen, 📌 Modus, Minimieren, Maximieren, Ausblenden.
 - Klänge: eigene Windows-Klangereignisse „Agent fertig“, „Agent wartet auf dich“, „Agent mit Fehler
   abgebrochen“, „Aufgabe erledigt“ (Letzteres standardmässig stumm). Auswahl in der Systemsteuerung unter
   Sound › Sounds › Programm „Agenten-Monitor“.
@@ -111,10 +136,18 @@ Planverbrauch): Umgebungsvariable `AGENTMONITOR_PORT=47999` setzen.
 | `AgentMonitor.Core` | `HookEvent` (Ereignis lesen), `MonitorState` (Sitzung → Agenten → Aktionen, Phasen, Aufgaben, Planfenster, Klang-Signale, Aufräumen), `ToolSummary` (Beschreibungen), `DurationEstimator` (Schätzung), `StatusInfo` (Statuszeile), `TokenCounter` (Protokolle) |
 | `AgentMonitor.App` | WPF-Fenster, Kestrel-Empfang auf `127.0.0.1:47811` (`POST /hook`, `POST /status`, `GET /health`, Antwort immer 200 ohne Inhalt), Tray, Klänge, Einstellungen |
 | `AgentMonitor.StatusLine` | `AgentMonitorStatus.exe`: liest das Statuszeilen-JSON, gibt es an `/status` weiter, schreibt „Fable 5.2 · 5h 34 % · Woche 12 % · Kontext 45 %“ |
-| `AgentMonitor.Tests` | 47 xUnit-Tests |
+| `AgentMonitor.Tests` | 62 xUnit-Tests (Stand 20.11.) |
 
-Dateien unter `%APPDATA%\AgentMonitor`: `settings.json`, `dauern.json` (nur Aktionsart und Sekunden),
-`planverbrauch.json`. Nichts verlässt den Rechner; Befehle und Pfade werden nur angezeigt, nicht gespeichert.
+`AgentMonitor.Core` enthält seit 20.11. auch `ActionList` (fertige Aktionen einzeln, zusammengefasst oder nur laufende) und
+`DayStats` (Tageszahlen).
+
+Dateien unter `%APPDATA%\AgentMonitor`: `settings.json` (seit 20.11. auch `FinishedDisplay`, `FinishedRetentionMinutes`),
+`dauern.json` (nur Aktionsart und Sekunden), `planverbrauch.json`, `tageszahlen.json` (nur Zähler). Nichts verlässt den
+Rechner; Befehle und Pfade werden nur angezeigt, nicht gespeichert.
+
+Vor dem Einspielen am 20.11. liegt der alte Stand als Sicherung unter `%LOCALAPPDATA%\AgentMonitor\app_vorher_2026-11-20`.
+Einspielen so: erst `dotnet test`, dann in einen Zwischenordner veröffentlichen, Monitor beenden, kopieren, neu starten. So
+dauert die Lücke mit „Hook error … ECONNREFUSED“ nur etwa eine Sekunde.
 
 ## Fallstricke (gelernt)
 
@@ -130,5 +163,12 @@ Dateien unter `%APPDATA%\AgentMonitor`: `settings.json`, `dauern.json` (nur Akti
   (ReadyToRun, rund 0,2 s) und darf nie leer ausgeben, sonst blendet Claude die Zeile aus.
 - Probewerte nie stehen lassen: Nach einem Test mit erfundenen Planwerten Monitor neu starten, sonst zeigt er
   sie als echten Verbrauch an.
+- Nie `sed` für Ersetzungen mit `&` verwenden: In der Ersetzung steht `&` für den gefundenen Text. So wurde in
+  `MonitorState.cs` aus `&lt;Typ&gt;` zweimal die Zeile `public DateTimeOffset? Ended …` (am 20.11. berichtigt). Die XAML
+  enthält viele `&#x…;`; dort nur mit einem Editor arbeiten.
+- Eine ausgeblendete Sitzung darf nicht durch die Statuszeile zurückkommen: Sie läuft alle 15 s auch bei untätigen
+  Sitzungen. Zurück kommt eine Sitzung nur, wenn sie nach einem Hook-Ereignis arbeitet.
+- Die Warnung „ungewöhnlich lange“ nutzt nur gelernte Dauern. Mit dem Startwert (Bash 10 s) wäre schon jeder 30-s-Befehl
+  verdächtig.
 - Diese Hooks und die Statuszeile gelten global für alle Claude-Sitzungen auf dem Laptop, auch fürs Dashboard
   (Hinweis in `TrafagSalesExporter/docs/AGENT_COORDINATION.md`).

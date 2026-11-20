@@ -23,8 +23,102 @@ public partial class MainWindow : Window
     /// <summary>Hat der Mensch das Fenster waehrend einer Arbeitsphase weggeklickt, bleibt es bis zur naechsten zu.</summary>
     private bool _suppressedUntilIdle;
     private DateTimeOffset _lastPrune = DateTimeOffset.MinValue;
+    private int _lastWaitingCount;
+    private DayStats? _savedToday;
+    private string _flashText = "";
+    private DateTimeOffset _flashUntil = DateTimeOffset.MinValue;
 
     public bool AllowClose { get; set; }
+
+    /// <summary>Kurzstand fuer Kopfzeile und Tray-Tooltip, z. B. „2 aktiv · 1 wartet · 3 Sitzungen“.</summary>
+    public string StatusText { get; private set; } = "";
+
+    // ------------------------------------------------------------------ Aufraeumen und Anzeige fertiger Aktionen
+
+    /// <summary>Knopf „Aufräumen“ und Tray: fertige Aktionen, fertige Unteragenten, untaetige Sitzungen weg.</summary>
+    public void CleanUp()
+    {
+        var now = DateTimeOffset.Now;
+        var removed = _state.ClearFinished(now);
+        Flash(removed == 0 ? "aufgeräumt" : $"aufgeräumt: {removed} Aktion{(removed == 1 ? "" : "en")}");
+        Tick();
+    }
+
+    public void SetFinishedDisplay(FinishedDisplay mode)
+    {
+        _settings.FinishedDisplay = mode;
+        ViewOptions.Finished = mode;
+        _settings.Save();
+        Tick();
+    }
+
+    public void SetFinishedRetention(int minutes)
+    {
+        _settings.FinishedRetentionMinutes = Math.Max(0, minutes);
+        _state.FinishedRetention = _settings.FinishedRetention;
+        _settings.Save();
+        _lastPrune = DateTimeOffset.MinValue; // sofort anwenden
+        Tick();
+    }
+
+    private void Flash(string text)
+    {
+        _flashText = text;
+        _flashUntil = DateTimeOffset.Now.AddSeconds(3);
+    }
+
+    /// <summary>Tageszusammenfassung fuer Fenster und Tray.</summary>
+    public string TodayText(DateTimeOffset now)
+    {
+        var d = _state.Today(now);
+        if (d.Turns == 0 && d.Actions == 0 && d.Subagents == 0) return "Heute: noch keine Runde";
+        var parts = new System.Collections.Generic.List<string>
+        {
+            $"{d.Turns} Runde{(d.Turns == 1 ? "" : "n")}",
+        };
+        if (d.Subagents > 0) parts.Add($"{d.Subagents} Unteragent{(d.Subagents == 1 ? "" : "en")}");
+        parts.Add($"{d.Actions} Aktion{(d.Actions == 1 ? "" : "en")}{(d.FailedActions > 0 ? $" ({d.FailedActions} mit Fehler)" : "")}");
+        if (d.Waits > 0) parts.Add($"{d.Waits} Rückfrage{(d.Waits == 1 ? "" : "n")}");
+        if (d.Errors > 0) parts.Add($"{d.Errors} Abbruch{(d.Errors == 1 ? "" : "e")}");
+        if (d.WorkSeconds > 0) parts.Add($"Arbeitszeit {Format.Duration(TimeSpan.FromSeconds(d.WorkSeconds))}");
+        return "Heute: " + string.Join(" · ", parts);
+    }
+
+    private void CleanButton_Click(object sender, RoutedEventArgs e) => CleanUp();
+
+    private void HideSession_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is SessionVm s)
+        {
+            _state.HideSession(s.Id);
+            Flash("Sitzung ausgeblendet, bis sie wieder arbeitet");
+            Tick();
+        }
+    }
+
+    private void ActionHeader_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is ActionVm a)
+        {
+            a.IsExpanded = !a.IsExpanded;
+            e.Handled = true;
+        }
+    }
+
+    private void CopyAction_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ActionVm a) return;
+        try
+        {
+            Clipboard.SetText(a.FullText);
+            Flash("kopiert");
+        }
+        catch (Exception)
+        {
+            // Zwischenablage gerade von einem anderen Programm belegt (COMException).
+            Flash("Zwischenablage belegt, bitte nochmals");
+        }
+    }
 
     public MainWindow(MonitorState state, HookServer server, MonitorSettings settings)
     {
@@ -34,6 +128,8 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         SessionList.ItemsSource = _sessions;
+        ViewOptions.Finished = settings.FinishedDisplay;
+        _state.FinishedRetention = settings.FinishedRetention;
         Width = settings.Width;
         Height = settings.Height;
         Topmost = settings.Topmost;
@@ -57,6 +153,12 @@ public partial class MainWindow : Window
             _lastPrune = now;
             // Gelernte Dauern sichern (auch wenn der Monitor spaeter hart beendet wird).
             if (_state.Estimator.IsDirty) MonitorSettings.SaveEstimator(_state.Estimator);
+            var today = _state.Today(now);
+            if (today != _savedToday)
+            {
+                MonitorSettings.SaveToday(today);
+                _savedToday = today;
+            }
         }
 
         // Auch ohne neues Ereignis abgleichen, damit Laufzeiten weiterzaehlen.
@@ -64,11 +166,23 @@ public partial class MainWindow : Window
         CollectionSync.Sync(_sessions, snapshot, s => s.Id, vm => vm.Id, s => new SessionVm(s), (vm, s) => vm.Update(s, now));
 
         var busyCount = snapshot.Count(s => s.IsBusy);
+        var waitingCount = snapshot.Count(s => s.IsWaiting);
         var busy = busyCount > 0;
         EmptyHint.Visibility = snapshot.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        HeaderInfo.Text = snapshot.Count == 0 ? "" : $"{busyCount} aktiv · {snapshot.Count} Sitzung{(snapshot.Count == 1 ? "" : "en")}";
-        ActivityDot.Fill = (Brush)FindResource(busy ? "Working" : "Idle");
+        StatusText = snapshot.Count == 0 ? "" :
+            $"{busyCount} aktiv{(waitingCount > 0 ? $" · {waitingCount} wartet" : "")} · {snapshot.Count} Sitzung{(snapshot.Count == 1 ? "" : "en")}";
+        HeaderInfo.Text = now < _flashUntil ? _flashText : StatusText;
+        ActivityDot.Fill = (Brush)FindResource(waitingCount > 0 ? "Waiting" : busy ? "Working" : "Idle");
         Footer.Text = FooterText(now);
+        TodayLine.Text = TodayText(now);
+
+        // Eine neue Rueckfrage holt das Fenster immer hervor, auch wenn es weggeklickt war (Freigabe nicht verpassen).
+        if (waitingCount > _lastWaitingCount)
+        {
+            _suppressedUntilIdle = false;
+            if (!IsVisible) Show();
+        }
+        _lastWaitingCount = waitingCount;
 
         UpdatePlan(now);
         if (_settings.Sounds)

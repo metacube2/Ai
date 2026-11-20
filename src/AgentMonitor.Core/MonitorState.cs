@@ -19,9 +19,26 @@ public enum AgentPhase
 public enum ActionStatus { Running, Done, Failed }
 
 /// <param name="EstimateSeconds">Geschaetzte Dauer aus frueheren gleichartigen Aktionen, oder null.</param>
+/// <param name="FullDetail">Ganzer Befehl, Pfad oder Auftrag (Klick auf die Aktion, Kopieren); nur im Speicher.</param>
+/// <param name="LearnedSeconds">Gelernte Dauer genau dieser Aktionsart (ohne Rueckfall), Grundlage der Warnung „laeuft ungewoehnlich lange“.</param>
 public sealed record ActionView(
     string Id, string Tool, string Summary, ActionStatus Status,
-    DateTimeOffset Start, DateTimeOffset? End, string? Detail = null, double? EstimateSeconds = null);
+    DateTimeOffset Start, DateTimeOffset? End, string? Detail = null, double? EstimateSeconds = null,
+    string? FullDetail = null, double? LearnedSeconds = null)
+{
+    /// <summary>Ab so viel Sekunden darf eine Aktion ueberhaupt als „ungewoehnlich lang“ gelten.</summary>
+    public const double OverdueMinSeconds = 60;
+    /// <summary>Ab diesem Vielfachen der gelernten Dauer gilt eine laufende Aktion als ungewoehnlich lang.</summary>
+    public const double OverdueFactor = 3;
+
+    /// <summary>
+    /// Laeuft die Aktion ungewoehnlich lange? Nur mit gelernter Dauer genau dieser Art, erst ab 60 s und nie,
+    /// solange der Agent auf eine Freigabe wartet (dann ist die Wartezeit kein Haenger).
+    /// </summary>
+    public bool IsOverdue(DateTimeOffset now, bool agentWaiting) =>
+        Status == ActionStatus.Running && !agentWaiting && LearnedSeconds is { } learned && learned > 0 &&
+        (now - Start).TotalSeconds >= Math.Max(OverdueMinSeconds, OverdueFactor * learned);
+}
 
 /// <param name="Detail">Hinweis in Warnfarbe, z. B. „wartet auf Freigabe“ oder ein Fehler.</param>
 /// <param name="LastMessage">Erste Zeile der letzten Antwort des Agenten (nach Stop/SubagentStop).</param>
@@ -38,7 +55,22 @@ public sealed record SessionView(
 {
     /// <summary>Gilt eine Sitzung als aktiv (Monitor soll sichtbar sein)?</summary>
     public bool IsBusy => !Ended && Agents.Any(a => a.Phase is AgentPhase.Thinking or AgentPhase.Working or AgentPhase.Waiting);
+
+    /// <summary>Wartet ein Agent dieser Sitzung auf eine Freigabe oder Antwort?</summary>
+    public bool IsWaiting => !Ended && Agents.Any(a => a.Phase == AgentPhase.Waiting);
 }
+
+/// <summary>Tageszahlen fuer die Zusammenfassung im Tray. Bleiben beim Aufraeumen erhalten, beginnen um Mitternacht neu.</summary>
+/// <param name="Turns">Beendete Runden des Hauptagenten (Auftrag bis Antwort).</param>
+/// <param name="Subagents">Beendete Unteragenten.</param>
+/// <param name="Actions">Beendete Aktionen (Werkzeugaufrufe).</param>
+/// <param name="FailedActions">Davon fehlgeschlagen.</param>
+/// <param name="Errors">Abbrueche mit Fehler (StopFailure).</param>
+/// <param name="Waits">Rueckfragen um eine Freigabe.</param>
+/// <param name="WorkSeconds">Summe der Rundendauern des Hauptagenten ueber alle Sitzungen (parallele Sitzungen zaehlen doppelt).</param>
+public sealed record DayStats(
+    DateOnly Day, int Turns = 0, int Subagents = 0, int Actions = 0, int FailedActions = 0,
+    int Errors = 0, int Waits = 0, double WorkSeconds = 0);
 
 /// <summary>Anlaesse fuer einen Klang.</summary>
 public enum MonitorSignal
@@ -73,6 +105,11 @@ public sealed class MonitorState
     public TimeSpan IdleRetention { get; init; } = TimeSpan.FromHours(3);
     /// <summary>Fertige Unteragenten bleiben so lange sichtbar.</summary>
     public TimeSpan DoneAgentRetention { get; init; } = TimeSpan.FromMinutes(10);
+    /// <summary>
+    /// Fertige Aktionen verschwinden so lange nach ihrem Ende von selbst (beim naechsten Prune); null = nie.
+    /// Einstellbar im Tray, Standard 2 Minuten (Wunsch Ingo 20.11.).
+    /// </summary>
+    public TimeSpan? FinishedRetention { get; set; } = TimeSpan.FromMinutes(2);
 
     /// <summary>Lernt Dauern und schaetzt den Fortschritt laufender Aktionen.</summary>
     public DurationEstimator Estimator { get; init; } = new();
@@ -83,6 +120,33 @@ public sealed class MonitorState
 
     private readonly System.Collections.Concurrent.ConcurrentQueue<MonitorSignal> _signals = new();
     private PlanUsage? _plan;
+    private DayStats? _today;
+
+    /// <summary>Tageszahlen von heute (bezogen auf <paramref name="now"/>); nach Mitternacht leer.</summary>
+    public DayStats Today(DateTimeOffset now)
+    {
+        lock (_lock) return RollDay(now);
+    }
+
+    /// <summary>Laedt gespeicherte Tageszahlen nach einem Neustart, wenn sie von heute sind.</summary>
+    public void RestoreToday(DayStats saved, DateTimeOffset now)
+    {
+        lock (_lock)
+        {
+            if (saved.Day == DayOf(now) && _today is null) _today = saved;
+        }
+    }
+
+    private static DateOnly DayOf(DateTimeOffset now) => DateOnly.FromDateTime(now.Date);
+
+    private DayStats RollDay(DateTimeOffset now)
+    {
+        var day = DayOf(now);
+        if (_today is null || _today.Day != day) _today = new DayStats(day);
+        return _today;
+    }
+
+    private void Count(DateTimeOffset now, Func<DayStats, DayStats> change) => _today = change(RollDay(now));
 
     /// <summary>Steigt bei jeder Aenderung; die Oberflaeche erkennt so, ob neu gezeichnet werden muss.</summary>
     public long Version => Interlocked.Read(ref _version);
@@ -178,11 +242,18 @@ public sealed class MonitorState
                     break;
 
                 case "PostToolUse":
-                    FinishAction(agent, e, ActionStatus.Done, now, Estimator);
+                    if (FinishAction(agent, e, ActionStatus.Done, now, Estimator))
+                        Count(now, d => d with { Actions = d.Actions + 1 });
                     break;
 
                 case "PostToolUseFailure":
-                    FinishAction(agent, e, e.IsInterrupt ? ActionStatus.Done : ActionStatus.Failed, now, Estimator);
+                    var failStatus = e.IsInterrupt ? ActionStatus.Done : ActionStatus.Failed;
+                    if (FinishAction(agent, e, failStatus, now, Estimator))
+                        Count(now, d => d with
+                        {
+                            Actions = d.Actions + 1,
+                            FailedActions = d.FailedActions + (failStatus == ActionStatus.Failed ? 1 : 0),
+                        });
                     break;
 
                 case "SubagentStart":
@@ -193,6 +264,7 @@ public sealed class MonitorState
                 case "SubagentStop":
                     if (!agent.IsMain)
                     {
+                        if (agent.Ended is null) Count(now, d => d with { Subagents = d.Subagents + 1 });
                         EndTurn(agent, now, learn: true);
                         CloseRunning(agent, ActionStatus.Done, now);
                         agent.SetPhase(AgentPhase.Done, now);
@@ -204,7 +276,8 @@ public sealed class MonitorState
                 case "Stop":
                     if (agent.IsMain)
                     {
-                        EndTurn(agent, now, learn: true);
+                        var turn = EndTurn(agent, now, learn: true);
+                        Count(now, d => d with { Turns = d.Turns + 1, WorkSeconds = d.WorkSeconds + turn });
                         CloseRunning(agent, ActionStatus.Done, now);
                         agent.SetPhase(AgentPhase.Idle, now);
                         agent.Detail = null;
@@ -215,7 +288,8 @@ public sealed class MonitorState
 
                 case "StopFailure":
                     _signals.Enqueue(MonitorSignal.Failed);
-                    EndTurn(s.Main, now, learn: false);
+                    var failedTurn = EndTurn(s.Main, now, learn: false);
+                    Count(now, d => d with { Errors = d.Errors + 1, WorkSeconds = d.WorkSeconds + failedTurn });
                     CloseRunning(s.Main, ActionStatus.Failed, now);
                     s.Main.SetPhase(AgentPhase.Failed, now);
                     s.Main.Detail = ToolSummary.Shorten(e.Error ?? "Fehler");
@@ -227,6 +301,7 @@ public sealed class MonitorState
                         agent.SetPhase(AgentPhase.Waiting, now);
                         agent.Detail = "wartet auf Freigabe";
                         _signals.Enqueue(MonitorSignal.NeedsYou);
+                        Count(now, d => d with { Waits = d.Waits + 1 });
                     }
                     else if (e.NotificationType == "idle_prompt")
                     {
@@ -266,8 +341,73 @@ public sealed class MonitorState
                     break;
             }
 
+            // Ausgeblendete Sitzung kommt erst zurueck, wenn sie wieder arbeitet. Ein spaetes „idle_prompt“
+            // oder die Statuszeile (ApplyStatus) holen sie bewusst nicht zurueck.
+            if (s.Hidden && s.IsBusy) s.Hidden = false;
+
             Interlocked.Increment(ref _version);
         }
+    }
+
+    /// <summary>
+    /// Knopf „Aufräumen“: entfernt fertige Aktionen, fertige Unteragenten und beendete Sitzungen und blendet
+    /// untaetige Sitzungen aus, bis sie wieder arbeiten. Laufende Aktionen, Aufgaben- und Rundenbalken
+    /// arbeitender Agenten, gelernte Dauern und Tageszahlen bleiben.
+    /// </summary>
+    /// <returns>Anzahl entfernter Aktionen (fuer die Rueckmeldung).</returns>
+    public int ClearFinished(DateTimeOffset now)
+    {
+        lock (_lock)
+        {
+            var removed = 0;
+            foreach (var id in _sessions.Keys.ToList()) removed += ClearSessionCore(id, hide: false);
+            Interlocked.Increment(ref _version);
+            return removed;
+        }
+    }
+
+    /// <summary>
+    /// Rechtsklick „Sitzung ausblenden“: raeumt die Sitzung auf und blendet sie aus, auch wenn sie
+    /// scheinbar arbeitet (z. B. haengengeblieben). Sie erscheint wieder, sobald sie wirklich weiterarbeitet.
+    /// </summary>
+    public void HideSession(string sessionId)
+    {
+        lock (_lock)
+        {
+            ClearSessionCore(sessionId, hide: true);
+            Interlocked.Increment(ref _version);
+        }
+    }
+
+    private int ClearSessionCore(string id, bool hide)
+    {
+        if (!_sessions.TryGetValue(id, out var s)) return 0;
+        if (s.Ended)
+        {
+            var n = s.Main.Actions.Count + s.Subagents.Values.Sum(a => a.Actions.Count);
+            _sessions.Remove(id);
+            return n;
+        }
+
+        var removed = 0;
+        foreach (var a in new[] { s.Main }.Concat(s.Subagents.Values))
+            removed += a.Actions.RemoveAll(x => x.Status != ActionStatus.Running);
+        foreach (var (aid, a) in s.Subagents.ToList())
+        {
+            if (!a.IsBusy) s.Subagents.Remove(aid);
+        }
+        if (!s.Main.IsBusy)
+        {
+            s.Main.LastMessage = null;
+            if (s.Main.Phase == AgentPhase.Failed)
+            {
+                s.Main.SetPhase(AgentPhase.Idle, s.LastEvent);
+                s.Main.Detail = null;
+            }
+            if (s.Main.TasksTotal > 0 && s.Main.TasksDone >= s.Main.TasksTotal) s.Main.TasksDone = s.Main.TasksTotal = 0;
+        }
+        if (hide || !s.IsBusy) s.Hidden = true;
+        return removed;
     }
 
     /// <summary>Entfernt beendete und lange untaetige Sitzungen sowie alte fertige Unteragenten.</summary>
@@ -293,17 +433,31 @@ public sealed class MonitorState
                         changed = true;
                     }
                 }
+                if (FinishedRetention is { } keep)
+                {
+                    foreach (var a in new[] { s.Main }.Concat(s.Subagents.Values))
+                    {
+                        if (a.Actions.RemoveAll(x => x.Status != ActionStatus.Running && x.End is { } e && now - e > keep) > 0)
+                            changed = true;
+                    }
+                }
             }
             if (changed) Interlocked.Increment(ref _version);
         }
     }
 
+    /// <summary>
+    /// Sichtbare Sitzungen: ausgeblendete fehlen. Wartende zuerst (Freigabe nicht uebersehen),
+    /// dann arbeitende, dann nach letztem Ereignis.
+    /// </summary>
     public IReadOnlyList<SessionView> Snapshot()
     {
         lock (_lock)
         {
             return _sessions.Values
-                .OrderByDescending(s => s.IsBusy)
+                .Where(s => !s.Hidden)
+                .OrderByDescending(s => s.IsWaiting)
+                .ThenByDescending(s => s.IsBusy)
                 .ThenByDescending(s => s.LastEvent)
                 .Select(s => new SessionView(
                     s.Id, s.Project, s.Title, s.Ended, s.LastEvent,
@@ -360,6 +514,8 @@ public sealed class MonitorState
         {
             EstimateKey = key,
             EstimateSeconds = Estimator.EstimateWithFallback(key),
+            LearnedSeconds = Estimator.Estimate(key),
+            FullDetail = ToolSummary.FullText(e.ToolName, e.ToolInput),
             Id = id,
             Tool = ToolSummary.DisplayName(e.ToolName),
             Summary = ToolSummary.Describe(e.ToolName, e.ToolInput),
@@ -396,12 +552,14 @@ public sealed class MonitorState
         }
     }
 
-    private static void FinishAction(Agent agent, HookEvent e, ActionStatus status, DateTimeOffset now, DurationEstimator estimator)
+    /// <returns>true, wenn eine laufende Aktion damit beendet wurde.</returns>
+    private static bool FinishAction(Agent agent, HookEvent e, ActionStatus status, DateTimeOffset now, DurationEstimator estimator)
     {
         var item = e.ToolUseId is { } id
             ? agent.Actions.FindLast(a => a.Id == id)
             : agent.Actions.FindLast(a => a.Status == ActionStatus.Running && a.Tool == ToolSummary.DisplayName(e.ToolName));
-        if (item is not null && item.Status == ActionStatus.Running)
+        var finished = item is { Status: ActionStatus.Running };
+        if (item is { Status: ActionStatus.Running })
         {
             // Lernen aus der Zeit, die der Balken tatsaechlich abbildet (Anfordern bis Ende).
             if (status == ActionStatus.Done) estimator.Record(item.EstimateKey, (now - item.Start).TotalSeconds);
@@ -415,15 +573,19 @@ public sealed class MonitorState
             agent.SetPhase(AgentPhase.Thinking, now);
             agent.Detail = null;
         }
+        return finished;
     }
 
     /// <summary>Beendet die laufende Runde eines Agenten; bei normalem Ende lernt die Schaetzung ihre Dauer.</summary>
-    private void EndTurn(Agent agent, DateTimeOffset now, bool learn)
+    /// <returns>Dauer der Runde in Sekunden (0, wenn keine lief).</returns>
+    private double EndTurn(Agent agent, DateTimeOffset now, bool learn)
     {
-        if (agent.TurnStarted is not { } start) return;
-        if (learn && !agent.TurnPartial) Estimator.Record(agent.TurnKey, (now - start).TotalSeconds);
+        if (agent.TurnStarted is not { } start) return 0;
+        var seconds = Math.Max(0, (now - start).TotalSeconds);
+        if (learn && !agent.TurnPartial) Estimator.Record(agent.TurnKey, seconds);
         agent.TurnStarted = null;
         agent.TurnPartial = false;
+        return seconds;
     }
 
     private static void CloseRunning(Agent agent, ActionStatus status, DateTimeOffset now)
@@ -437,7 +599,8 @@ public sealed class MonitorState
 
     private AgentView ToView(Agent a) => new(
         a.Id, a.Label, a.IsMain, a.Phase, a.PhaseSince, a.TasksDone, a.TasksTotal, a.Detail,
-        a.Actions.Select(x => new ActionView(x.Id, x.Tool, x.Summary, x.Status, x.Start, x.End, x.Detail, x.EstimateSeconds)).ToList(),
+        a.Actions.Select(x => new ActionView(x.Id, x.Tool, x.Summary, x.Status, x.Start, x.End, x.Detail, x.EstimateSeconds,
+            x.FullDetail, x.LearnedSeconds)).ToList(),
         a.LastMessage, a.TurnStarted, a.TurnStarted is null ? null : Estimator.EstimateWithFallback(a.TurnKey));
 
     internal static string ProjectName(string? cwd)
@@ -456,12 +619,15 @@ public sealed class MonitorState
         public string? Model { get; set; }
         public string? ModelFamily { get; set; }
         public bool Ended { get; set; }
+        /// <summary>Per „Aufräumen“ oder Rechtsklick ausgeblendet, bis die Sitzung wieder arbeitet.</summary>
+        public bool Hidden { get; set; }
         public DateTimeOffset LastEvent { get; set; } = now;
         public Agent Main { get; } = new(MainAgentId, "Hauptagent", isMain: true, now);
         public Dictionary<string, Agent> Subagents { get; } = new();
         public List<PendingAgentCall> PendingAgentCalls { get; } = new();
 
         public bool IsBusy => !Ended && (Main.IsBusy || Subagents.Values.Any(a => a.IsBusy));
+        public bool IsWaiting => !Ended && (Main.Phase == AgentPhase.Waiting || Subagents.Values.Any(a => a.Phase == AgentPhase.Waiting));
     }
 
     private sealed record PendingAgentCall(string Type, string? Description);
@@ -480,7 +646,7 @@ public sealed class MonitorState
         public DateTimeOffset? TurnStarted { get; set; }
         /// <summary>Beginn der Runde wurde verpasst; ihre Dauer taugt nicht zum Lernen.</summary>
         public bool TurnPartial { get; set; }
-        /// <summary>Art der Runde fuer die Dauer-Schaetzung: „Runde:main“ oder „Runde:        public DateTimeOffset? Ended { get; set; }lt;Typ        public DateTimeOffset? Ended { get; set; }gt;“.</summary>
+        /// <summary>Art der Runde fuer die Dauer-Schaetzung: „Runde:main“ oder „Runde:&lt;Typ&gt;“.</summary>
         public string TurnKey => IsMain ? "Runde:main" : $"Runde:{AgentType ?? "Unteragent"}";
         public string? Detail { get; set; }
         public string? LastMessage { get; set; }
@@ -509,5 +675,7 @@ public sealed class MonitorState
         public DateTimeOffset? End { get; set; }
         public string EstimateKey { get; init; } = "";
         public double? EstimateSeconds { get; init; }
+        public double? LearnedSeconds { get; init; }
+        public string? FullDetail { get; init; }
     }
 }

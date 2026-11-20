@@ -33,6 +33,14 @@ public sealed class MonitorSettings
 
     public const double MinScale = 0.8, MaxScale = 2.5;
 
+    /// <summary>Fertige Aktionen einzeln, zusammengefasst (Standard) oder nur laufende anzeigen.</summary>
+    public AgentMonitor.Core.FinishedDisplay FinishedDisplay { get; set; } = AgentMonitor.Core.FinishedDisplay.Compact;
+
+    /// <summary>Fertige Aktionen verschwinden so viele Minuten nach ihrem Ende; 0 = nie. Standard 2 (Wunsch Ingo 20.11.).</summary>
+    public int FinishedRetentionMinutes { get; set; } = 2;
+
+    public TimeSpan? FinishedRetention => FinishedRetentionMinutes > 0 ? TimeSpan.FromMinutes(FinishedRetentionMinutes) : null;
+
     /// <summary>Beim ersten Start einmal den Autostart einrichten; danach gilt, was im Tray-Menue gewaehlt ist.</summary>
     public bool AutostartInitialized { get; set; }
 
@@ -98,6 +106,34 @@ public sealed class MonitorSettings
         {
             Directory.CreateDirectory(Folder);
             File.WriteAllText(PlanPath, JsonSerializer.Serialize(plan, Json));
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    /// <summary>Tageszahlen (nur Zaehler, keine Inhalte), damit sie einen Neustart des Monitors ueberstehen.</summary>
+    private static string TodayPath => Path.Combine(Folder, "tageszahlen.json");
+
+    public static AgentMonitor.Core.DayStats? LoadToday()
+    {
+        try
+        {
+            if (File.Exists(TodayPath))
+                return JsonSerializer.Deserialize<AgentMonitor.Core.DayStats>(File.ReadAllText(TodayPath));
+        }
+        catch (Exception)
+        {
+        }
+        return null;
+    }
+
+    public static void SaveToday(AgentMonitor.Core.DayStats today)
+    {
+        try
+        {
+            Directory.CreateDirectory(Folder);
+            File.WriteAllText(TodayPath, JsonSerializer.Serialize(today, Json));
         }
         catch (Exception)
         {
