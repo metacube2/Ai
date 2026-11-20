@@ -868,3 +868,26 @@ Kernbelege von der Hauptsitzung gegengelesen: NAST, T683S, T100, CDHDR).
   `ZSD_MISSING_ZBA1` ist seit T76K912722 (08.10.) geloescht.
 - **Nicht geprueft:** Findungsanalyse in der GUI, Mandant 090, P76, warum der V_V2-Lauf um 15:46 den Auftrag noch nicht
   bestaetigt hat.
+
+## 13. Rueckbau der beiden Fabio-Tests in T76/100 (2026-11-20 08:47 bis 08:53, Auftrag Ingo, Agent sap-t76 auf Sonnet)
+
+*Erledigt 2026-11-20 08:50 / 08:52:* Beide Test-Aenderungen vom 18.11. sind zurueckgebaut und rueckgelesen (Agent, von der Hauptsitzung
+fuer beide Zielzeilen per RFC gegengelesen).
+
+| | T161V (Abschnitt 10) | T441V (Abschnitt 11) |
+| --- | --- | --- |
+| Zeile / Feld | F / NB / 1100, `ATPCONFMRP` | 02 / AE, `BESTP` |
+| Stand heute | **X** (war leer seit 18.11. 12:06) | **X** (war A seit 18.11. 18:11) |
+| Gesichert | 08:50:13, Auftrag **T76K912926** (E070-Aufgabe 08:50:11) | 08:52:10, Auftrag **T76K912928** (E070-Aufgabe 08:52:07) |
+| Vorher gelesen | 08:48:12, gleich NACHHER-Datei (0 Unterschiede) | 08:47:58, gleich NACHHER-Datei (0 Unterschiede) |
+| Rueckleseprobe 08:52:29 | 11 Zeilen, schluesselweise 0 Abweichungen gegen VORHER | 75 Zeilen, schluesselweise 0 Abweichungen gegen VORHER |
+
+- **E071K unveraendert:** `100FNB  1100` nur in T76K912180/181 (freigegeben, alt) und T76K912927; `10002AE` nur in T76K903213 (alt) und T76K912929.
+  Die Auftraege T76K912926, 927, 928, 929 sind offen (D), nicht freigegeben, ohne Ziel P76. Ingo kann sie loeschen oder stehen lassen.
+- **Abweichung vom Plan (5):** Die Vermutung „der Auftragsdialog bleibt aus“ war falsch. Er kam beide Male und schlug jeweils den falschen
+  (zuletzt benutzten) Auftrag vor: bei T161V T76K912928, bei T441V T76K912926. Die Nummer wurde jedes Mal ausdruecklich gesetzt und vor Enter
+  zurueckgemessen. Im Dialog zeigte die Kurzbeschreibung noch den Text des vorigen Auftrags (nur Anzeige).
+- **Fuer Fabio:** Eine vor 08:52 geoeffnete Transaktion kann den alten Pruefumfang noch halten; neu aufrufen. Ob Fabio seinen Test abgeschlossen
+  hatte, steht hier nicht; der Rueckbau erfolgte auf Ingos Zuruf vom 20.11.
+- P76 und Mandant 090 nicht gelesen und nicht beruehrt, kein Passwort eingegeben (RFC-Lesen mit der DPAPI-Ablage, GUI in eigener Sitzung,
+  geschlossen).

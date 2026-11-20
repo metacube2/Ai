@@ -119,3 +119,5 @@ Abweichung vom Plan: keine. Die Warnung erschien erst beim Bestaetigen des Abfra
 Die Zeile gilt je Belegart und Lieferwerk, nicht je Bestellung oder Benutzer: Ab dem Sichern wirkt der leere Haken in T76/100
 fuer alle NB-Bestellungen mit Lieferwerk 1100, auch fuer andere Tester (so auch im Wortlaut Fabios). P76 und Mandant 090 sind
 nicht betroffen.
+
+**Rueckbau ausgefuehrt 2026-11-20 (siehe `NOTES.md` 13):** zurueck auf X, rueckgelesen. Der Auftragsdialog kam trotz „Vermutung“ in Abschnitt 5 und schlug den falschen Auftrag vor; die Nummer wurde ausdruecklich gesetzt.

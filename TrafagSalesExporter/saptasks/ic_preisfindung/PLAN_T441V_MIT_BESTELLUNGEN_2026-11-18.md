@@ -184,3 +184,5 @@ Die Zeile gilt je Pruefgruppe und Pruefregel, nicht je Auftrag oder Benutzer: Ab
 Kundenauftragspositionen mit Kundeneinzelbestand und Pruefgruppe 02, auch fuer andere Tester. Zusammen mit dem Test vom Mittag
 (T161V F/NB/1100 ATPCONFMRP leer seit 12:06) sind damit zwei Schalter gleichzeitig gegenueber dem Ausgangsstand veraendert;
 ein Vergleich „nur X gegen A“ gilt bei leerem ATPCONFMRP. P76 und Mandant 090 sind nicht betroffen und wurden nicht gelesen.
+
+**Rueckbau ausgefuehrt 2026-11-20 (siehe `NOTES.md` 13):** zurueck auf X, rueckgelesen. Der Auftragsdialog kam trotz „Vermutung“ in Abschnitt 5 und schlug den falschen Auftrag vor; die Nummer wurde ausdruecklich gesetzt.
