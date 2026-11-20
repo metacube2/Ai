@@ -320,6 +320,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben; Nachpruefungen vom 29.10. und 12.11. in der Datei (am 12.11. waren die Befunde 13 und 15 erneut eingetreten) |
 | `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md` | Doku-Pruefung aller Markdown-Dateien vom 2026-11-12: Vorgehen, Zahl der Befunde, offene Entscheide |
 | `docs/CODE_REVIEW_2026-11-12.md` | Code-Review des Anwendungscodes vom 2026-11-12: 13 Befunde nach Schwere (4 hoch, bestaetigt), Finance_All getrennt, nicht Angesehenes; nichts geaendert |
+| `docs/CODE_REVIEW_2026-11-20.md` | Code-Review 2 vom 2026-11-20 auf Stand `ad4f437`: Stand der 13 Befunde vom 12.11. (1 erledigt, 12 offen), 8 neue hohe Befunde (Zugriff, Shopfloor-XSS, SAP-Zugangsdaten, ABAP ohne Berechtigungspruefung, P76-Werkzeug), Messwerte Clean Code und Tests, Doings und Entscheide; am Code nichts geaendert |
 
 ## Archiv — kein Sollstand
 

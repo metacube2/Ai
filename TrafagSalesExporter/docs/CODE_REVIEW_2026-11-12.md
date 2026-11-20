@@ -1,6 +1,9 @@
 # Code-Review Befunde (12.11.2026)
 
-Stand: 2026-11-12 (Review abgeschlossen, nichts geaendert; Entscheide Ingo offen).
+Stand: 2026-11-20 (Nachfolge-Review `docs/CODE_REVIEW_2026-11-20.md` Abschnitt 2: Befund 13 erledigt am 16.11. mit `e10ab3a`,
+die uebrigen zwoelf offen; Befunde 5 und 9 sind nicht mehr „nicht deployed“, `c9208b5` ist seit 18.11. 09:31 produktiv;
+`finance-cockpit/controlling` aus Befund 3 ist laut Seed-Kommentar bewusst offen); davor 2026-11-12 (Review abgeschlossen,
+nichts geaendert; Entscheide Ingo offen).
 
 Auftrag Ingo 12.11.: „gesamten Quellcode reviewen, Bugs usw.“. Geprueft wurde der saubere Stand `a6a96b2` in einem eigenen
 Worktree (ohne die unkommittierte Finance_All-Automatik), mit dem Review-Werkzeug auf Stufe „high“. Bei rund 128'000 Zeilen

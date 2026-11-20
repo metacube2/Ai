@@ -1,5 +1,20 @@
 # Last Change
 
+## 2026-11-20 14:30: Code-Review 2 mit Clean-Code- und Testpruefung, nur Doku
+
+- **Auftrag Ingo:** „fuehre ein codereview durch ueber den gesamten quellcode, dann analyse und doings“, danach „schreib das alles
+  in ein dokument“, „auch clean code, tdd geprueft?“. Stand `ad4f437`, sechs lesende Bereichs-Agenten, hohe Befunde von der
+  Hauptsitzung am Code nachgelesen. Am Code nichts geaendert, kein SAP, kein Deploy.
+- **Ergebnis:** `docs/CODE_REVIEW_2026-11-20.md`. Von den 13 Befunden vom 12.11. ist Nr. 13 erledigt, zwoelf sind offen (Nr. 5
+  und 9 seit 18.11. produktiv). Neu 8 hohe Befunde: Seiten ohne Sperre bei `Security:Enabled = false`, `/einkauf/verbindungen`
+  gibt SAP-Zugangsdaten preis, Cookie ohne Abmelden, Secrets-Export, Shopfloor-XSS (`kw`), HR-Sets ohne `AUTHORITY-CHECK`,
+  `FinanzJournalSet` ohne Pflichtfilter, P76-Werkzeug nicht technisch „nur lesen“.
+- **Gemessen:** Gesamttest im Review-Worktree 1785/1785 gruen; Zeilenabdeckung ohne Uebersetzungen 50 %, Dienste rund 70 %,
+  Razor-Komponenten 0,6 %; 77 % der Code-Commits mit Tests im selben Commit; 15 Dateien ueber 1000 Zeilen, 43 Methoden ueber 100.
+- **Offen bei Ingo:** Doings D1 bis D9 freigeben (ohne Entscheid moeglich), Entscheide B1 bis B7. Wochen_Todo 159 nachgefuehrt.
+- **Fehler dabei (LEARNINGS):** Review vom 12.11. erst beim Schreiben gefunden und davor im Chat „nirgends erfasst“ behauptet;
+  Worktree ohne `trafag_exporter.db`; leeres `git log` mit falschem Pfad als „unveraendert“ gelesen.
+
 ## 2026-11-20 13:25: Finance Stufe 2 deployed
 
 - **Auftrag Ingo:** „mache deploy wenn anderer agent schon fertig ist mit seinem eigenen deploy“. Shopfloor-Sitzung war 13:05 abgeschlossen; Patch 10 (`e3248a4`) in den Finance-Zweig gemergt, Feature-Zweig auf `26d23a9`.
