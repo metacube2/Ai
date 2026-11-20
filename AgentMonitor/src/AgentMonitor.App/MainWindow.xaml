@@ -261,6 +261,9 @@
                     <TextBlock x:Name="HeaderInfo" Foreground="{StaticResource Muted}" Margin="10,1,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="CleanButton" Style="{StaticResource HeaderButton}" Click="CleanButton_Click" Content="&#x1F9F9;"
+                            FontFamily="Segoe UI Emoji"
+                            ToolTip="Aufräumen: fertige Aktionen, fertige Unteragenten und untätige Sitzungen ausblenden (laufende bleiben)"/>
                     <Button x:Name="PinButton" Style="{StaticResource HeaderButton}" Click="PinButton_Click" Content="&#x1F4CC;"/>
                     <Button Style="{StaticResource HeaderButton}" Click="MinimizeButton_Click" ToolTip="Minimieren"
                             FontFamily="Segoe MDL2 Assets" FontSize="10" Content="&#xE921;"/>
@@ -279,7 +282,14 @@
                     <ItemsControl x:Name="SessionList">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="{StaticResource Card}" CornerRadius="8" Margin="0,0,4,8" Padding="10,8">
+                                <Grid Margin="0,0,4,8">
+                                <Border Background="{StaticResource Card}" CornerRadius="8" Padding="10,8">
+                                    <!-- Rechtsklick auf die Sitzung (Wunsch Ingo 20.11.) -->
+                                    <Border.ContextMenu>
+                                        <ContextMenu FontSize="15">
+                                            <MenuItem Header="Sitzung ausblenden (bis sie wieder arbeitet)" Click="HideSession_Click"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Title}" Foreground="{StaticResource Text}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,1,0,6"/>
@@ -353,7 +363,14 @@
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
                                                                         <StackPanel Margin="0,3,0,1">
-                                                                            <Grid>
+                                                                            <StackPanel.ContextMenu>
+                                                                                <ContextMenu FontSize="15">
+                                                                                    <MenuItem Header="Ganzen Befehl kopieren" Click="CopyAction_Click"/>
+                                                                                </ContextMenu>
+                                                                            </StackPanel.ContextMenu>
+                                                                            <!-- Klick klappt den ganzen Befehl auf (Wunsch Ingo 20.11.) -->
+                                                                            <Grid Background="Transparent" Cursor="Hand" MouseLeftButtonUp="ActionHeader_MouseLeftButtonUp"
+                                                                                  ToolTip="Klicken: ganzen Befehl zeigen · Rechtsklick: kopieren">
                                                                                 <Grid.ColumnDefinitions>
                                                                                     <ColumnDefinition Width="18"/>
                                                                                     <ColumnDefinition Width="Auto"/>
@@ -362,7 +379,7 @@
                                                                                 </Grid.ColumnDefinitions>
                                                                                 <TextBlock Text="{Binding Glyph}" Style="{StaticResource Glyph}" FontFamily="Segoe UI Symbol"/>
                                                                                 <TextBlock Grid.Column="1" Text="{Binding Tool}" Foreground="{StaticResource Text}" FontWeight="SemiBold" Margin="0,0,6,0"/>
-                                                                                <TextBlock Grid.Column="2" Text="{Binding Summary}" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
+                                                                                <TextBlock Grid.Column="2" Text="{Binding Summary}" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"/>
                                                                                 <TextBlock Grid.Column="3" Text="{Binding Duration}" Foreground="{StaticResource Muted}" FontSize="11" Margin="8,0,0,0"/>
                                                                             </Grid>
                                                                             <!-- Das „Wie“: genauer Befehl, Ordner usw. -->
@@ -378,20 +395,40 @@
                                                                                     </Style>
                                                                                 </TextBlock.Style>
                                                                             </TextBlock>
-                                                                            <ProgressBar Style="{StaticResource ActionBar}" Margin="18,3,0,0"
+                                                                            <!-- Aufgeklappt: ganzer Text, markierbar, mit Rollbalken bei langen Befehlen -->
+                                                                            <TextBox Text="{Binding FullText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                                                                     MaxHeight="160" VerticalScrollBarVisibility="Auto" Margin="18,3,0,0" Padding="4,3"
+                                                                                     Background="#1F2127" Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}"
+                                                                                     FontFamily="Cascadia Mono, Consolas" FontSize="10.5"
+                                                                                     Visibility="{Binding IsExpanded, Converter={StaticResource BoolVis}}"/>
+                                                                            <TextBlock Text="{Binding OverdueText}" Foreground="{StaticResource Waiting}" FontSize="11" Margin="18,2,0,0"
+                                                                                       TextWrapping="Wrap" Visibility="{Binding IsOverdue, Converter={StaticResource BoolVis}}"/>
+                                                                            <ProgressBar Margin="18,3,0,0"
                                                                                          local:BarAnimation.Value="{Binding BarValue, Mode=OneWay}" Tag="{Binding PercentText}"
-                                                                                         ToolTip="Geschätzt aus der Dauer früherer gleichartiger Aktionen; höchstens 95 %, bis die Aktion wirklich fertig ist."/>
+                                                                                         ToolTip="Geschätzt aus der Dauer früherer gleichartiger Aktionen; höchstens 95 %, bis die Aktion wirklich fertig ist.">
+                                                                                <ProgressBar.Style>
+                                                                                    <!-- Ungewoehnlich lang: orange statt blau -->
+                                                                                    <Style TargetType="ProgressBar" BasedOn="{StaticResource ActionBar}">
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                                                                <Setter Property="Foreground" Value="{StaticResource BarOrange}"/>
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </ProgressBar.Style>
+                                                                            </ProgressBar>
                                                                         </StackPanel>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
 
-                                                            <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="18,3,0,0">
+                                                            <!-- Fertige Aktionen in einer Zeile (Tray „Fertige Aktionen“) -->
+                                                            <TextBlock Text="{Binding DigestText}" Foreground="{StaticResource Muted}" FontSize="11" Margin="18,4,0,0"
+                                                                       ToolTip="Zusammengefasste fertige Aktionen; Zeit = vom ersten Beginn bis zum letzten Ende. Einstellbar im Tray unter „Fertige Aktionen“.">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
-                                                                        <Setter Property="Text" Value="{Binding HiddenActions, StringFormat='+ {0} ältere Aktionen'}"/>
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding HiddenActions}" Value="0">
+                                                                            <DataTrigger Binding="{Binding DigestText}" Value="{x:Null}">
                                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
@@ -405,6 +442,26 @@
                                         </ItemsControl>
                                     </StackPanel>
                                 </Border>
+                                <!-- Wartet ein Agent auf dich: pulsierender oranger Rahmen, Karte steht zuoberst -->
+                                <Border x:Name="WaitFrame" CornerRadius="8" BorderThickness="2.5" BorderBrush="{StaticResource Waiting}"
+                                        IsHitTestVisible="False" Visibility="Collapsed"/>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsWaiting}" Value="True">
+                                        <Setter TargetName="WaitFrame" Property="Visibility" Value="Visible"/>
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard x:Name="WaitPulse">
+                                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                    <DoubleAnimation Storyboard.TargetName="WaitFrame" Storyboard.TargetProperty="Opacity"
+                                                                     From="1" To="0.25" Duration="0:0:0.8"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="WaitPulse"/>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -439,6 +496,8 @@
                     </Grid>
                     <TextBlock x:Name="TokensToday" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap"
                                ToolTip="Summe aus den Gesprächsprotokollen unter ~/.claude/projects (nur heute). Das Protokollformat ist nicht offiziell dokumentiert; die Zahl ist eine Auskunft, kein Abrechnungswert. Massgeblich für das Limit sind die Prozentbalken."/>
+                    <TextBlock x:Name="TodayLine" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
+                               ToolTip="Gezählt, solange der Monitor läuft (übersteht einen Neustart, beginnt um Mitternacht neu). Arbeitszeit = Summe der Runden des Hauptagenten; parallele Sitzungen zählen doppelt."/>
                 </StackPanel>
             </Border>
 

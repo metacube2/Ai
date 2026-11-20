@@ -67,6 +67,37 @@ public static class ToolSummary
         return string.IsNullOrWhiteSpace(d) ? null : Shorten(OneLine(d), MaxDetailLength);
     }
 
+    /// <summary>Hoechstlaenge des vollstaendigen Textes (Klick auf eine Aktion, Kopieren).</summary>
+    public const int MaxFullLength = 4000;
+
+    /// <summary>
+    /// Vollstaendiger Text einer Aktion fuer die Detailansicht und zum Kopieren: der ganze Befehl, der
+    /// ganze Pfad, das Suchmuster oder der Auftrag. Nur im Speicher, wird nie gespeichert.
+    /// </summary>
+    public static string? FullText(string? toolName, JsonElement? input)
+    {
+        if (input is not { ValueKind: JsonValueKind.Object } i) return null;
+        string? Join(params string?[] parts)
+        {
+            var p = parts.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+            return p.Length == 0 ? null : string.Join("\n", p);
+        }
+        var t = toolName switch
+        {
+            "Bash" or "PowerShell" => First(i, "command"),
+            "Read" or "Write" or "Edit" or "NotebookEdit" => First(i, "file_path") ?? First(i, "notebook_path"),
+            "Grep" => Join(First(i, "pattern"), First(i, "path") is { } p ? $"in {p}" : null, First(i, "glob") is { } g ? $"Dateien: {g}" : null),
+            "Glob" => Join(First(i, "pattern"), First(i, "path") is { } p2 ? $"in {p2}" : null),
+            "WebFetch" => First(i, "url"),
+            "WebSearch" => First(i, "query"),
+            "Agent" or "Task" => Join(First(i, "description"), First(i, "prompt")),
+            _ => i.GetRawText(),
+        };
+        if (string.IsNullOrWhiteSpace(t)) return null;
+        t = t.Replace("\r\n", "\n").Trim();
+        return t.Length <= MaxFullLength ? t : t[..(MaxFullLength - 1)] + "…";
+    }
+
     /// <summary>Kurzer Anzeigename eines Werkzeugs, bei MCP ohne Praefix.</summary>
     public static string DisplayName(string? toolName)
     {

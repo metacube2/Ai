@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using AgentMonitor.Core;
@@ -46,6 +47,7 @@ public partial class App : System.Windows.Application
         SoundEvents.Register();
         var state = new MonitorState { Estimator = MonitorSettings.LoadEstimator() };
         if (MonitorSettings.LoadPlan() is { } savedPlan) state.RestorePlan(savedPlan, DateTimeOffset.Now);
+        if (MonitorSettings.LoadToday() is { } savedToday) state.RestoreToday(savedToday, DateTimeOffset.Now);
         _state = state;
         _server = new HookServer(state, _settings);
         await _server.StartAsync();
@@ -89,6 +91,41 @@ public partial class App : System.Windows.Application
             catch (Exception) { }
         });
 
+        // Tageszusammenfassung (nur Anzeige) und Aufraeumen (Wunsch Ingo 20.11.)
+        var today = new Forms.ToolStripMenuItem("Heute") { Enabled = false };
+        var clean = new Forms.ToolStripMenuItem("Erledigtes aufräumen", null, (_, _) => _window?.CleanUp());
+
+        var finished = new Forms.ToolStripMenuItem("Fertige Aktionen");
+        foreach (var (label, mode) in new[]
+                 {
+                     ("einzeln zeigen", FinishedDisplay.All),
+                     ("zusammenfassen (letzte zwei einzeln)", FinishedDisplay.Compact),
+                     ("nur laufende zeigen", FinishedDisplay.RunningOnly),
+                 })
+        {
+            var item = new Forms.ToolStripMenuItem(label) { Tag = mode };
+            item.Click += (_, _) => _window?.SetFinishedDisplay((FinishedDisplay)item.Tag!);
+            finished.DropDownItems.Add(item);
+        }
+        finished.DropDownItems.Add(new Forms.ToolStripSeparator());
+        foreach (var (label, minutes) in new[] { ("ausblenden nach 1 Minute", 1), ("ausblenden nach 2 Minuten", 2),
+                     ("ausblenden nach 5 Minuten", 5), ("ausblenden nach 15 Minuten", 15), ("nie ausblenden", 0) })
+        {
+            var item = new Forms.ToolStripMenuItem(label) { Tag = minutes };
+            item.Click += (_, _) => _window?.SetFinishedRetention((int)item.Tag!);
+            finished.DropDownItems.Add(item);
+        }
+        finished.DropDownOpening += (_, _) =>
+        {
+            foreach (var i in finished.DropDownItems.OfType<Forms.ToolStripMenuItem>())
+                i.Checked = i.Tag switch
+                {
+                    FinishedDisplay m => m == _settings.FinishedDisplay,
+                    int min => min == _settings.FinishedRetentionMinutes,
+                    _ => false,
+                };
+        };
+
         popup.Click += (_, _) => _window?.SetMode(DisplayMode.Popup);
         pinned.Click += (_, _) => _window?.SetMode(DisplayMode.Pinned);
         topmost.CheckedChanged += (_, _) => _window?.SetTopmost(topmost.Checked);
@@ -97,11 +134,13 @@ public partial class App : System.Windows.Application
         {
             popup.Checked = _settings.Mode == DisplayMode.Popup;
             pinned.Checked = _settings.Mode == DisplayMode.Pinned;
+            today.Text = _window?.TodayText(DateTimeOffset.Now) ?? "Heute";
         };
 
         menu.Items.AddRange(new Forms.ToolStripItem[]
         {
-            show, new Forms.ToolStripSeparator(), popup, pinned, size, topmost, new Forms.ToolStripSeparator(),
+            today, new Forms.ToolStripSeparator(),
+            show, clean, new Forms.ToolStripSeparator(), popup, pinned, size, topmost, finished, new Forms.ToolStripSeparator(),
             sounds, soundPick, new Forms.ToolStripSeparator(), autostart, new Forms.ToolStripSeparator(), exit,
         });
 
@@ -119,7 +158,19 @@ public partial class App : System.Windows.Application
         {
             if (args.Button == Forms.MouseButtons.Left) _window?.ShowFromTray();
         };
+
+        // Kurzstand im Tooltip des Tray-Symbols (Windows erlaubt hoechstens 127 Zeichen).
+        _trayTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _trayTimer.Tick += (_, _) =>
+        {
+            if (_tray is null || _window is null) return;
+            var text = _window.StatusText.Length == 0 ? "Agenten-Monitor" : $"Agenten-Monitor · {_window.StatusText}";
+            _tray.Text = text.Length <= 127 ? text : text[..127];
+        };
+        _trayTimer.Start();
     }
+
+    private System.Windows.Threading.DispatcherTimer? _trayTimer;
 
     /// <summary>Ein schlichtes Tray-Symbol: violetter Punkt mit blauem Ring, ohne Bilddatei.</summary>
     private static Icon MakeIcon()
@@ -171,7 +222,12 @@ public partial class App : System.Windows.Application
             _tray.Dispose();
         }
         if (_server is not null) await _server.DisposeAsync();
-        if (_state is not null) MonitorSettings.SaveEstimator(_state.Estimator);
+        _trayTimer?.Stop();
+        if (_state is not null)
+        {
+            MonitorSettings.SaveEstimator(_state.Estimator);
+            MonitorSettings.SaveToday(_state.Today(DateTimeOffset.Now));
+        }
         _mutex?.ReleaseMutex();
         Shutdown();
     }

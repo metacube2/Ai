@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using AgentMonitor.Core;
 
@@ -78,12 +79,23 @@ public static class CollectionSync
     }
 }
 
+/// <summary>Anzeigeoptionen aus den Einstellungen, die alle Agenten gleich betreffen.</summary>
+public static class ViewOptions
+{
+    /// <summary>Fertige Aktionen einzeln, zusammengefasst oder nur laufende (Tray „Fertige Aktionen“).</summary>
+    public static FinishedDisplay Finished { get; set; } = FinishedDisplay.Compact;
+}
+
 public sealed class SessionVm : Observable
 {
     private string _title = "";
     private string _subtitle = "";
     private bool _isBusy;
     private bool _ended;
+    private bool _isWaiting;
+
+    /// <summary>Ein Agent wartet auf eine Freigabe: Karte mit pulsierendem orangem Rahmen.</summary>
+    public bool IsWaiting { get => _isWaiting; private set => Set(ref _isWaiting, value); }
 
     public string Id { get; }
     public ObservableCollection<AgentVm> Agents { get; } = new();
@@ -102,6 +114,7 @@ public sealed class SessionVm : Observable
             ? "Sitzung beendet"
             : $"Sitzung {s.Id[..Math.Min(8, s.Id.Length)]} · letztes Ereignis vor {Format.Duration(now - s.LastEvent)}";
         IsBusy = s.IsBusy;
+        IsWaiting = s.IsWaiting;
         Ended = s.Ended;
         CollectionSync.Sync(Agents, s.Agents, a => a.Id, vm => vm.Id, a => new AgentVm(a),
             (vm, a) => vm.Update(a, now, s.Model, s.ModelFamily));
@@ -121,7 +134,7 @@ public sealed class AgentVm : Observable
     private bool _hasProgress;
     private double _progress;
     private string _progressText = "";
-    private int _hiddenActions;
+    private string? _digestText;
 
     public string Id { get; }
     public bool IsMain { get; }
@@ -137,7 +150,8 @@ public sealed class AgentVm : Observable
     public bool HasProgress { get => _hasProgress; private set => Set(ref _hasProgress, value); }
     public double Progress { get => _progress; private set => Set(ref _progress, value); }
     public string ProgressText { get => _progressText; private set => Set(ref _progressText, value); }
-    public int HiddenActions { get => _hiddenActions; private set => Set(ref _hiddenActions, value); }
+    /// <summary>Zusammengefasste fertige Aktionen, z. B. „✓ 5 weitere erledigt · 1 Fehler · in 42 s“, sonst null.</summary>
+    public string? DigestText { get => _digestText; private set => Set(ref _digestText, value); }
 
     private string _progressTip = "";
     public string ProgressTip { get => _progressTip; private set => Set(ref _progressTip, value); }
@@ -184,13 +198,20 @@ public sealed class AgentVm : Observable
             ProgressTip = "";
         }
 
-        var max = IsMain ? MainVisible : SubVisible;
-        var start = Math.Max(0, a.Actions.Count - max);
-        HiddenActions = start;
-        var visible = new List<ActionView>(a.Actions.Count - start);
-        // Neueste oben.
-        for (var i = a.Actions.Count - 1; i >= start; i--) visible.Add(a.Actions[i]);
-        CollectionSync.Sync(Actions, visible, x => x.Id, vm => vm.Id, x => new ActionVm(x), (vm, x) => vm.Update(x, now));
+        // Laufende einzeln, fertige je nach Einstellung einzeln oder in einer Zeile zusammengefasst; neueste oben.
+        var (visible, digest) = ActionList.Arrange(a.Actions, ViewOptions.Finished, IsMain ? MainVisible : SubVisible);
+        DigestText = digest is null ? null : DigestLine(digest, visible.Any(v => v.Status != ActionStatus.Running));
+        var waiting = a.Phase == AgentPhase.Waiting;
+        CollectionSync.Sync(Actions, visible, x => x.Id, vm => vm.Id, x => new ActionVm(x),
+            (vm, x) => vm.Update(x, now, waiting));
+    }
+
+    private static string DigestLine(ActionDigest d, bool someShown)
+    {
+        var text = d.Done == 0 ? "" : $"✓ {d.Done}{(someShown ? " weitere" : "")} erledigt";
+        if (d.Failed > 0) text += (text.Length > 0 ? " · " : "") + $"✗ {d.Failed} mit Fehler";
+        if (d.Span > TimeSpan.Zero) text += $" · in {Format.Duration(d.Span)}";
+        return text;
     }
 }
 
@@ -224,10 +245,36 @@ public sealed class ActionVm : Observable
     /// <summary>Laufend, aber noch keine Erfahrungswerte: wandernder Lichtstreifen statt Prozent.</summary>
     public bool IsIndeterminate { get => _isIndeterminate; private set => Set(ref _isIndeterminate, value); }
 
-    public ActionVm(ActionView a) { Id = a.Id; Tool = a.Tool; Detail = a.Detail; Update(a, DateTimeOffset.Now); }
+    /// <summary>Ganzer Befehl, Pfad oder Auftrag; Klick auf die Zeile klappt ihn auf, Rechtsklick kopiert ihn.</summary>
+    public string FullText { get; }
 
-    public void Update(ActionView a, DateTimeOffset now)
+    private bool _isExpanded;
+    /// <summary>Detailansicht aufgeklappt (bleibt erhalten, solange die Aktion sichtbar ist).</summary>
+    public bool IsExpanded { get => _isExpanded; set => Set(ref _isExpanded, value); }
+
+    private bool _isOverdue;
+    /// <summary>Laeuft mindestens dreimal so lange wie gelernt (und mindestens 60 s): Balken orange, Hinweiszeile.</summary>
+    public bool IsOverdue { get => _isOverdue; private set => Set(ref _isOverdue, value); }
+
+    private string? _overdueText;
+    public string? OverdueText { get => _overdueText; private set => Set(ref _overdueText, value); }
+
+    public ActionVm(ActionView a)
     {
+        Id = a.Id;
+        Tool = a.Tool;
+        Detail = a.Detail;
+        FullText = a.FullDetail ?? a.Detail ?? a.Summary;
+        Update(a, DateTimeOffset.Now);
+    }
+
+    public void Update(ActionView a, DateTimeOffset now, bool agentWaiting = false)
+    {
+        IsOverdue = a.IsOverdue(now, agentWaiting);
+        OverdueText = IsOverdue && a.LearnedSeconds is { } learned
+            ? $"⚠ läuft ungewöhnlich lange: {Format.Duration(now - a.Start)}, üblich etwa {Format.Duration(TimeSpan.FromSeconds(learned))}"
+            : null;
+
         var running = a.Status == ActionStatus.Running;
         var estimate = running && a.EstimateSeconds is > 0 ? a.EstimateSeconds : null;
         IsIndeterminate = running && estimate is null;
