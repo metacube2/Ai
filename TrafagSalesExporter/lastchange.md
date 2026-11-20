@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-20 13:25: Finance Stufe 2 deployed
+
+- **Auftrag Ingo:** „mache deploy wenn anderer agent schon fertig ist mit seinem eigenen deploy“. Shopfloor-Sitzung war 13:05 abgeschlossen; Patch 10 (`e3248a4`) in den Finance-Zweig gemergt, Feature-Zweig auf `26d23a9`.
+- **Deploy 13:23** `26d23a9`, Release-Worktree 1785/1785, kein Einkauf-Delta, Protokoll `.tmp_deploy_2026-11-20_finance_stufe2.log` bitgleich, nur -wal/-shm-Alarme (wieder da). Wirkt ab dem naechsten Export: Spalte Supplier Origin, Topic 3 bei TR IT/TR IN (nach dem naechsten B1-Lauf), TR-IT-Mapping nach Bestaetigung.
+
 ## 2026-11-20 13:20: Lieferantenbewertung im Chrome geprueft, Mailtext fuer Einkauf
 
 - **Auftrag Ingo:** Doku als Mailtext fuer den Einkauf, im Chrome pruefen, „ist alles in md festgehalten“.
@@ -16,11 +21,11 @@
 ## 2026-11-20 12:30: Finance Stufe 2 gebaut (nicht deployed), Export 20.11. geprueft, Mail Andreas vorbereitet
 
 - **Auftrag Ingo:** „alles umsetzen“ (Plan `docs/FINANCE_PLAN_MAPPING_STUFE2_2026-11-20.md`, Vorgaben F1 bis F7, Deploy erst nach Rueckfrage); „lesen auf p ist genehmigt“.
-- **Code** (`9c6fe53`, Zweig `finance-mapping-2011`, Worktree fin1911, Tests 1785/1785): Mapping auf Artikelnummer TR IT (B), Topic 3 bei TR IT/TR IN durch Artikel mit Kosten 0 in `GroupStandardCosts` (C, begruendete Abweichung vom Plantext), Spalte Supplier Origin mit neuer Spalte `CentralSalesRecords.SupplierSource` (D), Feldhilfe (G). **Nicht deployed.**
+- **Code** (`9c6fe53`, Zweig `finance-mapping-2011`, Worktree fin1911, Tests 1785/1785): Mapping auf Artikelnummer TR IT (B), Topic 3 bei TR IT/TR IN durch Artikel mit Kosten 0 in `GroupStandardCosts` (C, begruendete Abweichung vom Plantext), Spalte Supplier Origin mit neuer Spalte `CentralSalesRecords.SupplierSource` (D), Feldhilfe (G). *(ueberholt: deployed 13:23 als `26d23a9`, mit Shopfloor Patch 10)*
 - **Export 20.11.:** Zeilen/Umsatz plausibel, Indien-Ware IT 455 -> 51, UK 88 -> 17, US 7 -> 2, Summary 11 von 18 Gruppen mit Marge (19.11.: 2), leer FR/IN/US und IT 2025 wegen Lieferant unklar oder Konzernkosten fehlen. Entscheid 1 neu 0,84 Mio. CHF (2,5 Mio. vom 16.11. ueberholt).
 - **Paket E:** Typencode in `MARA-ZZTYP`/`ZZTYP_F4` (T76); P76-Lesen vom Auto-Modus abgelehnt, offen. SE16N-Dumps in T76 in LEARNINGS.
 - **Downloads (nicht gesendet):** Mail Andreas, Mail Indien (6 Artikel), Top 50 DE zur Pruefung.
-- **Offen:** Deploy-Freigabe; P76 `Zztyp`; Nebenbefund 272 Zeilen mit sehr tiefen Konzernkosten TR AG (H7xxxx).
+- **Offen:** P76 `Zztyp`; Nebenbefund 272 Zeilen mit sehr tiefen Konzernkosten TR AG (H7xxxx).
 
 ## 2026-11-20 10:50: Finance Plan Stufe 2 Mapping und Issue Topic (nur Doku)
 

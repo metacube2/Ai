@@ -1,7 +1,7 @@
 # Finance: Plan Stufe 2 Mapping und Issue Topic (Ausfuehrung durch Opus 5.5)
 
 Stand: 2026-11-20 11:20, **freigegeben („alles umsetzen“, Vorgaben F1 bis F7 gelten), B, C, D, G gebaut (`9c6fe53` im Worktree, Zweig
-`finance-mapping-2011`), Tests 1785/1785, NICHT deployed (F7: vorher fragen)**; davor 2026-11-20 10:50 (*ueberholt:* Plan, nicht
+`finance-mapping-2011`), Tests 1785/1785, **deployed 2026-11-20 13:23 als `26d23a9`** (mit Shopfloor Patch 10, Freigabe Ingo „mache deploy wenn anderer agent fertig“)**; davor 2026-11-20 10:50 (*ueberholt:* Plan, nicht
 freigegeben, nichts gebaut). Auftrag Ingo 20.11. („mach ein plan fuer opus 5.5“) nach
 der Pruefung Abschrift 18.11. gegen Loesung. Vorgaenger: `docs/FINANCE_PLAN_MAPPING_ISSUE_TOPIC_2026-11-18.md` (Stufe 1,
 deployed `aade490`), Regelset-Abgleich `docs/FINANCE_REGELSET_ABGLEICH_2026-11-20.md`.
