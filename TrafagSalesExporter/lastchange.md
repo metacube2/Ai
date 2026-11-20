@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-20 10:50: Finance Plan Stufe 2 Mapping und Issue Topic (nur Doku)
+
+- **Auftrag Ingo:** Abschrift 18.11. gegen Loesung pruefen, danach Plan fuer Opus 5.5. Kein Code, kein Deploy.
+- **Befund:** Ausloeser Andreas (Italien liefert an Spanien, verschiedene Nummern) ist nicht abgedeckt, der Vorschlagslauf sucht nur im Stamm Trafag AG; `DeliveringEntity`/`DeliveringMaterialNumber` der Mapping-Tabelle wirken nirgends. Zahl zu Entscheid 1 steht doppelt (2,5 und 0,85 Mio. CHF).
+- **Plan:** `docs/FINANCE_PLAN_MAPPING_STUFE2_2026-11-20.md`, Pakete A bis G, 7 Fragen an Ingo, nicht freigegeben.
+
 ## 2026-11-20 11:00: Finance Regelset-Abgleich (nur Doku)
 
 - **Auftrag Ingo:** „wo gibt es ein missmatch in der regel“. Regelset-Word-Dateien gegen Issue-Topic-Matrix und `ResolveIssueTopic` gelesen, kein Code, kein Deploy.
