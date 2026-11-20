@@ -45,6 +45,9 @@
   weiter nicht nutzbar (2 von 109 mit Limit ueber 1'000, 22 Leiter ohne Eintrag, 12 mit Kostenstelle; Leiter von 250 und 700 jetzt inaktiv).
 - **Offen:** Konto der anderen Person (Kandidat `ran`, nicht belegt, Protokolltabelle lesen); Einkauf fragen, warum nicht mehr bestellt wird; Neuzuweisung der 12; Stammdatenpflege.
 - **Doku:** Konzept 6.15 (und 6.12, Kopf, Abschnitt 7 als ueberholt markiert), rag PURCHASING, LEARNINGS, Wochen_Todo 120/165 + xlsx. Einzelheiten Konzept 6.15.
+- **Uebergabe, Sitzung geschlossen 20.11.:** Mailentwurf an den Einkauf (sieben Fragen) liegt bei Ingo, nicht gesendet, Inhalt in Konzept 6.15; offen ist,
+  ob dort 431 (aelter als drei Jahre) oder rund 930 (aelter als ein Jahr) alte offene Bestellungen stehen. Naechste Sitzung: Antwort Einkauf abwarten,
+  Kandidat `ran` nur lesend in einer Kopie der Tagessicherung pruefen (Tabelle `Protokoll`).
 
 ## 2026-11-20 09:05: Rueckbau Fabio-Test T161V in T76/100 (T441V 02/AE versehentlich mit zurueck, wieder A)
 

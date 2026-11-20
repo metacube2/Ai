@@ -595,6 +595,18 @@ Ob die Handbestellungen jetzt anderswo laufen (Mail, Excel, direkt beim Lieferan
 Adresse nicht kennen, laesst sich aus dem Dashboard nicht ablesen; das muss der Einkauf sagen. Dazu passt, dass die Rueckmeldungen von
 Sandro und Vinc vom 17./18.11. von einem Test und einer einzelnen Bestellung stammen. Offen gelassene Entscheide siehe Abschnitt 7.
 
+**Mailentwurf an den Einkauf (20.11., im Chat an Ingo, nicht gesendet).** Inhalt in sieben Fragen: (1) wird anders bestellt oder fehlt
+Zugang/Adresse; (2) wer sind die 22 Leiter ohne Mitarbeitereintrag und die Namen bei 245/835, sollen sie freigeben; (3) Limit je
+Kostenstellen- und Projektleiter; (4) wer ist Projektleiter fuer die Freigabe ueber CHF 1'000; (5) wer darf Wareneingang buchen; (6) alte offene
+Bestellungen gesammelt ausbuchen und 25 Doppelklick-Doubletten stornieren (Bereinigung 6.5); (7) Rechnungsbetrag und Mail beim Wareneingang noch
+noetig. Dazu: 12 Bestellungen ehemaliger Mitarbeitender werden nach Angabe des Einkaufs neu zugewiesen. **Rueckfrage offen:** In Frage 6 stand
+„ueber 400“ (431 aelter als drei Jahre, Datenpruefung 22.10., nicht frisch gemessen); mit Stichtag ein Jahr waeren es rund 930. Welche Zahl in die
+Mail kommt, entscheidet Ingo.
+
+**Uebergabe (Sitzung geschlossen 20.11.):** Wer weitermacht, prueft zuerst, ob Ingo die Mail gesendet hat und was der Einkauf antwortet. Fuer den
+Kandidaten `ran` die Tabelle `Protokoll` in `hbdaten\handbestellwesen.db` nur lesend auswerten (Kopie der Tagessicherung, nicht die Live-DB),
+Eintraege des Laufs vom 20.11. 09:08 zu `ran`: alter und neuer Name.
+
 ## 7. Naechste Schritte
 
 1. ~~Dump pruefen und importieren~~ erledigt 22.10. (6.4). Offen: klaeren, ob nach dem Dump noch in PHP bestellt wurde.
