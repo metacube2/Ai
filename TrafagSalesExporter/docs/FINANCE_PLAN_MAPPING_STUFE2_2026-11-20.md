@@ -1,8 +1,22 @@
 # Finance: Plan Stufe 2 Mapping und Issue Topic (Ausfuehrung durch Opus 5.5)
 
-Stand: 2026-11-20 10:50, **Plan, nicht freigegeben, nichts gebaut.** Auftrag Ingo 20.11. („mach ein plan fuer opus 5.5“) nach
+Stand: 2026-11-20 11:20, **freigegeben („alles umsetzen“, Vorgaben F1 bis F7 gelten), B, C, D, G gebaut (`9c6fe53` im Worktree, Zweig
+`finance-mapping-2011`), Tests 1785/1785, NICHT deployed (F7: vorher fragen)**; davor 2026-11-20 10:50 (*ueberholt:* Plan, nicht
+freigegeben, nichts gebaut). Auftrag Ingo 20.11. („mach ein plan fuer opus 5.5“) nach
 der Pruefung Abschrift 18.11. gegen Loesung. Vorgaenger: `docs/FINANCE_PLAN_MAPPING_ISSUE_TOPIC_2026-11-18.md` (Stufe 1,
 deployed `aade490`), Regelset-Abgleich `docs/FINANCE_REGELSET_ABGLEICH_2026-11-20.md`.
+
+## 00. Umsetzungsstand 2026-11-20 (Opus 5.5)
+
+| Paket | Stand | Nachweis |
+| --- | --- | --- |
+| A | wartet auf den Export 12:10; Pruefskript am Export 19.11. getestet (Basis Zeilen/Umsatz je Land; 19.11. noch ohne Issue Topic, weil der Deploy nach 12:10 kam). Eine `Mapping_2026-11-19.xlsx` gibt es aus demselben Grund nicht | Skript im Scratchpad |
+| B | gebaut. **Messung vorab (Schritt 1, Sales_All 16.11.):** Zeilen anderer Gesellschaften mit Lieferant Trafag Italia ohne Kosten TR IT: FR 29 Zeilen (54'797), UK 11 (9'810); mit Kosten TR IT: FR 21, UK 3. ES 0, weil der Lieferant bis zu Santis Lauf fehlt (erwartet, kein Fehler). Bestaetigte Mapping-Zeile mit `DeliveringEntity` TR IT/TR IN/TR AG und deren Nummer wirkt in `FindGroupCost` zuerst, nur wenn die Zeile dieselbe Gesellschaft liefert; Gruppennummer der Zeile bleibt leer; Vorschlagslauf sucht fuer TR-IT-Kandidaten zuerst unter den TR-IT-Artikeln mit positiven Kosten (Text aus TRIT-Verkaufszeilen) | `9c6fe53`, `FinanceStufe2Tests` |
+| C | gebaut, **Abweichung vom Plantext mit Begruendung:** statt einer eigenen Menge legt `B1GroupStandardCostBuilder` Artikel ohne positive Kosten mit `UnitCost = 0` in `GroupStandardCosts` ab. Geprueft: die Kostenregel nimmt nur `UnitCost > 0` (keine Konzernkosten 0), die Praesenz liest nur `ResolveIssueTopic` (`lookup.Found`), der Klassifizierer nur den Bereich TR AG, `MaterialCount` steht nur im Protokoll; dasselbe Muster gilt fuer TR AG schon (MBEW mit 0). Vorteil: keine Schemaaenderung, Stand bleibt zwischen Laeufen. Dazu: `ReplaceAsync` ersetzt nur bei mindestens einem positiven Wert (bestehender Schutztest war rot und ist wieder gruen), die I-Praefix-Regel wird von einem 0-Eintrag unter dem vollen Schluessel nicht verdeckt | `9c6fe53` |
+| D | gebaut: `SalesRecord`/`CentralSalesRecords.SupplierSource` (Wareneingang, Liste; Spalte per `AddColumnIfMissing`), Spalte „Supplier Origin“ Sales 60, Finance Details 47 (Rule CH/AT, Rule Sales Type, Source field, Last goods receipt, IT override list, CH plant master, none). Altzeilen zeigen bis zum naechsten Lauf ihres Landes „Source field“ | `9c6fe53` |
+| E | Schritt 1 gemessen (Sales_All 16.11., Finance-Zeilen TRUK): 725 Artikel, 7,06 Mio. GBP; 361 Artikel (4,57 Mio.) tragen ein Typencode-Muster im Text, meist der volle Konfigurationscode (z. B. `8474.76.8963.32.17.00.T2.01`, `8782.20.20L1.Y1…`), keine Sachnummer. Schritt 2 laeuft (Agent `sap-t76`, nur T76, nur lesen) | – |
+| F | Indien: **6** Artikel (nicht 5), 147 Zeilen, 10,76 Mio. INR, LRD ohne Sachnummer; DM000083 allein 112 Zeilen / 9,09 Mio. INR; H90101 (Lotstab) und FA000028/29 (Schweissmaschinen) sehen nicht nach Ware von TR AG aus. Mailentwurf `Downloads\Mail_Indien_LRD_ohne_Sachnummer_2026-11-20.eml` (Empfaenger offen, nicht gesendet). Top 50 DE: nach dem Export aus `Mapping_2026-11-20.xlsx` | – |
+| G | Feldhilfe: Zusatzcodes 7 (extern), 8, 9, 10 als „nicht Teil der Matrix“ gekennzeichnet; Mapping-Text („Regelzeilen wirken sofort“ war seit 19.11. 14:20 falsch) und TR IT; neue Hilfe „Supplier Origin“ | `9c6fe53` |
 
 ## 0. Auftrag an die ausfuehrende Sitzung
 
