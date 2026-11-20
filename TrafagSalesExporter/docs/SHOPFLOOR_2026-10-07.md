@@ -1,4 +1,4 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-20 12:55 (27.6: Patch 10 Forecast Suche/Filter deployed `e3248a4`); davor bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
@@ -1311,3 +1311,18 @@ Einzelheiten: `docs/shopfloor_paket_2026-11-19/Antwort_Fabio_2026-11-19.md`. Nur
   - Auftragsliste: Fabio prueft TX +765 und Verzug 18./19.11. selbst gegen ZC22 /P00 TX (ab 20.11.).
   - VF/WE: Mapping gut, Datum fuer „Bestaetigter Liefertermin (VF)“ klaert Fabio mit Anh Nhi; bis dahin „Wunschtermin“.
   - **Offen bei Fabio:** Quelle SEH 3'024 (Teamleiter SEH); Rueckbau T76 02/AE und T161V NB/1100 jetzt oder spaeter.
+
+### 27.6 Patch 10 Forecast (Suche/Filter) deployed 2026-11-20 12:51 (`e3248a4`)
+
+Mail Fabio 20.11. mit `Shopfloor_Patch10_Forecast_2026-11-20.zip` (nur `app.js`, kein CSS, kein Backend), Auftrag Ingo „ja, mit Deploy“.
+Forecast: Auftragsliste der gewaehlten Abteilung immer aufgeklappt, „Nicht zugeordnete Auftraege“ zugeklappt; beide Listen mit Suchfeld
+(Auftrag, Material, Kurztext, Disponent, Arbeitsplatz, Naechster Vorgang) und Filtern Tag/Disponent/Arbeitsplatz/Naechster Vorgang, Anzeige
+„x von y Auftraegen · Summe Stk.“, Knopf „Filter zuruecksetzen“; Filter bleiben nach dem Speichern einer Planzahl erhalten.
+- Fabios `apply_patch.js` zuerst `--check` gegen eine Kopie, dann auf `wwwroot/shopfloor`: alle 5 Stellen genau 1x, `node --check` ok,
+  `.bak` entfernt. Cache-Version `index.html` `f974bfb4` -> `6ad4413a`.
+- Release-Worktree auf `e3248a4`: **1'759/1'759** Tests gruen. Einkauf-Delta lief nicht (`-wal` 460 KB), Wochensicherung 16.11. aktuell,
+  Monitor offen. Deploy 12:51 mit dem Werkzeug, Commit `e3248a4`, ohne Alarm; produktive `app.js` bitgleich mit dem Repo.
+- *Ueberholt 13:10:* **Im Board gesehen** (Windows-Chrome, Ingos Anmeldung): `app.js?v=6ad4413a`, keine Skriptfehler, TX (215) offen, Nicht zugeordnete (147) zu; Suche 1278981 -> „1 von 215 · 20 Stk.“, Disponent EL1 -> 37 von 215 / 1791 Stk., Zuruecksetzen -> 215; nichts gespeichert. Urspruenglich: Oberflaeche nicht gesehen (Anmeldung). Fabio schaut es
+  im Board an. Zum FPY kommt von Fabio eine eigene Nachricht (SAP-Rueckmeldungen kennen nur Endausschuss, Quote >99 % statt ~87 %).
+- **Hinweis Finance Stufe 2** (Zweig `finance-mapping-2011`, wartet auf Deploy): vor deren Deploy `e3248a4` mergen, sonst faellt Patch 10
+  produktiv wieder heraus.

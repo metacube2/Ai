@@ -47,7 +47,7 @@ Entscheide: Produktgruppe auf Verwendung umstellen, Zusatzaufrisse bauen, Regist
 Klasse A/B/C je Lieferant (Paket 1, Zeitraum = Dashboard-Filter, Disponent 001-006; vorher auf `/einkauf/lieferanten`) und dem
 Eingabeteil Paket 2 (`Modules/Lieferantenbewertung/`, DB `lbdaten\lieferantenbewertung.db`): sieben Themenfelder mit datiertem
 Verlauf, die Uebersicht zeigt die juengste Bewertung (Armin E2); Zertifikate mit Ampel, Massnahmen, Reviews/Audits, Dokument-Links.
-Schreiben nur `Lieferantenbewertung:EditUsers` (`koi`, `gun` Armin, `wid` Marco; seit 12:58 `e8a8743`) und entsperrte Admins; Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden (13:01). Nicht gebaut: SAP-Score/Preis (Anfang Dezember),
+Schreiben nur `Lieferantenbewertung:EditUsers` (`koi`, `gun` Armin, `wid` Marco; seit 12:58 `e8a8743`) und entsperrte Admins; Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden (13:01). Link fuer Fachanwender nur mit Basispfad: `.../BiDashboard/einkauf/lieferantenbewertung` (Chrome 20.11.). Nicht gebaut: SAP-Score/Preis (Anfang Dezember),
 Q2 (eigener SAP-Plan), Liefertreue (nach 01.12.). Einzelheiten `docs/EINKAUF_SITZUNG_2026-10-22.md` 6.8.
 *Der folgende Absatz ist der Stand vom 17.11.; die dort offenen Punkte Zeitraum A/B/C und Rhythmus der Themenfelder sind durch
 Armins Antwort vom 18.11. (6.5) und den Bau vom 18./19.11. erledigt.*

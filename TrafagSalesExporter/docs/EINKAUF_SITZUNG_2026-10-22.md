@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-20 13:20 (6.8: Pruefung im Chrome, Link mit `/BiDashboard`, A/B/C-Zahlen, kein Testeintrag); davor 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -373,3 +373,12 @@ Offen: Link an Armin und Marco (Ingo); aus 6.7 weiter offen: Summe A+B+C gegen d
 Zeitraum und D1 („A umfasst mindestens 70 %“) von Armin bestaetigen; Q2 (eigener SAP-Plan), Liefertreue nach 01.12.,
 SAP-Score/Preis nach der Diskussion Anfang Dezember; Texte des Eingabeteils nur deutsch/englisch (die Sprachen es/it/hi/sq/tr/tlh
 zeigen Englisch); Handbuch Kapitel Einkauf.
+
+**Pruefung im Chrome 20.11. 10:20 (produktiv, nichts gespeichert):** Reiter im Menue Einkauf vorhanden; die Adresse braucht den
+Basispfad: `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/einkauf/lieferantenbewertung` (ohne `/BiDashboard` bleibt die
+Seite bei „wird geladen“, Konsole „The circuit failed to initialize“). Klasse A/B/C fuer 2026-01 bis 2026-11: A 20 Lieferanten 71.1 %
+CHF 22'823'852, B 30 / 19.2 % / CHF 6'154'137, C 208 / 9.8 % / CHF 3'145'286, Summe CHF 32'123'275 (Bestellwert im Zeitraum ueber
+alle Disponenten CHF 34'767'422, Differenz erwartet). Sechs Register, „Bearbeiten erlaubt“ fuer koi, noch keine Eintraege. Entscheid:
+kein neuer Testeintrag, weil er in der Uebersicht wie eine echte Bewertung aussaehe; der erste echte Eintrag von Armin gilt als
+fachliche Abnahme. Mailtext an Armin und Marco (Link, Klasse, sechs Register, Rechte, noch nicht enthalten, Bitte Summe A+B+C) liegt
+im Chat bei Ingo; Versand durch Ingo.

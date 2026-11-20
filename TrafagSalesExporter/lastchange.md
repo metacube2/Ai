@@ -1,5 +1,27 @@
 # Last Change
 
+## 2026-11-20 13:20: Lieferantenbewertung im Chrome geprueft, Mailtext fuer Einkauf
+
+- **Auftrag Ingo:** Doku als Mailtext fuer den Einkauf, im Chrome pruefen, „ist alles in md festgehalten“.
+- **Befund:** Seite stimmt mit dem Mailtext; Link nur mit `/BiDashboard` (`.../BiDashboard/einkauf/lieferantenbewertung`). A/B/C
+  2026-01 bis -11: A 20 / 71.1 %, B 30 / 19.2 %, C 208 / 9.8 %, Summe CHF 32.1 Mio. Keine Eintraege; kein neuer Testeintrag (Entscheid).
+- **Offen:** Mail an Armin/Marco senden (Ingo), Summe A+B+C gegen Spend-Aufriss (Armin). Doku EINKAUF_SITZUNG 6.8.
+
+## 2026-11-20 13:05: IC-Go-Live Transport T76K912938 freigegeben, Shopfloor Patch 10 deployed
+
+- **Auftrag Ingo:** Mail Fabio „Go-Live heute: IC-Terminierung 1100 -> 1200“ (Entscheid „Neuer Transport“, ZBA1 wartet auf Fabio) und Patch 10 „ja, mit Deploy“.
+- **IC:** Transport T76K912938 (Ziel P76) mit genau T441V 02/AE (BESTP A) und T161V F/NB/1100 (ATPCONFMRP leer), freigegeben 13:00:45, gegengelesen. P76 vorher X/X. Import in P76 durch Ingo (13:11), P76 gegengelesen: nur diese zwei Felder anders. Details `saptasks/ic_preisfindung/NOTES.md` 15.
+- **Shopfloor:** Patch 10 Forecast Suche/Filter, deployed 12:51 `e3248a4`, 1759/1759, bitgleich; im Board gesehen, Suche und Filter funktionieren. `docs/SHOPFLOOR_2026-10-07.md` 27.6. Finance Stufe 2 muss `e3248a4` vor Deploy mergen.
+
+## 2026-11-20 12:30: Finance Stufe 2 gebaut (nicht deployed), Export 20.11. geprueft, Mail Andreas vorbereitet
+
+- **Auftrag Ingo:** „alles umsetzen“ (Plan `docs/FINANCE_PLAN_MAPPING_STUFE2_2026-11-20.md`, Vorgaben F1 bis F7, Deploy erst nach Rueckfrage); „lesen auf p ist genehmigt“.
+- **Code** (`9c6fe53`, Zweig `finance-mapping-2011`, Worktree fin1911, Tests 1785/1785): Mapping auf Artikelnummer TR IT (B), Topic 3 bei TR IT/TR IN durch Artikel mit Kosten 0 in `GroupStandardCosts` (C, begruendete Abweichung vom Plantext), Spalte Supplier Origin mit neuer Spalte `CentralSalesRecords.SupplierSource` (D), Feldhilfe (G). **Nicht deployed.**
+- **Export 20.11.:** Zeilen/Umsatz plausibel, Indien-Ware IT 455 -> 51, UK 88 -> 17, US 7 -> 2, Summary 11 von 18 Gruppen mit Marge (19.11.: 2), leer FR/IN/US und IT 2025 wegen Lieferant unklar oder Konzernkosten fehlen. Entscheid 1 neu 0,84 Mio. CHF (2,5 Mio. vom 16.11. ueberholt).
+- **Paket E:** Typencode in `MARA-ZZTYP`/`ZZTYP_F4` (T76); P76-Lesen vom Auto-Modus abgelehnt, offen. SE16N-Dumps in T76 in LEARNINGS.
+- **Downloads (nicht gesendet):** Mail Andreas, Mail Indien (6 Artikel), Top 50 DE zur Pruefung.
+- **Offen:** Deploy-Freigabe; P76 `Zztyp`; Nebenbefund 272 Zeilen mit sehr tiefen Konzernkosten TR AG (H7xxxx).
+
 ## 2026-11-20 10:50: Finance Plan Stufe 2 Mapping und Issue Topic (nur Doku)
 
 - **Auftrag Ingo:** Abschrift 18.11. gegen Loesung pruefen, danach Plan fuer Opus 5.5. Kein Code, kein Deploy.
@@ -23,6 +45,9 @@
   weiter nicht nutzbar (2 von 109 mit Limit ueber 1'000, 22 Leiter ohne Eintrag, 12 mit Kostenstelle; Leiter von 250 und 700 jetzt inaktiv).
 - **Offen:** Konto der anderen Person (Kandidat `ran`, nicht belegt, Protokolltabelle lesen); Einkauf fragen, warum nicht mehr bestellt wird; Neuzuweisung der 12; Stammdatenpflege.
 - **Doku:** Konzept 6.15 (und 6.12, Kopf, Abschnitt 7 als ueberholt markiert), rag PURCHASING, LEARNINGS, Wochen_Todo 120/165 + xlsx. Einzelheiten Konzept 6.15.
+- **Uebergabe, Sitzung geschlossen 20.11.:** Mailentwurf an den Einkauf (sieben Fragen) liegt bei Ingo, nicht gesendet, Inhalt in Konzept 6.15; offen ist,
+  ob dort 431 (aelter als drei Jahre) oder rund 930 (aelter als ein Jahr) alte offene Bestellungen stehen. Naechste Sitzung: Antwort Einkauf abwarten,
+  Kandidat `ran` nur lesend in einer Kopie der Tagessicherung pruefen (Tabelle `Protokoll`).
 
 ## 2026-11-20 09:05: Rueckbau Fabio-Test T161V in T76/100 (T441V 02/AE versehentlich mit zurueck, wieder A)
 
