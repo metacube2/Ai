@@ -186,3 +186,5 @@ Kundenauftragspositionen mit Kundeneinzelbestand und Pruefgruppe 02, auch fuer a
 ein Vergleich „nur X gegen A“ gilt bei leerem ATPCONFMRP. P76 und Mandant 090 sind nicht betroffen und wurden nicht gelesen.
 
 **Rueckbau ausgefuehrt 2026-11-20 (siehe `NOTES.md` 13):** zurueck auf X, rueckgelesen. Der Auftragsdialog kam trotz „Vermutung“ in Abschnitt 5 und schlug den falschen Auftrag vor; die Nummer wurde ausdruecklich gesetzt.
+
+*Berichtigung 2026-11-20 09:03: Der Rueckbau-Vermerk oben ist fuer T441V ueberholt. 02/AE steht seit 09:02:55 wieder auf A (Ingo wollte nur T161V zurueck), siehe `NOTES.md` 13.*

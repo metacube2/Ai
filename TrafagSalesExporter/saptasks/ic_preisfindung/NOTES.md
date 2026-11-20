@@ -891,3 +891,15 @@ fuer beide Zielzeilen per RFC gegengelesen).
   hatte, steht hier nicht; der Rueckbau erfolgte auf Ingos Zuruf vom 20.11.
 - P76 und Mandant 090 nicht gelesen und nicht beruehrt, kein Passwort eingegeben (RFC-Lesen mit der DPAPI-Ablage, GUI in eigener Sitzung,
   geschlossen).
+
+**Berichtigung 2026-11-20 09:03: Abschnitt 13 gilt nur fuer T161V.** Ingo wollte nur **T161V** zuruecknehmen; der Rueckbau von `T441V` 02/AE
+war ein Irrtum der Hauptsitzung („Einstellungen“ als beide Tests gelesen, nicht nachgefragt). Korrigiert:
+- **T161V F/NB/1100 `ATPCONFMRP` = X** (zurueckgebaut 08:50:13, Auftrag T76K912926), bleibt so.
+- **T441V 02/AE `BESTP` = A** (Fabios Test aktiv, wie seit 18.11. 18:11): 08:52:10 auf X zurueckgebaut, **09:02:55 wieder auf A gesetzt**
+  (Auftrag T76K912928, Aufgabe T76K912929; Dialog schlug diesmal den richtigen Auftrag vor, trotzdem ausdruecklich gesetzt). Rueckleseprobe:
+  75 Zeilen, schluesselweise 0 Abweichungen gegen `T441V_02_AE_NACHHER_2026-11-18.txt`, nur 02/AE hat A; T161V weiter gleich VORHER;
+  E071K unveraendert. Hauptsitzung hat 02/AE und T161V per RFC selbst gegengelesen (09:03).
+- **Luecke:** zwischen 08:52:10 und 09:02:55 (rund 11 Minuten) stand 02/AE auf X. Fabio muss den Test neu aufrufen, eine vor 09:03 geoeffnete
+  Transaktion kann den alten Pruefumfang im Speicher halten. Der Vergleichstest gilt nur fuer Aufrufe nach 09:03.
+- Der Satz „beide Tests zurueckgebaut“ in Abschnitt 13, in lastchange, Wochen_Todo 153 und in den Plaenen (Rueckbau-Vermerk) ist fuer T441V
+  ueberholt.
