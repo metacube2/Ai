@@ -37,7 +37,7 @@ public static class GroupMarginSupplierClassifier
     // docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md Abschnitt 3).
     private static readonly string[] IntercompanySellingTsc = { "TRCH", "TRAT" };
 
-    private static bool IsIntercompanySellingTsc(string? tsc)
+    public static bool IsIntercompanySellingTsc(string? tsc)
         => !string.IsNullOrWhiteSpace(tsc) &&
            IntercompanySellingTsc.Contains(tsc.Trim(), StringComparer.OrdinalIgnoreCase);
 

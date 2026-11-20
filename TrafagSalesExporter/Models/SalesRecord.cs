@@ -26,6 +26,9 @@ public class SalesRecord
     /// <summary>B1 (2026-11-18): Lieferant stammt aus dem letzten Wareneingang, nicht aus dem Artikelstamm. Nur zur Laufzeit,
     /// damit die Uebergangsliste (SupplierMaterialOverrideStore) einen solchen abgeleiteten Wert noch ersetzen darf.</summary>
     public bool SupplierFromGoodsReceipt { get; set; }
+    /// <summary>Paket D (20.11.2026): Herkunft eines abgeleiteten Lieferanten, gespeichert in CentralSalesRecords.SupplierSource:
+    /// <see cref="SupplierSources.GoodsReceipt"/>, <see cref="SupplierSources.OverrideList"/> oder leer (Feld wie aus der Quelle).</summary>
+    public string SupplierSource { get; set; } = string.Empty;
     // Verrechnungspreisliche Rolle des Standorts fuer diesen Artikel, Rohwert aus der Quelle
     // (Indiens SAP B1: OITM."U_Tasc_ST" - FFM/LRD/CM). Bewusst der Rohwert und nicht die
     // Auslegung, damit im Audit-CSV nachvollziehbar bleibt, woher eine Klassifikation kommt.
@@ -70,4 +73,13 @@ public class SalesRecord
     public DateTime? LineRegistrationDate { get; set; }
     public string Land { get; set; } = string.Empty;
     public string DocumentType { get; set; } = string.Empty;
+}
+
+/// <summary>Werte von <see cref="SalesRecord.SupplierSource"/> (Paket D, Plan docs/FINANCE_PLAN_MAPPING_STUFE2_2026-11-20.md).</summary>
+public static class SupplierSources
+{
+    /// <summary>B1: Lieferant aus dem letzten Wareneingang, weil der Artikelstamm keinen Standardlieferanten fuehrt.</summary>
+    public const string GoodsReceipt = "Wareneingang";
+    /// <summary>Italienische Uebergangsliste (SupplierMaterialOverrideStore).</summary>
+    public const string OverrideList = "Liste";
 }

@@ -90,7 +90,7 @@
         <MudTd>@context.Tsc</MudTd>
         <MudTd>@context.LocalMaterial</MudTd>
         <MudTd>@context.LocalText</MudTd>
-        <MudTd>@context.GroupMaterialNumber</MudTd>
+        <MudTd>@context.GroupMaterialNumber@(string.IsNullOrWhiteSpace(context.DeliveringMaterialNumber) ? "" : $" / {context.DeliveringEntity} {context.DeliveringMaterialNumber}")</MudTd>
         <MudTd>@context.GroupText</MudTd>
         <MudTd title="@context.MethodDetail">@context.Method</MudTd>
         <MudTd Style="text-align:right">@context.Confidence</MudTd>

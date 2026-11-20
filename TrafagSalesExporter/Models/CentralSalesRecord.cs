@@ -36,6 +36,8 @@ public class CentralSalesRecord
     // docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md.
     public string SalesType { get; set; } = string.Empty;
     public string GroupMaterialNumber { get; set; } = string.Empty;
+    // Paket D (20.11.2026): Herkunft eines abgeleiteten Lieferanten (SupplierSources), leer = wie aus der Quelle.
+    public string SupplierSource { get; set; } = string.Empty;
     public string CustomerNumber { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerCountry { get; set; } = string.Empty;

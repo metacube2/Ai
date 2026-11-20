@@ -60,7 +60,10 @@ public static class GroupMarginCalculator
             materialMappings.TryResolve(line.Tsc, line.Material, out var hit))
         {
             mappingHit = hit;
-            line = line with { GroupMaterialNumber = hit.GroupMaterialNumber };
+            // Paket B: eine Zeile nur mit Nummer der liefernden Gesellschaft (Artikel, die Trafag AG nicht kennt) laesst die
+            // Gruppennummer leer; Werkstamm-Abgleich, Klassifikation und Sparte bleiben dann wie ohne Mapping.
+            if (hit.GroupMaterialNumber.Length > 0)
+                line = line with { GroupMaterialNumber = hit.GroupMaterialNumber };
         }
 
         var materialKey = ResolveGroupCostKey(line);
@@ -78,6 +81,8 @@ public static class GroupMarginCalculator
             InternalSupplierCostSourceMode: InternalSupplierCostSourceModes.Normalize(internalSupplierCostSourceMode),
             ForeignProcurementMaterialKeys: foreignProcurementMaterials,
             MarcForeignProcurementMode: MarcForeignProcurementModes.Normalize(marcForeignProcurementMode),
+            DeliveringMaterialEntity: mappingHit?.DeliveringEntity,
+            DeliveringMaterialKey: mappingHit?.DeliveringMaterialKey,
             // Gutschriften/Retouren tragen einen negativen Netto-Umsatz. Die Kostenbasis muss
             // mit umkehren, sonst rechnet die Marge die Kosten doppelt negativ (Umsatz -100,
             // Kosten +60 -> -160 statt korrekt -40). Bei Umsatz 0 fuehrt das Mengenvorzeichen.
@@ -103,7 +108,9 @@ public static class GroupMarginCalculator
             : GroupMarginCostRules.FindGroupCost(line, context, deliveringEntity);
         var issueTopic = ResolveIssueTopic(line, supplierType, deliveringEntity, basis, context, lookup);
 
-        var mappingLabel = mappingHit is not null
+        var mappingLabel = lookup.UsedDeliveringMapping && mappingHit is not null
+            ? $"{lookup.EffectiveKey} ({DeliveringEntityLabel(deliveringEntity)}, {mappingHit.Method})"
+            : mappingHit is not null && mappingHit.GroupMaterialNumber.Length > 0
             ? $"{mappingHit.GroupMaterialNumber.Trim()} ({mappingHit.Method})"
             : lookup.UsedItalianIndiaPrefixRule
                 ? $"{lookup.EffectiveKey} ({IssueTopics.ItalianIndiaPrefixRuleLabel})"
@@ -176,6 +183,50 @@ public static class GroupMarginCalculator
         if (localCostMissing)
             return noSupplier ? IssueTopics.NoSupplierUseZero : IssueTopics.SupplierUseZero;
         return noSupplier ? IssueTopics.NoSupplierNotFound : IssueTopics.SupplierNotFound;
+    }
+
+    /// <summary>
+    /// Paket D (Plan docs/FINANCE_PLAN_MAPPING_STUFE2_2026-11-20.md, 20.11.2026, Wunsch aus der Besprechung 18.11.): woher die
+    /// Lieferantenzuordnung der Zeile stammt. Reihenfolge wie die Klassifikation: CH/AT-Regel, Sales Type (Indien), dann die
+    /// Lieferantenfelder (Wareneingang, italienische Liste oder Quelle), ohne Lieferant der CH-Werkstamm, sonst keiner.
+    /// </summary>
+    public static string ResolveSupplierOrigin(
+        string? supplierNumber, string? supplierName, string? supplierCountry, string? tsc, string? salesType,
+        string? supplierSource, string supplierType, string? deliveringEntity)
+    {
+        if (GroupMarginSupplierClassifier.IsIntercompanySellingTsc(tsc))
+            return SupplierOrigins.ChAtRule;
+        if (GroupMarginSupplierClassifier.ResolveSalesTypeRole(salesType) is not null)
+            return SupplierOrigins.SalesTypeRule;
+        if (!string.IsNullOrWhiteSpace(supplierNumber) || !string.IsNullOrWhiteSpace(supplierName) ||
+            !string.IsNullOrWhiteSpace(supplierCountry))
+        {
+            return supplierSource switch
+            {
+                SupplierSources.GoodsReceipt => SupplierOrigins.GoodsReceipt,
+                SupplierSources.OverrideList => SupplierOrigins.OverrideList,
+                _ => SupplierOrigins.Source
+            };
+        }
+        return supplierType == GroupMarginSupplierClassifier.Internal && deliveringEntity == GroupStandardCostEntities.TrAg
+            ? SupplierOrigins.ChPlantMaster
+            : SupplierOrigins.None;
+    }
+
+    /// <summary>
+    /// Umkehrung von <see cref="DeliveringEntityLabel"/>: "TR AG", "TR IT", "TR IN" (auch "TR_IT", "trit") auf den
+    /// GroupStandardCostEntities-Wert; leer oder unbekannt ergibt null. Paket B, 20.11.2026.
+    /// </summary>
+    public static string? DeliveringEntityFromLabel(string? label)
+    {
+        var compact = new string((label ?? string.Empty).Where(char.IsLetter).ToArray()).ToUpperInvariant();
+        return compact switch
+        {
+            "TRAG" => GroupStandardCostEntities.TrAg,
+            "TRIT" => GroupStandardCostEntities.TrIt,
+            "TRIN" => GroupStandardCostEntities.TrIn,
+            _ => null
+        };
     }
 
     /// <summary>Anzeigetext der liefernden Gesellschaft fuer Excel: "TR AG", "TR IT", "TR IN" oder leer.</summary>
@@ -331,7 +382,11 @@ public sealed record GroupMarginCostContext(
     string? SupplierFallbackMode = null,
     string? InternalSupplierCostSourceMode = null,
     IReadOnlySet<string>? ForeignProcurementMaterialKeys = null,
-    string? MarcForeignProcurementMode = null);
+    string? MarcForeignProcurementMode = null,
+    // Paket B (20.11.2026): Artikelnummer bei der liefernden Gesellschaft aus einer bestaetigten Mapping-Zeile
+    // (GroupStandardCostEntities-Wert und normalisierter Schluessel). Wirkt nur, wenn die Zeile dieselbe Gesellschaft liefert.
+    string? DeliveringMaterialEntity = null,
+    string? DeliveringMaterialKey = null);
 
 /// <summary>Vollstaendiges Ergebnis fuer eine Zeile.</summary>
 public sealed record GroupMarginEvaluation(
@@ -358,7 +413,8 @@ public readonly record struct GroupCostLookup(
     bool Found,
     GroupStandardCost? Cost,
     string EffectiveKey,
-    bool UsedItalianIndiaPrefixRule);
+    bool UsedItalianIndiaPrefixRule,
+    bool UsedDeliveringMapping = false);
 
 /// <summary>
 /// Codes der Spalte „Issue Topic“. 1 bis 7 nach der Matrix von Ingo (19.11.2026); 8 bis 10 sind VORLAEUFIGE Kennzeichen fuer
@@ -509,7 +565,16 @@ public static class GroupMarginCostRules
         if (!GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area))
             return new GroupCostLookup(false, null, context.MaterialKey, false);
 
-        if (context.GroupStandardCosts.TryGetValue((context.MaterialKey, area), out var cost))
+        // Paket B (20.11.2026): eine bestaetigte Mapping-Zeile mit liefernder Gesellschaft und deren Artikelnummer geht vor.
+        if (context.DeliveringMaterialKey is { Length: > 0 } deliveringKey &&
+            string.Equals(context.DeliveringMaterialEntity, deliveringEntity, StringComparison.Ordinal) &&
+            context.GroupStandardCosts.TryGetValue((deliveringKey, area), out var mappedCost))
+            return new GroupCostLookup(true, mappedCost, deliveringKey, false, UsedDeliveringMapping: true);
+
+        var fullFound = context.GroupStandardCosts.TryGetValue((context.MaterialKey, area), out var cost);
+        // Seit Paket C (20.11.2026) stehen bei TR IT/TR IN auch Artikel mit Kosten 0 in der Tabelle. Ein solcher Treffer unter dem
+        // vollen Schluessel darf die I-Praefix-Regel nicht verdecken, wenn der gekuerzte Schluessel echte Kosten hat.
+        if (fullFound && cost!.UnitCost > 0m)
             return new GroupCostLookup(true, cost, context.MaterialKey, false);
 
         if (deliveringEntity == GroupStandardCostEntities.TrIn &&
@@ -518,11 +583,14 @@ public static class GroupMarginCostRules
             (context.MaterialKey[0] == 'I' || context.MaterialKey[0] == 'i'))
         {
             var stripped = MaterialKeyNormalizer.Normalize(context.MaterialKey[1..]);
-            if (stripped.Length > 0 && context.GroupStandardCosts.TryGetValue((stripped, area), out var strippedCost))
+            if (stripped.Length > 0 && context.GroupStandardCosts.TryGetValue((stripped, area), out var strippedCost) &&
+                (!fullFound || strippedCost.UnitCost > 0m))
                 return new GroupCostLookup(true, strippedCost, stripped, true);
         }
 
-        return new GroupCostLookup(false, null, context.MaterialKey, false);
+        return fullFound
+            ? new GroupCostLookup(true, cost, context.MaterialKey, false)
+            : new GroupCostLookup(false, null, context.MaterialKey, false);
     }
 
     private static bool ShouldUseSwissStprs(GroupMarginCostContext context)
@@ -573,4 +641,16 @@ public static class GroupMarginCostRules
         => quantity != 0m
             ? Math.Abs(quantity) * Math.Abs(unitCost)
             : Math.Abs(unitCost);
+}
+
+/// <summary>Werte der Spalte „Supplier Origin“ (Paket D, 20.11.2026). Englisch wie die uebrigen Spaltenwerte fuer Andreas.</summary>
+public static class SupplierOrigins
+{
+    public const string ChAtRule = "Rule CH/AT";
+    public const string SalesTypeRule = "Rule Sales Type";
+    public const string Source = "Source field";
+    public const string GoodsReceipt = "Last goods receipt";
+    public const string OverrideList = "IT override list";
+    public const string ChPlantMaster = "CH plant master";
+    public const string None = "none";
 }

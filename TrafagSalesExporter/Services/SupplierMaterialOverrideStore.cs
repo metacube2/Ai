@@ -198,6 +198,7 @@ public static class SupplierMaterialOverrideStore
             record.SupplierName = match.SupplierName;
             record.SupplierCountry = match.SupplierCountry;
             record.SupplierFromGoodsReceipt = false;
+            record.SupplierSource = SupplierSources.OverrideList;
             filled++;
             usedMaterials.Add(key);
         }

@@ -74,7 +74,9 @@ public class CentralExcelMarketSegmentTests
             // 2026-11-19 additiv dahinter: Issue Topic und Mapping (Plan Mapping/Issue Topic, Matrix Ingo).
             Assert.Equal("Issue Topic", sales.Cell(1, MarketSegmentSourceColumn + 7).GetString());
             Assert.Equal("Mapping", sales.Cell(1, MarketSegmentSourceColumn + 8).GetString());
-            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 9).GetString());
+            // 2026-11-20 additiv dahinter: Herkunft der Lieferantenzuordnung (Paket D).
+            Assert.Equal("Supplier Origin", sales.Cell(1, MarketSegmentSourceColumn + 9).GetString());
+            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 10).GetString());
         }
         finally
         {

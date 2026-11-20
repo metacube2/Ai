@@ -363,6 +363,9 @@ public class HanaQueryService : IHanaQueryService
                 SupplierName = reader["supplier_name"]?.ToString() ?? string.Empty,
                 SupplierCountry = reader["supplier_country"]?.ToString() ?? string.Empty,
                 SupplierFromGoodsReceipt = string.Equals(reader["supplier_source"]?.ToString(), "WE", StringComparison.Ordinal),
+                SupplierSource = string.Equals(reader["supplier_source"]?.ToString(), "WE", StringComparison.Ordinal)
+                    ? SupplierSources.GoodsReceipt
+                    : string.Empty,
                 SalesType = NormalizeItemMasterValue(reader["sales_type"]?.ToString()),
                 GroupMaterialNumber = NormalizeItemMasterValue(reader["group_material_number"]?.ToString()),
                 CustomerNumber = reader["customer_number"]?.ToString() ?? string.Empty,

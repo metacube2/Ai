@@ -538,7 +538,10 @@ public class ExcelExportService : IExcelExportService
                     GroupMarginCalculator.DeliveringEntityLabel(margin.DeliveringEntity),
                     row.FinanceDate.Month,
                     margin.IssueTopic,
-                    margin.Mapping);
+                    margin.Mapping,
+                    GroupMarginCalculator.ResolveSupplierOrigin(
+                        row.Record.SupplierNumber, row.Record.SupplierName, row.Record.SupplierCountry, row.Record.Tsc,
+                        row.Record.SalesType, row.Record.SupplierSource, margin.SupplierType, margin.DeliveringEntity));
             })
             .OrderBy(row => GroupMarginStatuses.Sort(row.Status))
             .ThenBy(row => row.Year)
@@ -1263,7 +1266,9 @@ public class ExcelExportService : IExcelExportService
         int Month = 0,
         // Issue Topic (GroupMarginCalculator.ResolveIssueTopic) und wirksames Mapping, 2026-11-19.
         string IssueTopic = "",
-        string Mapping = "");
+        string Mapping = "",
+        // Herkunft der Lieferantenzuordnung (GroupMarginCalculator.ResolveSupplierOrigin), Paket D 20.11.2026.
+        string SupplierOrigin = "");
 
     internal static void WriteWorkbook(
         string fullPath,
@@ -1387,7 +1392,7 @@ public class ExcelExportService : IExcelExportService
             foreach (var marginRow in groupMarginRows)
                 if (marginRow.Source is not null)
                     marginBySource.TryAdd(marginRow.Source, marginRow);
-            headers = [.. headers, .. SupplierAssignmentHeaders, "Cost Source", .. IssueTopicHeaders];
+            headers = [.. headers, .. SupplierAssignmentHeaders, "Cost Source", .. IssueTopicHeaders, SupplierOriginHeader];
         }
 
         for (var i = 0; i < headers.Length; i++)
@@ -1471,6 +1476,7 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(row, 57).Value = salesMargin.CostSource;
                 ws.Cell(row, 58).Value = salesMargin.IssueTopic;
                 ws.Cell(row, 59).Value = salesMargin.Mapping;
+                ws.Cell(row, 60).Value = salesMargin.SupplierOrigin;
             }
             row++;
         }
@@ -1510,6 +1516,9 @@ public class ExcelExportService : IExcelExportService
     /// Gruppennummer aus der Mapping-Tabelle bzw. der I-Praefix-Regel mit Verfahren, leer = keine.
     /// </summary>
     internal static readonly string[] IssueTopicHeaders = ["Issue Topic", "Mapping"];
+
+    /// <summary>Paket D (20.11.2026): Herkunft der Lieferantenzuordnung, Sales Spalte 60, Finance Details Spalte 47.</summary>
+    internal const string SupplierOriginHeader = "Supplier Origin";
 
     /// <summary>Spalten mit Standardkosten-Bezug in Sales_All (Wunsch Ingo 2026-10-07).</summary>
     internal static readonly IReadOnlySet<string> StandardCostHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -1717,7 +1726,9 @@ public class ExcelExportService : IExcelExportService
             SupplierAssignmentHeaders[1],
             // 2026-11-19, additiv am ENDE: Issue Topic und Mapping wie im Blatt Sales.
             IssueTopicHeaders[0],
-            IssueTopicHeaders[1]
+            IssueTopicHeaders[1],
+            // 2026-11-20 (Paket D), additiv am ENDE: Herkunft der Lieferantenzuordnung wie im Blatt Sales.
+            SupplierOriginHeader
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1817,6 +1828,7 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(rowIndex, 44).Value = margin.DeliveringEntity;
                 ws.Cell(rowIndex, 45).Value = margin.IssueTopic;
                 ws.Cell(rowIndex, 46).Value = margin.Mapping;
+                ws.Cell(rowIndex, 47).Value = margin.SupplierOrigin;
             }
 
             rowIndex++;
@@ -1944,8 +1956,9 @@ public class ExcelExportService : IExcelExportService
             ("Supplier Type", "WIRKSAME Lieferantenzuordnung der Gruppenmarge, auch wenn die Lieferantenfelder der Quelle leer sind. Reihenfolge: (1) CH/AT verkaufen immer als Trafag AG = Intern; (2) Sales Type (nur Indien: FFM/CM = eigene Fertigung, LRD = Bezug von Trafag AG) = Intern; (3) gepflegter Lieferant: Trafag/GFS im Namen = Intern, sonst Extern; (4) kein Lieferant: je nach Einstellung 'Supplier-Fallback' entweder Treffer im CH-Werkstamm (MARC Werk 1100) = Intern, sicherer Nichttreffer = Lokal, oder immer Lokal; ohne Materialnummer = Unklar. Seit 2026-11-13 auch in den Blaettern Sales (Spalte 55) und Finance Details (Spalte 43)."),
             ("Delivering Entity", "Erkannte liefernde Konzerngesellschaft: TR AG, TR IT oder TR IN; leer bei Extern, Lokal und Unklar. Bestimmt, aus welcher Konzernkostentabelle die Kostenbasis kommt. Intern mit LEERER Delivering Entity heisst: Konzernlieferant erkannt (z. B. GFS, Trafag GmbH), fuer den es keine Konzernkostentabelle gibt; die Zeile rechnet dann mit dem lokalen Standardpreis (offener Fachentscheid ISS-018.7). Blatt Sales Spalte 56, Finance Details Spalte 44."),
             ("Cost Source", "Woher die Kostenbasis kommt: 'Kosten aus Verkaufszeile' (explizit extern), 'Standardkosten der lokalen Gesellschaft' (kein Treffer im geprueften CH-Werkstamm), 'Interner Standardpreis' (intern), 'Konzernkosten TR AG (MBEW-STPRS)' (echte Gruppenkosten), 'Lieferant unklar'. Zusatz bei abweichender Kostenwaehrung: umgerechnet mit dem Tageskurs (Beschluss Andreas 27.08.2026) oder maskiert."),
-            ("Issue Topic", "Seit 2026-11-19 (Matrix Ingo 19.11.2026): warum die Kostenkette nicht bis zu den Konzernkosten kam. Spalten der Matrix: no Supplier (keine CH/AT-Regel, kein Sales Type, alle Lieferantenfelder leer) / no Mat Number Match (Artikel bei der liefernden Gesellschaft, ohne Lieferant im CH-Werkstamm Trafag AG, auch ueber Mapping nicht gefunden) / no Cost. leer = kein Issue; 1 = 1/1/0 lokale Standardkosten; 2 = 0/1/0 lokale Standardkosten; 3 = 0/0/1 lokale Standardkosten; 4 = 1/0/1 lokale Standardkosten; 5 = 1/0/0 Standardkosten TR AG; 6 = 1/1/1 und 7 = 0/1/1: Artikel nicht gefunden und auch lokale Kosten fehlen: use 0, gerechnet mit Kosten 0, Marge = Umsatz (Status Standardpreis fehlt bleibt als Kennzeichen, Entscheid Ingo 19.11.). Ein gefundener Artikel bleibt 3 bzw. 4, auch wenn die lokalen Kosten 0 sind (dann ebenfalls Kosten 0). Vorlaeufig, von der Matrix nicht abgedeckt: 7 auch bei externem Lieferanten ohne lokale Kosten; 8 = Indien LRD ohne Konzernkosten (Kosten bleiben offen, Entscheid 05.08.); 9 = Lieferant unklar; 10 = interner Lieferant ohne bekannte Kostenquelle (z. B. GFS). Die Spalte aendert keine Kosten; Cost Source und Status bleiben massgebend. Bei TR IT und TR IN sind nur positive Kosten gespeichert, dort ist 3 nicht von 2 unterscheidbar (immer 2)."),
-            ("Mapping", "Seit 2026-11-19: Gruppen-Artikelnummer, mit der die Zeile gerechnet wurde, wenn sie nicht aus der Quelle kommt: aus der Mapping-Tabelle (Verfahren und Status in Klammern; Regelzeilen wirken sofort, Text- und Handzeilen nur bestaetigt) oder aus der Regel I-Praefix TRIT (Italien verkauft Ware aus Indien unter I + Nummer). Leer = Nummer der Quelle. Die Tabelle steht als Mapping_JJJJ-MM-TT.xlsx im selben Ordner."),
+            ("Issue Topic", "Seit 2026-11-19 (Matrix Ingo 19.11.2026): warum die Kostenkette nicht bis zu den Konzernkosten kam. Spalten der Matrix: no Supplier (keine CH/AT-Regel, kein Sales Type, alle Lieferantenfelder leer) / no Mat Number Match (Artikel bei der liefernden Gesellschaft, ohne Lieferant im CH-Werkstamm Trafag AG, auch ueber Mapping nicht gefunden) / no Cost. leer = kein Issue; 1 = 1/1/0 lokale Standardkosten; 2 = 0/1/0 lokale Standardkosten; 3 = 0/0/1 lokale Standardkosten; 4 = 1/0/1 lokale Standardkosten; 5 = 1/0/0 Standardkosten TR AG; 6 = 1/1/1 und 7 = 0/1/1: Artikel nicht gefunden und auch lokale Kosten fehlen: use 0, gerechnet mit Kosten 0, Marge = Umsatz (Status Standardpreis fehlt bleibt als Kennzeichen, Entscheid Ingo 19.11.). Ein gefundener Artikel bleibt 3 bzw. 4, auch wenn die lokalen Kosten 0 sind (dann ebenfalls Kosten 0). Zusatzcodes, NICHT Teil der Matrix (vorlaeufig, bestaetigt von Ingo 20.11., offen bei Andreas): 7 auch bei externem Lieferanten ohne lokale Kosten; 8 = Indien LRD ohne Konzernkosten (Kosten bleiben offen, Entscheid 05.08.); 9 = Lieferant unklar; 10 = interner Lieferant ohne bekannte Kostenquelle (z. B. GFS). Die Spalte aendert keine Kosten; Cost Source und Status bleiben massgebend. Seit 2026-11-20 kennen auch TR IT und TR IN Artikel ohne Kosten (aus eigenen Verkaufszeilen mit Stueckkosten 0), dort ist 3 von 2 unterscheidbar."),
+            ("Mapping", "Seit 2026-11-19: Gruppen-Artikelnummer, mit der die Zeile gerechnet wurde, wenn sie nicht aus der Quelle kommt: aus der Mapping-Tabelle (Verfahren und Status in Klammern; seit 19.11. 14:20 wirken alle Zeilen, auch Regelzeilen, nur bestaetigt) oder aus der Regel I-Praefix TRIT (Italien verkauft Ware aus Indien unter I + Nummer). Seit 2026-11-20 auch eine Artikelnummer der liefernden Gesellschaft, z. B. „M_IT01_000931 (TR IT, Text bestaetigt)“: Artikel, die Trafag AG nicht kennt (Italien liefert an andere Gesellschaften); die Gruppennummer der Zeile bleibt dann leer. Leer = Nummer der Quelle. Die Tabelle steht als Mapping_JJJJ-MM-TT.xlsx im selben Ordner."),
+            ("Supplier Origin", "Seit 2026-11-20: woher die Lieferantenzuordnung der Zeile stammt. Rule CH/AT = TRCH/TRAT verkaufen als Trafag AG; Rule Sales Type = Indien FFM/CM/LRD; Source field = Lieferantenfeld wie aus dem Quellsystem (Artikelstamm, bei Spanien Sage-Wareneingang); Last goods receipt = B1 ohne Standardlieferant, Lieferant aus dem letzten Wareneingang; IT override list = italienische Uebergangsliste; CH plant master = kein Lieferant, Artikel im CH-Werkstamm, gerechnet mit Trafag AG; none = kein Lieferant und nicht im Werkstamm. Zeilen, die vor dem 20.11. gespeichert wurden, zeigen bis zum naechsten Lauf ihres Landes Source field statt Last goods receipt/IT override list."),
             ("Status", "OK = Marge belastbar. 'Standardpreis fehlt' = Kostenbasis 0. 'Lieferant unklar' = Lieferantenfelder leer. '" + GroupMarginCostCurrencyConverter.OpenStatus + "' = Kosten- und Verkaufswaehrung verschieden bei Schalter Mask. '" + GroupMarginStatuses.GroupCostMissing + "' = Standort verkauft Konzernware (Sales Type LRD), Konzernkosten zum Material aber nicht auffindbar; der lokale Standardpreis ist dort der IC-Einkaufspreis und wird bewusst nicht verwendet. 'Umsatz fehlt' = Wert 0. Grundregel: fehlende Daten werden markiert, NIE geschaetzt."),
             ("Variable Unit Cost", "NEU/vorbereitet: variabler Anteil des Standardpreises pro Stueck (Quelle: fix/variabel-Split, z. B. SAP Planpreis variabel). Leer = Quelle liefert den Split noch nicht."),
             ("Variable Cost Basis", "Berechnet: Menge x Variable Unit Cost, gleiche Vorzeichen- und Waehrungsregel wie Known Cost Basis. Leer ohne Split."),

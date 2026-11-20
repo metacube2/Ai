@@ -55,7 +55,12 @@ public static class MaterialMappingStatuses
 }
 
 /// <summary>Wirksamer Treffer der Mapping-Tabelle fuer eine Zeile.</summary>
-public sealed record MaterialMappingHit(string GroupMaterialNumber, string Method);
+public sealed record MaterialMappingHit(
+    string GroupMaterialNumber,
+    string Method,
+    // Paket B (20.11.2026): GroupStandardCostEntities-Wert und normalisierte Artikelnummer bei der liefernden Gesellschaft, sonst null.
+    string? DeliveringEntity = null,
+    string? DeliveringMaterialKey = null);
 
 /// <summary>
 /// Nachschlagewerk (TSC, normalisierte lokale Nummer) auf die Gruppennummer, nur mit WIRKSAMEN Zeilen. Unveraenderlich,
@@ -72,8 +77,12 @@ public sealed class MaterialMappingLookup
         foreach (var mapping in mappings.Where(MaterialMappingStore.IsEffective))
         {
             var key = (NormalizeTsc(mapping.Tsc), MaterialKeyNormalizer.Normalize(mapping.LocalMaterialKey));
+            var deliveringEntity = MaterialMappingStore.DeliveringEntityOf(mapping);
+            var deliveringKey = deliveringEntity is null ? null : MaterialKeyNormalizer.Normalize(mapping.DeliveringMaterialNumber);
             _hits.TryAdd(key, new MaterialMappingHit(mapping.GroupMaterialNumber.Trim(),
-                $"{mapping.Method} {mapping.Status}".Trim()));
+                $"{mapping.Method} {mapping.Status}".Trim(),
+                deliveringKey is { Length: > 0 } ? deliveringEntity : null,
+                deliveringKey is { Length: > 0 } ? deliveringKey : null));
         }
     }
 
@@ -128,14 +137,25 @@ public static class MaterialMappingStore
 {
     /// <summary>
     /// Seit Entscheid Ingo 19.11.2026 14:20 wirkt jede Zeile nur im Status bestaetigt (auch Regelzeilen); abgelehnte, offene
-    /// und Vorschlaege nie. Ohne Gruppennummer und fuer TRCH/TRAT wirkt keine Zeile.
+    /// und Vorschlaege nie. Fuer TRCH/TRAT wirkt keine Zeile. Noetig ist eine Gruppennummer ODER (Paket B, 20.11.2026) eine
+    /// liefernde Gesellschaft TR AG, TR IT oder TR IN mit deren Artikelnummer (Artikel, die Trafag AG nicht kennt).
     /// </summary>
     public static bool IsEffective(MaterialMapping mapping)
         => !IsExcludedTsc(mapping.Tsc) &&
-           !string.IsNullOrWhiteSpace(mapping.GroupMaterialNumber) &&
+           HasTarget(mapping.GroupMaterialNumber, mapping.DeliveringEntity, mapping.DeliveringMaterialNumber) &&
            !string.Equals(mapping.Status, MaterialMappingStatuses.Rejected, StringComparison.Ordinal) &&
            !string.Equals(mapping.Status, MaterialMappingStatuses.Open, StringComparison.Ordinal) &&
            string.Equals(mapping.Status, MaterialMappingStatuses.Confirmed, StringComparison.Ordinal);
+
+    /// <summary>Paket B: Ziel vorhanden, wenn Gruppennummer oder liefernde Gesellschaft samt deren Artikelnummer gefuellt ist.</summary>
+    public static bool HasTarget(string? groupMaterialNumber, string? deliveringEntity, string? deliveringMaterialNumber)
+        => !string.IsNullOrWhiteSpace(groupMaterialNumber) ||
+           (GroupMarginCalculator.DeliveringEntityFromLabel(deliveringEntity) is not null &&
+            MaterialKeyNormalizer.Normalize(deliveringMaterialNumber).Length > 0);
+
+    /// <summary>Liefernde Gesellschaft einer Mapping-Zeile als GroupStandardCostEntities-Wert, sonst null.</summary>
+    public static string? DeliveringEntityOf(MaterialMapping mapping)
+        => GroupMarginCalculator.DeliveringEntityFromLabel(mapping.DeliveringEntity);
 
     /// <summary>
     /// Entscheid Ingo 19.11.2026 14:20: Regelzeilen im Status bestaetigt, die nie von Hand geprueft wurden (kein Pruefzeitpunkt),
@@ -254,12 +274,22 @@ public static class MaterialMappingStore
             }
             // Eine offene Zeile mit nachgetragener Gruppennummer wird ein Vorschlag (wirkt erst bestaetigt);
             // wer sie gleich wirken lassen will, setzt den Status auf bestaetigt.
-            if (status == MaterialMappingStatuses.Open && !string.IsNullOrWhiteSpace(row.GroupMaterialNumber))
-                status = MaterialMappingStatuses.Proposed;
-            if (status != MaterialMappingStatuses.Rejected && status != MaterialMappingStatuses.Open &&
-                string.IsNullOrWhiteSpace(row.GroupMaterialNumber))
+            // Paket B (20.11.2026): liefernde Gesellschaft nur leer, TR AG, TR IT oder TR IN; mit Gesellschaft gehoert deren Nummer dazu.
+            var entityText = row.DeliveringEntity.Trim();
+            var entity = GroupMarginCalculator.DeliveringEntityFromLabel(entityText);
+            if (entityText.Length > 0 && entity is null)
             {
-                errors.Add($"Zeile {row.RowNumber}: Gruppen-Artikelnummer fehlt.");
+                errors.Add($"Zeile {row.RowNumber}: Liefernde Gesellschaft '{entityText}' ist unbekannt (erlaubt: leer, TR AG, TR IT, TR IN).");
+                continue;
+            }
+            var hasTarget = HasTarget(row.GroupMaterialNumber, row.DeliveringEntity, row.DeliveringMaterialNumber);
+            if (status == MaterialMappingStatuses.Open && hasTarget)
+                status = MaterialMappingStatuses.Proposed;
+            if (status != MaterialMappingStatuses.Rejected && status != MaterialMappingStatuses.Open && !hasTarget)
+            {
+                errors.Add(entity is GroupStandardCostEntities.TrIt or GroupStandardCostEntities.TrIn
+                    ? $"Zeile {row.RowNumber}: Artikelnummer bei {entityText} fehlt."
+                    : $"Zeile {row.RowNumber}: Gruppen-Artikelnummer fehlt.");
                 continue;
             }
 
@@ -342,8 +372,9 @@ public static class MaterialMappingStore
         var mapping = await db.MaterialMappings.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
         if (mapping is null)
             return false;
-        if (normalized == MaterialMappingStatuses.Confirmed && string.IsNullOrWhiteSpace(mapping.GroupMaterialNumber))
-            throw new InvalidOperationException("Eine Zeile ohne Gruppen-Artikelnummer kann nicht bestaetigt werden.");
+        if (normalized == MaterialMappingStatuses.Confirmed &&
+            !HasTarget(mapping.GroupMaterialNumber, mapping.DeliveringEntity, mapping.DeliveringMaterialNumber))
+            throw new InvalidOperationException("Eine Zeile ohne Gruppen-Artikelnummer (oder Nummer bei TR IT/TR IN) kann nicht bestaetigt werden.");
 
         mapping.Status = normalized;
         mapping.ReviewedBy = normalized == MaterialMappingStatuses.Proposed ? string.Empty : userName;
@@ -500,6 +531,7 @@ public static class MaterialMappingStore
         => string.IsNullOrWhiteSpace(row.Tsc) &&
            string.IsNullOrWhiteSpace(row.LocalMaterial) &&
            string.IsNullOrWhiteSpace(row.GroupMaterialNumber) &&
+           string.IsNullOrWhiteSpace(row.DeliveringMaterialNumber) &&
            string.IsNullOrWhiteSpace(row.LocalText) &&
            string.IsNullOrWhiteSpace(row.Status);
 }

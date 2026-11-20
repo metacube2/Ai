@@ -56,9 +56,14 @@ public static class MaterialMappingSuggester
     public static IReadOnlyList<MaterialMapping> Suggest(
         IEnumerable<MaterialMappingCandidate> candidates,
         IReadOnlyDictionary<string, string> trAgMaterials,
-        DateTime nowUtc)
+        DateTime nowUtc,
+        IReadOnlyDictionary<string, string>? trItMaterials = null)
     {
         var index = new TextIndex(trAgMaterials);
+        // Paket B (Plan docs/FINANCE_PLAN_MAPPING_STUFE2_2026-11-20.md, 20.11.2026): Ausloeser Andreas 18.11., Italien liefert an
+        // Spanien/Frankreich/UK Artikel, die Trafag AG nicht kennt. Fuer Kandidaten mit liefernder Gesellschaft TR IT zuerst
+        // gegen die Artikel von TR IT (nur solche mit Kosten), nur als Textvorschlag.
+        var itIndex = trItMaterials is { Count: > 0 } ? new TextIndex(trItMaterials) : null;
         var result = new List<MaterialMapping>();
         foreach (var candidate in candidates
                      .Where(item => !MaterialMappingStore.IsExcludedTsc(item.Tsc))
@@ -75,6 +80,16 @@ public static class MaterialMappingSuggester
                 .ToList();
 
             MaterialMapping? suggestion = null;
+            if (itIndex is not null && trItMaterials is not null &&
+                GroupMarginCalculator.DeliveringEntityFromLabel(candidate.DeliveringEntity) == GroupStandardCostEntities.TrIt &&
+                !trItMaterials.ContainsKey(localKey) &&
+                itIndex.FindBest(candidate.LocalText ?? string.Empty) is { } itHit && itHit.Confidence >= MinimumTextConfidence)
+            {
+                result.Add(CreateDelivering(candidate, localKey, GroupMarginCalculator.DeliveringEntityLabel(GroupStandardCostEntities.TrIt),
+                    itHit.MaterialKey, trItMaterials[itHit.MaterialKey], itHit.Confidence, nowUtc));
+                continue;
+            }
+
             var slashKey = DeSlashKey(candidate.Tsc, candidate.LocalMaterial);
             if (slashKey is not null && trAgMaterials.ContainsKey(slashKey))
             {
@@ -136,6 +151,20 @@ public static class MaterialMappingSuggester
             return null;
         var key = MaterialKeyNormalizer.Normalize(localMaterial[(slash + 1)..]);
         return key.Length == 0 ? null : key;
+    }
+
+    public const string TextSimilarityTrIt = "Textaehnlichkeit (Trigramme) gegen TR IT";
+
+    /// <summary>Paket B: Vorschlag auf die Artikelnummer der liefernden Gesellschaft, Gruppennummer bleibt leer.</summary>
+    private static MaterialMapping CreateDelivering(
+        MaterialMappingCandidate candidate, string localKey, string entityLabel, string deliveringKey, string deliveringText,
+        int confidence, DateTime nowUtc)
+    {
+        var mapping = Create(candidate, localKey, string.Empty, deliveringText, MaterialMappingMethods.Text, TextSimilarityTrIt,
+            confidence, nowUtc);
+        mapping.DeliveringEntity = entityLabel;
+        mapping.DeliveringMaterialNumber = deliveringKey;
+        return mapping;
     }
 
     private static MaterialMapping Create(
@@ -327,7 +356,7 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         var now = DateTime.UtcNow;
         // Entscheid Ingo 19.11.2026 14:20: Regelzeilen wirken nur bestaetigt; nie geprueft bestaetigte zurueck auf Vorschlag.
         await MaterialMappingStore.ResetUnreviewedRuleRowsAsync(db, now, cancellationToken);
-        var suggestions = MaterialMappingSuggester.Suggest(candidates, plant, now);
+        var suggestions = MaterialMappingSuggester.Suggest(candidates, plant, now, BuildTrItMaterials(records, costs));
         var deSlash = suggestions.Where(item => item.MethodDetail == MaterialMappingSuggester.RuleDeSlash).ToList();
         var (inserted, updated, protectedRows) = await MaterialMappingStore.UpsertSuggestionsAsync(db, suggestions, now, cancellationToken);
         // Auftrag Ingo 19.11.2026: alle Artikel mit Mapping-Bedarf sichtbar, auch ohne Vorschlag (Status offen).
@@ -401,6 +430,31 @@ public sealed class MaterialMappingSuggestionService : IMaterialMappingSuggestio
         }
 
         return count;
+    }
+
+    /// <summary>
+    /// Paket B: Artikel von TR IT als Ziel fuer den Textvorschlag, Schluessel wie im Kostenaufbau (Gruppennummer, sonst Material),
+    /// Text aus den eigenen Verkaufszeilen. Nur Artikel mit positiven Kosten TR IT, sonst braechte ein Mapping keine Kosten.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> BuildTrItMaterials(
+        IEnumerable<SalesRecord> records,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> costs)
+    {
+        var area = GroupStandardCostAreas.ByEntity[GroupStandardCostEntities.TrIt];
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var record in records.Where(record => string.Equals(record.Tsc?.Trim(), "TRIT", StringComparison.OrdinalIgnoreCase)))
+        {
+            var key = MaterialKeyNormalizer.Normalize(string.IsNullOrWhiteSpace(record.GroupMaterialNumber)
+                ? record.Material
+                : record.GroupMaterialNumber);
+            var text = record.Name?.Trim() ?? string.Empty;
+            if (key.Length == 0 || text.Length == 0 || result.ContainsKey(key))
+                continue;
+            if (costs.TryGetValue((key, area), out var cost) && cost.UnitCost > 0m)
+                result[key] = text;
+        }
+
+        return result;
     }
 
     /// <summary>Artikel mit „nicht gefunden“ je (TSC, Nummer), mit Gewicht. Getrennt, damit testbar ohne Datenbank.</summary>

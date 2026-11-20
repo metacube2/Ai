@@ -99,6 +99,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         // Verrechnungspreisliche Rolle und Trafag-Sachnummer aus dem Artikelstamm der Quelle
         // (Indien: OITM."U_Tasc_ST" / "U_TASC_OMN"), additiv nachgezogen.
         AddColumnIfMissing(db, "CentralSalesRecords", "SalesType", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "SupplierSource", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "GroupMaterialNumber", "TEXT NOT NULL DEFAULT ''");
         // Sage FechaRegistro, additiv. Nur mitgefuehrt, nicht gerechnet (ISS-004.2).
         AddColumnIfMissing(db, "CentralSalesRecords", "LineRegistrationDate", "TEXT NULL");
