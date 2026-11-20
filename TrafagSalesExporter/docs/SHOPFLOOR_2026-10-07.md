@@ -1322,7 +1322,7 @@ Forecast: Auftragsliste der gewaehlten Abteilung immer aufgeklappt, „Nicht zug
   `.bak` entfernt. Cache-Version `index.html` `f974bfb4` -> `6ad4413a`.
 - Release-Worktree auf `e3248a4`: **1'759/1'759** Tests gruen. Einkauf-Delta lief nicht (`-wal` 460 KB), Wochensicherung 16.11. aktuell,
   Monitor offen. Deploy 12:51 mit dem Werkzeug, Commit `e3248a4`, ohne Alarm; produktive `app.js` bitgleich mit dem Repo.
-- **Nicht gesehen:** Oberflaeche im Board (Seite verlangt Anmeldung, `401` per HTTP; Arbeits-Chrome nicht verbunden). Fabio schaut es
+- *Ueberholt 13:10:* **Im Board gesehen** (Windows-Chrome, Ingos Anmeldung): `app.js?v=6ad4413a`, keine Skriptfehler, TX (215) offen, Nicht zugeordnete (147) zu; Suche 1278981 -> „1 von 215 · 20 Stk.“, Disponent EL1 -> 37 von 215 / 1791 Stk., Zuruecksetzen -> 215; nichts gespeichert. Urspruenglich: Oberflaeche nicht gesehen (Anmeldung). Fabio schaut es
   im Board an. Zum FPY kommt von Fabio eine eigene Nachricht (SAP-Rueckmeldungen kennen nur Endausschuss, Quote >99 % statt ~87 %).
 - **Hinweis Finance Stufe 2** (Zweig `finance-mapping-2011`, wartet auf Deploy): vor deren Deploy `e3248a4` mergen, sonst faellt Patch 10
   produktiv wieder heraus.

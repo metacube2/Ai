@@ -927,3 +927,7 @@ war ein Irrtum der Hauptsitzung („Einstellungen“ als beide Tests gelesen, ni
   (Transaktionen nach Import neu aufrufen). **ZBA1** (VV12, VkOrg 1200, KNUMH 2490, Versandzeitpunkt 2 -> 4): wartet auf Fabios Antwort, macht
   er oder spaeter wir. Wirksam ab Montag mit ZSD_NEUTERMIN_LIEFERVORRAT 04:10/04:26.
 - Lokale Testauftraege T76K912926 bis 929 unberuehrt (D, ohne Ziel). Kein Passwort eingegeben; Ingos GUI-Sitzungen nicht benutzt.
+- **Nachtrag 13:15: Import in P76 durch Ingo, gegengelesen.** E070 in P76: T76K912938 vorhanden (13:11:35, vermutlich Importzeit; STMS-Historie
+  nicht gelesen). T441V: von 71 Zeilen weicht nur 100/02/AE ab, nur BESTP X -> A; SE16 mit BESTP = A ergibt genau 1 Treffer (02/AE).
+  T161V: von 11 Zeilen weicht nur 100/F/NB/1100 ab, nur ATPCONFMRP X -> leer (Feld ueber die Tab-Position zugeordnet). Nur gelesen (SE16, eigene
+  Sitzung), nichts geschrieben. **Offen:** ZBA1 (wartet auf Fabio); Fabio Bescheid, Transaktionen neu aufrufen.
