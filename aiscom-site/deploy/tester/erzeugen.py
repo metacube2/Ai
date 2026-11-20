@@ -14,6 +14,7 @@ Alle Apps sind Vollversionen: Kamera-Import, Antennen-Studio und MacYaesu als Te
 import hashlib
 import os
 import plistlib
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -665,6 +666,31 @@ def feed_eintraege(apps, ios, android, buecher=(), windows=()):
     return neu
 
 
+def app_schluessel(guid: str) -> str:
+    """App und Plattform aus der Kennung <app>-<plattform>-<version>-<build>; ohne Plattform (z. B.
+    ft991a-remote-win-1.0.1) alles vor der Versionsnummer."""
+    m = re.match(r"^(.*?)-(mac|ios|android|windows|buch|seite)(-|$)", guid) or re.match(r"^(.*?)-\d", guid)
+    return m.group(0).rstrip("-") if m else guid
+
+
+def app_schluessel_alle(verlauf) -> set:
+    return {app_schluessel(e["guid"]) for e in verlauf}
+
+
+def feed_auswahl(verlauf, neueste: int = 40) -> list:
+    """Wunsch Benutzer 2026-11-20: der Feed zeigt alle Apps. Von jeder App und Plattform die aktuelle Fassung,
+    dazu die neuesten Eintraege der Versionsgeschichte; nach Datum, neueste zuerst."""
+    gesehen, liste = set(), []
+    for e in verlauf:  # verlauf ist nach Datum absteigend sortiert
+        k = app_schluessel(e["guid"])
+        if k not in gesehen:
+            gesehen.add(k)
+            liste.append(e)
+    guids = {e["guid"] for e in liste}
+    liste += [e for e in verlauf[:neueste] if e["guid"] not in guids]
+    return sorted(liste, key=lambda e: e["datum"], reverse=True)
+
+
 def neuigkeiten(verlauf):
     zeilen = "".join(f'<li><time>{datetime.fromisoformat(e["datum"]).strftime("%d.%m.%Y")}</time> {e["titel"]}</li>' for e in verlauf[:6])
     return f'''<section class="neu"><h3>Neueste Fassungen</h3><ul>{zeilen}</ul>
@@ -877,8 +903,11 @@ if __name__ == "__main__":
             sys.exit(1)
         windows.append(daten_windows(a))
     verlauf = rss.verlauf_ergaenzen(HIER / "verlauf.json", feed_eintraege(fertig, ios, android, buecher, windows))
+    feedliste = feed_auswahl(verlauf)
     (HIER / "feed.xml").write_text(rss.feed("AISCOM – Testversionen", "https://www.aiscom.ch/tester/", "https://www.aiscom.ch/tester/feed.xml",
-                                            "Neue Testfassungen für Mac, iPhone/iPad, Android und Windows.", verlauf), encoding="utf-8")
+                                            "Neue Testfassungen für Mac, iPhone/iPad, Android und Windows.", feedliste,
+                                            anzahl=len(feedliste)), encoding="utf-8")
+    print(f"feed.xml: {len(feedliste)} Einträge ({len(app_schluessel_alle(verlauf))} Apps je Plattform, jede mit aktueller Fassung)")
     (HIER / "index.html").write_text(seite(fertig, ios, android, verlauf, buecher, windows), encoding="utf-8")
     for d in fertig:
         print(f"Mac {d['name']}: {d['version']} ({d['build']}) {d['groesse']} "
