@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-20 13:05: IC-Go-Live Transport T76K912938 freigegeben, Shopfloor Patch 10 deployed
+
+- **Auftrag Ingo:** Mail Fabio „Go-Live heute: IC-Terminierung 1100 -> 1200“ (Entscheid „Neuer Transport“, ZBA1 wartet auf Fabio) und Patch 10 „ja, mit Deploy“.
+- **IC:** Transport T76K912938 (Ziel P76) mit genau T441V 02/AE (BESTP A) und T161V F/NB/1100 (ATPCONFMRP leer), freigegeben 13:00:45, gegengelesen. P76 vorher X/X. Import in P76 macht Ingo. Details `saptasks/ic_preisfindung/NOTES.md` 15.
+- **Shopfloor:** Patch 10 Forecast Suche/Filter, deployed 12:51 `e3248a4`, 1759/1759, bitgleich; Oberflaeche nicht gesehen. `docs/SHOPFLOOR_2026-10-07.md` 27.6. Finance Stufe 2 muss `e3248a4` vor Deploy mergen.
+
 ## 2026-11-20 12:30: Finance Stufe 2 gebaut (nicht deployed), Export 20.11. geprueft, Mail Andreas vorbereitet
 
 - **Auftrag Ingo:** „alles umsetzen“ (Plan `docs/FINANCE_PLAN_MAPPING_STUFE2_2026-11-20.md`, Vorgaben F1 bis F7, Deploy erst nach Rueckfrage); „lesen auf p ist genehmigt“.

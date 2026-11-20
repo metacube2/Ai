@@ -914,3 +914,16 @@ war ein Irrtum der Hauptsitzung („Einstellungen“ als beide Tests gelesen, ni
   zeichengleich, E071K unveraendert. Hauptsitzung hat T161V (NB/1100 leer) und T441V (einzige Zeile mit A) selbst gegengelesen.
 - **Fuer Fabio:** vor 10:06 geoeffnete Transaktionen neu aufrufen. Der Schalter gilt je Belegart/Lieferwerk, also fuer alle NB-Bestellungen mit Lieferwerk 1100 in T76/100.
 - Endzustand T76/100 jetzt: T161V NB/1100 = leer, T441V 02/AE = A (beide wie am 18.11. Mittag/Abend, Abschnitt 13 und Berichtigung sind damit ueberholt).
+
+## 15. 2026-11-20 13:00: Go-Live-Transport IC-Terminierung 1100 -> 1200 freigegeben (Mail Fabio 20.11. 11:33, Entscheid Ingo „Neuer Transport“)
+
+- **P76/100 vorher** (gelesen 12:50 per GUI/SE16, nicht geschrieben): T441V 02/AE `BESTP = X`, T161V F/NB/1100 `ATPCONFMRP = X`. T76 ganze Zeilen
+  gegen P76: je Zeile genau ein Feld anders (T441V 31 Felder nur BESTP, T161V 33 Felder nur ATPCONFMRP).
+- **Auftrag T76K912938** (Customizing, Ziel P76, Kurztext „IC-Terminierung 1100->1200: T441V 02/AE, T161V NB/1100“), Aufgabe T76K912939.
+  Aufgenommen ueber SM30-Einstiegsbild Knopf „Transport“ ohne Aendern-Modus (keine Wertaenderung in T76). E071K genau zwei Schluessel:
+  `T441V` `10002AE` (V_441VC) und `T161V` `100FNB  1100` (VV_161V_VF). Aufgabe freigegeben 12:59:48, Auftrag 13:00:45, Export „(0) Erfolgreich“.
+  T76 vor jeder Freigabe erneut gelesen, 0 Abweichungen. Hauptsitzung hat E070 (`W,R,P76`) und E071K per RFC selbst gegengelesen.
+- **Offen bei Ingo:** Import T76K912938 in P76 (STMS, Zielmandant 100), danach P76 gegenlesen (BESTP A, ATPCONFMRP leer); Fabio Bescheid
+  (Transaktionen nach Import neu aufrufen). **ZBA1** (VV12, VkOrg 1200, KNUMH 2490, Versandzeitpunkt 2 -> 4): wartet auf Fabios Antwort, macht
+  er oder spaeter wir. Wirksam ab Montag mit ZSD_NEUTERMIN_LIEFERVORRAT 04:10/04:26.
+- Lokale Testauftraege T76K912926 bis 929 unberuehrt (D, ohne Ziel). Kein Passwort eingegeben; Ingos GUI-Sitzungen nicht benutzt.
