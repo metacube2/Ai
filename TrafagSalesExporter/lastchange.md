@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-20 13:20: Lieferantenbewertung im Chrome geprueft, Mailtext fuer Einkauf
+
+- **Auftrag Ingo:** Doku als Mailtext fuer den Einkauf, im Chrome pruefen, „ist alles in md festgehalten“.
+- **Befund:** Seite stimmt mit dem Mailtext; Link nur mit `/BiDashboard` (`.../BiDashboard/einkauf/lieferantenbewertung`). A/B/C
+  2026-01 bis -11: A 20 / 71.1 %, B 30 / 19.2 %, C 208 / 9.8 %, Summe CHF 32.1 Mio. Keine Eintraege; kein neuer Testeintrag (Entscheid).
+- **Offen:** Mail an Armin/Marco senden (Ingo), Summe A+B+C gegen Spend-Aufriss (Armin). Doku EINKAUF_SITZUNG 6.8.
+
 ## 2026-11-20 13:05: IC-Go-Live Transport T76K912938 freigegeben, Shopfloor Patch 10 deployed
 
 - **Auftrag Ingo:** Mail Fabio „Go-Live heute: IC-Terminierung 1100 -> 1200“ (Entscheid „Neuer Transport“, ZBA1 wartet auf Fabio) und Patch 10 „ja, mit Deploy“.
