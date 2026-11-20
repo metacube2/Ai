@@ -5,6 +5,7 @@ Hauptagent und Unteragenten, jede Aktion mit Balken und Prozent, Aufgaben-Fortsc
 (5 Stunden und Woche) und Tokens des Tages. Gebaut am 17.11.2026 auf Wunsch von Ingo.
 
 Stand: 17.11.2026 abends. 49 Tests grün. Installiert und im Autostart auf Ingos Windows-Laptop.
+Nachtrag 20.11.2026: Paket für andere Benutzer (ZIP mit Laufzeit, Einrichtungsskript, Anleitung auch für Claude), erstes Paket für Fabio, siehe „Paket für andere Benutzer“.
 
 | Ort | Inhalt |
 | --- | --- |
@@ -82,6 +83,26 @@ Zeitstempel von heute, inkrementell. Massgeblich für das Limit sind die Prozent
 Wichtig: Läuft der Monitor nicht, arbeitet Claude normal weiter, zeigt aber bei jedem Schritt einen Hinweis
 „Hook error … ECONNREFUSED“ (getestet). Deshalb Autostart. Laufende Sitzungen übernehmen eine neue
 Statuszeile erst nach einem Neustart.
+
+## Paket für andere Benutzer (seit 20.11.2026)
+
+Für Kolleginnen und Kollegen ohne Entwicklungsumgebung (erster Empfänger: Fabio). Ordner `paket/`:
+
+| Datei | Zweck |
+| --- | --- |
+| `Baue-Paket.ps1` | baut App und Statuszeile eigenständig (`win-x64`, mit .NET-Laufzeit, ReadyToRun), legt Skripte und Anleitung dazu und schreibt das ZIP nach `Downloads\AgentMonitor_Paket_<Datum>.zip` (rund 80 MB, entpackt 196 MB, ohne `.pdb`) |
+| `Setup-AgentMonitor.ps1` / `.cmd` | kopiert nach `%LOCALAPPDATA%\AgentMonitor\app`, führt Hooks (14 Ereignisse) und `statusLine` in `~/.claude/settings.json` **zusammen** (Sicherung vorher, fremde Hooks und fremde Statuszeile bleiben, `-Force` ersetzt die Statuszeile, `-NoStart` für Tests), startet den Monitor, prüft `/health` |
+| `Entfernen-AgentMonitor.ps1` / `.cmd` | nimmt nur die eigenen Einträge aus der `settings.json`, Autostart und Programm weg |
+| `ANLEITUNG.md` | für den Benutzer und für Claude (was er ist, was nie angefasst werden darf, ECONNREFUSED, Einrichten durch Claude, Fehlersuche) |
+
+Geprüft am 20.11. gegen Kopien von Ingos `settings.json` und eine Testdatei mit fremden Hooks: außer `hooks` und
+`statusLine` bleibt jeder Schlüssel gleich, ein zweiter Lauf ändert nichts, Entfernen lässt Fremdes stehen, die Datei
+wird ohne BOM geschrieben. **Nicht geprüft:** ein Lauf auf einem anderen Rechner als Ingos Laptop (SmartScreen,
+Skript-Sperre über `.cmd`, andere Claude-Code-Version).
+
+Skripte bleiben reines ASCII (Windows PowerShell 5.1 liest BOM-lose Dateien als ANSI), `.cmd` mit CRLF.
+Ein Test der Statuszeile darf nie gegen Port 47811 laufen, wenn ein Monitor offen ist (er übernimmt die Werte als
+Planverbrauch): Umgebungsvariable `AGENTMONITOR_PORT=47999` setzen.
 
 ## Aufbau
 
