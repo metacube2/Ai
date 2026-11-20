@@ -903,3 +903,14 @@ war ein Irrtum der Hauptsitzung („Einstellungen“ als beide Tests gelesen, ni
   Transaktion kann den alten Pruefumfang im Speicher halten. Der Vergleichstest gilt nur fuer Aufrufe nach 09:03.
 - Der Satz „beide Tests zurueckgebaut“ in Abschnitt 13, in lastchange, Wochen_Todo 153 und in den Plaenen (Rueckbau-Vermerk) ist fuer T441V
   ueberholt.
+
+## 14. 2026-11-20 10:06: T161V F/NB/1100 ATPCONFMRP wieder leer (Wunsch Fabio, Freigabe Ingo)
+
+- **Anlass:** Fabios Test mit 02/AE = A und ATPCONFMRP = X: IC-Bestellung wird in 1100 ohne fixierten Planauftrag auf das Ende der WBZ bestaetigt (09.03.2027),
+  MRP plant den Planauftrag auf dieses Datum. Realistischer Termin nur nach manuellem Vorziehen und Fixieren (411404: 21.12.2026; ohne: 411405 25.03.2027).
+  Mit leerem Feld (18.11., 411403) plante MRP auf den angefragten Termin.
+- **Aenderung (sap-t76, T76/100):** nur `T161V` F/NB/1100 `ATPCONFMRP` X -> leer, gesichert 10:06:30, Auftrag T76K912926 (lokal, offen, nie freigegeben,
+  Aufgabe T76K912927). `T441V` 02/AE `BESTP` bleibt **A**. Vorher/Nachher per RFC: genau eine geaenderte Zeile, T161V weiter 11 Zeilen, T441V Pruefgruppe 02
+  zeichengleich, E071K unveraendert. Hauptsitzung hat T161V (NB/1100 leer) und T441V (einzige Zeile mit A) selbst gegengelesen.
+- **Fuer Fabio:** vor 10:06 geoeffnete Transaktionen neu aufrufen. Der Schalter gilt je Belegart/Lieferwerk, also fuer alle NB-Bestellungen mit Lieferwerk 1100 in T76/100.
+- Endzustand T76/100 jetzt: T161V NB/1100 = leer, T441V 02/AE = A (beide wie am 18.11. Mittag/Abend, Abschnitt 13 und Berichtigung sind damit ueberholt).
