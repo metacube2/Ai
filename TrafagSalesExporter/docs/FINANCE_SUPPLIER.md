@@ -801,3 +801,10 @@ Deploynachweis: `docs/DEPLOYMENT.md`.
 - Gruppenmarge-Fachlogik: `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`
 - SAP-Rohwertnachweis WAVWR: `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md`
 - Klassifikationscode: `Services/GroupMarginSupplierClassifier.cs`, `Services/GroupMarginCalculator.cs`
+
+## 13. Stand 20.11.: Regelset Lieferantenzuordnung gegen Matrix und Code
+
+Ingos Regelset (zwei Word-Dateien) weicht an fuenf Stellen von Matrix und Code ab: Indien LRD (Kosten offen gegen Standardpreis TR AG),
+Kein Lieferant (Werkstamm Regel 4 gegen Beschluss 27.08. „immer lokal“), fehlende lokale Kosten (use 0, Code 7 bei extern ist Annahme),
+Lieferant unklar (Name gegen Nummer, Code 9), Regel 1 im Text unvollstaendig. Tabelle und Frageliste:
+`docs/FINANCE_REGELSET_ABGLEICH_2026-11-20.md`. Offen bis Entscheid Ingo/Andreas; keine Code-Aenderung.
