@@ -1,0 +1,707 @@
+Du hast gesagt: vorgängerchat müsste bei dir sein,   ich habe diese sichten in rexx,  habe fast alles:Was ich verstanden habe:
+
+    Ursprüngliches Ziel: Power BI Schulung für 3-4 HR-Damen (Schweiz)
+    Korrektur: HR soll nur konsumieren, nicht selbst bauen → du baust das Dashboard
+    Aktueller Stand: ABAP-Report Z_HR_KPI_CONSOLIDATE wurde erstellt, der HR-Daten konsolidiert
+    Der Report zieht:
+  pastedvorgängerchat müsste bei dir sein,   ich habe diese sichten in rexx,  habe fast alles:5. MärzClaude hat geantwortet: Ich sehe das Dropdown aus Rexx mit den verfügbaren Abfragen/Exports.Ich sehe das Dropdown aus Rexx mit den verfügbaren Abfragen/Exports. Das ist eine solide Liste. Lass mich die relevanten für das HR-KPI-Dashboard identifizieren.
+Aus dem Screenshot sehe ich diese Rexx-Abfragen:
+Direkt relevant für HR-KPIs:
+
+Abwesenheit in Stunden (#744) — Krankheit, Ferien etc. in Stunden
+Abwesenheiten in Std. Übersicht (#742) — Übersicht/Zusammenfassung
+Export KOMMEN/GEHEN (#732) — Zeitstempelungen → Produktivstunden, GLZ-Saldi, Überstunden
+Monatszahlung Entwicklung (voll) (#547) — Lohnentwicklung
+Monatszahlung Entwicklung (einfach) (#548) — Lohn vereinfacht
+Jahreszahlung vss (#551) — Jahreslohn
+
+Stammdaten/Org:
+
+Export Stammdaten SAP (#735) — Abgleich mit SAP
+Org. daten (#307) — Organisationsstruktur
+Adressen etc (#317) — Adressdaten
+Geburtstag und Jubiläum (#563) — Dienstalter
+
+HR-Prozesse:
+
+Personal Ausgeschieden (S, #381) — Austritte → Fluktuation
+Personal-Auswahl (S, #337) — Recruiting → Time-to-hire?
+EM Probezeitindex (S, #751) — Probezeit
+Gesprächsmanagement 2 Auswahl (S, #716) — MA-Gespräche?
+CARDS (#660, #707) — Zeiterfassung?
+
+Unklar:
+
+Auswahl f. Vorschläge (S, #418) — ?
+Org.-Akte Personal-Widget (Wheels) (S, M, Z, #705) — ?
+Portal (S, Z, #334) — ?
+
+Für das Power BI Dashboard würde ich diese Rexx-Exports vorschlagen:Noch zwei Punkte zum SAP-Report: Die leeren Rexx-Platzhalter-Felder (Pulsumfrage, Zufriedenheit, Kununu, Time-to-hire) im CSV — soll ich die rausnehmen, da die Daten sowieso aus separaten Rexx-Exports kommen? Oder drinlassen als Reserve?
+Und: Scrollt die Dropdown-Liste noch weiter runter? Ich sehe sie endet bei "Portal (S, Z, #334)" — gibt es darunter noch Einträge wie Pulsumfrage oder ähnliches?Du hast gesagt: F: Welche Rexx-Exports sollen wir für Power BI nutzen?F: Welche Rexx-Exports sollen wir für Power BI nutzen? (Ich kann die Spaltenköpfe analysieren wenn du sie mir schickst) (Wähle alle zutreffenden aus)
+A: Abwesenheit in Stunden (#744) — Krankheit/Ferien, Export KOMMEN/GEHEN (#732) — Überstunden/GLZ, Personal Ausgeschieden (#381) — FluktuationF: Rexx-Krankheit vs. SAP-Krankheit: SAP hat Tage, Rexx hat Stunden. Welche Quelle ist führend?
+A: Rexx (Stunden) ist führend5. MärzClaude hat geantwortet: Gut, klare Entscheidung.Gut, klare Entscheidung. Das heisst:
+Architektur für Power BI:
+QuelleDatenFormatSAP CSV (Z_HR_KPI_CONSOLIDATE)Stammdaten, Org, Lohn, Stellenplan, Ein-/AustrittCSV via HandstartRexx #744Abwesenheiten in Stunden (Krankheit, Ferien etc.) — führendCSV ExportRexx #732Kommen/Gehen → Überstunden, GLZ-Saldi, ProduktivstundenCSV ExportRexx #381Personal Ausgeschieden → FluktuationCSV ExportExcel manuellKununu-ScoreExcel
+Konsequenz für den SAP-Report:
+
+Krankheits-/Ferienfelder aus dem SAP-CSV können raus (oder drinbleiben als Backup) — Rexx ist führend
+Rexx-Platzhalter (Pulsumfrage, Zufriedenheit, Kununu, Time-to-hire) → raus, kommt nicht aus SAP
+SAP liefert primär: Stammdaten, Org-Zuordnung, Lohn, Stellenplan, Ein-/Austritt
+
+Nächste Schritte:
+Schick mir die Spaltenköpfe der drei Rexx-Exports — einfach die erste Zeile jeder CSV oder ein Screenshot wie vorhin:
+
+Abwesenheit in Stunden (#744) — hast du schon teilweise geschickt
+Export KOMMEN/GEHEN (#732)
+Personal Ausgeschieden (#381)
+
+Dann kann ich prüfen welche Felder wir brauchen und wie der PERNR-Join in Power BI aussieht.
+Und zur Frage ob die Liste noch weitergeht — siehst du in Rexx noch Einträge unter "Portal (S, Z, #334)"? Speziell interessiert mich ob es eine Pulsumfrage-Abfrage gibt.Du hast gesagt: steht in der diskussion was das hr für auswertungen wünscht?steht in der diskussion was das hr für auswertungen wünscht?5. MärzClaude hat geantwortet: Ja, das steht in der angehängten Datei "Betreff__PowerBISchulung_zu__.Ja, das steht in der angehängten Datei "Betreff__Power_BI_Schulung___zu____.txt" — das ist die E-Mail an Nadja mit den Klärungsfragen. Lass mich die relevanten Stellen raussuchen.Hat einen Befehl ausgeführt, datei angesehenHat einen Befehl ausgeführt, datei angesehenDie TXT-Datei ist nicht als Upload vorhanden, aber sie wird im Dokument (dem Chatverlauf) mehrfach als "Attached source" referenziert. Der Betreff ist: "Power BI Schulung – Klärungsfragen zu Datenquellen & Anforderungen" an Nadja.
+Aus dem Chatverlauf und der Zusammenfassung sehe ich folgende HR-Wünsche/KPIs:
+Bestätigt gewünscht (aus der E-Mail/Requirements):
+
+Headcount / FTE (Beschäftigungsgrad)
+Fluktuation (Austritte / Avg Headcount)
+Kranktage kurz (<60 Tage) und lang (>=61 Tage)
+NBU-Tage, BU-Tage
+Ferientage (Anspruch vs. bezogen)
+Überstunden
+GLZ-Saldi
+Produktivstunden
+Lohnkosten
+Stellenplan Soll vs. Ist
+Pulsumfrage-Score
+MA-Zufriedenheit
+Kununu-Score
+Time-to-hire
+
+Aber: Den vollständigen Fragebogen / die Mail an Nadja habe ich nicht als Datei. Im Chatverlauf steht nur die Zusammenfassung.
+Hast du die Original-Mail an Nadja noch? Oder den Fragebogen den HR ausgefüllt hat? Wenn du den hier reinschickst, kann ich exakt abgleichen was HR wünscht vs. was wir jetzt abdecken mit SAP + den 3 Rexx-Exports.Du hast gesagt: chatgpt hat zugriff auf mailkonto outlook, hier antwort:Gefunden ✅ — die „Original-Mail an Nadja“ inkl.chatgpt hat zugriff auf mailkonto outlook, hier antwort:Gefunden ✅ — die „Original-Mail an Nadja“ inkl. Klärungsfragen ist in deinem Outlook als Mail-Thread vorhanden (nicht nur als „Attached source“ im Chat).
+1) Deine Mail mit den Klärungsfragen an Nadja (Original)
+In deiner Nachricht fragst du u. a. nach:
+* Schwellwerten/Ampeln (rot/gelb/grün, z. B. Krankenquote/Fluktuation)
+AW: Power BI Schulung – Klärung…Darstellungspräferenzen (Diagrammtypen)
+AW: Power BI Schulung – Klärung…Genaue KPI-Definitionen pro Kennzahl (Beispiel Krankenquote, Stellenplan Soll/Ist)
+AW: Power BI Schulung – Klärung…Und du listest als „konkrete HR-Themen/KPIs“ (von dir angefragt) u. a.: Headcount, Fluktuation, Krankenstand/Absenzen, Krankenquote (gesamt & ohne LZK), Überstunden, Ferientage, Lohnkosten, Stellenplan (Rexx), Pulsumfrage, Zufriedenheitsumfrage, Kununu, Time-to-hire
+AW: Power BI Schulung – Klärung…2) Antworten aus HR (Nadja / Sonja)
+Nadjas Antworten (Okt 2025) bestätigen u. a.:
+* Rexx → SAP CSV-Schnittstelle, aber keine direkte Power-BI-Schnittstelle
+AW: Power BI Schulung – Klärung…Kununu wird manuell von der Homepage nach Excel übertragen
+AW: Power BI Schulung – Klärung…Refline liefert Downloads nur als Bild/PDF; soll später durch Rexx abgelöst werden
+AW: Power BI Schulung – Klärung…Langzeitkrankheit ab dem 61. Tag, Unterscheidung über Abwesenheitsarten (bis 60 / ab 61) und teils zu berechnen
+AW: Power BI Schulung – Klärung…Wunsch: ein Dashboard mit allen HR-Daten; Aktualisierung bislang manuell (Sonja/Nadja); GL/VR sollen nach Bereichen filtern können; Zeitvergleiche ja; RLS ideal: Gesamt + eigener Bereich
+AW: Power BI Schulung – Klärung…Sonjas Mail (Feb 2026) konkretisiert den Startfokus: Zeit- & Absenzwesen (schrittweise), inkl. gewünschten Auswertungen:
+* Ferien: 2 Wochen am Stück / Restferien-Übertrag max. 5 Tage (jährlich, pro Abt./KST)
+AW: Power BI Schulung – Klärung…GLZ-Saldi mit Ampel (0…±50 grün; ±51…±100 gelb; >±100 rot), monatlich pro Abt./KST
+AW: Power BI Schulung – Klärung…Krankheit & Unfall: Fit-&-Wohl-Trigger (6. Absenz oder 12 Krankheitstage), plus Rücklauftracking Ja/Nein
+AW: Power BI Schulung – Klärung…Absenzquote % mit Ampel (bis 3% grün, bis 4% gelb, ab 5% rot), monatlich/quartalsweise + Vergleiche
+AW: Power BI Schulung – Klärung…Kurz-/Langzeit-Unterscheidung: bis 60 Tage / ab 61. Tag
+AW: Power BI Schulung – Klärung…3) Kurzes Fazit zu deiner KPI-Liste aus dem Chat
+Deine im Chat zusammengefasste KPI-Liste passt sehr gut zur Mailhistorie:
+* Headcount/FTE, Fluktuation, Krankheit kurz/lang, Ferientage, Überstunden/GLZ, Produktivstunden, Lohnkosten, Stellenplan Soll/Ist, Puls/Zufriedenheit, Kununu, Time-to-hire sind alle so (oder sehr nahe) im Mail-Thread genannt.
+AW: Power BI Schulung – Klärung…
+AW: Power BI Schulung – Klärung…Zusätzlich gibt es sehr konkrete operative Regeln/Ampeln für GLZ/Absenzquote sowie die 60/61-Tage-Logik und „Fit-&-Wohl“-Trigger, die man beim Dashboard-Design unbedingt berücksichtigen sollte.
+AW: Power BI Schulung – Klärung…Wenn du willst, kann ich dir als nächsten Schritt eine Abgleich-Tabelle „HR wünscht“ vs. „Datenquelle (SAP/Rexx/Kununu/Refline)“ vs. „Berechnung nötig?“ vs. „Refresh/Granularität“ aus genau diesen Mails zusammenstellen (ohne weitere Rückfragen).Mehr anzeigen5. MärzClaude hat geantwortet: Sehr gut, ChatGPT hat die Mails durchgewühlt.Sehr gut, ChatGPT hat die Mails durchgewühlt. Jetzt haben wir das vollständige Bild. Lass mich das konsolidieren.
+Was HR konkret wünscht — mit Datenquellen-Mapping:
+KPI / AuswertungQuelleStatusBemerkungHeadcount / FTESAP (PA0007)✅ im ReportFluktuationSAP (Ein-/Austritt) + Rexx #381⚠️ teilweiseBerechnung in Power BIKrankheit kurz (≤60 Tage)Rexx #744 (führend)✅ Export nötigSAP als BackupKrankheit lang (≥61 Tage)Rexx #744 (führend)✅ Export nötigNBU / BU-TageRexx #744✅ Export nötigAbsenzquote % + AmpelRexx #744🔧 Berechnung PBI≤3% grün, ≤4% gelb, ≥5% rotFit-&-Wohl-TriggerRexx #744🔧 Berechnung PBI6. Absenz ODER 12 Krankheitstage + Rücklauf Ja/NeinFerien: 2 Wo am StückRexx #744🔧 Berechnung PBIPrüfung ob 10+ Tage zusammenhängendFerien: Restübertrag max 5 TageRexx #744🔧 Berechnung PBIJährlich, pro Abt./KSTGLZ-Saldi + AmpelRexx #732✅ Export nötig0–±50 grün, ±51–±100 gelb, >±100 rotÜberstundenRexx #732✅ Export nötigProduktivstundenRexx #732✅ Export nötigLohnkostenSAP (PA0008)✅ im ReportStellenplan Soll/IstSAP (HRP1000) + Rexx⚠️ teilweiseSoll aus Rexx?PulsumfrageRexx (welche Abfrage?)❓ unklarNicht in deiner Export-Liste gesehenMA-ZufriedenheitRexx (welche Abfrage?)❓ unklarKununu-ScoreExcel manuell✅ manuellVon HomepageTime-to-hireRefline → später Rexx⚠️ späterRefline liefert nur Bild/PDF
+Wichtig — von Sonja gewünscht, aber noch nicht abgedeckt:
+
+Filter: GL/VR sollen nach Bereichen filtern → Row-Level Security in Power BI
+Zeitvergleiche (Monat/Quartal/Jahr) → Zeitdimension in Power BI
+Ampeln für GLZ und Absenzquote → Conditional Formatting in Power BI
+
+Was mir auffällt:
+Sonja hat einen sehr konkreten Startfokus definiert: Zeit- & Absenzwesen schrittweise. Das heisst wir müssen nicht alles auf einmal bauen.Und noch eine Sache: Der Fit-&-Wohl-Trigger (6. Absenz oder 12 Krankheitstage) mit Rücklauf-Tracking — das ist eine ziemlich spezifische Logik. Weisst du ob Rexx das schon trackt, oder muss das komplett in Power BI berechnet werden?Du hast gesagt: F: Wie willst du vorgehen?F: Wie willst du vorgehen?
+A: Phase 1: Zeit & Absenzen (Sonja-Fokus)F: Pulsumfrage / MA-Zufriedenheit: Gibt es dafür eine Rexx-Abfrage in deiner Liste?
+A: Ja, habe ich in Rexx gesehen5. MärzClaude hat geantwortet: Gut, Phase 1 ist klar: Zeit & Absenzen nach Sonjas Vorgaben.Gut, Phase 1 ist klar: Zeit & Absenzen nach Sonjas Vorgaben.
+Phase 1 — Scope:
+AuswertungDatenquelleTypKrankheit kurz/lang (≤60 / ≥61 Tage)Rexx #744ExportNBU / BU-TageRexx #744ExportAbsenzquote % + Ampel (≤3/≤4/≥5%)Rexx #744Berechnung PBIFit-&-Wohl-Trigger (6. Absenz / 12 Krankheitstage)Rexx #744Berechnung PBIFerien: 2 Wo am Stück PrüfungRexx #744Berechnung PBIFerien: Restübertrag max 5 TageRexx #744Berechnung PBIGLZ-Saldi + Ampel (±50/±100)Rexx #732ExportÜberstundenRexx #732ExportStammdaten/Org (für Filter pro Bereich)SAP CSVExportHeadcount/FTESAP CSVExport
+Was ich jetzt brauche von dir — Spaltenköpfe der 2 Rexx-Exports:
+
+Rexx #744 (Abwesenheit in Stunden) — hast du teilweise schon geschickt, aber schick nochmal den vollständigen Header
+Rexx #732 (Export KOMMEN/GEHEN) — Header noch nie gesehen
+
+Einfach die erste Zeile der CSV oder Screenshot reicht. Dann kann ich:
+
+prüfen welche Felder wir für Phase 1 brauchen
+den PERNR-Join definieren
+die Power BI Berechnungslogik (Ampeln, Fit-&-Wohl, Ferienregeln) planen
+
+Zum Fit-&-Wohl-Trigger nochmal die Frage: Trackt Rexx das schon (also gibt es ein Feld "Fit-&-Wohl ausgelöst Ja/Nein" und "Rücklauf Ja/Nein"), oder müssen wir das komplett aus den Rohdaten berechnen?Du hast gesagt: kann man rexx die downloads üer die webseite irgendwie anstossen und autmoatisch laden,  sonst eine klickereikann man rexx die downloads üer die webseite irgendwie anstossen und autmoatisch laden,  sonst eine klickerei5. MärzClaude hat geantwortet: Gute Frage — das ist der klassische Pain bei Rexx-Exports.Gute Frage — das ist der klassische Pain bei Rexx-Exports. Lass mich die Optionen durchgehen.
+Möglichkeiten Rexx-Exports zu automatisieren:
+1. Rexx API / Webservice
+Rexx Systems hat eine REST-API. Wenn bei Trafag freigeschaltet, könnte man Exports per API-Call auslösen und die Daten direkt in Power BI oder auf einen Share ziehen. Das wäre die sauberste Lösung — aber braucht Rexx-Admin/Lizenz-Klärung.
+2. Browser-Automation (RPA-artig)
+Tools wie Power Automate Desktop oder ein einfaches Python-Script mit Selenium könnten die Rexx-Webseite öffnen, sich einloggen, die Abfrage auswählen, Export klicken, CSV speichern. Funktioniert, ist aber fragil — jedes Rexx-UI-Update kann das kaputtmachen.
+3. Scheduled Report in Rexx selbst
+Manche Rexx-Versionen haben "Geplante Berichte" / "Scheduled Reports" — die können z.B. täglich/wöchentlich eine Abfrage ausführen und das Ergebnis per Mail oder auf einen Ablageort schicken. Das wäre am wartungsärmsten.
+4. Manuell bleiben (KISS)
+Die HR-Damen starten 2 Exports pro Monat (Rexx #744, #732), speichern auf Netzlaufwerk, Power BI refresht von dort. Bei monatlicher Aktualisierung ist das vertretbar.Übrigens — hast du Zugang zur Rexx-Administration, oder ist das bei euch jemand anderes? Und weisst du welche Rexx-Version/Lizenz ihr habt? Das bestimmt ob API oder Scheduled Reports überhaupt verfügbar sind.Du hast gesagt: F: Welchen Weg willst du gehen?F: Welchen Weg willst du gehen?
+A: Rexx Scheduled Reports prüfenF: Wie oft sollen die Rexx-Daten aktualisiert werden?
+A: Täglich5. MärzClaude hat geantwortet: Täglich + Scheduled Reports — das wäre ideal.Täglich + Scheduled Reports — das wäre ideal. Kein manuelles Klicken, Daten jeden Morgen frisch auf einem Ablageort.
+Was du in Rexx prüfen musst:
+Schau in der Rexx-Administration ob es sowas gibt wie:
+
+"Geplante Berichte" / "Scheduled Reports" / "Automatische Auswertungen"
+"Datenexport-Aufträge" / "Export-Jobs"
+"Abonnements" auf Abfragen
+
+Typischerweise findest du das unter: Administration → Berichte → Zeitgesteuerte Berichte oder ähnlich.
+Was wir konfigurieren müssten (pro Export):
+ParameterWertAbfrage#744 / #732 / #381ZeitplanTäglich, z.B. 06:00 UhrFormatCSV (Semikolon, UTF-8)AblageortNetzlaufwerk / SharePoint / E-MailDateinamez.B. REXX_ABSENZEN_YYYYMMDD.csv
+Power BI kann dann per Scheduled Refresh täglich vom Netzlaufwerk/SharePoint die CSVs einlesen.
+Nächster Schritt: Kannst du in Rexx nachschauen ob "Geplante Berichte" oder ähnliches existiert und mir einen Screenshot schicken? Dann wissen wir ob das geht oder ob wir Plan B (Browser-Automation oder manuell) brauchen.
+Und parallel dazu: Schick mir die Spaltenköpfe von Rexx #744 und #732 — dann kann ich schon mal die Power BI Datenmodell-Struktur für Phase 1 vorbereiten.Du hast gesagt: finde das nichtfinde das nicht5. MärzClaude hat geantwortet: Interessant — du hast die Management Services Übersicht offen.Interessant — du hast die Management Services Übersicht offen. Ich sehe dort kein "Geplante Berichte" oder "Scheduled Reports".
+Aber zwei Kacheln sind vielversprechend:
+
+Data Warehouse — das könnte eine Export/Schnittstellen-Funktion sein. Klick da mal drauf und schick mir einen Screenshot was drin ist.
+Zeitmanagement — dort könnten Export-Optionen für die Absenzen/GLZ versteckt sein.
+
+Und noch eine Frage: Die Abfragen (#744, #732 etc.) die du vorhin gezeigt hast — unter welchem Menüpunkt findest du die? Möglicherweise gibt es dort eine Option "Abfrage planen" oder "als Job einrichten" wenn du eine Abfrage öffnest.Data Warehouse klingt am vielversprechendsten — dort könnte Rexx eine Schnittstelle für automatisierten Datenexport anbieten, evtl. sogar direkt als Datenquelle für Power BI.Du hast gesagt: in beiden unterkategorien kann man nur exporter machen, aber warehouse ist powerbi ohne sap daten wo vieles fehltin beiden unterkategorien kann man nur exporter machen, aber warehouse ist powerbi ohne sap daten wo vieles fehlt5. MärzClaude hat geantwortet: OK, also:OK, also:
+
+Data Warehouse = Rexx-eigenes Power BI, aber ohne SAP-Daten → unvollständig
+Zeitmanagement = manuelle Exports, kein Scheduling
+
+Das heisst: Scheduled Reports gibt es in eurer Rexx-Version nicht (oder nicht freigeschaltet).
+Realistische Optionen:
+
+Rexx API prüfen — Rexx Systems hat eine REST-API. Damit könnte ein Script (Python, Power Automate) die Exports täglich automatisch ziehen. Frage: Hat euer Rexx-Vertrag API-Zugang?
+Rexx Support fragen — direkt bei Rexx Systems anfragen ob Scheduled Exports möglich sind oder freigeschaltet werden können. Vielleicht ist es ein Feature das nur aktiviert werden muss.
+Browser-Automation — Python + Selenium loggt sich täglich ein, klickt die 3 Exports, speichert CSVs auf Netzlaufwerk. Fragil aber funktioniert.
+Manuell (KISS für Phase 1) — Die HR-Damen machen täglich morgens 3 Klicks in Rexx, speichern auf Netzlaufwerk. Power BI refresht von dort. Bei 3 Exports à 30 Sekunden ist das 2 Minuten pro Tag.
+
+Meine Empfehlung für jetzt: Option 4 — manuell starten, parallel Option 2 — Rexx Support anfragen ob Scheduling oder API verfügbar ist. Dann upgraden wenn möglich.Übrigens — das Data Warehouse in Rexx: Welche Daten sind dort drin? Wenn es schon Power-BI-fähig ist, könnte man es als Rexx-Datenquelle nutzen und nur die SAP-Daten separat dazujoinen. Das wäre evtl. weniger Aufwand als 3 CSV-Exports.Du hast gesagt: F: Wie weiter?F: Wie weiter?
+A: Browser-Automation bauenF: Können wir parallel mit Phase 1 (Power BI Datenmodell) weitermachen?
+A: Ja, jetzt Spaltenköpfe #744 und #732 schicken5. MärzClaude hat geantwortet: Gut, zwei parallele Stränge:Gut, zwei parallele Stränge:
+Strang 1: Browser-Automation (Rexx → CSV täglich)
+Dafür brauche ich:
+
+Die URL eurer Rexx-Instanz (z.B. https://trafag.rexx-systems.com oder ähnlich)
+Wie läuft der Login? Username/Passwort? SSO/Azure AD?
+Auf welchem Rechner/Server soll das laufen? (Dein Homelab? Ein Windows-Server bei Trafag? Azure VM?)
+Ablageort für die CSVs: Netzlaufwerk-Pfad oder SharePoint?
+
+Strang 2: Power BI Datenmodell Phase 1
+Dafür schick mir die Spaltenköpfe:
+
+Rexx #744 (Abwesenheit in Stunden) — vollständiger Header
+Rexx #732 (Export KOMMEN/GEHEN) — Header
+
+Einfach die erste Zeile der CSV oder Screenshot der Spalten reicht.
+Dann baue ich:
+
+Das Datenmodell (Tabellen, Joins über PERNR)
+Die DAX-Measures für Ampeln (Absenzquote, GLZ-Saldi)
+Die Fit-&-Wohl-Trigger-Logik
+Die Ferienregeln (2 Wochen am Stück, max 5 Tage Übertrag)
+
+Fang mit den Spaltenköpfen an — die Browser-Automation können wir danach angehen wenn die Rexx-Zugangsdaten klar sind.Du hast gesagt: 744::Personalnummer	Foto rund	Nachname, Vorname (Link Personal)	Stelle	Organisation	Leitung j/n	Eintrittsdatum	Personal Status	Krank nicht buchbar angetreten (…744::Personalnummer    Foto rund    Nachname, Vorname (Link Personal)    Stelle    Organisation    Leitung j/n    Eintrittsdatum    Personal Status    Krank nicht buchbar angetreten (Stunden Ind.)    Krankheit angetreten (Stunden Ind.)    Krank nicht buchbar angetreten (Stunden)    Krankheit angetreten (Stunden)    Krank nicht buchbar angetreten (Zeitraum)    Krankheit angetreten (Zeitraum)    Krank nicht buchbar ausstehend (Stunden Ind.)    Krankheit ausstehend (Stunden Ind.)    Krank nicht buchbar gebucht gesamt (Stunden)    Krankheit genehmigt (Zeitraum)    Krank nicht buchbar genehmigt (Zeitraum)    Krankheit genehmigt (Stunden)    Krank nicht buchbar genehmigt (Stunden)    Krankheit genehmigt (Stunden Ind.)    Krank nicht buchbar genehmigt (Stunden Ind.)    Krankheit gebucht gesamt (Stunden)    Krankheit gebucht gesamt (Stunden Ind.)    Krank nicht buchbar gebucht gesamt (Stunden Ind.)         Jolie, Angelina    TEST Leitung IT    Test Rexx    ja    01.02.2024    Aktiv            0:00    0:00                    0:00            0:00    0:00            0:00                 Empfänger, Reminder    Applikationsmanager    ICT Service    nein    12.07.2024    Aktiv            0:00    0:00                    0:00            0:00    0:00            0:00         1        Muster, Peter    TEST Stv. IT    Test Rexx    nein    01.04.2024    Aktiv            0:00    0:00                    0:00            0:00    0:00            0:00         00000000000000000001        ICT, Trafag    Standard Stelle    ICT Service    nein    01.09.2024    Aktiv            0:00    0:00                    0:00            0:00    0:00            0:00         00002004        Fernandez, Carlos    Sachbearbeiter Logistik    Logistik    nein    01.07.1988    Aktiv            0:00    0:00        23.01.2025 - 24.01.2025            0:00    23.01.2025 - 24.01.2025        0:00    0:00            0:00         00002007        Bordonaro, Diega    Betriebsangestellte    Transmitter TR    nein    01.12.1997    Aktiv    0.00    8.00    0:00    8:00        23.02.2026            0:00    23.02.2026        8:00    0:00    8.00    0.00    8:00    8.00    0.00 //kommen gehen732:Sozialversicherungsnummer    Nachname, Vorname (Link Personal)    Geburtsdatum    Personal Status    Stelle    Organisation    Arbeitszeitmodell    Arbeitszeit    Ø tägliche Sollarbeitszeit (Woche)    Arbeitszeit Mo.    Arbeitszeit Di.    Arbeitszeit Mi.    Arbeitszeit Do.    Arbeitszeit Fr.    Arbeitszeit Sa.
+756.1979.3167.43    Zürrer, Katharina    02.05.1970    Aktiv    People & Culture Manager, Lehrlingsverantwortliche    People & Culture, Lehrlingsausbildung    Teilzeit    308:49    6.00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00
+756.9704.7370.47    Zuluaga, Jeimmy    22.02.1988    Aktiv    Produktion Aushilfe    Transmitter TX    Vollzeit    176:56    5.71    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59
+756.6483.7821.38    Zollinger, Samuel    10.11.1992    Aktiv    Automatiker Instandhaltung    Technischer Unterhalt    Vollzeit    331:19    5.71    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59
+756.5567.9044.73    Zetterblom, Johannes    17.07.1985    Aktiv    Area Sales Manager    Sales Territory 5    Vollzeit    397:45    6.83    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00
+Sozialversicherungsnummer    Nachname, Vorname (Link Personal)    Geburtsdatum    Personal Status    Stelle    Organisation    Arbeitszeitmodell    Arbeitszeit    Ø tägliche Sollarbeitszeit (Woche)    Arbeitszeit Mo.    Arbeitszeit Di.    Arbeitszeit Mi.    Arbeitszeit Do.    Arbeitszeit Fr.    Arbeitszeit Sa.
+756.1979.3167.43    Zürrer, Katharina    02.05.1970    Aktiv    People & Culture Manager, Lehrlingsverantwortliche    People & Culture, Lehrlingsausbildung    Teilzeit    308:49    6.00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00
+756.9704.7370.47    Zuluaga, Jeimmy    22.02.1988    Aktiv    Produktion Aushilfe    Transmitter TX    Vollzeit    176:56    5.71    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59
+756.6483.7821.38    Zollinger, Samuel    10.11.1992    Aktiv    Automatiker Instandhaltung    Technischer Unterhalt    Vollzeit    331:19    5.71    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59
+756.5567.9044.73    Zetterblom, Johannes    17.07.1985    Aktiv    Area Sales Manager    Sales Territory 5    Vollzeit    397:45    6.83    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00Mehr anzeigen5. MärzClaude hat geantwortet: Danke.Danke. Ich sehe sofort ein paar Probleme und wichtige Punkte:
+Problem 1: Join-Schlüssel
+
+#744 hat Personalnummer (SAP PERNR) → gut, matcht mit SAP
+#732 hat Sozialversicherungsnummer (AHV-Nr.) aber keine PERNR → Join auf SAP nicht direkt möglich!
+
+Wir brauchen entweder:
+
+PERNR in #732 dazu (gibt's die als Spalte in Rexx?)
+Oder eine Mapping-Tabelle PERNR ↔ AHV-Nr. (die steht in SAP in PA0001-PERID oder PA0185)
+
+Problem 2: #732 ist nicht Kommen/Gehen
+Das sind Arbeitszeitmodelle/Sollzeiten, nicht tatsächliche Stempelungen. Ich sehe:
+
+Arbeitszeitmodell (Vollzeit/Teilzeit)
+Sollarbeitszeit pro Tag/Woche
+Arbeitszeitrahmen (06:00-23:00)
+
+Aber keine IST-Zeiten, keine GLZ-Saldi, keine Überstunden. Das ist nur die Soll-Seite.
+Problem 3: #744 hat nur Krankheit
+Ich sehe nur Krankheits-Felder (buchbar/nicht buchbar, angetreten/genehmigt/ausstehend). Keine Ferien, kein Unfall (NBU/BU) — oder hast du in Rexx eine andere Abfrage dafür?
+Problem 4: Datenschutz #732
+AHV-Nummern im CSV sind sensibel. Die sollten nicht auf einem Netzlaufwerk rumliegen.
+Zusammenfassung — was fehlt für Phase 1:
+Was fehltFrageGLZ-Saldi / ÜberstundenWelche Rexx-Abfrage hat die IST-Stunden und Saldi?Ferien / NBU / BUGibt es eine andere #-Abfrage für Ferien und Unfälle?PERNR in #732Kann man Personalnummer als Spalte in #732 hinzufügen?Kommen/Gehen tatsächlichWelche Abfrage hat die echten Stempelzeiten?Und noch was: Die "Foto rund"-Spalte in #744 — das ist vermutlich ein Bild-Link oder Base64. Die können wir ignorieren im Export. Aber sie zeigt dass Rexx-Exports nicht immer sauber für Datenverarbeitung designed sind.Du hast gesagt: F: Kannst du in Rexx prüfen welche Abfragen GLZ-Saldi, Ferien, Unfälle und echte Stempelzeiten enthalten?F: Kannst du in Rexx prüfen welche Abfragen GLZ-Saldi, Ferien, Unfälle und echte Stempelzeiten enthalten?
+A: Ich schicke die komplette Abfragen-Liste nochmal5. MärzClaude hat geantwortet: Gut, schick die komplette Liste — am besten den Screenshot vom Dropdown nochmal, aber diesmal ganz durchscrollen damit ich alle Abfragen sehe.Gut, schick die komplette Liste — am besten den Screenshot vom Dropdown nochmal, aber diesmal ganz durchscrollen damit ich alle Abfragen sehe. Im ersten Screenshot endete es bei "Portal (S, Z, #334)" — da fehlt vermutlich noch der untere Teil.
+Und wenn möglich: Gibt es in Rexx eine Möglichkeit bei einer Abfrage die verfügbaren Spalten zu sehen bevor man exportiert? Dann könntest du für die vielversprechenden Abfragen schnell prüfen ob GLZ-Saldi, Ferienkontingente oder Stempelzeiten drin sind.
+Ich warte auf die Liste.Du hast gesagt: Sozialversicherungsnummer	Personalnummer	Nachname, Vorname (Link Personal)	Geburtsdatum	Personal Status	Stelle	Organisation	Arbeitszeitmodell	Arbeitszeit	Ø täg…Sozialversicherungsnummer    Personalnummer    Nachname, Vorname (Link Personal)    Geburtsdatum    Personal Status    Stelle    Organisation    Arbeitszeitmodell    Arbeitszeit    Ø tägliche Sollarbeitszeit (Woche)    Arbeitszeit Mo.    Arbeitszeit Di.    Arbeitszeit Mi.    Arbeitszeit Do.    Arbeitszeit Fr.    Arbeitszeit Sa.
+756.1979.3167.43    00002688    Zürrer, Katharina    02.05.1970    Aktiv    People & Culture Manager, Lehrlingsverantwortliche    People & Culture, Lehrlingsausbildung    Teilzeit    308:49    6.00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00
+756.9704.7370.47    00003395    Zuluaga, Jeimmy    22.02.1988    Aktiv    Produktion Aushilfe    Transmitter TX    Vollzeit    176:56    5.71    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59
+756.6483.7821.38    00003278    Zollinger, Samuel    10.11.1992    Aktiv    Automatiker Instandhaltung    Technischer Unterhalt    Vollzeit    331:19    5.71    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59    00:00 - 23:59
+756.5567.9044.73    00003082    Zetterblom, Johannes    17.07.1985    Aktiv    Area Sales Manager    Sales Territory 5    Vollzeit    397:45    6.83    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00
+756.8406.5146.80    00002068    Zeisel, Dieter    27.07.1961    Aktiv    CEO    Geschäftsführung    Teilzeit    312:14    4.10    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00    06:00 - 23:00Mehr anzeigen5. MärzClaude hat geantwortet: Gut, Problem 1 gelöst — du hast die Personalnummer als Spalte in #732 hinzugefügt.Gut, Problem 1 gelöst — du hast die Personalnummer als Spalte in #732 hinzugefügt. Jetzt haben wir den Join-Schlüssel.
+Aber #732 bleibt Sollzeiten/Arbeitszeitmodelle, nicht IST-Zeiten. Das ist trotzdem nützlich für:
+
+Soll-Stunden pro Tag/Woche
+Vollzeit/Teilzeit-Kennzeichen
+Arbeitszeitrahmen
+
+Ich warte noch auf:
+
+Die komplette Abfragen-Liste aus dem Dropdown (alle Einträge) — damit ich die richtigen Exports für GLZ-Saldi, Ferien, Stempelzeiten finde
+Oder hast du die Liste noch nicht geschickt?
+Du hast gesagt: was kannst du hier brtauchenwas kannst du hier brtauchen5. MärzClaude hat geantwortet: Da sind die Goldstücke:Da sind die Goldstücke:
+Direkt relevant für Phase 1:
+
+Saldi (Stunden / Ferien) (#745) — DAS ist was wir brauchen! GLZ-Saldi + Feriensaldi → Überstunden, Ferienanspruch vs. bezogen, Restferien
+Saldi per Stichtag (#757) — vermutlich Saldi zu einem bestimmten Datum → gut für Monatsvergleiche/Zeitreihen
+
+Nützlich:
+
+SAP_Export (#771) — interessant, was exportiert Rexx hier zurück an SAP?
+Personal Ausgeschieden (S, #381) — hatten wir schon, für Fluktuation
+Sachbearbeitung (#5) — könnte HR-Prozesse enthalten
+
+Weniger relevant für Phase 1:
+
+Monatszahlung (#547, #548), Jahreszahlung (#551) — Lohn kommt aus SAP
+Org. daten (#307) — Org kommt aus SAP
+Portal/Cards/Scriba/Skillmatching — später
+
+Nächster Schritt — schick mir die Spaltenköpfe von:
+
+#745 (Saldi Stunden/Ferien) — höchste Priorität!
+#757 (Saldi per Stichtag) — zweite Priorität
+
+Das sind vermutlich die fehlenden Puzzleteile für GLZ-Saldi, Überstunden und Ferienkontingente.
+Und: Scrollt die Liste noch weiter runter nach "Skillmatching Skillschema (#553)"? Oder weiter oben — gibt es noch einen Teil zwischen dem ersten Screenshot und diesem hier den ich nicht gesehen habe?Du hast gesagt: 745 saldii stunden ferien::Personalnummer	Kürzel	Foto rund	Nachname, Vorname (Link Personal)	Stelle	Organisation	Leitung j/n	Eintrittsdatum	Personal Status	Stu…745 saldii stunden ferien::Personalnummer    Kürzel    Foto rund    Nachname, Vorname (Link Personal)    Stelle    Organisation    Leitung j/n    Eintrittsdatum    Personal Status    Stunden Saldo    Urlaub Rest    Voraussichtlicher Verfall Resturlaub
+00003009    SCM        Scalet, Michael    Teamleiter Elektronische Linienfertigung    Transmitter TX    ja    01.10.2020    Aktiv    63:12    4.00    0
+00002377    GUN        Güntensperger, Armin    Chief Procurement Officer (CPO)    Procurement    ja    21.05.2001    Aktiv    18:10    13.50    0
+00003020    LUG        Lustig, Gunther    Chief Information Officer (CIO)    IT    ja    01.12.2020    Aktiv    16:40    29.50    0
+00002769    RAD        Radanovic, Dragan    Head of Operations    Operations CH    ja    01.04.2015    Aktiv    49:33    26.00    0
+00002862    STM        Stämpfli, Marc    Head of Technologies    Technologies    ja    01.01.2018    Aktiv    18:47    27.00    0
+00002068    ZEI        Zeisel, Dieter    CEO    Geschäftsführung    ja    01.06.1998    Aktiv    116:11    18.00    0Mehr anzeigen5. MärzClaude hat geantwortet: Jackpot!Jackpot! Das ist genau was wir brauchen. #745 hat:
+
+Stunden Saldo → GLZ-Saldo (z.B. 63:12 = 63h 12min Überzeit)
+Urlaub Rest → Restferien in Tagen (z.B. 4.00, 13.50)
+Voraussichtlicher Verfall Resturlaub → Ferienverfall
+
+Das deckt ab:
+
+✅ GLZ-Saldi + Ampel (±50/±100)
+✅ Restferien (max 5 Tage Übertrag-Prüfung)
+✅ Überstunden (= Stunden Saldo)
+
+Aber es fehlt noch:
+
+Ferienanspruch gesamt (nur Rest ist drin, nicht wieviel Anspruch total)
+Ferien bezogen (Anspruch minus Rest = bezogen → berechenbar wenn Anspruch bekannt)
+2 Wochen am Stück Prüfung → dafür brauchen wir die Einzelbuchungen aus #744, nicht nur Saldi
+
+Aktueller Stand Phase 1 Datenquellen:
+BedarfQuelleStatusGLZ-Saldi + AmpelRexx #745 (Stunden Saldo)✅ÜberstundenRexx #745 (Stunden Saldo)✅Restferien + VerfallRexx #745 (Urlaub Rest)✅Krankheit (Stunden)Rexx #744✅SollarbeitszeitRexx #732✅Stammdaten/Org/LohnSAP CSV✅FluktuationRexx #381✅Absenzquote % + AmpelBerechnung PBI🔧Fit-&-Wohl-TriggerBerechnung PBI🔧Ferien 2 Wo am Stück❓ Einzelbuchungen nötig❓Ferienanspruch total❓ Nicht in #745❓Übrigens — Zeisel mit 116:11 Stunden Saldo wäre tiefrot in der Ampel (>±100). Das Dashboard wird gleich spannend für die GL. 😄Du hast gesagt: F: #757 (Saldi per Stichtag) — könnte Ferienanspruch total enthalten.F: #757 (Saldi per Stichtag) — könnte Ferienanspruch total enthalten. Willst du den Header auch noch schicken?
+A: Ja, schicke HeaderF: Ferien 2 Wochen am Stück: Hat Rexx #744 oder eine andere Abfrage die einzelnen Ferien-Zeiträume (von-bis)?
+A: Weiss nicht5. MärzClaude hat geantwortet: OK, dann schick mir:OK, dann schick mir:
+
+#757 (Saldi per Stichtag) — Spaltenköpfe
+#744 nochmal — aber diesmal mit dem Ferien-Filter statt Krankheit, falls man in Rexx die Abwesenheitsart wechseln kann. Die #744 die du geschickt hast hatte nur Krankheits-Spalten. Vielleicht gibt es beim Export eine Auswahl ob Krankheit/Ferien/Unfall?
+
+Oder alternativ: Schau in der Rexx-Abfragenliste ob es eine separate Abfrage gibt die Ferien-Einzelbuchungen (von-bis Datum) enthält — das wäre z.B. sowas wie "Abwesenheiten Übersicht" oder "Ferien Übersicht".
+Warte auf die Headers.Du hast gesagt: 757 saldiperstichtag  Personalnummer	Kürzel	Nachname, Vorname (Link Personal)	Stelle	Organisation	Kostenstelle	Leitung j/n	Eintrittsdatum	Personal Status	Anste…757 saldiperstichtag  Personalnummer    Kürzel    Nachname, Vorname (Link Personal)    Stelle    Organisation    Kostenstelle    Leitung j/n    Eintrittsdatum    Personal Status    Anstellungsverhältnis    Stunden Saldo    Urlaubsanspruch    Urlaub Rest    Ferien ausstehend (Tage)    Lohnart    Lohn    Lohn Währung
+00003368    acn    Acikalin, Neva    Teamleiterin Logistik    Logistik    920 / Logistik    ja    01.10.2025    Aktiv    unbefristet    0:00    25.00        6.00    Monatslohn * 13    6800.00    CHF
+00002510    ADE    Adé, Daniel    Technischer Mitarbeiter Pilotfertigung    Produktionstechnik    870 / Produktionstechnik    nein    01.01.2007    Aktiv    unbefristet    -6:12    25.00    1.00    10.00    Monatslohn * 13    6900.00    CHF
+00002208    APA    Agorastos-Disseris, Panagiotis    Technischer Mitarbeiter Prozesstechnik    Produktionstechnik    870 / Produktionstechnik    nein    12.11.1990    Aktiv    unbefristet    -18:37    28.00    0.00    27.00    Monatslohn * 13    6100.00    CHF
+00003022    RUC    Akeret, Claudia    Projekt Managerin    Projekt Management    810 / Projektmanagement    nein    01.01.2021    Aktiv    unbefristet    58:10    30.00    6.00    23.00    Monatslohn * 13    5700.00    CHF
+00002524    ADA    Alderisio, Dario    Schichtverantwortlicher und Stv. Teamleiter Dichtewächter    Dichtewächter SF6    700 / Dichtewächter    nein    01.05.2007    Aktiv    unbefristet    2:03    28.00    0.00    20.00    Monatslohn * 13    6190.00    CHFMehr anzeigen5. MärzClaude hat geantwortet: Das ist die Hauptquelle!Das ist die Hauptquelle! #757 hat praktisch alles:
+FeldNutzen für Phase 1Personalnummer✅ Join-SchlüsselStunden Saldo✅ GLZ-Saldi + AmpelUrlaubsanspruch✅ Ferienanspruch total (25/28/30 Tage)Urlaub Rest✅ RestferienFerien ausstehend (Tage)✅ Noch geplant/genehmigtKostenstelle✅ Filter pro BereichOrganisation✅ AbteilungsfilterLeitung j/n✅ Führungskräfte-FilterAnstellungsverhältnis✅ befristet/unbefristetLohn + Währung✅ Lohndaten (Alternative zu SAP!)Lohnart✅ Monats-/Stundenlohn
+#757 ersetzt teilweise den SAP-Report! Hier sind Lohn, Org, Kostenstelle, Saldi und Ferien alles in einer Abfrage.
+Revidierte Datenarchitektur Phase 1:
+QuelleDatenFrequenzRexx #757Saldi, Ferien, Lohn, Org, KostenstelleTäglichRexx #744Krankheit/Absenzen (Stunden)TäglichRexx #381Austritte → FluktuationTäglichSAP CSVStammdaten die Rexx NICHT hat (PERSG, PERSK, Stellenplan Soll, Planstelle)Monatlich
+Frage die sich jetzt stellt:
+Der SAP-Report wird weniger wichtig wenn Rexx #757 schon Lohn, Org und Kostenstelle liefert. SAP liefert dann nur noch Ergänzungen die Rexx nicht hat.Übrigens — Akeret mit 58:10 Stunden Saldo wäre gelb in der Ampel (±51–±100). Adé mit -6:12 ist grün. Agorastos mit -18:37 auch grün. Die Daten sind sofort dashboard-fähig.Du hast gesagt: F: Rexx #757 hat fast alles.F: Rexx #757 hat fast alles. Sollen wir Rexx als Hauptdatenquelle für Power BI nehmen?
+A: Ja, Rexx als Hauptquelle + SAP nur ErgänzungF: Lohndaten aus #757: Sollen die ins Power BI Dashboard? (Datenschutz!)
+A: Nur aggregiert pro Abteilung5. MärzClaude hat geantwortet: Perfekt, klare Architektur-Entscheidung.Perfekt, klare Architektur-Entscheidung. Lass mich das zusammenfassen.
+Finale Architektur Phase 1:
+QuelleRolleDatenFrequenzRexx #757HauptquelleSaldi, Ferien, Lohn (aggregiert), Org, KSTTäglichRexx #744AbsenzenKrankheit in Stunden (Detail)TäglichRexx #381FluktuationAusgeschiedene MATäglichSAP CSVErgänzungPERSG, PERSK, Stellenplan Soll, PlanstelleMonatlich
+Datenschutz-Regel für Power BI:
+
+Lohn wird nur aggregiert pro Abteilung/KST angezeigt
+Keine Einzelgehälter im Dashboard sichtbar
+Row-Level Security: GL/VR sehen nur eigenen Bereich
+
+Was ich jetzt bauen kann:
+
+Power BI Datenmodell — Tabellenstruktur, Beziehungen, Berechnungen
+DAX Measures — Ampeln, Absenzquote, Fit-&-Wohl, Ferienregeln
+Browser-Automation — Rexx-Exports automatisieren
+SAP-Report anpassen — Rexx-Platzhalter raus, nur noch SAP-eigene Felder
+
+Soll ich als Erstes eine Übersichtsdokumentation erstellen? Ein Dokument das alles zusammenfasst — Architektur, Datenquellen, Felder, Berechnungslogik, Ampeln — damit du das auch HR/GL zeigen kannst?Und noch offen: Die Ferien 2-Wochen-am-Stück-Prüfung — dafür brauchen wir Einzelbuchungen mit Von-Bis-Datum. Hast du in der Rexx-Abfragenliste sowas wie "Abwesenheiten Übersicht" mit Zeiträumen gesehen? In #744 waren bei Krankheit Zeiträume drin (z.B. "23.01.2025 - 24.01.2025") — gibt es das auch für Ferien?Du hast gesagt: F: In welcher Reihenfolge soll ich vorgehen?F: In welcher Reihenfolge soll ich vorgehen?
+A: Rangfolge: 1. Übersichtsdokumentation (Word/PDF), 2. Power BI Datenmodell-Design, 3. Browser-Automation für Rexx, 4. SAP-Report anpassen5. MärzClaude hat geantwortet: Gut, starte mit der Übersichtsdokumentation.Gut, starte mit der Übersichtsdokumentation. Lass mich zuerst das Skill-File lesen.2 Dateien angesehen2 Dateien angesehenGut, jetzt baue ich die Dokumentation.4 Befehle ausgeführt, datei erstellt, datei lesen4 Befehle ausgeführt, datei erstellt, datei lesenDas Dokument enthält 9 Kapitel: Management Summary, Datenarchitektur mit Quellenüberblick, KPI-Mapping Phase 1 mit Status-Ampeln, Ampel-Definitionen (Sonjas Schwellwerte), Rexx-Feldlisten für alle 3 Exports (#757, #744, #732), Berechnungslogik (DAX), Datenfluss/Refresh-Ablauf, Offene Punkte und Phasenplanung.
+Kannst du damit HR/GL zeigen wo wir stehen. Nächster Schritt wäre das Power BI Datenmodell — oder willst du erst die Spaltenköpfe von #757 (Saldi per Stichtag) nochmal komplett prüfen und die fehlende #381 (Personal Ausgeschieden) schicken?Hr kpi dashboard dokumentationDokument · DOCX HerunterladenDu hast gesagt: 381  ausgeschiedene:Nachname, Vorname (Link Personal)	Personalnummer	Stelle-1	Organisation-1	Leitung j/n	Austrittsdatum	Austrittsart	Eintrittsdatum	Personal St…381  ausgeschiedene:Nachname, Vorname (Link Personal)    Personalnummer    Stelle-1    Organisation-1    Leitung j/n    Austrittsdatum    Austrittsart    Eintrittsdatum    Personal Status
+Owsianka, Klaudia    00003231    Betriebsangestellte    Dichtewächter SF6    nein    14.04.2024        12.02.2024    Ausgeschieden
+Micic, Dalibor    00003262    Produktion Aushilfe    Transmitter TX    nein    16.08.2024        08.07.2024    Ausgeschieden
+Rutz, Dominic    00003263    Automationstechniker    Technischer Unterhalt    nein    31.07.2024        15.07.2024    Ausgeschieden
+Meyer, Jenifer    00003289    Hochschulpraktikantin Softwareentwicklung    Software    nein    30.04.2025        01.11.2024    Ausgeschieden
+Evloev, Adam    00003301    Aushilfe Dichtewächter    Dichtewächter SF6    nein    31.03.2025        06.01.2025    Ausgeschieden
+Förster, David    00003310    Werkstudent    Business Development Gasanalytik    nein    30.06.2025        01.03.2025    AusgeschiedenMehr anzeigen5. MärzClaude hat geantwortet: Gut, #381 ist sauber.Gut, #381 ist sauber. Alle Felder die wir brauchen sind da:
+
+Personalnummer → Join-Key
+Austrittsdatum → Fluktuation berechnen (pro Monat/Quartal/Jahr)
+Austrittsart → leer bei allen Beispielen — wird das in Rexx gepflegt? (Kündigung MA / Kündigung AG / Pension / befristet ausgelaufen)
+Eintrittsdatum → Verweildauer berechnen
+Organisation → Fluktuation pro Abteilung
+
+Auffälligkeiten in den Daten:
+
+Austrittsart ist überall leer — das wäre wichtig für die Unterscheidung gewollte vs. ungewollte Fluktuation
+Owsianka: Eintritt 12.02.2024, Austritt 14.04.2024 → nur 2 Monate, vermutlich Probezeit
+Meyer/Förster: Praktikant/Werkstudent → sollten die aus der Fluktuationsberechnung raus?
+
+Damit haben wir jetzt alle 4 Rexx-Exports komplett:
+ExportFelderJoinStatus#757 Saldi17 FelderPERNR✅#744 Absenzen26 FelderPERNR✅#732 Sollzeiten16 FelderPERNR✅#381 Ausgeschieden9 FelderPERNR✅Und die leere Austrittsart — weisst du ob das in Rexx konfigurierbar ist? Für HR wäre es wertvoll zu sehen: "Haben wir ein Kündigungsproblem oder laufen nur befristete Verträge aus?"Du hast gesagt: F: Fluktuation: Sollen Praktikanten, Werkstudenten und Aushilfen in die Fluktuationsberechnung einfliessen?F: Fluktuation: Sollen Praktikanten, Werkstudenten und Aushilfen in die Fluktuationsberechnung einfliessen?
+A: steuerbar möglich ?F: Dokumentation ist fertig. Was als naechstes?
+A: Power BI Datenmodell als naechstes5. MärzClaude hat geantwortet: Ja, steuerbar ist möglich — in Power BI bauen wir einfach einen Slicer/Filter auf das Feld "Stelle" oder eine berechnete Spalte "Mitarbeitertyp" (Festangestell…Ja, steuerbar ist möglich — in Power BI bauen wir einfach einen Slicer/Filter auf das Feld "Stelle" oder eine berechnete Spalte "Mitarbeitertyp" (Festangestellt / Praktikant / Werkstudent / Aushilfe). Dann kann HR selbst entscheiden ob sie die Fluktuation mit oder ohne Temporäre sehen wollen.
+Zum Power BI Datenmodell: Soll ich dir das als visuelles Diagramm bauen (Tabellenstruktur mit Beziehungen, wie ein ER-Diagramm), oder als technische Beschreibung mit den DAX Measures, oder beides?
+Und eine wichtige Frage: Hast du Power BI Desktop auf deinem Rechner? Dann könnte ich dir ein .pbix-Template bauen mit den Tabellen, Beziehungen und Measures — du müsstest dann nur noch die CSV-Pfade anpassen.Du hast gesagt: F: Power BI Datenmodell: Was brauchst du?F: Power BI Datenmodell: Was brauchst du?
+A: BeidesF: Wer baut das Power BI Dashboard technisch? Du oder Constantin (PowerBI/Reporting)?
+A: Ja, habe Power BI Desktop5. MärzClaude hat geantwortet: Gut, dann baue ich beides: ER-Diagramm + DAX Measures.Gut, dann baue ich beides: ER-Diagramm + DAX Measures. Das ER-Diagramm als visuelles Artifact, die technische Spec als Dokument.
+Starte mit dem ER-Diagramm:Datei erstellt, datei lesenDatei erstellt, datei lesenDas ist das interaktive ER-Diagramm — klick auf die Tabellen für Details. Star Schema mit Rexx #757 als Faktentabelle, alle Joins über Personalnummer.
+Jetzt die technische Spec mit den DAX Measures — soll ich das als separates Word-Dokument machen, oder reicht ein Markdown/Text das du direkt in Power BI als Referenz nutzen kannst?Hr kpi datenmodellCode · JSX HerunterladenDu hast gesagt: mach das pbi powerbi files zum downloadmach das pbi powerbi files zum download5. MärzClaude hat geantwortet: Gute Idee, aber hier muss ich ehrlich sein: Ein .Gute Idee, aber hier muss ich ehrlich sein: Ein .pbix-File kann ich nicht direkt generieren — das ist ein proprietäres Microsoft-Format (komprimiertes Binary mit internem Datenmodell).
+Was ich aber bauen kann:
+
+Power BI Template (.pbit) — geht auch nicht direkt, gleiches Binary-Format
+TMDL / TMSL — Power BI Tabular Model Definition (JSON) die du in Power BI Desktop importieren kannst
+M-Queries (Power Query) — die Lade-Scripts für jede CSV-Tabelle, die du in Power BI per Copy-Paste einfügst
+DAX Measures als .dax-File — zum Importieren via Tabular Editor oder DAX Studio
+
+Der pragmatischste Weg: Ich baue dir ein Paket mit allen M-Queries + DAX Measures als Dateien. Du öffnest Power BI Desktop, fügst die Queries ein (Get Data → Blank Query → Advanced Editor), und die DAX Measures per Copy-Paste oder Tabular Editor.Übrigens — hast du Tabular Editor (kostenlos) oder DAX Studio installiert? Damit geht das Importieren von Measures deutlich schneller als einzeln per Hand.Du hast gesagt: F: Wie soll ich das Power BI Setup liefern?F: Wie soll ich das Power BI Setup liefern?
+A: M-Queries + DAX Measures als DateienF: Wo werden die Rexx-CSVs liegen? (Brauche ich fuer die M-Queries)
+A: Weiss noch nicht5. MärzClaude hat geantwortet: Kein Problem, ich baue die M-Queries mit einem Platzhalter-Pfad den du einfach anpassen kannst.Kein Problem, ich baue die M-Queries mit einem Platzhalter-Pfad den du einfach anpassen kannst.3 Dateien erstellt, hat einen Befehl ausgeführt, datei lesen3 Dateien erstellt, hat einen Befehl ausgeführt, datei lesenDrei Dateien:
+
+PBI_Setup_Anleitung.txt — Schritt-für-Schritt, inkl. empfohlene Dashboard-Seiten (6 Seiten)
+PBI_M_Queries.txt — 5 Power Queries mit Parsing (Stunden-Saldo "58:10" → Dezimal, Ampel-Berechnung direkt im Query)
+PBI_DAX_Measures.dax — 30+ Measures für alle KPIs, Ampeln und Conditional Formatting
+
+Wichtig: Der param_CsvPfad Parameter muss einmal gesetzt werden — den Rest erledigen die Queries.
+Nächster Schritt wäre die Browser-Automation für Rexx. Dafür brauche ich die Rexx-URL und das Login-Verfahren. Willst du damit weitermachen, oder erstmal das Power BI aufsetzen und testen?Pbi setup anleitungTXT HerunterladenPbi m queriesTXT HerunterladenPbi dax measuresDAX HerunterladenAlles herunterladenDu hast gesagt: ich habe schon ein dashboard da ist folgendes drin:// Power Query M-Code für HR KPI Daten
+// In Power BI: Daten abrufen → Leere Abfrage → Erweiterter Editor → Code einfügen
+// Quelle: CSV-Export aus SAP Report ZHR_KPI_CONSOLIDATE
+
+let
+    // Quelle: Excel aus SAP Export
+    Quelle = Excel.Workbook(File.Contents("C:\tmp\HR_KPI_Export.xlsx"), null, trpastedich habe schon ein dashboard da ist folgendes drin:5. MärzClaude hat geantwortet: Ah, du hast schon ein Power BI Dashboard mit dem SAP-Report als Quelle (Excel aus ZHRKPI_CONSOLIDATE).Ah, du hast schon ein Power BI Dashboard mit dem SAP-Report als Quelle (Excel aus Z_HR_KPI_CONSOLIDATE). Das ändert die Situation — wir bauen nicht von null, sondern erweitern das bestehende.
+Was im bestehenden Query schon drin ist:
+
+Alle SAP-Felder (Stammdaten, Absenzen in Tagen, Lohn, Stellenplan)
+Berechnete Spalten: FTE, Alter, Altersgruppe, Geschlecht_Text, Teilzeit-Flag, Dienstjahre, Krankenquote, Aktiv-Flag
+Periode als Zeitachse
+
+Was wir jetzt machen müssen:
+Die Rexx-Daten als zusätzliche Queries daneben stellen und verknüpfen — nicht das bestehende ersetzen.Und noch was: Dein bestehender Query liest aus C:\tmp\HR_KPI_Export.xlsx — ist das der CSV-Download aus dem SAP-Report, den du manuell als Excel gespeichert hast? Oder hat ChatGPT das so gebaut?Du hast gesagt: F: Wie willst du die Rexx-Daten integrieren?F: Wie willst du die Rexx-Daten integrieren?
+A: was empfielist du   ?F: Hast du im bestehenden Dashboard schon Visuals/Seiten gebaut, oder nur den Query?
+A: Ja, gibt es schon5. MärzClaude hat geantwortet: OK, wenn du schon Visuals/Seiten gebaut hast, dann auf keinen Fall alles neu — sonst ist die Arbeit weg.OK, wenn du schon Visuals/Seiten gebaut hast, dann auf keinen Fall alles neu — sonst ist die Arbeit weg.
+Meine Empfehlung: Rexx-Queries dazu, SAP bleibt wie es ist.
+Begründung:
+Warum nicht ersetzen:
+
+Deine bestehenden Visuals referenzieren die SAP-Spalten (Personalnummer, Krankheitstage_Gesamt, etc.). Wenn du die Query umbaust, brechen alle Visuals.
+SAP liefert Daten die Rexx nicht hat (PERSG, PERSK, Planstelle, Soll_Stelle)
+Die berechneten Spalten (Alter, Altersgruppe, Dienstjahre, FTE) sind sauber — die behalten wir
+
+Was wir stattdessen machen:
+
+3 neue Rexx-Queries daneben stellen (#757, #744, #732, #381)
+Beziehungen über Personalnummer/PERNR
+Neue DAX Measures für die Rexx-Daten (GLZ-Ampel, Absenzquote aus Stunden, Ferien)
+Neue Dashboard-Seiten für Phase 1 (GLZ, Absenzen, Ferien) — die bestehenden Seiten bleiben
+
+So hast du beides: Die alten SAP-basierten Auswertungen laufen weiter, und die neuen Rexx-basierten kommen dazu. Langfristig kannst du dann schrittweise die SAP-Krankheitstage durch die Rexx-Stunden ersetzen.
+Angepasste M-Queries brauche ich dann nur für die 4 Rexx-Tabellen — die SAP-Query bleibt unverändert. Die Dateien die ich gerade geliefert habe passen also bereits — du musst nur die Rexx-Queries einfügen und die Beziehung SAP_Query[Personalnummer] = Rexx_757[PERNR] anlegen.
+Soll ich die M-Queries nochmal anpassen damit die Spaltennamen zum bestehenden Dashboard passen, oder passt es so?Du hast gesagt: ja Soll ich die M-Queries nochmal anpassen damit die Spaltennamen zum bestehenden Dashboard passen,  was brauchst du noch vom alten dashboard?ja Soll ich die M-Queries nochmal anpassen damit die Spaltennamen zum bestehenden Dashboard passen,  was brauchst du noch vom alten dashboard?5. MärzClaude hat geantwortet: Ich brauche:Ich brauche:
+
+Alle Query-Namen die du im Power BI hast (im linken Panel unter "Queries" / Daten-Tab) — heisst die Haupt-Tabelle z.B. "HR_Daten", "SAP_Export", "Sortiert"?
+Bestehende Measures — hast du schon DAX Measures angelegt? Wenn ja, welche?
+Beziehungen — hast du weitere Tabellen/Queries im Modell? (z.B. eine Datumstabelle, Lookup-Tabellen für Kostenstellen?)
+Die Spaltennamen wie sie im Dashboard heissen — aus dem Query sehe ich z.B. "Personalnummer", "Kostenstelle", "Organisationseinheit" etc. — aber wurden die im Modell umbenannt?
+
+Am einfachsten: Mach einen Screenshot von der Model View in Power BI (das Diagramm-Icon links) — da sehe ich alle Tabellen, Spalten und Beziehungen auf einen Blick.
+Oder alternativ: Exportiere die Query-Liste — Rechtsklick auf eine Query → "Advanced Editor" → Copy für jede Query.Das Minimum wäre der Name der Haupt-Tabelle und ob Personalnummer als Text oder Zahl gespeichert ist — das bestimmt ob der Join auf die Rexx-Daten (PERNR als Text) funktioniert.Du hast gesagt: es hat nur diesen eine sapquelle woes alles  macht:es hat nur diesen eine sapquelle woes alles  macht:5. MärzClaude hat geantwortet: OK, dann ist es einfach.OK, dann ist es einfach. Eine Tabelle, die heisst vermutlich "Sortiert" (letzter Step im M-Query) oder wie du sie in Power BI umbenannt hast.
+Aus dem bestehenden Query sehe ich:
+
+Personalnummer = Int64.Type (Zahl!) → Problem: Rexx liefert PERNR als Text ("00002688"). Muss ich anpassen.
+Kostenstelle = Int64.Type → Rexx hat "810 / Projektmanagement" (Text mit Beschreibung)
+Organisationseinheit = Int64.Type → Rexx hat "Transmitter TR" (Text)
+
+Das heisst der Join braucht eine Konvertierung. Ich passe die Rexx-Queries so an dass PERNR als Zahl gespeichert wird (führende Nullen entfernen, zu Zahl konvertieren) — dann matcht es mit deiner bestehenden Personalnummer.Sobald ich den Tabellennamen habe, liefere ich die angepassten Rexx-Queries die direkt in dein bestehendes Dashboard passen.Du hast gesagt: du meionst dasdu meionst das5. MärzClaude hat geantwortet: Ja, genau das!Ja, genau das! Die Tabelle heisst HR_KPI_Daten.
+Ich sehe auch schon einige DAX Measures (die mit dem Taschenrechner-Symbol):
+
+Absenzquote, Absenzquote1
+Absenztage_Total, Absenztage_Total1
+Anzahl_Kranke_MA, Anzahl_LZK
+Avg_Beschaeftigungsgrad
+BU_Tage_Total
+Ferientage_Total
+FTE, FTEE
+Headcount, Headcount_Aktiv
+
+Scrollt die Liste noch weiter runter? Ich sehe sie endet bei "Jahr" — es gibt vermutlich noch mehr Felder/Measures darunter (Kostenstelle, Krankenquote, Name, NBU_Tage, etc.)?Was ich jetzt schon weiss für die angepassten Queries:
+
+Tabelle: HR_KPI_Daten
+Join-Feld: Personalnummer (Int64 → ich konvertiere Rexx-PERNR zu Zahl)
+Bestehende Measures bleiben, neue kommen für Rexx-Daten dazu
+5. MärzClaude hat geantwortet: Perfekt, jetzt habe ich das komplette Bild.Perfekt, jetzt habe ich das komplette Bild. Noch mehr darunter, oder endet es bei "Stelle"?
+Ich sehe noch mehr Measures:
+
+Kennzahl
+Krankheitstage_Kurz1, Krankheitstage_LZK, Krankheitstage_Total
+NBU_Tage_Total
+Sollarbeitstage
+Sonstige_Abwesenheiten_Total
+
+Und wichtige Felder: Kostenstelle, Organisationseinheit, Personalbereich — alle als Zahlen (Σ-Symbol), nicht als Text.
+Jetzt habe ich alles was ich brauche. Ich baue die 4 Rexx-Queries angepasst an dein bestehendes Dashboard:
+
+PERNR → zu Int64 konvertieren (matcht mit Personalnummer)
+Spalten die in beiden Quellen vorkommen (Name, Organisation, Kostenstelle) kriegen ein Rexx-Prefix um Konflikte zu vermeiden
+Beziehung: HR_KPI_Daten[Personalnummer] 1:1 Rexx_757[Personalnummer]
+Datei erstellt, hat einen Befehl ausgeführt, datei lesenDatei erstellt, hat einen Befehl ausgeführt, datei lesenAlles in einer Datei: 4 M-Queries + alle DAX Measures + Beziehungs-Anleitung.
+Wichtig — was ich angepasst habe vs. vorherige Version:
+
+Personalnummer wird von Text → Int64 konvertiert (matcht dein HR_KPI_Daten[Personalnummer])
+Delimiter auf Tab gesetzt (Rexx exportiert typischerweise Tab-getrennt — wenn Semikolon, ändere "	" auf ";")
+Bestehende Tabelle HR_KPI_Daten bleibt komplett unverändert
+Neue Measures haben Prefix M_ um Konflikte mit deinen bestehenden zu vermeiden
+
+Nächster Schritt: Bevor du das einbaust — exportiere mal eine echte CSV aus Rexx #757 und schau ob der Delimiter Tab oder Semikolon ist. Das bestimmt ob der Query sofort läuft.
+Danach: Browser-Automation für Rexx?Pbi rexx queries angepasstTXT HerunterladenDu hast gesagt: das alte dashbaord war nur konzept aus alter sietzung ,  mach das neue angepasste dax und mquery files das gleiche wie das oben nur von rexx ausse das es hier …das alte dashbaord war nur konzept aus alter sietzung ,  mach das neue angepasste dax und mquery files das gleiche wie das oben nur von rexx ausse das es hier noch matching macht mit sap tabelle !?5. MärzClaude hat geantwortet: Verstanden — das alte Dashboard war nur ein Prototyp.Verstanden — das alte Dashboard war nur ein Prototyp. Du willst ein komplett neues Dashboard basierend auf Rexx, das die gleichen berechneten Spalten hat wie der alte SAP-Query (Alter, Altersgruppe, FTE, Dienstjahre, Krankenquote etc.) — aber aus Rexx-Daten, plus optional SAP-Match für Ergänzungen.
+Also: Rexx #757 als Haupttabelle mit allen Berechnungen die der alte SAP-Query hatte, plus die neuen Rexx-Felder (GLZ-Ampel, Ferien etc.), und einen Join auf SAP nur für PERSG/PERSK/Stellenplan.Komplett neues Power BI Setup: Rexx als Hauptquelle mit allen berechneten Spalten aus dem alten SAP-Query plus neue Rexx-FeaturesKomplett neues Power BI Setup: Rexx als Hauptquelle mit allen berechneten Spalten aus dem alten SAP-Query plus neue Rexx-FeaturesClaudes Antwort wurde unterbrochenWiederholenDu hast gesagt: das alte dashbaord war nur konzept aus alter sietzung , mach das neue angepasste dax und mquery files das gleiche wie das oben nur von rexx ausse das es hier n…das alte dashbaord war nur konzept aus alter sietzung , mach das neue angepasste dax und mquery files das gleiche wie das oben nur von rexx ausse das es hier noch matching macht mit sap tabelle ?  was würdest du machen   die dax query files von vorrher alles neu aufgaben oder mit bestgehendem weiterfahren, ist alels was sap hatg auch in rexx anhand der daten die ich dir über rexx gegebben habe?5. MärzClaude hat geantwortet: Gute Frage.Gute Frage. Lass mich das ehrlich vergleichen — was hat SAP, was hat Rexx:
+Feld-Vergleich SAP vs. Rexx:
+FeldSAP (alter Query)Rexx #757Rexx #744Rexx #732Personalnummer✅✅✅✅Vorname/Nachname✅ (getrennt)✅ (kombiniert)✅-Geschlecht✅❌❌❌Geburtsdatum✅❌❌✅ (#732)Eintrittsdatum✅✅✅-Austrittsdatum✅---Kostenstelle✅ (Nummer)✅ (Nr + Text)--Organisation/Abteilung✅ (Nummer)✅ (Klartext)✅-Stelle✅ (Nummer)✅ (Klartext)✅✅Planstelle✅❌❌❌PERSG/PERSK✅❌❌❌Beschäftigungsgrad %✅❌❌-Teilzeit/Vollzeit❌❌❌✅ (AZ_Modell)Bruttolohn✅✅--Soll-Stelle✅ (HRP1000)❌❌❌Krankheit (Tage)✅❌--Krankheit (Stunden)❌-✅ (führend!)-NBU/BU Tage✅❌❌❌Ferientage bezogen✅---Ferienanspruch❌✅--Ferien Rest❌✅--Ferien ausstehend❌✅--Stunden Saldo (GLZ)❌✅--Sollstunden/Tag❌--✅Leitung j/n❌✅✅-Anstellungsverhältnis❌✅--Lohnart❌✅--
+Fazit:
+Rexx hat fast alles, aber nicht alles. Es fehlen in Rexx:
+
+Geschlecht → nur in SAP (PA0002)
+Geburtsdatum → in #732, nicht in #757
+Beschäftigungsgrad % → nur SAP (PA0007), Rexx hat nur Vollzeit/Teilzeit
+PERSG/PERSK → nur SAP
+Planstelle / Soll-Stelle → nur SAP (HRP1000)
+NBU/BU-Tage → nur SAP (oder andere Rexx-Abfrage?)
+
+Meine Empfehlung: Alles neu, Rexx als Haupttabelle + SAP-Join für fehlende Felder.
+Der alte SAP-Query wird zur Ergänzungstabelle. Rexx #757 wird die zentrale Faktentabelle mit allen berechneten Spalten (Alter, Altersgruppe, FTE etc.) — und per Join holt sie sich Geschlecht, PERSG, Soll-Stelle etc. aus SAP.Noch eine wichtige Frage: Die fehlenden Felder Geschlecht und Beschäftigungsgrad % — brauchst du die für das Dashboard, oder reicht Vollzeit/Teilzeit aus #732? Die Altersgruppe und Gender-Auswertungen aus dem alten Dashboard brauchen Geburtsdatum und Geschlecht.Du hast gesagt: kanns tdu das prüfen  hast aj alle tabellenkanns tdu das prüfen  hast aj alle tabellen5. MärzClaude hat geantwortet: Stimmt, ich habe alle Spaltenköpfe.Stimmt, ich habe alle Spaltenköpfe. Lass mich das systematisch durchgehen:
+Rexx #757 (Saldi per Stichtag) — 17 Felder:
+Personalnummer, Kürzel, Nachname/Vorname, Stelle, Organisation, Kostenstelle, Leitung j/n, Eintrittsdatum, Personal Status, Anstellungsverhältnis, Stunden Saldo, Urlaubsanspruch, Urlaub Rest, Ferien ausstehend, Lohnart, Lohn, Lohn Währung
+→ Kein Geschlecht, kein Geburtsdatum, kein Beschäftigungsgrad %
+Rexx #732 (Sollzeiten) — 16 Felder:
+Sozialversicherungsnummer, Personalnummer, Nachname/Vorname, Geburtsdatum, Personal Status, Stelle, Organisation, Arbeitszeitmodell, Arbeitszeit, Ø tägliche Sollarbeitszeit, Arbeitszeit Mo-Sa
+→ Geburtsdatum ✅, kein Geschlecht, kein Beschäftigungsgrad % (aber Arbeitszeitmodell Vollzeit/Teilzeit)
+Rexx #744 (Absenzen) — 26 Felder:
+Personalnummer, Foto rund, Nachname/Vorname, Stelle, Organisation, Leitung j/n, Eintrittsdatum, Personal Status, diverse Krankheitsfelder...
+→ Kein Geschlecht, kein Geburtsdatum
+Rexx #381 (Ausgeschieden) — 9 Felder:
+Nachname/Vorname, Personalnummer, Stelle, Organisation, Leitung j/n, Austrittsdatum, Austrittsart, Eintrittsdatum, Personal Status
+→ Kein Geschlecht, kein Geburtsdatum
+SAP Query (alter Report) hat exklusiv:
+FeldIn Rexx?Woher in SAPGeschlecht❌ Nirgends in RexxPA0002Geburtsdatum✅ Rexx #732PA0002Beschäftigungsgrad %❌ Nirgends (nur VZ/TZ)PA0007PERSG (Mitarbeitergruppe)❌PA0001PERSK (Mitarbeiterkreis)❌PA0001Planstelle❌PA0001Soll-Stelle❌HRP1000NBU-Tage❌PA2001BU-Tage❌PA2001Buchungskreis❌PA0001Personalbereich❌PA0001Personalteilbereich❌PA0001
+Ergebnis:
+SAP wird trotzdem gebraucht für Geschlecht, Beschäftigungsgrad %, PERSG/PERSK, Soll-Stelle, NBU/BU-Tage. Das sind Felder die Rexx schlicht nicht hat.
+Mein Vorschlag — Hybrid-Ansatz:
+Rexx #757 = Haupttabelle mit allen neuen Berechnungen (GLZ-Ampel, Ferien, Absenzquote). Geburtsdatum holen wir per Join aus #732. Geschlecht, Beschäftigungsgrad, PERSG, Soll-Stelle, NBU/BU holen wir per Join aus dem SAP-CSV.
+So hast du eine zentrale Tabelle mit allem drin — das Beste aus beiden Welten.
+Soll ich das so bauen? Ein File, alles drin: M-Queries + DAX Measures + Beziehungen?Du hast gesagt: hier noch ein beispiel wie import von hrkpidaten aussieht:Personalnummer	Jahr	Monat	Buchungskreis	Personalbereich	Personalteilbereich	Kostenstelle	Organisation…hier noch ein beispiel wie import von hr_kpi_daten aussieht:Personalnummer    Jahr    Monat    Buchungskreis    Personalbereich    Personalteilbereich    Kostenstelle    Organisationseinheit    Planstelle    Stelle    Mitarbeitergruppe    Mitarbeiterkreis    Teilzeitkennzeichen    Beschaeftigungsgrad_Prozent    Vorname    Nachname    Geschlecht    Geburtsdatum    Eintrittsdatum    Austrittsdatum    Bruttolohn    Krankheitstage_Gesamt    Krankheitstage_Kurz    Krankheitstage_Lang    NBU_Tage    BU_Tage    Ferientage    Sonstige_Abwesenheiten    Soll_Stelle    Pulsumfrage_Score    Zufriedenheit_Score    Kununu_Score    Time_to_Hire    FTE    Alter_Jahre    Altersgruppe    Geschlecht_Text    Ist_Teilzeit    Periode    Periode_Text    Absenztage_Total    Krankenquote_MA    Krankenquote_ohne_LZK    Name_Voll    Dienstjahre    Ist_Aktiv
+100    2026    1    1100    1000    1010    4711    50000001    50000101    1    1    10    null    100    Thomas    Müller    1    15.03.1985    01.03.2010    null    14000    3    3    0    0    0    2    0    X    78    82    4    null    1    40    40-49    Männlich    FALSE    01.01.2026    2026-01    3    0.142857143    0.142857143    Müller, Thomas    16    TRUE
+101    2026    1    1100    1000    1010    4711    50000001    50000102    2    1    10    null    100    Sandra    Keller    2    22.07.1978    15.08.2005    null    13000    0    0    0    0    0    0    0    X    85    88    4    null    1    47    40-49    Weiblich    FALSE    01.01.2026    2026-01    0    0    0    Keller, Sandra    20    TRUE
+102    2026    1    1100    1000    1020    4712    50000002    50000103    3    1    15    X    60    Maria    Schneider    2    03.11.1990    01.06.2018    null    3900    5    5    0    0    0    1    0    X    72    75    4    null    0.6    35    30-39    Weiblich    TRUE    01.01.2026    2026-01    5    0.238095238    0.238095238    Schneider, Maria    7    TRUE
+103    2026    1    1100    1000    1020    4712    50000002    50000104    3    1    20    null    100    Peter    Huber    1    18.05.1972    01.01.2000    null    5400    12    12    0    2    0    0    3    X    65    68    3    null    1    53    50-59    Männlich    FALSE    01.01.2026    2026-01    14    0.571428571    0.571428571    Huber, Peter    26    TRUE
+104    2026    1    1100    1000    1030    4713    50000003    50000105    4    1    20    null    100    Andreas    Weber    1    29.09.1988    15.03.2015    null    5100    0    0    0    0    0    0    0    X    80    83    4    null    1    37    30-39    Männlich    FALSE    01.01.2026    2026-01    0    0    0    Weber, Andreas    10    TRUE
+105    2026    1    1100    1000    1030    4713    50000003    50000106    4    1    20    null    100    Claudia    Fischer    2    14.02.1995    01.09.2020    null    4800    2    2    0    0    0    3    0    X    88    90    4    null    1    31    30-39    Weiblich    FALSE    01.01.2026    2026-01    2    0.095238095    0.095238095    Fischer, Claudia    5    TRUE
+106    2026    1    1100    1000    1010    4711    50000001    50000107    1    1    10    null    100    Markus    Brunner    1    07.12.1980    01.04.2008    null    8500    0    0    0    0    0    0    0    X    75    78    4    null    1    45    40-49    Männlich    FALSE    01.01.2026    2026-01    0    0    0    Brunner, Markus    17    TRUE
+107    2026    1    1100    1000    1040    4714    50000004    50000108    5    1    15    X    80    Nicole    Steiner    2    25.06.1983    15.01.2012    null    5600    8    8    0    0    0    0    2    X    70    72    3    null    0.8    42    40-49    Weiblich    TRUE    01.01.2026    2026-01    8    0.380952381    0.380952381    Steiner, Nicole    14    TRUE
+108    2026    1    1100    1000    1040    4714    50000004    50000109    5    1    15    null    100    Daniel    Meier    1    11.04.1992    01.07.2019    null    6200    0    0    0    0    3    0    0    X    82    85    4    null    1    33    30-39    Männlich    FALSE    01.01.2026    2026-01    3    0    0    Meier, Daniel    6    TRUE
+109    2026    1    1100    1000    1020    4712    50000002    50000110    3    1    20    null    100    Stefan    Zimmermann    1    30.08.1975    01.02.2003    null    5800    65    5    60    0    0    0    0    X    55    58    2.8    null    1    50    50-59    Männlich    FALSE    01.01.2026    2026-01    65    3.095238095    0.238095238    Zimmermann, Stefan    23    TRUEMehr anzeigen5. MärzClaude hat geantwortet: Perfekt, jetzt sehe ich genau wie die Daten aussehen — das sind Testdaten (Müller, Keller, Schneider.Perfekt, jetzt sehe ich genau wie die Daten aussehen — das sind Testdaten (Müller, Keller, Schneider...), aber die Struktur ist klar. Das ist der SAP-Export mit allen berechneten Spalten schon drin.
+Jetzt baue ich das komplett neu — Rexx als Haupttabelle mit exakt den gleichen berechneten Spalten wie der alte SAP-Query, plus die neuen Rexx-Features, plus SAP-Join für fehlende Felder.Komplettes neues Power BI Setup: Rexx-Haupttabelle mit allen berechneten Spalten aus dem alten SAP-Query plus neue Rexx-Features plus SAP-JoinKomplettes neues Power BI Setup: Rexx-Haupttabelle mit allen berechneten Spalten aus dem alten SAP-Query plus neue Rexx-Features plus SAP-JoinMoment, ich muss noch den DIVIDE-Bug im M-Query fixen — DIVIDE ist DAX, nicht Power Query:Hat eine Datei bearbeitet, hat einen Befehl ausgeführt, datei lesenHat eine Datei bearbeitet, hat einen Befehl ausgeführt, datei lesenAlles in einer Datei — 3 Queries + alle DAX Measures + Beziehungen + Dashboard-Seiten-Empfehlung.
+Was drin ist:
+Query 1: HR_KPI_Daten (Haupttabelle) — merged direkt im Query:
+
+Rexx #757 als Basis
+Rexx #732 dazu-gejoined (Geburtsdatum, AZ-Modell, Sollzeit)
+SAP CSV dazu-gejoined (Geschlecht, Beschäftigungsgrad, PERSG, PERSK, Soll-Stelle, NBU/BU)
+Alle berechneten Spalten aus dem alten Dashboard (FTE, Alter, Altersgruppe, Geschlecht_Text, Dienstjahre, Krankenquote etc.)
+Plus neue: GLZ_Ampel, Ferien_Bezogen, Restferien_Ampel, Mitarbeitertyp
+
+Query 2: Rexx_Absenzen (#744) — Detail-Krankheitsdaten in Stunden
+Query 3: Rexx_Ausgeschieden (#381) — Fluktuation
+30+ DAX Measures — kompatibel mit den alten Measure-Namen (Headcount, Absenzquote, FTE etc.) plus neue (GLZ-Ampel, Ferien, Fluktuation)
+Wichtig: Der Delimiter ist auf Tab gesetzt (#(tab)). Wenn Rexx Semikolon exportiert, musst du das auf ";" ändern. Teste mit einer echten Rexx-CSV welcher Delimiter verwendet wird.
+Nächster Schritt: Browser-Automation für Rexx, oder willst du erstmal das Power BI aufsetzen?Pbi komplett neuTXT HerunterladenDu hast gesagt: kann mquery xls lesen ?kann mquery xls lesen ?  im export von rexx werden xls files erzeugt5. MärzClaude hat geantwortet: Ja, Power Query kann Excel-Files lesen — sogar besser als CSVs (keine Delimiter-Probleme, keine Encoding-Issues).Ja, Power Query kann Excel-Files lesen — sogar besser als CSVs (keine Delimiter-Probleme, keine Encoding-Issues).
+Der Unterschied im M-Code ist minimal:
+// CSV:
+Csv.Document(File.Contents(Pfad), [Delimiter = ...])
+
+// Excel:
+Excel.Workbook(File.Contents(Pfad), null, true)
+Soll ich die Queries auf .xls umbauen? Dann muss ich wissen:Das ist sogar besser als CSV — kein Delimiter-Raten, keine Umlaut-Probleme, und Power BI erkennt Datentypen automatischer. Ich baue die Queries sofort um sobald ich die Antworten habe.Du hast gesagt: excel hat nur ein sheet.excel hat nur ein sheet.    rexxx exportiert so wie auf screenshot sichtbar  am anfang würde alles im c:\temp\ liegen,  kannst du filesname den numemr zuordcnen ?5. MärzClaude hat geantwortet: Perfekt, .Perfekt, .xlsx mit einem Sheet. Ich sehe die Dateinamen:
+DateinameRexx-AbfrageInhaltSaldiperstichdatum.xlsx#757Saldi, Ferien, Lohn (Hauptquelle)Abwesenheitinstunden.xlsx#744Krankheit in StundenExportkommengehen.xlsx#732Sollzeiten, AZ-Modell, GeburtsdatumPersonalausgeschieden.xlsx#381Austritte / FluktuationSaldistundenferien.xlsx#745Saldi Stunden+Ferien (Alternative zu #757)
+Plus:
+
+HR_KPI_Dashboard_Dokumentation.docx — das ist unser Dokument von vorhin
+
+Ich baue jetzt die Queries um auf Excel mit den echten Dateinamen in C:\temp\.Datei erstellt, hat einen Befehl ausgeführt, datei lesenDatei erstellt, hat einen Befehl ausgeführt, datei lesenDas ist die finale Version. Alles in einer Datei:
+3 Queries:
+
+HR_KPI_Daten — Rexx #757 als Basis, merged mit #732 (Geburtsdatum, AZ-Modell) und SAP (Geschlecht, PERSG, Soll-Stelle, NBU/BU). Alle berechneten Spalten aus dem alten Dashboard plus neue Rexx-Features.
+Rexx_Absenzen — Krankheitsstunden aus #744, mit Umrechnung in Tage (kompatibel)
+Rexx_Ausgeschieden — Fluktuation aus #381
+
+30+ DAX Measures mit den gleichen Namen wie im alten Dashboard (Headcount, Absenzquote, FTEE etc.)
+Dateipfade: Alle auf C:\temp\ mit den echten Rexx-Dateinamen.
+Eine Beziehung: HR_KPI_Daten ↔ Rexx_Absenzen über Personalnummer. #732 und SAP sind direkt in der Haupttabelle gemerged.
+Willst du als nächstes die Browser-Automation für den täglichen Rexx-Export, oder erst das Dashboard aufbauen und testen?Pbi final xlsxTXT HerunterladenDu hast gesagt: Expression.Expression.Error: Die Spalte "Personalnummer" der Tabelle wurde nicht gefunden. Details: Personalnummer  beim Schritt sorted5. MärzClaude hat geantwortet: Das Problem ist dass die Rexx-Excel-Datei die Spalte vermutlich anders benennt als erwartet.Das Problem ist dass die Rexx-Excel-Datei die Spalte vermutlich anders benennt als erwartet. Wir müssen zuerst schauen welche Spaltennamen die Excel-Datei tatsächlich liefert.
+Mach folgendes in Power BI:
+
+Get Data → Excel Workbook → C:\temp\Saldiperstichdatum.xlsx
+Im Navigator das Sheet auswählen und "Transform Data" klicken (nicht Load!)
+Schick mir einen Screenshot der Spaltenköpfe die Power BI anzeigt
+
+Oder alternativ schneller — erstelle eine neue Blank Query mit nur diesem Code:
+let
+    Source = Excel.Workbook(File.Contents("C:\temp\Saldiperstichdatum.xlsx"), null, true),
+    Data = Source{0}[Data],
+    Head = Table.PromoteHeaders(Data, [PromoteAllScalars = true])
+in
+    Table.ColumnNames(Head)
+Das gibt dir eine Liste aller Spaltennamen. Schick mir die Liste — dann sehe ich ob die Spalte "Personalnummer" heisst oder z.B. "Personalnummer " (mit Leerzeichen), "PersonalNummer", "Personal Nr." oder ganz anders.
+Der Fehler kommt daher dass das Table.ReorderColumns am Ende eine Spalte "Personalnummer" erwartet die zu dem Zeitpunkt vielleicht noch "PERNR_Text" heisst oder durch einen der Rename/Remove-Schritte verloren gegangen ist.5. MärzClaude hat geantwortet: Gut, ich sehe das Problem: Die Spalte heisst "Personalnummer" (ohne "Link Personal") — aber die Personalnummern haben keine führenden Nullen (3368, 2510, 2208.Gut, ich sehe das Problem: Die Spalte heisst "Personalnummer" (ohne "Link Personal") — aber die Personalnummern haben keine führenden Nullen (3368, 2510, 2208...). Das heisst Excel hat sie bereits als Zahlen interpretiert, nicht als Text.
+Und das Sheet heisst "Saldi per Stichdatum" (mit Leerzeichen).
+Ausserdem sehe ich: "Nachname, Vorname (Link Personal)" — aber ohne "Link" im Header? Lass mich den Query anpassen.
+Das Problem im Code war: Table.RemoveColumns entfernt PERNR_Text, aber AddPernr erstellt Personalnummer — die Reihenfolge der Schritte könnte das Problem sein, oder der Table.ReorderColumns referenziert Spalten die nicht existieren weil ein Rename/Merge fehlschlug.
+Ich fixe den Query. Kannst du noch schnell nach rechts scrollen und mir die restlichen Spaltenköpfe zeigen? Ich muss wissen ob die Rexx-Excel-Datei exakt die gleichen Header hat wie die CSV die du mir vorher geschickt hast, oder ob Excel sie abschneidet/ändert.
+Oder führe die Blank Query aus:
+let
+    Source = Excel.Workbook(File.Contents("C:\temp\Saldiperstichdatum.xlsx"), null, true),
+    Data = Source{0}[Data],
+    Head = Table.PromoteHeaders(Data, [PromoteAllScalars = true])
+in
+    Table.ColumnNames(Head)
+Das gibt mir alle Spaltennamen als Liste — damit kann ich den Query exakt anpassen.5. MärzClaude hat geantwortet: Jetzt sehe ich die exakten Spaltennamen.Jetzt sehe ich die exakten Spaltennamen. Unterschiede zu meinem Code:
+Mein Code hatteExcel hat tatsächlichNachname, Vorname (Link Personal)Nachname, Vorname (Link Personal) ✅Leitung j/nLeitung j/n ✅AnstellungsverhältnisAnstellungsverhältnis ✅Stunden SaldoStunden Saldo ✅UrlaubsanspruchUrlaubsanspruch ✅Urlaub RestUrlaub Rest ✅ (nicht "Urlaub Rest"!)Ferien ausstehend (Tage)Ferien ausstehend (Tage) ✅Lohn WährungLohn Währung ✅
+Die Header stimmen überein. Das Problem ist also nicht die Benennung, sondern die Reihenfolge der Schritte im Query. Der Table.ReorderColumns am Ende listet Spalten auf die nach dem Table.RemoveColumns nicht mehr existieren könnten, oder der SAP-Merge schlägt fehl weil die SAP-CSV noch nicht existiert.
+Hast du die SAP_HR_KPI.csv schon in C:\temp\? Wenn nicht, schlägt der SAP-Merge fehl und alle SAP-Spalten (Geschlecht, PERSG etc.) fehlen — dann crasht der ReorderColumns.Sobald ich das weiss, fixe ich den Query — wenn die SAP-CSV noch nicht da ist, mache ich den SAP-Merge optional (try...otherwise) damit der Query auch ohne SAP-Datei läuft.Du hast gesagt: Personalnummer	Jahr	Monat	Buchungskreis	Personalbereich	Personalteilbereich	Kostenstelle	Organisationseinheit	Planstelle	Stelle	Mitarbeitergruppe	Mitarbeiterkr…Personalnummer    Jahr    Monat    Buchungskreis    Personalbereich    Personalteilbereich    Kostenstelle    Organisationseinheit    Planstelle    Stelle    Mitarbeitergruppe    Mitarbeiterkreis    Teilzeitkennzeichen    Beschaeftigungsgrad_Prozent    Vorname    Nachname    Geschlecht    Geburtsdatum    Eintrittsdatum    Austrittsdatum    Bruttolohn    Krankheitstage_Gesamt    Krankheitstage_Kurz    Krankheitstage_Lang    NBU_Tage    BU_Tage    Ferientage    Sonstige_Abwesenheiten    Soll_Stelle    Pulsumfrage_Score    Zufriedenheit_Score    Kununu_Score    Time_to_Hire
+100    2026    1    1100    1000    1010    4711    50000001    50000101    1    1    10        100    Thomas    Müller    1    15.03.1985    01.03.2010        14000    3    3    0    0    0    2    0    X    78    82    4    
+101    2026    1    1100    1000    1010    4711    50000001    50000102    2    1    10        100    Sandra    Keller    2    22.07.1978    15.08.2005        13000    0    0    0    0    0    0    0    X    85    88    4    
+102    2026    1    1100    1000    1020    4712    50000002    50000103    3    1    15    X    60    Maria    Schneider    2    03.11.1990    01.06.2018        3900    5    5    0    0    0    1    0    X    72    75    4    
+103    2026    1    1100    1000    1020    4712    50000002    50000104    3    1    20        100    Peter    Huber    1    18.05.1972    01.01.2000        5400    12    12    0    2    0    0    3    X    65    68    3    
+104    2026    1    1100    1000    1030    4713    50000003    50000105    4    1    20        100    Andreas    Weber    1    29.09.1988    15.03.2015        5100    0    0    0    0    0    0    0    X    80    83    4Mehr anzeigen5. MärzClaude hat geantwortet: OK, die SAP-Daten sind noch Testdaten (Müller, Keller etc.OK, die SAP-Daten sind noch Testdaten (Müller, Keller etc.) — aber die Struktur stimmt. Die SAP-CSV hat Tab-Delimiter (nicht Semikolon wie ich angenommen hatte) und keine berechneten Spalten (FTE, Alter etc. fehlen — die waren nur im alten Power Query berechnet).
+Ich fixe jetzt den Query mit drei Änderungen:
+
+SAP-Merge optional (try...otherwise) — läuft auch ohne SAP-Datei
+SAP-Delimiter auf Tab statt Semikolon
+ReorderColumns entfernt — das war die Crash-Ursache (referenziert Spalten die bei fehlendem SAP-Merge nicht existieren)
+Datei erstellt, hat einen Befehl ausgeführt, datei lesenDatei erstellt, hat einen Befehl ausgeführt, datei lesenFixes in v2:
+
+ReorderColumns komplett entfernt — das war die Crash-Ursache
+SAP-Merge optional — Query läuft auch wenn SAP_HR_KPI.csv nicht in C:\temp\ liegt (SAP-Spalten werden dann null)
+#732-Merge optional — gleich, falls Exportkommengehen.xlsx fehlt
+SAP Delimiter auf Tab korrigiert
+PERNR_Raw statt PERNR_Text — konsistentere Benennung
+Robusteres Null-Handling überall (Text.From mit null-Check)
+
+Probier Query 1 (HR_KPI_Daten) nochmal aus — wenn er durchläuft, dann Query 2 und 3 dazu. Melde dich wenn der nächste Fehler kommt.Pbi final v2 fixedTXT HerunterladenDu hast gesagt: immernoch   gleicher fehler :  das file heisst aber HRKPIExport.immernoch   gleicher fehler :  das file heisst aber HR_KPI_Export.xlsx5. MärzClaude hat geantwortet: Das SAP-File heisst HRKPIExport.Das SAP-File heisst HR_KPI_Export.xlsx (nicht .csv)! Und es ist ein Excel, kein CSV.
+Aber warte — der Fehler "Spalte Personalnummer nicht gefunden" kommt beim Schritt Sorted. Das heisst die Spalte Personalnummer existiert am Ende des Queries nicht.
+Das Problem: Table.RemoveColumns entfernt PERNR_Raw, und AddPernr erstellt Personalnummer — aber wenn AddPernr fehlschlägt (z.B. weil die Rexx-Personalnummer schon eine Zahl ist und Text.From + Number.FromText sich beisst), dann gibt es keine Spalte Personalnummer.
+Da Excel die Personalnummer schon als Zahl liefert (3368, nicht "00003368" — habe ich im Navigator-Screenshot gesehen), ist die Konvertierung unnötig und schlägt vermutlich fehl.
+Quick Fix: Ersetze in Query 1 den ganzen AddPernr-Schritt:
+Von:
+AddPernr = Table.AddColumn(Ren757, "Personalnummer", each
+    try Number.FromText(Text.Trim(Text.From([PERNR_Raw]))) otherwise null,
+    Int64.Type
+),
+Zu:
+AddPernr = Table.AddColumn(Ren757, "Personalnummer", each
+    try (if [PERNR_Raw] is number then [PERNR_Raw] else Number.FromText(Text.Trim(Text.From([PERNR_Raw])))) otherwise null,
+    Int64.Type
+),
+Oder noch einfacher — da Excel die Nummer schon als Zahl liefert:
+AddPernr = Table.RenameColumns(Ren757, {{"PERNR_Raw", "Personalnummer"}}),
+Probier die einfache Variante (RenameColumns). Wenn die Personalnummer schon eine Zahl ist, brauchen wir keine Konvertierung.Du hast gesagt: ganzes fil nochmal nur query1ganzes fil nochmal nur query15. MärzClaude hat geantwortet: Fixes in v3:Datei erstellt, datei lesenDatei erstellt, datei lesenFixes in v3:
+
+Personalnummer wird nicht mehr konvertiert — Excel liefert schon Zahl, wird nur als Int64 typisiert
+Kein Rename von Personalnummer auf PERNR_Raw — bleibt direkt "Personalnummer"
+SAP-Datei heisst HR_KPI_Export.xlsx (nicht .csv) und wird als Excel geladen
+PERNR_Key für Merges separat erstellt (Text-Version)
+Clean entfernt kein PERNR_Raw mehr (existiert nicht mehr)
+
+Kopiere den ganzen Code in Advanced Editor und teste. Melde dich mit dem Ergebnis.Pbi query1 hr kpi daten v3TXT HerunterladenDu hast gesagt: die dax formeln,  was reinziehen matrix odedr welches controll ?die dax formeln,  was reinziehen matrix odedr welches controll ?5. MärzClaude hat geantwortet: Das heisst Query 1 läuft!Das heisst Query 1 läuft! 🎉
+DAX Measures musst du einzeln erstellen, nicht in einer Matrix. So geht's:
+Measures erstellen:
+
+Links im Daten-Panel auf HR_KPI_Daten klicken
+Oben: Modeling → New Measure
+In die Formelleiste eine Measure einfügen, z.B.:
+
+Headcount = COUNTROWS(HR_KPI_Daten)
+
+Enter drücken
+Wiederholen für jede Measure
+
+Welche Visuals für welche Measures:Starte mit diesen 5 — wenn die laufen, bauen wir die Dashboard-Seiten auf. Die Measures die Rexx_Absenzen referenzieren (Krankheitstage_Total etc.) funktionieren erst wenn Query 2 auch geladen ist.Du hast gesagt: muss man di 100 mesaure einzeln immer reinkopieren,  ?muss man di 100 mesaure einzeln immer reinkopieren,  ?5. MärzClaude hat geantwortet: Nein, es gibt schnellere Wege:Nein, es gibt schnellere Wege:
+Option 1: Tabular Editor (gratis, empfohlen)
+
+Lade Tabular Editor 2 runter (tabulareditor.com, kostenlos)
+In Power BI: File → Save
+Tabular Editor öffnen → File → Open → dein .pbix
+Rechtsklick auf "Measures" → Script → alle Measures als C#-Script reinkopieren
+Save → Power BI neu öffnen
+
+Option 2: DAX Studio (gratis)
+Ähnlich, aber eher für Abfragen als Measure-Import.
+Option 3: Ich baue dir ein fertiges Tabular Editor Script
+Das kopierst du einmal rein und alle Measures sind da.Tabular Editor spart dir massiv Zeit — nicht nur jetzt, sondern auch für jede spätere Anpassung. Lohnt sich das zu installieren.Du hast gesagt: neue woche, ich brauche nur die dax query für die einzelnen spaltenneue woche, ich brauche nur die dax query für die einzelnen spalten9. MärzClaude hat geantwortet: Hier sind alle DAX Measures — eine pro Zeile, einfach nacheinander in Power BI einfügen (Modeling → New Measure): 39 Measures in 3 Blöcken:Hier sind alle DAX Measures — eine pro Zeile, einfach nacheinander in Power BI einfügen (Modeling → New Measure):Datei erstellt, datei lesenDatei erstellt, datei lesen39 Measures in 3 Blöcken:
+Block 1 (24 Measures) — sofort einfügbar: Headcount, GLZ-Saldi, Ferien, Lohn — brauchen nur HR_KPI_Daten
+Block 2 (15 Measures) — braucht Query 2: Krankheitstage, Absenzquote, Ampeln — erst wenn Rexx_Absenzen geladen ist
+Block 3 (5 Measures) — braucht Query 3: Fluktuation — erst wenn Rexx_Ausgeschieden geladen ist
+Starte mit Block 1, immer eine Zeile kopieren → Modeling → New Measure → einfügen → Enter. Die Kommentarzeilen (//) überspringen.Dax measures einzelnTXT HerunterladenDu hast gesagt: ok measures eingebaut  mit welchen 4 indikatorn fangen wir mal anok measures eingebaut  mit welchen 4 indikatorn fangen wir mal an9. MärzClaude hat geantwortet: Starte mit diesen 4 KPI-Cards auf einer Überblick-Seite:Starte mit diesen 4 KPI-Cards auf einer Überblick-Seite:
+1. Headcount → Wie viele aktive MA haben wir?
+2. M_GLZ_Rot → Wie viele MA haben kritische Überstunden (>100h)?
+3. M_Ferien_Rot_Count → Wie viele MA haben zu viel Restferien (>5 Tage)?
+4. FTEE → Wie viele Vollzeitstellen (FTE) haben wir?
+So baust du sie:
+
+Neue Seite anlegen → "Überblick" nennen
+Visualizations → Card (das Karten-Symbol)
+Card auf die Seite ziehen
+Im Fields-Panel: Headcount reinziehen
+Wiederholen für M_GLZ_Rot, M_Ferien_Rot_Count, FTEE
+
+Dann noch einen Slicer für Organisationseinheit daneben — damit HR sofort nach Abteilung filtern kann.Wenn die Cards laufen, bauen wir als nächstes das GLZ-Saldi Balkendiagramm mit Ampelfarben — das wird der Hingucker für die GL.Du hast gesagt: F: Funktionieren die 4 KPI-Cards mit echten Rexx-Daten?F: Funktionieren die 4 KPI-Cards mit echten Rexx-Daten?
+A: Cards funktionieren, zeigen Zahlen9. MärzClaude hat geantwortet: Läuft!Läuft! Jetzt das GLZ-Saldi Balkendiagramm mit Ampelfarben:
+GLZ-Saldi Balkendiagramm:
+
+Visualizations → Clustered Bar Chart (horizontale Balken)
+Y-Achse: Name_Voll
+X-Achse: Stunden_Saldo
+Sortieren: Rechtsklick auf Chart → Sort by → Stunden_Saldo → Descending (höchste Überstunden oben)
+
+Ampelfarben auf die Balken:
+
+Format-Panel (Pinsel-Symbol) → Data colors oder Columns
+→ Color → fx (Conditional Formatting)
+Format by: Field value
+Field: M_GLZ_Farbe
+OK
+
+Jetzt sind Balken >100h rot, 51-100h gelb, ≤50h grün.
+Dann noch dazu auf die gleiche Seite:
+
+Donut Chart: Values = M_GLZ_Gruen, M_GLZ_Gelb, M_GLZ_Rot (zeigt Verteilung)
+Slicer: Field = Organisationseinheit (Abteilungsfilter)
+Card: M_GLZ_Saldo_Avg (Durchschnittlicher Saldo)
+Tipp: Wenn die Liste der Mitarbeiter zu lang ist, kannst du einen Top N Filter setzen: Filters-Panel → Name_Voll → Filter type: Top N → Top 20 → By Stunden_Saldo. Dann siehst du nur die 20 kritischsten.Du hast gesagt: frage vorher , welche daten bekommen wir nur aus sap hr kpi daten und nicht rexx?frage vorher , welche daten bekommen wir nur aus sap hr kpi daten und nicht rexx?9. MärzClaude hat geantwortet: Aus dem Vergleich vorher:Aus dem Vergleich vorher:
+Nur in SAP, nicht in Rexx:
+FeldSAP-QuelleBraucht HR das?GeschlechtPA0002Ja (Gender-Auswertungen)Beschäftigungsgrad %PA0007Ja (FTE-Berechnung exakt)PERSG (Mitarbeitergruppe)PA0001Vielleicht (Filter)PERSK (Mitarbeiterkreis)PA0001Vielleicht (Filter)PlanstellePA0001VielleichtSoll_StelleHRP1000Ja (Stellenplan Soll/Ist)NBU-TagePA2001Ja (Unfallstatistik)BU-TagePA2001Ja (Unfallstatistik)BuchungskreisPA0001Nein (nur 1 BK?)PersonalbereichPA0001Nein (Rexx hat Organisation)PersonalteilbereichPA0001NeinTeilzeitkennzeichenPA0007Nein (Rexx hat AZ-Modell)
+Wirklich kritisch fehlt ohne SAP:
+
+Geschlecht → Geschlecht_Text zeigt "Unbekannt" ohne SAP
+Beschäftigungsgrad % → FTE ist ungenau (nur 1.0 oder 0.5 statt z.B. 0.6)
+NBU/BU-Tage → Unfallstatistik komplett leer
+Soll_Stelle → Stellenplan Soll/Ist nicht möglich
+
+Alles andere hat Rexx (Name, Org, Kostenstelle, Eintrittsdatum, Lohn, Ferien, GLZ-Saldi, Krankheit).Die Frage ist relevant weil du gerade mit echten Rexx-Daten arbeitest aber die SAP-Datei bisher nur Testdaten hat (Müller, Keller...). Der SAP-Join matcht nur wenn die Personalnummern übereinstimmen — und die Testdaten haben 100, 101, 102... während Rexx echte Nummern wie 2688, 3022 etc. hat.

@@ -1,0 +1,30 @@
+﻿Sage Spain Sales CSV export
+===========================
+
+Created: 2026-05-05 10:44:06
+Server instance: localhost
+Database: Sage
+From date: 2025-01-01
+To date: 2026-01-01
+
+Output:
+C:\Users\Administrador\Desktop\Sage_Spain_Sales_Export_20260505_104358\Spain_Sales_2025.csv
+
+Rows:
+4341
+
+SalesPriceValue sum:
+3082320.180000
+
+Source:
+dbo.CabeceraAlbaranCliente joined with dbo.LineasAlbaranCliente
+
+Filter:
+CabeceraAlbaranCliente.FechaFactura >= FromDate
+CabeceraAlbaranCliente.FechaFactura < ToDate
+
+Notes:
+- Currency is set to EUR because Sage exports EnEuros_=-1 and CodigoDivisa is empty in the analysed rows.
+- SalesPriceValue uses LineasAlbaranCliente.ImporteNeto.
+- DocumentNetAmount uses CabeceraAlbaranCliente.BaseImponible.
+- Credit notes are marked when TipoNuevaFra=2, SerieFactura='REC', or StatusAbono is non-zero.

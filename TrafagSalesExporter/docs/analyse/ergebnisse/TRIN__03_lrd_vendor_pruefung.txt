@@ -1,0 +1,132 @@
+﻿Server-Analyse (nur lesend)
+Datei    : TRIN__03_lrd_vendor_pruefung.sql
+Standort : TRIN (Indien)
+Quelle   : SAGE
+Host     : 20.197.20.60:30015
+Schema   : TRAFAG_LIVE
+Zeitpunkt: 2026-08-05 11:32:43
+Statements: 5
+
+=== Runde 3: Bestimmt LRD allein die liefernde Gesellschaft? ===
+SALES_TYPE | VENDOR | ARTIKEL | RECHNUNGSZEILEN
+-- | V0078 | 35 | 188
+-- | V0058 | 4 | 7
+-- | V0034 | 3 | 6
+-- | V0134 | 2 | 19
+-- | V0110 | 2 | 4
+-- | V0040 | 2 | 6
+-- | V0007 | 1 | 2
+-- | V0408 | 1 | 2
+-- | V0066 | 1 | 1
+-- | V0076 | 1 | 2
+-- | V0443 | 1 | 1
+-- | V0016 | 1 | 1
+-- | V0037 | 1 | 1
+-- | V0056 | 1 | 1
+-- | V0247 | 1 | 8
+-- | V0496 | 1 | 2
+-- | V0071 | 1 | 2
+-- | V0055 | 1 | 6
+-- | V0054 | 1 | 1
+-- | V0057 | 1 | 2
+-- | V0042 | 1 | 1
+-- | V0065 | 1 | 1
+FFM | V0078 | 7 | 37
+FFM | V0393 | 3 | 41
+LRD | V0078 | 93 | 454
+-- 25 Zeile(n), 313 ms
+
+=== 2 Namen und Land der beteiligten Lieferanten (ist V0078 wirklich Trafag AG Schweiz) ===
+SALES_TYPE | VENDOR | VENDOR_NAME | LAND
+LRD | V0078 | Trafag AG | CH
+-- 1 Zeile(n), 308 ms
+
+=== 3 Die 2 CM-Artikel ohne Vendor im Detail (echte Fremdfertigung, Lieferant unbekannt) ===
+ARTIKEL | BEZEICHNUNG | SALES_TYPE | RECHNUNGSZEILEN
+IC15415 | Outer Bellow Assembly (Non LPI) | CM | 13
+IC15037 | Outer Bellows Assembly With LPI | CM | 10
+-- 2 Zeile(n), 326 ms
+
+=== 4 Ohne Sales Type UND ohne Vendor: die echte Luecke unter den 130 ===
+ARTIKEL | BEZEICHNUNG | RECHNUNGSZEILEN
+2100332 | "Manifold 2 Valve 1/2 NPT(F) x1/2NPT(F) SS316 drain 1/2""NPT(F" | 9
+H20108 | Brass Capillary tube D15/13 | 7
+F60048 | Protection tube  Brass 8316  G=200K with accessories | 7
+F60046 | Protection Tube 8316 G=110 mm Brass Ni plated ID/OD: 8/10 mm  with accessories | 6
+H05227 | Bellow Sleeve TP14  L200 ID Ø 16 (NG15 BR) | 4
+H05255 | Bellow Sleeve  TP22  L200 ID Ø 24 (NG22 SS) | 4
+IC32413 | Sensor Bulb (Typ 022)-Cu | 3
+2100288 | Adaptor SS 316 1/8BSP(M)x1/4BSP(F) | 3
+IC38455 | Sensor tube 87X9 | 3
+2100623 | Adaptor SS316L 1/4"BSP(F)x1/2BSP(M) | 3
+c40867 | NIPPEL 1439 G1/2" | 2
+IC41212 | WEATHER COVER RADIAL 87x9 COMP. | 2
+F60050 | PROTECTION TUBE SS 8411 G=110K with accessories | 2
+IR65290 | Slotted Washer 7.4x14x1.5 Brass Ni plated | 2
+IR65146 | Slotted Screw for fastening-G3/8 Brass Nickle plated | 2
+5100463 | "Thermowell 1412", SS316L_G1/2"_IL-110mm | 2
+F60073 | Protection Tube  SS 8411 G=400mm with accessories | 2
+IR64515 | Protection tube 1211 L=400 mm | 2
+SM000029 | Fuse T4.0A | 1
+SM000030 | Fuse T5.0A | 1
+SM000031 | Fuse T6.3A | 1
+SM000032 | T250mA | 1
+SM000033 | T315 mA | 1
+SM000034 | Lamp 40mA | 1
+SM000037 | Solenoid valve coil (8W) | 1
+SM000038 | Timer for welding machine | 1
+SM000039 | Adaptor for flow meter tubing | 1
+H05226 | Bellow Sleeve TP20 L200 ID Ø 22 (NG20 BR) | 1
+H05240 | Bellow Sleeve Quader Block Pac BK14 20 (NG15 SS) | 1
+SM000041 | Mixture gas Regulator | 1
+SM000042 | Protection Glass (Large) | 1
+SM000043 | Protection Glass (Small) | 1
+F60052 | PROTECTION TUBE SS 8411 G=200K with accessories | 1
+SM000044 | Suppressor Capacitor | 1
+F60090 | Protection tube  Brass 1217  G=110 K with accessories | 1
+IR64282 | Protection tube 1411 L=150 mm | 1
+F60091 | Special Protection tube IL=48mm, with Fastening Screw | 1
+F60051 | PROTECTION TUBE SS 8411 G=150K with accessories | 1
+R65098 | NIPPLE 1341 G1/2’ MS | 1
+F60047 | Protection tube  Brass 8316  G=150K with accessories | 1
+ID34626 With Mars Cover | Cover Assembly With Cable Gland M25X1.5 | 1
+FA000048 | MANUAL STACKER CUMI 1016 | 1
+IK80105 | Closing Mechanism clamp assembly | 1
+B55555 | Plastic scarp | 1
+IR13010 | Cover Assembly for Ministat Internal Adjustment | 1
+E00692 | PCB Plug Connector 2X3 pin | 1
+2100062 | Adaptor SS-316 ( 1/8 BSP(M)x1/4NPT(F) | 1
+IR13011 | Cover Assembly for Ministat Limistat | 1
+R23019 | Housing plastic for Alterostat-Duostat | 1
+2100429 | "Manifold 5 valve 1/2 NPT(F) x1/2NPT(F) SS316 drain 1/2""NPT(F)" | 1
+IR64705 | Protection tube 8411 L=150 mm | 1
+IR13012 | Cover Assembly for Ministat External Adjustment | 1
+F60054 | PROTECTION TUBE BRASS 8319 G=065 | 1
+F51216 | Protection Tube 1216 G=415mm with accessories | 1
+2100107 | Adaptor SS-316 1/4BSP(M)x3/8BSP(M) | 1
+F60059 | Protection tube  Brass nickel plated 8318  G=150K | 1
+SM000019 | Motor Brush Typ Bu-004 | 1
+SM000020 | Main Switch Typ AT08A197 | 1
+SM000021 | Main Contactor 230V  DIL 00M | 1
+SM000022 | Relay C2-A20 | 1
+SM000023 | Fuse T0.5A | 1
+SM000024 | Fuse T1A L | 1
+SM000025 | Fuse T1A H | 1
+SM000026 | Fuse T1.25A | 1
+SM000027 | Fuse T1.6A | 1
+SM000028 | Fuse T2.0A | 1
+-- 66 Zeile(n), 451 ms
+
+=== 5 Die 10 FFM-Artikel mit Vendor im Detail (Widerspruch oder Zukaufteil) ===
+ARTIKEL | BEZEICHNUNG | VENDOR | RECHNUNGSZEILEN
+PS000358 | P4-BRASS1SPDT With 1/2"NPT(F) Cable Entry | V0393 | 25
+DM000281 | DENSITYMONITOR_64659  , Part No. 2GHV121855A5250 | V0078 | 15
+PS000353 | PD3.4-BRASS1SPDT With 1/2"NPT(F) Cable Entry | V0393 | 11
+DM000282 | DENSITYMONITOR_64660  , Part No. 2GHV121855A5350 | V0078 | 9
+DM000284 | DENSITYMONITOR_64730 , Part No. 2GHV121855A5250 | V0078 | 7
+PS000816 | P4-BRASS1SPDT With 1/2"NPT(F) Cable Entry | V0393 | 5
+IR85025 | Sensing Device Type 132 (bulb) Cu 1C | V0078 | 3
+DM000322 | DENSITYMONITOR_64436  , Part No. 2GHV121855A0255 | V0078 | 1
+DM000324 | DENSITYMONITOR_64432  , Part No. 2GHV121855A0255 | V0078 | 1
+DM000323 | DENSITYMONITOR_64795  , Part No. 2GHV121855A0355 | V0078 | 1
+-- 10 Zeile(n), 312 ms

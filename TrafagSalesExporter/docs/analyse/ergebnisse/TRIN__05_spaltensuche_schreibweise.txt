@@ -1,0 +1,26 @@
+﻿Server-Analyse (nur lesend)
+Datei    : TRIN__05_spaltensuche_schreibweise.sql
+Standort : TRIN (Indien)
+Quelle   : SAGE
+Host     : 20.197.20.60:30015
+Schema   : TRAFAG_LIVE
+Zeitpunkt: 2026-08-05 15:47:46
+Statements: 3
+
+=== Runde 5: Findet die schreibweisenunabhaengige Spaltensuche beide UDFs? ===
+GEFUNDENER_NAME | DATA_TYPE_NAME | POSITION
+U_TASC_OMN | NVARCHAR | 348
+U_Tasc_ST | NVARCHAR | 361
+-- 2 Zeile(n), 1333 ms
+
+=== 2 Gegenprobe: die exakte Suche nach der grossgeschriebenen Variante findet NICHTS ===
+TREFFER_MIT_GROSSSCHREIBUNG
+0
+-- 1 Zeile(n), 350 ms
+
+=== 3 Und das SELECT selbst mit der Originalschreibweise liefert Werte ===
+ARTIKEL | SALES_TYPE | MATERIAL_NO
+DM000001 | FFM | 59831
+IC15415 | CM | 
+PT000003 | LRD | 57291
+-- 3 Zeile(n), 244 ms

@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="gui-design.css" rel="stylesheet" type="text/css">
+<style>
+a {color:black ; border: 1px solid}
+a:link {color : green; }
+a:hover {color : orange}
+a:visited {back-color: white }
+}
+
+</style>
+<script>
+/* Nachbau 2026: Die MySQL-Datenbank von 2004 ist weg (schon damals: "Host ... is not allowed").
+   Benutzer und Nachrichten liegen jetzt im Browser (localStorage) - nur auf diesem Gerät sichtbar. */
+var NV = {
+  lesen: function (k) { try { return JSON.parse(localStorage.getItem('nv2004_' + k) || '[]'); } catch (e) { return []; } },
+  speichern: function (k, v) { try { localStorage.setItem('nv2004_' + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  esc: function (t) { return String(t).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+};
+</script>
+</head>
+
+<body>
+<span id="layer1">
+<img src="nextvision-logo.jpg" width="139" height="108" class="amrand"> </p>
+<p class="titelboxen">
+<a href="main2.html?runmenu=yes">Benutzer suchen</a> </p>
+<p class="titelboxen"><a href="eintragen1.html">Nachricht hinterlegen </a></p>
+<p class="titelboxen"><a href="main2.html?runbuch=yes">Benutzer hinzuf&uuml;gen </a></a></p>
+</span>
+
+
+
+<span id='textlayer'>Verbinde mit Datenbank</span><br />
+<div class="rechtsformatiert" id="inhalt" style="width:420px;padding:6px;color:#fff"></div>
+<script>
+var q = location.search, ziel = document.getElementById('inhalt');
+var tl = document.getElementById('textlayer');
+tl.innerHTML = 'Datenbank: Browser<br><font size="1">(MySQL von 2004 ersetzt)</font>';
+function nvBenutzer(f) {
+  var b = NV.lesen('benutzer');
+  b.push({name: f.namee.value, alter: f.alter.value, email: f.email.value, hp: f.hp.value, wohnort: f.wohnort.value, zeit: new Date().toLocaleString('de-CH')});
+  NV.speichern('benutzer', b);
+  location.href = 'main2.html?runmenu=yes';
+  return false;
+}
+function liste(filter) {
+  var b = NV.lesen('benutzer').filter(function (x) { return !filter || JSON.stringify(x).toLowerCase().indexOf(filter.toLowerCase()) >= 0; });
+  if (!b.length) return '<i>keine Benutzer gefunden</i>';
+  return b.map(function (x) { return '<b>' + NV.esc(x.name) + '</b> (' + NV.esc(x.alter) + ') aus ' + NV.esc(x.wohnort) + (x.hp ? '<br><small>' + NV.esc(x.hp) + '</small>' : ''); }).join('<hr>');
+}
+if (q.indexOf('runbuch=yes') >= 0) {
+  ziel.innerHTML = 'Schreib hier deine Infos rein <br>' + '<form action="#" onsubmit="return nvBenutzer(this)"><a align=center>name</a><br><input type=\'text\' name=\'namee\'><br>alter<br><input type=\'text\' name=\'alter\'><br>email<br><input type=\'text\' name=\'email\'><br>deine homepage<br><input type=\'text\' name=\'hp\'><br>wohnort<br><input type=\'text\' name=\'wohnort\'><br><input type=\'submit\' value=\'senden\'><br></form>';
+} else if (q.indexOf('runmenu=yes') >= 0) {
+  ziel.innerHTML = '<form onsubmit="document.getElementById(\'treffer\').innerHTML=liste(this.s.value);return false">Benutzer suchen: <input name="s" type="text"> <input type="submit" value="suchen"></form><div id="treffer">' + liste('') + '</div>';
+} else {
+  var n = NV.lesen('nachrichten');
+  ziel.innerHTML = '<b>Willkommen bei Nextvision!</b><br>Hinterlassene Nachrichten:<br><br>' +
+    (n.length ? n.slice().reverse().map(function (x) { return '<b>' + NV.esc(x.name) + '</b> <small>' + NV.esc(x.zeit) + '</small><br>' + NV.esc(x.text); }).join('<hr>') : '<i>noch keine</i>');
+}
+</script>
+</body></html>

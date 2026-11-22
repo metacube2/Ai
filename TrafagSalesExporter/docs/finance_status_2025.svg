@@ -1,0 +1,236 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1780" height="1240" viewBox="0 0 1780 1240" role="img" aria-labelledby="title desc">
+  <title id="title">Finance-Abgleich 2025: Was passt, was ist offen</title>
+  <desc id="desc">Statusuebersicht zum Net-Sales-Abgleich 2025 gegen check.xlsx auf Basis der Financechef-Entscheide.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f6f7f9; }
+      .panel { fill: #ffffff; stroke: #c9d1dc; stroke-width: 1.2; }
+      .title { font: 700 34px Arial, sans-serif; fill: #172033; }
+      .subtitle { font: 400 17px Arial, sans-serif; fill: #536074; }
+      .h2 { font: 700 20px Arial, sans-serif; fill: #172033; }
+      .h3 { font: 700 15px Arial, sans-serif; fill: #172033; }
+      .txt { font: 400 13.5px Arial, sans-serif; fill: #344054; }
+      .small { font: 400 12px Arial, sans-serif; fill: #667085; }
+      .table-head { fill: #22324a; }
+      .th { font: 700 13px Arial, sans-serif; fill: #ffffff; }
+      .td { font: 400 12.5px Arial, sans-serif; fill: #263241; }
+      .num { font: 400 12.5px Arial, sans-serif; fill: #263241; }
+      .line { stroke: #d8dee8; stroke-width: 1; }
+      .ok { fill: #e7f5ec; stroke: #168a48; stroke-width: 1.5; }
+      .warn { fill: #fff6e6; stroke: #d99020; stroke-width: 1.5; }
+      .miss { fill: #f0f2f5; stroke: #98a2b3; stroke-width: 1.5; }
+      .bad { fill: #fff0f0; stroke: #c93d3d; stroke-width: 1.5; }
+      .pill-ok { fill: #168a48; }
+      .pill-warn { fill: #d99020; }
+      .pill-miss { fill: #667085; }
+      .pill-bad { fill: #c93d3d; }
+      .pill-text { font: 700 11px Arial, sans-serif; fill: #ffffff; }
+      .rule { fill: #eef3f8; stroke: #c3cedb; stroke-width: 1; }
+      .arrow { stroke: #637083; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#637083"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1780" height="1240"/>
+  <text class="title" x="54" y="62">Finance-Abgleich 2025 - was passt, was noch nicht</text>
+  <text class="subtitle" x="54" y="92">Stand: letzter lokaler FinanceProbe-Abgleich gegen check.xlsx von Rhino, plus fachliche Entscheide vom Financechef.</text>
+
+  <g transform="translate(54,124)">
+    <rect class="panel" width="1672" height="144" rx="8"/>
+    <text class="h2" x="24" y="34">Verbindliche Finance-Regeln</text>
+    <g transform="translate(24,54)">
+      <rect class="rule" width="250" height="58" rx="6"/>
+      <text class="h3" x="14" y="22">Fuehrende Waehrung</text>
+      <text class="txt" x="14" y="43">Immer Hauswaehrung</text>
+    </g>
+    <g transform="translate(294,54)">
+      <rect class="rule" width="250" height="58" rx="6"/>
+      <text class="h3" x="14" y="22">CHF-Ausweis</text>
+      <text class="txt" x="14" y="43">Budgetkurse, keine Tageskurse</text>
+    </g>
+    <g transform="translate(564,54)">
+      <rect class="rule" width="250" height="58" rx="6"/>
+      <text class="h3" x="14" y="22">Summierung</text>
+      <text class="txt" x="14" y="43">Pro Artikel / Belegposition</text>
+    </g>
+    <g transform="translate(834,54)">
+      <rect class="rule" width="250" height="58" rx="6"/>
+      <text class="h3" x="14" y="22">Net Sales Basis</text>
+      <text class="txt" x="14" y="43">Nettofakturawert</text>
+    </g>
+    <g transform="translate(1104,54)">
+      <rect class="rule" width="250" height="58" rx="6"/>
+      <text class="h3" x="14" y="22">Periode 2025</text>
+      <text class="txt" x="14" y="43">Buchungsdatum</text>
+    </g>
+    <g transform="translate(1374,54)">
+      <rect class="rule" width="250" height="58" rx="6"/>
+      <text class="h3" x="14" y="22">IC / Gutschriften</text>
+      <text class="txt" x="14" y="43">Separat sichtbar ausweisen</text>
+    </g>
+  </g>
+
+  <g transform="translate(54,294)">
+    <rect class="panel" width="1672" height="132" rx="8"/>
+    <text class="h2" x="24" y="34">Kurzfazit</text>
+    <g transform="translate(24,58)">
+      <rect class="ok" width="260" height="48" rx="7"/>
+      <text class="h3" x="16" y="20">Passt rechnerisch</text>
+      <text class="txt" x="16" y="39">Indien, aber Waehrungsfeld pruefen</text>
+    </g>
+    <g transform="translate(312,58)">
+      <rect class="warn" width="430" height="48" rx="7"/>
+      <text class="h3" x="16" y="20">Daten vorhanden, aber noch nicht fachlich sauber</text>
+      <text class="txt" x="16" y="39">ES, FR, IT, US brauchen Regel-/Mapping-Klaerung</text>
+    </g>
+    <g transform="translate(770,58)">
+      <rect class="miss" width="410" height="48" rx="7"/>
+      <text class="h3" x="16" y="20">Noch keine belastbaren Ist-Daten</text>
+      <text class="txt" x="16" y="39">AT, CH, DE, UK und weitere Referenzlaender</text>
+    </g>
+    <g transform="translate(1208,58)">
+      <rect class="bad" width="390" height="48" rx="7"/>
+      <text class="h3" x="16" y="20">Technische Anpassung offen</text>
+      <text class="txt" x="16" y="39">FinanceProbe/Export muss strikt Finance-Regeln zeigen</text>
+    </g>
+  </g>
+
+  <g transform="translate(54,454)">
+    <rect class="panel" width="1672" height="530" rx="8"/>
+    <text class="h2" x="24" y="34">Laenderstatus gegen Rhino check.xlsx</text>
+
+    <rect class="table-head" x="24" y="56" width="1624" height="34" rx="4"/>
+    <text class="th" x="42" y="78">Status</text>
+    <text class="th" x="156" y="78">Land</text>
+    <text class="th" x="302" y="78">Ist aktuell</text>
+    <text class="th" x="432" y="78">Soll Rhino</text>
+    <text class="th" x="562" y="78">Differenz</text>
+    <text class="th" x="700" y="78">Was passt</text>
+    <text class="th" x="1020" y="78">Was noch nicht passt / naechster Schritt</text>
+
+    <g transform="translate(24,90)">
+      <line class="line" x1="0" y1="48" x2="1624" y2="48"/>
+      <line class="line" x1="0" y1="96" x2="1624" y2="96"/>
+      <line class="line" x1="0" y1="144" x2="1624" y2="144"/>
+      <line class="line" x1="0" y1="192" x2="1624" y2="192"/>
+      <line class="line" x1="0" y1="240" x2="1624" y2="240"/>
+      <line class="line" x1="0" y1="288" x2="1624" y2="288"/>
+      <line class="line" x1="0" y1="336" x2="1624" y2="336"/>
+      <line class="line" x1="0" y1="384" x2="1624" y2="384"/>
+
+      <g transform="translate(0,0)">
+        <rect class="pill-ok" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">PASST</text>
+        <text class="td" x="132" y="20">IN</text>
+        <text class="num" x="278" y="20">750'936'591.38</text>
+        <text class="num" x="408" y="20">750'936'591.00</text>
+        <text class="num" x="538" y="20">0.38</text>
+        <text class="td" x="676" y="20">Zahl passt fast exakt gegen Soll.</text>
+        <text class="td" x="996" y="20">Anzeige/Mapping muss INR Hauswaehrung zeigen; aktuell gemischte Waehrungen sichtbar.</text>
+      </g>
+
+      <g transform="translate(0,48)">
+        <rect class="pill-warn" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">PRUEFEN</text>
+        <text class="td" x="132" y="20">ES</text>
+        <text class="num" x="278" y="20">3'082'320.18</text>
+        <text class="num" x="408" y="20">3'102'334.00</text>
+        <text class="num" x="538" y="20">-20'013.82</text>
+        <text class="td" x="676" y="20">Sage-Datei ist lesbar, 4'341 Zeilen.</text>
+        <text class="td" x="996" y="20">Datumsabgrenzung, Serien REG/LAT/PRO/REC und Gutschriften klaeren.</text>
+      </g>
+
+      <g transform="translate(0,96)">
+        <rect class="pill-warn" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">PRUEFEN</text>
+        <text class="td" x="132" y="20">FR</text>
+        <text class="num" x="278" y="20">1'414'138.88</text>
+        <text class="num" x="408" y="20">1'471'218.00</text>
+        <text class="num" x="538" y="20">-57'079.12</text>
+        <text class="td" x="676" y="20">B1/HANA-Daten vorhanden.</text>
+        <text class="td" x="996" y="20">Muss auf Nettofakturawert Hauswaehrung + Buchungsdatum ausgerichtet werden.</text>
+      </g>
+
+      <g transform="translate(0,144)">
+        <rect class="pill-warn" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">PRUEFEN</text>
+        <text class="td" x="132" y="20">IT</text>
+        <text class="num" x="278" y="20">11'866'896.53</text>
+        <text class="num" x="408" y="20">7'669'840.00</text>
+        <text class="num" x="538" y="20">4'197'056.53</text>
+        <text class="td" x="676" y="20">Hauswaehrung/EUR-Daten vorhanden.</text>
+        <text class="td" x="996" y="20">IC/2nd-party separat markieren; nicht still abziehen. Abgrenzung weiter klaeren.</text>
+      </g>
+
+      <g transform="translate(0,192)">
+        <rect class="pill-warn" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">PRUEFEN</text>
+        <text class="td" x="132" y="20">US</text>
+        <text class="num" x="278" y="20">3'795'763.33</text>
+        <text class="num" x="408" y="20">3'749'865.00</text>
+        <text class="num" x="538" y="20">45'898.33</text>
+        <text class="td" x="676" y="20">B1/HANA-Daten vorhanden.</text>
+        <text class="td" x="996" y="20">Hauswaehrung, Buchungsdatum und Nettofakturawert gegen Quelle pruefen.</text>
+      </g>
+
+      <g transform="translate(0,240)">
+        <rect class="pill-miss" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">FEHLT</text>
+        <text class="td" x="132" y="20">UK</text>
+        <text class="num" x="278" y="20">-</text>
+        <text class="num" x="408" y="20">3'749'865.00</text>
+        <text class="num" x="538" y="20">-</text>
+        <text class="td" x="676" y="20">UK_B1 SharePoint-Ordner ist konfiguriert.</text>
+        <text class="td" x="996" y="20">Noch keine 2025-Zeilen in CentralSalesRecords; Export/Import neu laufen lassen.</text>
+      </g>
+
+      <g transform="translate(0,288)">
+        <rect class="pill-miss" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">FEHLT</text>
+        <text class="td" x="132" y="20">DE</text>
+        <text class="num" x="278" y="20">-</text>
+        <text class="num" x="408" y="20">3'635'923.00</text>
+        <text class="num" x="538" y="20">-</text>
+        <text class="td" x="676" y="20">Alphaplan-Mapping ist vorhanden.</text>
+        <text class="td" x="996" y="20">Finalen Alphaplan-Exportpfad/Import pruefen; Sample ist nicht Jahresdatei.</text>
+      </g>
+
+      <g transform="translate(0,336)">
+        <rect class="pill-miss" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">FEHLT</text>
+        <text class="td" x="132" y="20">AT / CH</text>
+        <text class="num" x="278" y="20">-</text>
+        <text class="num" x="408" y="20">AT 3'443'863</text>
+        <text class="num" x="538" y="20">-</text>
+        <text class="td" x="676" y="20">ZSCHWEIZ OData-Pfad ist vorbereitet.</text>
+        <text class="td" x="996" y="20">Export muss AT/CH nach LAND1 trennen; danach FinanceProbe erneut pruefen.</text>
+      </g>
+
+      <g transform="translate(0,384)">
+        <rect class="pill-miss" x="16" y="12" width="78" height="24" rx="12"/>
+        <text class="pill-text" x="55" y="28" text-anchor="middle">FEHLT</text>
+        <text class="td" x="132" y="20">CN/CZ/GFS/JP/MS/MSA/PL/RU</text>
+        <text class="num" x="278" y="20">-</text>
+        <text class="num" x="408" y="20">teils vorhanden</text>
+        <text class="num" x="538" y="20">-</text>
+        <text class="td" x="676" y="20">Sollwerte/Referenzen sichtbar.</text>
+        <text class="td" x="996" y="20">Noch keine Ist-Daten; Quelle, Standort oder Importprozess festlegen.</text>
+      </g>
+    </g>
+  </g>
+
+  <g transform="translate(54,1010)">
+    <rect class="panel" width="1672" height="160" rx="8"/>
+    <text class="h2" x="24" y="34">Konkrete Luecken zur Finance-Regel</text>
+    <path class="arrow" d="M 38 62 H 250"/>
+    <text class="h3" x="270" y="66">Ist-Wert muss konsequent aus Nettofakturawert Hauswaehrung kommen</text>
+    <text class="txt" x="270" y="88">Aktuell zeigt die Probe bei einigen Laendern noch alternative technische Kandidaten oder gemischte Waehrungen.</text>
+    <path class="arrow" d="M 38 108 H 250"/>
+    <text class="h3" x="270" y="112">Buchungsdatum und Belegpositionslogik muessen in Quelle/Mapping sichtbar sein</text>
+    <text class="txt" x="270" y="134">Gutschriften separat, IC/2nd-party als Klassifikation; 3rd-party ist Default. Keine stille Bereinigung im Hintergrund.</text>
+  </g>
+
+  <text class="small" x="54" y="1210">Hinweis: Diese SVG ist eine fachliche Statusdoku, keine Codeaenderung. Zahlen stammen aus dem letzten lokalen Abgleich gegen Rhino check.xlsx.</text>
+</svg>

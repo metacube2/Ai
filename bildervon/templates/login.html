@@ -1,0 +1,14 @@
+{% extends "basis.html" %}
+{% block koerper %}login-seite{% endblock %}
+{% block inhalt %}
+<section class="login">
+  <p class="eyebrow">Familienalbum</p>
+  <h1 class="riesig">Schön, dass<br><span class="verlauf">du da bist.</span></h1>
+  <form method="post" class="glas formular-login">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label class="feld"><input name="login" autocomplete="username" placeholder=" " required autofocus><span>Login</span></label>
+    <label class="feld"><input name="passwort" type="password" autocomplete="current-password" placeholder=" " required><span>Passwort</span></label>
+    <button class="glow">Los geht's <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </form>
+</section>
+{% endblock %}

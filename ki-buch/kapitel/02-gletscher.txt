@@ -1,0 +1,78 @@
+# Der Berg, der nicht schlief
+@ Lötschental und Saas · Sommer 2031
+
+[bild]
+
+Wer im Lötschental aufgewachsen war, sprach von Blatten nicht in der Vergangenheitsform. Man sagte nicht «das Dorf, das es gab», man sagte «Blatten» und meinte damit beides: die Häuser, die am 28. Mai 2025 unter Eis, Fels und Schlamm verschwunden waren, und die Menschen, die neun Tage vorher ihre Koffer gepackt hatten, weil Geologen auf ihre Messungen vertrauten.
+
+Noemi Rieder war damals zwölf gewesen. Sie hatte im Fernsehen gesehen, wie die Staubwolke über das Tal zog, und ihr Vater, der Bergführer war, hatte neben ihr gesessen und kein Wort gesagt. Sechs Jahre später schrieb sie sich an der ETH für Erdwissenschaften ein. Wieder sechs Jahre später, im Juli 2031, sass sie in einem Container auf zweitausend Metern über Saas-Grund und starrte auf eine Kurve, die nicht aufhören wollte zu steigen.
+
+## Die Wächter
+
+Der Container war ein Provisorium mit Solardach, zwei Arbeitsplätzen und einer Kaffeemaschine, die mehr Strom brauchte als alle Rechner zusammen. Von hier aus betreute Noemi für das kantonale Amt für Naturgefahren sieben Gletscher und dreiundzwanzig Felsflanken im Saastal. Betreuen hiess: zusehen, wie Maschinen zusahen.
+
+An den Flanken standen Radarstationen, die alle sechs Minuten die Oberfläche abtasteten und Bewegungen von einem Millimeter erkannten. In Bohrlöchern steckten Sensoren für Temperatur und Wasserdruck. Über dem Tal kreisten bei gutem Wetter zwei Drohnen, und dreimal am Tag lieferte ein europäischer Radarsatellit ein Bild, auf dem man sehen konnte, wo sich Hänge um Zentimeter verschoben hatten. Alles lief zusammen in einem System, das die Leute im Amt «Wächter» nannten, obwohl es offiziell einen langen Namen mit vier Abkürzungen trug.
+
+Der Wächter tat etwas, wozu kein Mensch fähig war: Er verglich in Echtzeit das Verhalten jedes überwachten Hangs mit allen Bewegungsverläufen, die man in den Alpen, im Himalaya und in den Anden je gemessen hatte, auch mit den Daten vom Birchgletscher in jenem Mai 2025, die in den Jahren danach zu den meistanalysierten Messreihen der Glaziologie geworden waren. Er suchte nicht nach Grenzwerten. Er suchte nach Mustern. Nach jener charakteristischen Beschleunigung, mit der ein Hang sich ankündigt, wenn er nicht mehr kriecht, sondern zu fallen beginnt.
+
+Die Kurve auf Noemis Bildschirm gehörte zu einem Felssporn über dem Allalingletscher. Seit drei Wochen bewegte er sich, ein paar Millimeter am Tag, nichts Ungewöhnliches für einen Sommer, in dem die Nullgradgrenze seit Tagen über fünftausend Meter lag. Seit vorgestern bewegte er sich schneller. Seit heute Morgen bewegte er sich in einer Weise, die der Wächter in einer gelben Zeile zusammenfasste:
+
+*Verlauf ähnlich zu inverser Geschwindigkeitskurve vor Versagen. Prognostizierter Zeitpunkt der Instabilität: 9 bis 31 Tage. Vertrauensbereich breit. Volumen: 1,2 bis 3,5 Millionen Kubikmeter. Mögliche Kaskade: Eisabbruch Allalin, Murgang Saaser Vispa.*
+
+## Die Methode der umgekehrten Geschwindigkeit
+
+Es gibt in der Geotechnik ein altes Verfahren, das schon in den Sechzigerjahren ein japanischer Ingenieur beschrieben hat. Man nimmt die Geschwindigkeit eines Hangs, bildet den Kehrwert und trägt ihn gegen die Zeit auf. Wenn ein Hang auf das Versagen zuläuft, sinkt diese Kurve oft fast geradlinig gegen null, und dort, wo sie die Nulllinie schneidet, bricht er. Das Verfahren hat Leben gerettet und Fehlalarme ausgelöst, weil die Natur sich selten an Geraden hält.
+
+Was der Wächter tat, war im Kern dasselbe, nur mit tausend Kurven statt einer und mit der Fähigkeit, Regen, Schmelzwasser, Temperatur und die Risse auf den Drohnenbildern mitzudenken. Er lag nicht immer richtig. Im Sommer 2029 hatte er für einen Hang bei Kandersteg einen Abbruch innerhalb von zwei Wochen vorausgesagt, der bis heute nicht stattgefunden hat. Die Gemeinde hatte zwei Wochen lang eine Strasse gesperrt und danach eine böse Stellungnahme an den Kanton geschickt.
+
+Noemi kannte diese Stellungnahme auswendig. Sie kannte auch die Zahl der Fehlalarme des Wächters seit seiner Einführung: elf. Und die Zahl der Ereignisse, die er korrekt vorhergesagt hatte: neunzehn. Bei sieben davon waren Menschen in Gefahr gewesen.
+
+---
+
+Am Abend fuhr sie ins Tal, nach Saas-Grund, wo der Gemeindepräsident ein Sitzungszimmer im ersten Stock des Gemeindehauses reserviert hatte. Es waren mehr Leute da, als sie erwartet hatte. Der Präsident, zwei Gemeinderäte, der Kommandant der Feuerwehr, ein Vertreter der Bergbahnen, der Direktor des Tourismusbüros und eine Frau, die Noemi nicht kannte und die sich als Präsidentin des Hotelierverbands vorstellte.
+
+«Wir haben Hochsaison», sagte die Frau, bevor Noemi den Laptop aufgeklappt hatte. «Achttausend Gäste im Tal. Wenn Sie heute sagen, dass in neun bis einunddreissig Tagen ein Berg herunterkommt, dann sind morgen dreitausend davon weg.»
+
+Noemi nickte. «Ich sage nicht, dass ein Berg herunterkommt. Ich sage, dass er es tun könnte, und ich sage Ihnen, wie wir es früher wissen werden.»
+
+Sie zeigte ihnen die Kurve. Sie zeigte ihnen, welche Bereiche im Tal bei welchem Volumen betroffen wären, und es waren weniger, als die Hoteliers befürchtet hatten: ein Campingplatz, zwei Wanderwege, die Zufahrt zum Mattmark-Stausee und vier Ferienhäuser am Rand von Saas-Almagell. Und sie zeigte ihnen den eigentlichen Grund, warum sie gekommen war.
+
+«Der Wächter ist kein Orakel», sagte sie. «Er ist ein Rauchmelder, der lauter wird, je näher das Feuer kommt. Wir können ihm sagen, was er tun soll, wenn er lauter wird. Wenn die Bewegung über zwanzig Zentimeter am Tag steigt, sperren wir die Wanderwege. Über fünfzig: den Campingplatz und die Strasse nach Mattmark. Über einem Meter: die Ferienhäuser. Diese Schwellen legen nicht wir fest. Die legen Sie fest. Heute Abend, solange alle ruhig sind.»
+
+Es wurde still im Raum. Dann sagte der Feuerwehrkommandant, ein Mann mit einer Narbe auf der Stirn, der in Blatten als Helfer dabei gewesen war: «Das ist das erste Mal, dass mir jemand die Gelegenheit gibt, mich vorher zu entscheiden statt nachher.»
+
+## Die Treppe
+
+Sie legten die Schwellen fest. Sie schrieben sie in ein Dokument von vier Seiten, das der Gemeinderat am nächsten Morgen genehmigte und das auf der Webseite der Gemeinde veröffentlicht wurde, zusammen mit einem Link auf eine Seite, auf der jeder die Kurve live sehen konnte. Die Hoteliers protestierten zwei Tage lang. Dann stellte sich heraus, dass die Gäste die Seite liebten. Ein Reiseblog aus Holland nannte sie «den spannendsten Livestream der Alpen». Ein Hotel in Saas-Fee stellte einen Bildschirm in die Lobby.
+
+Am elften Tag erreichte die Bewegung zwanzig Zentimeter. Die Wanderwege wurden gesperrt, und weil die Schwelle seit Tagen bekannt war, beschwerte sich niemand.
+
+Am neunzehnten Tag fünfzig. Der Campingplatz wurde geräumt, die Strasse nach Mattmark gesperrt. Die Campinggäste wurden in einer Turnhalle untergebracht und von der Gemeinde zum Raclette eingeladen.
+
+Am zweiundzwanzigsten Tag, kurz nach Mitternacht, sprang die Bewegung auf neunzig Zentimeter. Noemi sass im Container. Sie hatte seit drei Tagen kaum geschlafen. Der Wächter meldete: *Beschleunigung überproportional. Instabilität in 6 bis 30 Stunden wahrscheinlich.* Sie rief den Präsidenten an. Um zwei Uhr morgens wurden die vier Ferienhäuser geräumt. In einem davon wohnte ein Ehepaar aus Visp, beide über achtzig, die seit fünfzig Jahren jeden Sommer dort verbrachten. Sie gingen ohne Widerrede. Die Frau sagte zu den Feuerwehrleuten, sie habe die Kurve jeden Abend auf dem Tablet angesehen, ihr Enkel habe ihr das eingerichtet, und sie habe den Koffer schon seit dem fünfzigsten Zentimeter gepackt.
+
+Um 14.40 Uhr am nächsten Tag brach der Felssporn ab. Zwei Millionen Kubikmeter Fels stürzten auf den Allalingletscher, rissen eine Eiszunge mit und schoben eine Lawine aus Eis, Fels und Schmelzwasser zwei Kilometer weit ins Tal. Sie kam fünfzig Meter vor dem ersten Ferienhaus zum Stehen.
+
+---
+
+Niemand wurde verletzt. In den Zeitungen stand das in einem Satz, ganz unten. Die Schlagzeilen gehörten den Bildern: der Staubwolke, dem zerrissenen Gletscher, dem Ehepaar aus Visp, das mit seinem Koffer vor der Turnhalle stand.
+
+Noemi fuhr am Tag danach ins Lötschental. Sie stellte das Auto am Rand der neuen Strasse ab, die über den Schuttkegel führte, und ging zu Fuss zu der Stelle, wo das Haus ihrer Grosseltern gestanden hatte. Ihr Vater wartete dort. Er war inzwischen siebzig, aber er ging immer noch jeden Sommer auf die Gipfel.
+
+«Hat er's gewusst?», fragte er. Er meinte den Wächter.
+
+«Er hat es geahnt», sagte Noemi. «Gewusst haben wir es erst, als wir uns vorher entschieden hatten, was wir tun, wenn er recht hat.»
+
+Ihr Vater nickte langsam. «Das war 2025 auch so», sagte er. «Die haben uns rausgeholt, bevor es kam. Die Maschinen waren nur langsamer.»
+
+## Die Karte der schlafenden Berge
+
+Im Herbst 2031 beschloss der Bund, alle Gletscher und instabilen Hänge des Landes, bei denen Siedlungen oder Verkehrswege gefährdet sein könnten, in ein gemeinsames System zu bringen. Es waren mehr als neunhundert Orte. Für die meisten reichten Satellitendaten. Für etwa achtzig wurden Radarstationen und Sensoren gebaut. Die Kosten waren geringer als die eines einzigen Autobahnviadukts.
+
+Was den Wächter am Ende so wertvoll machte, war nicht die Rechenleistung. Es war die Treppe: das Prinzip, dass Gemeinden ihre Schwellen vorher festlegen, öffentlich, solange alle ruhig sind, und dass die Maschine nur misst, wann eine Stufe erreicht ist. Das Prinzip wurde später in Norwegen, Kanada und Nepal übernommen, wo man es auf Englisch «the Saas staircase» nennt.
+
+Als Lea im Februar 2045 mit Noemi Rieder über den Schuttkegel von Blatten ging, auf dem inzwischen Lärchen wuchsen, zeigte Noemi auf eine Flanke auf der anderen Talseite. «Da oben», sagte sie, «bewegt sich seit vier Jahren etwas. Drei Millimeter im Jahr. Wahrscheinlich bis ich in Pension gehe und noch lange danach. Aber die Gemeinde hat ihre Treppe. Die hängt im Gemeindehaus neben dem Bild vom alten Dorf.»
+
+> !Stand heute
+> Am 28. Mai 2025 begrub der Abbruch des Birchgletschers den grössten Teil des Dorfes Blatten im Lötschental. Die rund 300 Einwohnerinnen und Einwohner waren neun Tage vorher evakuiert worden, weil Fachleute die zunehmende Bewegung der Felsflanke darüber verfolgten.
+> Radarinterferometrie vom Boden und aus dem All misst heute Hangbewegungen im Millimeterbereich. Die «Methode der inversen Geschwindigkeit» zur Abschätzung des Versagenszeitpunkts geht auf Arbeiten des japanischen Ingenieurs Fukuzono (1985) und frühere von Saito zurück. Modelle des maschinellen Lernens werden in der Forschung erprobt, um solche Prognosen zu verbessern.

@@ -199,7 +199,7 @@ struct DialIndicatorView: View {
 
                 // Value arc
                 Circle()
-                    .trim(from: 0.25, to: 0.25 + (Double(value) / 255.0) * 0.5)
+                    .trim(from: 0.25, to: 0.25 + (Double(value) / 100.0) * 0.5)
                     .stroke(
                         isConnected ? dialColor(for: value) : Color.gray,
                         style: StrokeStyle(lineWidth: 4, lineCap: .round)
@@ -223,7 +223,7 @@ struct DialIndicatorView: View {
     }
 
     private func dialColor(for value: Int) -> Color {
-        let ratio = Double(value) / 255.0
+        let ratio = Double(value) / 100.0
         if ratio > 0.9 { return .red }
         if ratio > 0.75 { return .orange }
         if ratio > 0.5 { return .yellow }
@@ -456,8 +456,8 @@ struct HardwareSettingsView: View {
             Text("Format: {\"dials\":[d1,d2,d3,d4]}\\n")
             Text("Values: 0-255 array")
         case .vuServer:
-            Text("Format: #0:val\\n#1:val\\n#2:val\\n#3:val\\n")
-            Text("Values: 0-100 percentage per dial")
+            Text("Format: >{CMD}{TYPE}{LEN}{DATA}\\r\\n")
+            Text("Native VU1 serial protocol, 0-100 per dial")
         }
     }
 }
@@ -517,8 +517,10 @@ struct ProbeButtonStyle: ButtonStyle {
 }
 
 // MARK: - Preview
-#Preview {
-    HardwareSettingsView()
-        .environmentObject(SerialManager())
-        .frame(width: 500, height: 700)
+struct HardwareSettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        HardwareSettingsView()
+            .environmentObject(SerialManager())
+            .frame(width: 500, height: 700)
+    }
 }

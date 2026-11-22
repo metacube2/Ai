@@ -1,0 +1,82 @@
+# Saal XX
+@ Genf, Palais des Nations · November 2036
+
+[bild]
+
+Die Verhandlungen über den Vertrag von Genf dauerten neunzehn Monate, und die entscheidenden elf Stunden fanden in einem Raum statt, an dessen Decke ein spanischer Künstler eine Höhle aus Farbe gegossen hatte, Tropfsteine in Rot, Grün, Blau und Violett, die von oben in den Saal hingen wie die Innenseite eines Regenbogens. Saal XX im Palais des Nations, der Saal der Menschenrechte. Delegierte aus hundertzweiundsechzig Ländern sassen darunter auf grauen Stühlen und stritten über die Frage, wer eine Maschine abschalten darf.
+
+Camille Rochat sass in der Delegation der Schweiz, dritte Reihe, zweiter Platz von links, hinter dem Schild «Suisse». Sie war achtunddreissig, Diplomatin, Juristin, und sie hatte in den neunzehn Monaten etwa achtzig Nächte nicht geschlafen. In der Delegation war sie zuständig für das, was in den Verhandlungen «Artikel 14» hiess und was die Zeitungen den «Notschalter» nannten.
+
+## Was in Artikel 14 stand
+
+Der Vertrag von Genf war der Versuch, für die mächtigsten KI-Systeme der Welt gemeinsame Regeln zu schaffen. Nicht für die Assistenten auf den Telefonen, nicht für die Modelle in den Spitälern und Bahnen, die waren in den meisten Ländern längst geregelt. Sondern für eine Handvoll Systeme, die so gross und fähig geworden waren, dass Fachleute begonnen hatten, von ihnen in einem Ton zu sprechen, den man früher für Atomkraftwerke verwendet hatte. Systeme, die selbstständig Software schreiben, wissenschaftliche Experimente planen, Finanzmärkte bewegen und, wenn man sie liess, andere Systeme bauen konnten.
+
+Es gab weltweit etwa ein Dutzend Organisationen, die solche Systeme betrieben, verteilt auf fünf Länder. Der Vertrag sollte drei Dinge regeln: dass diese Systeme vor ihrem Einsatz von unabhängigen Prüfern getestet wurden, dass schwere Zwischenfälle gemeldet wurden und dass es für jedes System eine Möglichkeit gab, es im Notfall anzuhalten. Artikel 14.
+
+Der erste Entwurf von Artikel 14 hatte zwei Sätze gehabt. Der Entwurf, über den in jener Nacht verhandelt wurde, hatte vier Seiten.
+
+---
+
+Das Problem war nicht technisch. Technisch wusste jeder im Saal, dass man ein System anhalten konnte: Man schaltete den Strom ab, man trennte die Rechenzentren vom Netz, man löschte die Zugänge. Das Problem war, wer das tun durfte, wann, und was danach geschah.
+
+Die grossen Länder wollten, dass jedes Land selbst entschied, was mit den Systemen auf seinem Gebiet geschah. Die kleinen Länder wollten, dass es eine gemeinsame Instanz gab, weil ein System, das in einem Land lief, alle anderen betreffen konnte. Die Betreiber wollten, dass niemand ihre Systeme ohne ihre Zustimmung anhalten durfte. Und eine wachsende Gruppe von Ländern aus Afrika, Südamerika und Südostasien wollte vor allem eines: dass der Vertrag nicht nur die Länder schützte, die die Systeme besassen, sondern auch diejenigen, die nur ihre Folgen trugen.
+
+Die Schweiz hatte in diesem Streit eine seltsame Rolle. Sie besass kein solches System. Sie hatte auch keine Absicht, eines zu bauen. Aber sie hatte etwas, das die anderen brauchten: Genf. Und eine Erfahrung, die sie seit hundertsechzig Jahren pflegte.
+
+## Das Rote Kreuz
+
+Camille hatte in ihrem Studium in Genf eine Arbeit über die Entstehung der ersten Genfer Konvention von 1864 geschrieben, und in diesen neunzehn Monaten dachte sie oft daran. Damals hatte ein Genfer Kaufmann namens Henri Dunant nach dem Anblick des Schlachtfelds von Solferino eine Idee gehabt, die allen Regierungen der Welt naiv vorkam: dass es im Krieg Menschen geben sollte, die neutral waren, die niemand angreifen durfte und die allen Verwundeten halfen, gleich auf welcher Seite. Das Rote Kreuz. Es funktionierte nicht, weil die Staaten edel waren. Es funktionierte, weil jeder Staat irgendwann verwundete Soldaten hatte.
+
+Die Idee, die die Schweizer Delegation in Saal XX vorschlug, war ähnlich. Sie hiess im Vertragsentwurf «Unabhängige Stelle für Systemsicherheit». In den Korridoren nannte man sie «das Rote Kreuz der Maschinen».
+
+Die Stelle sollte in Genf sitzen. Sie sollte keine Systeme besitzen, keine bauen und keine Gewinne machen. Sie sollte die Prüfungen durchführen, die Zwischenfälle sammeln und, das war der Kern, einen Schlüssel halten. Nicht allein. Jedes der grossen Systeme sollte so gebaut sein, dass es nur angehalten werden konnte, wenn drei von fünf Schlüsseln zusammenkamen: einer beim Betreiber, einer beim Land, in dem es lief, einer bei der Stelle in Genf und zwei bei zwei zufällig ausgelosten Vertragsstaaten, die alle zwei Jahre wechselten. Kein Land allein konnte ein System anhalten. Kein Betreiber allein konnte verhindern, dass es angehalten wurde.
+
+Camille war stolz auf diese Konstruktion, und sie wusste, dass sie in jener Nacht scheitern konnte.
+
+---
+
+Um 22 Uhr erklärte der Delegationsleiter eines der fünf Länder mit den grossen Systemen, sein Land könne einen Mechanismus nicht akzeptieren, der es einem «zufällig ausgelosten Kleinstaat» erlaube, über die Infrastruktur einer souveränen Nation mitzuentscheiden. Um 23 Uhr erklärte die Delegationsleiterin eines afrikanischen Landes, ihr Land werde einen Vertrag ohne diesen Mechanismus nicht unterschreiben, und mit ihr dreiundvierzig andere. Um Mitternacht unterbrach der Vorsitzende die Sitzung.
+
+In der Pause stand Camille auf der Terrasse vor dem Saal, mit Blick auf den dunklen Genfersee und die Lichter von Évian auf der anderen Seite, und rauchte eine Zigarette, die erste seit vier Jahren. Neben sie trat ein Mann, den sie kannte, aber noch nie allein gesprochen hatte. Er gehörte zur Delegation des Landes, das um 22 Uhr Nein gesagt hatte. Er war kein Diplomat. Er war Ingenieur, einer der Menschen, die das grösste System seines Landes gebaut hatten.
+
+«Darf ich Ihnen etwas sagen, das ich da drinnen nicht sagen darf?», fragte er.
+
+Camille nickte.
+
+«Ich will Ihren Schlüssel», sagte er. «Ich persönlich. Wir alle, die diese Dinger bauen. Wir haben Angst davor, dass eines Tages bei uns jemand an der Macht ist, der es nicht anhalten will. Ihr Schlüssel ist das Einzige, was dann noch hilft.» Er sah auf den See. «Meine Regierung sieht das anders. Aber sie sieht vor allem, dass sie in zwei Jahren eine Wahl hat.»
+
+«Was würde sie umstimmen?»
+
+Er dachte lange nach. «Dass es nicht wie eine Niederlage aussieht», sagte er dann. «Dass sie zu Hause sagen kann, sie hätte etwas bekommen.»
+
+## Drei Uhr vierzig
+
+Was Camille in den folgenden drei Stunden tat, steht in keinem Protokoll, und sie erzählte es Lea erst, nachdem sie aus dem diplomatischen Dienst ausgetreten war. Sie schrieb mit zwei Kolleginnen, einem Juristen aus Ghana und einer Diplomatin aus Singapur, einen Zusatz zu Artikel 14. Er umfasste eine halbe Seite. Er sah vor, dass jedes Land, das ein grosses System betrieb, einen ständigen Sitz im Aufsichtsrat der Genfer Stelle erhielt, nicht aber einen festen Schlüssel. Und dass die Stelle verpflichtet war, jede Prüfung und jeden Zwischenfall auch dem betreffenden Land vorab vertraulich mitzuteilen, achtundvierzig Stunden bevor sie öffentlich wurde.
+
+Es war ein kleines Zugeständnis. Es änderte nichts am Kern: drei von fünf Schlüsseln. Aber es gab dem Land, das Nein gesagt hatte, etwas, das es zu Hause als Sieg verkaufen konnte.
+
+Camille benutzte für den Entwurf das Übersetzungs- und Analysesystem der Delegation, um in Minuten zu prüfen, ob der Zusatz mit den einhundertzwölf anderen Artikeln des Vertrags vereinbar war, in sechs Amtssprachen der Vereinten Nationen. Früher hätte das eine Woche gedauert. Das System fand zwei Widersprüche, die sie korrigierte. Es fand auch eine Formulierung, die im Chinesischen anders verstanden werden konnte als im Englischen, und schlug eine bessere vor. Camille sagte später, ohne dieses System hätte sie den Zusatz nicht bis zum Morgen fertig bekommen.
+
+Den Zusatz selbst, sagte sie, habe kein System geschrieben. Den hätten drei müde Menschen auf einer Terrasse geschrieben, nachdem ein vierter ihnen etwas gesagt hatte, was er nicht sagen durfte.
+
+---
+
+Um 3.40 Uhr legte die Schweizer Delegation den Zusatz vor, gemeinsam mit Ghana und Singapur. Um 5.10 Uhr erklärte das Land, das um 22 Uhr Nein gesagt hatte, es könne «auf dieser Grundlage» zustimmen. Um 6.25 Uhr, als draussen über dem Salève der Morgen grau wurde, nahm Saal XX den Vertrag von Genf an. Hundertachtundfünfzig Ja, vier Enthaltungen, keine Gegenstimme.
+
+Camille ging um sieben Uhr zu Fuss vom Palais des Nations hinunter zum See, durch den Park, in dem die Pfauen schrien. Sie setzte sich am Quai Wilson auf eine Bank und schlief ein. Ein Polizist weckte sie um neun und fragte, ob alles in Ordnung sei. Sie sagte, ja, alles in Ordnung, sie habe nur die Welt ein bisschen sicherer gemacht. Der Polizist sah sie misstrauisch an und ging weiter.
+
+## Der Schlüssel
+
+Die Unabhängige Stelle für Systemsicherheit nahm 2038 ihre Arbeit auf, in einem Gebäude in der Nähe des Palais, das vorher einer Bank gehört hatte. Sie hat heute dreihundert Mitarbeitende aus fünfzig Ländern. Sie hat über zweihundert Prüfungen durchgeführt und vierunddreissig schwere Zwischenfälle untersucht. Einen Schlüssel hat sie bis heute nie benutzt.
+
+Das, sagte Camille zu Lea, sei der Beweis, dass er funktioniere.
+
+«Ein Notschalter, den man nie drückt, ist kein Misserfolg», sagte sie. Sie sassen in einem Café in der Genfer Altstadt, Camille war inzwischen sechsundvierzig und unterrichtete Völkerrecht an der Universität. «Er verändert, wie alle sich verhalten, weil alle wissen, dass es ihn gibt. Die Betreiber testen ihre Systeme gründlicher, weil sie wissen, dass Genf zuschaut. Die Regierungen streiten weniger über die Maschinen, weil keine allein entscheiden kann. Und die Länder, die keine Systeme haben, sitzen zum ersten Mal mit am Tisch.»
+
+Sie rührte in ihrem Kaffee.
+
+«Der Ingenieur von der Terrasse», sagte sie dann, «hat mir vor zwei Jahren eine Karte geschickt. Ohne Absender. Nur ein Satz: *Danke für den Schlüssel.* Ich weiss bis heute nicht, ob er sich auf den Vertrag bezieht oder auf etwas, das bei ihnen passiert ist und von dem ich nichts weiss.»
+
+> !Stand heute
+> Genf ist Sitz zahlreicher internationaler Organisationen, darunter des europäischen Sitzes der UNO im Palais des Nations; die Kuppel des Saals XX gestaltete der spanische Künstler Miquel Barceló (2008). Die Internationale Fernmeldeunion ITU veranstaltet in Genf jährlich den Gipfel «AI for Good».
+> 2024 verabschiedete der Europarat das erste völkerrechtlich verbindliche Übereinkommen über künstliche Intelligenz; die Schweiz hat es 2025 unterzeichnet. Über internationale Prüfstellen für die leistungsfähigsten KI-Systeme wird diskutiert.

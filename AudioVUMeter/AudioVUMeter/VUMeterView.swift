@@ -246,11 +246,13 @@ struct HorizontalMeterView: View {
     }
 }
 
-#Preview {
-    HStack(spacing: 30) {
-        VUMeterView(level: 0.7, peakLevel: 0.9, label: "L", colorScheme: .audio)
-        VUMeterView(level: 0.5, peakLevel: 0.8, label: "R", colorScheme: .audio)
+struct VUMeterView_Previews: PreviewProvider {
+    static var previews: some View {
+        HStack(spacing: 30) {
+            VUMeterView(level: 0.7, peakLevel: 0.9, label: "L", colorScheme: .audio)
+            VUMeterView(level: 0.5, peakLevel: 0.8, label: "R", colorScheme: .audio)
+        }
+        .padding()
+        .background(Color.black)
     }
-    .padding()
-    .background(Color.black)
 }

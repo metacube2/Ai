@@ -1,0 +1,84 @@
+# Abstimmungssonntag
+@ Bern und St. Gallen · September 2032
+
+[bild]
+
+Die Videos tauchten am Mittwoch vor der Abstimmung auf, um 21.14 Uhr, auf einer Plattform, die in der Schweiz von etwa zwei Millionen Menschen genutzt wurde. Es waren drei. Im ersten sagte die Vorsteherin des Eidgenössischen Finanzdepartements, eine Bundesrätin aus dem Kanton Waadt, in einem Gespräch, das offensichtlich heimlich aufgenommen worden war, dass die AHV-Reform, über die am Sonntag abgestimmt wurde, «natürlich nicht reicht» und dass man «nach der Abstimmung das Rentenalter für alle auf siebzig hochsetzen» werde. Im zweiten lachte ein Nationalrat der Mitte über «die Alten, die das sowieso nicht verstehen». Im dritten zeigte ein angeblich interner Bericht des Bundesamts für Sozialversicherungen, dass die Zahlen im Abstimmungsbüchlein gefälscht seien.
+
+Alle drei waren gut gemacht. Die Stimme der Bundesrätin hatte genau den leichten Lausanner Akzent, den man aus Interviews kannte. Der Raum, in dem sie sass, sah aus wie ihr Büro. Der Bericht trug das richtige Logo, die richtige Schrift, die richtigen Aktenzeichen.
+
+Um 22 Uhr waren die Videos zweihunderttausend Mal angesehen worden. Um Mitternacht eine Million.
+
+## Die Wache
+
+Rahel Zürcher bekam den Anruf um 22.40 Uhr. Sie war vierzig, Politikwissenschaftlerin, und sie leitete seit zwei Jahren eine Stelle, die es in der Schweiz vor 2030 nicht gegeben hatte und über deren Einrichtung im Parlament heftig gestritten worden war. Die Stelle hiess offiziell «Unabhängige Prüfstelle für Abstimmungsinformationen». Sie war nicht beim Bund angesiedelt, das war der Kompromiss gewesen, sondern bei einer Stiftung, die von den Kantonen, den Universitäten und der Schweizerischen Akademie der Wissenschaften getragen wurde. Ihr Auftrag war schlicht: Sie sollte prüfen, was vor Abstimmungen über die Vorlagen behauptet wurde, und das Ergebnis veröffentlichen. Nicht entscheiden, was wahr ist. Zeigen, wie man es prüfen kann.
+
+Die Prüfstelle hatte elf Mitarbeitende und ein System, das sie «die Wache» nannten. Die Wache beobachtete öffentlich zugängliche Kanäle, erkannte, welche Behauptungen über Abstimmungsvorlagen sich verbreiteten, und prüfte sie gegen Quellen: Gesetzestexte, Botschaften des Bundesrats, Statistiken, Protokolle der Räte, frühere Aussagen der Beteiligten. Und sie prüfte Bilder, Töne und Videos auf Spuren von Fälschung.
+
+Was die Wache nicht tat, und darauf hatte das Parlament bestanden: Sie löschte nichts, sie sperrte nichts, sie meldete niemanden. Sie veröffentlichte.
+
+---
+
+«Sie sind gefälscht», sagte Moritz Huber, der Techniker, der Nachtdienst hatte, als Rahel in die Räume der Prüfstelle in einem Altbau hinter dem Bahnhof Bern kam. «Alle drei. Das ist nicht die Frage.»
+
+«Was ist die Frage?»
+
+«Die Frage ist, ob uns jemand glaubt.»
+
+Er zeigte ihr, was die Wache gefunden hatte. Das Video der Bundesrätin war aus zwei echten Aufnahmen zusammengesetzt: einem Interview mit einem Westschweizer Fernsehsender vom März und einer Rede an einer Parteiversammlung im Mai. Die Lippenbewegungen waren neu erzeugt, die Stimme synthetisch, aber auf eine Weise, die nur in den Frequenzen über zwölf Kilohertz Spuren hinterliess. Der Raum war ihr Büro, aber das Licht kam aus der falschen Richtung: Auf den echten Bildern fiel es von links ein, durch das Fenster zum Bundesplatz. Im Video von rechts. Der Bericht des Bundesamts trug ein Aktenzeichen, das es gab, aber es gehörte zu einem Dokument über Ergänzungsleistungen aus dem Jahr 2029.
+
+Das alles war eindeutig. Und es war, das wusste Rahel aus drei Jahren Erfahrung, fast nutzlos.
+
+## Das Problem mit der Wahrheit
+
+Es gibt eine Erkenntnis aus der Forschung über Falschinformationen, die älter ist als die Sprachmodelle und die Rahel in ihren Vorträgen gerne zitierte: Eine Lüge, die sich bestätigt, ist schneller als eine Wahrheit, die widerlegt. Wer ein Video gesehen hat, in dem eine Bundesrätin sagt, dass das Rentenalter auf siebzig steigt, wird eine Korrektur, die sagt «das Video ist gefälscht», nicht unbedingt glauben. Er wird denken: Natürlich sagen die das. Und selbst wenn er es glaubt, bleibt etwas hängen. Ein Gefühl. Die haben doch etwas vor.
+
+Die Prüfstelle hatte in den ersten Jahren deshalb eine Strategie entwickelt, die anders funktionierte als die klassischen Faktenchecks. Sie sagte nicht: Das ist falsch. Sie zeigte: So kannst du es selbst prüfen.
+
+Zu jeder geprüften Behauptung veröffentlichte die Wache eine Seite, auf der jeder Schritt nachvollziehbar war. Hier ist das Originalinterview vom März, hier die Rede vom Mai, hier siehst du, wo die beiden zusammengeschnitten wurden. Hier ist das echte Büro, hier das Licht. Hier das echte Aktenzeichen, hier das Dokument, zu dem es gehört. Und darunter: Hier ist der Gesetzestext, über den du am Sonntag abstimmst. Artikel 21, Absatz 1. Lies selbst, was er über das Rentenalter sagt.
+
+Das Wichtigste aber, und das war der Teil, über den im Parlament am längsten gestritten worden war: Jeder konnte die Wache fragen. In jeder der vier Landessprachen, auf der Webseite, per Telefon, per Sprachnachricht. «Stimmt es, dass das Rentenalter auf siebzig steigt?» Und die Wache antwortete, mit Quellen, so lange, bis man keine Fragen mehr hatte. Sie stritt nicht. Sie wurde nicht ungeduldig. Sie sagte, wenn etwas unklar war, dass es unklar war. Und sie sagte, wenn eine Frage nicht die Fakten betraf, sondern die Meinung, dass das eine Frage der Meinung sei, und zeigte die Argumente beider Seiten, so wie sie im Abstimmungsbüchlein standen.
+
+## Die Nacht
+
+Rahel liess die Prüfseiten um 23.30 Uhr veröffentlichen. Dann tat sie etwas, das sie vorher noch nie getan hatte. Sie rief die Bundeskanzlei an, die für die Durchführung der Abstimmungen zuständig ist, und die Generalsekretärin des Finanzdepartements, und bat beide, die Prüfseiten nicht zu verbreiten.
+
+«Warum nicht?», fragte die Generalsekretärin, eine Juristin aus Freiburg, hörbar verärgert. «Das ist eine Fälschung, die unsere Departementsvorsteherin verleumdet. Wir wollen das so laut wie möglich sagen.»
+
+«Genau darum», sagte Rahel. «Wenn der Bund sagt, das Video ist gefälscht, glauben es die Leute, die dem Bund ohnehin glauben. Die anderen glauben es nicht. Wir sind nicht der Bund. Lassen Sie uns das machen. Und lassen Sie die Bundesrätin morgen früh etwas anderes sagen.»
+
+«Was?»
+
+«Sie soll sagen, was sie über das Rentenalter wirklich denkt. Ohne das Video zu erwähnen.»
+
+Es gab eine lange Pause. Dann sagte die Generalsekretärin: «Ich rede mit ihr.»
+
+---
+
+Um sechs Uhr am Donnerstagmorgen hatten die Videos drei Millionen Aufrufe. Die Prüfseiten der Wache hatten neunhunderttausend. Und die Wache hatte in der Nacht hundertvierzigtausend Fragen beantwortet, die meisten zwischen Mitternacht und drei Uhr morgens, als Menschen nicht schlafen konnten und wissen wollten, ob ihre Rente sicher war.
+
+Rahel las am Morgen eine Stichprobe dieser Gespräche. Sie durfte das, anonymisiert, für die Qualitätskontrolle. Eine Frau aus dem Toggenburg hatte gefragt, ob sie jetzt bis siebzig arbeiten müsse, sie sei Pflegerin und habe schon jetzt Rückenschmerzen. Die Wache hatte ihr den Gesetzestext gezeigt, erklärt, was die Reform für ihren Jahrgang bedeutete, und dann gefragt, ob sie wissen wolle, wie man herausfinde, ob ein Video echt sei. Die Frau hatte ja gesagt. Am Ende des Gesprächs hatte sie geschrieben: «Danke. Jetzt bin ich wütend auf die, die das gemacht haben, nicht auf die Regierung.»
+
+Ein Mann aus Schaffhausen hatte geschrieben, das sei doch alles Propaganda, die Wache sei vom Staat bezahlt. Die Wache hatte ihm erklärt, wer sie finanziere, wer im Stiftungsrat sitze und wo man die Jahresrechnung finde. Dann hatte sie ihm angeboten, die Prüfung des Videos selbst nachzuvollziehen, mit einem frei verfügbaren Programm. Der Mann hatte nicht geantwortet. Aber er hatte die Seite mit dem Programm aufgerufen.
+
+Um neun Uhr sprach die Bundesrätin vor dem Bundeshaus mit der Presse. Sie erwähnte das Video nicht. Sie sagte, sie wolle etwas klarstellen, weil sie wisse, dass viele Menschen verunsichert seien: Die Reform, über die am Sonntag abgestimmt werde, verändere das Rentenalter nicht. Und sie werde, solange sie im Amt sei, keine Erhöhung auf siebzig vorschlagen. «Wenn Sie mir nicht glauben», sagte sie, «lesen Sie den Gesetzestext. Er ist zwölf Seiten lang. Ich habe ihn auch gelesen.»
+
+## Wer?
+
+Die Abstimmung am Sonntag wurde angenommen, mit 53,4 Prozent. Die Beteiligung lag bei 51 Prozent, höher als üblich. Nachbefragungen zeigten, dass etwa vierzig Prozent der Stimmenden die Videos gesehen hatten und dass fast drei Viertel von ihnen wussten, dass sie gefälscht waren.
+
+Wer die Videos gemacht hatte, wurde nie ganz geklärt. Die Spuren führten zu einer Gruppe von Konten, die von Servern in drei Ländern aus betrieben wurden und die vorher bei Wahlen in Rumänien und Moldawien aufgefallen waren. Der Nachrichtendienst des Bundes sprach in seinem Jahresbericht von einer «staatlich unterstützten Beeinflussungsoperation». Mehr sagte er nicht.
+
+Wichtiger als die Frage nach dem Wer war, was die Schweiz aus jener Woche lernte. Das Parlament verdoppelte das Budget der Prüfstelle, gegen den Widerstand derer, die sie für überflüssig hielten, und mit den Stimmen einiger, die sie 2030 noch bekämpft hatten. Die Schulen nahmen eine Lektion in den Lehrplan auf, in der Jugendliche selbst ein gefälschtes Video herstellten und dann lernten, es zu entlarven. Und die Bundeskanzlei begann, mit jedem Abstimmungsbüchlein einen Zugang zur Wache zu verschicken, als QR-Code auf der letzten Seite, mit dem Satz: «Fragen Sie, bis Sie keine Fragen mehr haben.»
+
+---
+
+Rahel Zürcher leitet die Prüfstelle nicht mehr. Sie unterrichtet heute an der Universität St. Gallen und schreibt an einem Buch über die Abstimmung von 2032. Als Lea sie dort besuchte, in einem Büro voller Bücher und mit Blick auf den Bodensee, fragte Lea, ob die Wache die Demokratie gerettet habe.
+
+Rahel lachte. «Nein. Die Demokratie haben die Leute gerettet, die nachts um zwei eine Frage gestellt haben, statt das Video weiterzuschicken. Die Wache hat ihnen nur jemanden gegeben, den sie fragen konnten, ohne sich dumm vorzukommen.»
+
+Sie zögerte. «Wissen Sie, was mir damals am meisten Angst gemacht hat? Nicht die Fälschung. Die war gut, aber man konnte sie finden. Was mir Angst gemacht hat, war der Gedanke, dass irgendwann jemand kommt und sagt: Dann lassen wir die Maschine doch gleich entscheiden, was wahr ist, und löschen den Rest. Das wäre der Moment gewesen, in dem wir verloren hätten. Nicht gegen die Fälscher. Gegen uns selbst.»
+
+> !Stand heute
+> Die Schweiz stimmt auf Bundesebene in der Regel viermal im Jahr über Vorlagen ab; der Bundesrat verschickt dazu die Erläuterungen, das «Abstimmungsbüchlein». Täuschend echte Fälschungen von Stimmen und Videos («Deepfakes») lassen sich heute mit frei verfügbarer Software erzeugen.
+> Forschende und Medien arbeiten an Verfahren, mit denen sich die Herkunft von Bildern und Videos prüfen lässt, etwa mit digitalen Herkunftsnachweisen nach dem C2PA-Standard. Die Forschung zeigt, dass Korrekturen besser wirken, wenn sie erklären, wie man selbst prüfen kann.

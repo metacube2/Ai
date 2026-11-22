@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>AISCOM – Testversionen</title>
+  <link>https://www.aiscom.ch/tester/</link>
+  <atom:link href="https://www.aiscom.ch/tester/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>Neue Testfassungen für Mac, iPhone/iPad, Android und Windows.</description>
+  <language>de-ch</language>
+  <lastBuildDate>Fri, 20 Nov 2026 22:23:23 +0000</lastBuildDate>
+  <item>
+    <title>EGLO AwoX Bridge 0.2 (Build 2) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">eglo-awox-bridge-mac-0.2-2</guid>
+    <pubDate>Fri, 20 Nov 2026 23:10:59 +0100</pubDate>
+    <description>Steuert AwoX- und EGLO-connect-Bluetooth-Lampen über den Mac und meldet sie per MQTT an Home Assistant. Mit Bluetooth-Live-Ansicht (Spektrum, Wasserfall, Scope).</description>
+  </item>
+  <item>
+    <title>Agenten-Monitor 0.1 (Build 9) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">agentmonitor-mac-0.1-9</guid>
+    <pubDate>Fri, 20 Nov 2026 23:09:56 +0100</pubDate>
+    <description>Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.</description>
+  </item>
+  <item>
+    <title>Vitalbrücke 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">vitalbruecke-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:55:03 +0100</pubDate>
+    <description>Führt Daten der Huawei Watch D2 (Export) und aus Apple Health zusammen: Dubletten erkennen, Quelle je Datentyp wählen, konsolidiert exportieren.</description>
+  </item>
+  <item>
+    <title>Spiegelwerk 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">spiegelwerk-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:54:01 +0100</pubDate>
+    <description>Kopierprogramm mit Aufträgen, Stopp und späterem Weitermachen, nur Neues kopieren; eigener Auftragstyp für den Proxmox Backup Server.</description>
+  </item>
+  <item>
+    <title>Funkblick 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">funkblick-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:53:08 +0100</pubDate>
+    <description>Macht WLAN und Bluetooth auf dem Funkweg sichtbar: Scope mit Spektrum und Wasserfall, dazu die Daten des Bluetooth-Audiowegs und des WLANs.</description>
+  </item>
+  <item>
+    <title>Agenten-Monitor 0.1 (Build 7) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">agentmonitor-mac-0.1-7</guid>
+    <pubDate>Wed, 18 Nov 2026 21:52:31 +0100</pubDate>
+    <description>Zeigt live in der Menüleiste, was Claude Code gerade tut: Sitzungen, Aktionen, Unteragenten, Planverbrauch und Tokens von heute. Hooks-Skript liegt im DMG.</description>
+  </item>
+  <item>
+    <title>Zeitregler 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">zeitregler-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:50:59 +0100</pubDate>
+    <description>Texteditor mit Zeit-Schieberegler: Jede Änderung bleibt als Version erhalten und lässt sich in Echtzeit zurückspulen und wiederherstellen.</description>
+  </item>
+  <item>
+    <title>Painbrush 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">painbrush-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:49:40 +0100</pubDate>
+    <description>Malprogramm im Stil der klassischen Werkzeugkasten-Programme der frühen Neunziger. Pinsel und Farbrolle blubbern, die Spraydose zischt.</description>
+  </item>
+  <item>
+    <title>Für Dich 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">fuerdich-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:48:42 +0100</pubDate>
+    <description>Fluxus-Installation: ein Feed, der die Form des schnellen Wischens übernimmt und den Inhalt entfernt. Das Wischen selbst wird zum Stück.</description>
+  </item>
+  <item>
+    <title>MainBeam 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">mainbeam-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:47:57 +0100</pubDate>
+    <description>Hält einen AirPlay-Bildschirm (z. B. einen Beamer) automatisch verbunden, damit er nach Aufwachen und Neustart Hauptbildschirm bleibt.</description>
+  </item>
+  <item>
+    <title>Tabwache 0.1 (Build 1) für macOS – Alpha</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">tabwache-mac-0.1-1</guid>
+    <pubDate>Wed, 18 Nov 2026 21:47:19 +0100</pubDate>
+    <description>Findet Firefox-Tabs, die dauerhaft Rechenleistung fressen, meldet sie und beendet auf Wunsch nur diesen einen Tab.</description>
+  </item>
+  <item>
+    <title>FT991A Remote für Windows 1.0.1</title>
+    <link>https://www.aiscom.ch/tester/#windows</link>
+    <guid isPermaLink="false">ft991a-remote-win-1.0.1</guid>
+    <pubDate>Wed, 18 Nov 2026 09:42:24 +0100</pubDate>
+    <description>Die neue Windows-App (Tauri): FT-991A per USB-CAT fernsteuern, Modern- und Frontpanel-Ansicht, QSO-Log, CAT-Konsole, Speicher mit Scan, Relais-Schnellkonfiguration, Papagei über USB-Audio, Infobereich, Deutsch und Englisch. Klein (3 MB), am echten Gerät noch ungetestet.</description>
+  </item>
+  <item>
+    <title>MacYaesu 1.1 (Build 5) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">macyaesu-mac-1.1-5</guid>
+    <pubDate>Wed, 18 Nov 2026 09:39:53 +0100</pubDate>
+    <description>Steuerung des Yaesu FT-991A per USB vom Mac: Frequenz, Modus, PTT, Speicher, Logbuch und Audio.</description>
+  </item>
+  <item>
+    <title>FT991A Remote für Windows 1.0.0</title>
+    <link>https://www.aiscom.ch/tester/#windows</link>
+    <guid isPermaLink="false">ft991a-remote-win-1.0.0</guid>
+    <pubDate>Tue, 17 Nov 2026 23:24:13 +0100</pubDate>
+    <description>Die neue Windows-App (Tauri): FT-991A per USB-CAT fernsteuern, Modern- und Frontpanel-Ansicht, QSO-Log, CAT-Konsole, Speicher mit Scan, Relais-Schnellkonfiguration, Papagei über USB-Audio, Infobereich, Deutsch und Englisch. Klein (3 MB), am echten Gerät noch ungetestet.</description>
+  </item>
+  <item>
+    <title>MacYaesu für Windows 1.1.2</title>
+    <link>https://www.aiscom.ch/tester/#windows</link>
+    <guid isPermaLink="false">macyaesu-windows-1.1.2</guid>
+    <pubDate>Tue, 17 Nov 2026 13:25:01 +0100</pubDate>
+    <description>FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. Übergangsfassung, bis die neue Windows-App fertig ist.</description>
+  </item>
+  <item>
+    <title>MacYaesu für Windows 1.1.1</title>
+    <link>https://www.aiscom.ch/tester/#windows</link>
+    <guid isPermaLink="false">macyaesu-windows-1.1.1</guid>
+    <pubDate>Tue, 17 Nov 2026 13:12:49 +0100</pubDate>
+    <description>FT-991A per USB-CAT fernsteuern unter Windows: VFO A/B, Betriebsarten, Pegel, S-/PO-/SWR-Meter, PTT, Modern- und Frontplatten-Ansicht, 100 Speicher mit Scan, QSO-Log als CSV, Deutsch und Englisch. Übergangsfassung, bis die neue Windows-App fertig ist.</description>
+  </item>
+  <item>
+    <title>NetBottleneck 1.0 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">netbottleneck-mac-1.0-2</guid>
+    <pubDate>Sun, 15 Nov 2026 16:27:00 +0100</pubDate>
+    <description>Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D, während der Messung live mit Spuren für Messung, anderen Verkehr und TCP/UDP/ICMP. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.</description>
+  </item>
+  <item>
+    <title>NetBottleneck 1.0 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">netbottleneck-mac-1.0-1</guid>
+    <pubDate>Sun, 15 Nov 2026 14:34:17 +0100</pubDate>
+    <description>Findet, wo die Strecke zu NAS, Server oder Büro bremst: Karte/WLAN, Router, Anschlüsse, VPN, Prozessor, ein gegen vier Ströme – als Rohrkette in 2D und 3D. Gegenstelle: zweiter Mac oder der beiliegende Helper für Windows/Linux. Deutsch, Englisch.</description>
+  </item>
+  <item>
+    <title>TapLoop 1.0 (Build 44) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-1.0-44</guid>
+    <pubDate>Thu, 05 Nov 2026 23:10:18 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller, neu mit Video-Teller in der Mitte: aussen Filmstreifen, innen der Titel, getrennt scratchbar, Kamera oder Videodatei, 97 Bildeffekte. Klick nimmt auf und spielt im Loop, Plattenkiste, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
+  <item>
+    <title>Bergbahnchronik 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">bergbahnchronik-ios-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 17:38:48 +0100</pubDate>
+    <description>Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Synthchronik 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">synthchronik-ios-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 17:37:37 +0100</pubDate>
+    <description>Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Lautsprecherchronik 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">lautsprecherchronik-ios-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 17:36:23 +0100</pubDate>
+    <description>58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Bäderchronik 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">baederchronik-ios-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 17:35:08 +0100</pubDate>
+    <description>Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. Auf iPhone, iPad und iPhone Duo. 0 von 1 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Bandchronik 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">bandchronik-mac-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 17:31:40 +0100</pubDate>
+    <description>350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, 13 Sprachen.</description>
+  </item>
+  <item>
+    <title>Bergbahnchronik 1.0 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">bergbahnchronik-mac-1.0-2</guid>
+    <pubDate>Sun, 01 Nov 2026 17:29:23 +0100</pubDate>
+    <description>Schweizer Zahnrad-, Stand- und Luftseilbahnen, Passstrassen und Alpentunnel als Zeitleiste. 13 Sprachen.</description>
+  </item>
+  <item>
+    <title>Synthchronik 1.0 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">synthchronik-mac-1.0-2</guid>
+    <pubDate>Sun, 01 Nov 2026 17:28:30 +0100</pubDate>
+    <description>Synthesizer seit 1900: 49 Hersteller und Instrumente vom Telharmonium bis Eurorack als Zeitleiste. 13 Sprachen.</description>
+  </item>
+  <item>
+    <title>Lautsprecherchronik 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">lautsprecherchronik-mac-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 17:27:47 +0100</pubDate>
+    <description>58 Lautsprecher-Hersteller von Western Electric bis Genelec: Erfindungen, Kultmodelle, Studios, Bühnen. 13 Sprachen.</description>
+  </item>
+  <item>
+    <title>Bäderchronik 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">baederchronik-mac-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 17:26:57 +0100</pubDate>
+    <description>Schweizer Frei-, Hallen-, See-, Fluss- und Thermalbäder seit 1900 und historische Bäder Europas als Zeitleiste. 13 Sprachen.</description>
+  </item>
+  <item>
+    <title>Bandchronik 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">bandchronik-ios-0.1-1</guid>
+    <pubDate>Sun, 01 Nov 2026 15:50:31 +0100</pubDate>
+    <description>350 Bands mit über 5700 Meilensteinen als Zeitleiste: Pop, Punk, K-Pop, Goa, Free Jazz. Fotos von Wikimedia Commons, Auf iPhone, iPad und iPhone Duo. 1 von 1 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>TapLoop 1.0 (Build 41) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">taploop-ios-1.0-41</guid>
+    <pubDate>Tue, 27 Oct 2026 21:12:14 +0100</pubDate>
+    <description>Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 5 von 5 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>ScreenCam 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">screencam-mac-0.1-1</guid>
+    <pubDate>Tue, 27 Oct 2026 20:37:13 +0100</pubDate>
+    <description>Bildschirm aufnehmen mit Systemton und Mikrofon, Bildschirmfotos mit Editor (Pfeil, Rahmen, Text, Verpixeln, Zuschneiden) und Texterkennung.</description>
+  </item>
+  <item>
+    <title>TapLoop 1.0 (Build 41) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-1.0-41</guid>
+    <pubDate>Tue, 27 Oct 2026 20:26:01 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
+  <item>
+    <title>Makrowerk 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">makrowerk-ios-0.1-1</guid>
+    <pubDate>Tue, 27 Oct 2026 10:38:11 +0100</pubDate>
+    <description>Fokusserie auf dem iPhone aufnehmen (Linse Schritt für Schritt, Fokus-Peaking) und stapeln; quer und aufgeklappt wie am Mac. 5 von 5 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Makrowerk 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">makrowerk-mac-0.1-1</guid>
+    <pubDate>Tue, 27 Oct 2026 10:35:46 +0100</pubDate>
+    <description>Fokus-Stacking für Supermakro: Serie laden (auch RAW), ausrichten, stapeln, vorher/nachher vergleichen, Tiefenkarte, Lückenbericht, Bewegungsschutz, Retusche-Pinsel. Deutsch, Englisch.</description>
+  </item>
+  <item>
+    <title>TapLoop 1.0 (Build 39) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">taploop-ios-1.0-39</guid>
+    <pubDate>Tue, 27 Oct 2026 08:09:19 +0100</pubDate>
+    <description>Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 5 von 5 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>TapLoop 1.0 (Build 38) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-1.0-38</guid>
+    <pubDate>Mon, 26 Oct 2026 13:53:49 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
+  <item>
+    <title>TapLoop 1.0 (Build 36) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">taploop-ios-1.0-36</guid>
+    <pubDate>Mon, 26 Oct 2026 11:47:55 +0100</pubDate>
+    <description>Vier Plattenteller zum Loopen und Scratchen auf dem iPhone, aufgeklappt zwei links und zwei rechts. 3 von 3 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>TapLoop 0.1 (Build 34) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-0.1-34</guid>
+    <pubDate>Mon, 26 Oct 2026 11:15:10 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
+  <item>
+    <title>TapLoop 0.1 (Build 29) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-0.1-29</guid>
+    <pubDate>Mon, 26 Oct 2026 09:09:07 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
+  <item>
+    <title>TapLoop 0.1 (Build 28) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">taploop-mac-0.1-28</guid>
+    <pubDate>Mon, 26 Oct 2026 08:47:36 +0100</pubDate>
+    <description>Vier Schleifenspieler als Plattenteller: Klick nimmt auf und spielt im Loop, Wellenform oder Spektrum im Ring, Schnalzen setzt das Tempo, Metronom, je Spur Lautstärke und Delay oder Hall.</description>
+  </item>
+  <item>
+    <title>Kamera-Import 1.0 (Build 1) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">kamera-import-android-1.0-1</guid>
+    <pubDate>Sat, 24 Oct 2026 22:46:23 +0200</pubDate>
+    <description>Fotos von der Kamera per USB-Kabel (OTG) oder aus einem Ordner holen, nur Fehlendes, Ablage nach Typ und Tag, Ziel Ordner oder SFTP. Sechs Sprachen. Echte Kameras am Handy noch ungetestet.</description>
+  </item>
+  <item>
+    <title>Antennen-Studio 1.0 (Build 1) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">antennen-studio-android-1.0-1</guid>
+    <pubDate>Sat, 24 Oct 2026 21:52:51 +0200</pubDate>
+    <description>Antennen mit NEC-2 simulieren: 3D-Modell, Richtdiagramme, SWR, Smith-Diagramm, Optimierer, Live-Regler. Rechenkern nec2c (GPLv3) wie auf Mac und iPhone, Ergebnisse zahlengleich.</description>
+  </item>
+  <item>
+    <title>Stretcher 0.2 (Build 1) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">stretcher-android-0.2-1</guid>
+    <pubDate>Sat, 24 Oct 2026 19:52:21 +0200</pubDate>
+    <description>Klänge extrem dehnen (Paulstretch, Phase-Vocoder, Sinusmodell) und die Verfahren vergleichen, auf Android. Rechnet gleich wie die Mac-Fassung; je Lauf bis 30 s, auf kleinen Geräten 15 s.</description>
+  </item>
+  <item>
+    <title>Mietprüfer 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">mietpruefer-mac-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 17:16:25 +0200</pubDate>
+    <description>Mietzinssenkung, Mieterhöhung und Nebenkosten nach Schweizer Mietrecht nachrechnen, Brief als PDF. Deutsch, Französisch, Italienisch, Englisch.</description>
+  </item>
+  <item>
+    <title>Mietprüfer 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">mietpruefer-ios-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 17:14:57 +0200</pubDate>
+    <description>Schweizer Mietrecht auf dem iPhone: Senkung, Erhöhung, Nebenkosten prüfen und Brief erstellen. 12 von 12 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Fotogedächtnis 0.1 (Build 1) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">fotogedaechtnis-mac-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 16:23:41 +0200</pubDate>
+    <description>Fotoarchiv mit KI-Suche ohne Cloud: „Katze auf dem Sofa 2019“. Alles bleibt auf dem Gerät. Deutsch, Englisch, Französisch.</description>
+  </item>
+  <item>
+    <title>Obhut 0.1 (Build 2) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">obhut-mac-0.1-2</guid>
+    <pubDate>Sat, 24 Oct 2026 16:11:19 +0200</pubDate>
+    <description>Familien koordinieren die Betreuung alternder Eltern: Termine, Medikamente, Vollmachten, Arztberichte, Notfallblatt. Deutsch, Englisch, Französisch.</description>
+  </item>
+  <item>
+    <title>Kamera-Import 1.0 (Build 9) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">kamera-import-mac-1.0-9</guid>
+    <pubDate>Sat, 24 Oct 2026 16:09:51 +0200</pubDate>
+    <description>Lädt von der per USB angeschlossenen Kamera nur die Fotos und Videos, die im Zielordner noch fehlen – auf den Mac oder per SFTP.</description>
+  </item>
+  <item>
+    <title>Aurora Studio 1.0 (Build 4) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">aurora-studio-mac-1.0-4</guid>
+    <pubDate>Sat, 24 Oct 2026 16:08:58 +0200</pubDate>
+    <description>Live-Bildmischer, Tonpult, Sendeziele, Aufnahme, Visuals und Shorts für den Livestream auf dem Mac.</description>
+  </item>
+  <item>
+    <title>Antennen-Studio 1.0 (Build 8) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">antennen-studio-mac-1.0-8</guid>
+    <pubDate>Sat, 24 Oct 2026 16:07:46 +0200</pubDate>
+    <description>NEC-Antennensimulation mit 3D-Ansicht, Strahlungsdiagramm, Frequenzgang und Optimierer (Kerne nec2c und momwire).</description>
+  </item>
+  <item>
+    <title>Obhut 0.1 (Build 1) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">obhut-android-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 16:06:19 +0200</pubDate>
+    <description>Betreuung alternder Eltern in der Familie koordinieren, auf Android. Gleiches Datenformat wie Mac und iPhone.</description>
+  </item>
+  <item>
+    <title>Stretcher 0.2 (Build 5) für macOS</title>
+    <link>https://www.aiscom.ch/tester/#mac</link>
+    <guid isPermaLink="false">stretcher-mac-0.2-5</guid>
+    <pubDate>Sat, 24 Oct 2026 16:05:59 +0200</pubDate>
+    <description>Extreme Zeitdehnung von Audio (Faktor 1 bis 1000) mit Sinusmodell, Paulstretch und Phase-Vocoder, Vergleich mit Kennzahlen.</description>
+  </item>
+  <item>
+    <title>Fotogedächtnis 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">fotogedaechtnis-ios-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 15:56:13 +0200</pubDate>
+    <description>Fotoarchiv mit lokaler KI-Suche auf dem iPhone, mit Apple Intelligence, wo verfügbar. 10 von 10 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>cAurora 0.4.5 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">caurora-ios-0.4.5-1</guid>
+    <pubDate>Sat, 24 Oct 2026 15:38:48 +0200</pubDate>
+    <description>Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse und Wetter auf dem iPhone. Sechs Sprachen. 23 von 24 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>E-Book „Die Schweiz denkt mit“</title>
+    <link>https://www.aiscom.ch/tester/#buch</link>
+    <guid isPermaLink="false">ki-buch-epub-020fcd5138c9</guid>
+    <pubDate>Sat, 24 Oct 2026 15:00:50 +0200</pubDate>
+    <description>Zukunftsgeschichten über künstliche Intelligenz in der Schweiz, 2027–2045: eine Reporterin reist durchs Land, jedes Kapitel ein anderes Jahr. Gut 100 Seiten mit Bildern, am Ende jedes Kapitels „Stand heute“.</description>
+  </item>
+  <item>
+    <title>Obhut 0.1 (Build 1) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">obhut-ios-0.1-1</guid>
+    <pubDate>Sat, 24 Oct 2026 14:32:39 +0200</pubDate>
+    <description>Betreuung alternder Eltern in der Familie koordinieren, auf dem iPhone. 11 von 11 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Stretcher 0.2 (Build 2) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">stretcher-ios-0.2-2</guid>
+    <pubDate>Sat, 24 Oct 2026 14:26:54 +0200</pubDate>
+    <description>Extreme Zeitdehnung von Audio auf dem iPhone, drei Verfahren im Vergleich, eingebaute Beispielklänge. 10 von 10 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>Antennen-Studio 1.0 (Build 7) für iPhone/iPad</title>
+    <link>https://www.aiscom.ch/tester/#ios</link>
+    <guid isPermaLink="false">antennen-studio-ios-1.0-7</guid>
+    <pubDate>Sat, 24 Oct 2026 14:20:17 +0200</pubDate>
+    <description>NEC-Antennensimulation auf dem iPhone: 3D, Diagramme, Regler, Frequenzgang, Optimierer (nec2c eingebaut). 17 von 17 Klicktests bestanden. Installation über TestFlight.</description>
+  </item>
+  <item>
+    <title>cAurora 0.4.5 (Build 10) für Android</title>
+    <link>https://www.aiscom.ch/tester/#android</link>
+    <guid isPermaLink="false">caurora-android-0.4.5-10</guid>
+    <pubDate>Fri, 09 Oct 2026 23:41:05 +0200</pubDate>
+    <description>Livebild der Aurora-Kamera Oberdürnten, Zeitraffer, Ereignisse, Widget. Sechs Sprachen.</description>
+  </item>
+</channel>
+</rss>

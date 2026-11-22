@@ -7,6 +7,7 @@ Handhabt die Kommunikation mit der Paperless REST-API inkl. Paginierung und Cach
 import hashlib
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Union
@@ -87,6 +88,9 @@ class PaperlessClient:
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         })
+        host_header = os.environ.get('PAPERLESS_HOST_HEADER')
+        if host_header:
+            session.headers.update({'Host': host_header})
 
         return session
 
@@ -169,6 +173,46 @@ class PaperlessClient:
 
         except requests.exceptions.RequestException as e:
             raise PaperlessAPIError(f"Request-Fehler: {e}")
+
+    def create_custom_field(self, name: str, data_type: str, extra_data: Optional[dict] = None) -> dict:
+        """Creates a Paperless custom field."""
+        payload = {
+            'name': name,
+            'data_type': data_type,
+            'extra_data': extra_data or {},
+        }
+        field = self._request('POST', self.ENDPOINTS['custom_fields'], data=payload, use_cache=False)
+        self._custom_fields_cache = None
+        return field
+
+    def ensure_custom_field(self, name: str, data_type: str, extra_data: Optional[dict] = None) -> dict:
+        """Finds or creates a custom field by name."""
+        existing = self.get_custom_field_by_name(name)
+        if existing:
+            return existing
+        return self.create_custom_field(name, data_type, extra_data)
+
+    def update_document_custom_field(self, document: dict, field_id: int, value: Any) -> dict:
+        """Updates a single custom field on a document without dropping other fields."""
+        endpoint = f"{self.ENDPOINTS['documents']}{document['id']}/"
+        custom_fields = list(document.get('custom_fields') or [])
+        updated = False
+
+        for item in custom_fields:
+            if item.get('field') == field_id:
+                item['value'] = value
+                updated = True
+                break
+
+        if not updated:
+            custom_fields.append({'field': field_id, 'value': value})
+
+        return self._request(
+            'PATCH',
+            endpoint,
+            data={'custom_fields': custom_fields},
+            use_cache=False,
+        )
 
     def _get_paginated(
         self,

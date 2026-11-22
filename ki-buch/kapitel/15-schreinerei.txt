@@ -1,0 +1,60 @@
+# Zwölf Leute und eine Offerte
+@ Appenzell · März 2031
+
+[bild]
+
+Die Schreinerei Fässler in Appenzell hatte zwölf Angestellte, zwei Lernende, eine Werkhalle am Rand des Dorfes mit Blick auf den Alpstein und ein Problem, das sie mit Zehntausenden anderen kleinen Firmen in der Schweiz teilte: Sie ertrank in Papier.
+
+Ruedi Fässler, der Chef, sechsundfünfzig, war Schreinermeister in vierter Generation. Er konnte aus einem Stamm Bergahorn einen Tisch machen, an dem eine Familie hundert Jahre lang essen würde. Er konnte eine Küche planen, die in eine Bauernstube aus dem achtzehnten Jahrhundert passte, ohne dass ein Balken bewegt werden musste. Was er nicht konnte, war eine Offerte schreiben, ohne dabei zu fluchen.
+
+Eine Offerte für eine Küche dauerte bei ihm zwei Abende. Masse aus den Notizen übertragen, Material berechnen, Beschläge aus Katalogen heraussuchen, Preise der Lieferanten vergleichen, Arbeitsstunden schätzen, Mehrwertsteuer, Rabatte, Liefertermine. Dann kamen die Ausschreibungen der Gemeinden und des Kantons, mit Formularen von zwanzig Seiten. Die Abrechnungen der Lohnbuchhaltung. Die Meldungen an die Ausgleichskasse, an die Unfallversicherung, an die Berufsbildung. Die Rechnungen, die nicht bezahlt wurden. Ruedi hatte ausgerechnet, dass er im Jahr 2029 etwa vierzig Prozent seiner Arbeitszeit am Schreibtisch verbracht hatte und sechzig in der Werkstatt. Als er die Schreinerei übernommen hatte, war es umgekehrt gewesen, und sein Vater hatte schon damals geklagt.
+
+## Die Angst
+
+Als die Gewerbeverbände ab 2028 begannen, für ihre Mitglieder KI-Assistenten anzubieten, war Ruedi dagegen. Nicht, weil er glaubte, sie funktionierten nicht. Sondern weil er glaubte, sie funktionierten zu gut.
+
+«Wenn die Maschine meine Offerten schreibt», sagte er an einer Versammlung des kantonalen Gewerbeverbands, «dann schreibt sie auch die Offerten der grossen Küchenfabriken in Deutschland. Und die haben mehr Daten, mehr Geld und mehr Maschinen. Dann sind wir in zehn Jahren alle weg.»
+
+Es gab Applaus. Viele im Saal dachten wie er. In den Zeitungen standen in jenen Jahren Zahlen über Arbeitsplätze, die verschwinden würden, und sie waren so gross, dass sie keiner glaubte und alle Angst machten. Buchhalterinnen, Sachbearbeiter, Übersetzer, Kundendienst. Und irgendwann, so hiess es, auch das Handwerk, wenn die Roboter gut genug würden.
+
+Es war seine Tochter, die ihn umstimmte. Martina Fässler war dreissig, Schreinerin wie er, mit einer Weiterbildung in Betriebswirtschaft, und sie hatte zwei Jahre in einer grossen Möbelfabrik in Vorarlberg gearbeitet, bevor sie nach Appenzell zurückkam. Sie sagte ihm etwas, das er zuerst nicht hören wollte.
+
+«Die grossen Fabriken haben das schon lange», sagte sie. «Seit Jahren. Mit eigenen Programmen, eigenen Leuten, eigenen Abteilungen. Das ist ja der Grund, warum sie so billig sind. Neu ist nicht, dass es das gibt. Neu ist, dass wir es auch haben können.»
+
+## Fünf Wochen
+
+Die Schreinerei Fässler bekam ihren Assistenten im März 2031, über den Gewerbeverband, für einen Monatsbeitrag, der weniger kostete als eine Lehrlingsstunde pro Tag. Er lief auf einem Rechner im Büro, nicht in der Cloud, weil Ruedi darauf bestand, dass die Daten seiner Kunden niemanden etwas angingen. Martina richtete ihn ein. Sie fütterte ihn mit allem, was die Schreinerei in zwanzig Jahren an Offerten, Rechnungen, Plänen und Notizen gesammelt hatte, eingescannt aus Ordnern, die im Estrich lagen.
+
+In der ersten Woche lernte der Assistent, wie die Schreinerei kalkulierte. Welche Hölzer sie kaufte, von welchen Sägereien. Wie lange Ruedi für eine Schublade brauchte und wie lange sein Geselle. Welche Kunden pünktlich zahlten und welche nicht.
+
+In der zweiten Woche schrieb er seine erste Offerte. Martina diktierte ihm am Abend die Notizen eines Kundenbesuchs ins Telefon, eine Küche in einem Bauernhaus in Gonten, mit Massen, Wünschen und einer Skizze auf einem Zettel, den sie fotografierte. Am nächsten Morgen lag die Offerte im Büro. Zwölf Seiten, mit Plänen, Materialliste, Preisen, Lieferterminen.
+
+Ruedi las sie mit dem Bleistift in der Hand, wie er alles las. Er fand vier Fehler. Der Assistent hatte für die Arbeitsplatte Eiche gerechnet statt Nussbaum, weil der Kunde «dunkles Holz» gesagt hatte. Er hatte die Montage im Dachgeschoss mit derselben Zeit gerechnet wie im Erdgeschoss, obwohl die Treppe in diesem Haus so eng war, dass jedes Teil von Hand getragen werden musste. Er hatte einen Rabatt für Stammkunden gegeben, obwohl der Kunde neu war. Und er hatte vergessen, dass im Appenzellerland im Juli die Hälfte der Leute auf der Alp war, inklusive Ruedis Geselle.
+
+Ruedi korrigierte die Fehler mit dem Bleistift. Martina diktierte die Korrekturen dem Assistenten und erklärte ihm, warum. Die nächste Offerte hatte zwei Fehler. Die übernächste einen.
+
+In der fünften Woche schrieb der Assistent eine Offerte für einen Einbauschrank in einem Altersheim in Herisau, und Ruedi fand keinen Fehler. Er las sie zweimal, legte den Bleistift hin und sagte nichts. Dann ging er in die Werkstatt und kam an diesem Tag nicht mehr ins Büro.
+
+## Was die Zeit tat
+
+Was in den folgenden Jahren in der Schreinerei Fässler geschah, wiederholte sich in Tausenden anderen kleinen Firmen im Land, und es überraschte die Ökonomen mehr als die Handwerker.
+
+Die Schreinerei verlor keine Arbeitsplätze. Sie gewann zwei. Ruedi verbrachte nicht mehr vierzig Prozent seiner Zeit am Schreibtisch, sondern zehn. Die Zeit, die er gewann, verbrachte er in der Werkstatt und bei Kunden. Er konnte mehr Offerten schreiben, also bekam er mehr Aufträge. Er konnte bei Ausschreibungen mitmachen, die er früher wegen des Papierkrams ausgelassen hatte, also bekam er grössere Aufträge. Und er konnte etwas tun, das er schon immer hatte tun wollen und für das er nie Zeit gehabt hatte: alte Möbel restaurieren. Appenzeller Bauernmöbel, bemalt, aus dem achtzehnten und neunzehnten Jahrhundert, die in Estrichen und Scheunen verfielen, weil niemand sie mehr reparieren konnte.
+
+Martina übernahm die Firma 2036. Sie hat heute achtzehn Angestellte, darunter zwei Restauratorinnen und vier Lernende. Der Assistent schreibt die Offerten, die Rechnungen, die Lohnabrechnungen, die Formulare für die Ausschreibungen und die Mahnungen, die er auf Appenzeller Art höflicher formuliert, als Ruedi es je getan hätte. Er plant die Zuschnitte, so dass weniger Holz verschwendet wird. Er bestellt Material, bevor es ausgeht. Er schlägt vor, welche Aufträge die Firma annehmen sollte und welche nicht, und Martina entscheidet.
+
+Was er nicht tut, ist schreinern. Es gibt in der Werkstatt zwei computergesteuerte Fräsen, die es schon 2020 gab, und einen Roboterarm, der Kanten schleift. Aber die Tische, die Küchen, die Schränke und die bemalten Truhen entstehen durch Menschen.
+
+---
+
+Die grossen Zahlen der Zwanzigerjahre über die verschwindenden Arbeitsplätze sind nicht eingetroffen, jedenfalls nicht so, wie sie vorhergesagt wurden. Es sind Berufe verschwunden, und andere sind entstanden. Es gab schwierige Jahre, vor allem in den Büros grosser Firmen, in Banken und Versicherungen, wo Tausende Stellen nicht mehr besetzt wurden, wenn jemand in Pension ging. Es gab Menschen, die mit fünfzig noch einmal einen Beruf lernen mussten, und nicht alle schafften es. Die Arbeitslosigkeit stieg in jenen Jahren nie über fünf Prozent, aber für die, die es traf, war das kein Trost.
+
+Und es gab eine Entwicklung, die kaum jemand vorhergesagt hatte: Die kleinen Firmen holten auf. Die Werkzeuge, die sich früher nur Konzerne leisten konnten, standen plötzlich jeder Schreinerei, jeder Bäckerei, jedem Malergeschäft zur Verfügung. Und weil kleine Firmen ohnehin den grössten Teil der Arbeitsplätze in der Schweiz stellten, war das, was ihnen half, das, was dem Land am meisten half.
+
+Ruedi Fässler ist heute einundsiebzig und kommt jeden Morgen in die Werkstatt. Er restauriert eine Truhe aus dem Jahr 1784, bemalt mit Blumen und einem Senn, der eine Kuh auf die Alp führt. Als Lea ihn im Juni 2045 besuchte, zeigte er ihr die Truhe und dann einen alten Ordner, den er aus dem Regal nahm.
+
+«Das sind meine Offerten von 2029», sagte er. «Ich habe sie aufbewahrt. Wenn ich mal schlechte Laune habe, schaue ich sie an.» Er blätterte. «Sehen Sie hier. Elf Uhr nachts, steht da. Mit Kaffeefleck.» Er klappte den Ordner zu. «Ich habe damals gedacht, die Maschine nimmt mir die Arbeit weg. Sie hat mir die Arbeit weggenommen, die ich nie machen wollte.»
+
+> !Stand heute
+> Kleine und mittlere Unternehmen mit weniger als 250 Beschäftigten machen über 99 Prozent der Firmen in der Schweiz aus und stellen rund zwei Drittel der Arbeitsplätze. Der administrative Aufwand gehört in Umfragen regelmässig zu ihren grössten Belastungen.
+> KI-Assistenten, die Offerten, Rechnungen und Korrespondenz entwerfen, sind heute in gängiger Bürosoftware verfügbar. Wie stark KI den Arbeitsmarkt verändern wird, ist unter Ökonominnen und Ökonomen umstritten; Studien kommen zu sehr unterschiedlichen Schätzungen.

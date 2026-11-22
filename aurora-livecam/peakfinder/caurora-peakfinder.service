@@ -1,0 +1,10 @@
+[Unit]
+Description=Peakfinder: Bildversatz der Kamera gegen die Kalibrierung messen
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/sbin/caurora-peakfinder-abgleich
+Nice=19
+IOSchedulingClass=idle
+TimeoutStartSec=60
