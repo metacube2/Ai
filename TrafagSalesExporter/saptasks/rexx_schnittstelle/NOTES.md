@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-23 (Abschnitt 20: Antwort Artjom, /v1/requests liefert alle Abwesenheiten auch ohne Workflow, sieben Schnittstellen mit IDs, Lohnarten-Endpunkt bis Ende 2026, SFTP laut Artjom durch Upgreat); davor 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -559,7 +559,7 @@ Geaenderte** (Sicherungen, Testabruf, Protokoll).
    Spaltensummen der Summen „angetreten“ und die Personalnummern vergleichen (Werkzeug, nicht von Hand). Weicht der Hub ab (z. B. nur
    Vorjahr oder laufender Monat), in Rexx beim Endpunkt einen Export-Filter setzen oder Artjom fragen.
 5. `"Enabled": true` in `appsettings.json`, committen, mit dem Deploy-Werkzeug deployen. Danach kommt die Gesamtdatei taeglich ab 05:30;
-   #777 bleibt Handexport, bis Artjom einen Weg nennt.
+   #777 bleibt Handexport, bis Artjom einen Weg nennt. *(Nachtrag 23.11.: Weg genannt, `/v1/requests`, Abschnitt 20.)*
 
 **Nachtrag 2026-11-19 12:20 (Auftrag Ingo „alles fertigmachen“):**
 - **Zeilen je Seite bei API-Benutzer #2 `/v1/employees` auf 100 gesetzt** (Rexx bietet nur 5/10/25/50/75/100; 500 aus Abschnitt 17
@@ -590,7 +590,7 @@ Auftrag Ingo „mach weiter, alles fertigmachen“. Ablauf:
   Militaer 528 gegen 496 h, Urlaubsanspruch 6'747,5 gegen 6'743,5, Urlaub Rest 861 gegen 1'027. Passt zu „01.01. bis heute“ plus 15 Tage.
 - **`a848f93`:** `HrKpi:RexxHub:Enabled = true`, `GesamtZeitraumGeprueft = true`, deployed 13:25. Tagesabruf ab 05:30; nach jedem Start
   rund 3 Minuten spaeter, wenn faellig. Die bisherige Handexport-Datei wird beim ersten Schreiben als `Hrcockpitgesamtdashboard.manuell.xlsx`
-  gesichert. **#777 bleibt Handexport** (`CaseEnabled = false`), Ingo klaert mit Artjom.
+  gesichert. **#777 bleibt Handexport** (`CaseEnabled = false`), Ingo klaert mit Artjom. *(Nachtrag 23.11.: Artjom nennt `/v1/requests`, auch fuer direkt gebuchte Abwesenheiten; noch nicht umgestellt, Abschnitt 20.)*
 - Offen: Verfallsdatum fuer Benutzer #2 (Entscheid Ingo), User #1 Freigaben `employees`/`time-management` durch Artjom sperren lassen.
 - **Erster Abruf 13:28:59** (Ereignisprotokoll HR „Rexx-Hub #775 geschrieben“): 395 Zeilen, 31 Spalten, 4 Seiten, 9,3 s, bisher 393 Zeilen,
   1 Doppelzeile entfernt. Handexport gesichert als `hrdata\Hrcockpitgesamtdashboard.manuell.xlsx`. Nachgezaehlt: 395 Zeilen, 0 doppelt,
@@ -621,7 +621,7 @@ nur per GUI; in P76 zusaetzlich AL11 sowie TEVEN/PA2001 (nur Anzahl, Datum, Kuer
 - Zaehlungen aus APQI/TBTCO sind Untergrenzen (erfolgreiche Mappen und alte Jobs werden geloescht).
 
 **Folge fuer die Migration auf den Hub:** Stammdaten ueber `/v1/employees` (Felder der Importdatei erweitern), Kommen/Gehen ueber
-`/v1/time-management/entries`, Absenzen ohne Endpunkt (Frage Artjom), Lohnarten SAP->Rexx unklar (`/v1/payments` nur lesen). Offen:
+`/v1/time-management/entries`, Absenzen ohne Endpunkt (Frage Artjom) *(ueberholt 23.11.: `/v1/requests`, Abschnitt 20)*, Lohnarten SAP->Rexx unklar (`/v1/payments` nur lesen). Offen:
 wer die `root`-Ablage betreibt (Basis/IT), welche 8 Schnittstellen Rexx verrechnet (Artjom), Job vom Berater-Konto loesen, Sonja wegen
 Absenz-Import seit Juli ansprechen, Zweck der Ordner Lohnabrechnung/Lohnausweis.
 
@@ -639,3 +639,42 @@ Absenz-Import seit Juli ansprechen, Zweck der Ordner Lohnabrechnung/Lohnausweis.
   nicht. Frage an Artjom: welches Rexx-Modul liest die Lohnarten-Datei, und gibt es dafuer einen Hub-Weg.
 - Hinweis: Beim PATCH-Endpunkt von Benutzer #2 steht „Zuletzt bearbeitet 19.11.26 14:10, Ingo Kohler“ (Parameter-Mapping employeeId =
   ID Personal); von Claude nicht geaendert, Freigegeben = Nein.
+
+## 20. Antwort Artjom (Rexx) auf die Mail vom 19.11. (eingegangen 23.11., von Ingo in den Chat kopiert)
+
+Ingo hat die Mail mit vier Fragen am 19.11. um 14:23 gesendet (Entwurf aus Abschnitt 19). Artjom Yahno (Consultant, rexx systems
+Schweiz AG) antwortet:
+
+1. **Abwesenheiten:** Im Hub stehen **saemtliche Abwesenheiten unter `/v1/requests`**, auch solche, die HR direkt bucht und die keinen
+   Workflow durchlaufen; Rexx legt auch diese als Request ab. Damit hat #777 (Abwesenheiten je Fall) einen Hub-Weg. *Ueberholt damit:*
+   „#777 hat keinen Hub-Endpunkt“ (Abschnitte 17, 18) und die Grenze „direkt gebuchte Krankheit ohne Datum“ (`docs/HR_KPI.md` 8.14),
+   soweit `/v1/requests` die Faelle mit Datum liefert. **Noch nicht geprueft:** Felder von `/v1/requests` (Art, Status, Von/Bis, Tage,
+   Tagessoll, Buchungs-ID wie in #777), Freigabe fuer API-Benutzer #2, Menge und Zeitraum gegen den Handexport #777.
+2. **Bestehende Schnittstellen laut Rexx (sieben, nicht acht):**
+
+   | ID | Name bei Rexx | Zuordnung (Abschnitt 19) |
+   | --- | --- | --- |
+   | 3 | Kaba Import Zeit | Stempeluhrtransfer dormakaba -> Rexx; bleibt (Entscheid 10.11., Abschnitt 12) |
+   | 23 | Import Lohnabrechnungen | vermutlich Ordner `/usr/sap/rexx/Lohnabrechnung` (leer, 26.10.2026); Sender in SAP unbekannt |
+   | 39 | SAP Gehaltsdaten Import | Lohnarten SAP -> Rexx, Job `LOHNDATEN NACH REXX` unter `EXPRIS_SIWY`, Ordner `Benefits_Gehaltsdaten` |
+   | 117 | SAP Export Stammdaten | Stammdaten Rexx -> SAP (`Z_HR_PA_REXX`) -> Hub `/v1/employees` |
+   | 118 | SAP Export Zeit | Zeitereignisse Rexx -> SAP (`Z_HR_REXX_PA_ZE`) -> Hub `/v1/time-management/entries` |
+   | 119 | SAP Export Abwesenheiten | Absenzen Rexx -> SAP (`Z_HR_REXX_PA_ABS`) -> Hub `/v1/requests` |
+   | 121 | Import Lohnausweis | vermutlich Ordner `/usr/sap/rexx/Lohnausweis` (leer, 02.02.2026); Sender in SAP unbekannt |
+
+   Das Angebot AG36071 nannte acht verrechnete Schnittstellen (11'200 EUR/Jahr, Abschnitt 11); Artjom sieht sieben. **Offen:** ob
+   Trafag fuer acht oder sieben zahlt (Rechnung bzw. Riccardo Schwick). Die Zuordnung der Spalte rechts ist Ableitung aus Namen und
+   Ordnern, nicht von Rexx bestaetigt; wer 23 und 121 befuellt (Lohnabrechnungen und Lohnausweise, vermutlich PDF aus der Lohnabrechnung),
+   ist offen.
+3. **Lohnarten SAP -> Rexx:** Im Hub gibt es dafuer noch keine Schnittstelle; sie soll **voraussichtlich bis Ende 2026** kommen. Bis dahin
+   bleibt Schnittstelle 39 mit dem Job unter `EXPRIS_SIWY`. Die Frage, welches Rexx-Modul die Datei liest und ob der Monatsverlauf noetig
+   ist, hat Artjom nicht beantwortet.
+4. **Dateiuebertragung:** Die Dateien legt laut Artjom **der Provider auf dem SFTP-Server** ab, „meines Wissens Upgreat“. Das passt zu
+   den `root`-Dateien mit Zeit 23:50 (Abschnitt 19), **widerspricht aber dem Upgreat-Ticket #12699584** („Unable to solve“, Upgreat
+   betreut Rexx nicht, Abschnitt 11). Bei Upgreat bzw. Basis/IT klaeren, welcher Transfer laeuft und was nach der Umstellung abgestellt
+   wird.
+
+**Folge fuer die Migration:** 117, 118 und 119 lassen sich ueber den Hub abloesen (employees, time-management/entries, requests); 3 bleibt;
+39 wartet auf den Hub-Endpunkt Ende Jahr; 23 und 121 sind zu klaeren. **Naechster Schritt (Entscheid Ingo):** `/v1/requests` fuer
+Benutzer #2 freigeben, Felder und Mengen gegen #777 pruefen, dann den Fall-Abruf im Code darauf umstellen (heute `CaseEnabled = false`).
+Nichts davon ist am 23.11. umgesetzt; nur Doku.

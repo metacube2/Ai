@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-19 13:30 (8.19 Nachtrag: Rexx Hub eingeschaltet `a848f93`); davor 2026-11-19 (8.19: Rexx Hub, #775 ueber GET v1/employees, deployed `b7f52a9`, Schalter aus; #777 ohne Hub-Endpunkt); davor 2026-11-17 (8.17 Nachtrag: Rexx Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Zugang bei Rexx angefragt); davor 2026-11-12 (Doku-Pruefung: Produktivstand `e956183` mit vorbereitetem Rexx-Hub-Abruf, Schalter aus, 8.18; Nachtrag Hub nicht bestellt, 8.17; ueberholte Rexx-Grenze in 8.7 und beschaedigte Pfade in 8.3, 8.5, 8.6 markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-23 (8.20: Antwort Rexx, /v1/requests liefert alle Abwesenheiten, sieben Schnittstellen, Lohnarten-Endpunkt bis Ende 2026; 8.19 „#777 ohne Hub-Endpunkt“ als ueberholt markiert); davor 2026-11-19 13:30 (8.19 Nachtrag: Rexx Hub eingeschaltet `a848f93`); davor 2026-11-19 (8.19: Rexx Hub, #775 ueber GET v1/employees, deployed `b7f52a9`, Schalter aus; #777 ohne Hub-Endpunkt); davor 2026-11-17 (8.17 Nachtrag: Rexx Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Zugang bei Rexx angefragt); davor 2026-11-12 (Doku-Pruefung: Produktivstand `e956183` mit vorbereitetem Rexx-Hub-Abruf, Schalter aus, 8.18; Nachtrag Hub nicht bestellt, 8.17; ueberholte Rexx-Grenze in 8.7 und beschaedigte Pfade in 8.3, 8.5, 8.6 markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -726,10 +726,24 @@ laesst `ReadRows` die ganze Datei verwerfen, und Text-Zahlen werden nach der Ser
 Rexx-Data-Warehouse-Abfragen sind Kennzahlen je Monat; `datawarehouse/775` gibt 404, damit war die Annahme von 8.18 falsch. #775 ist im Hub
 als Export-Felder von `GET /v1/employees` beim eigenen API-Benutzer #2 „BI-Dashboard HR-Cockpit“ nachgebaut (alle 25 Spalten plus
 Vorgesetzte, Test 200 mit 396 Personen, 04.11. hatte #775 393 Zeilen). Der Abruf ist umgestellt und seit 11:48 deployed (`b7f52a9`),
-`HrKpi:RexxHub:Enabled` bleibt aus. **#777 (Abwesenheiten je Fall) hat keinen Hub-Endpunkt** und bleibt Handexport (`CaseEnabled = false`),
+`HrKpi:RexxHub:Enabled` bleibt aus. **#777 (Abwesenheiten je Fall) hat keinen Hub-Endpunkt** *(ueberholt am 2026-11-23: laut Artjom liefert `/v1/requests` alle Abwesenheiten, auch direkt gebuchte; noch nicht umgestellt, 8.20)* und bleibt Handexport (`CaseEnabled = false`),
 Ingo klaert mit Artjom. Offen vor dem Einschalten: Token als Quellsystem `REXXHUB`, IP-Sperre, Zeitraum der Summen „angetreten“ gegen einen
 frischen Handexport pruefen. Anleitung `saptasks/rexx_schnittstelle/NOTES.md` 16 und 17. **Nachtrag 13:25 (NOTES 18): eingeschaltet (`a848f93`).** Quellsystem `REXXHUB` angelegt, IP-Sperre 212.243.171.23, doppelte Personalnummer (zweites Arbeitsverhaeltnis) wird bereinigt, Zeitraum per Spaltensummen gegen den Handexport vom 04.11. bestaetigt (01.01. bis heute). Die Gesamtdatei kommt taeglich ab 05:30 ueber den Hub, #777 bleibt Handexport. *(Damit ueberholt in 8.18: Pfad `datawarehouse/{id}`
 und die Annahme, #775/#777 seien Data-Warehouse-Abfragen.)*
+
+### 8.20 Antwort Rexx 23.11.: Abwesenheiten ueber /v1/requests, sieben Schnittstellen, Lohnarten bis Ende Jahr
+
+Artjom Yahno (Rexx) hat Ingos Mail vom 19.11. beantwortet (Einzelheiten `saptasks/rexx_schnittstelle/NOTES.md` 20):
+
+- **`/v1/requests` liefert alle Abwesenheiten**, auch die von HR direkt gebuchten ohne Workflow. Damit kann #777 auf den Hub; ob die
+  Felder (Art, Status, Von/Bis, Tage, Tagessoll, Buchungs-ID) und Mengen dem Handexport entsprechen, ist noch nicht geprueft. Gelingt
+  das, faellt auch die Grenze „direkt gebuchte Krankheit ohne Datum“ (8.14, 8.16 gelb). Bis zur Umstellung bleibt #777 Handexport
+  (`CaseEnabled = false`).
+- **Sieben Schnittstellen laut Rexx:** 3 Kaba Import Zeit (bleibt), 23 Import Lohnabrechnungen, 39 SAP Gehaltsdaten Import (Lohnarten),
+  117 SAP Export Stammdaten, 118 SAP Export Zeit, 119 SAP Export Abwesenheiten, 121 Import Lohnausweis. Das Angebot nannte acht; offen,
+  fuer wie viele Trafag zahlt.
+- **Lohnarten SAP -> Rexx:** Hub-Schnittstelle voraussichtlich bis Ende 2026, bis dahin bleibt der Job unter `EXPRIS_SIWY`.
+- **Dateiablage per SFTP laut Artjom durch Upgreat**; widerspricht dem geschlossenen Upgreat-Ticket (8.9), mit Upgreat bzw. IT klaeren.
 
 ## 9. Reiter Interaktiv (2026-11-04)
 

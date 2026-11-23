@@ -1,5 +1,11 @@
 # Last Change
 
+
+## 2026-11-23: Antwort Artjom (Rexx) in die HR-Doku uebernommen
+
+- `/v1/requests` liefert alle Abwesenheiten (auch direkt gebuchte), damit hat #777 einen Hub-Weg (noch nicht umgestellt);
+  sieben bestehende Schnittstellen mit IDs; Lohnarten-Endpunkt bis Ende 2026; SFTP laut Artjom durch Upgreat.
+- Rexx-NOTES 20, `docs/HR_KPI.md` 8.20, rag HR_KPI, Router HR, Wochen_Todo 133 + xlsx. Nur Doku.
 ## 2026-11-23 10:50: Uebergabe zum Schliessen des Chats
 
 - `docs/UEBERGABE_2026-11-23.md`: erledigt, offen, erste Schritte am 24.11.; verlinkt in rag PROJECT, Router Projekt, baum.
