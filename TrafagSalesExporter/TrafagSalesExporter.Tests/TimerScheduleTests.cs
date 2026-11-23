@@ -121,6 +121,15 @@ public class TimerScheduleTests
     }
 
     [Fact]
+    public void PurchasingSlotMode_Sonntag_FullLoad_sonst_Delta()
+    {
+        // 22.11.2026 ist ein Sonntag.
+        Assert.Equal(PurchasingRefreshRunner.ModeFull, TimerSchedule.PurchasingSlotMode(new DateTime(2026, 11, 22, 3, 0, 0), DayOfWeek.Sunday));
+        Assert.Equal(PurchasingRefreshRunner.ModeDelta, TimerSchedule.PurchasingSlotMode(new DateTime(2026, 11, 23, 3, 0, 0), DayOfWeek.Sunday));
+        Assert.Equal(PurchasingRefreshRunner.ModeDelta, TimerSchedule.PurchasingSlotMode(new DateTime(2026, 11, 22, 3, 0, 0), null));
+    }
+
+    [Fact]
     public void IsPurchasingCatchUpDue_TimerAus_False()
     {
         Assert.False(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 20, 13, 0, 0), 3, 0, enabled: false, lastSuccessLocal: null));

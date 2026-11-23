@@ -53,6 +53,16 @@ public static class TimerSchedule
     public const int PurchasingDeltaDefaultMinute = 0;
 
     /// <summary>
+    /// Art des Einkauf-Laufs im Nachtslot: am Tag <paramref name="weeklyFullLoadDay"/> ein Full Load, sonst ein Delta.
+    ///
+    /// Seit 2026-11-23: Das echte Delta laedt nur neue und offene Belege. Aenderungen an abgeschlossenen
+    /// Bestellungen (Preis, Loeschkennzeichen, Storno eines Wareneingangs, neue Position) kaemen sonst nie
+    /// an; bis zum 20.11. erledigte das unbeabsichtigt der Delta, der in Wahrheit alles neu lud.
+    /// </summary>
+    public static string PurchasingSlotMode(DateTime slotLocal, DayOfWeek? weeklyFullLoadDay)
+        => weeklyFullLoadDay == slotLocal.DayOfWeek ? "Full" : "Delta";
+
+    /// <summary>
     /// Juengster Slot, der schon erreicht ist: heute um Stunde/Minute, sonst gestern.
     /// </summary>
     public static DateTime MostRecentSlot(DateTime now, int hour, int minute)

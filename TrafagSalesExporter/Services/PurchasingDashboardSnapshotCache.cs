@@ -112,10 +112,15 @@ public sealed class PurchasingDashboardSnapshotCache
         CacheKey key,
         Func<CancellationToken, Task<PurchasingDashboardLiveState>> factory)
     {
+        // Task.Run seit 2026-11-23: Die Berechnung ist trotz async-Signatur praktisch synchron (SQLite-Aufrufe
+        // sind auch als *Async sofort fertig). Direkt aufgerufen lief sie bis zum Ende im Thread des Aufrufers,
+        // und "stale-while-revalidate" lieferte den alten Stand erst nach der ganzen Neuberechnung: auf dem
+        // Server rund 100 s fuer den ersten Benutzer nach Ablauf (stuendlich), sichtbar als Logzeile
+        // "Einkauf-Standardansicht vorberechnet in ~100 s" (docs/PLATTFORM_TEMPO_2026-09-28.md 11.4).
         var lazy = _loads.GetOrAdd(
             key,
             _ => new Lazy<Task<PurchasingDashboardLiveState>>(
-                () => factory(CancellationToken.None),
+                () => Task.Run(() => factory(CancellationToken.None)),
                 LazyThreadSafetyMode.ExecutionAndPublication));
         return (lazy, lazy.Value);
     }

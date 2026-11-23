@@ -44,9 +44,15 @@ public sealed class PurchasingDashboardSnapshotCacheTests
         var cached = await cache.GetOrCreateAsync(Filter(), Factory);
         cache.Clear();
         // Seit 2026-10-01: direkt nach dem Lauf kommt der alte Stand, gekennzeichnet, und die
-        // Neuberechnung laeuft im Hintergrund (hier synchron fertig).
+        // Neuberechnung laeuft im Hintergrund. Seit 2026-11-23 wirklich im Hintergrund (Task.Run),
+        // deshalb hier auf den neuen Stand warten statt ihn synchron zu erwarten.
         var duringRecalculation = await cache.GetOrCreateAsync(Filter(), Factory);
-        var refreshed = await cache.GetOrCreateAsync(Filter(), Factory);
+        var refreshed = duringRecalculation;
+        for (var i = 0; i < 100 && ReferenceEquals(refreshed, first); i++)
+        {
+            await Task.Delay(10);
+            refreshed = await cache.GetOrCreateAsync(Filter(), Factory);
+        }
 
         Assert.Same(first, cached);
         Assert.Same(first, duringRecalculation);
@@ -70,8 +76,13 @@ public sealed class PurchasingDashboardSnapshotCacheTests
         Assert.True(cache.IsPrevious(shown));
 
         newData.SetResult(new PurchasingDashboardLiveState { PurchaseOrderCount = 2 });
-        await Task.Yield();
-        var current = await cache.GetOrCreateAsync(Filter(), _ => throw new InvalidOperationException("darf nicht neu rechnen"));
+        // Seit 2026-11-23 laeuft die Neuberechnung wirklich im Hintergrund: auf das Eintragen warten.
+        var current = shown;
+        for (var i = 0; i < 200 && ReferenceEquals(current, old); i++)
+        {
+            await Task.Delay(10);
+            current = await cache.GetOrCreateAsync(Filter(), _ => newData.Task);
+        }
 
         Assert.Equal(2, current.PurchaseOrderCount);
         Assert.False(cache.IsPrevious(current));
@@ -112,20 +123,27 @@ public sealed class PurchasingDashboardSnapshotCacheTests
         var calls = 0;
         var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        async Task<PurchasingDashboardLiveState> Factory(CancellationToken _)
+        // Zwei getrennte Fabriken statt eines Zaehlers: seit 2026-11-23 starten die Berechnungen ueber
+        // Task.Run, die Reihenfolge der Aufrufe ist damit nicht mehr fest (der Zaehler blockierte sonst).
+        async Task<PurchasingDashboardLiveState> StaleFactory(CancellationToken _)
         {
-            var call = Interlocked.Increment(ref calls);
-            if (call == 1)
-                await releaseFirst.Task;
-            return new PurchasingDashboardLiveState { PurchaseOrderCount = call };
+            Interlocked.Increment(ref calls);
+            await releaseFirst.Task;
+            return new PurchasingDashboardLiveState { PurchaseOrderCount = 1 };
         }
 
-        var staleLoad = cache.GetOrCreateAsync(Filter(), Factory);
+        Task<PurchasingDashboardLiveState> FreshFactory(CancellationToken _)
+        {
+            Interlocked.Increment(ref calls);
+            return Task.FromResult(new PurchasingDashboardLiveState { PurchaseOrderCount = 2 });
+        }
+
+        var staleLoad = cache.GetOrCreateAsync(Filter(), StaleFactory);
         cache.Clear();
-        var fresh = await cache.GetOrCreateAsync(Filter(), Factory);
+        var fresh = await cache.GetOrCreateAsync(Filter(), FreshFactory);
         releaseFirst.SetResult();
         var stale = await staleLoad;
-        var cached = await cache.GetOrCreateAsync(Filter(), Factory);
+        var cached = await cache.GetOrCreateAsync(Filter(), FreshFactory);
 
         Assert.Equal(1, stale.PurchaseOrderCount);
         Assert.Equal(2, fresh.PurchaseOrderCount);
@@ -165,6 +183,9 @@ public sealed class PurchasingDashboardSnapshotCacheTests
         var staleAgain = await cache.GetOrCreateAsync(Filter(), Factory).WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Same(first, stale);
         Assert.Same(first, staleAgain);
+        // Die Hintergrundberechnung startet seit 2026-11-23 ueber Task.Run: kurz auf ihren Start warten.
+        for (var i = 0; i < 200 && Volatile.Read(ref calls) < 2; i++)
+            await Task.Delay(10);
         Assert.Equal(2, calls); // nur EINE Hintergrundberechnung, obwohl zweimal gefragt
 
         releaseRefresh.SetResult();
@@ -177,6 +198,37 @@ public sealed class PurchasingDashboardSnapshotCacheTests
 
         Assert.Equal(2, refreshed.PurchaseOrderCount);
         Assert.Equal(2, calls);
+    }
+
+    /// <summary>
+    /// Befund 2026-11-23: Die echte Berechnung laeuft synchron (SQLite-Aufrufe sind auch als *Async synchron
+    /// fertig). Startete der Cache die "Hintergrund"-Neuberechnung direkt aus dem Aufruf heraus, wartete der
+    /// Aufrufer die ganze Berechnung ab, auf dem Server rund 100 s, jede Stunde nach Ablauf des Stands.
+    /// </summary>
+    [Fact]
+    public async Task ExpiredSnapshot_WithSynchronousFactory_DoesNotBlockTheCaller()
+    {
+        var time = new ManualTime();
+        var cache = new PurchasingDashboardSnapshotCache(time);
+        var calls = 0;
+
+        Task<PurchasingDashboardLiveState> SynchronousFactory(CancellationToken _)
+        {
+            var call = Interlocked.Increment(ref calls);
+            if (call == 2)
+                Thread.Sleep(TimeSpan.FromSeconds(2));
+            return Task.FromResult(new PurchasingDashboardLiveState { PurchaseOrderCount = call });
+        }
+
+        var first = await cache.GetOrCreateAsync(Filter(), SynchronousFactory);
+        time.Now += PurchasingDashboardSnapshotCache.Lifetime + TimeSpan.FromMinutes(1);
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var stale = await cache.GetOrCreateAsync(Filter(), SynchronousFactory);
+        watch.Stop();
+
+        Assert.Same(first, stale);
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(1), $"Aufrufer wartete {watch.Elapsed.TotalSeconds:N1} s");
     }
 
     [Fact]

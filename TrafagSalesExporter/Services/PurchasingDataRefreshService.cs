@@ -329,6 +329,17 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var productGroupResult = await _productGroupSapReader.ReadAsync(
                 connection.BaseUrl, connection.Username, connection.Password, cancellationToken);
 
+            // Seit 2026-11-23 (Review 20.11. E9, und weil der Full Load jetzt woechentlich automatisch laeuft):
+            // eine leere oder stark geschrumpfte SAP-Antwort ersetzt den Bestand nicht.
+            if (!fromDate.HasValue)
+            {
+                var cachedEkko = (await LoadCachedEbelnsAsync(cancellationToken)).Count;
+                if (!PurchasingDeltaSelection.IsPlausibleReplacement(ekkoRows.Count, cachedEkko))
+                    throw new InvalidOperationException(
+                        $"SAP lieferte {ekkoRows.Count:N0} Bestellkoepfe, im Cache liegen {cachedEkko:N0}. " +
+                        "Weniger als die Haelfte gilt als unplausibel (Berechtigung, Transport, Ausfall?); der Bestand bleibt.");
+            }
+
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
             if (conn.State != ConnectionState.Open)

@@ -62,6 +62,17 @@ public class PurchasingDeltaSelectionTests
     }
 
     [Theory]
+    [InlineData(178_505, 178_479, true)]
+    [InlineData(0, 178_479, false)]
+    [InlineData(80_000, 178_479, false)]
+    [InlineData(90_000, 178_479, true)]
+    [InlineData(5, 0, true)]
+    public void Full_Load_ersetzt_nur_plausible_Bestaende(int neu, int bisher, bool erlaubt)
+    {
+        Assert.Equal(erlaubt, PurchasingDeltaSelection.IsPlausibleReplacement(neu, bisher));
+    }
+
+    [Theory]
     [InlineData("2026-11-19", 2026, 11, 19)]
     [InlineData("2026-11-19T00:00:00", 2026, 11, 19)]
     [InlineData("20261119", 2026, 11, 19)]

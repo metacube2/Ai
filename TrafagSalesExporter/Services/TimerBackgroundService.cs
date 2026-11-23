@@ -43,6 +43,9 @@ public class TimerBackgroundService : BackgroundService
     /// </summary>
     private DateTime? _purchasingSlotAttempted;
 
+    /// <summary>Gesetzt, wenn die Berechnung von <see cref="_nextRun"/> scheiterte: dann neuer Versuch, kein Export.</summary>
+    private DateTime? _recalculateRetryAt;
+
     public DateTime NextRun => _nextRun;
 
     public TimerBackgroundService(IServiceProvider serviceProvider, ILogger<TimerBackgroundService> logger)
@@ -78,8 +81,11 @@ public class TimerBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Naechster Timer-Lauf konnte nicht berechnet werden; neuer Versuch in einer Stunde");
-            _nextRun = DateTime.Now.AddHours(1);
+            // Kein Export als Ersatz einplanen: _nextRun ist der Ausloeser des Exports. Stattdessen
+            // ohne Export warten und die Berechnung spaeter wiederholen (siehe ExecuteAsync).
+            _logger.LogError(ex, "Naechster Timer-Lauf konnte nicht berechnet werden; neuer Versuch in 15 Minuten");
+            _nextRun = DateTime.MaxValue;
+            _recalculateRetryAt = DateTime.Now.AddMinutes(15);
         }
     }
 
@@ -95,6 +101,19 @@ public class TimerBackgroundService : BackgroundService
         if (hour is < 0 or > 23 || minute is < 0 or > 59)
             return (TimerSchedule.PurchasingDeltaDefaultHour, TimerSchedule.PurchasingDeltaDefaultMinute);
         return (hour, minute);
+    }
+
+    /// <summary>
+    /// Wochentag des automatischen Full Loads im Nachtslot aus <c>Purchasing:WeeklyFullLoadDay</c>
+    /// (englischer Name, Standard Sunday; leer oder <c>none</c> schaltet ihn ab). Grund in
+    /// <see cref="TimerSchedule.PurchasingSlotMode"/>.
+    /// </summary>
+    private DayOfWeek? WeeklyFullLoadDay()
+    {
+        var text = _serviceProvider.GetService<IConfiguration>()?["Purchasing:WeeklyFullLoadDay"];
+        if (text is null)
+            return DayOfWeek.Sunday;
+        return Enum.TryParse<DayOfWeek>(text.Trim(), ignoreCase: true, out var day) ? day : null;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -115,19 +134,26 @@ public class TimerBackgroundService : BackgroundService
         {
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
 
-            // Erst in der Schleife, nicht beim Start: der PurchasingRefreshRunner raeumt bei
-            // seinem eigenen Start liegengebliebene Running-Eintraege auf und muss vorher
-            // gestartet sein. Nach 30 Sekunden ist er das sicher.
-            await CheckPurchasingCatchUpAsync();
+            if (_recalculateRetryAt is { } retryAt && DateTime.Now >= retryAt)
+            {
+                _recalculateRetryAt = null;
+                await RecalculateNextRunAsync();
+            }
 
-            // Einkauf-Delta seit 2026-11-20 im eigenen Nachtslot (Standard 03:00), nicht mehr
-            // hinter dem 12:00-Export: dort lief es in der Arbeitszeit, und ein Deploy am Mittag
-            // brach es ab (20.11. 12:51, nachgeholt 13:39 bis 15:10).
+            // Einkauf-Lauf seit 2026-11-20 im eigenen Nachtslot (Standard 03:00), nicht mehr
+            // hinter dem 12:00-Export: dort lief er in der Arbeitszeit, und ein Deploy am Mittag
+            // brach ihn ab (20.11. 12:51, nachgeholt 13:39 bis 15:10). Vor der Nachhol-Pruefung,
+            // damit der regulaere Lauf nicht als „Slot verpasst“ startet.
             if (DateTime.Now >= _nextPurchasingRun)
             {
                 await RunPurchasingDeltaAsync();
                 _nextPurchasingRun = TimerSchedule.ComputeNextRun(DateTime.Now, deltaHour, deltaMinute);
             }
+
+            // Erst in der Schleife, nicht beim Start: der PurchasingRefreshRunner raeumt bei
+            // seinem eigenen Start liegengebliebene Running-Eintraege auf und muss vorher
+            // gestartet sein. Nach 30 Sekunden ist er das sicher.
+            await CheckPurchasingCatchUpAsync();
 
             if (DateTime.Now < _nextRun) continue;
 
@@ -227,14 +253,18 @@ public class TimerBackgroundService : BackgroundService
             }
 
             var (hour, minute) = PurchasingDeltaSlot();
-            _purchasingSlotAttempted = TimerSchedule.MostRecentSlot(DateTime.Now, hour, minute);
+            var slot = TimerSchedule.MostRecentSlot(DateTime.Now, hour, minute);
+            _purchasingSlotAttempted = slot;
+            // Sonntags (einstellbar) ein Full Load, sonst ein Delta, siehe TimerSchedule.PurchasingSlotMode.
+            // Ein verpasster Sonntag wird nur als Delta nachgeholt, damit kein Full Load in den Tag faellt.
+            var mode = TimerSchedule.PurchasingSlotMode(slot, WeeklyFullLoadDay());
 
             // Seit 2026-11-20 ueber den Runner statt direkt (Code-Review 20.11. E2): nur so greift
             // die Laufsperre gegen einen gleichzeitigen Klick oder Nachhol-Lauf, und der Hinweis
             // im Dashboard sieht den Lauf.
             var runner = _serviceProvider.GetRequiredService<IPurchasingRefreshRunner>();
-            var started = runner.TryStart(PurchasingRefreshRunner.ModeDelta);
-            _logger.LogInformation("Einkauf-Delta (naechtlich) {Result} um {Time}",
+            var started = runner.TryStart(mode);
+            _logger.LogInformation("Einkauf-Lauf naechtlich ({Mode}) {Result} um {Time}", mode,
                 started ? "gestartet" : "nicht gestartet (es laeuft bereits ein Einkauf-Lauf)", DateTime.Now);
         }
         catch (Exception ex)

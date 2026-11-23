@@ -47,6 +47,14 @@ public static class PurchasingDeltaSelection
         return result;
     }
 
+    /// <summary>
+    /// Ob ein Full Load den Bestand ersetzen darf: nur, wenn SAP mindestens die Haelfte der bisherigen
+    /// Bestellkoepfe liefert. Bestellungen verschwinden in SAP praktisch nie in grosser Zahl; eine leere
+    /// oder halbe Antwort deutet auf Berechtigung, Transport oder Ausfall (Review 20.11. E9).
+    /// </summary>
+    public static bool IsPlausibleReplacement(int newCount, int cachedCount)
+        => cachedCount == 0 || (newCount > 0 && newCount * 2L >= cachedCount);
+
     /// <summary>Liest <c>yyyy-MM-dd</c>, ISO mit Zeit, <c>yyyyMMdd</c> und OData-V2 <c>/Date(ms)/</c>.</summary>
     public static DateTime? ParseSapDate(string? value)
     {
