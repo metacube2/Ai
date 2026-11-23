@@ -109,7 +109,7 @@ kein Passwort. Die Hauptsitzung hat Quelltext, Gateway-Zeile und Testlisten an d
   `LIMU METH ZCL_ZPOWERBI_EINKAUF_DPC_EXT GET_ENTITYSET`. Programm byte-gleich mit `Z_ZLO03_TURBO2_FIX29_2026-11-23.abap`
   (Syntax nur die bekannte POSIX-Warnung), DPC: genau eine neue Zeile `P_NOFRM = X` nach `P_APP`. Beide aktiv. Gateway-Caches nicht
   noetig (Modell unveraendert).
-- **Offen: Selektionstext** fuer `P_NOFRM` (Feld 30 Zeichen; „Fremdbeschaffte Teile nicht auflösen“ hat 36). Auf dem Bild steht
+- *Erledigt 2026-11-23: Selektionstext „Fremdteile nicht auflösen“ (Entscheid Ingo), gesichert, aktiviert, `LIMU REPT Z_ZLO03_TURBO2` als dritter Eintrag in `T76K912940` (Status weiter D). Ein Ja/Nein-Fenster nach dem Sichern („ABAP - Pflege der Textelemente“, Text per Scripting nicht lesbar) wurde mit Nein beantwortet; gesichert war schon.* Vorher: **Offen: Selektionstext** fuer `P_NOFRM` (Feld 30 Zeichen; „Fremdbeschaffte Teile nicht auflösen“ hat 36). Auf dem Bild steht
   bis dahin „P_NOFRM“.
 - **Test 40731 [B]:** ohne Haken 88 = 88 App-Zeilen und Excel 91 = 91 Zeilen, 0 Abweichungen. Mit Haken 76 Zeilen, es fehlen genau
   E00670, H10040, H10093, H10221, H10222, H10225, H20774, H20908, K50711, K80175, XXXXXX, ZC18907; keine verbleibende Menge
