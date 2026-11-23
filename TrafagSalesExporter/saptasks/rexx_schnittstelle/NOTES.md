@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-23 (Abschnitt 20: Antwort Artjom, /v1/requests liefert alle Abwesenheiten auch ohne Workflow, sieben Schnittstellen mit IDs, Lohnarten-Endpunkt bis Ende 2026, SFTP laut Artjom durch Upgreat); davor 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-23 nachmittags (Abschnitt 21: /v1/requests eingerichtet, `001646b`/`df7b874` deployed, Schalter aus, Rexx 500 auf Seite 56); davor 2026-11-23 (Abschnitt 20: Antwort Artjom, /v1/requests liefert alle Abwesenheiten auch ohne Workflow, sieben Schnittstellen mit IDs, Lohnarten-Endpunkt bis Ende 2026, SFTP laut Artjom durch Upgreat); davor 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -678,3 +678,46 @@ Schweiz AG) antwortet:
 39 wartet auf den Hub-Endpunkt Ende Jahr; 23 und 121 sind zu klaeren. **Naechster Schritt (Entscheid Ingo):** `/v1/requests` fuer
 Benutzer #2 freigeben, Felder und Mengen gegen #777 pruefen, dann den Fall-Abruf im Code darauf umstellen (heute `CaseEnabled = false`).
 Nichts davon ist am 23.11. umgesetzt; nur Doku.
+
+## 21. #777 ueber GET v1/requests: eingerichtet, deployed, Schalter aus; Rexx liefert Seite 56 mit Fehler 500 (2026-11-23)
+
+Auftrag Ingo 23.11. („mach 1-4“ nach Abschnitt 20, dann „mach weiter so weit du kannst“). **Ergebnis: alles vorbereitet und deployed,
+`CaseEnabled` bleibt false, weil Rexx bei `GET /v1/requests` ab Seite 56 mit HTTP 500 antwortet.** #777 bleibt bis dahin Handexport.
+
+**1. Rexx (produktiv, API-Benutzer #2 „BI-Dashboard HR-Cockpit“, 13:19 bis 13:24):** `GET /v1/requests` freigegeben, Zeilen je Seite 100,
+zehn Export-Felder ergaenzt (zu den 11 voreingestellten `application_*`, zusammen 21): Personalnummer `personnel_number`,
+Abwesenheit von `absence_of`, bis `absence_until`, Buchung (Art) `absence_entry`, Status `absence_status`, Tage `days_of_absence`,
+Tagessoll `absence_from_daily_target`, halbe Tage `absences_for_half_a_day`, ID Buchung `absence_id_booking`, Zeit `time_away` (Liste).
+Format laut Swagger: Datum ISO, Tage Zahl, Personalnummer Text. Nach jedem Speichern neu geladen und geprueft.
+*Export Filter:* um 14:28 „Abwesenheit Buchung“ (`absence_entry`) angelegt, um 14:46 wieder entfernt (0 Filter, Stand wie vorher). Laut
+Handbuch ist ein Export Filter nur ein Query-Parameter, den der Aufruf mitschicken kann, kein fester Filter in Rexx.
+
+**2. Code (Zweig `rexxhub-requests-2311` ab Produktivstand `155276e`, Worktree `C:\TMP\TrafagSalesExporter_rx2311`):**
+- `001646b` (deployed 13:34): `CasePathTemplate = v1/requests`, ColumnMap der zehn technischen Namen auf die Ueberschriften von #777;
+  `Normalize` entfernt bei der Fall-Datei Antraege ohne „Abwesenheit Buchung“ und ohne „Abwesenheit von“ (Homeoffice, Berechtigungen
+  usw.), sonst verfehlten die Pflichtspalten den Fuellanteil; der Testabruf prueft die Fall-Datei auch bei `CaseEnabled = false`, sobald
+  ein eigener Pfad gesetzt ist, und zeigt `Verteilung` (Zeilen und Tage je „Art | Status“, Datumsbereich) ohne Personenwerte.
+- `df7b874` (deployed 14:36): Testabruf im Hintergrund, `/BiDashboard/admin/rexxhub/test?hintergrund=1` startet und holt das Ergebnis,
+  `&neu=1` startet nach einem fertigen Lauf neu. Grund: der direkte Testabruf brach nach rund 2 Minuten mit **502** ab (Zeitlimit des
+  Webservers; die Seiten kamen bis dahin alle mit 200, je ~2,2 s), und mit der Anfrage brach auch der Abruf ab.
+- Tests 1'821/1'821 (Release-Worktree). Beide Deploys mit dem Werkzeug, Protokolle `.tmp_deploy_2026-11-23_rexx-requests.log` und
+  `_rexx-hintergrund.log`, Commit-Zeile geprueft, Alarm nur `-wal`/`-shm` (wieder da). **Nicht in `feature/supplier-overrides-trit`
+  gemergt** (wie `einkauf-tempo-2011`): ein Deploy vom Hauptzweig nimmt die Aenderungen zurueck.
+
+**3. Testabruf im Hintergrund (14:40 und 14:46, je einmal):** #775 ok (200, 395 Zeilen, wuerde geschrieben). **#777: Rexx antwortet 500**,
+request ids `req_7341f6cf6b82843630d70c4afe15c93e` (14:40) und `req_de972e1f38698e0d88d71c0fe284e250` (14:46). Laut „Rexx Hub Logs“
+liefern die Seiten 1 bis 55 je 200, **Seite 56** (Antraege 5'501 bis 5'600, Sortierung `application_id` aufsteigend) bricht ab, auch ohne
+Export Filter. Damit hat `/v1/requests` ueber 5'500 Antraege aller Workflows; der Handexport #777 vom 04.11. hat 2'683 Abwesenheiten.
+Ein Vergleich mit #777 war deshalb noch nicht moeglich (Handexport-Summen 04.11. liegen bereit: z. B. Krankheit genommen 398 Zeilen /
+954 Tage, Ferien genommen 614 / 1'710,5, Kompensation genommen 384 / 592, Unfall genommen 60 / 247,5).
+
+**Kontingent:** zwei ueberlagerte direkte Testlaeufe um 13:4x (Fehler: zweiter Start, waehrend der erste lief) und zwei
+Hintergrundlaeufe, zusammen rund 250 Anfragen von 50'000 im Monat.
+
+**Offen, naechste Schritte:**
+1. Artjom (Rexx) mit den beiden request ids: 500 bei `GET /v1/requests?page=56` (API-Benutzer #2), Bitte um Korrektur; dazu fragen, ob
+   sich `/v1/requests` serverseitig auf Abwesenheiten eingrenzen laesst (Wert fuer den Export Filter, Workflow-Klasse).
+2. Danach `?hintergrund=1&neu=1`, Verteilung gegen die Summen oben bzw. einen frischen Handexport #777 pruefen.
+3. Passt es: `"CaseEnabled": true` in appsettings, Tests, Deploy. Achtung: der Tagesdienst schreibt dann sofort beim Start, weil die
+   Fall-Datei vom 04.11. ist; der Handexport wird als `*.manuell.xlsx` gesichert (Abschnitt 14).
+

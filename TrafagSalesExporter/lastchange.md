@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-23 15:00: Rexx Hub #777 ueber GET v1/requests, deployed, Schalter aus
+
+- Rexx: `/v1/requests` bei Benutzer #2 frei, zehn Abwesenheitsfelder. Code `001646b` (Pfad, Feldzuordnung, Antraege ohne Abwesenheit
+  entfernen, Verteilung im Testabruf) und `df7b874` (Testabruf im Hintergrund), deployed 13:34 und 14:36, Tests 1'821/1'821.
+- `CaseEnabled` bleibt false: Rexx antwortet auf Seite 56 mit 500 (Rexx-NOTES 21). Nicht in den Hauptzweig gemergt.
+
 
 ## 2026-11-23: Antwort Artjom (Rexx) in die HR-Doku uebernommen
 
