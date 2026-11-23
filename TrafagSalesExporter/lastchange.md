@@ -1,5 +1,13 @@
 # Last Change
 
+## 2026-11-23 nachmittags: ZLO03 FIX 29 in T76 gebaut (Auftrag T76K912940, nicht freigegeben)
+
+- **Auftrag Ingo:** „leg los, prod ist auch offen fuer dich“. P76 nur gelesen (Elternkette gefuellt, Schalter wirkt dort).
+- **T76:** `Z_ZLO03_TURBO2` FIX 29 (Schalter `p_nofrm`, ab Werk aus) und eine Zeile `P_NOFRM = X` im DPC (ZloTopDownSet). Test 40731:
+  ohne Haken unveraendert, mit Haken 12 Komponenten weniger, Materialwert 106.26 -> 93.04 CHF je Stueck; 31318: 74.10 -> 59.78 CHF.
+- **Offen:** Selektionstext (max. 30 Zeichen), Befund B65814 (Einkaufspreis 4.62 unter Stuecklistensumme 11.64), Info Armin,
+  Freigabe und Import durch Ingo. Plan Abschnitt 7.
+
 ## 2026-11-23 10:10: Plan ZLO03 FIX 29 (fremdbeschaffte Teile, Schalter), nur T76 gelesen
 
 - **Auftrag Ingo:** Befund in `Dashboard_Materialanteil pro Produktgruppe.xlsx`, dann „lese t76 mache plan“ und „sonst ein Schalter,

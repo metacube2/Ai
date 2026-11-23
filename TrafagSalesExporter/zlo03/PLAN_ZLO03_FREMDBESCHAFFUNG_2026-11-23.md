@@ -1,6 +1,6 @@
 # Plan FIX 29: ZLO03 ohne Stuecklisten fremdbeschaffter Teile (Schalter)
 
-Stand: 2026-11-23 (Plan, nichts geaendert; wartet auf Freigabe und Entscheide Ingo E1 bis E5).
+Stand: 2026-11-23 nachmittags (gebaut und getestet in T76, Auftrag `T76K912940` nicht freigegeben, Abschnitt 7); davor 2026-11-23 (Plan, wartet auf Freigabe).
 
 Auftrag Ingo 23.11.: Befund in `Downloads\Dashboard_Materialanteil pro Produktgruppe.xlsx` (Textfeld auf Blatt ZLO03), danach
 „lese T76, mache Plan“ und „sonst ein Schalter, dass man beide Optionen hat (wenn es nicht technisch sehr komplex wird)“.
@@ -95,3 +95,36 @@ Materialanteil reicht der Schalter; ob die Stuecklistenanalyse dieselbe Regel br
 
 - Welches Programm `ZPOWERBI_VC_TXT` in P76 fuellt (in T76 schreibt `Z_VC_ZLO03_TXT` nach `ZAT_VC_TXT`) [B/V].
 - Die Gateway-Methode in T76 ist noch nicht gelesen und verglichen; das gehoert in den Bauschritt.
+
+## 7. Bau und Test in T76 (2026-11-23)
+
+Auftrag Ingo „leg los, prod ist auch offen fuer dich“; Vorschlaege E1 bis E5 uebernommen. Agent sap-t76, eigene Sitzungen, kein RFC,
+kein Passwort. Die Hauptsitzung hat Quelltext, Gateway-Zeile und Testlisten an den Exportdateien nachgeprueft.
+
+- **E4, P76 nur gelesen [B]:** `ZPOWERBI_VC_TXT` 40731 hat 122 Zeilen; Stufe 01 hat `MAT_MSTAE = 00000000`, alle 81 tieferen
+  Zeilen zeigen auf eine Zeile der Stufe darueber (H10040 ID 01042711 -> C17389 ID 01042655). Der Schalter wirkt also auch in P76.
+  *Zwischenfall:* Ein ad hoc angepasstes SE16N-Exportskript loeste in P76 einen Kurzdump `RAISE_EXCEPTION` in `SAPLSE16N` aus
+  (23.11.2026 09:27:14, Benutzer KOI); nichts geaendert, danach mit SE16 gelesen.
+- **Auftrag `T76K912940`** (Workbench, Ziel P76, nicht freigegeben): `LIMU REPS Z_ZLO03_TURBO2` und
+  `LIMU METH ZCL_ZPOWERBI_EINKAUF_DPC_EXT GET_ENTITYSET`. Programm byte-gleich mit `Z_ZLO03_TURBO2_FIX29_2026-11-23.abap`
+  (Syntax nur die bekannte POSIX-Warnung), DPC: genau eine neue Zeile `P_NOFRM = X` nach `P_APP`. Beide aktiv. Gateway-Caches nicht
+  noetig (Modell unveraendert).
+- **Offen: Selektionstext** fuer `P_NOFRM` (Feld 30 Zeichen; „Fremdbeschaffte Teile nicht auflösen“ hat 36). Auf dem Bild steht
+  bis dahin „P_NOFRM“.
+- **Test 40731 [B]:** ohne Haken 88 = 88 App-Zeilen und Excel 91 = 91 Zeilen, 0 Abweichungen. Mit Haken 76 Zeilen, es fehlen genau
+  E00670, H10040, H10093, H10221, H10222, H10225, H20774, H20908, K50711, K80175, XXXXXX, ZC18907; keine verbleibende Menge
+  geaendert. Dashboard-Lesart (Disponent 001 bis 006): **106.26 -> 93.04 CHF je Stueck**, Differenz = Summe der entfallenen Zeilen.
+  Gateway-Weg (DPC-Aufruf) liefert danach 76 Zeilen ohne H10040.
+- **Gegen CK11N 40731 [B]:** Rest-Differenz +2.44 CHF je Stueck bei den direkten Positionen, erklaert durch Mehrfachverwendung unter
+  Eigenfertigungsteilen (C18298, C15316), einen Disponenten ausserhalb 001 bis 006 (H90077) und Rundung. Neu: ZLO03 rechnet den
+  Komponentenausschuss nicht (H05140 5 %, C15399 4 %).
+- **Zweites Geraet 31318 [B]:** 48 -> 36 Zeilen, 74.10 -> 59.78 CHF. **Fachlicher Befund:** Unter B65814 (F, ohne Sonderbeschaffung,
+  Einkaufspreis 4.62 CHF) fallen Stuecklistenteile fuer 11.64 CHF weg (B65813 allein 8.80). Die Kalkulation von B65814 hat nur den
+  Infosatz (462.48 CHF/100 ST), verhaelt sich also wie der Schalter. Vermutung: Beistellung ohne Kennzeichen Lohnbearbeitung oder
+  veraltete Stueckliste (PCBA-Thema). Vor dem Import mit dem Einkauf klaeren.
+- **Hinweis:** Excel mit Haken zeigt in der Spalte „Weitere VKNR“ teils eine andere Auswahl (unstabile Sortierung mit Schnitt bei 100,
+  Vermutung); betrifft nur den Dialoglauf, nicht das Dashboard.
+- **Uebrig in T76:** Testreport geloescht (Quelltext `zlo03/Z_KOI_ZLO_FIX29_TEST.abap`), vier erledigte Jobs `Z_KOI_ZLO_FIX29`.
+
+**Naechste Schritte:** Selektionstext waehlen (dann REPT in den Auftrag), Befund B65814 bewerten und Armin informieren, `T76K912940`
+freigeben und nach P76 importieren (Ingo). Das Dashboard zeigt die neuen Werte nach dem naechsten Einkauf-Lauf (Mitternacht).

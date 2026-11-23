@@ -258,7 +258,11 @@ Hinweis zur Pruefung: viele Kopfmaterialien in VC_TXT haben in T76 eine Loeschvo
 
 Befund Ingo: Rohmaterial unter fremdbeschafften Drehteilen (z. B. H10040 unter C17389, `BESKZ F`) zaehlt im Materialanteil
 mit, CK11N grenzt es ab. Plan mit Belegen aus T76 und Entscheiden: `zlo03/PLAN_ZLO03_FREMDBESCHAFFUNG_2026-11-23.md`
-(Schalter `p_nofrm` in `Z_ZLO03_TURBO2`, ab Werk aus; Dashboard setzt ihn). Noch nichts geaendert.
+(Schalter `p_nofrm` in `Z_ZLO03_TURBO2`, ab Werk aus; Dashboard setzt ihn). *Gebaut 2026-11-23 in T76, Auftrag `T76K912940`
+(nicht freigegeben): Quelltext `Z_ZLO03_TURBO2_FIX29_2026-11-23.abap`, dazu eine Zeile `P_NOFRM` im DPC (ZloTopDownSet). Test 40731:
+ohne Haken unveraendert (88 = 88), mit Haken 12 Komponenten weniger, Dashboard-Wert 106.26 -> 93.04 CHF. Selektionstext offen
+(max. 30 Zeichen). Befund B65814 (31318): Einkaufspreis 4.62 unter Summe der Stuecklistenteile 11.64, fachlich zu klaeren.
+Details Plan Abschnitt 7.*
 
 ## Verifikationsplan
 
@@ -381,7 +385,7 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
   P76-Liste der Stuecklisten mit BMENG <> 1 und Befund FP_THERMOST (Selbststueckliste, MM gegen KG)
 - `FIX27_ALTE_UND_NEUE_MENGE_2026-11-09.md` — **FIX 27**: alte Menge in den VKNR-Spalten, neue Menge als Zusatzspalten;
   Quelltext `Z_ZLO03_TURBO2_FIX27_2026-11-09.abap`, Auftrag `T76K912839`; Test `Z_KOI_ZLO_FIX27_TEST.abap`
-  *(ueberholt am 2026-11-12: aktueller Quelltext ist FIX 28)*
+  *(ueberholt am 2026-11-12: aktueller Quelltext ist FIX 28; seit 2026-11-23 in T76 FIX 29, `Z_ZLO03_TURBO2_FIX29_2026-11-23.abap`)*
 - `BEFUND_SPRACHE_MATERIALANTEIL_2026-11-18.md` — Befund 18.11.: `load_stammdaten_cache` liest MAKT ueber `sy-langu`, der alte
   FIX 4 loescht Komponenten ohne Text; die Dashboard-Anfrage lief englisch, Einkaufsteile ohne englischen Kurztext fehlten im
   Materialanteil. Im Dashboard behoben (`sap-language=DE`); in `Z_ZLO03_TURBO2` **nichts geaendert**, Vorschlag im Befund
