@@ -93,31 +93,37 @@ public class TimerScheduleTests
             lastSuccessLocal: new DateTime(2026, 11, 21, 3, 20, 0)));
     }
 
-    [Fact]
-    public void IsPurchasingCatchUpDue_NachtlaufVerpasst_MorgensFaellig()
-    {
-        // Fall 19./20.11.: Worker um 21:20 beendet, erst um 06:21 wieder gestartet.
-        var now = new DateTime(2026, 11, 20, 6, 22, 0);
+    // Seit 2026-11-23: Slot 00:00 (Wunsch Ingo), Nachholen nur bis 06:00, nie in den Arbeitstag.
 
-        Assert.True(TimerSchedule.IsPurchasingCatchUpDue(now, 3, 0, enabled: true,
-            lastSuccessLocal: new DateTime(2026, 11, 19, 17, 36, 0)));
+    [Fact]
+    public void IsPurchasingCatchUpDue_NachtlaufVerpasst_NachtsFaellig()
+    {
+        Assert.True(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 24, 2, 0, 0), 0, 0, enabled: true,
+            lastSuccessLocal: new DateTime(2026, 11, 22, 0, 40, 0)));
     }
 
     [Fact]
-    public void IsPurchasingCatchUpDue_GesternNachmittagFertig_HeuteVorDemSlot_NichtFaellig()
+    public void IsPurchasingCatchUpDue_NachtlaufVerpasst_TagsueberNichtFaellig()
     {
-        // 20.11. 15:10 fertig; am 21.11. um 01:00 ist der juengste Slot der vom 20.11. 03:00.
-        Assert.False(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 21, 1, 0, 0), 3, 0, true,
-            new DateTime(2026, 11, 20, 15, 10, 0)));
-        // Nach dem Slot vom 21.11. ist er faellig, falls der Nachtlauf nicht kam.
-        Assert.True(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 21, 7, 0, 0), 3, 0, true,
-            new DateTime(2026, 11, 20, 15, 10, 0)));
+        // Fall 23.11.: Deploy 07:37, der Nachhol-Delta ab 07:38 blockierte die Arbeit.
+        Assert.False(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 23, 7, 38, 0), 0, 0, enabled: true,
+            lastSuccessLocal: new DateTime(2026, 11, 20, 15, 10, 0)));
+        Assert.False(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 23, 6, 0, 0), 0, 0, true, null));
+        Assert.True(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 23, 5, 59, 0), 0, 0, true, null));
     }
 
     [Fact]
-    public void IsPurchasingCatchUpDue_OhneJedenErfolg_True()
+    public void IsPurchasingCatchUpDue_HeuteNachtSchonErfolgreich_NichtFaellig()
     {
-        Assert.True(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 20, 12, 5, 0), 3, 0, true, null));
+        Assert.False(TimerSchedule.IsPurchasingCatchUpDue(new DateTime(2026, 11, 24, 1, 30, 0), 0, 0, true,
+            new DateTime(2026, 11, 24, 0, 25, 0)));
+    }
+
+    [Fact]
+    public void Standardslot_ist_Mitternacht()
+    {
+        Assert.Equal(0, TimerSchedule.PurchasingDeltaDefaultHour);
+        Assert.Equal(TimeSpan.FromHours(6), TimerSchedule.PurchasingCatchUpWindow);
     }
 
     [Fact]

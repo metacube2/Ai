@@ -46,8 +46,17 @@ public static class TimerSchedule
     ///
     /// Seit 2026-11-20 nachts statt hinter dem 12:00-Export (Auftrag Ingo: ein durch Deploy
     /// abgebrochener Mittagslauf wurde um 13:39 nachgeholt und lief 90 Minuten in der Arbeitszeit).
+    /// Seit 2026-11-23 um Mitternacht statt 03:00 (Wunsch Ingo, nachdem der Nachhol-Lauf nach dem Deploy
+    /// am Montagmorgen ueber eine Stunde lief und die Arbeit blockierte).
     /// </summary>
-    public const int PurchasingDeltaDefaultHour = 3;
+    public const int PurchasingDeltaDefaultHour = 0;
+
+    /// <summary>
+    /// Nachgeholt wird nur in diesem Fenster nach dem Slot (Standard 00:00 bis 06:00). Danach wartet ein
+    /// verpasster Lauf auf die naechste Nacht oder einen Klick in der Oberflaeche, statt in den Arbeitstag
+    /// zu fallen (Fall 2026-11-23: Deploy 07:37, Nachhol-Delta ab 07:38 blockierte die Arbeit).
+    /// </summary>
+    public static readonly TimeSpan PurchasingCatchUpWindow = TimeSpan.FromHours(6);
 
     /// <summary>Minute zum <see cref="PurchasingDeltaDefaultHour"/>.</summary>
     public const int PurchasingDeltaDefaultMinute = 0;
@@ -96,6 +105,10 @@ public static class TimerSchedule
         if (!enabled)
             return false;
 
-        return lastSuccessLocal is null || lastSuccessLocal.Value < MostRecentSlot(now, hour, minute);
+        var slot = MostRecentSlot(now, hour, minute);
+        if (now - slot >= PurchasingCatchUpWindow)
+            return false;
+
+        return lastSuccessLocal is null || lastSuccessLocal.Value < slot;
     }
 }
