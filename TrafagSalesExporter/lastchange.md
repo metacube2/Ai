@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-23 10:45: ZLO03 FIX 29 in P76 importiert
+
+- Ingo hat `T76K912940` freigegeben und um 10:30 nach P76 importiert; P76 nur gelesen: TPALOG alle Schritte RC 0000, Feld
+  `P_NOFRM` „Fremdteile nicht auflösen“ auf dem Selektionsbild, keine Laufzeitfehler zu den Objekten. Quelltext in P76 nicht
+  lesbar; Beleg der Wirkung nach dem Einkauf-Lauf heute Nacht (40731 ca. 93.04 statt 106.26 CHF). Plan Abschnitt 8.
+
 ## 2026-11-23 nachmittags: ZLO03 FIX 29 in T76 gebaut (Auftrag T76K912940, nicht freigegeben)
 
 - **Auftrag Ingo:** „leg los, prod ist auch offen fuer dich“. P76 nur gelesen (Elternkette gefuellt, Schalter wirkt dort).

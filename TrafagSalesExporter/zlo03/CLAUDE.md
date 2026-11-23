@@ -259,7 +259,7 @@ Hinweis zur Pruefung: viele Kopfmaterialien in VC_TXT haben in T76 eine Loeschvo
 Befund Ingo: Rohmaterial unter fremdbeschafften Drehteilen (z. B. H10040 unter C17389, `BESKZ F`) zaehlt im Materialanteil
 mit, CK11N grenzt es ab. Plan mit Belegen aus T76 und Entscheiden: `zlo03/PLAN_ZLO03_FREMDBESCHAFFUNG_2026-11-23.md`
 (Schalter `p_nofrm` in `Z_ZLO03_TURBO2`, ab Werk aus; Dashboard setzt ihn). *Gebaut 2026-11-23 in T76, Auftrag `T76K912940`
-(nicht freigegeben): Quelltext `Z_ZLO03_TURBO2_FIX29_2026-11-23.abap`, dazu eine Zeile `P_NOFRM` im DPC (ZloTopDownSet). Test 40731:
+(*in P76 importiert 2026-11-23 10:30, RC 0000*): Quelltext `Z_ZLO03_TURBO2_FIX29_2026-11-23.abap`, dazu eine Zeile `P_NOFRM` im DPC (ZloTopDownSet). Test 40731:
 ohne Haken unveraendert (88 = 88), mit Haken 12 Komponenten weniger, Dashboard-Wert 106.26 -> 93.04 CHF. Selektionstext offen
 (max. 30 Zeichen). Befund B65814 (31318): Einkaufspreis 4.62 unter Summe der Stuecklistenteile 11.64, fachlich zu klaeren.
 Details Plan Abschnitt 7.*

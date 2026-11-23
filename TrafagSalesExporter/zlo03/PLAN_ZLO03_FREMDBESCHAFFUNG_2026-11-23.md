@@ -1,6 +1,6 @@
 # Plan FIX 29: ZLO03 ohne Stuecklisten fremdbeschaffter Teile (Schalter)
 
-Stand: 2026-11-23 nachmittags (gebaut und getestet in T76, Auftrag `T76K912940` nicht freigegeben, Abschnitt 7); davor 2026-11-23 (Plan, wartet auf Freigabe).
+Stand: 2026-11-23 (in P76 importiert 10:30, Abschnitt 8; Wirkung im Dashboard nach dem Einkauf-Lauf um Mitternacht); davor nachmittags (gebaut und getestet in T76, Auftrag `T76K912940`, Abschnitt 7); davor 2026-11-23 (Plan, wartet auf Freigabe).
 
 Auftrag Ingo 23.11.: Befund in `Downloads\Dashboard_Materialanteil pro Produktgruppe.xlsx` (Textfeld auf Blatt ZLO03), danach
 „lese T76, mache Plan“ und „sonst ein Schalter, dass man beide Optionen hat (wenn es nicht technisch sehr komplex wird)“.
@@ -128,3 +128,15 @@ kein Passwort. Die Hauptsitzung hat Quelltext, Gateway-Zeile und Testlisten an d
 
 **Naechste Schritte:** Selektionstext waehlen (dann REPT in den Auftrag), Befund B65814 bewerten und Armin informieren, `T76K912940`
 freigeben und nach P76 importieren (Ingo). Das Dashboard zeigt die neuen Werte nach dem naechsten Einkauf-Lauf (Mitternacht).
+
+## 8. Import in P76 (2026-11-23)
+
+*Erledigt 2026-11-23 10:30:* Ingo hat `T76K912940` freigegeben (Aufgabe 10:22:24) und nach P76 importiert. P76 nur gelesen [B]:
+TPALOG sechs Schritte 10:30:24 bis 10:30:53, alle Rueckgabecode 0000; E070 Status R; E071 REPS, METH, REPT. Das Selektionsbild der
+Transaktion ZLO03 zeigt das Ankreuzfeld `P_NOFRM` mit „Fremdteile nicht auflösen“, ab Werk leer. REPOSRC `Z_ZLO03_TURBO2` und
+`ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W` (GET_ENTITYSET) tragen das Importdatum. ST22 P76 bis 10:42 ohne Laufzeitfehler zu den beiden
+Objekten.
+
+Nicht direkt gelesen: der Quelltext in P76 (fuer P76 gibt es kein freigegebenes Quelltext-Lesewerkzeug). Den Inhalt belegt erst
+der Einkauf-Lauf heute Nacht: Materialanteil 40731 muss von rund 106.26 auf rund 93.04 CHF je Stueck sinken, H10040 darf im
+Materialanteil nicht mehr erscheinen. Offen bleiben Befund B65814 (Einkauf) und die Information an Armin.
