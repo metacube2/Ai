@@ -322,6 +322,7 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/MD_KONSISTENZPRUEFUNG_2026-11-12.md` | Doku-Pruefung aller Markdown-Dateien vom 2026-11-12: Vorgehen, Zahl der Befunde, offene Entscheide |
 | `docs/CODE_REVIEW_2026-11-12.md` | Code-Review des Anwendungscodes vom 2026-11-12: 13 Befunde nach Schwere (4 hoch, bestaetigt), Finance_All getrennt, nicht Angesehenes; nichts geaendert |
 | `docs/CODE_REVIEW_2026-11-20.md` | Code-Review 2 vom 2026-11-20 auf Stand `ad4f437`: Stand der 13 Befunde vom 12.11. (1 erledigt, 10 bestaetigt offen, 2 nicht erneut geprueft), 5 neue hohe Befunde (Secrets-Export, Shopfloor-XSS, HR-Sets ohne Berechtigungspruefung, FinanzJournalSet ohne Pflichtfilter, P76-Werkzeug) und 3 erweiterte, Messwerte Clean Code und Tests, Doings und Entscheide; am Code nichts geaendert |
+| `docs/UEBERGABE_2026-11-23.md` | Uebergabe 23.11.2026 nach Chatende: Code-Review 2, Einkauf-Tempo (deployed `155276e`, nicht im Hauptzweig), ZLO03 FIX 29 (in P76), offene Punkte und erste Schritte |
 
 ## Archiv — kein Sollstand
 

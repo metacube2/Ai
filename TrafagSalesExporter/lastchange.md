@@ -1,5 +1,9 @@
 # Last Change
 
+## 2026-11-23 10:50: Uebergabe zum Schliessen des Chats
+
+- `docs/UEBERGABE_2026-11-23.md`: erledigt, offen, erste Schritte am 24.11.; verlinkt in rag PROJECT, Router Projekt, baum.
+
 ## 2026-11-23 10:45: ZLO03 FIX 29 in P76 importiert
 
 - Ingo hat `T76K912940` freigegeben und um 10:30 nach P76 importiert; P76 nur gelesen: TPALOG alle Schritte RC 0000, Feld

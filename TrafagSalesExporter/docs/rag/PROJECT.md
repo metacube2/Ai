@@ -9,6 +9,10 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 ## Kurzstand
 
+- **2026-11-23 10:50 (Uebergabe):** Einstieg fuer die naechste Sitzung: `docs/UEBERGABE_2026-11-23.md`. Zuerst Mitternachtslauf
+  Einkauf pruefen (Dauer je Abschnitt) und Wirkung ZLO03 FIX 29 im Materialanteil (40731 ca. 93.04 statt 106.26 CHF). **Zweig
+  `einkauf-tempo-2011` (produktiv `155276e`) ist nicht im Hauptzweig**; ein Deploy vom Hauptzweig nimmt ihn zurueck (Finance_All
+  unkommittiert im Hauptordner). ZLO03 FIX 29 seit 23.11. 10:30 in P76.
 - **2026-11-20 14:45 (Plattform, Code-Review 2):** Zweites Review auf Stand `ad4f437`, am Code nichts geaendert. Von den 13
   Befunden vom 12.11. ist einer erledigt (Nr. 13), zehn sind am Code bestaetigt offen, Nr. 9 und 11 nicht erneut geprueft;
   Nr. 5 und 9 sind seit 18.11. produktiv. Neu 5 hohe Befunde: Secrets-Export hinter dem Finance-Passwort, gespeichertes XSS im
