@@ -283,9 +283,9 @@ Scratchpad kopiert), ohne Produktiv-DB.*
 *Berichtigung 2026-11-23:* Im Chat vom 20.11. stand, der Delta habe die Datenbank 90 Minuten „belegt“. Geschrieben wird erst am
 Ende; belastet haben ihn die SAP-Anfragen und die parallel laufende Vorberechnung (196,7 s statt rund 100 s waehrend des Laufs).
 
-### 11.3 Umgesetzt im Zweig `einkauf-tempo-2011` (`e76df02` und `d4e9a18`), Tests 1816/1816, *nicht deployed*
+### 11.3 Umgesetzt im Zweig `einkauf-tempo-2011` (`e76df02`, `d4e9a18`, `155276e`), deployed 2026-11-23 (siehe 11.5)
 
-- Delta im eigenen **Nachtslot 03:00** (`Purchasing:DeltaHour`/`DeltaMinute`), Start immer ueber den Runner (Laufsperre).
+- Delta im eigenen **Nachtslot** (zuerst 03:00, *seit 155276e 00:00, nachgeholt nur bis 06:00, siehe 11.5*) (`Purchasing:DeltaHour`/`DeltaMinute`), Start immer ueber den Runner (Laufsperre).
   Nachholen, wenn seit dem juengsten Slot kein Erfolg da ist, hoechstens ein Versuch je Slot und Prozess. Der Worker lief nicht
   jede Nacht (19.11. 21:20 bis 20.11. 06:21 kein Prozess); dann holt der erste Start am Morgen den Lauf nach.
 - **Echtes Delta:** Auswahl in der App (`PurchasingDeltaSelection`): Belege, die im Cache fehlen oder deren `Aedat` ab dem
@@ -335,3 +335,18 @@ Am 26.10. fiel die Dauer einmal auf 37 s und stieg danach ueber Wochen wieder an
 Kopie der Wochensicherung vom 16.11. Dafuer braucht es Ingos Freigabe (Produktivdaten). Nach Teil 1 rechnet das weiterhin
 stuendlich im Hintergrund, aber niemand wartet mehr auf diese stuendliche Neuberechnung (nur die allererste Berechnung eines
 Filters nach einem Neustart wartet weiter).
+
+### 11.5 Deploy 2026-11-23 und Abbruch des Nachhol-Laufs
+
+- **07:37 Deploy `d4e9a18`.** Um 07:38 startete der Nachhol-Delta (letzter Erfolg 20.11. 15:10, am Wochenende kein Erfolg).
+  Der Hinweisbalken erschien auf `/einkauf` wie geplant. Der Lauf brauchte aber deutlich laenger als geschaetzt: nach 58 Minuten
+  war er noch nicht fertig (WAL um 08:34 bei 193 MB, er schrieb also schon). Die Dauer je Abschnitt ist nicht bekannt, weil die
+  Meldung erst am Ende kommt. Damit ist offen, ob das echte Delta schneller ist als der alte Lauf von 90 Minuten.
+- **Wunsch Ingo 08:30:** „beende den Delta, er blockiert weitere Arbeiten, soll Mitternacht laufen“. Ein Abbruch geht nur ueber
+  einen Neustart; ein blosser Neustart haette den Nachhol-Lauf nach 30 Sekunden wieder gestartet.
+- **08:36 Deploy `155276e`** mit `--trotz-einkauf-lauf`: Slot 00:00, Nachholen nur bis 06:00 (`PurchasingCatchUpWindow`). Der
+  Runner setzte den Lauf beim Start auf „Abgebrochen“; ein neuer Lauf startete nicht. Tests 1'817/1'817.
+- **Folge:** Der Einkaufsstand bleibt bis heute Nacht der vom 20.11. 15:10 (plus was der abgebrochene Lauf schon geschrieben hat).
+  Der erste Mitternachtslauf zeigt die Dauer je Abschnitt in der Erfolgsmeldung (Datenservice-Seite, Admin-Log).
+- **Selbstkritik:** Dass der erste Deploy tagsueber sofort einen Nachhol-Lauf ausloest, stand im Chat vorher als Hinweis, war
+  aber kein Grund, den Deploy zu verschieben oder das Nachholen tagsueber zu sperren. Genau das ist jetzt nachgezogen.

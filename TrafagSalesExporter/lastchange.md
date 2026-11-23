@@ -1,6 +1,16 @@
 # Last Change
 
-## 2026-11-23: Dashboard zaeh am 20.11., Einkauf-Delta nachts und als echtes Delta (gebaut, nicht deployed)
+## 2026-11-23 08:40: Einkauf-Tempo deployed, Nachhol-Delta abgebrochen, Slot um Mitternacht
+
+- **Auftrag Ingo:** „mache deploy“, dann 08:30 „beende den Delta, er blockiert weitere Arbeiten, soll Mitternacht laufen“.
+- **Deploy 07:37** `d4e9a18` (1'816/1'816, bitgleich, Einkauf-Pruefung im Werkzeug erstmals im Einsatz). Nachhol-Delta ab 07:38,
+  Hinweisbalken auf `/einkauf` im Chrome gesehen; nach 58 Minuten noch nicht fertig.
+- **Deploy 08:36** `155276e` mit `--trotz-einkauf-lauf`: Slot 00:00, Nachholen nur bis 06:00; Lauf auf „Abgebrochen“, kein neuer
+  Start. Einkaufsstand bis heute Nacht vom 20.11. 15:10.
+- **Offen:** Dauer des ersten Mitternachtslaufs, Merge in `feature/supplier-overrides-trit` (Finance_All unkommittiert im Hauptordner),
+  Messung Vorberechnung. Neu von Ingo: ZLO03 loest Stuecklisten fremdbeschaffter Teile auf (Materialanteil), Plan folgt.
+
+## 2026-11-23: Dashboard zaeh am 20.11., Einkauf-Delta nachts und als echtes Delta (gebaut, *seit 07:37/08:36 deployed*)
 
 - **Auftrag Ingo 20.11.:** „anscheinend ist das Dashboard extrem langsam, was ist los“, dann „mache das alles, ev Anzeige im
   Dashboard Achtung ... laeuft, ist langsam“, am 23.11. „mach weiter“.
