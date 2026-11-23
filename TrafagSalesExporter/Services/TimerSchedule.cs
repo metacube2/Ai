@@ -42,28 +42,43 @@ public static class TimerSchedule
     }
 
     /// <summary>
-    /// Mindestalter des letzten erfolgreichen Einkauf-Laufs, ab dem ein Nachhol-Delta startet.
-    /// 20 statt 24 Stunden, damit ein Lauf, der gestern etwas spaeter fertig wurde, heute nach
-    /// dem Slot trotzdem faellig ist; kurz genug, dass es hoechstens einen Versuch pro Tag gibt.
+    /// Slot des Einkauf-Deltas, wenn <c>Purchasing:DeltaHour</c>/<c>DeltaMinute</c> nichts anderes sagen.
+    ///
+    /// Seit 2026-11-20 nachts statt hinter dem 12:00-Export (Auftrag Ingo: ein durch Deploy
+    /// abgebrochener Mittagslauf wurde um 13:39 nachgeholt und lief 90 Minuten in der Arbeitszeit).
     /// </summary>
-    public static readonly TimeSpan PurchasingCatchUpMinAge = TimeSpan.FromHours(20);
+    public const int PurchasingDeltaDefaultHour = 3;
+
+    /// <summary>Minute zum <see cref="PurchasingDeltaDefaultHour"/>.</summary>
+    public const int PurchasingDeltaDefaultMinute = 0;
 
     /// <summary>
-    /// True, wenn das Einkauf-Delta ausserhalb des planmaessigen Slots nachgeholt werden soll.
+    /// Juengster Slot, der schon erreicht ist: heute um Stunde/Minute, sonst gestern.
+    /// </summary>
+    public static DateTime MostRecentSlot(DateTime now, int hour, int minute)
+    {
+        var todayRun = new DateTime(now.Year, now.Month, now.Day, hour, minute, 0, now.Kind);
+        return todayRun <= now ? todayRun : todayRun.AddDays(-1);
+    }
+
+    /// <summary>
+    /// True, wenn das Einkauf-Delta ausserhalb des planmaessigen Slots nachgeholt werden soll:
+    /// seit dem juengsten Slot gab es keinen erfolgreichen Lauf.
     ///
-    /// BEFUND 2026-09-28: Vom 10.09. bis 28.09. lief KEIN einziger Einkauf-Lauf. Das Delta
-    /// startete nur im 12:00-Slot und erst nach dem Verkaufsexport. Der IIS-Worker wird aber im
-    /// Leerlauf beendet: an den meisten Tagen lebte er um 12:00 nicht (dann Nachhol-Lauf ohne
-    /// Einkauf), am 18.09. und 25.09. starb er mitten im Export, bevor das Delta begann.
+    /// BEFUND 2026-09-28: Vom 10.09. bis 28.09. lief KEIN einziger Einkauf-Lauf, weil der
+    /// IIS-Worker zur Slotzeit nicht lebte. BEFUND 2026-11-20: Der Worker endete am 19.11. um 21:20
+    /// und startete erst am 20.11. um 06:21; ein Nachtslot kann also ausfallen und wird dann beim
+    /// naechsten Start nachgeholt.
     ///
-    /// Die urspruengliche Sorge bleibt gewahrt: kein SAP-Lauf bei JEDEM beliebigen Neustart.
-    /// Nachgeholt wird nur nach dem heutigen Slot und nur, wenn der letzte ERFOLGREICHE Lauf
-    /// mindestens <see cref="PurchasingCatchUpMinAge"/> zurueckliegt. Ein abgebrochener Lauf
-    /// zaehlt bewusst nicht als erfolgreich, sonst bliebe der Ausfall wieder unsichtbar.
+    /// Vorher galt „letzter Erfolg mindestens 20 Stunden alt“. Mit dem Nachtslot haette ein Lauf,
+    /// der um 15:10 fertig wurde, einen verpassten Nachtslot erst am Folgetag um 11:10 nachgeholt,
+    /// also wieder mitten im Tag. Ein abgebrochener Lauf zaehlt weiterhin nicht als erfolgreich.
+    /// Dass ein gescheiterter Nachholversuch nicht alle 15 Minuten wiederholt wird, regelt der
+    /// <see cref="TimerBackgroundService"/> (hoechstens ein Versuch je Slot und Prozess).
     /// </summary>
     /// <param name="now">Aktuelle lokale Zeit.</param>
-    /// <param name="hour">Geplante Stunde.</param>
-    /// <param name="minute">Geplante Minute.</param>
+    /// <param name="hour">Stunde des Delta-Slots.</param>
+    /// <param name="minute">Minute des Delta-Slots.</param>
     /// <param name="enabled">Timer aktiviert.</param>
     /// <param name="lastSuccessLocal">Ende des letzten erfolgreichen Einkauf-Laufs, lokal, oder null.</param>
     public static bool IsPurchasingCatchUpDue(DateTime now, int hour, int minute, bool enabled, DateTime? lastSuccessLocal)
@@ -71,10 +86,6 @@ public static class TimerSchedule
         if (!enabled)
             return false;
 
-        var todayRun = new DateTime(now.Year, now.Month, now.Day, hour, minute, 0, now.Kind);
-        if (now < todayRun)
-            return false;
-
-        return lastSuccessLocal is null || now - lastSuccessLocal.Value >= PurchasingCatchUpMinAge;
+        return lastSuccessLocal is null || lastSuccessLocal.Value < MostRecentSlot(now, hour, minute);
     }
 }

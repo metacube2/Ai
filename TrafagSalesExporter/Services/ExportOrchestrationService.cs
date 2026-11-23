@@ -57,6 +57,15 @@ public class ExportOrchestrationService
         }
     }
 
+    /// <summary>Irgendein Standort- oder Gesamtexport laeuft (fuer den Hinweis im Dashboard, 2026-11-20).</summary>
+    public bool IsAnyExportRunning()
+    {
+        lock (_lock)
+        {
+            return _consolidatedExportRunning || _runningExports.Count > 0;
+        }
+    }
+
     public string GetConsolidatedExportStatus()
     {
         lock (_lock)

@@ -101,6 +101,12 @@ public sealed class PurchasingRefreshRunner : IPurchasingRefreshRunner, IHostedS
             _message = string.Empty;
         }
 
+        // Seit 2026-11-20 steht jeder Start im Serverprotokoll, das Ende ohnehin ("beendet").
+        // Die Deploy-Pruefung liest genau dieses Paar (PurchasingRunLog), statt aus der Groesse
+        // der -wal-Datei zu raten: der Delta liest zuerst lange aus SAP und schreibt erst am Ende,
+        // die WAL bleibt bis dahin klein (Deploy 20.11. 12:51 brach so einen Lauf ab).
+        _logger.LogInformation("Einkauf-Lauf {Mode} gestartet um {Time}", normalized, DateTime.Now);
+
         // Absichtlich ohne await: der Aufrufer ist ein Klick und soll sofort zurueckkommen.
         _ = Task.Run(() => RunAsync(normalized, fromDate));
         return true;

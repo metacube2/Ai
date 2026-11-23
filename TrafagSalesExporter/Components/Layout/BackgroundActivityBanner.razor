@@ -1,0 +1,48 @@
+@using TrafagSalesExporter.Services
+@implements IDisposable
+@inject IPurchasingRefreshRunner PurchasingRunner
+@inject ExportOrchestrationService ExportOrchestration
+@inject IUiTextService UiText
+
+@* Hinweis oben auf jeder Seite, solange ein schwerer Hintergrundlauf laeuft (Wunsch Ingo 2026-11-20).
+   Prueft alle 20 Sekunden den Zustand im Speicher, ohne Datenbankzugriff. *@
+@if (_notice is not null)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" Class="mt-2 mb-2"
+              Icon="@Icons.Material.Filled.HourglassTop">
+        @UiText.Text(_notice.German, _notice.English)
+    </MudAlert>
+}
+
+@code {
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(20);
+    private BackgroundActivityNotice.Notice? _notice;
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _notice = Read();
+        _timer = new System.Threading.Timer(_ => Refresh(), null, PollInterval, PollInterval);
+    }
+
+    private BackgroundActivityNotice.Notice? Read()
+        => BackgroundActivityNotice.Describe(PurchasingRunner.Current, ExportOrchestration.IsAnyExportRunning(), DateTime.UtcNow);
+
+    private void Refresh()
+    {
+        try
+        {
+            var next = Read();
+            if (next == _notice)
+                return;
+            _notice = next;
+            _ = InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Circuit beendet, Timer laeuft noch einmal nach: nichts zu tun.
+        }
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

@@ -34,6 +34,15 @@ public class TimerBackgroundService : BackgroundService
     private DateTime _nextRun = DateTime.MaxValue;
     private DateTime _nextPurchasingCatchUpCheck = DateTime.MinValue;
 
+    /// <summary>Naechster Slot des Einkauf-Deltas (seit 2026-11-20 nachts, eigener Slot).</summary>
+    private DateTime _nextPurchasingRun = DateTime.MaxValue;
+
+    /// <summary>
+    /// Juengster Delta-Slot, fuer den dieser Prozess schon einen Lauf gestartet hat (Slot oder
+    /// Nachholen). Verhindert, dass ein gescheiterter Lauf alle 15 Minuten wiederholt wird.
+    /// </summary>
+    private DateTime? _purchasingSlotAttempted;
+
     public DateTime NextRun => _nextRun;
 
     public TimerBackgroundService(IServiceProvider serviceProvider, ILogger<TimerBackgroundService> logger)
@@ -49,19 +58,43 @@ public class TimerBackgroundService : BackgroundService
 
     private async Task RecalculateNextRunAsync()
     {
-        var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-        using var db = await dbFactory.CreateDbContextAsync();
-        var settings = await db.ExportSettings
-            .OrderBy(x => x.Id)
-            .FirstOrDefaultAsync();
-
-        if (settings is null || !settings.TimerEnabled)
+        // try/catch seit 2026-11-20 (Code-Review 12.11. Nr. 10): ein DB-Fehler hier lief sonst
+        // aus ExecuteAsync heraus und beendete den Hintergrunddienst samt Host.
+        try
         {
-            _nextRun = DateTime.MaxValue;
-            return;
-        }
+            var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var db = await dbFactory.CreateDbContextAsync();
+            var settings = await db.ExportSettings
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync();
 
-        _nextRun = TimerSchedule.ComputeNextRun(DateTime.Now, settings.TimerHour, settings.TimerMinute);
+            if (settings is null || !settings.TimerEnabled)
+            {
+                _nextRun = DateTime.MaxValue;
+                return;
+            }
+
+            _nextRun = TimerSchedule.ComputeNextRun(DateTime.Now, settings.TimerHour, settings.TimerMinute);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Naechster Timer-Lauf konnte nicht berechnet werden; neuer Versuch in einer Stunde");
+            _nextRun = DateTime.Now.AddHours(1);
+        }
+    }
+
+    /// <summary>
+    /// Slot des Einkauf-Deltas aus <c>Purchasing:DeltaHour</c>/<c>Purchasing:DeltaMinute</c>,
+    /// sonst <see cref="TimerSchedule.PurchasingDeltaDefaultHour"/> (03:00).
+    /// </summary>
+    private (int Hour, int Minute) PurchasingDeltaSlot()
+    {
+        var config = _serviceProvider.GetService<IConfiguration>();
+        var hour = config?.GetValue<int?>("Purchasing:DeltaHour") ?? TimerSchedule.PurchasingDeltaDefaultHour;
+        var minute = config?.GetValue<int?>("Purchasing:DeltaMinute") ?? TimerSchedule.PurchasingDeltaDefaultMinute;
+        if (hour is < 0 or > 23 || minute is < 0 or > 59)
+            return (TimerSchedule.PurchasingDeltaDefaultHour, TimerSchedule.PurchasingDeltaDefaultMinute);
+        return (hour, minute);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -75,6 +108,8 @@ public class TimerBackgroundService : BackgroundService
 
         await CatchUpMissedRunAsync();
         await RecalculateNextRunAsync();
+        var (deltaHour, deltaMinute) = PurchasingDeltaSlot();
+        _nextPurchasingRun = TimerSchedule.ComputeNextRun(DateTime.Now, deltaHour, deltaMinute);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -85,13 +120,18 @@ public class TimerBackgroundService : BackgroundService
             // gestartet sein. Nach 30 Sekunden ist er das sicher.
             await CheckPurchasingCatchUpAsync();
 
+            // Einkauf-Delta seit 2026-11-20 im eigenen Nachtslot (Standard 03:00), nicht mehr
+            // hinter dem 12:00-Export: dort lief es in der Arbeitszeit, und ein Deploy am Mittag
+            // brach es ab (20.11. 12:51, nachgeholt 13:39 bis 15:10).
+            if (DateTime.Now >= _nextPurchasingRun)
+            {
+                await RunPurchasingDeltaAsync();
+                _nextPurchasingRun = TimerSchedule.ComputeNextRun(DateTime.Now, deltaHour, deltaMinute);
+            }
+
             if (DateTime.Now < _nextRun) continue;
 
             await RunExportAsync("Timer-Export gestartet um {Time}");
-            // Einkauf-Delta laeuft NUR im planmaessigen Slot, nicht im Nachhol-Lauf: ein
-            // verpasster Slot (z.B. Deploy nach 03:00) darf nicht bei einem beliebigen
-            // Tages-Restart einen SAP-Lauf gegen travp762 ausloesen.
-            await RunPurchasingDeltaAsync();
             await RecalculateNextRunAsync();
         }
     }
@@ -179,13 +219,23 @@ public class TimerBackgroundService : BackgroundService
                 return;
             }
 
-            _logger.LogInformation("Einkauf-Delta (naechtlich) gestartet um {Time}", DateTime.Now);
+            var settings = await db.ExportSettings.OrderBy(x => x.Id).FirstOrDefaultAsync();
+            if (settings is null || !settings.TimerEnabled)
+            {
+                _logger.LogInformation("Einkauf-Delta uebersprungen: Timer ist ausgeschaltet.");
+                return;
+            }
 
-            // IPurchasingDataRefreshService ist Scoped -> eigener Scope statt Aufloesung
-            // aus dem Singleton-Root (sonst Scope-Validation-Fehler).
-            using var scope = _serviceProvider.CreateScope();
-            var refresh = scope.ServiceProvider.GetRequiredService<IPurchasingDataRefreshService>();
-            await refresh.RunDeltaAsync();
+            var (hour, minute) = PurchasingDeltaSlot();
+            _purchasingSlotAttempted = TimerSchedule.MostRecentSlot(DateTime.Now, hour, minute);
+
+            // Seit 2026-11-20 ueber den Runner statt direkt (Code-Review 20.11. E2): nur so greift
+            // die Laufsperre gegen einen gleichzeitigen Klick oder Nachhol-Lauf, und der Hinweis
+            // im Dashboard sieht den Lauf.
+            var runner = _serviceProvider.GetRequiredService<IPurchasingRefreshRunner>();
+            var started = runner.TryStart(PurchasingRefreshRunner.ModeDelta);
+            _logger.LogInformation("Einkauf-Delta (naechtlich) {Result} um {Time}",
+                started ? "gestartet" : "nicht gestartet (es laeuft bereits ein Einkauf-Lauf)", DateTime.Now);
         }
         catch (Exception ex)
         {
@@ -205,12 +255,16 @@ public class TimerBackgroundService : BackgroundService
     {
         if (DateTime.Now < _nextPurchasingCatchUpCheck)
             return;
-
-        // Steht der heutige Slot noch aus oder ist er gerade faellig, macht ihn der regulaere
-        // Lauf samt Delta. Sonst liefe das Delta um 12:00 doppelt: einmal hier, einmal im Slot.
-        if (_nextRun.Date <= DateTime.Now.Date)
-            return;
         _nextPurchasingCatchUpCheck = DateTime.Now + PurchasingCatchUpCheckInterval;
+
+        // Hoechstens ein Versuch je Delta-Slot und Prozess: ist fuer den juengsten Slot schon ein
+        // Lauf gestartet worden (im Slot selbst oder als Nachholen), wird ein Fehlschlag nicht
+        // alle 15 Minuten gegen SAP wiederholt. Ersetzt am 2026-11-20 die Bindung an den
+        // Export-Slot (`_nextRun`), die nur galt, solange das Delta hinter dem Export lief.
+        var (deltaHour, deltaMinute) = PurchasingDeltaSlot();
+        var slot = TimerSchedule.MostRecentSlot(DateTime.Now, deltaHour, deltaMinute);
+        if (_purchasingSlotAttempted == slot)
+            return;
 
         try
         {
@@ -225,7 +279,7 @@ public class TimerBackgroundService : BackgroundService
 
             var lastSuccessUtc = await ReadLastPurchasingSuccessUtcAsync(db);
             var lastSuccessLocal = lastSuccessUtc?.ToLocalTime();
-            if (!TimerSchedule.IsPurchasingCatchUpDue(DateTime.Now, settings.TimerHour, settings.TimerMinute, settings.TimerEnabled, lastSuccessLocal))
+            if (!TimerSchedule.IsPurchasingCatchUpDue(DateTime.Now, deltaHour, deltaMinute, settings.TimerEnabled, lastSuccessLocal))
                 return;
 
             var runner = _serviceProvider.GetService<IPurchasingRefreshRunner>();
@@ -233,6 +287,8 @@ public class TimerBackgroundService : BackgroundService
                 return;
 
             var started = runner.TryStart(PurchasingRefreshRunner.ModeDelta);
+            if (started)
+                _purchasingSlotAttempted = slot;
             _logger.LogInformation(
                 "Einkauf-Delta Nachhol-Lauf {Result} um {Time}, letzter Erfolg {LastSuccess}",
                 started ? "gestartet" : "nicht gestartet (es laeuft bereits ein Einkauf-Lauf)",

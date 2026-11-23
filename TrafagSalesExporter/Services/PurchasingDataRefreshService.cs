@@ -371,21 +371,41 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     public async Task<PurchasingDataRefreshStatus> RunDeltaAsync(DateTime? fromDate = null, CancellationToken cancellationToken = default)
     {
         var current = await GetStatusAsync(cancellationToken);
-        var deltaFrom = fromDate ?? current.LastSuccessfulDeltaAtUtc ?? current.CompletedAtUtc ?? DateTime.UtcNow.AddDays(-7);
+        // Stichtag seit 2026-11-20 aus dem letzten ERFOLGREICHEN Lauf (Full oder Delta), einen Tag
+        // Sicherheit, weil Aedat nur ein Datum ist. Vorher galt die juengste Statuszeile ohne Blick
+        // auf den Status; nach einem abgebrochenen Lauf sprang der Stichtag nach vorn (Review 20.11. E5).
+        var lastSuccessUtc = await ReadLastSuccessUtcAsync(cancellationToken);
+        var deltaFrom = fromDate
+            ?? lastSuccessUtc?.AddDays(-1)
+            ?? current.LastSuccessfulDeltaAtUtc
+            ?? DateTime.UtcNow.AddDays(-7);
         var started = DateTime.UtcNow;
         await WriteStatusAsync("Delta", "Running", started, null, deltaFrom, null, current.LastSuccessfulDeltaAtUtc, current.EkkoRows, current.EkpoRows, current.EketRows, "Delta gestartet.", cancellationToken);
 
         try
         {
+            var phases = new System.Diagnostics.Stopwatch();
+            var timings = new List<string>();
+            void Phase(string name)
+            {
+                timings.Add($"{name} {phases.Elapsed.TotalSeconds:N0} s");
+                phases.Restart();
+            }
+            phases.Start();
+
             var connection = await ResolveConnectionAsync(cancellationToken);
             using var client = CreateClient(connection.Username, connection.Password);
+            // Der Filter bleibt in der Anfrage (falls SAP ihn eines Tages auswertet), wirkt heute aber
+            // nicht: EKKOSet liefert alle Koepfe. Ausgewaehlt wird deshalb in der App.
             var filter = $"Aedat ge '{deltaFrom:yyyy-MM-dd}'";
-            var changedEkko = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Bstyp,Bsart,Konnr,Waers,Wkurs", filter, "Ebeln", cancellationToken);
-            var changedEbelns = changedEkko
-                .Select(row => GetText(row, "Ebeln"))
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var sapEkko = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Bstyp,Bsart,Konnr,Waers,Wkurs", filter, "Ebeln", cancellationToken);
+            Phase("EKKO lesen");
+
+            var cachedEbelns = await LoadCachedEbelnsAsync(cancellationToken);
+            var changedEbelns = PurchasingDeltaSelection.SelectChanged(
+                sapEkko.Select(row => (GetText(row, "Ebeln"), GetText(row, "Aedat"))),
+                cachedEbelns,
+                deltaFrom.ToLocalTime());
 
             // Wareneingaenge aendern nur EKET.Wemng, nicht EKKO.Aedat. Ein reines Aedat-Delta
             // wuerde offene Werte dauerhaft veralten lassen. Deshalb zusaetzlich alle Belege
@@ -394,6 +414,10 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var ebelnKeys = changedEbelns
                 .Union(openEbelns, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+            // Koepfe aller Belege, die neu geladen werden. Die uebrigen Koepfe bleiben, wie sie sind;
+            // geaenderte Koepfe alter, abgeschlossener Belege bringt der naechste Full Load.
+            var reloadKeys = new HashSet<string>(ebelnKeys, StringComparer.OrdinalIgnoreCase);
+            var changedEkko = sapEkko.Where(row => reloadKeys.Contains(GetText(row, "Ebeln"))).ToList();
 
             var ekpoRows = new List<Dictionary<string, object?>>();
             var eketRows = new List<Dictionary<string, object?>>();
@@ -403,12 +427,15 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
                 ekpoRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Elikz,Bukrs,Werks", ebelnFilter, "Ebeln,Ebelp", cancellationToken));
                 eketRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", ebelnFilter, "Ebeln,Ebelp,Etenr", cancellationToken));
             }
+            Phase($"EKPO/EKET fuer {ebelnKeys.Count:N0} Belege");
 
             var materialStatusMap = await LoadMaterialMasterMapAsync(client, connection.BaseUrl, cancellationToken);
             var classificationMap = await LoadMaterialClassificationMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
             var productGroupResult = await _productGroupSapReader.ReadAsync(
                 connection.BaseUrl, connection.Username, connection.Password, cancellationToken);
+
+            Phase("Stammdaten lesen");
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
@@ -427,17 +454,22 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
                 conn, transaction, materialStatusMap, classificationMap, cancellationToken);
             await ReplaceProductGroupRulesAsync(conn, transaction, productGroupResult, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            Phase("Cache schreiben");
 
             // Nach dem Commit, damit ein Fehler hier die bereits geschriebenen Belegdaten
             // nicht mehr gefaehrden kann.
             var contractLzMessage = await RefreshContractsAndLzSafeAsync(client, connection.BaseUrl, supplierNameMap, cancellationToken);
+            Phase("Kontrakte/LZ");
             contractLzMessage += " " + await RefreshComponentDispoSafeAsync(client, connection.BaseUrl, cancellationToken);
+            Phase("Dispo");
             contractLzMessage += " " + await RefreshMaterialShareSafeAsync(client, connection.BaseUrl, cancellationToken);
+            Phase("Materialanteil");
             await RefreshStockValueSafeAsync(connection, cancellationToken);
+            Phase("Lagerwert");
 
             var completed = DateTime.UtcNow;
             var status = await GetStatusAsync(cancellationToken);
-            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}). {contractLzMessage}";
+            var message = $"Delta abgeschlossen: Belege aus SAP={sapEkko.Count:N0}, davon neu oder ab {deltaFrom.ToLocalTime():dd.MM.yyyy}={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}). Dauer: {string.Join(", ", timings)}. {contractLzMessage}";
             await WriteStatusAsync("Delta", "Success", started, completed, deltaFrom, null, completed, status.EkkoRows, status.EkpoRows, status.EketRows, message, cancellationToken);
             _dashboardSnapshotCache?.Clear();
             await _logService.WriteAsync("Purchasing", "Einkauf Delta erfolgreich", details: message);
@@ -449,6 +481,38 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await _logService.WriteAsync("Purchasing", "Einkauf Delta fehlgeschlagen", "Error", details: ex.ToString());
             return await GetStatusAsync(cancellationToken);
         }
+    }
+
+    // Alle Belegnummern im Cache. Ein Beleg, der hier fehlt, ist neu und wird im Delta geladen.
+    private async Task<HashSet<string>> LoadCachedEbelnsAsync(CancellationToken cancellationToken)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync(cancellationToken);
+
+        var ebelns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await using var command = conn.CreateCommand();
+        command.CommandText = "SELECT Ebeln FROM PurchasingEkkoCache WHERE COALESCE(Ebeln, '') <> '';";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            ebelns.Add(reader.GetString(0));
+        return ebelns;
+    }
+
+    // Ende des letzten erfolgreichen Einkauf-Laufs (Full oder Delta); "Abgebrochen", "Error" und
+    // "Running" zaehlen nicht. Die Zeitstempel liegen als ISO-Text ("O") vor, MAX ist deshalb chronologisch.
+    private async Task<DateTime?> ReadLastSuccessUtcAsync(CancellationToken cancellationToken)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync(cancellationToken);
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = "SELECT MAX(CompletedAtUtc) FROM PurchasingSyncState WHERE Status = 'Success' AND COALESCE(CompletedAtUtc, '') <> '';";
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is string text ? ParseDateTime(text) : null;
     }
 
     // Belege mit offener Menge im Cache (EKET.Menge > EKET.Wemng). Diese muessen im Delta
