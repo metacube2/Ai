@@ -1,6 +1,6 @@
 # Tempo der Webapp: sofort sichtbare Oberflaeche und Ladezeiten
 
-Stand: 2026-10-01, zuletzt Abschnitt 10 (Einkauf nach Delta-Lauf, `4e2b55a`); Grundmessung 2026-09-28. Zurueck: `docs/router/plattform.md`.
+Stand: 2026-11-23, zuletzt Abschnitt 11 (Dashboard zaeh am 20.11.: Einkauf-Delta war ein verkappter Full Load, Nachtslot und Deploy-Pruefung gebaut, nicht deployed; Vorberechnung seit 09.10. dreimal langsamer); davor 2026-10-01, Abschnitt 10 (Einkauf nach Delta-Lauf, `4e2b55a`); Grundmessung 2026-09-28. Zurueck: `docs/router/plattform.md`.
 
 ## 0. Stand auf einen Blick
 
@@ -250,3 +250,72 @@ bis 30 s lang die Zahlen vor dem Delta); (b) die 55 Abfragen zusammenfassen oder
 eigene Filter oft genug gebraucht werden") ist mit dieser Rueckmeldung zu ueberdenken.
 
 *Entschieden und umgesetzt am 2026-10-01 (Ingo: „mach mal a“), produktiv 11:21, `4e2b55a`:* `PurchasingDashboardSnapshotCache.Clear()` behaelt den Stand je Filter als Vorgaenger. Ein Aufruf ohne neuen Stand bekommt sofort den alten, die Neuberechnung laeuft im Hintergrund, `IsPrevious` meldet das der Seite. Die Seite zeigt den Hinweis „Neue Einkaufsdaten werden eingerechnet ...“ und laedt alle 5 s nach (hoechstens 5 Minuten), bis die neuen Zahlen da sind. Ein Filter ohne frueheren Stand wartet wie bisher. Tests im Cache-Test, 816/816. Nebenwirkung: die Logzeile „Einkauf-Standardansicht vorberechnet in ... s“ erscheint nach einem Lauf nicht mehr, weil das Vorwaermen sofort den alten Stand bekommt; die Rechenzeit selbst ist damit nicht mehr im Protokoll. **(b) bleibt offen** (Abfragen buendeln, zuerst messen).
+
+## 11. Dashboard zaeh am 2026-11-20 nachmittags: Einkauf-Delta, Ursachen und Umbau (2026-11-23)
+
+*Auftrag Ingo 20.11. („anscheinend ist das Dashboard extrem langsam, was ist los“, danach „mache das alles, ev Anzeige im
+Dashboard Achtung ... laeuft, ist langsam“). Belegt mit den stdout-Protokollen des Servers (718 Dateien seit 28.09., einmal in den
+Scratchpad kopiert), ohne Produktiv-DB.*
+
+### 11.1 Was am 20.11. passiert ist
+
+| Zeit | Ereignis |
+| --- | --- |
+| 12:31 | Taeglicher Einkauf-Delta startet hinter dem 12:00-Export |
+| 12:51 | Deploy Shopfloor Patch 10 startet die App neu, der Delta stirbt (im Deploy-Eintrag stand „Einkauf-Delta lief nicht“) |
+| 13:23 | Zweiter Deploy (Finance Stufe 2) |
+| 13:39 | Nachhol-Lauf startet in der Arbeitszeit |
+| 15:09 | Delta fertig: „geaenderte Belege=178'505“ bei 178'505 Belegen gesamt |
+
+### 11.2 Ursachen
+
+1. **Der Delta war seit langem ein verkappter Full Load.** `EKKOSet` reicht `$filter` nicht an den Data Provider durch
+   (`saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`, Abschnitt zu `set_filterable`). `Aedat ge '<gestern>'` lieferte alle Koepfe,
+   danach wurden EKPO und EKET fuer jeden Beleg in Paketen zu 20 nachgeladen: rund 18'000 Anfragen, 90 Minuten. Am 19.11.
+   dasselbe Bild (178'479).
+2. **Der Delta lief mittags**, im Timer-Slot hinter dem Verkaufsexport, also in der Arbeitszeit und mitten in den ueblichen
+   Deploy-Zeiten.
+3. **Die Deploy-Pruefung „kleine -wal-Datei = kein Delta“ ist blind:** der Delta liest zuerst ueber eine Stunde aus SAP und
+   schreibt erst am Ende.
+4. **Die Einkauf-Vorberechnung ist seit dem 09.10. rund dreimal langsamer** (Abschnitt 11.4). Das ist eine zweite, vom Delta
+   unabhaengige Last.
+
+*Berichtigung 2026-11-23:* Im Chat vom 20.11. stand, der Delta habe die Datenbank 90 Minuten „belegt“. Geschrieben wird erst am
+Ende; belastet haben ihn die SAP-Anfragen und die parallel laufende Vorberechnung (196,7 s statt rund 100 s waehrend des Laufs).
+
+### 11.3 Umgesetzt im Zweig `einkauf-tempo-2011` (`e76df02`), Tests 1809/1809, *nicht deployed*
+
+- Delta im eigenen **Nachtslot 03:00** (`Purchasing:DeltaHour`/`DeltaMinute`), Start immer ueber den Runner (Laufsperre).
+  Nachholen, wenn seit dem juengsten Slot kein Erfolg da ist, hoechstens ein Versuch je Slot und Prozess. Der Worker lief nicht
+  jede Nacht (19.11. 21:20 bis 20.11. 06:21 kein Prozess); dann holt der erste Start am Morgen den Lauf nach.
+- **Echtes Delta:** Auswahl in der App (`PurchasingDeltaSelection`): Belege, die im Cache fehlen oder deren `Aedat` ab dem
+  Stichtag liegt, dazu wie bisher alle Belege mit offener Menge. Stichtag = letzter erfolgreicher Lauf minus ein Tag. Die
+  Erfolgsmeldung nennt jetzt die Dauer je Abschnitt. Erwartung (nicht gemessen): die offenen Belege (am 20.11. 28'723) bestimmen
+  die Dauer, rund ein Sechstel der bisherigen Anfragen. Die erste Meldung nach dem Deploy liefert die echte Zahl.
+- **Deploy-Pruefung aus dem Serverprotokoll:** der Runner schreibt „Einkauf-Lauf {Mode} gestartet“, `PurchasingRunLog` wertet
+  Start gegen Ende aus, `DeployHeadless` bricht bei laufendem Lauf ab (`--trotz-einkauf-lauf` uebersteuert).
+- **Hinweisbalken** oben auf jeder Seite, solange ein Einkauf-Lauf oder Verkaufsexport laeuft. Die Wochensicherung der
+  Datenbank laeuft im Deploy-Werkzeug ausserhalb der App und erscheint dort nicht.
+
+### 11.4 Vorberechnung: Befund, noch keine Behebung
+
+Median der Vorberechnung je Prozess (ohne den ersten Lauf nach dem Start), aus den Serverprotokollen:
+
+| Zeitraum | Median im laufenden Betrieb |
+| --- | --- |
+| 28.09. bis 08.10. | 33 bis 40 s |
+| 09.10. bis 23.10. | 121 bis 150 s |
+| 26.10. | 37 s, danach wieder steigend |
+| 29.10. bis 20.11. | 97 bis 121 s |
+
+Am 09.10. wurden Trafag Projekte, Trafag Reddit und der Shopfloor-SAP-Abgleich ausgeliefert; keiner davon aendert den
+Einkauf-Code, der Abgleich laeuft nur zu festen Zeiten. Eine Ursache im Code ist damit nicht belegt. Auffaellig ist dagegen:
+
+- Seit dem 01.10. (Abschnitt 10) erscheint die Logzeile nur noch, wenn fuer den Filter **gar kein** Stand im Cache liegt. Sie
+  kommt aber rund einmal pro Stunde. Vermutung: `TrimIfNeeded` leert bei mehr als 32 Filtern den ganzen Cache
+  (`PurchasingDashboardSnapshotCache.cs`), danach rechnen mehrere Filter gleichzeitig neu und behindern sich. Das wuerde den
+  schnellen ersten Lauf nach einem Neustart erklaeren.
+- Die Datenbank waechst (613 MB am 13.10., 690 MB am 20.11.).
+
+Pruefen laesst sich das nur mit echten Daten: Zeitmessung je Abfrage gegen eine Kopie der Wochensicherung vom 16.11. Dafuer
+braucht es Ingos Freigabe (Produktivdaten).
