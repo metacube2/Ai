@@ -160,7 +160,9 @@ public sealed class RexxHubRefreshService : BackgroundService
 
             var notes = Notes(kind, check, connection, _options);
             if (dropped > 0)
-                notes.Add($"{dropped} Zeile(n) mit schon vorkommender Personalnummer (zweites Arbeitsverhaeltnis) entfernt, juengster Eintritt bleibt");
+                notes.Add(kind == RexxHubQueryKind.Gesamt
+                    ? $"{dropped} Zeile(n) mit schon vorkommender Personalnummer (zweites Arbeitsverhaeltnis) entfernt, juengster Eintritt bleibt"
+                    : $"{dropped} Antrag/Antraege ohne Abwesenheit (andere Workflows) entfernt");
             if (backup is not null)
                 notes.Add($"Handexport gesichert als {Path.GetFileName(backup)}");
             await _log.WriteAsync("HR", $"Rexx-Hub {label} geschrieben", notes.Any(n => !n.StartsWith("Handexport", StringComparison.Ordinal)) ? "Warning" : "Info",
@@ -266,6 +268,12 @@ public sealed class RexxHubProbeQuery
     /// <summary>Spaltensummen (Zahl, Stunden als Dezimalstunden), zum Vergleich mit einem Handexport; keine Werte je Person.</summary>
     public Dictionary<string, decimal> Summen { get; init; } = [];
     public int EntfernteDoppelzeilen { get; init; }
+    /// <summary>Nur Fall-Datei: Antraege ohne Abwesenheit (andere Workflows aus GET v1/requests), vor der Pruefung entfernt.</summary>
+    public int EntfernteAntraegeOhneAbwesenheit { get; init; }
+    /// <summary>Nur Fall-Datei: Zeilen und Tage je „Art | Status“ und Datumsbereich, fuer den Vergleich mit dem Handexport.</summary>
+    public Dictionary<string, string> Verteilung { get; init; } = [];
+    /// <summary>Schreibt der Tagesabruf diese Datei? Fall-Datei nur mit HrKpi:RexxHub:CaseEnabled = true.</summary>
+    public bool SchreibtImTagesabruf { get; init; } = true;
 }
 
 /// <summary>
@@ -299,7 +307,9 @@ public sealed class RexxHubProbe(
                      (RexxHubQueryKind.Faelle, settings.CaseQueryId, fileNames.RexxCaseFile)
                  })
         {
-            if (kind == RexxHubQueryKind.Faelle && !settings.CaseEnabled)
+            // Seit 2026-11-23: mit eigenem Pfad (v1/requests) wird die Fall-Datei auch bei CaseEnabled = false geprueft, nur nicht
+            // geschrieben (der Testabruf schreibt nie); so laesst sich vor dem Einschalten gegen den Handexport #777 vergleichen.
+            if (kind == RexxHubQueryKind.Faelle && !settings.CaseEnabled && string.IsNullOrWhiteSpace(settings.CasePathTemplate))
             {
                 queries.Add(new RexxHubProbeQuery
                 {
@@ -328,7 +338,10 @@ public sealed class RexxHubProbe(
                     Formatpruefung = check.Formatpruefung, Wertpruefung = check.Wertpruefung,
                     DoppeltePersonalnummern = check.DoppeltePersonalnummern, DatumswerteMitZeitanteil = check.DatumswerteMitZeitanteil,
                     Summen = RexxHubColumns.Sums(kind, result.Table),
-                    EntfernteDoppelzeilen = dropped,
+                    EntfernteDoppelzeilen = kind == RexxHubQueryKind.Gesamt ? dropped : 0,
+                    EntfernteAntraegeOhneAbwesenheit = kind == RexxHubQueryKind.Faelle ? dropped : 0,
+                    Verteilung = kind == RexxHubQueryKind.Faelle ? RexxHubColumns.CaseDistribution(result.Table) : [],
+                    SchreibtImTagesabruf = kind == RexxHubQueryKind.Gesamt || settings.CaseEnabled,
                     Hinweise = RexxHubRefreshService.Notes(kind, check, connection, settings)
                 });
             }

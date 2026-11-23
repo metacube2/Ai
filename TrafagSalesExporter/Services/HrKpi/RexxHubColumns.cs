@@ -366,9 +366,13 @@ public static class RexxHubColumns
     /// <c>HrKpiDashboardBuilder.ParseRexxPeriod</c> erkennt nur „05.01.2026“. ISO-Daten in diesen Texten werden umgeschrieben,
     /// alles andere bleibt. Datumsspalten bleiben ISO, die liest der Schreiber ohnehin als Datum.
     /// </summary>
-    /// <returns>Anzahl der Zeilen, die als zweite Zeile derselben Personalnummer entfernt wurden (nur Gesamtdatei).</returns>
+    /// <returns>Gesamtdatei: Anzahl der Zeilen, die als zweite Zeile derselben Personalnummer entfernt wurden. Fall-Datei: Anzahl
+    /// der Antraege ohne Abwesenheit (<see cref="DropNonAbsenceRequests"/>).</returns>
     public static int Normalize(RexxHubQueryKind kind, RexxHubTable table)
     {
+        if (kind == RexxHubQueryKind.Faelle)
+            return DropNonAbsenceRequests(table);
+
         var periodColumns = For(kind).Where(c => c.Kind == RexxHubColumnKind.Zeitraum)
             .SelectMany(c => new[] { c.Name }.Concat(c.Aliases))
             .Where(table.Columns.Contains)
@@ -382,6 +386,58 @@ public static class RexxHubColumns
             }
         }
         return kind == RexxHubQueryKind.Gesamt ? KeepLatestEmployment(table) : 0;
+    }
+
+    /// <summary>
+    /// Seit 2026-11-23 (GET v1/requests, Rexx-NOTES 21): der Endpunkt liefert alle Antraege jeder Workflow-Art (z. B. Homeoffice,
+    /// Berechtigungen), der Handexport #777 nur Abwesenheiten. Antraege ohne „Abwesenheit Buchung“ und ohne „Abwesenheit von“
+    /// sind keine Abwesenheit und werden entfernt, sonst verfehlten die Pflichtspalten den Fuellanteil und der ganze Abruf fiele.
+    /// Was der Leser danach nicht kennt (andere Abwesenheitsarten, Status), filtert weiter <c>MergeRexxCases</c>.
+    /// </summary>
+    private static int DropNonAbsenceRequests(RexxHubTable table)
+    {
+        const string typeColumn = "Abwesenheit Buchung";
+        const string fromColumn = "Abwesenheit von";
+        if (!table.Columns.Contains(typeColumn) && !table.Columns.Contains(fromColumn))
+            return 0;
+        return table.Rows.RemoveAll(r => IsEmpty(r.GetValueOrDefault(typeColumn)) && IsEmpty(r.GetValueOrDefault(fromColumn)));
+    }
+
+    /// <summary>
+    /// Verteilung der Fall-Datei fuer den Testabruf: Anzahl Zeilen und Summe „Abwesenheit Tage“ je Art und Status, dazu der
+    /// Datumsbereich „Abwesenheit von“. Nur Summen, keine Werte einzelner Personen; fuer den Vergleich mit dem Handexport #777.
+    /// </summary>
+    public static Dictionary<string, string> CaseDistribution(RexxHubTable table)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (!table.Columns.Contains("Abwesenheit Buchung"))
+            return result;
+        DateTime? first = null, last = null;
+        foreach (var group in table.Rows
+                     .GroupBy(r => Text(r, "Abwesenheit Buchung") + " | " + Text(r, "Abwesenheit Status"))
+                     .OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            decimal days = 0;
+            foreach (var row in group)
+            {
+                var value = row.GetValueOrDefault("Abwesenheit Tage");
+                if (value is decimal d)
+                    days += d;
+                else if (RexxHubWorkbook.TryParseNumber(Convert.ToString(value, CultureInfo.InvariantCulture) ?? "", out var n))
+                    days += n;
+            }
+            result[group.Key] = $"{group.Count()} Zeilen, {Math.Round(days, 1).ToString(CultureInfo.InvariantCulture)} Tage";
+        }
+        foreach (var row in table.Rows)
+        {
+            if (!RexxHubWorkbook.TryParseDate(Text(row, "Abwesenheit von"), out var from))
+                continue;
+            first = first is null || from < first ? from : first;
+            last = last is null || from > last ? from : last;
+        }
+        if (first is not null)
+            result["Abwesenheit von (Bereich)"] = $"{first:dd.MM.yyyy} bis {last:dd.MM.yyyy}";
+        return result;
     }
 
     /// <summary>

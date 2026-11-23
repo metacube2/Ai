@@ -1253,7 +1253,10 @@ public sealed class RexxHubTests : IDisposable
         Assert.True(options.GesamtZeitraumGeprueft);
         Assert.False(options.CaseEnabled);
         Assert.Equal("v1/employees", options.GesamtPathTemplate);
+        Assert.Equal("v1/requests", options.CasePathTemplate); // seit 2026-11-23, Rexx-NOTES 21
         Assert.Equal("page", options.PageParameter);
+        // Jede Pflichtspalte von #777 muss ueber die ColumnMap erreichbar sein (GET v1/requests, technische Namen).
+        Assert.All(RexxHubColumns.Faelle.Where(c => c.Pflicht), c => Assert.Contains(c.Name, options.ColumnMap.Values));
         // Jede Pflichtspalte von #775 muss ueber die ColumnMap erreichbar sein, sonst schreibt der Abruf nie.
         var mapped = options.ColumnMap.Values.ToHashSet(StringComparer.Ordinal);
         Assert.All(RexxHubColumns.Gesamt.Where(c => c.Pflicht), c => Assert.Contains(c.Name, mapped));
@@ -1297,5 +1300,82 @@ public sealed class RexxHubTests : IDisposable
         Assert.Equal(7.25m, sums["Krankheit angetreten (Stunden)"]);
         Assert.Equal(5.5m, sums["Ferien angetreten (Tage)"]);
         Assert.False(sums.ContainsKey("Urlaub Rest"));
+    }
+    // ---- Seit 2026-11-23: #777 ueber GET v1/requests (Rexx-NOTES 21) ----
+
+    private static Dictionary<string, object?> CaseRow(string? pernr, string? type, string? status, string? from, decimal? days)
+        => new() { ["Personalnummer"] = pernr, ["Abwesenheit Buchung"] = type, ["Abwesenheit Status"] = status, ["Abwesenheit von"] = from, ["Abwesenheit Tage"] = days };
+
+    [Fact]
+    public void Normalize_Faelle_Entfernt_Antraege_Ohne_Abwesenheit()
+    {
+        var table = Table(
+        [
+            CaseRow("1001", "Krankheit", "Genommen", "2026-11-02", 1m),
+            CaseRow("1002", null, "Genehmigt", null, null),          // z. B. Homeoffice-Antrag
+            CaseRow("1003", "", "Genehmigt", "", null),              // z. B. Berechtigungsantrag
+            CaseRow("1004", null, "Genommen", "2026-11-03", 2m)      // Datum ohne Art: bleibt, der Leser entscheidet
+        ]);
+
+        Assert.Equal(2, RexxHubColumns.Normalize(RexxHubQueryKind.Faelle, table));
+
+        Assert.Equal(["1001", "1004"], table.Rows.Select(r => (string?)r["Personalnummer"]).ToArray());
+    }
+
+    [Fact]
+    public void CaseDistribution_Zaehlt_Je_Art_Und_Status_Ohne_Personenwerte()
+    {
+        var table = Table(
+        [
+            CaseRow("1001", "Krankheit", "Genommen", "2026-04-07", 1.5m),
+            CaseRow("1002", "Krankheit", "Genommen", "2026-11-20", 2m),
+            CaseRow("1003", "Ferien", "Storniert", "2026-06-01", 5m)
+        ]);
+
+        var distribution = RexxHubColumns.CaseDistribution(table);
+
+        Assert.Equal("2 Zeilen, 3.5 Tage", distribution["Krankheit | Genommen"]);
+        Assert.Equal("1 Zeilen, 5 Tage", distribution["Ferien | Storniert"]);
+        Assert.Equal("07.04.2026 bis 20.11.2026", distribution["Abwesenheit von (Bereich)"]);
+        Assert.DoesNotContain(distribution, x => x.Key.Contains("100") || x.Value.Contains("100"));
+    }
+
+    [Fact]
+    public async Task Testabruf_Prueft_Faelle_Ueber_Requests_Auch_Wenn_Der_Schalter_Aus_Ist()
+    {
+        var options = Options(enabled: false);
+        options.CaseEnabled = false;
+        options.CasePathTemplate = "v1/requests";
+        options.ColumnMap["personnel_number"] = "Personalnummer";
+        options.ColumnMap["absence_of"] = "Abwesenheit von";
+        options.ColumnMap["absence_entry"] = "Abwesenheit Buchung";
+        options.ColumnMap["absence_status"] = "Abwesenheit Status";
+        options.ColumnMap["days_of_absence"] = "Abwesenheit Tage";
+        var requests = JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["data"] = new object[]
+            {
+                new Dictionary<string, object?> { ["personnel_number"] = "1001", ["absence_of"] = "2026-11-02", ["absence_entry"] = "Krankheit", ["absence_status"] = "Genommen", ["days_of_absence"] = 1, ["application_id"] = 1 },
+                new Dictionary<string, object?> { ["personnel_number"] = "1002", ["absence_of"] = null, ["absence_entry"] = null, ["absence_status"] = null, ["days_of_absence"] = null, ["application_id"] = 2 }
+            },
+            ["_links"] = new { self = "x" },
+            ["_meta"] = new Dictionary<string, object?> { ["request_id"] = "req-r" }
+        });
+        var rexx = new FakeRexx((r, _) => r.RequestUri!.AbsolutePath.EndsWith("/requests") ? FakeRexx.Ok(requests) : FakeRexx.Ok("""{"data":[]}"""));
+        var probe = new RexxHubProbe(new FixedSource(), Client(rexx).Client,
+            Microsoft.Extensions.Options.Options.Create(options),
+            Microsoft.Extensions.Options.Options.Create(new HrKpiDataSourceOptions()), new Env(_root));
+
+        var report = await probe.RunAsync(CancellationToken.None);
+
+        var f = report.Abfragen[1];
+        Assert.Contains(rexx.Requests, r => r.RequestUri!.AbsolutePath == "/rexx_hub/v1/requests");
+        Assert.True(f.Ok);
+        Assert.False(f.SchreibtImTagesabruf);
+        Assert.Equal(1, f.EntfernteAntraegeOhneAbwesenheit);
+        Assert.Equal(1, f.Zeilen);
+        Assert.Empty(f.FehlendePflichtspalten);
+        Assert.Equal("1 Zeilen, 1 Tage", f.Verteilung["Krankheit | Genommen"]);
+        Assert.DoesNotContain("1001", JsonSerializer.Serialize(report));
     }
 }
