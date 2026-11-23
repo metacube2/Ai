@@ -283,7 +283,7 @@ Scratchpad kopiert), ohne Produktiv-DB.*
 *Berichtigung 2026-11-23:* Im Chat vom 20.11. stand, der Delta habe die Datenbank 90 Minuten „belegt“. Geschrieben wird erst am
 Ende; belastet haben ihn die SAP-Anfragen und die parallel laufende Vorberechnung (196,7 s statt rund 100 s waehrend des Laufs).
 
-### 11.3 Umgesetzt im Zweig `einkauf-tempo-2011` (`e76df02`), Tests 1809/1809, *nicht deployed*
+### 11.3 Umgesetzt im Zweig `einkauf-tempo-2011` (`e76df02` und `d4e9a18`), Tests 1816/1816, *nicht deployed*
 
 - Delta im eigenen **Nachtslot 03:00** (`Purchasing:DeltaHour`/`DeltaMinute`), Start immer ueber den Runner (Laufsperre).
   Nachholen, wenn seit dem juengsten Slot kein Erfolg da ist, hoechstens ein Versuch je Slot und Prozess. Der Worker lief nicht
@@ -295,9 +295,19 @@ Ende; belastet haben ihn die SAP-Anfragen und die parallel laufende Vorberechnun
 - **Deploy-Pruefung aus dem Serverprotokoll:** der Runner schreibt „Einkauf-Lauf {Mode} gestartet“, `PurchasingRunLog` wertet
   Start gegen Ende aus, `DeployHeadless` bricht bei laufendem Lauf ab (`--trotz-einkauf-lauf` uebersteuert).
 - **Hinweisbalken** oben auf jeder Seite, solange ein Einkauf-Lauf oder Verkaufsexport laeuft. Die Wochensicherung der
-  Datenbank laeuft im Deploy-Werkzeug ausserhalb der App und erscheint dort nicht.
+  Datenbank laeuft im Deploy-Werkzeug ausserhalb der App und erscheint dort nicht. Im Browser noch nicht gesehen.
+- **Sonntags 03:00 ein Full Load** statt Delta (`Purchasing:WeeklyFullLoadDay`, leer oder `none` schaltet ab). Grund: das
+  echte Delta laedt nur neue und offene Belege; Aenderungen an abgeschlossenen Bestellungen (Preis, Loeschkennzeichen, Storno
+  eines Wareneingangs, neue Position) kamen bis zum 20.11. nur, weil der Delta unbeabsichtigt alles neu lud. Der Full Load liest
+  die drei Tabellen in ganzen Seiten statt je 20 Belege. Neu: er ersetzt den Bestand nicht, wenn SAP weniger als die Haelfte
+  der bisherigen Bestellkoepfe liefert (Review 20.11. E9). Ein verpasster Sonntag wird nur als Delta nachgeholt.
+- **Fehler des neuen Timer-Fangnetzes vor dem Commit behoben:** die erste Fassung haette nach einem DB-Fehler eine Stunde
+  spaeter einen Verkaufsexport ausgeloest. Jetzt: kein Export, neuer Berechnungsversuch nach 15 Minuten.
+- **Grenzen:** Ein gescheiterter Nachtlauf wird bis zur naechsten Nacht oder bis zu einem Neustart nicht wiederholt (hoechstens
+  ein Versuch je Slot und Prozess). Ob SAP um 03:00 erreichbar ist, ist nicht geprueft. Der erste Deploy startet sofort einen
+  Nachhol-Delta, falls seit dem letzten 03:00 kein Lauf erfolgreich war.
 
-### 11.4 Vorberechnung: Befund, noch keine Behebung
+### 11.4 Vorberechnung: ein Teil behoben, die Verdreifachung offen
 
 Median der Vorberechnung je Prozess (ohne den ersten Lauf nach dem Start), aus den Serverprotokollen:
 
@@ -308,14 +318,20 @@ Median der Vorberechnung je Prozess (ohne den ersten Lauf nach dem Start), aus d
 | 26.10. | 37 s, danach wieder steigend |
 | 29.10. bis 20.11. | 97 bis 121 s |
 
-Am 09.10. wurden Trafag Projekte, Trafag Reddit und der Shopfloor-SAP-Abgleich ausgeliefert; keiner davon aendert den
-Einkauf-Code, der Abgleich laeuft nur zu festen Zeiten. Eine Ursache im Code ist damit nicht belegt. Auffaellig ist dagegen:
+**Behoben (Teil 1): Benutzer warteten stuendlich die ganze Neuberechnung ab.** Die Logzeile erscheint rund einmal pro Stunde,
+auch an Sonntagen, also im Takt der Lebensdauer von 60 Minuten. Laut Abschnitt 10 haette der Aufrufer nach Ablauf aber sofort
+den alten Stand bekommen sollen. Ursache: der Cache startete die „Hintergrund“-Berechnung direkt aus dem Aufruf, und die
+Berechnung laeuft trotz async-Signatur synchron (SQLite-Aufrufe sind auch als *Async sofort fertig). Wer nach Ablauf als
+Erster `/einkauf` oeffnete, wartete deshalb die ganze Berechnung ab, rund 100 s. Nachgewiesen mit einem Test, der genau das
+zeigte (2,0 s Wartezeit bei einer synchronen 2-s-Berechnung), behoben mit `Task.Run` in
+`PurchasingDashboardSnapshotCache.StartOrJoinLoad`. Drei Cache-Tests setzten die alte, synchrone Reihenfolge voraus und
+wurden reihenfolgeunabhaengig gemacht; einer davon blockierte sich sonst selbst. *Die erste Vermutung (ganzer Cache durch
+`TrimIfNeeded` geleert) war falsch: die Zeile kommt auch sonntags ohne Benutzer.*
 
-- Seit dem 01.10. (Abschnitt 10) erscheint die Logzeile nur noch, wenn fuer den Filter **gar kein** Stand im Cache liegt. Sie
-  kommt aber rund einmal pro Stunde. Vermutung: `TrimIfNeeded` leert bei mehr als 32 Filtern den ganzen Cache
-  (`PurchasingDashboardSnapshotCache.cs`), danach rechnen mehrere Filter gleichzeitig neu und behindern sich. Das wuerde den
-  schnellen ersten Lauf nach einem Neustart erklaeren.
-- Die Datenbank waechst (613 MB am 13.10., 690 MB am 20.11.).
-
-Pruefen laesst sich das nur mit echten Daten: Zeitmessung je Abfrage gegen eine Kopie der Wochensicherung vom 16.11. Dafuer
-braucht es Ingos Freigabe (Produktivdaten).
+**Offen (Teil 2): die Berechnung selbst dauert seit dem 09.10. dreimal so lang.** Am 09.10. wurden Trafag Projekte, Trafag
+Reddit und der Shopfloor-SAP-Abgleich ausgeliefert; keiner aendert den Einkauf-Code, der Abgleich laeuft nur zu festen Zeiten.
+Am 26.10. fiel die Dauer einmal auf 37 s und stieg danach ueber Wochen wieder an, was eher nach Datenwachstum aussieht
+(Datenbank 613 MB am 13.10., 690 MB am 20.11.). Pruefen laesst sich das nur mit echten Daten: Zeitmessung je Abfrage gegen eine
+Kopie der Wochensicherung vom 16.11. Dafuer braucht es Ingos Freigabe (Produktivdaten). Nach Teil 1 rechnet das weiterhin
+stuendlich im Hintergrund, aber niemand wartet mehr auf diese stuendliche Neuberechnung (nur die allererste Berechnung eines
+Filters nach einem Neustart wartet weiter).

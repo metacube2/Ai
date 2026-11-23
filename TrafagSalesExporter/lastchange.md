@@ -7,11 +7,14 @@
 - **Ursache:** Deploy 12:51 brach den taeglichen Delta (seit 12:31) ab, Nachhol-Lauf 13:39 bis 15:09 in der Arbeitszeit. Der Delta
   laedt seit langem alle rund 178'500 Belege, weil `EKKOSet` den `$filter` ignoriert (90 Minuten). Deploy-Eintrag 12:51 („lief
   nicht“) berichtigt.
-- **Gebaut** im Zweig `einkauf-tempo-2011` (`e76df02`, Worktree `C:\TMP\TrafagSalesExporter_tempo2011`), Tests 1809/1809:
+- **Gebaut** im Zweig `einkauf-tempo-2011` (`e76df02`, `d4e9a18`, Worktree `C:\TMP\TrafagSalesExporter_tempo2011`), Tests 1816/1816:
   Nachtslot 03:00 ueber den Runner, Auswahl der Belege in der App, Stichtag aus letztem Erfolg, Deploy-Pruefung aus dem
   Serverprotokoll (`PurchasingRunLog`, im lokalen `DeployHeadless` eingebaut), Hinweisbalken bei laufendem Einkauf-Lauf oder Export.
-- **Befund ohne Behebung:** Einkauf-Vorberechnung seit 09.10. rund dreimal langsamer (35 s auf 100 bis 150 s); Ursache im Code
-  nicht belegt, Messung mit Kopie der Wochensicherung braucht Freigabe.
+- **Vorberechnung:** behoben, dass der erste Benutzer nach Ablauf des Stands stuendlich die ganze Neuberechnung abwartete (~100 s;
+  Cache startete die Hintergrundberechnung synchron). Offen: die Berechnung selbst ist seit 09.10. dreimal langsamer, Messung mit
+  Kopie der Wochensicherung braucht Freigabe.
+- **Dazu:** sonntags 03:00 Full Load (das echte Delta frischt abgeschlossene Bestellungen nicht mehr auf), nur bei plausibler
+  SAP-Antwort. Fehler der ersten Fassung vor dem Commit behoben (Timer haette nach DB-Fehler einen Export ausgeloest).
 - **Offen bei Ingo:** Deploy freigeben, Slotzeit 03:00, Messung Vorberechnung. Doku: `docs/PLATTFORM_TEMPO_2026-09-28.md` 11,
   `docs/rag/DEPLOYMENT.md`, `docs/rag/PURCHASING.md`, Review 20.11. (E2/E4/E5, Nr. 10), LEARNINGS, Wochen_Todo 168.
 
