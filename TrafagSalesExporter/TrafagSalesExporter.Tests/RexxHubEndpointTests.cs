@@ -177,4 +177,37 @@ public sealed class RexxHubEndpointTests : IAsyncLifetime
         Assert.False(Directory.Exists(Path.Combine(_dir, "hrdata")));
         Assert.Equal(2, _rexx.Requests.Count);
     }
+    [Fact]
+    public async Task Hintergrund_Startet_Einmal_Und_Liefert_Spaeter_Den_Bericht()
+    {
+        var cookie = await UnlockCookieAsync();
+        HttpRequestMessage Bg(string query = "?hintergrund=1")
+        {
+            var r = Get(@"TRAFAG\Admin", "TestAdmins", cookie);
+            r.RequestUri = new Uri(RexxHubRegistration.TestPath + query, UriKind.Relative);
+            return r;
+        }
+
+        using var first = JsonDocument.Parse(await (await _http.SendAsync(Bg())).Content.ReadAsStringAsync());
+        Assert.Equal("gestartet", first.RootElement.GetProperty("Status").GetString());
+        JsonDocument? done = null;
+        for (var i = 0; i < 100 && done is null; i++)
+        {
+            var state = JsonDocument.Parse(await (await _http.SendAsync(Bg())).Content.ReadAsStringAsync());
+            if (state.RootElement.GetProperty("Status").GetString() == "fertig")
+                done = state;
+            else
+                await Task.Delay(50);
+        }
+
+        Assert.NotNull(done);
+        Assert.Equal("#775", done!.RootElement.GetProperty("Bericht").GetProperty("Abfragen")[0].GetProperty("Abfrage").GetString());
+        var requestsAfterFirstRun = _rexx.Requests.Count;
+        // Ein weiterer Aufruf ohne neu=1 startet keinen zweiten Lauf.
+        await _http.SendAsync(Bg());
+        Assert.Equal(requestsAfterFirstRun, _rexx.Requests.Count);
+        using var again = JsonDocument.Parse(await (await _http.SendAsync(Bg("?hintergrund=1&neu=1"))).Content.ReadAsStringAsync());
+        Assert.Equal("gestartet", again.RootElement.GetProperty("Status").GetString());
+        done.Dispose();
+    }
 }

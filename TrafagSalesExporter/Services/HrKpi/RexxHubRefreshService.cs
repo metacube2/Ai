@@ -388,6 +388,7 @@ public static class RexxHubRegistration
         services.AddSingleton<IRexxHubConnectionSource, RexxHubDbConnectionSource>();
         services.AddSingleton<RexxHubClient>();
         services.AddSingleton<RexxHubProbe>();
+        services.AddSingleton<RexxHubProbeJob>();
         services.AddHostedService<RexxHubRefreshService>();
         return services;
     }
@@ -409,6 +410,15 @@ public static class RexxHubRegistration
                     {
                         Fehler = "Admin-Freischaltung fehlt. Zuerst unter Admin > Passwoerter (admin/passwoerter) mit dem Admin-Login entsperren, dann diese Adresse neu laden."
                     }, JsonOptions, statusCode: StatusCodes.Status403Forbidden);
+                // Seit 2026-11-23: ?hintergrund=1 startet den Testabruf an der Anwendung und gibt sofort den Stand zurueck; derselbe
+                // Aufruf holt spaeter das Ergebnis. Grund: GET v1/requests hat viele Seiten (je ~2 s), der Webserver bricht eine
+                // Anfrage nach rund 2 Minuten mit 502 ab und damit auch den Abruf (Rexx-NOTES 21). &neu=1 startet nach einem
+                // fertigen Lauf einen weiteren.
+                if (string.Equals(context.Request.Query["hintergrund"], "1", StringComparison.Ordinal))
+                {
+                    var job = context.RequestServices.GetRequiredService<RexxHubProbeJob>();
+                    return Results.Json(job.StartOrGet(string.Equals(context.Request.Query["neu"], "1", StringComparison.Ordinal)), JsonOptions);
+                }
                 var report = await probe.RunAsync(context.RequestAborted);
                 return Results.Json(report, JsonOptions);
             })
@@ -416,3 +426,35 @@ public static class RexxHubRegistration
         return app;
     }
 }
+
+/// <summary>
+/// Testabruf im Hintergrund (seit 2026-11-23): hoechstens ein Lauf zur Zeit, an die Lebensdauer der Anwendung gebunden statt an die
+/// Anfrage. Der Bericht bleibt bis zum naechsten Start im Speicher; er enthaelt wie der direkte Testabruf nur Zaehlwerte.
+/// </summary>
+public sealed class RexxHubProbeJob(RexxHubProbe probe, IHostApplicationLifetime lifetime)
+{
+    private readonly object _gate = new();
+    private Task<RexxHubProbeReport>? _task;
+    private DateTime _startedAt;
+
+    public RexxHubProbeJobState StartOrGet(bool restart)
+    {
+        lock (_gate)
+        {
+            if (_task is null || (restart && _task.IsCompleted))
+            {
+                _startedAt = DateTime.Now;
+                _task = Task.Run(() => probe.RunAsync(lifetime.ApplicationStopping));
+                return new RexxHubProbeJobState("gestartet", _startedAt, null, null);
+            }
+            if (!_task.IsCompleted)
+                return new RexxHubProbeJobState("laeuft", _startedAt, null, null);
+            return _task.IsCompletedSuccessfully
+                ? new RexxHubProbeJobState("fertig", _startedAt, _task.Result, null)
+                : new RexxHubProbeJobState("Fehler", _startedAt, null, _task.Exception?.GetBaseException().GetType().Name ?? "abgebrochen");
+        }
+    }
+}
+
+public sealed record RexxHubProbeJobState(string Status, DateTime GestartetUm, RexxHubProbeReport? Bericht, string? Fehler);
+
