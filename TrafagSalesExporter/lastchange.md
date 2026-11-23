@@ -1,5 +1,15 @@
 # Last Change
 
+## 2026-11-23 10:10: Plan ZLO03 FIX 29 (fremdbeschaffte Teile, Schalter), nur T76 gelesen
+
+- **Auftrag Ingo:** Befund in `Dashboard_Materialanteil pro Produktgruppe.xlsx`, dann „lese t76 mache plan“ und „sonst ein Schalter,
+  dass man beide Optionen hat“.
+- **Ergebnis:** ZLO03 loest Stuecklisten fremdbeschaffter Drehteile auf (Generator ohne Abbruch nach Beschaffungsart); CK11N nicht.
+  Bei 40731 zaehlt H10040 (0.73 CHF) zusaetzlich zu C17389 (1.58 CHF). Schalter zur Laufzeit in `Z_ZLO03_TURBO2` machbar (einfach bis
+  mittel), ab Werk aus, Dashboard setzt ihn. Plan `zlo03/PLAN_ZLO03_FREMDBESCHAFFUNG_2026-11-23.md`, Entscheide E1 bis E5.
+- T76 nur gelesen (Agent sap-t76, eigene GUI-Sitzungen, RFC vom Auto-Modus abgelehnt, nicht wiederholt); P76 nicht. Doku: zlo03/CLAUDE.md H,
+  Router SAP, baum, LEARNINGS, Wochen_Todo 169.
+
 ## 2026-11-23 08:40: Einkauf-Tempo deployed, Nachhol-Delta abgebrochen, Slot um Mitternacht
 
 - **Auftrag Ingo:** „mache deploy“, dann 08:30 „beende den Delta, er blockiert weitere Arbeiten, soll Mitternacht laufen“.

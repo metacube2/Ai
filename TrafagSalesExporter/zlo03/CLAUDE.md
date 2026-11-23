@@ -254,6 +254,12 @@ Hinweis zur Pruefung: viele Kopfmaterialien in VC_TXT haben in T76 eine Loeschvo
 
 ---
 
+### H) Stuecklisten fremdbeschaffter Teile werden aufgeloest (2026-11-23, Plan FIX 29)
+
+Befund Ingo: Rohmaterial unter fremdbeschafften Drehteilen (z. B. H10040 unter C17389, `BESKZ F`) zaehlt im Materialanteil
+mit, CK11N grenzt es ab. Plan mit Belegen aus T76 und Entscheiden: `zlo03/PLAN_ZLO03_FREMDBESCHAFFUNG_2026-11-23.md`
+(Schalter `p_nofrm` in `Z_ZLO03_TURBO2`, ab Werk aus; Dashboard setzt ihn). Noch nichts geaendert.
+
 ## Verifikationsplan
 
 ### Schritt 1 — Diagnoselauf
