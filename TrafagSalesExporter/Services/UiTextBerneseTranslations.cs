@@ -1083,6 +1083,7 @@ internal static class UiTextBerneseTranslations
             ["Gruppenrichtlinien"] = "Grupperichtlinie",
             ["Verlauf"] = "Verlouf",
             ["Excel"] = "Excel",
+            ["Als Excel herunterladen: alle Ebenen, Code und Text in eigenen Spalten, Beträge als Zahlen"] = "Als Excel abelade: alli Ebene, Code und Text i eigete Spalte, Beträg als Zahle",
             ["aktive Geräte"] = "aktivi Grät",
             ["Support endet in"] = "Support hört uf i",
             ["Tagen"] = "Täg",

@@ -148,6 +148,10 @@
                 </div>
             </div>
         }
+        @* Excel-Download (Wunsch Armin, 24.11.2026): ganzer Baum des gewaehlten Einstiegs, alle Ebenen, Code und Text getrennt. *@
+        <div class="d-flex justify-end mt-2">
+            <PurchasingExcelDownloadButton Table="BuildCascadeExport" FileLabel="@ActiveExportLabel" />
+        </div>
         <div class="purchasing-matrix-scroll mt-2">
             <table class="purchasing-matrix">
                 <thead>
@@ -227,6 +231,9 @@
     }
     else
     {
+        <div class="d-flex justify-end">
+            <PurchasingExcelDownloadButton Table="BuildRegionExport" FileLabel="@RegionExportLabel" />
+        </div>
         <div class="purchasing-pie-grid mt-2">
             @foreach (var group in RegionGroups)
             {
@@ -274,6 +281,9 @@
     }
     else
     {
+        <div class="d-flex justify-end mb-2">
+            <PurchasingExcelDownloadButton Table="BuildXyzExport" FileLabel="@XyzExportLabel" />
+        </div>
         <div class="purchasing-explorer-bars">
             @foreach (var bar in BuildCountBars(XyzCountRows))
             {
@@ -307,6 +317,9 @@
     }
     else
     {
+        <div class="d-flex justify-end mb-2">
+            <PurchasingExcelDownloadButton Table="BuildAbcXyzExport" FileLabel="@AbcXyzExportLabel" />
+        </div>
         <div class="purchasing-matrix-scroll">
             <table class="purchasing-action-matrix">
                 <thead>
@@ -364,6 +377,36 @@
     // Anzahl Materialien je XYZ-Klasse (Mail Marco Widmer 2026-11-12); Wert = Anzahl, nicht CHF.
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> XyzCountRows { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];
+    // Angewendeter Zeitraum (z.B. 2026-01 - 2026-11), nur fuer das Info-Blatt des Excel-Downloads.
+    [Parameter] public string PeriodLabel { get; set; } = string.Empty;
+
+    // Excel-Download je Tabelle (Wunsch Armin, Auftrag Ingo 24.11.2026). Die Daten liegen schon im Speicher; die Erzeugung
+    // steckt in PurchasingSpendExcelExport, hier keine Rechnung und keine Datenbank.
+    private string ActiveExportLabel => ActivePerspective?.LabelDe ?? PurchasingSpendExcelExport.ScopeAllPurchasing;
+    private string RegionExportLabel => PurchasingSpendExcelExport.RegionFileLabel;
+    private string XyzExportLabel => PurchasingSpendExcelExport.XyzFileLabel;
+    private string AbcXyzExportLabel => PurchasingSpendExcelExport.AbcXyzFileLabel;
+    private bool PartsActive => _onlyPurchasingParts && PartsPerspectives.Count > 0;
+
+    private SpendExcelTable BuildCascadeExport()
+    {
+        var perspective = ActivePerspective ?? new PurchasingSpendPerspectiveResult(
+            string.Empty, ActiveExportLabel, ActiveExportLabel, [], [], CascadeRows);
+        return PurchasingSpendExcelExport.BuildCascadeExport(perspective, SpendYears, PartsActive, PeriodLabel, DateTime.Now);
+    }
+
+    private SpendExcelTable BuildRegionExport()
+        => PurchasingSpendExcelExport.BuildRegionTable(RegionGroups, PurchasingSpendExcelExport.BuildInfo(
+            RegionExportLabel, PurchasingSpendExcelExport.ScopeAllPurchasingFixed, PeriodLabel, SpendYears, DateTime.Now,
+            note: PurchasingSpendExcelExport.RegionNote));
+
+    private SpendExcelTable BuildXyzExport()
+        => PurchasingSpendExcelExport.BuildXyzCountTable(XyzCountRows, PurchasingSpendExcelExport.BuildInfo(
+            XyzExportLabel, PurchasingSpendExcelExport.ScopeAllPurchasingFixed, PeriodLabel, SpendYears, DateTime.Now));
+
+    private SpendExcelTable BuildAbcXyzExport()
+        => PurchasingSpendExcelExport.BuildAbcXyzActionTable(AbcXyzActionRows, PurchasingSpendExcelExport.BuildInfo(
+            AbcXyzExportLabel, PurchasingSpendExcelExport.ScopeAllPurchasingFixed, PeriodLabel, SpendYears, DateTime.Now));
 
     // Elf Farben: die grossten 10 eines Einstiegs plus „übrige“ im Kuchen (Mail Marco Widmer 2026-11-12).
     // Als Konstanten, weil der Uebersetzungstest zwei benachbarte Zeichenketten fuer ein Textpaar Deutsch/Englisch haelt.

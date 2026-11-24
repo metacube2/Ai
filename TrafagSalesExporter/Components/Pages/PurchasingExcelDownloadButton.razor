@@ -1,0 +1,42 @@
+@using TrafagSalesExporter.Services
+@inject IJSRuntime JsRuntime
+@inject ISnackbar Snackbar
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+@* Excel-Download einer Tabelle im Spend-Aufriss (Wunsch Armin, Auftrag Ingo 24.11.2026). Die Tabelle liegt schon im Speicher;
+   erzeugt wird die Datei in PurchasingSpendExcelExport, hier nur der Download ueber die Blazor-Verbindung (Stream, kein Base64). *@
+<MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload"
+           OnClick="DownloadAsync" Disabled="_busy"
+           title="@T("Als Excel herunterladen: alle Ebenen, Code und Text in eigenen Spalten, Beträge als Zahlen", "Download as Excel: all levels, code and text in separate columns, amounts as numbers")">
+    @T("Excel", "Excel")
+</MudButton>
+
+@code {
+    [Parameter, EditorRequired] public Func<SpendExcelTable> Table { get; set; } = default!;
+    [Parameter, EditorRequired] public string FileLabel { get; set; } = string.Empty;
+
+    private bool _busy;
+
+    private async Task DownloadAsync()
+    {
+        _busy = true;
+        try
+        {
+            var bytes = PurchasingSpendExcelExport.CreateWorkbookBytes(Table());
+            var fileName = PurchasingSpendExcelExport.FileName(FileLabel, DateTime.Today);
+            using var streamRef = new DotNetStreamReference(new MemoryStream(bytes), leaveOpen: false);
+            await JsRuntime.InvokeVoidAsync("trafagDownload.saveStream", TimeSpan.FromMinutes(5), fileName, streamRef,
+                PurchasingSpendExcelExport.ContentType);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Excel-Export fehlgeschlagen: {0}", "Excel export failed: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

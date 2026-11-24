@@ -1379,7 +1379,8 @@ LIMIT 12;";
         var levelsDe = (IReadOnlyList<string>)["Disponent Verwendung", "Lieferant", "Material"];
         var levelsEn = (IReadOnlyList<string>)["MRP controller of usage", "Supplier", "Material"];
         var result = new PurchasingSpendPerspectiveResult(
-            DisponentUsagePerspectiveKey, "Disponent Verwendung (ZLO03)", "MRP controller of usage (ZLO03)", levelsDe, levelsEn, []);
+            DisponentUsagePerspectiveKey, "Disponent Verwendung (ZLO03)", "MRP controller of usage (ZLO03)", levelsDe, levelsEn, [],
+            ["disponent", "supplier", "article"]);
         var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
@@ -1462,10 +1463,12 @@ GROUP BY 1, 2, 3, 4;";
         // Beide Einstiege aus EINER Abfrage (die Verwendungszuordnung kostet auf der Produktivkopie rund 4 s je Lauf).
         var bySupplier = new PurchasingSpendPerspectiveResult(
             UsageProductGroupSupplierPerspectiveKey, "Produktgruppe nach Verwendung : Lieferant", "Product group by usage : supplier",
-            ["Produktgruppe (Verwendung)", "Lieferant", "Material"], ["Product group (usage)", "Supplier", "Material"], []);
+            ["Produktgruppe (Verwendung)", "Lieferant", "Material"], ["Product group (usage)", "Supplier", "Material"], [],
+            ["productgroup", "supplier", "article"]);
         var byMaterialGroup = new PurchasingSpendPerspectiveResult(
             UsageProductGroupPerspectiveKey, "Produktgruppe nach Verwendung : Warengruppe", "Product group by usage : material group",
-            ["Produktgruppe (Verwendung)", "Warengruppe", "Material"], ["Product group (usage)", "Material group", "Material"], []);
+            ["Produktgruppe (Verwendung)", "Warengruppe", "Material"], ["Product group (usage)", "Material group", "Material"], [],
+            ["productgroup", "materialgroup", "article"]);
         var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
@@ -1617,7 +1620,8 @@ GROUP BY 1, 2, 3, 4, 6;";
                 perspective.LabelEn,
                 perspective.Levels.Select(level => level.LabelDe).ToList(),
                 perspective.Levels.Select(level => level.LabelEn).ToList(),
-                rows));
+                rows,
+                perspective.Levels.Select(level => level.Key).ToList()));
         }
 
         return results;
@@ -1700,12 +1704,14 @@ SapProductGroupResolved AS (
         var mgLevelsDe = (IReadOnlyList<string>)["Produktgruppe", "Warengruppe", "Material"];
         var mgLevelsEn = (IReadOnlyList<string>)["Product group", "Material group", "Material"];
         var emptyMaterialGroupPerspective = new PurchasingSpendPerspectiveResult(
-            ProductGroupMaterialGroupPerspectiveKey, "Produktgruppe : Warengruppe", "Product group : material group", mgLevelsDe, mgLevelsEn, []);
+            ProductGroupMaterialGroupPerspectiveKey, "Produktgruppe : Warengruppe", "Product group : material group", mgLevelsDe, mgLevelsEn, [],
+            ["productgroup", "materialgroup", "article"]);
         var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
         var emptyPerspective = new PurchasingSpendPerspectiveResult(
-            "productgroup", "Produktgruppe : Lieferant", "Product group : supplier", levelsDe, levelsEn, []);
+            "productgroup", "Produktgruppe : Lieferant", "Product group : supplier", levelsDe, levelsEn, [],
+            ["productgroup", "supplier", "article"]);
         if (years.Count == 0)
             return new ProductGroupPerspectiveBuildResult(emptyPerspective, PurchasingProductGroupAllocationSummary.Empty, emptyMaterialGroupPerspective);
 

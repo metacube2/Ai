@@ -91,7 +91,10 @@ public sealed record PurchasingSpendPerspectiveResult(
     string LabelEn,
     IReadOnlyList<string> LevelLabelsDe,
     IReadOnlyList<string> LevelLabelsEn,
-    IReadOnlyList<PurchasingSpendCascadeNode> Rows);
+    IReadOnlyList<PurchasingSpendCascadeNode> Rows,
+    // Fachlicher Schluessel je Ebene (supplier, materialgroup, article, region, currency, disponent, productgroup), damit der
+    // Excel-Download (24.11.2026) „Code – Text“ nur bei Warengruppe und Material trennt, ohne am Anzeigetext zu haengen.
+    IReadOnlyList<string>? LevelKeys = null);
 
 /// <summary>
 /// Region-Anteil je Warengruppe fuer die Kuchendiagramme im Spend-Aufriss (Marco-Wunsch:

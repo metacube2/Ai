@@ -46,6 +46,9 @@
                 @string.Format(CultureInfo.CurrentCulture, T("Stand {0}, Termin bestätigt {1} bis {2}", "As of {0}, confirmed dates {1} to {2}"),
                                LoadedText(_state.LoadedAtUtc), MonthLabel(_state.MonthFrom), MonthLabel(_state.MonthTo))
             </MudText>
+            <MudSpacer />
+            @* Excel-Download (Wunsch Armin, 24.11.2026): alle drei Ebenen aus den schon geladenen Zeilen, keine Datenbankabfrage. *@
+            <PurchasingExcelDownloadButton Table="BuildExport" FileLabel="@ExportLabel" />
         </MudStack>
 
         <div class="purchasing-matrix-scroll">
@@ -205,6 +208,12 @@
         if (!_expanded.Remove(key))
             _expanded.Add(key);
     }
+
+    private string ExportLabel => PurchasingSpendExcelExport.MaterialShareFileLabel;
+
+    private SpendExcelTable BuildExport()
+        => PurchasingSpendExcelExport.BuildMaterialShareExport(
+            _rows, MonthLabel(_from), MonthLabel(_to), _state is null ? string.Empty : LoadedText(_state.LoadedAtUtc), DateTime.Now);
 
     private static string MonthLabel(string month)
         => month.Length == 6 ? month[4..] + "." + month[..4] : month;
