@@ -1,6 +1,6 @@
 # Plan FIX 29: ZLO03 ohne Stuecklisten fremdbeschaffter Teile (Schalter)
 
-Stand: 2026-11-23 (in P76 importiert 10:30, Abschnitt 8; Wirkung im Dashboard nach dem Einkauf-Lauf um Mitternacht); davor nachmittags (gebaut und getestet in T76, Auftrag `T76K912940`, Abschnitt 7); davor 2026-11-23 (Plan, wartet auf Freigabe).
+Stand: 2026-11-24 (Wirkung im Dashboard und per ZLO03-Lauf in P76 belegt: 40731 100.23 -> 86.83 CHF, Abschnitt 9); davor 2026-11-23 (in P76 importiert 10:30, Abschnitt 8); davor nachmittags (gebaut und getestet in T76, Auftrag `T76K912940`, Abschnitt 7); davor 2026-11-23 (Plan, wartet auf Freigabe).
 
 Auftrag Ingo 23.11.: Befund in `Downloads\Dashboard_Materialanteil pro Produktgruppe.xlsx` (Textfeld auf Blatt ZLO03), danach
 „lese T76, mache Plan“ und „sonst ein Schalter, dass man beide Optionen hat (wenn es nicht technisch sehr komplex wird)“.
@@ -140,3 +140,39 @@ Objekten.
 Nicht direkt gelesen: der Quelltext in P76 (fuer P76 gibt es kein freigegebenes Quelltext-Lesewerkzeug). Den Inhalt belegt erst
 der Einkauf-Lauf heute Nacht: Materialanteil 40731 muss von rund 106.26 auf rund 93.04 CHF je Stueck sinken, H10040 darf im
 Materialanteil nicht mehr erscheinen. Offen bleiben Befund B65814 (Einkauf) und die Information an Armin.
+*(Wirkung am 2026-11-24 belegt, Abschnitt 9.)*
+
+## 9. Wirkung im Dashboard nach dem Einkauf-Lauf (2026-11-24)
+
+Produktiv im Chrome gelesen (`/BiDashboard/einkauf/aufriss`, roter Knopf „Materialanteil je Produktgruppe“, 01.2026 bis 11.2026,
+Stand der Tabelle „24.11.2026 00:48“, also nach dem Import). Alle 21 Produktgruppen und alle Materialgruppen „01.01.00 Rohmaterial
+allgemein“ aufgeklappt [B]:
+
+- **H10040 erscheint in FP_DICHTEWÄCH und FP_DW-HYBRID nicht mehr** (dort stand es laut ZLO03-Export vom 23.11. 07:59,
+  `Downloads\Dashboard_Materialanteil pro Produktgruppe.xlsx`, unter C17389/C17390 in 40731 und vielen weiteren 878x-Nummern mit
+  0.05 bzw. 0.053 M). Es bleibt **ein Rest von CHF 19 (1 MTR) in HW_ZUKAUFSORT**. Woher der kommt, ist nicht geprueft
+  (Vermutung: H10040 haengt dort unter einem Eigenfertigungsteil, dann waere er richtig).
+- Die uebrigen Teile der Liste aus Abschnitt 7 stehen weiter im Dashboard, aber nur noch mit kleinen Werten in anderen
+  Gruppen (z. B. H10093 CHF 923 in HW_ZUKAUFSORT, E00670 in FP_DW-HYBRID und FP_DICHTEWÄCH). Das widerspricht dem Fix nicht: die
+  Liste galt fuer 40731, dieselben Teile koennen unter anderen Nummern direkt oder unter Eigenfertigungsteilen verbaut sein.
+- **Nicht belegt im Dashboard:** der Wert je Stueck fuer 40731 (93.04 statt 106.26 CHF). Die Seite zeigt nur Summen je Gruppe und
+  Teil. Ein Lesen der Produktiv-DB (`PurchasingMaterialShareBom`, Vknr 40731) hat der Auto-Modus am 24.11. abgelehnt; der Beleg
+  je Stueck kommt aus einem lesenden ZLO03-Lauf in P76 (siehe unten).
+
+**ZLO03 in P76, nur gelesen (24.11., Agent sap-t76, Sitzung von Ingo geoeffnet, eigene Sitzung `ses[1]`, danach geschlossen)** [B]:
+40731, Top-Down, Werk fest 1100, je 1 Stueck; Haken vor jedem F8 zurueckgelesen; Liste ueber den SAP-Dialog „Datei speichern“ als
+Excel gezogen, Summen von der Hauptsitzung an den Dateien nachgerechnet.
+
+| Pruefung | T76 (Abschnitt 7) | P76 24.11. |
+| --- | --- | --- |
+| Zeilen ohne / mit Haken | 88 / 76 | **87 / 75** |
+| Wegfallende Komponenten | 12 | **dieselben 12** (E00670, H10040, H10093, H10221, H10222, H10225, H20774, H20908, K50711, K80175, XXXXXX, ZC18907) |
+| Verbleibende Zeilen | unveraendert | unveraendert (Menge, Stueckkosten, Disponent) |
+| Summe Disponent 001 bis 006, CHF je Stueck | 106.26 -> 93.04 | **100.23 -> 86.83** |
+| Wirkung des Hakens | 13.22 | **13.40** = Summe der entfallenen Zeilen 001 bis 006 |
+
+**Damit ist FIX 29 in P76 belegt:** Der Schalter wirkt wie in T76, und das Dashboard (gleicher Weg, `ZloTopDownSet` mit `P_NOFRM = X`)
+fuehrt H10040 nicht mehr unter den 878x-Nummern. Abweichend gegenueber T76 sind eine Zeile weniger in beiden Laeufen (haengt also
+nicht am Schalter) und rund 6 CHF tiefere Werte. Vermutung: andere Stammdaten und Preise in P76 als in der T76-Kopie, nicht belegt.
+Die P76-Summe ist aus der Excel-Spalte „Stückkosten Lager“ gerechnet, die T76-Zahl aus den App-Zeilen (`stk_bom`); laut
+Programmkommentar gleich, nicht gemessen. **Die erwartete Zahl je Stueck lautet fuer P76 also rund 86.83 CHF, nicht 93.04.**

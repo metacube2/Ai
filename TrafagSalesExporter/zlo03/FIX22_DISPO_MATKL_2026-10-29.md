@@ -31,6 +31,9 @@ Quelltext `Z_ZLO03_TURBO2_FIX22_DISPO_MATKL_2026-10-29.abap` (Vorstand FIX 21, i
 
 Falle beim Lauf: Mit Material `8475*` meldet ZLO03 „Keine Daten gefunden“; `8475*` gehoert in das Feld **Typencode**
 (`S_TYPCD`). Den Windows-Dialog „Datei speichern“ erreicht das Scripting nicht; Ingo hat gespeichert.
+*(Ueberholt am 2026-11-24: In P76 war „Datei speichern“ nach dem ZLO03-Dialoglauf ein SAP-Fenster `wnd[1]` mit `ctxtDY_PATH`,
+`ctxtDY_FILENAME` und Knopf `tbar[0]/btn[0]` „Erzeugen“, per Scripting bedienbar; danach oeffnet SAP die Datei in Excel. Siehe
+`docs/rag/LEARNINGS.md` 2026-11-24.)*
 
 ## 4. Offen
 

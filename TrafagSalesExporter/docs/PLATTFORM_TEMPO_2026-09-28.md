@@ -1,6 +1,6 @@
 # Tempo der Webapp: sofort sichtbare Oberflaeche und Ladezeiten
 
-Stand: 2026-11-23, zuletzt Abschnitt 11 (Dashboard zaeh am 20.11.: Einkauf-Delta war ein verkappter Full Load, Nachtslot und Deploy-Pruefung gebaut, nicht deployed; Vorberechnung seit 09.10. dreimal langsamer); davor 2026-10-01, Abschnitt 10 (Einkauf nach Delta-Lauf, `4e2b55a`); Grundmessung 2026-09-28. Zurueck: `docs/router/plattform.md`.
+Stand: 2026-11-24, zuletzt Abschnitt 11.6 (erster Mitternachtslauf: 49 Min., davon Materialanteil 37 Min.); davor 2026-11-23, Abschnitt 11 (Dashboard zaeh am 20.11.: Einkauf-Delta war ein verkappter Full Load, Nachtslot und Deploy-Pruefung gebaut, nicht deployed; Vorberechnung seit 09.10. dreimal langsamer); davor 2026-10-01, Abschnitt 10 (Einkauf nach Delta-Lauf, `4e2b55a`); Grundmessung 2026-09-28. Zurueck: `docs/router/plattform.md`.
 
 ## 0. Stand auf einen Blick
 
@@ -350,3 +350,19 @@ Filters nach einem Neustart wartet weiter).
   Der erste Mitternachtslauf zeigt die Dauer je Abschnitt in der Erfolgsmeldung (Datenservice-Seite, Admin-Log).
 - **Selbstkritik:** Dass der erste Deploy tagsueber sofort einen Nachhol-Lauf ausloest, stand im Chat vorher als Hinweis, war
   aber kein Grund, den Deploy zu verschieben oder das Nachholen tagsueber zu sperren. Genau das ist jetzt nachgezogen.
+
+### 11.6 Erster Mitternachtslauf 2026-11-24 (aus dem Serverprotokoll gelesen am 24.11.)
+
+Quelle: `stdout_20261123133622_9920.log` (Prozess seit dem Deploy 14:36), Zeilen „Einkauf-Lauf Delta gestartet/beendet“.
+
+- Gestartet 00:00:06 im Slot, erfolgreich beendet; Ladestand im Dashboard „2026-11-24 00:49“ bzw. Materialanteil „24.11.2026 00:48“.
+- **Dauer rund 49 Minuten** (Summe der Abschnitte 2'965 s), gegen rund 90 Minuten beim alten verkappten Full Load (11.1).
+- Abschnitte: EKKO lesen 318 s, EKPO/EKET fuer 28'755 Belege 323 s, Stammdaten 27 s, Cache schreiben 18 s, Kontrakte/LZ 6 s,
+  Dispo 1 s, **Materialanteil 2'240 s (37 Min., 76 % des Laufs)**, Lagerwert 32 s.
+- Mengen: Belege aus SAP 178'539, davon neu oder ab 19.11. 92, offene Belege nachgeladen 28'728; Materialanteil 31'051
+  ZC23-Summen (8'895 verkuerzte Nummern), 229'438 Stuecklistenzeilen Disponent 001 bis 006.
+- **Folgerung:** Der Delta-Teil selbst ist mit rund 11 Minuten schnell. Was die Nacht lang macht, ist der Materialanteil
+  (ZLO03 Top-Down ueber alle verkuerzten Nummern). Ihn bei Bedarf nur sonntags rechnen waere der naechste Hebel; Entscheid Ingo.
+- *Offene Frage, nicht geprueft:* Die Meldung sagt „Stammdaten aktualisiert auf=0 Cachezeilen“. Ob das beim Delta so gewollt ist
+  (keine geaenderten Stammdaten) oder ein Fehler, ist im Code nicht nachgesehen.
+- Naechste Pruefung: Sonntag 29.11. 00:00 der erste automatische Full Load, am 30.11. Dauer und Erfolg.

@@ -263,6 +263,9 @@ mit, CK11N grenzt es ab. Plan mit Belegen aus T76 und Entscheiden: `zlo03/PLAN_Z
 ohne Haken unveraendert (88 = 88), mit Haken 12 Komponenten weniger, Dashboard-Wert 106.26 -> 93.04 CHF. Selektionstext offen
 (max. 30 Zeichen). Befund B65814 (31318): Einkaufspreis 4.62 unter Summe der Stuecklistenteile 11.64, fachlich zu klaeren.
 Details Plan Abschnitt 7.*
+*Wirkung belegt am 2026-11-24 (Plan Abschnitt 9): Im Dashboard fehlt H10040 unter FP_DICHTEWÄCH/FP_DW-HYBRID (Rest CHF 19 in
+HW_ZUKAUFSORT, Herkunft nicht geprueft); ZLO03 in P76 nur gelesen: 87 -> 75 Zeilen, dieselben 12 Komponenten fallen weg, 40731
+100.23 -> 86.83 CHF je Stueck (T76 hatte 106.26 -> 93.04). Selektionstext ist erledigt (REPT). Offen: Befund B65814, Info Armin.*
 
 ## Verifikationsplan
 

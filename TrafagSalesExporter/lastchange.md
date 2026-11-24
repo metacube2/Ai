@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-24: Erster Einkauf-Mitternachtslauf ausgewertet, ZLO03 FIX 29 belegt
+
+- Nachtlauf 24.11. 00:00: 49 Minuten statt 90, davon Materialanteil 37 Minuten (`docs/PLATTFORM_TEMPO_2026-09-28.md` 11.6).
+- FIX 29: Im Dashboard fehlt H10040 unter den 878x-Gruppen; ZLO03 in P76 nur gelesen: 40731 87 -> 75 Zeilen, 100.23 -> 86.83 CHF
+  je Stueck (`zlo03/PLAN_ZLO03_FREMDBESCHAFFUNG_2026-11-23.md` 9). Nur Doku, kein Code, kein Deploy.
+
 ## 2026-11-23 15:00: Rexx Hub #777 ueber GET v1/requests, deployed, Schalter aus
 
 - Rexx: `/v1/requests` bei Benutzer #2 frei, zehn Abwesenheitsfelder. Code `001646b` (Pfad, Feldzuordnung, Antraege ohne Abwesenheit
