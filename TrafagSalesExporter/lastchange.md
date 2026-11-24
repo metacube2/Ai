@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-24 14:45: PDF Andreas nachgefuehrt, Wochen_Todo 170/171
+
+- PDF Andreas (6 Seiten) mit Zeile „Bruecken aus Belegen“ in Abschnitt 7, neu in Downloads (`8388e9c`).
+- Wochen_Todo: 170 Spend-Aufriss Excel und bestaetigte Menge (Armin, erledigt), 171 Zoll CZ Quelltext fuer Fabio (erledigt), xlsx neu.
+
 ## 2026-11-24 14:26: Materialanteil, Menge vor Umsatz
 
 - `8b79cb7`: Spalte „Bestaetigte Menge“ vor „Umsatz bestaetigt“ in Anzeige und Excel; Tests 1'870/1'870, deployed 14:26.
