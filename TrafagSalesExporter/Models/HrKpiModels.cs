@@ -103,7 +103,7 @@ public sealed class RexxHubOptions
 
     /// <summary>
     /// Fall-Datei (#777) ueber den Hub holen. Seit 2026-11-19 in appsettings aus: der Hub hat keinen Endpunkt fuer Abwesenheiten
-    /// je Fall (NOTES 16), #777 bleibt Handexport. Aus: kein Abruf, kein Protokolleintrag, der Testabruf meldet „uebersprungen“.
+    /// je Fall (NOTES 16), #777 bleibt Handexport. Aus: kein Abruf, kein Protokolleintrag, der Testabruf meldet „uebersprungen“. *Seit 2026-11-24 ein: GET v1/requests ab CaseFromDate (Rexx-NOTES 22).*
     /// </summary>
     public bool CaseEnabled { get; set; } = true;
 

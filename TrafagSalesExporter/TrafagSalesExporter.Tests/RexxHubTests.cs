@@ -1251,7 +1251,7 @@ public sealed class RexxHubTests : IDisposable
 
         Assert.True(options.Enabled); // seit 2026-11-19 13:35 ein (Zeitraum gegen Handexport 04.11. geprueft, NOTES 17)
         Assert.True(options.GesamtZeitraumGeprueft);
-        Assert.False(options.CaseEnabled);
+        Assert.True(options.CaseEnabled); // seit 2026-11-24: #777 ueber GET v1/requests ab 07.04.2026, Rexx-NOTES 22
         Assert.Equal("v1/employees", options.GesamtPathTemplate);
         Assert.Equal("v1/requests", options.CasePathTemplate); // seit 2026-11-23, Rexx-NOTES 21
         Assert.Equal(new DateTime(2026, 4, 7), options.CaseFromDate); // seit 2026-11-24: wie Handexport #777, Rexx-NOTES 22
