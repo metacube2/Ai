@@ -208,7 +208,7 @@ public class PurchasingSpendExcelExportTests
         Assert.Equal(
             [
                 "Ebene", "Produktgruppe", "Materialgruppe", "Materialgruppe Text", "Material", "Material Text",
-                "Umsatz bestaetigt CHF", "Herstellkosten HK CHF", "HK-Abdeckung Umsatz", "Bestaetigte Menge", "Materialanteil CHF", "Anteil",
+                "Bestaetigte Menge", "Umsatz bestaetigt CHF", "Herstellkosten HK CHF", "HK-Abdeckung Umsatz", "Materialanteil CHF", "Anteil",
                 "Anteil bezogen auf", "Bedarfsmenge", "Einheit", "Stueckkosten CHF"
             ],
             table.Columns.Select(c => c.Header).ToArray());
@@ -220,16 +220,16 @@ public class PurchasingSpendExcelExportTests
         Assert.Equal("Leiterplatte bestückt", table.Rows[2][5]);
         Assert.Equal(0.8m, table.Rows[2][11]);
         Assert.Equal("H17500", table.Rows[3][4]);
-        Assert.Equal(6m, table.Rows[0][9]);
-        Assert.Equal(4m, table.Rows[1][9]);
-        Assert.Equal(4m, table.Rows[2][9]);
+        Assert.Equal(6m, table.Rows[0][6]);
+        Assert.Equal(4m, table.Rows[1][6]);
+        Assert.Equal(4m, table.Rows[2][6]);
 
         using var workbook = new XLWorkbook(new MemoryStream(PurchasingSpendExcelExport.CreateWorkbookBytes(table)));
         var ws = workbook.Worksheet(1);
-        Assert.Equal("Bestaetigte Menge", ws.Cell(1, 10).GetString());
-        Assert.Equal(XLDataType.Number, ws.Cell(2, 10).DataType);
-        Assert.Equal(6d, ws.Cell(2, 10).GetDouble());
-        Assert.Equal("#,##0", ws.Cell(2, 10).Style.NumberFormat.Format);
+        Assert.Equal("Bestaetigte Menge", ws.Cell(1, 7).GetString());
+        Assert.Equal(XLDataType.Number, ws.Cell(2, 7).DataType);
+        Assert.Equal(6d, ws.Cell(2, 7).GetDouble());
+        Assert.Equal("#,##0", ws.Cell(2, 7).Style.NumberFormat.Format);
         Assert.Equal(string.Empty, table.Rows[3][5]);
     }
 

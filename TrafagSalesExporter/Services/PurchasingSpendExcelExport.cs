@@ -266,10 +266,11 @@ public static class PurchasingSpendExcelExport
             new("Materialgruppe Text", SpendExcelColumnKind.Text),
             new("Material", SpendExcelColumnKind.Text),
             new("Material Text", SpendExcelColumnKind.Text),
+            // Menge vor dem Umsatz (Wunsch Ingo 24.11.: gehoert zum Fertigprodukt), wie in der Anzeige.
+            new("Bestaetigte Menge", SpendExcelColumnKind.Count),
             new("Umsatz bestaetigt CHF", SpendExcelColumnKind.Amount),
             new("Herstellkosten HK CHF", SpendExcelColumnKind.Amount),
             new("HK-Abdeckung Umsatz", SpendExcelColumnKind.Percent),
-            new("Bestaetigte Menge", SpendExcelColumnKind.Count),
             new("Materialanteil CHF", SpendExcelColumnKind.Amount),
             new("Anteil", SpendExcelColumnKind.Percent),
             new("Anteil bezogen auf", SpendExcelColumnKind.Text),
@@ -283,8 +284,8 @@ public static class PurchasingSpendExcelExport
         {
             rows.Add(
             [
-                1, group.Label, null, null, null, null, group.Revenue, group.ManufacturingCost,
-                group.Revenue > 0m ? group.ManufacturingCostCoverage : null, group.ConfirmedQuantity,
+                1, group.Label, null, null, null, null, group.ConfirmedQuantity, group.Revenue, group.ManufacturingCost,
+                group.Revenue > 0m ? group.ManufacturingCostCoverage : null,
                 group.Value, Fraction(group.Value, group.Revenue), "Umsatz", null, null, null
             ]);
             foreach (var materialGroup in group.Children)
@@ -292,7 +293,7 @@ public static class PurchasingSpendExcelExport
                 var (mgCode, mgText) = SplitCodeText(materialGroup.Label);
                 rows.Add(
                 [
-                    2, group.Label, mgCode, mgText, null, null, null, null, null, materialGroup.ConfirmedQuantity,
+                    2, group.Label, mgCode, mgText, null, null, materialGroup.ConfirmedQuantity, null, null, null,
                     materialGroup.Value, Fraction(materialGroup.Value, group.Value), "Produktgruppe", null, null, null
                 ]);
                 foreach (var part in materialGroup.Children)
@@ -300,7 +301,7 @@ public static class PurchasingSpendExcelExport
                     var (partCode, partText) = SplitPart(part);
                     rows.Add(
                     [
-                        3, group.Label, mgCode, mgText, partCode, partText, null, null, null, part.ConfirmedQuantity,
+                        3, group.Label, mgCode, mgText, partCode, partText, part.ConfirmedQuantity, null, null, null,
                         part.Value, Fraction(part.Value, materialGroup.Value), "Materialgruppe", part.Quantity,
                         part.Unit, part.UnitCost
                     ]);

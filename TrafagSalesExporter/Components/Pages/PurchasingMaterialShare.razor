@@ -56,9 +56,9 @@
                 <thead>
                     <tr>
                         <th>@T("Bezeichnung", "Description")</th>
+                        <th title="@T("Bestätigte Menge der Geräte (ZC23, Termin bestätigt im Zeitraum): bei der Materialgruppe jedes Gerät mit einer Komponente der Gruppe einmal, beim Teil die Geräte, deren Stückliste es enthält", "Confirmed quantity of the devices (ZC23, confirmed date in the period): for the material group each device with a component of the group once, for the part the devices whose bill of material contains it")">@T("Bestätigte Menge", "Confirmed quantity")</th>
                         <th>@T("Umsatz bestätigt", "Confirmed revenue")</th>
                         <th title="@T("Herstellkosten: bestätigte Menge mal Standardpreis MBEW-STPRS (Werk 1100) des verkauften Materials", "Manufacturing cost: confirmed quantity times standard price MBEW-STPRS (plant 1100) of the sold material")">@T("Herstellkosten HK", "Manufacturing cost")</th>
-                        <th title="@T("Bestätigte Menge der Geräte (ZC23, Termin bestätigt im Zeitraum): bei der Materialgruppe jedes Gerät mit einer Komponente der Gruppe einmal, beim Teil die Geräte, deren Stückliste es enthält", "Confirmed quantity of the devices (ZC23, confirmed date in the period): for the material group each device with a component of the group once, for the part the devices whose bill of material contains it")">@T("Bestätigte Menge", "Confirmed quantity")</th>
                         <th>@T("Materialanteil", "Material share")</th>
                         <th>@T("Anteil", "Share")</th>
                         <th>@T("Bedarfsmenge", "Demand quantity")</th>
@@ -74,9 +74,9 @@
                                 @Toggle(group)
                                 <strong>@group.Label</strong>
                             </td>
+                            <td>@Qty(group.ConfirmedQuantity)</td>
                             <td>@Chf(group.Revenue)</td>
                             <td title="@HkTitle(group)">@Chf(group.ManufacturingCost)@(HkIncomplete(group) ? " *" : "")</td>
-                            <td>@Qty(group.ConfirmedQuantity)</td>
                             <td><strong>@Chf(group.Value)</strong></td>
                             <td>@Share(group.Value, group.Revenue, ShareOfRevenue)</td>
                             <td></td>
@@ -89,9 +89,9 @@
                             {
                                 <tr class="purchasing-cascade-l2">
                                     <td>@Toggle(materialGroup) @materialGroup.Label</td>
-                                    <td></td>
-                                    <td></td>
                                     <td>@Qty(materialGroup.ConfirmedQuantity)</td>
+                                    <td></td>
+                                    <td></td>
                                     <td>@Chf(materialGroup.Value)</td>
                                     <td>@Share(materialGroup.Value, group.Value, ShareOfProductGroup)</td>
                                     <td></td>
@@ -104,9 +104,9 @@
                                     {
                                         <tr class="purchasing-cascade-l3">
                                             <td>@part.Label</td>
-                                            <td></td>
-                                            <td></td>
                                             <td>@Qty(part.ConfirmedQuantity)</td>
+                                            <td></td>
+                                            <td></td>
                                             <td>@Chf(part.Value)</td>
                                             <td>@Share(part.Value, materialGroup.Value, ShareOfMaterialGroup)</td>
                                             <td>@part.Quantity.ToString("N0", CultureInfo.CurrentCulture)</td>
@@ -120,9 +120,9 @@
                     }
                     <tr class="purchasing-cascade-l1">
                         <td><strong>@T("Total", "Total")</strong></td>
+                        <td><strong>@Qty(_rows.Sum(r => r.ConfirmedQuantity))</strong></td>
                         <td><strong>@Chf(_rows.Sum(r => r.Revenue))</strong></td>
                         <td><strong>@Chf(_rows.Sum(r => r.ManufacturingCost))</strong></td>
-                        <td><strong>@Qty(_rows.Sum(r => r.ConfirmedQuantity))</strong></td>
                         <td><strong>@Chf(_rows.Sum(r => r.Value))</strong></td>
                         <td>@Share(_rows.Sum(r => r.Value), _rows.Sum(r => r.Revenue), ShareOfRevenue)</td>
                         <td></td>
