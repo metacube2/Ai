@@ -318,6 +318,9 @@ def build(out):
         ['UK, Code 2', 'Typencode im Text gegen SAP: 99 Artikel eindeutig, 14 mehrdeutig, 10 nur Teilcode, 152 ohne Treffer',
          'Vorschläge zur Bestätigung'],
         ['DE-Mappings', '568 sicher, 73 prüfen, 91 wohl falsch (meist Ziel zum Löschen vorgemerkt)', 'Liste Mapping_DE_Vorpruefung_P76'],
+        ['Brücken aus Belegen', 'Kundenmaterialnummern in SAP (KNMT, IC-Aufträge) und Katalognummern in B1 sind kaum gepflegt: nur 4 '
+         'Artikel lassen sich so auf eine Trafag-AG-Nummer zurückführen, 79 spanische auf TR-IT-Handelsware. Kein Widerspruch zu den '
+         'sicheren Vorschlägen', 'verlässliche Brücke bleibt der Typencode; Feld „Trafag-Nummer“ in den Tochter-ERP wäre die Lösung'],
         ['Indien LRD', 'Kandidaten C16421 und C14917 (Freilufthaube 87X6), F90162 (Regenschutz mit Isolation); '
          'FA000028/29 sind Schweissmaschinen', 'Frage 2'],
         ['Supplier Origin', 'Lieferant aus Wareneingang wirkt, die Herkunftsangabe fehlt aber im Export (Programmfehler)',
