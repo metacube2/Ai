@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-24 14:16: Materialanteil mit Spalte „Bestaetigte Menge“
+
+- `c250d08` (Zweig `aufriss-excel-2411`): ZC23 `Bmeng` je Ebene in Anzeige und Excel. Tests 1'870/1'870, deployed 14:16, im Chrome
+  gesehen. rag PURCHASING, DEPLOYMENT.
+
 ## 2026-11-24 13:56: Excel-Download im Spend-Aufriss (Wunsch Armin)
 
 - `989b329` (Zweig `aufriss-excel-2411`): Knopf „Excel“ je Aufriss, Code und Text getrennt, Zahlen als Zahlen. Tests 1'869/1'869,

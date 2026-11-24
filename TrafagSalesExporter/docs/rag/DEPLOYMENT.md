@@ -96,6 +96,7 @@ Klammern stammen aus `docs/rag/LEARNINGS.md`). Vorher standen Befehl, Vorschritt
 
 ## Kurzstand
 
+- **Deploy 2026-11-24 14:16, Materialanteil bestaetigte Menge (`c250d08`, Zweig `aufriss-excel-2411`).** Tests 1'870/1'870, `-- --no-backup`, Funktionscommit geprueft, bitgleich, Alarme wie zuvor (`-wal`/`-shm` wieder da, Checkpoint). Spalte im Chrome gesehen.
 - **Deploy 2026-11-24 13:56, Spend-Aufriss Excel-Download (`989b329`, Zweig `aufriss-excel-2411` ab `6503c1d`).** Tests 1'869/1'869 im Release-Worktree, `-- --no-backup`, Funktionscommit geprueft, bitgleich, Alarme `-wal`/`-shm` (wieder da; Shopfloor oeffnet die DB erst bei Bedarf) und Checkpoint der DB. **Produktivstand jetzt Zweig `aufriss-excel-2411`.**
 - **Deploy 2026-11-24 12:35, Supplier Origin (`6503c1d`, Zweig `supplier-origin-2411` ab `95c5ad5`, also mit DB-Sicherung und Rexx).** Tests 1'842/1'842 im Release-Worktree, `-- --no-backup` (erste App-Sicherung erst Nacht auf 25.11.), Funktionscommit geprueft, bitgleich, Alarme nur `-wal`/`-shm` (wieder da) und Checkpoint der DB. **Produktivstand jetzt Zweig `supplier-origin-2411`.**
 - **Deploy 2026-11-24 11:01, Datenbanksicherung in der App (`95c5ad5`, Zweig `db-sicherung-2411` ab `142d304`, also mit Rexx-Stand).** Tests 1'842/1'842 im Release-Worktree, `-- --no-backup`, Funktionscommit-Zeile geprueft, bitgleich, Alarm nur `-wal`/`-shm` (alle wieder da). Abschnitt im Admin im Chrome gesehen (Liste mit sieben Sicherungen des Deploy-Werkzeugs, Knopf). **Produktivstand jetzt Zweig `db-sicherung-2411`.**

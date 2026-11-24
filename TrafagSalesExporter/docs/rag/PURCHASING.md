@@ -14,6 +14,7 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Mail Marco Widmer 12.11.: Wuensche Einkauf umgesetzt (Stand 2026-11-13, produktiv 09:11 `052c5a3`)
 
+- **2026-11-24 14:16: Materialanteil mit Spalte „Bestaetigte Menge“** (`c250d08`, Auftrag Ingo): ZC23 `Bmeng` im Zeitraum; Produktgruppe = Summe der Geraete, Materialgruppe = verschiedene Geraete mit Komponente dieser Gruppe (je einmal), Komponente = Geraete mit dieser Komponente; auch im Excel. Produktiv gesehen (z. B. FP_TRANSM. TX 320'832). Einheit von `Bmeng` nicht belegt (Vermutung Verkaufsmengeneinheit); HW_ZUKAUFSORT zeigt 6,2 Mio., Kleinteile.
 - **2026-11-24 13:56: Excel-Download im Spend-Aufriss** (Wunsch Armin, `989b329`, Zweig `aufriss-excel-2411`): Knopf „Excel“ an Kaskade (alle Ebenen, Spalte Ebene, Code und Text getrennt bei Warengruppe und Material ueber `LevelKeys`), Laenderkuchen, XYZ, ABC/XYZ-Matrix und Materialanteil; Betraege/Prozente als Zahlen, Kopf fixiert, Autofilter, Blatt Info. Tests 1'869/1'869, deployed, vier Knoepfe im Chrome gesehen, Download selbst nicht ausgeloest. Grenzen: Textbestellungen ohne Materialnummer nur am Anzeigetext getrennt, Lieferant ohne Nummer, Spaltenkoepfe deutsch.
 
 Mail „Feedback / Wuensche Dashboard Einkauf“ vom 12.11. 15:49 (Marco Widmer, mit Armin abgesprochen). Auftrag Ingo 13.11.,
