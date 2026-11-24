@@ -10,7 +10,11 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.graphics.shapes import Drawing
 from reportlab.platypus import (KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle)
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import finance_grafiken as G  # noqa: E402
 
 pdfmetrics.registerFont(TTFont('Cal', r'C:\Windows\Fonts\calibri.ttf'))
 pdfmetrics.registerFont(TTFont('CalB', r'C:\Windows\Fonts\calibrib.ttf'))
@@ -22,9 +26,9 @@ DARK = colors.HexColor('#222222')
 GREY = colors.HexColor('#666666')
 LIGHT = colors.HexColor('#F3F3F3')
 LINE = colors.HexColor('#D0D0D0')
-GREEN = colors.HexColor('#2E7D32')
-YELLOW = colors.HexColor('#B7860B')
-ORANGE = colors.HexColor('#D2691E')
+GREEN = colors.HexColor('#0ca30c')
+YELLOW = colors.HexColor('#fab219')
+ORANGE = colors.HexColor('#ec835a')
 RED = colors.HexColor('#C62828')
 
 base = ParagraphStyle('base', fontName='Cal', fontSize=10, leading=13.5, textColor=DARK, alignment=TA_LEFT)
@@ -110,6 +114,8 @@ def build(out):
     s.append(P('Lieferantenzuordnung, Mapping und Issue Topic', h1))
     s.append(P('Finance Dashboard und Sales_All: was sich seit dem 13.11.2026 geändert hat, Stand je Land und offene Entscheide. '
                'Für Andreas, Stand 24.11.2026.', sub))
+    s.append(G.kpi_tiles())
+    s.append(Spacer(1, 10))
 
     s.append(note_box([
         P('<b>Kurzfassung</b>', box), Spacer(1, 3),
@@ -133,6 +139,8 @@ def build(out):
 
     # 1 Chronologie
     s.append(P('1. Was neu ist, in der Reihenfolge der Einführung', h2))
+    s.append(G.timeline())
+    s.append(Spacer(1, 6))
     s.append(table([
         ['Datum', 'Änderung', 'Wo sichtbar'],
         ['13.11.', 'Wirksame Zuordnung je Zeile: <b>Supplier Type</b> (Intern, Extern, Lokal, Unklar), <b>Delivering Entity</b> '
@@ -157,20 +165,9 @@ def build(out):
     # 2 Kostenkette
     s.append(P('2. So wird je Zeile gerechnet', h2))
     s.append(P('Gerechnet wird nur bis zur <b>ersten liefernden Konzerngesellschaft</b> (ein Schritt, Entscheid vom 09.09.). '
-               'Die Reihenfolge der Prüfungen:'))
-    s.append(table([
-        ['Schritt', 'Regel', 'Ergebnis'],
-        ['1', '<b>CH und AT</b> verkaufen als Trafag AG.', 'Intern, Kosten Trafag AG'],
-        ['2', '<b>Indien</b>, Feld Sales Type: FFM oder CM = eigene Fertigung; LRD = Ware von Trafag AG.',
-         'Trafag India bzw. Trafag AG'],
-        ['3', '<b>Lieferant vorhanden</b> (Artikelstamm, Übergangsliste Italien oder letzter Wareneingang): Name oder Nummer enthält '
-              'TRAFAG = intern (Italia, India, sonst Trafag AG); anderer Name = extern.',
-         'Intern: Standardkosten der liefernden Gesellschaft. Extern: lokale Kosten der Zeile'],
-        ['4', '<b>Kein Lieferant:</b> führt Trafag AG das Material im Werk 1100 (Werkstamm)?',
-         'ja: Kosten Trafag AG; nein: lokale Standardkosten'],
-        ['5', '<b>Findet das Programm keine Konzernkosten</b> oder fehlen sie, gelten die lokalen Standardkosten; fehlen auch diese, '
-              'wird mit 0 gerechnet (use 0).', 'Kennzeichen über Issue Topic'],
-    ], [15 * mm, 105 * mm, 50 * mm]))
+               'Blau = Konzernkosten, orange = lokale Kosten, grau = Kosten 0.'))
+    s.append(Spacer(1, 4))
+    s.append(G.cost_flow())
 
     s.append(P('Herkunft des Lieferanten (Spalte Supplier Origin)', h3))
     s.append(table([
@@ -190,17 +187,8 @@ def build(out):
     s.append(P('Die Matrix ist die vom 18./19.11. Drei Fragen je Zeile: <b>kein Lieferant</b> / <b>Artikelnummer bei der liefernden '
                'Gesellschaft nicht gefunden</b> (auch nicht über das Mapping) / <b>keine Kosten</b>. 1 = trifft zu. '
                'Leer heisst: kein Issue, es gelten die Konzernkosten (bei externem Lieferanten die lokalen Kosten).'))
-    s.append(table([
-        ['Code', 'kein Lieferant / nicht gefunden / keine Kosten', 'Gerechnet wird mit'],
-        ['leer', '0 / 0 / 0', 'Konzernkosten der liefernden Gesellschaft'],
-        ['1', '1 / 1 / 0', 'lokalen Standardkosten'],
-        ['2', '0 / 1 / 0', 'lokalen Standardkosten'],
-        ['3', '0 / 0 / 1', 'lokalen Standardkosten'],
-        ['4', '1 / 0 / 1', 'lokalen Standardkosten'],
-        ['5', '1 / 0 / 0', 'Standardkosten Trafag AG (Werkstamm)'],
-        ['6', '1 / 1 / 1', 'Kosten 0 (use 0)'],
-        ['7', '0 / 1 / 1', 'Kosten 0 (use 0)'],
-    ], [18 * mm, 80 * mm, 72 * mm]))
+    s.append(Spacer(1, 4))
+    s.append(G.topic_matrix())
     s.append(Spacer(1, 4))
     s.append(P('Zusatzcodes für Fälle, die die Matrix nicht abdeckt (in der Feldhilfe als „nicht Teil der Matrix“ gekennzeichnet):', base))
     s.extend(bullets([
@@ -239,6 +227,11 @@ def build(out):
     s.append(P('Ampel: grün = erledigt, gelb = gebaut, wartet auf Datenlauf, orange = wartet auf jemanden, rot = Entscheid offen. '
                'Zeilen mit Lieferant aus dem Export 18.11. (erster Lauf mit Wareneingang).', small))
     s.append(Spacer(1, 3))
+    s.append(G.country_tiles())
+    s.append(Spacer(1, 8))
+    s.append(P('Anteil der Zeilen mit Lieferant, vor und nach dem Lieferanten aus dem Wareneingang', h3))
+    s.append(G.supplier_bars())
+    s.append(Spacer(1, 8))
     s.append(table([
         ['Land', 'Woher der Lieferant kommt', 'Stand', 'Offen bei'],
         ['CH, AT', 'Regel: immer Trafag AG', dot(GREEN, '100 % Intern / TR AG'), '–'],
@@ -267,6 +260,8 @@ def build(out):
 
     # 6 Entscheide
     s.append(P('6. Was ich von dir brauche', h2))
+    s.append(G.decision_one())
+    s.append(Spacer(1, 6))
     s.append(table([
         ['Nr', 'Frage', 'Grösse', 'Vorschlag'],
         ['1', '<b>Ohne Lieferant: Schweizer Werkstamm oder immer lokal?</b> Am 18.11. mündlich „das können wir so machen“; '
@@ -310,10 +305,10 @@ def build(out):
         if isinstance(x, Paragraph) and x.style.name in ('h2', 'h3'):
             j = i + 1
             block = [x]
-            while j < len(s) and len(block) < 3:
+            while j < len(s) and len(block) < 5:
                 block.append(s[j])
                 j += 1
-                if isinstance(s[j - 1], Table):
+                if isinstance(s[j - 1], (Table, Drawing)):
                     break
             grouped.append(KeepTogether(block))
             i = j
