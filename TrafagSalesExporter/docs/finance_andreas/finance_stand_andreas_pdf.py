@@ -129,7 +129,7 @@ def build(out):
             '(Matrix 1 bis 7). Fehlen auch die lokalen Kosten, wird mit <b>Kosten 0</b> gerechnet (use 0).',
             'Eine <b>Mapping-Tabelle</b> ordnet lokale Artikelnummern der Gruppennummer zu. Sie wirkt nur mit <b>bestätigten</b> Zeilen; '
             'am 23.11. war noch keine bestätigt. Seit dem 20.11. geht das auch gegen die Artikelnummern von <b>Trafag Italia</b>.',
-            '<b>Am 24.11. in SAP (P76) und B1 nachgeprüft</b> (Abschnitt 7): 186 deutsche Vorschläge sind nach SAP sicher, 99 '
+            '<b>Am 24.11. in SAP (P76) und B1 nachgeprüft</b> (Abschnitt 7): 568 deutsche Vorschläge sind nach SAP sicher, 99 '
             'UK-Artikel tragen einen eindeutigen Trafag-Typencode, Italien braucht keine Stammpflege mehr, die „unklaren“ Zeilen sind '
             'Nebenerlöse ohne Artikel, und die tiefen Konzernkosten bei H7-Materialien sind Prüfzeugnisse, kein Rechenfehler.',
             '<b>Von dir offen:</b> die schriftliche Bestätigung „ohne Lieferant gilt der Schweizer Werkstamm“ (rund 0,85 Mio. CHF '
@@ -178,8 +178,8 @@ def build(out):
         ['Rule CH/AT', 'CH und AT, per Regel Trafag AG'],
         ['Rule Sales Type', 'Indien, aus dem Feld Sales Type'],
         ['Source field', 'Lieferant aus dem Artikelstamm der Gesellschaft. Ältere Zeilen zeigen diesen Wert, bis ihr Land neu exportiert wird'],
-        ['Last goods receipt', 'Lieferant aus dem letzten Wareneingang (seit 18.11.). <b>Hinweis:</b> wird wegen eines Programmfehlers '
-                               'derzeit noch als „Source field“ gezeigt; die Zuordnung selbst stimmt, nur die Herkunftsangabe fehlt'],
+        ['Last goods receipt', 'Lieferant aus dem letzten Wareneingang (seit 18.11.). <b>Hinweis:</b> wurde bis 24.11. wegen eines Programmfehlers '
+                               'als „Source field“ gezeigt; behoben, sichtbar ab dem nächsten Export je Land'],
         ['IT override list', 'Übergangsliste Italien (Paola), geht dem Wareneingang vor; gleicher Hinweis wie oben'],
         ['CH plant master', 'kein Lieferant, Material im Schweizer Werkstamm gefunden'],
         ['none', 'kein Lieferant und nicht im Werkstamm'],
@@ -225,7 +225,7 @@ def build(out):
         '<b>Wo:</b> Finance Cockpit > Mapping (Liste, Bestätigen, Import/Export) und die Datei Mapping_JJJJ-MM-TT.xlsx neben Sales_All '
         'mit Vorschlag, Sicherheit und Gewicht (Zeilen, Umsatz).',
         '<b>Grösster Block ist Deutschland:</b> 732 Vorschläge mit 5,75 Mio. EUR Umsatz. <b>Vorprüfung gegen SAP P76 (24.11.):</b> '
-        '186 sicher (Nummer oder Typencode stimmt, Material aktiv, Kosten plausibel; 3,57 Mio. EUR), 455 prüfen (1,81 Mio. EUR), 91 '
+        '568 sicher (Nummer oder Typencode stimmt, Material aktiv, Kostenfaktor 0,3 bis 8; 4,83 Mio. EUR), 73 prüfen (0,55 Mio. EUR), 91 '
         'wohl falsch (Ziel zum Löschen vorgemerkt oder Verpackung; 0,37 Mio. EUR). Das ist eine Prüfhilfe, keine Bestätigung.',
         '<b>UK:</b> 99 Artikel (549 Zeilen, 427\'670 GBP) tragen im Text einen Trafag-Typencode, der in SAP eindeutig auf genau ein '
         'Material zeigt; weitere 14 sind mehrdeutig, 152 ohne Treffer (UK-eigene Nummern).',
@@ -267,8 +267,8 @@ def build(out):
          dot(ORANGE, '0 von 8\'230 mit Lieferant, bis der neue Sage-Export läuft; 5\'248 Zeilen Code 5 (Werkstamm)'),
          'Santi: Exportlauf mit Lieferantenspalten'],
         ['DE', 'Alphaplan-Export ohne Lieferantenspalte',
-         dot(YELLOW, '0 von 7\'853 mit Lieferant; deutsche Nummern meist nicht im Werkstamm (Code 1 und 6). 186 Mapping-Vorschläge '
-                     'nach SAP-Vorprüfung sicher (3,57 Mio. EUR)'),
+         dot(YELLOW, '0 von 7\'853 mit Lieferant; deutsche Nummern meist nicht im Werkstamm (Code 1 und 6). 568 Mapping-Vorschläge '
+                     'nach SAP-Vorprüfung sicher (4,83 Mio. EUR), zum Import vorbereitet'),
          'Rohail (Lieferant im Export), Mappings bestätigen'],
     ], [15 * mm, 42 * mm, 75 * mm, 38 * mm]))
 
@@ -286,7 +286,7 @@ def build(out):
         ['2', '<b>Indien LRD ohne Konzernkosten</b> (Code 8): Kosten offen lassen, bis Indien die Sachnummern bestätigt?',
          '153 Zeilen, 5 Artikel (DM000083 allein 122 Zeilen, 9,62 Mio. INR). Kandidaten aus SAP: C16421, C14917, F90162',
          'ja; Schweissmaschinen FA000028/29 als Nebenerlös'],
-        ['3', '<b>Wer bestätigt die Mappings?</b>', 'DE 732 Vorschläge, davon 186 nach SAP sicher (3,57 Mio. EUR); UK 99 eindeutig',
+        ['3', '<b>Wer bestätigt die Mappings?</b>', 'DE 732 Vorschläge, davon 568 nach SAP sicher (4,83 Mio. EUR); UK 96 eindeutig und plausibel',
          'die sicheren DE und UK in einem Zug bestätigen, den Rest an Rohail und Cornell'],
         ['4', '<b>Externer Lieferant, lokale Kosten fehlen:</b> mit Kosten 0 rechnen (Code 7)?', 'wenige Zeilen', 'ja (heutiger Stand)'],
         ['5', '<b>Zeilen ohne Artikel</b> (Code 9): Fracht, US-Zollzuschlag, Gewährleistungsgutschriften, IT-Personalverleih. Als '
@@ -317,11 +317,11 @@ def build(out):
          'aus dem Wareneingang (443 Trafag AG, 67 italienische Lieferanten)', 'keine Stammpflege für die Marge nötig'],
         ['UK, Code 2', 'Typencode im Text gegen SAP: 99 Artikel eindeutig, 14 mehrdeutig, 10 nur Teilcode, 152 ohne Treffer',
          'Vorschläge zur Bestätigung'],
-        ['DE-Mappings', '186 sicher, 455 prüfen, 91 wohl falsch (meist Ziel zum Löschen vorgemerkt)', 'Liste Mapping_DE_Vorpruefung_P76'],
+        ['DE-Mappings', '568 sicher, 73 prüfen, 91 wohl falsch (meist Ziel zum Löschen vorgemerkt)', 'Liste Mapping_DE_Vorpruefung_P76'],
         ['Indien LRD', 'Kandidaten C16421 und C14917 (Freilufthaube 87X6), F90162 (Regenschutz mit Isolation); '
          'FA000028/29 sind Schweissmaschinen', 'Frage 2'],
         ['Supplier Origin', 'Lieferant aus Wareneingang wirkt, die Herkunftsangabe fehlt aber im Export (Programmfehler)',
-         'Korrektur bei Ingo'],
+         'behoben 24.11., sichtbar ab dem nächsten Export je Land'],
     ], [40 * mm, 92 * mm, 38 * mm]))
 
     s.append(P('8. Wo du was findest', h2))

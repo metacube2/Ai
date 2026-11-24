@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-24 12:45: Supplier Origin behoben, Mapping-Import DE/UK vorbereitet
+
+- `6503c1d` (Zweig `supplier-origin-2411`): `SupplierSource` in der Audit-CSV, Tests 1'842/1'842, deployed 12:35 ohne Wochensicherung.
+- DE-Vorpruefung Faktor 0,3 bis 8: 568 sicher (4,83 Mio. EUR). Import-Datei 664 Zeilen (DE 568, UK 96) in Downloads, Status bestaetigt,
+  nicht importiert (macht Ingo). PDF Andreas nachgefuehrt. FINANCE_SUPPLIER 14 Nachtrag.
+
 ## 2026-11-24 nachmittags: Finance offene Punkte per P76/B1, PDF Andreas nachgefuehrt
 
 - Nur gelesen (P76 MARA/MBEW/MARC/MAKT per SE16, B1 FR/US/IT, Export 23.11.); `saptasks/finance_offene_punkte/` (NOTES, Skripte,

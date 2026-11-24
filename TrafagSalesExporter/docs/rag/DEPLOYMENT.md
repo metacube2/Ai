@@ -96,6 +96,7 @@ Klammern stammen aus `docs/rag/LEARNINGS.md`). Vorher standen Befehl, Vorschritt
 
 ## Kurzstand
 
+- **Deploy 2026-11-24 12:35, Supplier Origin (`6503c1d`, Zweig `supplier-origin-2411` ab `95c5ad5`, also mit DB-Sicherung und Rexx).** Tests 1'842/1'842 im Release-Worktree, `-- --no-backup` (erste App-Sicherung erst Nacht auf 25.11.), Funktionscommit geprueft, bitgleich, Alarme nur `-wal`/`-shm` (wieder da) und Checkpoint der DB. **Produktivstand jetzt Zweig `supplier-origin-2411`.**
 - **Deploy 2026-11-24 11:01, Datenbanksicherung in der App (`95c5ad5`, Zweig `db-sicherung-2411` ab `142d304`, also mit Rexx-Stand).** Tests 1'842/1'842 im Release-Worktree, `-- --no-backup`, Funktionscommit-Zeile geprueft, bitgleich, Alarm nur `-wal`/`-shm` (alle wieder da). Abschnitt im Admin im Chrome gesehen (Liste mit sieben Sicherungen des Deploy-Werkzeugs, Knopf). **Produktivstand jetzt Zweig `db-sicherung-2411`.**
 - **Deploy 2026-11-24 09:58, Rexx Hub Wiederholung je Seite (`142d304`).** Zweig `rexxhub-requests-2311`, Tests 1'829/1'829 im Release-Worktree, mit `-- --no-backup` (**Wochensicherung weiter faellig**, letzte 16.11.). Funktionscommit-Zeile geprueft, lokaler Build und Server bitgleich. Alarme wie bei allen drei Deploys heute: `-wal`/`-shm` verschwunden (wieder da) und „geschuetzte Datei veraendert: trafag_exporter.db“ (gleiche Groesse, Zeitstempel vom Checkpoint beim Stoppen).
 - **Deploy 2026-11-24 09:10, Rexx Hub #777 eingeschaltet (`21d11b4`), davor 08:57 Stichtag `CaseFromDate` (`5b3774f`).** Zweig

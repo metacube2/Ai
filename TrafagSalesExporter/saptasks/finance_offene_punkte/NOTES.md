@@ -1,4 +1,4 @@
-# Finance: offene Punkte aus der PDF fuer Andreas, mit Daten geklaert (Stand 2026-11-24 12:15, Auswertung P76 ergaenzt)
+# Finance: offene Punkte aus der PDF fuer Andreas, mit Daten geklaert (Stand 2026-11-24 12:38, Auswertung P76 und Import-Datei ergaenzt)
 
 Auftrag Ingo 24.11.: offene Punkte der PDF `docs/finance_andreas/Finance_Lieferantenzuordnung_Mapping_Stand_2026-11-24.pdf`
 selbst klaeren, soweit es mit Daten geht (Aufgaben 7, 4, 6, Vorbereitung P76). **Nur gelesen:** kein Code, keine Aenderung an
@@ -146,9 +146,11 @@ Pfad: `C:\Users\koi\AppData\Local\Temp\claude\5071e751cc66269e\1760985e-ab7a-453
 4. Indien 36 Topic-9-Zeilen in B1 pruefen (nur ueber den Server).
 5. ~~H7-Zeilen mit den P76-Daten gegen MBEW-STPRS/PEINH und Mengeneinheit pruefen.~~ *(erledigt 12:15, Abschnitt unten: kein
    Preiseinheitsfehler, PEINH wird richtig angewendet.)*
-6. DE-Mappings: Pruefliste in `Downloads\Mapping_DE_Vorpruefung_P76_2026-11-24.xlsx`; bestaetigen nur durch Ingo/DE. Entscheid,
-   ob die Faktorgrenze fuer DE bei 3 bleibt (Median 3,9, siehe unten).
-7. UK-Regel Typencode: Vorschlagsliste liegt vor (99 eindeutig); Bau erst nach Entscheid Ingo.
+6. DE-Mappings: Pruefliste in `Downloads\Mapping_DE_Vorpruefung_P76_2026-11-24.xlsx`; bestaetigen nur durch Ingo/DE. ~~Entscheid,
+   ob die Faktorgrenze fuer DE bei 3 bleibt.~~ *(Entscheid Ingo 24.11.: Faktor 0,3 bis 8, Abschnitt „Import-Datei“ unten.)*
+   Offen: Import der Datei `Downloads\Mapping_Import_DE_UK_sicher_2026-11-24.xlsx` durch Ingo.
+7. UK-Typencode: ~~Bau erst nach Entscheid Ingo.~~ *(24.11.: kein Code, die 96 eindeutigen Treffer gehen als Mapping-Zeilen in
+   die Import-Datei.)*
 8. Indien Code 8: Kandidaten an Indien zur Bestaetigung; FA000028/29 sind Maschinen, kein Mapping.
 
 ## Auswertung P76 (Stand 2026-11-24 12:15)
@@ -201,6 +203,8 @@ Skripte: `skripte/p76lib.py` (Laden, Typencode-Index), `p1_h7.py`, `p1b_peinh.py
 
 ### 3. DE-Vorschlaege (732)
 
+*(Einteilung mit Faktor 0,3 bis 3; ueberholt durch die Neueinteilung mit Faktor 0,3 bis 8 im Abschnitt „Import-Datei“ unten.)*
+
 Lokale Kosten = Median `Standard Cost CHF (per unit)` der TRDE-Zeilen 2025/2026 (DE-Kosten sind plausibel: Median 72 % des
 Verkaufspreises). Regeln wie vorgegeben: **sicher** = Nummer (nach dem Schraegstrich oder als 5-6-stellige Zahl in der DE-Nummer)
 oder ganzer Typencode zeigt eindeutig auf das Ziel, kein Typencode zeigt auf ein anderes Material, Ziel in MARA und MARC 1100 ohne
@@ -233,3 +237,42 @@ ohne stuetzende Nummer, oder Faktor unter 0,1/ueber 10. **pruefen** = Rest.
 | FA000028, FA000029 Welding machine (complete), je 1 Z., 303 CHF/St. | 1 Kunde | keiner | Anlagegut (Praefix FA), kein Trafag-Produkt; MARA kennt nur Schweissteile, keine Maschine. Kein Mapping, als Nebenerloes behandeln |
 
 Keine der Indien-Nummern traegt einen Trafag-Typencode; ZZTYP lieferte keinen Treffer.
+
+## Import-Datei Mapping DE/UK (Stand 2026-11-24 12:38, Auftrag Ingo „ja mach alles“, nichts importiert)
+
+**DE neu eingeteilt mit Faktor 0,3 bis 8** (Entscheid Ingo 24.11.; die Tabelle in Abschnitt 3 oben mit Grenze 3 ist damit
+ueberholt), Skript `skripte/p3_de_f8.py`, Datei `Downloads\Mapping_DE_Vorpruefung_P76_2026-11-24.xlsx` ueberschrieben, Vermerk im
+Blatt Übersicht:
+
+| Klasse | Vorschlaege | Zeilen | EUR |
+| --- | ---: | ---: | ---: |
+| sicher | 568 | 1'673 | 4'832'673 |
+| pruefen | 73 | 212 | 548'211 |
+| wohl falsch | 91 | 2'282 | 373'257 |
+
+pruefen: 51 Typencode zeigt auf ein anderes Material bei passender Nummer, 11 Faktor ausserhalb 0,3-8, 4 ohne Faktor, 9 ohne exakte
+Nummer. wohl falsch unveraendert.
+
+**Importformat (Code im Worktree `C:\TMP\TrafagSalesExporter_rx2311`, `6503c1d`):** `MaterialMappingExcel.Parse` liest das Blatt
+„Mapping“ (sonst das erste), Spalten ueber die Kopfzeile; Pflicht sind `TSC`, `Local Material`, `Group Material Number`, `Status`;
+gelesen werden zusaetzlich Local Text, Text Trafag AG, Delivering Entity, Delivering Material Number, Method, Method Detail,
+Confidence, Reviewed By (Rows, Net Sales, Effective, Reviewed At nicht). `MaterialMappingStore.ImportAsync` ist alles oder nichts:
+abgelehnt werden unbekannter TSC (gegen `Sites`), fehlende Nummer, Status ausser offen/Vorschlag/bestaetigt/abgelehnt (auch
+„bestätigt“, englisch), Delivering Entity ausser leer/TR AG/TR IT/TR IN, Confidence ausserhalb 0-100, doppelter Schluessel (TSC +
+lokale Nummer ohne Leerzeichen und fuehrende Nullen). Delivering Entity mit Delivering Material Number ersetzt die Gruppennummer
+nur fuer Ware von TR IT/TR IN (Paket B); fuer DE/UK bleibt sie leer. **Status „bestaetigt“ im Import bestaetigt die Zeile**
+(Pruefer = angemeldeter Benutzer, Zeitpunkt = Import); bestehende Zeilen desselben Schluessels werden aktualisiert.
+
+**Datei `C:\Users\koi\Downloads\Mapping_Import_DE_UK_sicher_2026-11-24.xlsx`** (Skript `skripte/build_import.py`): 664 Zeilen,
+alle Status bestaetigt. TRDE 568 (Klasse sicher, Local Material, Methode und Sicherheit genau aus `Mapping_2026-11-23.xlsx`,
+4'832'673 EUR); TRUK 96 (Typencode eindeutig, Ziel aktiv, Faktor 0,5-6; Methode „Hand“, Sicherheit 100; 417'752 GBP; alle 96 stehen
+im Mapping-Export schon als offen bzw. 1 als Vorschlag und werden ueberschrieben). Nicht aufgenommen: UK mehrdeutig, Teilcode
+(auch 51078-MDM7910), 1 Faktor ueber 6, 2 ohne Faktor. **Gegenprobe** `skripte/check_import.py` (Regeln wie Parse/ImportAsync,
+TSC gegen `Sites` im lokalen DB-Abbild 12.11.): 664 gueltig, 0 Fehler, 0 doppelte Schluessel. Negativtest am Mapping-Export 23.11.:
+der Pruefer meldet dort 617 Fehler (TSC TRES fehlt im lokalen Abbild), kann also rot werden.
+
+**Wirkung nach dem Import:** Die Zeilen wirken bei der naechsten Berechnung, die die Mapping-Tabelle laedt: Sales_All beim naechsten
+Export (`ExcelExportService.LoadMaterialMappings`), das Cockpit beim naechsten Neuaufbau (`ManagementCockpitService` Zeile 370;
+ob ein gecachter Stand bis zur naechsten Datenaenderung stehen bleibt, ist nicht geprueft). Die Gruppennummer wird nur gesetzt, wo
+die Quelle keine liefert; fuer DE ohne Lieferant fuehrt sie ueber den Werkstamm zu Intern/TR AG und Konzernkosten (Code 5 statt 1/6),
+fuer UK zu Konzernkosten statt Code 2. Rueckgaengig: Zeilen auf der Seite ablehnen oder eine Datei mit Status abgelehnt importieren.
