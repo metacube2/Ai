@@ -11,7 +11,8 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 
 - **2026-11-24 (Einkauf, ZLO03):** Erster Mitternachtslauf erfolgreich, 49 Min. (Materialanteil allein 37 Min., PLATTFORM_TEMPO
   11.6). ZLO03 FIX 29 in P76 belegt: 40731 100.23 -> 86.83 CHF je Stueck, H10040 weg (Plan FIX 29, Abschnitt 9). Weiter offen:
-  Merge des Produktivstands (`df7b874`, Zweig `rexxhub-requests-2311`, enthaelt `einkauf-tempo-2011`) in den Hauptzweig,
+  Merge des Produktivstands (*seit 24.11. 11:01* `95c5ad5`, Zweig `db-sicherung-2411`, enthaelt `rexxhub-requests-2311` und
+  `einkauf-tempo-2011`; davor `df7b874`) in den Hauptzweig,
   ~~Befund B65814, Info Armin~~ (erledigt 24.11.: Armin hat B65814 bereinigt, Liste 1'286 F-Teile mit Stueckliste/Arbeitsplan aus
   P76 an Armin, `saptasks/zukauf_stuecklisten/NOTES.md`), Full Load So. 29.11.
 - **2026-11-23 10:50 (Uebergabe, die ersten beiden Pruefungen am 24.11. erledigt):** Einstieg fuer die naechste Sitzung: `docs/UEBERGABE_2026-11-23.md`. Zuerst Mitternachtslauf

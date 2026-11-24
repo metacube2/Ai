@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-24 11:01: Datenbanksicherung in der App
+
+- `DatabaseBackupService` (`95c5ad5`, Zweig `db-sicherung-2411`): samstags 03:00 bis 05:00, nie waehrend eines Einkauf-Laufs, vier
+  eigene Sicherungen neben der DB; Knopf und Liste unter Admin > Aktive Logins. Das Deploy-Werkzeug erkennt die Sicherungen und
+  sichert nicht mehr selbst. Server zusaetzlich mit Veeam (IT). Tests 1'842/1'842, deployed 11:01. `docs/rag/DEPLOYMENT.md`.
+
 ## 2026-11-24 10:30: Liste Zukaufteile mit Stueckliste/Arbeitsplan an Armin
 
 - Armin hat B65814 bereinigt (Stueckliste und Arbeitsplan geloescht). Liste aus P76 (nur gelesen, Agent sap-t76): 1'286 F-Teile

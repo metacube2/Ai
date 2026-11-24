@@ -121,8 +121,9 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
    „Erledigt am“ in `Wochen_Todo.tsv` als `JJJJ-MM-TT HH:MM`, „Letztes Update“ im Issue-Log, in der
    Fachdatei ein Vermerk `*Erledigt JJJJ-MM-TT HH:MM:*` am betroffenen Absatz, Deploys mit Uhrzeit
    in `rag/DEPLOYMENT.md`. Keine Zeitstempel an unveraenderten Absaetzen, alte Eintraege nicht nachruesten.
-11. **Deploy (Stand 2026-10-13, Entscheid Ingo):** DB-Sicherung **einmal pro Woche**, der Runner sichert selbst, wenn
-   die neueste Sicherung aelter als sieben Tage ist; `--backup` erzwingt, `--no-backup` unterdrueckt sie. Zu jedem Deploy das **Monitor-Fenster** oeffnen:
+11. **Deploy (Stand 2026-11-24):** Die **App sichert die Datenbank selbst** samstags 03:00 (`DatabaseBackupService`, Admin >
+   Aktive Logins); das Deploy-Werkzeug sichert nur noch, wenn die neueste Sicherung aelter als sieben Tage ist (Rueckfall);
+   `--backup` erzwingt, `--no-backup` unterdrueckt sie. *Davor (2026-10-13):* nur der Runner sicherte, einmal pro Woche. Zu jedem Deploy das **Monitor-Fenster** oeffnen:
    `.tmp_tools/DeployMonitor/` (Start ueber `explorer.exe ...\ZeigeLetztenDeploy.cmd`, sonst unsichtbar) zeigt
    Schritt, Fortschrittsbalken und die letzten Zeilen. Befehle und Fallen in `docs/rag/DEPLOYMENT.md` oben („Deploy-Ablauf seit 2026-10-13“).
 

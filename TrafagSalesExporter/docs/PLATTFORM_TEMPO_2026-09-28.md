@@ -295,7 +295,7 @@ Ende; belastet haben ihn die SAP-Anfragen und die parallel laufende Vorberechnun
 - **Deploy-Pruefung aus dem Serverprotokoll:** der Runner schreibt „Einkauf-Lauf {Mode} gestartet“, `PurchasingRunLog` wertet
   Start gegen Ende aus, `DeployHeadless` bricht bei laufendem Lauf ab (`--trotz-einkauf-lauf` uebersteuert).
 - **Hinweisbalken** oben auf jeder Seite, solange ein Einkauf-Lauf oder Verkaufsexport laeuft. Die Wochensicherung der
-  Datenbank laeuft im Deploy-Werkzeug ausserhalb der App und erscheint dort nicht. Im Browser noch nicht gesehen.
+  Datenbank laeuft im Deploy-Werkzeug ausserhalb der App und erscheint dort nicht. *Ueberholt 2026-11-24: die App sichert selbst samstags 03:00 (`docs/rag/DEPLOYMENT.md`).* Im Browser noch nicht gesehen.
 - **Sonntags 03:00 ein Full Load** statt Delta (`Purchasing:WeeklyFullLoadDay`, leer oder `none` schaltet ab). Grund: das
   echte Delta laedt nur neue und offene Belege; Aenderungen an abgeschlossenen Bestellungen (Preis, Loeschkennzeichen, Storno
   eines Wareneingangs, neue Position) kamen bis zum 20.11. nur, weil der Delta unbeabsichtigt alles neu lud. Der Full Load liest
