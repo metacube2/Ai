@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-24: PDF Finance fuer Andreas
+
+- `docs/finance_andreas/Finance_Lieferantenzuordnung_Mapping_Stand_2026-11-24.pdf` (4 Seiten, Kopie in Downloads) mit Generator
+  `finance_stand_andreas_pdf.py`: Neuerungen 13. bis 20.11., Kostenkette, Issue-Topic-Matrix, Mapping, Stand je Land, offene
+  Fragen an Andreas. Nur aus der Doku, Zahlen der Exporte 18. und 20.11.
+
 ## 2026-11-24 11:01: Datenbanksicherung in der App
 
 - `DatabaseBackupService` (`95c5ad5`, Zweig `db-sicherung-2411`): samstags 03:00 bis 05:00, nie waehrend eines Einkauf-Laufs, vier
