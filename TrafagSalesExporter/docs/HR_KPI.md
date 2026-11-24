@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-11-23 nachmittags (8.20 Nachtrag: #777 ueber v1/requests deployed, Schalter aus, Rexx 500 auf Seite 56); davor 2026-11-23 (8.20: Antwort Rexx, /v1/requests liefert alle Abwesenheiten, sieben Schnittstellen, Lohnarten-Endpunkt bis Ende 2026; 8.19 „#777 ohne Hub-Endpunkt“ als ueberholt markiert); davor 2026-11-19 13:30 (8.19 Nachtrag: Rexx Hub eingeschaltet `a848f93`); davor 2026-11-19 (8.19: Rexx Hub, #775 ueber GET v1/employees, deployed `b7f52a9`, Schalter aus; #777 ohne Hub-Endpunkt); davor 2026-11-17 (8.17 Nachtrag: Rexx Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Zugang bei Rexx angefragt); davor 2026-11-12 (Doku-Pruefung: Produktivstand `e956183` mit vorbereitetem Rexx-Hub-Abruf, Schalter aus, 8.18; Nachtrag Hub nicht bestellt, 8.17; ueberholte Rexx-Grenze in 8.7 und beschaedigte Pfade in 8.3, 8.5, 8.6 markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-11-24 (8.21: #777 kommt taeglich ueber den Rexx Hub, Stichtag 07.04.2026, `21d11b4`); davor 2026-11-23 nachmittags (8.20 Nachtrag: #777 ueber v1/requests deployed, Schalter aus, Rexx 500 auf Seite 56); davor 2026-11-23 (8.20: Antwort Rexx, /v1/requests liefert alle Abwesenheiten, sieben Schnittstellen, Lohnarten-Endpunkt bis Ende 2026; 8.19 „#777 ohne Hub-Endpunkt“ als ueberholt markiert); davor 2026-11-19 13:30 (8.19 Nachtrag: Rexx Hub eingeschaltet `a848f93`); davor 2026-11-19 (8.19: Rexx Hub, #775 ueber GET v1/employees, deployed `b7f52a9`, Schalter aus; #777 ohne Hub-Endpunkt); davor 2026-11-17 (8.17 Nachtrag: Rexx Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Zugang bei Rexx angefragt); davor 2026-11-12 (Doku-Pruefung: Produktivstand `e956183` mit vorbereitetem Rexx-Hub-Abruf, Schalter aus, 8.18; Nachtrag Hub nicht bestellt, 8.17; ueberholte Rexx-Grenze in 8.7 und beschaedigte Pfade in 8.3, 8.5, 8.6 markiert); davor 2026-11-10 (Rexx-Hub-Abruf gebaut, Schalter aus, 8.18; Entscheid Rexx Hub und Lieferfelder, 8.17); davor 2026-11-04 (Unfallkachel aus Faellen, 8.15; Rexx-Abwesenheiten je Fall #777, Abschnitt 8.14; Rexx-Gesamtabfrage #775 als Hauptquelle, Abschnitt 8.13; Pruefung der Formeln mit drei Korrekturen, Abschnitt 8.10; Reiter Interaktiv, Abschnitt 9); davor 2026-11-03 (Rexx-Schnittstelle nach SAP, Abschnitt 8.9), 2026-10-29 (Konsistenzpruefung), urspruenglich 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -781,6 +781,20 @@ eine Spielwiese.
 
 *Ueberholt am 2026-11-04 09:20:* ~~committet, Tests gruen, nicht deployed~~. **Produktiv seit 2026-11-04 09:20**
 (`b65f059`, `docs/rag/DEPLOYMENT.md`); *Sichtpruefung im Browser am 2026-11-04 11:50 erledigt (Zeitraffer, Krankheitskalender).*
+
+### 8.21 #777 laeuft ueber den Rexx Hub (2026-11-24)
+
+*(Ueberholt damit: 8.20 Nachtrag „Schalter aus, Rexx 500 auf Seite 56“.)* Ursache des Fehlers war das Exportfeld „Abwesenheit Zeit“
+(`time_away`, Listenfeld) beim API-Benutzer #2; es ist in Rexx entfernt, das Cockpit liest es nicht. Seitdem kommen alle 168 Seiten.
+Neu `HrKpi:RexxHub:CaseFromDate = 2026-04-07`: die Fall-Datei behaelt nur Abwesenheiten, die ab dem 07.04.2026 enden, damit 2024/2025
+den Vorjahresvergleich nicht veraendern. `CaseEnabled = true` seit dem Deploy 09:10 (`21d11b4`); #777 kommt damit wie #775 taeglich
+ab 05:30, der Handexport wird beim ersten Schreiben als `*.manuell.xlsx` gesichert.
+
+Vergleich mit dem Handexport 04.11.: Der Hub liefert mehr (z. B. Ferien genommen 1'341 statt 614 Faelle), weil der Handexport nur
+Antraege mit Antragsdatum ab 04.05.2026 enthielt; frueher beantragte Ferien fehlten dort. Unfall stimmt fast genau (66 statt 60 Faelle,
+249 statt 247,5 Tage). Einzelheiten und Tabelle: `saptasks/rexx_schnittstelle/NOTES.md` 22.
+
+SFTP laut Alex Donato (24.11.): Die Rexx-Terminals senden die Stempelungen selbst an den FTP-Server; das bleibt so. Offen bleiben, mit Rexx zu klaeren, wer die uebrigen Dateien ablegt und ob acht oder sieben Schnittstellen bezahlt werden (NOTES 22 Punkt 7).
 
 ## Querverweise
 

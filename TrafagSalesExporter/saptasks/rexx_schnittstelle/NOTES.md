@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-23 nachmittags (Abschnitt 21: /v1/requests eingerichtet, `001646b`/`df7b874` deployed, Schalter aus, Rexx 500 auf Seite 56); davor 2026-11-23 (Abschnitt 20: Antwort Artjom, /v1/requests liefert alle Abwesenheiten auch ohne Workflow, sieben Schnittstellen mit IDs, Lohnarten-Endpunkt bis Ende 2026, SFTP laut Artjom durch Upgreat); davor 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-24 (Abschnitt 22: #777 eingeschaltet, Ursache Seite 56 war Exportfeld time_away, Stichtag 07.04.2026, `5b3774f`/`21d11b4` deployed); davor 2026-11-23 nachmittags (Abschnitt 21: /v1/requests eingerichtet, `001646b`/`df7b874` deployed, Schalter aus, Rexx 500 auf Seite 56); davor 2026-11-23 (Abschnitt 20: Antwort Artjom, /v1/requests liefert alle Abwesenheiten auch ohne Workflow, sieben Schnittstellen mit IDs, Lohnarten-Endpunkt bis Ende 2026, SFTP laut Artjom durch Upgreat); davor 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -721,3 +721,52 @@ Hintergrundlaeufe, zusammen rund 250 Anfragen von 50'000 im Monat.
 3. Passt es: `"CaseEnabled": true` in appsettings, Tests, Deploy. Achtung: der Tagesdienst schreibt dann sofort beim Start, weil die
    Fall-Datei vom 04.11. ist; der Handexport wird als `*.manuell.xlsx` gesichert (Abschnitt 14).
 
+
+*(Die offenen Schritte 1 bis 3 oben sind am 2026-11-24 erledigt, siehe Abschnitt 22. Eine Meldung an Artjom war nicht noetig.)*
+
+## 22. #777 laeuft: Ursache Seite 56 war das Exportfeld time_away; Stichtag 07.04.2026; eingeschaltet (2026-11-24)
+
+Auftrag Ingo 24.11. („versuchen wir das nochmal ev zu fixen, rexx ist im chrome offen“, danach „mach alle vorschlaege“).
+
+**1. Ursache eingegrenzt (Rexx produktiv, nur gelesen):** In den Rexx Hub Logs steht der Absturz als Zeile ohne Antwortcode und ohne
+Antwortinhalt (Dauer 0.00); Rexx bricht intern ab. `/v1/requests` kennt nur den Parameter `page` (Parameter Mapping „Fest definiert“),
+keine Seitengroesse und kein Datum; eingrenzen liesse er sich nur ueber Export Filter oder die Feldauswahl.
+
+**2. Korrektur in Rexx (08:21, API-Benutzer #2, Endpunkt `/v1/requests`):** Exportfeld „Abwesenheit Zeit“ (`time_away`, Listenfeld)
+entfernt, 21 -> 20 Felder, nach dem Speichern neu geladen und geprueft. Das Cockpit liest die Spalte nicht (`RexxHubColumns`, Leser).
+Ruecknahme: „Felder auswaehlen“, Feld wieder hinzufuegen.
+
+**3. Testabruf 08:25 (ohne Stichtag):** #777 **168 Seiten, 200**, 14'494 Abwesenheiten nach Entfernen von 2'213 Antraegen ohne
+Abwesenheit, Pflichtspalten 100 %, Format und Werte erkannt, wuerde geschrieben, rund 6 Minuten. Bereich „Abwesenheit von“
+03.01.2024 bis 27.12.2027. **Ursache bestaetigt: das Listenfeld `time_away` liess Rexx bei einzelnen Antraegen abstuerzen.**
+
+**4. Stichtag (Code `5b3774f`, deployed 08:57 ohne Wochensicherung):** `HrKpi:RexxHub:CaseFromDate = 2026-04-07`; die Fall-Datei
+behaelt nur Abwesenheiten, die an oder nach dem Stichtag enden („bis“, ersatzweise „von“). Grund: `MergeRexxCases` ergaenzt jeden
+Rexx-Fall ohne SAP-Gegenstueck unabhaengig vom Datum; ohne Grenze haetten 2024/2025 den Vorjahresvergleich veraendert.
+
+**5. Testabruf 08:58 (mit Stichtag):** 168 Seiten ok, **4'416 Abwesenheiten**, 10'078 vor dem Stichtag entfernt, wuerde geschrieben.
+Vergleich mit dem Handexport #777 vom 04.11. (Zeilen / Tage, Status Genommen):
+
+| Art | Handexport 04.11. | Hub 24.11. |
+| --- | --- | --- |
+| Krankheit | 398 / 954 | 546 / 1'314 |
+| Krankheit ueber 60 Tage | 2 / 32 | 6 / 47 |
+| Unfall | 60 / 247,5 | 66 / 249 |
+| Ferien | 614 / 1'710,5 | 1'341 / 4'266,5 |
+| Kompensation | 384 / 592 | 584 / 970,5 |
+| Militaer / Zivildienst | 5 / 13 | 13 / 50 |
+
+**Abweichung erklaert:** Der Handexport enthielt nur Antraege mit **Antragsdatum ab 04.05.2026** (gelesen: Antragsdatum 04.05. bis
+04.11.2026); frueher beantragte Ferien fehlten (Ferien genommen im April 3, Mai 42). Der Hub liefert alle Antraege und ist damit
+vollstaendiger; dazu kommen 20 Tage seit dem 04.11. Unfall passt fast genau (60/66 Faelle, 247,5/249 Tage).
+
+**6. Eingeschaltet (Code `21d11b4`, deployed 09:10 ohne Wochensicherung):** `CaseEnabled = true`. Tests 1'823/1'823 (Worktree und
+Release-Worktree). Beide Deploys mit dem Werkzeug, Protokolle `.tmp_deploy_2026-11-24_rexx-stichtag.log` und
+`.tmp_deploy_2026-11-24_rexx-777-ein.log`, Commit-Zeile geprueft, Alarm nur `-wal`/`-shm` (wieder da). **Wochensicherung bleibt
+faellig** (letzte 16.11.; Wunsch Ingo, beim ersten Deploy abgebrochen). Zweig `rexxhub-requests-2311` ist weiter **nicht** im
+Hauptzweig.
+
+**7. SFTP, Hinweis Alex Donato (an Ingo, 24.11.):** Die **Rexx-Terminals senden die Stempelungen selbst an den FTP-Server**. Das bleibt
+so (Stempeluhrtransfer, Schnittstelle 3, Entscheid 10.11.). Fuer die Hub-Umstellung muss daran nichts geaendert werden. *Offen bleibt*
+nur, wer die uebrigen Dateien auf dem SFTP-Server ablegt (Artjom nannte Upgreat, Abschnitt 20 Punkt 4) und ob Trafag acht oder
+sieben Schnittstellen bezahlt; beides klaert Ingo mit Rexx.

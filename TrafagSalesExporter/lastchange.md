@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-24 09:10: Rexx Hub #777 eingeschaltet
+
+- Ursache 500 auf Seite 56: Exportfeld `time_away` beim API-Benutzer #2, in Rexx entfernt. Stichtag `CaseFromDate = 2026-04-07`
+  (`5b3774f`, deployed 08:57), `CaseEnabled = true` (`21d11b4`, deployed 09:10), beide ohne Wochensicherung (weiter faellig).
+- Testabruf 168 Seiten, 4'416 Abwesenheiten; Hub vollstaendiger als der Handexport (der hatte nur Antraege ab 04.05.2026).
+  Rexx-NOTES 22, `docs/HR_KPI.md` 8.21.
+
 ## 2026-11-24: Sicherung auf GitHub
 
 - Gepusht: `feature/supplier-overrides-trit`, `rexxhub-requests-2311` (Produktivstand `df7b874`), `einkauf-tempo-2011`,
