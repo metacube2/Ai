@@ -1,5 +1,9 @@
 # Last Change
 
+## 2026-11-24 14:26: Materialanteil, Menge vor Umsatz
+
+- `8b79cb7`: Spalte „Bestaetigte Menge“ vor „Umsatz bestaetigt“ in Anzeige und Excel; Tests 1'870/1'870, deployed 14:26.
+
 ## 2026-11-24 14:16: Materialanteil mit Spalte „Bestaetigte Menge“
 
 - `c250d08` (Zweig `aufriss-excel-2411`): ZC23 `Bmeng` je Ebene in Anzeige und Excel. Tests 1'870/1'870, deployed 14:16, im Chrome
