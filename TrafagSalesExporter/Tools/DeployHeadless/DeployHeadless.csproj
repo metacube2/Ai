@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Tools\DeployConsole\DeployConsole.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.30" />
+  </ItemGroup>
+  <!-- Seit 2026-11-20: Pruefung "laeuft ein Einkauf-Lauf?" aus dem Serverprotokoll. Die Regel liegt in der App
+       (Services/PurchasingRunLog.cs, mit Tests) und wird aus dem Release-Worktree mitkompiliert, der beim Deploy
+       ohnehin auf dem auszuliefernden Commit steht. Fehlt die Datei dort (aelterer Commit), baut das Werkzeug
+       ohne Pruefung und meldet das. -->
+  <PropertyGroup>
+    <PurchasingRunLogFile>C:\TMP\TrafagSalesExporter_release_eafd1c5\TrafagSalesExporter\Services\PurchasingRunLog.cs</PurchasingRunLogFile>
+    <DefineConstants Condition="Exists('$(PurchasingRunLogFile)')">$(DefineConstants);PURCHASING_RUN_LOG</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(PurchasingRunLogFile)')">
+    <Compile Include="$(PurchasingRunLogFile)" Link="PurchasingRunLog.cs" />
+  </ItemGroup>
+</Project>

@@ -34,6 +34,16 @@ Danach:
 Diese Schritte duerfen auch dann nicht uebersprungen werden, wenn der Auftrag bereits in
 einem Chat beschrieben wurde.
 
+**Eine Ausnahme, und nur diese:** Eine Kurzauskunft nach Abschnitt 3a aendert nichts und
+braucht deshalb weder Lektuere noch Eintrag. Sobald doch etwas geaendert wird, gilt dieser
+Abschnitt vollstaendig, auch mitten in der Arbeit.
+
+`docs/AGENT_COORDINATION.md` enthaelt seit dem 2026-09-09 nur laufende Arbeit und einen
+Kurzindex der letzten sieben Tage. Abgeschlossenes steht im Volltext in
+`docs/AGENT_COORDINATION_HISTORIE.md`; die ist Nachschlagewerk und keine Pflichtlektuere.
+Abgeschlossene Eintraege gehoeren beim naechsten Aufraeumen dorthin, nicht in die
+Hauptdatei.
+
 ## 3. Abschluss einer Aufgabe: committen und Doku nachfuehren
 
 **Jede abgeschlossene Aufgabe endet mit einem Commit und nachgefuehrter Dokumentation.**
@@ -68,6 +78,40 @@ Lieferantenfelder", obwohl die Spalten immer gefuellt und nur nie gemappt waren.
 spanische Buchungsdatum war seit dem 2026-08-26 entschieden und deployed, waehrend Titel und
 Abschnitt 1 derselben Datei weiter „fehlendes Buchungsdatum" sagten und der Issue-Log neun
 Tage hinterherhinkte. Beides ist am 2026-09-02 aufgefallen und korrigiert worden.
+
+### 3a. Kurzauskunft: Antwort im Chat, ohne Commit und ohne Nachfuehrung
+
+Die Abschlussregel gilt fuer **erledigte Aufgaben**, nicht fuer Fragen. Eine reine Frage
+ist mit einer Antwort im Chat erledigt.
+
+**Kurzauskunft** heisst: im Repository und im Produktivsystem aendert sich nichts. Kein
+Commit, keine Doku, kein Issue-Log, kein Eintrag in `docs/AGENT_COORDINATION.md`, und die
+Koordinationsdatei muss dafuer auch nicht vorher gelesen werden. Erlaubt sind Lesen,
+Suchen, Messen und Rechnen; Dateien unter `.tmp_tools/` oder im Scratchpad zaehlen nicht
+als Aenderung.
+
+Wann welcher Modus gilt:
+
+| Fall | Modus |
+| --- | --- |
+| Ingo sagt „nur Auskunft", „nur schauen", „nur sagen" | Kurzauskunft |
+| Ingo sagt „vollstaendig" oder „nachdokumentieren" | vollstaendiger Abschluss nach Abschnitt 3 |
+| Nichts gesagt, und die Antwort aendert keine Datei | Kurzauskunft |
+| Nichts gesagt, aber Code, Daten, Produktivstand oder eine Dokumentationsdatei aendern sich | vollstaendiger Abschluss nach Abschnitt 3 |
+
+Zwei Grenzen, damit der Modus nichts verschluckt:
+
+1. **Ein dauerhafter Befund gehoert festgehalten, auch wenn die Frage kurz war.** Eine
+   Messung, ein Entscheid oder ein widerspruechlicher Doku-Stand, der beim Nachsehen
+   auffaellt, wird im Chat ausdruecklich benannt, mit dem Angebot, ihn nachzufuehren. Was
+   nur im Chat steht, ist fuer die naechste Sitzung verloren; das Angebot ersetzt also
+   nicht die Nachfuehrung, es ueberlaesst Ingo nur die Entscheidung darueber.
+2. **Sobald doch etwas geaendert wird, gilt Abschnitt 2 und 3 vollstaendig.** Ein
+   angefangener Fix ist keine Kurzauskunft mehr, auch wenn die Frage klein anfing.
+
+Grund fuer die Regel, festgehalten am 2026-09-09: Ohne diesen Modus kostete jede kleine
+Frage denselben Abschlussaufwand wie ein Produktivfix, weil es nur „alles nachfuehren"
+oder „Regel brechen" gab.
 
 ## 4. Arbeitsweise
 

@@ -1,5 +1,14 @@
 # Last Change
 
+## 2026-11-24: Sicherung auf GitHub
+
+- Gepusht: `feature/supplier-overrides-trit`, `rexxhub-requests-2311` (Produktivstand `df7b874`), `einkauf-tempo-2011`,
+  lokales `main` als `main-laptop-2026-11-24` (GitHub-`main` ist auseinandergelaufen, 144 fremde Commits, nicht gemergt).
+- Neu `finance-all-wip` (`623f6f1`): unkommittierte Finance_All-Arbeit als Kopie, kompiliert, ungetestet, nicht deployed;
+  Hauptordner unveraendert.
+- `Tools/DeployHeadless/`: Kopie des Deploy-Werkzeugs (`.tmp_tools/` ist ignoriert), ohne Passwoerter.
+- ZLO03: `ZM_LZCODE20_OPT.abap`, `ZM_LZCODE20_OPT_fixes.md`, `BEFUND_SYSTEMABGLEICH_2026-08-03.md` erstmals committet.
+
 ## 2026-11-24: Erster Einkauf-Mitternachtslauf ausgewertet, ZLO03 FIX 29 belegt
 
 - Nachtlauf 24.11. 00:00: 49 Minuten statt 90, davon Materialanteil 37 Minuten (`docs/PLATTFORM_TEMPO_2026-09-28.md` 11.6).

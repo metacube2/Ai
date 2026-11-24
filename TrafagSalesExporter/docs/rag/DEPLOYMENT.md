@@ -49,6 +49,9 @@ Klammern stammen aus `docs/rag/LEARNINGS.md`). Vorher standen Befehl, Vorschritt
 
 ## Werkzeug und drei Fallen im Publish selbst
 
+- **Sicherungskopie seit 2026-11-24:** `.tmp_tools/` ist ignoriert; `Program.cs` und `.csproj` von `DeployHeadless` liegen
+  deshalb als Kopie in `Tools/DeployHeadless/` (mit Anleitung zum Wiederherstellen). Aenderungen am Werkzeug dorthin kopieren.
+
 - **FALLE, am 2026-08-07 selbst hineingelaufen: `dotnet publish` NIEMALS ueber das
   Bash-Werkzeug auf den UNC-Pfad.** Git Bash macht aus
   `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` das lokale Verzeichnis
