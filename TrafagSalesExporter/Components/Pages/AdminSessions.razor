@@ -6,6 +6,7 @@
 @inject IAdminAccessService AdminAccess
 @inject ILandingPageSettingsService LandingSettings
 @inject IUiTextService UiText
+@inject DatabaseBackupManager Backup
 
 <PageTitle>@T("Aktive Logins", "Active logins")</PageTitle>
 
@@ -72,6 +73,53 @@ else
         </MudTable>
     </MudPaper>
 
+    @* Seit 2026-11-24: Wochensicherung der Datenbank in der App (DatabaseBackupService), hier Stand und Knopf. *@
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
+            <div>
+                <MudText Typo="Typo.h6">@T("Datenbanksicherung", "Database backup")</MudText>
+                <MudText Typo="Typo.caption">
+                    @BackupPlanText()
+                </MudText>
+            </div>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="Refresh">
+                @T("Aktualisieren", "Refresh")
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Backup"
+                       Disabled="@(Backup.IsRunning)" OnClick="StartBackup">
+                @(Backup.IsRunning ? T("Sicherung läuft …", "Backup running …") : T("Jetzt sichern", "Back up now"))
+            </MudButton>
+        </MudStack>
+        @if (!string.IsNullOrEmpty(_backupMessage))
+        {
+            <MudAlert Severity="Severity.Info" Dense Class="mb-3">@_backupMessage</MudAlert>
+        }
+        @if (Backup.LastResult is { } last)
+        {
+            <MudAlert Severity="@(last.Ok ? Severity.Success : Severity.Warning)" Dense Class="mb-3">
+                @T("Letzte Sicherung seit App-Start", "Last backup since app start"): @last.At.ToString("dd.MM.yyyy HH:mm") – @last.Message
+            </MudAlert>
+        }
+        <MudTable Items="_backups" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Datei", "File")</MudTh>
+                <MudTh>@T("Geschrieben", "Written")</MudTh>
+                <MudTh>@T("Grösse", "Size")</MudTh>
+                <MudTh>@T("Von", "By")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@context.WrittenAt.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                <MudTd>@($"{context.Bytes / 1048576.0:N0} MB")</MudTd>
+                <MudTd>@(context.FromApp ? T("App", "App") : T("Deploy-Werkzeug", "Deploy tool"))</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.caption">@T("Keine Sicherung gefunden.", "No backup found.")</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
+
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
         @T("Hinweis: HR und Finance verwenden gemeinsame App-Logins. Diese Seite zeigt daher den verwendeten Login-Namen und die Session, nicht zwingend die echte Person.", "Note: HR and Finance use shared app logins. This page therefore shows the used login name and session, not necessarily the real person.")
     </MudAlert>
@@ -79,6 +127,8 @@ else
 
 @code {
     private IReadOnlyList<AccessSessionSnapshot> _sessions = [];
+    private List<DatabaseBackupFile> _backups = [];
+    private string? _backupMessage;
 
     protected override void OnInitialized()
     {
@@ -88,6 +138,37 @@ else
     private void Refresh()
     {
         _sessions = SessionTracker.GetActiveSessions();
+        try
+        {
+            _backups = Backup.List();
+        }
+        catch (Exception ex)
+        {
+            _backups = [];
+            _backupMessage = T("Sicherungen konnten nicht gelesen werden", "Could not read backups") + $": {ex.Message}";
+        }
+    }
+
+    private void StartBackup()
+    {
+        if (Backup.PurchasingRunning)
+        {
+            _backupMessage = T("Ein Einkauf-Lauf läuft gerade. Bitte nach dessen Ende sichern.", "A purchasing run is in progress. Please back up after it finishes.");
+            return;
+        }
+        _backupMessage = Backup.TryStart("Admin-Knopf")
+            ? T("Sicherung gestartet. Sie dauert etwa 1 bis 3 Minuten; danach „Aktualisieren“.", "Backup started. It takes about 1 to 3 minutes; then press Refresh.")
+            : T("Es läuft bereits eine Sicherung.", "A backup is already running.");
+    }
+
+    private string BackupPlanText()
+    {
+        var o = Backup.Options;
+        if (!o.Enabled)
+            return T("Automatische Sicherung ist ausgeschaltet (DatabaseBackup:Enabled).", "Automatic backup is off (DatabaseBackup:Enabled).");
+        var day = System.Globalization.CultureInfo.GetCultureInfo("de-CH").DateTimeFormat.GetDayName(o.Day);
+        return T($"Automatisch jeden {day} zwischen {o.WindowStartHour:00}:00 und {o.WindowEndHour:00}:00, nie während eines Einkauf-Laufs; {o.Keep} eigene Sicherungen bleiben liegen. Die Server sichert zusätzlich die IT (Veeam).",
+            $"Automatically every {o.Day} between {o.WindowStartHour:00}:00 and {o.WindowEndHour:00}:00, never during a purchasing run; the newest {o.Keep} own backups are kept. IT also backs up the servers (Veeam).");
     }
 
     private void LockAdmin()

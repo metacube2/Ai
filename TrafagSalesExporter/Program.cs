@@ -140,6 +140,11 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundSer
 // Notwendig, weil einzelne Standortsysteme (Indiens HANA) nur der Server erreicht und dort
 // weder Remoteausfuehrung noch RDP zur Verfuegung steht.
 builder.Services.AddHostedService<ServerAnalysisBackgroundService>();
+// Wochensicherung der Datenbank in der App (seit 2026-11-24): Samstag 03:00 bis 05:00, nie waehrend eines Einkauf-Laufs, vier
+// eigene Sicherungen neben der Datenbank; Knopf unter Admin > Aktive Logins. docs/rag/DEPLOYMENT.md.
+builder.Services.Configure<DatabaseBackupOptions>(builder.Configuration.GetSection(DatabaseBackupOptions.SectionName));
+builder.Services.AddSingleton<DatabaseBackupManager>();
+builder.Services.AddHostedService<DatabaseBackupService>();
 // Holt die SAP-HR-Felder taeglich ueber OData (HrKpiSet) statt aus dem Handexport, docs/HR_KPI.md 8.6.
 builder.Services.AddHostedService<HrKpiSapRefreshService>();
 // Rexx Hub (vorbereitet 2026-11-10): holt #775/#777 taeglich per API statt Handexport, nur mit HrKpi:RexxHub:Enabled;
