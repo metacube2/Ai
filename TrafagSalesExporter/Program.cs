@@ -96,6 +96,7 @@ builder.Services.AddSingleton<IHrKpiService, HrKpiService>();
 builder.Services.AddSingleton<IManualExcelImportService, ManualExcelImportService>();
 builder.Services.AddSingleton<IExportAuditCsvService, ExportAuditCsvService>();
 builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportService>();
+builder.Services.AddSingleton<IFinanceAllExportService, FinanceAllExportService>();
 builder.Services.AddSingleton<IExportLogService, ExportLogService>();
 builder.Services.AddSingleton<ICentralSalesRecordService, CentralSalesRecordService>();
 builder.Services.AddSingleton<ICentralSalesDataProvider, CentralSalesDataProvider>();

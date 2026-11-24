@@ -132,10 +132,39 @@ public class TimerBackgroundService : BackgroundService
             _logger.LogError(ex, "Fehler beim Timer-Export");
         }
 
+        await RunFinanceAllAsync();
+
         // Nach dem Versuch stempeln (auch bei Teilfehler): verhindert, dass ein erneuter
         // Prozessstart am selben Tag den schweren Export wiederholt ausloest. Ein echter
         // Fehlversuch wird regulaer am naechsten geplanten Slot erneut ausgefuehrt.
         await StampLastRunAsync();
+    }
+
+    /// <summary>
+    /// Taegliche Erzeugung von <c>Finance_All</c> samt Upload in den zentralen SharePoint-Ordner.
+    ///
+    /// Bewusst ANDERS als beim Einkauf-Delta: Dieser Schritt laeuft auch im Nachhol-Lauf mit.
+    /// Das Delta ist davon ausgenommen, weil es einen SAP-Lauf gegen <c>travp762</c> ausloesen
+    /// wuerde. Finance_All liest dagegen nur die lokale Datenbank und schreibt in unseren
+    /// eigenen Ordner; der Dateiname traegt das Tagesdatum, ein zweiter Lauf am selben Tag
+    /// ersetzt also dieselbe Datei, statt eine weitere anzulegen.
+    ///
+    /// Eigener try/catch, damit ein Fehler hier weder den Zeitstempel des Tageslaufs noch das
+    /// nachfolgende Einkauf-Delta verhindert. Der Fehler wird geloggt und landet zusaetzlich
+    /// ueber <see cref="IAppEventLogService"/> im Admin-Log: Ein still aussteigender Schritt
+    /// war in dieser Datei schon einmal der Grund, warum ein Ausfall sechs Tage unbemerkt blieb.
+    /// </summary>
+    private async Task RunFinanceAllAsync()
+    {
+        try
+        {
+            var financeAll = _serviceProvider.GetRequiredService<IFinanceAllExportService>();
+            await financeAll.ExportAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fehler beim taeglichen Finance_All-Lauf");
+        }
     }
 
     /// <summary>
