@@ -1254,6 +1254,7 @@ public sealed class RexxHubTests : IDisposable
         Assert.False(options.CaseEnabled);
         Assert.Equal("v1/employees", options.GesamtPathTemplate);
         Assert.Equal("v1/requests", options.CasePathTemplate); // seit 2026-11-23, Rexx-NOTES 21
+        Assert.Equal(new DateTime(2026, 4, 7), options.CaseFromDate); // seit 2026-11-24: wie Handexport #777, Rexx-NOTES 22
         Assert.Equal("page", options.PageParameter);
         // Jede Pflichtspalte von #777 muss ueber die ColumnMap erreichbar sein (GET v1/requests, technische Namen).
         Assert.All(RexxHubColumns.Faelle.Where(c => c.Pflicht), c => Assert.Contains(c.Name, options.ColumnMap.Values));
@@ -1320,6 +1321,36 @@ public sealed class RexxHubTests : IDisposable
         Assert.Equal(2, RexxHubColumns.Normalize(RexxHubQueryKind.Faelle, table));
 
         Assert.Equal(["1001", "1004"], table.Rows.Select(r => (string?)r["Personalnummer"]).ToArray());
+    }
+
+    [Fact]
+    public void DropCasesBefore_Entfernt_Nur_Faelle_Die_Vor_Dem_Stichtag_Enden()
+    {
+        var spansCutoff = CaseRow("1003", "Ferien", "Genommen", "2026-04-01", 5m);
+        spansCutoff["Abwesenheit bis"] = "2026-04-09";               // endet nach dem Stichtag: bleibt
+        var endsBefore = CaseRow("1002", "Krankheit", "Genommen", "2026-03-30", 2m);
+        endsBefore["Abwesenheit bis"] = "2026-04-06";                // endet vor dem Stichtag: weg
+        var table = Table(
+        [
+            CaseRow("1001", "Krankheit", "Genommen", "2025-12-01", 1m),   // ohne „bis“: „von“ zaehlt, vor dem Stichtag: weg
+            endsBefore,
+            spansCutoff,
+            CaseRow("1004", "Unfall", "Genommen", "07.04.2026", 1m),      // Schweizer Format am Stichtag: bleibt
+            CaseRow("1005", "Krankheit", "Genommen", "unlesbar", 1m)      // nicht lesbar: bleibt, die Pruefung meldet es
+        ]);
+
+        Assert.Equal(2, RexxHubColumns.DropCasesBefore(table, new DateTime(2026, 4, 7)));
+
+        Assert.Equal(["1003", "1004", "1005"], table.Rows.Select(r => (string?)r["Personalnummer"]).ToArray());
+    }
+
+    [Fact]
+    public void DropCasesBefore_Ohne_Stichtag_Laesst_Alles_Stehen()
+    {
+        var table = Table([CaseRow("1001", "Krankheit", "Genommen", "2024-01-03", 1m)]);
+
+        Assert.Equal(0, RexxHubColumns.DropCasesBefore(table, null));
+        Assert.Single(table.Rows);
     }
 
     [Fact]

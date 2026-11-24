@@ -394,6 +394,25 @@ public static class RexxHubColumns
     /// sind keine Abwesenheit und werden entfernt, sonst verfehlten die Pflichtspalten den Fuellanteil und der ganze Abruf fiele.
     /// Was der Leser danach nicht kennt (andere Abwesenheitsarten, Status), filtert weiter <c>MergeRexxCases</c>.
     /// </summary>
+    /// <summary>
+    /// Fall-Datei: entfernt Abwesenheiten, die vor <paramref name="from"/> enden (Seit 2026-11-24, HrKpi:RexxHub:CaseFromDate).
+    /// Massgeblich ist „Abwesenheit bis“, ersatzweise „Abwesenheit von“; Zeilen ohne lesbares Datum bleiben (die Pruefung meldet sie).
+    /// </summary>
+    /// <returns>Anzahl entfernter Zeilen.</returns>
+    public static int DropCasesBefore(RexxHubTable table, DateTime? from)
+    {
+        if (from is null)
+            return 0;
+        var cutoff = from.Value.Date;
+        return table.Rows.RemoveAll(r =>
+        {
+            var end = Text(r, "Abwesenheit bis");
+            if (string.IsNullOrWhiteSpace(end))
+                end = Text(r, "Abwesenheit von");
+            return RexxHubWorkbook.TryParseDate(end, out var date) && date.Date < cutoff;
+        });
+    }
+
     private static int DropNonAbsenceRequests(RexxHubTable table)
     {
         const string typeColumn = "Abwesenheit Buchung";

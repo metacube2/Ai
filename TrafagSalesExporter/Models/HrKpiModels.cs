@@ -107,6 +107,13 @@ public sealed class RexxHubOptions
     /// </summary>
     public bool CaseEnabled { get; set; } = true;
 
+    /// <summary>
+    /// Fall-Datei (#777): nur Abwesenheiten, die an oder nach diesem Tag enden („Abwesenheit bis“, ersatzweise „von“). Seit
+    /// 2026-11-24: GET v1/requests liefert alles ab 2024, der Handexport #777 begann am 07.04.2026; ohne Grenze ergaenzte
+    /// <c>MergeRexxCases</c> auch 2024/2025 und veraenderte den Vorjahresvergleich. Leer = keine Grenze.
+    /// </summary>
+    public DateTime? CaseFromDate { get; set; }
+
     /// <summary>Kopie mit dem Pfad der Abfrageart als <see cref="PathTemplate"/>, damit Client und Testabruf nur eine Stelle kennen.</summary>
     public RexxHubOptions ForKind(bool gesamt)
     {

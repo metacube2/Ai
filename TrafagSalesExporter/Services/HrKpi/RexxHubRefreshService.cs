@@ -141,6 +141,7 @@ public sealed class RexxHubRefreshService : BackgroundService
             token = connection.Token;
             var result = await _client.FetchQueryAsync(connection, queryId, _options.ForKind(kind == RexxHubQueryKind.Gesamt), cancellationToken);
             var dropped = RexxHubColumns.Normalize(kind, result.Table);
+            var beforeCutoff = kind == RexxHubQueryKind.Faelle ? RexxHubColumns.DropCasesBefore(result.Table, _options.CaseFromDate) : 0;
             var existing = RexxHubWorkbook.Inspect(kind, path);
             var check = RexxHubColumns.Check(kind, result.Table, existing.Rows, _options.MinShare, _options.MinRowShareOfPrevious, _options.MaxDuplicatePersonalnummern);
             var requestId = string.IsNullOrWhiteSpace(result.RequestId) ? "keine" : result.RequestId;
@@ -163,6 +164,8 @@ public sealed class RexxHubRefreshService : BackgroundService
                 notes.Add(kind == RexxHubQueryKind.Gesamt
                     ? $"{dropped} Zeile(n) mit schon vorkommender Personalnummer (zweites Arbeitsverhaeltnis) entfernt, juengster Eintritt bleibt"
                     : $"{dropped} Antrag/Antraege ohne Abwesenheit (andere Workflows) entfernt");
+            if (beforeCutoff > 0)
+                notes.Add($"{beforeCutoff} Abwesenheit(en) vor dem {_options.CaseFromDate:dd.MM.yyyy} entfernt (HrKpi:RexxHub:CaseFromDate)");
             if (backup is not null)
                 notes.Add($"Handexport gesichert als {Path.GetFileName(backup)}");
             await _log.WriteAsync("HR", $"Rexx-Hub {label} geschrieben", notes.Any(n => !n.StartsWith("Handexport", StringComparison.Ordinal)) ? "Warning" : "Info",
@@ -270,6 +273,8 @@ public sealed class RexxHubProbeQuery
     public int EntfernteDoppelzeilen { get; init; }
     /// <summary>Nur Fall-Datei: Antraege ohne Abwesenheit (andere Workflows aus GET v1/requests), vor der Pruefung entfernt.</summary>
     public int EntfernteAntraegeOhneAbwesenheit { get; init; }
+    /// <summary>Nur Fall-Datei: Abwesenheiten, die vor HrKpi:RexxHub:CaseFromDate enden, vor der Pruefung entfernt.</summary>
+    public int EntfernteFaelleVorStichtag { get; init; }
     /// <summary>Nur Fall-Datei: Zeilen und Tage je „Art | Status“ und Datumsbereich, fuer den Vergleich mit dem Handexport.</summary>
     public Dictionary<string, string> Verteilung { get; init; } = [];
     /// <summary>Schreibt der Tagesabruf diese Datei? Fall-Datei nur mit HrKpi:RexxHub:CaseEnabled = true.</summary>
@@ -323,6 +328,7 @@ public sealed class RexxHubProbe(
             {
                 var result = await client.FetchQueryAsync(connection, queryId, settings.ForKind(kind == RexxHubQueryKind.Gesamt), cancellationToken);
                 var dropped = RexxHubColumns.Normalize(kind, result.Table);
+                var beforeCutoff = kind == RexxHubQueryKind.Faelle ? RexxHubColumns.DropCasesBefore(result.Table, settings.CaseFromDate) : 0;
                 var existing = RexxHubWorkbook.Inspect(kind, Path.Combine(folder, file));
                 var check = RexxHubColumns.Check(kind, result.Table, existing.Rows, settings.MinShare, settings.MinRowShareOfPrevious, settings.MaxDuplicatePersonalnummern);
                 queries.Add(new RexxHubProbeQuery
@@ -340,6 +346,7 @@ public sealed class RexxHubProbe(
                     Summen = RexxHubColumns.Sums(kind, result.Table),
                     EntfernteDoppelzeilen = kind == RexxHubQueryKind.Gesamt ? dropped : 0,
                     EntfernteAntraegeOhneAbwesenheit = kind == RexxHubQueryKind.Faelle ? dropped : 0,
+                    EntfernteFaelleVorStichtag = beforeCutoff,
                     Verteilung = kind == RexxHubQueryKind.Faelle ? RexxHubColumns.CaseDistribution(result.Table) : [],
                     SchreibtImTagesabruf = kind == RexxHubQueryKind.Gesamt || settings.CaseEnabled,
                     Hinweise = RexxHubRefreshService.Notes(kind, check, connection, settings)
