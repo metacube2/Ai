@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-24 13:56: Excel-Download im Spend-Aufriss (Wunsch Armin)
+
+- `989b329` (Zweig `aufriss-excel-2411`): Knopf „Excel“ je Aufriss, Code und Text getrennt, Zahlen als Zahlen. Tests 1'869/1'869,
+  deployed 13:56 ohne Wochensicherung; Knoepfe produktiv gesehen. rag PURCHASING, DEPLOYMENT.
+
 ## 2026-11-24 13:30: Zoll CZ, Quelltext Ursprungsland aus P76 fuer Fabio
 
 - Nur gelesen (P76 SE38/SE37/SE11/SE16, eigene Sitzung): `ZLO_CALC_URSPRUNGSLAND_2`, `Z_MARA_DELTA_AUSN`, Baustein `ZLO_UPDATE_MAPE`
