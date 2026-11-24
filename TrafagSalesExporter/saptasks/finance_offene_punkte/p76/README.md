@@ -70,3 +70,41 @@ MARA 8 Materialarten, LVORM leer 43'715 / X 25'125.
 
 `umwandeln.py <Ordner mit Rohexporten>` (Python mit `-I`) liest `mara_roh.txt`, `mbew_1100_roh.txt`, `marc_1100_roh.txt`,
 `makt_de_roh.txt`, `makt_en_roh.txt` und schreibt die vier CSV neu.
+
+# Nachtrag 2026-11-24 12:45: Bruecke lokale Artikelnummer <-> Trafag-Nummer (KNA1, KNMT, VBAK, VBAP)
+
+## Auftrag und Lesung
+
+Ingo „ja prüfe das“ auf das Angebot, in P76 „KNMT, VBAP-KDMAT der IC-Kunden“ nur lesend anzusehen. Nur KNA1, KNMT, VBAK und
+VBAP gelesen. Eigene Sitzung `/app/con[1]/ses[1]`, SE16 mit Feldauswahl (Funktionscode `FELD`, `btn[14]`, ankreuzen,
+Uebernehmen) und `%PC`, 12:44 bis 12:50, danach geschlossen. Keine Benutzerfelder in der Ausgabe, nichts geaendert.
+
+| Tabelle | Ausgabefelder | Selektion in SE16 | Treffer | Filter danach | Datei, Zeilen |
+| --- | --- | --- | --- | --- | --- |
+| KNA1 | KUNNR LAND1 NAME1 KTOKD VBUND | keine | 17'805 | VBUND gefuellt (0 Treffer) oder NAME1 enthaelt TRAFAG (56) | `KNA1_IC.csv`, 56 |
+| KNMT | VKORG VTWEG KUNNR MATNR KDMAT POSTX | keine (ganze Tabelle) | 22'378 | keiner, Spalte `IC_KUNDE` = X fuer die 56 | `KNMT.csv`, 22'378 |
+| VBAK | VBELN ERDAT AUDAT VBTYP AUART KUNNR BSTNK | AUDAT ab 01.07.2022 | 73'168 | KUNNR aus `KNA1_IC`, ERDAT ab 2023-01-01 | `VBAK_IC.csv`, 10'687 |
+| VBAP | VBELN POSNR MATNR KDMAT ARKTX | VBELN aus `VBAK_IC` (Mehrfachselektion per Datei) | 24'466 | keiner, Kopfdaten dazugemischt | `VBAP_IC.csv`, 24'466 |
+
+- **VBUND ist in KNA1 nirgends gefuellt.** Die IC-Kunden sind deshalb nur ueber den Namen bestimmt. `HINWEIS_AGENT` in
+  `KNA1_IC.csv` ist die Einschaetzung des Agenten, nicht aus SAP: Testkunde/Muster (3), Fremdkunde mit Trafag im Namen
+  (Sabre Engines, MASTER GRID, LCI), Trafag AG / CH intern (alle LAND1 CH).
+- VBAK bietet in SE16 nur VBELN, AUDAT, VBTYP, AUART als Selektionsfelder an, KUNNR und ERDAT nicht. Gelesen wurde darum
+  AUDAT ab 01.07.2022 fuer alle Kunden, gefiltert in Python. Im Abzug gibt es keinen Beleg mit AUDAT vor 2023 und ERDAT ab
+  2023; Belege mit AUDAT vor dem 01.07.2022 und ERDAT ab 2023 sind nicht gelesen (vermutlich keine).
+- `VBAK_IC` enthaelt alle Belegtypen: VBTYP C (Auftrag) 8'955, B (Angebot) 1'582, K (Gutschriftsanforderung) 138, L 8, A 3,
+  I 1. `VBAP_IC` traegt VBTYP, AUART, KUNNR, LAND1 und ERDAT des Kopfs mit; 7 Koepfe haben keine Position.
+- Format wie oben: UTF-8, Semikolon, CRLF, MATNR, KUNNR und VBELN in externer Form, POSNR ohne fuehrende Nullen, Datum
+  JJJJ-MM-TT. Ersatzzeichen 0. Neu erzeugen mit `umwandeln_bruecke.py <Ordner mit Rohexporten>`.
+
+## Befund
+
+- KNMT gehoert fast ganz Fremdkunden: 15'061 von 22'378 Eintraegen haben KDMAT. Bei den IC-Kunden sind es 4'854 Eintraege
+  (alle VKORG 1100, VTWEG 01), aber nur **200 mit KDMAT**; 2'596 tragen nur einen Positionstext (POSTX), 2'098 sind ganz
+  leer. 21 Kombinationen Kunde + KDMAT zeigen auf mehrere MATNR.
+- VBAP der IC-Auftraege: 896 von 24'466 Positionen haben KDMAT (845 davon in Auftraegen VBTYP C). Davon stehen 631 auf
+  Sammel-/Dummymaterial (`*99999`, `STS999`) und 485 enthalten Preistexte wie `EUR 160.00` (Reparaturen RS99999). Eine echte
+  Nummernbruecke (kein Dummy, kein Preistext, KDMAT ungleich MATNR) bleibt bei **264 Positionen**, 153 davon stehen genauso
+  in KNMT.
+- KDMAT wird also selten als lokale Artikelnummer gefuehrt; haeufig steht dort eine Bestell-, Reklamations- oder QM-Nummer
+  (z. B. `QM113920`, `CLAIM 11_2024`, `B-SAMPLE`). Als allgemeine Bruecke taugt es nur teilweise [V].

@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-24 13:00: Mapping-Bruecken aus Belegen geprueft (schwach)
+
+- P76 KNMT/VBAP-KDMAT und B1-Katalognummern nur gelesen: kaum gepflegt; belegt nur 4 Artikel auf TR AG, 79 TRES auf TR-IT-Artikel.
+  Kein Widerspruch zur Mittagsdatei. Offen: TSC TRES/TRSE beim Import. FINANCE_SUPPLIER 14 Nachtrag.
+
 ## 2026-11-24 12:45: Supplier Origin behoben, Mapping-Import DE/UK vorbereitet
 
 - `6503c1d` (Zweig `supplier-origin-2411`): `SupplierSource` in der Audit-CSV, Tests 1'842/1'842, deployed 12:35 ohne Wochensicherung.

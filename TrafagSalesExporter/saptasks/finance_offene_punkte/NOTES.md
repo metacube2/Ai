@@ -1,4 +1,4 @@
-# Finance: offene Punkte aus der PDF fuer Andreas, mit Daten geklaert (Stand 2026-11-24 12:38, Auswertung P76 und Import-Datei ergaenzt)
+# Finance: offene Punkte aus der PDF fuer Andreas, mit Daten geklaert (Stand 2026-11-24 12:55, Auswertung P76, Import-Dateien und Bruecken aus Belegen ergaenzt)
 
 Auftrag Ingo 24.11.: offene Punkte der PDF `docs/finance_andreas/Finance_Lieferantenzuordnung_Mapping_Stand_2026-11-24.pdf`
 selbst klaeren, soweit es mit Daten geht (Aufgaben 7, 4, 6, Vorbereitung P76). **Nur gelesen:** kein Code, keine Aenderung an
@@ -276,3 +276,71 @@ Export (`ExcelExportService.LoadMaterialMappings`), das Cockpit beim naechsten N
 ob ein gecachter Stand bis zur naechsten Datenaenderung stehen bleibt, ist nicht geprueft). Die Gruppennummer wird nur gesetzt, wo
 die Quelle keine liefert; fuer DE ohne Lieferant fuehrt sie ueber den Werkstamm zu Intern/TR AG und Konzernkosten (Code 5 statt 1/6),
 fuer UK zu Konzernkosten statt Code 2. Rueckgaengig: Zeilen auf der Seite ablehnen oder eine Datei mit Status abgelehnt importieren.
+
+## Bruecken aus Belegen: B1 (Stand 2026-11-24 12:50, Auftrag Ingo „ja pruefe das, das mehr als sicher gelten“)
+
+Gelesen mit HanaQ (nur SELECT): `skripte/q_br1.sql`, `q_br2.sql`; Paare `b1_paare.csv` im Scratchpad. UK ist kein B1 (Sage bzw.
+Handexcel, Site-Quelle `MANUAL_EXCEL`), Indien nur ueber den Server (nicht abgefragt), DE Alphaplan, ES Sage.
+
+| Quelle | TRFR | TRUS | TRIT |
+| --- | --- | --- | --- |
+| `OITM.SuppCatNum`, Standardlieferant Trafag AG | 1 von 16 Artikeln | 0 von 1 | 0 von 18'354 |
+| `OITM.SuppCatNum`, Standardlieferant andere Trafag-Gesellschaft | 53 von 109 (alle Trafag Italia, Katalognr. meist `TS…` = indische Nummer) | 0 von 1 | 0 von 424 |
+| `OSCN` mit Trafag-Geschaeftspartnern | 1 (Trafag Italia) | 0 | 705 Paare, alle mit Trafag-Gesellschaften als **Kunden** (Spanien 247, Frankreich 157, Oesterreich 124, Deutschland 77, UK 47, Trafag AG 20, USA 19, CZ 10, Japan 3) |
+| `POR1/PDN1.SubCatNum` bei Trafag AG ab 2023 | 0 von 2'082 / 1'902 Zeilen | 0 von 1'016 / 1'291 | 0 von 6'851 / 7'099 |
+
+**Folgerung:** In FR/US/IT gibt es keine Bruecke „lokale Nummer -> Trafag-AG-Nummer“ in den Einkaufsdaten; Trafag AG wird ohne
+Lieferanten-Katalognummer bestellt. Nutzbar ist nur die umgekehrte Richtung im TRIT-Mandanten: `OSCN` fuehrt zu TR-IT-Artikeln die
+Nummer, unter der die Schwester sie kauft (oft deren Artikelnummer, z. B. Spaniens Typencode-Nummern). Ist der TR-IT-Artikel eine
+aktive Trafag-AG-Nummer (direkt oder als „I“ + Nummer), ist das eine Bruecke „Beleg B1-Katalog“ fuer die Schwester; sonst eine
+Bruecke zu einem TR-IT-Artikel (420 Paare, davon 33 mit Mapping-Bedarf; nicht „belegt“, weil das Ziel nicht in MARA ist).
+
+**Nebenbefund Import Spanien:** Die Seite prueft beim Import den TSC gegen die Tabelle `Sites` (`FinanceMaterialMapping.razor`
+Zeile 211). Im lokalen DB-Abbild 12.11. heisst die Spanien-Site `TRSE`, die Verkaufszeilen und das Mapping fuehren `TRES`. Eine
+Import-Datei mit TRES-Zeilen wuerde dann ganz abgelehnt (alles oder nichts). Produktiv nicht geprueft (Vermutung).
+
+## Bruecken aus Belegen: P76 und Zusammenfuehrung (Stand 2026-11-24 12:55)
+
+Quelle P76: `p76/KNA1_IC.csv` (56 IC-Kunden), `KNMT.csv`, `VBAP_IC.csv` (README dort, Nachtrag 12:45, `FERTIG_BRUECKE.txt` 12:51).
+Kunden je TSC ueber LAND1, ohne die vom SAP-Agenten markierten CH-intern-, Test- und Fremdkunden. Skript `skripte/bruecken2.py`
+(plus `fanout.py`). Verworfen: KDMAT gleich MATNR, Sammel-/Dummymaterialien (`…999…`, z. B. RS99999 Transportkosten mit 205 KDMAT,
+STS999 mit 50, E99999 mit 8).
+
+**Fuellgrad (IC-Kunden, KDMAT gefuellt / Eintraege):**
+
+| Quelle | TRDE | TRUK | TRES | TRFR | TRIT | TRUS | TRIN | TRAT |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| KNMT | 9 / 284 | 32 / 309 | 50 / 258 | 5 / 67 | 12 / 429 | 14 / 547 | 10 / 30 | 2 / 91 |
+| VBAP (Auftraege) | 50 / 2'414 (41 Dummy) | 83 / 2'580 (73 Dummy) | 111 / 3'458 (40 Dummy) | 3 / 386 (3 Dummy) | 83 / 1'384 (81 Dummy) | 22 / 1'309 | 22 / 4'497 | 176 / 595 (175 Dummy) |
+| B1 TRIT OSCN (Paare) | 77 | 47 | 247 | 157 | – | 19 | – | 124 |
+
+**Treffer auf Artikel mit Mapping-Bedarf (`Mapping_2026-11-23.xlsx`, alle Laender):**
+
+| Klasse | TSC | Artikel | Zeilen | Umsatz |
+| --- | --- | ---: | ---: | ---: |
+| belegt (Trafag-AG-Nummer) | TRDE | 3 | 61 | 351'273 EUR |
+| belegt (Trafag-AG-Nummer) | TRUK | 1 | 4 | 2'593 GBP |
+| belegt TR IT (Bruecke auf TR-IT-Artikel) | TRES | 79 | 194 | 94'910 EUR |
+| belegt TR IT | TRUK | 2 | 3 | 3'976 GBP |
+| belegt TR IT | TRUS | 1 | 1 | 274 USD |
+| Bruecke mehrdeutig | TRES | 3 | 6 | 5'513 EUR |
+
+- **Pruefstein „sicher“:** Nur 2 der 568 DE-„sicher“ haben eine Bruecke (8258.85.2317/55440 -> 55440, 8258.79.2317/60886 -> 60886,
+  beide KNMT), beide stimmen. Als Pruefung der 568 reicht das nicht; die Bruecken sind zu duenn.
+- Neu belegt: TRDE ECT0.1A -> 52458 (KNMT und Auftrag, bisher offen, 12 Zeilen, 58'364 EUR). TRUK NAH10.0A -> 47144 (B1-Katalog,
+  stimmt mit dem UK-Typencode in der Mittagsdatei). UK „kein Treffer“ neu belegt: 0 mit AG-Nummer (die 9 Treffer auf STS999 sind
+  verworfen), 2 auf TR-IT-Artikel.
+- **Widersprueche zur Mittagsdatei: keine.** Widerspruch zu einem Vorschlag: 3 TRES-Artikel (E032196, E032197, E032198), Vorschlag
+  B54788/B54789/B64487, Bruecke auf die TR-IT-Artikel GC11645/GC11646/GC11647.
+- Die 79 TRES-Bruecken zeigen auf TR-IT-Handelsware (`GC…`), die in P76 zwar als HALB ohne STPRS existiert, aber keine Trafag-AG-
+  Kosten hat; deshalb Delivering Entity TR IT statt Gruppennummer.
+
+**Dateien (Downloads, nichts importiert):**
+- `Mapping_Bruecken_Beleg_2026-11-24.xlsx`: Übersicht (je Land, Klasse, Quelle; Uebereinstimmung mit „sicher“; Fuellgrad), Liste,
+  Widersprueche Mittagsdatei (leer).
+- `Mapping_Import_belegt_2026-11-24.xlsx`: 1 Zeile (TRDE ECT0.1A -> 52458); die anderen 3 belegten stehen schon gleich in der
+  Mittagsdatei.
+- `Mapping_Import_belegt_TR_IT_2026-11-24.xlsx`: 3 Zeilen (TRUK 2, TRUS 1) mit Delivering Entity TR IT.
+- `Mapping_Import_belegt_TR_IT_TRES_2026-11-24.xlsx`: 79 TRES-Zeilen, getrennt, weil der Import am TSC TRES scheitern duerfte.
+- Gegenprobe `check_import.py`: erste zwei Dateien 0 Fehler; TRES-Datei 79 Fehler „TSC TRES unbekannt“ gegen das lokale Abbild.
+- Methode „Beleg …“ speichert die Seite als „Hand“ (`MaterialMappingMethods.Normalize`), die Quelle steht in Method Detail.
