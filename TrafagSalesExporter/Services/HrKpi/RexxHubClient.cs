@@ -92,6 +92,14 @@ public sealed class RexxHubClient
     /// <summary>Hoechstens so viele Wiederholungen nach 429.</summary>
     internal const int MaxRetriesOn429 = 2;
 
+    /// <summary>
+    /// Seit 2026-11-24: Wartezeiten vor der Wiederholung einer Seite nach einem voruebergehenden Fehler (500/502/503/504, Verbindung
+    /// abgebrochen, keine Antwort). Grund: Rexx liess am 24.11. einzelne Seiten unbeantwortet (09:13 Seite 6, 09:48 Seite 139, im
+    /// Rexx-Protokoll ohne Antwortcode), wohl der Datei-Lock ueber alle API-Benutzer. Ohne Wiederholung brach der ganze Lauf von
+    /// 168 Seiten ab und kam erst 30 Minuten spaeter wieder dran (Rexx-NOTES 22).
+    /// </summary>
+    internal static readonly TimeSpan[] ServerErrorWaits = [TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(60)];
+
     private readonly HttpMessageHandler _handler;
 
     /// <summary>Warten vor einer Wiederholung; im Test ersetzt, damit nichts wirklich wartet.</summary>
@@ -325,6 +333,7 @@ public sealed class RexxHubClient
     private async Task<(int Status, string Body)> SendAsync(
         HttpClient client, Uri uri, string token, int queryId, int retryDelaySeconds, CancellationToken cancellationToken)
     {
+        var serverErrors = 0;
         for (var attempt = 0; ; attempt++)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -338,11 +347,21 @@ public sealed class RexxHubClient
             }
             catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new RexxHubException($"Abfrage #{queryId}: keine Antwort innerhalb von {client.Timeout.TotalSeconds:0} s.", transient: true);
+                if (serverErrors < ServerErrorWaits.Length)
+                {
+                    await Delay(ServerErrorWaits[serverErrors++], cancellationToken);
+                    continue;
+                }
+                throw new RexxHubException($"Abfrage #{queryId}: keine Antwort innerhalb von {client.Timeout.TotalSeconds:0} s, auch nach {ServerErrorWaits.Length} Wiederholungen.", transient: true);
             }
             catch (HttpRequestException ex)
             {
-                throw new RexxHubException($"Abfrage #{queryId}: Rexx Hub nicht erreichbar ({ex.Message}).", transient: true);
+                if (serverErrors < ServerErrorWaits.Length)
+                {
+                    await Delay(ServerErrorWaits[serverErrors++], cancellationToken);
+                    continue;
+                }
+                throw new RexxHubException($"Abfrage #{queryId}: Rexx Hub nicht erreichbar ({ex.Message}), auch nach {ServerErrorWaits.Length} Wiederholungen.", transient: true);
             }
 
             using (response)
@@ -352,6 +371,11 @@ public sealed class RexxHubClient
                 if (response.StatusCode == HttpStatusCode.TooManyRequests && attempt < MaxRetriesOn429)
                 {
                     await Delay(RetryWait(response, retryDelaySeconds), cancellationToken);
+                    continue;
+                }
+                if (code != 429 && RexxHubException.IsTransientStatus(code) && serverErrors < ServerErrorWaits.Length)
+                {
+                    await Delay(ServerErrorWaits[serverErrors++], cancellationToken);
                     continue;
                 }
                 if (!response.IsSuccessStatusCode)
@@ -399,8 +423,8 @@ public sealed class RexxHubClient
             404 => $"Abfrage-ID {queryId} unbekannt oder nicht freigegeben (404). Pruefen, ob die Data-Warehouse-Abfrage #{queryId} existiert und ueber den Hub abrufbar ist, und ob Basis-URL und Pfad stimmen.",
             422 => "Zu viele Felder (422, „Please reduce the requested fields“). Export-Felder des Endpunkts in Rexx reduzieren.",
             429 => $"Anfragelimit (429), auch nach {MaxRetriesOn429} Wiederholungen. Rexx erlaubt eine Anfrage gleichzeitig ueber alle API-Benutzer und 50'000 pro Monat.",
-            500 => "Interner Fehler bei Rexx (500). Mit der request id an den Rexx-Support.",
-            504 => "Zeitueberschreitung bei Rexx (504). Spaeter erneut versuchen.",
+            500 => $"Interner Fehler bei Rexx (500), auch nach {ServerErrorWaits.Length} Wiederholungen. Mit der request id an den Rexx-Support.",
+            504 => $"Zeitueberschreitung bei Rexx (504), auch nach {ServerErrorWaits.Length} Wiederholungen. Spaeter erneut versuchen.",
             _ => $"Rexx Hub antwortete mit HTTP {status}."
         };
         return $"Abfrage #{queryId}: {text}" + (string.IsNullOrWhiteSpace(requestId) ? string.Empty : $" request id {requestId}.");

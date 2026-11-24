@@ -455,6 +455,51 @@ public sealed class RexxHubTests : IDisposable
         Assert.Equal(2, waits2.Count);
     }
 
+    [Theory]
+    [InlineData(500)]
+    [InlineData(502)]
+    [InlineData(503)]
+    [InlineData(504)]
+    public async Task Serverfehler_Auf_Einer_Seite_Wird_Wiederholt_Statt_Den_Lauf_Abzubrechen(int status)
+    {
+        // 24.11.: Rexx liess einzelne Seiten unbeantwortet; die Seite wird nach 10/30/60 s neu angefragt.
+        var once = new FakeRexx((_, i) => i == 0 ? FakeRexx.Status(status) : FakeRexx.Ok(Envelope([Row(("Personalnummer", "1"))])));
+        var (client, waits) = Client(once);
+        var result = await client.FetchQueryAsync(Connection, 777, Options());
+        Assert.Equal(2, once.Requests.Count);
+        Assert.Equal([TimeSpan.FromSeconds(10)], waits);
+        Assert.Single(result.Table.Rows);
+
+        var always = new FakeRexx((_, _) => FakeRexx.Status(status));
+        var (client2, waits2) = Client(always);
+        var ex = await Assert.ThrowsAsync<RexxHubException>(() => client2.FetchQueryAsync(Connection, 777, Options()));
+        Assert.Equal(status, ex.StatusCode);
+        Assert.True(ex.Transient);
+        Assert.Equal(1 + RexxHubClient.ServerErrorWaits.Length, always.Requests.Count);
+        Assert.Equal(RexxHubClient.ServerErrorWaits, waits2);
+    }
+
+    [Fact]
+    public async Task Abgebrochene_Verbindung_Wird_Wiederholt()
+    {
+        var once = new FakeRexx((_, i) => i == 0 ? throw new HttpRequestException("reset") : FakeRexx.Ok(Envelope([Row(("Personalnummer", "1"))])));
+        var (client, waits) = Client(once);
+        var result = await client.FetchQueryAsync(Connection, 777, Options());
+        Assert.Equal(2, once.Requests.Count);
+        Assert.Single(waits);
+        Assert.Single(result.Table.Rows);
+    }
+
+    [Fact]
+    public async Task Fehler_400_Wird_Nicht_Wiederholt()
+    {
+        var always = new FakeRexx((_, _) => FakeRexx.Status(400));
+        var (client, waits) = Client(always);
+        await Assert.ThrowsAsync<RexxHubException>(() => client.FetchQueryAsync(Connection, 777, Options()));
+        Assert.Single(always.Requests);
+        Assert.Empty(waits);
+    }
+
     [Fact]
     public async Task Nur_Eine_Anfrage_Gleichzeitig_Auch_Ueber_Zwei_Clients()
     {
@@ -914,9 +959,10 @@ public sealed class RexxHubTests : IDisposable
         var gesamt = Envelope(People().Select(ApiRow));
         var faelle = Envelope([CaseApiRow(1001, new DateTime(2026, 11, 2), "Krankheit")]);
         var calls775 = 0;
-        // #775: zweimal 500, dann Erfolg; #777: immer 403.
+        // #775: 500 ueber den ganzen ersten Durchgang (Anfrage + 3 Wiederholungen der Seite, seit 24.11.), dann Erfolg; #777: immer 403.
+        var failing = 1 + RexxHubClient.ServerErrorWaits.Length;
         var rexx = new FakeRexx((r, _) => r.RequestUri!.AbsolutePath.EndsWith("/775")
-            ? (++calls775 <= 2 ? FakeRexx.Status(500) : FakeRexx.Ok(gesamt))
+            ? (++calls775 <= failing ? FakeRexx.Status(500) : FakeRexx.Ok(gesamt))
             : FakeRexx.Status(403));
         var log = new RecordingLog();
         var service = Service(rexx, log);
@@ -925,7 +971,7 @@ public sealed class RexxHubTests : IDisposable
         for (var pass = 0; pass < 4; pass++)
             await service.RunDueAsync(day.AddMinutes(30 * pass), CancellationToken.None);
 
-        Assert.Equal(3, calls775);
+        Assert.Equal(failing + 1, calls775);
         Assert.True(File.Exists(Path.Combine(_root, "hrdata", new HrKpiDataSourceOptions().GesamtFile)));
         Assert.Equal(1, rexx.Requests.Count(r => r.RequestUri!.AbsolutePath.EndsWith("/777")));
         Assert.Contains(log.Entries, x => x.Details!.Contains("Voruebergehend"));
@@ -937,8 +983,8 @@ public sealed class RexxHubTests : IDisposable
             Microsoft.Extensions.Options.Options.Create(new HrKpiDataSourceOptions()));
         for (var pass = 0; pass < 6; pass++)
             await capped.RunDueAsync(day.AddMinutes(30 * pass), CancellationToken.None);
-        // Je Versuch eine Anfrage je Abfrage (503 wird im Abruf selbst nicht wiederholt): 3 Versuche x 2 Abfragen.
-        Assert.Equal(6, always.Requests.Count);
+        // Seit 24.11. wird 503 im Abruf selbst wiederholt: 3 Versuche x 2 Abfragen x (1 + 3 Wiederholungen der Seite).
+        Assert.Equal(3 * 2 * (1 + RexxHubClient.ServerErrorWaits.Length), always.Requests.Count);
     }
 
     [Fact]
