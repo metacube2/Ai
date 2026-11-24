@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-24 10:30: Liste Zukaufteile mit Stueckliste/Arbeitsplan an Armin
+
+- Armin hat B65814 bereinigt (Stueckliste und Arbeitsplan geloescht). Liste aus P76 (nur gelesen, Agent sap-t76): 1'286 F-Teile
+  Werk 1100 mit Stueckliste oder Arbeitsplan, 1'243 zu pruefen, 43 Lohnbearbeitung; Mail mit Excel von Ingo gesendet.
+  `saptasks/zukauf_stuecklisten/NOTES.md`, Plan FIX 29 Abschnitt 10.
+
 ## 2026-11-24 10:08: erste Fall-Datei #777 ueber den Rexx Hub
 
 - Tageslauf brach um 09:13 und 09:48 ab (Rexx beantwortete je eine Seite nicht). Fix `142d304`: Seite bei 500/502/503/504,

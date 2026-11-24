@@ -265,7 +265,7 @@ ohne Haken unveraendert (88 = 88), mit Haken 12 Komponenten weniger, Dashboard-W
 Details Plan Abschnitt 7.*
 *Wirkung belegt am 2026-11-24 (Plan Abschnitt 9): Im Dashboard fehlt H10040 unter FP_DICHTEWÄCH/FP_DW-HYBRID (Rest CHF 19 in
 HW_ZUKAUFSORT, Herkunft nicht geprueft); ZLO03 in P76 nur gelesen: 87 -> 75 Zeilen, dieselben 12 Komponenten fallen weg, 40731
-100.23 -> 86.83 CHF je Stueck (T76 hatte 106.26 -> 93.04). Selektionstext ist erledigt (REPT). Offen: Befund B65814, Info Armin.*
+100.23 -> 86.83 CHF je Stueck (T76 hatte 106.26 -> 93.04). Selektionstext ist erledigt (REPT). Offen: Befund B65814, Info Armin.* *Erledigt 2026-11-24: Info Armin gesendet; B65814 von Armin bereinigt (Stueckliste und Arbeitsplan geloescht, wird komplett eingekauft); Liste weiterer F-Teile mit Stueckliste/Arbeitsplan aus P76 an Armin, `saptasks/zukauf_stuecklisten/NOTES.md`, Plan Abschnitt 10.*
 
 ## Verifikationsplan
 

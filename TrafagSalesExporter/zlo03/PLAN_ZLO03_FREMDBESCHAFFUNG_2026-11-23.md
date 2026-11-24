@@ -1,6 +1,6 @@
 # Plan FIX 29: ZLO03 ohne Stuecklisten fremdbeschaffter Teile (Schalter)
 
-Stand: 2026-11-24 (Wirkung im Dashboard und per ZLO03-Lauf in P76 belegt: 40731 100.23 -> 86.83 CHF, Abschnitt 9); davor 2026-11-23 (in P76 importiert 10:30, Abschnitt 8); davor nachmittags (gebaut und getestet in T76, Auftrag `T76K912940`, Abschnitt 7); davor 2026-11-23 (Plan, wartet auf Freigabe).
+Stand: 2026-11-24 mittags (Abschnitt 10: Befund B65814 von Armin bereinigt, Info Armin gesendet, Liste Zukaufteile aus P76); davor 2026-11-24 (Wirkung im Dashboard und per ZLO03-Lauf in P76 belegt: 40731 100.23 -> 86.83 CHF, Abschnitt 9); davor 2026-11-23 (in P76 importiert 10:30, Abschnitt 8); davor nachmittags (gebaut und getestet in T76, Auftrag `T76K912940`, Abschnitt 7); davor 2026-11-23 (Plan, wartet auf Freigabe).
 
 Auftrag Ingo 23.11.: Befund in `Downloads\Dashboard_Materialanteil pro Produktgruppe.xlsx` (Textfeld auf Blatt ZLO03), danach
 „lese T76, mache Plan“ und „sonst ein Schalter, dass man beide Optionen hat (wenn es nicht technisch sehr komplex wird)“.
@@ -176,3 +176,8 @@ fuehrt H10040 nicht mehr unter den 878x-Nummern. Abweichend gegenueber T76 sind 
 nicht am Schalter) und rund 6 CHF tiefere Werte. Vermutung: andere Stammdaten und Preise in P76 als in der T76-Kopie, nicht belegt.
 Die P76-Summe ist aus der Excel-Spalte „Stückkosten Lager“ gerechnet, die T76-Zahl aus den App-Zeilen (`stk_bom`); laut
 Programmkommentar gleich, nicht gemessen. **Die erwartete Zahl je Stueck lautet fuer P76 also rund 86.83 CHF, nicht 93.04.**
+
+## 10. Befund B65814 erledigt, Info Armin gesendet (2026-11-24)
+
+*Ueberholt damit: „Offen bleiben Befund B65814 (Einkauf) und die Information an Armin“ (Abschnitt 8/9).* Info an Armin am
+24.11. 08:01 gesendet. Antwort Armin 24.11. 09:43: die Leiterplatte (nach Lage B65814) wird komplett eingekauft, Stueckliste mit Preisen und Arbeitsplan waren falsch und sind geloescht, Herstellkosten korrekt; in P76 hat B65814 keine Stueckliste mehr, MAPL mit Loeschkennzeichen vom 24.11. Armin fragte nach weiteren Faellen: Liste aus P76 (1'286 F-Teile Werk 1100 mit Stueckliste oder Arbeitsplan, 1'243 zu pruefen, 43 Lohnbearbeitung) am 24.11. von Ingo an Armin gesendet, `saptasks/zukauf_stuecklisten/NOTES.md`.
