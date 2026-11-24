@@ -123,19 +123,22 @@ def build(out):
             'Sales_All zeigt seit dem 13.11., <b>wie jede Zeile wirklich zugeordnet wird</b> (Supplier Type, Delivering Entity, '
             'Cost Source) und seit dem 20.11. auch, <b>woher der Lieferant stammt</b> (Supplier Origin).',
             'Seit dem 18.11. kommt der Lieferant in <b>Frankreich, USA, Italien und Indien</b> auch aus dem <b>letzten Wareneingang</b>, '
-            'wenn der Artikelstamm keinen Lieferanten hat. Frankreich ging damit von 120 auf 2\'437 von 2\'846 Zeilen mit Lieferant, '
-            'die USA von 6 auf 1\'129 von 1\'790.',
+            'wenn der Artikelstamm keinen Lieferanten hat. Frankreich ging damit von 120 auf 2\'440 von 2\'850 Zeilen mit Lieferant, '
+            'die USA von 6 auf 1\'146 von 1\'811 (Export 23.11.).',
             'Die Spalte <b>Issue Topic</b> sagt seit dem 19.11. je Zeile, warum die Kostenkette nicht bis zu den Konzernkosten kam '
             '(Matrix 1 bis 7). Fehlen auch die lokalen Kosten, wird mit <b>Kosten 0</b> gerechnet (use 0).',
             'Eine <b>Mapping-Tabelle</b> ordnet lokale Artikelnummern der Gruppennummer zu. Sie wirkt nur mit <b>bestätigten</b> Zeilen; '
-            'am 20.11. war noch keine bestätigt. Seit dem 20.11. geht das auch gegen die Artikelnummern von <b>Trafag Italia</b>.',
-            '<b>Von dir offen:</b> die schriftliche Bestätigung „ohne Lieferant gilt der Schweizer Werkstamm“ (rund 0,84 Mio. CHF '
-            'Gruppenmarge), Indien LRD ohne Konzernkosten, und wer die Mappings bestätigt.',
+            'am 23.11. war noch keine bestätigt. Seit dem 20.11. geht das auch gegen die Artikelnummern von <b>Trafag Italia</b>.',
+            '<b>Am 24.11. in SAP (P76) und B1 nachgeprüft</b> (Abschnitt 7): 186 deutsche Vorschläge sind nach SAP sicher, 99 '
+            'UK-Artikel tragen einen eindeutigen Trafag-Typencode, Italien braucht keine Stammpflege mehr, die „unklaren“ Zeilen sind '
+            'Nebenerlöse ohne Artikel, und die tiefen Konzernkosten bei H7-Materialien sind Prüfzeugnisse, kein Rechenfehler.',
+            '<b>Von dir offen:</b> die schriftliche Bestätigung „ohne Lieferant gilt der Schweizer Werkstamm“ (rund 0,85 Mio. CHF '
+            'Gruppenmarge), der Umgang mit Zeilen ohne Artikel und mit Prüfzeugnissen, Indien LRD, und wer die Mappings bestätigt.',
         ]),
     ]))
     s.append(Spacer(1, 4))
-    s.append(P('Alle Zahlen stammen aus den regulären Exporten Sales_All vom 18.11. und 20.11.2026 (Blatt Finance Details, '
-               'Rechnungen 2025 und 2026), soweit nicht anders vermerkt. Spätere Exporte können leicht abweichen.', small))
+    s.append(P('Zahlen aus dem regulären Export Sales_All vom 23.11.2026 (Blatt Finance Details, Rechnungen 2025 und 2026), per '
+               'Skript gerechnet und an den Exporten vom 18. und 20.11. gegengeprüft; Vorher-Werte aus dem Export vom 17.11.', small))
 
     # 1 Chronologie
     s.append(P('1. Was neu ist, in der Reihenfolge der Einführung', h2))
@@ -175,8 +178,9 @@ def build(out):
         ['Rule CH/AT', 'CH und AT, per Regel Trafag AG'],
         ['Rule Sales Type', 'Indien, aus dem Feld Sales Type'],
         ['Source field', 'Lieferant aus dem Artikelstamm der Gesellschaft. Ältere Zeilen zeigen diesen Wert, bis ihr Land neu exportiert wird'],
-        ['Last goods receipt', 'Lieferant aus dem letzten Wareneingang (seit 18.11.)'],
-        ['IT override list', 'Übergangsliste Italien (Paola), geht dem Wareneingang vor'],
+        ['Last goods receipt', 'Lieferant aus dem letzten Wareneingang (seit 18.11.). <b>Hinweis:</b> wird wegen eines Programmfehlers '
+                               'derzeit noch als „Source field“ gezeigt; die Zuordnung selbst stimmt, nur die Herkunftsangabe fehlt'],
+        ['IT override list', 'Übergangsliste Italien (Paola), geht dem Wareneingang vor; gleicher Hinweis wie oben'],
         ['CH plant master', 'kein Lieferant, Material im Schweizer Werkstamm gefunden'],
         ['none', 'kein Lieferant und nicht im Werkstamm'],
     ], [35 * mm, 135 * mm]))
@@ -194,13 +198,15 @@ def build(out):
     s.extend(bullets([
         '<b>7</b> auch bei externem Lieferanten, wenn die lokalen Kosten fehlen.',
         '<b>8</b> Indien LRD ohne Konzernkosten: Kosten bleiben offen, weil der lokale Wert dort der IC-Preis ist (Entscheid 05.08.).',
-        '<b>9</b> Lieferant unklar (Lieferantenfelder widersprechen sich).',
+        '<b>9</b> Lieferant unklar: Zeile ohne Artikel und ohne Lieferant, also nicht prüfbar. Am 24.11. in B1 geprüft: das sind '
+        'Dienstleistungs- und Nebenerlöszeilen (Fracht, Zollzuschlag, Gutschriften, Personalverleih), siehe Abschnitt 7.',
         '<b>10</b> interner Lieferant ohne Kostenquelle.',
     ]))
-    s.append(P('<b>Häufigste Codes je Land</b> (Export 20.11.): TRDE 1: 5\'518 und 6: 2\'143 Zeilen, TRES 5: 5\'204, TRUK 2: 1\'485, '
-               'TRCH 3: 1\'243, TRAT 2: 217, TRIN 8: 153. In der Gruppenmarge-Summary haben jetzt 11 von 18 Gruppen eine Marge '
-               '(am 19.11.: 2). Leer bleiben FR, IN und US (2025 und 2026) sowie IT 2025, wegen Zeilen mit „Lieferant unklar“ oder '
-               '„Konzernkosten fehlen“. Die Kennzahl „Saubere Kostenbasis %“ zählt use-0-Zeilen bewusst weiter als nicht sauber.', base))
+    s.append(P('<b>Häufigste Codes je Land</b> (Export 23.11.): TRDE 1: 5\'555 und 6: 2\'158 Zeilen, TRES 5: 5\'248, TRUK 2: 1\'485, '
+               'TRCH 3: 1\'243, TRAT 2: 217, TRIT 3: 191 und 7: 60, TRIN 8: 153. In der Gruppenmarge-Summary haben 11 von 18 Gruppen '
+               'eine Marge (am 19.11.: 2). Leer bleiben FR, IN und US (2025 und 2026) sowie IT 2025, wegen Zeilen mit Code 9 '
+               '(ohne Artikel) oder Code 8 (Indien LRD). Ohne die 131 Zeilen ohne Artikel wären es 16 von 18. Die Kennzahl „Saubere '
+               'Kostenbasis %“ zählt use-0-Zeilen bewusst weiter als nicht sauber.', base))
 
     # 4 Mapping
     s.append(P('4. Mapping: lokale Artikelnummer auf Gruppennummer', h2))
@@ -209,7 +215,7 @@ def build(out):
                'Dann rechnet die Zeile mit den Konzernkosten statt mit den lokalen Kosten.'))
     s.extend(bullets([
         '<b>Wirkt nur bestätigt.</b> Ein Vorschlag ändert keine Zahl, bis er bestätigt ist (seit 19.11. auch für Regeltreffer). '
-        'Einzige Ausnahme ist die Italien-Regel „I“ + Nummer, sie wirkt sofort. <b>Am 20.11. war noch kein Vorschlag bestätigt</b>; '
+        'Einzige Ausnahme ist die Italien-Regel „I“ + Nummer, sie wirkt sofort. <b>Am 23.11. war noch kein Vorschlag bestätigt</b>; '
         'die Zahlen in Sales_All sind also noch ohne Mapping gerechnet.',
         '<b>Vorschläge</b> kommen aus dem Artikeltext (Ähnlichkeit) und aus Regeln, zum Beispiel für Deutschland Typencode oder '
         'Sachnummer in der Artikelnummer (Nummer nach dem letzten Schrägstrich, im Werkstamm 1100).',
@@ -218,14 +224,18 @@ def build(out):
         '<b>TRCH und TRAT</b> sind ausgenommen, sie verkaufen per Regel als Trafag AG.',
         '<b>Wo:</b> Finance Cockpit > Mapping (Liste, Bestätigen, Import/Export) und die Datei Mapping_JJJJ-MM-TT.xlsx neben Sales_All '
         'mit Vorschlag, Sicherheit und Gewicht (Zeilen, Umsatz).',
-        '<b>Grösster Block ist Deutschland:</b> 732 Vorschläge mit 5,72 Mio. EUR Umsatz; die 50 grössten decken 3,69 Mio. EUR (65 %).',
+        '<b>Grösster Block ist Deutschland:</b> 732 Vorschläge mit 5,75 Mio. EUR Umsatz. <b>Vorprüfung gegen SAP P76 (24.11.):</b> '
+        '186 sicher (Nummer oder Typencode stimmt, Material aktiv, Kosten plausibel; 3,57 Mio. EUR), 455 prüfen (1,81 Mio. EUR), 91 '
+        'wohl falsch (Ziel zum Löschen vorgemerkt oder Verpackung; 0,37 Mio. EUR). Das ist eine Prüfhilfe, keine Bestätigung.',
+        '<b>UK:</b> 99 Artikel (549 Zeilen, 427\'670 GBP) tragen im Text einen Trafag-Typencode, der in SAP eindeutig auf genau ein '
+        'Material zeigt; weitere 14 sind mehrdeutig, 152 ohne Treffer (UK-eigene Nummern).',
     ]))
 
     # 5 Laender
     s.append(PageBreak())
     s.append(P('5. Stand je Land', h2))
-    s.append(P('Ampel: grün = erledigt, gelb = gebaut, wartet auf Datenlauf, orange = wartet auf jemanden, rot = Entscheid offen. '
-               'Zeilen mit Lieferant aus dem Export 18.11. (erster Lauf mit Wareneingang).', small))
+    s.append(P('Ampel: grün = erledigt, gelb = Vorschläge da, warten auf Bestätigung, orange = wartet auf jemanden. '
+               'Zeilen mit Lieferant aus dem Export 23.11.', small))
     s.append(Spacer(1, 3))
     s.append(G.country_tiles())
     s.append(Spacer(1, 8))
@@ -236,25 +246,29 @@ def build(out):
         ['Land', 'Woher der Lieferant kommt', 'Stand', 'Offen bei'],
         ['CH, AT', 'Regel: immer Trafag AG', dot(GREEN, '100 % Intern / TR AG'), '–'],
         ['FR', 'Artikelstamm, sonst letzter Wareneingang',
-         dot(GREEN, '2\'437 von 2\'846 Zeilen mit Lieferant (vorher 120). Rest 391 lokal (nicht im Werkstamm), 12 unklar'), '–'],
+         dot(GREEN, '2\'440 von 2\'850 Zeilen mit Lieferant (vorher 120). 12 Zeilen ohne Artikel (Gewährleistungsgutschriften)'), '–'],
         ['US', 'Artikelstamm, sonst letzter Wareneingang',
-         dot(GREEN, '1\'129 von 1\'790 (vorher 6). Rest: 495 über den Werkstamm (betrifft Entscheid 1), 89 lokal, 77 unklar'),
-         'Entscheid 1'],
+         dot(GREEN, '1\'146 von 1\'811 (vorher 6). 499 Zeilen über den Werkstamm (Entscheid 1); 77 Zeilen ohne Artikel, '
+                    'v. a. Zollzuschlag „Tariff Add-On“ und Fracht'),
+         'Entscheid 1, Zeilen ohne Artikel'],
         ['IT', 'Artikelstamm, Übergangsliste Paola, letzter Wareneingang',
-         dot(GREEN, '20\'214 von 20\'220. Ware aus Indien findet jetzt die Kosten TR IN (455 → 51 Zeilen mit lokalem Preis)'),
-         'Paola: 162 Artikel ohne Standardlieferant, zwei Schenker-Artikel'],
+         dot(GREEN, '20\'228 von 20\'234. Die 162 Artikel ohne Standardlieferant haben jetzt alle 510 Zeilen mit Lieferant aus dem '
+                    'Wareneingang; Ware aus Indien findet die Kosten TR IN'),
+         '– (Rest: 6 Hausnummern, 0 EUR)'],
         ['IN', 'Sales Type (FFM, CM, LRD), zusätzlich Wareneingang',
-         dot(GREEN, 'Sales Type entscheidet; 1\'380 von 8\'453 Zeilen zusätzlich mit Lieferant'),
-         'Indien: 6 Artikel LRD ohne Sachnummer (Code 8)'],
-        ['UK', 'Lieferantenfelder vollständig (3\'115 von 3\'115)',
-         dot(ORANGE, 'Ware aus Indien 88 → 17 Zeilen mit lokalem Preis; 1\'485 Zeilen Code 2 (UK-eigene Nummern, keine Schweizer '
-                     'Sachnummer). Eine Regel über den Typencode ist untersucht, aber noch nicht gebaut'),
+         dot(YELLOW, 'Sales Type entscheidet; 1\'381 von 8\'497 Zeilen zusätzlich mit Lieferant. 5 LRD-Artikel ohne Sachnummer '
+                     '(Code 8): Kandidaten aus SAP vorgeschlagen, zwei sind Schweissmaschinen (Anlagegut)'),
+         'Indien: Kandidaten bestätigen'],
+        ['UK', 'Lieferantenfelder vollständig (3\'139 von 3\'139)',
+         dot(YELLOW, '1\'485 Zeilen Code 2 (UK-eigene Nummern). Typencode in SAP: 99 Artikel eindeutig zugeordnet (549 Zeilen, '
+                     '427\'670 GBP), als Mapping-Vorschläge vorbereitet'),
          'Cornell (TR09 mit zwei Namen, eine Zeile)'],
         ['ES', 'Letzter Sage-Wareneingang, seit 18.11. gebaut',
-         dot(YELLOW, '0 von 8\'105 mit Lieferant, bis der neue Sage-Export läuft; 5\'204 Zeilen Code 5 (Werkstamm)'),
+         dot(ORANGE, '0 von 8\'230 mit Lieferant, bis der neue Sage-Export läuft; 5\'248 Zeilen Code 5 (Werkstamm)'),
          'Santi: Exportlauf mit Lieferantenspalten'],
         ['DE', 'Alphaplan-Export ohne Lieferantenspalte',
-         dot(ORANGE, '0 von 7\'800 mit Lieferant; deutsche Nummern meist nicht im Werkstamm (Code 1 und 6). Mapping-Vorschläge liegen vor'),
+         dot(YELLOW, '0 von 7\'853 mit Lieferant; deutsche Nummern meist nicht im Werkstamm (Code 1 und 6). 186 Mapping-Vorschläge '
+                     'nach SAP-Vorprüfung sicher (3,57 Mio. EUR)'),
          'Rohail (Lieferant im Export), Mappings bestätigen'],
     ], [15 * mm, 42 * mm, 75 * mm, 38 * mm]))
 
@@ -266,32 +280,59 @@ def build(out):
         ['Nr', 'Frage', 'Grösse', 'Vorschlag'],
         ['1', '<b>Ohne Lieferant: Schweizer Werkstamm oder immer lokal?</b> Am 18.11. mündlich „das können wir so machen“; '
               'bitte schriftlich bestätigen.',
-         '5\'888 Zeilen, 5,49 Mio. CHF Umsatz (2025/2026). Herstellkosten Werkstamm 2,24, „immer lokal“ 3,07 Mio. CHF: '
-         'rund 0,84 Mio. CHF Gruppenmarge Unterschied',
+         '5\'933 Zeilen, 5,53 Mio. CHF Umsatz (2025/2026), davon ES 5\'248 und US 499 Zeilen. Herstellkosten Werkstamm 2,25, '
+         '„immer lokal“ 3,10 Mio. CHF: rund 0,85 Mio. CHF Gruppenmarge Unterschied',
          'Werkstamm (so produktiv). Die Wareneingänge bestätigen ihn überwiegend'],
-        ['2', '<b>Indien LRD ohne Konzernkosten</b> (Code 8): Kosten offen lassen, bis Indien die Sachnummern nachpflegt?',
-         '153 Zeilen, 6 Artikel (DM000083 allein 112 Zeilen, 9,09 Mio. INR)', 'ja, Indien pflegt nach'],
-        ['3', '<b>Wer bestätigt die Mappings?</b>', 'DE 732 Vorschläge, 5,72 Mio. EUR',
-         'Ingo prüft die Top 50 DE, danach Listen an DE Rohail, UK Cornell, IT Paola, ES Santi/Borja'],
+        ['2', '<b>Indien LRD ohne Konzernkosten</b> (Code 8): Kosten offen lassen, bis Indien die Sachnummern bestätigt?',
+         '153 Zeilen, 5 Artikel (DM000083 allein 122 Zeilen, 9,62 Mio. INR). Kandidaten aus SAP: C16421, C14917, F90162',
+         'ja; Schweissmaschinen FA000028/29 als Nebenerlös'],
+        ['3', '<b>Wer bestätigt die Mappings?</b>', 'DE 732 Vorschläge, davon 186 nach SAP sicher (3,57 Mio. EUR); UK 99 eindeutig',
+         'die sicheren DE und UK in einem Zug bestätigen, den Rest an Rohail und Cornell'],
         ['4', '<b>Externer Lieferant, lokale Kosten fehlen:</b> mit Kosten 0 rechnen (Code 7)?', 'wenige Zeilen', 'ja (heutiger Stand)'],
-        ['5', '<b>Widersprüchliche Lieferantenfelder:</b> gewinnt der Name, die Nummer, oder bleibt die Zeile „unklar“ (Code 9)?',
-         'wenige Zeilen', 'unklar lassen (heutiger Stand)'],
-        ['6', '<b>CH/AT:</b> gilt Intern / Trafag AG auch, wenn zum Material ein externer Einkaufsbeleg existiert?',
+        ['5', '<b>Zeilen ohne Artikel</b> (Code 9): Fracht, US-Zollzuschlag, Gewährleistungsgutschriften, IT-Personalverleih. Als '
+              'eigene Gruppe „Nebenerlös“ mit Kosten 0 führen oder aus der Gruppenmarge nehmen? Gehören sie in den Ist-Umsatz '
+              '(z. B. die FR-Zeile auf dem Mehrwertsteuerkonto 445710)?',
+         '131 Zeilen: FR 12, US 77, IT 6, IN 36. Ohne sie hätten 16 statt 11 von 18 Gruppen eine Marge',
+         'Nebenerlös mit Kosten 0'],
+        ['6', '<b>Prüfzeugnisse EN10204</b> (H70210, H70310, H70312 bis H70317): Standardpreis Trafag AG 0,01 CHF, lokal z. B. '
+              'H70313 zu rund 60 CHF verkauft. Wie Dienstleistung behandeln oder Standardpreis in CH pflegen?',
+         '245 Zeilen, 53\'018 CHF; dazu 19 Zeilen mit Platzhalterpreisen (E99999, H99999 u. a.), 21\'127 CHF',
+         'wie Dienstleistung (Nebenerlös)'],
+        ['7', '<b>CH/AT:</b> gilt Intern / Trafag AG auch, wenn zum Material ein externer Einkaufsbeleg existiert?',
          'Stichprobe liegt vor (z. B. F88103)', 'offen'],
     ], [9 * mm, 62 * mm, 55 * mm, 44 * mm]))
 
-    s.append(P('Nebenbefund', h3))
-    s.append(P('272 Zeilen (rund 77\'000 CHF Umsatz) haben Konzernkosten der Trafag AG unter 5 % des lokalen Preises, meist '
-               'H7xxxx-Materialien (z. B. H70313: 0,01 gegen 60 CHF). Verdacht auf Preis- oder Mengeneinheit, noch nicht geprüft.'))
+    s.append(P('7. Am 24.11. in SAP (P76) und B1 nachgeprüft', h2))
+    s.append(P('Nur gelesen: Materialstamm aus P76 (MARA mit Typencode, MBEW, MARC, MAKT), Belege aus SAP B1 (FR, US, IT), '
+               'Export Sales_All und Mapping vom 23.11. Nichts wurde geändert oder bestätigt.', small))
+    s.append(Spacer(1, 3))
+    s.append(table([
+        ['Thema', 'Ergebnis', 'Folge'],
+        ['Tiefe Konzernkosten (276 Zeilen)', 'Kein Rechenfehler: die Preiseinheit wird richtig angewendet (geprüft an allen 74\'169 '
+         'Zeilen mit Konzernkosten). 245 Zeilen sind EN10204-Prüfzeugnisse mit Standardpreis 0,01 CHF, 19 Zeilen Platzhalterpreise',
+         'Frage 6'],
+        ['„Unklar“ (Code 9, 131 Zeilen)', 'Alle ohne Artikel und ohne Lieferant; in B1 Dienstleistungsbelege: US-Zollzuschlag '
+         '(26\'068 USD), Fracht, FR-Gewährleistungsgutschriften, IT-Personalverleih 2025 (86\'550 EUR)', 'Frage 5'],
+        ['Italien, 162 Artikel ohne Standardlieferant', 'Stamm in B1 weiter leer, aber alle 510 Zeilen haben jetzt einen Lieferanten '
+         'aus dem Wareneingang (443 Trafag AG, 67 italienische Lieferanten)', 'keine Stammpflege für die Marge nötig'],
+        ['UK, Code 2', 'Typencode im Text gegen SAP: 99 Artikel eindeutig, 14 mehrdeutig, 10 nur Teilcode, 152 ohne Treffer',
+         'Vorschläge zur Bestätigung'],
+        ['DE-Mappings', '186 sicher, 455 prüfen, 91 wohl falsch (meist Ziel zum Löschen vorgemerkt)', 'Liste Mapping_DE_Vorpruefung_P76'],
+        ['Indien LRD', 'Kandidaten C16421 und C14917 (Freilufthaube 87X6), F90162 (Regenschutz mit Isolation); '
+         'FA000028/29 sind Schweissmaschinen', 'Frage 2'],
+        ['Supplier Origin', 'Lieferant aus Wareneingang wirkt, die Herkunftsangabe fehlt aber im Export (Programmfehler)',
+         'Korrektur bei Ingo'],
+    ], [40 * mm, 92 * mm, 38 * mm]))
 
-    s.append(P('7. Wo du was findest', h2))
+    s.append(P('8. Wo du was findest', h2))
     s.append(table([
         ['Was', 'Wo'],
         ['Zuordnung je Zeile', 'Sales_All, Blatt Sales Spalten 55 bis 57 (Supplier Type, Delivering Entity, Cost Source) und 60 '
                                '(Supplier Origin); Finance Details 43, 44 und 47; Issue Topic und Mapping in den letzten Spalten'],
         ['Zuordnung je Gesellschaft', 'Sales_All, Blatt Lieferantenzuordnung'],
         ['Erklärung der Felder', 'Sales_All, Blatt Finance Filter Hilfe'],
-        ['Mapping', 'Finance Cockpit > Mapping; Datei Mapping_JJJJ-MM-TT.xlsx neben Sales_All'],
+        ['Mapping', 'Finance Cockpit > Mapping; Datei Mapping_JJJJ-MM-TT.xlsx neben Sales_All; Vorprüfung DE '
+                    'Mapping_DE_Vorpruefung_P76_2026-11-24.xlsx'],
         ['Gruppenmarge', 'Finance Cockpit und Blätter Gruppenmarge Summary / Details in Sales_All'],
     ], [45 * mm, 125 * mm]))
     s.append(Spacer(1, 8))

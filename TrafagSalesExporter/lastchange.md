@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-24 nachmittags: Finance offene Punkte per P76/B1, PDF Andreas nachgefuehrt
+
+- Nur gelesen (P76 MARA/MBEW/MARC/MAKT per SE16, B1 FR/US/IT, Export 23.11.); `saptasks/finance_offene_punkte/` (NOTES, Skripte,
+  P76-README; CSVs nur lokal). Code 9 berichtigt (Zeilen ohne Artikel), Supplier-Origin-Fehler (Audit-CSV ohne SupplierSource,
+  Go Ingo offen), IT 162 erledigt, H7 = Pruefzeugnisse, UK 99 per Typencode, DE 186 sicher (Excel in Downloads), Indien 5 Artikel.
+  PDF Andreas 6 Seiten mit Abschnitt 7 „Am 24.11. nachgeprueft“. FINANCE_SUPPLIER 14, Regelset-Abgleich berichtigt, ISS-003/003.6.
+
 ## 2026-11-24: PDF Finance fuer Andreas
 
 - `docs/finance_andreas/Finance_Lieferantenzuordnung_Mapping_Stand_2026-11-24.pdf` (5 Seiten mit Grafiken: Kennzahlen, Zeitstrahl, Prozessgrafik Kostenkette, Issue-Topic-Matrix, Ampel und Balken je Land, Entscheid 1; Kopie in Downloads) mit Generator und `finance_grafiken.py`,

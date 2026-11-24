@@ -74,8 +74,8 @@ def kpi_tiles():
     tiles = [
         ('86 %', 'FR-Zeilen mit Lieferant', 'vorher 4 %'),
         ('63 %', 'US-Zeilen mit Lieferant', 'vorher 0,3 %'),
-        ('11 von 18', 'Gruppen mit Gruppenmarge', 'am 19.11.: 2'),
-        ('0,84 Mio.', 'CHF Marge an Entscheid 1', 'Werkstamm oder lokal'),
+        ('11 von 18', 'Gruppen mit Gruppenmarge', '16 ohne Zeilen ohne Artikel'),
+        ('0,85 Mio.', 'CHF Marge an Entscheid 1', 'Werkstamm oder lokal'),
     ]
     h, gap = 62, 8
     tw = (W - gap * 3) / 4
@@ -228,7 +228,7 @@ def topic_matrix():
 def country_tiles():
     tiles = [
         ('CH/AT', GOOD, 'erledigt'), ('FR', GOOD, 'erledigt'), ('US', GOOD, 'erledigt'), ('IT', GOOD, 'erledigt'),
-        ('IN', GOOD, 'erledigt'), ('UK', SERIOUS, 'wartet'), ('ES', WARN, 'wartet auf Daten'), ('DE', SERIOUS, 'wartet'),
+        ('IN', WARN, 'Vorschläge da'), ('UK', WARN, 'Vorschläge da'), ('ES', SERIOUS, 'wartet auf Santi'), ('DE', WARN, 'Vorschläge da'),
     ]
     h, gap = 54, 5
     tw = (W - gap * 7) / 8
@@ -244,14 +244,15 @@ def country_tiles():
 
 # 6 Balken vorher/nachher
 def supplier_bars():
+    # vorher: Export 17.11. (Anteil an den Zeilen vom 18.11.), nachher: Export 23.11.
     data = [
-        ('FR', 120, 2437, 2846, ''),
-        ('US', 6, 1129, 1790, ''),
-        ('IT', 19696, 20214, 20220, ''),
-        ('IN', 960, 1380, 8453, 'Sales Type entscheidet, Lieferant nur ergänzend'),
-        ('UK', 3115, 3115, 3115, 'Felder schon immer gefüllt'),
-        ('ES', 0, 0, 8105, 'wartet auf Santis Sage-Export'),
-        ('DE', 0, 0, 7800, 'Alphaplan liefert keinen Lieferanten'),
+        ('FR', 100 * 120 / 2846, 2440, 2850, ''),
+        ('US', 100 * 6 / 1790, 1146, 1811, ''),
+        ('IT', 100 * 19696 / 20220, 20228, 20234, 'vorher mit Übergangsliste Paola'),
+        ('IN', 100 * 960 / 8453, 1381, 8497, 'Sales Type entscheidet, Lieferant nur ergänzend'),
+        ('UK', 100.0, 3139, 3139, 'Felder schon immer gefüllt'),
+        ('ES', 0.0, 0, 8230, 'wartet auf Santis Sage-Export'),
+        ('DE', 0.0, 0, 7853, 'Alphaplan liefert keinen Lieferanten'),
     ]
     bar, gap, group = 8, 2, 30
     top = 30
@@ -260,19 +261,18 @@ def supplier_bars():
     x0, xw = 34, 250
     # Legende
     d.add(Rect(x0, h - 12, 9, 9, fillColor=VORHER, strokeColor=None))
-    _text(d, x0 + 13, h - 11, 'vor dem 18.11. (nur Artikelstamm)', 7.8, 'Cal', INK2)
+    _text(d, x0 + 13, h - 11, 'vor dem 18.11. (Export 17.11.)', 7.8, 'Cal', INK2)
     d.add(Rect(x0 + 160, h - 12, 9, 9, fillColor=NACHHER, strokeColor=None))
-    _text(d, x0 + 173, h - 11, 'ab 18.11. (mit letztem Wareneingang)', 7.8, 'Cal', INK2)
+    _text(d, x0 + 173, h - 11, 'mit letztem Wareneingang (Export 23.11.)', 7.8, 'Cal', INK2)
     base_y = h - top
     for p in (0, 25, 50, 75, 100):
         x = x0 + xw * p / 100
         d.add(Line(x, 16, x, base_y + 4, strokeColor=GRID, strokeWidth=0.6))
         _text(d, x, 6, f'{p} %', 6.8, 'Cal', MUTED, 'middle')
-    for i, (c, before, after, total, note) in enumerate(data):
+    for i, (c, before_pct, after, total, note) in enumerate(data):
         gy = base_y - i * group - 4
         _text(d, 0, gy - bar - 1, c, 9, 'CalB', INK)
-        for j, (v, col) in enumerate(((before, VORHER), (after, NACHHER))):
-            pct = 100 * v / total if total else 0
+        for j, (pct, col) in enumerate(((before_pct, VORHER), (100 * after / total if total else 0, NACHHER))):
             y = gy - (j + 1) * bar - j * gap
             wpx = max(xw * pct / 100, 0.0)
             if wpx > 0:
@@ -291,17 +291,17 @@ def decision_one():
     h = 96
     d = Drawing(W, h)
     x0, xw, maxv = 120, 300, 3.5
-    rows = [('Werkstamm (heute produktiv)', 2.24, KONZERN), ('immer lokale Kosten', 3.07, LOKAL)]
-    _text(d, 0, h - 10, 'Herstellkosten der 5\'888 Zeilen ohne Lieferant, 2025/2026 (Umsatz 5,49 Mio. CHF)', 8, 'CalB', INK2)
+    rows = [('Werkstamm (heute produktiv)', 2.252, KONZERN), ('immer lokale Kosten', 3.097, LOKAL)]
+    _text(d, 0, h - 10, 'Herstellkosten der 5\'933 Zeilen ohne Lieferant, 2025/2026 (Umsatz 5,53 Mio. CHF, Export 23.11.)', 8, 'CalB', INK2)
     for i, (lab, v, col) in enumerate(rows):
         y = h - 38 - i * 24
         _text(d, 0, y + 4, lab, 8.2, 'Cal', INK)
         d.add(Rect(x0, y, xw * v / maxv, 14, rx=3, ry=3, fillColor=col, strokeColor=None))
         _text(d, x0 + xw * v / maxv + 5, y + 4, f'{v:.2f} Mio. CHF'.replace('.', ','), 8.2, 'CalB', INK)
-    xa, xb = x0 + xw * 2.24 / maxv, x0 + xw * 3.07 / maxv
+    xa, xb = x0 + xw * 2.252 / maxv, x0 + xw * 3.097 / maxv
     yk = 12
     d.add(Line(xa, yk + 10, xa, yk + 4, strokeColor=INK2, strokeWidth=0.8))
     d.add(Line(xb, yk + 10, xb, yk + 4, strokeColor=INK2, strokeWidth=0.8))
     d.add(Line(xa, yk + 4, xb, yk + 4, strokeColor=INK2, strokeWidth=0.8))
-    _text(d, (xa + xb) / 2, yk - 6, '0,84 Mio. CHF weniger Gruppenmarge mit „immer lokal“', 7.8, 'Cal', INK, 'middle')
+    _text(d, (xa + xb) / 2, yk - 6, '0,85 Mio. CHF weniger Gruppenmarge mit „immer lokal“', 7.8, 'Cal', INK, 'middle')
     return d
