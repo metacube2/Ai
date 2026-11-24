@@ -62,7 +62,8 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
             Land = "Schweiz",
             DocumentType = "INV",
             StandardCostVariable = 12.34m,
-            StandardCostFixed = 5.66m
+            StandardCostFixed = 5.66m,
+            SupplierSource = SupplierSources.GoodsReceipt
         };
 
         var path = await service.WriteSiteAuditCsvAsync(site, settings, "SAP", _tempDirectory, [record]);
@@ -83,6 +84,8 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
         Assert.Equal(new DateTime(2026, 6, 11), roundtrip.InvoiceDate);
         Assert.Equal(12.34m, roundtrip.StandardCostVariable);
         Assert.Equal(5.66m, roundtrip.StandardCostFixed);
+        // 2026-11-24: die Herkunft des Lieferanten muss die Audit-CSV ueberleben (Supplier Origin „Last goods receipt“).
+        Assert.Equal(SupplierSources.GoodsReceipt, roundtrip.SupplierSource);
     }
 
     [Fact]

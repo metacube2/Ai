@@ -93,7 +93,11 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         "StandardCostVariable",
         "StandardCostFixed",
         // Sage FechaRegistro (ISS-004.2). Rein additiv, nur mitgefuehrt, nicht gerechnet.
-        "LineRegistrationDate"
+        "LineRegistrationDate",
+        // Seit 2026-11-24: Herkunft eines abgeleiteten Lieferanten (Wareneingang, Liste Italien). Ohne diese Spalte verlor der
+        // zentrale Export sie, weil er je Land die Audit-CSV statt der DB liest, sobald die CSV neuer ist (Supplier Origin zeigte
+        // nie „Last goods receipt“, docs/FINANCE_SUPPLIER.md 14). Aeltere CSV ohne Spalte lesen sich als leer.
+        "SupplierSource"
     ];
 
     public async Task<string?> WriteSiteAuditCsvAsync(
@@ -283,6 +287,7 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         yield return FormatNullableDecimal(record.StandardCostVariable);
         yield return FormatNullableDecimal(record.StandardCostFixed);
         yield return FormatNullableDate(record.LineRegistrationDate);
+        yield return record.SupplierSource;
     }
 
     private static async Task<List<SalesRecord>> ReadFileAsync(string path)
@@ -357,7 +362,8 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
                 DocumentType = GetText(values, headers, "DocumentType"),
                 StandardCostVariable = GetNullableDecimal(values, headers, "StandardCostVariable"),
                 StandardCostFixed = GetNullableDecimal(values, headers, "StandardCostFixed"),
-                LineRegistrationDate = GetDate(values, headers, "LineRegistrationDate")
+                LineRegistrationDate = GetDate(values, headers, "LineRegistrationDate"),
+                SupplierSource = GetText(values, headers, "SupplierSource")
             });
         }
 

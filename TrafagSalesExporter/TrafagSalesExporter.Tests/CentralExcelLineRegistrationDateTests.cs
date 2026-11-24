@@ -190,7 +190,8 @@ public class CentralExcelLineRegistrationDateTests
             Assert.NotNull(path);
 
             var header = (await File.ReadAllLinesAsync(path!))[0];
-            Assert.EndsWith("LineRegistrationDate", header);
+            // Additiv am Ende; seit 2026-11-24 folgt noch SupplierSource (Herkunft des Lieferanten).
+            Assert.EndsWith("LineRegistrationDate;SupplierSource", header);
 
             var roundtrip = Assert.Single(await service.ReadLatestSiteAuditCsvRecordsAsync(settings));
             Assert.Equal(new DateTime(2025, 7, 29, 12, 23, 31), roundtrip.LineRegistrationDate);
