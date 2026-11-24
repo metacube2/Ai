@@ -1083,6 +1083,8 @@ internal static class UiTextBerneseTranslations
             ["Gruppenrichtlinien"] = "Grupperichtlinie",
             ["Verlauf"] = "Verlouf",
             ["Excel"] = "Excel",
+            ["Bestätigte Menge"] = "Bestätigti Mängi",
+            ["Bestätigte Menge der Geräte (ZC23, Termin bestätigt im Zeitraum): bei der Materialgruppe jedes Gerät mit einer Komponente der Gruppe einmal, beim Teil die Geräte, deren Stückliste es enthält"] = "Bestätigti Mängi vo de Grät (ZC23, Termin bestätigt im Zytruum): bi dr Materialgruppe jedes Grät mit ere Komponänte vo dr Gruppe einisch, bim Teil d Grät, wo s i dr Stückliste hei",
             ["Als Excel herunterladen: alle Ebenen, Code und Text in eigenen Spalten, Beträge als Zahlen"] = "Als Excel abelade: alli Ebene, Code und Text i eigete Spalte, Beträg als Zahle",
             ["aktive Geräte"] = "aktivi Grät",
             ["Support endet in"] = "Support hört uf i",

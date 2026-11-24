@@ -198,28 +198,38 @@ public class PurchasingSpendExcelExportTests
     [Fact]
     public void BuildMaterialShareTable_TakesPartCodeFromKeyAndKeepsAllLevels()
     {
-        var part = new PurchasingMaterialShareNode("FP_THERMOST.|10.08.00|H20201", "H20201 Leiterplatte bestückt", 40m, 0m, 8m, "ST", 5m, []);
+        var part = new PurchasingMaterialShareNode("FP_THERMOST.|10.08.00|H20201", "H20201 Leiterplatte bestückt", 40m, 0m, 8m, "ST", 5m, [], ConfirmedQuantity: 4m);
         var partWithoutText = new PurchasingMaterialShareNode("FP_THERMOST.|10.08.00|H17500", "H17500", 10m, 0m, 2m, "ST", 5m, []);
-        var materialGroup = new PurchasingMaterialShareNode("FP_THERMOST.|10.08.00", "10.08.00 – Leiterplatten bestüc", 50m, 0m, 0m, string.Empty, 0m, [part, partWithoutText]);
-        var group = new PurchasingMaterialShareNode("FP_THERMOST.", "FP_THERMOST.", 50m, 200m, 0m, string.Empty, 0m, [materialGroup], 120m, 1m);
+        var materialGroup = new PurchasingMaterialShareNode("FP_THERMOST.|10.08.00", "10.08.00 – Leiterplatten bestüc", 50m, 0m, 0m, string.Empty, 0m, [part, partWithoutText], ConfirmedQuantity: 4m);
+        var group = new PurchasingMaterialShareNode("FP_THERMOST.", "FP_THERMOST.", 50m, 200m, 0m, string.Empty, 0m, [materialGroup], 120m, 1m, 6m);
 
         var table = PurchasingSpendExcelExport.BuildMaterialShareTable([group]);
 
         Assert.Equal(
             [
                 "Ebene", "Produktgruppe", "Materialgruppe", "Materialgruppe Text", "Material", "Material Text",
-                "Umsatz bestaetigt CHF", "Herstellkosten HK CHF", "HK-Abdeckung Umsatz", "Materialanteil CHF", "Anteil",
+                "Umsatz bestaetigt CHF", "Herstellkosten HK CHF", "HK-Abdeckung Umsatz", "Bestaetigte Menge", "Materialanteil CHF", "Anteil",
                 "Anteil bezogen auf", "Bedarfsmenge", "Einheit", "Stueckkosten CHF"
             ],
             table.Columns.Select(c => c.Header).ToArray());
         Assert.Equal(4, table.Rows.Count);
-        Assert.Equal(0.25m, table.Rows[0][10]);
+        Assert.Equal(0.25m, table.Rows[0][11]);
         Assert.Equal("10.08.00", table.Rows[1][2]);
         Assert.Equal("Leiterplatten bestüc", table.Rows[1][3]);
         Assert.Equal("H20201", table.Rows[2][4]);
         Assert.Equal("Leiterplatte bestückt", table.Rows[2][5]);
-        Assert.Equal(0.8m, table.Rows[2][10]);
+        Assert.Equal(0.8m, table.Rows[2][11]);
         Assert.Equal("H17500", table.Rows[3][4]);
+        Assert.Equal(6m, table.Rows[0][9]);
+        Assert.Equal(4m, table.Rows[1][9]);
+        Assert.Equal(4m, table.Rows[2][9]);
+
+        using var workbook = new XLWorkbook(new MemoryStream(PurchasingSpendExcelExport.CreateWorkbookBytes(table)));
+        var ws = workbook.Worksheet(1);
+        Assert.Equal("Bestaetigte Menge", ws.Cell(1, 10).GetString());
+        Assert.Equal(XLDataType.Number, ws.Cell(2, 10).DataType);
+        Assert.Equal(6d, ws.Cell(2, 10).GetDouble());
+        Assert.Equal("#,##0", ws.Cell(2, 10).Style.NumberFormat.Format);
         Assert.Equal(string.Empty, table.Rows[3][5]);
     }
 

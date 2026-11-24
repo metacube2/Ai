@@ -195,4 +195,40 @@ public class PurchasingMaterialShareTests : IDisposable
         Assert.Equal(125m, group.ManufacturingCost);
         Assert.Equal(0.6667m, group.ManufacturingCostCoverage);
     }
+
+    [Fact]
+    public void Bestaetigte_Menge_Je_Ebene_Geraet_Zaehlt_Je_Materialgruppe_Einmal()
+    {
+        // Auftrag Ingo 24.11.2026: Spalte "Bestaetigte Menge". Geraet A (100 Stk) hat zwei Komponenten der Warengruppe 10.08.00
+        // und eine der 20.01.00, Geraet B (50) eine der 10.08.00, Geraet C (30) keine Stueckliste. D (20) gehoert zu einer
+        // anderen Produktgruppe und verwendet dasselbe Teil P1.
+        static PurchasingMaterialShareQuery.BomRow Row(string idnrk, decimal menge, string matkl)
+            => new(idnrk, menge, "ST", 1m, menge, matkl, "Text " + idnrk);
+        var bom = new Dictionary<string, List<PurchasingMaterialShareQuery.BomRow>>
+        {
+            ["A"] = [Row("P1", 2m, "10.08.00"), Row("P2", 1m, "10.08.00"), Row("P3", 4m, "20.01.00")],
+            ["B"] = [Row("P1", 3m, "10.08.00")],
+            ["D"] = [Row("P1", 1m, "10.08.00")]
+        };
+
+        var rows = PurchasingMaterialShareQuery.Build(
+            [("A", "Dichte", 100m, 1000m), ("B", "Dichte", 50m, 500m), ("C", "Dichte", 30m, 300m), ("D", "Sensor", 20m, 200m)],
+            bom);
+
+        var dichte = Assert.Single(rows, row => row.Key == "Dichte");
+        Assert.Equal(180m, dichte.ConfirmedQuantity);
+        var leiterplatten = Assert.Single(dichte.Children, node => node.Key == "Dichte|10.08.00");
+        Assert.Equal(150m, leiterplatten.ConfirmedQuantity);
+        Assert.Equal(100m, Assert.Single(dichte.Children, node => node.Key == "Dichte|20.01.00").ConfirmedQuantity);
+
+        var p1 = Assert.Single(leiterplatten.Children, node => node.Key.EndsWith("|P1", StringComparison.Ordinal));
+        Assert.Equal(150m, p1.ConfirmedQuantity);
+        // Bedarfsmenge = Summe bestaetigte Menge Geraet x Stuecklistenmenge je Geraet: 100 x 2 + 50 x 3.
+        Assert.Equal(350m, p1.Quantity);
+        Assert.Equal(100m, Assert.Single(leiterplatten.Children, node => node.Key.EndsWith("|P2", StringComparison.Ordinal)).ConfirmedQuantity);
+
+        var sensor = Assert.Single(rows, row => row.Key == "Sensor");
+        Assert.Equal(20m, sensor.ConfirmedQuantity);
+        Assert.Equal(20m, sensor.Children.Single().Children.Single().ConfirmedQuantity);
+    }
 }

@@ -17,7 +17,11 @@ public sealed record PurchasingMaterialShareNode(
     // Werk 1100 (GroupStandardCosts, Bewertungskreis 1100). Nur auf Produktgruppen-Ebene, wie der Umsatz.
     decimal ManufacturingCost = 0m,
     // Anteil des Umsatzes, dessen verkuerzte Nummer einen Standardpreis hat; unter 1 heisst: HK unvollstaendig.
-    decimal ManufacturingCostCoverage = 0m);
+    decimal ManufacturingCostCoverage = 0m,
+    // Bestaetigte Menge (ZC23 BMENG, Termin bestaetigt im Zeitraum; Auftrag Ingo 24.11.2026): Produktgruppe = alle Geraete der
+    // Gruppe, Materialgruppe = verschiedene Geraete mit mindestens einer Komponente der Gruppe, Teil = Geraete, deren Stueckliste
+    // das Teil enthaelt. Bedarfsmenge des Teils = Summe bestaetigte Menge Geraet x Stuecklistenmenge je Geraet.
+    decimal ConfirmedQuantity = 0m);
 
 /// <summary>Stand der geladenen Daten (Zeitpunkt, Monatsbereich, Meldung des letzten Laufs).</summary>
 public sealed record PurchasingMaterialShareState(string LoadedAtUtc, string MonthFrom, string MonthTo, string Message);
@@ -112,6 +116,7 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
             if (!groups.TryGetValue(name, out var group))
                 groups[name] = group = new GroupAcc();
             group.Revenue += netwr;
+            group.ConfirmedByDevice[vknr] = group.ConfirmedByDevice.TryGetValue(vknr, out var confirmed) ? confirmed + bmeng : bmeng;
             if (unitCosts is not null && unitCosts.TryGetValue(PurchasingComponentDispoLoader.NormalizeKey(vknr), out var stprs))
             {
                 group.ManufacturingCost += bmeng * stprs;
@@ -124,10 +129,14 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
                 var matkl = row.Matkl.Trim();
                 if (!group.MaterialGroups.TryGetValue(matkl, out var materials))
                     group.MaterialGroups[matkl] = materials = new Dictionary<string, PartAcc>(StringComparer.Ordinal);
+                if (!group.MaterialGroupDevices.TryGetValue(matkl, out var devices))
+                    group.MaterialGroupDevices[matkl] = devices = new HashSet<string>(StringComparer.Ordinal);
+                devices.Add(vknr);
                 if (!materials.TryGetValue(row.Idnrk, out var part))
                     materials[row.Idnrk] = part = new PartAcc(row.Maktx, row.Meins, row.Stk);
                 part.Quantity += bmeng * row.Menge;
                 part.Value += bmeng * row.Wert;
+                part.Devices.Add(vknr);
             }
         }
 
@@ -140,17 +149,20 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
                         var parts = mg.Value
                             .Select(p => new PurchasingMaterialShareNode($"{g.Key}|{mg.Key}|{p.Key}",
                                 p.Value.Text.Length == 0 ? p.Key : $"{p.Key} {p.Value.Text}",
-                                Math.Round(p.Value.Value, 2), 0m, Math.Round(p.Value.Quantity, 3), p.Value.Unit, p.Value.UnitCost, []))
+                                Math.Round(p.Value.Value, 2), 0m, Math.Round(p.Value.Quantity, 3), p.Value.Unit, p.Value.UnitCost, [],
+                                ConfirmedQuantity: Math.Round(g.Value.ConfirmedOf(p.Value.Devices), 3)))
                             .OrderByDescending(n => n.Value).ThenBy(n => n.Key, StringComparer.Ordinal)
                             .ToList();
                         var label = mg.Key.Length == 0 ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(mg.Key);
-                        return new PurchasingMaterialShareNode($"{g.Key}|{mg.Key}", label, parts.Sum(n => n.Value), 0m, 0m, string.Empty, 0m, parts);
+                        return new PurchasingMaterialShareNode($"{g.Key}|{mg.Key}", label, parts.Sum(n => n.Value), 0m, 0m, string.Empty, 0m, parts,
+                            ConfirmedQuantity: Math.Round(g.Value.ConfirmedOf(g.Value.MaterialGroupDevices[mg.Key]), 3));
                     })
                     .OrderByDescending(n => n.Value).ThenBy(n => n.Key, StringComparer.Ordinal)
                     .ToList();
                 return new PurchasingMaterialShareNode(g.Key, g.Key, materialGroups.Sum(n => n.Value), Math.Round(g.Value.Revenue, 2), 0m, string.Empty, 0m, materialGroups,
                     Math.Round(g.Value.ManufacturingCost, 2),
-                    g.Value.Revenue > 0m ? Math.Round(g.Value.CoveredRevenue / g.Value.Revenue, 4) : 0m);
+                    g.Value.Revenue > 0m ? Math.Round(g.Value.CoveredRevenue / g.Value.Revenue, 4) : 0m,
+                    Math.Round(g.Value.ConfirmedByDevice.Values.Sum(), 3));
             })
             .OrderByDescending(n => n.Value).ThenBy(n => n.Key, StringComparer.Ordinal)
             .ToList();
@@ -188,6 +200,13 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
         public decimal ManufacturingCost;
         public decimal CoveredRevenue;
         public Dictionary<string, Dictionary<string, PartAcc>> MaterialGroups { get; } = new(StringComparer.Ordinal);
+        // Bestaetigte Menge je Geraet (verkuerzte Nummer) und je Materialgruppe die Geraete mit mindestens einer Komponente;
+        // so zaehlt jedes Geraet je Materialgruppe und je Teil genau einmal (Auftrag Ingo 24.11.2026).
+        public Dictionary<string, decimal> ConfirmedByDevice { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, HashSet<string>> MaterialGroupDevices { get; } = new(StringComparer.Ordinal);
+
+        public decimal ConfirmedOf(IEnumerable<string> devices)
+            => devices.Sum(device => ConfirmedByDevice.TryGetValue(device, out var quantity) ? quantity : 0m);
     }
 
     private sealed class PartAcc(string text, string unit, decimal unitCost)
@@ -197,5 +216,6 @@ WHERE Monat >= $f AND Monat <= $t GROUP BY Vknr, Produktgruppe;";
         public decimal UnitCost { get; } = unitCost;
         public decimal Quantity;
         public decimal Value;
+        public HashSet<string> Devices { get; } = new(StringComparer.Ordinal);
     }
 }
