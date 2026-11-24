@@ -1,0 +1,14 @@
+# ZSD_HERKL_CH: Struktur aus SE11 (Anzeigen), P76 Mandant 100, gelesen 2026-11-24
+Kurzbeschreibung	Zolltarifnummern für Herkunft CH
+Tabellenart	Transp.Tabelle
+Auslieferungsklasse	A (Anwendungstab. (Stamm- und Bewegungsdaten))
+Data Browser/Tabellensicht-Pflege	Anzeige/Pflege erlaubt
+Paket	ZSD1
+Letzte Aenderung (Datum)	07.10.2024
+Schluesselkennzeichen	aus DD03L-KEYFLAG (SE16)
+
+Nr	Feld	Schluessel	Datenelement	Typ	Laenge	Dezimalstellen	Kurztext
+1	MANDT	X	MANDT	CLNT	3	0	Mandant
+2	STAWN	X	STAWN	CHAR	17	0	Statistische Warennummer
+3	GZOLX	X	GZOLX	CHAR	4	0	Präferenzzone
+4	PROZCH		EXP_PERCENT	NUMC	3	0	Prozentualer Anteil

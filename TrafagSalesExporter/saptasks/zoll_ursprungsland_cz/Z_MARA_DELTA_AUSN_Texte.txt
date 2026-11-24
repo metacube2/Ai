@@ -1,0 +1,20 @@
+# Textelemente Z_MARA_DELTA_AUSN, P76 Mandant 100, Sprache Deutsch, gelesen 2026-11-24 (SE38 Textelemente anzeigen)
+
+## Selektionstexte
+Name	Text
+P_GRUND	Grund (Default-Text)
+P_NOCHK	MARC-Prüfung überspringen
+P_TAGE	?...
+P_TEST	Testlauf (kein DB-Update)
+P_WERKS	Werk
+S_ERDAT	Angelegt am (ERSDA)
+S_ERNAM	Angelegt von
+S_LAEDA	Letzte Änderung (LAEDA)
+S_MATNR	Material
+S_MTART	Materialart
+
+## Textsymbole
+Schluessel	Text
+(keine Textsymbole gepflegt, SE38 zeigt 0 Zeilen; text-t01 und text-t02 der Rahmen sind damit leer)
+
+Hinweise: P_TAGE hat keinen Selektionstext (SE38 zeigt '?...'). S_ERDAT und S_LAEDA haben Texte, kommen im aktuellen Quelltext aber nicht vor.

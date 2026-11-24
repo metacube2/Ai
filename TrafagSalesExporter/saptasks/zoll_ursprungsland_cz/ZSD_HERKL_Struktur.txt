@@ -1,0 +1,37 @@
+# ZSD_HERKL: Struktur aus SE11 (Anzeigen), P76 Mandant 100, gelesen 2026-11-24
+Kurzbeschreibung	Ergebnis Herkunftslandberechnung
+Tabellenart	Transp.Tabelle
+Auslieferungsklasse	A (Anwendungstab. (Stamm- und Bewegungsdaten))
+Data Browser/Tabellensicht-Pflege	Anzeige/Pflege erlaubt
+Paket	ZSD1
+Letzte Aenderung (Datum)	07.10.2024
+Schluesselkennzeichen	aus DD03L-KEYFLAG (SE16)
+
+Nr	Feld	Schluessel	Datenelement	Typ	Laenge	Dezimalstellen	Kurztext
+1	MANDT	X	MANDT	CLNT	3	0	Mandant
+2	MATNR	X	MATNR	CHAR	40	0	Materialnummer
+3	WERKS	X	WERKS_D	CHAR	4	0	Werk
+4	DATUM		DATUM	DATS	8	0	Datum
+5	STPRS		STPRS	CURR	11	2	Standardpreis
+6	VPREIS		ZZ_VPREIS	CURR	11	2	Verkaufspreis
+7	MARGE		ZZ_MARGE	CURR	11	2	Marge
+8	EIGEN_CH		ZZ_EIGEN_CH	CURR	11	2	Eigenfertigung CH
+9	FREMD_CH		ZZ_FREMD_CH	CURR	11	2	Fremdfertigung CH
+10	MATER_CH		ZZ_MATER_CH	CURR	11	2	Material CH
+11	GMKST_CH		ZZ_GMKST_CH	CURR	11	2	Gemeinkosten CH
+12	PROZT_CH		ZZ_PROZT_CH	NUMC	3	0	Anteil CH
+13	EIGEN_EU		ZZ_EIGEN_EU	CURR	11	2	Eigenfertigung EU
+14	FREMD_EU		ZZ_FREMD_EU	CURR	11	2	Fremdfertigung EU
+15	MATER_EU		ZZ_MATER_EU	CURR	11	2	Material EU
+16	GMKST_EU		ZZ_GMKST_EU	CURR	11	2	Gemeinkosten EU
+17	PROZT_EU		ZZ_PROZT_EU	NUMC	3	0	Anteil EU
+18	EIGEN_UEB		ZZ_EIGEN_UEB	CURR	11	2	Eigenfertigung übrige
+19	FREMD_UEB		ZZ_FREMD_UEB	CURR	11	2	Fremdfertigung übrige
+20	MATER_UEB		ZZ_MATER_UEB	CURR	11	2	Material übrige
+21	GMKST_UEB		ZZ_GMKST_UEB	CURR	11	2	Gemeinkosten übrige
+22	PROZT_UEB		ZZ_PROZT_UEB	NUMC	3	0	Anteil übrige
+23	EIGEN_UND		ZZ_EIGEN_UND	CURR	11	2	Eigenfertigung undefiniert
+24	FREMD_UND		ZZ_FREMD_UND	CURR	11	2	Fremdfertigung undefiniert
+25	MATER_UND		ZZ_MATER_UND	CURR	11	2	Material undefiniert
+26	GMKST_UND		ZZ_GMKST_UND	CURR	11	2	Gemeinkosten undefiniert
+27	PROZT_UND		ZZ_PROZT_UND	NUMC	3	0	Anteil undefiniert

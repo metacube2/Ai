@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-24 13:30: Zoll CZ, Quelltext Ursprungsland aus P76 fuer Fabio
+
+- Nur gelesen (P76 SE38/SE37/SE11/SE16, eigene Sitzung): `ZLO_CALC_URSPRUNGSLAND_2`, `Z_MARA_DELTA_AUSN`, Baustein `ZLO_UPDATE_MAPE`
+  (Gruppe ZZLO2, MM02-Batch-Input, Mappe ZOLL-PRAEF im Fehlerfall), Tabellen ZSD_HERKL (189), ZSD_HERKL_CH (71, Inhalt als CSV),
+  ZLO_URSPR_AUSN (6'897), Selektionstexte. Ablage `saptasks/zoll_ursprungsland_cz/`, Kopie in Downloads. Befunde in der README
+  (WERKS nicht im Schluessel, kein DUMMY-Eintrag in ZSD_HERKL_CH).
+
 ## 2026-11-24 13:00: Mapping-Bruecken aus Belegen geprueft (schwach)
 
 - P76 KNMT/VBAP-KDMAT und B1-Katalognummern nur gelesen: kaum gepflegt; belegt nur 4 Artikel auf TR AG, 79 TRES auf TR-IT-Artikel.

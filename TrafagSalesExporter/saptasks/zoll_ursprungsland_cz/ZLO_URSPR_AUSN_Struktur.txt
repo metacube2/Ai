@@ -1,0 +1,16 @@
+# ZLO_URSPR_AUSN: Struktur aus SE11 (Anzeigen), P76 Mandant 100, gelesen 2026-11-24
+Kurzbeschreibung	Ausnahmen für Zollvergabe
+Tabellenart	Transp.Tabelle
+Auslieferungsklasse	C (Customizingtabelle, Pflege nur durch Kunden, kein SAP Import)
+Data Browser/Tabellensicht-Pflege	Anzeige/Pflege erlaubt
+Paket	ZPP
+Letzte Aenderung (Datum)	03.06.2026
+Schluesselkennzeichen	aus DD03L-KEYFLAG (SE16)
+
+Nr	Feld	Schluessel	Datenelement	Typ	Laenge	Dezimalstellen	Kurztext
+1	MANDT	X	MANDT	CLNT	3	0	Mandant
+2	MATNR	X	MATNR	CHAR	40	0	Materialnummer
+3	WERKS		WERKS_D	CHAR	4	0	Werk
+4	GRUND		CHAR40	CHAR	40	0	Character 40-Stellen
+5	ERDAT		ERSDA	DATS	8	0	Erstellungsdatum
+6	ERNAM		ERNAM	CHAR	12	0	Name des Sachbearbeiters, der das Objekt hinzugefügt hat

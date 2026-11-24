@@ -1,0 +1,35 @@
+# Textelemente ZLO_CALC_URSPRUNGSLAND_2, P76 Mandant 100, Sprache Deutsch, gelesen 2026-11-24 (SE38 Textelemente anzeigen)
+
+## Selektionstexte
+Name	Text
+P_AUSN	Ausnahmeliste aktivieren
+P_DETAIL	Mit Details
+P_FAKTOR	Verkaufspreis (Faktor HK)
+P_LAND	Ausgabe pro Land
+P_LANDD	Nur mit abw. Herkunftsland
+P_LOEKZ	Mit gelöschten
+P_MATUP	Materialstamm ändern
+P_PRAEF	Mit Präferenzberechnung
+P_STTAG	Stichtag
+P_TABUP	Update Tabelle ZSD_HERKL
+P_WERKS	Werk
+S_MATNR	Materialnummer
+
+## Textsymbole
+Schluessel	Text
+000	Total
+001	Schweiz
+002	EU
+003	Übrige
+004	undefiniert
+005	          Eigenfert.         Fremdfert.           Material         Gem.Kosten              Marge       Proz
+007	    Verkaufspreis:
+008	Präferenz-Zone
+009	Losgrösse:
+010	    Zolltarif:
+011	Kalkulationsstichtag
+012	Davon Übrige                    :
+T01	Materialauswahl
+T02	Sonstiges
+T03	Optionen
+T11	Stichtag Kalkulation:
