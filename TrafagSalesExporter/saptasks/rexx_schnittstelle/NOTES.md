@@ -1,6 +1,6 @@
 # Rexx-Schnittstelle nach SAP: Befund und Idee Tagesjob
 
-Stand: 2026-11-24 (Abschnitt 22: #777 eingeschaltet, Ursache Seite 56 war Exportfeld time_away, Stichtag 07.04.2026, `5b3774f`/`21d11b4` deployed); davor 2026-11-23 nachmittags (Abschnitt 21: /v1/requests eingerichtet, `001646b`/`df7b874` deployed, Schalter aus, Rexx 500 auf Seite 56); davor 2026-11-23 (Abschnitt 20: Antwort Artjom, /v1/requests liefert alle Abwesenheiten auch ohne Workflow, sieben Schnittstellen mit IDs, Lohnarten-Endpunkt bis Ende 2026, SFTP laut Artjom durch Upgreat); davor 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
+Stand: 2026-11-24 10:10 (Abschnitt 22 Punkt 8: erster Tageslauf geschrieben 10:08, 4'417 Abwesenheiten, nach Wiederholung je Seite `142d304`); davor 2026-11-24 (Abschnitt 22: #777 eingeschaltet, Ursache Seite 56 war Exportfeld time_away, Stichtag 07.04.2026, `5b3774f`/`21d11b4` deployed); davor 2026-11-23 nachmittags (Abschnitt 21: /v1/requests eingerichtet, `001646b`/`df7b874` deployed, Schalter aus, Rexx 500 auf Seite 56); davor 2026-11-23 (Abschnitt 20: Antwort Artjom, /v1/requests liefert alle Abwesenheiten auch ohne Workflow, sieben Schnittstellen mit IDs, Lohnarten-Endpunkt bis Ende 2026, SFTP laut Artjom durch Upgreat); davor 2026-11-17 nachmittags (Abschnitt 15: Admin-Zugang erhalten, keine Testumgebung, Anleitung gelesen, Rueckfrage an Artjom gesendet); davor 2026-11-17 (Abschnitt 12: Hub bestellt, Offerte AG37140 am 11.11. unterschrieben, Mail an Artjom wegen Zugang; Nachtrag: Vorgesetzte je Person als zusaetzliches Lieferfeld, Quelle Rexx Hub statt AD, Wochen_Todo 164); davor 2026-11-12 (Doku-Pruefung: Abschnitt 14, „Nicht deployed“ ueberholt, Abruf seit dem Deploy vom 2026-11-12 11:33 auf dem Server, Schalter aus); davor 2026-11-10 (Entscheid Rexx Hub und Lieferfelder, Abschnitt 12; Hub-Mail und Produktbeschreibung gelesen, Abschnitt 13; Abruf ueber den Hub gebaut, Schalter aus, Abschnitt 14); Befund vom 2026-11-03. Untersucht auf Frage Ingo „finde heraus, wie die Daten von Rexx in SAP gelangen,
 wo die Schnittstelle liegt“; festgehalten auf Auftrag Ingo „halte alles in md fest, falls der Chat
 crasht“. **Gelesen nur in T76** (Mandant 100, per SapProbe/RFC, Benutzer KOI). P76 ist nicht
 angefasst. T76 ist eine Kopie mit Daten bis etwa April 2026; Laeufe und Jobs in P76 koennen
@@ -770,3 +770,16 @@ Hauptzweig.
 so (Stempeluhrtransfer, Schnittstelle 3, Entscheid 10.11.). Fuer die Hub-Umstellung muss daran nichts geaendert werden. *Offen bleibt*
 nur, wer die uebrigen Dateien auf dem SFTP-Server ablegt (Artjom nannte Upgreat, Abschnitt 20 Punkt 4) und ob Trafag acht oder
 sieben Schnittstellen bezahlt; beides klaert Ingo mit Rexx.
+
+**8. Erster Tageslauf brach zweimal ab, behoben mit Wiederholung je Seite (Code `142d304`, deployed 09:58 ohne Wochensicherung):**
+Der Dienst holte #777 um 09:13 und 09:43; beide Laeufe brachen ab, weil Rexx eine einzelne Seite unbeantwortet liess (09:13 nach 5
+Seiten, 09:48 nach 138 Seiten; im Rexx-Hub-Protokoll Zeile ohne Antwortcode, Dauer 0.00). Wahrscheinliche Ursache: Rexx erlaubt
+nur eine Anfrage gleichzeitig ueber alle API-Benutzer (Datei-Lock, hoechstens 3 s Wartezeit) [V]. Der Abruf wiederholte bisher nur
+429; jeder andere Fehler brach den ganzen Lauf von 168 Seiten ab, der naechste Versuch kam erst 30 Minuten spaeter (hoechstens 4
+je Tag). **Neu:** Eine Seite wird bei 500/502/503/504, Verbindungsabbruch oder Zeitueberschreitung nach 10, 30 und 60 s erneut
+angefragt (`RexxHubClient.ServerErrorWaits`). Tests 1'829/1'829 (Worktree und Release-Worktree). **Ergebnis:** Nach dem Neustart
+hat der Dienst die Fall-Datei um **10:08** geschrieben, **4'417 Abwesenheiten**, 20 Spalten; der Handexport vom 04.11. liegt als
+`Hr-cockpit-absenzen-je-fall.manuell.xlsx` daneben. Damit kommen **#775 und #777 taeglich ueber den Hub**. Das Cockpit selbst
+(hinter dem HR-Login) ist nicht im Browser angesehen.
+Nebenbei: Ein versehentlicher direkter Testabruf (Testseite ohne `?hintergrund=1`) lief 09:31 bis 09:33 ueber 36 Seiten und brach
+mit dem Webserver-Timeout ab; geaendert hat er nichts.

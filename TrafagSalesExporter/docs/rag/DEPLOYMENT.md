@@ -95,6 +95,7 @@ Klammern stammen aus `docs/rag/LEARNINGS.md`). Vorher standen Befehl, Vorschritt
 
 ## Kurzstand
 
+- **Deploy 2026-11-24 09:58, Rexx Hub Wiederholung je Seite (`142d304`).** Zweig `rexxhub-requests-2311`, Tests 1'829/1'829 im Release-Worktree, mit `-- --no-backup` (**Wochensicherung weiter faellig**, letzte 16.11.). Funktionscommit-Zeile geprueft, lokaler Build und Server bitgleich. Alarme wie bei allen drei Deploys heute: `-wal`/`-shm` verschwunden (wieder da) und „geschuetzte Datei veraendert: trafag_exporter.db“ (gleiche Groesse, Zeitstempel vom Checkpoint beim Stoppen).
 - **Deploy 2026-11-24 09:10, Rexx Hub #777 eingeschaltet (`21d11b4`), davor 08:57 Stichtag `CaseFromDate` (`5b3774f`).** Zweig
   `rexxhub-requests-2311`, Tests 1'823/1'823 im Release-Worktree. Beide mit `-- --no-backup`: der erste Lauf um 08:45 hing in der
   faelligen Wochensicherung (seitenweise, `-wal` nicht leer); Ingo wollte sie abbrechen, Lauf gestoppt, nichts auf dem Server

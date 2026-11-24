@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-24 10:08: erste Fall-Datei #777 ueber den Rexx Hub
+
+- Tageslauf brach um 09:13 und 09:48 ab (Rexx beantwortete je eine Seite nicht). Fix `142d304`: Seite bei 500/502/503/504,
+  Verbindungsabbruch oder Zeitueberschreitung nach 10/30/60 s wiederholen. Tests 1'829/1'829, deployed 09:58 ohne Wochensicherung.
+- Fall-Datei 10:08 geschrieben, 4'417 Abwesenheiten, Handexport als `.manuell.xlsx` gesichert. Rexx-NOTES 22 Punkt 8.
+
 ## 2026-11-24 09:10: Rexx Hub #777 eingeschaltet
 
 - Ursache 500 auf Seite 56: Exportfeld `time_away` beim API-Benutzer #2, in Rexx entfernt. Stichtag `CaseFromDate = 2026-04-07`
