@@ -1,5 +1,13 @@
 # Last Change
 
+## 2026-11-25 06:45: Shopfloor Paket Fabio 24.11., Welle 1 deployed
+
+- `d8e74d2`: Kommunikationstool Einkauf und Feld „Offene K-Auf“ entfernt, A/B/C bei Code 2 weg; Materialverfuegbarkeit je KW
+  (Code-2-Maximum Mo bis Sa, Nenner als Eingabe, Durchschnitt YTD), Horizont nach Fabrikkalender; Radar Verzug Einkauf/GFS je Sparte.
+  Tests 1'876/1'876, deployed 06:45, im Board gesehen. Patch 10 aus dem Paket war schon produktiv.
+- **Offen:** Nenner aus SAP (MATDOC) und VF/WE-Spalten (T76, ein Transport), P76-Pruefungen ZC22/MD04, Vorschlag Meeting-Modus,
+  Antwort an Fabio. SHOPFLOOR 28, `docs/shopfloor_paket_2026-11-24/Antwort_Fabio_2026-11-25.md`.
+
 ## 2026-11-24 14:45: PDF Andreas nachgefuehrt, Wochen_Todo 170/171
 
 - PDF Andreas (6 Seiten) mit Zeile „Bruecken aus Belegen“ in Abschnitt 7, neu in Downloads (`8388e9c`).

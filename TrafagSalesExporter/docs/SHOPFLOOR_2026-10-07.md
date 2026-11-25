@@ -1,4 +1,4 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-20 12:55 (27.6: Patch 10 Forecast Suche/Filter deployed `e3248a4`); davor bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-25 06:50 (Abschnitt 28: Paket Fabio 24.11., Welle 1 deployed `d8e74d2`: Kommunikation Einkauf und Offene K-Auf entfernt, Materialverfuegbarkeit je KW, Radar Verzug Einkauf/GFS); davor bis 2026-11-20 12:55 (27.6: Patch 10 Forecast Suche/Filter deployed `e3248a4`); davor bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
@@ -1025,7 +1025,7 @@ Scalet (TX-Mengen, Schichten, FPY TX), Live-Pruefung des Boards, vier Bitten (Ru
 Auftrag Ingo „mach mal alles“: die vier Punkte, soweit ohne Fabios Entscheide moeglich. *Damit ueberholt im Nachtrag „Phase C“ am
 Ende von Abschnitt 24: Anh Nhi hat Wunschtermin und „Datum WE geplant“ fachlich beantwortet, Michael die Quelle der TX-Mengen und
 die Schichtregeln, der Einkauf (ueber Fabio 13./16.11.) „WE aktuell gem. SAP“ und die Bestellnummer. Offen bleiben dort der
-MES-DB-User (Marco Di Menco), Sanel (FPY DW), Sacha bzw. die Logistik (Offene K-Auf) und die Handfelder.*
+MES-DB-User (Marco Di Menco), Sanel (FPY DW), Sacha bzw. die Logistik (Offene K-Auf) und die Handfelder. Ueberholt 2026-11-25: „Offene K-Auf“, Bestellnummer und „WE aktuell gem. SAP“ entfallen (Abschnitt 28).*
 
 **Umgesetzt und deployed 14:36 (`32bf356`, Zweig `shopfloor-ergaenzung-1711` ab Produktivstand `2e62163`, ohne Spanien):**
 - **Seite „Schnittstelle SAP / MES“** (`shopfloor_config.json`, Bloecke `sap`; Kopftext in `app.js` `viewSchema`): Jedes der 105
@@ -1037,7 +1037,7 @@ MES-DB-User (Marco Di Menco), Sanel (FPY DW), Sacha bzw. die Logistik (Offene K-
   nennt den Abruf ueber das Gateway (Stichtag 04:00) statt „Push vorgesehen“ und „Stand 17.11.2026“ statt „Feldmapping 14.10.“.
   *Die Seite zeigt damit nicht mehr den Stand von Abschnitt 12 (Feldmapping-Excel 14.10.).* Vorher standen 95 von 105 Feldern auf „offen“,
   darunter die meisten der 44 gelieferten (LEARNINGS 17.11.).
-- **Bestellnummer im Kommunikationstool Einkauf** ist Handeingabe (kein `src`, Fabio 13.11.).
+- **Bestellnummer im Kommunikationstool Einkauf** ist Handeingabe (kein `src`, Fabio 13.11.). *(Ueberholt 2026-11-25: Modul Kommunikationstool Einkauf entfernt, Abschnitt 28.)*
 - **TX Tagesmenge, Schicht 1 und 2** haben die Quelle MES statt SAP. Michaels `ProdMengePerDisponent.xlsm` (nur gelesen, Makros nicht
   ausgefuehrt, Modul unter `docs/shopfloor_paket_2026-11-17/auswertung_ingo/ProdMengePerDisponent_Modul1.bas`): Die Schaltflaeche
   „GetData“ ruft das Makro `ProdMenge`, das per ADODB/SQLOLEDB mit Windows-Anmeldung (kein Passwort in der Datei) auf
@@ -1325,4 +1325,34 @@ Forecast: Auftragsliste der gewaehlten Abteilung immer aufgeklappt, „Nicht zug
 - *Ueberholt 13:10:* **Im Board gesehen** (Windows-Chrome, Ingos Anmeldung): `app.js?v=6ad4413a`, keine Skriptfehler, TX (215) offen, Nicht zugeordnete (147) zu; Suche 1278981 -> „1 von 215 · 20 Stk.“, Disponent EL1 -> 37 von 215 / 1791 Stk., Zuruecksetzen -> 215; nichts gespeichert. Urspruenglich: Oberflaeche nicht gesehen (Anmeldung). Fabio schaut es
   im Board an. Zum FPY kommt von Fabio eine eigene Nachricht (SAP-Rueckmeldungen kennen nur Endausschuss, Quote >99 % statt ~87 %).
 - **Hinweis Finance Stufe 2** (Zweig `finance-mapping-2011`, wartet auf Deploy): vor deren Deploy `e3248a4` mergen, sonst faellt Patch 10
-  produktiv wieder heraus.
+  produktiv wieder heraus. *(Erledigt: Finance Stufe 2 deployed 20.11. 13:23 mit `e3248a4`; am 25.11. geprueft, dass die Deploys bis
+  `8b79cb7` den Patch enthalten.)*
+
+## 28. Paket Fabio 24.11. (`Shopfloor_Paket_Ingo_2026-11-24.zip`): Welle 1 deployed (Stand 2026-11-25 06:50)
+
+Einzelheiten, Messwerte und Antwortentwurf: `docs/shopfloor_paket_2026-11-24/Antwort_Fabio_2026-11-25.md`. Auftrag Ingo 25.11.
+(„bittte paket bearbeiten“, „mach alles was noetig ist“, SAP T76 und P76 offen).
+
+- **Patch 10 im Paket = produktiv seit 20.11.** (alle fuenf Stellen genau einmal in der produktiven `app.js`), nichts zu tun.
+- **Gebaut und deployed 2026-11-25 06:45** (Funktionscommit `d8e74d2`, Zweig `shopfloor-paket-2411` ab Produktivstand `8b79cb7`):
+  Modul „Kommunikationstool Einkauf ↔ Produktion“ entfernt (Konfiguration, Agenda 10.1, Mailregel, Knopf auf der ZD05-Seite), Feld
+  Logistik „Offene K-Auf“ entfernt (97 statt 99 SAP-Felder auf der Schnittstellen-Seite), A/B/C-Aufteilung bei Code 2 entfernt (Spalte
+  Klasse und ABC-Liste bleiben). Gespeicherte Daten bleiben in `shopfloor.db`.
+- **Materialverfuegbarkeit je KW** (ZD05-Seite, „Kennzahlen pro KW“): Zaehler = hoechster Tageswert Code 2 im Horizont Mo bis Sa
+  (aus `zd05_days.kpi.code2`, Tage mit Excel-Kennzahl ohne `code2` zaehlen nicht), Nenner = Eingabefeld „Materialien bezogen (201/261)“
+  (`zd05_week.nenner`), Materialverfuegbarkeit = 1 − Zaehler ÷ Nenner in %, Zeile „Durchschnitt YTD“. Ohne Nenner bleibt der alte
+  Handwert `mat_verf`. **Horizont** (`ShopfloorZd05.AddWorkdays`) jetzt nach Fabrikkalender CH statt Mo bis Fr.
+- **Radar Verzug Einkauf und GFS (YTD)** (`ShopfloorRadar`, `GET api/radar?day=`, ZD05-Seite unten): Prod. Menge YTD = Summe
+  `daily.prod` 01.01. bis Vortag (Marcos Werte 29.10. = Excel-Zeile 28.10.), Verzug = Summe `menge_rs` der RS-Zeilen mit Eintrag im Jahr
+  bis Stichtag und „Einkauf“ bzw. „GFS DE“ in `verursacher`, beide Ursachen im Total einmal.
+- Tests: Release-Worktree **1'876/1'876**; Deploy mit dem Werkzeug, Commit-Zeile `d8e74d2`, bitgleich, Alarm nur `-wal`/`-shm`
+  (wieder da) und Checkpoint der Haupt-DB (Groesse gleich). Im Arbeits-Chrome gesehen: `app.js?v=5524f3d9`, kein Knopf Kommunikation,
+  KW-Tabelle mit den neuen Spalten, Radar SEH 669'248 / 0 / 1'300 / 0,19 %, TR5 176'379 / 534 / 166 / 0,40 %, TX 285'469 / 3'653 / 974 /
+  1,62 %, DW 163'401 / 1'909 / 0 / 1,17 %, Total 0,66 %. Nichts gespeichert.
+- **Grenzen, Fabio mitzuteilen:** RS-Listen im Board noch vom Import 05.10. (Radar erst nach dem naechsten Excel-Import aktuell);
+  TX-Tagesmengen fehlen seit Oktober (MES), TX Prod. YTD deshalb rund 6,5 % zu tief; Code 2 im Board KW 47 hoechstens 1 statt Marcos 4
+  (Codes im Board nicht gepflegt); Positionen ohne Unterdeckungsdatum zaehlen als im Horizont (Bestaetigung Fabio).
+- **Offen (Welle 2):** Nenner aus SAP (MATDOC 201/261, Werk 1100, Mo bis Sa, verschiedene MATNR; Fabio in P76: KW 47 = 1'525) und
+  VF/WE-Spalten (Punkt 7) in einem T76-Plan und einem Transport; P76-Pruefungen Punkt 8 (aktueller Stichtag gegen ZC22 `/P00 TX`,
+  Naechster Vorgang gegen MD04; TX +765 vom 17.11. auftragsgenau nicht mehr pruefbar, Auftragsliste erst ab 20.11.); Meeting-Modus nur
+  Vorschlag (Punkt 6).
