@@ -22,7 +22,7 @@
             <MudSelectItem Value="@("OK")">OK</MudSelectItem>
             <MudSelectItem Value="@("Error")">Error</MudSelectItem>
         </MudSelect>
-        <MudDatePicker @bind-Date="_filterDate" Label="@T("Datum", "Date")" Clearable Dense Style="max-width:200px;" />
+        <div style="width:200px"><MudDatePicker @bind-Date="_filterDate" Label="@T("Datum", "Date")" Clearable Dense /></div>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyFilter"
                    StartIcon="@Icons.Material.Filled.FilterAlt">
             @T("Filtern", "Filter")

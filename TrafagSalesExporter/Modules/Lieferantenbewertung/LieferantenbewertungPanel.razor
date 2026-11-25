@@ -99,7 +99,7 @@
                 @if (_darf)
                 {
                     <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-2">
-                        <MudDatePicker Label="@T("Bewertungsdatum", "Rating date")" @bind-Date="_bewDatum" DateFormat="dd.MM.yyyy" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:200px" />
+                        <div style="width:200px"><MudDatePicker Label="@T("Bewertungsdatum", "Rating date")" @bind-Date="_bewDatum" DateFormat="dd.MM.yyyy" Editable="true" Culture="@DeCh" Variant="Variant.Outlined" Margin="Margin.Dense" /></div>
                         <MudTextField @bind-Value="_bewVerantwortlich" Label="@T("Verantwortlich", "Responsible")" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:260px" />
                     </MudStack>
                     <MudSimpleTable Dense="true" Hover="true" Class="mb-2">
@@ -179,7 +179,7 @@
                     </MudSelect>
                     <MudTextField @bind-Value="_zert.Nummer" Label="@T("Nummer", "Number")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:160px" />
                     <MudCheckBox T="bool" @bind-Value="_zert.Vorhanden" Label="@T("vorhanden", "available")" Dense="true" />
-                    <MudDatePicker Label="@T("Gültig bis", "Valid until")" Date="@ZuDatum(_zert.GueltigBis)" DateChanged="@(d => _zert.GueltigBis = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <div style="width:170px"><MudDatePicker Label="@T("Gültig bis", "Valid until")" Date="@ZuDatum(_zert.GueltigBis)" DateChanged="@(d => _zert.GueltigBis = VonDatum(d))" DateFormat="dd.MM.yyyy" Editable="true" Culture="@DeCh" Margin="Margin.Dense" Variant="Variant.Outlined" Clearable="true" /></div>
                     <MudTextField @bind-Value="_zert.Link" Label="@T("Link zur Ablage", "Link to storage")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:240px" />
                     <MudTextField @bind-Value="_zert.Bemerkung" Label="@T("Bemerkung", "Remark")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:200px" />
                     @SpeicherKnoepfe(_zert, () => Speichere(_zert, () => _zert = NeuesZertifikat()), () => _zert = NeuesZertifikat())
@@ -207,7 +207,7 @@
                 <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-2">
                     <MudTextField @bind-Value="_mass.Massnahme" Label="@T("Massnahme", "Measure")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:320px" />
                     <MudTextField @bind-Value="_mass.Verantwortung" Label="@T("Verantwortung", "Responsibility")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:200px" />
-                    <MudDatePicker Label="@T("Termin", "Due date")" Date="@ZuDatum(_mass.Termin)" DateChanged="@(d => _mass.Termin = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <div style="width:170px"><MudDatePicker Label="@T("Termin", "Due date")" Date="@ZuDatum(_mass.Termin)" DateChanged="@(d => _mass.Termin = VonDatum(d))" DateFormat="dd.MM.yyyy" Editable="true" Culture="@DeCh" Margin="Margin.Dense" Variant="Variant.Outlined" Clearable="true" /></div>
                     <MudSelect T="string" @bind-Value="_mass.Status" Label="@T("Status", "Status")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:150px">
                         @foreach (var s in LbKatalog.MassnahmeStatus) { <MudSelectItem T="string" Value="@s">@s</MudSelectItem> }
                     </MudSelect>
@@ -238,7 +238,7 @@
                     <MudSelect T="string" @bind-Value="_term.Art" Label="@T("Art", "Type")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:180px">
                         @foreach (var a in LbKatalog.TerminArten) { <MudSelectItem T="string" Value="@a">@a</MudSelectItem> }
                     </MudSelect>
-                    <MudDatePicker Label="@T("Datum", "Date")" Date="@ZuDatum(_term.Datum)" DateChanged="@(d => _term.Datum = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <div style="width:170px"><MudDatePicker Label="@T("Datum", "Date")" Date="@ZuDatum(_term.Datum)" DateChanged="@(d => _term.Datum = VonDatum(d))" DateFormat="dd.MM.yyyy" Editable="true" Culture="@DeCh" Margin="Margin.Dense" Variant="Variant.Outlined" Clearable="true" /></div>
                     <MudSelect T="string" @bind-Value="_term.Status" Label="@T("Status", "Status")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px">
                         @foreach (var s in LbKatalog.TerminStatus) { <MudSelectItem T="string" Value="@s">@s</MudSelectItem> }
                     </MudSelect>
@@ -276,7 +276,7 @@
                     <MudSelect T="string" @bind-Value="_dok.Typ" Label="@T("Typ", "Type")" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:230px">
                         @foreach (var t in LbKatalog.DokumentTypen) { <MudSelectItem T="string" Value="@t">@t</MudSelectItem> }
                     </MudSelect>
-                    <MudDatePicker Label="@T("Datum", "Date")" Date="@ZuDatum(_dok.Datum)" DateChanged="@(d => _dok.Datum = VonDatum(d))" DateFormat="dd.MM.yyyy" Margin="Margin.Dense" Variant="Variant.Outlined" Style="max-width:170px" Clearable="true" />
+                    <div style="width:170px"><MudDatePicker Label="@T("Datum", "Date")" Date="@ZuDatum(_dok.Datum)" DateChanged="@(d => _dok.Datum = VonDatum(d))" DateFormat="dd.MM.yyyy" Editable="true" Culture="@DeCh" Margin="Margin.Dense" Variant="Variant.Outlined" Clearable="true" /></div>
                     <MudTextField @bind-Value="_dok.Beschreibung" Label="@T("Beschreibung", "Description")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:240px" />
                     <MudTextField @bind-Value="_dok.Link" Label="@T("Link (Pfad oder URL)", "Link (path or URL)")" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width:300px" />
                     @SpeicherKnoepfe(_dok, () => Speichere(_dok, () => _dok = NeuesDokument()), () => _dok = NeuesDokument())
@@ -484,6 +484,9 @@
     private static LbTermin Kopie(LbTermin t) => new() { Id = t.Id, LieferantNr = t.LieferantNr, LieferantName = t.LieferantName, Art = t.Art, Datum = t.Datum, Status = t.Status, Ergebnis = t.Ergebnis, Bemerkung = t.Bemerkung };
     private static LbDokument Kopie(LbDokument o) => new() { Id = o.Id, LieferantNr = o.LieferantNr, LieferantName = o.LieferantName, Typ = o.Typ, Datum = o.Datum, Beschreibung = o.Beschreibung, Link = o.Link };
 
+    // 2026-11-25: Datumsfelder eintippbar (dd.MM.yyyy) und mit Schweizer Kultur geparst; Breite ueber einen umgebenden div,
+    // weil MudBlazor das Style des Pickers auch ins Kalenderfenster uebernimmt (Kalender war auf 170 px abgeschnitten).
+    private static readonly CultureInfo DeCh = CultureInfo.GetCultureInfo("de-CH");
     private static DateTime? ZuDatum(DateOnly? d) => d?.ToDateTime(TimeOnly.MinValue);
     private static DateOnly? VonDatum(DateTime? d) => d is { } x ? DateOnly.FromDateTime(x) : null;
     private static string Datum(DateOnly? d) => d?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "–";
