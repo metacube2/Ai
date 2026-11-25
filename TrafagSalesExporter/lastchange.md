@@ -1,5 +1,14 @@
 # Last Change
 
+## 2026-11-25 11:45: ZLO03 offene MK zu hoch (Meldung Armin B64344), Analyse
+
+- **Auftrag Ingo:** Mail Armin 11:03 nachstellen, Problem beschreiben, fixen; zuerst Analyse.
+- **Befund:** Die Zahl kommt aus `ZMD04_CALC-MKMNG`, gefuellt vom Job `Z_LO03_MD04_BATCH`. Der liest `EKAB` mit
+  `FOR ALL ENTRIES` ohne Abrufbeleg, gleiche Abrufmengen fallen zusammen. B64344: 4'032 + 4'424 = 8'456 (Armins Wert), richtig
+  2'120 bzw. 2'125 wie ME3M. T76 gelesen (RFC), P76 nicht gelesen, nichts geaendert.
+- **Offen:** Freigabe Fix (zwei Zeilen in T76, eigener Transport), Entscheid Armin zu abgelaufenen Kontrakten, drei weitere
+  Stellen mit gleichem Muster (MDBS, MSEG, AFPO). `zlo03/BEFUND_MKMNG_ABRUFE_2026-11-25.md`.
+
 ## 2026-11-25 11:00: Reiter „Lieferantenentwicklung“ deployed, Mailentwuerfe Einkauf in Outlook
 
 - **Auftrag Ingo:** Stand Handbestellwesen und Lieferantenmanagement, Entwuerfe oeffnen, Reiter „Lieferantenbewertung“ in

@@ -68,6 +68,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **CO-PA (KEA0): Ergebnisbereich 1000, Tabelle `CE11000`, Produktsparte `WWPSP`, Wertfelder des Nettoerloeses; Verkauf Shopfloor J4 ueber Fiori `C_SALESANALYTICSQRY_1_CDS`** (KEA0 gelesen 2026-11-02; `CE11000`/`WWPSP` schon seit Juni im Produktsparten-Mapping) | `docs/SHOPFLOOR_2026-10-07.md` Abschnitt 16 |
 | **Einkauf Materialanteil je Produktgruppe (Phase 2): `ZloTopDownSet` (ZLO03 FIX 25, `P_APP`), Struktur `ZSTR_ZLO_TOPDOWN`, Auftrag `T76K912785` (T76 aktiv 2026-11-02; laut Ingo am 2026-11-02 nach P76 importiert, Kopf der FIX-25-Datei)** | `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` |
 | **ZLO03 FIX 29 (Plan 2026-11-23): Stuecklisten fremdbeschaffter Teile nicht aufloesen, Schalter `p_nofrm`** (Befund Ingo: Rohmaterial unter Drehteilen zaehlt im Materialanteil doppelt) | `zlo03/PLAN_ZLO03_FREMDBESCHAFFUNG_2026-11-23.md` |
+| **ZLO03 „offene MK“ zu hoch (Befund 2026-11-25, Meldung Armin B64344)**: Job `Z_LO03_MD04_BATCH` zieht Abrufe gleicher Menge nur einmal ab; Fix wartet auf Freigabe | `zlo03/BEFUND_MKMNG_ABRUFE_2026-11-25.md` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |
 | Uebergabe Produktsparten-Zuordnung | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` |
