@@ -267,7 +267,7 @@ Details Plan Abschnitt 7.*
 HW_ZUKAUFSORT, Herkunft nicht geprueft); ZLO03 in P76 nur gelesen: 87 -> 75 Zeilen, dieselben 12 Komponenten fallen weg, 40731
 100.23 -> 86.83 CHF je Stueck (T76 hatte 106.26 -> 93.04). Selektionstext ist erledigt (REPT). Offen: Befund B65814, Info Armin.* *Erledigt 2026-11-24: Info Armin gesendet; B65814 von Armin bereinigt (Stueckliste und Arbeitsplan geloescht, wird komplett eingekauft); Liste weiterer F-Teile mit Stueckliste/Arbeitsplan aus P76 an Armin, `saptasks/zukauf_stuecklisten/NOTES.md`, Plan Abschnitt 10.*
 
-### I) „offene MK“ zu hoch: Abrufe gleicher Menge nur einmal abgezogen (2026-11-25, FIX 30 bis 34 in T76 aktiv, `T76K912950` nicht freigegeben)
+### I) „offene MK“ zu hoch: Abrufe gleicher Menge nur einmal abgezogen (2026-11-25, FIX 30 bis 34, `T76K912950` seit 25.11. 13:49 in P76)
 
 Meldung Armin 25.11.: Top-Down 61227, B64344 offene MK 8'456, ME3M 2'125. Ursache liegt nicht in `Z_ZLO03_TURBO2`, sondern im
 Job `Z_LO03_MD04_BATCH` (fuellt `ZMD04_CALC-MKMNG`): `EKAB` wird mit `FOR ALL ENTRIES` und nur `konnr, ktpnr, menge` gelesen,
@@ -287,6 +287,10 @@ offener Bestellmenge, `MSEG` 62 mit zu tiefem Verbrauch, `AFPO` 0; ~~**nicht gef
 C38774 Verbrauch +25'000, sieben Materialien wie vorab gerechnet; 499 von 500 Kontrollzeilen unveraendert (C21962 `GEPL_ZUG`
 +300, nicht geklaert, Feld vom Fix nicht beruehrt). Aktueller Quelltext `Z_LO03_MD04_BATCH_FIX34_2026-11-25.abap`. Offen:
 Freigabe/Import Ingo, Jobvariante P76, Befund 7.2.
+
+*Nachtrag 2026-11-25 14:40:* `T76K912950` in P76 importiert 13:49:32, RC 0 (SE01-Protokoll). Job `ZLO03_PRECALC` taeglich 06:00,
+Variante `ALLES360TAGE`; `P_KTABG` dort nicht gespeichert, wirkt mit Vorschlag X (wie von Armin gewollt). Erster Lauf mit dem neuen
+Stand 26.11. 06:00; danach B64344 = 2'125 pruefen. `FIX30_31_MKMNG_ABRUFE_2026-11-25.md` Abschnitt 7.
 
 ## Verifikationsplan
 

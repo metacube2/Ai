@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-25 13:35 (6.10: Datumsfelder eintippbar, Kalender nicht mehr abgeschnitten, deployed `8fbd718`); davor 2026-11-25 11:00 (6.9: Reiter heisst „Lieferantenentwicklung“, deployed `51142ed`, Mailentwurf an Armin/Marco in Outlook); davor 2026-11-20 13:20 (6.8: Pruefung im Chrome, Link mit `/BiDashboard`, A/B/C-Zahlen, kein Testeintrag); davor 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-25 14:40 (6.11: Knopf „Pfad kopieren“, Anfuehrungszeichen weg, deployed `c297e69`); davor 2026-11-25 13:35 (6.10: Datumsfelder eintippbar, Kalender nicht mehr abgeschnitten, deployed `8fbd718`); davor 2026-11-25 11:00 (6.9: Reiter heisst „Lieferantenentwicklung“, deployed `51142ed`, Mailentwurf an Armin/Marco in Outlook); davor 2026-11-20 13:20 (6.8: Pruefung im Chrome, Link mit `/BiDashboard`, A/B/C-Zahlen, kein Testeintrag); davor 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -423,3 +423,20 @@ Teilkalender an“.
   angesehen.
 * Die uebrigen Datumsfelder der App (HR, Einkauf-Zeitraum, Handbestellwesen, Einstellungen) hatten kein `Style` und sind nicht
   betroffen; sie bleiben nur per Kalender bedienbar.
+
+### 6.11 Dokument-Links: „Pfad kopieren“ statt Klick (2026-11-25, deployed 14:29 `c297e69`)
+
+Wunsch (Bild, Register Dokumente, Eintraege von Armin zu Fuchia Electron 70563): Pfad anklickbar, Ordner soll aufgehen.
+
+* **Geht nicht wie gewuenscht:** Chrome und Edge oeffnen lokale Pfade (`C:\…`, `\\Server\…`, `file://`) von einer https-Seite aus nicht
+  (6.8, geprueft 19.11.). Armins Pfade liegen zudem in seinem persoenlichen OneDrive (`C:\Users\gun\OneDrive - Trafag AG\99 Temp\…`),
+  Kollegen sehen sie nicht.
+* **Entscheid Ingo 25.11.:** Knopf „Pfad kopieren“ neben jedem Pfad (Zertifikate und Dokumente), Hinweis: fuer einen anklickbaren
+  Link in OneDrive/SharePoint „Link kopieren“ (https) eintragen. Dazu Anfuehrungszeichen um Pfade beim Speichern und in der Anzeige
+  entfernen (Explorer „Als Pfad kopieren“ liefert `"C:\…"`; so war der zweite Eintrag gespeichert).
+* **Code:** `LbKatalog.BereinigeLink`, Aufruf in `LbService.SpeichereAsync` (Zertifikat, Dokument) und in `LinkZelle`; Knopf mit
+  `navigator.clipboard.writeText` und Meldung „Pfad kopiert. Im Explorer Strg+L, dann Strg+V und Enter.“ Tests `BereinigeLink`
+  (8 Faelle) und Speichern; Suite 1'888/1'888.
+* **Produktiv geprueft (14:32):** beide Pfade mit Knopf, Anfuehrungszeichen in der Anzeige weg; Knopf gedrueckt, Zwischenablage
+  enthaelt den Pfad ohne Anfuehrungszeichen (111 Zeichen, endet auf `.docx`). In der Datenbank steht der zweite Eintrag noch mit
+  Anfuehrungszeichen; er wird beim naechsten Speichern bereinigt, Anzeige und Kopie sind schon sauber.

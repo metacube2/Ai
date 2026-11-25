@@ -1,5 +1,13 @@
 # Last Change
 
+## 2026-11-25 14:40: Transporte in P76 geprueft; Pfad kopieren deployed
+
+- **P76 (nur gelesen, Agent):** `T76K912906` 16.11. 16:10, `T76K912938` 20.11. 13:11, `T76K912940` 23.11. 10:30, `T76K912944` 25.11.
+  13:49:12, `T76K912950` 25.11. 13:49:32, alle RC 0 laut SE01-Protokoll, aktive Versionen tragen die Auftraege. Testauftraege
+  `T76K912926`/`928` nicht in P76. Job `ZLO03_PRECALC` (06:00, Variante `ALLES360TAGE`) rechnet ab 26.11. mit FIX 30 bis 34 und
+  `P_KTABG` X (Vorschlag, nicht gespeichert). Nicht gelesen: Quelltext in P76, Ankreuzfeld ATPCONFMRP.
+- **Lieferantenentwicklung:** Knopf „Pfad kopieren“, Anfuehrungszeichen weg, deployed 14:29 `c297e69`, im Chrome geprueft.
+
 ## 2026-11-25 13:35: Datumsfelder Lieferantenentwicklung, deployed `8fbd718`
 
 - **Meldung (Bild):** Zertifikate, „Gueltig bis“: Datum nicht eintippbar, Kalender nur teilweise sichtbar.

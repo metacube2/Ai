@@ -1,6 +1,6 @@
 # FIX 30 bis FIX 34 in `Z_LO03_MD04_BATCH`: offene Mengenkontraktmenge, offene Bestellmenge, Verbrauch (2026-11-25)
 
-Stand: 2026-11-25 13:15 (Abschnitt 6: FIX 32 bis 34 im selben Auftrag; der Dateiname nennt nur FIX 30/31, weil die Datei vorher angelegt wurde). **In T76/100 aktiv, Auftrag `T76K912950` (Aufgabe `T76K912951`), nicht freigegeben. P76 nicht beruehrt.**
+Stand: 2026-11-25 14:40 (Abschnitt 7: `T76K912950` in P76 importiert 13:49:32 RC 0, Job und Variante gelesen); davor 13:15 (Abschnitt 6: FIX 32 bis 34 im selben Auftrag; der Dateiname nennt nur FIX 30/31, weil die Datei vorher angelegt wurde). **In T76/100 aktiv, Auftrag `T76K912950` (Aufgabe `T76K912951`), nicht freigegeben. P76 nicht beruehrt.**
 Anlass und Ursache: `BEFUND_MKMNG_ABRUFE_2026-11-25.md` (Meldung Armin, B64344 in ZLO03 8'456 statt 2'125 wie ME3M).
 Auftrag Ingo 25.11.: „ja einbauen und testen im t. punkt 3 mach ein schalter“. Entscheid Armin 25.11. (Mail an Ingo):
 abgelaufene Kontrakte mit Restmenge zaehlen mit, „da wir eine offene Verpflichtung gegenueber dem Lieferanten haben“.
@@ -48,7 +48,7 @@ Wirksam in ZLO03 erst nach dem naechsten Lauf des Jobs nach dem Import.
 
 ## 4. Offen
 
-1. **Ingo:** `T76K912950` freigeben und nach P76 importieren.
+1. ~~**Ingo:** `T76K912950` freigeben und nach P76 importieren.~~ *Erledigt: freigegeben 13:48, in P76 importiert 13:49:32, RC 0 (Abschnitt 7).*
 2. **Vor dem Import pruefen (P76, braucht Ingos Freigabe zum Lesen):** dass in P76 der Stand vom 04.08.2026 laeuft
    (`T76K911441`). Der Transport bringt das ganze Programm; ein abweichender P76-Stand wuerde ueberschrieben. Nicht geprueft.
 3. **Nach dem Import:** Selektionsbild der Jobvariante in P76 ansehen. Eine bestehende Variante kennt `P_KTABG` nicht; dass sie dann
@@ -103,3 +103,23 @@ Abschnitt 4 Punkte 1 bis 4 gelten unveraendert, der Auftrag bringt jetzt alle fu
 ausser „offene MK“ auch offene Bestellmenge, deren Wert und der Verbrauch bei den betroffenen Materialien, jeweils nach oben.
 Das gehoert in die Antwort an Armin. Offen bleiben die Befunde aus dem Befund Abschnitt 7.2 („Wert offene MK“ mit Stueckkosten
 statt Kontraktpreis, alte Zeilen bei Loeschvormerkung).
+
+## 7. Import in P76 nachgeprueft (2026-11-25 14:40, Agent sap-t76, P76 nur gelesen)
+
+Auftrag Ingo: „alle transport im p pruefe“. Belege aus SE01-Transportprotokollen, Versionsverwaltung, SM37 und Variantenanzeige
+in P76 (eigene Sitzung, nichts gespeichert); die STMS-Importhistorie liess sich mit den Werkzeugen nicht blaettern.
+
+- **`T76K912950` importiert am 25.11.2026 13:49:32, beendet 13:49:33, RC 0.** Aktive Version von `Z_LO03_MD04_BATCH` in P76 traegt
+  `T76K912950`. P76 fuehrt nur die aktive Version; der Vorgaenger laut T76-Versionsliste ist `T76K911441` (04.08.2026), dessen Import
+  in P76 am 04.08.2026 10:35:10 mit RC 0 protokolliert ist; dazwischen kein anderer T76-Auftrag. Damit ist Punkt 4.2 nachtraeglich
+  belegt (ein Auftrag aus einem anderen System dazwischen ist ohne P76-Versionshistorie nicht ausgeschlossen, unwahrscheinlich).
+- Den Quelltext selbst konnten die P76-Werkzeuge nicht lesen; Beleg fuer den neuen Stand sind Auftrag und Zeit der aktiven Version und
+  der neue Parameter in der Variante (unten).
+- **Job `ZLO03_PRECALC`** (Ersteller KOI, taeglich 06:00, Klasse C), ein Schritt `Z_LO03_MD04_BATCH` mit Variante **`ALLES360TAGE`**
+  (Material 1 bis Z410, Werk 1100, vollstaendig, 360 Tage, `P_KTGUE` X, `P_TEST` leer). Letzter Lauf 25.11. 06:00:21 (1'680 s), also
+  noch mit dem alten Stand. **Erster Lauf mit FIX 30 bis 34: 26.11.2026 06:00.** Nur die erste Jobzeile war sichtbar; weitere Jobs mit
+  dem Programm sind nicht ausgeschlossen.
+- **`P_KTABG` in der Variante:** Zeile „Abgelaufene MK mit Restmenge“ mit X und dem SAP-Hinweis „Kein Wert fuer Parameter gespeichert
+  (ggf. neuer Parameter)“, also Vorschlagswert X. Das ist Armins Entscheid (abgelaufene Kontrakte mit Restmenge zaehlen); an der
+  Variante ist nichts zu aendern. Punkt 4.3 damit erledigt.
+- **Offen:** ab 26.11. nach 06:30 ZLO03 Top-Down 61227 bzw. `ZMD04_CALC` B64344 pruefen (Erwartung 2'125), Antwort an Armin.

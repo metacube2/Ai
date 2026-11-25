@@ -1,6 +1,6 @@
 # Z-Objekte aufraeumen: Analysereport `Z_KOI_ZOBJ_NUTZUNG`
 
-Stand: 2026-11-25 07:10 (Agent, Auftrag Ingo 24.11. „ja bau es in t100“). Report in T76 gebaut, aktiv und getestet; Transport `T76K912944` offen, nicht freigegeben.
+Stand: 2026-11-25 14:40: `T76K912944` von Ingo freigegeben (13:47) und in P76 importiert (25.11. 13:49:12, beendet 13:49:14, RC 0; aktive Version von `Z_KOI_ZOBJ_NUTZUNG` in P76 traegt den Auftrag, SE01-Protokoll, Agent nur lesend). Davor 07:10 (Agent, Auftrag Ingo 24.11. „ja bau es in t100“): Report in T76 gebaut, aktiv und getestet; ~~Transport `T76K912944` offen, nicht freigegeben~~.
 
 ## 0. Zweck
 
