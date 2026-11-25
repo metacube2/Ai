@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-25 11:00 (6.9: Reiter heisst „Lieferantenentwicklung“, deployed `51142ed`, Mailentwurf an Armin/Marco in Outlook); davor 2026-11-20 13:20 (6.8: Pruefung im Chrome, Link mit `/BiDashboard`, A/B/C-Zahlen, kein Testeintrag); davor 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-25 13:35 (6.10: Datumsfelder eintippbar, Kalender nicht mehr abgeschnitten, deployed `8fbd718`); davor 2026-11-25 11:00 (6.9: Reiter heisst „Lieferantenentwicklung“, deployed `51142ed`, Mailentwurf an Armin/Marco in Outlook); davor 2026-11-20 13:20 (6.8: Pruefung im Chrome, Link mit `/BiDashboard`, A/B/C-Zahlen, kein Testeintrag); davor 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -404,3 +404,22 @@ Adresse bleibt).
   Ladens irrefuehrend; ein Hinweis „wird geladen“ waere richtig.
 * **Mail an Armin und Marco:** Entwurf in Outlook (nicht gesendet), Betreff „Neuer Reiter „Lieferantenentwicklung“ im BI-Dashboard“,
   Text der Fassung vom 20.11. mit neuem Namen und Summe CHF 32.3 Mio. Versand durch Ingo.
+
+### 6.10 Datumsfelder: eintippbar, Kalender vollstaendig (2026-11-25, deployed 13:23 `8fbd718`)
+
+Meldung 25.11. (Bild, Register Zertifikate, Lieferant X-FAB Sarawak 71100): „Datum kann ich nicht eingeben und zeigt nur
+Teilkalender an“.
+
+* **Nachgestellt (Chrome, produktiv, nichts gespeichert):** Das Feld „Gueltig bis“ war schreibgeschuetzt (`readOnly`, Vorgabe von
+  `MudDatePicker`). Das Kalenderfenster war 170 px breit, der Kalender braucht mindestens 310 px; Fr, Sa und So fehlten.
+* **Ursache:** MudBlazor 7.15 uebernimmt das `Style` des Pickers auch in das Kalenderfenster (`mud-picker-popover-paper` hatte
+  `max-width:170px`). Gesetzt war `Style="max-width:170px"` bzw. `200px` an allen fuenf Datumsfeldern des Eingabeteils
+  (Bewertungsdatum, Gueltig bis, Termin, zweimal Datum) und am Datumsfilter der Protokollseite.
+* **Fix:** Breite ueber einen umgebenden `div`, nicht mehr am Picker; die fuenf Felder der Lieferantenentwicklung sind eintippbar
+  (`Editable`, `dd.MM.yyyy`, Kultur de-CH). Neuer Test `DatePickerMarkupTests` verbietet `Style` an Datumsfeldern in der ganzen
+  App. Suite 1'879/1'879, Zweig `lieferantenentwicklung-2511`.
+* **Produktiv geprueft (13:30):** „31.12.2027“ eingetippt, Kalender springt auf Fr, 31. Dez 2027; Fenster 310 px, alle sieben
+  Wochentage; Seite danach neu geladen, nichts gespeichert. Die Protokollseite ist nur ueber den Test abgedeckt, nicht im Browser
+  angesehen.
+* Die uebrigen Datumsfelder der App (HR, Einkauf-Zeitraum, Handbestellwesen, Einstellungen) hatten kein `Style` und sind nicht
+  betroffen; sie bleiben nur per Kalender bedienbar.

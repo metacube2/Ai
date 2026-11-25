@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-25 13:35: Datumsfelder Lieferantenentwicklung, deployed `8fbd718`
+
+- **Meldung (Bild):** Zertifikate, „Gueltig bis“: Datum nicht eintippbar, Kalender nur teilweise sichtbar.
+- **Ursache:** `Style="max-width:170px"` am `MudDatePicker` begrenzt auch das Kalenderfenster; Feld standardmaessig schreibgeschuetzt.
+- **Fix:** Breite ueber umgebenden `div` (5 Felder Lieferantenentwicklung, 1 Protokollseite), Felder der Lieferantenentwicklung
+  eintippbar (dd.MM.yyyy, de-CH); Test verbietet `Style` an Datumsfeldern app-weit. Suite 1'879/1'879, deployed 13:23, im Chrome geprueft.
+
 ## 2026-11-25 13:15: ZLO03 Job, FIX 32 bis 34 im selben Auftrag
 
 - **Auftrag Ingo:** „ja alle mitfixen“. FIX 32 (`MDBS` mit Einteilung), FIX 33 (`MSEG` mit Belegzeile), FIX 34 (`AFPO` mit Position)
