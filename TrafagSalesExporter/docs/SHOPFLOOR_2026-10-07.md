@@ -1,4 +1,4 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-25 06:50 (Abschnitt 28: Paket Fabio 24.11., Welle 1 deployed `d8e74d2`: Kommunikation Einkauf und Offene K-Auf entfernt, Materialverfuegbarkeit je KW, Radar Verzug Einkauf/GFS); davor bis 2026-11-20 12:55 (27.6: Patch 10 Forecast Suche/Filter deployed `e3248a4`); davor bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-25 12:30 (Abschnitt 28.9: Antwort Fabio 25.11. mit Entscheiden E1 bis E3 und Freigabe Meeting-Modus; davor 06:50, Abschnitt 28: Paket Fabio 24.11., Welle 1 deployed `d8e74d2`: Kommunikation Einkauf und Offene K-Auf entfernt, Materialverfuegbarkeit je KW, Radar Verzug Einkauf/GFS); davor bis 2026-11-20 12:55 (27.6: Patch 10 Forecast Suche/Filter deployed `e3248a4`); davor bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
@@ -1362,3 +1362,23 @@ Einzelheiten, Messwerte und Antwortentwurf: `docs/shopfloor_paket_2026-11-24/Ant
   VF/WE-Spalten (Punkt 7) in einem T76-Plan und einem Transport; P76-Pruefungen Punkt 8 (aktueller Stichtag gegen ZC22 `/P00 TX`,
   Naechster Vorgang gegen MD04; TX +765 vom 17.11. auftragsgenau nicht mehr pruefbar, Auftragsliste erst ab 20.11.); Meeting-Modus nur
   Vorschlag (Punkt 6).
+
+### 28.9 Antwort Fabio 25.11. 11:54 (nur aufgenommen, nichts gebaut)
+
+Mail „AW: Shopfloor: Patch 10 Forecast, FPY, Rueckmeldungen Teamleiter und Einkauf“, Antwort auf Ingos Mail von 08:07.
+
+| Punkt | Antwort Fabio | Folge |
+| --- | --- | --- |
+| 4 Horizont | heute + 3 Arbeitstage nach Fabrikkalender CH bestaetigt; Position ohne Unterdeckungsdatum zaehlt als im Horizont: bestaetigt | nichts zu tun |
+| 4 Zaehler | Fabio klaert mit Marco Widmer, dass der Einkauf die Codes ab sofort im Board setzt | wartet auf Fabio |
+| 5 GFS TR5/TX | Fabio schaut die Abweichung mit Marco an, zuerst RS-TR5-26-206 | wartet auf Fabio |
+| 5 Rueckstandslisten | **Platzhalter nicht ausgefuellt** („[Ich schicke dir den aktuellen Excel-Export bis … / Bitte importiere die aktuelle Version aus …]“) | Rueckfrage noetig |
+| 5 TX-Tagesmengen | kommen mit dem MES-Zugang, Fabio fragt bei Marco Di Menco nach | wartet |
+| 6 Meeting-Modus | **freigegeben wie vorgeschlagen:** gelb ab 10 % unter Tagesziel, rot ab 20 % darunter, Hinweis ab 20 % darueber; drei Arbeitstage in Folge unter Ziel hervorheben; Code 2 und Rueckstaende immer sichtbar und zuerst; Schwellen in der Konfiguration | bauen (noch nicht begonnen) |
+| 6 SEH | **Platzhalter nicht ausgefuellt** („[vorerst ausnehmen / festes Tagesziel von … Stk.]“) | Rueckfrage noetig; bis dahin SEH ausnehmen waere die vorsichtige Wahl |
+| 7 E1 | letzte bestaetigte Einteilung | `saptasks/shopfloor_sap/PLAN_WELLE2_2026-11-25.md` 10 |
+| 7 E2 | nur Eigenfertigung, ohne Beschaffungsart F | ebenda |
+| 7 E3 | SAP-Nenner ist Standard, von Hand ueberschreibbar, Kennzeichen im Board | ebenda; Board braucht ein Kennzeichen je Woche |
+| 8 Pruefungen | fuer Fabio geklaert (Zeitversatz); Hinweis ZC22 „Mit Vorgangsdaten“ gibt er an die Disponenten | erledigt |
+
+Offen bei Ingo: Freigabe Plan Welle 2 samt E4 (Nachtrag 1b), Rueckfrage an Fabio zu den zwei Platzhaltern.

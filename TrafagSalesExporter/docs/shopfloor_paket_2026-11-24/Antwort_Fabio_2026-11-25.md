@@ -74,3 +74,9 @@ Einzelheiten: `saptasks/shopfloor_sap/P76_PRUEFUNG_PAKET2411_2026-11-25.md`. Von
 - ~~**Punkt 8 P76-Pruefungen**: nach dem laufenden T76-Auftrag.~~ *Erledigt 25.11. 07:21, siehe oben.* Nicht geprueft: Verzugsspruenge 18./19.11.
   (stehen schon in `P76_URSACHEN_2026-11-19.md`: echt, Auftraege ueber die Stichtagsgrenze).
 - **Punkt 2 FPY:** nichts zu tun, MES-/OfenManagement-Zugang bei Marco Di Menco angefragt.
+
+## Antwort Fabio 25.11. 11:54
+
+Entscheide E1 (letzte Einteilung), E2 (nur Eigenfertigung), E3 (SAP-Nenner Standard, von Hand ueberschreibbar, Kennzeichen) und
+Freigabe des Meeting-Modus liegen vor. Zwei Platzhalter in seiner Mail sind nicht ausgefuellt (Weg fuer die aktuellen
+Rueckstandslisten; SEH ausnehmen oder festes Tagesziel). Tabelle: `docs/SHOPFLOOR_2026-10-07.md` 28.9.

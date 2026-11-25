@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-25 12:30: Shopfloor, Antwort Fabio aufgenommen (nur Doku)
+
+- Mail Fabio 11:54: E1 letzte bestaetigte Einteilung, E2 nur Eigenfertigung, E3 SAP-Nenner Standard und von Hand ueberschreibbar
+  mit Kennzeichen; Meeting-Modus wie vorgeschlagen freigegeben. Zwei Platzhalter nicht ausgefuellt (Rueckstandslisten-Import,
+  SEH). Nichts gebaut. `docs/SHOPFLOOR_2026-10-07.md` 28.9, `saptasks/shopfloor_sap/PLAN_WELLE2_2026-11-25.md` 10.
+
 ## 2026-11-25 11:45: ZLO03 offene MK zu hoch (Meldung Armin B64344), Analyse
 
 - **Auftrag Ingo:** Mail Armin 11:03 nachstellen, Problem beschreiben, fixen; zuerst Analyse.
