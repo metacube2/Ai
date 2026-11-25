@@ -178,6 +178,9 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `zlo03/PLAN_ZLO03_FREMDBESCHAFFUNG_2026-11-23.md` | Plan FIX 29: Schalter in `Z_ZLO03_TURBO2`, damit Stuecklisten fremdbeschaffter Teile (BESKZ F) im Materialanteil nicht aufgeloest werden; Belege aus T76, Entscheide E1 bis E5; nichts geaendert |
 | `zlo03/BEFUND_MKMNG_ABRUFE_2026-11-25.md` | Befund: ZLO03 „offene MK“ zu hoch (B64344 8'456 statt 2'125), `Z_LO03_MD04_BATCH` zieht Abrufe gleicher Menge nur einmal ab (`EKAB` mit `FOR ALL ENTRIES` ohne Abrufbeleg); Fix-Vorschlag, wartet auf Freigabe |
 | `zlo03/Z_LO03_MD04_BATCH_T76_2026-11-25.abap` | Quelltext des Jobs `Z_LO03_MD04_BATCH` (fuellt `ZMD04_CALC`), aus T76/100 gelesen am 2026-11-25, unveraendert |
+| `zlo03/FIX30_31_MKMNG_ABRUFE_2026-11-25.md` | FIX 30/31 im Job `Z_LO03_MD04_BATCH`: Abrufe einzeln zaehlen, Schalter `P_KTABG` fuer abgelaufene Kontrakte mit Restmenge (Vorschlag an); Test T76, Auftrag `T76K912950` nicht freigegeben, offene Punkte |
+| `zlo03/Z_LO03_MD04_BATCH_FIX31_2026-11-25.abap` | Quelltext des Jobs mit FIX 30 und FIX 31, zeichengleich mit T76/100 (zurueckgelesen 2026-11-25) |
+| `zlo03/fix30_31_belege/` | Testlisten des Jobs vorher, nachher, nachher mit Schalter und die geaenderten Materialien (T76, 2026-11-25) |
 | `zlo03/BEFUND_SPRACHE_MATERIALANTEIL_2026-11-18.md` | Befund Materialanteil: ZLO03-Anfrage englisch, Einkaufsteile ohne englischen Kurztext fehlten (Meldung Armin 10.08.00); Korrektur im Dashboard `1417a3a`, Vorschlag fuer die ZLO03 |
 | `zlo03/FIX25_APP_EXPORT_2026-11-02.md`, `zlo03/Z_ZLO03_TURBO2_FIX25_2026-11-02.abap`, `docs/abap/ZZLO_TOPDOWN_ADD.abap` | ZLO03 FIX 25 und `ZloTopDownSet` fuer den Materialanteil je Produktgruppe (T76 aktiv, `T76K912785`, laut Ingo am 2026-11-02 nach P76 importiert) |
 | `docs/EINKAUF_PRUEFUNG_2026-11-05.md` | Funktionspruefung aller Einkauf-Ansichten im Produktivdashboard (05.11.), Fehlerliste F1-F10 |

@@ -1,6 +1,6 @@
 # ZLO03: „offene MK“ zu hoch, Abrufe mit gleicher Menge werden nur einmal abgezogen (B64344)
 
-Stand: 2026-11-25 (Analyse, nichts geaendert; Fix wartet auf Freigabe Ingo). Anlass: Mail Armin 25.11. 11:03
+Stand: 2026-11-25 12:45 (Abschnitt 7: Fix in T76 gebaut und getestet, `T76K912950` nicht freigegeben; uebrige Felder des Jobs geprueft); davor 11:45 (Analyse, nichts geaendert; Fix wartet auf Freigabe Ingo). Anlass: Mail Armin 25.11. 11:03
 „ZLO03 / offene Mengenkontraktmenge“: ZLO03 Top-Down VKNR 61227 zeigt fuer **B64344** offene MK **8'456** St
 (Wert offene MK 164'046.4), ME3M zeigt offene Zielmenge **2'125** St.
 
@@ -87,3 +87,46 @@ Ob diese drei in den Daten tatsaechlich Abweichungen erzeugen, ist offen. Sie we
    aus 46009174) oder nur heute gueltige (heutiges Verhalten des Jobs mit `p_ktgue`)?
 5. **Entscheid Ingo:** die drei Stellen aus Abschnitt 5 im selben Transport mitnehmen (aendert `OMENG` und Verbrauch bei
    betroffenen Materialien) oder zuerst zaehlen, wie viele Materialien es trifft.
+
+## 7. Nachtrag 2026-11-25 12:45: Fix gebaut, uebrige Felder des Jobs geprueft
+
+**Fix:** FIX 30 und FIX 31 sind in T76 aktiv (`T76K912950`, nicht freigegeben), siehe `FIX30_31_MKMNG_ABRUFE_2026-11-25.md`. Die
+Abschnitte 3 („noch nicht testweise gelaufen“) und 6 (Vorschlag) sind damit ueberholt: der alte Stand lieferte in T76 wie
+vorhergesagt 9'032, der neue 5'000 bzw. 5'005 mit Schalter.
+
+**Frage Ingo 25.11.:** „sind die anderen Felder hoffentlich korrekt oder aehnliches Problem, wir wiegen uns in falscher
+Sicherheit“. Geprueft: der ganze Job `Z_LO03_MD04_BATCH` (Quelltext) und die drei Stellen aus Abschnitt 5 mit T76-Daten (RFC,
+Datenstand etwa Mai 2026, Werk 1100). **Nicht geprueft:** P76, und die Spalten, die `Z_ZLO03_TURBO2` selbst rechnet (Bedarf,
+Stueckkosten, Exklusiv im Top-Down).
+
+### 7.1 Gleiches Muster, mit Daten nachgezaehlt (ersetzt „nicht nachgerechnet“ in Abschnitt 5)
+
+| Stelle | Feld in ZLO03 | gelesen | zusammenfallende Zeilen | betroffene Materialien | Richtung | groesste Faelle |
+| --- | --- | --- | --- | --- | --- | --- |
+| `MDBS` ohne `ETENR` | offene Bestellmenge (`OMENG`, `OWERT`) | 1'151 Einteilungen, 615 Materialien | 14 Gruppen | **12** | zu tief, zusammen 65'720 | C34974 41'600 statt 70'400; B61003 33'000 statt 53'000; D34612 9'120 statt 15'360 |
+| `MSEG` ohne `ZEILE` | Verbrauch (`VERBR`), Teil Kundeneinzelbestand | 8'925 Belegzeilen, 3'285 Materialien | 79 Gruppen | **62** | zu tief | C38774 30'000 statt 55'000; K70758 2'000 statt 10'000; C10312 11'000 statt 16'000; C15316 5'000 statt 10'000 |
+| `AFPO` ohne `POSNR` | offene Fertigungsmenge (in `OMENG`) | 2'199 Positionen | 0 | 0 | kein Fall | |
+
+Die Zahlen bei `MSEG` betreffen nur den Teil des Verbrauchs aus Kundeneinzelbestand (Bewegungsarten 601, 602, 651, 654); der
+Teil aus `VERBRAUCH_SUMMIEREN` kommt dazu und ist nicht betroffen. Ein Fix waere je Stelle eine Zeile (Schluesselfeld mitlesen),
+wie FIX 30. **Nicht gebaut**, Entscheid Ingo.
+
+### 7.2 Weitere Befunde aus dem Quelltext (nicht mit P76-Daten belegt)
+
+1. **„Wert offene MK“ ist kein Kontraktwert.** `OMKWR` = offene Menge mal Stueckkosten des Materials (`MBEW`: gleitender Preis
+   bei `VPRSV` = V, sonst Standardpreis, je `PEINH`), nicht mal Kontraktpreis. Beleg T76 B64344: 5'005 St, `OMKWR` 77'127.05, also
+   15.41 CHF je Stueck; der Kontraktpreis in `EKPO-NETPR` ist 15.64 **EUR**. Ob das so gewollt ist, muss Armin sagen.
+2. **Alte Zeilen bleiben stehen.** Der Job rechnet nur Materialien ohne Loeschvormerkung und loescht nie. Bekommt ein Material
+   spaeter eine Loeschvormerkung, bleibt sein letzter Wert in `ZMD04_CALC`. Beleg T76: B64072 `MKMNG` −102 vom 02.12.2025
+   (negativ, aus der ersten Programmfassung), heute nicht mehr gerechnet. In P76 nicht geprueft; sichtbar wird es in ZLO03 nur
+   mit „Loeschvormerkung anzeigen“.
+3. **Zeilen ohne Materialnummer.** Positionen ohne Material (vermutlich Textpositionen) werden unter einer leeren
+   Materialnummer summiert (T76: `MKMNG` 14'958, `OMENG` 64'443.5), dazu eine Zeile `XXXXXX`. Vermutlich folgenlos.
+4. **Exklusiv im Job.** `EXKLUSIV` und `EXKL_COUNT` gelten relativ zur Selektion des Joblaufs, und der Zaehler bricht bei der ersten
+   Verwendung ab, die die Exklusivitaet aufhebt. ZLO03 rechnet die Exklusivitaet im Top-Down selbst
+   (`EXKLUSIV_LOGIK_2026-10-08.md`); ob die Job-Felder irgendwo angezeigt werden, ist nicht geprueft.
+5. **MD04-Elemente.** Ein unbekanntes Dispoelement (`DELKZ`) zaehlt als fester Zu- bzw. Abgang; die Liste der unbekannten
+   erscheint nur im Dialoglauf. Welche in P76 vorkommen, ist nicht geprueft.
+6. **`ZMD04_CONTROL`:** `LAST_FULL_RUN` wird auch nach einem Teillauf gesetzt; betrifft nur den Modus „Automatisch“.
+7. **Materialnummern-Format:** In T76 stehen numerische Komponenten in `ZPOWERBI_VC_TXT` mit fuehrenden Nullen wie in `MARA`,
+   der Job findet sie also. Fuer P76 nicht geprueft (bekannte Datenfalle 2 in `CLAUDE.md`).

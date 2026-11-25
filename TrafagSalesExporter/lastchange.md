@@ -1,5 +1,16 @@
 # Last Change
 
+## 2026-11-25 12:45: ZLO03 offene MK, FIX 30/31 in T76 gebaut und getestet
+
+- **Auftrag Ingo:** „ja einbauen und testen im t. punkt 3 mach ein schalter“; Entscheid Armin: abgelaufene Kontrakte mit Restmenge
+  zaehlen mit (2'125).
+- **T76:** Job `Z_LO03_MD04_BATCH` mit FIX 30 (Abrufe einzeln) und FIX 31 (Schalter `P_KTABG`, Vorschlag an), Auftrag `T76K912950`,
+  **nicht freigegeben**. B64344 in T76 9'032 -> 5'005, 16 Materialien gegen eigene Rechnung aus EKPO/EKAB gleich. P76 nicht beruehrt.
+- **Uebrige Felder:** gleiches Muster nachgezaehlt (offene Bestellmenge 12 Materialien, Verbrauch 62 Materialien zu tief),
+  nicht gefixt; weitere Befunde im Befund Abschnitt 7 („Wert offene MK“ rechnet mit Stueckkosten statt Kontraktpreis).
+- **Offen Ingo:** Freigabe und Import, vorher P76-Stand des Jobs vergleichen, danach Jobvariante und B64344 = 2'125 pruefen;
+  Entscheid zu MDBS/MSEG. `zlo03/FIX30_31_MKMNG_ABRUFE_2026-11-25.md`.
+
 ## 2026-11-25 12:30: Shopfloor, Antwort Fabio aufgenommen (nur Doku)
 
 - Mail Fabio 11:54: E1 letzte bestaetigte Einteilung, E2 nur Eigenfertigung, E3 SAP-Nenner Standard und von Hand ueberschreibbar
