@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-25 07:20: Z-Objekte aufraeumen, Analysereport in T76
+
+- Report `Z_KOI_ZOBJ_NUTZUNG` (lesend, Paket ZPP) in T76/100 aktiv: je Z-/Y-Objekt Paket, Autor, Aenderung, Verwender, Jobs,
+  Rollen/TCodes, ST03N-Nutzung und Einstufung genutzt/indirekt/tot/unklar, Excel-Export. Auftrag `T76K912944` offen.
+- **Ingo:** Auftrag freigeben und nach P76 importieren, ST03N-Aufbewahrung und SCMON mit Basis klaeren, Report einmal ausfuehren.
+  `saptasks/zobj_aufraeumen/NOTES.md` 7.
+
 ## 2026-11-25 06:45: Shopfloor Paket Fabio 24.11., Welle 1 deployed
 
 - `d8e74d2`: Kommunikationstool Einkauf und Feld „Offene K-Auf“ entfernt, A/B/C bei Code 2 weg; Materialverfuegbarkeit je KW

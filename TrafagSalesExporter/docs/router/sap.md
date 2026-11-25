@@ -1,6 +1,6 @@
 # Unterrouter SAP
 
-Zurueck: `router.md`. Stand: 2026-11-18 (IC-Zeile: Tests Fabio T161V/T441V und Analyse ZBA1 nachgetragen); davor 2026-11-12 (ZC12 Plan Wert 0/Laufzeit, SAP-Quellen Lieferantenbewertung, IC V1 von Fabio getestet; Doku-Pruefung: RFC ohne Passworteingabe, Importstaende ZREICHW/ZLO03, ZZPRDAT-Stand, fehlende Notizen verlinkt, P76-Server, Alter der T76-Kopie); davor 2026-11-11 (IC-Preisfindung nachgetragen, V1 ZICAA1 in T76); davor 2026-11-03 (ZC22 Banf-Abruf statt Kundenauftrag; ZREICHW schnelle Fassung uebernommen); davor 2026-11-02 (CO-PA/KEA0 fuer den Shopfloor), 2026-10-22 (ZLO03 FIX 20).
+Zurueck: `router.md`. Stand: 2026-11-25 (Zeile Z-Objekte aufraeumen, Report `Z_KOI_ZOBJ_NUTZUNG`, `T76K912944`); davor 2026-11-18 (IC-Zeile: Tests Fabio T161V/T441V und Analyse ZBA1 nachgetragen); davor 2026-11-12 (ZC12 Plan Wert 0/Laufzeit, SAP-Quellen Lieferantenbewertung, IC V1 von Fabio getestet; Doku-Pruefung: RFC ohne Passworteingabe, Importstaende ZREICHW/ZLO03, ZZPRDAT-Stand, fehlende Notizen verlinkt, P76-Server, Alter der T76-Kopie); davor 2026-11-11 (IC-Preisfindung nachgetragen, V1 ZICAA1 in T76); davor 2026-11-03 (ZC22 Banf-Abruf statt Kundenauftrag; ZREICHW schnelle Fassung uebernommen); davor 2026-11-02 (CO-PA/KEA0 fuer den Shopfloor), 2026-10-22 (ZLO03 FIX 20).
 
 ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation, OData/Gateway.
 
@@ -94,6 +94,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | **`CoPaSumSet` (Verkauf AE / Umsatz IST aus CO-PA `CE11000` fuer das Shopfloor-Cockpit), Auftrag `T76K912866`, T76 aktiv, nicht freigegeben (Stand der Notiz 2026-11-10)** (nachgetragen 2026-11-12; *`T76K912866` seit 12.11. in P76; seit 13.11. Filter `Hzdat` in `T76K912906`, offen*) | `saptasks/copa_verkauf/NOTES.md` |
 | **Shopfloor Layoutfilter (P76-Befund 13.11.): ZC22-Layout `/ P00 TX` und ZC27-Layout `/NIN`; `ShopRmSet` Filter `Matex`, `ShopAufSet` `Sttxt`/`Arbpl`/`Vornr`/`Avo`; Auftrag `T76K912906` (mit CoPaSumSet Hzdat; *seit 2026-11-16 in P76, Status- und Materialfilter im Cockpit eingeschaltet, Abnahme `P76_ABNAHME_2026-11-16.md`, `docs/SHOPFLOOR_2026-10-07.md` 23; ueberholt: „T76 aktiv, offen“*)** | `saptasks/shopfloor_sap/P76_BEFUND_2026-11-13.md`, `P76_ABNAHME_2026-11-16.md`, `PLAN_LAYOUTFILTER_2026-11-13.md`, `NOTES.md` 10 |
 | Rexx-Schnittstelle nach SAP: Befund (T76 gelesen), Idee Tagesjob, Entscheid Rexx Hub; fuehrender Ast ist HR (nachgetragen 2026-11-12) | `saptasks/rexx_schnittstelle/NOTES.md`, Einordnung in `docs/router/hr.md` |
+| **Z-Objekte aufraeumen: lesender Report `Z_KOI_ZOBJ_NUTZUNG`** (Einstufung genutzt/indirekt/tot/unklar aus TADIR, ST03N `SWNC_COLLECTOR_GET_AGGREGATES`, CROSS/WBCROSSGT/D010INC, TNAPR, TSTC/AGR_TCODES, TBTCO/TBTCP; SCMON/SUSG in T76 leer), Paket ZPP, **Auftrag `T76K912944`, T76 aktiv, nicht freigegeben** (Stand 2026-11-25) | `saptasks/zobj_aufraeumen/NOTES.md` (Abschnitt 7: Schritte fuer P76), Quelltext `Z_KOI_ZOBJ_NUTZUNG.abap` |
 
 ## Systeme
 
