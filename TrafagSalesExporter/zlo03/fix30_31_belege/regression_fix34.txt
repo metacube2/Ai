@@ -1,0 +1,4 @@
+Regression Stand FIX 31 gegen FIX 34, 500 Zeilen (B64000-B64999 und Komponenten), T76, 2026-11-25
+gleich: 499
+geaendert: 1
+C21962: GEPL_ZUG 6300.000 -> 6600.000

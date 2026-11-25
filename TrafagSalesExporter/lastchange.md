@@ -1,5 +1,13 @@
 # Last Change
 
+## 2026-11-25 13:15: ZLO03 Job, FIX 32 bis 34 im selben Auftrag
+
+- **Auftrag Ingo:** „ja alle mitfixen“. FIX 32 (`MDBS` mit Einteilung), FIX 33 (`MSEG` mit Belegzeile), FIX 34 (`AFPO` mit Position)
+  im Job `Z_LO03_MD04_BATCH`, T76 aktiv, selber Auftrag `T76K912950` (jetzt FIX 30 bis 34), **nicht freigegeben**.
+- **Test T76:** sieben Materialien wie vorab gerechnet (C34974 offene Bestellmenge 41'600 -> 70'400, C38774 Verbrauch +25'000);
+  499 von 500 Kontrollzeilen unveraendert, C21962 `GEPL_ZUG` +300 nicht geklaert (Feld vom Fix nicht beruehrt).
+- **Offen Ingo:** P76-Stand vergleichen, freigeben, importieren, Jobvariante ansehen, B64344 = 2'125 pruefen, Armin antworten.
+
 ## 2026-11-25 12:45: ZLO03 offene MK, FIX 30/31 in T76 gebaut und getestet
 
 - **Auftrag Ingo:** „ja einbauen und testen im t. punkt 3 mach ein schalter“; Entscheid Armin: abgelaufene Kontrakte mit Restmenge

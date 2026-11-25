@@ -1,6 +1,6 @@
 # ZLO03: „offene MK“ zu hoch, Abrufe mit gleicher Menge werden nur einmal abgezogen (B64344)
 
-Stand: 2026-11-25 12:45 (Abschnitt 7: Fix in T76 gebaut und getestet, `T76K912950` nicht freigegeben; uebrige Felder des Jobs geprueft); davor 11:45 (Analyse, nichts geaendert; Fix wartet auf Freigabe Ingo). Anlass: Mail Armin 25.11. 11:03
+Stand: 2026-11-25 13:15 (7.1: die drei weiteren Stellen sind mit FIX 32 bis 34 in T76 behoben); davor 12:45 (Abschnitt 7: Fix in T76 gebaut und getestet, `T76K912950` nicht freigegeben; uebrige Felder des Jobs geprueft); davor 11:45 (Analyse, nichts geaendert; Fix wartet auf Freigabe Ingo). Anlass: Mail Armin 25.11. 11:03
 „ZLO03 / offene Mengenkontraktmenge“: ZLO03 Top-Down VKNR 61227 zeigt fuer **B64344** offene MK **8'456** St
 (Wert offene MK 164'046.4), ME3M zeigt offene Zielmenge **2'125** St.
 
@@ -109,7 +109,7 @@ Stueckkosten, Exklusiv im Top-Down).
 
 Die Zahlen bei `MSEG` betreffen nur den Teil des Verbrauchs aus Kundeneinzelbestand (Bewegungsarten 601, 602, 651, 654); der
 Teil aus `VERBRAUCH_SUMMIEREN` kommt dazu und ist nicht betroffen. Ein Fix waere je Stelle eine Zeile (Schluesselfeld mitlesen),
-wie FIX 30. **Nicht gebaut**, Entscheid Ingo.
+wie FIX 30. ~~**Nicht gebaut**, Entscheid Ingo.~~ *Ueberholt 13:15: Ingo „ja alle mitfixen“, gebaut als FIX 32 (MDBS), FIX 33 (MSEG), FIX 34 (AFPO) im selben Auftrag `T76K912950`; Test an sieben Materialien trifft die Erwartung, `FIX30_31_MKMNG_ABRUFE_2026-11-25.md` Abschnitt 6.*
 
 ### 7.2 Weitere Befunde aus dem Quelltext (nicht mit P76-Daten belegt)
 

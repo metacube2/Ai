@@ -267,7 +267,7 @@ Details Plan Abschnitt 7.*
 HW_ZUKAUFSORT, Herkunft nicht geprueft); ZLO03 in P76 nur gelesen: 87 -> 75 Zeilen, dieselben 12 Komponenten fallen weg, 40731
 100.23 -> 86.83 CHF je Stueck (T76 hatte 106.26 -> 93.04). Selektionstext ist erledigt (REPT). Offen: Befund B65814, Info Armin.* *Erledigt 2026-11-24: Info Armin gesendet; B65814 von Armin bereinigt (Stueckliste und Arbeitsplan geloescht, wird komplett eingekauft); Liste weiterer F-Teile mit Stueckliste/Arbeitsplan aus P76 an Armin, `saptasks/zukauf_stuecklisten/NOTES.md`, Plan Abschnitt 10.*
 
-### I) „offene MK“ zu hoch: Abrufe gleicher Menge nur einmal abgezogen (2026-11-25, FIX 30/31 in T76 aktiv, `T76K912950` nicht freigegeben)
+### I) „offene MK“ zu hoch: Abrufe gleicher Menge nur einmal abgezogen (2026-11-25, FIX 30 bis 34 in T76 aktiv, `T76K912950` nicht freigegeben)
 
 Meldung Armin 25.11.: Top-Down 61227, B64344 offene MK 8'456, ME3M 2'125. Ursache liegt nicht in `Z_ZLO03_TURBO2`, sondern im
 Job `Z_LO03_MD04_BATCH` (fuellt `ZMD04_CALC-MKMNG`): `EKAB` wird mit `FOR ALL ENTRIES` und nur `konnr, ktpnr, menge` gelesen,
@@ -279,8 +279,14 @@ geaendert. Befund, Tragweite und Fix-Vorschlag: `BEFUND_MKMNG_ABRUFE_2026-11-25.
 Vorschlag an, Entscheid Armin) sind in T76 im Job `Z_LO03_MD04_BATCH` aktiv, Auftrag `T76K912950`, nicht freigegeben. Test B64344 in
 T76: 9'032 -> 5'000 -> 5'005 mit Schalter, gegen eigene Rechnung aus `EKPO`/`EKAB` bestaetigt; Erwartung P76 2'125. Die FIX-Nummern
 zaehlen die Reihe von `Z_ZLO03_TURBO2` weiter, stehen aber im Job. Nachgezaehlt in T76: `MDBS` 12 Materialien mit zu tiefer
-offener Bestellmenge, `MSEG` 62 mit zu tiefem Verbrauch, `AFPO` 0; **nicht gefixt**, Entscheid Ingo. Details
+offener Bestellmenge, `MSEG` 62 mit zu tiefem Verbrauch, `AFPO` 0; ~~**nicht gefixt**, Entscheid Ingo~~. Details
 `FIX30_31_MKMNG_ABRUFE_2026-11-25.md`, Befund Abschnitt 7.
+
+*Nachtrag 2026-11-25 13:15 (Ingo „ja alle mitfixen“):* **FIX 32** (`MDBS` mit `ETENR`), **FIX 33** (`MSEG` mit `ZEILE`), **FIX 34**
+(`AFPO` mit `POSNR`) im selben Job und selben Auftrag `T76K912950`, T76 aktiv. Test T76: C34974 offene Bestellmenge 41'600 -> 70'400,
+C38774 Verbrauch +25'000, sieben Materialien wie vorab gerechnet; 499 von 500 Kontrollzeilen unveraendert (C21962 `GEPL_ZUG`
++300, nicht geklaert, Feld vom Fix nicht beruehrt). Aktueller Quelltext `Z_LO03_MD04_BATCH_FIX34_2026-11-25.abap`. Offen:
+Freigabe/Import Ingo, Jobvariante P76, Befund 7.2.
 
 ## Verifikationsplan
 
@@ -414,3 +420,4 @@ Fall 4 ist der wichtigste — er ist der einzige, der FIX 10 wirklich beweist.
   `Z_LO03_MD04_BATCH`; Quelltext des Jobs aus T76: `Z_LO03_MD04_BATCH_T76_2026-11-25.abap` (vorher nicht im Repo)
 - `FIX30_31_MKMNG_ABRUFE_2026-11-25.md` — **FIX 30/31 im Job `Z_LO03_MD04_BATCH`** (Abrufe einzeln zaehlen, Schalter `P_KTABG`);
   Quelltext `Z_LO03_MD04_BATCH_FIX31_2026-11-25.abap`, Auftrag `T76K912950` (nicht freigegeben), Belege `fix30_31_belege/`
+  *(ergaenzt 13:15: dieselbe Datei beschreibt auch FIX 32 bis 34; aktueller Quelltext `Z_LO03_MD04_BATCH_FIX34_2026-11-25.abap`)*
