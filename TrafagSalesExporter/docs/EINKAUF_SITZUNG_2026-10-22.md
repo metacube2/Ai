@@ -1,6 +1,6 @@
 # Einkauf: Sitzung vom 2026-10-22
 
-Stand: 2026-11-20 13:20 (6.8: Pruefung im Chrome, Link mit `/BiDashboard`, A/B/C-Zahlen, kein Testeintrag); davor 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
+Stand: 2026-11-25 11:00 (6.9: Reiter heisst „Lieferantenentwicklung“, deployed `51142ed`, Mailentwurf an Armin/Marco in Outlook); davor 2026-11-20 13:20 (6.8: Pruefung im Chrome, Link mit `/BiDashboard`, A/B/C-Zahlen, kein Testeintrag); davor 2026-11-19 13:02 (6.8: Schreibrecht koi/gun/wid und Netzwerkpfade deployed `e8a8743`, Abnahme Erfassen/Uebersicht/Loeschen produktiv bestanden); davor 2026-11-19 11:41 (Abschnitt 6.8: eigener Reiter „Lieferantenbewertung“ mit Klasse A/B/C und Paket 2 deployed `7ae22c2`/`7b2ff9f`, ohne SAP-Score, Q2, Liefertreue). Davor 2026-11-18 08:20 (Abschnitt 6.7: Lieferanten-Klasse A/B/C deployed `f2c0267`; Abschnitt 6.6: Plan Paket 1; Abschnitt 6.5: Antwort Armin, A/B/C ueber den Dashboard-Zeitraum mit Disponenten 001-006, Themenfelder jederzeit, Preis Anfang Dezember). Davor 2026-11-17 (Abschnitt 6.4: Mail an Armin mit E1, E2 und Preis 0 % gesendet, nichts gebaut). Davor 2026-11-12 11:20 (Abschnitt 6 bis 6.3: Gespraech mit Marco Widmer, Strukturvorschlag, Rueckmeldung Armin mit Paket 1/2, Oscar OK, SAP-Quellen in T76 geklaert; Doku-Pruefung: Vermerke in 6 und 6.1, wo 6.2 und 6.3 sie ueberholen). Davor 2026-11-02 (Abschnitt 5: Dashboard-Entwurf Lieferantenbewertung V6 erhalten). Davor 2026-10-22. Quelle: Whisper-Transkript der Sitzung (Ingo mit Einkauf, u. a. Armin und Marco; Erich, Sandro als
 Feedbackgeber genannt). Das Transkript hat keine Sprecherzuordnung; Aussagen sind deshalb nur dort einer Person
 zugeordnet, wo es aus dem Gespraech eindeutig hervorgeht. Kein Wortprotokoll, nur Ergebnisse.
 
@@ -382,3 +382,25 @@ alle Disponenten CHF 34'767'422, Differenz erwartet). Sechs Register, „Bearbei
 kein neuer Testeintrag, weil er in der Uebersicht wie eine echte Bewertung aussaehe; der erste echte Eintrag von Armin gilt als
 fachliche Abnahme. Mailtext an Armin und Marco (Link, Klasse, sechs Register, Rechte, noch nicht enthalten, Bitte Summe A+B+C) liegt
 im Chat bei Ingo; Versand durch Ingo.
+
+### 6.9 Reiter heisst „Lieferantenentwicklung“ (2026-11-25, deployed 10:52 `51142ed`)
+
+Auftrag Ingo 25.11. („laferantwnbewert in entwikclung ädnern Lieferantenentwicklung“, Antwort auf Rueckfrage: Dashboard und Mail,
+Adresse bleibt).
+
+* **Geaendert:** Menue Einkauf > „Lieferantenentwicklung“ (EN „Supplier development“), Ueberschrift des Eingabeteils
+  „Lieferantenentwicklung“ (vorher „Lieferantenbewertung und -entwicklung“) und dessen Fehlermeldung. Bestehende Installationen
+  bekommen den Menuetitel beim Start (`DatabaseSeedService`, Sonderfall fuer den Schluessel `purchasing-supplier-evaluation`,
+  wie `finance-journal-import`); ein von Hand in Admin > Menuestruktur geaenderter Titel wird dabei ueberschrieben.
+* **Unveraendert:** Adresse `/einkauf/lieferantenbewertung` (Links in Mails gelten weiter), Menueschluessel, Modul- und
+  Klassennamen (`Modules/Lieferantenbewertung`), Konfiguration `Lieferantenbewertung:*`, Datenbank `lbdaten\lieferantenbewertung.db`.
+* **Code:** Zweig `lieferantenentwicklung-2511` ab Produktivstand `d8e74d2` (Worktree `C:\TMP\Ai_lbent2511`), Commit `51142ed`,
+  neuer Test `NavigationMenuSeedTests.SeedDefaults_Benennt_Lieferantenbewertung_In_Lieferantenentwicklung_Um` (zuerst rot),
+  Suite 1'877/1'877 im Worktree und im Release-Worktree.
+* **Produktiv geprueft (Chrome, 10:55):** Menue und Ueberschrift zeigen „Lieferantenentwicklung“. Klasse A/B/C 2026-01 bis 2026-11:
+  A 20 / 71.1 % / CHF 22'984'551, B 30 / 19.1 % / CHF 6'175'774, C 208 / 9.8 % / CHF 3'181'276, Summe CHF 32.3 Mio.
+* **Befund (nicht behoben):** Direkt nach dem Neustart zeigt die Klasse A/B/C „Keine Daten im gewaehlten Zeitraum.“, solange die
+  Einkaufsdaten noch laden (Kachel „Rechnet“); nach dem Laden und Neuladen der Seite stimmt sie. Der Hinweis ist waehrend des
+  Ladens irrefuehrend; ein Hinweis „wird geladen“ waere richtig.
+* **Mail an Armin und Marco:** Entwurf in Outlook (nicht gesendet), Betreff „Neuer Reiter „Lieferantenentwicklung“ im BI-Dashboard“,
+  Text der Fassung vom 20.11. mit neuem Namen und Summe CHF 32.3 Mio. Versand durch Ingo.

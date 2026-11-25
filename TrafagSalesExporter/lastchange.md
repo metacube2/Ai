@@ -1,5 +1,17 @@
 # Last Change
 
+## 2026-11-25 11:00: Reiter „Lieferantenentwicklung“ deployed, Mailentwuerfe Einkauf in Outlook
+
+- **Auftrag Ingo:** Stand Handbestellwesen und Lieferantenmanagement, Entwuerfe oeffnen, Reiter „Lieferantenbewertung“ in
+  „Lieferantenentwicklung“ umbenennen (Dashboard und Mail, Adresse bleibt).
+- **Code:** `51142ed` (Zweig `lieferantenentwicklung-2511` ab `d8e74d2`): Menue DE/EN und Ueberschrift, Seed benennt bestehende
+  Eintraege um, Test; 1'877/1'877. **Deployed 10:52**, im Chrome gesehen. `EINKAUF_SITZUNG` 6.9.
+- **Outlook-Entwuerfe (nicht gesendet):** (1) Handbestellwesen an Sandro/Vinc/Alex, Cc Armin, sieben Fragen vom 20.11.
+  (Zahl „ueber 400“ in Frage 6 offen); (2) Lieferantenentwicklung an Armin/Marco mit Link, Summe CHF 32.3 Mio.
+- **Mailstand Handbestellwesen:** letzte Rueckmeldung im Thread „PCBWin“ am 18.11.; seither keine Mail, die Einkaufsmail vom
+  20.11. war nicht gesendet. Mail mit Link Lieferantenbewertung an Armin/Marco vom 20.11. ebenfalls nicht gesendet.
+- **Befund:** Klasse A/B/C zeigt waehrend der Vorberechnung nach einem Neustart „Keine Daten“ statt „wird geladen“.
+
 ## 2026-11-25 07:20: Z-Objekte aufraeumen, Analysereport in T76
 
 - Report `Z_KOI_ZOBJ_NUTZUNG` (lesend, Paket ZPP) in T76/100 aktiv: je Z-/Y-Objekt Paket, Autor, Aenderung, Verwender, Jobs,
