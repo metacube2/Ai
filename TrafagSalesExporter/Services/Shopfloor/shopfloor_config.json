@@ -4312,21 +4312,6 @@
      "signed": true
     },
     {
-     "key": "offene_kauf",
-     "label": "Offene K-Auf",
-     "type": "num",
-     "col": "T",
-     "group": "Total",
-     "src": "sap",
-     "sap": {
-      "vorschlag_tabelle": "VBAK / VBUK",
-      "vorschlag_feld": "offene Kundenaufträge (Anzahl) – zu klären",
-      "vorschlag_odata": "API_SALES_ORDER_SRV",
-      "status": "offen",
-      "bemerkung": "Klären, ob das Feld noch gebraucht wird (Logistik)."
-     }
-    },
-    {
      "key": "ma1",
      "label": "MA Schicht 1 Früh",
      "type": "num",
@@ -4520,169 +4505,6 @@
      "label": "Status Bereich Bemerkung",
      "type": "text",
      "group": "Status Bereich"
-    }
-   ]
-  },
-  {
-   "key": "einkauf",
-   "kind": "list",
-   "sheet": "10. Einkauf",
-   "header_row": 3,
-   "title": "Kommunikationstool Einkauf ↔ Produktion / PPD",
-   "short": "Kommunikation",
-   "id_format": "PPA-KEP-{n:04}",
-   "due_field": "best_termin",
-   "status_field": "status",
-   "date_field": "datum",
-   "fields": [
-    {
-     "key": "datum",
-     "label": "Datum Eintrag",
-     "type": "date",
-     "col": "B",
-     "group": "Eingaben durch PPD / Produktion",
-     "list": true,
-     "default": "today"
-    },
-    {
-     "key": "eintrag",
-     "label": "Eintrag durch",
-     "type": "text",
-     "col": "C",
-     "group": "Eingaben durch PPD / Produktion",
-     "default": "user",
-     "list": true
-    },
-    {
-     "key": "von",
-     "label": "Anfrage von",
-     "type": "select",
-     "col": "D",
-     "opts": "bereich_kt",
-     "free": true,
-     "group": "Eingaben durch PPD / Produktion",
-     "list": true
-    },
-    {
-     "key": "an",
-     "label": "Anfrage an",
-     "type": "select",
-     "col": "E",
-     "opts": "bereich_kt",
-     "free": true,
-     "group": "Eingaben durch PPD / Produktion"
-    },
-    {
-     "key": "material",
-     "label": "Material",
-     "type": "text",
-     "col": "F",
-     "group": "Eingaben durch PPD / Produktion",
-     "list": true
-    },
-    {
-     "key": "menge",
-     "label": "Menge",
-     "type": "num",
-     "col": "G",
-     "group": "Eingaben durch PPD / Produktion",
-     "unit": "Stk.",
-     "list": true
-    },
-    {
-     "key": "we_sap",
-     "label": "WE aktuell gem. SAP",
-     "type": "date",
-     "col": "H",
-     "group": "Eingaben durch PPD / Produktion",
-     "src": "sap",
-     "list": true,
-     "sap": {
-      "vorschlag_tabelle": "EKET / EKES",
-      "vorschlag_feld": "geplanter Wareneingang der Bestellposition (EKET-EINDT, bestätigt EKES) – nicht geprüft",
-      "selektion": "über Bestellnummer und Material der Zeile",
-      "status": "definiert (Fabio 13./16.11.), nicht gebaut",
-      "bemerkung": "Gemeint ist der geplante, nicht der gebuchte Wareneingang."
-     }
-    },
-    {
-     "key": "wunschdatum",
-     "label": "Wunschlieferdatum",
-     "type": "date",
-     "col": "I",
-     "group": "Eingaben durch PPD / Produktion",
-     "list": true
-    },
-    {
-     "key": "prio",
-     "label": "Priorität / Anfragemodus",
-     "type": "select",
-     "col": "J",
-     "opts": "prio_kt",
-     "free": true,
-     "group": "Eingaben durch PPD / Produktion",
-     "list": true
-    },
-    {
-     "key": "bestellnr",
-     "label": "Bestellnummer",
-     "type": "text",
-     "col": "K",
-     "group": "Eingaben durch PPD / Produktion"
-    },
-    {
-     "key": "bemerkungen",
-     "label": "Bemerkungen",
-     "type": "long",
-     "col": "L",
-     "group": "Eingaben durch PPD / Produktion"
-    },
-    {
-     "key": "best_termin",
-     "label": "Bestmöglicher Termin",
-     "type": "date",
-     "col": "M",
-     "group": "Auszufüllen durch Einkauf",
-     "list": true
-    },
-    {
-     "key": "best_menge",
-     "label": "Menge",
-     "type": "num",
-     "col": "N",
-     "group": "Auszufüllen durch Einkauf",
-     "unit": "Stk."
-    },
-    {
-     "key": "bemerkungen_ek",
-     "label": "Bemerkungen Einkauf",
-     "type": "long",
-     "col": "O",
-     "group": "Auszufüllen durch Einkauf"
-    },
-    {
-     "key": "bearbeitet",
-     "label": "Bearbeitet durch",
-     "type": "text",
-     "col": "P",
-     "group": "Auszufüllen durch Einkauf"
-    },
-    {
-     "key": "status",
-     "label": "Status",
-     "type": "select",
-     "opts": "status",
-     "free": true,
-     "group": "Auszufüllen durch Einkauf",
-     "list": true,
-     "default": "offen"
-    },
-    {
-     "key": "abschluss",
-     "label": "Datum Abschluss",
-     "type": "date",
-     "col": "Q",
-     "group": "Auszufüllen durch Einkauf"
     }
    ]
   },
@@ -5273,12 +5095,6 @@
    "must": true
   },
   {
-   "label": "10.1 Kommunikation Einkauf ↔ Produktion",
-   "module": "einkauf",
-   "must": false,
-   "sub": true
-  },
-  {
    "label": "11. Verkauf",
    "module": "verkauf",
    "must": true
@@ -5383,15 +5199,6 @@
    "title": "vknr"
   },
   "czch": {
-   "notify": [
-    "an"
-   ],
-   "notify_done": [
-    "eintrag"
-   ],
-   "title": "material"
-  },
-  "einkauf": {
    "notify": [
     "an"
    ],

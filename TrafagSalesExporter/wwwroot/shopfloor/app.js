@@ -1251,7 +1251,7 @@ async function viewSchema() {
     <p class="muted" style="font-size:13px">Abteilungen werden über den Disponenten im Werk 1100 abgegrenzt: ${prefix}. Kursiv steht ein Vorschlag, der in SAP bzw. im MES noch nicht geprüft ist. Stand: 19.11.2026 (Paket Fabio 13.11., Ergänzung 17.11., Paket 19.11.).</p>
     <p class="muted" style="font-size:13px" id="vrListe">Auftragsliste des Vorrats je Stichtag (ShopAufSet Typ VR, Lauf 04:00, für den Abgleich mit ZC22): wird geladen …</p></div></div>
     <div class="tbl-wrap"><table class="schema"><thead><tr><th>Quelle</th><th>Modul</th><th>Feld</th><th>Technischer Name</th><th>Einheit</th><th>SAP-Tabelle · Feld</th><th>Selektion</th><th>Status</th><th>Bemerkung</th></tr></thead>
-    <tbody>${rows.map(({ m, f }) => { const s = f.sap || {}; return `<tr><td><span class="src ${f.planned_source}">${f.planned_source.toUpperCase()}</span></td><td>${esc(m.title)}</td><td>${esc(f.label)}</td><td><code>${esc(m.module)}.${esc(f.key)}</code></td><td>${esc(f.unit || "")}</td><td>${sapCell(s)}</td><td>${esc(s.selektion || "")}</td><td>${esc(s.status || "")}</td><td>${esc(s.bemerkung || "")}</td></tr>`; }).join("")}</tbody></table></div>`;
+    <tbody>${rows.map(({ m, f }) => { const s = f.sap || {}; return `<tr><td><span class="src ${f.planned_source}">${f.planned_source.toUpperCase()}</span></td><td>${esc(m.title)}</td><td>${esc(f.label)}</td><td><code>${esc(m.module)}.${esc(f.key)}</code></td><td>${esc(f.unit || "")}</td><td>${sapCell(s)}</td><td>${esc(s.selektion || "")}</td><td>${esc(s.status || "")}</td><td>${esc(s.bemerkung || "")}</td></tr>`; }).join("")}</tbody></table></div>`;
   try {
     const tage = await api("GET", "api/sap/vorrat/auftraege");
     const el = $("#vrListe");
@@ -1299,8 +1299,8 @@ async function viewZd05(day) {
   const q = new URLSearchParams(location.hash.split("?")[1] || "");
   day = day || q.get("day") || "";
   if (S.meeting && ZD.filter.only === "all") ZD.filter.only = "talk";   // im laufenden Shop-Floor direkt die zu besprechenden Positionen
-  const [d, h] = await Promise.all([api("GET", "api/zd05" + (day ? "?day=" + day : "")), api("GET", "api/zd05/history")]);
-  ZD.data = d; ZD.hist = h;
+  const [d, h, rd] = await Promise.all([api("GET", "api/zd05" + (day ? "?day=" + day : "")), api("GET", "api/zd05/history"), api("GET", "api/radar").catch(() => null)]);
+  ZD.data = d; ZD.hist = h; ZD.radar = rd;
   renderZd05();
 }
 function zdKpi() { const d = ZD.data; return d.kpi_fixed ? d.kpi : (d.kpi_live || d.kpi || {}); }
@@ -1312,7 +1312,6 @@ function renderZd05() {
   $("#view").innerHTML = `
   <div class="head"><div class="grow"><h1>Einkauf – Fehlteile ZD05</h1>
     <p class="lede">${d.day ? `Stand ${fmtDate(d.day)} · importiert ${esc(fmtDate(d.imported_at))} ${esc((d.imported_at || "").slice(11, 16))} von ${esc(d.imported_by || "")}` : "Noch kein ZD05-Export importiert."}</p></div>
-    <a class="btn" href="#/m/einkauf">Kommunikation Einkauf ↔ Produktion</a>
     <button class="btn" id="zdCsv" ${d.day ? "" : "disabled"}>Export (CSV)</button>
     <label class="btn signal" style="cursor:pointer">ZD05-Export importieren<input type="file" id="zdFile" accept=".xlsx,.csv,.txt,.tsv" hidden></label>
   </div>
@@ -1330,14 +1329,13 @@ function renderZd05() {
     <div class="kpi"><div class="kpi-top"><div><div class="v">${k.anzahl ?? "–"}</div><div class="l">Positionen bewertet${k.horizon ? ` (Unterdeckung bis ${fmtDate(k.horizon)})` : ""} · Summe ${k.summe ?? "–"} Pt.</div></div>
       ${k.anzahl != null && d.rows.length ? gxRing(k.anzahl / d.rows.length * 100, Math.round(k.anzahl / d.rows.length * 100) + " %") : ""}</div>
       ${k.anzahl != null && d.rows.length ? `<div class="muted" style="font-size:11.5px">${k.anzahl} von ${d.rows.length} Positionen im Horizont</div>` : ""}</div>
-    <div class="kpi ${k.code2 ? "alarm" : ""}"><div><div class="v">${k.code2 ?? 0}</div><div class="l">Fehlmaterial Kundenauftrag (Code 2)${k.c2_A != null ? ` · A ${k.c2_A} / B ${k.c2_B} / C ${k.c2_C}` : ""}</div></div>
-      ${k.c2_A != null ? gxMiniBars([{ lab: "A", val: k.c2_A || 0, od: k.c2_A || 0 }, { lab: "B", val: k.c2_B || 0, od: k.c2_B || 0 }, { lab: "C", val: k.c2_C || 0, od: k.c2_C || 0 }]) : ""}</div>
+    <div class="kpi ${k.code2 ? "alarm" : ""}"><div><div class="v">${k.code2 ?? 0}</div><div class="l">Fehlmaterial Kundenauftrag (Code 2) im Horizont</div></div></div>
     <div class="kpi"><div><div class="v">${d.rows.filter(r => r.neu).length}<span class="muted" style="font-size:18px"> neu · ${d.resolved.length} erledigt</span></div><div class="l">gegenüber ${d.prev_day ? fmtDate(d.prev_day) : "Vortag"}${(d.kpi_live || {}).ohne_code ? ` · <b style="color:var(--alarm)">${d.kpi_live.ohne_code} ohne Code</b>` : ""}</div></div>
       ${gxStack([{ cls: "s-new", n: d.rows.filter(r => r.neu).length, lab: "neu" }, { cls: "s-open", n: d.rows.filter(r => !r.neu).length, lab: "unverändert" }, { cls: "s-done", n: d.resolved.length, lab: "erledigt" }])}</div>
   </div>
   <div class="charts2">
     <div class="chart"><h3>Bewertungskennzahl pro Tag</h3><div class="legend"><span><i style="background:var(--brand)"></i>Kennzahl</span><span><i style="background:var(--alarm)"></i>Ziel ${f2(target)}</span></div>${zdTrendSvg()}</div>
-    <div class="chart"><h3>Pro KW: Materialverfügbarkeit und offene Bestellungen</h3><div class="legend">${(ZD.hist.weeks || []).some(w => w.mat_verf != null) ? '<span><i style="background:var(--ok)"></i>Materialverfügbarkeit %</span>' : ""}<span><i style="background:var(--ink);opacity:.25"></i>offene Bestellungen</span></div>${zdWeekSvg()}</div>
+    <div class="chart"><h3>Pro KW: Materialverfügbarkeit und offene Bestellungen</h3><div class="legend">${(ZD.hist.weeks || []).some(w => zdMv(w) != null) ? '<span><i style="background:var(--ok)"></i>Materialverfügbarkeit %</span>' : ""}<span><i style="background:var(--ink);opacity:.25"></i>offene Bestellungen</span></div>${zdWeekSvg()}</div>
   </div>
   <div class="toolbar">
     <input class="field-in search" id="zdQ" type="search" placeholder="Material, Text, Bemerkung …" value="${esc(ZD.filter.q)}">
@@ -1352,7 +1350,9 @@ function renderZd05() {
     <th>Code</th><th>Liefertermin</th><th style="min-width:200px;width:26%">Bemerkung Einkauf</th></tr></thead><tbody id="zdBody"></tbody></table></div>
   ${d.resolved.length ? `<h2>Seit ${fmtDate(d.prev_day)} nicht mehr auf der Liste (${d.resolved.length})</h2><div class="chips">${d.resolved.map(r => `<span class="chip" title="${esc(r.bemerkung || "")}"><b>${esc(r.material)}</b> ${esc((r.text || "").slice(0, 30))}</span>`).join("")}</div>` : ""}
   <h2>Kennzahlen pro KW</h2>
-  <div class="tbl-wrap" style="max-width:640px"><table class="zdw"><thead><tr><th>KW</th><th class="r">Materialverfügbarkeit %</th><th class="r">offene Bestellungen</th></tr></thead><tbody>${zdWeekRows()}</tbody></table></div>
+  <div class="tbl-wrap" style="max-width:880px"><table class="zdw"><thead><tr><th>KW</th><th class="r">Code 2 im Horizont (höchster Tag)</th><th class="r">Materialien bezogen (201/261)</th><th class="r">Materialverfügbarkeit %</th><th class="r">offene Bestellungen</th></tr></thead><tbody>${zdWeekRows()}</tbody></table></div>
+  <p class="muted" style="font-size:12.5px">Materialverfügbarkeit = 1 − höchster Tageswert Code 2 der KW (Mo–Sa, Horizont heute + ${d.horizon_days || 3} Arbeitstage nach Fabrikkalender) ÷ Anzahl verschiedener Materialien mit Warenausgang 201/261 in Werk 1100 (Mo–Sa, Stornos mitgezählt). Ohne Nenner bleibt der frühere Handwert stehen.</p>
+  ${zdRadar()}
   <p class="muted" style="font-size:13px;margin-top:18px">ABC/XYZ-Klassifizierung: <label class="link-like">Liste aktualisieren (Excel/CSV mit Spalten Material, ABC-Kennzeichen, XYZ-Kennzeichen)<input type="file" id="abcFile" accept=".xlsx,.csv,.txt" hidden></label></p>
   ` : ""}`;
   // Ereignisse
@@ -1459,7 +1459,7 @@ function zdTrendSvg() {
   return s + "</svg>";
 }
 function zdWeekSvg() {
-  const w = (ZD.hist.weeks || []).filter(x => x.mat_verf != null || x.off_best != null).slice(-30);
+  const w = (ZD.hist.weeks || []).map(x => Object.assign({}, x, { mat_verf: zdMv(x) })).filter(x => x.mat_verf != null || x.off_best != null).slice(-30);
   if (!w.length) return '<p class="muted">Noch keine Wochenwerte.</p>';
   const W = 560, H = 210, pl = 40, pr = 40, pb = 22, pt = 8;
   const mv = w.map(x => x.mat_verf).filter(v => v != null), ob = w.map(x => x.off_best).filter(v => v != null);
@@ -1474,20 +1474,40 @@ function zdWeekSvg() {
   s += `<polyline points="${w.map((ww, i) => ww.mat_verf != null ? `${x(i)},${y1(ww.mat_verf)}` : null).filter(Boolean).join(" ")}" class="gx-ln ok"/>`;
   return s + "</svg>";
 }
+// KW-Schluessel wie im Backend (ISO-Jahr = Jahr des Donnerstags der Woche)
+function zdKwKey(mon) { const th = addDaysD(mon, 3); return `${th.getFullYear()}-W${String(isoWeek(mon)).padStart(2, "0")}`; }
+// Materialverfuegbarkeit (Marco/Fabio 24.11.2026): berechnet aus Code-2-Maximum und Nenner, sonst der fruehere Handwert
+function zdMv(w) { return w.mv != null ? w.mv : w.mat_verf; }
 function zdWeekRows() {
   const map = {}; (ZD.hist.weeks || []).forEach(w => map[w.kw] = w);
   const out = []; let d = monday(new Date());
+  const inp = (kw, k, v, dig) => `<input class="field-in" data-kw="${kw}" data-k="${k}" inputmode="decimal" value="${v != null ? fmtNum(v, dig) : ""}" style="text-align:right;max-width:110px">`;
   for (let i = 0; i < 10; i++) {
-    const kwDate = addDaysD(d, -7 * i); const kw = `${kwDate.getFullYear()}-W${String(isoWeek(kwDate)).padStart(2, "0")}`;
+    const kwDate = addDaysD(d, -7 * i); const kw = zdKwKey(kwDate);
     const w = map[kw] || {};
+    const c2 = w.c2_max != null ? `<b>${w.c2_max}</b> <span class="muted">${WD[parseIso(w.c2_max_day).getDay()]} ${fmtDate(w.c2_max_day).slice(0, 6)}</span>` : '<span class="muted">–</span>';
+    const mv = w.mv != null ? `<b>${fmtNum(w.mv, 2)}</b>` : inp(kw, "mat_verf", w.mat_verf, 2);
     out.push(`<tr><td><b>KW ${isoWeek(kwDate)}</b> <span class="muted">${fmtDate(iso(kwDate)).slice(0, 6)}</span></td>
-      <td class="n"><input class="field-in" data-kw="${kw}" data-k="mat_verf" inputmode="decimal" value="${w.mat_verf != null ? fmtNum(w.mat_verf, 2) : ""}" style="text-align:right;max-width:120px"></td>
-      <td class="n"><input class="field-in" data-kw="${kw}" data-k="off_best" inputmode="decimal" value="${w.off_best != null ? fmtNum(w.off_best) : ""}" style="text-align:right;max-width:120px"></td></tr>`);
+      <td class="n" title="${w.c2_tage ? w.c2_tage + " Tage mit ZD05" : ""}">${c2}</td>
+      <td class="n">${inp(kw, "nenner", w.nenner, 0)}</td>
+      <td class="n">${mv}</td>
+      <td class="n">${inp(kw, "off_best", w.off_best, 0)}</td></tr>`);
   }
+  const y = ZD.hist.mv_ytd;
+  if (y && y.mv != null) out.push(`<tr><td colspan="3"><b>Durchschnitt ${y.jahr} (YTD)</b> <span class="muted">${y.wochen} KW mit Wert</span></td><td class="n"><b>${fmtNum(y.mv, 2)}</b></td><td></td></tr>`);
   return out.join("");
 }
+/* Radar Kundenverfuegbarkeit: Verzug Einkauf und GFS je Sparte (Paket Fabio 24.11.2026) */
+function zdRadar() {
+  const r = ZD.radar; if (!r || !r.rows) return "";
+  const pct = v => v == null ? "–" : fmtNum(v, 2) + " %";
+  return `<h2>Radar: Verzug Einkauf und GFS (YTD)</h2>
+  <div class="tbl-wrap" style="max-width:820px"><table class="zdw"><thead><tr><th>Sparte</th><th class="r">Prod. Menge YTD</th><th class="r">Verzug Einkauf YTD</th><th class="r">Verzug GFS YTD</th><th class="r">%</th></tr></thead>
+  <tbody>${r.rows.map(x => `<tr${x.key === "total" ? ' style="font-weight:600"' : ""}><td>${esc(x.label)}</td><td class="n">${fmtNum(x.prod_ytd)}</td><td class="n">${fmtNum(x.verzug_einkauf)}</td><td class="n">${fmtNum(x.verzug_gfs)}</td><td class="n">${pct(x.prozent)}</td></tr>`).join("")}</tbody></table></div>
+  <p class="muted" style="font-size:12.5px">Produktion vom 01.01. bis ${esc(fmtDate(r.prod_bis))} (Tageswerte im Board). Verzug = „Menge im Rückstand“ der Rückstandslisten mit Eintrag im Jahr und Ursache „Einkauf“ bzw. „GFS DE“, abgeschlossene mitgezählt; eine Zeile mit beiden Ursachen zählt im % nur einmal. Rückstandslisten zuletzt geändert ${esc(fmtDate(r.rs_stand) || "–")}.</p>`;
+}
 async function zdSaveWeek(inp) {
-  try { await api("POST", "api/zd05/week", { kw: inp.dataset.kw, changes: { [inp.dataset.k]: inp.value } }); ZD.hist = await api("GET", "api/zd05/history"); toast("Wochenwert gespeichert"); }
+  try { await api("POST", "api/zd05/week", { kw: inp.dataset.kw, changes: { [inp.dataset.k]: inp.value } }); ZD.hist = await api("GET", "api/zd05/history"); zdUpdateKpi(); toast("Wochenwert gespeichert"); }
   catch (e) { toast("Nicht gespeichert: " + e.message, true); }
 }
 function zdCsv() {

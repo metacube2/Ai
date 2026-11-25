@@ -520,6 +520,13 @@ public sealed class ShopfloorStore
         return ShopfloorZd05.History(con);
     }
 
+    /// <summary>Radar Verzug Einkauf / GFS je Sparte (Paket Fabio 24.11.2026); ohne Stichtag = heute.</summary>
+    public JsonNode GetRadar(string? day)
+    {
+        using var con = Db.Open();
+        return ShopfloorRadar.Compute(con, string.IsNullOrWhiteSpace(day) ? Today() : day.Trim());
+    }
+
     public JsonNode GetForecast(string? monday)
     {
         using var con = Db.Open();

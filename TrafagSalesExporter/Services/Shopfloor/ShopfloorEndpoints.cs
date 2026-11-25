@@ -503,6 +503,7 @@ public static class ShopfloorEndpoints
         });
         g.MapGet("/zd05", (HttpContext c) => J(c, Store(c).GetZd05(c.Request.Query["day"])));
         g.MapGet("/zd05/history", (HttpContext c) => J(c, Store(c).GetZd05History()));
+        g.MapGet("/radar", (HttpContext c) => J(c, Store(c).GetRadar(c.Request.Query["day"])));
         g.MapGet("/people", (HttpContext c) => J(c, Store(c).GetPeople()));
         g.MapGet("/mail", (HttpContext c) => J(c, Store(c).GetMail()));
         g.MapGet("/mail/preview", (HttpContext c) =>

@@ -17,12 +17,13 @@ public static class ShopfloorZd05
 
     private static string Now() => ShopfloorDb.Now();
 
+    /// <summary>Arbeitstage nach dem Fabrikkalender CH von Werk 1100 (Wunsch Marco/Fabio 24.11.2026, vorher nur Mo bis Fr).</summary>
     public static DateTime AddWorkdays(DateTime d, int n)
     {
         while (n > 0)
         {
             d = d.AddDays(1);
-            if (d.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday))
+            if (ShopfloorKalender.IstArbeitstag(DateOnly.FromDateTime(d)))
                 n--;
         }
         return d;
@@ -296,17 +297,75 @@ public static class ShopfloorZd05
                 ["kpi"] = string.IsNullOrEmpty(r.Str("kpi")) ? null : JsonNode.Parse(r.Str("kpi")!)
             });
         days.Reverse();
-        var weeks = new JsonArray();
+        var byKw = new SortedDictionary<string, JsonObject>(StringComparer.Ordinal);
         foreach (var r in ShopfloorDb.Query(con, "SELECT * FROM zd05_week ORDER BY kw"))
         {
             var w = new JsonObject { ["kw"] = r.Str("kw") };
             foreach (var kv in SfJson.ParseObject(r.Str("data")))
                 w[kv.Key] = SfJson.Clone(kv.Value);
-            weeks.Add(w);
+            byKw[r.Str("kw") ?? string.Empty] = w;
         }
+        foreach (var z in WeekCounters(days))
+        {
+            if (!byKw.TryGetValue(z.Kw, out var w))
+                byKw[z.Kw] = w = new JsonObject { ["kw"] = z.Kw };
+            w["c2_max"] = z.Max;
+            w["c2_max_day"] = z.Day;
+            w["c2_tage"] = z.Tage;
+        }
+        foreach (var w in byKw.Values)
+        {
+            var mv = Materialverfuegbarkeit(SfJson.AsDouble(w["c2_max"]), SfJson.AsDouble(w["nenner"]));
+            if (mv is not null) w["mv"] = mv;
+        }
+        var weeks = new JsonArray();
+        foreach (var w in byKw.Values) weeks.Add(w);
         var arr = new JsonArray();
         foreach (var d in days) arr.Add(d);
-        return new JsonObject { ["days"] = arr, ["weeks"] = weeks, ["target"] = Target };
+        return new JsonObject
+        {
+            ["days"] = arr, ["weeks"] = weeks, ["target"] = Target,
+            ["mv_ytd"] = MvYtd(byKw.Values, DateTime.Today.Year)
+        };
+    }
+
+    /// <summary>
+    /// Kennzahl Materialverfuegbarkeit Produktion (Marco Widmer / Fabio 24.11.2026): je KW der hoechste Tageswert „Code 2 im
+    /// Horizont“ (Montag bis Samstag). Tage ohne Code-2-Zaehlung (z. B. Kennzahl aus dem Excel) zaehlen nicht.
+    /// </summary>
+    public static IEnumerable<(string Kw, int Max, string Day, int Tage)> WeekCounters(IEnumerable<JsonObject> days)
+    {
+        return days
+            .Select(d => (Day: SfJson.PyStr(d["day"]), C2: d["kpi"] is JsonObject k ? SfJson.AsDouble(SfJson.Get(k, "code2")) : null))
+            .Where(x => x.C2 is not null && x.Day.Length == 10)
+            .Select(x => (x.Day, C2: (int)x.C2!.Value, Date: ParseDay(x.Day)))
+            .Where(x => x.Date.DayOfWeek != DayOfWeek.Sunday)
+            .GroupBy(x => KwKey(x.Date))
+            .Select(g =>
+            {
+                var top = g.OrderByDescending(x => x.C2).ThenBy(x => x.Day, StringComparer.Ordinal).First();
+                return (g.Key, top.C2, top.Day, g.Count());
+            });
+    }
+
+    public static string KwKey(DateTime d)
+        => $"{ISOWeek.GetYear(d)}-W{ISOWeek.GetWeekOfYear(d):00}";
+
+    /// <summary>1 − Zaehler ÷ Nenner in Prozent, 2 Stellen; Nenner = verschiedene Materialien mit Bewegungsart 201/261 der KW.</summary>
+    public static double? Materialverfuegbarkeit(double? zaehler, double? nenner)
+        => zaehler is null || nenner is null || nenner <= 0 ? null : Math.Round((1 - zaehler.Value / nenner.Value) * 100, 2);
+
+    /// <summary>Durchschnitt YTD der berechneten Wochenwerte (Quartalsabfrage Marco).</summary>
+    public static JsonObject MvYtd(IEnumerable<JsonObject> weeks, int year)
+    {
+        var vals = weeks.Where(w => SfJson.PyStr(w["kw"]).StartsWith(year + "-W", StringComparison.Ordinal))
+            .Select(w => SfJson.AsDouble(w["mv"])).Where(v => v is not null).Select(v => v!.Value).ToList();
+        return new JsonObject
+        {
+            ["jahr"] = year,
+            ["wochen"] = vals.Count,
+            ["mv"] = vals.Count > 0 ? Math.Round(vals.Average(), 2) : null
+        };
     }
 
     public static JsonObject SaveWeek(SqliteConnection con, string kw, JsonObject changes, string user)
@@ -315,7 +374,7 @@ public static class ShopfloorZd05
         var d = SfJson.ParseObject(r?.Str("data"));
         foreach (var kv in changes)
         {
-            if (kv.Key is not ("mat_verf" or "off_best")) continue;
+            if (kv.Key is not ("mat_verf" or "off_best" or "nenner")) continue;
             if (!Present(kv.Value))
             {
                 d.Remove(kv.Key);
