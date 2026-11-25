@@ -1,10 +1,12 @@
 @using System.Globalization
+@using Microsoft.JSInterop
 @using TrafagSalesExporter.Services
 @inject LbService Lb
 @inject IUiTextService UiText
 @inject IAdminAccessService AdminAccess
 @inject AuthenticationStateProvider AuthState
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 @* Lieferantenbewertung Paket 2 (2026-11-19, Auftrag Ingo „setze alles um, ausser SAP-Score“, Grundlage V6 von Armin):
    sieben Themenfelder mit Verlauf (Uebersicht = juengste Bewertung, Armin 18.11. E2), Zertifikate mit Ampel, Massnahmen,
@@ -284,6 +286,8 @@
                 <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
                     @T("Das Dashboard speichert keine Dateien, nur den Link auf die zentrale Ablage; jeder öffnet nur, wofür er Rechte hat.",
                        "The dashboard stores no files, only the link to the central storage; everyone opens only what they have rights for.")
+                    @T("Anklickbar sind nur Web-Links (https): in OneDrive oder SharePoint bei der Datei „Link kopieren“ wählen und hier einfügen. Pfade wie C:\\… oder \\\\Server\\… öffnet der Browser aus Sicherheitsgründen nicht; dafür gibt es den Knopf „Pfad kopieren“ zum Einfügen im Explorer. Pfade im eigenen OneDrive (C:\\Users\\…) sehen Kollegen nicht.",
+                       "Only web links (https) are clickable: in OneDrive or SharePoint choose “Copy link” on the file and paste it here. The browser does not open paths like C:\\… or \\\\server\\… for security reasons; use the “Copy path” button and paste into Explorer. Paths in your own OneDrive (C:\\Users\\…) are not visible to colleagues.")
                 </MudText>
             }
             @Hinweis()
@@ -531,24 +535,44 @@
         <MudChip T="string" Size="Size.Small" Color="@farbe" Variant="Variant.Outlined">@text</MudChip>
     };
 
-    private RenderFragment LinkZelle(string link) => __builder =>
+    private RenderFragment LinkZelle(string roh) => __builder =>
     {
-        if (string.IsNullOrWhiteSpace(link))
+        // Bereinigt auch Altdaten, die noch mit Anfuehrungszeichen gespeichert sind (25.11.).
+        var link = LbKatalog.BereinigeLink(roh);
+        if (link.Length == 0)
         {
             <span>–</span>
             return;
         }
-        // Nur http(s) als Link. Netzwerkpfade (\\server\..., O:\...) blockiert der Browser von einer https-Seite aus
-        // („file://“ wird nicht geoeffnet); sie stehen als markierbarer Text da, zum Kopieren in den Explorer.
+        // Nur http(s) als Link. Netzwerk- und Laufwerkpfade (\\server\..., O:\..., C:\Users\...) blockiert der Browser von einer
+        // https-Seite aus („file://“ wird nicht geoeffnet, geprueft 19.11.); deshalb Text plus Knopf „Pfad kopieren“ (Wunsch Armin 25.11.).
         if (LbKatalog.IstWebLink(link))
         {
-            <a href="@link.Trim()" target="_blank" rel="noopener" title="@link">@T("öffnen", "open")</a>
+            <a href="@link" target="_blank" rel="noopener" title="@link">@T("öffnen", "open")</a>
         }
         else
         {
-            <span style="user-select:all;font-family:monospace;font-size:12px" title="@T("Pfad kopieren und im Explorer öffnen", "Copy the path and open it in Explorer")">@link</span>
+            <span style="display:inline-flex;align-items:flex-start;gap:2px">
+                <MudTooltip Text="@T("Pfad kopieren, dann im Explorer in die Adresszeile einfügen (Strg+L, Strg+V)", "Copy path, then paste into the Explorer address bar (Ctrl+L, Ctrl+V)")">
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => PfadKopierenAsync(link))" aria-label="@T("Pfad kopieren", "Copy path")" />
+                </MudTooltip>
+                <span style="user-select:all;font-family:monospace;font-size:12px;padding-top:6px">@link</span>
+            </span>
         }
     };
+
+    private async Task PfadKopierenAsync(string pfad)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", pfad);
+            Snackbar.Add(T("Pfad kopiert. Im Explorer Strg+L, dann Strg+V und Enter.", "Path copied. In Explorer press Ctrl+L, then Ctrl+V and Enter."), Severity.Info);
+        }
+        catch (JSException)
+        {
+            Snackbar.Add(T("Kopieren nicht möglich; bitte den Pfad markieren und mit Strg+C kopieren.", "Copy not possible; please select the path and press Ctrl+C."), Severity.Warning);
+        }
+    }
 
     private RenderFragment Hinweis() => __builder =>
     {

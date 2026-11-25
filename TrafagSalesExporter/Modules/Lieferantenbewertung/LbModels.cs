@@ -176,6 +176,12 @@ public static class LbKatalog
         => Uri.TryCreate((link ?? "").Trim(), UriKind.Absolute, out var uri)
            && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
 
+    // 2026-11-25: Explorer „Als Pfad kopieren“ liefert "C:\...". Mit Anfuehrungszeichen gespeichert, oeffnete der kopierte Pfad
+    // im Explorer nichts. Umschliessende gerade, typografische und einfache Anfuehrungszeichen und Leerraum werden entfernt.
+    private static readonly char[] LinkRand = [' ', '\t', '"', '\'', '„', '“', '”', '‚', '‘', '’', '«', '»'];
+
+    public static string BereinigeLink(string? link) => (link ?? "").Trim(LinkRand);
+
     public static string NormalisiereNr(string? nr)
     {
         var t = (nr ?? "").Trim();

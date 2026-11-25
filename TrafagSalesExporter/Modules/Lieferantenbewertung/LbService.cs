@@ -152,6 +152,11 @@ public sealed class LbService(IDbContextFactory<LbDbContext> dbFactory, IOptions
         if (fehlt is not null)
             throw new ArgumentException(fehlt);
 
+        // 2026-11-25: Pfade aus dem Explorer („Als Pfad kopieren“) kommen in Anfuehrungszeichen; ohne sie speichern.
+        if (eintrag is LbDokument dokument)
+            dokument.Link = LbKatalog.BereinigeLink(dokument.Link);
+        else if (eintrag is LbZertifikat zertifikat)
+            zertifikat.Link = LbKatalog.BereinigeLink(zertifikat.Link);
         eintrag.LieferantNr = LbKatalog.NormalisiereNr(eintrag.LieferantNr);
         eintrag.LieferantName = Name(eintrag.LieferantName);
         eintrag.GeaendertVon = b.Login;

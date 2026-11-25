@@ -174,6 +174,30 @@ public sealed class LieferantenbewertungTests : IDisposable
         Assert.Contains("AddLieferantenbewertung(", File.ReadAllText(Path.Combine(root, "Program.cs")), StringComparison.Ordinal);
     }
 
+    // 2026-11-25 (Bild Armin, Register Dokumente): Explorer „Als Pfad kopieren“ liefert den Pfad in Anfuehrungszeichen;
+    // gespeichert wurde er so, und Kopieren ergab einen Pfad, den der Explorer nicht oeffnet.
+    [Theory]
+    [InlineData(@"""C:\Users\gun\a b.docx""", @"C:\Users\gun\a b.docx")]
+    [InlineData(@"  „C:\x.pdf“ ", @"C:\x.pdf")]
+    [InlineData(@"“C:\x.pdf”", @"C:\x.pdf")]
+    [InlineData(@"'\\server\ablage'", @"\\server\ablage")]
+    [InlineData("https://trafagag.sharepoint.com/sites/x", "https://trafagag.sharepoint.com/sites/x")]
+    [InlineData(@"C:\ohne\zeichen.txt", @"C:\ohne\zeichen.txt")]
+    [InlineData(@"""""", "")]
+    [InlineData(null, "")]
+    public void Link_Ohne_Umschliessende_Anfuehrungszeichen(string? eingabe, string erwartet)
+        => Assert.Equal(erwartet, LbKatalog.BereinigeLink(eingabe));
+
+    [Fact]
+    public async Task Speichern_Entfernt_Anfuehrungszeichen_Um_Pfade()
+    {
+        await _lb.SpeichereAsync(_editor, new LbDokument { LieferantNr = "42", Typ = "Bericht", Link = @"""C:\Users\gun\Besuch.docx""" });
+        await _lb.SpeichereAsync(_editor, new LbZertifikat { LieferantNr = "42", Typ = "ISO 9001", Link = @" ""O:\QM\iso.pdf"" " });
+        var daten = await _lb.LadeAsync();
+        Assert.Equal(@"C:\Users\gun\Besuch.docx", daten.Dokumente.Single().Link);
+        Assert.Equal(@"O:\QM\iso.pdf", daten.Zertifikate.Single().Link);
+    }
+
     private sealed class Factory(string verbindung) : IDbContextFactory<LbDbContext>
     {
         public LbDbContext CreateDbContext() => new(new DbContextOptionsBuilder<LbDbContext>().UseSqlite(verbindung).Options);
