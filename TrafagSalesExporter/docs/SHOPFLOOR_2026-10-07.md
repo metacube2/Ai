@@ -1352,6 +1352,12 @@ Einzelheiten, Messwerte und Antwortentwurf: `docs/shopfloor_paket_2026-11-24/Ant
 - **Grenzen, Fabio mitzuteilen:** RS-Listen im Board noch vom Import 05.10. (Radar erst nach dem naechsten Excel-Import aktuell);
   TX-Tagesmengen fehlen seit Oktober (MES), TX Prod. YTD deshalb rund 6,5 % zu tief; Code 2 im Board KW 47 hoechstens 1 statt Marcos 4
   (Codes im Board nicht gepflegt); Positionen ohne Unterdeckungsdatum zaehlen als im Horizont (Bestaetigung Fabio).
+- **P76-Pruefungen Punkt 8 erledigt (25.11. 07:08 bis 07:21, sap-t76, nur gelesen):** TX Board-Vorschau = ZC22 `/P00 TX` im selben Moment
+  (1'292 / 53'461, alle Fenster); gegen den Stichtag 04:02 nur Zeitversatz (22 neue Planauftraege 456 Stk., 2527510 59 -> 56). Ohne
+  „Mit Vorgangsdaten“ greift `M*` in ZC22 nicht (TX +26 Auftraege / +1'049 Stk.). Naechster Vorgang 1279556 bis 1279559 Board = ZC22 =
+  MD04 (0001 / DSP00), 1278404 seit 24.11. endgeliefert. `saptasks/shopfloor_sap/P76_PRUEFUNG_PAKET2411_2026-11-25.md`. Plan Welle 2:
+  `saptasks/shopfloor_sap/PLAN_WELLE2_2026-11-25.md` (wartet auf Freigabe Ingo und Fabios Entscheide E1 bis E3). *Ueberholt damit im
+  folgenden Punkt: „P76-Pruefungen Punkt 8“ als offen.*
 - **Offen (Welle 2):** Nenner aus SAP (MATDOC 201/261, Werk 1100, Mo bis Sa, verschiedene MATNR; Fabio in P76: KW 47 = 1'525) und
   VF/WE-Spalten (Punkt 7) in einem T76-Plan und einem Transport; P76-Pruefungen Punkt 8 (aktueller Stichtag gegen ZC22 `/P00 TX`,
   Naechster Vorgang gegen MD04; TX +765 vom 17.11. auftragsgenau nicht mehr pruefbar, Auftragsliste erst ab 20.11.); Meeting-Modus nur

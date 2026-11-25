@@ -45,12 +45,32 @@ Tagesziele mit dem Excel-Import kommen. Eine Schwelle laesst sich daraus noch ni
   zuerst ein festes Tagesziel festlegen oder SEH ausnehmen.
 - Die Schwellen kommen in die Konfiguration, damit Fabio sie ohne Programmaenderung anpassen kann.
 
+## P76-Pruefungen Punkt 8 (25.11. 07:08 bis 07:21, sap-t76, nur gelesen)
+
+Einzelheiten: `saptasks/shopfloor_sap/P76_PRUEFUNG_PAKET2411_2026-11-25.md`. Von Claude gegen die Board-CSV 04:02 nachgeprueft
+(TX 1'270 / 53'008, hoechste Planauftragsnummer 2543281, vier DW-Auftraege 0001 / DSP00).
+
+- **TX gegen ZC22 `/P00 TX` um 07:10:** gleich wie die Board-Vorschau im selben Moment (1'292 / 53'461, alle Fenster). Gegen den
+  Stichtag 04:02 nur Zeitversatz: 22 neue Planauftraege 2543580 bis 2543601 (456 Stk.), 2527510 59 -> 56; kein Auftrag nur im Board.
+- **Zweite Lesart:** ohne „Mit Vorgangsdaten“ (Standard im Selektionsbild aus) greift `M*` in ZC22 nicht; TX dann 1'318 / 54'510
+  (26 Auftraege / 1'049 Stk. mehr, alle in der laufenden KW). Die 18 `/PPA`-Varianten haben das Haekchen (P76-Befund 13.11.).
+- **Naechster Vorgang:** 1279556 bis 1279559 Board = ZC22 = MD04 (0001 / DSP00); 1278404 seit 24.11. endgeliefert (59 von 60),
+  Board 24.11. 0700 / EL911, heute nicht mehr in der Liste.
+- **Regelabweichung des Agenten:** fuer das ZC22-Selektionsbild ein eigenes Scratchpad-Skript in P76 benutzt, das zwei Haekchen
+  wegnahm (nichts gesichert); SE16-Selektionsbilder TBTCO und MATDOC geoeffnet (SE16 kann dabei Selektionsreports generieren).
+  In LEARNINGS eingetragen.
+
 ## Nicht gebaut, offen
 
 - **Nenner automatisch aus SAP** (MATDOC 201/261, Werk 1100, Mo bis Sa, verschiedene Materialien): braucht eine neue Quelle in
   `ZPOWERBI_EINKAUF_SRV` (T76, Transport nach P76). Zusammen mit den **VF/WE-Spalten** (Punkt 7: Wunschtermin `VBBE-MBDAT`,
   bestaetigte Bereitstellung `VBEP-MBDAT`, bestaetigter Liefertermin `VBEP-EDATU`, je Plan-/Fertigungsauftrag Endtermin und
-  Verfuegbarkeit) in einem Plan und einem Transport, damit Ingo nur einmal importiert. Plan folgt nach dem laufenden T76-Auftrag.
+  Verfuegbarkeit) in einem Plan und einem Transport, damit Ingo nur einmal importiert. **Plan geschrieben:**
+  `saptasks/shopfloor_sap/PLAN_WELLE2_2026-11-25.md` (neue Sets `ShopMatBezugSet` und `ShopKdTerminSet`, Strukturen
+  `ZSTR_SHOP_MATBEZ`/`ZSTR_SHOP_KDTERM`, keine Sperren auf MPC_EXT/DPC_EXT). Wartet auf Freigabe Ingo (E4: Nachtrag 1b mit
+  vollstaendigem ABAP vorher) und Fabios Entscheide E1 bis E3 (mehrere bestaetigte Einteilungen, Planauftraege BESKZ F, SAP-Nenner
+  ersetzt Handwert?). Gegenprobe 1'525 in P76 nicht moeglich (SE16 MATDOC ohne WERKS), folgt nach dem Import ueber das neue Set.
 - **Punkt 6 Meeting-Modus:** nur Vorschlag an Fabio, nichts gebaut (Fabio will die Schwelle gemeinsam festlegen).
-- **Punkt 8 P76-Pruefungen** (aktueller Stichtag gegen ZC22 `/P00 TX`, Naechster Vorgang gegen MD04): nach dem laufenden T76-Auftrag.
+- ~~**Punkt 8 P76-Pruefungen**: nach dem laufenden T76-Auftrag.~~ *Erledigt 25.11. 07:21, siehe oben.* Nicht geprueft: Verzugsspruenge 18./19.11.
+  (stehen schon in `P76_URSACHEN_2026-11-19.md`: echt, Auftraege ueber die Stichtagsgrenze).
 - **Punkt 2 FPY:** nichts zu tun, MES-/OfenManagement-Zugang bei Marco Di Menco angefragt.
