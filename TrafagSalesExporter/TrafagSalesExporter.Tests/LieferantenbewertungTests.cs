@@ -169,7 +169,7 @@ public sealed class LieferantenbewertungTests : IDisposable
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(seite, "<PurchasingSupplierClass"));
 
         var seed = File.ReadAllText(Path.Combine(root, "Services", "DatabaseSeedService.cs"));
-        Assert.Contains("\"purchasing-supplier-evaluation\", \"purchasing\", \"Lieferantenbewertung\"", seed, StringComparison.Ordinal);
+        Assert.Contains("\"purchasing-supplier-evaluation\", \"purchasing\", \"Lieferantenentwicklung\"", seed, StringComparison.Ordinal);
         Assert.Contains("\"einkauf/lieferantenbewertung\"", seed, StringComparison.Ordinal);
         Assert.Contains("AddLieferantenbewertung(", File.ReadAllText(Path.Combine(root, "Program.cs")), StringComparison.Ordinal);
     }

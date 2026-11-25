@@ -206,6 +206,13 @@ public class DatabaseSeedService : IDatabaseSeedService
                 existing.Match = item.Match;
                 existing.Icon = item.Icon;
             }
+            if (existing.Key == "purchasing-supplier-evaluation")
+            {
+                // 2026-11-25 (Wunsch Ingo): Reiter heisst „Lieferantenentwicklung“ statt „Lieferantenbewertung“;
+                // Schluessel und Adresse /einkauf/lieferantenbewertung bleiben, damit Links weiter gehen.
+                existing.TitleDe = item.TitleDe;
+                existing.TitleEn = item.TitleEn;
+            }
             if (existing.Key == "finance-journal-import")
             {
                 // Titel-Korrektur 2026-07-14: umfasst neben B1 (FR/IT/US/IN) jetzt auch CH/AT via SAP OData.
@@ -442,7 +449,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("purchasing-contracts", "purchasing", "Kontrakte", "Contracts", "Assignment", "einkauf/kontrakte", 40, "All"),
         Link("purchasing-suppliers", "purchasing", "Lieferanten", "Suppliers", "Verified", "einkauf/lieferanten", 50, "All"),
         // Lieferantenbewertung 2026-11-19 (Wunsch Armin „neues Registerblatt unter dem Einkauf“): Klasse A/B/C und Paket 2.
-        Link("purchasing-supplier-evaluation", "purchasing", "Lieferantenbewertung", "Supplier evaluation", "FactCheck", "einkauf/lieferantenbewertung", 52, "All"),
+        Link("purchasing-supplier-evaluation", "purchasing", "Lieferantenentwicklung", "Supplier development", "FactCheck", "einkauf/lieferantenbewertung", 52, "All"),
         Link("purchasing-breakdown", "purchasing", "Spend-Aufriss", "Spend breakdown", "AccountTree", "einkauf/aufriss", 55, "All"),
         // Additive Supply-Chain-Reiter 2026-08-06. Eigene Routen und eigener Read-only-Service;
         // keine bestehende Einkaufsseite oder Berechnung wird ersetzt.

@@ -174,4 +174,29 @@ public class NavigationMenuSeedTests
         Assert.Equal("Aktive Logins", sessions.TitleDe);
         Assert.Equal(10, sessions.SortOrder);
     }
+
+    // 2026-11-25 (Wunsch Ingo): Reiter „Lieferantenbewertung“ heisst „Lieferantenentwicklung“; bestehende Installationen
+    // bekommen den neuen Titel, Schluessel und Adresse /einkauf/lieferantenbewertung bleiben gleich.
+    [Fact]
+    public void SeedDefaults_Benennt_Lieferantenbewertung_In_Lieferantenentwicklung_Um()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using var db = new AppDbContext(options);
+        db.Database.EnsureCreated();
+        db.NavigationMenuItems.Add(new NavigationMenuItem
+        {
+            Key = "purchasing-supplier-evaluation", ParentKey = "purchasing", TitleDe = "Lieferantenbewertung",
+            TitleEn = "Supplier evaluation", Icon = "FactCheck", ItemType = NavigationMenuItemTypes.Link,
+            Href = "einkauf/lieferantenbewertung", Match = "All", SortOrder = 52
+        });
+        db.SaveChanges();
+
+        new DatabaseSeedService().SeedDefaults(db);
+
+        var item = db.NavigationMenuItems.Single(x => x.Key == "purchasing-supplier-evaluation");
+        Assert.Equal(("Lieferantenentwicklung", "Supplier development"), (item.TitleDe, item.TitleEn));
+        Assert.Equal("einkauf/lieferantenbewertung", item.Href);
+    }
 }
