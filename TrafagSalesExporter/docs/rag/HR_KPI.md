@@ -54,7 +54,7 @@ Stand: 2026-11-26 (Angabe Ingo: alles ausser Lohn laeuft ueber Rexx, Lohn in ca.
 - **2026-11-04: HR-Vorgaben aus den Mails umgesetzt** (`docs/HR_KPI.md` 8.12): Kurz/Lang je Krankheit ab dem 61. Tag,
   Absenzquote = Krankheit und Unfall (0290), Kachel „Quote ohne Langzeit“, Gelb auf der Uebersichtskachel, Vorjahresvergleich
   gleicher Zeitraum, Von/Bis-Kachel mit Spanne. Echte Daten 2026: Quote 2,5 %, ohne Langzeit 2,2 %. Offen fuer HR:
-  Kontrollwerte 2025 passen nicht zum Export (2025 nur 6 „Kündigung AN“), Befristete im Headcount, 0210/0220/0280, Ferienformel *(geklaert 8.13)*.
+  Kontrollwerte 2025 passen nicht zum Export (2025 nur 6 „Kündigung AN“), Befristete im Headcount, 0210/0220/0280, Ferienformel *(geklaert 8.13)*. *(Praezisiert 2026-11-26: 0220 zaehlt schon zur Krankenquote, offen sind 0210, 0280 und „Kind krank“; die Fragenmail an HR ist bis heute nicht gesendet, Entwurf in Outlook, `docs/HR_KPI.md` 8.16.)*
   **Produktiv seit 10:21 (`69a63b6`).**
 
 - **2026-11-04 09:30: Rexx-Dateien in `hrdata` aktuell** (Ingos Exporte vom 04.11., alte vom 08.07. in

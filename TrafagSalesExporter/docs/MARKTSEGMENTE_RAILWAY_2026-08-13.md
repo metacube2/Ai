@@ -687,7 +687,7 @@ nach bestaetigt und Vorschlag, mit Kundenblatt. Die App ist dafuer nicht geaende
 
 **Naechste Schritte:** Andreas' AG-Railway-Sicht fuer die Bestaetigung der Schweizer Vorschlaege
 nutzen; statt aller 171 Vorschlaege die Top 15 durch Patrik und Andreas bestaetigen lassen (70 %
-des Umsatzes); ITEC verwerfen. **Veraltet im Export:** Die Anleitung sagt noch, in den deutschen
+des Umsatzes); ITEC verwerfen. *(Stand 2026-11-26: nichts davon ist geschehen, seit dem 30.09. gibt es dazu weder Mail noch Teams. Ein Entwurf an Andreas mit den 15 groessten Vorschlaegen liegt seit 26.11. in Outlook, Versand Ingo. Rohail hat am 30.09. per Teams gefragt, ob China fehlt (CRRC, CARS) und wann DB4 kommt; ob das beantwortet ist, ist nicht geprueft.)* **Veraltet im Export:** Die Anleitung sagt noch, in den deutschen
 Verkaufszeilen fehlten Kundenname und Kundenland; laut Blatt Datenluecken sind es nur noch 145 bzw.
 163 von 7'737 Zeilen. *Behoben 2026-11-10 (`c5c9b4a`, `548b10e`): Die Anleitung nennt jetzt „Datenluecken je Standort“ und verweist auf das Blatt Datenluecken; sie sagt auch, dass der Nachzug nur den Bestand bis 09.09. gefuellt hat und neuere deutsche Rechnungen wieder ohne Name und Land ankommen koennen.* Die Periodenregel des Exports (Buchungsdatum zuerst) weicht fuer Spanien von
 Finance (Rechnungsdatum) ab.

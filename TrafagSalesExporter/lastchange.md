@@ -1,5 +1,20 @@
 # Last Change
 
+## 2026-11-26 10:30: Fuenf Mailentwuerfe in Outlook, gegen Doku, Mail und Teams geprueft; Qdrant wieder in Betrieb
+
+- **Auftrag Ingo:** offene Mails pruefen, Entwuerfe im Chrome anlegen, danach „nicht dass wir Sachen fragen, die schon beantwortet sind“.
+- **Mail/Teams geprueft:** FIX 22/23 an Armin waren seit 29.10. per Teams beantwortet (Wochen_Todo 124, 128 erledigt); Inventar an
+  Philip am 12.11. gesendet, Erinnerung 16.11. (138 wartet). Nicht gesendet waren HR-Ampel, Paola 7c, Railway Top 15, Rueckfrage
+  Ann-Katrin, Materialanteil Armin.
+- **Entwuerfe (Outlook, nichts gesendet):** HR (Sonja, Nadja), Ann-Katrin, Paola (Cc Andreas), Andreas (Railway), Armin. Nach der
+  Pruefung berichtigt: bei Armin die Frage zu FP_THERMOST. gestrichen (seit 12.11. mit FIX 28 behoben), bei HR Befristete nur noch
+  fuer den Headcount und die Krankenquote-Frage auf 0210/0280/Kind krank eingegrenzt (0220 zaehlt schon).
+- **Offen, Angabe Ingo steht gegen die Belege:** Zeilen 9, 119, 129, 152, 160 stehen auf erledigt („Fixe gemailt“); in Mail und Teams
+  gibt es seit dem 21.10. nichts an Ann-Katrin und nichts zu den Fixes an Sandro.
+- **Qdrant:** lief nicht, Index vom 10.11.; Start und vollstaendiger Neuaufbau direkt nach diesem Commit (7155 Abschnitte), Ergebnis wird mit `-NurPruefen` geprueft. LEARNINGS (3).
+- **Doku:** HR_KPI 8.16, rag HR_KPI, FINANCE_IT_REFERENZKOSTEN 2/7c, Issue-Log ISS-007.2, MARKTSEGMENTE_RAILWAY 20, TAGESZEIT,
+  EINKAUF_PRUEFUNG F1, rag PURCHASING, FIX22/FIX23, Wochen_Todo (40, 52, 54, 94, 123, 124, 128, 138, 149) + xlsx.
+
 ## 2026-11-26 09:50: Wochen_Todo fuenf Zeilen erledigt; Rolle POWERBI fuer die Liefertreue geprueft
 
 - **Erledigt laut Ingo (Fixe gemailt):** Zeilen 9, 119, 129, 152 (mit den damals offenen Nebenpunkten), 160. Zeile 94 bleibt offen.

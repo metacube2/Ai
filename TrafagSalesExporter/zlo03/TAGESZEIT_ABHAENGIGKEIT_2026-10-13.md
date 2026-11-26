@@ -7,6 +7,9 @@ Meldung und der Jobliste; noch keine Quelltextpruefung in P76.
 ist laut Ingo am 29.10. nach P76 importiert, die Importliste P76 vom 10.11. bestaetigt den Import. Naechster Schritt laut
 Wochen_Todo 94: Ann-Katrin fragen, ob die Abweichung seit dem Import noch auftritt.)*
 
+*(Vermerk vom 2026-11-26: Ann-Katrin ist noch nicht gefragt worden (Mail und Teams geprueft, letzter Kontakt 21.10.). Die Rueckfrage
+liegt seit 26.11. als Outlook-Entwurf bereit, Versand Ingo.)*
+
 ## 1. Meldung
 
 Ann-Katrin Michel (Phase-Out, Cc Philip Steiger) hat am 13.04.2026 gemeldet, dass ZLO03 zu

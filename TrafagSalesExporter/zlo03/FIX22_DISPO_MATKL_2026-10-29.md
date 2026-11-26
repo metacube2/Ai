@@ -39,4 +39,4 @@ Falle beim Lauf: Mit Material `8475*` meldet ZLO03 „Keine Daten gefunden“; `
 
 1. ~~Freigabe und Import `T76K912777` nach P76 (Ingo), **nach** `T76K912742` und `T76K912752`.~~ *Erledigt: laut Ingo am
    2026-10-29 importiert (Wochen_Todo 124, Eintrag vom 30.10.).*
-2. Rueckmeldung an Armin, sobald der Import durch ist. *(Weiter offen laut Wochen_Todo 124 und `Status_kurz.tsv`, Stand 10.11.)*
+2. Rueckmeldung an Armin, sobald der Import durch ist. *(Erledigt, nachgefuehrt 2026-11-26: Ingo hat Armin am 29.10. per Teams „ist in Prod“ gemeldet; der Vermerk „weiter offen“ vom 10.11. war falsch.)*

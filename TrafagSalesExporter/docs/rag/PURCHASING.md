@@ -88,7 +88,7 @@ und `PurchasingMaterialShareBom` (Monatsfenster Januar des Vorjahres bis Dezembe
 die Basismenge der Stueckliste geteilt: das Einkauf-Delta vom 09.11. zeigt HW_ZUKAUFSORT mit 1.27 Mio. Materialanteil auf
 3.67 Mio. Umsatz (34.7 %) statt 957 Mio. Offen: Abgleich einer Produktgruppe mit Armin und Abnahme durch den Einkauf,
 FP_THERMOST. (Selbststuecklisten H20201/H17500; *behoben in T76 am 2026-11-12 mit ZLO03 FIX 28, `T76K912902`, seit 12.11. 13:54
-in P76 (Einkauf-Lauf seitdem noch nicht gelaufen): Selbst-Stuecklisten zaehlen nicht mehr doppelt, H20201 0.05 statt 1'815 CHF je Geraet; nach dem Import Einkauf-Lauf
+in P76 (Einkauf-Lauf seitdem noch nicht gelaufen; *Stand 2026-11-26: Laeufe seither taeglich, der Wert von FP_THERMOST. im Dashboard ist aber nicht nachgemessen*): Selbst-Stuecklisten zaehlen nicht mehr doppelt, H20201 0.05 statt 1'815 CHF je Geraet; nach dem Import Einkauf-Lauf
 neu, der Materialanteil sinkt, `zlo03/FIX28_SELBSTSTUECKLISTE_2026-11-12.md`*), Verdacht FP_FROSTI, G4 Mehrstufigkeit,
 Laufzeit des Laders in P76 (Wochen_Todo 123, 152, 154). Details:
 `saptasks/zc23_materialanteil/BAUPLAN_PHASE2_MATERIALANTEIL_2026-11-02.md`, `zlo03/FIX26_BASISMENGE_2026-11-05.md`,

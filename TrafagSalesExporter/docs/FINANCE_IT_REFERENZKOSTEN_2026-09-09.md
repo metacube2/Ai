@@ -1,6 +1,6 @@
 # TR IT Referenzkost je Artikel: Vorschlag von Andreas vom 2026-09-09
 
-Stand: 2026-10-29 (Abschnitt 2 auf die versendete Antwort aus 7b nachgefuehrt); fachlich 2026-09-29, Messergebnis in Abschnitt 4a, Paolas Antwort in Abschnitt 7a, ihre Mail vom
+Stand: 2026-11-26 (7c: Antwort zum Lagerumfang nie versendet, jetzt Outlook-Entwurf); davor 2026-10-29 (Abschnitt 2 auf die versendete Antwort aus 7b nachgefuehrt); fachlich 2026-09-29, Messergebnis in Abschnitt 4a, Paolas Antwort in Abschnitt 7a, ihre Mail vom
 2026-09-29 und Ingos am selben Tag versendete Antwort in Abschnitt 7b, ihre Rueckfrage zum Lagerumfang
 und die Aufteilung je Lager in Abschnitt 7c.
 Gehoert zu `ISS-007.1` (Bewertungsmethode) und `ISS-007.2` (Referenzkost aus dem Bestand).
@@ -49,7 +49,7 @@ priorisiert, erneute Betrachtung im naechsten Jahr.** Damit gilt fuer `ISS-007.1
   Textvorschlag und ihr Wortlaut in Abschnitt 7a, nicht mehr in Abschnitt 7. *(ueberholt am
   2026-10-29: versendet wurde am 2026-09-29 der Text aus Abschnitt 7b, der 7a ersetzt; offen sind
   laut `ISS-007.2` Paolas Rueckmeldung und danach der Fachentscheid Andreas. Ob der Entwurf aus
-  Abschnitt 7c zum Lagerumfang versendet wurde, ist nicht dokumentiert)*
+  Abschnitt 7c zum Lagerumfang versendet wurde, ist nicht dokumentiert)* *(Geklaert 2026-11-26: nicht versendet. Die letzte Mail an Paola ist vom 29.09. 09:42, ihre Rueckfrage kam um 10:07 und blieb ohne Antwort. Ein Entwurf nach 7c liegt seit 26.11. in Outlook, Versand Ingo.)*
 
 ## 3. Was von Andreas' Frage bereits beantwortet ist
 
@@ -469,7 +469,7 @@ Auffaellig: `Mc_Resi` (-3'976.25 EUR bei 125 Stueck) und `Ms PIXSY` (-571.18 EUR
 haben negative Bestandswerte. Drei Lager sind in B1 als nicht disponierbar markiert (`Nettable = N`:
 `Mc_Cvis`, `Mc_DENI`, `Mc_MARIN`).
 
-### Antwortvorschlag an Paola, nicht versendet
+### Antwortvorschlag an Paola, nicht versendet (seit 2026-11-26 als Outlook-Entwurf, Zahlen vom 29.09., Abgleich „Ende November“)
 
 > Hi Paola,
 >
