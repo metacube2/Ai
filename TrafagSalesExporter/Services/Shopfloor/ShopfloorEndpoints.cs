@@ -242,6 +242,24 @@ public static class ShopfloorEndpoints
         }
     }
 
+    /// <summary>Vorschau Nenner fuer die KW eines Tages (nur lesen, schreibt nichts): GET sap/nenner?tag=JJJJ-MM-TT.</summary>
+    private static async Task<IResult> Nenner(HttpContext c)
+    {
+        var tag = c.Request.Query["tag"].ToString();
+        var day = DateOnly.FromDateTime(DateTime.Today).AddDays(-7);
+        if (tag.Length > 0 && !DateOnly.TryParseExact(tag, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out day))
+            return Results.Json(new { error = "tag als JJJJ-MM-TT" }, statusCode: 400);
+        try
+        {
+            return J(c, await c.RequestServices.GetRequiredService<ShopfloorSapSync>().NennerVorschauAsync(day, c.RequestAborted));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Results.Json(new { ok = false, meldung = ex.GetBaseException().Message }, statusCode: 502);
+        }
+    }
+
     private static async Task<IResult> CoPa(HttpContext c, bool write)
     {
         var tag = c.Request.Query["tag"].ToString();
@@ -471,6 +489,10 @@ public static class ShopfloorEndpoints
                 ? J(c, new JsonObject { ["error"] = $"Keine Auftragsliste fuer {tag} gespeichert" }, StatusCodes.Status404NotFound)
                 : Results.File(ShopfloorSapVorrat.AuftraegeCsv(tag, liste), "text/csv; charset=utf-8", $"shopfloor_vorrat_auftraege_{tag}.csv");
         });
+        // Welle 2 / Punkt 9 (2026-11-26): Nachschlagen nach Kundenauftrag/Position, Vorschau Nenner; Schalter aus bis T76K912954 in P76
+        g.MapGet("/sap/kdtermin", async Task<IResult> (HttpContext c) => J(c, await c.RequestServices.GetRequiredService<ShopfloorSapSync>()
+            .KdTerminNachschlagenAsync(c.Request.Query["module"], c.Request.Query["vbeln"], c.Request.Query["posnr"], c.Request.Query["id"], c.RequestAborted)));
+        g.MapGet("/sap/nenner", async Task<IResult> (HttpContext c) => await Nenner(c));
         g.MapGet("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, false));
         g.MapPost("/sap/copa", async Task<IResult> (HttpContext c) => await CoPa(c, true));
         g.MapPost("/sap/vorrat", async Task<IResult> (HttpContext c) => await Vorrat(c, true));

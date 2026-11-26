@@ -206,6 +206,31 @@ public sealed class ShopfloorSapSync : BackgroundService
                     _logger.LogWarning(ex, "Shopfloor: Auftragsvorrat aus SAP fehlgeschlagen.");
                 }
             }
+            // Welle 2 / Punkt 9 (2026-11-26): Kundenauftragstermine, FA/PA bei Kundeneinzelfertigung, Nenner je KW. Schalter aus bis P76.
+            if (options.SapKdTerminEnabled)
+            {
+                try
+                {
+                    LastResult["kdtermin"] = await KdTerminCoreAsync(client, baseUrl, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    LastResult["kdtermin"] = new JsonObject { ["ok"] = false, ["meldung"] = ex.GetBaseException().Message };
+                    _logger.LogWarning(ex, "Shopfloor: Kundenauftragstermine aus SAP fehlgeschlagen.");
+                }
+            }
+            if (options.SapNennerEnabled)
+            {
+                try
+                {
+                    LastResult["nenner"] = await NennerCoreAsync(client, baseUrl, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    LastResult["nenner"] = new JsonObject { ["ok"] = false, ["meldung"] = ex.GetBaseException().Message };
+                    _logger.LogWarning(ex, "Shopfloor: Nenner Materialverfuegbarkeit aus SAP fehlgeschlagen.");
+                }
+            }
             return LastResult;
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -399,6 +424,103 @@ public sealed class ShopfloorSapSync : BackgroundService
         return result;
     }
 
+    // ---------------------------------------------------------------- Welle 2 / Punkt 9 (2026-11-26)
+
+    private async Task<JsonObject> KdTerminCoreAsync(HttpClient client, string baseUrl, CancellationToken ct)
+    {
+        var o = _options.CurrentValue;
+        var rows = await ReadAsync(client, baseUrl, ShopfloorSapKdTermin.Set, ShopfloorSapKdTermin.Filter(o.SapPlant), ct, deutsch: true);
+        var positionen = ShopfloorSapKdTermin.Parse(rows, o.PaBeskzAusschluss);
+        var store = _stores.Store;
+        List<(string, string, JsonObject)> eintraege;
+        using (var con = store.Db.Open())
+            eintraege = ShopfloorSapKdTermin.Module
+                .SelectMany(m => ShopfloorDb.Query(con, "SELECT nr, data FROM records WHERE module=? AND deleted=0", m)
+                    .Select(r => (m, r.Str("nr") ?? string.Empty, SfJson.ParseObject(r.Str("data")))))
+                .ToList();
+        var (items, geprueft, treffer) = ShopfloorSapKdTermin.Abgleich(eintraege, store.Config, positionen);
+        var result = new JsonObject
+        {
+            ["ok"] = true, ["zeilen_sap"] = rows.Count, ["positionen_sap"] = positionen.Count,
+            ["eintraege_mit_auftrag"] = geprueft, ["gefunden"] = treffer, ["geaendert"] = items.Count
+        };
+        if (items.Count > 0)
+            result["ergebnis"] = store.ApplyPush(new ShopfloorPush { Items = new JsonArray(items.Select(i => (JsonNode?)i).ToArray()) }, "SAP");
+        _logger.LogInformation("Shopfloor: Kundenauftragstermine {Treffer}/{Geprueft} gefunden, {Geaendert} Eintraege geaendert", treffer, geprueft, items.Count);
+        return result;
+    }
+
+    /// <summary>
+    /// Nachschlagen im Formular (TVAV, Angebote) nach Kundenauftrag und Position. Drei Zustaende bleiben getrennt: Schalter aus
+    /// (<c>aus</c>), SAP-Fehler (<c>fehler</c>, nichts wird geleert) und erfolgreiche leere Antwort (<c>nicht_gefunden</c>, Hinweis).
+    /// </summary>
+    public async Task<JsonObject> KdTerminNachschlagenAsync(string? modul, string? vbeln, string? posnr, string? id, CancellationToken ct)
+    {
+        var o = _options.CurrentValue;
+        if (!o.SapKdTerminEnabled)
+            return new JsonObject { ["status"] = "aus" };
+        if (string.IsNullOrWhiteSpace(modul) || ShopfloorSapKdTermin.NormVbeln(vbeln).Length == 0 || ShopfloorSapKdTermin.NormPosnr(posnr).Length == 0)
+            return new JsonObject { ["status"] = "unvollstaendig" };
+        try
+        {
+            var (client, baseUrl) = await CreateClientAsync(ct);
+            using (client)
+            {
+                var rows = await ReadAsync(client, baseUrl, ShopfloorSapKdTermin.Set, ShopfloorSapKdTermin.Filter(o.SapPlant, vbeln), ct, deutsch: true);
+                JsonObject? aktuell = null;
+                if (long.TryParse(id, out var recId))
+                    using (var con = _stores.Store.Db.Open())
+                        aktuell = SfJson.ParseObject(ShopfloorDb.QueryOne(con, "SELECT data FROM records WHERE id=?", recId)?.Str("data"));
+                return ShopfloorSapKdTermin.Nachschlagen(modul.Trim(), vbeln!, posnr!, ShopfloorSapKdTermin.Parse(rows, o.PaBeskzAusschluss), aktuell);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            _logger.LogWarning(ex, "Shopfloor: Nachschlagen Kundenauftrag fehlgeschlagen.");
+            return new JsonObject { ["status"] = "fehler", ["meldung"] = ex.GetBaseException().Message };
+        }
+    }
+
+    private async Task<JsonObject> NennerCoreAsync(HttpClient client, string baseUrl, CancellationToken ct)
+    {
+        var o = _options.CurrentValue;
+        var store = _stores.Store;
+        HashSet<string> vorhanden;
+        using (var con = store.Db.Open())
+            vorhanden = ShopfloorZd05.WeeksWithSapNenner(con);
+        var wochen = ShopfloorSapKdTermin.NennerWochen(DateOnly.FromDateTime(DateTime.Today), vorhanden);
+        var geschrieben = new JsonArray();
+        foreach (var montag in wochen)
+        {
+            var rows = await ReadAsync(client, baseUrl, ShopfloorSapKdTermin.NennerSet,
+                ShopfloorSapKdTermin.NennerFilter(o.SapPlant, montag, montag.AddDays(5)), ct);
+            if (ShopfloorSapKdTermin.NennerAnzahl(rows) is not { } anzahl) continue;
+            var kw = ShopfloorZd05.KwKey(montag.ToDateTime(TimeOnly.MinValue));
+            if (store.Db.Write(con => ShopfloorZd05.SaveWeekSap(con, kw, anzahl)))
+                geschrieben.Add(new JsonObject { ["kw"] = kw, ["nenner"] = anzahl });
+        }
+        return new JsonObject { ["ok"] = true, ["abgefragt"] = wochen.Count, ["geschrieben"] = geschrieben };
+    }
+
+    /// <summary>Vorschau Nenner der KW von <paramref name="day"/> (Mo bis Sa), schreibt nichts; funktioniert auch bei ausgeschaltetem Schalter.</summary>
+    public async Task<JsonObject> NennerVorschauAsync(DateOnly day, CancellationToken ct)
+    {
+        var montag = day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+        var (client, baseUrl) = await CreateClientAsync(ct);
+        using (client)
+        {
+            var rows = await ReadAsync(client, baseUrl, ShopfloorSapKdTermin.NennerSet,
+                ShopfloorSapKdTermin.NennerFilter(_options.CurrentValue.SapPlant, montag, montag.AddDays(5)), ct);
+            return new JsonObject
+            {
+                ["ok"] = true, ["kw"] = ShopfloorZd05.KwKey(montag.ToDateTime(TimeOnly.MinValue)),
+                ["von"] = montag.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ["bis"] = montag.AddDays(5).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ["nenner"] = ShopfloorSapKdTermin.NennerAnzahl(rows)
+            };
+        }
+    }
+
     private async Task<(HttpClient Client, string BaseUrl)> CreateClientAsync(CancellationToken ct)
     {
         var (baseUrl, user, password) = await ResolveConnectionAsync(_services, ct);
@@ -486,13 +608,15 @@ public sealed class ShopfloorSapSync : BackgroundService
             }
             : 0;
 
-    private static async Task<List<JsonElement>> ReadAsync(HttpClient client, string baseUrl, string set, string filter, CancellationToken ct)
+    /// <param name="deutsch">sap-language=DE mitschicken (Einheiten ST statt PC, LEARNINGS 13.11.); fuer die neuen Sets ab 26.11.</param>
+    private static async Task<List<JsonElement>> ReadAsync(HttpClient client, string baseUrl, string set, string filter, CancellationToken ct, bool deutsch = false)
     {
         const int pageSize = 5000;
         var rows = new List<JsonElement>();
         for (var page = 0; page < 10; page++)
         {
-            var url = $"{baseUrl.TrimEnd('/')}/{set}?$format=json&$top={pageSize}&$skip={page * pageSize}&$filter={Uri.EscapeDataString(filter)}";
+            var url = $"{baseUrl.TrimEnd('/')}/{set}?$format=json&$top={pageSize}&$skip={page * pageSize}&$filter={Uri.EscapeDataString(filter)}"
+                      + (deutsch ? "&sap-language=DE" : string.Empty);
             using var response = await client.GetAsync(url, ct);
             if (!response.IsSuccessStatusCode)
                 throw new HttpRequestException($"SAP OData {set} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase})" +
@@ -523,6 +647,7 @@ public sealed class ShopfloorSapSync : BackgroundService
             ShopfloorSapMengen.RmSet or ShopfloorSapMengen.ProdSet => "T76K912740 + T76K912738",
             ShopfloorSapCoPa.Set => "T76K912866",
             Zd05Set or OrderSet => "T76K912718",
+            ShopfloorSapKdTermin.Set or ShopfloorSapKdTermin.NennerSet => ShopfloorSapKdTermin.Transport,
             _ => null
         };
         return transport is null

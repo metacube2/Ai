@@ -54,7 +54,9 @@ public class ShopfloorForecastTests
         // 2026-11-17 (Ergaenzung Fabio): einkauf.bestellnr Handeingabe; tx.prod, prod_s1, prod_s2 aus dem MES (Michaels
         // ProdMengePerDisponent.xlsm ruft TMS_MES.dbo.getProdQtyPerDayOfMonthPerDisponent auf) -> 99 SAP + 6 MES = 105
         // 2026-11-25 (Paket Fabio 24.11.): logistik.offene_kauf und Modul einkauf (we_sap) entfernt -> 97 SAP + 6 MES
-        Assert.Equal(97, auto.Count(x => x.f.Src == "sap"));
+        // 2026-11-26 (Welle 2 / Punkt 9): tvav pl_auf, sobkz; angebote termin_sap, fa, pl_auf, sobkz; je RS-Liste wunsch_sap, bereit_sap,
+        // liefer_sap, auftraege_sap -> 97 + 2 + 4 + 16 = 119 SAP
+        Assert.Equal(119, auto.Count(x => x.f.Src == "sap"));
         var mes = auto.Where(x => x.f.Src == "mes").ToList();
         Assert.Equal(6, mes.Count);   // FPY TR5, TX, DW sowie TX Tagesmenge und Schicht 1/2
         Assert.All(mes, x => Assert.True(x.f.Key == "fpy" || x.m.Key == "tx", $"{x.m.Key}.{x.f.Key}"));

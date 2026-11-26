@@ -315,7 +315,13 @@ public static class ShopfloorZd05
         }
         foreach (var w in byKw.Values)
         {
-            var mv = Materialverfuegbarkeit(SfJson.AsDouble(w["c2_max"]), SfJson.AsDouble(w["nenner"]));
+            // Nenner (Entscheid Fabio E3, 25.11.2026): SAP-Wert ist Standard, ein Handwert geht vor und wird gekennzeichnet
+            var hand = SfJson.AsDouble(w["nenner"]);
+            var sap = SfJson.AsDouble(w["nenner_sap"]);
+            var nenner = hand ?? sap;
+            if (nenner is not null) w["nenner_eff"] = nenner;
+            w["nenner_quelle"] = hand is not null ? (sap is not null ? "hand_ueber_sap" : "hand") : sap is not null ? "sap" : null;
+            var mv = Materialverfuegbarkeit(SfJson.AsDouble(w["c2_max"]), nenner);
             if (mv is not null) w["mv"] = mv;
         }
         var weeks = new JsonArray();
@@ -383,6 +389,12 @@ public static class ShopfloorZd05
             var s = SfJson.PyStr(kv.Value).Replace(",", ".").Replace("'", "").Replace("%", "");
             if (!double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var num))
                 throw new ShopfloorException($"Zahl ungültig: {s}");
+            // gleich wie der SAP-Wert = kein Handwert (sonst stuende jeder bestaetigte SAP-Wert als „von Hand ueberschrieben“)
+            if (kv.Key == "nenner" && SfJson.AsDouble(d["nenner_sap"]) is { } sapWert && Math.Abs(sapWert - num) < 0.0001)
+            {
+                d.Remove(kv.Key);
+                continue;
+            }
             d[kv.Key] = num;
         }
         ShopfloorDb.Exec(con, "INSERT OR REPLACE INTO zd05_week(kw,data,updated_at,updated_by) VALUES(?,?,?,?)",
@@ -390,6 +402,32 @@ public static class ShopfloorZd05
         d["kw"] = kw;
         return d;
     }
+
+    /// <summary>
+    /// Nenner aus SAP (ShopMatBezugSet) fuer die KW schreiben (<c>nenner_sap</c>); ein Handwert (<c>nenner</c>) bleibt stehen. Ist der
+    /// Handwert gleich dem SAP-Wert, faellt er weg (dann gilt er nicht als ueberschrieben). Liefert true, wenn sich etwas geaendert hat.
+    /// </summary>
+    public static bool SaveWeekSap(SqliteConnection con, string kw, int anzahl, string user = "SAP")
+    {
+        var r = ShopfloorDb.QueryOne(con, "SELECT data FROM zd05_week WHERE kw=?", kw);
+        var d = SfJson.ParseObject(r?.Str("data"));
+        var alt = SfJson.AsDouble(d["nenner_sap"]);
+        var hand = SfJson.AsDouble(d["nenner"]);
+        if (alt is { } a && Math.Abs(a - anzahl) < 0.0001 && !(hand is { } h0 && Math.Abs(h0 - anzahl) < 0.0001))
+            return false;
+        d["nenner_sap"] = anzahl;
+        if (hand is { } h && Math.Abs(h - anzahl) < 0.0001)
+            d.Remove("nenner");
+        ShopfloorDb.Exec(con, "INSERT OR REPLACE INTO zd05_week(kw,data,updated_at,updated_by) VALUES(?,?,?,?)",
+            kw, SfJson.Dump(d), Now(), user);
+        return true;
+    }
+
+    /// <summary>KW-Schluessel, fuer die schon ein SAP-Nenner steht.</summary>
+    public static HashSet<string> WeeksWithSapNenner(SqliteConnection con)
+        => ShopfloorDb.Query(con, "SELECT kw, data FROM zd05_week")
+            .Where(r => SfJson.AsDouble(SfJson.ParseObject(r.Str("data"))["nenner_sap"]) is not null)
+            .Select(r => r.Str("kw") ?? string.Empty).ToHashSet(StringComparer.Ordinal);
 
     public static int ReplaceAbc(SqliteConnection con, IEnumerable<JsonNode?> rows)
     {

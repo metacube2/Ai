@@ -694,6 +694,26 @@ function readForm(m, root) {
   });
   return out;
 }
+/* Punkt 9 (Fabio 26.11.2026): TVAV und Angebote füllen sich nach Kundenauftrag und Position aus SAP (ShopKdTerminSet, api/sap/kdtermin).
+   Schalter Shopfloor:SapKdTerminEnabled; ausgeschaltet oder bei SAP-Fehler wird nichts geändert, nur „nicht gefunden“ gibt einen Hinweis. */
+const KD_MODS = ["tvav", "angebote"];
+async function kdLookup(m, form, rec) {
+  const box = $("#kdHint"); if (!box) return;
+  const v = readForm(m, form); if (!v.ka_nr || !v.ka_pos) { box.hidden = true; return; }
+  let r; try { r = await api("GET", `api/sap/kdtermin?module=${m.key}&vbeln=${encodeURIComponent(v.ka_nr)}&posnr=${encodeURIComponent(v.ka_pos)}${rec ? "&id=" + rec.id : ""}`); }
+  catch (e) { r = { status: "fehler", meldung: e.message }; }
+  if (r.status === "aus" || r.status === "unvollstaendig") { box.hidden = true; return; }
+  box.hidden = false;
+  if (r.status === "fehler") { box.innerHTML = `<span class="muted">SAP nicht erreichbar, Felder unverändert: ${esc(r.meldung || "")}</span>`; return; }
+  if (r.status === "nicht_gefunden") { box.innerHTML = `<b style="color:var(--alarm)">⚠ ${esc(r.meldung)}</b>`; return; }
+  const set = [];
+  for (const [k, val] of Object.entries(r.felder || {})) {
+    const f = m.fields.find(x => x.key === k); const el = form.querySelector(`[data-k="${k}"]`); if (!f || !el) continue;
+    el.value = val == null ? "" : f.type === "num" ? fmtNum(val) : val; set.push(f.label);
+  }
+  form.dispatchEvent(new Event("input"));
+  box.innerHTML = `<b>Aus SAP übernommen:</b> ${esc(set.join(", "))}${r.einzelfertigung ? " · Kundeneinzelfertigung: Fertigungs- und Planaufträge werden bei jedem SAP-Lauf neu gelesen" : " · Lagerfertigung: Fertigungs- und Planauftrag bitte von Hand"}${r.auftraege ? `<div class="muted" style="white-space:pre-line;margin-top:4px">${esc(r.auftraege)}</div>` : ""}`;
+}
 function srcTag(f, meta) {
   const m = meta && meta[f.key];
   if (m) return ` <span class="src ${m.src.toLowerCase() === "mes" ? "mes" : "sap"}" title="Automatisch geliefert ${esc(m.ts)}">${esc(m.src)}</span>`;
@@ -720,6 +740,7 @@ async function openRecord(m, rec) {
         if (f.type === "calc") return `<div class="fld"><label>${esc(f.label)}</label><div class="calcval" data-calc="${f.key}">${esc(f.fmt === "date" ? fmtDate(computed[f.key]) : fmtNum(computed[f.key], f.digits))}</div></div>`;
         return `<div class="fld ${wide ? "wide" : ""}"><label for="${id}">${esc(f.label)}${f.required ? ' <span class="req">*</span>' : ""}${f.unit ? ` <span class="muted">[${esc(f.unit)}]</span>` : ""}${srcTag(f, rec && rec.meta)}</label>${inputHtml(f, vals[f.key], id)}</div>`;
       }).join("")}</div></fieldset>`).join("")}
+      ${KD_MODS.includes(m.key) ? '<div class="tvinfo" id="kdHint" hidden></div>' : ""}
       ${(S.cfg.notify_rules || {})[m.key] && (S.cfg.notify_rules[m.key].notify || []).length ? `<div class="notify-box" id="ntBox"></div>` : ""}
       ${rec ? `<details class="hist" id="histBox"><summary>Änderungsverlauf</summary><div>Lade…</div></details>` : ""}
     </form>
@@ -738,6 +759,7 @@ async function openRecord(m, rec) {
   });
   form.onsubmit = e => { e.preventDefault(); save(); };
   $("#saveBtn").onclick = save;
+  if (KD_MODS.includes(m.key)) form.addEventListener("change", e => { const k = e.target && e.target.dataset && e.target.dataset.k; if (k === "ka_nr" || k === "ka_pos") kdLookup(m, form, rec); });
   const nt = $("#ntBox");
   const renderNt = () => {
     if (!nt) return;
@@ -1535,7 +1557,7 @@ function zdWeekRows() {
     const mv = w.mv != null ? `<b>${fmtNum(w.mv, 2)}</b>` : inp(kw, "mat_verf", w.mat_verf, 2);
     out.push(`<tr><td><b>KW ${isoWeek(kwDate)}</b> <span class="muted">${fmtDate(iso(kwDate)).slice(0, 6)}</span></td>
       <td class="n" title="${w.c2_tage ? w.c2_tage + " Tage mit ZD05" : ""}">${c2}</td>
-      <td class="n">${inp(kw, "nenner", w.nenner, 0)}</td>
+      <td class="n">${inp(kw, "nenner", w.nenner != null ? w.nenner : w.nenner_sap, 0)}${w.nenner_quelle === "hand_ueber_sap" ? ` <span class="pill warn" title="Von Hand überschrieben, SAP: ${fmtNum(w.nenner_sap, 0)} (Feld leeren = SAP-Wert)">Hand</span>` : w.nenner_quelle === "sap" ? ' <span class="src sap" title="Aus SAP (ShopMatBezugSet)">SAP</span>' : ""}</td>
       <td class="n">${mv}</td>
       <td class="n">${inp(kw, "off_best", w.off_best, 0)}</td></tr>`);
   }

@@ -1170,6 +1170,58 @@
      }
     },
     {
+     "key": "wunsch_sap",
+     "label": "Wunschtermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBBE-MBDAT der ersten offenen Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "bereit_sap",
+     "label": "Bestätigte Bereitstellung (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-MBDAT der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "liefer_sap",
+     "label": "Bestätigter Liefertermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-EDATU der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "auftraege_sap",
+     "label": "Plan-/Fertigungsaufträge: Endtermin und Verfügbarkeit (SAP)",
+     "type": "long",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "PLAF-PEDTR / AFKO-GLTRP + WEBAZ Arbeitstage",
+      "bemerkung": "Je Auftrag Endtermin und Verfuegbarkeit (Fabrikkalender CH), bei jedem Lauf."
+     }
+    },
+    {
      "key": "status",
      "label": "Status",
      "type": "select",
@@ -1795,6 +1847,58 @@
       "vorschlag_feld": "Eckendtermin des Produktionsauftrags (WE-Termin) – SAP-Feld wird geprüft",
       "status": "definiert (Anh Nhi), SAP-Feld in Prüfung, nicht gebaut",
       "selektion": "Disponent(en) TR5 – siehe Blatt «Disponenten» (Feld DISPO in MARC / AFKO / PLAF)"
+     }
+    },
+    {
+     "key": "wunsch_sap",
+     "label": "Wunschtermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBBE-MBDAT der ersten offenen Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "bereit_sap",
+     "label": "Bestätigte Bereitstellung (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-MBDAT der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "liefer_sap",
+     "label": "Bestätigter Liefertermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-EDATU der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "auftraege_sap",
+     "label": "Plan-/Fertigungsaufträge: Endtermin und Verfügbarkeit (SAP)",
+     "type": "long",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "PLAF-PEDTR / AFKO-GLTRP + WEBAZ Arbeitstage",
+      "bemerkung": "Je Auftrag Endtermin und Verfuegbarkeit (Fabrikkalender CH), bei jedem Lauf."
      }
     },
     {
@@ -2524,6 +2628,58 @@
      }
     },
     {
+     "key": "wunsch_sap",
+     "label": "Wunschtermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBBE-MBDAT der ersten offenen Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "bereit_sap",
+     "label": "Bestätigte Bereitstellung (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-MBDAT der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "liefer_sap",
+     "label": "Bestätigter Liefertermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-EDATU der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "auftraege_sap",
+     "label": "Plan-/Fertigungsaufträge: Endtermin und Verfügbarkeit (SAP)",
+     "type": "long",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "PLAF-PEDTR / AFKO-GLTRP + WEBAZ Arbeitstage",
+      "bemerkung": "Je Auftrag Endtermin und Verfuegbarkeit (Fabrikkalender CH), bei jedem Lauf."
+     }
+    },
+    {
      "key": "status",
      "label": "Status",
      "type": "select",
@@ -3222,6 +3378,58 @@
      }
     },
     {
+     "key": "wunsch_sap",
+     "label": "Wunschtermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBBE-MBDAT der ersten offenen Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "bereit_sap",
+     "label": "Bestätigte Bereitstellung (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-MBDAT der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "liefer_sap",
+     "label": "Bestätigter Liefertermin (SAP)",
+     "type": "date",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-EDATU der letzten bestaetigten Einteilung",
+      "bemerkung": "Ueber Kundenauftrag/Position, bei jedem Lauf."
+     }
+    },
+    {
+     "key": "auftraege_sap",
+     "label": "Plan-/Fertigungsaufträge: Endtermin und Verfügbarkeit (SAP)",
+     "type": "long",
+     "group": "Termine SAP (VF/WE)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "PLAF-PEDTR / AFKO-GLTRP + WEBAZ Arbeitstage",
+      "bemerkung": "Je Auftrag Endtermin und Verfuegbarkeit (Fabrikkalender CH), bei jedem Lauf."
+     }
+    },
+    {
      "key": "status",
      "label": "Status",
      "type": "select",
@@ -3602,6 +3810,32 @@
      }
     },
     {
+     "key": "pl_auf",
+     "label": "Planauftrag",
+     "type": "text",
+     "group": "Eingabe durch Verkauf",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "PLAF-PLNUM ueber KDAUF/KDPOS",
+      "bemerkung": "Bei Kundeneinzelfertigung (SOBKZ E) bei jedem Lauf neu aus SAP, mehrere moeglich; sonst Handeingabe."
+     }
+    },
+    {
+     "key": "sobkz",
+     "label": "Kundeneinzelfertigung (SOBKZ)",
+     "type": "text",
+     "group": "Eingabe durch Verkauf",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBAP-SOBKZ",
+      "bemerkung": "E = Kundeneinzelfertigung: Fertigungs- und Planauftraege kommen dann aus SAP."
+     }
+    },
+    {
      "key": "termin_sap",
      "label": "Bestätigter Termin (SAP)",
      "type": "date",
@@ -3851,6 +4085,58 @@
       "vorschlag_odata": "API_SALES_ORDER_SRV, API_PRODUCTION_ORDER_2_SRV, API_PLANNED_ORDERS",
       "status": "definiert, nicht gebaut",
       "bemerkung": "Beim Nachschlagen über Kundenauftrag bzw. Fertigungs-/Planauftrag lesen."
+     }
+    },
+    {
+     "key": "termin_sap",
+     "label": "Bestätigter Termin (SAP)",
+     "type": "date",
+     "group": "Bestellung (Verkauf)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBEP-EDATU der letzten bestaetigten Einteilung",
+      "bemerkung": "Letzte bestaetigte Einteilung (spaetestes EDATU, Entscheid Fabio E1)."
+     }
+    },
+    {
+     "key": "fa",
+     "label": "Fertigungsauftrag",
+     "type": "text",
+     "group": "Bestellung (Verkauf)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "AFPO-AUFNR ueber KDAUF/KDPOS",
+      "bemerkung": "Bei SOBKZ E bei jedem Lauf neu aus SAP, mehrere moeglich; sonst Handeingabe."
+     }
+    },
+    {
+     "key": "pl_auf",
+     "label": "Planauftrag",
+     "type": "text",
+     "group": "Bestellung (Verkauf)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "PLAF-PLNUM ueber KDAUF/KDPOS",
+      "bemerkung": "Bei SOBKZ E bei jedem Lauf neu aus SAP, mehrere moeglich; sonst Handeingabe."
+     }
+    },
+    {
+     "key": "sobkz",
+     "label": "Kundeneinzelfertigung (SOBKZ)",
+     "type": "text",
+     "group": "Bestellung (Verkauf)",
+     "src": "sap",
+     "sap": {
+      "tabelle": "ZPOWERBI_EINKAUF_SRV/ShopKdTerminSet (T76K912954)",
+      "status": "definiert, gebaut 26.11.2026 in T76 (T76K912954), Schalter Shopfloor:SapKdTerminEnabled aus bis P76-Import",
+      "feld": "VBAP-SOBKZ",
+      "bemerkung": "E = Kundeneinzelfertigung."
      }
     },
     {

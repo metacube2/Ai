@@ -78,6 +78,18 @@ public sealed class ShopfloorOptions
     public bool SapCoPaEnabled { get; set; }
 
     /// <summary>
+    /// Welle 2 / Punkt 9 (2026-11-26): TVAV, Angebote und Rueckstandslisten aus ShopKdTerminSet fuellen (Nachschlagen im Formular und Abgleich je
+    /// Lauf). Erst einschalten, wenn T76K912954 in P76 ist, die Gateway-Caches geleert sind und 419371/10 zur MD04 passt.
+    /// </summary>
+    public bool SapKdTerminEnabled { get; set; }
+
+    /// <summary>Nenner der Materialverfuegbarkeit je KW aus ShopMatBezugSet (2026-11-26). Erst nach T76K912954 in P76 (Abnahme KW 47 = 1'525).</summary>
+    public bool SapNennerEnabled { get; set; }
+
+    /// <summary>Planauftraege mit diesen Beschaffungsarten nicht anzeigen (Entscheid Fabio E2 25.11.2026: nur Eigenfertigung = ohne F).</summary>
+    public List<string> PaBeskzAusschluss { get; set; } = ["F"];
+
+    /// <summary>
     /// Abteilungen, fuer die Auftragsvorrat und Verzug nur Material 1 bis 99999 zaehlen. Kommagetrennt, weil der Konfigurations-Binder
     /// eine leere Liste nicht als Ueberschreibung liest; leer = ohne Materialfilter. Verlauf: 2026-11-10 nur Verzug
     /// (`VerzugMaterialFilter`, alle vier), 2026-11-13 morgens leer (Mail Fabio), seit 2026-11-13 mittags fuer Vorrat und Verzug
