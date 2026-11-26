@@ -1446,6 +1446,15 @@ Fabio fest; Board-Teil nach gruenen Tests deployen.
   - **Zugriff Daniels OneDrive:** Fabio hat nur die **Datei** geteilt (13:02), nicht den Ordner; die OneDrive-Wurzel zeigt unter „Geteilt“
     nur diese Datei. Fuers Einlesen reicht das. Die Datei wurde nach dem Import von 13:05 erneut geaendert (Susanne Krieg, ~13:20); ein
     weiterer Import geht wie gehabt (Vorschau, dann OK).
+  - *Nachtrag 13:45: Fabio hat die Anhaenge nachgeliefert, `Downloads\Shopfloor_Paket_Ingo_2026-11-26 (1).zip` (13:24; LIESMICH, Mailtext,
+    `Verzeichnis_Vorschlag.csv` mit 16 Eintraegen, davon 4 belegt / 5 Vorschlag / 4 „offen – Fabio“, `tvav_sap\Pruefung_TVAV_Angebote_SAP_2026-11-25.md`
+    und SE16N-Rohexporte VBAK/VBAP/VBEP/AFPO/PLAF/AUFK/MARA/MARC). Nicht im Repo (Kunden- und Personendaten). Seine belegte Feldzuordnung
+    (VBAP-MATNR, MARA-ZZTYP, VBAP-KWMENG + VRKME, VBEP-EDATU mit BMENG > 0, AFPO bzw. PLAF ueber KDAUF/KDPOS, VBAP-SOBKZ = E) deckt sich mit
+    `ShopKdTerminSet`. Er fand in VBEP 419700–420100 keine Position mit mehr als einer bestaetigten Einteilung; FA-Status (JEST) hat er nicht
+    geprueft. **Erwartung fuer die P76-Abnahme (Stand P76 25.11.):** 419908/10: MATNR 50436, KWMENG 90 ST, SOBKZ E, EDATU 06.01.2027 (MBDAT
+    04.01.2027), BMENG 90, FA 1281397 (30, Ende 04.12.2026), PA 2539374 (30, Ende 10.12.2026) und 2539375 (30, Ende 16.12.2026); 419908/20:
+    MATNR 48804, 10 ST, PA 2539372 (10, Ende 04.12.2026), kein FA. Bis zur Abnahme koennen PA zu FA umgesetzt sein, dann gegen MD04 desselben
+    Moments vergleichen.* Damit ueberholt:
   - **Fabios Anhaenge** (P76-Protokoll mit Rohdaten zu Punkt 9, `Verzeichnis_Vorschlag.csv`) sind **nie angekommen**: Mails von Fabio seit
     25.11. ohne Anhang (letzter Anhang Paket 24.11. 17:18), Volltextsuche „Verzeichnis_Vorschlag“/„419908“ nur im Mailtext, Teams seit
     25.11. ohne Anhang, Downloads und Zip-Pakete ohne Treffer. Nicht blockierend: Abnahme Punkt 9 macht die Hauptsitzung selbst gegen MD04,

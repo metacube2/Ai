@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-26 13:45: Fabios fehlende Anhaenge nachgeliefert und abgeglichen
+
+- `Shopfloor_Paket_Ingo_2026-11-26 (1).zip` (Downloads): P76-Pruefung Punkt 9 mit Rohdaten und `Verzeichnis_Vorschlag.csv`. Feldzuordnung
+  deckt sich mit `ShopKdTerminSet`; Beispiel 419908/10 und /20 als Erwartung fuer die P76-Abnahme in SHOPFLOOR 28.10. Rohdaten nicht im Repo.
+
 ## 2026-11-26 13:35: Shopfloor nach dem P76-Import von T76K912954: Caches offen, Anhaenge nie geschickt
 
 - `T76K912954` ist in P76 (Ingo); die Board-Vorschau KW 47 gibt noch 404, Gateway-Caches `/IWBEP` dann `/IWFND` leeren (Ingo), danach
