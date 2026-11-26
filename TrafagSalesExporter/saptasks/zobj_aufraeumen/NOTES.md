@@ -1,6 +1,8 @@
 # Z-Objekte aufraeumen: Analysereport `Z_KOI_ZOBJ_NUTZUNG`
 
-Stand: 2026-11-25 14:40: `T76K912944` von Ingo freigegeben (13:47) und in P76 importiert (25.11. 13:49:12, beendet 13:49:14, RC 0; aktive Version von `Z_KOI_ZOBJ_NUTZUNG` in P76 traegt den Auftrag, SE01-Protokoll, Agent nur lesend). Davor 07:10 (Agent, Auftrag Ingo 24.11. „ja bau es in t100“): Report in T76 gebaut, aktiv und getestet; ~~Transport `T76K912944` offen, nicht freigegeben~~.
+Stand: 2026-11-26 14:10 (Abschnitt 9: erster Lauf in P76, 3'379 Objekte, genutzt 175 / indirekt 1'012 / tot 304 / unklar 1'888, Liste in
+Downloads); davor 2026-11-26 (Abschnitt 8: P76 gelesen, ST03N nur 08–11/2026, SCMON seit 08.08.2024 aus, SUSG leer; Entscheid Ingo: Basis
+SCMON/Aufbewahrung, Report einmal in P76, Loeschen fruehestens 2027). Davor 2026-11-25 14:40: `T76K912944` von Ingo freigegeben (13:47) und in P76 importiert (25.11. 13:49:12, beendet 13:49:14, RC 0; aktive Version von `Z_KOI_ZOBJ_NUTZUNG` in P76 traegt den Auftrag, SE01-Protokoll, Agent nur lesend). Davor 07:10 (Agent, Auftrag Ingo 24.11. „ja bau es in t100“): Report in T76 gebaut, aktiv und getestet; ~~Transport `T76K912944` offen, nicht freigegeben~~.
 
 ## 0. Zweck
 
@@ -224,3 +226,45 @@ ST22: keine Kurzdumps am 25.11. nach den Laeufen.
 4. Mit Basis klaeren, ob SCMON (oder die SUSG-Verdichtung) in P76 aktiv ist oder eingeschaltet werden soll; erst damit
    werden CLAS, FUGR und Includes messbar. Nach einigen Monaten Laufzeit den Report erneut ausfuehren.
 5. Der Report setzt nichts um. Loeschentscheide trifft Ingo je Objekt.
+
+*Erledigt 2026-11-25 13:49:* Punkt 1 (Import, siehe Kopf).
+
+## 8. P76 gelesen 2026-11-26 14:00–14:15 (Agent sap-t76, eigene SE16-Sitzung, nur lesen; von der Hauptsitzung an den Rohdateien nachgeprueft)
+
+*Erledigt 2026-11-26 14:15:* Punkte 2 und 4 aus Abschnitt 7 geprueft.
+
+- **ST03N:** `SWNCMONIINDEX` COMPONENT TOTAL, PERIODTYPE M: 4 Monate **08/2026 bis 11/2026** (November laufend, bis 25.11.), kein aelterer
+  Monat (auch ohne COMPONENT-Filter). `SWNCCOLLPARAM` 33 Zeilen, Zeile fuer Zeile gleich wie T76 (KEEP_MONT 2, WA 3). „Tot“ heisst in
+  P76 also nur: **seit dem 01.08.2026 nicht gestartet**. KEEP_MONT 2 ergibt trotzdem 4 Monate im Index; Monatszahl immer aus
+  `SWNCMONIINDEX` lesen, nicht aus dem Parameter ableiten.
+- **SCMON:** `SCMON_SLICE` 3 Zeilen, 06., 07. und 08.08.2024, seither keine; `SCMON_CONFIG` 0 Zeilen. SCMON lief offenbar einmal drei
+  Tage und ist seither aus (Status in Transaktion SCMON nicht angesehen, Vermutung). `SCMON_DATA`/`RDATA` bewusst nicht geoeffnet.
+- **SUSG:** `SUSG_ADMIN` 0 Zeilen, keine Verdichtung.
+- In P76 nichts geaendert, keine Sicherheitsabfrage; SE16 hat vermutlich `/1BCDWB/DB<Tabelle>` erzeugt (belegt fuer `SCMON_CONFIG`).
+
+**Entscheid Ingo 2026-11-26 (Vorschlag der Hauptsitzung, „ja mach das“):**
+1. Basis: SCMON in P76 dauerhaft einschalten und die Aufbewahrung der ST03N-Monatswerte verlaengern (Vorschlag 24 Monate); Mailtext an
+   die Basis im Chat (Empfaenger offen). Erst dann werden Quartals- und Jahresabschlussreports und die rund 1'950 „unklar“ (CLAS, FUGR,
+   Includes) messbar.
+2. Report jetzt einmal in P76 ausfuehren, Liste nach Downloads; belastbar ist nur „genutzt“ (bleibt sicher), „tot“ ist Kandidat.
+3. **Geloescht wird erst nach einem Jahreswechsel mit SCMON-Daten, fruehestens Anfang 2027**; bis dahin nur Objekte, die Ingo ohnehin
+   kennt (z. B. alte Tests in `$TMP`), und auch die nur auf Entscheid je Objekt.
+
+## 9. Erster Lauf in P76 (2026-11-26 14:04, Agent sap-t76, Freigabe Ingo; von der Hauptsitzung an der Datei nachgeprueft)
+
+*Erledigt 2026-11-26 14:10:* Punkt 3 aus Abschnitt 7.
+
+- Dialoglauf SA38 mit Vorschlagswerten (Z*/Y*, 13 Typen, 12 Monate), rund 6 s, ohne Abbruch, Popup oder Sicherheitsabfrage; eigene
+  Sitzung ueber `SapGuiP76Hilfe.vbs` (`P76Lesen.vbs` laesst SA38 nicht zu, Sperre nicht angetastet), geschlossen mit `ok <n> /i`.
+  Liste mit `SapGuiGridAusgeben.vbs` vollstaendig ausgelesen (244 s), kein `%PC`. Nebeneffekt: SA38 hat den Programmnamen als
+  letzten Wert vorbelegt (Benutzerparameter).
+- **Ablage:** `Downloads\Z_Objekte_Nutzung_P76_2026-11-26.txt` (Tab, 3'379 Zeilen x 23 Spalten, 4 Kopfzeilen) und `.xlsx`
+  (Blaetter Liste, Kopf, Zaehlung; aus der Textdatei gebaut). Nicht im Repo.
+- **Zeitraum laut Report:** ST03N 2026/08–2026/11, SCMON keine Daten, SUSG keine Daten.
+- **Ergebnis:** 3'379 Objekte: **genutzt 175, indirekt 1'012, tot 304, unklar 1'888**. „tot“ nur bei PROG (252) und TRAN (52);
+  unklar vor allem IWSG 1'370, SICF 291, FUGR 63, CLAS 52. PROG ausfuehrbar: 81 genutzt, 56 indirekt, 239 tot.
+- **Stichproben:** `Z_ZLO03_TURBO2`/`ZLO03` genutzt (ST03N 2'966, 9 Rollen); `ZREICHW` genutzt (5); `Z_RVADOR01` indirekt (16 TNAPR-Verwender);
+  in `$TMP` nur 2 tote (`Z_TEST_LF`, `Z_VC_BATCH_2`); `Z_KOI_ZOBJ_NUTZUNG` selbst tot (erst seit 25.11. vorhanden).
+- **Bewertung:** belastbar ist „genutzt“ (bleibt); die 304 „tot“ sind Kandidaten fuer „seit August 2026 nicht gestartet“, keine
+  Loeschliste. Naechster Schritt Ingo (Admin): SCMON in P76 dauerhaft einschalten und Aufbewahrung der ST03N-Monate verlaengern,
+  dann den Report nach dem Jahreswechsel erneut laufen lassen.

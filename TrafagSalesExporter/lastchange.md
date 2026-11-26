@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-26 14:15: Z-Objekte aufraeumen: P76 gelesen und erster Lauf von Z_KOI_ZOBJ_NUTZUNG
+
+- P76 nur gelesen: ST03N nur 08–11/2026, SCMON nur 06.–08.08.2024, SUSG leer. Entscheid Ingo: SCMON dauerhaft ein und ST03N-Monate
+  verlaengern (Ingo ist selbst Admin, offen ist nur der Ressourcenbedarf), Report einmal in P76, Loeschen fruehestens 2027.
+- Lauf P76 14:04 (Freigabe Ingo): 3'379 Objekte, genutzt 175, indirekt 1'012, tot 304, unklar 1'888; Liste
+  `Downloads\Z_Objekte_Nutzung_P76_2026-11-26.txt/.xlsx`. `saptasks/zobj_aufraeumen/NOTES.md` 8 und 9, LEARNINGS (2), Wochen_Todo 142.
+
 ## 2026-11-26 13:45: Fabios fehlende Anhaenge nachgeliefert und abgeglichen
 
 - `Shopfloor_Paket_Ingo_2026-11-26 (1).zip` (Downloads): P76-Pruefung Punkt 9 mit Rohdaten und `Verzeichnis_Vorschlag.csv`. Feldzuordnung
