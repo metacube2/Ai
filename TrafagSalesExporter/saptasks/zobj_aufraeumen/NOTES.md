@@ -250,6 +250,13 @@ ST22: keine Kurzdumps am 25.11. nach den Laeufen.
   **Entscheid Ingo 2026-11-26:** Ingo (Admin) loescht die Daten von 2024 („Delete Data“) und schaltet SCMON selbst ein (Activate);
   Empfehlung: unbefristet, taegliche Datensammlung, SUSG-Verdichtung falls angeboten. Einstellungen und Nachkontrolle (neue Tagesscheibe)
   folgen.
+  *Erledigt 2026-11-26 ~15:00 (Ingo, P76, Hauptsitzung oeffnete dafuer eine eigene Sitzung in SCMON):* Daten von 2024 geloescht, SCMON
+  **aktiv**. Dialog „Configure Activation“ bot nur Scheduled Deactivation (Vorgabe +7 Tage) und Record Limit (Vorgabe 20'000'000). Stand
+  danach laut Startbild: Activation Active, Records 0, Daily Time Slices 0 of 7, **Scheduled Data Collection Hourly**, **Scheduled
+  Deactivation 30.11.2027 14:56:12**, **Record Limit 20'000'000** (bei Ueberschreitung schaltet SCMON selbst ab). SUSG-Verdichtung nicht
+  eingerichtet. Naechste Schritte: nach rund einer Woche nur lesend pruefen, wie schnell die Records wachsen und ob die Tagesscheiben
+  rotieren; danach entscheiden, ob SUSG noetig ist, damit das Limit vor dem 30.11.2027 nicht erreicht wird. Report `Z_KOI_ZOBJ_NUTZUNG`
+  nach dem Jahreswechsel erneut laufen lassen.
 - **SUSG:** `SUSG_ADMIN` 0 Zeilen, keine Verdichtung.
 - In P76 nichts geaendert, keine Sicherheitsabfrage; SE16 hat vermutlich `/1BCDWB/DB<Tabelle>` erzeugt (belegt fuer `SCMON_CONFIG`).
 

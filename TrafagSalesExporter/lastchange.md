@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-26 15:00: SCMON in P76 eingeschaltet (Ingo)
+
+- Daten von 2024 geloescht, SCMON aktiv bis 30.11.2027, stuendliche Datensammlung, Record Limit 20 Mio.; SUSG nicht eingerichtet.
+  Nach einer Woche Wachstum pruefen, Report `Z_KOI_ZOBJ_NUTZUNG` nach dem Jahreswechsel erneut. `saptasks/zobj_aufraeumen/NOTES.md` 8.
+
 ## 2026-11-26 14:15: Z-Objekte aufraeumen: P76 gelesen und erster Lauf von Z_KOI_ZOBJ_NUTZUNG
 
 - P76 nur gelesen: ST03N nur 08–11/2026, SCMON nur 06.–08.08.2024, SUSG leer. Entscheid Ingo: SCMON dauerhaft ein und ST03N-Monate
