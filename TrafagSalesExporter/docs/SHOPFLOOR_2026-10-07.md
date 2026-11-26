@@ -1425,6 +1425,19 @@ Fabio fest; Board-Teil nach gruenen Tests deployen.
   Arbeits-Chrome gesehen: Ablauf mit ZD05 und Rueckstandslisten zuerst; Moderationsmodus (nur im Browser gestartet und beendet) auf TX
   mit Kasten „Tagesleistung 25.11.: 1'267 von 1'200 Stk. (+5,6 %) · im Ziel“ und eingeklappter Gruppe; `api/mail` Modus „aus“, eine
   wartende Mail (Fabios Testmail 26.11. 09:27, bleibt beim Einschalten Protokoll). Nichts gespeichert.
+- **Welle 2 / Punkt 9 im Board** (Funktionscommit `a2f7c97`, gleicher Zweig, Entscheid Ingo „jetzt bauen, Schalter aus“; Agent-Entscheide
+  „letzte Einteilung = spaetestes EDATU“ und „Bmeng = Summe, BmengLetzte dazu“ von Ingo bestaetigt): `ShopfloorSapKdTermin`;
+  **TVAV/Angebote** schlagen im Formular nach Kundenauftrag und Position nach (`GET api/sap/kdtermin`, Zustaende aus / SAP-Fehler / nicht
+  gefunden getrennt, nur „nicht gefunden“ zeigt einen Hinweis). TVAV: VkNr, Typencode, Auftragsmenge, bestaetigter Termin, SOBKZ; bei SOBKZ E
+  Fertigungs- und Planauftraege (mehrere, kommagetrennt) und im SAP-Lauf jedes Mal neu, sonst Handeingabe. **Angebote**: VkNr, Typencode und
+  Menge sind dort Handfelder des Verkaufs und werden nur gefuellt, wenn sie leer sind (Frage an Fabio); neue Felder termin_sap, fa, pl_auf,
+  sobkz. **Rueckstandslisten**: neue Felder ohne Excel-Spalte (Gruppe „Termine SAP (VF/WE)“: Wunschtermin, bestaetigte Bereitstellung,
+  bestaetigter Liefertermin, Plan-/Fertigungsauftraege mit Endtermin und Verfuegbarkeit), damit der Excel-Import sie nicht ueberschreibt.
+  Abgleich im SAP-Lauf ueber den Push-Weg (Quelle SAP, keine Mail), nur offene Eintraege und nur Aenderungen; eine Position ohne Treffer im
+  Werksmodus bleibt unangetastet. **Nenner**: `nenner_sap` je abgeschlossener KW des Jahres (die letzte immer neu), Handwert geht vor und
+  ist mit „Hand“ gekennzeichnet, ein Handwert gleich dem SAP-Wert faellt weg; Vorschau `GET api/sap/nenner?tag=`. Planauftraege mit BESKZ
+  aus `Shopfloor:PaBeskzAusschluss` (Standard F, E2) fallen weg. Schalter `SapKdTerminEnabled`, `SapNennerEnabled` **aus** bis
+  `T76K912954` in P76 ist. Tests 1'925/1'925 (Worktree und Release-Worktree).
 - **Befund 26.11. (produktiv, `api/meeting`):** TR5 und DW haben seit dem 21.11. kein Tagesziel im Board (letzter Tag mit Menge und
   Ziel 20.11.), deshalb dort keine Bewertung. Die Ziele kamen bisher aus dem Excel-Import; laut Fabio (17.11.) gelten sie bis zum
   Go-live aus dem Excel. Abhilfe: Import V1.04 oder Ziel im Board eintragen. Ob das Board ein fehlendes Ziel vom letzten erfassten Tag

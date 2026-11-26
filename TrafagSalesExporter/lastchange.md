@@ -1,5 +1,19 @@
 # Last Change
 
+## 2026-11-26 13:00: Shopfloor Welle 2 und Punkt 9: SAP in T76 gebaut (`T76K912954`, nicht freigegeben), Board deployed `a2f7c97` mit Schalter aus
+
+- **SAP (Agent sap-t76, von der Hauptsitzung per RFC nachgeprueft):** `ShopMatBezugSet` (Nenner 201/261) und `ShopKdTerminSet` (Termine,
+  KD-Daten, PA/FA je Position) in T76/100; nur Zugaenge (DPC +331, MPC +219), Tests wie erwartet (KW 11 = 1'559, 20 Positionen 0
+  Abweichungen). Cache-Runde musste zweimal laufen (LEARNINGS).
+- **Board (`a2f7c97`, deployed 12:55):** TVAV/Angebote schlagen nach Kundenauftrag/Position nach, FA/PA bei SOBKZ E bei jedem Lauf neu;
+  RS-Listen mit eigenen VF/WE-Feldern; Nenner aus SAP mit Kennzeichen „Hand“. Schalter aus. Tests 1'925/1'925.
+- **Entscheide Ingo:** Board jetzt bauen, Schalter aus; Agent-Entscheide (spaetestes EDATU, Bmeng Summe) bestaetigt; Rueckstandslisten nicht
+  aus der Kopie vom 17.11. einlesen, auf die aktuelle Datei warten (Download aus Daniels OneDrive ohne Zugriff).
+- **Offen bei Ingo:** `T76K912954` freigeben und nach P76 importieren, Caches `/IWBEP` dann `/IWFND` (bei 404 die Runde wiederholen);
+  danach schalte ich ein und nehme ab (KW 47 = 1'525, 419371/10 gegen MD04). Mails an Fabio und ICT (Text im Chat).
+- Doku: SHOPFLOOR 28.10, rag DEPLOYMENT/ARCHITECTURE, LEARNINGS (SAP), SAP_ARBEITSWEISE (Gateway-Rumpf lesbar, neues Werkzeug),
+  Wochen_Todo 172 + xlsx, Koordination.
+
 ## 2026-11-26 Nachmittag: Qdrant-Suchseite kennzeichnet Treffer ohne Suchwort; Autostart
 
 - Autostart (Ingo „ja qdrant auto start“): geplante Aufgabe „Qdrant Doku-Suche (TrafagSalesExporter)“ bei Anmeldung, 30 s Verzögerung,
