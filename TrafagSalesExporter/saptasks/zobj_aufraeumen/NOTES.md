@@ -262,6 +262,9 @@ ST22: keine Kurzdumps am 25.11. nach den Laeufen.
   aktiv, noch 0 aggregierte Tage. Damit ueberholt: „SUSG-Verdichtung nicht eingerichtet“ und die Frage „ob SUSG noetig ist“. Bleibt:
   nach dem 27.11. nur lesend pruefen, ob die erste Aggregation ohne Fehler lief (SUSG „Aggregationsprotokoll“) und wie die SCMON-Records
   sich entwickeln.
+  **Termine (Wochen_Todo, damit nichts vergessen geht):** 175 erste SUSG-Verdichtung pruefen (faellig 27.11.2026), 176 SCMON-Wachstum
+  nach einer Woche (03.12.2026), 177 ST03N-Aufbewahrung verlaengern (15.12.2026, Ingo), 178 Report nach dem Jahreswechsel erneut
+  (15.01.2027).
 - **SUSG:** `SUSG_ADMIN` 0 Zeilen, keine Verdichtung.
 - In P76 nichts geaendert, keine Sicherheitsabfrage; SE16 hat vermutlich `/1BCDWB/DB<Tabelle>` erzeugt (belegt fuer `SCMON_CONFIG`).
 
