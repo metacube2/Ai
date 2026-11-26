@@ -237,8 +237,19 @@ ST22: keine Kurzdumps am 25.11. nach den Laeufen.
   Monat (auch ohne COMPONENT-Filter). `SWNCCOLLPARAM` 33 Zeilen, Zeile fuer Zeile gleich wie T76 (KEEP_MONT 2, WA 3). „Tot“ heisst in
   P76 also nur: **seit dem 01.08.2026 nicht gestartet**. KEEP_MONT 2 ergibt trotzdem 4 Monate im Index; Monatszahl immer aus
   `SWNCMONIINDEX` lesen, nicht aus dem Parameter ableiten.
-- **SCMON:** `SCMON_SLICE` 3 Zeilen, 06., 07. und 08.08.2024, seither keine; `SCMON_CONFIG` 0 Zeilen. SCMON lief offenbar einmal drei
-  Tage und ist seither aus (Status in Transaktion SCMON nicht angesehen, Vermutung). `SCMON_DATA`/`RDATA` bewusst nicht geoeffnet.
+- **SCMON:** `SCMON_SLICE` 3 Zeilen, 06., 07. und 08.08.2024, seither keine; `SCMON_CONFIG` 0 Zeilen. ~~SCMON lief offenbar einmal drei
+  Tage und ist seither aus (Status in Transaktion SCMON nicht angesehen, Vermutung). `SCMON_DATA`/`RDATA` bewusst nicht geoeffnet.~~
+  *Berichtigt 2026-11-26 (Transaktion SCMON und Log nur angezeigt, Agent sap-t76):* SCMON ist **inaktiv** („Activation: Inactive“,
+  „Records 1,033,293“, „Daily Time Slices: 3 of 7 Slices Used“, „Scheduled Data Collection: Not scheduled“, „Record Limit: 0“). Laut
+  Log lief es am 06.08.2024 nur 21 s und vom 07.08.2024 08:17 bis 08.08.2024 06:45 (rund **22,5 h**), Benutzer CAT. Zeilen
+  `SCMON_DATA` je Scheibe 5'576 / 775'200 / 252'517 (gesamt 1'033'293, dreifach belegt), `SCMON_RDATA` 3'021, `SCMON_PROG` 14'377.
+  Ein Werktag (~16 h) ergab rund 775'000 Zeilen; Hochrechnung bei 7 Tagesscheiben grob 5 bis 7 Mio. Zeilen (Vermutung, Satzbreite
+  und MB nicht gemessen). Menue „ABAP Call Monitor“: Activate, Deactivate, Collect Data, Display Data, Display Call Graph, Delete Data,
+  Display Log, Clear Log, Configure Time Slices; den Aktivierungsdialog hat der Agent nicht geoeffnet. SE16 erzeugte
+  `/1BCDWB/DBSCMON_DATA`, `_RDATA`, `_PROG`.
+  **Entscheid Ingo 2026-11-26:** Ingo (Admin) loescht die Daten von 2024 („Delete Data“) und schaltet SCMON selbst ein (Activate);
+  Empfehlung: unbefristet, taegliche Datensammlung, SUSG-Verdichtung falls angeboten. Einstellungen und Nachkontrolle (neue Tagesscheibe)
+  folgen.
 - **SUSG:** `SUSG_ADMIN` 0 Zeilen, keine Verdichtung.
 - In P76 nichts geaendert, keine Sicherheitsabfrage; SE16 hat vermutlich `/1BCDWB/DB<Tabelle>` erzeugt (belegt fuer `SCMON_CONFIG`).
 
