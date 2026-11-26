@@ -1,6 +1,6 @@
 # Shopfloor: Mengen aus SAP (ShopRmSet, ShopProdSet)
 
-Stand: 2026-11-16 abends: `T76K912906` ist von Ingo freigegeben und nach P76 importiert (Meldung 16.11. ~16:10, Caches P76 nicht geleert); Abnahme in P76 `P76_ABNAHME_2026-11-16.md`; im Cockpit sind Status- und Materialfilter seit 16.11. 17:06 eingeschaltet (`docs/SHOPFLOOR_2026-10-07.md` 23). Ueberholt damit unten „**nicht freigegeben**, nicht in P76“ und Abschnitt 10.7 Punkt 1. Davor Stand 2026-11-13 15:05: juengster Inhalt ist Abschnitt 10, Layoutfilter ZC22/ZC27 (`Matex` an `ShopRmSet`; `Sttxt`, `Arbpl`, `Vornr`, `Avo` an `ShopAufSet`) in T76 aktiv und gegen ZC22/ZC27 geprueft, Auftrag `T76K912906` **nicht freigegeben**, nicht in P76. Davor 2026-11-12 (Doku-Pruefung: Kopf um Abschnitt 9 ergaenzt, Importstand `T76K912860` nachgetragen): Abschnitt 9 vom 2026-11-09, Auftragsvorrat Typ VR (`T76K912860`; laut Wochen_Todo 110 in P76 und seit 09.11. 15:11 live). Davor 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
+Stand: 2026-11-26 12:00: Welle 2 (Nenner `ShopMatBezugSet`, VF/WE und Punkt 9 `ShopKdTerminSet`) in T76 gebaut und geprueft, Auftrag `T76K912954` **nicht freigegeben**, nicht in P76 (Abschnitt 11, Plan `PLAN_WELLE2_2026-11-25.md` Abschnitt 11). Davor 2026-11-16 abends: `T76K912906` ist von Ingo freigegeben und nach P76 importiert (Meldung 16.11. ~16:10, Caches P76 nicht geleert); Abnahme in P76 `P76_ABNAHME_2026-11-16.md`; im Cockpit sind Status- und Materialfilter seit 16.11. 17:06 eingeschaltet (`docs/SHOPFLOOR_2026-10-07.md` 23). Ueberholt damit unten „**nicht freigegeben**, nicht in P76“ und Abschnitt 10.7 Punkt 1. Davor Stand 2026-11-13 15:05: juengster Inhalt ist Abschnitt 10, Layoutfilter ZC22/ZC27 (`Matex` an `ShopRmSet`; `Sttxt`, `Arbpl`, `Vornr`, `Avo` an `ShopAufSet`) in T76 aktiv und gegen ZC22/ZC27 geprueft, Auftrag `T76K912906` **nicht freigegeben**, nicht in P76. Davor 2026-11-12 (Doku-Pruefung: Kopf um Abschnitt 9 ergaenzt, Importstand `T76K912860` nachgetragen): Abschnitt 9 vom 2026-11-09, Auftragsvorrat Typ VR (`T76K912860`; laut Wochen_Todo 110 in P76 und seit 09.11. 15:11 live). Davor 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
 *Ueberholt:* „Cockpit-Abruf mit ausgeschaltetem Schreiben“ (bis 09:50).
 Auftrag: Mail Fabio 16.10. (Datenabfragen J5 Logistik, J8 Tagesmengen SEH/TR5, J11 FPY SEH), von Ingo weitergeleitet.
 
@@ -305,3 +305,69 @@ Vergleich vorher/nachher ohne `Avo` steht deshalb nur im Report.
   Aufrufs (386'862 / 385'044 Byte nacheinander). Fuer neue Properties die Set-Antwort lesen, nicht die Laenge vergleichen.
 - Der Dialog „Inaktive Objekte“ in SE38 meldet `RowCount` 29 bei 5 Eintraegen (Leerzeilen als Unterstrichreihe); eine Pruefung
   „Liste laenger als sichtbar“ ueber `RowCount` bricht faelschlich ab.
+
+## 11. Welle 2: Nenner und VF/WE-Termine samt Punkt 9 (2026-11-26, T76, Phase 2)
+
+Auftrag Ingo 26.11. („Direkt in T76 bauen“), Plan `PLAN_WELLE2_2026-11-25.md` Abschnitt 11 (Nachtrag 1b als erster Schritt, E4), Punkt 9 aus
+Fabios Mail 26.11. 10:29 im selben Set. Nur T76/100; P76 nicht beruehrt. Eigene Sitzung `/app/con[1]/ses[2]` (per `SapGuiT76Hilfe.vbs neu`;
+Ingos `ses[0]` SE10 und `ses[1]` SE80 nicht angefasst), am Ende mit `zu` geschlossen. Die SAP-GUI-Sicherheitsabfrage kam nicht.
+**`T76K912954` (Aufgabe `T76K912955`) ist nicht freigegeben.**
+
+### 11.1 Objekte, Auftrag `T76K912954` „Shopfloor W2: Nenner, VF/WE-Termine, KD-Daten (Gateway)“ (Ziel P76, D)
+
+| Objekt | Aenderung | Ruecklesen |
+| --- | --- | --- |
+| `ZSTR_SHOP_MATBEZ` (neu, `ZPP`) | 5 Felder (Plan 11.2) | `DD03L` 5 Felder, `AS4LOCAL` A, `DD02L` INTTAB A |
+| `ZSTR_SHOP_KDTERM` (neu, `ZPP`) | 23 Felder (Plan 11.2) | `DD03L` 23 Felder in Planreihenfolge, alle A |
+| `MPC_EXT->DEFINE` (`CM001`) | Block M (219 Zeilen) vor `* LogKap` | 3'281 Zeilen; `diff` gegen `MPC_EXT_DEFINE_2026-11-26_welle2_neu.abap` rc 0; gegen vorher 1 Block, 219 Zugaenge, 0 Abgaenge |
+| `DPC_EXT->GET_ENTITYSET` (`CM01W`) | Block D (331 Zeilen) vor `* Logistik live Teil C` | 3'218 Zeilen; `diff` gegen `..._neu.abap` rc 0; gegen vorher `948a949,1279`, 331 Zugaenge, 0 Abgaenge |
+
+`E071` (`T76K912955`) genau: `R3TR TABL ZSTR_SHOP_MATBEZ`, `R3TR TABL ZSTR_SHOP_KDTERM`, `LIMU METH ZCL_ZPOWERBI_EINKAUF_MPC_EXT DEFINE`,
+`LIMU METH ZCL_ZPOWERBI_EINKAUF_DPC_EXT /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET`; `E071K` leer; `TLOCK` dieselben vier auf `T76K912955`;
+`DWINACTIV` ohne eigene Objekte (nur vier alte KOI-Reports). Vor dem Schreiben: Sperrpruefung wie Plan 1 (0 / keine), beide Methoden
+per `abap-read` gegen die Vorher-Ablage 0 Unterschiede; der Auftragsdialog schlug beim zweiten Objekt `T76K912954` vor, trotzdem
+ausdruecklich gesetzt. Syntaxpruefung beider Methoden „keine Syntaxfehler“, beide Klassen ohne Fehlerdialog aktiviert.
+
+Ablagen: `*_2026-11-26_welle2_vorher.abap`/`_neu.abap`, `methoden_bauen_welle2_2026-11-26.py`, `ZSTR_SHOP_MATBEZ_felder.txt`,
+`ZSTR_SHOP_KDTERM_felder.txt`, `docs/abap/ZSHOP_WELLE2_ADD.abap`; neues Lesewerkzeug `.tmp_sap_probe/SapGuiT76GatewayGet.vbs` (GET im
+Gateway Client der eigenen Sitzung, Id-geprueft, Rumpf ueber `GetLineText` des Editors `shellcont[3]`).
+
+### 11.2 Caches T76 (Abweichung vom Plan, dokumentierte Abhilfe)
+
+`/IWBEP/CACHE_CLEANUP` (alle Modelle), dann `/IWFND/CACHE_CLEANUP` `ZPOWERBI_EINKAUF_MDL` (11:22): danach lieferten **beide neuen Sets 404**
+„Ressource fuer Segment 'ShopMatBezugSet' nicht gefunden“ (`/IWFND/MED167`), die bestehenden Sets 200. Ein zweites `/IWFND/CACHE_CLEANUP`
+allein half nicht; erst eine **zweite Runde `/IWBEP` dann `/IWFND`** (11:28) gab die Sets frei. Ursache nicht untersucht (T76 hat nur einen
+Anwendungsserver, `TH_SERVER_LIST`). Fuer P76 heisst das: nach dem Import beide Caches in dieser Reihenfolge leeren und bei 404 die Runde
+wiederholen.
+
+### 11.3 Tests (Gateway Client, eigene Sitzung, Rumpf gelesen, Plan 11.6)
+
+| Nr | Erwartet | Ist |
+| --- | --- | --- |
+| T0 `ShopAufSet` VR 26.11. `$top=3` ohne/mit `Avo`, `ShopRmSet` DLQ72 14.04., `CoPaSumSet` 1100/2026/003, `QmMeldungSet` `$top=2` | Rumpf gleich vorher | 200, alle fuenf Ruempfe bytegleich vorher/nachher (zweimal nachher gelesen, auch nach der zweiten Cache-Runde); `$metadata` 200 |
+| T1 KW 11 (09. bis 14.03.2026) | `Anzahl` 1'559, `Zeilen` 17'565 (MATDOC vorher neu gezaehlt) | **1'559 / 17'565** |
+| T2 Samstag 14.03. | 170 | **170** / 539 |
+| T3 Montag 09.03. | 645 | **645** / 3'260 |
+| T4 ohne `Bis`, `Bis` < `Von`, 63 Tage | leer | je 200, leere Liste |
+| T5/T6 409313 mit und ohne Nullen | 9 Zeilen | 9, gleich; KD Bereit 20260506, Liefer 20260508, Bmeng 300, BmengLetzte 240; FA 1241683 Verfueg 20260428 (= MD04) |
+| T7 402611, T8 411051, T9 411051/20, T10 411290 | 2 / 7 / 2 / 2 | 2 / 7 / 2 / 2, Feld fuer Feld gleich `calc.py` |
+| T11 0000999999; 409313 in Werk 1200; ohne `Werks` | leer; leer; 400 | leer; leer; **400** „ShopKdTerminSet braucht den Filter Werks (optional Vbeln, Posnr).“ |
+| T12 Feiertage 406820, 409067 | PA 2309671 → 20260518, PA 2340261/2340262 → 20260527 | gleich (= MD04 `AVAIL_DATE`) |
+| T13 405877 („letzte“ nach Datum) | BmengLetzte 2, Bereit 20260420, Liefer 20260422, Bmeng 62 | gleich |
+| T14 ganzes Werk `$skip=8896` / `8897` | 1 / 0 Zeilen (8'897) | 1 (KD 411409/20) / 0; Laufzeit je Aufruf 0,9 bis 1,1 s (DPC rechnet jedes Mal alle 8'897 Zeilen) |
+| T15 zweiter Weg | 20 Positionen, 0 Abweichungen | **20 Positionen, 71 Zeilen, 0 Abweichungen** gegen `calc.py` (`table-read` + `TFACS`); Lieferung 0080432544 leer |
+
+| Nachtest (zweite eigene Sitzung `ses[3]`, danach geschlossen): 411051 `Posnr eq '20'`; 411051 `(Posnr eq '000010' or Posnr eq '000030')`; ganzes Werk `$skip=3806&$top=9` | wie T9; T8 ohne /20 und /40; die 9 Zeilen von 409313/10 | 2 Zeilen = T9; 4 Zeilen = T8 /10 und /30; 9 Zeilen feldgleich T5 (Werksmodus liefert dieselben Werte wie der `Vbeln`-Modus) |
+
+ST22 „Heute“ (alle Mandanten) nach den Tests: keine Kurzdumps.
+
+Gemessene Ausgabeform (Beispiel 409313/10 KD): `Vbeln` „409313“, `Posnr` „000010“, `Aufnr` ohne Nullen („1241683“, „2344122“),
+`Matnr` „55441“, `Meins`/`Vrkme` „ST“ (mit `sap-language=DE`), Daten JJJJMMTT, leere Felder als `""`, Int32-Felder als Zahl (0 bei leer).
+
+### 11.4 Offen, was Ingo tun muss
+
+1. **`T76K912954` freigeben und nach P76 importieren** (Ingo), danach in P76 `/IWBEP/CACHE_CLEANUP`, dann `/IWFND/CACHE_CLEANUP`
+   (`ZPOWERBI_EINKAUF_MDL`); bei 404 die Runde wiederholen (11.2). Abnahme P76: `ShopMatBezugSet` KW 47 (16. bis 21.11.2026) gegen Fabios
+   1'525; `ShopKdTerminSet` 419371/10 gegen MD04 desselben Moments (Plan 6.3 g).
+2. Board-Seite gegen die Schnittstelle in Plan 11.8 bauen (eigener Commit).
+3. Entscheide, die der Agent getroffen hat und die Ingo/Fabio bestaetigen sollten: siehe Plan 11.1 (Punkte 2, 4, 5, 7, 9) und den Bericht.
