@@ -12,7 +12,12 @@
 - **Dringlichkeit „Heute“** nur noch fuer die Punkte aus Ingos fast_todo vom 26.11.: 120 Handbestellwesen, 133 Rexx/Lohn,
   163 Finance Mapping und Laender, 173 ZLO03 offene MK; die uebrigen 13 „Heute“-Zeilen auf Diese Woche (36 auf „Hoch, haengt an anderen“).
 - **Texte:** „Naechster Schritt“ der offenen Zeilen auf Stand und naechsten Schritt gekuerzt (vorher 62 Zeilen ueber 800 Zeichen,
-  jetzt keine); die Historie steht in den genannten Fachdateien und im Git-Stand vor diesem Commit. Verstrichene Faelligkeiten (24, 26, 56, 94, 97, 121) geleert, im Text vermerkt.
+  jetzt keine); die Historie steht in den genannten Fachdateien und im Git-Stand vor `ee395e1`. Verstrichene Faelligkeiten (24, 26, 56, 94, 97, 121) geleert, im Text vermerkt.
+- **Grenze:** Keine Zeile geschlossen oder zusammengelegt. Aktuell sind nur die Zeilen, die die Doku vom 18. bis 26.11. beruehrt;
+  die uebrigen sind aus ihrem letzten Eintrag verdichtet (meist Pruefung vom 10.11.). Jede gekuerzte Zeile beginnt deshalb mit
+  „Stand TT.MM.:“ (Datum des juengsten Eintrags davor), „Stand 26.11. (nachgefuehrt)“ dort, wo neuere Doku eingeflossen ist.
+  Zeile 153 nach Nachpruefung berichtigt: `T76K912938` ist die IC-Terminierung (T441V/T161V), nicht V1; V1 `T76K912884` wartet weiter auf den P76-Import.
+  Legende im Excel (Handblatt) auf die neuen Statusfarben gebracht, `router.md` Zeile „Wo stehen wir gerade?“ nennt das Archiv.
 - **Neu:** Zeile 174 Claude Worktool (Angabe Ingo); HR-Lohn in Zeile 133 und `docs/rag/HR_KPI.md` (Angabe Ingo, nicht nachgeprueft).
 - **Skript:** `wochen_todo_xlsx.py` faerbt die neuen Statuswerte; Wochen_Todo.xlsx und Status_kurz.xlsx neu erzeugt.
 

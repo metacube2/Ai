@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-11-19 (neuer Abschnitt „Vorrang 0: Token sparen“ oben, Wunsch Ingo); davor 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, `projektmanagement/Wochen_Todo.tsv` in der Zeile „Wo stehen wir gerade?“ ergaenzt); davor 2026-11-05 (Absatz Agenten, feste Definitionen `.claude/agents/`, `f8752f4`); davor 2026-10-22 (Regel 6: Historie und Archiv `docs/archiv/`)
+Stand: 2026-11-26 (Zeile „Wo stehen wir gerade?“ nennt `projektmanagement/Wochen_Todo_Archiv.tsv`); davor 2026-11-19 (neuer Abschnitt „Vorrang 0: Token sparen“ oben, Wunsch Ingo); davor 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, `projektmanagement/Wochen_Todo.tsv` in der Zeile „Wo stehen wir gerade?“ ergaenzt); davor 2026-11-05 (Absatz Agenten, feste Definitionen `.claude/agents/`, `f8752f4`); davor 2026-10-22 (Regel 6: Historie und Archiv `docs/archiv/`)
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
@@ -138,7 +138,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen, Arbeitsplatzleistung und WLAN, Tempo der Webapp, Benutzerhandbuch, Reiter Netzwerk, Weltlage, Operations (Shopfloor), Trafag Projekte, Trafag Reddit | `docs/router/plattform.md` |
 | **SAP** | **SAP selbst bedienen (Werkzeuge, Grenzen, Fallen)**, ABAP, OData/Gateway, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation | `docs/router/sap.md` |
 | **Projekt** | Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand | `docs/router/projekt.md` |
-| **Wo stehen wir gerade?** | Gesamtstand je Bereich, offene Punkte, Arbeitspakete | Ast Projekt: `projektmanagement/Status_kurz.tsv`, `projektmanagement/Wochen_Todo.tsv` (alle Aufgaben mit Status), `projektmanagement/PROJEKTSTATUS.md`, fuer Finance-Punkte das Issue-Log. `docs/UEBERGABE_2026-09-08.md` ist der Stand vom 2026-09-09 (Finance-Ladelauf) und nicht mehr der aktuelle Einstieg |
+| **Wo stehen wir gerade?** | Gesamtstand je Bereich, offene Punkte, Arbeitspakete | Ast Projekt: `projektmanagement/Status_kurz.tsv`, `projektmanagement/Wochen_Todo.tsv` (offene und in den letzten 14 Tagen erledigte Aufgaben mit Status; aeltere erledigte seit 2026-11-26 in `projektmanagement/Wochen_Todo_Archiv.tsv`), `projektmanagement/PROJEKTSTATUS.md`, fuer Finance-Punkte das Issue-Log. `docs/UEBERGABE_2026-09-08.md` ist der Stand vom 2026-09-09 (Finance-Ladelauf) und nicht mehr der aktuelle Einstieg |
 
 ## Wenn der Ast nicht klar ist
 
