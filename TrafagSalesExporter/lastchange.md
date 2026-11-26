@@ -1,5 +1,19 @@
 # Last Change
 
+## 2026-11-26 11:10: Shopfloor Mail Fabio 26.11. 10:29: TV MTS weg, Meeting-Modus, Mailversand mit Schalter aus, deployed `6ef88af`
+
+- **Auftrag Ingo:** „ja führe den plan aus“; Fragekatalog: SAP direkt in T76 bauen, Mailversand bauen mit Schalter aus, Ereignisse legt
+  Fabio fest, Board-Teil deployen. Mailtext an ICT (Absender, Versandweg, Verteiler, Menge) im Chat, nicht gesendet.
+- **Gebaut und deployed 10:59** (Zweig `shopfloor-paket-2611` ab `c297e69`): PPD-Feld TV MTS entfernt; Meeting-Modus nur Abweichungen
+  (`api/meeting`, Vortag, gelb −10 %, rot −20 %, Hinweis +20 %, Serie ab 3 Tagen, SEH ausgenommen, fehlender Wert = keine Bewertung,
+  ZD05 und Rueckstandslisten zuerst im Ablauf); Mailversand SMTP, Standard aus, kein Nachversand alter Protokollmails; Ereignisse je
+  Liste einstellbar. Tests 1'909/1'909. Im Chrome geprueft, nichts gespeichert.
+- **Befund:** TR5 und DW ohne Tagesziel seit 21.11., Meeting-Modus bewertet dort deshalb nicht. Fabios Anhaenge (P76-Protokoll,
+  `Verzeichnis_Vorschlag.csv`) fehlen in der Mail.
+- **Offen:** Import Rueckstandslisten V1.04 (Datei noch nicht als xlsx vorhanden); SAP Welle 2 und Punkt 9 in T76 (Agent sap-t76 laeuft,
+  Auftrag wird nicht freigegeben); Board-Seite der neuen Sets nach dem P76-Import; Antwort an Ingo von ICT.
+- Doku: SHOPFLOOR 28.9/28.10, rag DEPLOYMENT, ARCHITECTURE, LEARNINGS, Wochen_Todo 172 + xlsx, Koordination.
+
 ## 2026-11-26 10:30: Fuenf Mailentwuerfe in Outlook, gegen Doku, Mail und Teams geprueft; Qdrant wieder in Betrieb
 
 - **Auftrag Ingo:** offene Mails pruefen, Entwuerfe im Chrome anlegen, danach „nicht dass wir Sachen fragen, die schon beantwortet sind“.

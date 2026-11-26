@@ -1,4 +1,4 @@
-# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-25 12:30 (Abschnitt 28.9: Antwort Fabio 25.11. mit Entscheiden E1 bis E3 und Freigabe Meeting-Modus; davor 06:50, Abschnitt 28: Paket Fabio 24.11., Welle 1 deployed `d8e74d2`: Kommunikation Einkauf und Offene K-Auf entfernt, Materialverfuegbarkeit je KW, Radar Verzug Einkauf/GFS); davor bis 2026-11-20 12:55 (27.6: Patch 10 Forecast Suche/Filter deployed `e3248a4`); davor bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
+# Operations (Shopfloor), Grundstand 2026-10-07, nachgefuehrt bis 2026-11-26 (Abschnitt 28.10: Mail Fabio 26.11., TV MTS entfernt, Meeting-Modus nur Abweichungen, Mailversand mit Schalter aus, Welle 2 und Punkt 9 in T76 in Arbeit); davor bis 2026-11-25 12:30 (Abschnitt 28.9: Antwort Fabio 25.11. mit Entscheiden E1 bis E3 und Freigabe Meeting-Modus; davor 06:50, Abschnitt 28: Paket Fabio 24.11., Welle 1 deployed `d8e74d2`: Kommunikation Einkauf und Offene K-Auf entfernt, Materialverfuegbarkeit je KW, Radar Verzug Einkauf/GFS); davor bis 2026-11-20 12:55 (27.6: Patch 10 Forecast Suche/Filter deployed `e3248a4`); davor bis 2026-11-19 10:12 (Abschnitt 27: Paket Fabio 19.11., deployed `591c96c`; 27.5 Fabios Antwort und Entscheide); davor bis 2026-11-17 abends (Abschnitt 26: Entscheide Fabio 17.11., AE TX = SAP, Rueckstandslisten Excel gegen Board gemessen, Plan Paket B/C; Abschnitt 25: Ergaenzung Fabio 17.11., Schnittstellen-Seite, TX-Mengen aus dem MES, Rueckstandslisten geprueft; Abschnitt 24: CO-PA und Arbeitsplatzfilter M* ein; Abschnitt 23: Layoutfilter eingeschaltet; Abschnitt 22: Paket Fabio 13.11.)
 
 *Titel am 2026-11-12 (Doku-Pruefung) ergaenzt; bis dahin „Operations (Shopfloor), Stand 2026-10-07“. Die Stand-Zeilen unten
 stehen nicht in zeitlicher Folge; die juengste ist die vom 2026-11-17.*
@@ -1381,4 +1381,51 @@ Mail „AW: Shopfloor: Patch 10 Forecast, FPY, Rueckmeldungen Teamleiter und Ein
 | 7 E3 | SAP-Nenner ist Standard, von Hand ueberschreibbar, Kennzeichen im Board | ebenda; Board braucht ein Kennzeichen je Woche |
 | 8 Pruefungen | fuer Fabio geklaert (Zeitversatz); Hinweis ZC22 „Mit Vorgangsdaten“ gibt er an die Disponenten | erledigt |
 
-Offen bei Ingo: Freigabe Plan Welle 2 samt E4 (Nachtrag 1b), Rueckfrage an Fabio zu den zwei Platzhaltern.
+Offen bei Ingo: Freigabe Plan Welle 2 samt E4 (Nachtrag 1b), Rueckfrage an Fabio zu den zwei Platzhaltern. *Ueberholt am
+2026-11-26: Fabio hat beide Platzhalter in der Mail vom 26.11. 10:29 ausgefuellt, Ingo hat Welle 2 freigegeben (E4: Nachtrag 1b als
+erster Schritt), siehe 28.10.*
+
+### 28.10 Mail Fabio 26.11. 10:29: Punkte 9 bis 11, Nachtraege 5 und 6; Board-Teil deployed (Stand 2026-11-26)
+
+Mail „AW: Shopfloor: Patch 10 Forecast, FPY, Rueckmeldungen Teamleiter und Einkauf“. Fabio nennt Anhaenge (P76-Protokoll und
+Rohdaten zu Punkt 9, `Verzeichnis_Vorschlag.csv`); in der Mail ist nur ein Bild angehaengt, die Dateien fehlen. Entscheide Ingo
+26.11. (Fragekatalog): SAP direkt in T76 bauen; Mailversand bauen mit Schalter aus; Ereignisse je Liste einstellbar, Werte legt
+Fabio fest; Board-Teil nach gruenen Tests deployen.
+
+| Punkt | Inhalt Fabio | Umsetzung |
+| --- | --- | --- |
+| 5 Nachtrag | Rueckstandslisten aus `PPA-Shop-Floor-File-2026_Version 1.04.xlsx` (OneDrive Daniel Tobler) importieren | **offen:** die Datei muss als xlsx vorliegen (Import ueber „Excel einlesen“ mit Vorschau, Server sichert vorher); ueber die M365-Werkzeuge kommt nur Text |
+| 6 Nachtrag | SEH vorerst ausnehmen | `meeting_modus.ausnehmen = ["seh"]` |
+| 6 | Meeting-Modus nur Abweichungen (25.11. freigegeben) | **gebaut** (unten) |
+| 9 | TVAV/Angebote: SAP-Felder nach Kundenauftrag/Position (VBAP-MATNR, MARA-ZZTYP, VBAP-KWMENG, letzte bestaetigte VBEP-EDATU; bei SOBKZ E alle FA/PA, mehrere je Feld, bei jedem Lauf neu) | SAP-Teil zusammen mit Welle 2 in **einem** T76-Auftrag (Agent sap-t76, laeuft, Set `ShopKdTerminSet` mit Basis VBAP bei Angabe des Auftrags, `Beskz`/`Elikz` als Felder statt hart gefiltert); Board-Seite folgt nach dem P76-Import |
+| 10 | „TV MTS“ und „Verzug MTS“ entfernen | `tv_mts` entfernt, `tv_total` ohne MTS; `verzug_mts` war schon seit dem Paket vom 01.11. weg (Abschnitt oben, `apply_config.js`). Gespeicherte Werte bleiben in `shopfloor.db` |
+| 11 | Mailversand einrichten, Absender z. B. shopfloor@trafag.com; Fragen: Ereignisse, Listen | **gebaut, Schalter aus**; Mail an ICT (Absender, Versandweg, Verteiler, Menge) von Ingo; Ereignisse legt Fabio fest |
+
+**Gebaut** (Funktionscommit `6ef88af`, Zweig `shopfloor-paket-2611` ab Produktivstand `c297e69`, Worktree `C:\TMP\Ai_sf2611`):
+
+- **Meeting-Modus** (`ShopfloorMeeting.cs`, `GET api/meeting?day=`): bewertet `prod` gegen `ziel` des letzten Tages **vor** dem Stichtag mit
+  beiden Werten (Stand Vortag wie der Radar, der laufende Tag ist morgens unvollstaendig). gelb ab −10 %, rot ab −20 %, Hinweis ab +20 %
+  (Grenzen zaehlen mit, auf 0,1 % gerundet); Serie = Tage mit Werten in Folge unter Ziel (Wochenende ohne Werte wird uebersprungen),
+  hervorgehoben ab 3. Fehlt Menge oder Ziel oder ist der letzte Wert aelter als 4 Kalendertage, gibt es **keine** Bewertung (TX ohne
+  MES-Mengen ist damit nie dauerhaft rot). Alles in `shopfloor_config.json` `meeting_modus` (Schwellen, `abteilungen`, `ausnehmen`,
+  `zuerst`). Im Board: Pills im Ablauf auf der Startseite; waehrend des Meetings Kasten auf der Abteilungsseite, Tagesmenge am
+  Bewertungstag farbig, Gruppe „Tagesleistung“ im Ziel grau und eingeklappt (Klick klappt auf); Ablauf mit ZD05 und den vier
+  Rueckstandslisten zuerst (`zuerst`, leer = alte Reihenfolge).
+- **Mailversand** (`ShopfloorMailSender.cs`, appsettings `Shopfloor:Mail`): SMTP, **Modus „aus“**. Versendet erst, wenn `Modus = smtp`,
+  `Host`, `Absender` und `SendenAb` gesetzt sind. Nur Mails ab `SendenAb`; aeltere „wartend“-Mails (Protokoll seit Oktober) werden beim
+  ersten Lauf auf „nicht gesendet“ gesetzt und **nie nachversandt**. Versand ausserhalb der DB-Schreibsperre, `MaxVersuche` 3, „Erneut“
+  setzt die Zeit neu. Passwort nie ins Repository (Umgebungsvariable `Shopfloor__Mail__Passwort`). Seite „Personen & Mail“ nennt, was
+  fehlt. `Shopfloor:BaseUrl` ist leer; fuer den „Oeffnen“-Knopf in den Mails beim Einschalten setzen. Microsoft Graph ist nicht gebaut.
+- **Ereignisse je Liste** (`notify_rules.<liste>.ereignisse`): `neu`, `zust`, `done`, `status` (Statuswechsel, nicht abgeschlossen),
+  `termin` (Termin geaendert); ohne Eintrag wie bisher `neu`, `zust`, `done`.
+- Tests neu: `ShopfloorPaket2611Tests` (Grenzen, Vortag, Serie, SEH, alte Werte, Konfiguration, TV MTS), `ShopfloorMailVersandTests`
+  (aus, kein Nachversand, Fehler/Wiederholung, Erneut, Status ohne Passwort, Ereignisse); Suite **1'909/1'909** im Worktree und im
+  Release-Worktree.
+- **Deployed 2026-11-26 10:59** mit dem Werkzeug (Commit-Zeile `6ef88af`, bitgleich, Alarm nur `-wal`/`-shm` und Checkpoint). Im
+  Arbeits-Chrome gesehen: Ablauf mit ZD05 und Rueckstandslisten zuerst; Moderationsmodus (nur im Browser gestartet und beendet) auf TX
+  mit Kasten „Tagesleistung 25.11.: 1'267 von 1'200 Stk. (+5,6 %) · im Ziel“ und eingeklappter Gruppe; `api/mail` Modus „aus“, eine
+  wartende Mail (Fabios Testmail 26.11. 09:27, bleibt beim Einschalten Protokoll). Nichts gespeichert.
+- **Befund 26.11. (produktiv, `api/meeting`):** TR5 und DW haben seit dem 21.11. kein Tagesziel im Board (letzter Tag mit Menge und
+  Ziel 20.11.), deshalb dort keine Bewertung. Die Ziele kamen bisher aus dem Excel-Import; laut Fabio (17.11.) gelten sie bis zum
+  Go-live aus dem Excel. Abhilfe: Import V1.04 oder Ziel im Board eintragen. Ob das Board ein fehlendes Ziel vom letzten erfassten Tag
+  uebernehmen soll, ist eine Frage an Fabio (heute nicht gebaut, damit kein Wert ohne Beleg rot wird).
