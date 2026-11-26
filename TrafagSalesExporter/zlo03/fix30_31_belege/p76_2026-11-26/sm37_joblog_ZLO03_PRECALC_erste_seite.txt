@@ -1,0 +1,30 @@
+﻿  0: 
+  1: Job-Log �bersicht f�r Job:ZLO03_PRECALC / 06002101
+  2: 
+  4:  Datum      Uhrzeit  Nachrichtentext                                                                          N-Klasse N-Nummer N-Typ
+  6:  26.11.2026 06:00:16 Job ZLO03_PRECALC 06002101 wurde gestartet                                                  00      516      S
+  7:  26.11.2026 06:00:16 Step 001 gestartet (Programm Z_LO03_MD04_BATCH, Variante ALLES360TAGE, Benutzername KOI)    00      550      S
+  8:  26.11.2026 06:00:17 Modus F : Caches laden...                                                                   00      001      S
+  9:  26.11.2026 06:00:17 Cache: MSEG laden...                                                                        00      001      S
+ 10:  26.11.2026 06:00:17 Cache: MBEW laden...                                                                        00      001      S
+ 11:  26.11.2026 06:00:18 Cache: MDBS laden...                                                                        00      001      S
+ 12:  26.11.2026 06:00:18 Cache: AFPO laden...                                                                        00      001      S
+ 13:  26.11.2026 06:00:18 Cache: Kontrakte laden...                                                                   00      001      S
+ 14:  26.11.2026 06:00:18 Cache: EKAB laden...                                                                        00      001      S
+ 15:  26.11.2026 06:00:18 Cache: Verwendung laden...                                                                  00      001      S
+ 16:  26.11.2026 06:00:18 Cache: Verwendung 1000/44858...                                                             00      001      S
+ 17:  26.11.2026 06:00:18 Cache: Verwendung 2000/44858...                                                             00      001      S
+ 18:  26.11.2026 06:00:18 Cache: Verwendung 3000/44858...                                                             00      001      S
+ 19:  26.11.2026 06:00:18 Cache: Verwendung 4000/44858...                                                             00      001      S
+ 20:  26.11.2026 06:00:18 Cache: Verwendung 5000/44858...                                                             00      001      S
+ 21:  26.11.2026 06:00:18 Cache: Verwendung 6000/44858...                                                             00      001      S
+ 22:  26.11.2026 06:00:18 Cache: Verwendung 7000/44858...                                                             00      001      S
+ 23:  26.11.2026 06:00:18 Cache: Verwendung 8000/44858...                                                             00      001      S
+ 24:  26.11.2026 06:00:18 Cache: Verwendung 9000/44858...                                                             00      001      S
+ 25:  26.11.2026 06:00:18 Cache: Verwendung 10000/44858...                                                            00      001      S
+ 26:  26.11.2026 06:00:18 Cache: Verwendung 11000/44858...                                                            00      001      S
+ 27:  26.11.2026 06:00:18 Cache: Verwendung 12000/44858...                                                            00      001      S
+ 28:  26.11.2026 06:00:18 Cache: Verwendung 13000/44858...                                                            00      001      S
+ 29:  26.11.2026 06:00:19 Cache: Verwendung 14000/44858...                                                            00      001      S
+ 30:  26.11.2026 06:00:19 Cache: Verwendung 15000/44858...                                                            00      001      S
+ 31:  26.11.2026 06:00:19 Cache: Verwendung 16000/44858...                                                            00      001      S

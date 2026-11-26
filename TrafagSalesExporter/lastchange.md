@@ -1,5 +1,16 @@
 # Last Change
 
+## 2026-11-26: ZLO03-Job, erster P76-Lauf mit FIX 30 bis 34 nachgeprueft
+
+- **Auftrag Ingo:** „sap prod ist offen, du kannst gegenchecken ob felder werte korrekt sind“. P76 wurde nur gelesen (SM37, SE16, Agent sap-t76).
+- **Job:** `ZLO03_PRECALC` 06:00:16 fertig, 1'693 s, „Modus F: 44858 Saetze geschrieben“. 44'858 Zeilen in `ZMD04_CALC` tragen den 26.11.
+- **Werte:** Fuer acht Materialien sind MKMNG/OMKWR, OMENG/OWERT und VERBR gegen P76-Rohdaten nachgerechnet und alle gleich.
+  FIX 30, 31 und 33 sind belegt, FIX 32 wirkt heute an diesen Materialien nicht. **B64344 = 7'125:** Armins 2'125 plus der neue Kontrakt
+  46010673 (5'000, angelegt 25.11.).
+- **Offen:** Antwort an Armin (Ingo). Im Dashboard erscheint der neue Stand nach dem Einkauf-Lauf der Nacht auf den 27.11.
+- **Doku:** FIX30_31 Abschnitt 8, Belege `zlo03/fix30_31_belege/p76_2026-11-26/`, zlo03/CLAUDE.md, rag PURCHASING/PROJECT, LEARNINGS, baum,
+  Wochen_Todo 173 + xlsx.
+
 ## 2026-11-26: Handbestellwesen, Mail an den Einkauf versendet
 
 - **Mail** „Handbestellwesen: Stand und was wir vom Einkauf brauchen“ am 26.11. 08:25 von Ingo versendet (an Sandro, Vinc, Alex,

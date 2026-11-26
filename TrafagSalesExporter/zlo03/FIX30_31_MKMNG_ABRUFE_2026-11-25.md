@@ -1,6 +1,6 @@
 # FIX 30 bis FIX 34 in `Z_LO03_MD04_BATCH`: offene Mengenkontraktmenge, offene Bestellmenge, Verbrauch (2026-11-25)
 
-Stand: 2026-11-25 14:40 (Abschnitt 7: `T76K912950` in P76 importiert 13:49:32 RC 0, Job und Variante gelesen); davor 13:15 (Abschnitt 6: FIX 32 bis 34 im selben Auftrag; der Dateiname nennt nur FIX 30/31, weil die Datei vorher angelegt wurde). **In T76/100 aktiv, Auftrag `T76K912950` (Aufgabe `T76K912951`), nicht freigegeben. P76 nicht beruehrt.**
+Stand: 2026-11-26 (Abschnitt 8: erster P76-Lauf 26.11. 06:00 mit FIX 30 bis 34 fertig, Werte in `ZMD04_CALC` gegen P76-Rohdaten nachgerechnet und gleich; B64344 = 7'125 wegen neuem Kontrakt 46010673 vom 25.11.); davor 2026-11-25 14:40 (Abschnitt 7: `T76K912950` in P76 importiert 13:49:32 RC 0, Job und Variante gelesen); davor 13:15 (Abschnitt 6: FIX 32 bis 34 im selben Auftrag; der Dateiname nennt nur FIX 30/31, weil die Datei vorher angelegt wurde). **In T76/100 aktiv, Auftrag `T76K912950` (Aufgabe `T76K912951`), nicht freigegeben. P76 nicht beruehrt.**
 Anlass und Ursache: `BEFUND_MKMNG_ABRUFE_2026-11-25.md` (Meldung Armin, B64344 in ZLO03 8'456 statt 2'125 wie ME3M).
 Auftrag Ingo 25.11.: „ja einbauen und testen im t. punkt 3 mach ein schalter“. Entscheid Armin 25.11. (Mail an Ingo):
 abgelaufene Kontrakte mit Restmenge zaehlen mit, „da wir eine offene Verpflichtung gegenueber dem Lieferanten haben“.
@@ -44,7 +44,7 @@ zusammen 500 Zeilen. T76-Daten reichen bis etwa Mai 2026, deshalb andere Zahlen 
 ## 3. Erwartung fuer P76
 
 Mit Armins ME3M-Liste vom 25.11.: B64344 = 5 (46009174, abgelaufen 31.12.2025) + 0 (46009844) + 2'120 (46010268) = **2'125**.
-Wirksam in ZLO03 erst nach dem naechsten Lauf des Jobs nach dem Import.
+Wirksam in ZLO03 erst nach dem naechsten Lauf des Jobs nach dem Import. *(Ueberholt 26.11.: P76 zeigt 7'125, weil am 25.11. der Kontrakt 46010673 mit 5'000 dazukam; 2'125 gilt fuer die drei alten Kontrakte, Abschnitt 8.)*
 
 ## 4. Offen
 
@@ -122,4 +122,52 @@ in P76 (eigene Sitzung, nichts gespeichert); die STMS-Importhistorie liess sich 
 - **`P_KTABG` in der Variante:** Zeile „Abgelaufene MK mit Restmenge“ mit X und dem SAP-Hinweis „Kein Wert fuer Parameter gespeichert
   (ggf. neuer Parameter)“, also Vorschlagswert X. Das ist Armins Entscheid (abgelaufene Kontrakte mit Restmenge zaehlen); an der
   Variante ist nichts zu aendern. Punkt 4.3 damit erledigt.
-- **Offen:** ab 26.11. nach 06:30 ZLO03 Top-Down 61227 bzw. `ZMD04_CALC` B64344 pruefen (Erwartung 2'125), Antwort an Armin.
+- **Offen:** ab 26.11. nach 06:30 ZLO03 Top-Down 61227 bzw. `ZMD04_CALC` B64344 pruefen (Erwartung 2'125), Antwort an Armin. *Geprueft 26.11., Abschnitt 8; offen bleibt die Antwort an Armin.*
+
+## 8. Erster Lauf in P76 nachgeprueft (2026-11-26, Agent sap-t76, P76 nur gelesen, von Claude gegen die Belege gegengelesen)
+
+Auftrag Ingo 26.11.: „sap prod ist offen, du kannst gegenchecken ob felder werte korrekt sind“. Gelesen wurde nur mit SM37 und
+SE16 in einer eigenen Sitzung; es lief kein Report, kein Job und keine Variante wurde gespeichert. Belege liegen in `fix30_31_belege/p76_2026-11-26/`.
+
+**Job:** `ZLO03_PRECALC` / 06002101, Status fertig, Start 06:00:16, Dauer 1'693 s (am 25.11. 1'680 s). Protokoll: „Verarbeitet:
+44858/44858“, „Modus F: 44858 Saetze geschrieben.“ um 06:28:29, auf erster und letzter Seite keine E- oder A-Meldung. Heute lief kein
+anderer Job mit `Z_LO03_MD04_BATCH`. In `ZMD04_CALC` (45'416 Zeilen, alle Werk 1100) tragen 44'858 Zeilen das Datum 26.11.; das ist dieselbe
+Zahl. Die uebrigen rund 557 Zeilen haben ein aelteres Datum, eine davon den 25.11. (67692). *Vermutung, nicht geprueft:* Es sind Materialien,
+die der Job nicht mehr auswaehlt.
+
+**Werte gegen eine Nachrechnung aus P76-Rohdaten** (Rechenregeln aus `Z_LO03_MD04_BATCH_FIX34_2026-11-25.abap`, Preise aus `MBEW`, Standardpreis/PEINH):
+
+| Material | Feld | `ZMD04_CALC` | Nachrechnung | Urteil |
+| --- | --- | --- | --- | --- |
+| B64344 | MKMNG / OMKWR | 7'125 / 138'225.00 | 5 + 0 + 2'120 + 5'000 = 7'125; × 19.40 | gleich |
+| B64344 | OMENG / OWERT | 1'152 / 22'348.80 | 576 + 576 | gleich |
+| C34974 | OMENG / OWERT | 11'600 / 6'496.00 | Einteilung 0045148351/10/5 | gleich |
+| D34612 | OMENG / OWERT | 24'000 / 16'560.00 | 3 × 8'000 | gleich |
+| D34612 | MKMNG / OMKWR | 60'000 / 41'400.00 | 42'000 + 18'000 (alte Logik 136'000) | gleich |
+| K70758 | OMENG / OWERT | 10'000 / 74.30 | 10'000 × 7.43 / 1'000 | gleich |
+| B61003 | MKMNG / OMKWR | 40'000 / 21'200.00 | Kontrakt 46010211 | gleich |
+| C10312 | MKMNG / OMKWR | 95'000 / 9'500.00 | 150'000 − 55'000 (46010376) | gleich |
+| C38774 | VERBR | 44'504 | 4'504 (MVER 12/2025 bis 11/2026) + 40'000 (MSEG KDE) | gleich |
+
+Nicht nachgerechnet sind 59397 OMENG 220 (vermutlich Fertigungsauftrag, `AFPO` nicht gelesen) und VERBR der uebrigen Materialien.
+
+**B64344 = 7'125 statt der erwarteten 2'125:** Die Kontrakte 46009174 (offen 5, abgelaufen 31.12.2025, zaehlt nur mit `P_KTABG`), 46009844
+(offen 0) und 46010268 (offen 2'120) ergeben Armins 2'125. Dazu kommt **46010673/10 mit 5'000 Stueck und ohne Abruf**. Laut `EKKO` ist er am
+25.11.2026 angelegt, gueltig vom 25.11.2026 bis 30.06.2028, Kuerzel MSO. Die Erwartung 2'125 war fuer den Stand ohne diesen Kontrakt richtig.
+*Vermutung:* Er wurde erst nach Armins ME3M-Liste angelegt.
+
+**Wirkung je Fix in P76:**
+
+- FIX 30 ist belegt: Nach der alten Logik ergaebe B64344 13'456 (die gemeldeten 8'456 plus 5'000), D34612 136'000 statt 60'000.
+- FIX 31 ist belegt: Ohne `P_KTABG` ergaebe B64344 7'120.
+- FIX 33 ist belegt: C38774 KDE-Verbrauch 40'000 statt 15'000, also +25'000 wie in T76. Ursache sind sechs Zeilen eines Belegs vom 18.12.2025.
+- FIX 32 hat an den acht Materialien heute keine Wirkung; die T76-Faelle sind in P76 nicht mehr offen.
+- FIX 34 ist nicht gesehen.
+
+**Grenzen:** SE16 bietet in P76 bei `EKPO`, `MDBS` und `AFPO` kein MATNR zur Selektion an. Deshalb wurde ueber Nummernkreise gelesen:
+`EKPO` 46*, `MDBS` 45140000 bis 45169999 (ab 03.03.2025). Aeltere offene Bestellungen waeren nicht erfasst, der Abgleich mit dem Jobwert zeigt
+aber keine Luecke. ST22 wurde nicht gelesen.
+
+**Offen:** Antwort an Armin (Ingo). B64344 zeigt jetzt 7'125, das sind 2'125 aus den alten Kontrakten und 5'000 aus 46010673. Offene Bestellmenge
+und Verbrauch steigen bei betroffenen Materialien. Das Dashboard (Materialanteil, `ZloTopDownSet`) liest den neuen Stand erst im Einkauf-Lauf
+der Nacht auf den 27.11. Weiter offen sind Befund 7.2, 59397 OMENG und die rund 557 alten Zeilen.

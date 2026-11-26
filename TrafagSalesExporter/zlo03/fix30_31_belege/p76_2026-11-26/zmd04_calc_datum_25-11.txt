@@ -1,0 +1,6 @@
+Tabelle:		ZMD04_CALC
+Angezeigte Felder:			18	von	18	Feststehende Führungsspalten:			 1		Listbreite	1023
+
+	MATNR						WERKS	LABST		FESTE_ZUG			GEPL_ZUG	FESTE_ABG	GEPL_ABG	CALC_DATE	CALC_TIME	VERBR	OMENG	OWERT	MKMNG	OMKWR	EXKLUSIV	EXKL_COUNT	VERBR_DAYS	VERBR_DATE
+
+	000000000000067692						1100	            0.000		            0.000			            0.000	            0.000	            0.000	25.11.2026	06:15:30	           0.000	           0.000	             0.00	           0.000	             0.00		 0.000000000000000E+00	       360	25.11.2026

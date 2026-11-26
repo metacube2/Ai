@@ -1,0 +1,29 @@
+﻿  0: 
+  1: Job-Log �bersicht f�r Job:ZLO03_PRECALC / 06002101
+  2: 
+  4:  Datum      Uhrzeit  Nachrichtentext                                                                          N-Klasse N-Nummer N-Typ
+  6:  26.11.2026 06:27:58 Material VC0106 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+  7:  26.11.2026 06:27:58 Material VC0107 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+  8:  26.11.2026 06:27:58 Material VC0108 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+  9:  26.11.2026 06:27:58 Material VC0114 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 10:  26.11.2026 06:27:58 Material VC0120 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 11:  26.11.2026 06:27:58 Material VC0142 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 12:  26.11.2026 06:27:58 Material VC0143 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 13:  26.11.2026 06:27:58 Material VC0144 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 14:  26.11.2026 06:27:58 Material VC0145 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 15:  26.11.2026 06:27:58 Material VC0146 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 16:  26.11.2026 06:27:58 Material VC0157 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 17:  26.11.2026 06:27:58 Material VC0158 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 18:  26.11.2026 06:27:58 Material VC0204 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 19:  26.11.2026 06:27:58 Material VC0219 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 20:  26.11.2026 06:27:59 Material VC0247 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 21:  26.11.2026 06:27:59 Material VC0250 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 22:  26.11.2026 06:27:59 Material VC0251 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 23:  26.11.2026 06:27:59 Material VC0349 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 24:  26.11.2026 06:28:01 Material VG0021 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 25:  26.11.2026 06:28:01 Material VS0027 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 26:  26.11.2026 06:28:21 Material Z99999 in Werk 1100 ist zum L�schen vorgemerkt                                   61      403      S
+ 27:  26.11.2026 06:28:21 Material ZC18907 in Werk 1100 ist zum L�schen vorgemerkt                                  61      403      S
+ 28:  26.11.2026 06:28:21 Verarbeitet: 44858/44858                                                                    00      001      S
+ 29:  26.11.2026 06:28:29 Modus F: 44858 Saetze geschrieben.                                                          00      001      S
+ 30:  26.11.2026 06:28:29 Job wurde beendet                                                                           00      517      S

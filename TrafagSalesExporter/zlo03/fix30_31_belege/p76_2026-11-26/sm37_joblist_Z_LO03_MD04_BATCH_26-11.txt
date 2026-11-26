@@ -1,0 +1,13 @@
+﻿  0: Job�bersicht von :26.11.2026 um :    :  :
+  1:              bis :  26.11.2026 um :    :  :
+  2: Selektierte      Jobnamen :  *
+  3: Selektierte Benutzernamen :  *
+  4: 
+  5:   geplant       freigegeben     bereit     aktiv      fertig       abgebrochen
+  6:   eventgesteuert      Eventid :
+  7:   ABAP Programm    Programmname : Z_LO03_MD04_BATCH
+  8: 
+  9: 
+ 11:     Jobname                          Spool Job Dok Job-Erstelle Status          Startdatum Startzeit Dauer(sec.) Verz�gerung(sec.)ManVerz�gerungsgrund
+ 13:     ZLO03_PRECALC                                  KOI          fertig          26.11.2026 06:00:16       1,693                16  100
+ 15:    *Zusammenfassung                                                                                       1,693                16
