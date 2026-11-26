@@ -1,6 +1,6 @@
 # Handbestellwesen: Abloesung der PHP-Anwendung durch ein Modul im Dashboard
 
-Stand: 2026-11-20 09:45 (Abschnitt 6.15: AD-Abgleich am 20.11. 09:08 ausgefuehrt, Nachpruefung produktiv; seit dem 22.10. praktisch keine Bestellung mehr im Tool, Stammdaten fuer Freigabe ueber CHF 1'000 weiter nicht gepflegt); davor 2026-11-18 10:32 (Abschnitt 6.14: Rueckmeldungen Sandro/Vinc in der klassischen Startansicht nachgezogen, Sortierung, Befund Limits; Commit `3c18493`, deployed 10:45 als `e316353`); davor 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
+Stand: 2026-11-26 (Mail an den Einkauf mit den sieben Fragen am 26.11. 08:25 von Ingo versendet, Abschnitt 6.15 Nachtrag; Antwort ausstehend); davor 2026-11-20 09:45 (Abschnitt 6.15: AD-Abgleich am 20.11. 09:08 ausgefuehrt, Nachpruefung produktiv; seit dem 22.10. praktisch keine Bestellung mehr im Tool, Stammdaten fuer Freigabe ueber CHF 1'000 weiter nicht gepflegt); davor 2026-11-18 10:32 (Abschnitt 6.14: Rueckmeldungen Sandro/Vinc in der klassischen Startansicht nachgezogen, Sortierung, Befund Limits; Commit `3c18493`, deployed 10:45 als `e316353`); davor 2026-11-18 08:20 (Abschnitt 6.13: Stammdaten neu erfassen fuer alle Besteller, Freigabeliste ueber CHF 1'000 mit Kostenstellen- und Projektleiter, deployed 08:15 `f2c0267`); davor 2026-11-17 nachmittags (Abschnitt 6.12: Antworten Ingo, Teil 2 deployed 12:36 `44a3ed1`, seit 12:43 im gemeinsamen Stand `2e62163`,
 `Schreiben` an, *ueberholt: am 20.11. 09:08 ausgefuehrt, siehe 6.15*; ein Konto gehoert im AD einer anderen Person, Entscheid Ingo). Davor 2026-11-17 (Abschnitt 6.11: naechtlicher
 AD-Abgleich, deployed 11:28 `6a7de50`, Nachtlauf nur Vorschau; erste Vorschau aus der Produktion; Fragen an Ingo in 6.11). Davor 2026-11-12 (Doku-Pruefung: Kopf an die Abschnitte 6.2 bis 6.10 angeglichen;
 der juengste Inhalt war damals vom 2026-10-27).
@@ -9,6 +9,7 @@ PHP-Anwendung ist abgeschaltet und der Reiter seit dem 27.10. sichtbar (6.8). Of
 Bereinigung, Rechnungsbetrag und Mail beim Wareneingang, Bestaetigung der Regeln durch den fachlichen Owner (6.8, 7).
 **Stand 20.11. (6.15):** AD-Abgleich ausgefuehrt; seit dem 22.10. wird praktisch nicht mehr im Tool bestellt (November: eine Bestellung),
 offene Bestellungen unveraendert 1'289; Freigabe ueber CHF 1'000 mangels gepflegter Limits und Leiter weiter nicht nutzbar.
+**Stand 26.11.:** Die Mail mit den sieben Fragen an den Einkauf ist am 26.11. 08:25 versendet (Sandro, Vinc, Alex, Cc Armin), Antwort ausstehend.
 
 Davor 2026-10-22 (Nachtrag Antworten Ingo: Betrieb lokal bei Trafag, Benutzer ohne SAP-Konto, Plugin/KISS, AD,
 Schreiben nach SAP). Status: **Phase 1 programmiert und getestet, nicht deployed** *(ueberholt, siehe Stand oben)* (Abschnitt 6). **Entscheid 22.10. (nach der Einkaufssitzung,
@@ -601,9 +602,9 @@ Kostenstellen- und Projektleiter; (4) wer ist Projektleiter fuer die Freigabe ue
 Bestellungen gesammelt ausbuchen und 25 Doppelklick-Doubletten stornieren (Bereinigung 6.5); (7) Rechnungsbetrag und Mail beim Wareneingang noch
 noetig. Dazu: 12 Bestellungen ehemaliger Mitarbeitender werden nach Angabe des Einkaufs neu zugewiesen. **Rueckfrage offen:** In Frage 6 stand
 „ueber 400“ (431 aelter als drei Jahre, Datenpruefung 22.10., nicht frisch gemessen); mit Stichtag ein Jahr waeren es rund 930. Welche Zahl in die
-Mail kommt, entscheidet Ingo.
+Mail kommt, entscheidet Ingo. *Nachtrag 26.11.: Ingo hat die Mail am 25.11. als Outlook-Entwurf angelegt und am **26.11. 08:25 unveraendert versendet** (Betreff „Handbestellwesen: Stand und was wir vom Einkauf brauchen“, an Sandro, Vinc, Alex, Cc Armin). In Frage 6 steht „ueber 400“; die Rueckfrage zur Zahl ist damit erledigt. Antwort des Einkaufs ausstehend. Sandros Vorschlag vom 18.11. (Bestellungen ueber CHF 1'000 in SAP erfassen statt im Tool freigeben) ist in der Mail nicht angesprochen und bleibt offen.*
 
-**Uebergabe (Sitzung geschlossen 20.11.):** Wer weitermacht, prueft zuerst, ob Ingo die Mail gesendet hat und was der Einkauf antwortet. Fuer den
+**Uebergabe (Sitzung geschlossen 20.11.):** Wer weitermacht, prueft zuerst, ob Ingo die Mail gesendet hat *(gesendet 26.11. 08:25)* und was der Einkauf antwortet. Fuer den
 Kandidaten `ran` die Tabelle `Protokoll` in `hbdaten\handbestellwesen.db` nur lesend auswerten (Kopie der Tagessicherung, nicht die Live-DB),
 Eintraege des Laufs vom 20.11. 09:08 zu `ran`: alter und neuer Name.
 
@@ -617,6 +618,6 @@ Eintraege des Laufs vom 20.11. 09:08 zu `ran`: alter und neuer Name.
    (braucht einen Deploy). *Stand 6.12: Fragen beantwortet, `Schreiben` an; offen ist der Entscheid zum Konto, das im AD einer
    anderen Person gehoert, danach einmal „Jetzt ausfuehren“.* **Erledigt 20.11. 09:08 (6.15).** Offen danach: 12 offene Bestellungen
    Deaktivierter neu zuweisen, Konto der anderen Person pruefen (Kandidat `ran`).
-6. Nachfrage beim Einkauf, warum seit dem 22.10. praktisch nicht mehr im Tool bestellt wird (6.15), Zugang und Bekanntgabe der Adresse.
+6. Nachfrage beim Einkauf, warum seit dem 22.10. praktisch nicht mehr im Tool bestellt wird (6.15), Zugang und Bekanntgabe der Adresse. *Mail mit sieben Fragen am 26.11. 08:25 versendet, Antwort ausstehend.*
 7. Limits der Kostenstellenleiter, Projektleiter-Haken, fehlende Mitarbeitende (22 Leiter) und Haken Wareneingang pflegen (Admin, Angaben
    Einkauf/Armin); sonst bleibt die Freigabe ueber CHF 1'000 fuer die meisten Leiter grau.

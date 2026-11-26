@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-26: Handbestellwesen, Mail an den Einkauf versendet
+
+- **Mail** „Handbestellwesen: Stand und was wir vom Einkauf brauchen“ am 26.11. 08:25 von Ingo versendet (an Sandro, Vinc, Alex,
+  Cc Armin), unveraendert gegenueber dem Entwurf vom 25.11.: sieben Fragen, dazu zwoelf offene Bestellungen Deaktivierter zum Neuzuweisen; Frage 6
+  mit „ueber 400“. Antwort ausstehend. Sandros Vorschlag vom 18.11. (ueber CHF 1'000 in SAP erfassen) ist nicht angesprochen.
+- **Doku:** KONZEPT Kopf, 6.15 Nachtrag, 7; rag PURCHASING und PROJECT (auch: Mail Lieferantenentwicklung am 25.11. 11:17 versendet); Wochen_Todo 120 + xlsx.
+
 ## 2026-11-25 14:40: Transporte in P76 geprueft; Pfad kopieren deployed
 
 - **P76 (nur gelesen, Agent):** `T76K912906` 16.11. 16:10, `T76K912938` 20.11. 13:11, `T76K912940` 23.11. 10:30, `T76K912944` 25.11.
