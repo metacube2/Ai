@@ -199,6 +199,11 @@ class Suche:
             with_payload=True,
             with_vectors=False,
         )
+        # Die Vektorsuche liefert immer die naechsten Nachbarn, auch fuer Unsinn wie
+        # "kaerfdpinvesdrio" (Score 0.48, hoeher als echte Fragen wie "Krankheit Absenzen" mit 0.34;
+        # 2026-11-26 gemessen). Eine Score-Schwelle trennt das nicht, deshalb wird je Treffer
+        # ausgewiesen, welche Suchwoerter im Abschnitt wirklich vorkommen.
+        suchwoerter = woerter_der_frage(frage)
         treffer: list[dict] = []
         for punkt in antwort.points:
             payload = punkt.payload or {}
@@ -217,6 +222,9 @@ class Suche:
                     "abschnitt": str(meta.get("abschnitt") or ""),
                     "teil": meta.get("teil"),
                     "text": text_ohne_kopf(str(payload.get("document") or "")),
+                    "wortfunde": [
+                        w for w in suchwoerter if w.lower() in str(payload.get("document") or "").lower()
+                    ],
                 }
             )
             if len(treffer) >= anzahl:
@@ -459,6 +467,7 @@ def handler_bauen(suche: Suche, port: int):
                     "ordner": ordner,
                     "alle_woerter": alle_woerter,
                     "dauer_ms": round((time.perf_counter() - beginn) * 1000),
+                    "suchwoerter": woerter_der_frage(frage),
                     "treffer": treffer,
                 },
             )
@@ -588,6 +597,8 @@ label { font-size: 13px; color: var(--tx2); }
 .treffer { background: var(--fl); border: 1px solid var(--rand); border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
 .kopf { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
 .rang { color: var(--tx2); font-size: 13px; min-width: 1.6em; }
+.wort { font-size: 12px; border-radius: 10px; padding: 1px 8px; color: var(--ok); background: var(--ok-bg); }
+.wort.keins { color: var(--warn); background: var(--warn-bg); }
 .score { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--akz); background: var(--akz-bg);
   border-radius: 10px; padding: 1px 8px; }
 .datei { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13.5px; color: var(--akz);
@@ -713,12 +724,19 @@ async function kopieren(text, knopf) {
 
 function trefferZeigen(daten, woerter) {
   const liste = $("liste");
-  liste.textContent = "";
   for (const t of daten.treffer) {
     const karte = el("div", "treffer");
     const kopf = el("div", "kopf");
     kopf.append(el("span", "rang", t.rang + "."));
     kopf.append(el("span", "score", "Score " + t.score.toFixed(3)));
+    if ((daten.suchwoerter || []).length) {
+      const f = t.wortfunde || [];
+      const tag = f.length
+        ? el("span", "wort", "enthält " + f.length + " von " + daten.suchwoerter.length + " Wörtern")
+        : el("span", "wort keins", "kein Suchwort, nur ähnlich");
+      tag.title = f.length ? "Im Abschnitt: " + f.join(", ") : "Keines der Suchwörter steht in diesem Abschnitt; die Vektorsuche hält ihn nur für inhaltlich ähnlich.";
+      kopf.append(tag);
+    }
     const datei = el("button", "datei", t.datei);
     datei.type = "button";
     datei.title = "Pfad kopieren: " + t.pfad;
@@ -780,6 +798,13 @@ async function suchen() {
       + (d.ordner ? " · Ordner " + (d.ordner === "/" ? "Wurzel" : d.ordner) : "")
       + (d.alle_woerter ? " · nur Abschnitte mit allen Wörtern" : "");
     if (!d.treffer.length && d.alle_woerter) info.textContent += " – ohne Haken bei „alle Wörter“ erneut versuchen";
+    $("liste").textContent = "";
+    if (d.treffer.length && (d.suchwoerter || []).length && !d.treffer.some((t) => (t.wortfunde || []).length)) {
+      const w = el("div", "stand warn");
+      w.append(el("b", "warn", "Keines der Suchwörter kommt in den Treffern vor. "));
+      w.append(document.createTextNode("Die Vektorsuche zeigt immer die ähnlichsten Abschnitte, auch bei Tippfehlern oder Wörtern, die es in der Doku nicht gibt. Diese Treffer sind deshalb wahrscheinlich nicht, was du suchst: Schreibweise prüfen oder anders formulieren."));
+      $("liste").append(w);
+    }
     const markWoerter = frage.split(/\s+/).filter((w) => w.length >= 3 && !FUELL.has(w.toLowerCase()));
     trefferZeigen(d, markWoerter);
   } catch (e) {

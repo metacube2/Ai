@@ -234,8 +234,22 @@ an den Einkauf versendet“ auf Platz 3. Auf „ZLO03 offene Mengenkontraktmenge
 die reine Vektorsuche: `zlo03/BEFUND_MKMNG_ABRUFE_2026-11-25.md` auf Platz 1. Vorgabe ist aus,
 damit die Seite ohne Haken genau wie `qdrant-find` sucht.
 
+**Kennzeichnung „enthaelt n von m Woertern“ (seit 2026-11-26 nachmittags).** Die Vektorsuche liefert
+immer die naechsten Nachbarn, auch fuer Tippfehler oder Unsinn. Ingo hat „kaerfdpinvesdrio“
+eingegeben und zehn Treffer bekommen (Score 0.48). Eine Score-Schwelle hilft nicht: Unsinn erreicht
+0.46 bis 0.48, die echte Frage „Krankheit Absenzen“ nur 0.34 (gemessen 2026-11-26). Deshalb steht
+jetzt bei jedem Treffer, wie viele Suchwoerter im Abschnitt wirklich vorkommen, sonst „kein
+Suchwort, nur aehnlich“. Kommt in keinem Treffer ein Suchwort vor, zeigt die Seite oben einen
+gelben Hinweis, dass die Treffer wahrscheinlich nicht das Gesuchte sind. Gezaehlt wird als
+Teilzeichenkette ohne Gross-/Kleinschreibung, „Absenzen“ findet also kein „Absenz“.
+
+**Waehrend eines Neuaufbaus ist die Suche unvollstaendig.** `Reindex-Docs.ps1 -WennVeraltet` baut
+die Sammlung ganz neu auf, rund zehn bis fuenfzehn Minuten lang; in dieser Zeit stehen oben weniger
+Punkte als Abschnitte, und Treffer fehlen.
+
 **Schnittstelle.** `GET /api/suche?q=<Frage>&n=10&ordner=docs/rag&woerter=1` liefert JSON mit
-`treffer` (Rang, Score, Datei, Pfad, Abschnitt, Text); `ordner=/` heisst nur Dateien der
+`suchwoerter` und `treffer` (Rang, Score, Datei, Pfad, Abschnitt, Text, `wortfunde` = die
+Suchwoerter, die im Abschnitt vorkommen); `ordner=/` heisst nur Dateien der
 Repository-Wurzel. `GET /api/stand` liefert den Stand des Index und dient dem Startskript als
 Kennung.
 

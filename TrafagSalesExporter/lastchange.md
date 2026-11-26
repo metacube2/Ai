@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-26 Nachmittag: Qdrant-Suchseite kennzeichnet Treffer ohne Suchwort
+
+- Anlass: Bild Ingo, Unsinnswort „kaerfdpinvesdrio“ lieferte zehn Treffer. Die Vektorsuche liefert immer Nachbarn; eine Score-Schwelle
+  trennt nicht (Unsinn 0.48, „Krankheit Absenzen“ 0.34). Neu je Treffer „enthält n von m Wörtern“ bzw. „kein Suchwort, nur ähnlich“,
+  gelber Hinweis oben, wenn kein Treffer ein Suchwort enthält; API-Felder `suchwoerter`, `wortfunde`. `Tools/Qdrant/suche_server.py`, README 8.
+
 ## 2026-11-26 12:00: Qdrant-Suche im Browser; Repo SAP_Code nach SAP-Namen geordnet; Prüfungen ZLO03 und Z-Objekte
 
 - **Qdrant:** Index neu aufgebaut (7'162 Punkte = Abschnitte). Neu `Tools/Qdrant/suche_server.py` und `Start-Suche.ps1`: Suchseite
