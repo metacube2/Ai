@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-26 13:35: Shopfloor nach dem P76-Import von T76K912954: Caches offen, Anhaenge nie geschickt
+
+- `T76K912954` ist in P76 (Ingo); die Board-Vorschau KW 47 gibt noch 404, Gateway-Caches `/IWBEP` dann `/IWFND` leeren (Ingo), danach
+  Vorschau 1'525, Schalter ein, Abnahme. Daniels OneDrive: nur die Datei geteilt, nicht der Ordner; Datei nach dem Import erneut geaendert.
+  Fabios Anhaenge (P76-Protokoll, Verzeichnis_Vorschlag.csv) in Mail, Teams und Downloads nicht vorhanden. Absenderadresse fragt Fabio bei
+  Alex (ICT) an. SHOPFLOOR 28.10, Wochen_Todo 172.
+
 ## 2026-11-26 13:10: Shopfloor Rueckstandslisten und Tagesziele aus Fabios V1.04 importiert
 
 - Fabio schickte `PPA-Shop-Floor-File-2026_Version 1.04.xlsx` und gab Zugriff. Vorschau per API, nach OK Ingo uebernommen 13:05: TR5 +27

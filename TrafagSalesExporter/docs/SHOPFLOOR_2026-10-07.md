@@ -1438,6 +1438,21 @@ Fabio fest; Board-Teil nach gruenen Tests deployen.
   ist mit „Hand“ gekennzeichnet, ein Handwert gleich dem SAP-Wert faellt weg; Vorschau `GET api/sap/nenner?tag=`. Planauftraege mit BESKZ
   aus `Shopfloor:PaBeskzAusschluss` (Standard F, E2) fallen weg. Schalter `SapKdTerminEnabled`, `SapNennerEnabled` **aus** bis
   `T76K912954` in P76 ist. Tests 1'925/1'925 (Worktree und Release-Worktree).
+- **Stand 2026-11-26 13:35 (nach dem P76-Import):**
+  - **`T76K912954` in P76 importiert** (Ingo, ~13:20). Die Vorschau `GET api/sap/nenner?tag=2026-11-16` (KW 47) lieferte danach **404**
+    (`ShopMatBezugSet` nicht gefunden): Gateway-Caches in P76 noch nicht geleert. Naechster Schritt Ingo: `/IWBEP/CACHE_CLEANUP`, dann
+    `/IWFND/CACHE_CLEANUP` (`ZPOWERBI_EINKAUF_MDL`), bei 404 die Runde wiederholen. Danach Vorschau KW 47 (Erwartung 1'525), dann
+    `SapKdTerminEnabled`/`SapNennerEnabled` einschalten (Deploy) und Abnahme 419371/10 bzw. 419908/10 gegen MD04.
+  - **Zugriff Daniels OneDrive:** Fabio hat nur die **Datei** geteilt (13:02), nicht den Ordner; die OneDrive-Wurzel zeigt unter „Geteilt“
+    nur diese Datei. Fuers Einlesen reicht das. Die Datei wurde nach dem Import von 13:05 erneut geaendert (Susanne Krieg, ~13:20); ein
+    weiterer Import geht wie gehabt (Vorschau, dann OK).
+  - **Fabios Anhaenge** (P76-Protokoll mit Rohdaten zu Punkt 9, `Verzeichnis_Vorschlag.csv`) sind **nie angekommen**: Mails von Fabio seit
+    25.11. ohne Anhang (letzter Anhang Paket 24.11. 17:18), Volltextsuche „Verzeichnis_Vorschlag“/„419908“ nur im Mailtext, Teams seit
+    25.11. ohne Anhang, Downloads und Zip-Pakete ohne Treffer. Nicht blockierend: Abnahme Punkt 9 macht die Hauptsitzung selbst gegen MD04,
+    die Adressen traegt Fabio selbst ein.
+  - **Mailversand / ICT:** laut Teams-Chat Ingo–Fabio hat Fabio die Absenderadresse schon bei Alex (ICT) angefragt. Offen bleibt der
+    Versandweg (SMTP-Relay oder Exchange Online), den Ingo bei Bedarf mit dem ICT-Mailtext im Chat klaert.
+  - Ampel im Chat (3 rot: FPY/MES-Zugang, TX-Tagesmengen, Anhaenge; 5 gelb: Punkte 7, 9, 4, GFS-Abweichung, 11; 6 gruen).
 - **Befund 26.11. (produktiv, `api/meeting`):** TR5 und DW haben seit dem 21.11. kein Tagesziel im Board (letzter Tag mit Menge und
   Ziel 20.11.), deshalb dort keine Bewertung. Die Ziele kamen bisher aus dem Excel-Import; laut Fabio (17.11.) gelten sie bis zum
   Go-live aus dem Excel. Abhilfe: Import V1.04 oder Ziel im Board eintragen. Ob das Board ein fehlendes Ziel vom letzten erfassten Tag
