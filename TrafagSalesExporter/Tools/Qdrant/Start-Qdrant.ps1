@@ -46,4 +46,4 @@ if (-not $bereit) {
     throw "Qdrant antwortet nicht auf http://127.0.0.1:6333/healthz. Log: $QdrantVerzeichnis\qdrant.err.log"
 }
 
-Write-Host "Qdrant ist bereit unter http://127.0.0.1:6333 (Weboberflaeche: /dashboard)."
+Write-Host "Qdrant ist bereit unter http://127.0.0.1:6333 (Suche im Browser: ToolsQdrantStart-Suche.ps1, dann http://127.0.0.1:6340/)."

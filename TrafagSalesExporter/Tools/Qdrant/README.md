@@ -1,6 +1,6 @@
 # Lokale Vektorsuche ueber die Projektdokumentation
 
-Stand: 2026-11-12 (Doku-Pruefung: Kopf nachgefuehrt; Abschnitt 4 beschreibt seit dem 2026-11-10 den Reindex als eigenen Prozess mit Pruefung); Grundstand 2026-09-03
+Stand: 2026-11-26 (Suche im Browser: neuer Abschnitt 8 mit `suche_server.py` und `Start-Suche.ps1`; die Angabe zur Weboberflaeche `/dashboard` in Abschnitt 2 ist ueberholt); davor 2026-11-12 (Doku-Pruefung: Kopf nachgefuehrt; Abschnitt 4 beschreibt seit dem 2026-11-10 den Reindex als eigenen Prozess mit Pruefung); Grundstand 2026-09-03
 
 Dieser Ordner enthaelt die Werkzeuge, mit denen die Markdown-Dokumentation des Repositories
 in eine lokale Vektordatenbank geschrieben und von Claude-Sitzungen semantisch durchsucht
@@ -28,9 +28,14 @@ letzten Indexlaufs ab und kann der Datei hinterherhinken.
 | `uv` 0.12.9 | `C:\Users\koi\.local\bin\uv.exe` | fuehrt den MCP-Server und das Indexierskript aus |
 | MCP-Server | `uvx mcp-server-qdrant` | stellt Claude das Werkzeug `qdrant-find` bereit |
 | Konfiguration | `.mcp.json` in der Repository-Wurzel | verbindet Claude Code mit dem MCP-Server |
+| Suchseite (seit 2026-11-26) | `Tools/Qdrant/suche_server.py`, gestartet mit `Start-Suche.ps1` | Suche im Browser unter <http://127.0.0.1:6340/>, siehe Abschnitt 8 |
 
 Der Dienst bindet ausschliesslich an `127.0.0.1` und ist damit aus dem Firmennetz nicht
-erreichbar. Die Weboberflaeche liegt unter <http://127.0.0.1:6333/dashboard>.
+erreichbar. ~~Die Weboberflaeche liegt unter <http://127.0.0.1:6333/dashboard>.~~
+*Ueberholt am 2026-11-26:* `/dashboard` antwortet bei dieser Installation mit 404 (gemessen), neben
+`qdrant.exe` liegt kein `static`-Ordner mit der Web-UI; `Start-Qdrant.ps1` nennt sie in seiner Meldung noch.
+Auch mit dieser Oberflaeche liesse sich keine Frage in Worten suchen, weil die Frage zuerst mit
+demselben Modell eingebettet werden muss. Dafuer gibt es jetzt die Suchseite aus Abschnitt 8.
 
 Zum Einbetten laeuft ein kleines Sprachmodell lokal auf der CPU, rund 220 MB. Das ist keine
 Wahlmoeglichkeit, sondern eine Notwendigkeit: Claude kann keine Einbettungen erzeugen, die
@@ -65,6 +70,8 @@ starten:
 
 Laeuft Qdrant nicht, meldet die Suche in der Claude-Sitzung einen Verbindungsfehler. Das ist
 der haeufigste Stolperstein.
+
+Im Browser suchen: `.\Tools\Qdrant\Start-Suche.ps1`, dann <http://127.0.0.1:6340/> (Abschnitt 8).
 
 ### Optionaler Autostart bei der Anmeldung
 
@@ -183,3 +190,60 @@ ihrerseits Adminrechte braeuchten.
   Aufgabe, kein Hintergrundprozess.
 * **Speicher ausserhalb des Repositories.** Der Vektorspeicher waere sonst eine grosse,
   staendig veraenderte Binaerablage im Arbeitsbaum.
+* **Suchseite nur lesend und nur lokal.** `suche_server.py` schreibt nichts in Qdrant, bindet an
+  `127.0.0.1` und beantwortet nur Aufrufe mit Host `127.0.0.1` oder `localhost`.
+
+## 8. Suche im Browser
+
+Seit 2026-11-26. Die Seite macht dasselbe wie `qdrant-find` in einer Claude-Sitzung: Frage
+eintippen, Treffer mit Score, Datei, Abschnitt und Textausschnitt sehen.
+
+```powershell
+.\Tools\Qdrant\Start-Suche.ps1
+```
+
+Das Skript startet bei Bedarf Qdrant (ueber `Start-Qdrant.ps1`), dann den Suchdienst
+`suche_server.py` im Hintergrund, wartet, bis das Modell geladen ist (beim ersten Start rund
+15 Sekunden), und gibt die Adresse aus, normalerweise <http://127.0.0.1:6340/>. Ist Port 6340
+belegt, nimmt der Dienst den naechsten freien bis 6349. Laeuft er schon, gibt das Skript nur die
+Adresse aus. Keine Administratorrechte, kein Autostart; nach einem Neustart des Rechners das
+Skript einmal ausfuehren.
+
+| Datei unter `C:\Users\koi\tools\qdrant\` | Inhalt |
+|---|---|
+| `suche_dienst.json` | Port, PID und Adresse des laufenden Dienstes |
+| `suche.out.log`, `suche.err.log` | Ausgaben des Dienstes, im Fehlerprotokoll auch jeder Aufruf |
+
+Beenden: `Stop-Process -Id (Get-Content C:\Users\koi\tools\qdrant\suche_dienst.json | ConvertFrom-Json).pid`
+
+**Was die Seite zeigt.** Oben den Stand des Index: Punktzahl der Sammlung, Zeitpunkt, Datei- und
+Abschnittszahl des letzten vollstaendigen Laufs (aus `reindex_stand_trafag_docs.json`) und, wie
+`Reindex-Docs.ps1 -NurPruefen`, ob seither Markdown-Dateien geaendert wurden. Dann Suchfeld, Filter
+nach Ordner (zum Beispiel nur `docs/rag` oder nur `zlo03`) und Trefferzahl (Vorgabe 10). Ein Klick
+auf den Dateinamen kopiert den vollstaendigen Pfad; oeffnen kann der Browser lokale Dateien von
+einer `http`-Seite aus nicht. Laeuft Qdrant nicht, steht das samt Startbefehl auf der Seite.
+
+**Schalter „alle Woerter muessen vorkommen“.** Die reine Vektorsuche uebersieht seltene
+Fachwoerter. Gemessen am 2026-11-26: Auf „Handbestellwesen Mail an den Einkauf“ liefern
+`qdrant-find` und die Seite dieselben Treffer in derselben Reihenfolge, aber
+`docs/HANDBESTELLWESEN_KONZEPT_2026-10-22.md` steht nicht unter den ersten 50; vorne stehen
+Abschnitte ueber Einkauf und Mails allgemein. Mit dem Schalter muss jedes Wort ab drei Zeichen
+(ohne Fuellwoerter wie „den“, „und“) im Abschnitt vorkommen, die Reihenfolge bleibt die
+semantische; dann steht das Konzept auf Platz 2 und die Lastchange-Zeile „Handbestellwesen, Mail
+an den Einkauf versendet“ auf Platz 3. Auf „ZLO03 offene Mengenkontraktmenge B64344“ trifft schon
+die reine Vektorsuche: `zlo03/BEFUND_MKMNG_ABRUFE_2026-11-25.md` auf Platz 1. Vorgabe ist aus,
+damit die Seite ohne Haken genau wie `qdrant-find` sucht.
+
+**Schnittstelle.** `GET /api/suche?q=<Frage>&n=10&ordner=docs/rag&woerter=1` liefert JSON mit
+`treffer` (Rang, Score, Datei, Pfad, Abschnitt, Text); `ordner=/` heisst nur Dateien der
+Repository-Wurzel. `GET /api/stand` liefert den Stand des Index und dient dem Startskript als
+Kennung.
+
+**Technik.** Der Dienst laeuft wie der Indexer mit `uv run --python 3.12` und denselben
+Abhaengigkeiten (fastembed, qdrant-client); das Startskript versucht es zuerst mit `--offline`.
+Die Frage wird mit `query_embed` eingebettet und mit dem benannten Vektor aus Abschnitt 5
+gesucht. Der Modellcache ist `C:\Users\koi\tools\qdrant\models`, auch bei einem Direktstart ohne
+Startskript. Der Abgleich mit `qdrant-find` (gleiche Treffer, gleiche Reihenfolge) ist der
+Beleg, dass Einbettung und Schema zum Index passen; weicht er einmal ab, zuerst die
+fastembed-Versionen nach Abschnitt 5 vergleichen. Am 2026-11-26 zog der Dienst fastembed 0.9.1
+und qdrant-client 1.20.0 (anzeigen mit `/api/stand`).

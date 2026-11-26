@@ -1,6 +1,6 @@
 # RAG-Einstieg: Ladereihenfolge und Abschlussregel
 
-Stand: 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, Schritt 1a Koordinationsdatei in die Ladereihenfolge aufgenommen); davor 2026-11-10 (Abschlussregel Punkt 6: Reindex mit `-WennVeraltet`, `1161767`); davor 2026-10-29 (Abschlussregel um LEARNINGS und Kurzauskunft ergaenzt wie `CLAUDE.md` 3 und 3a); davor 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026-10-01 Verweis auf `LEARNINGS.md`)
+Stand: 2026-11-26 (Qdrant-Absatz: Suchseite im Browser `Tools/Qdrant/Start-Suche.ps1`); davor 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, Schritt 1a Koordinationsdatei in die Ladereihenfolge aufgenommen); davor 2026-11-10 (Abschlussregel Punkt 6: Reindex mit `-WennVeraltet`, `1161767`); davor 2026-10-29 (Abschlussregel um LEARNINGS und Kurzauskunft ergaenzt wie `CLAUDE.md` 3 und 3a); davor 2026-10-22 (Archiv `docs/archiv/`, Umfang von `lastchange.md`; davor 2026-10-01 Verweis auf `LEARNINGS.md`)
 
 ## Ladereihenfolge fuer eine neue Sitzung
 
@@ -37,6 +37,8 @@ Ist unklar, in welcher Datei eine Aussage steht, gibt es zusaetzlich das MCP-Wer
 `Tools/Qdrant/`. Sie ersetzt die Ladereihenfolge nicht, sondern findet den Einstiegspunkt,
 und ihre Treffer sind Hinweise, keine Belege — die genannte Datei danach vollstaendig
 lesen. Antwortet sie nicht, laeuft Qdrant nicht (`Tools/Qdrant/Start-Qdrant.ps1`).
+Im Browser sucht man dieselbe Sammlung seit 2026-11-26 ueber `Tools/Qdrant/Start-Suche.ps1`
+(Adresse <http://127.0.0.1:6340/>, Beschreibung in `Tools/Qdrant/README.md` Abschnitt 8).
 
 ## Abschlussregel: committen und Doku nachfuehren
 

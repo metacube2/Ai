@@ -1,5 +1,19 @@
 # Last Change
 
+## 2026-11-26 12:00: Qdrant-Suche im Browser; Repo SAP_Code nach SAP-Namen geordnet; Prüfungen ZLO03 und Z-Objekte
+
+- **Qdrant:** Index neu aufgebaut (7'162 Punkte = Abschnitte). Neu `Tools/Qdrant/suche_server.py` und `Start-Suche.ps1`: Suchseite
+  http://127.0.0.1:6340/ (nur 127.0.0.1), Ordnerfilter, Schalter „alle Wörter“, Stand des Index oben. Die alte Angabe `/dashboard` (404,
+  keine Web-UI installiert) ist in README und `Start-Qdrant.ps1` berichtigt. Befund: Die reine Vektorsuche findet „Handbestellwesen Mail an
+  den Einkauf“ nicht im Konzept (Überschriften-Abschnitte stehen vorne), mit „alle Wörter“ auf Platz 2; Verbesserung gehört in `index_docs.py`.
+- **Z_ZLO03_TURBO2:** Ingos Aufräumen in T76 gegen P76 maschinell verglichen (ohne Leerzeilen/Kommentare): 2'899 = 2'899 Anweisungen,
+  0 Abweichungen; Prod = FIX 29 im Repo. Externe Code-Prüfung (Opus im Web) gegengeprüft: 5 Befunde stimmen (Minus am Ende in .xlsx,
+  DELETE bei fehlendem Text, Rundung auf 3 Stellen, CLEAR fehlt, G4 Mehrstufigkeit), Mailtext an Armin im Chat. Nichts geändert.
+- **Z-Objekte gegen Git:** Inventar aller KOI-Aufträge 2026 in T76 (nur RFC): 27 gleich, 4 abweichend, 37 nicht in diesem Repo.
+  Ingo führt seine Quelltexte in **github.com/metacube2/SAP_Code** (privat): umgebaut auf Wunsch Ingo, direkt auf main (`a216729`):
+  `programme/` 80 (Name = SAP-Programm, Inhalt T76 aktiv), `klassen/` 76 Teile, `funktionsgruppen/` 3, `archiv/` 25, README mit Zuordnung.
+- LEARNINGS (2).
+
 ## 2026-11-26 11:10: Shopfloor Mail Fabio 26.11. 10:29: TV MTS weg, Meeting-Modus, Mailversand mit Schalter aus, deployed `6ef88af`
 
 - **Auftrag Ingo:** „ja führe den plan aus“; Fragekatalog: SAP direkt in T76 bauen, Mailversand bauen mit Schalter aus, Ereignisse legt
