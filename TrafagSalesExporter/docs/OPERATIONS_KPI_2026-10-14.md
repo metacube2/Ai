@@ -3,7 +3,7 @@
 Auftrag: Mail Fabio Palma vom 2026-10-14 mit Spezifikation und Referenzpaket (`docs/operations_kpi/`). Menue nach Wunsch Ingo:
 **Operations** mit den Unterreitern **KPI** (darunter **OTD / OTIF / OTP**) und **Shopfloor** (der bisherige Reiter).
 
-Stand: 2026-11-12 (Doku-Pruefung: Zugriffssatz in Abschnitt 1 als ueberholt markiert); davor Nachtrag 2026-11-02; Grundstand
+Stand: 2026-11-26 (P76 gelesen: `ZF_BR_SALES_MANAGER` ist `POWERBI` bis 31.12.9999 zugeordnet, nicht bis 31.10.; Abruf 02.12. geht nach heutigem Stand durch, Abschnitt 4); davor 2026-11-12 (Doku-Pruefung: Zugriffssatz in Abschnitt 1 als ueberholt markiert); davor Nachtrag 2026-11-02; Grundstand
 2026-10-14.
 
 **Nachtrag 2026-11-02:** Rubrik **Kunden** gebaut (Abschnitt 5, `aa12a39`), **produktiv seit 13:57 (`187f8a0`), Abnahme bestanden**
@@ -95,7 +95,7 @@ fuer `202609` zeigt, ob die Portierung auf Rohdaten dieselben Werte liefert (Tol
 
 ## 3b. Live-Abruf und Abnahme (*Erledigt 2026-10-14 10:33*)
 
-Ingo hat `ZF_BR_SALES_MANAGER` dem Benutzer **`POWERBI`** zugeordnet (gueltig bis 31.10.2026). Abruf `202609` danach ok:
+Ingo hat `ZF_BR_SALES_MANAGER` dem Benutzer **`POWERBI`** zugeordnet (gueltig bis 31.10.2026 *(falsch, berichtigt 26.11.: laut `AGR_USERS` vom 14.10.2026 bis 31.12.9999)*). Abruf `202609` danach ok:
 22'175 Auftragspositionen, 30'358 Lieferpositionen, 155 s. Die Liefer-Abfrage brauchte keine weitere Berechtigung.
 
 | Kennzahl | Abnahme (Fabio, 13.10.) | Live SAP (14.10. 10:33) |
@@ -106,7 +106,7 @@ Ingo hat `ZF_BR_SALES_MANAGER` dem Benutzer **`POWERBI`** zugeordnet (gueltig bi
 | Zu frueh >= 5 AT | 2'236 | 2'236 |
 
 Abnahme bestanden (Toleranz 1 Prozentpunkt; die zwei bis drei Positionen Unterschied sind Nachbuchungen seit dem 13.10.).
-Uebersicht und Report zeigen jetzt „Quelle: SAP 14.10.2026 10:33“. **Offen:** `ZF_BR_SALES_MANAGER` laeuft am 31.10. aus;
+Uebersicht und Report zeigen jetzt „Quelle: SAP 14.10.2026 10:33“. *(Ueberholt 26.11.: Die Rolle laeuft nicht aus, Zuordnung bis 31.12.9999, siehe Abschnitt 4.)* **Offen:** `ZF_BR_SALES_MANAGER` laeuft am 31.10. aus;
 bis dahin eine schmale Rolle (nur `S_RS_COMP`/`S_RS_COMP1`, ACTVT 16, Query `2CCSDSLSORDDLVPRFQ`, InfoProvider
 `2CISDSLSORDDLVPRFC`) beim Hauptadmin bestellen und `POWERBI` zuordnen, sonst scheitert der Monatsabruf am 02.11.
 
@@ -130,6 +130,13 @@ Ein Mailversand ist nicht eingerichtet (braucht eine App-Registrierung bei der I
 - **Schmale Rolle fuer `POWERBI` vor dem 31.10.** (siehe 3b), sonst scheitert der Abruf vom 02.11.
   *Stand 2026-11-02:* Der Abruf vom 02.11. 00:26 lief durch (23'031 Auftrags-, 31'647 Lieferpositionen). Ob die Rolle verlaengert
   wurde oder eine schmale Rolle zugeordnet ist, ist nicht geprueft; vor dem 02.12. in P76 (`AGR_USERS` fuer `POWERBI`) nachsehen.
+  *Geprueft 2026-11-26 (P76 nur gelesen, Agent sap-t76, Belege `saptasks/operations_kpi_rolle_2026-11-26/`):* `AGR_USERS` zeigt fuer `POWERBI`
+  drei Rollen, alle bis 31.12.9999: `ZF_BR_SALES_MANAGER` (seit 14.10.2026, Aenderung 14.10. 10:30:51), `Z_FLP_USER` und `Z_POWERBI_SERVICES`.
+  Die Query steht im ganzen System woertlich nur in `ZF_BR_SALES_MANAGER` (`S_RS_COMP` und `S_RS_COMP1`, ACTVT 16). Das erzeugte Profil
+  T-T6080138 haengt aktiv am Benutzer (`UST04`, `UST10S`, `UST12`). Die beiden anderen Rollen haben kein `S_RS_COMP`. **Der Abruf am 02.12.
+  geht nach heutigem Stand durch.** Das „bis 31.10.“ vom 14.10. war nie zurueckgelesen worden (LEARNINGS 26.11.).
+  **Offen, Entscheid Ingo:** Die breite Rolle haengt unbefristet am technischen Benutzer. Gedacht war eine schmale Rolle nur fuer die zwei
+  Queries. Wer `ZF_BR_SALES_MANAGER` entfernen will, muss vorher die schmale Rolle zuordnen.
 
 - *Erledigt 10:33:* Rolle fuer `POWERBI`, Abruf `202609`, Abnahme (3b).
 - *Erledigt 2026-10-14:* Feiertage nicht abziehen (Fabio, Spezifikation korrigiert).

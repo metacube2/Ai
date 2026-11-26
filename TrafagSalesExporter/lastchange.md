@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-26 09:50: Wochen_Todo fuenf Zeilen erledigt; Rolle POWERBI fuer die Liefertreue geprueft
+
+- **Erledigt laut Ingo (Fixe gemailt):** Zeilen 9, 119, 129, 152 (mit den damals offenen Nebenpunkten), 160. Zeile 94 bleibt offen.
+- **Zeile 96, P76 nur gelesen:** `ZF_BR_SALES_MANAGER` ist `POWERBI` seit 14.10. bis 31.12.9999 zugeordnet (Doku sagte faelschlich 31.10.),
+  sie allein traegt die Query `2CCSDSLSORDDLVPRFQ`, ihr Profil haengt aktiv am Benutzer. Der Abruf am 02.12. geht durch. Offen: Entscheid breite
+  oder schmale Rolle. Belege `saptasks/operations_kpi_rolle_2026-11-26/`; OPERATIONS_KPI 4, LEARNINGS, baum, Wochen_Todo + xlsx.
+
 ## 2026-11-26 09:00: ZLO03, Antwort an Armin versendet
 
 - Mail „ZLO03: offene MK bei B64344 korrigiert“ am 26.11. 08:59 von Ingo an Armin versendet (Ursache, drei Fixes, B64344 = 7'125 mit

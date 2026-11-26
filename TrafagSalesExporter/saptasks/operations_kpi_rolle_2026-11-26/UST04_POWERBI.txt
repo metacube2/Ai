@@ -1,0 +1,9 @@
+Tabelle:			UST04
+Angezeigte Felder:				 3	von		 3	Feststehende Führungsspalten:	 3	Listbreite	1023
+
+	MANDT	BNAME				PROFILE
+
+	100	POWERBI				T-S6080084
+	100	POWERBI				T-T6080138
+	100	POWERBI				T-T60801381
+	100	POWERBI				T-T6080206

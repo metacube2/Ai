@@ -1,0 +1,8 @@
+Tabelle:			AGR_USERS
+Angezeigte Felder:				11	von	11	Feststehende Führungsspalten:			 5		Listbreite		1023
+
+	MANDT	AGR_NAME						UNAME	FROM_DAT		TO_DAT		EXCLUDE		CHANGE_DAT	CHANGE_TIM	CHANGE_TST	ORG_FLAG	COL_FLAG
+
+	100	ZF_BR_SALES_MANAGER						POWERBI	14.10.2026		31.12.9999				14.10.2026	10:30:51	                 0
+	100	Z_FLP_USER						POWERBI	21.01.2026		31.12.9999				24.02.2026	08:46:54	                 0
+	100	Z_POWERBI_SERVICES						POWERBI	21.01.2026		31.12.9999				24.02.2026	08:46:54	                 0
