@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-26 13:10: Shopfloor Rueckstandslisten und Tagesziele aus Fabios V1.04 importiert
+
+- Fabio schickte `PPA-Shop-Floor-File-2026_Version 1.04.xlsx` und gab Zugriff. Vorschau per API, nach OK Ingo uebernommen 13:05: TR5 +27
+  neu/2 geaendert, TX +35/48 (43 Status), DW +20/8, SEH unveraendert, nichts geloescht; Tagesziele +102 Tage; 161 Widersprueche. Sicherung
+  vorher auf dem Server. Radar jetzt Stand 13:05, Meeting-Modus bewertet TR5/DW wieder. SHOPFLOOR 28.10, Wochen_Todo 172.
+
 ## 2026-11-26 13:00: Shopfloor Welle 2 und Punkt 9: SAP in T76 gebaut (`T76K912954`, nicht freigegeben), Board deployed `a2f7c97` mit Schalter aus
 
 - **SAP (Agent sap-t76, von der Hauptsitzung per RFC nachgeprueft):** `ShopMatBezugSet` (Nenner 201/261) und `ShopKdTerminSet` (Termine,
