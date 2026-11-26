@@ -61,8 +61,8 @@ Deutsch, 384 Dimensionen, 220 MB, 512 Token Sequenzlaenge. Eingebettet wird in S
 
 ## 3. Taeglicher Gebrauch
 
-Qdrant laeuft nicht automatisch nach dem Anmelden. Nach einem Neustart des Rechners einmal
-starten:
+Seit 2026-11-26 startet eine geplante Aufgabe Qdrant und die Suchseite bei der Anmeldung (unten).
+Wurde Qdrant beendet, von Hand starten:
 
 ```powershell
 .\Tools\Qdrant\Start-Qdrant.ps1
@@ -73,25 +73,21 @@ der haeufigste Stolperstein.
 
 Im Browser suchen: `.\Tools\Qdrant\Start-Suche.ps1`, dann <http://127.0.0.1:6340/> (Abschnitt 8).
 
-### Optionaler Autostart bei der Anmeldung
+### Autostart bei der Anmeldung (eingerichtet 2026-11-26)
 
-Wer den manuellen Start sparen will, richtet eine Aufgabe im Benutzerkontext ein. Auch das
-braucht keine Administratorrechte. Der Befehl ist bewusst nicht automatisch ausgefuehrt
-worden, weil ein Autostart eine dauerhafte Veraenderung am Arbeitsplatz ist und die
-Entscheidung dafuer beim Benutzer liegt:
+Auf Wunsch Ingos („ja qdrant auto start“, 26.11.2026) laeuft eine geplante Aufgabe im
+Benutzerkontext, ohne Administratorrechte: **„Qdrant Doku-Suche (TrafagSalesExporter)“**, Ausloeser
+Anmeldung von `koi` mit 30 Sekunden Verzoegerung, Aktion `powershell.exe -WindowStyle Hidden -File
+Tools\Qdrant\Start-Suche.ps1`. Das Skript startet Qdrant (Port 6333) und die Suchseite (Port 6340);
+laufen beide schon, gibt es nur die Adresse aus. Zeitgrenze 10 Minuten, keine zweite Instanz.
+Testlauf am 2026-11-26 12:51 mit Ergebnis 0.
 
-```powershell
-$name = "Qdrant Doku-Suche (TrafagSalesExporter)"
-$aktion = New-ScheduledTaskAction -Execute "C:\Users\koi\tools\qdrant\qdrant.exe" -WorkingDirectory "C:\Users\koi\tools\qdrant"
-$ausloeser = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
-$einstellungen = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero)
-Register-ScheduledTask -TaskName $name -Action $aktion -Trigger $ausloeser -Settings $einstellungen
-```
-
-Rueckgaengig machen:
+Den Index baut die Aufgabe **nicht** neu (Abschnitt 4 gilt weiter).
 
 ```powershell
-Unregister-ScheduledTask -TaskName "Qdrant Doku-Suche (TrafagSalesExporter)" -Confirm:$false
+Get-ScheduledTaskInfo -TaskName "Qdrant Doku-Suche (TrafagSalesExporter)"   # letzter Lauf und Ergebnis
+Start-ScheduledTask   -TaskName "Qdrant Doku-Suche (TrafagSalesExporter)"   # von Hand ausloesen
+Unregister-ScheduledTask -TaskName "Qdrant Doku-Suche (TrafagSalesExporter)" -Confirm:$false   # entfernen
 ```
 
 ## 4. Nach jeder Doku-Aenderung neu indexieren
@@ -206,8 +202,8 @@ Das Skript startet bei Bedarf Qdrant (ueber `Start-Qdrant.ps1`), dann den Suchdi
 `suche_server.py` im Hintergrund, wartet, bis das Modell geladen ist (beim ersten Start rund
 15 Sekunden), und gibt die Adresse aus, normalerweise <http://127.0.0.1:6340/>. Ist Port 6340
 belegt, nimmt der Dienst den naechsten freien bis 6349. Laeuft er schon, gibt das Skript nur die
-Adresse aus. Keine Administratorrechte, kein Autostart; nach einem Neustart des Rechners das
-Skript einmal ausfuehren.
+Adresse aus. Keine Administratorrechte. Seit 2026-11-26 startet die geplante Aufgabe aus
+Abschnitt 3 das Skript bei jeder Anmeldung; von Hand nur noetig, wenn der Dienst beendet wurde.
 
 | Datei unter `C:\Users\koi\tools\qdrant\` | Inhalt |
 |---|---|

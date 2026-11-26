@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-11-26 (Qdrant-Absatz: Suchseite im Browser `Tools/Qdrant/Start-Suche.ps1`); davor 2026-11-26 (Zeile „Wo stehen wir gerade?“ nennt `projektmanagement/Wochen_Todo_Archiv.tsv`); davor 2026-11-19 (neuer Abschnitt „Vorrang 0: Token sparen“ oben, Wunsch Ingo); davor 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, `projektmanagement/Wochen_Todo.tsv` in der Zeile „Wo stehen wir gerade?“ ergaenzt); davor 2026-11-05 (Absatz Agenten, feste Definitionen `.claude/agents/`, `f8752f4`); davor 2026-10-22 (Regel 6: Historie und Archiv `docs/archiv/`)
+Stand: 2026-11-26 (Qdrant-Absatz: Autostart bei Anmeldung; davor Qdrant-Absatz: Suchseite im Browser `Tools/Qdrant/Start-Suche.ps1`); davor 2026-11-26 (Zeile „Wo stehen wir gerade?“ nennt `projektmanagement/Wochen_Todo_Archiv.tsv`); davor 2026-11-19 (neuer Abschnitt „Vorrang 0: Token sparen“ oben, Wunsch Ingo); davor 2026-11-12 (Doku-Pruefung: Kopfstand nachgefuehrt, `projektmanagement/Wochen_Todo.tsv` in der Zeile „Wo stehen wir gerade?“ ergaenzt); davor 2026-11-05 (Absatz Agenten, feste Definitionen `.claude/agents/`, `f8752f4`); davor 2026-10-22 (Regel 6: Historie und Archiv `docs/archiv/`)
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
@@ -67,7 +67,7 @@ MCP-Werkzeug `qdrant-find`: eine semantische Suche ueber alle Markdown-Dateien,
 eingerichtet in `Tools/Qdrant/`. Sie nennt Datei und Abschnitt und ersetzt weder diesen
 Ladeweg noch das Lesen der Datei, denn ihre Treffer sind Ausschnitte aus dem letzten
 Indexlauf. Antwortet sie gar nicht, laeuft Qdrant nicht; `Tools/Qdrant/Start-Qdrant.ps1`
-startet es. Fuer Menschen gibt es dieselbe Suche im Browser: `Tools/Qdrant/Start-Suche.ps1` startet
+startet es (seit 2026-11-26 startet es eine geplante Aufgabe bei der Anmeldung, README 3). Fuer Menschen gibt es dieselbe Suche im Browser: `Tools/Qdrant/Start-Suche.ps1` startet
 sie unter <http://127.0.0.1:6340/> (seit 2026-11-26; die Qdrant-Oberflaeche `/dashboard` fehlt bei
 dieser Installation, `Tools/Qdrant/README.md` Abschnitt 8).
 

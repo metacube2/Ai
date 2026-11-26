@@ -11,7 +11,8 @@
     Der Dienst bindet ausschliesslich an 127.0.0.1, Port 6340 oder den naechsten freien bis 6349.
     Port und PID stehen in <QdrantVerzeichnis>\suche_dienst.json, die Ausgaben in
     suche.out.log und suche.err.log daneben. Laeuft der Dienst schon, gibt das Skript nur die
-    Adresse aus. Keine Administratorrechte, kein Autostart, keine geplante Aufgabe.
+    Adresse aus. Keine Administratorrechte. Seit 2026-11-26 ruft die geplante Aufgabe
+    "Qdrant Doku-Suche (TrafagSalesExporter)" dieses Skript bei jeder Anmeldung auf (README 3).
 
     Gestartet wird zuerst mit "uv run --offline", damit nichts aus dem Internet geladen wird;
     nur wenn das scheitert (Paket fehlt im uv-Cache), einmal ohne --offline wie Reindex-Docs.ps1.

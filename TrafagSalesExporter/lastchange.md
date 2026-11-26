@@ -1,6 +1,9 @@
 # Last Change
 
-## 2026-11-26 Nachmittag: Qdrant-Suchseite kennzeichnet Treffer ohne Suchwort
+## 2026-11-26 Nachmittag: Qdrant-Suchseite kennzeichnet Treffer ohne Suchwort; Autostart
+
+- Autostart (Ingo „ja qdrant auto start“): geplante Aufgabe „Qdrant Doku-Suche (TrafagSalesExporter)“ bei Anmeldung, 30 s Verzögerung,
+  ruft `Start-Suche.ps1` (Qdrant + Suchseite), Testlauf 12:51 Ergebnis 0. Index wird weiter nicht automatisch nachgeführt. README 3.
 
 - Anlass: Bild Ingo, Unsinnswort „kaerfdpinvesdrio“ lieferte zehn Treffer. Die Vektorsuche liefert immer Nachbarn; eine Score-Schwelle
   trennt nicht (Unsinn 0.48, „Krankheit Absenzen“ 0.34). Neu je Treffer „enthält n von m Wörtern“ bzw. „kein Suchwort, nur ähnlich“,
