@@ -1394,11 +1394,11 @@ Fabio fest; Board-Teil nach gruenen Tests deployen.
 
 | Punkt | Inhalt Fabio | Umsetzung |
 | --- | --- | --- |
-| 5 Nachtrag | Rueckstandslisten aus `PPA-Shop-Floor-File-2026_Version 1.04.xlsx` (OneDrive Daniel Tobler) importieren | **offen:** die Datei muss als xlsx vorliegen (Import ueber „Excel einlesen“ mit Vorschau, Server sichert vorher); ueber die M365-Werkzeuge kommt nur Text |
+| 5 Nachtrag | Rueckstandslisten aus `PPA-Shop-Floor-File-2026_Version 1.04.xlsx` (OneDrive Daniel Tobler) importieren | **offen:** die Datei muss als xlsx vorliegen (Import ueber „Excel einlesen“ mit Vorschau, Server sichert vorher); ueber die M365-Werkzeuge kommt nur Text. Download im Arbeits-Chrome (Wahl Ingo 26.11.) scheiterte: „keine Zugangsberechtigung“ fuer Ingos Konto auf Daniels OneDrive; Fabio um Freigabe oder Datei gebeten (Antwortentwurf) |
 | 6 Nachtrag | SEH vorerst ausnehmen | `meeting_modus.ausnehmen = ["seh"]` |
 | 6 | Meeting-Modus nur Abweichungen (25.11. freigegeben) | **gebaut** (unten) |
 | 9 | TVAV/Angebote: SAP-Felder nach Kundenauftrag/Position (VBAP-MATNR, MARA-ZZTYP, VBAP-KWMENG, letzte bestaetigte VBEP-EDATU; bei SOBKZ E alle FA/PA, mehrere je Feld, bei jedem Lauf neu) | SAP-Teil zusammen mit Welle 2 in **einem** T76-Auftrag (Agent sap-t76, laeuft, Set `ShopKdTerminSet` mit Basis VBAP bei Angabe des Auftrags, `Beskz`/`Elikz` als Felder statt hart gefiltert); Board-Seite folgt nach dem P76-Import |
-| 10 | „TV MTS“ und „Verzug MTS“ entfernen | `tv_mts` entfernt, `tv_total` ohne MTS; `verzug_mts` war schon seit dem Paket vom 01.11. weg (Abschnitt oben, `apply_config.js`). Gespeicherte Werte bleiben in `shopfloor.db` |
+| 10 | „TV MTS“ und „Verzug MTS“ entfernen | `tv_mts` entfernt, `tv_total` ohne MTS; `verzug_mts` war schon seit Fabios Config-Patch 04 vom 16.10. weg (Abschnitt 14, `apply_config.js`). Gespeicherte Werte bleiben in `shopfloor.db` |
 | 11 | Mailversand einrichten, Absender z. B. shopfloor@trafag.com; Fragen: Ereignisse, Listen | **gebaut, Schalter aus**; Mail an ICT (Absender, Versandweg, Verteiler, Menge) von Ingo; Ereignisse legt Fabio fest |
 
 **Gebaut** (Funktionscommit `6ef88af`, Zweig `shopfloor-paket-2611` ab Produktivstand `c297e69`, Worktree `C:\TMP\Ai_sf2611`):
