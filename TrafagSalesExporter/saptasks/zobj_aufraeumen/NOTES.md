@@ -257,6 +257,11 @@ ST22: keine Kurzdumps am 25.11. nach den Laeufen.
   eingerichtet. Naechste Schritte: nach rund einer Woche nur lesend pruefen, wie schnell die Records wachsen und ob die Tagesscheiben
   rotieren; danach entscheiden, ob SUSG noetig ist, damit das Limit vor dem 30.11.2027 nicht erreicht wird. Report `Z_KOI_ZOBJ_NUTZUNG`
   nach dem Jahreswechsel erneut laufen lassen.
+  *Ergaenzt 2026-11-26 ~15:15 (Ingo, P76, Transaktion SUSG „Verbrauchsdaten: Aggregationsstatus“, Knopf Aktivieren):* **SUSG-Verdichtung
+  aktiv**, laut Bildschirm (von der Hauptsitzung nur abgelesen) „Aktiv (Aggregation eingeplant um: 27.11.2026 02:30:00)“, ABAP-Aufrufmonitor
+  aktiv, noch 0 aggregierte Tage. Damit ueberholt: „SUSG-Verdichtung nicht eingerichtet“ und die Frage „ob SUSG noetig ist“. Bleibt:
+  nach dem 27.11. nur lesend pruefen, ob die erste Aggregation ohne Fehler lief (SUSG „Aggregationsprotokoll“) und wie die SCMON-Records
+  sich entwickeln.
 - **SUSG:** `SUSG_ADMIN` 0 Zeilen, keine Verdichtung.
 - In P76 nichts geaendert, keine Sicherheitsabfrage; SE16 hat vermutlich `/1BCDWB/DB<Tabelle>` erzeugt (belegt fuer `SCMON_CONFIG`).
 
