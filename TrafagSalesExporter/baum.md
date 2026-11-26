@@ -309,7 +309,8 @@ als „nur in Git“ oder „nicht versioniert“ markiert sein.
 | `docs/AGENT_COORDINATION_HISTORIE.md` | abgeschlossene Koordinationseintraege: Volltext bis 2026-09-29, danach verschobene Kurzindex-Zeilen; Nachschlagewerk |
 | `docs/rag/PROJECT.md` | Projektstand, Kurzstand |
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
-| `projektmanagement/Wochen_Todo.tsv`, `projektmanagement/Wochen_Todo.xlsx`, `projektmanagement/wochen_todo_xlsx.py` | Aufgabenliste mit Status je Aufgabe (Quelle), erzeugte Excel mit HERMES-Uebersicht, Erzeuger-Skript (auch fuer `Status_kurz.xlsx`); Pflichtnachfuehrung nach `CLAUDE.md` 3 Punkt 3 |
+| `projektmanagement/Wochen_Todo.tsv`, `projektmanagement/Wochen_Todo.xlsx`, `projektmanagement/wochen_todo_xlsx.py` | Aufgabenliste mit Status je Aufgabe (Quelle), erzeugte Excel mit HERMES-Uebersicht, Erzeuger-Skript (auch fuer `Status_kurz.xlsx`); Pflichtnachfuehrung nach `CLAUDE.md` 3 Punkt 3. Seit 2026-11-26 sechs Statuswerte (Offen, In Arbeit, Wartet auf andere, Wartet auf Entscheid, Zurückgestellt, Erledigt), offene und in den letzten 14 Tagen erledigte Zeilen |
+| `projektmanagement/Wochen_Todo_Archiv.tsv` | Archiv der Wochen_Todo seit 2026-11-26: erledigte Zeilen, die aelter als 14 Tage sind, gleiche Spalten und Nummern; Nachschlagewerk, wird nicht ins Excel geschrieben |
 | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` | Statusquelle fuer Finance- und Datenpunkte (`ISS-…`), `router.md` Regel 2 |
 | `projektmanagement/Status_kurz.tsv`, `projektmanagement/Status_kurz.xlsx` | Status kurz fuer den Chef (Quelle und erzeugte A4-Seite), seit 2026-10-01 |
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |

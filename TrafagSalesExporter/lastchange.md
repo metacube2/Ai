@@ -1,5 +1,21 @@
 # Last Change
 
+## 2026-11-26: Wochen_Todo aufgeraeumt und auf den Stand gebracht
+
+- **Auftrag Ingo:** Wochen_Todo anschauen, aufraeumen, auf neuen Stand bringen; Antworten: Archiv-Datei, Texte kuerzen mit
+  Verweis, neue Punkte HR Lohn ueber Rexx Hub und Claude Worktool.
+- **Archiv:** 57 erledigte Zeilen aelter als 14 Tage in `projektmanagement/Wochen_Todo_Archiv.tsv` (gleiche Spalten und Nummern),
+  in der Liste bleiben 117 (offene und fuenf kuerzlich erledigte). Erledigt-Datum fuer 2, 8, 14, 20 aus dem Zeilentext.
+- **Status:** sechs Werte (Offen, In Arbeit, Wartet auf andere, Wartet auf Entscheid, Zurueckgestellt, Erledigt); Laeuft,
+  Groesstenteils erledigt und „In P76, Ladelauf offen“ wurden In Arbeit, „Umgesetzt, wartet auf Entscheid“ wurde Wartet auf Entscheid,
+  „Entwurf liegt vor“ wurde Offen, „Wartet auf Daten“ wurde Wartet auf andere. Erledigte tragen die Dringlichkeit Erledigt.
+- **Dringlichkeit „Heute“** nur noch fuer die Punkte aus Ingos fast_todo vom 26.11.: 120 Handbestellwesen, 133 Rexx/Lohn,
+  163 Finance Mapping und Laender, 173 ZLO03 offene MK; die uebrigen 13 „Heute“-Zeilen auf Diese Woche (36 auf „Hoch, haengt an anderen“).
+- **Texte:** „Naechster Schritt“ der offenen Zeilen auf Stand und naechsten Schritt gekuerzt (vorher 62 Zeilen ueber 800 Zeichen,
+  jetzt keine); die Historie steht in den genannten Fachdateien und im Git-Stand vor diesem Commit. Verstrichene Faelligkeiten (24, 26, 56, 94, 97, 121) geleert, im Text vermerkt.
+- **Neu:** Zeile 174 Claude Worktool (Angabe Ingo); HR-Lohn in Zeile 133 und `docs/rag/HR_KPI.md` (Angabe Ingo, nicht nachgeprueft).
+- **Skript:** `wochen_todo_xlsx.py` faerbt die neuen Statuswerte; Wochen_Todo.xlsx und Status_kurz.xlsx neu erzeugt.
+
 ## 2026-11-26: ZLO03-Job, erster P76-Lauf mit FIX 30 bis 34 nachgeprueft
 
 - **Auftrag Ingo:** „sap prod ist offen, du kannst gegenchecken ob felder werte korrekt sind“. P76 wurde nur gelesen (SM37, SE16, Agent sap-t76).

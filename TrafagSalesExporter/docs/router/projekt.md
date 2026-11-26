@@ -1,6 +1,6 @@
 # Unterrouter Projekt
 
-Zurueck: `router.md`. Stand: 2026-11-12 (Doku-Pruefung: Zeile fuer `projektmanagement/Wochen_Todo.tsv` ergaenzt); davor 2026-11-03 (Abschlussrunde Dashboard); davor 2026-10-29 (Kurzauskunft-Ausnahme, Managementbericht nur in Git); davor 2026-10-27 (Loesungslandkarte), 2026-10-22 (Archivverweis `docs/archiv/`).
+Zurueck: `router.md`. Stand: 2026-11-26 (Wochen_Todo aufgeraeumt, Archiv `projektmanagement/Wochen_Todo_Archiv.tsv`); davor 2026-11-12 (Doku-Pruefung: Zeile fuer `projektmanagement/Wochen_Todo.tsv` ergaenzt); davor 2026-11-03 (Abschlussrunde Dashboard); davor 2026-10-29 (Kurzauskunft-Ausnahme, Managementbericht nur in Git); davor 2026-10-27 (Loesungslandkarte), 2026-10-22 (Archivverweis `docs/archiv/`).
 
 Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand.
 
@@ -22,7 +22,7 @@ braucht diesen Schritt nicht, siehe `CLAUDE.md` Abschnitt 3a.
 | --- | --- |
 | **Abschlussrunde Dashboard/Data Lake 2026-11-03**: Rueckmeldungen je Bereich, Datenverantwortliche, Power-BI-/Smartsheet-Inventar, Auftraege (Taskliste in Trafag Projekte) | `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md` |
 | **Persoenliche Aufgabenliste, „woran arbeite ich gerade", Auftraggeber und Termine** | `projektmanagement/PROJEKTSTATUS.md` (IDs `PM-01` ff.) |
-| **Alle Aufgaben mit Status, naechstem Schritt und Erledigt-Datum** (Pflichtnachfuehrung nach `CLAUDE.md` 3 Punkt 3, eine Zeile je Aufgabe) | `projektmanagement/Wochen_Todo.tsv` (Quelle), Ausgabe `projektmanagement/Wochen_Todo.xlsx`, erzeugt mit `projektmanagement/wochen_todo_xlsx.py` |
+| **Alle Aufgaben mit Status, naechstem Schritt und Erledigt-Datum** (Pflichtnachfuehrung nach `CLAUDE.md` 3 Punkt 3, eine Zeile je Aufgabe) | `projektmanagement/Wochen_Todo.tsv` (Quelle, offene und in den letzten 14 Tagen erledigte), Ausgabe `projektmanagement/Wochen_Todo.xlsx`, erzeugt mit `projektmanagement/wochen_todo_xlsx.py`; aeltere erledigte seit 2026-11-26 in `projektmanagement/Wochen_Todo_Archiv.tsv` |
 | **Status kurz fuer den Chef** (eine A4-Seite, je Bereich Bereit / Laeuft / Wartet / Offen, Zahlen aus der Detailliste; seit 2026-10-01). **Pflege:** aendert sich der Stand eines Punkts, der dort steht, im selben Zug die Zeile in `Status_kurz.tsv` nachfuehren; neue Themen nur aufnehmen, wenn sie fuer den Chef zaehlen, Kleinigkeiten bleiben in Wochen_Todo | `projektmanagement/Status_kurz.tsv` (Quelle), Ausgabe `projektmanagement/Status_kurz.xlsx`, erzeugt mit `projektmanagement/wochen_todo_xlsx.py` |
 | **Vorhaben nach HERMES fuer die Geschaeftsleitung**: Stufe, Auftraggeber, Anwendervertreter, Freigabe/Abnahme/Abschluss, Ampel; Vorlagen Projektauftrag und Abnahmeprotokoll | `projektmanagement/Vorhaben_HERMES.tsv` (Quelle), Ausgabe `projektmanagement/Wochen_Todo.xlsx` Blatt „HERMES Übersicht“, erzeugt mit `projektmanagement/wochen_todo_xlsx.py` |
 | **Offene Punkte im Finance Dashboard, Status je Punkt** | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, dazu `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` |

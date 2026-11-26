@@ -62,10 +62,16 @@ BREITEN = {
     "Nächster Schritt": 90, "Erledigt am": 13, "Vorhaben": 10, "HERMES-Stufe": 14,
 }
 
+# Seit 2026-11-26 sechs Statuswerte: Offen, In Arbeit, Wartet auf andere, Wartet auf Entscheid,
+# Zurückgestellt, Erledigt. Erledigte aelter als 14 Tage stehen in Wochen_Todo_Archiv.tsv.
 FARBEN = {
     "Erledigt": "C6E0B4",
+    "In Arbeit": "FFE699",
     "Läuft": "FFE699",
     "Offen": "F8CBAD",
+    "Wartet auf andere": "DDEBF7",
+    "Wartet auf Entscheid": "DDEBF7",
+    "Zurückgestellt": "EDEDED",
 }
 
 # Status kurz: Hintergrund je Stand
