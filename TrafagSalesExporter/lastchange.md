@@ -1,5 +1,16 @@
 # Last Change
 
+## 2026-11-26 17:00: TMVFU Werk 1200 (Anfrage Fabio) analysiert; Agenten-Monitor mit Mail-Waechter
+
+- **TMVFU:** nur in T76/100 gelesen. Z2 in Werk 1200 bewusst eingefuehrt (`T76K910618`, 21.03.2025, „Lagerartikel - AT“), Werk 1100
+  FERT/HALB im offenen `T76K912186` auf Y2, Customizing fuer P76 in T76/090. Dispositionsgruppe ueber OMIG (`TMW00`) moeglich, fuer
+  Einkaeufergruppe/QM-Steuerschluessel kein Standard-Vorschlag. Entscheid Ingo: erst Fabio fragen (Text im Chat). Neu
+  `saptasks/tmvfu_werk1200/NOTES.md`, Router SAP, baum, Wochen_Todo 179.
+- **Agenten-Monitor** (eigenes Repo AgentMonitor, nicht im Repo Ai, kein Remote): Mail-Waechter alle 30 min fuer hinterlegte Absender
+  (Vorgabe Fabio), stille Claude-Analyse nur lesend, Karte „SAP noetig keins/T76/P76“; Antworten als `.eml`-Entwuerfe mit Register und
+  Chrome-Lauf, der Entwuerfe mit Kategorie „Agent-Entwurf“ in Outlook im Web anlegt; der Monitor sendet nie. Commits `9398e4d`,
+  `0f6a896`, `da24501`, `62a9604`, 110 Tests. Outlook-COM liefert wegen IT-Richtlinie keinen Mailtext (LEARNINGS).
+
 ## 2026-11-26 15:00: SCMON in P76 eingeschaltet (Ingo)
 
 - Daten von 2024 geloescht, SCMON aktiv bis 30.11.2027, stuendliche Datensammlung, Record Limit 20 Mio.; SUSG-Verdichtung ~15:15 aktiviert (erste Aggregation 27.11. 02:30).
