@@ -40,6 +40,9 @@ public sealed class ShopfloorOptions
     /// <summary>Adresse der Oberflaeche fuer Links in Mails, z. B. https://server/BiDashboard/shopfloor/index.html.</summary>
     public string BaseUrl { get; set; } = string.Empty;
 
+    /// <summary>Mailversand (2026-11-26, Fabio Punkt 11); Standard aus, siehe <see cref="ShopfloorMailOptions"/>.</summary>
+    public ShopfloorMailOptions Mail { get; set; } = new();
+
     /// <summary>SAP-Abgleich (ShopZd05Set, ShopAufSet). Erst einschalten, wenn T76K912718 in P76 ist.</summary>
     public bool SapSyncEnabled { get; set; }
 

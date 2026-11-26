@@ -527,6 +527,16 @@ public sealed class ShopfloorStore
         return ShopfloorRadar.Compute(con, string.IsNullOrWhiteSpace(day) ? Today() : day.Trim());
     }
 
+    /// <summary>Meeting-Modus „nur Abweichungen“ (Paket Fabio 24.11.2026 Punkt 6); ohne Stichtag = heute, bewertet wird der Vortag.</summary>
+    public JsonNode GetMeeting(string? day)
+    {
+        using var con = Db.Open();
+        var stichtag = string.IsNullOrWhiteSpace(day) ? Today() : day.Trim();
+        ShopfloorZd05.ParseDay(stichtag);   // ungueltiges Datum -> Fehler wie bei den anderen Tagesabfragen
+        return ShopfloorMeeting.Compute(con, stichtag, ShopfloorMeeting.Lesen(Config.RawJson),
+            k => Config.Modules.TryGetValue(k, out var m) && m.Short.Length > 0 ? m.Short : k.ToUpperInvariant());
+    }
+
     public JsonNode GetForecast(string? monday)
     {
         using var con = Db.Open();
@@ -540,10 +550,14 @@ public sealed class ShopfloorStore
         return ShopfloorMail.PeopleJson(con);
     }
 
-    public JsonNode GetMail()
+    public JsonNode GetMail(ShopfloorMailOptions? mail = null)
     {
         using var con = Db.Open();
-        return new JsonObject { ["status"] = ShopfloorMail.Status(BaseUrl), ["outbox"] = ShopfloorMail.Outbox(con) };
+        return new JsonObject
+        {
+            ["status"] = ShopfloorMailVersand.Status(mail ?? new ShopfloorMailOptions(), BaseUrl, con),
+            ["outbox"] = ShopfloorMail.Outbox(con)
+        };
     }
 
     public string? MailPreviewHtml(string? id)
@@ -585,7 +599,8 @@ public sealed class ShopfloorStore
                         throw new ShopfloorException("Keine Zuständigen im Verzeichnis gefunden");
                     return ShopfloorMail.Enqueue(con, Config, mod, rec, pl, "manuell", user, BaseUrl);
                 case "retry":
-                    ShopfloorDb.Exec(con, "UPDATE mail_outbox SET status='wartend', tries=0 WHERE id=?", ReqId(b));
+                    // ts neu: eine bewusst erneut angestossene Mail gilt als neu und faellt nicht unter SendenAb (2026-11-26)
+                    ShopfloorDb.Exec(con, "UPDATE mail_outbox SET status='wartend', tries=0, error=NULL, ts=? WHERE id=?", ShopfloorDb.Now(), ReqId(b));
                     return new JsonObject { ["ok"] = true };
                 default:
                     throw new ShopfloorException("unbekannt", 404);

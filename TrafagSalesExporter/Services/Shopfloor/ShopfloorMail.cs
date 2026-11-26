@@ -31,8 +31,8 @@ public sealed class ShopfloorPerson
 
 /// <summary>
 /// Zustaendigkeits-Mails (Port von notify.py): Personenverzeichnis, Empfaenger-Aufloesung, Postausgang und
-/// Mailtext. Versand ueber Graph oder SMTP ist bewusst NICHT umgesetzt (Modus bleibt "aus"). Die Mails stehen
-/// im Postausgang und lassen sich mit "In Outlook oeffnen" (mailto) versenden. TODO: Graph/SMTP, siehe docs/SHOPFLOOR_2026-10-07.md.
+/// Mailtext. Versand seit 2026-11-26 ueber SMTP in <see cref="ShopfloorMailSender"/>, Standard aus (appsettings Shopfloor:Mail);
+/// solange aus, stehen die Mails nur im Postausgang (mailto „In Outlook oeffnen“). Doku docs/SHOPFLOOR_2026-10-07.md 28.10.
 /// </summary>
 public static class ShopfloorMail
 {
@@ -171,9 +171,11 @@ public static class ShopfloorMail
             "neu" => "Ihnen wurde eine neue Aufgabe zugewiesen",
             "zust" => "Die Zuständigkeit wurde Ihnen übertragen",
             "done" => "Ihr Eintrag wurde abgeschlossen",
+            "status" => "Der Status Ihres Eintrags wurde geändert",
+            "termin" => "Der Termin Ihres Eintrags wurde geändert",
             _ => "Bitte beachten Sie folgenden Eintrag"
         };
-        var subj = reason == "done" ? "Erledigt" : "Zuständigkeit";
+        var subj = reason switch { "done" => "Erledigt", "status" => "Statuswechsel", "termin" => "Terminänderung", _ => "Zuständigkeit" };
         var subject = shortTitle.Length > 0 ? $"[Shop-Floor] {subj}: {nr} – {shortTitle}" : $"[Shop-Floor] {subj}: {nr}";
         var link = baseUrl.Length > 0 ? $"{baseUrl.TrimEnd('/')}/#/m/{mod.Key}/{Uri.EscapeDataString(nr)}" : string.Empty;
         var rows = mod.Fields.Where(f => f.Type != "calc")
@@ -225,14 +227,27 @@ public static class ShopfloorMail
                 order.Add(key);
         }
         foreach (var f in rule.Notify)
-            if ((isNew && SfJson.Truthy(SfJson.Get(d, f))) || (!isNew && changes.ContainsKey(f) && SfJson.Truthy(SfJson.Get(d, f))))
+            if ((isNew && rule.Will("neu") && SfJson.Truthy(SfJson.Get(d, f)))
+                || (!isNew && rule.Will("zust") && changes.ContainsKey(f) && SfJson.Truthy(SfJson.Get(d, f))))
                 foreach (var p in Resolve(SfJson.Str(SfJson.Get(d, f)), people).Hits)
                     Add(p, isNew ? "neu" : "zust");
         var sf = mod.StatusField;
-        if (!string.IsNullOrEmpty(sf) && changes.ContainsKey(sf) && !isNew && ClosedForMail(SfJson.Str(SfJson.Get(d, sf)), mod))
+        var statusChanged = !isNew && !string.IsNullOrEmpty(sf) && changes.ContainsKey(sf);
+        var closed = statusChanged && ClosedForMail(SfJson.Str(SfJson.Get(d, sf!)), mod);
+        if (closed && rule.Will("done"))
             foreach (var f in rule.NotifyDone)
                 foreach (var p in Resolve(SfJson.Str(SfJson.Get(d, f)), people).Hits)
                     Add(p, "done");
+        // 2026-11-26: Statuswechsel (nicht abgeschlossen) und Terminaenderung, nur wenn in notify_rules.ereignisse eingeschaltet
+        if (statusChanged && !closed && rule.Will("status"))
+            foreach (var f in rule.Notify)
+                foreach (var p in Resolve(SfJson.Str(SfJson.Get(d, f)), people).Hits)
+                    Add(p, "status");
+        var df = mod.DueField;
+        if (!isNew && rule.Will("termin") && !string.IsNullOrEmpty(df) && changes.ContainsKey(df))
+            foreach (var f in rule.Notify)
+                foreach (var p in Resolve(SfJson.Str(SfJson.Get(d, f)), people).Hits)
+                    Add(p, "termin");
 
         var byReason = new List<(string Reason, List<ShopfloorPerson> People)>();
         foreach (var key in order)
@@ -284,7 +299,4 @@ public static class ShopfloorMail
         return arr;
     }
 
-    /// <summary>Versandstatus. Graph/SMTP sind nicht umgesetzt, der Modus bleibt "aus".</summary>
-    public static JsonObject Status(string baseUrl)
-        => new() { ["modus"] = "aus", ["absender"] = string.Empty, ["base_url"] = baseUrl, ["bereit"] = false };
 }

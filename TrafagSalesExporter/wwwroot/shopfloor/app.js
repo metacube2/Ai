@@ -344,17 +344,20 @@ async function viewHome(silent) {
   S.agendaStatus = st;
   let zh = null; try { zh = await api("GET", "api/zd05/history"); } catch (e) { }   // nur fuer die Kennzahl-Sparkline, optional
   const amp = await loadAmpelAll();   // Ampel pro Bereich (2026-10-15)
-  const items = S.cfg.agenda;
+  const mtg = await loadMeeting(day);   // Abweichung Tagesmenge je Abteilung (Meeting-Modus, 2026-11-26)
+  const items = agendaItems(isFri, true);
   let must = 0, mustDone = 0; const mustDots = [];   // mustDots: je Pflichtpunkt erledigt ja/nein (Chips unter dem Ring)
-  const rows = items.map((it, i) => {
+  const rows = items.map(it => {
+    const i = it.i;
     const m = S.mods[it.module]; const s = st[it.module] || {};
     const skip = it.friday && !isFri;
     let stat = "";
     if (m.kind === "daily") {
       if (it.must && !skip) { must++; if (s.filled) mustDone++; mustDots.push({ lab: m.short, done: !!s.filled }); }
-      stat = s.filled
+      stat = (s.filled
         ? `<span class="pill ok">erfasst</span><span class="who">${esc(s.by || "")} ${s.at ? s.at.slice(11, 16) : ""}</span>`
-        : (skip ? `<span class="muted">nur am Freitag</span>` : `<span class="pill ${it.must ? "bad" : ""}">noch nicht erfasst</span>`);
+        : (skip ? `<span class="muted">nur am Freitag</span>` : `<span class="pill ${it.must ? "bad" : ""}">noch nicht erfasst</span>`))
+        + mtgPill(mtgRow(mtg, it.module));
     } else if (m.kind === "list") {
       const bits = [];
       if (s.open != null) bits.push(`<span class="pill ${s.open ? "warn" : "ok"}">${s.open} offen</span>`);
@@ -444,9 +447,39 @@ async function viewHome(silent) {
 }
 
 /* ---------------------------------------------------------------- Moderationsmodus */
+/* Reihenfolge im Ablauf (2026-11-26, Fabio 25.11. Punkt 6): Module aus meeting_modus.zuerst (Fehlteile Code 2, Rückstände)
+   kommen zuerst, der Rest in der Reihenfolge der Agenda. Ohne Eintrag in der Konfiguration bleibt alles wie bisher. */
+function agendaItems(isFri, all) {
+  const its = S.cfg.agenda.map((it, i) => ({ ...it, i })).filter(it => all || !(it.friday && !isFri));
+  const first = ((S.cfg.meeting_modus || {}).zuerst || []);
+  const rank = it => { const p = first.indexOf(it.module); return p < 0 ? first.length : p; };
+  return its.sort((a, b) => rank(a) - rank(b) || a.i - b.i);
+}
 function meetingItems() {
   const isFri = parseIso(homeDay()).getDay() === 5;
-  return S.cfg.agenda.map((it, i) => ({ ...it, i })).filter(it => !(it.friday && !isFri));
+  return agendaItems(isFri, false);
+}
+/* Meeting-Modus „nur Abweichungen“ (Fabio 25./26.11.2026): Bewertung kommt vom Server (api/meeting, ShopfloorMeeting.cs),
+   Stand Vortag. Ein fehlender Wert ist nie „unter Ziel“. SEH ist ausgenommen (meeting_modus.ausnehmen). */
+async function loadMeeting(day) { try { S.mtg = await api("GET", "api/meeting?day=" + (day || todayIso())); } catch (e) { S.mtg = null; } return S.mtg; }
+function mtgRow(mtg, key) { return mtg && (mtg.rows || []).find(r => r.key === key) || null; }
+const MTG_TXT = { rot: "deutlich unter Ziel", gelb: "unter Ziel", hinweis: "deutlich über Ziel", ok: "im Ziel" };
+function mtgPill(r) {
+  if (!r || !MTG_TXT[r.stufe]) return "";
+  const cls = { rot: "bad", gelb: "warn", hinweis: "info", ok: "ok" }[r.stufe];
+  const abw = `${r.abw_pct > 0 ? "+" : ""}${fmtNum(r.abw_pct, 1)} %`;
+  const t = `Tagesmenge ${fmtDate(r.tag)}: ${fmtNum(r.prod)} von ${fmtNum(r.ziel)} Stk. (${abw}), ${MTG_TXT[r.stufe]}`;
+  return (r.stufe === "ok" ? "" : `<span class="pill ${cls}" title="${esc(t)}">${abw}</span>`)
+    + (r.serie_alarm ? `<span class="pill bad" title="${r.serie} Tage in Folge unter dem Tagesziel">${r.serie} Tage unter Ziel</span>` : "");
+}
+function mtgBoxHtml(m) {
+  const r = mtgRow(S.mtg, m.key); if (!r) return "";
+  if (r.stufe === "ausgenommen") return `<div class="mtgbox"><b>Meeting-Modus:</b> ${esc(m.short || m.title)} ist von der Abweichungsbewertung ausgenommen (festes Tagesziel folgt).</div>`;
+  if (r.stufe === "keine_daten") return `<div class="mtgbox"><b>Meeting-Modus:</b> keine aktuelle Tagesmenge mit Tagesziel${r.letzter_tag ? ` (letzter Wert ${fmtDate(r.letzter_tag)})` : ""}, deshalb keine Bewertung.</div>`;
+  const abw = `${r.abw_pct > 0 ? "+" : ""}${fmtNum(r.abw_pct, 1)} %`;
+  return `<div class="mtgbox ${r.stufe}"><b>Tagesleistung ${esc(fmtDate(r.tag))}:</b> ${fmtNum(r.prod)} von ${fmtNum(r.ziel)} Stk. (${abw}) · ${MTG_TXT[r.stufe]}
+    ${r.serie_alarm ? `<span class="pill bad">${r.serie} Arbeitstage in Folge unter Ziel</span>` : ""}
+    ${r.stufe === "ok" && !r.serie_alarm ? '<span class="muted"> · Tagesleistung eingeklappt, kein Besprechungspunkt</span>' : ""}</div>`;
 }
 function startMeeting() {
   S.meeting = { start: Date.now(), idx: meetingItems()[0].i };
@@ -791,6 +824,7 @@ async function viewDaily(m) {
   S.activeDay = focusDay;
   await loadWeek(m);
   await syncTvFromRs(m);
+  if (S.meeting) await loadMeeting(todayIso()); else S.mtg = null;
   const days = [...Array(7)].map((_, i) => addDaysD(S.week, i));
   const kw = isoWeek(S.week);
   $("#view").innerHTML = `
@@ -800,6 +834,7 @@ async function viewDaily(m) {
     ${(m.fields || []).some(f => f.key === "ampel") ? '<div id="ampelBox"></div>' : ""}
     ${m.key === "verkauf" ? '<div id="goalBox"></div>' : ""}
     ${tvAutoOn(m) ? `<div id="tvInfo" class="tvinfo">${tvInfoHtml()}</div>` : ""}
+    ${S.meeting ? mtgBoxHtml(m) : ""}
     <div id="trendBox"></div>
     <div id="chartBox"></div>
     <div class="toolbar">
@@ -1069,18 +1104,28 @@ function renderDailyGrid(m) {
   const recs = S.daily[m.key] || {};
   const comp = {}; days.forEach(d => comp[d] = computeRecord(m, (recs[d] || {}).data || {}, { module: m.key, day: d }));
   const groups = groupFields(m.fields);
+  /* Meeting-Modus: Tagesleistung im Ziel grau und eingeklappt (Klick auf die Gruppenzeile klappt auf), Abweichung am Bewertungstag markiert */
+  const mr = S.meeting ? mtgRow(S.mtg, m.key) : null;
+  const mtgGrp = mr && mr.tag ? ((m.fields.find(f => f.key === "prod") || {}).group || null) : null;
+  S.mtgOpen = S.mtgOpen || {};
+  const mtgCan = !!(mtgGrp && mr.stufe === "ok" && !mr.serie_alarm);
+  const mtgFold = mtgCan && !S.mtgOpen[m.key];
   const head = `<colgroup><col class="lab">${days.map(d => { const wd = parseIso(d).getDay(); return `<col class="${wd === 0 || wd === 6 ? "we" : "day"}">`; }).join("")}</colgroup>
     <thead><tr><th>Kennzahl</th>${days.map(d => { const x = parseIso(d); const r = recs[d];
       return `<th class="${d === today ? "today" : ""}" title="${r ? `zuletzt ${esc(r.updated_by || "")} ${esc((r.updated_at || "").slice(11, 16))}` : "noch nichts erfasst"}">${WD[x.getDay()]} ${fmtDate(d).slice(0, 6)}<small>${r ? esc(r.updated_by || "") : "–"}</small></th>`; }).join("")}</tr></thead>`;
   let body = "";
   for (const g of groups) {
-    if (g.name) body += `<tr class="grp"><th colspan="${days.length + 1}">${esc(g.name)}</th></tr>`;
+    const fold = mtgFold && g.name === mtgGrp;
+    if (g.name) body += mtgCan && g.name === mtgGrp
+      ? `<tr class="grp mtg-grp" data-mtgfold="${m.key}" title="${fold ? "Im Ziel: zum Aufklappen klicken" : "Zum Einklappen klicken"}"><th colspan="${days.length + 1}">${fold ? "▸" : "▾"} ${esc(g.name)}${fold ? " · im Ziel" : ""}</th></tr>`
+      : `<tr class="grp"><th colspan="${days.length + 1}">${esc(g.name)}</th></tr>`;
     for (const f of g.fields) {
-      body += `<tr class="${f.type === "calc" ? "calc" : ""}"${f.type === "calc" ? ` data-ck="${f.key}"` : ""}><th class="lab">${esc(f.label)}${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ""} ${f.src ? `<span class="src ${f.src}">${f.src.toUpperCase()}</span>` : ""}${tvAuto(m, f.key) ? `<span class="src rs" title="Automatisch: Summe «Menge im Rückstand» der offenen Positionen der Rückstandsliste">RS</span>` : ""}</th>`;
+      body += `<tr class="${f.type === "calc" ? "calc" : ""}${fold ? " mtg-dim" : ""}"${fold ? " hidden" : ""}${f.type === "calc" ? ` data-ck="${f.key}"` : ""}><th class="lab">${esc(f.label)}${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ""} ${f.src ? `<span class="src ${f.src}">${f.src.toUpperCase()}</span>` : ""}${tvAuto(m, f.key) ? `<span class="src rs" title="Automatisch: Summe «Menge im Rückstand» der offenen Positionen der Rückstandsliste">RS</span>` : ""}</th>`;
       for (const d of days) {
         const wd = parseIso(d).getDay(); const cls = [d === today ? "today" : "", wd === 0 || wd === 6 ? "we" : ""];
         const r = recs[d]; const meta = r && r.meta && r.meta[f.key];
         if (meta) cls.push("ext", meta.src.toLowerCase() === "mes" ? "mesv" : "");
+        if (mr && f.key === "prod" && d === mr.tag && mr.stufe !== "ok") cls.push("mtg-" + mr.stufe);
         if (f.type === "calc") {
           const v = comp[d][f.key];
           let c = ""; if (f.signed && typeof v === "number") c = v < 0 ? "neg" : v > 0 ? "pos" : "";
@@ -1102,6 +1147,7 @@ function renderDailyGrid(m) {
   const lists = m.fields.filter(f => f.type === "select" && f.free).map(f => `<datalist id="gdl-${f.key}">${optsOf(f).map(x => `<option value="${esc(x)}">`).join("")}</datalist>`).join("");
   $("#gridBox").innerHTML = `<table class="grid">${head}<tbody>${body}</tbody></table>${lists}`;
   const box = $("#gridBox");
+  box.querySelectorAll("[data-mtgfold]").forEach(tr => tr.onclick = () => { S.mtgOpen[m.key] = !S.mtgOpen[m.key]; renderDailyGrid(m); });
   box.querySelectorAll("[data-k]").forEach(el => {
     el.addEventListener("change", () => saveCell(m, el));
     el.addEventListener("keydown", e => {
@@ -1967,7 +2013,10 @@ async function viewMail() {
     recs.filter(r => isOpenRec(S.mods[key], r)).forEach(r => resolveAll(rule.notify.map(f => r.data[f])).missing.forEach(t => unknown[t] = (unknown[t] || 0) + 1));
   }
   const unk = Object.entries(unknown).sort((a, b) => b[1] - a[1]).slice(0, 30);
-  const st = info.status; const modeTxt = { aus: "nicht eingerichtet – Mails werden nur protokolliert", graph: "Microsoft Graph (Outlook / Exchange Online)", smtp: "SMTP (Exchange-Relay)", demo: "Demo – es werden keine Mails versendet" }[st.modus] || st.modus;
+  const st = info.status; let modeTxt = { aus: "nicht eingerichtet – Mails werden nur protokolliert", graph: "Microsoft Graph (Outlook / Exchange Online)", smtp: "SMTP (Exchange-Relay)", demo: "Demo – es werden keine Mails versendet" }[st.modus] || st.modus;
+  /* 2026-11-26: Versand über SMTP gebaut, Schalter in appsettings Shopfloor:Mail (Standard aus); „fehlt“ nennt, was noch zu setzen ist */
+  if (st.modus === "smtp" && !st.bereit) modeTxt = "SMTP eingeschaltet, aber unvollständig – fehlt: " + (st.fehlt || []).join(", ");
+  else if (st.modus === "smtp") modeTxt = `SMTP über ${st.server}, Mails ab ${st.senden_ab}`;
   $("#view").innerHTML = `
   <div class="head"><div class="grow"><h1>Personen &amp; Mail</h1><p class="lede">Wer bei Zuständigkeiten per Mail informiert wird. Einträge wie „Unterhalt/PT“ oder „Samuel, Kujtim“ werden in einzelne Empfänger aufgelöst.</p></div></div>
   <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">
@@ -1986,9 +2035,9 @@ async function viewMail() {
     <td style="white-space:nowrap">${window.SF_DEMO ? "" : `<a class="btn small" href="api/mail/preview?id=${o.id}" target="_blank">Ansehen</a>`}${o.status === "Fehler" ? ` <button class="btn small" data-retry="${o.id}">Erneut</button>` : ""}</td></tr>`).join("") : '<tr><td colspan="5" class="empty">Noch keine Mails.</td></tr>'}
   </tbody></table></div>
   <details class="hist"><summary>Einrichtung durch die IT</summary><div style="font-size:13.5px;line-height:1.6">
-  <p><b>Variante A – Outlook / Exchange Online über Microsoft Graph (empfohlen):</b> In Entra ID eine App registrieren, Anwendungsberechtigung <code>Mail.Send</code> erteilen (Admin-Zustimmung) und idealerweise per Application Access Policy auf das Postfach <code>shopfloor@…</code> beschränken. Dann in <code>settings.ini</code> unter <code>[mail]</code>: <code>modus = graph</code>, <code>tenant_id</code>, <code>client_id</code>, <code>client_secret</code>, <code>absender</code>.</p>
-  <p><b>Variante B – SMTP-Relay:</b> <code>modus = smtp</code>, <code>smtp_host</code> (z. B. interner Exchange-Relay), <code>smtp_port</code>, optional Benutzer/Passwort, <code>absender</code>.</p>
-  <p><code>base_url</code> = Adresse des Shop-Floor (z. B. <code>http://shopfloor:8080</code>), damit die Mail einen „Öffnen“-Knopf enthält. Danach Server neu starten.</p>
+  <p><b>Im Cockpit (seit 26.11.2026):</b> Versand über SMTP, Einstellungen in <code>appsettings.json</code> unter <code>Shopfloor:Mail</code>: <code>Modus = smtp</code>, <code>Host</code>, <code>Port</code>, <code>Ssl</code>, optional <code>Benutzer</code> (Passwort nur auf dem Server, z. B. Umgebungsvariable <code>Shopfloor__Mail__Passwort</code>), <code>Absender</code> und <code>SendenAb</code> (JJJJ-MM-TT HH:MM). Nur Mails ab <code>SendenAb</code> werden versendet; ältere Einträge im Postausgang bleiben Protokoll und gehen nie nachträglich raus. Microsoft Graph ist noch nicht eingebaut (Entscheid ICT offen).</p>
+  <p><code>Shopfloor:BaseUrl</code> = Adresse des Shop-Floor, damit die Mail einen „Öffnen“-Knopf enthält.</p>
+  <p>Bei welchen Ereignissen eine Mail entsteht, steht je Liste in <code>shopfloor_config.json</code> unter <code>notify_rules.&lt;liste&gt;.ereignisse</code>: <code>neu</code>, <code>zust</code> (Zuständigkeit geändert), <code>done</code> (abgeschlossen), <code>status</code> (Statuswechsel), <code>termin</code> (Terminänderung). Ohne Eintrag: neu, zust, done.</p>
   <p>Ohne Einrichtung funktioniert jederzeit der Knopf <b>„In Outlook öffnen“</b> im Eintrag: Er öffnet eine vorbereitete Mail im eigenen Outlook.</p></div></details>`;
   const body = $("#pplBody");
   const rowHtml = p => `<tr><td><input class="field-in" data-p="name" value="${esc(p.name || "")}"></td><td><input class="field-in" data-p="kuerzel" value="${esc(p.kuerzel || "")}" style="max-width:90px"></td>

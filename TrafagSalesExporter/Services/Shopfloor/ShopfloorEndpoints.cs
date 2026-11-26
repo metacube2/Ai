@@ -107,6 +107,7 @@ public static class ShopfloorEndpoints
         services.AddSingleton<IShopfloorAccess, ShopfloorAccess>();
         services.AddSingleton<ShopfloorStoreProvider>();
         services.AddHostedService<ShopfloorBackupService>();
+        services.AddHostedService<ShopfloorMailSender>();   // 2026-11-26: versendet erst, wenn Shopfloor:Mail bereit ist (Standard aus)
         services.AddSingleton<ShopfloorSapSync>();
         services.AddHostedService(sp => sp.GetRequiredService<ShopfloorSapSync>());
         // Operations KPI Liefertreue (2026-10-14), Doku docs/OPERATIONS_KPI_2026-10-14.md
@@ -504,8 +505,9 @@ public static class ShopfloorEndpoints
         g.MapGet("/zd05", (HttpContext c) => J(c, Store(c).GetZd05(c.Request.Query["day"])));
         g.MapGet("/zd05/history", (HttpContext c) => J(c, Store(c).GetZd05History()));
         g.MapGet("/radar", (HttpContext c) => J(c, Store(c).GetRadar(c.Request.Query["day"])));
+        g.MapGet("/meeting", (HttpContext c) => J(c, Store(c).GetMeeting(c.Request.Query["day"])));
         g.MapGet("/people", (HttpContext c) => J(c, Store(c).GetPeople()));
-        g.MapGet("/mail", (HttpContext c) => J(c, Store(c).GetMail()));
+        g.MapGet("/mail", (HttpContext c) => J(c, Store(c).GetMail(c.RequestServices.GetRequiredService<IOptionsMonitor<ShopfloorOptions>>().CurrentValue.Mail)));
         g.MapGet("/mail/preview", (HttpContext c) =>
             Results.Text(Store(c).MailPreviewHtml(c.Request.Query["id"]) ?? "nicht gefunden", "text/html; charset=utf-8", Encoding.UTF8));
         g.MapGet("/forecast", (HttpContext c) => J(c, Store(c).GetForecast(c.Request.Query["monday"])));

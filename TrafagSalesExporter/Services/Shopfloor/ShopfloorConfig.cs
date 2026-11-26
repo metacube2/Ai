@@ -206,6 +206,18 @@ public sealed class ShopfloorNotifyRule
     public List<string> Notify { get; init; } = [];
     public List<string> NotifyDone { get; init; } = [];
     public string Title { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Bei welchen Ereignissen eine Mail entsteht (2026-11-26, Frage Fabio Punkt 11, Werte legt Fabio fest): „neu“ (Anlegen),
+    /// „zust“ (Zustaendigkeit geaendert), „done“ (abgeschlossen), „status“ (Statuswechsel, nicht abgeschlossen), „termin“
+    /// (Termin geaendert). Ohne Eintrag <c>ereignisse</c> gilt das bisherige Verhalten neu/zust/done.
+    /// </summary>
+    public List<string> Ereignisse { get; init; } = [.. StandardEreignisse];
+
+    public static readonly string[] StandardEreignisse = ["neu", "zust", "done"];
+    public static readonly string[] AlleEreignisse = ["neu", "zust", "done", "status", "termin"];
+
+    public bool Will(string ereignis) => Ereignisse.Contains(ereignis, StringComparer.Ordinal);
 }
 
 /// <summary>
@@ -279,7 +291,10 @@ public sealed class ShopfloorConfig
                     {
                         Notify = Strings(r["notify"]),
                         NotifyDone = Strings(r["notify_done"]),
-                        Title = SfJson.GetString(r, "title") ?? string.Empty
+                        Title = SfJson.GetString(r, "title") ?? string.Empty,
+                        Ereignisse = r["ereignisse"] is JsonArray
+                            ? Strings(r["ereignisse"]).Where(e => ShopfloorNotifyRule.AlleEreignisse.Contains(e)).ToList()
+                            : [.. ShopfloorNotifyRule.StandardEreignisse]
                     };
 
         if (root["forecast_prefix"] is JsonObject fp)

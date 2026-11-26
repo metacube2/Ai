@@ -3348,14 +3348,6 @@
      "unit": "Stk."
     },
     {
-     "key": "tv_mts",
-     "label": "TV MTS",
-     "type": "num",
-     "col": "M",
-     "group": "Terminverschiebungen",
-     "unit": "Stk."
-    },
-    {
      "key": "tv_tr5",
      "label": "TV TR5",
      "type": "num",
@@ -3383,7 +3375,7 @@
      "key": "tv_total",
      "label": "Total Terminverschiebungen",
      "type": "calc",
-     "calc": "v.tv_seh + v.tv_mts + v.tv_tr5 + v.tv_tx + v.tv_dw",
+     "calc": "v.tv_seh + v.tv_tr5 + v.tv_tx + v.tv_dw",
      "group": "Terminverschiebungen",
      "unit": "Stk."
     },
@@ -4742,6 +4734,30 @@
    ]
   }
  ],
+ "meeting_modus": {
+  "_hinweis": "Meeting-Modus nur Abweichungen (Fabio 25./26.11.2026): Tagesmenge gegen Tagesziel des Vortags; gelb/rot ab x % darunter, Hinweis ab x % darueber; Serie = Tage in Folge unter Ziel; zuerst = Reihenfolge im Ablauf",
+  "abteilungen": [
+   "seh",
+   "tr5",
+   "tx",
+   "dw"
+  ],
+  "ausnehmen": [
+   "seh"
+  ],
+  "gelb_unter_pct": 10,
+  "rot_unter_pct": 20,
+  "hinweis_ueber_pct": 20,
+  "tage_in_folge": 3,
+  "max_alter_tage": 4,
+  "zuerst": [
+   "zd05",
+   "rs_seh",
+   "rs_tr5",
+   "rs_tx",
+   "rs_dw"
+  ]
+ },
  "lists": {
   "tl": [
    "anwesend",

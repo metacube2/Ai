@@ -531,3 +531,15 @@ td.locked .out::after{content:" \1F512";font-size:10px;opacity:.55}
 
 /* 2026-11-19: Widerspruch Abschlussdatum / Status in den Rückstandslisten */
 .wid { color: var(--alarm); font-weight: 600; cursor: help; }
+
+/* 2026-11-26: Meeting-Modus nur Abweichungen (Fabio 25./26.11.) */
+.mtgbox{margin:0 0 12px;padding:8px 12px;border-left:3px solid var(--ink-3);background:var(--head-bg);font-size:13px;border-radius:4px}
+.mtgbox.rot{border-left-color:var(--alarm);background:var(--alarm-soft)}
+.mtgbox.gelb{border-left-color:var(--warn);background:var(--warn-soft)}
+.mtgbox.hinweis{border-left-color:var(--info);background:var(--info-soft)}
+.mtgbox .pill{margin-left:6px}
+.grid tr.mtg-grp th{cursor:pointer}
+.grid tr.mtg-dim th,.grid tr.mtg-dim td{color:var(--ink-3)}
+.grid td.mtg-rot{box-shadow:inset 0 0 0 2px var(--alarm);background:var(--alarm-soft)}
+.grid td.mtg-gelb{box-shadow:inset 0 0 0 2px var(--warn);background:var(--warn-soft)}
+.grid td.mtg-hinweis{box-shadow:inset 0 0 0 2px var(--info);background:var(--info-soft)}
