@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-26 09:00: ZLO03, Antwort an Armin versendet
+
+- Mail „ZLO03: offene MK bei B64344 korrigiert“ am 26.11. 08:59 von Ingo an Armin versendet (Ursache, drei Fixes, B64344 = 7'125 mit
+  neuem Kontrakt 46010673, Dashboard ab 27.11.). Doku: FIX30_31 8, zlo03/CLAUDE.md, rag PROJECT, Wochen_Todo 173 + xlsx.
+
 ## 2026-11-26: Wochen_Todo aufgeraeumt und auf den Stand gebracht
 
 - **Auftrag Ingo:** Wochen_Todo anschauen, aufraeumen, auf neuen Stand bringen; Antworten: Archiv-Datei, Texte kuerzen mit

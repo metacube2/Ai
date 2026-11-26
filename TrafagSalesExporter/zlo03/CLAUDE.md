@@ -294,7 +294,7 @@ Stand 26.11. 06:00; danach B64344 = 2'125 pruefen. `FIX30_31_MKMNG_ABRUFE_2026-1
 
 *Nachtrag 2026-11-26:* Der erste P76-Lauf am 26.11. 06:00 ist fertig, 44'858 Saetze in 1'693 s. Die Werte in `ZMD04_CALC` sind fuer acht Materialien gegen
 P76-Rohdaten nachgerechnet und gleich. FIX 30, 31 und 33 sind in P76 belegt, FIX 32 wirkt dort heute nicht. B64344 = **7'125**: Armins 2'125 plus
-der neue Kontrakt 46010673 (5'000, angelegt 25.11.). Offen ist die Antwort an Armin. `FIX30_31_MKMNG_ABRUFE_2026-11-25.md` Abschnitt 8.
+der neue Kontrakt 46010673 (5'000, angelegt 25.11.). Antwort an Armin am 26.11. 08:59 versendet. `FIX30_31_MKMNG_ABRUFE_2026-11-25.md` Abschnitt 8.
 
 ## Verifikationsplan
 

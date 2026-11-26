@@ -168,6 +168,6 @@ Nicht nachgerechnet sind 59397 OMENG 220 (vermutlich Fertigungsauftrag, `AFPO` n
 `EKPO` 46*, `MDBS` 45140000 bis 45169999 (ab 03.03.2025). Aeltere offene Bestellungen waeren nicht erfasst, der Abgleich mit dem Jobwert zeigt
 aber keine Luecke. ST22 wurde nicht gelesen.
 
-**Offen:** Antwort an Armin (Ingo). B64344 zeigt jetzt 7'125, das sind 2'125 aus den alten Kontrakten und 5'000 aus 46010673. Offene Bestellmenge
+**Offen:** *(Antwort an Armin am 26.11. 08:59 von Ingo versendet, Betreff „ZLO03: offene MK bei B64344 korrigiert“; Inhalt wie unten.)* B64344 zeigt jetzt 7'125, das sind 2'125 aus den alten Kontrakten und 5'000 aus 46010673. Offene Bestellmenge
 und Verbrauch steigen bei betroffenen Materialien. Das Dashboard (Materialanteil, `ZloTopDownSet`) liest den neuen Stand erst im Einkauf-Lauf
 der Nacht auf den 27.11. Weiter offen sind Befund 7.2, 59397 OMENG und die rund 557 alten Zeilen.

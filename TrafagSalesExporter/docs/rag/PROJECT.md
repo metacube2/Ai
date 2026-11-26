@@ -14,7 +14,7 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 - **2026-11-26 (Handbestellwesen):** Mail mit sieben Fragen an den Einkauf (Sandro, Vinc, Alex, Cc Armin) 08:25 versendet, Antwort
   ausstehend (KONZEPT 6.15 Nachtrag).
 - **2026-11-26 (ZLO03):** Der Job `ZLO03_PRECALC` lief 06:00 erstmals mit FIX 30 bis 34 (fertig, 44'858 Saetze). Die Werte in `ZMD04_CALC` sind
-  gegen P76 nachgerechnet und gleich. B64344 = 7'125 (2'125 plus neuer Kontrakt 46010673 vom 25.11.). Offen: Antwort an Armin (FIX30_31 Abschnitt 8).
+  gegen P76 nachgerechnet und gleich. B64344 = 7'125 (2'125 plus neuer Kontrakt 46010673 vom 25.11.). Antwort an Armin 08:59 versendet (FIX30_31 Abschnitt 8).
 - **2026-11-25 (Einkauf, ZLO03, Shopfloor):** Shopfloor Paket Fabio Welle 1 deployed 06:45 (`d8e74d2`), Antwort Fabio mit E1 bis E3
   (SHOPFLOOR 28.9). Reiter „Lieferantenentwicklung“ (`51142ed`), Datumsfelder (`8fbd718`), „Pfad kopieren“ (`c297e69`, letzter Deploy
   14:29). ZLO03-Job FIX 30 bis 34 (offene MK, Bestellmenge, Verbrauch) seit 13:49 in P76, wirksam ab 26.11. 06:00; dann B64344 = 2'125
