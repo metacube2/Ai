@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-27 10:30: Agenten-Monitor liest die Antwort-Zusammenfassung vor (Repo AgentMonitor, kein Dashboard-Code)
+
+- Stop der Hauptsitzung: Zeile mit Lautsprecher-Zeichen (Anweisung in `~/.claude/CLAUDE.md`, vom Setup eingetragen) ueber
+  `tts.ingok.ch` vorlesen; Stimme horst bei Ingo, commanderdataTNG3 als Vorgabe fuer andere, Umschalten im Tray. Gemeinsamer
+  Paket-Schluessel als eigene Datei `tts_schluessel.txt` (lesbar im Paket), beim Benutzer DPAPI. `60f1860`, 130 Tests, bei Ingo
+  eingespielt, Paket `Downloads\AgentMonitor_Paket_2026-11-27` noch ohne Schluessel. Subtree nicht gepusht (Entscheid Ingo).
+
 ## 2026-11-27 10:10: SUSG/SCMON in P76 nachkontrolliert (Wochen_Todo 175 erledigt)
 
 - P76 nur gelesen (Agent sap-t76, eigene Sitzung, geschlossen): erste SUSG-Verdichtung 27.11. 02:30 ohne Fehler (Tag 26.11.,

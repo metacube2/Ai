@@ -1,6 +1,6 @@
 # Uebergabe 2026-11-27: Shopfloor (Fabio), SAP, Z-Objekte, Agenten-Monitor
 
-Stand: 2026-11-27 vormittags, Abschnitt 8 (ZD05-Ergebnis) nachgetragen um ~10:00. Geschrieben von der Sitzung `trafagsalesexporter-aa` (Auftrag Ingo: „schreibe am Schluss md, ich starte
+Stand: 2026-11-27 vormittags, Abschnitt 8 (ZD05-Ergebnis) nachgetragen um ~10:00, Abschnitt 6 (Vorlesen) ~10:30. Geschrieben von der Sitzung `trafagsalesexporter-aa` (Auftrag Ingo: „schreibe am Schluss md, ich starte
 Chat neu, bereite alles vor, Instruktion fuer weitere Arbeiten“). **Eine neue Sitzung liest zuerst diese Datei**, dann wie immer
 `CLAUDE.md`, `router.md`, `docs/AGENT_COORDINATION.md` (vor jeder Aenderung) und `docs/rag/LEARNINGS.md` (vor SAP/Deploy).
 Status je Aufgabe gilt weiter aus `projektmanagement/Wochen_Todo.tsv`; diese Datei ordnet nur die Reihenfolge und nennt die Fallen.
@@ -80,6 +80,14 @@ Antworten als `.eml` + Register + Chrome-Lauf mit Kategorie „Agent-Entwurf“;
 Outlook-Programmzugriff (COM liefert keinen Text), PreToolUse-Hook gegen Lesebefehle ausserhalb des Repos bei SAP-Schaltern,
 Rueckblick 3 Tage, Mac (lagoon) nachziehen, Subtree in `werkzeuge/agentmonitor-videodoku`. Neues Outlook legt eine geoeffnete
 `.eml` sofort als Entwurf an.
+
+*Nachtrag 27.11. ~10:30:* **Vorlesen** gebaut (Auftrag Ingo): `60f1860`, 130 Tests, bei Ingo eingespielt (Stimme horst, Sicherung
+`%LOCALAPPDATA%\AgentMonitor\app_vorher_2026-11-27`), Block in `~/.claude/CLAUDE.md` angelegt, Durchlauf mit echtem Stop-Ereignis gehoert
+(123 s bis zur Ansage, der Dienst laedt die Stimme nach Pause neu). Paket `Downloads\AgentMonitor_Paket_2026-11-27` (Ordner und ZIP)
+**ohne Schluessel**: Ingo holt bei lagoon einen Paket-Schluessel mit horst und commanderdataTNG3 (diese Stimme ist fuer den heutigen
+Schluessel nicht freigegeben) und legt ihn als `tts_schluessel.txt` in den Paketordner oder nach
+`%APPDATA%\AgentMonitor\paket_tts_schluessel.txt` und baut neu. Subtree lokal in `..\Ai-werkzeuge` nachgezogen (`45d96b7`), **nicht
+gepusht** (enthaelt Mail-Waechter mit Fabios Adresse, Entscheid Ingo). Naechster Wunsch Ingo: Auto-Update (NetSparkle).
 
 ## 7. Sonst offen
 
