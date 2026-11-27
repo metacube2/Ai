@@ -94,10 +94,13 @@ public sealed class ShopfloorSapSync : BackgroundService
             var (client, baseUrl) = await CreateClientAsync(ct);
             using var clientScope = client;
 
-            var zd05 = new List<JsonElement>();
-            foreach (var dispo in options.Zd05Dispo.Where(d => !string.IsNullOrWhiteSpace(d)))
-                zd05.AddRange(await ReadAsync(client, baseUrl, Zd05Set,
-                    $"Werks eq '{options.SapPlant}' and Dispo eq '{dispo.Trim()}'", ct));
+            // ZD05 je Disponent (Punkt 12, 2026-11-27: Disponenten 001 bis 006). Ein Fehler bei einem Disponenten stoppt den
+            // Abgleich nicht mehr; dann wird ZD05 aber gar nicht geschrieben, weil der Import den Tag ersetzt und fehlende
+            // Positionen als erledigt zaehlen wuerde. Der Stand vom letzten vollstaendigen Lauf bleibt stehen.
+            var (zd05, zd05Fehler) = await ReadZd05Async(options.Zd05Dispo,
+                dispo => ReadAsync(client, baseUrl, Zd05Set, $"Werks eq '{options.SapPlant}' and Dispo eq '{dispo}'", ct), ct);
+            foreach (var (dispo, meldung) in zd05Fehler)
+                _logger.LogWarning("Shopfloor: ZD05 Disponent {Dispo} nicht gelesen, ZD05 bleibt auf dem letzten Stand: {Meldung}", dispo, meldung);
 
             var from = DateOnly.FromDateTime(DateTime.Today);
             var orders = await ReadAsync(client, baseUrl, OrderSet,
@@ -119,14 +122,10 @@ public sealed class ShopfloorSapSync : BackgroundService
             }
             var naechster = vorratRows is null ? null : ShopfloorSapVorrat.NaechsterVorgang(vorratRows);
 
-            var push = new ShopfloorPush
-            {
-                Items =
-                [
-                    new JsonObject { ["module"] = "zd05", ["day"] = from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), ["rows"] = Zd05Rows(zd05) },
-                    new JsonObject { ["module"] = "planauftraege", ["rows"] = OrderRows(orders, until, naechster) }
-                ]
-            };
+            var push = new ShopfloorPush();
+            if (zd05Fehler.Count == 0)
+                push.Items.Add(new JsonObject { ["module"] = "zd05", ["day"] = from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), ["rows"] = Zd05Rows(zd05) });
+            push.Items.Add(new JsonObject { ["module"] = "planauftraege", ["rows"] = OrderRows(orders, until, naechster) });
             var results = _stores.Store.ApplyPush(push, "SAP");
             LastResult = new JsonObject
             {
@@ -136,6 +135,12 @@ public sealed class ShopfloorSapSync : BackgroundService
                 ["auftraege"] = orders.Count,
                 ["ergebnis"] = results
             };
+            if (zd05Fehler.Count > 0)
+                LastResult["zd05_fehler"] = new JsonObject
+                {
+                    ["meldung"] = "ZD05 nicht geschrieben, letzter Stand bleibt",
+                    ["disponenten"] = new JsonObject(zd05Fehler.Select(f => KeyValuePair.Create(f.Dispo, (JsonNode?)f.Meldung)))
+                };
             _logger.LogInformation("Shopfloor: SAP-Abgleich {Zd05} ZD05-Positionen, {Orders} Auftraege", zd05.Count, orders.Count);
             // Mengen je Produktionstag (J5, J8, J11, DW), 2026-10-16; seit 2026-10-19 heute und die drei Tage davor
             // (Produktionstag statt Abfragetag). Ein Fehler hier stoppt ZD05 und Forecast nicht.
@@ -530,6 +535,29 @@ public sealed class ShopfloorSapSync : BackgroundService
             "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{user}:{password}")));
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return (client, baseUrl);
+    }
+
+    /// <summary>
+    /// ZD05 je Disponent lesen (leer und doppelt uebersprungen). Fehler werden je Disponent gesammelt statt geworfen, damit der
+    /// uebrige Abgleich weiterlaeuft; ein Abbruch ueber <paramref name="ct"/> bleibt ein Abbruch.
+    /// </summary>
+    internal static async Task<(List<JsonElement> Rows, List<(string Dispo, string Meldung)> Fehler)> ReadZd05Async(
+        IEnumerable<string> dispos, Func<string, Task<List<JsonElement>>> read, CancellationToken ct)
+    {
+        var rows = new List<JsonElement>();
+        var fehler = new List<(string Dispo, string Meldung)>();
+        foreach (var dispo in dispos.Where(d => !string.IsNullOrWhiteSpace(d)).Select(d => d.Trim()).Distinct(StringComparer.Ordinal))
+        {
+            try
+            {
+                rows.AddRange(await read(dispo));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+            {
+                fehler.Add((dispo, ex.GetBaseException().Message));
+            }
+        }
+        return (rows, fehler);
     }
 
     /// <summary>ShopZd05Set -> Zeilen wie der ZD05-Excel-Import (Feldnamen aus zd05.py AUTO).</summary>

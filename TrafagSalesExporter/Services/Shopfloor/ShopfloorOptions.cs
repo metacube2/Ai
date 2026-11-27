@@ -142,8 +142,8 @@ public sealed class ShopfloorOptions
 
     public string SapPlant { get; set; } = "1100";
 
-    /// <summary>Disponenten fuer ZD05 (je Disponent ein Aufruf, wie die Selektion im Report).</summary>
-    public List<string> Zd05Dispo { get; set; } = ["001", "003"];
+    /// <summary>Disponenten fuer ZD05 (je Disponent ein Aufruf, wie die Selektion im Report). 001 bis 006 seit 2026-11-27 (Fabio/Marco, Punkt 12).</summary>
+    public List<string> Zd05Dispo { get; set; } = ["001", "002", "003", "004", "005", "006"];
 
     /// <summary>Tage ab heute fuer Plan- und Fertigungsauftraege (Forecast).</summary>
     public int ForecastDays { get; set; } = 28;

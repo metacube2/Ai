@@ -80,6 +80,48 @@ public sealed class ShopfloorSapSyncTests
     }
 
     [Fact]
+    public async Task Zd05_Ein_Fehler_Je_Disponent_Bricht_Nicht_Ab_Und_Wird_Gemeldet()
+    {
+        // Bis 2026-11-27 brach ein Fehler bei einem Disponenten den ganzen SAP-Abgleich ab (auch Forecast, Mengen, Verkauf).
+        var gelesen = new List<string>();
+        Task<List<JsonElement>> Lesen(string dispo)
+        {
+            gelesen.Add(dispo);
+            if (dispo == "005") throw new HttpRequestException("500 Internal Server Error");
+            return Task.FromResult(Rows($$"""[{"Matnr":"M{{dispo}}"}]"""));
+        }
+
+        var (rows, fehler) = await ShopfloorSapSync.ReadZd05Async(["001", " 003 ", "", "001", "005", "006"], Lesen, CancellationToken.None);
+
+        // Leer und doppelt uebersprungen (die Konfigurationsbindung kann Listen an die Codevorgabe anhaengen).
+        Assert.Equal(["001", "003", "005", "006"], gelesen);
+        Assert.Equal(["M001", "M003", "M006"], rows.Select(r => r.GetProperty("Matnr").GetString()));
+        var f = Assert.Single(fehler);
+        Assert.Equal("005", f.Dispo);
+        Assert.Contains("500", f.Meldung);
+    }
+
+    [Fact]
+    public async Task Zd05_Abbruch_Bleibt_Ein_Abbruch()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => ShopfloorSapSync.ReadZd05Async(["001"],
+            _ => Task.FromException<List<JsonElement>>(new OperationCanceledException(cts.Token)), cts.Token));
+    }
+
+    [Fact]
+    public void Zd05_Disponenten_001_Bis_006()
+    {
+        // Entscheid Fabio/Marco 27.11.2026 (Punkt 12), wirksam nach T76K912964 in P76.
+        string[] soll = ["001", "002", "003", "004", "005", "006"];
+        Assert.Equal(soll, new ShopfloorOptions().Zd05Dispo);
+        var appsettings = JsonNode.Parse(File.ReadAllText(Path.Combine(ShopfloorTestEnv.ProjectRoot, "appsettings.json")))!["Shopfloor"]!;
+        Assert.Equal(soll, appsettings["Zd05Dispo"]!.AsArray().Select(n => (string?)n));
+    }
+
+    [Fact]
     public void NotFound_Hint_For_An_Unknown_Set_Names_No_Transport()
     {
         var hint = ShopfloorSapSync.NotFoundHint("C_SALESANALYTICSQRY_1(P_DisplayCurrency='CHF')/Results");
