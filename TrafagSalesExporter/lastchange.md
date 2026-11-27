@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-27 12:45: TMVFU/OMIG Werk 1200 in T76/100 umgestellt und getestet (Anfrage Fabio)
+
+- `T76K912962` (lokal, nicht freigeben): TMVFU 1200 FERT/HALB/HAWA/LEER/VERP Z2 -> 02, TMW00 FERT/HAWA 1200 = 0002. MM01 belegt
+  beide Werte im Bild vor (Test 53531 FERT, F89025 HAWA). NGRP ohne TMVFU-Eintrag in T76 und P76 (P76 nur angezeigt).
+  `saptasks/tmvfu_werk1200/NOTES.md` 7, Wochen_Todo 179, LEARNINGS.
+
 ## 2026-11-27 12:15: Paket Fabio 27.11. gelesen, Bauplan Punkte 12 und 14–20, Werk 1200 Testlauf abgebrochen
 
 - Mail Fabio 11:36 und Paket (Antwort Punkt 12: alle Unterdeckungen, Fertigungsauftrag als Zugang, Disponenten 001–006) gelesen;

@@ -1,6 +1,6 @@
 # TMVFU Werk 1200: Vorschlag Verfuegbarkeitspruefung Z2 auf 02 (Anfrage Fabio, 26.11.2026)
 
-Stand: 2026-11-27 mittags (Abschnitt 6: Antwort Fabio, Testlauf abgebrochen ohne Aenderung); davor 2026-11-26 (Phase 1, nur gelesen in T76/100, Agent sap-t76, von der Hauptsitzung an den Rohdaten nachgeprueft; **nichts
+Stand: 2026-11-27 12:45 (Abschnitt 7: in T76/100 umgestellt und getestet, `T76K912962` nicht freigegeben); davor 2026-11-27 mittags (Abschnitt 6: Antwort Fabio, Testlauf abgebrochen ohne Aenderung); davor 2026-11-26 (Phase 1, nur gelesen in T76/100, Agent sap-t76, von der Hauptsitzung an den Rohdaten nachgeprueft; **nichts
 geaendert, kein Auftrag**). Entscheid Ingo 26.11.: **erst Fabio fragen**, geaendert wird erst nach seiner Antwort. Rueckfrage an Fabio
 als Text im Chat (von Ingo zu senden).
 
@@ -98,3 +98,29 @@ Vorarbeit, belegt (Rohdaten im Scratchpad der Sitzung, `tmvfu1200\`):
 **Naechster Lauf** (nach Neuanmeldung Ingo): Customizing-Schritt TMVFU 1200 -> 02 und TMW00 FERT/HAWA 1200 = 0002 in einem Auftrag
 „NICHT FREIGEBEN“ (Zielsystem P76 im Dialog vorbelegt, Feld leeren braucht ein kleines T76-Skript), dann MM01-Probe beider Materialien
 (Bild vor Eingabe, danach MARC), NGRP in P76 nur per Anzeige.
+
+## 7. Umgestellt und getestet in T76/100 (27.11. 12:30–12:40, Agent sap-t76, Hauptsitzung per RFC nachgeprueft)
+
+- **Auftrag `T76K912962`** (Customizing W, Status D, **ohne Zielsystem**, lokal, Aufgabe `T76K912963`), Text „TMVFU/TMW00 Werk 1200
+  Test Fabio NICHT FREIGEBEN“. E071 `R3TR VDAT V_TMVFU` und `V_TMW00`; E071K genau 7 Schluessel: TMVFU `100FERT1200` bis
+  `100VERP1200`, TMW00 `100FERT1200`, `100HAWA1200`. **Nie freigeben** (Test; P76 geht ueber 090, Variante A).
+- **TMVFU** 1200 FERT/HALB/HAWA/LEER/VERP: Z2 -> 02; uebrige 13 Zeilen unveraendert (1100 FERT/HALB weiter Y2).
+- **TMW00** (OMIG): FERT/1200 und HAWA/1200 = 0002, HALB nicht. **0002 heisst in Werk 1200 „Kundeneinzelfertigung“**, auch fuer HAWA.
+- **MM01 Erweitern auf 1200 ohne Vorlage** (Disponent 001, einziger in 1200):
+
+  | Material | 1100 | Dispo 1 Dispogruppe im Bild | Dispo 3 Verfuegbarkeitspruefung im Bild | MARC 1200 nach Sichern |
+  |---|---|---|---|---|
+  | `000000000000053531` FERT | DISGR 0022, MTVFP KP | 0002 | 02 | 0002 / 02 |
+  | `F89025` HAWA | DISGR 0011, MTVFP 02 | 0002 (vor der Aenderung leer) | 02 | 0002 / 02 |
+
+  **Antwort auf Fabios Frage: Die Werte werden im Bild vorbelegt** (nicht erst beim Sichern gesetzt). Beweis ist das FERT (in 1100 KP,
+  nichts kopiert). Vermutung, nicht getestet: im Bild ueberschreibbar, wirkt nur beim Anlegen/Erweitern, bestehende MARC-Saetze bleiben.
+- **Testsaetze in T76/100 bleiben stehen:** beide mit BESKZ **X** und PLIFZ **0** (1100: FERT E, HAWA F/30), SBDKZ leer (1100: 2).
+  Entscheid Ingo: so lassen, mit MM02 korrigieren oder Loeschvormerkung (MM06).
+- **NGRP:** keine TMVFU-Zeile, weder T76/100 (RFC) noch **P76** (SM30 `V_TMVFU` nur angezeigt, 18 von 18 Zeilen). In P76 steht 1200
+  fuenfmal Z2, 1100 durchgehend 02 (T76: Y2 aus `T76K912186`). Ob MM01 bei NGRP ueber die Referenzmaterialart FERT (T134) sucht, ist
+  nicht getestet (moegliche Probe: MM01 mit NGRP-Material ohne Sichern).
+- **Rueckbau T76/100:** SM30 `V_TMVFU` 1200 wieder Z2, `V_TMW00` FERT/HAWA 1200 loeschen, jeweils in `T76K912962`; per RFC gegen
+  `tmvfu_vorher.csv` (Scratchpad) zuruecklesen.
+- **Fuer P76 (Variante A):** Pflege in T76/090 durch Ingo (OVZ3 und OMIG) in eigenem Auftrag Ziel P76, erst nach Fabios Klaerung mit
+  trimaster zu `T76K912186`.
