@@ -1,5 +1,12 @@
 # Last Change
 
+## 2026-11-27 12:15: Paket Fabio 27.11. gelesen, Bauplan Punkte 12 und 14–20, Werk 1200 Testlauf abgebrochen
+
+- Mail Fabio 11:36 und Paket (Antwort Punkt 12: alle Unterdeckungen, Fertigungsauftrag als Zugang, Disponenten 001–006) gelesen;
+  Bauplan `docs/shopfloor_paket_2026-11-27/PLAN.md` (Board-Code im Worktree `C:\TMP\Ai_sf2611` gelesen, nichts gebaut).
+- TMVFU/OMIG Werk 1200: Testlauf T76/100 durch Netzabbruch ohne Aenderung abgebrochen; NGRP ohne TMVFU-Eintrag
+  (`saptasks/tmvfu_werk1200/NOTES.md` 6). Uebergabe 9, Wochen_Todo 172/179/180, LEARNINGS.
+
 ## 2026-11-27 10:30: Agenten-Monitor liest die Antwort-Zusammenfassung vor (Repo AgentMonitor, kein Dashboard-Code)
 
 - Stop der Hauptsitzung: Zeile mit Lautsprecher-Zeichen (Anweisung in `~/.claude/CLAUDE.md`, vom Setup eingetragen) ueber

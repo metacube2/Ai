@@ -134,3 +134,17 @@ MD04 das Material QE11155.
 2. Erst danach: Disponenten 002 und 004 in `Shopfloor:Zd05Dispo` aufnehmen?
 3. Bei Fabio erfragen: Schreibweise E11155/QE11155 in Marcos Liste und Uhrzeit seines ZD05-Laufs.
 4. Antwort an Fabio auf Punkt 12 erst nach Entscheid 1 (Inhalt steht oben).
+
+## 9. Nachtrag 27.11. mittags: Mail Fabio 11:36 (Punkte 14–20), Antwort Punkt 12, Werk 1200
+
+- Ingos Mail zu Punkt 12 (Analyse ZD05, zwei Entscheidfragen) ist **um 09:57 gesendet** (Abschnitt 8 erledigt).
+- Fabio 11:36 mit Paket `Downloads\Shopfloor_Paket_Ingo_2026-11-27.zip` (entpackt daneben): Punkte 14–20 und **Antwort Fabio/Marco zu
+  Punkt 12**: alle Unterdeckungen zeigen (`CHECK lv_sh_umt` weg), Planauftrag/Banf kein Zugang, **Fertigungsauftrag zaehlt als Zugang**,
+  Disponenten 001–006, QE11155 ist Marcos Zeile, C37815 = Uhrzeit (Marco 06:50, Import 06:17). Im Testsystem bauen.
+- **ZD05 rechnet nicht so:** der Report kennt nur Bestellungen als Zugang (Fertigungsauftraege fehlen), das Board weicht danach bei
+  Eigenfertigung bewusst ab. An Fabio melden.
+- Bauplan Punkte 12 und 14–20 mit Belegen, drei Wellen und sieben offenen Fragen an Fabio: `docs/shopfloor_paket_2026-11-27/PLAN.md`.
+  SAP-Aenderung fuer Punkt 12 ist dort beschrieben, **noch nicht gebaut**.
+- Werk 1200 (Wochen_Todo 179): Fabio sagt „umsetzen“ (in P76 schon 2'607 von 2'620 Materialien auf 02), FERT/HAWA OMIG in T76
+  testen, Vorlagematerial reicht. Erster Testlauf 12:00 **abgebrochen ohne Aenderung**, weil das Netz beide SAP-Verbindungen trennte
+  (`saptasks/tmvfu_werk1200/NOTES.md` Abschnitt 6). 090 pflegt Ingo selbst.

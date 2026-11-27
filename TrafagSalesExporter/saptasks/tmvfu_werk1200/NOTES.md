@@ -1,6 +1,6 @@
 # TMVFU Werk 1200: Vorschlag Verfuegbarkeitspruefung Z2 auf 02 (Anfrage Fabio, 26.11.2026)
 
-Stand: 2026-11-26 (Phase 1, nur gelesen in T76/100, Agent sap-t76, von der Hauptsitzung an den Rohdaten nachgeprueft; **nichts
+Stand: 2026-11-27 mittags (Abschnitt 6: Antwort Fabio, Testlauf abgebrochen ohne Aenderung); davor 2026-11-26 (Phase 1, nur gelesen in T76/100, Agent sap-t76, von der Hauptsitzung an den Rohdaten nachgeprueft; **nichts
 geaendert, kein Auftrag**). Entscheid Ingo 26.11.: **erst Fabio fragen**, geaendert wird erst nach seiner Antwort. Rueckfrage an Fabio
 als Text im Chat (von Ingo zu senden).
 
@@ -67,3 +67,34 @@ Die 12 Materialien mit Z2 in Werk 1200 (P76) bereinigt Fabio selbst.
 2. Danach Entscheid Ingo Variante A/B und OMIG-Test.
 
 Rohdaten (nicht im Repo): Scratchpad der Sitzung 26.11. (`tmvfu_all.csv`, `e071k_*.csv`, `t441v_02_z2.csv`, `marc_1200.csv`).
+
+## 6. Antwort Fabio 27.11. und erster Testlauf (abgebrochen)
+
+**Antwort Fabio (von Ingo in den Chat kopiert, 27.11.):**
+1. Umsetzen. In P76 stehen 2'607 von 2'620 Materialien in Werk 1200 schon auf 02 (MARC), 12 noch Z2 (bereinigt Fabio). Umstellung mit
+   AT/Harald abgestimmt (bei 02 zaehlt der Sicherheitsbestand mit). Das ATP-Projekt kennt er; vor dem Transport nach P76 klaert er mit
+   trimaster, was die Aenderungen an Gruppe 02 (`T76K912186`) fuer 1200 bedeuten. Frage: 10 der 12 Z2-Materialien sind NGRP, gibt es
+   fuer NGRP einen eigenen Vorschlagswert?
+2. OMIG nur fuer FERT und HAWA in T76 testen (HALB nicht). Frage: Wird das Feld im Materialstamm vorbelegt, oder gilt der Wert nur,
+   wenn das Feld leer bleibt?
+3. Vorlagematerial reicht, keine Eigenentwicklung.
+
+**Testlauf 27.11. ~11:55–12:02 (Agent sap-t76, T76/100): abgebrochen, nichts geaendert.** Ein Netzabbruch (WSAECONNRESET) trennte die
+GUI-Verbindungen T76 und P76; RFC lief weiter. Nachweis per RFC 12:02: TMVFU 18 Zeilen zeichengleich, kein E070-Auftrag von KOI am
+27.11., MARC F89025 nur in 1100.
+
+Vorarbeit, belegt (Rohdaten im Scratchpad der Sitzung, `tmvfu1200\`):
+- TMVFU vorher wie Abschnitt 2; TMW00 in T76/100 leer.
+- **NGRP:** keine TMVFU-Zeile in T76/100, in keinem Werk; damit kein Vorschlagswert (T134: NGRP, Referenzmaterialart FERT). P76 nicht
+  gelesen. Antwort an Fabio: eine Zeile NGRP/1200 = 02 koennte in denselben Auftrag.
+- Offene Aufgabe `T76K912187` (zu `T76K912186`) hat **fuenf** TMVFU-Schluessel `090FERT1100` bis `090VERP1100` (Mandant 090, kein
+  Konflikt mit 100). Abschnitt 2 „FERT/HALB = Y2“ betrifft die Werte; gesperrt sind alle fuenf 1100-Schluessel in 090.
+- T000: Mandant 100 CCCATEGORY T, Auftragspflicht (CCCORACTIV 1); 090 C/1. Dispogruppe `1200/0002` existiert (T438M). Disponent in
+  1200 nur `001` (T024D).
+- Testmaterialien (in 1100, nicht in 1200): HAWA `F89025` (1100 MTVFP 02), FERT `000000000000053531` (1100 MTVFP KP, damit eine 02
+  eindeutig aus TMVFU kommt).
+- MM01 ohne Vorlage, VOR der Aenderung: Dispo 1 Dispositionsgruppe leer (TMW00 leer, erwartet). Dispo 3 nicht mehr erreicht.
+
+**Naechster Lauf** (nach Neuanmeldung Ingo): Customizing-Schritt TMVFU 1200 -> 02 und TMW00 FERT/HAWA 1200 = 0002 in einem Auftrag
+„NICHT FREIGEBEN“ (Zielsystem P76 im Dialog vorbelegt, Feld leeren braucht ein kleines T76-Skript), dann MM01-Probe beider Materialien
+(Bild vor Eingabe, danach MARC), NGRP in P76 nur per Anzeige.
