@@ -21,6 +21,7 @@ braucht diesen Schritt nicht, siehe `CLAUDE.md` Abschnitt 3a.
 | Bedarf | Datei |
 | --- | --- |
 | **Abschlussrunde Dashboard/Data Lake 2026-11-03**: Rueckmeldungen je Bereich, Datenverantwortliche, Power-BI-/Smartsheet-Inventar, Auftraege (Taskliste in Trafag Projekte) | `docs/SITZUNG_ABSCHLUSSRUNDE_DASHBOARD_2026-11-03.md` |
+| **Uebergabe 27.11.2026 (Neustart Chat): Reihenfolge der offenen Arbeiten Shopfloor/SAP/Z-Objekte/Agenten-Monitor, Fallen** | `docs/UEBERGABE_2026-11-27.md` |
 | **Persoenliche Aufgabenliste, „woran arbeite ich gerade", Auftraggeber und Termine** | `projektmanagement/PROJEKTSTATUS.md` (IDs `PM-01` ff.) |
 | **Alle Aufgaben mit Status, naechstem Schritt und Erledigt-Datum** (Pflichtnachfuehrung nach `CLAUDE.md` 3 Punkt 3, eine Zeile je Aufgabe) | `projektmanagement/Wochen_Todo.tsv` (Quelle, offene und in den letzten 14 Tagen erledigte), Ausgabe `projektmanagement/Wochen_Todo.xlsx`, erzeugt mit `projektmanagement/wochen_todo_xlsx.py`; aeltere erledigte seit 2026-11-26 in `projektmanagement/Wochen_Todo_Archiv.tsv` |
 | **Status kurz fuer den Chef** (eine A4-Seite, je Bereich Bereit / Laeuft / Wartet / Offen, Zahlen aus der Detailliste; seit 2026-10-01). **Pflege:** aendert sich der Stand eines Punkts, der dort steht, im selben Zug die Zeile in `Status_kurz.tsv` nachfuehren; neue Themen nur aufnehmen, wenn sie fuer den Chef zaehlen, Kleinigkeiten bleiben in Wochen_Todo | `projektmanagement/Status_kurz.tsv` (Quelle), Ausgabe `projektmanagement/Status_kurz.xlsx`, erzeugt mit `projektmanagement/wochen_todo_xlsx.py` |
