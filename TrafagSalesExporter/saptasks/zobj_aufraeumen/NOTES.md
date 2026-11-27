@@ -1,6 +1,6 @@
 # Z-Objekte aufraeumen: Analysereport `Z_KOI_ZOBJ_NUTZUNG`
 
-Stand: 2026-11-26 14:10 (Abschnitt 9: erster Lauf in P76, 3'379 Objekte, genutzt 175 / indirekt 1'012 / tot 304 / unklar 1'888, Liste in
+Stand: 2026-11-27 10:10 (Abschnitt 8: erste SUSG-Verdichtung 27.11. 02:30 ohne Fehler, SCMON 1,56 Mio. Records, 2 von 7 Scheiben); davor 2026-11-26 14:10 (Abschnitt 9: erster Lauf in P76, 3'379 Objekte, genutzt 175 / indirekt 1'012 / tot 304 / unklar 1'888, Liste in
 Downloads); davor 2026-11-26 (Abschnitt 8: P76 gelesen, ST03N nur 08–11/2026, SCMON seit 08.08.2024 aus, SUSG leer; Entscheid Ingo: Basis
 SCMON/Aufbewahrung, Report einmal in P76, Loeschen fruehestens 2027). Davor 2026-11-25 14:40: `T76K912944` von Ingo freigegeben (13:47) und in P76 importiert (25.11. 13:49:12, beendet 13:49:14, RC 0; aktive Version von `Z_KOI_ZOBJ_NUTZUNG` in P76 traegt den Auftrag, SE01-Protokoll, Agent nur lesend). Davor 07:10 (Agent, Auftrag Ingo 24.11. „ja bau es in t100“): Report in T76 gebaut, aktiv und getestet; ~~Transport `T76K912944` offen, nicht freigegeben~~.
 
@@ -262,6 +262,18 @@ ST22: keine Kurzdumps am 25.11. nach den Laeufen.
   aktiv, noch 0 aggregierte Tage. Damit ueberholt: „SUSG-Verdichtung nicht eingerichtet“ und die Frage „ob SUSG noetig ist“. Bleibt:
   nach dem 27.11. nur lesend pruefen, ob die erste Aggregation ohne Fehler lief (SUSG „Aggregationsprotokoll“) und wie die SCMON-Records
   sich entwickeln.
+  *Nachkontrolle 2026-11-27 10:05–10:07 (Wochen_Todo 175, Agent sap-t76, P76 nur gelesen in eigener Sitzung `ses[2]`, geschlossen; von der
+  Hauptsitzung an den Rohausgaben nachgeprueft):* **Erste SUSG-Verdichtung lief ohne Fehler.** SUSG-Startbild: „Aktiv (Aggregation
+  eingeplant um: 28.11.2026 02:30:00)“, Zeitraum 26.11.–26.11., „Verfuegbare Tage: 1. Fehlende Tage: 0“, „Datensaetze: 655,615.
+  Objektdatensaetze 156,021. Anfragedatensaetze: 1,737“, „Fehler: 0. Warnungen: 0. Deaktivierungshinweise: 0“. Protokoll: 27.11.
+  02:30:41 „SCMON-Daten verfuegbar fuer 20261126“, 02:30:56 „Hinzugefuegte Saetze: 655615“. SM37: `SUSG_COLLECT_FROM_SCMON` fertig
+  (27.11. 02:30:41, 15 s), `ABAP CALL MONITOR: COLLECT` stuendlich fertig, kein abgebrochener Job in der Liste. **SCMON:** Active,
+  Status OK, **Records 1,561,382**, „2 of 7 Slices Used“, Hourly, Deaktivierung 30.11.2027, Limit 20,000,000; Log stuendlich ohne Luecke
+  und ohne Fehler. Tag 26.11. (ab 15:06) endete bei 655'615 Records = SUSG-Saetze; 27.11. bis 09:45 +905'767 (Spitze 06:45 +245'423).
+  Genaue Zeiten 26.11. aus den Protokollen: SCMON „Data deleted“ 14:55:58, „Activation successful“ 15:06:23, SUSG „Aggregation wurde
+  aktiviert“ 15:27:43 (oben „~15:00“/„~15:15“). *Vermutung:* ein voller Werktag 1 bis 1,5 Mio. Records, 7 Scheiben grob 6 bis 9 Mio.,
+  unter dem Limit; ob SCMON die aelteste Scheibe verwirft, prueft Wochen_Todo 176 am 03.12. Kein Handlungsbedarf fuer Ingo.
+  *Damit ueberholt oben: „noch 0 aggregierte Tage“.*
   **Termine (Wochen_Todo, damit nichts vergessen geht):** 175 erste SUSG-Verdichtung pruefen (faellig 27.11.2026), 176 SCMON-Wachstum
   nach einer Woche (03.12.2026), 177 ST03N-Aufbewahrung verlaengern (15.12.2026, Ingo), 178 Report nach dem Jahreswechsel erneut
   (15.01.2027).

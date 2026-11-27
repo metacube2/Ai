@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-27 10:10: SUSG/SCMON in P76 nachkontrolliert (Wochen_Todo 175 erledigt)
+
+- P76 nur gelesen (Agent sap-t76, eigene Sitzung, geschlossen): erste SUSG-Verdichtung 27.11. 02:30 ohne Fehler (Tag 26.11.,
+  655'615 Saetze), SCMON aktiv, 1'561'382 Records, 2 von 7 Tagesscheiben, stuendlich ohne Luecke. Naechste Kontrolle 176 am 03.12.
+- Doku: `saptasks/zobj_aufraeumen/NOTES.md` 8, Wochen_Todo 175 + xlsx, LEARNINGS (SM37 nur sichtbare Zeilen).
+
 ## 2026-11-27 ~10:00: ZD05-Ergebnis (Fabio Punkt 12) in die Uebergabe nachgetragen
 
 - Agent sap-t76 (P76/T76 nur gelesen): Die Positionen fehlen im Board nicht wegen des Imports, sondern weil `ShopZd05Set` nur Materialien mit
