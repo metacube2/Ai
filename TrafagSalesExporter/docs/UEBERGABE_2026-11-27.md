@@ -1,12 +1,13 @@
 # Uebergabe 2026-11-27: Shopfloor (Fabio), SAP, Z-Objekte, Agenten-Monitor
 
-Stand: 2026-11-27 vormittags. Geschrieben von der Sitzung `trafagsalesexporter-aa` (Auftrag Ingo: „schreibe am Schluss md, ich starte
+Stand: 2026-11-27 vormittags, Abschnitt 8 (ZD05-Ergebnis) nachgetragen um ~10:00. Geschrieben von der Sitzung `trafagsalesexporter-aa` (Auftrag Ingo: „schreibe am Schluss md, ich starte
 Chat neu, bereite alles vor, Instruktion fuer weitere Arbeiten“). **Eine neue Sitzung liest zuerst diese Datei**, dann wie immer
 `CLAUDE.md`, `router.md`, `docs/AGENT_COORDINATION.md` (vor jeder Aenderung) und `docs/rag/LEARNINGS.md` (vor SAP/Deploy).
 Status je Aufgabe gilt weiter aus `projektmanagement/Wochen_Todo.tsv`; diese Datei ordnet nur die Reihenfolge und nennt die Fallen.
 
 ## 0. Zuerst wissen
 
+- *Nachtrag 27.11. ~10:00: Git Bash laeuft in der neuen Sitzung wieder; der folgende Punkt ist damit ueberholt.*
 - **Git Bash startet seit 27.11. ~09:00 nicht** (`fatal error - add_item ("\??\C:\Program Files\Git", "/", ...) failed, errno 1`).
   Kein haengender Prozess, Git unveraendert (2.51.0, Aug. 2025); Ursache nicht gefunden. **Abhilfe: Windows ab-/anmelden oder
   neu starten.** Bis dahin PowerShell nehmen (`git.exe` geht dort). **Deploy braucht Bash** (Befehl nach `CLAUDE.md` 5), also erst
@@ -19,10 +20,13 @@ Status je Aufgabe gilt weiter aus `projektmanagement/Wochen_Todo.tsv`; diese Dat
 - P76 nur in **eigener** GUI-Sitzung (`.tmp_sap_probe/SapGuiP76Hilfe.vbs neu`, schliessen mit `ok <n> /i`), nie Ingos Sitzungen,
   keine Passwortskripte (`SapCredential.ps1`/`Test-SapPassword` lehnt der Auto-Modus ab), T76 nur `RunSapProbe.ps1` mit DPAPI.
 
-## 1. Shopfloor Welle 2 / Punkt 9 einschalten (wartet auf Ingo: Gateway-Caches P76)
+## 1. Shopfloor Welle 2 / Punkt 9 einschalten (Caches P76 offenbar geleert, naechster Schritt 2)
 
 Doku: `docs/SHOPFLOOR_2026-10-07.md` 28.10, Plan/Schnittstelle `saptasks/shopfloor_sap/PLAN_WELLE2_2026-11-25.md` 11.8/11.9.
 SAP-Auftrag `T76K912954` ist **in P76 importiert** (Ingo 26.11.), aber das Board bekam bis 26.11. abends **404** (Caches).
+
+*Nachtrag 27.11. 09:30 (Abschnitt 8): `ShopMatBezugSet` antwortet in P76 mit 200 statt 404; Schritt 1 ist damit offenbar erledigt,
+der Wert 1'525 aber noch nicht gelesen. Weiter mit Schritt 2.*
 
 1. Ingo: in P76 `/IWBEP/CACHE_CLEANUP`, dann `/IWFND/CACHE_CLEANUP` (`ZPOWERBI_EINKAUF_MDL`); bei 404 die **ganze Runde wiederholen**.
 2. Pruefen (nur lesen): `GET https://trch-webapp-bidashboard.trafagch.local/BiDashboard/shopfloor/api/sap/nenner?tag=2026-11-16`
@@ -37,8 +41,8 @@ SAP-Auftrag `T76K912954` ist **in P76 importiert** (Ingo 26.11.), aber das Board
 
 ## 2. Shopfloor Punkt 12: 9 ZD05-Positionen fehlen im Board (Mail Fabio 27.11. 08:22, Marco Widmer cc)
 
-Analyse laeuft bzw. lief (Agent sap-t76, P76/T76 nur lesen, Freigabe Ingo „sap p und t offen“). **Ergebnis siehe Nachtrag unten**
-(Abschnitt 8), falls schon eingetragen. Belegt aus dem Code:
+Analyse erledigt 27.11. 09:30 (Agent sap-t76, P76/T76 nur lesen, Freigabe Ingo „sap p und t offen“). **Ergebnis und naechste
+Schritte in Abschnitt 8**; die offenen Punkte unten sind dort beantwortet (Ursache: Set verlangt einen Bestell-Zugang, ZD05 nicht). Belegt aus dem Code:
 - Das Board holt die ZD05 nur fuer **Disponent 001 und 003** (`appsettings.json` `Shopfloor:Zd05Dispo`): E11229 (002) und H90313 (004)
   fehlen deshalb.
 - „erledigt“ im Board = im vorigen Import da, im neuen nicht (`ShopfloorZd05.ImportRows`): E11155 kam am 27.11. 06:17 nicht mit.
@@ -85,4 +89,40 @@ Rueckblick 3 Tage, Mac (lagoon) nachziehen, Subtree in `werkzeuge/agentmonitor-v
 
 ## 8. Nachtrag Ergebnis Punkt 12 (ZD05)
 
-*(wird eingetragen, sobald der Agent zurueck ist; fehlt dieser Abschnitt, ist die Analyse in der neuen Sitzung neu zu starten)*
+Eingetragen 27.11. nach der Rueckkehr des Agenten (sap-t76, 09:00 bis 09:30, P76/T76 nur gelesen, eigene P76-Sitzung mit `/i`
+geschlossen). Ganzer Bericht: `saptasks/shopfloor_sap/ZD05_ANALYSE_2026-11-27.md`; Report-Quelltext (T76) neu im Repo:
+`saptasks/shopfloor_sap/ZMM_CHECK_UMTERMINIERUNG_T76_2026-11-27.abap`.
+
+**Ursache (am Quelltext belegt, von der Hauptsitzung nachgeprueft):** Das Set filtert strenger als der Report.
+- Report ZD05 (`ZMM_CHECK_UMTERMINIERUNG`, Zeile 214): `check not wa_matnr is initial.` prueft die ganze Struktur; weil `zzudek`
+  schon gefuellt ist, greift die Pruefung nie. ZD05 zeigt also **jedes Material mit Unterdeckung**.
+- `ShopZd05Set` (`DPC_EXT_GET_ENTITYSET_2026-11-26_welle2_neu.abap` Zeile 555): `CHECK lv_sh_umt = abap_true` laesst nur Materialien
+  durch, bei denen nach der Unterdeckung noch eine **offene Bestelleinteilung (EKET)** kommt. Fertigungsauftrag, Planauftrag und Banf
+  zaehlen nicht als Zugang. Set-Zweig in T76 seit `T76K912718` (09.10.) unveraendert.
+- Zaehlung P76 09:16: Disponent 001 Report 10 / Set 8, 003 16 / 12, 002 1 / 0, 004 1 / 0. Die Differenz geht genau auf.
+
+**Je Material (MD04 P76, 09:23 bis 09:25):**
+- D64231, D65038 (001): nur Banf als Zugang. B66364 (003): nur Fertigungsauftrag. QE11155 (003): nur Planauftrag. Alle belegt.
+- B66360, C24254 (003): nur Fertigungsauftraege, hergeleitet aus der Zaehlung.
+- E11229 (002) und H90313 (004): Disponent nicht in `Zd05Dispo`, **und** das Set liefert fuer 002/004 ohnehin nichts.
+- E11155 und C37815 stehen 09:16 auch im Report nicht mehr (Unterdeckung weg bzw. nie unter Reichweite). Marcos Liste stammt
+  vermutlich von einer anderen Uhrzeit (Set 06:17 22 Zeilen, 09:16 20; H90313 bei Fabio UD 17.12., jetzt 21.12.), nicht belegt.
+- **E11155 und QE11155 sind zwei Materialien.** Fabios „07.12.“ passt zu QE11155.
+
+**Ausgeschlossen:** Board (`ImportRows` verwirft nur leere/doppelte), `UP TO 4000 ROWS` (wirkt heute nicht, bleibt Risiko, T76 hat
+fuer 003 3'586 Materialien). Nicht geprueft: Filter im Standardlayout von ZD05 (`LTDXD`).
+
+**Nebenbefund zu Abschnitt 1:** `ShopMatBezugSet` (1100, 16. bis 21.11.) antwortet in P76 um 09:2x mit **200** statt 404. Die
+Gateway-Caches sind also offenbar geleert; ob `Anzahl` = 1'525 ist, konnte der Agent nicht lesen (fuer P76 gibt es kein freigegebenes
+Werkzeug, das den Antwortrumpf liest). Schritt 2 in Abschnitt 1 (Nenner-Abruf) ist damit der naechste.
+
+**Nebenwirkung in P76:** SET/GET-Parameter in Ingos Benutzer: das naechste ZD05 schlaegt wahrscheinlich Disponent 004 vor, das naechste
+MD04 das Material QE11155.
+
+**Naechste Schritte (Entscheid Ingo mit Marco/Fabio, nichts davon ist begonnen):**
+1. Soll das Set den Report abbilden (jedes Material mit Unterdeckung, auch Eigenfertigung/Planauftrag/Banf) oder ist die tote
+   Pruefung im Report der eigentliche Fehler (ZD05 heisst „Bestellungen auf Umterminierung pruefen“)? Danach entweder
+   `CHECK lv_sh_umt` im Set entfernen (T76, eigener Auftrag, Plan zuerst) oder den Report korrigieren.
+2. Erst danach: Disponenten 002 und 004 in `Shopfloor:Zd05Dispo` aufnehmen?
+3. Bei Fabio erfragen: Schreibweise E11155/QE11155 in Marcos Liste und Uhrzeit seines ZD05-Laufs.
+4. Antwort an Fabio auf Punkt 12 erst nach Entscheid 1 (Inhalt steht oben).

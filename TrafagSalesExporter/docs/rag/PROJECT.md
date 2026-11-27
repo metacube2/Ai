@@ -10,9 +10,9 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
 ## Kurzstand
 
 - **2026-11-27 (Uebergabe, Neustart Chat): zuerst `docs/UEBERGABE_2026-11-27.md` lesen.** Produktiv `a2f7c97` (Zweig
-  `shopfloor-paket-2611`, jeder Deploy muss ihn enthalten); Shopfloor Welle 2 wartet auf Gateway-Caches P76, dann Schalter ein und
-  Abnahme; Fabio Punkte 12 (ZD05 fehlende Positionen) und 13 (Radar je Stichtag); TMVFU 1200 wartet auf Fabio; SCMON/SUSG P76 aktiv,
-  Nachkontrolle Wochen_Todo 175 (27.11.); Git Bash defekt bis Neustart (Deploy braucht Bash).
+  `shopfloor-paket-2611`, jeder Deploy muss ihn enthalten); Shopfloor Welle 2: Caches P76 offenbar geleert (27.11. 200 statt 404), naechster Schritt Nenner-Abruf,
+  dann Schalter ein und Abnahme; Fabio Punkt 12 (ZD05) analysiert, wartet auf Entscheid Set gegen Report (Uebergabe 8); Punkt 13 (Radar je Stichtag); TMVFU 1200 wartet auf Fabio; SCMON/SUSG P76 aktiv,
+  Nachkontrolle Wochen_Todo 175 (27.11.); Git Bash lief 27.11. ~10:00 wieder.
 
 - **2026-11-26 (Wochen_Todo):** aufgeraeumt: 117 Zeilen in der Liste, 57 erledigte im Archiv `projektmanagement/Wochen_Todo_Archiv.tsv`,
   sechs Statuswerte, „Heute“ nur 120, 133, 163, 173. HR laut Ingo: alles ausser Lohn ueber Rexx, Lohn in ca. 3 Wochen im Hub.

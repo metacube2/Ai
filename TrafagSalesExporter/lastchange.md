@@ -1,5 +1,14 @@
 # Last Change
 
+## 2026-11-27 ~10:00: ZD05-Ergebnis (Fabio Punkt 12) in die Uebergabe nachgetragen
+
+- Agent sap-t76 (P76/T76 nur gelesen): Die Positionen fehlen im Board nicht wegen des Imports, sondern weil `ShopZd05Set` nur Materialien mit
+  offener Bestelleinteilung nach der Unterdeckung liefert; ZD05 zeigt wegen einer toten Pruefung (`check not wa_matnr is initial`)
+  jedes Material mit Unterdeckung. Zaehlung P76 geht genau auf. Entscheid Set oder Report offen (Ingo mit Marco/Fabio).
+- Neu `saptasks/shopfloor_sap/ZD05_ANALYSE_2026-11-27.md` und `ZMM_CHECK_UMTERMINIERUNG_T76_2026-11-27.abap`; Uebergabe 0, 1, 2, 8;
+  SHOPFLOOR 8 (Aussage „Logik von ZD05“ als ueberholt markiert), rag PROJECT, LEARNINGS (3), Wochen_Todo 172.
+- Nebenbefund: `ShopMatBezugSet` antwortet in P76 mit 200 statt 404, Caches offenbar geleert; Wert 1'525 noch nicht gelesen.
+
 ## 2026-11-26 17:00: TMVFU Werk 1200 (Anfrage Fabio) analysiert; Agenten-Monitor mit Mail-Waechter
 
 - **TMVFU:** nur in T76/100 gelesen. Z2 in Werk 1200 bewusst eingefuehrt (`T76K910618`, 21.03.2025, „Lagerartikel - AT“), Werk 1100
