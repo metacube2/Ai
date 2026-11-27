@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-27 16:15: Doku ZD05 Punkt 12 nachgefuehrt (Handbuch, rag ARCHITECTURE, Router SAP, Analyse, baum)
+
+- Handbuch Kapitel 10 ZD05: Disponenten 001–006, jede Unterdeckung, FA als Zugang, Abweichung zum Report, Bruch ab 27.11.
+  (im Worktree `shopfloor-paket-2611` mitgezogen, sichtbar erst mit dem naechsten Deploy). rag ARCHITECTURE Nachtrag,
+  `docs/router/sap.md`, Umsetzungsvermerk in `ZD05_ANALYSE_2026-11-27.md`, baum.
+
 ## 2026-11-27 16:00: Shopfloor ZD05 Disponenten 001–006 deployed (`76615393`)
 
 - Board liest ZD05 fuer Disponenten 001–006; ein Fehler je Disponent stoppt den Abgleich nicht mehr (ZD05 bleibt dann auf dem
