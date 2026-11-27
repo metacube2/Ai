@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-27 16:00: Shopfloor ZD05 Disponenten 001–006 deployed (`76615393`)
+
+- Board liest ZD05 fuer Disponenten 001–006; ein Fehler je Disponent stoppt den Abgleich nicht mehr (ZD05 bleibt dann auf dem
+  letzten Stand). Tests 1'928/1'928, Deploy 15:47 bitgleich, Startlauf 15:48 25 Positionen. `docs/SHOPFLOOR_2026-10-07.md` 29,
+  rag DEPLOYMENT, NOTES 12, PLAN, Uebergabe 9, Wochen_Todo 172.
+
 ## 2026-11-27 15:30: ShopZd05Set (T76K912964) in P76 importiert
 
 - Ingo hat `T76K912964` freigegeben (14:38) und nach P76 importiert (14:47, RC 0); in P76 per SE16 E070/TPALOG nur gelesen

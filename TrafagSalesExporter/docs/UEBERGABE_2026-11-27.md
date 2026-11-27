@@ -157,3 +157,4 @@ MD04 das Material QE11155.
 - **15:30:** `T76K912964` (ShopZd05Set) von Ingo freigegeben und **in P76 importiert** (14:47, RC 0, per SE16 E070/TPALOG in P76
   nachgeprueft). Board liest weiter 001/003; naechster Schritt Board `Zd05Dispo` 001–006 und Schleife absichern (Plan Punkt 12),
   wartet auf Ingo. Mailentwuerfe an Fabio (Punkt 12, Werk 1200) stehen nur im Chat, nicht gesendet.
+- **16:00:** Board umgestellt und deployed (`76615393`): ZD05 Disponenten 001–006, Fehler je Disponent stoppt den Abgleich nicht mehr. Startlauf 15:48: 25 Positionen; von Marcos neun fehlenden jetzt H90313, B66364, D64231, D65038, QE11155 da; E11229, B66360, C24254, C37815 nicht. Neu erledigt C17525, C33181, C35538, E17029 (Ursache offen, Marco vergleichen lassen). Mail an Fabio/Marco zu Punkt 12 steht im Chat.
