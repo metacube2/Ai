@@ -1,5 +1,11 @@
 # Last Change
 
+## 2026-11-27 13:30: ShopZd05Set in T76 umgebaut (Punkt 12), neue Anfrage Infosatz-Job 70953/1200
+
+- `ShopZd05Set` ohne Bestell-Pruefung, offener Fertigungsauftrag als Zugang (Entscheid Fabio/Marco), `T76K912964` nicht freigegeben;
+  T76 001 4 -> 39, 003 8 -> 64, gegen Nachrechnung gleich. Quelltext `saptasks/shopfloor_sap/DPC_EXT_GET_ENTITYSET_2026-11-27_zd05_neu.abap`,
+  NOTES 12. Neue Anfrage Fabio 11:58 (Infosatz-Job) in Wochen_Todo 181, Uebergabe 9.
+
 ## 2026-11-27 12:45: TMVFU/OMIG Werk 1200 in T76/100 umgestellt und getestet (Anfrage Fabio)
 
 - `T76K912962` (lokal, nicht freigeben): TMVFU 1200 FERT/HALB/HAWA/LEER/VERP Z2 -> 02, TMW00 FERT/HAWA 1200 = 0002. MM01 belegt

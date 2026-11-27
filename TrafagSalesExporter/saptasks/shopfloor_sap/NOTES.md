@@ -1,6 +1,6 @@
 # Shopfloor: Mengen aus SAP (ShopRmSet, ShopProdSet)
 
-Stand: 2026-11-26 12:00: Welle 2 (Nenner `ShopMatBezugSet`, VF/WE und Punkt 9 `ShopKdTerminSet`) in T76 gebaut und geprueft, Auftrag `T76K912954` **nicht freigegeben**, nicht in P76 (Abschnitt 11, Plan `PLAN_WELLE2_2026-11-25.md` Abschnitt 11). Davor 2026-11-16 abends: `T76K912906` ist von Ingo freigegeben und nach P76 importiert (Meldung 16.11. ~16:10, Caches P76 nicht geleert); Abnahme in P76 `P76_ABNAHME_2026-11-16.md`; im Cockpit sind Status- und Materialfilter seit 16.11. 17:06 eingeschaltet (`docs/SHOPFLOOR_2026-10-07.md` 23). Ueberholt damit unten „**nicht freigegeben**, nicht in P76“ und Abschnitt 10.7 Punkt 1. Davor Stand 2026-11-13 15:05: juengster Inhalt ist Abschnitt 10, Layoutfilter ZC22/ZC27 (`Matex` an `ShopRmSet`; `Sttxt`, `Arbpl`, `Vornr`, `Avo` an `ShopAufSet`) in T76 aktiv und gegen ZC22/ZC27 geprueft, Auftrag `T76K912906` **nicht freigegeben**, nicht in P76. Davor 2026-11-12 (Doku-Pruefung: Kopf um Abschnitt 9 ergaenzt, Importstand `T76K912860` nachgetragen): Abschnitt 9 vom 2026-11-09, Auftragsvorrat Typ VR (`T76K912860`; laut Wochen_Todo 110 in P76 und seit 09.11. 15:11 live). Davor 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
+Stand: 2026-11-27 13:30: `ShopZd05Set` ohne Bestell-Pruefung, Fertigungsauftrag als Zugang, in T76 aktiv, `T76K912964` **nicht freigegeben** (Abschnitt 12). Davor 2026-11-26 12:00: Welle 2 (Nenner `ShopMatBezugSet`, VF/WE und Punkt 9 `ShopKdTerminSet`) in T76 gebaut und geprueft, Auftrag `T76K912954` **nicht freigegeben**, nicht in P76 (Abschnitt 11, Plan `PLAN_WELLE2_2026-11-25.md` Abschnitt 11). Davor 2026-11-16 abends: `T76K912906` ist von Ingo freigegeben und nach P76 importiert (Meldung 16.11. ~16:10, Caches P76 nicht geleert); Abnahme in P76 `P76_ABNAHME_2026-11-16.md`; im Cockpit sind Status- und Materialfilter seit 16.11. 17:06 eingeschaltet (`docs/SHOPFLOOR_2026-10-07.md` 23). Ueberholt damit unten „**nicht freigegeben**, nicht in P76“ und Abschnitt 10.7 Punkt 1. Davor Stand 2026-11-13 15:05: juengster Inhalt ist Abschnitt 10, Layoutfilter ZC22/ZC27 (`Matex` an `ShopRmSet`; `Sttxt`, `Arbpl`, `Vornr`, `Avo` an `ShopAufSet`) in T76 aktiv und gegen ZC22/ZC27 geprueft, Auftrag `T76K912906` **nicht freigegeben**, nicht in P76. Davor 2026-11-12 (Doku-Pruefung: Kopf um Abschnitt 9 ergaenzt, Importstand `T76K912860` nachgetragen): Abschnitt 9 vom 2026-11-09, Auftragsvorrat Typ VR (`T76K912860`; laut Wochen_Todo 110 in P76 und seit 09.11. 15:11 live). Davor 2026-11-02, KEA0 fuer J2/J3 gelesen (Abschnitt 6, Nachtrag). Davor 2026-10-19 10:05, **produktiv, Produktionstag statt Abfragetag, DW prod** (Abschnitt 8). Vorher: 2026-10-16 09:51, **produktiv**: in P76 importiert, gegen Fabios Kontrollwerte gleich, Schreiben eingeschaltet (`9d6b5d2`), Erstlauf fuer den 16.10. geschrieben.
 *Ueberholt:* „Cockpit-Abruf mit ausgeschaltetem Schreiben“ (bis 09:50).
 Auftrag: Mail Fabio 16.10. (Datenabfragen J5 Logistik, J8 Tagesmengen SEH/TR5, J11 FPY SEH), von Ingo weitergeleitet.
 
@@ -371,3 +371,27 @@ Gemessene Ausgabeform (Beispiel 409313/10 KD): `Vbeln` „409313“, `Posnr` „
    1'525; `ShopKdTerminSet` 419371/10 gegen MD04 desselben Moments (Plan 6.3 g).
 2. Board-Seite gegen die Schnittstelle in Plan 11.8 bauen (eigener Commit).
 3. Entscheide, die der Agent getroffen hat und die Ingo/Fabio bestaetigen sollten: siehe Plan 11.1 (Punkte 2, 4, 5, 7, 9) und den Bericht.
+
+## 12. ShopZd05Set: alle Unterdeckungen, Fertigungsauftrag als Zugang (2026-11-27, T76)
+
+Entscheid Fabio/Marco 27.11. (Punkt 12, Paket `Downloads\Shopfloor_Paket_Ingo_2026-11-27.zip`); Plan `docs/shopfloor_paket_2026-11-27/PLAN.md`.
+Gebaut vom Agenten sap-t76, von der Hauptsitzung per RFC (E070/E071) und Quelltext-Vergleich nachgeprueft.
+
+- **Auftrag `T76K912964`** (Workbench K, Ziel P76, Status D; Aufgabe `T76K912965`), einziges Objekt `LIMU METH ZCL_ZPOWERBI_EINKAUF_DPC_EXT
+  /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET`. **Nicht freigegeben.** Vorher keine Sperre in offenen Auftraegen (`T76K912954` ist R).
+- Quelltext: vorher = `DPC_EXT_GET_ENTITYSET_2026-11-26_welle2_neu.abap` (zeilengleich), nachher =
+  `DPC_EXT_GET_ENTITYSET_2026-11-27_zd05_neu.abap` (41 Diff-Zeilen): Schleife `lv_sh_umt` und `CHECK lv_sh_umt` entfernt; neu offene
+  Fertigungsauftraege als Zugang (AFPO+AUFK, `pwerk`, `elikz`/`xloek`/`loekz` leer, ohne aktiven Status I0045 TECO und I0076 LOEVM ueber
+  JEST, Termin `dgltp`, Menge `psmng - wemng`). Syntax ok, aktiviert. Caches nicht noetig (nur DPC).
+- **Test T76 Gateway** (Werks 1100): 001 4 -> **39**, 002 0 -> 1, 003 8 -> **64** Zeilen; fuer 001/003 Material und Unterdeckungsdatum
+  identisch mit einer unabhaengigen Nachrechnung per RFC. Laufzeit +2 bis 4 s je Disponent.
+- Belege T76: B62036 (gar kein Zugang) und E11282 (Bestellung nur vor der Unterdeckung) neu im Set; D64014 bleibt draussen, weil FA
+  1240544 (50 ST, 20.04.) vor dem Bedarf kommt (FA-Regel). Ebenso durch die FA-Regel draussen: D24059, D64354, C18438, C24254;
+  B66360 Unterdeckung 24.09. -> 29.10.
+- **Abweichung zur ZD05** (bewusst, an Fabio melden): ZD05 kennt nur Bestellungen als Zugang.
+- Fachlich offen (Vermutungen/Entscheide): `DNREL` (nicht dispositiv) und I0046 werden nicht gefiltert; Termin ohne WEBAZ (MD04 zeigt
+  Endtermin + WEBAZ); Mengen in `AMEIN`, in T76 ueberall = `MEINS`, P76 nicht geprueft.
+- **Rueckbau:** Methode mit dem Vorher-Stand in `T76K912964` zurueckschreiben (SE24, `SapGuiKlassenMethodeQuelltext.vbs`), aktivieren,
+  `abap-read` mit Diff 0; oder Auftrag nie freigeben und so zuruecksetzen.
+- **Naechste Schritte:** Freigabe und Import Ingo; danach Board `Zd05Dispo` 001–006 und Schleife absichern (Plan Punkt 12); Bruch in der
+  Code-2-Reihe (Punkt 19) beachten.

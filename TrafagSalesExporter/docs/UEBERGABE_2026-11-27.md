@@ -148,3 +148,9 @@ MD04 das Material QE11155.
 - Werk 1200 (Wochen_Todo 179): Fabio sagt „umsetzen“ (in P76 schon 2'607 von 2'620 Materialien auf 02), FERT/HAWA OMIG in T76
   testen, Vorlagematerial reicht. Erster Testlauf 12:00 **abgebrochen ohne Aenderung**, weil das Netz beide SAP-Verbindungen trennte
   (`saptasks/tmvfu_werk1200/NOTES.md` Abschnitt 6). 090 pflegt Ingo selbst.
+- **13:30:** Werk 1200 in T76/100 umgestellt und getestet (`T76K912962` lokal, nie freigeben; MM01 belegt Werte im Bild vor;
+  `saptasks/tmvfu_werk1200/NOTES.md` 7). `ShopZd05Set` in T76 umgebaut (`T76K912964`, Ziel P76, **nicht freigegeben**; T76 001 4 -> 39,
+  003 8 -> 64; `saptasks/shopfloor_sap/NOTES.md` 12). Antworten an Fabio (Werk 1200, Punkt 12) stehen im Chat, nicht gesendet.
+- **Neue Anfrage Fabio 11:58:** Infosatz-Anlage 70953/Werk 1200 als SAP-Job statt Laptop-Skript (Spezifikation als Claude-Doku
+  `https://claude.ai/artifact/8f2cWXgKcDovELfuN5UBGz`, PDF im Anhang); BAPI `ME_INFORECORD_MAINTAIN` mit Konditionen/Staffel in T76
+  vorhanden; Schaetzung 3–4 Arbeitstage; Entscheid Ingo zu Plan und Reihenfolge offen (Wochen_Todo 181).
