@@ -1,5 +1,10 @@
 # Last Change
 
+## 2026-11-27 15:30: ShopZd05Set (T76K912964) in P76 importiert
+
+- Ingo hat `T76K912964` freigegeben (14:38) und nach P76 importiert (14:47, RC 0); in P76 per SE16 E070/TPALOG nur gelesen
+  nachgeprueft. Board liest weiter Disponenten 001/003. NOTES 12, PLAN, Uebergabe 9, Wochen_Todo 172.
+
 ## 2026-11-27 13:30: ShopZd05Set in T76 umgebaut (Punkt 12), neue Anfrage Infosatz-Job 70953/1200
 
 - `ShopZd05Set` ohne Bestell-Pruefung, offener Fertigungsauftrag als Zugang (Entscheid Fabio/Marco), `T76K912964` nicht freigegeben;

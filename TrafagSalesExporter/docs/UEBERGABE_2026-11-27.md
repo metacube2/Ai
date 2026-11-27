@@ -154,3 +154,6 @@ MD04 das Material QE11155.
 - **Neue Anfrage Fabio 11:58:** Infosatz-Anlage 70953/Werk 1200 als SAP-Job statt Laptop-Skript (Spezifikation als Claude-Doku
   `https://claude.ai/artifact/8f2cWXgKcDovELfuN5UBGz`, PDF im Anhang); BAPI `ME_INFORECORD_MAINTAIN` mit Konditionen/Staffel in T76
   vorhanden; Schaetzung 3–4 Arbeitstage; Entscheid Ingo zu Plan und Reihenfolge offen (Wochen_Todo 181).
+- **15:30:** `T76K912964` (ShopZd05Set) von Ingo freigegeben und **in P76 importiert** (14:47, RC 0, per SE16 E070/TPALOG in P76
+  nachgeprueft). Board liest weiter 001/003; naechster Schritt Board `Zd05Dispo` 001–006 und Schleife absichern (Plan Punkt 12),
+  wartet auf Ingo. Mailentwuerfe an Fabio (Punkt 12, Werk 1200) stehen nur im Chat, nicht gesendet.

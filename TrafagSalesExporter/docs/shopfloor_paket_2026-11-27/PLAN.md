@@ -1,6 +1,6 @@
 # Shopfloor Paket Fabio 27.11.2026: Bauplan Punkte 12 und 14 bis 20
 
-Stand: 2026-11-27 13:30: SAP-Teil Punkt 12 in T76 gebaut (`T76K912964`, nicht freigegeben, `saptasks/shopfloor_sap/NOTES.md` 12); Board-Punkte noch nicht gebaut. Davor mittags: nur Plan. Grundlage: Mail Fabio 27.11. 11:36 und Paket
+Stand: 2026-11-27 15:30: SAP-Teil Punkt 12 gebaut und in P76 importiert (`T76K912964`, 14:47, `saptasks/shopfloor_sap/NOTES.md` 12); Board-Punkte noch nicht gebaut. Davor mittags: nur Plan. Grundlage: Mail Fabio 27.11. 11:36 und Paket
 `Downloads\Shopfloor_Paket_Ingo_2026-11-27.zip` (Mailtext Punkte 14–20, Antwort Fabio/Marco zu Punkt 12, LIESMICH mit Entscheiden).
 Code-Stand gelesen im Worktree `C:\TMP\Ai_sf2611` (Zweig `shopfloor-paket-2611`, `a2f7c97`, produktiv); im Hauptordner fehlen
 `ShopfloorMeeting.cs`, `ShopfloorRadar.cs`, `ShopfloorMailSender.cs`. Abkuerzungen: cfg = `Services/Shopfloor/shopfloor_config.json`,
