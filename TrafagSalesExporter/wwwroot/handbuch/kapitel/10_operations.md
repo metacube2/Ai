@@ -423,7 +423,7 @@ Alle Werte sind von Hand erfasst. Die 8 Stunden je Person sind eine feste Annahm
 
 ### Wozu
 
-Die Seite ersetzt den täglichen ZD05-Export aus SAP. Sie zeigt, bei welchen Materialien eine Unterdeckung droht, die sich durch Vorziehen einer Bestellung noch abwenden lässt, und wie gut der Einkauf die Fehlteile im Griff hat.
+Die Seite ersetzt den täglichen ZD05-Export aus SAP. Sie zeigt, bei welchen Materialien eine Unterdeckung droht, und wie gut der Einkauf die Fehlteile im Griff hat.
 
 ### Was man sieht
 
@@ -431,7 +431,7 @@ Die Positionen des Tages mit Material, Kurztext, Unterdeckungsdatum, Dispomerkma
 
 ### Wie gerechnet wird
 
-Die Daten kommen werktags um 04:00 und 12:45 Uhr aus SAP (Logik des Reports ZD05 für die Disponenten 001 und 003). Eine Position entsteht, wenn der Bestand unter null fällt und danach noch ein Zugang kommt, eine Umterminierung also möglich ist. Bemerkung, Liefertermin und Code werden je Material vom Vortag übernommen. **Zu besprechen** ist eine Position, die seit dem letzten Import neu ist, noch keinen Code hat oder deren Liefertermin überschritten ist; im laufenden Meeting ist dieser Filter automatisch aktiv. Die **Bewertungskennzahl** ist der Durchschnitt der vergebenen Codes über alle Positionen, deren Unterdeckung bis heute plus 3 Arbeitstage eintritt; das Ziel ist höchstens 1,20.
+Die Daten kommen werktags um 04:00 und 12:45 Uhr aus SAP, für die Disponenten 001 bis 006. Seit dem 27.11.2026 entsteht eine Position bei jedem Material, dessen Bestand unter null fällt. Als Zugang zählen Bestellungen, Lieferplaneinteilungen und offene Fertigungsaufträge, Planaufträge und Bestellanforderungen nicht. Bei Eigenfertigung zeigt das Board deshalb weniger Positionen als der Report ZD05, der Fertigungsaufträge nicht als Zugang kennt. Bis zum 27.11.2026 kamen nur die Disponenten 001 und 003, und eine Position entstand nur, wenn nach der Unterdeckung noch eine Bestellung kam. Kann SAP einen Disponenten nicht liefern, bleibt die Liste auf dem letzten vollständigen Stand. Bemerkung, Liefertermin und Code werden je Material vom Vortag übernommen. **Zu besprechen** ist eine Position, die seit dem letzten Import neu ist, noch keinen Code hat oder deren Liefertermin überschritten ist; im laufenden Meeting ist dieser Filter automatisch aktiv. Die **Bewertungskennzahl** ist der Durchschnitt der vergebenen Codes über alle Positionen, deren Unterdeckung bis heute plus 3 Arbeitstage eintritt; das Ziel ist höchstens 1,20.
 
 ### Einsatz im Arbeitsalltag
 
@@ -439,7 +439,7 @@ Die Daten kommen werktags um 04:00 und 12:45 Uhr aus SAP (Logik des Reports ZD05
 
 ### Grenzen und Fallstricke
 
-Positionen ohne Code fliessen nicht in die Kennzahl ein; eine gute Kennzahl kann also auch bedeuten, dass Codes fehlen. Darum zeigt die Startseite zusätzlich die Zahl der Positionen ohne Code. Hinweis: Die Bedeutung der einzelnen Codes ausser Code 2 (Fehlmaterial Kundenauftrag) ist in diesem Handbuch nicht geprüft.
+Positionen ohne Code fliessen nicht in die Kennzahl ein; eine gute Kennzahl kann also auch bedeuten, dass Codes fehlen. Darum zeigt die Startseite zusätzlich die Zahl der Positionen ohne Code. Wegen der neuen Regel und der zusätzlichen Disponenten sind die Zahlen ab dem 27.11.2026 nicht direkt mit den Tagen davor vergleichbar. Hinweis: Die Bedeutung der einzelnen Codes ausser Code 2 (Fehlmaterial Kundenauftrag) ist in diesem Handbuch nicht geprüft.
 
 ## Shopfloor: Verkauf
 
